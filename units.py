@@ -17,6 +17,7 @@ weber   = volt * second
 tesla   = weber / meter**2
 
 radian                  = (meter / meter)
+(mA,uA)                 = (1e-3,1e-6)
 (km,cm,mm,um,nm)        = (1e3,1e-2,1e-3,1e-6,1e-9)
 (rad,mrad,urad,nrad)    = (1e0,1e-3,1e-6,1e-9)
 (minutes,hour,day,year) = (60,60*60,24*60*60,365.25*24*60*60)
