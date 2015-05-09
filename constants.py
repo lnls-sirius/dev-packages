@@ -9,7 +9,7 @@ _joule   = _u.kilogram * _u.meter**2 / _u.second**2
 # physical constants
 # ==================
 light_speed              = 299792458 * (_u.meter/_u.second)                               # [m/s]   - definition
-vacuum_permeability      = 4*_math.pi*1e-7   * (_volt * _u.second / _u.ampere / _u.meter) # [T.m/A] - definition
+vacuum_permeability      = 4*_math.pi*1e-7  * (_volt * _u.second / _u.ampere / _u.meter)  # [T.m/A] - definition
 elementary_charge        = 1.602176565e-19  * _coulomb                                    # [C]     - 2014-06-11
 electron_mass            = 9.10938291e-31   * _u.kilogram                                 # [Kg]    - 2014-06-11
 electron_rest_energy     = electron_mass * _math.pow(light_speed,2)                       # [Kg.m^2/s^2] - derived
