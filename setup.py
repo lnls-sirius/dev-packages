@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
 with open('VERSION','r') as _f:
     __version__ = _f.read().strip()
@@ -13,10 +13,8 @@ setup(
     url='https://github.com/lnls-fac/mathphys',
     download_url='https://github.com/lnls-fac/mathphys',
     license='MIT License',
-    platforms=['Linux', 'Mac Os X'],
     classifiers=[
         'Intended Audience :: Science/Research',
-        'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Topic :: Scientific/Engineering'
     ],
