@@ -8,9 +8,18 @@ with open('VERSION','r') as _f:
 setup(
     name='mathphys',
     version=__version__,
+    author='lnls-fac',
     description='LNLS Math and Physics utilities',
     url='https://github.com/lnls-fac/mathphys',
-    package_dir={'mathphys': 'src'},
+    download_url='https://github.com/lnls-fac/mathphys',
+    license='MIT License',
+    platforms=['Linux', 'Mac Os X'],
+    classifiers=[
+        'Intended Audience :: Science/Research',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python',
+        'Topic :: Scientific/Engineering'
+    ],
     packages=['mathphys'],
 
     install_requires=[
