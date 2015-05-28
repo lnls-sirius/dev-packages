@@ -19,6 +19,7 @@ setup(
         'Topic :: Scientific/Engineering'
     ],
     packages=['mathphys'],
+    package_data={'mathphys': ['VERSION']},
 
     install_requires=[
         'numpy>=1.8.2',
