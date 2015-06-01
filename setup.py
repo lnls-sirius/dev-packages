@@ -20,11 +20,5 @@ setup(
     ],
     packages=['mathphys'],
     package_data={'mathphys': ['VERSION']},
-
-    # install_requires=[
-    #     'numpy>=1.8.2',
-    #     'lnls>=0.1.0'
-    # ],
-    # dependency_links=['https://github.com/lnls-fac/lnls/archive/v0.1.0.tar.gz#egg=lnls-0.1.0'],
     zip_safe=False,
 )
