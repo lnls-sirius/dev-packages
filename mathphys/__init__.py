@@ -4,6 +4,7 @@ import mathphys.units as units
 import mathphys.constants as constants
 import mathphys.functions as functions
 import mathphys.beam_optics as beam_optics
+import mathphys.beam_lifetime as beam_lifetime
 
 __all__ = ['base_units', 'units','constants','functions','beam_optics']
 

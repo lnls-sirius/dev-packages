@@ -19,6 +19,7 @@ def calc_rf_acceptance(U0, mcf, h, q, energy):
        U0:     energy loss per turn [keV]
        mcf:    momentum compaction factor
        h:      harmonic_number
+       q:      overvoltage
        energy: beam energy [GeV] """
     eRF = _math.sqrt(2*U0/(_math.pi*mcf*h*(energy*1e6))*(_math.sqrt(q**2-1)-_math.acos(1/q)))
     return eRF
