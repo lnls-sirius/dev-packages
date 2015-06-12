@@ -29,7 +29,6 @@ def calc_elastic_loss_rate(energy, aperture_ratio, acceptances, pressure,
     """
     _, _, beta, *_ = _beam_optics.beam_rigidity(energy=energy)
     energy_joule = energy*_ev_2_joule;
-    print('energy_joule', energy_joule)
 
     beta_x, beta_y = betas
     r = aperture_ratio
@@ -43,9 +42,6 @@ def calc_elastic_loss_rate(energy, aperture_ratio, acceptances, pressure,
 
     alpha = (_elastic_factor * z_q**2 * z_atom**2 * (f_x + f_y) /
         (beta * energy_joule**2 * temperature))
-
-    temp = _elastic_factor * z_q**2 * z_atom**2 / (beta)
-    print(temp)
 
     return alpha
 
