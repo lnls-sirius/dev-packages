@@ -1,10 +1,13 @@
 
-import math as _math
+import numpy as _np
 
 
 def calc_quantum_loss_rates(natural_emittance, coupling, energy_spread,
         transverse_acceptances, energy_acceptance, radiation_damping_times):
     """Calculate loss rates due to quantum beam lifetime
+
+    Acceptances can be supplied as numbers or numpy arrays. In case arrays are
+    supplied, the corresponding loss rates returned will also be arrays.
 
     Keyword arguments:
     natural_emittance -- natural emittance [m·rad]
@@ -28,6 +31,9 @@ def calc_quantum_loss_rates(natural_emittance, coupling, energy_spread,
 def calc_quantum_loss_rates_transverse(natural_emittance, coupling,
         acceptances, radiation_damping_times):
     """Calculate loss rate due to transverse quantum beam lifetime
+
+    Acceptances can be supplied as numbers or numpy arrays. In case arrays are
+    supplied, the corresponding loss rates returned will also be arrays.
 
     Keyword arguments:
     natural_emittance -- natural emittance [m·rad]
@@ -53,6 +59,9 @@ def calc_quantum_loss_rate_longitudinal(energy_spread, energy_acceptance,
         radiation_damping_time):
     """Calculate loss rate due to longitudinal quantum beam lifetime
 
+    Acceptances can be supplied as numbers or numpy arrays. In case arrays are
+    supplied, the corresponding loss rates returned will also be arrays.
+
     Keyword arguments:
     energy_spread -- relative energy spread
     energy_acceptance -- relative energy acceptance
@@ -65,4 +74,4 @@ def calc_quantum_loss_rate_longitudinal(energy_spread, energy_acceptance,
 
 
 def _calc_quantum_loss_rate(ksi, tau):
-    return 2*ksi*_math.exp(-ksi)/tau
+    return 2*ksi*_np.exp(-ksi)/tau

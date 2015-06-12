@@ -1,5 +1,6 @@
 
 import unittest
+import numpy
 import mathphys.beam_lifetime as beam_lifetime
 
 
@@ -40,6 +41,27 @@ class TestLossRates(unittest.TestCase):
             radiation_damping_time=1.5
         )
         self.assertAlmostEqual(alpha_s, 0.147082817097433, 15)
+
+    def test_calc_quantum_loss_rates_with_acceptance_array(self):
+        expected_results = (
+            [0.163746150615596, 0.136343006234594],
+            0.239642114195851,
+            0.147082817097433
+        )
+        results = beam_lifetime.calc_quantum_loss_rates(
+            natural_emittance=1.5,
+            coupling=0.2,
+            energy_spread=1.0,
+            transverse_acceptances=[numpy.array([0.5, 0.4]), 0.4],
+            energy_acceptance=0.5,
+            radiation_damping_times=[2.0, 3.0, 1.5]
+        )
+        self.assertEqual(len(results), 3)
+        self.assertEqual(len(results[0]), 2)
+        for i in range(2):
+            self.assertAlmostEqual(results[0][i], expected_results[0][i], 15)
+        for i in range(1, len(expected_results)):
+            self.assertAlmostEqual(results[i], expected_results[i], 15)
 
 
 def loss_rates_suite():
