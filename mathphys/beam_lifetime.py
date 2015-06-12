@@ -1,5 +1,53 @@
 
 import numpy as _np
+import mathphys.constants as _c
+import mathphys.beam_optics as _beam_optics
+
+
+# Constant factors
+_ev_2_joule = 1/_c._joule_2_eV
+_mbar_2_pascal = 1.0e-3/_c.pascal_2_bar
+_elastic_factor = ((_c.light_speed * _c.elementary_charge**4) /
+    (4 * _np.pi**2 * _c.vacuum_permitticity**2 * _c.boltzmann_constant))
+
+
+def calc_elastic_loss_rate(energy, aperture_ratio, acceptances, pressure,
+        betas, z_q=1, z_atom=7, temperature=300):
+    """Calculate loss rate due to elastic scattering beam lifetime
+
+    Keyword arguments:
+    energy -- beam energy [eV]
+    aperture_ratio -- ratio of vertical to horizontal apertures
+    acceptances -- [horizontal, vertical] [m·rad]
+    pressure -- residual gas pressure [mbar]
+    betas -- betatron function [horizontal, vertical] [m]
+    z_q -- particle charge multiplicity (default: 1)
+    z_atom -- residual gas atomic number (default: 7)
+    temperature -- [K]
+
+    Returns loss rate [1/s].
+    """
+    _, _, beta, *_ = _beam_optics.beam_rigidity(energy=energy)
+    energy_joule = energy*_ev_2_joule;
+    print('energy_joule', energy_joule)
+
+    beta_x, beta_y = betas
+    r = aperture_ratio
+    a_x, a_y = acceptances
+    p = pressure
+
+    f_x = ((2*_np.arctan(r) + _np.sin(2*_np.arctan(r))) *
+        p*_mbar_2_pascal * beta_x / a_x)
+    f_y = ((_np.pi - 2*_np.arctan(r) + _np.sin(2*_np.arctan(r))) *
+        p*_mbar_2_pascal * beta_y / a_y)
+
+    alpha = (_elastic_factor * z_q**2 * z_atom**2 * (f_x + f_y) /
+        (beta * energy_joule**2 * temperature))
+
+    temp = _elastic_factor * z_q**2 * z_atom**2 / (beta)
+    print(temp)
+
+    return alpha
 
 
 def calc_quantum_loss_rates(natural_emittance, coupling, energy_spread,
