@@ -6,6 +6,36 @@ import mathphys.beam_lifetime as beam_lifetime
 
 class TestLossRates(unittest.TestCase):
 
+    def test_calc_elastic_loss_rate(self):
+        loss_rate = beam_lifetime.calc_elastic_loss_rate(
+            energy=3.0e9,
+            aperture_ratio=0.4,
+            acceptances=[0.5, 0.3],
+            pressure=1.0e-9,
+            betas=[20.0, 15.0],
+        )
+        self.assertAlmostEqual(loss_rate, 6.913893987477171e-11, 15)
+
+    def test_calc_elastic_loss_rate_with_arrays(self):
+        beta_x = numpy.array([20.0, 18.0, 16.0])
+        beta_y = numpy.array([15.0, 10.0, 12.5])
+        pressure = 1.0e-9*numpy.array([1.0, 1.2, 1.3])
+        expected_results = 1.0e-10*numpy.array([
+            0.691389398747717,
+            0.606214559460527,
+            0.740786854286091
+        ])
+        loss_rates = beam_lifetime.calc_elastic_loss_rate(
+            energy=3.0e9,
+            aperture_ratio=0.4,
+            acceptances=[0.5, 0.3],
+            pressure=pressure,
+            betas=[beta_x, beta_y],
+        )
+        self.assertEqual(len(loss_rates), 3)
+        for i in range(len(expected_results)):
+            self.assertAlmostEqual(loss_rates[i], expected_results[i], 15)
+
     def test_calc_quantum_loss_rates(self):
         expected_results = (
             0.163746150615596,
