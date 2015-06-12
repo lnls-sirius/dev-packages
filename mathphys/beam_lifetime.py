@@ -13,7 +13,7 @@ _elastic_factor = ((_c.light_speed * _c.elementary_charge**4) /
 
 def calc_elastic_loss_rate(energy, aperture_ratio, acceptances, pressure,
         betas, z_q=1, z_atom=7, temperature=300):
-    """Calculate loss rate due to elastic scattering beam lifetime
+    """Calculate beam loss rate due to elastic scattering from residual gas
 
     Keyword arguments:
     energy -- beam energy [eV]
@@ -48,7 +48,7 @@ def calc_elastic_loss_rate(energy, aperture_ratio, acceptances, pressure,
 
 def calc_quantum_loss_rates(natural_emittance, coupling, energy_spread,
         transverse_acceptances, energy_acceptance, radiation_damping_times):
-    """Calculate loss rates due to quantum beam lifetime
+    """Calculate beam loss rates due to quantum excitation and radiation damping
 
     Acceptances can be supplied as numbers or numpy arrays. In case arrays are
     supplied, the corresponding loss rates returned will also be arrays.
@@ -74,7 +74,7 @@ def calc_quantum_loss_rates(natural_emittance, coupling, energy_spread,
 
 def calc_quantum_loss_rates_transverse(natural_emittance, coupling,
         acceptances, radiation_damping_times):
-    """Calculate loss rate due to transverse quantum beam lifetime
+    """Calculate beam loss rate due to quantum excitation and radiation damping in transverse directions
 
     Acceptances can be supplied as numbers or numpy arrays. In case arrays are
     supplied, the corresponding loss rates returned will also be arrays.
@@ -101,7 +101,7 @@ def calc_quantum_loss_rates_transverse(natural_emittance, coupling,
 
 def calc_quantum_loss_rate_longitudinal(energy_spread, energy_acceptance,
         radiation_damping_time):
-    """Calculate loss rate due to longitudinal quantum beam lifetime
+    """Calculate beam loss rate due to quantum excitation and radiation damping in longitudinal direction
 
     Acceptances can be supplied as numbers or numpy arrays. In case arrays are
     supplied, the corresponding loss rates returned will also be arrays.
