@@ -9,11 +9,17 @@ _ev_2_joule = 1/_c._joule_2_eV
 _mbar_2_pascal = 1.0e-3/_c.pascal_2_bar
 _elastic_factor = ((_c.light_speed * _c.elementary_charge**4) /
     (4 * _np.pi**2 * _c.vacuum_permitticity**2 * _c.boltzmann_constant))
+_inelastic_factor = ((32 * _c.light_speed * _c.electron_radius**2) /
+    (411 * _c.boltzmann_constant))
 
 
 def calc_elastic_loss_rate(energy, aperture_ratio, acceptances, pressure,
-        betas, z_q=1, z_atom=7, temperature=300):
+        betas, z=7, temperature=300):
     """Calculate loss rate due to elastic scattering beam lifetime
+
+    Pressure and betas can be supplied as numbers or numpy arrays. In case
+    arrays are supplied, lengths must be equal the loss rate returned will
+    be an array of same length.
 
     Keyword arguments:
     energy -- beam energy [eV]
@@ -21,9 +27,8 @@ def calc_elastic_loss_rate(energy, aperture_ratio, acceptances, pressure,
     acceptances -- [horizontal, vertical] [m·rad]
     pressure -- residual gas pressure [mbar]
     betas -- betatron function [horizontal, vertical] [m]
-    z_q -- particle charge multiplicity (default: 1)
-    z_atom -- residual gas atomic number (default: 7)
-    temperature -- [K]
+    z -- residual gas atomic number (default: 7)
+    temperature -- [K] (default: 300)
 
     Returns loss rate [1/s].
     """
@@ -40,9 +45,30 @@ def calc_elastic_loss_rate(energy, aperture_ratio, acceptances, pressure,
     f_y = ((_np.pi - 2*_np.arctan(r) + _np.sin(2*_np.arctan(r))) *
         p*_mbar_2_pascal * beta_y / a_y)
 
-    alpha = (_elastic_factor * z_q**2 * z_atom**2 * (f_x + f_y) /
+    alpha = (_elastic_factor * z**2 * (f_x + f_y) /
         (beta * energy_joule**2 * temperature))
 
+    return alpha
+
+
+def calc_inelastic_loss_rate(energy_acceptance, pressure, z=7,
+        temperature=300):
+    """Calculate loss rate due to inelastic scattering beam lifetime
+
+    Pressure can be supplied as a number or numpy array. In case an array is
+    supplied, the loss rate returned will be an array of same length.
+
+    Keyword arguments:
+    energy_acceptance -- relative energy acceptance
+    z -- residual gas atomic number (default: 7)
+    temperature -- [K] (default: 300)
+
+    Returns loss rate [1/s].
+    """
+    acc = energy_acceptance
+    p = pressure
+    alpha = (z**2 * _inelastic_factor * _np.log(183/z**(1/3)) *
+        (acc - _np.log(acc) - 5/8) * p*_mbar_2_pascal / temperature)
     return alpha
 
 
