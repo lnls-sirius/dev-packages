@@ -60,6 +60,7 @@ def calc_inelastic_loss_rate(energy_acceptance, pressure, z=7,
 
     Keyword arguments:
     energy_acceptance -- relative energy acceptance
+    pressure -- residual gas pressure [mbar]
     z -- residual gas atomic number (default: 7)
     temperature -- [K] (default: 300)
 
