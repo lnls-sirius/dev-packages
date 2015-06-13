@@ -1,3 +1,4 @@
+"""Beam lifetime calculation"""
 
 import numpy as _np
 import mathphys.constants as _c
