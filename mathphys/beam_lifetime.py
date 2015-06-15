@@ -85,9 +85,6 @@ def calc_touschek_loss_rate(energy, energy_spread, natural_emittance, n,
     loss_rate_p = (_touschek_factor*n*d_p) / (gamma**2*power(acc_p, 3)*volume)
     loss_rate_n = (_touschek_factor*n*d_n) / (gamma**2*power(acc_n, 3)*volume)
 
-    import matplotlib.pyplot as plt
-    plt.plot(loss_rate_p)
-
     loss_rate = 0.5*(loss_rate_p + loss_rate_n)
 
     return loss_rate
