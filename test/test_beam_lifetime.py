@@ -36,6 +36,27 @@ class TestLossRates(unittest.TestCase):
         for i in range(len(expected_results)):
             self.assertAlmostEqual(loss_rates[i], expected_results[i], 15)
 
+    def test_calc_inelastic_loss_rate(self):
+        loss_rate = beam_lifetime.calc_inelastic_loss_rate(
+            energy_acceptance=0.05,
+            pressure=1.0e-9
+        )
+        self.assertAlmostEqual(loss_rate, 2.420898310898740e-06, 15)
+
+    def test_calc_inelastic_loss_rate_with_pressure_array(self):
+        expected_results = [
+            0.242089831089874e-5,
+            0.290507797307849e-5,
+            0.338925763525824e-5
+        ]
+        loss_rates = beam_lifetime.calc_inelastic_loss_rate(
+            energy_acceptance=0.05,
+            pressure=1.0e-9*numpy.array([1.0, 1.2, 1.4])
+        )
+        self.assertEqual(len(loss_rates), 3)
+        for i in range(len(expected_results)):
+            self.assertAlmostEqual(loss_rates[i], expected_results[i], 15)
+
     def test_calc_quantum_loss_rates(self):
         expected_results = (
             0.163746150615596,
