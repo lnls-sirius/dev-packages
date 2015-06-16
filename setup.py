@@ -19,6 +19,6 @@ setup(
         'Topic :: Scientific/Engineering'
     ],
     packages=['mathphys'],
-    package_data={'mathphys': ['VERSION']},
+    package_data={'mathphys': ['VERSION', 'data/d_touschek.npz']},
     zip_safe=False,
 )
