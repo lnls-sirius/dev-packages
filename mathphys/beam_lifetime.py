@@ -63,11 +63,11 @@ def calc_touschek_loss_rate(energy, energy_spread, natural_emittance, n,
 
     _, _, _, gamma, _ = _beam_optics.beam_rigidity(energy=energy)
 
-    size_x = sqrt(beta_x * 1/(1+k)*emit + power(eta_x, 2)*se**2)
-    size_y = sqrt(beta_y * k/(1+k)*emit + power(eta_y, 2)*se**2)
+    size_x = sqrt(beta_x*1/(1+k)*emit + power(eta_x, 2)*se**2)
+    size_y = sqrt(beta_y*k/(1+k)*emit + power(eta_y, 2)*se**2)
+    volume = bunch_length*size_x*size_y
 
     sbx2 = 1/(1+k)*emit*beta_x
-    volume = bunch_length * size_x * size_y
 
     f = beta_x*eta_p_x + alpha_x*eta_x
     a_1 = 1/(4*se**2) + (power(eta_x, 2) + power(f, 2))/(4*sbx2)
