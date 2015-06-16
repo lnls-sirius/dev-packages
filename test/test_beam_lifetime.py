@@ -6,6 +6,12 @@ import mathphys.beam_lifetime as beam_lifetime
 
 class TestLossRates(unittest.TestCase):
 
+    def test_calc_touschek_loss_rate(self):
+        self.assertTrue(False)
+
+    def test_calc_touschek_loss_rate_with_arrays(self):
+        self.assertTrue(False)
+
     def test_calc_elastic_loss_rate(self):
         loss_rate = beam_lifetime.calc_elastic_loss_rate(
             energy=3.0e9,

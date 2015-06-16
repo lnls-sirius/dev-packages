@@ -26,8 +26,8 @@ _d_table = _data['d']
 
 
 def calc_touschek_loss_rate(energy, energy_spread, natural_emittance, n,
-        bunch_length, coupling, energy_acceptances, betas, alphas, etas,
-        eta_ps):
+        bunch_length, coupling, energy_acceptances, betas, etas, alpha_x,
+        eta_p_x):
     """Calculate loss rate due to Touschek beam lifetime
 
     Acceptances and optical functions can be supplied as numbers or numpy
@@ -43,9 +43,9 @@ def calc_touschek_loss_rate(energy, energy_spread, natural_emittance, n,
     coupling -- coupling between vertical and horizontal planes
     energy_acceptances -- relative energy acceptances [positive, negative]
     betas -- betatron function [horizontal, vertical] [m]
-    alphas -- betatron function derivative [horizontal, vertical]
     etas -- dispersion function [horizontal, vertical] [m]
-    eta_ps -- dispersion function derivative [horizontal, vertical] [m]
+    alpha_x -- horizontal betatron function derivative
+    eta_p_x -- horizontal dispersion function derivative
 
     Returns loss rate [1/s].
     """
@@ -59,9 +59,7 @@ def calc_touschek_loss_rate(energy, energy_spread, natural_emittance, n,
     acc_p = energy_acceptances[0]
     acc_n = -energy_acceptances[1]
     beta_x, beta_y = betas
-    alpha_x, alpha_y = alphas
     eta_x, eta_y = etas
-    eta_p_x, eta_p_y = eta_ps
 
     _, _, _, gamma, _ = _beam_optics.beam_rigidity(energy=energy)
 
