@@ -26,8 +26,8 @@ _d_table = _data['d']
 
 
 def calc_touschek_loss_rate(energy, energy_spread, natural_emittance, n,
-        bunch_length, coupling, energy_acceptances, betas, etas, alpha_x,
-        eta_p_x):
+        bunch_length, coupling, energy_acceptance_interval, betas, etas, alphax,
+        etaxl):
     """Calculate loss rate due to Touschek beam lifetime
 
     Acceptances and optical functions can be supplied as numbers or numpy
@@ -41,14 +41,15 @@ def calc_touschek_loss_rate(energy, energy_spread, natural_emittance, n,
     n -- number of electrons per bunch
     bunch_length -- [m]
     coupling -- coupling between vertical and horizontal planes
-    energy_acceptances -- relative energy acceptances [positive, negative]
+    energy_acceptance_interval -- relative energy acceptance interval [min, max]
     betas -- betatron function [horizontal, vertical] [m]
     etas -- dispersion function [horizontal, vertical] [m]
-    alpha_x -- horizontal betatron function derivative
-    eta_p_x -- horizontal dispersion function derivative
+    alphax -- horizontal betatron function derivative
+    etalx -- horizontal dispersion function derivative
 
     Returns loss rate [1/s].
     """
+
     power = _np.power
     sqrt = _np.sqrt
     interp = _np.interp
@@ -56,23 +57,25 @@ def calc_touschek_loss_rate(energy, energy_spread, natural_emittance, n,
     se = energy_spread
     emit = natural_emittance
     k = coupling
-    acc_p = energy_acceptances[0]
-    acc_n = -energy_acceptances[1]
-    beta_x, beta_y = betas
-    eta_x, eta_y = etas
+    acc_n = -energy_acceptance_interval[0]
+    acc_p = energy_acceptance_interval[1]
+    betax, betay = betas
+    etax, etay = etas
 
     _, _, _, gamma, _ = _beam_optics.beam_rigidity(energy=energy)
 
-    size_x = sqrt(beta_x*1/(1+k)*emit + power(eta_x, 2)*se**2)
-    size_y = sqrt(beta_y*k/(1+k)*emit + power(eta_y, 2)*se**2)
-    volume = bunch_length*size_x*size_y
+    emitx = emit / (1 + k)
+    emity = emit * k / (1 + k)
+    sizex = sqrt(betax*emitx + power(etax, 2)*se**2)
+    sizey = sqrt(betay*emity + power(etay, 2)*se**2)
+    volume = bunch_length*sizex*sizey
 
-    sbx2 = 1/(1+k)*emit*beta_x
+    sbx2 = emitx*betax
 
-    f = beta_x*eta_p_x + alpha_x*eta_x
-    a_1 = 1/(4*se**2) + (power(eta_x, 2) + power(f, 2))/(4*sbx2)
-    b_1 = beta_x*f/(2*sbx2)
-    c_1 = power(beta_x, 2)/(4*sbx2) - power(b_1, 2)/(4*a_1)
+    f = betax*etaxl + alphax*etax
+    a_1 = 1/(4*se**2) + (power(etax, 2) + power(f, 2))/(4*sbx2)
+    b_1 = betax*f/(2*sbx2)
+    c_1 = power(betax, 2)/(4*sbx2) - power(b_1, 2)/(4*a_1)
 
     ksi_p = power(2*sqrt(c_1)*acc_p/gamma, 2)
     ksi_n = power(2*sqrt(c_1)*acc_n/gamma, 2)
