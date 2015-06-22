@@ -27,7 +27,7 @@ _d_table = _data['d']
 
 def calc_touschek_loss_rate(energy, energy_spread, natural_emittance, n,
         bunch_length, coupling, energy_acceptance_interval, betas, etas, alphax,
-        etaxl):
+        etapx):
     """Calculate loss rate due to Touschek beam lifetime
 
     Acceptances and optical functions can be supplied as numbers or numpy
@@ -72,7 +72,7 @@ def calc_touschek_loss_rate(energy, energy_spread, natural_emittance, n,
 
     sbx2 = emitx*betax
 
-    f = betax*etaxl + alphax*etax
+    f = betax*etapx + alphax*etax
     a_1 = 1/(4*se**2) + (power(etax, 2) + power(f, 2))/(4*sbx2)
     b_1 = betax*f/(2*sbx2)
     c_1 = power(betax, 2)/(4*sbx2) - power(b_1, 2)/(4*a_1)
