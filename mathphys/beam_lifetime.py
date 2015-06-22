@@ -26,8 +26,8 @@ _d_table = _data['d']
 
 
 def calc_touschek_loss_rate(energy, energy_spread, natural_emittance, n,
-        bunch_length, coupling, energy_acceptance_interval, betas, etas, alphax,
-        etaxl):
+        bunch_length, coupling, energy_acceptance_interval, betas, etas,
+        alphax, etaxl):
     """Calculate loss rate due to Touschek beam lifetime
 
     Acceptances and optical functions can be supplied as numbers or numpy
@@ -153,7 +153,8 @@ def calc_inelastic_loss_rate(energy_acceptance, pressure, z=7,
 
 def calc_quantum_loss_rates(natural_emittance, coupling, energy_spread,
         transverse_acceptances, energy_acceptance, radiation_damping_times):
-    """Calculate beam loss rates due to quantum excitation and radiation damping
+    """Calculate beam loss rates due to quantum excitation and radiation
+    damping
 
     Acceptances can be supplied as numbers or numpy arrays. In case arrays are
     supplied, the corresponding loss rates returned will also be arrays.
@@ -180,7 +181,8 @@ def calc_quantum_loss_rates(natural_emittance, coupling, energy_spread,
 
 def calc_quantum_loss_rates_transverse(natural_emittance, coupling,
         acceptances, radiation_damping_times):
-    """Calculate beam loss rate due to quantum excitation and radiation damping in transverse directions
+    """Calculate beam loss rate due to quantum excitation and radiation damping
+    in transverse directions
 
     Acceptances can be supplied as numbers or numpy arrays. In case arrays are
     supplied, the corresponding loss rates returned will also be arrays.
@@ -207,7 +209,8 @@ def calc_quantum_loss_rates_transverse(natural_emittance, coupling,
 
 def calc_quantum_loss_rate_longitudinal(energy_spread, energy_acceptance,
         radiation_damping_time):
-    """Calculate beam loss rate due to quantum excitation and radiation damping in longitudinal direction
+    """Calculate beam loss rate due to quantum excitation and radiation damping
+    in longitudinal direction
 
     Acceptances can be supplied as numbers or numpy arrays. In case arrays are
     supplied, the corresponding loss rates returned will also be arrays.
