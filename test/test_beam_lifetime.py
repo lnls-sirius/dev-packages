@@ -14,23 +14,23 @@ class TestLossRates(unittest.TestCase):
             n=6.2e+09,
             bunch_length=2.4e-3,
             coupling=0.01,
-            energy_acceptances=[0.052, -0.052],
+            energy_acceptance_interval=[-0.052, 0.052],
             betas=[6.5, 10.4],
             etas=[0.028, 0.001],
-            alpha_x=0.22,
-            eta_p_x=-6.5e-05
+            alphax=0.22,
+            etapx=-6.5e-05
         )
         self.assertAlmostEqual(loss_rate, 2.302788533844299e-06, 15)
 
     def test_calc_touschek_loss_rate_with_arrays(self):
-        acceptance_x = numpy.array([0.052, 0.050, 0.048])
-        acceptance_y = -numpy.array([0.046, 0.044, 0.042])
-        beta_x = numpy.array([6.5, 6.0, 5.5])
-        beta_y = numpy.array([10.4, 11.0, 11.6])
-        eta_x = numpy.array([0.028, 0.030, 0.032])
-        eta_y = numpy.array([0.001, 0.002, 0.001])
-        alpha_x = numpy.array([0.22, 0.20, 0.21])
-        eta_p_x = 1.0e-5*numpy.array([-6.5, -6.4, -6.3])
+        acceptance_p = numpy.array([0.052, 0.050, 0.048])
+        acceptance_n = -numpy.array([0.046, 0.044, 0.042])
+        betax = numpy.array([6.5, 6.0, 5.5])
+        betay = numpy.array([10.4, 11.0, 11.6])
+        etax = numpy.array([0.028, 0.030, 0.032])
+        etay = numpy.array([0.001, 0.002, 0.001])
+        alphax = numpy.array([0.22, 0.20, 0.21])
+        etapx = 1.0e-5*numpy.array([-6.5, -6.4, -6.3])
         expected_results = 1.0e-4*numpy.array([
             0.042329866034302,
             0.067315890774126,
@@ -43,11 +43,11 @@ class TestLossRates(unittest.TestCase):
             n=6.2e+09,
             bunch_length=2.4e-3,
             coupling=0.01,
-            energy_acceptances=[acceptance_x, acceptance_y],
-            betas=[beta_x, beta_y],
-            etas=[eta_x, eta_y],
-            alpha_x=alpha_x,
-            eta_p_x=eta_p_x
+            energy_acceptance_interval=[acceptance_n, acceptance_p],
+            betas=[betax, betay],
+            etas=[etax, etay],
+            alphax=alphax,
+            etapx=etapx
         )
         self.assertEqual(len(loss_rate), 3)
         for i in range(len(expected_results)):
@@ -64,8 +64,8 @@ class TestLossRates(unittest.TestCase):
         self.assertAlmostEqual(loss_rate, 6.913893987477171e-11, 15)
 
     def test_calc_elastic_loss_rate_with_arrays(self):
-        beta_x = numpy.array([20.0, 18.0, 16.0])
-        beta_y = numpy.array([15.0, 10.0, 12.5])
+        betax = numpy.array([20.0, 18.0, 16.0])
+        betay = numpy.array([15.0, 10.0, 12.5])
         pressure = 1.0e-9*numpy.array([1.0, 1.2, 1.3])
         expected_results = 1.0e-10*numpy.array([
             0.691389398747717,
@@ -77,7 +77,7 @@ class TestLossRates(unittest.TestCase):
             aperture_ratio=0.4,
             acceptances=[0.5, 0.3],
             pressure=pressure,
-            betas=[beta_x, beta_y],
+            betas=[betax, betay],
         )
         self.assertEqual(len(loss_rate), 3)
         for i in range(len(expected_results)):
@@ -123,14 +123,14 @@ class TestLossRates(unittest.TestCase):
             self.assertAlmostEqual(results[i], expected_results[i], 15)
 
     def test_calc_quantum_loss_rates_transverse(self):
-        alpha_x, alpha_y = beam_lifetime.calc_quantum_loss_rates_transverse(
+        alphax, alphay = beam_lifetime.calc_quantum_loss_rates_transverse(
             natural_emittance=1.5,
             coupling=0.2,
             acceptances=[0.5, 0.4],
             radiation_damping_times=[2.0, 3.0]
         )
-        self.assertAlmostEqual(alpha_x, 0.163746150615596, 15)
-        self.assertAlmostEqual(alpha_y, 0.239642114195851, 15)
+        self.assertAlmostEqual(alphax, 0.163746150615596, 15)
+        self.assertAlmostEqual(alphay, 0.239642114195851, 15)
 
     def test_calc_quantum_loss_rate_longitudinal(self):
         alpha_s = beam_lifetime.calc_quantum_loss_rate_longitudinal(
