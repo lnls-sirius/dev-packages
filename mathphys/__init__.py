@@ -1,4 +1,4 @@
-"""Math functions, physical constants and auxilliary functions"""
+"""Math functions, physical constants and auxiliary functions"""
 
 import os as _os
 import mathphys.base_units as base_units
