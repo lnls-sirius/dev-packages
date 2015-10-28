@@ -18,6 +18,7 @@ avogadro_constant       = 6.02214129e23 * (1 / _u.mole)                         
 boltzmann_constant      = gas_constant/avogadro_constant                                 # 2015-06-12 - http://physics.nist.gov/cgi-bin/cuu/Value?k
 electron_rest_energy    = electron_mass * _math.pow(light_speed,2)                       # [Kg̣*m^2/s^2] - derived
 vacuum_permitticity     = 1.0/(vacuum_permeability * _math.pow(light_speed,2))           # [V·s/(A.m)]  - derived
+vacuum_impedance        = vacuum_permeability * light_speed                              # [T·m^2/(A·s)] - derived
 electron_radius         = _math.pow(elementary_charge,2)/(4*_math.pi*vacuum_permitticity*electron_rest_energy) # [m] - derived
 
 _joule_2_eV             = _joule / elementary_charge
