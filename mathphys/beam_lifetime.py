@@ -24,6 +24,96 @@ _data = _np.load(_d_touschek_file)
 _ksi_table = _data['ksi']
 _d_table = _data['d']
 
+def lnls_tau_touschek_inverso(Accep,twispos,twiss,emit0,E,N,sigE,sigS,K):
+    """ calcula o inverso do tempo de vida Touschek.
+
+      Saídas:
+          Resp = estrutura com campos:
+              Rate = taxa de perda de elétrons ao longo do anel [1/s]
+              AveRate = Taxa média de perda de elétrons [1/s]
+              Pos  = Posição do anel onde foi calculada a taxa [m]
+              Volume = Volume do feixe ao longo do anel [m^3]
+
+      Entradas:
+          emit0 = emitância natural [m rad]
+          E     = energia das partículas [eV]
+          N     = número de elétrons por bunch
+          sigE  = dispersão de energia relativa sigE,
+          sigS  = comprimento do bunch [m]
+          K     = fator de acoplamento (emity = K*emitx)
+          Accep = dicionário com chaves:
+              pos = aceitância positiva para uma seleção de pontos do anel;
+              neg = aceitância negativa para uma seleção de pontos do anel;
+                       (lembrar: min(accep_din, accep_rf))
+              s   = posição longitudinal dos pontos para os quais a
+                       aceitância foi calculada.
+
+          twiss = estrutura com as funções óticas ao longo do trecho
+                  para o qual setá calculado o tempo de vida:
+                       pos,   betax,    betay,  etax,   etay,
+                              alphax,   alphay, etapx,  etapy
+
+      CUIDADO: os limites de cálculo são definidos pelos pontos
+         inicial e final da Aceitância e não das funções ópticas.
+    """
+
+    _, _, _, gamma, _ = _beam_optics.beam_rigidity(energy=E)
+
+    s    = Accep['s']
+    accp = Accep['pos']
+    accn = Accep['neg']
+    # calcular o tempo de vida a cada 10 cm do anel:
+    npoints = int((s[-1] - s[0])/0.1)
+    s_calc = _np.linspace(s[0], s[-1], npoints)
+
+    d_accp  = _np.interp(s_calc,s, accp)
+    d_accn  = _np.interp(s_calc,s,-accn)
+    # if momentum aperture is 0, set it to 1e-4:
+    d_accp[d_accp==0] = 1e-4
+    d_accn[d_accn==0] = 1e-4
+
+    _, ind = _np.unique(twispos,return_index=True)
+
+    betax  = _np.interp(s_calc, twispos[ind], twiss.betax[ind])
+    alphax = _np.interp(s_calc, twispos[ind], twiss.alphax[ind])
+    etax   = _np.interp(s_calc, twispos[ind], twiss.etax[ind])
+    etaxl  = _np.interp(s_calc, twispos[ind], twiss.etapx[ind])
+    betay  = _np.interp(s_calc, twispos[ind], twiss.betay[ind])
+    etay   = _np.interp(s_calc, twispos[ind], twiss.etay[ind])
+
+    # Volume do bunch
+    sigX = _np.sqrt(betay*(K/(1+K))*emit0 + etay**2*sigE**2)
+    sigY = _np.sqrt(betax*(1/(1+K))*emit0 + etax**2*sigE**2)
+    V = sigS * sigX * sigY
+
+
+    # Tamanho betatron horizontal do bunch
+    Sx2 = 1/(1+K) * emit0 * betax
+
+    fator = betax*etaxl + alphax*etax
+    A1 = 1/(4*sigE**2) + (etax**2 + fator**2)/(4*Sx2)
+    B1 = betax*fator/(2*Sx2)
+    C1 = betax**2/(4*Sx2) - B1**2/(4*A1)
+
+    # Limite de integração inferior
+    ksip = (2*_np.sqrt(C1)/gamma * d_accp)**2
+    ksin = (2*_np.sqrt(C1)/gamma * d_accn)**2
+
+    # Interpola d_touschek
+    Dp = _np.interp(ksip,_ksi_table,_d_table,left=0.0,right=0.0)
+    Dn = _np.interp(ksin,_ksi_table,_d_table,left=0.0,right=0.0)
+
+    # Tempo de vida touschek inverso
+    Ratep = _touschek_factor*N/gamma**2 / d_accp**3 * Dp / V
+    Raten = _touschek_factor*N/gamma**2 / d_accn**3 * Dn / V
+    rate = (Ratep + Raten) / 2
+
+    # Tempo de vida touschek inverso médio
+    ave_rate = _np.trapz(rate,x=s_calc) / ( s_calc[-1] - s_calc[0] )
+    resp = dict(rate=rate,ave_rate=ave_rate,volume=V,pos=s_calc)
+
+    return resp
+
 
 def calc_touschek_loss_rate(energy_acceptance_interval, coupling, n, **kwargs):
     """Calculate loss rate due to Touschek beam lifetime
