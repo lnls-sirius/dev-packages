@@ -24,74 +24,81 @@ _data = _np.load(_d_touschek_file)
 _ksi_table = _data['ksi']
 _d_table = _data['d']
 
-def lnls_tau_touschek_inverso(Accep,twispos,twiss,emit0,E,N,sigE,sigS,K):
-    """ calcula o inverso do tempo de vida Touschek.
+def calc_touschek_loss_rate(energy_acceptance, twiss, coupling, n, natural_emittance,
+                         energy, energy_spread, bunch_length):
+    """Calculate loss rate due to Touschek beam lifetime
 
-      Saídas:
-          Resp = estrutura com campos:
-              Rate = taxa de perda de elétrons ao longo do anel [1/s]
-              AveRate = Taxa média de perda de elétrons [1/s]
-              Pos  = Posição do anel onde foi calculada a taxa [m]
-              Volume = Volume do feixe ao longo do anel [m^3]
+      keyword arguments:
+          natural_emittance = Natural emittance in m.rad
+          energy            = Bunch energy in [eV]
+          n                 = Number of electrons ber bunch
+          energy_spread     = relative energy spread,
+          bunch_length      = bunch length in [m]
+          coupling          = emittance coupling factor (emity = coupling*emitx)
+          energy_acceptance = energy acceptance of the machine. May be a
+              dictionary with keys:
+              pos = positive acceptance for a selection of points in the ring
+              neg = negative acceptance for a selection of points in the ring
+                       (remenber: min(accep_din, accep_rf))
+              s   = Longitudinal position where pos and neg were calculated.
 
-      Entradas:
-          emit0 = emitância natural [m rad]
-          E     = energia das partículas [eV]
-          N     = número de elétrons por bunch
-          sigE  = dispersão de energia relativa sigE,
-          sigS  = comprimento do bunch [m]
-          K     = fator de acoplamento (emity = K*emitx)
-          Accep = dicionário com chaves:
-              pos = aceitância positiva para uma seleção de pontos do anel;
-              neg = aceitância negativa para uma seleção de pontos do anel;
-                       (lembrar: min(accep_din, accep_rf))
-              s   = posição longitudinal dos pontos para os quais a
-                       aceitância foi calculada.
-
-          twiss = estrutura com as funções óticas ao longo do trecho
-                  para o qual setá calculado o tempo de vida:
-                       pos,   betax,    betay,  etax,   etay,
+          twiss = pyaccel.TwissList object or similar object with fields:
+                      spos,   betax,    betay,  etax,   etay,
                               alphax,   alphay, etapx,  etapy
 
-      CUIDADO: os limites de cálculo são definidos pelos pontos
-         inicial e final da Aceitância e não das funções ópticas.
+      output:
+        dictionary with fiels:
+            rate     = loss rate along the ring [1/s]
+            ave_rate = average loss rate along the ring [1/s]
+            pos      = longitudinal position where loss rate was calculated [m]
+            volume   = volume of the beam along the ring [m^3]
+
+      CUIDADO: if energy_acceptance is a dictionary the limits of the calculation
+        will be defined by the initial and final points of the acceptance and
+        not by the optical functions.
     """
 
-    _, _, _, gamma, _ = _beam_optics.beam_rigidity(energy=E)
+    _, _, _, gamma, _ = _beam_optics.beam_rigidity(energy=energy)
+    _, ind = _np.unique(twiss.spos,return_index=True)
 
-    s    = Accep['s']
-    accp = Accep['pos']
-    accn = Accep['neg']
+    if isinstance(energy_acceptance,dict):
+        s    = energy_acceptance['s']
+        accp = energy_acceptance['pos']
+        accn = energy_acceptance['neg']
+    elif isinstance(energy_acceptance,(list,tuple,_np.ndarray)):
+        s    = twiss.spos[ind]
+        accp = s*0.0 + energy_acceptance[1]
+        accn = s*0.0 + energy_acceptance[0]
+    else:
+        raise TypeError('energy_acceptance ')
+
     # calcular o tempo de vida a cada 10 cm do anel:
     npoints = int((s[-1] - s[0])/0.1)
     s_calc = _np.linspace(s[0], s[-1], npoints)
-
     d_accp  = _np.interp(s_calc,s, accp)
     d_accn  = _np.interp(s_calc,s,-accn)
+
     # if momentum aperture is 0, set it to 1e-4:
     d_accp[d_accp==0] = 1e-4
     d_accn[d_accn==0] = 1e-4
 
-    _, ind = _np.unique(twispos,return_index=True)
-
-    betax  = _np.interp(s_calc, twispos[ind], twiss.betax[ind])
-    alphax = _np.interp(s_calc, twispos[ind], twiss.alphax[ind])
-    etax   = _np.interp(s_calc, twispos[ind], twiss.etax[ind])
-    etaxl  = _np.interp(s_calc, twispos[ind], twiss.etapx[ind])
-    betay  = _np.interp(s_calc, twispos[ind], twiss.betay[ind])
-    etay   = _np.interp(s_calc, twispos[ind], twiss.etay[ind])
+    betax  = _np.interp(s_calc, twiss.spos[ind], twiss.betax[ind])
+    alphax = _np.interp(s_calc, twiss.spos[ind], twiss.alphax[ind])
+    etax   = _np.interp(s_calc, twiss.spos[ind], twiss.etax[ind])
+    etaxl  = _np.interp(s_calc, twiss.spos[ind], twiss.etapx[ind])
+    betay  = _np.interp(s_calc, twiss.spos[ind], twiss.betay[ind])
+    etay   = _np.interp(s_calc, twiss.spos[ind], twiss.etay[ind])
 
     # Volume do bunch
-    sigX = _np.sqrt(betay*(K/(1+K))*emit0 + etay**2*sigE**2)
-    sigY = _np.sqrt(betax*(1/(1+K))*emit0 + etax**2*sigE**2)
-    V = sigS * sigX * sigY
-
+    sigX = _np.sqrt(betay*(coupling/(1+coupling))*natural_emittance + etay**2*energy_spread**2)
+    sigY = _np.sqrt(betax*(1/(1+coupling))*natural_emittance + etax**2*energy_spread**2)
+    V = bunch_length * sigX * sigY
 
     # Tamanho betatron horizontal do bunch
-    Sx2 = 1/(1+K) * emit0 * betax
+    Sx2 = 1/(1+coupling) * natural_emittance * betax
 
     fator = betax*etaxl + alphax*etax
-    A1 = 1/(4*sigE**2) + (etax**2 + fator**2)/(4*Sx2)
+    A1 = 1/(4*energy_spread**2) + (etax**2 + fator**2)/(4*Sx2)
     B1 = betax*fator/(2*Sx2)
     C1 = betax**2/(4*Sx2) - B1**2/(4*A1)
 
@@ -104,8 +111,8 @@ def lnls_tau_touschek_inverso(Accep,twispos,twiss,emit0,E,N,sigE,sigS,K):
     Dn = _np.interp(ksin,_ksi_table,_d_table,left=0.0,right=0.0)
 
     # Tempo de vida touschek inverso
-    Ratep = _touschek_factor*N/gamma**2 / d_accp**3 * Dp / V
-    Raten = _touschek_factor*N/gamma**2 / d_accn**3 * Dn / V
+    Ratep = _touschek_factor*n/gamma**2 / d_accp**3 * Dp / V
+    Raten = _touschek_factor*n/gamma**2 / d_accn**3 * Dn / V
     rate = (Ratep + Raten) / 2
 
     # Tempo de vida touschek inverso médio
@@ -113,81 +120,6 @@ def lnls_tau_touschek_inverso(Accep,twispos,twiss,emit0,E,N,sigE,sigS,K):
     resp = dict(rate=rate,ave_rate=ave_rate,volume=V,pos=s_calc)
 
     return resp
-
-
-def calc_touschek_loss_rate(energy_acceptance_interval, coupling, n, **kwargs):
-    """Calculate loss rate due to Touschek beam lifetime
-
-    Acceptances and optical functions can be supplied as numbers or numpy
-    arrays. In case arrays are supplied, lengths must be equal; the loss rate
-    returned will be an array of same length.
-
-    Positional arguments:
-    energy_acceptance_interval -- Relative energy acceptance interval [min, max]
-    coupling -- Coupling between vertical and horizontal planes
-    n -- Number of electrons per bunch
-
-    Keyword arguments:
-    energy            -- Beam energy [eV]
-    energy_spread     -- Relative energy spread
-    natural_emittance -- Natural emittance [m·rad]
-    bunch_length      -- Bunch length [m]
-    betax             -- Horizontal betatron function [m]
-    betay             -- Vertical betatron function [m]
-    etax              -- Horizontal dispersion function [m]
-    etay              -- Vertical dispersion function [m]
-    alphax            -- Horizontal betatron function derivative
-    etalx             -- Horizontal dispersion function derivative
-
-    Returns loss rate [1/s].
-    """
-    energy            = kwargs['energy']
-    energy_spread     = kwargs['energy_spread']
-    natural_emittance = kwargs['natural_emittance']
-    bunch_length      = kwargs['bunch_length']
-    betax, betay      = kwargs['betax'], kwargs['betay']
-    etax, etay        = kwargs['etax'], kwargs['etay']
-    alphax            = kwargs['alphax']
-    etapx             = kwargs['etapx']
-
-    power = _np.power
-    sqrt = _np.sqrt
-    interp = _np.interp
-
-    se = energy_spread
-    emit = natural_emittance
-    k = coupling
-    acc_n = -energy_acceptance_interval[0]
-    acc_p = energy_acceptance_interval[1]
-
-    _, _, _, gamma, _ = _beam_optics.beam_rigidity(energy=energy)
-
-    emitx = emit / (1 + k)
-    emity = emit * k / (1 + k)
-    sizex = sqrt(betax*emitx + power(etax, 2)*se**2)
-    sizey = sqrt(betay*emity + power(etay, 2)*se**2)
-    volume = bunch_length*sizex*sizey
-
-    sbx2 = emitx*betax
-
-    f = betax*etapx + alphax*etax
-    a_1 = 1/(4*se**2) + (power(etax, 2) + power(f, 2))/(4*sbx2)
-    b_1 = betax*f/(2*sbx2)
-    c_1 = power(betax, 2)/(4*sbx2) - power(b_1, 2)/(4*a_1)
-
-    ksi_p = power(2*sqrt(c_1)*acc_p/gamma, 2)
-    ksi_n = power(2*sqrt(c_1)*acc_n/gamma, 2)
-
-    d_p = interp(ksi_p, _ksi_table, _d_table)
-    d_n = interp(ksi_n, _ksi_table, _d_table)
-
-    loss_rate_p = (_touschek_factor*n*d_p) / (gamma**2*power(acc_p, 3)*volume)
-    loss_rate_n = (_touschek_factor*n*d_n) / (gamma**2*power(acc_n, 3)*volume)
-
-    loss_rate = 0.5*(loss_rate_p + loss_rate_n)
-
-    return loss_rate
-
 
 def calc_elastic_loss_rate(transverse_acceptances, pressure, z=7, temperature=300, **kwargs):
     """Calculate beam loss rate due to elastic scattering from residual gas
@@ -232,7 +164,6 @@ def calc_elastic_loss_rate(transverse_acceptances, pressure, z=7, temperature=30
 
     return loss_rate
 
-
 def calc_inelastic_loss_rate(energy_acceptance, pressure, z=7, temperature=300):
     """Calculate loss rate due to inelastic scattering beam lifetime
 
@@ -254,7 +185,6 @@ def calc_inelastic_loss_rate(energy_acceptance, pressure, z=7, temperature=300):
     loss_rate = (z**2 * _inelastic_factor * _np.log(183/z**(1/3)) *
         (acc - _np.log(acc) - 5/8) * p*_mbar_2_pascal / temperature)
     return loss_rate
-
 
 def calc_quantum_loss_rates(transverse_acceptances, energy_acceptance, coupling, **kwargs):
     """Calculate beam loss rates due to quantum excitation and radiation
@@ -286,7 +216,6 @@ def calc_quantum_loss_rates(transverse_acceptances, energy_acceptance, coupling,
         energy_spread=energy_spread, damping_times=damping_times)
 
     return loss_rate_x, loss_rate_y, loss_rate_s
-
 
 def calc_quantum_loss_rates_transverse(transverse_acceptances, coupling, **kwargs):
     """Calculate beam loss rate due to quantum excitation and radiation damping
@@ -320,7 +249,6 @@ def calc_quantum_loss_rates_transverse(transverse_acceptances, coupling, **kwarg
 
     return loss_rate_x, loss_rate_y
 
-
 def calc_quantum_loss_rate_longitudinal(energy_acceptance, **kwargs):
     """Calculate beam loss rate due to quantum excitation and radiation damping
     in longitudinal direction
@@ -344,19 +272,16 @@ def calc_quantum_loss_rate_longitudinal(energy_acceptance, **kwargs):
     ksi_s = (energy_acceptance/energy_spread)**2/2
     return _calc_quantum_loss_rate(ksi_s, tau_s)
 
-
 def _calc_d_touschek_table(a, b, n):
     ksi = _np.logspace(a, b, n)
     d = _calc_d_touschek_array(ksi)
     return ksi, d
-
 
 def _calc_d_touschek_array(ksi):
     d = _np.zeros(len(ksi))
     for i in range(len(ksi)):
         d[i] = _calc_d_touschek(ksi[i])
     return d
-
 
 def _calc_d_touschek(ksi):
     limit = 1000
@@ -375,7 +300,6 @@ def _calc_d_touschek(ksi):
     d = sqrt(ksi)*(-1.5*exp(-ksi) + 0.5*(3*ksi-ksi*log(ksi)+2)*i1 + 0.5*ksi*i2)
 
     return d
-
 
 def _calc_quantum_loss_rate(ksi, tau):
     return 2*ksi*_np.exp(-ksi)/tau
