@@ -25,7 +25,7 @@ _ksi_table = _data['ksi']
 _d_table = _data['d']
 
 def calc_touschek_loss_rate(energy_acceptance, twiss, coupling, n, natural_emittance,
-                         energy, energy_spread, bunch_length):
+                         energy, energy_spread, bunch_length, **kwargs):
     """Calculate loss rate due to Touschek beam lifetime
 
       keyword arguments:
@@ -53,7 +53,7 @@ def calc_touschek_loss_rate(energy_acceptance, twiss, coupling, n, natural_emitt
             pos      = longitudinal position where loss rate was calculated [m]
             volume   = volume of the beam along the ring [m^3]
 
-      CUIDADO: if energy_acceptance is a dictionary the limits of the calculation
+      WARNING: if energy_acceptance is a dictionary the limits of the calculation
         will be defined by the initial and final points of the acceptance and
         not by the optical functions.
     """
@@ -70,7 +70,7 @@ def calc_touschek_loss_rate(energy_acceptance, twiss, coupling, n, natural_emitt
         accp = s*0.0 + energy_acceptance[1]
         accn = s*0.0 + energy_acceptance[0]
     else:
-        raise TypeError('energy_acceptance ')
+        raise TypeError('energy_acceptance')
 
     # calcular o tempo de vida a cada 10 cm do anel:
     npoints = int((s[-1] - s[0])/0.1)
