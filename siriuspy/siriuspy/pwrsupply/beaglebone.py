@@ -143,13 +143,21 @@ class BBBFactory:
         # Build psmodels dict with bsmp devices
         # psmodels = BBBFactory._build_psmodels_dict(devices)
 
-        udc_list = _PSSearch.conv_bbb_2_udc(bbbname)
+        if bbbname == 'BBB1_TEST1':
+            udc_list = ['UDC_TEST']
+        else:
+            udc_list = _PSSearch.conv_bbb_2_udc(bbbname)
 
         controllers = dict()  # 1 controller per UDC
         databases = dict()
         for udc in udc_list:
-            print(udc)
-            devices = _PSSearch.conv_udc_2_bsmps(udc)
+            if udc == 'UDC_TEST':
+                devices = (('BO-01U:PS-CH', 1),
+                           ('BO-01U:PS-CV', 2),
+                           ('BO-03U:PS-CH', 5),
+                           ('BO-03U:PS-CV', 6))
+            else:
+                devices = _PSSearch.conv_udc_2_bsmps(udc)
             # Check if there is only one psmodel
             psmodel = BBBFactory.check_ps_models(devices)
             # Get out model object
