@@ -180,7 +180,7 @@ class StandardPSController(PSController):
         if setpoint in (_PSConst.OpMode.Cycle, _PSConst.OpMode.MigWfm,
                         _PSConst.OpMode.RmpWfm):
             self._set_watchers(setpoint)
-        if setpoint in (_PSConst.OpMode.RmpWfm):
+        if setpoint in (_PSConst.OpMode.RmpWfm, ):
             self._set_pruc_ramp()
 
     def _set_pruc_ramp(self):
