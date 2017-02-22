@@ -14,6 +14,7 @@ import utils as _utils
 scan_period = 0.1 # [second]
 magnet_families = (
     'QFA','QDA','QDB1','QFB','QDB2','QDP1','QFP','QDP2','Q1','Q2','Q3','Q4',
+    'SFA0','SDA0','SDA1','SFA1','SDA2','SDA3',
 )
 
 _etyps = _utils.get_enum_types()
@@ -92,5 +93,41 @@ pvdb = {
     'Q4:State-Sts':  {'type':'enum', 'enums':_etyps['OffOnTyp'], 'value':1, 'unit': ''},
     'Q4:Current-RB': {'type':'float', 'value': 0.0, 'prec': 6, 'unit': 'A'},
     'Q4:Current-SP': {'type':'float', 'value': 0.0, 'prec': 6, 'unit': 'A'},
+
+    'SFA0:Reset-Cmd':  {'type':'int', 'value': 0},
+    'SFA0:State-Sel':  {'type':'enum', 'enums':_etyps['OffOnTyp'], 'value':1, 'unit': ''},
+    'SFA0:State-Sts':  {'type':'enum', 'enums':_etyps['OffOnTyp'], 'value':1, 'unit': ''},
+    'SFA0:Current-RB': {'type':'float', 'value': 0.0, 'prec': 6, 'unit': 'A'},
+    'SFA0:Current-SP': {'type':'float', 'value': 0.0, 'prec': 6, 'unit': 'A'},
+
+    'SDA0:Reset-Cmd':  {'type':'int', 'value': 0},
+    'SDA0:State-Sel':  {'type':'enum', 'enums':_etyps['OffOnTyp'], 'value':1, 'unit': ''},
+    'SDA0:State-Sts':  {'type':'enum', 'enums':_etyps['OffOnTyp'], 'value':1, 'unit': ''},
+    'SDA0:Current-RB': {'type':'float', 'value': 0.0, 'prec': 6, 'unit': 'A'},
+    'SDA0:Current-SP': {'type':'float', 'value': 0.0, 'prec': 6, 'unit': 'A'},
+
+    'SDA1:Reset-Cmd':  {'type':'int', 'value': 0},
+    'SDA1:State-Sel':  {'type':'enum', 'enums':_etyps['OffOnTyp'], 'value':1, 'unit': ''},
+    'SDA1:State-Sts':  {'type':'enum', 'enums':_etyps['OffOnTyp'], 'value':1, 'unit': ''},
+    'SDA1:Current-RB': {'type':'float', 'value': 0.0, 'prec': 6, 'unit': 'A'},
+    'SDA1:Current-SP': {'type':'float', 'value': 0.0, 'prec': 6, 'unit': 'A'},
+
+    'SFA1:Reset-Cmd':  {'type':'int', 'value': 0},
+    'SFA1:State-Sel':  {'type':'enum', 'enums':_etyps['OffOnTyp'], 'value':1, 'unit': ''},
+    'SFA1:State-Sts':  {'type':'enum', 'enums':_etyps['OffOnTyp'], 'value':1, 'unit': ''},
+    'SFA1:Current-RB': {'type':'float', 'value': 0.0, 'prec': 6, 'unit': 'A'},
+    'SFA1:Current-SP': {'type':'float', 'value': 0.0, 'prec': 6, 'unit': 'A'},
+
+    'SDA2:Reset-Cmd':  {'type':'int', 'value': 0},
+    'SDA2:State-Sel':  {'type':'enum', 'enums':_etyps['OffOnTyp'], 'value':1, 'unit': ''},
+    'SDA2:State-Sts':  {'type':'enum', 'enums':_etyps['OffOnTyp'], 'value':1, 'unit': ''},
+    'SDA2:Current-RB': {'type':'float', 'value': 0.0, 'prec': 6, 'unit': 'A'},
+    'SDA2:Current-SP': {'type':'float', 'value': 0.0, 'prec': 6, 'unit': 'A'},
+
+    'SDA3:Reset-Cmd':  {'type':'int', 'value': 0},
+    'SDA3:State-Sel':  {'type':'enum', 'enums':_etyps['OffOnTyp'], 'value':1, 'unit': ''},
+    'SDA3:State-Sts':  {'type':'enum', 'enums':_etyps['OffOnTyp'], 'value':1, 'unit': ''},
+    'SDA3:Current-RB': {'type':'float', 'value': 0.0, 'prec': 6, 'unit': 'A'},
+    'SDA3:Current-SP': {'type':'float', 'value': 0.0, 'prec': 6, 'unit': 'A'},
 
 }
