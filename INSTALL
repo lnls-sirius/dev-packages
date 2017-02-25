@@ -1,0 +1,42 @@
+INSTALL - sirius
+================
+
+This package can be installed using setuptools (>=16.0). There is no automatic
+dependency checking, so read the list below and ensure necessary dependencies
+are available. Developed and tested with Python 3 (3.4).
+
+
+REQUIREMENTS
+============
+
+- numpy 1.8 (>=1.8.2)
+- lnls 0.8 (>=0.8.0)
+- mathphys 0.7 (>=0.7.0)
+- pyaccel 0.12 (>=0.12.0)
+
+
+INSTALLATION
+============
+
+To install to a default Python directory, run
+
+    <python> setup.py install
+
+Use the appropriate command in <python>. Depending on permissions, it may be
+necessary to run the command with sudo or as superuser.
+
+To install a development version, with a link to the local package files in the
+default Python directory, run
+
+    <python> setup.py develop
+
+Details and further options can be found in setuptools documentation.
+
+To install the excitation curve files, inside the excitation_curves directory,
+run
+
+    make install
+
+or
+
+    make develop
