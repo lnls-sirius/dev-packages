@@ -1,5 +1,5 @@
 import epics as _epics
-import utils as _utils
+import psirius as _psirius
 import math as _math
 import pvs as _pvs
 
@@ -27,7 +27,7 @@ class App:
             self.current_pvs_rb[family] = _epics.PV(_ioc_prefix+'SI-Fam:PS-'+family+':Current-RB', connection_timeout=_timeout); self.current_pvs_rb[family].value;
 
     def read(self,driver,reason):
-        #st = _utils.get_timestamp(); print('read at ' + st)
+        #st = _psirius.util.get_timestamp(); print('read at ' + st)
         if reason == 'IOC:Version':
             self.process_all_pvs(driver)
             driver.updatePVs()
