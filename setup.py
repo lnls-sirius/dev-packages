@@ -2,8 +2,12 @@
 
 from setuptools import setup, find_packages
 
-with open('VERSION','r') as _f:
-    __version__ = _f.read().strip()
+import git
+repo = git.Repo(search_parent_directories=True)
+sha = repo.head.object.hexsha
+
+with open('VERSION','w') as _f:
+    __version__ = _f.write(str(sha))
 
 setup(
     name='psirius',

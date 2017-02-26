@@ -19,6 +19,7 @@ def get_prop_types():
     }
     return prop_types
 
+
 def get_prop_suffix(prop):
     if prop[-3:] == '-RB': return 'RB'
     if prop[-3:] == '-SP': return 'SP'
@@ -27,6 +28,7 @@ def get_prop_suffix(prop):
     if prop[-4:] == '-Mon': return 'Mon'
     if prop[-4:] == '-Cmd': return 'Cmd'
     return None
+
 
 def get_enum_types():
     enums = {

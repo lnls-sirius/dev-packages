@@ -1,9 +1,9 @@
 import json as _json
 import urllib.request as _urllib_request
+import psirius.config as _config
 
-server_ip = 'http://10.0.7.55:8080'
 
-def get_slots_list():
+def get_slots_list(timeout=1):
     '''Return a list of slots'''
 
     def _get_attribute_value(text, attr):
@@ -14,8 +14,8 @@ def get_slots_list():
             value = None
         return value
 
-    url = server_ip + '/names/rest/deviceNames'
-    response = _urllib_request.urlopen(url)
+    url = _config.ns_server_url + '/names/rest/deviceNames'
+    response = _urllib_request.urlopen(url, timeout=1)
     str_response = response.readall().decode('utf-8')
     words = str_response.split('deviceNameElement')
     tmpslots = []

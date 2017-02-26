@@ -1,12 +1,12 @@
 import json as _json
 import urllib as _urllib
+import psirius.config as _config
 
-server_ip = 'http://10.0.7.55:8083'
 
-def get_slots_list():
+def get_slots_list(timeout=1):
     '''Return a list of dictionaries with slots defined in CCDB'''
-    url = server_ip + '/rest/slots'
-    response = _urllib.request.urlopen(url)
+    url = _config.ccdb_server_url + '/rest/slots'
+    response = _urllib.request.urlopen(url, timeout=timeout)
     str_response = response.readall().decode('utf-8')
     data = _json.loads(str_response);
     try:
@@ -15,10 +15,10 @@ def get_slots_list():
         slot_list = data['slot']
     return slot_list
 
-def get_devtypes_dict():
+def get_devtypes_dict(timeout=1):
     '''Return dictionary with list of device types defined in CCDB'''
-    url = server_ip + '/rest/deviceTypes'
-    response = _urllib.request.urlopen(url)
+    url = _config.ccdb_server_url + '/rest/deviceTypes'
+    response = _urllib.request.urlopen(url, timeout=timeout)
     str_response = response.readall().decode('utf-8')
     lines = str_response.split('<deviceType>')
     device_types = {}
