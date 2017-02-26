@@ -10,7 +10,8 @@ class MagnetExcitation:
         init_curr = 0.0
         self.coil = {}
         for i in range(len(labels)):
-            self.coil[labels[i].lower().replace('.txt','')] = (init_curr,excdata_list[i])
+            label = labels[i][:-5] if labels[i].lower().endswith('.txt') else labels[i]
+            self.coil[label] = (init_curr,excdata_list[i])
 
     @property
     def coil_labels(self):

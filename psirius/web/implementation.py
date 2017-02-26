@@ -13,7 +13,7 @@ def magnets_excitation_data_get_filenames_list(timeout=1):
     fname_list = []
     for word in words[1:]:
         fname = word.split('.txt">')[1].split('</a></td>')[0]
-        fname_list.append(exc)
+        fname_list.append(fname)
     return fname_list
 
 
