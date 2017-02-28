@@ -47,4 +47,4 @@ class Family:
 
     @staticmethod
     def si_quadrupoles():
-        return ('QFA','QDA', 'Q1', 'Q2', 'Q3')
+        return ('QFA','QDA', 'Q1', 'Q2', 'Q3', 'Q4', 'QDB1', 'QFB', 'QDB2', 'QDP1', 'QFP', 'QDP2')

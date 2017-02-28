@@ -5,7 +5,7 @@ import psirius.config as _config
 
 def get_slots_list(timeout=1):
     '''Return a list of dictionaries with slots defined in CCDB'''
-    url = _config.ccdb_server_url + '/rest/slots'
+    url = _config.server_url_ccdb + '/rest/slots'
     response = _urllib.request.urlopen(url, timeout=timeout)
     str_response = response.readall().decode('utf-8')
     data = _json.loads(str_response);
@@ -17,7 +17,7 @@ def get_slots_list(timeout=1):
 
 def get_devtypes_dict(timeout=1):
     '''Return dictionary with list of device types defined in CCDB'''
-    url = _config.ccdb_server_url + '/rest/deviceTypes'
+    url = _config.server_url_ccdb + '/rest/deviceTypes'
     response = _urllib.request.urlopen(url, timeout=timeout)
     str_response = response.readall().decode('utf-8')
     lines = str_response.split('<deviceType>')

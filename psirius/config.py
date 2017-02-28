@@ -1,5 +1,6 @@
+
 # Support Applications IPs/URLs
 
-web_server_url  = 'http://10.0.7.55'
-ns_server_url   = 'http://10.0.7.55:8080'
-ccdb_server_url = 'http://10.0.7.55:8083'
+server_url_web  = 'http://10.0.7.55'
+server_url_ns   = 'http://10.0.7.55:8080'
+server_url_ccdb = 'http://10.0.7.55:8083'
