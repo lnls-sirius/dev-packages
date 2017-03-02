@@ -1,4 +1,4 @@
-import psirius.web as _web
+import siriuspy.web as _web
 
 
 class ExcData:

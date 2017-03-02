@@ -1,6 +1,6 @@
 import json as _json
 import urllib.request as _urllib_request
-import psirius.config as _config
+import siriuspy.config as _config
 
 
 def get_slots_list(timeout=1):

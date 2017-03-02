@@ -1,5 +1,5 @@
 import urllib.request as _urllib_request
-import psirius.config as _config
+import siriuspy.config as _config
 
 
 def magnets_excitation_data_get_filenames_list(timeout=1):
