@@ -12,11 +12,11 @@ def magnets_excitation_data_get_filenames_list(timeout=1):
     response = _urllib_request.urlopen(url, timeout=timeout)
     data = response.read()
     text = data.decode('utf-8')
-    words = text.split('"[TXT]"></td><td><a href="./')
+    words = text.split('"[TXT]"></td><td><a href="')
     fname_list = []
     for word in words[1:]:
-        fname = word.split('.txt">')[1].split('</a></td>')[0]
-        fname_list.append(fname)
+        fname = word.split('.txt">')[1].split('</a></td><td')
+        fname_list.append(fname[0])
     return fname_list
 
 
