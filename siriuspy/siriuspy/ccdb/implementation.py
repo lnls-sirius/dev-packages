@@ -1,11 +1,11 @@
 import json as _json
 import urllib as _urllib
-import siriuspy.config as _config
+import siriuspy.envars as _envars
 
 
 def get_slots_list(timeout=1):
     '''Return a list of dictionaries with slots defined in CCDB'''
-    url = _config.server_url_ccdb + '/rest/slots'
+    url = _envars.server_url_ccdb + '/rest/slots'
     response = _urllib.request.urlopen(url, timeout=timeout)
     str_response = response.readall().decode('utf-8')
     data = _json.loads(str_response);
@@ -17,7 +17,7 @@ def get_slots_list(timeout=1):
 
 def get_devtypes_dict(timeout=1):
     '''Return dictionary with list of device types defined in CCDB'''
-    url = _config.server_url_ccdb + '/rest/deviceTypes'
+    url = _envars.server_url_ccdb + '/rest/deviceTypes'
     response = _urllib.request.urlopen(url, timeout=timeout)
     str_response = response.readall().decode('utf-8')
     lines = str_response.split('<deviceType>')

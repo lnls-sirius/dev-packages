@@ -7,8 +7,9 @@ def get_timestamp():
     st = _datetime.datetime.fromtimestamp(t0).strftime('%Y-%m-%d-%H:%M:%S')
     st = st + '.{0:03d}'.format(int(1000*(t0-int(t0))))
     return st
+    
 
-
+# this function can be subsituted with fernando's implementation of VACA
 def get_prop_types():
     prop_types = {
         'RB'  : {'read':True,  'write':False, 'enum':False},
@@ -19,7 +20,7 @@ def get_prop_types():
     }
     return prop_types
 
-
+# this function can be subsituted with fernando's implementation of VACA
 def get_prop_suffix(prop):
     if prop[-3:] == '-RB': return 'RB'
     if prop[-3:] == '-SP': return 'SP'
@@ -30,6 +31,7 @@ def get_prop_suffix(prop):
     return None
 
 
+# maybe this can be obtained from CCDB
 def get_enum_types():
     enums = {
         'OffOnTyp' : ('Off','On'),

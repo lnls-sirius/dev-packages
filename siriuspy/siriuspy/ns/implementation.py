@@ -1,6 +1,6 @@
 import json as _json
 import urllib.request as _urllib_request
-import siriuspy.config as _config
+import siriuspy.envars as _envars
 
 
 def get_slots_list(timeout=1):
@@ -14,7 +14,7 @@ def get_slots_list(timeout=1):
             value = None
         return value
 
-    url = _config.server_url_ns + '/names/rest/deviceNames'
+    url = _envars.server_url_ns + '/names/rest/deviceNames'
     response = _urllib_request.urlopen(url, timeout=1)
     str_response = response.readall().decode('utf-8')
     words = str_response.split('deviceNameElement')

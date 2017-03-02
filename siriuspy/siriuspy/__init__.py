@@ -1,4 +1,4 @@
-from . import config
+from . import envars
 from . import util
 from . import ns
 from . import ccdb
@@ -10,4 +10,4 @@ with open(_os.path.join(__path__[0], 'VERSION'), 'r') as _f:
      __version__ = _f.read().strip()
 del _os
 
-__all__ = ['config','util','ns','ccdb','web','magnet']
+__all__ = ['envars','util','ns','ccdb','web','magnet']
