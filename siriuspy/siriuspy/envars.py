@@ -28,6 +28,8 @@ server_url_ccdb   = _os.environ.get('SIRIUS_URL_CCDB',   default='http://10.0.7.
 server_url_cables = _os.environ.get('SIRIUS_URL_CABLES', default='http://10.0.7.55:8086')
 server_url_web    = _os.environ.get('SIRIUS_URL_WEB',    default='http://10.0.7.55')
 
+vaca_prefix = _os.environ.get('VACA_PREFIX',   default='VA-')
+
 # --- repositories ---
 
 org_folders = {
@@ -52,7 +54,7 @@ repo_names = {
                  'scripts',
                  'va',
                  'MatlabMiddleLayer',
-                 'models'],
+                 'pymodels'],
 
     'lnls-ima': ['bo-correctors',
                  'bo-sextupoles',
