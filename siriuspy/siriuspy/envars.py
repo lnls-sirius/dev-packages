@@ -44,7 +44,7 @@ repo_names = {
                  'trackcpp',
                  'fieldmaptrack',
                  'lnls',
-                 'sands-adaptation',
+                 #'sands-adaptation',
                  'tracy_sirius',
                  'mathphys',
                  'scripts',
