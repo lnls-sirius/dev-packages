@@ -2,6 +2,6 @@
 
 Useful development packages for  Sirius control system.
 
-Pacakges:
+Packages:
 
 * <code>siriuspy - python3 </code>
