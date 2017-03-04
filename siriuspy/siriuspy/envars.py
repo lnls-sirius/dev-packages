@@ -16,10 +16,6 @@ folder_lnls_sirius_csconstants  = _os.path.join(folder_lnls_sirius, 'control-sys
 folder_lnls_sirius_dev_packages = _os.path.join(folder_lnls_sirius, 'dev-packages')
 folder_lnls_sirius_hla          = _os.path.join(folder_lnls_sirius, 'hla')
 
-# these are temporary definitions. they shoul be moved elsewhere...
-folder_excitation_data = _os.path.join(folder_lnls_sirius_csconstants, 'magnets', 'excitation-data')
-folder_pulse_curves = _os.path.join(folder_lnls_sirius_csconstants, 'magnets', 'pulse-curve-data')
-
 # --- support applications IPs/URLs ---
 
 server_url_rbac   = _os.environ.get('SIRIUS_URL_RBAC',   default='https://10.0.7.55:8445')
