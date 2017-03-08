@@ -1,5 +1,5 @@
 import numpy as _numpy
-import siriuspy.web as _web
+import siriuspy.macapp_web as _web
 from . import util as _util
 
 class ExcitationData:
