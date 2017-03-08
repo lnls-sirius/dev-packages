@@ -19,7 +19,7 @@ folder_lnls_sirius_hla          = _os.path.join(folder_lnls_sirius, 'hla')
 # --- support applications IPs/URLs ---
 
 server_url_rbac   = _os.environ.get('SIRIUS_URL_RBAC',   default='https://10.0.7.55:8445')
-server_url_ns     = _os.environ.get('SIRIUS_URL_NS',     default='http://10.0.7.55:8080/names')
+server_url_ns     = _os.environ.get('SIRIUS_URL_NS',     default='http://10.0.7.55:8089/names')
 server_url_ccdb   = _os.environ.get('SIRIUS_URL_CCDB',   default='http://10.0.7.55:8083')
 server_url_cables = _os.environ.get('SIRIUS_URL_CABLES', default='http://10.0.7.55:8086')
 server_url_web    = _os.environ.get('SIRIUS_URL_WEB',    default='http://10.0.7.55')
