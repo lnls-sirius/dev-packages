@@ -1,0 +1,52 @@
+
+import epics as _epics
+
+
+class SiriusPV(_epics.PV):
+
+    def __init__(self, pv_name, connection_callback=None, connection_timeout=None):
+
+        self._pv_name = pv_name
+        super().__init__(pv_name,
+                         connection_callback=connection_callback,
+                         connection_timeout=connection_timeout)
+
+    @property
+    def value(self):
+        if super().type == 'time_enum':
+            return super().enum_strs[super().value]
+        else:
+            return super().value
+
+    @value.setter
+    def value(self, value):
+        super().put(super().enum_strs.index(value))
+
+    def get(self):
+        return super().enum_strs.index(value)
+
+    @property
+    def pv_name(self):
+        return self._pv_name
+
+    @property
+    def pv_name_property(self):
+        return self.pv_name.split(':')[2]
+
+    @property
+    def pv_name_device(self):
+        return self.pv_name.split(':')[1]
+
+    @property
+    def pv_name_area(self):
+        return self.pv_name.split(':')[0]
+
+    @property
+    def pv_name_discipline(self):
+        return self.pv_name.split(':')[1].split('-')[0]
+
+    def __del__(self):
+        super().disconnect()
+
+    def __hash__(self):
+        return hash(self._pv_name)
