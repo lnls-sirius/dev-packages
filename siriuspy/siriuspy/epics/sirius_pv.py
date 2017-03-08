@@ -4,12 +4,13 @@ import epics as _epics
 
 class SiriusPV(_epics.PV):
 
-    def __init__(self, pv_name, connection_callback=None, connection_timeout=None):
+    def __init__(self, pv_name, connection_callback=None, connection_timeout=None, verbose=False):
 
         self._pv_name = pv_name
         super().__init__(pv_name,
                          connection_callback=connection_callback,
-                         connection_timeout=connection_timeout)
+                         connection_timeout=connection_timeout,
+                         verbose=verbose)
 
     @property
     def value(self):

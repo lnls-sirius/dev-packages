@@ -34,6 +34,13 @@ class SiriusPVsSet:
         else:
             raise KeyError
 
+    @property
+    def connected(self):
+        for pv_name in self._pv_names:
+            if not self._pvs[pv_name].connected:
+                return False
+        return True
+        
     def add(self, pv, connection_callback=None):
         """Add a reference of passed SiriusPV object 'pv' or creates a new one, if passed argument is a pv name string."""
         if isinstance(pv, str):
