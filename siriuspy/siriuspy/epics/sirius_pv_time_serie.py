@@ -21,7 +21,7 @@ class SiriusPVTimeSerie:
     @property
     def nr_points(self):
         return self._nr_points
-        
+
     @property
     def serie(self):
         """Return PV time series as two separate lists: timestamp and value"""

@@ -14,7 +14,7 @@ def get_slots_list(timeout=1):
             value = None
         return value
 
-    url = _envars.server_url_ns + '/names/rest/deviceNames'
+    url = _envars.server_url_ns + '/rest/deviceNames'
     response = _urllib_request.urlopen(url, timeout=1)
     str_response = response.readall().decode('utf-8')
     words = str_response.split('deviceNameElement')

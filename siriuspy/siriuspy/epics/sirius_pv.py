@@ -14,6 +14,8 @@ class SiriusPV(_epics.PV):
 
     @property
     def value(self):
+        if not self.connected:
+            return None
         if super().type == 'time_enum':
             return super().enum_strs[super().value]
         else:
@@ -21,7 +23,12 @@ class SiriusPV(_epics.PV):
 
     @value.setter
     def value(self, value):
-        super().put(super().enum_strs.index(value))
+        if not self.connected:
+            return None
+        if super().type == 'time_enum':
+            super().put(super().enum_strs.index(value))
+        else:
+            super().put(value)
 
     def get(self):
         return super().enum_strs.index(value)

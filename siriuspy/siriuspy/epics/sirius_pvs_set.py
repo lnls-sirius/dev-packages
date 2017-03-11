@@ -1,4 +1,6 @@
+
 from .sirius_pv import SiriusPV as _SiriusPV
+
 
 class SiriusPVsSet:
 
@@ -26,6 +28,13 @@ class SiriusPVsSet:
     def pv_names(self):
         return tuple(self._pv_names)
 
+    @property
+    def connected(self):
+        for pv_name in self._pv_names:
+            if not self._pvs[pv_name].connected:
+                return False
+        return True
+
     def __getitem__(self, key):
         if isinstance(key, str):
             return self._pvs[key]
@@ -34,13 +43,6 @@ class SiriusPVsSet:
         else:
             raise KeyError
 
-    @property
-    def connected(self):
-        for pv_name in self._pv_names:
-            if not self._pvs[pv_name].connected:
-                return False
-        return True
-        
     def add(self, pv, connection_callback=None):
         """Add a reference of passed SiriusPV object 'pv' or creates a new one, if passed argument is a pv name string."""
         if isinstance(pv, str):
@@ -53,6 +55,16 @@ class SiriusPVsSet:
                 self._pvs[pv] = pv
         else:
             raise ValueError
+
+    def add_callback(self, callback, index):
+        """Add callback function to all PVs in the set object.
+
+        Arguments:
+        callback -- reference to the callback function
+        index    -- an immutable used as a key to the callback being added.
+        """
+        for pv_name in self._pv_names:
+            self._pvs[pv_name].add_callback(callback=callback, index=index)
 
     def remove(self, pv):
         if isinstance(pv, str):
@@ -68,6 +80,9 @@ class SiriusPVsSet:
         for pv_name in self._pv_names:
             self._pvs[pv_name].disconnect()
 
+    def __len__(self):
+        return len(self._pvs)
+        
     def __del__(self):
         for pv_name in self._pv_names:
             del(self._pvs[pv_name])
