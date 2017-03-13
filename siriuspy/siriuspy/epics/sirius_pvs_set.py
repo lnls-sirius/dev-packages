@@ -43,18 +43,29 @@ class SiriusPVsSet:
         else:
             raise KeyError
 
-    def add(self, pv, connection_callback=None):
+    def __setitem__(self, key, value):
+        if isinstance(key, str):
+            self._pvs[key].value = value
+        elif isinstance(key, int):
+            self._pvs[self._pv_names[key]].value = value
+        else:
+            raise KeyError
+
+    def add(self, pv, connection_callback=None, connection_timeout=None):
         """Add a reference of passed SiriusPV object 'pv' or creates a new one, if passed argument is a pv name string."""
         if isinstance(pv, str):
             if pv not in self._pvs:
                 self._pv_names.append(pv)
-                self._pvs[pv] = _SiriusPV(pv, connection_callback=connection_callback, connection_timeout=self._connection_timeout)
+                self._pvs[pv] = _SiriusPV(pv, connection_callback=connection_callback, connection_timeout=connection_timeout)
+                return True
         elif isinstance(pv, _SiriusPV):
             if pv.pv_name not in self._pvs:
                 self._pv_names.append(pv.pv_name)
                 self._pvs[pv] = pv
+                return True
         else:
             raise ValueError
+        return False
 
     def add_callback(self, callback, index):
         """Add callback function to all PVs in the set object.
@@ -82,7 +93,7 @@ class SiriusPVsSet:
 
     def __len__(self):
         return len(self._pvs)
-        
+
     def __del__(self):
         for pv_name in self._pv_names:
             del(self._pvs[pv_name])
