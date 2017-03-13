@@ -32,8 +32,7 @@ class PCASDriver(_pcaspy.Driver):
             return value
 
     def write(self, reason, value):
-        return self.app.write(reason, value)
-
+        self.app.write(reason, value)
 
 def run():
 
@@ -52,7 +51,6 @@ def run():
 
     # main loop
     while not stop_event:
-        #print('here')
         pcas_driver.app.process(INTERVAL)
 
     # sends stop signal to server thread
