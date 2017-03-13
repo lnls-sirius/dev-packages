@@ -31,3 +31,17 @@ def split_name(name):
         name_dict['Field'] = ''
 
     return name_dict
+
+class SiriusPVName:
+
+    def __init__(self, pv_name):
+        name = split_name(pv_name)
+        self.area = name['Area_name']
+        self.device_slot = name['Device_name']
+        self.section = name['Section']
+        self.subsection = name['Subsection']
+        self.discipline = name['Discipline']
+        self.device = name['Device']
+        self.instance = name['Instance']
+        self.property = name['Property']
+        self.field = name['Field']
