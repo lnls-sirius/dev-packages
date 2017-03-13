@@ -41,5 +41,5 @@ class App:
     def write(self,reason,value):
         ps_fam_name, propty = reason.split(':')
         if ps_fam_name in App.magnet_ps_family_names:
-            self._magnet_ps[fam_name][propty] = value
+            self._magnet_ps[ps_fam_name][propty] = value
             self._driver.updatePVs()
