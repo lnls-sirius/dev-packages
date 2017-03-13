@@ -1,107 +1,136 @@
-
 import siriuspy as _siriuspy
 from siriuspy.epics import SiriusPVsSet as _SiriusPVsSet
 from siriuspy.epics import GroupPVs as _GroupPVs
 from siriuspy.epics import GroupPVsDep as _GroupPVsDep
 
+import uuid as _uuid
+import siriuspy.naming_system as _ns
+import copy as _copy
+
 
 with open('VERSION','r') as _f:
     __version__ = _f.read().strip()
 
+
 _PREFIX             = 'SI-Fam:MA-'
+_magnet_ps_family_names = (
+    'QFA', 'QDA','QDB1','QFB','QDB2','QDP1','QFP','QDP2','Q1','Q2','Q3','Q4',
+    'SFA0','SDA0','SDA1','SFA1','SDA2','SDA3',)
+_pvs_set  = _siriuspy.epics.SiriusPVsSet()
+_magnet_ps_objects = {}
+
 _connection_timeout = 0.05
 _PREFIX_VACA        = _siriuspy.envars.vaca_prefix
 _PREFIX_PS          =  _PREFIX_VACA + 'SI-Fam:PS-'
 
-_ps_families = (
-    'QFA', 'QDA','QDB1','QFB','QDB2','QDP1','QFP','QDP2','Q1','Q2','Q3','Q4',
-    'SFA0','SDA0','SDA1','SFA1','SDA2','SDA3',)
-_ps_properties = (
-    'CtrlMode-Mon',
-    'PwrState-Sel',
-    'PwrState-Sts',
-    'OpMode-Sel',
-    'OpMode-Sts',
-    'Current-SP',
-    'Current-RB',)
-_primitive_pvs_set  = None
-_macapp_pvs = None
 
+class MagnetPSDevice:
 
-def _MacAppGroupPVsDep(_GroupPVsDep):
+    _property_names = (
+        'CtrlMode-Mon',
+        'PwrState-Sel',
+        'PwrState-Sts',
+        'OpMode-Sel',
+        'OpMode-Sts',
+        'Current-SP',
+        'Current-RB',)
 
-    def __init__(self, pv_database, group_pvs):
-        super().__init__(pv_database, group_pvs)
+    def __init__(self,
+                 family_name,
+                 pvs_prefix,
+                 pvs_set,
+                 connection_timeout=_connection_timeout,
+                 ):
 
-    def update(self):
-        self._database['value'] = group_pvs[0].value
+        self._uuid = _uuid.uuid4()                     # unique ID for the class object
+        self._family_name = family_name                # family name of the power supply
+        self._pvs_prefix = pvs_prefix                  # prefix of PVs used by class object
+        self._pvs_set = pvs_set                        # set of Sirius PVs in use.
+        self._connection_timeout = connection_timeout  # default connection timeout for the class object
+        self._properties = {}
+
+        self._create_properties_dict()
+        self._add_all_pvs()
+
+    @property
+    def family_name(self):
+        return self._family_name
+
+    def device_property(self, propty):
+        if propty in self._properties:
+            return self._family_name + ':' + propty
+        else:
+            raise Exception('invalid property name "' + propty + '"!')
+
+    def get_pv_name(self, propty):
+        if propty in self._properties:
+            return self._pvs_prefix + self._family_name + ':' + propty
+        else:
+            raise Exception('invalid property name "' + propty + '"!')
+
+    def properties(self):
+        properties = _copy.deepcopy(self._properties)
+        return properties
+
+    def properties_database(self):
+        props_db = _siriuspy.dev_types.get_properties()
+        database = {}
+        for propty in self._properties:
+            db = props_db[propty]
+            db['value'] = self._properties[propty]
+            database[self.device_property(propty)] = db
+        return database
+
+    def __getitem__(self, key):
+        return self._properties[key]
+
+    def __setitem__(self, key, value):
+        pv_name = self.get_pv_name(key)
+        self._pvs_set[pv_name] = value
+
+    def _create_properties_dict(self):
+        for propty in MagnetPSDevice._property_names:
+            self._properties[propty] = None
+
+    def _add_all_pvs(self):
+        for propty in self._properties:
+            pv_name = self.get_pv_name(propty)
+            self._pvs_set.add(pv_name, connection_timeout=self._connection_timeout)
+            self._pvs_set[pv_name].add_callback(callback=self._pvs_callback, index=self._uuid)
+            self._properties[propty] = self._pvs_set[pv_name].value
+
+    def _pvs_callback(self, pvname, value, **kwargs):
+        names = _siriuspy.naming_system.split_name(pvname)
+        self._properties[names['Property']] = value
+
+    def __del__(self):
+        for propty in self._properties:
+            pv_name = self.get_pv_name(propty)
+            self._pvs_set[pv_name].remove_callback(index=self._uuid)
 
 
 def get_prefix():
     """Return prefix of the machine application PVs."""
     return _PREFIX
 
-def get_ps_families():
+def get_magnet_ps_family_names():
     """Return tupple with power supply family names."""
-    return _ps_families
+    return _magnet_ps_family_names
 
-def get_ps_properties():
-    """Return tupple with power supply properties."""
-    return _ps_properties
+def _create_magnet_ps_objects():
+    global _magnet_ps_objects
+    _magnet_ps_objects = {}
+    for magnet_ps_name in _magnet_ps_family_names:
+        ps = MagnetPSDevice(family_name=magnet_ps_name,
+                            pvs_prefix=_PREFIX_PS,
+                            pvs_set=_pvs_set,
+                            connection_timeout=_connection_timeout)
+        _magnet_ps_objects[magnet_ps_name] = ps
 
-def get_primitive_pvs_set():
-    """Return set of SiriusPVs corresponding to all power supplies used in
-    the machine application.
-    """
-    def get_properties_database_dict():
-        database = {}
-        for prop in ps_properties:
-            database[prop] = _siriuspy.dev_types.enum_types[prop]
-        return database
-    def primitive_pvs_set_clear():
-        global _primitive_pvs_set
-        if _primitive_pvs_set:
-            _primitive_pvs_set.__del__()
-    def primitive_pvs_set_create():
-        global _primitive_pvs_set
-        primitive_pvs_set_clear()
-        _primitive_pvs_set = _SiriusPVsSet(connection_timeout=_connection_timeout)
-        for family in _ps_families:
-            for propty in _ps_properties:
-                pv_name = family + ':' + propty
-                ps_pv_name = _PREFIX_PS + pv_name
-                _primitive_pvs_set.add(ps_pv_name)
-
-    if not _primitive_pvs_set:
-        primitive_pvs_set_create()
-    return _primitive_pvs_set
-
-def get_macapp_pvs():
-    """Return a dictionary with PVs corresponding to power supplies provided
-    in the machine application.
-    """
-    def macapp_pvs_clear():
-        global _macapp_pvs
-        _macapp_pvs = None
-    def macapp_pvs_create():
-        global _macapp_pvs
-        macapp_pvs_clear()
-        pvs_set = get_primitive_pvs_set()
-        _macapp_pvs = {}
-        for family in _ps_families:
-            for propty in _ps_properties:
-                pv_name = family + ':' + propty
-                ps_pv_name = _PREFIX_PS + pv_name
-                ma_pv_name = _PREFIX + pv_name
-                pvs_group = _GroupPVs((ps_pv_name,), pvs_set)
-                _macapp_pvs[ma_pv_name] = _GroupPVsDep(database, pvs_group)
-
-
-    if not _macapp_pvs:
-        macapp_pvs_create()
-    return _macapp_pvs
-
-
+def get_magnet_power_supplies():
+    if not _magnet_ps_objects:
+        _create_magnet_ps_objects()
+    return _magnet_ps_objects
 
 def gets_pvs_database():
 
@@ -111,22 +140,14 @@ def gets_pvs_database():
         'IOC:Status-Mon':  {'type':'string', 'value':'not connected!'},
     }
 
-    global origin_pvs_set
+    # Add databases corresponding to all magnet power supply objects
+    magnet_ps = get_magnet_power_supplies()
+    for ps_name, ps_object in magnet_ps:
+        ps_database = ps_object.properties_database()
+        database.update(ps_database)
 
-    family = 'QDA'
+    return database
 
-    for propty in ps_property:
-
-        pv_name = family + ':' + propty
-        pv_name_origin = PREFIX_ORIGIN + pv_name
-
-        _GroupPVs((pv_name_origin, ), connection_callback=None, connection_timeout=None)
-
-    # loop over all mirrored devices pvs, one for each ps family
-    AllMirroredDevicesPVs = get_AllMirroredDevicesPVs()
-    for family, mirrored_device_PVs in AllMirroredDevicesPVs.items():
-
-        pass
 
 #
 # pvs_database[PREFIX] = {
