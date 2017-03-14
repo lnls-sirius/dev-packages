@@ -27,13 +27,16 @@ class MagnetPSDevice:
     def __init__(self,
                  family_name,
                  pvs_prefix,
-                 pvs_set,
+                 pvs_set=None,
                  connection_timeout=_connection_timeout,
                  ):
         self._uuid = _uuid.uuid4()                     # unique ID for the class object
         self._family_name = family_name                # family name of the power supply
         self._pvs_prefix = pvs_prefix                  # prefix of PVs used by class object
-        self._pvs_set = pvs_set                        # set of Sirius PVs in use.
+        if pvs_set:
+            self._pvs_set = pvs_set                    # set of Sirius PVs in use.
+        else:
+            self._pvs_set = _siriuspy.epics.SiriusPVsSet(connection_timeout=connection_timeout)
         self._connection_timeout = connection_timeout  # default connection timeout for the class object
         self._properties_values = {}                   # a dctionary with properties current values
 
@@ -73,7 +76,7 @@ class MagnetPSDevice:
         """Return a dictionary with databases for all PS properties, with their current values."""
         database = {}
         for propty in self.properties_names:
-            db = MagnetPSDevice._properties_database[propty]
+            db = _copy.deepcopy(MagnetPSDevice._properties_database[propty])
             db['value'] = self._properties_values[propty]
             database[self._device_property(propty)] = db
         return database
@@ -96,7 +99,6 @@ class MagnetPSDevice:
             raise KeyError
 
     def __setitem__(self, key, value):
-
         if isinstance(key, str):
             pv_name = self.get_pv_name(key)
             self._properties_values[key] = value
@@ -117,25 +119,19 @@ class MagnetPSDevice:
 
     def _create_properties_dict(self):
         for propty in MagnetPSDevice._properties_names:
-            self._properties_values[propty] = None
+            self._properties_values[propty] = 0
 
     def _add_all_pvs(self):
         for propty in MagnetPSDevice._properties_names:
             pv_name = self.get_pv_name(propty)
             self._pvs_set.add(pv_name, connection_timeout=self._connection_timeout)
             self._pvs_set[pv_name].add_callback(callback=self._pvs_callback, index=self._uuid)
-            self._properties_values[propty] = self._pvs_set[pv_name].value
 
     def _pvs_callback(self, pvname, value, **kwargs):
         names = _siriuspy.naming_system.split_name(pvname)
         propty = names['Property']
         propty_db = MagnetPSDevice._properties_database[propty]
         self._properties_values[propty] = value
-        # if propty_db['type'] == 'enum':
-        #     enum_list = propty_db['enums']
-        #     self._properties_values[propty] = enum_list[value]
-        # else:
-        #     self._properties_values[propty] = value
 
     def __del__(self):
         for propty in self._properties_values:
