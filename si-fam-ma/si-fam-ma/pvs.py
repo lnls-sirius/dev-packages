@@ -46,6 +46,7 @@ def _create_magnet_ps_objects():
         _magnet_ps_objects[magnet_ps_name] = ps
 
 
+
 def get_magnet_power_supplies():
     """Return dictionary with all magnet power supply objects used by the machine applicaiton."""
     if not _magnet_ps_objects:
