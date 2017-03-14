@@ -15,7 +15,7 @@ def get_enum_types():
     return enum_types
 
 # this should replicate info in the CCDB machine application
-def get_properties():
+def get_magnet_ps_properties():
     enum_types = get_enum_types()
     properties = {
         'Reset-Cmd':    {'type':'int', 'value':0},

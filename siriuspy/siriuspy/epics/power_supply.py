@@ -22,7 +22,7 @@ class MagnetPSDevice:
         'Current-SP',
         'Current-RB',)
 
-    _properties_database = _siriuspy.dev_types.get_properties()
+    _properties_database = _siriuspy.dev_types.get_magnet_ps_properties()
 
     def __init__(self,
                  family_name,
@@ -119,7 +119,7 @@ class MagnetPSDevice:
 
     def _create_properties_dict(self):
         for propty in MagnetPSDevice._properties_names:
-            self._properties_values[propty] = 0
+            self._properties_values[propty] = MagnetPSDevice._properties_database[propty]['value']
 
     def _add_all_pvs(self):
         for propty in MagnetPSDevice._properties_names:
