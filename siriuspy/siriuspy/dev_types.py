@@ -3,6 +3,23 @@
 # it here. Implementation needed !!!
 
 # this should replicate info in the CCDB machine application
+
+_EnumTypes = _namedtupple('EnumTypes', ('OffOnTyp',
+                                        'OffOnWaitTyp',
+                                        'DsblEnblTyp',
+                                        'PSOpModeTyp',
+                                        'RmtLocType',
+                                        'SOFBOpModeTyp',))
+
+enum_types = _EnumTypes(
+    OffOnTyp      = ('Off', 'On'),
+    OffOnWaitTyp  = ('Off', 'On', 'Wait'),
+    DsblEnblTyp   = ('Dsbl', 'Enbl'),
+    PSOpModeTyp   = ('SlowRef', 'FastRef', 'WfmRef', 'SigGen'),
+    RmtLocTyp     = ('Remote', 'Local'),
+    SOFBOpModeTyp = ('Off', 'AutoCorr', 'MeasRespMat'),)
+
+    
 def get_enum_types():
     enum_types = {
         'OffOnTyp'      : ('Off','On'),
