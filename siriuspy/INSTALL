@@ -1,5 +1,5 @@
-INSTALL - sirius
-================
+INSTALL - siriuspy
+==================
 
 This package can be installed using setuptools (>=16.0). There is no automatic
 dependency checking, so read the list below and ensure necessary dependencies
@@ -8,11 +8,6 @@ are available. Developed and tested with Python 3 (3.4).
 
 REQUIREMENTS
 ============
-
-- numpy 1.8 (>=1.8.2)
-- lnls 0.8 (>=0.8.0)
-- mathphys 0.7 (>=0.7.0)
-- pyaccel 0.12 (>=0.12.0)
 
 
 INSTALLATION
