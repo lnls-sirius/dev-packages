@@ -4,9 +4,9 @@
 
 # this should replicate info in the CCDB machine application
 
-import siriuspy.namedtuple as _namedtupple
+import siriuspy.namedtuple as _namedtuple
 
-enum_types = _namedtupple.EnumTypes(
+enum_types = _namedtuple.EnumTypes(
     OffOnTyp      = ('Off', 'On'),
     OffOnWaitTyp  = ('Off', 'On', 'Wait'),
     DsblEnblTyp   = ('Dsbl', 'Enbl'),
@@ -14,7 +14,7 @@ enum_types = _namedtupple.EnumTypes(
     RmtLocTyp     = ('Remote', 'Local'),
     SOFBOpModeTyp = ('Off', 'AutoCorr', 'MeasRespMat'),)
 
-    
+
 def get_enum_types():
     enum_types = {
         'OffOnTyp'      : ('Off','On'),

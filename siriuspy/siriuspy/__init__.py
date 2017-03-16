@@ -5,7 +5,7 @@ from . import macapp_ccdb
 from . import macapp_web
 from . import magnet
 from . import naming_system
-from . import namedtupple
+from . import namedtuple
 from . import dev_types
 from . import epics
 
@@ -17,4 +17,4 @@ del _os
 
 
 __all__ = ['envars','util','macapp_ns','macapp_ccdb','macapp_web','magnet','naming_system',
-           'namedtupple','dev_types','epics']
+           'namedtuple','dev_types','epics']
