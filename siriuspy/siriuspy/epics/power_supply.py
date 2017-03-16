@@ -39,6 +39,7 @@ class MagnetPSDevice:
             self._pvs_set = _siriuspy.epics.SiriusPVsSet(connection_timeout=connection_timeout)
         self._connection_timeout = connection_timeout  # default connection timeout for the class object
         self._properties_values = {}                   # a dctionary with properties current values
+        self._callback_functions = {}
 
         self._create_properties_dict()
         self._add_all_pvs()
@@ -89,6 +90,9 @@ class MagnetPSDevice:
                 return False
         return True
 
+    def add_callback(self, callback, index):
+        self._callback_functions[index] = callback
+
     def __getitem__(self, key):
 
         if isinstance(key, str):
@@ -132,6 +136,13 @@ class MagnetPSDevice:
         propty = names['Property']
         propty_db = MagnetPSDevice._properties_database[propty]
         self._properties_values[propty] = value
+        for index,function in self._callback_functions.items():
+            function(family_name=self._family_name,
+                     propty=propty,
+                     value=value,
+                     pvname=pvname,
+                     **kwargs)
+
 
     def __del__(self):
         for propty in self._properties_values:

@@ -30,6 +30,10 @@ class ExcitationData:
         self.currents = []
         self.multipoles = {}
 
+    @property
+    def current_limits(self):
+        return self._current_limits;
+
     def read_text(self, text):
 
         self._init()
@@ -68,6 +72,8 @@ class ExcitationData:
         for h in self.harmonics:
             self.multipoles['normal'][h] = [self.multipoles['normal'][h][idx[i]] for i in range(len(idx))]
             self.multipoles['skew'][h] = [self.multipoles['skew'][h][idx[i]] for i in range(len(idx))]
+
+        self._current_limits = (min(self.currents),max(self.currents))
 
     def read_file(self, filename):
 
