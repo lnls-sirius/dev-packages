@@ -1,8 +1,9 @@
 
 import uuid as _uuid
 import copy as _copy
-import siriuspy as _siriuspy
-
+from siriuspy import dev_types as _dev_types
+from siriuspy.epics import SiriusPVsSet as _SiriusPVsSet
+from siriuspy import naming_system as _naming_system
 
 class MagnetPSDevice:
     """Power supply device of magnets.
@@ -22,7 +23,7 @@ class MagnetPSDevice:
         'Current-SP',
         'Current-RB',)
 
-    _properties_database = _siriuspy.dev_types.get_magnet_ps_properties()
+    _properties_database = _dev_types.get_device_database(_dev_types.dev_ps_magnet)
 
     def __init__(self,
                  family_name,
@@ -36,7 +37,7 @@ class MagnetPSDevice:
         if pvs_set:
             self._pvs_set = pvs_set                    # set of Sirius PVs in use.
         else:
-            self._pvs_set = _siriuspy.epics.SiriusPVsSet(connection_timeout=connection_timeout)
+            self._pvs_set = _SiriusPVsSet(connection_timeout=connection_timeout)
         self._connection_timeout = connection_timeout  # default connection timeout for the class object
         self._properties_values = {}                   # a dctionary with properties current values
         self._callback_functions = {}
@@ -132,7 +133,7 @@ class MagnetPSDevice:
             self._pvs_set[pv_name].add_callback(callback=self._pvs_callback, index=self._uuid)
 
     def _pvs_callback(self, pvname, value, **kwargs):
-        names = _siriuspy.naming_system.split_name(pvname)
+        names = _naming_system.split_name(pvname)
         propty = names['Property']
         propty_db = MagnetPSDevice._properties_database[propty]
         self._properties_values[propty] = value

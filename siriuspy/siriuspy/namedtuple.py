@@ -21,7 +21,13 @@ _DevicePropDB = _namedtuple('DevicePropDB', ('name',
                                              'value',
                                              'unit',
                                              'prec',
-                                             'scan',))
+                                             'scan',
+                                             'lolo',
+                                             'lo',
+                                             'lolim',
+                                             'hilim',
+                                             'high',
+                                             'hihi'))
 
 class DevicePropDB(_DevicePropDB):
     def __new__(cls, name, type,
@@ -30,11 +36,32 @@ class DevicePropDB(_DevicePropDB):
                      value=None,
                      unit='',
                      prec=None,
-                     scan=None):
+                     scan=None,
+                     lolo=None,
+                     lo=None,
+                     lolim=None,
+                     hilim=None,
+                     hi=None,
+                     hihi=None):
         return super().__new__(cls, name=name, type=type,
                                     enums=enums,
                                     count=count,
                                     value=value,
                                     unit=unit,
                                     prec=prec,
-                                    scan=scan)
+                                    scan=scan,
+                                    lolo=lolo,
+                                    lo=lo,
+                                    lolim=lolim,
+                                    hilim=hilim,
+                                    hi=hi,
+                                    hihi=hihi
+                                    )
+    def _asdict(self):
+        d = {}
+        for field in self._fields:
+            if field != 'name':
+                attr = self.__getattribute__(field)
+                if attr is not None:
+                    d[field] = self.__getattribute__(field)
+        return d
