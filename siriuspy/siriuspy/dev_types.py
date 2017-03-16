@@ -22,7 +22,7 @@ def get_magnet_ps_properties():
         'PwrState-Sel': {'type':'enum', 'enums':enum_types['OffOnTyp'], 'value':1, 'unit': ''},
         'PwrState-Sts': {'type':'enum', 'enums':enum_types['OffOnTyp'], 'value':1, 'unit': ''},
         'Current-RB':   {'type':'float', 'value':0.0, 'prec':4, 'unit': 'A'},
-        'Current-SP':   {'type':'float', 'value':0.0, 'prec':4, 'unit': 'A'},
+        'Current-SP':   {'type':'float', 'value':0.0, 'prec':4, 'unit': 'A', 'lolim':0, 'hilim':500},
         'CtrlMode-Mon': {'type':'enum', 'enums':enum_types['RmtLocTyp'], 'value':0, 'unit': ''},
         'OpMode-Sel':   {'type':'enum', 'enums':enum_types['PSOpModeTyp'], 'value':0, 'unit': ''},
         'OpMode-Sts':   {'type':'enum', 'enums':enum_types['PSOpModeTyp'], 'value':0, 'unit': ''},
