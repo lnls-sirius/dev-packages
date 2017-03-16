@@ -26,7 +26,7 @@ _DevicePropDB = _namedtuple('DevicePropDB', ('name',
                                              'lo',
                                              'lolim',
                                              'hilim',
-                                             'high',
+                                             'hi',
                                              'hihi'))
 
 class DevicePropDB(_DevicePropDB):
