@@ -2,11 +2,33 @@ import urllib.request as _urllib_request
 import siriuspy.envars as _envars
 
 
+_timeout = 1.0
 _excdat_folder = '/magnets/excitation-data/'
 _ps_folder = '/power_supplies/'
 
 
-def magnets_excitation_data_get_filenames_list(timeout=1):
+def read_url(url, timeout=_timeout):
+    try:
+        response = _urllib_request.urlopen(url, timeout=timeout)
+        data = response.read()
+        text = data.decode('utf-8')
+    except:
+        errtxt = 'Error reading url "' + url + '"!'
+        raise Exception(errtxt)
+
+    return text
+
+
+def server_online():
+    url = _envars.server_url_web
+    try:
+        index_html = read_url(url, timeout=_timeout)
+        return True
+    except:
+        return False
+
+
+def magnets_excitation_data_get_filenames_list(timeout=_timeout):
     """Get list of filenames in magnet excitation data folder at web server."""
 
     url = _envars.server_url_web + _excdat_folder
@@ -21,11 +43,31 @@ def magnets_excitation_data_get_filenames_list(timeout=1):
     return fname_list
 
 
-def magnets_excitation_data_read(filename, timeout=1):
+def magnets_excitation_data_read(filename, timeout=_timeout):
     """Return the text of the corresponding retrived from the web server."""
 
     url = _envars.server_url_web + _excdat_folder + filename
-    response = _urllib_request.urlopen(url, timeout=timeout)
-    data = response.read()
-    text = data.decode('utf-8')
-    return text
+    return read_url(url, timeout=timeout)
+
+
+def magnets_excitation_data_read(filename, timeout=_timeout):
+    """Return the text of the corresponding retrieved magnet excitation data from the web server."""
+
+    url = _envars.server_url_web + _excdat_folder + filename
+    return read_url(url, timeout=timeout)
+
+
+def power_supplies_pstypes_names_read(timeout=_timeout):
+    """Return the text of the corresponding retrieved power supplies type from the web server."""
+
+    url = _envars.server_url_web + _ps_folder + 'pstypes-names.txt'
+    return read_url(url, timeout=timeout)
+
+
+def power_supplies_pstype_data_read(filename, timeout=_timeout):
+    url = _envars.server_url_web + _ps_folder + filename
+    return read_url(url, timeout=timeout)
+
+def power_supplies_pstype_setpoint_limits(timeout = _timeout):
+    url = _envars.server_url_web + _ps_folder + 'pstypes-setpoint-limits.txt'
+    return read_url(url, timeout=timeout)

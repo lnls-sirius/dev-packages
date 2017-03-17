@@ -2,8 +2,30 @@ import json as _json
 import urllib.request as _urllib_request
 import siriuspy.envars as _envars
 
+_timeout = 1.0
 
-def get_slots_list(timeout=1):
+def read_url(url, timeout=_timeout):
+    try:
+        response = _urllib_request.urlopen(url, timeout=timeout)
+        data = response.read()
+        text = data.decode('utf-8')
+    except:
+        errtxt = 'Error reading url "' + url + '"!'
+        raise Exception(errtxt)
+
+    return text
+
+
+def server_online():
+    url = _envars.server_url_ns
+    try:
+        index_html = read_url(url, timeout=_timeout)
+        return True
+    except:
+        return False
+
+
+def get_slots_list(timeout=_timeout):
     '''Return a list of slots'''
 
     def _get_attribute_value(text, attr):

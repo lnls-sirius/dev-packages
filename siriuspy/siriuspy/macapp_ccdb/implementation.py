@@ -3,7 +3,31 @@ import urllib as _urllib
 import siriuspy.envars as _envars
 
 
-def get_slots_list(timeout=1):
+_timeout = 1.0
+
+
+def read_url(url, timeout=_timeout):
+    try:
+        response = _urllib_request.urlopen(url, timeout=timeout)
+        data = response.read()
+        text = data.decode('utf-8')
+    except:
+        errtxt = 'Error reading url "' + url + '"!'
+        raise Exception(errtxt)
+
+    return text
+
+
+def server_online():
+    url = _envars.server_url_ccdb
+    try:
+        index_html = read_url(url, timeout=_timeout)
+        return True
+    except:
+        return False
+
+
+def get_slots_list(timeout=_timeout):
     '''Return a list of dictionaries with slots defined in CCDB'''
     url = _envars.server_url_ccdb + '/rest/slots'
     response = _urllib.request.urlopen(url, timeout=timeout)
@@ -15,7 +39,7 @@ def get_slots_list(timeout=1):
         slot_list = data['slot']
     return slot_list
 
-def get_devtypes_dict(timeout=1):
+def get_devtypes_dict(timeout=_timeout):
     '''Return dictionary with list of device types defined in CCDB'''
     url = _envars.server_url_ccdb + '/rest/deviceTypes'
     response = _urllib.request.urlopen(url, timeout=timeout)
