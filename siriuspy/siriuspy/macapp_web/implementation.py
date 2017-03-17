@@ -3,6 +3,7 @@ import siriuspy.envars as _envars
 
 
 _excdat_folder = '/magnets/excitation-data/'
+_ps_folder = '/power_supplies/'
 
 
 def magnets_excitation_data_get_filenames_list(timeout=1):
