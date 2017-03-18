@@ -6,8 +6,7 @@ from . import macapp_web
 from . import power_supply
 from . import magnet
 from . import naming_system
-from . import namedtuple
-from . import dev_types
+from . import cs_device
 from . import epics
 
 
@@ -17,6 +16,5 @@ with open(_os.path.join(__path__[0], 'VERSION'), 'r') as _f:
 del _os
 
 
-__all__ = ['envars','util','macapp_ns','macapp_ccdb','macapp_web',
-           'power_supply','magnet','naming_system','namedtuple',
-           'dev_types','epics']
+__all__ = ['envars', 'util', 'macapp_ns', 'macapp_ccdb', 'macapp_web',
+           'power_supply', 'magnet', 'naming_system', 'cs_device','epics']

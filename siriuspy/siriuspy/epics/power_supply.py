@@ -1,7 +1,7 @@
 
 import uuid as _uuid
 import copy as _copy
-from siriuspy import dev_types as _dev_types
+#from siriuspy import devicetypes as _dev_types
 from siriuspy.epics import SiriusPVsSet as _SiriusPVsSet
 from siriuspy import naming_system as _naming_system
 
@@ -23,7 +23,7 @@ class MagnetPSDevice:
         'Current-SP',
         'Current-RB',)
 
-    _properties_database = _dev_types.get_device_database(_dev_types.dev_ps_magnet)
+    #_properties_database = _dev_types.get_device_database(_dev_types.dev_ps_magnet)
 
     def __init__(self,
                  family_name,

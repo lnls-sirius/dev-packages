@@ -2,8 +2,8 @@ import siriuspy.macapp_web as _web
 
 _timeout = 1.0
 
-class _PSTypes:
-    """Class with names and excitation polarities of all power supply types.
+class _PSData:
+    """Class with names and excitation polarities of all power supplies.
 
     Data on power supplies are read from the Sirius web server.
     """
@@ -19,10 +19,11 @@ class _PSTypes:
         self._pstype2ps_dict = None
         self._ps2pstype_dict = None
 
-        pstypes_text = _web.power_supplies_pstypes_names_read(timeout=_timeout)
-        self._build_pstype_data(pstypes_text)
-        self._build_ps_data()
-        self._build_pstype_sp_limits()
+        if _web.server_online():
+            pstypes_text = _web.power_supplies_pstypes_names_read(timeout=_timeout)
+            self._build_pstype_data(pstypes_text)
+            self._build_ps_data()
+            self._build_pstype_sp_limits()
 
     @property
     def pstype_name_list(self):
@@ -118,7 +119,7 @@ class _PSTypes:
             return self._ps2pstype_dict[self._ps_name_list[ps]]
 
     def _build_pstype_data(self, text):
-        data, _ = _PSTypes._read_text(text)
+        data, _ = _PSData._read_text(text)
         names, polarities = [], []
         for datum in data:
             name, polarity = datum[0], datum[1]
@@ -147,7 +148,7 @@ class _PSTypes:
 
     def _build_pstype_sp_limits(self):
         text = _web.power_supplies_pstype_setpoint_limits(timeout=_timeout)
-        data, param_dict = _PSTypes._read_text(text)
+        data, param_dict = _PSData._read_text(text)
         self._setpoint_unit = tuple(param_dict['unit'])
         self._setpoint_limit_names = tuple(param_dict['power_supply_type'])
         self._pstype_sp_limits_dict = {pstype_name:[None,]*len(data[0]) for pstype_name in self._pstype_name_list}
@@ -158,7 +159,7 @@ class _PSTypes:
             self._pstype_sp_limits_dict[pstype_name] = tuple(self._pstype_sp_limits_dict[pstype_name])
 
     def _read_text_pstype(self, text):
-        data, _ = _PSTypes._read_text(text)
+        data, _ = _PSData._read_text(text)
         psnames = []
         for datum in data:
             psnames.append(datum[0])
@@ -193,10 +194,10 @@ def server_online():
     """Return True/False if Sirius web server is online."""
     return _web.server_online()
 
-_pstypes = None
-def get_pstypes():
+_ps_data = None
+def get_ps_data():
     """Return an object with static information power supplies."""
-    global _pstypes
-    if _pstypes is None:
-        _pstypes = _PSTypes()
-    return _pstypes
+    global _ps_data
+    if _ps_data is None:
+        _ps_data = _PSData()
+    return _ps_data

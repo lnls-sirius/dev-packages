@@ -9,7 +9,7 @@ def get_timestamp():
     return st
 
 
-# this function can be subsituted with fernando's implementation of VACA
+# this function can be substituted with fernando's implementation in VACA
 def get_prop_types():
     prop_types = {
         'RB'  : {'read':True,  'write':False, 'enum':False},
@@ -20,7 +20,7 @@ def get_prop_types():
     }
     return prop_types
 
-# this function can be subsituted with fernando's implementation of VACA
+# this function can be substituted with fernando's implementation in VACA
 def get_prop_suffix(prop):
     if prop[-3:] == '-RB': return 'RB'
     if prop[-3:] == '-SP': return 'SP'
