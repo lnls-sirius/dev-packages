@@ -1,5 +1,6 @@
 
 from .psdata import get_ps_data as _get_ps_data
+from .controller import ControllerModel as _ControllerModel
 import siriuspy.cs_device as _cs_device
 import copy as _copy
 
@@ -9,7 +10,8 @@ _psdata = _get_ps_data()
 
 class MagnetPSModel:
 
-    def __init__(self, name, enum_keys=False):
+    def __init__(self, name, controller=None, enum_keys=False):
+
 
         self._name = name
         self._pstype_name = _psdata.get_ps2pstype(name)
@@ -18,6 +20,8 @@ class MagnetPSModel:
         device = _cs_device.get_psclass(self._pstype_name)
         self._database = device.get_database()
         self._enum_keys = enum_keys
+        self._controller = controller
+        self._init_controller()
         self._controller_DCCT_current = self.current_rb
 
     @property
@@ -101,6 +105,13 @@ class MagnetPSModel:
         else:
             self._controller_power_on()
         self._controller_read_status()
+
+    def _init_controller(self):
+        if self._controller is None: self._controller = _ControllerModel()
+        # initial config of controller
+        self._controller.pwrstate = self._get_enum('PwrState-Sel')
+        self._controller.opmode = self._get_enum('OpMode-Sel')
+        self._controller.current = self._get_enum('Current-SP')
 
     def _check_IOC_setpoint_limits(self, value):
         l = self.setpoint_limits
