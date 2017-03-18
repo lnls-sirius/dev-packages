@@ -84,6 +84,8 @@ class _PSData:
         returned.
         """
 
+        if self._pstype_name_list is None: return None
+
         if psname in self._pstype_name_list:
             values = self._pstype_sp_limits_dict[psname]
         elif psname in self._ps_name_list:
