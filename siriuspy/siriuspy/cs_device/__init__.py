@@ -1,5 +1,5 @@
-from .magnetps import MagnetPSClasses, get_psclass
 from .enumtypes import enum_types
+from .pspvdb import *
 
-del magnetps
+del pspvdb
 del enum_types

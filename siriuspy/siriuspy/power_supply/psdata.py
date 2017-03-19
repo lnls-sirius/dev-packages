@@ -196,10 +196,13 @@ def server_online():
     """Return True/False if Sirius web server is online."""
     return _web.server_online()
 
-_ps_data = None
-def get_ps_data():
-    """Return an object with static information power supplies."""
-    global _ps_data
-    if _ps_data is None:
-        _ps_data = _PSData()
-    return _ps_data
+_psdata = None
+def get_psdata():
+    """Return an object with static information of power supplies."""
+
+    # encapsulating _psdata within a function avoid creating the global object
+    # (which is time consuming) at module load time.
+    global _psdata
+    if _psdata is None:
+        _psdata = _PSData()
+    return _psdata

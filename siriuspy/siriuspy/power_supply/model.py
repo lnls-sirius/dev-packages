@@ -1,32 +1,47 @@
 
-from .psdata import get_ps_data as _get_ps_data
+from .psdata import get_psdata as _get_psdata
 from .controller import ControllerModel as _ControllerModel
 import siriuspy.cs_device as _cs_device
 import copy as _copy
 
 
-_psdata = _get_ps_data()
+# this global PSData object contains all static data of all PS
+_ps_data = _get_psdata()
 
 
 class MagnetPSModel:
+    """Magnet Power Supply model
 
-    def __init__(self, name, controller=None, enum_keys=False):
+    This class implements a model of the basic power supply of magnets.
+    All basic properties, CtrlMode-Mon, PwrState-(Sel/Sts), OprMode-(Sel/Sts) and
+    Current-(SP/RB) are implemented. Additional specific properties may be
+    implemented in subclasses.
 
+    The model uses a Controller object to drive updates of property values.
+    a) The default controller object is a power supply drive simulator.
+    b) It could also be an object that updates the model properties by reading
+    the physical power supply. In this case the PS model can be used to feed
+    the IOC with PV data.
+    c) Another application of the PS model is where the controller updates the
+    model properties by readinf a lower level PS IOC.
+    """
 
-        self._name = name
-        self._pstype_name = _psdata.get_ps2pstype(name)
-        self._polarity = _psdata.get_polarity(self._pstype_name)
-        self._setpoint_limits = _psdata.get_setpoint_limits(self._pstype_name)
-        device = _cs_device.get_psclass(self._pstype_name)
-        self._database = device.get_database()
+    def __init__(self, ps_name, controller=None, enum_keys=False):
+
+        self._ps_name = ps_name
+        self._pstype_name = _ps_data.get_ps2pstype(name)
+        self._polarity = _ps_data.get_polarity(self._pstype_name)
+        self._setpoint_limits = _ps_data.get_setpoint_limits(self._pstype_name)
+        self._database = _cs_device.get_database(self._pstype_name)
+        if self._database is None:
+            raise Exception('no database defined for power supply type "' + self._pstype_name + '"!')
         self._enum_keys = enum_keys
         self._controller = controller
-        self._init_controller()
-        self._controller_DCCT_current = self.current_rb
+        self._controller_init()
 
     @property
-    def name(self):
-        return self._name
+    def ps_name(self):
+        return self._ps_name
 
     @property
     def pstype_name(self):
@@ -44,11 +59,12 @@ class MagnetPSModel:
         return _copy.deepcopy(self._setpoint_limits)
 
     @property
-    def enum_keys(self):
-        return self._enum_keys
+    def reset_cmd(self):
+        return None
 
     @property
     def ctrlmode_mon(self):
+        self._controller_read_status()
         return self._get('CtrlMode-Mon')
 
     @property
@@ -56,96 +72,108 @@ class MagnetPSModel:
         return self._get('PwrState-Sel')
 
     @property
-    def pwrstate_sts(self):
-        return self._get('PwrState-Sts')
-
-    @property
     def opmode_sel(self):
         return self._get('OpMode-Sel')
 
     @property
+    def current_sp(self):
+        self._controller_read_status()
+        return self._get('Current-SP')
+
+    @property
+    def pwrstate_sts(self):
+        self._controller_read_status()
+        return self._get('PwrState-Sts')
+
+    @property
     def opmode_sts(self):
+        self._controller_read_status()
         return self._get('OpMode-Sts')
 
     @property
     def current_rb(self):
+        self._controller_read_status()
         return self._get('Current-RB')
 
-    @property
-    def current_sp(self):
-        return self._get('Current-SP')
-
-    @current_sp.setter
-    def current_sp(self, value):
+    @pwrstate_sel.setter
+    def pwrstate_sel(self, value):
         if self._get_enum('CtrlMode-Mon') != 'Remote': return
-        #if value == self._get('Current-SP') : return # ???
-
-        value = self._check_IOC_setpoint_limits(value)
-        self._set('Current-SP',value) # is this correct?
-        self._controller_setpoint(value)
+        self._set('PwrState-Sel',value)
+        self._controller.pwrstate = self._get_idx('PwrState-Sel')
         self._controller_read_status()
 
     @opmode_sel.setter
     def opmode_sel(self, value):
         if self._get_enum('CtrlMode-Mon') != 'Remote': return
-        #if value == self._get('OpMode-Sel') : return # ???
-
         self._set('OpMode-Sel',value)
-        self._controller_setopmode(value)
+        #self._controller.current = self._get('Current-SP')
+        self._controller.opmode = self._get_idx('OpMode-Sel')
         self._controller_read_status()
 
-    @pwrstate_sel.setter
-    def pwrstate_sel(self, value):
+    @current_sp.setter
+    def current_sp(self, value):
         if self._get_enum('CtrlMode-Mon') != 'Remote': return
-        #if value == self._get('PwrState-Sel') : return # ???
-
-        self._set('PwrState-Sel',value)
-        if self._get_enum('PwrState-Sel') == 'Off':
-            self._controller_power_off()
-        else:
-            self._controller_power_on()
+        value = self._check_IOC_setpoint_limits(value)
+        self._set('Current-SP',value)
+        # if self._get_enum('OpMode-Sel') == 'SlowRef':
+        #     self._controller.current = value
+        #     self._controller_read_status()
+        self._controller.current = value
         self._controller_read_status()
 
-    def _init_controller(self):
-        if self._controller is None: self._controller = _ControllerModel()
-        # initial config of controller
-        self._controller.pwrstate = self._get_enum('PwrState-Sel')
-        self._controller.opmode = self._get_enum('OpMode-Sel')
-        self._controller.current = self._get_enum('Current-SP')
+    @reset_cmd.setter
+    def reset_cmd(self, value):
+        if self._get_enum('CtrlMode-Mon') != 'Remote': return
+        self.opmode_sel = self._get_value('OpMode-Sel','SlowRef')
+        self.current_sp = 0.0
+        # reset status flags to be implemented!
+        self._controller_read_status()
 
     def _check_IOC_setpoint_limits(self, value):
-        l = self.setpoint_limits
-        if value > l['HIHI']: return l['HIHI']
-        if value < l['LOLO']: return l['LOLO']
+        l = self.setpoint_limits.values()
+        _min, _max = min(l), max(l)
+        value = _min if value < _min else value
+        value = _max if value > _max else value
         return value
+        # l = self.setpoint_limits
+        # if value > l['HIHI']: return l['HIHI']
+        # if value < l['LOLO']: return l['LOLO']
+        # return value
+
+    def _controller_init(self):
+        if self._controller is None:
+            l = self.setpoint_limits
+            self._controller = _ControllerModel(current_min = l['DRVL'],
+                                                current_max = l['DRVH'])
+        # initial config of controller
+        self._controller.IOC = self
+        self._controller.pwrstate = self._get_idx('PwrState-Sel')
+        self._controller.opmode = self._get_idx('OpMode-Sel')
+        self._controller.current = self._get_idx('Current-SP')
 
     def _controller_read_status(self):
-        self._set('Current-RB', self._controller_DCCT_current)
+        self._set_idx('PwrState-Sts', self._controller.pwrstate)
+        self._set_idx('OpMode-Sts', self._controller.opmode)
+        self._set('Current-RB', self._controller.current)
 
-    def _controller_power_off(self):
-        self._set_enum('PwrState-Sts','Off')
-        self._controller_DCCT_current = 0.0
 
-    def _controller_power_on(self):
-        self._set_enum('PwrState-Sts','On')
-        if self._get_enum('OpMode-Sts') == 'SlowRef':
-            self._controller_DCCT_current = self._get('Current-SP')
-
-    def _controller_setpoint(self, value):
-        if self._get_enum('PwrState-Sts') == 'On':
-            if self._get_enum('OpMode-Sts') == 'SlowRef':
-                self._controller_DCCT_current = value
-
-    def _controller_setopmode(self, value):
-        self._set('OpMode-Sts',value)
-        self._controller_setpoint(self._get('Current-SP'))
+    def _get_value(self, propty_name, enum_value):
+        "Return either the passed enum_value, of enum_keys is set, or its index."
+        p = self._database[propty_name]
+        return enum_value if self._enum_keys else p['enums'].index(enum_value)
 
     def _get_enum(self, propty_name):
-        # return the enum value of a enum property, if applicable
+        """Return the enum value of a enum property in the DB, if applicable."""
         p = self._database[propty_name]
         return p['enums'][p['value']] if p['type'] == 'enum' else p['value']
 
+    def _get_idx(self, propty_name):
+        """Return the index value of a enum property in the DB, or the value of a non-enum property."""
+        p = self._database[propty_name]
+        return p['value']
+
     def _get(self, propty_name):
+        """return either the enum or index value of enum properties in DB, if applicable."""
         # return either the index or the enum value of a enum property
         p = self._database[propty_name]
         return p['value'] if (p['type'] != 'enum' or not self._enum_keys) else self._get_enum(propty_name)
@@ -153,6 +181,10 @@ class MagnetPSModel:
     def _set_enum(self, propty_name, value):
         p = self._database[propty_name]
         p['value'] = p['enums'].index(value)
+
+    def _set_idx(self, propty_name, value):
+        p = self._database[propty_name]
+        p['value'] = value
 
     def _set(self, propty_name, value):
         p = self._database[propty_name]
@@ -162,12 +194,20 @@ class MagnetPSModel:
             p['value'] = value
 
     def __str__(self):
-        st = ''
-        propty = 'CtrlMode-Mon';  st +=   '{0:<20s}: {1}'.format(propty, self._get_enum(propty))
+        self._controller_read_status()
+        st_controller = self._controller.__str__()
+        st  =   '{0:<20s}: {1}'.format('power_supply', self._ps_name)
+        st += '\n{0:<20s}: {1}'.format('type', self._pstype_name)
+        st += '\n{0:<20s}: {1}'.format('polarity', self._polarity)
+        l = self.setpoint_limits
+        st += '\n{0:<20s}: {1} {2}'.format('limits', min(l.values()),max(l.values()))
+        st += '\n--- IOC ---'
+        propty = 'CtrlMode-Mon';  st += '\n{0:<20s}: {1}'.format(propty, self._get_enum(propty))
         propty = 'PwrState-Sel';  st += '\n{0:<20s}: {1}'.format(propty, self._get_enum(propty))
         propty = 'PwrState-Sts';  st += '\n{0:<20s}: {1}'.format(propty, self._get_enum(propty))
         propty = 'OpMode-Sel';    st += '\n{0:<20s}: {1}'.format(propty, self._get_enum(propty))
         propty = 'OpMode-Sts';    st += '\n{0:<20s}: {1}'.format(propty, self._get_enum(propty))
         propty = 'Current-SP';    st += '\n{0:<20s}: {1}'.format(propty, self._get_enum(propty))
         propty = 'Current-RB';    st += '\n{0:<20s}: {1}'.format(propty, self._get_enum(propty))
+        st += '\n' + st_controller
         return st
