@@ -1,6 +1,6 @@
 
 from .psdata import get_psdata as _get_psdata
-from .controller import ControllerModel as _ControllerModel
+from .controller import Controller as _Controller
 import siriuspy.cs_device as _cs_device
 import copy as _copy
 
@@ -29,7 +29,7 @@ class MagnetPSModel:
     def __init__(self, ps_name, controller=None, enum_keys=False):
 
         self._ps_name = ps_name
-        self._pstype_name = _ps_data.get_ps2pstype(name)
+        self._pstype_name = _ps_data.get_ps2pstype(ps_name)
         self._polarity = _ps_data.get_polarity(self._pstype_name)
         self._setpoint_limits = _ps_data.get_setpoint_limits(self._pstype_name)
         self._database = _cs_device.get_database(self._pstype_name)
@@ -143,8 +143,8 @@ class MagnetPSModel:
     def _controller_init(self):
         if self._controller is None:
             l = self.setpoint_limits
-            self._controller = _ControllerModel(current_min = l['DRVL'],
-                                                current_max = l['DRVH'])
+            self._controller = _Controller(current_min = l['DRVL'],
+                                           current_max = l['DRVH'])
         # initial config of controller
         self._controller.IOC = self
         self._controller.pwrstate = self._get_idx('PwrState-Sel')
