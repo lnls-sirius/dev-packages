@@ -1,6 +1,6 @@
 
 from .psdata import get_psdata as _get_psdata
-from .controller import Controller as _Controller
+from .controller import ControllerSim as _ControllerSim
 import siriuspy.cs_device as _cs_device
 import copy as _copy
 
@@ -115,9 +115,6 @@ class MagnetPSModel:
         if self._get_enum('CtrlMode-Mon') != 'Remote': return
         value = self._check_IOC_setpoint_limits(value)
         self._set('Current-SP',value)
-        # if self._get_enum('OpMode-Sel') == 'SlowRef':
-        #     self._controller.current = value
-        #     self._controller_read_status()
         self._controller.current = value
         self._controller_read_status()
 
@@ -143,8 +140,9 @@ class MagnetPSModel:
     def _controller_init(self):
         if self._controller is None:
             l = self.setpoint_limits
-            self._controller = _Controller(current_min = l['DRVL'],
-                                           current_max = l['DRVH'])
+            self._controller = _ControllerSim(current_min = l['DRVL'],
+                                              current_max = l['DRVH'],
+                                              fluctuation_rms=0.050)
         # initial config of controller
         self._controller.IOC = self
         self._controller.pwrstate = self._get_idx('PwrState-Sel')

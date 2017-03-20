@@ -110,6 +110,38 @@ class MagPSPVDBClasses:
         @staticmethod
         def get_database(): return MagPSPVDBClasses._getdatabase(__class__)
 
+    class bo_quadrupole_qd_fam(_Base):
+        """BO quadrupole QD power supply"""
+
+        name = 'bo-qaudrupole-qd-fam'
+        _Current_RB = _PVDB(name  ='Current-RB', type='float', value=0.0, prec=4, unit='A')
+        _Current_SP = _PVDB(name  ='Current-SP', type='float', value=0.0, prec=4, unit='A',
+                            lolo  =_psdata.get_setpoint_limits(name, 'LOLO'),
+                            lo    =_psdata.get_setpoint_limits(name, 'LOW'),
+                            lolim =_psdata.get_setpoint_limits(name, 'LOPR'),
+                            hilim =_psdata.get_setpoint_limits(name, 'HOPR'),
+                            hi    =_psdata.get_setpoint_limits(name, 'HIGH'),
+                            hihi  =_psdata.get_setpoint_limits(name, 'HIHI'),
+                           )
+        @staticmethod
+        def get_database(): return MagPSPVDBClasses._getdatabase(__class__)
+
+    class bo_quadrupole_qf_fam(_Base):
+        """BO quadrupole QF power supply"""
+
+        name = 'bo-qaudrupole-qf-fam'
+        _Current_RB = _PVDB(name  ='Current-RB', type='float', value=0.0, prec=4, unit='A')
+        _Current_SP = _PVDB(name  ='Current-SP', type='float', value=0.0, prec=4, unit='A',
+                            lolo  =_psdata.get_setpoint_limits(name, 'LOLO'),
+                            lo    =_psdata.get_setpoint_limits(name, 'LOW'),
+                            lolim =_psdata.get_setpoint_limits(name, 'LOPR'),
+                            hilim =_psdata.get_setpoint_limits(name, 'HOPR'),
+                            hi    =_psdata.get_setpoint_limits(name, 'HIGH'),
+                            hihi  =_psdata.get_setpoint_limits(name, 'HIHI'),
+                           )
+        @staticmethod
+        def get_database(): return MagPSPVDBClasses._getdatabase(__class__)
+
     @staticmethod
     def get_database(pstype_name):
         pstype_name = pstype_name.replace('-','_')

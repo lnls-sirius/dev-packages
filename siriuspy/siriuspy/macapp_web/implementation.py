@@ -3,8 +3,9 @@ import siriuspy.envars as _envars
 
 
 _timeout = 1.0
-_excdat_folder = '/magnets/excitation-data/'
-_ps_folder = '/power_supplies/'
+_excdat_folder = '/magnet/excitation-data/'
+_ps_folder = '/power-supply/'
+_pstypes_data_folder = '/power-supply/pstypes-data/'
 
 
 def read_url(url, timeout=_timeout):
@@ -65,7 +66,7 @@ def power_supplies_pstypes_names_read(timeout=_timeout):
 
 
 def power_supplies_pstype_data_read(filename, timeout=_timeout):
-    url = _envars.server_url_web + _ps_folder + filename
+    url = _envars.server_url_web + _pstypes_data_folder + filename
     return read_url(url, timeout=timeout)
 
 def power_supplies_pstype_setpoint_limits(timeout = _timeout):
