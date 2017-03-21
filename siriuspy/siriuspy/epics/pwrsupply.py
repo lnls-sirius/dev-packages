@@ -1,13 +1,10 @@
 
 import uuid as _uuid
 import copy as _copy
-import siriuspy.cs_device as _cs_device
+import siriuspy.csdevice as _csdevice
 from siriuspy.epics import SiriusPVsSet as _SiriusPVsSet
-from siriuspy import naming_system as _naming_system
-from siriuspy.power_supply.psdata import get_psdata as _get_psdata
-
-
-_psdata = _get_psdata()
+from siriuspy import namesys as _namesys
+from siriuspy.pwrsupply.psdata import conv_psname_2_pstype as _conv_psname_2_pstype
 
 
 class MagnetPSDevice:
@@ -27,8 +24,11 @@ class MagnetPSDevice:
 
         self._uuid = _uuid.uuid4()         # unique ID for the class object
         self._ps_name = ps_name            # power supply device name
-        self._pstype_name = _psdata.get_ps2pstype(ps_name)
-        self._database = _cs_device.get_database(self._pstype_name)
+        self._pstype_name = conv_psname_2_pstype(ps_name)
+        self._database = _csdevice.get_database(self._pstype_name)
+
+        if self._database is None:
+            print(self._ps_name, self._pstype_name)
 
         self._pvsset = pvsset if pvsset else _SiriusPVsSet(connection_timeout=connection_timeout)
         self._connection_timeout = connection_timeout      # default connection timeout for the class object
@@ -53,7 +53,7 @@ class MagnetPSDevice:
     @property
     def database(self):
         return _copy.deepcopy(self._database)
-        
+
     @property
     def connected(self):
         for pv_name in self._pv_names.values():
@@ -78,16 +78,6 @@ class MagnetPSDevice:
         else:
             raise KeyError
 
-    def _device_property(self, propty):
-        if propty in self._properties_values:
-            return self._family_name + ':' + propty
-        else:
-            raise Exception('invalid property name "' + propty + '"!')
-
-    def _create_properties_dict(self):
-        for propty in MagnetPSDevice._properties_names:
-            self._properties_values[propty] = MagnetPSDevice._properties_database[propty]['value']
-
     def _insert_pvs_in_set(self):
         for propty in self._database:
             pv_name = self._ps_name + ':' + propty
@@ -96,7 +86,7 @@ class MagnetPSDevice:
             self._pvsset[pv_name].add_callback(callback=self._pvs_callback, index=self._uuid)
 
     def _pvs_callback(self, pvname, value, **kwargs):
-        names = _naming_system.split_name(pvname)
+        names = _namesys.split_name(pvname)
         propty = names['Property']
         self._database[propty]['value'] = value
         for index,function in self._callback_functions.items():
@@ -105,7 +95,6 @@ class MagnetPSDevice:
                      value=value,
                      pvname=pvname,
                      **kwargs)
-
 
     def __del__(self):
         for propty in self._database:

@@ -1,4 +1,4 @@
-import siriuspy.macapp_web as _web
+import siriuspy.servweb as _web
 
 _timeout = 1.0
 
@@ -14,7 +14,7 @@ class _PSData:
         self._pstype_polarity_list = None
         self._pstype_sp_limits_dict = None
         self._setpoint_unit = None
-        self._setpoint_limit_names = None
+        self._setpoint_limit_labels = None
         self._ps_name_list = None
         self._pstype2ps_dict = None
         self._ps2pstype_dict = None
@@ -26,32 +26,31 @@ class _PSData:
             self._build_pstype_sp_limits()
 
     @property
-    def pstype_name_list(self):
+    def pwrsupply_types(self):
         """Return a list of names of all power supply types."""
         return self._pstype_name_list
 
     @property
-    def ps_name_list(self):
+    def pwrsupply_names(self):
         """Return a list of names of all power supplies."""
         return self._ps_name_list
 
-    @property
-    def nr_pstypes(self):
-        """Return the number of power supply types."""
-        return len(self._pstype_name_list)
+    def conv_pstype_2_psname(self, pstype):
+        """Return a list of power supplies of a given type."""
+        if isinstance(pstype, str):
+            return self._pstype2ps_dict[pstype]
+        elif isinstance(pstype, int):
+            return self._pstype2ps_dict[self._pstype_name_list[pstype]]
 
-    @property
-    def nr_ps(self):
-        """Return the number of power supplies."""
-        return len(self._ps_name_list)
+    def conv_psname_2_pstype(self, ps):
+        """Return the type of a given power supply."""
+        if isinstance(ps, str):
+            return self._ps2pstype_dict[ps]
+        elif isinstance(ps, int):
+            return self._ps2pstype_dict[self._ps_name_list[ps]]
 
-    @property
-    def setpoint_unit(self):
+    def get_setpoint_unit(self):
         return self._setpoint_unit
-
-    @property
-    def setpoint_limit_names(self):
-        return self._setpoint_limit_names
 
     def get_polarity(self, psname):
         """Return the polarity of a given power supply or power supply type."""
@@ -66,13 +65,13 @@ class _PSData:
         else:
             return None
 
-    def get_setpoint_limits(self, psname, *limit_names):
+    def get_setpoint_limits(self, psname, *limit_labels):
         """Return setpoint limits of given power supply of power suppy type.
 
         Arguments:
 
         psname -- name of power supply of power supply type
-        limit_names -- limit names of interest
+        limit_labels -- limit labels of interest
                        a) it can be a sequence of strings, each for a limit name of interest
                        b) if not passed, all defined limits are returned
                        c) if a single string, the single value of the the corresponding limit is returned
@@ -94,31 +93,17 @@ class _PSData:
         else:
             return None
 
-        if len(limit_names) == 0:
-            limit_names = self._setpoint_limit_names
-        if len(limit_names) == 1 and isinstance(limit_names[0], str):
-            idx = self._setpoint_limit_names.index(limit_names[0])
+        if len(limit_labels) == 0:
+            limit_labels = self._setpoint_limit_labels
+        if len(limit_labels) == 1 and isinstance(limit_labels[0], str):
+            idx = self._setpoint_limit_labels.index(limit_labels[0])
             return values[idx]
 
         limits_dict = {}
-        for limit_name in limit_names:
-            idx = self._setpoint_limit_names.index(limit_name)
+        for limit_name in limit_labels:
+            idx = self._setpoint_limit_labels.index(limit_name)
             limits_dict[limit_name] = values[idx]
         return limits_dict
-
-    def get_pstype2ps(self, pstype):
-        """Return a list of power supplies of a given type."""
-        if isinstance(pstype, str):
-            return self._pstype2ps_dict[pstype]
-        elif isinstance(pstype, int):
-            return self._pstype2ps_dict[self._pstype_name_list[pstype]]
-
-    def get_ps2pstype(self, ps):
-        """Return a list of power supply typesies of a given type."""
-        if isinstance(ps, str):
-            return self._ps2pstype_dict[ps]
-        elif isinstance(ps, int):
-            return self._ps2pstype_dict[self._ps_name_list[ps]]
 
     def _build_pstype_data(self, text):
         data, _ = _PSData._read_text(text)
@@ -133,7 +118,7 @@ class _PSData:
 
         # read data from files in the web server and build pstype2ps dict
         self._pstype2ps_dict = {}
-        for name in self.pstype_name_list:
+        for name in self._pstype_name_list:
             text = _web.power_supplies_pstype_data_read(name + '.txt', timeout=_timeout)
             self._pstype2ps_dict[name] = tuple(self._read_text_pstype(text))
 
@@ -152,7 +137,7 @@ class _PSData:
         text = _web.power_supplies_pstype_setpoint_limits(timeout=_timeout)
         data, param_dict = _PSData._read_text(text)
         self._setpoint_unit = tuple(param_dict['unit'])
-        self._setpoint_limit_names = tuple(param_dict['power_supply_type'])
+        self._setpoint_limit_labels = tuple(param_dict['power_supply_type'])
         self._pstype_sp_limits_dict = {pstype_name:[None,]*len(data[0]) for pstype_name in self._pstype_name_list}
         for line in data:
             pstype_name, *limits = line
@@ -188,21 +173,55 @@ class _PSData:
         return data, parameters
 
 
-
-# API
-# ===
-
-def server_online():
-    """Return True/False if Sirius web server is online."""
-    return _web.server_online()
-
 _psdata = None
-def get_psdata():
-    """Return an object with static information of power supplies."""
-
+def _get_psdata():
     # encapsulating _psdata within a function avoid creating the global object
     # (which is time consuming) at module load time.
     global _psdata
     if _psdata is None:
         _psdata = _PSData()
     return _psdata
+
+
+# PSDATA API
+# ==========
+
+def server_online():
+    """Return True/False if Sirius web server is online."""
+    return _web.server_online()
+
+def get_types():
+    """Return a name list of power supply types."""
+    psdata = _get_psdata()
+    return psdata.pwrsupply_types
+
+def get_names():
+    """Return a name list of power supplies."""
+    psdata = _get_psdata()
+    return psdata.pwrsupply_names
+
+def get_polarity(psname):
+    """Return the polarity type of a given power supply or power supply type."""
+    psdata = _get_psdata()
+    return psdata.get_polarity(psname)
+
+def get_unit():
+    """Return the power supplies' unit for the currents."""
+    psdata = _get_psdata()
+    return psdata._setpoint_unit()
+
+def conv_pstype_2_psname(pstype):
+    """Return a list of power supply of a given type."""
+    psdata = _get_psdata()
+    return psdata.conv_pstype_2_psname(pstype)
+
+def conv_psname_2_pstype(psname):
+    """Return the type name of a given power suppply."""
+    psdata = _get_psdata()
+    return psdata.conv_psname_2_pstype(psname)
+
+def get_setpoint_limits(ps, *limit_labels):
+    """Return a dictionary with setpoint limits of a given power supply name of
+    type."""
+    psdata = _get_psdata()
+    return psdata.get_setpoint_limits(ps, *limit_labels)

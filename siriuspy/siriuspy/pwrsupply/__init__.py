@@ -1,4 +1,5 @@
-from .psdata import *
+from . import psdata
+
 from .waveform import *
 from .controller import *
 from .model import *
@@ -7,4 +8,3 @@ from .model import *
 del model
 del controller
 del waveform
-del psdata

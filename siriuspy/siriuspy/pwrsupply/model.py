@@ -1,15 +1,13 @@
 
-from .psdata import get_psdata as _get_psdata
-from .controller import ControllerSim as _ControllerSim
-import siriuspy.cs_device as _cs_device
 import copy as _copy
+from .psdata import conv_psname_2_pstype as _conv_psname_2_pstype
+from .psdata import get_setpoint_limits as _sp_limits
+from .psdata import get_polarity as _get_polarity
+import siriuspy.csdevice as _csdevice
+from .controller import ControllerSim as _ControllerSim
 
 
-# this global PSData object contains all static data of all PS
-_ps_data = _get_psdata()
-
-
-class MagnetPSModel:
+class PowerSupply:
     """Magnet Power Supply model
 
     This class implements a model of the basic power supply of magnets.
@@ -29,10 +27,10 @@ class MagnetPSModel:
     def __init__(self, ps_name, controller=None, enum_keys=False):
 
         self._ps_name = ps_name
-        self._pstype_name = _ps_data.get_ps2pstype(ps_name)
-        self._polarity = _ps_data.get_polarity(self._pstype_name)
-        self._setpoint_limits = _ps_data.get_setpoint_limits(self._pstype_name)
-        self._database = _cs_device.get_database(self._pstype_name)
+        self._pstype_name = _conv_psname_2_pstype(ps_name)
+        self._polarity = _get_polarity(self._pstype_name)
+        self._setpoint_limits = _sp_limits(self._pstype_name)
+        self._database = _csdevice.get_database(self._pstype_name)
         if self._database is None:
             raise Exception('no database defined for power supply type "' + self._pstype_name + '"!')
         self._enum_keys = enum_keys
@@ -113,9 +111,10 @@ class MagnetPSModel:
     @current_sp.setter
     def current_sp(self, value):
         if self._get_enum('CtrlMode-Mon') != 'Remote': return
+        value = float(value)
         value = self._check_IOC_setpoint_limits(value)
         self._set('Current-SP',value)
-        self._controller.current = value
+        self._controller.current_ref = value
         self._controller_read_status()
 
     @reset_cmd.setter
@@ -125,6 +124,9 @@ class MagnetPSModel:
         self.current_sp = 0.0
         # reset status flags to be implemented!
         self._controller_read_status()
+
+    def timing_trigger(self):
+        self._controller.timing_trigger()
 
     def _check_IOC_setpoint_limits(self, value):
         l = self.setpoint_limits.values()
@@ -147,7 +149,7 @@ class MagnetPSModel:
         self._controller.IOC = self
         self._controller.pwrstate = self._get_idx('PwrState-Sel')
         self._controller.opmode = self._get_idx('OpMode-Sel')
-        self._controller.current = self._get_idx('Current-SP')
+        self._controller.current_ref = self._get_idx('Current-SP')
 
     def _controller_read_status(self):
         self._set_idx('PwrState-Sts', self._controller.pwrstate)

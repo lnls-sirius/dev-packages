@@ -13,12 +13,6 @@ class SiriusPV(_epics.PV):
                          verbose=verbose)
 
     @property
-    def value(self):
-        if not self.connected:
-            return None
-        return super().value
-
-    @property
     def value_enum(self):
         if not self.connected:
             return None
@@ -27,13 +21,7 @@ class SiriusPV(_epics.PV):
         else:
             return super().value
 
-    @value.setter
-    def value(self, value):
-        if not self.connected:
-            return None
-        super().put(value)
-
-    @value.setter
+    @value_enum.setter
     def value_enum(self, value):
         if not self.connected:
             return None
