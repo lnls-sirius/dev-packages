@@ -1,6 +1,7 @@
 import pvs as _pvs
 import time as _time
 import siriuspy as _siriuspy
+import uuid as _uuid
 
 # Coding guidelines:
 # =================
@@ -15,13 +16,18 @@ __version__  = _pvs.__version__
 
 class App:
 
+    devices = _pvs.get_csdevices()
     pvs_database = _pvs.get_pvs_database()
-    magnet_ps_family_names = _pvs.get_magnet_ps_family_names()
 
     def __init__(self,driver):
 
+        self._uuid = _uuid.uuid4()
         self._driver = driver
-        self._magnet_ps = _pvs.get_magnet_power_supplies()
+        self._set_callback()
+
+    def _set_callback(self):
+        for family, device in App.devices.items():
+            device.add_callback(self._callback, self._uuid)
 
     @property
     def driver(self):
@@ -32,15 +38,27 @@ class App:
         pass
 
     def read(self,reason):
-        ps_fam_name, propty = reason.split(':')
-        if ps_fam_name in App.magnet_ps_family_names:
-            return self._magnet_ps[ps_fam_name][propty]
-        else:
-            return None
+        ps, propty = self._get_dev_propty(reason)
+        if propty == 'Current-RB':
+            return ps.current_rb
+        elif propty == 'Current-SP':
+            return ps.current_sp
+
+    @staticmethod
+    def _get_dev_propty(reason):
+        family, propty = reason.split(':')
+        device = App.devices[family]
+        return device, propty
+
+    def _callback(self, pvname, value, **kwargs):
+        print(pvname, value)
+
 
     def write(self,reason,value):
-        ps_fam_name, propty = reason.split(':')
-        if ps_fam_name in App.magnet_ps_family_names:
-            self._magnet_ps[ps_fam_name][propty] = value
-            self._driver.setParam(reason,value)
-            self._driver.updatePVs()
+        ps, propty = self._get_dev_propty(reason)
+        if propty == 'Current-SP':
+            prev_value = ps.current_sp
+            ps.current_sp = value
+            if ps.current_sp != prev_value:
+                self._driver.setParam(reason,value)
+                self._driver.updatePVs()
