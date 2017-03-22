@@ -1,5 +1,6 @@
 
 import copy as _copy
+import uuid as _uuid
 from .psdata import conv_psname_2_pstype as _conv_psname_2_pstype
 from .psdata import get_setpoint_limits as _sp_limits
 from .psdata import get_polarity as _get_polarity
@@ -24,8 +25,9 @@ class PowerSupply:
     model properties by readinf a lower level PS IOC.
     """
 
-    def __init__(self, ps_name, controller=None, enum_keys=False):
+    def __init__(self, ps_name, controller=None, callback=None, enum_keys=False):
 
+        self._uuid = _uuid.uuid4()
         self._ps_name = ps_name
         self._pstype_name = _conv_psname_2_pstype(ps_name)
         self._polarity = _get_polarity(self._pstype_name)
@@ -34,6 +36,8 @@ class PowerSupply:
         if self._database is None:
             raise Exception('no database defined for power supply type "' + self._pstype_name + '"!')
         self._enum_keys = enum_keys
+        self._callback_functions = {}
+        if callback is not None: self._callback_functions[_uuid.uuid4] = callback
         self._controller = controller
         self._controller_init()
 
@@ -48,9 +52,18 @@ class PowerSupply:
     @property
     def polarity(self):
         return self._polarity
+
     @property
     def database(self):
-        return _copy.deepcopy(self._database) # deepcopy for safety
+        """Return a database whose keys correspond to PS properties prefixed by the device instance name."""
+        return _copy.deepcopy(self._database)
+        # pv_name = _namesys.SiriusPVName(self._ps_name)
+        # database = {}
+        # for propty, db in self._database.items():
+        #     pv_name.propty = propty
+        #     database[pv_name.pv_name] = _copy.deepcopy(db)
+        #     #print(pv_name.pv_name)
+        # return database
 
     @property
     def setpoint_limits(self):
@@ -76,7 +89,8 @@ class PowerSupply:
     @property
     def current_sp(self):
         self._controller_read_status()
-        return self._get('Current-SP')
+        value = self._get('Current-SP')
+        return value
 
     @property
     def pwrstate_sts(self):
@@ -125,6 +139,9 @@ class PowerSupply:
         # reset status flags to be implemented!
         self._controller_read_status()
 
+    def add_callback(self, callback, index):
+        self._callback_functions[index] = callback
+
     def timing_trigger(self):
         self._controller.timing_trigger()
 
@@ -140,22 +157,67 @@ class PowerSupply:
         # return value
 
     def _controller_init(self):
+
+        # set controller setpoint limits according to PS database
         if self._controller is None:
             l = self.setpoint_limits
             self._controller = _ControllerSim(current_min = l['DRVL'],
                                               current_max = l['DRVH'],
                                               fluctuation_rms=0.050)
-        # initial config of controller
         self._controller.IOC = self
-        self._controller.pwrstate = self._get_idx('PwrState-Sel')
-        self._controller.opmode = self._get_idx('OpMode-Sel')
-        self._controller.current_ref = self._get_idx('Current-SP')
+
+        # add model callback to controller callback list
+        if hasattr(self._controller,'add_callback'):
+            self._controller.add_callback(self._callback, self._uuid)
+
+        # either update controller properties states (if corresponding value in
+        # the model DB is not None or read the state from the controller property
+        # and set the database
+
+        value = self._get_idx('PwrState-Sel')
+        if value is not None:
+            self._controller.pwrstate = value
+        else:
+            self._callback('PwrState-Sel', self._controller.pwrstate)
+
+        value = self._get_idx('OpMode-Sel')
+        if value is not None:
+            self._controller.opmode = value
+        else:
+            self._callback('OpModel-Sel', self._controller.opmode)
+
+        value = self._get_idx('Current-SP')
+        print(self._ps_name, value)
+        if value is not None:
+            self._controller.current_ref = value
+        else:
+            self._callback('Current-SP', self._controller.current_ref)
+
+    def _callback(self, pvname, value, **kwargs):
+        """Callback invoked when EPICS controller state changes externally.
+           It updates internal state of the PS model and signals all registered
+           callback functions."""
+
+        if 'PwrState-Sel' in pvname:
+            self._set_idx('PwrState-Sel', value)
+        elif 'PwrState-Sts' in pvname:
+            self._set_idx('PwrState-Sts', value)
+        elif 'OpMode-Sts' in pvname:
+            self._set_idx('OpMode-Sts', value)
+        elif 'OpMode-Sel' in pvname:
+            self._set_idx('OpMode-Sel', value)
+        elif 'Current-RB' in pvname:
+            self._set('Current-RB', value)
+        elif 'Current-SP' in pvname:
+            self._set('Current-SP', value)
+        for index, callback_function in self._callback_functions.items():
+            callback_function(pvname, value, **kwargs)
 
     def _controller_read_status(self):
+        """This is necessary for controllers without callbacks"""
         self._set_idx('PwrState-Sts', self._controller.pwrstate)
         self._set_idx('OpMode-Sts', self._controller.opmode)
         self._set('Current-RB', self._controller.current)
-
 
     def _get_value(self, propty_name, enum_value):
         "Return either the passed enum_value, of enum_keys is set, or its index."
@@ -211,3 +273,21 @@ class PowerSupply:
         propty = 'Current-RB';    st += '\n{0:<20s}: {1}'.format(propty, self._get_enum(propty))
         st += '\n' + st_controller
         return st
+
+
+class PowerSupplyMA(PowerSupply):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    @property
+    def database(self):
+        _database = {}
+        dd = super().database
+        _, family = self.ps_name.split('PS-')
+        if not isinstance(family,str):
+            raise Exception('invalid pv_name!')
+        for propty, db in super().database.items():
+            key = family + ':' + propty
+            _database[key] = _copy.deepcopy(db)
+        return _database

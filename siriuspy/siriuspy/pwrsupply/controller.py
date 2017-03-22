@@ -184,39 +184,26 @@ class ControllerSim(Controller):
         self._current_dcct += 2*(_random.random()-0.5)*self._fluctuation_rms
 
 
-class ControllerVACA(ControllerSim):
+class ControllerEpicsPS(ControllerSim):
 
-    def __init__(self, prefix_vaca,
+    def __init__(self, prefix,
                        ps_name,
                        connection_timeout = _connection_timeout,
+                       callback = None,
                        **kwargs):
         super().__init__(**kwargs)
 
         self._uuid = _uuid.uuid4()  # unique ID for the class object
-        self._prefix_vaca = prefix_vaca
+        self._prefix = prefix
         self._ps_name = ps_name
         self._connection_timeout = connection_timeout
-        self._init_pvs()
+        self._callbacks = {} if callback is None else {callback}
+        self._create_pvs()
         self.update_state()
 
-    def _init_pvs(self):
-        self._pvs = {}
-        vaca_ps = self._prefix_vaca + self._ps_name
-        self._pvs['PwrState-Sel'] = _SiriusPV(vaca_ps + ':PwrState-Sel', connection_timeout=self._connection_timeout)
-        self._pvs['PwrState-Sts'] = _SiriusPV(vaca_ps + ':PwrState-Sts', connection_timeout=self._connection_timeout)
-        self._pvs['OpMode-Sel'] = _SiriusPV(vaca_ps + ':OpMode-Sel', connection_timeout=self._connection_timeout)
-        self._pvs['OpMode-Sts'] = _SiriusPV(vaca_ps + ':OpMode-Sts', connection_timeout=self._connection_timeout)
-        self._pvs['Current-SP'] = _SiriusPV(vaca_ps + ':Current-SP', connection_timeout=self._connection_timeout)
-        self._pvs['Current-RB'] = _SiriusPV(vaca_ps + ':Current-RB', connection_timeout=self._connection_timeout)
-        self._pvs['PwrState-Sts'].add_callback(self._pvs_callback,index=self._uuid)
-        self._pvs['OpMode-Sts'].add_callback(self._pvs_callback,index=self._uuid)
-        self._pvs['Current-RB'].add_callback(self._pvs_callback,index=self._uuid)
-        self._pvs['Current-SP'].add_callback(self._pvs_callback,index=self._uuid)
-
-
     @property
-    def prefix_vaca(self):
-        return self.prefix_vaca
+    def prefix(self):
+        return self.prefix
 
     @property
     def ps_name(self):
@@ -250,7 +237,21 @@ class ControllerVACA(ControllerSim):
         self._pvs['OpMode-Sel'].value = value
         # invocation of _pvs_callback will update internal state of controller
 
+    def add_callback(self, callback, index):
+        self._callbacks[index] = callback
+
+    def _create_pvs(self):
+        self._pvs = {}
+        pvname = self._prefix + self._ps_name
+        self._pvs['PwrState-Sel'] = _SiriusPV(pvname + ':PwrState-Sel', connection_timeout=self._connection_timeout)
+        self._pvs['PwrState-Sts'] = _SiriusPV(pvname + ':PwrState-Sts', callback=self._pvs_callback, connection_timeout=self._connection_timeout)
+        self._pvs['OpMode-Sel'] = _SiriusPV(pvname + ':OpMode-Sel', connection_timeout=self._connection_timeout)
+        self._pvs['OpMode-Sts'] = _SiriusPV(pvname + ':OpMode-Sts', callback=self._pvs_callback, connection_timeout=self._connection_timeout)
+        self._pvs['Current-SP'] = _SiriusPV(pvname + ':Current-SP', callback=self._pvs_callback, connection_timeout=self._connection_timeout)
+        self._pvs['Current-RB'] = _SiriusPV(pvname + ':Current-RB', callback=self._pvs_callback, connection_timeout=self._connection_timeout)
+
     def _pvs_callback(self, pvname, value, **kwargs):
+        #print('conrtoller callback', pvname, value)
         if 'PwrState-Sts' in pvname:
             self._pwrstate = value
         elif 'OpMode-Sts' in pvname:
@@ -260,3 +261,5 @@ class ControllerVACA(ControllerSim):
         elif 'Current-SP' in pvname:
             self._current_ref = value
         self.update_state()
+        for index, callback in self._callbacks.items():
+            callback(pvname, value, **kwargs)
