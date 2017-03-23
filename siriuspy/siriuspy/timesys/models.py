@@ -27,8 +27,8 @@ class Event(CallBack):
     @staticmethod
     def get_database(prefix):
         db = dict()
-        db[prefix + 'Delay-SP']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'prec': 10}
-        db[prefix + 'Delay-RB']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'prec': 10}
+        db[prefix + 'Delay-SP']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'unit':'us', 'prec': 3}
+        db[prefix + 'Delay-RB']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'unit':'us','prec': 3}
         db[prefix + 'Mode-Sel']      = {'type' : 'enum', 'enums':Event._modes, 'value':1}
         db[prefix + 'Mode-Sts']      = {'type' : 'enum', 'enums':Event._modes, 'value':1}
         db[prefix + 'DelayType-Sel'] = {'type' : 'enum', 'enums':Event._delay_types, 'value':1}
@@ -40,16 +40,27 @@ class Event(CallBack):
         self.name = name
         self._mode = None
         self._delay_type = None
-        self._delay = 0
-        self.mode = 0
-        self.delay_type = 1
+        self._delay_sp = 0
+        self._delay_rb = 0
+        self._mode_sp = 0
+        self._mode_rb = 0
+        self._delay_type_sp = 1
+        self._delay_type_rb = 1
 
     @property
-    def delay(self):
-        return self._delay
-    @delay.setter
+    def delay_sp(self):
+        return self._delay_sp
+    @delay_sp.setter
     def delay(self,value):
-        self._delay = (value // 8) * 8  #must respect steps of 8 ns
+        self._delay_sp = value
+        self.delay_rb = value
+
+    @property
+    def delay_rb(self):
+        return self._delay_rb
+    @delay_rb.setter
+    def delay_rb(self,value):
+        self._delay_rb = (value // 8) * 8  #must respect steps of 8 ns
 
     @property
     def mode(self):
