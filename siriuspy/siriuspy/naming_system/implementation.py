@@ -32,16 +32,18 @@ def split_name(name):
 
     return name_dict
 
-class SiriusPVName:
+class SiriusPVName(str):
 
-    def __init__(self, pv_name):
+    def __new__(cls, pv_name):
         name = split_name(pv_name)
-        self.area = name['Area_name']
-        self.device_slot = name['Device_name']
-        self.section = name['Section']
-        self.subsection = name['Subsection']
-        self.discipline = name['Discipline']
-        self.device = name['Device']
-        self.instance = name['Instance']
-        self.property = name['Property']
-        self.field = name['Field']
+        obj = super().__new__(cls, pv_name)
+        obj.area = name['Area_name']
+        obj.device_slot = name['Device_name']
+        obj.section = name['Section']
+        obj.subsection = name['Subsection']
+        obj.discipline = name['Discipline']
+        obj.device = name['Device']
+        obj.instance = name['Instance']
+        obj.property = name['Property']
+        obj.field = name['Field']
+        return obj
