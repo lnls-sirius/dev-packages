@@ -4,19 +4,14 @@ import epics as _epics
 
 class SiriusPV(_epics.PV):
 
-    def __init__(self, pv_name, connection_callback=None, connection_timeout=None, verbose=False):
+    def __init__(self, pv_name, callback=None, connection_callback=None, connection_timeout=None, verbose=False):
 
         self._pv_name = pv_name
         super().__init__(pv_name,
+                         callback=callback,
                          connection_callback=connection_callback,
                          connection_timeout=connection_timeout,
                          verbose=verbose)
-
-    @property
-    def value(self):
-        if not self.connected:
-            return None
-        return super().value
 
     @property
     def value_enum(self):
@@ -27,13 +22,7 @@ class SiriusPV(_epics.PV):
         else:
             return super().value
 
-    @value.setter
-    def value(self, value):
-        if not self.connected:
-            return None
-        super().put(value)
-
-    @value.setter
+    @value_enum.setter
     def value_enum(self, value):
         if not self.connected:
             return None

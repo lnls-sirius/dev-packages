@@ -35,6 +35,7 @@ def split_name(name):
 class SiriusPVName:
 
     def __init__(self, pv_name):
+
         name = split_name(pv_name)
         self.area = name['Area_name']
         self.device_slot = name['Device_name']
@@ -43,5 +44,20 @@ class SiriusPVName:
         self.discipline = name['Discipline']
         self.device = name['Device']
         self.instance = name['Instance']
-        self.property = name['Property']
+        self.propty = name['Property']
         self.field = name['Field']
+
+    @property
+    def device_property(self):
+        device = self.device + '-' + self.instance if self.instance else self.device
+        return device + ':' + self.propty
+
+    @property
+    def pv_name(self):
+        return join_name(self.section,
+                  self.discipline,
+                  self.device,
+                  self.subsection,
+                  self.instance,
+                  self.propty,
+                  self.field)

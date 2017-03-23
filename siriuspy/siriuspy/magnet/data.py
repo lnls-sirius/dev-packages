@@ -1,5 +1,5 @@
 
-import siriuspy.macapp_web as _web
+import siriuspy.servweb as _web
 
 
 class FamilyData:
