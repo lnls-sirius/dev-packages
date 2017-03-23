@@ -1,21 +1,44 @@
-class Event:
+
+class CallBack:
+
+    def __init__(self):
+        self._callbacks = dict()
+
+    def _callback(self,propty,value,**kwargs):
+        self.call_callbacks(propty,value,**kwargs)
+
+    def _call_callbacks(self, propty, value, **kwargs):
+        for uuid, callback in self._callbacks.items():
+            callback(propty, value, **kwargs)
+
+    def add_callback(self,uuid, callback):
+        self._callbacks[uuid] = callback
+
+    def remove_callback(self,uuid):
+        self._callbacks.pop(uuid)
+
+
+class Event(CallBack):
+
+
+    _modes = ('Disabled','Continuous','Injection','Single')
+    _delay_types = ('Fixed','Incr')
 
     @staticmethod
     def get_database(prefix):
         db = dict()
         db[prefix + 'Delay-SP']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'prec': 10}
         db[prefix + 'Delay-RB']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'prec': 10}
-        db[prefix + 'Mode-Sel']      = {'type' : 'enum', 'enums':('Disabled','Continuous','Injection','Single'), 'value':1}
-        db[prefix + 'Mode-Sts']      = {'type' : 'enum', 'enums':('Disabled','Continuous','Injection','Single'), 'value':1}
-        db[prefix + 'DelayType-Sel'] = {'type' : 'enum', 'enums':('Fixed','Incr'), 'value':1}
-        db[prefix + 'DelayType-Sts'] = {'type' : 'enum', 'enums':('Fixed','Incr'), 'value':1}
+        db[prefix + 'Mode-Sel']      = {'type' : 'enum', 'enums':Event._modes, 'value':1}
+        db[prefix + 'Mode-Sts']      = {'type' : 'enum', 'enums':Event._modes, 'value':1}
+        db[prefix + 'DelayType-Sel'] = {'type' : 'enum', 'enums':Event._delay_types, 'value':1}
+        db[prefix + 'DelayType-Sts'] = {'type' : 'enum', 'enums':Event._delay_types, 'value':1}
         return db
 
     def __init__(self,name):
+        super().__init__(self)
         self.name = name
         self._mode = None
-        self._modes = ('Dsbl','Cont','Inj','Sgl')
-        self._delay_types = ('Fix','Incr')
         self._delay_type = None
         self._delay = 0
         self.mode = 0
@@ -45,7 +68,7 @@ class Event:
             self._delay_type = self._delay_types[value]
 
 
-class Clock:
+class Clock(CallBack):
 
     @staticmethod
     def get_database(prefix):
@@ -57,6 +80,7 @@ class Clock:
         return db
 
     def __init__(self,base_freq):
+        super().__init__(self)
         self._base_frequency = base_freq
         self._frequency = self._base_frequency
         self._state = 'Enbl'
@@ -80,7 +104,7 @@ class Clock:
         self._frequency = self._base_frequency / n
 
 
-class EVG:
+class EVG(CallBack):
 
     @staticmethod:
     def get_database(prefix):
@@ -105,6 +129,7 @@ class EVG:
         return db
 
     def __init__(self, frequency, events):
+        supert().__init__(self)
         self._frequency = frequency
         self._continuous = None
         self._continuous_types = ('Off','On')
