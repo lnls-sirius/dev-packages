@@ -20,6 +20,425 @@ _fluctuation_rms = 0.0
 _wfm_nr_points = 2000
 
 
+
+class A:
+
+    def __init__(self, current_min=None, current_max=None, waveform=None):
+        self._current_min = current_min
+        self._current_max = current_max
+        if waveform is None: waveform = _PSWaveForm.wfm_constant(_wfm_nr_points)
+        self._waveform = waveform
+        self._waveform_step = 0
+        now = _time.time()
+        self._timestamp_pwrstate = now
+        self._timestamp_opmode   = now
+
+    # --- pwrstate_sel getter ---
+    @property
+    def pwrstate_sel(self):
+        return self.__getter_pwrstate_sel()
+    def __getter_pwrstate_sel(self):
+        return self._getter_pwrstate_sel()
+    def _getter_pwrstate_sel(self):
+        raise NotImplementedError
+
+    # --- pwrstate_sel setter ---
+    @pwrstate_sel.setter
+    def pwrstate_sel(self, value):
+        self.__setter_pwrstate_sel(value)
+        self._update_state()
+    def __setter_pwrstate_sel(self, value):
+        self._setter_pwrstate_sel(value)
+    def _setter_pwrstate_sel(self, value):
+        raise NotImplementedError
+
+    # --- pwrstate_sts getter ---
+    @property
+    def pwrstate_sts(self):
+        raise NotImplementedError
+
+
+    # --- opmode_sel getter ---
+    @property
+    def opmode_sel(self):
+        return self.__getter_opmode_sel()
+    def __getter_opmode_sel(self):
+        return self._getter_opmode_sel()
+    def _getter_opmode_sel(self):
+        raise NotImplementedError
+
+    # --- opmode_sel setter ---
+    @opmode_sel.setter
+    def opmode_sel(self, value):
+        self.__setter_opmode_sel(value)
+        self._update_state()
+    def __setter_opmode_sel(self, value):
+        self._setter_opmode_sel(value)
+    def _setter_opmode_sel(self, value):
+        raise NotImplementedError
+
+    # --- opmode_sts getter ---
+    @property
+    def opmode_sts(self):
+        raise NotImplementedError
+
+    # --- current_sp getter ---
+    @property
+    def current_sp(self):
+        return self.__getter_current_sp()
+    def __getter_current_sp(self):
+        return self._getter_current_sp()
+    def _getter_current_sp(self):
+        raise NotImplementedError
+
+    # --- current_sp setter ---
+    @current_sp.setter
+    def current_sp(self, value):
+        self.__setter_current_sp(value)
+        self._update_state()
+    def __setter_current_sp(self, value):
+        self._setter_current_sp(value)
+    def _setter_current_sp(self, value):
+        raise NotImplementedError
+
+    # --- current_rb getter ---
+    @property
+    def current_rb(self):
+        raise NotImplementedError
+    def _setter_current_rb(self, value):
+        raise NotImplementedError
+
+
+    def _update_state(self):
+        #self._setter_current_rb(self.current_sp)
+        if self.pwrstate_sts == _Off:
+            self._setter_current_rb(0.0)
+        else:
+            opmode = self.opmode_sts
+            if opmode == _SlowRef:
+                self._update_opmode_slowref()
+            elif opmode == _FastRef:
+                self._update_opmode_fastref()
+            elif opmode == _WfmRef:
+                self._update_opmode_wfmref()
+            elif opmode == _SigGen:
+                self._update_opmode_siggen()
+            self._update_fluctuations()
+
+
+class B(A):
+
+    def __init__(self, fluctuation_rms=0, **kwargs):
+        super().__init__(**kwargs)
+        self._fluctuation_rms = fluctuation_rms
+        self._pwrstate = 0
+        self._opmode = 0
+        self._current_sp = 0.0
+        self._current_rb = 0.0
+
+    # --- pwrstate_sel getter ---
+    def _getter_pwrstate_sel(self):
+        return self._pwrstate
+    # --- pwrstate_sel setter ---
+    def _setter_pwrstate_sel(self, value):
+        self._pwrstate = value
+    # --- pwrstate_sel getter ---
+    @property
+    def pwrstate_sts(self):
+        return self._pwrstate
+
+    # --- opmode_sel getter ---
+    def _getter_opmode_sel(self):
+        return self._opmode
+    # --- opmode_sel setter ---
+    def _setter_opmode_sel(self, value):
+        self._opmode = value
+    # --- opmode_sel getter ---
+    @property
+    def opmode_sts(self):
+        return self._opmode
+
+    # --- current_sp getter ---
+    def _getter_current_sp(self):
+        return self._current_sp
+    # --- current_sp setter ---
+    def _setter_current_sp(self, value):
+        self._current_sp = value
+    # --- current_sp getter ---
+    @property
+    def current_rb(self):
+        return self._current_rb
+
+    # --- current_rb getter ---
+    @property
+    def current_rb(self):
+        return self._current_rb
+    def _setter_current_rb(self, value):
+        self._current_rb = value
+
+class Ctrller:
+    """Base Controller Class
+
+    This is a simple power supply controller that responds immediatelly
+    to setpoints.
+
+    all enum properties (pwrstate, opmode, etc) are set in ints.
+    """
+
+    def __init__(self, current_min=None, current_max=None, waveform=None):
+
+        # --- default initial controller state ---
+        self._current_min = current_min
+        self._current_max = current_max
+        if waveform is None: waveform = _PSWaveForm.wfm_constant(_wfm_nr_points)
+        self._waveform = waveform
+        self._waveform_step = 0
+        now = _time.time()
+        self._timestamp_pwrstate = now
+        self._timestamp_opmode   = now
+
+
+    @property
+    def pwrstate_sel(self):
+        return self.__getter_pwrstate_sel()
+
+    @pwrstate_sel.setter
+    def pwrstate_sel(self, value):
+        self._timestamp_pwrstate = _time.time()
+        self.__setter_pwrstate_sel(value)
+        self._update_state()
+
+    def __getter_pwrstate_sel(self):
+        return self._getter_pwrstate_sel()
+    def _getter_pwrstate_sel(self):
+        raise NotImplementedError
+
+    def __setter_pwrstate_sel(self):
+        self._setter_pwrstate_sel()
+    def _setter_pwrstate_sel(self, value):
+        raise NotImplementedError
+
+
+
+
+    @property
+    def pwrstate_sts(self):
+        raise NotImplementedError
+
+    @property
+    def opmode_sts(self):
+        raise NotImplementedError
+
+    def _getter_opmode_sel(self):
+        raise NotImplementedError
+
+    def _setter_opmode_sel(self, value):
+        raise NotImplementedError
+
+    @property
+    def current_rb(self):
+        raise NotImplementedError
+
+    def _getter_current_sp(self):
+        raise NotImplementedError
+
+    def _setter_current_sp(self, value):
+        raise NotImplementedError
+
+
+    @property
+    def opmode_sel(self):
+        return self.__getter_opmode_sel()
+    @opmode_sel.setter
+    def opmode_sel(self, value):
+        self._timestamp_opmode = _time.time()
+        self.__setter_opmode_sel(value)
+        self._update_state()
+    def __getter_opmode_sel(self):
+        return self._getter_opmode_sel()
+    def __setter_opmode_sel(self):
+        self._setter_opmode_sel()
+
+    @property
+    def current_sp(self):
+        return self.__getter_current_sp()
+    @current_sp.setter
+    def current_sp(self, value):
+        self.__setter_current_sp(value)
+        self._update_state()
+    def __getter_current_sp(self):
+        return self._getter_current_sp()
+    def __setter_current_sp(self, value):
+        value = self._check_current_ref_limits(value)
+        self._setter_current_sp(value)
+
+    def timing_trigger(self):
+        if self.opmode == _WfmRef:
+            self._current_rb = self._waveform[self._waveform_step]
+            self._waveform_step += 1
+            if self._waveform_step >= self._waveform.nr_points:
+                self._waveform_step = 0
+            self.update_state()
+
+    def _callback(self, pvname, value, **kwargs):
+        raise NotImplementedError
+
+    def update_state(self):
+        if self.pwrstate == _Off:
+            self._set_current_rb(0.0)
+        else:
+            if self.opmode == _SlowRef:
+                self._update_opmode_slowref()
+            elif self.opmode == _FastRef:
+                self._update_opmode_fastref()
+            elif self.opmode == _WfmRef:
+                self._update_opmode_wfmref()
+            elif self.opmode == _SigGen:
+                self._update_opmode_siggen()
+            self._update_fluctuations()
+
+    def _set_current_rb(value):
+        raise NotImplementedError
+
+    def _update_opmode_slowref(self):
+        # slow reference setpoint mode
+        pass
+
+    def _update_opmode_fastref(self):
+        # fast reference setpoints (FOFB)
+        pass
+
+    def _update_opmode_wfmref(self):
+        # ramp driven by timing system signal
+        pass
+
+    def _update_opmode_siggen(self):
+        # demagnetization curve, for example
+        pass
+    def _update_fluctuations(self):
+        pass
+
+    def _check_current_ref_limits(self, value):
+        value = value if self._current_min is None else max(value,self._current_min)
+        value = value if self._current_max is None else min(value,self._current_max)
+        return value
+
+    def __str__(self):
+        st = '--- Controller ---\n'
+        propty = 'pwrstate_sel';       st +=   '{0:<20s}: {1}'.format(propty, _et.key('OffOnTyp', self.pwrstate_sel))
+        propty = 'pwrstate_sts';       st += '\n{0:<20s}: {1}'.format(propty, _et.key('OffOnTyp', self.pwrstate_sts))
+        propty = 'opmode_sel';         st += '\n{0:<20s}: {1}'.format(propty, _et.key('PSOpModeTyp', self.opmode_sel))
+        propty = 'opmode_sts';         st += '\n{0:<20s}: {1}'.format(propty, _et.key('PSOpModeTyp', self.opmode_sts))
+        propty = 'current_sp';         st += '\n{0:<20s}: {1}'.format(propty, self.current_sp)
+        propty = 'current_rb';         st += '\n{0:<20s}: {1}'.format(propty, self.current_rb)
+        propty = 'timestamp_pwrstate'; st += '\n{0:<20s}: {1}'.format(propty, _get_timestamp(self._timestamp_pwrstate))
+        propty = 'timestamp_opmode';   st += '\n{0:<20s}: {1}'.format(propty, _get_timestamp(self._timestamp_opmode))
+        return st
+
+
+class CtrllerSim(Ctrller):
+
+    def __init__(self, fluctuation_rms=_fluctuation_rms,
+                       **kwargs):
+        super().__init__(**kwargs)
+        self._fluctuation_rms = fluctuation_rms
+        self._pwrstate     = _et.idx('OffOnTyp', 'Off')
+        self._opmode       = _et.idx('PSOpModeTyp', 'SlowRef')
+        self._current_sp   = 0.0
+        self._current_rb   = self._current_sp
+        self._update_fluctuations()
+
+
+        def _getter_pwrstate_sel(self):
+            return self._pwrstate
+
+        def _setter_pwrstate_sel(self, value):
+            self._pwrstate = value
+
+
+
+
+
+
+
+        @property
+        def pwrstate_sts(self):
+            return self._pwrstate
+
+        @property
+        def opmode_sts(self):
+            return self._opmode
+
+        def _getter_opmode_sel(self):
+            return self._opmode
+
+        def _setter_opmode_sel(self, value):
+            self._opmode = value
+
+        @property
+        def current_rb(self):
+            return self._current_rb
+
+        def _getter_current_sp(self):
+            return self._current_sp
+
+        def _setter_current_sp(self, value):
+            self._current_sp = value
+
+
+    def timing_trigger(self):
+        if self.opmode == _WfmRef:
+            self._current_rb = self._waveform[self._waveform_step]
+            self._waveform_step += 1
+            if self._waveform_step >= self._waveform.nr_points:
+                self._waveform_step = 0
+            self.update_state()
+
+    def _callback(self, pvname, value, **kwargs):
+        raise NotImplementedError
+
+    def update_state(self):
+        if self.pwrstate == _Off:
+            self._set_current_rb(0.0)
+        else:
+            if self.opmode == _SlowRef:
+                self._update_opmode_slowref()
+            elif self.opmode == _FastRef:
+                self._update_opmode_fastref()
+            elif self.opmode == _WfmRef:
+                self._update_opmode_wfmref()
+            elif self.opmode == _SigGen:
+                self._update_opmode_siggen()
+            self._update_add_fluctuations()
+
+    def _set_current_rb(value):
+        raise NotImplementedError
+
+    def _update_opmode_slowref(self):
+        # slow reference setpoint mode
+        pass
+
+    def _update_opmode_fastref(self):
+        # fast reference setpoints (FOFB)
+        pass
+
+    def _update_opmode_wfmref(self):
+        # ramp driven by timing system signal
+        pass
+
+    def _update_opmode_siggen(self):
+        # demagnetization curve, for example
+        pass
+
+    def _update_fluctuations(self):
+        self._current_rb += 2*(_random.random()-0.5)*self._fluctuation_rms
+
+    def _check_current_ref_limits(self, value):
+        value = value if self._current_min is None else max(value,self._current_min)
+        value = value if self._current_max is None else min(value,self._current_max)
+        return value
+
+
 class Controller:
     """Base Controller Class
 
@@ -215,6 +634,7 @@ class ControllerEpicsPS(ControllerSim):
 
     @current_ref.setter
     def current_ref(self, value):
+        #print('controller', 'current_ref', value)
         value = self._check_current_ref_limits(value)
         self._pvs['Current-SP'].value = value
         # invocation of _pvs_callback will update internal state of controller
@@ -244,22 +664,26 @@ class ControllerEpicsPS(ControllerSim):
         self._pvs = {}
         pvname = self._prefix + self._ps_name
         self._pvs['PwrState-Sel'] = _SiriusPV(pvname + ':PwrState-Sel', connection_timeout=self._connection_timeout)
-        self._pvs['PwrState-Sts'] = _SiriusPV(pvname + ':PwrState-Sts', callback=self._pvs_callback, connection_timeout=self._connection_timeout)
+        self._pvs['PwrState-Sts'] = _SiriusPV(pvname + ':PwrState-Sts', callback=self._callback, connection_timeout=self._connection_timeout)
         self._pvs['OpMode-Sel'] = _SiriusPV(pvname + ':OpMode-Sel', connection_timeout=self._connection_timeout)
-        self._pvs['OpMode-Sts'] = _SiriusPV(pvname + ':OpMode-Sts', callback=self._pvs_callback, connection_timeout=self._connection_timeout)
-        self._pvs['Current-SP'] = _SiriusPV(pvname + ':Current-SP', callback=self._pvs_callback, connection_timeout=self._connection_timeout)
-        self._pvs['Current-RB'] = _SiriusPV(pvname + ':Current-RB', callback=self._pvs_callback, connection_timeout=self._connection_timeout)
+        self._pvs['OpMode-Sts'] = _SiriusPV(pvname + ':OpMode-Sts', callback=self._callback, connection_timeout=self._connection_timeout)
+        self._pvs['Current-SP'] = _SiriusPV(pvname + ':Current-SP', callback=self._callback, connection_timeout=self._connection_timeout)
+        self._pvs['Current-RB'] = _SiriusPV(pvname + ':Current-RB', callback=self._callback, connection_timeout=self._connection_timeout)
 
-    def _pvs_callback(self, pvname, value, **kwargs):
-        #print('conrtoller callback', pvname, value)
-        if 'PwrState-Sts' in pvname:
-            self._pwrstate = value
-        elif 'OpMode-Sts' in pvname:
-            self._opmode = value
-        elif 'Current-RB' in pvname:
-            self._current_dcct = value
-        elif 'Current-SP' in pvname:
-            self._current_ref = value
-        self.update_state()
-        for index, callback in self._callbacks.items():
-            callback(pvname, value, **kwargs)
+    def _callback(self, pvname, value, **kwargs):
+
+        value_changed_flag = False
+        if 'PwrState-Sts' in pvname and value != self._pwrstate:
+            self._pwrstate = value; value_changed_flag = True
+        elif 'OpMode-Sts' in pvname and value != self._opmode:
+            self._opmode = value; value_changed_flag = True
+        elif 'Current-RB' in pvname and value != self._current_dcct:
+            self._current_dcct = value; value_changed_flag = True
+        elif 'Current-SP' in pvname and value != self._current_ref:
+            print('controller current-sp', value)
+            self._current_ref = value; value_changed_flag = True
+
+        if value_changed_flag:
+            self.update_state()
+            for index, callback in self._callbacks.items():
+                callback(pvname, value, **kwargs)

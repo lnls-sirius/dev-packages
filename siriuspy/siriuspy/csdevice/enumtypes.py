@@ -31,6 +31,10 @@ class EnumTypes:
         values = EnumTypes.enums(typ)
         return values[idx]
 
+    @staticmethod
+    def values(typ):
+        return tuple(range(len(EnumTypes[typ])))
+        
     @_ClassProperty
     @classmethod
     def names(cls):

@@ -57,13 +57,6 @@ class PowerSupply:
     def database(self):
         """Return a database whose keys correspond to PS properties prefixed by the device instance name."""
         return _copy.deepcopy(self._database)
-        # pv_name = _namesys.SiriusPVName(self._ps_name)
-        # database = {}
-        # for propty, db in self._database.items():
-        #     pv_name.propty = propty
-        #     database[pv_name.pv_name] = _copy.deepcopy(db)
-        #     #print(pv_name.pv_name)
-        # return database
 
     @property
     def setpoint_limits(self):
@@ -109,27 +102,22 @@ class PowerSupply:
 
     @pwrstate_sel.setter
     def pwrstate_sel(self, value):
-        if self._get_enum('CtrlMode-Mon') != 'Remote': return
-        self._set('PwrState-Sel',value)
-        self._controller.pwrstate = self._get_idx('PwrState-Sel')
-        self._controller_read_status()
+        """Set corresponding controller parameter and wait response through callback."""
+        if self._get_enum('CtrlMode-Mon') != 'Remote': return # necessary???
+        self._controller.pwrstate = self._conv_enum2idx('PwrState-Sel', value)
 
     @opmode_sel.setter
     def opmode_sel(self, value):
-        if self._get_enum('CtrlMode-Mon') != 'Remote': return
-        self._set('OpMode-Sel',value)
-        #self._controller.current = self._get('Current-SP')
-        self._controller.opmode = self._get_idx('OpMode-Sel')
-        self._controller_read_status()
+        """Set corresponding controller parameter and wait response through callback."""
+        if self._get_enum('CtrlMode-Mon') != 'Remote': return # necessary???
+        self._controller.opmode = self._conv_enum2idx('OpMode-Sel', value)
 
     @current_sp.setter
     def current_sp(self, value):
-        if self._get_enum('CtrlMode-Mon') != 'Remote': return
+        if self._get_enum('CtrlMode-Mon') != 'Remote': return # necessary???
         value = float(value)
         value = self._check_IOC_setpoint_limits(value)
-        self._set('Current-SP',value)
         self._controller.current_ref = value
-        self._controller_read_status()
 
     @reset_cmd.setter
     def reset_cmd(self, value):
@@ -187,7 +175,6 @@ class PowerSupply:
             self._callback('OpModel-Sel', self._controller.opmode)
 
         value = self._get_idx('Current-SP')
-        print(self._ps_name, value)
         if value is not None:
             self._controller.current_ref = value
         else:
@@ -198,20 +185,25 @@ class PowerSupply:
            It updates internal state of the PS model and signals all registered
            callback functions."""
 
-        if 'PwrState-Sel' in pvname:
-            self._set_idx('PwrState-Sel', value)
-        elif 'PwrState-Sts' in pvname:
-            self._set_idx('PwrState-Sts', value)
-        elif 'OpMode-Sts' in pvname:
-            self._set_idx('OpMode-Sts', value)
-        elif 'OpMode-Sel' in pvname:
-            self._set_idx('OpMode-Sel', value)
-        elif 'Current-RB' in pvname:
-            self._set('Current-RB', value)
-        elif 'Current-SP' in pvname:
-            self._set('Current-SP', value)
-        for index, callback_function in self._callback_functions.items():
-            callback_function(pvname, value, **kwargs)
+        #print('model.py callback', pvname, value)
+
+        value_changed_flag = False
+        if 'PwrState-Sel' in pvname and value != self._get_idx('PwrState-Sel'):
+            self._set_idx('PwrState-Sel', value); value_changed_flag = True
+        elif 'PwrState-Sts' in pvname and value != self._get_idx('PwrState-Sts'):
+            self._set_idx('PwrState-Sts', value); value_changed_flag = True
+        elif 'OpMode-Sel' in pvname and value != self._get_idx('OpMode-Sel'):
+            self._set_idx('OpMode-Sel', value); value_changed_flag = True
+        elif 'OpMode-Sts' in pvname and value != self._get_idx('OpMode-Sts'):
+            self._set_idx('OpMode-Sts', value); value_changed_flag = True
+        elif 'Current-SP' in pvname and value != self._get_idx('Current-SP'):
+            self._set('Current-SP', value); value_changed_flag = True
+        elif 'Current-RB' in pvname and value != self._get_idx('Current-RB'):
+            self._set('Current-RB', value); value_changed_flag = True
+
+        if value_changed_flag:
+            for index, callback_function in self._callback_functions.items():
+                callback_function(pvname, value, **kwargs)
 
     def _controller_read_status(self):
         """This is necessary for controllers without callbacks"""
@@ -219,26 +211,30 @@ class PowerSupply:
         self._set_idx('OpMode-Sts', self._controller.opmode)
         self._set('Current-RB', self._controller.current)
 
-    def _get_value(self, propty_name, enum_value):
-        "Return either the passed enum_value, of enum_keys is set, or its index."
-        p = self._database[propty_name]
+    def _conv_enum2idx(self, propty, value):
+        p = self._database[propty]
+        return p['enums'].index(value) if self._enum_keys else value
+
+    def _get(self, propty):
+        """Return either the enum or index value of enum properties in DB, if applicable."""
+        p = self._database[propty]
+        return p['value'] if (p['type'] != 'enum' or not self._enum_keys) else self._get_enum(propty)
+
+    def _get_value(self, propty, enum_value):
+        """Return either the passed enum_value, of enum_keys is set, or its index."""
+        p = self._database[propty]
         return enum_value if self._enum_keys else p['enums'].index(enum_value)
 
-    def _get_enum(self, propty_name):
+    def _get_enum(self, propty):
         """Return the enum value of a enum property in the DB, if applicable."""
-        p = self._database[propty_name]
+        p = self._database[propty]
         return p['enums'][p['value']] if p['type'] == 'enum' else p['value']
 
-    def _get_idx(self, propty_name):
+    def _get_idx(self, propty):
         """Return the index value of a enum property in the DB, or the value of a non-enum property."""
-        p = self._database[propty_name]
+        p = self._database[propty]
         return p['value']
 
-    def _get(self, propty_name):
-        """return either the enum or index value of enum properties in DB, if applicable."""
-        # return either the index or the enum value of a enum property
-        p = self._database[propty_name]
-        return p['value'] if (p['type'] != 'enum' or not self._enum_keys) else self._get_enum(propty_name)
 
     def _set_enum(self, propty_name, value):
         p = self._database[propty_name]
