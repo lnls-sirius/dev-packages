@@ -2,10 +2,11 @@ import time as _time
 import datetime as _datetime
 
 
-def get_timestamp():
-    t0 = _time.time()
-    st = _datetime.datetime.fromtimestamp(t0).strftime('%Y-%m-%d-%H:%M:%S')
-    st = st + '.{0:03d}'.format(int(1000*(t0-int(t0))))
+def get_timestamp(now = None):
+    if now is None:
+        now = _time.time()
+    st = _datetime.datetime.fromtimestamp(now).strftime('%Y-%m-%d-%H:%M:%S')
+    st = st + '.{0:03d}'.format(int(1000*(now-int(now))))
     return st
 
 
