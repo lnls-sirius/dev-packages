@@ -6,6 +6,8 @@ import uuid as _uuid
 from siriuspy.util import get_timestamp as _get_timestamp
 from .waveform import PSWaveForm as _PSWaveForm
 from siriuspy.epics import SiriusPV as _SiriusPV
+from abc import abstractmethod as _abstractmethod
+from abc import abstractproperty as _abstractproperty
 
 _Off     = _et.idx('OffOnTyp','Off')
 _On      = _et.idx('OffOnTyp','On')
@@ -17,103 +19,192 @@ _SigGen  = _et.idx('PSOpModeTyp','SigGen')
 
 _connection_timeout = 0.05
 _fluctuation_rms = 0.0
-_wfm_nr_points = 2000
+_wfm_default = _PSWaveForm.wfm_linear_ramp(2000,10, max_value=50.0)
 
 
+class Controller:
 
-class A:
+    def __init__(self, current_min=None, # mininum current setpoint value
+                       current_max=None, # maximum current setpoint value
+                       waveform=None,    # wafeform used in WfmRef mode
+                       callback=None,    # callback function to signal
+                       index=None):      # callback index in dictionary
 
-    def __init__(self, current_min=None, current_max=None, waveform=None):
+        """Class implementation of the logic of a power supply controller.
+
+        This is a pure virtual class that implements the logic of controllers used by
+        power supply IOCs. It can be subclassed to either a controller state
+        simulator or to a front-end object that may interact bellow with another
+        IOC (such as VACA), or with a hardware controller.
+
+        The idea with this class is to concentrate most of the logic of the
+        controller signals within this pure virtual super class, thus minimizing
+        as much as possible algorithm replication and code maintenance.
+
+        A broad range of controller types can be implemented as subclasses due
+        to the fact that many of the methods that may require specific actions
+        are implemented as virtual methods.
+
+        """
+        # controller limits
         self._current_min = current_min
         self._current_max = current_max
-        if waveform is None: waveform = _PSWaveForm.wfm_constant(_wfm_nr_points)
+        # waveform
+        if waveform is None:
+            waveform = _wfm_default
         self._waveform = waveform
         self._waveform_step = 0
+        # timestamps
         now = _time.time()
         self._timestamp_pwrstate = now
         self._timestamp_opmode   = now
+        # callback function
+        self._callbacks = {}
+        if callback is not None:
+            if index is None: index = _uuid.uuid4()
+            self._callbacks[index] = callback
+        self._update_state()
 
-    # --- pwrstate_sel getter ---
+    # --- pure virtual properties and methods ---
+
+    @_abstractmethod
+    def _getter_pwrstate_sel(self):
+        """Virtual method that retrieves the state of PwrState-Sel."""
+        pass
+
+    @_abstractmethod
+    def _setter_pwrstate_sel(self, value):
+        """Virtual method that sets the state of PwrState-Sel.
+        It returns True if state has changed."""
+        pass
+
+    @_abstractproperty
+    def pwrstate_sts(self):
+        """Virtual property that returns state of PwrState-Sts."""
+        pass
+
+    @_abstractmethod
+    def _getter_opmode_sel(self):
+        """Virtual method that retrieves the state of OpMode-Sel."""
+        pass
+
+    @_abstractmethod
+    def _setter_opmode_sel(self, value):
+        """Virtual method that sets the state of OpMode-Sel.
+        It returns True is state has changed."""
+        pass
+
+    @_abstractproperty
+    def opmode_sts(self):
+        """Virtual property that returns state of OpMode-Sts."""
+        pass
+
+    @_abstractmethod
+    def _getter_current_sp(self):
+        """Virtual method that returns state of Current-SP."""
+        pass
+
+    @_abstractmethod
+    def _setter_current_sp(self, value):
+        """Virtual method that sets the state of Current-SP.
+        It returns True is state has changed."""
+        pass
+
+    @_abstractproperty
+    def current_rb(self):
+        """Virtual property that retrieves the state of Current-RB."""
+        pass
+
+    @_abstractmethod
+    def _setter_current_rb(self, value):
+        """Virtual method that sets the state of Current-RB.
+        It returns True is state is changed.
+        This method is used in the internal logic of the controller.
+        """
+        pass
+
+    # --- virtual methods used to update the state of the controller ---
+
+    def _update_opmode_slowref(self):
+        pass
+
+    def _update_opmode_fastref(self):
+        pass
+
+    def _update_opmode_wfmref(self):
+        pass
+
+    def _update_opmode_siggen(self):
+        pass
+
+    def _add_errors():
+        """Virtual method that can be used to add fluctuations to readout
+        properties of the controller."""
+        pass
+
+    def _run_callbacks(self):
+        """This virtual method is used to signal up registered callback functions
+        when the state of the controller has changed. It is invoked at the end
+        of the _update_state method."""
+        pass
+
+    # --- super class setters, properties and methods that Should
+    #     implement most of the logic of the controller
+
     @property
     def pwrstate_sel(self):
+        """Return the state of PwrState-Sel."""
         return self.__getter_pwrstate_sel()
     def __getter_pwrstate_sel(self):
         return self._getter_pwrstate_sel()
-    def _getter_pwrstate_sel(self):
-        raise NotImplementedError
 
-    # --- pwrstate_sel setter ---
     @pwrstate_sel.setter
     def pwrstate_sel(self, value):
-        self.__setter_pwrstate_sel(value)
-        self._update_state()
+        """Set state of PwrState-Sel and update state of controller."""
+        self._timestamp_pwrstate = _time.time()
+        if self.__setter_pwrstate_sel(value):
+            self._update_state()
     def __setter_pwrstate_sel(self, value):
-        self._setter_pwrstate_sel(value)
-    def _setter_pwrstate_sel(self, value):
-        raise NotImplementedError
+        return self._setter_pwrstate_sel(value)
 
-    # --- pwrstate_sts getter ---
-    @property
-    def pwrstate_sts(self):
-        raise NotImplementedError
-
-
-    # --- opmode_sel getter ---
     @property
     def opmode_sel(self):
+        """Return the state of POpMode-Sel."""
         return self.__getter_opmode_sel()
     def __getter_opmode_sel(self):
         return self._getter_opmode_sel()
-    def _getter_opmode_sel(self):
-        raise NotImplementedError
 
-    # --- opmode_sel setter ---
     @opmode_sel.setter
     def opmode_sel(self, value):
-        self.__setter_opmode_sel(value)
-        self._update_state()
+        """Set state of PwrState-Sel and update state of controller."""
+        self._timestamp_opmode = _time.time()
+        if self.__setter_opmode_sel(value):
+            self._update_state()
     def __setter_opmode_sel(self, value):
-        self._setter_opmode_sel(value)
-    def _setter_opmode_sel(self, value):
-        raise NotImplementedError
+        return self._setter_opmode_sel(value)
 
-    # --- opmode_sts getter ---
-    @property
-    def opmode_sts(self):
-        raise NotImplementedError
-
-    # --- current_sp getter ---
     @property
     def current_sp(self):
+        """Return the state of Current-SP."""
         return self.__getter_current_sp()
     def __getter_current_sp(self):
         return self._getter_current_sp()
-    def _getter_current_sp(self):
-        raise NotImplementedError
 
-    # --- current_sp setter ---
     @current_sp.setter
     def current_sp(self, value):
-        self.__setter_current_sp(value)
-        self._update_state()
+        """Set state of PwrState-Sel and update state of controller."""
+        if self.__setter_current_sp(value):
+            self._update_state()
     def __setter_current_sp(self, value):
-        self._setter_current_sp(value)
-    def _setter_current_sp(self, value):
-        raise NotImplementedError
-
-    # --- current_rb getter ---
-    @property
-    def current_rb(self):
-        raise NotImplementedError
-    def _setter_current_rb(self, value):
-        raise NotImplementedError
-
+        return self._setter_current_sp(value)
 
     def _update_state(self):
-        #self._setter_current_rb(self.current_sp)
+        """Method that update controller state. It implements most of the
+        controller logic regarding the interdependency of the controller
+        properties."""
         if self.pwrstate_sts == _Off:
             self._setter_current_rb(0.0)
-        else:
+        elif self.pwrstate_sts == _On:
             opmode = self.opmode_sts
             if opmode == _SlowRef:
                 self._update_opmode_slowref()
@@ -123,205 +214,12 @@ class A:
                 self._update_opmode_wfmref()
             elif opmode == _SigGen:
                 self._update_opmode_siggen()
-            self._update_fluctuations()
-
-
-class B(A):
-
-    def __init__(self, fluctuation_rms=0, **kwargs):
-        super().__init__(**kwargs)
-        self._fluctuation_rms = fluctuation_rms
-        self._pwrstate = 0
-        self._opmode = 0
-        self._current_sp = 0.0
-        self._current_rb = 0.0
-
-    # --- pwrstate_sel getter ---
-    def _getter_pwrstate_sel(self):
-        return self._pwrstate
-    # --- pwrstate_sel setter ---
-    def _setter_pwrstate_sel(self, value):
-        self._pwrstate = value
-    # --- pwrstate_sel getter ---
-    @property
-    def pwrstate_sts(self):
-        return self._pwrstate
-
-    # --- opmode_sel getter ---
-    def _getter_opmode_sel(self):
-        return self._opmode
-    # --- opmode_sel setter ---
-    def _setter_opmode_sel(self, value):
-        self._opmode = value
-    # --- opmode_sel getter ---
-    @property
-    def opmode_sts(self):
-        return self._opmode
-
-    # --- current_sp getter ---
-    def _getter_current_sp(self):
-        return self._current_sp
-    # --- current_sp setter ---
-    def _setter_current_sp(self, value):
-        self._current_sp = value
-    # --- current_sp getter ---
-    @property
-    def current_rb(self):
-        return self._current_rb
-
-    # --- current_rb getter ---
-    @property
-    def current_rb(self):
-        return self._current_rb
-    def _setter_current_rb(self, value):
-        self._current_rb = value
-
-class Ctrller:
-    """Base Controller Class
-
-    This is a simple power supply controller that responds immediatelly
-    to setpoints.
-
-    all enum properties (pwrstate, opmode, etc) are set in ints.
-    """
-
-    def __init__(self, current_min=None, current_max=None, waveform=None):
-
-        # --- default initial controller state ---
-        self._current_min = current_min
-        self._current_max = current_max
-        if waveform is None: waveform = _PSWaveForm.wfm_constant(_wfm_nr_points)
-        self._waveform = waveform
-        self._waveform_step = 0
-        now = _time.time()
-        self._timestamp_pwrstate = now
-        self._timestamp_opmode   = now
-
-
-    @property
-    def pwrstate_sel(self):
-        return self.__getter_pwrstate_sel()
-
-    @pwrstate_sel.setter
-    def pwrstate_sel(self, value):
-        self._timestamp_pwrstate = _time.time()
-        self.__setter_pwrstate_sel(value)
-        self._update_state()
-
-    def __getter_pwrstate_sel(self):
-        return self._getter_pwrstate_sel()
-    def _getter_pwrstate_sel(self):
-        raise NotImplementedError
-
-    def __setter_pwrstate_sel(self):
-        self._setter_pwrstate_sel()
-    def _setter_pwrstate_sel(self, value):
-        raise NotImplementedError
-
-
-
-
-    @property
-    def pwrstate_sts(self):
-        raise NotImplementedError
-
-    @property
-    def opmode_sts(self):
-        raise NotImplementedError
-
-    def _getter_opmode_sel(self):
-        raise NotImplementedError
-
-    def _setter_opmode_sel(self, value):
-        raise NotImplementedError
-
-    @property
-    def current_rb(self):
-        raise NotImplementedError
-
-    def _getter_current_sp(self):
-        raise NotImplementedError
-
-    def _setter_current_sp(self, value):
-        raise NotImplementedError
-
-
-    @property
-    def opmode_sel(self):
-        return self.__getter_opmode_sel()
-    @opmode_sel.setter
-    def opmode_sel(self, value):
-        self._timestamp_opmode = _time.time()
-        self.__setter_opmode_sel(value)
-        self._update_state()
-    def __getter_opmode_sel(self):
-        return self._getter_opmode_sel()
-    def __setter_opmode_sel(self):
-        self._setter_opmode_sel()
-
-    @property
-    def current_sp(self):
-        return self.__getter_current_sp()
-    @current_sp.setter
-    def current_sp(self, value):
-        self.__setter_current_sp(value)
-        self._update_state()
-    def __getter_current_sp(self):
-        return self._getter_current_sp()
-    def __setter_current_sp(self, value):
-        value = self._check_current_ref_limits(value)
-        self._setter_current_sp(value)
-
-    def timing_trigger(self):
-        if self.opmode == _WfmRef:
-            self._current_rb = self._waveform[self._waveform_step]
-            self._waveform_step += 1
-            if self._waveform_step >= self._waveform.nr_points:
-                self._waveform_step = 0
-            self.update_state()
-
-    def _callback(self, pvname, value, **kwargs):
-        raise NotImplementedError
-
-    def update_state(self):
-        if self.pwrstate == _Off:
-            self._set_current_rb(0.0)
+            else:
+                raise Exception('Invalid controller OpMode-Sts!')
+            self._add_errors()
         else:
-            if self.opmode == _SlowRef:
-                self._update_opmode_slowref()
-            elif self.opmode == _FastRef:
-                self._update_opmode_fastref()
-            elif self.opmode == _WfmRef:
-                self._update_opmode_wfmref()
-            elif self.opmode == _SigGen:
-                self._update_opmode_siggen()
-            self._update_fluctuations()
-
-    def _set_current_rb(value):
-        raise NotImplementedError
-
-    def _update_opmode_slowref(self):
-        # slow reference setpoint mode
-        pass
-
-    def _update_opmode_fastref(self):
-        # fast reference setpoints (FOFB)
-        pass
-
-    def _update_opmode_wfmref(self):
-        # ramp driven by timing system signal
-        pass
-
-    def _update_opmode_siggen(self):
-        # demagnetization curve, for example
-        pass
-    def _update_fluctuations(self):
-        pass
-
-    def _check_current_ref_limits(self, value):
-        value = value if self._current_min is None else max(value,self._current_min)
-        value = value if self._current_max is None else min(value,self._current_max)
-        return value
+            raise Exception('Invalid controller PwrState-Sts!')
+        self._run_callbacks()
 
     def __str__(self):
         st = '--- Controller ---\n'
@@ -335,355 +233,617 @@ class Ctrller:
         propty = 'timestamp_opmode';   st += '\n{0:<20s}: {1}'.format(propty, _get_timestamp(self._timestamp_opmode))
         return st
 
+class ControllerError(Controller):
+    """Controller Error Class.
 
-class CtrllerSim(Ctrller):
-
-    def __init__(self, fluctuation_rms=_fluctuation_rms,
-                       **kwargs):
-        super().__init__(**kwargs)
-        self._fluctuation_rms = fluctuation_rms
-        self._pwrstate     = _et.idx('OffOnTyp', 'Off')
-        self._opmode       = _et.idx('PSOpModeTyp', 'SlowRef')
-        self._current_sp   = 0.0
-        self._current_rb   = self._current_sp
-        self._update_fluctuations()
-
-
-        def _getter_pwrstate_sel(self):
-            return self._pwrstate
-
-        def _setter_pwrstate_sel(self, value):
-            self._pwrstate = value
-
-
-
-
-
-
-
-        @property
-        def pwrstate_sts(self):
-            return self._pwrstate
-
-        @property
-        def opmode_sts(self):
-            return self._opmode
-
-        def _getter_opmode_sel(self):
-            return self._opmode
-
-        def _setter_opmode_sel(self, value):
-            self._opmode = value
-
-        @property
-        def current_rb(self):
-            return self._current_rb
-
-        def _getter_current_sp(self):
-            return self._current_sp
-
-        def _setter_current_sp(self, value):
-            self._current_sp = value
-
-
-    def timing_trigger(self):
-        if self.opmode == _WfmRef:
-            self._current_rb = self._waveform[self._waveform_step]
-            self._waveform_step += 1
-            if self._waveform_step >= self._waveform.nr_points:
-                self._waveform_step = 0
-            self.update_state()
-
-    def _callback(self, pvname, value, **kwargs):
-        raise NotImplementedError
-
-    def update_state(self):
-        if self.pwrstate == _Off:
-            self._set_current_rb(0.0)
-        else:
-            if self.opmode == _SlowRef:
-                self._update_opmode_slowref()
-            elif self.opmode == _FastRef:
-                self._update_opmode_fastref()
-            elif self.opmode == _WfmRef:
-                self._update_opmode_wfmref()
-            elif self.opmode == _SigGen:
-                self._update_opmode_siggen()
-            self._update_add_fluctuations()
-
-    def _set_current_rb(value):
-        raise NotImplementedError
-
-    def _update_opmode_slowref(self):
-        # slow reference setpoint mode
-        pass
-
-    def _update_opmode_fastref(self):
-        # fast reference setpoints (FOFB)
-        pass
-
-    def _update_opmode_wfmref(self):
-        # ramp driven by timing system signal
-        pass
-
-    def _update_opmode_siggen(self):
-        # demagnetization curve, for example
-        pass
-
-    def _update_fluctuations(self):
-        self._current_rb += 2*(_random.random()-0.5)*self._fluctuation_rms
-
-    def _check_current_ref_limits(self, value):
-        value = value if self._current_min is None else max(value,self._current_min)
-        value = value if self._current_max is None else min(value,self._current_max)
-        return value
-
-
-class Controller:
-    """Base Controller Class
-
-    This is a simple power supply controller that responds immediatelly
-    to setpoints.
-
-    all enum properties (pwrstate, opmode, etc) are set in ints.
+    Pure virtual class of controller with added gaussian error in the Current-RB
+    property.
     """
+    def __init__(self, error_std=0.0, **kwargs):
 
-    def __init__(self, IOC=None,
-                       current_min=None,
-                       current_max=None,
-                       waveform=None):
+        self._error_std = error_std
+        # At last, after state parameters within the subclass are defined,
+        # super class __init__ can be invoked.
+        super().__init__(**kwargs)
 
-        self._IOC = IOC
-        # --- default initial controller state ---
+    def _add_errors(self):
+        self._setter_current_rb(_random.gauss(self.current_rb,self._error_std))
+
+class ControllerSim(ControllerError):
+    """Class for Controller Simulation.
+
+    This controller subclass derives from ControllerError and implements a
+    controller simulation where its state is stored as class attributes.
+    """
+    def __init__(self, fluctuation_rms=0, **kwargs):
+
+        # define initial state of controller
         self._pwrstate = _Off
-        self._opmode   = _SlowRef
-        self._current_ref  = 0.0  # PS feedback current setpoint
-        self._current_dcct = 0.0  # PS feedback current readback
-        self._current_min = current_min
-        self._current_max = current_max
-        if waveform is None: waveform = _PSWaveForm.wfm_constant(_wfm_nr_points)
-        self._waveform = waveform
-        self._waveform_step = 0
-        now = _time.time()
-        self._timestamp_pwrstate = now
-        self._timestamp_opmode   = now
+        self._opmode = _SlowRef
+        self._current_sp = 0.0
+        self._current_rb = 0.0
 
-    @property
-    def IOC(self):
-        return self._IOC
+        self._fluctuation_rms = fluctuation_rms
+        # At last, after state parameters within the subclass are defined,
+        # super class __init__ can be invoked.
+        super().__init__(**kwargs)
 
-    @property
-    def current(self):
-        self.update_state()
-        return self._current_dcct
+    # --- pwrstate_sel getter ---
+    def _getter_pwrstate_sel(self):
+        return self._pwrstate
+    # --- pwrstate_sel setter ---
+    def _setter_pwrstate_sel(self, value):
+        """Return True is property has changed."""
+        if value == self._pwrstate: return False
+        self._pwrstate = value
+        return True
 
+
+    # --- pwrstate_sel getter ---
     @property
-    def pwrstate(self):
-        self.update_state()
+    def pwrstate_sts(self):
         return self._pwrstate
 
+    # --- opmode_sel getter ---
+    def _getter_opmode_sel(self):
+        return self._opmode
+    # --- opmode_sel setter ---
+    def _setter_opmode_sel(self, value):
+        """Return True is property has changed."""
+        if value == self._opmode: return False
+        self._opmode = value
+        return True
+    # --- opmode_sel getter ---
     @property
-    def opmode(self):
-        self.update_state()
+    def opmode_sts(self):
         return self._opmode
 
-    @IOC.setter
-    def IOC(self, value):
-        self._IOC = value
+    # --- current_sp getter ---
+    def _getter_current_sp(self):
+        return self._current_sp
+    # --- current_sp setter ---
+    def _setter_current_sp(self, value):
+        """Return True is property has changed."""
+        if value == self._current_sp: return False
+        self._current_sp = value
+        return True
+    # --- current_sp getter ---
+    @property
+    def current_rb(self):
+        return self._current_rb
 
-    @current.setter
-    def current_ref(self, value):
-        value = self._check_current_ref_limits(value)
-        self._current_ref = value # Should it happen even with PS off?
-        self.update_state()
-
-    @pwrstate.setter
-    def pwrstate(self, value):
-        self._timestamp_pwrstate = _time.time()
-        if value == _Off:
-            self._pwrstate = _Off
-        elif value == _On:
-            self._pwrstate = _On
-        else:
-            raise Exception('Invalid value!')
-        self.update_state()
-
-    @opmode.setter
-    def opmode(self, value):
-        if value == self._opmode: return # ?
-        self._timestamp_opmode = _time.time()
-        self._waveform_step = 0
-        if value in tuple(range(len(_et.enums('PSOpModeTyp')))):
-            self._opmode = value
-        else:
-            raise Exception('Invalid value!')
-        self.update_state()
-
-    def timing_trigger(self):
-        if self._opmode == _WfmRef:
-            self._current_dcct = self._waveform[self._waveform_step]
-            self._waveform_step += 1
-            if self._waveform_step >= self._waveform.nr_points:
-                self._waveform_step = 0
-            self.update_state()
-
-    def update_state(self):
-        if self._pwrstate == _Off:
-            self._current_dcct = 0.0
-        else:
-            if self._opmode == _SlowRef:
-                self._update_opmode_slowref()
-            elif self._opmode == _FastRef:
-                self._update_opmode_fastref()
-            elif self._opmode == _WfmRef:
-                self._update_opmode_wfmref()
-            elif self._opmode == _SigGen:
-                self._update_opmode_siggen()
-            self._update_add_fluctuations()
+    # --- current_rb getter ---
+    @property
+    def current_rb(self):
+        return self._current_rb
+    def _setter_current_rb(self, value):
+        self._current_rb = value
 
     def _update_opmode_slowref(self):
-        # slow reference setpoint mode
-        self._current_dcct = self._current_ref
+        self._current_rb = self._current_sp
 
-    def _update_opmode_fastref(self):
-        # fast reference setpoints (FOFB)
-        pass
+    # def _add_errors(self):
+    #     self._current_rb += 2*(_random.random()-0.5)*self._fluctuation_rms
 
-    def _update_opmode_wfmref(self):
-        # ramp driven by timing system signal
-        pass
-
-    def _update_opmode_siggen(self):
-        # demagnetization curve, for example
-        pass
-
-    def _update_add_fluctuations(self):
-        pass
-
-    def _check_current_ref_limits(self, value):
-        value = value if self._current_min is None else max(value,self._current_min)
-        value = value if self._current_max is None else min(value,self._current_max)
-        return value
-
-    def __str__(self):
-        st = '--- Controller ---\n'
-        propty = 'pwrstate';     st +=   '{0:<20s}: {1}'.format(propty, _et.key('OffOnTyp', self._pwrstate))
-        propty = 'opmode';       st += '\n{0:<20s}: {1}'.format(propty, _et.key('PSOpModeTyp', self._opmode))
-        propty = 'current-ref';   st += '\n{0:<20s}: {1}'.format(propty, self._current_ref)
-        propty = 'current-dcct';   st += '\n{0:<20s}: {1}'.format(propty, self._current_dcct)
-        propty = 'timestamp-pwrstate'; st += '\n{0:<20s}: {1}'.format(propty, _get_timestamp(self._timestamp_pwrstate))
-        propty = 'timestamp-opmode';   st += '\n{0:<20s}: {1}'.format(propty, _get_timestamp(self._timestamp_opmode))
-        return st
+    def _run_callbacks(self):
+        for index, callback in self._callbacks.items():
+            callback('PwrState-Sel', self.pwrstate_sel)
+            callback('PwrState-Sts', self.pwrstate_sts)
+            callback('OpMode-Sel', self.opmode_sel)
+            callback('OpMode-Sts', self.opmode_sts)
+            callback('Current-SP', self.current_sp)
+            callback('Current-RB', self.current_rb)
 
 
-class ControllerSim(Controller):
-    """Simple Simulated Controller Class
+# class Ctrller:
+#     """Base Controller Class
+#
+#     This is a simple power supply controller that responds immediatelly
+#     to setpoints.
+#
+#     all enum properties (pwrstate, opmode, etc) are set in ints.
+#     """
+#
+#     def __init__(self, current_min=None, current_max=None, waveform=None):
+#
+#         # --- default initial controller state ---
+#         self._current_min = current_min
+#         self._current_max = current_max
+#         if waveform is None: waveform = _PSWaveForm.wfm_constant(_wfm_nr_points)
+#         self._waveform = waveform
+#         self._waveform_step = 0
+#         now = _time.time()
+#         self._timestamp_pwrstate = now
+#         self._timestamp_opmode   = now
+#
+#
+#     @property
+#     def pwrstate_sel(self):
+#         return self.__getter_pwrstate_sel()
+#
+#     @pwrstate_sel.setter
+#     def pwrstate_sel(self, value):
+#         self._timestamp_pwrstate = _time.time()
+#         self.__setter_pwrstate_sel(value)
+#         self._update_state()
+#
+#     def __getter_pwrstate_sel(self):
+#         return self._getter_pwrstate_sel()
+#     def _getter_pwrstate_sel(self):
+#         raise NotImplementedError
+#
+#     def __setter_pwrstate_sel(self):
+#         self._setter_pwrstate_sel()
+#     def _setter_pwrstate_sel(self, value):
+#         raise NotImplementedError
+#
+#
+#
+#
+#     @property
+#     def pwrstate_sts(self):
+#         raise NotImplementedError
+#
+#     @property
+#     def opmode_sts(self):
+#         raise NotImplementedError
+#
+#     def _getter_opmode_sel(self):
+#         raise NotImplementedError
+#
+#     def _setter_opmode_sel(self, value):
+#         raise NotImplementedError
+#
+#     @property
+#     def current_rb(self):
+#         raise NotImplementedError
+#
+#     def _getter_current_sp(self):
+#         raise NotImplementedError
+#
+#     def _setter_current_sp(self, value):
+#         raise NotImplementedError
+#
+#
+#     @property
+#     def opmode_sel(self):
+#         return self.__getter_opmode_sel()
+#     @opmode_sel.setter
+#     def opmode_sel(self, value):
+#         self._timestamp_opmode = _time.time()
+#         self.__setter_opmode_sel(value)
+#         self._update_state()
+#     def __getter_opmode_sel(self):
+#         return self._getter_opmode_sel()
+#     def __setter_opmode_sel(self):
+#         self._setter_opmode_sel()
+#
+#     @property
+#     def current_sp(self):
+#         return self.__getter_current_sp()
+#     @current_sp.setter
+#     def current_sp(self, value):
+#         self.__setter_current_sp(value)
+#         self._update_state()
+#     def __getter_current_sp(self):
+#         return self._getter_current_sp()
+#     def __setter_current_sp(self, value):
+#         value = self._check_current_ref_limits(value)
+#         self._setter_current_sp(value)
+#
+#     def timing_trigger(self):
+#         if self.opmode == _WfmRef:
+#             self._current_rb = self._waveform[self._waveform_step]
+#             self._waveform_step += 1
+#             if self._waveform_step >= self._waveform.nr_points:
+#                 self._waveform_step = 0
+#             self.update_state()
+#
+#     def _callback(self, pvname, value, **kwargs):
+#         raise NotImplementedError
+#
+#     def update_state(self):
+#         if self.pwrstate == _Off:
+#             self._set_current_rb(0.0)
+#         else:
+#             if self.opmode == _SlowRef:
+#                 self._update_opmode_slowref()
+#             elif self.opmode == _FastRef:
+#                 self._update_opmode_fastref()
+#             elif self.opmode == _WfmRef:
+#                 self._update_opmode_wfmref()
+#             elif self.opmode == _SigGen:
+#                 self._update_opmode_siggen()
+#             self._update_fluctuations()
+#
+#     def _set_current_rb(value):
+#         raise NotImplementedError
+#
+#     def _update_opmode_slowref(self):
+#         # slow reference setpoint mode
+#         pass
+#
+#     def _update_opmode_fastref(self):
+#         # fast reference setpoints (FOFB)
+#         pass
+#
+#     def _update_opmode_wfmref(self):
+#         # ramp driven by timing system signal
+#         pass
+#
+#     def _update_opmode_siggen(self):
+#         # demagnetization curve, for example
+#         pass
+#     def _update_fluctuations(self):
+#         pass
+#
+#     def _check_current_ref_limits(self, value):
+#         value = value if self._current_min is None else max(value,self._current_min)
+#         value = value if self._current_max is None else min(value,self._current_max)
+#         return value
+#
+#     def __str__(self):
+#         st = '--- Controller ---\n'
+#         propty = 'pwrstate_sel';       st +=   '{0:<20s}: {1}'.format(propty, _et.key('OffOnTyp', self.pwrstate_sel))
+#         propty = 'pwrstate_sts';       st += '\n{0:<20s}: {1}'.format(propty, _et.key('OffOnTyp', self.pwrstate_sts))
+#         propty = 'opmode_sel';         st += '\n{0:<20s}: {1}'.format(propty, _et.key('PSOpModeTyp', self.opmode_sel))
+#         propty = 'opmode_sts';         st += '\n{0:<20s}: {1}'.format(propty, _et.key('PSOpModeTyp', self.opmode_sts))
+#         propty = 'current_sp';         st += '\n{0:<20s}: {1}'.format(propty, self.current_sp)
+#         propty = 'current_rb';         st += '\n{0:<20s}: {1}'.format(propty, self.current_rb)
+#         propty = 'timestamp_pwrstate'; st += '\n{0:<20s}: {1}'.format(propty, _get_timestamp(self._timestamp_pwrstate))
+#         propty = 'timestamp_opmode';   st += '\n{0:<20s}: {1}'.format(propty, _get_timestamp(self._timestamp_opmode))
+#         return st
+#
+#
 
-    This subclass of Controller introduces simulated measurement fluctuations
-    and OpModes other than SlowRef.
-    """
+# class CtrllerSim(Ctrller):
+#
+#     def __init__(self, fluctuation_rms=_fluctuation_rms,
+#                        **kwargs):
+#         super().__init__(**kwargs)
+#         self._fluctuation_rms = fluctuation_rms
+#         self._pwrstate     = _et.idx('OffOnTyp', 'Off')
+#         self._opmode       = _et.idx('PSOpModeTyp', 'SlowRef')
+#         self._current_sp   = 0.0
+#         self._current_rb   = self._current_sp
+#         self._update_fluctuations()
+#
+#
+#         def _getter_pwrstate_sel(self):
+#             return self._pwrstate
+#
+#         def _setter_pwrstate_sel(self, value):
+#             self._pwrstate = value
+#
+#
+#
+#
+#
+#
+#
+#         @property
+#         def pwrstate_sts(self):
+#             return self._pwrstate
+#
+#         @property
+#         def opmode_sts(self):
+#             return self._opmode
+#
+#         def _getter_opmode_sel(self):
+#             return self._opmode
+#
+#         def _setter_opmode_sel(self, value):
+#             self._opmode = value
+#
+#         @property
+#         def current_rb(self):
+#             return self._current_rb
+#
+#         def _getter_current_sp(self):
+#             return self._current_sp
+#
+#         def _setter_current_sp(self, value):
+#             self._current_sp = value
+#
+#
+#     def timing_trigger(self):
+#         if self.opmode == _WfmRef:
+#             self._current_rb = self._waveform[self._waveform_step]
+#             self._waveform_step += 1
+#             if self._waveform_step >= self._waveform.nr_points:
+#                 self._waveform_step = 0
+#             self.update_state()
+#
+#     def _callback(self, pvname, value, **kwargs):
+#         raise NotImplementedError
+#
+#     def update_state(self):
+#         if self.pwrstate == _Off:
+#             self._set_current_rb(0.0)
+#         else:
+#             if self.opmode == _SlowRef:
+#                 self._update_opmode_slowref()
+#             elif self.opmode == _FastRef:
+#                 self._update_opmode_fastref()
+#             elif self.opmode == _WfmRef:
+#                 self._update_opmode_wfmref()
+#             elif self.opmode == _SigGen:
+#                 self._update_opmode_siggen()
+#             self._update_add_fluctuations()
+#
+#     def _set_current_rb(value):
+#         raise NotImplementedError
+#
+#     def _update_opmode_slowref(self):
+#         # slow reference setpoint mode
+#         pass
+#
+#     def _update_opmode_fastref(self):
+#         # fast reference setpoints (FOFB)
+#         pass
+#
+#     def _update_opmode_wfmref(self):
+#         # ramp driven by timing system signal
+#         pass
+#
+#     def _update_opmode_siggen(self):
+#         # demagnetization curve, for example
+#         pass
+#
+#     def _update_fluctuations(self):
+#         self._current_rb += 2*(_random.random()-0.5)*self._fluctuation_rms
+#
+#     def _check_current_ref_limits(self, value):
+#         value = value if self._current_min is None else max(value,self._current_min)
+#         value = value if self._current_max is None else min(value,self._current_max)
+#         return value
+#
 
-    def __init__(self, fluctuation_rms=_fluctuation_rms,
-                       **kwargs):
-        super().__init__(**kwargs)
-        self._fluctuation_rms = fluctuation_rms
+# class Controller:
+#     """Base Controller Class
+#
+#     This is a simple power supply controller that responds immediatelly
+#     to setpoints.
+#
+#     all enum properties (pwrstate, opmode, etc) are set in ints.
+#     """
+#
+#     def __init__(self, IOC=None,
+#                        current_min=None,
+#                        current_max=None,
+#                        waveform=None):
+#
+#         self._IOC = IOC
+#         # --- default initial controller state ---
+#         self._pwrstate = _Off
+#         self._opmode   = _SlowRef
+#         self._current_ref  = 0.0  # PS feedback current setpoint
+#         self._current_dcct = 0.0  # PS feedback current readback
+#         self._current_min = current_min
+#         self._current_max = current_max
+#         if waveform is None: waveform = _PSWaveForm.wfm_constant(_wfm_nr_points)
+#         self._waveform = waveform
+#         self._waveform_step = 0
+#         now = _time.time()
+#         self._timestamp_pwrstate = now
+#         self._timestamp_opmode   = now
+#
+#     @property
+#     def IOC(self):
+#         return self._IOC
+#
+#     @property
+#     def current(self):
+#         self.update_state()
+#         return self._current_dcct
+#
+#     @property
+#     def pwrstate(self):
+#         self.update_state()
+#         return self._pwrstate
+#
+#     @property
+#     def opmode(self):
+#         self.update_state()
+#         return self._opmode
+#
+#     @IOC.setter
+#     def IOC(self, value):
+#         self._IOC = value
+#
+#     @current.setter
+#     def current_ref(self, value):
+#         value = self._check_current_ref_limits(value)
+#         self._current_ref = value # Should it happen even with PS off?
+#         self.update_state()
+#
+#     @pwrstate.setter
+#     def pwrstate(self, value):
+#         self._timestamp_pwrstate = _time.time()
+#         if value == _Off:
+#             self._pwrstate = _Off
+#         elif value == _On:
+#             self._pwrstate = _On
+#         else:
+#             raise Exception('Invalid value!')
+#         self.update_state()
+#
+#     @opmode.setter
+#     def opmode(self, value):
+#         if value == self._opmode: return # ?
+#         self._timestamp_opmode = _time.time()
+#         self._waveform_step = 0
+#         if value in tuple(range(len(_et.enums('PSOpModeTyp')))):
+#             self._opmode = value
+#         else:
+#             raise Exception('Invalid value!')
+#         self.update_state()
+#
+#     def timing_trigger(self):
+#         if self._opmode == _WfmRef:
+#             self._current_dcct = self._waveform[self._waveform_step]
+#             self._waveform_step += 1
+#             if self._waveform_step >= self._waveform.nr_points:
+#                 self._waveform_step = 0
+#             self.update_state()
+#
+#     def update_state(self):
+#         if self._pwrstate == _Off:
+#             self._current_dcct = 0.0
+#         else:
+#             if self._opmode == _SlowRef:
+#                 self._update_opmode_slowref()
+#             elif self._opmode == _FastRef:
+#                 self._update_opmode_fastref()
+#             elif self._opmode == _WfmRef:
+#                 self._update_opmode_wfmref()
+#             elif self._opmode == _SigGen:
+#                 self._update_opmode_siggen()
+#             self._update_add_fluctuations()
+#
+#     def _update_opmode_slowref(self):
+#         # slow reference setpoint mode
+#         self._current_dcct = self._current_ref
+#
+#     def _update_opmode_fastref(self):
+#         # fast reference setpoints (FOFB)
+#         pass
+#
+#     def _update_opmode_wfmref(self):
+#         # ramp driven by timing system signal
+#         pass
+#
+#     def _update_opmode_siggen(self):
+#         # demagnetization curve, for example
+#         pass
+#
+#     def _update_add_fluctuations(self):
+#         pass
+#
+#     def _check_current_ref_limits(self, value):
+#         value = value if self._current_min is None else max(value,self._current_min)
+#         value = value if self._current_max is None else min(value,self._current_max)
+#         return value
+#
+#     def __str__(self):
+#         st = '--- Controller ---\n'
+#         propty = 'pwrstate';     st +=   '{0:<20s}: {1}'.format(propty, _et.key('OffOnTyp', self._pwrstate))
+#         propty = 'opmode';       st += '\n{0:<20s}: {1}'.format(propty, _et.key('PSOpModeTyp', self._opmode))
+#         propty = 'current-ref';   st += '\n{0:<20s}: {1}'.format(propty, self._current_ref)
+#         propty = 'current-dcct';   st += '\n{0:<20s}: {1}'.format(propty, self._current_dcct)
+#         propty = 'timestamp-pwrstate'; st += '\n{0:<20s}: {1}'.format(propty, _get_timestamp(self._timestamp_pwrstate))
+#         propty = 'timestamp-opmode';   st += '\n{0:<20s}: {1}'.format(propty, _get_timestamp(self._timestamp_opmode))
+#         return st
+#
 
-    def _update_opmode_fastref(self):
-        # fast reference setpoints (FOFB)
-        if self._current_min is not None and self._current_max is not None:
-            self._current_dcct = self._current_min + _random.random()*(self._current_max - self._current_min)
+# class ControllerSim(Controller):
+#     """Simple Simulated Controller Class
+#
+#     This subclass of Controller introduces simulated measurement fluctuations
+#     and OpModes other than SlowRef.
+#     """
+#
+#     def __init__(self, fluctuation_rms=_fluctuation_rms,
+#                        **kwargs):
+#         super().__init__(**kwargs)
+#         self._fluctuation_rms = fluctuation_rms
+#
+#     def _update_opmode_fastref(self):
+#         # fast reference setpoints (FOFB)
+#         if self._current_min is not None and self._current_max is not None:
+#             self._current_dcct = self._current_min + _random.random()*(self._current_max - self._current_min)
+#
+#     def _update_opmode_siggen(self):
+#         # demagnetization curve, for example
+#         if self._current_min is not None and self._current_max is not None:
+#             ramp_fraction = ((_time.time() - self._timestamp_opmode)/20) % 1
+#             self._current_dcct = self._current_min + ramp_fraction*(self._current_max - self._current_min)
+#
+#     def _update_add_fluctuations(self):
+#         self._current_dcct += 2*(_random.random()-0.5)*self._fluctuation_rms
+#
 
-    def _update_opmode_siggen(self):
-        # demagnetization curve, for example
-        if self._current_min is not None and self._current_max is not None:
-            ramp_fraction = ((_time.time() - self._timestamp_opmode)/20) % 1
-            self._current_dcct = self._current_min + ramp_fraction*(self._current_max - self._current_min)
-
-    def _update_add_fluctuations(self):
-        self._current_dcct += 2*(_random.random()-0.5)*self._fluctuation_rms
-
-
-class ControllerEpicsPS(ControllerSim):
-
-    def __init__(self, prefix,
-                       ps_name,
-                       connection_timeout = _connection_timeout,
-                       callback = None,
-                       **kwargs):
-        super().__init__(**kwargs)
-
-        self._uuid = _uuid.uuid4()  # unique ID for the class object
-        self._prefix = prefix
-        self._ps_name = ps_name
-        self._connection_timeout = connection_timeout
-        self._callbacks = {} if callback is None else {callback}
-        self._create_pvs()
-        self.update_state()
-
-    @property
-    def prefix(self):
-        return self.prefix
-
-    @property
-    def ps_name(self):
-        return self._ps_name
-
-    @property
-    def current_ref(self):
-        return super().current_ref
-
-    @current_ref.setter
-    def current_ref(self, value):
-        #print('controller', 'current_ref', value)
-        value = self._check_current_ref_limits(value)
-        self._pvs['Current-SP'].value = value
-        # invocation of _pvs_callback will update internal state of controller
-
-    @property
-    def pwrstate(self): # necessary for setter
-        return super().pwrstate
-
-    @pwrstate.setter
-    def pwrstate(self, value):
-        self._pvs['PwrState-Sel'].value = value
-        # invocation of _pvs_callback will update internal state of controller
-
-    @property # necessary for setter
-    def opmode(self):
-        return super().opmode
-
-    @opmode.setter
-    def opmode(self, value):
-        self._pvs['OpMode-Sel'].value = value
-        # invocation of _pvs_callback will update internal state of controller
-
-    def add_callback(self, callback, index):
-        self._callbacks[index] = callback
-
-    def _create_pvs(self):
-        self._pvs = {}
-        pvname = self._prefix + self._ps_name
-        self._pvs['PwrState-Sel'] = _SiriusPV(pvname + ':PwrState-Sel', connection_timeout=self._connection_timeout)
-        self._pvs['PwrState-Sts'] = _SiriusPV(pvname + ':PwrState-Sts', callback=self._callback, connection_timeout=self._connection_timeout)
-        self._pvs['OpMode-Sel'] = _SiriusPV(pvname + ':OpMode-Sel', connection_timeout=self._connection_timeout)
-        self._pvs['OpMode-Sts'] = _SiriusPV(pvname + ':OpMode-Sts', callback=self._callback, connection_timeout=self._connection_timeout)
-        self._pvs['Current-SP'] = _SiriusPV(pvname + ':Current-SP', callback=self._callback, connection_timeout=self._connection_timeout)
-        self._pvs['Current-RB'] = _SiriusPV(pvname + ':Current-RB', callback=self._callback, connection_timeout=self._connection_timeout)
-
-    def _callback(self, pvname, value, **kwargs):
-
-        value_changed_flag = False
-        if 'PwrState-Sts' in pvname and value != self._pwrstate:
-            self._pwrstate = value; value_changed_flag = True
-        elif 'OpMode-Sts' in pvname and value != self._opmode:
-            self._opmode = value; value_changed_flag = True
-        elif 'Current-RB' in pvname and value != self._current_dcct:
-            self._current_dcct = value; value_changed_flag = True
-        elif 'Current-SP' in pvname and value != self._current_ref:
-            print('controller current-sp', value)
-            self._current_ref = value; value_changed_flag = True
-
-        if value_changed_flag:
-            self.update_state()
-            for index, callback in self._callbacks.items():
-                callback(pvname, value, **kwargs)
+# class ControllerEpicsPS(ControllerSim):
+#
+#     def __init__(self, prefix,
+#                        ps_name,
+#                        connection_timeout = _connection_timeout,
+#                        callback = None,
+#                        **kwargs):
+#         super().__init__(**kwargs)
+#
+#         self._uuid = _uuid.uuid4()  # unique ID for the class object
+#         self._prefix = prefix
+#         self._ps_name = ps_name
+#         self._connection_timeout = connection_timeout
+#         self._callbacks = {} if callback is None else {callback}
+#         self._create_pvs()
+#         self.update_state()
+#
+#     @property
+#     def prefix(self):
+#         return self.prefix
+#
+#     @property
+#     def ps_name(self):
+#         return self._ps_name
+#
+#     @property
+#     def current_ref(self):
+#         return super().current_ref
+#
+#     @current_ref.setter
+#     def current_ref(self, value):
+#         #print('controller', 'current_ref', value)
+#         value = self._check_current_ref_limits(value)
+#         self._pvs['Current-SP'].value = value
+#         # invocation of _pvs_callback will update internal state of controller
+#
+#     @property
+#     def pwrstate(self): # necessary for setter
+#         return super().pwrstate
+#
+#     @pwrstate.setter
+#     def pwrstate(self, value):
+#         self._pvs['PwrState-Sel'].value = value
+#         # invocation of _pvs_callback will update internal state of controller
+#
+#     @property # necessary for setter
+#     def opmode(self):
+#         return super().opmode
+#
+#     @opmode.setter
+#     def opmode(self, value):
+#         self._pvs['OpMode-Sel'].value = value
+#         # invocation of _pvs_callback will update internal state of controller
+#
+#     def add_callback(self, callback, index):
+#         self._callbacks[index] = callback
+#
+#     def _create_pvs(self):
+#         self._pvs = {}
+#         pvname = self._prefix + self._ps_name
+#         self._pvs['PwrState-Sel'] = _SiriusPV(pvname + ':PwrState-Sel', connection_timeout=self._connection_timeout)
+#         self._pvs['PwrState-Sts'] = _SiriusPV(pvname + ':PwrState-Sts', callback=self._callback, connection_timeout=self._connection_timeout)
+#         self._pvs['OpMode-Sel'] = _SiriusPV(pvname + ':OpMode-Sel', connection_timeout=self._connection_timeout)
+#         self._pvs['OpMode-Sts'] = _SiriusPV(pvname + ':OpMode-Sts', callback=self._callback, connection_timeout=self._connection_timeout)
+#         self._pvs['Current-SP'] = _SiriusPV(pvname + ':Current-SP', callback=self._callback, connection_timeout=self._connection_timeout)
+#         self._pvs['Current-RB'] = _SiriusPV(pvname + ':Current-RB', callback=self._callback, connection_timeout=self._connection_timeout)
+#
+#     def _callback(self, pvname, value, **kwargs):
+#
+#         value_changed_flag = False
+#         if 'PwrState-Sts' in pvname and value != self._pwrstate:
+#             self._pwrstate = value; value_changed_flag = True
+#         elif 'OpMode-Sts' in pvname and value != self._opmode:
+#             self._opmode = value; value_changed_flag = True
+#         elif 'Current-RB' in pvname and value != self._current_dcct:
+#             self._current_dcct = value; value_changed_flag = True
+#         elif 'Current-SP' in pvname and value != self._current_ref:
+#             print('controller current-sp', value)
+#             self._current_ref = value; value_changed_flag = True
+#
+#         if value_changed_flag:
+#             self.update_state()
+#             for index, callback in self._callbacks.items():
+#                 callback(pvname, value, **kwargs)
