@@ -30,7 +30,7 @@ def split_name(pvname):
         name_dict['propty'] = ''
         name_dict['field'] = ''
 
-    name_dict['dev_propty'] = (name_dict['device_type'] +
+    name_dict['dev_propty'] = (name_dict['dev_type'] +
                                ('-' + name_dict['dev_idx'] if name_dict['dev_idx'] else '') +
                                (':' + name_dict['propty']   if name_dict['propty']   else '') +
                                ('.' + name_dict['field']    if name_dict['field']    else ''))
@@ -43,13 +43,13 @@ class SiriusPVName(str):
         name = split_name(pv_name)
         obj = super().__new__(cls, pv_name)
         obj.area_name = name['area_name']
-        obj.device_name = name['dev_name']
+        obj.dev_name = name['dev_name']
         obj.section = name['section']
         obj.subsection = name['subsection']
         obj.discipline = name['discipline']
-        obj.device_type = name['dev_type']
-        obj.device_instance = name['dev_idx']
+        obj.dev_type = name['dev_type']
+        obj.dev_instance = name['dev_idx']
         obj.propty = name['propty']
         obj.field = name['field']
-        obj.device_propty = name['dev_propty']
+        obj.dev_propty = name['dev_propty']
         return obj

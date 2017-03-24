@@ -77,10 +77,10 @@ class EventIOC(CallBack):
         db = dict()
         db[prefix + 'Delay-SP']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'unit':'us', 'prec': 3}
         db[prefix + 'Delay-RB']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'unit':'us','prec': 3}
-        db[prefix + 'Mode-Sel']      = {'type' : 'enum', 'enums':Event._modes, 'value':1}
-        db[prefix + 'Mode-Sts']      = {'type' : 'enum', 'enums':Event._modes, 'value':1}
-        db[prefix + 'DelayType-Sel'] = {'type' : 'enum', 'enums':Event._delay_types, 'value':1}
-        db[prefix + 'DelayType-Sts'] = {'type' : 'enum', 'enums':Event._delay_types, 'value':1}
+        db[prefix + 'Mode-Sel']      = {'type' : 'enum', 'enums':EventIOC._modes, 'value':1}
+        db[prefix + 'Mode-Sts']      = {'type' : 'enum', 'enums':EventIOC._modes, 'value':1}
+        db[prefix + 'DelayType-Sel'] = {'type' : 'enum', 'enums':EventIOC._delay_types, 'value':1}
+        db[prefix + 'DelayType-Sts'] = {'type' : 'enum', 'enums':EventIOC._delay_types, 'value':1}
         return db
 
     def __init__(self,base_freq,callbacks = None, prefix = None, controller = None):
@@ -439,14 +439,14 @@ class EVGIOC(CallBack):
     def get_database(prefix):
         db = dict()
         p = prefix
-        db[p + 'SingleState-Sel']     = {'type' : 'enum', 'enums':EVG._states, 'value':0}
-        db[p + 'SingleState-Sts']     = {'type' : 'enum', 'enums':EVG._states, 'value':0}
-        db[p + 'InjectionState-Sel']  = {'type' : 'enum', 'enums':EVG._states, 'value':0}
-        db[p + 'InjectionState-Sts']  = {'type' : 'enum', 'enums':EVG._states, 'value':0}
-        db[p + 'InjCyclic-Sel']       = {'type' : 'enum', 'enums':EVG._cyclic_types, 'value':0}
-        db[p + 'InjCyclic-Sts']       = {'type' : 'enum', 'enums':EVG._cyclic_types, 'value':0}
-        db[p + 'ContinuousState-Sel'] = {'type' : 'enum', 'enums':EVG._states, 'value':1}
-        db[p + 'ContinuousState-Sts'] = {'type' : 'enum', 'enums':EVG._states, 'value':1}
+        db[p + 'SingleState-Sel']     = {'type' : 'enum', 'enums':EVGIOC._states, 'value':0}
+        db[p + 'SingleState-Sts']     = {'type' : 'enum', 'enums':EVGIOC._states, 'value':0}
+        db[p + 'InjectionState-Sel']  = {'type' : 'enum', 'enums':EVGIOC._states, 'value':0}
+        db[p + 'InjectionState-Sts']  = {'type' : 'enum', 'enums':EVGIOC._states, 'value':0}
+        db[p + 'InjCyclic-Sel']       = {'type' : 'enum', 'enums':EVGIOC._cyclic_types, 'value':0}
+        db[p + 'InjCyclic-Sts']       = {'type' : 'enum', 'enums':EVGIOC._cyclic_types, 'value':0}
+        db[p + 'ContinuousState-Sel'] = {'type' : 'enum', 'enums':EVGIOC._states, 'value':1}
+        db[p + 'ContinuousState-Sts'] = {'type' : 'enum', 'enums':EVGIOC._states, 'value':1}
         db[p + 'BucketList'] = {'type' : 'int', 'count': 864, 'value':0}
         db[p + 'RepRate-SP'] = {'type' : 'float', 'unit':'Hz', 'value': 2.0, 'prec': 5}
         db[p + 'RepRate-RB'] = {'type' : 'float', 'unit':'Hz', 'value': 2.0, 'prec': 5}
@@ -468,10 +468,6 @@ class EVGIOC(CallBack):
         else:
             self._controller = controller
             self._controller.add_callback({self._uuid:self._callback})
-        self.add_injection_callback    = self._controller.add_injection_callback
-        self.remove_injection_callback = self._controller.remove_injection_callback
-        self.add_single_callback       = self._controller.add_single_callback
-        self.remove_single_callback    = self._controller.remove_single_callback
         self._frequency_sp = None
         self._frequency_rb = None
         self._single_sp = None
@@ -524,6 +520,18 @@ class EVGIOC(CallBack):
             self.single_rb = value
             self._single_sp = value
             self._call_callbacks('SingleState-Sel',value)
+
+    def add_injection_callback(self, uuid,callback):
+        self._controller.add_injection_callback(uuid,callback)
+
+    def remove_injection_callback(self, uuid,callback):
+        self._controller.remove_injection_callback(uuid,callback)
+
+    def add_single_callback(self, uuid,callback):
+        self._controller.add_single_callback(uuid,callback)
+
+    def remove_single_callback(self, uuid,callback):
+        self._controller.remove_single_callback(uuid,callback)
 
     @property
     def continuous_sp(self):
