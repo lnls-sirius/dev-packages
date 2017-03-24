@@ -33,7 +33,7 @@ def split_name(pvname):
     name_dict['dev_propty'] = (name_dict['device_type'] +
                                ('-' + name_dict['dev_idx'] if name_dict['dev_idx'] else '') +
                                (':' + name_dict['propty']   if name_dict['propty']   else '') +
-                               ('.' + name_dict['field']    if name_dict['field']    else '') +
+                               ('.' + name_dict['field']    if name_dict['field']    else ''))
 
     return name_dict
 
