@@ -9,6 +9,8 @@ from siriuspy.epics import SiriusPV as _SiriusPV
 from abc import abstractmethod as _abstractmethod
 from abc import abstractproperty as _abstractproperty
 
+from epics import PV as _PV
+
 
 _Off     = _et.idx('OffOnTyp','Off')
 _On      = _et.idx('OffOnTyp','On')
@@ -148,7 +150,7 @@ class Controller:
         of the update_state method."""
         pass
 
-    # --- super class setters, properties and methods that Should
+    # --- super class setters, properties and methods that should
     #     implement most of the logic of the controller
 
     @property
@@ -353,15 +355,33 @@ class ControllerEpics(ControllerError):
         self._ps_name = ps_name
         self._uuid = _uuid.uuid4()
         self._connection_timeout = connection_timeout
+        self._current_rb = 0.0
         self._create_epics_pvs()
         super().__init__(**kwargs)
-        #         self._callbacks = {} if callback is None else {callback}
+
 
     @property
     def ps_name(self):
         return self._ps_name
 
-    def _process_callbacks(self):
+    def _connected(self):
+        if not self._pvs['PwrState-Sel'].connected: return False
+        if not self._pvs['PwrState-Sts'].connected: return False
+        if not self._pvs['OpMode-Sel'].connected: return False
+        if not self._pvs['OpMode-Sts'].connected: return False
+        if not self._pvs['Current-SP'].connected: return False
+        if not self._pvs['Current-RB'].connected: return False
+        return True
+
+
+    def update_state(self):
+        if not self._connected(): return
+        super().update_state()
+        
+    def _process_callbacks(self, propty, value, **kwargs):
+        """This virtual method is used to signal up registered callback functions
+        when the state of the controller has changed. It is invoked at the end
+        of the update_state method."""
         for index, callback in self._callbacks.items():
             callback('PwrState-Sel', self.pwrstate_sel)
             callback('PwrState-Sts', self.pwrstate_sts)
@@ -375,13 +395,95 @@ class ControllerEpics(ControllerError):
 
     def _create_epics_pvs(self):
         self._pvs = {}
-        pvname = self._prefix + self._ps_name
-        self._pvs['PwrState-Sel'] = _SiriusPV(pvname + ':PwrState-Sel', connection_timeout=self._connection_timeout)
-        self._pvs['PwrState-Sts'] = _SiriusPV(pvname + ':PwrState-Sts', callback=self._callback, connection_timeout=self._connection_timeout)
-        self._pvs['OpMode-Sel']   = _SiriusPV(pvname + ':OpMode-Sel', connection_timeout=self._connection_timeout)
-        self._pvs['OpMode-Sts']   = _SiriusPV(pvname + ':OpMode-Sts', callback=self._callback, connection_timeout=self._connection_timeout)
-        self._pvs['Current-SP']   = _SiriusPV(pvname + ':Current-SP', callback=self._callback, connection_timeout=self._connection_timeout)
-        self._pvs['Current-RB']   = _SiriusPV(pvname + ':Current-RB', callback=self._callback, connection_timeout=self._connection_timeout)
+        pvname = self._ps_name
+        self._pvs['PwrState-Sel'] = _PV(pvname + ':PwrState-Sel', connection_timeout=self._connection_timeout)
+        self._pvs['PwrState-Sts'] = _PV(pvname + ':PwrState-Sts', callback=self._callback, connection_timeout=self._connection_timeout)
+        self._pvs['OpMode-Sel']   = _PV(pvname + ':OpMode-Sel', connection_timeout=self._connection_timeout)
+        self._pvs['OpMode-Sts']   = _PV(pvname + ':OpMode-Sts', callback=self._callback, connection_timeout=self._connection_timeout)
+        self._pvs['Current-SP']   = _PV(pvname + ':Current-SP', callback=self._callback, connection_timeout=self._connection_timeout)
+        self._pvs['Current-RB']   = _PV(pvname + ':Current-RB', callback=self._callback, connection_timeout=self._connection_timeout)
+
+
+    @_abstractmethod
+    def _getter_pwrstate_sel(self):
+        """Virtual method that retrieves the state of PwrState-Sel."""
+        return self._pvs['PwrState-Sel'].value
+
+    @_abstractmethod
+    def _setter_pwrstate_sel(self, value):
+        """Virtual method that sets the state of PwrState-Sel.
+        It returns True if state has changed."""
+        prev_value = self._pvs['PwrState-Sel'].value
+        if prev_value == value: return False
+        self._pvs['PwrState-Sel'].value = value
+        return True
+
+    @_abstractproperty
+    def pwrstate_sts(self):
+        """Virtual property that returns state of PwrState-Sts."""
+        return self._pvs['PwrState-Sts'].value
+
+    @_abstractmethod
+    def _getter_opmode_sel(self):
+        """Virtual method that retrieves the state of OpMode-Sel."""
+        return self._pvs['OpMode-Sel'].value
+
+    @_abstractmethod
+    def _setter_opmode_sel(self, value):
+        """Virtual method that sets the state of OpMode-Sel.
+        It returns True is state has changed."""
+        prev_value = self._pvs['OpMode-Sel'].value
+        if prev_value == value: return False
+        self._pvs['OpMode-Sel'].value = value
+        return True
+
+    @_abstractproperty
+    def opmode_sts(self):
+        """Virtual property that returns state of OpMode-Sts."""
+        return self._pvs['OpMode-Sts'].value
+
+    @_abstractmethod
+    def _getter_current_sp(self):
+        """Virtual method that returns state of Current-SP."""
+        return self._pvs['Current-SP'].value
+
+    @_abstractmethod
+    def _setter_current_sp(self, value):
+        """Virtual method that sets the state of Current-SP.
+        It returns True is state has changed."""
+        prev_value = self._pvs['Current-SP'].value
+        if prev_value == value: return False
+        self._pvs['Current-SP'].value = value
+        return True
+
+    @_abstractproperty
+    def current_rb(self):
+        """Virtual property that retrieves the state of Current-RB."""
+        return self._current_rb
+
+    @_abstractmethod
+    def _setter_current_rb(self, value):
+        """Virtual method that sets the state of Current-RB.
+        It returns True is state is changed.
+        This method is used in the internal logic of the controller.
+        """
+        self._current_rb = value
+
+    # --- virtual methods used to update the state of the controller ---
+
+    def _update_opmode_slowref(self):
+        self._current_rb = self.current_sp
+
+    def _update_opmode_fastref(self):
+        pass
+
+    def _update_opmode_wfmref(self):
+        pass
+
+    def _update_opmode_siggen(self):
+        pass
+
+
 
 class ControllerPyaccel(Controller):
     """Controller PyEpics model.

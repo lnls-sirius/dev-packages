@@ -28,13 +28,14 @@ class EnumTypes:
 
     @staticmethod
     def key(typ,idx):
+        if idx is None: return 'None'
         values = EnumTypes.enums(typ)
         return values[idx]
 
     @staticmethod
     def values(typ):
         return tuple(range(len(EnumTypes[typ])))
-        
+
     @_ClassProperty
     @classmethod
     def names(cls):
