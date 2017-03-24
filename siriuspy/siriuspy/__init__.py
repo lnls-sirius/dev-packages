@@ -6,6 +6,7 @@ from . import servweb
 from . import pwrsupply
 from . import magnet
 from . import namesys
+from . import timesys
 from . import csdevice
 from . import epics
 
@@ -17,4 +18,4 @@ del _os
 
 
 __all__ = ['envars', 'util', 'servname', 'servccdb', 'servweb',
-           'pwrsupply', 'magnet', 'namesys', 'csdevice','epics']
+           'pwrsupply', 'magnet', 'namesys', 'timesys', 'csdevice','epics']
