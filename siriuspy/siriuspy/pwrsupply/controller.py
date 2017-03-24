@@ -63,7 +63,7 @@ class Controller:
         if callback is not None:
             if index is None: index = _uuid.uuid4()
             self._callbacks[index] = callback
-        self._update_state()
+        self.update_state()
 
     # --- pure virtual properties and methods ---
 
@@ -142,10 +142,10 @@ class Controller:
         properties of the controller."""
         pass
 
-    def _run_callbacks(self):
+    def _process_callbacks(self, propty, value, **kwargs):
         """This virtual method is used to signal up registered callback functions
         when the state of the controller has changed. It is invoked at the end
-        of the _update_state method."""
+        of the update_state method."""
         pass
 
     # --- super class setters, properties and methods that Should
@@ -163,7 +163,7 @@ class Controller:
         """Set state of PwrState-Sel and update state of controller."""
         self._timestamp_pwrstate = _time.time()
         if self.__setter_pwrstate_sel(value):
-            self._update_state()
+            self.update_state()
     def __setter_pwrstate_sel(self, value):
         return self._setter_pwrstate_sel(value)
 
@@ -179,7 +179,7 @@ class Controller:
         """Set state of PwrState-Sel and update state of controller."""
         self._timestamp_opmode = _time.time()
         if self.__setter_opmode_sel(value):
-            self._update_state()
+            self.update_state()
     def __setter_opmode_sel(self, value):
         return self._setter_opmode_sel(value)
 
@@ -195,7 +195,7 @@ class Controller:
         """Set state of PwrState-Sel and update state of controller."""
         value = self._check_current_ref_limits(value)
         if self.__setter_current_sp(value):
-            self._update_state()
+            self.update_state()
     def __setter_current_sp(self, value):
         return self._setter_current_sp(value)
 
@@ -204,7 +204,7 @@ class Controller:
         value = value if self._current_max is None else min(value,self._current_max)
         return value
 
-    def _update_state(self):
+    def update_state(self):
         """Method that update controller state. It implements most of the
         controller logic regarding the interdependency of the controller
         properties."""
@@ -225,7 +225,7 @@ class Controller:
             self._add_errors()
         else:
             raise Exception('Invalid controller PwrState-Sts!')
-        self._run_callbacks()
+        self._process_callbacks(propty=None,value=None)
 
     def __str__(self):
         st = '--- Controller ---\n'
@@ -333,7 +333,7 @@ class ControllerSim(ControllerError):
     # def _add_errors(self):
     #     self._current_rb += 2*(_random.random()-0.5)*self._fluctuation_rms
 
-    def _run_callbacks(self):
+    def _process_callbacks(self, propty, values, **kwargs):
         for index, callback in self._callbacks.items():
             callback('PwrState-Sel', self.pwrstate_sel)
             callback('PwrState-Sts', self.pwrstate_sts)
@@ -342,21 +342,56 @@ class ControllerSim(ControllerError):
             callback('Current-SP', self.current_sp)
             callback('Current-RB', self.current_rb)
 
-class ControlleEpics(ControllerError):
+class ControllerEpics(ControllerError):
     """Controller Epics Class.
     """
 
     def __init__(self, ps_name,
-                       connection_timeout=_connection_timeout, **kwargs):
+                       connection_timeout=_connection_timeout,
+                       **kwargs):
 
         self._ps_name = ps_name
+        self._uuid = _uuid.uuid4()
+        self._connection_timeout = connection_timeout
+        self._create_epics_pvs()
         super().__init__(**kwargs)
+        #         self._callbacks = {} if callback is None else {callback}
 
     @property
     def ps_name(self):
         return self._ps_name
 
+    def _process_callbacks(self):
+        for index, callback in self._callbacks.items():
+            callback('PwrState-Sel', self.pwrstate_sel)
+            callback('PwrState-Sts', self.pwrstate_sts)
+            callback('OpMode-Sel', self.opmode_sel)
+            callback('OpMode-Sts', self.opmode_sts)
+            callback('Current-SP', self.current_sp)
+            callback('Current-RB', self.current_rb)
 
+    def _callback(self, propty, value, **kwargs):
+        self._process_callbacks(propty=propty, value=value)
+
+    def _create_epics_pvs(self):
+        self._pvs = {}
+        pvname = self._prefix + self._ps_name
+        self._pvs['PwrState-Sel'] = _SiriusPV(pvname + ':PwrState-Sel', connection_timeout=self._connection_timeout)
+        self._pvs['PwrState-Sts'] = _SiriusPV(pvname + ':PwrState-Sts', callback=self._callback, connection_timeout=self._connection_timeout)
+        self._pvs['OpMode-Sel']   = _SiriusPV(pvname + ':OpMode-Sel', connection_timeout=self._connection_timeout)
+        self._pvs['OpMode-Sts']   = _SiriusPV(pvname + ':OpMode-Sts', callback=self._callback, connection_timeout=self._connection_timeout)
+        self._pvs['Current-SP']   = _SiriusPV(pvname + ':Current-SP', callback=self._callback, connection_timeout=self._connection_timeout)
+        self._pvs['Current-RB']   = _SiriusPV(pvname + ':Current-RB', callback=self._callback, connection_timeout=self._connection_timeout)
+
+class ControllerPyaccel(Controller):
+    """Controller PyEpics model.
+
+    (pending!)
+    This pure virtual class implements basic functionality of a controller that
+    gets its internal state from an accelerator Pyaccel model. The class is
+    supposed to be subclasses elsewhere.
+    """
+    pass
 
 
 # class Ctrller:
