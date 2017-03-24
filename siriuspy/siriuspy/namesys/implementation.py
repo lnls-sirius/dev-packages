@@ -7,57 +7,49 @@ def join_name(section, discipline, device, subsection,
     name += ('.' + field)   if field   else ""
     return name
 
-def split_name(name):
+def split_name(pvname):
     name_dict = {}
-    name_list = name.split(':')
-    name_dict['Area_name'] = name_list[0]
-    name_dict['Device_name'] = name_list[0] + ':' + name_list[1]
+    name_list = pvname.split(':')
+    name_dict['area_name'] = name_list[0]
+    name_dict['dev_name'] = name_list[0] + ':' + name_list[1]
 
     name_sublist = name_list[0].split('-')
-    name_dict['Section']    = name_sublist[0]
-    name_dict['Subsection'] = name_sublist[1]
+    name_dict['section']    = name_sublist[0]
+    name_dict['subsection'] = name_sublist[1]
 
     name_sublist = name_list[1].split('-')
-    name_dict['Discipline'] = name_sublist[0]
-    name_dict['Device']     = name_sublist[1]
-    name_dict['Instance']   = name_sublist[2] if len(name_sublist) >= 3 else ''
+    name_dict['discipline']      = name_sublist[0]
+    name_dict['dev_type']     = name_sublist[1]
+    name_dict['dev_idx'] = name_sublist[2] if len(name_sublist) >= 3 else ''
 
     if len(name_list) >= 3:
         name_sublist = name_list[2].split('.')
-        name_dict['Property'] = name_sublist[0]
-        name_dict['Field'] = name_sublist[1] if len(name_sublist) >= 2 else ''
+        name_dict['propty'] = name_sublist[0]
+        name_dict['field'] = name_sublist[1] if len(name_sublist) >= 2 else ''
     else:
-        name_dict['Property'] = ''
-        name_dict['Field'] = ''
+        name_dict['propty'] = ''
+        name_dict['field'] = ''
+
+    name_dict['dev_propty'] = (name_dict['device_type'] +
+                               ('-' + name_dict['dev_idx'] if name_dict['dev_idx'] else '') +
+                               (':' + name_dict['propty']   if name_dict['propty']   else '') +
+                               ('.' + name_dict['field']    if name_dict['field']    else '') +
 
     return name_dict
 
-class SiriusPVName:
+class SiriusPVName(str):
 
-    def __init__(self, pv_name):
-
+    def __new__(cls, pv_name):
         name = split_name(pv_name)
-        self.area = name['Area_name']
-        self.device_slot = name['Device_name']
-        self.section = name['Section']
-        self.subsection = name['Subsection']
-        self.discipline = name['Discipline']
-        self.device = name['Device']
-        self.instance = name['Instance']
-        self.propty = name['Property']
-        self.field = name['Field']
-
-    @property
-    def device_property(self):
-        device = self.device + '-' + self.instance if self.instance else self.device
-        return device + ':' + self.propty
-
-    @property
-    def pv_name(self):
-        return join_name(self.section,
-                  self.discipline,
-                  self.device,
-                  self.subsection,
-                  self.instance,
-                  self.propty,
-                  self.field)
+        obj = super().__new__(cls, pv_name)
+        obj.area_name = name['area_name']
+        obj.device_name = name['dev_name']
+        obj.section = name['section']
+        obj.subsection = name['subsection']
+        obj.discipline = name['discipline']
+        obj.device_type = name['dev_type']
+        obj.device_instance = name['dev_idx']
+        obj.propty = name['propty']
+        obj.field = name['field']
+        obj.device_propty = name['dev_propty']
+        return obj
