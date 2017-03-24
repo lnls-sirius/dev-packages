@@ -1,8 +1,9 @@
 import uuid as _uuid
+import numpy as _np
 
-_EventMapping = {['Linac':0,  'InjBO':1,  'InjSI':2,  'RmpBO':3,
+_EventMapping = {'Linac':0,  'InjBO':1,  'InjSI':2,  'RmpBO':3,
                   'RampSI':4, 'DigLI':5,  'DigTB':6,  'DigBO':7,
-                  'DigTS':8,  'DigSI':9]}
+                  'DigTS':8,  'DigSI':9}
 _PwrFreq = 60
 
 
@@ -19,8 +20,14 @@ class CallBack:
         for uuid, callback in self._callbacks.items():
             callback(self.prefix + propty, value, **kwargs)
 
-    def add_callback(self,uuid, callback):
-        self._callbacks[uuid] = callback
+    def add_callback(self,*args):
+        if len(args)<2 and isinstance(args[0],dict):
+            self._callbacks.update(args[0])
+        elif len(args) == 2:
+            uuid, callback = args
+            self._callbacks[uuid] = callback
+        else:
+            raise Exception('wrong input for add_callback')
 
     def remove_callback(self,uuid):
         self._callbacks.pop(uuid)
@@ -29,8 +36,8 @@ class CallBack:
 class EventSim(CallBack):
 
 
-    def __init__(self,callbacks):
-        super().__init__(self,callbacks)
+    def __init__(self,callbacks=None):
+        super().__init__(callbacks)
         self._delay_type = None
         self._delay = 0
         self._mode = 0
@@ -62,7 +69,6 @@ class EventSim(CallBack):
 
 class EventIOC(CallBack):
 
-
     _modes = ('Disabled','Continuous','Injection','Single')
     _delay_types = ('Fixed','Incr')
 
@@ -78,10 +84,14 @@ class EventIOC(CallBack):
         return db
 
     def __init__(self,base_freq,callbacks = None, prefix = None, controller = None):
-        super().__init__(self, callbacks, prefix = prefix)
+        super().__init__(callbacks, prefix = prefix)
         self._uuid = _uuid.uuid4()
         self._base_frequency = base_freq
-        if controller is None: self._controller = EventSim({self._uuid:self._callback})
+        if controller is None:
+            self._controller = EventSim({self._uuid:self._callback})
+        else:
+            self._controller = controller
+            self._controller.add_callback({self._uuid:self._callback})
         self._mode = None
         self._delay_type = None
         self._delay_sp = None
@@ -106,7 +116,7 @@ class EventIOC(CallBack):
     @delay_rb.setter
     def delay_rb(self,value):
         self._delay_rb = value * (1/self._base_frequency)
-        self._call_callbacks(self.name+'Delay-RB',self._delay_rb)
+        self._call_callbacks('Delay-RB',self._delay_rb)
 
     @property
     def mode_sp(self):
@@ -116,7 +126,7 @@ class EventIOC(CallBack):
         if value <len(self._modes):
             self._mode_sp = value
             self._controller.mode = value
-            self._call_callbacks(self.name+'Mode-Sel',value)
+            self._call_callbacks('Mode-Sel',value)
 
     @property
     def mode_rb(self):
@@ -125,7 +135,7 @@ class EventIOC(CallBack):
     def mode_rb(self,value):
         if value <len(self._modes):
             self._mode_rb = value
-            self._call_callbacks(self.name+'Mode-Sts',value)
+            self._call_callbacks('Mode-Sts',value)
 
     @property
     def delay_type_sp(self):
@@ -135,7 +145,7 @@ class EventIOC(CallBack):
         if value <len(self._delay_types):
             self._delay_type_sp = value
             self._controller.delay_type = value
-            self._call_callbacks(self.name+'DelayType-Sel',value)
+            self._call_callbacks('DelayType-Sel',value)
 
     @property
     def delay_type_rb(self):
@@ -144,9 +154,9 @@ class EventIOC(CallBack):
     def delay_type_rb(self,value):
         if value <len(self._delay_types):
             self._delay_type_rb = value
-            self._call_callbacks(self.name+'DelayType-Sts',value)
+            self._call_callbacks('DelayType-Sts',value)
 
-    def _callback(propty,value,**kwargs):
+    def _callback(self,propty,value,**kwargs):
         if propty == 'delay':
             self.delay_rb = value
         if propty == 'mode':
@@ -155,7 +165,7 @@ class EventIOC(CallBack):
             self.delay_type_rb = value
 
     def get_propty(self,reason):
-        reason = reason[len(self.name):]
+        reason = reason[len(self.prefix):]
         if reason  == 'Mode-Sel':
             return self.mode_sp
         elif reason  == 'Mode-Sts':
@@ -172,6 +182,7 @@ class EventIOC(CallBack):
             return None
 
     def set_propty(self,reason,value):
+        reason = reason[len(self.prefix):]
         if reason  == 'Mode-Sel':
             self.mode_sp = value
         elif reason  == 'DelayType-Sel':
@@ -186,7 +197,7 @@ class EventIOC(CallBack):
 class ClockSim(CallBack):
 
     def __init__(self,callbacks=None):
-        super().__init__(self,callbacks)
+        super().__init__(callbacks)
         self._frequency = 1
         self._state = 0
 
@@ -203,7 +214,7 @@ class ClockSim(CallBack):
         return self._frequency
     @frequency.setter
     def frequency(self,value):
-        self._frequency = frequency
+        self._frequency = value
         self._call_callbacks('frequency',value)
 
 
@@ -221,10 +232,14 @@ class ClockIOC(CallBack):
         return db
 
     def __init__(self, base_freq, callbacks = None, prefix = None, controller = None):
-        super().__init__(self, callbacks, prefix = prefix)
+        super().__init__(callbacks, prefix = prefix)
         self._uuid = _uuid.uuid4()
         self._base_frequency = base_freq
-        if controller is None: self._controller = ClockSim({self._uuid:self._callback})
+        if controller is None:
+            self._controller = ClockSim({self._uuid:self._callback})
+        else:
+            self._controller = controller
+            self._controller.add_callback({self._uuid:self._callback})
         self._frequency_sp = self._base_frequency
         self._frequency_rb = self._base_frequency
         self._state_sp = 0
@@ -237,7 +252,7 @@ class ClockIOC(CallBack):
     def frequency_sp(self,value):
         self._frequency_sp = value
         self._controller.frequency = round(self._base_frequency / value) #integer
-        self._call_callbacks(self.name+'Freq-SP',value)
+        self._call_callbacks('Freq-SP',value)
 
     @property
     def frequency_rb(self):
@@ -245,7 +260,7 @@ class ClockIOC(CallBack):
     @frequency_rb.setter
     def frequency_rb(self,value):
         self._frequency_rb = value * self._base_frequency
-        self._call_callbacks(self.name+'Freq-RB',self._frequency_rb)
+        self._call_callbacks('Freq-RB',self._frequency_rb)
 
     @property
     def state_sp(self):
@@ -255,7 +270,7 @@ class ClockIOC(CallBack):
         if value <len(self._states):
             self._state_sp = value
             self._controller.state = value
-            self._call_callbacks(self.name+'State-Sel',value)
+            self._call_callbacks('State-Sel',value)
 
     @property
     def state_rb(self):
@@ -264,16 +279,16 @@ class ClockIOC(CallBack):
     def state_rb(self,value):
         if value <len(self._states):
             self._state_rb = value
-            self._call_callbacks(self.name+'State-Sts',value)
+            self._call_callbacks('State-Sts',value)
 
-    def _callback(propty,value,**kwargs):
+    def _callback(self, propty,value,**kwargs):
         if propty == 'frequency':
             self.frequency_rb = value
         if propty == 'state':
             self.state_rb = value
 
     def get_propty(self,reason):
-        reason = reason[len(self.name):]
+        reason = reason[len(self.prefix):]
         if reason  == 'State-Sel':
             return self.state_sp
         elif reason  == 'State-Sts':
@@ -286,6 +301,8 @@ class ClockIOC(CallBack):
             return None
 
     def set_propty(self,reason,value):
+        reason = reason[len(self.prefix):]
+        print(reason)
         if reason  == 'State-Sel':
             self.state_sp = value
         elif reason == 'Freq-SP':
@@ -297,8 +314,8 @@ class ClockIOC(CallBack):
 
 class EVGSim(CallBack):
 
-    def __init__(self, callbacks):
-        super().__init__(self,callbacks)
+    def __init__(self, callbacks= None):
+        super().__init__(callbacks)
         self._continuous = None
         self._injection = False
         self._injection_callbacks = dict()
@@ -355,7 +372,7 @@ class EVGSim(CallBack):
         if value:
             if not self._injection:
                 self._injection = value
-                _threading.Thread(target=self._injection_fun, kwargs={'callbacks':self._injection_callbacks}).start()
+                _threading.Thread(target=self._injection_fun).start()
         else:
             self._injection = value
         self._call_callbacks('injection',value)
@@ -366,7 +383,7 @@ class EVGSim(CallBack):
     def remove_injection_callback(self,uuid):
         self._injection_callbacks.pop(uuid, None)
 
-    def _injection_fun(self, callback):
+    def _injection_fun(self):
         while True:
             for i in self.bucket_list:
                 if not self._can_inject(): return
@@ -418,7 +435,7 @@ class EVGIOC(CallBack):
     _states = ('Dsbl','Enbl')
     _cyclic_types = ('Off','On')
 
-    @staticmethod:
+    @staticmethod
     def get_database(prefix):
         db = dict()
         p = prefix
@@ -442,19 +459,23 @@ class EVGIOC(CallBack):
 
         return db
 
-    def __init__(self, frequency, callbacks, prefix = None):
-        supert().__init__(self, callbacks, prefix = None)
+    def __init__(self, base_freq, callbacks = None, prefix = None, controller = None):
+        super().__init__(callbacks = callbacks, prefix = None)
         self._uuid = _uuid.uuid4()
         self._base_freq = base_freq
         if controller is None:
-            self._controller = EVGSim({self._uuid:self._sim_callback})
-            self.add_injection_callback    = self._controller.add_injection_callback
-            self.remove_injection_callback = self._controller.remove_injection_callback
-            self.add_single_callback       = self._controller.add_single_callback
-            self.remove_single_callback    = self._controller.remove_single_callback
-        self._frequency_sp = frequency
-        self._frequency_rb = frequency
-        self._single =
+            self._controller = EVGSim({self._uuid:self._callback})
+        else:
+            self._controller = controller
+            self._controller.add_callback({self._uuid:self._callback})
+        self.add_injection_callback    = self._controller.add_injection_callback
+        self.remove_injection_callback = self._controller.remove_injection_callback
+        self.add_single_callback       = self._controller.add_single_callback
+        self.remove_single_callback    = self._controller.remove_single_callback
+        self._frequency_sp = None
+        self._frequency_rb = None
+        self._single_sp = None
+        self._single_rb = None
         self._continuous_sp = None
         self._continuous_rb = None
         self._cyclic_injection_sp = None
@@ -467,12 +488,18 @@ class EVGIOC(CallBack):
         self.events = dict()
         for i,ev in enumerate(sorted(_EventMapping.keys())):
             cntler = self._controller.events[i]
-            self.events[ev] = EventIOC(ev,self._base_freq/4,{self._uuid:self._ioc_callback},controller = cntler)
+            self.events[ev] = EventIOC(self._base_freq/4,
+                                       callbacks = {self._uuid:self._ioc_callback},
+                                       prefix = ev,
+                                       controller = cntler)
         self.clocks = dict()
         for i in range(8):
             name = 'Clock{0:d}'.format(i)
             cntler = self._controller.clocks[i]
-            self.clocks[name] = ClockIOC(name,self._base_freq/4,{self._uuid:self._ioc_callback}, controller = cntler)
+            self.clocks[name] = ClockIOC(self._base_freq/4,
+                                         callbacks = {self._uuid:self._ioc_callback},
+                                         prefix = name,
+                                         controller = cntler)
 
     def _ioc_callback(self,propty,value, **kwargs):
         self._call_callbacks(propty, value, **kwargs)
@@ -484,7 +511,7 @@ class EVGIOC(CallBack):
             self.clyclic_injection_rb = value
             self._call_callbacks('BucketList',value)
         elif propty == 'bucket_list':
-            if _np.any(value != self._bucket_list)
+            if _np.any(value != self._bucket_list):
                 self.bucket_list = value
                 self._call_callbacks('BucketList',value)
         elif propty == 'repetition_rate':
@@ -639,7 +666,7 @@ class EVGIOC(CallBack):
         elif reason.startswith(tuple(self.clocks.keys())):
             return self.clocks[reason[:6]].get_propty(reason)#Not general enough
         elif reason.startswith(tuple(self.events.keys())):
-            return self.clocks[reason[:6]].get_propty(reason)#Absolutely not general enough
+            return self.events[reason[:5]].get_propty(reason)#Absolutely not general enough
         else:
             return None
 
@@ -659,7 +686,7 @@ class EVGIOC(CallBack):
         elif reason.startswith(tuple(self.clocks.keys())):
             return self.clocks[reason[:6]].set_propty(reason, value)#Not general enough
         elif reason.startswith(tuple(self.events.keys())):
-            return self.clocks[reason[:6]].set_propty(reason, value)#Absolutely not general enough
+            return self.events[reason[:5]].set_propty(reason, value)#Absolutely not general enough
         else:
             return False
         return True
