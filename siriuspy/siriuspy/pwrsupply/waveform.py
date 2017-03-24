@@ -5,8 +5,8 @@
 class PSWaveForm:
 
     @staticmethod
-    def wfm_constant(nr_points, period, value=0.0):
-        return PSWaveForm(period, tuple([value for i in range(nr_points)]))
+    def wfm_constant(nr_points, value=0.0):
+        return PSWaveForm(0.0, tuple([value for i in range(nr_points)]))
 
     @staticmethod
     def wfm_linear_ramp(nr_points, period, max_value=0.0):

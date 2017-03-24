@@ -9,6 +9,7 @@ from siriuspy.epics import SiriusPV as _SiriusPV
 from abc import abstractmethod as _abstractmethod
 from abc import abstractproperty as _abstractproperty
 
+
 _Off     = _et.idx('OffOnTyp','Off')
 _On      = _et.idx('OffOnTyp','On')
 _SlowRef = _et.idx('PSOpModeTyp','SlowRef')
@@ -19,7 +20,6 @@ _SigGen  = _et.idx('PSOpModeTyp','SigGen')
 
 _connection_timeout = 0.05
 _fluctuation_rms = 0.0
-_wfm_default = _PSWaveForm.wfm_linear_ramp(2000,10, max_value=50.0)
 
 
 class Controller:
@@ -30,7 +30,7 @@ class Controller:
                        callback=None,    # callback function to signal
                        index=None):      # callback index in dictionary
 
-        """Class implementation of the logic of a power supply controller.
+        """Controller Class.
 
         This is a pure virtual class that implements the logic of controllers used by
         power supply IOCs. It can be subclassed to either a controller state
@@ -44,14 +44,14 @@ class Controller:
         A broad range of controller types can be implemented as subclasses due
         to the fact that many of the methods that may require specific actions
         are implemented as virtual methods.
-
         """
+
         # controller limits
         self._current_min = current_min
         self._current_max = current_max
         # waveform
         if waveform is None:
-            waveform = _wfm_default
+            waveform = _PSWaveForm.wfm_constant(2000,value=0.0)
         self._waveform = waveform
         self._waveform_step = 0
         # timestamps
@@ -193,10 +193,16 @@ class Controller:
     @current_sp.setter
     def current_sp(self, value):
         """Set state of PwrState-Sel and update state of controller."""
+        value = self._check_current_ref_limits(value)
         if self.__setter_current_sp(value):
             self._update_state()
     def __setter_current_sp(self, value):
         return self._setter_current_sp(value)
+
+    def _check_current_ref_limits(self, value):
+        value = value if self._current_min is None else max(value,self._current_min)
+        value = value if self._current_max is None else min(value,self._current_max)
+        return value
 
     def _update_state(self):
         """Method that update controller state. It implements most of the
@@ -223,14 +229,16 @@ class Controller:
 
     def __str__(self):
         st = '--- Controller ---\n'
-        propty = 'pwrstate_sel';       st +=   '{0:<20s}: {1}'.format(propty, _et.key('OffOnTyp', self.pwrstate_sel))
-        propty = 'pwrstate_sts';       st += '\n{0:<20s}: {1}'.format(propty, _et.key('OffOnTyp', self.pwrstate_sts))
-        propty = 'opmode_sel';         st += '\n{0:<20s}: {1}'.format(propty, _et.key('PSOpModeTyp', self.opmode_sel))
-        propty = 'opmode_sts';         st += '\n{0:<20s}: {1}'.format(propty, _et.key('PSOpModeTyp', self.opmode_sts))
-        propty = 'current_sp';         st += '\n{0:<20s}: {1}'.format(propty, self.current_sp)
-        propty = 'current_rb';         st += '\n{0:<20s}: {1}'.format(propty, self.current_rb)
-        propty = 'timestamp_pwrstate'; st += '\n{0:<20s}: {1}'.format(propty, _get_timestamp(self._timestamp_pwrstate))
-        propty = 'timestamp_opmode';   st += '\n{0:<20s}: {1}'.format(propty, _get_timestamp(self._timestamp_opmode))
+        propty = 'pwrstate_sel';        st +=   '{0:<20s}: {1}'.format(propty, _et.key('OffOnTyp', self.pwrstate_sel))
+        propty = 'pwrstate_sts';        st += '\n{0:<20s}: {1}'.format(propty, _et.key('OffOnTyp', self.pwrstate_sts))
+        propty = 'opmode_sel';          st += '\n{0:<20s}: {1}'.format(propty, _et.key('PSOpModeTyp', self.opmode_sel))
+        propty = 'opmode_sts';          st += '\n{0:<20s}: {1}'.format(propty, _et.key('PSOpModeTyp', self.opmode_sts))
+        propty = 'current_sp';          st += '\n{0:<20s}: {1}'.format(propty, self.current_sp)
+        propty = 'current_rb';          st += '\n{0:<20s}: {1}'.format(propty, self.current_rb)
+        propty = '_current_min';        st += '\n{0:<20s}: {1}'.format(propty, self._current_min)
+        propty = '_current_max';        st += '\n{0:<20s}: {1}'.format(propty, self._current_max)
+        propty = '_timestamp_pwrstate'; st += '\n{0:<20s}: {1}'.format(propty, _get_timestamp(self._timestamp_pwrstate))
+        propty = '_timestamp_opmode';   st += '\n{0:<20s}: {1}'.format(propty, _get_timestamp(self._timestamp_opmode))
         return st
 
 class ControllerError(Controller):
@@ -250,7 +258,7 @@ class ControllerError(Controller):
         self._setter_current_rb(_random.gauss(self.current_rb,self._error_std))
 
 class ControllerSim(ControllerError):
-    """Class for Controller Simulation.
+    """Controller Simulation Class.
 
     This controller subclass derives from ControllerError and implements a
     controller simulation where its state is stored as class attributes.
@@ -273,7 +281,7 @@ class ControllerSim(ControllerError):
         return self._pwrstate
     # --- pwrstate_sel setter ---
     def _setter_pwrstate_sel(self, value):
-        """Return True is property has changed."""
+        """Return True if property has changed."""
         if value == self._pwrstate: return False
         self._pwrstate = value
         return True
@@ -289,7 +297,7 @@ class ControllerSim(ControllerError):
         return self._opmode
     # --- opmode_sel setter ---
     def _setter_opmode_sel(self, value):
-        """Return True is property has changed."""
+        """Return True if property has changed."""
         if value == self._opmode: return False
         self._opmode = value
         return True
@@ -303,7 +311,7 @@ class ControllerSim(ControllerError):
         return self._current_sp
     # --- current_sp setter ---
     def _setter_current_sp(self, value):
-        """Return True is property has changed."""
+        """Return True if property has changed."""
         if value == self._current_sp: return False
         self._current_sp = value
         return True
@@ -333,6 +341,22 @@ class ControllerSim(ControllerError):
             callback('OpMode-Sts', self.opmode_sts)
             callback('Current-SP', self.current_sp)
             callback('Current-RB', self.current_rb)
+
+class ControlleEpics(ControllerError):
+    """Controller Epics Class.
+    """
+
+    def __init__(self, ps_name,
+                       connection_timeout=_connection_timeout, **kwargs):
+
+        self._ps_name = ps_name
+        super().__init__(**kwargs)
+
+    @property
+    def ps_name(self):
+        return self._ps_name
+
+
 
 
 # class Ctrller:
