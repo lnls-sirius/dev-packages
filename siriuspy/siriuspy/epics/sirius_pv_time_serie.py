@@ -1,4 +1,4 @@
-from .sirius_pv import SiriusPV as _SiriusPV
+from .pv import SiriusPV as _SiriusPV
 import collections as _collections
 import time as _time
 import copy as _copy

@@ -1,5 +1,5 @@
 
-from .sirius_pv import SiriusPV as _SiriusPV
+from .pv import SiriusPV as _SiriusPV
 
 
 class SiriusPVsSet:

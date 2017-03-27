@@ -1,9 +1,9 @@
-from .sirius_pv import *
-from .sirius_pvs_set import *
+from .pv import *
+from .pvsset import *
 from .sirius_pv_time_serie import *
-from .power_supply import *
+from .pwrsupply import *
 
-del power_supply
+del pwrsupply
 del sirius_pv_time_serie
-del sirius_pvs_set
-del sirius_pv
+del pvsset
+del pv
