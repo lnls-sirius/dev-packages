@@ -2,21 +2,25 @@ from .sirius_pv import SiriusPV as _SiriusPV
 import collections as _collections
 import time as _time
 import copy as _copy
-# import threading as _threading
+import threading as _threading
+import signal as _signal
 
 class SiriusPVTimeSerie:
 
-    def __init__(self, pv, time_window=None, nr_max_points=None, time_min_interval=0.0):
+    def __init__(self, pv, time_window=None, nr_max_points=None, time_min_interval=0.0, mode=0):
         self._pv                = pv
         self._time_window       = time_window
         self._time_min_interval = time_min_interval
         self._nr_max_points     = nr_max_points
         self._timestamp_deque   = _collections.deque(maxlen=self._nr_max_points)
         self._value_deque       = _collections.deque(maxlen=self._nr_max_points)
-        # self._mode              = mode
-        # self._timer             = _threading.Timer(self._time_min_interval,self._auto_acquire)
-        # if mode == 1:
-        #     self._timer.start()
+        self._mode              = mode
+        if self._mode == 1:
+            self._th_auto_acquire = _threading.Thread(target=self._auto_acquire,daemon=True)
+            self._stop_auto_acquire = False
+            self._th_auto_acquire.start()
+        else:
+            self._stop_auto_acquire = True
 
     @property
     def time_window(self):
@@ -70,21 +74,22 @@ class SiriusPVTimeSerie:
         self._timestamp_deque   = _collections.deque(self._timestamp_deque, maxlen=self._nr_max_points)
         self._value_deque       = _collections.deque(self._value_deque, maxlen=self._nr_max_points)
 
-    # @property
-    # def mode(self):
-    #     return self._mode
-    #
-    # @mode.setter
-    # def mode(self, value):
-    #     """Define new mode of acquisition of datapoints"""
-    #     if self._mode == value:
-    #         pass
-    #     else:
-    #         self._mode = value
-    #         if self._mode == 1:
-    #             self._timer.start()
-    #         else:
-    #             self._timer.stop()
+    @property
+    def mode(self):
+        """Returns the mode of acquisition: 0 if manual and 1 if automatic"""
+        return self._mode
+
+    @mode.setter
+    def mode(self, value):
+        """Define new mode of acquisition of datapoints"""
+        if self._mode != value:
+            self._mode = value
+            if self._mode == 1:
+                self._th_auto_acquire = _threading.Thread(target=self._auto_acquire,daemon=True)
+                self._stop_auto_acquire = False
+                self._th_auto_acquire.start()
+            else:
+                self._stop_auto_acquire = True
 
     @property
     def serie(self):
@@ -98,25 +103,16 @@ class SiriusPVTimeSerie:
     def acquire(self):
         """Acquire a new time serie datapoint"""
         """Returns True if datapoint was acquired and False otherwise"""
-        timestamp = _time.time()
-        pv_timestamp, pv_value = self._pv.timestamp, self._pv.value
+        # check if pv is connected
+        if self.connected():
+            timestamp = _time.time()
+            pv_timestamp, pv_value = self._pv.timestamp, self._pv.value
 
-        # check if it is a new datapoint
-        if len(self._timestamp_deque) == 0 or pv_timestamp != self._timestamp_deque[-1]:
-            # check if there is a limiting time_window
-            if self._time_window == None:
-                # check if there is a limiting time_min_interval
-                if len(self._timestamp_deque)==0 or self._time_min_interval<=timestamp-self._timestamp_deque[-1]:
-                    self._timestamp_deque.append(pv_timestamp), self._value_deque.append(pv_value)
-                    return True
-                else:
-                    # print('not acquired: time interval not sufficient')
-                    return False
-            else:
-                # check if the datapoints in the deques are yet valid to the limiting time_window
-                self._update(timestamp)
-                # check if the new point is within the limiting time_window
-                if pv_timestamp >= timestamp - self._time_window:
+            # check if it is a new datapoint
+            if len(self._timestamp_deque) == 0 or pv_timestamp != self._timestamp_deque[-1]:
+                # check if there is a limiting time_window
+                if self._time_window == None:
+                    # check if there is a limiting time_min_interval
                     if len(self._timestamp_deque)==0 or self._time_min_interval<=timestamp-self._timestamp_deque[-1]:
                         self._timestamp_deque.append(pv_timestamp), self._value_deque.append(pv_value)
                         return True
@@ -124,34 +120,45 @@ class SiriusPVTimeSerie:
                         # print('not acquired: time interval not sufficient')
                         return False
                 else:
-                    # print('not acquired: not within time_window')
-                    return False
+                    # check if the datapoints in the deques are yet valid to the limiting time_window
+                    self._update(timestamp)
+                    # check if the new point is within the limiting time_window
+                    if pv_timestamp >= timestamp - self._time_window:
+                        if len(self._timestamp_deque)==0 or self._time_min_interval<=timestamp-self._timestamp_deque[-1]:
+                            self._timestamp_deque.append(pv_timestamp), self._value_deque.append(pv_value)
+                            return True
+                        else:
+                            # print('not acquired: time interval not sufficient')
+                            return False
+                    else:
+                        # print('not acquired: not within time_window')
+                        return False
+            else:
+                # print('not acquired: item already in deque')
+                return False
         else:
-            # print('not acquired: item already in deque')
+            # print('not acquired: pv not connected')
             return False
 
-    # def _auto_acquire(self):
-    #     self.acquire()
-    #     self._timer = _threading.Timer(self._time_min_interval,self._auto_acquire)
-    #     self._timer.start()
+    def _auto_acquire(self):
+        while not self._stop_auto_acquire:
+            self.acquire()
+            _time.sleep(self.time_min_interval)
 
     def _update(self, timestamp):
         """Update time serie according to current timestamp"""
-        # deltat_deque = [timestamp-i for i in self._timestamp_deque]
 
         if len(self._timestamp_deque) > 0:
             if self._timestamp_deque[-1] <= timestamp - self._time_window:
-                self._timestamp_deque.clear()
-                self._value_deque.clear()
-                # print('deques cleared')
-                # print(deltat_deque)
+                self.clearserie()
+
             elif self._timestamp_deque[0] >= timestamp - self._time_window:
                 pass
-                # print(deltat_deque)
+
             else:
                 # while self._timestamp_deque[0] <= timestamp - self._time_window:
                 #     self._timestamp_deque.popleft(), self._value_deque.popleft()
-                # print(deltat_deque)
+
                 low_interval_end = 0
                 high_interval_end = len(self._timestamp_deque)-1
                 search_index = (high_interval_end - low_interval_end)//2
@@ -163,9 +170,6 @@ class SiriusPVTimeSerie:
                     else:
                         high_interval_end = search_index
                         search_index = (high_interval_end - low_interval_end)//2+low_interval_end
-                    # print(low_interval_end)
-                    # print(high_interval_end)
-                    # print('s: '+str(search_index))
 
                 for item in range(search_index+1):
                     self._timestamp_deque.popleft(), self._value_deque.popleft()
