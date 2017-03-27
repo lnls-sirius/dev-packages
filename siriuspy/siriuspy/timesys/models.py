@@ -534,10 +534,8 @@ class EVGIOC(CallBack):
     def _sim_callback(self,propty,value, **kwargs):
         if propty == 'continuous':
             self.continuous_rb = value
-            self._call_callbacks('ContinuousState-Sts',value)
         elif propty == 'clyclic_injection':
             self.clyclic_injection_rb = value
-            self._call_callbacks('InjCyclic-Sts',value)
         elif propty == 'bucket_list':
             if _np.any(value != self._bucket_list):
                 self.bucket_list = value
@@ -546,8 +544,9 @@ class EVGIOC(CallBack):
             self.repetition_rate_rb = value
         elif propty == 'injection':
             self.injection_rb = value
-            self._injection_sp = value
-            self._call_callbacks('InjectionState-Sel',value)
+            if value != self._injection_sp:
+                self._injection_sp = value
+                self._call_callbacks('InjectionState-Sel',value)
         elif propty == 'single':
             self.single_rb = value
             self._single_sp = value
@@ -602,7 +601,6 @@ class EVGIOC(CallBack):
         if value <len(self._states):
             self._injection_rb = value
             self._call_callbacks('InjectionState-Sts',value)
-
 
     @property
     def single_sp(self):
