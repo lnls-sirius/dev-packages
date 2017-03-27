@@ -1,6 +1,7 @@
 import uuid as _uuid
 import numpy as _np
 import threading as _threading
+import time as _time
 
 _EventMapping = {'Linac':0, 'InjBO':1,  'InjSI':2,  'RmpBO':3,
                  'RmpSI':4, 'DigLI':5,  'DigTB':6,  'DigBO':7,
@@ -332,14 +333,14 @@ class EVGSim(CallBack):
 
     def __init__(self, callbacks= None):
         super().__init__(callbacks)
-        self._continuous = None
-        self._injection = False
+        self._continuous = 1
+        self._injection = 0
         self._injection_callbacks = dict()
-        self._cyclic_injection = None
-        self._single = None
+        self._cyclic_injection = 0
+        self._single = 0
         self._single_callbacks = dict()
         self._bucket_list = _np.zeros(864)
-        self._repetition_rate = None
+        self._repetition_rate = 30
         self.events = dict()
         for i in range(len(_EventMapping.keys())):
             self.events[i] = EventSim()
@@ -369,7 +370,7 @@ class EVGSim(CallBack):
     @bucket_list.setter
     def bucket_list(self,value):
         self._bucket_list = value
-        self._call_callbacks('bucket_list',value)
+        # self._call_callbacks('bucket_list',value)
 
     @property
     def repetition_rate(self):
@@ -386,7 +387,7 @@ class EVGSim(CallBack):
     @injection.setter
     def injection(self,value):
         if value:
-            if not self._injection:
+            if not self._injection and self._continuous:
                 self._injection = value
                 _threading.Thread(target=self._injection_fun).start()
         else:
@@ -401,7 +402,7 @@ class EVGSim(CallBack):
 
     def _injection_fun(self):
         while True:
-            for i in self.bucket_list:
+            for i in self._bucket_list:
                 if not self._can_inject(): return
                 if i<=0: break
                 evnts = self._generate_events((1,2))
@@ -480,7 +481,7 @@ class EVGIOC(CallBack):
         self._uuid = _uuid.uuid4()
         self._base_freq = base_freq
         if controller is None:
-            self._controller = EVGSim()#EVGSim({self._uuid:self._callback})
+            self._controller = EVGSim({self._uuid:self._sim_callback})
         else:
             self._controller = controller
             self._controller.add_callback({self._uuid:self._sim_callback})
@@ -533,9 +534,10 @@ class EVGIOC(CallBack):
     def _sim_callback(self,propty,value, **kwargs):
         if propty == 'continuous':
             self.continuous_rb = value
+            self._call_callbacks('ContinuousState-Sts',value)
         elif propty == 'clyclic_injection':
             self.clyclic_injection_rb = value
-            self._call_callbacks('BucketList',value)
+            self._call_callbacks('InjCyclic-Sts',value)
         elif propty == 'bucket_list':
             if _np.any(value != self._bucket_list):
                 self.bucket_list = value
