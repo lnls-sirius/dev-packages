@@ -48,6 +48,7 @@ class Controller:
         are implemented as virtual methods.
         """
 
+        print('controller init')
         # controller limits
         self._current_min = current_min
         self._current_max = current_max
@@ -210,6 +211,7 @@ class Controller:
         """Method that update controller state. It implements most of the
         controller logic regarding the interdependency of the controller
         properties."""
+        print('update_state')
         if self.pwrstate_sts == _Off:
             self._setter_current_rb(0.0)
         elif self.pwrstate_sts == _On:
@@ -350,6 +352,7 @@ class ControllerEpics(ControllerError):
                        connection_timeout=_connection_timeout,
                        **kwargs):
 
+        print('epics init')
         self._ps_name = ps_name
         self._uuid = _uuid.uuid4()
         self._connection_timeout = connection_timeout
@@ -371,7 +374,6 @@ class ControllerEpics(ControllerError):
         if not self._pvs['Current-RB'].connected: return False
         return True
 
-
     def update_state(self):
         if not self._connected(): return
         super().update_state()
@@ -388,8 +390,12 @@ class ControllerEpics(ControllerError):
             callback('Current-SP', self.current_sp)
             callback('Current-RB', self.current_rb)
 
-    def _callback(self, propty, value, **kwargs):
-        self._process_callbacks(propty=propty, value=value)
+    def _callback(self, pvname=None, propty=None, value=None, **kwargs):
+        if pvname is not None:
+            if 'Current-RB' in pvname:
+                self._current_rb = value
+                self.update_state()
+        self._process_callbacks(propty=propty, value=value, **kwargs)
 
     def _create_epics_pvs(self):
         self._pvs = {}
@@ -400,7 +406,6 @@ class ControllerEpics(ControllerError):
         self._pvs['OpMode-Sts']   = _PV(pvname + ':OpMode-Sts', callback=self._callback, connection_timeout=self._connection_timeout)
         self._pvs['Current-SP']   = _PV(pvname + ':Current-SP', callback=self._callback, connection_timeout=self._connection_timeout)
         self._pvs['Current-RB']   = _PV(pvname + ':Current-RB', callback=self._callback, connection_timeout=self._connection_timeout)
-
 
     @_abstractmethod
     def _getter_pwrstate_sel(self):
@@ -471,6 +476,7 @@ class ControllerEpics(ControllerError):
 
     def _update_opmode_slowref(self):
         self._current_rb = self.current_sp
+        print('here: ', self.current_sp, self._current_rb)
 
     def _update_opmode_fastref(self):
         pass
