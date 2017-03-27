@@ -1,9 +1,10 @@
 import uuid as _uuid
 import numpy as _np
+import threading as _threading
 
-_EventMapping = {'Linac':0,  'InjBO':1,  'InjSI':2,  'RmpBO':3,
-                  'RampSI':4, 'DigLI':5,  'DigTB':6,  'DigBO':7,
-                  'DigTS':8,  'DigSI':9}
+_EventMapping = {'Linac':0, 'InjBO':1,  'InjSI':2,  'RmpBO':3,
+                 'RmpSI':4, 'DigLI':5,  'DigTB':6,  'DigBO':7,
+                 'DigTS':8, 'DigSI':9}
 _PwrFreq = 60
 
 
@@ -73,7 +74,7 @@ class EventIOC(CallBack):
     _delay_types = ('Fixed','Incr')
 
     @staticmethod
-    def get_database(prefix):
+    def get_database(prefix=''):
         db = dict()
         db[prefix + 'Delay-SP']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'unit':'us', 'prec': 3}
         db[prefix + 'Delay-RB']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'unit':'us','prec': 3}
@@ -92,14 +93,22 @@ class EventIOC(CallBack):
         else:
             self._controller = controller
             self._controller.add_callback({self._uuid:self._callback})
-        self._mode = None
-        self._delay_type = None
         self._delay_sp = None
         self._delay_rb = None
         self._mode_sp = None
         self._mode_rb = None
         self._delay_type_sp = None
         self._delay_type_rb = None
+        self._set_init_values()
+
+    def _set_init_values(self):
+        db = self.get_database()
+        self._delay_sp = db['Delay-SP']['value']
+        self._delay_rb = db['Delay-RB']['value']
+        self._mode_sp = db['Mode-Sel']['value']
+        self._mode_rb = db['Mode-Sts']['value']
+        self._delay_type_sp = db['DelayType-Sel']['value']
+        self._delay_type_rb = db['DelayType-Sts']['value']
 
     @property
     def delay_sp(self):
@@ -223,12 +232,12 @@ class ClockIOC(CallBack):
     _states = ('Dsbl','Enbl')
 
     @staticmethod
-    def get_database(prefix):
+    def get_database(prefix=''):
         db = dict()
-        db[prefix + 'Freq-SP']   = {'type' : 'float', 'count': 1, 'value': 0.0, 'prec': 10}
-        db[prefix + 'Freq-RB']   = {'type' : 'float', 'count': 1, 'value': 0.0, 'prec': 10}
-        db[prefix + 'State-Sel'] = {'type' : 'enum', 'enums':ClockIOC._states, 'value':1}
-        db[prefix + 'State-Sts'] = {'type' : 'enum', 'enums':ClockIOC._states, 'value':1}
+        db[prefix + 'Freq-SP']   = {'type' : 'float', 'count': 1, 'value': 1.0, 'prec': 10}
+        db[prefix + 'Freq-RB']   = {'type' : 'float', 'count': 1, 'value': 1.0, 'prec': 10}
+        db[prefix + 'State-Sel'] = {'type' : 'enum', 'enums':ClockIOC._states, 'value':0}
+        db[prefix + 'State-Sts'] = {'type' : 'enum', 'enums':ClockIOC._states, 'value':0}
         return db
 
     def __init__(self, base_freq, callbacks = None, prefix = None, controller = None):
@@ -240,10 +249,18 @@ class ClockIOC(CallBack):
         else:
             self._controller = controller
             self._controller.add_callback({self._uuid:self._callback})
-        self._frequency_sp = self._base_frequency
-        self._frequency_rb = self._base_frequency
-        self._state_sp = 0
-        self._state_rb = 0
+        self._frequency_sp = None
+        self._frequency_rb = None
+        self._state_sp = None
+        self._state_rb = None
+        self._set_init_values()
+
+    def _set_init_values(self):
+        db = self.get_database()
+        self._frequency_sp = db['Freq-SP']['value']
+        self._frequency_rb = db['Freq-RB']['value']
+        self._state_sp = db['State-Sel']['value']
+        self._state_rb = db['State-Sts']['value']
 
     @property
     def frequency_sp(self):
@@ -302,7 +319,6 @@ class ClockIOC(CallBack):
 
     def set_propty(self,reason,value):
         reason = reason[len(self.prefix):]
-        print(reason)
         if reason  == 'State-Sel':
             self.state_sp = value
         elif reason == 'Freq-SP':
@@ -436,7 +452,7 @@ class EVGIOC(CallBack):
     _cyclic_types = ('Off','On')
 
     @staticmethod
-    def get_database(prefix):
+    def get_database(prefix=''):
         db = dict()
         p = prefix
         db[p + 'SingleState-Sel']     = {'type' : 'enum', 'enums':EVGIOC._states, 'value':0}
@@ -460,42 +476,56 @@ class EVGIOC(CallBack):
         return db
 
     def __init__(self, base_freq, callbacks = None, prefix = None, controller = None):
-        super().__init__(callbacks = callbacks, prefix = None)
+        super().__init__(callbacks = callbacks, prefix = prefix)
         self._uuid = _uuid.uuid4()
         self._base_freq = base_freq
         if controller is None:
-            self._controller = EVGSim({self._uuid:self._callback})
+            self._controller = EVGSim()#EVGSim({self._uuid:self._callback})
         else:
             self._controller = controller
-            self._controller.add_callback({self._uuid:self._callback})
-        self._frequency_sp = None
-        self._frequency_rb = None
-        self._single_sp = None
-        self._single_rb = None
-        self._continuous_sp = None
-        self._continuous_rb = None
-        self._cyclic_injection_sp = None
-        self._cyclic_injection_rb = None
-        self._bucket_list = _np.zeros(864)
-        self._repetition_rate_sp = None
-        self._repetition_rate_rb = None
-        self._injection_sp = False
-        self._injection_rb = False
+            self._controller.add_callback({self._uuid:self._sim_callback})
         self.events = dict()
         for i,ev in enumerate(sorted(_EventMapping.keys())):
             cntler = self._controller.events[i]
             self.events[ev] = EventIOC(self._base_freq/4,
-                                       callbacks = {self._uuid:self._ioc_callback},
-                                       prefix = ev,
-                                       controller = cntler)
+            callbacks = {self._uuid:self._ioc_callback},
+            prefix = ev,
+            controller = cntler)
         self.clocks = dict()
         for i in range(8):
             name = 'Clock{0:d}'.format(i)
             cntler = self._controller.clocks[i]
             self.clocks[name] = ClockIOC(self._base_freq/4,
-                                         callbacks = {self._uuid:self._ioc_callback},
-                                         prefix = name,
-                                         controller = cntler)
+            callbacks = {self._uuid:self._ioc_callback},
+            prefix = name,
+            controller = cntler)
+        self._single_sp = None
+        self._single_rb = None
+        self._injection_sp = False
+        self._injection_rb = False
+        self._cyclic_injection_sp = None
+        self._cyclic_injection_rb = None
+        self._continuous_sp = None
+        self._continuous_rb = None
+        self._bucket_list = _np.zeros(864)
+        self._repetition_rate_sp = None
+        self._repetition_rate_rb = None
+        self._set_init_values()
+
+    def _set_init_values(self):
+        db = self.get_database()
+        self._single_sp = db['SingleState-Sel']['value']
+        self._single_rb = db['SingleState-Sts']['value']
+        self._injection_sp = db['InjectionState-Sel']['value']
+        self._injection_rb = db['InjectionState-Sts']['value']
+        self._cyclic_injection_sp = db['InjCyclic-Sel']['value']
+        self._cyclic_injection_rb = db['InjCyclic-Sts']['value']
+        self._continuous_sp = db['ContinuousState-Sel']['value']
+        self._continuous_rb = db['ContinuousState-Sts']['value']
+        self._repetition_rate_sp = db['RepRate-SP']['value']
+        self._repetition_rate_rb = db['RepRate-RB']['value']
+        self._bucket_list = _np.ones(864)*db['BucketList']['value']
+
 
     def _ioc_callback(self,propty,value, **kwargs):
         self._call_callbacks(propty, value, **kwargs)
