@@ -378,7 +378,7 @@ class EVGSim(CallBack):
         self._call_callbacks('injection',value)
 
     def add_injection_callback(self,uuid,callback):
-        self._injection_callbacks.update({uuid,callback})
+        self._injection_callbacks.update({uuid:callback})
 
     def remove_injection_callback(self,uuid):
         self._injection_callbacks.pop(uuid, None)
@@ -419,7 +419,7 @@ class EVGSim(CallBack):
         self._call_callbacks('single',value)
 
     def add_single_callback(self,uuid,callback):
-        self._single_callbacks.update({uuid,callback})
+        self._single_callbacks.update({uuid:callback})
 
     def remove_single_callback(self,uuid):
         self._single_callbacks.pop(uuid, None)
@@ -524,14 +524,14 @@ class EVGIOC(CallBack):
     def add_injection_callback(self, uuid,callback):
         self._controller.add_injection_callback(uuid,callback)
 
-    def remove_injection_callback(self, uuid,callback):
-        self._controller.remove_injection_callback(uuid,callback)
+    def remove_injection_callback(self, uuid):
+        self._controller.remove_injection_callback(uuid)
 
     def add_single_callback(self, uuid,callback):
         self._controller.add_single_callback(uuid,callback)
 
-    def remove_single_callback(self, uuid,callback):
-        self._controller.remove_single_callback(uuid,callback)
+    def remove_single_callback(self, uuid):
+        self._controller.remove_single_callback(uuid)
 
     @property
     def continuous_sp(self):
