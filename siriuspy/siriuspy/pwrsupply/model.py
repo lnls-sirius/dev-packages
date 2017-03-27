@@ -36,8 +36,8 @@ class PowerSupply:
         if self._database is None:
             raise Exception('no database defined for power supply type "' + self._pstype_name + '"!')
         self._enum_keys = enum_keys
-        self._callback_functions = {}
-        if callback is not None: self._callback_functions[_uuid.uuid4] = callback
+        self._callbacks = {}
+        if callback is not None: self._callbacks[_uuid.uuid4] = callback
         self._controller = controller
         self._controller_init()
 
@@ -128,7 +128,7 @@ class PowerSupply:
         self._controller_read_status()
 
     def add_callback(self, callback, index):
-        self._callback_functions[index] = callback
+        self._callbacks[index] = callback
 
     def timing_trigger(self):
         self._controller.timing_trigger()
@@ -202,7 +202,7 @@ class PowerSupply:
             self._set('Current-RB', value); value_changed_flag = True
 
         if value_changed_flag:
-            for index, callback_function in self._callback_functions.items():
+            for index, callback_function in self._callbacks.items():
                 callback_function(pvname, value, **kwargs)
 
     def _controller_read_status(self):

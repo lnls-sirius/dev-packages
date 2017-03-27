@@ -265,15 +265,13 @@ class ControllerSim(ControllerError):
     This controller subclass derives from ControllerError and implements a
     controller simulation where its state is stored as class attributes.
     """
-    def __init__(self, fluctuation_rms=0, **kwargs):
+    def __init__(self, **kwargs):
 
         # define initial state of controller
         self._pwrstate = _Off
         self._opmode = _SlowRef
         self._current_sp = 0.0
         self._current_rb = 0.0
-
-        self._fluctuation_rms = fluctuation_rms
         # At last, after state parameters within the subclass are defined,
         # super class __init__ can be invoked.
         super().__init__(**kwargs)
@@ -335,7 +333,7 @@ class ControllerSim(ControllerError):
     # def _add_errors(self):
     #     self._current_rb += 2*(_random.random()-0.5)*self._fluctuation_rms
 
-    def _process_callbacks(self, propty, values, **kwargs):
+    def _process_callbacks(self, propty, value, **kwargs):
         for index, callback in self._callbacks.items():
             callback('PwrState-Sel', self.pwrstate_sel)
             callback('PwrState-Sts', self.pwrstate_sts)
@@ -377,7 +375,7 @@ class ControllerEpics(ControllerError):
     def update_state(self):
         if not self._connected(): return
         super().update_state()
-        
+
     def _process_callbacks(self, propty, value, **kwargs):
         """This virtual method is used to signal up registered callback functions
         when the state of the controller has changed. It is invoked at the end
@@ -482,8 +480,6 @@ class ControllerEpics(ControllerError):
 
     def _update_opmode_siggen(self):
         pass
-
-
 
 class ControllerPyaccel(Controller):
     """Controller PyEpics model.
