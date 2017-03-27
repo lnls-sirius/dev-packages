@@ -37,7 +37,6 @@ class CallBack:
 
 class EventSim(CallBack):
 
-
     def __init__(self,callbacks=None):
         super().__init__(callbacks)
         self._delay_type = None
@@ -728,3 +727,108 @@ class EVGIOC(CallBack):
         else:
             return False
         return True
+
+
+class TriggerOutputSim(CallBack):
+
+        def __init__(self,callbacks=None):
+            super().__init__(callbacks)
+            self._optic_channel = 0
+            self._delay = 0
+
+        @property
+        def delay(self):
+            return self._delay
+        @delay.setter
+        def delay(self,value):
+            self._delay = value
+            self._call_callbacks('delay',value)
+
+        @property
+        def optic_channel(self):
+            return self._mode
+        @optic_channel.setter
+        def mode(self,value):
+            self._optic_channel = value
+            self._call_callbacks('optic_channel',value)
+
+
+class TriggerOptChSim(CallBack):
+
+    def __init__(self,callbacks=None):
+        super().__init__(callbacks)
+        self._state = 0
+        self._width = 0
+        self._delay = 0
+        self._polarity = 0
+        self._event = 0
+        self._pulses = 1
+
+    @property
+    def state(self):
+        return self._state
+    @state.setter
+    def state(self,value):
+        self._state = value
+        self._call_callbacks('state',value)
+
+    @property
+    def width(self):
+        return self._width
+    @width.setter
+    def width(self,value):
+        self._width = value
+        self._call_callbacks('width',value)
+
+    @property
+    def delay(self):
+        return self._delay
+    @delay.setter
+    def delay(self,value):
+        self._delay = value
+        self._call_callbacks('delay',value)
+
+    @property
+    def polarity(self):
+        return self._polarity
+    @polarity.setter
+    def polarity(self,value):
+        self._polarity = value
+        self._call_callbacks('polarity',value)
+
+    @property
+    def event(self):
+        return self._event
+    @event.setter
+    def event(self,value):
+        self._event = value
+        self._call_callbacks('event',value)
+
+    @property
+    def pulses(self):
+        return self._pulses
+    @pulses.setter
+    def pulses(self,value):
+        self._pulses = value
+        self._call_callbacks('pulses',value)
+
+
+class EVRSim(CallBack):
+
+    def __init__(self, callbacks= None):
+        super().__init__(callbacks)
+        self._state = 1
+        self.optic_channels = dict()
+        for i in range(16):
+            self.optic_channels[i] = TriggerOptChSim()
+        self.trigger_outputs = dict()
+        for i in range(8):
+            self.trigger_outputs[i] = TriggerOutputSim()
+
+    @property
+    def state(self):
+        return self._state
+    @state.setter
+    def state(self,value):
+        self._state = value
+        self._call_callbacks('state',value)
