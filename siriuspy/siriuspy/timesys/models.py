@@ -7,7 +7,12 @@ _EventMapping = {'Linac':0, 'InjBO':1,  'InjSI':2,  'RmpBO':3,
                  'RmpSI':4, 'DigLI':5,  'DigTB':6,  'DigBO':7,
                  'DigTS':8, 'DigSI':9}
 _PwrFreq = 60
+_FINE_DELAY_STEP = 5e-12
 
+_EVENT_LABEL_TEMPLATE = 'Ev{0:02x}'
+_CLOCK_LABEL_TEMPLATE = 'Cl{0:1d}'
+_OPT_LABEL_TEMPLATE   = 'OPT{0:2d}'
+_OUT_LABEL_TEMPLATE   = 'OUT{0:1d}'
 
 class CallBack:
 
@@ -37,8 +42,9 @@ class CallBack:
 
 class EventSim(CallBack):
 
-    def __init__(self,callbacks=None):
+    def __init__(self,base_freq,callbacks=None):
         super().__init__(callbacks)
+        self.base_freq = base_freq
         self._delay_type = None
         self._delay = 0
         self._mode = 0
@@ -67,6 +73,13 @@ class EventSim(CallBack):
         self._delay_type = value
         self._call_callbacks('delay_type',value)
 
+    def get_base_freq(self):
+        return self.base_freq
+
+    def generate(self):
+        if self._mode > 0:
+            return {'delay':self._delay/self.base_freq}
+
 
 class EventIOC(CallBack):
 
@@ -87,12 +100,13 @@ class EventIOC(CallBack):
     def __init__(self,base_freq,callbacks = None, prefix = None, controller = None):
         super().__init__(callbacks, prefix = prefix)
         self._uuid = _uuid.uuid4()
-        self._base_frequency = base_freq
+        self._base_freq = base_freq
         if controller is None:
-            self._controller = EventSim({self._uuid:self._callback})
+            self._controller = EventSim(self.base_freq, {self._uuid:self._callback})
         else:
             self._controller = controller
             self._controller.add_callback({self._uuid:self._callback})
+            self.base_freq = self._controller.get_base_freq()
         self._delay_sp = None
         self._delay_rb = None
         self._mode_sp = None
@@ -116,7 +130,7 @@ class EventIOC(CallBack):
     @delay_sp.setter
     def delay_sp(self,value):
         self._delay_sp = value
-        self._controller.delay = round(value * self._base_frequency) #integer
+        self._controller.delay = round( value * self._base_freq) #integer
         self._call_callbacks('Delay-SP',value)
 
     @property
@@ -124,7 +138,7 @@ class EventIOC(CallBack):
         return self._delay_rb
     @delay_rb.setter
     def delay_rb(self,value):
-        self._delay_rb = value * (1/self._base_frequency)
+        self._delay_rb = value * (1/self._base_freq)
         self._call_callbacks('Delay-RB',self._delay_rb)
 
     @property
@@ -225,6 +239,10 @@ class ClockSim(CallBack):
     def frequency(self,value):
         self._frequency = value
         self._call_callbacks('frequency',value)
+
+    def generate(self):
+        if self._state > 0:
+            return {'frequency':self.base_freq/self._frequency}
 
 
 class ClockIOC(CallBack):
@@ -340,12 +358,12 @@ class EVGSim(CallBack):
         self._single_callbacks = dict()
         self._bucket_list = _np.zeros(864)
         self._repetition_rate = 30
-        self.events = dict()
-        for i in range(len(_EventMapping.keys())):
-            self.events[i] = EventSim()
-        self.clocks = dict()
+        self.events = list()
+        for i in range(256):
+            self.events.append(EventSim())
+        self.clocks = list()
         for i in range(8):
-            self.clocks[i] = ClockSim()
+            self.clocks.append(ClockSim())
 
     @property
     def continuous(self):
@@ -443,7 +461,20 @@ class EVGSim(CallBack):
 
     def _generate_events(self,tables):
         tables = tables if isinstance(tables,(list,tuple)) else (tables,)
-        return [ev for ev in self.events.values() if ev.mode in tables]
+        events = dict()
+        for i, ev in enumerate(self.events):
+            if not ev.mode in tables: continue
+            dic = ev.generate()
+            if not dic: continue
+            lab = _EVENT_LABEL_TEMPLATE.format(i)
+            events.update(  { lab : dic }  )
+        for i, cl in enumerate(self.clocks):
+            dic = cl.generate()
+            if not dic: continue
+            lab = _CLOCK_LABEL_TEMPLATE.format(i)
+            events.update(  { lab : dic }  )
+
+        return events
 
 
 class EVGIOC(CallBack):
@@ -729,34 +760,188 @@ class EVGIOC(CallBack):
         return True
 
 
-class TriggerOutputSim(CallBack):
+class TriggerSim(CallBack):
 
-        def __init__(self,callbacks=None):
-            super().__init__(callbacks)
-            self._optic_channel = 0
-            self._delay = 0
-
-        @property
-        def delay(self):
-            return self._delay
-        @delay.setter
-        def delay(self,value):
-            self._delay = value
-            self._call_callbacks('delay',value)
-
-        @property
-        def optic_channel(self):
-            return self._mode
-        @optic_channel.setter
-        def mode(self,value):
-            self._optic_channel = value
-            self._call_callbacks('optic_channel',value)
-
-
-class TriggerOptChSim(CallBack):
-
-    def __init__(self,callbacks=None):
+    def __init__(self,base_freq,callbacks=None):
         super().__init__(callbacks)
+        self.base_freq = base_freq
+        self._optic_channel = 0
+        self._delay = 0
+        self._fine_delay = 0
+
+    @property
+    def fine_delay(self):
+        return self._fine_delay
+    @fine_delay.setter
+    def fine_delay(self,value):
+        self._fine_delay = value
+        self._call_callbacks('fine_delay',value)
+
+    @property
+    def delay(self):
+        return self._delay
+    @delay.setter
+    def delay(self,value):
+        self._delay = value
+        self._call_callbacks('delay',value)
+
+    @property
+    def optic_channel(self):
+        return self._optic_channel
+    @optic_channel.setter
+    def optic_channel(self,value):
+        self._optic_channel = value
+        self._call_callbacks('optic_channel',value)
+
+    def receive_events(self, events):
+        lab = _OPT_LABEL_TEMPLATE.format(self._optic_channel)
+        dic = events.get(lab,None)
+        if dic is None: return
+        dic['delay'] += self._delay/self.base_freq + self._fine_delay * _FINE_DELAY_STEP
+        return dic
+
+
+class EVRTriggerIOC(CallBack):
+
+    _optic_channels = tuple(  [ _OPT_LABEL_TEMPLATE.format(i) for i in range(EVRSim._NR_INTERNAL_OPT_CHANNELS) ]  )
+
+    @staticmethod
+    def get_database(prefix=''):
+        db = dict()
+        db[prefix + 'FineDelay-SP']   = {'type' : 'float', 'unit':'ps', 'value': 0.0, 'prec': 0}
+        db[prefix + 'FineDelay-RB']   = {'type' : 'float', 'unit':'ps', 'value': 0.0, 'prec': 0}
+        db[prefix + 'Delay-SP']   = {'type' : 'float', 'unit':'us', 'value': 0.0, 'prec': 0}
+        db[prefix + 'Delay-RB']   = {'type' : 'float', 'unit':'us', 'value': 0.0, 'prec': 0}
+        db[prefix + 'OptCh-Sel']   = {'type' : 'enum', 'enums':EVRTriggerIOC._OptChs, 'value':0}
+        db[prefix + 'OptCh-Sts']   = {'type' : 'enum', 'enums':EVRTriggerIOC._OptChs, 'value':0}
+        return db
+
+    def __init__(self, base_freq, callbacks = None, prefix = None, controller = None):
+        super().__init__(callbacks, prefix = prefix)
+        self._uuid = _uuid.uuid4()
+        self._base_freq = base_freq
+        if controller is None:
+            self._controller = TriggerSim(self.base_freq, {self._uuid:self._callback})
+        else:
+            self._controller = controller
+            self._controller.add_callback({self._uuid:self._callback})
+        self._delay_sp = 0
+        self._delay_rb = 0
+        self._optic_channel_sp = 0
+        self._optic_channel_rb = 0
+        self._fine_delay_sp = 0
+        self._fine_delay_rb = 0
+        self._set_init_values()
+
+    def _set_init_values(self):
+        db = self.get_database()
+        self._delay_sp = db['Delay-SP']['value']
+        self._delay_rb = db['Delay-RB']['value']
+        self._optic_channel_sp = db['OptCh-Sel']['value']
+        self._optic_channel_rb = db['OptCh-Sts']['value']
+        self._fine_delay_sp = db['FineDelay-SP']['value']
+        self._fine_delay_rb = db['FineDelay-RB']['value']
+
+    @property
+    def fine_delay_sp(self):
+        return self._fine_delay_sp
+    @fine_delay_sp.setter
+    def fine_delay_sp(self,value):
+        self._fine_delay_sp = value
+        self._controller.fine_delay = round(value / _FINE_DELAY_STEP ) #integer
+        self._call_callbacks('FineDelay-SP',value)
+
+    @property
+    def fine_delay_rb(self):
+        return self._fine_delay_rb
+    @fine_delay_rb.setter
+    def fine_delay_rb(self,value):
+        self._fine_delay_rb = value * _FINE_DELAY_STEP
+        self._call_callbacks('FineDelay-RB',self._fine_delay_rb)
+
+    @property
+    def delay_sp(self):
+        return self._delay_sp
+    @delay_sp.setter
+    def delay_sp(self,value):
+        self._delay_sp = value
+        self._controller.delay = round(value * self._base_frequency ) #integer
+        self._call_callbacks('Delay-SP',value)
+
+    @property
+    def delay_rb(self):
+        return self._delay_rb
+    @delay_rb.setter
+    def delay_rb(self,value):
+        self._delay_rb = value / self._base_frequency
+        self._call_callbacks('Delay-RB',self._delay_rb)
+
+    @property
+    def optic_channel_sp(self):
+        return self._optic_channel_sp
+    @optic_channel_sp.setter
+    def optic_channel_sp(self,value):
+        if value <len(self._optic_channels):
+            self._optic_channel_sp = value
+            self._controller.optic_channel = value
+            self._call_callbacks('OptCh-Sel',value)
+
+    @property
+    def optic_channel_rb(self):
+        return self._optic_channel_rb
+    @optic_channel_rb.setter
+    def optic_channel_rb(self,value):
+        if value <len(self._optic_channels):
+            self._optic_channel_rb = value
+            self._call_callbacks('OptCh-Sts',value)
+
+    def _callback(self, propty,value,**kwargs):
+        if propty == 'delay':
+            self.delay_rb = value
+        if propty == 'fine_delay':
+            self.fine_delay_rb = value
+        if propty == 'optic_channel':
+            self.optic_channel_rb = value
+
+    def get_propty(self,reason):
+        reason = reason[len(self.prefix):]
+        if reason  == 'OptCh-Sel':
+            return self.optic_channel_sp
+        elif reason  == 'OptCh-Sts':
+            return self.optic_channel_rb
+        elif reason == 'Delay-SP':
+            return self.delay_sp
+        elif reason == 'Delay-RB':
+            return self.delay_rb
+        elif reason == 'FineDelay-SP':
+            return self.fine_delay_sp
+        elif reason == 'FineDelay-RB':
+            return self.fine_delay_rb
+        else:
+            return None
+
+    def set_propty(self,reason,value):
+        reason = reason[len(self.prefix):]
+        if reason  == 'OptCh-Sel':
+            self.optic_channel_sp = value
+        elif reason == 'Delay-SP':
+            self.delay_sp = value
+        elif reason == 'FineDelay-SP':
+            self.fine_delay_sp = value
+        else:
+            return False
+        return True
+
+class EVETriggerIOC(EVRTriggerIOC):
+    _optic_channels = tuple(  [ _OPT_LABEL_TEMPLATE.format(i) for i in range(EVRSim._NR_INTERNAL_OPT_CHANNELS) ]  )
+
+##hele
+
+class OpticChannelSim(CallBack):
+
+    def __init__(self,base_freq,callbacks=None):
+        super().__init__(callbacks)
+        self.base_freq = base_freq
         self._state = 0
         self._width = 0
         self._delay = 0
@@ -812,18 +997,29 @@ class TriggerOptChSim(CallBack):
         self._pulses = value
         self._call_callbacks('pulses',value)
 
+    def receive_events(self, events):
+        if self._state == 0: return
+        lab = _EVENT_LABEL_TEMPLATE.format(self._event)
+        ev = events.get(lab,None)
+        if ev is None: return
+        delay = ev['delay'] + self._delay/self.base_freq
+        return dict(  { 'pulses':self._pulses, 'width':self._width/self.base_freq, 'delay':delay }  )
 
 class EVRSim(CallBack):
 
-    def __init__(self, callbacks= None):
+    _NR_INTERNAL_OPT_CHANNELS = 24
+    _NR_OPT_CHANNELS_OUT = 12
+
+    def __init__(self, base_freq, callbacks= None):
         super().__init__(callbacks)
+        self.base_freq = base_freq
         self._state = 1
-        self.optic_channels = dict()
-        for i in range(16):
-            self.optic_channels[i] = TriggerOptChSim()
-        self.trigger_outputs = dict()
+        self.optic_channels = list()
+        for i in range(self._NR_INTERNAL_OPT_CHANNELS):
+            self.optic_channels[i] = OpticChannelSim(self.base_freq)
+        self.trigger_outputs = list()
         for i in range(8):
-            self.trigger_outputs[i] = TriggerOutputSim()
+            self.trigger_outputs[i] = TriggerOutputSim(self.base_freq)
 
     @property
     def state(self):
@@ -832,3 +1028,22 @@ class EVRSim(CallBack):
     def state(self,value):
         self._state = value
         self._call_callbacks('state',value)
+
+    def receive_events(self,events):
+        opt_out = dict()
+        triggers = dict()
+        for i, opt_ch in enumerate(self.optic_channels):
+            opt = opt_ch.receive_events(events)
+            if opt is None: continue
+            lab = _OPT_LABEL_TEMPLATE.format(i)
+            opt_out.update( {lab:opt} )
+            if i < _NR_OPT_CHANNELS_OUT: triggers.update( {lab:opt} )
+        for tri_ch in self.trigger_outputs:
+            triggers.append(tri_ch.deal_with_opt_ch(opt_out))
+        return triggers
+
+
+class EVESim(EVRSim):
+
+    _NR_INTERNAL_OPT_CHANNELS = 16
+    _NR_OPT_CHANNELS_OUT = 0
