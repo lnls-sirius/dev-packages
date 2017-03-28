@@ -3,41 +3,41 @@ import numpy as _np
 import threading as _threading
 import time as _time
 
-_EventMapping = {'Linac':0, 'InjBO':1,  'InjSI':2,  'RmpBO':3,
+__EventMapping = {'Linac':0, 'InjBO':1,  'InjSI':2,  'RmpBO':3,
                  'RmpSI':4, 'DigLI':5,  'DigTB':6,  'DigBO':7,
                  'DigTS':8, 'DigSI':9}
-_PwrFreq = 60
-_FINE_DELAY_STEP = 5e-12
+__PwrFreq = 60
+__FINE_DELAY_STEP = 5e-12
 
-_EVENT_LABEL_TEMPLATE = 'Ev{0:02x}'
-_CLOCK_LABEL_TEMPLATE = 'Cl{0:1d}'
-_OPT_LABEL_TEMPLATE   = 'OPT{0:2d}'
-_OUT_LABEL_TEMPLATE   = 'OUT{0:1d}'
+__EVENT_LABEL_TEMPLATE = 'Ev{0:02x}'
+__CLOCK_LABEL_TEMPLATE = 'Cl{0:1d}'
+__OPT_LABEL_TEMPLATE   = 'OPT{0:2d}'
+__OUT_LABEL_TEMPLATE   = 'OUT{0:1d}'
 
 class CallBack:
 
     def __init__(self, callbacks=None, prefix = None):
         self.prefix = prefix or ''
-        self._callbacks = dict(callbacks) if callbacks else dict()
+        self.__callbacks = dict(callbacks) if callbacks else dict()
 
-    def _callback(self,propty,value,**kwargs):
+    def __callback(self,propty,value,**kwargs):
         return NotImplemented()
 
-    def _call_callbacks(self, propty, value, **kwargs):
-        for uuid, callback in self._callbacks.items():
+    def __call_callbacks(self, propty, value, **kwargs):
+        for uuid, callback in self.__callbacks.items():
             callback(self.prefix + propty, value, **kwargs)
 
     def add_callback(self,*args):
         if len(args)<2 and isinstance(args[0],dict):
-            self._callbacks.update(args[0])
+            self.__callbacks.update(args[0])
         elif len(args) == 2:
             uuid, callback = args
-            self._callbacks[uuid] = callback
+            self.__callbacks[uuid] = callback
         else:
             raise Exception('wrong input for add_callback')
 
     def remove_callback(self,uuid):
-        self._callbacks.pop(uuid)
+        self.__callbacks.pop(uuid)
 
 
 class EventSim(CallBack):
@@ -45,40 +45,40 @@ class EventSim(CallBack):
     def __init__(self,base_freq,callbacks=None):
         super().__init__(callbacks)
         self.base_freq = base_freq
-        self._delay_type = None
-        self._delay = 0
-        self._mode = 0
+        self.__delay_type = None
+        self.__delay = 0
+        self.__mode = 0
 
     @property
     def delay(self):
-        return self._delay
+        return self.__delay
     @delay.setter
     def delay(self,value):
-        self._delay = value
-        self._call_callbacks('delay',value)
+        self.__delay = value
+        self.__call_callbacks('delay',value)
 
     @property
     def mode(self):
-        return self._mode
+        return self.__mode
     @mode.setter
     def mode(self,value):
-        self._mode = value
-        self._call_callbacks('mode',value)
+        self.__mode = value
+        self.__call_callbacks('mode',value)
 
     @property
     def delay_type(self):
-        return self._delay_type
+        return self.__delay_type
     @delay_type.setter
     def delay_type(self,value):
-        self._delay_type = value
-        self._call_callbacks('delay_type',value)
+        self.__delay_type = value
+        self.__call_callbacks('delay_type',value)
 
     def get_base_freq(self):
         return self.base_freq
 
     def generate(self):
-        if self._mode > 0:
-            return {'delay':self._delay/self.base_freq}
+        if self.__mode > 0:
+            return {'delay':self.__delay/self.base_freq}
 
 
 class EventIOC(CallBack):
@@ -99,87 +99,87 @@ class EventIOC(CallBack):
 
     def __init__(self,base_freq,callbacks = None, prefix = None, controller = None):
         super().__init__(callbacks, prefix = prefix)
-        self._uuid = _uuid.uuid4()
-        self._base_freq = base_freq
+        self.__uuid = _uuid.uuid4()
+        self.__base_freq = base_freq
         if controller is None:
-            self._controller = EventSim(self.base_freq, {self._uuid:self._callback})
+            self.__controller = EventSim(self.base_freq, {self.__uuid:self.__callback})
         else:
-            self._controller = controller
-            self._controller.add_callback({self._uuid:self._callback})
-            self.base_freq = self._controller.get_base_freq()
-        self._delay_sp = None
-        self._delay_rb = None
-        self._mode_sp = None
-        self._mode_rb = None
-        self._delay_type_sp = None
-        self._delay_type_rb = None
-        self._set_init_values()
+            self.__controller = controller
+            self.__controller.add_callback({self.__uuid:self.__callback})
+            self.base_freq = self.__controller.get_base_freq()
+        self.__delay_sp = None
+        self.__delay_rb = None
+        self.__mode_sp = None
+        self.__mode_rb = None
+        self.__delay_type_sp = None
+        self.__delay_type_rb = None
+        self.__set_init_values()
 
-    def _set_init_values(self):
+    def __set_init_values(self):
         db = self.get_database()
-        self._delay_sp = db['Delay-SP']['value']
-        self._delay_rb = db['Delay-RB']['value']
-        self._mode_sp = db['Mode-Sel']['value']
-        self._mode_rb = db['Mode-Sts']['value']
-        self._delay_type_sp = db['DelayType-Sel']['value']
-        self._delay_type_rb = db['DelayType-Sts']['value']
+        self.__delay_sp = db['Delay-SP']['value']
+        self.__delay_rb = db['Delay-RB']['value']
+        self.__mode_sp = db['Mode-Sel']['value']
+        self.__mode_rb = db['Mode-Sts']['value']
+        self.__delay_type_sp = db['DelayType-Sel']['value']
+        self.__delay_type_rb = db['DelayType-Sts']['value']
 
     @property
     def delay_sp(self):
-        return self._delay_sp
+        return self.__delay_sp
     @delay_sp.setter
     def delay_sp(self,value):
-        self._delay_sp = value
-        self._controller.delay = round( value * self._base_freq) #integer
-        self._call_callbacks('Delay-SP',value)
+        self.__delay_sp = value
+        self.__controller.delay = round( value * self.__base_freq) #integer
+        self.__call_callbacks('Delay-SP',value)
 
     @property
     def delay_rb(self):
-        return self._delay_rb
+        return self.__delay_rb
     @delay_rb.setter
     def delay_rb(self,value):
-        self._delay_rb = value * (1/self._base_freq)
-        self._call_callbacks('Delay-RB',self._delay_rb)
+        self.__delay_rb = value * (1/self.__base_freq)
+        self.__call_callbacks('Delay-RB',self.__delay_rb)
 
     @property
     def mode_sp(self):
-        return self._mode_sp
+        return self.__mode_sp
     @mode_sp.setter
     def mode_sp(self,value):
-        if value <len(self._modes):
-            self._mode_sp = value
-            self._controller.mode = value
-            self._call_callbacks('Mode-Sel',value)
+        if value <len(self.__modes):
+            self.__mode_sp = value
+            self.__controller.mode = value
+            self.__call_callbacks('Mode-Sel',value)
 
     @property
     def mode_rb(self):
-        return self._mode_rb
+        return self.__mode_rb
     @mode_rb.setter
     def mode_rb(self,value):
-        if value <len(self._modes):
-            self._mode_rb = value
-            self._call_callbacks('Mode-Sts',value)
+        if value <len(self.__modes):
+            self.__mode_rb = value
+            self.__call_callbacks('Mode-Sts',value)
 
     @property
     def delay_type_sp(self):
-        return self._delay_type_sp
+        return self.__delay_type_sp
     @delay_type_sp.setter
     def delay_type_sp(self,value):
-        if value <len(self._delay_types):
-            self._delay_type_sp = value
-            self._controller.delay_type = value
-            self._call_callbacks('DelayType-Sel',value)
+        if value <len(self.__delay_types):
+            self.__delay_type_sp = value
+            self.__controller.delay_type = value
+            self.__call_callbacks('DelayType-Sel',value)
 
     @property
     def delay_type_rb(self):
-        return self._delay_type_rb
+        return self.__delay_type_rb
     @delay_type_rb.setter
     def delay_type_rb(self,value):
-        if value <len(self._delay_types):
-            self._delay_type_rb = value
-            self._call_callbacks('DelayType-Sts',value)
+        if value <len(self.__delay_types):
+            self.__delay_type_rb = value
+            self.__call_callbacks('DelayType-Sts',value)
 
-    def _callback(self,propty,value,**kwargs):
+    def __callback(self,propty,value,**kwargs):
         if propty == 'delay':
             self.delay_rb = value
         if propty == 'mode':
@@ -221,28 +221,28 @@ class ClockSim(CallBack):
 
     def __init__(self,callbacks=None):
         super().__init__(callbacks)
-        self._frequency = 1
-        self._state = 0
+        self.__frequency = 1
+        self.__state = 0
 
     @property
     def state(self):
-        return self._state
+        return self.__state
     @state.setter
     def state(self,value):
-        self._state = value
-        self._call_callbacks('state',value)
+        self.__state = value
+        self.__call_callbacks('state',value)
 
     @property
     def frequency(self):
-        return self._frequency
+        return self.__frequency
     @frequency.setter
     def frequency(self,value):
-        self._frequency = value
-        self._call_callbacks('frequency',value)
+        self.__frequency = value
+        self.__call_callbacks('frequency',value)
 
     def generate(self):
-        if self._state > 0:
-            return {'frequency':self.base_freq/self._frequency}
+        if self.__state > 0:
+            return {'frequency':self.base_freq/self.__frequency}
 
 
 class ClockIOC(CallBack):
@@ -260,63 +260,63 @@ class ClockIOC(CallBack):
 
     def __init__(self, base_freq, callbacks = None, prefix = None, controller = None):
         super().__init__(callbacks, prefix = prefix)
-        self._uuid = _uuid.uuid4()
-        self._base_frequency = base_freq
+        self.__uuid = _uuid.uuid4()
+        self.__base_frequency = base_freq
         if controller is None:
-            self._controller = ClockSim({self._uuid:self._callback})
+            self.__controller = ClockSim({self.__uuid:self.__callback})
         else:
-            self._controller = controller
-            self._controller.add_callback({self._uuid:self._callback})
-        self._frequency_sp = None
-        self._frequency_rb = None
-        self._state_sp = None
-        self._state_rb = None
-        self._set_init_values()
+            self.__controller = controller
+            self.__controller.add_callback({self.__uuid:self.__callback})
+        self.__frequency_sp = None
+        self.__frequency_rb = None
+        self.__state_sp = None
+        self.__state_rb = None
+        self.__set_init_values()
 
-    def _set_init_values(self):
+    def __set_init_values(self):
         db = self.get_database()
-        self._frequency_sp = db['Freq-SP']['value']
-        self._frequency_rb = db['Freq-RB']['value']
-        self._state_sp = db['State-Sel']['value']
-        self._state_rb = db['State-Sts']['value']
+        self.__frequency_sp = db['Freq-SP']['value']
+        self.__frequency_rb = db['Freq-RB']['value']
+        self.__state_sp = db['State-Sel']['value']
+        self.__state_rb = db['State-Sts']['value']
 
     @property
     def frequency_sp(self):
-        return self._frequency_sp
+        return self.__frequency_sp
     @frequency_sp.setter
     def frequency_sp(self,value):
-        self._frequency_sp = value
-        self._controller.frequency = round(self._base_frequency / value) #integer
-        self._call_callbacks('Freq-SP',value)
+        self.__frequency_sp = value
+        self.__controller.frequency = round(self.__base_frequency / value) #integer
+        self.__call_callbacks('Freq-SP',value)
 
     @property
     def frequency_rb(self):
-        return self._frequency_rb
+        return self.__frequency_rb
     @frequency_rb.setter
     def frequency_rb(self,value):
-        self._frequency_rb = value * self._base_frequency
-        self._call_callbacks('Freq-RB',self._frequency_rb)
+        self.__frequency_rb = value * self.__base_frequency
+        self.__call_callbacks('Freq-RB',self.__frequency_rb)
 
     @property
     def state_sp(self):
-        return self._state_sp
+        return self.__state_sp
     @state_sp.setter
     def state_sp(self,value):
-        if value <len(self._states):
-            self._state_sp = value
-            self._controller.state = value
-            self._call_callbacks('State-Sel',value)
+        if value <len(self.__states):
+            self.__state_sp = value
+            self.__controller.state = value
+            self.__call_callbacks('State-Sel',value)
 
     @property
     def state_rb(self):
-        return self._state_rb
+        return self.__state_rb
     @state_rb.setter
     def state_rb(self,value):
-        if value <len(self._states):
-            self._state_rb = value
-            self._call_callbacks('State-Sts',value)
+        if value <len(self.__states):
+            self.__state_rb = value
+            self.__call_callbacks('State-Sts',value)
 
-    def _callback(self, propty,value,**kwargs):
+    def __callback(self, propty,value,**kwargs):
         if propty == 'frequency':
             self.frequency_rb = value
         if propty == 'state':
@@ -350,14 +350,14 @@ class EVGSim(CallBack):
 
     def __init__(self, callbacks= None):
         super().__init__(callbacks)
-        self._continuous = 1
-        self._injection = 0
-        self._injection_callbacks = dict()
-        self._cyclic_injection = 0
-        self._single = 0
-        self._single_callbacks = dict()
-        self._bucket_list = _np.zeros(864)
-        self._repetition_rate = 30
+        self.__continuous = 1
+        self.__injection = 0
+        self.__injection_callbacks = dict()
+        self.__cyclic_injection = 0
+        self.__single = 0
+        self.__single_callbacks = dict()
+        self.__bucket_list = _np.zeros(864)
+        self.__repetition_rate = 30
         self.events = list()
         for i in range(256):
             self.events.append(EventSim())
@@ -367,111 +367,111 @@ class EVGSim(CallBack):
 
     @property
     def continuous(self):
-        return self._continuous
+        return self.__continuous
     @continuous.setter
     def continuous(self,value):
-        self._continuous = value
-        self._call_callbacks('continuous',value)
+        self.__continuous = value
+        self.__call_callbacks('continuous',value)
 
     @property
     def cyclic_injection(self):
-        return self._cyclic_injection
+        return self.__cyclic_injection
     @cyclic_injection.setter
     def cyclic_injection(self,value):
-        self._cyclic_injection = value
-        self._call_callbacks('cyclic_injection',value)
+        self.__cyclic_injection = value
+        self.__call_callbacks('cyclic_injection',value)
 
     @property
     def bucket_list(self):
-        return self._bucket_list
+        return self.__bucket_list
     @bucket_list.setter
     def bucket_list(self,value):
-        self._bucket_list = value
-        # self._call_callbacks('bucket_list',value)
+        self.__bucket_list = value
+        # self.__call_callbacks('bucket_list',value)
 
     @property
     def repetition_rate(self):
-        return self._repetition_rate
+        return self.__repetition_rate
     @repetition_rate.setter
     def repetition_rate(self,value):
-        self._repetition_rate = value
-        self._call_callbacks('repetition_rate',value)
+        self.__repetition_rate = value
+        self.__call_callbacks('repetition_rate',value)
 
     ########### Functions related to Injection simulation #############
     @property
     def injection(self):
-        return self._injection
+        return self.__injection
     @injection.setter
     def injection(self,value):
         if value:
-            if not self._injection and self._continuous:
-                self._injection = value
-                _threading.Thread(target=self._injection_fun).start()
+            if not self.__injection and self.__continuous:
+                self.__injection = value
+                _threading.Thread(target=self.__injection_fun).start()
         else:
-            self._injection = value
-        self._call_callbacks('injection',value)
+            self.__injection = value
+        self.__call_callbacks('injection',value)
 
     def add_injection_callback(self,uuid,callback):
-        self._injection_callbacks.update({uuid:callback})
+        self.__injection_callbacks.update({uuid:callback})
 
     def remove_injection_callback(self,uuid):
-        self._injection_callbacks.pop(uuid, None)
+        self.__injection_callbacks.pop(uuid, None)
 
-    def _injection_fun(self):
+    def __injection_fun(self):
         while True:
-            for i in self._bucket_list:
-                if not self._can_inject(): return
+            for i in self.__bucket_list:
+                if not self.__can_inject(): return
                 if i<=0: break
-                evnts = self._generate_events((1,2))
-                for callback in self._injection_callbacks.values():
+                evnts = self.__generate_events((1,2))
+                for callback in self.__injection_callbacks.values():
                     callback(i,evnts)
-                _time.sleep(self._repetition_rate/_PwrFreq)
-            if not self._cyclic_injection:
-                self._injection = 0
-                self._call_callbacks('injection',0)
+                _time.sleep(self.__repetition_rate/_PwrFreq)
+            if not self.__cyclic_injection:
+                self.__injection = 0
+                self.__call_callbacks('injection',0)
                 return
 
-    def _can_inject(self):
-        if not self._continuous or not self._injection: return False
+    def __can_inject(self):
+        if not self.__continuous or not self.__injection: return False
         return True
     ######################################################################
     ########### Functions related to Single Pulse simulation #############
     @property
     def single(self):
-        return self._single
+        return self.__single
     @single.setter
     def single(self,value):
         if value:
-            if not self._single:
-                self._single = value
-                if not self._continuous: return
-                evnts = self._generate_events(3)
-                for callback in self._single_callbacks.values():
+            if not self.__single:
+                self.__single = value
+                if not self.__continuous: return
+                evnts = self.__generate_events(3)
+                for callback in self.__single_callbacks.values():
                     callback(evnts)
         else:
-            self._single = value
-        self._call_callbacks('single',value)
+            self.__single = value
+        self.__call_callbacks('single',value)
 
     def add_single_callback(self,uuid,callback):
-        self._single_callbacks.update({uuid:callback})
+        self.__single_callbacks.update({uuid:callback})
 
     def remove_single_callback(self,uuid):
-        self._single_callbacks.pop(uuid, None)
+        self.__single_callbacks.pop(uuid, None)
     ##########################################################################
 
-    def _generate_events(self,tables):
+    def __generate_events(self,tables):
         tables = tables if isinstance(tables,(list,tuple)) else (tables,)
         events = dict()
         for i, ev in enumerate(self.events):
             if not ev.mode in tables: continue
             dic = ev.generate()
             if not dic: continue
-            lab = _EVENT_LABEL_TEMPLATE.format(i)
+            lab = __EVENT_LABEL_TEMPLATE.format(i)
             events.update(  { lab : dic }  )
         for i, cl in enumerate(self.clocks):
             dic = cl.generate()
             if not dic: continue
-            lab = _CLOCK_LABEL_TEMPLATE.format(i)
+            lab = __CLOCK_LABEL_TEMPLATE.format(i)
             events.update(  { lab : dic }  )
 
         return events
@@ -500,7 +500,7 @@ class EVGIOC(CallBack):
         for i in range(8):
             p = prefix + 'Clock{0:d}'.format(i)
             db.update(ClockIOC.get_database(p))
-        for evnt in _EventMapping.keys():
+        for evnt in __EventMapping.keys():
             p = prefix + evnt
             db.update(EventIOC.get_database(p))
 
@@ -508,205 +508,205 @@ class EVGIOC(CallBack):
 
     def __init__(self, base_freq, callbacks = None, prefix = None, controller = None):
         super().__init__(callbacks = callbacks, prefix = prefix)
-        self._uuid = _uuid.uuid4()
-        self._base_freq = base_freq
+        self.__uuid = _uuid.uuid4()
+        self.__base_freq = base_freq
         if controller is None:
-            self._controller = EVGSim({self._uuid:self._sim_callback})
+            self.__controller = EVGSim({self.__uuid:self.__sim_callback})
         else:
-            self._controller = controller
-            self._controller.add_callback({self._uuid:self._sim_callback})
+            self.__controller = controller
+            self.__controller.add_callback({self.__uuid:self.__sim_callback})
         self.events = dict()
         for i,ev in enumerate(sorted(_EventMapping.keys())):
-            cntler = self._controller.events[i]
-            self.events[ev] = EventIOC(self._base_freq/4,
-            callbacks = {self._uuid:self._ioc_callback},
+            cntler = self.__controller.events[i]
+            self.events[ev] = EventIOC(self.__base_freq/4,
+            callbacks = {self.__uuid:self.__ioc_callback},
             prefix = ev,
             controller = cntler)
         self.clocks = dict()
         for i in range(8):
             name = 'Clock{0:d}'.format(i)
-            cntler = self._controller.clocks[i]
-            self.clocks[name] = ClockIOC(self._base_freq/4,
-            callbacks = {self._uuid:self._ioc_callback},
+            cntler = self.__controller.clocks[i]
+            self.clocks[name] = ClockIOC(self.__base_freq/4,
+            callbacks = {self.__uuid:self.__ioc_callback},
             prefix = name,
             controller = cntler)
-        self._single_sp = None
-        self._single_rb = None
-        self._injection_sp = False
-        self._injection_rb = False
-        self._cyclic_injection_sp = None
-        self._cyclic_injection_rb = None
-        self._continuous_sp = None
-        self._continuous_rb = None
-        self._bucket_list = _np.zeros(864)
-        self._repetition_rate_sp = None
-        self._repetition_rate_rb = None
-        self._set_init_values()
+        self.__single_sp = None
+        self.__single_rb = None
+        self.__injection_sp = False
+        self.__injection_rb = False
+        self.__cyclic_injection_sp = None
+        self.__cyclic_injection_rb = None
+        self.__continuous_sp = None
+        self.__continuous_rb = None
+        self.__bucket_list = _np.zeros(864)
+        self.__repetition_rate_sp = None
+        self.__repetition_rate_rb = None
+        self.__set_init_values()
 
-    def _set_init_values(self):
+    def __set_init_values(self):
         db = self.get_database()
-        self._single_sp = db['SingleState-Sel']['value']
-        self._single_rb = db['SingleState-Sts']['value']
-        self._injection_sp = db['InjectionState-Sel']['value']
-        self._injection_rb = db['InjectionState-Sts']['value']
-        self._cyclic_injection_sp = db['InjCyclic-Sel']['value']
-        self._cyclic_injection_rb = db['InjCyclic-Sts']['value']
-        self._continuous_sp = db['ContinuousState-Sel']['value']
-        self._continuous_rb = db['ContinuousState-Sts']['value']
-        self._repetition_rate_sp = db['RepRate-SP']['value']
-        self._repetition_rate_rb = db['RepRate-RB']['value']
-        self._bucket_list = _np.ones(864)*db['BucketList']['value']
+        self.__single_sp = db['SingleState-Sel']['value']
+        self.__single_rb = db['SingleState-Sts']['value']
+        self.__injection_sp = db['InjectionState-Sel']['value']
+        self.__injection_rb = db['InjectionState-Sts']['value']
+        self.__cyclic_injection_sp = db['InjCyclic-Sel']['value']
+        self.__cyclic_injection_rb = db['InjCyclic-Sts']['value']
+        self.__continuous_sp = db['ContinuousState-Sel']['value']
+        self.__continuous_rb = db['ContinuousState-Sts']['value']
+        self.__repetition_rate_sp = db['RepRate-SP']['value']
+        self.__repetition_rate_rb = db['RepRate-RB']['value']
+        self.__bucket_list = _np.ones(864)*db['BucketList']['value']
 
 
-    def _ioc_callback(self,propty,value, **kwargs):
-        self._call_callbacks(propty, value, **kwargs)
+    def __ioc_callback(self,propty,value, **kwargs):
+        self.__call_callbacks(propty, value, **kwargs)
 
-    def _sim_callback(self,propty,value, **kwargs):
+    def __sim_callback(self,propty,value, **kwargs):
         if propty == 'continuous':
             self.continuous_rb = value
         elif propty == 'clyclic_injection':
             self.clyclic_injection_rb = value
         elif propty == 'bucket_list':
-            if _np.any(value != self._bucket_list):
+            if _np.any(value != self.__bucket_list):
                 self.bucket_list = value
-                self._call_callbacks('BucketList',value)
+                self.__call_callbacks('BucketList',value)
         elif propty == 'repetition_rate':
             self.repetition_rate_rb = value
         elif propty == 'injection':
             self.injection_rb = value
-            if value != self._injection_sp:
-                self._injection_sp = value
-                self._call_callbacks('InjectionState-Sel',value)
+            if value != self.__injection_sp:
+                self.__injection_sp = value
+                self.__call_callbacks('InjectionState-Sel',value)
         elif propty == 'single':
             self.single_rb = value
-            self._single_sp = value
-            self._call_callbacks('SingleState-Sel',value)
+            self.__single_sp = value
+            self.__call_callbacks('SingleState-Sel',value)
 
     def add_injection_callback(self, uuid,callback):
-        self._controller.add_injection_callback(uuid,callback)
+        self.__controller.add_injection_callback(uuid,callback)
 
     def remove_injection_callback(self, uuid):
-        self._controller.remove_injection_callback(uuid)
+        self.__controller.remove_injection_callback(uuid)
 
     def add_single_callback(self, uuid,callback):
-        self._controller.add_single_callback(uuid,callback)
+        self.__controller.add_single_callback(uuid,callback)
 
     def remove_single_callback(self, uuid):
-        self._controller.remove_single_callback(uuid)
+        self.__controller.remove_single_callback(uuid)
 
     @property
     def continuous_sp(self):
-        return self._continuous_sp
+        return self.__continuous_sp
     @continuous_sp.setter
     def continuous_sp(self,value):
-        if value <len(self._states):
-            self._continuous_sp = value
-            self._controller.continuous = value
-            self._call_callbacks('ContinuousState-Sel',value)
+        if value <len(self.__states):
+            self.__continuous_sp = value
+            self.__controller.continuous = value
+            self.__call_callbacks('ContinuousState-Sel',value)
 
     @property
     def continuous_rb(self):
-        return self._continuous_rb
+        return self.__continuous_rb
     @continuous_rb.setter
     def continuous_rb(self,value):
-        if value <len(self._states):
-            self._continuous_rb = value
-            self._call_callbacks('ContinuousState-Sts',value)
+        if value <len(self.__states):
+            self.__continuous_rb = value
+            self.__call_callbacks('ContinuousState-Sts',value)
 
     @property
     def injection_sp(self):
-        return self._injection_sp
+        return self.__injection_sp
     @injection_sp.setter
     def injection_sp(self,value):
-        if value <len(self._states):
-            self._injection_sp = value
-            self._controller.injection = value
-            self._call_callbacks('InjectionState-Sel',value)
+        if value <len(self.__states):
+            self.__injection_sp = value
+            self.__controller.injection = value
+            self.__call_callbacks('InjectionState-Sel',value)
 
     @property
     def injection_rb(self):
-        return self._injection_rb
+        return self.__injection_rb
     @injection_rb.setter
     def injection_rb(self,value):
-        if value <len(self._states):
-            self._injection_rb = value
-            self._call_callbacks('InjectionState-Sts',value)
+        if value <len(self.__states):
+            self.__injection_rb = value
+            self.__call_callbacks('InjectionState-Sts',value)
 
     @property
     def single_sp(self):
-        return self._single_sp
+        return self.__single_sp
     @single_sp.setter
     def single_sp(self,value):
-        if value <len(self._states):
-            self._single_sp = value
-            self._controller.single = value
-            self._call_callbacks('SingleState-Sel',value)
+        if value <len(self.__states):
+            self.__single_sp = value
+            self.__controller.single = value
+            self.__call_callbacks('SingleState-Sel',value)
 
     @property
     def single_rb(self):
-        return self._single_rb
+        return self.__single_rb
     @single_rb.setter
     def single_rb(self,value):
-        if value <len(self._states):
-            self._single_rb = value
-            self._call_callbacks('SingleState-Sts',value)
+        if value <len(self.__states):
+            self.__single_rb = value
+            self.__call_callbacks('SingleState-Sts',value)
 
     @property
     def cyclic_injection_sp(self):
-        return self._cyclic_injection_sp
+        return self.__cyclic_injection_sp
     @cyclic_injection_sp.setter
     def cyclic_injection_sp(self,value):
-        if value <len(self._states):
-            self._cyclic_injection_sp = value
-            self._controller.cyclic_injection = value
-            self._call_callbacks('InjCyclic-Sel',value)
+        if value <len(self.__states):
+            self.__cyclic_injection_sp = value
+            self.__controller.cyclic_injection = value
+            self.__call_callbacks('InjCyclic-Sel',value)
 
     @property
     def cyclic_injection_rb(self):
-        return self._cyclic_injection_rb
+        return self.__cyclic_injection_rb
     @cyclic_injection_rb.setter
     def cyclic_injection_rb(self,value):
-        if value <len(self._states):
-            self._cyclic_injection_rb = value
-            self._call_callbacks('InjCyclic-Sts',value)
+        if value <len(self.__states):
+            self.__cyclic_injection_rb = value
+            self.__call_callbacks('InjCyclic-Sts',value)
 
     @property
     def bucket_list(self):
-        return self._bucket_list.tolist()
+        return self.__bucket_list.tolist()
     @bucket_list.setter
     def bucket_list(self,value):
         for i in range(min(len(value),864)):
             if value[i]<=0: break
-            self._bucket_list[i] = ((value[i]-1) % 864) + 1
-        self._bucket_list[i:] = 0
-        self._controller.bucket_list = value
-        self._call_callbacks('BucketList',value)
+            self.__bucket_list[i] = ((value[i]-1) % 864) + 1
+        self.__bucket_list[i:] = 0
+        self.__controller.bucket_list = value
+        self.__call_callbacks('BucketList',value)
 
     @property
     def repetition_rate(self):
-        return self._repetition_rate
+        return self.__repetition_rate
     @repetition_rate.setter
     def repetition_rate(self,value):
         n = round(60/value)
         n = n if n<60 else 60
-        self._repetition_rate = 60 / n
+        self.__repetition_rate = 60 / n
 
     @property
     def repetition_rate_sp(self):
-        return self._repetition_rate_sp
+        return self.__repetition_rate_sp
     @repetition_rate_sp.setter
     def repetition_rate_sp(self,value):
-        self._repetition_rate_sp = value
-        self._controller.repetition_rate = round(_PwrFreq / value) #integer
-        self._call_callbacks('RepRate-SP',value)
+        self.__repetition_rate_sp = value
+        self.__controller.repetition_rate = round(_PwrFreq / value) #integer
+        self.__call_callbacks('RepRate-SP',value)
 
     @property
     def repetition_rate_rb(self):
-        return self._repetition_rate_rb
+        return self.__repetition_rate_rb
     @repetition_rate_rb.setter
     def repetition_rate_rb(self,value):
-        self._repetition_rate_rb = value * _PwrFreq
-        self._call_callbacks('RepRate-RB',self._repetition_rate_rb)
+        self.__repetition_rate_rb = value * __PwrFreq
+        self.__call_callbacks('RepRate-RB',self.__repetition_rate_rb)
 
     def get_propty(self,reason):
         if reason  == 'SingleState-Sel':
@@ -765,45 +765,44 @@ class TriggerSim(CallBack):
     def __init__(self,base_freq,callbacks=None):
         super().__init__(callbacks)
         self.base_freq = base_freq
-        self._optic_channel = 0
-        self._delay = 0
-        self._fine_delay = 0
+        self.__optic_channel = 0
+        self.__delay = 0
+        self.__fine_delay = 0
 
     @property
     def fine_delay(self):
-        return self._fine_delay
+        return self.__fine_delay
     @fine_delay.setter
     def fine_delay(self,value):
-        self._fine_delay = value
-        self._call_callbacks('fine_delay',value)
+        self.__fine_delay = value
+        self.__call_callbacks('fine_delay',value)
 
     @property
     def delay(self):
-        return self._delay
+        return self.__delay
     @delay.setter
     def delay(self,value):
-        self._delay = value
-        self._call_callbacks('delay',value)
+        self.__delay = value
+        self.__call_callbacks('delay',value)
 
     @property
     def optic_channel(self):
-        return self._optic_channel
+        return self.__optic_channel
     @optic_channel.setter
     def optic_channel(self,value):
-        self._optic_channel = value
-        self._call_callbacks('optic_channel',value)
+        self.__optic_channel = value
+        self.__call_callbacks('optic_channel',value)
 
     def receive_events(self, events):
-        lab = _OPT_LABEL_TEMPLATE.format(self._optic_channel)
+        lab = __OPT_LABEL_TEMPLATE.format(self.__optic_channel)
         dic = events.get(lab,None)
         if dic is None: return
-        dic['delay'] += self._delay/self.base_freq + self._fine_delay * _FINE_DELAY_STEP
+        dic['delay'] += self.__delay/self.base_freq + self.__fine_delay * __FINE_DELAY_STEP
         return dic
 
 
 class EVRTriggerIOC(CallBack):
-
-    _optic_channels = tuple(  [ _OPT_LABEL_TEMPLATE.format(i) for i in range(EVRSim._NR_INTERNAL_OPT_CHANNELS) ]  )
+    _optic_channels = tuple(  [ __OPT_LABEL_TEMPLATE.format(i) for i in range(EVRSim._NR_INTERNAL_OPT_CHANNELS) ]  )
 
     @staticmethod
     def get_database(prefix=''):
@@ -818,84 +817,84 @@ class EVRTriggerIOC(CallBack):
 
     def __init__(self, base_freq, callbacks = None, prefix = None, controller = None):
         super().__init__(callbacks, prefix = prefix)
-        self._uuid = _uuid.uuid4()
-        self._base_freq = base_freq
+        self.__uuid = _uuid.uuid4()
+        self.__base_freq = base_freq
         if controller is None:
-            self._controller = TriggerSim(self.base_freq, {self._uuid:self._callback})
+            self.__controller = TriggerSim(self.base_freq, {self.__uuid:self.__callback})
         else:
-            self._controller = controller
-            self._controller.add_callback({self._uuid:self._callback})
-        self._delay_sp = 0
-        self._delay_rb = 0
-        self._optic_channel_sp = 0
-        self._optic_channel_rb = 0
-        self._fine_delay_sp = 0
-        self._fine_delay_rb = 0
-        self._set_init_values()
+            self.__controller = controller
+            self.__controller.add_callback({self.__uuid:self.__callback})
+        self.__delay_sp = 0
+        self.__delay_rb = 0
+        self.__optic_channel_sp = 0
+        self.__optic_channel_rb = 0
+        self.__fine_delay_sp = 0
+        self.__fine_delay_rb = 0
+        self.__set_init_values()
 
-    def _set_init_values(self):
+    def __set_init_values(self):
         db = self.get_database()
-        self._delay_sp = db['Delay-SP']['value']
-        self._delay_rb = db['Delay-RB']['value']
-        self._optic_channel_sp = db['OptCh-Sel']['value']
-        self._optic_channel_rb = db['OptCh-Sts']['value']
-        self._fine_delay_sp = db['FineDelay-SP']['value']
-        self._fine_delay_rb = db['FineDelay-RB']['value']
+        self.__delay_sp = db['Delay-SP']['value']
+        self.__delay_rb = db['Delay-RB']['value']
+        self.__optic_channel_sp = db['OptCh-Sel']['value']
+        self.__optic_channel_rb = db['OptCh-Sts']['value']
+        self.__fine_delay_sp = db['FineDelay-SP']['value']
+        self.__fine_delay_rb = db['FineDelay-RB']['value']
 
     @property
     def fine_delay_sp(self):
-        return self._fine_delay_sp
+        return self.__fine_delay_sp
     @fine_delay_sp.setter
     def fine_delay_sp(self,value):
-        self._fine_delay_sp = value
-        self._controller.fine_delay = round(value / _FINE_DELAY_STEP ) #integer
-        self._call_callbacks('FineDelay-SP',value)
+        self.__fine_delay_sp = value
+        self.__controller.fine_delay = round(value / __FINE_DELAY_STEP ) #integer
+        self.__call_callbacks('FineDelay-SP',value)
 
     @property
     def fine_delay_rb(self):
-        return self._fine_delay_rb
+        return self.__fine_delay_rb
     @fine_delay_rb.setter
     def fine_delay_rb(self,value):
-        self._fine_delay_rb = value * _FINE_DELAY_STEP
-        self._call_callbacks('FineDelay-RB',self._fine_delay_rb)
+        self.__fine_delay_rb = value * __FINE_DELAY_STEP
+        self.__call_callbacks('FineDelay-RB',self.__fine_delay_rb)
 
     @property
     def delay_sp(self):
-        return self._delay_sp
+        return self.__delay_sp
     @delay_sp.setter
     def delay_sp(self,value):
-        self._delay_sp = value
-        self._controller.delay = round(value * self._base_frequency ) #integer
-        self._call_callbacks('Delay-SP',value)
+        self.__delay_sp = value
+        self.__controller.delay = round(value * self.__base_frequency ) #integer
+        self.__call_callbacks('Delay-SP',value)
 
     @property
     def delay_rb(self):
-        return self._delay_rb
+        return self.__delay_rb
     @delay_rb.setter
     def delay_rb(self,value):
-        self._delay_rb = value / self._base_frequency
-        self._call_callbacks('Delay-RB',self._delay_rb)
+        self.__delay_rb = value / self.__base_frequency
+        self.__call_callbacks('Delay-RB',self.__delay_rb)
 
     @property
     def optic_channel_sp(self):
-        return self._optic_channel_sp
+        return self.__optic_channel_sp
     @optic_channel_sp.setter
     def optic_channel_sp(self,value):
-        if value <len(self._optic_channels):
-            self._optic_channel_sp = value
-            self._controller.optic_channel = value
-            self._call_callbacks('OptCh-Sel',value)
+        if value <len(self.__optic_channels):
+            self.__optic_channel_sp = value
+            self.__controller.optic_channel = value
+            self.__call_callbacks('OptCh-Sel',value)
 
     @property
     def optic_channel_rb(self):
-        return self._optic_channel_rb
+        return self.__optic_channel_rb
     @optic_channel_rb.setter
     def optic_channel_rb(self,value):
-        if value <len(self._optic_channels):
-            self._optic_channel_rb = value
-            self._call_callbacks('OptCh-Sts',value)
+        if value <len(self.__optic_channels):
+            self.__optic_channel_rb = value
+            self.__call_callbacks('OptCh-Sts',value)
 
-    def _callback(self, propty,value,**kwargs):
+    def __callback(self, propty,value,**kwargs):
         if propty == 'delay':
             self.delay_rb = value
         if propty == 'fine_delay':
@@ -933,7 +932,7 @@ class EVRTriggerIOC(CallBack):
         return True
 
 class EVETriggerIOC(EVRTriggerIOC):
-    _optic_channels = tuple(  [ _OPT_LABEL_TEMPLATE.format(i) for i in range(EVRSim._NR_INTERNAL_OPT_CHANNELS) ]  )
+    _optic_channels = tuple(  [ __OPT_LABEL_TEMPLATE.format(i) for i in range(EVRSim._NR_INTERNAL_OPT_CHANNELS) ]  )
 
 ##hele
 
@@ -942,80 +941,80 @@ class OpticChannelSim(CallBack):
     def __init__(self,base_freq,callbacks=None):
         super().__init__(callbacks)
         self.base_freq = base_freq
-        self._state = 0
-        self._width = 0
-        self._delay = 0
-        self._polarity = 0
-        self._event = 0
-        self._pulses = 1
+        self.__state = 0
+        self.__width = 0
+        self.__delay = 0
+        self.__polarity = 0
+        self.__event = 0
+        self.__pulses = 1
 
     @property
     def state(self):
-        return self._state
+        return self.__state
     @state.setter
     def state(self,value):
-        self._state = value
-        self._call_callbacks('state',value)
+        self.__state = value
+        self.__call_callbacks('state',value)
 
     @property
     def width(self):
-        return self._width
+        return self.__width
     @width.setter
     def width(self,value):
-        self._width = value
-        self._call_callbacks('width',value)
+        self.__width = value
+        self.__call_callbacks('width',value)
 
     @property
     def delay(self):
-        return self._delay
+        return self.__delay
     @delay.setter
     def delay(self,value):
-        self._delay = value
-        self._call_callbacks('delay',value)
+        self.__delay = value
+        self.__call_callbacks('delay',value)
 
     @property
     def polarity(self):
-        return self._polarity
+        return self.__polarity
     @polarity.setter
     def polarity(self,value):
-        self._polarity = value
-        self._call_callbacks('polarity',value)
+        self.__polarity = value
+        self.__call_callbacks('polarity',value)
 
     @property
     def event(self):
-        return self._event
+        return self.__event
     @event.setter
     def event(self,value):
-        self._event = value
-        self._call_callbacks('event',value)
+        self.__event = value
+        self.__call_callbacks('event',value)
 
     @property
     def pulses(self):
-        return self._pulses
+        return self.__pulses
     @pulses.setter
     def pulses(self,value):
-        self._pulses = value
-        self._call_callbacks('pulses',value)
+        self.__pulses = value
+        self.__call_callbacks('pulses',value)
 
     def receive_events(self, events):
-        if self._state == 0: return
-        lab = _EVENT_LABEL_TEMPLATE.format(self._event)
+        if self.__state == 0: return
+        lab = __EVENT_LABEL_TEMPLATE.format(self.__event)
         ev = events.get(lab,None)
         if ev is None: return
-        delay = ev['delay'] + self._delay/self.base_freq
-        return dict(  { 'pulses':self._pulses, 'width':self._width/self.base_freq, 'delay':delay }  )
+        delay = ev['delay'] + self.__delay/self.base_freq
+        return dict(  { 'pulses':self.__pulses, 'width':self.__width/self.base_freq, 'delay':delay }  )
 
 class EVRSim(CallBack):
 
-    _NR_INTERNAL_OPT_CHANNELS = 24
-    _NR_OPT_CHANNELS_OUT = 12
+    __NR_INTERNAL_OPT_CHANNELS = 24
+    __NR_OPT_CHANNELS_OUT = 12
 
     def __init__(self, base_freq, callbacks= None):
         super().__init__(callbacks)
         self.base_freq = base_freq
-        self._state = 1
+        self.__state = 1
         self.optic_channels = list()
-        for i in range(self._NR_INTERNAL_OPT_CHANNELS):
+        for i in range(self.__NR_INTERNAL_OPT_CHANNELS):
             self.optic_channels[i] = OpticChannelSim(self.base_freq)
         self.trigger_outputs = list()
         for i in range(8):
@@ -1023,11 +1022,11 @@ class EVRSim(CallBack):
 
     @property
     def state(self):
-        return self._state
+        return self.__state
     @state.setter
     def state(self,value):
-        self._state = value
-        self._call_callbacks('state',value)
+        self.__state = value
+        self.__call_callbacks('state',value)
 
     def receive_events(self,events):
         opt_out = dict()
@@ -1035,9 +1034,9 @@ class EVRSim(CallBack):
         for i, opt_ch in enumerate(self.optic_channels):
             opt = opt_ch.receive_events(events)
             if opt is None: continue
-            lab = _OPT_LABEL_TEMPLATE.format(i)
+            lab = __OPT_LABEL_TEMPLATE.format(i)
             opt_out.update( {lab:opt} )
-            if i < _NR_OPT_CHANNELS_OUT: triggers.update( {lab:opt} )
+            if i < __NR_OPT_CHANNELS_OUT: triggers.update( {lab:opt} )
         for tri_ch in self.trigger_outputs:
             triggers.append(tri_ch.deal_with_opt_ch(opt_out))
         return triggers
@@ -1045,5 +1044,5 @@ class EVRSim(CallBack):
 
 class EVESim(EVRSim):
 
-    _NR_INTERNAL_OPT_CHANNELS = 16
-    _NR_OPT_CHANNELS_OUT = 0
+    __NR_INTERNAL_OPT_CHANNELS = 16
+    __NR_OPT_CHANNELS_OUT = 0
