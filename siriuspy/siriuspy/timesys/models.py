@@ -81,6 +81,7 @@ class BaseIOC(CallBack):
     def get_propty(self,reason):
         reason = reason[len(self.prefix):]
         if reason not in self._pvname2attr.keys():
+            print('get_propty1: '+reason)
             return None
         return self.__getattr__(self._pvname2attr[reason])
 
@@ -121,8 +122,9 @@ class ClockSim(BaseSim):
 
     _attributes = {'state','frequency'}
 
-    def __init__(self,callbacks=None):
+    def __init__(self, base_freq, callbacks=None):
         super().__init__(callbacks)
+        self.base_freq = base_freq
         self._frequency = 1
         self._state = 0
 
@@ -135,7 +137,7 @@ class EventSim(BaseSim):
 
     _attributes = {'delay','mode','delay_type',}
 
-    def __init__(self,base_freq,callbacks=None):
+    def __init__(self, base_freq, callbacks=None):
         super().__init__(callbacks)
         self.base_freq = base_freq
         self._delay_type = None
@@ -151,8 +153,9 @@ class EVGSim(BaseSim):
 
     _attributes = {'continuous','cyclic_injection','bucket_list','repetition_rate','injection','single'}
 
-    def __init__(self, callbacks= None):
+    def __init__(self, base_freq, callbacks= None):
         super().__init__(callbacks)
+        self.base_freq = base_freq
         self._continuous = 1
         self._injection = 0
         self._injection_callbacks = dict()
@@ -163,10 +166,10 @@ class EVGSim(BaseSim):
         self._repetition_rate = 30
         self.events = list()
         for i in range(256):
-            self.events.append(EventSim())
+            self.events.append(EventSim(self.base_freq/4))
         self.clocks = list()
         for i in range(8):
-            self.clocks.append(ClockSim())
+            self.clocks.append(ClockSim(self.base_freq/4))
 
     def __setattr__(self,attr,value):
         if attr == 'injection':
@@ -375,8 +378,8 @@ class EVGIOC(BaseIOC):
         for i in range(8):
             p = prefix + 'Clock{0:d}'.format(i)
             db.update(ClockIOC.get_database(p))
-        for evnt in _EventMapping.keys():
-            p = prefix + evnt
+        for i in range(256):
+            p = prefix + 'Evnt{0:02x}'.format(i)
             db.update(EventIOC.get_database(p))
 
         return db
@@ -399,7 +402,7 @@ class EVGIOC(BaseIOC):
         super().__init__(callbacks = callbacks, prefix = prefix)
         self.base_freq = base_freq
         if controller is None:
-            self._controller = EVGSim({self._uuid:self._sim_callback})
+            self._controller = EVGSim(self.base_freq,{self._uuid:self._sim_callback})
         else:
             self._controller = controller
             self._controller.add_callback({self._uuid:self._sim_callback})
@@ -429,6 +432,7 @@ class EVGIOC(BaseIOC):
 
     def _set_init_values(self):
         super()._set_init_values()
+        db = self.get_database()
         self._bucket_list_sp = 864*[db['BucketList-SP']['value']]
         self._bucket_list_rb = 864*[db['BucketList-RB']['value']]
 
@@ -468,18 +472,20 @@ class EVGIOC(BaseIOC):
         self._controller.remove_single_callback(uuid)
 
     def get_propty(self, reason):
-        if reason.startswith(tuple(self.clocks.keys())):
-            return self.clocks[reason[:6]].get_propty(reason)#Not general enough
-        elif reason.startswith(tuple(self.events.keys())):
-            return self.events[reason[:6]].get_propty(reason)#Absolutely not general enough
+        reason2 = reason[len(self.prefix):]
+        if reason2.startswith(tuple(self.clocks.keys())):
+            return self.clocks[reason2[:6]].get_propty(reason2)#Not general enough
+        elif reason2.startswith(tuple(self.events.keys())):
+            return self.events[reason2[:6]].get_propty(reason2)#Absolutely not general enough
         else:
             return super().get_propty(reason)
 
     def set_propty(self, reason, value):
-        if reason.startswith(tuple(self.clocks.keys())):
-            return self.clocks[reason[:6]].set_propty(reason, value)#Not general enough
-        elif reason.startswith(tuple(self.events.keys())):
-            return self.events[reason[:6]].set_propty(reason, value)#Absolutely not general enough
+        reason2 = reason[len(self.prefix):]
+        if reason2.startswith(tuple(self.clocks.keys())):
+            return self.clocks[reason2[:6]].set_propty(reason2, value)#Not general enough
+        elif reason2.startswith(tuple(self.events.keys())):
+            return self.events[reason2[:6]].set_propty(reason2, value)#Absolutely not general enough
         else:
             return super().set_propty(reason, value)
 
