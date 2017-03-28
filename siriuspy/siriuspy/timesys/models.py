@@ -112,132 +112,6 @@ class BaseSim(CallBack):
         self._call_callbacks(name,value)
 
 
-class EventSim(BaseSim):
-
-    _attributes = {'delay','mode','delay_type',}
-
-    def __init__(self,base_freq,callbacks=None):
-        super().__init__(callbacks)
-        self.base_freq = base_freq
-        self._delay_type = None
-        self._delay = 0
-        self._mode = 0
-
-    def get_base_freq(self):
-        return self.base_freq
-
-    def generate(self):
-        if self._mode > 0:
-            return {'delay':self._delay/self.base_freq}
-
-
-class EventIOC(BaseIOC):
-
-
-    _modes = ('Disabled','Continuous','Injection','Single')
-    _delay_types = ('Fixed','Incr')
-
-    @staticmethod
-    def get_database(prefix=''):
-        db = dict()
-        db[prefix + 'Delay-SP']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'unit':'us', 'prec': 3}
-        db[prefix + 'Delay-RB']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'unit':'us','prec': 3}
-        db[prefix + 'Mode-Sel']      = {'type' : 'enum', 'enums':EventIOC._modes, 'value':1}
-        db[prefix + 'Mode-Sts']      = {'type' : 'enum', 'enums':EventIOC._modes, 'value':1}
-        db[prefix + 'DelayType-Sel'] = {'type' : 'enum', 'enums':EventIOC._delay_types, 'value':1}
-        db[prefix + 'DelayType-Sts'] = {'type' : 'enum', 'enums':EventIOC._delay_types, 'value':1}
-        return db
-
-    def __init__(self,base_freq,callbacks = None, prefix = None, controller = None):
-        _attr2pvname = {
-            'delay_sp':'Delay-SP',
-            'delay_rb':'Delay-RB',
-            'mode_sp':'Mode-Sel',
-            'mode_rb':'Mode-Sts',
-            'delay_type_sp':'DelayType-Sel',
-            'delay_type_rb':'DelayType-Sts',
-            }
-        self._attr2expr  = {
-            'delay_sp': lambda x: int(round( value * self._base_freq)),
-            'delay_rb': lambda x: x * (1/self._base_freq),
-            'mode_sp': lambda x: int(x),
-            'mode_rb': lambda x: x,
-            'delay_type_sp': lambda x: int(x),
-            'delay_type_rb': lambda x: x,
-            }
-        super().__init__(callbacks, prefix = prefix)
-        self._base_freq = base_freq
-        if controller is None:
-            self._controller = EventSim(self.base_freq, {self._uuid:self._callback})
-        else:
-            self._controller = controller
-            self._controller.add_callback({self._uuid:self._callback})
-            self.base_freq = self._controller.get_base_freq()
-
-    def _callback(self,propty,value,**kwargs):
-        if propty == 'delay':
-            self.delay_rb = value
-        if propty == 'mode':
-            self.mode_rb = value
-        if propty == 'delay_type':
-            self.delay_type_rb = value
-
-
-class ClockSim(BaseSim):
-
-    _attributes = {'state','frequency'}
-
-    def __init__(self,callbacks=None):
-        super().__init__(callbacks)
-        self._frequency = 1
-        self._state = 0
-
-    def generate(self):
-        if self._state > 0:
-            return {'frequency':self.base_freq/self._frequency}
-
-
-class ClockIOC(BaseIOC):
-
-    _states = ('Dsbl','Enbl')
-
-    @staticmethod
-    def get_database(prefix=''):
-        db = dict()
-        db[prefix + 'Freq-SP']   = {'type' : 'float', 'count': 1, 'value': 1.0, 'prec': 10}
-        db[prefix + 'Freq-RB']   = {'type' : 'float', 'count': 1, 'value': 1.0, 'prec': 10}
-        db[prefix + 'State-Sel'] = {'type' : 'enum', 'enums':ClockIOC._states, 'value':0}
-        db[prefix + 'State-Sts'] = {'type' : 'enum', 'enums':ClockIOC._states, 'value':0}
-        return db
-
-    def __init__(self, base_freq, callbacks = None, prefix = None, controller = None):
-        self._attr2pvname = {
-            'frequency_sp' :'Freq-SP',
-            'frequency_rb' :'Freq-RB',
-            'state_sp' :'State-Sel',
-            'state_rb' :'State-Sts',
-            }
-        self._attr2expr  = {
-            'frequency_sp': lambda x: int( round(self._base_frequency / value) ),
-            'frequency_rb': lambda x: x * self._base_freq,
-            'state_sp': lambda x: int(x),
-            'state_rb': lambda x: x,
-            }
-        super().__init__(callbacks, prefix = prefix)
-        self._base_freq = base_freq
-        if controller is None:
-            self._controller = ClockSim({self._uuid:self._callback})
-        else:
-            self._controller = controller
-            self._controller.add_callback({self._uuid:self._callback})
-
-    def _callback(self, propty,value,**kwargs):
-        if propty == 'frequency':
-            self.frequency_rb = value
-        if propty == 'state':
-            self.state_rb = value
-
-
 class EVGSim(BaseSim):
 
     _attributes = {'continuous','cyclic_injection','bucket_list','repetition_rate','injection','single'}
@@ -481,23 +355,130 @@ class EVGIOC(BaseIOC):
             return super().set_propty(reason)
 
 
-class TriggerSim(BaseSim):
+class EventSim(BaseSim):
 
-    _attributes = {'fine_delay','delay','optic_channel'}
+    _attributes = {'delay','mode','delay_type',}
 
     def __init__(self,base_freq,callbacks=None):
         super().__init__(callbacks)
         self.base_freq = base_freq
-        self._optic_channel = 0
+        self._delay_type = None
         self._delay = 0
-        self._fine_delay = 0
+        self._mode = 0
 
-    def receive_optical_channels(self, opts):
-        lab = _OPT_LABEL_TEMPLATE.format(self._optic_channel)
-        dic = opts.get(lab,None)
-        if dic is None: return
-        dic['delay'] += self._delay/self.base_freq + self._fine_delay * _FINE_DELAY_STEP
-        return dic
+    def get_base_freq(self):
+        return self.base_freq
+
+    def generate(self):
+        if self._mode > 0:
+            return {'delay':self._delay/self.base_freq}
+
+
+class EventIOC(BaseIOC):
+
+
+    _modes = ('Disabled','Continuous','Injection','Single')
+    _delay_types = ('Fixed','Incr')
+
+    @staticmethod
+    def get_database(prefix=''):
+        db = dict()
+        db[prefix + 'Delay-SP']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'unit':'us', 'prec': 3}
+        db[prefix + 'Delay-RB']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'unit':'us','prec': 3}
+        db[prefix + 'Mode-Sel']      = {'type' : 'enum', 'enums':EventIOC._modes, 'value':1}
+        db[prefix + 'Mode-Sts']      = {'type' : 'enum', 'enums':EventIOC._modes, 'value':1}
+        db[prefix + 'DelayType-Sel'] = {'type' : 'enum', 'enums':EventIOC._delay_types, 'value':1}
+        db[prefix + 'DelayType-Sts'] = {'type' : 'enum', 'enums':EventIOC._delay_types, 'value':1}
+        return db
+
+    def __init__(self,base_freq,callbacks = None, prefix = None, controller = None):
+        _attr2pvname = {
+            'delay_sp':'Delay-SP',
+            'delay_rb':'Delay-RB',
+            'mode_sp':'Mode-Sel',
+            'mode_rb':'Mode-Sts',
+            'delay_type_sp':'DelayType-Sel',
+            'delay_type_rb':'DelayType-Sts',
+            }
+        self._attr2expr  = {
+            'delay_sp': lambda x: int(round( value * self._base_freq)),
+            'delay_rb': lambda x: x * (1/self._base_freq),
+            'mode_sp': lambda x: int(x),
+            'mode_rb': lambda x: x,
+            'delay_type_sp': lambda x: int(x),
+            'delay_type_rb': lambda x: x,
+            }
+        super().__init__(callbacks, prefix = prefix)
+        self._base_freq = base_freq
+        if controller is None:
+            self._controller = EventSim(self.base_freq, {self._uuid:self._callback})
+        else:
+            self._controller = controller
+            self._controller.add_callback({self._uuid:self._callback})
+            self.base_freq = self._controller.get_base_freq()
+
+    def _callback(self,propty,value,**kwargs):
+        if propty == 'delay':
+            self.delay_rb = value
+        if propty == 'mode':
+            self.mode_rb = value
+        if propty == 'delay_type':
+            self.delay_type_rb = value
+
+
+class ClockSim(BaseSim):
+
+    _attributes = {'state','frequency'}
+
+    def __init__(self,callbacks=None):
+        super().__init__(callbacks)
+        self._frequency = 1
+        self._state = 0
+
+    def generate(self):
+        if self._state > 0:
+            return {'frequency':self.base_freq/self._frequency}
+
+
+class ClockIOC(BaseIOC):
+
+    _states = ('Dsbl','Enbl')
+
+    @staticmethod
+    def get_database(prefix=''):
+        db = dict()
+        db[prefix + 'Freq-SP']   = {'type' : 'float', 'count': 1, 'value': 1.0, 'prec': 10}
+        db[prefix + 'Freq-RB']   = {'type' : 'float', 'count': 1, 'value': 1.0, 'prec': 10}
+        db[prefix + 'State-Sel'] = {'type' : 'enum', 'enums':ClockIOC._states, 'value':0}
+        db[prefix + 'State-Sts'] = {'type' : 'enum', 'enums':ClockIOC._states, 'value':0}
+        return db
+
+    def __init__(self, base_freq, callbacks = None, prefix = None, controller = None):
+        self._attr2pvname = {
+            'frequency_sp' :'Freq-SP',
+            'frequency_rb' :'Freq-RB',
+            'state_sp' :'State-Sel',
+            'state_rb' :'State-Sts',
+            }
+        self._attr2expr  = {
+            'frequency_sp': lambda x: int( round(self._base_frequency / value) ),
+            'frequency_rb': lambda x: x * self._base_freq,
+            'state_sp': lambda x: int(x),
+            'state_rb': lambda x: x,
+            }
+        super().__init__(callbacks, prefix = prefix)
+        self._base_freq = base_freq
+        if controller is None:
+            self._controller = ClockSim({self._uuid:self._callback})
+        else:
+            self._controller = controller
+            self._controller.add_callback({self._uuid:self._callback})
+
+    def _callback(self, propty,value,**kwargs):
+        if propty == 'frequency':
+            self.frequency_rb = value
+        if propty == 'state':
+            self.state_rb = value
 
 
 class EVRSim(BaseSim):
@@ -536,6 +517,128 @@ class EVESim(EVRSim):
 
     _NR_INTERNAL_OPT_CHANNELS = 16
     _NR_OPT_CHANNELS_OUT = 0
+
+
+class EVRIOC(BaseIOC):
+        _states = ('Dsbl','Enbl')
+        _cyclic_types = ('Off','On')
+
+        @staticmethod
+        def get_database(prefix=''):
+            db = dict()
+            p = prefix
+            db[p + 'State-Sel']     = {'type' : 'enum', 'enums':EVRIOC._states, 'value':0}
+            db[p + 'State-Sts']     = {'type' : 'enum', 'enums':EVRIOC._states, 'value':0}
+            for i in range(EVRSim._NR_INTERNAL_OPT_CHANNELS):
+                p = prefix + 'OPT{0:02d}'.format(i)
+                db.update(OpticChannelIOC.get_database(p))
+            for out in range(8):
+                p = prefix + 'OUT{0:d}'.format(out)
+                db.update(EVRTriggerIOC.get_database(p))
+            return db
+
+        def __init__(self, base_freq, callbacks = None, prefix = None, controller = None):
+            _attr2pvname = {
+                'state_sp' : 'State-Sel',
+                'state_rb' : 'State-Sts',
+                }
+            _attr2expr = {
+                'state_sp' : lambda x: int(x),
+                'state_rb' : lambda x: x,
+                }
+            super().__init__(callbacks = callbacks, prefix = prefix)
+            self._uuid = _uuid.uuid4()
+            self._base_freq = base_freq
+            if controller is None:
+                self._controller = EVRSim({self._uuid:self._sim_callback})
+            else:
+                self._controller = controller
+                self._controller.add_callback({self._uuid:self._sim_callback})
+            self.optic_channels = dict()
+            for i in range(EVRSim._NR_INTERNAL_OPT_CHANNELS):
+                name = 'OPT{0:02d}'.format(i)
+                cntler = self._controller.events[i]
+                self.events[ev] = EventIOC(self._base_freq/4,
+                                           callbacks = {self._uuid:self._ioc_callback},
+                                           prefix = ev,
+                                           controller = cntler)
+            self.clocks = dict()
+            for i in range(8):
+                name = 'Clock{0:d}'.format(i)
+                cntler = self._controller.clocks[i]
+                self.clocks[name] = ClockIOC(self._base_freq/4,
+                                             callbacks = {self._uuid:self._ioc_callback},
+                                             prefix = name,
+                                             controller = cntler)
+
+        def _ioc_callback(self,propty,value, **kwargs):
+            self._call_callbacks(propty, value, **kwargs)
+
+        def _sim_callback(self,propty,value, **kwargs):
+            if propty == 'continuous':
+                self.continuous_rb = value
+            elif propty == 'clyclic_injection':
+                self.clyclic_injection_rb = value
+            elif propty == 'bucket_list':
+                self.bucket_list_rb = value
+            elif propty == 'repetition_rate':
+                self.repetition_rate_rb = value
+            elif propty == 'injection':
+                self.injection_rb = value
+                if value != self._injection_sp:
+                    self._injection_sp = value
+                    self._call_callbacks('InjectionState-Sel',value)
+            elif propty == 'single':
+                self.single_rb = value
+                self._single_sp = value
+                self._call_callbacks('SingleState-Sel',value)
+
+        def add_injection_callback(self, uuid,callback):
+            self._controller.add_injection_callback(uuid,callback)
+
+        def remove_injection_callback(self, uuid):
+            self._controller.remove_injection_callback(uuid)
+
+        def add_single_callback(self, uuid,callback):
+            self._controller.add_single_callback(uuid,callback)
+
+        def remove_single_callback(self, uuid):
+            self._controller.remove_single_callback(uuid)
+
+        def get_propty(self,reason):
+            if reason.startswith(tuple(self.clocks.keys())):
+                return self.clocks[reason[:6]].get_propty(reason)#Not general enough
+            elif reason.startswith(tuple(self.events.keys())):
+                return self.events[reason[:5]].get_propty(reason)#Absolutely not general enough
+            else:
+                return super().get_propty(reason)
+
+        def set_propty(self,reason,value):
+            if reason.startswith(tuple(self.clocks.keys())):
+                return self.clocks[reason[:6]].set_propty(reason, value)#Not general enough
+            elif reason.startswith(tuple(self.events.keys())):
+                return self.events[reason[:5]].set_propty(reason, value)#Absolutely not general enough
+            else:
+                return super().set_propty(reason)
+
+
+class TriggerSim(BaseSim):
+
+    _attributes = {'fine_delay','delay','optic_channel'}
+
+    def __init__(self,base_freq,callbacks=None):
+        super().__init__(callbacks)
+        self.base_freq = base_freq
+        self._optic_channel = 0
+        self._delay = 0
+        self._fine_delay = 0
+
+    def receive_optical_channels(self, opts):
+        lab = _OPT_LABEL_TEMPLATE.format(self._optic_channel)
+        dic = opts.get(lab,None)
+        if dic is None: return
+        dic['delay'] += self._delay/self.base_freq + self._fine_delay * _FINE_DELAY_STEP
+        return dic
 
 
 class EVRTriggerIOC(BaseIOC):
