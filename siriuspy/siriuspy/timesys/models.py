@@ -156,7 +156,6 @@ class EVGSim(BaseSim):
         else:
             super().__setattr__(attr,value)
 
-    ######################################################################
     ########### Functions related to Single Pulse simulation #############
     def add_injection_callback(self,uuid,callback):
         self._injection_callbacks.update({uuid:callback})
@@ -181,8 +180,8 @@ class EVGSim(BaseSim):
     def _can_inject(self):
         if not self._continuous or not self._injection: return False
         return True
-
     ######################################################################
+
     ########### Functions related to Single Pulse simulation #############
     def add_single_callback(self,uuid,callback):
         self._single_callbacks.update({uuid:callback})
@@ -268,28 +267,28 @@ class EVGIOC(BaseIOC):
             'bucket_list_rb' : lambda x: x,
             }
         super().__init__(callbacks = callbacks, prefix = prefix)
-        self._uuid = _uuid.uuid4()
-        self._base_freq = base_freq
+        self.base_freq = base_freq
         if controller is None:
             self._controller = EVGSim({self._uuid:self._sim_callback})
         else:
             self._controller = controller
             self._controller.add_callback({self._uuid:self._sim_callback})
         self.events = dict()
-        for i,ev in enumerate(sorted(_EventMapping.keys())):
+        for i in range(256):
+            name = 'Evnt{0:02x}'.format(i)
             cntler = self._controller.events[i]
-            self.events[ev] = EventIOC(self._base_freq/4,
-            callbacks = {self._uuid:self._ioc_callback},
-            prefix = ev,
-            controller = cntler)
+            self.events[name] = EventIOC(self.base_freq/4,
+                                         callbacks = {self._uuid:self._ioc_callback},
+                                         prefix = name,
+                                         controller = cntler) )
         self.clocks = dict()
         for i in range(8):
             name = 'Clock{0:d}'.format(i)
             cntler = self._controller.clocks[i]
-            self.clocks[name] = ClockIOC(self._base_freq/4,
-            callbacks = {self._uuid:self._ioc_callback},
-            prefix = name,
-            controller = cntler)
+            self.clocks[name] = ClockIOC(self.base_freq/4,
+                                         callbacks = {self._uuid:self._ioc_callback},
+                                         prefix = name,
+                                         controller = cntler) )
 
     def _bucket_list_setter(self,value):
         bucket = []
@@ -342,7 +341,7 @@ class EVGIOC(BaseIOC):
         if reason.startswith(tuple(self.clocks.keys())):
             return self.clocks[reason[:6]].get_propty(reason)#Not general enough
         elif reason.startswith(tuple(self.events.keys())):
-            return self.events[reason[:5]].get_propty(reason)#Absolutely not general enough
+            return self.events[reason[:6]].get_propty(reason)#Absolutely not general enough
         else:
             return super().get_propty(reason)
 
@@ -350,7 +349,7 @@ class EVGIOC(BaseIOC):
         if reason.startswith(tuple(self.clocks.keys())):
             return self.clocks[reason[:6]].set_propty(reason, value)#Not general enough
         elif reason.startswith(tuple(self.events.keys())):
-            return self.events[reason[:5]].set_propty(reason, value)#Absolutely not general enough
+            return self.events[reason[:6]].set_propty(reason, value)#Absolutely not general enough
         else:
             return super().set_propty(reason)
 
@@ -365,9 +364,6 @@ class EventSim(BaseSim):
         self._delay_type = None
         self._delay = 0
         self._mode = 0
-
-    def get_base_freq(self):
-        return self.base_freq
 
     def generate(self):
         if self._mode > 0:
@@ -401,21 +397,21 @@ class EventIOC(BaseIOC):
             'delay_type_rb':'DelayType-Sts',
             }
         self._attr2expr  = {
-            'delay_sp': lambda x: int(round( value * self._base_freq)),
-            'delay_rb': lambda x: x * (1/self._base_freq),
+            'delay_sp': lambda x: int(round( value * self.base_freq)),
+            'delay_rb': lambda x: x * (1/self.base_freq),
             'mode_sp': lambda x: int(x),
             'mode_rb': lambda x: x,
             'delay_type_sp': lambda x: int(x),
             'delay_type_rb': lambda x: x,
             }
         super().__init__(callbacks, prefix = prefix)
-        self._base_freq = base_freq
+        self.base_freq = base_freq
         if controller is None:
             self._controller = EventSim(self.base_freq, {self._uuid:self._callback})
         else:
             self._controller = controller
             self._controller.add_callback({self._uuid:self._callback})
-            self.base_freq = self._controller.get_base_freq()
+            self.base_freq = self._controller.base_freq
 
     def _callback(self,propty,value,**kwargs):
         if propty == 'delay':
@@ -461,13 +457,13 @@ class ClockIOC(BaseIOC):
             'state_rb' :'State-Sts',
             }
         self._attr2expr  = {
-            'frequency_sp': lambda x: int( round(self._base_frequency / value) ),
-            'frequency_rb': lambda x: x * self._base_freq,
+            'frequency_sp': lambda x: int( round(self.base_frequency / value) ),
+            'frequency_rb': lambda x: x * self.base_freq,
             'state_sp': lambda x: int(x),
             'state_rb': lambda x: x,
             }
         super().__init__(callbacks, prefix = prefix)
-        self._base_freq = base_freq
+        self.base_freq = base_freq
         if controller is None:
             self._controller = ClockSim({self._uuid:self._callback})
         else:
@@ -520,106 +516,79 @@ class EVESim(EVRSim):
 
 
 class EVRIOC(BaseIOC):
-        _states = ('Dsbl','Enbl')
-        _cyclic_types = ('Off','On')
+    _states = ('Dsbl','Enbl')
+    _cyclic_types = ('Off','On')
 
-        @staticmethod
-        def get_database(prefix=''):
-            db = dict()
-            p = prefix
-            db[p + 'State-Sel']     = {'type' : 'enum', 'enums':EVRIOC._states, 'value':0}
-            db[p + 'State-Sts']     = {'type' : 'enum', 'enums':EVRIOC._states, 'value':0}
-            for i in range(EVRSim._NR_INTERNAL_OPT_CHANNELS):
-                p = prefix + 'OPT{0:02d}'.format(i)
-                db.update(OpticChannelIOC.get_database(p))
-            for out in range(8):
-                p = prefix + 'OUT{0:d}'.format(out)
-                db.update(EVRTriggerIOC.get_database(p))
-            return db
+    @staticmethod
+    def get_database(prefix=''):
+        db = dict()
+        p = prefix
+        db[p + 'State-Sel']     = {'type' : 'enum', 'enums':EVRIOC._states, 'value':0}
+        db[p + 'State-Sts']     = {'type' : 'enum', 'enums':EVRIOC._states, 'value':0}
+        for i in range(EVRSim._NR_INTERNAL_OPT_CHANNELS):
+            p = prefix + 'OPT{0:02d}'.format(i)
+            db.update(OpticChannelIOC.get_database(p))
+        for out in range(8):
+            p = prefix + 'OUT{0:d}'.format(out)
+            db.update(EVRTriggerIOC.get_database(p))
+        return db
 
-        def __init__(self, base_freq, callbacks = None, prefix = None, controller = None):
-            _attr2pvname = {
-                'state_sp' : 'State-Sel',
-                'state_rb' : 'State-Sts',
-                }
-            _attr2expr = {
-                'state_sp' : lambda x: int(x),
-                'state_rb' : lambda x: x,
-                }
-            super().__init__(callbacks = callbacks, prefix = prefix)
-            self._uuid = _uuid.uuid4()
-            self._base_freq = base_freq
-            if controller is None:
-                self._controller = EVRSim({self._uuid:self._sim_callback})
-            else:
-                self._controller = controller
-                self._controller.add_callback({self._uuid:self._sim_callback})
-            self.optic_channels = dict()
-            for i in range(EVRSim._NR_INTERNAL_OPT_CHANNELS):
-                name = 'OPT{0:02d}'.format(i)
-                cntler = self._controller.events[i]
-                self.events[ev] = EventIOC(self._base_freq/4,
-                                           callbacks = {self._uuid:self._ioc_callback},
-                                           prefix = ev,
-                                           controller = cntler)
-            self.clocks = dict()
-            for i in range(8):
-                name = 'Clock{0:d}'.format(i)
-                cntler = self._controller.clocks[i]
-                self.clocks[name] = ClockIOC(self._base_freq/4,
-                                             callbacks = {self._uuid:self._ioc_callback},
-                                             prefix = name,
-                                             controller = cntler)
+    def __init__(self, base_freq, callbacks = None, prefix = None, controller = None):
+        _attr2pvname = {
+            'state_sp' : 'State-Sel',
+            'state_rb' : 'State-Sts',
+            }
+        _attr2expr = {
+            'state_sp' : lambda x: int(x),
+            'state_rb' : lambda x: x,
+            }
+        super().__init__(callbacks = callbacks, prefix = prefix)
+        self._uuid = _uuid.uuid4()
+        self.base_freq = base_freq
+        if controller is None:
+            self._controller = EVRSim({self._uuid:self._sim_callback})
+        else:
+            self._controller = controller
+            self._controller.add_callback({self._uuid:self._sim_callback})
+        self.optic_channels = dict()
+        for i in range(EVRSim._NR_INTERNAL_OPT_CHANNELS):
+            name = 'OPT{0:02d}'.format(i)
+            cntler = self._controller.optic_channels[i]
+            self.events[ev] = EventIOC(self.base_freq/4,
+                                       callbacks = {self._uuid:self._ioc_callback},
+                                       prefix = ev,
+                                       controller = cntler)
+        self.clocks = dict()
+        for i in range(8):
+            name = 'OUT{0:d}'.format(i)
+            cntler = self._controller.trigger_outputs[i]
+            self.clocks[name] = ClockIOC(self.base_freq/4,
+                                         callbacks = {self._uuid:self._ioc_callback},
+                                         prefix = name,
+                                         controller = cntler)
 
-        def _ioc_callback(self,propty,value, **kwargs):
-            self._call_callbacks(propty, value, **kwargs)
+    def _ioc_callback(self,propty,value, **kwargs):
+        self._call_callbacks(propty, value, **kwargs)
 
-        def _sim_callback(self,propty,value, **kwargs):
-            if propty == 'continuous':
-                self.continuous_rb = value
-            elif propty == 'clyclic_injection':
-                self.clyclic_injection_rb = value
-            elif propty == 'bucket_list':
-                self.bucket_list_rb = value
-            elif propty == 'repetition_rate':
-                self.repetition_rate_rb = value
-            elif propty == 'injection':
-                self.injection_rb = value
-                if value != self._injection_sp:
-                    self._injection_sp = value
-                    self._call_callbacks('InjectionState-Sel',value)
-            elif propty == 'single':
-                self.single_rb = value
-                self._single_sp = value
-                self._call_callbacks('SingleState-Sel',value)
+    def _sim_callback(self,propty,value, **kwargs):
+        if propty == 'state':
+            self.state_rb = value
 
-        def add_injection_callback(self, uuid,callback):
-            self._controller.add_injection_callback(uuid,callback)
+    def get_propty(self,reason):
+        if reason.startswith(tuple(self.clocks.keys())):
+            return self.clocks[reason[:6]].get_propty(reason)#Not general enough
+        elif reason.startswith(tuple(self.events.keys())):
+            return self.events[reason[:5]].get_propty(reason)#Absolutely not general enough
+        else:
+            return super().get_propty(reason)
 
-        def remove_injection_callback(self, uuid):
-            self._controller.remove_injection_callback(uuid)
-
-        def add_single_callback(self, uuid,callback):
-            self._controller.add_single_callback(uuid,callback)
-
-        def remove_single_callback(self, uuid):
-            self._controller.remove_single_callback(uuid)
-
-        def get_propty(self,reason):
-            if reason.startswith(tuple(self.clocks.keys())):
-                return self.clocks[reason[:6]].get_propty(reason)#Not general enough
-            elif reason.startswith(tuple(self.events.keys())):
-                return self.events[reason[:5]].get_propty(reason)#Absolutely not general enough
-            else:
-                return super().get_propty(reason)
-
-        def set_propty(self,reason,value):
-            if reason.startswith(tuple(self.clocks.keys())):
-                return self.clocks[reason[:6]].set_propty(reason, value)#Not general enough
-            elif reason.startswith(tuple(self.events.keys())):
-                return self.events[reason[:5]].set_propty(reason, value)#Absolutely not general enough
-            else:
-                return super().set_propty(reason)
+    def set_propty(self,reason,value):
+        if reason.startswith(tuple(self.clocks.keys())):
+            return self.clocks[reason[:6]].set_propty(reason, value)#Not general enough
+        elif reason.startswith(tuple(self.events.keys())):
+            return self.events[reason[:5]].set_propty(reason, value)#Absolutely not general enough
+        else:
+            return super().set_propty(reason)
 
 
 class TriggerSim(BaseSim):
@@ -668,13 +637,13 @@ class EVRTriggerIOC(BaseIOC):
         _attr2expr  = {
             'fine_delay_sp':    lambda x: int(round(x / _FINE_DELAY_STEP )),
             'fine_delay_rb':    lambda x: x * _FINE_DELAY_STEP,
-            'delay_sp':         lambda x: int(round(value * self._base_freq)),
-            'delay_rb':         lambda x: x / self._base_freq,
+            'delay_sp':         lambda x: int(round(value * self.base_freq)),
+            'delay_rb':         lambda x: x / self.base_freq,
             'optic_channel_sp': lambda x: int(x),
             'optic_channel_rb': lambda x: x,
             }
         super().__init__(callbacks, prefix = prefix)
-        self._base_freq = base_freq
+        self.base_freq = base_freq
         if controller is None:
             self._controller = TriggerSim(self.base_freq, {self._uuid:self._callback})
         else:
