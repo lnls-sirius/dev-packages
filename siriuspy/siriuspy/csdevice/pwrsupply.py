@@ -57,7 +57,7 @@ class PSClasses:
                             'hilim' :_sp_limits(name, 'HOPR'),
                             'hi'    :_sp_limits(name, 'HIGH'),
                             'hihi'  :_sp_limits(name, 'HIHI')}
-        _Current_SP = {'name':'Current-SP','type':'float', 'value':None, 'prec':4, 'unit':'A',
+        _Current_SP = {'name':'Current-SP','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                             'lolo'  :_sp_limits(name, 'LOLO'),
                             'lo'    :_sp_limits(name, 'LOW'),
                             'lolim' :_sp_limits(name, 'LOPR'),
@@ -79,7 +79,7 @@ class PSClasses:
                             'hilim' :_sp_limits(name, 'HOPR'),
                             'hi'    :_sp_limits(name, 'HIGH'),
                             'hihi'  :_sp_limits(name, 'HIHI')}
-        _Current_SP = {'name':'Current-SP','type':'float', 'value':None, 'prec':4, 'unit':'A',
+        _Current_SP = {'name':'Current-SP','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                             'lolo'  :_sp_limits(name, 'LOLO'),
                             'lo'    :_sp_limits(name, 'LOW'),
                             'lolim' :_sp_limits(name, 'LOPR'),
@@ -100,7 +100,7 @@ class PSClasses:
                             'hilim' :_sp_limits(name, 'HOPR'),
                             'hi'    :_sp_limits(name, 'HIGH'),
                             'hihi'  :_sp_limits(name, 'HIHI')}
-        _Current_SP = {'name':'Current-SP','type':'float', 'value':None, 'prec':4, 'unit':'A',
+        _Current_SP = {'name':'Current-SP','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                             'lolo'  :_sp_limits(name, 'LOLO'),
                             'lo'    :_sp_limits(name, 'LOW'),
                             'lolim' :_sp_limits(name, 'LOPR'),
@@ -121,7 +121,7 @@ class PSClasses:
                             'hilim' :_sp_limits(name, 'HOPR'),
                             'hi'    :_sp_limits(name, 'HIGH'),
                             'hihi'  :_sp_limits(name, 'HIHI')}
-        _Current_SP = {'name':'Current-SP','type':'float', 'value':None, 'prec':4, 'unit':'A',
+        _Current_SP = {'name':'Current-SP','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                             'lolo'  :_sp_limits(name, 'LOLO'),
                             'lo'    :_sp_limits(name, 'LOW'),
                             'lolim' :_sp_limits(name, 'LOPR'),
