@@ -788,6 +788,8 @@ class EVRIOC(BaseIOC):
         else:
             return super().set_propty(reason, value)
 
+    def receive_events(self,events):
+        return { self.prefix : self._controller.receive_events(events) }
 
 class EVEIOC(EVRIOC):
     _ClassSim = EVESim
