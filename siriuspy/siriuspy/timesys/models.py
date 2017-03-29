@@ -81,7 +81,6 @@ class BaseIOC(CallBack):
     def get_propty(self,reason):
         reason = reason[len(self.prefix):]
         if reason not in self._pvname2attr.keys():
-            print('get_propty1: '+reason)
             return None
         return self.__getattr__(self._pvname2attr[reason])
 
@@ -95,7 +94,7 @@ class BaseIOC(CallBack):
 
 class BaseSim(CallBack):
 
-    _attributes = {'fine_delay','delay','optic_channel'}
+    _attributes = {}
 
     def __init__(self,callbacks=None):
         super().__init__(callbacks)
@@ -443,8 +442,8 @@ class EVGIOC(BaseIOC):
     def _sim_callback(self,propty,value, **kwargs):
         if propty == 'continuous':
             self.continuous_rb = value
-        elif propty == 'clyclic_injection':
-            self.clyclic_injection_rb = value
+        elif propty == 'cyclic_injection':
+            self.cyclic_injection_rb = value
         elif propty == 'bucket_list':
             self.bucket_list_rb = value
         elif propty == 'repetition_rate':
