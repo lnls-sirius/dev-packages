@@ -21,13 +21,13 @@ class App:
 
     def __init__(self,driver):
 
-        self._uuid = _uuid.uuid4()
         self._driver = driver
-        self._set_callback()
+        self._set_callbacks()
 
-    def _set_callback(self):
+    def _set_callbacks(self):
         for family, device in App.devices.items():
-            device.add_callback(self._callback, self._uuid)
+            device.set_callback(self._mycallback)
+            device.update_state()
 
     @property
     def driver(self):
@@ -39,10 +39,21 @@ class App:
 
     def read(self,reason):
         ps, propty = self._get_dev_propty(reason)
-        if propty == 'Current-RB':
+        if propty == 'CtrlMode-Mon':
+            return ps.ctrlmode_mon
+        elif propty == 'PwrState-Sel':
+            return ps.pwrstate_sel
+        elif propty == 'PwtState-Sts':
+            return ps.pwrstate_sts
+        elif propty == 'OpMode-Sel':
+            return ps.opmode_sel
+        elif propty == 'OpMode-Sts':
+            return ps.opmode_sts
+        elif propty == 'Current-RB':
             return ps.current_rb
         elif propty == 'Current-SP':
             return ps.current_sp
+        return None
 
     @staticmethod
     def _get_dev_propty(reason):
@@ -50,15 +61,22 @@ class App:
         device = App.devices[family]
         return device, propty
 
-    def _callback(self, pvname, value, **kwargs):
-        print(pvname, value)
-
+    def _mycallback(self, pvname, value, **kwargs):
+        _, reason = pvname.split('PS-')
+        prev_value = self._driver.getParam(reason)
+        if value != prev_value:
+             #print(reason, value)
+             self._driver.setParam(reason, value)
+             self._driver.updatePVs()
 
     def write(self,reason,value):
+        """Write value to reason and let callback update PV database."""
         ps, propty = self._get_dev_propty(reason)
-        if propty == 'Current-SP':
-            prev_value = ps.current_sp
+        if propty == 'PwrState-Sel':
+            ps.pwrstate_sel = value
+        elif propty == 'OpMode-Sel':
+            ps.opmode_sp = value
+        elif propty == 'Current-SP':
             ps.current_sp = value
-            if ps.current_sp != prev_value:
-                self._driver.setParam(reason,value)
-                self._driver.updatePVs()
+        else:
+            return
