@@ -1,9 +1,11 @@
 from . import magdata
 
-from siriuspy.magnet.util import *
-from siriuspy.magnet.excdat import *
-from siriuspy.magnet.magexc import *
+from .util import *
+from .excdat import *
+from .magexc import *
+from .model import *
 
+del model
 del magexc
 del excdat
 del util

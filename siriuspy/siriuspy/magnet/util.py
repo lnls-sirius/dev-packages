@@ -27,8 +27,19 @@ def get_multipole_si_units(harmonic, power='^', product='.'):
 
 
 def linear_extrapolation(x,x1,x2,y1,y2):
-    
+
     if x2 == x1:
         return min(y1,y2,key=abs)
     else:
         return y1 + (y2-y1)*(x-x1)/(x2-x1)
+
+def add_multipoles(multipoles_list):
+    r = {'normal':{}, 'skew':{}}
+    for m in multipoles_list:
+        for mtype, mult in m.items():
+            for harm,value in mult.items():
+                try:
+                    r[mtype][harm] += value
+                except:
+                    r[mtype][harm] = 0.0
+    return r

@@ -9,7 +9,8 @@ class _MagData:
 
     def __init__(self, timeout=_timeout):
 
-        self.mag_excitation_dict = None
+        self.mag2ps_dict = None
+        self.ps2mag_dict = None
         self.magps_sp_limits_dict = None
 
         if _web.server_online():
@@ -27,8 +28,25 @@ class _MagData:
             db = {setpoint_limit_labels[i]:limits[i] for i in range(len(setpoint_limit_labels))}
             self.magps_sp_limits_dict[magps_name] = db
 
-    def _build_mag_excitation_dict(self):
-        pass
+    def _build_mag_excitation_dict(self, timeout=_timeout):
+        text = _web.magnets_excitation_ps_read(timeout=timeout)
+        data, param_dict = _util.read_text_data(text)
+        self.mag2ps_dict = {}
+        self.ps2mag_dict = {}
+        for datum in data:
+            magnet, *ps_names = datum
+            self.mag2ps_dict[magnet] = tuple(ps_names)
+            for ps_name in ps_names:
+                try:
+                    self.ps2mag_dict[ps_name].append(magnet)
+                except:
+                    self.ps2mag_dict[ps_name] = [magnet]
+
+    def conv_mag2ps(self, magname):
+        return tuple(self.mag2ps_dict[magname])
+
+    def conv_ps2mag(self, psname):
+        return tuple(self.ps2mag_dict[psname])
 
 
 _magdata = None
@@ -51,13 +69,12 @@ def server_online():
 def get_magnet_names():
     """Return a name list of magnets"""
     magdata = _get_magdata()
-    return tuple(magdata.mag_excitation_dict.keys())
+    return tuple(magdata.mag2ps_dict.keys())
 
 def get_magps_names():
     """Return a name list of magnets"""
     magdata = _get_magdata()
     return tuple(magdata.magps_sp_limits_dict.keys())
-
 
 def get_magps_unit():
     """Return the power supplies' unit for the currents."""
@@ -69,3 +86,11 @@ def get_magps_setpoint_limits(magps=None):
     type."""
     magdata = _get_magdata()
     return magdata.magps_sp_limits_dict[magps]
+
+def conv_magnet_2_psnames(magname):
+    magdata = _get_magdata()
+    return magdata.conv_mag2ps(magname)
+
+def conv_psname_2_magnets(psname):
+    magdata = _get_magdata()
+    return magdata.conv_ps2mag2(psname)

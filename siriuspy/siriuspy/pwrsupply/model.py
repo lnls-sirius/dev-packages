@@ -8,6 +8,7 @@ import siriuspy.csdevice as _csdevice
 from .controller import ControllerSim as _ControllerSim
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 
+_default_error_std = 0.0
 
 class PowerSupply:
     """Magnet Power Supply model

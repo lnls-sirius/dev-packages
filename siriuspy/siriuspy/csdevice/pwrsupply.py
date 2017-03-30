@@ -110,6 +110,63 @@ class PSClasses:
         @staticmethod
         def get_database(): return PSClasses._getdatabase(__class__)
 
+    class si_quadrupole_q14_trim(_Base):
+        """SI quadrupole Q14 trim power supply"""
+
+        name = 'si-quadrupole-q14-trim'
+        _Current_RB = {'name':'Current-RB','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
+                            'lolo'  :_sp_limits(name, 'LOLO'),
+                            'lo'    :_sp_limits(name, 'LOW'),
+                            'lolim' :_sp_limits(name, 'LOPR'),
+                            'hilim' :_sp_limits(name, 'HOPR'),
+                            'hi'    :_sp_limits(name, 'HIGH'),
+                            'hihi'  :_sp_limits(name, 'HIHI')}
+        _Current_SP = {'name':'Current-SP','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
+                            'lolo'  :_sp_limits(name, 'LOLO'),
+                            'lo'    :_sp_limits(name, 'LOW'),
+                            'lolim' :_sp_limits(name, 'LOPR'),
+                            'hilim' :_sp_limits(name, 'HOPR'),
+                            'hi'    :_sp_limits(name, 'HIGH'),
+                            'hihi'  :_sp_limits(name, 'HIHI')}
+
+    class si_quadrupole_q20_trim(_Base):
+        """SI quadrupole Q20 trim power supply"""
+
+        name = 'si-quadrupole-q20-trim'
+        _Current_RB = {'name':'Current-RB','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
+                            'lolo'  :_sp_limits(name, 'LOLO'),
+                            'lo'    :_sp_limits(name, 'LOW'),
+                            'lolim' :_sp_limits(name, 'LOPR'),
+                            'hilim' :_sp_limits(name, 'HOPR'),
+                            'hi'    :_sp_limits(name, 'HIGH'),
+                            'hihi'  :_sp_limits(name, 'HIHI')}
+        _Current_SP = {'name':'Current-SP','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
+                            'lolo'  :_sp_limits(name, 'LOLO'),
+                            'lo'    :_sp_limits(name, 'LOW'),
+                            'lolim' :_sp_limits(name, 'LOPR'),
+                            'hilim' :_sp_limits(name, 'HOPR'),
+                            'hi'    :_sp_limits(name, 'HIGH'),
+                            'hihi'  :_sp_limits(name, 'HIHI')}
+
+    class si_quadrupole_q30_trim(_Base):
+        """SI quadrupole Q30 trim power supply"""
+
+        name = 'si-quadrupole-q30-trim'
+        _Current_RB = {'name':'Current-RB','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
+                            'lolo'  :_sp_limits(name, 'LOLO'),
+                            'lo'    :_sp_limits(name, 'LOW'),
+                            'lolim' :_sp_limits(name, 'LOPR'),
+                            'hilim' :_sp_limits(name, 'HOPR'),
+                            'hi'    :_sp_limits(name, 'HIGH'),
+                            'hihi'  :_sp_limits(name, 'HIHI')}
+        _Current_SP = {'name':'Current-SP','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
+                            'lolo'  :_sp_limits(name, 'LOLO'),
+                            'lo'    :_sp_limits(name, 'LOW'),
+                            'lolim' :_sp_limits(name, 'LOPR'),
+                            'hilim' :_sp_limits(name, 'HOPR'),
+                            'hi'    :_sp_limits(name, 'HIGH'),
+                            'hihi'  :_sp_limits(name, 'HIHI')}
+
     class si_sextupole_s15_fam(_Base):
         """SI sextupole S15 power supply for horizontal correctors"""
 

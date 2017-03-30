@@ -94,7 +94,7 @@ class ControllerSim(Controller):
         if value != self._pwrstate:
             self._timestamp_pwrstate = _time.time()
             self._pwrstate = value
-            self._run_callback(pvname='PwrState-Sel')
+            self._mycallback(pvname='PwrState-Sel')
             self.update_state()
 
     @property
@@ -127,7 +127,7 @@ class ControllerSim(Controller):
         value = self._check_current_ref_limits(value)
         if value != self._current_sp:
             self._current_sp = value
-            self._run_callback(pvname='Current-SP')
+            self._mycallback(pvname='Current-SP')
             self.update_state()
 
     @property
@@ -150,7 +150,7 @@ class ControllerSim(Controller):
 
     def _update_opmode_slowref(self):
         self._current_rb = _random.gauss(self._current_sp, self._error_std)
-        self._run_callback(pvname='Current-RB')
+        self._mycallback(pvname='Current-RB')
 
     def _update_opmode_fastref(self):
         self._current_rb = _random.unform(self.current_min, self.current_max)
@@ -164,7 +164,7 @@ class ControllerSim(Controller):
             dt = (_time.time() - self._timestamp_opmode) % 20
             value = self._current_min + (self._current_max-self._current_min) * _math.exp(-dt/10.0) * _math.cos(2*_math.pi*dt/1.0) ** 2
             self._current_rb = _random.gauss(value, self._error_std)
-            self._run_callback(pvname='Current-RB')
+            self._mycallback(pvname='Current-RB')
 
     def timing_trigger(self):
         if self._opmode == _WfmRef:
