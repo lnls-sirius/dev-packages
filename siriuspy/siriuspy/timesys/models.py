@@ -488,7 +488,7 @@ class TriggerSim(BaseSim):
         self._delay = 0
         self._fine_delay = 0
 
-    def receive_optical_channels(self, opts):
+    def receive_events(self, opts):
         lab = _OPT_LABEL_TEMPLATE.format(self._optic_channel)
         dic = opts.get(lab,None)
         if dic is None: return
@@ -520,48 +520,60 @@ class OpticChannelSim(BaseSim):
 
 
 class EVRSim(BaseSim):
+    _ClassTrigSim = TriggerSim
+    _NR_INTERNAL_OPT_CHANNELS = 24
+    _NR_OPT_CHANNELS = 12
+    _NR_OUT_CHANNELS = 8
 
     _attributes = {'state'}
-
-    _NR_INTERNAL_OPT_CHANNELS = 24
-    _NR_OPT_CHANNELS_OUT = 12
 
     def __init__(self, base_freq, callbacks= None):
         super().__init__(callbacks)
         self.base_freq = base_freq
         self._state = 1
+
         self.optic_channels = list()
         for _ in range(self._NR_INTERNAL_OPT_CHANNELS):
             self.optic_channels.append( OpticChannelSim(self.base_freq) )
+
         self.trigger_outputs = list()
-        for _ in range(8):
-            self.trigger_outputs.append( TriggerSim(self.base_freq) )
+        for _ in range(self._NR_OUT_CHANNELS):
+            self.trigger_outputs.append(cls._ClassTrigSim(self.base_freq) )
 
     def receive_events(self,events):
-        opt_out = dict()
         triggers = dict()
+        inp_dic = dict(events)
         for i, opt_ch in enumerate(self.optic_channels):
-            opt = opt_ch.receive_events(events)
+            opt = opt_ch.receive_events(inp_dic)
             if opt is None: continue
             lab = _OPT_LABEL_TEMPLATE.format(i)
-            opt_out.update( {lab:opt} )
-            if i < self._NR_OPT_CHANNELS_OUT: triggers.update( {lab:opt} )
+            inp_dic.update( {lab:opt} )
+            if i < self._NR_OPT_CHANNELS: triggers.update( {lab:opt} )
         for tri_ch in self.trigger_outputs:
-            triggers.append(tri_ch.receive_optical_channels(opt_out))
+            out = tri_ch.receive_events(inp_dic))
+            if out is None: continue
+            lab = _OUT_LABEL_TEMPLATE.format(i)
+            triggers.update( {lab:out} )
         return triggers
 
 
 class EVESim(EVRSim):
-
+    _ClassTrigSim = TriggerSim
     _NR_INTERNAL_OPT_CHANNELS = 16
-    _NR_OPT_CHANNELS_OUT = 0
+    _NR_OPT_CHANNELS = 0
+    _NR_OUT_CHANNELS = 8
+
+
+class AFCSim(EVRSim):
+    _ClassTrigSim = OpticChannelSim
+    _NR_INTERNAL_OPT_CHANNELS = 10
+    _NR_OPT_CHANNELS = 10
+    _NR_OUT_CHANNELS = 8
 
 
 class EVRTriggerIOC(BaseIOC):
 
-    _ClassSim = EVRSim
-
-    _optic_channels = tuple(  [ _OPT_LABEL_TEMPLATE.format(i) for i in range(_ClassSim._NR_INTERNAL_OPT_CHANNELS) ]  )
+    _optic_channels = tuple(  [ _OPT_LABEL_TEMPLATE.format(i) for i in range(EVRSim._NR_INTERNAL_OPT_CHANNELS) ]  )
 
     _attr2pvname = {
         'fine_delay_sp':    'FineDelay-SP',
@@ -605,9 +617,8 @@ class EVRTriggerIOC(BaseIOC):
 
 
 class EVETriggerIOC(EVRTriggerIOC):
-    _ClassSim = EVESim
 
-    _optic_channels = tuple(  [ _OPT_LABEL_TEMPLATE.format(i) for i in range(_ClassSim._NR_INTERNAL_OPT_CHANNELS) ]  )
+    _optic_channels = tuple(  [ _OPT_LABEL_TEMPLATE.format(i) for i in range(EVESim._NR_INTERNAL_OPT_CHANNELS) ]  )
 
 
 class OpticChannelIOC(BaseIOC):
@@ -687,7 +698,6 @@ class EVRIOC(BaseIOC):
     _ClassTrigIOC = EVRTriggerIOC
 
     _states = ('Dsbl','Enbl')
-    _cyclic_types = ('Off','On')
 
     _attr2pvname = {
         'state_sp' : 'State-Sel',
@@ -703,7 +713,7 @@ class EVRIOC(BaseIOC):
         for i in range(cls._ClassSim._NR_INTERNAL_OPT_CHANNELS):
             p = prefix + 'OPT{0:02d}'.format(i)
             db.update(OpticChannelIOC.get_database(p))
-        for out in range(8):
+        for out in range(cls._ClassSim._NR_OUT_CHANNELS):
             p = prefix + 'OUT{0:d}'.format(out)
             db.update(cls._ClassTrigIOC.get_database(p))
         return db
@@ -725,7 +735,7 @@ class EVRIOC(BaseIOC):
                                                         prefix = name,
                                                         controller = cntler)
         self.trigger_outputs = dict()
-        for i in range(8):
+        for i in range(self._ClassSim._NR_OUT_CHANNELS):
             name = 'OUT{0:d}'.format(i)
             cntler = self._controller.trigger_outputs[i]
             self.trigger_outputs[name] = self._ClassTrigIOC(self.base_freq/4,
@@ -761,6 +771,12 @@ class EVRIOC(BaseIOC):
     def receive_events(self,events):
         return { self.prefix : self._controller.receive_events(events) }
 
+
 class EVEIOC(EVRIOC):
     _ClassSim = EVESim
     _ClassTrigIOC = EVETriggerIOC
+
+
+class AFCIOC(BaseIOC):
+    _ClassSim = AFCSim
+    _ClassTrigIOC = OpticChannelIOC
