@@ -21,7 +21,7 @@ class CallBack:
         self._callbacks = dict(callbacks) if callbacks else dict()
 
     def _callback(self,propty,value,**kwargs):
-        return NotImplemented()
+        return NotImplemented
 
     def _call_callbacks(self, propty, value, **kwargs):
         for uuid, callback in self._callbacks.items():
@@ -38,6 +38,27 @@ class CallBack:
 
     def remove_callback(self,uuid):
         self._callbacks.pop(uuid)
+
+
+class BaseSim(CallBack):
+
+    _attributes = {}
+
+    def __init__(self,callbacks=None):
+        super().__init__(callbacks)
+
+    def __getattr__(self,name):
+        if name in self.__class__._attributes:
+            return self.__dict__['_'+name]
+        else:
+            return super().__getattr__(name)
+
+    def __setattr__(self,name,value):
+        if name in self.__class__._attributes:
+            self.__dict__['_'+name] = value
+            self._call_callbacks(name,value)
+        else:
+            super().__setattr__(name, value)
 
 
 class BaseIOC(CallBack):
@@ -90,27 +111,6 @@ class BaseIOC(CallBack):
             return False
         self.__setattr__(self._pvname2attr[reason],value)
         return True
-
-
-class BaseSim(CallBack):
-
-    _attributes = {}
-
-    def __init__(self,callbacks=None):
-        super().__init__(callbacks)
-
-    def __getattr__(self,name):
-        if name in self.__class__._attributes:
-            return self.__dict__['_'+name]
-        else:
-            return super().__getattr__(name)
-
-    def __setattr__(self,name,value):
-        if name in self.__class__._attributes:
-            self.__dict__['_'+name] = value
-            self._call_callbacks(name,value)
-        else:
-            super().__setattr__(name, value)
 
 
 ##############################################################
@@ -202,8 +202,10 @@ class EVGSim(BaseSim):
 
     def _injection_fun(self):
         while True:
+            if not len(self._bucket_list): _time.sleep(0.1)
             for i in self._bucket_list:
                 if not self._can_inject(): return
+
                 if i<=0: break
                 evnts = self._generate_events((1,2))
                 for callback in self._injection_callbacks.values():
@@ -279,7 +281,7 @@ class EventIOC(BaseIOC):
             'delay_type_rb': lambda x: x,
             }
         if controller is None: controller = EventSim(base_freq)
-        super().__init__(callbacks, prefix = prefix)
+        super().__init__(controller, callbacks, prefix = prefix)
 
     def _callback(self,propty,value,**kwargs):
         if propty == 'delay':
@@ -318,7 +320,7 @@ class ClockIOC(BaseIOC):
             'state_rb': lambda x: x,
             }
         if controller is None: controller = ClockSim(base_freq)
-        super().__init__(callbacks, controller, prefix = prefix)
+        super().__init__(controller, callbacks, prefix = prefix)
 
     def _callback(self, propty,value,**kwargs):
         if propty == 'frequency':
@@ -388,7 +390,7 @@ class EVGIOC(BaseIOC):
             'bucket_list_rb' : lambda x: x,
             }
         if controller is None: controller = EVGSim(base_freq)
-        super().__init__(callbacks = callbacks, prefix = prefix)
+        super().__init__(controller, callbacks = callbacks, prefix = prefix)
 
         self.events = dict()
         for i in range(256):
@@ -424,7 +426,7 @@ class EVGIOC(BaseIOC):
     def _ioc_callback(self,propty,value, **kwargs):
         self._call_callbacks(propty, value, **kwargs)
 
-    def _sim_callback(self,propty,value, **kwargs):
+    def _callback(self,propty,value, **kwargs):
         if propty == 'continuous':
             self.continuous_rb = value
         elif propty == 'cyclic_injection':
@@ -538,7 +540,7 @@ class EVRSim(BaseSim):
 
         self.trigger_outputs = list()
         for _ in range(self._NR_OUT_CHANNELS):
-            self.trigger_outputs.append(cls._ClassTrigSim(self.base_freq) )
+            self.trigger_outputs.append(self._ClassTrigSim(self.base_freq) )
 
     def receive_events(self,events):
         triggers = dict()
@@ -550,7 +552,7 @@ class EVRSim(BaseSim):
             inp_dic.update( {lab:opt} )
             if i < self._NR_OPT_CHANNELS: triggers.update( {lab:opt} )
         for tri_ch in self.trigger_outputs:
-            out = tri_ch.receive_events(inp_dic))
+            out = tri_ch.receive_events(inp_dic)
             if out is None: continue
             lab = _OUT_LABEL_TEMPLATE.format(i)
             triggers.update( {lab:out} )
@@ -605,7 +607,7 @@ class EVRTriggerIOC(BaseIOC):
             'optic_channel_rb': lambda x: x,
             }
         if controller is None: controller = TriggerSim(base_freq)
-        super().__init__(callbacks, prefix = prefix)
+        super().__init__(controller, callbacks, prefix = prefix)
 
     def _callback(self, propty,value,**kwargs):
         if propty == 'delay':
@@ -676,7 +678,7 @@ class OpticChannelIOC(BaseIOC):
             'pulses_rb'     : lambda x: x,
             }
         if controller is None: controller = OpticChannelSim(base_freq)
-        super().__init__(callbacks, prefix = prefix)
+        super().__init__(controller, callbacks, prefix = prefix)
 
     def _callback(self,propty,value,**kwargs):
         if propty == 'state':
@@ -724,7 +726,7 @@ class EVRIOC(BaseIOC):
             'state_rb' : lambda x: x,
             }
         if controller is None: controller = self._ClassSim(base_freq)
-        super().__init__(callbacks = callbacks, prefix = prefix)
+        super().__init__(controller, callbacks = callbacks, prefix = prefix)
 
         self.optic_channels = dict()
         for i in range(self._ClassSim._NR_INTERNAL_OPT_CHANNELS):
@@ -746,7 +748,7 @@ class EVRIOC(BaseIOC):
     def _ioc_callback(self,propty,value, **kwargs):
         self._call_callbacks(propty, value, **kwargs)
 
-    def _sim_callback(self,propty,value, **kwargs):
+    def _callback(self,propty,value,**kwargs):
         if propty == 'state':
             self.state_rb = value
 
@@ -777,6 +779,6 @@ class EVEIOC(EVRIOC):
     _ClassTrigIOC = EVETriggerIOC
 
 
-class AFCIOC(BaseIOC):
+class AFCIOC(EVRIOC):
     _ClassSim = AFCSim
     _ClassTrigIOC = OpticChannelIOC
