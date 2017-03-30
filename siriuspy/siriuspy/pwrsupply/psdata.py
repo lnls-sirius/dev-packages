@@ -1,4 +1,5 @@
 import siriuspy.servweb as _web
+import siriuspy.util as _util
 
 _timeout = 1.0
 
@@ -106,7 +107,7 @@ class _PSData:
         return limits_dict
 
     def _build_pstype_data(self, text):
-        data, _ = _PSData._read_text(text)
+        data, _ = _util.read_text_data(text)
         names, polarities = [], []
         for datum in data:
             name, polarity = datum[0], datum[1]
@@ -135,7 +136,7 @@ class _PSData:
 
     def _build_pstype_sp_limits(self):
         text = _web.power_supplies_pstype_setpoint_limits(timeout=_timeout)
-        data, param_dict = _PSData._read_text(text)
+        data, param_dict = _util.read_text_data(text)
         self._setpoint_unit = tuple(param_dict['unit'])
         self._setpoint_limit_labels = tuple(param_dict['power_supply_type'])
         self._pstype_sp_limits_dict = {pstype_name:[None,]*len(data[0]) for pstype_name in self._pstype_name_list}
@@ -146,31 +147,11 @@ class _PSData:
             self._pstype_sp_limits_dict[pstype_name] = tuple(self._pstype_sp_limits_dict[pstype_name])
 
     def _read_text_pstype(self, text):
-        data, _ = _PSData._read_text(text)
+        data, _ = _util.read_text_data(text)
         psnames = []
         for datum in data:
             psnames.append(datum[0])
         return psnames
-
-    @staticmethod
-    def _read_text(text):
-        lines = text.splitlines()
-        parameters = {}
-        data = []
-        for line in lines:
-            line = line.strip()
-            if not line: continue # empty line
-            if line[0] == '#':
-                if len(line[1:].strip())>0:
-                    token, *words = line[1:].split()
-                    if token[0] == '[':
-                        # it is a parameter.
-                        parm = token[1:-1].strip()
-                        parameters[parm] = words
-            else:
-                # it is a data line
-                data.append(line.split())
-        return data, parameters
 
 
 _psdata = None

@@ -30,3 +30,22 @@ def get_prop_suffix(prop):
     if prop[-4:] == '-Mon': return 'Mon'
     if prop[-4:] == '-Cmd': return 'Cmd'
     return None
+
+def read_text_data(text):
+    lines = text.splitlines()
+    parameters = {}
+    data = []
+    for line in lines:
+        line = line.strip()
+        if not line: continue # empty line
+        if line[0] == '#':
+            if len(line[1:].strip())>0:
+                token, *words = line[1:].split()
+                if token[0] == '[':
+                    # it is a parameter.
+                    parm = token[1:-1].strip()
+                    parameters[parm] = words
+        else:
+            # it is a data line
+            data.append(line.split())
+    return data, parameters
