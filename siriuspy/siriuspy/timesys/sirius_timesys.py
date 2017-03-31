@@ -136,14 +136,14 @@ def get_mapping_timing_devs_2_receivers():
                ('AS-Glob:TI-EVR-2', 'OPT10'):(('BO-05D', 'LLRF'),),
                ('AS-Glob:TI-EVR-2',  'OUT1'):( ('BO-01U','CH'),   ('BO-03U','CH'),   ('BO-05U','CH'),   ('BO-07U','CH'),   ('BO-09U','CH'),  ## FOUT, maybe
                                                ('BO-11U','CH'),   ('BO-13U','CH'),   ('BO-15U','CH'),   ('BO-17U','CH'),   ('BO-19U','CH'),
-                                               ('BO-11U','CH'),   ('BO-23U','CH'),   ('BO-25U','CH'),   ('BO-27U','CH'),   ('BO-29U','CH'),
-                                               ('BO-11U','CH'),   ('BO-33U','CH'),   ('BO-35U','CH'),   ('BO-37U','CH'),   ('BO-39U','CH'),
-                                               ('BO-11U','CH'),   ('BO-43U','CH'),   ('BO-45U','CH'),   ('BO-47U','CH'),   ('BO-49U','CH'),  ),
+                                               ('BO-21U','CH'),   ('BO-23U','CH'),   ('BO-25U','CH'),   ('BO-27U','CH'),   ('BO-29U','CH'),
+                                               ('BO-31U','CH'),   ('BO-33U','CH'),   ('BO-35U','CH'),   ('BO-37U','CH'),   ('BO-39U','CH'),
+                                               ('BO-41U','CH'),   ('BO-43U','CH'),   ('BO-45U','CH'),   ('BO-47U','CH'),   ('BO-49U','CH'),  ),
                ('AS-Glob:TI-EVR-2',  'OUT2'):( ('BO-01U','CV'),   ('BO-03U','CV'),   ('BO-05U','CV'),   ('BO-07U','CV'),   ('BO-09U','CV'),  ## FOUT, maybe
                                                ('BO-11U','CV'),   ('BO-13U','CV'),   ('BO-15U','CV'),   ('BO-17U','CV'),   ('BO-19U','CV'),
-                                               ('BO-11U','CV'),   ('BO-23U','CV'),   ('BO-25U','CV'),   ('BO-27U','CV'),   ('BO-29U','CV'),
-                                               ('BO-11U','CV'),   ('BO-33U','CV'),   ('BO-35U','CV'),   ('BO-37U','CV'),   ('BO-39U','CV'),
-                                               ('BO-11U','CV'),   ('BO-43U','CV'),   ('BO-45U','CV'),   ('BO-47U','CV'),   ('BO-49U','CV'),  ),
+                                               ('BO-21U','CV'),   ('BO-23U','CV'),   ('BO-25U','CV'),   ('BO-27U','CV'),   ('BO-29U','CV'),
+                                               ('BO-31U','CV'),   ('BO-33U','CV'),   ('BO-35U','CV'),   ('BO-37U','CV'),   ('BO-39U','CV'),
+                                               ('BO-41U','CV'),   ('BO-43U','CV'),   ('BO-45U','CV'),   ('BO-47U','CV'),   ('BO-49U','CV'),  ),
                ('AS-Glob:TI-EVR-2',  'OUT3'):( ('BO-Fam','B-1'),  ('BO-Fam','B-2'),  ('BO-Fam','QF'),   ('BO-Fam','QD'),
                                                ('BO-Fam','SD'),   ('BO-Fam','SF'),   ('BO-02D','QS'), ),
 
