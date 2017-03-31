@@ -5,6 +5,7 @@ import time as _time
 
 _PwrFreq = 60
 _FINE_DELAY_STEP = 5e-12
+RF_FREQ_DIV = 4
 
 _EVENT_LABEL_TEMPLATE = 'Ev{0:02x}'
 _CLOCK_LABEL_TEMPLATE = 'Cl{0:1d}'
@@ -69,10 +70,10 @@ class _BaseIOC(CallBack):
 
     def __init__(self, controller, callbacks = None, prefix = None):
         super().__init__(callbacks, prefix = prefix)
-        self._uuid = _uuid.uuid4()
+        self.uuid = _uuid.uuid4()
         self._pvname2attr = { value:key for key,value in self._attr2pvname.items() }
         self._controller = controller
-        self._controller.add_callback({self._uuid:self._callback})
+        self._controller.add_callback({self.uuid:self._callback})
         self.base_freq = self._controller.base_freq
         self._set_init_values()
 
@@ -165,10 +166,10 @@ class _EVGSim(_BaseSim):
         self._repetition_rate = 30
         self.events = list()
         for i in range(256):
-            self.events.append(_EventSim(self.base_freq/4))
+            self.events.append(_EventSim(self.base_freq/RF_FREQ_DIV))
         self.clocks = list()
         for i in range(8):
-            self.clocks.append(_ClockSim(self.base_freq/4))
+            self.clocks.append(_ClockSim(self.base_freq/RF_FREQ_DIV))
 
     def __setattr__(self,attr,value):
         if attr == 'injection':
@@ -408,16 +409,16 @@ class EVGIOC(_BaseIOC):
         for i in range(256):
             name = EVENT_LABEL_TEMPLATE.format(i)
             cntler = self._controller.events[i]
-            self.events[name] = _EventIOC(self.base_freq/4,
-                                         callbacks = {self._uuid:self._ioc_callback},
+            self.events[name] = _EventIOC(self.base_freq/RF_FREQ_DIV,
+                                         callbacks = {self.uuid:self._ioc_callback},
                                          prefix = name,
                                          controller = cntler)
         self.clocks = dict()
         for i in range(8):
             name = CLOCK_LABEL_TEMPLATE.format(i)
             cntler = self._controller.clocks[i]
-            self.clocks[name] = _ClockIOC(self.base_freq/4,
-                                         callbacks = {self._uuid:self._ioc_callback},
+            self.clocks[name] = _ClockIOC(self.base_freq/RF_FREQ_DIV,
+                                         callbacks = {self.uuid:self._ioc_callback},
                                          prefix = name,
                                          controller = cntler)
 
@@ -750,16 +751,16 @@ class EVRIOC(_BaseIOC):
         for i in range(self._ClassSim._NR_INTERNAL_OPT_CHANNELS):
             name = 'OPT{0:02d}'.format(i)
             cntler = self._controller.optic_channels[i]
-            self.optic_channels[name] = _OpticChannelIOC(self.base_freq/4,
-                                                        callbacks = {self._uuid:self._ioc_callback},
+            self.optic_channels[name] = _OpticChannelIOC(self.base_freq,
+                                                        callbacks = {self.uuid:self._ioc_callback},
                                                         prefix = name,
                                                         controller = cntler)
         self.trigger_outputs = dict()
         for i in range(self._ClassSim._NR_OUT_CHANNELS):
             name = 'OUT{0:d}'.format(i)
             cntler = self._controller.trigger_outputs[i]
-            self.trigger_outputs[name] = self._ClassTrigIOC(self.base_freq/4,
-                                                            callbacks = {self._uuid:self._ioc_callback},
+            self.trigger_outputs[name] = self._ClassTrigIOC(self.base_freq,
+                                                            callbacks = {self.uuid:self._ioc_callback},
                                                             prefix = name,
                                                             controller = cntler)
 
