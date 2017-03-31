@@ -155,6 +155,7 @@ class EVGSim(BaseSim):
     def __init__(self, base_freq, callbacks= None):
         super().__init__(callbacks)
         self.base_freq = base_freq
+        self._pending_devices_callbacks = dict()
         self._continuous = 1
         self._injection = 0
         self._injection_callbacks = dict()
@@ -185,13 +186,22 @@ class EVGSim(BaseSim):
                     self._single = value
                     if not self._continuous: return
                     evnts = self._generate_events(3)
+                    triggers = dict()
+                    for callback in self._pending_devices_callbacks.values():
+                        triggers.update(callback(0,evnts))
                     for callback in self._single_callbacks.values():
-                        callback(evnts)
+                        callback(triggers)
             else:
                 self._single = value
             self._call_callbacks('single',value)
         else:
             super().__setattr__(attr,value)
+
+    def add_pending_devices_callback(self, uuid,callback):
+        self._pending_devices_callbacks.update({uuid:callback})
+
+    def remove_pending_devices_callback(self, uuid):
+        self._pending_devices_callbacks.pop(uuid,None)
 
     ########### Functions related to Single Pulse simulation #############
     def add_injection_callback(self,uuid,callback):
@@ -208,8 +218,11 @@ class EVGSim(BaseSim):
 
                 if i<=0: break
                 evnts = self._generate_events((1,2))
+                triggers = dict()
+                for callback in self._pending_devices_callbacks.values():
+                    triggers.update(callback(i,evnts))
                 for callback in self._injection_callbacks.values():
-                    callback(i,evnts)
+                    callback(i,triggers)
                 _time.sleep(self._repetition_rate/_PwrFreq)
             if not self._cyclic_injection:
                 self._injection = 0
@@ -456,6 +469,12 @@ class EVGIOC(BaseIOC):
 
     def remove_single_callback(self, uuid):
         self._controller.remove_single_callback(uuid)
+
+    def add_pending_devices_callback(self, uuid,callback):
+        self._controller.add_pending_devices_callback(uuid,callback)
+
+    def remove_pending_devices_callback(self, uuid):
+        self._controller.remove_pending_devices_callback(uuid)
 
     def get_propty(self, reason):
         reason2 = reason[len(self.prefix):]
