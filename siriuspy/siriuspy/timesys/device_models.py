@@ -13,7 +13,7 @@ CLOCK_LABEL_TEMPLATE = 'Clock{0:d}'
 OPT_LABEL_TEMPLATE   = 'OPT{0:2d}'
 OUT_LABEL_TEMPLATE   = 'OUT{0:1d}'
 
-class _CallBack:
+class CallBack:
 
     def __init__(self, callbacks=None, prefix = None):
         self.prefix = prefix or ''
@@ -39,7 +39,7 @@ class _CallBack:
         self._callbacks.pop(uuid)
 
 
-class _BaseSim(_CallBack):
+class _BaseSim(CallBack):
 
     _attributes = {}
 
@@ -60,12 +60,12 @@ class _BaseSim(_CallBack):
             super().__setattr__(name, value)
 
 
-class _BaseIOC(_CallBack):
+class _BaseIOC(CallBack):
 
     @classmethod
     def get_database(cls, prefix=''):
         db = dict()
-        return NotImplemented() #return db
+        return NotImplemented #return db
 
     def __init__(self, controller, callbacks = None, prefix = None):
         super().__init__(callbacks, prefix = prefix)
