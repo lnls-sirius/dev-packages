@@ -1,3 +1,1 @@
-from .models import *
-
-del models
+from . import device_models
