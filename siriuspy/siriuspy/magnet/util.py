@@ -1,4 +1,5 @@
 
+
 def get_multipole_name(harmonic, suffix='pole'):
 
     names = {0: 'dipole',
@@ -32,6 +33,7 @@ def linear_extrapolation(x,x1,x2,y1,y2):
         return min(y1,y2,key=abs)
     else:
         return y1 + (y2-y1)*(x-x1)/(x2-x1)
+
 
 def add_multipoles(multipoles_list):
     r = {'normal':{}, 'skew':{}}
