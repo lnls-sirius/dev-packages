@@ -509,7 +509,7 @@ class _TriggerSim(_BaseSim):
         self._delay = 0
         self._fine_delay = 0
 
-    def receive_events(self, opts):
+    def receive_events(self, bucket, opts):
         lab = OPT_LABEL_TEMPLATE.format(self._optic_channel)
         dic = opts.get(lab,None)
         if dic is None: return
@@ -531,7 +531,7 @@ class _OpticChannelSim(_BaseSim):
         self._event = 0
         self._pulses = 1
 
-    def receive_events(self, events):
+    def receive_events(self, bucket, events):
         if self._state == 0: return
         lab = _EVENT_LABEL_TEMPLATE.format(self._event)
         ev = events.get(lab,None)
@@ -561,17 +561,17 @@ class _EVRSim(_BaseSim):
         for _ in range(self._NR_OUT_CHANNELS):
             self.trigger_outputs.append(self._ClassTrigSim(self.base_freq) )
 
-    def receive_events(self,events):
+    def receive_events(self, bucket, events):
         triggers = dict()
         inp_dic = dict(events)
         for i, opt_ch in enumerate(self.optic_channels):
-            opt = opt_ch.receive_events(inp_dic)
+            opt = opt_ch.receive_events(bucket, inp_dic)
             if opt is None: continue
             lab = OPT_LABEL_TEMPLATE.format(i)
             inp_dic.update( {lab:opt} )
             if i < self._NR_OPT_CHANNELS: triggers.update( {lab:opt} )
         for tri_ch in self.trigger_outputs:
-            out = tri_ch.receive_events(inp_dic)
+            out = tri_ch.receive_events(bucket, inp_dic)
             if out is None: continue
             lab = OUT_LABEL_TEMPLATE.format(i)
             triggers.update( {lab:out} )
@@ -793,8 +793,8 @@ class EVRIOC(_BaseIOC):
         else:
             return super().set_propty(reason, value)
 
-    def receive_events(self,events):
-        return { self.prefix : self._controller.receive_events(events) }
+    def receive_events(self, bucket, events):
+        return { self.prefix : self._controller.receive_events(bucket, events) }
 
 
 class EVEIOC(EVRIOC):
