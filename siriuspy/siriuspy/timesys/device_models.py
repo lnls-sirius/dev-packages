@@ -612,8 +612,10 @@ class _EVRTriggerIOC(_BaseIOC):
         db[prefix + 'FineDelay-RB']   = {'type' : 'float', 'unit':'ps', 'value': 0.0, 'prec': 0}
         db[prefix + 'Delay-SP']       = {'type' : 'float', 'unit':'us', 'value': 0.0, 'prec': 0}
         db[prefix + 'Delay-RB']       = {'type' : 'float', 'unit':'us', 'value': 0.0, 'prec': 0}
-        db[prefix + 'OptCh-Sel']      = {'type' : 'enum', 'enums':cls._optic_channels, 'value':0}
-        db[prefix + 'OptCh-Sts']      = {'type' : 'enum', 'enums':cls._optic_channels, 'value':0}
+        db[prefix + 'OptCh-Sel']      = {'type' : 'int', 'value':0}
+        db[prefix + 'OptCh-Sts']      = {'type' : 'int', 'value':0}
+        # db[prefix + 'OptCh-Sel']      = {'type' : 'enum', 'enums':cls._optic_channels, 'value':0} # pcaspy only accepts 16 states for enum
+        # db[prefix + 'OptCh-Sts']      = {'type' : 'enum', 'enums':cls._optic_channels, 'value':0}
         return db
 
     def __init__(self, base_freq, callbacks = None, prefix = None, controller = None):
@@ -647,7 +649,7 @@ class _OpticChannelIOC(_BaseIOC):
     _states = ('Dsbl','Enbl')
     _polarities = ('Normal','Inverse')
     _delay_types = ('Fixed','Incr')
-    _events = [_EVENT_LABEL_TEMPLATE.format(i) for i in range(256)]
+    _events = [EVENT_LABEL_TEMPLATE.format(i) for i in range(256)] + [CLOCK_LABEL_TEMPLATE.format(i) for i in range(8)]
 
     _attr2pvname = {
         'state_sp'      :'State-Sel',
@@ -675,8 +677,10 @@ class _OpticChannelIOC(_BaseIOC):
         db[prefix + 'Delay-RB']      = {'type' : 'float', 'value': 0.0, 'unit':'us', 'prec': 3}
         db[prefix + 'Polrty-Sel']    = {'type' : 'enum', 'enums':cls._polarities, 'value':0}
         db[prefix + 'Polrty-Sts']    = {'type' : 'enum', 'enums':cls._polarities, 'value':0}
-        db[prefix + 'Event-Sel']     = {'type' : 'enum', 'enums':cls._events, 'value':0}
-        db[prefix + 'Event-Sts']     = {'type' : 'enum', 'enums':cls._events, 'value':0}
+        db[prefix + 'Event-Sel']     = {'type' : 'int', 'value':0}
+        db[prefix + 'Event-Sts']     = {'type' : 'int', 'value':0}
+        # db[prefix + 'Event-Sel']     = {'type' : 'enum', 'enums':cls._events, 'value':0}
+        # db[prefix + 'Event-Sts']     = {'type' : 'enum', 'enums':cls._events, 'value':0}
         db[prefix + 'Pulses-SP']     = {'type' : 'float', 'value': 0.0, 'prec': 3}
         db[prefix + 'Pulses-RB']     = {'type' : 'float', 'value': 0.0, 'prec': 3}
         return db
