@@ -43,5 +43,5 @@ def add_multipoles(multipoles_list):
                 try:
                     r[mtype][harm] += value
                 except:
-                    r[mtype][harm] = 0.0
+                    r[mtype][harm] = value
     return r
