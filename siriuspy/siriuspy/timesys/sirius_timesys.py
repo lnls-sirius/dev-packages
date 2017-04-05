@@ -111,5 +111,4 @@ class TimingSimulation(_device_models.CallBack):
             return False
 
 
-def get_mapping_timing_devs_2_receivers():
-    mapping = {
+def get_mapping_timing_devs_2_receivers(): pass

@@ -6,6 +6,8 @@ _timeout = 1.0
 _excdat_folder = '/magnet/excitation-data/'
 _ps_folder = '/power-supply/'
 _pstypes_data_folder = '/power-supply/pstypes-data/'
+_diag_folder = '/diagnostics/'
+_timesys_folder = '/timesys/'
 
 
 def read_url(url, timeout=_timeout):
@@ -75,4 +77,12 @@ def power_supplies_pstype_setpoint_limits(timeout = _timeout):
 
 def beaglebone_power_supplies_mapping(timeout = _timeout):
     url = _envars.server_url_web + _ps_folder + 'beaglebone-mapping.txt'
+    return read_url(url, timeout=timeout)
+
+def crate_to_bpm_mapping(timeout = _timeout):
+    url = _envars.server_url_web + _diag_folder + 'crates-connection.txt'
+    return read_url(url, timeout=timeout)
+
+def timing_devices_mapping(timeout = _timeout):
+    url = _envars.server_url_web + _timesys_folder + 'timing-devices-connection.txt'
     return read_url(url, timeout=timeout)

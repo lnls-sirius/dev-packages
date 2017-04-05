@@ -24,8 +24,11 @@ class _BBBData:
         for line in lines:
             line = line.strip()
             if not line or line[0] == '#': continue # empty line
-            l = line.split()
-            mapping[l[0]] = tuple(l[1:])
+            key,*val = line.split()
+            if key in mapping.keys():
+                mapping[key] += tuple(val)
+            else:
+                mapping[key] = tuple(val)
         return mapping
 
     def _build_inv_mapping(self):
