@@ -16,7 +16,7 @@ __version__  = _pvs.__version__
 
 class App:
 
-    devices = _pvs.get_csdevices()
+    devices = _pvs.get_ps_devices()
     pvs_database = _pvs.get_pvs_database()
 
     def __init__(self,driver):
@@ -75,7 +75,7 @@ class App:
         if propty == 'PwrState-Sel':
             ps.pwrstate_sel = value
         elif propty == 'OpMode-Sel':
-            ps.opmode_sp = value
+            ps.opmode_sel = value
         elif propty == 'Current-SP':
             ps.current_sp = value
         else:
