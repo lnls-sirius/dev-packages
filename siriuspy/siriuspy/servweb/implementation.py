@@ -72,3 +72,7 @@ def power_supplies_pstype_data_read(filename, timeout=_timeout):
 def power_supplies_pstype_setpoint_limits(timeout = _timeout):
     url = _envars.server_url_web + _ps_folder + 'pstypes-setpoint-limits.txt'
     return read_url(url, timeout=timeout)
+
+def beaglebone_power_supplies_mapping(timeout = _timeout):
+    url = _envars.server_url_web + _ps_folder + 'beaglebone-mapping.txt'
+    return read_url(url, timeout=timeout)
