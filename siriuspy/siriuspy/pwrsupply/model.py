@@ -165,6 +165,7 @@ class PowerSupply:
         self._controller.update_state()
 
     def _mycallback(self, pvname, value, **kwargs):
+        print('pwrsup', pvname)
         if self._callback is None:
             return
         else:

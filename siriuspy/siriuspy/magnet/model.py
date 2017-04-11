@@ -24,9 +24,12 @@ class Magnet:
                  left=None,   # type of left-side multipole interpolation
                  right=None,  # type of right-side multipole interpolation
                  ):
+
+        #print(name)
         self._name = name
         self._ps_dict = {}
         self._excdata = {}
+        self._callback = None
         self._left = 'linear' if left is None else left
         self._right = 'linear' if left is None else right
         self.add_power_supplies(power_supplies)
@@ -42,9 +45,14 @@ class Magnet:
         for psname, ps in self._ps_dict.items():
             ps.update_state()
 
+    def _mycallback(self, pvname, value, **kwargs):
+        #print('magnet', pvname, self._callback)
+        if self._callback is not None:
+            self._callback(pvname, value, **kwargs)
+
     def set_callback(self, callback):
-        for psname, ps in self._ps_dict.items():
-            ps.set_callback(callback)
+        #print('set_callback', callback)
+        self._callback = callback
 
     def add_power_supplies(self, power_supplies):
         if power_supplies is None: return
@@ -57,6 +65,10 @@ class Magnet:
             self._ps_dict.update(power_supplies)
         else:
             raise TypeError
+
+        for ps_name, ps in self._ps_dict.items():
+            ps.set_callback(self._mycallback)
+
         self._update_excdata()
 
     def _update_excdata(self):
@@ -126,6 +138,17 @@ class MagnetFam(Magnet):
         self._magnet_type = magnet_type
         self._mag_sp_lims = _mag_sp_lims(magps=self._name)
 
+    def _mycallback(self, pvname, value, **kwargs):
+        #print('magnetfam', pvname, value)
+        if self._callback is None: return
+        super()._mycallback(pvname, value, **kwargs)
+        if 'Current' in pvname:
+            typ, h, str_kl, unit = _magnet_types[self._magnet_type]
+            reason_kl = pvname.replace('Current',str_kl)
+            value_kl = self.kl_sp if 'SP' in pvname else self.kl_rb
+            print('magnetfam_kl', reason_kl, value_kl)
+            self._callback(reason_kl, value_kl, **kwargs)
+
     @property
     def magnet_type(self):
         return self._magnet_type
@@ -134,24 +157,31 @@ class MagnetFam(Magnet):
     def kl_sp(self):
         currents = self.get_current_sp()
         m = self.conv_currents2multipoles(currents)
-        typ, h, prop, unit = _magnet_types[self._magnet_type]
+        typ, h, str_kl, unit = _magnet_types[self._magnet_type]
         return m[typ][h]
+
+    @kl_sp.setter
+    def kl_sp(self, value):
+        typ, h, str_kl, unit = _magnet_types[self._magnet_type]
+        (ps_name, ps), = self._ps_dict.items()
+        excdata = self._excdata[ps_name]
+        current = excdata.interp_mult2curr(multipole=value, harmonic=h, multipole_type=typ, left='linear', right='linear')
+        ps.current_sp = current
 
     @property
     def kl_rb(self):
         currents = self.get_current_rb()
         m = self.conv_currents2multipoles(currents)
-        typ, h, prop, unit = _magnet_types[self._magnet_type]
+        typ, h, str_kl, unit = _magnet_types[self._magnet_type]
         return m[typ][h]
-
 
     @property
     def database(self):
 
         def _get_db_kl(ps_name, key_ps, db_value, sp_lims):
-            typ, h, prop, unit = _magnet_types[self._magnet_type]
+            typ, h, str_kl, unit = _magnet_types[self._magnet_type]
             family, propty = key_ps.split(':')
-            key_kl = family + ':' + propty.replace('Current',prop)
+            key_kl = family + ':' + propty.replace('Current',str_kl)
 
             hlim = self.conv_currents2multipoles({ps_name:sp_lims['HIHI']})
             llim = self.conv_currents2multipoles({ps_name:sp_lims['LOLO']})

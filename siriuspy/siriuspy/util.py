@@ -49,3 +49,28 @@ def read_text_data(text):
             # it is a data line
             data.append(line.split())
     return data, parameters
+
+def print_ioc_banner(ioc_name, db, description, version, prefix, ):
+    ld = '==================================='
+    nw = (len(ld)-len(ioc_name))//2
+    line = ' '*nw + ioc_name + ' '*nw
+    print(ld)
+    print(line)
+    print(ld)
+    print(description)
+    print('FAC@LNLS,   Sirius Project.')
+    print('Version   : ' + version)
+    print('Timestamp : ' + get_timestamp())
+    print('Prefix    : ' + prefix)
+    print()
+    pvs = sorted(tuple(db.keys()))
+    max_len = 0
+    for pv in pvs:
+        if len(pv)>max_len: max_len=len(pv)
+    i=1;
+    for pv in pvs:
+        print(('{0:04d} {1:<'+str(max_len+2)+'}  ').format(i, pv), end=''); new_line=True
+        i += 1
+        if not (i-1) % 5:
+            print(''); new_line=False
+    if new_line: print('')
