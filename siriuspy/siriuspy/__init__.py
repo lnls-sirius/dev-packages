@@ -9,7 +9,7 @@ from . import namesys
 from . import timesys
 from . import csdevice
 from . import epics
-
+from . import diagnostics
 
 import os as _os
 with open(_os.path.join(__path__[0], 'VERSION'), 'r') as _f:
@@ -17,5 +17,5 @@ with open(_os.path.join(__path__[0], 'VERSION'), 'r') as _f:
 del _os
 
 
-__all__ = ['envars', 'util', 'servname', 'servccdb', 'servweb',
+__all__ = ['envars', 'util', 'servname', 'servccdb', 'servweb', 'diagnostics',
            'pwrsupply', 'magnet', 'namesys', 'timesys', 'csdevice','epics']

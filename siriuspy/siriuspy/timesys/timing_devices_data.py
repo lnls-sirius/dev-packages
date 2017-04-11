@@ -141,6 +141,7 @@ class _TimeDevData:
                 dx = positions[conn][0] - x
                 dy = positions[conn][1] - y
                 cor = arrow_colors[(dev,conn)]
+                if dev == 'BO-02:CO-BBB': print(dev, conn, x,y,dx,dy)
                 ax.arrow(x,y,dx,dy, fc=cor, ec=cor, length_includes_head=True)#,**kwargs)
 
     def _get_positions(self):
@@ -168,7 +169,11 @@ class _TimeDevData:
                 min_ang = min(min_ang,dang,dang/nr if nr else min_ang)
                 for i,dev2 in enumerate(devs2):
                     angles[dev2] = ( i*dang/nr + angi, (i+1)*dang/nr + angi)
-            radia[n] = dist(min_ang)
+            r = dist(min_ang)
+            if n>0 and r <= radia[n-1]:
+                radia[n] = 2*radia[n-1]
+            else:
+                radia[n] = r
 
         # get positions
         for n,devs in enumerate(self._hierarchy_map):
