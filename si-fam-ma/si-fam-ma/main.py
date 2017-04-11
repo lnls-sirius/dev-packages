@@ -16,7 +16,7 @@ __version__  = _pvs.__version__
 
 class App:
 
-    devices = _pvs.get_ps_devices()
+    ma_devices = _pvs.get_ma_devices()
     pvs_database = _pvs.get_pvs_database()
 
     def __init__(self,driver):
@@ -25,7 +25,7 @@ class App:
         self._set_callbacks()
 
     def _set_callbacks(self):
-        for family, device in App.devices.items():
+        for family, device in App.ma_devices.items():
             device.set_callback(self._mycallback)
             device.update_state()
 
@@ -38,7 +38,7 @@ class App:
         pass
 
     def read(self,reason):
-        ps, propty = self._get_dev_propty(reason)
+        ma, ps, propty = self._get_dev_propty(reason)
         if propty == 'CtrlMode-Mon':
             return ps.ctrlmode_mon
         elif propty == 'PwrState-Sel':
@@ -53,13 +53,18 @@ class App:
             return ps.current_rb
         elif propty == 'Current-SP':
             return ps.current_sp
+        elif propty in ('KL-SP','SL-SP'):
+            return ma.kl_sp
+        elif propty == ('KL-RB', 'SL-RB'):
+            return ma.kl_rb
         return None
 
     @staticmethod
     def _get_dev_propty(reason):
         family, propty = reason.split(':')
-        device = App.devices[family]
-        return device, propty
+        ma = App.ma_devices[family]
+        ps = ma.get_ps('SI-Fam:PS-'+family)
+        return ma, ps, propty
 
     def _mycallback(self, pvname, value, **kwargs):
         _, reason = pvname.split('PS-')
@@ -71,7 +76,7 @@ class App:
 
     def write(self,reason,value):
         """Write value to reason and let callback update PV database."""
-        ps, propty = self._get_dev_propty(reason)
+        ma, ps, propty = self._get_dev_propty(reason)
         if propty == 'PwrState-Sel':
             ps.pwrstate_sel = value
         elif propty == 'OpMode-Sel':

@@ -2,9 +2,9 @@ import copy as _copy
 import siriuspy as _siriuspy
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.pwrsupply import ControllerEpics as _ControllerEpics
-from siriuspy.pwrsupply import PowerSupplyMA as _PowerSupplyMA
+from siriuspy.pwrsupply import PowerSupplyMAFam as _PowerSupplyMAFam
 from siriuspy.pwrsupply.psdata import get_setpoint_limits as _get_setpoint_limits
-from siriuspy.magnet import Magnet as _Magnet
+from siriuspy.magnet import MagnetFam as _MagnetFam
 
 
 with open('VERSION','r') as _f:
@@ -30,7 +30,6 @@ sextupole_families = (
 
 families = quadrupole_families + sextupole_families
 
-
 _ps_devices = None
 _ma_devices = None
 
@@ -48,9 +47,9 @@ def get_ps_devices():
                                       connection_timeout = _connection_timeout,
                                       current_min = sp_lims['DRVL'],
                                       current_max = sp_lims['DRVH'])
-        psdev = _PowerSupplyMA(ps_name = ps_name,
-                               controller=controller,
-                               enum_keys=False)
+        psdev = _PowerSupplyMAFam(ps_name = ps_name,
+                                  controller=controller,
+                                  enum_keys=False)
         _ps_devices[family] = psdev
     return _ps_devices
 
@@ -58,28 +57,40 @@ def get_ps_devices():
 def get_ma_devices():
 
     global _ma_devices
-    if _|ma_devices is not None:
+    if _ma_devices is not None:
         return _ma_devices
 
     ps_devices = get_ps_devices()
     ma_devices = {}
-    for family in families:
+
+    for family in quadrupole_families:
         ma_name = 'SI-Fam:MA-' + family
-        madev = _Magnet(name = ma_name,
-                        power_supplies=None,
-                        left=None,
-                        right=None)
-        ps_names = madev.list_exc_ps_names()
-        psdevs = [ps_devices[ps_name] for ps_name in ps_names]
-        madev.add_power_supplies(ps_names)
-        ma_devices[ma_name] = madev
+        madev = _MagnetFam(name = ma_name,
+                           magnet_type = 'normal_quadrupole',
+                           power_supplies=None,
+                           left=None,
+                           right=None)
+        madev.add_power_supplies((ps_devices[family],))
+        ma_devices[family] = madev
+
+    for family in sextupole_families:
+        ma_name = 'SI-Fam:MA-' + family
+        madev = _MagnetFam(name = ma_name,
+                           magnet_type = 'normal_sextupole',
+                           power_supplies=None,
+                           left=None,
+                           right=None)
+        madev.add_power_supplies((ps_devices[family],))
+        ma_devices[family] = madev
+
     return ma_devices
 
 def get_pvs_database():
 
     pv_database = {}
     pv_database[_PREFIX] = {}
-    ps_devices = get_ps_devices()
-    for ps_name, ps_device in ps_devices.items():
-        pv_database[_PREFIX].update(ps_device.database)
+    ma_devices = get_ma_devices()
+    for ma_name, ma_device in ma_devices.items():
+        for ps_name in ma_device.ps_names:
+            pv_database[_PREFIX].update(ma_device.database)
     return pv_database
