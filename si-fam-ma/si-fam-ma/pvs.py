@@ -61,7 +61,7 @@ def get_ma_devices():
         return _ma_devices
 
     ps_devices = get_ps_devices()
-    ma_devices = {}
+    _ma_devices = {}
 
     for family in quadrupole_families:
         ma_name = 'SI-Fam:MA-' + family
@@ -71,7 +71,7 @@ def get_ma_devices():
                            left=None,
                            right=None)
         madev.add_power_supplies((ps_devices[family],))
-        ma_devices[family] = madev
+        _ma_devices[family] = madev
 
     for family in sextupole_families:
         ma_name = 'SI-Fam:MA-' + family
@@ -81,14 +81,14 @@ def get_ma_devices():
                            left=None,
                            right=None)
         madev.add_power_supplies((ps_devices[family],))
-        ma_devices[family] = madev
+        _ma_devices[family] = madev
 
-    return ma_devices
+    return _ma_devices
 
 def get_pvs_database():
 
     pv_database = {}
-    pv_database[_PREFIX] = {}
+    pv_database[_PREFIX] = {'IOC:Version-Cte':{'type':'str', 'value':__version__}}
     ma_devices = get_ma_devices()
     for ma_name, ma_device in ma_devices.items():
         for ps_name in ma_device.ps_names:
