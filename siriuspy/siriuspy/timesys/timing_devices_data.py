@@ -12,6 +12,7 @@ import siriuspy.servweb as _web
 import siriuspy.namesys as _namesys
 
 _timeout = 1.0
+_LOCAL = False
 
 class _TimeDevData:
     """Class with mapping of Connection among timing devices and triggers receivers.
@@ -31,7 +32,12 @@ class _TimeDevData:
         self._all_devices = set()
         self._hierarchy_map = list()
         if _web.server_online():
-            text = _web.timing_devices_mapping(timeout=_timeout)
+            if _LOCAL:
+                with open('/home/fac_files/lnls-sirius/control-system-constants/'+
+                          'timesys/timing-devices-connection.txt','r') as f:
+                    text = f.read()
+            else:
+                text = _web.timing_devices_mapping(timeout=_timeout)
             self._parse_text_and_build_connection_mappings(text)
             self._update_related_maps()
 
@@ -209,25 +215,41 @@ class _TimeDevData:
 
         return colors
 
-    def add_crates_and_bbb_info(self,connections_dict):
+    def add_crates_info(self,connections_dict):
         for crate, bpms in connections_dict.items():
-            my_crate_conns = self._conn_twrds_evg.get(crate)
-            if my_crate_conns is None:
+            my_conns = self._conn_twrds_evg.get(crate)
+            if my_conns is None:
                 print(crate)
                 continue
-            for conn in my_crate_conns.keys():
+            for conn in my_conns.keys():
                 for bpm in bpms:
-                    self._conn_from_evg[crate][conn] += ((bpm,conn),)
-                    bpm_entry = self._conn_twrds_evg.get(bpm)
-                    if bpm_entry is None:
-                        self._conn_twrds_evg[bpm] = {conn:((crate,conn),)}
-                        continue
-                    conn_entry = bpm_entry.get(conn)
-                    if conn_entry is None:
-                        bpm_entry[conn] = ((crate,conn),)
-                    else:
-                        bpm_entry[conn] += ((crate,conn),)
+                    self._add_entry_to_map(which_map='from', conn=conn, ele1=crate, ele2=bpm)
+                    self._add_entry_to_map(which_map='twrds', conn=conn, ele1=bpm, ele2=crate)
         self._update_related_maps()
+
+    def add_bbb_info(self,connections_dict):
+        conn = 'ser1'
+        for bbb, pss in connections_dict.items():
+            my_conns = self._conn_twrds_evg.get(bbb)
+            if my_conns is None:
+                print(bbb)
+                continue
+            for ps in pss:
+                self._add_entry_to_map(which_map='from', conn=conn, ele1=bbb, ele2=ps)
+                self._add_entry_to_map(which_map='twrds', conn=conn, ele1=ps, ele2=bbb)
+        self._update_related_maps()
+
+    def _add_entry_to_map(self, which_map, conn, ele1, ele2):
+        mapp = self._conn_from_evg if which_map=='from' else self._conn_twrds_evg
+        ele1_entry = mapp.get(ele1)
+        if not ele1_entry:
+            mapp[ele1] = {  conn:( (ele2,conn), )  }
+        else:
+            conn_entry = ele1_entry.get(conn)
+            if not conn_entry:
+                ele1_entry[conn]  = ((ele2,conn),)
+            else:
+                ele1_entry[conn] += ((ele2,conn),)
 
     @property
     def conn_from_evg(self): return _copy.deepcopy(self._conn_from_evg)
@@ -276,3 +298,38 @@ def get_connections_twrds_evg():
     """Return a dictionary with the beaglebone to power supply mapping."""
     timedata =  _get_timedata()
     return timedata.conn_twrds_evg
+
+def get_top_chain_senders():
+    """Return a dictionary with the beaglebone to power supply mapping."""
+    timedata =  _get_timedata()
+    return timedata.top_chain_senders
+
+def get_final_receivers():
+    """Return a dictionary with the beaglebone to power supply mapping."""
+    timedata =  _get_timedata()
+    return timedata.final_receivers
+
+def get_relations_from_evg():
+    """Return a dictionary with the beaglebone to power supply mapping."""
+    timedata =  _get_timedata()
+    return timedata.relations_from_evg
+
+def get_hierarchy_list():
+    """Return a dictionary with the beaglebone to power supply mapping."""
+    timedata =  _get_timedata()
+    return timedata.hierarchy_list
+
+def add_bbb_info(connections_dict):
+    """Return a dictionary with the beaglebone to power supply mapping."""
+    timedata =  _get_timedata()
+    return timedata.add_bbb_info(connections_dict)
+
+def add_crates_info(connections_dict):
+    """Return a dictionary with the beaglebone to power supply mapping."""
+    timedata =  _get_timedata()
+    return timedata.add_crates_info(connections_dict)
+
+def plot_network():
+    """Return a dictionary with the beaglebone to power supply mapping."""
+    timedata =  _get_timedata()
+    return timedata.plot_network()
