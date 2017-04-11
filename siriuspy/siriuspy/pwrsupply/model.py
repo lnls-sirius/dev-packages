@@ -60,7 +60,7 @@ class PowerSupply:
 
     @property
     def database(self):
-        """Return a database whose keys correspond to PS properties prefixed by the device instance name."""
+        """Return a PV database whose keys correspond to PS properties."""
         db = _copy.deepcopy(self._database)
         db['CtrlMode-Mon']['value'] = self._ctrlmode_mon
         db['PwrState-Sel']['value'] = self._controller.pwrstate_sel
@@ -190,10 +190,10 @@ class PowerSupply:
         return st
 
 
-class PowerSupplyMA(PowerSupply):
+class PowerSupplyMAFam(PowerSupply):
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, ps_name, **kwargs):
+        super().__init__(ps_name, **kwargs)
 
     @property
     def database(self):

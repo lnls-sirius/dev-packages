@@ -25,7 +25,7 @@ class _MagData:
         self.magps_sp_limits_dict = {}
         for line in data:
             magps_name, *limits = line
-            db = {setpoint_limit_labels[i]:limits[i] for i in range(len(setpoint_limit_labels))}
+            db = {setpoint_limit_labels[i]:float(limits[i]) for i in range(len(setpoint_limit_labels))}
             self.magps_sp_limits_dict[magps_name] = db
 
     def _build_mag_excitation_dict(self, timeout=_timeout):
@@ -47,6 +47,7 @@ class _MagData:
 
     def conv_ps2mag(self, psname):
         return tuple(self.ps2mag_dict[psname])
+
 
 
 _magdata = None
