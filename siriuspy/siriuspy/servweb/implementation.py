@@ -5,8 +5,8 @@ import siriuspy.envars as _envars
 _timeout = 1.0
 _excdat_folder = '/magnet/excitation-data/'
 _magnet_folder = '/magnet/'
-_ps_folder = '/power-supply/'
-_pstypes_data_folder = '/power-supply/pstypes-data/'
+_ps_folder = '/pwrsupply/'
+_pstypes_data_folder = '/pwrsupply/pstypes-data/'
 
 
 def read_url(url, timeout=_timeout):
