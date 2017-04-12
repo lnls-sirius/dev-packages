@@ -2,6 +2,7 @@ import copy as _copy
 import re as _re
 import sys as _sys
 import math as _math
+import numpy as _np
 import importlib as _importlib
 if _importlib.find_loader('matplotlib') is not None:
     import matplotlib.pyplot as _plt
@@ -24,13 +25,16 @@ class _TimeDevData:
     _spacing_for_plot = 10
 
     def __init__(self, timeout=_timeout):
-        self._conn_from_evg = dict()
-        self._conn_twrds_evg = dict()
-        self._devices_relations = dict()
-        self._top_chain_devs = set()
+        self._conn_from_evg       = dict()
+        self._conn_twrds_evg      = dict()
+        self._devices_relations   = dict()
+        self._top_chain_devs      = set()
         self._final_receiver_devs = set()
-        self._all_devices = set()
-        self._hierarchy_map = list()
+        self._all_devices         = set()
+        self._hierarchy_map       = list()
+        self._positions           = dict()
+        self._colors              = dict()
+        self._arrow_colors        = dict()
         if _web.server_online():
             if _LOCAL:
                 with open('/home/fac_files/lnls-sirius/control-system-constants/'+
@@ -47,6 +51,9 @@ class _TimeDevData:
         self._all_devices         = self._conn_from_evg.keys()   | self._conn_twrds_evg.keys()
         self._build_devices_relations()
         self._build_hierarchy_map()
+        self._build_positions()
+        self._build_colors()
+        self._build_arrow_colors()
 
     def _get_dev_and_channel(self,txt):
         type_chan = num_chan = None
@@ -121,30 +128,44 @@ class _TimeDevData:
         if 'matplotlib' not in _sys.modules:
             print('Cannot draw network:matplotlib is not installed')
             return
-        positions    = self._get_positions()
-        colors       = self._get_colors()
-        arrow_colors = self._get_arrow_colors()
+
+        def on_motion(event):
+            if event.inaxes is None:
+                print('here')
+                return
+            x = event.xdata
+            y = event.ydata
+            ind = _np.argmin((xs-x)**2+(ys-y)**2)
+            pos = (xs[ind],ys[ind])
+            txt.set_position(pos)
+            txt.set_text(self._inv_positions[pos])
+            f.canvas.draw()
 
         f  = _plt.figure(figsize=(20,20))
+        f.canvas.mpl_connect('motion_notify_event',on_motion)
         gs = _gridspec.GridSpec(1, 1)
         gs.update(left=0.1,top=0.97,bottom=0.12,right=0.95,hspace=0.00,wspace=0.2)
         ax = _plt.subplot(gs[0,0])
-        for dev in sorted(self._all_devices):
-            ax.plot(*positions[dev],color=colors[dev],marker='.',markersize = 8)
+        xs = _np.zeros(len(self._all_devices))
+        ys = _np.zeros(len(self._all_devices))
+        for i,dev in enumerate(sorted(self._all_devices)):
+            xs[i], ys[i] = self._positions[dev]
+            ax.plot(*self._positions[dev],color=self._colors[dev],marker='.',markersize = 8)
+
+        txt = ax.annotate(s='',xy=(0.0,0.0))
 
         kwargs = dict()
         for dev in sorted(self._devices_relations.keys()):
             conns = sorted(self._devices_relations[dev])
             for conn in conns:
-                x  = positions[dev][0]
-                y  = positions[dev][1]
-                dx = positions[conn][0] - x
-                dy = positions[conn][1] - y
-                cor = arrow_colors[(dev,conn)]
-                if dev == 'BO-02:CO-BBB': print(dev, conn, x,y,dx,dy)
+                x  = self._positions[dev][0]
+                y  = self._positions[dev][1]
+                dx = self._positions[conn][0] - x
+                dy = self._positions[conn][1] - y
+                cor = self._arrow_colors[(dev,conn)]
                 ax.arrow(x,y,dx,dy, fc=cor, ec=cor, length_includes_head=True)#,**kwargs)
 
-    def _get_positions(self):
+    def _build_positions(self):
         pi2 = _math.pi*2
         dist = lambda x: self._spacing_for_plot/_math.sqrt(  2*( 1-_math.cos(x) )  )
         pol2cart = lambda x,y:(  x*_math.cos( (y[0]+y[1])/2 ),  x*_math.sin( (y[0]+y[1])/2 )   )
@@ -181,9 +202,11 @@ class _TimeDevData:
                 devs2 = self._devices_relations.get(dev,set())
                 for i,dev2 in enumerate(devs2):
                     positions[dev2] = pol2cart(radia[n],angles[dev2])
-        return positions
 
-    def _get_colors(self):
+        self._positions =  positions
+        self._inv_positions = {xy:dev for dev,xy in positions.items()}
+
+    def _build_colors(self):
         dev_types = set()
         for dev in self._all_devices:
             dev_types.add(_namesys.SiriusPVName(dev).dev_type)
@@ -197,9 +220,9 @@ class _TimeDevData:
         for dev in self._all_devices:
             colors[dev] = color_types[_namesys.SiriusPVName(dev).dev_type]
 
-        return colors
+        self._colors = colors
 
-    def _get_arrow_colors(self):
+    def _build_arrow_colors(self):
         chan_types = set()
         for conns in self._conn_from_evg.values():
             for chan in conns.keys():
@@ -218,31 +241,35 @@ class _TimeDevData:
                 for dev2 in devs:
                     colors[(dev1,dev2[0])] = color_types[chan_type]
 
-        return colors
+        self._arrow_colors = colors
 
     def add_crates_info(self,connections_dict):
+        not_used = set()
         for crate, bpms in connections_dict.items():
             my_conns = self._conn_twrds_evg.get(crate)
             if my_conns is None:
-                print(crate)
+                not_used.add(crate)
                 continue
             for conn in my_conns.keys():
                 for bpm in bpms:
                     self._add_entry_to_map(which_map='from', conn=conn, ele1=crate, ele2=bpm)
                     self._add_entry_to_map(which_map='twrds', conn=conn, ele1=bpm, ele2=crate)
         self._update_related_maps()
+        return not_used
 
     def add_bbb_info(self,connections_dict):
         conn = 'ser1'
+        not_used = set()
         for bbb, pss in connections_dict.items():
             my_conns = self._conn_twrds_evg.get(bbb)
             if my_conns is None:
-                print(bbb)
+                not_used.add(bbb)
                 continue
             for ps in pss:
                 self._add_entry_to_map(which_map='from', conn=conn, ele1=bbb, ele2=ps)
                 self._add_entry_to_map(which_map='twrds', conn=conn, ele1=ps, ele2=bbb)
         self._update_related_maps()
+        return not_used
 
     def _add_entry_to_map(self, which_map, conn, ele1, ele2):
         mapp = self._conn_from_evg if which_map=='from' else self._conn_twrds_evg
