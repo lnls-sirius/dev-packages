@@ -23,6 +23,10 @@ class App:
     PVS_PREFIX = 'SI-Glob:AP-CurrLT:'
 
     def __init__(self):
+
+        _siriuspy.util.print_ioc_banner('si-ap-currlt', _pvs.pvs_database,
+                                        'SI Beam Current and Lifetime', _pvs.__version__, App.PVS_PREFIX)
+
         self._driver              = None # This should latter be set by the Driver __init__ using driver.setter
         self._pvs_database        = _pvs.pvs_database
         self._current_13C4_pv     = _epics.PV(_ioc_prefix + 'SI-13C4:DI-DCCT:Current-Mon', connection_timeout=0.05)
