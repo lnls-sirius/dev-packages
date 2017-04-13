@@ -35,6 +35,7 @@ ioc_ca_ports_dict = {
     'vaca'        : ('CA_PORT_VACA',         '37144'),
     'si-ap-currlt': ('CA_PORT_SI_AP_CURRLT', '37146'),
     'si-fam-ma':    ('CA_PORT_SI_FAM_MA',    '37148'),
+    'as-high-level-timing':    ('CA_PORT_AS_HIGH_LEVEL_TIMING',    '37150'),
     }
 
 # --- repositories ---
