@@ -1,6 +1,7 @@
+import os as _os
 import time as _time
 import datetime as _datetime
-
+from . import envars as _envars
 
 def get_timestamp(now = None):
     if now is None:
@@ -74,3 +75,8 @@ def print_ioc_banner(ioc_name, db, description, version, prefix, ):
         if not (i-1) % 5:
             print(''); new_line=False
     if new_line: print('')
+
+def set_ioc_ca_port_number(ioc_name):
+    envar, default_port = _envars.ioc_ca_ports_dict[ioc_name]
+    port = _os.environ.get(envar, default=default_port)
+    _os.environ['EPICS_CA_SERVER_PORT'] = port
