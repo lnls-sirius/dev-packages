@@ -1,21 +1,22 @@
 import uuid as _uuid
-from . import device_models as _device_models
 import siriuspy.namesys as _namesys
-
+from siriuspy.timesys import device_models as _device_models
+from siriuspy.timesys import timing_devices_data as _timing_data
 
 _EventMapping = {'Linac':0,  'InjBO':1,  'InjSI':2,  'RmpBO':3,  'RmpSI':4,
                  'DigLI':5,  'DigTB':6,  'DigBO':7,  'DigTS':8,  'DigSI':9,
                  'Orbit':10, 'Coupl':11,  'Tunes':12,}
 
 EVG_PREFIX = 'AS-Glob:TI-EVG:'
-EVR_PREFIX = 'AS-Glob:TI-EVR-{0:d}:'
-EVE_PREFIX = 'AS-Glob:TI-EVE-{0:d}:'
-AFC_PREFIX = 'AS-CRT{0:02d}:TI-AFC:'
 
-NR_EVRs = 7
-NR_EVEs = 4
-NR_AFCs = 20
+_ALL_DEVICES = _timing_data.get_all_devices()
+_pv_fun = lambda x,y: _namesys.SiriusPVName(x).dev_type.lower() == y.lower()
+_get_devs = lambda x: { dev for dev in _ALL_DEVICES if _pv_fun(dev,x) }
 
+EVGs = _get_devs('evg')
+EVRs = _get_devs('evr')
+EVEs = _get_devs('eve')
+AFCs = _get_devs('afc')
 
 class TimingSimulation(_device_models.CallBack):
 
@@ -23,15 +24,12 @@ class TimingSimulation(_device_models.CallBack):
     def get_database(cls, prefix = ''):
         db = dict()
         db.update(  _device_models.EVGIOC.get_database( prefix = prefix + EVG_PREFIX )  )
-        for i in range(NR_EVRs):
-            pref = prefix + EVR_PREFIX.format(i)
-            db.update(  _device_models.EVRIOC.get_database( prefix = pref )  )
-        for i in range(NR_EVEs):
-            pref = prefix + EVE_PREFIX.format(i)
-            db.update(  _device_models.EVEIOC.get_database( prefix = pref )  )
-        for i in range(NR_AFCs):
-            pref = prefix + AFC_PREFIX.format(i)
-            db.update(  _device_models.AFCIOC.get_database( prefix = pref )  )
+        for dev in EVRs:
+            db.update(  _device_models.EVRIOC.get_database( prefix = prefix + dev + ':' )  )
+        for dev in EVEs:
+            db.update(  _device_models.EVEIOC.get_database( prefix = prefix + dev + ':' )  )
+        for dev in AFCs:
+            db.update(  _device_models.AFCIOC.get_database( prefix = prefix + dev + ':' )  )
         return db
 
     def __init__(self,rf_frequency,callbacks=None, prefix = ''):
@@ -41,8 +39,8 @@ class TimingSimulation(_device_models.CallBack):
                                          callbacks={self.uuid:self._callback},
                                          prefix = prefix + EVG_PREFIX  )
         self.evrs = dict()
-        for i in range(NR_EVRs):
-            pref = prefix + EVR_PREFIX.format(i)
+        for dev in EVRs:
+            pref = prefix + dev + ':'
             evr = _device_models.EVRIOC( rf_frequency/_device_models.RF_FREQ_DIV,
                                          callbacks={self.uuid:self._callback},
                                          prefix = pref )
@@ -50,8 +48,8 @@ class TimingSimulation(_device_models.CallBack):
             self.evrs[pref] = evr
 
         self.eves = dict()
-        for i in range(NR_EVEs):
-            pref = prefix + EVE_PREFIX.format(i)
+        for dev in EVEs:
+            pref = prefix + dev + ':'
             eve = _device_models.EVEIOC( rf_frequency/_device_models.RF_FREQ_DIV,
                                          callbacks={self.uuid:self._callback},
                                          prefix = pref )
@@ -59,8 +57,8 @@ class TimingSimulation(_device_models.CallBack):
             self.eves[pref] = eve
 
         self.afcs = dict()
-        for i in range(NR_AFCs):
-            pref = prefix + AFC_PREFIX.format(i)
+        for dev in AFCs:
+            pref = prefix + dev + ':'
             afc = _device_models.AFCIOC( rf_frequency/_device_models.RF_FREQ_DIV,
                                          callbacks={self.uuid:self._callback},
                                          prefix = pref )
