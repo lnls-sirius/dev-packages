@@ -1,4 +1,5 @@
 
+
 def get_multipole_name(harmonic, suffix='pole'):
 
     names = {0: 'dipole',
@@ -27,8 +28,48 @@ def get_multipole_si_units(harmonic, power='^', product='.'):
 
 
 def linear_extrapolation(x,x1,x2,y1,y2):
-    
+
     if x2 == x1:
         return min(y1,y2,key=abs)
     else:
         return y1 + (y2-y1)*(x-x1)/(x2-x1)
+
+
+def add_multipoles(multipoles_list):
+    r = {'normal':{}, 'skew':{}}
+    for m in multipoles_list:
+        for mtype, mult in m.items():
+            for harm,value in mult.items():
+                try:
+                    r[mtype][harm] += value
+                except:
+                    r[mtype][harm] = value
+    return r
+
+def conv_epics2pcaspy_lim_names(name, inverted=False):
+
+    epics2pcaspy_lim_names_table = {
+        'DRVL' : 'DRVL',
+        'LOLO' : 'lolo',
+        'LOW'  : 'lo',
+        'LOPR' : 'lolim',
+        'HOPR' : 'hilim',
+        'HIGH' : 'hi',
+        'HIHI' : 'hihi',
+        'DRVH' : 'DRVH'
+    }
+    epics2pcaspy_lim_names_table_i = {
+        'DRVL' : 'DRVH',
+        'LOLO' : 'hihi',
+        'LOW'  : 'hi',
+        'LOPR' : 'hilim',
+        'HOPR' : 'lolim',
+        'HIGH' : 'lo',
+        'HIHI' : 'lolo',
+        'DRVH' : 'DRVL'
+    }
+
+    if inverted:
+        return epics2pcaspy_lim_names_table_i[name]
+    else:
+        return epics2pcaspy_lim_names_table[name]

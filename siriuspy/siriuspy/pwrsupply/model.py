@@ -6,15 +6,17 @@ from .psdata import get_setpoint_limits as _sp_limits
 from .psdata import get_polarity as _get_polarity
 import siriuspy.csdevice as _csdevice
 from .controller import ControllerSim as _ControllerSim
+from siriuspy.csdevice.enumtypes import EnumTypes as _et
 
+_default_error_std = 0.0
 
 class PowerSupply:
     """Magnet Power Supply model
 
     This class implements a model of the basic power supply of magnets.
     All basic properties, CtrlMode-Mon, PwrState-(Sel/Sts), OprMode-(Sel/Sts) and
-    Current-(SP/RB) are implemented. Additional specific properties may be
-    implemented in subclasses.
+    Current-(SP/RB) are implemented and theirs states are stored in a database
+    dictionary. Additional specific properties may be implemented in subclasses.
 
     The model uses a Controller object to drive updates of property values.
     a) The default controller object is a power supply drive simulator.
@@ -22,10 +24,13 @@ class PowerSupply:
     the physical power supply. In this case the PS model can be used to feed
     the IOC with PV data.
     c) Another application of the PS model is where the controller updates the
-    model properties by readinf a lower level PS IOC.
+    model properties by reading a lower level PS IOC.
     """
 
-    def __init__(self, ps_name, controller=None, callback=None, enum_keys=False):
+    def __init__(self, ps_name,
+                       controller=None,
+                       callback=None,
+                       enum_keys=False):
 
         self._uuid = _uuid.uuid4()
         self._ps_name = ps_name
@@ -36,10 +41,10 @@ class PowerSupply:
         if self._database is None:
             raise Exception('no database defined for power supply type "' + self._pstype_name + '"!')
         self._enum_keys = enum_keys
-        self._callbacks = {}
-        if callback is not None: self._callbacks[_uuid.uuid4] = callback
+        self._callback = callback
         self._controller = controller
         self._controller_init()
+        self._ctrlmode_mon = _et.idx('RmtLocTyp', 'Remote')
 
     @property
     def ps_name(self):
@@ -55,8 +60,16 @@ class PowerSupply:
 
     @property
     def database(self):
-        """Return a database whose keys correspond to PS properties prefixed by the device instance name."""
-        return _copy.deepcopy(self._database)
+        """Return a PV database whose keys correspond to PS properties."""
+        db = _copy.deepcopy(self._database)
+        db['CtrlMode-Mon']['value'] = self._ctrlmode_mon
+        db['PwrState-Sel']['value'] = self._controller.pwrstate_sel
+        db['PwrState-Sts']['value'] = self._controller.pwrstate_sts
+        db['OpMode-Sel']['value'] = self._controller.opmode_sel
+        db['OpMode-Sts']['value'] = self._controller.opmode_sts
+        db['Current-SP']['value'] = self._controller.current_sp
+        db['Current-RB']['value'] = self._controller.current_rb
+        return db
 
     @property
     def setpoint_limits(self):
@@ -68,67 +81,57 @@ class PowerSupply:
 
     @property
     def ctrlmode_mon(self):
-        self._controller_read_status()
-        return self._get('CtrlMode-Mon')
+        value = self._ctrlmode_mon
+        return value if not self._enum_keys else _et.key('RmtLocTyp', value)
 
     @property
     def pwrstate_sel(self):
-        return self._get('PwrState-Sel')
-
-    @property
-    def opmode_sel(self):
-        return self._get('OpMode-Sel')
-
-    @property
-    def current_sp(self):
-        self._controller_read_status()
-        value = self._get('Current-SP')
-        return value
+        value = self._controller.pwrstate_sel
+        return value if not self._enum_keys else _et.key('OffOnTyp', value)
 
     @property
     def pwrstate_sts(self):
-        self._controller_read_status()
-        return self._get('PwrState-Sts')
+        value = self._controller.pwrstate_sts
+        return value if not self._enum_keys else _et.key('OffOnTyp', value)
+
+    @property
+    def opmode_sel(self):
+        value = self._controller.opmode_sel
+        return value if not self._enum_keys else _et.key('PSOpModeTyp', value)
 
     @property
     def opmode_sts(self):
-        self._controller_read_status()
-        return self._get('OpMode-Sts')
+        value = self._controller.opmode_sts
+        return value if not self._enum_keys else _et.key('PSOpModeTyp', value)
 
     @property
     def current_rb(self):
-        self._controller_read_status()
-        return self._get('Current-RB')
+        return self._controller.current_rb
+
+    @property
+    def current_sp(self):
+        return self._controller.current_sp
 
     @pwrstate_sel.setter
     def pwrstate_sel(self, value):
-        """Set corresponding controller parameter and wait response through callback."""
-        if self._get_enum('CtrlMode-Mon') != 'Remote': return # necessary???
-        self._controller.pwrstate = self._conv_enum2idx('PwrState-Sel', value)
+        if self._ctrlmode_mon != _et.idx('RmtLocTyp', 'Remote'): return
+        self._controller.pwrstate_sel = value if not self._enum_keys else _et.idx('OffOnTyp', value)
 
     @opmode_sel.setter
     def opmode_sel(self, value):
-        """Set corresponding controller parameter and wait response through callback."""
-        if self._get_enum('CtrlMode-Mon') != 'Remote': return # necessary???
-        self._controller.opmode = self._conv_enum2idx('OpMode-Sel', value)
+        if self._ctrlmode_mon != _et.idx('RmtLocTyp', 'Remote'): return
+        self._controller.opmode_sel = value if not self._enum_keys else _et.idx('PSOpModeTyp', value)
 
     @current_sp.setter
     def current_sp(self, value):
-        if self._get_enum('CtrlMode-Mon') != 'Remote': return # necessary???
-        value = float(value)
-        value = self._check_IOC_setpoint_limits(value)
-        self._controller.current_ref = value
+        if self._ctrlmode_mon != _et.idx('RmtLocTyp', 'Remote'): return
+        value = self._check_IOC_setpoint_limits(float(value))
+        self._controller.current_sp = value
 
     @reset_cmd.setter
     def reset_cmd(self, value):
-        if self._get_enum('CtrlMode-Mon') != 'Remote': return
-        self.opmode_sel = self._get_value('OpMode-Sel','SlowRef')
-        self.current_sp = 0.0
-        # reset status flags to be implemented!
-        self._controller_read_status()
-
-    def add_callback(self, callback, index):
-        self._callbacks[index] = callback
+        if self._ctrlmode_mon != _et.idx('RmtLocTyp', 'Remote'): return
+        self._controller.reset_cmd()
 
     def timing_trigger(self):
         self._controller.timing_trigger()
@@ -139,145 +142,65 @@ class PowerSupply:
         value = _min if value < _min else value
         value = _max if value > _max else value
         return value
-        # l = self.setpoint_limits
-        # if value > l['HIHI']: return l['HIHI']
-        # if value < l['LOLO']: return l['LOLO']
-        # return value
+
+    def update_state(self):
+        self._controller.update_state()
+
+    def set_callback(self, callback):
+        self._callback = callback
 
     def _controller_init(self):
-
         # set controller setpoint limits according to PS database
         if self._controller is None:
             l = self.setpoint_limits
             self._controller = _ControllerSim(current_min = l['DRVL'],
                                               current_max = l['DRVH'],
-                                              fluctuation_rms=0.050)
-        self._controller.IOC = self
-
-        # add model callback to controller callback list
-        if hasattr(self._controller,'add_callback'):
-            self._controller.add_callback(self._callback, self._uuid)
-
-        # either update controller properties states (if corresponding value in
-        # the model DB is not None or read the state from the controller property
-        # and set the database
-
-        value = self._get_idx('PwrState-Sel')
-        if value is not None:
-            self._controller.pwrstate = value
+                                              callback=self._mycallback,
+                                              error_std=_default_error_std)
         else:
-            self._callback('PwrState-Sel', self._controller.pwrstate)
+            # add model callback to controller callback list
+            self._controller.set_callback(self._mycallback)
 
-        value = self._get_idx('OpMode-Sel')
-        if value is not None:
-            self._controller.opmode = value
+        # controller update triggers update state in PS
+        self._controller.update_state()
+
+    def _mycallback(self, pvname, value, **kwargs):
+        print('pwrsup', pvname)
+        if self._callback is None:
+            return
         else:
-            self._callback('OpModel-Sel', self._controller.opmode)
-
-        value = self._get_idx('Current-SP')
-        if value is not None:
-            self._controller.current_ref = value
-        else:
-            self._callback('Current-SP', self._controller.current_ref)
-
-    def _callback(self, pvname, value, **kwargs):
-        """Callback invoked when EPICS controller state changes externally.
-           It updates internal state of the PS model and signals all registered
-           callback functions."""
-
-        #print('model.py callback', pvname, value)
-
-        value_changed_flag = False
-        if 'PwrState-Sel' in pvname and value != self._get_idx('PwrState-Sel'):
-            self._set_idx('PwrState-Sel', value); value_changed_flag = True
-        elif 'PwrState-Sts' in pvname and value != self._get_idx('PwrState-Sts'):
-            self._set_idx('PwrState-Sts', value); value_changed_flag = True
-        elif 'OpMode-Sel' in pvname and value != self._get_idx('OpMode-Sel'):
-            self._set_idx('OpMode-Sel', value); value_changed_flag = True
-        elif 'OpMode-Sts' in pvname and value != self._get_idx('OpMode-Sts'):
-            self._set_idx('OpMode-Sts', value); value_changed_flag = True
-        elif 'Current-SP' in pvname and value != self._get_idx('Current-SP'):
-            self._set('Current-SP', value); value_changed_flag = True
-        elif 'Current-RB' in pvname and value != self._get_idx('Current-RB'):
-            self._set('Current-RB', value); value_changed_flag = True
-
-        if value_changed_flag:
-            for index, callback_function in self._callbacks.items():
-                callback_function(pvname, value, **kwargs)
-
-    def _controller_read_status(self):
-        """This is necessary for controllers without callbacks"""
-        self._set_idx('PwrState-Sts', self._controller.pwrstate)
-        self._set_idx('OpMode-Sts', self._controller.opmode)
-        self._set('Current-RB', self._controller.current)
-
-    def _conv_enum2idx(self, propty, value):
-        p = self._database[propty]
-        return p['enums'].index(value) if self._enum_keys else value
-
-    def _get(self, propty):
-        """Return either the enum or index value of enum properties in DB, if applicable."""
-        p = self._database[propty]
-        return p['value'] if (p['type'] != 'enum' or not self._enum_keys) else self._get_enum(propty)
-
-    def _get_value(self, propty, enum_value):
-        """Return either the passed enum_value, of enum_keys is set, or its index."""
-        p = self._database[propty]
-        return enum_value if self._enum_keys else p['enums'].index(enum_value)
-
-    def _get_enum(self, propty):
-        """Return the enum value of a enum property in the DB, if applicable."""
-        p = self._database[propty]
-        return p['enums'][p['value']] if p['type'] == 'enum' else p['value']
-
-    def _get_idx(self, propty):
-        """Return the index value of a enum property in the DB, or the value of a non-enum property."""
-        p = self._database[propty]
-        return p['value']
-
-
-    def _set_enum(self, propty_name, value):
-        p = self._database[propty_name]
-        p['value'] = p['enums'].index(value)
-
-    def _set_idx(self, propty_name, value):
-        p = self._database[propty_name]
-        p['value'] = value
-
-    def _set(self, propty_name, value):
-        p = self._database[propty_name]
-        if self._enum_keys and p['type'] == 'enum':
-            self._set_enum(propty_name, value)
-        else:
-            p['value'] = value
+            self._callback(pvname=pvname, value=value, **kwargs)
 
     def __str__(self):
-        self._controller_read_status()
+        #self._controller_read_status()
         st_controller = self._controller.__str__()
-        st  =   '{0:<20s}: {1}'.format('power_supply', self._ps_name)
-        st += '\n{0:<20s}: {1}'.format('type', self._pstype_name)
-        st += '\n{0:<20s}: {1}'.format('polarity', self._polarity)
+        st  =   '{0:<20s}: {1}'.format('power_supply', self.ps_name)
+        st += '\n{0:<20s}: {1}'.format('type', self.pstype_name)
+        st += '\n{0:<20s}: {1}'.format('polarity', self.polarity)
         l = self.setpoint_limits
         st += '\n{0:<20s}: {1} {2}'.format('limits', min(l.values()),max(l.values()))
         st += '\n--- IOC ---'
-        propty = 'CtrlMode-Mon';  st += '\n{0:<20s}: {1}'.format(propty, self._get_enum(propty))
-        propty = 'PwrState-Sel';  st += '\n{0:<20s}: {1}'.format(propty, self._get_enum(propty))
-        propty = 'PwrState-Sts';  st += '\n{0:<20s}: {1}'.format(propty, self._get_enum(propty))
-        propty = 'OpMode-Sel';    st += '\n{0:<20s}: {1}'.format(propty, self._get_enum(propty))
-        propty = 'OpMode-Sts';    st += '\n{0:<20s}: {1}'.format(propty, self._get_enum(propty))
-        propty = 'Current-SP';    st += '\n{0:<20s}: {1}'.format(propty, self._get_enum(propty))
-        propty = 'Current-RB';    st += '\n{0:<20s}: {1}'.format(propty, self._get_enum(propty))
+        propty = 'CtrlMode-Mon';  st += '\n{0:<20s}: {1}'.format(propty, self.ctrlmode_mon)
+        propty = 'PwrState-Sel';  st += '\n{0:<20s}: {1}'.format(propty, self.pwrstate_sel)
+        propty = 'PwrState-Sts';  st += '\n{0:<20s}: {1}'.format(propty, self.pwrstate_sts)
+        propty = 'OpMode-Sel';    st += '\n{0:<20s}: {1}'.format(propty, self.opmode_sel)
+        propty = 'OpMode-Sts';    st += '\n{0:<20s}: {1}'.format(propty, self.opmode_sts)
+        propty = 'Current-SP';    st += '\n{0:<20s}: {1}'.format(propty, self.current_sp)
+        propty = 'Current-RB';    st += '\n{0:<20s}: {1}'.format(propty, self.current_rb)
         st += '\n' + st_controller
         return st
 
 
-class PowerSupplyMA(PowerSupply):
+class PowerSupplyMAFam(PowerSupply):
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, ps_name, **kwargs):
+        super().__init__(ps_name, **kwargs)
 
     @property
     def database(self):
+        """Return property database as a dictionary.
+        It prepends power supply family name to each dictionary key.
+        """
         _database = {}
         dd = super().database
         _, family = self.ps_name.split('PS-')

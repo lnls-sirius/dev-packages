@@ -4,10 +4,12 @@ import siriuspy.envars as _envars
 
 _timeout = 1.0
 _excdat_folder = '/magnet/excitation-data/'
-_ps_folder = '/power-supply/'
-_pstypes_data_folder = '/power-supply/pstypes-data/'
+_magnet_folder = '/magnet/'
+_ps_folder = '/pwrsupply/'
+_pstypes_data_folder = '/pwrsupply/pstypes-data/'
 _diag_folder = '/diagnostics/'
 _timesys_folder = '/timesys/'
+
 
 
 def read_url(url, timeout=_timeout):
@@ -59,6 +61,13 @@ def magnets_excitation_data_read(filename, timeout=_timeout):
     url = _envars.server_url_web + _excdat_folder + filename
     return read_url(url, timeout=timeout)
 
+def magnets_setpoint_limits(timeout = _timeout):
+    url = _envars.server_url_web + _magnet_folder + 'magnet-setpoint-limits.txt'
+    return read_url(url, timeout=timeout)
+
+def magnets_excitation_ps_read(timeout=_timeout):
+    url = _envars.server_url_web + _magnet_folder + 'magnet-excitation-ps.txt'
+    return read_url(url, timeout=timeout)
 
 def power_supplies_pstypes_names_read(timeout=_timeout):
     """Return the text of the corresponding retrieved power supplies type from the web server."""
@@ -70,6 +79,7 @@ def power_supplies_pstypes_names_read(timeout=_timeout):
 def power_supplies_pstype_data_read(filename, timeout=_timeout):
     url = _envars.server_url_web + _pstypes_data_folder + filename
     return read_url(url, timeout=timeout)
+
 
 def power_supplies_pstype_setpoint_limits(timeout = _timeout):
     url = _envars.server_url_web + _ps_folder + 'pstypes-setpoint-limits.txt'

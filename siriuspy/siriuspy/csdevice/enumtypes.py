@@ -34,7 +34,7 @@ class EnumTypes:
 
     @staticmethod
     def values(typ):
-        return tuple(range(len(EnumTypes[typ])))
+        return tuple(range(len(EnumTypes._types[typ])))
 
     @_ClassProperty
     @classmethod
