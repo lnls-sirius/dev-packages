@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
-import os as _os
 import siriuspy as _siriuspy
-_os.environ['EPICS_CA_SERVER_PORT'] = _siriuspy.envars.ca_port_si_ap_currlt # avoid port collisions 
+_siriuspy.util.set_ioc_ca_port_number('si-ap-currlt')
 
 import pcaspy as _pcaspy
 import pcaspy.tools as _pcaspy_tools
