@@ -7,6 +7,8 @@ _PwrFreq = 60
 _FINE_DELAY_STEP = 5e-12
 RF_FREQ_DIV = 4
 
+_EVNTS_AVAIL = list(range(50)) + list(range(80,120)) + list(range(160,256))
+
 _EVENT_LABEL_TEMPLATE = 'Ev{0:02x}'
 _CLOCK_LABEL_TEMPLATE = 'Cl{0:1d}'
 EVENT_LABEL_TEMPLATE = 'Evnt{0:02x}'
@@ -165,7 +167,7 @@ class _EVGSim(_BaseSim):
         self._bucket_list = [0.0]*864
         self._repetition_rate = 30
         self.events = list()
-        for i in range(256):
+        for i in _EVNTS_AVAIL:
             self.events.append(_EventSim(self.base_freq/RF_FREQ_DIV))
         self.clocks = list()
         for i in range(8):
@@ -246,10 +248,11 @@ class _EVGSim(_BaseSim):
         tables = tables if isinstance(tables,(list,tuple)) else (tables,)
         events = dict()
         for i, ev in enumerate(self.events):
+            ev_nr = _EVNTS_AVAIL[i]
             if not ev.mode in tables: continue
             dic = ev.generate()
             if not dic: continue
-            lab = _EVENT_LABEL_TEMPLATE.format(i)
+            lab = _EVENT_LABEL_TEMPLATE.format(ev_nr)
             events.update(  { lab : dic }  )
         for i, cl in enumerate(self.clocks):
             dic = cl.generate()
@@ -381,7 +384,7 @@ class EVGIOC(_BaseIOC):
         for i in range(8):
             p = prefix + CLOCK_LABEL_TEMPLATE.format(i)
             db.update(_ClockIOC.get_database(p))
-        for i in range(256):
+        for i in _EVNTS_AVAIL:
             p = prefix + EVENT_LABEL_TEMPLATE.format(i)
             db.update(_EventIOC.get_database(p))
 
@@ -406,8 +409,8 @@ class EVGIOC(_BaseIOC):
         super().__init__(controller, callbacks = callbacks, prefix = prefix)
 
         self.events = dict()
-        for i in range(256):
-            name = EVENT_LABEL_TEMPLATE.format(i)
+        for i,ev_nr in enumerate(_EVNTS_AVAIL):
+            name = EVENT_LABEL_TEMPLATE.format(ev_nr)
             cntler = self._controller.events[i]
             self.events[name] = _EventIOC(self.base_freq/RF_FREQ_DIV,
                                          callbacks = {self.uuid:self._ioc_callback},
@@ -649,7 +652,7 @@ class _OpticChannelIOC(_BaseIOC):
     _states = ('Dsbl','Enbl')
     _polarities = ('Normal','Inverse')
     _delay_types = ('Fixed','Incr')
-    _events = [EVENT_LABEL_TEMPLATE.format(i) for i in range(256)] + [CLOCK_LABEL_TEMPLATE.format(i) for i in range(8)]
+    _events = [EVENT_LABEL_TEMPLATE.format(i) for i in _EVNTS_AVAIL] + [CLOCK_LABEL_TEMPLATE.format(i) for i in range(8)]
 
     _attr2pvname = {
         'state_sp'      :'State-Sel',
