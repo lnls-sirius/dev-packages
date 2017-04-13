@@ -46,9 +46,9 @@ class _TimeDevData:
             self._update_related_maps()
 
     def _update_related_maps(self):
-        self._top_chain_devs      = self._conn_from_evg.keys()   - self._conn_twrds_evg.keys()
+        self._top_chain_devs      = self._conn_from_evg.keys()  - self._conn_twrds_evg.keys()
         self._final_receiver_devs = self._conn_twrds_evg.keys() - self._conn_from_evg.keys()
-        self._all_devices         = self._conn_from_evg.keys()   | self._conn_twrds_evg.keys()
+        self._all_devices         = self._conn_from_evg.keys()  | self._conn_twrds_evg.keys()
         self._build_devices_relations()
         self._build_hierarchy_map()
         self._build_positions()
@@ -130,16 +130,14 @@ class _TimeDevData:
             return
 
         def on_motion(event):
-            if event.inaxes is None:
-                print('here')
-                return
-            x = event.xdata
-            y = event.ydata
-            ind = _np.argmin((xs-x)**2+(ys-y)**2)
+            if event.inaxes is None: return
+            ind = _np.argmin(  ( xs - event.xdata )**2  +  ( ys - event.ydata )**2  )
             pos = (xs[ind],ys[ind])
+            txt.xy = pos
             txt.set_position(pos)
             txt.set_text(self._inv_positions[pos])
             f.canvas.draw()
+
 
         f  = _plt.figure(figsize=(20,20))
         f.canvas.mpl_connect('motion_notify_event',on_motion)
@@ -152,7 +150,7 @@ class _TimeDevData:
             xs[i], ys[i] = self._positions[dev]
             ax.plot(*self._positions[dev],color=self._colors[dev],marker='.',markersize = 8)
 
-        txt = ax.annotate(s='',xy=(0.0,0.0))
+        txt = ax.annotate(s='',xy=(0.0,0.0),xycoords='data')
 
         kwargs = dict()
         for dev in sorted(self._devices_relations.keys()):
@@ -301,6 +299,9 @@ class _TimeDevData:
     @property
     def hierarchy_list(self): return _copy.deepcopy(self._hierarchy_map)
 
+    @property
+    def all_devices(self): return _copy.deepcopy(self._all_devices)
+
 _timedata = None
 def  _get_timedata():
     # encapsulating _bbbdata within a function avoid creating the global object
@@ -350,6 +351,11 @@ def get_hierarchy_list():
     """Return a dictionary with the beaglebone to power supply mapping."""
     timedata =  _get_timedata()
     return timedata.hierarchy_list
+
+def get_all_devices():
+    """Return a dictionary with the beaglebone to power supply mapping."""
+    timedata =  _get_timedata()
+    return timedata.all_devices
 
 def add_bbb_info(connections_dict):
     """Return a dictionary with the beaglebone to power supply mapping."""
