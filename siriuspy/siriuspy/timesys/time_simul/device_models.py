@@ -2,7 +2,7 @@ import uuid as _uuid
 import numpy as _np
 import threading as _threading
 import time as _time
-from siriuspy.timesys import timing_devices_data as _timedata
+from .. import time_data as _timedata
 
 _PwrFreq = 60
 _FINE_DELAY_STEP = 5e-12

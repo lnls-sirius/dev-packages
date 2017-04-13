@@ -1,7 +1,7 @@
 import uuid as _uuid
 import siriuspy.namesys as _namesys
-from siriuspy.timesys import device_models as _device_models
-from siriuspy.timesys import timing_devices_data as _timedata
+from .  import device_models as _device_models
+from .. import time_data as _timedata
 
 EVG_PREFIX = 'AS-Glob:TI-EVG:'
 

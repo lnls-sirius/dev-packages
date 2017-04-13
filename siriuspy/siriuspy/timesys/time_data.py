@@ -9,7 +9,7 @@ if _importlib.find_loader('matplotlib') is not None:
     import matplotlib.gridspec as _gridspec
     import matplotlib.cm as _cmap
 
-import siriuspy.servweb as _web
+from siriuspy import servweb as _web
 import siriuspy.namesys as _namesys
 
 
