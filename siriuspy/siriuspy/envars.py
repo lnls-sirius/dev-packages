@@ -26,6 +26,12 @@ server_url_web    = _os.environ.get('SIRIUS_URL_WEB',    default='http://10.0.7.
 
 vaca_prefix = _os.environ.get('VACA_PREFIX',   default='VA-')
 
+# --- Soft IOCs CA ports ---
+
+ca_port_vaca         = _os.environ.get('CA_PORT_VACA', default='37144')
+ca_port_si_ap_currlt = _os.environ.get('CA_PORT_SI_AP_CURRLT', default='37146')
+ca_port_si_fam_ma    = _os.environ.get('CA_PORT_SI_FAM_MA', default='37148')
+
 # --- repositories ---
 
 org_folders = {
