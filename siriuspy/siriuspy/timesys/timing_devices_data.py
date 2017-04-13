@@ -12,6 +12,16 @@ if _importlib.find_loader('matplotlib') is not None:
 import siriuspy.servweb as _web
 import siriuspy.namesys as _namesys
 
+
+EVENT_MAPPING = {'Linac':0,  'InjBO':1,  'InjSI':2,  'RmpBO':3,  'RmpSI':4,
+                 'DigLI':5,  'DigTB':6,  'DigBO':7,  'DigTS':8,  'DigSI':9,
+                 'Orbit':10, 'Coupl':11,  'Tunes':12,}
+
+EVENT_LABEL_TEMPLATE = 'Evnt{0:02x}'
+CLOCK_LABEL_TEMPLATE = 'Clock{0:d}'
+OPT_LABEL_TEMPLATE   = 'OPT{0:2d}'
+OUT_LABEL_TEMPLATE   = 'OUT{0:1d}'
+
 _timeout = 1.0
 _LOCAL = False
 

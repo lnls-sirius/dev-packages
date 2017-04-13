@@ -2,6 +2,7 @@ import uuid as _uuid
 import numpy as _np
 import threading as _threading
 import time as _time
+import timing_devices_data as _timedata
 
 _PwrFreq = 60
 _FINE_DELAY_STEP = 5e-12
@@ -11,10 +12,11 @@ _EVNTS_AVAIL = list(range(50)) + list(range(80,120)) + list(range(160,256))
 
 _EVENT_LABEL_TEMPLATE = 'Ev{0:02x}'
 _CLOCK_LABEL_TEMPLATE = 'Cl{0:1d}'
-EVENT_LABEL_TEMPLATE = 'Evnt{0:02x}'
-CLOCK_LABEL_TEMPLATE = 'Clock{0:d}'
-OPT_LABEL_TEMPLATE   = 'OPT{0:2d}'
-OUT_LABEL_TEMPLATE   = 'OUT{0:1d}'
+
+EVENT_LABEL_TEMPLATE = _timedata.EVENT_LABEL_TEMPLATE
+CLOCK_LABEL_TEMPLATE = _timedata.CLOCK_LABEL_TEMPLATE
+OPT_LABEL_TEMPLATE   = _timedata.OPT_LABEL_TEMPLATE
+OUT_LABEL_TEMPLATE   = _timedata.OUT_LABEL_TEMPLATE
 
 class CallBack:
 

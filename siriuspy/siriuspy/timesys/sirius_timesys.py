@@ -3,10 +3,6 @@ import siriuspy.namesys as _namesys
 from siriuspy.timesys import device_models as _device_models
 from siriuspy.timesys import timing_devices_data as _timing_data
 
-_EventMapping = {'Linac':0,  'InjBO':1,  'InjSI':2,  'RmpBO':3,  'RmpSI':4,
-                 'DigLI':5,  'DigTB':6,  'DigBO':7,  'DigTS':8,  'DigSI':9,
-                 'Orbit':10, 'Coupl':11,  'Tunes':12,}
-
 EVG_PREFIX = 'AS-Glob:TI-EVG:'
 
 _ALL_DEVICES = _timing_data.get_all_devices()
