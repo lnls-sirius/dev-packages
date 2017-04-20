@@ -599,7 +599,8 @@ class _AFCSim(_EVRSim):
 
 class _EVRTriggerIOC(_BaseIOC):
 
-    _optic_channels = tuple(  [ OPT_LABEL_TEMPLATE.format(i) for i in range(_EVRSim._NR_INTERNAL_OPT_CHANNELS) ]  )
+    _optic_channels = tuple( [  OPT_LABEL_TEMPLATE.format(i) for i in range(_EVRSim._NR_INTERNAL_OPT_CHANNELS) ]
+                        +    [CLOCK_LABEL_TEMPLATE.format(i) for i in range(8)] )
 
     _attr2pvname = {
         'fine_delay_sp':    'FineDelay-SP',
@@ -619,8 +620,6 @@ class _EVRTriggerIOC(_BaseIOC):
         db[prefix + 'Delay-RB']       = {'type' : 'float', 'unit':'us', 'value': 0.0, 'prec': 0}
         db[prefix + 'OptCh-Sel']      = {'type' : 'int', 'value':0}
         db[prefix + 'OptCh-Sts']      = {'type' : 'int', 'value':0}
-        # db[prefix + 'OptCh-Sel']      = {'type' : 'enum', 'enums':cls._optic_channels, 'value':0} # pcaspy only accepts 16 states for enum
-        # db[prefix + 'OptCh-Sts']      = {'type' : 'enum', 'enums':cls._optic_channels, 'value':0}
         return db
 
     def __init__(self, base_freq, callbacks = None, prefix = None, controller = None):
@@ -646,15 +645,14 @@ class _EVRTriggerIOC(_BaseIOC):
 
 class _EVETriggerIOC(_EVRTriggerIOC):
 
-    _optic_channels = tuple(  [ OPT_LABEL_TEMPLATE.format(i) for i in range(_EVESim._NR_INTERNAL_OPT_CHANNELS) ]  )
-
+    _optic_channels = tuple( [  OPT_LABEL_TEMPLATE.format(i) for i in range(_EVESim._NR_INTERNAL_OPT_CHANNELS) ]
+                        +    [CLOCK_LABEL_TEMPLATE.format(i) for i in range(8)] )
 
 class _OpticChannelIOC(_BaseIOC):
 
     _states = ('Dsbl','Enbl')
     _polarities = ('Normal','Inverse')
-    _delay_types = ('Fixed','Incr')
-    _events = [EVENT_LABEL_TEMPLATE.format(i) for i in _EVNTS_AVAIL] + [CLOCK_LABEL_TEMPLATE.format(i) for i in range(8)]
+    _events = tuple( [EVENT_LABEL_TEMPLATE.format(i) for i in _EVNTS_AVAIL] )
 
     _attr2pvname = {
         'state_sp'      :'State-Sel',
@@ -684,10 +682,8 @@ class _OpticChannelIOC(_BaseIOC):
         db[prefix + 'Polrty-Sts']    = {'type' : 'enum', 'enums':cls._polarities, 'value':0}
         db[prefix + 'Event-Sel']     = {'type' : 'int', 'value':0}
         db[prefix + 'Event-Sts']     = {'type' : 'int', 'value':0}
-        # db[prefix + 'Event-Sel']     = {'type' : 'enum', 'enums':cls._events, 'value':0}
-        # db[prefix + 'Event-Sts']     = {'type' : 'enum', 'enums':cls._events, 'value':0}
-        db[prefix + 'Pulses-SP']     = {'type' : 'float', 'value': 0.0, 'prec': 3}
-        db[prefix + 'Pulses-RB']     = {'type' : 'float', 'value': 0.0, 'prec': 3}
+        db[prefix + 'Pulses-SP']     = {'type' : 'int', 'value': 1 }
+        db[prefix + 'Pulses-RB']     = {'type' : 'int', 'value': 1 }
         return db
 
     def __init__(self,base_freq,callbacks = None, prefix = None, controller = None):
