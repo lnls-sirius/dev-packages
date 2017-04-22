@@ -1,7 +1,9 @@
-Btriggers= {
+import copy as _copy
+
+_TRIGGERS= {
 'SI-Glob:TI-Corrs': {
     'event':'MigSI',
-    'type':'PSSI',
+    'trigger_type':'PSSI',
     'devices': (
         'SI-01M1:PS-CH', 'SI-01M1:PS-CV', 'SI-01M2:PS-CH', 'SI-01M2:PS-CV', 'SI-01C1:PS-CH', 'SI-01C1:PS-CV', 'SI-01C2:PS-CH', 'SI-01C2:PS-CV-1', 'SI-01C2:PS-CV-2', 'SI-01C3:PS-CH', 'SI-01C3:PS-CV-1', 'SI-01C3:PS-CV-2', 'SI-01C4:PS-CH', 'SI-01C4:PS-CV',
         'SI-02M1:PS-CH', 'SI-02M1:PS-CV', 'SI-02M2:PS-CH', 'SI-02M2:PS-CV', 'SI-02C1:PS-CH', 'SI-02C1:PS-CV', 'SI-02C2:PS-CH', 'SI-02C2:PS-CV-1', 'SI-02C2:PS-CV-2', 'SI-02C3:PS-CH', 'SI-02C3:PS-CV-1', 'SI-02C3:PS-CV-2', 'SI-02C4:PS-CH', 'SI-02C4:PS-CV',
@@ -27,7 +29,7 @@ Btriggers= {
     },
 'SI-Glob:TI-Quads': {
     'event':'MigSI',
-    'type':'PSSI',
+    'trigger_type':'PSSI',
     'devices': (
         'SI-Fam:PS-QFA', 'SI-Fam:PS-QDA', 'SI-Fam:PS-QFB', 'SI-Fam:PS-QDB1', 'SI-Fam:PS-QDB2', 'SI-Fam:PS-QFP', 'SI-Fam:PS-QDP1', 'SI-Fam:PS-QDP2', 'SI-Fam:PS-Q1', 'SI-Fam:PS-Q2', 'SI-Fam:PS-Q3', 'SI-Fam:PS-Q4',
 
@@ -57,7 +59,7 @@ Btriggers= {
     },
 'SI-Glob:TI-Skews': {
     'event':'MigSI',
-    'type':'PSSI',
+    'trigger_type':'PSSI',
     'devices': (
         'SI-01M1:PS-QS', 'SI-01M2:PS-QS', 'SI-01C1:PS-QS', 'SI-01C2:PS-QS', 'SI-01C3:PS-QS',
         'SI-02M1:PS-QS', 'SI-02M2:PS-QS', 'SI-02C1:PS-QS', 'SI-02C2:PS-QS', 'SI-02C3:PS-QS',
@@ -83,14 +85,14 @@ Btriggers= {
     },
 'SI-Glob:TI-Dips': {
     'event':'MigSI',
-    'type':'PSSI',
+    'trigger_type':'PSSI',
     'devices': (
         'SI-Fam:PS-B1B2-1', 'SI-Fam:PS-B1B2-2',
         ),
     },
 'SI-Glob:TI-Sexts': {
     'event':'MigSI',
-    'type':'PSSI',
+    'trigger_type':'PSSI',
     'devices': (
         'SI-Fam:PS-SFA0', 'SI-Fam:PS-SFA1', 'SI-Fam:PS-SFA2', 'SI-Fam:PS-SDA0', 'SI-Fam:PS-SDA1', 'SI-Fam:PS-SDA2', 'SI-Fam:PS-SDA3',
         'SI-Fam:PS-SFB0', 'SI-Fam:PS-SFB1', 'SI-Fam:PS-SFB2', 'SI-Fam:PS-SDB0', 'SI-Fam:PS-SDB1', 'SI-Fam:PS-SDB2', 'SI-Fam:PS-SDB3',
@@ -99,7 +101,7 @@ Btriggers= {
     },
 'BO-Glob:TI-Mags': {
     'event':'RmpBO',
-    'type':'RmpBO',
+    'trigger_type':'rmpbo',
     'devices': (
         'BO-Fam:PS-B-1', 'BO-Fam:PS-B-2',
         'BO-Fam:PS-QF', 'BO-Fam:PS-QD',
@@ -114,203 +116,203 @@ Btriggers= {
     },
 'LI-01:TI-EGun:MultBun':{
     'event':'Linac',
-    'type':'simple',
+    'trigger_type':'simple',
     'devices':(
         'LI-01:EGun-Trig1',
         ),
     },
 'LI-01:TI-EGun:SglBun':{
     'event':'Linac',
-    'type':'simple',
+    'trigger_type':'simple',
     'devices':(
         'LI-01:EGun-Trig2',
         ),
     },
 'LI-01:TI-Modltr-1':{
     'event':'Linac',
-    'type':'simple',
+    'trigger_type':'simple',
     'devices':(
         'LI-01:RF-Modltr-1',
         ),
     },
 'LI-01:TI-Modltr-2':{
     'event':'Linac',
-    'type':'simple',
+    'trigger_type':'simple',
     'devices':(
         'LI-01:RF-Modltr-2',
         ),
     },
 'LI-Glob:TI-SHAmp':{
     'event':'Linac',
-    'type':'simple',
+    'trigger_type':'simple',
     'devices':(
         'LI-Glob:RF-SHAmp',
         ),
     },
 'LI-Glob:TI-RFAmp-1':{
     'event':'Linac',
-    'type':'simple',
+    'trigger_type':'simple',
     'devices':(
         'LI-Glob:RF-RFAmp-1',
         ),
     },
 'LI-Glob:TI-RFAmp-2':{
     'event':'Linac',
-    'type':'simple',
+    'trigger_type':'simple',
     'devices':(
         'LI-Glob:RF-RFAmp-2',
         ),
     },
 'LI-Glob:TI-LLRF-1':{
     'event':'Linac',
-    'type':'simple',
+    'trigger_type':'simple',
     'devices':(
         'LI-Glob:RF-LLRF-1',
         ),
     },
 'LI-Glob:TI-LLRF-2':{
     'event':'Linac',
-    'type':'simple',
+    'trigger_type':'simple',
     'devices':(
         'LI-Glob:RF-LLRF-2',
         ),
     },
 'LI-Glob:TI-LLRF-3':{
     'event':'Linac',
-    'type':'simple',
+    'trigger_type':'simple',
     'devices':(
         'LI-Glob:RF-LLRF-3',
         ),
     },
 'TB-04:TI-InjS':{
     'event':'InjBO',
-    'type':'simple',
+    'trigger_type':'simple',
     'devices':(
         'TB-04:PU-InjS',
         ),
     },
 'BO-01D:TI-InjK':{
     'event':'InjBO',
-    'type':'simple',
+    'trigger_type':'simple',
     'devices':(
         'BO-01D:PU-InjK',
         ),
     },
 'BO-05D:TI-P5Cav':{
     'event':'InjBO',
-    'type':'RmpBO',
+    'trigger_type':'cavity',
     'devices':(
         'BO-05D:RF-P5Cav',
         ),
     },
 'BO-48D:TI-EjeK':{
     'event':'InjSI',
-    'type':'simple',
+    'trigger_type':'simple',
     'devices':(
         'BO-48D:PU-EjeK',
         ),
     },
 'TS-01:TI-EjeSF':{
     'event':'InjSI',
-    'type':'simple',
+    'trigger_type':'simple',
     'devices':(
         'TS-01:PU-EjeSF',
         ),
     },
 'TS-01:TI-EjeSG':{
     'event':'InjSI',
-    'type':'simple',
+    'trigger_type':'simple',
     'devices':(
         'TS-01:PU-EjeSG',
         ),
     },
 'TS-Fam:TI-InjSG':{
     'event':'InjSI',
-    'type':'simple',
+    'trigger_type':'simple',
     'devices':(
         'TS-Fam:PU-InjSG',
         ),
     },
 'TS-04:TI-InjSF':{
     'event':'InjSI',
-    'type':'simple',
+    'trigger_type':'simple',
     'devices':(
         'TS-04:PU-InjSF',
         ),
     },
 'SI-01SA:TI-InjK':{
     'event':'InjSI',
-    'type':'simple',
+    'trigger_type':'simple',
     'devices':(
         'SI-01SA:PU-InjK',
         ),
     },
 'LI-Fam:TI-BPM':{
     'event':'DigLI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'LI-Fam:DI-BPM',
         ),
     },
 'LI-Fam:TI-Scrn':{
     'event':'DigLI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'LI-Fam:DI-Scrn',
         ),
     },
 'LI-01:TI-ICT-1':{
     'event':'DigLI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'LI-01:DI-ICT-1',
         ),
     },
 'LI-01:TI-ICT-2':{
     'event':'DigLI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'LI-01:DI-ICT-2',
         ),
     },
 'TB-Fam:TI-BPM':{
     'event':'DigLI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'TB-01:DI-BPM-1', 'TB-01:DI-BPM-2', 'TB-02:DI-BPM-1',  'TB-02:DI-BPM-2',  'TB-03:DI-BPM',  'TB-04:DI-BPM',
         ),
     },
 'TB-Fam:TI-Scrn':{
     'event':'DigLI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'TB-01:DI-Scrn-1', 'TB-01:DI-Scrn-2', 'TB-02:DI-Scrn-1',  'TB-02:DI-Scrn-2',  'TB-03:DI-Scrn',  'TB-04:DI-Scrn',
         ),
     },
 'TB-02:TI-ICT':{
     'event':'DigLI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'TB-02:DI-ICT',
         ),
     },
 'TB-04:TI-ICT':{
     'event':'DigLI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'TB-04:DI-ICT',
         ),
     },
 'TB-04:TI-FCT':{
     'event':'DigLI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'TB-04:DI-FCT',
         ),
     },
 'BO-Fam:TI-BPM':{
     'event':'DigLI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'BO-01U:DI-BPM', 'BO-02U:DI-BPM', 'BO-03U:DI-BPM', 'BO-04U:DI-BPM', 'BO-05U:DI-BPM', 'BO-06U:DI-BPM', 'BO-07U:DI-BPM', 'BO-08U:DI-BPM', 'BO-09U:DI-BPM', 'BO-10U:DI-BPM',
         'BO-11U:DI-BPM', 'BO-12U:DI-BPM', 'BO-13U:DI-BPM', 'BO-14U:DI-BPM', 'BO-15U:DI-BPM', 'BO-16U:DI-BPM', 'BO-17U:DI-BPM', 'BO-18U:DI-BPM', 'BO-19U:DI-BPM', 'BO-20U:DI-BPM',
@@ -321,154 +323,154 @@ Btriggers= {
     },
 'BO-Fam:TI-Scrn':{
     'event':'DigLI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'BO-01D:DI-Scrn-1', 'BO-01D:DI-Scrn-2', 'BO-02U:DI-Scrn',
         ),
     },
 'BO-04U:TI-GSL':{
     'event':'DigLI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'BO-04U:DI-GSL',
         ),
     },
 'BO-02D:TI-TuneS':{
     'event':'DigLI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'BO-02D:DI-TuneS',
         ),
     },
 'BO-04D:TI-TuneP':{
     'event':'DigLI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'BO-04D:DI-TuneP',
         ),
     },
 'BO-35D:TI-DCCT':{
     'event':'DigLI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'BO-35D:DI-DCCT',
         ),
     },
 'TS-Fam:TI-BPM':{
     'event':'DigLI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'TS-01:DI-BPM', 'TS-02:DI-BPM',  'TS-03:DI-BPM',  'TS-04:DI-BPM-1', 'TS-04:DI-BPM-2',
         ),
     },
 'TS-Fam:TI-Scrn':{
     'event':'DigLI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'TS-01:DI-Scrn', 'TS-02:DI-Scrn',  'TS-03:DI-Scrn',  'TS-04:DI-Scrn-1', 'TS-04:DI-Scrn-2', 'TS-04:DI-Scrn-3',
         ),
     },
 'TS-01:TI-ICT':{
     'event':'DigLI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'TS-01:DI-ICT',
         ),
     },
 'TS-04:TI-ICT':{
     'event':'DigLI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'TS-04:DI-ICT',
         ),
     },
 'TS-04:TI-FCT':{
     'event':'DigLI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'TS-04:DI-FCT',
         ),
     },
 'SI-19SP:TI-GSL15':{
     'event':'DigSI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'SI-19SP:DI-GSL15',
         ),
     },
 'SI-20SB:TI-GSL07':{
     'event':'DigSI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'SI-20SB:DI-GSL07',
         ),
     },
 'SI-13C4:TI-DCCT':{
     'event':'DigSI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'SI-13C4:DI-DCCT',
         ),
     },
 'SI-14C4:TI-DCCT':{
     'event':'DigSI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'SI-14C4:DI-DCCT',
         ),
     },
 'SI-01SA:TI-HTuneS':{
     'event':'DigSI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'SI-01SA:DI-HTuneS',
         ),
     },
 'SI-17SA:TI-HTuneP':{
     'event':'DigSI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'SI-17SA:DI-HTuneP',
         ),
     },
 'SI-18C4:TI-VTuneS':{
     'event':'DigSI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'SI-18C4:DI-VTuneS',
         ),
     },
 'SI-17C4:TI-VTuneP':{
     'event':'DigSI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'SI-17C4:DI-VTuneP',
         ),
     },
 'SI-19C4:TI-VPing':{
     'event':'DigSI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'SI-19C4:PU-VPing',
         ),
     },
 'SI-01SA:TI-HPing':{
     'event':'DigSI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'SI-01SA:PU-HPing',
         ),
     },
 'SI-16C4:TI-GBPM':{
     'event':'DigSI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'SI-16C4:DI-GBPM',
         ),
     },
 'SI-Fam:TI-BPM':{
     'event':'DigSI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'SI-01M1:DI-BPM', 'SI-01M2:DI-BPM', 'SI-01C1:DI-BPM-1', 'SI-01C1:DI-BPM-2', 'SI-01C2:DI-BPM', 'SI-01C3:DI-BPM-1', 'SI-01C3:DI-BPM-2', 'SI-01C4:DI-BPM',
         'SI-02M1:DI-BPM', 'SI-02M2:DI-BPM', 'SI-02C1:DI-BPM-1', 'SI-02C1:DI-BPM-2', 'SI-02C2:DI-BPM', 'SI-02C3:DI-BPM-1', 'SI-02C3:DI-BPM-2', 'SI-02C4:DI-BPM',
@@ -494,9 +496,12 @@ Btriggers= {
     },
 'SI-Glob:TI-BbB':{
     'event':'DigSI',
-    'type':'generic',
+    'trigger_type':'generic',
     'devices':(
         'SI-Glob:DI-BbB',
         ),
     },
 }
+
+def get_triggers():
+    return _copy.deepcopy(_TRIGGERS)

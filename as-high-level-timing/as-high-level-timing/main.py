@@ -4,6 +4,7 @@ import re as _re
 import epics as _epics
 from siriuspy.timesys import time_data as _timedata
 from siriuspy.namesys import SiriusPVName as _PVName
+from data.triggers import get_triggers as _get_triggers
 
 # Coding guidelines:
 # =================
@@ -30,6 +31,186 @@ AFCs = _get_devs('afc')
 EVENT_REGEXP  = _re.compile(  '('  +  '|'.join( _timedata.EVENT_MAPPING.keys() )  +  ')'  +  '([\w-]+)'  )
 TRIGCH_REGEXP = _re.compile('([a-z]+)([0-9]*)',_re.IGNORECASE)
 
+def check_triggers_consistency():
+    triggers = _get_triggers()
+    time_rel = _timedata.get_connections_from_evg()
+    twds_evg = _timedata.get_connections_twrds_evg()
+    for trig, val in triggers.items():
+        devs = set(val['devices'])
+        for dev in devs:
+            _tmp = twds_evg.get(dev)
+            if not _tmp:
+                print('Device '+dev+' defined in the high level trigger '+trig+' not specified in timing connections data.')
+                return False
+            conn,up_dev = _tmp.popitem()
+            diff_devs = set(from_evg[up_dev[0]][up_dev[1]]) - devs
+            if diff_devs:
+                print('Devices: '+diff_devs+' are connected to the same output of '+up_dev+' as '+dev+' but are not related to the sam trigger ('+trig+').')
+                return False
+    return True
+
+
+def get_low_level_trigger_object(device,callback):
+
+    return obj
+
+_HIGH_LEVEL_TRIGGER_CLASSES = {
+    'simple':   TriggerSimple,
+    'rmpbo':    TriggerRmpBO,
+    'cavity':   TriggerCavity,
+    'pssi':     TriggerPSSI,
+    'generic':  TriggerGeneric,
+    }
+
+def get_high_level_trigger_object(trigger,callback,devices,event,trigger_type):
+    ty = trigger_type
+    cls_ = _HIGH_LEVEL_TRIGGER_CLASSES.get(ty)
+    if not cls_: raise Exception('High Level Trigger Class not defined for trigger type '+ty+'.')
+    return cls_(trigger,callback,devices,event)
+
+class TriggerSimple:
+    _STATES = ('Dsbl','Enbl')
+
+    @classmethod
+    def get_database(cls,prefix=''):
+        db = dict()
+        db[prefix + 'Delay-SP']  = {'type' : 'float', 'value': 0.0, 'unit':'us', 'prec': 4}
+        db[prefix + 'Delay-RB']  = {'type' : 'float', 'value': 0.0, 'unit':'us', 'prec': 4}
+        db[prefix + 'State-Sel'] = {'type' : 'enum', 'enums':cls._STATES, 'value':0}
+        db[prefix + 'State-Sts'] = {'type' : 'enum', 'enums':cls._STATES, 'value':0}
+        return db
+
+    def __init__(self,trigger,callback,devices,event):
+        self._devices = dict()
+        self._props = {
+            'event'      : event,
+            'delay'      : 0.0,
+            'delay_type' : 'Incr',
+            'pulses'     : 1,
+            'width'      : 150,
+            'state'      : 'Dsbl',
+            'polarity'   : 'Normal',
+            }
+        for dev in devices:
+            low_lev_obj = get_low_level_trigger_object(dev,self._callback)
+            self._devices[dev] = low_lev_obj
+            for prop, val in self._props.items():
+                low_lev_obj.set(prop,val)
+
+    def set_propty(pv,value):
+        if 'Delay-SP' in pv and value != self._props['delay']:
+            self._props['delay'] = value
+            for dev, obj in self._devices.keys():
+                obj.set('delay',self._props['delay'])
+        elif 'State-SP' in pv and value != self._STATES.index(self._props['state']):
+            self._props['state'] = self.STATES[value]
+            for dev, obj in self._devices.keys():
+                obj.set('state',self._props['state'])
+
+class TriggerRmpBO:
+    _STATES = ('Dsbl','Enbl')
+
+    @classmethod
+    def get_database(cls,prefix=''):
+        db = dict()
+        db[prefix + 'State-Sel'] = {'type' : 'enum', 'enums':cls._STATES, 'value':0}
+        db[prefix + 'State-Sts'] = {'type' : 'enum', 'enums':cls._STATES, 'value':0}
+        return db
+
+    def __init__(self,trigger,callback,devices,event):
+        self._devices = dict()
+        self._props = {
+            'event'      : event,
+            'delay'      : 0.0,
+            'delay_type' : 'Incr',
+            'pulses'     : 2000,
+            'width'      : 490e3/2000,
+            'state'      : 'Dsbl',
+            'polarity'   : 'Normal',
+            }
+        for dev in devices:
+            low_lev_obj = get_low_level_trigger_object(dev,self._callback)
+            self._devices[dev] = low_lev_obj
+            for prop, val in self._props.items():
+                low_lev_obj.set(prop,val)
+
+    def set_propty(pv,value):
+        if 'State-SP' in pv and value != self._STATES.index(self._props['state']):
+            self._props['state'] = self.STATES[value]
+            for dev, obj in self._devices.keys():
+                obj.set('state',self._props['state'])
+
+
+class TriggerCavity:
+    _STATES = ('Dsbl','Enbl')
+
+    @classmethod
+    def get_database(cls,prefix=''):
+        db = dict()
+        db[prefix + 'State-Sel'] = {'type' : 'enum', 'enums':cls._STATES, 'value':0}
+        db[prefix + 'State-Sts'] = {'type' : 'enum', 'enums':cls._STATES, 'value':0}
+        return db
+
+    def __init__(self,trigger,callback,devices,event):
+        self._devices = dict()
+        self._props = {
+            'event'      : event,
+            'delay'      : 0.0,
+            'delay_type' : 'Incr',
+            'pulses'     : 2000,
+            'width'      : 490e3/2000,
+            'state'      : 'Dsbl',
+            'polarity'   : 'Normal',
+            }
+        for dev in devices:
+            low_lev_obj = get_low_level_trigger_object(dev,self._callback)
+            self._devices[dev] = low_lev_obj
+            for prop, val in self._props.items():
+                low_lev_obj.set(prop,val)
+
+    def set_propty(pv,value):
+        if 'State-SP' in pv and value != self._STATES.index(self._props['state']):
+            self._props['state'] = self.STATES[value]
+            for dev, obj in self._devices.keys():
+                obj.set('state',self._props['state'])
+
+
+class TriggerPSSI:
+    _STATES = ('Dsbl','Enbl')
+
+    @classmethod
+    def get_database(cls,prefix=''):
+        db = dict()
+        db[prefix + 'Duration-SP']  = {'type' : 'float', 'value': 0.0, 'unit':'us', 'prec': 4}
+        db[prefix + 'Duration-RB']  = {'type' : 'float', 'value': 0.0, 'unit':'us', 'prec': 4}
+        db[prefix + 'State-Sel'] = {'type' : 'enum', 'enums':cls._STATES, 'value':0}
+        db[prefix + 'State-Sts'] = {'type' : 'enum', 'enums':cls._STATES, 'value':0}
+        return db
+
+    def __init__(self,trigger,callback,devices,event):
+        self._devices = dict()
+        self._props = {
+            'event'      : event,
+            'delay'      : 0.0,
+            'delay_type' : 'Incr',
+            'pulses'     : 2000,
+            'width'      : 490e3/2000,
+            'state'      : 'Dsbl',
+            'polarity'   : 'Normal',
+            }
+        for dev in devices:
+            low_lev_obj = get_low_level_trigger_object(dev,self._callback)
+            self._devices[dev] = low_lev_obj
+            for prop, val in self._props.items():
+                low_lev_obj.set(prop,val)
+
+    def set_propty(pv,value):
+        if 'State-SP' in pv and value != self._STATES.index(self._props['state']):
+            self._props['state'] = self.STATES[value]
+            for dev, obj in self._devices.keys():
+                obj.set('state',self._props['state'])
+
+
 class App:
 
     pvs_database = _pvs.pvs_database
@@ -39,8 +220,14 @@ class App:
         self._events = dict()
         for ev in _timedata.EVENT_MAPPING.keys():
             self._events[ev] = EventInterface(ev,self._callback)
+
+        if not check_triggers_consistency():
+            raise Exception('Triggers not consistent.')
+
         self._triggers = dict()
-        for trig in _timedata.TRIGGER_MAPPING.
+        triggers = _get_triggers()
+        for trig, prop in _triggers.itmes():
+            self._triggers = get_high_level_trigger_object(trig,self._callback,**prop)
 
     def _callback(self,pv_name,pv_value,**kwargs):
         self.driver.setParam(pv_name,pv_value)
@@ -54,10 +241,7 @@ class App:
         _time.sleep(interval)
 
     def read(self,reason):
-        parts = _PVName(reason)
-        if parts.dev_type == 'EVG':
-            ev,pv = EVENT_REGEXP.findall(parts.propty)
-            return self._events[ev].get(pv)
+        return None # Driver will read from database
 
     def write(self,reason,value):
         parts = _PVName(reason)
