@@ -199,7 +199,7 @@ _TRIGGERS= {
         ),
     },
 'BO-05D:TI-P5Cav':{
-    'events':('InjBO','Study'),
+    'events':('InjBO','RmpBO','Study'),
     'trigger_type':'cavity',
     'devices':(
         'BO-05D:RF-P5Cav',
