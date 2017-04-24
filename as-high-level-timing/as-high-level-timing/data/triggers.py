@@ -2,7 +2,7 @@ import copy as _copy
 
 _TRIGGERS= {
 'SI-Glob:TI-Corrs': {
-    'event':'MigSI',
+    'events':('MigSI','Orbit','Study'),
     'trigger_type':'PSSI',
     'devices': (
         'SI-01M1:PS-CH', 'SI-01M1:PS-CV', 'SI-01M2:PS-CH', 'SI-01M2:PS-CV', 'SI-01C1:PS-CH', 'SI-01C1:PS-CV', 'SI-01C2:PS-CH', 'SI-01C2:PS-CV-1', 'SI-01C2:PS-CV-2', 'SI-01C3:PS-CH', 'SI-01C3:PS-CV-1', 'SI-01C3:PS-CV-2', 'SI-01C4:PS-CH', 'SI-01C4:PS-CV',
@@ -28,7 +28,7 @@ _TRIGGERS= {
         ),
     },
 'SI-Glob:TI-Quads': {
-    'event':'MigSI',
+    'events':('MigSI','Tunes','Study'),
     'trigger_type':'PSSI',
     'devices': (
         'SI-Fam:PS-QFA', 'SI-Fam:PS-QDA', 'SI-Fam:PS-QFB', 'SI-Fam:PS-QDB1', 'SI-Fam:PS-QDB2', 'SI-Fam:PS-QFP', 'SI-Fam:PS-QDP1', 'SI-Fam:PS-QDP2', 'SI-Fam:PS-Q1', 'SI-Fam:PS-Q2', 'SI-Fam:PS-Q3', 'SI-Fam:PS-Q4',
@@ -58,7 +58,7 @@ _TRIGGERS= {
         ),
     },
 'SI-Glob:TI-Skews': {
-    'event':'MigSI',
+    'events':('MigSI','Coupl','Study'),
     'trigger_type':'PSSI',
     'devices': (
         'SI-01M1:PS-QS', 'SI-01M2:PS-QS', 'SI-01C1:PS-QS', 'SI-01C2:PS-QS', 'SI-01C3:PS-QS',
@@ -84,14 +84,14 @@ _TRIGGERS= {
         ),
     },
 'SI-Glob:TI-Dips': {
-    'event':'MigSI',
+    'events':('MigSI','Study'),
     'trigger_type':'PSSI',
     'devices': (
         'SI-Fam:PS-B1B2-1', 'SI-Fam:PS-B1B2-2',
         ),
     },
 'SI-Glob:TI-Sexts': {
-    'event':'MigSI',
+    'events':('MigSI','Study'),
     'trigger_type':'PSSI',
     'devices': (
         'SI-Fam:PS-SFA0', 'SI-Fam:PS-SFA1', 'SI-Fam:PS-SFA2', 'SI-Fam:PS-SDA0', 'SI-Fam:PS-SDA1', 'SI-Fam:PS-SDA2', 'SI-Fam:PS-SDA3',
@@ -100,7 +100,7 @@ _TRIGGERS= {
         ),
     },
 'BO-Glob:TI-Mags': {
-    'event':'RmpBO',
+    'events':('RmpBO','Study'),
     'trigger_type':'rmpbo',
     'devices': (
         'BO-Fam:PS-B-1', 'BO-Fam:PS-B-2',
@@ -115,203 +115,203 @@ _TRIGGERS= {
         ),
     },
 'LI-01:TI-EGun:MultBun':{
-    'event':'Linac',
+    'events':('Linac','Study'),
     'trigger_type':'simple',
     'devices':(
         'LI-01:EGun-Trig1',
         ),
     },
 'LI-01:TI-EGun:SglBun':{
-    'event':'Linac',
+    'events':('Linac','Study'),
     'trigger_type':'simple',
     'devices':(
         'LI-01:EGun-Trig2',
         ),
     },
 'LI-01:TI-Modltr-1':{
-    'event':'Linac',
+    'events':('Linac','Study'),
     'trigger_type':'simple',
     'devices':(
         'LI-01:RF-Modltr-1',
         ),
     },
 'LI-01:TI-Modltr-2':{
-    'event':'Linac',
+    'events':('Linac','Study'),
     'trigger_type':'simple',
     'devices':(
         'LI-01:RF-Modltr-2',
         ),
     },
 'LI-Glob:TI-SHAmp':{
-    'event':'Linac',
+    'events':('Linac','Study'),
     'trigger_type':'simple',
     'devices':(
         'LI-Glob:RF-SHAmp',
         ),
     },
 'LI-Glob:TI-RFAmp-1':{
-    'event':'Linac',
+    'events':('Linac','Study'),
     'trigger_type':'simple',
     'devices':(
         'LI-Glob:RF-RFAmp-1',
         ),
     },
 'LI-Glob:TI-RFAmp-2':{
-    'event':'Linac',
+    'events':('Linac','Study'),
     'trigger_type':'simple',
     'devices':(
         'LI-Glob:RF-RFAmp-2',
         ),
     },
 'LI-Glob:TI-LLRF-1':{
-    'event':'Linac',
+    'events':('Linac','Study'),
     'trigger_type':'simple',
     'devices':(
         'LI-Glob:RF-LLRF-1',
         ),
     },
 'LI-Glob:TI-LLRF-2':{
-    'event':'Linac',
+    'events':('Linac','Study'),
     'trigger_type':'simple',
     'devices':(
         'LI-Glob:RF-LLRF-2',
         ),
     },
 'LI-Glob:TI-LLRF-3':{
-    'event':'Linac',
+    'events':('Linac','Study'),
     'trigger_type':'simple',
     'devices':(
         'LI-Glob:RF-LLRF-3',
         ),
     },
 'TB-04:TI-InjS':{
-    'event':'InjBO',
+    'events':('InjBO','Study'),
     'trigger_type':'simple',
     'devices':(
         'TB-04:PU-InjS',
         ),
     },
 'BO-01D:TI-InjK':{
-    'event':'InjBO',
+    'events':('InjBO','Study'),
     'trigger_type':'simple',
     'devices':(
         'BO-01D:PU-InjK',
         ),
     },
 'BO-05D:TI-P5Cav':{
-    'event':'InjBO',
+    'events':('InjBO','Study'),
     'trigger_type':'cavity',
     'devices':(
         'BO-05D:RF-P5Cav',
         ),
     },
 'BO-48D:TI-EjeK':{
-    'event':'InjSI',
+    'events':('InjSI','Study'),
     'trigger_type':'simple',
     'devices':(
         'BO-48D:PU-EjeK',
         ),
     },
 'TS-01:TI-EjeSF':{
-    'event':'InjSI',
+    'events':('InjSI','Study'),
     'trigger_type':'simple',
     'devices':(
         'TS-01:PU-EjeSF',
         ),
     },
 'TS-01:TI-EjeSG':{
-    'event':'InjSI',
+    'events':('InjSI','Study'),
     'trigger_type':'simple',
     'devices':(
         'TS-01:PU-EjeSG',
         ),
     },
 'TS-Fam:TI-InjSG':{
-    'event':'InjSI',
+    'events':('InjSI','Study'),
     'trigger_type':'simple',
     'devices':(
         'TS-Fam:PU-InjSG',
         ),
     },
 'TS-04:TI-InjSF':{
-    'event':'InjSI',
+    'events':('InjSI','Study'),
     'trigger_type':'simple',
     'devices':(
         'TS-04:PU-InjSF',
         ),
     },
 'SI-01SA:TI-InjK':{
-    'event':'InjSI',
+    'events':('InjSI','Study'),
     'trigger_type':'simple',
     'devices':(
         'SI-01SA:PU-InjK',
         ),
     },
 'LI-Fam:TI-BPM':{
-    'event':'DigLI',
+    'events':('DigLI','Study'),
     'trigger_type':'generic',
     'devices':(
         'LI-Fam:DI-BPM',
         ),
     },
 'LI-Fam:TI-Scrn':{
-    'event':'DigLI',
+    'events':('DigLI','Study'),
     'trigger_type':'generic',
     'devices':(
         'LI-Fam:DI-Scrn',
         ),
     },
 'LI-01:TI-ICT-1':{
-    'event':'DigLI',
+    'events':('DigLI','Study'),
     'trigger_type':'generic',
     'devices':(
         'LI-01:DI-ICT-1',
         ),
     },
 'LI-01:TI-ICT-2':{
-    'event':'DigLI',
+    'events':('DigLI','Study'),
     'trigger_type':'generic',
     'devices':(
         'LI-01:DI-ICT-2',
         ),
     },
 'TB-Fam:TI-BPM':{
-    'event':'DigLI',
+    'events':('DigTB','Study'),
     'trigger_type':'generic',
     'devices':(
         'TB-01:DI-BPM-1', 'TB-01:DI-BPM-2', 'TB-02:DI-BPM-1',  'TB-02:DI-BPM-2',  'TB-03:DI-BPM',  'TB-04:DI-BPM',
         ),
     },
 'TB-Fam:TI-Scrn':{
-    'event':'DigLI',
+    'events':('DigTB','Study'),
     'trigger_type':'generic',
     'devices':(
         'TB-01:DI-Scrn-1', 'TB-01:DI-Scrn-2', 'TB-02:DI-Scrn-1',  'TB-02:DI-Scrn-2',  'TB-03:DI-Scrn',  'TB-04:DI-Scrn',
         ),
     },
 'TB-02:TI-ICT':{
-    'event':'DigLI',
+    'events':('DigTB','Study'),
     'trigger_type':'generic',
     'devices':(
         'TB-02:DI-ICT',
         ),
     },
 'TB-04:TI-ICT':{
-    'event':'DigLI',
+    'events':('DigTB','Study'),
     'trigger_type':'generic',
     'devices':(
         'TB-04:DI-ICT',
         ),
     },
 'TB-04:TI-FCT':{
-    'event':'DigLI',
+    'events':('DigTB','Study'),
     'trigger_type':'generic',
     'devices':(
         'TB-04:DI-FCT',
         ),
     },
 'BO-Fam:TI-BPM':{
-    'event':'DigLI',
+    'events':('DigBO','Study'),
     'trigger_type':'generic',
     'devices':(
         'BO-01U:DI-BPM', 'BO-02U:DI-BPM', 'BO-03U:DI-BPM', 'BO-04U:DI-BPM', 'BO-05U:DI-BPM', 'BO-06U:DI-BPM', 'BO-07U:DI-BPM', 'BO-08U:DI-BPM', 'BO-09U:DI-BPM', 'BO-10U:DI-BPM',
@@ -322,154 +322,154 @@ _TRIGGERS= {
         ),
     },
 'BO-Fam:TI-Scrn':{
-    'event':'DigLI',
+    'events':('DigBO','Study'),
     'trigger_type':'generic',
     'devices':(
         'BO-01D:DI-Scrn-1', 'BO-01D:DI-Scrn-2', 'BO-02U:DI-Scrn',
         ),
     },
 'BO-04U:TI-GSL':{
-    'event':'DigLI',
+    'events':('DigBO','Study'),
     'trigger_type':'generic',
     'devices':(
         'BO-04U:DI-GSL',
         ),
     },
 'BO-02D:TI-TuneS':{
-    'event':'DigLI',
+    'events':('DigBO','Study'),
     'trigger_type':'generic',
     'devices':(
         'BO-02D:DI-TuneS',
         ),
     },
 'BO-04D:TI-TuneP':{
-    'event':'DigLI',
+    'events':('DigBO','Study'),
     'trigger_type':'generic',
     'devices':(
         'BO-04D:DI-TuneP',
         ),
     },
 'BO-35D:TI-DCCT':{
-    'event':'DigLI',
+    'events':('DigBO','Study'),
     'trigger_type':'generic',
     'devices':(
         'BO-35D:DI-DCCT',
         ),
     },
 'TS-Fam:TI-BPM':{
-    'event':'DigLI',
+    'events':('DigTS','Study'),
     'trigger_type':'generic',
     'devices':(
         'TS-01:DI-BPM', 'TS-02:DI-BPM',  'TS-03:DI-BPM',  'TS-04:DI-BPM-1', 'TS-04:DI-BPM-2',
         ),
     },
 'TS-Fam:TI-Scrn':{
-    'event':'DigLI',
+    'events':('DigTS','Study'),
     'trigger_type':'generic',
     'devices':(
         'TS-01:DI-Scrn', 'TS-02:DI-Scrn',  'TS-03:DI-Scrn',  'TS-04:DI-Scrn-1', 'TS-04:DI-Scrn-2', 'TS-04:DI-Scrn-3',
         ),
     },
 'TS-01:TI-ICT':{
-    'event':'DigLI',
+    'events':('DigTS','Study'),
     'trigger_type':'generic',
     'devices':(
         'TS-01:DI-ICT',
         ),
     },
 'TS-04:TI-ICT':{
-    'event':'DigLI',
+    'events':('DigTS','Study'),
     'trigger_type':'generic',
     'devices':(
         'TS-04:DI-ICT',
         ),
     },
 'TS-04:TI-FCT':{
-    'event':'DigLI',
+    'events':('DigTS','Study'),
     'trigger_type':'generic',
     'devices':(
         'TS-04:DI-FCT',
         ),
     },
 'SI-19SP:TI-GSL15':{
-    'event':'DigSI',
+    'events':('DigSI','Study'),
     'trigger_type':'generic',
     'devices':(
         'SI-19SP:DI-GSL15',
         ),
     },
 'SI-20SB:TI-GSL07':{
-    'event':'DigSI',
+    'events':('DigSI','Study'),
     'trigger_type':'generic',
     'devices':(
         'SI-20SB:DI-GSL07',
         ),
     },
 'SI-13C4:TI-DCCT':{
-    'event':'DigSI',
+    'events':('DigSI','Study'),
     'trigger_type':'generic',
     'devices':(
         'SI-13C4:DI-DCCT',
         ),
     },
 'SI-14C4:TI-DCCT':{
-    'event':'DigSI',
+    'events':('DigSI','Study'),
     'trigger_type':'generic',
     'devices':(
         'SI-14C4:DI-DCCT',
         ),
     },
 'SI-01SA:TI-HTuneS':{
-    'event':'DigSI',
+    'events':('DigSI','Study'),
     'trigger_type':'generic',
     'devices':(
         'SI-01SA:DI-HTuneS',
         ),
     },
 'SI-17SA:TI-HTuneP':{
-    'event':'DigSI',
+    'events':('DigSI','Study'),
     'trigger_type':'generic',
     'devices':(
         'SI-17SA:DI-HTuneP',
         ),
     },
 'SI-18C4:TI-VTuneS':{
-    'event':'DigSI',
+    'events':('DigSI','Study'),
     'trigger_type':'generic',
     'devices':(
         'SI-18C4:DI-VTuneS',
         ),
     },
 'SI-17C4:TI-VTuneP':{
-    'event':'DigSI',
+    'events':('DigSI','Study'),
     'trigger_type':'generic',
     'devices':(
         'SI-17C4:DI-VTuneP',
         ),
     },
 'SI-19C4:TI-VPing':{
-    'event':'DigSI',
+    'events':('DigSI','Study'),
     'trigger_type':'generic',
     'devices':(
         'SI-19C4:PU-VPing',
         ),
     },
 'SI-01SA:TI-HPing':{
-    'event':'DigSI',
+    'events':('DigSI','Study'),
     'trigger_type':'generic',
     'devices':(
         'SI-01SA:PU-HPing',
         ),
     },
 'SI-16C4:TI-GBPM':{
-    'event':'DigSI',
+    'events':('DigSI','Study'),
     'trigger_type':'generic',
     'devices':(
         'SI-16C4:DI-GBPM',
         ),
     },
 'SI-Fam:TI-BPM':{
-    'event':'DigSI',
+    'events':('DigSI','Study'),
     'trigger_type':'generic',
     'devices':(
         'SI-01M1:DI-BPM', 'SI-01M2:DI-BPM', 'SI-01C1:DI-BPM-1', 'SI-01C1:DI-BPM-2', 'SI-01C2:DI-BPM', 'SI-01C3:DI-BPM-1', 'SI-01C3:DI-BPM-2', 'SI-01C4:DI-BPM',
@@ -495,7 +495,7 @@ _TRIGGERS= {
         ),
     },
 'SI-Glob:TI-BbB':{
-    'event':'DigSI',
+    'events':('DigSI','Study'),
     'trigger_type':'generic',
     'devices':(
         'SI-Glob:DI-BbB',
