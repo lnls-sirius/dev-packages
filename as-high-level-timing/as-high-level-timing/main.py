@@ -18,6 +18,8 @@ from data.triggers import get_triggers as _get_triggers
 __version__ = _pvs.__version__
 _TIMEOUT = 0.05
 
+RFFREQ = 299792458/518.396*864
+
 
 _ALL_DEVICES = _timedata.get_all_devices()
 _pv_fun = lambda x,y: _PVName(x).dev_type.lower() == y.lower()
@@ -101,29 +103,29 @@ def get_trigger_channels(devs):
     return sorted(channels)
 
 _LOW_LEVEL_TRIGGER_CLASSES = {
-    ('evr','mfo'): LowLevelTrigEVRMFO,
-    ('evr','opt'): LowLevelTrigEVROPT,
-    ('eve','elp'): LowLevelTrigEVRELP,
-    ('eve','opt'): LowLevelTrigEVROPT,
-    ('afc','elp'): LowLevelTrigEVRELP,
-    ('afc','opt'): LowLevelTrigEVROPT,
+    ('evr','mfo'): LL_TrigEVRMFO,
+    ('evr','opt'): LL_TrigEVROPT,
+    ('eve','elp'): LL_TrigEVRELP,
+    ('eve','opt'): LL_TrigEVROPT,
+    ('afc','elp'): LL_TrigEVRELP,
+    ('afc','opt'): LL_TrigEVROPT,
     }
 def get_low_level_trigger_object(device,callback):
     dev = _PVName(device)
-    conn,*_ = TRIGCH_REGEXP.findall(dev.propty.lower())
+    conn, num = TRIGCH_REGEXP.findall(dev.propty.lower())
     key = (dev.dev_type.lower(), conn)
     cls_ = _LOW_LEVEL_TRIGGER_CLASSES.get(key)
     if not cls_:
         raise Exception('Low Level Trigger Class not defined for device type '+key[0]+' and connection type '+key[1]+'.')
-    return cls_(device, callback)
+    return cls_(dev.dev_name, conn, num, callback)
 
 
 _HIGH_LEVEL_TRIGGER_CLASSES = {
-    'simple':   TriggerSimple,
-    'rmpbo':    TriggerRmpBO,
-    'cavity':   TriggerCavity,
-    'pssi':     TriggerPSSI,
-    'generic':  TriggerGeneric,
+    'simple':   HL_TrigSimple,
+    'rmpbo':    HL_TrigRmpBO,
+    'cavity':   HL_TrigCavity,
+    'pssi':     HL_TrigPSSI,
+    'generic':  HL_TrigGeneric,
     }
 def get_high_level_trigger_object(trigger,callback,devices,event,trigger_type):
     ty = trigger_type
@@ -133,7 +135,7 @@ def get_high_level_trigger_object(trigger,callback,devices,event,trigger_type):
     return cls_(trigger,callback,devices,event)
 
 
-class TriggerBase:
+class HL_TrigBase:
     _STATES      = ('Dsbl','Enbl')
     _POLARITIES  = ('Normal','Inverse')
     _DELAY_TYPES = ('Incr','Fixed')
@@ -153,7 +155,7 @@ class TriggerBase:
         'state'      :'State-Sel',
         'polarity'   :'Polrty-Sel',
         }
-    _WRITE_MAP_INV = {  val:key for key,val in TriggerBase._WRITE_MAP.items()  }
+    _WRITE_MAP_INV = {  val:key for key,val in HL_TrigBase._WRITE_MAP.items()  }
     _READ_MAP = {
         'work_as'    :'WorkAs-Sts',
         'clock'      :'Clock-Sts',
@@ -178,37 +180,35 @@ class TriggerBase:
         self.prefix = trigger + ':'
         self._channel_names = get_trigger_channels(devices)
         len_rb = len(self._channel_names)
-        self._values_sp = self._get_initial_sp_values()
-        self._values_rb = {  key:len_rb*[val] for key,val in self._values_sp.items()  }
+        self._hl2ll = self._get_initial_hl2ll()
+        self._values_rb = {  key:len_rb*[val] for key,val in self._hl2ll.items()  }
         self._channels = dict()
         for dev in self._channel_names:
             low_lev_obj = get_low_level_trigger_object(dev,self._pvs_statuses)
             self._channel_names.append(dev)
             self._channels[dev] = low_lev_obj
-            for prop, val in self._values_sp.items():
+            for prop, val in self._hl2ll.items():
                 low_lev_obj.set_propty(prop,val)
 
     def _get_write_funs_map(self):
         map_ = {
             'work_as'    : lambda x,y: self._FUNCTION_TYPES[x],
             'clock'      : lambda x,y: self._CLOCKS[x],
-            'event'      : lambda x,y: self._EVENTS[x],
+            'event'      : lambda x,y: _timedata.EVENT_MAPPING[self._EVENTS[x]],
             'delay'      : lambda x,y: x,
             'delay_type' : lambda x,y: self._DELAY_TYPES[x],
             'pulses'     : lambda x,y: x,
-            'width'      : lambda x,y: x / self._values_sp['pulses']*1e3,
+            'width'      : lambda x,y: x / self._hl2ll['pulses']*1e3,
             'state'      : lambda x,y: self._STATES[x],
             'polarity'   : lambda x,y: self._POLARITIES[x],
             }
-        for prop in self._get_not_my_props():
-            map_.pop(prop)
         return map_
 
     def _get_read_funs_map(self):
         map_ = {
-            'work_as'    : lambda x:  self._FUNCTION_TYPES.index(x),
-            'clock'      : lambda x:  self._CLOCKS.index(x),
-            'event'      : lambda x:  self._EVENTS.index(x),
+            'work_as'    : lambda x: self._FUNCTION_TYPES.index(x),
+            'clock'      : lambda x: self._CLOCKS.index(x),
+            'event'      : lambda x: self._EVENTS.index(_timedata.EVENT_MAPPING_INV[x]),
             'delay'      : lambda x: x,
             'delay_type' : lambda x: self._DELAY_TYPES.index(x),
             'pulses'     : lambda x: x,
@@ -216,11 +216,9 @@ class TriggerBase:
             'state'      : lambda x: self._STATES.index(x),
             'polarity'   : lambda x: self._POLARITIES.index(x),
             }
-        for prop in self._get_not_my_props():
-            map_.pop(prop)
         return map_
 
-    def _get_initial_sp_values(self):
+    def _get_initial_hl2ll(self):
         map_ = {
             'work_as'    : 0,
             'clock'      : 0,
@@ -255,10 +253,11 @@ class TriggerBase:
         db[pre + 'Polrty-Sel']  = {'type':'enum', 'value':0, 'enums':self._POLARITIES}
         db[pre + 'Polrty-Sts']  = {'type':'int',  'value':0, 'count':len_rb}
 
-        for prop in self._get_not_my_props():
-            db.pop(pre + self._WRITE_MAP[prop])
-            db.pop(pre + self._READ_MAP[prop])
-        return db
+        db2 = dict()
+        for prop in self._WRITABLE_PROPS:
+            db2[pre + self._WRITE_MAP[prop]] = db[self._WRITE_MAP[prop]]
+            db2[pre + self._READ_MAP[prop] ] = db[self._READ_MAP[prop] ]
+        return db2
 
     def _pvs_statuses(self, channel, prop, value):
         if prop not in self._WRITABLE_PROPS: return
@@ -269,144 +268,131 @@ class TriggerBase:
     def set_propty(pv,value):
         prop = self._WRITE_MAP_INV[pv]
         if prop not in self._WRITABLE_PROPS: return
-        if value == self._values_sp[prop]: return
-        self._values_sp[prop] = self._WRITE_FUNS[prop](value)
+        if value == self._hl2ll[prop]: return
+        self._hl2ll[prop] = self._WRITE_FUNS[prop](value)
         for dev, obj in self._channels.keys():
-            obj.set_propty(prop,self._values_sp[prop])
+            obj.set_propty(prop,self._hl2ll[prop])
 
 
-class TriggerSimple(TriggerBase):
+class HL_TrigSimple(HL_TrigBase):
     _WRITABLE_PROPS = {'event','delay','state'}
 
-    def _get_initial_sp_values(self):
-        map_ = super()._get_initial_sp_values()
-        return map_
-
-
-class TriggerRmpBO(TriggerBase):
+class HL_TrigRmpBO(HL_TrigBase):
     _WRITABLE_PROPS = {'event','state'}
 
-    def _get_initial_sp_values(self):
-        map_ = super()._get_initial_sp_values()
+    def _get_initial_hl2ll(self):
+        map_ = super()._get_initial_hl2ll()
         map_['width'] = 490e3/2000
         map_['pulses'] = 2000
         return map_
 
 
-class TriggerCavity(TriggerBase):
+class HL_TrigCavity(HL_TrigBase):
     _WRITABLE_PROPS = {'event','state','pulses'}
 
-    def _get_initial_sp_values(self):
-        map_ = super()._get_initial_sp_values()
+    def _get_initial_hl2ll(self):
+        map_ = super()._get_initial_hl2ll()
         map_['width'] = 490e3/2000
         map_['pulses'] = 2000
         return map_
 
 
-class TriggerPSSI(TriggerBase):
+class HL_TrigPSSI(HL_TrigBase):
     _WRITABLE_PROPS = {'event','state','width','work_as','clock'}
 
-    def _get_initial_sp_values(self):
-        map_ = super()._get_initial_sp_values()
-        map_[''] =
+    def _get_initial_hl2ll(self):
+        map_ = super()._get_initial_hl2ll()
+        map_['width'] = 2/2000
+        map_['pulses'] = 2000
         return map_
 
     def _get_write_funs_map(self):
         map_ = super()._get_write_funs_map()
         map_['event'] = self._set_event
+        return map_
 
     def _set_event(self,ev):
         props = []
         if ev == 0:
-            if self._values_sp['pulses'] != 2000:
-                self._values_sp['pulses'] = 2000
+            if self._hl2ll['pulses'] != 2000:
+                self._hl2ll['pulses'] = 2000
                 props.append('pulses')
-            if self._values_sp['work_as'] != 0:
-                self._values_sp['work_as'] = 0
+            if self._hl2ll['work_as'] != 0:
+                self._hl2ll['work_as'] = 0
                 props.append('work_as')
-            if self._values_sp['width'] != 490e3/2000:
-                self._values_sp['width'] = 490e3/2000
+            if self._hl2ll['width'] != 490e3/2000:
+                self._hl2ll['width'] = 490e3/2000
                 props.append('width')
         else:
-            if self._values_sp['pulses'] != 1:
-                self._values_sp['pulses'] = 1
+            if self._hl2ll['pulses'] != 1:
+                self._hl2ll['pulses'] = 1
                 props.append('pulses')
-        for dev, obj in self._channels.keys():
-            for prop in props:
-                obj.set_propty(prop,self._values_sp[prop])
 
-        return self._EVENTS.index(ev)
+        for prop in props:
+            for dev, obj in self._channels.keys():
+                obj.set_propty(prop,self._hl2ll[prop])
 
-class TriggerGeneric(TriggerBase):
+        return _timedata.EVENT_MAPPING[self._EVENTS[ev]]
+
+
+class HL_TrigGeneric(HL_TrigBase):
     _WRITABLE_PROPS = {'event','state','pulses','width','work_as','clock'}
 
-    def _get_initial_sp_values(self):
-        map_ = super()._get_initial_sp_values()
-        return map_
 
+class LL_TrigEVRMFO:
+    _NUM_OPT   = 12
+    _NUM_INT   = 24
+    _INTTMP    = 'IntTrig{0:02d}'
+    _OUTTMP    = 'MFO{0:d}'
 
-class LowLevelTrigEVRMFO:
-    _STATES = ('Dsbl','Enbl')
-    _POLARITIES = ('Normal','Inverse')
-    _FUNCTION_TYPES = ('Trigger', 'Clock')
-    _EVR_NUM_OPT   = 12
-    _EVR_NUM_LC    = 8
-    _EVE_NUM_ELP   = 8
-    _AFC_NUM_OPT   = 10
-    _AFC_NUM_ELP   = 8
-    _EVENTS = tuple(  sorted( _timedata.EVENT_MAPPING.keys() )  )
-    _CLOCKS = tuple([_timedata.CLOCK_LABEL_TEMPLATE.format(i) for i in range(8)])
-
-
-    _LOW_LEVEL_PVS = {
-        'commom': set(
-            'State-Sel', 'State-Sts', 'Pulses-SP', 'Pulses-RB', 'Width-SP', 'Width-RB',
-            'Delay-SP', 'Delay-RB', 'Polrty-Sel', 'Polrty-Sts', 'Event-Sel', 'Event-Sts',),
-        ('evr','lc'): set(
-            'FineDelay-SP', 'FineDelay-RB', 'Delay-SP', 'Delay-RB','OptCh-Sel', 'OptCh-Sts'),
-        ('evr','opt'): set(),
-        ('eve','opt'): set(),
-        ('eve','lc'): set(
-            'FineDelay-SP', 'FineDelay-RB', 'Delay-SP', 'Delay-RB','OptCh-Sel', 'OptCh-Sts' ),
-        ('afc','opt'): set(
-            'OptCh-Sel', 'OptCh-Sts' ),
-        ('afc','elp'): set(
-            'OptCh-Sel', 'OptCh-Sts' ),
-        }
-
-    def __init__(self, device, callback=None):
+    def __init__(self, device, conn, num,  callback=None, initial_hl2ll = None):
         self._WRITE_FUNS = self._get_write_funs_map()
         self.callback = callback
-        self.prefix = device
-        self._channel_names = get_trigger_channels(devices)
-        len_rb = len(self._channel_names)
-        self._values_sp = self._get_initial_sp_values()
-        self._values_rb = {  key:len_rb*[val] for key,val in self._values_sp.items()  }
-        self._channels = dict()
+        self.prefix = device + ':'
+        self._OUTLB = self._OUTTMP.format(num)
+        self._INTLB = self._INTLB.format(self._NUM_OPT + num)
+
+        self._hl2ll = initial_hl2ll or self._get_initial_hl2ll()
+
+        self._pvs_sp = dict()
+        self._pvs_rb = dict()
         for dev in self._channel_names:
-            low_lev_obj = get_low_level_trigger_object(dev,self._pvs_statuses)
-            self._channel_names.append(dev)
+            self._pvs_sp[pv]  = _epics.PV()
             self._channels[dev] = low_lev_obj
-            for prop, val in self._values_sp.items():
+            for prop, val in self._hl2ll.items():
                 low_lev_obj.set_propty(prop,val)
 
-    def _get_write_funs_map(self):
+    def _get_map_pvs_sp(self):
         map_ = {
-            'work_as'    : self.set_int_channel,
-            'clock'      : self.set_int_channel,
-            'event'      : self.set_event,
-            'delay'      : self.set_delay,
-            'delay_type' : self.set_delay_type,
-            'pulses'     : self.set_pulses,
-            'width'      : self.set_width,
-            'state'      : self.set_state,
-            'polarity'   : self.set_polarity,
+            'internal_trigger' : self._OUTLB + 'IntChan-SP'
+            'event'      : self._INTLB + 'Event-SP',
+            'delay1'     : self._INTLB + 'Delay-SP',
+            'delay2'     : self._OUTLB + 'Delay-SP',
+            'delay3'     : self._OUTLB + 'FineDelay-SP',
+            'delay_type' : self._INTLB + 'DelayType-Sel',
+            'pulses'     : self._INTLB + 'Pulses-Sel',
+            'width'      : self._INTLB + 'Width-Sel',
+            'state'      : self._INTLB + 'State-Sel',
+            'polarity'   : self._INTLB + 'Polrty-Sel',
             }
-        for prop in self._get_not_my_props():
-            map_.pop(prop)
         return map_
 
-    def _get_initial_sp_values(self):
+    def _get_map_pvs_rb(self):
+        map_ = {
+            'internal_trigger' : self._OUTLB + 'IntChan-RB'
+            'event'      : self._INTLB + 'Event-RB',
+            'delay1'     : self._INTLB + 'Delay-RB',
+            'delay2'     : self._OUTLB + 'Delay-RB',
+            'delay3'     : self._OUTLB + 'FineDelay-RB',
+            'delay_type' : self._INTLB + 'DelayType-Sts',
+            'pulses'     : self._INTLB + 'Pulses-Sts',
+            'width'      : self._INTLB + 'Width-Sts',
+            'state'      : self._INTLB + 'State-Sts',
+            'polarity'   : self._INTLB + 'Polrty-Sts',
+            }
+        return map_
+
+    def _get_initial_hl2ll(self):
         map_ = {
             'work_as'    : 0,
             'clock'      : 0,
@@ -420,6 +406,49 @@ class LowLevelTrigEVRMFO:
             }
         return map_
 
+    def _get_write_funs_map(self):
+        map_ = {
+            'work_as'    : lambda x: self.set_int_channel('work_as',x),
+            'clock'      : lambda x: self.set_int_channel('clock',x),
+            'delay'      : self.set_delay,
+            'event'      : lambda x: self.set_simple('event',x),
+            'delay_type' : lambda x: self.set_simple('delay_type',x),
+            'pulses'     : lambda x: self.set_simple('pulses',x),
+            'width'      : lambda x: self.set_simple('width',x),
+            'state'      : lambda x: self.set_simple('state',x),
+            'polarity'   : lambda x: self.set_simple('polarity',x),
+            }
+        return map_
+
+    def set_simple(self,prop,value):
+        self._hl2ll[prop]   = value
+        self.pvs_sp[prop].value = value
+
+    def set_delay(self,value):
+        rf_per = 1/RFFREQ * 1e6
+        delay1_unit = rf_per * 4
+        delay2_unit = rf_per * 4 / 20
+        delay1_unit = 5e-6 # five picoseconds
+
+        delay1  = (value // delay1_unit) * delay1_unit
+        value  -= delay1
+        delay2  = (value // delay2_unit) * delay2_unit
+        value  -= delay2
+        delay3  = (value // delay3_unit) * delay3_unit * 1e3 # in nanoseconds
+
+        self._hl2ll['delay'] = delay1 + delay2 + delay3/1e3
+        self.pvs_sp['delay1'].value = delay1
+        self.pvs_sp['delay2'].value = delay2
+        self.pvs_sp['delay3'].value = delay3
+
+    def set_int_channel(self,prop,value):
+        self._hl2ll[prop] = value
+        if not self._hl2ll['work_as']:
+            self._pvs_sp['internal_trigger'].value = self._internal_trigger
+        else:
+            clock_num = self._hl2ll['clock']
+            self._pvs_sp['internal_trigger'].value = self._NUM_INT + clock_num
+
     def _pvs_statuses(self, channel, prop, value):
         if prop not in self._WRITABLE_PROPS: return
         ind = self._channel_names.index(channel)
@@ -428,51 +457,6 @@ class LowLevelTrigEVRMFO:
 
     def set_propty(prop,value):
         self._WRITE_MAP[prop](value)
-
-
-
-
-    def __init__(self, device, callback=None):
-        self._callback = callback
-        self.prefix = prefix
-
-        # gets the device and output types
-        parts = _PVName(device)
-        if parts.dev_type not in {'AFC','EVR','EVE'}:
-            raise Exception('Wrong device type for TriggerInterface initialization.')
-        match = TRIGCH_REGEXP.find_all(output)
-        if not match:
-            raise Exception('Wrong output definition for TriggerInterface initialization.')
-        # sets the device and output types
-        self.device_type = parts.dev_type
-        self.out_type, self.out_num = match[0]
-
-        gets the prefix for the low_level internal trigger p
-        inter_pref     = device + ':' + _timedata.OPT_LABEL_TEMPLATE.format(int(self.out_num))
-        # gets the prefix for the low level output pvs
-        pref = inter_pref
-        #sets the prefix for the low level pvs as an attribute
-        self.device_prefix = pref
-
-        # build the dictionary with the low level pvs
-        self.low_level_pvs = dict()
-        options = dict(callback=self._low_level_callback, connection_timeout=_TIMEOUT)
-        for pv in self._LOW_LEVEL_PVS['common'] | self._LOW_LEVEL_PVS[(self.device_type,self.out_type)]:
-            self._low_level_pvs[pv] = _epics.PV(self.device_prefix + pv)
-
-        self.low_level_label = EVG + ':' + _timedata.EVENT_LABEL_TEMPLATE.format(self.code)
-        for pv in self.get_database().keys():
-            self.low_level_pvs[pv] = _epics.PV(self.low_level_label+pv,**options )
-
-    def get(self,pv):
-        return self.low_level_pvs[pv].value
-
-    def set(self,pv, value):
-        self.low_level_pvs[pv].value = value
-
-    def _low_level_callback(self,pv_name,pv_value,**kwargs):
-        pv_name = self.low_level_label + pv_name
-        if self._callback: self._callback(pv_name,pv_value,**kwargs)
 
 
 class EventInterface:
