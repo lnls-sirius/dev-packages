@@ -109,8 +109,13 @@ _LOW_LEVEL_TRIGGER_CLASSES = {
     ('afc','opt'): LowLevelTrigEVROPT,
     }
 def get_low_level_trigger_object(device,callback):
-
-    return obj
+    dev = _PVName(device)
+    conn,*_ = TRIGCH_REGEXP.findall(dev.propty.lower())
+    key = (dev.dev_type.lower(), conn)
+    cls_ = _LOW_LEVEL_TRIGGER_CLASSES.get(key)
+    if not cls_:
+        raise Exception('Low Level Trigger Class not defined for device type '+key[0]+' and connection type '+key[1]+'.')
+    return cls_(device, callback)
 
 
 _HIGH_LEVEL_TRIGGER_CLASSES = {
@@ -189,7 +194,7 @@ class TriggerBase:
             'clock'      : lambda x,y: self._CLOCKS[x],
             'event'      : lambda x,y: self._EVENTS[x],
             'delay'      : lambda x,y: x,
-            'delay_type' : lambda x,y: self._DELAY_TYPES[x],,
+            'delay_type' : lambda x,y: self._DELAY_TYPES[x],
             'pulses'     : lambda x,y: x,
             'width'      : lambda x,y: x / self._values_sp['pulses']*1e3,
             'state'      : lambda x,y: self._STATES[x],
@@ -337,8 +342,137 @@ class TriggerGeneric(TriggerBase):
 
     def _get_initial_sp_values(self):
         map_ = super()._get_initial_sp_values()
-        map_[''] =
         return map_
+
+
+class LowLevelTrigEVRMFO:
+    _STATES = ('Dsbl','Enbl')
+    _POLARITIES = ('Normal','Inverse')
+    _FUNCTION_TYPES = ('Trigger', 'Clock')
+    _EVR_NUM_OPT   = 12
+    _EVR_NUM_LC    = 8
+    _EVE_NUM_ELP   = 8
+    _AFC_NUM_OPT   = 10
+    _AFC_NUM_ELP   = 8
+    _EVENTS = tuple(  sorted( _timedata.EVENT_MAPPING.keys() )  )
+    _CLOCKS = tuple([_timedata.CLOCK_LABEL_TEMPLATE.format(i) for i in range(8)])
+
+
+    _LOW_LEVEL_PVS = {
+        'commom': set(
+            'State-Sel', 'State-Sts', 'Pulses-SP', 'Pulses-RB', 'Width-SP', 'Width-RB',
+            'Delay-SP', 'Delay-RB', 'Polrty-Sel', 'Polrty-Sts', 'Event-Sel', 'Event-Sts',),
+        ('evr','lc'): set(
+            'FineDelay-SP', 'FineDelay-RB', 'Delay-SP', 'Delay-RB','OptCh-Sel', 'OptCh-Sts'),
+        ('evr','opt'): set(),
+        ('eve','opt'): set(),
+        ('eve','lc'): set(
+            'FineDelay-SP', 'FineDelay-RB', 'Delay-SP', 'Delay-RB','OptCh-Sel', 'OptCh-Sts' ),
+        ('afc','opt'): set(
+            'OptCh-Sel', 'OptCh-Sts' ),
+        ('afc','elp'): set(
+            'OptCh-Sel', 'OptCh-Sts' ),
+        }
+
+    def __init__(self, device, callback=None):
+        self._WRITE_FUNS = self._get_write_funs_map()
+        self.callback = callback
+        self.prefix = device
+        self._channel_names = get_trigger_channels(devices)
+        len_rb = len(self._channel_names)
+        self._values_sp = self._get_initial_sp_values()
+        self._values_rb = {  key:len_rb*[val] for key,val in self._values_sp.items()  }
+        self._channels = dict()
+        for dev in self._channel_names:
+            low_lev_obj = get_low_level_trigger_object(dev,self._pvs_statuses)
+            self._channel_names.append(dev)
+            self._channels[dev] = low_lev_obj
+            for prop, val in self._values_sp.items():
+                low_lev_obj.set_propty(prop,val)
+
+    def _get_write_funs_map(self):
+        map_ = {
+            'work_as'    : self.set_int_channel,
+            'clock'      : self.set_int_channel,
+            'event'      : self.set_event,
+            'delay'      : self.set_delay,
+            'delay_type' : self.set_delay_type,
+            'pulses'     : self.set_pulses,
+            'width'      : self.set_width,
+            'state'      : self.set_state,
+            'polarity'   : self.set_polarity,
+            }
+        for prop in self._get_not_my_props():
+            map_.pop(prop)
+        return map_
+
+    def _get_initial_sp_values(self):
+        map_ = {
+            'work_as'    : 0,
+            'clock'      : 0,
+            'event'      : 0,
+            'delay'      : 0.0,
+            'delay_type' : 0,
+            'pulses'     : 1,
+            'width'      : 150,
+            'state'      : 0,
+            'polarity'   : 0,
+            }
+        return map_
+
+    def _pvs_statuses(self, channel, prop, value):
+        if prop not in self._WRITABLE_PROPS: return
+        ind = self._channel_names.index(channel)
+        self._values_rb[prop][ind] = self._READ_FUNS[prop](value,ind)
+        self.callback( self.prefix + self._READ_MAP[prop], self._values_rb[prop]  )
+
+    def set_propty(prop,value):
+        self._WRITE_MAP[prop](value)
+
+
+
+
+    def __init__(self, device, callback=None):
+        self._callback = callback
+        self.prefix = prefix
+
+        # gets the device and output types
+        parts = _PVName(device)
+        if parts.dev_type not in {'AFC','EVR','EVE'}:
+            raise Exception('Wrong device type for TriggerInterface initialization.')
+        match = TRIGCH_REGEXP.find_all(output)
+        if not match:
+            raise Exception('Wrong output definition for TriggerInterface initialization.')
+        # sets the device and output types
+        self.device_type = parts.dev_type
+        self.out_type, self.out_num = match[0]
+
+        gets the prefix for the low_level internal trigger p
+        inter_pref     = device + ':' + _timedata.OPT_LABEL_TEMPLATE.format(int(self.out_num))
+        # gets the prefix for the low level output pvs
+        pref = inter_pref
+        #sets the prefix for the low level pvs as an attribute
+        self.device_prefix = pref
+
+        # build the dictionary with the low level pvs
+        self.low_level_pvs = dict()
+        options = dict(callback=self._low_level_callback, connection_timeout=_TIMEOUT)
+        for pv in self._LOW_LEVEL_PVS['common'] | self._LOW_LEVEL_PVS[(self.device_type,self.out_type)]:
+            self._low_level_pvs[pv] = _epics.PV(self.device_prefix + pv)
+
+        self.low_level_label = EVG + ':' + _timedata.EVENT_LABEL_TEMPLATE.format(self.code)
+        for pv in self.get_database().keys():
+            self.low_level_pvs[pv] = _epics.PV(self.low_level_label+pv,**options )
+
+    def get(self,pv):
+        return self.low_level_pvs[pv].value
+
+    def set(self,pv, value):
+        self.low_level_pvs[pv].value = value
+
+    def _low_level_callback(self,pv_name,pv_value,**kwargs):
+        pv_name = self.low_level_label + pv_name
+        if self._callback: self._callback(pv_name,pv_value,**kwargs)
 
 
 class EventInterface:
@@ -371,126 +505,5 @@ class EventInterface:
         self.low_level_pvs[pv].value = value
 
     def _call_callback(self,pv_name,pv_value,**kwargs):
-        pv_name = self.low_level_label + pv_name
-        if self._callback: self._callback(pv_name,pv_value,**kwargs)
-
-
-class TriggerInterface:
-    _STATES = ('Dsbl','Enbl')
-    _POLARITIES = ('Normal','Inverse')
-    _FUNCTION_TYPES = ('Trigger', 'Clock')
-    _EVR_NUM_OPT   = 12
-    _EVR_NUM_LC    = 8
-    _EVE_NUM_ELP   = 8
-    _AFC_NUM_OPT   = 10
-    _AFC_NUM_ELP   = 8
-    _EVENTS = tuple(  sorted( _timedata.EVENT_MAPPING.keys() )  )
-    _CLOCKS = tuple([_timedata.CLOCK_LABEL_TEMPLATE.format(i) for i in range(8)])
-
-    @classmethod
-    def get_database(cls,prefix=''):
-        db = dict()
-        db[prefix + 'TIDevice-Cte']  = {'type' : 'string', 'value':'AS-01:TI-AFC:LC1'}
-        db[prefix + 'State-Sel']     = {'type' : 'enum', 'enums':cls._STATES, 'value':0}
-        db[prefix + 'State-Sts']     = {'type' : 'enum', 'enums':cls._STATES, 'value':0}
-        db[prefix + 'WorkAs-Sel']    = {'type' : 'enum', 'enums':cls._FUNCTION_TYPES,'value':0}
-        db[prefix + 'WorkAs-Sts']    = {'type' : 'enum', 'enums':cls._FUNCTION_TYPES,'value':0}
-        db[prefix + 'Event-Sel']     = {'type' : 'enum', 'enums':cls._EVENTS, 'value':0}
-        db[prefix + 'Event-Sts']     = {'type' : 'enum', 'enums':cls._EVENTS, 'value':0}
-        db[prefix + 'Clock-Sel']     = {'type' : 'enum', 'enums':cls._CLOCKS, 'value':0}
-        db[prefix + 'Clock-Sts']     = {'type' : 'enum', 'enums':cls._CLOCKS, 'value':0}
-        db[prefix + 'Delay-SP']      = {'type' : 'float', 'unit':'us', 'value': 0.0, 'prec': 0}
-        db[prefix + 'Delay-RB']      = {'type' : 'float', 'unit':'us', 'value': 0.0, 'prec': 0}
-        db[prefix + 'Pulses-SP']     = {'type' : 'int',  'value': 1}
-        db[prefix + 'Pulses-RB']     = {'type' : 'int',  'value': 1}
-        db[prefix + 'Duration-SP']   = {'type' : 'float', 'value': 0.0, 'unit':'ms', 'prec': 3}
-        db[prefix + 'Duration-RB']   = {'type' : 'float', 'value': 0.0, 'unit':'ms', 'prec': 3}
-        db[prefix + 'Polrty-Sel']    = {'type' : 'enum', 'enums':cls._POLARITIES, 'value':0}
-        db[prefix + 'Polrty-Sts']    = {'type' : 'enum', 'enums':cls._POLARITIES, 'value':0}
-
-    _LOW_LEVEL_PVS = {
-        'commom': set(
-            'State-Sel', 'State-Sts', 'Pulses-SP', 'Pulses-RB', 'Width-SP', 'Width-RB',
-            'Delay-SP', 'Delay-RB', 'Polrty-Sel', 'Polrty-Sts', 'Event-Sel', 'Event-Sts',),
-        ('evr','lc'): set(
-            'FineDelay-SP', 'FineDelay-RB', 'Delay-SP', 'Delay-RB','OptCh-Sel', 'OptCh-Sts'),
-        ('evr','opt'): set(),
-        ('eve','opt'): set(),
-        ('eve','lc'): set(
-            'FineDelay-SP', 'FineDelay-RB', 'Delay-SP', 'Delay-RB','OptCh-Sel', 'OptCh-Sts' ),
-        ('afc','opt'): set(
-            'OptCh-Sel', 'OptCh-Sts' ),
-        ('afc','elp'): set(
-            'OptCh-Sel', 'OptCh-Sts' ),
-        }
-
-    def __init__(self, prefix, device, output, callback=None):
-        self._callback = callback
-        self.prefix = prefix
-
-        # gets the device and output types
-        parts = _PVName(device)
-        if parts.dev_type not in {'AFC','EVR','EVE'}:
-            raise Exception('Wrong device type for TriggerInterface initialization.')
-        match = TRIGCH_REGEXP.find_all(output)
-        if not match:
-            raise Exception('Wrong output definition for TriggerInterface initialization.')
-        # sets the device and output types
-        self.device_type = parts.dev_type
-        self.out_type, self.out_num = match[0]
-
-        gets the prefix for the low_level internal trigger p
-        inter_pref     = device + ':' + _timedata.OPT_LABEL_TEMPLATE.format(int(self.out_num))
-        # gets the prefix for the low level output pvs
-        if self.device_type == 'evr':
-            if self.out_type == 'opt':
-                if int(self.out_num) > self._EVR_NUM_OPT:
-                    raise Exception('Wrong output number for TriggerInterface initialization.')
-                pref = inter_pref
-            elif self.out_type == 'lc':
-                num = int(self.out_num) - self._EVR_NUM_OPT
-                if not (0 < num <= self._EVR_NUM_LC):
-                    raise Exception('Wrong output number for TriggerInterface initialization.')
-                pref = device + ':' + _timedata.OUT_LABEL_TEMPLATE.format(num)
-            else:
-                raise Exception('Wrong output type for TriggerInterface initialization.')
-        elif self.device_type == 'eve':
-            if self.out_type != 'opt':
-                raise Exception('Wrong output type for TriggerInterface initialization.')
-            if int(self.out_num) > self._EVE_NUM_ELP:
-                raise Exception('Wrong output number for TriggerInterface initialization.')
-            pref = device + ':' + _timedata.OUT_LABEL_TEMPLATE.format(int(self.out_num))
-        else:
-            if self.out_type == 'opt':
-                if int(self.out_num) > self._AFC_NUM_OPT:
-                    raise Exception('Wrong output number for TriggerInterface initialization.')
-                pref = device + ':' + _timedata.OPT_LABEL_TEMPLATE.format(int(self.out_num))
-            elif self.out_type == 'elp':
-                num = int(self.out_num) - self._AFC_NUM_OPT
-                if not (0 < num <= self._AFC_NUM_ELP):
-                    raise Exception('Wrong output number for TriggerInterface initialization.')
-                pref = device + ':' + _timedata.OUT_LABEL_TEMPLATE.format(num)
-            else:
-                raise Exception('Wrong output type for TriggerInterface initialization.')
-        #sets the prefix for the low level pvs as an attribute
-        self.device_prefix = pref
-
-        # build the dictionary with the low level pvs
-        self.low_level_pvs = dict()
-        options = dict(callback=self._low_level_callback, connection_timeout=_TIMEOUT)
-        for pv in self._LOW_LEVEL_PVS['common'] | self._LOW_LEVEL_PVS[(self.device_type,self.out_type)]:
-            self._low_level_pvs[pv] = _epics.PV(self.device_prefix + pv)
-
-        self.low_level_label = EVG + ':' + _timedata.EVENT_LABEL_TEMPLATE.format(self.code)
-        for pv in self.get_database().keys():
-            self.low_level_pvs[pv] = _epics.PV(self.low_level_label+pv,**options )
-
-    def get(self,pv):
-        return self.low_level_pvs[pv].value
-
-    def set(self,pv, value):
-        self.low_level_pvs[pv].value = value
-
-    def _low_level_callback(self,pv_name,pv_value,**kwargs):
         pv_name = self.low_level_label + pv_name
         if self._callback: self._callback(pv_name,pv_value,**kwargs)
