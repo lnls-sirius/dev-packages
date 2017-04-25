@@ -56,7 +56,10 @@ def conv_epics2pcaspy_lim_names(name, inverted=False):
         'HOPR' : 'hilim',
         'HIGH' : 'hi',
         'HIHI' : 'hihi',
-        'DRVH' : 'DRVH'
+        'DRVH' : 'DRVH',
+        'TSTV' : 'TSTV',
+        'TSTR' : 'TSTR',
+
     }
     epics2pcaspy_lim_names_table_i = {
         'DRVL' : 'DRVH',
@@ -66,7 +69,9 @@ def conv_epics2pcaspy_lim_names(name, inverted=False):
         'HOPR' : 'lolim',
         'HIGH' : 'lo',
         'HIHI' : 'lolo',
-        'DRVH' : 'DRVL'
+        'DRVH' : 'DRVL',
+        'TSTV' : 'TSTV',
+        'TSTR' : 'TSTR',
     }
 
     if inverted:
