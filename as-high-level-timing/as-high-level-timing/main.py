@@ -73,6 +73,21 @@ class App:
             return True # when returning True super().write of PCASDrive is invoked
 
 
+def _get_initial_hl2ll():
+    map_ = {
+        'work_as'    : 0,
+        'clock'      : 0,
+        'event'      : 0,
+        'delay'      : 0.0,
+        'delay_type' : 0,
+        'pulses'     : 1,
+        'width'      : 150,
+        'state'      : 0,
+        'polarity'   : 0,
+        }
+    return map_
+
+
 def check_triggers_consistency():
     triggers = _get_triggers()
     from_evg = _timedata.get_connections_from_evg()
@@ -91,6 +106,7 @@ def check_triggers_consistency():
                 return False
     return True
 
+
 def get_trigger_channels(devs):
     from_evg = _timedata.get_connections_from_evg()
     twds_evg = _timedata.get_connections_twrds_evg()
@@ -102,6 +118,7 @@ def get_trigger_channels(devs):
         channels += (dev+':'+conn,)
     return sorted(channels)
 
+
 _LOW_LEVEL_TRIGGER_CLASSES = {
     ('evr','mfo'): LL_TrigEVRMFO,
     ('evr','opt'): LL_TrigEVROPT,
@@ -110,14 +127,14 @@ _LOW_LEVEL_TRIGGER_CLASSES = {
     ('afc','elp'): LL_TrigEVRELP,
     ('afc','opt'): LL_TrigEVROPT,
     }
-def get_low_level_trigger_object(device,callback):
+def get_low_level_trigger_object(device,callback,initial_hl2ll):
     dev = _PVName(device)
     conn, num = TRIGCH_REGEXP.findall(dev.propty.lower())
     key = (dev.dev_type.lower(), conn)
     cls_ = _LOW_LEVEL_TRIGGER_CLASSES.get(key)
     if not cls_:
         raise Exception('Low Level Trigger Class not defined for device type '+key[0]+' and connection type '+key[1]+'.')
-    return cls_(dev.dev_name, conn, num, callback)
+    return cls_(dev.dev_name, conn, num, callback, initial_hl2ll)
 
 
 _HIGH_LEVEL_TRIGGER_CLASSES = {
@@ -180,15 +197,21 @@ class HL_TrigBase:
         self.prefix = trigger + ':'
         self._channel_names = get_trigger_channels(devices)
         len_rb = len(self._channel_names)
-        self._hl2ll = self._get_initial_hl2ll()
+        self._hl2ll = self._get_initial_hl2ll() # high level to low level interface
         self._values_rb = {  key:len_rb*[val] for key,val in self._hl2ll.items()  }
         self._channels = dict()
         for dev in self._channel_names:
-            low_lev_obj = get_low_level_trigger_object(dev,self._pvs_statuses)
+            low_lev_obj = get_low_level_trigger_object(
+                                device = dev,
+                                callback = self._pvs_value_rb,
+                                initial_hl2ll=_copy.deepcopy(self._hl2ll)
+                                )
             self._channel_names.append(dev)
             self._channels[dev] = low_lev_obj
             for prop, val in self._hl2ll.items():
                 low_lev_obj.set_propty(prop,val)
+
+    def _get_initial_hl2ll(self): return _get_initial_hl2ll()
 
     def _get_write_funs_map(self):
         map_ = {
@@ -218,20 +241,6 @@ class HL_TrigBase:
             }
         return map_
 
-    def _get_initial_hl2ll(self):
-        map_ = {
-            'work_as'    : 0,
-            'clock'      : 0,
-            'event'      : 0,
-            'delay'      : 0.0,
-            'delay_type' : 0,
-            'pulses'     : 1,
-            'width'      : 150,
-            'state'      : 0,
-            'polarity'   : 0,
-            }
-        return map_
-
     def get_database(self):
         db = dict()
         pre = self.prefix
@@ -244,12 +253,12 @@ class HL_TrigBase:
         db[pre + 'Event-Sts']   = {'type':'int',  'value':0, 'count':len_rb}
         db[pre + 'Clock-Sel']   = {'type':'enum', 'value':0, 'enums':self._CLOCKS}
         db[pre + 'Clock-Sts']   = {'type':'int',  'value':0, 'count':len_rb}
-        db[pre + 'Delay-SP']    = {'type':'float', 'value':0.0, 'unit':'us', 'prec': 4}
-        db[pre + 'Delay-RB']    = {'type':'float', 'value':0.0, 'unit':'us', 'prec': 4, 'count':len_rb}
+        db[pre + 'Delay-SP']    = {'type':'float','value':0.0, 'unit':'us', 'prec': 4}
+        db[pre + 'Delay-RB']    = {'type':'float','value':0.0, 'unit':'us', 'prec': 4, 'count':len_rb}
         db[pre + 'Pulses-SP']   = {'type':'int',  'value':1}
         db[pre + 'Pulses-RB']   = {'type':'int',  'value':1, 'count':len_rb}
-        db[pre + 'Duration-SP'] = {'type':'float', 'value':0.0, 'unit':'ms', 'prec': 4}
-        db[pre + 'Duration-RB'] = {'type':'float', 'value':0.0, 'unit':'ms', 'prec': 4, 'count':len_rb}
+        db[pre + 'Duration-SP'] = {'type':'float','value':0.0, 'unit':'ms', 'prec': 4}
+        db[pre + 'Duration-RB'] = {'type':'float','value':0.0, 'unit':'ms', 'prec': 4, 'count':len_rb}
         db[pre + 'Polrty-Sel']  = {'type':'enum', 'value':0, 'enums':self._POLARITIES}
         db[pre + 'Polrty-Sts']  = {'type':'int',  'value':0, 'count':len_rb}
 
@@ -259,7 +268,7 @@ class HL_TrigBase:
             db2[pre + self._READ_MAP[prop] ] = db[self._READ_MAP[prop] ]
         return db2
 
-    def _pvs_statuses(self, channel, prop, value):
+    def _pvs_values_rb(self, channel, prop, value):
         if prop not in self._WRITABLE_PROPS: return
         ind = self._channel_names.index(channel)
         self._values_rb[prop][ind] = self._READ_FUNS[prop](value,ind)
@@ -277,6 +286,7 @@ class HL_TrigBase:
 class HL_TrigSimple(HL_TrigBase):
     _WRITABLE_PROPS = {'event','delay','state'}
 
+
 class HL_TrigRmpBO(HL_TrigBase):
     _WRITABLE_PROPS = {'event','state'}
 
@@ -287,14 +297,8 @@ class HL_TrigRmpBO(HL_TrigBase):
         return map_
 
 
-class HL_TrigCavity(HL_TrigBase):
+class HL_TrigCavity(HL_TrigRmpBO):
     _WRITABLE_PROPS = {'event','state','pulses'}
-
-    def _get_initial_hl2ll(self):
-        map_ = super()._get_initial_hl2ll()
-        map_['width'] = 490e3/2000
-        map_['pulses'] = 2000
-        return map_
 
 
 class HL_TrigPSSI(HL_TrigBase):
@@ -347,20 +351,27 @@ class LL_TrigEVRMFO:
 
     def __init__(self, device, conn, num,  callback=None, initial_hl2ll = None):
         self._WRITE_FUNS = self._get_write_funs_map()
+        self._WRITE_PVS_MAP = self.get_map_pvs_sp()
+        self._READ_PVS_MAP  = self.get_map_pvs_rb()
+        self._READ_PVS_MAP_INV = { val:key for key,val in self._READ_PVS_MAP.items() }
         self.callback = callback
         self.prefix = device + ':'
         self._OUTLB = self._OUTTMP.format(num)
-        self._INTLB = self._INTLB.format(self._NUM_OPT + num)
-
-        self._hl2ll = initial_hl2ll or self._get_initial_hl2ll()
-
+        self._INTLB = self._INTTMP.format(self._get_num_int(num))
+        self._hl2ll = initial_hl2ll or _get_initial_hl2ll()
         self._pvs_sp = dict()
         self._pvs_rb = dict()
-        for dev in self._channel_names:
-            self._pvs_sp[pv]  = _epics.PV()
-            self._channels[dev] = low_lev_obj
-            for prop, val in self._hl2ll.items():
-                low_lev_obj.set_propty(prop,val)
+        for prop, pv in self._WRITE_PVS_MAP.items():
+            self._pvs_sp[prop]  = _epics.PV(self.prefix + pv,
+                                            callback = self._pvs_sp_callback,
+                                            timeout=_TIMEOUT)
+        for prop, pv in self._READ_PVS_MAP.items():
+            self._pvs_rb[prop]  = _epics.PV(self.prefix + pv,
+                                            callback = self._pvs_rb_callback,
+                                            timeout=_TIMEOUT)
+
+    def _get_num_int(self,num):
+        return self._NUM_OPT + num
 
     def _get_map_pvs_sp(self):
         map_ = {
@@ -392,20 +403,6 @@ class LL_TrigEVRMFO:
             }
         return map_
 
-    def _get_initial_hl2ll(self):
-        map_ = {
-            'work_as'    : 0,
-            'clock'      : 0,
-            'event'      : 0,
-            'delay'      : 0.0,
-            'delay_type' : 0,
-            'pulses'     : 1,
-            'width'      : 150,
-            'state'      : 0,
-            'polarity'   : 0,
-            }
-        return map_
-
     def _get_write_funs_map(self):
         map_ = {
             'work_as'    : lambda x: self.set_int_channel('work_as',x),
@@ -419,6 +416,11 @@ class LL_TrigEVRMFO:
             'polarity'   : lambda x: self.set_simple('polarity',x),
             }
         return map_
+
+    def _pvs_rb_callback(self,pv_name,pv_value,**kwargs):
+        pv = pv_name[len(self.prefix):]
+        self.callback(self._READ_PVS_MAP_INV[pv], value)
+
 
     def set_simple(self,prop,value):
         self._hl2ll[prop]   = value
@@ -449,14 +451,14 @@ class LL_TrigEVRMFO:
             clock_num = self._hl2ll['clock']
             self._pvs_sp['internal_trigger'].value = self._NUM_INT + clock_num
 
-    def _pvs_statuses(self, channel, prop, value):
+    def _pvs_values_rb(self, channel, prop, value):
         if prop not in self._WRITABLE_PROPS: return
         ind = self._channel_names.index(channel)
         self._values_rb[prop][ind] = self._READ_FUNS[prop](value,ind)
         self.callback( self.prefix + self._READ_MAP[prop], self._values_rb[prop]  )
 
     def set_propty(prop,value):
-        self._WRITE_MAP[prop](value)
+        self._WRITE_FUNS[prop](value)
 
 
 class EventInterface:
