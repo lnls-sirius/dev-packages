@@ -17,6 +17,41 @@ RFFREQ = 299792458/518.396*864
 
 TRIGCH_REGEXP = _re.compile('([a-z]+)([0-9]*)',_re.IGNORECASE)
 
+
+class EventInterface:
+    _MODES = ('Disabled','Continuous','Injection','Single')
+    _DELAY_TYPES = ('Fixed','Incr')
+
+    @classmethod
+    def get_database(cls,prefix=''):
+        db = dict()
+        db[prefix + 'Delay-SP']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'unit':'us', 'prec': 3}
+        db[prefix + 'Delay-RB']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'unit':'us','prec': 3}
+        db[prefix + 'Mode-Sel']      = {'type' : 'enum', 'enums':cls._MODES, 'value':1}
+        db[prefix + 'Mode-Sts']      = {'type' : 'enum', 'enums':cls._MODES, 'value':1}
+        db[prefix + 'DelayType-Sel'] = {'type' : 'enum', 'enums':cls._DELAY_TYPES, 'value':1}
+        db[prefix + 'DelayType-Sts'] = {'type' : 'enum', 'enums':cls._DELAY_TYPES, 'value':1}
+
+    def __init__(self,name,callback=None):
+        self.callback = callback
+        self.low_level_code  = _timedata.EVENT_MAPPING[name]
+        self.low_level_label = EVG + ':' + _timedata.EVENT_LABEL_TEMPLATE.format(self.code)
+        self.low_level_pvs = dict()
+        options = dict(callback=self._call_callback, connection_timeout=_TIMEOUT)
+        for pv in self.get_database().keys():
+            self.low_level_pvs[pv] = _epics.PV(self.low_level_label+pv,**options )
+
+    def get_propty(self,pv):
+        return self.low_level_pvs[pv].value
+
+    def set_propty(self,pv, value):
+        self.low_level_pvs[pv].value = value
+
+    def _call_callback(self,pv_name,pv_value,**kwargs):
+        pv_name = self.low_level_label + pv_name
+        if self._callback: self._callback(pv_name,pv_value,**kwargs)
+
+
 _LOW_LEVEL_TRIGGER_CLASSES = {
     ('evr','mfo'): _LL_TrigEVRMFO,
     ('evr','opt'): _LL_TrigEVROPT,
