@@ -1,7 +1,7 @@
+import time
 from pydm.PyQt.QtGui import QLabel, QApplication, QColor, QPalette, QWidget, QScrollBar
 from pydm.PyQt.QtCore import Qt, pyqtSignal, pyqtSlot, pyqtProperty, QState, QStateMachine, QPropertyAnimation, QByteArray
 from pydm.widgets.channel import PyDMChannel
-import time
 
 class PyDMScrollBar(QScrollBar):
 
@@ -16,38 +16,45 @@ class PyDMScrollBar(QScrollBar):
         self._channels = None
         self.channel = channel
         self._channeltype = None
-        self.setMinimum(0)
-        self.setMaximum(350)
-        self.setMinimumWidth(90)
 
         self.valueChanged.connect(self.value_changed)
+
 
     @pyqtSlot(bool)
     def connectionStateChanged(self, connected):
         self._connected = connected
         if connected:
-            print("Connected")
+            #print("Connected")
             self.connected_signal.emit()
         else:
             self.disconnected_signal.emit()
 
     @pyqtSlot(float)
     def receiveValue(self, value):
-        print("Scroll Bar Received Value {}".format(value))
+        #print("Scroll Bar Received Value {}".format(value))
         self._channeltype = type(value)
         self.setValue(value)
 
     @pyqtSlot()
     def value_changed(self):
         ''' Emits a value changed signal '''
-        print("Scroll Bar Emitting {}".format(self.value()))
-        self.value_changed_signal[self._channeltype].emit(self._channeltype(self.value()))
+        if self._connected:
+            #print("Scroll Bar Emitting {}".format(self.value()))
+            self.value_changed_signal[self._channeltype].emit(self._channeltype(self.value()))
 
+    @pyqtSlot(int)
+    def receiveLowerLimit(self, value):
+        self.setMinimum(value)
+    @pyqtSlot(int)
+    def receiveUpperLimit(self, value):
+        self.setMaximum(value)
 
     def channels(self):
         if self._channels is None:
             self._channels = [PyDMChannel(  address=self.channel,
                                             connection_slot=self.connectionStateChanged,
                                             value_slot=self.receiveValue,
-                                            value_signal=self.value_changed_signal)]
+                                            value_signal=self.value_changed_signal,
+                                            lower_limit_slot=self.receiveLowerLimit,
+                                            upper_limit_slot=self.receiveUpperLimit)]
         return self._channels

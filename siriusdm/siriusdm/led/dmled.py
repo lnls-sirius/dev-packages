@@ -41,7 +41,7 @@ class PyDMLed(Led):
     def receiveValue(self, value):
         if self._enum_strings is None: #PV of type integer or float
             if self._bit is None: #Led represents value of PV
-                if isinstance(value, str):
+                if value and isinstance(value, str):
                     value = int(value)
                 if value:
                     self.setGreen()
