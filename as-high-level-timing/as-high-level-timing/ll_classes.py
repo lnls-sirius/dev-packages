@@ -13,24 +13,27 @@ from siriuspy.namesys import SiriusPVName as _PVName
 
 _TIMEOUT = 0.05
 
-RFFREQ = 299792458/518.396*864
+RFFREQ = 299792458/518.396*864  # This should be read from the RF generator Setpoint
+RF_PER = 1/RFFREQ * 1e6         # In micro seconds
+D1_STEP = RF_PER * 4
+D2_STEP = RF_PER * 4 / 20
+D3_STEP = 5e-6                  # five picoseconds
+
 
 TRIGCH_REGEXP = _re.compile('([a-z]+)([0-9]*)',_re.IGNORECASE)
 
 
 class EventInterface:
-    _MODES = ('Disabled','Continuous','Injection','Single')
-    _DELAY_TYPES = ('Fixed','Incr')
 
     @classmethod
     def get_database(cls,prefix=''):
         db = dict()
         db[prefix + 'Delay-SP']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'unit':'us', 'prec': 3}
         db[prefix + 'Delay-RB']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'unit':'us','prec': 3}
-        db[prefix + 'Mode-Sel']      = {'type' : 'enum', 'enums':cls._MODES, 'value':1}
-        db[prefix + 'Mode-Sts']      = {'type' : 'enum', 'enums':cls._MODES, 'value':1}
-        db[prefix + 'DelayType-Sel'] = {'type' : 'enum', 'enums':cls._DELAY_TYPES, 'value':1}
-        db[prefix + 'DelayType-Sts'] = {'type' : 'enum', 'enums':cls._DELAY_TYPES, 'value':1}
+        db[prefix + 'Mode-Sel']      = {'type' : 'enum', 'enums':_tm.MODES, 'value':1}
+        db[prefix + 'Mode-Sts']      = {'type' : 'enum', 'enums':_tm.MODES, 'value':1}
+        db[prefix + 'DelayType-Sel'] = {'type' : 'enum', 'enums':_tm.DELAY_TYPES, 'value':1}
+        db[prefix + 'DelayType-Sts'] = {'type' : 'enum', 'enums':_tm.DELAY_TYPES, 'value':1}
 
     def __init__(self,name,callback=None):
         self.callback = callback
@@ -78,12 +81,12 @@ class _LL_TrigEVRMFO:
     _REMOVE_PROPS = {}
 
     def __init__(self, device, conn, num,  callback, initial_hl2ll):
-        self._WRITE_FUNS = self._get_write_funs_map()
-        self._READ_FUNS = self._get_read_funs_map()
-        self._WRITE_PVS_MAP     = self.get_map_pvs_sp()
-        self._WRITE_PVS_MAP_INV = { val:key for key,val in self._WRITE_PVS_MAP.items() }
-        self._READ_PVS_MAP      = self.get_map_pvs_rb()
-        self._READ_PVS_MAP_INV  = { val:key for key,val in self._READ_PVS_MAP.items() }
+        self._HLPROP_FUNS = self._get_hlprop_funs_map()
+        self._LLPROP_FUNS = self._get_llprop_funs_map()
+        self._LLPROP_2_PVSP = self._get_llprop_2_pvsp_map()
+        self._PVSP_2_LLPROP = { val:key for key,val in self._LLPROP_2_PVSP.items() }
+        self._LLPROP_2_PVRB = self._get_llprop_2_pvrb_map()
+        self._PVRB_2_LLPROP = { val:key for key,val in self._LLPROP_2_PVRB.items() }
         self.callback = callback
         self.prefix = device + ':'
         self._OUTLB = self._OUTTMP.format(num)
@@ -91,11 +94,11 @@ class _LL_TrigEVRMFO:
         self._hl2ll = initial_hl2ll
         self._pvs_sp = dict()
         self._pvs_rb = dict()
-        for prop, pv in self._WRITE_PVS_MAP.items():
+        for prop, pv in self._LLPROP_2_PVSP.items():
             self._pvs_sp[prop]  = _epics.PV(self.prefix + pv,
                                             callback = self._pvs_sp_callback,
                                             timeout=_TIMEOUT)
-        for prop, pv in self._READ_PVS_MAP.items():
+        for prop, pv in self._LLPROP_2_PVRB.items():
             self._pvs_rb[prop]  = _epics.PV(self.prefix + pv,
                                             callback = self._pvs_rb_callback,
                                             timeout=_TIMEOUT)
@@ -103,14 +106,13 @@ class _LL_TrigEVRMFO:
     def _get_num_int(self,num):
         return self._NUM_OPT + num
 
-    def _get_map_pvs_sp(self):
+    def _get_llprop_2_pvsp_map(self):
         map_ = {
             'internal_trigger' : self._OUTLB + 'IntChan-SP',
             'event'      : self._INTLB + 'Event-SP',
             'delay1'     : self._INTLB + 'Delay-SP',
             'delay2'     : self._OUTLB + 'Delay-SP',
             'delay3'     : self._OUTLB + 'FineDelay-SP',
-            'delay_type' : self._INTLB + 'DelayType-Sel',
             'pulses'     : self._INTLB + 'Pulses-Sel',
             'width'      : self._INTLB + 'Width-Sel',
             'state'      : self._INTLB + 'State-Sel',
@@ -120,14 +122,13 @@ class _LL_TrigEVRMFO:
             map_.pop(prop)
         return map_
 
-    def _get_map_pvs_rb(self):
+    def _get_llprop_2_pvrb_map(self):
         map_ = {
             'internal_trigger' : self._OUTLB + 'IntChan-RB',
             'event'      : self._INTLB + 'Event-RB',
             'delay1'     : self._INTLB + 'Delay-RB',
             'delay2'     : self._OUTLB + 'Delay-RB',
             'delay3'     : self._OUTLB + 'FineDelay-RB',
-            'delay_type' : self._INTLB + 'DelayType-Sts',
             'pulses'     : self._INTLB + 'Pulses-Sts',
             'width'      : self._INTLB + 'Width-Sts',
             'state'      : self._INTLB + 'State-Sts',
@@ -137,28 +138,26 @@ class _LL_TrigEVRMFO:
             map_.pop(prop)
         return map_
 
-    def _get_write_funs_map(self):
+    def _get_hlprop_funs_map(self):
         map_ = {
-            'work_as'    : lambda x: self.set_int_channel('work_as',x),
-            'clock'      : lambda x: self.set_int_channel('clock',x),
-            'delay'      : self.set_delay,
-            'event'      : lambda x: self.set_simple('event',x),
-            'delay_type' : lambda x: self.set_simple('delay_type',x),
-            'pulses'     : lambda x: self.set_simple('pulses',x),
-            'width'      : lambda x: self.set_simple('width',x),
-            'state'      : lambda x: self.set_simple('state',x),
-            'polarity'   : lambda x: self.set_simple('polarity',x),
+            'work_as'    : lambda x: self._set_int_channel('work_as',x),
+            'clock'      : lambda x: self._set_int_channel('clock',x),
+            'delay'      : self._set_delay,
+            'event'      : lambda x: self._set_simple('event',x),
+            'pulses'     : lambda x: self._set_simple('pulses',x),
+            'width'      : lambda x: self._set_simple('width',x),
+            'state'      : lambda x: self._set_simple('state',x),
+            'polarity'   : lambda x: self._set_simple('polarity',x),
             }
         return map_
 
-    def _get_read_funs_map(self):
+    def _get_llprop_funs_map(self):
         map_ = {
-            'internal_trigger' : self.get_int_channel,
+            'internal_trigger' : self._get_int_channel,
             'event'      : lambda x,ty=None: {'event':x},
-            'delay1'     : self.get_delay,
-            'delay2'     : self.get_delay,
-            'delay3'     : self.get_delay,
-            'delay_type' : lambda x,ty=None: {'delay_type':x},
+            'delay1'     : self._get_delay,
+            'delay2'     : self._get_delay,
+            'delay3'     : self._get_delay,
             'pulses'     : lambda x,ty=None: {'pulses':x},
             'width'      : lambda x,ty=None: {'width':x},
             'state'      : lambda x,ty=None: {'state':x},
@@ -170,47 +169,42 @@ class _LL_TrigEVRMFO:
 
     def _pvs_rb_callback(self,pv_name,pv_value,**kwargs):
         pv = _PVName(pv_name)
-        props = self._READ_FUNS[ self._READ_PVS_MAP_INV[pv.propty] ](pv_value)
+        props = self._LLPROP_FUNS[ self._PVRB_2_LLPROP[pv.propty] ](pv_value)
         for prop,value in props.items():
             self.callback(pv.dev_name, prop, value)
 
     def _pvs_sp_callback(self,pv_name,pv_value,**kwargs):
         if not _FORCE_EQUAL: return
         pv = _PVName(pv_name)
-        props = self._READ_FUNS[ self._WRITE_PVS_MAP_INV[pv.propty] ](pv_value, ty='sp')
+        props = self._LLPROP_FUNS[ self._PVSP_2_LLPROP[pv.propty] ](pv_value, ty='sp')
         for prop,value in props.items():
             if self._hl2ll[prop] != value:
                 self.set_propty(prop, value)
 
-    def set_simple(self,prop,value):
+    def _set_simple(self,prop,value):
         self._hl2ll[prop]   = value
         self.pvs_sp[prop].value = value
 
-    def get_delay(self, value, ty = None):
+    def _get_delay(self, value, ty = None):
         pvs = self._pvs_sp if ty else self._pvs_rb
         delay  = pvs['delay1'].value
         delay += pvs['delay2'].value
         delay += pvs['delay3'].value * 1e-3  # nanoseconds
         return {'delay':delay}
 
-    def set_delay(self,value):
-        rf_per = 1/RFFREQ * 1e6
-        delay1_unit = rf_per * 4
-        delay2_unit = rf_per * 4 / 20
-        delay1_unit = 5e-6 # five picoseconds
-
-        delay1  = (value // delay1_unit) * delay1_unit
+    def _set_delay(self,value):
+        delay1  = (value // D1_STEP) * D1_STEP
         value  -= delay1
-        delay2  = (value // delay2_unit) * delay2_unit
+        delay2  = (value // D2_STEP) * D2_STEP
         value  -= delay2
-        delay3  = (value // delay3_unit) * delay3_unit * 1e3 # in nanoseconds
+        delay3  = (value // D3_STEP) * D3_STEP * 1e3 # in nanoseconds
 
         self._hl2ll['delay'] = delay1 + delay2 + delay3/1e3
         self.pvs_sp['delay1'].value = delay1
         self.pvs_sp['delay2'].value = delay2
         self.pvs_sp['delay3'].value = delay3
 
-    def get_int_channel(self, value, ty = None):
+    def _get_int_channel(self, value, ty = None):
         pvs = self._pvs_sp if ty else self._pvs_rb
         props = dict()
         if value < self._NUM_INT:
@@ -220,7 +214,7 @@ class _LL_TrigEVRMFO:
             props['clock'] = value - self._NUM_INT
         return props
 
-    def set_int_channel(self,prop,value):
+    def _set_int_channel(self,prop,value):
         self._hl2ll[prop] = value
         if not self._hl2ll['work_as']:
             self._pvs_sp['internal_trigger'].value = self._internal_trigger
@@ -228,14 +222,8 @@ class _LL_TrigEVRMFO:
             clock_num = self._hl2ll['clock']
             self._pvs_sp['internal_trigger'].value = self._NUM_INT + clock_num
 
-    def _pvs_values_rb(self, channel, prop, value):
-        if prop not in self._WRITABLE_PROPS: return
-        ind = self._channel_names.index(channel)
-        self._values_rb[prop][ind] = self._READ_FUNS[prop](value,ind)
-        self.callback( self.prefix + self._READ_MAP[prop], self._values_rb[prop]  )
-
     def set_propty(prop,value):
-        self._WRITE_FUNS[prop](value)
+        self._HLPROP_FUNS[prop](value)
 
 
 class _LL_TrigEVROPT(_LL_TrigEVRMFO):
@@ -247,15 +235,13 @@ class _LL_TrigEVROPT(_LL_TrigEVRMFO):
     def _get_num_int(self,num):
         return num
 
-    def get_delay(self, value, ty = None):
+    def _get_delay(self, value, ty = None):
         pvs = self._pvs_sp if ty else self._pvs_rb
         delay  = pvs['delay1'].value
         return {'delay':delay}
 
-    def set_delay(self,value):
-        rf_per = 1/RFFREQ * 1e6
-        delay1_unit = rf_per * 4
-        delay1  = (value // delay1_unit) * delay1_unit
+    def _set_delay(self,value):
+        delay1  = (value // D1_STEP) * D1_STEP
         self._hl2ll['delay'] = delay1
         self.pvs_sp['delay1'].value = delay1
 

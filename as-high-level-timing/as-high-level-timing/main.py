@@ -18,6 +18,25 @@ from .ll_classes import EventInterface
 __version__ = _pvs.__version__
 _TIMEOUT = 0.05
 
+def check_triggers_consistency():
+    triggers = _get_triggers()
+    from_evg = _timedata.get_connections_from_evg()
+    twds_evg = _timedata.get_connections_twrds_evg()
+    for trig, val in triggers.items():
+        devs = set(val['devices'])
+        for dev in devs:
+            _tmp = twds_evg.get(dev)
+            if not _tmp:
+                print('Device '+dev+' defined in the high level trigger '+trig+' not specified in timing connections data.')
+                return False
+            conn,up_dev = _tmp.popitem()
+            diff_devs = set(from_evg[up_dev[0]][up_dev[1]]) - devs
+            if diff_devs:
+                print('Devices: '+diff_devs+' are connected to the same output of '+up_dev+' as '+dev+' but are not related to the sam trigger ('+trig+').')
+                return False
+    return True
+
+
 class App:
     pvs_database = _pvs.pvs_database
 
@@ -55,22 +74,3 @@ class App:
             ev,pv = EVENT_REGEXP.findall(parts.propty)
             self._events[ev].set_propty(pv, value)
             return True # when returning True super().write of PCASDrive is invoked
-
-
-def check_triggers_consistency():
-    triggers = _get_triggers()
-    from_evg = _timedata.get_connections_from_evg()
-    twds_evg = _timedata.get_connections_twrds_evg()
-    for trig, val in triggers.items():
-        devs = set(val['devices'])
-        for dev in devs:
-            _tmp = twds_evg.get(dev)
-            if not _tmp:
-                print('Device '+dev+' defined in the high level trigger '+trig+' not specified in timing connections data.')
-                return False
-            conn,up_dev = _tmp.popitem()
-            diff_devs = set(from_evg[up_dev[0]][up_dev[1]]) - devs
-            if diff_devs:
-                print('Devices: '+diff_devs+' are connected to the same output of '+up_dev+' as '+dev+' but are not related to the sam trigger ('+trig+').')
-                return False
-    return True
