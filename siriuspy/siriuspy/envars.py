@@ -81,6 +81,7 @@ repo_names = {
                     'discs-management',
                     'org.csstudio.product',
                     'dev-packages',
-                    'hla'],
+                    'hla',
+                    'pydm'],
 
 }
