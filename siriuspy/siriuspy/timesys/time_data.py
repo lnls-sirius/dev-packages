@@ -22,6 +22,12 @@ CLOCK_LABEL_TEMPLATE = 'Clock{0:d}'
 OPT_LABEL_TEMPLATE   = 'OPT{0:2d}'
 OUT_LABEL_TEMPLATE   = 'OUT{0:1d}'
 
+MODES       = ('Disabled','Continuous','Injection','Single')
+STATES      = ('Dsbl','Enbl')
+POLARITIES  = ('Normal','Inverse')
+DELAY_TYPES = ('Incr','Fixed')
+CLOCKS = tuple([CLOCK_LABEL_TEMPLATE.format(i) for i in range(8)])
+
 _timeout = 1.0
 _LOCAL = False
 
