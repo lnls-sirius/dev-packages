@@ -373,14 +373,20 @@ def get_all_devices():
     timedata =  _get_timedata()
     return timedata.all_devices
 
-def add_bbb_info(connections_dict):
+def add_bbb_info(connections_dict = None):
     """Return a dictionary with the beaglebone to power supply mapping."""
     timedata =  _get_timedata()
+    if connections_dict is None:
+        from siriuspy import pwrsupply
+        connections_dict = pwrsupply.bbbdata.get_mapping()
     return timedata.add_bbb_info(connections_dict)
 
-def add_crates_info(connections_dict):
+def add_crates_info(connections_dict = None):
     """Return a dictionary with the beaglebone to power supply mapping."""
     timedata =  _get_timedata()
+    if connections_dict is None:
+        from siriuspy import diagnostics
+        connections_dict = diagnostics.cratesdata.get_mapping()
     return timedata.add_crates_info(connections_dict)
 
 def plot_network():
