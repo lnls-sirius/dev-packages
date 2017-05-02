@@ -1,117 +1,117 @@
 import copy as _copy
 
 _TRIGGERS= {
-'SI-Glob:TI-Corrs': {
+'SI-Glob:TI-Corrs:': {
     'events':('MigSI','Orbit','Study'),
     'trigger_type':'PSSI',
     'devices': (
-        'SI-01M1:PS-CH', 'SI-01M1:PS-CV', 'SI-01M2:PS-CH', 'SI-01M2:PS-CV', 'SI-01C1:PS-CH', 'SI-01C1:PS-CV', 'SI-01C2:PS-CH', 'SI-01C2:PS-CV-1', 'SI-01C2:PS-CV-2', 'SI-01C3:PS-CH', 'SI-01C3:PS-CV-1', 'SI-01C3:PS-CV-2', 'SI-01C4:PS-CH', 'SI-01C4:PS-CV',
-        'SI-02M1:PS-CH', 'SI-02M1:PS-CV', 'SI-02M2:PS-CH', 'SI-02M2:PS-CV', 'SI-02C1:PS-CH', 'SI-02C1:PS-CV', 'SI-02C2:PS-CH', 'SI-02C2:PS-CV-1', 'SI-02C2:PS-CV-2', 'SI-02C3:PS-CH', 'SI-02C3:PS-CV-1', 'SI-02C3:PS-CV-2', 'SI-02C4:PS-CH', 'SI-02C4:PS-CV',
-        'SI-03M1:PS-CH', 'SI-03M1:PS-CV', 'SI-03M2:PS-CH', 'SI-03M2:PS-CV', 'SI-03C1:PS-CH', 'SI-03C1:PS-CV', 'SI-03C2:PS-CH', 'SI-03C2:PS-CV-1', 'SI-03C2:PS-CV-2', 'SI-03C3:PS-CH', 'SI-03C3:PS-CV-1', 'SI-03C3:PS-CV-2', 'SI-03C4:PS-CH', 'SI-03C4:PS-CV',
-        'SI-04M1:PS-CH', 'SI-04M1:PS-CV', 'SI-04M2:PS-CH', 'SI-04M2:PS-CV', 'SI-04C1:PS-CH', 'SI-04C1:PS-CV', 'SI-04C2:PS-CH', 'SI-04C2:PS-CV-1', 'SI-04C2:PS-CV-2', 'SI-04C3:PS-CH', 'SI-04C3:PS-CV-1', 'SI-04C3:PS-CV-2', 'SI-04C4:PS-CH', 'SI-04C4:PS-CV',
-        'SI-05M1:PS-CH', 'SI-05M1:PS-CV', 'SI-05M2:PS-CH', 'SI-05M2:PS-CV', 'SI-05C1:PS-CH', 'SI-05C1:PS-CV', 'SI-05C2:PS-CH', 'SI-05C2:PS-CV-1', 'SI-05C2:PS-CV-2', 'SI-05C3:PS-CH', 'SI-05C3:PS-CV-1', 'SI-05C3:PS-CV-2', 'SI-05C4:PS-CH', 'SI-05C4:PS-CV',
-        'SI-06M1:PS-CH', 'SI-06M1:PS-CV', 'SI-06M2:PS-CH', 'SI-06M2:PS-CV', 'SI-06C1:PS-CH', 'SI-06C1:PS-CV', 'SI-06C2:PS-CH', 'SI-06C2:PS-CV-1', 'SI-06C2:PS-CV-2', 'SI-06C3:PS-CH', 'SI-06C3:PS-CV-1', 'SI-06C3:PS-CV-2', 'SI-06C4:PS-CH', 'SI-06C4:PS-CV',
-        'SI-07M1:PS-CH', 'SI-07M1:PS-CV', 'SI-07M2:PS-CH', 'SI-07M2:PS-CV', 'SI-07C1:PS-CH', 'SI-07C1:PS-CV', 'SI-07C2:PS-CH', 'SI-07C2:PS-CV-1', 'SI-07C2:PS-CV-2', 'SI-07C3:PS-CH', 'SI-07C3:PS-CV-1', 'SI-07C3:PS-CV-2', 'SI-07C4:PS-CH', 'SI-07C4:PS-CV',
-        'SI-08M1:PS-CH', 'SI-08M1:PS-CV', 'SI-08M2:PS-CH', 'SI-08M2:PS-CV', 'SI-08C1:PS-CH', 'SI-08C1:PS-CV', 'SI-08C2:PS-CH', 'SI-08C2:PS-CV-1', 'SI-08C2:PS-CV-2', 'SI-08C3:PS-CH', 'SI-08C3:PS-CV-1', 'SI-08C3:PS-CV-2', 'SI-08C4:PS-CH', 'SI-08C4:PS-CV',
-        'SI-09M1:PS-CH', 'SI-09M1:PS-CV', 'SI-09M2:PS-CH', 'SI-09M2:PS-CV', 'SI-09C1:PS-CH', 'SI-09C1:PS-CV', 'SI-09C2:PS-CH', 'SI-09C2:PS-CV-1', 'SI-09C2:PS-CV-2', 'SI-09C3:PS-CH', 'SI-09C3:PS-CV-1', 'SI-09C3:PS-CV-2', 'SI-09C4:PS-CH', 'SI-09C4:PS-CV',
-        'SI-10M1:PS-CH', 'SI-10M1:PS-CV', 'SI-10M2:PS-CH', 'SI-10M2:PS-CV', 'SI-10C1:PS-CH', 'SI-10C1:PS-CV', 'SI-10C2:PS-CH', 'SI-10C2:PS-CV-1', 'SI-10C2:PS-CV-2', 'SI-10C3:PS-CH', 'SI-10C3:PS-CV-1', 'SI-10C3:PS-CV-2', 'SI-10C4:PS-CH', 'SI-10C4:PS-CV',
-        'SI-11M1:PS-CH', 'SI-11M1:PS-CV', 'SI-11M2:PS-CH', 'SI-11M2:PS-CV', 'SI-11C1:PS-CH', 'SI-11C1:PS-CV', 'SI-11C2:PS-CH', 'SI-11C2:PS-CV-1', 'SI-11C2:PS-CV-2', 'SI-11C3:PS-CH', 'SI-11C3:PS-CV-1', 'SI-11C3:PS-CV-2', 'SI-11C4:PS-CH', 'SI-11C4:PS-CV',
-        'SI-12M1:PS-CH', 'SI-12M1:PS-CV', 'SI-12M2:PS-CH', 'SI-12M2:PS-CV', 'SI-12C1:PS-CH', 'SI-12C1:PS-CV', 'SI-12C2:PS-CH', 'SI-12C2:PS-CV-1', 'SI-12C2:PS-CV-2', 'SI-12C3:PS-CH', 'SI-12C3:PS-CV-1', 'SI-12C3:PS-CV-2', 'SI-12C4:PS-CH', 'SI-12C4:PS-CV',
-        'SI-13M1:PS-CH', 'SI-13M1:PS-CV', 'SI-13M2:PS-CH', 'SI-13M2:PS-CV', 'SI-13C1:PS-CH', 'SI-13C1:PS-CV', 'SI-13C2:PS-CH', 'SI-13C2:PS-CV-1', 'SI-13C2:PS-CV-2', 'SI-13C3:PS-CH', 'SI-13C3:PS-CV-1', 'SI-13C3:PS-CV-2', 'SI-13C4:PS-CH', 'SI-13C4:PS-CV',
-        'SI-14M1:PS-CH', 'SI-14M1:PS-CV', 'SI-14M2:PS-CH', 'SI-14M2:PS-CV', 'SI-14C1:PS-CH', 'SI-14C1:PS-CV', 'SI-14C2:PS-CH', 'SI-14C2:PS-CV-1', 'SI-14C2:PS-CV-2', 'SI-14C3:PS-CH', 'SI-14C3:PS-CV-1', 'SI-14C3:PS-CV-2', 'SI-14C4:PS-CH', 'SI-14C4:PS-CV',
-        'SI-15M1:PS-CH', 'SI-15M1:PS-CV', 'SI-15M2:PS-CH', 'SI-15M2:PS-CV', 'SI-15C1:PS-CH', 'SI-15C1:PS-CV', 'SI-15C2:PS-CH', 'SI-15C2:PS-CV-1', 'SI-15C2:PS-CV-2', 'SI-15C3:PS-CH', 'SI-15C3:PS-CV-1', 'SI-15C3:PS-CV-2', 'SI-15C4:PS-CH', 'SI-15C4:PS-CV',
-        'SI-16M1:PS-CH', 'SI-16M1:PS-CV', 'SI-16M2:PS-CH', 'SI-16M2:PS-CV', 'SI-16C1:PS-CH', 'SI-16C1:PS-CV', 'SI-16C2:PS-CH', 'SI-16C2:PS-CV-1', 'SI-16C2:PS-CV-2', 'SI-16C3:PS-CH', 'SI-16C3:PS-CV-1', 'SI-16C3:PS-CV-2', 'SI-16C4:PS-CH', 'SI-16C4:PS-CV',
-        'SI-17M1:PS-CH', 'SI-17M1:PS-CV', 'SI-17M2:PS-CH', 'SI-17M2:PS-CV', 'SI-17C1:PS-CH', 'SI-17C1:PS-CV', 'SI-17C2:PS-CH', 'SI-17C2:PS-CV-1', 'SI-17C2:PS-CV-2', 'SI-17C3:PS-CH', 'SI-17C3:PS-CV-1', 'SI-17C3:PS-CV-2', 'SI-17C4:PS-CH', 'SI-17C4:PS-CV',
-        'SI-18M1:PS-CH', 'SI-18M1:PS-CV', 'SI-18M2:PS-CH', 'SI-18M2:PS-CV', 'SI-18C1:PS-CH', 'SI-18C1:PS-CV', 'SI-18C2:PS-CH', 'SI-18C2:PS-CV-1', 'SI-18C2:PS-CV-2', 'SI-18C3:PS-CH', 'SI-18C3:PS-CV-1', 'SI-18C3:PS-CV-2', 'SI-18C4:PS-CH', 'SI-18C4:PS-CV',
-        'SI-19M1:PS-CH', 'SI-19M1:PS-CV', 'SI-19M2:PS-CH', 'SI-19M2:PS-CV', 'SI-19C1:PS-CH', 'SI-19C1:PS-CV', 'SI-19C2:PS-CH', 'SI-19C2:PS-CV-1', 'SI-19C2:PS-CV-2', 'SI-19C3:PS-CH', 'SI-19C3:PS-CV-1', 'SI-19C3:PS-CV-2', 'SI-19C4:PS-CH', 'SI-19C4:PS-CV',
-        'SI-20M1:PS-CH', 'SI-20M1:PS-CV', 'SI-20M2:PS-CH', 'SI-20M2:PS-CV', 'SI-20C1:PS-CH', 'SI-20C1:PS-CV', 'SI-20C2:PS-CH', 'SI-20C2:PS-CV-1', 'SI-20C2:PS-CV-2', 'SI-20C3:PS-CH', 'SI-20C3:PS-CV-1', 'SI-20C3:PS-CV-2', 'SI-20C4:PS-CH', 'SI-20C4:PS-CV',
+        'SI-01M1:PS-CH:SRIO', 'SI-01M1:PS-CV:SRIO', 'SI-01M2:PS-CH:SRIO', 'SI-01M2:PS-CV:SRIO', 'SI-01C1:PS-CH:SRIO', 'SI-01C1:PS-CV:SRIO', 'SI-01C2:PS-CH:SRIO', 'SI-01C2:PS-CV-1', 'SI-01C2:PS-CV-2', 'SI-01C3:PS-CH:SRIO', 'SI-01C3:PS-CV-1', 'SI-01C3:PS-CV-2', 'SI-01C4:PS-CH:SRIO', 'SI-01C4:PS-CV:SRIO',
+        'SI-02M1:PS-CH:SRIO', 'SI-02M1:PS-CV:SRIO', 'SI-02M2:PS-CH:SRIO', 'SI-02M2:PS-CV:SRIO', 'SI-02C1:PS-CH:SRIO', 'SI-02C1:PS-CV:SRIO', 'SI-02C2:PS-CH:SRIO', 'SI-02C2:PS-CV-1', 'SI-02C2:PS-CV-2', 'SI-02C3:PS-CH:SRIO', 'SI-02C3:PS-CV-1', 'SI-02C3:PS-CV-2', 'SI-02C4:PS-CH:SRIO', 'SI-02C4:PS-CV:SRIO',
+        'SI-03M1:PS-CH:SRIO', 'SI-03M1:PS-CV:SRIO', 'SI-03M2:PS-CH:SRIO', 'SI-03M2:PS-CV:SRIO', 'SI-03C1:PS-CH:SRIO', 'SI-03C1:PS-CV:SRIO', 'SI-03C2:PS-CH:SRIO', 'SI-03C2:PS-CV-1', 'SI-03C2:PS-CV-2', 'SI-03C3:PS-CH:SRIO', 'SI-03C3:PS-CV-1', 'SI-03C3:PS-CV-2', 'SI-03C4:PS-CH:SRIO', 'SI-03C4:PS-CV:SRIO',
+        'SI-04M1:PS-CH:SRIO', 'SI-04M1:PS-CV:SRIO', 'SI-04M2:PS-CH:SRIO', 'SI-04M2:PS-CV:SRIO', 'SI-04C1:PS-CH:SRIO', 'SI-04C1:PS-CV:SRIO', 'SI-04C2:PS-CH:SRIO', 'SI-04C2:PS-CV-1', 'SI-04C2:PS-CV-2', 'SI-04C3:PS-CH:SRIO', 'SI-04C3:PS-CV-1', 'SI-04C3:PS-CV-2', 'SI-04C4:PS-CH:SRIO', 'SI-04C4:PS-CV:SRIO',
+        'SI-05M1:PS-CH:SRIO', 'SI-05M1:PS-CV:SRIO', 'SI-05M2:PS-CH:SRIO', 'SI-05M2:PS-CV:SRIO', 'SI-05C1:PS-CH:SRIO', 'SI-05C1:PS-CV:SRIO', 'SI-05C2:PS-CH:SRIO', 'SI-05C2:PS-CV-1', 'SI-05C2:PS-CV-2', 'SI-05C3:PS-CH:SRIO', 'SI-05C3:PS-CV-1', 'SI-05C3:PS-CV-2', 'SI-05C4:PS-CH:SRIO', 'SI-05C4:PS-CV:SRIO',
+        'SI-06M1:PS-CH:SRIO', 'SI-06M1:PS-CV:SRIO', 'SI-06M2:PS-CH:SRIO', 'SI-06M2:PS-CV:SRIO', 'SI-06C1:PS-CH:SRIO', 'SI-06C1:PS-CV:SRIO', 'SI-06C2:PS-CH:SRIO', 'SI-06C2:PS-CV-1', 'SI-06C2:PS-CV-2', 'SI-06C3:PS-CH:SRIO', 'SI-06C3:PS-CV-1', 'SI-06C3:PS-CV-2', 'SI-06C4:PS-CH:SRIO', 'SI-06C4:PS-CV:SRIO',
+        'SI-07M1:PS-CH:SRIO', 'SI-07M1:PS-CV:SRIO', 'SI-07M2:PS-CH:SRIO', 'SI-07M2:PS-CV:SRIO', 'SI-07C1:PS-CH:SRIO', 'SI-07C1:PS-CV:SRIO', 'SI-07C2:PS-CH:SRIO', 'SI-07C2:PS-CV-1', 'SI-07C2:PS-CV-2', 'SI-07C3:PS-CH:SRIO', 'SI-07C3:PS-CV-1', 'SI-07C3:PS-CV-2', 'SI-07C4:PS-CH:SRIO', 'SI-07C4:PS-CV:SRIO',
+        'SI-08M1:PS-CH:SRIO', 'SI-08M1:PS-CV:SRIO', 'SI-08M2:PS-CH:SRIO', 'SI-08M2:PS-CV:SRIO', 'SI-08C1:PS-CH:SRIO', 'SI-08C1:PS-CV:SRIO', 'SI-08C2:PS-CH:SRIO', 'SI-08C2:PS-CV-1', 'SI-08C2:PS-CV-2', 'SI-08C3:PS-CH:SRIO', 'SI-08C3:PS-CV-1', 'SI-08C3:PS-CV-2', 'SI-08C4:PS-CH:SRIO', 'SI-08C4:PS-CV:SRIO',
+        'SI-09M1:PS-CH:SRIO', 'SI-09M1:PS-CV:SRIO', 'SI-09M2:PS-CH:SRIO', 'SI-09M2:PS-CV:SRIO', 'SI-09C1:PS-CH:SRIO', 'SI-09C1:PS-CV:SRIO', 'SI-09C2:PS-CH:SRIO', 'SI-09C2:PS-CV-1', 'SI-09C2:PS-CV-2', 'SI-09C3:PS-CH:SRIO', 'SI-09C3:PS-CV-1', 'SI-09C3:PS-CV-2', 'SI-09C4:PS-CH:SRIO', 'SI-09C4:PS-CV:SRIO',
+        'SI-10M1:PS-CH:SRIO', 'SI-10M1:PS-CV:SRIO', 'SI-10M2:PS-CH:SRIO', 'SI-10M2:PS-CV:SRIO', 'SI-10C1:PS-CH:SRIO', 'SI-10C1:PS-CV:SRIO', 'SI-10C2:PS-CH:SRIO', 'SI-10C2:PS-CV-1', 'SI-10C2:PS-CV-2', 'SI-10C3:PS-CH:SRIO', 'SI-10C3:PS-CV-1', 'SI-10C3:PS-CV-2', 'SI-10C4:PS-CH:SRIO', 'SI-10C4:PS-CV:SRIO',
+        'SI-11M1:PS-CH:SRIO', 'SI-11M1:PS-CV:SRIO', 'SI-11M2:PS-CH:SRIO', 'SI-11M2:PS-CV:SRIO', 'SI-11C1:PS-CH:SRIO', 'SI-11C1:PS-CV:SRIO', 'SI-11C2:PS-CH:SRIO', 'SI-11C2:PS-CV-1', 'SI-11C2:PS-CV-2', 'SI-11C3:PS-CH:SRIO', 'SI-11C3:PS-CV-1', 'SI-11C3:PS-CV-2', 'SI-11C4:PS-CH:SRIO', 'SI-11C4:PS-CV:SRIO',
+        'SI-12M1:PS-CH:SRIO', 'SI-12M1:PS-CV:SRIO', 'SI-12M2:PS-CH:SRIO', 'SI-12M2:PS-CV:SRIO', 'SI-12C1:PS-CH:SRIO', 'SI-12C1:PS-CV:SRIO', 'SI-12C2:PS-CH:SRIO', 'SI-12C2:PS-CV-1', 'SI-12C2:PS-CV-2', 'SI-12C3:PS-CH:SRIO', 'SI-12C3:PS-CV-1', 'SI-12C3:PS-CV-2', 'SI-12C4:PS-CH:SRIO', 'SI-12C4:PS-CV:SRIO',
+        'SI-13M1:PS-CH:SRIO', 'SI-13M1:PS-CV:SRIO', 'SI-13M2:PS-CH:SRIO', 'SI-13M2:PS-CV:SRIO', 'SI-13C1:PS-CH:SRIO', 'SI-13C1:PS-CV:SRIO', 'SI-13C2:PS-CH:SRIO', 'SI-13C2:PS-CV-1', 'SI-13C2:PS-CV-2', 'SI-13C3:PS-CH:SRIO', 'SI-13C3:PS-CV-1', 'SI-13C3:PS-CV-2', 'SI-13C4:PS-CH:SRIO', 'SI-13C4:PS-CV:SRIO',
+        'SI-14M1:PS-CH:SRIO', 'SI-14M1:PS-CV:SRIO', 'SI-14M2:PS-CH:SRIO', 'SI-14M2:PS-CV:SRIO', 'SI-14C1:PS-CH:SRIO', 'SI-14C1:PS-CV:SRIO', 'SI-14C2:PS-CH:SRIO', 'SI-14C2:PS-CV-1', 'SI-14C2:PS-CV-2', 'SI-14C3:PS-CH:SRIO', 'SI-14C3:PS-CV-1', 'SI-14C3:PS-CV-2', 'SI-14C4:PS-CH:SRIO', 'SI-14C4:PS-CV:SRIO',
+        'SI-15M1:PS-CH:SRIO', 'SI-15M1:PS-CV:SRIO', 'SI-15M2:PS-CH:SRIO', 'SI-15M2:PS-CV:SRIO', 'SI-15C1:PS-CH:SRIO', 'SI-15C1:PS-CV:SRIO', 'SI-15C2:PS-CH:SRIO', 'SI-15C2:PS-CV-1', 'SI-15C2:PS-CV-2', 'SI-15C3:PS-CH:SRIO', 'SI-15C3:PS-CV-1', 'SI-15C3:PS-CV-2', 'SI-15C4:PS-CH:SRIO', 'SI-15C4:PS-CV:SRIO',
+        'SI-16M1:PS-CH:SRIO', 'SI-16M1:PS-CV:SRIO', 'SI-16M2:PS-CH:SRIO', 'SI-16M2:PS-CV:SRIO', 'SI-16C1:PS-CH:SRIO', 'SI-16C1:PS-CV:SRIO', 'SI-16C2:PS-CH:SRIO', 'SI-16C2:PS-CV-1', 'SI-16C2:PS-CV-2', 'SI-16C3:PS-CH:SRIO', 'SI-16C3:PS-CV-1', 'SI-16C3:PS-CV-2', 'SI-16C4:PS-CH:SRIO', 'SI-16C4:PS-CV:SRIO',
+        'SI-17M1:PS-CH:SRIO', 'SI-17M1:PS-CV:SRIO', 'SI-17M2:PS-CH:SRIO', 'SI-17M2:PS-CV:SRIO', 'SI-17C1:PS-CH:SRIO', 'SI-17C1:PS-CV:SRIO', 'SI-17C2:PS-CH:SRIO', 'SI-17C2:PS-CV-1', 'SI-17C2:PS-CV-2', 'SI-17C3:PS-CH:SRIO', 'SI-17C3:PS-CV-1', 'SI-17C3:PS-CV-2', 'SI-17C4:PS-CH:SRIO', 'SI-17C4:PS-CV:SRIO',
+        'SI-18M1:PS-CH:SRIO', 'SI-18M1:PS-CV:SRIO', 'SI-18M2:PS-CH:SRIO', 'SI-18M2:PS-CV:SRIO', 'SI-18C1:PS-CH:SRIO', 'SI-18C1:PS-CV:SRIO', 'SI-18C2:PS-CH:SRIO', 'SI-18C2:PS-CV-1', 'SI-18C2:PS-CV-2', 'SI-18C3:PS-CH:SRIO', 'SI-18C3:PS-CV-1', 'SI-18C3:PS-CV-2', 'SI-18C4:PS-CH:SRIO', 'SI-18C4:PS-CV:SRIO',
+        'SI-19M1:PS-CH:SRIO', 'SI-19M1:PS-CV:SRIO', 'SI-19M2:PS-CH:SRIO', 'SI-19M2:PS-CV:SRIO', 'SI-19C1:PS-CH:SRIO', 'SI-19C1:PS-CV:SRIO', 'SI-19C2:PS-CH:SRIO', 'SI-19C2:PS-CV-1', 'SI-19C2:PS-CV-2', 'SI-19C3:PS-CH:SRIO', 'SI-19C3:PS-CV-1', 'SI-19C3:PS-CV-2', 'SI-19C4:PS-CH:SRIO', 'SI-19C4:PS-CV:SRIO',
+        'SI-20M1:PS-CH:SRIO', 'SI-20M1:PS-CV:SRIO', 'SI-20M2:PS-CH:SRIO', 'SI-20M2:PS-CV:SRIO', 'SI-20C1:PS-CH:SRIO', 'SI-20C1:PS-CV:SRIO', 'SI-20C2:PS-CH:SRIO', 'SI-20C2:PS-CV-1', 'SI-20C2:PS-CV-2', 'SI-20C3:PS-CH:SRIO', 'SI-20C3:PS-CV-1', 'SI-20C3:PS-CV-2', 'SI-20C4:PS-CH:SRIO', 'SI-20C4:PS-CV:SRIO',
         ),
     },
-'SI-Glob:TI-Quads': {
+'SI-Glob:TI-Quads:': {
     'events':('MigSI','Tunes','Study'),
     'trigger_type':'PSSI',
     'devices': (
-        'SI-Fam:PS-QFA', 'SI-Fam:PS-QDA', 'SI-Fam:PS-QFB', 'SI-Fam:PS-QDB1', 'SI-Fam:PS-QDB2', 'SI-Fam:PS-QFP', 'SI-Fam:PS-QDP1', 'SI-Fam:PS-QDP2', 'SI-Fam:PS-Q1', 'SI-Fam:PS-Q2', 'SI-Fam:PS-Q3', 'SI-Fam:PS-Q4',
+        'SI-Fam:PS-QFA:SRIO', 'SI-Fam:PS-QDA:SRIO', 'SI-Fam:PS-QFB:SRIO', 'SI-Fam:PS-QDB1:SRIO', 'SI-Fam:PS-QDB2:SRIO', 'SI-Fam:PS-QFP:SRIO', 'SI-Fam:PS-QDP1:SRIO', 'SI-Fam:PS-QDP2:SRIO', 'SI-Fam:PS-Q1:SRIO', 'SI-Fam:PS-Q2:SRIO', 'SI-Fam:PS-Q3:SRIO', 'SI-Fam:PS-Q4:SRIO',
 
-        'SI-01C1:PS-Q1', 'SI-01C1:PS-Q2', 'SI-01C2:PS-Q3', 'SI-01C2:PS-Q4', 'SI-01C3:PS-Q1', 'SI-01C3:PS-Q2', 'SI-01C4:PS-Q3', 'SI-01C4:PS-Q4', 'SI-01M1:PS-QFA', 'SI-01M1:PS-QDA', 'SI-01M2:PS-QFA', 'SI-01M2:PS-QDA',
-        'SI-05C1:PS-Q1', 'SI-05C1:PS-Q2', 'SI-05C2:PS-Q3', 'SI-05C2:PS-Q4', 'SI-05C3:PS-Q1', 'SI-05C3:PS-Q2', 'SI-05C4:PS-Q3', 'SI-05C4:PS-Q4', 'SI-05M1:PS-QFA', 'SI-05M1:PS-QDA', 'SI-05M2:PS-QFA', 'SI-05M2:PS-QDA',
-        'SI-09C1:PS-Q1', 'SI-09C1:PS-Q2', 'SI-09C2:PS-Q3', 'SI-09C2:PS-Q4', 'SI-09C3:PS-Q1', 'SI-09C3:PS-Q2', 'SI-09C4:PS-Q3', 'SI-09C4:PS-Q4', 'SI-09M1:PS-QFA', 'SI-09M1:PS-QDA', 'SI-09M2:PS-QFA', 'SI-09M2:PS-QDA',
-        'SI-13C1:PS-Q1', 'SI-13C1:PS-Q2', 'SI-13C2:PS-Q3', 'SI-13C2:PS-Q4', 'SI-13C3:PS-Q1', 'SI-13C3:PS-Q2', 'SI-13C4:PS-Q3', 'SI-13C4:PS-Q4', 'SI-13M1:PS-QFA', 'SI-13M1:PS-QDA', 'SI-13M2:PS-QFA', 'SI-13M2:PS-QDA',
-        'SI-17C1:PS-Q1', 'SI-17C1:PS-Q2', 'SI-17C2:PS-Q3', 'SI-17C2:PS-Q4', 'SI-17C3:PS-Q1', 'SI-17C3:PS-Q2', 'SI-17C4:PS-Q3', 'SI-17C4:PS-Q4', 'SI-17M1:PS-QFA', 'SI-17M1:PS-QDA', 'SI-17M2:PS-QFA', 'SI-17M2:PS-QDA',
+        'SI-01C1:PS-Q1:SRIO', 'SI-01C1:PS-Q2:SRIO', 'SI-01C2:PS-Q3:SRIO', 'SI-01C2:PS-Q4:SRIO', 'SI-01C3:PS-Q1:SRIO', 'SI-01C3:PS-Q2:SRIO', 'SI-01C4:PS-Q3:SRIO', 'SI-01C4:PS-Q4:SRIO', 'SI-01M1:PS-QFA:SRIO', 'SI-01M1:PS-QDA:SRIO', 'SI-01M2:PS-QFA:SRIO', 'SI-01M2:PS-QDA:SRIO',
+        'SI-05C1:PS-Q1:SRIO', 'SI-05C1:PS-Q2:SRIO', 'SI-05C2:PS-Q3:SRIO', 'SI-05C2:PS-Q4:SRIO', 'SI-05C3:PS-Q1:SRIO', 'SI-05C3:PS-Q2:SRIO', 'SI-05C4:PS-Q3:SRIO', 'SI-05C4:PS-Q4:SRIO', 'SI-05M1:PS-QFA:SRIO', 'SI-05M1:PS-QDA:SRIO', 'SI-05M2:PS-QFA:SRIO', 'SI-05M2:PS-QDA:SRIO',
+        'SI-09C1:PS-Q1:SRIO', 'SI-09C1:PS-Q2:SRIO', 'SI-09C2:PS-Q3:SRIO', 'SI-09C2:PS-Q4:SRIO', 'SI-09C3:PS-Q1:SRIO', 'SI-09C3:PS-Q2:SRIO', 'SI-09C4:PS-Q3:SRIO', 'SI-09C4:PS-Q4:SRIO', 'SI-09M1:PS-QFA:SRIO', 'SI-09M1:PS-QDA:SRIO', 'SI-09M2:PS-QFA:SRIO', 'SI-09M2:PS-QDA:SRIO',
+        'SI-13C1:PS-Q1:SRIO', 'SI-13C1:PS-Q2:SRIO', 'SI-13C2:PS-Q3:SRIO', 'SI-13C2:PS-Q4:SRIO', 'SI-13C3:PS-Q1:SRIO', 'SI-13C3:PS-Q2:SRIO', 'SI-13C4:PS-Q3:SRIO', 'SI-13C4:PS-Q4:SRIO', 'SI-13M1:PS-QFA:SRIO', 'SI-13M1:PS-QDA:SRIO', 'SI-13M2:PS-QFA:SRIO', 'SI-13M2:PS-QDA:SRIO',
+        'SI-17C1:PS-Q1:SRIO', 'SI-17C1:PS-Q2:SRIO', 'SI-17C2:PS-Q3:SRIO', 'SI-17C2:PS-Q4:SRIO', 'SI-17C3:PS-Q1:SRIO', 'SI-17C3:PS-Q2:SRIO', 'SI-17C4:PS-Q3:SRIO', 'SI-17C4:PS-Q4:SRIO', 'SI-17M1:PS-QFA:SRIO', 'SI-17M1:PS-QDA:SRIO', 'SI-17M2:PS-QFA:SRIO', 'SI-17M2:PS-QDA:SRIO',
 
-        'SI-02C1:PS-Q1', 'SI-02C1:PS-Q2', 'SI-02C2:PS-Q3', 'SI-02C2:PS-Q4', 'SI-02C3:PS-Q1', 'SI-02C3:PS-Q2', 'SI-02C4:PS-Q3', 'SI-02C4:PS-Q4', 'SI-02M1:PS-QFB', 'SI-02M1:PS-QDB1', 'SI-02M1:PS-QDB2', 'SI-02M2:PS-QFB', 'SI-02M2:PS-QDB1', 'SI-02M2:PS-QDB1',
-        'SI-04C1:PS-Q1', 'SI-04C1:PS-Q2', 'SI-04C2:PS-Q3', 'SI-04C2:PS-Q4', 'SI-04C3:PS-Q1', 'SI-04C3:PS-Q2', 'SI-04C4:PS-Q3', 'SI-04C4:PS-Q4', 'SI-04M1:PS-QFB', 'SI-04M1:PS-QDB1', 'SI-04M1:PS-QDB2', 'SI-04M2:PS-QFB', 'SI-04M2:PS-QDB1', 'SI-04M2:PS-QDB1',
-        'SI-06C1:PS-Q1', 'SI-06C1:PS-Q2', 'SI-06C2:PS-Q3', 'SI-06C2:PS-Q4', 'SI-06C3:PS-Q1', 'SI-06C3:PS-Q2', 'SI-06C4:PS-Q3', 'SI-06C4:PS-Q4', 'SI-06M1:PS-QFB', 'SI-06M1:PS-QDB1', 'SI-06M1:PS-QDB2', 'SI-06M2:PS-QFB', 'SI-06M2:PS-QDB1', 'SI-06M2:PS-QDB1',
-        'SI-08C1:PS-Q1', 'SI-08C1:PS-Q2', 'SI-08C2:PS-Q3', 'SI-08C2:PS-Q4', 'SI-08C3:PS-Q1', 'SI-08C3:PS-Q2', 'SI-08C4:PS-Q3', 'SI-08C4:PS-Q4', 'SI-08M1:PS-QFB', 'SI-08M1:PS-QDB1', 'SI-08M1:PS-QDB2', 'SI-08M2:PS-QFB', 'SI-08M2:PS-QDB1', 'SI-08M2:PS-QDB1',
-        'SI-10C1:PS-Q1', 'SI-10C1:PS-Q2', 'SI-10C2:PS-Q3', 'SI-10C2:PS-Q4', 'SI-10C3:PS-Q1', 'SI-10C3:PS-Q2', 'SI-10C4:PS-Q3', 'SI-10C4:PS-Q4', 'SI-10M1:PS-QFB', 'SI-10M1:PS-QDB1', 'SI-10M1:PS-QDB2', 'SI-10M2:PS-QFB', 'SI-10M2:PS-QDB1', 'SI-10M2:PS-QDB1',
-        'SI-12C1:PS-Q1', 'SI-12C1:PS-Q2', 'SI-12C2:PS-Q3', 'SI-12C2:PS-Q4', 'SI-12C3:PS-Q1', 'SI-12C3:PS-Q2', 'SI-12C4:PS-Q3', 'SI-12C4:PS-Q4', 'SI-12M1:PS-QFB', 'SI-12M1:PS-QDB1', 'SI-12M1:PS-QDB2', 'SI-12M2:PS-QFB', 'SI-12M2:PS-QDB1', 'SI-12M2:PS-QDB1',
-        'SI-14C1:PS-Q1', 'SI-14C1:PS-Q2', 'SI-14C2:PS-Q3', 'SI-14C2:PS-Q4', 'SI-14C3:PS-Q1', 'SI-14C3:PS-Q2', 'SI-14C4:PS-Q3', 'SI-14C4:PS-Q4', 'SI-14M1:PS-QFB', 'SI-14M1:PS-QDB1', 'SI-14M1:PS-QDB2', 'SI-14M2:PS-QFB', 'SI-14M2:PS-QDB1', 'SI-14M2:PS-QDB1',
-        'SI-16C1:PS-Q1', 'SI-16C1:PS-Q2', 'SI-16C2:PS-Q3', 'SI-16C2:PS-Q4', 'SI-16C3:PS-Q1', 'SI-16C3:PS-Q2', 'SI-16C4:PS-Q3', 'SI-16C4:PS-Q4', 'SI-16M1:PS-QFB', 'SI-16M1:PS-QDB1', 'SI-16M1:PS-QDB2', 'SI-16M2:PS-QFB', 'SI-16M2:PS-QDB1', 'SI-16M2:PS-QDB1',
-        'SI-18C1:PS-Q1', 'SI-18C1:PS-Q2', 'SI-18C2:PS-Q3', 'SI-18C2:PS-Q4', 'SI-18C3:PS-Q1', 'SI-18C3:PS-Q2', 'SI-18C4:PS-Q3', 'SI-18C4:PS-Q4', 'SI-18M1:PS-QFB', 'SI-18M1:PS-QDB1', 'SI-18M1:PS-QDB2', 'SI-18M2:PS-QFB', 'SI-18M2:PS-QDB1', 'SI-18M2:PS-QDB1',
-        'SI-20C1:PS-Q1', 'SI-20C1:PS-Q2', 'SI-20C2:PS-Q3', 'SI-20C2:PS-Q4', 'SI-20C3:PS-Q1', 'SI-20C3:PS-Q2', 'SI-20C4:PS-Q3', 'SI-20C4:PS-Q4', 'SI-20M1:PS-QFB', 'SI-20M1:PS-QDB1', 'SI-20M1:PS-QDB2', 'SI-20M2:PS-QFB', 'SI-20M2:PS-QDB1', 'SI-20M2:PS-QDB1',
+        'SI-02C1:PS-Q1:SRIO', 'SI-02C1:PS-Q2:SRIO', 'SI-02C2:PS-Q3:SRIO', 'SI-02C2:PS-Q4:SRIO', 'SI-02C3:PS-Q1:SRIO', 'SI-02C3:PS-Q2:SRIO', 'SI-02C4:PS-Q3:SRIO', 'SI-02C4:PS-Q4:SRIO', 'SI-02M1:PS-QFB:SRIO', 'SI-02M1:PS-QDB1:SRIO', 'SI-02M1:PS-QDB2:SRIO', 'SI-02M2:PS-QFB:SRIO', 'SI-02M2:PS-QDB1:SRIO', 'SI-02M2:PS-QDB1:SRIO',
+        'SI-04C1:PS-Q1:SRIO', 'SI-04C1:PS-Q2:SRIO', 'SI-04C2:PS-Q3:SRIO', 'SI-04C2:PS-Q4:SRIO', 'SI-04C3:PS-Q1:SRIO', 'SI-04C3:PS-Q2:SRIO', 'SI-04C4:PS-Q3:SRIO', 'SI-04C4:PS-Q4:SRIO', 'SI-04M1:PS-QFB:SRIO', 'SI-04M1:PS-QDB1:SRIO', 'SI-04M1:PS-QDB2:SRIO', 'SI-04M2:PS-QFB:SRIO', 'SI-04M2:PS-QDB1:SRIO', 'SI-04M2:PS-QDB1:SRIO',
+        'SI-06C1:PS-Q1:SRIO', 'SI-06C1:PS-Q2:SRIO', 'SI-06C2:PS-Q3:SRIO', 'SI-06C2:PS-Q4:SRIO', 'SI-06C3:PS-Q1:SRIO', 'SI-06C3:PS-Q2:SRIO', 'SI-06C4:PS-Q3:SRIO', 'SI-06C4:PS-Q4:SRIO', 'SI-06M1:PS-QFB:SRIO', 'SI-06M1:PS-QDB1:SRIO', 'SI-06M1:PS-QDB2:SRIO', 'SI-06M2:PS-QFB:SRIO', 'SI-06M2:PS-QDB1:SRIO', 'SI-06M2:PS-QDB1:SRIO',
+        'SI-08C1:PS-Q1:SRIO', 'SI-08C1:PS-Q2:SRIO', 'SI-08C2:PS-Q3:SRIO', 'SI-08C2:PS-Q4:SRIO', 'SI-08C3:PS-Q1:SRIO', 'SI-08C3:PS-Q2:SRIO', 'SI-08C4:PS-Q3:SRIO', 'SI-08C4:PS-Q4:SRIO', 'SI-08M1:PS-QFB:SRIO', 'SI-08M1:PS-QDB1:SRIO', 'SI-08M1:PS-QDB2:SRIO', 'SI-08M2:PS-QFB:SRIO', 'SI-08M2:PS-QDB1:SRIO', 'SI-08M2:PS-QDB1:SRIO',
+        'SI-10C1:PS-Q1:SRIO', 'SI-10C1:PS-Q2:SRIO', 'SI-10C2:PS-Q3:SRIO', 'SI-10C2:PS-Q4:SRIO', 'SI-10C3:PS-Q1:SRIO', 'SI-10C3:PS-Q2:SRIO', 'SI-10C4:PS-Q3:SRIO', 'SI-10C4:PS-Q4:SRIO', 'SI-10M1:PS-QFB:SRIO', 'SI-10M1:PS-QDB1:SRIO', 'SI-10M1:PS-QDB2:SRIO', 'SI-10M2:PS-QFB:SRIO', 'SI-10M2:PS-QDB1:SRIO', 'SI-10M2:PS-QDB1:SRIO',
+        'SI-12C1:PS-Q1:SRIO', 'SI-12C1:PS-Q2:SRIO', 'SI-12C2:PS-Q3:SRIO', 'SI-12C2:PS-Q4:SRIO', 'SI-12C3:PS-Q1:SRIO', 'SI-12C3:PS-Q2:SRIO', 'SI-12C4:PS-Q3:SRIO', 'SI-12C4:PS-Q4:SRIO', 'SI-12M1:PS-QFB:SRIO', 'SI-12M1:PS-QDB1:SRIO', 'SI-12M1:PS-QDB2:SRIO', 'SI-12M2:PS-QFB:SRIO', 'SI-12M2:PS-QDB1:SRIO', 'SI-12M2:PS-QDB1:SRIO',
+        'SI-14C1:PS-Q1:SRIO', 'SI-14C1:PS-Q2:SRIO', 'SI-14C2:PS-Q3:SRIO', 'SI-14C2:PS-Q4:SRIO', 'SI-14C3:PS-Q1:SRIO', 'SI-14C3:PS-Q2:SRIO', 'SI-14C4:PS-Q3:SRIO', 'SI-14C4:PS-Q4:SRIO', 'SI-14M1:PS-QFB:SRIO', 'SI-14M1:PS-QDB1:SRIO', 'SI-14M1:PS-QDB2:SRIO', 'SI-14M2:PS-QFB:SRIO', 'SI-14M2:PS-QDB1:SRIO', 'SI-14M2:PS-QDB1:SRIO',
+        'SI-16C1:PS-Q1:SRIO', 'SI-16C1:PS-Q2:SRIO', 'SI-16C2:PS-Q3:SRIO', 'SI-16C2:PS-Q4:SRIO', 'SI-16C3:PS-Q1:SRIO', 'SI-16C3:PS-Q2:SRIO', 'SI-16C4:PS-Q3:SRIO', 'SI-16C4:PS-Q4:SRIO', 'SI-16M1:PS-QFB:SRIO', 'SI-16M1:PS-QDB1:SRIO', 'SI-16M1:PS-QDB2:SRIO', 'SI-16M2:PS-QFB:SRIO', 'SI-16M2:PS-QDB1:SRIO', 'SI-16M2:PS-QDB1:SRIO',
+        'SI-18C1:PS-Q1:SRIO', 'SI-18C1:PS-Q2:SRIO', 'SI-18C2:PS-Q3:SRIO', 'SI-18C2:PS-Q4:SRIO', 'SI-18C3:PS-Q1:SRIO', 'SI-18C3:PS-Q2:SRIO', 'SI-18C4:PS-Q3:SRIO', 'SI-18C4:PS-Q4:SRIO', 'SI-18M1:PS-QFB:SRIO', 'SI-18M1:PS-QDB1:SRIO', 'SI-18M1:PS-QDB2:SRIO', 'SI-18M2:PS-QFB:SRIO', 'SI-18M2:PS-QDB1:SRIO', 'SI-18M2:PS-QDB1:SRIO',
+        'SI-20C1:PS-Q1:SRIO', 'SI-20C1:PS-Q2:SRIO', 'SI-20C2:PS-Q3:SRIO', 'SI-20C2:PS-Q4:SRIO', 'SI-20C3:PS-Q1:SRIO', 'SI-20C3:PS-Q2:SRIO', 'SI-20C4:PS-Q3:SRIO', 'SI-20C4:PS-Q4:SRIO', 'SI-20M1:PS-QFB:SRIO', 'SI-20M1:PS-QDB1:SRIO', 'SI-20M1:PS-QDB2:SRIO', 'SI-20M2:PS-QFB:SRIO', 'SI-20M2:PS-QDB1:SRIO', 'SI-20M2:PS-QDB1:SRIO',
 
-        'SI-03C1:PS-Q1', 'SI-03C1:PS-Q2', 'SI-03C2:PS-Q3', 'SI-03C2:PS-Q4', 'SI-03C3:PS-Q1', 'SI-03C3:PS-Q2', 'SI-03C4:PS-Q3', 'SI-03C4:PS-Q4', 'SI-03M1:PS-QFP', 'SI-03M1:PS-QDP1', 'SI-03M1:PS-QDP2', 'SI-03M2:PS-QFP', 'SI-03M2:PS-QDP1', 'SI-03M2:PS-QDP1',
-        'SI-07C1:PS-Q1', 'SI-07C1:PS-Q2', 'SI-07C2:PS-Q3', 'SI-07C2:PS-Q4', 'SI-07C3:PS-Q1', 'SI-07C3:PS-Q2', 'SI-07C4:PS-Q3', 'SI-07C4:PS-Q4', 'SI-07M1:PS-QFP', 'SI-07M1:PS-QDP1', 'SI-07M1:PS-QDP2', 'SI-07M2:PS-QFP', 'SI-07M2:PS-QDP1', 'SI-07M2:PS-QDP1',
-        'SI-11C1:PS-Q1', 'SI-11C1:PS-Q2', 'SI-11C2:PS-Q3', 'SI-11C2:PS-Q4', 'SI-11C3:PS-Q1', 'SI-11C3:PS-Q2', 'SI-11C4:PS-Q3', 'SI-11C4:PS-Q4', 'SI-11M1:PS-QFP', 'SI-11M1:PS-QDP1', 'SI-11M1:PS-QDP2', 'SI-11M2:PS-QFP', 'SI-11M2:PS-QDP1', 'SI-11M2:PS-QDP1',
-        'SI-15C1:PS-Q1', 'SI-15C1:PS-Q2', 'SI-15C2:PS-Q3', 'SI-15C2:PS-Q4', 'SI-15C3:PS-Q1', 'SI-15C3:PS-Q2', 'SI-15C4:PS-Q3', 'SI-15C4:PS-Q4', 'SI-15M1:PS-QFP', 'SI-15M1:PS-QDP1', 'SI-15M1:PS-QDP2', 'SI-15M2:PS-QFP', 'SI-15M2:PS-QDP1', 'SI-15M2:PS-QDP1',
-        'SI-19C1:PS-Q1', 'SI-19C1:PS-Q2', 'SI-19C2:PS-Q3', 'SI-19C2:PS-Q4', 'SI-19C3:PS-Q1', 'SI-19C3:PS-Q2', 'SI-19C4:PS-Q3', 'SI-19C4:PS-Q4', 'SI-19M1:PS-QFP', 'SI-19M1:PS-QDP1', 'SI-19M1:PS-QDP2', 'SI-19M2:PS-QFP', 'SI-19M2:PS-QDP1', 'SI-19M2:PS-QDP1',
+        'SI-03C1:PS-Q1:SRIO', 'SI-03C1:PS-Q2:SRIO', 'SI-03C2:PS-Q3:SRIO', 'SI-03C2:PS-Q4:SRIO', 'SI-03C3:PS-Q1:SRIO', 'SI-03C3:PS-Q2:SRIO', 'SI-03C4:PS-Q3:SRIO', 'SI-03C4:PS-Q4:SRIO', 'SI-03M1:PS-QFP:SRIO', 'SI-03M1:PS-QDP1:SRIO', 'SI-03M1:PS-QDP2:SRIO', 'SI-03M2:PS-QFP:SRIO', 'SI-03M2:PS-QDP1:SRIO', 'SI-03M2:PS-QDP1:SRIO',
+        'SI-07C1:PS-Q1:SRIO', 'SI-07C1:PS-Q2:SRIO', 'SI-07C2:PS-Q3:SRIO', 'SI-07C2:PS-Q4:SRIO', 'SI-07C3:PS-Q1:SRIO', 'SI-07C3:PS-Q2:SRIO', 'SI-07C4:PS-Q3:SRIO', 'SI-07C4:PS-Q4:SRIO', 'SI-07M1:PS-QFP:SRIO', 'SI-07M1:PS-QDP1:SRIO', 'SI-07M1:PS-QDP2:SRIO', 'SI-07M2:PS-QFP:SRIO', 'SI-07M2:PS-QDP1:SRIO', 'SI-07M2:PS-QDP1:SRIO',
+        'SI-11C1:PS-Q1:SRIO', 'SI-11C1:PS-Q2:SRIO', 'SI-11C2:PS-Q3:SRIO', 'SI-11C2:PS-Q4:SRIO', 'SI-11C3:PS-Q1:SRIO', 'SI-11C3:PS-Q2:SRIO', 'SI-11C4:PS-Q3:SRIO', 'SI-11C4:PS-Q4:SRIO', 'SI-11M1:PS-QFP:SRIO', 'SI-11M1:PS-QDP1:SRIO', 'SI-11M1:PS-QDP2:SRIO', 'SI-11M2:PS-QFP:SRIO', 'SI-11M2:PS-QDP1:SRIO', 'SI-11M2:PS-QDP1:SRIO',
+        'SI-15C1:PS-Q1:SRIO', 'SI-15C1:PS-Q2:SRIO', 'SI-15C2:PS-Q3:SRIO', 'SI-15C2:PS-Q4:SRIO', 'SI-15C3:PS-Q1:SRIO', 'SI-15C3:PS-Q2:SRIO', 'SI-15C4:PS-Q3:SRIO', 'SI-15C4:PS-Q4:SRIO', 'SI-15M1:PS-QFP:SRIO', 'SI-15M1:PS-QDP1:SRIO', 'SI-15M1:PS-QDP2:SRIO', 'SI-15M2:PS-QFP:SRIO', 'SI-15M2:PS-QDP1:SRIO', 'SI-15M2:PS-QDP1:SRIO',
+        'SI-19C1:PS-Q1:SRIO', 'SI-19C1:PS-Q2:SRIO', 'SI-19C2:PS-Q3:SRIO', 'SI-19C2:PS-Q4:SRIO', 'SI-19C3:PS-Q1:SRIO', 'SI-19C3:PS-Q2:SRIO', 'SI-19C4:PS-Q3:SRIO', 'SI-19C4:PS-Q4:SRIO', 'SI-19M1:PS-QFP:SRIO', 'SI-19M1:PS-QDP1:SRIO', 'SI-19M1:PS-QDP2:SRIO', 'SI-19M2:PS-QFP:SRIO', 'SI-19M2:PS-QDP1:SRIO', 'SI-19M2:PS-QDP1:SRIO',
         ),
     },
-'SI-Glob:TI-Skews': {
+'SI-Glob:TI-Skews:': {
     'events':('MigSI','Coupl','Study'),
     'trigger_type':'PSSI',
     'devices': (
-        'SI-01M1:PS-QS', 'SI-01M2:PS-QS', 'SI-01C1:PS-QS', 'SI-01C2:PS-QS', 'SI-01C3:PS-QS',
-        'SI-02M1:PS-QS', 'SI-02M2:PS-QS', 'SI-02C1:PS-QS', 'SI-02C2:PS-QS', 'SI-02C3:PS-QS',
-        'SI-03M1:PS-QS', 'SI-03M2:PS-QS', 'SI-03C1:PS-QS', 'SI-03C2:PS-QS', 'SI-03C3:PS-QS',
-        'SI-04M1:PS-QS', 'SI-04M2:PS-QS', 'SI-04C1:PS-QS', 'SI-04C2:PS-QS', 'SI-04C3:PS-QS',
-        'SI-05M1:PS-QS', 'SI-05M2:PS-QS', 'SI-05C1:PS-QS', 'SI-05C2:PS-QS', 'SI-05C3:PS-QS',
-        'SI-06M1:PS-QS', 'SI-06M2:PS-QS', 'SI-06C1:PS-QS', 'SI-06C2:PS-QS', 'SI-06C3:PS-QS',
-        'SI-07M1:PS-QS', 'SI-07M2:PS-QS', 'SI-07C1:PS-QS', 'SI-07C2:PS-QS', 'SI-07C3:PS-QS',
-        'SI-08M1:PS-QS', 'SI-08M2:PS-QS', 'SI-08C1:PS-QS', 'SI-08C2:PS-QS', 'SI-08C3:PS-QS',
-        'SI-09M1:PS-QS', 'SI-09M2:PS-QS', 'SI-09C1:PS-QS', 'SI-09C2:PS-QS', 'SI-09C3:PS-QS',
-        'SI-10M1:PS-QS', 'SI-10M2:PS-QS', 'SI-10C1:PS-QS', 'SI-10C2:PS-QS', 'SI-10C3:PS-QS',
-        'SI-11M1:PS-QS', 'SI-11M2:PS-QS', 'SI-11C1:PS-QS', 'SI-11C2:PS-QS', 'SI-11C3:PS-QS',
-        'SI-12M1:PS-QS', 'SI-12M2:PS-QS', 'SI-12C1:PS-QS', 'SI-12C2:PS-QS', 'SI-12C3:PS-QS',
-        'SI-13M1:PS-QS', 'SI-13M2:PS-QS', 'SI-13C1:PS-QS', 'SI-13C2:PS-QS', 'SI-13C3:PS-QS',
-        'SI-14M1:PS-QS', 'SI-14M2:PS-QS', 'SI-14C1:PS-QS', 'SI-14C2:PS-QS', 'SI-14C3:PS-QS',
-        'SI-15M1:PS-QS', 'SI-15M2:PS-QS', 'SI-15C1:PS-QS', 'SI-15C2:PS-QS', 'SI-15C3:PS-QS',
-        'SI-16M1:PS-QS', 'SI-16M2:PS-QS', 'SI-16C1:PS-QS', 'SI-16C2:PS-QS', 'SI-16C3:PS-QS',
-        'SI-17M1:PS-QS', 'SI-17M2:PS-QS', 'SI-17C1:PS-QS', 'SI-17C2:PS-QS', 'SI-17C3:PS-QS',
-        'SI-18M1:PS-QS', 'SI-18M2:PS-QS', 'SI-18C1:PS-QS', 'SI-18C2:PS-QS', 'SI-18C3:PS-QS',
-        'SI-19M1:PS-QS', 'SI-19M2:PS-QS', 'SI-19C1:PS-QS', 'SI-19C2:PS-QS', 'SI-19C3:PS-QS',
-        'SI-20M1:PS-QS', 'SI-20M2:PS-QS', 'SI-20C1:PS-QS', 'SI-20C2:PS-QS', 'SI-20C3:PS-QS',
+        'SI-01M1:PS-QS:SRIO', 'SI-01M2:PS-QS:SRIO', 'SI-01C1:PS-QS:SRIO', 'SI-01C2:PS-QS:SRIO', 'SI-01C3:PS-QS:SRIO',
+        'SI-02M1:PS-QS:SRIO', 'SI-02M2:PS-QS:SRIO', 'SI-02C1:PS-QS:SRIO', 'SI-02C2:PS-QS:SRIO', 'SI-02C3:PS-QS:SRIO',
+        'SI-03M1:PS-QS:SRIO', 'SI-03M2:PS-QS:SRIO', 'SI-03C1:PS-QS:SRIO', 'SI-03C2:PS-QS:SRIO', 'SI-03C3:PS-QS:SRIO',
+        'SI-04M1:PS-QS:SRIO', 'SI-04M2:PS-QS:SRIO', 'SI-04C1:PS-QS:SRIO', 'SI-04C2:PS-QS:SRIO', 'SI-04C3:PS-QS:SRIO',
+        'SI-05M1:PS-QS:SRIO', 'SI-05M2:PS-QS:SRIO', 'SI-05C1:PS-QS:SRIO', 'SI-05C2:PS-QS:SRIO', 'SI-05C3:PS-QS:SRIO',
+        'SI-06M1:PS-QS:SRIO', 'SI-06M2:PS-QS:SRIO', 'SI-06C1:PS-QS:SRIO', 'SI-06C2:PS-QS:SRIO', 'SI-06C3:PS-QS:SRIO',
+        'SI-07M1:PS-QS:SRIO', 'SI-07M2:PS-QS:SRIO', 'SI-07C1:PS-QS:SRIO', 'SI-07C2:PS-QS:SRIO', 'SI-07C3:PS-QS:SRIO',
+        'SI-08M1:PS-QS:SRIO', 'SI-08M2:PS-QS:SRIO', 'SI-08C1:PS-QS:SRIO', 'SI-08C2:PS-QS:SRIO', 'SI-08C3:PS-QS:SRIO',
+        'SI-09M1:PS-QS:SRIO', 'SI-09M2:PS-QS:SRIO', 'SI-09C1:PS-QS:SRIO', 'SI-09C2:PS-QS:SRIO', 'SI-09C3:PS-QS:SRIO',
+        'SI-10M1:PS-QS:SRIO', 'SI-10M2:PS-QS:SRIO', 'SI-10C1:PS-QS:SRIO', 'SI-10C2:PS-QS:SRIO', 'SI-10C3:PS-QS:SRIO',
+        'SI-11M1:PS-QS:SRIO', 'SI-11M2:PS-QS:SRIO', 'SI-11C1:PS-QS:SRIO', 'SI-11C2:PS-QS:SRIO', 'SI-11C3:PS-QS:SRIO',
+        'SI-12M1:PS-QS:SRIO', 'SI-12M2:PS-QS:SRIO', 'SI-12C1:PS-QS:SRIO', 'SI-12C2:PS-QS:SRIO', 'SI-12C3:PS-QS:SRIO',
+        'SI-13M1:PS-QS:SRIO', 'SI-13M2:PS-QS:SRIO', 'SI-13C1:PS-QS:SRIO', 'SI-13C2:PS-QS:SRIO', 'SI-13C3:PS-QS:SRIO',
+        'SI-14M1:PS-QS:SRIO', 'SI-14M2:PS-QS:SRIO', 'SI-14C1:PS-QS:SRIO', 'SI-14C2:PS-QS:SRIO', 'SI-14C3:PS-QS:SRIO',
+        'SI-15M1:PS-QS:SRIO', 'SI-15M2:PS-QS:SRIO', 'SI-15C1:PS-QS:SRIO', 'SI-15C2:PS-QS:SRIO', 'SI-15C3:PS-QS:SRIO',
+        'SI-16M1:PS-QS:SRIO', 'SI-16M2:PS-QS:SRIO', 'SI-16C1:PS-QS:SRIO', 'SI-16C2:PS-QS:SRIO', 'SI-16C3:PS-QS:SRIO',
+        'SI-17M1:PS-QS:SRIO', 'SI-17M2:PS-QS:SRIO', 'SI-17C1:PS-QS:SRIO', 'SI-17C2:PS-QS:SRIO', 'SI-17C3:PS-QS:SRIO',
+        'SI-18M1:PS-QS:SRIO', 'SI-18M2:PS-QS:SRIO', 'SI-18C1:PS-QS:SRIO', 'SI-18C2:PS-QS:SRIO', 'SI-18C3:PS-QS:SRIO',
+        'SI-19M1:PS-QS:SRIO', 'SI-19M2:PS-QS:SRIO', 'SI-19C1:PS-QS:SRIO', 'SI-19C2:PS-QS:SRIO', 'SI-19C3:PS-QS:SRIO',
+        'SI-20M1:PS-QS:SRIO', 'SI-20M2:PS-QS:SRIO', 'SI-20C1:PS-QS:SRIO', 'SI-20C2:PS-QS:SRIO', 'SI-20C3:PS-QS:SRIO',
         ),
     },
-'SI-Glob:TI-Dips': {
+'SI-Glob:TI-Dips:': {
     'events':('MigSI','Study'),
     'trigger_type':'PSSI',
     'devices': (
-        'SI-Fam:PS-B1B2-1', 'SI-Fam:PS-B1B2-2',
+        'SI-Fam:PS-B1B2-1:SRIO', 'SI-Fam:PS-B1B2-2:SRIO',
         ),
     },
-'SI-Glob:TI-Sexts': {
+'SI-Glob:TI-Sexts:': {
     'events':('MigSI','Study'),
     'trigger_type':'PSSI',
     'devices': (
-        'SI-Fam:PS-SFA0', 'SI-Fam:PS-SFA1', 'SI-Fam:PS-SFA2', 'SI-Fam:PS-SDA0', 'SI-Fam:PS-SDA1', 'SI-Fam:PS-SDA2', 'SI-Fam:PS-SDA3',
-        'SI-Fam:PS-SFB0', 'SI-Fam:PS-SFB1', 'SI-Fam:PS-SFB2', 'SI-Fam:PS-SDB0', 'SI-Fam:PS-SDB1', 'SI-Fam:PS-SDB2', 'SI-Fam:PS-SDB3',
-        'SI-Fam:PS-SFP0', 'SI-Fam:PS-SFP1', 'SI-Fam:PS-SFP2', 'SI-Fam:PS-SDP0', 'SI-Fam:PS-SDP1', 'SI-Fam:PS-SDP2', 'SI-Fam:PS-SDP3',
+        'SI-Fam:PS-SFA0:SRIO', 'SI-Fam:PS-SFA1:SRIO', 'SI-Fam:PS-SFA2:SRIO', 'SI-Fam:PS-SDA0:SRIO', 'SI-Fam:PS-SDA1:SRIO', 'SI-Fam:PS-SDA2:SRIO', 'SI-Fam:PS-SDA3:SRIO',
+        'SI-Fam:PS-SFB0:SRIO', 'SI-Fam:PS-SFB1:SRIO', 'SI-Fam:PS-SFB2:SRIO', 'SI-Fam:PS-SDB0:SRIO', 'SI-Fam:PS-SDB1:SRIO', 'SI-Fam:PS-SDB2:SRIO', 'SI-Fam:PS-SDB3:SRIO',
+        'SI-Fam:PS-SFP0:SRIO', 'SI-Fam:PS-SFP1:SRIO', 'SI-Fam:PS-SFP2:SRIO', 'SI-Fam:PS-SDP0:SRIO', 'SI-Fam:PS-SDP1:SRIO', 'SI-Fam:PS-SDP2:SRIO', 'SI-Fam:PS-SDP3:SRIO',
         ),
     },
-'BO-Glob:TI-Mags': {
+'BO-Glob:TI-Mags:': {
     'events':('RmpBO','Study'),
     'trigger_type':'rmpbo',
     'devices': (
-        'BO-Fam:PS-B-1', 'BO-Fam:PS-B-2',
-        'BO-Fam:PS-QF', 'BO-Fam:PS-QD',
-        'BO-Fam:PS-SF', 'BO-Fam:PS-SD',
-        'BO-01U:PS-CH', 'BO-01U:PS-CV', 'BO-03U:PS-CH', 'BO-03U:PS-CV', 'BO-05U:PS-CH', 'BO-05U:PS-CV', 'BO-07U:PS-CH', 'BO-07U:PS-CV', 'BO-09U:PS-CH', 'BO-09U:PS-CV',
-        'BO-11U:PS-CH', 'BO-11U:PS-CV', 'BO-13U:PS-CH', 'BO-13U:PS-CV', 'BO-15U:PS-CH', 'BO-15U:PS-CV', 'BO-17U:PS-CH', 'BO-17U:PS-CV', 'BO-19U:PS-CH', 'BO-19U:PS-CV',
-        'BO-21U:PS-CH', 'BO-21U:PS-CV', 'BO-23U:PS-CH', 'BO-23U:PS-CV', 'BO-25U:PS-CH', 'BO-25U:PS-CV', 'BO-27U:PS-CH', 'BO-27U:PS-CV', 'BO-29U:PS-CH', 'BO-29U:PS-CV',
-        'BO-31U:PS-CH', 'BO-31U:PS-CV', 'BO-33U:PS-CH', 'BO-33U:PS-CV', 'BO-35U:PS-CH', 'BO-35U:PS-CV', 'BO-37U:PS-CH', 'BO-37U:PS-CV', 'BO-39U:PS-CH', 'BO-39U:PS-CV',
-        'BO-41U:PS-CH', 'BO-41U:PS-CV', 'BO-43U:PS-CH', 'BO-43U:PS-CV', 'BO-45U:PS-CH', 'BO-45U:PS-CV', 'BO-47U:PS-CH', 'BO-47U:PS-CV', 'BO-49U:PS-CH', 'BO-49U:PS-CV',
-        'BO-02D:PS-QS',
+        'BO-Fam:PS-B-1:SRIO', 'BO-Fam:PS-B-2:SRIO',
+        'BO-Fam:PS-SQF:SRIO', 'BO-Fam:PS-SQD:SRIO',
+        'BO-Fam:PS-SSF:SRIO', 'BO-Fam:PS-SSD:SRIO',
+        'BO-01U:PS-CH:SRIO', 'BO-01U:PS-CV:SRIO', 'BO-03U:PS-CH:SRIO', 'BO-03U:PS-CV:SRIO', 'BO-05U:PS-CH:SRIO', 'BO-05U:PS-CV:SRIO', 'BO-07U:PS-CH:SRIO', 'BO-07U:PS-CV:SRIO', 'BO-09U:PS-CH:SRIO', 'BO-09U:PS-CV:SRIO',
+        'BO-11U:PS-CH:SRIO', 'BO-11U:PS-CV:SRIO', 'BO-13U:PS-CH:SRIO', 'BO-13U:PS-CV:SRIO', 'BO-15U:PS-CH:SRIO', 'BO-15U:PS-CV:SRIO', 'BO-17U:PS-CH:SRIO', 'BO-17U:PS-CV:SRIO', 'BO-19U:PS-CH:SRIO', 'BO-19U:PS-CV:SRIO',
+        'BO-21U:PS-CH:SRIO', 'BO-21U:PS-CV:SRIO', 'BO-23U:PS-CH:SRIO', 'BO-23U:PS-CV:SRIO', 'BO-25U:PS-CH:SRIO', 'BO-25U:PS-CV:SRIO', 'BO-27U:PS-CH:SRIO', 'BO-27U:PS-CV:SRIO', 'BO-29U:PS-CH:SRIO', 'BO-29U:PS-CV:SRIO',
+        'BO-31U:PS-CH:SRIO', 'BO-31U:PS-CV:SRIO', 'BO-33U:PS-CH:SRIO', 'BO-33U:PS-CV:SRIO', 'BO-35U:PS-CH:SRIO', 'BO-35U:PS-CV:SRIO', 'BO-37U:PS-CH:SRIO', 'BO-37U:PS-CV:SRIO', 'BO-39U:PS-CH:SRIO', 'BO-39U:PS-CV:SRIO',
+        'BO-41U:PS-CH:SRIO', 'BO-41U:PS-CV:SRIO', 'BO-43U:PS-CH:SRIO', 'BO-43U:PS-CV:SRIO', 'BO-45U:PS-CH:SRIO', 'BO-45U:PS-CV:SRIO', 'BO-47U:PS-CH:SRIO', 'BO-47U:PS-CV:SRIO', 'BO-49U:PS-CH:SRIO', 'BO-49U:PS-CV:SRIO',
+        'BO-02D:PS-QS:SRIO',
         ),
     },
 'LI-01:TI-EGun:MultBun':{
@@ -128,189 +128,189 @@ _TRIGGERS= {
         'LI-01:EGun-Trig2',
         ),
     },
-'LI-01:TI-Modltr-1':{
+'LI-01:TI-Modltr-1:': {
     'events':('Linac','Study'),
     'trigger_type':'simple',
     'devices':(
         'LI-01:RF-Modltr-1',
         ),
     },
-'LI-01:TI-Modltr-2':{
+'LI-01:TI-Modltr-2:': {
     'events':('Linac','Study'),
     'trigger_type':'simple',
     'devices':(
         'LI-01:RF-Modltr-2',
         ),
     },
-'LI-Glob:TI-SHAmp':{
+'LI-Glob:TI-SHAmp:': {
     'events':('Linac','Study'),
     'trigger_type':'simple',
     'devices':(
         'LI-Glob:RF-SHAmp',
         ),
     },
-'LI-Glob:TI-RFAmp-1':{
+'LI-Glob:TI-RFAmp-1:': {
     'events':('Linac','Study'),
     'trigger_type':'simple',
     'devices':(
         'LI-Glob:RF-RFAmp-1',
         ),
     },
-'LI-Glob:TI-RFAmp-2':{
+'LI-Glob:TI-RFAmp-2:': {
     'events':('Linac','Study'),
     'trigger_type':'simple',
     'devices':(
         'LI-Glob:RF-RFAmp-2',
         ),
     },
-'LI-Glob:TI-LLRF-1':{
+'LI-Glob:TI-LLRF-1:': {
     'events':('Linac','Study'),
     'trigger_type':'simple',
     'devices':(
         'LI-Glob:RF-LLRF-1',
         ),
     },
-'LI-Glob:TI-LLRF-2':{
+'LI-Glob:TI-LLRF-2:': {
     'events':('Linac','Study'),
     'trigger_type':'simple',
     'devices':(
         'LI-Glob:RF-LLRF-2',
         ),
     },
-'LI-Glob:TI-LLRF-3':{
+'LI-Glob:TI-LLRF-3:': {
     'events':('Linac','Study'),
     'trigger_type':'simple',
     'devices':(
         'LI-Glob:RF-LLRF-3',
         ),
     },
-'TB-04:TI-InjS':{
+'TB-04:TI-InjS:': {
     'events':('InjBO','Study'),
     'trigger_type':'simple',
     'devices':(
         'TB-04:PU-InjS',
         ),
     },
-'BO-01D:TI-InjK':{
+'BO-01D:TI-InjK:': {
     'events':('InjBO','Study'),
     'trigger_type':'simple',
     'devices':(
         'BO-01D:PU-InjK',
         ),
     },
-'BO-05D:TI-P5Cav':{
+'BO-05D:TI-P5Cav:': {
     'events':('InjBO','RmpBO','Study'),
     'trigger_type':'cavity',
     'devices':(
         'BO-05D:RF-P5Cav',
         ),
     },
-'BO-48D:TI-EjeK':{
+'BO-48D:TI-EjeK:': {
     'events':('InjSI','Study'),
     'trigger_type':'simple',
     'devices':(
         'BO-48D:PU-EjeK',
         ),
     },
-'TS-01:TI-EjeSF':{
+'TS-01:TI-EjeSF:': {
     'events':('InjSI','Study'),
     'trigger_type':'simple',
     'devices':(
         'TS-01:PU-EjeSF',
         ),
     },
-'TS-01:TI-EjeSG':{
+'TS-01:TI-EjeSG:': {
     'events':('InjSI','Study'),
     'trigger_type':'simple',
     'devices':(
         'TS-01:PU-EjeSG',
         ),
     },
-'TS-Fam:TI-InjSG':{
+'TS-Fam:TI-InjSG:': {
     'events':('InjSI','Study'),
     'trigger_type':'simple',
     'devices':(
         'TS-Fam:PU-InjSG',
         ),
     },
-'TS-04:TI-InjSF':{
+'TS-04:TI-InjSF:': {
     'events':('InjSI','Study'),
     'trigger_type':'simple',
     'devices':(
         'TS-04:PU-InjSF',
         ),
     },
-'SI-01SA:TI-InjK':{
+'SI-01SA:TI-InjK:': {
     'events':('InjSI','Study'),
     'trigger_type':'simple',
     'devices':(
         'SI-01SA:PU-InjK',
         ),
     },
-'LI-Fam:TI-BPM':{
+'LI-Fam:TI-BPM:': {
     'events':('DigLI','Study'),
     'trigger_type':'generic',
     'devices':(
         'LI-Fam:DI-BPM',
         ),
     },
-'LI-Fam:TI-Scrn':{
+'LI-Fam:TI-Scrn:': {
     'events':('DigLI','Study'),
     'trigger_type':'generic',
     'devices':(
         'LI-Fam:DI-Scrn',
         ),
     },
-'LI-01:TI-ICT-1':{
+'LI-01:TI-ICT-1:': {
     'events':('DigLI','Study'),
     'trigger_type':'generic',
     'devices':(
         'LI-01:DI-ICT-1',
         ),
     },
-'LI-01:TI-ICT-2':{
+'LI-01:TI-ICT-2:': {
     'events':('DigLI','Study'),
     'trigger_type':'generic',
     'devices':(
         'LI-01:DI-ICT-2',
         ),
     },
-'TB-Fam:TI-BPM':{
+'TB-Fam:TI-BPM:': {
     'events':('DigTB','Study'),
     'trigger_type':'generic',
     'devices':(
         'TB-01:DI-BPM-1', 'TB-01:DI-BPM-2', 'TB-02:DI-BPM-1',  'TB-02:DI-BPM-2',  'TB-03:DI-BPM',  'TB-04:DI-BPM',
         ),
     },
-'TB-Fam:TI-Scrn':{
+'TB-Fam:TI-Scrn:': {
     'events':('DigTB','Study'),
     'trigger_type':'generic',
     'devices':(
         'TB-01:DI-Scrn-1', 'TB-01:DI-Scrn-2', 'TB-02:DI-Scrn-1',  'TB-02:DI-Scrn-2',  'TB-03:DI-Scrn',  'TB-04:DI-Scrn',
         ),
     },
-'TB-02:TI-ICT':{
+'TB-02:TI-ICT:': {
     'events':('DigTB','Study'),
     'trigger_type':'generic',
     'devices':(
         'TB-02:DI-ICT',
         ),
     },
-'TB-04:TI-ICT':{
+'TB-04:TI-ICT:': {
     'events':('DigTB','Study'),
     'trigger_type':'generic',
     'devices':(
         'TB-04:DI-ICT',
         ),
     },
-'TB-04:TI-FCT':{
+'TB-04:TI-FCT:': {
     'events':('DigTB','Study'),
     'trigger_type':'generic',
     'devices':(
         'TB-04:DI-FCT',
         ),
     },
-'BO-Fam:TI-BPM':{
+'BO-Fam:TI-BPM:': {
     'events':('DigBO','Study'),
     'trigger_type':'generic',
     'devices':(
@@ -321,154 +321,154 @@ _TRIGGERS= {
         'BO-41U:DI-BPM', 'BO-42U:DI-BPM', 'BO-43U:DI-BPM', 'BO-44U:DI-BPM', 'BO-45U:DI-BPM', 'BO-46U:DI-BPM', 'BO-47U:DI-BPM', 'BO-48U:DI-BPM', 'BO-49U:DI-BPM', 'BO-50U:DI-BPM',
         ),
     },
-'BO-Fam:TI-Scrn':{
+'BO-Fam:TI-Scrn:': {
     'events':('DigBO','Study'),
     'trigger_type':'generic',
     'devices':(
         'BO-01D:DI-Scrn-1', 'BO-01D:DI-Scrn-2', 'BO-02U:DI-Scrn',
         ),
     },
-'BO-04U:TI-GSL':{
+'BO-04U:TI-GSL:': {
     'events':('DigBO','Study'),
     'trigger_type':'generic',
     'devices':(
         'BO-04U:DI-GSL',
         ),
     },
-'BO-02D:TI-TuneS':{
+'BO-02D:TI-TuneS:': {
     'events':('DigBO','Study'),
     'trigger_type':'generic',
     'devices':(
         'BO-02D:DI-TuneS',
         ),
     },
-'BO-04D:TI-TuneP':{
+'BO-04D:TI-TuneP:': {
     'events':('DigBO','Study'),
     'trigger_type':'generic',
     'devices':(
         'BO-04D:DI-TuneP',
         ),
     },
-'BO-35D:TI-DCCT':{
+'BO-35D:TI-DCCT:': {
     'events':('DigBO','Study'),
     'trigger_type':'generic',
     'devices':(
         'BO-35D:DI-DCCT',
         ),
     },
-'TS-Fam:TI-BPM':{
+'TS-Fam:TI-BPM:': {
     'events':('DigTS','Study'),
     'trigger_type':'generic',
     'devices':(
         'TS-01:DI-BPM', 'TS-02:DI-BPM',  'TS-03:DI-BPM',  'TS-04:DI-BPM-1', 'TS-04:DI-BPM-2',
         ),
     },
-'TS-Fam:TI-Scrn':{
+'TS-Fam:TI-Scrn:': {
     'events':('DigTS','Study'),
     'trigger_type':'generic',
     'devices':(
         'TS-01:DI-Scrn', 'TS-02:DI-Scrn',  'TS-03:DI-Scrn',  'TS-04:DI-Scrn-1', 'TS-04:DI-Scrn-2', 'TS-04:DI-Scrn-3',
         ),
     },
-'TS-01:TI-ICT':{
+'TS-01:TI-ICT:': {
     'events':('DigTS','Study'),
     'trigger_type':'generic',
     'devices':(
         'TS-01:DI-ICT',
         ),
     },
-'TS-04:TI-ICT':{
+'TS-04:TI-ICT:': {
     'events':('DigTS','Study'),
     'trigger_type':'generic',
     'devices':(
         'TS-04:DI-ICT',
         ),
     },
-'TS-04:TI-FCT':{
+'TS-04:TI-FCT:': {
     'events':('DigTS','Study'),
     'trigger_type':'generic',
     'devices':(
         'TS-04:DI-FCT',
         ),
     },
-'SI-19SP:TI-GSL15':{
+'SI-19SP:TI-GSL15:': {
     'events':('DigSI','Study'),
     'trigger_type':'generic',
     'devices':(
         'SI-19SP:DI-GSL15',
         ),
     },
-'SI-20SB:TI-GSL07':{
+'SI-20SB:TI-GSL07:': {
     'events':('DigSI','Study'),
     'trigger_type':'generic',
     'devices':(
         'SI-20SB:DI-GSL07',
         ),
     },
-'SI-13C4:TI-DCCT':{
+'SI-13C4:TI-DCCT:': {
     'events':('DigSI','Study'),
     'trigger_type':'generic',
     'devices':(
         'SI-13C4:DI-DCCT',
         ),
     },
-'SI-14C4:TI-DCCT':{
+'SI-14C4:TI-DCCT:': {
     'events':('DigSI','Study'),
     'trigger_type':'generic',
     'devices':(
         'SI-14C4:DI-DCCT',
         ),
     },
-'SI-01SA:TI-HTuneS':{
+'SI-01SA:TI-HTuneS:': {
     'events':('DigSI','Study'),
     'trigger_type':'generic',
     'devices':(
         'SI-01SA:DI-HTuneS',
         ),
     },
-'SI-17SA:TI-HTuneP':{
+'SI-17SA:TI-HTuneP:': {
     'events':('DigSI','Study'),
     'trigger_type':'generic',
     'devices':(
         'SI-17SA:DI-HTuneP',
         ),
     },
-'SI-18C4:TI-VTuneS':{
+'SI-18C4:TI-VTuneS:': {
     'events':('DigSI','Study'),
     'trigger_type':'generic',
     'devices':(
         'SI-18C4:DI-VTuneS',
         ),
     },
-'SI-17C4:TI-VTuneP':{
+'SI-17C4:TI-VTuneP:': {
     'events':('DigSI','Study'),
     'trigger_type':'generic',
     'devices':(
         'SI-17C4:DI-VTuneP',
         ),
     },
-'SI-19C4:TI-VPing':{
+'SI-19C4:TI-VPing:': {
     'events':('DigSI','Study'),
     'trigger_type':'generic',
     'devices':(
         'SI-19C4:PU-VPing',
         ),
     },
-'SI-01SA:TI-HPing':{
+'SI-01SA:TI-HPing:': {
     'events':('DigSI','Study'),
     'trigger_type':'generic',
     'devices':(
         'SI-01SA:PU-HPing',
         ),
     },
-'SI-16C4:TI-GBPM':{
+'SI-16C4:TI-GBPM:': {
     'events':('DigSI','Study'),
     'trigger_type':'generic',
     'devices':(
         'SI-16C4:DI-GBPM',
         ),
     },
-'SI-Fam:TI-BPM':{
+'SI-Fam:TI-BPM:': {
     'events':('DigSI','Study'),
     'trigger_type':'generic',
     'devices':(
@@ -494,7 +494,7 @@ _TRIGGERS= {
         'SI-20M1:DI-BPM', 'SI-20M2:DI-BPM', 'SI-20C1:DI-BPM-1', 'SI-20C1:DI-BPM-2', 'SI-20C2:DI-BPM', 'SI-20C3:DI-BPM-1', 'SI-20C3:DI-BPM-2', 'SI-20C4:DI-BPM',
         ),
     },
-'SI-Glob:TI-BbB':{
+'SI-Glob:TI-BbB:': {
     'events':('DigSI','Study'),
     'trigger_type':'generic',
     'devices':(

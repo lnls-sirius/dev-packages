@@ -1,13 +1,11 @@
 from siriuspy.timesys import time_data as _tm
 from siriuspy.namesys import SiriusPVName as _PVName
-from data.triggers import get_triggers as _get_triggers
 from .ll_classes import get_low_level_trigger_object
 
 _ALL_DEVICES = _tm.get_all_devices()
 _pv_fun = lambda x,y: _PVName(x).dev_type.lower() == y.lower()
 _get_devs = lambda x: { dev for dev in _ALL_DEVICES if _pv_fun(dev,x) }
 
-EVG  = _get_devs('evg').pop()
 EVRs = _get_devs('evr')
 EVEs = _get_devs('eve')
 AFCs = _get_devs('afc')
@@ -28,14 +26,16 @@ def _get_initial_hl2ll():
 
 
 def _get_ll_trig_names(devs):
-    from_evg = _tm.get_connections_from_evg()
+    _tm.add_bbb_info()
+    _tm.add_crates_info()
     twds_evg = _tm.get_connections_twrds_evg()
     channels = tuple()
     for dev in devs:
-        dev,conn = twds_evg[dev].pop()
-        while dev not in EVRs | EVEs |AFCs:
-            dev, conn = twds_evg[dev][conn]
-        channels += (dev+':'+conn,)
+        conn, up_dev = twds_evg[dev].popitem()
+        while up_dev[0] not in EVRs | EVEs |AFCs:
+            conn_up = _tm.IO_MAP_INV[ up_dev[0] ][ up_dev[1] ]
+            up_dev = twds_evg[ up_dev[0] ][ conn_up ]
+        channels += (up_dev[0]+':'+up_dev[1],)
     return sorted(channels)
 
 
@@ -46,12 +46,12 @@ _HIGH_LEVEL_TRIGGER_CLASSES = {
     'pssi':     _HL_TrigPSSI,
     'generic':  _HL_TrigGeneric,
     }
-def get_high_level_trigger_object(trigger,callback,devices,event,trigger_type):
+def get_high_level_trigger_object(trig_prefix,callback,devices,event,trigger_type):
     ty = trigger_type
     cls_ = _HIGH_LEVEL_TRIGGER_CLASSES.get(ty)
     if not cls_:
         raise Exception('High Level Trigger Class not defined for trigger type '+ty+'.')
-    return cls_(trigger,callback,devices,event)
+    return cls_(trig_prefix,callback,devices,event)
 
 
 class _HL_TrigBase:
@@ -110,20 +110,20 @@ class _HL_TrigBase:
             db2[pre + self._HLPROP_2_PVRB[prop] ] = db[self._HLPROP_2_PVRB[prop] ]
         return db2
 
-    def __init__(self,trigger,callback,devices,events):
+    def __init__(self,trig_prefix,callback,devices,events):
         self._RB_FUNS  = self._get_read_funs_map()
         self._SP_FUNS = self._get_sp_funs_map()
         self._EVENTS = events
         self.callback = callback
-        self.prefix = trigger + ':'
+        self.prefix = trig_prefix
         self._ll_trig_names = _get_ll_trig_names(devices)
         len_rb = len(self._ll_trig_names)
         self._hl2ll = self._get_initial_hl2ll() # high level to low level interface
         self._values_rb = {  key:len_rb*[val] for key,val in self._hl2ll.items()  }
         self._ll_trigs = dict()
-        for dev in self._ll_trig_names:
+        for chan in self._ll_trig_names:
             low_lev_obj = get_low_level_trigger_object(
-                                device = dev,
+                                channel = chan,
                                 callback = self._pvs_value_rb,
                                 initial_hl2ll=_copy.deepcopy(self._hl2ll)
                                 )
@@ -160,19 +160,22 @@ class _HL_TrigBase:
             }
         return map_
 
-    def _pvs_values_rb(self, channel, prop, value):
+    def _pvs_values_rb(self, device, prop, value):
         if prop not in self._HL_PROPS: return
-        ind = self._ll_trig_names.index(channel)
+        ind = self._ll_trig_names.index(device)
         self._values_rb[prop][ind] = self._RB_FUNS[prop](value,ind)
         self.callback( self.prefix + self._HLPROP_2_PVRB[prop], self._values_rb[prop]  )
 
-    def set_propty(pv,value):
-        prop = self._PVSP_2_HLPROP.get(pv)
-        if prop not in self._HL_PROPS: return
-        if value == self._hl2ll[prop]: return
+    def set_propty(reason,value):
+        pv = pv.split(self.prefix)
+        if len(pv) == 1: return False
+        prop = self._PVSP_2_HLPROP.get(pv[1])
+        if prop not in self._HL_PROPS: return False
+        if value == self._hl2ll[prop]: return False
         self._hl2ll[prop] = self._SP_FUNS[prop](value)
         for dev, obj in self._ll_trigs.keys():
             obj.set_propty(prop,self._hl2ll[prop])
+        return True
 
 
 class _HL_TrigSimple(HL_TrigBase):

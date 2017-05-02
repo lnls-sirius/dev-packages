@@ -19,8 +19,7 @@ D1_STEP = RF_PER * 4
 D2_STEP = RF_PER * 4 / 20
 D3_STEP = 5e-6                  # five picoseconds
 
-
-TRIGCH_REGEXP = _re.compile('([a-z]+)([0-9]*)',_re.IGNORECASE)
+EVG  = 'AS-Glob:TI-EVG'
 
 
 class EventInterface:
@@ -63,14 +62,14 @@ _LOW_LEVEL_TRIGGER_CLASSES = {
     ('afc','elp'): _LL_TrigEVRELP,
     ('afc','opt'): _LL_TrigEVROPT,
     }
-def get_low_level_trigger_object(device,callback,initial_hl2ll):
-    dev = _PVName(device)
-    conn, num = TRIGCH_REGEXP.findall(dev.propty.lower())
-    key = (dev.dev_type.lower(), conn)
+def get_low_level_trigger_object(channel,callback,initial_hl2ll):
+    chan = _PVName(channel)
+    conn, num = _tm.TRIGCH_REGEXP.findall(chan.propty.lower())
+    key = (chan.dev_type.lower(), conn)
     cls_ = _LOW_LEVEL_TRIGGER_CLASSES.get(key)
     if not cls_:
         raise Exception('Low Level Trigger Class not defined for device type '+key[0]+' and connection type '+key[1]+'.')
-    return cls_(dev.dev_name, conn, num, callback, initial_hl2ll)
+    return cls_(channel, conn, num, callback, initial_hl2ll)
 
 
 class _LL_TrigEVRMFO:
@@ -80,7 +79,7 @@ class _LL_TrigEVRMFO:
     _OUTTMP    = 'MFO{0:d}'
     _REMOVE_PROPS = {}
 
-    def __init__(self, device, conn, num,  callback, initial_hl2ll):
+    def __init__(self, channel, conn, num,  callback, initial_hl2ll):
         self._HLPROP_FUNS = self._get_hlprop_funs_map()
         self._LLPROP_FUNS = self._get_llprop_funs_map()
         self._LLPROP_2_PVSP = self._get_llprop_2_pvsp_map()
@@ -88,7 +87,7 @@ class _LL_TrigEVRMFO:
         self._LLPROP_2_PVRB = self._get_llprop_2_pvrb_map()
         self._PVRB_2_LLPROP = { val:key for key,val in self._LLPROP_2_PVRB.items() }
         self.callback = callback
-        self.prefix = device + ':'
+        self.prefix = channel
         self._OUTLB = self._OUTTMP.format(num)
         self._INTLB = self._INTTMP.format(self._get_num_int(num))
         self._hl2ll = initial_hl2ll
@@ -223,7 +222,10 @@ class _LL_TrigEVRMFO:
             self._pvs_sp['internal_trigger'].value = self._NUM_INT + clock_num
 
     def set_propty(prop,value):
-        self._HLPROP_FUNS[prop](value)
+        fun = self._HLPROP_FUNS.get(prop)
+        if fun is None:  return False
+        fun(value)
+        return True
 
 
 class _LL_TrigEVROPT(_LL_TrigEVRMFO):

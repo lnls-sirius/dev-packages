@@ -16,7 +16,8 @@ stop_event = False # _multiprocessing.Event()
 
 def stop_now(signum, frame):
     print(' - SIGINT received.')
-    return stop_event.set()
+    global stop_event
+    stop_event = True
 
 
 class PCASDriver(_pcaspy.Driver):
@@ -33,7 +34,11 @@ class PCASDriver(_pcaspy.Driver):
             return value
 
     def write(self, reason, value):
-        return self.app.write(reason, value)
+        app_ret =  self.app.write(reason, value)
+        if app_ret:
+            self.setParam(reason,value)
+            self.updatePVs()
+        return app_ret
 
 
 def run():
