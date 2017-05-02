@@ -17,16 +17,80 @@ EVENT_MAPPING = {'Linac':0,  'InjBO':1,  'InjSI':2,  'RmpBO':3,  'RmpSI':4,
                  'DigLI':5,  'DigTB':6,  'DigBO':7,  'DigTS':8,  'DigSI':9,
                  'Orbit':10, 'Coupl':11, 'Tunes':12, 'Study':13, }
 
-EVENT_LABEL_TEMPLATE = 'Evnt{0:02x}'
+EVENT_LABEL_TEMPLATE = 'Event{0:02x}'
 CLOCK_LABEL_TEMPLATE = 'Clock{0:d}'
-OPT_LABEL_TEMPLATE   = 'OPT{0:2d}'
-OUT_LABEL_TEMPLATE   = 'OUT{0:1d}'
 
 MODES       = ('Disabled','Continuous','Injection','Single')
 STATES      = ('Dsbl','Enbl')
 POLARITIES  = ('Normal','Inverse')
 DELAY_TYPES = ('Incr','Fixed')
 CLOCKS = tuple([CLOCK_LABEL_TEMPLATE.format(i) for i in range(8)])
+
+TRIGCH_REGEXP = _re.compile('([a-z]+)([0-9]*)',_re.IGNORECASE)
+
+IO_MAP = {
+'EVR':{
+    'MFIO':(
+        'OPTO00','OPTO00','OPTO00','OPTO03','OPTO04','OPTO05',
+        'OPTO06','OPTO07','OPTO08','OPTO09','OPTO10','OPTO11',
+        'MFO0','MFO1','MFO2','MFO3','MFO4','MFO5','MFO6','MFO7',
+        ),
+    },
+'EVE':{
+    'MFIO':(
+        'LVEO00','LVEO01','LVEO02','LVEO03','LVEO04','LVEO05','LVEO06','LVEO07','LVEO08',
+        ),
+    },
+'AFC':{
+    'MFIO':(
+        'OPTO00','OPTO00','OPTO00','OPTO03','OPTO04',
+        'OPTO05','OPTO06','OPTO07','OPTO08','OPTO09',
+        'LVEIO0','LVEIO1','LVEIO2','LVEIO3','LVEIO4','LVEIO5','LVEIO6','LVEIO7','LVEIO8',
+        ),
+    },
+'STDMOE':{
+    'MFI0':('HVEO0',),
+    'MFI1':('HVEO1',),
+    'MFI2':('HVEO2',),
+    'MFI3':('HVEO3',),
+    },
+'STDSOE':{
+    'OPTI0':('HVEO0',),
+    'OPTI1':('HVEO1',),
+    'OPTI2':('HVEO2',),
+    'OPTI3':('HVEO3',),
+    },
+'SOE':{
+    'OPTI':('HVEO',),
+    },
+'FOUT':{
+    'MFIO':(
+        'MFIO0','MFIO1','MFIO2','MFIO3','MFIO4','MFIO5','MFIO6','MFIO7',
+        ),
+    },
+'BBB':{
+    'OPT':('RSIO'),
+    },
+'Crate':{
+    'LVEIO0':('LVEIO0',),
+    'LVEIO1':('LVEIO1',),
+    'LVEIO2':('LVEIO2',),
+    'LVEIO3':('LVEIO3',),
+    'LVEIO4':('LVEIO4',),
+    'LVEIO5':('LVEIO5',),
+    'LVEIO6':('LVEIO6',),
+    'LVEIO7':('LVEIO7',),
+    },
+}
+
+IO_MAP_INV = dict()
+for dev, conns_ in IO_MAP.items():
+    dic_ = dict()
+    IO_MAP_INV[dev] = dic_
+    for conn1,conns in conns_.items():
+        for conn2 in conns:
+            dic_[conn2] = conn1
+
 
 _timeout = 1.0
 _LOCAL = False
@@ -36,7 +100,7 @@ class _TimeDevData:
 
     Data are read from the Sirius web server.
     """
-    _reg = _re.compile('([a-z]+)([0-9]*)',_re.IGNORECASE)
+
 
     _spacing_for_plot = 10
 
@@ -76,7 +140,7 @@ class _TimeDevData:
         txt = _namesys.SiriusPVName(txt)
         dev = txt.dev_name
         chan  = txt.propty.lower()
-        reg_match = self._reg.findall(chan)
+        reg_match = TRIGCH_REGEXP.findall(chan)
         if reg_match:
             type_chan, num_chan = reg_match[0]
             return dev, chan, type_chan, num_chan
@@ -240,7 +304,7 @@ class _TimeDevData:
         chan_types = set()
         for conns in self._conn_from_evg.values():
             for chan in conns.keys():
-                chan_type = self._reg.findall(chan)[0][0]
+                chan_type = TRIGCH_REGEXP.findall(chan)[0][0]
                 chan_types.add(chan_type)
 
         nr = len(chan_types)+2
@@ -251,7 +315,7 @@ class _TimeDevData:
         colors = dict()
         for dev1,conns in self._conn_from_evg.items():
             for chan,devs in conns.items():
-                chan_type = self._reg.findall(chan)[0][0]
+                chan_type = TRIGCH_REGEXP.findall(chan)[0][0]
                 for dev2 in devs:
                     colors[(dev1,dev2[0])] = color_types[chan_type]
 
@@ -272,7 +336,7 @@ class _TimeDevData:
         return not_used
 
     def add_bbb_info(self,connections_dict):
-        conn = 'ser1'
+        conn = 'SRIO'
         not_used = set()
         for bbb, pss in connections_dict.items():
             my_conns = self._conn_twrds_evg.get(bbb)
