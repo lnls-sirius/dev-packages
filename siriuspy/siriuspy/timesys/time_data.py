@@ -152,7 +152,6 @@ class _TimeDevData:
         txt = _namesys.SiriusPVName(txt)
         dev = txt.dev_name
         chan  = txt.propty.lower()
-        print(txt,chan)
         reg_match = TRIGCH_REGEXP.findall(chan)
         if reg_match:
             type_chan, io_chan, num_chan = reg_match[0]
@@ -166,7 +165,6 @@ class _TimeDevData:
             line = line.strip()
             if not line or line[0] == '#': continue # empty line
             out,inn,*_ = line.split()
-            print(n)
             send, ochn, octyp, ocn = self._get_dev_and_channel(out)
             recv, ichn, ictyp, icn = self._get_dev_and_channel(inn)
             if not ochn or not ichn:
