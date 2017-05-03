@@ -19,6 +19,8 @@ EVENT_MAPPING = {'Linac':0,  'InjBO':1,  'InjSI':2,  'RmpBO':3,  'RmpSI':4,
 
 EVENT_LABEL_TEMPLATE = 'Event{0:02x}'
 CLOCK_LABEL_TEMPLATE = 'Clock{0:d}'
+EVENTS_PREFIX = 'AS-Glob:TI-Event:'
+
 
 MODES       = ('Disabled','Continuous','Injection','Single')
 STATES      = ('Dsbl','Enbl')
@@ -26,7 +28,7 @@ POLARITIES  = ('Normal','Inverse')
 DELAY_TYPES = ('Incr','Fixed')
 CLOCKS = tuple([CLOCK_LABEL_TEMPLATE.format(i) for i in range(8)])
 
-TRIGCH_REGEXP = _re.compile('([a-z]+)([0-9]*)',_re.IGNORECASE)
+TRIGCH_REGEXP = _re.compile('([OPTMFLHVESR]{2,3})([IO]{1,2})([0-9]{0,2})',_re.IGNORECASE)
 
 IO_MAP = {
 'EVR':{
@@ -69,7 +71,7 @@ IO_MAP = {
         ),
     },
 'BBB':{
-    'OPT':('RSIO'),
+    'OPTI':('RSIO'),
     },
 'Crate':{
     'LVEIO0':('LVEIO0',),
@@ -94,6 +96,16 @@ for dev, conns_ in IO_MAP.items():
 
 _timeout = 1.0
 _LOCAL = False
+
+
+def connections_meaning(conn=None):
+    print(  '{0:13s} {1:s}'.format('Connection', 'Meaning')  )
+    print(  '{0:13s} {1:s}'.format('MFIO', 'Multi Fibre Input/Output')  )
+    print(  '{0:13s} {1:s}'.format('OPTIO', 'Optical Fibre Input/Output')  )
+    print(  '{0:13s} {1:s}'.format('SRIO', 'RS485 Serial Network')  )
+    print(  '{0:13s} {1:s}'.format('LVEIO', 'Low Voltage Eletric Input/Output')  )
+    print(  '{0:13s} {1:s}'.format('HVEIO', 'High Voltage Eletric Input/Output')  )
+
 
 class _TimeDevData:
     """Class with mapping of Connection among timing devices and triggers receivers.
@@ -142,7 +154,7 @@ class _TimeDevData:
         chan  = txt.propty.lower()
         reg_match = TRIGCH_REGEXP.findall(chan)
         if reg_match:
-            type_chan, num_chan = reg_match[0]
+            type_chan, io_chan, num_chan = reg_match[0]
             return dev, chan, type_chan, num_chan
 
     def _parse_text_and_build_connection_mappings(self,text):
@@ -361,6 +373,10 @@ class _TimeDevData:
             else:
                 ele1_entry[conn] += ((ele2,conn),)
 
+    def get_devices_by_type(self,type_dev):
+        _pv_fun = lambda x,y: _PVName(x).dev_type.lower() == y.lower()
+        return {  dev for dev in self._all_devices if _pv_fun(dev,type_dev) }
+
     @property
     def conn_from_evg(self): return _copy.deepcopy(self._conn_from_evg)
 
@@ -432,10 +448,13 @@ def get_hierarchy_list():
     timedata =  _get_timedata()
     return timedata.hierarchy_list
 
-def get_all_devices():
+def get_devices(type_dev = None):
     """Return a dictionary with the beaglebone to power supply mapping."""
     timedata =  _get_timedata()
-    return timedata.all_devices
+    if not type_dev:
+        return timedata.all_devices
+    else:
+        return timedata.get_devices_by_type(type_dev)
 
 def add_bbb_info(connections_dict = None):
     """Return a dictionary with the beaglebone to power supply mapping."""

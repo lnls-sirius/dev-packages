@@ -2,7 +2,7 @@ import uuid as _uuid
 import numpy as _np
 import threading as _threading
 import time as _time
-from .. import time_data as _timedata
+from .. import time_data as _tm
 
 _PwrFreq = 60
 _FINE_DELAY_STEP = 5e-12
@@ -13,10 +13,10 @@ _EVNTS_AVAIL = list(range(50)) + list(range(80,120)) + list(range(160,256))
 _EVENT_LABEL_TEMPLATE = 'Ev{0:02x}'
 _CLOCK_LABEL_TEMPLATE = 'Cl{0:1d}'
 
-EVENT_LABEL_TEMPLATE = _timedata.EVENT_LABEL_TEMPLATE
-CLOCK_LABEL_TEMPLATE = _timedata.CLOCK_LABEL_TEMPLATE
-OPT_LABEL_TEMPLATE   = _timedata.OPT_LABEL_TEMPLATE
-OUT_LABEL_TEMPLATE   = _timedata.OUT_LABEL_TEMPLATE
+EVENT_LABEL_TEMPLATE = _tm.EVENT_LABEL_TEMPLATE
+CLOCK_LABEL_TEMPLATE = _tm.CLOCK_LABEL_TEMPLATE
+OPT_LABEL_TEMPLATE   = 'OPT{0:x}'
+OUT_LABEL_TEMPLATE   = 'OUT{0:x}'
 
 class CallBack:
 
@@ -599,9 +599,6 @@ class _AFCSim(_EVRSim):
 
 class _EVRTriggerIOC(_BaseIOC):
 
-    _optic_channels = tuple( [  OPT_LABEL_TEMPLATE.format(i) for i in range(_EVRSim._NR_INTERNAL_OPT_CHANNELS) ]
-                        +    [CLOCK_LABEL_TEMPLATE.format(i) for i in range(8)] )
-
     _attr2pvname = {
         'fine_delay_sp':    'FineDelay-SP',
         'fine_delay_rb':    'FineDelay-RB',
@@ -643,10 +640,8 @@ class _EVRTriggerIOC(_BaseIOC):
             self.optic_channel_rb = value
 
 
-class _EVETriggerIOC(_EVRTriggerIOC):
+class _EVETriggerIOC(_EVRTriggerIOC): pass
 
-    _optic_channels = tuple( [  OPT_LABEL_TEMPLATE.format(i) for i in range(_EVESim._NR_INTERNAL_OPT_CHANNELS) ]
-                        +    [CLOCK_LABEL_TEMPLATE.format(i) for i in range(8)] )
 
 class _OpticChannelIOC(_BaseIOC):
 
@@ -722,6 +717,8 @@ class _OpticChannelIOC(_BaseIOC):
 class EVRIOC(_BaseIOC):
     _ClassSim = _EVRSim
     _ClassTrigIOC = _EVRTriggerIOC
+    _OUTTMP = 'MFO{0:d}'
+    _INTTMP = 'OPTO{0:x}'
 
     _states = ('Dsbl','Enbl')
 
@@ -737,10 +734,10 @@ class EVRIOC(_BaseIOC):
         db[p + 'State-Sel']     = {'type' : 'enum', 'enums':cls._states, 'value':0}
         db[p + 'State-Sts']     = {'type' : 'enum', 'enums':cls._states, 'value':0}
         for i in range(cls._ClassSim._NR_INTERNAL_OPT_CHANNELS):
-            p = prefix + 'OPT{0:02d}'.format(i)
+            p = prefix + cls._INTTMP.format(i)
             db.update(_OpticChannelIOC.get_database(p))
         for out in range(cls._ClassSim._NR_OUT_CHANNELS):
-            p = prefix + 'OUT{0:d}'.format(out)
+            p = prefix + cls._OUTTMP.format(out)
             db.update(cls._ClassTrigIOC.get_database(p))
         return db
 
@@ -801,8 +798,11 @@ class EVRIOC(_BaseIOC):
 class EVEIOC(EVRIOC):
     _ClassSim = _EVESim
     _ClassTrigIOC = _EVETriggerIOC
+    _OUTTMP = 'LVEO{0:d}'
 
 
 class AFCIOC(EVRIOC):
     _ClassSim = _AFCSim
     _ClassTrigIOC = _OpticChannelIOC
+    _OUTTMP = 'LVEO{0:d}'
+    _INTTMP = 'OPTO{0:x}'

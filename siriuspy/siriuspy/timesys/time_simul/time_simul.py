@@ -1,18 +1,13 @@
 import uuid as _uuid
 import siriuspy.namesys as _namesys
 from .  import device_models as _device_models
-from .. import time_data as _timedata
+from .. import time_data as _tm
 
-EVG_PREFIX = 'AS-Glob:TI-EVG:'
+EVG_PREFIX  = _tm.get_devices('evg').pop() + ':'
 
-_ALL_DEVICES = _timedata.get_all_devices()
-_pv_fun = lambda x,y: _namesys.SiriusPVName(x).dev_type.lower() == y.lower()
-_get_devs = lambda x: { dev for dev in _ALL_DEVICES if _pv_fun(dev,x) }
-
-EVGs = _get_devs('evg')
-EVRs = _get_devs('evr')
-EVEs = _get_devs('eve')
-AFCs = _get_devs('afc')
+EVRs = _tm.get_devices('evr')
+EVEs = _tm.get_devices('eve')
+AFCs = _tm.get_devices('afc')
 
 class TimingSimulation(_device_models.CallBack):
 
