@@ -1,17 +1,15 @@
+import copy as _copy
 from siriuspy.timesys import time_data as _tm
 from siriuspy.namesys import SiriusPVName as _PVName
 from .ll_classes import get_low_level_trigger_object
+from .ll_classes import HL_Event
 
-_ALL_DEVICES = _tm.get_all_devices()
-_pv_fun = lambda x,y: _PVName(x).dev_type.lower() == y.lower()
-_get_devs = lambda x: { dev for dev in _ALL_DEVICES if _pv_fun(dev,x) }
-
-EVRs = _get_devs('evr')
-EVEs = _get_devs('eve')
-AFCs = _get_devs('afc')
+EVRs = _tm.get_devices('evr')
+EVEs = _tm.get_devices('eve')
+AFCs = _tm.get_devices('afc')
 
 
-def _get_initial_hl2ll():
+def _get_initial_trig_hl2ll():
     map_ = {
         'work_as'    : 0,
         'clock'      : 0,
@@ -25,13 +23,13 @@ def _get_initial_hl2ll():
     return map_
 
 
-def _get_ll_trig_names(devs):
+def _get_ll_trig_names(chans):
     _tm.add_bbb_info()
     _tm.add_crates_info()
     twds_evg = _tm.get_connections_twrds_evg()
     channels = tuple()
-    for dev in devs:
-        conn, up_dev = twds_evg[dev].popitem()
+    for chan in chans:
+        up_dev = twds_evg[chan.dev_name][chan.propty]
         while up_dev[0] not in EVRs | EVEs |AFCs:
             conn_up = _tm.IO_MAP_INV[ up_dev[0] ][ up_dev[1] ]
             up_dev = twds_evg[ up_dev[0] ][ conn_up ]
@@ -46,12 +44,12 @@ _HIGH_LEVEL_TRIGGER_CLASSES = {
     'pssi':     _HL_TrigPSSI,
     'generic':  _HL_TrigGeneric,
     }
-def get_high_level_trigger_object(trig_prefix,callback,devices,event,trigger_type):
+def get_high_level_trigger_object(trig_prefix,callback,channels,event,trigger_type):
     ty = trigger_type
     cls_ = _HIGH_LEVEL_TRIGGER_CLASSES.get(ty)
     if not cls_:
         raise Exception('High Level Trigger Class not defined for trigger type '+ty+'.')
-    return cls_(trig_prefix,callback,devices,event)
+    return cls_(trig_prefix,callback,channels,event)
 
 
 class _HL_TrigBase:
@@ -110,13 +108,13 @@ class _HL_TrigBase:
             db2[pre + self._HLPROP_2_PVRB[prop] ] = db[self._HLPROP_2_PVRB[prop] ]
         return db2
 
-    def __init__(self,trig_prefix,callback,devices,events):
-        self._RB_FUNS  = self._get_read_funs_map()
-        self._SP_FUNS = self._get_sp_funs_map()
+    def __init__(self,trig_prefix,callback,channels,events):
+        self._RB_FUNS  = self._get_RB_FUNS()
+        self._SP_FUNS = self._get_SP_FUNS()
         self._EVENTS = events
         self.callback = callback
         self.prefix = trig_prefix
-        self._ll_trig_names = _get_ll_trig_names(devices)
+        self._ll_trig_names = _get_ll_trig_names(channels)
         len_rb = len(self._ll_trig_names)
         self._hl2ll = self._get_initial_hl2ll() # high level to low level interface
         self._values_rb = {  key:len_rb*[val] for key,val in self._hl2ll.items()  }
@@ -132,9 +130,9 @@ class _HL_TrigBase:
             for prop, val in self._hl2ll.items():
                 low_lev_obj.set_propty(prop,val)
 
-    def _get_initial_hl2ll(self): return _get_initial_hl2ll()
+    def _get_initial_hl2ll(self): return _get_initial_trig_hl2ll()
 
-    def _get_sp_funs_map(self):
+    def _get_SP_FUNS(self):
         map_ = {
             'work_as'    : lambda x: self._FUNCTION_TYPES[x],
             'clock'      : lambda x: _tm.CLOCKS[x],
@@ -147,7 +145,7 @@ class _HL_TrigBase:
             }
         return map_
 
-    def _get_read_funs_map(self):
+    def _get_RB_FUNS(self):
         map_ = {
             'work_as'    : lambda x: self._FUNCTION_TYPES.index(x),
             'clock'      : lambda x: _tm.CLOCKS.index(x),
@@ -205,8 +203,8 @@ class _HL_TrigPSSI(HL_TrigBase):
         map_['pulses'] = 2000
         return map_
 
-    def _get_sp_funs_map(self):
-        map_ = super()._get_sp_funs_map()
+    def _get_SP_FUNS(self):
+        map_ = super()._get_SP_FUNS()
         map_['event'] = self._set_event
         return map_
 
@@ -236,3 +234,80 @@ class _HL_TrigPSSI(HL_TrigBase):
 
 class _HL_TrigGeneric(HL_TrigBase):
     _HL_PROPS = {'event','state','pulses','width','work_as','clock'}
+
+
+class HL_Event:
+    _HLPROP_2_PVSP = { # This dictionary converts the internal property name to the SP pv name
+        'delay'      : 'Delay-SP',
+        'mode'       : 'Mode-Sel',
+        'delay_type' : 'DelayType-Sel',
+        }
+    _PVSP_2_HLPROP = {  val:key for key,val in _HL_Event._HLPROP_2_PVSP.items()  }
+    _HLPROP_2_PVRB = {
+        'delay'      : 'Delay-RB',
+        'mode'       : 'Mode-Sts',
+        'delay_type' : 'DelayType-Sts',
+        }
+
+    def get_database(self):
+        db = dict()
+        pre = self.prefix
+        db[pre + 'Delay-SP']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'unit':'us', 'prec': 3}
+        db[pre + 'Delay-RB']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'unit':'us','prec': 3}
+        db[pre + 'Mode-Sel']      = {'type' : 'enum', 'enums':_tm.MODES, 'value':1}
+        db[pre + 'Mode-Sts']      = {'type' : 'enum', 'enums':_tm.MODES, 'value':1}
+        db[pre + 'DelayType-Sel'] = {'type' : 'enum', 'enums':_tm.DELAY_TYPES, 'value':1}
+        db[pre + 'DelayType-Sts'] = {'type' : 'enum', 'enums':_tm.DELAY_TYPES, 'value':1}
+        return db
+
+    def __init__(self,prefix,code,callback):
+        self._RB_FUNS  = self._get_RB_FUNS()
+        self._SP_FUNS = self._get_SP_FUNS()
+        self.callback = callback
+        self.prefix = prefix
+        self.ll_code  = code
+        self._hl2ll = self._get_initial_hl2ll()
+        self._values_rb = {  key:val for key,val in self._hl2ll.items()  }
+        self.ll_obj = HL_Event( prefix = self.ll_code,
+                                callback = self._pvs_value_rb,
+                                initial_hl2ll=_copy.deepcopy(self._hl2ll)
+                                )
+        for prop, val in self._hl2ll.items():
+            self.ll_obj.set_propty(prop,val)
+
+    def _get_initial_hl2ll(self):
+        map_ = {
+            'delay'      : 0,
+            'mode'       : 0,
+            'delay_type' : 0,
+            }
+        return map_
+
+    def _get_SP_FUNS(self):
+        map_ = {
+            'delay'      : lambda x: x,
+            'mode'       : lambda x: x,
+            'delay_type' : lambda x: x,
+            }
+        return map_
+
+    def _get_RB_FUNS(self):
+        map_ = {
+            'delay'      : lambda x: x,
+            'mode'       : lambda x: x,
+            'delay_type' : lambda x: x,
+            }
+        return map_
+
+    def _pvs_values_rb(self, device, prop, value):
+        self._values_rb[prop] = self._RB_FUNS[prop](value)
+        self.callback( self.prefix + self._HLPROP_2_PVRB[prop], self._values_rb[prop]  )
+
+    def set_propty(reason,value):
+        pv = pv.split(self.prefix)
+        if len(pv) == 1: return False
+        prop = self._PVSP_2_HLPROP.get(pv[1])
+        if value == self._hl2ll[prop]: return True
+        self._hl2ll[prop] = self._SP_FUNS[prop](value)
+        self.ll_obj.set_propty(prop,self._hl2ll[prop])
+        return True

@@ -22,9 +22,10 @@ def stop_now(signum, frame):
 
 class PCASDriver(_pcaspy.Driver):
 
-    def __init__(self):
+    def __init__(self,app):
         super().__init__()
-        self.app = _main.App(self)
+        self.app = app
+        self.app.driver = self
 
     def read(self, reason):
         value = self.app.read(reason)
@@ -46,11 +47,12 @@ def run():
     # define abort function
     _signal.signal(_signal.SIGINT, stop_now)
 
+    app = _main.App()
     # create a new simple pcaspy server and driver to responde client's requests
     server = _pcaspy.SimpleServer()
-    for prefix, database in _main.App.pvs_database.items():
+    for prefix, database in app.get_database():
         server.createPV(prefix, database)
-    pcas_driver = PCASDriver()
+    pcas_driver = PCASDriver(app)
 
     # initiate a new thread responsible for listening for client connections
     server_thread = _pcaspy_tools.ServerThread(server)
