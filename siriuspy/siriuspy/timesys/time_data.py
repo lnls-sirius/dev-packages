@@ -95,7 +95,7 @@ for dev, conns_ in IO_MAP.items():
 
 
 _timeout = 1.0
-_LOCAL = False
+_LOCAL = True
 
 
 def connections_meaning(conn=None):
@@ -152,6 +152,7 @@ class _TimeDevData:
         txt = _namesys.SiriusPVName(txt)
         dev = txt.dev_name
         chan  = txt.propty.lower()
+        print(txt,chan)
         reg_match = TRIGCH_REGEXP.findall(chan)
         if reg_match:
             type_chan, io_chan, num_chan = reg_match[0]
@@ -165,6 +166,7 @@ class _TimeDevData:
             line = line.strip()
             if not line or line[0] == '#': continue # empty line
             out,inn,*_ = line.split()
+            print(n)
             send, ochn, octyp, ocn = self._get_dev_and_channel(out)
             recv, ichn, ictyp, icn = self._get_dev_and_channel(inn)
             if not ochn or not ichn:
@@ -374,7 +376,7 @@ class _TimeDevData:
                 ele1_entry[conn] += ((ele2,conn),)
 
     def get_devices_by_type(self,type_dev):
-        _pv_fun = lambda x,y: _PVName(x).dev_type.lower() == y.lower()
+        _pv_fun = lambda x,y: _namesys.SiriusPVName(x).dev_type.lower() == y.lower()
         return {  dev for dev in self._all_devices if _pv_fun(dev,type_dev) }
 
     @property
