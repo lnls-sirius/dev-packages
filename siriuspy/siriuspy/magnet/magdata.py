@@ -67,13 +67,13 @@ def server_online():
     """Return True/False if Sirius web server is online."""
     return _web.server_online()
 
-def get_magnet_names():
+def get_magps_names():
     """Return a name list of magnets"""
     magdata = _get_magdata()
     return tuple(magdata.mag2ps_dict.keys())
 
-def get_magps_names():
-    """Return a name list of magnets"""
+def get_ps_names():
+    """Return a name list of power supplies"""
     magdata = _get_magdata()
     return tuple(magdata.magps_sp_limits_dict.keys())
 
