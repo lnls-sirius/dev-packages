@@ -1,7 +1,7 @@
 import re as _re
 import epics as _epics
 from siriuspy.namesys import SiriusPVName as _PVName
-from siriuspy.timesys import time_data as _tm
+from siriuspy.timesys.time_data import Connections, IOs
 
 # Coding guidelines:
 # =================
@@ -22,20 +22,20 @@ D1_STEP = RF_PER * 4
 D2_STEP = RF_PER * 4 / 20
 D3_STEP = 5e-6                  # five picoseconds
 
-EVG  = _tm.get_devices('evg').pop()
+EVG  = Connections.get_devices('evg').pop()
 
 
-_LOW_LEVEL_TRIGGER_CLASSES = {
-    ('evr','mf'): _LL_TrigEVRMF,
-    ('evr','opt'): _LL_TrigEVROPT,
-    ('eve','lve'): _LL_TrigEVELVE,
-    ('eve','opt'): _LL_TrigEVEOPT,
-    ('afc','lve'): _LL_TrigAFCLVE,
-    ('afc','opt'): _LL_TrigAFCOPT,
-    }
 def get_low_level_trigger_object(channel,callback,initial_hl2ll):
+    _LOW_LEVEL_TRIGGER_CLASSES = {
+        ('evr','mf'): _LL_TrigEVRMF,
+        ('evr','opt'): _LL_TrigEVROPT,
+        ('eve','lve'): _LL_TrigEVELVE,
+        ('eve','opt'): _LL_TrigEVEOPT,
+        ('afc','lve'): _LL_TrigAFCLVE,
+        ('afc','opt'): _LL_TrigAFCOPT,
+        }
     chan = _PVName(channel)
-    conn_ty,conn_conf, conn_num = _tm.TRIGCH_REGEXP.findall(chan.propty.lower())
+    conn_ty,conn_conf, conn_num = IOs.TRIGCH_REGEXP.findall(chan.propty.lower())
     key = (chan.dev_type.lower(), conn)
     cls_ = _LOW_LEVEL_TRIGGER_CLASSES.get(key)
     if not cls_:
@@ -289,7 +289,7 @@ class LL_Event:
         self._LLPROP_2_PVRB = self._get_LLPROP_2_PVRB()
         self._PVRB_2_LLPROP = { val:key for key,val in self._LLPROP_2_PVRB.items() }
         self.callback = callback
-        self.prefix = EVG + ':' + _tm.EVENT_LABEL_TEMPLATE.format(code)
+        self.prefix = EVG + ':' + Events.LL_TMP.format(code)
         self._hl2ll = initial_hl2ll
         self._pvs_sp = dict()
         self._pvs_rb = dict()

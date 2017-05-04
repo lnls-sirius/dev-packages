@@ -1,10 +1,9 @@
 import pvs as _pvs
 import time as _time
-from siriuspy.timesys import time_data as _tm
+from siriuspy.timesys.time_data import Connections, Events
 from siriuspy.namesys import SiriusPVName as _PVName
 from data.triggers import get_triggers as _get_triggers
-from .hl_classes import get_high_level_trigger_object
-from .ll_classes import EventInterface
+from hl_classes import get_high_level_trigger_object, HL_Event
 
 # Coding guidelines:
 # =================
@@ -20,14 +19,16 @@ _TIMEOUT = 0.05
 
 def check_triggers_consistency():
     triggers = _get_triggers()
-    _tm.add_bbb_info()
-    _tm.add_crates_info()
-    from_evg = _tm.get_connections_from_evg()
-    twds_evg = _tm.get_connections_twrds_evg()
+    Connections.add_bbb_info()
+    Connections.add_crates_info()
+    from_evg = Connections.get_connections_from_evg()
+    twds_evg = Connections.get_connections_twrds_evg()
     for trig, val in triggers.items():
+        print(trig)
         chans = {  _PVName(chan) for chan in val['channels']  }
         devs  = {  chan.dev_name for chan in chans  }
         for chan in chans:
+            print(chan)
             tmp = twds_evg.get(chan.dev_name)
             if tmp is None:
                 print('Device '+chan.dev_name+' defined in the high level trigger '+
@@ -55,15 +56,14 @@ class App:
             db.update(trig.get_database())
         return db
 
-
     def __init__(self,driver=None):
         self._driver = driver
         if not check_triggers_consistency():
             raise Exception('Triggers not consistent.')
         # Build Event's Variables:
         self._events = dict()
-        for ev,code in _tm.EVENT_MAPPING.items():
-            event = _tm.EVENTS_PREFIX + ev
+        for ev,code in Events.HL2LL_MAP.items():
+            event = Events.HL_PREF + ev
             self._events[event] = HL_Event(event,code,self._update_driver)
         # Build triggers from data dictionary:
         self._triggers = dict()
@@ -92,12 +92,12 @@ class App:
 
     def write(self,reason,value):
         parts = _PVName(reason)
-        ev = [ val if key,val in self._events.items() if parts.startswith(key) ]
+        ev = [ val for key,val in self._events.items() if parts.startswith(key) ]
         if parts.dev_name == EVG:
-            ev,pv = EVENT_REGEXP.findall(parts.propty)
+            ev,pv = Events.HL_RGX.findall(parts.propty)[0]
             return self._events[ev].set_propty(pv, value)
 
-        trig = [ val if key,val in self._triggers.items() if parts.startswith(key) ]
+        trig = [ val for key,val in self._triggers.items() if parts.startswith(key) ]
         if len(trig)>0:
             return trig[0].set_propty(reason,value)
 
