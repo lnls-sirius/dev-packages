@@ -1,13 +1,13 @@
 import uuid as _uuid
-import siriuspy.namesys as _namesys
+from siriuspy.namesys import SiriusPVName as _PVName
 from .  import device_models as _device_models
-from .. import time_data as _tm
+from ..time_data import Connections
 
-EVG_PREFIX  = _tm.get_devices('evg').pop() + ':'
+EVG_PREFIX  = Connections.get_devices('evg').pop() + ':'
 
-EVRs = _tm.get_devices('evr')
-EVEs = _tm.get_devices('eve')
-AFCs = _tm.get_devices('afc')
+EVRs = Connections.get_devices('evr')
+EVEs = Connections.get_devices('eve')
+AFCs = Connections.get_devices('afc')
 
 class TimingSimulation(_device_models.CallBack):
 
@@ -73,7 +73,7 @@ class TimingSimulation(_device_models.CallBack):
 
     def get_propty(self, reason):
         reason = reason[len(self.prefix):]
-        parts = _namesys.SiriusPVName(reason)
+        parts = _PVName(reason)
         if parts.dev_type == 'EVG':
             return self.evg.get_propty(reason)
         elif parts.dev_name+':' in self.evrs.keys():
@@ -87,7 +87,7 @@ class TimingSimulation(_device_models.CallBack):
 
     def set_propty(self, reason, value):
         reason = reason[len(self.prefix):]
-        parts = _namesys.SiriusPVName(reason)
+        parts = _PVName(reason)
         if parts.dev_type == 'EVG':
             return self.evg.set_propty(reason,value)
         elif parts.dev_name+':' in self.evrs.keys():
