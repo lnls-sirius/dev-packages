@@ -1,7 +1,7 @@
 import uuid as _uuid
 from siriuspy.namesys import SiriusPVName as _PVName
 from .  import device_models as _device_models
-from ..time_data import Connections
+from ..time_data import Connections as _Connections
 
 class TimingSimulation(_device_models.CallBack):
     EVG_PREFIX  = None
@@ -13,10 +13,10 @@ class TimingSimulation(_device_models.CallBack):
     @classmethod
     def get_constants(cls):
         if cls.EVG_PREFIX: return
-        cls.EVG_PREFIX  = Connections.get_devices('evg').pop() + ':'
-        cls.EVRs = Connections.get_devices('evr')
-        cls.EVEs = Connections.get_devices('eve')
-        cls.AFCs = Connections.get_devices('afc')
+        cls.EVG_PREFIX  = _Connections.get_devices('evg').pop() + ':'
+        cls.EVRs = _Connections.get_devices('evr')
+        cls.EVEs = _Connections.get_devices('eve')
+        cls.AFCs = _Connections.get_devices('afc')
 
     @classmethod
     def get_database(cls, prefix = ''):
