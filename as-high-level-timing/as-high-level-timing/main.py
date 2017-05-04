@@ -36,7 +36,7 @@ def check_triggers_consistency():
                 return False
             up_dev = tmp.get(chan.propty)
             if up_dev is None:
-                print('Connection channel '+chan.propty+' define in the high level trigger '
+                print('Connection channel '+chan.propty+' defined in the high level trigger '
                       +trig+' not specified in timing connections data.')
                 return False
             diff_devs = set(from_evg[up_dev[0]][up_dev[1]]) - devs
