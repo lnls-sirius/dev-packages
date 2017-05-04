@@ -123,7 +123,7 @@ class IOs:
         print(  '{0:13s} {1:s}'.format('HVEIO', 'High Voltage Eletric Input/Output')  )
 
 
-_LOCAL = True
+_LOCAL = False
 class _TimeDevData:
     """Class with mapping of Connection among timing devices and triggers receivers.
 
