@@ -28,6 +28,7 @@ class Events:
 
     LL_TMP   = 'Event{0:02x}'
     HL_TMP   = 'Event{0:s}'
+    HL_RGX   = _re.compile('Event('+'|'.join(list(HL2LL_MAP.keys()))+ ')([a-z-\.]*)',_re.IGNORECASE)
     HL_PREF  = 'AS-Glob:TI-Event:'
 
 
