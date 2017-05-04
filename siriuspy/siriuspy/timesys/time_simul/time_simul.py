@@ -1,22 +1,13 @@
 import uuid as _uuid
-import siriuspy.namesys as _namesys
-from siriuspy.timesys import device_models as _device_models
-from siriuspy.timesys import timing_devices_data as _timing_data
+from siriuspy.namesys import SiriusPVName as _PVName
+from .  import device_models as _device_models
+from ..time_data import Connections
 
-_EventMapping = {'Linac':0,  'InjBO':1,  'InjSI':2,  'RmpBO':3,  'RmpSI':4,
-                 'DigLI':5,  'DigTB':6,  'DigBO':7,  'DigTS':8,  'DigSI':9,
-                 'Orbit':10, 'Coupl':11,  'Tunes':12,}
+EVG_PREFIX  = Connections.get_devices('evg').pop() + ':'
 
-EVG_PREFIX = 'AS-Glob:TI-EVG:'
-
-_ALL_DEVICES = _timing_data.get_all_devices()
-_pv_fun = lambda x,y: _namesys.SiriusPVName(x).dev_type.lower() == y.lower()
-_get_devs = lambda x: { dev for dev in _ALL_DEVICES if _pv_fun(dev,x) }
-
-EVGs = _get_devs('evg')
-EVRs = _get_devs('evr')
-EVEs = _get_devs('eve')
-AFCs = _get_devs('afc')
+EVRs = Connections.get_devices('evr')
+EVEs = Connections.get_devices('eve')
+AFCs = Connections.get_devices('afc')
 
 class TimingSimulation(_device_models.CallBack):
 
@@ -82,7 +73,7 @@ class TimingSimulation(_device_models.CallBack):
 
     def get_propty(self, reason):
         reason = reason[len(self.prefix):]
-        parts = _namesys.SiriusPVName(reason)
+        parts = _PVName(reason)
         if parts.dev_type == 'EVG':
             return self.evg.get_propty(reason)
         elif parts.dev_name+':' in self.evrs.keys():
@@ -96,7 +87,7 @@ class TimingSimulation(_device_models.CallBack):
 
     def set_propty(self, reason, value):
         reason = reason[len(self.prefix):]
-        parts = _namesys.SiriusPVName(reason)
+        parts = _PVName(reason)
         if parts.dev_type == 'EVG':
             return self.evg.set_propty(reason,value)
         elif parts.dev_name+':' in self.evrs.keys():
@@ -107,6 +98,3 @@ class TimingSimulation(_device_models.CallBack):
             return self.afcs[parts.dev_name+':'].set_propty(reason,value)
         else:
             return False
-
-
-def get_mapping_timing_devs_2_receivers(): pass

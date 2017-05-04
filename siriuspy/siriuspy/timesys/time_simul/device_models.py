@@ -2,19 +2,17 @@ import uuid as _uuid
 import numpy as _np
 import threading as _threading
 import time as _time
+from ..time_data import Events, Clocks, Triggers
 
 _PwrFreq = 60
 _FINE_DELAY_STEP = 5e-12
 RF_FREQ_DIV = 4
 
-_EVNTS_AVAIL = list(range(50)) + list(range(80,120)) + list(range(160,256))
+_EVENT_SIM_TMP = 'Ev{0:02x}'
+_CLOCK_SIM_TMP = 'Cl{0:1d}'
 
-_EVENT_LABEL_TEMPLATE = 'Ev{0:02x}'
-_CLOCK_LABEL_TEMPLATE = 'Cl{0:1d}'
-EVENT_LABEL_TEMPLATE = 'Evnt{0:02x}'
-CLOCK_LABEL_TEMPLATE = 'Clock{0:d}'
-OPT_LABEL_TEMPLATE   = 'OPT{0:2d}'
-OUT_LABEL_TEMPLATE   = 'OUT{0:1d}'
+_OPT_SIM_TMP   = 'OPT{0:02d}'
+_OUT_SIM_TMP   = 'OUT{0:d}'
 
 class CallBack:
 
@@ -87,12 +85,14 @@ class _BaseIOC(CallBack):
 
     def __setattr__(self,name,value):
         if name in self.__class__._attr2pvname.keys():
+            f_ = self._attr2expr.get(name)
+            pvalue = f_(value)
             if name.endswith(('_sp','_sel')):
-                self._controller.__setattr__(  name[:-3], self._attr2expr[name](value)  )
+                self._controller.__setattr__(  name[:-3], pvalue  )
                 self.__dict__['_'+name] = value
             elif name.endswith(('_rb','_sts')):
-                self.__dict__['_'+name] = self._attr2expr[name](value)
-            self._call_callbacks(self._attr2pvname[name],value)
+                self.__dict__['_'+name] = pvalue
+                self._call_callbacks(self._attr2pvname[name], pvalue)
         else:
             super().__setattr__(name, value)
 
@@ -167,10 +167,10 @@ class _EVGSim(_BaseSim):
         self._bucket_list = [0.0]*864
         self._repetition_rate = 30
         self.events = list()
-        for i in _EVNTS_AVAIL:
+        for i in Events.LL_CODES:
             self.events.append(_EventSim(self.base_freq/RF_FREQ_DIV))
         self.clocks = list()
-        for i in range(8):
+        for i in range(Clocks.NUM):
             self.clocks.append(_ClockSim(self.base_freq/RF_FREQ_DIV))
 
     def __setattr__(self,attr,value):
@@ -248,24 +248,24 @@ class _EVGSim(_BaseSim):
         tables = tables if isinstance(tables,(list,tuple)) else (tables,)
         events = dict()
         for i, ev in enumerate(self.events):
-            ev_nr = _EVNTS_AVAIL[i]
+            ev_nr = Events.LL_CODES[i]
             if not ev.mode in tables: continue
             dic = ev.generate()
             if not dic: continue
-            lab = _EVENT_LABEL_TEMPLATE.format(ev_nr)
+            lab = _EVENT_SIM_TMP.format(ev_nr)
             events.update(  { lab : dic }  )
         for i, cl in enumerate(self.clocks):
             dic = cl.generate()
             if not dic: continue
-            lab = _CLOCK_LABEL_TEMPLATE.format(i)
+            lab = _CLOCK_SIM_TMP.format(i)
             events.update(  { lab : dic }  )
         return events
 
 
 class _EventIOC(_BaseIOC):
 
-    _modes = ('Disabled','Continuous','Injection','Single')
-    _delay_types = ('Fixed','Incr')
+    _modes = Events.MODES
+    _delay_types = Events.DELAY_TYPES
 
     _attr2pvname = {
         'delay_sp':'Delay-SP',
@@ -289,8 +289,8 @@ class _EventIOC(_BaseIOC):
 
     def __init__(self,base_freq,callbacks = None, prefix = None, controller = None):
         self._attr2expr  = {
-            'delay_sp': lambda x: int(round( x * self.base_freq)),
-            'delay_rb': lambda x: x * (1/self.base_freq),
+            'delay_sp': lambda x: int(round( (x*1e-6) * self.base_freq)),
+            'delay_rb': lambda x: x * (1e6/self.base_freq),
             'mode_sp': lambda x: int(x),
             'mode_rb': lambda x: x,
             'delay_type_sp': lambda x: int(x),
@@ -322,16 +322,16 @@ class _ClockIOC(_BaseIOC):
     @classmethod
     def get_database(cls, prefix=''):
         db = dict()
-        db[prefix + 'Freq-SP']   = {'type' : 'float', 'value': 1.0, 'prec': 10}
-        db[prefix + 'Freq-RB']   = {'type' : 'float', 'value': 1.0, 'prec': 10}
+        db[prefix + 'Freq-SP']   = {'type' : 'float', 'value': 1.0, 'unit':'kHz', 'prec': 10}
+        db[prefix + 'Freq-RB']   = {'type' : 'float', 'value': 1.0, 'unit':'kHz', 'prec': 10}
         db[prefix + 'State-Sel'] = {'type' : 'enum', 'enums':_ClockIOC._states, 'value':0}
         db[prefix + 'State-Sts'] = {'type' : 'enum', 'enums':_ClockIOC._states, 'value':0}
         return db
 
     def __init__(self, base_freq, callbacks = None, prefix = None, controller = None):
         self._attr2expr  = {
-            'frequency_sp': lambda x: int( round(self.base_frequency / x) ),
-            'frequency_rb': lambda x: x * self.base_freq,
+            'frequency_sp': lambda x: int( round(1e-3*self.base_freq / x) ),
+            'frequency_rb': lambda x: 1e-3*self.base_freq / x,
             'state_sp': lambda x: int(x),
             'state_rb': lambda x: x,
             }
@@ -381,11 +381,11 @@ class EVGIOC(_BaseIOC):
         db[p + 'BucketList-RB'] = {'type' : 'int', 'count': 864, 'value':0}
         db[p + 'RepRate-SP'] = {'type' : 'float', 'unit':'Hz', 'value': 2.0, 'prec': 5}
         db[p + 'RepRate-RB'] = {'type' : 'float', 'unit':'Hz', 'value': 2.0, 'prec': 5}
-        for i in range(8):
-            p = prefix + CLOCK_LABEL_TEMPLATE.format(i)
+        for i in range(Clocks.NUM):
+            p = prefix + Clocks.LL_TMP.format(i)
             db.update(_ClockIOC.get_database(p))
-        for i in _EVNTS_AVAIL:
-            p = prefix + EVENT_LABEL_TEMPLATE.format(i)
+        for i in Events.LL_CODES:
+            p = prefix + Events.LL_TMP.format(i)
             db.update(_EventIOC.get_database(p))
 
         return db
@@ -401,7 +401,7 @@ class EVGIOC(_BaseIOC):
             'continuous_sp' : lambda x: int(x),
             'continuous_rb' : lambda x: x,
             'repetition_rate_sp' : lambda x: int(round(_PwrFreq / x)),
-            'repetition_rate_rb' : lambda x: x * _PwrFreq,
+            'repetition_rate_rb' : lambda x: _PwrFreq / x,
             'bucket_list_sp' : self._bucket_list_setter,
             'bucket_list_rb' : lambda x: x,
             }
@@ -409,16 +409,16 @@ class EVGIOC(_BaseIOC):
         super().__init__(controller, callbacks = callbacks, prefix = prefix)
 
         self.events = dict()
-        for i,ev_nr in enumerate(_EVNTS_AVAIL):
-            name = EVENT_LABEL_TEMPLATE.format(ev_nr)
+        for i,ev_nr in enumerate(Events.LL_CODES):
+            name = Events.LL_TMP.format(ev_nr)
             cntler = self._controller.events[i]
             self.events[name] = _EventIOC(self.base_freq/RF_FREQ_DIV,
                                          callbacks = {self.uuid:self._ioc_callback},
                                          prefix = name,
                                          controller = cntler)
         self.clocks = dict()
-        for i in range(8):
-            name = CLOCK_LABEL_TEMPLATE.format(i)
+        for i in range(Clocks.NUM):
+            name = Clocks.LL_TMP.format(i)
             cntler = self._controller.clocks[i]
             self.clocks[name] = _ClockIOC(self.base_freq/RF_FREQ_DIV,
                                          callbacks = {self.uuid:self._ioc_callback},
@@ -482,18 +482,22 @@ class EVGIOC(_BaseIOC):
     def get_propty(self, reason):
         reason2 = reason[len(self.prefix):]
         if reason2.startswith(tuple(self.clocks.keys())):
-            return self.clocks[reason2[:6]].get_propty(reason2)#Not general enough
+            leng = len(Clocks.LL_TMP.format(0))
+            return self.clocks[reason2[:leng]].get_propty(reason2)
         elif reason2.startswith(tuple(self.events.keys())):
-            return self.events[reason2[:6]].get_propty(reason2)#Absolutely not general enough
+            leng = len(Events.LL_TMP.format(0))
+            return self.events[reason2[:leng]].get_propty(reason2)
         else:
             return super().get_propty(reason)
 
     def set_propty(self, reason, value):
         reason2 = reason[len(self.prefix):]
         if reason2.startswith(tuple(self.clocks.keys())):
-            return self.clocks[reason2[:6]].set_propty(reason2, value)#Not general enough
+            leng = len(Clocks.LL_TMP.format(0))
+            return self.clocks[reason2[:leng]].set_propty(reason2, value)
         elif reason2.startswith(tuple(self.events.keys())):
-            return self.events[reason2[:6]].set_propty(reason2, value)#Absolutely not general enough
+            leng = len(Events.LL_TMP.format(0))
+            return self.events[reason2[:leng]].set_propty(reason2, value)
         else:
             return super().set_propty(reason, value)
 
@@ -513,7 +517,7 @@ class _TriggerSim(_BaseSim):
         self._fine_delay = 0
 
     def receive_events(self, bucket, opts):
-        lab = OPT_LABEL_TEMPLATE.format(self._optic_channel)
+        lab = _OPT_SIM_TMP.format(self._optic_channel)
         dic = opts.get(lab,None)
         if dic is None: return
         dic['delay'] += self._delay/self.base_freq + self._fine_delay * _FINE_DELAY_STEP
@@ -536,7 +540,7 @@ class _OpticChannelSim(_BaseSim):
 
     def receive_events(self, bucket, events):
         if self._state == 0: return
-        lab = _EVENT_LABEL_TEMPLATE.format(self._event)
+        lab = _EVENT_SIM_TMP.format(self._event)
         ev = events.get(lab,None)
         if ev is None: return
         delay = ev['delay'] + self._delay/self.base_freq
@@ -570,13 +574,13 @@ class _EVRSim(_BaseSim):
         for i, opt_ch in enumerate(self.optic_channels):
             opt = opt_ch.receive_events(bucket, inp_dic)
             if opt is None: continue
-            lab = OPT_LABEL_TEMPLATE.format(i)
+            lab = _OPT_SIM_TMP.format(i)
             inp_dic.update( {lab:opt} )
             if i < self._NR_OPT_CHANNELS: triggers.update( {lab:opt} )
         for tri_ch in self.trigger_outputs:
             out = tri_ch.receive_events(bucket, inp_dic)
             if out is None: continue
-            lab = OUT_LABEL_TEMPLATE.format(i)
+            lab = _OUT_SIM_TMP.format(i)
             triggers.update( {lab:out} )
         return triggers
 
@@ -597,8 +601,6 @@ class _AFCSim(_EVRSim):
 
 class _EVRTriggerIOC(_BaseIOC):
 
-    _optic_channels = tuple(  [ OPT_LABEL_TEMPLATE.format(i) for i in range(_EVRSim._NR_INTERNAL_OPT_CHANNELS) ]  )
-
     _attr2pvname = {
         'fine_delay_sp':    'FineDelay-SP',
         'fine_delay_rb':    'FineDelay-RB',
@@ -611,22 +613,20 @@ class _EVRTriggerIOC(_BaseIOC):
     @classmethod
     def get_database(cls, prefix=''):
         db = dict()
-        db[prefix + 'FineDelay-SP']   = {'type' : 'float', 'unit':'ps', 'value': 0.0, 'prec': 0}
-        db[prefix + 'FineDelay-RB']   = {'type' : 'float', 'unit':'ps', 'value': 0.0, 'prec': 0}
+        db[prefix + 'FineDelay-SP']   = {'type' : 'float', 'unit':'ns', 'value': 0.0, 'prec': 0}
+        db[prefix + 'FineDelay-RB']   = {'type' : 'float', 'unit':'ns', 'value': 0.0, 'prec': 0}
         db[prefix + 'Delay-SP']       = {'type' : 'float', 'unit':'us', 'value': 0.0, 'prec': 0}
         db[prefix + 'Delay-RB']       = {'type' : 'float', 'unit':'us', 'value': 0.0, 'prec': 0}
         db[prefix + 'OptCh-Sel']      = {'type' : 'int', 'value':0}
         db[prefix + 'OptCh-Sts']      = {'type' : 'int', 'value':0}
-        # db[prefix + 'OptCh-Sel']      = {'type' : 'enum', 'enums':cls._optic_channels, 'value':0} # pcaspy only accepts 16 states for enum
-        # db[prefix + 'OptCh-Sts']      = {'type' : 'enum', 'enums':cls._optic_channels, 'value':0}
         return db
 
     def __init__(self, base_freq, callbacks = None, prefix = None, controller = None):
         self._attr2expr  = {
-            'fine_delay_sp':    lambda x: int(round(x / _FINE_DELAY_STEP )),
-            'fine_delay_rb':    lambda x: x * _FINE_DELAY_STEP,
-            'delay_sp':         lambda x: int(round( x * self.base_freq)),
-            'delay_rb':         lambda x: x / self.base_freq,
+            'fine_delay_sp':    lambda x: int(round((x*1e-9) / _FINE_DELAY_STEP )),
+            'fine_delay_rb':    lambda x: x * _FINE_DELAY_STEP * 1e9,
+            'delay_sp':         lambda x: int(round( (x*1e-6) * self.base_freq)),
+            'delay_rb':         lambda x: x * (1e6 / self.base_freq),
             'optic_channel_sp': lambda x: int(x),
             'optic_channel_rb': lambda x: x,
             }
@@ -642,17 +642,13 @@ class _EVRTriggerIOC(_BaseIOC):
             self.optic_channel_rb = value
 
 
-class _EVETriggerIOC(_EVRTriggerIOC):
-
-    _optic_channels = tuple(  [ OPT_LABEL_TEMPLATE.format(i) for i in range(_EVESim._NR_INTERNAL_OPT_CHANNELS) ]  )
+class _EVETriggerIOC(_EVRTriggerIOC): pass
 
 
 class _OpticChannelIOC(_BaseIOC):
 
-    _states = ('Dsbl','Enbl')
-    _polarities = ('Normal','Inverse')
-    _delay_types = ('Fixed','Incr')
-    _events = [EVENT_LABEL_TEMPLATE.format(i) for i in _EVNTS_AVAIL] + [CLOCK_LABEL_TEMPLATE.format(i) for i in range(8)]
+    _states = Triggers.STATES
+    _polarities = Triggers.POLARITIES
 
     _attr2pvname = {
         'state_sp'      :'State-Sel',
@@ -682,20 +678,18 @@ class _OpticChannelIOC(_BaseIOC):
         db[prefix + 'Polrty-Sts']    = {'type' : 'enum', 'enums':cls._polarities, 'value':0}
         db[prefix + 'Event-Sel']     = {'type' : 'int', 'value':0}
         db[prefix + 'Event-Sts']     = {'type' : 'int', 'value':0}
-        # db[prefix + 'Event-Sel']     = {'type' : 'enum', 'enums':cls._events, 'value':0}
-        # db[prefix + 'Event-Sts']     = {'type' : 'enum', 'enums':cls._events, 'value':0}
-        db[prefix + 'Pulses-SP']     = {'type' : 'float', 'value': 0.0, 'prec': 3}
-        db[prefix + 'Pulses-RB']     = {'type' : 'float', 'value': 0.0, 'prec': 3}
+        db[prefix + 'Pulses-SP']     = {'type' : 'int', 'value': 1 }
+        db[prefix + 'Pulses-RB']     = {'type' : 'int', 'value': 1 }
         return db
 
     def __init__(self,base_freq,callbacks = None, prefix = None, controller = None):
         self._attr2expr  = {
             'state_sp'      : lambda x: int(x),
             'state_rb'      : lambda x: x,
-            'width_sp'      : lambda x: int(round( x * self.base_freq)),
-            'width_rb'      : lambda x: x * (1/self.base_freq),
-            'delay_sp'      : lambda x: int(round( x * self.base_freq)),
-            'delay_rb'      : lambda x: x * (1/self.base_freq),
+            'width_sp'      : lambda x: int(round( (x*1e-6) * self.base_freq)),
+            'width_rb'      : lambda x: x * (1e6/self.base_freq),
+            'delay_sp'      : lambda x: int(round( (x*1e-6) * self.base_freq)),
+            'delay_rb'      : lambda x: x * (1e6/self.base_freq),
             'polarity_sp'   : lambda x: int(x),
             'polarity_rb'   : lambda x: x,
             'event_sp'      : lambda x: int(x),
@@ -724,6 +718,8 @@ class _OpticChannelIOC(_BaseIOC):
 class EVRIOC(_BaseIOC):
     _ClassSim = _EVRSim
     _ClassTrigIOC = _EVRTriggerIOC
+    _OUTTMP = 'MFO{0:d}'
+    _INTTMP = 'OPTO{0:02d}'
 
     _states = ('Dsbl','Enbl')
 
@@ -739,10 +735,10 @@ class EVRIOC(_BaseIOC):
         db[p + 'State-Sel']     = {'type' : 'enum', 'enums':cls._states, 'value':0}
         db[p + 'State-Sts']     = {'type' : 'enum', 'enums':cls._states, 'value':0}
         for i in range(cls._ClassSim._NR_INTERNAL_OPT_CHANNELS):
-            p = prefix + 'OPT{0:02d}'.format(i)
+            p = prefix + cls._INTTMP.format(i)
             db.update(_OpticChannelIOC.get_database(p))
         for out in range(cls._ClassSim._NR_OUT_CHANNELS):
-            p = prefix + 'OUT{0:d}'.format(out)
+            p = prefix + cls._OUTTMP.format(out)
             db.update(cls._ClassTrigIOC.get_database(p))
         return db
 
@@ -756,7 +752,7 @@ class EVRIOC(_BaseIOC):
 
         self.optic_channels = dict()
         for i in range(self._ClassSim._NR_INTERNAL_OPT_CHANNELS):
-            name = 'OPT{0:02d}'.format(i)
+            name = self._INTTMP.format(i)
             cntler = self._controller.optic_channels[i]
             self.optic_channels[name] = _OpticChannelIOC(self.base_freq,
                                                         callbacks = {self.uuid:self._ioc_callback},
@@ -764,7 +760,7 @@ class EVRIOC(_BaseIOC):
                                                         controller = cntler)
         self.trigger_outputs = dict()
         for i in range(self._ClassSim._NR_OUT_CHANNELS):
-            name = 'OUT{0:d}'.format(i)
+            name = self._OUTTMP.format(i)
             cntler = self._controller.trigger_outputs[i]
             self.trigger_outputs[name] = self._ClassTrigIOC(self.base_freq,
                                                             callbacks = {self.uuid:self._ioc_callback},
@@ -781,18 +777,22 @@ class EVRIOC(_BaseIOC):
     def get_propty(self, reason):
         reason2 = reason[len(self.prefix):]
         if reason2.startswith(tuple(self.trigger_outputs.keys())):
-            return self.trigger_outputs[reason2[:4]].get_propty(reason2)#Not general enough
+            leng = len(self._OUTTMP.format(0))
+            return self.trigger_outputs[reason2[:leng]].get_propty(reason2)#Not general enough
         elif reason2.startswith(tuple(self.optic_channels.keys())):
-            return self.optic_channels[reason2[:5]].get_propty(reason2)#Absolutely not general enough
+            leng = len(self._INTTMP.format(0))
+            return self.optic_channels[reason2[:leng]].get_propty(reason2)#Absolutely not general enough
         else:
             return super().get_propty(reason)
 
     def set_propty(self, reason, value):
         reason2 = reason[len(self.prefix):]
         if reason2.startswith(tuple(self.trigger_outputs.keys())):
-            return self.trigger_outputs[reason2[:4]].set_propty(reason2, value)#Not general enough
+            leng = len(self._OUTTMP.format(0))
+            return self.trigger_outputs[reason2[:leng]].set_propty(reason2, value)
         elif reason2.startswith(tuple(self.optic_channels.keys())):
-            return self.optic_channels[reason2[:5]].set_propty(reason2, value)#Absolutely not general enough
+            leng = len(self._INTTMP.format(0))
+            return self.optic_channels[reason2[:leng]].set_propty(reason2, value)
         else:
             return super().set_propty(reason, value)
 
@@ -803,8 +803,11 @@ class EVRIOC(_BaseIOC):
 class EVEIOC(EVRIOC):
     _ClassSim = _EVESim
     _ClassTrigIOC = _EVETriggerIOC
+    _OUTTMP = 'LVEO{0:d}'
 
 
 class AFCIOC(EVRIOC):
     _ClassSim = _AFCSim
     _ClassTrigIOC = _OpticChannelIOC
+    _OUTTMP = 'LVEO{0:d}'
+    _INTTMP = 'OPTO{0:02d}'

@@ -9,19 +9,126 @@ if _importlib.find_loader('matplotlib') is not None:
     import matplotlib.gridspec as _gridspec
     import matplotlib.cm as _cmap
 
-import siriuspy.servweb as _web
-import siriuspy.namesys as _namesys
+from siriuspy import servweb as _web
+from siriuspy.namesys import SiriusPVName as _PVName
 
 _timeout = 1.0
-_LOCAL = False
 
+class Events:
+    HL2LL_MAP = {'Linac':0,  'InjBO':1,  'InjSI':2,  'RmpBO':3,  'RmpSI':4,
+                 'DigLI':5,  'DigTB':6,  'DigBO':7,  'DigTS':8,  'DigSI':9,
+                 'Orbit':10, 'Coupl':11, 'Tunes':12, 'Study':13, }
+    LL2HL_MAP = {  val:key for key,val in HL2LL_MAP.items()  }
+
+
+    LL_CODES    = list(range(50)) + list(range(80,120)) + list(range(160,256))
+
+    MODES       = ('Disabled','Continuous','Injection','Single')
+    DELAY_TYPES = ('Incr','Fixed')
+
+    LL_TMP   = 'Event{0:02x}'
+    HL_TMP   = 'Event{0:s}'
+    HL_PREF  = 'AS-Glob:TI-Event:'
+
+
+class Clocks:
+    LL_TMP   = 'Clock{0:d}'
+    HL_TMP   = 'Clock{0:d}'
+    HL_PREF = 'AS-Glob:TI-Clock:'
+
+    NUM = 8
+
+
+class Triggers:
+    STATES      = ('Dsbl','Enbl')
+    POLARITIES  = ('Normal','Inverse')
+    CLOCKS      = tuple([Clocks.HL_TMP.format(i) for i in range(Clocks.NUM)])
+
+
+class IOs:
+    LL_RGX = _re.compile('([OPTMFLHVESR]{2,3})([IO]{1,2})([0-9]{0,2})',_re.IGNORECASE)
+
+    # defines the relations between input and output of the timing devices that are possible taking
+    # into consideration only the devices architecture
+    I2O_MAP = {
+        'EVR':{
+            'MFIO':(
+                'OPTO00','OPTO00','OPTO00','OPTO03','OPTO04','OPTO05',
+                'OPTO06','OPTO07','OPTO08','OPTO09','OPTO10','OPTO11',
+                'MFO0','MFO1','MFO2','MFO3','MFO4','MFO5','MFO6','MFO7',
+                ),
+            },
+        'EVE':{
+            'MFIO':(
+                'LVEO00','LVEO01','LVEO02','LVEO03','LVEO04','LVEO05','LVEO06','LVEO07','LVEO08',
+                ),
+            },
+        'AFC':{
+            'MFIO':(
+                'OPTO00','OPTO00','OPTO00','OPTO03','OPTO04',
+                'OPTO05','OPTO06','OPTO07','OPTO08','OPTO09',
+                'LVEIO0','LVEIO1','LVEIO2','LVEIO3','LVEIO4','LVEIO5','LVEIO6','LVEIO7','LVEIO8',
+                ),
+            },
+        'STDMOE':{
+            'MFI0':('HVEO0',),
+            'MFI1':('HVEO1',),
+            'MFI2':('HVEO2',),
+            'MFI3':('HVEO3',),
+            },
+        'STDSOE':{
+            'OPTI0':('HVEO0',),
+            'OPTI1':('HVEO1',),
+            'OPTI2':('HVEO2',),
+            'OPTI3':('HVEO3',),
+            },
+        'SOE':{
+            'OPTI':('HVEO',),
+            },
+        'FOUT':{
+            'MFIO':(
+                'MFIO0','MFIO1','MFIO2','MFIO3','MFIO4','MFIO5','MFIO6','MFIO7',
+                ),
+            },
+        'BBB':{
+            'OPTI':('RSIO'),
+            },
+        'Crate':{
+            'LVEIO0':('LVEIO0',),
+            'LVEIO1':('LVEIO1',),
+            'LVEIO2':('LVEIO2',),
+            'LVEIO3':('LVEIO3',),
+            'LVEIO4':('LVEIO4',),
+            'LVEIO5':('LVEIO5',),
+            'LVEIO6':('LVEIO6',),
+            'LVEIO7':('LVEIO7',),
+            },
+        }
+
+    O2I_MAP = dict()
+    for dev, conns_ in I2O_MAP.items():
+        dic_ = dict()
+        O2I_MAP[dev] = dic_
+        for conn1,conns in conns_.items():
+            for conn2 in conns:
+                dic_[conn2] = conn1
+
+    @staticmethod
+    def ios_meaning(conn=None):
+        print(  '{0:13s} {1:s}'.format('Connection', 'Meaning')  )
+        print(  '{0:13s} {1:s}'.format('MFIO', 'Multi Fibre Input/Output')  )
+        print(  '{0:13s} {1:s}'.format('OPTIO', 'Optical Fibre Input/Output')  )
+        print(  '{0:13s} {1:s}'.format('SRIO', 'RS485 Serial Network')  )
+        print(  '{0:13s} {1:s}'.format('LVEIO', 'Low Voltage Eletric Input/Output')  )
+        print(  '{0:13s} {1:s}'.format('HVEIO', 'High Voltage Eletric Input/Output')  )
+
+
+_LOCAL = True
 class _TimeDevData:
     """Class with mapping of Connection among timing devices and triggers receivers.
 
     Data are read from the Sirius web server.
     """
-    _reg = _re.compile('([a-z]+)([0-9]*)',_re.IGNORECASE)
-
     _spacing_for_plot = 10
 
     def __init__(self, timeout=_timeout):
@@ -57,12 +164,12 @@ class _TimeDevData:
 
     def _get_dev_and_channel(self,txt):
         type_chan = num_chan = None
-        txt = _namesys.SiriusPVName(txt)
+        txt = _PVName(txt)
         dev = txt.dev_name
         chan  = txt.propty.lower()
-        reg_match = self._reg.findall(chan)
+        reg_match = IOs.LL_RGX.findall(chan)
         if reg_match:
-            type_chan, num_chan = reg_match[0]
+            type_chan, io_chan, num_chan = reg_match[0]
             return dev, chan, type_chan, num_chan
 
     def _parse_text_and_build_connection_mappings(self,text):
@@ -207,7 +314,7 @@ class _TimeDevData:
     def _build_colors(self):
         dev_types = set()
         for dev in self._all_devices:
-            dev_types.add(_namesys.SiriusPVName(dev).dev_type)
+            dev_types.add(_PVName(dev).dev_type)
 
         nr = len(dev_types)+2
         color_types = dict()
@@ -216,7 +323,7 @@ class _TimeDevData:
 
         colors = dict()
         for dev in self._all_devices:
-            colors[dev] = color_types[_namesys.SiriusPVName(dev).dev_type]
+            colors[dev] = color_types[_PVName(dev).dev_type]
 
         self._colors = colors
 
@@ -224,7 +331,7 @@ class _TimeDevData:
         chan_types = set()
         for conns in self._conn_from_evg.values():
             for chan in conns.keys():
-                chan_type = self._reg.findall(chan)[0][0]
+                chan_type = IOs.LL_RGX.findall(chan)[0][0]
                 chan_types.add(chan_type)
 
         nr = len(chan_types)+2
@@ -235,7 +342,7 @@ class _TimeDevData:
         colors = dict()
         for dev1,conns in self._conn_from_evg.items():
             for chan,devs in conns.items():
-                chan_type = self._reg.findall(chan)[0][0]
+                chan_type = IOs.LL_RGX.findall(chan)[0][0]
                 for dev2 in devs:
                     colors[(dev1,dev2[0])] = color_types[chan_type]
 
@@ -256,7 +363,7 @@ class _TimeDevData:
         return not_used
 
     def add_bbb_info(self,connections_dict):
-        conn = 'ser1'
+        conn = 'SRIO'
         not_used = set()
         for bbb, pss in connections_dict.items():
             my_conns = self._conn_twrds_evg.get(bbb)
@@ -281,6 +388,10 @@ class _TimeDevData:
             else:
                 ele1_entry[conn] += ((ele2,conn),)
 
+    def get_devices_by_type(self,type_dev):
+        _pv_fun = lambda x,y: _PVName(x).dev_type.lower() == y.lower()
+        return {  dev for dev in self._all_devices if _pv_fun(dev,type_dev) }
+
     @property
     def conn_from_evg(self): return _copy.deepcopy(self._conn_from_evg)
 
@@ -302,72 +413,92 @@ class _TimeDevData:
     @property
     def all_devices(self): return _copy.deepcopy(self._all_devices)
 
-_timedata = None
-def  _get_timedata():
-    # encapsulating _bbbdata within a function avoid creating the global object
-    # (which is time consuming) at module load time.
-    global _timedata
-    if _timedata is None:
+
+class Connections:
+    _timedata = None
+
+    @classmethod
+    def  _get_timedata(cls):
+        # encapsulating _bbbdata within a function avoid creating the global object
+        # (which is time consuming) at module load time.
+        if cls._timedata is None:
+            cls._timedata = _TimeDevData()
+        return cls._timedata
+
+    @classmethod
+    def reset(cls):
         _timedata = _TimeDevData()
-    return _timedata
 
+    @staticmethod
+    def server_online():
+        """Return True/False if Sirius web server is online."""
+        return _web.server_online()
 
-# TIMEDATA API
-# ==========
-def reset():
-    global _timedata
-    _timedata = _TimeDevData()
+    @classmethod
+    def get_connections_from_evg(cls):
+        """Return a dictionary with the beaglebone to power supply mapping."""
+        timedata =  cls._get_timedata()
+        return timedata.conn_from_evg
 
-def server_online():
-    """Return True/False if Sirius web server is online."""
-    return _web.server_online()
+    @classmethod
+    def get_connections_twrds_evg(cls):
+        """Return a dictionary with the beaglebone to power supply mapping."""
+        timedata =  cls._get_timedata()
+        return timedata.conn_twrds_evg
 
-def get_connections_from_evg():
-    """Return a dictionary with the beaglebone to power supply mapping."""
-    timedata =  _get_timedata()
-    return timedata.conn_from_evg
+    @classmethod
+    def get_top_chain_senders(cls):
+        """Return a dictionary with the beaglebone to power supply mapping."""
+        timedata =  cls._get_timedata()
+        return timedata.top_chain_senders
 
-def get_connections_twrds_evg():
-    """Return a dictionary with the beaglebone to power supply mapping."""
-    timedata =  _get_timedata()
-    return timedata.conn_twrds_evg
+    @classmethod
+    def get_final_receivers(cls):
+        """Return a dictionary with the beaglebone to power supply mapping."""
+        timedata =  cls._get_timedata()
+        return timedata.final_receivers
 
-def get_top_chain_senders():
-    """Return a dictionary with the beaglebone to power supply mapping."""
-    timedata =  _get_timedata()
-    return timedata.top_chain_senders
+    @classmethod
+    def get_relations_from_evg(cls):
+        """Return a dictionary with the beaglebone to power supply mapping."""
+        timedata =  cls._get_timedata()
+        return timedata.relations_from_evg
 
-def get_final_receivers():
-    """Return a dictionary with the beaglebone to power supply mapping."""
-    timedata =  _get_timedata()
-    return timedata.final_receivers
+    @classmethod
+    def get_hierarchy_list(cls):
+        """Return a dictionary with the beaglebone to power supply mapping."""
+        timedata =  cls._get_timedata()
+        return timedata.hierarchy_list
 
-def get_relations_from_evg():
-    """Return a dictionary with the beaglebone to power supply mapping."""
-    timedata =  _get_timedata()
-    return timedata.relations_from_evg
+    @classmethod
+    def get_devices(cls, type_dev = None):
+        """Return a dictionary with the beaglebone to power supply mapping."""
+        timedata =  cls._get_timedata()
+        if not type_dev:
+            return timedata.all_devices
+        else:
+            return timedata.get_devices_by_type(type_dev)
 
-def get_hierarchy_list():
-    """Return a dictionary with the beaglebone to power supply mapping."""
-    timedata =  _get_timedata()
-    return timedata.hierarchy_list
+    @classmethod
+    def add_bbb_info(cls, connections_dict = None):
+        """Return a dictionary with the beaglebone to power supply mapping."""
+        timedata =  cls._get_timedata()
+        if connections_dict is None:
+            from siriuspy import pwrsupply
+            connections_dict = pwrsupply.bbbdata.get_mapping()
+        return timedata.add_bbb_info(connections_dict)
 
-def get_all_devices():
-    """Return a dictionary with the beaglebone to power supply mapping."""
-    timedata =  _get_timedata()
-    return timedata.all_devices
+    @classmethod
+    def add_crates_info(cls, connections_dict = None):
+        """Return a dictionary with the beaglebone to power supply mapping."""
+        timedata =  cls._get_timedata()
+        if connections_dict is None:
+            from siriuspy import diagnostics
+            connections_dict = diagnostics.cratesdata.get_mapping()
+        return timedata.add_crates_info(connections_dict)
 
-def add_bbb_info(connections_dict):
-    """Return a dictionary with the beaglebone to power supply mapping."""
-    timedata =  _get_timedata()
-    return timedata.add_bbb_info(connections_dict)
-
-def add_crates_info(connections_dict):
-    """Return a dictionary with the beaglebone to power supply mapping."""
-    timedata =  _get_timedata()
-    return timedata.add_crates_info(connections_dict)
-
-def plot_network():
-    """Return a dictionary with the beaglebone to power supply mapping."""
-    timedata =  _get_timedata()
-    return timedata.plot_network()
+    @classmethod
+    def plot_network(cls):
+        """Return a dictionary with the beaglebone to power supply mapping."""
+        timedata =  cls._get_timedata()
+        return timedata.plot_network()
