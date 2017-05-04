@@ -34,33 +34,37 @@ class PyDMLed(Led):
             self.connected_signal.emit()
         else:
             self.disconnected_signal.emit()
+            self.receiveValue(0)
 
     @pyqtSlot(int)
     @pyqtSlot(float)
     @pyqtSlot(str)
     def receiveValue(self, value):
-        if self._enum_strings is None: #PV of type integer or float
-            if self._bit is None: #Led represents value of PV
-                if value and isinstance(value, str):
+        if self._connected:
+            if self._enum_strings is None: #PV of type integer or float
+                if self._bit is None: #Led represents value of PV
+                    if value and isinstance(value, str):
+                        value = int(value)
+                    if value:
+                        self.setGreen()
+                    else:
+                        self.setRed()
+                else: #Led represents specific bit of PV
                     value = int(value)
-                if value:
-                    self.setGreen()
+                    bit_val = (value & self._mask) >> self._bit
+                    self.setColor(bit_val)
+            else: #PV of type ENUM
+                if self._enum_map is None:
+                    self.setColor(value)
                 else:
-                    self.setRed()
-            else: #Led represents specific bit of PV
-                value = int(value)
-                bit_val = (value & self._mask) >> self._bit
-                self.setColor(bit_val)
-        else: #PV of type ENUM
-            if self._enum_map is None:
-                self.setColor(value)
-            else:
-                if self._enum_strings is not None and isinstance(value, int):
-                    enum_name = self._enum_strings[value]
-                    color = self._enum_map[enum_name]
-                    self.setColor(color)
+                    if self._enum_strings is not None and isinstance(value, int):
+                        enum_name = self._enum_strings[value]
+                        color = self._enum_map[enum_name]
+                        self.setColor(color)
 
-        #TODO: PV of type array
+            #TODO: PV of type array
+        else:
+            self.setColor(-1)
 
 
 
