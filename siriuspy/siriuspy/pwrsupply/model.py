@@ -6,9 +6,11 @@ from .psdata import get_setpoint_limits as _sp_limits
 from .psdata import get_polarity as _get_polarity
 import siriuspy.csdevice as _csdevice
 from .controller import ControllerSim as _ControllerSim
+from .controller import ControllerEpics as _ControllerEpics
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 
 _default_error_std = 0.0
+
 
 class PowerSupply:
     """Magnet Power Supply model
@@ -189,24 +191,3 @@ class PowerSupply:
         propty = 'Current-RB';    st += '\n{0:<20s}: {1}'.format(propty, self.current_rb)
         st += '\n' + st_controller
         return st
-
-
-class PowerSupplyMAFam(PowerSupply):
-
-    def __init__(self, ps_name, **kwargs):
-        super().__init__(ps_name, **kwargs)
-
-    @property
-    def database(self):
-        """Return property database as a dictionary.
-        It prepends power supply family name to each dictionary key.
-        """
-        _database = {}
-        dd = super().database
-        _, family = self.ps_name.split('PS-')
-        if not isinstance(family,str):
-            raise Exception('invalid pv_name!')
-        for propty, db in super().database.items():
-            key = family + ':' + propty
-            _database[key] = _copy.deepcopy(db)
-        return _database

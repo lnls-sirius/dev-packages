@@ -83,6 +83,7 @@ class ExcitationData:
 
     def read_webs(self, label):
 
+        self._fname = label
         text = _web.magnets_excitation_data_read(label)
         self.read_text(text)
 
