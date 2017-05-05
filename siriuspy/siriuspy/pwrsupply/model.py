@@ -46,7 +46,7 @@ class PowerSupply:
         self._callback = callback
         self._controller = controller
         self._controller_init()
-        self._ctrlmode_mon = _et.idx('RmtLocTyp', 'Remote')
+        self._ctrlmode_mon = _et.idx.Remote
 
     @property
     def ps_name(self):
@@ -65,12 +65,12 @@ class PowerSupply:
         """Return a PV database whose keys correspond to PS properties."""
         db = _copy.deepcopy(self._database)
         db['CtrlMode-Mon']['value'] = self._ctrlmode_mon
-        db['PwrState-Sel']['value'] = self._controller.pwrstate_sel
-        db['PwrState-Sts']['value'] = self._controller.pwrstate_sts
-        db['OpMode-Sel']['value'] = self._controller.opmode_sel
-        db['OpMode-Sts']['value'] = self._controller.opmode_sts
+        db['PwrState-Sel']['value'] = self._controller.pwrstate
+        db['PwrState-Sts']['value'] = self._controller.pwrstate
+        db['OpMode-Sel']['value'] = self._controller.opmode
+        db['OpMode-Sts']['value'] = self._controller.opmode
         db['Current-SP']['value'] = self._controller.current_sp
-        db['Current-RB']['value'] = self._controller.current_rb
+        db['Current-RB']['value'] = self._controller.current_load
         return db
 
     @property
@@ -161,10 +161,10 @@ class PowerSupply:
                                               error_std=_default_error_std)
         else:
             # add model callback to controller callback list
-            self._controller.set_callback(self._mycallback)
+            self._controller.callback = self._mycallback
 
         # controller update triggers update state in PS
-        self._controller.update_state()
+        self._controller._update_state()
 
     def _mycallback(self, pvname, value, **kwargs):
         print('pwrsup', pvname)
@@ -191,3 +191,24 @@ class PowerSupply:
         propty = 'Current-RB';    st += '\n{0:<20s}: {1}'.format(propty, self.current_rb)
         st += '\n' + st_controller
         return st
+
+
+class PowerSupplyMAFam(PowerSupply):
+
+    def __init__(self, ps_name, **kwargs):
+        super().__init__(ps_name, **kwargs)
+
+    @property
+    def database(self):
+        """Return property database as a dictionary.
+        It prepends power supply family name to each dictionary key.
+        """
+        _database = {}
+        dd = super().database
+        _, family = self.ps_name.split('PS-')
+        if not isinstance(family,str):
+            raise Exception('invalid pv_name!')
+        for propty, db in super().database.items():
+            key = family + ':' + propty
+            _database[key] = _copy.deepcopy(db)
+        return _database
