@@ -35,11 +35,33 @@ class PSClasses:
 
     class _Base:
         _Reset_Cmd    = {'name':'Reset-Cmd',    'type':'int',   'value':0}
-        _CtrlMode_Mon = {'name':'CtrlMode-Mon', 'type':'enum',  'enums':_et.enums('RmtLocTyp'),   'value':_et.idx('RmtLocTyp', 'Remote')}
-        _PwrState_Sel = {'name':'PwrState-Sel', 'type':'enum',  'enums':_et.enums('OffOnTyp'),    'value':_et.idx('OffOnTyp','On')}
-        _PwrState_Sts = {'name':'PwrState-Sts', 'type':'enum',  'enums':_et.enums('OffOnTyp'),    'value':_et.idx('OffOnTyp','On')}
-        _OpMode_Sel   = {'name':'OpMode-Sel',   'type':'enum',  'enums':_et.enums('PSOpModeTyp'), 'value':_et.idx('PSOpModeTyp','SlowRef')}
-        _OpMode_Sts   = {'name':'OpMode-Sts',   'type':'enum',  'enums':_et.enums('PSOpModeTyp'), 'value':_et.idx('PSOpModeTyp','SlowRef')}
+        _CtrlMode_Mon = {'name':'CtrlMode-Mon', 'type':'enum',  'enums':_et.enums('RmtLocTyp'),   'value':_et.get_idx('RmtLocTyp', 'Remote')}
+        _PwrState_Sel = {'name':'PwrState-Sel', 'type':'enum',  'enums':_et.enums('OffOnTyp'),    'value':_et.get_idx('OffOnTyp','On')}
+        _PwrState_Sts = {'name':'PwrState-Sts', 'type':'enum',  'enums':_et.enums('OffOnTyp'),    'value':_et.get_idx('OffOnTyp','On')}
+        _OpMode_Sel   = {'name':'OpMode-Sel',   'type':'enum',  'enums':_et.enums('PSOpModeTyp'), 'value':_et.get_idx('PSOpModeTyp','SlowRef')}
+        _OpMode_Sts   = {'name':'OpMode-Sts',   'type':'enum',  'enums':_et.enums('PSOpModeTyp'), 'value':_et.get_idx('PSOpModeTyp','SlowRef')}
+        @staticmethod
+        def get_database(): return PSClasses._getdatabase(__class__)
+
+    class si_dipole_b1b2_fam(_Base):
+        """SI dipole B1B2 power supply"""
+
+        name = 'si-dipole-b1b2-fam'
+        _Current_RB = {'name':'Current-RB','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
+                            'lolo'  :_ps_sp_lims(name, 'LOLO'),
+                            'lo'    :_ps_sp_lims(name, 'LOW'),
+                            'lolim' :_ps_sp_lims(name, 'LOPR'),
+                            'hilim' :_ps_sp_lims(name, 'HOPR'),
+                            'hi'    :_ps_sp_lims(name, 'HIGH'),
+                            'hihi'  :_ps_sp_lims(name, 'HIHI')}
+        _Current_SP = {'name':'Current-SP','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
+                            'lolo'  :_ps_sp_lims(name, 'LOLO'),
+                            'lo'    :_ps_sp_lims(name, 'LOW'),
+                            'lolim' :_ps_sp_lims(name, 'LOPR'),
+                            'hilim' :_ps_sp_lims(name, 'HOPR'),
+                            'hi'    :_ps_sp_lims(name, 'HIGH'),
+                            'hihi'  :_ps_sp_lims(name, 'HIHI')}
+
         @staticmethod
         def get_database(): return PSClasses._getdatabase(__class__)
 

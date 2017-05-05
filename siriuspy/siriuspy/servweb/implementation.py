@@ -47,14 +47,6 @@ def magnets_excitation_data_get_filenames_list(timeout=_timeout):
         fname_list.append(fname[0])
     return fname_list
 
-
-def magnets_excitation_data_read(filename, timeout=_timeout):
-    """Return the text of the corresponding retrived from the web server."""
-
-    url = _envars.server_url_web + _excdat_folder + filename
-    return read_url(url, timeout=timeout)
-
-
 def magnets_excitation_data_read(filename, timeout=_timeout):
     """Return the text of the corresponding retrieved magnet excitation data from the web server."""
 
