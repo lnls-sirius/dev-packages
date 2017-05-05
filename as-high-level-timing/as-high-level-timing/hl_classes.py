@@ -17,39 +17,41 @@ def _get_initial_trig_hl2ll():
         }
     return map_
 
-
+Connections.add_bbb_info()
+Connections.add_crates_info()
+EVRs = Connections.get_devices('EVR')
+EVEs = Connections.get_devices('EVE')
+AFCs = Connections.get_devices('AFC')
+twds_evg = Connections.get_connections_twds_evg()
 def _get_ll_trig_names(chans):
-    Connections.add_bbb_info()
-    Connections.add_crates_info()
 
-    EVRs = Connections.get_devices('evr')
-    EVEs = Connections.get_devices('eve')
-    AFCs = Connections.get_devices('afc')
-
-    twds_evg = Connections.get_connections_twrds_evg()
-    channels = tuple()
+    channels = set()
     for chan in chans:
-        up_dev = twds_evg[chan.dev_name][chan.propty]
-        while up_dev[0] not in EVRs | EVEs | AFCs:
-            conn_up = IOs.O2I_MAP[ up_dev[0] ][ up_dev[1] ]
-            up_dev = twds_evg[ up_dev[0] ][ conn_up ]
-        channels += (up_dev[0]+':'+up_dev[1],)
+        up_dev = _PVName(list(twds_evg[chan])[0])
+        while up_dev.dev_name not in EVRs | EVEs | AFCs:
+            tmp_ = IOs.O2I_MAP[ up_dev.dev_type ]
+            conn_up = tmp_.get( up_dev.propty )
+            if conn_up is None:
+                print(IOs.O2I_MAP)
+                print(up_dev.dev_type, up_dev.propty)
+            up_dev = _PVName(  list(twds_evg[ up_dev.dev_name +':'+ conn_up ])[0]  )
+        channels |= {up_dev}
     return sorted(channels)
 
 
-def get_hl_trigger_object(trig_prefix,callback,channels,event,trigger_type):
+def get_hl_trigger_object(trig_prefix,callback,channels,events,trigger_type):
     HL_TRIGGER_CLASSES = {
         'simple':   _HL_TrigSimple,
         'rmpbo':    _HL_TrigRmpBO,
         'cavity':   _HL_TrigCavity,
-        'pssi':     _HL_TrigPSSI,
+        'PSSI':     _HL_TrigPSSI,
         'generic':  _HL_TrigGeneric,
         }
     ty = trigger_type
     cls_ = HL_TRIGGER_CLASSES.get(ty)
     if not cls_:
         raise Exception('High Level Trigger Class not defined for trigger type '+ty+'.')
-    return cls_(trig_prefix,callback,channels,event)
+    return cls_(trig_prefix,callback,channels,events)
 
 
 class _HL_TrigBase:
@@ -109,6 +111,7 @@ class _HL_TrigBase:
         return db2
 
     def __init__(self,trig_prefix,callback,channels,events):
+        print('Starting Trigger '+trig_prefix)
         self._RB_FUNS  = self._get_RB_FUNS()
         self._SP_FUNS = self._get_SP_FUNS()
         self._EVENTS = events
@@ -120,13 +123,13 @@ class _HL_TrigBase:
         self._values_rb = {  key:len_rb*[val] for key,val in self._hl2ll.items()  }
         self._ll_trigs = dict()
         for chan in self._ll_trig_names:
+            print('   Connecting to Low Level Object '+chan)
             low_lev_obj = get_ll_trigger_object(
                                 channel = chan,
-                                callback = self._pvs_value_rb,
+                                callback = self._pvs_values_rb,
                                 initial_hl2ll=_copy.deepcopy(self._hl2ll)
                                 )
-            self._ll_trig_names.append(dev)
-            self._ll_trigs[dev] = low_lev_obj
+            self._ll_trigs[chan] = low_lev_obj
             for prop, val in self._hl2ll.items():
                 low_lev_obj.set_propty(prop,val)
 
@@ -164,7 +167,7 @@ class _HL_TrigBase:
         self._values_rb[prop][ind] = self._RB_FUNS[prop](value,ind)
         self.callback( self.prefix + self._HLPROP_2_PVRB[prop], self._values_rb[prop]  )
 
-    def set_propty(reason,value):
+    def set_propty(self,reason,value):
         pv = pv.split(self.prefix)
         if len(pv) == 1: return False
         prop = self._PVSP_2_HLPROP.get(pv[1])
@@ -261,6 +264,7 @@ class HL_Event:
         return db
 
     def __init__(self,prefix,code,callback):
+        print('Starting Event '+prefix)
         self._RB_FUNS  = self._get_RB_FUNS()
         self._SP_FUNS = self._get_SP_FUNS()
         self.callback = callback
@@ -268,8 +272,8 @@ class HL_Event:
         self.ll_code  = code
         self._hl2ll = self._get_initial_hl2ll()
         self._values_rb = {  key:val for key,val in self._hl2ll.items()  }
-        self.ll_obj = LL_Event( prefix = self.ll_code,
-                                callback = self._pvs_value_rb,
+        self.ll_obj = LL_Event( code = self.ll_code,
+                                callback = self._pvs_values_rb,
                                 initial_hl2ll=_copy.deepcopy(self._hl2ll)
                                 )
         for prop, val in self._hl2ll.items():
@@ -303,7 +307,7 @@ class HL_Event:
         self._values_rb[prop] = self._RB_FUNS[prop](value)
         self.callback( self.prefix + self._HLPROP_2_PVRB[prop], self._values_rb[prop]  )
 
-    def set_propty(reason,value):
+    def set_propty(self,reason,value):
         pv = pv.split(self.prefix)
         if len(pv) == 1: return False
         prop = self._PVSP_2_HLPROP.get(pv[1])

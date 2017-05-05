@@ -22,28 +22,21 @@ def check_triggers_consistency():
     Connections.add_bbb_info()
     Connections.add_crates_info()
     from_evg = Connections.get_connections_from_evg()
-    twds_evg = Connections.get_connections_twrds_evg()
+    twds_evg = Connections.get_connections_twds_evg()
     for trig, val in triggers.items():
-        print(trig)
         chans = {  _PVName(chan) for chan in val['channels']  }
-        devs  = {  chan.dev_name for chan in chans  }
         for chan in chans:
-            print(chan)
-            tmp = twds_evg.get(chan.dev_name)
+            tmp = twds_evg.get(chan)
             if tmp is None:
-                print('Device '+chan.dev_name+' defined in the high level trigger '+
+                print('Device '+chan+' defined in the high level trigger '+
                       trig+' not specified in timing connections data.')
                 return False
-            up_dev = tmp.get(chan.propty)
-            if up_dev is None:
-                print('Connection channel '+chan.propty+' defined in the high level trigger '
-                      +trig+' not specified in timing connections data.')
-                return False
-            diff_devs = set(from_evg[up_dev[0]][up_dev[1]]) - devs
-            if diff_devs:
-                print('Devices: '+diff_devs+' are connected to the same output of '+up_dev+' as '
-                       +chan.dev_name+' but are not related to the sam trigger ('+trig+').')
-                return False
+            up_dev = tmp.pop()
+            diff_devs = from_evg[up_dev] - chans
+            if diff_devs and not chan.dev_type.endswith('BPM'):
+                print('Devices: '+' '.join(diff_devs)+' are connected to the same output of '+up_dev+' as '
+                       +chan+' but are not related to the sam trigger ('+trig+').')
+                # return False
     return True
 
 
@@ -58,6 +51,7 @@ class App:
         return db
 
     def __init__(self,driver=None):
+        print('Starting App...')
         self._driver = driver
         if not check_triggers_consistency():
             raise Exception('Triggers not consistent.')

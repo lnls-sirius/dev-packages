@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 import siriuspy.util as _util
 _util.set_ioc_ca_port_number('as-high-level-timing')
 
@@ -50,8 +51,9 @@ def run():
     app = _main.App()
     # create a new simple pcaspy server and driver to responde client's requests
     server = _pcaspy.SimpleServer()
-    for prefix, database in app.get_database():
-        server.createPV(prefix, database)
+    db = app.get_database()
+    print(db)
+    server.createPV(prefix, db)
     pcas_driver = PCASDriver(app)
 
     # initiate a new thread responsible for listening for client connections

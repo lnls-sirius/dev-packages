@@ -1,7 +1,7 @@
 import re as _re
 import epics as _epics
 from siriuspy.namesys import SiriusPVName as _PVName
-from siriuspy.timesys.time_data import Connections, IOs
+from siriuspy.timesys.time_data import Connections, IOs, Events
 
 # Coding guidelines:
 # =================
@@ -15,6 +15,7 @@ from siriuspy.timesys.time_data import Connections, IOs
 _TIMEOUT = 0.05
 _FORCE_EQUAL = True
 
+LL_PREFIX = 'VAF-'
 
 RFFREQ = 299792458/518.396*864  # This should be read from the RF generator Setpoint
 RF_PER = 1/RFFREQ * 1e6         # In micro seconds
@@ -22,25 +23,24 @@ D1_STEP = RF_PER * 4
 D2_STEP = RF_PER * 4 / 20
 D3_STEP = 5e-6                  # five picoseconds
 
-EVG  = Connections.get_devices('evg').pop()
+EVG  = Connections.get_devices('EVG').pop()
 
 
 def get_ll_trigger_object(channel,callback,initial_hl2ll):
     LL_TRIGGER_CLASSES = {
-        ('evr','mf'): _LL_TrigEVRMF,
-        ('evr','opt'): _LL_TrigEVROPT,
-        ('eve','lve'): _LL_TrigEVELVE,
-        ('eve','opt'): _LL_TrigEVEOPT,
-        ('afc','lve'): _LL_TrigAFCLVE,
-        ('afc','opt'): _LL_TrigAFCOPT,
+        ('EVR','MF'): _LL_TrigEVRMF,
+        ('EVR','OPT'): _LL_TrigEVROPT,
+        ('EVE','LVE'): _LL_TrigEVELVE,
+        ('AFC','LVE'): _LL_TrigAFCLVE,
+        ('AFC','OPT'): _LL_TrigAFCOPT,
         }
     chan = _PVName(channel)
-    conn_ty,conn_conf, conn_num = IOs.TRIGCH_REGEXP.findall(chan.propty.lower())
-    key = (chan.dev_type.lower(), conn)
+    conn_ty,conn_conf, conn_num = IOs.LL_RGX.findall(chan.propty)[0]
+    key = (chan.dev_type, conn_ty)
     cls_ = LL_TRIGGER_CLASSES.get(key)
     if not cls_:
         raise Exception('Low Level Trigger Class not defined for device type '+key[0]+' and connection type '+key[1]+'.')
-    return cls_(channel, conn_num, callback, initial_hl2ll)
+    return cls_(channel, int(conn_num), callback, initial_hl2ll)
 
 
 class _LL_TrigEVRMF:
@@ -51,6 +51,9 @@ class _LL_TrigEVRMF:
     _REMOVE_PROPS = {}
 
     def __init__(self, channel, conn_num,  callback, initial_hl2ll):
+        self._internal_trigger = self._get_num_int(conn_num)
+        self._OUTLB = self._OUTTMP.format(conn_num)
+        self._INTLB = self._INTTMP.format(self._internal_trigger)
         self._HLPROP_FUNS = self._get_HLPROP_FUNS()
         self._LLPROP_FUNS = self._get_LLPROP_FUNS()
         self._LLPROP_2_PVSP = self._get_LLPROP_2_PVSP()
@@ -59,18 +62,15 @@ class _LL_TrigEVRMF:
         self._PVRB_2_LLPROP = { val:key for key,val in self._LLPROP_2_PVRB.items() }
         self.callback = callback
         self.prefix = channel
-        self._internal_trigger = self._get_num_int(conn_num)
-        self._OUTLB = self._OUTTMP.format(num)
-        self._INTLB = self._INTTMP.format(self._internal_trigger)
         self._hl2ll = initial_hl2ll
         self._pvs_sp = dict()
         self._pvs_rb = dict()
         for prop, pv in self._LLPROP_2_PVSP.items():
-            self._pvs_sp[prop]  = _epics.PV(self.prefix + pv,
+            self._pvs_sp[prop]  = _epics.PV(LL_PREFIX + self.prefix + pv,
                                             callback = self._pvs_sp_callback,
                                             connection_timeout=_TIMEOUT)
         for prop, pv in self._LLPROP_2_PVRB.items():
-            self._pvs_rb[prop]  = _epics.PV(self.prefix + pv,
+            self._pvs_rb[prop]  = _epics.PV(LL_PREFIX + self.prefix + pv,
                                             callback = self._pvs_rb_callback,
                                             connection_timeout=_TIMEOUT)
 
@@ -89,7 +89,7 @@ class _LL_TrigEVRMF:
             'state'      : self._INTLB + 'State-Sel',
             'polarity'   : self._INTLB + 'Polrty-Sel',
             }
-        for prop in _REMOVE_PROPS:
+        for prop in self._REMOVE_PROPS:
             map_.pop(prop)
         return map_
 
@@ -105,7 +105,7 @@ class _LL_TrigEVRMF:
             'state'      : self._INTLB + 'State-Sts',
             'polarity'   : self._INTLB + 'Polrty-Sts',
             }
-        for prop in _REMOVE_PROPS:
+        for prop in self._REMOVE_PROPS:
             map_.pop(prop)
         return map_
 
@@ -134,7 +134,7 @@ class _LL_TrigEVRMF:
             'state'      : lambda x,ty=None: {'state':x},
             'polarity'   : lambda x,ty=None: {'polarity':x},
             }
-        for prop in _REMOVE_PROPS:
+        for prop in self._REMOVE_PROPS:
             map_.pop(prop)
         return map_
 
@@ -154,7 +154,8 @@ class _LL_TrigEVRMF:
 
     def _set_simple(self,prop,value):
         self._hl2ll[prop]   = value
-        self.pvs_sp[prop].value = value
+        pv = self._pvs_sp[prop]
+        if pv.connected: pv.value = value
 
     def _get_delay(self, value, ty = None):
         pvs = self._pvs_sp if ty else self._pvs_rb
@@ -171,9 +172,11 @@ class _LL_TrigEVRMF:
         delay3  = (value // D3_STEP) * D3_STEP * 1e3 # in nanoseconds
 
         self._hl2ll['delay'] = delay1 + delay2 + delay3/1e3
-        self.pvs_sp['delay1'].value = delay1
-        self.pvs_sp['delay2'].value = delay2
-        self.pvs_sp['delay3'].value = delay3
+        pv = self._pvs_sp['delay1']
+        if pv.connected:
+            pv.value = delay1
+            self._pvs_sp['delay2'].value = delay2
+            self._pvs_sp['delay3'].value = delay3
 
     def _get_int_channel(self, value, ty = None):
         pvs = self._pvs_sp if ty else self._pvs_rb
@@ -187,13 +190,17 @@ class _LL_TrigEVRMF:
 
     def _set_int_channel(self,prop,value):
         self._hl2ll[prop] = value
+        int_trig = self._pvs_sp.get('internal_trigger')
+        if int_trig is None: return
         if not self._hl2ll['work_as']:
-            self._pvs_sp['internal_trigger'].value = self._internal_trigger
+             val = self._internal_trigger
         else:
             clock_num = self._hl2ll['clock']
-            self._pvs_sp['internal_trigger'].value = self._NUM_INT + clock_num
+            val = self._NUM_INT + clock_num
 
-    def set_propty(prop,value):
+        if int_trig.connected: int_trig.value = val
+
+    def set_propty(self,prop,value):
         fun = self._HLPROP_FUNS.get(prop)
         if fun is None:  return False
         fun(value)
@@ -217,7 +224,9 @@ class _LL_TrigEVROPT(_LL_TrigEVRMF):
     def _set_delay(self,value):
         delay1  = (value // D1_STEP) * D1_STEP
         self._hl2ll['delay'] = delay1
-        self.pvs_sp['delay1'].value = delay1
+        pv = self._pvs_sp['delay1']
+        if pv.connected:
+            pv.value = delay1
 
 
 class _LL_TrigEVELVE(_LL_TrigEVRMF):
@@ -247,7 +256,7 @@ class _LL_TrigAFCLVE(_LL_TrigEVRMF):
         map_ = super()._get_HLPROP_FUNS()
         map_['work_as'] = lambda x: self._set_channel_to_listen('work_as',x)
         map_['event']   = lambda x: self._set_channel_to_listen('event',x)
-        map_['clock']   = lambda x: self._set_simple('clock',x)
+        map_['clock']   = lambda x: self._set_channel_to_listen('clock',x)
         return map_
 
     def _get_LLPROP_FUNS(self):
@@ -255,7 +264,19 @@ class _LL_TrigAFCLVE(_LL_TrigEVRMF):
         map_['event'] = self._get_channel_to_listen
         return map_
 
-    def _get_int_channel(self, value, ty = None):
+    def _get_delay(self, value, ty = None):
+        pvs = self._pvs_sp if ty else self._pvs_rb
+        delay  = pvs['delay1'].value
+        return {'delay':delay}
+
+    def _set_delay(self,value):
+        delay1  = (value // D1_STEP) * D1_STEP
+        self._hl2ll['delay'] = delay1
+        pv = self._pvs_sp['delay1']
+        if pv.connected:
+            pv.value = delay1
+
+    def _get_channel_to_listen(self, value, ty = None):
         pvs = self._pvs_sp if ty else self._pvs_rb
         props = dict()
         if value < self._NUM_INT:
@@ -269,10 +290,14 @@ class _LL_TrigAFCLVE(_LL_TrigEVRMF):
     def _set_channel_to_listen(self,prop,value):
         self._hl2ll[prop] = value
         if not self._hl2ll['work_as']:
-            self._pvs_sp['event'].value = self._hl2ll['event']
+            val = self._hl2ll['event']
         else:
             clock_num = self._hl2ll['clock']
-            self._pvs_sp['event'].value = self._NUM_INT + clock_num
+            val = self._NUM_INT + clock_num
+
+        pv = self._pvs_sp['event']
+        if pv.connected:
+            pv.value = val
 
 
 class _LL_TrigAFCOPT(_LL_TrigAFCLVE):
@@ -294,11 +319,11 @@ class LL_Event:
         self._pvs_sp = dict()
         self._pvs_rb = dict()
         for prop, pv in self._LLPROP_2_PVSP.items():
-            self._pvs_sp[prop]  = _epics.PV(self.prefix + pv,
+            self._pvs_sp[prop]  = _epics.PV(LL_PREFIX + self.prefix + pv,
                                             callback = self._pvs_sp_callback,
                                             connection_timeout=_TIMEOUT)
         for prop, pv in self._LLPROP_2_PVRB.items():
-            self._pvs_rb[prop]  = _epics.PV(self.prefix + pv,
+            self._pvs_rb[prop]  = _epics.PV(LL_PREFIX + self.prefix + pv,
                                             callback = self._pvs_rb_callback,
                                             connection_timeout=_TIMEOUT)
 
@@ -350,9 +375,10 @@ class LL_Event:
 
     def _set_simple(self,prop,value):
         self._hl2ll[prop]   = value
-        self.pvs_sp[prop].value = value
+        pv = self._pvs_sp[prop]
+        if pv.connected: pv.value = value
 
-    def set_propty(prop,value):
+    def set_propty(self,prop,value):
         fun = self._HLPROP_FUNS.get(prop)
         if fun is None:  return False
         fun(value)
