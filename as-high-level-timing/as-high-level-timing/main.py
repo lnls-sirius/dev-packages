@@ -3,7 +3,7 @@ import time as _time
 from siriuspy.timesys.time_data import Connections, Events
 from siriuspy.namesys import SiriusPVName as _PVName
 from data.triggers import get_triggers as _get_triggers
-from hl_classes import get_high_level_trigger_object, HL_Event
+from hl_classes import get_hl_trigger_object, HL_Event
 
 # Coding guidelines:
 # =================
@@ -70,7 +70,7 @@ class App:
         self._triggers = dict()
         triggers = _get_triggers()
         for trig_prefix, prop in triggers.items():
-            trig = get_high_level_trigger_object(trig_prefix, self._update_driver, **prop)
+            trig = get_hl_trigger_object(trig_prefix, self._update_driver, **prop)
             self._triggers[trig_prefix] = trig
 
     def _update_driver(self,pv_name,pv_value,**kwargs):

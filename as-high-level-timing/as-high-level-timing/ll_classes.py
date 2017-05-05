@@ -25,8 +25,8 @@ D3_STEP = 5e-6                  # five picoseconds
 EVG  = Connections.get_devices('evg').pop()
 
 
-def get_low_level_trigger_object(channel,callback,initial_hl2ll):
-    _LOW_LEVEL_TRIGGER_CLASSES = {
+def get_ll_trigger_object(channel,callback,initial_hl2ll):
+    LL_TRIGGER_CLASSES = {
         ('evr','mf'): _LL_TrigEVRMF,
         ('evr','opt'): _LL_TrigEVROPT,
         ('eve','lve'): _LL_TrigEVELVE,
@@ -37,7 +37,7 @@ def get_low_level_trigger_object(channel,callback,initial_hl2ll):
     chan = _PVName(channel)
     conn_ty,conn_conf, conn_num = IOs.TRIGCH_REGEXP.findall(chan.propty.lower())
     key = (chan.dev_type.lower(), conn)
-    cls_ = _LOW_LEVEL_TRIGGER_CLASSES.get(key)
+    cls_ = LL_TRIGGER_CLASSES.get(key)
     if not cls_:
         raise Exception('Low Level Trigger Class not defined for device type '+key[0]+' and connection type '+key[1]+'.')
     return cls_(channel, conn_num, callback, initial_hl2ll)

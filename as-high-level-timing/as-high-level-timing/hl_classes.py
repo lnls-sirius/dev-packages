@@ -1,13 +1,8 @@
 import copy as _copy
 from siriuspy.timesys.time_data import Connections, IOs, Triggers, Clocks, Events
 from siriuspy.namesys import SiriusPVName as _PVName
-from ll_classes import get_low_level_trigger_object
+from ll_classes import get_ll_trigger_object
 from ll_classes import LL_Event
-
-EVRs = Connections.get_devices('evr')
-EVEs = Connections.get_devices('eve')
-AFCs = Connections.get_devices('afc')
-
 
 def _get_initial_trig_hl2ll():
     map_ = {
@@ -26,19 +21,24 @@ def _get_initial_trig_hl2ll():
 def _get_ll_trig_names(chans):
     Connections.add_bbb_info()
     Connections.add_crates_info()
+
+    EVRs = Connections.get_devices('evr')
+    EVEs = Connections.get_devices('eve')
+    AFCs = Connections.get_devices('afc')
+
     twds_evg = Connections.get_connections_twrds_evg()
     channels = tuple()
     for chan in chans:
         up_dev = twds_evg[chan.dev_name][chan.propty]
-        while up_dev[0] not in EVRs | EVEs |AFCs:
+        while up_dev[0] not in EVRs | EVEs | AFCs:
             conn_up = IOs.O2I_MAP[ up_dev[0] ][ up_dev[1] ]
             up_dev = twds_evg[ up_dev[0] ][ conn_up ]
         channels += (up_dev[0]+':'+up_dev[1],)
     return sorted(channels)
 
 
-def get_high_level_trigger_object(trig_prefix,callback,channels,event,trigger_type):
-    _HIGH_LEVEL_TRIGGER_CLASSES = {
+def get_hl_trigger_object(trig_prefix,callback,channels,event,trigger_type):
+    HL_TRIGGER_CLASSES = {
         'simple':   _HL_TrigSimple,
         'rmpbo':    _HL_TrigRmpBO,
         'cavity':   _HL_TrigCavity,
@@ -46,14 +46,14 @@ def get_high_level_trigger_object(trig_prefix,callback,channels,event,trigger_ty
         'generic':  _HL_TrigGeneric,
         }
     ty = trigger_type
-    cls_ = _HIGH_LEVEL_TRIGGER_CLASSES.get(ty)
+    cls_ = HL_TRIGGER_CLASSES.get(ty)
     if not cls_:
         raise Exception('High Level Trigger Class not defined for trigger type '+ty+'.')
     return cls_(trig_prefix,callback,channels,event)
 
 
 class _HL_TrigBase:
-    _FUNCTION_TYPES = ('Trigger', 'Clock')
+    _WORKAS_ENUMS = ('Trigger', 'Clock')
 
     _HL_PROPS = {'work_as','clock','event','delay','pulses','width','state','polarity'}
 
@@ -87,7 +87,7 @@ class _HL_TrigBase:
         len_rb = len(self._ll_trigs)
         db[pre + 'State-Sel']   = {'type':'enum', 'value':0, 'enums':Triggers.STATES}
         db[pre + 'State-Sts']   = {'type':'int',  'value':0, 'count':len_rb}
-        db[pre + 'WorkAs-Sel']  = {'type':'enum', 'value':0, 'enums':self._FUNCTION_TYPES}
+        db[pre + 'WorkAs-Sel']  = {'type':'enum', 'value':0, 'enums':self._WORKAS_ENUMS}
         db[pre + 'WorkAs-Sts']  = {'type':'int',  'value':0, 'count':len_rb}
         db[pre + 'Event-Sel']   = {'type':'enum', 'value':0, 'enums':self._EVENTS}
         db[pre + 'Event-Sts']   = {'type':'int',  'value':0, 'count':len_rb}
@@ -120,7 +120,7 @@ class _HL_TrigBase:
         self._values_rb = {  key:len_rb*[val] for key,val in self._hl2ll.items()  }
         self._ll_trigs = dict()
         for chan in self._ll_trig_names:
-            low_lev_obj = get_low_level_trigger_object(
+            low_lev_obj = get_ll_trigger_object(
                                 channel = chan,
                                 callback = self._pvs_value_rb,
                                 initial_hl2ll=_copy.deepcopy(self._hl2ll)
@@ -134,7 +134,7 @@ class _HL_TrigBase:
 
     def _get_SP_FUNS(self):
         map_ = {
-            'work_as'    : lambda x: self._FUNCTION_TYPES[x],
+            'work_as'    : lambda x: self._WORKAS_ENUMS[x],
             'clock'      : lambda x: Triggers.CLOCKS[x],
             'event'      : lambda x: Events.HL2LL_MAP[self._EVENTS[x]],
             'delay'      : lambda x: x,
@@ -147,7 +147,7 @@ class _HL_TrigBase:
 
     def _get_RB_FUNS(self):
         map_ = {
-            'work_as'    : lambda x: self._FUNCTION_TYPES.index(x),
+            'work_as'    : lambda x: self._WORKAS_ENUMS.index(x),
             'clock'      : lambda x: Triggers.CLOCKS.index(x),
             'event'      : lambda x: self._EVENTS.index(Events.LL2HL_MAP[x]),
             'delay'      : lambda x: x,
