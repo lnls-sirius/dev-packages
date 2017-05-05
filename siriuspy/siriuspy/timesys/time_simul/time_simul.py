@@ -13,10 +13,10 @@ class TimingSimulation(_device_models.CallBack):
     @classmethod
     def get_constants(cls):
         if cls.EVG_PREFIX: return
-        cls.EVG_PREFIX  = _Connections.get_devices('evg').pop() + ':'
-        cls.EVRs = _Connections.get_devices('evr')
-        cls.EVEs = _Connections.get_devices('eve')
-        cls.AFCs = _Connections.get_devices('afc')
+        cls.EVG_PREFIX  = _Connections.get_devices('EVG').pop() + ':'
+        cls.EVRs = _Connections.get_devices('EVR')
+        cls.EVEs = _Connections.get_devices('EVE')
+        cls.AFCs = _Connections.get_devices('AFC')
 
     @classmethod
     def get_database(cls, prefix = ''):

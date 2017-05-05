@@ -92,7 +92,7 @@ class IOs:
                 ),
             },
         'BBB':{
-            'OPTI':('RSIO'),
+            'OPTI':('RSIO',),
             },
         'Crate':{
             'LVEIO0':('LVEIO0',),
@@ -154,10 +154,10 @@ class _TimeDevData:
             self._update_related_maps()
 
     def _update_related_maps(self):
-        self._top_chain_devs      = self._conn_from_evg.keys()  - self._conn_twrds_evg.keys()
-        self._final_receiver_devs = self._conn_twrds_evg.keys() - self._conn_from_evg.keys()
-        self._all_devices         = self._conn_from_evg.keys()  | self._conn_twrds_evg.keys()
         self._build_devices_relations()
+        self._top_chain_devs      = self._dev_from_evg.keys() - self._dev_twds_evg.keys()
+        self._final_receiver_devs = self._dev_twds_evg.keys() - self._dev_from_evg.keys()
+        self._all_devices         = self._dev_from_evg.keys() | self._dev_twds_evg.keys()
         self._build_hierarchy_map()
         self._build_positions()
         self._build_colors()
@@ -165,9 +165,8 @@ class _TimeDevData:
 
     def _get_dev_and_channel(self,txt):
         type_chan = num_chan = None
-        txt = _PVName(txt)
         dev = txt.dev_name
-        chan  = txt.propty.lower()
+        chan  = txt.propty
         reg_match = IOs.LL_RGX.findall(chan)
         if reg_match:
             type_chan, io_chan, num_chan = reg_match[0]
@@ -175,12 +174,13 @@ class _TimeDevData:
 
     def _parse_text_and_build_connection_mappings(self,text):
         from_evg = dict()
-        twrds_evg = dict()
+        twds_evg = dict()
         lines = text.splitlines()
         for n,line in enumerate(lines,1):
             line = line.strip()
             if not line or line[0] == '#': continue # empty line
             out,inn,*_ = line.split()
+            out, inn = _PVName(out), _PVName(inn)
             send, ochn, octyp, ocn = self._get_dev_and_channel(out)
             recv, ichn, ictyp, icn = self._get_dev_and_channel(inn)
             if not ochn or not ichn:
@@ -195,39 +195,42 @@ class _TimeDevData:
                 print('Channel types do not match in line {0:d}:\n\t {1:s}'.format(n,line))
                 return
             else:
-                if send in from_evg.keys():
-                    this_sen = from_evg[send]
-                    if ochn in this_sen.keys():  this_sen[ochn] += (recv,ichn)
-                    else:                        this_sen.update({ ochn : ((recv, ichn), ) }  )
+                if out in from_evg.keys():
+                    from_evg[out] |= {inn}
                 else:
-                    from_evg[send] = { ochn : ((recv, ichn), ) }
+                    from_evg[out] = {inn}
 
-                if recv in twrds_evg.keys():
-                    this_recv = twrds_evg[recv]
-                    if ichn in this_recv.keys():
-                        print('Duplicate device input connection in line {0:d}:\n\t {1:s}'.format(n,line))
-                        return
-                    else:
-                        this_recv.update(  { ichn : (send, ochn) }  )
+                if inn in twds_evg.keys():
+                    print('Duplicate device input connection in line {0:d}:\n\t {1:s}'.format(n,line))
+                    return
                 else:
-                    twrds_evg[recv] =   { ichn : (send, ochn) }
-        self._conn_from_evg   = from_evg
-        self._conn_twrds_evg = twrds_evg
+                    twds_evg[inn] = {out}
+        self._conn_from_evg = from_evg
+        self._conn_twds_evg = twds_evg
 
     def _build_devices_relations(self):
         simple_map = dict()
         for k,vs in self._conn_from_evg.items():
-            devs = set()
-            for v in vs.values(): devs.update([i[0] for i in v])
-            simple_map[k] = devs
-        self._devices_relations =  simple_map
+            devs = {v.dev_name for v in vs }
+            devs |= simple_map.get(k.dev_name,set())
+            simple_map[k.dev_name] = devs
+
+        inv_map = dict()
+        for k,vs in simple_map.items():
+            for v in vs:
+                devs = {k}
+                devs |= inv_map.get(v,set())
+                inv_map[v] = devs
+
+        self._dev_from_evg = simple_map
+        self._dev_twds_evg = inv_map
 
     def _build_hierarchy_map(self):
         hierarchy = [self._top_chain_devs.copy(),]
         while True:
             vals = set()
             for k in hierarchy[-1]:
-                vals |= self._devices_relations.get(k,set())
+                vals |= self._dev_from_evg.get(k,set())
             if vals: hierarchy.append(vals)
             else:    break
         self._hierarchy_map = hierarchy
@@ -261,8 +264,8 @@ class _TimeDevData:
         txt = ax.annotate(s='',xy=(0.0,0.0),xycoords='data')
 
         kwargs = dict()
-        for dev in sorted(self._devices_relations.keys()):
-            conns = sorted(self._devices_relations[dev])
+        for dev in sorted(self._dev_from_evg.keys()):
+            conns = sorted(self._dev_from_evg[dev])
             for conn in conns:
                 x  = self._positions[dev][0]
                 y  = self._positions[dev][1]
@@ -291,7 +294,7 @@ class _TimeDevData:
             for dev in devs:
                 angi, angf = angles[dev]
                 dang = angf-angi
-                devs2 = self._devices_relations.get(dev,set())
+                devs2 = self._dev_from_evg.get(dev,set())
                 nr = len(devs2)
                 min_ang = min(min_ang,dang,dang/nr if nr else min_ang)
                 for i,dev2 in enumerate(devs2):
@@ -305,7 +308,7 @@ class _TimeDevData:
         # get positions
         for n,devs in enumerate(self._hierarchy_map):
             for dev in devs:
-                devs2 = self._devices_relations.get(dev,set())
+                devs2 = self._dev_from_evg.get(dev,set())
                 for i,dev2 in enumerate(devs2):
                     positions[dev2] = pol2cart(radia[n],angles[dev2])
 
@@ -313,6 +316,9 @@ class _TimeDevData:
         self._inv_positions = {xy:dev for dev,xy in positions.items()}
 
     def _build_colors(self):
+        if 'matplotlib' not in _sys.modules:
+            print('Cannot draw network:matplotlib is not installed')
+            return
         dev_types = set()
         for dev in self._all_devices:
             dev_types.add(_PVName(dev).dev_type)
@@ -329,11 +335,13 @@ class _TimeDevData:
         self._colors = colors
 
     def _build_arrow_colors(self):
+        if 'matplotlib' not in _sys.modules:
+            print('Cannot draw network:matplotlib is not installed')
+            return
         chan_types = set()
-        for conns in self._conn_from_evg.values():
-            for chan in conns.keys():
-                chan_type = IOs.LL_RGX.findall(chan)[0][0]
-                chan_types.add(chan_type)
+        for chan in self._conn_from_evg.keys():
+            chan_type = IOs.LL_RGX.findall(chan.propty)[0][0]
+            chan_types.add(chan_type)
 
         nr = len(chan_types)+2
         color_types = dict()
@@ -341,63 +349,59 @@ class _TimeDevData:
             color_types[chan_type] = _cmap.spectral(i/nr)
 
         colors = dict()
-        for dev1,conns in self._conn_from_evg.items():
-            for chan,devs in conns.items():
-                chan_type = IOs.LL_RGX.findall(chan)[0][0]
-                for dev2 in devs:
-                    colors[(dev1,dev2[0])] = color_types[chan_type]
+        for chan1,conns in self._conn_from_evg.items():
+                chan_type = IOs.LL_RGX.findall(chan1.propty)[0][0]
+                for chan2 in conns:
+                    colors[(chan1.dev_name,chan2.dev_name)] = color_types[chan_type]
 
         self._arrow_colors = colors
 
     def add_crates_info(self,connections_dict):
-        not_used = set()
-        for crate, bpms in connections_dict.items():
-            my_conns = self._conn_twrds_evg.get(crate)
-            if my_conns is None:
-                not_used.add(crate)
-                continue
-            for conn in my_conns.keys():
-                for bpm in bpms:
-                    self._add_entry_to_map(which_map='from', conn=conn, ele1=crate, ele2=bpm)
-                    self._add_entry_to_map(which_map='twrds', conn=conn, ele1=bpm, ele2=crate)
+        used = set()
+        twds_evg = self.conn_twds_evg
+        for chan in twds_evg.keys():
+            bpms = connections_dict.get(chan.dev_name)
+            if bpms is None: continue
+            used.add(chan.dev_name)
+            for bpm in bpms:
+                self._add_entry_to_map(which_map='from', conn=chan.propty, ele1=chan.dev_name, ele2=bpm)
+                self._add_entry_to_map(which_map='twds', conn=chan.propty, ele1=bpm, ele2=chan.dev_name)
         self._update_related_maps()
-        return not_used
+        return ( connections_dict.keys() - used )
 
     def add_bbb_info(self,connections_dict):
-        conn = 'SRIO'
-        not_used = set()
-        for bbb, pss in connections_dict.items():
-            my_conns = self._conn_twrds_evg.get(bbb)
-            if my_conns is None:
-                not_used.add(bbb)
-                continue
+        conn = 'RSIO'
+        used = set()
+        twds_evg = self.conn_twds_evg
+        for chan in twds_evg.keys():
+            pss = connections_dict.get(chan.dev_name)
+            if pss is None: continue
+            used.add(chan.dev_name)
             for ps in pss:
-                self._add_entry_to_map(which_map='from', conn=conn, ele1=bbb, ele2=ps)
-                self._add_entry_to_map(which_map='twrds', conn=conn, ele1=ps, ele2=bbb)
+                self._add_entry_to_map(which_map='from', conn=conn, ele1=chan.dev_name, ele2=ps)
+                self._add_entry_to_map(which_map='twds', conn=conn, ele1=ps, ele2=chan.dev_name)
         self._update_related_maps()
-        return not_used
+        return ( connections_dict.keys() - used )
 
     def _add_entry_to_map(self, which_map, conn, ele1, ele2):
-        mapp = self._conn_from_evg if which_map=='from' else self._conn_twrds_evg
+        mapp = self._conn_from_evg if which_map=='from' else self._conn_twds_evg
+        ele1 = _PVName(ele1+':'+conn)
+        ele2 = _PVName(ele2+':'+conn)
         ele1_entry = mapp.get(ele1)
         if not ele1_entry:
-            mapp[ele1] = {  conn:( (ele2,conn), )  }
+            mapp[ele1] = {ele2}
         else:
-            conn_entry = ele1_entry.get(conn)
-            if not conn_entry:
-                ele1_entry[conn]  = ((ele2,conn),)
-            else:
-                ele1_entry[conn] += ((ele2,conn),)
+            ele1_entry |= {ele2}
 
     def get_devices_by_type(self,type_dev):
-        _pv_fun = lambda x,y: _PVName(x).dev_type.lower() == y.lower()
+        _pv_fun = lambda x,y: _PVName(x).dev_type == y
         return {  dev for dev in self._all_devices if _pv_fun(dev,type_dev) }
 
     @property
     def conn_from_evg(self): return _copy.deepcopy(self._conn_from_evg)
 
     @property
-    def conn_twrds_evg(self): return _copy.deepcopy(self._conn_twrds_evg)
+    def conn_twds_evg(self): return _copy.deepcopy(self._conn_twds_evg)
 
     @property
     def final_receivers(self): return _copy.deepcopy(self._final_receiver_devs)
@@ -406,7 +410,10 @@ class _TimeDevData:
     def top_chain_senders(self): return _copy.deepcopy(self._top_chain_devs)
 
     @property
-    def relations_from_evg(self): return _copy.deepcopy(self._devices_relations)
+    def relations_from_evg(self): return _copy.deepcopy(self._dev_from_evg)
+
+    @property
+    def relations_twds_evg(self): return _copy.deepcopy(self._dev_twds_evg)
 
     @property
     def hierarchy_list(self): return _copy.deepcopy(self._hierarchy_map)
@@ -442,10 +449,10 @@ class Connections:
         return timedata.conn_from_evg
 
     @classmethod
-    def get_connections_twrds_evg(cls):
+    def get_connections_twds_evg(cls):
         """Return a dictionary with the beaglebone to power supply mapping."""
         timedata =  cls._get_timedata()
-        return timedata.conn_twrds_evg
+        return timedata.conn_twds_evg
 
     @classmethod
     def get_top_chain_senders(cls):
@@ -464,6 +471,12 @@ class Connections:
         """Return a dictionary with the beaglebone to power supply mapping."""
         timedata =  cls._get_timedata()
         return timedata.relations_from_evg
+
+    @classmethod
+    def get_relations_twds_evg(cls):
+        """Return a dictionary with the beaglebone to power supply mapping."""
+        timedata =  cls._get_timedata()
+        return timedata.relations_twds_evg
 
     @classmethod
     def get_hierarchy_list(cls):
