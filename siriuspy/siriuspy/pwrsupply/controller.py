@@ -63,6 +63,8 @@ class Controller:
         value = value if self.current_max is None else min(value,self.current_max)
         return float(value)
 
+    def process(self):
+        pass
 
 class ControllerSim(Controller):
 
@@ -266,26 +268,27 @@ class ControllerSim(Controller):
             self._change_opmode(previous_mode=kwargs['opmode'])
         now = self._update_ramping_state()
         self._check_pending_waveform_writes()
-        if self._opmode == _et.idx.SlowRef:
+        if self.opmode == _et.idx.SlowRef:
             self._update_SlowRef(**kwargs)
-        elif self._opmode == _et.idx.SyncRef:
+        elif self.opmode == _et.idx.SyncRef:
             self._update_SyncRef(**kwargs)
-        elif self._opmode == _et.idx.FastRef:
+        elif self.opmode == _et.idx.FastRef:
             self._update_FastRef(**kwargs)
-        elif self._opmode == _et.idx.RmpMultWfm:
+        elif self.opmode == _et.idx.RmpMultWfm:
             self._update_RmpMultWfm(**kwargs)
-        elif self._opmode == _et.idx.MigMultWfm:
+        elif self.opmode == _et.idx.MigMultWfm:
             self._update_MigMultWfm(**kwargs)
-        elif self._opmode == _et.idx.RmpSglWfm:
+        elif self.opmode == _et.idx.RmpSglWfm:
             self._update_RmpSglWfm(**kwargs)
-        elif self._opmode == _et.idx.MigSglWfm:
+        elif self.opmode == _et.idx.MigSglWfm:
             self._update_MigSglWfm(**kwargs)
-        elif self._opmode == _et.idx.SigGen:
+        elif self.opmode == _et.idx.SigGen:
             self._update_SigGen(**kwargs)
-        elif self._opmode == _et.idx.CycGen:
+        elif self.opmode == _et.idx.CycGen:
             self._update_CycGen(**kwargs)
         else:
             raise Exception('Invalid controller opmode')
+        self.process()
 
     def _check_pending_waveform_writes(self):
         if not self._ramping_mode or self._wfmindex == 0:
@@ -308,13 +311,13 @@ class ControllerSim(Controller):
             self._mycallback(pvname='current_load')
 
     def _update_SlowRef(self, **kwargs):
-        self._update_current_ref(self._current_sp)
+        self._update_current_ref(self.current_sp)
 
     def _update_SyncRef(self, **kwargs):
         if 'trigger_signal' in kwargs:
-            self._update_current_ref(self._current_sp)
+            self._update_current_ref(self.current_sp)
         else:
-            self._update_current_ref(self._current_ref)
+            self._update_current_ref(self.current_ref)
 
     def _update_FastRef(self, **kwargs):
         pass
@@ -374,7 +377,120 @@ class ControllerSim(Controller):
             raise NotImplementedError
 
 
-class ControllerEpics(Controller):
+class ControllerEpics(ControllerSim):
+
+    def __init__(self, ps_name,
+                       connection_timeout=_connection_timeout,
+                       current_min=None,     # mininum current setpoint value
+                       current_max=None,     # maximum current setpoint value
+                       callback=None,
+                       current_std=0.0,
+                       **kwargs):
+
+        self._current_min = current_min
+        self._current_max = current_max
+        self._callback = callback
+
+        now = _time.time()
+        self._current_std = current_std
+        self._timestamp_pwrstate = now # last time pwrstate was changed
+        self._timestamp_opmode   = now # last time opmode was changed
+        self._timestamp_trigger  = now # last time trigger received
+
+        self._ps_name = ps_name
+        self._connection_timeout = connection_timeout
+        self._create_epics_pvs()
+
+    def _create_epics_pvs(self):
+        self._pvs = {}
+        pv = self._ps_name
+        self._pvs['PwrState-Sel']   = _PV(pv + ':PwrState-Sel',   connection_timeout=self._connection_timeout)
+        self._pvs['PwrState-Sts']   = _PV(pv + ':PwrState-Sts',   connection_timeout=self._connection_timeout)
+        self._pvs['OpMode-Sel']     = _PV(pv + ':OpMode-Sel',     connection_timeout=self._connection_timeout)
+        self._pvs['OpMode-Sts']     = _PV(pv + ':OpMode-Sts',     connection_timeout=self._connection_timeout)
+        self._pvs['Current-SP']     = _PV(pv + ':Current-SP',     connection_timeout=self._connection_timeout)
+        self._pvs['Current-RB']     = _PV(pv + ':Current-RB',     connection_timeout=self._connection_timeout)
+        self._pvs['CurrentRef-Mon'] = _PV(pv + ':CurrentRef-Mon', connection_timeout=self._connection_timeout)
+        self._pvs['Current-Mon']    = _PV(pv + ':Current-Mon',    connection_timeout=self._connection_timeout)
+        self._pvs['WfmIndex-Mon']   = _PV(pv + ':WfmIndex-Mon',   connection_timeout=self._connection_timeout)
+        self._pvs['WfmLabels-Mon']  = _PV(pv + ':WfmLabels-Mon',  connection_timeout=self._connection_timeout)
+        self._pvs['WfmLabel-SP']    = _PV(pv + ':WfmLabel-SP',    connection_timeout=self._connection_timeout)
+        self._pvs['WfmLabel-RB']    = _PV(pv + ':WfmLabel-RB',    connection_timeout=self._connection_timeout)
+
+        self._pvs['PwrState-Sel'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['PwrState-Sts'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['OpMode-Sel'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['OpMode-Sts'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['Current-SP'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['Current-RB'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['CurrentRef-Mon'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['Current-Mon'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['WfmIndex-Mon'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['WfmLabels-Mon'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['WfmLabel-SP'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['WfmLabel-RB'].wait_for_connection(timeout=self._connection_timeout)
+
+        # add callback
+        uuid = _uuid.uuid4()
+        self._pvs['PwrState-Sel'].add_callback(callback=self._mycallback, index=uuid)
+        self._pvs['PwrState-Sts'].add_callback(callback=self._mycallback, index=uuid)
+        self._pvs['OpMode-Sel'].add_callback(callback=self._mycallback, index=uuid)
+        self._pvs['OpMode-Sts'].add_callback(callback=self._mycallback, index=uuid)
+        self._pvs['Current-SP'].add_callback(callback=self._mycallback, index=uuid)
+        self._pvs['Current-RB'].add_callback(callback=self._mycallback, index=uuid)
+        self._pvs['CurrentRef-Mon'].add_callback(callback=self._mycallback, index=uuid)
+        self._pvs['Current-Mon'].add_callback(callback=self._mycallback, index=uuid)
+        self._pvs['WfmIndex-Mon'].add_callback(callback=self._mycallback, index=uuid)
+        self._pvs['WfmLabels-Mon'].add_callback(callback=self._mycallback, index=uuid)
+        self._pvs['WfmLabel-SP'].add_callback(callback=self._mycallback, index=uuid)
+        self._pvs['WfmLabel-RB'].add_callback(callback=self._mycallback, index=uuid)
+
+    @property
+    def wfmindex(self):
+        return self._pvs['WfmIndex-Mon'].get(timeout=self._connection_timeout)
+
+    @property
+    def wfmlabels(self):
+        return self._pvs['WfmLabels-Mon'].get(timeout=self._connection_timeout)
+
+    @property
+    def wfmlabel(self):
+        return self._pvs['WfmLabel-RB'].get(timeout=self._connection_timeout)
+
+    @wfmlabel.setter
+    def wfmlabel(self, value):
+        if value != self.wfmlabel:
+            self._pvs['WfmLabel-SP'].value = bytes(value,'utf-8')
+            self._update_state(wfmlabel=True)
+
+    @property
+    def pwrstate(self):
+        return self._pvs['PwrState-Sts'].get(timeout=self._connection_timeout)
+
+    @property
+    def opmode(self):
+        return self._pvs['OpMode-Sts'].get(timeout=self._connection_timeout)
+
+    @property
+    def current_sp(self):
+        return self._pvs['Current-SP'].get(timeout=self._connection_timeout)
+
+    def _check_pending_waveform_writes(self):
+        pass
+
+    def _update_ramping_state(self):
+        return _time.time()
+
+    def _update_current_ref(self, value):
+        pass
+
+    def _mycallback(self, pvname, value, **kwargs):
+        if self._callback is None:
+            return
+        else:
+            self._callback(pvname=pvname, value=value, **kwargs)
+
+class ControllerEpics2(Controller):
 
     def __init__(self, ps_name,
                        connection_timeout=_connection_timeout,
@@ -506,6 +622,7 @@ class ControllerEpics(Controller):
     @property
     def current_load(self):
         return self._pvs['Current-Mon'].get(timeout=self._connection_timeout)
+
 
 # class ControllerEpics(Controller):
 #
