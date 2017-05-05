@@ -37,7 +37,7 @@ class TimingSimulation(_device_models.CallBack):
         self.uuid = _uuid.uuid4()
         self.evg = _device_models.EVGIOC(rf_frequency,
                                          callbacks={self.uuid:self._callback},
-                                         prefix = prefix + EVG_PREFIX  )
+                                         prefix = prefix + self.EVG_PREFIX  )
         self.evrs = dict()
         for dev in self.EVRs:
             pref = prefix + dev + ':'
