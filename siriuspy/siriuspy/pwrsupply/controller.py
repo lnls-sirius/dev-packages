@@ -1,30 +1,40 @@
 
-from siriuspy.csdevice.enumtypes import EnumTypes as _et
-import random as _random
 import time as _time
 import uuid as _uuid
 import math as _math
+import copy as _copy
+import random as _random
+from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.util import get_timestamp as _get_timestamp
 from .waveform import PSWaveForm as _PSWaveForm
-from siriuspy.epics import SiriusPV as _SiriusPV
 from abc import abstractmethod as _abstractmethod
-from abc import abstractproperty as _abstractproperty
-import copy as _copy
+from abc import ABCMeta as _ABCMeta
 
 from epics import PV as _PV
 
+_connection_timeout = 0.05 # [seconds]
 
-_connection_timeout = 0.05 # [s]
-_controller_wfmlabels         = ('Waveform1','Waveform2','Waveform3','Waveform4','Waveform5','Waveform6')
-_controller_trigger_timeout   = 20 # [s]
+_controller_wfmlabels         = ('Waveform1', # These are the waveform slot labels
+                                 'Waveform2', # with which waveforms stored in
+                                 'Waveform3', # non-volatile memory may be selected
+                                 'Waveform4', # with the WfmLoad-Sel PV.
+                                 'Waveform5',
+                                 'Waveform6')
 
-class Controller:
+_controller_trigger_timeout   = 20 # [seconds]
 
-    def __init__(self, current_min=None,     # mininum current setpoint value
-                       current_max=None,     # maximum current setpoint value
-                       callback=None):
-        self._current_min = current_min
-        self._current_max = current_max
+
+class Controller(object):
+
+    """Base controller class that implements class interface.
+
+        This class contains a number of pure virtual methods that should be
+    implemented in sub classes. It also implements general methods that
+    manipulate class object properties."""
+
+    __metaclass__ = _ABCMeta
+
+    def __init__(self, callback=None):
         self._callback = callback
 
     def __str__(self):
@@ -58,8 +68,103 @@ class Controller:
 
         return st
 
+    # --- class interface ---
+
+    @property
+    def pwrstate(self):
+        return self._get_pwrstate()
+
+    @pwrstate.setter
+    def pwrstate(self, value):
+        self._set_pwrstate(value)
+
+    @property
+    def opmode(self):
+        return self._get_opmode()
+
+    @opmode.setter
+    def opmode(self, value):
+        self._set_opmode(value)
+
+    @property
+    def current_min(self):
+        return self._get_current_min()
+
+    @current_min.setter
+    def current_min(self, value):
+        if value is None or self.current_max is None or value <= self.current_max:
+            self._set_current_min(value)
+        else:
+            raise ValueError('Attribution of current_min > current_max!')
+
+    @property
+    def current_max(self):
+        return self._get_current_max()
+
+    @current_max.setter
+    def current_max(self, value):
+        if value is None or self.current_min is None or value >= self.current_min:
+            self._set_current_max(value)
+        else:
+            raise ValueError('Attribution of current_max < current_min!')
+
+    @property
+    def current_sp(self):
+        return self._get_current_sp()
+
+    @current_sp.setter
+    def current_sp(self, value):
+        self._set_current_sp(value)
+
+    @property
+    def callback(self):
+        return self._callback
+
+    @callback.setter
+    def callback(self, value):
+        if callable(value):
+            self._callback = value
+
     def process(self):
         pass
+
+
+    # --- pure virtual methods ---
+
+    @_abstractmethod
+    def _get_pwrstate(self):
+        pass
+
+    @_abstractmethod
+    def _set_pwrstate(self, value):
+        pass
+
+    @_abstractmethod
+    def _get_opmode(self):
+        pass
+
+    @_abstractmethod
+    def _set_opmode(self, value):
+        pass
+
+    @_abstractmethod
+    def _get_current_min(self):
+        pass
+
+    @_abstractmethod
+    def _set_current_min(self, value):
+        pass
+
+    @_abstractmethod
+    def _get_current_sp(self):
+        pass
+
+    @_abstractmethod
+    def _set_current_sp(self, value):
+        pass
+
+
+    # --- private methods ---
 
     def _check_current_ref_limits(self, value):
         value = value if self.current_min is None else max(value,self.current_min)
@@ -69,70 +174,134 @@ class Controller:
 
 class ControllerSim(Controller):
 
-    def __init__(self, current_std=0.0,
+    def __init__(self, current_min=None,
+                       current_max=None,
+                       current_std=0.0,
                        **kwargs):
 
         super().__init__(**kwargs)
         now = _time.time()
-        self._current_std = current_std
-        self._pwrstate = _et.idx.Off
-        self._opmode = _et.idx.SlowRef
-        self._current_sp = 0.0
-        self._current_ref = self._current_sp
-        self._current_load = self._current_ref
-        self._timestamp_pwrstate = now # last time pwrstate was changed
-        self._timestamp_opmode   = now # last time opmode was changed
-        self._timestamp_trigger  = now # last time trigger received
+        self.current_min = current_min
+        self.current_max = current_max
+        self._current_std = current_std        # standard dev of error added to output current
+        self._pwrstate    = _et.idx.Off        # power state
+        self._opmode      = _et.idx.SlowRef    # operation mode state
+        self._current_sp   = 0.0               # init SP value
+        self._current_ref  = self._current_sp  # reference current of DSP
+        self._current_load = self._current_ref # current value supplied to magnets
+        self._timestamp_pwrstate = now         # last time pwrstate was changed
+        self._timestamp_opmode   = now         # last time opmode was changed
+        self._timestamp_trigger  = now         # last time trigger received
+        self._abort = 0                        # abort command counter
         self._cmd_abort_issued = False
         self._cmd_reset_issued = False
         self._ramping_mode     = False
-        self._pending_wfmdata = False  # pending wfm slot number
-        self._pending_wfmload = False # epnding wfm slot number
-        self._pending_abort   = False
-        self._init_waveforms()
+        self._pending_wfmdata  = False          # pending wfm slot number
+        self._pending_wfmload  = False          # pending wfm slot number
+        self._init_waveforms()                  # initialize waveform data
 
-    def _init_waveforms(self):
-        self._wfmindex = 0
-        self._wfmsave = 0
-        self._wfmslot = 0
-        self._wfmlabels = []
-        for i in range(len(_controller_wfmlabels)):
-            wfm = self._load_waveform_from_slot(i)
-            self._wfmlabels.append(wfm.label)
-            if i == self._wfmslot:
-                self._waveform = wfm
-                self._wfmdata_in_use = [datum for datum in wfm.data]
+    def _get_pwrstate(self):
+        return self._pwrstate
 
-    def _load_waveform_from_slot(self, slot):
-        fname = _controller_wfmlabels[slot]
-        try:
-            return _PSWaveForm(filename=fname+'.txt')
-        except FileNotFoundError:
-            wfm = _PSWaveForm.wfm_constant(label=fname)
-            wfm.save_to_file(filename=fname+'.txt')
-            return wfm
+    def _set_pwrstate(self, value):
+        if value not in _et.values('OffOnTyp'): return
+        if value != self.pwrstate:
+            self._timestamp_pwrstate = _time.time()
+            self._pwrstate = value
+            self._mycallback(pvname='pwrstate')
+            self._update_state(pwrstate=True)
 
-    def _load_waveform_from_label(self, label):
-        if label in self._wfmlabels:
-            slot = self._wfmlabels.index(label)
-            return slot, self._load_waveform_from_slot(slot)
-        else:
-            return None
+    def _get_opmode(self):
+        return self._opmode
 
-    def _save_waveform_to_slot(self, slot):
-        fname = _controller_wfmlabels[slot]
-        try:
-            self._waveform.save_to_file(filename=fname+'.txt')
-        except PermissionError:
-            raise Exception('Could not write file "' + fname+'.txt' + '"!')
+    def _set_opmode(self, value):
+        if value not in _et.values('PSOpModeTyp'): return
+        if value != self.opmode:
+            self._timestamp_opmode = _time.time()
+            previous_opmode = self.opmode
+            self._opmode = value
+            self._mycallback(pvname='opmode')
+            self._update_state(opmode=previous_opmode)
 
-    @property
-    def callback(self):
-        return self._callback
+    def _get_current_min(self):
+        return None if not hasattr(self, '_current_min') else self._current_min
 
-    @callback.setter
-    def callback(self, value):
-        self._callback = value
+    def _set_current_min(self, value):
+        self._current_min = value
+
+    def _get_current_max(self):
+        return None if not hasattr(self, '_current_max') else self._current_max
+
+    def _set_current_max(self, value):
+        self._current_max = value
+
+    def _get_current_sp(self):
+        return self._current_sp
+
+    def _set_current_sp(self, value):
+        value = self._check_current_ref_limits(value)
+        if value != self.current_sp:
+            self._current_sp = value
+            self._mycallback(pvname='current_sp')
+            self._update_state(current_sp=True)
+
+
+
+    # @property
+    # def pwrstate(self):
+    #     return self._pwrstate
+    #
+    # @pwrstate.setter
+    # def pwrstate(self, value):
+    #     if value not in _et.values('OffOnTyp'): return
+    #     if value != self._pwrstate:
+    #         self._timestamp_pwrstate = _time.time()
+    #         self._pwrstate = value
+    #         self._mycallback(pvname='pwrstate')
+    #         self._update_state(pwrstate=True)
+
+    # @property
+    # def opmode(self):
+    #     return self._opmode
+    #
+    # @opmode.setter
+    # def opmode(self, value):
+    #     if value not in _et.values('PSOpModeTyp'): return
+    #     if value != self._opmode:
+    #         self._timestamp_opmode = _time.time()
+    #         previous_opmode = self._opmode
+    #         self._opmode = value
+    #         self._mycallback(pvname='opmode')
+    #         self._update_state(opmode=previous_opmode)
+
+    # @property
+    # def callback(self):
+    #     return self._callback
+    #
+    # @callback.setter
+    # def callback(self, value):
+    #     self._callback = value
+
+    # @property
+    # def current_sp(self):
+    #     return self._current_sp
+    #
+    # @current_sp.setter
+    # def current_sp(self, value):
+    #     value = self._check_current_ref_limits(value)
+    #     if value != self._current_sp:
+    #         self._current_sp = value
+    #         self._mycallback(pvname='current_sp')
+    #         self._update_state(current_sp=True)
+
+
+    # @property
+    # def current_min(self):
+    #     return self._current_min
+    #
+    # @property
+    # def current_max(self):
+    #     return self._current_max
 
     @property
     def wfmindex(self):
@@ -192,52 +361,9 @@ class ControllerSim(Controller):
         self._mycallback(pvname='wfmsave')
         self._update_state(wfmsave=True)
 
-    @property
-    def pwrstate(self):
-        return self._pwrstate
 
-    @pwrstate.setter
-    def pwrstate(self, value):
-        if value not in _et.values('OffOnTyp'): return
-        if value != self._pwrstate:
-            self._timestamp_pwrstate = _time.time()
-            self._pwrstate = value
-            self._mycallback(pvname='pwrstate')
-            self._update_state(pwrstate=True)
 
-    @property
-    def opmode(self):
-        return self._opmode
 
-    @opmode.setter
-    def opmode(self, value):
-        if value not in _et.values('PSOpModeTyp'): return
-        if value != self._opmode:
-            self._timestamp_opmode = _time.time()
-            previous_opmode = self._opmode
-            self._opmode = value
-            self._mycallback(pvname='opmode')
-            self._update_state(opmode=previous_opmode)
-
-    @property
-    def current_min(self):
-        return self._current_min
-
-    @property
-    def current_max(self):
-        return self._current_max
-
-    @property
-    def current_sp(self):
-        return self._current_sp
-
-    @current_sp.setter
-    def current_sp(self, value):
-        value = self._check_current_ref_limits(value)
-        if value != self._current_sp:
-            self._current_sp = value
-            self._mycallback(pvname='current_sp')
-            self._update_state(current_sp=True)
 
     @property
     def current_ref(self):
@@ -377,6 +503,42 @@ class ControllerSim(Controller):
             self._callback(pvname='wfmsave', value=self._wfmsave)
         else:
             raise NotImplementedError
+
+    def _init_waveforms(self):
+        self._wfmindex  = 0   # updated index selecting value of current in waveform in use
+        self._wfmsave   = 0   # waveform save command counter
+        self._wfmslot   = 0   # selected waveform slot index
+        self._wfmlabels = []  # updated array with waveform labels
+        for i in range(len(_controller_wfmlabels)):
+            wfm = self._load_waveform_from_slot(i)
+            self._wfmlabels.append(wfm.label)
+            if i == self._wfmslot:
+                self._waveform = wfm
+                self._wfmdata_in_use = [datum for datum in wfm.data]
+
+    def _load_waveform_from_slot(self, slot):
+        fname = _controller_wfmlabels[slot]
+        try:
+            return _PSWaveForm(filename=fname+'.txt')
+        except FileNotFoundError:
+            wfm = _PSWaveForm.wfm_constant(label=fname)
+            wfm.save_to_file(filename=fname+'.txt')
+            return wfm
+
+    def _load_waveform_from_label(self, label):
+        if label in self._wfmlabels:
+            slot = self._wfmlabels.index(label)
+            return slot, self._load_waveform_from_slot(slot)
+        else:
+            return None
+
+    def _save_waveform_to_slot(self, slot):
+        fname = _controller_wfmlabels[slot]
+        try:
+            self._waveform.save_to_file(filename=fname+'.txt')
+        except PermissionError:
+            raise Exception('Could not write file "' + fname+'.txt' + '"!')
+
 
 class ControllerEpics(ControllerSim):
 
@@ -524,6 +686,7 @@ class ControllerEpics(ControllerSim):
             return
         else:
             self._callback(pvname=pvname, value=value, **kwargs)
+
 
 # class ControllerEpics(Controller):
 #
