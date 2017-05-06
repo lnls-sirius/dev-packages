@@ -61,18 +61,24 @@ class _LL_TrigEVRMF:
         self._LLPROP_2_PVRB = self._get_LLPROP_2_PVRB()
         self._PVRB_2_LLPROP = { val:key for key,val in self._LLPROP_2_PVRB.items() }
         self.callback = callback
-        self.prefix = channel
+        self.prefix = _PVName(channel).dev_name + ':'
         self._hl2ll = initial_hl2ll
         self._pvs_sp = dict()
         self._pvs_rb = dict()
+        print('     creating PVs :')
         for prop, pv in self._LLPROP_2_PVSP.items():
-            self._pvs_sp[prop]  = _epics.PV(LL_PREFIX + self.prefix + pv,
+            pv_name = LL_PREFIX + self.prefix + pv
+            print('        '+pv_name)
+            self._pvs_sp[prop]  = _epics.PV(pv_name,
                                             callback = self._pvs_sp_callback,
                                             connection_timeout=_TIMEOUT)
         for prop, pv in self._LLPROP_2_PVRB.items():
-            self._pvs_rb[prop]  = _epics.PV(LL_PREFIX + self.prefix + pv,
+            pv_name = LL_PREFIX + self.prefix + pv
+            print('        '+pv_name)
+            self._pvs_rb[prop]  = _epics.PV(pv_name,
                                             callback = self._pvs_rb_callback,
                                             connection_timeout=_TIMEOUT)
+        print('\n')
 
     def _get_num_int(self,num):
         return self._NUM_OPT + num
@@ -315,17 +321,24 @@ class LL_Event:
         self._PVRB_2_LLPROP = { val:key for key,val in self._LLPROP_2_PVRB.items() }
         self.callback = callback
         self.prefix = EVG + ':' + Events.LL_TMP.format(code)
+        print('   Connecting to Low Level Object '+self.prefix)
         self._hl2ll = initial_hl2ll
         self._pvs_sp = dict()
         self._pvs_rb = dict()
+        print('     creating PVs :')
         for prop, pv in self._LLPROP_2_PVSP.items():
-            self._pvs_sp[prop]  = _epics.PV(LL_PREFIX + self.prefix + pv,
+            pv_name = LL_PREFIX + self.prefix + pv
+            print('        '+pv_name)
+            self._pvs_sp[prop]  = _epics.PV(pv_name,
                                             callback = self._pvs_sp_callback,
                                             connection_timeout=_TIMEOUT)
         for prop, pv in self._LLPROP_2_PVRB.items():
-            self._pvs_rb[prop]  = _epics.PV(LL_PREFIX + self.prefix + pv,
+            pv_name = LL_PREFIX + self.prefix + pv
+            print('        '+pv_name)
+            self._pvs_rb[prop]  = _epics.PV(pv_name,
                                             callback = self._pvs_rb_callback,
                                             connection_timeout=_TIMEOUT)
+        print('\n')
 
     def _get_LLPROP_2_PVSP(self):
         map_ = {
