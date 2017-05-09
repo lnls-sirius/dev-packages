@@ -9,10 +9,187 @@ from .controller import ControllerSim as _ControllerSim
 from .controller import ControllerEpics as _ControllerEpics
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 
-_default_error_std = 0.0
+
+class PowerSupply(object):
+
+    def __init__(self, name_ps,
+                       controller=None,
+                       callback=None,
+                       current_std=0.0,
+                       enum_keys=False):
+
+        self._name_ps = name_ps
+        self._name_pstype = _conv_psname_2_pstype(self._name_ps)
+        self._callback = callback
+        self._enum_keys = enum_keys
+        self._database = _csdevice.get_database(self._name_pstype)
+        self._ctrlmode_mon = _et.idx.Remote
+        self._setpoint_limits = _sp_limits(self._name_pstype)
+        self._controller = controller
+        self._controller_init(current_std)
+
+    def _controller_init(self, current_std):
+        if self._controller is None:
+            lims = self._setpoint_limits # set controller setpoint limits according to PS database
+            self._controller = _ControllerSim(current_min = self._setpoint_limits['DRVL'],
+                                              current_max = self._setpoint_limits['DRVH'],
+                                              callback = self._mycallback,
+                                              current_std = current_std)
+            self._pwrstate_sel = self._database['PwrState-Sel']['value']
+            self._opmode_sel   = self._database['OpMode-Sel']['value']
+            self._current_sp   = self._database['Current-SP']['value']
+            self._wfmdata_sp   = self._database['WfmData-SP']['value']
+            self._controller.pwrstate   = self._pwrstate_sel
+            self._controller.opmode     = self._opmode_sel
+            self._controller.current_sp = self._current_sp
+            self._controller.wfmdata_sp = self._wfmdata_sp
+        else:
+            self._pwrstate_sel = self._controller.pwrstate
+            self._opmode_sel   = self._controller.opmode
+            self._current_sp   = self._controller.current_sp
+            self._wfmdata_sp   = self._controller.wfmdata
+
+        self.callback = self._mycallback
+        self._controller.update_state()
+
+    @property
+    def ps_name(self):
+        return self._ps_name
+
+    @property
+    def pstype_name(self):
+        return self._pstype_name
+
+    @property
+    def callback(self):
+        return self._callback
+
+    @callback.setter
+    def callback(self, value):
+        if callable(value):
+            self._callback = value
+        else:
+            self._callback = None
+
+    @property
+    def setpoint_limits(self):
+        return _copy.deepcopy(self._setpoint_limits)
+
+    @property
+    def database(self):
+        """Return a PV database whose keys correspond to PS properties."""
+        db = _copy.deepcopy(self._database)
+        db['CtrlMode-Mon']['value'] = self.ctrlmode_mon
+        db['PwrState-Sel']['value'] = self.pwrstate_sel
+        db['PwrState-Sts']['value'] = self.pwrstate_sts
+        db['OpMode-Sel']['value'] = self.opmode_sel
+        db['OpMode-Sts']['value'] = self.opmode_sts
+        db['Current-SP']['value'] = self.current_sp
+        db['Current-RB']['value'] = self.current_rb
+        db['CurrentRef-Mon']['value'] = self.currentref_mon
+        db['Current-Mon']['value'] = self.current_mon
+        return db
+
+    @property
+    def ctrlmode_mon(self):
+        return self._eget('RmtLocTyp', self._ctrlmode_mon)
+
+    def set_ctrlmode(self, value):
+        value = self._eget('RmtLocTyp', value, enum_keys=False)
+        if value is not None:
+            self._ctrlmode_mon = value
+
+    @property
+    def pwrstate_sel(self):
+        return self._pwrstate_sel
+
+    @pwrstate_sel.setter
+    def pwrstate_sel(self, value):
+        if self._ctrlmode_mon != _et.idx.Remote: return
+        value = self._eget('OffOnTyp', value, enum_keys=False)
+        if value is not None and value != self.pwrstate_sts:
+            self._pwrstate_sel = value
+            self._controller.pwrstate = value
+
+    @property
+    def pwrstate_sts(self):
+        return self._eget('OffOnTyp', self._controller.pwrstate)
+
+    @property
+    def opmode_sel(self):
+        return self._eget('PSOpModeTyp', self._opmode_sel)
+
+    @opmode_sel.setter
+    def opmode_sel(self, value):
+        if self._ctrlmode_mon != _et.idx.Remote: return
+        value = self._eget('PSOpModeTyp', value, enum_keys=False)
+        if value is not None and value != self.opmode_sts:
+            self._opmode_sel = value
+            self._controller.opmode = value
+
+    @property
+    def opmode_sts(self):
+        return self._eget('PSOpModeTyp',self._controller.pwrstate)
+
+    @property
+    def current_sp(self):
+        return self._current_sp
+
+    @current_sp.setter
+    def current_sp(self, value):
+        if self._ctrlmode_mon != _et.idx.Remote: return
+        if value not in (self.current_sp, self.current_rb):
+            self._current_sp = value
+            self._controller.current_sp = value
+
+    @property
+    def current_rb(self):
+        return self._controller.current_sp
+
+    @property
+    def currentref_mon(self):
+        return self._controller.current_ref
+
+    @property
+    def current_mon(self):
+        return self._controller.current_load
+
+    @property
+    def wfmdata_sp(self):
+        return [datum for datum in self._wfmdata_sp]
+
+    @property
+    def wfmdata_rb(self):
+        return self._controller.wfmdata
+
+    @wfmdata_sp.setter
+    def wfmdata_sp(self, value):
+        if self._ctrlmode_mon != _et.idx.Remote: return
+        if value != self.wfmdata_sp:
+            self._wfmdata_sp = [datum for datum in value]
+            self._controller.wfmdata = value
+
+    def _eget(self,typ,value,enum_keys=None):
+        enum_keys = self._enum_keys if enum_keys is None else enum_keys
+        try:
+            if enum_keys:
+                if isinstance(value, str):
+                    return value
+                else:
+                    return _et.key(typ, value)
+            else:
+                if isinstance(value, str):
+                    return _et.get_idx(typ, value)
+                else:
+                    return value
+        except:
+            return None
+
+    def _mycallback(self, pvname, value, **kwargs):
+        pass
 
 
-class PowerSupply:
+class PowerSupply2:
     """Magnet Power Supply model
 
     This class implements a model of the basic power supply of magnets.

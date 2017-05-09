@@ -1,17 +1,18 @@
 # In ths future this class can implement an interface with the service that will
 # store machine ramps and get data from it.
 
-_default_nr_pts = 2000
+from siriuspy.csdevice.pwrsupply import default_wfmsize as _default_wfmsize
+
 
 class PSWaveForm:
 
     @staticmethod
-    def wfm_constant(label, nr_points=_default_nr_pts, value=0.0):
+    def wfm_constant(label, nr_points=_default_wfmsize, value=0.0):
         return PSWaveForm(label, list([value for i in range(nr_points)]))
 
     @staticmethod
-    def wfm_linear_ramp(label, nr_points, period, max_value=0.0):
-        return PSWaveForm(label, list([max_value*i/(nr_points-1.0) for i in range(nr_points)]))
+    def wfm_linear_ramp(label, max_value=0.0):
+        return PSWaveForm(label, list([max_value*i/(_default_wfmsize-1.0) for i in range(_default_wfmsize)]))
 
     def __init__(self, label=None, data=None, filename=None):
         if filename is not None:
@@ -31,7 +32,7 @@ class PSWaveForm:
     @property
     def nr_points(self):
         return len(self._data)
-        
+
     @property
     def data(self):
         return self._data

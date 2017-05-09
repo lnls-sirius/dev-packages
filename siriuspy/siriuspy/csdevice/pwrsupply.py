@@ -1,6 +1,16 @@
 import copy as _copy
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.pwrsupply.psdata import get_setpoint_limits as _ps_sp_lims
+#from siriuspy.pwrsupply.controller import ControllerSim as _ControllerSim
+
+
+default_wfmsize   = 2000
+default_wfmlabels = ('Waveform1', # These are the waveform slot labels
+                     'Waveform2', # with which waveforms stored in
+                     'Waveform3', # non-volatile memory may be selected
+                     'Waveform4', # with the WfmLoad-Sel PV.
+                     'Waveform5',
+                     'Waveform6')
 
 
 class PSClasses:
@@ -34,12 +44,20 @@ class PSClasses:
         return database
 
     class _Base:
-        _Reset_Cmd    = {'name':'Reset-Cmd',    'type':'int',   'value':0}
-        _CtrlMode_Mon = {'name':'CtrlMode-Mon', 'type':'enum',  'enums':_et.enums('RmtLocTyp'),   'value':_et.get_idx('RmtLocTyp', 'Remote')}
-        _PwrState_Sel = {'name':'PwrState-Sel', 'type':'enum',  'enums':_et.enums('OffOnTyp'),    'value':_et.get_idx('OffOnTyp','On')}
-        _PwrState_Sts = {'name':'PwrState-Sts', 'type':'enum',  'enums':_et.enums('OffOnTyp'),    'value':_et.get_idx('OffOnTyp','On')}
-        _OpMode_Sel   = {'name':'OpMode-Sel',   'type':'enum',  'enums':_et.enums('PSOpModeTyp'), 'value':_et.get_idx('PSOpModeTyp','SlowRef')}
-        _OpMode_Sts   = {'name':'OpMode-Sts',   'type':'enum',  'enums':_et.enums('PSOpModeTyp'), 'value':_et.get_idx('PSOpModeTyp','SlowRef')}
+
+        _Reset_Cmd      = {'name':'Reset-Cmd',      'type':'int',    'value':0}
+        _CtrlMode_Mon   = {'name':'CtrlMode-Mon',   'type':'enum',   'enums':_et.enums('RmtLocTyp'),   'value':_et.idx.Remote}
+        _PwrState_Sel   = {'name':'PwrState-Sel',   'type':'enum',   'enums':_et.enums('OffOnTyp'),    'value':_et.idx.On}
+        _PwrState_Sts   = {'name':'PwrState-Sts',   'type':'enum',   'enums':_et.enums('OffOnTyp'),    'value':_et.idx.On}
+        _OpMode_Sel     = {'name':'OpMode-Sel',     'type':'enum',   'enums':_et.enums('PSOpModeTyp'), 'value':_et.idx.SlowRef}
+        _OpMode_Sts     = {'name':'OpMode-Sts',     'type':'enum',   'enums':_et.enums('PSOpModeTyp'), 'value':_et.idx.SlowRef}
+        _WfmIndex_Mon   = {'name':'WfmIndex-Mon',   'type':'int',    'value':0}
+        _WfmLabels_Mon  = {'name':'WfmLabels-Mon',  'type':'string', 'count':len(default_wfmlabels), 'value':default_wfmlabels}
+        _WfmLabel_SP    = {'name':'WfmLabel-SP',    'type':'string', 'count':1, 'value':default_wfmlabels[0]}
+        _WfmLabel_RB    = {'name':'WfmLabel-RB',    'type':'string', 'count':1, 'value':default_wfmlabels[0]}
+        _WfmData_SP     = {'name':'WfmData-SP',     'type':'float',  'count':default_wfmsize, 'value':[datum for datum in range(default_wfmsize)], 'unit':'A'}
+        _WfmData_RB     = {'name':'WfmData-RB',     'type':'float',  'count':default_wfmsize, 'value':[datum for datum in range(default_wfmsize)], 'unit':'A'}
+
         @staticmethod
         def get_database(): return PSClasses._getdatabase(__class__)
 
@@ -47,20 +65,18 @@ class PSClasses:
         """SI dipole B1B2 power supply"""
 
         name = 'si-dipole-b1b2-fam'
-        _Current_RB = {'name':'Current-RB','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
-                            'lolo'  :_ps_sp_lims(name, 'LOLO'),
-                            'lo'    :_ps_sp_lims(name, 'LOW'),
-                            'lolim' :_ps_sp_lims(name, 'LOPR'),
-                            'hilim' :_ps_sp_lims(name, 'HOPR'),
-                            'hi'    :_ps_sp_lims(name, 'HIGH'),
-                            'hihi'  :_ps_sp_lims(name, 'HIHI')}
-        _Current_SP = {'name':'Current-SP','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
-                            'lolo'  :_ps_sp_lims(name, 'LOLO'),
-                            'lo'    :_ps_sp_lims(name, 'LOW'),
-                            'lolim' :_ps_sp_lims(name, 'LOPR'),
-                            'hilim' :_ps_sp_lims(name, 'HOPR'),
-                            'hi'    :_ps_sp_lims(name, 'HIGH'),
-                            'hihi'  :_ps_sp_lims(name, 'HIHI')}
+        _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
+               'lolo'  :_ps_sp_lims(name, 'LOLO'),
+               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'lolim' :_ps_sp_lims(name, 'LOPR'),
+               'hilim' :_ps_sp_lims(name, 'HOPR'),
+               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'hihi'  :_ps_sp_lims(name, 'HIHI')}
+        _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
+        _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
+        _CurrentRef_Mon = _copy.deepcopy(_db); _CurrentRef_Mon.update({'name':'CurrentRef-Mon'})
+        _Current_Mon    = _copy.deepcopy(_db); _Current_Mon.update({'name':'Current-Mon'})
+        del(_db)
 
         @staticmethod
         def get_database(): return PSClasses._getdatabase(__class__)
@@ -69,20 +85,18 @@ class PSClasses:
         """SI quadrupole Q14 power supply"""
 
         name = 'si-quadrupole-q14-fam'
-        _Current_RB = {'name':'Current-RB','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
-                            'lolo'  :_ps_sp_lims(name, 'LOLO'),
-                            'lo'    :_ps_sp_lims(name, 'LOW'),
-                            'lolim' :_ps_sp_lims(name, 'LOPR'),
-                            'hilim' :_ps_sp_lims(name, 'HOPR'),
-                            'hi'    :_ps_sp_lims(name, 'HIGH'),
-                            'hihi'  :_ps_sp_lims(name, 'HIHI')}
-        _Current_SP = {'name':'Current-SP','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
-                            'lolo'  :_ps_sp_lims(name, 'LOLO'),
-                            'lo'    :_ps_sp_lims(name, 'LOW'),
-                            'lolim' :_ps_sp_lims(name, 'LOPR'),
-                            'hilim' :_ps_sp_lims(name, 'HOPR'),
-                            'hi'    :_ps_sp_lims(name, 'HIGH'),
-                            'hihi'  :_ps_sp_lims(name, 'HIHI')}
+        _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
+               'lolo'  :_ps_sp_lims(name, 'LOLO'),
+               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'lolim' :_ps_sp_lims(name, 'LOPR'),
+               'hilim' :_ps_sp_lims(name, 'HOPR'),
+               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'hihi'  :_ps_sp_lims(name, 'HIHI')}
+        _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
+        _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
+        _CurrentRef_Mon = _copy.deepcopy(_db); _CurrentRef_Mon.update({'name':'CurrentRef-Mon'})
+        _Current_Mon    = _copy.deepcopy(_db); _Current_Mon.update({'name':'Current-Mon'})
+        del(_db)
 
         @staticmethod
         def get_database(): return PSClasses._getdatabase(__class__)
@@ -91,20 +105,19 @@ class PSClasses:
         """SI quadrupole Q20 power supply"""
 
         name = 'si-quadrupole-q20-fam'
-        _Current_RB = {'name':'Current-RB','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
-                            'lolo'  :_ps_sp_lims(name, 'LOLO'),
-                            'lo'    :_ps_sp_lims(name, 'LOW'),
-                            'lolim' :_ps_sp_lims(name, 'LOPR'),
-                            'hilim' :_ps_sp_lims(name, 'HOPR'),
-                            'hi'    :_ps_sp_lims(name, 'HIGH'),
-                            'hihi'  :_ps_sp_lims(name, 'HIHI')}
-        _Current_SP = {'name':'Current-SP','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
-                            'lolo'  :_ps_sp_lims(name, 'LOLO'),
-                            'lo'    :_ps_sp_lims(name, 'LOW'),
-                            'lolim' :_ps_sp_lims(name, 'LOPR'),
-                            'hilim' :_ps_sp_lims(name, 'HOPR'),
-                            'hi'    :_ps_sp_lims(name, 'HIGH'),
-                            'hihi'  :_ps_sp_lims(name, 'HIHI')}
+        _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
+               'lolo'  :_ps_sp_lims(name, 'LOLO'),
+               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'lolim' :_ps_sp_lims(name, 'LOPR'),
+               'hilim' :_ps_sp_lims(name, 'HOPR'),
+               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'hihi'  :_ps_sp_lims(name, 'HIHI')}
+        _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
+        _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
+        _CurrentRef_Mon = _copy.deepcopy(_db); _CurrentRef_Mon.update({'name':'CurrentRef-Mon'})
+        _Current_Mon    = _copy.deepcopy(_db); _Current_Mon.update({'name':'Current-Mon'})
+        del(_db)
+
         @staticmethod
         def get_database(): return PSClasses._getdatabase(__class__)
 
@@ -112,20 +125,19 @@ class PSClasses:
         """SI quadrupole Q30 power supply"""
 
         name = 'si-quadrupole-q30-fam'
-        _Current_RB = {'name':'Current-RB','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
-                            'lolo'  :_ps_sp_lims(name, 'LOLO'),
-                            'lo'    :_ps_sp_lims(name, 'LOW'),
-                            'lolim' :_ps_sp_lims(name, 'LOPR'),
-                            'hilim' :_ps_sp_lims(name, 'HOPR'),
-                            'hi'    :_ps_sp_lims(name, 'HIGH'),
-                            'hihi'  :_ps_sp_lims(name, 'HIHI')}
-        _Current_SP = {'name':'Current-SP','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
-                            'lolo'  :_ps_sp_lims(name, 'LOLO'),
-                            'lo'    :_ps_sp_lims(name, 'LOW'),
-                            'lolim' :_ps_sp_lims(name, 'LOPR'),
-                            'hilim' :_ps_sp_lims(name, 'HOPR'),
-                            'hi'    :_ps_sp_lims(name, 'HIGH'),
-                            'hihi'  :_ps_sp_lims(name, 'HIHI')}
+        _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
+               'lolo'  :_ps_sp_lims(name, 'LOLO'),
+               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'lolim' :_ps_sp_lims(name, 'LOPR'),
+               'hilim' :_ps_sp_lims(name, 'HOPR'),
+               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'hihi'  :_ps_sp_lims(name, 'HIHI')}
+        _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
+        _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
+        _CurrentRef_Mon = _copy.deepcopy(_db); _CurrentRef_Mon.update({'name':'CurrentRef-Mon'})
+        _Current_Mon    = _copy.deepcopy(_db); _Current_Mon.update({'name':'Current-Mon'})
+        del(_db)
+
         @staticmethod
         def get_database(): return PSClasses._getdatabase(__class__)
 
@@ -133,77 +145,76 @@ class PSClasses:
         """SI quadrupole Q14 trim power supply"""
 
         name = 'si-quadrupole-q14-trim'
-        _Current_RB = {'name':'Current-RB','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
-                            'lolo'  :_ps_sp_lims(name, 'LOLO'),
-                            'lo'    :_ps_sp_lims(name, 'LOW'),
-                            'lolim' :_ps_sp_lims(name, 'LOPR'),
-                            'hilim' :_ps_sp_lims(name, 'HOPR'),
-                            'hi'    :_ps_sp_lims(name, 'HIGH'),
-                            'hihi'  :_ps_sp_lims(name, 'HIHI')}
-        _Current_SP = {'name':'Current-SP','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
-                            'lolo'  :_ps_sp_lims(name, 'LOLO'),
-                            'lo'    :_ps_sp_lims(name, 'LOW'),
-                            'lolim' :_ps_sp_lims(name, 'LOPR'),
-                            'hilim' :_ps_sp_lims(name, 'HOPR'),
-                            'hi'    :_ps_sp_lims(name, 'HIGH'),
-                            'hihi'  :_ps_sp_lims(name, 'HIHI')}
+        _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
+               'lolo'  :_ps_sp_lims(name, 'LOLO'),
+               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'lolim' :_ps_sp_lims(name, 'LOPR'),
+               'hilim' :_ps_sp_lims(name, 'HOPR'),
+               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'hihi'  :_ps_sp_lims(name, 'HIHI')}
+        _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
+        _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
+        _CurrentRef_Mon = _copy.deepcopy(_db); _CurrentRef_Mon.update({'name':'CurrentRef-Mon'})
+        _Current_Mon    = _copy.deepcopy(_db); _Current_Mon.update({'name':'Current-Mon'})
+        del(_db)
+
+        @staticmethod
+        def get_database(): return PSClasses._getdatabase(__class__)
 
     class si_quadrupole_q20_trim(_Base):
         """SI quadrupole Q20 trim power supply"""
 
         name = 'si-quadrupole-q20-trim'
-        _Current_RB = {'name':'Current-RB','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
-                            'lolo'  :_ps_sp_lims(name, 'LOLO'),
-                            'lo'    :_ps_sp_lims(name, 'LOW'),
-                            'lolim' :_ps_sp_lims(name, 'LOPR'),
-                            'hilim' :_ps_sp_lims(name, 'HOPR'),
-                            'hi'    :_ps_sp_lims(name, 'HIGH'),
-                            'hihi'  :_ps_sp_lims(name, 'HIHI')}
-        _Current_SP = {'name':'Current-SP','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
-                            'lolo'  :_ps_sp_lims(name, 'LOLO'),
-                            'lo'    :_ps_sp_lims(name, 'LOW'),
-                            'lolim' :_ps_sp_lims(name, 'LOPR'),
-                            'hilim' :_ps_sp_lims(name, 'HOPR'),
-                            'hi'    :_ps_sp_lims(name, 'HIGH'),
-                            'hihi'  :_ps_sp_lims(name, 'HIHI')}
+        _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
+               'lolo'  :_ps_sp_lims(name, 'LOLO'),
+               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'lolim' :_ps_sp_lims(name, 'LOPR'),
+               'hilim' :_ps_sp_lims(name, 'HOPR'),
+               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'hihi'  :_ps_sp_lims(name, 'HIHI')}
+        _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
+        _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
+        _CurrentRef_Mon = _copy.deepcopy(_db); _CurrentRef_Mon.update({'name':'CurrentRef-Mon'})
+        _Current_Mon    = _copy.deepcopy(_db); _Current_Mon.update({'name':'Current-Mon'})
+
+        @staticmethod
+        def get_database(): return PSClasses._getdatabase(__class__)
 
     class si_quadrupole_q30_trim(_Base):
         """SI quadrupole Q30 trim power supply"""
 
         name = 'si-quadrupole-q30-trim'
-        _Current_RB = {'name':'Current-RB','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
-                            'lolo'  :_ps_sp_lims(name, 'LOLO'),
-                            'lo'    :_ps_sp_lims(name, 'LOW'),
-                            'lolim' :_ps_sp_lims(name, 'LOPR'),
-                            'hilim' :_ps_sp_lims(name, 'HOPR'),
-                            'hi'    :_ps_sp_lims(name, 'HIGH'),
-                            'hihi'  :_ps_sp_lims(name, 'HIHI')}
-        _Current_SP = {'name':'Current-SP','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
-                            'lolo'  :_ps_sp_lims(name, 'LOLO'),
-                            'lo'    :_ps_sp_lims(name, 'LOW'),
-                            'lolim' :_ps_sp_lims(name, 'LOPR'),
-                            'hilim' :_ps_sp_lims(name, 'HOPR'),
-                            'hi'    :_ps_sp_lims(name, 'HIGH'),
-                            'hihi'  :_ps_sp_lims(name, 'HIHI')}
+        _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
+               'lolo'  :_ps_sp_lims(name, 'LOLO'),
+               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'lolim' :_ps_sp_lims(name, 'LOPR'),
+               'hilim' :_ps_sp_lims(name, 'HOPR'),
+               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'hihi'  :_ps_sp_lims(name, 'HIHI')}
+        _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
+        _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
+        _CurrentRef_Mon = _copy.deepcopy(_db); _CurrentRef_Mon.update({'name':'CurrentRef-Mon'})
+        _Current_Mon    = _copy.deepcopy(_db); _Current_Mon.update({'name':'Current-Mon'})
+
+        @staticmethod
+        def get_database(): return PSClasses._getdatabase(__class__)
 
     class si_sextupole_s15_fam(_Base):
         """SI sextupole S15 power supply for horizontal correctors"""
 
         name = 'si-sextupole-s15-ch'
-        _Current_RB = {'name':'Current-RB','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
-                            'lolo'  :_ps_sp_lims(name, 'LOLO'),
-                            'lo'    :_ps_sp_lims(name, 'LOW'),
-                            'lolim' :_ps_sp_lims(name, 'LOPR'),
-                            'hilim' :_ps_sp_lims(name, 'HOPR'),
-                            'hi'    :_ps_sp_lims(name, 'HIGH'),
-                            'hihi'  :_ps_sp_lims(name, 'HIHI')}
-        _Current_SP = {'name':'Current-SP','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
-                            'lolo'  :_ps_sp_lims(name, 'LOLO'),
-                            'lo'    :_ps_sp_lims(name, 'LOW'),
-                            'lolim' :_ps_sp_lims(name, 'LOPR'),
-                            'hilim' :_ps_sp_lims(name, 'HOPR'),
-                            'hi'    :_ps_sp_lims(name, 'HIGH'),
-                            'hihi'  :_ps_sp_lims(name, 'HIHI')}
+        _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
+               'lolo'  :_ps_sp_lims(name, 'LOLO'),
+               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'lolim' :_ps_sp_lims(name, 'LOPR'),
+               'hilim' :_ps_sp_lims(name, 'HOPR'),
+               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'hihi'  :_ps_sp_lims(name, 'HIHI')}
+        _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
+        _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
+        _CurrentRef_Mon = _copy.deepcopy(_db); _CurrentRef_Mon.update({'name':'CurrentRef-Mon'})
+        _Current_Mon    = _copy.deepcopy(_db); _Current_Mon.update({'name':'Current-Mon'})
+
         @staticmethod
         def get_database(): return PSClasses._getdatabase(__class__)
 
@@ -211,20 +222,18 @@ class PSClasses:
         """SI sextupole S15 power supply for horizontal correctors"""
 
         name = 'si-sextupole-s15-ch'
-        _Current_RB = {'name':'Current-RB','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
-                            'lolo'  :_ps_sp_lims(name, 'LOLO'),
-                            'lo'    :_ps_sp_lims(name, 'LOW'),
-                            'lolim' :_ps_sp_lims(name, 'LOPR'),
-                            'hilim' :_ps_sp_lims(name, 'HOPR'),
-                            'hi'    :_ps_sp_lims(name, 'HIGH'),
-                            'hihi'  :_ps_sp_lims(name, 'HIHI')}
-        _Current_SP = {'name':'Current-SP','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
-                            'lolo'  :_ps_sp_lims(name, 'LOLO'),
-                            'lo'    :_ps_sp_lims(name, 'LOW'),
-                            'lolim' :_ps_sp_lims(name, 'LOPR'),
-                            'hilim' :_ps_sp_lims(name, 'HOPR'),
-                            'hi'    :_ps_sp_lims(name, 'HIGH'),
-                            'hihi'  :_ps_sp_lims(name, 'HIHI')}
+        _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
+               'lolo'  :_ps_sp_lims(name, 'LOLO'),
+               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'lolim' :_ps_sp_lims(name, 'LOPR'),
+               'hilim' :_ps_sp_lims(name, 'HOPR'),
+               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'hihi'  :_ps_sp_lims(name, 'HIHI')}
+        _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
+        _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
+        _CurrentRef_Mon = _copy.deepcopy(_db); _CurrentRef_Mon.update({'name':'CurrentRef-Mon'})
+        _Current_Mon    = _copy.deepcopy(_db); _Current_Mon.update({'name':'Current-Mon'})
+
         @staticmethod
         def get_database(): return PSClasses._getdatabase(__class__)
 
@@ -232,20 +241,18 @@ class PSClasses:
         """BO quadrupole QD power supply"""
 
         name = 'bo-quadrupole-qd-fam'
-        _Current_RB = {'name':'Current-RB','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
-                            'lolo'  :_ps_sp_lims(name, 'LOLO'),
-                            'lo'    :_ps_sp_lims(name, 'LOW'),
-                            'lolim' :_ps_sp_lims(name, 'LOPR'),
-                            'hilim' :_ps_sp_lims(name, 'HOPR'),
-                            'hi'    :_ps_sp_lims(name, 'HIGH'),
-                            'hihi'  :_ps_sp_lims(name, 'HIHI')}
-        _Current_SP = {'name':'Current-SP','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
-                            'lolo'  :_ps_sp_lims(name, 'LOLO'),
-                            'lo'    :_ps_sp_lims(name, 'LOW'),
-                            'lolim' :_ps_sp_lims(name, 'LOPR'),
-                            'hilim' :_ps_sp_lims(name, 'HOPR'),
-                            'hi'    :_ps_sp_lims(name, 'HIGH'),
-                            'hihi'  :_ps_sp_lims(name, 'HIHI')}
+        _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
+               'lolo'  :_ps_sp_lims(name, 'LOLO'),
+               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'lolim' :_ps_sp_lims(name, 'LOPR'),
+               'hilim' :_ps_sp_lims(name, 'HOPR'),
+               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'hihi'  :_ps_sp_lims(name, 'HIHI')}
+        _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
+        _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
+        _CurrentRef_Mon = _copy.deepcopy(_db); _CurrentRef_Mon.update({'name':'CurrentRef-Mon'})
+        _Current_Mon    = _copy.deepcopy(_db); _Current_Mon.update({'name':'Current-Mon'})
+
         @staticmethod
         def get_database(): return PSClasses._getdatabase(__class__)
 
@@ -253,20 +260,18 @@ class PSClasses:
         """BO quadrupole QF power supply"""
 
         name = 'bo-quadrupole-qf-fam'
-        _Current_RB = {'name':'Current-RB','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
-                            'lolo'  :_ps_sp_lims(name, 'LOLO'),
-                            'lo'    :_ps_sp_lims(name, 'LOW'),
-                            'lolim' :_ps_sp_lims(name, 'LOPR'),
-                            'hilim' :_ps_sp_lims(name, 'HOPR'),
-                            'hi'    :_ps_sp_lims(name, 'HIGH'),
-                            'hihi'  :_ps_sp_lims(name, 'HIHI')}
-        _Current_SP = {'name':'Current-SP','type':'float', 'value':0.0, 'prec':4, 'unit':'A',
-                            'lolo'  :_ps_sp_lims(name, 'LOLO'),
-                            'lo'    :_ps_sp_lims(name, 'LOW'),
-                            'lolim' :_ps_sp_lims(name, 'LOPR'),
-                            'hilim' :_ps_sp_lims(name, 'HOPR'),
-                            'hi'    :_ps_sp_lims(name, 'HIGH'),
-                            'hihi'  :_ps_sp_lims(name, 'HIHI')}
+        _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
+               'lolo'  :_ps_sp_lims(name, 'LOLO'),
+               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'lolim' :_ps_sp_lims(name, 'LOPR'),
+               'hilim' :_ps_sp_lims(name, 'HOPR'),
+               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'hihi'  :_ps_sp_lims(name, 'HIHI')}
+        _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
+        _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
+        _CurrentRef_Mon = _copy.deepcopy(_db); _CurrentRef_Mon.update({'name':'CurrentRef-Mon'})
+        _Current_Mon    = _copy.deepcopy(_db); _Current_Mon.update({'name':'Current-Mon'})
+
         @staticmethod
         def get_database(): return PSClasses._getdatabase(__class__)
 
