@@ -55,8 +55,11 @@ class PSClasses:
         _WfmLabels_Mon  = {'name':'WfmLabels-Mon',  'type':'string', 'count':len(default_wfmlabels), 'value':default_wfmlabels}
         _WfmLabel_SP    = {'name':'WfmLabel-SP',    'type':'string', 'count':1, 'value':default_wfmlabels[0]}
         _WfmLabel_RB    = {'name':'WfmLabel-RB',    'type':'string', 'count':1, 'value':default_wfmlabels[0]}
+        _WfmLoad_Sel    = {'name':'WfmLoad-Sel',    'type':'enum',   'enums':default_wfmlabels,    'value':0}
+        _WfmLoad_Sts    = {'name':'WfmLoad-Sts',    'type':'enum',   'enums':default_wfmlabels,    'value':0}
         _WfmData_SP     = {'name':'WfmData-SP',     'type':'float',  'count':default_wfmsize, 'value':[datum for datum in range(default_wfmsize)], 'unit':'A'}
         _WfmData_RB     = {'name':'WfmData-RB',     'type':'float',  'count':default_wfmsize, 'value':[datum for datum in range(default_wfmsize)], 'unit':'A'}
+        _WfmSave_Cmd    = {'name':'WfmSave-Cmd',    'type':'int',    'value':0}
 
         @staticmethod
         def get_database(): return PSClasses._getdatabase(__class__)

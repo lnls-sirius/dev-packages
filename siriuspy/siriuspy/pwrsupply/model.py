@@ -1,6 +1,7 @@
 
 import copy as _copy
 import uuid as _uuid
+import numpy as _np
 from .psdata import conv_psname_2_pstype as _conv_psname_2_pstype
 from .psdata import get_setpoint_limits as _sp_limits
 from .psdata import get_polarity as _get_polarity
@@ -8,6 +9,7 @@ import siriuspy.csdevice as _csdevice
 from .controller import ControllerSim as _ControllerSim
 from .controller import ControllerEpics as _ControllerEpics
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
+from siriuspy.csdevice.pwrsupply import default_wfmlabels as _default_wfmlabels
 
 
 class PowerSupply(object):
@@ -38,15 +40,20 @@ class PowerSupply(object):
             self._pwrstate_sel = self._database['PwrState-Sel']['value']
             self._opmode_sel   = self._database['OpMode-Sel']['value']
             self._current_sp   = self._database['Current-SP']['value']
+            self._wfmlabel_sp  = self._database['WfmLabel-SP']['value']
+            self._wfmload_sel  = self._database['Wfmload-Sel']['value']
             self._wfmdata_sp   = self._database['WfmData-SP']['value']
             self._controller.pwrstate   = self._pwrstate_sel
             self._controller.opmode     = self._opmode_sel
             self._controller.current_sp = self._current_sp
+            self._controller.wfmload    = self._wfmload_sel
             self._controller.wfmdata_sp = self._wfmdata_sp
         else:
             self._pwrstate_sel = self._controller.pwrstate
             self._opmode_sel   = self._controller.opmode
             self._current_sp   = self._controller.current_sp
+            self._wfmlabel_sp  = self._controller.wfmlabel
+            self._wfmload_sel  = self._controller.wfmload
             self._wfmdata_sp   = self._controller.wfmdata
 
         self.callback = self._mycallback
@@ -79,15 +86,24 @@ class PowerSupply(object):
     def database(self):
         """Return a PV database whose keys correspond to PS properties."""
         db = _copy.deepcopy(self._database)
-        db['CtrlMode-Mon']['value'] = self.ctrlmode_mon
-        db['PwrState-Sel']['value'] = self.pwrstate_sel
-        db['PwrState-Sts']['value'] = self.pwrstate_sts
-        db['OpMode-Sel']['value'] = self.opmode_sel
-        db['OpMode-Sts']['value'] = self.opmode_sts
-        db['Current-SP']['value'] = self.current_sp
-        db['Current-RB']['value'] = self.current_rb
+        value = self.ctrlmode_mon; db['CtrlMode-Mon']['value'] = _et.enums.index('RmtLocTyp',value) if self._enum_keys else value
+        value = self.pwrstate_sel; db['PwrState-Sel']['value'] = _et.enums.index('OffOnTyp', value) if self._enum_keys else value
+        value = self.pwrstate_sts; db['PwrState-Sts']['value'] = _et.enums.index('OffOnTyp', value) if self._enum_keys else value
+        value = self.opmode_sel;   db['OpMode-Sel']['value'] = _et.enums.index('PSOpModeTyp', value) if self._enum_keys else value
+        value = self.opmode_sts;   db['OpMode-Sts']['value'] = _et.enums.index('PSOpModeTyp', value) if self._enum_keys else value
+        value = self.wfmload_sel;  db['WfmLoad-Sel']['value'] = _default_wfmlabels.index(value) if self._enum_keys else value
+        value = self.wfmload_sts;  db['WfmLoad-Sts']['value'] = _default_wfmlabels.index(value) if self._enum_keys else value
+        db['WfmIndex-Mon']['value']   = self.wfmindex_mon
+        db['WfmLabels-Mon']['value']  = self.wfmlabels_mon
+        db['WfmLabel-SP']['value']    = self.wfmlabel_sp
+        db['WfmLabel-RB']['value']    = self.wfmlabel_rb
+        db['WfmData-SP']['value']     = self.wfmdata_sp
+        db['WfmData-RB']['value']     = self.wfmdata_rb
+        db['WfmSave-Cmd']['value']    = self.wfmsave_cmd
+        db['Current-SP']['value']     = self.current_sp
+        db['Current-RB']['value']     = self.current_rb
         db['CurrentRef-Mon']['value'] = self.currentref_mon
-        db['Current-Mon']['value'] = self.current_mon
+        db['Current-Mon']['value']    = self.current_mon
         return db
 
     @property
@@ -155,20 +171,74 @@ class PowerSupply(object):
         return self._controller.current_load
 
     @property
+    def wfmindex_mon(self):
+        return self._controller.wfmindex
+
+    @property
+    def wfmlabels_mon(self):
+        return self._controller.wfmlabels
+
+    @property
+    def wfmlabel_sp(self):
+        return self._wfmlabel_sp
+
+    @property
+    def wfmlabel_rb(self):
+        return self._controller.wfmlabel
+
+    @wfmlabel_sp.setter
+    def wfmlabel_sp(self, value):
+        if self._ctrlmode_mon != _et.idx.Remote: return
+        if value != self.wfmlabel_rb:
+            self._wfmlabel_sp = value
+            self._controller.wfmlabel = value
+
+    @property
     def wfmdata_sp(self):
-        return [datum for datum in self._wfmdata_sp]
+        return _np.array(self._wfmdata_sp)
 
     @property
     def wfmdata_rb(self):
-        return self._controller.wfmdata
+        return _np.array(self._controller.wfmdata)
 
     @wfmdata_sp.setter
     def wfmdata_sp(self, value):
         if self._ctrlmode_mon != _et.idx.Remote: return
-        if value != self.wfmdata_sp:
-            self._wfmdata_sp = [datum for datum in value]
+        if (value != self.wfmdata_rb).any():
+            self._wfmdata_sp = _np.array(value)
             self._controller.wfmdata = value
 
+    @property
+    def wfmload_sel(self):
+        return self._wfmload_sel
+        #slot = self._controller.wfmload
+        #labels = self._controller.wfmlabels
+        #return labels[slot]
+
+    @property
+    def wfmload_sts(self):
+        return self._controller.wfmload
+
+    @wfmload_sel.setter
+    def wfmload_sel(self, value):
+        if self._ctrlmode_mon != _et.idx.Remote: return
+        slot = _default_wfmlabels.index(value) if self._enum_keys else value
+        self._wfmload_sel = slot
+        self._controller.wfmload = slot
+
+    @property
+    def wfmsave_cmd(self):
+        return self._controller.wfmsave
+
+    @wfmsave_cmd.setter
+    def wfmsave_cmd(self, value):
+        if self._ctrlmode_mon != _et.idx.Remote: return
+        self._controller.wfmsave = value
+
+    @property
+    def wfmramping_mon(self):
+        return self._controller.wfmramping
+        
     def _eget(self,typ,value,enum_keys=None):
         enum_keys = self._enum_keys if enum_keys is None else enum_keys
         try:
