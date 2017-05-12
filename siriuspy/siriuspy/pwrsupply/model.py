@@ -156,7 +156,7 @@ class PowerSupply(PowerSupplyLinac):
                                               current_max = self._setpoint_limits['DRVH'],
                                               callback = self._mycallback,
                                               current_std = current_std)
-            print(self._name_ps)
+            #print(self._name_ps)
             self._pwrstate_sel = self._database['PwrState-Sel']['value']
             self._opmode_sel   = self._database['OpMode-Sel']['value']
             self._current_sp   = self._database['Current-SP']['value']
@@ -225,7 +225,7 @@ class PowerSupply(PowerSupplyLinac):
     @property
     def currentref_mon(self):
         return self._controller.current_ref
-        
+
     @property
     def wfmindex_mon(self):
         return self._controller.wfmindex

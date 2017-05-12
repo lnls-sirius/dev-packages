@@ -200,10 +200,6 @@ class Controller(metaclass=_ABCMeta):
             self._update_CycGen(**kwargs)
         else:
             raise Exception('Invalid controller opmode')
-        self.process()
-
-    def process(self):
-        pass
 
     # --- pure virtual methods ---
 
@@ -301,19 +297,25 @@ class Controller(metaclass=_ABCMeta):
 
     # --- private methods ---
 
+    def _base_update_current_ref(self, value):
+        if self.pwrstate == _et.idx.Off:
+            self._update_current_ref(0.0)
+        else:
+            self._update_current_ref(value)
+
     def _check_current_ref_limits(self, value):
         value = value if self.current_min is None else max(value,self.current_min)
         value = value if self.current_max is None else min(value,self.current_max)
         return float(value)
 
     def _update_SlowRef(self, **kwargs):
-        self._update_current_ref(self.current_sp)
+        self._base_update_current_ref(self.current_sp)
 
     def _update_SyncRef(self, **kwargs):
         if 'trigger_signal' in kwargs:
-            self._update_current_ref(self.current_sp)
+            self._base_update_current_ref(self.current_sp)
         else:
-            self._update_current_ref(self.current_ref)
+            self._base_update_current_ref(self.current_ref)
 
     def _update_FastRef(self, **kwargs):
         pass
@@ -330,7 +332,7 @@ class Controller(metaclass=_ABCMeta):
                 self._wfmindex = (self._wfmindex + 1) % len(self._wfmdata_in_use)
         else:
             scan_value = self._current_ref
-        self._update_current_ref(scan_value)
+        self._base_update_current_ref(scan_value)
 
     def _update_MigMultWfm(self, **kwargs):
         pass
@@ -430,7 +432,7 @@ class ControllerSim(Controller):
         return self._waveform.label
 
     def _set_wfmlabel(self, value):
-        if value != self.waveform.label:
+        if value != self._waveform.label:
             self._waveform.label = value
             self._wfmlabels[self._wfmslot] = value
             self._mycallback(pvname='wfmlabel')
@@ -505,8 +507,8 @@ class ControllerSim(Controller):
         if value != self._current_ref:
             self._current_ref = value
             self._mycallback(pvname='current_ref')
-        if self._pwrstate == _et.idx.Off:
-            return
+        #if self._pwrstate == _et.idx.Off:
+        #    return
         value = _random.gauss(self._current_ref, self._current_std)
         if value != self._current_load:
             self._current_load = value
@@ -529,9 +531,9 @@ class ControllerSim(Controller):
         elif pvname == 'wfmload':
             self._callback(pvname='wfmload', value=self._wfmload)
         elif pvname == 'wfmdata':
-            self._callback(pvname='wfmdata', value=self._wfmdata)
+            self._callback(pvname='wfmdata', value=self._waveform.data)
         elif pvname == 'wfmlabel':
-            self._callback(pvname='wfmlabel', value=self._wfmlabel)
+            self._callback(pvname='wfmlabel', value=self._waveform.label)
         elif pvname == 'wfmsave':
             self._callback(pvname='wfmsave', value=self._wfmsave)
         else:
