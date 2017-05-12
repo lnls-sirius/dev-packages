@@ -58,4 +58,4 @@ class PSWaveForm:
         self._data = _np.array([float(datum) for datum in lines[1:]])
 
     def __ne__(self, other):
-        return self._label != other._label or self._data != other._data
+        return self._label != other._label or (self._data != other._data).any()
