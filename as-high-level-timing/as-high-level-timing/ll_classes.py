@@ -68,16 +68,18 @@ class _LL_TrigEVRMF:
         print('     creating PVs :')
         for prop, pv in self._LLPROP_2_PVSP.items():
             pv_name = LL_PREFIX + self.prefix + pv
-            print('        '+pv_name)
             self._pvs_sp[prop]  = _epics.PV(pv_name,
                                             callback = self._pvs_sp_callback,
                                             connection_timeout=_TIMEOUT)
+            print(8*' ' + '{0:45s}{1:s}connected'.format(
+                        pv_name,'' if self._pvs_sp[prop].connected else 'dis'))
         for prop, pv in self._LLPROP_2_PVRB.items():
             pv_name = LL_PREFIX + self.prefix + pv
-            print('        '+pv_name)
             self._pvs_rb[prop]  = _epics.PV(pv_name,
                                             callback = self._pvs_rb_callback,
                                             connection_timeout=_TIMEOUT)
+            print(8*' ' + '{0:45s}{1:s}connected'.format(
+                        pv_name,'' if self._pvs_sp[prop].connected else 'dis'))
         print('\n')
 
     def _get_num_int(self,num):
@@ -328,16 +330,20 @@ class LL_Event:
         print('     creating PVs :')
         for prop, pv in self._LLPROP_2_PVSP.items():
             pv_name = LL_PREFIX + self.prefix + pv
-            print('        '+pv_name)
             self._pvs_sp[prop]  = _epics.PV(pv_name,
-                                            callback = self._pvs_sp_callback,
+                                            # callback = self._pvs_sp_callback,
                                             connection_timeout=_TIMEOUT)
+            self._pvs_sp[prop].get()
+            print(8*' ' + '{0:45s}{1:s}connected'.format(
+                        pv_name,'' if self._pvs_sp[prop].connected else 'dis'))
         for prop, pv in self._LLPROP_2_PVRB.items():
             pv_name = LL_PREFIX + self.prefix + pv
-            print('        '+pv_name)
             self._pvs_rb[prop]  = _epics.PV(pv_name,
-                                            callback = self._pvs_rb_callback,
+                                            # callback = self._pvs_rb_callback,
                                             connection_timeout=_TIMEOUT)
+            self._pvs_sp[prop].get()
+            print(8*' ' + '{0:45s}{1:s}connected'.format(
+                        pv_name,'' if self._pvs_sp[prop].connected else 'dis'))
         print('\n')
 
     def _get_LLPROP_2_PVSP(self):
