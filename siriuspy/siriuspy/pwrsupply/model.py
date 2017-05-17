@@ -33,8 +33,8 @@ class PowerSupplyLinac(object):
     # --- class interface ---
 
     @property
-    def ps_name(self):
-        return self._ps_name
+    def name_ps(self):
+        return self._name_ps
 
     @property
     def pstype_name(self):
@@ -99,7 +99,8 @@ class PowerSupplyLinac(object):
     def current_mon(self):
         return self._controller.current_load
 
-    # --- classes
+    # --- class implementation ---
+
     def _get_database(self):
         """Return a PV database whose keys correspond to PS properties."""
         db = _copy.deepcopy(self._database)
@@ -111,10 +112,13 @@ class PowerSupplyLinac(object):
         return db
 
     def _set_pwrstate_sel(self, value):
+            self._pwrstate_sel = value
             self._controller.pwrstate = value
 
     def _set_current_sp(self, value):
+            self._pwrstate_sp = value
             self._controller.current_sp = value
+
 
     def _controller_init(self, current_std):
         if self._controller is None:
@@ -133,6 +137,8 @@ class PowerSupplyLinac(object):
 
         #self.callback = self._mycallback # ????
         self._controller.update_state()
+
+    # --- class private methods ---
 
     def _eget(self,typ,value,enum_keys=None):
         enum_keys = self._enum_keys if enum_keys is None else enum_keys
@@ -189,6 +195,100 @@ class PowerSupply(PowerSupplyLinac):
         self.callback = self._mycallback
         self._controller.update_state()
 
+    # --- class interface ---
+
+    @property
+    def opmode_sel(self):
+        return self._eget('PSOpModeTyp', self._opmode_sel)
+
+    @opmode_sel.setter
+    def opmode_sel(self, value):
+        if self.ctrlmode_mon != _et.idx.Remote: return
+        value = self._eget('PSOpModeTyp', value, enum_keys=False)
+        if value is not None and value != self.opmode_sts:
+            self._opmode_sel = value
+            self._set_opmode_sel(value)
+
+    @property
+    def opmode_sts(self):
+        return self._get_opmode_sts()
+
+    @property
+    def current_rb(self):
+        return self._get_current_rb()
+
+    @property
+    def currentref_mon(self):
+        return self._get_currentref_mon()
+
+    @property
+    def wfmindex_mon(self):
+        return self._get_wfmindex_mon()
+
+    @property
+    def wfmlabels_mon(self):
+        return self._get_wfmlabels_mon()
+
+    @property
+    def wfmlabel_sp(self):
+        return self._wfmlabel_sp
+
+    @property
+    def wfmlabel_rb(self):
+        return self._get_wfmlabel_rb()
+
+    @wfmlabel_sp.setter
+    def wfmlabel_sp(self, value):
+        if self.ctrlmode_mon != _et.idx.Remote: return
+        if value != self.wfmlabel_rb:
+            self._wfmlabel_sp = value
+            self._set_wfmlabel_sp(value)
+
+    @property
+    def wfmdata_sp(self):
+        return _np.array(self._wfmdata_sp)
+
+    @property
+    def wfmdata_rb(self):
+        return self._get_wfmdata_rb()
+
+    @wfmdata_sp.setter
+    def wfmdata_sp(self, value):
+        if self.ctrlmode_mon != _et.idx.Remote: return
+        if (value != self.wfmdata_rb).any():
+            self._wfmdata_sp = _np.array(value)
+            self._set_wfmdata_sp(value)
+
+    @property
+    def wfmload_sel(self):
+        return self._wfmload_sel
+
+    @property
+    def wfmload_sts(self):
+        return self._get_wfmload_sts()
+
+    @wfmload_sel.setter
+    def wfmload_sel(self, value):
+        if self.ctrlmode_mon != _et.idx.Remote: return
+        slot = _default_wfmlabels.index(value) if self._enum_keys else value
+        self._wfmload_sel = slot
+        self._set_wfmload_sel(value)
+
+    @property
+    def wfmsave_cmd(self):
+        return self._get_wfmsave_cmd()
+
+    @wfmsave_cmd.setter
+    def wfmsave_cmd(self, value):
+        if self.ctrlmode_mon != _et.idx.Remote: return
+        self._controller.wfmsave = value
+
+    @property
+    def wfmramping_mon(self):
+        return self._get_wfmramping_mon()
+
+    # --- class implementation ---
+
     def _get_database(self):
         """Return a PV database whose keys correspond to PS properties."""
         db = _copy.deepcopy(self._database)
@@ -212,163 +312,96 @@ class PowerSupply(PowerSupplyLinac):
         db['Current-Mon']['value']    = self.current_mon
         return db
 
-    @property
-    def opmode_sel(self):
-        return self._eget('PSOpModeTyp', self._opmode_sel)
-
-    @opmode_sel.setter
-    def opmode_sel(self, value):
-        if self.ctrlmode_mon != _et.idx.Remote: return
-        value = self._eget('PSOpModeTyp', value, enum_keys=False)
-        if value is not None and value != self.opmode_sts:
-            self._opmode_sel = value
-            self._set_opmode_sel(value)
-
     def _set_opmode_sel(self, value):
         self._controller.opmode = value
 
-    @property
-    def opmode_sts(self):
-        return self._get_opmode_sts()
-
     def _get_opmode_sts(self):
-        return self._eget('PSOpModeTyp',self._controller.pwrstate)
-
-    @property
-    def current_rb(self):
-        return self._get_current_rb()
+        return self._eget('PSOpModeTyp',self._controller.opmode)
 
     def _get_current_rb(self):
         return self._controller.current_sp
 
-    @property
-    def currentref_mon(self):
-        return self._get_currentref_mon()
-
     def _get_currentref_mon(self):
         return self._controller.current_ref
-
-    @property
-    def wfmindex_mon(self):
-        return self._get_wfmindex_mon()
 
     def _get_wfmindex_mon(self):
         return self._controller.wfmindex
 
-    @property
-    def wfmlabels_mon(self):
-        return self._get_wfmlabels_mon()
-
     def _get_wfmlabels_mon(self):
         return self._controller.wfmlabels
-
-    @property
-    def wfmlabel_sp(self):
-        return self._wfmlabel_sp
-
-    @property
-    def wfmlabel_rb(self):
-        return self._get_wfmlabel_rb()
 
     def _get_wfmlabel_rb(self):
         return self._controller.wfmlabel
 
-    @wfmlabel_sp.setter
-    def wfmlabel_sp(self, value):
-        if self.ctrlmode_mon != _et.idx.Remote: return
-        if value != self.wfmlabel_rb:
-            self._wfmlabel_sp = value
-            self._set_wfmlabel_sp(value)
-
     def _set_wfmlabel_sp(self, value):
         self._controller.wfmlabel = value
-
-    @property
-    def wfmdata_sp(self):
-        return _np.array(self._wfmdata_sp)
-
-    @property
-    def wfmdata_rb(self):
-        return self._get_wfmdata_rb()
 
     def _get_wfmdata_rb(self):
         return _np.array(self._controller.wfmdata)
 
-    @wfmdata_sp.setter
-    def wfmdata_sp(self, value):
-        if self.ctrlmode_mon != _et.idx.Remote: return
-        if (value != self.wfmdata_rb).any():
-            self._wfmdata_sp = _np.array(value)
-            self._set_wfmdata_sp(value)
-
     def _set_wfmdata_sp(self, value):
         self._controller.wfmdata = value
-
-    @property
-    def wfmload_sel(self):
-        return self._wfmload_sel
-
-    @property
-    def wfmload_sts(self):
-        return self._get_wfmload_sts()
 
     def _get_wfmload_sts(self):
         return self._controller.wfmload
 
-    @wfmload_sel.setter
-    def wfmload_sel(self, value):
-        if self.ctrlmode_mon != _et.idx.Remote: return
-        slot = _default_wfmlabels.index(value) if self._enum_keys else value
-        self._wfmload_sel = slot
-        self._set_wfmload_sel(value)
-
     def _set_wfmload_sel(self, value):
         self._controller.wfmload = slot
 
-    @property
-    def wfmsave_cmd(self):
-        return self._get_wfmsave_cmd()
-
     def _get_wfmsave_cmd(self):
         return self._controller.wfmsave
-
-    @wfmsave_cmd.setter
-    def wfmsave_cmd(self, value):
-        if self._ctrlmode_mon != _et.idx.Remote: return
-        self._controller.wfmsave = value
-
-    @property
-    def wfmramping_mon(self):
-        self._get_wfmramping_mon()
 
     def _get_wfmramping_mon(self):
         return self._controller.wfmramping
 
 
-class PowerSupplySync(PowerSupply):
+class PowerSupplyEpicsSync(PowerSupply):
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        # init all controllers with same state
-        self.current_sp = self._current_sp
+    def __init__(self, controllers, **kwargs):
+        self._controllers = controllers
+        super().__init__(controller=controllers[0], **kwargs)
 
     def _controller_init(self, current_std):
-        self._current_sp = []
-        self._pwrstate_sel = []
-        self._opmode_sel = []
-        for c in self._controller:
-            self._current_sp.append(c.current_sp)
-            self._pwrstate_sel.append(c.pwrstate)
-            self._opmode_sel.append(c.opmode)
-        self._current_sp = sum(self._current_sp)/len(self._current_sp) # average value
-        self._pwrstate_sel = min(self._pwrstate_sel) # min value
-        self._opmode_sel = min(self._opmode_sel) # min value
-        # update controller states
-        for c in self._controller:
-            c.current_sp = self._current_sp
+        c0 = self._controllers[0]
+        self._pwrstate_sel = c0.pwrstate
+        self._opmode_sel = c0.opmode
+        self._current_sp = c0.current_sp
+        self._wfmlabel_sp  = c0.wfmlabel
+        self._wfmload_sel  = c0.wfmload
+        self._wfmdata_sp   = c0.wfmdata
+        for c in self._controllers:
             c.pwrstate = self._pwrstate_sel
             c.opmode = self._opmode_sel
+            c.current_sp = self._current_sp
+            c.wfmlabel = self._wfmlabel_sp
+            c.wfmload = self._wfmload_sel
+            c.wfmdata = self._wfmdata_sp
             c.update_state()
+
+    def _set_opmode_sel(self, value):
+        for c in self._controllers:
+            c.opmode = value
+
+    def _set_wfmlabel_sp(self, value):
+        for c in self._controllers:
+            c.wfmlabel = value
+
+    def _set_wfmdata_sp(self, value):
+        for c in self._controllers:
+            c.wfmdata = value
+
+    def _set_wfmload_sel(self, value):
+        for c in self._controllers:
+            c.wfmload = slot
+
+    def _set_pwrstate_sel(self, value):
+        for c in self._controllers:
+            c.pwrstate = value
+
+    def _set_current_sp(self, value):
+        for c in self._controllers:
+            c.current_sp = value
+
 
 
 class PowerSupplyMAFam(PowerSupply):

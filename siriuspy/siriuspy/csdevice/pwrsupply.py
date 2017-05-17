@@ -60,6 +60,7 @@ class PSClasses:
         _WfmData_SP     = {'name':'WfmData-SP',     'type':'float',  'count':default_wfmsize, 'value':[0.0 for datum in range(default_wfmsize)], 'unit':'A'}
         _WfmData_RB     = {'name':'WfmData-RB',     'type':'float',  'count':default_wfmsize, 'value':[0.0 for datum in range(default_wfmsize)], 'unit':'A'}
         _WfmSave_Cmd    = {'name':'WfmSave-Cmd',    'type':'int',    'value':0}
+        _WfmRamping_Mon = {'name':'WfmRamping-Mon', 'type':'int',    'value':0}
 
         @staticmethod
         def get_database(): return PSClasses._getdatabase(__class__)

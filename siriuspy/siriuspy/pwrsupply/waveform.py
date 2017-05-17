@@ -46,10 +46,10 @@ class PSWaveForm:
         return self._data[index]
 
     def save_to_file(self, filename):
-        fp = open(filename, 'w')
-        print(self._label, file=fp)
-        for datum in self._data:
-            print(str(datum), file=fp)
+        with open(filename, 'w') as fp:
+            print(self._label, file=fp)
+            for datum in self._data:
+                print(str(datum), file=fp)
 
     def load_from_file(self, filename):
         with open(filename) as f:
