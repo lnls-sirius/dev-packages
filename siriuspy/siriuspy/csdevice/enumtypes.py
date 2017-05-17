@@ -8,6 +8,8 @@ class _ClassProperty(property):
 
 class EnumTypes:
 
+    # This should be constructed from CCDB server.
+    
     _types = {
         'OffOnTyp'        : ('Off', 'On'),
         'OffOnWaitTyp'    : ('Off', 'On', 'Wait'),
