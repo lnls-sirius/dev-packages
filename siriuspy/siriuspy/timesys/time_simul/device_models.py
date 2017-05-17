@@ -719,7 +719,7 @@ class EVRIOC(_BaseIOC):
     _ClassSim = _EVRSim
     _ClassTrigIOC = _EVRTriggerIOC
     _OUTTMP = 'MFO{0:d}'
-    _INTTMP = 'OPTO{0:02d}'
+    _INTTMP = 'IntTrig{0:02d}'
 
     _states = ('Dsbl','Enbl')
 
@@ -809,5 +809,5 @@ class EVEIOC(EVRIOC):
 class AFCIOC(EVRIOC):
     _ClassSim = _AFCSim
     _ClassTrigIOC = _OpticChannelIOC
-    _OUTTMP = 'LVEO{0:d}'
+    _OUTTMP = 'LVEIO{0:d}'
     _INTTMP = 'OPTO{0:02d}'

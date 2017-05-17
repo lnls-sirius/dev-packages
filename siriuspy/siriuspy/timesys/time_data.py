@@ -27,6 +27,7 @@ class Events:
     DELAY_TYPES = ('Incr','Fixed')
 
     LL_TMP   = 'Event{0:02x}'
+    LL_RGX   = _re.compile('Event([0-9a-f]{2})([a-z-\.]*)',_re.IGNORECASE)
     HL_TMP   = 'Event{0:s}'
     HL_RGX   = _re.compile('Event('+'|'.join(list(HL2LL_MAP.keys()))+ ')([a-z-\.]*)',_re.IGNORECASE)
     HL_PREF  = 'AS-Glob:TI-Event:'
