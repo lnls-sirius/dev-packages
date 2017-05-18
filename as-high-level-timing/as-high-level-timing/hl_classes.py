@@ -54,6 +54,101 @@ def get_hl_trigger_object(trig_prefix,callback,channels,events,trigger_type):
         raise Exception('High Level Trigger Class not defined for trigger type '+ty+'.')
     return cls_(trig_prefix,callback,channels,events)
 
+class HL_Event:
+    _HLPROP_2_PVSP = { # This dictionary converts the internal property name to the SP pv name
+        'delay'      : 'Delay-SP',
+        'mode'       : 'Mode-Sel',
+        'delay_type' : 'DelayType-Sel',
+        }
+    _PVSP_2_HLPROP = {  val:key for key,val in _HLPROP_2_PVSP.items()  }
+    _HLPROP_2_PVRB = {
+        'delay'      : 'Delay-RB',
+        'mode'       : 'Mode-Sts',
+        'delay_type' : 'DelayType-Sts',
+        }
+
+    def get_database(self):
+        db = dict()
+        pre = self.prefix
+        db[pre + 'Delay-SP']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'unit':'us', 'prec': 3}
+        db[pre + 'Delay-RB']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'unit':'us','prec': 3}
+        db[pre + 'Mode-Sel']      = {'type' : 'enum', 'enums':Events.MODES, 'value':1}
+        db[pre + 'Mode-Sts']      = {'type' : 'enum', 'enums':Events.MODES, 'value':1}
+        db[pre + 'DelayType-Sel'] = {'type' : 'enum', 'enums':Events.DELAY_TYPES, 'value':1}
+        db[pre + 'DelayType-Sts'] = {'type' : 'enum', 'enums':Events.DELAY_TYPES, 'value':1}
+        db[pre + 'Connections-Mon']  = {'type':'int',  'value':0}
+        return db
+
+    def __init__(self,prefix,code,callback):
+        _log.info('Event '+prefix+', code = '+str(code)+' Starting.')
+        self._RB_FUNS  = self._get_RB_FUNS()
+        self._SP_FUNS = self._get_SP_FUNS()
+        self.callback = callback
+        self.prefix = prefix
+        self.ll_code  = code
+        self._hl2ll = self._get_initial_hl2ll()
+        self._values_rb = {  key:val for key,val in self._hl2ll.items()  }
+
+    def connect(self):
+        _log.info('Event '+self.prefix+' -> connecting to LL Devices')
+        self.ll_obj_conn_sts = 0
+        self.ll_obj = LL_Event( code = self.ll_code,
+                                callback = self._pvs_values_rb,
+                                connection_callback = self._ll_on_connection,
+                                initial_hl2ll=_copy.deepcopy(self._hl2ll)
+                                )
+
+    def check(self):
+        self.ll_obj.check()
+
+    def _ll_on_connection(self,channel, status):
+        self.ll_obj_conn_sts = int(status)
+        self.callback( self.prefix + 'Connections-Mon', self._ll_trigs_conn_sts )
+
+    def _get_initial_hl2ll(self):
+        map_ = {
+            'delay'      : 0,
+            'mode'       : 0,
+            'delay_type' : 0,
+            }
+        return map_
+
+    def _get_SP_FUNS(self):
+        map_ = {
+            'delay'      : lambda x: x,
+            'mode'       : lambda x: x,
+            'delay_type' : lambda x: x,
+            }
+        return map_
+
+    def _get_RB_FUNS(self):
+        map_ = {
+            'delay'      : lambda x: x,
+            'mode'       : lambda x: x,
+            'delay_type' : lambda x: x,
+            }
+        return map_
+
+    def _pvs_values_rb(self, channel, prop, value):
+        _log.debug('Event '+self.prefix+' RB propty = {0:s}; LL Device = {1:s}; New Value = {2:s}'.format(prop,channel,str(value)))
+        self._values_rb[prop] = self._RB_FUNS[prop](value)
+        self.callback( self.prefix + self._HLPROP_2_PVRB[prop], self._values_rb[prop]  )
+
+    def set_propty(self,reason,value):
+        _log.debug('Event '+self.prefix+' set_propty receive {0:15s}; Value = {0:s}'.format(reason,str(value)))
+        pv = pv.split(self.prefix)
+        if len(pv) == 1:
+            _log.debug('Event '+self.prefix+' Not my PV.')
+            return False
+        prop = self._PVSP_2_HLPROP.get(pv[1])
+        if value == self._hl2ll[prop]:
+            _log.debug('Event '+self.prefix+' new value = old value.')
+            return True
+        self._hl2ll[prop] = self._SP_FUNS[prop](value)
+        _log.debug('Event '+self.prefix+' Sending to LL device')
+        self.ll_obj.set_propty(prop,self._hl2ll[prop])
+        return True
+
 
 class _HL_TrigBase:
     _WORKAS_ENUMS = ('Trigger', 'Clock')
@@ -140,8 +235,12 @@ class _HL_TrigBase:
             self._ll_trigs[chan] = low_lev_obj
             self._ll_trigs_conn_sts.append(0)
 
+    def check(self):
+        for obj in self._ll_trigs.values():
+            obj.check()
+
     def _ll_on_connection(self,channel,status):
-        ind = self._ll_trig_names.index(device)
+        ind = self._ll_trig_names.index(channel)
         self._ll_trigs_conn_sts[ind] = int(status)
         status = all(self._ll_trigs_conn_sts)
         self.callback( self.prefix + 'Connections-Mon', self._ll_trigs_conn_sts )
@@ -165,10 +264,10 @@ class _HL_TrigBase:
         map_ = {
             'work_as'    : lambda x: x,
             'clock'      : lambda x: x,
-            'event'      : lambda x: self._EVENTS.index(Events.LL2HL_MAP[x]),
+            'event'      : self._get_event,
             'delay'      : lambda x: x,
             'pulses'     : lambda x: x,
-            'width'      : lambda x: x * self._values_rb[y]['pulses'] * 1e-3,
+            'width'      : lambda x: x * self._hl2ll['pulses'] * 1e-3,
             'state'      : lambda x: x,
             'polarity'   : lambda x: x,
             }
@@ -184,6 +283,11 @@ class _HL_TrigBase:
         ind = self._ll_trig_names.index(channel)
         self._values_rb[prop][ind] = self._RB_FUNS[prop](value)
         self.callback( self.prefix + self._HLPROP_2_PVRB[prop], self._values_rb[prop]  )
+
+    def _get_event(self,x):
+        try:                 val = self._EVENTS.index(Events.LL2HL_MAP[x])
+        except ValueError:   val = 1000
+        finally:             return val
 
     def set_propty(self,reason,value):
         _log.debug(self.prefix+' set_propty receive {0:15s}; Value = {1:s}'.format(reason,str(value)))
@@ -263,96 +367,3 @@ class _HL_TrigPSSI(_HL_TrigBase):
 
 class _HL_TrigGeneric(_HL_TrigBase):
     _HL_PROPS = {'event','state','pulses','width','work_as','clock'}
-
-
-class HL_Event:
-    _HLPROP_2_PVSP = { # This dictionary converts the internal property name to the SP pv name
-        'delay'      : 'Delay-SP',
-        'mode'       : 'Mode-Sel',
-        'delay_type' : 'DelayType-Sel',
-        }
-    _PVSP_2_HLPROP = {  val:key for key,val in _HLPROP_2_PVSP.items()  }
-    _HLPROP_2_PVRB = {
-        'delay'      : 'Delay-RB',
-        'mode'       : 'Mode-Sts',
-        'delay_type' : 'DelayType-Sts',
-        }
-
-    def get_database(self):
-        db = dict()
-        pre = self.prefix
-        db[pre + 'Delay-SP']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'unit':'us', 'prec': 3}
-        db[pre + 'Delay-RB']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'unit':'us','prec': 3}
-        db[pre + 'Mode-Sel']      = {'type' : 'enum', 'enums':Events.MODES, 'value':1}
-        db[pre + 'Mode-Sts']      = {'type' : 'enum', 'enums':Events.MODES, 'value':1}
-        db[pre + 'DelayType-Sel'] = {'type' : 'enum', 'enums':Events.DELAY_TYPES, 'value':1}
-        db[pre + 'DelayType-Sts'] = {'type' : 'enum', 'enums':Events.DELAY_TYPES, 'value':1}
-        db[pre + 'Connections-Mon']  = {'type':'int',  'value':0}
-        return db
-
-    def __init__(self,prefix,code,callback):
-        _log.info('Event '+prefix+', code = '+str(code)+' Starting.')
-        self._RB_FUNS  = self._get_RB_FUNS()
-        self._SP_FUNS = self._get_SP_FUNS()
-        self.callback = callback
-        self.prefix = prefix
-        self.ll_code  = code
-        self._hl2ll = self._get_initial_hl2ll()
-        self._values_rb = {  key:val for key,val in self._hl2ll.items()  }
-
-    def connect(self):
-        _log.info('Event '+self.prefix+' -> connecting to LL Devices')
-        self.ll_obj_conn_sts = 0
-        self.ll_obj = LL_Event( code = self.ll_code,
-                                callback = self._pvs_values_rb,
-                                connection_callback = self._ll_on_connection,
-                                initial_hl2ll=_copy.deepcopy(self._hl2ll)
-                                )
-
-    def _ll_on_connection(self,status):
-        self.ll_obj_conn_sts = int(status)
-        self.callback( self.prefix + 'Connections-Mon', self._ll_trigs_conn_sts )
-
-    def _get_initial_hl2ll(self):
-        map_ = {
-            'delay'      : 0,
-            'mode'       : 0,
-            'delay_type' : 0,
-            }
-        return map_
-
-    def _get_SP_FUNS(self):
-        map_ = {
-            'delay'      : lambda x: x,
-            'mode'       : lambda x: x,
-            'delay_type' : lambda x: x,
-            }
-        return map_
-
-    def _get_RB_FUNS(self):
-        map_ = {
-            'delay'      : lambda x: x,
-            'mode'       : lambda x: x,
-            'delay_type' : lambda x: x,
-            }
-        return map_
-
-    def _pvs_values_rb(self, channel, prop, value):
-        _log.debug('Event '+self.prefix+' RB propty = {0:s}; LL Device = {1:s}; New Value = {2:s}'.format(prop,channel,str(value)))
-        self._values_rb[prop] = self._RB_FUNS[prop](value)
-        self.callback( self.prefix + self._HLPROP_2_PVRB[prop], self._values_rb[prop]  )
-
-    def set_propty(self,reason,value):
-        _log.debug('Event '+self.prefix+' set_propty receive {0:15s}; Value = {0:s}'.format(reason,str(value)))
-        pv = pv.split(self.prefix)
-        if len(pv) == 1:
-            _log.debug('Event '+self.prefix+' Not my PV.')
-            return False
-        prop = self._PVSP_2_HLPROP.get(pv[1])
-        if value == self._hl2ll[prop]:
-            _log.debug('Event '+self.prefix+' new value = old value.')
-            return True
-        self._hl2ll[prop] = self._SP_FUNS[prop](value)
-        _log.debug('Event '+self.prefix+' Sending to LL device')
-        self.ll_obj.set_propty(prop,self._hl2ll[prop])
-        return True

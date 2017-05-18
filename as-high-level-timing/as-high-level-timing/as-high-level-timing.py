@@ -54,7 +54,7 @@ class PCASDriver(_pcaspy.Driver):
 def run():
 
     fmt = '%(levelname)7s | %(asctime)s: %(message)s'
-    _log.basicConfig(format=fmt,datefmt='%F %T',filename=LOG_FILENAME, level=_log.DEBUG)
+    _log.basicConfig(format=fmt,datefmt='%F %T',filename=LOG_FILENAME, filemode='w', level=_log.DEBUG)
     _log.info('Starting...')
 
     # define abort function

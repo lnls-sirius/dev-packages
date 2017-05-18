@@ -16,7 +16,7 @@ from siriuspy.timesys.time_data import Connections, IOs, Events
 # 06 - be consistent in coding style (variable naming, spacings, prefixes, suffixes, etc)
 
 _TIMEOUT = 0.02
-_FORCE_EQUAL = True
+_FORCE_EQUAL = False
 
 LL_PREFIX = 'VAF-'
 
@@ -48,7 +48,7 @@ def get_ll_trigger_object(channel,callback,connection_callback,initial_hl2ll):
 class _LL_Base:
 
 
-    def __init__(self, code,  callback, connection_callback, initial_hl2ll):
+    def __init__(self, callback, connection_callback, initial_hl2ll):
         self._HLPROP_FUNS = self._get_HLPROP_FUNS()
         self._LLPROP_FUNS = self._get_LLPROP_FUNS()
         self._LLPROP_2_PVSP = self._get_LLPROP_2_PVSP()
@@ -61,12 +61,14 @@ class _LL_Base:
         self._pvs_sp = dict()
         self._pvs_rb = dict()
         self._pvs_conn_sts = dict()
+        self._pvs_sp_canput = dict()
         _log.info(self.str_for_log+': Starting.')
         _log.info(self.str_for_log+': Creating PVs.')
         for prop, pv in self._LLPROP_2_PVSP.items():
             pv_name = LL_PREFIX + self.prefix + pv
             _log.debug(self.str_for_log +' -> creating {0:s}'.format(pv))
             self._pvs_conn_sts[pv_name] = False
+            self._pvs_sp_canput[pv_name] = True
             self._pvs_sp[prop]  = _epics.PV(pv_name,
                                             callback = self._pvs_sp_callback,
                                             connection_callback = self._pvs_on_connection,
@@ -104,7 +106,17 @@ class _LL_Base:
         current = all(self._pvs_conn_sts.values())
         if current is not previous:
             _log.info(self.str_for_log+' {0:s}all PVs connected.'.format('' if current else 'NOT '))
-            self.conn_callback(current)
+            self.conn_callback(self.channel,current)
+
+    def check(self):
+        for ll_prop,pv in self._pvs_sp.items():
+            if self._pvs_conn_sts[pv.pvname] and self._pvs_sp_canput[pv.pvname]:
+                props = self._LLPROP_FUNS[ll_prop](pv.value, ty='sp')
+                for hl_prop,val in props.items():
+                    my_val = self._hl2ll[hl_prop]
+                    if my_val == val: continue
+                    _log.debug(self.str_for_log+' check; propty = {0:s} Value = {1:s} '.format(hl_prop,str(my_val)))
+                    self.set_propty(hl_prop, my_val)
 
     def _pvs_rb_callback(self,pvname,value,**kwargs):
         if value is None:
@@ -124,20 +136,29 @@ class _LL_Base:
         _log.debug(self.str_for_log+' pvs_sp_callback; PV = {0:s} New Value = {1:s} '.format(pvname,str(value)))
         if not _FORCE_EQUAL: return
         pv = _PVName(pvname)
-        props = self._LLPROP_FUNS[ self._PVSP_2_LLPROP[pv.propty] ](value)
+        props = self._LLPROP_FUNS[ self._PVSP_2_LLPROP[pv.propty] ](value, ty='sp')
         for hl_prop,val in props.items():
-            if self._hl2ll[hl_prop] != val:
-                _log.debug(self.str_for_log+' pvs_sp_callback; Forcing  propty = {0:s} Value = {1:s} '.format(hl_prop,str(val)))
-                self.set_propty(hl_prop, val)
+            my_val = self._hl2ll[hl_prop]
+            if my_val != val:
+                _log.debug(self.str_for_log+' pvs_sp_callback; Forcing  propty = {0:s} Value = {1:s} '.format(hl_prop,str(my_val)))
+                self.set_propty(hl_prop, my_val)
+
+    def _put_complete(self,pvname,**kwargs):
+        self._pvs_sp_canput[pvname] = True
+
+    def _put_on_pv(self,pv,value):
+        self._pvs_sp_canput[pv.pvname] = False
+        pv.put(value,callback=self._put_complete)
 
     def _set_simple(self,prop,value):
-        _log.debug(self.str_for_log+' Setting propty = {0:s}, value = {1:s}.'.format(prop,str(value)))
+        _log.debug(self.str_for_log+'set_simple; propty = {0:s}, value = {1:s}.'.format(prop,str(value)))
         pv = self._pvs_sp[prop]
         if not pv.connected:
-            _log.debug(self.str_for_log+' PV '+pv.pvname+' NOT connected.')
+            _log.debug(self.str_for_log+'set_simple; PV '+pv.pvname+' NOT connected.')
             return
         self._hl2ll[prop]   = value
-        pv.value = value
+        _log.debug(self.str_for_log+'set_simple; Setting PV '+pv.pvname+', value = {0:s}.'.format(str(value)))
+        self._put_on_pv(pv, value)
 
     def set_propty(self,prop,value):
         _log.debug(self.str_for_log+' set_propty receive propty = {0:s}; Value = {1:s}'.format(
@@ -149,7 +170,7 @@ class _LL_Base:
 
 
 
-class LL_Event:
+class LL_Event(_LL_Base):
 
     def __init__(self, code,  callback, connection_callback, initial_hl2ll):
         self.ll_code_string = Events.LL_TMP.format(code)
@@ -186,14 +207,14 @@ class LL_Event:
 
     def _get_LLPROP_FUNS(self):
         map_ = {
-            'delay'      : lambda x: {'delay':x},
-            'mode'       : lambda x: {'mode':x},
-            'delay_type' : lambda x: {'delay_type':x},
+            'delay'      : lambda x,ty=None: {'delay':x},
+            'mode'       : lambda x,ty=None: {'mode':x},
+            'delay_type' : lambda x,ty=None: {'delay_type':x},
             }
         return map_
 
 
-class _LL_TrigEVRMF(LL_Base):
+class _LL_TrigEVRMF(_LL_Base):
     _NUM_OPT   = 12
     _NUM_INT   = 24
     _INTTMP    = 'IntTrig{0:02d}'
@@ -215,12 +236,12 @@ class _LL_TrigEVRMF(LL_Base):
     def _get_LLPROP_2_PVSP(self):
         map_ = {
             'internal_trigger' : self._OUTLB + 'IntChan-SP',
-            'event'      : self._INTLB + 'Event-SP',
+            'event'      : self._INTLB + 'Event-Sel',
             'delay1'     : self._INTLB + 'Delay-SP',
             'delay2'     : self._OUTLB + 'Delay-SP',
             'delay3'     : self._OUTLB + 'FineDelay-SP',
-            'pulses'     : self._INTLB + 'Pulses-Sel',
-            'width'      : self._INTLB + 'Width-Sel',
+            'pulses'     : self._INTLB + 'Pulses-SP',
+            'width'      : self._INTLB + 'Width-SP',
             'state'      : self._INTLB + 'State-Sel',
             'polarity'   : self._INTLB + 'Polrty-Sel',
             }
@@ -231,12 +252,12 @@ class _LL_TrigEVRMF(LL_Base):
     def _get_LLPROP_2_PVRB(self):
         map_ = {
             'internal_trigger' : self._OUTLB + 'IntChan-RB',
-            'event'      : self._INTLB + 'Event-RB',
+            'event'      : self._INTLB + 'Event-Sts',
             'delay1'     : self._INTLB + 'Delay-RB',
             'delay2'     : self._OUTLB + 'Delay-RB',
             'delay3'     : self._OUTLB + 'FineDelay-RB',
-            'pulses'     : self._INTLB + 'Pulses-Sts',
-            'width'      : self._INTLB + 'Width-Sts',
+            'pulses'     : self._INTLB + 'Pulses-RB',
+            'width'      : self._INTLB + 'Width-RB',
             'state'      : self._INTLB + 'State-Sts',
             'polarity'   : self._INTLB + 'Polrty-Sts',
             }
@@ -274,11 +295,10 @@ class _LL_TrigEVRMF(LL_Base):
         return map_
 
     def _get_delay(self, value, ty = None):
-        _log.debug(self.channel+' Getting Delay.')
         pvs = self._pvs_sp if ty else self._pvs_rb
         delay  =  pvs['delay1'].get(timeout=_TIMEOUT) or 0.0
         delay +=  pvs['delay2'].get(timeout=_TIMEOUT) or 0.0
-        delay += (pvs['delay3'].get(timeout=_TIMEOUT)  or 0.0)*1e-3  # nanoseconds
+        delay += (pvs['delay3'].get(timeout=_TIMEOUT)  or 0.0)*1e-6  # picoseconds
         return {'delay':delay}
 
     def _set_delay(self,value):
@@ -300,9 +320,9 @@ class _LL_TrigEVRMF(LL_Base):
         if pv1.connected and pv2.connected and pv3.connected:
             _log.debug(self.channel+' Delay1 = {}, Delay2 = {}, Delay3 = {}.'.format(
                                         str(delay1),str(delay2),str(delay3)))
-            pv1.value = delay1
-            pv2.value = delay2
-            pv3.value = delay3
+            self._put_on_pv(pv1, delay1)
+            self._put_on_pv(pv2, delay2)
+            self._put_on_pv(pv3, delay3)
 
     def _get_int_channel(self, value, ty = None):
         pvs = self._pvs_sp if ty else self._pvs_rb
@@ -329,7 +349,7 @@ class _LL_TrigEVRMF(LL_Base):
         else:
             clock_num = self._hl2ll['clock']
             val = self._NUM_INT + clock_num
-        int_trig.value = val
+        self._put_on_pv(int_trig, val)
 
 
 class _LL_TrigEVROPT(_LL_TrigEVRMF):
@@ -341,10 +361,10 @@ class _LL_TrigEVROPT(_LL_TrigEVRMF):
     def _get_num_int(self,num):
         return num
 
-    def _get_delay(self, value, ty = None):
-        pvs = self._pvs_sp if ty else self._pvs_rb
-        delay  = pvs['delay1'].get(timeout=_TIMEOUT) or 0.0
-        return {'delay':delay}
+    def _get_LLPROP_FUNS(self):
+        map_ = super()._get_LLPROP_FUNS()
+        map_['delay1'] = lambda x,ty=None: {'delay':x}
+        return map_
 
     def _set_delay(self,value):
         _log.debug(self.channel+' Setting propty = {0:s}, value = {1:s}.'.format('delay',str(value)))
@@ -355,7 +375,7 @@ class _LL_TrigEVROPT(_LL_TrigEVRMF):
         delay1  = (value // D1_STEP) * D1_STEP
         _log.debug(self.channel+' Delay1 = {}.'.format(str(delay1)))
         self._hl2ll['delay'] = delay1
-        pv.value = delay1
+        self._put_on_pv(pv, delay1)
 
 
 class _LL_TrigEVELVE(_LL_TrigEVRMF):
@@ -390,13 +410,9 @@ class _LL_TrigAFCLVE(_LL_TrigEVRMF):
 
     def _get_LLPROP_FUNS(self):
         map_ = super()._get_LLPROP_FUNS()
-        map_['event'] = self._get_channel_to_listen
+        map_['event']  = self._get_channel_to_listen
+        map_['delay1'] = lambda x,ty=None: {'delay':x}
         return map_
-
-    def _get_delay(self, value, ty = None):
-        pvs = self._pvs_sp if ty else self._pvs_rb
-        delay  = pvs['delay1'].get(timeout=_TIMEOUT) or 0.0
-        return {'delay':delay}
 
     def _set_delay(self,value):
         _log.debug(self.channel+' Setting propty = {0:s}, value = {1:s}.'.format('delay',str(value)))
@@ -407,7 +423,7 @@ class _LL_TrigAFCLVE(_LL_TrigEVRMF):
         delay1  = (value // D1_STEP) * D1_STEP
         _log.debug(self.channel+' Delay1 = {}.'.format(str(delay1)))
         self._hl2ll['delay'] = delay1
-        pv.value = delay1
+        self._put_on_pv(pv, delay1)
 
     def _get_channel_to_listen(self, value, ty = None):
         if value is None: return
@@ -433,8 +449,7 @@ class _LL_TrigAFCLVE(_LL_TrigEVRMF):
         else:
             clock_num = self._hl2ll['clock']
             val = self._NUM_INT + clock_num
-
-        pv.value = val
+        self._put_on_pv(pv, val)
 
 
 class _LL_TrigAFCOPT(_LL_TrigAFCLVE):

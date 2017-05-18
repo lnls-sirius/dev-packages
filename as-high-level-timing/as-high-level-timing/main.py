@@ -97,11 +97,24 @@ class App:
         self._driver = driver
 
     def process(self,interval):
-        _time.sleep(interval)
+        t0 = _time.time()
+        # _log.debug('App: Executing check.')
+        self.check()
+        tf = _time.time()
+        dt = (tf-t0)
+        if dt > 0.2: _log.debug('App: check took {0:f}ms.'.format(dt*1000))
+        dt = interval - dt
+        if dt>0: _time.sleep(dt)
 
     def read(self,reason):
         # _log.debug("PV {0:s} read from App.".format(reason))
         return None # Driver will read from database
+
+    def check(self):
+        for ev in self._events.values():
+            ev.check()
+        for tr in self._triggers.values():
+            tr.check()
 
     def write(self,reason,value):
         parts = _PVName(reason)
