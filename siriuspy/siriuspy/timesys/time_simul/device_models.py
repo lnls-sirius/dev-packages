@@ -606,8 +606,8 @@ class _EVRTriggerIOC(_BaseIOC):
         'fine_delay_rb':    'FineDelay-RB',
         'delay_sp':         'Delay-SP',
         'delay_rb':         'Delay-RB',
-        'optic_channel_sp': 'OptCh-Sel',
-        'optic_channel_rb': 'OptCh-Sts',
+        'optic_channel_sp': 'IntChan-Sel',
+        'optic_channel_rb': 'IntChan-Sts',
         }
 
     @classmethod
@@ -617,8 +617,8 @@ class _EVRTriggerIOC(_BaseIOC):
         db[prefix + 'FineDelay-RB']   = {'type' : 'float', 'unit':'ns', 'value': 0.0, 'prec': 0}
         db[prefix + 'Delay-SP']       = {'type' : 'float', 'unit':'us', 'value': 0.0, 'prec': 0}
         db[prefix + 'Delay-RB']       = {'type' : 'float', 'unit':'us', 'value': 0.0, 'prec': 0}
-        db[prefix + 'OptCh-Sel']      = {'type' : 'int', 'value':0}
-        db[prefix + 'OptCh-Sts']      = {'type' : 'int', 'value':0}
+        db[prefix + 'IntChan-Sel']      = {'type' : 'int', 'value':0}
+        db[prefix + 'IntChan-Sts']      = {'type' : 'int', 'value':0}
         return db
 
     def __init__(self, base_freq, callbacks = None, prefix = None, controller = None):
