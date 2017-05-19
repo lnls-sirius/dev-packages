@@ -7,6 +7,7 @@ import random as _random
 import numpy as _np
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.csdevice.pwrsupply import default_wfmlabels as _default_wfmlabels
+from siriuspy.csdevice.pwrsupply import default_intlklabels as _default_intlklabels
 from siriuspy.util import get_timestamp as _get_timestamp
 from .waveform import PSWaveForm as _PSWaveForm
 from abc import abstractmethod as _abstractmethod
@@ -53,7 +54,7 @@ class Controller(metaclass=_ABCMeta):
         if value not in _et.values('PSOpModeTyp'): return
         if value != self.opmode:
             self._set_wfmindex(0)
-            self._set_wfmramping(False)
+            self._set_wfmscanning(False)
             self._set_opmode(value)
             self.update_state(opmode=True)
 
@@ -70,8 +71,12 @@ class Controller(metaclass=_ABCMeta):
         self.update_state(reset=True)
 
     @property
-    def interlock(self):
-        return self._get_interlock()
+    def intlk(self):
+        return self._get_intlk()
+
+    @property
+    def intlklabels(self):
+        return self._get_intlklabels()
 
     @property
     def current_min(self):
@@ -137,8 +142,9 @@ class Controller(metaclass=_ABCMeta):
 
     @wfmload.setter
     def wfmload(self, value):
-        self._set_wfmload(value)
-        self.update_state(wfmload=True)
+        if value < len(_default_wfmlabels):
+            self._set_wfmload(value)
+            self.update_state(wfmload=True)
 
     @property
     def wfmdata(self):
@@ -160,8 +166,8 @@ class Controller(metaclass=_ABCMeta):
         self.update_state(wfmsave=True)
 
     @property
-    def wfmramping(self):
-        return self._get_wfmramping()
+    def wfmscanning(self):
+        return self._get_wfmscanning()
 
     @property
     def time(self):
@@ -187,11 +193,11 @@ class Controller(metaclass=_ABCMeta):
 
     def trigger_signal(self, delay=0, nrpts=1, width=0.0):
         if delay != 0: _time.sleep(delay)
-        self._update_ramping_state()
+        self._update_scanning_state()
         self._process_trigger_signal(nrpts,width)
 
     def update_state(self, **kwargs):
-        self._update_ramping_state()
+        self._update_scanning_state()
         self._check_pending_waveform_writes()
         if self.opmode == _et.idx.SlowRef:
             self._update_SlowRef(**kwargs)
@@ -214,13 +220,16 @@ class Controller(metaclass=_ABCMeta):
         else:
             raise Exception('Invalid controller opmode')
 
+    def fofb_signal(self):
+        pass
+
 
     # --- private methods ---
 
-    def _update_ramping_state(self):
-        if self.wfmramping and self.trigger_timeout:
+    def _update_scanning_state(self):
+        if self.wfmscanning and self.trigger_timeout:
             self._set_wfmindex(0)
-            self._set_wfmramping(False)
+            self._set_wfmscanning(False)
 
     def _update_current_ref(self, value):
         value = self._check_current_ref_limits(value)
@@ -243,7 +252,7 @@ class Controller(metaclass=_ABCMeta):
 
     def _update_RmpMultWfm(self, **kwargs):
         if 'trigger_signal' in kwargs:
-            self._set_wfmramping(True)
+            self._set_wfmscanning(True)
             scan_value = self._wfmdata_in_use[self._wfmindex]
             if self._cmd_abort_issued and self._wfmindex == 0:
                 # end of ramp and abort has been issued.
@@ -280,6 +289,8 @@ class Controller(metaclass=_ABCMeta):
         st = '--- Controller ---\n'
         propty = 'opmode';          st += '\n{0:<20s}: {1}'.format(propty, _et.key('PSOpModeTyp', self.opmode))
         propty = 'pwrstate';        st += '\n{0:<20s}: {1}'.format(propty, _et.key('OffOnTyp', self.pwrstate))
+        propty = 'intlk';           st += '\n{0:<20s}: {1}'.format(propty, self.intlk)
+        propty = 'intlklabels';     st += '\n{0:<20s}: {1}'.format(propty, self.intlklabels)
         #propty = 'abort';           st += '\n{0:<20s}: {1}'.format(propty, self.abort)
         #propty = 'abort_flag';      st += '\n{0:<20s}: {1}'.format(propty, self._abort_flag)
         propty = 'reset';           st += '\n{0:<20s}: {1}'.format(propty, self.reset)
@@ -292,7 +303,7 @@ class Controller(metaclass=_ABCMeta):
         propty = 'wfmdata';         st += '\n{0:<20s}: {1}'.format(propty, '['+str(self.wfmdata[0])+' ... '+str(self.wfmdata[-1])+']')
         propty = 'wfmsave';         st += '\n{0:<20s}: {1}'.format(propty, self.wfmsave)
         propty = 'wfmindex';        st += '\n{0:<20s}: {1}'.format(propty, self.wfmindex)
-        propty = 'wfmramping';      st += '\n{0:<20s}: {1}'.format(propty, self.wfmramping)
+        propty = 'wfmscanning';      st += '\n{0:<20s}: {1}'.format(propty, self.wfmscanning)
         propty = 'trigger_timeout'; st += '\n{0:<20s}: {1}'.format(propty, self.trigger_timeout)
 
         try:
@@ -333,7 +344,11 @@ class Controller(metaclass=_ABCMeta):
         pass
 
     @_abstractmethod
-    def _get_interlock(self):
+    def _get_intlk(self):
+        pass
+
+    @_abstractmethod
+    def _get_intlklabels(self):
         pass
 
     @_abstractmethod
@@ -409,7 +424,7 @@ class Controller(metaclass=_ABCMeta):
         pass
 
     @_abstractmethod
-    def _get_wfmramping(self):
+    def _get_wfmscanning(self):
         pass
 
     @_abstractmethod
@@ -429,7 +444,7 @@ class Controller(metaclass=_ABCMeta):
         pass
 
     @_abstractmethod
-    def _set_wfmramping(self, value):
+    def _set_wfmscanning(self, value):
         pass
 
     @_abstractmethod
@@ -467,12 +482,13 @@ class ControllerSim(Controller):
         self._timestamp_pwrstate = now         # last time pwrstate was changed
         self._timestamp_opmode   = now         # last time opmode was changed
         self._timestamp_trigger  = now         # last time trigger signal was received
-        self._interlock = 0                    # interlock signals
+        self._intlk = 0                        # interlock signals
+        self._intlklabels = _default_intlklabels
         self._abort = 0                        # abort command counter
         self._reset = 0                        # reset command counter
         self._cmd_abort_issued = False
         self._cmd_reset_issued = False
-        self._wfmramping       = False
+        self._wfmscanning       = False
         self._pending_wfmdata  = False          # pending wfm slot number
         self._pending_wfmload  = False          # pending wfm slot number
         super().__init__(**kwargs)
@@ -499,11 +515,14 @@ class ControllerSim(Controller):
 
     def _set_reset(self, value):
         self._reset += 1
-        self._interlock = 0
+        self.intlk = 0
         self._mycallback(pvname='reset')
 
-    def _get_interlock(self):
-        return self._interlock
+    def _get_intlk(self):
+        return self._intlk
+
+    def _get_intlklabels(self):
+        return self._intlklabels
 
     def _get_current_min(self):
         return None if not hasattr(self, '_current_min') else self._current_min
@@ -572,14 +591,14 @@ class ControllerSim(Controller):
         self._save_waveform_to_slot(self._wfmslot)
         self._mycallback(pvname='wfmsave')
 
-    def _get_wfmramping(self):
-        return self._wfmramping
+    def _get_wfmscanning(self):
+        return self._wfmscanning
 
     def _set_wfmindex(self, value):
         self._wfmindex = value
 
-    def _set_wfmramping(self, value):
-        self._wfmramping = value
+    def _set_wfmscanning(self, value):
+        self._wfmscanning = value
 
     def _set_timestamp_trigger(self, value):
         self._timestamp_trigger = value
@@ -609,7 +628,7 @@ class ControllerSim(Controller):
         self._time_simulated = None
 
     def _check_pending_waveform_writes(self):
-        if not self._wfmramping or self._wfmindex == 0:
+        if not self._wfmscanning or self._wfmindex == 0:
             if self._pending_wfmdata:
                 self._pending_wfmdata = False
                 self._wfmdata_in_use = [datum for datum in self._waveform.data]
@@ -642,7 +661,7 @@ class ControllerSim(Controller):
         elif pvname == 'current_load':
             self._callback(pvname='current_load', value=self._current_load)
         elif pvname == 'wfmload':
-            self._callback(pvname='wfmload', value=self._wfmload)
+            self._callback(pvname='wfmload', value=self._wfmload_sel)
         elif pvname == 'wfmdata':
             self._callback(pvname='wfmdata', value=self._waveform.data)
         elif pvname == 'wfmlabel':
@@ -726,7 +745,7 @@ class ControllerEpics(Controller):
         self._pvs['WfmData-SP']     = _PV(pv + ':WfmData-SP',     connection_timeout=self._connection_timeout)
         self._pvs['WfmData-RB']     = _PV(pv + ':WfmData-RB',     connection_timeout=self._connection_timeout)
         self._pvs['WfmSave-Cmd']    = _PV(pv + ':WfmSave-Cmd',    connection_timeout=self._connection_timeout)
-        self._pvs['WfmRamping-Mon'] = _PV(pv + ':WfmRamping-Mon', connection_timeout=self._connection_timeout)
+        self._pvs['Wfmscanning-Mon'] = _PV(pv + ':WfmScanning-Mon', connection_timeout=self._connection_timeout)
 
         self._pvs['PwrState-Sel'].wait_for_connection(timeout=self._connection_timeout)
         self._pvs['PwrState-Sts'].wait_for_connection(timeout=self._connection_timeout)
@@ -745,7 +764,7 @@ class ControllerEpics(Controller):
         self._pvs['WfmData-SP'].wait_for_connection(timeout=self._connection_timeout)
         self._pvs['WfmData-RB'].wait_for_connection(timeout=self._connection_timeout)
         self._pvs['WfmSave-Cmd'].wait_for_connection(timeout=self._connection_timeout)
-        self._pvs['WfmRamping-Mon'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['WfmScanning-Mon'].wait_for_connection(timeout=self._connection_timeout)
 
         # add callback
         uuid = _uuid.uuid4()
@@ -766,7 +785,7 @@ class ControllerEpics(Controller):
         self._pvs['WfmData-SP'].add_callback(callback=self._mycallback, index=uuid)
         self._pvs['WfmData-RB'].add_callback(callback=self._mycallback, index=uuid)
         self._pvs['WfmSave-Cmd'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['WfmRamping-Mon'].add_callback(callback=self._mycallback, index=uuid)
+        self._pvs['WfmScanning-Mon'].add_callback(callback=self._mycallback, index=uuid)
 
     def _get_current_min(self):
         return self._pvs['Current-SP'].lower_ctrl_limit
@@ -853,13 +872,13 @@ class ControllerEpics(Controller):
         self._pvs['WfmSave-Cmd'].value = value
         self.update_state(wfmsave=True)
 
-    def _get_wfmramping(self):
-        return self._pvs['WfmRamping-Mon'].get(timeout=self._connection_timeout)
+    def _get_wfmscanning(self):
+        return self._pvs['WfmScanning-Mon'].get(timeout=self._connection_timeout)
 
     def _check_pending_waveform_writes(self):
         pass
 
-    def _update_ramping_state(self):
+    def _update_scanning_state(self):
         return self.time
 
     def _update_current_ref(self, value):
