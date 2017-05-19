@@ -99,7 +99,16 @@ class PowerSupplyLinac(object):
     def current_mon(self):
         return self._controller.current_load
 
-    # --- class implementation ---
+    @property
+    def intlk_mon(self):
+        # This will eventually be implemented in _PowerSupply!
+        return self._controller.intlk
+
+    @property
+    def intlklabels_cte(self):
+        return self._controller.intlklabels
+
+        # --- class implementation ---
 
     def _get_database(self):
         """Return a PV database whose keys correspond to PS properties."""
@@ -284,8 +293,8 @@ class PowerSupply(PowerSupplyLinac):
         self._controller.wfmsave = value
 
     @property
-    def wfmramping_mon(self):
-        return self._get_wfmramping_mon()
+    def wfmscanning_mon(self):
+        return self._get_wfmscanning_mon()
 
     # --- class implementation ---
 
@@ -346,13 +355,13 @@ class PowerSupply(PowerSupplyLinac):
         return self._controller.wfmload
 
     def _set_wfmload_sel(self, value):
-        self._controller.wfmload = slot
+        self._controller.wfmload = value
 
     def _get_wfmsave_cmd(self):
         return self._controller.wfmsave
 
-    def _get_wfmramping_mon(self):
-        return self._controller.wfmramping
+    def _get_wfmscanning_mon(self):
+        return self._controller.wfmscanning
 
 
 class PowerSupplyEpicsSync(PowerSupply):
@@ -392,7 +401,7 @@ class PowerSupplyEpicsSync(PowerSupply):
 
     def _set_wfmload_sel(self, value):
         for c in self._controllers:
-            c.wfmload = slot
+            c.wfmload = value
 
     def _set_pwrstate_sel(self, value):
         for c in self._controllers:

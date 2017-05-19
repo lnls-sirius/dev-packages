@@ -12,6 +12,16 @@ default_wfmlabels = ('Waveform1', # These are the waveform slot labels
                      'Waveform5',
                      'Waveform6')
 
+default_intlklabels = ('Timeout',
+                        'Bit1',
+                        'Bit2',
+                        'Bit3',
+                        'Bit4',
+                        'Bit5',
+                        'Bit6',
+                        'Bit7')
+
+
 
 class PSClasses:
     """Magnet Power Supply PV Database Classes
@@ -45,22 +55,25 @@ class PSClasses:
 
     class _Base:
 
-        _Reset_Cmd      = {'name':'Reset-Cmd',      'type':'int',    'value':0}
-        _CtrlMode_Mon   = {'name':'CtrlMode-Mon',   'type':'enum',   'enums':_et.enums('RmtLocTyp'),   'value':_et.idx.Remote}
-        _PwrState_Sel   = {'name':'PwrState-Sel',   'type':'enum',   'enums':_et.enums('OffOnTyp'),    'value':_et.idx.Off}
-        _PwrState_Sts   = {'name':'PwrState-Sts',   'type':'enum',   'enums':_et.enums('OffOnTyp'),    'value':_et.idx.Off}
-        _OpMode_Sel     = {'name':'OpMode-Sel',     'type':'enum',   'enums':_et.enums('PSOpModeTyp'), 'value':_et.idx.SlowRef}
-        _OpMode_Sts     = {'name':'OpMode-Sts',     'type':'enum',   'enums':_et.enums('PSOpModeTyp'), 'value':_et.idx.SlowRef}
-        _WfmIndex_Mon   = {'name':'WfmIndex-Mon',   'type':'int',    'value':0}
-        _WfmLabels_Mon  = {'name':'WfmLabels-Mon',  'type':'string', 'count':len(default_wfmlabels), 'value':default_wfmlabels}
-        _WfmLabel_SP    = {'name':'WfmLabel-SP',    'type':'string', 'count':1, 'value':default_wfmlabels[0]}
-        _WfmLabel_RB    = {'name':'WfmLabel-RB',    'type':'string', 'count':1, 'value':default_wfmlabels[0]}
-        _WfmLoad_Sel    = {'name':'WfmLoad-Sel',    'type':'enum',   'enums':default_wfmlabels,    'value':0}
-        _WfmLoad_Sts    = {'name':'WfmLoad-Sts',    'type':'enum',   'enums':default_wfmlabels,    'value':0}
-        _WfmData_SP     = {'name':'WfmData-SP',     'type':'float',  'count':default_wfmsize, 'value':[0.0 for datum in range(default_wfmsize)], 'unit':'A'}
-        _WfmData_RB     = {'name':'WfmData-RB',     'type':'float',  'count':default_wfmsize, 'value':[0.0 for datum in range(default_wfmsize)], 'unit':'A'}
-        _WfmSave_Cmd    = {'name':'WfmSave-Cmd',    'type':'int',    'value':0}
-        _WfmRamping_Mon = {'name':'WfmRamping-Mon', 'type':'int',    'value':0}
+        _Reset_Cmd          = {'name':'Reset-Cmd',       'type':'int',    'value':0}
+        _CtrlMode_Mon       = {'name':'CtrlMode-Mon',    'type':'enum',   'enums':_et.enums('RmtLocTyp'),   'value':_et.idx.Remote}
+        _PwrState_Sel       = {'name':'PwrState-Sel',    'type':'enum',   'enums':_et.enums('OffOnTyp'),    'value':_et.idx.Off}
+        _PwrState_Sts       = {'name':'PwrState-Sts',    'type':'enum',   'enums':_et.enums('OffOnTyp'),    'value':_et.idx.Off}
+        _OpMode_Sel         = {'name':'OpMode-Sel',      'type':'enum',   'enums':_et.enums('PSOpModeTyp'), 'value':_et.idx.SlowRef}
+        _OpMode_Sts         = {'name':'OpMode-Sts',      'type':'enum',   'enums':_et.enums('PSOpModeTyp'), 'value':_et.idx.SlowRef}
+        _WfmIndex_Mon       = {'name':'WfmIndex-Mon',    'type':'int',    'value':0}
+        _WfmLabels_Mon      = {'name':'WfmLabels-Mon',   'type':'string', 'count':len(default_wfmlabels), 'value':default_wfmlabels}
+        _WfmLabel_SP        = {'name':'WfmLabel-SP',     'type':'string', 'count':1, 'value':default_wfmlabels[0]}
+        _WfmLabel_RB        = {'name':'WfmLabel-RB',     'type':'string', 'count':1, 'value':default_wfmlabels[0]}
+        _WfmLoad_Sel        = {'name':'WfmLoad-Sel',     'type':'enum',   'enums':default_wfmlabels,    'value':0}
+        _WfmLoad_Sts        = {'name':'WfmLoad-Sts',     'type':'enum',   'enums':default_wfmlabels,    'value':0}
+        _WfmData_SP         = {'name':'WfmData-SP',      'type':'float',  'count':default_wfmsize, 'value':[0.0 for datum in range(default_wfmsize)], 'unit':'A'}
+        _WfmData_RB         = {'name':'WfmData-RB',      'type':'float',  'count':default_wfmsize, 'value':[0.0 for datum in range(default_wfmsize)], 'unit':'A'}
+        _WfmSave_Cmd        = {'name':'WfmSave-Cmd',     'type':'int',    'value':0}
+        _WfmScanning_Mon    = {'name':'WfmScanning-Mon', 'type':'int',    'value':0}
+        _Intlk_Mon          = {'name':'Intlk-Mon',       'type':'int',    'value':0}
+        _IntlkLabels_Cte    = {'name':'IntlkLabels-Cte', 'type':'string', 'count':8, 'value':default_intlklabels}
+
 
         @staticmethod
         def get_database(): return PSClasses._getdatabase(__class__)
