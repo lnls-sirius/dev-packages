@@ -90,33 +90,51 @@ class PsCycleWindow(QDialog):
         #Anel
         self.siDCkB = QCheckBox("Dipoles")
         self.siDCkB.setObjectName("si_b")
-        self.siDCkB.stateChanged.connect(lambda state: self.changePsSet(state, 'SI', psdata.FAM, psdata.DIPO))
+        self.siDCkB.stateChanged.connect(
+            lambda state: self.changePsSet(
+                state, 'SI', psdata.filters.FAM, psdata.filters.DIPO))
         self.siQCkB = QCheckBox("Quadrupoles")
         self.siQCkB.setObjectName("si_q")
-        self.siQCkB.stateChanged.connect(lambda state: self.changePsSet(state, 'SI', psdata.FAM, psdata.QUAD))
+        self.siQCkB.stateChanged.connect(
+            lambda state: self.changePsSet(
+                state, 'SI', psdata.filters.FAM, psdata.filters.QUAD))
         self.siSCkB = QCheckBox("Sextupoles")
         self.siSCkB.setObjectName("si_s")
-        self.siSCkB.stateChanged.connect(lambda state: self.changePsSet(state, 'SI', psdata.FAM, psdata.SEXT))
+        self.siSCkB.stateChanged.connect(
+            lambda state: self.changePsSet(
+                state, 'SI', psdata.filters.FAM, psdata.filters.SEXT))
         self.siCCkB = QCheckBox("Corretoras")
         self.siCCkB.setObjectName("si_c")
-        self.siCCkB.stateChanged.connect(lambda state: self.changePsSet(state, 'SI', psdata.TRIM, psdata.CORR))
+        self.siCCkB.stateChanged.connect(
+            lambda state: self.changePsSet(
+                state, 'SI', psdata.filters.TRIM, psdata.filters.CORR))
         #Linhas de transpote
         self.ltDCkB = QCheckBox("Dipoles")
         self.ltDCkB.setObjectName("lt_b")
-        self.ltDCkB.stateChanged.connect(lambda state: self.changePsSet(state, 'LT', psdata.FAM, psdata.DIPO))
+        self.ltDCkB.stateChanged.connect(
+            lambda state: self.changePsSet(
+                state, 'LT', psdata.filters.FAM, psdata.filters.DIPO))
         self.ltQCkB = QCheckBox("Quadrupoles")
         self.ltQCkB.setObjectName("lt_q")
-        self.ltQCkB.stateChanged.connect(lambda state: self.changePsSet(state, 'LT', psdata.FAM, psdata.QUAD))
+        self.ltQCkB.stateChanged.connect(
+            lambda state: self.changePsSet(
+                state, 'LT', psdata.filters.FAM, psdata.filters.QUAD))
         self.ltCCkB = QCheckBox("Corretoras")
         self.ltCCkB.setObjectName("lt_c")
-        self.ltCCkB.stateChanged.connect(lambda state: self.changePsSet(state, 'LT', psdata.TRIM, psdata.CORR))
+        self.ltCCkB.stateChanged.connect(
+            lambda state: self.changePsSet(
+                state, 'LT', psdata.filters.TRIM, psdata.filters.CORR))
         #Linac
         self.liQCkB = QCheckBox("Quadrupoles")
         self.liQCkB.setObjectName("li_q")
-        self.liQCkB.stateChanged.connect(lambda state: self.changePsSet(state, 'LI', psdata.FAM, psdata.QUAD))
+        self.liQCkB.stateChanged.connect(
+            lambda state: self.changePsSet(
+                state, 'LI', psdata.filters.FAM, psdata.filters.QUAD))
         self.liCCkb = QCheckBox("Corretoras")
         self.liCCkb.setObjectName("li_c")
-        self.liCCkb.stateChanged.connect(lambda state: self.changePsSet(state, 'LI', psdata.TRIM, psdata.CORR))
+        self.liCCkb.stateChanged.connect(
+            lambda state: self.changePsSet(
+                state, 'LI', psdata.filters.TRIM, psdata.filters.CORR))
         #Create Group Boxes
         siPsBox = self._createCheckBoxGroup("Ring", [self.siDCkB, self.siQCkB, \
                 self.siSCkB, self.siCCkB ])
