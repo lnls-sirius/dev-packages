@@ -67,11 +67,9 @@ def power_supplies_pstypes_names_read(timeout=_timeout):
     url = _envars.server_url_web + _ps_folder + 'pstypes-names.txt'
     return read_url(url, timeout=timeout)
 
-
 def power_supplies_pstype_data_read(filename, timeout=_timeout):
     url = _envars.server_url_web + _pstypes_data_folder + filename
     return read_url(url, timeout=timeout)
-
 
 def power_supplies_pstype_setpoint_limits(timeout = _timeout):
     url = _envars.server_url_web + _ps_folder + 'pstypes-setpoint-limits.txt'
