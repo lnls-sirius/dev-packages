@@ -169,6 +169,24 @@ class HL_Base:
         self._hl2ll = self._get_initial_hl2ll()
         self._values_rb = {  key:val for key,val in self._hl2ll.items()  }
 
+    def _get_HLPROP_2_PVSP(self):
+        map_ = dict()
+        return map_
+
+    def _get_HLPROP_2_PVRB(self):
+        map_ = dict()
+        return map_
+
+    def _get_SP_FUNS(self):
+        map_ = {
+        }
+        return map_
+
+    def _get_RB_FUNS(self):
+        map_ = {
+        }
+        return map_
+
     def connect(self):
         _log.info('Event '+self.prefix+' -> connecting to LL Devices')
         self.ll_obj_conn_sts = 0
@@ -190,30 +208,6 @@ class HL_Base:
             'delay'      : 0,
             'mode'       : 0,
             'delay_type' : 0,
-            }
-        return map_
-
-    def _get_HLPROP_2_PVSP(self):
-        map_ = dict()
-        return map_
-
-    def _get_HLPROP_2_PVRB(self):
-        map_ = dict()
-        return map_
-
-    def _get_SP_FUNS(self):
-        map_ = {
-            'delay'      : lambda x: x,
-            'mode'       : lambda x: x,
-            'delay_type' : lambda x: x,
-            }
-        return map_
-
-    def _get_RB_FUNS(self):
-        map_ = {
-            'delay'      : lambda x: x,
-            'mode'       : lambda x: x,
-            'delay_type' : lambda x: x,
             }
         return map_
 
@@ -292,6 +286,10 @@ class _HL_TrigBase:
 
     def __init__(self,trig_prefix,callback,channels,events):
         _log.info(trig_prefix +' Starting.')
+        self._HLPROP_2_PVSP = self._get_HLPROP_2_PVSP()
+        self._PVSP_2_HLPROP = {  val:key for key,val in self._HLPROP_2_PVSP.items()  }
+        self._HLPROP_2_PVRB = self._get_HLPROP_2_PVRB()
+        self._PVRB_2_HLPROP = {  val:key for key,val in self._HLPROP_2_PVRB.items()  }
         self._RB_FUNS  = self._get_RB_FUNS()
         self._SP_FUNS = self._get_SP_FUNS()
         self._EVENTS = events
