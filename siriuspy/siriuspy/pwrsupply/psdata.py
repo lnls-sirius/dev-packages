@@ -1,6 +1,7 @@
-import re
+import re as _re
 import siriuspy.servweb as _web
 import siriuspy.util as _util
+import types as _types
 
 _timeout = 1.0
 
@@ -176,25 +177,28 @@ class _PSData:
             psnames.append(datum[0])
         return psnames
 
+
+filters = _types.SimpleNamespace()
+
 #SubSections
-FAM = 'Fam'
-TRIM = '\d{2}\w{0,2}'
+filters.FAM = 'Fam'
+filters.TRIM = '\d{2}\w{0,2}'
 #Devices
-DIPO = 'B.*'
-QUAD = '(?:QD|QF|Q[0-9]).*'
-DEFO_QUAD = 'QD.*'
-FOCU_QUAD = 'QF.*'
-SEXT = 'S(?:D|F)*'
-DEFO_SEXT = 'SD.*'
-FOCU_SECT = 'SF.*'
-CORR = '(?:C|FC).*'
-SLOW_CORR = 'C(?:H|V).*'
-H_SLOW_CORR = 'CH.*'
-V_SLOW_CORR = 'CV.*'
-FAST_CORR = 'FC.*'
-H_FAST_CORR = 'FCH.*'
-V_FAST_CORR = 'FCV.*'
-QUAD_SKEW = 'QS'
+filters.DIPO = 'B.*'
+filters.QUAD = '(?:QD|QF|Q[0-9]).*'
+filters.DEFO_QUAD = 'QD.*'
+filters.FOCU_QUAD = 'QF.*'
+filters.SEXT = 'S(?:D|F)*'
+filters.DEFO_SEXT = 'SD.*'
+filters.FOCU_SECT = 'SF.*'
+filters.CORR = '(?:C|FC).*'
+filters.SLOW_CORR = 'C(?:H|V).*'
+filters.H_SLOW_CORR = 'CH.*'
+filters.V_SLOW_CORR = 'CV.*'
+filters.FAST_CORR = 'FC.*'
+filters.H_FAST_CORR = 'FCH.*'
+filters.V_FAST_CORR = 'FCV.*'
+filters.QUAD_SKEW = 'QS'
 
 _psdata = None
 def _get_psdata():
@@ -236,7 +240,7 @@ def add_filter(section, sub_section, discipline, device):
         device = '.+'
 
     pattern = section + '-' + sub_section + ':' + discipline + '-' + device
-    regexp = re.compile(pattern)
+    regexp = _re.compile(pattern)
     #Append new filter to psdata
     psdata.filter = regexp
 
