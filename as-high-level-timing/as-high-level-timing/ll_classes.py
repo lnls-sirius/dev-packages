@@ -15,7 +15,7 @@ from siriuspy.timesys.time_data import Connections, IOs, Events
 # 05 - 'copy and paste' is your friend and it allows you to code 'repeatitive' (but clearer) sections fast.
 # 06 - be consistent in coding style (variable naming, spacings, prefixes, suffixes, etc)
 
-_TIMEOUT = 0.02
+_TIMEOUT = 0.05
 _FORCE_EQUAL = False
 
 LL_PREFIX = 'VAF-'
@@ -110,12 +110,16 @@ class _LL_Base:
 
     def check(self):
         for ll_prop,pv in self._pvs_sp.items():
-            if self._pvs_conn_sts[pv.pvname] and self._pvs_sp_canput[pv.pvname]:
-                props = self._LLPROP_FUNS[ll_prop](pv.value, ty='sp')
+            if pv.connected and self._pvs_sp_canput[pv.pvname]:
+                v = pv.get(timeout=_TIMEOUT)
+                if v is None:
+                    _log.debug(self.str_for_log+' propty = {0:s} is None '.format(ll_prop))
+                    continue
+                props = self._LLPROP_FUNS[ll_prop](v, ty='sp')
                 for hl_prop,val in props.items():
                     my_val = self._hl2ll[hl_prop]
                     if my_val == val: continue
-                    _log.debug(self.str_for_log+' check; propty = {0:s} Value = {1:s} '.format(hl_prop,str(my_val)))
+                    _log.debug(self.str_for_log+' propty = {0:s} Value = {1:s} '.format(hl_prop,str(my_val)))
                     self.set_propty(hl_prop, my_val)
 
     def _pvs_rb_callback(self,pvname,value,**kwargs):
@@ -235,7 +239,7 @@ class _LL_TrigEVRMF(_LL_Base):
 
     def _get_LLPROP_2_PVSP(self):
         map_ = {
-            'internal_trigger' : self._OUTLB + 'IntChan-SP',
+            'internal_trigger' : self._OUTLB + 'IntChan-Sel',
             'event'      : self._INTLB + 'Event-Sel',
             'delay1'     : self._INTLB + 'Delay-SP',
             'delay2'     : self._OUTLB + 'Delay-SP',
@@ -251,7 +255,7 @@ class _LL_TrigEVRMF(_LL_Base):
 
     def _get_LLPROP_2_PVRB(self):
         map_ = {
-            'internal_trigger' : self._OUTLB + 'IntChan-RB',
+            'internal_trigger' : self._OUTLB + 'IntChan-Sts',
             'event'      : self._INTLB + 'Event-Sts',
             'delay1'     : self._INTLB + 'Delay-RB',
             'delay2'     : self._OUTLB + 'Delay-RB',
@@ -393,12 +397,12 @@ class _LL_TrigAFCLVE(_LL_TrigEVRMF):
 
     def _get_LLPROP_2_PVSP(self):
         map_ = super()._get_LLPROP_2_PVSP()
-        map_['event'] = self._INTLB + 'EVGParam-SP'
+        map_['event'] = self._INTLB + 'Event-Sel'#'EVGParam-SP'
         return map_
 
     def _get_LLPROP_2_PVRB(self):
         map_ = super()._get_LLPROP_2_PVRB()
-        map_['event'] = self._INTLB + 'EVGParam-RB'
+        map_['event'] = self._INTLB + 'Event-Sts'#'EVGParam-RB'
         return map_
 
     def _get_HLPROP_FUNS(self):

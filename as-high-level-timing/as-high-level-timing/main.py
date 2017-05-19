@@ -70,6 +70,8 @@ class App:
             trig = get_hl_trigger_object(trig_prefix, self._update_driver, **prop)
             self._triggers[trig_prefix] = trig
 
+        self._database = self.get_database()
+
     def connect(self):
         _log.info('Connecting to Low Level Events:')
         # Build Event's Variables:
@@ -116,33 +118,32 @@ class App:
         for tr in self._triggers.values():
             tr.check()
 
-    def write(self,reason,value):
-        parts = _PVName(reason)
-        _log.debug('App: Writing PV {0:s} with value {1:s}'.format(reason,str(value)))
+    def _verify_validity(self,reason,value):
         if parts.propty.endswith(('-Sts','-RB', '-Mon')):
             _log.debug('App: PV {0:s} is read only.'.format(reason))
             return False
 
-        res_ = Events.HL_RGX.findall(parts.propty)
-        if res_:
-            ev, pv = res_
-            _log.debug('App: Writing Event {0:s} property {1:s}'.format(ev,pv))
-            ret_val = self._events[ev].set_propty(pv, value)
-            if ret_val:
-                _log.debug('App: Write complete.')
-            else:
-                _log.debug('App: Write unsuccessful.')
-            return ret_val
+        entry_ = self._database[reason]
+        enums = entry_.get('enums')
+        len_ = len(enums)
+        if enums is not None and value >= len_:
+            _log.warning('App: value {0:d} too large for PV {1:s} of type enum'.format(value,reason))
+            return False
+        return True
 
-        trig = [ val for key,val in self._triggers.items() if parts.startswith(key) ]
-        if len(trig)>0:
-            _log.debug('App: Writing Trigger property.')
-            ret_val = trig[0].set_propty(reason,value)
-            if ret_val:
-                _log.debug('App: Write complete.')
-            else:
-                _log.debug('App: Write unsuccessful.')
-            return ret_val
+    def write(self,reason,value):
+        _log.debug('App: Writing PV {0:s} with value {1:s}'.format(reason,str(value)))
+        if not self._verify_validity(reason,value):
+            return False
 
-        _log.debug('App: Write unsuccessful. PV not recognized.')
-        return False
+        fun_ = self.database[reason].get('fun_set_pv')
+        if fun_ is None:
+            _log.warning('App: Write unsuccessful. PV {0:s} does not have a set function.'.format(reason))
+            return False
+
+        ret_val = fun_(value)
+        if ret_val:
+            _log.debug('App: Write complete.')
+        else:
+            _log.warning('App: Unsuccessful write of PV {0:s}; value = {1:s}.'.format(reason,str(value)))
+        return ret_val
