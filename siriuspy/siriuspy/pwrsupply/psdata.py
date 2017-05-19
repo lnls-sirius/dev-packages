@@ -1,3 +1,4 @@
+import re
 import siriuspy.servweb as _web
 import siriuspy.util as _util
 
@@ -10,6 +11,8 @@ class _PSData:
     """
 
     def __init__(self, timeout=_timeout):
+
+        self._filter = list()
 
         self._pstype_name_list = None
         self._pstype_polarity_list = None
@@ -34,7 +37,27 @@ class _PSData:
     @property
     def pwrsupply_names(self):
         """Return a list of names of all power supplies."""
+        if len(self._filter) > 0 and self._ps_name_list is not None:
+            filtered_ps_name_list = list()
+            for ps in self._ps_name_list:
+                for pattern in self._filter:
+                    if pattern.match(ps):
+                        filtered_ps_name_list.append(ps)
+                        break
+            return filtered_ps_name_list
+
         return self._ps_name_list
+
+    @property
+    def filter(self):
+        return self._filter
+
+    @filter.setter
+    def filter(self, regexp):
+        self._filter.append(regexp)
+
+    def clear_filter(self):
+        self._filter.clear()
 
     def conv_pstype_2_psname(self, pstype):
         """Return a list of power supplies of a given type."""
@@ -153,6 +176,25 @@ class _PSData:
             psnames.append(datum[0])
         return psnames
 
+#SubSections
+FAM = 'Fam'
+TRIM = '\d{2}\w{0,2}'
+#Devices
+DIPO = 'B.*'
+QUAD = '(?:QD|QF|Q[0-9]).*'
+DEFO_QUAD = 'QD.*'
+FOCU_QUAD = 'QF.*'
+SEXT = 'S(?:D|F)*'
+DEFO_SEXT = 'SD.*'
+FOCU_SECT = 'SF.*'
+CORR = '(?:C|FC).*'
+SLOW_CORR = 'C(?:H|V).*'
+H_SLOW_CORR = 'CH.*'
+V_SLOW_CORR = 'CV.*'
+FAST_CORR = 'FC.*'
+H_FAST_CORR = 'FCH.*'
+V_FAST_CORR = 'FCV.*'
+QUAD_SKEW = 'QS'
 
 _psdata = None
 def _get_psdata():
@@ -166,7 +208,6 @@ def _get_psdata():
 
 # PSDATA API
 # ==========
-
 def server_online():
     """Return True/False if Sirius web server is online."""
     return _web.server_online()
@@ -178,6 +219,32 @@ def get_types():
 
 def get_names():
     """Return a name list of power supplies."""
+    psdata = _get_psdata()
+    psdata.clear_filter()
+    return psdata.pwrsupply_names
+
+def add_filter(section, sub_section, discipline, device):
+    psdata = _get_psdata()
+
+    if section is None:
+        section = '[A-Z]{2}'
+    if sub_section is None:
+        sub_section = '\w{2,4}'
+    if discipline is None:
+        discipline = '[A-Z]{2,6}'
+    if device is None:
+        device = '.+'
+
+    pattern = section + '-' + sub_section + ':' + discipline + '-' + device
+    regexp = re.compile(pattern)
+    #Append new filter to psdata
+    psdata.filter = regexp
+
+def clear_filter():
+    psdata = _get_psdata()
+    psdata.clear_filter()
+
+def get_filtered_names():
     psdata = _get_psdata()
     return psdata.pwrsupply_names
 
