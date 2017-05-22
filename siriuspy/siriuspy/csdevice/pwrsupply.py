@@ -35,7 +35,7 @@ class SetPointLims:
         # read data from files in the web server and build pstype2ps dict
         self._pstype2ps_dict = {}
         for name in self._pstype_name_list:
-            text = _web.power_supplies_pstype_data_read(name + '.txt', timeout=SetPointLims._timeout)
+            text = _web.power_supplies_pstype_data_read(name + '.txt', timeout=_timeout)
             self._pstype2ps_dict[name] = tuple(self._read_text_pstype(text))
 
         # build ps2pstype dict
@@ -59,7 +59,7 @@ class SetPointLims:
         self._pstype_polarity_list = tuple(polarities)
 
     def _build_pstype_sp_limits(self):
-        text = _web.power_supplies_pstype_setpoint_limits(timeout=SetPointLims._timeout)
+        text = _web.power_supplies_pstype_setpoint_limits(timeout=_timeout)
         data, param_dict = _util.read_text_data(text)
         self._setpoint_unit = tuple(param_dict['unit'])
         self._setpoint_limit_labels = tuple(param_dict['power_supply_type'])
