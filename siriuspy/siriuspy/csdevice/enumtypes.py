@@ -10,24 +10,32 @@ class EnumTypes:
 
     # This should be constructed from CCDB server.
 
-    _types = {
+    _types_general = {
         'OffOnTyp'        : ('Off', 'On'),
         'OffOnWaitTyp'    : ('Off', 'On', 'Wait'),
         'DsblEnblTyp'     : ('Dsbl', 'Enbl'),
+        'RmtLocTyp'       : ('Remote', 'Local'),
+    }
+
+    _types_ps = {
         'PSOpModeTyp'     : ('SlowRef', 'SyncRef', 'FastRef',
                              'RmpMultWfm', 'RmpSglWfm',
                              'MigMultWfm', 'MigSglWfm',
                              'SigGen', 'CycGen'),
         'PSWfmLabelsTyp'  : ('Waveform1', 'Waveform2', 'Waveform3',
                              'Waveform4', 'Waveform5', 'Waveform6'),
+        'PSIntlkLabelsTyp': ('Timeout', 'Bit1', 'Bit2', 'Bit3',
+                                'Bit4', 'Bit5', 'Bit6', 'Bit7'),
+    }
 
-        'PSIntlkLabelsTyp': ('Timeout', 'Bit1', 'Bit2',
-                                'Bit3', 'Bit4', 'Bit5',
-                                'Bit6', 'Bit7'),
-
-        'RmtLocTyp'       : ('Remote', 'Local'),
+    _types_sofb = {
         'SOFBOpModeTyp'   : ('Off', 'AutoCorr', 'MeasRespMat'),
     }
+
+    _types = {}
+    _types.update(_types_general)
+    _types.update(_types_ps)
+    _types.update(_types_sofb)
 
     @staticmethod
     def enums(typ):
