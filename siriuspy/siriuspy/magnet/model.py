@@ -162,6 +162,7 @@ class Magnet:
         currents_rb = self.get_current_rb(ps_names=ps_names)
         return self.conv_currents2multipoles(currents_rb)
 
+
 class MagnetFam(Magnet):
 
     def __init__(self,
@@ -251,6 +252,7 @@ class MagnetFam(Magnet):
                 db_ps = self._ps_dict[ps_name].database
                 db_ma.update(db_ps)
         return db_ma
+
 
 class MagnetFamDip(MagnetFam):
 

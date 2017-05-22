@@ -9,7 +9,7 @@ class _ClassProperty(property):
 class EnumTypes:
 
     # This should be constructed from CCDB server.
-    
+
     _types = {
         'OffOnTyp'        : ('Off', 'On'),
         'OffOnWaitTyp'    : ('Off', 'On', 'Wait'),
@@ -18,6 +18,13 @@ class EnumTypes:
                              'RmpMultWfm', 'RmpSglWfm',
                              'MigMultWfm', 'MigSglWfm',
                              'SigGen', 'CycGen'),
+        'PSWfmLabelsTyp'  : ('Waveform1', 'Waveform2', 'Waveform3',
+                             'Waveform4', 'Waveform5', 'Waveform6'),
+
+        'PSIntlkLabelsTyp': ('Timeout', 'Bit1', 'Bit2',
+                                'Bit3', 'Bit4', 'Bit5',
+                                'Bit6', 'Bit7'),
+
         'RmtLocTyp'       : ('Remote', 'Local'),
         'SOFBOpModeTyp'   : ('Off', 'AutoCorr', 'MeasRespMat'),
     }
