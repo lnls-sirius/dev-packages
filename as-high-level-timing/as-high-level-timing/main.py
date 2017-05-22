@@ -1,9 +1,9 @@
 import pvs as _pvs
 import time as _time
-import re as _re
-import epics as _epics
-from siriuspy.timesys import time_data as _timedata
+from siriuspy.timesys.time_data import Connections, Events
 from siriuspy.namesys import SiriusPVName as _PVName
+from data.triggers import get_triggers as _get_triggers
+from hl_classes import get_hl_trigger_object, HL_Event
 
 # Coding guidelines:
 # =================
@@ -17,83 +17,89 @@ from siriuspy.namesys import SiriusPVName as _PVName
 __version__ = _pvs.__version__
 _TIMEOUT = 0.05
 
-
-_ALL_DEVICES = _timedata.get_all_devices()
-_pv_fun = lambda x,y: _PVName(x).dev_type.lower() == y.lower()
-_get_devs = lambda x: { dev for dev in _ALL_DEVICES if _pv_fun(dev,x) }
-
-EVG  = _get_devs('evg').pop()
-EVRs = _get_devs('evr')
-EVEs = _get_devs('eve')
-AFCs = _get_devs('afc')
-
-EVENT_REGEXP = _re.compile(  '('  +  '|'.join( _timedata.EVENT_MAPPING.keys() )  +  ')'  +  '([\w-]+)'  )
+def check_triggers_consistency():
+    triggers = _get_triggers()
+    Connections.add_bbb_info()
+    Connections.add_crates_info()
+    from_evg = Connections.get_connections_from_evg()
+    twds_evg = Connections.get_connections_twrds_evg()
+    for trig, val in triggers.items():
+        print(trig)
+        chans = {  _PVName(chan) for chan in val['channels']  }
+        devs  = {  chan.dev_name for chan in chans  }
+        for chan in chans:
+            print(chan)
+            tmp = twds_evg.get(chan.dev_name)
+            if tmp is None:
+                print('Device '+chan.dev_name+' defined in the high level trigger '+
+                      trig+' not specified in timing connections data.')
+                return False
+            up_dev = tmp.get(chan.propty)
+            if up_dev is None:
+                print('Connection channel '+chan.propty+' defined in the high level trigger '
+                      +trig+' not specified in timing connections data.')
+                return False
+            diff_devs = set(from_evg[up_dev[0]][up_dev[1]]) - devs
+            if diff_devs:
+                print('Devices: '+diff_devs+' are connected to the same output of '+up_dev+' as '
+                       +chan.dev_name+' but are not related to the sam trigger ('+trig+').')
+                return False
+    return True
 
 
 class App:
 
-    pvs_database = _pvs.pvs_database
+    def get_database(self):
+        db = dict()
+        for ev in self._events.values():
+            db.update(ev.get_database())
+        for trig in self._triggers.values():
+            db.update(trig.get_database())
+        return db
 
-    def __init__(self,driver):
+    def __init__(self,driver=None):
         self._driver = driver
+        if not check_triggers_consistency():
+            raise Exception('Triggers not consistent.')
+        # Build Event's Variables:
         self._events = dict()
-        for ev in _timedata.EVENT_MAPPING.keys():
-            self._events[ev] = EventInterface(ev,self._callback)
+        for ev,code in Events.HL2LL_MAP.items():
+            event = Events.HL_PREF + ev
+            self._events[event] = HL_Event(event,code,self._update_driver)
+        # Build triggers from data dictionary:
+        self._triggers = dict()
+        triggers = _get_triggers()
+        for trig_prefix, prop in triggers.items():
+            trig = get_hl_trigger_object(trig_prefix, self._update_driver, **prop)
+            self._triggers[trig_prefix] = trig
 
-    def _callback(self,pv_name,pv_value,**kwargs):
-        self.driver.setParam(pv_name,pv_value)
-        self.driver.updatePVs()
+    def _update_driver(self,pv_name,pv_value,**kwargs):
+        self._driver.setParam(pv_name,pv_value)
+        self._driver.updatePVs()
 
     @property
     def driver(self):
         return self._driver
 
+    @driver.setter
+    def driver(self,driver):
+        self._driver = driver
+
     def process(self,interval):
         _time.sleep(interval)
 
     def read(self,reason):
-        parts = _PVName(reason)
-        if parts.dev_name == EVG:
-            ev,pv = EVENT_REGEXP.findall(parts.propty)
-            return self._events[ev].get(pv)
+        return None # Driver will read from database
 
     def write(self,reason,value):
         parts = _PVName(reason)
+        ev = [ val for key,val in self._events.items() if parts.startswith(key) ]
         if parts.dev_name == EVG:
-            ev,pv = EVENT_REGEXP.findall(parts.propty)
-            self._events[ev].set(pv, value)
-            return True # when returning True super().write of PCASDrive is invoked
+            ev,pv = Events.HL_RGX.findall(parts.propty)[0]
+            return self._events[ev].set_propty(pv, value)
 
+        trig = [ val for key,val in self._triggers.items() if parts.startswith(key) ]
+        if len(trig)>0:
+            return trig[0].set_propty(reason,value)
 
-class EventInterface:
-    _MODES = ('Disabled','Continuous','Injection','Single')
-    _DELAY_TYPES = ('Fixed','Incr')
-
-    @classmethod
-    def get_database(cls,prefix=''):
-        db = dict()
-        db[prefix + 'Delay-SP']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'unit':'us', 'prec': 3}
-        db[prefix + 'Delay-RB']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'unit':'us','prec': 3}
-        db[prefix + 'Mode-Sel']      = {'type' : 'enum', 'enums':cls._MODES, 'value':1}
-        db[prefix + 'Mode-Sts']      = {'type' : 'enum', 'enums':cls._MODES, 'value':1}
-        db[prefix + 'DelayType-Sel'] = {'type' : 'enum', 'enums':cls._DELAY_TYPES, 'value':1}
-        db[prefix + 'DelayType-Sts'] = {'type' : 'enum', 'enums':cls._DELAY_TYPES, 'value':1}
-
-    def __init__(self,name,callback=None):
-        self._callback = callback
-        self.low_level_code  = _timedata.EVENT_MAPPING[name]
-        self.low_level_label = EVG + ':' + _timedata.EVENT_LABEL_TEMPLATE.format(self.code)
-        self.low_level_pvs = dict()
-        options = dict(callback=self._low_level_callback, connection_timeout=_TIMEOUT)
-        for pv in self.get_database().keys():
-            self.low_level_pvs[pv] = _epics.PV(self.low_level_label+pv,**options )
-
-    def get(self,pv):
-        return self.low_level_pvs[pv].value
-
-    def set(self,pv, value):
-        self.low_level_pvs[pv].value = value
-
-    def _low_level_callback(self,pv_name,pv_value,**kwargs):
-        pv_name = self.low_level_label + pv_name
-        if self._callback: self._callback(pv_name,pv_value,**kwargs)
+        return False

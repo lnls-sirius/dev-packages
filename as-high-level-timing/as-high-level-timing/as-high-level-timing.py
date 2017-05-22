@@ -16,14 +16,16 @@ stop_event = False # _multiprocessing.Event()
 
 def stop_now(signum, frame):
     print(' - SIGINT received.')
-    return stop_event.set()
+    global stop_event
+    stop_event = True
 
 
 class PCASDriver(_pcaspy.Driver):
 
-    def __init__(self):
+    def __init__(self,app):
         super().__init__()
-        self.app = _main.App(self)
+        self.app = app
+        self.app.driver = self
 
     def read(self, reason):
         value = self.app.read(reason)
@@ -33,7 +35,11 @@ class PCASDriver(_pcaspy.Driver):
             return value
 
     def write(self, reason, value):
-        return self.app.write(reason, value)
+        app_ret =  self.app.write(reason, value)
+        if app_ret:
+            self.setParam(reason,value)
+            self.updatePVs()
+        return app_ret
 
 
 def run():
@@ -41,11 +47,12 @@ def run():
     # define abort function
     _signal.signal(_signal.SIGINT, stop_now)
 
+    app = _main.App()
     # create a new simple pcaspy server and driver to responde client's requests
     server = _pcaspy.SimpleServer()
-    for prefix, database in _main.App.pvs_database.items():
+    for prefix, database in app.get_database():
         server.createPV(prefix, database)
-    pcas_driver = PCASDriver()
+    pcas_driver = PCASDriver(app)
 
     # initiate a new thread responsible for listening for client connections
     server_thread = _pcaspy_tools.ServerThread(server)
