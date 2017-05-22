@@ -262,7 +262,8 @@ class Controller(metaclass=_ABCMeta):
                 self._wfmindex = (self._wfmindex + 1) % len(self._wfmdata_in_use)
         else:
             scan_value = self.current_ref
-        self._base_update_current_ref(scan_value)
+        self._update_current_ref(scan_value)
+
 
     def _update_MigMultWfm(self, **kwargs):
         pass
