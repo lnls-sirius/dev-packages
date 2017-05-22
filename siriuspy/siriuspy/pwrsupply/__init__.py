@@ -1,12 +1,6 @@
-from . import psdata
-from . import beaglebonedata as bbbdata
-#from . import controller
+from siriuspy.pwrsupply import psdata
+from siriuspy.pwrsupply import beaglebonedata as bbbdata
 
-from .waveform import *
-from .controller import *
-from .model import *
-
-del model
-del controller
-del waveform
-del beaglebonedata
+from siriuspy.pwrsupply.waveform import *
+from siriuspy.pwrsupply.controller import *
+from siriuspy.pwrsupply.model import *

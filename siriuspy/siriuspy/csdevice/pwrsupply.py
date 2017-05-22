@@ -1,27 +1,124 @@
 import copy as _copy
+import siriuspy.servweb as _web
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
-from siriuspy.pwrsupply.psdata import get_setpoint_limits as _ps_sp_lims
-#from siriuspy.pwrsupply.controller import ControllerSim as _ControllerSim
+#from siriuspy.pwrsupply.psdata import get_setpoint_limits as _ps_sp_lims
+import siriuspy.util as _util
 
 
 default_wfmsize   = 2000
-default_wfmlabels = ('Waveform1', # These are the waveform slot labels
-                     'Waveform2', # with which waveforms stored in
-                     'Waveform3', # non-volatile memory may be selected
-                     'Waveform4', # with the WfmLoad-Sel PV.
-                     'Waveform5',
-                     'Waveform6')
+default_wfmlabels =_et.enums('PSWfmLabelsTyp')
+default_intlklabels = _et.enums('PSIntlkLabelsTyp')
 
-default_intlklabels = ('Timeout',
-                        'Bit1',
-                        'Bit2',
-                        'Bit3',
-                        'Bit4',
-                        'Bit5',
-                        'Bit6',
-                        'Bit7')
+_timeout = None
 
+class SetPointLims:
 
+    def __init__(self,timeout=_timeout):
+
+        self._ps_name_list = None
+        self._pstype_name_list = None
+        self._pstype2ps_dict = None
+        self._ps2pstype_dict = None
+        self._setpoint_unit = None
+        self._pstype_polarity_list = None
+        self._pstype_sp_limits_dict = None
+        self._setpoint_limit_labels = None
+
+        if _web.server_online():
+            pstypes_text = _web.power_supplies_pstypes_names_read(timeout=timeout)
+            self._build_pstype_data(pstypes_text)
+            self._build_ps_data()
+            self._build_pstype_sp_limits()
+
+    def _build_ps_data(self):
+
+        # read data from files in the web server and build pstype2ps dict
+        self._pstype2ps_dict = {}
+        for name in self._pstype_name_list:
+            text = _web.power_supplies_pstype_data_read(name + '.txt', timeout=_timeout)
+            self._pstype2ps_dict[name] = tuple(self._read_text_pstype(text))
+
+        # build ps2pstype dict
+        self._ps2pstype_dict = {}
+        for pstype_name in self._pstype_name_list:
+            for ps_name in self._pstype2ps_dict[pstype_name]:
+                if ps_name in self._ps2pstype_dict:
+                    raise Exception('power supply "' + ps_name + '" is listed in more than one power supply type files!')
+                else:
+                    self._ps2pstype_dict[ps_name] = pstype_name
+
+        self._ps_name_list = sorted(self._ps2pstype_dict.keys())
+
+    def _build_pstype_data(self, text):
+        data, _ = _util.read_text_data(text)
+        names, polarities = [], []
+        for datum in data:
+            name, polarity = datum[0], datum[1]
+            names.append(name), polarities.append(polarity)
+        self._pstype_name_list = tuple(names)
+        self._pstype_polarity_list = tuple(polarities)
+
+    def _build_pstype_sp_limits(self):
+        text = _web.power_supplies_pstype_setpoint_limits(timeout=_timeout)
+        data, param_dict = _util.read_text_data(text)
+        self._setpoint_unit = tuple(param_dict['unit'])
+        self._setpoint_limit_labels = tuple(param_dict['power_supply_type'])
+        self._pstype_sp_limits_dict = {pstype_name:[None,]*len(data[0]) for pstype_name in self._pstype_name_list}
+        for line in data:
+            pstype_name, *limits = line
+            self._pstype_sp_limits_dict[pstype_name] = [float(limit) for limit in limits]
+        for pstype_name in self._pstype_name_list:
+            self._pstype_sp_limits_dict[pstype_name] = tuple(self._pstype_sp_limits_dict[pstype_name])
+
+    def _read_text_pstype(self, text):
+        data, _ = _util.read_text_data(text)
+        psnames = []
+        for datum in data:
+            psnames.append(datum[0])
+        return psnames
+
+    def get_setpoint_limits(self, psname, *limit_labels):
+        """Return setpoint limits of given power supply of power suppy type.
+
+        Arguments:
+
+        psname -- name of power supply of power supply type
+        limit_labels -- limit labels of interest
+                       a) it can be a sequence of strings, each for a limit name of interest
+                       b) if not passed, all defined limits are returned
+                       c) if a single string, the single value of the the corresponding limit is returned
+
+        returns:
+
+        A dictionary with name and value pair of the requested limits.
+        In case of a string argument for single limit name, a single value is
+        returned.
+        """
+
+        if self._pstype_name_list is None: return None
+
+        if psname in self._pstype_name_list:
+            values = self._pstype_sp_limits_dict[psname]
+        elif psname in self._ps_name_list:
+            pstype_name  = self._ps2pstype_dict[psname]
+            values = self._pstype_sp_limits_dict[pstype_name]
+        else:
+            return None
+
+        if len(limit_labels) == 0:
+            limit_labels = self._setpoint_limit_labels
+        if len(limit_labels) == 1 and isinstance(limit_labels[0], str):
+            idx = self._setpoint_limit_labels.index(limit_labels[0])
+            return values[idx]
+
+        limits_dict = {}
+        for limit_name in limit_labels:
+            idx = self._setpoint_limit_labels.index(limit_name)
+            limits_dict[limit_name] = values[idx]
+        return limits_dict
+
+_pslims = SetPointLims()
+_ps_sp_lims = _pslims.get_setpoint_limits
 
 class PSClasses:
     """Magnet Power Supply PV Database Classes
