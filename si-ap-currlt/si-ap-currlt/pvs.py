@@ -11,7 +11,7 @@ pvs_database = {
     'Lifetime-Mon':   {'type': 'float', 'count': 1, 'value': 0.0, 'prec': 0, 'unit': 's'},
     'SplNr-Sel':	  {'type': 'int',	'count': 1, 'value': 100 },
     'SplNr-Sts':	  {'type': 'int',	'count': 1, 'value': 100 },
-    'TotTs':		  {'type': 'float', 'count': 1, 'value': 10.0, 'unit': 's'  },
+    'TotTs':		  {'type': 'int', 'count': 1, 'value': 10.0, 'unit': 's'  },
     'DCCT-Sel':		  {'type': 'enum',  'count': 1, 'value': 0, 'enums': ['13C4','14C4','Avg'] },
     'DCCT-Sts':		  {'type': 'enum',  'count': 1, 'value': 0, 'enums': ['13C4','14C4','Avg'] },
     'DeltaCurrMinLT': {'type': 'float', 'count': 1, 'value': 60.0, 'prec': 1, 'unit': 's'},
