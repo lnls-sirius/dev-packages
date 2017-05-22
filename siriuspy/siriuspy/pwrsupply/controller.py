@@ -618,7 +618,7 @@ class ControllerSim(Controller):
         else:
             return self._time_simulated
 
-    def _process_trigger_signal(nrpts, width):
+    def _process_trigger_signal(self, nrpts, width):
         now = self.time
         self._time_simulated = now
         for i in range(nrpts):
