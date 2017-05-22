@@ -4,7 +4,7 @@ import sys as _sys
 import re as _re
 import epics as _epics
 from siriuspy.namesys import SiriusPVName as _PVName
-from siriuspy.timesys.time_data import Connections, IOs, Events
+from siriuspy.timesys.time_data import IOs
 
 # Coding guidelines:
 # =================
@@ -25,9 +25,6 @@ RF_PER = 1/RFFREQ * 1e6         # In micro seconds
 D1_STEP = RF_PER * 4
 D2_STEP = RF_PER * 4 / 20
 D3_STEP = 5e-6                  # five picoseconds
-
-EVG  = Connections.get_devices('EVG').pop()
-
 
 def get_ll_trigger_object(channel,callback,connection_callback,initial_hl2ll):
     LL_TRIGGER_CLASSES = {
@@ -52,7 +49,7 @@ class _LL_Base:
         self._HLPROP_FUNS = self._get_HLPROP_FUNS()
         self._LLPROP_FUNS = self._get_LLPROP_FUNS()
         self._LLPROP_2_PVSP = self._get_LLPROP_2_PVSP()
-        self._PVSP_2_LLPROP = { val:key for key,val in self._LLPROP_2_PVSP.items() }
+        self._channel = { val:key for key,val in self._LLPROP_2_PVSP.items() }
         self._LLPROP_2_PVRB = self._get_LLPROP_2_PVRB()
         self._PVRB_2_LLPROP = { val:key for key,val in self._LLPROP_2_PVRB.items() }
         self.callback = callback
@@ -64,18 +61,16 @@ class _LL_Base:
         self._pvs_sp_canput = dict()
         _log.info(self.channel+': Starting.')
         _log.info(self.channel+': Creating PVs.')
-        for prop, pv in self._LLPROP_2_PVSP.items():
-            pv_name = LL_PREFIX + self.prefix + pv
-            _log.debug(self.channel +' -> creating {0:s}'.format(pv))
+        for prop, pv_name in self._LLPROP_2_PVSP.items():
+            _log.debug(self.channel +' -> creating {0:s}'.format(pv_name))
             self._pvs_conn_sts[pv_name] = False
             self._pvs_sp_canput[pv_name] = True
             self._pvs_sp[prop]  = _epics.PV(pv_name,
                                             callback = self._pvs_sp_callback,
                                             connection_callback = self._pvs_on_connection,
                                             connection_timeout=_TIMEOUT)
-        for prop, pv in self._LLPROP_2_PVRB.items():
-            pv_name = LL_PREFIX + self.prefix + pv
-            _log.debug(self.channel +' -> creating {0:s}'.format(pv))
+        for prop, pv_name in self._LLPROP_2_PVRB.items():
+            _log.debug(self.channel +' -> creating {0:s}'.format(pv_name))
             self._pvs_conn_sts[pv_name] = False
             self._pvs_rb[prop]  = _epics.PV(pv_name,
                                             callback = self._pvs_rb_callback,
@@ -126,9 +121,8 @@ class _LL_Base:
         if value is None:
             _log.debug(self.channel+' pvs_rb_callback; {0:s} received None'.format(pvname))
             return
-        pv = _PVName(pvname)
         _log.debug(self.channel+' pvs_rb_callback; PV = {0:s} New Value = {1:s} '.format(pvname,str(value)))
-        props = self._LLPROP_FUNS[ self._PVRB_2_LLPROP[pv.propty] ](value)
+        props = self._LLPROP_FUNS[ self._PVRB_2_LLPROP[pvname] ](value)
         for hl_prop,val in props.items():
             _log.debug(self.channel+' pvs_rb_callback; Sending to HL;  propty = {0:s} Value = {1:s} '.format(hl_prop,str(val)))
             self.callback(self.channel, hl_prop, val)
@@ -139,8 +133,7 @@ class _LL_Base:
             return
         _log.debug(self.channel+' pvs_sp_callback; PV = {0:s} New Value = {1:s} '.format(pvname,str(value)))
         if not _FORCE_EQUAL: return
-        pv = _PVName(pvname)
-        props = self._LLPROP_FUNS[ self._PVSP_2_LLPROP[pv.propty] ](value, ty='sp')
+        props = self._LLPROP_FUNS[ self._PVSP_2_LLPROP[pvname] ](value, ty='sp')
         for hl_prop,val in props.items():
             my_val = self._hl2ll[hl_prop]
             if my_val != val:
@@ -155,13 +148,13 @@ class _LL_Base:
         pv.put(value,callback=self._put_complete)
 
     def _set_simple(self,prop,value):
-        _log.debug(self.channel+'set_simple; propty = {0:s}, value = {1:s}.'.format(prop,str(value)))
+        _log.debug(self.channel+' propty = {0:s}, value = {1:s}.'.format(prop,str(value)))
         pv = self._pvs_sp[prop]
         if not pv.connected:
-            _log.debug(self.channel+'set_simple; PV '+pv.pvname+' NOT connected.')
+            _log.debug(self.channel+' PV '+pv.pvname+' NOT connected.')
             return
         self._hl2ll[prop]   = value
-        _log.debug(self.channel+'set_simple; Setting PV '+pv.pvname+', value = {0:s}.'.format(str(value)))
+        _log.debug(self.channel+' Setting PV '+pv.pvname+', value = {0:s}.'.format(str(value)))
         self._put_on_pv(pv, value)
 
     def set_propty(self,prop,value):
@@ -177,23 +170,23 @@ class _LL_Base:
 class LL_Event(_LL_Base):
 
     def __init__(self, channel,  callback, connection_callback, initial_hl2ll):
-        self.prefix = channel
+        self.prefix = LL_PREFIX + channel
         self.channel = channel
         super().__init__(callback,connection_callback,initial_hl2ll)
 
     def _get_LLPROP_2_PVSP(self):
         map_ = {
-            'delay'      : 'Delay-SP',
-            'mode'       : 'Mode-Sel',
-            'delay_type' : 'DelayType-Sel',
+            'delay'      : self.prefix + 'Delay-SP',
+            'mode'       : self.prefix + 'Mode-Sel',
+            'delay_type' : self.prefix + 'DelayType-Sel',
             }
         return map_
 
     def _get_LLPROP_2_PVRB(self):
         map_ = {
-            'delay'      : 'Delay-RB',
-            'mode'       : 'Mode-Sts',
-            'delay_type' : 'DelayType-Sts',
+            'delay'      : self.prefix + 'Delay-RB',
+            'mode'       : self.prefix + 'Mode-Sts',
+            'delay_type' : self.prefix + 'DelayType-Sts',
             }
         return map_
 
@@ -225,7 +218,7 @@ class _LL_TrigEVRMF(_LL_Base):
         self._internal_trigger = self._get_num_int(conn_num)
         self._OUTLB = self._OUTTMP.format(conn_num)
         self._INTLB = self._INTTMP.format(self._internal_trigger)
-        self.prefix = _PVName(channel).dev_name + ':'
+        self.prefix = LL_PREFIX + _PVName(channel).dev_name + ':'
         self.channel = channel
         super().__init__(callback,connection_callback,initial_hl2ll)
 
@@ -234,15 +227,15 @@ class _LL_TrigEVRMF(_LL_Base):
 
     def _get_LLPROP_2_PVSP(self):
         map_ = {
-            'internal_trigger' : self._OUTLB + 'IntChan-Sel',
-            'event'      : self._INTLB + 'Event-Sel',
-            'delay1'     : self._INTLB + 'Delay-SP',
-            'delay2'     : self._OUTLB + 'Delay-SP',
-            'delay3'     : self._OUTLB + 'FineDelay-SP',
-            'pulses'     : self._INTLB + 'Pulses-SP',
-            'width'      : self._INTLB + 'Width-SP',
-            'state'      : self._INTLB + 'State-Sel',
-            'polarity'   : self._INTLB + 'Polrty-Sel',
+            'int_trig'   : self.prefix + self._OUTLB + 'IntChan-Sel',
+            'event'      : self.prefix + self._INTLB + 'Event-Sel',
+            'delay1'     : self.prefix + self._INTLB + 'Delay-SP',
+            'delay2'     : self.prefix + self._OUTLB + 'Delay-SP',
+            'delay3'     : self.prefix + self._OUTLB + 'FineDelay-SP',
+            'pulses'     : self.prefix + self._INTLB + 'Pulses-SP',
+            'width'      : self.prefix + self._INTLB + 'Width-SP',
+            'state'      : self.prefix + self._INTLB + 'State-Sel',
+            'polarity'   : self.prefix + self._INTLB + 'Polrty-Sel',
             }
         for prop in self._REMOVE_PROPS:
             map_.pop(prop)
@@ -250,15 +243,15 @@ class _LL_TrigEVRMF(_LL_Base):
 
     def _get_LLPROP_2_PVRB(self):
         map_ = {
-            'internal_trigger' : self._OUTLB + 'IntChan-Sts',
-            'event'      : self._INTLB + 'Event-Sts',
-            'delay1'     : self._INTLB + 'Delay-RB',
-            'delay2'     : self._OUTLB + 'Delay-RB',
-            'delay3'     : self._OUTLB + 'FineDelay-RB',
-            'pulses'     : self._INTLB + 'Pulses-RB',
-            'width'      : self._INTLB + 'Width-RB',
-            'state'      : self._INTLB + 'State-Sts',
-            'polarity'   : self._INTLB + 'Polrty-Sts',
+            'int_trig'   : self.prefix + self._OUTLB + 'IntChan-Sts',
+            'event'      : self.prefix + self._INTLB + 'Event-Sts',
+            'delay1'     : self.prefix + self._INTLB + 'Delay-RB',
+            'delay2'     : self.prefix + self._OUTLB + 'Delay-RB',
+            'delay3'     : self.prefix + self._OUTLB + 'FineDelay-RB',
+            'pulses'     : self.prefix + self._INTLB + 'Pulses-RB',
+            'width'      : self.prefix + self._INTLB + 'Width-RB',
+            'state'      : self.prefix + self._INTLB + 'State-Sts',
+            'polarity'   : self.prefix + self._INTLB + 'Polrty-Sts',
             }
         for prop in self._REMOVE_PROPS:
             map_.pop(prop)
@@ -279,7 +272,7 @@ class _LL_TrigEVRMF(_LL_Base):
 
     def _get_LLPROP_FUNS(self):
         map_ = {
-            'internal_trigger' : self._get_int_channel,
+            'int_trig'   : self._get_int_channel,
             'event'      : lambda x,ty=None: {'event':x},
             'delay1'     : self._get_delay,
             'delay2'     : self._get_delay,
@@ -336,7 +329,7 @@ class _LL_TrigEVRMF(_LL_Base):
     def _set_int_channel(self,prop,value):
         _log.debug(self.channel+' Setting propty = {0:s}, value = {1:s}.'.format(prop,str(value)))
         self._hl2ll[prop] = value
-        int_trig = self._pvs_sp.get('internal_trigger')
+        int_trig = self._pvs_sp.get('int_trig')
         if int_trig is None:
             _log.debug(self.channel+' Internal Channel NOT Existent.')
             return
@@ -355,7 +348,7 @@ class _LL_TrigEVROPT(_LL_TrigEVRMF):
     _NUM_OPT   = 12
     _NUM_INT   = 24
     _INTTMP    = 'IntTrig{0:02d}'
-    _REMOVE_PROPS = {'delay2','delay3','internal_trigger'}
+    _REMOVE_PROPS = {'delay2','delay3','int_trig'}
 
     def _get_num_int(self,num):
         return num
@@ -388,16 +381,16 @@ class _LL_TrigAFCLVE(_LL_TrigEVRMF):
     _NUM_OPT   = 0
     _NUM_INT   = 256
     _INTTMP    = 'LVEIO{0:d}'
-    _REMOVE_PROPS = {'delay2','delay3','internal_trigger'}
+    _REMOVE_PROPS = {'delay2','delay3','int_trig'}
 
     def _get_LLPROP_2_PVSP(self):
         map_ = super()._get_LLPROP_2_PVSP()
-        map_['event'] = self._INTLB + 'Event-Sel'#'EVGParam-SP'
+        map_['event'] = self.prefix + self._INTLB + 'Event-Sel'#'EVGParam-SP'
         return map_
 
     def _get_LLPROP_2_PVRB(self):
         map_ = super()._get_LLPROP_2_PVRB()
-        map_['event'] = self._INTLB + 'Event-Sts'#'EVGParam-RB'
+        map_['event'] = self.prefix + self._INTLB + 'Event-Sts'#'EVGParam-RB'
         return map_
 
     def _get_HLPROP_FUNS(self):

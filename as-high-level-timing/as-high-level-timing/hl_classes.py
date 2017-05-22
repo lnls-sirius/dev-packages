@@ -5,11 +5,9 @@ from siriuspy.namesys import SiriusPVName as _PVName
 from ll_classes import get_ll_trigger_object
 from ll_classes import LL_Event
 
-def _get_initial_trig_hl2ll():
-
-
 Connections.add_bbb_info()
 Connections.add_crates_info()
+EVG  = Connections.get_devices('EVG').pop()
 EVRs = Connections.get_devices('EVR')
 EVEs = Connections.get_devices('EVE')
 AFCs = Connections.get_devices('AFC')
@@ -53,7 +51,7 @@ class _HL_Base:
         self._hl2ll = self._get_initial_hl2ll()
         self._ll_objs_names = self._get_LL_OBJS_NAMES(channels)
         _log.debug(self.prefix+ ' LL names: '+' '.join([tr for tr in self._ll_objs_names]))
-        len_rb = len(self._ll_obj_names)
+        len_rb = len(self._ll_objs_names)
         self._values_rb = {  key:len_rb*[val] for key,val in self._hl2ll.items()  }
         self._ll_objs = dict()
         self._ll_objs_conn_sts = list()
@@ -100,8 +98,8 @@ class _HL_Base:
             obj.check()
 
     def _ll_on_connection(self,channel,status):
-        ind = self._ll_obj_names.index(channel)
-        _log.debug(self.prefix+' channel = {0:s}; status = {1:d}; ind = {2:d}; len(_ll_objs) = {3:d}'.format(channel,int(status),ind,len(self._ll_trigs_conn_sts)))
+        ind = self._ll_objs_names.index(channel)
+        _log.debug(self.prefix+' channel = {0:s}; status = {1:d}; ind = {2:d}; len(_ll_objs) = {3:d}'.format(channel,int(status),ind,len(self._ll_objs_conn_sts)))
         if len(self._ll_objs_conn_sts) > ind:
             self._ll_objs_conn_sts[ind] = int(status)
         else:
@@ -119,13 +117,14 @@ class _HL_Base:
             if self._hl2ll[prop] != value:
                 _log.warning(self.prefix+' RB propty = '+prop+' (not HL); '+' LL Device = '+channel+
                             '; New Value = '+str(value)+'; Expected Value = '+str(self._hl2ll[prop]))
-                return
+            return
         _log.debug(self.prefix+' RB propty = {0:s}; LL Device = {1:s}; New Value = {2:s}'.format(prop,channel,str(value)))
         ind = self._ll_objs_names.index(channel)
         self._values_rb[prop][ind] = self._RB_FUNS[prop](value)
         self.callback( self.prefix + self._HLPROP_2_PVRB[prop], self._values_rb[prop]  )
 
     def set_propty(self,prop,value):
+        _log.debug(self.prefix+' propty {0:10s}; Value = {1:s}'.format(prop,str(value)))
         if value == self._hl2ll[prop]:
             _log.debug(self.prefix+' new value = old value.')
             return True
@@ -145,16 +144,17 @@ class HL_Event(_HL_Base):
     def get_database(self):
         db = dict()
         pre = self.prefix
+        len_rb = len(self._ll_objs_names)
         db[pre + 'Delay-SP']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'unit':'us', 'prec': 3,
                                      'fun_set_pv':lambda x: self.set_propty('delay',x)}
-        db[pre + 'Delay-RB']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'unit':'us','prec': 3}
+        db[pre + 'Delay-RB']      = {'type' : 'float', 'count': len_rb, 'value': 0.0, 'unit':'us','prec': 3}
         db[pre + 'Mode-Sel']      = {'type' : 'enum', 'enums':Events.MODES, 'value':1,
                                      'fun_set_pv':lambda x: self.set_propty('mode',x)}
-        db[pre + 'Mode-Sts']      = {'type' : 'enum', 'enums':Events.MODES, 'value':1}
+        db[pre + 'Mode-Sts']      = {'type' : 'int', 'value':1, 'count':len_rb}
         db[pre + 'DelayType-Sel'] = {'type' : 'enum', 'enums':Events.DELAY_TYPES, 'value':1,
                                      'fun_set_pv':lambda x: self.set_propty('delay_type',x)}
-        db[pre + 'DelayType-Sts'] = {'type' : 'enum', 'enums':Events.DELAY_TYPES, 'value':1}
-        db[pre + 'Connections-Mon']  = {'type':'int',  'value':0}
+        db[pre + 'DelayType-Sts'] = {'type' : 'int', 'value':1, 'count':len_rb}
+        db[pre + 'Connections-Mon']  = {'type':'int', 'value':0, 'count':len_rb}
         return db
 
     def __init__(self,prefix,callback,code):
@@ -216,22 +216,30 @@ class _HL_TrigBase(_HL_Base):
     def get_database(self):
         db = dict()
         pre = self.prefix
-        len_rb = len(self._ll_trig_names)
-        db[pre + 'State-Sel']   = {'type':'enum', 'value':0, 'enums':Triggers.STATES}
+        len_rb = len(self._ll_objs_names)
+        db[pre + 'State-Sel']   = {'type':'enum', 'value':0, 'enums':Triggers.STATES,
+                                   'fun_set_pv':lambda x: self.set_propty('state',x)}
         db[pre + 'State-Sts']   = {'type':'int',  'value':0, 'count':len_rb}
-        db[pre + 'WorkAs-Sel']  = {'type':'enum', 'value':0, 'enums':self._WORKAS_ENUMS}
+        db[pre + 'WorkAs-Sel']  = {'type':'enum', 'value':0, 'enums':self._WORKAS_ENUMS,
+                                   'fun_set_pv':lambda x: self.set_propty('work_as',x)}
         db[pre + 'WorkAs-Sts']  = {'type':'int',  'value':0, 'count':len_rb}
-        db[pre + 'Event-Sel']   = {'type':'enum', 'value':0, 'enums':self._EVENTS}
+        db[pre + 'Event-Sel']   = {'type':'enum', 'value':0, 'enums':self._EVENTS,
+                                   'fun_set_pv':lambda x: self.set_propty('event',x)}
         db[pre + 'Event-Sts']   = {'type':'int',  'value':0, 'count':len_rb}
-        db[pre + 'Clock-Sel']   = {'type':'enum', 'value':0, 'enums':Triggers.CLOCKS}
+        db[pre + 'Clock-Sel']   = {'type':'enum', 'value':0, 'enums':Triggers.CLOCKS,
+                                   'fun_set_pv':lambda x: self.set_propty('clock',x)}
         db[pre + 'Clock-Sts']   = {'type':'int',  'value':0, 'count':len_rb}
-        db[pre + 'Delay-SP']    = {'type':'float','value':0.0, 'unit':'us', 'prec': 4}
+        db[pre + 'Delay-SP']    = {'type':'float','value':0.0, 'unit':'us', 'prec': 4,
+                                   'fun_set_pv':lambda x: self.set_propty('delay',x)}
         db[pre + 'Delay-RB']    = {'type':'float','value':0.0, 'unit':'us', 'prec': 4, 'count':len_rb}
-        db[pre + 'Pulses-SP']   = {'type':'int',  'value':1}
+        db[pre + 'Pulses-SP']   = {'type':'int',  'value':1,
+                                   'fun_set_pv':lambda x: self.set_propty('pulses',x)}
         db[pre + 'Pulses-RB']   = {'type':'int',  'value':1, 'count':len_rb}
-        db[pre + 'Duration-SP'] = {'type':'float','value':0.0, 'unit':'ms', 'prec': 4}
+        db[pre + 'Duration-SP'] = {'type':'float','value':0.0, 'unit':'ms', 'prec': 4,
+                                   'fun_set_pv':lambda x: self.set_propty('width',x)}
         db[pre + 'Duration-RB'] = {'type':'float','value':0.0, 'unit':'ms', 'prec': 4, 'count':len_rb}
-        db[pre + 'Polrty-Sel']  = {'type':'enum', 'value':0, 'enums':Triggers.POLARITIES}
+        db[pre + 'Polrty-Sel']  = {'type':'enum', 'value':0, 'enums':Triggers.POLARITIES,
+                                   'fun_set_pv':lambda x: self.set_propty('polarity',x)}
         db[pre + 'Polrty-Sts']  = {'type':'int',  'value':0, 'count':len_rb}
         db2 = dict()
         for prop in self._HL_PROPS:
@@ -312,7 +320,7 @@ class _HL_TrigBase(_HL_Base):
             }
         return map_
 
-    def _get_LL_OBJ_NAMES(self,chans):
+    def _get_LL_OBJS_NAMES(self,chans):
         channels = set()
         for chan in chans:
             up_dev = _PVName(list(twds_evg[chan])[0])
@@ -368,10 +376,11 @@ class _HL_TrigPSSI(_HL_TrigBase):
 
     def _get_SP_FUNS(self):
         map_ = super()._get_SP_FUNS()
-        map_['event'] = self._set_event
+        map_['event'] = lambda x: self._set_event(x)
         return map_
 
     def _set_event(self,ev):
+        _log.debug('enter.')
         props = []
         if ev == 0:
             if self._hl2ll['pulses'] != 2000:
@@ -387,12 +396,14 @@ class _HL_TrigPSSI(_HL_TrigBase):
             if self._hl2ll['pulses'] != 1:
                 self._hl2ll['pulses'] = 1
                 props.append('pulses')
-
         for prop in props:
-            for dev, obj in self._ll_trigs.items():
+            for dev, obj in self._ll_objs.items():
                 obj.set_propty(prop,self._hl2ll[prop])
 
-        return Events.HL2LL_MAP[self._EVENTS[ev]]
+        _log.debug('exit.')
+        res_ = Events.HL2LL_MAP[self._EVENTS[ev]]
+        _log.debug('exit.')
+        return res_
 
 
 class _HL_TrigGeneric(_HL_TrigBase):

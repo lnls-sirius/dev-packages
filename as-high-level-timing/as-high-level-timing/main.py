@@ -68,7 +68,7 @@ class App:
         triggers = _get_triggers()
         for prefix, prop in triggers.items():
             trig = get_hl_trigger_object(prefix, self._update_driver, **prop)
-            self._triggers[trig_prefix] = trig
+            self._triggers[prefix] = trig
 
         self._database = self.get_database()
 
@@ -118,23 +118,23 @@ class App:
         for tr in self._triggers.values():
             tr.check()
 
-    def _verify_validity(self,reason,value):
-        if parts.propty.endswith(('-Sts','-RB', '-Mon')):
+    def _isValid(self,reason,value):
+        if reason.endswith(('-Sts','-RB', '-Mon')):
             _log.debug('App: PV {0:s} is read only.'.format(reason))
             return False
-        entry_ = self._database[reason]
-        enums = entry_.get('enums')
-        len_ = len(enums)
-        if enums is not None and value >= len_:
-            _log.warning('App: value {0:d} too large for PV {1:s} of type enum'.format(value,reason))
-            return False
+        enums = self._database[reason].get('enums')
+        if enums is not None:
+            len_ = len(enums)
+            if int(value) >= len_:
+                _log.warning('App: value {0:d} too large for PV {1:s} of type enum'.format(value,reason))
+                return False
         return True
 
     def write(self,reason,value):
         _log.debug('App: Writing PV {0:s} with value {1:s}'.format(reason,str(value)))
-        if not self._verify_validity(reason,value):
+        if not self._isValid(reason,value):
             return False
-        fun_ = self.database[reason].get('fun_set_pv')
+        fun_ = self._database[reason].get('fun_set_pv')
         if fun_ is None:
             _log.warning('App: Write unsuccessful. PV {0:s} does not have a set function.'.format(reason))
             return False
