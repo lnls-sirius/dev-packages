@@ -412,7 +412,6 @@ class PowerSupplyEpicsSync(PowerSupply):
             c.current_sp = value
 
 
-
 class PowerSupplyMAFam(PowerSupply):
 
     def __init__(self, ps_name, **kwargs):

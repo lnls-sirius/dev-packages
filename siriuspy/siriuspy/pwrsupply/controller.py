@@ -552,6 +552,9 @@ class ControllerSim(Controller):
     def _get_wfmindex(self):
         return self._wfmindex
 
+    def _set_wfmindex(self, value):
+        self._wfmindex = value
+
     def _get_wfmlabels(self):
         return [label for label in self._wfmlabels]
 
@@ -593,9 +596,6 @@ class ControllerSim(Controller):
 
     def _get_wfmscanning(self):
         return self._wfmscanning
-
-    def _set_wfmindex(self, value):
-        self._wfmindex = value
 
     def _set_wfmscanning(self, value):
         self._wfmscanning = value
@@ -715,42 +715,177 @@ class ControllerEpics(Controller):
                        connection_timeout=_connection_timeout,
                        **kwargs):
 
+        self._ps_name = ps_name
+        self._connection_timeout = connection_timeout
+        self._create_epics_pvs()
+
         super().__init__(**kwargs)
 
         now = self.time
         self._timestamp_pwrstate = now # last time pwrstate was changed
         self._timestamp_opmode   = now # last time opmode was changed
 
-        self._ps_name = ps_name
-        self._connection_timeout = connection_timeout
-        self._create_epics_pvs()
+
+    def _get_pwrstate(self):
+        return self._pvs['PwrState-Sts'].get(timeout=self._connection_timeout)
+
+    def _set_pwrstate(self, value):
+        if value not in _et.values('OffOnTyp'): raise Exception('Invalid value of pwrstate_sel')
+        if value != self.pwrstate:
+            self._pvs['PwrState-Sel'].value = value
+            self.update_state(pwrstate=True)
+
+    def _get_opmode(self):
+        return self._pvs['OpMode-Sts'].get(timeout=self._connection_timeout)
+
+    def _set_opmode(self, value):
+        if value not in _et.values('OffOnTyp'): raise Exception('Invalid value of pwrstate_sel')
+        if value != self.opmode:
+            self._pvs['OpMode-Sel'].value = value
+            self.update_state(opmode=True)
+
+    def _get_reset(self):
+        return self._pvs['Reset-Cmd'].get(timeout=self._connection_timeout)
+
+    def _set_reset(self, value):
+        self._pvs['Reset-Cmd'].value = value
+        self.update_state(reset=True)
+
+    def _get_intlk(self):
+        return self._pvs['Intlk-Mon'].get(timeout=self._connection_timeout)
+
+    def _get_intlklabels(self):
+        return self._pvs['IntlkLabels-Cte'].get(timeout=self._connection_timeout)
+
+    def _get_current_min(self):
+        return self._pvs['Current-SP'].lower_ctrl_limit
+
+    def _get_current_max(self):
+        return self._pvs['Current-SP'].upper_ctrl_limit
+
+    def _set_current_min(self):
+        pass
+
+    def _set_current_max(self):
+        pass
+
+    def _get_current_sp(self):
+        return self._pvs['Current-SP'].get(timeout=self._connection_timeout)
+
+    def _set_current_sp(self, value):
+        if value != self.current_sp:
+            self._pvs['Current-SP'].value = value
+            self.update_state(current_sp=True)
+
+    def _get_current_ref(self):
+        return self._pvs['CurrentRef-Mon'].get(timeout=self._connection_timeout)
+
+    def _get_current_load(self):
+        return self._pvs['Current-Mon'].get(timeout=self._connection_timeout)
+
+    def _get_wfmindex(self):
+        return self._pvs['WfmIndex-Mon'].get(timeout=self._connection_timeout)
+
+    def _set_wfmindex(self, value):
+        pass
+
+    def _get_wfmlabels(self):
+        return self._pvs['WfmLabels-Mon'].get(timeout=self._connection_timeout)
+
+    def _get_wfmlabel(self):
+        return self._pvs['WfmLabel-RB'].get(timeout=self._connection_timeout)
+
+    def _set_wfmlabel(self, value):
+        if value != self.wfmlabel:
+            self._pvs['WfmLabel-SP'].value = value
+            self.update_state(wfmlabel=True)
+
+    def _get_wfmload(self):
+        return self._pvs['WfmLoad-Sts'].get(timeout=self._connection_timeout)
+
+    def _set_wfmload(self, value):
+        if value != self.wfmload:
+            self._pvs['WfmLoad-Sel'].value = value
+            self.update_state(wfmload=True)
+
+    def _get_wfmdata(self):
+        return self._pvs['WfmData-RB'].get(timeout=self._connection_timeout)
+
+    def _set_wfmdata(self, value):
+        if (value != self.wfmdata).any():
+            self._pvs['WfmData-SP'].value = value
+            self.update_state(wfmdata=True)
+
+    def _get_wfmsave(self):
+        return self._pvs['WfmSave-Cmd'].get(timeout=self._connection_timeout)
+
+    def _set_wfmsave(self, value):
+        self._pvs['WfmSave-Cmd'].value = value
+        self.update_state(wfmsave=True)
+
+    def _get_wfmscanning(self):
+        return self._pvs['WfmScanning-Mon'].get(timeout=self._connection_timeout)
+
+    def _set_wfmscanning(self):
+        pass
+
+    def _set_timestamp_trigger(self, value):
+        pass
+
+    def _get_trigger_timeout(self):
+        return False
+
+    def _set_trigger_timeout(self, value):
+        pass
+
+    def _get_time(self):
+        return _time.time()
+
+    def _process_trigger_signal(nrpts, width):
+        pass
+
+    def _check_pending_waveform_writes(self):
+        pass
+
+    def _set_current_ref(self, value):
+        pass
+
+    def _mycallback(self, pvname, value, **kwargs):
+        if self._callback is None:
+            return
+        else:
+            self._callback(pvname=pvname, value=value, **kwargs)
 
     def _create_epics_pvs(self):
         self._pvs = {}
         pv = self._ps_name
-        self._pvs['PwrState-Sel']   = _PV(pv + ':PwrState-Sel',   connection_timeout=self._connection_timeout)
-        self._pvs['PwrState-Sts']   = _PV(pv + ':PwrState-Sts',   connection_timeout=self._connection_timeout)
-        self._pvs['OpMode-Sel']     = _PV(pv + ':OpMode-Sel',     connection_timeout=self._connection_timeout)
-        self._pvs['OpMode-Sts']     = _PV(pv + ':OpMode-Sts',     connection_timeout=self._connection_timeout)
-        self._pvs['Current-SP']     = _PV(pv + ':Current-SP',     connection_timeout=self._connection_timeout)
-        self._pvs['Current-RB']     = _PV(pv + ':Current-RB',     connection_timeout=self._connection_timeout)
-        self._pvs['CurrentRef-Mon'] = _PV(pv + ':CurrentRef-Mon', connection_timeout=self._connection_timeout)
-        self._pvs['Current-Mon']    = _PV(pv + ':Current-Mon',    connection_timeout=self._connection_timeout)
-        self._pvs['WfmIndex-Mon']   = _PV(pv + ':WfmIndex-Mon',   connection_timeout=self._connection_timeout)
-        self._pvs['WfmLabels-Mon']  = _PV(pv + ':WfmLabels-Mon',  connection_timeout=self._connection_timeout)
-        self._pvs['WfmLabel-SP']    = _PV(pv + ':WfmLabel-SP',    connection_timeout=self._connection_timeout)
-        self._pvs['WfmLabel-RB']    = _PV(pv + ':WfmLabel-RB',    connection_timeout=self._connection_timeout)
-        self._pvs['WfmLoad-Sel']    = _PV(pv + ':WfmLoad-Sel',    connection_timeout=self._connection_timeout)
-        self._pvs['WfmLoad-Sts']    = _PV(pv + ':WfmLoad-Sts',    connection_timeout=self._connection_timeout)
-        self._pvs['WfmData-SP']     = _PV(pv + ':WfmData-SP',     connection_timeout=self._connection_timeout)
-        self._pvs['WfmData-RB']     = _PV(pv + ':WfmData-RB',     connection_timeout=self._connection_timeout)
-        self._pvs['WfmSave-Cmd']    = _PV(pv + ':WfmSave-Cmd',    connection_timeout=self._connection_timeout)
-        self._pvs['Wfmscanning-Mon'] = _PV(pv + ':WfmScanning-Mon', connection_timeout=self._connection_timeout)
+        self._pvs['PwrState-Sel']    = _PV(pv + ':PwrState-Sel',    connection_timeout=self._connection_timeout)
+        self._pvs['PwrState-Sts']    = _PV(pv + ':PwrState-Sts',    connection_timeout=self._connection_timeout)
+        self._pvs['OpMode-Sel']      = _PV(pv + ':OpMode-Sel',      connection_timeout=self._connection_timeout)
+        self._pvs['OpMode-Sts']      = _PV(pv + ':OpMode-Sts',      connection_timeout=self._connection_timeout)
+        self._pvs['Intlk-Mon']       = _PV(pv + ':Intlk-Mon',       connection_timeout=self._connection_timeout)
+        self._pvs['IntlkLabels-Cte'] = _PV(pv + ':IntlkLabels-Cte', connection_timeout=self._connection_timeout)
+        self._pvs['Current-SP']      = _PV(pv + ':Current-SP',      connection_timeout=self._connection_timeout)
+        self._pvs['Current-RB']      = _PV(pv + ':Current-RB',      connection_timeout=self._connection_timeout)
+        self._pvs['CurrentRef-Mon']  = _PV(pv + ':CurrentRef-Mon',  connection_timeout=self._connection_timeout)
+        self._pvs['Current-Mon']     = _PV(pv + ':Current-Mon',     connection_timeout=self._connection_timeout)
+        self._pvs['WfmIndex-Mon']    = _PV(pv + ':WfmIndex-Mon',    connection_timeout=self._connection_timeout)
+        self._pvs['WfmLabels-Mon']   = _PV(pv + ':WfmLabels-Mon',   connection_timeout=self._connection_timeout)
+        self._pvs['WfmLabel-SP']     = _PV(pv + ':WfmLabel-SP',     connection_timeout=self._connection_timeout)
+        self._pvs['WfmLabel-RB']     = _PV(pv + ':WfmLabel-RB',     connection_timeout=self._connection_timeout)
+        self._pvs['WfmLoad-Sel']     = _PV(pv + ':WfmLoad-Sel',     connection_timeout=self._connection_timeout)
+        self._pvs['WfmLoad-Sts']     = _PV(pv + ':WfmLoad-Sts',     connection_timeout=self._connection_timeout)
+        self._pvs['WfmData-SP']      = _PV(pv + ':WfmData-SP',      connection_timeout=self._connection_timeout)
+        self._pvs['WfmData-RB']      = _PV(pv + ':WfmData-RB',      connection_timeout=self._connection_timeout)
+        self._pvs['WfmSave-Cmd']     = _PV(pv + ':WfmSave-Cmd',     connection_timeout=self._connection_timeout)
+        self._pvs['WfmScanning-Mon'] = _PV(pv + ':WfmScanning-Mon', connection_timeout=self._connection_timeout)
 
         self._pvs['PwrState-Sel'].wait_for_connection(timeout=self._connection_timeout)
         self._pvs['PwrState-Sts'].wait_for_connection(timeout=self._connection_timeout)
         self._pvs['OpMode-Sel'].wait_for_connection(timeout=self._connection_timeout)
         self._pvs['OpMode-Sts'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['Intlk-Mon'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['IntlkLabels-Cte'].wait_for_connection(timeout=self._connection_timeout)
         self._pvs['Current-SP'].wait_for_connection(timeout=self._connection_timeout)
         self._pvs['Current-RB'].wait_for_connection(timeout=self._connection_timeout)
         self._pvs['CurrentRef-Mon'].wait_for_connection(timeout=self._connection_timeout)
@@ -772,6 +907,8 @@ class ControllerEpics(Controller):
         self._pvs['PwrState-Sts'].add_callback(callback=self._mycallback, index=uuid)
         self._pvs['OpMode-Sel'].add_callback(callback=self._mycallback, index=uuid)
         self._pvs['OpMode-Sts'].add_callback(callback=self._mycallback, index=uuid)
+        self._pvs['Intlk-Mon'].add_callback(callback=self._mycallback, index=uuid)
+        self._pvs['IntlkLabels-Cte'].add_callback(callback=self._mycallback, index=uuid)
         self._pvs['Current-SP'].add_callback(callback=self._mycallback, index=uuid)
         self._pvs['Current-RB'].add_callback(callback=self._mycallback, index=uuid)
         self._pvs['CurrentRef-Mon'].add_callback(callback=self._mycallback, index=uuid)
@@ -787,107 +924,5 @@ class ControllerEpics(Controller):
         self._pvs['WfmSave-Cmd'].add_callback(callback=self._mycallback, index=uuid)
         self._pvs['WfmScanning-Mon'].add_callback(callback=self._mycallback, index=uuid)
 
-    def _get_current_min(self):
-        return self._pvs['Current-SP'].lower_ctrl_limit
-
-    def _set_current_min(self):
-        pass
-
-    def _get_current_max(self):
-        return self._pvs['Current-SP'].upper_ctrl_limit
-
-    def _set_current_max(self):
-        pass
-
-    def _get_current_sp(self):
-        return self._pvs['Current-SP'].get(timeout=self._connection_timeout)
-
-    def _set_current_sp(self, value):
-        if value != self.current_sp:
-            self._pvs['Current-SP'].value = value
-            self.update_state(current_sp=True)
-
-    def _get_current_ref(self):
-        return self._pvs['CurrentRef-Mon'].get(timeout=self._connection_timeout)
-
-    def _get_current_load(self):
-        return self._pvs['Current-Mon'].get(timeout=self._connection_timeout)
-
-    def _get_pwrstate(self):
-        return self._pvs['PwrState-Sts'].get(timeout=self._connection_timeout)
-
-    def _set_pwrstate(self, value):
-        if value not in _et.values('OffOnTyp'): raise Exception('Invalid value of pwrstate_sel')
-        if value != self.pwrstate:
-            self._pvs['PwrState-Sel'].value = value
-            self.update_state()
-
-    def _get_opmode(self):
-        return self._pvs['OpMode-Sts'].get(timeout=self._connection_timeout)
-
-    def _set_opmode(self, value):
-        if value not in _et.values('OffOnTyp'): raise Exception('Invalid value of pwrstate_sel')
-        if value != self.opmode:
-            self._pvs['OpMode-Sel'].value = value
-            self.update_state()
-
-    def _get_wfmindex(self):
-        return self._pvs['WfmIndex-Mon'].get(timeout=self._connection_timeout)
-
-    def _get_wfmlabels(self):
-        return self._pvs['WfmLabels-Mon'].get(timeout=self._connection_timeout)
-
-    def _get_wfmlabel(self):
-        return self._pvs['WfmLabel-RB'].get(timeout=self._connection_timeout)
-
-    def _set_wfmlabel(self, value):
-        if value != self.wfmlabel:
-            self._pvs['WfmLabel-SP'].value = value
-            self.update_state(wfmlabel=True)
-
-    def _get_wfmload(self):
-        return self._pvs['WfmLoad-Sts'].get(timeout=self._connection_timeout)
-        #labels = self._pvs['WfmLabels-Mon'].get(timeout=self._connection_timeout)
-        #return labels.tolist().index(label)
-
-    def _set_wfmload(self, value):
-        if value != self.wfmload:
-            self._pvs['WfmLoad-Sel'].value = value
-            #labels = self._pvs['WfmLabels-Mon'].get(timeout=self._connection_timeout)
-            #self._pvs['WfmLoad-Sel'].value = labels[value]
-            self.update_state(wfmload=True)
-
-    def _get_wfmdata(self):
-        return self._pvs['WfmData-RB'].get(timeout=self._connection_timeout)
-
-    def _set_wfmdata(self, value):
-        if (value != self.wfmdata).any():
-            self._pvs['WfmData-SP'].value = value
-            self.update_state(wfmdata=True)
-
-    def _get_wfmsave(self):
-        return self._pvs['WfmSave-Cmd'].get(timeout=self._connection_timeout)
-
-    def _set_wfmsave(self, value):
-        self._pvs['WfmSave-Cmd'].value = value
-        self.update_state(wfmsave=True)
-
-    def _get_wfmscanning(self):
-        return self._pvs['WfmScanning-Mon'].get(timeout=self._connection_timeout)
-
-    def _check_pending_waveform_writes(self):
-        pass
-
-    def _update_scanning_state(self):
-        return self.time
-
-    def _update_current_ref(self, value):
-        pass
-
-    def _mycallback(self, pvname, value, **kwargs):
-        if self._callback is None:
-            return
-        else:
-            self._callback(pvname=pvname, value=value, **kwargs)
 
 Controller.register(ControllerEpics)
