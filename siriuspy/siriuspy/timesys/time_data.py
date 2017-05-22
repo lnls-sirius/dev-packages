@@ -15,7 +15,7 @@ from siriuspy.namesys import SiriusPVName as _PVName
 _timeout = 1.0
 
 class Events:
-    HL2LL_MAP = {'Linac':0,  'InjBO':1,  'InjSI':2,  'RmpBO':3,  'RmpSI':4,
+    HL2LL_MAP = {'Linac':0,  'InjBO':1,  'InjSI':2,  'RmpBO':3,  'MigSI':4,
                  'DigLI':5,  'DigTB':6,  'DigBO':7,  'DigTS':8,  'DigSI':9,
                  'Orbit':10, 'Coupl':11, 'Tunes':12, 'Study':13, }
     LL2HL_MAP = {  val:key for key,val in HL2LL_MAP.items()  }
