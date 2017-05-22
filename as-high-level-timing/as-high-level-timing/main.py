@@ -61,13 +61,13 @@ class App:
         self._events = dict()
         for ev,code in Events.HL2LL_MAP.items():
             event = Events.HL_PREF + ev
-            self._events[event] = HL_Event(event,code,self._update_driver)
+            self._events[event] = HL_Event(event,self._update_driver,code)
         # Build triggers from data dictionary:
         _log.info('Creating High Level Triggers:')
         self._triggers = dict()
         triggers = _get_triggers()
-        for trig_prefix, prop in triggers.items():
-            trig = get_hl_trigger_object(trig_prefix, self._update_driver, **prop)
+        for prefix, prop in triggers.items():
+            trig = get_hl_trigger_object(prefix, self._update_driver, **prop)
             self._triggers[trig_prefix] = trig
 
         self._database = self.get_database()
@@ -122,7 +122,6 @@ class App:
         if parts.propty.endswith(('-Sts','-RB', '-Mon')):
             _log.debug('App: PV {0:s} is read only.'.format(reason))
             return False
-
         entry_ = self._database[reason]
         enums = entry_.get('enums')
         len_ = len(enums)
@@ -135,12 +134,10 @@ class App:
         _log.debug('App: Writing PV {0:s} with value {1:s}'.format(reason,str(value)))
         if not self._verify_validity(reason,value):
             return False
-
         fun_ = self.database[reason].get('fun_set_pv')
         if fun_ is None:
             _log.warning('App: Write unsuccessful. PV {0:s} does not have a set function.'.format(reason))
             return False
-
         ret_val = fun_(value)
         if ret_val:
             _log.debug('App: Write complete.')
