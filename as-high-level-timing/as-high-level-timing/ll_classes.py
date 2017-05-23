@@ -167,6 +167,42 @@ class _LL_Base:
 
 
 
+class LL_Clock(_LL_Base):
+
+    def __init__(self, channel,  callback, connection_callback, initial_hl2ll):
+        self.prefix = LL_PREFIX + channel
+        self.channel = channel
+        super().__init__(callback,connection_callback,initial_hl2ll)
+
+    def _get_LLPROP_2_PVSP(self):
+        map_ = {
+            'frequency' : self.prefix + 'Freq-SP',
+            'state'     : self.prefix + 'State-Sel',
+            }
+        return map_
+
+    def _get_LLPROP_2_PVRB(self):
+        map_ = {
+            'frequency' : self.prefix + 'Freq-RB',
+            'state'     : self.prefix + 'State-Sts',
+            }
+        return map_
+
+    def _get_HLPROP_FUNS(self):
+        map_ = {
+            'frequency' : lambda x: self._set_simple('frequency',x),
+            'state'     : lambda x: self._set_simple('state',x),
+            }
+        return map_
+
+    def _get_LLPROP_FUNS(self):
+        map_ = {
+            'frequency' : lambda x,ty=None: {'frequency':x},
+            'state'     : lambda x,ty=None: {'state':x},
+            }
+        return map_
+
+
 class LL_Event(_LL_Base):
 
     def __init__(self, channel,  callback, connection_callback, initial_hl2ll):

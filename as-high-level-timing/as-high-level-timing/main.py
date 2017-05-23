@@ -56,6 +56,12 @@ class App:
         self._driver = driver
         if not check_triggers_consistency():
             raise Exception('Triggers not consistent.')
+        # Build Clock's Variables:
+        _log.info('Creating High Level Clocks:')
+        self._events = dict()
+        for cl,num in Clocks.HL2LL_MAP.items():
+            clock = Clocks.HL_PREF + cl
+            self._clocks[clock] = HL_Event(clock,self._update_driver,num)
         # Build Event's Variables:
         _log.info('Creating High Level Events:')
         self._events = dict()
@@ -73,15 +79,14 @@ class App:
         self._database = self.get_database()
 
     def connect(self):
+        _log.info('Connecting to Low Level Clocks:')
+        for key,val in self._clocks.items(): val.connect()
+        _log.info('All Clocks connection opened.')
         _log.info('Connecting to Low Level Events:')
-        # Build Event's Variables:
-        for key,val in self._events.items():
-            val.connect()
+        for key,val in self._events.items(): val.connect()
         _log.info('All Events connection opened.')
-        # Build triggers from data dictionary:
         _log.info('Connecting to Low Level Triggers:')
-        for key,val in self._triggers.items():
-            val.connect()
+        for key,val in self._triggers.items(): val.connect()
         _log.info('All Triggers connection opened.')
 
     def _update_driver(self,pvname,value,**kwargs):

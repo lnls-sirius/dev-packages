@@ -208,6 +208,69 @@ class HL_Event(_HL_Base):
         return LL_Event(**kwargs)
 
 
+class HL_Clock(_HL_Base):
+
+    _HL_PROPS = {'frequency','state'}
+
+    def get_database(self):
+        db = dict()
+        pre = self.prefix
+        len_rb = len(self._ll_objs_names)
+        db[pre + 'Freq-SP']      = {'type' : 'float', 'value': 1.0, 'unit':'kHz', 'prec': 10,
+                                     'fun_set_pv':lambda x: self.set_propty('frequency',x)}
+        db[pre + 'Freq-RB']      = {'type' : 'float', 'count': len_rb, 'value': 0.0, 'unit':'kHz','prec': 10}
+        db[pre + 'State-Sel']      = {'type' : 'enum', 'enums':Clocks.STATES, 'value':0,
+                                     'fun_set_pv':lambda x: self.set_propty('state',x)}
+        db[pre + 'State-Sts']      = {'type' : 'int', 'value':1, 'count':len_rb}
+        db[pre + 'Connections-Mon']  = {'type':'int', 'value':0, 'count':len_rb}
+        return db
+
+    def __init__(self,prefix,callback,number):
+        super().__init__(prefix,callback,number)
+
+    def _get_initial_hl2ll(self):
+        map_ = {
+            'frequency' : 0,
+            'state'     : 0,
+            }
+        return map_
+
+    def _get_HLPROP_2_PVSP(self):
+        map_ = { # This dictionary converts the internal property name to the SP pv name
+            'frequency' : 'Freq-SP',
+            'state'     : 'State-Sel',
+            }
+        return map_
+
+    def _get_HLPROP_2_PVRB(self):
+        map_ = {
+            'frequency' : 'Freq-RB',
+            'state'     : 'State-Sts',
+            }
+        return map_
+
+    def _get_SP_FUNS(self):
+        map_ = {
+            'frequency' : lambda x: x,
+            'state'     : lambda x: x,
+            }
+        return map_
+
+    def _get_RB_FUNS(self):
+        map_ = {
+            'frequency' : lambda x: x,
+            'state'     : lambda x: x,
+            }
+        return map_
+
+    def _get_LL_OBJS_NAMES(self,number):
+        channels = [EVG + ':' + Clocks.LL_TMP.format(number) ]
+        return channels
+
+    def _get_LL_OBJ(self,**kwargs):
+        return LL_Clock(**kwargs)
+
+
 class _HL_TrigBase(_HL_Base):
     _WORKAS_ENUMS = ('Trigger', 'Clock')
 
@@ -400,7 +463,6 @@ class _HL_TrigPSSI(_HL_TrigBase):
             for dev, obj in self._ll_objs.items():
                 obj.set_propty(prop,self._hl2ll[prop])
 
-        _log.debug('exit.')
         res_ = Events.HL2LL_MAP[self._EVENTS[ev]]
         _log.debug('exit.')
         return res_
