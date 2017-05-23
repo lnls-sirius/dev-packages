@@ -3,7 +3,7 @@ import copy as _copy
 from siriuspy.timesys.time_data import Connections, IOs, Triggers, Clocks, Events
 from siriuspy.namesys import SiriusPVName as _PVName
 from ll_classes import get_ll_trigger_object
-from ll_classes import LL_Event
+from ll_classes import LL_Event, LL_Clock
 
 Connections.add_bbb_info()
 Connections.add_crates_info()

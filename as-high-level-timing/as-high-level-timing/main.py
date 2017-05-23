@@ -1,10 +1,10 @@
 import pvs as _pvs
 import time as _time
 import logging as _log
-from siriuspy.timesys.time_data import Connections, Events
+from siriuspy.timesys.time_data import Connections, Events, Clocks
 from siriuspy.namesys import SiriusPVName as _PVName
 from data.triggers import get_triggers as _get_triggers
-from hl_classes import get_hl_trigger_object, HL_Event
+from hl_classes import get_hl_trigger_object, HL_Event, HL_Clock
 
 # Coding guidelines:
 # =================
@@ -45,10 +45,9 @@ class App:
 
     def get_database(self):
         db = dict()
-        for ev in self._events.values():
-            db.update(ev.get_database())
-        for trig in self._triggers.values():
-            db.update(trig.get_database())
+        for cl in self._clocks.values():     db.update(cl.get_database())
+        for ev in self._events.values():     db.update(ev.get_database())
+        for trig in self._triggers.values(): db.update(trig.get_database())
         return db
 
     def __init__(self,driver=None):
@@ -56,19 +55,16 @@ class App:
         self._driver = driver
         if not check_triggers_consistency():
             raise Exception('Triggers not consistent.')
-        # Build Clock's Variables:
         _log.info('Creating High Level Clocks:')
-        self._events = dict()
+        self._clocks = dict()
         for cl,num in Clocks.HL2LL_MAP.items():
             clock = Clocks.HL_PREF + cl
-            self._clocks[clock] = HL_Event(clock,self._update_driver,num)
-        # Build Event's Variables:
+            self._clocks[clock] = HL_Clock(clock,self._update_driver,num)
         _log.info('Creating High Level Events:')
         self._events = dict()
         for ev,code in Events.HL2LL_MAP.items():
             event = Events.HL_PREF + ev
             self._events[event] = HL_Event(event,self._update_driver,code)
-        # Build triggers from data dictionary:
         _log.info('Creating High Level Triggers:')
         self._triggers = dict()
         triggers = _get_triggers()
