@@ -39,7 +39,7 @@ class Clocks:
     HL_TMP   = 'Clock{0:d}'
     HL_PREF  = 'AS-Glob:TI-Clock:'
 
-    HL2LL_MAP = {Clocks.HL_TMP.format(i):i for i in range(8)}
+    HL2LL_MAP = {HL_TMP.format(i):i for i in range(8)}
 
 
 class Triggers:
