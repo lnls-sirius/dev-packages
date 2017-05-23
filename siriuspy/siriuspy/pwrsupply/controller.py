@@ -489,6 +489,7 @@ class ControllerSim(Controller):
         self._reset = 0                        # reset command counter
         self._cmd_abort_issued = False
         self._cmd_reset_issued = False
+        self._wfmslot     = 0
         self._wfmscanning       = False
         self._pending_wfmdata  = False          # pending wfm slot number
         self._pending_wfmload  = False          # pending wfm slot number
@@ -662,7 +663,7 @@ class ControllerSim(Controller):
         elif pvname == 'current_load':
             self._callback(pvname='current_load', value=self._current_load)
         elif pvname == 'wfmload':
-            self._callback(pvname='wfmload', value=self._wfmload_sel)
+            self._callback(pvname='wfmload', value=self._wfmslot)
         elif pvname == 'wfmdata':
             self._callback(pvname='wfmdata', value=self._waveform.data)
         elif pvname == 'wfmlabel':
