@@ -45,7 +45,7 @@ Clocks.LL2HL_MAP = {  val:key for key,val in Clocks.HL2LL_MAP.items()  }
 class Triggers:
     STATES      = ('Dsbl','Enbl')
     POLARITIES  = ('Normal','Inverse')
-    CLOCKS      = tuple([Clocks.HL_TMP.format(i) for i in range(Clocks.NUM)])
+    CLOCKS      = tuple(Clocks.HL2LL_MAP.keys())
 
 
 class IOs:
