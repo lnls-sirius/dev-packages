@@ -9,7 +9,7 @@ setup(
     name='SOFB',
     version=__version__,
     author='lnls-sirius',
-    description='Slow Orbit FeedBack System for Sirius',
+    description='Slow Orbit Feedback System for Sirius',
     url='PROJECT-URL',
     download_url='PROJECT-DOWNLOAD-URL',
     license='MIT License',

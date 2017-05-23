@@ -74,6 +74,24 @@ class App:
 
         self._database = self.get_database()
 
+
+    def main_loop(self):
+
+        while self.correct_orbit:
+            t0 = _time.time()
+            # _log.debug('App: Executing check.')
+            orb = BPMs.get_orbit()
+            dtheta = Matrix.get_kicks(orb)
+            if
+
+
+
+            tf = _time.time()
+            dt = (tf-t0)
+            if dt > 0.2: _log.debug('App: check took {0:f}ms.'.format(dt*1000))
+            dt = interval - dt
+            if dt>0: _time.sleep(dt)
+
     def connect(self):
         _log.info('Connecting to Low Level Clocks:')
         for key,val in self._clocks.items(): val.connect()

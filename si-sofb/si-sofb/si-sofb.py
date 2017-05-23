@@ -13,7 +13,7 @@ INTERVAL = 0.1
 stop_event = False # _multiprocessing.Event()
 PREFIX = ''
 DB_FILENAME = 'my_pvs.txt'
-LOG_FILENAME = 'as-hl-timing.log'
+LOG_FILENAME = 'si-sofb'
 
 def stop_now(signum, frame):
     _log.info('SIGINT received')
