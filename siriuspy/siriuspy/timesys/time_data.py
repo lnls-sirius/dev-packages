@@ -34,12 +34,12 @@ class Events:
 
 
 class Clocks:
-    STATES  = ('Dsbl','Enbl')
+    STATES   = ('Dsbl','Enbl')
     LL_TMP   = 'Clock{0:d}'
     HL_TMP   = 'Clock{0:d}'
     HL_PREF  = 'AS-Glob:TI-Clock:'
-
-    HL2LL_MAP = {HL_TMP.format(i):i for i in range(8)}
+Clocks.HL2LL_MAP = { Clocks.HL_TMP.format(i):i for i in range(8) } # Issue with dict comprehensions
+Clocks.LL2HL_MAP = {  val:key for key,val in Clocks.HL2LL_MAP.items()  }
 
 
 class Triggers:
