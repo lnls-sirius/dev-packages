@@ -170,7 +170,7 @@ class _EVGSim(_BaseSim):
         for i in Events.LL_CODES:
             self.events.append(_EventSim(self.base_freq/RF_FREQ_DIV))
         self.clocks = list()
-        for i in range(Clocks.NUM):
+        for i in Clocks.LL2HL_MAP.keys():
             self.clocks.append(_ClockSim(self.base_freq/RF_FREQ_DIV))
 
     def __setattr__(self,attr,value):
@@ -381,7 +381,7 @@ class EVGIOC(_BaseIOC):
         db[p + 'BucketList-RB'] = {'type' : 'int', 'count': 864, 'value':0}
         db[p + 'RepRate-SP'] = {'type' : 'float', 'unit':'Hz', 'value': 2.0, 'prec': 5}
         db[p + 'RepRate-RB'] = {'type' : 'float', 'unit':'Hz', 'value': 2.0, 'prec': 5}
-        for i in range(Clocks.NUM):
+        for i in Clocks.LL2HL_MAP.keys():
             p = prefix + Clocks.LL_TMP.format(i)
             db.update(_ClockIOC.get_database(p))
         for i in Events.LL_CODES:
@@ -417,7 +417,7 @@ class EVGIOC(_BaseIOC):
                                          prefix = name,
                                          controller = cntler)
         self.clocks = dict()
-        for i in range(Clocks.NUM):
+        for i in Clocks.LL2HL_MAP.keys():
             name = Clocks.LL_TMP.format(i)
             cntler = self._controller.clocks[i]
             self.clocks[name] = _ClockIOC(self.base_freq/RF_FREQ_DIV,
@@ -606,8 +606,8 @@ class _EVRTriggerIOC(_BaseIOC):
         'fine_delay_rb':    'FineDelay-RB',
         'delay_sp':         'Delay-SP',
         'delay_rb':         'Delay-RB',
-        'optic_channel_sp': 'OptCh-Sel',
-        'optic_channel_rb': 'OptCh-Sts',
+        'optic_channel_sp': 'IntChan-Sel',
+        'optic_channel_rb': 'IntChan-Sts',
         }
 
     @classmethod
@@ -617,8 +617,8 @@ class _EVRTriggerIOC(_BaseIOC):
         db[prefix + 'FineDelay-RB']   = {'type' : 'float', 'unit':'ns', 'value': 0.0, 'prec': 0}
         db[prefix + 'Delay-SP']       = {'type' : 'float', 'unit':'us', 'value': 0.0, 'prec': 0}
         db[prefix + 'Delay-RB']       = {'type' : 'float', 'unit':'us', 'value': 0.0, 'prec': 0}
-        db[prefix + 'OptCh-Sel']      = {'type' : 'int', 'value':0}
-        db[prefix + 'OptCh-Sts']      = {'type' : 'int', 'value':0}
+        db[prefix + 'IntChan-Sel']    = {'type' : 'int', 'value':0}
+        db[prefix + 'IntChan-Sts']    = {'type' : 'int', 'value':0}
         return db
 
     def __init__(self, base_freq, callbacks = None, prefix = None, controller = None):
@@ -719,7 +719,7 @@ class EVRIOC(_BaseIOC):
     _ClassSim = _EVRSim
     _ClassTrigIOC = _EVRTriggerIOC
     _OUTTMP = 'MFO{0:d}'
-    _INTTMP = 'OPTO{0:02d}'
+    _INTTMP = 'IntTrig{0:02d}'
 
     _states = ('Dsbl','Enbl')
 
@@ -809,5 +809,5 @@ class EVEIOC(EVRIOC):
 class AFCIOC(EVRIOC):
     _ClassSim = _AFCSim
     _ClassTrigIOC = _OpticChannelIOC
-    _OUTTMP = 'LVEO{0:d}'
+    _OUTTMP = 'LVEIO{0:d}'
     _INTTMP = 'OPTO{0:02d}'
