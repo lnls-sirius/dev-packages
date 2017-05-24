@@ -45,45 +45,30 @@ class App:
 
     def get_database(self):
         db = dict()
-        for cl in self._clocks.values():     db.update(cl.get_database())
-        for ev in self._events.values():     db.update(ev.get_database())
-        for trig in self._triggers.values(): db.update(trig.get_database())
+        db.update(self.correctors.get_database())
+        db.update(self.matrix.get_database())
+        db.update(self.orbit.get_database())
         return db
 
     def __init__(self,driver=None):
         _log.info('Starting App...')
         self._driver = driver
-        if not check_triggers_consistency():
-            raise Exception('Triggers not consistent.')
-        _log.info('Creating High Level Clocks:')
-        self._clocks = dict()
-        for cl,num in Clocks.HL2LL_MAP.items():
-            clock = Clocks.HL_PREF + cl
-            self._clocks[clock] = HL_Clock(clock,self._update_driver,num)
-        _log.info('Creating High Level Events:')
-        self._events = dict()
-        for ev,code in Events.HL2LL_MAP.items():
-            event = Events.HL_PREF + ev
-            self._events[event] = HL_Event(event,self._update_driver,code)
-        _log.info('Creating High Level Triggers:')
-        self._triggers = dict()
-        triggers = _get_triggers()
-        for prefix, prop in triggers.items():
-            trig = get_hl_trigger_object(prefix, self._update_driver, **prop)
-            self._triggers[prefix] = trig
+
 
         self._database = self.get_database()
 
 
     def main_loop(self):
 
+        orb = orbit.get_orbit()
         while self.correct_orbit:
             t0 = _time.time()
             # _log.debug('App: Executing check.')
-            orb = BPMs.get_orbit()
-            dtheta = Matrix.get_kicks(orb)
-            if
+            dtheta = matrix.get_kicks(orb)
+            if self.apply_kicks:
+                correctors.apply(dtheta)
 
+            orb = BPMs.get_orbit()
 
 
             tf = _time.time()
@@ -163,3 +148,118 @@ class App:
         else:
             _log.warning('App: Unsuccessful write of PV {0:s}; value = {1:s}.'.format(reason,str(value)))
         return ret_val
+
+
+TINY_INTERVAL = 0.01
+
+class Orbit:
+
+    REF_ORBIT_NUM   = 15
+    REF_ORBIT_ENUMS = tuple(  ['RefOrbit{0:X}'.format(i) for i in range(REF_ORBIT_NUM)]  )
+
+    def get_database(self):
+        db = dict()
+        pre = self.prefix
+        for i in len(self.NUM_REF_ORBIT):
+            str_ = self.ref_orbit_tmp.format(i)
+            db[pre + 'OrbitRefX'+str_+'-SP'] = {'type':'float','count':self.nr_bpms,'value'=0,
+                                                'set_pv_fun':lambda x: self.set_ref_orbit('x',i,x)}
+            db[pre + 'OrbitRefX'+str_+'-RB'] = {'type':'float','count':self.nr_bpms,'value'=0}
+            db[pre + 'OrbitRefY'+str_+'-SP'] = {'type':'float','count':self.nr_bpms,'value'=0,
+                                                'set_pv_fun':lambda x: self.set_ref_orbit('y',i,x)}
+            db[pre + 'OrbitRefY'+str_+'-RB'] = {'type':'float','count':self.nr_bpms,'value'=0}
+            db[pre+'OrbitRefName'+str_+'-SP']= {'type':'float','value'='Null',
+                                                'set_pv_fun':lambda x: self.set_ref_orbit_name(i,x)}
+            db[pre+'OrbitRefName'+str_+'-RB']= {'type':'float','value'='Null'}
+        db[pre+'OrbitRef-Sel'] = {'type':'enum','enums':self.REF_ORBIT_ENUMS,'value'=0,
+                                        'set_pv_fun':self.set_ref_orbit_ind}
+        db[pre+'OrbitRef-Sts'] = {'type':'enum','enums':self.REF_ORBIT_ENUMS,'value'=0}
+
+
+    def __init__(self,prefix,callback):
+        self.callback = callback
+        self.prefix = prefix
+        self.pv ={'x':_epics.PV( 'SI-Glob:AP-Orbit:PosX-Mon', callback=self.update_orbs('x') ),
+                  'y':_epics.PV( 'SI-Glob:AP-Orbit:PosY-Mon', callback=self.update_orbs('y') )  }
+        if not (self.pv['x'].connected and self.pv['y'].connected):
+            raise Exception('Orbit PVs not Connected.')
+        if self.pv['x'].count != self.pv['y'].count:
+            raise Exception('Orbit not consistent')
+        self.nr_bpms = self.pv['x'].count
+        self.ref_orbit = {'x':self.REF_ORBIT_NUM*[_np.zeros(self.nr_bpms,dtype=float)],
+                          'y':self.REF_ORBIT_NUM*[_np.zeros(self.nr_bpms,dtype=float)]  }
+        self.ref_orbit_tmp = '{0:X}'
+        self.ref_orbit_ind = 0
+        self.orbs = {'x':[],'y':[]}
+        self.orb = {'x':None,'y':None}
+
+    def reset_orbs(self,plane):
+        self.orbs[plane] = []
+        self.orb[plane] = None
+
+    def get_count(self,plane):
+        return len(self.orbs[plane])
+
+    def update_orbs(self,plane):
+        def update(pvname,value,**kwargs):
+            if value is None: return
+            orb = _np.array(value, dtype=float) - self.ref_orbit['plane']
+            self.orbs[plane].append()
+            if len(self.orbs[plane]) >= self.nr_averages:
+                self.orb[plane] = _np.array(self.orbs[plane]).mean(axis=1)
+                self.orbs[ṕlane] = []
+        return update
+
+    def set_ref_orbit_ind(self,ind):
+        self.ref_orbit_ind = ind
+        pvname = self.prefix+'OrbitRef-Sts'
+        self.callback(pvname, ind)
+
+    def set_ref_orbit(plane,ind,orb):
+        self.ref_orbit[plane][ind] = _np.array(orb,dtype=float)
+        pvname = self.prefix+'OrbitRef'+plane.upper()+self.ref_orbit_tmp.format(ind)+'-RB'
+        self.callback(pvname, orb)
+
+    def set_ref_orbit_name(self,ind,name):
+        self.ref_obit_name[ind] = name
+        pvname = self.prefix+'OrbitRef'+plane.upper()+self.ref_orbit_tmp.format(ind)+'-RB'
+        self.callback(pvname, name)
+
+    def get_orbit(self):
+        ref_orbitx = _np.zeros(self.nr_bpms)
+        ref_orbity = _np.zeros(self.nr_bpms)
+        if self.relative:
+            ref_orbitx = self.ref_orbit['x'][self.ref_orbit_ind]
+            ref_orbity = self.ref_orbit['y'][self.ref_orbit_ind]
+
+        thx = _threads.Thread(target=self.set_orbit_plane,kwargs={'plane':'x'})
+        thy = _threads.Thread(target=self.set_orbit_plane,kwargs={'plane':'y'})
+        thx.start()
+        thy.start()
+        thx.join()
+        thy.join()
+        orbx = self.orb['x'] - ref_orbitx
+        orby = self.orb['y'] - ref_orbity
+        return orbx, orby
+
+    def set_orbit_plane(self,plane):
+
+
+        self.reset_orbs(plane)
+        while self.orbx is None:
+            _time.sleep(TINY_INTERVAL)
+
+
+class BPMs:
+
+    def get_bpms_device_names(self):
+        return ordered_list_bpm_names
+
+    def _on_monitor_change(self,pvname,value,**kwargs):
+
+
+    def get_orbit(self):
+        self.reset_count()
+        while True:
+            for i, bpm in enumerate(self.bpms):
+                if self.count[i]
