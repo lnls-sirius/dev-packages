@@ -5,6 +5,9 @@ import copy as _copy
 import numpy as _numpy
 import pvs as _pvs
 import siriuspy as _siriuspy
+import siriuspy.envars as _siriuspy_envars
+import siriuspy.epics as _siriuspy_epics
+import siriuspy.util as _siriuspy_util
 
 # Coding guidelines:
 # =================
@@ -16,7 +19,7 @@ import siriuspy as _siriuspy
 # 06 - be consistent in coding style (variable naming, spacings, prefixes, suffixes, etc)
 
 __version__ = _pvs.__version__
-_ioc_prefix = _siriuspy.envars.vaca_prefix
+_ioc_prefix = _siriuspy_envars.vaca_prefix
 
 class App:
 
@@ -24,7 +27,7 @@ class App:
 
     def __init__(self):
 
-        _siriuspy.util.print_ioc_banner('si-ap-currlt', _pvs.pvs_database,
+        _siriuspy_util.print_ioc_banner('si-ap-currlt', _pvs.pvs_database,
                                         'SI Beam Current and Lifetime', _pvs.__version__, App.PVS_PREFIX)
 
         self._driver              = None # This should latter be set by the Driver __init__ using driver.setter
@@ -35,8 +38,8 @@ class App:
         self._sampling_time       = 10.0
         self._buffer_size         = 100
         self._scan_time           = self._sampling_time/self._buffer_size
-        self._current_13C4_buffer = _siriuspy.epics.SiriusPVTimeSerie(self._current_13C4_pv, self._sampling_time, self._buffer_size, self._scan_time, 0)
-        self._current_14C4_buffer = _siriuspy.epics.SiriusPVTimeSerie(self._current_14C4_pv, self._sampling_time, self._buffer_size, self._scan_time, 0)
+        self._current_13C4_buffer = _siriuspy_epics.SiriusPVTimeSerie(self._current_13C4_pv, self._sampling_time, self._buffer_size, self._scan_time, 0)
+        self._current_14C4_buffer = _siriuspy_epics.SiriusPVTimeSerie(self._current_14C4_pv, self._sampling_time, self._buffer_size, self._scan_time, 0)
         self._minlifetime         = 60.0
         # self._ebeamflag_13C4_pv   = _epics.PV(_ioc_prefix + 'SI-13C4:DI-DCCT:EBeamFlag', connection_timeout=0.05)
         # self._ebeamflag_14C4_pv   = _epics.PV(_ioc_prefix + 'SI-14C4:DI-DCCT:EBeamFlag', connection_timeout=0.05)
