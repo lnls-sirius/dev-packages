@@ -57,7 +57,7 @@ class PowerSupplyLinac(object):
 
     @property
     def database(self):
-        return _get_database()
+        return self._get_database()
 
     @property
     def ctrlmode_mon(self):
@@ -128,7 +128,6 @@ class PowerSupplyLinac(object):
             self._pwrstate_sp = value
             self._controller.current_sp = value
 
-
     def _controller_init(self, current_std):
         if self._controller is None:
             lims = self._setpoint_limits # set controller setpoint limits according to PS database
@@ -168,7 +167,6 @@ class PowerSupplyLinac(object):
     def _mycallback(self, pvname, value, **kwargs):
         pass
 
-
 class PowerSupply(PowerSupplyLinac):
 
     def __init__(self, **kwargs):
@@ -201,7 +199,9 @@ class PowerSupply(PowerSupplyLinac):
             self._wfmload_sel  = self._controller.wfmload
             self._wfmdata_sp   = self._controller.wfmdata
 
-        self.callback = self._mycallback
+        #self.callback = self._mycallback
+        self._controller.callback = self._mycallback
+
         self._controller.update_state()
 
     # --- class interface ---
@@ -363,6 +363,23 @@ class PowerSupply(PowerSupplyLinac):
     def _get_wfmscanning_mon(self):
         return self._controller.wfmscanning
 
+    def _mycallback(self, pvname, value, **kwargs):
+        if isinstance(self._controller, _ControllerEpics):
+            print(pvname, value)
+            if 'CtrlMode-Mon' in pvname:
+                self._ctrlmode_mon = value
+            elif 'PwrState-Sel' in pvname:
+                self._pwrstate_sel = value
+            elif 'OpMode-Sel' in pvname:
+                self._opmode_sel   = value
+            elif 'Current-SP' in pvname:
+                self._current_sp   = value
+            elif 'WfmLabel-SP' in pvname:
+                self._wfmlabel_sp  = value
+            elif 'WfmLoad-Sel' in pvname:
+                self._wfmload_sel  = value
+            elif 'WfmData-SP' in pvname:
+                self._wfmdata_sp   = value
 
 class PowerSupplyEpicsSync(PowerSupply):
 
@@ -411,11 +428,10 @@ class PowerSupplyEpicsSync(PowerSupply):
         for c in self._controllers:
             c.current_sp = value
 
+class PowerSupplyMagnet(PowerSupply):
 
-class PowerSupplyMAFam(PowerSupply):
-
-    def __init__(self, ps_name, **kwargs):
-        super().__init__(ps_name, **kwargs)
+    def __init__(self, name_ps, **kwargs):
+        super().__init__(name_ps, **kwargs)
 
     @property
     def database(self):
