@@ -12,7 +12,7 @@ import os as _os
 
 class PSWaveForm:
 
-    _path = '/tmp'
+    path = '/tmp'
 
     @staticmethod
     def wfm_constant(label, nr_points=_default_wfmsize, value=0.0):
@@ -54,13 +54,13 @@ class PSWaveForm:
 
     def save_to_file(self, filename):
 
-        with open(_os.path.join(PSWaveForm._path, filename), 'w') as fp:
+        with open(_os.path.join(PSWaveForm.path, filename), 'w') as fp:
             print(self._label, file=fp)
             for datum in self._data:
                 print(str(datum), file=fp)
 
     def load_from_file(self, filename):
-        with open(_os.path.join(PSWaveForm._path, filename)) as f:
+        with open(_os.path.join(PSWaveForm.path, filename)) as f:
             lines = [line.strip() for line in f]
         self._label = lines[0]
         self._data = _np.array([float(datum) for datum in lines[1:]])
