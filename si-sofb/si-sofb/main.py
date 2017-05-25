@@ -53,7 +53,9 @@ class App:
     def __init__(self,driver=None):
         _log.info('Starting App...')
         self._driver = driver
-
+        self.orbit = Orbit(prefix = prefix, callback = self._update_driver)
+        self.correctors = Correctors(prefix = prefix, callback = self._update_driver)
+        self.matrix = Matrix(prefix = prefix, callback = self._update_driver)
 
         self._database = self.get_database()
 
@@ -68,7 +70,7 @@ class App:
             if self.apply_kicks:
                 correctors.apply(dtheta)
 
-            orb = BPMs.get_orbit()
+            orb = orbit.get_orbit()
 
 
             tf = _time.time()
@@ -150,104 +152,256 @@ class App:
         return ret_val
 
 
-TINY_INTERVAL = 0.01
+TINY_INTERVAL = 0.001
 
 class Orbit:
 
-    REF_ORBIT_NUM   = 15
-    REF_ORBIT_ENUMS = tuple(  ['RefOrbit{0:X}'.format(i) for i in range(REF_ORBIT_NUM)]  )
+    REF_ORBIT_FILENAME = 'data/reference_orbit'
+    NR_BPMS = 180
 
     def get_database(self):
         db = dict()
         pre = self.prefix
-        for i in len(self.NUM_REF_ORBIT):
-            str_ = self.ref_orbit_tmp.format(i)
-            db[pre + 'OrbitRefX'+str_+'-SP'] = {'type':'float','count':self.nr_bpms,'value'=0,
-                                                'set_pv_fun':lambda x: self.set_ref_orbit('x',i,x)}
-            db[pre + 'OrbitRefX'+str_+'-RB'] = {'type':'float','count':self.nr_bpms,'value'=0}
-            db[pre + 'OrbitRefY'+str_+'-SP'] = {'type':'float','count':self.nr_bpms,'value'=0,
-                                                'set_pv_fun':lambda x: self.set_ref_orbit('y',i,x)}
-            db[pre + 'OrbitRefY'+str_+'-RB'] = {'type':'float','count':self.nr_bpms,'value'=0}
-            db[pre+'OrbitRefName'+str_+'-SP']= {'type':'float','value'='Null',
-                                                'set_pv_fun':lambda x: self.set_ref_orbit_name(i,x)}
-            db[pre+'OrbitRefName'+str_+'-RB']= {'type':'float','value'='Null'}
-        db[pre+'OrbitRef-Sel'] = {'type':'enum','enums':self.REF_ORBIT_ENUMS,'value'=0,
-                                        'set_pv_fun':self.set_ref_orbit_ind}
-        db[pre+'OrbitRef-Sts'] = {'type':'enum','enums':self.REF_ORBIT_ENUMS,'value'=0}
+        db[pre + 'OrbitRefX-SP'] = {'type':'float','count':self.NR_BPMS,'value'=0,
+                                            'set_pv_fun':lambda x: self._set_ref_orbit('x',x)}
+        db[pre + 'OrbitRefX-RB'] = {'type':'float','count':self.NR_BPMS,'value'=0}
+        db[pre + 'OrbitRefY-SP'] = {'type':'float','count':self.NR_BPMS,'value'=0,
+                                            'set_pv_fun':lambda x: self._set_ref_orbit('y',x)}
+        db[pre + 'OrbitRefY-RB'] = {'type':'float','count':self.NR_BPMS,'value'=0}
+        db[pre+'OrbitAvgNum-SP']= {'type':'int','value'=1,
+                                            'set_pv_fun':lambda x: self._set_orbit_avg_num}
+        db[pre+'OrbitAvgNum-RB']= {'type':'int','value'=1}
 
 
     def __init__(self,prefix,callback):
         self.callback = callback
         self.prefix = prefix
-        self.pv ={'x':_epics.PV( 'SI-Glob:AP-Orbit:PosX-Mon', callback=self.update_orbs('x') ),
-                  'y':_epics.PV( 'SI-Glob:AP-Orbit:PosY-Mon', callback=self.update_orbs('y') )  }
-        if not (self.pv['x'].connected and self.pv['y'].connected):
-            raise Exception('Orbit PVs not Connected.')
-        if self.pv['x'].count != self.pv['y'].count:
-            raise Exception('Orbit not consistent')
-        self.nr_bpms = self.pv['x'].count
-        self.ref_orbit = {'x':self.REF_ORBIT_NUM*[_np.zeros(self.nr_bpms,dtype=float)],
-                          'y':self.REF_ORBIT_NUM*[_np.zeros(self.nr_bpms,dtype=float)]  }
-        self.ref_orbit_tmp = '{0:X}'
-        self.ref_orbit_ind = 0
         self.orbs = {'x':[],'y':[]}
         self.orb = {'x':None,'y':None}
+        self.acquire = {'x':False,'y':False}
+        self.relative = True
+        self._load_ref_orbits()
+        self.orbit_avg_num = 1
+        self.pv ={'x':_epics.PV( 'SI-Glob:AP-Orbit:PosX-Mon', callback=self._update_orbs('x') ),
+                  'y':_epics.PV( 'SI-Glob:AP-Orbit:PosY-Mon', callback=self._update_orbs('y') )  }
+        if not self.pv['x'].connected or not self.pv['y'].connected:
+            raise Exception('Orbit PVs not Connected.')
+        if self.pv['x'].count != self.NR_BPMS:
+            raise Exception('Orbit length not consistent')
 
-    def reset_orbs(self,plane):
+    def _load_ref_orbits(self):
+        self.ref_orbit = dict()
+        for plane in ('x','y'):
+            filename = self.REF_ORBIT_FILENAME+plane.upper()+'.txt'
+            self.ref_orbit[plane] = _np.zeros(self.NR_BPMS,dtype=float)
+            if os.path.isfile(filename):
+                self.ref_orbit[plane] = _np.loadtxt(filename)
+
+    def _save_ref_orbit(self,plane, orb):
+        _np.savetxt(self.REF_ORBIT_FILENAME+plane.upper()+'.txt',orb)
+
+    def _reset_orbs(self,plane):
         self.orbs[plane] = []
         self.orb[plane] = None
 
-    def get_count(self,plane):
+    def _get_count(self,plane):
         return len(self.orbs[plane])
 
-    def update_orbs(self,plane):
-        def update(pvname,value,**kwargs):
-            if value is None: return
-            orb = _np.array(value, dtype=float) - self.ref_orbit['plane']
-            self.orbs[plane].append()
-            if len(self.orbs[plane]) >= self.nr_averages:
+    def _update_orbs(self,plane):
+        def _update(pvname,value,**kwargs):
+            if value is None or not self.acquire[plane]: return
+            if len(self.orbs[plane]) < self.orbit_avg_num:
+                orb = _np.array(value, dtype=float)
+                self.orbs[plane].append(orb)
+            if len(self.orbs[plane]) == self.orbit_avg_num:
                 self.orb[plane] = _np.array(self.orbs[plane]).mean(axis=1)
-                self.orbs[ṕlane] = []
+                if self.relative:
+                    self.orb[plane] -= self.ref_orbit[plane]
+                self.acquire[plane] = False
         return update
 
-    def set_ref_orbit_ind(self,ind):
-        self.ref_orbit_ind = ind
-        pvname = self.prefix+'OrbitRef-Sts'
-        self.callback(pvname, ind)
+    def _set_orbit_avg_num(self,num):
+        self.orbit_avg_num = num
+        self._reset_orbs('x')
+        self._reset_orbs('y')
+        pvname = self.prefix+'OrbitAvgNum-RB'
+        self.callback(pvname, num)
 
-    def set_ref_orbit(plane,ind,orb):
-        self.ref_orbit[plane][ind] = _np.array(orb,dtype=float)
-        pvname = self.prefix+'OrbitRef'+plane.upper()+self.ref_orbit_tmp.format(ind)+'-RB'
+    def _set_ref_orbit(self,plane,orb):
+        self._save_ref_orbit(plane,orb)
+        self.ref_orbit[plane] = _np.array(orb,dtype=float)
+        self._reset_orbs(plane)
+        pvname = self.prefix+'OrbitRef'+plane.upper()+'-RB'
         self.callback(pvname, orb)
 
-    def set_ref_orbit_name(self,ind,name):
-        self.ref_obit_name[ind] = name
-        pvname = self.prefix+'OrbitRef'+plane.upper()+self.ref_orbit_tmp.format(ind)+'-RB'
-        self.callback(pvname, name)
-
     def get_orbit(self):
-        ref_orbitx = _np.zeros(self.nr_bpms)
-        ref_orbity = _np.zeros(self.nr_bpms)
-        if self.relative:
-            ref_orbitx = self.ref_orbit['x'][self.ref_orbit_ind]
-            ref_orbity = self.ref_orbit['y'][self.ref_orbit_ind]
-
-        thx = _threads.Thread(target=self.set_orbit_plane,kwargs={'plane':'x'})
-        thy = _threads.Thread(target=self.set_orbit_plane,kwargs={'plane':'y'})
-        thx.start()
-        thy.start()
-        thx.join()
-        thy.join()
-        orbx = self.orb['x'] - ref_orbitx
-        orby = self.orb['y'] - ref_orbity
+        self.acquire = {'x':True,'y':True}
+        while any(self.acquire.values()):  _time.sleep(TINY_INTERVAL)
+        orbx = self.orb['x']
+        orby = self.orb['y']
+        self._reset_orbs('x')
+        self._reset_orbs('y')
         return orbx, orby
 
-    def set_orbit_plane(self,plane):
+class Matrix:
 
+    RSP_MTX_FILENAME = 'data/response_matrix'
+    NR_BPMS = Orbit.NR_BPMS
+    NR_CH   = Correctors.NR_CH
+    NR_CV   = Correctors.NR_CV
+    NR_CORRS = NR_CH + NR_CV + 1
+    MTX_SZ = (2*NR_BPMS) * NR_CORRS
 
-        self.reset_orbs(plane)
-        while self.orbx is None:
-            _time.sleep(TINY_INTERVAL)
+    def get_database(self):
+        db = dict()
+        pre = self.prefix
+        db[pre + 'RSPMatrix-SP'] = {'type':'float','count':self.MTX_SZ,'value'=0,
+                                    'unit':'(BH,BV)(nm) x (CH,CV,RF)(urad,Hz)',
+                                    'set_pv_fun':lambda x: self._set_resp_matrix(x)}
+        db[pre + 'RSPMatrix-RB'] = {'type':'float','count':self.MTX_SZ,'value'=0,
+                                    'unit':'(BH,BV)(nm) x (CH,CV,RF)(urad,Hz)'}
+        db[pre + 'SingValues-Mon']= {'type':'float','count':self.NR_CORRS,'value'=0,
+                                    'unit':'Singular values of the matrix in use'}
+        db[pre + 'CHEnblList-SP']= {'type':'int','count':self.NR_CH,'value'=1,
+                                    'unit':'CHs used in correction',
+                                    'set_pv_fun':lambda x: self._set_enbl_list('ch',x)}
+        db[pre + 'CHEnblList-RB']= {'type':'int','count':self.NR_CH,'value'=1,
+                                    'unit':'CHs used in correction'}
+        db[pre + 'CVEnblList-SP']= {'type':'int','count':self.NR_CV,'value'=1,
+                                    'unit':'CVs used in correction',
+                                    'set_pv_fun':lambda x: self._set_enbl_list('cv',x)}
+        db[pre + 'CVEnblList-RB']= {'type':'int','count':self.NR_CV,'value'=1,
+                                    'unit':'CVs used in correction'}
+        db[pre + 'BPMxEnblList-SP']= {'type':'int','count':self.NR_BPMS,'value'=1,
+                                    'unit':'BPMx used in correction',
+                                    'set_pv_fun':lambda x: self._set_enbl_list('bpmx',x)}
+        db[pre + 'BPMxEnblList-RB']= {'type':'int','count':self.NR_BPMS,'value'=1,
+                                    'unit':'BPMx used in correction'}
+        db[pre + 'BPMyEnblList-SP']= {'type':'int','count':self.NR_BPMS,'value'=1,
+                                    'unit':'BPMy used in correction',
+                                    'set_pv_fun':lambda x: self._set_enbl_list('bpmy',x)}
+        db[pre + 'BPMyEnblList-RB']= {'type':'int','count':self.NR_BPMS,'value'=1,
+                                    'unit':'BPMy used in correction'}
+        db[pre + 'RFEnbl-Sel'] = {'type':'enum','enums':self.RF_ENBL_ENUMS,'value'=0,
+                                    'unit':'If RF is used in correction',
+                                    'set_pv_fun':lambda x: self._set_enbl_list('rf',x)}
+        db[pre + 'RFEnbl-Sts'] = {'type':'enum','enums':self.RF_ENBL_ENUMS,'value'=0,
+                                    'unit':'If RF is used in correction'}
+        db[pre + 'NumSingValues-SP']= {'type':'int','value'=self.NR_CORRS,
+                                    'unit':'Maximum number of SV to use',
+                                    'set_pv_fun':lambda x: self._set_num_sing_values(x)}
+        db[pre + 'NumSingValues-RB']= {'type':'int','value'=self.NR_CORRS,
+                                    'unit':'Maximum number of SV to use'}
+
+    def __init__(self,prefix,callback):
+        self.callback = callback
+        self.prefix = prefix
+        self.selection_configs = {
+            'bpmx':_np.ones(self.NR_BPMS,dtype=bool),
+            'bpmy':_np.ones(self.NR_BPMS,dtype=bool),
+              'ch':_np.ones(self.NR_CH,  dtype=bool),
+              'cv':_np.ones(self.NR_CV,  dtype=bool),
+              'rf':_np.zeros(False,dtype=bool),
+            }
+        self.selection_pv_names = {
+            'bpmx':'CHEnblList-RB',
+            'bpmy':'CVEnblList-RB',
+              'ch':'BPMxEnblList-RB',
+              'cv':'BPMyEnblList-RB',
+              'rf':'RFEnbl-Sts',
+            }
+        self.num_sing_values = self.NR_CORRS
+        self.sing_values = _np.zeros(self.NR_CORRS,dtype=float)
+        self._load_response_matrix()
+
+    def _set_enbl_list(self,key,val):
+        copy_ = self.selection_configs[key]
+        self.selection_configs[key] = _np.array(val,dtype=bool)
+        ok_ = self._calc_matrices()
+        if not ok_:
+            self.selection_configs[key] = copy
+            return
+        pvname = self.prefix + self.selection_pv_names[key]
+        self.callback(pvname,val)
+
+    def _calc_matrices(self):
+        selecbpm = _np.hstack([ self.selection_configs['bpmx'],
+                                self.selection_configs['bpmy'] ]  )
+        seleccor = _np.hstack([ self.selection_configs['ch'],
+                                self.selection_configs['cv'],
+                                self.selection_configs['rf'] ]  )
+        if not any(selecbpm) or not any(seleccor):
+            return False
+        mat = self.response_matrix[selecbpm,seleccor]
+        U, s, V = _np.linalg.svd(mat, full_matrices = False)
+        inv_s = 1/s
+        inv_s[self.num_sing_values:] = 0
+        Inv_S = np.diag(inv_s)
+        self.inv_response_matrix = _np.dot(  _np.dot( V.T, Inv_S ),  U.T  )
+        self.sing_values[:] = 0
+        self.sing_values[:len(s)] = s
+        pvname = self.prefix + 'SingValues-Mon'
+        self.callback(pvname,list(self.sing_values))
+        return True
+
+    def _set_num_sing_values(self,num):
+        self.num_sing_values = num
+        pvname = self.prefix + 'NumSingValues-RB'
+        self.callback(pvname,num)
+
+    def _load_response_matrix(self):
+        filename = self.RSP_MTX_FILENAME+'.txt'
+        if os.path.isfile(filename):
+            self.response_matrix = _np.loadtxt(filename)
+            self._calc_matrices()
+            pvname = self.prefix + 'RSPMatrix-RB'
+            self.callback(pvname,list(self.response_matrix.flatten()))
+
+    def _save_ref_orbit(self, mat):
+        _np.savetxt(self.RSP_MTX_FILENAME+'.txt',mat)
+
+    def _reset_orbs(self,plane):
+        self.orbs[plane] = []
+        self.orb[plane] = None
+
+    def _get_count(self,plane):
+        return len(self.orbs[plane])
+
+    def _update_orbs(self,plane):
+        def _update(pvname,value,**kwargs):
+            if value is None or not self.acquire[plane]: return
+            if len(self.orbs[plane]) < self.orbit_avg_num:
+                orb = _np.array(value, dtype=float)
+                self.orbs[plane].append(orb)
+            if len(self.orbs[plane]) == self.orbit_avg_num:
+                self.orb[plane] = _np.array(self.orbs[plane]).mean(axis=1)
+                if self.relative:
+                    self.orb[plane] -= self.ref_orbit[plane]
+                self.acquire[plane] = False
+        return update
+
+    def _set_orbit_avg_num(self,num):
+        self.orbit_avg_num = num
+        self._reset_orbs('x')
+        self._reset_orbs('y')
+        pvname = self.prefix+'OrbitAvgNum-RB'
+        self.callback(pvname, num)
+
+    def _set_ref_orbit(self,plane,orb):
+        self._save_ref_orbit(plane,orb)
+        self.ref_orbit[plane] = _np.array(orb,dtype=float)
+        self._reset_orbs(plane)
+        pvname = self.prefix+'OrbitRef'+plane.upper()+'-RB'
+        self.callback(pvname, orb)
+
+    def get_orbit(self):
+        self.acquire = {'x':True,'y':True}
+        while any(self.acquire.values()):  _time.sleep(TINY_INTERVAL)
+        orbx = self.orb['x']
+        orby = self.orb['y']
+        self._reset_orbs('x')
+        self._reset_orbs('y')
+        return orbx, orby
 
 
 class BPMs:
