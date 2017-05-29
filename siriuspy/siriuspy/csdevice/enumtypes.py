@@ -18,14 +18,12 @@ class EnumTypes:
     }
 
     _types_ps = {
-        'PSOpModeTyp'     : ('SlowRef', 'SyncRef', 'FastRef',
-                             'RmpMultWfm', 'RmpSglWfm',
-                             'MigMultWfm', 'MigSglWfm',
-                             'SigGen', 'CycGen'),
+        'PSOpModeTyp'     : ('SlowRef', 'SlowRefSync', 'FastRef',
+                             'RmpWfm', 'MigWfm', 'CycGen'),
         'PSWfmLabelsTyp'  : ('Waveform1', 'Waveform2', 'Waveform3',
                              'Waveform4', 'Waveform5', 'Waveform6'),
-        'PSIntlkLabelsTyp': ('Timeout', 'Bit1', 'Bit2', 'Bit3',
-                                'Bit4', 'Bit5', 'Bit6', 'Bit7'),
+        'PSIntlkLabelsTyp': ('Bit0', 'Bit1', 'Bit2', 'Bit3',
+                             'Bit4', 'Bit5', 'Bit6', 'Bit7'),
     }
 
     _types_sofb = {

@@ -37,8 +37,8 @@ class PowerSupplyLinac(object):
         return self._name_ps
 
     @property
-    def pstype_name(self):
-        return self._pstype_name
+    def name_pstype(self):
+        return self._name_pstype
 
     @property
     def callback(self):
@@ -178,7 +178,8 @@ class PowerSupply(PowerSupplyLinac):
             self._controller = _ControllerSim(current_min = self._setpoint_limits['DRVL'],
                                               current_max = self._setpoint_limits['DRVH'],
                                               callback = self._mycallback,
-                                              current_std = current_std)
+                                              current_std = current_std,
+                                              name_ps=self._name_ps)
             #print(self._name_ps)
             self._pwrstate_sel = self._database['PwrState-Sel']['value']
             self._opmode_sel   = self._database['OpMode-Sel']['value']
@@ -221,6 +222,22 @@ class PowerSupply(PowerSupplyLinac):
     @property
     def opmode_sts(self):
         return self._get_opmode_sts()
+
+    @property
+    def reset(self):
+        return self._controller.reset_counter
+
+    @reset.setter
+    def reset(self,value):
+        self._controller.reset()
+
+    @property
+    def abort(self):
+        return self._controller.abort_counter
+
+    @abort.setter
+    def abort(self,value):
+        self._controller.abort()
 
     @property
     def current_rb(self):
@@ -292,10 +309,6 @@ class PowerSupply(PowerSupplyLinac):
         if self.ctrlmode_mon != _et.idx.Remote: return
         self._controller.wfmsave = value
 
-    @property
-    def wfmscanning_mon(self):
-        return self._get_wfmscanning_mon()
-
     # --- class implementation ---
 
     def _get_database(self):
@@ -359,9 +372,6 @@ class PowerSupply(PowerSupplyLinac):
 
     def _get_wfmsave_cmd(self):
         return self._controller.wfmsave
-
-    def _get_wfmscanning_mon(self):
-        return self._controller.wfmscanning
 
     def _mycallback(self, pvname, value, **kwargs):
         if isinstance(self._controller, _ControllerEpics):
