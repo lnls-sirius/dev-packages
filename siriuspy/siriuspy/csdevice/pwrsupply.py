@@ -152,12 +152,13 @@ class PSClasses:
 
     class _Base:
 
-        _Reset_Cmd          = {'name':'Reset-Cmd',       'type':'int',    'value':0}
         _CtrlMode_Mon       = {'name':'CtrlMode-Mon',    'type':'enum',   'enums':_et.enums('RmtLocTyp'),   'value':_et.idx.Remote}
         _PwrState_Sel       = {'name':'PwrState-Sel',    'type':'enum',   'enums':_et.enums('OffOnTyp'),    'value':_et.idx.Off}
         _PwrState_Sts       = {'name':'PwrState-Sts',    'type':'enum',   'enums':_et.enums('OffOnTyp'),    'value':_et.idx.Off}
         _OpMode_Sel         = {'name':'OpMode-Sel',      'type':'enum',   'enums':_et.enums('PSOpModeTyp'), 'value':_et.idx.SlowRef}
         _OpMode_Sts         = {'name':'OpMode-Sts',      'type':'enum',   'enums':_et.enums('PSOpModeTyp'), 'value':_et.idx.SlowRef}
+        _Reset_Cmd          = {'name':'Reset-Cmd',       'type':'int',    'value':0}
+        _Abort_Cmd          = {'name':'Abort-Cmd',       'type':'int',    'value':0}
         _WfmIndex_Mon       = {'name':'WfmIndex-Mon',    'type':'int',    'value':0}
         _WfmLabels_Mon      = {'name':'WfmLabels-Mon',   'type':'string', 'count':len(default_wfmlabels), 'value':default_wfmlabels}
         _WfmLabel_SP        = {'name':'WfmLabel-SP',     'type':'string', 'count':1, 'value':default_wfmlabels[0]}
@@ -167,7 +168,6 @@ class PSClasses:
         _WfmData_SP         = {'name':'WfmData-SP',      'type':'float',  'count':default_wfmsize, 'value':[0.0 for datum in range(default_wfmsize)], 'unit':'A'}
         _WfmData_RB         = {'name':'WfmData-RB',      'type':'float',  'count':default_wfmsize, 'value':[0.0 for datum in range(default_wfmsize)], 'unit':'A'}
         _WfmSave_Cmd        = {'name':'WfmSave-Cmd',     'type':'int',    'value':0}
-        _WfmScanning_Mon    = {'name':'WfmScanning-Mon', 'type':'int',    'value':0}
         _Intlk_Mon          = {'name':'Intlk-Mon',       'type':'int',    'value':0}
         _IntlkLabels_Cte    = {'name':'IntlkLabels-Cte', 'type':'string', 'count':8, 'value':default_intlklabels}
 
@@ -191,10 +191,10 @@ class PSClasses:
         name = 'si-dipole-b1b2-fam'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -211,10 +211,10 @@ class PSClasses:
         name = 'si-quadrupole-q14-fam'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -231,10 +231,10 @@ class PSClasses:
         name = 'si-quadrupole-q20-fam'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -251,10 +251,10 @@ class PSClasses:
         name = 'si-quadrupole-q30-fam'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -271,10 +271,10 @@ class PSClasses:
         name = 'si-quadrupole-q14-trim'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -291,10 +291,10 @@ class PSClasses:
         name = 'si-quadrupole-q20-trim'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -311,10 +311,10 @@ class PSClasses:
         name = 'si-quadrupole-q30-trim'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -331,10 +331,10 @@ class PSClasses:
         name = 'si-quadrupole-qs'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -351,10 +351,10 @@ class PSClasses:
         name = 'si-sextupole-s15-ch'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -371,10 +371,10 @@ class PSClasses:
         name = 'si-sextupole-s15-ch'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -391,10 +391,10 @@ class PSClasses:
         name = 'si-sextupole-s15-cv'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -411,10 +411,10 @@ class PSClasses:
         name = 'si-sextupole-s15-qs'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -431,10 +431,10 @@ class PSClasses:
         name = 'si-corrector-cv'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -451,10 +451,10 @@ class PSClasses:
         name = 'si-corrector-fch'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -471,10 +471,10 @@ class PSClasses:
         name = 'si-corrector-fcv'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -491,10 +491,10 @@ class PSClasses:
         name = 'si-injdpk'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -511,10 +511,10 @@ class PSClasses:
         name = 'si-injnlk'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -531,10 +531,10 @@ class PSClasses:
         name = 'si-hping'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -551,10 +551,10 @@ class PSClasses:
         name = 'si-vping'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -571,10 +571,10 @@ class PSClasses:
         name = 'ts-dipole-b-fam'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -591,10 +591,10 @@ class PSClasses:
         name = 'ts-quadrupole-q14'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -611,10 +611,10 @@ class PSClasses:
         name = 'ts-quadrupole-q20'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -631,10 +631,10 @@ class PSClasses:
         name = 'ts-corrector-ch'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -651,10 +651,10 @@ class PSClasses:
         name = 'ts-corrector-cv'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -671,10 +671,10 @@ class PSClasses:
         name = 'ts-injseptum-thick'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -691,10 +691,10 @@ class PSClasses:
         name = 'ts-injseptum-thin'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -711,10 +711,10 @@ class PSClasses:
         name = 'ts-ejeseptum-thick'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -731,10 +731,10 @@ class PSClasses:
         name = 'ts-ejeseptum-thin'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -751,10 +751,10 @@ class PSClasses:
         name = 'bo-dipole-b-fam'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -771,10 +771,10 @@ class PSClasses:
         name = 'bo-quadrupole-qd-fam'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -791,10 +791,10 @@ class PSClasses:
         name = 'bo-quadrupole-qf-fam'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -811,10 +811,10 @@ class PSClasses:
         name = 'bo-quadrupole-qs'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -831,10 +831,10 @@ class PSClasses:
         name = 'bo-sextupole-sd-fam'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -851,10 +851,10 @@ class PSClasses:
         name = 'bo-sextupole-sf-fam'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -871,10 +871,10 @@ class PSClasses:
         name = 'bo-corrector-ch'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -891,10 +891,10 @@ class PSClasses:
         name = 'bo-corrector-cv'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -911,10 +911,10 @@ class PSClasses:
         name = 'bo-injkicker'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -931,10 +931,10 @@ class PSClasses:
         name = 'bo-ejekicker'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -951,10 +951,10 @@ class PSClasses:
         name = 'tb-dipole-b-fam'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -971,10 +971,10 @@ class PSClasses:
         name = 'tb-quadrupole'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -991,10 +991,10 @@ class PSClasses:
         name = 'tb-corrector-ch'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -1011,10 +1011,10 @@ class PSClasses:
         name = 'tb-corrector-cv'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -1031,10 +1031,10 @@ class PSClasses:
         name = 'tb-injseptum'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_RB     = _copy.deepcopy(_db); _Current_RB.update({'name':'Current-RB'})
@@ -1052,10 +1052,10 @@ class PSClasses:
         name = 'li-spect'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_Mon    = _copy.deepcopy(_db); _Current_Mon.update({'name':'Current-Mon'})
@@ -1071,10 +1071,10 @@ class PSClasses:
         name = 'li-solenoid-fam'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_Mon    = _copy.deepcopy(_db); _Current_Mon.update({'name':'Current-Mon'})
@@ -1090,10 +1090,10 @@ class PSClasses:
         name = 'li-solenoid'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_Mon    = _copy.deepcopy(_db); _Current_Mon.update({'name':'Current-Mon'})
@@ -1109,10 +1109,10 @@ class PSClasses:
         name = 'li-quadrupole-long'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_Mon    = _copy.deepcopy(_db); _Current_Mon.update({'name':'Current-Mon'})
@@ -1128,10 +1128,10 @@ class PSClasses:
         name = 'li-quadrupole-short'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_Mon    = _copy.deepcopy(_db); _Current_Mon.update({'name':'Current-Mon'})
@@ -1147,10 +1147,10 @@ class PSClasses:
         name = 'li-corrector-ch-long'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_Mon    = _copy.deepcopy(_db); _Current_Mon.update({'name':'Current-Mon'})
@@ -1166,10 +1166,10 @@ class PSClasses:
         name = 'li-corrector-cv-long'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_Mon    = _copy.deepcopy(_db); _Current_Mon.update({'name':'Current-Mon'})
@@ -1185,10 +1185,10 @@ class PSClasses:
         name = 'li-corrector-ch-short'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_Mon    = _copy.deepcopy(_db); _Current_Mon.update({'name':'Current-Mon'})
@@ -1204,10 +1204,10 @@ class PSClasses:
         name = 'li-corrector-cv-short'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_Mon    = _copy.deepcopy(_db); _Current_Mon.update({'name':'Current-Mon'})
@@ -1223,10 +1223,10 @@ class PSClasses:
         name = 'li-lens'
         _db = {'type':'float', 'value':0.0, 'prec':4, 'unit':'A',
                'lolo'  :_ps_sp_lims(name, 'LOLO'),
-               'lo'    :_ps_sp_lims(name, 'LOW'),
+               'low'   :_ps_sp_lims(name, 'LOW'),
                'lolim' :_ps_sp_lims(name, 'LOPR'),
                'hilim' :_ps_sp_lims(name, 'HOPR'),
-               'hi'    :_ps_sp_lims(name, 'HIGH'),
+               'high'  :_ps_sp_lims(name, 'HIGH'),
                'hihi'  :_ps_sp_lims(name, 'HIHI')}
         _Current_SP     = _copy.deepcopy(_db); _Current_SP.update({'name':'Current-SP'})
         _Current_Mon    = _copy.deepcopy(_db); _Current_Mon.update({'name':'Current-Mon'})
