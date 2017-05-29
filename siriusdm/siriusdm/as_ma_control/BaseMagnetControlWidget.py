@@ -88,7 +88,7 @@ class BaseMagnetControlWidget(QWidget):
         #name_label.setFlat(True) #Trasparent button
         magnet_widgets.append(name_label)
 
-        scroll_bar = PyDMScrollBar(Qt.Horizontal, self, "ca://" + ma + ":Current-SP")
+        scroll_bar = PyDMScrollBar(self, Qt.Horizontal, "ca://" + ma + ":Current-SP")
         scroll_bar.setObjectName("current-sp_" + ma)
         scroll_bar.setMinimumWidth(150)
         magnet_widgets.append(scroll_bar)

@@ -134,7 +134,7 @@ class MagnetDetailWidget(QWidget):
         self.current_sp_val = PyDMLineEdit(self, "ca://" + self._magnet_name + ":Current-SP")
         self.current_sp_val.receivePrecision(3)
 
-        self.current_sp_slider = PyDMScrollBar(Qt.Horizontal, self, \
+        self.current_sp_slider = PyDMScrollBar(self, Qt.Horizontal, \
                 "ca://" + self._magnet_name + ":Current-SP")
 
         layout.addWidget(self.current_rb_label, 0, 0)
@@ -162,7 +162,7 @@ class MagnetDetailWidget(QWidget):
                 "ca://" + self._magnet_name + ":" + self._metric + "-SP")
         self.metric_sp_val.receivePrecision(3)
 
-        self.metric_sp_slider = PyDMScrollBar(Qt.Horizontal, self, \
+        self.metric_sp_slider = PyDMScrollBar(self, Qt.Horizontal, \
                 "ca://" + self._magnet_name + ":" + self._metric + "-SP")
 
         layout.addWidget(self.metric_rb_label, 0, 0)
