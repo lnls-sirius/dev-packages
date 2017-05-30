@@ -27,7 +27,7 @@ class Controller(metaclass=_ABCMeta):
     implemented in sub classes. It also contains methods that implement
     most of the controller logic."""
 
-    trigger_timeout = 10 # [seconds]
+    trigger_timeout = 10000000 # [seconds]
     #trigger_timout  = 0.002 # [seconds]
 
     def __init__(self, callback=None, name_ps=None, cycgen=None):
@@ -89,7 +89,6 @@ class Controller(metaclass=_ABCMeta):
     def abort(self):
         self._inc_abort_counter()
         if self.opmode == _et.idx.MigWfm:
-            self.current_sp = self.current_ref
             self.opmode = _et.idx.SlowRef
         elif self.opmode == _et.idx.RmpWfm:
             self._set_cmd_abort_issued(True)
@@ -254,7 +253,9 @@ class Controller(metaclass=_ABCMeta):
         elif self.opmode == _et.idx.CycGen:
             self._update_CycGen(**kwargs)
         else:
-            raise Exception('Invalid controller opmode')
+            pass
+            #raise Exception('Invalid controller opmode')
+
 
     def fofb_signal(self):
         pass
@@ -298,11 +299,12 @@ class Controller(metaclass=_ABCMeta):
 
     def _update_RmpWfm(self, **kwargs):
         if 'trigger_signal' in kwargs or 'pwrstate' in kwargs:
+            print(self._cmd_abort_issued, self._wfmindex)
             scan_value = self._wfmdata_in_use[self._wfmindex]
+            self._wfmindex = (self._wfmindex + 1) % len(self._wfmdata_in_use)
             if self._cmd_abort_issued and self._wfmindex == 0:
+                print('end of scan')
                 self.opmode = _et.idx.SlowRef
-            else:
-                self._wfmindex = (self._wfmindex + 1) % len(self._wfmdata_in_use)
         else:
             scan_value = self.current_ref
         self._update_current_ref(scan_value)
@@ -859,6 +861,12 @@ class ControllerEpics(Controller):
         now = self.time
         self._timestamp_pwrstate = now # last time pwrstate was changed
         self._timestamp_opmode   = now # last time opmode was changed
+
+    @property
+    def connected(self):
+        for name,pv in self._pvs.items():
+            if not pv.connected: return False
+        return True
 
     def _get_pwrstate(self):
         return self._pvs['PwrState-Sts'].get(timeout=self._connection_timeout)

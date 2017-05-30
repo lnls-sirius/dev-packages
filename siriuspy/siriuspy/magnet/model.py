@@ -1,15 +1,17 @@
 
 import copy as _copy
 from siriuspy.magnet import util as _util
-from siriuspy.magnet import magdata as _magdata
-from siriuspy.magnet import ExcitationData as _ExcData
+from siriuspy.magnet import madata as _magdata
+from siriuspy.magnet import magexc as _magexc
+from siriuspy.magnet import util as _util
 from siriuspy.pwrsupply import psdata as _psdata
 from siriuspy.pwrsupply import PowerSupply as _PowerSupply
 from siriuspy.pwrsupply.controller import ControllerEpics as _ControllerEpics
-from .magdata import get_magps_setpoint_limits as _mag_sp_lims
-from .util import conv_epics2pcaspy_lim_names as _conv_lim_names
+import siriuspy.envars as _envars
 
-_connection_timeout = 0.05
+_ExcData = _magexc.MagnetExcitation
+_mag_sp_lims = _magdata.get_ma_setpoint_limits
+_conv_lim_names = _util.conv_epics2pcaspy_lim_names
 
 
 _magnet_types = {'normal_dipole':     ('normal', 0, 'BL', 'rad'),
@@ -20,6 +22,16 @@ _magnet_types = {'normal_dipole':     ('normal', 0, 'BL', 'rad'),
                  'skew_corrector':    ('skew',   0, 'VKick', 'rad'),
                 }
 
+
+
+class Magnet:
+
+    def __init__(self, name_ma):
+        self._name_ma = name_ma
+        try:
+            self._name_ps = _magdata.conv_maname_2_psname(name_ma)
+        except KeyError:
+            self._name_ps = None
 
 class PowerSupplyDipMagEpics:
 
@@ -48,7 +60,7 @@ class PowerSupplyDipMagEpics:
         pass
 
 
-class Magnet:
+class Magnet2:
 
     def __init__(self,
                  name,
@@ -163,7 +175,7 @@ class Magnet:
         return self.conv_currents2multipoles(currents_rb)
 
 
-class MagnetFam(Magnet):
+class MagnetFam(Magnet2):
 
     def __init__(self,
                  magnet_type,

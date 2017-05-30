@@ -12,6 +12,9 @@ from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.csdevice.pwrsupply import default_wfmlabels as _default_wfmlabels
 
 
+_connection_timeout = 0.0
+
+
 class PowerSupplyLinac(object):
 
     def __init__(self, name_ps,
@@ -315,23 +318,26 @@ class PowerSupply(PowerSupplyLinac):
         """Return a PV database whose keys correspond to PS properties."""
         db = _copy.deepcopy(self._database)
         value = self.ctrlmode_mon; db['CtrlMode-Mon']['value'] = _et.enums.index('RmtLocTyp',value) if self._enum_keys else value
-        value = self.pwrstate_sel; db['PwrState-Sel']['value'] = _et.enums.index('OffOnTyp', value) if self._enum_keys else value
-        value = self.pwrstate_sts; db['PwrState-Sts']['value'] = _et.enums.index('OffOnTyp', value) if self._enum_keys else value
         value = self.opmode_sel;   db['OpMode-Sel']['value'] = _et.enums.index('PSOpModeTyp', value) if self._enum_keys else value
         value = self.opmode_sts;   db['OpMode-Sts']['value'] = _et.enums.index('PSOpModeTyp', value) if self._enum_keys else value
+        value = self.pwrstate_sel; db['PwrState-Sel']['value'] = _et.enums.index('OffOnTyp', value) if self._enum_keys else value
+        value = self.pwrstate_sts; db['PwrState-Sts']['value'] = _et.enums.index('OffOnTyp', value) if self._enum_keys else value
+        db['Reset-Cmd']['value'] = self.reset
+        db['Abort-Cmd']['value'] = self.abort
         value = self.wfmload_sel;  db['WfmLoad-Sel']['value'] = _default_wfmlabels.index(value) if self._enum_keys else value
         value = self.wfmload_sts;  db['WfmLoad-Sts']['value'] = _default_wfmlabels.index(value) if self._enum_keys else value
-        db['WfmIndex-Mon']['value']   = self.wfmindex_mon
-        db['WfmLabels-Mon']['value']  = self.wfmlabels_mon
         db['WfmLabel-SP']['value']    = self.wfmlabel_sp
         db['WfmLabel-RB']['value']    = self.wfmlabel_rb
+        db['WfmLabels-Mon']['value']  = self.wfmlabels_mon
         db['WfmData-SP']['value']     = self.wfmdata_sp
         db['WfmData-RB']['value']     = self.wfmdata_rb
         db['WfmSave-Cmd']['value']    = self.wfmsave_cmd
+        db['WfmIndex-Mon']['value']   = self.wfmindex_mon
         db['Current-SP']['value']     = self.current_sp
         db['Current-RB']['value']     = self.current_rb
         db['CurrentRef-Mon']['value'] = self.currentref_mon
         db['Current-Mon']['value']    = self.current_mon
+        db['Intlk-Mon']['value']      = self.intlk_mon
         return db
 
     def _set_opmode_sel(self, value):
@@ -375,21 +381,23 @@ class PowerSupply(PowerSupplyLinac):
 
     def _mycallback(self, pvname, value, **kwargs):
         if isinstance(self._controller, _ControllerEpics):
-            print(pvname, value)
+            #print(pvname, value)
             if 'CtrlMode-Mon' in pvname:
                 self._ctrlmode_mon = value
-            elif 'PwrState-Sel' in pvname:
-                self._pwrstate_sel = value
             elif 'OpMode-Sel' in pvname:
                 self._opmode_sel   = value
-            elif 'Current-SP' in pvname:
-                self._current_sp   = value
-            elif 'WfmLabel-SP' in pvname:
-                self._wfmlabel_sp  = value
+            elif 'PwrState-Sel' in pvname:
+                self._pwrstate_sel = value
+            elif 'PwrState-Sel' in pvname:
+                self._pwrstate_sel = value
             elif 'WfmLoad-Sel' in pvname:
                 self._wfmload_sel  = value
+            elif 'WfmLabel-SP' in pvname:
+                self._wfmlabel_sp  = value
             elif 'WfmData-SP' in pvname:
                 self._wfmdata_sp   = value
+            elif 'Current-SP' in pvname:
+                self._current_sp   = value
 
 class PowerSupplyEpicsSync(PowerSupply):
 
