@@ -37,7 +37,7 @@ class MagnetTrimWindow(QDialog):
         ma_box_layout = QHBoxLayout()
         self.ma_led = PyDMLed(self, "ca://" + self._ma + ":PwrState-Sts")
         self.ma_label = QLabel(self._ma, self)
-        self.ma_current_sb = PyDMScrollBar(Qt.Horizontal, self, "ca://" + self._ma + ":Current-SP")
+        self.ma_current_sb = PyDMScrollBar(self, Qt.Horizontal, "ca://" + self._ma + ":Current-SP")
         self.ma_current_sp = PyDMLineEdit(self, "ca://" + self._ma + ":Current-SP")
         self.ma_current_rb = PyDMLabel(self, "ca://" + self._ma + ":Current-RB")
         self.ma_kl = PyDMLineEdit(self, "ca://" + self._ma + ":KL-SP")
@@ -94,7 +94,7 @@ class MagnetTrimWindow(QDialog):
         for i, magnet in enumerate(magnets):
             state_led = PyDMLed(self, "ca://" + magnet + ":PwrState-Sts")
             name_label = QLabel(magnet, self)
-            setpoint_sb = PyDMScrollBar(Qt.Horizontal, self, "ca://" + magnet + ":Current-SP")
+            setpoint_sb = PyDMScrollBar(self, Qt.Horizontal, "ca://" + magnet + ":Current-SP")
             current_sp = PyDMLineEdit(self, "ca://" + magnet + ":Current-SP")
             current_rb = PyDMLabel(self, "ca://" + magnet + ":Current-RB")
             kl_trim = PyDMLineEdit(self, "ca://" + magnet + ":KLTrim-SP")

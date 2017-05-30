@@ -1,2 +1,2 @@
 from . import db
-from .SectionConfiguration import SectionConfiguration
+from .Configuration import Configuration

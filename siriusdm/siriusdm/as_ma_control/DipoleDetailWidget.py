@@ -13,7 +13,7 @@ from .MagnetDetailWidget import MagnetDetailWidget
 
 class DipoleDetailWidget(MagnetDetailWidget):
     def __init__(self, magnet_name, parent=None):
-        
+
         if re.match("(SI|BO)-Fam:MA-B\w*", magnet_name):
             self._magnet_name = magnet_name
         else:
@@ -23,8 +23,6 @@ class DipoleDetailWidget(MagnetDetailWidget):
                 re.sub(":MA", ":PS", self._magnet_name + "-2")]
 
         super(DipoleDetailWidget, self).__init__(self._magnet_name, parent)
-
-
 
     def _interlockLayout(self):
         layout = QGridLayout()
@@ -96,7 +94,6 @@ class DipoleDetailWidget(MagnetDetailWidget):
 
         return layout
 
-
     def _currentLayout(self):
         layout = QGridLayout()
 
@@ -110,7 +107,7 @@ class DipoleDetailWidget(MagnetDetailWidget):
         self.current_sp_val = PyDMLineEdit(self, "ca://" + self._magnet_name + ":Current-SP")
         self.current_sp_val.receivePrecision(3)
 
-        self.current_sp_slider = PyDMScrollBar(Qt.Horizontal, self, \
+        self.current_sp_slider = PyDMScrollBar(self, Qt.Horizontal, \
                 "ca://" + self._magnet_name + ":Current-SP")
 
         self.ps1_current_rb = PyDMLabel(self, "ca://" +  self._ps_list[0] + ":Current-RB")

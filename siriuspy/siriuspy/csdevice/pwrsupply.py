@@ -1,6 +1,7 @@
 import copy as _copy
 import siriuspy.servweb as _web
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
+from siriuspy.namesys import SiriusPVName as _PVName
 #from siriuspy.pwrsupply.psdata import get_setpoint_limits as _ps_sp_lims
 import siriuspy.util as _util
 
@@ -47,7 +48,7 @@ class SetPointLims:
                 else:
                     self._ps2pstype_dict[ps_name] = pstype_name
 
-        self._ps_name_list = sorted(self._ps2pstype_dict.keys())
+        self._ps_name_list = sorted([_PVName(key) for key in self._ps2pstype_dict.keys()])
 
     def _build_pstype_data(self, text):
         data, _ = _util.read_text_data(text)
