@@ -34,14 +34,8 @@ class PCASDriver(_pcaspy.Driver):
         self.app.driver = self
 
     def read(self, reason):
-        _log.debug("Sending read of {0:s} to App.".format(reason))
-        value = self.app.read(reason)
-        if value is None:
-            _log.debug("PV {0:s} read by App. Trying drivers database.".format(reason))
-            return super().read(reason)
-        else:
-            _log.debug("App returned {0:s} for PV {1:s}.".format(str(value),reason))
-            return value
+        _log.debug("Reading {0:s}.".format(reason))
+        return super().read(reason)
 
     def write(self, reason, value):
         app_ret =  self.app.write(reason, value)
@@ -67,7 +61,6 @@ def run():
     _log.info('Generating database file.')
     db = app.get_database()
     print_pvs_in_file(db)
-
 
     # create a new simple pcaspy server and driver to responde client's requests
     _log.info('Creating Server.')
