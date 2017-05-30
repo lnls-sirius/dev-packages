@@ -53,3 +53,46 @@ class SiriusPVName(str):
         obj.field = name['field']
         obj.dev_propty = name['dev_propty']
         return obj
+
+    def __lt__(self,other):
+        if ( (type(other) == type(self)) and
+             (self.section == other.section) and
+             (self.subsection != other.subsection)  ):
+            return self._subsection_comparison(other)
+        else:
+            return super().__lt__(other)
+
+    def __gt__(self,other):
+        return other.__lt__(self)
+
+    def __le__(self,other):
+        return self.__lt__(other) or self.__eq__(other)
+
+    def __ge__(self,other):
+        return self.__gt__(other) or self.__eq__(other)
+
+    def _subsection_comparison(self,other):
+        my_ssec = self.subsection
+        th_ssec = other.subsection
+        if my_ssec == 'Glob':
+            return False
+        elif th_ssec == 'Glob':
+            return True
+        elif my_ssec == 'Fam':
+            return False
+        elif th_ssec == 'Fam':
+            return True
+        elif my_ssec == '01M1':
+            return False
+        elif th_ssec == '01M1':
+            return True
+        elif my_ssec[:2] != th_ssec[:2]:
+            return my_ssec[:2] < th_ssec[:2]
+        elif len(my_ssec) == 2:
+            return False
+        elif len(th_ssec) == 2:
+            return True
+        if my_ssec[2] == th_ssec[2]:
+            return my_ssec[3] < th_ssec[3]
+        else:
+            return not my_ssec[2] < th_ssec[2]
