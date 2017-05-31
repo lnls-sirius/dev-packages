@@ -250,8 +250,8 @@ class Controller(metaclass=_ABCMeta):
             self._update_RmpWfm(**kwargs)
         elif self.opmode == _et.idx.MigWfm:
             self._update_MigWfm(**kwargs)
-        elif self.opmode == _et.idx.CycGen:
-            self._update_CycGen(**kwargs)
+        elif self.opmode == _et.idx.Cycle:
+            self._update_Cycle(**kwargs)
         else:
             pass
             #raise Exception('Invalid controller opmode')
@@ -322,10 +322,10 @@ class Controller(metaclass=_ABCMeta):
         else:
             self._update_current_ref(self.current_ref)
 
-    def _update_CycGen(self, **kwargs):
+    def _update_Cycle(self, **kwargs):
         if 'pwrstate' in kwargs:
             self._set_timestamp_opmode(self.time)
-        self._process_CycGen()
+        self._process_Cycle()
 
 
     def _check_current_ref_limits(self, value):
@@ -546,7 +546,7 @@ class Controller(metaclass=_ABCMeta):
         pass
 
     @_abstractmethod
-    def _process_CycGen(self):
+    def _process_Cycle(self):
         pass
 
 
@@ -760,7 +760,7 @@ class ControllerSim(Controller):
             self._current_load = value
             self._mycallback(pvname='current_load')
 
-    def _process_CycGen(self):
+    def _process_Cycle(self):
         dt  = self.time - self._timestamp_opmode
         if self._cycgen.is_finished(dt):
             self._finilize_cycgen()
@@ -1017,7 +1017,7 @@ class ControllerEpics(Controller):
     def _set_current_ref(self, value):
         pass
 
-    def _process_CycGen(self):
+    def _process_Cycle(self):
         pass
 
 

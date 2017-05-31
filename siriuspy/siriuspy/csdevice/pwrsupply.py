@@ -2,7 +2,6 @@ import copy as _copy
 import siriuspy.servweb as _web
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.namesys import SiriusPVName as _PVName
-#from siriuspy.pwrsupply.psdata import get_setpoint_limits as _ps_sp_lims
 import siriuspy.util as _util
 
 
@@ -10,11 +9,12 @@ default_wfmsize   = 2000
 default_wfmlabels =_et.enums('PSWfmLabelsTyp')
 default_intlklabels = _et.enums('PSIntlkLabelsTyp')
 
+
 _timeout = None
 
-class SetPointLims:
+class PSSetPointLims:
 
-    def __init__(self,timeout=_timeout):
+    def __init__(self, timeout=_timeout):
 
         self._ps_name_list = None
         self._pstype_name_list = None
@@ -118,8 +118,82 @@ class SetPointLims:
             limits_dict[limit_name] = values[idx]
         return limits_dict
 
-_pslims = SetPointLims()
+# this code needs optimization in order to make import lighter!
+# see what has been donw for MAClass...
+_pslims = PSSetPointLims()
 _ps_sp_lims = _pslims.get_setpoint_limits
+def get_pssplims():
+    global _pslims
+    if _pslims is None:
+        _pslims = PSSetPointLims(timeout=_timeout)
+    return _pslims
+
+
+class MASetPointLims:
+
+    def __init__(self, timeout=_timeout):
+
+        self.mag2ps_dict = None
+        self.ps2mag_dict = None
+        self.magps_sp_limits_dict = None
+
+        if _web.server_online():
+            self._build_mag_sp_limits(timeout)
+            self._build_mag_excitation_dict()
+
+    def _build_mag_sp_limits(self, timeout=_timeout):
+        text = _web.magnets_setpoint_limits(timeout=timeout)
+        data, param_dict = _util.read_text_data(text)
+        self.setpoint_unit = tuple(param_dict['unit'])
+        self._setpoint_limit_labels = tuple(param_dict['power_supply_type'])
+        self.magps_sp_limits_dict = {}
+        for line in data:
+            magps_name, *limits = line
+            db = {self._setpoint_limit_labels[i]:float(limits[i]) for i in range(len(self._setpoint_limit_labels))}
+            self.magps_sp_limits_dict[magps_name] = db
+
+    def _build_mag_excitation_dict(self, timeout=_timeout):
+        text = _web.magnets_excitation_ps_read(timeout=timeout)
+        data, param_dict = _util.read_text_data(text)
+        self.mag2ps_dict = {}
+        self.ps2mag_dict = {}
+        for datum in data:
+            magnet, *ps_names = datum
+            self.mag2ps_dict[magnet] = tuple(ps_names)
+            for ps_name in ps_names:
+                try:
+                    self.ps2mag_dict[ps_name].append(magnet)
+                except:
+                    self.ps2mag_dict[ps_name] = [magnet]
+
+    def conv_mag2ps(self, magname):
+        return tuple(self.mag2ps_dict[magname])
+
+    def conv_ps2mag(self, psname):
+        return tuple(self.ps2mag_dict[psname])
+
+    def get_setpoint_limits(self, maname, *limit_labels):
+
+        values = self.magps_sp_limits_dict[maname]
+
+        if len(limit_labels) == 0:
+            limit_labels = self._setpoint_limit_labels
+        if len(limit_labels) == 1 and isinstance(limit_labels[0], str):
+            idx = self._setpoint_limit_labels.index(limit_labels[0])
+            return values[idx]
+
+        limits_dict = {}
+        for limit_name in limit_labels:
+            #idx = self._setpoint_limit_labels.index(limit_name)
+            limits_dict[limit_name] = values[limit_name]
+        return limits_dict
+
+_malims = None
+def get_masplims():
+    global _malims
+    if _malims is None:
+        _malims = MASetPointLims(timeout=_timeout)
+    return _malims
 
 class PSClasses:
     """Magnet Power Supply PV Database Classes
@@ -1252,3 +1326,31 @@ class PSClasses:
             if issubclass(getattr(__class__,method), PSClasses._Base):
                 classes.append(method.replace('_','-'))
         return classes if classes else None
+
+
+class MAClass:
+
+    @staticmethod
+    def get_database(maname):
+        masplims = get_masplims()
+        pssplims = get_pssplims()
+        psnames = masplims.conv_mag2ps(maname)
+        db = {}
+        for psname in psnames:
+            #print(psname)
+            pstype = pssplims._ps2pstype_dict[psname]
+            db[psname] = PSClasses.get_database(pstype)
+            maname_ps = psname.replace(':PS-',':MA-')
+            lims = masplims.get_setpoint_limits(maname_ps)
+            sp_lims = {}
+            sp_lims['lolo']  = lims['LOLO']
+            sp_lims['low']   = lims['LOW']
+            sp_lims['lolim'] = lims['LOPR']
+            sp_lims['hilim'] = lims['HOPR']
+            sp_lims['high']  = lims['HIGH']
+            sp_lims['hihi']  = lims['HIHI']
+            if 'Current-SP' in db[maname_ps]: db[maname_ps]['Current-SP'].update(sp_lims)
+            if 'Current-RB' in db[maname_ps]: db[maname_ps]['Current-RB'].update(sp_lims)
+            if 'CurrentRef-Mon' in db[maname_ps]: db[maname_ps]['CurrentRef-Mon'].update(sp_lims)
+            if 'Current-Mon' in db[maname_ps]: db[maname_ps]['Current-Mon'].update(sp_lims)
+        return db
