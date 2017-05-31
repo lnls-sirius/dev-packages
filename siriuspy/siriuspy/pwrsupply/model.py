@@ -77,7 +77,7 @@ class PowerSupplyLinac(object):
 
     @pwrstate_sel.setter
     def pwrstate_sel(self, value):
-        if self.ctrlmode_mon != _et.idx.Remote: return
+        if self._ctrlmode_mon != _et.idx.Remote: return
         value = self._eget('OffOnTyp', value, enum_keys=False)
         if value is not None and value != self.pwrstate_sts:
             self._pwrstate_sel = value
@@ -93,7 +93,7 @@ class PowerSupplyLinac(object):
 
     @current_sp.setter
     def current_sp(self, value):
-        if self.ctrlmode_mon != _et.idx.Remote: return
+        if self._ctrlmode_mon != _et.idx.Remote: return
         if value not in (self.current_sp, self.current_rb):
             self._current_sp = value
             self._set_current_sp(value)
@@ -216,7 +216,7 @@ class PowerSupply(PowerSupplyLinac):
 
     @opmode_sel.setter
     def opmode_sel(self, value):
-        if self.ctrlmode_mon != _et.idx.Remote: return
+        if self._ctrlmode_mon != _et.idx.Remote: return
         value = self._eget('PSOpModeTyp', value, enum_keys=False)
         if value is not None and value != self.opmode_sts:
             self._opmode_sel = value
@@ -268,7 +268,7 @@ class PowerSupply(PowerSupplyLinac):
 
     @wfmlabel_sp.setter
     def wfmlabel_sp(self, value):
-        if self.ctrlmode_mon != _et.idx.Remote: return
+        if self._ctrlmode_mon != _et.idx.Remote: return
         if value != self.wfmlabel_rb:
             self._wfmlabel_sp = value
             self._set_wfmlabel_sp(value)
@@ -283,7 +283,7 @@ class PowerSupply(PowerSupplyLinac):
 
     @wfmdata_sp.setter
     def wfmdata_sp(self, value):
-        if self.ctrlmode_mon != _et.idx.Remote: return
+        if self._ctrlmode_mon != _et.idx.Remote: return
         if (value != self.wfmdata_rb).any():
             self._wfmdata_sp = _np.array(value)
             self._set_wfmdata_sp(value)
@@ -299,16 +299,23 @@ class PowerSupply(PowerSupplyLinac):
 
     @wfmload_sel.setter
     def wfmload_sel(self, value):
-        if self.ctrlmode_mon != _et.idx.Remote: return
+        if self._ctrlmode_mon != _et.idx.Remote: return
         wfmlabels = self._get_wfmlabels_mon()
-        #slot = _default_wfmlabels.index(value) if self._enum_keys else value
         slot = wfmlabels.index(value) if self._enum_keys else value
         self._wfmload_sel = slot
+        print(type(wfmlabels))
+        print(slot)
         self._set_wfmload_sel(slot)
 
     @property
     def wfmload_sts(self):
-        return self._get_wfmload_sts()
+        slot = self._get_wfmload_sts()
+        if not self._enum_keys:
+            return slot
+        else:
+            wfmlabels = self._get_wfmlabels_mon()
+            return wfmlabels[slot]
+
 
     @property
     def wfmsave_cmd(self):
@@ -316,7 +323,7 @@ class PowerSupply(PowerSupplyLinac):
 
     @wfmsave_cmd.setter
     def wfmsave_cmd(self, value):
-        if self.ctrlmode_mon != _et.idx.Remote: return
+        if self._ctrlmode_mon != _et.idx.Remote: return
         self._controller.wfmsave = value
 
     # --- class implementation ---
