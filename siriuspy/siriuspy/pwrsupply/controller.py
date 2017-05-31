@@ -672,7 +672,7 @@ class ControllerSim(Controller):
         self._wfmindex = value
 
     def _get_wfmlabels(self):
-        return [label for label in self._wfmlabels]
+        return _np.array([label for label in self._wfmlabels])
 
     def _get_wfmlabel(self):
         return self._waveform.label

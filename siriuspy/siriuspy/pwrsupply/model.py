@@ -303,8 +303,6 @@ class PowerSupply(PowerSupplyLinac):
         wfmlabels = self._get_wfmlabels_mon()
         slot = wfmlabels.index(value) if self._enum_keys else value
         self._wfmload_sel = slot
-        print(type(wfmlabels))
-        print(slot)
         self._set_wfmload_sel(slot)
 
     @property
@@ -331,6 +329,8 @@ class PowerSupply(PowerSupplyLinac):
     def _get_database(self):
         """Return a PV database whose keys correspond to PS properties."""
         db = _copy.deepcopy(self._database)
+        #print(db['WfmData-RB'])
+        #print(self.current_rb)
         value = self.ctrlmode_mon; db['CtrlMode-Mon']['value'] = _et.enums('RmtLocTyp').index(value) if self._enum_keys else value
         value = self.opmode_sel;   db['OpMode-Sel']['value'] = _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
         value = self.opmode_sts;   db['OpMode-Sts']['value'] = _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
@@ -338,8 +338,11 @@ class PowerSupply(PowerSupplyLinac):
         value = self.pwrstate_sts; db['PwrState-Sts']['value'] = _et.enums('OffOnTyp').index(value) if self._enum_keys else value
         db['Reset-Cmd']['value'] = self.reset
         db['Abort-Cmd']['value'] = self.abort
-        value = self.wfmload_sel;  db['WfmLoad-Sel']['value'] = _default_wfmlabels.index(value) if self._enum_keys else value
-        value = self.wfmload_sts;  db['WfmLoad-Sts']['value'] = _default_wfmlabels.index(value) if self._enum_keys else value
+        wfmlabels = self._get_wfmlabels_mon()
+        #print(type(wfmlabels))
+        #print(wfmlabels)
+        value = self.wfmload_sel;  db['WfmLoad-Sel']['value'] = wfmlabels.index(value) if self._enum_keys else value
+        value = self.wfmload_sts;  db['WfmLoad-Sts']['value'] = wfmlabels.index(value) if self._enum_keys else value
         db['WfmLabel-SP']['value']    = self.wfmlabel_sp
         db['WfmLabel-RB']['value']    = self.wfmlabel_rb
         db['WfmLabels-Mon']['value']  = self.wfmlabels_mon
