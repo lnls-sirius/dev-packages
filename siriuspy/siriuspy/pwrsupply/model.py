@@ -73,7 +73,7 @@ class PowerSupplyLinac(object):
 
     @property
     def pwrstate_sel(self):
-        return self._pwrstate_sel
+        return self._eget('OffOnTyp', self._pwrstate_sel)
 
     @pwrstate_sel.setter
     def pwrstate_sel(self, value):
@@ -116,11 +116,11 @@ class PowerSupplyLinac(object):
     def _get_database(self):
         """Return a PV database whose keys correspond to PS properties."""
         db = _copy.deepcopy(self._database)
-        value = self.ctrlmode_mon; db['CtrlMode-Mon']['value'] = _et.enums.index('RmtLocTyp',value) if self._enum_keys else value
-        value = self.pwrstate_sel; db['PwrState-Sel']['value'] = _et.enums.index('OffOnTyp', value) if self._enum_keys else value
-        value = self.pwrstate_sts; db['PwrState-Sts']['value'] = _et.enums.index('OffOnTyp', value) if self._enum_keys else value
-        db['Current-SP']['value']     = self.current_sp
-        db['Current-Mon']['value']    = self.current_mon
+        value = self.ctrlmode_mon; db['CtrlMode-Mon']['value'] = _et.enums('RmtLocTyp').index(value) if self._enum_keys else value
+        value = self.pwrstate_sel; db['PwrState-Sel']['value'] = _et.enums('OffOnTyp').index(value) if self._enum_keys else value
+        value = self.pwrstate_sts; db['PwrState-Sts']['value'] = _et.enums('OffOnTyp').index(value) if self._enum_keys else value
+        db['Current-SP']['value']  = self.current_sp
+        db['Current-Mon']['value'] = self.current_mon
         return db
 
     def _set_pwrstate_sel(self, value):
@@ -290,18 +290,25 @@ class PowerSupply(PowerSupplyLinac):
 
     @property
     def wfmload_sel(self):
-        return self._wfmload_sel
-
-    @property
-    def wfmload_sts(self):
-        return self._get_wfmload_sts()
+        slot = self._wfmload_sel
+        if not self._enum_keys:
+            return slot
+        else:
+            wfmlabels = self._get_wfmlabels_mon()
+            return wfmlabels[slot]
 
     @wfmload_sel.setter
     def wfmload_sel(self, value):
         if self.ctrlmode_mon != _et.idx.Remote: return
-        slot = _default_wfmlabels.index(value) if self._enum_keys else value
+        wfmlabels = self._get_wfmlabels_mon()
+        #slot = _default_wfmlabels.index(value) if self._enum_keys else value
+        slot = wfmlabels.index(value) if self._enum_keys else value
         self._wfmload_sel = slot
-        self._set_wfmload_sel(value)
+        self._set_wfmload_sel(slot)
+
+    @property
+    def wfmload_sts(self):
+        return self._get_wfmload_sts()
 
     @property
     def wfmsave_cmd(self):
@@ -317,11 +324,11 @@ class PowerSupply(PowerSupplyLinac):
     def _get_database(self):
         """Return a PV database whose keys correspond to PS properties."""
         db = _copy.deepcopy(self._database)
-        value = self.ctrlmode_mon; db['CtrlMode-Mon']['value'] = _et.enums.index('RmtLocTyp',value) if self._enum_keys else value
-        value = self.opmode_sel;   db['OpMode-Sel']['value'] = _et.enums.index('PSOpModeTyp', value) if self._enum_keys else value
-        value = self.opmode_sts;   db['OpMode-Sts']['value'] = _et.enums.index('PSOpModeTyp', value) if self._enum_keys else value
-        value = self.pwrstate_sel; db['PwrState-Sel']['value'] = _et.enums.index('OffOnTyp', value) if self._enum_keys else value
-        value = self.pwrstate_sts; db['PwrState-Sts']['value'] = _et.enums.index('OffOnTyp', value) if self._enum_keys else value
+        value = self.ctrlmode_mon; db['CtrlMode-Mon']['value'] = _et.enums('RmtLocTyp').index(value) if self._enum_keys else value
+        value = self.opmode_sel;   db['OpMode-Sel']['value'] = _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
+        value = self.opmode_sts;   db['OpMode-Sts']['value'] = _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
+        value = self.pwrstate_sel; db['PwrState-Sel']['value'] = _et.enums('OffOnTyp').index(value) if self._enum_keys else value
+        value = self.pwrstate_sts; db['PwrState-Sts']['value'] = _et.enums('OffOnTyp').index(value) if self._enum_keys else value
         db['Reset-Cmd']['value'] = self.reset
         db['Abort-Cmd']['value'] = self.abort
         value = self.wfmload_sel;  db['WfmLoad-Sel']['value'] = _default_wfmlabels.index(value) if self._enum_keys else value
