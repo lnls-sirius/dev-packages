@@ -2,7 +2,7 @@ import re as _re
 import siriuspy.servweb as _web
 import siriuspy.util as _util
 import types as _types
-from siriuspy.csdevice.pwrsupply import SetPointLims as _SPLims
+from siriuspy.csdevice.pwrsupply import PSSetPointLims as _SPLims
 
 
 _timeout = 1.0
@@ -82,44 +82,7 @@ class _PSData:
     def get_setpoint_limits(self, psname, *limit_labels):
         return self._splims.get_setpoint_limits(psname, *limit_labels)
 
-        # """Return setpoint limits of given power supply of power suppy type.
-        #
-        # Arguments:
-        #
-        # psname -- name of power supply of power supply type
-        # limit_labels -- limit labels of interest
-        #                a) it can be a sequence of strings, each for a limit name of interest
-        #                b) if not passed, all defined limits are returned
-        #                c) if a single string, the single value of the the corresponding limit is returned
-        #
-        # returns:
-        #
-        # A dictionary with name and value pair of the requested limits.
-        # In case of a string argument for single limit name, a single value is
-        # returned.
-        # """
-        #
-        # if self._pstype_name_list is None: return None
-        #
-        # if psname in self._pstype_name_list:
-        #     values = self._pstype_sp_limits_dict[psname]
-        # elif psname in self._ps_name_list:
-        #     pstype_name  = self._ps2pstype_dict[psname]
-        #     values = self._pstype_sp_limits_dict[pstype_name]
-        # else:
-        #     return None
-        #
-        # if len(limit_labels) == 0:
-        #     limit_labels = self._setpoint_limit_labels
-        # if len(limit_labels) == 1 and isinstance(limit_labels[0], str):
-        #     idx = self._setpoint_limit_labels.index(limit_labels[0])
-        #     return values[idx]
-        #
-        # limits_dict = {}
-        # for limit_name in limit_labels:
-        #     idx = self._setpoint_limit_labels.index(limit_name)
-        #     limits_dict[limit_name] = values[idx]
-        # return limits_dict
+
 
 
 filters = _types.SimpleNamespace()

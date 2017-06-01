@@ -19,7 +19,7 @@ class EnumTypes:
 
     _types_ps = {
         'PSOpModeTyp'     : ('SlowRef', 'SlowRefSync', 'FastRef',
-                             'RmpWfm', 'MigWfm', 'CycGen'),
+                             'RmpWfm', 'MigWfm', 'Cycle'),
         'PSWfmLabelsTyp'  : ('Waveform1', 'Waveform2', 'Waveform3',
                              'Waveform4', 'Waveform5', 'Waveform6'),
         'PSIntlkLabelsTyp': ('Bit0', 'Bit1', 'Bit2', 'Bit3',

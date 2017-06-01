@@ -339,8 +339,6 @@ class PowerSupply(PowerSupplyLinac):
     def _get_database(self):
         """Return a PV database whose keys correspond to PS properties."""
         db = _copy.deepcopy(self._database)
-        #print(db['WfmData-RB'])
-        #print(self.current_rb)
         value = self.ctrlmode_mon; db['CtrlMode-Mon']['value'] = _et.enums('RmtLocTyp').index(value) if self._enum_keys else value
         value = self.opmode_sel;   db['OpMode-Sel']['value'] = _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
         value = self.opmode_sts;   db['OpMode-Sts']['value'] = _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
