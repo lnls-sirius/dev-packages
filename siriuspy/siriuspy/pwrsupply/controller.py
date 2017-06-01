@@ -30,9 +30,9 @@ class Controller(metaclass=_ABCMeta):
     trigger_timeout = 10000000 # [seconds]
     #trigger_timout  = 0.002 # [seconds]
 
-    def __init__(self, callback=None, name_ps=None, cycgen=None):
+    def __init__(self, callback=None, psname=None, cycgen=None):
         self._callback = callback
-        self._name_ps = name_ps
+        self._psname = psname
         #self._cycgen = _PSCycGenerator(interval=5) if cycgen is None else cycgen
         current_amp = 0.0 if self.current_min is None else abs(self.current_min)
         current_amp = current_amp if self.current_max is None else min(current_amp, abs(self.current_max))
@@ -556,14 +556,14 @@ class ControllerSim(Controller):
                        current_max=None,
                        current_std=0.0,
                        random_seed=None,
-                       name_ps=None,
+                       psname=None,
                        **kwargs):
 
         self._time_simulated  = None
         now = self.time
         if random_seed is not None:
             _random.seed(random_seed)
-        self._name_ps = name_ps
+        self._psname = psname
         self._pwrstate    = _et.idx.Off          # power state
         self._timestamp_pwrstate = now           # last time pwrstate was changed
         self._opmode      = _et.idx.SlowRef      # operation mode state
@@ -584,7 +584,7 @@ class ControllerSim(Controller):
         self._current_load = self._current_ref   # current value supplied to magnets
         self._init_waveforms()                   # initialize waveform data
 
-        super().__init__(name_ps=name_ps,**kwargs)
+        super().__init__(psname=psname,**kwargs)
 
     def _get_pwrstate(self):
         return self._pwrstate
@@ -814,8 +814,8 @@ class ControllerSim(Controller):
                 self._wfmdata_in_use = _np.array(wfm.data)
 
     def _load_waveform_from_slot(self, slot):
-        if self._name_ps is not None:
-            fname = self._name_ps + ':' + _default_wfmlabels[slot]
+        if self._psname is not None:
+            fname = self._psname + ':' + _default_wfmlabels[slot]
         else:
             fname = _default_wfmlabels[slot]
         try:
@@ -833,8 +833,8 @@ class ControllerSim(Controller):
             return None
 
     def _save_waveform_to_slot(self, slot):
-        if self._name_ps is not None:
-            fname = self._name_ps + ':' + _default_wfmlabels[slot]
+        if self._psname is not None:
+            fname = self._psname + ':' + _default_wfmlabels[slot]
         else:
             fname = _default_wfmlabels[slot]
         try:
@@ -847,15 +847,15 @@ Controller.register(ControllerSim)
 
 class ControllerEpics(Controller):
 
-    def __init__(self, name_ps,
+    def __init__(self, psname,
                        connection_timeout=_connection_timeout,
                        **kwargs):
 
-        self._name_ps = name_ps
+        self._psname = psname
         self._connection_timeout = connection_timeout
         self._callback = None
         self._create_epics_pvs()
-        super().__init__(name_ps=name_ps,**kwargs)
+        super().__init__(psname=psname,**kwargs)
 
 
         now = self.time
@@ -1029,7 +1029,7 @@ class ControllerEpics(Controller):
 
     def _create_epics_pvs(self):
         self._pvs = {}
-        pv = self._name_ps
+        pv = self._psname
         self._pvs['PwrState-Sel']    = _PV(pv + ':PwrState-Sel',    connection_timeout=self._connection_timeout)
         self._pvs['PwrState-Sts']    = _PV(pv + ':PwrState-Sts',    connection_timeout=self._connection_timeout)
         self._pvs['OpMode-Sel']      = _PV(pv + ':OpMode-Sel',      connection_timeout=self._connection_timeout)

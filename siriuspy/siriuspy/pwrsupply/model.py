@@ -2,46 +2,106 @@
 import copy as _copy
 import uuid as _uuid
 import numpy as _np
-from .psdata import conv_psname_2_pstype as _conv_psname_2_pstype
-from .psdata import get_setpoint_limits as _sp_limits
-from .psdata import get_polarity as _get_polarity
-import siriuspy.csdevice as _csdevice
-from .controller import ControllerSim as _ControllerSim
-from .controller import ControllerEpics as _ControllerEpics
+from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.csdevice.pwrsupply import default_wfmlabels as _default_wfmlabels
+from siriuspy.csdevice.pwrsupply import get_propty_database  as _get_propty_database
+from siriuspy.pwrsupply.controller import ControllerSim as _ControllerSim
+from siriuspy.pwrsupply.controller import ControllerEpics as _ControllerEpics
 
 
 _connection_timeout = 0.0
 
 
+class PSData:
+
+    def __init__(self, psname):
+        self._psname = psname
+        self._pstype = _PSSearch.conv_psname_2_pstype(self._psname)
+        self._polarity = _PSSearch.conv_pstype_2_polarity(self._pstype)
+        self._magfunc = _PSSearch.conv_pstype_2_magfunc(self._pstype)
+        self._splims = _PSSearch.conv_pstype_2_splims(self._pstype)
+        self._splims_unit = _PSSearch.get_splims_unit()
+        self._propty_database = _get_propty_database(self._pstype)
+
+    @property
+    def psname(self):
+        return self._psname
+
+    @property
+    def pstype(self):
+        return self._pstype
+
+    @property
+    def polarity(self):
+        return self._polarity
+
+    @property
+    def magfunc(self):
+        return self._magfunc
+
+    @property
+    def splims(self):
+        if self._splims is None:
+            return None
+        else:
+            return self._splims.copy()
+
+    @property
+    def splims_unit(self):
+        return self._splims_unit
+
+    @property
+    def splims_labels(self):
+        return sorted(self._slims.keys())
+
+    @property
+    def propty_database(self):
+        return _copy.deepcopy(self._propty_database)
+
+    def __str__(self):
+        st = ''
+        st +=        'psname      : ' + str(self.psname)
+        st += '\n' + 'pstype      : ' + str(self.pstype)
+        st += '\n' + 'polarity    : ' + str(self.polarity)
+        st += '\n' + 'magfunc     : ' + str(self.magfunc)
+        st += '\n' + 'splims_unit : ' + str(self.splims_unit)
+
+        if self.splims is None:
+            st += '\n' + 'splims      : ' + str(None)
+        else:
+            st += '\n' + 'splims      : ' + 'DRVH:{0:+09.3f} DRVL:{1:+09.3f}'.format(self.splims['DRVH'],self.splims['DRVL'])
+            st += '\n' + '              ' + 'HIHI:{0:+09.3f} LOLO:{1:+09.3f}'.format(self.splims['HIHI'],self.splims['LOLO'])
+            st += '\n' + '              ' + 'HIGH:{0:+09.3f} LOW :{1:+09.3f}'.format(self.splims['HIGH'],self.splims['LOW'])
+            st += '\n' + '              ' + 'HOPR:{0:+09.3f} LOPR:{1:+09.3f}'.format(self.splims['HOPR'],self.splims['LOPR'])
+
+        return st
+
+
 class PowerSupplyLinac(object):
 
-    def __init__(self, name_ps,
+    def __init__(self, psname,
                        controller=None,
                        callback=None,
                        current_std=0.0,
                        enum_keys=False):
 
-        self._name_ps = name_ps
-        self._name_pstype = _conv_psname_2_pstype(self._name_ps)
+        self._psdata = PSData(psname=psname)
         self._callback = callback
         self._enum_keys = enum_keys
-        self._database = _csdevice.get_database(self._name_pstype)
         self._ctrlmode_mon = _et.idx.Remote
-        self._setpoint_limits = _sp_limits(self._name_pstype)
         self._controller = controller
         self._controller_init(current_std)
 
     # --- class interface ---
 
     @property
-    def name_ps(self):
-        return self._name_ps
+    def psname(self):
+        return self._psdata.psname
 
     @property
-    def name_pstype(self):
-        return self._name_pstype
+    def pstype(self):
+        return self._psdata.pstype
 
     @property
     def callback(self):
@@ -55,8 +115,9 @@ class PowerSupplyLinac(object):
             self._callback = None
 
     @property
-    def setpoint_limits(self):
-        return _copy.deepcopy(self._setpoint_limits)
+    def splims(self):
+        #return _copy.deepcopy(self._setpoint_limits)
+        return _copy.deepcopy(self._psdata.splims)
 
     @property
     def database(self):
@@ -115,7 +176,7 @@ class PowerSupplyLinac(object):
 
     def _get_database(self):
         """Return a PV database whose keys correspond to PS properties."""
-        db = _copy.deepcopy(self._database)
+        db = self._psdata.propty_database
         value = self.ctrlmode_mon; db['CtrlMode-Mon']['value'] = _et.enums('RmtLocTyp').index(value) if self._enum_keys else value
         value = self.pwrstate_sel; db['PwrState-Sel']['value'] = _et.enums('OffOnTyp').index(value) if self._enum_keys else value
         value = self.pwrstate_sts; db['PwrState-Sts']['value'] = _et.enums('OffOnTyp').index(value) if self._enum_keys else value
@@ -133,13 +194,13 @@ class PowerSupplyLinac(object):
 
     def _controller_init(self, current_std):
         if self._controller is None:
-            lims = self._setpoint_limits # set controller setpoint limits according to PS database
-            self._controller = _ControllerSim(current_min = self._setpoint_limits['DRVL'],
-                                              current_max = self._setpoint_limits['DRVH'],
+            lims = self._psdata.splims # set controller setpoint limits according to PS database
+            self._controller = _ControllerSim(current_min = self._psdata.splims['DRVL'],
+                                              current_max = self._psdata.splims['DRVH'],
                                               callback = self._mycallback,
                                               current_std = current_std)
-            self._pwrstate_sel = self._database['PwrState-Sel']['value']
-            self._current_sp   = self._database['Current-SP']['value']
+            self._pwrstate_sel = self._psdata.propty_database['PwrState-Sel']['value']
+            self._current_sp   = self._psdata.propty_database['Current-SP']['value']
             self._controller.pwrstate   = self._pwrstate_sel
             self._controller.current_sp = self._current_sp
         else:
@@ -170,6 +231,7 @@ class PowerSupplyLinac(object):
     def _mycallback(self, pvname, value, **kwargs):
         pass
 
+
 class PowerSupply(PowerSupplyLinac):
 
     def __init__(self, **kwargs):
@@ -177,19 +239,19 @@ class PowerSupply(PowerSupplyLinac):
 
     def _controller_init(self, current_std):
         if self._controller is None:
-            lims = self._setpoint_limits # set controller setpoint limits according to PS database
-            self._controller = _ControllerSim(current_min = self._setpoint_limits['DRVL'],
-                                              current_max = self._setpoint_limits['DRVH'],
+            lims = self._psdata.splims # set controller setpoint limits according to PS database
+            self._controller = _ControllerSim(current_min = self._psdata.splims['DRVL'],
+                                              current_max = self._psdata.splims['DRVH'],
                                               callback = self._mycallback,
                                               current_std = current_std,
-                                              name_ps=self._name_ps)
-            #print(self._name_ps)
-            self._pwrstate_sel = self._database['PwrState-Sel']['value']
-            self._opmode_sel   = self._database['OpMode-Sel']['value']
-            self._current_sp   = self._database['Current-SP']['value']
-            self._wfmlabel_sp  = self._database['WfmLabel-SP']['value']
-            self._wfmload_sel  = self._database['WfmLoad-Sel']['value']
-            self._wfmdata_sp   = self._database['WfmData-SP']['value']
+                                              psname=self._psdata.psname)
+
+            self._pwrstate_sel = self._psdata.propty_database['PwrState-Sel']['value']
+            self._opmode_sel   = self._psdata.propty_database['OpMode-Sel']['value']
+            self._current_sp   = self._psdata.propty_database['Current-SP']['value']
+            self._wfmlabel_sp  = self._psdata.propty_database['WfmLabel-SP']['value']
+            self._wfmload_sel  = self._psdata.propty_database['WfmLoad-Sel']['value']
+            self._wfmdata_sp   = self._psdata.propty_database['WfmData-SP']['value']
             self._controller.pwrstate   = self._pwrstate_sel
             self._controller.opmode     = self._opmode_sel
             self._controller.current_sp = self._current_sp
@@ -203,9 +265,7 @@ class PowerSupply(PowerSupplyLinac):
             self._wfmload_sel  = self._controller.wfmload
             self._wfmdata_sp   = self._controller.wfmdata
 
-        #self.callback = self._mycallback
         self._controller.callback = self._mycallback
-
         self._controller.update_state()
 
     # --- class interface ---
@@ -328,7 +388,7 @@ class PowerSupply(PowerSupplyLinac):
 
     def _get_database(self):
         """Return a PV database whose keys correspond to PS properties."""
-        db = _copy.deepcopy(self._database)
+        db = self._psdata.propty_database
         value = self.ctrlmode_mon; db['CtrlMode-Mon']['value'] = _et.enums('RmtLocTyp').index(value) if self._enum_keys else value
         value = self.opmode_sel;   db['OpMode-Sel']['value'] = _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
         value = self.opmode_sts;   db['OpMode-Sts']['value'] = _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
@@ -412,6 +472,7 @@ class PowerSupply(PowerSupplyLinac):
             elif 'Current-SP' in pvname:
                 self._current_sp   = value
 
+
 class PowerSupplyEpicsSync(PowerSupply):
 
     def __init__(self, controllers, **kwargs):
@@ -459,10 +520,11 @@ class PowerSupplyEpicsSync(PowerSupply):
         for c in self._controllers:
             c.current_sp = value
 
+
 class PowerSupplyMagnet(PowerSupply):
 
-    def __init__(self, name_ps, **kwargs):
-        super().__init__(name_ps, **kwargs)
+    def __init__(self, psname, **kwargs):
+        super().__init__(psname, **kwargs)
 
     @property
     def database(self):

@@ -45,36 +45,3 @@ def add_multipoles(multipoles_list):
                 except:
                     r[mtype][harm] = value
     return r
-
-def conv_epics2pcaspy_lim_names(name, inverted=False):
-
-    epics2pcaspy_lim_names_table = {
-        'DRVL' : 'DRVL',
-        'LOLO' : 'lolo',
-        'LOW'  : 'lo',
-        'LOPR' : 'lolim',
-        'HOPR' : 'hilim',
-        'HIGH' : 'hi',
-        'HIHI' : 'hihi',
-        'DRVH' : 'DRVH',
-        'TSTV' : 'TSTV',
-        'TSTR' : 'TSTR',
-
-    }
-    epics2pcaspy_lim_names_table_i = {
-        'DRVL' : 'DRVH',
-        'LOLO' : 'hihi',
-        'LOW'  : 'hi',
-        'LOPR' : 'hilim',
-        'HOPR' : 'lolim',
-        'HIGH' : 'lo',
-        'HIHI' : 'lolo',
-        'DRVH' : 'DRVL',
-        'TSTV' : 'TSTV',
-        'TSTR' : 'TSTR',
-    }
-
-    if inverted:
-        return epics2pcaspy_lim_names_table_i[name]
-    else:
-        return epics2pcaspy_lim_names_table[name]

@@ -1,4 +1,4 @@
-from siriuspy.pwrsupply import psdata
+#from siriuspy.pwrsupply import psdata
 from siriuspy.pwrsupply import beaglebonedata as bbbdata
 
 from siriuspy.pwrsupply.waveform import *

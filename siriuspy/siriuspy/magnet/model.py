@@ -1,17 +1,17 @@
 
 import copy as _copy
+from siriuspy.util import conv_splims_labels as _conv_splims_labels
+import siriuspy.envars as _envars
+from siriuspy.pwrsupply import psdata as _psdata
+from siriuspy.pwrsupply import PowerSupply as _PowerSupply
+from siriuspy.pwrsupply.controller import ControllerEpics as _ControllerEpics
 from siriuspy.magnet import util as _util
 from siriuspy.magnet import madata as _magdata
 from siriuspy.magnet import magexc as _magexc
 from siriuspy.magnet import util as _util
-from siriuspy.pwrsupply import psdata as _psdata
-from siriuspy.pwrsupply import PowerSupply as _PowerSupply
-from siriuspy.pwrsupply.controller import ControllerEpics as _ControllerEpics
-import siriuspy.envars as _envars
 
 _ExcData = _magexc.MagnetExcitation
 _mag_sp_lims = _magdata.get_ma_setpoint_limits
-_conv_lim_names = _util.conv_epics2pcaspy_lim_names
 
 
 _magnet_types = {'normal_dipole':     ('normal', 0, 'BL', 'rad'),
@@ -231,7 +231,7 @@ class MagnetFam(Magnet2):
         db_kl = _copy.deepcopy(db_value)
         # convert limits
         for epics_name, lim in sp_lims.items():
-            pcaspy_name = _conv_lim_names(epics_name, inverted=inverted)
+            pcaspy_name = _conv_splims_labels(epics_name, inverted=inverted)
             m = self.conv_currents2multipoles({ps_name:lim})
             db_kl[pcaspy_name] = m[typ][h]
         # convert actual value
@@ -251,7 +251,7 @@ class MagnetFam(Magnet2):
                     if propty in ('Current-SP','Current-RB'):
                         # apply MA over PS limits
                         for epics_name, lim in sp_lims.items():
-                            pcaspy_name = _conv_lim_names(epics_name)
+                            pcaspy_name = _conv_splims_labels(epics_name)
                             db_value[pcaspy_name] = lim
                         # add ps database
                         db_ma[key] = db_value
@@ -298,7 +298,7 @@ class MagnetFamDip(MagnetFam):
             if propty in ('Current-SP','Current-RB'):
                 # apply MA over PS limits
                 for epics_name, lim in sp_lims.items():
-                    pcaspy_name = _conv_lim_names(epics_name)
+                    pcaspy_name = _conv_splims_labels(epics_name)
                     db_value[pcaspy_name] = lim
                 # add ps database
                 db_ma[key.replace('-1','').replace('-2','')] = db_value

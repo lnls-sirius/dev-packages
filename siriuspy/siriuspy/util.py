@@ -76,6 +76,35 @@ def print_ioc_banner(ioc_name, db, description, version, prefix, ):
             print(''); new_line=False
     if new_line: print('')
 
+
+def conv_splims_labels(label):
+    """Convert setpoint limit labels from pcaspy to epics and vice-versa."""
+    labels_dict = {
+        'DRVL' : 'DRVL',
+        'LOLO' : 'lolo',
+        'LOW'  : 'low',
+        'LOPR' : 'lolim',
+        'HOPR' : 'hilim',
+        'HIGH' : 'high',
+        'HIHI' : 'hihi',
+        'DRVH' : 'DRVH',
+        'TSTV' : 'TSTV',
+        'TSTR' : 'TSTR',
+    }
+    if label in labels_dict:
+        # epics -> pcaspy
+        return labels_dict[label]
+    else:
+        for k,v in labels_dict.items():
+            if v == label:
+                # pcaspy -> epics
+                return k
+        return None
+
+
+
+
+# Is this being used ?!?!
 def set_ioc_ca_port_number(ioc_name):
     envar, default_port = _envars.ioc_ca_ports_dict[ioc_name]
     port = _os.environ.get(envar, default=default_port)

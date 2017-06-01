@@ -7,8 +7,6 @@ from siriuspy.csdevice.enumtypes import EnumTypes as _et
 import os as _os
 
 
-#_default_wfmsize = _et.enums('PSWfmLabelsTyp')
-
 
 class PSWaveForm:
 
