@@ -1,4 +1,3 @@
-
 import copy as _copy
 import uuid as _uuid
 import numpy as _np
@@ -187,7 +186,7 @@ class PowerSupply(PowerSupplyLinac):
             self._pwrstate_sel = self._database['PwrState-Sel']['value']
             self._opmode_sel   = self._database['OpMode-Sel']['value']
             self._current_sp   = self._database['Current-SP']['value']
-            self._wfmlabel_sp  = self._database['WfmLabel-SP']['value']
+            self._wfmlabel_sp  = self._controller.wfmlabel
             self._wfmload_sel  = self._database['WfmLoad-Sel']['value']
             self._wfmdata_sp   = self._database['WfmData-SP']['value']
             self._controller.pwrstate   = self._pwrstate_sel
@@ -301,7 +300,19 @@ class PowerSupply(PowerSupplyLinac):
     def wfmload_sel(self, value):
         if self._ctrlmode_mon != _et.idx.Remote: return
         wfmlabels = self._get_wfmlabels_mon()
-        slot = wfmlabels.index(value) if self._enum_keys else value
+        #slot = _np.where(wfmlabels == value)[0][0] if self._enum_keys else value
+
+        if self._enum_keys:
+            if not isinstance(value, str):
+                raise ValueError("Type must be str, not {}".format(type(value)))
+            if value not in wfmlabels:
+                raise KeyError("There is no waveform name {}".format(value))
+            slot = _np.where(wfmlabels == value)[0][0]
+        else:
+            if not isinstance(value, int):
+                raise ValueError("Type must be int, not {}".format(type(value)))
+            slot = value
+
         self._wfmload_sel = slot
         self._set_wfmload_sel(slot)
 
@@ -313,7 +324,6 @@ class PowerSupply(PowerSupplyLinac):
         else:
             wfmlabels = self._get_wfmlabels_mon()
             return wfmlabels[slot]
-
 
     @property
     def wfmsave_cmd(self):
@@ -341,8 +351,10 @@ class PowerSupply(PowerSupplyLinac):
         wfmlabels = self._get_wfmlabels_mon()
         #print(type(wfmlabels))
         #print(wfmlabels)
-        value = self.wfmload_sel;  db['WfmLoad-Sel']['value'] = wfmlabels.index(value) if self._enum_keys else value
-        value = self.wfmload_sts;  db['WfmLoad-Sts']['value'] = wfmlabels.index(value) if self._enum_keys else value
+        db['WfmLoad-Sel']['enums'] = wfmlabels
+        db['WfmLoad-Sts']['enums'] = wfmlabels
+        value = self.wfmload_sel;  db['WfmLoad-Sel']['value'] = _np.where(wfmlabels == value)[0][0] if self._enum_keys else value
+        value = self.wfmload_sts;  db['WfmLoad-Sts']['value'] = _np.where(wfmlabels == value)[0][0] if self._enum_keys else value
         db['WfmLabel-SP']['value']    = self.wfmlabel_sp
         db['WfmLabel-RB']['value']    = self.wfmlabel_rb
         db['WfmLabels-Mon']['value']  = self.wfmlabels_mon
