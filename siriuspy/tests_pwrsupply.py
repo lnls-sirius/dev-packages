@@ -1,4 +1,4 @@
-#!/usr/local/bin/python3.6
+#!/usr/bin/env python3
 
 import unittest
 from siriuspy.pwrsupply import PowerSupply
@@ -6,14 +6,14 @@ from siriuspy.pwrsupply import PowerSupply
 class PowerSupplyTest(unittest.TestCase):
 
     def setUp(self):
-        self.ps = PowerSupply(name_ps='SI-Fam:PS-QDA')
-        self.ps_enum = PowerSupply(name_ps='SI-Fam:PS-QDA', enum_keys=True)
+        self.ps = PowerSupply(psname='SI-Fam:PS-QDA')
+        self.ps_enum = PowerSupply(psname='SI-Fam:PS-QDA', enum_keys=True)
 
         self.default_labels = self.ps.wfmlabels_mon
         self.default_labels_e = self.ps.wfmlabels_mon
 
     def test_initialization(self):
-        self.assertEqual(self.ps.name_ps, 'SI-Fam:PS-QDA')
+        self.assertEqual(self.ps.psname, 'SI-Fam:PS-QDA')
         self.assertEqual(self.ps._enum_keys, False)
         self.assertEqual(self.ps.callback, None)
 
@@ -149,7 +149,7 @@ class PowerSupplyTest(unittest.TestCase):
         self.ps.wfmlabel_sp = new_label_name
         self.ps.wfmsave_cmd = 1
         del self.ps
-        self.ps = PowerSupply(name_ps='SI-Fam:PS-QDA')
+        self.ps = PowerSupply(psname='SI-Fam:PS-QDA')
 
         labels = self.ps.wfmlabels_mon
         self.assertEqual(labels[idx_changed], new_label_name)
@@ -158,7 +158,7 @@ class PowerSupplyTest(unittest.TestCase):
         self.ps.wfmlabel_sp = old_label_name
         self.ps.wfmsave_cmd = 1
         del self.ps
-        self.ps = PowerSupply(name_ps='SI-Fam:PS-QDA')
+        self.ps = PowerSupply(psname='SI-Fam:PS-QDA')
 
         self.assertEqual(self.default_labels[idx_changed], old_label_name)
 
@@ -171,7 +171,7 @@ class PowerSupplyTest(unittest.TestCase):
         self.ps.wfmdata_sp = new_data
         self.ps.wfmsave_cmd
         del self.ps
-        self.ps = PowerSupply(name_ps='SI-Fam:PS-QDA')
+        self.ps = PowerSupply(psname='SI-Fam:PS-QDA')
 
         self.ps.wfmload_sel = idx_changed
         self.assertEqual(True, (self.ps.wfmdata_rb == new_data).all())
@@ -179,7 +179,7 @@ class PowerSupplyTest(unittest.TestCase):
         self.ps.wfmdata_sp = old_data
         self.ps.wfmsave_cmd
         del self.ps
-        self.ps = PowerSupply(name_ps='SI-Fam:PS-QDA')
+        self.ps = PowerSupply(psname='SI-Fam:PS-QDA')
 
         self.ps.wfmload_sel = idx_changed
         self.assertEqual(True, (self.ps.wfmdata_rb == old_data).all())'''

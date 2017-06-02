@@ -115,7 +115,6 @@ class PowerSupplyLinac(object):
 
     @property
     def splims(self):
-        #return _copy.deepcopy(self._setpoint_limits)
         return _copy.deepcopy(self._psdata.splims)
 
     @property
@@ -164,7 +163,6 @@ class PowerSupplyLinac(object):
 
     @property
     def intlk_mon(self):
-        # This will eventually be implemented in _PowerSupply!
         return self._controller.intlk
 
     @property
@@ -197,7 +195,8 @@ class PowerSupplyLinac(object):
             self._controller = _ControllerSim(current_min = self._psdata.splims['DRVL'],
                                               current_max = self._psdata.splims['DRVH'],
                                               callback = self._mycallback,
-                                              current_std = current_std)
+                                              current_std = current_std,
+                                              psname=self._psdata.psname)
             self._pwrstate_sel = self._psdata.propty_database['PwrState-Sel']['value']
             self._current_sp   = self._psdata.propty_database['Current-SP']['value']
             self._controller.pwrstate   = self._pwrstate_sel
@@ -407,8 +406,6 @@ class PowerSupply(PowerSupplyLinac):
         db['Reset-Cmd']['value'] = self.reset
         db['Abort-Cmd']['value'] = self.abort
         wfmlabels = self._get_wfmlabels_mon()
-        #print(type(wfmlabels))
-        #print(wfmlabels)
         db['WfmLoad-Sel']['enums'] = wfmlabels
         db['WfmLoad-Sts']['enums'] = wfmlabels
         value = self.wfmload_sel;  db['WfmLoad-Sel']['value'] = _np.where(wfmlabels == value)[0][0] if self._enum_keys else value
@@ -468,7 +465,6 @@ class PowerSupply(PowerSupplyLinac):
 
     def _mycallback(self, pvname, value, **kwargs):
         if isinstance(self._controller, _ControllerEpics):
-            #print(pvname, value)
             if 'CtrlMode-Mon' in pvname:
                 self._ctrlmode_mon = value
             elif 'OpMode-Sel' in pvname:

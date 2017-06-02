@@ -13,8 +13,10 @@ class PSWaveForm:
     path = _os.path.join(_os.environ.get('HOME','./'), '.siriuspy', 'pwrsupply')
 
     @staticmethod
-    def wfm_constant(label, nr_points=_default_wfmsize, value=0.0):
-        return PSWaveForm(label, _np.array([value for i in range(nr_points)]))
+    def wfm_constant(label, nr_points=_default_wfmsize, value=0.0, filename=None):
+        wfm = PSWaveForm(label=label, data=_np.array([value for i in range(nr_points)]))
+        wfm._filename = filename
+        return wfm
 
     @staticmethod
     def wfm_linear_ramp(label, max_value=0.0):
@@ -29,6 +31,7 @@ class PSWaveForm:
         else:
             self._label = label
             self._data = _np.array(data)
+        self._filename = filename
 
     @property
     def label(self):
@@ -53,14 +56,15 @@ class PSWaveForm:
     def __getitem__(self, index):
         return self._data[index]
 
-    def save_to_file(self, filename):
-
+    def save_to_file(self, filename=None):
+        if filename is None: filename = self._filename
         with open(_os.path.join(PSWaveForm.path, filename), 'w') as fp:
             print(self._label, file=fp)
             for datum in self._data:
                 print(str(datum), file=fp)
 
-    def load_from_file(self, filename):
+    def load_from_file(self, filename=None):
+        if filename is None: filename = self._filename
         with open(_os.path.join(PSWaveForm.path, filename)) as f:
             lines = [line.strip() for line in f]
         self._label = lines[0]

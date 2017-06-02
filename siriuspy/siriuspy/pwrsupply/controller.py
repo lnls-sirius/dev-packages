@@ -802,8 +802,6 @@ class ControllerSim(Controller):
         self._wfmsave   = 0   # waveform save command counter
         self._wfmslot   = 0   # selected waveform slot index
         self._wfmlabels = []  # updated array with waveform labels
-        #self._pending_wfmdata  = False  # pending wfm slot number
-        #self._pending_wfmload  = False  # pending wfm slot number
         self._wfmdata_changed_state = False
         self._wfmload_changed_state = False
         for i in range(len(_default_wfmlabels)):
@@ -819,9 +817,9 @@ class ControllerSim(Controller):
         else:
             fname = _default_wfmlabels[slot]
         try:
-            return _PSWaveForm(filename=fname+'.txt')
+            return _PSWaveForm(label= _default_wfmlabels[slot],filename=fname+'.txt')
         except FileNotFoundError:
-            wfm = _PSWaveForm.wfm_constant(label=fname)
+            wfm = _PSWaveForm.wfm_constant(label= _default_wfmlabels[slot],filename=fname+'.txt')
             wfm.save_to_file(filename=fname+'.txt')
             return wfm
 
