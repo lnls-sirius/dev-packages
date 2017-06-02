@@ -33,7 +33,9 @@ class App:
         self._driver              = None # This should latter be set by the Driver __init__ using driver.setter
         self._pvs_database        = _pvs.pvs_database
         self._current_13C4_pv     = _epics.PV(_ioc_prefix + 'SI-13C4:DI-DCCT:Current-Mon', connection_timeout=0.05)
+        self._current_13C4_pv.add_callback(self._read_current,self._current_13C4_pv.value)
         self._current_14C4_pv     = _epics.PV(_ioc_prefix + 'SI-14C4:DI-DCCT:Current-Mon', connection_timeout=0.05)
+        self._current_14C4_pv.add_callback(self._read_current,self._current_14C4_pv.value)
         self._mode                = 0
         self._sampling_time       = 10.0
         self._buffer_size         = 100
@@ -87,21 +89,9 @@ class App:
                     #     for i in range(len(a)):
                     #         print(str(a[i])+' '+str(b[i]))
                     #     print(str(len(a)))
-                    self.driver.setParam('Lifetime-Mon', lifetime)
+                    self.driver.setParam('CurrLT-Mon', lifetime)
                 self.driver.setParam('SplNr-Sts', len(self._current_13C4_buffer.serie[0]))
                 self.driver.updatePVs()
-
-        elif reason == 'Current-Mon':
-            if self._mode == 0 and self._current_13C4_pv.connected : # and self._hwflt_13C4_pv.value==0
-                value = self._current_13C4_pv.value
-            elif self._mode == 1 and self._current_14C4_pv.connected : # and self._hwflt_14C4_pv.value==0
-                value = self._current_14C4_pv.value
-            elif self._mode == 2 and self._current_13C4_pv.connected and self._current_14C4_pv.connected: # and self._hwflt_13C4_pv.value==0 and self._hwflt_14C4_pv.value==0
-                value1 = self._current_13C4_pv.value
-                value2 = self._current_14C4_pv.value
-                value = (value1+value2)/2
-            self.driver.setParam('Current-Mon', value)
-            self.driver.updatePVs()
         return value
 
     def write(self,reason,value):
@@ -182,9 +172,21 @@ class App:
             [self._timestamp_DCCT13C4, self._value_DCCT13C4] = self._current_13C4_buffer.serie
             [self._timestamp_DCCT14C4, self._value_DCCT14C4] = self._current_14C4_buffer.serie
             if len(self._timestamp_DCCT13C4) > min(20,self._buffer_size/2):
-                return lifetime_lsf_exponential(self._timestamp_DCCT13C4+self._timestamp_DCCT14C4, self._value_DCCT13C4+self._value_DCCT14C4)
+                ltDCCT13C4 = lifetime_lsf_exponential(self._timestamp_DCCT13C4, self._value_DCCT13C4)
+                ltDCCT14C4 = lifetime_lsf_exponential(self._timestamp_DCCT14C4, self._value_DCCT14C4)
+                return (ltDCCT13C4+ltDCCT14C4)/2
             else:
                 return None
+
+    def _read_current(self, value, **kwargs):
+        if self._mode == 0 and self._current_13C4_pv.connected : # and self._hwflt_13C4_pv.value==0
+            self._current_value = self._current_13C4_pv.value
+        elif self._mode == 1 and self._current_14C4_pv.connected : # and self._hwflt_14C4_pv.value==0
+            self._current_value = self._current_14C4_pv.value
+        elif self._mode == 2 and self._current_13C4_pv.connected and self._current_14C4_pv.connected: # and self._hwflt_13C4_pv.value==0 and self._hwflt_14C4_pv.value==0
+            self._current_value = self._current_13C4_pv.value
+        self.driver.setParam('Current-Mon', self._current_value)
+        self.driver.updatePVs()
 
     def _test_current_abrupt_variation(self, _current_buffer):
         # check if occurred an abrupt variation of current : compare the rate of change with a max rate of change based on the value of the mean current
