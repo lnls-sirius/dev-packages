@@ -34,12 +34,14 @@ class Controller(metaclass=_ABCMeta):
         self._callback = callback
         self._psname = psname
         #self._cycgen = _PSCycGenerator(interval=5) if cycgen is None else cycgen
-        current_amp = 0.0 if self.current_min is None else abs(self.current_min)
-        current_amp = current_amp if self.current_max is None else min(current_amp, abs(self.current_max))
+        current_amp = abs(self.current_max)
         if cycgen is None:
             self._cycgen = _PSCycGenerator(interval=30, cycgen_type='exp_cos', tau=10, period=2.0, current_amp=current_amp)
         else:
             self._cycgen = cycgen
+
+        self._set_cycling_state(False)
+
         self.update_state(init=True)
 
     # --- class interface - properties ---
@@ -63,6 +65,7 @@ class Controller(metaclass=_ABCMeta):
     def opmode(self, value):
         if value not in _et.values('PSOpModeTyp'): return
         if value != self.opmode:
+            self._set_cycling_state(False)
             self._set_timestamp_trigger(None)
             self._set_wfmindex(0)
             self._set_cmd_abort_issued(False)
@@ -78,6 +81,7 @@ class Controller(metaclass=_ABCMeta):
     def reset(self):
         self._inc_reset_counter()
         self.current_sp = 0.0
+        self._set_current_ref(0.0)
         self.opmode = _et.idx.SlowRef
         self._intlk_reset() # Try to reset interlock
         self.update_state(reset=True)
@@ -88,7 +92,7 @@ class Controller(metaclass=_ABCMeta):
 
     def abort(self):
         self._inc_abort_counter()
-        if self.opmode == _et.idx.MigWfm:
+        if self.opmode in (_et.idx.SlowRefSync, _et.idx.FastRef, _et.idx.MigWfm):
             self.opmode = _et.idx.SlowRef
         elif self.opmode == _et.idx.RmpWfm:
             self._set_cmd_abort_issued(True)
@@ -298,19 +302,20 @@ class Controller(metaclass=_ABCMeta):
         pass
 
     def _update_RmpWfm(self, **kwargs):
-        if 'trigger_signal' in kwargs or 'pwrstate' in kwargs:
-            print(self._cmd_abort_issued, self._wfmindex)
+        if 'trigger_signal' in kwargs:
+            #print(self._cmd_abort_issued, self._wfmindex)
             scan_value = self._wfmdata_in_use[self._wfmindex]
             self._wfmindex = (self._wfmindex + 1) % len(self._wfmdata_in_use)
             if self._cmd_abort_issued and self._wfmindex == 0:
-                print('end of scan')
+                #print('end of scan')
                 self.opmode = _et.idx.SlowRef
+        #elif 'pwrstate' in kwargs:
         else:
             scan_value = self.current_ref
         self._update_current_ref(scan_value)
 
     def _update_MigWfm(self, **kwargs):
-        if 'trigger_signal' in kwargs or 'pwrstate' in kwargs:
+        if 'trigger_signal' in kwargs:
             scan_value = self._wfmdata_in_use[self._wfmindex]
             if self._cmd_abort_issued:
                 self.opmode = _et.idx.SlowRef
@@ -323,6 +328,8 @@ class Controller(metaclass=_ABCMeta):
             self._update_current_ref(self.current_ref)
 
     def _update_Cycle(self, **kwargs):
+        if 'trigger_signal' in kwargs:
+            self._set_cycling_state(True)
         if 'pwrstate' in kwargs:
             self._set_timestamp_opmode(self.time)
         self._process_Cycle()
@@ -546,6 +553,14 @@ class Controller(metaclass=_ABCMeta):
         pass
 
     @_abstractmethod
+    def _get_cycling_state(self):
+        pass
+
+    @_abstractmethod
+    def _set_cycling_state(self, value):
+        pass
+
+    @_abstractmethod
     def _process_Cycle(self):
         pass
 
@@ -568,6 +583,7 @@ class ControllerSim(Controller):
         self._timestamp_pwrstate = now           # last time pwrstate was changed
         self._opmode      = _et.idx.SlowRef      # operation mode state
         self._timestamp_opmode   = now           # last time opmode was changed
+        self._timestamp_cycle_start = now
         self._abort_counter = 0                  # abort command counter
         self._cmd_abort_issued = False
         self._reset_counter = 0                  # reset command counter
@@ -760,13 +776,28 @@ class ControllerSim(Controller):
             self._current_load = value
             self._mycallback(pvname='current_load')
 
+    def _get_cycling_state(self):
+        return self._cycling_state
+
+    def _set_cycling_state(self, value):
+        print('Setting cycle to {}'.format(value))
+        if value and not self._cycling_state:
+            self._timestamp_cycle_start = self.time
+        self._cycling_state = value
+
     def _process_Cycle(self):
-        dt  = self.time - self._timestamp_opmode
-        if self._cycgen.is_finished(dt):
-            self._finilize_cycgen()
-        else:
-            scan_value = self._cycgen.get_current(dt)
-            self._update_current_ref(scan_value)
+        print("Process cycle")
+        if self._get_cycling_state():
+            print("Is in cycle state")
+            dt  = self.time - self._timestamp_cycle_start
+            if self._cycgen.out_of_range(dt):
+                print('ending')
+                self._finilize_cycgen()
+            else:
+                print('updating, dt={}'.format(dt))
+                scan_value = self._cycgen.get_current(dt)
+                print("Scan value = {}".format(scan_value))
+                self._update_current_ref(scan_value)
 
 
     def _mycallback(self, pvname):
@@ -1015,9 +1046,14 @@ class ControllerEpics(Controller):
     def _set_current_ref(self, value):
         pass
 
-    def _process_Cycle(self):
+    def _get_cycling_state(self):
         pass
 
+    def _set_cycling_state(self, value):
+        pass
+
+    def _process_Cycle(self):
+        pass
 
     def _mycallback(self, pvname, value, **kwargs):
         if self._callback is None:

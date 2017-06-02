@@ -49,23 +49,23 @@ class ControllerTest(unittest.TestCase):
         self.assertEqual(self.c.current_ref, self.curr_max)
         self.assertEqual(self.c.current_load, 10.039223131824139)
 
-    def test_sp_change2slowref(self):
-        self.c.wfmdata = [5.0 for _ in range(len(self.c.wfmdata))]
-        self.c.opmode = _et.idx.RmpWfm
-        self.c.trigger_signal()
-        self.c.trigger_signal()
-        self.c.trigger_signal()
-        self.assertEqual(self.c.wfmindex, 3)
-        self.assertEqual(self.c.current_sp, 0.0)
-        self.assertEqual(self.c.current_ref, 0.0)
-        self.assertEqual(self.c.current_load,0.051885885594204234)
-        self.c._set_wfmindex(10)
-        self.c.pwrstate = _et.idx.On
-        self.assertEqual(self.c.current_sp, 0.0)
-        self.assertEqual(self.c.current_ref, 5.0)
-        self.assertEqual(self.c.current_load, 5.052973467000613)
-        self.c.opmode = _et.idx.SlowRef
-        self.assertEqual(self.c.current_sp, 5.0)
+    # def test_sp_change2slowref(self):
+    #     self.c.wfmdata = [5.0 for _ in range(len(self.c.wfmdata))]
+    #     self.c.opmode = _et.idx.RmpWfm
+    #     self.c.trigger_signal()
+    #     self.c.trigger_signal()
+    #     self.c.trigger_signal()
+    #     self.assertEqual(self.c.wfmindex, 3)
+    #     self.assertEqual(self.c.current_sp, 0.0)
+    #     self.assertEqual(self.c.current_ref, 0.0)
+    #     self.assertEqual(self.c.current_load,0.051885885594204234)
+    #     self.c._set_wfmindex(10)
+    #     self.c.pwrstate = _et.idx.On
+    #     self.assertEqual(self.c.current_sp, 0.0)
+    #     self.assertEqual(self.c.current_ref, 5.0)
+    #     self.assertEqual(self.c.current_load, 5.052973467000613)
+    #     self.c.opmode = _et.idx.SlowRef
+    #     self.assertEqual(self.c.current_sp, 5.0)
 
 
 
