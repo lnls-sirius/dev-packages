@@ -12,7 +12,7 @@ class PSCycGenerator:
             self._parameters['current_amp'] = kwargs['current_amp']
 
     def out_of_range(self, dt):
-        return dt > self._parameters['interval']
+        return dt > self._interval
 
     def get_current(self, dt):
         if self.out_of_range(dt): return 0.0
@@ -20,7 +20,7 @@ class PSCycGenerator:
             return 0.0
         elif self._type == 'exp_cos':
             parms = self._parameters
-            A,tau,period = parms['current_amp'],parms['tau'],parms['paeriod']
+            A,tau,period = parms['current_amp'],parms['tau'],parms['period']
             exp,cos,pi = _math.exp,_math.cos,_math.pi
             value = A * exp(-dt/tau) * cos(2*pi*dt/period)
             return value

@@ -4,14 +4,14 @@ import siriuspy.util as _util
 from siriuspy.namesys import SiriusPVName as _PVName
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.search import PSSearch as _PSSearch
+#from siriuspy.search import MASearch as _MASearch
 
-#from siriuspy.pwrsupply import psdata as _psdata
 
 default_wfmsize   = 2000
 default_wfmlabels =_et.enums('PSWfmLabelsTyp')
 default_intlklabels = _et.enums('PSIntlkLabelsTyp')
 
-#_util.conv_splims_labels(label)
+
 
 def create_commun_propty_database():
     db = {
@@ -40,10 +40,9 @@ def create_commun_propty_database():
     }
     return db
 
-def get_propty_database(pstype):
+def get_ps_propty_database(pstype):
     """Returns property database of a power supply type device."""
     propty_db = create_commun_propty_database()
-    splims = _PSSearch.conv_pstype_2_splims(pstype)
     units = _PSSearch.get_splims_unit()
     for propty,db in propty_db.items():
         # set setpoint limits in database
@@ -59,3 +58,21 @@ def get_propty_database(pstype):
             db['unit'] = units[0]
 
     return propty_db
+
+# def get_ma_propty_database(maname):
+#     propty_db = create_commun_propty_database()
+#     units = _MASearch.get_splims_unit()
+#     #psnames = _MASearch.conv_maname_2_psnames(maname)
+#     db = {}
+#     for propty,db in propty_db.items():
+#         # set setpoint limits in database
+#         if propty in ('Current-SP',):
+#             label='lolo';  db[label] = _MASearch.get_splim(maname,label)
+#             label='low';   db[label] = _MASearch.get_splim(maname,label)
+#             label='lolim'; db[label] = _MASearch.get_splim(maname,label)
+#             label='hilim'; db[label] = _MASearch.get_splim(maname,label)
+#             label='high';  db[label] = _MASearch.get_splim(maname,label)
+#             label='hihi';  db[label] = _MASearch.get_splim(maname,label)
+#         # define unit of current
+#         if propty in ('Current-SP','Current-RB','CurrentRef-Mon','Current-Mon'):
+#             db['unit'] = units[0]

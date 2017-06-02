@@ -4,7 +4,7 @@ import numpy as _np
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.csdevice.pwrsupply import default_wfmlabels as _default_wfmlabels
-from siriuspy.csdevice.pwrsupply import get_propty_database  as _get_propty_database
+from siriuspy.csdevice.pwrsupply import get_ps_propty_database  as _get_ps_propty_database
 from siriuspy.pwrsupply.controller import ControllerSim as _ControllerSim
 from siriuspy.pwrsupply.controller import ControllerEpics as _ControllerEpics
 
@@ -21,7 +21,7 @@ class PSData:
         self._magfunc = _PSSearch.conv_pstype_2_magfunc(self._pstype)
         self._splims = _PSSearch.conv_pstype_2_splims(self._pstype)
         self._splims_unit = _PSSearch.get_splims_unit()
-        self._propty_database = _get_propty_database(self._pstype)
+        self._propty_database = _get_ps_propty_database(self._pstype)
 
     @property
     def psname(self):
@@ -172,7 +172,7 @@ class PowerSupplyLinac(object):
         # --- class implementation ---
 
     def _get_database(self):
-        """Return a PV database whose keys correspond to PS properties."""
+        """Return an updated PV database whose keys correspond to PS properties."""
         db = self._psdata.propty_database
         value = self.ctrlmode_mon; db['CtrlMode-Mon']['value'] = _et.enums('RmtLocTyp').index(value) if self._enum_keys else value
         value = self.pwrstate_sel; db['PwrState-Sel']['value'] = _et.enums('OffOnTyp').index(value) if self._enum_keys else value
@@ -396,7 +396,7 @@ class PowerSupply(PowerSupplyLinac):
     # --- class implementation ---
 
     def _get_database(self):
-        """Return a PV database whose keys correspond to PS properties."""
+        """Return an updated  PV database whose keys correspond to PS properties."""
         db = self._psdata.propty_database
         value = self.ctrlmode_mon; db['CtrlMode-Mon']['value'] = _et.enums('RmtLocTyp').index(value) if self._enum_keys else value
         value = self.opmode_sel;   db['OpMode-Sel']['value'] = _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
