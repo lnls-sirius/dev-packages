@@ -780,23 +780,17 @@ class ControllerSim(Controller):
         return self._cycling_state
 
     def _set_cycling_state(self, value):
-        print('Setting cycle to {}'.format(value))
         if value and not self._cycling_state:
             self._timestamp_cycle_start = self.time
         self._cycling_state = value
 
     def _process_Cycle(self):
-        print("Process cycle")
         if self._get_cycling_state():
-            print("Is in cycle state")
             dt  = self.time - self._timestamp_cycle_start
             if self._cycgen.out_of_range(dt):
-                print('ending')
                 self._finilize_cycgen()
             else:
-                print('updating, dt={}'.format(dt))
                 scan_value = self._cycgen.get_current(dt)
-                print("Scan value = {}".format(scan_value))
                 self._update_current_ref(scan_value)
 
 
