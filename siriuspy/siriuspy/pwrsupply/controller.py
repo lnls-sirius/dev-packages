@@ -33,15 +33,9 @@ class Controller(metaclass=_ABCMeta):
     def __init__(self, callback=None, psname=None, cycgen=None):
         self._callback = callback
         self._psname = psname
-        #self._cycgen = _PSCycGenerator(interval=5) if cycgen is None else cycgen
-        current_amp = abs(self.current_max)
-        if cycgen is None:
-            self._cycgen = _PSCycGenerator(interval=30, cycgen_type='exp_cos', tau=10, period=2.0, current_amp=current_amp)
-        else:
-            self._cycgen = cycgen
-
+        self._init_cycgen(cycgen)
         self._set_cycling_state(False)
-
+        self._set_timestamp_cycling(None)
         self.update_state(init=True)
 
     # --- class interface - properties ---
@@ -67,6 +61,7 @@ class Controller(metaclass=_ABCMeta):
         if value != self.opmode:
             self._set_cycling_state(False)
             self._set_timestamp_trigger(None)
+            self._set_timestamp_cycling(None)
             self._set_wfmindex(0)
             self._set_cmd_abort_issued(False)
             if value in (_et.idx.SlowRef,_et.idx.SlowRefSync):
@@ -260,9 +255,19 @@ class Controller(metaclass=_ABCMeta):
             pass
             #raise Exception('Invalid controller opmode')
 
-
     def fofb_signal(self):
         pass
+
+    def _init_cycgen(self, cycgen):
+        if cycgen is not None:
+            self._cycgen = cycgen
+        else:
+            if self.current_min is None:
+                self._cycgen = _PSCycGenerator(interval=5.0)
+            elif self.current_min >= 0.0:
+                self._cycgen = _PSCycGenerator(interval=30.0, cycgen_type='triangle', period=5.0, amplitude=abs(self.current_max))
+            else:
+                self._cycgen = _PSCycGenerator(interval=30.0, cycgen_type='exp_cos', period=2.0, tau=10, amplitude=abs(self.current_max))
 
     def _process_trigger_timeout(self):
         if self.opmode != _et.idx.RmpWfm: return
@@ -303,13 +308,10 @@ class Controller(metaclass=_ABCMeta):
 
     def _update_RmpWfm(self, **kwargs):
         if 'trigger_signal' in kwargs:
-            #print(self._cmd_abort_issued, self._wfmindex)
             scan_value = self._wfmdata_in_use[self._wfmindex]
             self._wfmindex = (self._wfmindex + 1) % len(self._wfmdata_in_use)
             if self._cmd_abort_issued and self._wfmindex == 0:
-                #print('end of scan')
                 self.opmode = _et.idx.SlowRef
-        #elif 'pwrstate' in kwargs:
         else:
             scan_value = self.current_ref
         self._update_current_ref(scan_value)
@@ -330,8 +332,6 @@ class Controller(metaclass=_ABCMeta):
     def _update_Cycle(self, **kwargs):
         if 'trigger_signal' in kwargs:
             self._set_cycling_state(True)
-        if 'pwrstate' in kwargs:
-            self._set_timestamp_opmode(self.time)
         self._process_Cycle()
 
 
@@ -343,31 +343,45 @@ class Controller(metaclass=_ABCMeta):
     def __str__(self):
         self.update_state()
         st = '--- Controller ---\n'
-        propty = 'opmode';            st += '\n{0:<20s}: {1}'.format(propty, _et.key('PSOpModeTyp', self.opmode))
-        propty = 'pwrstate';          st += '\n{0:<20s}: {1}'.format(propty, _et.key('OffOnTyp', self.pwrstate))
-        propty = 'intlk';             st += '\n{0:<20s}: {1}'.format(propty, self.intlk)
-        propty = 'intlklabels';       st += '\n{0:<20s}: {1}'.format(propty, self.intlklabels)
-        propty = 'reset_counter';     st += '\n{0:<20s}: {1}'.format(propty, self.reset_counter)
-        propty = 'abort_counter';     st += '\n{0:<20s}: {1}'.format(propty, self.abort_counter)
-        propty = 'current_min';       st += '\n{0:<20s}: {1}'.format(propty, self.current_min)
-        propty = 'current_max';       st += '\n{0:<20s}: {1}'.format(propty, self.current_max)
-        propty = 'current_sp';        st += '\n{0:<20s}: {1}'.format(propty, self.current_sp)
-        propty = 'current_ref';       st += '\n{0:<20s}: {1}'.format(propty, self.current_ref)
-        propty = 'current_load';      st += '\n{0:<20s}: {1}'.format(propty, self.current_load)
-        propty = 'wfmload';           st += '\n{0:<20s}: {1}'.format(propty, self.wfmlabels[self.wfmload])
-        propty = 'wfmdata';           st += '\n{0:<20s}: {1}'.format(propty, '['+str(self.wfmdata[0])+' ... '+str(self.wfmdata[-1])+']')
-        propty = 'wfmsave';           st += '\n{0:<20s}: {1}'.format(propty, self.wfmsave)
-        propty = 'wfmindex';          st += '\n{0:<20s}: {1}'.format(propty, self.wfmindex)
-        propty = 'trigger_timed_out'; st += '\n{0:<20s}: {1}'.format(propty, self.trigger_timed_out)
+        propty = 'opmode';            st += '\n{0:<25s}: {1}'.format(propty, _et.key('PSOpModeTyp', self.opmode))
+        propty = 'pwrstate';          st += '\n{0:<25s}: {1}'.format(propty, _et.key('OffOnTyp', self.pwrstate))
+        propty = 'intlk';             st += '\n{0:<25s}: {1}'.format(propty, self.intlk)
+        propty = 'intlklabels';       st += '\n{0:<25s}: {1}'.format(propty, self.intlklabels)
+        propty = 'reset_counter';     st += '\n{0:<25s}: {1}'.format(propty, self.reset_counter)
+        propty = 'abort_counter';     st += '\n{0:<25s}: {1}'.format(propty, self.abort_counter)
+        propty = 'current_min';       st += '\n{0:<25s}: {1}'.format(propty, self.current_min)
+        propty = 'current_max';       st += '\n{0:<25s}: {1}'.format(propty, self.current_max)
+        propty = 'current_sp';        st += '\n{0:<25s}: {1}'.format(propty, self.current_sp)
+        propty = 'current_ref';       st += '\n{0:<25s}: {1}'.format(propty, self.current_ref)
+        propty = 'current_load';      st += '\n{0:<25s}: {1}'.format(propty, self.current_load)
+        propty = 'wfmload';           st += '\n{0:<25s}: {1}'.format(propty, self.wfmlabels[self.wfmload])
+        propty = 'wfmdata';           st += '\n{0:<25s}: {1}'.format(propty, '['+str(self.wfmdata[0])+' ... '+str(self.wfmdata[-1])+']')
+        propty = 'wfmsave';           st += '\n{0:<25s}: {1}'.format(propty, self.wfmsave)
+        propty = 'wfmindex';          st += '\n{0:<25s}: {1}'.format(propty, self.wfmindex)
+        propty = 'trigger_timed_out'; st += '\n{0:<25s}: {1}'.format(propty, self.trigger_timed_out)
+        propty = 'cycling_state';     st += '\n{0:<25s}: {1}'.format(propty, self._get_cycling_state())
 
+        propty = '_timestamp_now';       st += '\n{0:<25s}: {1}'.format(propty, _get_timestamp(self.time))
         try:
-            propty = '_timestamp_now';       st += '\n{0:<20s}: {1}'.format(propty, _get_timestamp(self.time))
+            propty = '_timestamp_opmode';    st += '\n{0:<25s}: {1}'.format(propty, _get_timestamp(self._timestamp_opmode))
+        except:
+            pass
+        try:
+            propty = '_timestamp_pwrstate';  st += '\n{0:<25s}: {1}'.format(propty, _get_timestamp(self._timestamp_pwrstate))
+        except:
+            pass
+        try:
             if self.timestamp_trigger is not None:
-                propty = '_timestamp_trigger';   st += '\n{0:<20s}: {1}'.format(propty, _get_timestamp(self.timestamp_trigger))
+                propty = '_timestamp_trigger';   st += '\n{0:<25s}: {1}'.format(propty, _get_timestamp(self.timestamp_trigger))
             else:
-                propty = '_timestamp_trigger';   st += '\n{0:<20s}: {1}'.format(propty, str(None))
-            propty = '_timestamp_opmode';    st += '\n{0:<20s}: {1}'.format(propty, _get_timestamp(self._timestamp_opmode))
-            propty = '_timestamp_pwrstate';  st += '\n{0:<20s}: {1}'.format(propty, _get_timestamp(self._timestamp_pwrstate))
+                propty = '_timestamp_trigger';   st += '\n{0:<25s}: {1}'.format(propty, str(None))
+        except:
+            pass
+        try:
+            if self._get_timestamp_cycling() is not None:
+                propty = '_timestamp_cycling';  st += '\n{0:<25s}: {1}'.format(propty, _get_timestamp(self._timestamp_cycling))
+            else:
+                propty = '_timestamp_cycling';   st += '\n{0:<25s}: {1}'.format(propty, str(None))
         except:
             pass
 
@@ -426,6 +440,14 @@ class Controller(metaclass=_ABCMeta):
 
     @_abstractmethod
     def _set_timestamp_opmode(self, value):
+        pass
+
+    @_abstractmethod
+    def _get_timestamp_cycling(self):
+        pass
+
+    @_abstractmethod
+    def _set_timestamp_cycling(self, value):
         pass
 
     @_abstractmethod
@@ -582,8 +604,7 @@ class ControllerSim(Controller):
         self._pwrstate    = _et.idx.Off          # power state
         self._timestamp_pwrstate = now           # last time pwrstate was changed
         self._opmode      = _et.idx.SlowRef      # operation mode state
-        self._timestamp_opmode   = now           # last time opmode was changed
-        self._timestamp_cycle_start = now
+        self._timestamp_opmode  = now           # last time opmode was changed
         self._abort_counter = 0                  # abort command counter
         self._cmd_abort_issued = False
         self._reset_counter = 0                  # reset command counter
@@ -640,6 +661,12 @@ class ControllerSim(Controller):
 
     def _set_timestamp_trigger(self, value):
         self._timestamp_trigger = value
+
+    def _get_timestamp_cycling(self):
+        return self._timestamp_cycling
+
+    def _set_timestamp_cycling(self, value):
+        self._timestamp_cycling = value
 
     def _get_timestamp_opmode(self):
         return self._timestamp_opmode
@@ -790,9 +817,8 @@ class ControllerSim(Controller):
             if self._cycgen.out_of_range(dt):
                 self._finilize_cycgen()
             else:
-                scan_value = self._cycgen.get_current(dt)
+                scan_value = self._cycgen.get_signal(dt)
                 self._update_current_ref(scan_value)
-
 
     def _mycallback(self, pvname):
         if self._callback is None:
@@ -930,6 +956,12 @@ class ControllerEpics(Controller):
         raise Exception('Invalid method call')
 
     def _set_timestamp_trigger(self, value):
+        pass
+
+    def _get_timestamp_cycling(self):
+        raise Exception('Invalid method call')
+
+    def _set_timestamp_cycling(self, value):
         pass
 
     def _get_timestamp_opmode(self):
