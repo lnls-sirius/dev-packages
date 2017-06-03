@@ -161,7 +161,6 @@ class PSSearch:
             if 'device' not in f or f['device'] is None:
                 f['device'] = '.+'
             pattern = f['section'] + '-' + f['sub_section'] + ':' + f['discipline'] + '-' + f['device']
-            print(pattern)
             regexp = _re.compile(pattern)
             fs.append(regexp)
 
