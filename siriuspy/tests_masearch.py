@@ -73,6 +73,10 @@ class TestMASearchLoading(unittest.TestCase):
         sp_lim = MASearch.get_splim('SI-Fam:MA-QDA', 'lolo')
         self.assertEqual(MASearch._maname_2_splims_dict is not None, True)
 
+    def test_masearch_load_from_get_splims_unit(self):
+        MASearch.get_splims_unit()
+        self.assertEqual(MASearch._splims_unit is not None, True)
+
     def test_masearch_load_from_conv_maname_2_magfunc(self):
         mag_func = MASearch.conv_maname_2_magfunc('SI-Fam:MA-QDA')
         self.assertEqual(MASearch._maname_2_psnames_dict is not None, True)
