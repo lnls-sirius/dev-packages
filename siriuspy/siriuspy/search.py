@@ -150,14 +150,16 @@ class MASearch:
 
     @staticmethod
     def reload_pstype_2_splims_dict():
-        text = _web.power_supplies_pstype_setpoint_limits(timeout=PSSearch._connection_timeout)
-        data, param_dict = _util.read_text_data(text)
-        PSSearch._splims_unit = tuple(param_dict['unit'])
-        PSSearch._splims_labels = tuple(param_dict['power_supply_type'])
-        PSSearch._pstype_2_splims_dict = {}
-        for datum in data:
-            pstype, *lims = datum
-            PSSearch._pstype_2_splims_dict[pstype] = {PSSearch._splims_labels[i]:float(lims[i]) for i in range(len(lims))}
+        if _web.server_online():
+            text = _web. magnets_setpoint_limits(timeout=PSSearch._connection_timeout)
+            data, param_dict = _util.read_text_data(text)
+            _splims_unit = tuple(param_dict['unit'])
+            _splims_labels = tuple(param_dict['power_supply_type'])
+            _maname_2_splims_dict = {}
+            for datum in data:
+                maname, *limits = datum
+                db = {_splims_labels[i]:float(limits[i]) for i in range(len(_splims_labels))}
+                _maname_2_splims_dict[maname] = db
 
     @staticmethod
     def get_splims_unit():
