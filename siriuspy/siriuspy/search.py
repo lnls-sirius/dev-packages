@@ -166,7 +166,6 @@ class MASearch:
         else:
             raise Exception('could not read magnet splims from web server!')
 
-
     @staticmethod
     def get_splims_unit():
         pass
@@ -183,6 +182,11 @@ class MASearch:
                 return None
             else:
                 return MASearch._maname_2_splims_dict[maname][label]
+
+    @staticmethod
+    def conv_maname_2_magfunc(maname):
+        """Return magnetic function of a given magnet."""
+        pass
 
 
 # class MASetPointLims:
