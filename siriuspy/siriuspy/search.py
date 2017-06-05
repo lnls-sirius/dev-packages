@@ -144,7 +144,7 @@ class PSSearch:
         return PSSearch._splims_labels
 
 class MASearch:
-    ''' Searches Magnet from static files '''
+    ''' Searches magnets data in static files '''
 
     _maname_2_splims_dict = None
     _splims_labels        = None
