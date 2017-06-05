@@ -121,7 +121,7 @@ def beam_rigidity(energy):
     beta = _math.sqrt(((gamma-1.0)/gamma)*((gamma+1.0)/gamma))
     brho = beta * (energy) / _mp.constants.light_speed
     return brho
-
+'''
 watt    = joule / second
 coulomb = second * ampere
 volt    = watt / ampere
@@ -142,7 +142,7 @@ mm_2_meter = (mm / meter)
 mrad_2_rad = (mrad / rad)
 rad_2_mrad = (rad / mrad)
 radian_2_degree = (180.0/_math.pi)
-degree_2_radian = (_math.pi/180.0)
+degree_2_radian = (_math.pi/180.0)'''
 
 
 
