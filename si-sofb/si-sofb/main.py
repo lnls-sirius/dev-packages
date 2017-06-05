@@ -40,9 +40,9 @@ class App:
         db.update(self.correctors.get_database())
         db.update(self.matrix.get_database())
         db.update(self.orbit.get_database())
-        db[pre + 'AutoCorrState-SP'] = {'type':'enum','enums':('Off','On'),value=0,
+        db[pre + 'AutoCorrState-Sel'] = {'type':'enum','enums':('Off','On'),value=0,
                                    'set_pv_fun':self._toggle_auto_corr}
-        db[pre + 'AutoCorrState-RB'] = {'type':'enum','enums':('Off','On'),value=0}
+        db[pre + 'AutoCorrState-Sts'] = {'type':'enum','enums':('Off','On'),value=0}
         db[pre + 'AutoCorrFreq-SP']   = {'type':float,'value':1,
                                          'set_pv_fun':self._set_auto_corr_frequency}
         db[pre + 'AutoCorrFreq-SP']    = {'type':float,'value':1}
@@ -188,7 +188,7 @@ class App:
             self._thread.start()
 
     def _automatic_correction(self):
-        self._update_driver(self.prefix + 'AutoCorrState-RB',1)
+        self._update_driver(self.prefix + 'AutoCorrState-Sts',1)
         while self.auto_corr:
             t0 = _time.time()
             orb = self.orbit.get_orbit()
@@ -200,7 +200,7 @@ class App:
             if dt > interval: _log.debug('App: check took {0:f}ms.'.format(dt*1000))
             dt = inteval - dt
             if dt>0: _time.sleep(dt)
-        self._update_driver(self.prefix + 'AutoCorrState-RB',0)
+        self._update_driver(self.prefix + 'AutoCorrState-Sts',0)
 
     def _toggle_orbit_mode(self,value):
         self.orbit_mode = value
