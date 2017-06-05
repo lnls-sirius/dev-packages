@@ -143,13 +143,15 @@ class PSSearch:
         return PSSearch._splims_labels
 
 class MASearch:
+    ''' Searches Magnet from static files '''
 
     _maname_2_splims_dict = None
     _pslims_labels        = None
     _splims_unit          = None
 
     @staticmethod
-    def reload_pstype_2_splims_dict():
+    def reload_maname_2_splims_dict():
+        '''  Build dict with limits for each magnet '''
         if _web.server_online():
             text = _web. magnets_setpoint_limits(timeout=PSSearch._connection_timeout)
             data, param_dict = _util.read_text_data(text)
@@ -160,6 +162,8 @@ class MASearch:
                 maname, *limits = datum
                 db = {_splims_labels[i]:float(limits[i]) for i in range(len(_splims_labels))}
                 _maname_2_splims_dict[maname] = db
+        else:
+            raise Exception('could not read magnet splims from web server!')
 
     @staticmethod
     def get_splims_unit():

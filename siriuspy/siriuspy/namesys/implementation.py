@@ -152,8 +152,10 @@ class Filter:
         return filters
 
     def process_filters(pvnames, filters=None):
-        """Return a sorted and filtered list of fiven name lists.
-        'filters' is either a dictionary of a list of dictionaries whose keys"""
+        """ Return a sorted and filtered list of given pv name lists.
+            'filters' is either a dictionary of a list of dictionaries whose keys
+            are pv sub parts and the values are the desired patterns
+        """
         if filters is None: return pvnames
         if isinstance(filters, dict): filters = [filters]
         if isinstance(pvnames, str): pvnames = [pvnames]
