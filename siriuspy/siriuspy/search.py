@@ -1,10 +1,7 @@
 
 import copy as _copy
-import types as _types
-import re as _re
 import siriuspy.util as _util
 import siriuspy.servweb as _web
-
 
 class PSSearch:
 
@@ -15,25 +12,6 @@ class PSSearch:
     _splims_labels        = None
     _splims_unit          = None
     _psnames_list         = None
-
-    filters = _types.SimpleNamespace()
-    filters.FAM = 'Fam'
-    filters.TRIM = '\d{2}\w{0,2}'
-    filters.DIPOLE = 'B.*'
-    filters.QUADRUPOLE = '(?:QD|QF|Q[0-9]).*'
-    filters.QUADRUPOLE_SKEW = 'QS'
-    filters.QD = 'QD.*'
-    filters.QF = 'QF.*'
-    filters.SEXTUPOLE = 'S(?:D|F)*'
-    filters.SD = 'SD.*'
-    filters.SF = 'SF.*'
-    filters.CORRECTOR = '(?:C|FC).*'
-    filters.SLOW_CHV = 'C(?:H|V).*'
-    filters.SLOW_CH = 'CH.*'
-    filters.SLOW_CV = 'CV.*'
-    filters.FAST_CHV = 'FC.*'
-    filters.FAST_CH = 'FCH.*'
-    filters.FAST_CV = 'FCV.*'
 
     @staticmethod
     def reload_pstype_dict():
@@ -131,7 +109,8 @@ class PSSearch:
 
     @staticmethod
     def get_splim(pstype, label):
-        """Return setpoint limit corresponding to given lavel (either epics' or pcaspy's)."""
+        """Return setpoint limit corresponding to given label (either epics' or pcaspy's)."""
+        if PSSearch._pstype_2_splims_dict is None: PSSearch.reload_pstype_2_splims_dict()
         if label in PSSearch._splims_labels:
             return PSSearch._pstype_2_splims_dict[pstype][label]
         else:
@@ -145,34 +124,7 @@ class PSSearch:
     def get_psnames(filters=None):
         """Return a sorted and filtered list of all power supply names."""
         if PSSearch._pstype_2_names_dict is None: PSSearch.reload_pstype_2_names_dict()
-        if filters is None: return PSSearch._psnames_list
-
-        # build filter regexp
-        if isinstance(filters, dict):
-            filters = [filters]
-        fs = []
-        for f in filters:
-            if 'section' not in f or f['section'] is None:
-                f['section'] = '[A-Z]{2}'
-            if 'sub_section' not in f or f['sub_section'] is None:
-                f['sub_section'] = '\w{2,4}'
-            if 'discipline' not in f or f['discipline'] is None:
-                f['discipline'] = '[A-Z]{2,6}'
-            if 'device' not in f or f['device'] is None:
-                f['device'] = '.+'
-            pattern = f['section'] + '-' + f['sub_section'] + ':' + f['discipline'] + '-' + f['device']
-            print(pattern)
-            regexp = _re.compile(pattern)
-            fs.append(regexp)
-
-        # filter list
-        filtered_list = list()
-        for ps in PSSearch._psnames_list:
-            for pattern in fs:
-                if pattern.match(ps):
-                    filtered_list.append(ps)
-                    break
-        return filtered_list
+        return _util.filter_pvnames(PSSearch._psnames_list, filters=filters)
 
     @staticmethod
     def get_pstype_2_splims_dict():
@@ -189,3 +141,37 @@ class PSSearch:
     def get_splims_labels():
         if PSSearch._pstype_2_splims_dict is None: PSSearch.reload_pstype_2_splims_dict()
         return PSSearch._splims_labels
+
+class MASearch:
+
+    _maname_2_splims_dict = None
+    _pslims_labels        = None
+    _splims_unit          = None
+
+    @staticmethod
+    def reload_pstype_2_splims_dict():
+        text = _web.power_supplies_pstype_setpoint_limits(timeout=PSSearch._connection_timeout)
+        data, param_dict = _util.read_text_data(text)
+        PSSearch._splims_unit = tuple(param_dict['unit'])
+        PSSearch._splims_labels = tuple(param_dict['power_supply_type'])
+        PSSearch._pstype_2_splims_dict = {}
+        for datum in data:
+            pstype, *lims = datum
+            PSSearch._pstype_2_splims_dict[pstype] = {PSSearch._splims_labels[i]:float(lims[i]) for i in range(len(lims))}
+
+    @staticmethod
+    def get_splims_unit():
+        pass
+
+    @staticmethod
+    def get_splim(maname, label):
+        """Return setpoint limit corresponding to given label (either epics' or pcaspy's)."""
+        if MASearch._maname_2_splims_dict is None: PSSearch.reload_maname_2_splims_dict()
+        if label in MASearch._splims_labels:
+            return MASearch._maname_2_splims_dict[maname][label]
+        else:
+            label = _util.conv_splims_labels(label)
+            if label is None:
+                return None
+            else:
+                return MASearch._maname_2_splims_dict[maname][label]

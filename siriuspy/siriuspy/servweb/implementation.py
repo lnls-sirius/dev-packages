@@ -23,7 +23,6 @@ def read_url(url, timeout=_timeout):
 
     return text
 
-
 def server_online():
     url = _envars.server_url_web
     try:
@@ -31,7 +30,6 @@ def server_online():
         return True
     except:
         return False
-
 
 def magnets_excitation_data_get_filenames_list(timeout=_timeout):
     """Get list of filenames in magnet excitation data folder at web server."""

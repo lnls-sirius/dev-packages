@@ -4,7 +4,7 @@ import siriuspy.util as _util
 from siriuspy.namesys import SiriusPVName as _PVName
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.search import PSSearch as _PSSearch
-#from siriuspy.search import MASearch as _MASearch
+from siriuspy.search import MASearch as _MASearch
 
 
 default_wfmsize   = 2000
@@ -59,20 +59,20 @@ def get_ps_propty_database(pstype):
 
     return propty_db
 
-# def get_ma_propty_database(maname):
-#     propty_db = create_commun_propty_database()
-#     units = _MASearch.get_splims_unit()
-#     #psnames = _MASearch.conv_maname_2_psnames(maname)
-#     db = {}
-#     for propty,db in propty_db.items():
-#         # set setpoint limits in database
-#         if propty in ('Current-SP',):
-#             label='lolo';  db[label] = _MASearch.get_splim(maname,label)
-#             label='low';   db[label] = _MASearch.get_splim(maname,label)
-#             label='lolim'; db[label] = _MASearch.get_splim(maname,label)
-#             label='hilim'; db[label] = _MASearch.get_splim(maname,label)
-#             label='high';  db[label] = _MASearch.get_splim(maname,label)
-#             label='hihi';  db[label] = _MASearch.get_splim(maname,label)
-#         # define unit of current
-#         if propty in ('Current-SP','Current-RB','CurrentRef-Mon','Current-Mon'):
-#             db['unit'] = units[0]
+def get_ma_propty_database(maname):
+    propty_db = create_commun_propty_database()
+    units = _MASearch.get_splims_unit()
+    #psnames = _MASearch.conv_maname_2_psnames(maname)
+    db = {}
+    for propty,db in propty_db.items():
+        # set setpoint limits in database
+        if propty in ('Current-SP',):
+            label='lolo';  db[label] = _MASearch.get_splim(maname,label)
+            label='low';   db[label] = _MASearch.get_splim(maname,label)
+            label='lolim'; db[label] = _MASearch.get_splim(maname,label)
+            label='hilim'; db[label] = _MASearch.get_splim(maname,label)
+            label='high';  db[label] = _MASearch.get_splim(maname,label)
+            label='hihi';  db[label] = _MASearch.get_splim(maname,label)
+        # define unit of current
+        if propty in ('Current-SP','Current-RB','CurrentRef-Mon','Current-Mon'):
+            db['unit'] = units[0]
