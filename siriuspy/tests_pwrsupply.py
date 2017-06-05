@@ -332,80 +332,41 @@ class PowerSupplyOnMigWfmTest(PowerSupplyTest):
         self.assert_currents(3.14, 2.0, 2.0, 2.0)
         self.assertEqual(self.ps.wfmindex_mon, 0)
 
-# class PowerSupplyOnCycleTest(PowerSupplyTest):
-#     def setUp(self):
-#         self.ps = PowerSupply(psname='SI-Fam:PS-QDA', enum_keys=True)
-#
-#         self.ps.wfmload_sel = 'Waveform2'
-#         self.ps.wfmdata_sp = list(range(2000))
-#         self.ps.opmode_sel = 'Cycle'
-#         self.ps.pwrstate_sel = 'On'
-#
-#     def test_wfmindex(self):
-#         self.assertEqual(self.ps.wfmindex_mon, 0)
-#         self.assert_currents(0.0, 0.0, 0.0, 0.0)
-#         self.ps._controller.trigger_signal()
-#         self.assert_currents(0.0, 0.0, 0.0, 0.0)
-#         self.ps._controller.trigger_signal()
-#         self.assert_currents(0.0, 0.0, 1.0, 1.0)
-#
-#     def test_wfm_loaded(self):
-#         self.assertEqual(self.ps.wfmload_sts, 'Waveform2')
-#
-#     def test_wfm_values_loaded(self):
-#         for i in range(2000):
-#             self.assertEqual(self.ps.wfmdata_rb[i], float(i))
-#
-#     def test_wfm_loop(self):
-#         self.ps.current_sp = 3.14
-#         for i in range(1999):
-#             self.ps._controller.trigger_signal()
-#             val = i if i < self.ps.splims['HIGH'] else self.ps.splims['HIGH']
-#             self.assert_currents(3.14, 3.14, val, val)
-#         self.ps._controller.trigger_signal()
-#         val = self.ps.splims['HIGH']
-#         self.assert_currents(3.14, val, val, val)
-#         self.assertEqual(self.ps.opmode_sts, 'SlowRef')
-#
-#     def test_set_current(self):
-#         ''' Test set current_sp  on MigWfm '''
-#         self.ps.current_sp = 3.14
-#         self.assert_currents(3.14, 3.14, 0.0, 0.0)
-#         self.ps._controller.trigger_signal()
-#         self.ps._controller.trigger_signal()
-#         self.assert_currents(3.14, 3.14, 1.0, 1.0)
-#
-#     def test_opmode_on_reset(self):
-#         ''' Test opmode change on reset when on MigWfm '''
-#         self.assertEqual(self.ps.opmode_sts, 'MigWfm')
-#         self.ps.reset = 1
-#         self.assertEqual(self.ps.opmode_sts, 'SlowRef')
-#
-#     def test_currents_on_reset(self):
-#         ''' Test currents change on reset when on MigWfm '''
-#         self.ps.current_sp = 3.14
-#         self.ps._controller.trigger_signal()
-#         self.ps._controller.trigger_signal()
-#         self.ps._controller.trigger_signal()
-#         self.ps.reset = 1
-#         self.assert_currents(3.14, 0.0, 0.0, 0.0)
-#         self.assertEqual(self.ps.wfmindex_mon, 0)
-#
-#     def test_opmode_on_abort(self):
-#         ''' Test abort emitted when on MigWfm '''
-#         self.assertEqual(self.ps.opmode_sts, 'MigWfm')
-#         self.ps.abort = 1
-#         self.assertEqual(self.ps.opmode_sts, 'SlowRef')
-#
-#     def test_current_on_abort(self):
-#         ''' Test current change when abort is emitted on MigWfm '''
-#         self.ps.current_sp = 3.14
-#         self.ps._controller.trigger_signal()
-#         self.ps._controller.trigger_signal()
-#         self.ps._controller.trigger_signal()
-#         self.ps.abort = 1
-#         self.assert_currents(3.14, 2.0, 2.0, 2.0)
-#         self.assertEqual(self.ps.wfmindex_mon, 0)
+class PowerSupplyOnCycleTest(PowerSupplyTest):
+    def setUp(self):
+        self.ps = PowerSupply(psname='SI-Fam:PS-QDA', enum_keys=True)
+
+        self.ps.wfmload_sel = 'Waveform2'
+        self.ps.wfmdata_sp = list(range(2000))
+        self.ps.opmode_sel = 'Cycle'
+        self.ps.pwrstate_sel = 'On'
+
+        self.ps._controller.trigger_signal()
+
+    def test_wfm_loaded(self):
+        self.assertEqual(self.ps.wfmload_sts, 'Waveform2')
+
+    def test_wfm_values_loaded(self):
+        for i in range(2000):
+            self.assertEqual(self.ps.wfmdata_rb[i], float(i))
+
+    def test_opmode_on_reset(self):
+        ''' Test opmode change on reset when on MigWfm '''
+        self.assertEqual(self.ps.opmode_sts, 'Cycle')
+        self.ps.reset = 1
+        self.assertEqual(self.ps.opmode_sts, 'SlowRef')
+
+    def test_currents_on_reset(self):
+        ''' Test currents change on reset when on MigWfm '''
+        self.ps.reset = 1
+        self.assert_currents(0.0, 0.0, 0.0, 0.0)
+        self.assertEqual(self.ps.wfmindex_mon, 0)
+
+    def test_opmode_on_abort(self):
+        ''' Test abort emitted when on MigWfm '''
+        self.assertEqual(self.ps.opmode_sts, 'Cycle')
+        self.ps.abort = 1
+        self.assertEqual(self.ps.opmode_sts, 'SlowRef')
 
 class PowerSupplyGeneralTest(PowerSupplyTest):
 
@@ -591,7 +552,6 @@ class PowerSupplyGeneralTest(PowerSupplyTest):
     def test_initial_label_wfmindex(self):
         self.assertEqual(self.ps.wfmindex_mon, 0)
         self.assertEqual(self.ps_enum.wfmindex_mon, 0)
-
 
 if __name__ == '__main__':
     unittest.main()

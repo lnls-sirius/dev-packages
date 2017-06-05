@@ -92,7 +92,7 @@ class Controller(metaclass=_ABCMeta):
 
     def abort(self):
         self._inc_abort_counter()
-        if self.opmode in (_et.idx.SlowRefSync, _et.idx.FastRef, _et.idx.MigWfm):
+        if self.opmode in (_et.idx.SlowRefSync, _et.idx.FastRef, _et.idx.MigWfm, _et.idx.Cycle):
             self.opmode = _et.idx.SlowRef
         elif self.opmode == _et.idx.RmpWfm:
             self._set_cmd_abort_issued(True)
