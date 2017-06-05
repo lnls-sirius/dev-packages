@@ -146,9 +146,10 @@ class PSSearch:
 class MASearch:
     ''' Searches magnets data in static files '''
 
-    _maname_2_splims_dict = None
-    _splims_labels        = None
-    _splims_unit          = None
+    _maname_2_splims_dict   = None #magnets-stpoint-limits file
+    _maname_2_psnames_dict  = None #magnet-excitation-ps file
+    _splims_labels          = None
+    _splims_unit            = None
 
     @staticmethod
     def reload_maname_2_splims_dict():
@@ -165,6 +166,19 @@ class MASearch:
                 MASearch._maname_2_splims_dict[maname] = db
         else:
             raise Exception('could not read magnet splims from web server!')
+
+    @staticmethod
+    def reload_maname_2_psnames_dict():
+        ''' Build a dict of tuples with power supplies of each magnet '''
+        if _web.server_online():
+            text = _web.magnets_excitation_ps_read(timeout=PSSearch._connection_timeout)
+            data, param_dict = _util.read_text_data(text)
+            MASearch._maname_2_psnames_dict  = {}
+            for datum in data:
+                magnet, *ps_names = datum
+                MASearch._maname_2_psnames_dict[magnet] = tuple(ps_names)
+        else:
+            raise Exception('could not read magnet-excitation-ps from web server!')
 
     @staticmethod
     def get_splims_unit():
@@ -185,8 +199,19 @@ class MASearch:
 
     @staticmethod
     def conv_maname_2_magfunc(maname):
-        """Return magnetic function of a given magnet."""
-        pass
+        """Returns a dict mapping power supplies functions for given magnet."""
+        if MASearch._maname_2_psnames_dict is None: MASearch.reload_maname_2_psnames_dict()
+        ps = MASearch._maname_2_psnames_dict[maname]
+        ps_types = tuple(map(PSSearch.conv_psname_2_pstype, ps))
+        ma_func = tuple(map(PSSearch.conv_pstype_2_magfunc, ps_types))
+
+        ret = dict()
+        for i, psname in enumerate(ps):
+            ret[psname] = ma_func[i]
+
+        return ret
+
+
 
     @staticmethod
     def conv_maname_2_psnames(maname):
