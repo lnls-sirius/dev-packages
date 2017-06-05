@@ -63,7 +63,7 @@ def get_ma_propty_database(maname):
     units = _MASearch.get_splims_unit()
     magfunc_dict = _MASearch.conv_maname_2_magfunc(maname)
     db = {}
-    for psname, magfunc in magfunc_dict:
+    for psname, magfunc in magfunc_dict.items():
     #psnames = _MASearch.conv_maname_2_psnames(maname)
         db[psname] = _copy.deepcopy(propty_db)
         for propty,pdb in propty_db.items():
@@ -77,25 +77,25 @@ def get_ma_propty_database(maname):
                 label='hihi';  pdb[label] = _MASearch.get_splim(maname,label)
             # define unit of current
             if propty in ('Current-SP','Current-RB','CurrentRef-Mon','Current-Mon'):
-                db['unit'] = units[0]
+                db[psname]['unit'] = units[0]
         if magfunc == 'quadrupole':
-            db[psname]['KL-SP']     = _copy.deepcopy(db['Current-SP']); db['KL-SP']['unit'] = '1/m'
-            db[psname]['KL-RB']     = _copy.deepcopy(db['Current-RB']); db['KL-RB']['unit'] = '1/m'
-            db[psname]['KLRef-Mon'] = _copy.deepcopy(db['CurrentRef-Mon']); db['KLRef-Mon']['unit'] = '1/m'
-            db[psname]['KL-Mon']    = _copy.deepcopy(db['Current-Mon']); db['KL-Mon']['unit'] = '1/m'
+            db[psname]['KL-SP']     = _copy.deepcopy(db[psname]['Current-SP']); db[psname]['KL-SP']['unit'] = '1/m'
+            db[psname]['KL-RB']     = _copy.deepcopy(db[psname]['Current-RB']); db[psname]['KL-RB']['unit'] = '1/m'
+            db[psname]['KLRef-Mon'] = _copy.deepcopy(db[psname]['CurrentRef-Mon']); db[psname]['KLRef-Mon']['unit'] = '1/m'
+            db[psname]['KL-Mon']    = _copy.deepcopy(db[psname]['Current-Mon']); db[psname]['KL-Mon']['unit'] = '1/m'
         elif magfunc == 'sextupole':
-            db[psname]['SL-SP']     = _copy.deepcopy(db['Current-SP']); db['SL-SP']['unit'] = '1/m'
-            db[psname]['SL-RB']     = _copy.deepcopy(db['Current-RB']); db['SL-RB']['unit'] = '1/m'
-            db[psname]['SLRef-Mon'] = _copy.deepcopy(db['CurrentRef-Mon']); db['SLRef-Mon']['unit'] = '1/m'
-            db[psname]['SL-Mon']    = _copy.deepcopy(db['Current-Mon']); db['SL-Mon']['unit'] = '1/m'
+            db[psname]['SL-SP']     = _copy.deepcopy(db[psname]['Current-SP']); db[psname]['SL-SP']['unit'] = '1/m'
+            db[psname]['SL-RB']     = _copy.deepcopy(db[psname]['Current-RB']); db[psname]['SL-RB']['unit'] = '1/m'
+            db[psname]['SLRef-Mon'] = _copy.deepcopy(db[psname]['CurrentRef-Mon']); db[psname]['SLRef-Mon']['unit'] = '1/m'
+            db[psname]['SL-Mon']    = _copy.deepcopy(db[psname]['Current-Mon']); db[psname]['SL-Mon']['unit'] = '1/m'
         elif magfunc == 'dipole':
-            db[psname]['Energy-SP']     = _copy.deepcopy(db['Current-SP']); db['Energy-SP']['unit'] = 'GeV'
-            db[psname]['Energy-RB']     = _copy.deepcopy(db['Current-RB']); db['Energy-RB']['unit'] = 'GeV'
-            db[psname]['EnergyRef-Mon'] = _copy.deepcopy(db['CurrentRef-Mon']); db['EnergyRef-Mon']['unit'] = 'GeV'
-            db[psname]['Energy-Mon']    = _copy.deepcopy(db['Current-Mon']); db['Energy-Mon']['unit'] = 'GeV'
+            db[psname]['Energy-SP']     = _copy.deepcopy(db[psname]['Current-SP']); db[psname]['Energy-SP']['unit'] = 'GeV'
+            db[psname]['Energy-RB']     = _copy.deepcopy(db[psname]['Current-RB']); db[psname]['Energy-RB']['unit'] = 'GeV'
+            db[psname]['EnergyRef-Mon'] = _copy.deepcopy(db[psname]['CurrentRef-Mon']); db[psname]['EnergyRef-Mon']['unit'] = 'GeV'
+            db[psname]['Energy-Mon']    = _copy.deepcopy(db[psname]['Current-Mon']); db[psname]['Energy-Mon']['unit'] = 'GeV'
         elif magfunc == 'corrector':
-            db[psname]['Kick-SP']     = _copy.deepcopy(db['Current-SP']); db['Kick-SP']['unit'] = 'rad'
-            db[psname]['Kick-RB']     = _copy.deepcopy(db['Current-RB']); db['Kick-RB']['unit'] = 'rad'
-            db[psname]['KickRef-Mon'] = _copy.deepcopy(db['CurrentRef-Mon']); db['KickRef-Mon']['unit'] = 'rad'
-            db[psname]['Kick-Mon']    = _copy.deepcopy(db['Current-Mon']); db['Kick-Mon']['unit'] = 'rad'
+            db[psname]['Kick-SP']     = _copy.deepcopy(db[psname]['Current-SP']); db[psname]['Kick-SP']['unit'] = 'rad'
+            db[psname]['Kick-RB']     = _copy.deepcopy(db[psname]['Current-RB']); db[psname]['Kick-RB']['unit'] = 'rad'
+            db[psname]['KickRef-Mon'] = _copy.deepcopy(db[psname]['CurrentRef-Mon']); db[psname]['KickRef-Mon']['unit'] = 'rad'
+            db[psname]['Kick-Mon']    = _copy.deepcopy(db[psname]['Current-Mon']); db[psname]['Kick-Mon']['unit'] = 'rad'
     return db

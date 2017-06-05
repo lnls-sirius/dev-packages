@@ -3,6 +3,7 @@ import uuid as _uuid
 import numpy as _np
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.search import MASearch as _MASearch
+import siriuspy.namesys import SiriusPVname as _SiriusPVName
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.csdevice.pwrsupply import default_wfmlabels as _default_wfmlabels
 from siriuspy.csdevice.pwrsupply import get_ps_propty_database  as _get_ps_propty_database
@@ -516,13 +517,93 @@ class PowerSupply(PowerSupplyLinac):
                 self._current_sp   = value
 
 
+class _Strth:
+
+    _dipoles_ps = {
+        'SI':('SI-Fam:PS-B1B2-1','SI-Fam:PS-B1B2-2'),
+        'BO':('BO-Fam:PS-B',),
+    }
+
+    _nominal_values = {
+        'SI': (3.0, None,),
+        'BO': (3.0, None,),
+    }
+
+    @_abstractmethod
+    def get_strength(self, current):
+        pass
+    @_abstractmethod
+    def get_current(self, strength):
+        pass
+
+class _StrthMADip(_Strth):
+
+    def __init__(self, maname):
+        self._ps = PowerSupplyEpicsSync(controllers=_Strth._dipoles_ps[maname.section])
+        self._nominal_energy, self._nominal_intf = _Strth._nominal_values[maname.section]
+
+    def get_strength(self, current):
+        intfield = self._excdata.current_2_field(current)
+        return self._nominal_energy * (intfield / self._nominal_intf)
+
+    def get_current(self, strength):
+        intfield = self._nominal_intf * (strength / self._nominal_energy)
+        return self._excdata.field_2_current(insfield)
+
+
+
+class _StrthMAFamQuad(_Strth):
+    def get_strength(self, current):
+        current_dipole = self._dipole.current_mon
+        energy = self._dipole.get_strength(current_dipole) # [GeV]
+        brho = _util.beam_rigidity(energy)
+        intfield = self._excdata.current_2_field(current)
+        return intfield / brho
+
+class _StrthMATrimQuad(_Strth):
+    def get_strength(self):
+        pass
+
+
+
+
 class PowerSupplyMA(PowerSupply):
 
     def __init__(self, maname, **kwargs):
-        self._maname = maname
-        super().__init__(psname=maname.replace('-MA','-PS'),**kwargs)
+        self._maname    = _SiriusPVName(maname)
+        self._strthobj  = self._create_strth_object()
+        super().__init__(psname=maname.replace('-MA','-PS'),
+                         controller=self._controller,
+                         **kwargs)
+
+    def _create_strth_object(self):
+        if self._maname.sub_section == 'Fam':
+            if self.magfunc == 'dipole':
+                return _StrthMAFamDip(self._maname)
+            elif self.magfunc in ('quadrupole', 'quadrupole-skew'):
+                return _StrthMAFamQuad(self._maname)
 
 
+    def _get_madipole(self):
+        if self._maname.section == 'SI':
+            self._madipole = PowerSupply(psname = )
+
+    @property
+    def magfunc(self):
+        """Return string corresponding to the magnetic function excitated with the power supply."""
+        pass
+
+    @property
+    def strength_sp(self):
+        return self._strthobj.get_strength(self.current_sp)
+
+    @strength_sp.setter
+    def strength_sp(self, value):
+        current = self._strthobj.get_current(value)
+
+    @property
+    def strength_rb(self):
+        return self._get_strength(self.current_rb, self._dipole.current_mon)
 
 
 class PowerSupplyEpicsSync(PowerSupply):

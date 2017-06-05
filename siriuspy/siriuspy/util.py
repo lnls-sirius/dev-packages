@@ -102,6 +102,48 @@ def conv_splims_labels(label):
         return None
 
 
+def beam_rigidity(energy):
+    second  = 1.0; meter    = 1.0; kilogram = 1.0; ampere   = 1.0
+    newton  = kilogram * meter / second
+    joule   = newton * meter
+    watt    = joule / second
+    coulomb = second * ampere
+    volt    = watt / ampere
+    light_speed    = 299792458 * (meter/second)    # [m/s]   - definition
+    electron_mass  = 9.10938291e-31   * kilogram   # 2014-06-11 - http://physics.nist.gov/cgi-bin/cuu/Value?me
+    elementary_charge = 1.602176565e-19  * coulomb                                    # 2014-06-11 - http://physics.nist.gov/cgi-bin/cuu/Value?e
+    electron_volt  = elementary_charge * volt
+    joule_2_eV = (joule / electron_volt)
+    electron_rest_energy = electron_mass * _math.pow(light_speed,2) # [Kg̣*m^2/s^2] - derived
+
+    electron_rest_energy_eV = joule_2_eV * electron_rest_energy
+    gamma = energy/electron_rest_energy_eV
+    beta = _math.sqrt(((gamma-1.0)/gamma)*((gamma+1.0)/gamma))
+    brho = beta * (energy) / _mp.constants.light_speed
+    return brho
+
+watt    = joule / second
+coulomb = second * ampere
+volt    = watt / ampere
+weber   = volt * second
+tesla   = weber / meter**2
+
+radian                  = (meter / meter)
+(mA,uA)                 = (1e-3,1e-6)
+(km,cm,mm,um,nm)        = (1e3,1e-2,1e-3,1e-6,1e-9)
+(rad,mrad,urad,nrad)    = (1e0,1e-3,1e-6,1e-9)
+(minute,hour,day,year)  = (60,60*60,24*60*60,365.25*24*60*60)
+
+electron_volt           = _constants.elementary_charge * volt
+(eV,MeV,GeV)            = (electron_volt,electron_volt*1e6,electron_volt*1e9)
+
+meter_2_mm = (meter / mm)
+mm_2_meter = (mm / meter)
+mrad_2_rad = (mrad / rad)
+rad_2_mrad = (rad / mrad)
+radian_2_degree = (180.0/_math.pi)
+degree_2_radian = (_math.pi/180.0)
+
 
 
 # Is this being used ?!?!
