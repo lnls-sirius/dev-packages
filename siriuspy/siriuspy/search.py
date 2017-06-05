@@ -144,7 +144,7 @@ class PSSearch:
         return PSSearch._splims_labels
 
 class MASearch:
-    ''' Searches Magnet from static files '''
+    ''' Searches magnets data in static files '''
 
     _maname_2_splims_dict = None
     _splims_labels        = None
@@ -165,7 +165,6 @@ class MASearch:
                 MASearch._maname_2_splims_dict[maname] = db
         else:
             raise Exception('could not read magnet splims from web server!')
-
 
     @staticmethod
     def get_splims_unit():
