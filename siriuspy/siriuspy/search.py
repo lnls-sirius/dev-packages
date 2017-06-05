@@ -182,7 +182,8 @@ class MASearch:
 
     @staticmethod
     def get_splims_unit():
-        pass
+        if MASearch._maname_2_splims_dict is None: MASearch.reload_maname_2_splims_dict()
+        return MASearch._splims_unit
 
     @staticmethod
     def get_splim(maname, label):
@@ -211,6 +212,12 @@ class MASearch:
 
         return ret
 
+
+
+    @staticmethod
+    def conv_maname_2_psnames(maname):
+        """Return list of power supplies associated with a given magnet."""
+        pass
 
 
 
