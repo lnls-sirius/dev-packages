@@ -188,6 +188,12 @@ class MASearch:
         """Return magnetic function of a given magnet."""
         pass
 
+    @staticmethod
+    def conv_maname_2_psnames(maname):
+        """Return list of power supplies associated with a given magnet."""
+        pass
+
+
 
 # class MASetPointLims:
 #

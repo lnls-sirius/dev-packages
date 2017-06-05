@@ -2,9 +2,11 @@ import copy as _copy
 import uuid as _uuid
 import numpy as _np
 from siriuspy.search import PSSearch as _PSSearch
+from siriuspy.search import MASearch as _MASearch
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.csdevice.pwrsupply import default_wfmlabels as _default_wfmlabels
 from siriuspy.csdevice.pwrsupply import get_ps_propty_database  as _get_ps_propty_database
+from siriuspy.csdevice.pwrsupply import get_ma_propty_database  as _get_ma_propty_database
 from siriuspy.pwrsupply.controller import ControllerSim as _ControllerSim
 from siriuspy.pwrsupply.controller import ControllerEpics as _ControllerEpics
 
@@ -75,6 +77,37 @@ class PSData:
             st += '\n' + '              ' + 'HOPR:{0:+09.3f} LOPR:{1:+09.3f}'.format(self.splims['HOPR'],self.splims['LOPR'])
 
         return st
+
+
+class MAData:
+
+    def __init__(self, maname):
+        self._maname = maname
+        self._splims_unit = _MASearch.get_splims_unit()
+        psnames = _MASearch.conv_maname_2_psnames(self._maname)
+        self._propty_databases = _get_ma_propty_database(self._maname)
+        self._psdata = {}
+        for psname in psnames:
+            self._psdata[psname] = PSData(psname=psname)
+
+
+    @property
+    def maname(self):
+        return self._maname
+
+    @property
+    def splims_unit(self):
+        return self.splims_unit
+
+    @property
+    def psnames(self):
+        return list(self._psdata.keys())
+
+    def __getitem__(self, psname):
+        return self._psdata[psname]
+
+    def get_database(psname):
+        return self._propty_databases[psname]
 
 
 class PowerSupplyLinac(object):
@@ -481,6 +514,15 @@ class PowerSupply(PowerSupplyLinac):
                 self._wfmdata_sp   = value
             elif 'Current-SP' in pvname:
                 self._current_sp   = value
+
+
+class PowerSupplyMA(PowerSupply):
+
+    def __init__(self, maname, **kwargs):
+        self._maname = maname
+        super().__init__(psname=maname.replace('-MA','-PS'),**kwargs)
+
+
 
 
 class PowerSupplyEpicsSync(PowerSupply):

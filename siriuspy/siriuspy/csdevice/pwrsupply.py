@@ -12,7 +12,6 @@ default_wfmlabels =_et.enums('PSWfmLabelsTyp')
 default_intlklabels = _et.enums('PSIntlkLabelsTyp')
 
 
-
 def create_commun_propty_database():
     db = {
         'CtrlMode-Mon'       : {'type':'enum',   'enums':_et.enums('RmtLocTyp'),   'value':_et.idx.Remote},
@@ -62,38 +61,41 @@ def get_ps_propty_database(pstype):
 def get_ma_propty_database(maname):
     propty_db = create_commun_propty_database()
     units = _MASearch.get_splims_unit()
-    magfunc = MASearch.conv_maname_2_magfunc(maname)
-    #psnames = _MASearch.conv_maname_2_psnames(maname)
+    magfunc_dict = _MASearch.conv_maname_2_magfunc(maname)
     db = {}
-    for propty,pdb in propty_db.items():
-        # set setpoint limits in database
-        if propty in ('Current-SP',):
-            label='lolo';  pdb[label] = _MASearch.get_splim(maname,label)
-            label='low';   pdb[label] = _MASearch.get_splim(maname,label)
-            label='lolim'; pdb[label] = _MASearch.get_splim(maname,label)
-            label='hilim'; pdb[label] = _MASearch.get_splim(maname,label)
-            label='high';  pdb[label] = _MASearch.get_splim(maname,label)
-            label='hihi';  pdb[label] = _MASearch.get_splim(maname,label)
-        # define unit of current
-        if propty in ('Current-SP','Current-RB','CurrentRef-Mon','Current-Mon'):
-            db['unit'] = units[0]
-    if magfunc == 'quadrupole':
-        db['KL-SP']     = _copy.deepcopy(db['Current-SP']); db['KL-SP']['unit'] = '1/m'
-        db['KL-RB']     = _copy.deepcopy(db['Current-RB']); db['KL-RB']['unit'] = '1/m'
-        db['KLRef-Mon'] = _copy.deepcopy(db['CurrentRef-Mon']); db['KLRef-Mon']['unit'] = '1/m'
-        db['KL-Mon']    = _copy.deepcopy(db['Current-Mon']); db['KL-Mon']['unit'] = '1/m'
-    elif magfunc == 'sextupole':
-        db['SL-SP']     = _copy.deepcopy(db['Current-SP']); db['SL-SP']['unit'] = '1/m'
-        db['SL-RB']     = _copy.deepcopy(db['Current-RB']); db['SL-RB']['unit'] = '1/m'
-        db['SLRef-Mon'] = _copy.deepcopy(db['CurrentRef-Mon']); db['SLRef-Mon']['unit'] = '1/m'
-        db['SL-Mon']    = _copy.deepcopy(db['Current-Mon']); db['SL-Mon']['unit'] = '1/m'
-    elif magfunc == 'dipole':
-        db['Energy-SP']     = _copy.deepcopy(db['Current-SP']); db['Energy-SP']['unit'] = 'GeV'
-        db['Energy-RB']     = _copy.deepcopy(db['Current-RB']); db['Energy-RB']['unit'] = 'GeV'
-        db['EnergyRef-Mon'] = _copy.deepcopy(db['CurrentRef-Mon']); db['EnergyRef-Mon']['unit'] = 'GeV'
-        db['Energy-Mon']    = _copy.deepcopy(db['Current-Mon']); db['Energy-Mon']['unit'] = 'GeV'
-    elif magfunc == 'corrector'
-        db['Kick-SP']     = _copy.deepcopy(db['Current-SP']); db['Kick-SP']['unit'] = 'rad'
-        db['Kick-RB']     = _copy.deepcopy(db['Current-RB']); db['Kick-RB']['unit'] = 'rad'
-        db['KickRef-Mon'] = _copy.deepcopy(db['CurrentRef-Mon']); db['KickRef-Mon']['unit'] = 'rad'
-        db['Kick-Mon']    = _copy.deepcopy(db['Current-Mon']); db['Kick-Mon']['unit'] = 'rad'
+    for psname, magfunc in magfunc_dict:
+    #psnames = _MASearch.conv_maname_2_psnames(maname)
+        db[psname] = _copy.deepcopy(propty_db)
+        for propty,pdb in propty_db.items():
+            # set setpoint limits in database
+            if propty in ('Current-SP',):
+                label='lolo';  pdb[label] = _MASearch.get_splim(maname,label)
+                label='low';   pdb[label] = _MASearch.get_splim(maname,label)
+                label='lolim'; pdb[label] = _MASearch.get_splim(maname,label)
+                label='hilim'; pdb[label] = _MASearch.get_splim(maname,label)
+                label='high';  pdb[label] = _MASearch.get_splim(maname,label)
+                label='hihi';  pdb[label] = _MASearch.get_splim(maname,label)
+            # define unit of current
+            if propty in ('Current-SP','Current-RB','CurrentRef-Mon','Current-Mon'):
+                db['unit'] = units[0]
+        if magfunc == 'quadrupole':
+            db[psname]['KL-SP']     = _copy.deepcopy(db['Current-SP']); db['KL-SP']['unit'] = '1/m'
+            db[psname]['KL-RB']     = _copy.deepcopy(db['Current-RB']); db['KL-RB']['unit'] = '1/m'
+            db[psname]['KLRef-Mon'] = _copy.deepcopy(db['CurrentRef-Mon']); db['KLRef-Mon']['unit'] = '1/m'
+            db[psname]['KL-Mon']    = _copy.deepcopy(db['Current-Mon']); db['KL-Mon']['unit'] = '1/m'
+        elif magfunc == 'sextupole':
+            db[psname]['SL-SP']     = _copy.deepcopy(db['Current-SP']); db['SL-SP']['unit'] = '1/m'
+            db[psname]['SL-RB']     = _copy.deepcopy(db['Current-RB']); db['SL-RB']['unit'] = '1/m'
+            db[psname]['SLRef-Mon'] = _copy.deepcopy(db['CurrentRef-Mon']); db['SLRef-Mon']['unit'] = '1/m'
+            db[psname]['SL-Mon']    = _copy.deepcopy(db['Current-Mon']); db['SL-Mon']['unit'] = '1/m'
+        elif magfunc == 'dipole':
+            db[psname]['Energy-SP']     = _copy.deepcopy(db['Current-SP']); db['Energy-SP']['unit'] = 'GeV'
+            db[psname]['Energy-RB']     = _copy.deepcopy(db['Current-RB']); db['Energy-RB']['unit'] = 'GeV'
+            db[psname]['EnergyRef-Mon'] = _copy.deepcopy(db['CurrentRef-Mon']); db['EnergyRef-Mon']['unit'] = 'GeV'
+            db[psname]['Energy-Mon']    = _copy.deepcopy(db['Current-Mon']); db['Energy-Mon']['unit'] = 'GeV'
+        elif magfunc == 'corrector':
+            db[psname]['Kick-SP']     = _copy.deepcopy(db['Current-SP']); db['Kick-SP']['unit'] = 'rad'
+            db[psname]['Kick-RB']     = _copy.deepcopy(db['Current-RB']); db['Kick-RB']['unit'] = 'rad'
+            db[psname]['KickRef-Mon'] = _copy.deepcopy(db['CurrentRef-Mon']); db['KickRef-Mon']['unit'] = 'rad'
+            db[psname]['Kick-Mon']    = _copy.deepcopy(db['Current-Mon']); db['Kick-Mon']['unit'] = 'rad'
+    return db
