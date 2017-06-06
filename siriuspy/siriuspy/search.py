@@ -4,12 +4,17 @@ import siriuspy.util as _util
 import siriuspy.servweb as _web
 from siriuspy.namesys import Filter as _Filter
 
+from siriuspy.magnet.excdat import ExcitationData
+
 class PSSearch:
 
     _connection_timeout   = None
     _pstype_dict          = None
     _pstype_2_names_dict  = None
     _pstype_2_splims_dict = None
+
+    _pstype_2_excdat_dict = dict()
+
     _splims_labels        = None
     _splims_unit          = None
     _psnames_list         = None
@@ -52,6 +57,14 @@ class PSSearch:
         for datum in data:
             pstype, *lims = datum
             PSSearch._pstype_2_splims_dict[pstype] = {PSSearch._splims_labels[i]:float(lims[i]) for i in range(len(lims))}
+
+    @staticmethod
+    def reload_pstype_2_excdat_dict(pstype):
+        """ Load power supply excitatiom data """
+        if _web.server_online():
+            PSSearch._pstype_2_excdat_dict[pstype] = ExcitationData(filename_web=pstype + '.txt')
+        else:
+            raise Exception('could not read pstypes from web server!')
 
     @staticmethod
     def get_pstype_dict():
@@ -107,6 +120,14 @@ class PSSearch:
         if pstype is None: return None
         if PSSearch._pstype_2_splims_dict is None: PSSearch.reload_pstype_2_splims_dict()
         return _copy.deepcopy(PSSearch._pstype_2_splims_dict[pstype])
+
+    @staticmethod
+    def conv_psname_2_excdata(name):
+        pstype = PSSearch.conv_psname_2_pstype(name)
+        if pstype not in PSSearch._pstype_2_excdat_dict:
+            PSSearch.reload_pstype_2_excdat_dict(pstype)
+
+        return PSSearch._pstype_2_excdat_dict[pstype]
 
     @staticmethod
     def get_splim(pstype, label):

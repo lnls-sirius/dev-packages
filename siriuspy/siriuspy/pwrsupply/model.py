@@ -577,6 +577,9 @@ class PowerSupplyMA(PowerSupply):
     def __init__(self, maname, **kwargs):
         self._maname    = _SiriusPVName(maname)
         self._strthobj  = self._create_strth_object()
+
+        self._madata = MAData(self._maname)
+
         super().__init__(psname=maname.replace('-MA','-PS'),
                          controller=self._controller,
                          **kwargs)
@@ -587,11 +590,6 @@ class PowerSupplyMA(PowerSupply):
                 return _StrthMAFamDip(self._maname)
             elif self.magfunc in ('quadrupole', 'quadrupole-skew'):
                 return _StrthMAFamQuad(self._maname)
-
-
-    def _get_madipole(self):
-        if self._maname.section == 'SI':
-            self._madipole = PowerSupply(psname = )
 
     @property
     def magfunc(self):
@@ -608,7 +606,54 @@ class PowerSupplyMA(PowerSupply):
 
     @property
     def strength_rb(self):
-        return self._get_strength(self.current_rb, self._dipole.current_mon)
+        return None
+
+    def _get_database(self):
+        """Return an updated  PV database whose keys correspond to PS properties."""
+        db = self._madata.propty_database
+        value = self.ctrlmode_mon; db['CtrlMode-Mon']['value'] = _et.enums('RmtLocTyp').index(value) if self._enum_keys else value
+        value = self.opmode_sel;   db['OpMode-Sel']['value'] = _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
+        value = self.opmode_sts;   db['OpMode-Sts']['value'] = _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
+        value = self.pwrstate_sel; db['PwrState-Sel']['value'] = _et.enums('OffOnTyp').index(value) if self._enum_keys else value
+        value = self.pwrstate_sts; db['PwrState-Sts']['value'] = _et.enums('OffOnTyp').index(value) if self._enum_keys else value
+        db['Reset-Cmd']['value'] = self.reset
+        db['Abort-Cmd']['value'] = self.abort
+        wfmlabels = self._get_wfmlabels_mon()
+        db['WfmLoad-Sel']['enums'] = wfmlabels
+        db['WfmLoad-Sts']['enums'] = wfmlabels
+        value = self.wfmload_sel;  db['WfmLoad-Sel']['value'] = _np.where(wfmlabels == value)[0][0] if self._enum_keys else value
+        value = self.wfmload_sts;  db['WfmLoad-Sts']['value'] = _np.where(wfmlabels == value)[0][0] if self._enum_keys else value
+        db['WfmLabel-SP']['value']    = self.wfmlabel_sp
+        db['WfmLabel-RB']['value']    = self.wfmlabel_rb
+        db['WfmLabels-Mon']['value']  = self.wfmlabels_mon
+        db['WfmData-SP']['value']     = self.wfmdata_sp
+        db['WfmData-RB']['value']     = self.wfmdata_rb
+        db['WfmSave-Cmd']['value']    = self.wfmsave_cmd
+        db['WfmIndex-Mon']['value']   = self.wfmindex_mon
+        db['Current-SP']['value']     = self.current_sp
+        db['Current-RB']['value']     = self.current_rb
+        db['CurrentRef-Mon']['value'] = self.currentref_mon
+        db['Current-Mon']['value']    = self.current_mon
+        db['Intlk-Mon']['value']      = self.intlk_mon
+
+        if 'KL-SP' in db:
+            strength = 'KL'
+        elif 'SL-SP' in db:
+            strength = 'SL'
+        elif 'Energy-SP' in db:
+            strength = 'Energy'
+        elif 'Kick-SP' in db:
+            strength = 'Kick'
+        else:
+            raise ValueError("No strength defined")
+
+        #Set strength values
+        db[strength + '-SP']['value'] = self.strength_sp
+        db[strength + '-RB']['value'] = self.strength_rb
+        db[strength + 'Ref-Mon']['value'] = self.strengthref_mon
+        db[strength + '-Mon']['value'] = self.strength_mon
+
+        return db
 
 
 class PowerSupplyEpicsSync(PowerSupply):
