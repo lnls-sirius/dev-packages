@@ -10,6 +10,7 @@ from siriuspy.csdevice.pwrsupply import get_ps_propty_database  as _get_ps_propt
 from siriuspy.csdevice.pwrsupply import get_ma_propty_database  as _get_ma_propty_database
 from siriuspy.pwrsupply.controller import ControllerSim as _ControllerSim
 from siriuspy.pwrsupply.controller import ControllerEpics as _ControllerEpics
+from siriuspy.magnet.excdata import ExcitationData as _ExcitationData
 
 
 _connection_timeout = 0.0
@@ -525,6 +526,7 @@ class _Strth:
     }
 
     _nominal_values = {
+        # section, nominal_energy, nominal_deflection
         'SI': (3.0, None,),
         'BO': (3.0, None,),
     }
@@ -540,7 +542,10 @@ class _StrthMADip(_Strth):
 
     def __init__(self, maname):
         self._ps = PowerSupplyEpicsSync(controllers=_Strth._dipoles_ps[maname.section])
-        self._nominal_energy, self._nominal_intf = _Strth._nominal_values[maname.section]
+        self.excdat = _ExcitationData
+        self._nominal_energy, self._nominal_angle = _Strth._nominal_values[maname.section]
+        nominal_brho = _util.beam_rigidity(self._nominal_energy)
+        self._nominal_intf = self._nominal_angle * nominal_brho
 
     def get_strength(self, current):
         intfield = self._excdata.current_2_field(current)
