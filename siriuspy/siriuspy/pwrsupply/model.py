@@ -12,6 +12,7 @@ from siriuspy.pwrsupply.controller import ControllerSim as _ControllerSim
 from siriuspy.pwrsupply.controller import ControllerEpics as _ControllerEpics
 from abc import abstractmethod as _abstractmethod
 from abc import ABCMeta as _ABCMeta
+from siriuspy.magnet.excdata import ExcitationData as _ExcitationData
 
 
 _connection_timeout = 0.0
@@ -573,7 +574,7 @@ class _StrthMADip(_Strth):
     def get_current(self, strength):
         ''' Returns dipole current '''
 
-        
+
         intfield = self._nominal_intf * (strength / self._nominal_energy)
         return self._psdata._excdata.field_2_current(insfield)
 
