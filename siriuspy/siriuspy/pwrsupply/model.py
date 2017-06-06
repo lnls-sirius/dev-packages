@@ -3,13 +3,15 @@ import uuid as _uuid
 import numpy as _np
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.search import MASearch as _MASearch
-import siriuspy.namesys import SiriusPVname as _SiriusPVName
+from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.csdevice.pwrsupply import default_wfmlabels as _default_wfmlabels
 from siriuspy.csdevice.pwrsupply import get_ps_propty_database  as _get_ps_propty_database
 from siriuspy.csdevice.pwrsupply import get_ma_propty_database  as _get_ma_propty_database
 from siriuspy.pwrsupply.controller import ControllerSim as _ControllerSim
 from siriuspy.pwrsupply.controller import ControllerEpics as _ControllerEpics
+from abc import abstractmethod as _abstractmethod
+from abc import ABCMeta as _ABCMeta
 
 
 _connection_timeout = 0.0
@@ -24,6 +26,9 @@ class PSData:
         self._magfunc = _PSSearch.conv_pstype_2_magfunc(self._pstype)
         self._splims = _PSSearch.conv_pstype_2_splims(self._pstype)
         self._splims_unit = _PSSearch.get_splims_unit()
+
+        self._excdata = _PSSearch.conv_psname_2_excdata(self._psname)
+
         self._propty_database = _get_ps_propty_database(self._pstype)
 
     @property
@@ -525,9 +530,21 @@ class _Strth:
     }
 
     _nominal_values = {
-        'SI': (3.0, None,),
-        'BO': (3.0, None,),
+        'SI': (3.0, (2.7553 + 4.0964) * _math.pi/180.0),
+        'TS': (3.0, (5 + 1.0/3.0) * _math.pi/180.0),
+        'BO': (3.0, 7.2 * _math.pi/180.0),
+        'TB': (0.150, 15.0 * _math.pi/180.0),
     }
+
+    def __init__(self, maname):
+        ''' Sets PSData for target PS;
+            creates dipole controllers;
+            and gets nominal energy
+        '''
+        psname = maname.replace('-MA', '-PS')
+        psdata = PSData(psname)
+        self._dipoles = PowerSupplyEpicsSync(controllers=_Strth._dipoles_ps[maname.section])
+        self._nominal_energy, self._nominal_intf = _Strth._nominal_values[maname.section]
 
     @_abstractmethod
     def get_strength(self, current):
@@ -539,29 +556,56 @@ class _Strth:
 class _StrthMADip(_Strth):
 
     def __init__(self, maname):
-        self._ps = PowerSupplyEpicsSync(controllers=_Strth._dipoles_ps[maname.section])
-        self._nominal_energy, self._nominal_intf = _Strth._nominal_values[maname.section]
+        super().__init__(maname) #Won't work for dip
 
     def get_strength(self, current):
-        intfield = self._excdata.current_2_field(current)
+        ''' Return dipole strength '''
+        if isinstance(self._dipoles._psdata._excdata, dict):
+            multipoles_b1 = self._dipoles._psdata._excdata['B1'].interp_curr2mult(current)
+            multipoles_b2 = self._dipoles._psdata._excdata['B2'].interp_curr2mult(current)
+            intfield = multipoles_b1['normal'][0] + multipoles_b2['normal'][0]
+        else:
+            multipoles = self._dipoles._psdata._excdata.interp_curr2mult(current)
+            intfield = multipoles['normal'][0]
+
         return self._nominal_energy * (intfield / self._nominal_intf)
 
     def get_current(self, strength):
+        ''' Returns dipole current '''
+
+        
         intfield = self._nominal_intf * (strength / self._nominal_energy)
-        return self._excdata.field_2_current(insfield)
+        return self._psdata._excdata.field_2_current(insfield)
 
 
 
 class _StrthMAFamQuad(_Strth):
+
+    def __init__(self, maname):
+        super().__init__(maname)
+
     def get_strength(self, current):
         current_dipole = self._dipole.current_mon
         energy = self._dipole.get_strength(current_dipole) # [GeV]
         brho = _util.beam_rigidity(energy)
-        intfield = self._excdata.current_2_field(current)
+        intfield = self.psdata._excdata.current_2_field(current)
         return intfield / brho
 
+    def get_current(self, strength):
+        pass
+
 class _StrthMATrimQuad(_Strth):
-    def get_strength(self):
+
+    def __init__(self, maname):
+        super().__init__(maname)
+        #Get Family PS
+        self.fam_ps = maname.replace()
+
+
+    def get_strength(self, current):
+        pass
+
+    def get_current(self, strength):
         pass
 
 
