@@ -1,6 +1,7 @@
 import copy as _copy
 import uuid as _uuid
 import numpy as _np
+import math as _math
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.search import MASearch as _MASearch
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
@@ -12,13 +13,22 @@ from siriuspy.pwrsupply.controller import ControllerSim as _ControllerSim
 from siriuspy.pwrsupply.controller import ControllerEpics as _ControllerEpics
 from abc import abstractmethod as _abstractmethod
 from abc import ABCMeta as _ABCMeta
-from siriuspy.magnet.excdata import ExcitationData as _ExcitationData
+from siriuspy.magnet.excdat import ExcitationData as _ExcitationData
 
 
 _connection_timeout = 0.0
 
 
 class PSData:
+
+    _multipole_dict = {
+        'dipole': ('normal', 0),
+        'quadrupole': ('normal', 1),
+        'sextupole': ('normal', 2),
+        'corrector-horizontal': ('normal', 0),
+        'corrector-vertical': ('skew', 0),
+        'quadrupole-skew': ('skew', 1),
+    }
 
     def __init__(self, psname):
         self._psname = psname
@@ -28,6 +38,7 @@ class PSData:
         self._splims = _PSSearch.conv_pstype_2_splims(self._pstype)
         self._splims_unit = _PSSearch.get_splims_unit()
 
+        #print(self._psname)
         self._excdata = _PSSearch.conv_psname_2_excdata(self._psname)
 
         self._propty_database = _get_ps_propty_database(self._pstype)
@@ -47,6 +58,10 @@ class PSData:
     @property
     def magfunc(self):
         return self._magfunc
+
+    @property
+    def multipole(self):
+        return PSData._multipole_dict[self.magfunc]
 
     @property
     def splims(self):
@@ -85,7 +100,6 @@ class PSData:
 
         return st
 
-
 class MAData:
 
     def __init__(self, maname):
@@ -110,12 +124,15 @@ class MAData:
     def psnames(self):
         return list(self._psdata.keys())
 
+    @property
+    def magfunc(self, psname):
+        return self._psdata[psname].magfunc
+
     def __getitem__(self, psname):
         return self._psdata[psname]
 
-    def get_database(psname):
+    def get_database(self, psname):
         return self._propty_databases[psname]
-
 
 class PowerSupplyLinac(object):
 
@@ -268,7 +285,6 @@ class PowerSupplyLinac(object):
 
     def _mycallback(self, pvname, value, **kwargs):
         pass
-
 
 class PowerSupply(PowerSupplyLinac):
 
@@ -522,8 +538,32 @@ class PowerSupply(PowerSupplyLinac):
             elif 'Current-SP' in pvname:
                 self._current_sp   = value
 
-
 class _Strth:
+
+    def __init__(self, maname):
+        ''' Sets PSData for the MA '''
+        self._maname = maname
+
+        self._init_psdata()
+        self._set_multipole()
+
+    @_abstractmethod
+    def get_strength(self, current):
+        pass
+
+    @_abstractmethod
+    def get_current(self, strength):
+        pass
+
+    @_abstractmethod
+    def _init_psdata(self):
+        pass
+
+    @_abstractmethod
+    def _set_multipole(self):
+        pass
+
+class _StrthMADip(_Strth):
 
     _dipoles_ps = {
         'SI':('SI-Fam:PS-B1B2-1','SI-Fam:PS-B1B2-2'),
@@ -532,76 +572,94 @@ class _Strth:
 
     _nominal_values = {
         'SI': (3.0, (2.7553 + 4.0964) * _math.pi/180.0),
-        'TS': (3.0, (5 + 1.0/3.0) * _math.pi/180.0),
+        'TS': (3.0, (5.0 + 1.0/3.0) * _math.pi/180.0),
         'BO': (3.0, 7.2 * _math.pi/180.0),
         'TB': (0.150, 15.0 * _math.pi/180.0),
     }
 
     def __init__(self, maname):
-        ''' Sets PSData for target PS;
-            creates dipole controllers;
-            and gets nominal energy
-        '''
-        psname = maname.replace('-MA', '-PS')
-        psdata = PSData(psname)
-        self._dipoles = PowerSupplyEpicsSync(controllers=_Strth._dipoles_ps[maname.section])
-        self._nominal_energy, self._nominal_intf = _Strth._nominal_values[maname.section]
-
-    @_abstractmethod
-    def get_strength(self, current):
-        pass
-    @_abstractmethod
-    def get_current(self, strength):
-        pass
-
-class _StrthMADip(_Strth):
-
-    def __init__(self, maname):
-        super().__init__(maname) #Won't work for dip
+        super().__init__(maname)
 
     def get_strength(self, current):
         ''' Return dipole strength '''
-        if isinstance(self._dipoles._psdata._excdata, dict):
-            multipoles_b1 = self._dipoles._psdata._excdata['B1'].interp_curr2mult(current)
-            multipoles_b2 = self._dipoles._psdata._excdata['B2'].interp_curr2mult(current)
-            intfield = multipoles_b1['normal'][0] + multipoles_b2['normal'][0]
-        else:
-            multipoles = self._dipoles._psdata._excdata.interp_curr2mult(current)
-            intfield = multipoles['normal'][0]
-
+        multipoles = self._dipoles._psdata._excdata.interp_curr2mult(current)
+        intfield = multipoles['normal'][0]
         return self._nominal_energy * (intfield / self._nominal_intf)
+
+    def read_strength(self):
+        return self.get_strength(self._dipoles.current_mon)
 
     def get_current(self, strength):
         ''' Returns dipole current '''
-
-
         intfield = self._nominal_intf * (strength / self._nominal_energy)
-        return self._psdata._excdata.field_2_current(insfield)
+        return self._dipoles._psdata._excdata.field_2_current(intfield)
 
+    def _init_psdata(self):
+        self._dipoles = PowerSupplyEpicsSync(controllers=_Strth._dipoles_ps[maname.section])
+        self._nominal_energy, self._nominal_intf = _Strth._nominal_values[maname.section]
 
-
-class _StrthMAFamQuad(_Strth):
+class _StrthMAFam(_Strth):
 
     def __init__(self, maname):
         super().__init__(maname)
+        self._strth_dipole = _StrthMADip(self._maname)
 
     def get_strength(self, current):
-        current_dipole = self._dipole.current_mon
-        energy = self._dipole.get_strength(current_dipole) # [GeV]
+        energy = self._strth_dipole.read_strength()
         brho = _util.beam_rigidity(energy)
-        intfield = self.psdata._excdata.current_2_field(current)
+        multipoles = self._psdata._excdata.interp_curr2mult(current)
+
+        #Select multipole
+        harmonic = self._psdata.multipole[0]
+        multipole_type = self._psdata.multipole[1]
+        intfield = multipoles[multipole_type][harmonic]
+
         return intfield / brho
 
     def get_current(self, strength):
-        pass
+        energy = self._strth_dipole.read_strength()
+        intfield = strength * brho
+        return self._psdata._excdata.interp_mult2curr(intfield)
 
-class _StrthMATrimQuad(_Strth):
+    def _init_psdata(self):
+        self._psname = self._maname.replace(':MA-', ':PS-')
+        self._psdata = PSData(self._psname)
+
+class _StrthMATrim(_Strth):
 
     def __init__(self, maname):
         super().__init__(maname)
-        #Get Family PS
-        self.fam_ps = maname.replace()
+        self._strth_dipole = _StrthMADip(maname)
 
+    def get_strength(self, current):
+        energy = self._strth_dipole.read_strength
+        brho = _util.beam_rigidity(energy)
+        multipoles = self._psdata._excdata.interp_curr2mult(current)
+
+        #Select multipole
+        harmonic = self._psdata.multipole[0]
+        multipole_type = self._psdata.multipole[1]
+        intfield = multipoles[multipole_type][harmonic]
+
+        trim_strength = intfield / brho
+        fam_strength = self._fam_strth.get_strength(current)
+
+        return trim_strength + fam_strength
+
+    def get_current(self, strength):
+        pass
+
+    def _init_psdata(self):
+        self._psname = self._maname.replace(':MA-', ':PS-')
+        self._psdata = PSData(self._psname)
+
+        self._fam_maname = re.sub('-\w{2,6}:', '-Fam:', self._maname)
+        self._fam_strth = _StrthMAFam(self._fam_maname)
+
+class _StrthMA(_Strth):
+
+    def __init__(self, maname):
+        super().__init__(maname)
 
     def get_strength(self, current):
         pass
@@ -609,27 +667,31 @@ class _StrthMATrimQuad(_Strth):
     def get_current(self, strength):
         pass
 
-
-
+    def _init_psdata(self):
+        pass
 
 class PowerSupplyMA(PowerSupply):
 
     def __init__(self, maname, **kwargs):
         self._maname    = _SiriusPVName(maname)
-        self._strthobj  = self._create_strth_object()
-
+        self._strthobj  = self._strth_factory()
         self._madata = MAData(self._maname)
-
-        super().__init__(psname=maname.replace('-MA','-PS'),
-                         controller=self._controller,
+        c = _ControllerEpics(psname=maname.replace(':MA-', ':PS-'))
+        super().__init__(psname=maname.replace(':MA-',':PS-'),
+                         controller=c,
                          **kwargs)
 
-    def _create_strth_object(self):
-        if self._maname.sub_section == 'Fam':
+    def _strth_factory(self):
+        if self._maname.subsection == 'Fam':
             if self.magfunc == 'dipole':
                 return _StrthMAFamDip(self._maname)
-            elif self.magfunc in ('quadrupole', 'quadrupole-skew'):
-                return _StrthMAFamQuad(self._maname)
+            elif self.magfunc in ('quadrupole', 'sextupole'):
+                return _StrthMAFam(self._maname)
+        else:
+            if self.magfunc == 'quadrupole':
+                return _StrthMATrim(self._maname)
+            elif self.magfunc in ('corrector', 'quadrupole-skew'):
+                return _StrthMA(self._maname)
 
     @property
     def magfunc(self):
@@ -642,7 +704,7 @@ class PowerSupplyMA(PowerSupply):
 
     @strength_sp.setter
     def strength_sp(self, value):
-        current = self._strthobj.get_current(value)
+        self.current_sp = self._strthobj.get_current(value)
 
     @property
     def strength_rb(self):
@@ -742,7 +804,6 @@ class PowerSupplyEpicsSync(PowerSupply):
     def _set_current_sp(self, value):
         for c in self._controllers:
             c.current_sp = value
-
 
 class PowerSupplyMagnet(PowerSupply):
 
