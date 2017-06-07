@@ -766,10 +766,10 @@ class _StrthMADip(_Strth):
 
 class _StrthMAFam(_Strth):
 
-    def __init__(self, maname):
-        super().__init__(maname)
+    def __init__(self, maname, **kwargs):
+        super().__init__(maname, **kwargs)
         section, maname = self.get_dipole_maname(maname=maname)
-        self._strth_dipole = _StrthMADip(section=section)
+        self._strth_dipole = _StrthMADip(section=section, **kwargs)
 
     def get_strength(self, current):
         energy = self._strth_dipole.read_strength()
@@ -852,7 +852,7 @@ class PowerSupplyMA(PowerSupplyEpicsSync):
             if self.magfunc == 'dipole':
                 return _StrthMADip(self._maname, use_vaca, vaca_prefix)
             elif self.magfunc in ('quadrupole', 'sextupole'):
-                return _StrthMAFam(self._maname, use_vaca, vaca_prefix)
+                return _StrthMAFam(maname=self._maname, use_vaca=use_vaca, vaca_prefix=vaca_prefix)
         else:
             if self.magfunc == 'quadrupole':
                 return _StrthMATrim(self._maname, use_vaca, vaca_prefix)
@@ -879,33 +879,33 @@ class PowerSupplyMA(PowerSupplyEpicsSync):
     def strength_rb(self):
         return None
 
-    def _get_database(self):
+    def _get_database(self, prefix=''):
         """Return an updated  PV database whose keys correspond to PS properties."""
-        db = self._madata.propty_database
-        value = self.ctrlmode_mon; db['CtrlMode-Mon']['value'] = _et.enums('RmtLocTyp').index(value) if self._enum_keys else value
-        value = self.opmode_sel;   db['OpMode-Sel']['value'] = _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
-        value = self.opmode_sts;   db['OpMode-Sts']['value'] = _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
-        value = self.pwrstate_sel; db['PwrState-Sel']['value'] = _et.enums('OffOnTyp').index(value) if self._enum_keys else value
-        value = self.pwrstate_sts; db['PwrState-Sts']['value'] = _et.enums('OffOnTyp').index(value) if self._enum_keys else value
-        db['Reset-Cmd']['value'] = self.reset
-        db['Abort-Cmd']['value'] = self.abort
+        db = self._madata._propty_databases[self._psname[0]]
+        value = self.ctrlmode_mon; db[prefix + 'CtrlMode-Mon']['value'] = _et.enums('RmtLocTyp').index(value) if self._enum_keys else value
+        value = self.opmode_sel;   db[prefix + 'OpMode-Sel']['value'] = _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
+        value = self.opmode_sts;   db[prefix + 'OpMode-Sts']['value'] = _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
+        value = self.pwrstate_sel; db[prefix + 'PwrState-Sel']['value'] = _et.enums('OffOnTyp').index(value) if self._enum_keys else value
+        value = self.pwrstate_sts; db[prefix + 'PwrState-Sts']['value'] = _et.enums('OffOnTyp').index(value) if self._enum_keys else value
+        db[prefix + 'Reset-Cmd']['value'] = self.reset
+        db[prefix + 'Abort-Cmd']['value'] = self.abort
         wfmlabels = self._get_wfmlabels_mon()
-        db['WfmLoad-Sel']['enums'] = wfmlabels
-        db['WfmLoad-Sts']['enums'] = wfmlabels
-        value = self.wfmload_sel;  db['WfmLoad-Sel']['value'] = _np.where(wfmlabels == value)[0][0] if self._enum_keys else value
-        value = self.wfmload_sts;  db['WfmLoad-Sts']['value'] = _np.where(wfmlabels == value)[0][0] if self._enum_keys else value
-        db['WfmLabel-SP']['value']    = self.wfmlabel_sp
-        db['WfmLabel-RB']['value']    = self.wfmlabel_rb
-        db['WfmLabels-Mon']['value']  = self.wfmlabels_mon
-        db['WfmData-SP']['value']     = self.wfmdata_sp
-        db['WfmData-RB']['value']     = self.wfmdata_rb
-        db['WfmSave-Cmd']['value']    = self.wfmsave_cmd
-        db['WfmIndex-Mon']['value']   = self.wfmindex_mon
-        db['Current-SP']['value']     = self.current_sp
-        db['Current-RB']['value']     = self.current_rb
-        db['CurrentRef-Mon']['value'] = self.currentref_mon
-        db['Current-Mon']['value']    = self.current_mon
-        db['Intlk-Mon']['value']      = self.intlk_mon
+        db[prefix + 'WfmLoad-Sel']['enums'] = wfmlabels
+        db[prefix + 'WfmLoad-Sts']['enums'] = wfmlabels
+        value = self.wfmload_sel;  db[prefix + 'WfmLoad-Sel']['value'] = _np.where(wfmlabels == value)[0][0] if self._enum_keys else value
+        value = self.wfmload_sts;  db[prefix + 'WfmLoad-Sts']['value'] = _np.where(wfmlabels == value)[0][0] if self._enum_keys else value
+        db[prefix + 'WfmLabel-SP']['value']    = self.wfmlabel_sp
+        db[prefix + 'WfmLabel-RB']['value']    = self.wfmlabel_rb
+        db[prefix + 'WfmLabels-Mon']['value']  = self.wfmlabels_mon
+        db[prefix + 'WfmData-SP']['value']     = self.wfmdata_sp
+        db[prefix + 'WfmData-RB']['value']     = self.wfmdata_rb
+        db[prefix + 'WfmSave-Cmd']['value']    = self.wfmsave_cmd
+        db[prefix + 'WfmIndex-Mon']['value']   = self.wfmindex_mon
+        db[prefix + 'Current-SP']['value']     = self.current_sp
+        db[prefix + 'Current-RB']['value']     = self.current_rb
+        db[prefix + 'CurrentRef-Mon']['value'] = self.currentref_mon
+        db[prefix + 'Current-Mon']['value']    = self.current_mon
+        db[prefix + 'Intlk-Mon']['value']      = self.intlk_mon
 
         if 'KL-SP' in db:
             strength = 'KL'
