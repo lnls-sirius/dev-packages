@@ -3,7 +3,10 @@ import uuid as _uuid
 import numpy as _np
 import math as _math
 import re as _re
+from abc import abstractmethod as _abstractmethod
+from abc import ABCMeta as _ABCMeta
 from siriuspy import util as _util
+from siriuspy import envars as _envars
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.search import MASearch as _MASearch
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
@@ -13,8 +16,6 @@ from siriuspy.csdevice.pwrsupply import get_ps_propty_database  as _get_ps_propt
 from siriuspy.csdevice.pwrsupply import get_ma_propty_database  as _get_ma_propty_database
 from siriuspy.pwrsupply.controller import ControllerSim as _ControllerSim
 from siriuspy.pwrsupply.controller import ControllerEpics as _ControllerEpics
-from abc import abstractmethod as _abstractmethod
-from abc import ABCMeta as _ABCMeta
 from siriuspy.magnet.excdat import ExcitationData as _ExcitationData
 
 
@@ -156,6 +157,10 @@ class PowerSupplyLinac(object):
     # --- class interface ---
 
     @property
+    def connected(self):
+        return self._get_connected()
+
+    @property
     def psname(self):
         return self._psdata.psname
 
@@ -231,6 +236,12 @@ class PowerSupplyLinac(object):
         return self._controller.intlklabels
 
         # --- class implementation ---
+
+    def _get_connected(self):
+        if isinstance(self._controller, _ControllerEpics):
+            return self._controller.connected
+        else:
+            return True
 
     def _get_database(self):
         """Return an updated PV database whose keys correspond to PS properties."""
@@ -543,42 +554,55 @@ class PowerSupply(PowerSupplyLinac):
                 self._current_sp   = value
 
 class PowerSupplyEpicsSync(PowerSupply):
-    def __init__(self, psnames, use_vaca=False, vaca_prefix=None):
+
+    def __init__(self, psnames, use_vaca=False, vaca_prefix=None, connection_timeout=_connection_timeout):
         self._psnames = psnames
         self._controller_psnames = list()
         self._controllers = list()
 
-        if use_vaca and vaca_prefix is not None:
-            for psname in psnames:
-                self._controller_psnames.append(vaca_prefix + psname)
-        elif use_vaca and vaca_prefix is None:
-            raise ValueError("Use vaca is True but no vaca prefix was set")
-        elif not use_vaca:
-            for psname in psnames:
-                self._controller_psnames.append(psname)
+        if use_vaca:
+            if vaca_prefix is None:
+                vaca_prefix = _envars.vaca_prefix
+        else:
+            use_vaca = ''
+        for psname in psnames:
+            self._controller_psnames.append(vaca_prefix + psname)
 
         #Create controller epics
         for controller_name in self._controller_psnames:
-            self._controllers.append(_ControllerEpics(psname=controller_name))
+            self._controllers.append(_ControllerEpics(psname=controller_name, connection_timeout=connection_timeout))
 
         super().__init__(psname=psnames[0], controller=self._controllers[0])
 
+    def _get_connected(self):
+        for controller in self._controllers:
+            if not controller.connected: return False
+        return True
+
     def _controller_init(self, current_std):
         c0 = self._controllers[0]
-        self._pwrstate_sel = c0.pwrstate
-        self._opmode_sel = c0.opmode
-        self._current_sp = c0.current_sp
-        self._wfmlabel_sp  = c0.wfmlabel
-        self._wfmload_sel  = c0.wfmload
-        self._wfmdata_sp   = c0.wfmdata
-        for c in self._controllers:
-            c.pwrstate = self._pwrstate_sel
-            c.opmode = self._opmode_sel
-            c.current_sp = self._current_sp
-            c.wfmlabel = self._wfmlabel_sp
-            c.wfmload = self._wfmload_sel
-            c.wfmdata = self._wfmdata_sp
-            c.update_state()
+        if c0.connected:
+            self._pwrstate_sel = c0.pwrstate
+            self._opmode_sel = c0.opmode
+            self._current_sp = c0.current_sp
+            self._wfmlabel_sp  = c0.wfmlabel
+            self._wfmload_sel  = c0.wfmload
+            self._wfmdata_sp   = c0.wfmdata
+            for c in self._controllers:
+                c.pwrstate = self._pwrstate_sel
+                c.opmode = self._opmode_sel
+                c.current_sp = self._current_sp
+                c.wfmlabel = self._wfmlabel_sp
+                c.wfmload = self._wfmload_sel
+                c.wfmdata = self._wfmdata_sp
+                c.update_state()
+        else:
+            self._pwrstate_sel = None
+            self._opmode_sel = None
+            self._current_sp = None
+            self._wfmlabel_sp  = None
+            self._wfmload_sel  = None
+            self._wfmdata_sp   = None
 
     def _set_opmode_sel(self, value):
         for c in self._controllers:
@@ -634,15 +658,17 @@ class _Strth:
         'TB':'TB-Fam:MA-B',
     }
 
-    def __init__(self, maname):
+    def __init__(self, maname, use_vaca=False, vaca_prefix=None):
         ''' Sets PSData for the MA '''
         self._maname = maname
+        self._use_vaca = use_vaca
+        self._vaca_prefix = vaca_prefix
         self._madata = MAData(maname=self._maname)
         self._psnames = self._madata.psnames
-        self._excdata = self._madata.excdata(psnames[0])
+        self._excdata = self._madata.excdata(self._psnames[0])
         self._multipole_harmonic = self._excdata.main_multipole_harmonic
         self._multipole_type = self._excdata.main_multipole_type
-        self._init_psdata()
+        self._epicsps = self._get_epicsps()
 
     def get_dipole_maname(self, section=None, maname=None):
         if section is None:
@@ -650,16 +676,28 @@ class _Strth:
             section = pvname.section
         return section, _Strth._dipoles_maname[section]
 
+    @property
+    def current_sp(self):
+        return self._epicsps.current_sp
+
+    @property
+    def current_mon(self):
+        return self._epicsps.current_mon
+
+    @property
+    def connected(self):
+        return self._epicsps.connected
+
     @_abstractmethod
-    def get_strength(self, current):
+    def conv_current_2_strength(self, current):
         pass
 
     @_abstractmethod
-    def get_current(self, strength):
+    def conv_strength_2_current(self, strength):
         pass
 
     @_abstractmethod
-    def _init_psdata(self):
+    def _get_epicsps(self):
         pass
 
 class _StrthMADip(_Strth):
@@ -673,13 +711,10 @@ class _StrthMADip(_Strth):
         'TB'   : _math.radians(15.000),
     }
 
-    def _init_psdata(self):
-        controllers
-        self._psdata = PowerSupplyEpicsSync(controllers)
 
-    def __init__(self, section=None, maname=None):
-        section, maname = self.get_dipole_maname(section=section,maname=maname):
-        super().__init__(maname)
+    def __init__(self, section=None, maname=None, **kwargs):
+        section, maname = self.get_dipole_maname(section=section,maname=maname)
+        super().__init__(maname, **kwargs)
         ang = _StrthMADip._ref_angles
         if section == 'SI':
             self._ref_energy = 3.0 #[GeV]
@@ -708,12 +743,26 @@ class _StrthMADip(_Strth):
         else:
             raise NotImplementedError
 
-    def get_strength(self, current):
-        ''' Return dipole strength [Energy in GeV]'''
+    def _get_epicsps(self):
+        return PowerSupplyEpicsSync(psnames=self._psnames,
+                                    use_vaca=self._use_vaca,
+                                    vaca_prefix=self._vaca_prefix,
+                                    connection_timeout=None)
+
+    def conv_current_2_strength(self, current):
+        """Return dipole strength [Energy in GeV]."""
         multipoles = self._excdata.interp_curr2mult(current)
         intfield = multipoles[self._multipole_type][self._multipole_harmonic]
-        energy = (self._ref_energy / self._ref_brho) * (intfield + self._ref_BL_BC)/self._ref_angle
-        return energy
+        strength = (self._ref_energy / self._ref_brho) * (intfield + self._ref_BL_BC)/self._ref_angle
+        return strength
+
+    def conv_strength_2_current(self, strength):
+        """Return dipole power supply current."""
+        intfield = self._ref_angle * (self._ref_brho / self._ref_energy) * strength - self._ref_BL_BC
+        #multipoles = {'normal':{0:intfield}}
+        current = self._excdata.interp_mult2curr(intfield, harmonic=self._multipole_harmonic, multipole_type='normal')
+        return current
+
 
 class _StrthMAFam(_Strth):
 
@@ -796,19 +845,19 @@ class PowerSupplyMA(PowerSupplyEpicsSync):
         self._psname = self._get_controllers()
         super().__init__(psnames=self._psname, use_vaca=use_vaca, vaca_prefix=vaca_prefix)
         self._madata = MAData(self._maname)
-        self._strthobj  = self._strth_factory()
+        self._strthobj = self._strth_factory(use_vaca=use_vaca,vaca_prefix=vaca_prefix)
 
-    def _strth_factory(self):
+    def _strth_factory(self, use_vaca, vaca_prefix):
         if self._maname.subsection == 'Fam':
             if self.magfunc == 'dipole':
-                return _StrthMADip(self._maname)
+                return _StrthMADip(self._maname, use_vaca, vaca_prefix)
             elif self.magfunc in ('quadrupole', 'sextupole'):
-                return _StrthMAFam(self._maname)
+                return _StrthMAFam(self._maname, use_vaca, vaca_prefix)
         else:
             if self.magfunc == 'quadrupole':
-                return _StrthMATrim(self._maname)
+                return _StrthMATrim(self._maname, use_vaca, vaca_prefix)
             elif self.magfunc in ('corrector', 'quadrupole-skew'):
-                return _StrthMA(self._maname)
+                return _StrthMA(self._maname, use_vaca, vaca_prefix)
 
     @property
     def magfunc(self):

@@ -64,7 +64,7 @@ class PSSearch:
         if _web.server_online():
             PSSearch._pstype_2_excdat_dict[pstype] = ExcitationData(filename_web=pstype + '.txt')
         else:
-            raise Exception('could not read pstypes from web server!')
+            raise Exception('could not read "' + str(pstype) + '" from web server!')
 
     @staticmethod
     def get_pstype_dict():
