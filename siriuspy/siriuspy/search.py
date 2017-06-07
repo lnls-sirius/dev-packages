@@ -167,6 +167,8 @@ class PSSearch:
 class MASearch:
     ''' Searches magnets data in static files '''
 
+    _maname_list            = None
+
     _maname_2_splims_dict   = None #magnets-stpoint-limits file
     _maname_2_psnames_dict  = None #magnet-excitation-ps file
     _splims_labels          = None
@@ -195,8 +197,10 @@ class MASearch:
             text = _web.magnets_excitation_ps_read(timeout=PSSearch._connection_timeout)
             data, param_dict = _util.read_text_data(text)
             MASearch._maname_2_psnames_dict  = {}
+            MASearch._maname_list = []
             for datum in data:
                 magnet, *ps_names = datum
+                MASearch._maname_list.append(magnet)
                 MASearch._maname_2_psnames_dict[magnet] = tuple(ps_names)
         else:
             raise Exception('could not read magnet-excitation-ps from web server!')
@@ -239,6 +243,11 @@ class MASearch:
         if MASearch._maname_2_psnames_dict is None: MASearch.reload_maname_2_psnames_dict()
         return MASearch._maname_2_psnames_dict[maname]
 
+    @staticmethod
+    def get_psnames(filters=None):
+        """Return a sorted and filtered list of all magnet names."""
+        if PSSearch._manames_list is None: MASearch.reload_maname_2_psnames_dict()
+        return _Filter.process_filters(MASearch._manames_list, filters=filters)
 
 
 # class MASetPointLims:

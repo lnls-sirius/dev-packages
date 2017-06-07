@@ -2,6 +2,7 @@ import copy as _copy
 import uuid as _uuid
 import numpy as _np
 import math as _math
+import re as _re
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.search import MASearch as _MASearch
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
@@ -37,7 +38,6 @@ class PSData:
         self._magfunc = _PSSearch.conv_pstype_2_magfunc(self._pstype)
         self._splims = _PSSearch.conv_pstype_2_splims(self._pstype)
         self._splims_unit = _PSSearch.get_splims_unit()
-
         self._excdata = _PSSearch.conv_psname_2_excdata(self._psname)
 
         self._propty_database = _get_ps_propty_database(self._pstype)
@@ -123,9 +123,8 @@ class MAData:
     def psnames(self):
         return list(self._psdata.keys())
 
-    @property
     def magfunc(self, psname):
-        return self._psdata[psname].magfunc()
+        return self._psdata[psname].magfunc
 
     def __getitem__(self, psname):
         return self._psdata[psname]
@@ -538,15 +537,25 @@ class PowerSupply(PowerSupplyLinac):
                 self._current_sp   = value
 
 class PowerSupplyEpicsSync(PowerSupply):
-
-    def __init__(self, controllers, **kwargs):
+    def __init__(self, psnames, use_vaca=False, vaca_prefix=None):
+        self._psnames = psnames
+        self._controller_psnames = list()
         self._controllers = list()
 
+        if use_vaca and vaca_prefix is not None:
+            for psname in psnames:
+                self._controller_psnames.append(vaca_prefix + psname)
+        elif use_vaca and vaca_prefix is None:
+            raise ValueError("Use vaca is True but no vaca prefix was set")
+        elif not use_vaca:
+            for psname in psnames:
+                self._controller_psnames.append(psname)
+
         #Create controller epics
-        for controller_name in controllers:
+        for controller_name in self._controller_psnames:
             self._controllers.append(_ControllerEpics(psname=controller_name))
 
-        super().__init__(psname=controllers[0], controller=self._controllers[0])
+        super().__init__(psname=psnames[0], controller=self._controllers[0])
 
     def _controller_init(self, current_std):
         c0 = self._controllers[0]
@@ -663,11 +672,12 @@ class _StrthMADip(_Strth):
     def get_current(self, strength):
         ''' Returns dipole current '''
         intfield = self._nominal_intf * (strength / self._nominal_energy)
-        return self._dipoles._psdata._excdata.field_2_current(intfield)
+        return self._dipoles._psdata._excdata.interp_mult2curr(intfield, 0, 'normal')
 
     def _init_psdata(self):
-        self._dipoles = PowerSupplyEpicsSync(controllers=_StrthMADip._dipoles_ps[self._maname.section])
-        self._nominal_energy, self._nominal_intf = _StrthMADip._nominal_values[self._maname.section]
+        pass
+        #self._dipoles = PowerSupplyEpicsSync(psnames=_StrthMADip._dipoles_ps[self._maname.section])
+        #self._nominal_energy, self._nominal_intf = _StrthMADip._nominal_values[self._maname.section]
 
 class _StrthMAFam(_Strth):
 
@@ -724,7 +734,7 @@ class _StrthMATrim(_Strth):
         self._psname = self._maname.replace(':MA-', ':PS-')
         self._psdata = PSData(self._psname)
 
-        self._fam_maname = re.sub('-\w{2,6}:', '-Fam:', self._maname)
+        self._fam_maname = _re.sub('-\w{2,6}:', '-Fam:', self._maname)
         self._fam_strth = _StrthMAFam(self._fam_maname)
 
 class _StrthMA(_Strth):
@@ -743,13 +753,12 @@ class _StrthMA(_Strth):
 
 class PowerSupplyMA(PowerSupplyEpicsSync):
 
-    def __init__(self, maname, **kwargs):
+    def __init__(self, maname, use_vaca=False, vaca_prefix=None):
         self._maname    = _SiriusPVName(maname)
-        self._madata = MAData(self._maname)
         self._psname = self._get_controllers()
+        super().__init__(psnames=self._psname, use_vaca=use_vaca, vaca_prefix=vaca_prefix)
+        self._madata = MAData(self._maname)
         self._strthobj  = self._strth_factory()
-        super().__init__(controllers=self._get_controllers(),
-                         **kwargs)
 
     def _strth_factory(self):
         if self._maname.subsection == 'Fam':
@@ -769,7 +778,7 @@ class PowerSupplyMA(PowerSupplyEpicsSync):
         if len(self._psname) > 1:
             return 'dipole'
         else:
-            return self._madata.magfunc(self._psname)
+            return self._madata.magfunc(self._psname[0])
 
     @property
     def strength_sp(self):
@@ -832,6 +841,6 @@ class PowerSupplyMA(PowerSupplyEpicsSync):
 
     def _get_controllers(self):
         if self._maname == 'SI-Fam:MA-B1B2':
-            return ('SI-Fam:PS-B1B2-1', 'SI-Fam:PS-B1B2-2')
+            return ['SI-Fam:PS-B1B2-1', 'SI-Fam:PS-B1B2-2']
         else:
-            return (self._maname.replace(':MA-', ':PS-'))
+            return [self._maname.replace(':MA-', ':PS-')]
