@@ -771,6 +771,18 @@ class _StrthMAFam(_Strth):
         section, maname = self.get_dipole_maname(maname=maname)
         self._strth_dipole = _StrthMADip(section=section, **kwargs)
 
+
+    def conv_current_2_strength(self, current):
+        """Return dipole strength [Energy in GeV]."""
+        multipoles = self._excdata.interp_curr2mult(current)
+        intfield = multipoles[self._multipole_type][self._multipole_harmonic]
+        dip_current_mon = self._strth_dipole.current_mon
+        energy = self._strth_dipole.conv_current_2_strength(dip_current_mon)
+        brho = - _util.beam_rigidity(energy)
+        strength = intfield / brho
+        return strength
+
+
     def get_strength(self, current):
         energy = self._strth_dipole.read_strength()
         brho = _util.beam_rigidity(energy)
