@@ -38,7 +38,6 @@ class PSData:
         self._splims = _PSSearch.conv_pstype_2_splims(self._pstype)
         self._splims_unit = _PSSearch.get_splims_unit()
 
-        #print(self._psname)
         self._excdata = _PSSearch.conv_psname_2_excdata(self._psname)
 
         self._propty_database = _get_ps_propty_database(self._pstype)
@@ -126,7 +125,7 @@ class MAData:
 
     @property
     def magfunc(self, psname):
-        return self._psdata[psname].magfunc
+        return self._psdata[psname].magfunc()
 
     def __getitem__(self, psname):
         return self._psdata[psname]
@@ -538,6 +537,78 @@ class PowerSupply(PowerSupplyLinac):
             elif 'Current-SP' in pvname:
                 self._current_sp   = value
 
+class PowerSupplyEpicsSync(PowerSupply):
+
+    def __init__(self, controllers, **kwargs):
+        self._controllers = list()
+
+        #Create controller epics
+        for controller_name in controllers:
+            self._controllers.append(_ControllerEpics(psname=controller_name))
+
+        super().__init__(psname=controllers[0], controller=self._controllers[0])
+
+    def _controller_init(self, current_std):
+        c0 = self._controllers[0]
+        self._pwrstate_sel = c0.pwrstate
+        self._opmode_sel = c0.opmode
+        self._current_sp = c0.current_sp
+        self._wfmlabel_sp  = c0.wfmlabel
+        self._wfmload_sel  = c0.wfmload
+        self._wfmdata_sp   = c0.wfmdata
+        for c in self._controllers:
+            c.pwrstate = self._pwrstate_sel
+            c.opmode = self._opmode_sel
+            c.current_sp = self._current_sp
+            c.wfmlabel = self._wfmlabel_sp
+            c.wfmload = self._wfmload_sel
+            c.wfmdata = self._wfmdata_sp
+            c.update_state()
+
+    def _set_opmode_sel(self, value):
+        for c in self._controllers:
+            c.opmode = value
+
+    def _set_wfmlabel_sp(self, value):
+        for c in self._controllers:
+            c.wfmlabel = value
+
+    def _set_wfmdata_sp(self, value):
+        for c in self._controllers:
+            c.wfmdata = value
+
+    def _set_wfmload_sel(self, value):
+        for c in self._controllers:
+            c.wfmload = value
+
+    def _set_pwrstate_sel(self, value):
+        for c in self._controllers:
+            c.pwrstate = value
+
+    def _set_current_sp(self, value):
+        for c in self._controllers:
+            c.current_sp = value
+
+class PowerSupplyMagnet(PowerSupply):
+
+    def __init__(self, psname, **kwargs):
+        super().__init__(psname, **kwargs)
+
+    @property
+    def database(self):
+        """Return property database as a dictionary.
+        It prepends power supply family name to each dictionary key.
+        """
+        _database = {}
+        dd = super().database
+        _, family = self.ps_name.split('PS-')
+        if not isinstance(family,str):
+            raise Exception('invalid pv_name!')
+        for propty, db in super().database.items():
+            key = family + ':' + propty
+            _database[key] = _copy.deepcopy(db)
+        return _database
+
 class _Strth:
 
     def __init__(self, maname):
@@ -595,8 +666,8 @@ class _StrthMADip(_Strth):
         return self._dipoles._psdata._excdata.field_2_current(intfield)
 
     def _init_psdata(self):
-        self._dipoles = PowerSupplyEpicsSync(controllers=_Strth._dipoles_ps[maname.section])
-        self._nominal_energy, self._nominal_intf = _Strth._nominal_values[maname.section]
+        self._dipoles = PowerSupplyEpicsSync(controllers=_StrthMADip._dipoles_ps[self._maname.section])
+        self._nominal_energy, self._nominal_intf = _StrthMADip._nominal_values[self._maname.section]
 
 class _StrthMAFam(_Strth):
 
@@ -670,21 +741,20 @@ class _StrthMA(_Strth):
     def _init_psdata(self):
         pass
 
-class PowerSupplyMA(PowerSupply):
+class PowerSupplyMA(PowerSupplyEpicsSync):
 
     def __init__(self, maname, **kwargs):
         self._maname    = _SiriusPVName(maname)
-        self._strthobj  = self._strth_factory()
         self._madata = MAData(self._maname)
-        c = _ControllerEpics(psname=maname.replace(':MA-', ':PS-'))
-        super().__init__(psname=maname.replace(':MA-',':PS-'),
-                         controller=c,
+        self._psname = self._get_controllers()
+        self._strthobj  = self._strth_factory()
+        super().__init__(controllers=self._get_controllers(),
                          **kwargs)
 
     def _strth_factory(self):
         if self._maname.subsection == 'Fam':
             if self.magfunc == 'dipole':
-                return _StrthMAFamDip(self._maname)
+                return _StrthMADip(self._maname)
             elif self.magfunc in ('quadrupole', 'sextupole'):
                 return _StrthMAFam(self._maname)
         else:
@@ -696,7 +766,10 @@ class PowerSupplyMA(PowerSupply):
     @property
     def magfunc(self):
         """Return string corresponding to the magnetic function excitated with the power supply."""
-        pass
+        if len(self._psname) > 1:
+            return 'dipole'
+        else:
+            return self._madata.magfunc(self._psname)
 
     @property
     def strength_sp(self):
@@ -757,70 +830,8 @@ class PowerSupplyMA(PowerSupply):
 
         return db
 
-
-class PowerSupplyEpicsSync(PowerSupply):
-
-    def __init__(self, controllers, **kwargs):
-        self._controllers = controllers
-        super().__init__(controller=controllers[0], **kwargs)
-
-    def _controller_init(self, current_std):
-        c0 = self._controllers[0]
-        self._pwrstate_sel = c0.pwrstate
-        self._opmode_sel = c0.opmode
-        self._current_sp = c0.current_sp
-        self._wfmlabel_sp  = c0.wfmlabel
-        self._wfmload_sel  = c0.wfmload
-        self._wfmdata_sp   = c0.wfmdata
-        for c in self._controllers:
-            c.pwrstate = self._pwrstate_sel
-            c.opmode = self._opmode_sel
-            c.current_sp = self._current_sp
-            c.wfmlabel = self._wfmlabel_sp
-            c.wfmload = self._wfmload_sel
-            c.wfmdata = self._wfmdata_sp
-            c.update_state()
-
-    def _set_opmode_sel(self, value):
-        for c in self._controllers:
-            c.opmode = value
-
-    def _set_wfmlabel_sp(self, value):
-        for c in self._controllers:
-            c.wfmlabel = value
-
-    def _set_wfmdata_sp(self, value):
-        for c in self._controllers:
-            c.wfmdata = value
-
-    def _set_wfmload_sel(self, value):
-        for c in self._controllers:
-            c.wfmload = value
-
-    def _set_pwrstate_sel(self, value):
-        for c in self._controllers:
-            c.pwrstate = value
-
-    def _set_current_sp(self, value):
-        for c in self._controllers:
-            c.current_sp = value
-
-class PowerSupplyMagnet(PowerSupply):
-
-    def __init__(self, psname, **kwargs):
-        super().__init__(psname, **kwargs)
-
-    @property
-    def database(self):
-        """Return property database as a dictionary.
-        It prepends power supply family name to each dictionary key.
-        """
-        _database = {}
-        dd = super().database
-        _, family = self.ps_name.split('PS-')
-        if not isinstance(family,str):
-            raise Exception('invalid pv_name!')
-        for propty, db in super().database.items():
-            key = family + ':' + propty
-            _database[key] = _copy.deepcopy(db)
-        return _database
+    def _get_controllers(self):
+        if self._maname == 'SI-Fam:MA-B1B2':
+            return ('SI-Fam:PS-B1B2-1', 'SI-Fam:PS-B1B2-2')
+        else:
+            return (self._maname.replace(':MA-', ':PS-'))
