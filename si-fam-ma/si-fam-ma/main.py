@@ -18,8 +18,10 @@ class App:
 
     ma_devices = _pvs.get_ma_devices()
     pvs_database = _pvs.get_pvs_database()
+    strengths = ['KL', 'SL', 'Kick']
+    writable_fields = ['SP', 'Sel']
 
-    def __init__(self,driver):
+    def __init__(self, driver):
 
         _siriuspy.util.print_ioc_banner(
             ioc_name = 'si-fam-ma',
@@ -40,44 +42,56 @@ class App:
     def driver(self):
         return self._driver
 
-    def process(self,interval):
+    def process(self, interval):
         _time.sleep(interval)
         #print(_siriuspy.util.get_timestamp())
-        #pass
 
-    def read(self,reason):
+    def read(self, reason):
         if 'Version-Cte' in reason: return None
+        #Get property and field
+        device, propty, field = _get_dev_propty(reason)
+        #Check if property is a 'strength' and get attribute name
+        attr = propty + '_' + field if propty not in App.strengths else 'strength_' + field
+        attr = attr.lower()
+        #Return Magnet attribute based on the property and field requested
+        ma = self._ma_devices[device]
+        return getattr(ma, attr)
 
-        ma, ps, propty = self._get_dev_propty(reason)
-        if propty == 'CtrlMode-Mon':
-            return ps.ctrlmode_mon
-        elif propty == 'PwrState-Sel':
-            return ps.pwrstate_sel
-        elif propty == 'PwtState-Sts':
-            return ps.pwrstate_sts
-        elif propty == 'OpMode-Sel':
-            return ps.opmode_sel
-        elif propty == 'OpMode-Sts':
-            return ps.opmode_sts
-        elif propty == 'Current-RB':
-            return ps.current_rb
-        elif propty == 'Current-SP':
-            return ps.current_sp
-        elif propty in ('KL-SP','SL-SP'):
-            return ma.kl_sp
-        elif propty == ('KL-RB','SL-RB'):
-            return ma.kl_rb
-        return None
+        # ma, ps, propty = self._get_dev_propty(reason)
+        # if propty == 'CtrlMode-Mon':
+        #     return ps.ctrlmode_mon
+        # elif propty == 'PwrState-Sel':
+        #     return ps.pwrstate_sel
+        # elif propty == 'PwtState-Sts':
+        #     return ps.pwrstate_sts
+        # elif propty == 'OpMode-Sel':
+        #     return ps.opmode_sel
+        # elif propty == 'OpMode-Sts':
+        #     return ps.opmode_sts
+        # elif propty == 'Current-RB':
+        #     return ps.current_rb
+        # elif propty == 'Current-SP':
+        #     return ps.current_sp
+        # elif propty in ('KL-SP','SL-SP'):
+        #     return ma.kl_sp
+        # elif propty == ('KL-RB','SL-RB'):
+        #     return ma.kl_rb
+        # return None
 
     @staticmethod
     def _get_dev_propty(reason):
-        family, propty = reason.split(':')
-        ma = App.ma_devices[family]
-        ps = ma.get_ps('SI-Fam:PS-'+family) # there is only one PS anyway
-        return ma, ps, propty
+        ''' Returns 'property' and 'field' of a PV '''
+        device, pfield = reason.split(0)
+        propty, field = pfield.split('-')
+        return (device, propty, field)
+        # family, propty = reason.split(':')
+        # ma = App.ma_devices[family]
+        # ps = ma.get_ps('SI-Fam:PS-'+family) # there is only one PS anyway
+        # return ma, ps, propty
 
     def _mycallback(self, pvname, value, **kwargs):
         #print('main', pvname, value)
+        print(pvname)
         _, reason = pvname.split('PS-')
         prev_value = self._driver.getParam(reason)
         if value != prev_value:
@@ -86,15 +100,26 @@ class App:
              self._driver.updatePVs()
 
     def write(self,reason,value):
-        """Write value to reason and let callback update PV database."""
-        ma, ps, propty = self._get_dev_propty(reason)
-        if propty == 'PwrState-Sel':
-            ps.pwrstate_sel = value
-        elif propty == 'OpMode-Sel':
-            ps.opmode_sel = value
-        elif propty == 'Current-SP':
-            ps.current_sp = value
-        elif propty in ('KL-SP','SL-SP'):
-            ma.kl_sp = value
-        else:
+        """ Write value to reason and let callback update PV database. """
+        #Get property and field
+        device, propty, field = _get_dev_propty(reason)
+        #Check if field is writable
+        if field not in App.writable_fields:
             return
+        #Build attribute name
+        attr = propty + '_' + field
+        attr = attr.lower()
+        #Set Magnet attribute based on the property, field and value passed
+        ma = self._ma_devices[device]
+        return setattr(ma, attr, value)
+        # ma, ps, propty = self._get_dev_propty(reason)
+        # if propty == 'PwrState-Sel':
+        #     ps.pwrstate_sel = value
+        # elif propty == 'OpMode-Sel':
+        #     ps.opmode_sel = value
+        # elif propty == 'Current-SP':
+        #     ps.current_sp = value
+        # elif propty in ('KL-SP','SL-SP'):
+        #     ma.kl_sp = value
+        # else:
+        #     return
