@@ -1,9 +1,10 @@
 import pvs as _pvs
 import time as _time
-from siriuspy.timesys.time_data import Connections, Events
+import logging as _log
+from siriuspy.timesys.time_data import Connections, Events, Clocks
 from siriuspy.namesys import SiriusPVName as _PVName
 from data.triggers import get_triggers as _get_triggers
-from hl_classes import get_hl_trigger_object, HL_Event
+from hl_classes import get_hl_trigger_object, HL_Event, HL_Clock
 
 # Coding guidelines:
 # =================
@@ -22,28 +23,21 @@ def check_triggers_consistency():
     Connections.add_bbb_info()
     Connections.add_crates_info()
     from_evg = Connections.get_connections_from_evg()
-    twds_evg = Connections.get_connections_twrds_evg()
+    twds_evg = Connections.get_connections_twds_evg()
     for trig, val in triggers.items():
-        print(trig)
         chans = {  _PVName(chan) for chan in val['channels']  }
-        devs  = {  chan.dev_name for chan in chans  }
         for chan in chans:
-            print(chan)
-            tmp = twds_evg.get(chan.dev_name)
+            tmp = twds_evg.get(chan)
             if tmp is None:
-                print('Device '+chan.dev_name+' defined in the high level trigger '+
+                _log.warning('Device '+chan+' defined in the high level trigger '+
                       trig+' not specified in timing connections data.')
                 return False
-            up_dev = tmp.get(chan.propty)
-            if up_dev is None:
-                print('Connection channel '+chan.propty+' defined in the high level trigger '
-                      +trig+' not specified in timing connections data.')
-                return False
-            diff_devs = set(from_evg[up_dev[0]][up_dev[1]]) - devs
-            if diff_devs:
-                print('Devices: '+diff_devs+' are connected to the same output of '+up_dev+' as '
-                       +chan.dev_name+' but are not related to the sam trigger ('+trig+').')
-                return False
+            up_dev = tmp.pop()
+            diff_devs = from_evg[up_dev] - chans
+            if diff_devs and not chan.dev_type.endswith('BPM'):
+                _log.warning('Devices: '+' '.join(diff_devs)+' are connected to the same output of '
+                             +up_dev+' as '+chan+' but are not related to the sam trigger ('+trig+').')
+                # return False
     return True
 
 
@@ -51,30 +45,49 @@ class App:
 
     def get_database(self):
         db = dict()
-        for ev in self._events.values():
-            db.update(ev.get_database())
-        for trig in self._triggers.values():
-            db.update(trig.get_database())
+        for cl in self._clocks.values():     db.update(cl.get_database())
+        for ev in self._events.values():     db.update(ev.get_database())
+        for trig in self._triggers.values(): db.update(trig.get_database())
         return db
 
     def __init__(self,driver=None):
+        _log.info('Starting App...')
         self._driver = driver
         if not check_triggers_consistency():
             raise Exception('Triggers not consistent.')
-        # Build Event's Variables:
+        _log.info('Creating High Level Clocks:')
+        self._clocks = dict()
+        for cl,num in Clocks.HL2LL_MAP.items():
+            clock = Clocks.HL_PREF + cl
+            self._clocks[clock] = HL_Clock(clock,self._update_driver,num)
+        _log.info('Creating High Level Events:')
         self._events = dict()
         for ev,code in Events.HL2LL_MAP.items():
             event = Events.HL_PREF + ev
-            self._events[event] = HL_Event(event,code,self._update_driver)
-        # Build triggers from data dictionary:
+            self._events[event] = HL_Event(event,self._update_driver,code)
+        _log.info('Creating High Level Triggers:')
         self._triggers = dict()
         triggers = _get_triggers()
-        for trig_prefix, prop in triggers.items():
-            trig = get_hl_trigger_object(trig_prefix, self._update_driver, **prop)
-            self._triggers[trig_prefix] = trig
+        for prefix, prop in triggers.items():
+            trig = get_hl_trigger_object(prefix, self._update_driver, **prop)
+            self._triggers[prefix] = trig
 
-    def _update_driver(self,pv_name,pv_value,**kwargs):
-        self._driver.setParam(pv_name,pv_value)
+        self._database = self.get_database()
+
+    def connect(self):
+        _log.info('Connecting to Low Level Clocks:')
+        for key,val in self._clocks.items(): val.connect()
+        _log.info('All Clocks connection opened.')
+        _log.info('Connecting to Low Level Events:')
+        for key,val in self._events.items(): val.connect()
+        _log.info('All Events connection opened.')
+        _log.info('Connecting to Low Level Triggers:')
+        for key,val in self._triggers.items(): val.connect()
+        _log.info('All Triggers connection opened.')
+
+    def _update_driver(self,pvname,value,**kwargs):
+        _log.debug('PV {0:s} updated in driver database with value {1:s}'.format(pvname,str(value)))
+        self._driver.setParam(pvname,value)
         self._driver.updatePVs()
 
     @property
@@ -83,23 +96,52 @@ class App:
 
     @driver.setter
     def driver(self,driver):
+        _log.debug("Setting App's driver.")
         self._driver = driver
 
     def process(self,interval):
-        _time.sleep(interval)
+        t0 = _time.time()
+        # _log.debug('App: Executing check.')
+        self.check()
+        tf = _time.time()
+        dt = (tf-t0)
+        if dt > 0.2: _log.debug('App: check took {0:f}ms.'.format(dt*1000))
+        dt = interval - dt
+        if dt>0: _time.sleep(dt)
 
     def read(self,reason):
+        # _log.debug("PV {0:s} read from App.".format(reason))
         return None # Driver will read from database
 
+    def check(self):
+        for ev in self._events.values():
+            ev.check()
+        for tr in self._triggers.values():
+            tr.check()
+
+    def _isValid(self,reason,value):
+        if reason.endswith(('-Sts','-RB', '-Mon')):
+            _log.debug('App: PV {0:s} is read only.'.format(reason))
+            return False
+        enums = self._database[reason].get('enums')
+        if enums is not None:
+            len_ = len(enums)
+            if int(value) >= len_:
+                _log.warning('App: value {0:d} too large for PV {1:s} of type enum'.format(value,reason))
+                return False
+        return True
+
     def write(self,reason,value):
-        parts = _PVName(reason)
-        ev = [ val for key,val in self._events.items() if parts.startswith(key) ]
-        if parts.dev_name == EVG:
-            ev,pv = Events.HL_RGX.findall(parts.propty)[0]
-            return self._events[ev].set_propty(pv, value)
-
-        trig = [ val for key,val in self._triggers.items() if parts.startswith(key) ]
-        if len(trig)>0:
-            return trig[0].set_propty(reason,value)
-
-        return False
+        _log.debug('App: Writing PV {0:s} with value {1:s}'.format(reason,str(value)))
+        if not self._isValid(reason,value):
+            return False
+        fun_ = self._database[reason].get('fun_set_pv')
+        if fun_ is None:
+            _log.warning('App: Write unsuccessful. PV {0:s} does not have a set function.'.format(reason))
+            return False
+        ret_val = fun_(value)
+        if ret_val:
+            _log.debug('App: Write complete.')
+        else:
+            _log.warning('App: Unsuccessful write of PV {0:s}; value = {1:s}.'.format(reason,str(value)))
+        return ret_val
