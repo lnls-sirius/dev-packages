@@ -2,6 +2,7 @@ import copy as _copy
 import uuid as _uuid
 import numpy as _np
 import math as _math
+from siriuspy import util as _util
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.search import MASearch as _MASearch
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
@@ -37,9 +38,7 @@ class PSData:
         self._magfunc = _PSSearch.conv_pstype_2_magfunc(self._pstype)
         self._splims = _PSSearch.conv_pstype_2_splims(self._pstype)
         self._splims_unit = _PSSearch.get_splims_unit()
-
         self._excdata = _PSSearch.conv_psname_2_excdata(self._psname)
-
         self._propty_database = _get_ps_propty_database(self._pstype)
 
     @property
@@ -81,6 +80,10 @@ class PSData:
     def propty_database(self):
         return _copy.deepcopy(self._propty_database)
 
+    @property
+    def excdata(self):
+        return self._excdata
+
     def __str__(self):
         st = ''
         st +=        'psname      : ' + str(self.psname)
@@ -110,7 +113,6 @@ class MAData:
         for psname in psnames:
             self._psdata[psname] = PSData(psname=psname)
 
-
     @property
     def maname(self):
         return self._maname
@@ -123,9 +125,11 @@ class MAData:
     def psnames(self):
         return list(self._psdata.keys())
 
-    @property
     def magfunc(self, psname):
-        return self._psdata[psname].magfunc()
+        return self._psdata[psname].magfunc
+
+    def excdata(self, psname):
+        return self._psdata[psname].excdata
 
     def __getitem__(self, psname):
         return self._psdata[psname]
@@ -589,34 +593,51 @@ class PowerSupplyEpicsSync(PowerSupply):
         for c in self._controllers:
             c.current_sp = value
 
-class PowerSupplyMagnet(PowerSupply):
+# class PowerSupplyMagnet(PowerSupply):
+#
+#     def __init__(self, psname, **kwargs):
+#         super().__init__(psname, **kwargs)
+#
+#     @property
+#     def database(self):
+#         """Return property database as a dictionary.
+#         It prepends power supply family name to each dictionary key.
+#         """
+#         _database = {}
+#         dd = super().database
+#         _, family = self.ps_name.split('PS-')
+#         if not isinstance(family,str):
+#             raise Exception('invalid pv_name!')
+#         for propty, db in super().database.items():
+#             key = family + ':' + propty
+#             _database[key] = _copy.deepcopy(db)
+#         return _database
 
-    def __init__(self, psname, **kwargs):
-        super().__init__(psname, **kwargs)
-
-    @property
-    def database(self):
-        """Return property database as a dictionary.
-        It prepends power supply family name to each dictionary key.
-        """
-        _database = {}
-        dd = super().database
-        _, family = self.ps_name.split('PS-')
-        if not isinstance(family,str):
-            raise Exception('invalid pv_name!')
-        for propty, db in super().database.items():
-            key = family + ':' + propty
-            _database[key] = _copy.deepcopy(db)
-        return _database
 
 class _Strth:
+
+    _dipoles_maname = {
+        'SI':'SI-Fam:MA-B1B2',
+        'TS':'TS-Fam:MA-B',
+        'BO':'BO-Fam:MA-B',
+        'TB':'TB-Fam:MA-B',
+    }
 
     def __init__(self, maname):
         ''' Sets PSData for the MA '''
         self._maname = maname
-
+        self._madata = MAData(maname=self._maname)
+        self._psnames = self._madata.psnames
+        self._excdata = self._madata.excdata(psnames[0])
+        self._multipole_harmonic = self._excdata.main_multipole_harmonic
+        self._multipole_type = self._excdata.main_multipole_type
         self._init_psdata()
-        self._set_multipole()
+
+    def get_dipole_maname(self, section=None, maname=None):
+        if section is None:
+            pvname = _SiriusPVName(maname)
+            section = pvname.section
+        return section, _Strth._dipoles_maname[section]
 
     @_abstractmethod
     def get_strength(self, current):
@@ -628,52 +649,67 @@ class _Strth:
 
     @_abstractmethod
     def _init_psdata(self):
-        pass
-
-    @_abstractmethod
-    def _set_multipole(self):
         pass
 
 class _StrthMADip(_Strth):
 
-    _dipoles_ps = {
-        'SI':('SI-Fam:PS-B1B2-1','SI-Fam:PS-B1B2-2'),
-        'BO':('BO-Fam:PS-B',),
+    _ref_angles = {
+        'SI_BC': _math.radians(4.2966),
+        'SI_B1': _math.radians(2.7553),
+        'SI_B2': _math.radians(4.0964),
+        'TS'   : _math.radians(5.3333),
+        'BO'   : _math.radians(7.2000),
+        'TB'   : _math.radians(15.000),
     }
-
-    _nominal_values = {
-        'SI': (3.0, (2.7553 + 4.0964) * _math.pi/180.0),
-        'TS': (3.0, (5.0 + 1.0/3.0) * _math.pi/180.0),
-        'BO': (3.0, 7.2 * _math.pi/180.0),
-        'TB': (0.150, 15.0 * _math.pi/180.0),
-    }
-
-    def __init__(self, maname):
-        super().__init__(maname)
-
-    def get_strength(self, current):
-        ''' Return dipole strength '''
-        multipoles = self._dipoles._psdata._excdata.interp_curr2mult(current)
-        intfield = multipoles['normal'][0]
-        return self._nominal_energy * (intfield / self._nominal_intf)
-
-    def read_strength(self):
-        return self.get_strength(self._dipoles.current_mon)
-
-    def get_current(self, strength):
-        ''' Returns dipole current '''
-        intfield = self._nominal_intf * (strength / self._nominal_energy)
-        return self._dipoles._psdata._excdata.field_2_current(intfield)
 
     def _init_psdata(self):
-        self._dipoles = PowerSupplyEpicsSync(controllers=_StrthMADip._dipoles_ps[self._maname.section])
-        self._nominal_energy, self._nominal_intf = _StrthMADip._nominal_values[self._maname.section]
+        controllers
+        self._psdata = PowerSupplyEpicsSync(controllers)
+
+    def __init__(self, section=None, maname=None):
+        section, maname = self.get_dipole_maname(section=section,maname=maname):
+        super().__init__(maname)
+        ang = _StrthMADip._ref_angles
+        if section == 'SI':
+            self._ref_energy = 3.0 #[GeV]
+            self._ref_brho = -_util.beam_rigidity(self._ref_energy)
+            self._ref_BL_BC =  self._ref_brho * ang['SI_BC']
+            self._ref_angle = ang['SI_B1'] + ang['SI_B2'] + ang['SI_BC']
+            self._ref_BL = self._ref_brho * self._ref_angle - self._ref_BL_BC
+        elif section == 'BO':
+            self._ref_energy = 3.0 #[GeV]
+            self._ref_brho = -_util.beam_rigidity(self._ref_energy)
+            self._ref_BL_BC = 0.0
+            self._ref_angle = ang['BO']
+            self._ref_BL = self._ref_brho * self._ref_angle
+        elif section == 'TS':
+            self._ref_energy = 3.0 #[GeV]
+            self._ref_brho = -_util.beam_rigidity(self._ref_energy)
+            self._ref_BL_BC = 0.0
+            self._ref_angle = ang['TS']
+            self._ref_BL = self._ref_brho * self._ref_angle
+        elif section == 'TB':
+            self._ref_energy = 0.150 #[GeV]
+            self._ref_brho = -_util.beam_rigidity(self._ref_energy)
+            self._ref_BL_BC = 0.0
+            self._ref_angle = ang['TB']
+            self._ref_BL = self._ref_brho * self._ref_angle
+        else:
+            raise NotImplementedError
+
+    def get_strength(self, current):
+        ''' Return dipole strength [Energy in GeV]'''
+        multipoles = self._excdata.interp_curr2mult(current)
+        intfield = multipoles[self._multipole_type][self._multipole_harmonic]
+        energy = (self._ref_energy / self._ref_brho) * (intfield + self._ref_BL_BC)/self._ref_angle
+        return energy
 
 class _StrthMAFam(_Strth):
 
     def __init__(self, maname):
         super().__init__(maname)
-        self._strth_dipole = _StrthMADip(self._maname)
+        section, maname = self.get_dipole_maname(maname=maname)
+        self._strth_dipole = _StrthMADip(section=section)
 
     def get_strength(self, current):
         energy = self._strth_dipole.read_strength()
@@ -740,6 +776,7 @@ class _StrthMA(_Strth):
 
     def _init_psdata(self):
         pass
+
 
 class PowerSupplyMA(PowerSupplyEpicsSync):
 

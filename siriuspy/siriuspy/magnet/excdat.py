@@ -129,14 +129,14 @@ class ExcitationData:
                 multipoles['skew'][h] = _numpy.interp(current, self.currents, y, left=left, right=right)
             elif extrap_typ == 'extrap_linear_left':
                 y = self.multipoles['normal'][h]
-                multipoles['normal'][h] = _utils.linear_extrapolation(current,x[0],x[1],y[0],y[1])
+                multipoles['normal'][h] = _util.linear_extrapolation(current,x[0],x[1],y[0],y[1])
                 y = self.multipoles['skew'][h]
-                multipoles['skew'][h] = _utils.linear_extrapolation(current,x[0],x[1],y[0],y[1])
+                multipoles['skew'][h] = _util.linear_extrapolation(current,x[0],x[1],y[0],y[1])
             elif extrap_typ == 'extrap_linear_right':
                 y = self.multipoles['normal'][h]
-                multipoles['normal'][h] = _utils.linear_extrapolation(current,x[-1],x[-2],y[-1],y[-2])
+                multipoles['normal'][h] = _util.linear_extrapolation(current,x[-1],x[-2],y[-1],y[-2])
                 y = self.multipoles['skew'][h]
-                multipoles['skew'][h] = _utils.linear_extrapolation(current,x[-1],x[-2],y[-1],y[-2])
+                multipoles['skew'][h] = _util.linear_extrapolation(current,x[-1],x[-2],y[-1],y[-2])
             else:
                 pass # this point should never be reached
 
