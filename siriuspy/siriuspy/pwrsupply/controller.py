@@ -16,7 +16,7 @@ from abc import ABCMeta as _ABCMeta
 from epics import PV as _PV
 
 
-_connection_timeout = 0.05 # [seconds]
+_connection_timeout = 0.9 # [seconds]
 
 
 class Controller(metaclass=_ABCMeta):

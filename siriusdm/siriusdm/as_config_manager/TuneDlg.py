@@ -3,7 +3,11 @@ from pydm.PyQt.QtGui import QDialog, QDoubleSpinBox, QDialogButtonBox, QGridLayo
 class TuneDlg(QDialog):
     def __init__(self, parent=None):
         super(TuneDlg, self).__init__(parent)
+        
         self._setupUi()
+
+        self.button_box.accepted.connect(self.accept)
+        self.button_box.rejected.connect(self.reject)
 
     def _setupUi(self):
         self.layout = QGridLayout()
@@ -16,8 +20,6 @@ class TuneDlg(QDialog):
         self.tune_y.setSingleStep(0.1)
 
         self.button_box = QDialogButtonBox(QDialogButtonBox.Ok|QDialogButtonBox.Cancel)
-        self.button_box.accepted.connect(self.accept)
-        self.button_box.rejected.connect(self.reject)
 
         self.layout.addWidget(self.tune_x_label, 0, 0)
         self.layout.addWidget(self.tune_x, 0, 1)
