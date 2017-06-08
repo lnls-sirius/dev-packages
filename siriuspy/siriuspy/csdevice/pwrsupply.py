@@ -77,7 +77,8 @@ def get_ma_propty_database(maname):
                 label='hihi';  pdb[label] = _MASearch.get_splim(maname,label)
             # define unit of current
             if propty in ('Current-SP','Current-RB','CurrentRef-Mon','Current-Mon'):
-                db[psname]['unit'] = units[0]
+                #db[psname]['unit'] = units[0]
+                pdb['unit'] = units[0]
         if magfunc == 'quadrupole':
             db[psname]['KL-SP']     = _copy.deepcopy(db[psname]['Current-SP']); db[psname]['KL-SP']['unit'] = '1/m'
             db[psname]['KL-RB']     = _copy.deepcopy(db[psname]['Current-RB']); db[psname]['KL-RB']['unit'] = '1/m'

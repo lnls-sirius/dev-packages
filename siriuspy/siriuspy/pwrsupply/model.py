@@ -19,7 +19,7 @@ from siriuspy.pwrsupply.controller import ControllerEpics as _ControllerEpics
 from siriuspy.magnet.excdat import ExcitationData as _ExcitationData
 
 
-_connection_timeout = 0.0
+_connection_timeout = 0.1
 
 
 class PSData:
@@ -175,6 +175,7 @@ class PowerSupplyLinac(object):
     @callback.setter
     def callback(self, value):
         if callable(value):
+            print("Setting: {}".format(value))
             self._callback = value
         else:
             self._callback = None
@@ -570,9 +571,6 @@ class PowerSupplyEpicsSync(PowerSupply):
 
         #Create controller epics
         for controller_name in self._controller_psnames:
-            print('\n\n\n\n\n\n')
-            print(controller_name)
-            print('\n\n\n\n\n\n')
             self._controllers.append(_ControllerEpics(psname=controller_name, connection_timeout=connection_timeout))
 
         super().__init__(psname=psnames[0], controller=self._controllers[0])
@@ -865,7 +863,7 @@ class PowerSupplyMA(PowerSupplyEpicsSync):
     def _strth_factory(self, use_vaca, vaca_prefix):
         if self._maname.subsection == 'Fam':
             if self.magfunc == 'dipole':
-                return _StrthMADip(self._maname, use_vaca, vaca_prefix)
+                return _StrthMADip(manme=self._maname, use_vaca=use_vaca, vaca_prefix=vaca_prefix)
             elif self.magfunc in ('quadrupole', 'sextupole'):
                 return _StrthMAFam(maname=self._maname, use_vaca=use_vaca, vaca_prefix=vaca_prefix)
         else:
@@ -939,8 +937,9 @@ class PowerSupplyMA(PowerSupplyEpicsSync):
         #db[strength + 'Ref-Mon']['value'] = self.strengthref_mon
         #db[strength + '-Mon']['value'] = self.strength_mon
 
-        for key, value in db:
-            prefixed_db[prefix + name] = value
+        prefixed_db = dict()
+        for key, value in db.items():
+            prefixed_db[prefix + ':' + key] = value
 
         return prefixed_db
 
