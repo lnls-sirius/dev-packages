@@ -5,15 +5,16 @@ import math as _math
 import copy as _copy
 import random as _random
 import numpy as _np
-from siriuspy.csdevice.enumtypes import EnumTypes as _et
-from siriuspy.csdevice.pwrsupply import default_wfmlabels as _default_wfmlabels
-from siriuspy.csdevice.pwrsupply import default_intlklabels as _default_intlklabels
-from siriuspy.util import get_timestamp as _get_timestamp
-from .waveform import PSWaveForm as _PSWaveForm
-from .cycgen import PSCycGenerator as _PSCycGenerator
 from abc import abstractmethod as _abstractmethod
 from abc import ABCMeta as _ABCMeta
 from epics import PV as _PV
+from siriuspy.util import get_timestamp as _get_timestamp
+from siriuspy import envars as _envars
+from siriuspy.csdevice.enumtypes import EnumTypes as _et
+from siriuspy.csdevice.pwrsupply import default_wfmlabels as _default_wfmlabels
+from siriuspy.csdevice.pwrsupply import default_intlklabels as _default_intlklabels
+from .waveform import PSWaveForm as _PSWaveForm
+from .cycgen import PSCycGenerator as _PSCycGenerator
 
 
 _connection_timeout = 0.05 # [seconds]
@@ -898,12 +899,14 @@ class ControllerEpics(Controller):
 
     def __init__(self, psname,
                        connection_timeout=_connection_timeout,
+                       use_vaca=False,
+                       vaca_prefix=None,
                        **kwargs):
 
         self._psname = psname
         self._connection_timeout = connection_timeout
         self._callback = None
-        self._create_epics_pvs()
+        self._create_epics_pvs(use_vaca=use_vaca,vaca_prefix=vaca_prefix)
         super().__init__(psname=psname,**kwargs)
 
 
@@ -1087,9 +1090,14 @@ class ControllerEpics(Controller):
         else:
             self._callback(pvname=pvname, value=value, **kwargs)
 
-    def _create_epics_pvs(self):
+    def _create_epics_pvs(self, use_vaca, vaca_prefix):
         self._pvs = {}
-        pv = self._psname
+        if use_vaca:
+            if vaca_prefix is None:
+                vaca_prefix = _envars.vaca_prefix
+        else:
+            vaca_prefix = ''
+        pv = vaca_prefix + self._psname
         self._pvs['PwrState-Sel']    = _PV(pv + ':PwrState-Sel',    connection_timeout=self._connection_timeout)
         self._pvs['PwrState-Sts']    = _PV(pv + ':PwrState-Sts',    connection_timeout=self._connection_timeout)
         self._pvs['OpMode-Sel']      = _PV(pv + ':OpMode-Sel',      connection_timeout=self._connection_timeout)

@@ -570,9 +570,9 @@ class PowerSupplyEpicsSync(PowerSupply):
 
         #Create controller epics
         for controller_name in self._controller_psnames:
-            print('\n\n\n\n\n\n')
-            print(controller_name)
-            print('\n\n\n\n\n\n')
+            #print('\n\n\n\n\n\n')
+            #print(controller_name)
+            #print('\n\n\n\n\n\n')
             self._controllers.append(_ControllerEpics(psname=controller_name, connection_timeout=connection_timeout))
 
         super().__init__(psname=psnames[0], controller=self._controllers[0])
@@ -652,7 +652,7 @@ class PowerSupplyEpicsSync(PowerSupply):
 #         return _database
 
 
-class _Strth:
+class _MAStrength(metaclass=_ABCMeta):
 
     _dipoles_maname = {
         'SI':'SI-Fam:MA-B1B2',
@@ -661,49 +661,29 @@ class _Strth:
         'TB':'TB-Fam:MA-B',
     }
 
-    def __init__(self, maname, use_vaca=False, vaca_prefix=None):
-        ''' Sets PSData for the MA '''
+    def __init__(self, maname=None):
         self._maname = maname
-        self._use_vaca = use_vaca
-        self._vaca_prefix = vaca_prefix
         self._madata = MAData(maname=self._maname)
         self._psnames = self._madata.psnames
         self._excdata = self._madata.excdata(self._psnames[0])
-        self._multipole_harmonic = self._excdata.main_multipole_harmonic
-        self._multipole_type = self._excdata.main_multipole_type
-        self._epicsps = self._get_epicsps()
 
-    def get_dipole_maname(self, section=None, maname=None):
+    @staticmethod
+    def get_dipole_sector_maname(section=None, maname=None):
         if section is None:
             pvname = _SiriusPVName(maname)
             section = pvname.section
-        return section, _Strth._dipoles_maname[section]
-
-    @property
-    def current_sp(self):
-        return self._epicsps.current_sp
-
-    @property
-    def current_mon(self):
-        return self._epicsps.current_mon
-
-    @property
-    def connected(self):
-        return self._epicsps.connected
+        return section, _MAStrength._dipoles_maname[section]
 
     @_abstractmethod
-    def conv_current_2_strength(self, current):
+    def conv_current_2_strength(self, current, **kwargs):
         pass
 
     @_abstractmethod
-    def conv_strength_2_current(self, strength):
+    def conv_strength_2_current(self, strength, **kwargs):
         pass
 
-    @_abstractmethod
-    def _get_epicsps(self):
-        pass
 
-class _StrthMADip(_Strth):
+class MAStrengthDip(_MAStrength):
 
     _ref_angles = {
         'SI_BC': _math.radians(4.2966),
@@ -714,181 +694,218 @@ class _StrthMADip(_Strth):
         'TB'   : _math.radians(15.000),
     }
 
+    def __init__(self, section=None, **kwargs):
+        section, maname = self.get_dipole_sector_maname(section=section, maname=kwargs.get('maname',None))
+        self._section = section
+        super().__init__(maname=maname)
+        self._set_reference_dipole_data(self._section)
 
-    def __init__(self, section=None, maname=None, **kwargs):
-        section, maname = self.get_dipole_maname(section=section,maname=maname)
-        super().__init__(maname, **kwargs)
-        ang = _StrthMADip._ref_angles
+    def _set_reference_dipole_data(self, section):
+        ang = MAStrengthDip._ref_angles
         if section == 'SI':
             self._ref_energy = 3.0 #[GeV]
-            self._ref_brho = -_util.beam_rigidity(self._ref_energy)
-            self._ref_BL_BC =  self._ref_brho * ang['SI_BC']
+            self._ref_brho = _util.beam_rigidity(self._ref_energy)
+            self._ref_BL_BC =  - self._ref_brho * ang['SI_BC']
             self._ref_angle = ang['SI_B1'] + ang['SI_B2'] + ang['SI_BC']
-            self._ref_BL = self._ref_brho * self._ref_angle - self._ref_BL_BC
+            self._ref_BL = - self._ref_brho * self._ref_angle - self._ref_BL_BC
         elif section == 'BO':
             self._ref_energy = 3.0 #[GeV]
-            self._ref_brho = -_util.beam_rigidity(self._ref_energy)
-            self._ref_BL_BC = 0.0
+            self._ref_brho = _util.beam_rigidity(self._ref_energy)
             self._ref_angle = ang['BO']
-            self._ref_BL = self._ref_brho * self._ref_angle
+            self._ref_BL = - self._ref_brho * self._ref_angle
         elif section == 'TS':
             self._ref_energy = 3.0 #[GeV]
-            self._ref_brho = -_util.beam_rigidity(self._ref_energy)
-            self._ref_BL_BC = 0.0
+            self._ref_brho = _util.beam_rigidity(self._ref_energy)
             self._ref_angle = ang['TS']
-            self._ref_BL = self._ref_brho * self._ref_angle
+            self._ref_BL = - self._ref_brho * self._ref_angle
         elif section == 'TB':
             self._ref_energy = 0.150 #[GeV]
-            self._ref_brho = -_util.beam_rigidity(self._ref_energy)
-            self._ref_BL_BC = 0.0
+            self._ref_brho = _util.beam_rigidity(self._ref_energy)
             self._ref_angle = ang['TB']
-            self._ref_BL = self._ref_brho * self._ref_angle
+            self._ref_BL = - self._ref_brho * self._ref_angle
         else:
             raise NotImplementedError
 
-    def _get_epicsps(self):
-        return PowerSupplyEpicsSync(psnames=self._psnames,
-                                    use_vaca=self._use_vaca,
-                                    vaca_prefix=self._vaca_prefix,
-                                    connection_timeout=None)
-
-    def conv_current_2_strength(self, current):
+    def conv_current_2_strength(self, current, **kwargs):
         """Return dipole strength [Energy in GeV]."""
         multipoles = self._excdata.interp_curr2mult(current)
-        intfield = multipoles[self._multipole_type][self._multipole_harmonic]
-        strength = (self._ref_energy / self._ref_brho) * (intfield + self._ref_BL_BC)/self._ref_angle
+        m_type = self._excdata.main_multipole_type
+        m_harm = self._excdata.main_multipole_harmonic
+        intfield = multipoles[m_type][m_harm]
+        if self._section == 'SI':
+            strength = (self._ref_energy / self._ref_brho) * (- intfield - self._ref_BL_BC) / self._ref_angle
+        else:
+            strength = (self._ref_energy / self._ref_brho) * (-intfield) / self._ref_angle
         return strength
 
-    def conv_strength_2_current(self, strength):
+    def conv_strength_2_current(self, strength, **kwargs):
         """Return dipole power supply current."""
-        intfield = self._ref_angle * (self._ref_brho / self._ref_energy) * strength - self._ref_BL_BC
-        #multipoles = {'normal':{0:intfield}}
-        current = self._excdata.interp_mult2curr(intfield, harmonic=self._multipole_harmonic, multipole_type='normal')
+        if self._section == 'SI':
+            intfield = - self._ref_angle * (self._ref_brho / self._ref_energy) * strength - self._ref_BL_BC
+        else:
+            intfield = - self._ref_angle * (self._ref_brho / self._ref_energy) * strength
+        m_type = self._excdata.main_multipole_type
+        m_harm = self._excdata.main_multipole_harmonic
+        current = self._excdata.interp_mult2curr(intfield, harmonic=m_harm, multipole_type=m_type)
         return current
 
+    def conv_current_2_brho(self, current):
+        """Return beam rigidity as defined by the dipole field."""
+        energy = self.conv_current_2_strength(current)
+        brho = _util.beam_rigidity(energy)
+        return brho
 
-class _StrthMAFam(_Strth):
+_MAStrength.register(MAStrengthDip)
+
+
+class MAStrength(_MAStrength):
 
     def __init__(self, maname, **kwargs):
-        super().__init__(maname, **kwargs)
-        section, maname = self.get_dipole_maname(maname=maname)
-        self._strth_dipole = _StrthMADip(section=section, **kwargs)
+        section,dipole_maname = self.get_dipole_sector_maname(maname=maname)
+        if maname == dipole_maname:
+            raise Exception('MAStrength cannot be used for dipoles!')
+        super().__init__(maname=maname)
+        self._dipole = MAStrengthDip(section=section)
 
+    @property
+    def dipole(self):
+        return self._dipole
 
-    def conv_current_2_strength(self, current):
-        """Return dipole strength [Energy in GeV]."""
+    def conv_current_2_strength(self, current, current_dipole, **kwargs):
+        brho = self.dipole.conv_current_2_brho(current_dipole)
         multipoles = self._excdata.interp_curr2mult(current)
-        intfield = multipoles[self._multipole_type][self._multipole_harmonic]
-        dip_current_mon = self._strth_dipole.current_mon
-        energy = self._strth_dipole.conv_current_2_strength(dip_current_mon)
-        brho = - _util.beam_rigidity(energy)
-        strength = intfield / brho
+        m_type = self._excdata.main_multipole_type
+        m_harm = self._excdata.main_multipole_harmonic
+        intfield = multipoles[m_type][m_harm]
+        strength = - intfield / brho
         return strength
 
+    def conv_strength_2_current(self, strength, current_dipole, **kwargs):
+        brho = self.dipole.conv_current_2_brho(current_dipole)
+        intfield = - brho * strength
+        m_type = self._excdata.main_multipole_type
+        m_harm = self._excdata.main_multipole_harmonic
+        current = self._excdata.interp_mult2curr(intfield, harmonic=m_harm, multipole_type=m_type)
+        return current
 
-    def get_strength(self, current):
-        energy = self._strth_dipole.read_strength()
-        brho = _util.beam_rigidity(energy)
-        multipoles = self._psdata._excdata.interp_curr2mult(current)
+_MAStrength.register(MAStrength)
 
-        #Select multipole
-        harmonic = self._psdata.multipole[0]
-        multipole_type = self._psdata.multipole[1]
-        intfield = multipoles[multipole_type][harmonic]
 
-        return intfield / brho
+class MAStrengthTrim(_MAStrength):
 
-    def get_current(self, strength):
-        energy = self._strth_dipole.read_strength()
-        intfield = strength * brho
-        return self._psdata._excdata.interp_mult2curr(intfield)
+    def __init__(self, maname, **kwargs):
+        super().__init__(maname=maname)
+        pvname = _SiriusPVName(maname)
+        self._family = MAStrengthFam(maname=maname.replace(pvname.subsection, 'Fam'))
 
-    def _init_psdata(self):
-        self._psname = self._maname.replace(':MA-', ':PS-')
-        self._psdata = PSData(self._psname)
+    @property
+    def dipole(self):
+        return self._family.dipole
 
-class _StrthMATrim(_Strth):
+    @property
+    def family(self):
+        return self._family
 
-    def __init__(self, maname):
-        super().__init__(maname)
-        self._strth_dipole = _StrthMADip(maname)
+    def conv_current_2_strength(self, current, current_dipole, current_family, **kwargs):
+        brho = self.dipole.conv_current_2_brho(current_dipole)
+        multipoles = self._excdata.interp_curr2mult(current)
+        m_type = self._excdata.main_multipole_type
+        m_harm = self._excdata.main_multipole_harmonic
+        intfield = multipoles[m_type][m_harm]
+        strength_trim = - intfield / brho
+        strength_family = self.family.conv_current_2_strength(current_family, current_dipole)
+        return strength_family + strength_trim
 
-    def get_strength(self, current):
-        energy = self._strth_dipole.read_strength
-        brho = _util.beam_rigidity(energy)
-        multipoles = self._psdata._excdata.interp_curr2mult(current)
+    def conv_strength_2_current(self, strength, current_dipole, current_family, **kwargs):
+        strength_family = self.family.conv_current_2_strength(current_family, current_dipole)
+        brho = self.dipole.conv_current_2_brho(current_dipole)
+        intfield = - brho * (strength - strength_family)
+        m_type = self._excdata.main_multipole_type
+        m_harm = self._excdata.main_multipole_harmonic
+        current = self._excdata.interp_mult2curr(intfield, harmonic=m_harm, multipole_type=m_type)
+        return current
 
-        #Select multipole
-        harmonic = self._psdata.multipole[0]
-        multipole_type = self._psdata.multipole[1]
-        intfield = multipoles[multipole_type][harmonic]
+_MAStrength.register(MAStrengthTrim)
 
-        trim_strength = intfield / brho
-        fam_strength = self._fam_strth.get_strength(current)
-
-        return trim_strength + fam_strength
-
-    def get_current(self, strength):
-        pass
-
-    def _init_psdata(self):
-        self._psname = self._maname.replace(':MA-', ':PS-')
-        self._psdata = PSData(self._psname)
-
-        self._fam_maname = _re.sub('-\w{2,6}:', '-Fam:', self._maname)
-        self._fam_strth = _StrthMAFam(self._fam_maname)
-
-class _StrthMA(_Strth):
-
-    def __init__(self, maname):
-        super().__init__(maname)
-
-    def get_strength(self, current):
-        pass
-
-    def get_current(self, strength):
-        pass
-
-    def _init_psdata(self):
-        pass
 
 
 class PowerSupplyMA(PowerSupplyEpicsSync):
 
     def __init__(self, maname, use_vaca=False, vaca_prefix=None):
-        self._maname    = _SiriusPVName(maname)
-        self._psname = self._get_controllers()
-        super().__init__(psnames=self._psname, use_vaca=use_vaca, vaca_prefix=vaca_prefix)
+        self._maname = _SiriusPVName(maname)
         self._madata = MAData(self._maname)
-        self._strthobj = self._strth_factory(use_vaca=use_vaca,vaca_prefix=vaca_prefix)
+        self._psname = self._madata.psnames
+        super().__init__(psnames=self._psname, use_vaca=use_vaca, vaca_prefix=vaca_prefix)
+        self._init_pwrsupply(use_vaca=use_vaca, vaca_prefix=vaca_prefix)
 
-    def _strth_factory(self, use_vaca, vaca_prefix):
+    def _init_pwrsupply(self, use_vaca, vaca_prefix):
+        sector, dipole_maname = _MAStrength.get_dipole_sector_maname(maname=self._maname)
+        print(sector, dipole_maname)
         if self._maname.subsection == 'Fam':
             if self.magfunc == 'dipole':
-                return _StrthMADip(self._maname, use_vaca, vaca_prefix)
+                self._init_pwrsupply_dipole(dipole_maname, use_vaca, vaca_prefix)
             elif self.magfunc in ('quadrupole', 'sextupole'):
-                return _StrthMAFam(maname=self._maname, use_vaca=use_vaca, vaca_prefix=vaca_prefix)
+                self._init_pwrsupply_fam(dipole_name=dipole_maname, use_vaca=use_vaca, vaca_prefix=vaca_prefix)
         else:
             if self.magfunc == 'quadrupole':
-                return _StrthMATrim(self._maname, use_vaca, vaca_prefix)
+                self._init_pwrsupply_trim(dipole_name=dipole_maname, use_vaca=use_vaca, vaca_prefix=vaca_prefix)
             elif self.magfunc in ('corrector', 'quadrupole-skew'):
-                return _StrthMA(self._maname, use_vaca, vaca_prefix)
+                self._init_pwrsupply_fam(dipole_name=dipole_maname, use_vaca=use_vaca, vaca_prefix=vaca_prefix)
+
+    def _init_pwrsupply_dipole(self, dipole_maname, use_vaca, vaca_prefix):
+        self._ps = PowerSupplyEpicsSync(psnames=self._psname,
+                                        use_vaca=use_vaca,
+                                        vaca_prefix=vaca_prefix,
+                                        connection_timeout=None)
+        self._strobj = MAStrengthDip(maname=dipole_maname)
+        self._strobj_kwargs = {'current':self._ps}
+
+    def _init_pwrsupply_fam(self, dipole_maname, use_vaca, vaca_prefix):
+        self._init_pwrsupply_dipole(dipole_maname, use_vaca, vaca_prefix)
+        self._ps_dipole = self._ps
+        #self._strobj_dipole = self._strobj
+        controller = _ControllerEpics(psname=self._psname[0],
+                                      connection_timeout=None,
+                                      use_vaca=False,
+                                      vaca_prefix=None)
+        self._ps = PowerSupply(psname=self._psname[0],
+                               controller=controller)
+        self._strobj = _MAStrengthFam(maname=self._maname)
+        self._strobj_kwargs = {'current':self._ps, 'current_dipole':self._ps_dipole}
+
+    def _init_pwrsupply_trim(self, dipole_name, use_vaca, vaca_prefix):
+        self._init_pwrsupply_fam(dipole_name=dipole_name, use_vaca=use_vaca, vaca_prefix=vaca_prefix)
+        self._ps_family = self._ps
+        pvname = _SiriusPVName(self._psname[0])
+        pstrim = pvname.replace(pvname.subsection, 'Fam')
+        controller = _ControllerEpics(psname=pstrim,
+                                      connection_timeout=None,
+                                      use_vaca=False,
+                                      vaca_prefix=None)
+        self._ps = PowerSupply(psname=pstrim,
+                               controller=controller)
+        self._strobj = _MAStrengthTrim(maname=self._maname)
+        self._strobj_kwargs = {'current':self._ps, 'current_dipole':self._ps_dipole, 'current_family':self._ps_family}
+
 
     @property
     def magfunc(self):
         """Return string corresponding to the magnetic function excitated with the power supply."""
         if len(self._psname) > 1:
+        # really necessary ?!
             return 'dipole'
         else:
             return self._madata.magfunc(self._psname[0])
 
     @property
     def strength_sp(self):
-        return self._strthobj.conv_current_2_strength(self.current_sp)
+        kwargs = {arg:ps.current_rb for arg,ps in self._strobj_kwargs.items()}
+        return self._strobj.conv_current_2_strength(**kwargs)
 
     @strength_sp.setter
     def strength_sp(self, value):
-        self.current_sp = self._strthobj.conv_strength_2_current(value)
+        kwargs = {arg:ps.current_rb for arg,ps in self._strobj_kwargs.items()}
+        self.current_sp = self._strobj.conv_strength_2_current(**kwargs)
 
     @property
     def strength_rb(self):
@@ -943,9 +960,3 @@ class PowerSupplyMA(PowerSupplyEpicsSync):
             prefixed_db[prefix + name] = value
 
         return prefixed_db
-
-    def _get_controllers(self):
-        if self._maname == 'SI-Fam:MA-B1B2':
-            return ['SI-Fam:PS-B1B2-1', 'SI-Fam:PS-B1B2-2']
-        else:
-            return [self._maname.replace(':MA-', ':PS-')]
