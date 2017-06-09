@@ -17,7 +17,7 @@ from .waveform import PSWaveForm as _PSWaveForm
 from .cycgen import PSCycGenerator as _PSCycGenerator
 
 
-_connection_timeout = 0.05 # [seconds]
+_connection_timeout = 0.9 # [seconds]
 
 
 class Controller(metaclass=_ABCMeta):

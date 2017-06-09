@@ -19,7 +19,7 @@ from siriuspy.pwrsupply.controller import ControllerEpics as _ControllerEpics
 from siriuspy.magnet.excdat import ExcitationData as _ExcitationData
 
 
-_connection_timeout = 0.0
+_connection_timeout = 0.1
 
 
 class PSData:
@@ -219,9 +219,13 @@ class PowerSupplyLinac(object):
     @current_sp.setter
     def current_sp(self, value):
         if self._ctrlmode_mon != _et.idx.Remote: return
-        if value not in (self.current_sp, self.current_rb):
+        #if value not in (self.current_sp, self.current_rb):
+        if value != self.current_rb or value != self.current_sp:
+            print("Setting current sp to {}".format(value))
             self._current_sp = value
             self._set_current_sp(value)
+
+        print(self._current_sp)
 
     @property
     def current_mon(self):
@@ -553,6 +557,9 @@ class PowerSupply(PowerSupplyLinac):
             elif 'Current-SP' in pvname:
                 self._current_sp   = value
 
+            if self.callback is not None:
+                self.callback(pvname, value, **kwargs)
+
 class PowerSupplyEpicsSync(PowerSupply):
 
     def __init__(self, psnames, use_vaca=False, vaca_prefix=None, connection_timeout=_connection_timeout):
@@ -570,10 +577,14 @@ class PowerSupplyEpicsSync(PowerSupply):
 
         #Create controller epics
         for controller_name in self._controller_psnames:
+<<<<<<< HEAD
             #print('\n\n\n\n\n\n')
             #print(controller_name)
             #print('\n\n\n\n\n\n')
             self._controllers.append(_ControllerEpics(psname=controller_name, connection_timeout=connection_timeout))
+=======
+            self._controllers.append(_ControllerEpics(psname=controller_name, connection_timeout=connection_timeout, callback=self._mycallback))
+>>>>>>> 4f7a7f84a5f29a670be9e81dac4294377d129d9f
 
         super().__init__(psname=psnames[0], controller=self._controllers[0])
 
@@ -630,6 +641,38 @@ class PowerSupplyEpicsSync(PowerSupply):
     def _set_current_sp(self, value):
         for c in self._controllers:
             c.current_sp = value
+
+    def _mycallback(self, pvname, value, **kwargs):
+        callback = True
+        if 'CtrlMode-Mon' in pvname:
+            self._ctrlmode_mon = value
+        elif 'OpMode-Sel' in pvname:
+            if self._opmode_sel != value:
+                self._set_opmode_sel(self._opmode_sel)
+                callback = False
+        elif 'PwrState-Sel' in pvname:
+            if self._pwrstate_sel != value:
+                self._set_pwrstate_sel(self._pwrstate_sel)
+                callback = False
+        elif 'WfmLoad-Sel' in pvname:
+            if self._wfmload_sel != value:
+                self._set_wfmload_sel(self._wfmload_sel)
+                callback = False
+        elif 'WfmLabel-SP' in pvname:
+            if self._wfmlabel_sp != value:
+                self._set_wfmlabel_sp(self._wfmlabel_sp)
+                callback = False
+        elif 'WfmData-SP' in pvname:
+            if self._wfmdata_sp != value:
+                self._set_wfmdata_sp(self._wfmdata_sp)
+                callback = False
+        elif 'Current-SP' in pvname:
+            if self._current_sp != value: #Value was not changed by the MA-IOC
+                self._set_current_sp(self._current_sp)
+                callback = False
+
+        if self.callback is not None:
+            self.callback(pvname, value, **kwargs)
 
 # class PowerSupplyMagnet(PowerSupply):
 #
@@ -956,7 +999,48 @@ class PowerSupplyMA(PowerSupplyEpicsSync):
         #db[strength + 'Ref-Mon']['value'] = self.strengthref_mon
         #db[strength + '-Mon']['value'] = self.strength_mon
 
-        for key, value in db:
-            prefixed_db[prefix + name] = value
+        prefixed_db = dict()
+        for key, value in db.items():
+            prefixed_db[prefix + ':' + key] = value
 
         return prefixed_db
+
+    def _mycallback(self, pvname, value, **kwargs):
+        callback = True
+        if 'CtrlMode-Mon' in pvname:
+            self._ctrlmode_mon = value
+        elif 'OpMode-Sel' in pvname:
+            if self._opmode_sel != value:
+                self._set_opmode_sel(self._opmode_sel)
+                callback = False
+        elif 'PwrState-Sel' in pvname:
+            if self._pwrstate_sel != value:
+                self._set_pwrstate_sel(self._pwrstate_sel)
+                callback = False
+        elif 'WfmLoad-Sel' in pvname:
+            if self._wfmload_sel != value:
+                self._set_wfmload_sel(self._wfmload_sel)
+                callback = False
+        elif 'WfmLabel-SP' in pvname:
+            if self._wfmlabel_sp != value:
+                self._set_wfmlabel_sp(self._wfmlabel_sp)
+                callback = False
+        elif 'WfmData-SP' in pvname:
+            if self._wfmdata_sp != value:
+                self._set_wfmdata_sp(self._wfmdata_sp)
+                callback = False
+        elif 'Current-SP' in pvname:
+            if self._current_sp != value: #Value was not changed by the MA-IOC
+                self._set_current_sp(self._current_sp)
+                callback = False
+
+        if self.callback is not None and callback:
+            pfield = pvname.split(':')[-1]
+            slot = ':'.join(pvname.split(':')[:2])
+            if self.use_vaca:
+                slot = slot[4:]
+            print(slot)
+            if slot in ['SI-Fam:PS-B1B2-1', 'SI-Fam:PS-B1B2-2']:
+                self.callback('SI-Fam:PS-B1B2:' + pfield, value, **kwargs)
+            else:
+                self.callback(pvname, value, **kwargs)
