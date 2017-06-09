@@ -218,7 +218,7 @@ class PowerSupplyLinac(object):
 
     @current_sp.setter
     def current_sp(self, value):
-        print("[PSBase] current_sp setter issued. value={}".format(value))
+        print('[PSL] [setter] current_sp ', value)
         if self._ctrlmode_mon != _et.idx.Remote: return
         #if value not in (self.current_sp, self.current_rb):
         if value != self.current_rb or value != self._current_sp:
@@ -539,12 +539,11 @@ class PowerSupply(PowerSupplyLinac):
 
     def _mycallback(self, pvname, value, **kwargs):
         if isinstance(self._controller, _ControllerEpics):
+            print('[PS] [callback] ', pvname, value)
             if 'CtrlMode-Mon' in pvname:
                 self._ctrlmode_mon = value
             elif 'OpMode-Sel' in pvname:
                 self._opmode_sel   = value
-            elif 'PwrState-Sel' in pvname:
-                self._pwrstate_sel = value
             elif 'PwrState-Sel' in pvname:
                 self._pwrstate_sel = value
             elif 'WfmLoad-Sel' in pvname:
@@ -555,11 +554,27 @@ class PowerSupply(PowerSupplyLinac):
                 self._wfmdata_sp   = value
             elif 'Current-SP' in pvname:
                 self._current_sp   = value
-
-            print("[PS-Simples] ", pvname)
-
             if self.callback is not None:
                 self.callback(pvname, value, **kwargs)
+        elif isinstance(self._controller, _ControllerSim):
+            if self.callback is not None:
+                if pvname == 'opmode':
+                    self.callback(self.psname + ':OpMode-Sts', value, **kwargs)
+                elif pvname == 'pwrstate':
+                    self.callback(self.psname + ':PwrState-Sts', value, **kwargs)
+                elif pvname == 'wfmload':
+                    self.callback(self.psname + ':WfmLoad-Sel', value, **kwargs)
+                elif pvname == 'wfmlabel':
+                    self.callback(self.psname + ':WfmLabel-RB', value, **kwargs)
+                elif pvname == 'wfmdata':
+                    self.callback(self.psname + ':WfmLoad-Sel', value, **kwargs)
+                elif pvname == 'current_sp':
+                    self.callback(self.psname + ':Current-RB', value, **kwargs)
+                elif pvname == 'current_ref':
+                    self.callback(self.psname + ':CurrentRef-Mon', value, **kwargs)
+                elif pvname == 'current_load':
+                    self.callback(self.psname + ':Current-Mon', value, **kwargs)
+
 
 class PowerSupplyEpicsSync(PowerSupply):
 
@@ -633,39 +648,32 @@ class PowerSupplyEpicsSync(PowerSupply):
             c.pwrstate = value
 
     def _set_current_sp(self, value):
+        print('[PSES] _set_current_sp ', value)
         for c in self._controllers:
             c.current_sp = value
 
     def _mycallback(self, pvname, value, **kwargs):
-        callback = True
+        print('[PSES] [callback] ', pvname, value)
         if 'CtrlMode-Mon' in pvname:
             self._ctrlmode_mon = value
         elif 'OpMode-Sel' in pvname:
             if self._opmode_sel != value:
                 self._set_opmode_sel(self._opmode_sel)
-                callback = False
         elif 'PwrState-Sel' in pvname:
             if self._pwrstate_sel != value:
                 self._set_pwrstate_sel(self._pwrstate_sel)
-                callback = False
         elif 'WfmLoad-Sel' in pvname:
             if self._wfmload_sel != value:
                 self._set_wfmload_sel(self._wfmload_sel)
-                callback = False
         elif 'WfmLabel-SP' in pvname:
             if self._wfmlabel_sp != value:
                 self._set_wfmlabel_sp(self._wfmlabel_sp)
-                callback = False
         elif 'WfmData-SP' in pvname:
-            if self._wfmdata_sp != value:
+            if _np.any(self._wfmdata_sp != value):
                 self._set_wfmdata_sp(self._wfmdata_sp)
-                callback = False
         elif 'Current-SP' in pvname:
             if self._current_sp != value: #Value was not changed by the MA-IOC
                 self._set_current_sp(self._current_sp)
-                callback = False
-
-        print("[PS-Sync] ", pvname)
 
         if self.callback is not None:
             self.callback(pvname, value, **kwargs)
@@ -995,35 +1003,29 @@ class PowerSupplyMA(PowerSupplyEpicsSync):
         return prefixed_db
 
     def _mycallback(self, pvname, value, **kwargs):
-        callback = True
+
+        print('[PS] [callback] ', pvname, value)
+
         if 'CtrlMode-Mon' in pvname:
             self._ctrlmode_mon = value
         elif 'OpMode-Sel' in pvname:
             if self._opmode_sel != value:
                 self._set_opmode_sel(self._opmode_sel)
-                callback = False
         elif 'PwrState-Sel' in pvname:
             if self._pwrstate_sel != value:
                 self._set_pwrstate_sel(self._pwrstate_sel)
-                callback = False
         elif 'WfmLoad-Sel' in pvname:
             if self._wfmload_sel != value:
                 self._set_wfmload_sel(self._wfmload_sel)
-                callback = False
         elif 'WfmLabel-SP' in pvname:
             if self._wfmlabel_sp != value:
                 self._set_wfmlabel_sp(self._wfmlabel_sp)
-                callback = False
         elif 'WfmData-SP' in pvname:
             if self._wfmdata_sp != value:
                 self._set_wfmdata_sp(self._wfmdata_sp)
-                callback = False
         elif 'Current-SP' in pvname:
             if self._current_sp != value: #Value was not changed by the MA-IOC
                 self._set_current_sp(self._current_sp)
-                callback = False
-
-        print("[PSMA] ", pvname)
 
         if self.callback is not None and callback:
             pfield = pvname.split(':')[-1]
