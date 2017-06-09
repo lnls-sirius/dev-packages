@@ -1,8 +1,8 @@
-from   siriuspy.pwrsupply import PowerSupply
-from   siriuspy.pwrsupply import ControllerSim
+from siriuspy.pwrsupply import PowerSupply
+from siriuspy.pwrsupply import ControllerSim
+from siriuspy import envars
 
-
-_prefix = 'VAX-SI-Fam:'
+_prefix = envars.vaca_prefix + 'SI-Fam:'
 
 
 psnames = ('PS-B1B2-1','PS-B1B2-2')
@@ -25,4 +25,3 @@ def get_database():
         for i in range(len(props)):
             db[psname+':'+props[i]] = ps_db[props[i]]
     return {_prefix:db}
-

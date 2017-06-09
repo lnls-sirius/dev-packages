@@ -3,6 +3,7 @@ import uuid as _uuid
 import numpy as _np
 import math as _math
 import re as _re
+import threading as _threading
 from abc import abstractmethod as _abstractmethod
 from abc import ABCMeta as _ABCMeta
 from siriuspy import util as _util
@@ -218,7 +219,7 @@ class PowerSupplyLinac(object):
 
     @current_sp.setter
     def current_sp(self, value):
-        print('[PSL] [setter] current_sp ', value)
+        #print('[PSL] [setter] current_sp ', value)
         if self._ctrlmode_mon != _et.idx.Remote: return
         #if value not in (self.current_sp, self.current_rb):
         if value != self.current_rb or value != self._current_sp:
@@ -539,7 +540,7 @@ class PowerSupply(PowerSupplyLinac):
 
     def _mycallback(self, pvname, value, **kwargs):
         if isinstance(self._controller, _ControllerEpics):
-            print('[PS] [callback] ', pvname, value)
+            #print('[PS] [callback] ', pvname, value)
             if 'CtrlMode-Mon' in pvname:
                 self._ctrlmode_mon = value
             elif 'OpMode-Sel' in pvname:
@@ -648,55 +649,48 @@ class PowerSupplyEpicsSync(PowerSupply):
             c.pwrstate = value
 
     def _set_current_sp(self, value):
-        print('[PSES] _set_current_sp ', value)
+        #print('[PSES] _set_current_sp ', value)
         for c in self._controllers:
+            #print(c._psname)
             c.current_sp = value
 
     def _mycallback(self, pvname, value, **kwargs):
-        print('[PSES] [callback] ', pvname, value)
+        #print('[PSES] [callback] ', pvname, value)
         if 'CtrlMode-Mon' in pvname:
             self._ctrlmode_mon = value
         elif 'OpMode-Sel' in pvname:
             if self._opmode_sel != value:
-                self._set_opmode_sel(self._opmode_sel)
+                thread = _threading.Thread(target=self._set_opmode_sel, args=[self._opmode_sel])
+                thread.start()
+                value = self._opmode_sel
         elif 'PwrState-Sel' in pvname:
             if self._pwrstate_sel != value:
-                self._set_pwrstate_sel(self._pwrstate_sel)
+                thread = _threading.Thread(target=self._set_pwrstate_sel, args=[self._pwrstate_sel])
+                thread.start()
+                value = self._pwrstate_sel
         elif 'WfmLoad-Sel' in pvname:
             if self._wfmload_sel != value:
-                self._set_wfmload_sel(self._wfmload_sel)
+                thread = _threading.Thread(target=self._set_wfmload_sel, args=[self._wfmload_sel])
+                thread.start()
+                value = self._wfmload_sel
         elif 'WfmLabel-SP' in pvname:
             if self._wfmlabel_sp != value:
-                self._set_wfmlabel_sp(self._wfmlabel_sp)
+                thread = _threading.Thread(target=self._set_wfmlabel_sp, args=[self._wfmlabel_sp])
+                thread.start()
+                value = self._wfmlabel_sp
         elif 'WfmData-SP' in pvname:
             if _np.any(self._wfmdata_sp != value):
-                self._set_wfmdata_sp(self._wfmdata_sp)
+                thread = _threading.Thread(target=self._set_wfmdata_sp, args=[self._wfmdata_sp])
+                thread.start()
+                value = self._wfmdata_sp
         elif 'Current-SP' in pvname:
             if self._current_sp != value: #Value was not changed by the MA-IOC
-                self._set_current_sp(self._current_sp)
-
+                thread = _threading.Thread(target=self._set_current_sp, args=[self._current_sp])
+                thread.start()
+                value = self._current_sp
         if self.callback is not None:
             self.callback(pvname, value, **kwargs)
 
-# class PowerSupplyMagnet(PowerSupply):
-#
-#     def __init__(self, psname, **kwargs):
-#         super().__init__(psname, **kwargs)
-#
-#     @property
-#     def database(self):
-#         """Return property database as a dictionary.
-#         It prepends power supply family name to each dictionary key.
-#         """
-#         _database = {}
-#         dd = super().database
-#         _, family = self.ps_name.split('PS-')
-#         if not isinstance(family,str):
-#             raise Exception('invalid pv_name!')
-#         for propty, db in super().database.items():
-#             key = family + ':' + propty
-#             _database[key] = _copy.deepcopy(db)
-#         return _database
 
 
 class _MAStrength(metaclass=_ABCMeta):
@@ -931,7 +925,6 @@ class PowerSupplyMA(PowerSupplyEpicsSync):
         self._strobj = MAStrengthTrim(maname=self._maname)
         self._strobj_kwargs = {'current':self._controller, 'current_dipole':self._controller_dipole, 'current_family':self._controller_family}
 
-
     @property
     def magfunc(self):
         """Return string corresponding to the magnetic function excitated with the power supply."""
@@ -1003,36 +996,38 @@ class PowerSupplyMA(PowerSupplyEpicsSync):
         return prefixed_db
 
     def _mycallback(self, pvname, value, **kwargs):
+        #print('[PS] [callback] ', pvname, value)
+        for psname in self._psname:
+            pvname = pvname.replace(psname, self._maname)
+        super()._mycallback(pvname, value, **kwargs)
 
-        print('[PS] [callback] ', pvname, value)
-
-        if 'CtrlMode-Mon' in pvname:
-            self._ctrlmode_mon = value
-        elif 'OpMode-Sel' in pvname:
-            if self._opmode_sel != value:
-                self._set_opmode_sel(self._opmode_sel)
-        elif 'PwrState-Sel' in pvname:
-            if self._pwrstate_sel != value:
-                self._set_pwrstate_sel(self._pwrstate_sel)
-        elif 'WfmLoad-Sel' in pvname:
-            if self._wfmload_sel != value:
-                self._set_wfmload_sel(self._wfmload_sel)
-        elif 'WfmLabel-SP' in pvname:
-            if self._wfmlabel_sp != value:
-                self._set_wfmlabel_sp(self._wfmlabel_sp)
-        elif 'WfmData-SP' in pvname:
-            if self._wfmdata_sp != value:
-                self._set_wfmdata_sp(self._wfmdata_sp)
-        elif 'Current-SP' in pvname:
-            if self._current_sp != value: #Value was not changed by the MA-IOC
-                self._set_current_sp(self._current_sp)
-
-        if self.callback is not None and callback:
-            pfield = pvname.split(':')[-1]
-            slot = ':'.join(pvname.split(':')[:2])
-            if self._is_using_vaca:
-                slot = slot[4:]
-            if slot in ['SI-Fam:PS-B1B2-1', 'SI-Fam:PS-B1B2-2']:
-                self.callback('SI-Fam:PS-B1B2:' + pfield, value, **kwargs)
-            else:
-                self.callback(pvname, value, **kwargs)
+        # if 'CtrlMode-Mon' in pvname:
+        #     self._ctrlmode_mon = value
+        # elif 'OpMode-Sel' in pvname:
+        #     if self._opmode_sel != value:
+        #         self._set_opmode_sel(self._opmode_sel)
+        # elif 'PwrState-Sel' in pvname:
+        #     if self._pwrstate_sel != value:
+        #         self._set_pwrstate_sel(self._pwrstate_sel)
+        # elif 'WfmLoad-Sel' in pvname:
+        #     if self._wfmload_sel != value:
+        #         self._set_wfmload_sel(self._wfmload_sel)
+        # elif 'WfmLabel-SP' in pvname:
+        #     if self._wfmlabel_sp != value:
+        #         self._set_wfmlabel_sp(self._wfmlabel_sp)
+        # elif 'WfmData-SP' in pvname:
+        #     if self._wfmdata_sp != value:
+        #         self._set_wfmdata_sp(self._wfmdata_sp)
+        # elif 'Current-SP' in pvname:
+        #     if self._current_sp != value: #Value was not changed by the MA-IOC
+        #         self._set_current_sp(self._current_sp)
+        #
+        # if self.callback is not None and callback:
+        #     pfield = pvname.split(':')[-1]
+        #     slot = ':'.join(pvname.split(':')[:2])
+        #     if self._is_using_vaca:
+        #         slot = slot[4:]
+        #     if slot in ['SI-Fam:PS-B1B2-1', 'SI-Fam:PS-B1B2-2']:
+        #         self.callback('SI-Fam:PS-B1B2:' + pfield, value, **kwargs)
+        #     else:
+        #         self.callback(pvname, value, **kwargs)

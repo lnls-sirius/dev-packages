@@ -998,9 +998,11 @@ class ControllerEpics(Controller):
         return self._pvs['Current-SP'].get(timeout=self._connection_timeout)
 
     def _set_current_sp(self, value):
-        print('[CE] [set_current_sp] set_current_sp value:', value, ' SP:',self.current_sp)
+        #print('[CE] ' + str(self._psname) + ' [set_current_sp] set_current_sp value:', value, ' SP:',self.current_sp)
         if value != self.current_sp:
+            #print('[CE] ' + str(self._psname) + ' [set_current_sp] set_current_sp value:', value, ' SP:',self.current_sp)
             self._pvs['Current-SP'].value = value
+            #print(self._pvs['Current-SP'].value)
             self.update_state(current_sp=True)
 
     def _get_current_ref(self):
@@ -1086,7 +1088,7 @@ class ControllerEpics(Controller):
         pass
 
     def _mycallback(self, pvname, value, **kwargs):
-        print('[CE] [callback] ', pvname, value)
+        #print('[CE] [callback] ', pvname, value)
         if self._callback:
             self._callback(pvname=pvname, value=value, **kwargs)
 

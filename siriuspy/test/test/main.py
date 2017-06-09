@@ -44,7 +44,7 @@ class App:
         sp = getattr(_pvs.ps[psname], ps_propty)
         self._driver.setParam(reason, sp)
         return True
-        
+
     def _mycallback(self, pvname, value, **kwargs):
         print('mycallback ', pvname, value)
         _, reason = pvname.split('Fam:')
@@ -52,5 +52,3 @@ class App:
         if value != prev_value:
             self._driver.setParam(reason, value)
             self._driver.updatePVs()
-
-        
