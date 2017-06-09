@@ -567,24 +567,17 @@ class PowerSupplyEpicsSync(PowerSupply):
         self._controller_psnames = list()
         self._controllers = list()
 
-        if use_vaca:
+        '''if use_vaca:
             if vaca_prefix is None:
                 vaca_prefix = _envars.vaca_prefix
         else:
             use_vaca = ''
         for psname in psnames:
-            self._controller_psnames.append(vaca_prefix + psname)
+            self._controller_psnames.append(vaca_prefix + psname)'''
 
         #Create controller epics
-        for controller_name in self._controller_psnames:
-<<<<<<< HEAD
-            #print('\n\n\n\n\n\n')
-            #print(controller_name)
-            #print('\n\n\n\n\n\n')
-            self._controllers.append(_ControllerEpics(psname=controller_name, connection_timeout=connection_timeout))
-=======
-            self._controllers.append(_ControllerEpics(psname=controller_name, connection_timeout=connection_timeout, callback=self._mycallback))
->>>>>>> 4f7a7f84a5f29a670be9e81dac4294377d129d9f
+        for controller_name in self._psnames:
+            self._controllers.append(_ControllerEpics(psname=controller_name, use_vaca=use_vaca, connection_timeout=connection_timeout, callback=self._mycallback))
 
         super().__init__(psname=psnames[0], controller=self._controllers[0])
 
@@ -839,7 +832,7 @@ class MAStrengthTrim(_MAStrength):
     def __init__(self, maname, **kwargs):
         super().__init__(maname=maname)
         pvname = _SiriusPVName(maname)
-        self._family = MAStrengthFam(maname=maname.replace(pvname.subsection, 'Fam'))
+        self._family = MAStrength(maname=maname.replace(pvname.subsection, 'Fam'))
 
     @property
     def dipole(self):
@@ -883,17 +876,16 @@ class PowerSupplyMA(PowerSupplyEpicsSync):
 
     def _init_pwrsupply(self, use_vaca, vaca_prefix):
         sector, dipole_maname = _MAStrength.get_dipole_sector_maname(maname=self._maname)
-        print(sector, dipole_maname)
         if self._maname.subsection == 'Fam':
             if self.magfunc == 'dipole':
                 self._init_pwrsupply_dipole(dipole_maname, use_vaca, vaca_prefix)
             elif self.magfunc in ('quadrupole', 'sextupole'):
-                self._init_pwrsupply_fam(dipole_name=dipole_maname, use_vaca=use_vaca, vaca_prefix=vaca_prefix)
+                self._init_pwrsupply_fam(dipole_maname=dipole_maname, use_vaca=use_vaca, vaca_prefix=vaca_prefix)
         else:
             if self.magfunc == 'quadrupole':
-                self._init_pwrsupply_trim(dipole_name=dipole_maname, use_vaca=use_vaca, vaca_prefix=vaca_prefix)
+                self._init_pwrsupply_trim(dipole_maname=dipole_maname, use_vaca=use_vaca, vaca_prefix=vaca_prefix)
             elif self.magfunc in ('corrector', 'quadrupole-skew'):
-                self._init_pwrsupply_fam(dipole_name=dipole_maname, use_vaca=use_vaca, vaca_prefix=vaca_prefix)
+                self._init_pwrsupply_fam(dipole_maname=dipole_maname, use_vaca=use_vaca, vaca_prefix=vaca_prefix)
 
     def _init_pwrsupply_dipole(self, dipole_maname, use_vaca, vaca_prefix):
         self._ps = PowerSupplyEpicsSync(psnames=self._psname,
@@ -909,11 +901,11 @@ class PowerSupplyMA(PowerSupplyEpicsSync):
         #self._strobj_dipole = self._strobj
         controller = _ControllerEpics(psname=self._psname[0],
                                       connection_timeout=None,
-                                      use_vaca=False,
-                                      vaca_prefix=None)
+                                      use_vaca=use_vaca,
+                                      vaca_prefix=vaca_prefix)
         self._ps = PowerSupply(psname=self._psname[0],
                                controller=controller)
-        self._strobj = _MAStrengthFam(maname=self._maname)
+        self._strobj = MAStrength(maname=self._maname)
         self._strobj_kwargs = {'current':self._ps, 'current_dipole':self._ps_dipole}
 
     def _init_pwrsupply_trim(self, dipole_name, use_vaca, vaca_prefix):
@@ -923,11 +915,11 @@ class PowerSupplyMA(PowerSupplyEpicsSync):
         pstrim = pvname.replace(pvname.subsection, 'Fam')
         controller = _ControllerEpics(psname=pstrim,
                                       connection_timeout=None,
-                                      use_vaca=False,
-                                      vaca_prefix=None)
+                                      use_vaca=use_vaca,
+                                      vaca_prefix=vaca_prefix)
         self._ps = PowerSupply(psname=pstrim,
                                controller=controller)
-        self._strobj = _MAStrengthTrim(maname=self._maname)
+        self._strobj = MAStrengthTrim(maname=self._maname)
         self._strobj_kwargs = {'current':self._ps, 'current_dipole':self._ps_dipole, 'current_family':self._ps_family}
 
 
@@ -1039,7 +1031,6 @@ class PowerSupplyMA(PowerSupplyEpicsSync):
             slot = ':'.join(pvname.split(':')[:2])
             if self.use_vaca:
                 slot = slot[4:]
-            print(slot)
             if slot in ['SI-Fam:PS-B1B2-1', 'SI-Fam:PS-B1B2-2']:
                 self.callback('SI-Fam:PS-B1B2:' + pfield, value, **kwargs)
             else:
