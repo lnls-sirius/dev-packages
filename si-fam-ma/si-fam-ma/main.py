@@ -18,14 +18,14 @@ class App:
 
     ma_devices = _pvs.get_ma_devices()
     pvs_database = _pvs.get_pvs_database()
-    strengths = ['KL', 'SL', 'Kick']
+    strengths = ['Energy', 'KL', 'SL', 'Kick']
     writable_fields = ['SP', 'Sel']
 
     def __init__(self, driver):
 
         _siriuspy.util.print_ioc_banner(
             ioc_name = 'si-fam-ma',
-            db = App.pvs_database[_pvs._PREFIX],
+            db = App.pvs_database,#[_pvs._PREFIX],
             description = 'SI Magnet Power Supply Soft IOC',
             version = __version__,
             prefix = _pvs._PREFIX)
@@ -35,8 +35,9 @@ class App:
 
     def _set_callback(self):
         for family, device in App.ma_devices.items():
-            device.set_callback(self._mycallback)
-            device.update_state()
+            #device.set_callback(self._mycallback)
+            device.callback = self._mycallback
+            device._controller.update_state()
 
     @property
     def driver(self):
@@ -47,15 +48,17 @@ class App:
         #print(_siriuspy.util.get_timestamp())
 
     def read(self, reason):
-        if 'Version-Cte' in reason: return None
-        #Get property and field
-        device, propty, field = _get_dev_propty(reason)
-        #Check if property is a 'strength' and get attribute name
-        attr = propty + '_' + field if propty not in App.strengths else 'strength_' + field
-        attr = attr.lower()
-        #Return Magnet attribute based on the property and field requested
-        ma = self._ma_devices[device]
-        return getattr(ma, attr)
+        return None
+    #     if 'Version-Cte' in reason: return None
+    #     #Get property and field
+    #     device, propty, field = self._get_dev_propty(reason)
+    #     print(propty)
+    #     if propty not in App.strengths: return None
+    #     #Check if property is a 'strength' and get attribute name
+    #     attr = 'strength_' + field.lower()
+    #     #Return Magnet attribute based on the property and field requested
+    #     ma = self.ma_devices[device]
+    #     return getattr(ma, attr)
 
         # ma, ps, propty = self._get_dev_propty(reason)
         # if propty == 'CtrlMode-Mon':
@@ -81,7 +84,7 @@ class App:
     @staticmethod
     def _get_dev_propty(reason):
         ''' Returns 'property' and 'field' of a PV '''
-        device, pfield = reason.split(0)
+        device, pfield = reason.split(':')
         propty, field = pfield.split('-')
         return (device, propty, field)
         # family, propty = reason.split(':')
@@ -90,8 +93,6 @@ class App:
         # return ma, ps, propty
 
     def _mycallback(self, pvname, value, **kwargs):
-        #print('main', pvname, value)
-        print(pvname)
         _, reason = pvname.split('PS-')
         prev_value = self._driver.getParam(reason)
         if value != prev_value:
@@ -99,18 +100,21 @@ class App:
              self._driver.setParam(reason, value)
              self._driver.updatePVs()
 
-    def write(self,reason,value):
+    def write(self, reason, value):
         """ Write value to reason and let callback update PV database. """
         #Get property and field
-        device, propty, field = _get_dev_propty(reason)
+        device, propty, field = self._get_dev_propty(reason)
         #Check if field is writable
         if field not in App.writable_fields:
             return
         #Build attribute name
-        attr = propty + '_' + field
+        if propty in App.strengths:
+            attr = 'strength_' + field
+        else:
+            attr = propty + '_' + field
         attr = attr.lower()
         #Set Magnet attribute based on the property, field and value passed
-        ma = self._ma_devices[device]
+        ma = self.ma_devices[device]
         return setattr(ma, attr, value)
         # ma, ps, propty = self._get_dev_propty(reason)
         # if propty == 'PwrState-Sel':

@@ -14,7 +14,7 @@ from siriuspy.pwrsupply import PowerSupplyMA
 with open('VERSION','r') as _f:
     __version__ = _f.read().strip()
 
-_connection_timeout = 0.05
+_connection_timeout = 0.2
 
 _PREFIX         = 'SI-Fam:MA-'
 _PREFIX_VACA    = _vaca_prefix
@@ -68,8 +68,15 @@ def get_ma_devices():
                 section='SI',
                 sub_section='Fam',
                 discipline='MA',
-                device='(?:QD|QF|Q[0-9]).*'
+                device='B.*'
+
             ),
+            # dict(
+            #     section='SI',
+            #     sub_section='Fam',
+            #     discipline='MA',
+            #     device='(?:QD|QF|Q[0-9]).*'
+            # ),
         ]
         #Get magnets
         magnets = _MASearch.get_manames(filters)
@@ -77,7 +84,7 @@ def get_ma_devices():
         for magnet in magnets:
             _, device = magnet.split('SI-Fam:MA-')
             _ma_devices[device] = PowerSupplyMA(
-                maname=magnet, use_vaca=True, vaca_prefix=_PREFIX_VACA)
+                maname=magnet, use_vaca=True)
 
     return _ma_devices
 
