@@ -1,14 +1,6 @@
-#import copy as _copy
-#import siriuspy as _siriuspy
-#from siriuspy.namesys import SiriusPVName as _SiriusPVName
-#from siriuspy.pwrsupply import ControllerEpics as _ControllerEpics
-#from siriuspy.pwrsupply import PowerSupplyMAFam as _PowerSupplyMAFam
-#from siriuspy.pwrsupply.psdata import get_setpoint_limits as _get_setpoint_limits
-#from siriuspy.magnet import MagnetFam as _MagnetFam
-
 from siriuspy.envars import vaca_prefix as _vaca_prefix
 from siriuspy.search import MASearch as _MASearch
-from siriuspy.pwrsupply import PowerSupplyMA
+from siriuspy.magnet.model import PowerSupplyMA
 
 
 with open('VERSION','r') as _f:
