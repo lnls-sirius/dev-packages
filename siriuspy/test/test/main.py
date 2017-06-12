@@ -6,7 +6,7 @@ import time as _time
 # 01 - pay special attention to code readability
 # 02 - simplify logic as much as possible
 # 03 - unroll expressions in order to simplify code
-# 04 - dont be afraid to generate simingly repeatitive flat code (they may be easier to read!)
+# 04 - dont be afraid to generate seemingly repetitive flat code (they may be easier to read!)
 # 05 - 'copy and paste' is your friend and it allows you to code 'repeatitive' (but clearer) sections fast.
 # 06 - be consistent in coding style (variable naming, spacings, prefixes, suffixes, etc)
 

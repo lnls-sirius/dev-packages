@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 import unittest
-from siriuspy.pwrsupply import PowerSupply, PowerSupplyMA
+from siriuspy.pwrsupply import PowerSupply
+from siriuspy.magnet.model import PowerSupplyMA
 
 class PowerSupplyTest(unittest.TestCase):
     def assert_currents(self, sp, rb, ref, mon):

@@ -1,7 +1,5 @@
+
 import copy as _copy
-import siriuspy.servweb as _web
-import siriuspy.util as _util
-from siriuspy.namesys import SiriusPVName as _PVName
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.search import MASearch as _MASearch

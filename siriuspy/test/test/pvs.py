@@ -12,7 +12,6 @@ for psname in psnames:
     ps[psname] = PowerSupply(psname='SI-Fam:' + psname, controller=c)
 
 
-
 with open('VERSION','r') as _f:
     __version__ = _f.read().strip()
 

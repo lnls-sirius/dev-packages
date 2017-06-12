@@ -1,10 +1,8 @@
-
 import copy as _copy
-import siriuspy.util as _util
-import siriuspy.servweb as _web
+from siriuspy import util as _util
 from siriuspy.namesys import Filter as _Filter
-
-from siriuspy.magnet.excdat import ExcitationData
+from siriuspy import servweb as _web
+from siriuspy.magnet.excdata import ExcitationData as _ExcitationData
 
 class PSSearch:
 
@@ -62,7 +60,7 @@ class PSSearch:
     def reload_pstype_2_excdat_dict(pstype):
         """ Load power supply excitatiom data """
         if _web.server_online():
-            PSSearch._pstype_2_excdat_dict[pstype] = ExcitationData(filename_web=pstype + '.txt')
+            PSSearch._pstype_2_excdat_dict[pstype] = _ExcitationData(filename_web=pstype + '.txt')
         else:
             raise Exception('could not read "' + str(pstype) + '" from web server!')
 
@@ -164,6 +162,7 @@ class PSSearch:
         if PSSearch._pstype_2_splims_dict is None: PSSearch.reload_pstype_2_splims_dict()
         return PSSearch._splims_labels
 
+
 class MASearch:
     ''' Searches magnets data in static files '''
 
@@ -248,63 +247,3 @@ class MASearch:
         """Return a sorted and filtered list of all magnet names."""
         if MASearch._manames_list is None: MASearch.reload_maname_2_psnames_dict()
         return _Filter.process_filters(MASearch._manames_list, filters=filters)
-
-
-# class MASetPointLims:
-#
-#     def __init__(self, timeout=_timeout):
-#
-#         self.mag2ps_dict = None
-#         self.ps2mag_dict = None
-#         self.magps_sp_limits_dict = None
-#
-#         if _web.server_online():
-#             self._build_mag_sp_limits(timeout)
-#             self._build_mag_excitation_dict()
-#
-#     def _build_mag_sp_limits(self, timeout=_timeout):
-#         text = _web.magnets_setpoint_limits(timeout=timeout)
-#         data, param_dict = _util.read_text_data(text)
-#         self.setpoint_unit = tuple(param_dict['unit'])
-#         self._setpoint_limit_labels = tuple(param_dict['power_supply_type'])
-#         self.magps_sp_limits_dict = {}
-#         for line in data:
-#             magps_name, *limits = line
-#             db = {self._setpoint_limit_labels[i]:float(limits[i]) for i in range(len(self._setpoint_limit_labels))}
-#             self.magps_sp_limits_dict[magps_name] = db
-#
-#     def _build_mag_excitation_dict(self, timeout=_timeout):
-#         text = _web.magnets_excitation_ps_read(timeout=timeout)
-#         data, param_dict = _util.read_text_data(text)
-#         self.mag2ps_dict = {}
-#         self.ps2mag_dict = {}
-#         for datum in data:
-#             magnet, *ps_names = datum
-#             self.mag2ps_dict[magnet] = tuple(ps_names)
-#             for ps_name in ps_names:
-#                 try:
-#                     self.ps2mag_dict[ps_name].append(magnet)
-#                 except:
-#                     self.ps2mag_dict[ps_name] = [magnet]
-#
-#     def conv_mag2ps(self, magname):
-#         return tuple(self.mag2ps_dict[magname])
-#
-#     def conv_ps2mag(self, psname):
-#         return tuple(self.ps2mag_dict[psname])
-#
-#     def get_setpoint_limits(self, maname, *limit_labels):
-#
-#         values = self.magps_sp_limits_dict[maname]
-#
-#         if len(limit_labels) == 0:
-#             limit_labels = self._setpoint_limit_labels
-#         if len(limit_labels) == 1 and isinstance(limit_labels[0], str):
-#             idx = self._setpoint_limit_labels.index(limit_labels[0])
-#             return values[idx]
-#
-#         limits_dict = {}
-#         for limit_name in limit_labels:
-#             #idx = self._setpoint_limit_labels.index(limit_name)
-#             limits_dict[limit_name] = values[limit_name]
-#         return limits_dict

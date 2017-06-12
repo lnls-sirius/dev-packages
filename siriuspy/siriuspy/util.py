@@ -11,7 +11,6 @@ def get_timestamp(now = None):
     st = st + '.{0:03d}'.format(int(1000*(now-int(now))))
     return st
 
-
 # this function can be substituted with fernando's implementation in VACA
 def get_prop_types():
     prop_types = {
@@ -77,7 +76,6 @@ def print_ioc_banner(ioc_name, db, description, version, prefix, ):
             print(''); new_line=False
     if new_line: print('')
 
-
 def conv_splims_labels(label):
     """Convert setpoint limit labels from pcaspy to epics and vice-versa."""
     labels_dict = {
@@ -102,7 +100,6 @@ def conv_splims_labels(label):
                 return k
         return None
 
-
 def beam_rigidity(energy):
     """Return beam rigidity give its energy [GeV]."""
     second  = 1.0; meter    = 1.0; kilogram = 1.0; ampere   = 1.0
@@ -124,9 +121,8 @@ def beam_rigidity(energy):
     brho = beta * (energy*1e9) / light_speed
     return brho
 
-
-# Is this being used ?!?!
-def set_ioc_ca_port_number(ioc_name):
-    envar, default_port = _envars.ioc_ca_ports_dict[ioc_name]
-    port = _os.environ.get(envar, default=default_port)
-    _os.environ['EPICS_CA_SERVER_PORT'] = port
+# # Is this being used ?!?!
+# def set_ioc_ca_port_number(ioc_name):
+#     envar, default_port = _envars.ioc_ca_ports_dict[ioc_name]
+#     port = _os.environ.get(envar, default=default_port)
+#     _os.environ['EPICS_CA_SERVER_PORT'] = port
