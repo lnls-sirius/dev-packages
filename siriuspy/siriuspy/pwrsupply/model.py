@@ -457,17 +457,9 @@ class PowerSupplyEpicsSync(PowerSupply):
         self._controller_psnames = list()
         self._controllers = list()
 
-        '''if use_vaca:
-            if vaca_prefix is None:
-                vaca_prefix = _envars.vaca_prefix
-        else:
-            use_vaca = ''
-        for psname in psnames:
-            self._controller_psnames.append(vaca_prefix + psname)'''
-
-        #Create controller epics
+        # Create controller epics
         for controller_name in self._psnames:
-            self._controllers.append(_ControllerEpics(psname=controller_name, use_vaca=use_vaca, connection_timeout=connection_timeout, callback=self._mycallback))
+            self._controllers.append(_ControllerEpics(psname=controller_name, use_vaca=use_vaca, vaca_prefix=vaca_prefix, connection_timeout=connection_timeout, callback=self._mycallback))
 
         super().__init__(psname=psnames[0], controller=self._controllers[0])
 

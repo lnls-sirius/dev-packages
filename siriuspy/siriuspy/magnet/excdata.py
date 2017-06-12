@@ -188,9 +188,9 @@ class ExcitationData:
             else:
                 current = _numpy.interp(multipole, x, self.currents, left=left, right=right)
         elif extrap_typ == 'extrap_linear_left':
-            current = ExcitationData._linear_extrapolation(multipole,x[0],x[1],self.currents[0],self.currents[1])
+            current = _util.linear_extrapolation(multipole,x[0],x[1],self.currents[0],self.currents[1])
         elif extrap_typ == 'extrap_linear_right':
-            current = ExcitationData._linear_extrapolation(multipole,x[-1],x[-2],self.currents[-1],self.currents[-2])
+            current = _util.linear_extrapolation(multipole,x[-1],x[-2],self.currents[-1],self.currents[-2])
         else:
             pass # this should never be reached
 
