@@ -175,7 +175,7 @@ class MAStrength(MAStrengthBase):
         m_harm = self._excdata.main_multipole_harmonic
         intfield = multipoles[m_type][m_harm]
         strength = - intfield / brho
-        print(brho, intfield)
+        #print(brho, intfield)
         return strength
 
     def conv_strength_2_current(self, strength, current_dipole, **kwargs):

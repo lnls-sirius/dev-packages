@@ -18,6 +18,133 @@ _connection_timeout = None
 
 
 
+
+# class Magnet:
+#
+#     _magfuncs = {
+#         'dipole' : {'type':'normal', 'harmonic':0},
+#         'corrector-horizontal' : {'type':'normal', 'harmonic':0},
+#         'corrector-vertical' : {'type':'skew', 'harmonic':0},
+#         'quadrupole' : {'type':'normal', 'harmonic':1},
+#         'quadrupole-skew' : {'type':'skew', 'harmonic':1},
+#         'sextupole' : {'type':'normal', 'harmonic':2},
+#     }
+#
+#     def __init__(self, magfunc,
+#                        psupplies,
+#                        left='linear',
+#                        right='linear'):
+#         self._magfunc = magfunc
+#         self._psupplies = psupplies
+#         self._left = left
+#         self._right = right
+#         self._psmain = None
+#         for ps
+#     def get_multipoles(self, current_attr='current_mon'):
+#         msum = {}
+#         for ps in self._pssupplies:
+#             current = getattr(ps, current_attr)
+#             m = ps.psdata.excdata.interp_curr2mult(current)
+#             msum = _mutil.sum_magnetic_multipoles(msum, m)
+#         return msum
+#
+#     def get_intfield(self, current_attr='current_mon'):
+#         m = self.get_multipoles(current_attr=current_attr)
+#         mf = Magnet._magfuncs[self._magfunc]
+#         intfield = m[mf['type']][mf['harmonic']]
+#         return intfield
+#
+#
+# class MagnetQuadFam(Magnet):
+#
+#     def __init__(self, maname, dipole, **kwargs):
+#         kwargs['magfunc'] = 'quadrupole'
+#         super().__init__(**kwargs)
+#         self._maname = _SiriusPVName(maname)
+#         self._dipole = dipole
+#
+#     def get_kl(self, current_attr):
+#         brho = self._dipole.get_brho(current_attr=current_attr)
+#         intfield = self.get_intfield(current_attr=current_attr)
+#         return -intfield/brho
+#
+#     def set_kl(self, kl):
+#
+#
+#
+#
+#
+# class MagnetDipole(Magnet):
+#
+#     _ref_angles = {
+#         'SI_BC': _math.radians(4.2966),
+#         'SI_B1': _math.radians(2.7553),
+#         'SI_B2': _math.radians(4.0964),
+#         'TS'   : _math.radians(5.3333),
+#         'BO'   : _math.radians(7.2000),
+#         'TB'   : _math.radians(15.000),
+#     }
+#
+#     def __init__(self, maname, **kwargs):
+#         kwargs['magfunc'] = 'dipole'
+#         super().__init__(**kwargs)
+#         self._maname = _SiriusPVName(maname)
+#         self._set_reference_dipole_data()
+#         self._psmain = self._psupplies[0]
+#
+#     def _set_reference_dipole_data(self):
+#         ang = MagnetDipole._ref_angles
+#         if self._maname.section == 'SI':
+#             self._ref_energy = 3.0 #[GeV]
+#             self._ref_brho = _util.beam_rigidity(self._ref_energy)
+#             self._ref_BL_BC =  - self._ref_brho * ang['SI_BC']
+#             self._ref_angle = ang['SI_B1'] + ang['SI_B2'] + ang['SI_BC']
+#             self._ref_BL = - self._ref_brho * self._ref_angle - self._ref_BL_BC
+#         elif self._maname.section == 'BO':
+#             self._ref_energy = 3.0 #[GeV]
+#             self._ref_brho = _util.beam_rigidity(self._ref_energy)
+#             self._ref_angle = ang['BO']
+#             self._ref_BL = - self._ref_brho * self._ref_angle
+#         elif self._maname.section == 'TS':
+#             self._ref_energy = 3.0 #[GeV]
+#             self._ref_brho = _util.beam_rigidity(self._ref_energy)
+#             self._ref_angle = ang['TS']
+#             self._ref_BL = - self._ref_brho * self._ref_angle
+#         elif self._maname.section == 'TB':
+#             self._ref_energy = 0.150 #[GeV]
+#             self._ref_brho = _util.beam_rigidity(self._ref_energy)
+#             self._ref_angle = ang['TB']
+#             self._ref_BL = - self._ref_brho * self._ref_angle
+#         else:
+#             raise NotImplementedError
+#
+#     def get_energy(self, current_attr='current_mon'):
+#         intfield = self.get_intfield(current_attr=current_attr)
+#         if self._maname.section == 'SI':
+#             energy = (self._ref_energy / self._ref_brho) * (- intfield - self._ref_BL_BC) / self._ref_angle
+#         else:
+#             energy = (self._ref_energy / self._ref_brho) * (-intfield) / self._ref_angle
+#         return energy
+#
+#     def set_energy(self, energy):
+#         if self._section == 'SI':
+#             intfield = - self._ref_angle * (self._ref_brho / self._ref_energy) * energy - self._ref_BL_BC
+#         else:
+#             intfield = - self._ref_angle * (self._ref_brho / self._ref_energy) * energy
+#         mf = Magnet._magfuncs[self._magfunc]
+#         current = self._psmain.psdata.excdata.interp_mult2curr(self, intfield, mf['harmonic'], mf['type'], left=self._left, right=self._right)
+#         self._psmain.current_sp = current
+#
+#     def get_brho(self, current_attr='current_mon'):
+#         energy = self.get_energy(current_attr=current_attr)
+#         brho = _util.beam_rigidity(energy)
+#         return brho
+
+
+
+
+
+
 # class _Magnet(metaclass=_ABCMeta):
 #
 #     _dipoles_maname = {
@@ -234,6 +361,10 @@ class PowerSupplyMA(_PSEpicsSync):
                              vaca_prefix=vaca_prefix,
                              connection_timeout=connection_timeout)
 
+        kwargs = {arg:controller.current_sp for arg,controller in self._strobj_kwargs.items()}
+        self._strength_sp = self._strobj.conv_current_2_strength(**kwargs)
+
+
     def _get_ma_controllers(self):
         ''' Method to get controllers that'll be created for given magnet '''
         if self.magfunc == "dipole":
@@ -253,13 +384,16 @@ class PowerSupplyMA(_PSEpicsSync):
 
     @property
     def strength_sp(self):
-        kwargs = {arg:controller.current_sp for arg,controller in self._strobj_kwargs.items()}
-        return self._strobj.conv_current_2_strength(**kwargs)
+        return self._strength_sp
+        #kwargs = {arg:controller.current_sp for arg,controller in self._strobj_kwargs.items()}
+        #return self._strobj.conv_current_2_strength(**kwargs)
 
     @strength_sp.setter
     def strength_sp(self, value):
-        kwargs = {arg:controller.current_sp for arg,controller in self._strobj_kwargs.items()}
-        self.current_sp = self._strobj.conv_strength_2_current(strength=value, **kwargs)
+        if value != self._strength_sp:
+            self._strength_sp = value
+            kwargs = {arg:controller.current_sp for arg,controller in self._strobj_kwargs.items()}
+            self.current_sp = self._strobj.conv_strength_2_current(strength=value, **kwargs)
 
     @property
     def strength_mon(self):
@@ -322,11 +456,12 @@ class PowerSupplyMA(_PSEpicsSync):
         for psname in self._psname:
             pvname = pvname.replace(psname, self._maname)
         #Callbacks for strength: _rb, ref_mon, _mon
-        if 'Current' in pvname:
+        if 'Current' in pvname :
             slot = ':'.join(pvname.split(':')[:2])
-            self.callback(slot + ':KL-RB', self.strength_mon, **kwargs)
-            self.callback(slot + ':KLRef-Mon', self.strength_mon, **kwargs)
-            self.callback(slot + ':KL-Mon', self.strength_mon, **kwargs)
+            if self._callback is not None:
+                self.callback(slot + ':KL-RB', self.strength_mon, **kwargs)
+                self.callback(slot + ':KLRef-Mon', self.strength_mon, **kwargs)
+                self.callback(slot + ':KL-Mon', self.strength_mon, **kwargs)
         super()._mycallback(pvname, value, **kwargs)
 
 
