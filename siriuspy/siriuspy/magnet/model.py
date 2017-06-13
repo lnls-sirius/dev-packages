@@ -93,7 +93,7 @@ class MagnetQuadTrim(Magnet):
     def get_kl(self, current_attr):
         brho = self._dipole.get_brho(current_attr=current_attr)
         infield_family = self._family.get_intfield(current_attr=current_attr)
-        infield_trim = self..get_intfield(current_attr=current_attr)
+        infield_trim = self.get_intfield(current_attr=current_attr)
         intfield = infield_family + infield_trim
         kl = -intfield / brho
         return kl
@@ -176,11 +176,11 @@ class MagnetDipole(Magnet):
                                    left=self._left, right=self._right)
         self._psmain.current_sp = current
 
-
     def get_brho(self, current_attr='current_mon'):
         energy = self.get_energy(current_attr=current_attr)
         brho = _util.beam_rigidity(energy)
         return brho
+
 
 
 class PowerSupplyMA(_PSEpicsSync):
@@ -199,8 +199,8 @@ class PowerSupplyMA(_PSEpicsSync):
                              vaca_prefix=vaca_prefix,
                              connection_timeout=connection_timeout)
 
-        kwargs = {arg:controller.current_sp for arg,controller in self._strobj_kwargs.items()}
-        self._strength_sp = self._strobj.conv_current_2_strength(**kwargs)
+        #kwargs = {arg:controller.current_sp for arg,controller in self._strobj_kwargs.items()}
+        #self._strength_sp = self._strobj.conv_current_2_strength(**kwargs)
 
 
     def _get_ma_controllers(self):
@@ -222,9 +222,9 @@ class PowerSupplyMA(_PSEpicsSync):
 
     @property
     def strength_sp(self):
-        return self._strength_sp
-        #kwargs = {arg:controller.current_sp for arg,controller in self._strobj_kwargs.items()}
-        #return self._strobj.conv_current_2_strength(**kwargs)
+        #return self._strength_sp
+        kwargs = {arg:controller.current_sp for arg,controller in self._strobj_kwargs.items()}
+        return self._strobj.conv_current_2_strength(**kwargs)
 
     @strength_sp.setter
     def strength_sp(self, value):
@@ -346,7 +346,6 @@ class PowerSupplyMA(_PSEpicsSync):
                                                        use_vaca=use_vaca,
                                                        vaca_prefix=vaca_prefix,
                                                        connection_timeout=connection_timeout)
-            #print(self.magfunc)
             if self._maname.subsection == 'Fam' or self.magfunc in ('quadrupole-skew', 'corrector-horizontal'):
                 self._strobj = _MAStrength(maname=self._maname)
                 self._strobj_kwargs = {'current':self._controllers[0],
