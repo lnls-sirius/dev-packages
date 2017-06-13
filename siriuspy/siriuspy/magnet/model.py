@@ -13,6 +13,9 @@ from siriuspy.magnet.data import MAStrengthDip as _MAStrengthDip
 from siriuspy.magnet.data import MAStrength as _MAStrength
 from siriuspy.magnet.data import MAStrengthTrim as _MAStrengthTrim
 
+from epics import PV as _PV
+import uuid as _uuid
+
 
 _connection_timeout = None
 
@@ -191,7 +194,7 @@ class PowerSupplyMA(_PSEpicsSync):
         self._maname = _SiriusPVName(maname)
         self._madata = _MAData(self._maname)
         self._psname = self._madata.psnames
-        super().__init__(psnames=self._get_ma_controllers(),
+        super().__init__(psnames=self._get_psnames(),
                          use_vaca=use_vaca,
                          vaca_prefix=vaca_prefix,
                          connection_timeout=connection_timeout)
@@ -203,7 +206,7 @@ class PowerSupplyMA(_PSEpicsSync):
         #self._strength_sp = self._strobj.conv_current_2_strength(**kwargs)
 
 
-    def _get_ma_controllers(self):
+    def _get_psnames(self):
         ''' Method to get controllers that'll be created for given magnet '''
         if self.magfunc == "dipole":
             if self._maname.section == "SI":
@@ -227,15 +230,31 @@ class PowerSupplyMA(_PSEpicsSync):
         return self._strobj.conv_current_2_strength(**kwargs)
 
     @strength_sp.setter
-    def strength_sp(self, value):
+    def strength_sp(self, value): #COMO SETAR strength DO TRIM
         if value != self._strength_sp:
             self._strength_sp = value
             kwargs = {arg:controller.current_sp for arg,controller in self._strobj_kwargs.items()}
             self.current_sp = self._strobj.conv_strength_2_current(strength=value, **kwargs)
 
     @property
+    def strength_rb(self):
+        kwargs = {arg:controller.current_sp for arg,controller in self._strobj_kwargs.items()}
+        if 'current_family' in kwargs:
+            kwargs['current_family'] = self.family_current_rb
+        return self._strobj.conv_current_2_strength(**kwargs)
+
+    @property
+    def strengthref_mon(self):
+        kwargs = {arg:controller.current_ref for arg,controller in self._strobj_kwargs.items()}
+        if 'current_family' in kwargs:
+            kwargs['current_family'] = self.family_currentref_mon
+        return self._strobj.conv_current_2_strength(**kwargs)
+
+    @property
     def strength_mon(self):
         kwargs = {arg:controller.current_load for arg,controller in self._strobj_kwargs.items()}
+        if 'current_family' in kwargs:
+            kwargs['current_family'] = self.family_current_mon
         return self._strobj.conv_current_2_strength(**kwargs)
 
     def _get_database(self, prefix=''):
@@ -279,9 +298,9 @@ class PowerSupplyMA(_PSEpicsSync):
 
         #Set strength values
         db[strength + '-SP']['value'] = self.strength_sp
-        #db[strength + '-RB']['value'] = self.strength_rb
-        #db[strength + 'Ref-Mon']['value'] = self.strengthref_mon
-        #db[strength + '-Mon']['value'] = self.strength_mon
+        db[strength + '-RB']['value'] = self.strength_rb
+        db[strength + 'Ref-Mon']['value'] = self.strengthref_mon
+        db[strength + '-Mon']['value'] = self.strength_mon
 
         prefixed_db = dict()
         for key, value in db.items():
@@ -294,45 +313,16 @@ class PowerSupplyMA(_PSEpicsSync):
         for psname in self._psname:
             pvname = pvname.replace(psname, self._maname)
         #Callbacks for strength: _rb, ref_mon, _mon
-        if 'Current' in pvname :
+        if self._callback is not None:
             slot = ':'.join(pvname.split(':')[:2])
-            if self._callback is not None:
-                self.callback(slot + ':KL-RB', self.strength_mon, **kwargs)
-                self.callback(slot + ':KLRef-Mon', self.strength_mon, **kwargs)
+            #Callbacks to update strngth PVs
+            if 'Current-RB' in pvname:
+                self.callback(slot + ':KL-RB', self.strength_rb, **kwargs)
+            elif 'CurrentRef-Mon' in pvname:
+                self.callback(slot + ':KLRef-Mon', self.strengthref_mon, **kwargs)
+            elif 'Current-Mon' in pvname:
                 self.callback(slot + ':KL-Mon', self.strength_mon, **kwargs)
         super()._mycallback(pvname, value, **kwargs)
-
-
-        # if 'CtrlMode-Mon' in pvname:
-        #     self._ctrlmode_mon = value
-        # elif 'OpMode-Sel' in pvname:
-        #     if self._opmode_sel != value:
-        #         self._set_opmode_sel(self._opmode_sel)
-        # elif 'PwrState-Sel' in pvname:
-        #     if self._pwrstate_sel != value:
-        #         self._set_pwrstate_sel(self._pwrstate_sel)
-        # elif 'WfmLoad-Sel' in pvname:
-        #     if self._wfmload_sel != value:
-        #         self._set_wfmload_sel(self._wfmload_sel)
-        # elif 'WfmLabel-SP' in pvname:
-        #     if self._wfmlabel_sp != value:
-        #         self._set_wfmlabel_sp(self._wfmlabel_sp)
-        # elif 'WfmData-SP' in pvname:
-        #     if self._wfmdata_sp != value:
-        #         self._set_wfmdata_sp(self._wfmdata_sp)
-        # elif 'Current-SP' in pvname:
-        #     if self._current_sp != value: #Value was not changed by the MA-IOC
-        #         self._set_current_sp(self._current_sp)
-        #
-        # if self.callback is not None and callback:
-        #     pfield = pvname.split(':')[-1]
-        #     slot = ':'.join(pvname.split(':')[:2])
-        #     if self._is_using_vaca:
-        #         slot = slot[4:]
-        #     if slot in ['SI-Fam:PS-B1B2-1', 'SI-Fam:PS-B1B2-2']:
-        #         self.callback('SI-Fam:PS-B1B2:' + pfield, value, **kwargs)
-        #     else:
-        #         self.callback(pvname, value, **kwargs)
 
     def _init_pwrsupply(self, use_vaca, vaca_prefix, connection_timeout):
         sector, dipole_maname = _MAStrength.get_dipole_sector_maname(maname=self._maname)
@@ -356,8 +346,34 @@ class PowerSupplyMA(_PSEpicsSync):
                 self._controller_family = _ControllerEpics(psname=family,
                                                            use_vaca=use_vaca,
                                                            vaca_prefix=vaca_prefix,
+                                                           callback=self._trim_callback,
                                                            connection_timeout=connection_timeout)
                 self._strobj = _MAStrengthTrim(maname=self._maname)
+
+                self.family_current_rb = self._controller_family.current_sp
+                self.family_currentref_mon = self._controller_family.current_ref
+                self.family_current_mon = self._controller_family.current_load
+
                 self._strobj_kwargs = {'current':self._controllers[0],
                                        'current_dipole':self._controller_dipole,
                                        'current_family':self._controller_family}
+
+    def _trim_callback(self, pvname, value, **kwargs):
+        """ Callback used for trim MAs to sync with related Fam MA """
+        send_callback = False
+        if 'Current-RB' in pvname:
+            self.family_current_rb = value
+            new_value = self.strength_rb
+            send_callback = True
+        elif 'CurrentRef-Mon' in pvname:
+            self.family_currentref_mon = value
+            new_value = self.strengthref_mon
+            send_callback = True
+        elif 'Current-Mon' in pvname:
+            self.family_current_mon = value
+            new_value = self.strength_mon
+            send_callback = True
+        #Updates strength
+        if send_callback:
+            pfield = pvname.split(':')[-1].replace("Current", "KL")
+            self.callback(self._maname + ':' + pfield, new_value, **kwargs)
