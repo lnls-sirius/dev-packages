@@ -17,332 +17,170 @@ from siriuspy.magnet.data import MAStrengthTrim as _MAStrengthTrim
 _connection_timeout = None
 
 
+class Magnet:
+
+    _magfuncs = {
+        'dipole' : {'type':'normal', 'harmonic':0},
+        'corrector-horizontal' : {'type':'normal', 'harmonic':0},
+        'corrector-vertical' : {'type':'skew', 'harmonic':0},
+        'quadrupole' : {'type':'normal', 'harmonic':1},
+        'quadrupole-skew' : {'type':'skew', 'harmonic':1},
+        'sextupole' : {'type':'normal', 'harmonic':2},
+    }
+
+    def __init__(self, magfunc,
+                       psupplies,
+                       left='linear',
+                       right='linear'):
+        self._magfunc = magfunc
+        self._psupplies = psupplies
+        self._left = left
+        self._right = right
+
+    def get_multipoles(self, current_attr='current_mon'):
+        msum = {}
+        for ps in self._psupplies:
+            current = getattr(ps, current_attr)
+            m = ps.psdata.excdata.interp_curr2mult(current)
+            msum = _mutil.sum_magnetic_multipoles(msum, m)
+        return msum
+
+    def get_intfield(self, current_attr='current_mon'):
+        m = self.get_multipoles(current_attr=current_attr)
+        mf = Magnet._magfuncs[self._magfunc]
+        intfield = m[mf['type']][mf['harmonic']]
+        return intfield
 
 
-# class Magnet:
-#
-#     _magfuncs = {
-#         'dipole' : {'type':'normal', 'harmonic':0},
-#         'corrector-horizontal' : {'type':'normal', 'harmonic':0},
-#         'corrector-vertical' : {'type':'skew', 'harmonic':0},
-#         'quadrupole' : {'type':'normal', 'harmonic':1},
-#         'quadrupole-skew' : {'type':'skew', 'harmonic':1},
-#         'sextupole' : {'type':'normal', 'harmonic':2},
-#     }
-#
-#     def __init__(self, magfunc,
-#                        psupplies,
-#                        left='linear',
-#                        right='linear'):
-#         self._magfunc = magfunc
-#         self._psupplies = psupplies
-#         self._left = left
-#         self._right = right
-#         self._psmain = None
-#         for ps
-#     def get_multipoles(self, current_attr='current_mon'):
-#         msum = {}
-#         for ps in self._pssupplies:
-#             current = getattr(ps, current_attr)
-#             m = ps.psdata.excdata.interp_curr2mult(current)
-#             msum = _mutil.sum_magnetic_multipoles(msum, m)
-#         return msum
-#
-#     def get_intfield(self, current_attr='current_mon'):
-#         m = self.get_multipoles(current_attr=current_attr)
-#         mf = Magnet._magfuncs[self._magfunc]
-#         intfield = m[mf['type']][mf['harmonic']]
-#         return intfield
-#
-#
-# class MagnetQuadFam(Magnet):
-#
-#     def __init__(self, maname, dipole, **kwargs):
-#         kwargs['magfunc'] = 'quadrupole'
-#         super().__init__(**kwargs)
-#         self._maname = _SiriusPVName(maname)
-#         self._dipole = dipole
-#
-#     def get_kl(self, current_attr):
-#         brho = self._dipole.get_brho(current_attr=current_attr)
-#         intfield = self.get_intfield(current_attr=current_attr)
-#         return -intfield/brho
-#
-#     def set_kl(self, kl):
-#
-#
-#
-#
-#
-# class MagnetDipole(Magnet):
-#
-#     _ref_angles = {
-#         'SI_BC': _math.radians(4.2966),
-#         'SI_B1': _math.radians(2.7553),
-#         'SI_B2': _math.radians(4.0964),
-#         'TS'   : _math.radians(5.3333),
-#         'BO'   : _math.radians(7.2000),
-#         'TB'   : _math.radians(15.000),
-#     }
-#
-#     def __init__(self, maname, **kwargs):
-#         kwargs['magfunc'] = 'dipole'
-#         super().__init__(**kwargs)
-#         self._maname = _SiriusPVName(maname)
-#         self._set_reference_dipole_data()
-#         self._psmain = self._psupplies[0]
-#
-#     def _set_reference_dipole_data(self):
-#         ang = MagnetDipole._ref_angles
-#         if self._maname.section == 'SI':
-#             self._ref_energy = 3.0 #[GeV]
-#             self._ref_brho = _util.beam_rigidity(self._ref_energy)
-#             self._ref_BL_BC =  - self._ref_brho * ang['SI_BC']
-#             self._ref_angle = ang['SI_B1'] + ang['SI_B2'] + ang['SI_BC']
-#             self._ref_BL = - self._ref_brho * self._ref_angle - self._ref_BL_BC
-#         elif self._maname.section == 'BO':
-#             self._ref_energy = 3.0 #[GeV]
-#             self._ref_brho = _util.beam_rigidity(self._ref_energy)
-#             self._ref_angle = ang['BO']
-#             self._ref_BL = - self._ref_brho * self._ref_angle
-#         elif self._maname.section == 'TS':
-#             self._ref_energy = 3.0 #[GeV]
-#             self._ref_brho = _util.beam_rigidity(self._ref_energy)
-#             self._ref_angle = ang['TS']
-#             self._ref_BL = - self._ref_brho * self._ref_angle
-#         elif self._maname.section == 'TB':
-#             self._ref_energy = 0.150 #[GeV]
-#             self._ref_brho = _util.beam_rigidity(self._ref_energy)
-#             self._ref_angle = ang['TB']
-#             self._ref_BL = - self._ref_brho * self._ref_angle
-#         else:
-#             raise NotImplementedError
-#
-#     def get_energy(self, current_attr='current_mon'):
-#         intfield = self.get_intfield(current_attr=current_attr)
-#         if self._maname.section == 'SI':
-#             energy = (self._ref_energy / self._ref_brho) * (- intfield - self._ref_BL_BC) / self._ref_angle
-#         else:
-#             energy = (self._ref_energy / self._ref_brho) * (-intfield) / self._ref_angle
-#         return energy
-#
-#     def set_energy(self, energy):
-#         if self._section == 'SI':
-#             intfield = - self._ref_angle * (self._ref_brho / self._ref_energy) * energy - self._ref_BL_BC
-#         else:
-#             intfield = - self._ref_angle * (self._ref_brho / self._ref_energy) * energy
-#         mf = Magnet._magfuncs[self._magfunc]
-#         current = self._psmain.psdata.excdata.interp_mult2curr(self, intfield, mf['harmonic'], mf['type'], left=self._left, right=self._right)
-#         self._psmain.current_sp = current
-#
-#     def get_brho(self, current_attr='current_mon'):
-#         energy = self.get_energy(current_attr=current_attr)
-#         brho = _util.beam_rigidity(energy)
-#         return brho
+class MagnetQuad(Magnet):
+
+    def __init__(self, maname, dipole, **kwargs):
+        kwargs['magfunc'] = 'quadrupole'
+        super().__init__(**kwargs)
+        self._maname = _SiriusPVName(maname)
+        self._dipole = dipole
+        self._psmain = self._psupplies[0]
+        self._kl = self.get_kl(current_attr='current_sp')
+
+    def get_kl(self, current_attr):
+        brho = self._dipole.get_brho(current_attr=current_attr)
+        intfield = self.get_intfield(current_attr=current_attr)
+        kl = -intfield / brho
+        return kl
+
+    def set_kl(self, kl):
+        self._kl = kl
+        brho = self._dipole.get_brho(current_attr='current_sp')
+        intfield = -kl / brho
+        mf = Magnet._magfuncs[self._magfunc]
+        interp_mult2curr = self._psmain.psdata.excdata.interp_mult2curr
+        current = interp_mult2curr(intfield, mf['harmonic'], mf['type'],
+                                   left=self._left, right=self._right)
+        self._psmain.current_sp = current
 
 
+class MagnetQuadTrim(Magnet):
+
+    def __init__(self, maname, dipole, family, **kwargs):
+        kwargs['magfunc'] = 'quadrupole'
+        super().__init__(**kwargs)
+        self._maname = _SiriusPVName(maname)
+        self._dipole = dipole
+        self._family = family
+        self._psmain = self._psupplies[0]
+        self._kl = self.get_kl(current_attr='current_sp')
+
+    def get_kl(self, current_attr):
+        brho = self._dipole.get_brho(current_attr=current_attr)
+        infield_family = self._family.get_intfield(current_attr=current_attr)
+        infield_trim = self..get_intfield(current_attr=current_attr)
+        intfield = infield_family + infield_trim
+        kl = -intfield / brho
+        return kl
+
+    def set_kl(self, kl):
+        self._kl = kl
+        brho = self._dipole.get_brho(current_attr='current_sp')
+        intfield = -kl / brho
+        infield_family = self._family.get_intfield(current_attr='current_sp')
+        intfield_trim = intfield - intfield_family
+        mf = Magnet._magfuncs[self._magfunc]
+        interp_mult2curr = self._psmain.psdata.excdata.interp_mult2curr
+        current = interp_mult2curr(intfield_trim, mf['harmonic'], mf['type'],
+                                   left=self._left, right=self._right)
+        self._psmain.current_sp = current
 
 
+class MagnetDipole(Magnet):
+
+    _ref_angles = {
+        'SI_BC': _math.radians(4.2966),
+        'SI_B1': _math.radians(2.7553),
+        'SI_B2': _math.radians(4.0964),
+        'TS'   : _math.radians(5.3333),
+        'BO'   : _math.radians(7.2000),
+        'TB'   : _math.radians(15.000),
+    }
+
+    def __init__(self, maname, **kwargs):
+        kwargs['magfunc'] = 'dipole'
+        super().__init__(**kwargs)
+        self._maname = _SiriusPVName(maname)
+        self._set_reference_dipole_data()
+        self._psmain = self._psupplies[0]
+        self._energy = self._get_energy('current_sp')
+
+    def _set_reference_dipole_data(self):
+        ang = MagnetDipole._ref_angles
+        if self._maname.section == 'SI':
+            self._ref_energy = 3.0 #[GeV]
+            self._ref_brho = _util.beam_rigidity(self._ref_energy)
+            self._ref_BL_BC =  - self._ref_brho * ang['SI_BC']
+            self._ref_angle = ang['SI_B1'] + ang['SI_B2'] + ang['SI_BC']
+            self._ref_BL = - self._ref_brho * self._ref_angle - self._ref_BL_BC
+        elif self._maname.section == 'BO':
+            self._ref_energy = 3.0 #[GeV]
+            self._ref_brho = _util.beam_rigidity(self._ref_energy)
+            self._ref_angle = ang['BO']
+            self._ref_BL = - self._ref_brho * self._ref_angle
+        elif self._maname.section == 'TS':
+            self._ref_energy = 3.0 #[GeV]
+            self._ref_brho = _util.beam_rigidity(self._ref_energy)
+            self._ref_angle = ang['TS']
+            self._ref_BL = - self._ref_brho * self._ref_angle
+        elif self._maname.section == 'TB':
+            self._ref_energy = 0.150 #[GeV]
+            self._ref_brho = _util.beam_rigidity(self._ref_energy)
+            self._ref_angle = ang['TB']
+            self._ref_BL = - self._ref_brho * self._ref_angle
+        else:
+            raise NotImplementedError
+
+    def get_energy(self, current_attr='current_mon'):
+        intfield = self.get_intfield(current_attr=current_attr)
+        if self._maname.section == 'SI':
+            energy = (self._ref_energy / self._ref_brho) * (- intfield - self._ref_BL_BC) / self._ref_angle
+        else:
+            energy = (self._ref_energy / self._ref_brho) * (-intfield) / self._ref_angle
+        return energy
+
+    def set_energy(self, energy):
+        self._energy = energy
+        if self._maname.section == 'SI':
+            intfield = - self._ref_angle * (self._ref_brho / self._ref_energy) * energy - self._ref_BL_BC
+        else:
+            intfield = - self._ref_angle * (self._ref_brho / self._ref_energy) * energy
+        mf = Magnet._magfuncs[self._magfunc]
+        interp_mult2curr = self._psmain.psdata.excdata.interp_mult2curr
+        current = interp_mult2curr(intfield, mf['harmonic'], mf['type'],
+                                   left=self._left, right=self._right)
+        self._psmain.current_sp = current
 
 
-# class _Magnet(metaclass=_ABCMeta):
-#
-#     _dipoles_maname = {
-#         'SI':'SI-Fam:MA-B1B2',
-#         'TS':'TS-Fam:MA-B',
-#         'BO':'BO-Fam:MA-B',
-#         'TB':'TB-Fam:MA-B',
-#     }
-#
-#     @staticmethod
-#     def get_dipole_sector_maname(section=None, maname=None):
-#         if section is None:
-#             pvname = _SiriusPVName(maname)
-#             section = pvname.section
-#         return section, _Magnet._dipoles_maname[section]
-#
-#     @property
-#     def multipoles(self):
-#         return self._conv_currents_2_multipoles('current_mon')
-#
-#     @property
-#     def multipoles_sp(self):
-#         return self._conv_currents_2_multipoles('current_sp')
-#
-#     @property
-#     def strength(self):
-#         return self._conv_multipoles_2_strength(self.multipoles, 'current_mon', self.brho)
-#
-#     @property
-#     def strength_sp(self):
-#         return self._conv_multipoles_2_strength(self.multipoles_sp, 'current_sp', self.brho_sp)
-#
-#     @property
-#     def brho(self):
-#         return self._get_brho()
-#
-#     @property
-#     def brho_sp(self):
-#         return self._get_brho_sp()
-#
-#     @property
-#     def currents(self):
-#         return self._get_currents('current_mon')
-#
-#     @property
-#     def currents_sp(self):
-#         return self._get_currents('current_sp')
-#
-#     @_abstractmethod
-#     def _get_currents(self, current_attr):
-#         pass
-#
-#     @_abstractmethod
-#     def _conv_currents_2_multipoles(self, current_attr):
-#         pass
-#
-#     @_abstractmethod
-#     def _conv_multipoles_2_strength(self, multipoles, brho):
-#         pass
-#
-#     @_abstractmethod
-#     def _get_brho(self):
-#         pass
-#
-#     @_abstractmethod
-#     def _get_brho_sp(self):
-#         pass
-#
-#
-# class MagnetDipole(_MAData, _Magnet):
-#
-#     _ref_angles = {
-#         'SI_BC': _math.radians(4.2966),
-#         'SI_B1': _math.radians(2.7553),
-#         'SI_B2': _math.radians(4.0964),
-#         'TS'   : _math.radians(5.3333),
-#         'BO'   : _math.radians(7.2000),
-#         'TB'   : _math.radians(15.000),
-#     }
-#
-#     def __init__(self, maname, psupplies=None,
-#                        left='linear',
-#                        right='linear'):
-#         _MAData.__init__(self, maname=maname)
-#         self._left = left
-#         self._right = right
-#         self._psupplies = [_PowerSupply(psname=psname) for psname in self.psnames] if psupplies is None else psupplies
-#         self._set_reference_dipole_data()
-#         self._m_type = self.excdata(self.psnames[0]).main_multipole_type
-#         self._m_harm = self.excdata(self.psnames[0]).main_multipole_harmonic
-#
-#     def _set_reference_dipole_data(self):
-#         ang = MagnetDipole._ref_angles
-#         if self._maname.section == 'SI':
-#             self._ref_energy = 3.0 #[GeV]
-#             self._ref_brho = _util.beam_rigidity(self._ref_energy)
-#             self._ref_BL_BC =  - self._ref_brho * ang['SI_BC']
-#             self._ref_angle = ang['SI_B1'] + ang['SI_B2'] + ang['SI_BC']
-#             self._ref_BL = - self._ref_brho * self._ref_angle - self._ref_BL_BC
-#         elif self._maname.section == 'BO':
-#             self._ref_energy = 3.0 #[GeV]
-#             self._ref_brho = _util.beam_rigidity(self._ref_energy)
-#             self._ref_angle = ang['BO']
-#             self._ref_BL = - self._ref_brho * self._ref_angle
-#         elif self._maname.section == 'TS':
-#             self._ref_energy = 3.0 #[GeV]
-#             self._ref_brho = _util.beam_rigidity(self._ref_energy)
-#             self._ref_angle = ang['TS']
-#             self._ref_BL = - self._ref_brho * self._ref_angle
-#         elif self._maname.section == 'TB':
-#             self._ref_energy = 0.150 #[GeV]
-#             self._ref_brho = _util.beam_rigidity(self._ref_energy)
-#             self._ref_angle = ang['TB']
-#             self._ref_BL = - self._ref_brho * self._ref_angle
-#         else:
-#             raise NotImplementedError
-#
-#     def _get_currents(self, current_attr):
-#         return {ps.psname:getattr(ps, current_attr) for ps in self._psupplies}
-#
-#     def _conv_currents_2_multipoles(self, current_attr):
-#         m_sum = {}
-#         for ps in self._psupplies:
-#             m = ps.psdata.excdata.interp_curr2mult(getattr(ps, current_attr),
-#                                             left=self._left, right=self._right)
-#             m_sum = _mutil.sum_magnetic_multipoles(m_sum, m)
-#         return m_sum
-#
-#     def _conv_multipoles_2_strength(self, multipoles, brho=None):
-#         intfield = multipoles[self._m_type][self._m_harm]
-#         if self._maname.section == 'SI':
-#             strength = (self._ref_energy / self._ref_brho) * (- intfield - self._ref_BL_BC) / self._ref_angle
-#         else:
-#             strength = (self._ref_energy / self._ref_brho) * (-intfield) / self._ref_angle
-#         return strength
-#
-#     def _get_brho(self):
-#         m = self._conv_currents_2_multipoles('current_mon')
-#         energy = self._conv_multipoles_2_strength(m, brho=None)
-#         #energy = self.strength
-#         brho = _util.beam_rigidity(energy)
-#         return brho
-#
-#     def _get_brho_sp(self):
-#         m = self._conv_currents_2_multipoles('current_sp')
-#         energy = self._conv_multipoles_2_strength(m, brho=None)
-#         #energy = self.strength_sp
-#         brho = _util.beam_rigidity(energy)
-#         return brho
-#
-#
-# _Magnet.register(MagnetDipole)
-#
-#
-# class Magnet(_MAData, _Magnet):
-#
-#     def __init__(self, maname, psupplies=None,
-#                                dipole=None,
-#                                left='linear',
-#                                right='linear'):
-#         _MAData.__init__(self, maname=maname)
-#         self._left = left
-#         self._right = right
-#         if psupplies is None:
-#             # creates simulator power supply
-#             self._psupplies = [_PowerSupply(psname=psname) for psname in self.psnames]
-#             maname_dipole = _Magnet.get_dipole_sector_maname(maname=maname)
-#             self._dipole = MagnetDipole(maname=maname_dipole, psupplies=None, left=left, right=right)
-#         else:
-#             self._psupplies = psupplies
-#             self._dipole = dipole
-#         self._m_type = self.excdata(self.psnames[0]).main_multipole_type
-#         self._m_harm = self.excdata(self.psnames[0]).main_multipole_harmonic
-#
-#     def _get_currents(self, current_attr):
-#         return {ps.psname:getattr(ps, current_attr) for ps in self._psupplies}
-#
-#     def _conv_currents_2_multipoles(self, current_attr):
-#         m_sum = {}
-#         for ps in self._psupplies:
-#             m = ps.psdata.excdata.interp_curr2mult(getattr(ps, current_attr),
-#                                             left=self._left, right=self._right)
-#             m_sum = _mutil.sum_magnetic_multipoles(m_sum, m)
-#         return m_sum
-#
-#     def _conv_multipoles_2_strength(self, multipoles, brho):
-#         intfield = multipoles[self._m_type][self._m_harm]
-#         return -intfield / brho
-#
-#     def _get_brho(self):
-#         return self._dipole.brho
-#
-#     def _get_brho_sp(self):
-#         return self._dipole.brho_sp
-#
-# _Magnet.register(Magnet)
-#
-
+    def get_brho(self, current_attr='current_mon'):
+        energy = self.get_energy(current_attr=current_attr)
+        brho = _util.beam_rigidity(energy)
+        return brho
 
 
 class PowerSupplyMA(_PSEpicsSync):
