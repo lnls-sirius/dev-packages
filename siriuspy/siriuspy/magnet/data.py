@@ -13,7 +13,7 @@ from siriuspy.csdevice.pwrsupply import get_ma_propty_database as _get_ma_propty
 class MAData:
 
     def __init__(self, maname):
-        self._maname = maname
+        self._maname = _SiriusPVName(maname)
         self._splims_unit = _MASearch.get_splims_unit()
         psnames = _MASearch.conv_maname_2_psnames(self._maname)
         self._propty_databases = _get_ma_propty_database(self._maname)
@@ -27,7 +27,11 @@ class MAData:
 
     @property
     def splims_unit(self):
-        return self.splims_unit
+        return self._splims_unit
+
+    @property
+    def splims(self):
+        return _MASearch.get_splim(self._maname)
 
     @property
     def psnames(self):
@@ -171,6 +175,7 @@ class MAStrength(MAStrengthBase):
         m_harm = self._excdata.main_multipole_harmonic
         intfield = multipoles[m_type][m_harm]
         strength = - intfield / brho
+        print(brho, intfield)
         return strength
 
     def conv_strength_2_current(self, strength, current_dipole, **kwargs):
@@ -217,72 +222,3 @@ class MAStrengthTrim(MAStrengthBase):
         current = self._excdata.interp_mult2curr(intfield, harmonic=m_harm, multipole_type=m_type)
         return current
 MAStrengthBase.register(MAStrengthTrim)
-
-
-
-#
-# import siriuspy.servweb as _web
-# import siriuspy.util as _util
-# from siriuspy.csdevice.pwrsupply import MASetPointLims as _SPLims
-#
-# _timeout = None
-#
-# class _MagData:
-#
-#     def __init__(self, timeout=_timeout):
-#
-#         self._splims = _SPLims(timeout=_timeout)
-#
-#     def conv_mag2ps(self, magname):
-#         return self._splims.conv_mag2ps(magname)
-#
-#     def conv_ps2mag(self, psname):
-#         return self._splims.conv_ps2mag(magname)
-#
-#
-#
-# _magdata = None
-# def _get_magdata():
-#     # encapsulating _psdata within a function avoid creating the global object
-#     # (which is time consuming) at module load time.
-#     global _magdata
-#     if _magdata is None:
-#         _magdata = _MagData()
-#     return _magdata
-#
-#
-# # PSDATA API
-# # ==========
-#
-# def server_online():
-#     """Return True/False if Sirius web server is online."""
-#     return _web.server_online()
-#
-# def get_ma_names():
-#     """Return a name list of magnets"""
-#     magdata = _get_magdata()
-#     return tuple(magdata._splims.mag2ps_dict.keys())
-#
-# def get_ps_names():
-#     """Return a name list of power supplies"""
-#     magdata = _get_magdata()
-#     return tuple(magdata._splims.magps_sp_limits_dict.keys())
-#
-# def get_ma_unit():
-#     """Return the power supplies' unit for the currents."""
-#     magdata = _get_magdata()
-#     return magdata._splims.setpoint_unit
-#
-# def get_ma_setpoint_limits(magps=None):
-#     """Return a dictionary with setpoint limits of a given power supply name of
-#     type."""
-#     magdata = _get_magdata()
-#     return magdata._splims.magps_sp_limits_dict[magps]
-#
-# def conv_maname_2_psname(magname):
-#     magdata = _get_magdata()
-#     return magdata.conv_mag2ps(magname)
-#
-# def conv_psname_2_maname(psname):
-#     magdata = _get_magdata()
-#     return magdata.conv_ps2mag2(psname)

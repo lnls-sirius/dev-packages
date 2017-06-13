@@ -891,7 +891,6 @@ class ControllerSim(Controller):
             self._waveform.save_to_file(filename=fname+'.txt')
         except PermissionError:
             raise Exception('Could not write file "' + fname+'.txt' + '"!')
-
 Controller.register(ControllerSim)
 
 
@@ -1167,5 +1166,4 @@ class ControllerEpics(Controller):
         self._pvs['WfmData-SP'].add_callback(callback=self._mycallback, index=uuid)
         self._pvs['WfmData-RB'].add_callback(callback=self._mycallback, index=uuid)
         self._pvs['WfmSave-Cmd'].add_callback(callback=self._mycallback, index=uuid)
-
 Controller.register(ControllerEpics)

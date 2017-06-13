@@ -42,6 +42,10 @@ class PowerSupplyLinac(object):
         return self._psdata.pstype
 
     @property
+    def psdata(self):
+        return self._psdata
+
+    @property
     def callback(self):
         return self._callback
 
@@ -97,7 +101,6 @@ class PowerSupplyLinac(object):
         if value != self.current_rb or value != self._current_sp:
             self._current_sp = value
             self._set_current_sp(value)
-
 
     @property
     def current_mon(self):
