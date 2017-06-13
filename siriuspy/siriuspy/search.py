@@ -1,6 +1,7 @@
 import copy as _copy
 from siriuspy import util as _util
 from siriuspy.namesys import Filter as _Filter
+from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy import servweb as _web
 from siriuspy.magnet.excdata import ExcitationData as _ExcitationData
 
@@ -203,10 +204,16 @@ class MASearch:
                 magnet, *ps_names = datum
                 MASearch._manames_list.append(magnet)
                 MASearch._maname_2_psnames_dict[magnet] = tuple(ps_names)
-                famname = magnet.replace('MA-','PS-')
-                if 'Fam' not in magnet and famname in ps_names:
-                    ps_names.remove(famname)
-                    MASearch._maname_2_trim_dict[famname.replace('PS-','MA-')] = tuple(ps_names)
+                if 'Fam' not in magnet:
+                    famname = _SiriusPVName(magnet)
+                    famname = famname.replace(famname.subsection, 'Fam').replace('MA-','PS-')
+                    if '-Fam:PS-Q' in famname and famname in ps_names:
+                        ps_names.remove(famname)
+                        maname = famname.replace('PS-','MA-')
+                        if maname not in MASearch._maname_2_trim_dict:
+                            MASearch._maname_2_trim_dict[maname] = tuple(ps_names)
+                        else:
+                            MASearch._maname_2_trim_dict[maname] += tuple(ps_names)
         else:
             raise Exception('could not read magnet-excitation-ps from web server!')
 
