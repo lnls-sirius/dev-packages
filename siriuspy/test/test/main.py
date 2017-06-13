@@ -14,12 +14,13 @@ __version__ = _pvs.__version__
 
 class App:
 
+    ps_devices = _pvs.get_ps_devices()
     pvs_database = _pvs.get_database()
 
     def __init__(self,driver):
         self._driver = driver
-        for psname in _pvs.ps:
-            _pvs.ps[psname].callback = self._mycallback
+        for psname in _pvs.ps_devices:
+            _pvs.ps_devices[psname].callback = self._mycallback
 
     @property
     def driver(self):
@@ -29,25 +30,27 @@ class App:
         _time.sleep(interval)
 
     def read(self, reason):
-        psname, prop = reason.split(':')
+        '''psname, prop = reason.split(':')
         if 'Current-SP' in prop:
             return _pvs.ps[psname].current_sp
         elif 'Current-Mon' in prop:
-            return _pvs.ps[psname].current_mon
+            return _pvs.ps[psname].current_mon'''
         return None
 
     def write(self, reason, value):
-        print('write ', reason, value)
-        psname, propty = reason.split(':')
+        #print('write ', reason, value)
+        propty = reason.split(':')[-1]
+        psname = ':'.join(reason.split(':')[:2])
+        print(psname)
         ps_propty = propty.replace('-','_').lower()
-        setattr(_pvs.ps[psname], ps_propty, value)
-        sp = getattr(_pvs.ps[psname], ps_propty)
-        self._driver.setParam(reason, sp)
+        setattr(_pvs.ps_devices[psname], ps_propty, value)
+        self._driver.setParam(reason, value)
+        self._driver.updatePVs()
         return True
 
     def _mycallback(self, pvname, value, **kwargs):
-        print('mycallback ', pvname, value)
-        _, reason = pvname.split('Fam:')
+        reason = pvname
+        print(reason)
         prev_value = self._driver.getParam(reason)
         if value != prev_value:
             self._driver.setParam(reason, value)

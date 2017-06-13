@@ -174,13 +174,26 @@ class PowerSupplyMA(_PSEpicsSync):
         self._maname = _SiriusPVName(maname)
         self._madata = _MAData(self._maname)
         self._psname = self._madata.psnames
-        super().__init__(psnames=self._psname,
+        super().__init__(psnames=self._get_ma_controllers(),
                          use_vaca=use_vaca,
                          vaca_prefix=vaca_prefix,
                          connection_timeout=connection_timeout)
         self._init_pwrsupply(use_vaca=use_vaca,
                              vaca_prefix=vaca_prefix,
                              connection_timeout=connection_timeout)
+
+    def _get_ma_controllers(self):
+        ''' Method to get controllers that'll be created for given magnet '''
+        if self.magfunc == "dipole":
+            if self._maname.section == "SI":
+                return ["SI-Fam:PS-B1B2-1", "SI-Fam:PS-B1B2-2"]
+            elif self._maname.section == "BO":
+                return ["BO-Fam:PS-B-1", "BO-Fam:PS-B-2"]
+            else:
+                raise NotImplementedError
+        else:
+            return [self._maname.replace(':MA', ':PS')]
+
 
     @property
     def magfunc(self):
@@ -195,7 +208,7 @@ class PowerSupplyMA(_PSEpicsSync):
     @strength_sp.setter
     def strength_sp(self, value):
         kwargs = {arg:controller.current_sp for arg,controller in self._strobj_kwargs.items()}
-        self.current_sp = self._strobj.conv_strength_2_current(value, **kwargs)
+        self.current_sp = self._strobj.conv_strength_2_current(strength=value, **kwargs)
 
     @property
     def strength_mon(self):
@@ -257,7 +270,14 @@ class PowerSupplyMA(_PSEpicsSync):
         #print('[PS] [callback] ', pvname, value)
         for psname in self._psname:
             pvname = pvname.replace(psname, self._maname)
+        #Callbacks for strength: _rb, ref_mon, _mon
+        if 'Current' in pvname:
+            slot = ':'.join(pvname.split(':')[:2])
+            self.callback(slot + ':KL-RB', self.strength_mon, **kwargs)
+            self.callback(slot + ':KLRef-Mon', self.strength_mon, **kwargs)
+            self.callback(slot + ':KL-Mon', self.strength_mon, **kwargs)
         super()._mycallback(pvname, value, **kwargs)
+
 
         # if 'CtrlMode-Mon' in pvname:
         #     self._ctrlmode_mon = value
@@ -292,36 +312,36 @@ class PowerSupplyMA(_PSEpicsSync):
 
 
 
-        def _init_pwrsupply_dipole(self, dipole_maname, use_vaca, vaca_prefix):
-            self._controller = _ControllerEpics(psname=self._psname[0],
-                                          connection_timeout=None,
-                                          use_vaca=use_vaca,
-                                          vaca_prefix=vaca_prefix)
-            self._strobj = _MAStrengthDip(maname=dipole_maname)
-            self._strobj_kwargs = {'current':self._controller}
+    def _init_pwrsupply_dipole(self, dipole_maname, use_vaca, vaca_prefix):
+        self._controller = _ControllerEpics(psname=self._psname[0],
+                                      connection_timeout=None,
+                                      use_vaca=use_vaca,
+                                      vaca_prefix=vaca_prefix)
+        self._strobj = _MAStrengthDip(maname=dipole_maname)
+        self._strobj_kwargs = {'current':self._controller}
 
-        def _init_pwrsupply_fam(self, dipole_maname, use_vaca, vaca_prefix):
-            self._init_pwrsupply_dipole(dipole_maname, use_vaca, vaca_prefix)
-            self._controller_dipole = self._controller
-            #self._strobj_dipole = self._strobj
-            self._controller = _ControllerEpics(psname=self._psname[0],
-                                                connection_timeout=None,
-                                                use_vaca=use_vaca,
-                                                vaca_prefix=vaca_prefix)
-            self._strobj = _MAStrength(maname=self._maname)
-            self._strobj_kwargs = {'current':self._controller, 'current_dipole':self._controller_dipole}
+    def _init_pwrsupply_fam(self, dipole_maname, use_vaca, vaca_prefix):
+        self._init_pwrsupply_dipole(dipole_maname, use_vaca, vaca_prefix)
+        self._controller_dipole = self._controller
+        #self._strobj_dipole = self._strobj
+        self._controller = _ControllerEpics(psname=self._psname[0],
+                                            connection_timeout=None,
+                                            use_vaca=use_vaca,
+                                            vaca_prefix=vaca_prefix)
+        self._strobj = _MAStrength(maname=self._maname)
+        self._strobj_kwargs = {'current':self._controller, 'current_dipole':self._controller_dipole}
 
-        def _init_pwrsupply_trim(self, dipole_name, use_vaca, vaca_prefix):
-            self._init_pwrsupply_fam(dipole_name=dipole_name, use_vaca=use_vaca, vaca_prefix=vaca_prefix)
-            self._ps_family = self._ps
-            pvname = _SiriusPVName(self._psname[0])
-            pstrim = pvname.replace(pvname.subsection, 'Fam')
-            self._controller = _ControllerEpics(psname=pstrim,
-                                          connection_timeout=None,
-                                          use_vaca=use_vaca,
-                                          vaca_prefix=vaca_prefix)
-            self._strobj = MAStrengthTrim(maname=self._maname)
-            self._strobj_kwargs = {'current':self._controller, 'current_dipole':self._controller_dipole, 'current_family':self._controller_family}
+    def _init_pwrsupply_trim(self, dipole_name, use_vaca, vaca_prefix):
+        self._init_pwrsupply_fam(dipole_name=dipole_name, use_vaca=use_vaca, vaca_prefix=vaca_prefix)
+        self._ps_family = self._ps
+        pvname = _SiriusPVName(self._psname[0])
+        pstrim = pvname.replace(pvname.subsection, 'Fam')
+        self._controller = _ControllerEpics(psname=pstrim,
+                                      connection_timeout=None,
+                                      use_vaca=use_vaca,
+                                      vaca_prefix=vaca_prefix)
+        self._strobj = MAStrengthTrim(maname=self._maname)
+        self._strobj_kwargs = {'current':self._controller, 'current_dipole':self._controller_dipole, 'current_family':self._controller_family}
 
     def _init_pwrsupply(self, use_vaca, vaca_prefix, connection_timeout):
         sector, dipole_maname = _MAStrength.get_dipole_sector_maname(maname=self._maname)
@@ -335,7 +355,7 @@ class PowerSupplyMA(_PSEpicsSync):
                                                        use_vaca=use_vaca,
                                                        vaca_prefix=vaca_prefix,
                                                        connection_timeout=connection_timeout)
-            print(self.magfunc)
+            #print(self.magfunc)
             if self._maname.subsection == 'Fam' or self.magfunc in ('quadrupole-skew', 'corrector-horizontal'):
                 self._strobj = _MAStrength(maname=self._maname)
                 self._strobj_kwargs = {'current':self._controllers[0],

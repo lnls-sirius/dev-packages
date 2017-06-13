@@ -1,26 +1,39 @@
 from siriuspy.pwrsupply import PowerSupply
 from siriuspy.pwrsupply import ControllerSim
 from siriuspy import envars
+from siriuspy.search import PSSearch as _PSSearch
 
-_prefix = envars.vaca_prefix + 'SI-Fam:'
+_prefix = envars.vaca_prefix
 
 
-psnames = ('PS-B1B2-1','PS-B1B2-2')
-ps = {}
-for psname in psnames:
-    c = ControllerSim(current_min=0, current_max=100, psname=psname)
-    ps[psname] = PowerSupply(psname='SI-Fam:' + psname, controller=c)
-
+ps_devices = None
 
 with open('VERSION','r') as _f:
     __version__ = _f.read().strip()
 
+def get_ps_devices():
+    ''' Create/Returns PowerSupplyMA objects for each magnet. '''
+    global ps_devices
+    if ps_devices is None:
+        ps_devices = {}
+        #Create filter, only getting Fam Quads
+        filters = []
+        #Get magnets
+        pwr_supplies = _PSSearch.get_psnames()
+        #Create objects that'll handle the magnets
+        for ps in pwr_supplies:
+            ps_devices[ps] = PowerSupply(psname=ps)
+
+    return ps_devices
+
 def get_database():
 
+    global ps_devices
+
     db = {}
-    for psname in psnames:
-        ps_db = ps[psname].database
+    for psname in ps_devices:
+        ps_db = ps_devices[psname].database
         props = list(ps_db.keys())
         for i in range(len(props)):
-            db[psname+':'+props[i]] = ps_db[props[i]]
+            db[psname + ':' + props[i]] = ps_db[props[i]]
     return {_prefix:db}
