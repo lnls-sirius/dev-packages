@@ -20,6 +20,20 @@ _connection_timeout = None
 
 # class _Magnet(metaclass=_ABCMeta):
 #
+#     _dipoles_maname = {
+#         'SI':'SI-Fam:MA-B1B2',
+#         'TS':'TS-Fam:MA-B',
+#         'BO':'BO-Fam:MA-B',
+#         'TB':'TB-Fam:MA-B',
+#     }
+#
+#     @staticmethod
+#     def get_dipole_sector_maname(section=None, maname=None):
+#         if section is None:
+#             pvname = _SiriusPVName(maname)
+#             section = pvname.section
+#         return section, _Magnet._dipoles_maname[section]
+#
 #     @property
 #     def multipoles(self):
 #         return self._conv_currents_2_multipoles('current_mon')
@@ -30,11 +44,11 @@ _connection_timeout = None
 #
 #     @property
 #     def strength(self):
-#         return self._conv_multipoles_2_strength(self.multipoles)
+#         return self._conv_multipoles_2_strength(self.multipoles, 'current_mon', self.brho)
 #
 #     @property
 #     def strength_sp(self):
-#         return self._conv_multipoles_2_strength(self.multipoles_sp)
+#         return self._conv_multipoles_2_strength(self.multipoles_sp, 'current_sp', self.brho_sp)
 #
 #     @property
 #     def brho(self):
@@ -61,7 +75,7 @@ _connection_timeout = None
 #         pass
 #
 #     @_abstractmethod
-#     def _conv_multipoles_2_strength(self, multipoles):
+#     def _conv_multipoles_2_strength(self, multipoles, brho):
 #         pass
 #
 #     @_abstractmethod
@@ -72,18 +86,6 @@ _connection_timeout = None
 #     def _get_brho_sp(self):
 #         pass
 #
-#
-# class Magnet(_MAData, _Magnet):
-#
-#     def __init__(self, maname, psupplies=None,
-#                                dipole=None,
-#             q                   left='linear',
-#                                right='linear'):
-#        _MAData.__init__(self, maname=maname)
-#        self._left = left
-#        self._right = right
-#        self._psupplies = [_PowerSupply(psname=psname) for psname in self.psnames] if psupplies is None else psupplies
-#        self._set_reference_dipole_data()
 #
 # class MagnetDipole(_MAData, _Magnet):
 #
@@ -104,6 +106,8 @@ _connection_timeout = None
 #         self._right = right
 #         self._psupplies = [_PowerSupply(psname=psname) for psname in self.psnames] if psupplies is None else psupplies
 #         self._set_reference_dipole_data()
+#         self._m_type = self.excdata(self.psnames[0]).main_multipole_type
+#         self._m_harm = self.excdata(self.psnames[0]).main_multipole_harmonic
 #
 #     def _set_reference_dipole_data(self):
 #         ang = MagnetDipole._ref_angles
@@ -142,9 +146,8 @@ _connection_timeout = None
 #             m_sum = _mutil.sum_magnetic_multipoles(m_sum, m)
 #         return m_sum
 #
-#     def _conv_multipoles_2_strength(self, multipoles):
-#         m_type = 'normal'; m_harm = 0
-#         intfield = multipoles[m_type][m_harm]
+#     def _conv_multipoles_2_strength(self, multipoles, brho=None):
+#         intfield = multipoles[self._m_type][self._m_harm]
 #         if self._maname.section == 'SI':
 #             strength = (self._ref_energy / self._ref_brho) * (- intfield - self._ref_BL_BC) / self._ref_angle
 #         else:
@@ -152,18 +155,67 @@ _connection_timeout = None
 #         return strength
 #
 #     def _get_brho(self):
-#         energy = self.strength
+#         m = self._conv_currents_2_multipoles('current_mon')
+#         energy = self._conv_multipoles_2_strength(m, brho=None)
+#         #energy = self.strength
 #         brho = _util.beam_rigidity(energy)
 #         return brho
 #
 #     def _get_brho_sp(self):
-#         energy = self.strength_sp
+#         m = self._conv_currents_2_multipoles('current_sp')
+#         energy = self._conv_multipoles_2_strength(m, brho=None)
+#         #energy = self.strength_sp
 #         brho = _util.beam_rigidity(energy)
 #         return brho
 #
 #
 # _Magnet.register(MagnetDipole)
 #
+#
+# class Magnet(_MAData, _Magnet):
+#
+#     def __init__(self, maname, psupplies=None,
+#                                dipole=None,
+#                                left='linear',
+#                                right='linear'):
+#         _MAData.__init__(self, maname=maname)
+#         self._left = left
+#         self._right = right
+#         if psupplies is None:
+#             # creates simulator power supply
+#             self._psupplies = [_PowerSupply(psname=psname) for psname in self.psnames]
+#             maname_dipole = _Magnet.get_dipole_sector_maname(maname=maname)
+#             self._dipole = MagnetDipole(maname=maname_dipole, psupplies=None, left=left, right=right)
+#         else:
+#             self._psupplies = psupplies
+#             self._dipole = dipole
+#         self._m_type = self.excdata(self.psnames[0]).main_multipole_type
+#         self._m_harm = self.excdata(self.psnames[0]).main_multipole_harmonic
+#
+#     def _get_currents(self, current_attr):
+#         return {ps.psname:getattr(ps, current_attr) for ps in self._psupplies}
+#
+#     def _conv_currents_2_multipoles(self, current_attr):
+#         m_sum = {}
+#         for ps in self._psupplies:
+#             m = ps.psdata.excdata.interp_curr2mult(getattr(ps, current_attr),
+#                                             left=self._left, right=self._right)
+#             m_sum = _mutil.sum_magnetic_multipoles(m_sum, m)
+#         return m_sum
+#
+#     def _conv_multipoles_2_strength(self, multipoles, brho):
+#         intfield = multipoles[self._m_type][self._m_harm]
+#         return -intfield / brho
+#
+#     def _get_brho(self):
+#         return self._dipole.brho
+#
+#     def _get_brho_sp(self):
+#         return self._dipole.brho_sp
+#
+# _Magnet.register(Magnet)
+#
+
 
 
 class PowerSupplyMA(_PSEpicsSync):
@@ -193,7 +245,6 @@ class PowerSupplyMA(_PSEpicsSync):
                 raise NotImplementedError
         else:
             return [self._maname.replace(':MA', ':PS')]
-
 
     @property
     def magfunc(self):
@@ -309,39 +360,6 @@ class PowerSupplyMA(_PSEpicsSync):
         #         self.callback('SI-Fam:PS-B1B2:' + pfield, value, **kwargs)
         #     else:
         #         self.callback(pvname, value, **kwargs)
-
-
-
-    def _init_pwrsupply_dipole(self, dipole_maname, use_vaca, vaca_prefix):
-        self._controller = _ControllerEpics(psname=self._psname[0],
-                                      connection_timeout=None,
-                                      use_vaca=use_vaca,
-                                      vaca_prefix=vaca_prefix)
-        self._strobj = _MAStrengthDip(maname=dipole_maname)
-        self._strobj_kwargs = {'current':self._controller}
-
-    def _init_pwrsupply_fam(self, dipole_maname, use_vaca, vaca_prefix):
-        self._init_pwrsupply_dipole(dipole_maname, use_vaca, vaca_prefix)
-        self._controller_dipole = self._controller
-        #self._strobj_dipole = self._strobj
-        self._controller = _ControllerEpics(psname=self._psname[0],
-                                            connection_timeout=None,
-                                            use_vaca=use_vaca,
-                                            vaca_prefix=vaca_prefix)
-        self._strobj = _MAStrength(maname=self._maname)
-        self._strobj_kwargs = {'current':self._controller, 'current_dipole':self._controller_dipole}
-
-    def _init_pwrsupply_trim(self, dipole_name, use_vaca, vaca_prefix):
-        self._init_pwrsupply_fam(dipole_name=dipole_name, use_vaca=use_vaca, vaca_prefix=vaca_prefix)
-        self._ps_family = self._ps
-        pvname = _SiriusPVName(self._psname[0])
-        pstrim = pvname.replace(pvname.subsection, 'Fam')
-        self._controller = _ControllerEpics(psname=pstrim,
-                                      connection_timeout=None,
-                                      use_vaca=use_vaca,
-                                      vaca_prefix=vaca_prefix)
-        self._strobj = MAStrengthTrim(maname=self._maname)
-        self._strobj_kwargs = {'current':self._controller, 'current_dipole':self._controller_dipole, 'current_family':self._controller_family}
 
     def _init_pwrsupply(self, use_vaca, vaca_prefix, connection_timeout):
         sector, dipole_maname = _MAStrength.get_dipole_sector_maname(maname=self._maname)

@@ -170,6 +170,7 @@ class MASearch:
 
     _maname_2_splims_dict   = None #magnets-stpoint-limits file
     _maname_2_psnames_dict  = None #magnet-excitation-ps file
+    _maname_2_trim_dict     = None
     _splims_labels          = None
     _splims_unit            = None
 
@@ -196,11 +197,16 @@ class MASearch:
             text = _web.magnets_excitation_ps_read(timeout=PSSearch._connection_timeout)
             data, param_dict = _util.read_text_data(text)
             MASearch._maname_2_psnames_dict  = {}
+            MASearch._maname_2_trim_dict = {}
             MASearch._manames_list = []
             for datum in data:
                 magnet, *ps_names = datum
                 MASearch._manames_list.append(magnet)
                 MASearch._maname_2_psnames_dict[magnet] = tuple(ps_names)
+                famname = magnet.replace('MA-','PS-')
+                if 'Fam' not in magnet and famname in ps_names:
+                    ps_names.remove(famname)
+                    MASearch._maname_2_trim_dict[famname.replace('PS-','MA-')] = tuple(ps_names)
         else:
             raise Exception('could not read magnet-excitation-ps from web server!')
 
@@ -221,6 +227,11 @@ class MASearch:
                 return None
             else:
                 return MASearch._maname_2_splims_dict[maname][label]
+
+    @staticmethod
+    def conv_maname_2_trims(maname):
+        if MASearch._maname_2_trim_dict is None: MASearch.reload_maname_2_psnames_dict()
+        return MASearch._maname_2_trim_dict.get(maname, None)
 
     @staticmethod
     def conv_maname_2_magfunc(maname):
