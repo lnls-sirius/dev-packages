@@ -41,7 +41,6 @@ class App:
         #print('write ', reason, value)
         propty = reason.split(':')[-1]
         psname = ':'.join(reason.split(':')[:2])
-        print(psname)
         ps_propty = propty.replace('-','_').lower()
         setattr(_pvs.ps_devices[psname], ps_propty, value)
         self._driver.setParam(reason, value)
@@ -50,7 +49,6 @@ class App:
 
     def _mycallback(self, pvname, value, **kwargs):
         reason = pvname
-        print(reason)
         prev_value = self._driver.getParam(reason)
         if value != prev_value:
             self._driver.setParam(reason, value)

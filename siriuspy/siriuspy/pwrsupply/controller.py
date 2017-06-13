@@ -5,6 +5,7 @@ import math as _math
 import copy as _copy
 import random as _random
 import numpy as _np
+import threading
 from abc import abstractmethod as _abstractmethod
 from abc import ABCMeta as _ABCMeta
 from epics import PV as _PV
@@ -1090,6 +1091,8 @@ class ControllerEpics(Controller):
         #print('[CE] [callback] ', pvname, value)
         if self._callback:
             self._callback(pvname=pvname, value=value, **kwargs)
+            #t = threading.Thread(target=self._callback, args=[pvname, value])
+            #t.start()
 
     def _create_epics_pvs(self, use_vaca, vaca_prefix):
         self._pvs = {}
