@@ -268,6 +268,12 @@ class Orbit:
         db[pre + 'OrbitRefY-SP'] = {'type':'float','count':NR_BPMS,'value'=0,
                                     'set_pv_fun':lambda x: self._set_ref_orbit('y',x)}
         db[pre + 'OrbitRefY-RB'] = {'type':'float','count':NR_BPMS,'value'=0}
+        db[pre + 'GoldenOrbitX-SP'] = {'type':'float','count':NR_BPMS,'value'=0,
+                                    'set_pv_fun':lambda x: self._set_ref_orbit('x',x)}
+        db[pre + 'GoldenOrbitX-RB'] = {'type':'float','count':NR_BPMS,'value'=0}
+        db[pre + 'GoldenOrbitY-SP'] = {'type':'float','count':NR_BPMS,'value'=0,
+                                    'set_pv_fun':lambda x: self._set_ref_orbit('y',x)}
+        db[pre + 'GoldenOrbitY-RB'] = {'type':'float','count':NR_BPMS,'value'=0}
         db[pre + 'OnlineOrbitX-Mon'] = {'type':'float','count':NR_BPMS,'value'=0}
         db[pre + 'OnlineOrbitY-Mon'] = {'type':'float','count':NR_BPMS,'value'=0}
         db[pre + 'OrbitAvgNum-SP']   = {'type':'int','value'=1,'unit':'number of averages',
