@@ -64,8 +64,8 @@ class Magnet:
 class MagnetQuad(Magnet):
 
     def __init__(self, maname,
-                       psmain=None,
                        magnet_dipole,
+                       psmain=None,
                        **kwargs):
         kwargs['magfunc'] = 'quadrupole'
         super().__init__(**kwargs)
@@ -199,6 +199,7 @@ class PowerSupplyMA(_PowerSupplySync):
                                connection_timeout=_connection_timeout,
                                controller_dipole=None,
                                controller_family=None,
+                               lock=True,
                                **kwargs
                                ):
         self._maname = _SiriusPVName(maname)
@@ -211,6 +212,7 @@ class PowerSupplyMA(_PowerSupplySync):
                          use_vaca=use_vaca,
                          vaca_prefix=vaca_prefix,
                          connection_timeout=connection_timeout,
+                         lock=lock,
                          **kwargs)
         self._init_pwrsupply(use_vaca=use_vaca,
                              vaca_prefix=vaca_prefix,

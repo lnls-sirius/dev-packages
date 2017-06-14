@@ -460,7 +460,7 @@ class PowerSupply(PowerSupplyLinac):
 class PowerSupplySync(PowerSupply):
 
     def __init__(self, psnames, controller_type='ControllerEpics',
-                                lock=True,
+                                lock=False,
                                 use_vaca=False, vaca_prefix=None,
                                 connection_timeout=_connection_timeout,
                                 **kwargs):
