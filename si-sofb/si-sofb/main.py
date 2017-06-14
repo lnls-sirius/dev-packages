@@ -50,17 +50,11 @@ class App:
         db[pre + 'AbortMeasRSPMtx-Cmd']  = {'type':'int',value=0,'set_pv_fun':self._abort_measure_response_matrix}
         db[pre + 'ResetMeasRSPMtx-Cmd']  = {'type':'int',value=0,'set_pv_fun':self._reset_measure_response_matrix}
         db[pre + 'MeasRSPMtxState-Sts']  = {'type':'enum','enums':('Idle','Measuring','Completed','Aborted'),value=1}
-        db[pre + 'OrbitOnOffline-Sel'] = {'type':'enum','enums':('OffLine','Online'),value=1,
-                                          'unit':'Defines orbit type used in correction',
-                                          'set_pv_fun':self._toggle_orbit_mode}
-        db[pre + 'OrbitOnOffline-Sts'] = {'type':'enum','enums':('OffLine','Online'),value=1,
-                                          'unit':'Defines orbit type used in correction'}
-        db[pre + 'OfflineOrbitX-SP'] = {'type':'float','count':NR_BPMS,'value'=0,
-                                        'set_pv_fun':lambda x: self._set_offline_orbit('x',x)}
-        db[pre + 'OfflineOrbitX-RB'] = {'type':'float','count':NR_BPMS,'value'=0}
-        db[pre + 'OfflineOrbitY-SP'] = {'type':'float','count':NR_BPMS,'value'=0,
-                                        'set_pv_fun':lambda x: self._set_offline_orbit('y',x)}
-        db[pre + 'OfflineOrbitY-RB'] = {'type':'float','count':NR_BPMS,'value'=0}
+        db[pre + 'CorrectionMode-Sel'] = {'type':'enum','enums':('OffLine','Online'),value=1,
+                                          'unit':'Defines is correction is offline or online',
+                                          'set_pv_fun':self._toggle_correction_mode}
+        db[pre + 'CorrectionMode-Sts'] = {'type':'enum','enums':('OffLine','Online'),value=1,
+                                          'unit':'Defines is correction is offline or online'}
         db[pre + 'CalcCorr-Cmd']     = {'type':'int',value=0,'unit':'Calculate kicks',
                                         'set_pv_fun':self._calc_correction}
         db[pre + 'ApplyKicks-Cmd']   = {'type':'enum','enums':('CH','CV','RF','All'),value=0,
@@ -77,8 +71,7 @@ class App:
         self.matrix = Matrix(prefix = self.prefix, callback = self._update_driver)
         self.auto_corr = 0
         self.auto_corr_freq = 1
-        self.orbit_mode = 1
-        self.offline_orbit = {'x':_np.zeros(NR_BPMS),'y':_np.zeros(NR_BPMS)}
+        self.correction_mode = 1
         self.dtheta = None
         self._thread = None
         self._database = self.get_database()
@@ -188,6 +181,11 @@ class App:
             self._thread.start()
 
     def _automatic_correction(self):
+        if not self.correction_mode:
+            self._update_driver( 'Error-Mon','Error in AutoCorr: Offline Correction')
+            self._update_driver(self.prefix + 'AutoCorrState-Sel',0)
+            self._update_driver(self.prefix + 'AutoCorrState-Sts',0)
+            return
         self._update_driver(self.prefix + 'AutoCorrState-Sts',1)
         while self.auto_corr:
             t0 = _time.time()
@@ -202,27 +200,25 @@ class App:
             if dt>0: _time.sleep(dt)
         self._update_driver(self.prefix + 'AutoCorrState-Sts',0)
 
-    def _toggle_orbit_mode(self,value):
-        self.orbit_mode = value
-        self._call_callback( 'OrbitOnOffline-Sts',value)
-
-    def _set_offline_orbit(self,plane,value):
-        self.offline_orbit[plane] = _np.array(value)
+    def _toggle_correction_mode(self,value):
+        self.correction_mode = value
+        self._call_callback( 'CorrectionMode-Sts',value)
+        self.orbit.get_orbit(value)
 
     def _set_auto_corr_frequency(self,value):
         self.auto_corr_freq = value
 
     def _calc_correction(self,value):
         if self._thread and self._thread.isAlive():
-            self._call_callback( 'Error-Mon','AutoCorr or MeasRSPMtx is On.')
+            self._update_driver( 'Error-Mon','AutoCorr or MeasRSPMtx is On.')
             return
-        if self.orbit_mode:
-            orb = self.orbit.get_orbit()
-        else:
-            orb = _np.hstack([self.offline_orbit['x'], self.offline_orbit['y']])
+        orb = self.orbit.get_orbit(self.correction_mode)
         self.dtheta = self.matrix.calc_kicks(orb)
 
     def _apply_kicks(self,code):
+        if not self.correction_mode:
+            self._call_callback( 'Error-Mon','Cannot apply kicks. Offline Correction')
+            return
         if self._thread and self._thread.isAlive():
             self._call_callback( 'Error-Mon','AutoCorr or MeasRSPMtx is On.')
             return
@@ -258,6 +254,8 @@ class App:
 class Orbit:
 
     REF_ORBIT_FILENAME = 'data/reference_orbit'
+    GOLDEN_ORBIT_FILENAME = 'data/golden_orbit'
+    EXT = '.siorb'
 
     def get_database(self):
         db = dict()
@@ -269,15 +267,23 @@ class Orbit:
                                     'set_pv_fun':lambda x: self._set_ref_orbit('y',x)}
         db[pre + 'OrbitRefY-RB'] = {'type':'float','count':NR_BPMS,'value'=0}
         db[pre + 'GoldenOrbitX-SP'] = {'type':'float','count':NR_BPMS,'value'=0,
-                                    'set_pv_fun':lambda x: self._set_ref_orbit('x',x)}
+                                    'set_pv_fun':lambda x: self._set_golden_orbit('x',x)}
         db[pre + 'GoldenOrbitX-RB'] = {'type':'float','count':NR_BPMS,'value'=0}
         db[pre + 'GoldenOrbitY-SP'] = {'type':'float','count':NR_BPMS,'value'=0,
-                                    'set_pv_fun':lambda x: self._set_ref_orbit('y',x)}
+                                    'set_pv_fun':lambda x: self._set_golden_orbit('y',x)}
         db[pre + 'GoldenOrbitY-RB'] = {'type':'float','count':NR_BPMS,'value'=0}
-        db[pre + 'OnlineOrbitX-Mon'] = {'type':'float','count':NR_BPMS,'value'=0}
-        db[pre + 'OnlineOrbitY-Mon'] = {'type':'float','count':NR_BPMS,'value'=0}
+        db[pre + 'setRefwithGolden-Cmd'] = {'type':'int',value=0,'unit':'Set the reference orbit with the Golden Orbit',
+                                        'set_pv_fun':self._set_ref_with_golden}
+        db[pre + 'OrbitX-Mon']      = {'type':'float','count':NR_BPMS,'value'=0}
+        db[pre + 'OrbitY-Mon']      = {'type':'float','count':NR_BPMS,'value'=0}
+        db[pre + 'OfflineOrbitX-SP'] = {'type':'float','count':NR_BPMS,'value'=0,
+                                        'set_pv_fun':lambda x: self._set_offline_orbit('x',x)}
+        db[pre + 'OfflineOrbitX-RB'] = {'type':'float','count':NR_BPMS,'value'=0}
+        db[pre + 'OfflineOrbitY-SP'] = {'type':'float','count':NR_BPMS,'value'=0,
+                                        'set_pv_fun':lambda x: self._set_offline_orbit('y',x)}
+        db[pre + 'OfflineOrbitY-RB'] = {'type':'float','count':NR_BPMS,'value'=0}
         db[pre + 'OrbitAvgNum-SP']   = {'type':'int','value'=1,'unit':'number of averages',
-                                        'set_pv_fun':lambda x: self._set_orbit_avg_num}
+                                        'set_pv_fun':self._set_orbit_avg_num}
         db[pre + 'OrbitAvgNum-RB']   = {'type':'int','value'=1,'unit':'number of averages'}
 
     def __init__(self,prefix,callback):
@@ -285,9 +291,10 @@ class Orbit:
         self.prefix = prefix
         self.orbs = {'x':[],'y':[]}
         self.orb = {'x':None,'y':None}
+        self.offline_orbit = {'x':_np.zeros(NR_BPMS),'y':_np.zeros(NR_BPMS)}
         self.acquire = {'x':False,'y':False}
         self.relative = True
-        self._load_ref_orbits()
+        self._load_basic_orbits()
         self.orbit_avg_num = 1
         self.pv = {'x':None, 'y':None}
 
@@ -303,15 +310,19 @@ class Orbit:
         if self.pv['x'].count != NR_BPMS:
             raise Exception('Orbit length not consistent')
 
-    def get_orbit(self):
-        self.acquire = {'x':True,'y':True}
-        while any(self.acquire.values()):  _time.sleep(TINY_INTERVAL)
-        orbx = self.orb['x']
-        orby = self.orb['y']
-        self._reset_orbs('x')
-        self._reset_orbs('y')
-        self._call_callback( 'OnlineOrbitX-Mon',list(orbx))
-        self._call_callback( 'OnlineOrbitY-Mon',list(orby))
+    def get_orbit(self, mode):
+        if not mode:
+            orbx = self.offline_orbit['x']
+            orby = self.offline_orbit['y']
+        else:
+            self.acquire = {'x':True,'y':True}
+            while any(self.acquire.values()):  _time.sleep(TINY_INTERVAL)
+            orbx = self.orb['x']
+            orby = self.orb['y']
+            self._reset_orbs('x')
+            self._reset_orbs('y')
+        self._call_callback( 'OrbitX-Mon',list(orbx))
+        self._call_callback( 'OrbitY-Mon',list(orby))
         return _np.hstack([orbx, orby])
 
     def _on_connection(self,pvname,conn,pv):
@@ -321,16 +332,27 @@ class Orbit:
     def _call_callback(self,pv,value):
         self.callback(self.prefix + pv, value)
 
-    def _load_ref_orbits(self):
+    def _set_offline_orbit(self,plane,value):
+        self.offline_orbit[plane] = _np.array(value)
+
+    def _load_basic_orbits(self):
         self.ref_orbit = dict()
+        self.golden_orbit = dict()
         for plane in ('x','y'):
-            filename = self.REF_ORBIT_FILENAME+plane.upper()+'.txt'
+            filename = self.REF_ORBIT_FILENAME+plane.upper() + self.EXT
             self.ref_orbit[plane] = _np.zeros(NR_BPMS,dtype=float)
             if os.path.isfile(filename):
                 self.ref_orbit[plane] = _np.loadtxt(filename)
+            filename = self.GOLDEN_ORBIT_FILENAME+plane.upper() + self.EXT
+            self.golden_orbit[plane] = _np.zeros(NR_BPMS,dtype=float)
+            if os.path.isfile(filename):
+                self.golden_orbit[plane] = _np.loadtxt(filename)
 
     def _save_ref_orbit(self,plane, orb):
-        _np.savetxt(self.REF_ORBIT_FILENAME+plane.upper()+'.txt',orb)
+        _np.savetxt(self.REF_ORBIT_FILENAME+plane.upper() + self.EXT,orb)
+
+    def _save_golden_orbit(self,plane, orb):
+        _np.savetxt(self.GOLDEN_ORBIT_FILENAME+plane.upper() + self.EXT,orb)
 
     def _reset_orbs(self,plane):
         self.orbs[plane] = []
@@ -361,6 +383,15 @@ class Orbit:
         self._reset_orbs(plane)
         self._call_callback('OrbitRef'+plane.upper()+'-RB', orb)
 
+    def _set_golden_orbit(self,plane,orb):
+        self._save_golden_orbit(plane,orb)
+        self.golden_orbit[plane] = _np.array(orb,dtype=float)
+        self._call_callback('GoldenOrbit'+plane.upper()+'-RB', orb)
+
+    def _set_ref_with_golden(self,value):
+        for pl,orb in self.golden_orbit.items():
+            self._call_callback('OrbitRef'+pl.upper()+'-SP', orb.copy())
+            self._set_ref_orbit(pl,orb.copy())
 
 class Matrix:
 
