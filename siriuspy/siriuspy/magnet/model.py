@@ -36,6 +36,7 @@ class Magnet:
         self._psupplies = psupplies
         self._left = left
         self._right = right
+        self.psmain = self._psupplies[0] if psmain is None else psmain
 
     def get_multipoles(self, current_attr):
         msum = {}
@@ -51,35 +52,46 @@ class Magnet:
         intfield = m[mf['type']][mf['harmonic']]
         return intfield
 
+    @property
+    def psmain(self):
+        return self._psmain
+
+    @psmain.setter
+    def psmain(self, ps):
+        self._psmain = ps
+
 
 class MagnetQuad(Magnet):
 
-    def __init__(self, maname, dipole, **kwargs):
+    def __init__(self, maname,
+                       psmain=None,
+                       magnet_dipole,
+                       **kwargs):
         kwargs['magfunc'] = 'quadrupole'
         super().__init__(**kwargs)
         self._maname = _SiriusPVName(maname)
-        self._dipole = dipole
-        self._psmain = self._psupplies[0]
+        self._magnet_dipole = magnet_dipole
 
 
     @property
-    def dipole(self):
-        return self._dipole
+    def magnet_dipole(self):
+        return self._magnet_dipole
 
     def get_kl(self, current_attr):
-        brho = self._dipole.get_brho(current_attr=current_attr)
+        brho = self._magnet_dipole.get_brho(current_attr=current_attr)
         intfield = self.get_intfield(current_attr=current_attr)
         kl = -intfield / brho
+
         return kl
 
-    def set_kl(self, kl):
-        brho = self._dipole.get_brho(current_attr='current_sp')
-        intfield = -kl / brho
+    def conv_kl_2_current(self, kl):
+        brho = self._magnet_dipole.get_brho(current_attr='current_sp')
+        intfield = -kl * brho
         mf = Magnet._magfuncs[self._magfunc]
-        interp_mult2curr = self._psmain.psdata.excdata.interp_mult2curr
+        interp_mult2curr = self.psmain.psdata.excdata.interp_mult2curr
         current = interp_mult2curr(intfield, mf['harmonic'], mf['type'],
                                    left=self._left, right=self._right)
-        self._psmain.current_sp = current
+        return current
 
 
 class MagnetQuadTrim(Magnet):
@@ -88,30 +100,27 @@ class MagnetQuadTrim(Magnet):
         kwargs['magfunc'] = 'quadrupole'
         super().__init__(**kwargs)
         self._maname = _SiriusPVName(maname)
-        self._dipole = dipole
-        self._family = family
-        self._psmain = self._psupplies[0]
-        self._kl = self.get_kl(current_attr='current_sp')
+        self._magnet_dipole = dipole
+        self._magnet_family = family
 
     def get_kl(self, current_attr):
-        brho = self._dipole.get_brho(current_attr=current_attr)
-        infield_family = self._family.get_intfield(current_attr=current_attr)
+        brho = self._magnet_dipole.get_brho(current_attr=current_attr)
+        infield_family = self._magnet_family.get_intfield(current_attr=current_attr)
         infield_trim = self.get_intfield(current_attr=current_attr)
         intfield = infield_family + infield_trim
         kl = -intfield / brho
         return kl
 
-    def set_kl(self, kl):
-        self._kl = kl
-        brho = self._dipole.get_brho(current_attr='current_sp')
-        intfield = -kl / brho
-        infield_family = self._family.get_intfield(current_attr='current_sp')
+    def conv_kl_2_current(self, kl):
+        brho = self._magnet_dipole.get_brho(current_attr='current_sp')
+        intfield = -kl * brho
+        infield_family = self._magnet_family.get_intfield(current_attr='current_sp')
         intfield_trim = intfield - intfield_family
         mf = Magnet._magfuncs[self._magfunc]
-        interp_mult2curr = self._psmain.psdata.excdata.interp_mult2curr
+        interp_mult2curr = self.psmain.psdata.excdata.interp_mult2curr
         current = interp_mult2curr(intfield_trim, mf['harmonic'], mf['type'],
                                    left=self._left, right=self._right)
-        self._psmain.current_sp = current
+        return current
 
 
 class MagnetDipole(Magnet):
@@ -188,11 +197,16 @@ class PowerSupplyMA(_PowerSupplySync):
     def __init__(self, maname, use_vaca=False,
                                vaca_prefix=None,
                                connection_timeout=_connection_timeout,
+                               controller_dipole=None,
+                               controller_family=None,
                                **kwargs
                                ):
         self._maname = _SiriusPVName(maname)
         self._madata = _MAData(self._maname)
         self._psname = self._madata.psnames
+        self._controller_dipole = controller_dipole
+        self._controller_family = controller_family
+        self._callback_index = {}
         super().__init__(psnames=self._get_psnames(),
                          use_vaca=use_vaca,
                          vaca_prefix=vaca_prefix,
@@ -250,20 +264,22 @@ class PowerSupplyMA(_PowerSupplySync):
         self._currents_load['current'] = self._controller.current_load
         return self._strobj.conv_current_2_strength(**self._currents_load)
 
-    def _init_pwrsupply(self, use_vaca, vaca_prefix, connection_timeout):
+    def _init_pwrsupply(self, use_vaca, vaca_prefix,
+                              connection_timeout):
         sector, dipole_maname = _MAStrength.get_dipole_sector_maname(maname=self._maname)
         if self.magfunc == 'dipole' and self._maname.subsection == 'Fam':
-            self._controller = self._controllers[0]
             self._strobj = _MAStrengthDip(maname=dipole_maname)
             self._currents_sp  = {}
             self._currents_ref = {}
             self._currents_load = {}
         else:
             madata_dipole = _MAData(maname=dipole_maname)
-            self._controller_dipole = _ControllerEpics(psname=madata_dipole.psnames[0],
-                                                       use_vaca=use_vaca,
-                                                       vaca_prefix=vaca_prefix,
-                                                       connection_timeout=connection_timeout)
+            if self._controller_dipole is None:
+                self._controller_dipole = _ControllerEpics(psname=madata_dipole.psnames[0],
+                                                           use_vaca=use_vaca,
+                                                           vaca_prefix=vaca_prefix,
+                                                           connection_timeout=connection_timeout)
+            self._callback_indices['dipole'] = self._controller_dipole.add_callback(self._mycallback_dipole)
             if self._maname.subsection == 'Fam' or self.magfunc in ('quadrupole-skew',
                                                                     'corrector-horizontal',
                                                                     'corrector-vertical'):
@@ -274,11 +290,12 @@ class PowerSupplyMA(_PowerSupplySync):
             elif self.magfunc in ('quadrupole'):
                 pvname = _SiriusPVName(self._psname[0])
                 family = pvname.replace(pvname.subsection, 'Fam')
-                self._controller_family = _ControllerEpics(psname=family,
-                                                           use_vaca=use_vaca,
-                                                           vaca_prefix=vaca_prefix,
-                                                           callback=self._mycallback_family,
-                                                           connection_timeout=connection_timeout)
+                if self._controller_family is None:
+                    self._controller_family = _ControllerEpics(psname=family,
+                                                               use_vaca=use_vaca,
+                                                               vaca_prefix=vaca_prefix,
+                                                               connection_timeout=connection_timeout)
+                self._callback_indices['family'] = self._controller_family.add_callback(self._mycallback_family)
                 self._strobj = _MAStrengthTrim(maname=self._maname)
                 self._currents_sp   = {'current_dipole':self._controller_dipole.current_sp,
                                        'current_family':self._controller_family.current_sp}
@@ -286,6 +303,15 @@ class PowerSupplyMA(_PowerSupplySync):
                                        'current_family':self._controller_family.current_ref}
                 self._currents_load = {'current_dipole':self._controller_dipole.current_load,
                                        'current_family':self._controller_family.current_load}
+
+    def __del__(self):
+        remove_callback = {
+            'dipole':self._controller_dipole.remove_callback,
+            'family':self._controller_family.remove_callback
+        }
+        for typ,index in self._callback_indices.items():
+            remove_callback[typ](index=index)
+        super().__del__()
 
     def _get_database(self, prefix=''):
         """Return an updated  PV database whose keys correspond to PS properties."""
@@ -348,15 +374,15 @@ class PowerSupplyMA(_PowerSupplySync):
         for psname in self._psname:
             pvname = pvname.replace(psname, self._maname)
         #Callbacks for strength: _rb, ref_mon, _mon
-        if self._callback is not None:
+        for callback in self._callbacks.values():
             slot = ':'.join(pvname.split(':')[:2])
             #Callbacks to update strngth PVs
             if 'Current-RB' in pvname:
-                self.callback(slot + ':KL-RB', self.strength_rb, **kwargs)
+                callback(slot + ':KL-RB', self.strength_rb, **kwargs)
             elif 'CurrentRef-Mon' in pvname:
-                self.callback(slot + ':KLRef-Mon', self.strengthref_mon, **kwargs)
+                callback(slot + ':KLRef-Mon', self.strengthref_mon, **kwargs)
             elif 'Current-Mon' in pvname:
-                self.callback(slot + ':KL-Mon', self.strength_mon, **kwargs)
+                callback(slot + ':KL-Mon', self.strength_mon, **kwargs)
         super()._mycallback(pvname, value, **kwargs)
 
     def _mycallback_dipole(self, pvname, value, **kwargs):
@@ -374,7 +400,7 @@ class PowerSupplyMA(_PowerSupplySync):
             self._currents_load['current_dipole'] = value
             new_value = self.strength_mon
             run_callback = True
-        if run_callback:
+        if run_callback and self._callbacks:
             # signals up changes in strengths
             if self.magfunc in ('quadrupole','quadrupole-skew'):
                 pfield = pvname.split(':')[-1].replace("Current", "KL")
@@ -382,7 +408,8 @@ class PowerSupplyMA(_PowerSupplySync):
                 pfield = pvname.split(':')[-1].replace("Current", "Kick")
             elif self.magfunc in ('sextupole',):
                 pfield = pvname.split(':')[-1].replace("Current", "SL")
-            self.callback(self._maname + ':' + pfield, new_value, **kwargs)
+            for callback in self._callbacks.values():
+                callback(self._maname + ':' + pfield, new_value, **kwargs)
 
     def _mycallback_family(self, pvname, value, **kwargs):
         """ Callback used for family PVs updates. """
@@ -399,7 +426,7 @@ class PowerSupplyMA(_PowerSupplySync):
             self._currents_load['current_family'] = value
             new_value = self.strength_mon
             run_callback = True
-        if run_callback:
+        if run_callback and self._callbacks:
             # signals up changes in strengths
             if self.magfunc in ('quadrupole','quadrupole-skew'):
                 pfield = pvname.split(':')[-1].replace("Current", "KL")
@@ -407,4 +434,5 @@ class PowerSupplyMA(_PowerSupplySync):
                 pfield = pvname.split(':')[-1].replace("Current", "Kick")
             elif self.magfunc in ('sextupole',):
                 pfield = pvname.split(':')[-1].replace("Current", "SL")
-            self.callback(self._maname + ':' + pfield, new_value, **kwargs)
+            for callback in self._callbacks.values():
+                callback(self._maname + ':' + pfield, new_value, **kwargs)

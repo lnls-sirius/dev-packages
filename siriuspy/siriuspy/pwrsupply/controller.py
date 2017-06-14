@@ -33,11 +33,12 @@ class Controller(metaclass=_ABCMeta):
     #trigger_timout  = 0.002 # [seconds]
 
     def __init__(self, callback=None, psname=None, cycgen=None):
-        self._callback = callback
+        #self._callback = callback
         self._psname = psname
         self._init_cycgen(cycgen)
         self._set_cycling_state(False)
         self._set_timestamp_cycling(None)
+        self._callbacks = {} if callback is None else {_uuid.uuid4():callback}
         self.update_state(init=True)
 
     # --- class interface - properties ---
@@ -45,7 +46,7 @@ class Controller(metaclass=_ABCMeta):
     @property
     def connected(self):
         return True
-        
+
     @property
     def pwrstate(self):
         return self._get_pwrstate()
@@ -223,17 +224,17 @@ class Controller(metaclass=_ABCMeta):
     def time(self):
         return self._get_time()
 
-    @property
-    def callback(self):
-        return self._callback
+    def add_callback(self, callback, index=None):
+        index = _uuid.uuid4() if index is None else index
+        self._callbacks[index] = callback
+        return inde
 
-    @callback.setter
-    def callback(self, value):
-        if callable(value):
-            self._callback = value
-        else:
-            self._callback = None
+    def remove_callback(self, index):
+        if index in self._callbacks:
+            del self._callbacks[index]
 
+    def clear_callbacks(self):
+        self._callbacks.clear()
 
     # --- class interface - methods ---
 
@@ -339,7 +340,6 @@ class Controller(metaclass=_ABCMeta):
         if 'trigger_signal' in kwargs:
             self._set_cycling_state(True)
         self._process_Cycle()
-
 
     def _check_current_ref_limits(self, value):
         value = value if self.current_min is None else max(value,self.current_min)
@@ -827,30 +827,43 @@ class ControllerSim(Controller):
                 self._update_current_ref(scan_value)
 
     def _mycallback(self, pvname):
-        if self._callback is None:
-            return
+        # if self._callback is None:
+        #     return
+        if not self._callbacks: return
+
         elif pvname == 'pwrstate':
-            self._callback(pvname='pwrstate', value=self._pwrstate)
+            for callback in self._callbacks.values():
+                callback(pvname='pwrstate', value=self._pwrstate)
         elif pvname == 'opmode':
-            self._callback(pvname='opmode', value=self._opmode)
+            for callback in self._callbacks.values():
+                callback(pvname='opmode', value=self._opmode)
         elif pvname == 'current_sp':
-            self._callback(pvname='current_sp', value=self._current_sp)
+            for callback in self._callbacks.values():
+                callback(pvname='current_sp', value=self._current_sp)
         elif pvname == 'current_ref':
-            self._callback(pvname='current_ref', value=self._current_ref)
+            for callback in self._callbacks.values():
+                callback(pvname='current_ref', value=self._current_ref)
         elif pvname == 'current_load':
-            self._callback(pvname='current_load', value=self._current_load)
+            for callback in self._callbacks.values():
+                callback(pvname='current_load', value=self._current_load)
         elif pvname == 'wfmload':
-            self._callback(pvname='wfmload', value=self._wfmslot)
+            for callback in self._callbacks.values():
+                callback(pvname='wfmload', value=self._wfmslot)
         elif pvname == 'wfmdata':
-            self._callback(pvname='wfmdata', value=self._waveform.data)
+            for callback in self._callbacks.values():
+                callback(pvname='wfmdata', value=self._waveform.data)
         elif pvname == 'wfmlabel':
-            self._callback(pvname='wfmlabel', value=self._waveform.label)
+            for callback in self._callbacks.values():
+                callback(pvname='wfmlabel', value=self._waveform.label)
         elif pvname == 'wfmsave':
-            self._callback(pvname='wfmsave', value=self._wfmsave)
+            for callback in self._callbacks.values():
+                callback(pvname='wfmsave', value=self._wfmsave)
         elif pvname == 'reset':
-            self._callback(pvname='reset', value=self._wfmsave)
+            for callback in self._callbacks.values():
+                callback(pvname='reset', value=self._wfmsave)
         elif pvname == 'abort':
-            self._callback(pvname='abort', value=self._wfmsave)
+            for callback in self._callbacks.values():
+                callback(pvname='abort', value=self._wfmsave)
         else:
             raise NotImplementedError
 
@@ -909,9 +922,9 @@ class ControllerEpics(Controller):
 
         self._psname = psname
         self._connection_timeout = connection_timeout
-        self._callback = None
         self._create_epics_pvs(use_vaca=use_vaca,vaca_prefix=vaca_prefix)
         super().__init__(psname=psname,**kwargs)
+        self.callback = None
 
 
         now = self.time
@@ -1093,10 +1106,9 @@ class ControllerEpics(Controller):
 
     def _mycallback(self, pvname, value, **kwargs):
         #print('[CE] [callback] ', pvname, value)
-        if self._callback:
-            self._callback(pvname=pvname, value=value, **kwargs)
-            #t = threading.Thread(target=self._callback, args=[pvname, value])
-            #t.start()
+        if self._callbacks:
+            for callback in self._callbacks.values():
+                callback(pvname=pvname, value=value, **kwargs)
 
     def _create_epics_pvs(self, use_vaca, vaca_prefix):
         self._pvs = {}
@@ -1106,6 +1118,7 @@ class ControllerEpics(Controller):
         else:
             vaca_prefix = ''
         pv = vaca_prefix + self._psname
+        # eventually get this list from csdevice !!!
         self._pvs['PwrState-Sel']    = _PV(pv + ':PwrState-Sel',    connection_timeout=self._connection_timeout)
         self._pvs['PwrState-Sts']    = _PV(pv + ':PwrState-Sts',    connection_timeout=self._connection_timeout)
         self._pvs['OpMode-Sel']      = _PV(pv + ':OpMode-Sel',      connection_timeout=self._connection_timeout)
@@ -1151,26 +1164,31 @@ class ControllerEpics(Controller):
         self._pvs['WfmSave-Cmd'].wait_for_connection(timeout=self._connection_timeout)
 
         # add callback
-        uuid = _uuid.uuid4()
-        self._pvs['PwrState-Sel'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['PwrState-Sts'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['OpMode-Sel'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['OpMode-Sts'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['Reset-Cmd'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['Abort-Cmd'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['Intlk-Mon'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['IntlkLabels-Cte'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['Current-SP'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['Current-RB'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['CurrentRef-Mon'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['Current-Mon'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['WfmIndex-Mon'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['WfmLabels-Mon'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['WfmLabel-SP'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['WfmLabel-RB'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['WfmLoad-Sel'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['WfmLoad-Sts'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['WfmData-SP'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['WfmData-RB'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['WfmSave-Cmd'].add_callback(callback=self._mycallback, index=uuid)
+        index = None
+        index = self._pvs['PwrState-Sel'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['PwrState-Sts'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['OpMode-Sel'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['OpMode-Sts'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['Reset-Cmd'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['Abort-Cmd'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['Intlk-Mon'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['IntlkLabels-Cte'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['Current-SP'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['Current-RB'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['CurrentRef-Mon'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['Current-Mon'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['WfmIndex-Mon'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['WfmLabels-Mon'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['WfmLabel-SP'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['WfmLabel-RB'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['WfmLoad-Sel'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['WfmLoad-Sts'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['WfmData-SP'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['WfmData-RB'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['WfmSave-Cmd'].add_callback(callback=self._mycallback, index=index)
+
+    def __del__(self):
+        for index,pv in self._pvs.items():
+            pv.remove_callback(index=index)
+        super().__del__()
 Controller.register(ControllerEpics)

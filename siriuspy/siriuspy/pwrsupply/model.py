@@ -1,6 +1,7 @@
 
 import copy as _copy
 import numpy as _np
+import uuid as _uuid
 import threading as _threading
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
@@ -21,10 +22,10 @@ class PowerSupplyLinac(object):
                        enum_keys=False):
 
         self._psdata = _PSData(psname=psname)
-        self._callback = callback
         self._enum_keys = enum_keys
         self._ctrlmode_mon = _et.idx.Remote
         self._controller = controller
+        self._callbacks = {} if callback is None else {_uuid.uuid4():callback}
         self._controller_init(current_std)
 
     # --- class interface ---
@@ -45,16 +46,17 @@ class PowerSupplyLinac(object):
     def psdata(self):
         return self._psdata
 
-    @property
-    def callback(self):
-        return self._callback
+    def add_callback(self, callback, index=None):
+        index = _uuid.uuid4() if index is None else index
+        self._callbacks[index] = callback
+        return inde
 
-    @callback.setter
-    def callback(self, value):
-        if callable(value):
-            self._callback = value
-        else:
-            self._callback = None
+    def remove_callback(self, index):
+        if index in self._callbacks:
+            del self._callbacks[index]
+
+    def clear_callbacks(self):
+        self._callbacks.clear()
 
     @property
     def splims(self):
@@ -431,26 +433,28 @@ class PowerSupply(PowerSupplyLinac):
                 self._wfmdata_sp   = value
             elif 'Current-SP' in pvname:
                 self._current_sp   = value
-            if self.callback is not None:
-                self.callback(pvname, value, **kwargs)
+
+            for callback in self._callbacks.values():
+                callback(pvname,value,**kwargs)
+
         elif isinstance(self._controller, _ControllerSim):
-            if self.callback is not None:
+            for callback in self._callbacks.values():
                 if pvname == 'opmode':
-                    self.callback(self.psname + ':OpMode-Sts', value, **kwargs)
+                    callback(self.psname + ':OpMode-Sts', value, **kwargs)
                 elif pvname == 'pwrstate':
-                    self.callback(self.psname + ':PwrState-Sts', value, **kwargs)
+                    callback(self.psname + ':PwrState-Sts', value, **kwargs)
                 elif pvname == 'wfmload':
-                    self.callback(self.psname + ':WfmLoad-Sel', value, **kwargs)
+                    callback(self.psname + ':WfmLoad-Sel', value, **kwargs)
                 elif pvname == 'wfmlabel':
-                    self.callback(self.psname + ':WfmLabel-RB', value, **kwargs)
+                    callback(self.psname + ':WfmLabel-RB', value, **kwargs)
                 elif pvname == 'wfmdata':
-                    self.callback(self.psname + ':WfmLoad-Sel', value, **kwargs)
+                    callback(self.psname + ':WfmLoad-Sel', value, **kwargs)
                 elif pvname == 'current_sp':
-                    self.callback(self.psname + ':Current-RB', value, **kwargs)
+                    callback(self.psname + ':Current-RB', value, **kwargs)
                 elif pvname == 'current_ref':
-                    self.callback(self.psname + ':CurrentRef-Mon', value, **kwargs)
+                    callback(self.psname + ':CurrentRef-Mon', value, **kwargs)
                 elif pvname == 'current_load':
-                    self.callback(self.psname + ':Current-Mon', value, **kwargs)
+                    callback(self.psname + ':Current-Mon', value, **kwargs)
 
 
 class PowerSupplySync(PowerSupply):
@@ -597,5 +601,5 @@ class PowerSupplySync(PowerSupply):
                 if self._current_sp != value: #Value was not changed by the MA-IOC
                     self._set_current_sp(self._current_sp)
                     value = self._current_sp
-        if self.callback is not None:
-            self.callback(pvname, value, **kwargs)
+        for callback in self._callbacks.values():
+            callback(pvname, value, **kwargs)

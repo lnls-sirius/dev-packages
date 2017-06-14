@@ -2,7 +2,7 @@
 
 import unittest
 from siriuspy.pwrsupply import PowerSupply
-from siriuspy.magnet.model import PowerSupplyMA
+#from siriuspy.magnet.model import PowerSupplyMA
 
 class PowerSupplyTest(unittest.TestCase):
     def assert_currents(self, sp, rb, ref, mon):
@@ -16,7 +16,6 @@ class PowerSupplyOnSlowRefTest(PowerSupplyTest):
     def setUp(self):
         self.ps = PowerSupply(psname='SI-Fam:PS-QDA')
         self.initial_labels = self.ps.wfmlabels_mon
-
         self.ps.opmode_sel = 0
         self.ps.pwrstate_sel = 1
 
@@ -374,14 +373,13 @@ class PowerSupplyGeneralTest(PowerSupplyTest):
     def setUp(self):
         self.ps = PowerSupply(psname='SI-Fam:PS-QDA')
         self.ps_enum = PowerSupply(psname='SI-Fam:PS-QDA', enum_keys=True)
-
         self.default_labels = self.ps.wfmlabels_mon
         self.default_labels_e = self.ps.wfmlabels_mon
 
     def test_initialization(self):
         self.assertEqual(self.ps.psname, 'SI-Fam:PS-QDA')
         self.assertEqual(self.ps._enum_keys, False)
-        self.assertEqual(self.ps.callback, None)
+        self.assertEqual(self.ps._callbacks, {})
 
     def test_initial_ctrlmode(self):
         self.assertEqual(self.ps.ctrlmode_mon, 0)
