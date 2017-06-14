@@ -43,6 +43,10 @@ class Controller(metaclass=_ABCMeta):
     # --- class interface - properties ---
 
     @property
+    def connected(self):
+        return True
+        
+    @property
     def pwrstate(self):
         return self._get_pwrstate()
 

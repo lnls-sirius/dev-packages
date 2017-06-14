@@ -453,18 +453,34 @@ class PowerSupply(PowerSupplyLinac):
                     self.callback(self.psname + ':Current-Mon', value, **kwargs)
 
 
-class PowerSupplyEpicsSync(PowerSupply):
+class PowerSupplySync(PowerSupply):
 
-    def __init__(self, psnames, use_vaca=False, vaca_prefix=None, connection_timeout=_connection_timeout):
+    def __init__(self, psnames, controller_type='ControllerEpics',
+                                lock=True,
+                                use_vaca=False, vaca_prefix=None,
+                                connection_timeout=_connection_timeout,
+                                **kwargs):
         self._psnames = psnames
         self._controller_psnames = list()
         self._controllers = list()
+        self._lock = lock
 
         # Create controller epics
-        for controller_name in self._psnames:
-            self._controllers.append(_ControllerEpics(psname=controller_name, use_vaca=use_vaca, vaca_prefix=vaca_prefix, connection_timeout=connection_timeout, callback=self._mycallback))
+        for psname in self._psnames:
+            if controller_type == 'ControllerEpics':
+                c = _ControllerEpics(psname=psname,
+                                     use_vaca=use_vaca, vaca_prefix=vaca_prefix,
+                                     connection_timeout=connection_timeout,
+                                     callback=self._mycallback)
+            elif controller_type == 'ControllerSim':
+                psdata = _PSData(psname=psname)
+                c  = _ControllerSim(psname=psname,
+                                    current_min = psdata.splims['DRVL'],
+                                    current_max = psdata.splims['DRVH'],
+                                    callback = self._mycallback)
+            self._controllers.append(c)
 
-        super().__init__(psname=psnames[0], controller=self._controllers[0])
+        super().__init__(psname=psnames[0], controller=self._controllers[0], **kwargs)
 
     def _get_connected(self):
         for controller in self._controllers:
@@ -526,35 +542,60 @@ class PowerSupplyEpicsSync(PowerSupply):
         #print('[PSES] [callback] ', pvname, value)
         if 'CtrlMode-Mon' in pvname:
             self._ctrlmode_mon = value
-        elif 'OpMode-Sel' in pvname:
-            if self._opmode_sel != value:
-                thread = _threading.Thread(target=self._set_opmode_sel, args=[self._opmode_sel])
-                thread.start()
-                value = self._opmode_sel
-        elif 'PwrState-Sel' in pvname:
-            if self._pwrstate_sel != value:
-                thread = _threading.Thread(target=self._set_pwrstate_sel, args=[self._pwrstate_sel])
-                thread.start()
-                value = self._pwrstate_sel
-        elif 'WfmLoad-Sel' in pvname:
-            if self._wfmload_sel != value:
-                thread = _threading.Thread(target=self._set_wfmload_sel, args=[self._wfmload_sel])
-                thread.start()
-                value = self._wfmload_sel
-        elif 'WfmLabel-SP' in pvname:
-            if self._wfmlabel_sp != value:
-                thread = _threading.Thread(target=self._set_wfmlabel_sp, args=[self._wfmlabel_sp])
-                thread.start()
-                value = self._wfmlabel_sp
-        elif 'WfmData-SP' in pvname:
-            if _np.any(self._wfmdata_sp != value):
-                thread = _threading.Thread(target=self._set_wfmdata_sp, args=[self._wfmdata_sp])
-                thread.start()
-                value = self._wfmdata_sp
-        elif 'Current-SP' in pvname:
-            if self._current_sp != value: #Value was not changed by the MA-IOC
-                thread = _threading.Thread(target=self._set_current_sp, args=[self._current_sp])
-                thread.start()
-                value = self._current_sp
+        elif self._lock:
+            if 'OpMode-Sel' in pvname:
+                if self._opmode_sel != value:
+                    thread = _threading.Thread(target=self._set_opmode_sel, args=[self._opmode_sel])
+                    thread.start()
+                    value = self._opmode_sel
+            elif pvname == 'opmode':
+                if self._opmode_sel != value:
+                    self._set_opmode_sel(self._opmode_sel)
+                    value = self._opmode_sel
+            elif 'PwrState-Sel' in pvname:
+                if self._pwrstate_sel != value:
+                    thread = _threading.Thread(target=self._set_pwrstate_sel, args=[self._pwrstate_sel])
+                    thread.start()
+                    value = self._pwrstate_sel
+            elif pvname == 'pwrstate':
+                if self._pwrstate_sel != value:
+                    self._set_pwrstate_sel(self._pwrstate_sel)
+                    value = self._pwrstate_sel
+            elif 'WfmLoad-Sel' in pvname:
+                if self._wfmload_sel != value:
+                    thread = _threading.Thread(target=self._set_wfmload_sel, args=[self._wfmload_sel])
+                    thread.start()
+                    value = self._wfmload_sel
+            elif pvname == 'wfmload':
+                if self._wfmload_sel != value:
+                    self._set_wfmload_sel(self._wfmload_sel)
+                    value = self._wfmload_sel
+            elif 'WfmLabel-SP' in pvname:
+                if self._wfmlabel_sp != value:
+                    thread = _threading.Thread(target=self._set_wfmlabel_sp, args=[self._wfmlabel_sp])
+                    thread.start()
+                    value = self._wfmlabel_sp
+            elif pvname == 'wfmlabel':
+                if self._wfmlabel_sp != value:
+                    self._set_wfmlabel_sp(self._wfmlabel_sp)
+                    value = self._wfmlabel_sp
+            elif 'WfmData-SP' in pvname:
+                if _np.any(self._wfmdata_sp != value):
+                    thread = _threading.Thread(target=self._set_wfmdata_sp, args=[self._wfmdata_sp])
+                    thread.start()
+                    value = self._wfmdata_sp
+            elif pvname == 'wfmdata':
+                if _np.any(self._wfmdata_sp != value):
+                    self._set_wfmdata_sp(self._wfmdata_sp)
+                    value = self._wfmdata_sp
+            elif 'Current-SP' in pvname:
+                if self._current_sp != value: #Value was not changed by the MA-IOC
+                    thread = _threading.Thread(target=self._set_current_sp, args=[self._current_sp])
+                    thread.start()
+                    value = self._current_sp
+            elif pvname == 'current_sp':
+                if self._current_sp != value: #Value was not changed by the MA-IOC
+                    self._set_current_sp(self._current_sp)
+                    value = self._current_sp
         if self.callback is not None:
             self.callback(pvname, value, **kwargs)
