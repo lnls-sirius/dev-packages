@@ -227,7 +227,7 @@ class Controller(metaclass=_ABCMeta):
     def add_callback(self, callback, index=None):
         index = _uuid.uuid4() if index is None else index
         self._callbacks[index] = callback
-        return inde
+        return index
 
     def remove_callback(self, index):
         if index in self._callbacks:
@@ -610,7 +610,7 @@ class ControllerSim(Controller):
         self._pwrstate    = _et.idx.Off          # power state
         self._timestamp_pwrstate = now           # last time pwrstate was changed
         self._opmode      = _et.idx.SlowRef      # operation mode state
-        self._timestamp_opmode  = now           # last time opmode was changed
+        self._timestamp_opmode  = now            # last time opmode was changed
         self._abort_counter = 0                  # abort command counter
         self._cmd_abort_issued = False
         self._reset_counter = 0                  # reset command counter
@@ -618,7 +618,6 @@ class ControllerSim(Controller):
         self._intlk = 0                          # interlock signals
         self._intlklabels = _default_intlklabels
         self._timestamp_trigger  = None          # last time trigger signal was received
-
         self.current_max = current_max
         self.current_min = current_min
         self._current_std = current_std          # standard dev of error added to output current
@@ -912,6 +911,211 @@ class ControllerSim(Controller):
 Controller.register(ControllerSim)
 
 
+class ControllerSimLinac(ControllerSim):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def _set_opmode(self, value):
+        pass
+
+    def _set_cmd_abort_issued(self, value):
+        pass
+
+    # --- revise from this point down !!!
+
+    def _get_current_ref(self):
+        return self._current_ref
+
+    def _get_current_load(self):
+        return self._current_load
+
+    def _get_wfmindex(self):
+        return self._wfmindex
+
+    def _set_wfmindex(self, value):
+        self._wfmindex = value
+
+    def _get_wfmlabels(self):
+        return _np.array([label for label in self._wfmlabels])
+
+    def _get_wfmlabel(self):
+        return self._waveform.label
+
+    def _set_wfmlabel(self, value):
+        self._waveform.label = value
+        self._wfmlabels[self._wfmslot] = value
+        self._mycallback(pvname='wfmlabel')
+
+    def _get_wfmload(self):
+        return self._wfmslot
+
+    def _set_wfmload(self, value):
+        # load waveform stored in non-volatile memory
+        self._wfmslot = value
+        wfm = self._load_waveform_from_slot(self._wfmslot)
+        if wfm != self._waveform:
+            self._pending_wfmload = True
+            self._waveform = wfm
+            self._mycallback(pvname='wfmload')
+
+    def _get_wfmload_changed(self):
+        return self._wfmload_changed_state
+
+    def _set_wfmload_changed(self, value):
+        self._wfmload_changed_state = value
+
+    def _get_wfmdata(self):
+        return _np.array(self._waveform.data)
+
+    def _set_wfmdata(self, value):
+        self._waveform.data = _np.array(value)
+        self._mycallback(pvname='wfmdata')
+
+    def _get_wfmdata_changed(self):
+        return self._wfmdata_changed_state
+
+    def _set_wfmdata_changed(self, value):
+        self._wfmdata_changed_state = value
+
+    def _get_wfmsave(self):
+        return self._wfmsave
+
+    def _set_wfmsave(self, value):
+        self._wfmsave += 1
+        self._save_waveform_to_slot(self._wfmslot)
+        self._mycallback(pvname='wfmsave')
+
+    def _get_trigger_timed_out(self):
+        if self._timestamp_trigger is not None and self.time - self._timestamp_trigger > Controller.trigger_timeout:
+            return True
+        else:
+            return False
+
+    def _set_trigger_timed_out(self, value):
+        self._trigger_timed_out = value
+
+    def _get_time(self):
+        if self._time_simulated is None:
+            return _time.time()
+        else:
+            return self._time_simulated
+
+
+    def _set_current_ref(self, value):
+        if value != self._current_ref:
+            self._current_ref = value
+            self._mycallback(pvname='current_ref')
+        if self._time_simulated is not None:
+            _random.seed(self._time_simulated) # if time is frozen, generated same error.
+        value = _random.gauss(self._current_ref, self._current_std)
+        if value != self._current_load:
+            self._current_load = value
+            self._mycallback(pvname='current_load')
+
+    def _get_cycling_state(self):
+        return self._cycling_state
+
+    def _set_cycling_state(self, value):
+        if value and not self._cycling_state:
+            self._timestamp_cycle_start = self.time
+        self._cycling_state = value
+
+    def _process_Cycle(self):
+        if self._get_cycling_state():
+            dt  = self.time - self._timestamp_cycle_start
+            if self._cycgen.out_of_range(dt):
+                self._finilize_cycgen()
+            else:
+                scan_value = self._cycgen.get_signal(dt)
+                self._update_current_ref(scan_value)
+
+    def _mycallback(self, pvname):
+        # if self._callback is None:
+        #     return
+        if not self._callbacks: return
+
+        elif pvname == 'pwrstate':
+            for callback in self._callbacks.values():
+                callback(pvname='pwrstate', value=self._pwrstate)
+        elif pvname == 'opmode':
+            for callback in self._callbacks.values():
+                callback(pvname='opmode', value=self._opmode)
+        elif pvname == 'current_sp':
+            for callback in self._callbacks.values():
+                callback(pvname='current_sp', value=self._current_sp)
+        elif pvname == 'current_ref':
+            for callback in self._callbacks.values():
+                callback(pvname='current_ref', value=self._current_ref)
+        elif pvname == 'current_load':
+            for callback in self._callbacks.values():
+                callback(pvname='current_load', value=self._current_load)
+        elif pvname == 'wfmload':
+            for callback in self._callbacks.values():
+                callback(pvname='wfmload', value=self._wfmslot)
+        elif pvname == 'wfmdata':
+            for callback in self._callbacks.values():
+                callback(pvname='wfmdata', value=self._waveform.data)
+        elif pvname == 'wfmlabel':
+            for callback in self._callbacks.values():
+                callback(pvname='wfmlabel', value=self._waveform.label)
+        elif pvname == 'wfmsave':
+            for callback in self._callbacks.values():
+                callback(pvname='wfmsave', value=self._wfmsave)
+        elif pvname == 'reset':
+            for callback in self._callbacks.values():
+                callback(pvname='reset', value=self._wfmsave)
+        elif pvname == 'abort':
+            for callback in self._callbacks.values():
+                callback(pvname='abort', value=self._wfmsave)
+        else:
+            raise NotImplementedError
+
+    def _init_waveforms(self):
+        self._wfmindex  = 0   # updated index selecting value of current in waveform in use
+        self._wfmsave   = 0   # waveform save command counter
+        self._wfmslot   = 0   # selected waveform slot index
+        self._wfmlabels = []  # updated array with waveform labels
+        self._wfmdata_changed_state = False
+        self._wfmload_changed_state = False
+        for i in range(len(_default_wfmlabels)):
+            wfm = self._load_waveform_from_slot(i)
+            self._wfmlabels.append(wfm.label)
+            if i == self._wfmslot:
+                self._waveform = wfm
+                self._wfmdata_in_use = _np.array(wfm.data)
+
+    def _load_waveform_from_slot(self, slot):
+        if self._psname is not None:
+            fname = self._psname + ':' + _default_wfmlabels[slot]
+        else:
+            fname = _default_wfmlabels[slot]
+        try:
+            return _PSWaveForm(label= _default_wfmlabels[slot],filename=fname+'.txt')
+        except FileNotFoundError:
+            wfm = _PSWaveForm.wfm_constant(label= _default_wfmlabels[slot],filename=fname+'.txt')
+            wfm.save_to_file(filename=fname+'.txt')
+            return wfm
+
+    def _load_waveform_from_label(self, label):
+        if label in self._wfmlabels:
+            slot = self._wfmlabels.index(label)
+            return slot, self._load_waveform_from_slot(slot)
+        else:
+            return None
+
+    def _save_waveform_to_slot(self, slot):
+        if self._psname is not None:
+            fname = self._psname + ':' + _default_wfmlabels[slot]
+        else:
+            fname = _default_wfmlabels[slot]
+        try:
+            self._waveform.save_to_file(filename=fname+'.txt')
+        except PermissionError:
+            raise Exception('Could not write file "' + fname+'.txt' + '"!')
+Controller.register(ControllerSimLinac)
+
+
 class ControllerEpics(Controller):
 
     def __init__(self, psname,
@@ -924,9 +1128,6 @@ class ControllerEpics(Controller):
         self._connection_timeout = connection_timeout
         self._create_epics_pvs(use_vaca=use_vaca,vaca_prefix=vaca_prefix)
         super().__init__(psname=psname,**kwargs)
-        self.callback = None
-
-
         now = self.time
         self._timestamp_pwrstate = now # last time pwrstate was changed
         self._timestamp_opmode   = now # last time opmode was changed
@@ -1192,3 +1393,282 @@ class ControllerEpics(Controller):
             pv.remove_callback(index=index)
         super().__del__()
 Controller.register(ControllerEpics)
+
+
+class ControllerEpicsLinac(Controller):
+    # revise entire class !!!!
+    def __init__(self, psname,
+                       connection_timeout=_connection_timeout,
+                       use_vaca=False,
+                       vaca_prefix=None,
+                       **kwargs):
+
+        self._psname = psname
+        self._connection_timeout = connection_timeout
+        self._create_epics_pvs(use_vaca=use_vaca,vaca_prefix=vaca_prefix)
+        super().__init__(psname=psname,**kwargs)
+        now = self.time
+        self._timestamp_pwrstate = now # last time pwrstate was changed
+        self._timestamp_opmode   = now # last time opmode was changed
+
+    @property
+    def connected(self):
+        for name,pv in self._pvs.items():
+            if not pv.connected: return False
+        return True
+
+    def _get_pwrstate(self):
+        return self._pvs['PwrState-Sts'].get(timeout=self._connection_timeout)
+
+    def _set_pwrstate(self, value):
+        if value not in _et.values('OffOnTyp'): raise Exception('Invalid value of pwrstate_sel')
+        if value != self.pwrstate:
+            self._pvs['PwrState-Sel'].value = value
+            self.update_state(pwrstate=True)
+
+    def _get_opmode(self):
+        return self._pvs['OpMode-Sts'].get(timeout=self._connection_timeout)
+
+    def _set_opmode(self, value):
+        if value not in _et.values('OffOnTyp'): raise Exception('Invalid value of pwrstate_sel')
+        if value != self.opmode:
+            self._pvs['OpMode-Sel'].value = value
+            self.update_state(opmode=True)
+
+    def _set_cmd_abort_issued(self, value):
+        pass
+
+    def _get_reset_counter(self):
+        return self._pvs['Reset-Cmd'].get(timeout=self._connection_timeout)
+
+    def _inc_reset_counter(self):
+        self._pvs['Reset-Cmd'].value = 0
+        self.update_state(reset=True)
+
+    def _get_abort_counter(self):
+        return self._pvs['Abort-Cmd'].get(timeout=self._connection_timeout)
+
+    def _inc_abort_counter(self):
+        self._pvs['Abort-Cmd'].value = 0
+        self.update_state(reset=True)
+
+    def _get_timestamp_trigger(self):
+        raise Exception('Invalid method call')
+
+    def _set_timestamp_trigger(self, value):
+        pass
+
+    def _get_timestamp_cycling(self):
+        raise Exception('Invalid method call')
+
+    def _set_timestamp_cycling(self, value):
+        pass
+
+    def _get_timestamp_opmode(self):
+        raise Exception('Invalid method call')
+
+    def _set_timestamp_opmode(self, value):
+        pass
+
+    def _get_intlk(self):
+        return self._pvs['Intlk-Mon'].get(timeout=self._connection_timeout)
+
+    def _intlk_reset(self):
+        pass
+
+    def _get_intlklabels(self):
+        return self._pvs['IntlkLabels-Cte'].get(timeout=self._connection_timeout)
+
+    def _get_current_min(self):
+        return self._pvs['Current-SP'].lower_ctrl_limit
+
+    def _get_current_max(self):
+        return self._pvs['Current-SP'].upper_ctrl_limit
+
+    def _set_current_min(self):
+        pass
+
+    def _set_current_max(self):
+        pass
+
+    def _get_current_sp(self):
+        return self._pvs['Current-SP'].get(timeout=self._connection_timeout)
+
+    def _set_current_sp(self, value):
+        #print('[CE] ' + str(self._psname) + ' [set_current_sp] set_current_sp value:', value, ' SP:',self.current_sp)
+        if value != self.current_sp:
+            #print('[CE] ' + str(self._psname) + ' [set_current_sp] set_current_sp value:', value, ' SP:',self.current_sp)
+            self._pvs['Current-SP'].value = value
+            #print(self._pvs['Current-SP'].value)
+            self.update_state(current_sp=True)
+
+    def _get_current_ref(self):
+        return self._pvs['CurrentRef-Mon'].get(timeout=self._connection_timeout)
+
+    def _get_current_load(self):
+        return self._pvs['Current-Mon'].get(timeout=self._connection_timeout)
+
+    def _get_wfmindex(self):
+        return self._pvs['WfmIndex-Mon'].get(timeout=self._connection_timeout)
+
+    def _set_wfmindex(self, value):
+        pass
+
+    def _get_wfmlabels(self):
+        return self._pvs['WfmLabels-Mon'].get(timeout=self._connection_timeout)
+
+    def _get_wfmlabel(self):
+        return self._pvs['WfmLabel-RB'].get(timeout=self._connection_timeout)
+
+    def _set_wfmlabel(self, value):
+        if value != self.wfmlabel:
+            self._pvs['WfmLabel-SP'].value = value
+            self.update_state(wfmlabel=True)
+
+    def _get_wfmload(self):
+        return self._pvs['WfmLoad-Sts'].get(timeout=self._connection_timeout)
+
+    def _set_wfmload(self, value):
+        if value != self.wfmload:
+            self._pvs['WfmLoad-Sel'].value = value
+            self.update_state(wfmload=True)
+
+    def _get_wfmload_changed(self):
+        return False
+
+    def _set_wfmload_changed(self, value):
+        pass
+
+    def _get_wfmdata(self):
+        return self._pvs['WfmData-RB'].get(timeout=self._connection_timeout)
+
+    def _set_wfmdata(self, value):
+        if (value != self.wfmdata).any():
+            self._pvs['WfmData-SP'].value = value
+            self.update_state(wfmdata=True)
+
+    def _get_wfmdata_changed(self):
+        return False
+
+    def _set_wfmdata_changed(self, value):
+        pass
+
+    def _get_wfmsave(self):
+        return self._pvs['WfmSave-Cmd'].get(timeout=self._connection_timeout)
+
+    def _set_wfmsave(self, value):
+        self._pvs['WfmSave-Cmd'].value = value
+        self.update_state(wfmsave=True)
+
+    def _get_trigger_timed_out(self):
+        return False
+
+    def _set_trigger_timed_out(self, value):
+        pass
+
+    def _get_time(self):
+        return _time.time()
+
+    def _process_trigger_signal(self, nrpts, width):
+        pass
+
+    def _set_current_ref(self, value):
+        pass
+
+    def _get_cycling_state(self):
+        pass
+
+    def _set_cycling_state(self, value):
+        pass
+
+    def _process_Cycle(self):
+        pass
+
+    def _mycallback(self, pvname, value, **kwargs):
+        #print('[CE] [callback] ', pvname, value)
+        if self._callbacks:
+            for callback in self._callbacks.values():
+                callback(pvname=pvname, value=value, **kwargs)
+
+    def _create_epics_pvs(self, use_vaca, vaca_prefix):
+        self._pvs = {}
+        if use_vaca:
+            if vaca_prefix is None:
+                vaca_prefix = _envars.vaca_prefix
+        else:
+            vaca_prefix = ''
+        pv = vaca_prefix + self._psname
+        # eventually get this list from csdevice !!!
+        self._pvs['PwrState-Sel']    = _PV(pv + ':PwrState-Sel',    connection_timeout=self._connection_timeout)
+        self._pvs['PwrState-Sts']    = _PV(pv + ':PwrState-Sts',    connection_timeout=self._connection_timeout)
+        self._pvs['OpMode-Sel']      = _PV(pv + ':OpMode-Sel',      connection_timeout=self._connection_timeout)
+        self._pvs['OpMode-Sts']      = _PV(pv + ':OpMode-Sts',      connection_timeout=self._connection_timeout)
+        self._pvs['Reset-Cmd']       = _PV(pv + ':Reset-Cmd',       connection_timeout=self._connection_timeout)
+        self._pvs['Abort-Cmd']       = _PV(pv + ':Abort-Cmd',       connection_timeout=self._connection_timeout)
+        self._pvs['Intlk-Mon']       = _PV(pv + ':Intlk-Mon',       connection_timeout=self._connection_timeout)
+        self._pvs['IntlkLabels-Cte'] = _PV(pv + ':IntlkLabels-Cte', connection_timeout=self._connection_timeout)
+        self._pvs['Current-SP']      = _PV(pv + ':Current-SP',      connection_timeout=self._connection_timeout)
+        self._pvs['Current-RB']      = _PV(pv + ':Current-RB',      connection_timeout=self._connection_timeout)
+        self._pvs['CurrentRef-Mon']  = _PV(pv + ':CurrentRef-Mon',  connection_timeout=self._connection_timeout)
+        self._pvs['Current-Mon']     = _PV(pv + ':Current-Mon',     connection_timeout=self._connection_timeout)
+        self._pvs['WfmIndex-Mon']    = _PV(pv + ':WfmIndex-Mon',    connection_timeout=self._connection_timeout)
+        self._pvs['WfmLabels-Mon']   = _PV(pv + ':WfmLabels-Mon',   connection_timeout=self._connection_timeout)
+        self._pvs['WfmLabel-SP']     = _PV(pv + ':WfmLabel-SP',     connection_timeout=self._connection_timeout)
+        self._pvs['WfmLabel-RB']     = _PV(pv + ':WfmLabel-RB',     connection_timeout=self._connection_timeout)
+        self._pvs['WfmLoad-Sel']     = _PV(pv + ':WfmLoad-Sel',     connection_timeout=self._connection_timeout)
+        self._pvs['WfmLoad-Sts']     = _PV(pv + ':WfmLoad-Sts',     connection_timeout=self._connection_timeout)
+        self._pvs['WfmData-SP']      = _PV(pv + ':WfmData-SP',      connection_timeout=self._connection_timeout)
+        self._pvs['WfmData-RB']      = _PV(pv + ':WfmData-RB',      connection_timeout=self._connection_timeout)
+        self._pvs['WfmSave-Cmd']     = _PV(pv + ':WfmSave-Cmd',     connection_timeout=self._connection_timeout)
+
+        self._pvs['PwrState-Sel'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['PwrState-Sts'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['OpMode-Sel'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['OpMode-Sts'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['Reset-Cmd'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['Abort-Cmd'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['Intlk-Mon'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['IntlkLabels-Cte'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['Current-SP'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['Current-RB'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['CurrentRef-Mon'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['Current-Mon'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['WfmIndex-Mon'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['WfmLabels-Mon'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['WfmLabel-SP'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['WfmLabel-RB'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['WfmLoad-Sel'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['WfmLoad-Sts'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['WfmData-SP'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['WfmData-RB'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['WfmSave-Cmd'].wait_for_connection(timeout=self._connection_timeout)
+
+        # add callback
+        index = None
+        index = self._pvs['PwrState-Sel'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['PwrState-Sts'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['OpMode-Sel'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['OpMode-Sts'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['Reset-Cmd'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['Abort-Cmd'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['Intlk-Mon'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['IntlkLabels-Cte'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['Current-SP'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['Current-RB'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['CurrentRef-Mon'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['Current-Mon'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['WfmIndex-Mon'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['WfmLabels-Mon'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['WfmLabel-SP'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['WfmLabel-RB'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['WfmLoad-Sel'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['WfmLoad-Sts'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['WfmData-SP'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['WfmData-RB'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['WfmSave-Cmd'].add_callback(callback=self._mycallback, index=index)
+
+    def __del__(self):
+        for index,pv in self._pvs.items():
+            pv.remove_callback(index=index)
+        super().__del__()
+Controller.register(ControllerEpicsLinac)

@@ -1,4 +1,14 @@
+def get_magfunc_2_multipole_dict():
 
+    _magfuncs = {
+        'dipole' : {'type':'normal', 'harmonic':0},
+        'corrector-horizontal' : {'type':'normal', 'harmonic':0},
+        'corrector-vertical' : {'type':'skew', 'harmonic':0},
+        'quadrupole' : {'type':'normal', 'harmonic':1},
+        'quadrupole-skew' : {'type':'skew', 'harmonic':1},
+        'sextupole' : {'type':'normal', 'harmonic':2},
+    }
+    return _magfuncs
 
 def get_multipole_name(harmonic, suffix='pole'):
 

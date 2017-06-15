@@ -1,6 +1,5 @@
+
 import math as _math
-#from abc import abstractmethod as _abstractmethod
-#from abc import ABCMeta as _ABCMeta
 from siriuspy import util as _util
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.pwrsupply.controller import ControllerEpics as _ControllerEpics
@@ -8,7 +7,6 @@ from siriuspy.pwrsupply.model import PowerSupply as _PowerSupply
 from siriuspy.pwrsupply.model import PowerSupplySync as _PowerSupplySync
 from siriuspy.magnet import util as _mutil
 from siriuspy.magnet.data import MAData as _MAData
-#from siriuspy.magnet.data import MAStrengthBase as _MAStrengthBase
 from siriuspy.magnet.data import MAStrengthDip as _MAStrengthDip
 from siriuspy.magnet.data import MAStrength as _MAStrength
 from siriuspy.magnet.data import MAStrengthTrim as _MAStrengthTrim
@@ -19,14 +17,7 @@ _connection_timeout = None
 
 class Magnet:
 
-    _magfuncs = {
-        'dipole' : {'type':'normal', 'harmonic':0},
-        'corrector-horizontal' : {'type':'normal', 'harmonic':0},
-        'corrector-vertical' : {'type':'skew', 'harmonic':0},
-        'quadrupole' : {'type':'normal', 'harmonic':1},
-        'quadrupole-skew' : {'type':'skew', 'harmonic':1},
-        'sextupole' : {'type':'normal', 'harmonic':2},
-    }
+    _magfuncs = _mutil.get_magfunc_2_multipole_dict()
 
     def __init__(self, magfunc,
                        psupplies,

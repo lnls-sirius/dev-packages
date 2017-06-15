@@ -14,11 +14,11 @@ class ExcitationData:
             raise Exception('ambiguous constructor arguments')
 
         if text:
-            self.read_text(text)
+            self._read_text(text)
         elif filename:
-            self.read_file(filename)
+            self._read_file(filename)
         else:
-            self.read_webs(filename_web)
+            self._read_webs(filename_web)
 
     def _init(self):
 
@@ -46,7 +46,7 @@ class ExcitationData:
     def current_limits(self):
         return self._current_limits;
 
-    def read_text(self, text):
+    def _read_text(self, text):
 
         self._init()
         lines = text.splitlines()
@@ -87,17 +87,17 @@ class ExcitationData:
 
         self._current_limits = (min(self.currents),max(self.currents))
 
-    def read_file(self, filename):
+    def _read_file(self, filename):
 
         with open(filename) as f:
             text = f.read()
-        self.read_text(text)
+        self._read_text(text)
 
-    def read_webs(self, label):
+    def _read_webs(self, label):
 
         self._fname = label
         text = _web.magnets_excitation_data_read(label)
-        self.read_text(text)
+        self._read_text(text)
 
     def check_valid_curr(self, value):
         return self.currents[0] <= value <= self.currents[-1]

@@ -1,9 +1,8 @@
-from siriuspy.pwrsupply import PowerSupply
-from siriuspy.pwrsupply import ControllerSim
-from siriuspy import envars
+from siriuspy.pwrsupply import PowerSupplySim as _PowerSupplySim
+from siriuspy import envars as _envars
 from siriuspy.search import PSSearch as _PSSearch
 
-_prefix = envars.vaca_prefix
+_prefix = _envars.vaca_prefix
 
 
 ps_devices = None
@@ -22,7 +21,7 @@ def get_ps_devices():
         pwr_supplies = _PSSearch.get_psnames()
         #Create objects that'll handle the magnets
         for ps in pwr_supplies:
-            ps_devices[ps] = PowerSupply(psname=ps)
+            ps_devices[ps] = _PowerSupplySim(psname=ps)
 
     return ps_devices
 

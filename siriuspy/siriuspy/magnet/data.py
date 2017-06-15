@@ -4,8 +4,6 @@ from abc import abstractmethod as _abstractmethod
 from abc import ABCMeta as _ABCMeta
 import siriuspy.util as _util
 from siriuspy.search import MASearch as _MASearch
-import siriuspy.servweb as _web
-from siriuspy.namesys import Filter as _Filter
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.pwrsupply.data import PSData as _PSData
 from siriuspy.csdevice.pwrsupply import get_ma_propty_database as _get_ma_propty_database
