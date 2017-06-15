@@ -32,7 +32,7 @@ class PowerSupply(_PSData):
 
     def update_state(self):
         self._controller.update_state()
-        
+
     def add_callback(self, callback, index=None):
         index = _uuid.uuid4() if index is None else index
         self._callbacks[index] = callback
@@ -270,7 +270,7 @@ class PowerSupply(_PSData):
 
     def _get_database(self):
         """Return an updated  PV database whose keys correspond to PS properties."""
-        db = self._psdata.propty_database
+        db = self.propty_database
         value = self.ctrlmode_mon; db['CtrlMode-Mon']['value'] = _et.enums('RmtLocTyp').index(value) if self._enum_keys else value
         value = self.opmode_sel;   db['OpMode-Sel']['value'] = _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
         value = self.opmode_sts;   db['OpMode-Sts']['value'] = _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
