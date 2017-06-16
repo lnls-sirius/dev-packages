@@ -18,8 +18,9 @@ from .waveform import PSWaveForm as _PSWaveForm
 from .cycgen import PSCycGenerator as _PSCycGenerator
 
 
-_connection_timeout = 0.9 # [seconds]
-
+_connection_timeout       = 0.9 # [seconds]
+_trigger_timeout_default  = 0.002 # [seconds]
+_trigger_interval_default = 0.490/2000.0 # [seconds]
 
 class Controller(metaclass=_ABCMeta):
 
@@ -29,23 +30,42 @@ class Controller(metaclass=_ABCMeta):
     implemented in sub classes. It also contains methods that implement
     most of the controller logic."""
 
-    trigger_timeout = 10000000 # [seconds]
-    #trigger_timout  = 0.002 # [seconds]
-
     def __init__(self, callback=None, psname=None, cycgen=None):
-        #self._callback = callback
         self._psname = psname
         self._init_cycgen(cycgen)
         self._set_cycling_state(False)
         self._set_timestamp_cycling(None)
+        self._trigger_timeout = _trigger_timeout_default
+        self._trigger_interval = _trigger_interval_default
         self._callbacks = {} if callback is None else {_uuid.uuid4():callback}
         self.update_state(init=True)
 
     # --- class interface - properties ---
 
     @property
+    def psname(self):
+        return self._psname
+
+    @property
     def connected(self):
         return True
+
+    @property
+    def trigger_timeout(self):
+        return self._trigger_timeout
+
+    @trigger_timeout.setter
+    def trigger_timeout(self, value):
+        self._trigger_timeout = float(value) if value > 0.0 else 0.0
+
+    @property
+    def trigger_interval(self):
+        return self._trigger_interval
+
+    @trigger_interval.setter
+    def trigger_interval(self, value):
+        self._trigger_interval = float(value) if value > 0.0 else 0.0
+
 
     @property
     def pwrstate(self):
@@ -238,10 +258,10 @@ class Controller(metaclass=_ABCMeta):
 
     # --- class interface - methods ---
 
-    def trigger_signal(self, delay=0, nrpts=1, width=0.0):
+    def trigger_signal(self, delay=0, nrpts=1):
         if delay != 0: _time.sleep(delay)
         self._process_trigger_timeout()
-        self._process_trigger_signal(nrpts,width)
+        self._process_trigger_signal(nrpts)
 
     def update_state(self, **kwargs):
         self._process_trigger_timeout()
@@ -262,8 +282,10 @@ class Controller(metaclass=_ABCMeta):
             pass
             #raise Exception('Invalid controller opmode')
 
-    def fofb_signal(self):
-        pass
+    def fofb_signal(self, current):
+        if self.opmode == _et.idx.FastRef:
+            self._set_current_ref(float(current))
+            self.update_state(fofb_signal=True)
 
     def _init_cycgen(self, cycgen):
         if cycgen is not None:
@@ -577,7 +599,7 @@ class Controller(metaclass=_ABCMeta):
         pass
 
     @_abstractmethod
-    def _process_trigger_signal(self, nrpts, width):
+    def _process_trigger_signal(self, nrpts):
         pass
 
     @_abstractmethod
@@ -595,11 +617,11 @@ class Controller(metaclass=_ABCMeta):
 
 class ControllerSim(Controller):
 
-    def __init__(self, current_min=None,
+    def __init__(self, psname=None,
+                       current_min=None,
                        current_max=None,
                        current_std=0.0,
                        random_seed=None,
-                       psname=None,
                        **kwargs):
 
         self._time_simulated  = None
@@ -770,7 +792,7 @@ class ControllerSim(Controller):
         self._mycallback(pvname='wfmsave')
 
     def _get_trigger_timed_out(self):
-        if self._timestamp_trigger is not None and self.time - self._timestamp_trigger > Controller.trigger_timeout:
+        if self._timestamp_trigger is not None and self.time - self._timestamp_trigger > self._trigger_timeout:
             return True
         else:
             return False
@@ -784,7 +806,7 @@ class ControllerSim(Controller):
         else:
             return self._time_simulated
 
-    def _process_trigger_signal(self, nrpts, width):
+    def _process_trigger_signal(self, nrpts):
         now = self.time
         if nrpts == 1:
             self._set_timestamp_trigger(now)
@@ -792,7 +814,7 @@ class ControllerSim(Controller):
         else:
             self._time_simulated = now
             for i in range(nrpts):
-                self._time_simulated = now + i * width
+                self._time_simulated = now + i * self.trigger_interval
                 self._set_timestamp_trigger(self._time_simulated)
                 self.update_state(trigger_signal=True)
             self._time_simulated = None
@@ -801,8 +823,8 @@ class ControllerSim(Controller):
         if value != self._current_ref:
             self._current_ref = value
             self._mycallback(pvname='current_ref')
-        if self._time_simulated is not None:
-            _random.seed(self._time_simulated) # if time is frozen, generated same error.
+        #if self._time_simulated is not None:
+        #    _random.seed(self._time_simulated) # if time is frozen, generated same error.
         value = _random.gauss(self._current_ref, self._current_std)
         if value != self._current_load:
             self._current_load = value
@@ -987,7 +1009,7 @@ class ControllerSimLinac(ControllerSim):
         self._mycallback(pvname='wfmsave')
 
     def _get_trigger_timed_out(self):
-        if self._timestamp_trigger is not None and self.time - self._timestamp_trigger > Controller.trigger_timeout:
+        if self._timestamp_trigger is not None and self.time - self._timestamp_trigger > self._trigger_timeout:
             return True
         else:
             return False
