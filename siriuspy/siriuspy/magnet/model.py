@@ -195,16 +195,15 @@ class PowerSupplyMA(_PowerSupplySync):
                                ):
         self._maname = _SiriusPVName(maname)
         self._madata = _MAData(self._maname)
-        self._psname = self._madata.psnames
-        self._controller_dipole = controller_dipole
-        self._controller_family = controller_family
-        self._callback_index = {}
         super().__init__(psnames=self._get_psnames(),
                          use_vaca=use_vaca,
                          vaca_prefix=vaca_prefix,
                          connection_timeout=connection_timeout,
                          lock=lock,
                          **kwargs)
+        self._controller_dipole = controller_dipole
+        self._controller_family = controller_family
+        self._callback_indices = {}
         self._init_pwrsupply(use_vaca=use_vaca,
                              vaca_prefix=vaca_prefix,
                              connection_timeout=connection_timeout)
@@ -227,7 +226,7 @@ class PowerSupplyMA(_PowerSupplySync):
     @property
     def magfunc(self):
         """Return string corresponding to the magnetic function excitated with the power supply."""
-        return self._madata.magfunc(self._psname[0])
+        return self._madata.magfunc(self._madata.psnames[0])
 
     @property
     def strength_sp(self):
@@ -281,7 +280,7 @@ class PowerSupplyMA(_PowerSupplySync):
                 self._currents_ref  = {'current_dipole':self._controller_dipole.current_ref}
                 self._currents_load = {'current_dipole':self._controller_dipole.current_load}
             elif self.magfunc in ('quadrupole'):
-                pvname = _SiriusPVName(self._psname[0])
+                pvname = _SiriusPVName(self._psnames[0])
                 family = pvname.replace(pvname.subsection, 'Fam')
                 if self._controller_family is None:
                     self._controller_family = _ControllerEpics(psname=family,
@@ -308,7 +307,7 @@ class PowerSupplyMA(_PowerSupplySync):
 
     def _get_database(self, prefix=''):
         """Return an updated  PV database whose keys correspond to PS properties."""
-        db = self._madata._propty_databases[self._psname[0]]
+        db = self._madata._propty_databases[self._psnames[0]]
         value = self.ctrlmode_mon; db['CtrlMode-Mon']['value'] = _et.enums('RmtLocTyp').index(value) if self._enum_keys else value
         value = self.opmode_sel;   db['OpMode-Sel']['value'] = _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
         value = self.opmode_sts;   db['OpMode-Sts']['value'] = _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
@@ -364,7 +363,7 @@ class PowerSupplyMA(_PowerSupplySync):
 
     def _mycallback(self, pvname, value, **kwargs):
         #print('[PS] [callback] ', pvname, value)
-        for psname in self._psname:
+        for psname in self._psnames:
             pvname = pvname.replace(psname, self._maname)
         #Callbacks for strength: _rb, ref_mon, _mon
         for callback in self._callbacks.values():
