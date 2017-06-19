@@ -358,7 +358,7 @@ class PowerSupplyMA(_PowerSupplySync):
 
     def _set_current_sp(self, value):
         super()._set_current_sp(value)
-        self._currents_sp['current'] = self._controller.current_sp
+        self._currents_sp['current'] = value#self._controller.current_sp
         self._strength_sp = self._strobj.conv_current_2_strength(**self._currents_sp)
 
     def _mycallback(self, pvname, value, **kwargs):
@@ -369,13 +369,26 @@ class PowerSupplyMA(_PowerSupplySync):
         for callback in self._callbacks.values():
             slot = ':'.join(pvname.split(':')[:2])
             #Callbacks to update strngth PVs
+            strength = self._get_strength_string()
             if 'Current-RB' in pvname:
-                callback(slot + ':KL-RB', self.strength_rb, **kwargs)
+                callback(slot + ':' + strength + '-RB', self.strength_rb, **kwargs)
             elif 'CurrentRef-Mon' in pvname:
-                callback(slot + ':KLRef-Mon', self.strengthref_mon, **kwargs)
+                callback(slot + ':' + strength + 'Ref-Mon', self.strengthref_mon, **kwargs)
             elif 'Current-Mon' in pvname:
-                callback(slot + ':KL-Mon', self.strength_mon, **kwargs)
+                callback(slot + ':' + strength + '-Mon', self.strength_mon, **kwargs)
         super()._mycallback(pvname, value, **kwargs)
+
+    def _get_strength_string(self):
+        if self.magfunc in ('dipole'):
+            return "Energy"
+        elif self.magfunc in ('quadrupole','quadrupole-skew'):
+            return "KL"
+        elif self.magfunc in ('corrector-horizontal', 'corrector-vertical'):
+            return "Kick"
+        elif self.magfunc in ('sextupole',):
+            return "SL"
+        else:
+            raise ValueError("No such strength")
 
     def _mycallback_dipole(self, pvname, value, **kwargs):
         """ Callback used for dipole PVs updates. """
