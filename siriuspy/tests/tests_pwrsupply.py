@@ -2,6 +2,7 @@
 
 import unittest
 from siriuspy.pwrsupply import PowerSupply
+
 #from siriuspy.magnet.model import PowerSupplyMA
 
 class PowerSupplyTest(unittest.TestCase):
@@ -205,9 +206,20 @@ class PowerSupplyOnRmpWfmTest(PowerSupplyTest):
 
     def test_opmode_on_abort(self):
         ''' Test abort emitted when on RmpWfm '''
+        # abort right away, if no trigger signal has arrived
         self.assertEqual(self.ps.opmode_sts, 'RmpWfm')
         self.ps.abort = 1
+        self.assertEqual(self.ps.opmode_sts, 'SlowRef')
+        # waits till end of ramp if first signal had arrived
+        self.ps.opmode_sel = 'RmpWfm'
+        self.ps._controller.trigger_timeout = 10000
+        self.ps._controller.trigger_signal()
+        self.ps.abort = 1
         self.assertEqual(self.ps.opmode_sts, 'RmpWfm')
+        while self.ps.wfmindex_mon != 0:
+            self.ps._controller.trigger_signal()
+        self.assertEqual(self.ps.opmode_sts, 'SlowRef')
+
 
     def test_opmode_on_abort_after_scan(self):
         ''' Test abort emitted when on RmpWfm '''

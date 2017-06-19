@@ -25,6 +25,7 @@ class TestControllerSim(unittest.TestCase):
         self.assertEqual(self.c.intlk, 0)
         self.assertEqual(self.c.current_min, self.curr_min)
         self.assertEqual(self.c.current_max, self.curr_max)
+        self.assertEqual(type(self.c.current_sp), float)
         self.assertEqual(self.c.current_sp, 0.0)
         self.assertEqual(self.c.current_ref, 0.0)
         self.assertEqual(self.c.current_load, -0.01262415230153511)
@@ -84,6 +85,40 @@ class TestControllerSim(unittest.TestCase):
         self.assertEqual(self.c.current_ref, 2.3)
         self.assertEqual(self.c.current_load, 2.2273685778635097)
 
+    def test_rmpwfm(self):
+        # waits for timing trigger signal, ignoring current setpoints
+        self.c.trigger_timeout = 0.002
+        self.c.pwrstate = _et.idx.On
+        self.c.opmode = _et.idx.RmpWfm
+        self.c.current_sp = 4.0
+        self.assertEqual(self.c.current_sp, 4.0)
+        self.assertEqual(self.c.current_ref, 0.0)
+        self.assertEqual(self.c.current_load, 0.16835556870840707)
+        time.sleep(self.c.trigger_timeout*2)
+        self.c.update_state()
+        self.assertEqual(self.c.opmode, _et.idx.RmpWfm)
+        # sends triggers signals and checks that timeout occurs
+        self.c.trigger_signal()
+        self.c.trigger_signal()
+        self.c.trigger_signal()
+        time.sleep(self.c.trigger_timeout*2)
+        self.c.update_state() # This ensures update of timeout state
+        self.assertEqual(self.c.wfmindex, 0)
+        self.assertEqual(self.c.opmode, _et.idx.RmpWfm)
+        # sends abort while at the start of ramp. it should be implemented right away
+        self.c.abort()
+        self.c.update_state() # This ensures update of timeout state
+        self.assertEqual(self.c.opmode, _et.idx.SlowRef)
+        # checks if abort is postponed till end of ramp
+        self.c.trigger_timeout = 10000
+        self.c.opmode = _et.idx.RmpWfm
+        self.c.trigger_signal()
+        self.c.abort()
+        self.assertEqual(self.c.opmode, _et.idx.RmpWfm)
+        while self.c.wfmindex != 0:
+            self.c.trigger_signal()
+        self.assertEqual(self.c.opmode, _et.idx.SlowRef)
+
     def test_abort(self):
         # slowref
         self.c.pwrstate = _et.idx.On
@@ -129,19 +164,19 @@ class TestControllerSim(unittest.TestCase):
         self.c.trigger_signal()
         self.assertEqual(self.c.current_sp, 2.3)
         self.assertEqual(self.c.current_ref, 3.0)
-        self.assertEqual(self.c.current_load, 2.9610465471411977)
+        self.assertEqual(self.c.current_load, 3.0318294687025196)
         self.assertEqual(self.c.wfmindex, 1)
         self.c.abort()
         self.assertEqual(self.c.abort_counter, 5)
         self.assertEqual(self.c.opmode, _et.idx.RmpWfm)
         self.assertEqual(self.c.current_sp, 2.3)
         self.assertEqual(self.c.current_ref, 3.0)
-        self.assertEqual(self.c.current_load, 3.0318294687025196)
+        self.assertEqual(self.c.current_load, 3.0239082299427413)
         for _ in range(2000): self.c.trigger_signal()
         self.assertEqual(self.c.opmode, _et.idx.SlowRef)
         self.assertEqual(self.c.current_sp, 3.0)
         self.assertEqual(self.c.current_ref, 3.0)
-        self.assertEqual(self.c.current_load, 2.9474178499604298)
+        self.assertEqual(self.c.current_load,2.9597110878960953)
         # MigWfm
         self.c.current_sp = 6.0;
         self.c.trigger_timeout = 0.002
@@ -151,20 +186,20 @@ class TestControllerSim(unittest.TestCase):
         self.assertEqual(self.c.wfmindex, 0)
         self.assertEqual(self.c.current_sp, 6.0)
         self.assertEqual(self.c.current_ref, 6.0)
-        self.assertEqual(self.c.current_load, 6.071851076253223)
+        self.assertEqual(self.c.current_load, 6.036233653133654)
         self.c.abort()
         self.assertEqual(self.c.abort_counter, 6)
         self.assertEqual(self.c.opmode, _et.idx.SlowRef)
         self.assertEqual(self.c.current_sp, 6.0)
         self.assertEqual(self.c.current_ref, 6.0)
-        self.assertEqual(self.c.current_load, 6.036233653133654)
+        self.assertEqual(self.c.current_load, 6.0457012246171775)
         self.c.opmode = _et.idx.MigWfm
         self.c.trigger_signal(nrpts=2000)
         self.assertEqual(self.c.wfmindex, 0)
         self.assertEqual(self.c.opmode, _et.idx.SlowRef)
         self.assertEqual(self.c.current_sp, 3.0)
         self.assertEqual(self.c.current_ref, 3.0)
-        self.assertEqual(self.c.current_load, 2.8706911712729086)
+        self.assertEqual(self.c.current_load, 2.8052381381302047)
 
 
 

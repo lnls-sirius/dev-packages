@@ -56,7 +56,11 @@ class Controller(metaclass=_ABCMeta):
 
     @trigger_timeout.setter
     def trigger_timeout(self, value):
-        self._trigger_timeout = float(value) if value > 0.0 else 0.0
+        value = float(value) if value > 0.0 else 0.0
+        if value != self._trigger_timeout:
+            self._trigger_timeout = value
+            self.update_state(trigger_timeout=True)
+
 
     @property
     def trigger_interval(self):
@@ -65,7 +69,6 @@ class Controller(metaclass=_ABCMeta):
     @trigger_interval.setter
     def trigger_interval(self, value):
         self._trigger_interval = float(value) if value > 0.0 else 0.0
-
 
     @property
     def pwrstate(self):
@@ -122,10 +125,12 @@ class Controller(metaclass=_ABCMeta):
 
     @property
     def timestamp_trigger(self):
+        self._process_trigger_timed_out()
         return self._get_timestamp_trigger()
 
     @property
     def trigger_timed_out(self):
+        self._process_trigger_timed_out()
         return self._get_trigger_timed_out()
 
     @property
@@ -260,11 +265,11 @@ class Controller(metaclass=_ABCMeta):
 
     def trigger_signal(self, delay=0, nrpts=1):
         if delay != 0: _time.sleep(delay)
-        self._process_trigger_timeout()
+        self._process_trigger_timed_out()
         self._process_trigger_signal(nrpts)
 
     def update_state(self, **kwargs):
-        self._process_trigger_timeout()
+        self._process_trigger_timed_out()
         self._process_pending_waveform_update()
         if self.opmode == _et.idx.SlowRef:
             self._update_SlowRef(**kwargs)
@@ -298,10 +303,11 @@ class Controller(metaclass=_ABCMeta):
             else:
                 self._cycgen = _PSCycGenerator(interval=30.0, cycgen_type='exp_cos', period=2.0, tau=10, amplitude=abs(self.current_max))
 
-    def _process_trigger_timeout(self):
+    def _process_trigger_timed_out(self):
         if self.opmode != _et.idx.RmpWfm: return
-        if self.trigger_timed_out:
-            self.wfmindex = 0
+        if self._get_trigger_timed_out():
+            self._set_wfmindex(0)
+            # self._get_timestamp_trigger = None # this is none when changing opmode to SlowRef
 
     def _process_pending_waveform_update(self):
         if self.wfmindex == 0:
@@ -336,12 +342,15 @@ class Controller(metaclass=_ABCMeta):
         pass
 
     def _update_RmpWfm(self, **kwargs):
+        #print('abort_issued', self._cmd_abort_issued)
         if 'trigger_signal' in kwargs:
             scan_value = self._wfmdata_in_use[self._wfmindex]
             self._wfmindex = (self._wfmindex + 1) % len(self._wfmdata_in_use)
             if self._cmd_abort_issued and self._wfmindex == 0:
                 self.opmode = _et.idx.SlowRef
         else:
+            if self._cmd_abort_issued and self._wfmindex == 0:
+                self.opmode = _et.idx.SlowRef
             scan_value = self.current_ref
         self._update_current_ref(scan_value)
 
@@ -1148,6 +1157,7 @@ class ControllerEpics(Controller):
 
         self._psname = psname
         self._connection_timeout = connection_timeout
+        self._callbacks = {}
         self._create_epics_pvs(use_vaca=use_vaca,vaca_prefix=vaca_prefix)
         super().__init__(psname=psname,**kwargs)
         now = self.time

@@ -36,7 +36,7 @@ class PowerSupply(_PSData):
     def add_callback(self, callback, index=None):
         index = _uuid.uuid4() if index is None else index
         self._callbacks[index] = callback
-        return inde
+        return index
 
     def remove_callback(self, index):
         if index in self._callbacks:

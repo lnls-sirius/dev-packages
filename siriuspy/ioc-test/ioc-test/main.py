@@ -20,7 +20,7 @@ class App:
     def __init__(self,driver):
         self._driver = driver
         for psname in _pvs.ps_devices:
-            _pvs.ps_devices[psname].callback = self._mycallback
+            _pvs.ps_devices[psname].add_callback(self._mycallback)
 
     @property
     def driver(self):
@@ -38,10 +38,10 @@ class App:
         return None
 
     def write(self, reason, value):
-        #print('write ', reason, value)
         propty = reason.split(':')[-1]
         psname = ':'.join(reason.split(':')[:2])
         ps_propty = propty.replace('-','_').lower()
+        #print(psname, ps_propty, value)
         setattr(_pvs.ps_devices[psname], ps_propty, value)
         self._driver.setParam(reason, value)
         self._driver.updatePVs()
