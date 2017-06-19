@@ -1,12 +1,10 @@
-import pvs as _pvs
 import time as _time
+import os as _os
+import numpy as _np
 from threading import Thread as _Thread
 import logging as _log
-from siriuspy.timesys.time_data import Connections, Events, Clocks
-from siriuspy.namesys import SiriusPVName as _PVName
-from siriuspy.pwrsupply import psdata as _psdata
-from data.triggers import get_triggers as _get_triggers
-from hl_classes import get_hl_trigger_object, HL_Event, HL_Clock
+import epics as _epics
+from siriuspy.search import PSSearch as _PSSearch
 
 # Coding guidelines:
 # =================
@@ -17,12 +15,13 @@ from hl_classes import get_hl_trigger_object, HL_Event, HL_Clock
 # 05 - 'copy and paste' is your friend and it allows you to code 'repeatitive' (but clearer) sections fast.
 # 06 - be consistent in coding style (variable naming, spacings, prefixes, suffixes, etc)
 
-__version__ = _pvs.__version__
+with open('VERSION') as f:
+    __version__ = f.read()
 _TIMEOUT = 0.05
 
 TINY_INTERVAL = 0.001
 
-NR_BPMS  = 180
+NR_BPMS  = 160
 NR_CH    = 120
 NR_CV    = 160
 NR_CORRS = NR_CH + NR_CV + 1
@@ -40,26 +39,27 @@ class App:
         db.update(self.correctors.get_database())
         db.update(self.matrix.get_database())
         db.update(self.orbit.get_database())
-        db[pre + 'AutoCorrState-Sel'] = {'type':'enum','enums':('Off','On'),value=0,
-                                   'set_pv_fun':self._toggle_auto_corr}
-        db[pre + 'AutoCorrState-Sts'] = {'type':'enum','enums':('Off','On'),value=0}
-        db[pre + 'AutoCorrFreq-SP']   = {'type':float,'value':1,
-                                         'set_pv_fun':self._set_auto_corr_frequency}
-        db[pre + 'AutoCorrFreq-SP']    = {'type':float,'value':1}
-        db[pre + 'StartMeasRSPMtx-Cmd']  = {'type':'int',value=0,'set_pv_fun':self._start_measure_response_matrix}
-        db[pre + 'AbortMeasRSPMtx-Cmd']  = {'type':'int',value=0,'set_pv_fun':self._abort_measure_response_matrix}
-        db[pre + 'ResetMeasRSPMtx-Cmd']  = {'type':'int',value=0,'set_pv_fun':self._reset_measure_response_matrix}
-        db[pre + 'MeasRSPMtxState-Sts']  = {'type':'enum','enums':('Idle','Measuring','Completed','Aborted'),value=1}
-        db[pre + 'CorrectionMode-Sel'] = {'type':'enum','enums':('OffLine','Online'),value=1,
+        db[pre + 'Log-Mon'] = {'type':'string','value':''}
+        db[pre + 'AutoCorrState-Sel'] = {'type':'enum','enums':('Off','On'),'value':0,
+                                         'fun_set_pv':self._toggle_auto_corr}
+        db[pre + 'AutoCorrState-Sts'] = {'type':'enum','enums':('Off','On'),'value':0}
+        db[pre + 'AutoCorrFreq-SP']   = {'type':'float','value':1,
+                                         'fun_set_pv':self._set_auto_corr_frequency}
+        db[pre + 'AutoCorrFreq-RB']    = {'type':'float','value':1}
+        db[pre + 'StartMeasRSPMtx-Cmd']  = {'type':'int','value':0,'fun_set_pv':self._start_measure_response_matrix}
+        db[pre + 'AbortMeasRSPMtx-Cmd']  = {'type':'int','value':0,'fun_set_pv':self._abort_measure_response_matrix}
+        db[pre + 'ResetMeasRSPMtx-Cmd']  = {'type':'int','value':0,'fun_set_pv':self._reset_measure_response_matrix}
+        db[pre + 'MeasRSPMtxState-Sts']  = {'type':'enum','enums':('Idle','Measuring','Completed','Aborted'),'value':1}
+        db[pre + 'CorrectionMode-Sel'] = {'type':'enum','enums':('OffLine','Online'),'value':1,
                                           'unit':'Defines is correction is offline or online',
-                                          'set_pv_fun':self._toggle_correction_mode}
-        db[pre + 'CorrectionMode-Sts'] = {'type':'enum','enums':('OffLine','Online'),value=1,
+                                          'fun_set_pv':self._toggle_correction_mode}
+        db[pre + 'CorrectionMode-Sts'] = {'type':'enum','enums':('OffLine','Online'),'value':1,
                                           'unit':'Defines is correction is offline or online'}
-        db[pre + 'CalcCorr-Cmd']     = {'type':'int',value=0,'unit':'Calculate kicks',
-                                        'set_pv_fun':self._calc_correction}
-        db[pre + 'ApplyKicks-Cmd']   = {'type':'enum','enums':('CH','CV','RF','All'),value=0,
+        db[pre + 'CalcCorr-Cmd']     = {'type':'int','value':0,'unit':'Calculate kicks',
+                                        'fun_set_pv':self._calc_correction}
+        db[pre + 'ApplyKicks-Cmd']   = {'type':'enum','enums':('CH','CV','RF','All'),'value':0,
                                         'unit':'Apply last calculated kicks.',
-                                        'set_pv_fun':lambda x: self._apply_kicks(x)}
+                                        'fun_set_pv':self._apply_kicks}
         return db
 
     def __init__(self,driver=None):
@@ -123,31 +123,34 @@ class App:
 
     def _abort_measure_response_matrix(self, value):
         if not self.measuring_resp_matrix:
-            self._call_callback('Error-Mon','No Measurement ocurring.')
-            return
+            self._call_callback('Log-Mon','No Measurement ocurring.')
+            return False
         self.measuring_resp_matrix = False
         self._thread.join()
+        return True
 
     def _reset_measure_response_matrix(self,value):
         if self.measuring_resp_matrix:
-            self._call_callback('Error-Mon','Cannot Reset, Measurement in process.')
-            return
+            self._call_callback('Log-Mon','Cannot Reset, Measurement in process.')
+            return False
         self._call_callback('MeasRSPMtxState-Sts',0)
+        return True
 
     def _start_measure_response_matrix(self,value):
         if self.measuring_resp_matrix:
-            self._call_callback('Error-Mon','Measurement already in process.')
-            return
+            self._call_callback('Log-Mon','Measurement already in process.')
+            return False
         if self._thread and self._thread.isAlive():
-            self._call_callback( 'Error-Mon','Cannot Measure, AutoCorr is On.')
-            return
+            self._call_callback( 'Log-Mon','Cannot Measure, AutoCorr is On.')
+            return False
         self.masuring_resp_matrix = True
         self._thread = _Thread(target=self._measure_response_matrix)
         self._thread.start()
+        return True
 
     def _measure_response_matrix(self):
         self._call_callback('MeasRSPMtxState-Sts',1)
-        mat = _np.zeros(2*NR_BPMS,NR_CORRS)
+        mat = _np.zeros([2*NR_BPMS,NR_CORRS])
         for i in range(NR_CORRS):
             if not self.measuring_resp_matrix:
                 self._call_callback('MeasRSPMtxState-Sts',3)
@@ -156,40 +159,42 @@ class App:
             kicks = _np.zeros(NR_CORRS)
             kicks[i] = delta/2
             self.correctors.apply_kicks(kicks)
-            orbp = self.orbit.get_orbit()
+            orbp = self.orbit.get_orbit(1)
             kicks[i] = -delta
             self.correctors.apply_kicks(kicks)
-            orbn = self.orbit.get_orbit()
+            orbn = self.orbit.get_orbit(1)
             kicks[i] = delta/2
             self.correctors.apply_kicks(kicks)
             mat[:,i] = (orbp-orbn)/delta
         self.matrix.set_resp_matrix(list(mat.flatten()))
         self._call_callback('MeasRSPMtxState-Sts',2)
         self.measuring_resp_matrix = False
-        return
 
     def _toggle_auto_corr(self,value):
-        if self.auto_corr:
-            self._call_callback( 'Error-Mon','AutoCorr is Already On.')
-            return
-        if self._thread and self._thread.isAlive():
-            self._call_callback( 'Error-Mon','Cannot Correct, Measuring RSPMtx.')
-            return
-        self.auto_corr = value
-        if self.auto_corr:
+        if value:
+            if self.auto_corr:
+                self._call_callback( 'Log-Mon','AutoCorr is Already On.')
+                return False
+            self.auto_corr = value
+            if self._thread and self._thread.isAlive():
+                self._call_callback( 'Log-Mon','Cannot Correct, Measuring RSPMtx.')
+                return False
             self._thread = _Thread(target=self._automatic_correction)
             self._thread.start()
+        else:
+            self.auto_corr = value
+        return True
 
     def _automatic_correction(self):
         if not self.correction_mode:
-            self._update_driver( 'Error-Mon','Error in AutoCorr: Offline Correction')
+            self._update_driver( 'Log-Mon','Error in AutoCorr: Offline Correction')
             self._update_driver(self.prefix + 'AutoCorrState-Sel',0)
             self._update_driver(self.prefix + 'AutoCorrState-Sts',0)
             return
         self._update_driver(self.prefix + 'AutoCorrState-Sts',1)
         while self.auto_corr:
             t0 = _time.time()
-            orb = self.orbit.get_orbit()
+            orb = self.orbit.get_orbit(self.correction_mode)
             self.dtheta = self.matrix.calc_kicks(orb)
             correctors.apply_kicks(dtheta)
             tf = _time.time()
@@ -204,24 +209,28 @@ class App:
         self.correction_mode = value
         self._call_callback( 'CorrectionMode-Sts',value)
         self.orbit.get_orbit(value)
+        return True
 
     def _set_auto_corr_frequency(self,value):
         self.auto_corr_freq = value
+        self._call_callback( 'AutoCorrFreq-RB',value)
+        return True
 
     def _calc_correction(self,value):
         if self._thread and self._thread.isAlive():
-            self._update_driver( 'Error-Mon','AutoCorr or MeasRSPMtx is On.')
-            return
+            self._update_driver( 'Log-Mon','AutoCorr or MeasRSPMtx is On.')
+            return False
         orb = self.orbit.get_orbit(self.correction_mode)
         self.dtheta = self.matrix.calc_kicks(orb)
+        return True
 
     def _apply_kicks(self,code):
         if not self.correction_mode:
-            self._call_callback( 'Error-Mon','Cannot apply kicks. Offline Correction')
-            return
+            self._call_callback( 'Log-Mon','Cannot apply kicks. Offline Correction')
+            return False
         if self._thread and self._thread.isAlive():
-            self._call_callback( 'Error-Mon','AutoCorr or MeasRSPMtx is On.')
-            return
+            self._call_callback( 'Log-Mon','AutoCorr or MeasRSPMtx is On.')
+            return False
         kicks = self.dtheta.copy()
         if code == 1:
             kicks[NR_CH:] = 0
@@ -232,6 +241,7 @@ class App:
             kicks[:-1] = 0
         if any(kicks):
             self.correctors.apply_kicks(kicks)
+        return True
 
     def _update_driver(self,pvname,value,**kwargs):
         _log.debug('PV {0:s} updated in driver database with value {1:s}'.format(pvname,str(value)))
@@ -260,35 +270,36 @@ class Orbit:
     def get_database(self):
         db = dict()
         pre = self.prefix
-        db[pre + 'OrbitRefX-SP'] = {'type':'float','count':NR_BPMS,'value'=0,
-                                    'set_pv_fun':lambda x: self._set_ref_orbit('x',x)}
-        db[pre + 'OrbitRefX-RB'] = {'type':'float','count':NR_BPMS,'value'=0}
-        db[pre + 'OrbitRefY-SP'] = {'type':'float','count':NR_BPMS,'value'=0,
-                                    'set_pv_fun':lambda x: self._set_ref_orbit('y',x)}
-        db[pre + 'OrbitRefY-RB'] = {'type':'float','count':NR_BPMS,'value'=0}
-        db[pre + 'GoldenOrbitX-SP'] = {'type':'float','count':NR_BPMS,'value'=0,
-                                    'set_pv_fun':lambda x: self._set_golden_orbit('x',x)}
-        db[pre + 'GoldenOrbitX-RB'] = {'type':'float','count':NR_BPMS,'value'=0}
-        db[pre + 'GoldenOrbitY-SP'] = {'type':'float','count':NR_BPMS,'value'=0,
-                                    'set_pv_fun':lambda x: self._set_golden_orbit('y',x)}
-        db[pre + 'GoldenOrbitY-RB'] = {'type':'float','count':NR_BPMS,'value'=0}
-        db[pre + 'setRefwithGolden-Cmd'] = {'type':'int',value=0,
+        db[pre + 'OrbitRefX-SP'] = {'type':'float','count':NR_BPMS,'value':NR_BPMS*[0],
+                                    'fun_set_pv':lambda x: self._set_ref_orbit('x',x)}
+        db[pre + 'OrbitRefX-RB'] = {'type':'float','count':NR_BPMS,'value':NR_BPMS*[0]}
+        db[pre + 'OrbitRefY-SP'] = {'type':'float','count':NR_BPMS,'value':NR_BPMS*[0],
+                                    'fun_set_pv':lambda x: self._set_ref_orbit('y',x)}
+        db[pre + 'OrbitRefY-RB'] = {'type':'float','count':NR_BPMS,'value':NR_BPMS*[0]}
+        db[pre + 'GoldenOrbitX-SP'] = {'type':'float','count':NR_BPMS,'value':NR_BPMS*[0],
+                                    'fun_set_pv':lambda x: self._set_golden_orbit('x',x)}
+        db[pre + 'GoldenOrbitX-RB'] = {'type':'float','count':NR_BPMS,'value':NR_BPMS*[0]}
+        db[pre + 'GoldenOrbitY-SP'] = {'type':'float','count':NR_BPMS,'value':NR_BPMS*[0],
+                                    'fun_set_pv':lambda x: self._set_golden_orbit('y',x)}
+        db[pre + 'GoldenOrbitY-RB'] = {'type':'float','count':NR_BPMS,'value':NR_BPMS*[0]}
+        db[pre + 'setRefwithGolden-Cmd'] = {'type':'int','value':0,
                                             'unit':'Set the reference orbit with the Golden Orbit',
-                                            'set_pv_fun':self._set_ref_with_golden}
-        db[pre + 'OrbitX-Mon']      = {'type':'float','count':NR_BPMS,'value'=0}
-        db[pre + 'OrbitY-Mon']      = {'type':'float','count':NR_BPMS,'value'=0}
-        db[pre + 'OfflineOrbitX-SP'] = {'type':'float','count':NR_BPMS,'value'=0,
-                                        'set_pv_fun':lambda x: self._set_offline_orbit('x',x)}
-        db[pre + 'OfflineOrbitX-RB'] = {'type':'float','count':NR_BPMS,'value'=0}
-        db[pre + 'OfflineOrbitY-SP'] = {'type':'float','count':NR_BPMS,'value'=0,
-                                        'set_pv_fun':lambda x: self._set_offline_orbit('y',x)}
-        db[pre + 'OfflineOrbitY-RB'] = {'type':'float','count':NR_BPMS,'value'=0}
-        db[pre + 'OrbitAvgNum-SP']   = {'type':'int','value'=1,'unit':'number of averages',
-                                        'set_pv_fun':self._set_orbit_avg_num}
-        db[pre + 'OrbitAvgNum-RB']   = {'type':'int','value'=1,'unit':'number of averages'}
+                                            'fun_set_pv':self._set_ref_with_golden}
+        db[pre + 'OrbitX-Mon']      = {'type':'float','count':NR_BPMS,'value':NR_BPMS*[0]}
+        db[pre + 'OrbitY-Mon']      = {'type':'float','count':NR_BPMS,'value':NR_BPMS*[0]}
+        db[pre + 'OfflineOrbitX-SP'] = {'type':'float','count':NR_BPMS,'value':NR_BPMS*[0],
+                                        'fun_set_pv':lambda x: self._set_offline_orbit('x',x)}
+        db[pre + 'OfflineOrbitX-RB'] = {'type':'float','count':NR_BPMS,'value':NR_BPMS*[0]}
+        db[pre + 'OfflineOrbitY-SP'] = {'type':'float','count':NR_BPMS,'value':NR_BPMS*[0],
+                                        'fun_set_pv':lambda x: self._set_offline_orbit('y',x)}
+        db[pre + 'OfflineOrbitY-RB'] = {'type':'float','count':NR_BPMS,'value':NR_BPMS*[0]}
+        db[pre + 'OrbitAvgNum-SP']   = {'type':'int','value':1,'unit':'number of averages',
+                                        'fun_set_pv':self._set_orbit_avg_num}
+        db[pre + 'OrbitAvgNum-RB']   = {'type':'int','value':1,'unit':'number of averages'}
+        return db
 
     def __init__(self,prefix,callback):
-        self._call_callback = callback
+        self.callback = callback
         self.prefix = prefix
         self.orbs = {'x':[],'y':[]}
         self.orb = {'x':None,'y':None}
@@ -307,9 +318,9 @@ class Orbit:
                                 callback=self._update_orbs('y'),
                                 connection_callback= self._on_connection )  }
         if not self.pv['x'].connected or not self.pv['y'].connected:
-            raise Exception('Orbit PVs not Connected.')
+            self._call_callback('Log-Mon','Orbit PVs not Connected.')
         if self.pv['x'].count != NR_BPMS:
-            raise Exception('Orbit length not consistent')
+            self._call_callback('Log-Mon','Orbit length not consistent')
 
     def get_orbit(self, mode):
         if not mode:
@@ -317,24 +328,35 @@ class Orbit:
             orby = self.offline_orbit['y']
         else:
             self.acquire = {'x':True,'y':True}
-            while any(self.acquire.values()):  _time.sleep(TINY_INTERVAL)
+            i = 0
+            while any(self.acquire.values()):
+                i += 1
+                _time.sleep(TINY_INTERVAL)
+                if i>2000:
+                    self.orb['x'] =  self.ref_orbit['x']
+                    self.orb['y'] =  self.ref_orbit['y']
+                    break
             orbx = self.orb['x']
             orby = self.orb['y']
+            refx = self.ref_orbit['x']
+            refy = self.ref_orbit['y']
             self._reset_orbs('x')
             self._reset_orbs('y')
         self._call_callback( 'OrbitX-Mon',list(orbx))
         self._call_callback( 'OrbitY-Mon',list(orby))
-        return _np.hstack([orbx, orby])
+        return _np.hstack([orbx-refx, orby-refy])
 
     def _on_connection(self,pvname,conn,pv):
         if not conn:
-            self._call_callback('Error-Mon','PV '+pvname+'disconnected.')
+            self._call_callback('Log-Mon','PV '+pvname+'disconnected.')
 
     def _call_callback(self,pv,value):
         self.callback(self.prefix + pv, value)
 
     def _set_offline_orbit(self,plane,value):
         self.offline_orbit[plane] = _np.array(value)
+        self._call_callback('OfflineOrbit'+plane.upper()+'-RB', orb)
+        return True
 
     def _load_basic_orbits(self):
         self.ref_orbit = dict()
@@ -342,11 +364,11 @@ class Orbit:
         for plane in ('x','y'):
             filename = self.REF_ORBIT_FILENAME+plane.upper() + self.EXT
             self.ref_orbit[plane] = _np.zeros(NR_BPMS,dtype=float)
-            if os.path.isfile(filename):
+            if _os.path.isfile(filename):
                 self.ref_orbit[plane] = _np.loadtxt(filename)
             filename = self.GOLDEN_ORBIT_FILENAME+plane.upper() + self.EXT
             self.golden_orbit[plane] = _np.zeros(NR_BPMS,dtype=float)
-            if os.path.isfile(filename):
+            if _os.path.isfile(filename):
                 self.golden_orbit[plane] = _np.loadtxt(filename)
 
     def _save_ref_orbit(self,plane, orb):
@@ -361,15 +383,14 @@ class Orbit:
 
     def _update_orbs(self,plane):
         def update(pvname,value,**kwargs):
-            if value is None or not self.acquire[plane]: return
+            if value is None or not self.acquire[plane]: return True
             if len(self.orbs[plane]) < self.orbit_avg_num:
                 orb = _np.array(value, dtype=float)
                 self.orbs[plane].append(orb)
             if len(self.orbs[plane]) == self.orbit_avg_num:
                 self.orb[plane] = _np.array(self.orbs[plane]).mean(axis=1)
-                if self.relative:
-                    self.orb[plane] -= self.ref_orbit[plane]
                 self.acquire[plane] = False
+            return True
         return update
 
     def _set_orbit_avg_num(self,num):
@@ -377,72 +398,77 @@ class Orbit:
         self._reset_orbs('x')
         self._reset_orbs('y')
         self._call_callback('OrbitAvgNum-RB', num)
+        return True
 
     def _set_ref_orbit(self,plane,orb):
         self._save_ref_orbit(plane,orb)
         self.ref_orbit[plane] = _np.array(orb,dtype=float)
         self._reset_orbs(plane)
         self._call_callback('OrbitRef'+plane.upper()+'-RB', orb)
+        return True
 
     def _set_golden_orbit(self,plane,orb):
         self._save_golden_orbit(plane,orb)
         self.golden_orbit[plane] = _np.array(orb,dtype=float)
         self._call_callback('GoldenOrbit'+plane.upper()+'-RB', orb)
+        return True
 
     def _set_ref_with_golden(self,value):
         for pl,orb in self.golden_orbit.items():
             self._call_callback('OrbitRef'+pl.upper()+'-SP', orb.copy())
             self._set_ref_orbit(pl,orb.copy())
+        return True
 
 class Matrix:
-
+    RF_ENBL_ENUMS = ('No','Yes')
     RSP_MTX_FILENAME = 'data/response_matrix'
 
     def get_database(self):
         db = dict()
         pre = self.prefix
-        db[pre + 'RSPMatrix-SP'] = {'type':'float','count':MTX_SZ,'value'=0,
+        db[pre + 'RSPMatrix-SP'] = {'type':'float','count':MTX_SZ,'value':MTX_SZ*[0],
                                     'unit':'(BH,BV)(nm) x (CH,CV,RF)(urad,Hz)',
-                                    'set_pv_fun':lambda x: self.set_resp_matrix(x)}
-        db[pre + 'RSPMatrix-RB'] = {'type':'float','count':MTX_SZ,'value'=0,
+                                    'fun_set_pv':self.set_resp_matrix}
+        db[pre + 'RSPMatrix-RB'] = {'type':'float','count':MTX_SZ,'value':MTX_SZ*[0],
                                     'unit':'(BH,BV)(nm) x (CH,CV,RF)(urad,Hz)'}
-        db[pre + 'SingValues-Mon']= {'type':'float','count':NR_CORRS,'value'=0,
+        db[pre + 'SingValues-Mon']= {'type':'float','count':NR_CORRS,'value':NR_CORRS*[0],
                                     'unit':'Singular values of the matrix in use'}
-        db[pre + 'InvRSPMatrix-Mon']= {'type':'float','count':MTX_SZ,'value'=0,
+        db[pre + 'InvRSPMatrix-Mon']= {'type':'float','count':MTX_SZ,'value':MTX_SZ*[0],
                                     'unit':'(CH,CV,RF)(urad,Hz) x (BH,BV)(nm)'}
-        db[pre + 'CHEnblList-SP']= {'type':'int','count':NR_CH,'value'=1,
+        db[pre + 'CHEnblList-SP']= {'type':'int','count':NR_CH,'value':NR_CH*[1],
                                     'unit':'CHs used in correction',
-                                    'set_pv_fun':lambda x: self._set_enbl_list('ch',x)}
-        db[pre + 'CHEnblList-RB']= {'type':'int','count':NR_CH,'value'=1,
+                                    'fun_set_pv':lambda x: self._set_enbl_list('ch',x)}
+        db[pre + 'CHEnblList-RB']= {'type':'int','count':NR_CH,'value':NR_CH*[1],
                                     'unit':'CHs used in correction'}
-        db[pre + 'CVEnblList-SP']= {'type':'int','count':NR_CV,'value'=1,
+        db[pre + 'CVEnblList-SP']= {'type':'int','count':NR_CV,'value':NR_CV*[1],
                                     'unit':'CVs used in correction',
-                                    'set_pv_fun':lambda x: self._set_enbl_list('cv',x)}
-        db[pre + 'CVEnblList-RB']= {'type':'int','count':NR_CV,'value'=1,
+                                    'fun_set_pv':lambda x: self._set_enbl_list('cv',x)}
+        db[pre + 'CVEnblList-RB']= {'type':'int','count':NR_CV,'value':NR_CV*[1],
                                     'unit':'CVs used in correction'}
-        db[pre + 'BPMxEnblList-SP']= {'type':'int','count':NR_BPMS,'value'=1,
+        db[pre + 'BPMxEnblList-SP']= {'type':'int','count':NR_BPMS,'value':NR_BPMS*[1],
                                     'unit':'BPMx used in correction',
-                                    'set_pv_fun':lambda x: self._set_enbl_list('bpmx',x)}
-        db[pre + 'BPMxEnblList-RB']= {'type':'int','count':NR_BPMS,'value'=1,
+                                    'fun_set_pv':lambda x: self._set_enbl_list('bpmx',x)}
+        db[pre + 'BPMxEnblList-RB']= {'type':'int','count':NR_BPMS,'value':NR_BPMS*[1],
                                     'unit':'BPMx used in correction'}
-        db[pre + 'BPMyEnblList-SP']= {'type':'int','count':NR_BPMS,'value'=1,
+        db[pre + 'BPMyEnblList-SP']= {'type':'int','count':NR_BPMS,'value':NR_BPMS*[1],
                                     'unit':'BPMy used in correction',
-                                    'set_pv_fun':lambda x: self._set_enbl_list('bpmy',x)}
-        db[pre + 'BPMyEnblList-RB']= {'type':'int','count':NR_BPMS,'value'=1,
+                                    'fun_set_pv':lambda x: self._set_enbl_list('bpmy',x)}
+        db[pre + 'BPMyEnblList-RB']= {'type':'int','count':NR_BPMS,'value':NR_BPMS*[1],
                                     'unit':'BPMy used in correction'}
-        db[pre + 'RFEnbl-Sel'] = {'type':'enum','enums':self.RF_ENBL_ENUMS,'value'=0,
+        db[pre + 'RFEnbl-Sel'] = {'type':'enum','enums':self.RF_ENBL_ENUMS,'value':0,
                                     'unit':'If RF is used in correction',
-                                    'set_pv_fun':lambda x: self._set_enbl_list('rf',x)}
-        db[pre + 'RFEnbl-Sts'] = {'type':'enum','enums':self.RF_ENBL_ENUMS,'value'=0,
+                                    'fun_set_pv':lambda x: self._set_enbl_list('rf',x)}
+        db[pre + 'RFEnbl-Sts'] = {'type':'enum','enums':self.RF_ENBL_ENUMS,'value':0,
                                     'unit':'If RF is used in correction'}
-        db[pre + 'NumSingValues-SP']= {'type':'int','value'=NR_CORRS,
+        db[pre + 'NumSingValues-SP']= {'type':'int','value':NR_CORRS,
                                     'unit':'Maximum number of SV to use',
-                                    'set_pv_fun':lambda x: self._set_num_sing_values(x)}
-        db[pre + 'NumSingValues-RB']= {'type':'int','value'=NR_CORRS,
+                                    'fun_set_pv':self._set_num_sing_values}
+        db[pre + 'NumSingValues-RB']= {'type':'int','value':NR_CORRS,
                                     'unit':'Maximum number of SV to use'}
-        db[pre + 'CHCalcdKicks-Mon']= {'type':'float','count':NR_CH,'value'=0,'unit':'Last CH kicks calculated.'}
-        db[pre + 'CVCalcdKicks-Mon']= {'type':'float','count':NR_CV,'value'=0,'unit':'Last CV kicks calculated.'}
-        db[pre + 'RFCalcdKicks-Mon']= {'type':'float','value'=1,'unit':'Last RF kick calculated.'}
+        db[pre + 'CHCalcdKicks-Mon']= {'type':'float','count':NR_CH,'value':NR_CH*[0],'unit':'Last CH kicks calculated.'}
+        db[pre + 'CVCalcdKicks-Mon']= {'type':'float','count':NR_CV,'value':NR_CV*[0],'unit':'Last CV kicks calculated.'}
+        db[pre + 'RFCalcdKicks-Mon']= {'type':'float','value':1,'unit':'Last RF kick calculated.'}
+        return db
 
     def __init__(self,prefix,callback):
         self.callback = callback
@@ -452,7 +478,7 @@ class Matrix:
             'bpmy':_np.ones(NR_BPMS,dtype=bool),
               'ch':_np.ones(NR_CH,  dtype=bool),
               'cv':_np.ones(NR_CV,  dtype=bool),
-              'rf':_np.zeros(False,dtype=bool),
+              'rf':_np.zeros(1,dtype=bool),
             }
         self.selection_pv_names = {
               'ch':'CHEnblList-RB',
@@ -463,8 +489,8 @@ class Matrix:
             }
         self.num_sing_values = NR_CORRS
         self.sing_values = _np.zeros(NR_CORRS,dtype=float)
-        self.response_matrix = _np.zeros(2*NR_BPMS,NR_CORRS)
-        self.inv_response_matrix = _np.zeros(2*NR_BPMS,NR_CORRS).T
+        self.response_matrix = _np.zeros([2*NR_BPMS,NR_CORRS])
+        self.inv_response_matrix = _np.zeros([2*NR_BPMS,NR_CORRS]).T
         self._load_response_matrix()
 
     def set_resp_matrix(self,mat):
@@ -473,12 +499,13 @@ class Matrix:
         self.response_matrix = mat
         if not self._calc_matrices():
             self.response_matrix = old_
-            return
+            return False
         self._save_resp_matrix(mat)
         self._call_callback('RSPMatrix-RB',list(self.response_matrix.flatten()))
+        return True
 
     def calc_kicks(self,orbit):
-        kicks = _np.dot(-self.inv_respm,orbit)
+        kicks = _np.dot(-self.inv_response_matrix,orbit)
         self._call_callback('CHCalcdKicks-Mon',list(kicks[:NR_CH]))
         self._call_callback('CVCalcdKicks-Mon',list(kicks[NR_CH:NR_CH+NR_CV]))
         self._call_callback('RFCalcdKicks-Mon',kicks[-1])
@@ -492,18 +519,19 @@ class Matrix:
         self.select_items[key] = _np.array(val,dtype=bool)
         if not self._calc_matrices():
             self.select_items[key] = copy_
-            return
-        self.call_callback(self.selection_pv_names[key],val)
+            return False
+        self._call_callback(self.selection_pv_names[key],val)
+        return True
 
     def _calc_matrices(self):
         sel_ = self.select_items
         selecbpm = _np.hstack(  [  sel_['bpmx'],  sel_['bpmy']  ]    )
         seleccor = _np.hstack(  [  sel_['ch'],    sel_['cv'],  sel_['rf']  ]   )
         if not any(selecbpm):
-            self._call_callback('Error-Mon','No BPM selected in EnblList')
+            self._call_callback('Log-Mon','No BPM selected in EnblList')
             return False
         if not any(seleccor):
-            self._call_callback('Error-Mon','No Corrector selected in EnblList')
+            self._call_callback('Log-Mon','No Corrector selected in EnblList')
             return False
         sel_mat = selecbpm[:,None] * seleccor[None,:]
         mat = self.response_matrix[sel_mat]
@@ -511,7 +539,7 @@ class Matrix:
         try:
             U, s, V = _np.linalg.svd(mat, full_matrices = False)
         except _np.linalg.LinAlgError():
-            self._call_callback('Error-Mon','Could not calculate SVD')
+            self._call_callback('Log-Mon','Could not calculate SVD')
             return False
         inv_s = 1/s
         inv_s[self.num_sing_values:] = 0
@@ -519,13 +547,13 @@ class Matrix:
         inv_mat = _np.dot(  _np.dot( V.T, Inv_S ),  U.T  )
         valid_ = _np.any(   _np.bitwise_or( _np.isnan(inv_mat), _np.isinf(inv_mat) )   )
         if not valid_:
-            self._call_callback('Error-Mon','Pseudo inverse contains nan or inf.')
+            self._call_callback('Log-Mon','Pseudo inverse contains nan or inf.')
             return False
 
         self.sing_values[:] = 0
         self.sing_values[:len(s)] = s
         self._call_callback('SingValues-Mon',list(self.sing_values))
-        self.inv_response_matrix = _np.zeros(2*NR_BPMS,NR_CORRS).T
+        self.inv_response_matrix = _np.zeros([2*NR_BPMS,NR_CORRS]).T
         self.inv_response_matrix[sel_mat.T] = inv_mat.flatten()
         self._call_callback('InvRSPMatrix-Mon',list(self.inv_response_matrix.flatten()))
         return True
@@ -535,12 +563,13 @@ class Matrix:
         self.num_sing_values = num
         if not self._calc_matrices():
             self.num_sing_values = copy_
-            return
+            return False
         self._call_callback('NumSingValues-RB',num)
+        return True
 
     def _load_response_matrix(self):
         filename = self.RSP_MTX_FILENAME+'.txt'
-        if os.path.isfile(filename):
+        if _os.path.isfile(filename):
             copy_ = self.response_matrix.copy()
             self.response_matrix = _np.loadtxt(filename)
             if not self._calc_matrices():
@@ -559,18 +588,19 @@ class Correctors:
     def get_database(self):
         db = dict()
         pre = self.prefix
-        db[pre + 'CHStrength-SP'] = {'type':float,'value':0,'unit'='%',
-                                    'set_pv_fun':lambda x:self._set_strength('ch',x)}
-        db[pre + 'CHStrength-RB'] = {'type':float,'value':0,'unit'='%'}
-        db[pre + 'CVStrength-SP'] = {'type':float,'value':0,'unit'='%',
-                                    'set_pv_fun':lambda x:self._set_strength('cv',x)}
-        db[pre + 'CVStrength-RB'] = {'type':float,'value':0,'unit'='%'}
-        db[pre + 'RFStrength-SP'] = {'type':float,'value':0,'unit'='%',
-                                    'set_pv_fun':lambda x:self._set_strength('rf',x)}
-        db[pre + 'RFStrength-RB'] = {'type':float,'value':0,'unit'='%'}
-        db[pre + 'SyncKicks-Sel'] = {'type':'enum','enums':('Off','On'),value=1,
-                                     'set_pv_fun':self._set_corr_pvs_mode}
-        db[pre + 'SyncKicks-Sts'] = {'type':'enum','enums':('Off','On'),value=1}
+        db[pre + 'CHStrength-SP'] = {'type':'float','value':0,'unit':'%',
+                                    'fun_set_pv':lambda x:self._set_strength('ch',x)}
+        db[pre + 'CHStrength-RB'] = {'type':'float','value':0,'unit':'%'}
+        db[pre + 'CVStrength-SP'] = {'type':'float','value':0,'unit':'%',
+                                    'fun_set_pv':lambda x:self._set_strength('cv',x)}
+        db[pre + 'CVStrength-RB'] = {'type':'float','value':0,'unit':'%'}
+        db[pre + 'RFStrength-SP'] = {'type':'float','value':0,'unit':'%',
+                                    'fun_set_pv':lambda x:self._set_strength('rf',x)}
+        db[pre + 'RFStrength-RB'] = {'type':'float','value':0,'unit':'%'}
+        db[pre + 'SyncKicks-Sel'] = {'type':'enum','enums':('Off','On'),'value':1,
+                                     'fun_set_pv':self._set_corr_pvs_mode}
+        db[pre + 'SyncKicks-Sts'] = {'type':'enum','enums':('Off','On'),'value':1}
+        return db
 
     def __init__(self,prefix,callback):
         self.callback = callback
@@ -585,12 +615,8 @@ class Correctors:
         self.corr_pvs_ready = dict()
 
     def connect(self):
-        _psdata.clear_filter()
-        _psdata.add_filter(discipline='PS',device='CH',section=SECTION,sub_section='.*')
-        ch_names = _psdata.get_filtered_names()
-        _psdata.clear_filter()
-        _psdata.add_filter(discipline='PS',device='CV',section=SECTION,sub_section='.*')
-        cv_names = _psdata.get_filtered_names()
+        ch_names = _PSSearch.get_psnames({'section':'SI','discipline':'PS','device':'CH'})
+        cv_names = _PSSearch.get_psnames({'section':'SI','discipline':'PS','device':'CV'})
         ma_names = ch_names + cv_names
 
         for dev in ma_names:
@@ -606,8 +632,8 @@ class Correctors:
                                     connection_timeout=_TIMEOUT,
                                     callback=self._corrIsReady))
             self.corr_pvs_ready[LL_PREF+dev+':Current-RB'] = False
-        self.rf_pv_sp = _eptics.PV(LL_PREF+SECTION + '-Glob:RF-P5Cav:Freq-SP')
-        self.rf_pv_rb = _eptics.PV(LL_PREF+SECTION + '-Glob:RF-P5Cav:Freq-RB')
+        self.rf_pv_sp = _epics.PV(LL_PREF+SECTION + '-Glob:RF-P5Cav:Freq-SP')
+        self.rf_pv_rb = _epics.PV(LL_PREF+SECTION + '-Glob:RF-P5Cav:Freq-RB')
         self.event_pv_mode_sel = _epics.PV(SECTION + '-Glob:TI-Event:OrbitMode-Sel')
         self.event_pv_sp = _epics.PV(SECTION + '-Glob:TI-Event:OrbitExtTrig-Cmd')
 
@@ -616,13 +642,13 @@ class Correctors:
             if self.rf_pv_sp.connected:
                 self.rf_pv_sp.value = self.rf_pv_sp.value + self.strengths['rf']*values[-1]
             else:
-                self._call_callback('Error-Mon','PV '+self.rf_pv_sp.pvname+' Not Connected.')
+                self._call_callback('Log-Mon','PV '+self.rf_pv_sp.pvname+' Not Connected.')
         for i, pv in enumerate(self.corr_pvs_sp):
             pvname = pv.pvname.replace('-SP','-RB')
             self.pvs_ready[pvname] = True
             if not values[i]: continue
             if not pv.connected:
-                self._call_callback('Error-Mon','PV '+pv.pvname+' Not Connected.')
+                self._call_callback('Log-Mon','PV '+pv.pvname+' Not Connected.')
                 continue
             plane = 'ch' if i>=NR_CH else 'cv'
             self.pvs_ready[pvname] = False
@@ -633,7 +659,7 @@ class Correctors:
             if self.event_pv_sp.connected:
                 self.event_pv_sp.value = 1
             else:
-                self._call_callback('Error-Mon','Kicks not sent, Timing PV Disconnected.')
+                self._call_callback('Log-Mon','Kicks not sent, Timing PV Disconnected.')
 
     def _call_callback(self,pv,value):
         self.callback(self.prefix + pv, value)
@@ -641,12 +667,15 @@ class Correctors:
     def _set_strength(self,plane,value):
         self.strengths[plane] = value/100
         self._call_callback(plane.upper() + 'Strength-RB', value)
+        return True
 
     def _set_corr_pvs_mode(self,value):
         self.sync_kicks = True if value else False
         val = self.SLOW_REF_SYNC if self.sync_kicks else self.SLOW_REF
         for pv in self.corr_pvs_opmode_sel:
-            pv.value = val
+            if pv.connected:
+                pv.value = val
+        return True
 
     def _corrIsReady(self,pvname,value,**kwargs):
         self.corr_pvs_ready[pvname] = True
@@ -656,17 +685,3 @@ class Correctors:
         self.corr_pvs_opmode_ready[pvname] = (value == val)
         if all(self.corr_pvs_opmode_ready.values()):
             self._call_callback('SyncKicks-Sts',val == self.SLOW_REF_SYNC)
-
-class BPMs:
-
-    def get_bpms_device_names(self):
-        return ordered_list_bpm_names
-
-    def _on_monitor_change(self,pvname,value,**kwargs):
-
-
-    def get_orbit(self):
-        self.reset_count()
-        while True:
-            for i, bpm in enumerate(self.bpms):
-                if self.count[i]

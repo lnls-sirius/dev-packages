@@ -3,7 +3,6 @@
 import logging as _log
 import pcaspy as _pcaspy
 import pcaspy.tools as _pcaspy_tools
-import pvs as _pvs
 import multiprocessing as _multiprocessing
 import signal as _signal
 import main as _main
@@ -41,8 +40,10 @@ class PCASDriver(_pcaspy.Driver):
         app_ret =  self.app.write(reason, value)
         if app_ret:
             self.setParam(reason,value)
+        else:
+            self.setParam(reason,self.getParam(reason))
         self.updatePVs()
-        return app_ret
+        return True
 
 
 def run():
