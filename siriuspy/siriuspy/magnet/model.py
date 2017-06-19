@@ -297,13 +297,13 @@ class PowerSupplyMA(_PowerSupplySync):
                                        'current_family':self._controller_family.current_load}
 
     def __del__(self):
-        remove_callback = {
-            'dipole':self._controller_dipole.remove_callback,
-            'family':self._controller_family.remove_callback
-        }
         for typ,index in self._callback_indices.items():
-            remove_callback[typ](index=index)
-        super().__del__()
+            if typ == 'dipole' and self._controller_dipole is not None:
+                self._controller_dipole.remove_callback(index=index)
+            elif typ == 'family' and self._controller_family is not None:
+                self._controller_family.remove_callback(index=index)
+        if hasattr(super(), '__del__'):
+            super().__del__()
 
     def _get_database(self, prefix=''):
         """Return an updated  PV database whose keys correspond to PS properties."""
