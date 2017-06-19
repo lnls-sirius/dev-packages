@@ -1,4 +1,7 @@
 import copy as _copy
+import re as _re
+import types as _types
+
 from siriuspy import util as _util
 from siriuspy.namesys import Filter as _Filter
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
@@ -41,10 +44,10 @@ class PSSearch:
         for pstype in pstypes:
             text = _web.power_supplies_pstype_data_read(pstype + '.txt', timeout=PSSearch._connection_timeout)
             data, param_dict = _util.read_text_data(text)
-            psnames = [datum[0] for datum in data]
+            psnames = [_SiriusPVName(datum[0]) for datum in data]
             PSSearch._pstype_2_names_dict[pstype] = psnames
             PSSearch._psnames_list += psnames
-        PSSearch._psnames_list = sorted(set(PSSearch._psnames_list))
+        PSSearch._psnames_list = sorted(PSSearch._psnames_list)
 
     @staticmethod
     def reload_pstype_2_splims_dict():
