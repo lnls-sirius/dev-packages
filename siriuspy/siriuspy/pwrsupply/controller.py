@@ -1423,7 +1423,8 @@ class ControllerEpics(Controller):
     def __del__(self):
         for index,pv in self._pvs.items():
             pv.remove_callback(index=index)
-        super().__del__()
+        if hasattr(super(), '__del__'):
+            super().__del__()
 Controller.register(ControllerEpics)
 
 

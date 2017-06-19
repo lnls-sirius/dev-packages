@@ -38,8 +38,9 @@ class App:
         return None
 
     def write(self, reason, value):
-        propty = reason.split(':')[-1]
-        psname = ':'.join(reason.split(':')[:2])
+        parts = reason.split(':')
+        propty = parts[-1]
+        psname = ':'.join(parts[:2])
         ps_propty = propty.replace('-','_').lower()
         #print(psname, ps_propty, value)
         setattr(_pvs.ps_devices[psname], ps_propty, value)
