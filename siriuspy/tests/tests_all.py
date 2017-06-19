@@ -4,8 +4,9 @@ import inspect
 import unittest
 import tests_controller
 import tests_pwrsupply
+import tests_pwrsupply_epics
 
-modules = [tests_controller, tests_pwrsupply]
+modules = [tests_controller, tests_pwrsupply, tests_pwrsupply_epics]
 
 
 def get_test_classes(module_name):

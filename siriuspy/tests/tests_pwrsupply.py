@@ -567,7 +567,7 @@ class PowerSupplySimGeneralTest(PowerSupplyTest):
         self.assertEqual(self.ps.wfmindex_mon, 0)
         self.assertEqual(self.ps_enum.wfmindex_mon, 0)
 
-class PowerSupplySyncTest(PowerSupplyTest):
+class PowerSupplySyncSimTest(PowerSupplyTest):
 
     def setUp(self):
         if hasattr(self, 'ps'):

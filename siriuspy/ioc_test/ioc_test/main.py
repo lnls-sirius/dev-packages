@@ -14,13 +14,25 @@ __version__ = _pvs.__version__
 
 class App:
 
-    ps_devices = _pvs.get_ps_devices()
-    pvs_database = _pvs.get_database()
+    ps_devices = None
+    pvs_database = None
 
     def __init__(self,driver):
         self._driver = driver
         for psname in _pvs.ps_devices:
             _pvs.ps_devices[psname].add_callback(self._mycallback)
+
+    @staticmethod
+    def get_pvs_database():
+        if App.pvs_database is None:
+            App.pvs_database = _pvs.get_database()
+        return App.pvs_database
+
+    @staticmethod
+    def get_ps_devices():
+        if App.ps_devices is None:
+            App.ps_devices = _pvs.get_ps_devices()
+        return App.ps_devices
 
     @property
     def driver(self):

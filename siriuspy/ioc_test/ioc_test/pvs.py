@@ -7,8 +7,11 @@ _prefix = _envars.vaca_prefix
 
 ps_devices = None
 
-with open('VERSION','r') as _f:
-    __version__ = _f.read().strip()
+try:
+    with open('VERSION','r') as _f:
+        __version__ = _f.read().strip()
+except:
+    __version__ = 'not defined'
 
 def get_ps_devices():
     ''' Create/Returns PowerSupplyMA objects for each magnet. '''
