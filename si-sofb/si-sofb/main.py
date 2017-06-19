@@ -272,8 +272,9 @@ class Orbit:
         db[pre + 'GoldenOrbitY-SP'] = {'type':'float','count':NR_BPMS,'value'=0,
                                     'set_pv_fun':lambda x: self._set_golden_orbit('y',x)}
         db[pre + 'GoldenOrbitY-RB'] = {'type':'float','count':NR_BPMS,'value'=0}
-        db[pre + 'setRefwithGolden-Cmd'] = {'type':'int',value=0,'unit':'Set the reference orbit with the Golden Orbit',
-                                        'set_pv_fun':self._set_ref_with_golden}
+        db[pre + 'setRefwithGolden-Cmd'] = {'type':'int',value=0,
+                                            'unit':'Set the reference orbit with the Golden Orbit',
+                                            'set_pv_fun':self._set_ref_with_golden}
         db[pre + 'OrbitX-Mon']      = {'type':'float','count':NR_BPMS,'value'=0}
         db[pre + 'OrbitY-Mon']      = {'type':'float','count':NR_BPMS,'value'=0}
         db[pre + 'OfflineOrbitX-SP'] = {'type':'float','count':NR_BPMS,'value'=0,
