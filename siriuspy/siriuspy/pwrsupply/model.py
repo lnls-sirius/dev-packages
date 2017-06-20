@@ -29,7 +29,7 @@ class PowerSupply(_PSData):
         self._controller_init(current_std)
 
     # --- class interface ---
-
+    
     def update_state(self):
         self._controller.update_state()
 

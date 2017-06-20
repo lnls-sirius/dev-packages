@@ -1322,7 +1322,7 @@ class ControllerEpics(Controller):
     def _get_time(self):
         return _time.time()
 
-    def _process_trigger_signal(self, nrpts, width):
+    def _process_trigger_signal(self, nrpts):
         pass
 
     def _set_current_ref(self, value):
@@ -1602,7 +1602,7 @@ class ControllerEpicsLinac(Controller):
     def _get_time(self):
         return _time.time()
 
-    def _process_trigger_signal(self, nrpts, width):
+    def _process_trigger_signal(self, nrpts):
         pass
 
     def _set_current_ref(self, value):
