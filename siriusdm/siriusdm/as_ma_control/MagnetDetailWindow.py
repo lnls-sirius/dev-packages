@@ -2,7 +2,7 @@ from pydm.PyQt.QtGui import QApplication, QDialog, QVBoxLayout
 from .MagnetDetailWidget import MagnetDetailWidget
 
 class MagnetDetailWindow(QDialog):
-    STYLESHEET = "QGroupBox {font-size: 11pt; font-weight: bold;}"
+    STYLESHEET = "QGroupBox {font-size: 11pt; font-weight: bold;} QScrollBar {border: 1px solid black;}"
 
     def __init__(self, magnet_name, parent=None):
         super(MagnetDetailWindow, self).__init__(parent)

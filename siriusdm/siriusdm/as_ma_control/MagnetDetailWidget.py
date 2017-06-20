@@ -84,7 +84,7 @@ class MagnetDetailWidget(QWidget):
         layout = QVBoxLayout()
 
         self.opmode_sp = PyDMEnumComboBox(self)
-        self.opmode_sp.setChannel("ca://" + self._magnet_name + ":OpMode-Sel")
+        self.opmode_sp.channel = "ca://" + self._magnet_name + ":OpMode-Sel"
         self.opmode_rb = PyDMLabel(self, "ca://" + self._magnet_name + ":OpMode-Sts")
         self.ctrlmode_led = PyDMLed(self, "ca://" + self._magnet_name + ":CtrlMode-Mon")
         self.ctrlmode_label = PyDMLabel(self, "ca://" + self._magnet_name + ":CtrlMode-Mon")
@@ -103,9 +103,9 @@ class MagnetDetailWidget(QWidget):
         layout = QVBoxLayout()
 
         self.on_btn = PyDMPushButton(self, label="On", pressValue=1, \
-                channel="ca://" + self._magnet_name + ":PwrState-Sel")
+                init_channel="ca://" + self._magnet_name + ":PwrState-Sel")
         self.off_btn = PyDMPushButton(self, label="Off", pressValue=0, \
-                channel="ca://" + self._magnet_name + ":PwrState-Sel")
+                init_channel="ca://" + self._magnet_name + ":PwrState-Sel")
         self.pwrstate_led = PyDMLed(self, "ca://" + self._magnet_name + ":PwrState-Sts")
         self.pwrstate_label = PyDMLabel(self, "ca://" + self._magnet_name + ":PwrState-Sts")
 
