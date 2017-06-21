@@ -212,22 +212,27 @@ class ControllerSync:
                 for psname in self._psnames:
                     ps_value = self._pvs['Current-SP'][psname].value
                     if  ps_value != self._current_sp:
-                        #print('forcing ', psname, ' from ', ps_value, ' to ', self._current_sp)
                         self._pvs['Current-SP'][psname].put(self._current_sp, wait=ControllerSync.wait_pv_put)
-
+                    opmode_sel_value = self._pvs['OpMode-Sel'][psname].value
+                    if  opmode_sel_value != self.opmode_sel:
+                        self._pvs['OpMode-Sel'][psname].put(self._opmode_sel, wait=ControllerSync.wait_pv_put)
+                    pwrstate_sel_value = self._pvs['PwrState-Sel'][psname].value
+                    if  pwrstate_sel_value != self.pwrstate_sel:
+                        self._pvs['PwrState-Sel'][psname].put(self._pwrstate_sel, wait=ControllerSync.wait_pv_put)
 
     def _pvchange_opmode_sel(self, pvname, value, **kwargs):
-        self._opmode_sel = value
+        #self._opmode_sel = value
+        pass
     def _pvchange_opmode_sts(self, pvname, value, **kwargs):
         self._opmode_sts = value
     def _pvchange_pwrstate_sel(self, pvname, value, **kwargs):
-        self._pwrstate_sel = value
+        #self._pwrstate_sel = value
+        pass
     def _pvchange_pwrstate_sts(self, pvname, value, **kwargs):
         self._pwrstate_sts = value
     def _pvchange_current_sp(self, pvname, value, **kwargs):
         # if self._lock:
         #     if value != self._current_sp:
-        #         print(self._counter)
         #         thread = threading.Thread(target=self._set_current_sp, args=(self._current_sp,))
         #         thread.start()
         # else:
