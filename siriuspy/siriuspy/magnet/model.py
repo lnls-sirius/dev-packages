@@ -5,6 +5,7 @@ from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.pwrsupply.controller import ControllerEpics as _ControllerEpics
 from siriuspy.pwrsupply.model import PowerSupply as _PowerSupply
 from siriuspy.pwrsupply.model import PowerSupplySync as _PowerSupplySync
+from siriuspy.pwrsupply.model import PowerSupplyEpicsSync as _PowerSupplyEpicsSync
 from siriuspy.magnet import util as _mutil
 from siriuspy.magnet.data import MAData as _MAData
 from siriuspy.magnet.data import MAStrengthDip as _MAStrengthDip
@@ -14,238 +15,64 @@ from siriuspy.magnet.data import MAStrengthTrim as _MAStrengthTrim
 
 _connection_timeout = None
 
+class MagnetPowerSupplyDipole(_PowerSupplyEpicsSync):
 
-import threading
-import time as _time
-from epics import PV as _PV
-from siriuspy.search import MASearch as _MASearch
-from siriuspy import envars as _envars
+    def __init__(self, maname,
+                       use_vaca=False,
+                       vaca_prefix=None,
+                       connection_timeout=None):
+        super().__init__(maname=maname, use_vaca=use_vaca,
+                                        vaca_prefix=vaca_prefix,
+                                        lock=True,
+                                        connection_timeout=connection_timeout)
 
-class ControllerSync:
+        self._strength_sp  = self._conv_current_2_strength(self.current_sp)
+        self._strength_rb = self._conv_current_2_strength(self.current_rb)
+        self._strengthref_mon = self._conv_current_2_strength(self.currentref_mon)
+        self._strength_mon = self._conv_current_2_strength(self.current_mon)
 
-    wait_pv_put = True
-    sync_interval = 1.0
+    def _conv_current_2_strength(self, current):
+        return current/2;
 
-    def __init__(self,
-                 maname,
-                 use_vaca=False,
-                 vaca_prefix=None,
-                 lock=True,
-                 connection_timeout=None):
-
-        self._maname = maname
-        self._use_vaca = use_vaca
-        self._vaca_prefix = vaca_prefix
-        self._connection_timeout = connection_timeout
-        self._lock = lock
-        self._set_psnames()
-        self._create_epics_pvs()
-
-        if self._lock:
-            self._thread = threading.Thread(target=self._force_lock)
-            self._thread.start()
-
-    def __del__(self):
-        self._finished = True
-        self._thread.join()
+    def _conv_strength_2_current(self, strength):
+        return strength*2;
 
     @property
-    def connected(self):
-        for pv_dict in self._pvs.values():
-            for pv in pv_dict.values():
-                if not pv.connected:
-                    return False
-        return True
+    def strength_sp(self):
+        return self._strength_sp
 
-    def finished(self):
-        self._finished = True
+    @strength_sp.setter
+    def strength_sp(self, value):
+        current = self._conv_strength_2_current(value)
+        self.current_sp = current
 
     @property
-    def maname(self):
-        return self._maname
+    def strength_rb(self):
+        return self._strength_rb
 
     @property
-    def psname(self):
-        return tuple([psname in self._psnames])
-
-    # Current getters/setters
+    def strengthref_mon(self):
+        return self._strengthref_mon
 
     @property
-    def current_sp(self):
-        return self._current_sp
-
-    @property
-    def current_rb(self):
-        return self._current_rb
-
-    @property
-    def currentref_mon(self):
-        return self._currentref_mon
-
-    @property
-    def current_mon(self):
-        return self._current_mon
-
-    @current_sp.setter
-    def current_sp(self, value):
-        self._set_current_sp(value)
+    def strength_mon(self):
+        return self._strength_mon
 
     def _set_current_sp(self, value):
-        self._lock = False
-        self._current_sp = value
-        for psname, pv in self._pvs['Current-SP'].items():
-            pv.put(self._current_sp, wait=ControllerSync.wait_pv_put)
-        self._lock = True
+        super()._set_current_sp(value)
+        self._strength_sp = self._conv_current_2_strength(value)
 
-    @current_rb.setter
-    def current_rb(self, value):
-        raise NotImplementedError
-
-    @currentref_mon.setter
-    def currentref_mon(self, value):
-        raise NotImplementedError
-
-    @current_mon.setter
-    def current_mon(self, value):
-        raise NotImplementedError
-
-    #OpMode getter/setter
-    @property
-    def opmode_sel(self):
-        return self._opmode_sel
-
-    @opmode_sel.setter
-    def opmode_sel(self, value):
-        self._set_opmode_sel(value)
-
-    def _set_opmode_sel(self, value):
-        self._lock = False
-        self._opmode_sel = value
-        for psname, pv in self._pvs['OpMode-Sel'].items():
-            pv.put(self._opmode_sel, wait=ControllerSync.wait_pv_put)
-        self._lock = True
-
-    @property
-    def opmode_sts(self):
-        return self._opmode_sts
-
-    @property
-    def pwrstate_sel(self):
-        return self._pwrstate_sel
-
-    @pwrstate_sel.setter
-    def pwrstate_sel(self, value):
-        self._set_pwrstate_sel(value)
-
-    def _set_pwrstate_sel(self, value):
-        self._lock = False
-        self._pwrstate_sel = value
-        for psname, pv in self._pvs['PwrState-Sel'].items():
-            pv.put(self._pwrstate_sel, wait=ControllerSync.wait_pv_put)
-        self._lock = True
-
-    @property
-    def pwrstate_sts(self):
-        return self._pwrstate_sts
-
-    def _set_psnames(self):
-        if 'MA-B1B2' in self._maname:
-            self._psnames = ['SI-Fam:PS-B1B2-1','SI-Fam:PS-B1B2-2']
-        elif 'MA-B-' in self._maname:
-            self._psnames = ['BO-Fam:PS-B-1','BO-Fam:PS-B-2']
-        else:
-            self._psnames = [self._maname.replace('MA-','PS-'),]
-
-    def _create_epics_pvs(self):
-
-        if self._use_vaca:
-            if self._vaca_prefix is None:
-                self._vaca_prefix = _envars.vaca_prefix
-        else:
-            self._vaca_prefix = ''
-
-        properties = {
-            'OpMode-Sel'     : self._pvchange_opmode_sel,
-            'OpMode-Sts'     : self._pvchange_opmode_sts,
-            'PwrState-Sel'   : self._pvchange_pwrstate_sel,
-            'PwrState-Sts'   : self._pvchange_pwrstate_sts,
-            'Current-SP'     : self._pvchange_current_sp,
-            'Current-RB'     : self._pvchange_current_rb,
-            'CurrentRef-Mon' : self._pvchange_currentref_mon,
-            'Current-Mon'    : self._pvchange_current_mon,
-        }
-
-        lock = self._lock
-        self._lock = False
-
-        self._pvs = {}
-        index = None
-        for propty in properties:
-            self._pvs[propty] = {}
-        for psname in self._psnames:
-            pv = self._vaca_prefix + psname
-            for propty, callback in properties.items():
-                self._pvs[propty][psname] = _PV(pv + ':' + propty, connection_timeout=self._connection_timeout)
-                self._pvs[propty][psname].wait_for_connection(timeout=self._connection_timeout)
-                index = self._pvs[propty][psname].add_callback(callback=callback, index=index)
-
-        psname = self._psnames[0]
-        self.opmode_sel = self._pvs['OpMode-Sel'][psname].value
-        self._opmode_sts = self._pvs['OpMode-Sts'][psname].value
-        self.pwrstate_sel = self._pvs['PwrState-Sel'][psname].value
-        self._pwrstate_sts = self._pvs['PwrState-Sts'][psname].value
-        self.current_sp = self._pvs['Current-SP'][psname].value
-        self._current_rb = self._pvs['Current-RB'][psname].value
-        self._currentref_mon = self._pvs['CurrentRef-Mon'][psname].value
-        self._current_mon = self._pvs['Current-Mon'][psname].value
-
-        self._lock = lock
-        #print('init current_sp: ', self._current_sp)
-        #print('end of create lock state: ', self._lock)
-
-    def _force_lock(self):
-        self._finished = False
-        while not self._finished:
-            #print('looping force')
-            if self._lock:
-                _time.sleep(ControllerSync.sync_interval)
-                for psname in self._psnames:
-                    ps_value = self._pvs['Current-SP'][psname].value
-                    if  ps_value != self._current_sp:
-                        self._pvs['Current-SP'][psname].put(self._current_sp, wait=ControllerSync.wait_pv_put)
-                    opmode_sel_value = self._pvs['OpMode-Sel'][psname].value
-                    if  opmode_sel_value != self.opmode_sel:
-                        self._pvs['OpMode-Sel'][psname].put(self._opmode_sel, wait=ControllerSync.wait_pv_put)
-                    pwrstate_sel_value = self._pvs['PwrState-Sel'][psname].value
-                    if  pwrstate_sel_value != self.pwrstate_sel:
-                        self._pvs['PwrState-Sel'][psname].put(self._pwrstate_sel, wait=ControllerSync.wait_pv_put)
-
-    def _pvchange_opmode_sel(self, pvname, value, **kwargs):
-        #self._opmode_sel = value
-        pass
-    def _pvchange_opmode_sts(self, pvname, value, **kwargs):
-        self._opmode_sts = value
-    def _pvchange_pwrstate_sel(self, pvname, value, **kwargs):
-        #self._pwrstate_sel = value
-        pass
-    def _pvchange_pwrstate_sts(self, pvname, value, **kwargs):
-        self._pwrstate_sts = value
-    def _pvchange_current_sp(self, pvname, value, **kwargs):
-        # if self._lock:
-        #     if value != self._current_sp:
-        #         thread = threading.Thread(target=self._set_current_sp, args=(self._current_sp,))
-        #         thread.start()
-        # else:
-        #     self._current_sp = value
-        pass
     def _pvchange_current_rb(self, pvname, value, **kwargs):
-        self._current_rb = value
+        super()._pvchange_current_rb(pvname, value, **kwargs)
+        self._strength_rb = self._conv_current_2_strength(value)
+
     def _pvchange_currentref_mon(self, pvname, value, **kwargs):
-        self._currentref_mon = value
+        super()._pvchange_currentref_mon(pvname, value, **kwargs)
+        self._strengthref_mon = self._conv_current_2_strength(value)
+
     def _pvchange_current_mon(self, pvname, value, **kwargs):
-        self._current_mon = value
-
-
+        super()._pvchange_current_mon(pvname, value, **kwargs)
+        self._strength_mon = self._conv_current_2_strength(value)
 
 class Magnet:
 

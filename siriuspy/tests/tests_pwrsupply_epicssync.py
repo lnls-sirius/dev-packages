@@ -5,17 +5,16 @@ import epics
 import time
 import numpy
 
-from siriuspy.pwrsupply.model import PowerSupplyEpics
-from siriuspy.pwrsupply.model import PowerSupplySync
+#from siriuspy.pwrsupply.model import PowerSupplyEpics
+#from siriuspy.pwrsupply.model import PowerSupplySync
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
-from siriuspy.magnet.model import ControllerSync
+from siriuspy.pwrsupply.model import PowerSupplyEpicsSync
 import random as _random
-
 
 class TestSet1(unittest.TestCase):
 
     def setUp(self):
-        self.ps = ControllerSync(maname='SI-Fam:MA-B1B2',
+        self.ps = PowerSupplyEpicsSync(maname='SI-Fam:MA-B1B2',
                                  use_vaca=True,
                                  lock=True)
 
@@ -39,8 +38,8 @@ class TestSet1(unittest.TestCase):
         psname = self.ps._psnames[0]
         values = [0,1,0,1,0,1,1,0,1,0,1,1,0,0,1,0,1,0,1]
         for value in values:
-            self.ps._pvs['PwrState-Sel'][psname].put(0, wait=True)
             self.ps.pwrstate_sel = value
+            self.ps._pvs['PwrState-Sel'][psname].put(0, wait=True)
         self.wait_for(values[-1],self.ps._pvs['PwrState-Sel'][psname],'value',3.0)
         self.ps.finished()
 
@@ -57,8 +56,8 @@ class TestSet1(unittest.TestCase):
         psname = self.ps._psnames[0]
         values = [0,1,0,1,0,1,1,0,1,0,1,1,0,0,1,0,1,0]
         for value in values:
-            self.ps._pvs['OpMode-Sel'][psname].put(1, wait=True)
             self.ps.opmode_sel = value
+            self.ps._pvs['OpMode-Sel'][psname].put(1, wait=True)
         self.wait_for(values[-1],self.ps._pvs['OpMode-Sel'][psname],'value',3.0)
         self.ps.finished()
 
@@ -73,8 +72,8 @@ class TestSet1(unittest.TestCase):
         psname = self.ps._psnames[0]
         values = numpy.linspace(0, 10.0, 51)
         for value in values:
-            self.ps._pvs['Current-SP'][psname].put(1.0, wait=True)
             self.ps.current_sp = value
+            self.ps._pvs['Current-SP'][psname].put(1.0, wait=True)
         self.wait_for(values[-1],self.ps._pvs['Current-SP'][psname],'value',3.0)
         self.ps.finished()
 
@@ -97,7 +96,6 @@ class TestSet1(unittest.TestCase):
         self.wait_for(values[-1],self.ps._pvs['Current-Mon']['SI-Fam:PS-B1B2-1'],'value',3.0)
         self.wait_for(values[-1],self.ps._pvs['Current-Mon']['SI-Fam:PS-B1B2-2'],'value',3.0)
         self.ps.finished()
-
 
 
 
