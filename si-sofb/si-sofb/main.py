@@ -125,16 +125,19 @@ class App:
 
     def _abort_measure_response_matrix(self, value):
         if not self.measuring_resp_matrix:
-            self._call_callback('Log-Mon','No Measurement ocurring.')
+            self._call_callback('Log-Mon','Err :No Measurement ocurring.')
             return False
+        self._call_callback('Log-Mon','Aborting measurement.')
         self.measuring_resp_matrix = False
         self._thread.join()
+        self._call_callback('Log-Mon','Measurement aborted.')
         return True
 
     def _reset_measure_response_matrix(self,value):
         if self.measuring_resp_matrix:
             self._call_callback('Log-Mon','Cannot Reset, Measurement in process.')
             return False
+        self._call_callback('Log-Mon','Reseting measurement status.')
         self._call_callback('MeasRSPMtxState-Sts',0)
         return True
 
@@ -188,6 +191,7 @@ class App:
             self._thread = _Thread(target=self._automatic_correction,daemon=True)
             self._thread.start()
         else:
+            self._call_callback('Log-Mon', 'Turning Auto Correction Off.')
             self.auto_corr = value
         return True
 
@@ -206,13 +210,17 @@ class App:
             tf = _time.time()
             dt = (tf-t0)
             interval = 1/self.auto_corr_freq
-            if dt > interval: _log.debug('App: check took {0:f}ms.'.format(dt*1000))
+            if dt > interval:
+                _log.debug('App: check took {0:f}ms.'.format(dt*1000))
+                self._call_callback('Log-Mon', 'Warn: Auto Corr Loop took {0:6.2f}ms.'.format(dt*1000))
             dt = interval - dt
             if dt>0: _time.sleep(dt)
+        self._call_callback('Log-Mon', 'Auto Correction is Off.')
         self._update_driver(self.prefix + 'AutoCorrState-Sts',0)
 
     def _toggle_correction_mode(self,value):
         self.correction_mode = value
+        self._call_callback('Log-Mon', 'Changing to {0:s} mode.'.format('Online' if value else 'Offline'))
         self._call_callback( 'CorrectionMode-Sts',value)
         self.orbit.get_orbit(value)
         return True
@@ -224,27 +232,36 @@ class App:
 
     def _calc_correction(self,value):
         if self._thread and self._thread.isAlive():
-            self._update_driver( 'Log-Mon','AutoCorr or MeasRSPMtx is On.')
+            self._update_driver( 'Log-Mon','Err: AutoCorr or MeasRSPMtx is On.')
             return False
+        self._call_callback('Log-Mon', 'Getting the orbit.')
         orb = self.orbit.get_orbit(self.correction_mode)
+        self._call_callback('Log-Mon', 'Calculating the kicks.')
         self.dtheta = self.matrix.calc_kicks(orb)
         return True
 
     def _apply_kicks(self,code):
         if not self.correction_mode:
-            self._call_callback( 'Log-Mon','Cannot apply kicks. Offline Correction')
+            self._call_callback( 'Log-Mon','Err: Offline, cannot apply kicks.')
             return False
         if self._thread and self._thread.isAlive():
-            self._call_callback( 'Log-Mon','AutoCorr or MeasRSPMtx is On.')
+            self._call_callback( 'Log-Mon','Err: AutoCorr or MeasRSPMtx is On.')
             return False
         kicks = self.dtheta.copy()
-        if code == 1:
+        str_ = 'Applying '
+        if code == 0:
+            str_ += 'CH '
             kicks[NR_CH:] = 0
-        elif code == 2:
+        elif code == 1:
+            str_ += 'CV '
             kicks[:NR_CH] = 0
             kicks[-1] = 0
-        elif code == 3:
+        elif code == 2:
+            str_ += 'RF '
             kicks[:-1] = 0
+        elif code == 3:
+            str_ += 'All '
+        self._call_callback( 'Log-Mon',str_ + 'kicks.')
         if any(kicks):
             self.correctors.apply_kicks(kicks)
         return True
@@ -335,14 +352,13 @@ class Orbit:
             orby = self.offline_orbit['y']
         else:
             self.acquire = {'x':True,'y':True}
-            i = 0
-            while any(self.acquire.values()):
-                i += 1
+            for i in range(NUM_TIMEOUT):
+                if not any(self.acquire.values()): break
                 _time.sleep(TINY_INTERVAL)
-                if i>2000:
-                    self.orb['x'] =  self.ref_orbit['x']
-                    self.orb['y'] =  self.ref_orbit['y']
-                    break
+            else:
+                self._call_callback( 'Log-Mon','Err: get orbit function timeout.')
+                self.orb['x'] =  self.ref_orbit['x']
+                self.orb['y'] =  self.ref_orbit['y']
             orbx = self.orb['x']
             orby = self.orb['y']
             refx = self.ref_orbit['x']
@@ -413,7 +429,7 @@ class Orbit:
         return True
 
     # I changed to use median instead of mean:
-    # def _set_orbit_points_num(self,num):
+    # def _set_orbit_neglected_points_num(self,num):
     #     self._call_callback('Log-Mon','Changing Number Neglected points.')
     #     self.orbit_neglect_num = num
     #     self._reset_orbs('x')
@@ -446,6 +462,7 @@ class Orbit:
 class Matrix:
     RF_ENBL_ENUMS = ('No','Yes')
     RSP_MTX_FILENAME = 'data/response_matrix'
+    EXT = '.sirspmtx'
 
     def get_database(self):
         db = dict()
@@ -595,7 +612,7 @@ class Matrix:
         return True
 
     def _load_response_matrix(self):
-        filename = self.RSP_MTX_FILENAME+'.txt'
+        filename = self.RSP_MTX_FILENAME+self.EXT
         if _os.path.isfile(filename):
             copy_ = self.response_matrix.copy()
             self.response_matrix = _np.loadtxt(filename)
@@ -607,7 +624,7 @@ class Matrix:
 
     def _save_resp_matrix(self, mat):
         self._call_callback('Log-Mon','Saving RSP Matrix to file')
-        _np.savetxt(self.RSP_MTX_FILENAME+'.txt',mat)
+        _np.savetxt(self.RSP_MTX_FILENAME+self.EXT,mat)
 
 
 class Correctors:
@@ -694,14 +711,14 @@ class Correctors:
             plane = 'ch' if i>=NR_CH else 'cv'
             self.corr_pvs_ready[pvname] = False
             pv.value += streng[plane] * values[i]
-
-        i=0
-        while not all(self.corr_pvs_ready.values()):
+        #Wait for readbacks to be updated
+        for i in range(NUM_TIMEOUT):
+            if all(self.corr_pvs_ready.values()): break
             _time.sleep(TINY_INTERVAL)
-            i+=1
-            if i>2000:
-                self._call_callback('Log-Mon','Err: Timeout waiting Correctors PVs')
-                return
+        else:
+            self._call_callback('Log-Mon','Err: Timeout waiting Correctors PVs')
+            return
+        #Send trigger signal for implementation
         if self.sync_kicks:
             if self.event_pv_sp.connected:
                 self.event_pv_sp.value = 1
@@ -728,7 +745,9 @@ class Correctors:
         return True
 
     def _corrIsReady(self,pvname,value,**kwargs):
-        self.corr_pvs_ready[pvname] = True
+        name = pvname.replace('-RB','-SP')
+        if abs(self.corr_pvs_sp[name].value - value) <= 1e-3:
+            self.corr_pvs_ready[pvname] = True
 
     def _corrIsOnMode(self,pvname,value,**kwargs):
         val = self.SLOW_REF_SYNC if self.sync_kicks else self.SLOW_REF
