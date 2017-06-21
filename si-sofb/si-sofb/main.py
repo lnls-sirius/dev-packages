@@ -20,14 +20,15 @@ with open('VERSION') as f:
 _TIMEOUT = 0.05
 
 TINY_INTERVAL = 0.001
+NUM_TIMEOUT = 2000
 
 NR_BPMS  = 160
 NR_CH    = 120
 NR_CV    = 160
 NR_CORRS = NR_CH + NR_CV + 1
 MTX_SZ   = (2*NR_BPMS) * NR_CORRS
-DANG = 1E-3
-DFREQ = 100
+DANG = 2E-1
+DFREQ = 200
 SECTION = 'SI'
 LL_PREF = 'VAF-'
 
@@ -124,6 +125,7 @@ class App:
         self._update_driver(self.prefix + pv, value)
 
     def _abort_measure_response_matrix(self, value):
+        print('here')
         if not self.measuring_resp_matrix:
             self._call_callback('Log-Mon','Err :No Measurement ocurring.')
             return False
@@ -146,7 +148,7 @@ class App:
             self._call_callback('Log-Mon','Err: Measurement already in process.')
             return False
         if self._thread and self._thread.isAlive():
-            self._call_callback( 'Log-Mon','Err: Cannot Measure, AutoCorr is On.')
+            self._call_callback('Log-Mon','Err: Cannot Measure, AutoCorr is On.')
             return False
         self.measuring_resp_matrix = True
         self._call_callback('Log-Mon', 'Starting RSP Matrix measurement.')
@@ -181,11 +183,11 @@ class App:
     def _toggle_auto_corr(self,value):
         if value:
             if self.auto_corr:
-                self._call_callback( 'Log-Mon','Err: AutoCorr is Already On.')
+                self._call_callback('Log-Mon','Err: AutoCorr is Already On.')
                 return False
             self.auto_corr = value
             if self._thread and self._thread.isAlive():
-                self._call_callback( 'Log-Mon','Err: Cannot Correct, Measuring RSPMtx.')
+                self._call_callback('Log-Mon','Err: Cannot Correct, Measuring RSPMtx.')
                 return False
             self._call_callback('Log-Mon', 'Turning Auto Correction On.')
             self._thread = _Thread(target=self._automatic_correction,daemon=True)
@@ -197,16 +199,16 @@ class App:
 
     def _automatic_correction(self):
         if not self.correction_mode:
-            self._update_driver( 'Log-Mon','Err: Cannot Auto Correct in Offline Mode')
-            self._update_driver(self.prefix + 'AutoCorrState-Sel',0)
-            self._update_driver(self.prefix + 'AutoCorrState-Sts',0)
+            self._call_callback('Log-Mon','Err: Cannot Auto Correct in Offline Mode')
+            self._call_callback('AutoCorrState-Sel',0)
+            self._call_callback('AutoCorrState-Sts',0)
             return
-        self._update_driver(self.prefix + 'AutoCorrState-Sts',1)
+        self._call_callback('AutoCorrState-Sts',1)
         while self.auto_corr:
             t0 = _time.time()
             orb = self.orbit.get_orbit(self.correction_mode)
             self.dtheta = self.matrix.calc_kicks(orb)
-            self.correctors.apply_kicks(self.dtheta)
+            self.correctors.apply_kicks(self.dtheta, limit=True)
             tf = _time.time()
             dt = (tf-t0)
             interval = 1/self.auto_corr_freq
@@ -216,23 +218,23 @@ class App:
             dt = interval - dt
             if dt>0: _time.sleep(dt)
         self._call_callback('Log-Mon', 'Auto Correction is Off.')
-        self._update_driver(self.prefix + 'AutoCorrState-Sts',0)
+        self._call_callback('AutoCorrState-Sts',0)
 
     def _toggle_correction_mode(self,value):
         self.correction_mode = value
         self._call_callback('Log-Mon', 'Changing to {0:s} mode.'.format('Online' if value else 'Offline'))
-        self._call_callback( 'CorrectionMode-Sts',value)
+        self._call_callback('CorrectionMode-Sts',value)
         self.orbit.get_orbit(value)
         return True
 
     def _set_auto_corr_frequency(self,value):
         self.auto_corr_freq = value
-        self._call_callback( 'AutoCorrFreq-RB',value)
+        self._call_callback('AutoCorrFreq-RB',value)
         return True
 
     def _calc_correction(self,value):
         if self._thread and self._thread.isAlive():
-            self._update_driver( 'Log-Mon','Err: AutoCorr or MeasRSPMtx is On.')
+            self._call_callback('Log-Mon','Err: AutoCorr or MeasRSPMtx is On.')
             return False
         self._call_callback('Log-Mon', 'Getting the orbit.')
         orb = self.orbit.get_orbit(self.correction_mode)
@@ -242,10 +244,10 @@ class App:
 
     def _apply_kicks(self,code):
         if not self.correction_mode:
-            self._call_callback( 'Log-Mon','Err: Offline, cannot apply kicks.')
+            self._call_callback('Log-Mon','Err: Offline, cannot apply kicks.')
             return False
         if self._thread and self._thread.isAlive():
-            self._call_callback( 'Log-Mon','Err: AutoCorr or MeasRSPMtx is On.')
+            self._call_callback('Log-Mon','Err: AutoCorr or MeasRSPMtx is On.')
             return False
         kicks = self.dtheta.copy()
         str_ = 'Applying '
@@ -261,7 +263,7 @@ class App:
             kicks[:-1] = 0
         elif code == 3:
             str_ += 'All '
-        self._call_callback( 'Log-Mon',str_ + 'kicks.')
+        self._call_callback('Log-Mon',str_ + 'kicks.')
         if any(kicks):
             self.correctors.apply_kicks(kicks)
         return True
@@ -356,17 +358,17 @@ class Orbit:
                 if not any(self.acquire.values()): break
                 _time.sleep(TINY_INTERVAL)
             else:
-                self._call_callback( 'Log-Mon','Err: get orbit function timeout.')
+                self._call_callback('Log-Mon','Err: get orbit function timeout.')
                 self.orb['x'] =  self.ref_orbit['x']
                 self.orb['y'] =  self.ref_orbit['y']
             orbx = self.orb['x']
             orby = self.orb['y']
-            refx = self.ref_orbit['x']
-            refy = self.ref_orbit['y']
             self._reset_orbs('x')
             self._reset_orbs('y')
-        self._call_callback( 'OrbitX-Mon',list(orbx))
-        self._call_callback( 'OrbitY-Mon',list(orby))
+        refx = self.ref_orbit['x']
+        refy = self.ref_orbit['y']
+        self._call_callback('OrbitX-Mon',list(orbx))
+        self._call_callback('OrbitY-Mon',list(orby))
         return _np.hstack([orbx-refx, orby-refy])
 
     def _on_connection(self,pvname,conn,pv):
@@ -378,8 +380,11 @@ class Orbit:
 
     def _set_offline_orbit(self,plane,value):
         self._call_callback('Log-Mon','Setting New Offline Orbit.')
+        if len(value) != NR_BPMS:
+            self._call_callback('Log-Mon','Err: Wrong Size.')
+            return False
         self.offline_orbit[plane] = _np.array(value)
-        self._call_callback('OfflineOrbit'+plane.upper()+'-RB', orb)
+        self._call_callback('OfflineOrbit'+plane.upper()+'-RB', _np.array(value))
         return True
 
     def _load_basic_orbits(self):
@@ -439,6 +444,9 @@ class Orbit:
 
     def _set_ref_orbit(self,plane,orb):
         self._call_callback('Log-Mon','Setting New Reference Orbit.')
+        if len(value) != NR_BPMS:
+            self._call_callback('Log-Mon','Err: Wrong Size.')
+            return False
         self._save_ref_orbit(plane,orb)
         self.ref_orbit[plane] = _np.array(orb,dtype=float)
         self._reset_orbs(plane)
@@ -447,6 +455,9 @@ class Orbit:
 
     def _set_golden_orbit(self,plane,orb):
         self._call_callback('Log-Mon','Setting New Golden Orbit.')
+        if len(value) != NR_BPMS:
+            self._call_callback('Log-Mon','Err: Wrong Size.')
+            return False
         self._save_golden_orbit(plane,orb)
         self.golden_orbit[plane] = _np.array(orb,dtype=float)
         self._call_callback('GoldenOrbit'+plane.upper()+'-RB', orb)
@@ -458,6 +469,7 @@ class Orbit:
             self._call_callback('OrbitRef'+pl.upper()+'-SP', orb.copy())
             self._set_ref_orbit(pl,orb.copy())
         return True
+
 
 class Matrix:
     RF_ENBL_ENUMS = ('No','Yes')
@@ -486,16 +498,16 @@ class Matrix:
                                     'fun_set_pv':lambda x: self._set_enbl_list('cv',x)}
         db[pre + 'CVEnblList-RB']= {'type':'int','count':NR_CV,'value':NR_CV*[1],
                                     'unit':'CVs used in correction'}
-        db[pre + 'BPMxEnblList-SP']= {'type':'int','count':NR_BPMS,'value':NR_BPMS*[1],
-                                    'unit':'BPMx used in correction',
+        db[pre + 'BPMXEnblList-SP']= {'type':'int','count':NR_BPMS,'value':NR_BPMS*[1],
+                                    'unit':'BPMX used in correction',
                                     'fun_set_pv':lambda x: self._set_enbl_list('bpmx',x)}
-        db[pre + 'BPMxEnblList-RB']= {'type':'int','count':NR_BPMS,'value':NR_BPMS*[1],
-                                    'unit':'BPMx used in correction'}
-        db[pre + 'BPMyEnblList-SP']= {'type':'int','count':NR_BPMS,'value':NR_BPMS*[1],
-                                    'unit':'BPMy used in correction',
+        db[pre + 'BPMXEnblList-RB']= {'type':'int','count':NR_BPMS,'value':NR_BPMS*[1],
+                                    'unit':'BPMX used in correction'}
+        db[pre + 'BPMYEnblList-SP']= {'type':'int','count':NR_BPMS,'value':NR_BPMS*[1],
+                                    'unit':'BPMY used in correction',
                                     'fun_set_pv':lambda x: self._set_enbl_list('bpmy',x)}
-        db[pre + 'BPMyEnblList-RB']= {'type':'int','count':NR_BPMS,'value':NR_BPMS*[1],
-                                    'unit':'BPMy used in correction'}
+        db[pre + 'BPMYEnblList-RB']= {'type':'int','count':NR_BPMS,'value':NR_BPMS*[1],
+                                    'unit':'BPMY used in correction'}
         db[pre + 'RFEnbl-Sel'] = {'type':'enum','enums':self.RF_ENBL_ENUMS,'value':0,
                                     'unit':'If RF is used in correction',
                                     'fun_set_pv':lambda x: self._set_enbl_list('rf',x)}
@@ -524,8 +536,8 @@ class Matrix:
         self.selection_pv_names = {
               'ch':'CHEnblList-RB',
               'cv':'CVEnblList-RB',
-            'bpmx':'BPMxEnblList-RB',
-            'bpmy':'BPMyEnblList-RB',
+            'bpmx':'BPMXEnblList-RB',
+            'bpmy':'BPMYEnblList-RB',
               'rf':'RFEnbl-Sts',
             }
         self.num_sing_values = NR_CORRS
@@ -536,6 +548,9 @@ class Matrix:
 
     def set_resp_matrix(self,mat):
         self._call_callback('Log-Mon','Setting New RSP Matrix.')
+        if len(value) != MTX_SZ:
+            self._call_callback('Log-Mon','Err: Wrong Size.')
+            return False
         mat = _np.reshape(mat,[2*NR_BPMS,NR_CORRS])
         old_ = self.response_matrix.copy()
         self.response_matrix = mat
@@ -559,7 +574,14 @@ class Matrix:
     def _set_enbl_list(self,key,val):
         self._call_callback('Log-Mon','Setting {0:s} Enable List'.format(key.upper()))
         copy_ = self.select_items[key]
-        self.select_items[key] = _np.array(val,dtype=bool)
+        new_ = _np.array(val,dtype=bool)
+        if len(new_) >= len(copy_):
+            new_ = new_[:len(copy_)]
+        else:
+            new2_ = copy_.copy()
+            new2_[:len(new_)] = new_
+            new_ = new2
+        self.select_items[key] = new_
         if not self._calc_matrices():
             self.select_items[key] = copy_
             return False
@@ -643,6 +665,9 @@ class Correctors:
         db[pre + 'RFStrength-SP'] = {'type':'float','value':0,'unit':'%','lolim':-1000, 'hilim':1000,
                                     'prec':2, 'fun_set_pv':lambda x:self._set_strength('rf',x)}
         db[pre + 'RFStrength-RB'] = {'type':'float','value':0,'prec':2, 'unit':'%'}
+        db[pre + 'MaxKickStrength-SP'] =  {'type':'float','value':300,'unit':'urad','lolim':0, 'hilim':1000,
+                                    'prec':3, 'fun_set_pv':self._set_max_kick}
+        db[pre + 'MaxKickStrength-RB'] = {'type':'float','value':300,'prec':2, 'unit':'urad'}
         db[pre + 'SyncKicks-Sel'] = {'type':'enum','enums':('Off','On'),'value':1,
                                      'fun_set_pv':self._set_corr_pvs_mode}
         db[pre + 'SyncKicks-Sts'] = {'type':'enum','enums':('Off','On'),'value':1}
@@ -653,6 +678,7 @@ class Correctors:
         self.prefix = prefix
         self.strengths = {  'ch':0.0, 'cv':0.0, 'rf':0.0  }
         self.sync_kicks = True
+        self._max_kick = 300
         self.corr_pvs_opmode_sel = list()
         self.corr_pvs_opmode_sts = list()
         self.corr_pvs_opmode_ready = dict()
@@ -683,11 +709,12 @@ class Correctors:
         self.event_pv_mode_sel = _epics.PV(SECTION + '-Glob:TI-Event:OrbitMode-Sel')
         self.event_pv_sp = _epics.PV(SECTION + '-Glob:TI-Event:OrbitExtTrig-Cmd')
 
-    def apply_kicks(self,values, maxi=None):
+    def apply_kicks(self,values, limit=False):
         streng = self.strengths.copy()
-        if maxi is not None:
+        if limit:
             maxh = _np.argmax(_np.abs(values[:NR_CH]))
             maxv = _np.argmax(_np.abs(values[NR_CH:-1]))
+            maxi = self._max_kick
             if maxh*streng['ch'] > maxi:
                 streng['ch'] = min(maxi/maxh,1.0)
                 self._call_callback('Log-Mon','Warn: CH > max. Using {0:6.2f}%'.format(streng['ch']*100))
@@ -727,6 +754,10 @@ class Correctors:
 
     def _call_callback(self,pv,value):
         self.callback(self.prefix + pv, value)
+
+    def _set_max_kick(self,value):
+        self._max_kick = float(value)
+        self._call_callback('MaxKickStrength-RB', float(value))
 
     def _set_strength(self,plane,value):
         self.strengths[plane] = value/100
