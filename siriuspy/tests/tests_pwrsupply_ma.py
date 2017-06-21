@@ -1,9 +1,11 @@
+#!/usr/bin/env python3
+
 import unittest
 import time
 import math
 from siriuspy.magnet.model import PowerSupplyMA
+from siriuspy.pwrsupply.model import PowerSupplySync
 
-''' VACA and si-fam-ma must be running '''
 
 class PowerSupplyMATest(unittest.TestCase):
 
@@ -67,6 +69,7 @@ class PowerSupplyMATest(unittest.TestCase):
         for ma in self.ma_set:
             self.ioc_list.append(PowerSupplyMA(ma['input'], True))
             self.ioc_list[-1].pwrstate_sel = 1
+            self.ioc_list[-1].opmodel_sel = 0
 
     def test_strth_class(self):
         for i, ma in enumerate(self.ma_set):
@@ -80,6 +83,7 @@ class PowerSupplyMATest(unittest.TestCase):
     def test_magfunc(self):
         for i, ma in enumerate(self.ma_set):
             self.assertEqual(self.ioc_list[i].magfunc, ma['output']['magfunc'])
+
 
     def test_get_strength_sp(self):
         time.sleep(1)
@@ -98,8 +102,10 @@ class PowerSupplyMATest(unittest.TestCase):
         strengths = self.strengths
         for i, ma in enumerate(self.ma_set):
             self.ioc_list[i].strength_sp = strengths[i]
+            print('i:',self.ioc_list[i].psnames)
             time.sleep(1)
             self.assertEqual(math.fabs(self.ioc_list[i].strength_rb - strengths[i]) < 0.000001, True)
+            #print('diff:',self.ioc_list[i].strengthref_mon - strengths[i])
             self.assertEqual(math.fabs(self.ioc_list[i].strengthref_mon - strengths[i]) < 0.000001, True)
             self.assertEqual(math.fabs(self.ioc_list[i].strength_mon - strengths[i]) < 0.000001, True)
 

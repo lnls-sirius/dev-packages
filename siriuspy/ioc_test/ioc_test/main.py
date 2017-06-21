@@ -59,7 +59,7 @@ class App:
         psname = ':'.join(parts[:2])
         ps_propty = propty.replace('-','_').lower()
         if isinstance(value, float) or isinstance(value, int):
-            print('{0:<15s} [{1:}]: '.format('ioc write'), reason, value)
+            print('{0:<15s} {1:s} [{2:f}]: '.format('ioc write', reason, value))
         else:
             print('{0:<15s}: '.format('ioc write'), reason)
         try:

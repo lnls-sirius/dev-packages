@@ -15,6 +15,8 @@ from siriuspy.magnet.data import MAStrengthTrim as _MAStrengthTrim
 _connection_timeout = None
 
 
+import threading
+import time as _time
 from epics import PV as _PV
 from siriuspy.search import MASearch as _MASearch
 from siriuspy import envars as _envars
@@ -22,19 +24,41 @@ from siriuspy import envars as _envars
 class ControllerSync:
 
     wait_pv_put = True
+    sync_interval = 1.0
 
     def __init__(self,
                  maname,
                  use_vaca=False,
                  vaca_prefix=None,
+                 lock=True,
                  connection_timeout=None):
 
         self._maname = maname
         self._use_vaca = use_vaca
         self._vaca_prefix = vaca_prefix
         self._connection_timeout = connection_timeout
+        self._lock = lock
         self._set_psnames()
         self._create_epics_pvs()
+
+        if self._lock:
+            self._thread = threading.Thread(target=self.force_lock)
+            self._thread.start()
+
+    def force_lock(self):
+        self._finished = False
+        while not self._finished:
+            #print('looping force')
+            if self._lock:
+                _time.sleep(ControllerSync.sync_interval)
+                for psname in self._psnames:
+                    ps_value = self._pvs['Current-SP'][psname].value
+                    if  ps_value != self._current_sp:
+                        #print('forcing ', psname, ' from ', ps_value, ' to ', self._current_sp)
+                        self._pvs['Current-SP'][psname].put(self._current_sp, wait=ControllerSync.wait_pv_put)
+
+    def finished(self):
+        self._finished = True
 
     @property
     def connected(self):
@@ -67,9 +91,15 @@ class ControllerSync:
 
     @current_sp.setter
     def current_sp(self, value):
+        self._set_current_sp(value)
+
+    def _set_current_sp(self, value):
+        self._lock = False
         self._current_sp = value
-        for pv in self._pvs['Current-SP'].values():
+        for psname, pv in self._pvs['Current-SP'].items():
             pv.put(self._current_sp, wait=ControllerSync.wait_pv_put)
+        self._lock = True
+
 
     @current_rb.setter
     def current_rb(self, value):
@@ -95,6 +125,10 @@ class ControllerSync:
             pv.value = self._opmode_sel
 
     @property
+    def opmode_sts(self):
+        return self._opmode_sts
+
+    @property
     def pwrstate_sel(self):
         return self._pwrstate_sel
 
@@ -103,6 +137,10 @@ class ControllerSync:
         self._pwrstate_sel = value
         for pv in self._pvs['PwrState-Sel'].values():
             pv.put(value=self._pwrstate_sel)
+
+    @property
+    def pwrstate_sts(self):
+        return self._pwrstate_sts
 
     def _set_psnames(self):
         if 'MA-B1B2' in self._maname:
@@ -131,6 +169,9 @@ class ControllerSync:
             'Current-Mon'    : self._pvchange_current_mon,
         }
 
+        lock = self._lock
+        self._lock = False
+
         self._pvs = {}
         index = None
         for propty in properties:
@@ -152,6 +193,10 @@ class ControllerSync:
         self._currentref_mon = self._pvs['CurrentRef-Mon'][psname].value
         self._current_mon = self._pvs['Current-Mon'][psname].value
 
+        self._lock = lock
+        #print('init current_sp: ', self._current_sp)
+        #print('end of create lock state: ', self._lock)
+
     def _pvchange_opmode_sel(self, pvname, value, **kwargs):
         self._opmode_sel = value
     def _pvchange_opmode_sts(self, pvname, value, **kwargs):
@@ -161,7 +206,14 @@ class ControllerSync:
     def _pvchange_pwrstate_sts(self, pvname, value, **kwargs):
         self._pwrstate_sts = value
     def _pvchange_current_sp(self, pvname, value, **kwargs):
-        self._current_sp = value
+        # if self._lock:
+        #     if value != self._current_sp:
+        #         print(self._counter)
+        #         thread = threading.Thread(target=self._set_current_sp, args=(self._current_sp,))
+        #         thread.start()
+        # else:
+        #     self._current_sp = value
+        pass
     def _pvchange_current_rb(self, pvname, value, **kwargs):
         self._current_rb = value
     def _pvchange_currentref_mon(self, pvname, value, **kwargs):
