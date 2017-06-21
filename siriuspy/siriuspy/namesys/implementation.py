@@ -5,7 +5,7 @@ def join_name(section, discipline, device, subsection,
     name += ('-' + instance) if instance else ""
     name += (':' + proper)   if proper   else ""
     name += ('.' + field)   if field   else ""
-    return name
+    return SiriusPVName(name)
 
 def split_name(pvname):
     name_dict = {}

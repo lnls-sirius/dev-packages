@@ -83,6 +83,10 @@ def crate_to_bpm_mapping(timeout = _timeout):
     url = _envars.server_url_web + _diag_folder + 'crates-connection.txt'
     return read_url(url, timeout=timeout)
 
+def bpms_data(timeout = _timeout):
+    url = _envars.server_url_web + _diag_folder + 'bpms-data.txt'
+    return read_url(url, timeout=timeout)
+
 def timing_devices_mapping(timeout = _timeout):
     url = _envars.server_url_web + _timesys_folder + 'timing-devices-connection.txt'
     return read_url(url, timeout=timeout)
