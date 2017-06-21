@@ -42,23 +42,12 @@ class ControllerSync:
         self._create_epics_pvs()
 
         if self._lock:
-            self._thread = threading.Thread(target=self.force_lock)
+            self._thread = threading.Thread(target=self._force_lock)
             self._thread.start()
 
-    def force_lock(self):
-        self._finished = False
-        while not self._finished:
-            #print('looping force')
-            if self._lock:
-                _time.sleep(ControllerSync.sync_interval)
-                for psname in self._psnames:
-                    ps_value = self._pvs['Current-SP'][psname].value
-                    if  ps_value != self._current_sp:
-                        #print('forcing ', psname, ' from ', ps_value, ' to ', self._current_sp)
-                        self._pvs['Current-SP'][psname].put(self._current_sp, wait=ControllerSync.wait_pv_put)
-
-    def finished(self):
+    def __del__(self):
         self._finished = True
+        self._thread.join()
 
     @property
     def connected(self):
@@ -68,11 +57,19 @@ class ControllerSync:
                     return False
         return True
 
+    def finished(self):
+        self._finished = True
+
     @property
     def maname(self):
         return self._maname
 
-    #Current getters/setters
+    @property
+    def psname(self):
+        return tuple([psname in self._psnames])
+
+    # Current getters/setters
+
     @property
     def current_sp(self):
         return self._current_sp
@@ -100,7 +97,6 @@ class ControllerSync:
             pv.put(self._current_sp, wait=ControllerSync.wait_pv_put)
         self._lock = True
 
-
     @current_rb.setter
     def current_rb(self, value):
         raise NotImplementedError
@@ -120,9 +116,14 @@ class ControllerSync:
 
     @opmode_sel.setter
     def opmode_sel(self, value):
+        self._set_opmode_sel(value)
+
+    def _set_opmode_sel(self, value):
+        self._lock = False
         self._opmode_sel = value
-        for pv in self._pvs['OpMode-Sel'].values():
-            pv.value = self._opmode_sel
+        for psname, pv in self._pvs['OpMode-Sel'].items():
+            pv.put(self._opmode_sel, wait=ControllerSync.wait_pv_put)
+        self._lock = True
 
     @property
     def opmode_sts(self):
@@ -134,9 +135,14 @@ class ControllerSync:
 
     @pwrstate_sel.setter
     def pwrstate_sel(self, value):
+        self._set_pwrstate_sel(value)
+
+    def _set_pwrstate_sel(self, value):
+        self._lock = False
         self._pwrstate_sel = value
-        for pv in self._pvs['PwrState-Sel'].values():
-            pv.put(value=self._pwrstate_sel)
+        for psname, pv in self._pvs['PwrState-Sel'].items():
+            pv.put(self._pwrstate_sel, wait=ControllerSync.wait_pv_put)
+        self._lock = True
 
     @property
     def pwrstate_sts(self):
@@ -196,6 +202,19 @@ class ControllerSync:
         self._lock = lock
         #print('init current_sp: ', self._current_sp)
         #print('end of create lock state: ', self._lock)
+
+    def _force_lock(self):
+        self._finished = False
+        while not self._finished:
+            #print('looping force')
+            if self._lock:
+                _time.sleep(ControllerSync.sync_interval)
+                for psname in self._psnames:
+                    ps_value = self._pvs['Current-SP'][psname].value
+                    if  ps_value != self._current_sp:
+                        #print('forcing ', psname, ' from ', ps_value, ' to ', self._current_sp)
+                        self._pvs['Current-SP'][psname].put(self._current_sp, wait=ControllerSync.wait_pv_put)
+
 
     def _pvchange_opmode_sel(self, pvname, value, **kwargs):
         self._opmode_sel = value

@@ -9,53 +9,99 @@ from siriuspy.pwrsupply.model import PowerSupplyEpics
 from siriuspy.pwrsupply.model import PowerSupplySync
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.magnet.model import ControllerSync
+import random as _random
 
 
 class TestSet1(unittest.TestCase):
 
     def setUp(self):
-
         self.ps = ControllerSync(maname='SI-Fam:MA-B1B2',
-                                 use_vaca=True)
+                                 use_vaca=True,
+                                 lock=True)
+
+    def wait_for(self, value, obj, attr, timeout):
+        t0 = time.time();
+        while (time.time() - t0 < timeout) and getattr(obj, attr) != value:
+            pass
+        if getattr(obj, attr) != value:
+            raise Exception('timeout!')
+
+    def test_lock_pwrstate_sel(self):
+
         self.ps.opmode_sel = _et.idx.SlowRef
         self.ps.pwrstate_sel = _et.idx.On
-        self.ps.current_sp = 0.0
+        self.ps.current_sp = 5.5
+        self.wait_for(_et.idx.SlowRef,self.ps,'opmode_sts',3.0)
+        self.wait_for(_et.idx.On,self.ps,'pwrstate_sts',3.0)
+        self.wait_for(5.5,self.ps,'current_sp',3.0)
+        self.wait_for(5.5,self.ps,'current_mon',3.0)
 
-    def wait_for(self, value, attr, timeout):
-        t0 = time.time();
-        while (time.time() - t0 < timeout) and getattr(self.ps, attr) != value:
-            pass
+        psname = self.ps._psnames[0]
+        values = [0,1,0,1,0,1,1,0,1,0,1,1,0,0,1,0,1,0,1]
+        for value in values:
+            self.ps._pvs['PwrState-Sel'][psname].put(0, wait=True)
+            self.ps.pwrstate_sel = value
+        self.wait_for(values[-1],self.ps._pvs['PwrState-Sel'][psname],'value',3.0)
+        self.ps.finished()
 
-    # def test_basics(self):
-    #     self.assertEqual(self.ps.connected, True)
-    #     self.assertEqual(self.ps.opmode_sel, _et.idx.SlowRef)
-    #     self.assertEqual(self.ps.pwrstate_sel, _et.idx.On)
-    #     self.assertEqual(self.ps.current_sp, 0.0)
-    #
-    # def test_set_current_sp(self):
-    #     """ Test setting current sp """
-    #     self.ps.current_sp = 10.0
-    #     self.assertEqual(self.ps.current_sp, 10.0)
+    def test_lock_opmode_sel(self):
 
-    # def test_set_current_sp_exhaust(self):
-    #     """ Test setting current sp exhaustively """
-    #     for i in range(1000):
-    #         self.ps.current_sp = float(i)
-    #
-    #     self.assertEqual(self.ps.current_sp, 999.0)
+        self.ps.opmode_sel = _et.idx.SlowRef
+        self.ps.pwrstate_sel = _et.idx.On
+        self.ps.current_sp = 5.5
+        self.wait_for(_et.idx.SlowRef,self.ps,'opmode_sts',3.0)
+        self.wait_for(_et.idx.On,self.ps,'pwrstate_sts',3.0)
+        self.wait_for(5.5,self.ps,'current_sp',3.0)
+        self.wait_for(5.5,self.ps,'current_mon',3.0)
 
-    def test_current_rb_callback(self):
+        psname = self.ps._psnames[0]
+        values = [0,1,0,1,0,1,1,0,1,0,1,1,0,0,1,0,1,0]
+        for value in values:
+            self.ps._pvs['OpMode-Sel'][psname].put(1, wait=True)
+            self.ps.opmode_sel = value
+        self.wait_for(values[-1],self.ps._pvs['OpMode-Sel'][psname],'value',3.0)
+        self.ps.finished()
+
+    def test_lock_current_sp(self):
+        self.ps.opmode_sel = _et.idx.SlowRef
+        self.ps.pwrstate_sel = _et.idx.On
+        self.ps.current_sp = 5.5
+        self.wait_for(_et.idx.SlowRef,self.ps,'opmode_sts',3.0)
+        self.wait_for(_et.idx.On,self.ps,'pwrstate_sts',3.0)
+        self.wait_for(5.5,self.ps,'current_sp',3.0)
+        self.wait_for(5.5,self.ps,'current_mon',3.0)
+        psname = self.ps._psnames[0]
+        values = numpy.linspace(0, 10.0, 51)
+        for value in values:
+            self.ps._pvs['Current-SP'][psname].put(1.0, wait=True)
+            self.ps.current_sp = value
+        self.wait_for(values[-1],self.ps._pvs['Current-SP'][psname],'value',3.0)
+        self.ps.finished()
+
+    def test_current_sp_long_loops(self):
         """ Test current_rb set up when current_sp is set """
         self.ps.opmode_sel = _et.idx.SlowRef
         self.ps.pwrstate_sel = _et.idx.On
-        self.wait_for(_et.idx.On,'pwrstate_sel',3.0)
-        values = numpy.linspace(-10.0, 10.0, 5001)
+        self.wait_for(_et.idx.SlowRef,self.ps,'opmode_sts',3.0)
+        self.wait_for(_et.idx.On,self.ps,'pwrstate_sts',3.0)
+        self.ps.current_sp = _random.random()
+        values = numpy.linspace(0, 10.0, 51)
         for value in values:
+            #time.sleep(0.01)
             self.ps.current_sp = value
-        self.wait_for(values[-1],'current_mon',3.0)
+        self.wait_for(values[-1],self.ps, 'current_mon',0.1)
         self.assertEqual(self.ps.current_sp, values[-1])
-        self.assertEqual(self.ps.current_sp, values[-1])
+        self.assertEqual(self.ps.current_rb, values[-1])
+        self.assertEqual(self.ps.currentref_mon, values[-1])
+        self.assertEqual(self.ps.current_mon, values[-1])
+        self.wait_for(values[-1],self.ps._pvs['Current-Mon']['SI-Fam:PS-B1B2-1'],'value',3.0)
+        self.wait_for(values[-1],self.ps._pvs['Current-Mon']['SI-Fam:PS-B1B2-2'],'value',3.0)
+        self.ps.finished()
 
+
+
+
+    #     pass
         #time.sleep(3.0)
         #self.assertEqual(self.ps._pvs['Current-SP']['SI-Fam:PS-B1B2-1'].get(), maxv-1)
         #self.assertEqual(self.ps._pvs['Current-SP']['SI-Fam:PS-B1B2-2'].get(), maxv-1)
