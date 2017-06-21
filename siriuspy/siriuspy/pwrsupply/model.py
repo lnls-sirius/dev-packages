@@ -437,7 +437,7 @@ class PowerSupplySim(PowerSupply):
 
 class PowerSupplyEpicsSync:
 
-    wait_pv_put = True
+    wait_pv_put   = True
     sync_interval = 1.0
 
     def __init__(self,
@@ -446,7 +446,6 @@ class PowerSupplyEpicsSync:
                  vaca_prefix=None,
                  lock=True,
                  connection_timeout=None):
-
         self._maname = maname
         self._use_vaca = use_vaca
         self._vaca_prefix = vaca_prefix
@@ -454,7 +453,6 @@ class PowerSupplyEpicsSync:
         self._lock = lock
         self._set_psnames()
         self._create_epics_pvs()
-
         if self._lock:
             self._thread = _threading.Thread(target=self._force_lock)
             self._thread.start()
@@ -471,11 +469,35 @@ class PowerSupplyEpicsSync:
         self._finished = True
 
     @property
+    def upper_alarm_limit(self):
+        return self._get_limit('upper_alarm_limit', min)
+
+    @property
+    def upper_warning_limit(self):
+        return self._get_limit('upper_warning_limit', min)
+
+    @property
+    def upper_disp_limit(self):
+        return self._get_limit('upper_disp_limit', min)
+
+    @property
+    def lower_disp_limit(self):
+        return self._get_limit('lower_disp_limit', max)
+
+    @property
+    def lower_warning_limit(self):
+        return self._get_limit('lower_warning_limit', max)
+
+    @property
+    def lower_alarm_limit(self):
+        return self._get_limit('lower_alarm_limit', max)
+
+    @property
     def maname(self):
         return self._maname
 
     @property
-    def psname(self):
+    def psnames(self):
         return tuple([psname in self._psnames])
 
     # Current getters/setters
@@ -557,6 +579,15 @@ class PowerSupplyEpicsSync:
     @property
     def pwrstate_sts(self):
         return self._pwrstate_sts
+
+    def _get_limit(self, attr, maxmin):
+        if not self.connected: return None
+        lim = None
+        for psname in self._psnames:
+            pv = self._pvs['Current-SP'][psname]
+            value = getattr(pv, attr)
+            lim = value if lim is None else maxmin(lim,value)
+        return lim
 
     def _set_psnames(self):
         if 'MA-B1B2' in self._maname:

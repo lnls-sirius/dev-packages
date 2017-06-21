@@ -21,6 +21,7 @@ class PS:
     def __init__(self, psname):
         self._callback    = None
         self.psname = psname
+        self.pstype = _PSSearch.conv_psname_2_pstype(self.psname)
         self.opmode_sel   = 0
         self.pwrstate_sel = 0
         self.current_sp   = 0
@@ -79,11 +80,20 @@ class PS:
             'PwrState-Sts'       : {'type':'enum',   'enums':_et.enums('OffOnTyp'),    'value':self.pwrstate_sts},
             'OpMode-Sel'         : {'type':'enum',   'enums':_et.enums('PSOpModeTyp'), 'value':self.opmode_sel},
             'OpMode-Sts'         : {'type':'enum',   'enums':_et.enums('PSOpModeTyp'), 'value':self.opmode_sts},
-            'Current-SP'         : {'type':'float',  'value':self.current_sp, 'prec':4},
+            'Current-SP'         : {'type':'float',  'value':self.current_sp, 'prec':4, },
             'Current-RB'         : {'type':'float',  'value':self.current_rb, 'prec':4},
             'CurrentRef-Mon'     : {'type':'float',  'value':self.currentref_mon, 'prec':4},
             'Current-Mon'        : {'type':'float',  'value':self.current_mon, 'prec':4},
         }
+        pstype = self.pstype
+
+        label='lolo';  db['Current-SP'][label] = _PSSearch.get_splim(pstype,label)
+        label='low';   db['Current-SP'][label] = _PSSearch.get_splim(pstype,label)
+        label='lolim'; db['Current-SP'][label] = _PSSearch.get_splim(pstype,label)
+        label='hilim'; db['Current-SP'][label] = _PSSearch.get_splim(pstype,label)
+        label='high';  db['Current-SP'][label] = _PSSearch.get_splim(pstype,label)
+        label='hihi';  db['Current-SP'][label] = _PSSearch.get_splim(pstype,label)
+
         return db
 
     def add_callback(self, callback, index=None):

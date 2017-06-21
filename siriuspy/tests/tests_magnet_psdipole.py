@@ -3,15 +3,14 @@
 import unittest
 import time
 import math
+import numpy
+from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.magnet.model import MagnetPowerSupplyDipole
+#from siriuspy
+
 
 class MagnetPowerSupplyDipoleTest(unittest.TestCase):
 
-    UPPER_CURRENT_LIMIT = 1000.0
-    LOWER_CURRENT_LIMIT = 0.0
-
-    UPPER_STRENGTH_LIMIT = 5.834711
-    LOWER_STRENGTH_LIMIT = 1.156212
 
     def assertEqualTimeout(self, value, obj, attr, timeout):
         t0 = time.time();
@@ -21,47 +20,53 @@ class MagnetPowerSupplyDipoleTest(unittest.TestCase):
 
     def setUp(self):
         self.ma = MagnetPowerSupplyDipole("SI-Fam:MA-B1B2", use_vaca=True)
-        self.ma.opmode_sel = 0
-        self.ma.pwrstate_sel = 1
+        self.ma.opmode_sel = _et.idx.SlowRef
+        self.ma.pwrstate_sel = _et.idx.On
         self.ma.current_sp = 0.0
+        self.assertEqualTimeout(_et.idx.SlowRef, self.ma, 'opmode_sel', 2.0)
+        self.assertEqualTimeout(_et.idx.SlowRef, self.ma, 'opmode_sts', 2.0)
+        self.assertEqualTimeout(_et.idx.On, self.ma, 'pwrstate_sel', 2.0)
+        self.assertEqualTimeout(_et.idx.On, self.ma, 'pwrstate_sts', 2.0)
+        self.assertEqualTimeout(0.0, self.ma, 'current_sp', 2.0)
+        self.assertEqualTimeout(0.0, self.ma, 'current_rb', 2.0)
+        self.assertEqualTimeout(0.0, self.ma, 'currentref_mon', 2.0)
+        self.assertEqualTimeout(0.0, self.ma, 'current_mon', 2.0)
 
     def tearDown(self):
         self.ma.finished()
 
     def test_setup(self):
-        self.assertEqual(self.ma.opmode_sel, 0)
-        self.assertEqual(self.ma.pwrstate_sel, 1)
+        pass
 
     #test strength
     def test_set_strength(self):
         """ Test setting the strength attribute """
-        self.ma.strength_sp = 0.1 #self.UPPER_STRENGTH_LIMIT
-        self.assertEqual(self.ma.strength_sp, 0.1)#self.UPPER_STRENGTH_LIMIT)
+        self.ma.strength_sp = 0.1
+        self.assertEqualTimeout(0.1, self.ma, 'strength_sp', 2.0)
 
     #test callbacks
     def test_strength_rb_callback(self):
         self.ma.strength_sp = 1.2
-        self.assertEqual(self.ma.strength_rb, 1.2)
+        self.assertEqualTimeout(1.2, self.ma, 'strength_rb', 2.0)
 
     def test_strengthref_mon_callback(self):
-        self.ma.strength_sp = self.UPPER_STRENGTH_LIMIT
-        self.assertEqualTimeout(self.UPPER_STRENGTH_LIMIT, self.ma, 'strengthref_mon', timeout=2.0)
+        self.ma.strength_sp = 1.3
+        self.assertEqualTimeout(1.3, self.ma, 'strengthref_mon', 2.0)
 
     def test_strength_mon_callback(self):
-        self.ma.strength_sp = self.UPPER_STRENGTH_LIMIT
-        self.assertEqualTimeout(self.UPPER_STRENGTH_LIMIT, self.ma, 'strength_mon', timeout=2.0)
+        self.ma.strength_sp = 1.4
+        self.assertEqualTimeout(1.4, self.ma, 'strength_mon', 2.0)
 
     def test_loop_set_strength(self):
-        values = [1.5, 2.1, 2.6, 3.2, 4.3]
-
-        for i in range(len(values)):
-            self.ma.strength_sp = values[i]
-
-        self.assertEqualTimeout(values[-1], self.ma, 'strength_sp', timeout=2.0)
-        #self.assertEqualTimeout(2*values[-1], self.ma, 'current_sp', timeout=2.0)
-        self.assertEqualTimeout(values[-1], self.ma, 'strength_rb', timeout=2.0)
-        self.assertEqualTimeout(values[-1], self.ma, 'strengthref_mon', timeout=2.0)
-        self.assertEqualTimeout(values[-1], self.ma, 'strength_mon', timeout=2.0)
+        currents = numpy.linspace(0,120.0,101)
+        strengths = [self.ma._conv_current_2_strength(current) for current in currents]
+        for strength in strengths:
+            self.ma.strength_sp = strength
+        self.assertEqualTimeout(strengths[-1], self.ma, 'strength_sp', timeout=2.0)
+        self.assertEqualTimeout(strengths[-1], self.ma, 'strength_rb', timeout=2.0)
+        self.assertEqualTimeout(strengths[-1], self.ma, 'strengthref_mon', timeout=2.0)
+        self.assertEqualTimeout(strengths[-1], self.ma, 'strength_mon', timeout=2.0)
+        self.assertEqualTimeout(currents[-1], self.ma, 'current_sp', timeout=2.0)
 
     #
     # def test_strength_limit(self):

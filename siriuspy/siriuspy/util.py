@@ -79,16 +79,16 @@ def print_ioc_banner(ioc_name, db, description, version, prefix, ):
 def conv_splims_labels(label):
     """Convert setpoint limit labels from pcaspy to epics and vice-versa."""
     labels_dict = {
-        'DRVL' : 'DRVL',
-        'LOLO' : 'lolo',
-        'LOW'  : 'low',
-        'LOPR' : 'lolim',
-        'HOPR' : 'hilim',
-        'HIGH' : 'high',
-        'HIHI' : 'hihi',
-        'DRVH' : 'DRVH',
-        'TSTV' : 'TSTV',
-        'TSTR' : 'TSTR',
+        'DRVH' : 'DRVH',   # ??? [pyepics]
+        'HIHI' : 'hihi',   # upper_alarm_limit [pyepics]
+        'HIGH' : 'high',   # upper_warning_limit [pyepics]
+        'HOPR' : 'hilim',  # upper_disp_limit & upper_ctrl_limit [pyepics]
+        'LOPR' : 'lolim',  # lower_disp_limit & lower_ctrl_limit [pyepics]
+        'LOW'  : 'low',    # lower_warning_limit [pyepics]
+        'LOLO' : 'lolo',   # lower_alarm_limit [pyepics]
+        'DRVL' : 'DRVL',   # ??? [pyepics]
+        'TSTV' : 'TSTV',   # ---
+        'TSTR' : 'TSTR',   # ---
     }
     if label in labels_dict:
         # epics -> pcaspy
