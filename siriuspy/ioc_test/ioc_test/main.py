@@ -12,6 +12,8 @@ import time as _time
 
 __version__ = _pvs.__version__
 
+ttime = 0.0
+
 class App:
 
     ps_devices = None
@@ -50,17 +52,29 @@ class App:
         return None
 
     def write(self, reason, value):
+        global ttime
+        t0 = _time.time()
         parts = reason.split(':')
         propty = parts[-1]
         psname = ':'.join(parts[:2])
         ps_propty = propty.replace('-','_').lower()
-        #print(psname, ps_propty, value)
-        setattr(_pvs.ps_devices[psname], ps_propty, value)
-        self._driver.setParam(reason, value)
-        self._driver.updatePVs()
+        if isinstance(value, float) or isinstance(value, int):
+            print('{0:<15s} [{1:}]: '.format('ioc write'), reason, value)
+        else:
+            print('{0:<15s}: '.format('ioc write'), reason)
+        try:
+            setattr(_pvs.ps_devices[psname], ps_propty, value)
+            self._driver.setParam(reason, value)
+            self._driver.updatePVs()
+        except AttributeError:
+            pass
+        t1 = _time.time()
+        ttime += t1-t0
+        #print(ttime)
         return True
 
     def _mycallback(self, pvname, value, **kwargs):
+        print('{0:<15s}: '.format('ioc callback'), pvname, value)
         reason = pvname
         prev_value = self._driver.getParam(reason)
         if value != prev_value:
