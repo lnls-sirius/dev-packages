@@ -435,6 +435,7 @@ class PowerSupplySim(PowerSupply):
                          )
 
 
+local = True
 class PowerSupplyEpicsSync:
 
     wait_pv_put   = True
@@ -446,6 +447,11 @@ class PowerSupplyEpicsSync:
                  vaca_prefix=None,
                  lock=True,
                  connection_timeout=None):
+
+        if local:
+            self._finish = False
+            self._threads = list()
+
         self._maname = maname
         self._use_vaca = use_vaca
         self._vaca_prefix = vaca_prefix
@@ -453,9 +459,11 @@ class PowerSupplyEpicsSync:
         self._lock = lock
         self._set_psnames()
         self._create_epics_pvs()
-        if self._lock:
-            self._thread = _threading.Thread(target=self._force_lock)
-            self._thread.start()
+
+        if not local:
+            if self._lock:
+                self._thread = _threading.Thread(target=self._force_lock)
+                self._thread.start()
 
     @property
     def connected(self):
@@ -466,7 +474,14 @@ class PowerSupplyEpicsSync:
         return True
 
     def finished(self):
-        self._finished = True
+        if not local:
+            self._finished = True
+        if local:
+            self._lock = False
+            if self._threads:
+                for t in self._threads:
+                    if t.is_alive():
+                        t.join()
 
     @property
     def upper_alarm_limit(self):
@@ -523,11 +538,13 @@ class PowerSupplyEpicsSync:
         self._set_current_sp(value)
 
     def _set_current_sp(self, value):
-        self._lock = False
+        if not local:
+            self._lock = False
         self._current_sp = value
         for psname, pv in self._pvs['Current-SP'].items():
             pv.put(self._current_sp, wait=PowerSupplyEpicsSync.wait_pv_put)
-        self._lock = True
+        if not local:
+            self._lock = True
 
     @current_rb.setter
     def current_rb(self, value):
@@ -551,11 +568,13 @@ class PowerSupplyEpicsSync:
         self._set_opmode_sel(value)
 
     def _set_opmode_sel(self, value):
-        self._lock = False
+        if not local:
+            self._lock = False
         self._opmode_sel = value
         for psname, pv in self._pvs['OpMode-Sel'].items():
             pv.put(self._opmode_sel, wait=PowerSupplyEpicsSync.wait_pv_put)
-        self._lock = True
+        if not local:
+            self._lock = True
 
     @property
     def opmode_sts(self):
@@ -570,11 +589,13 @@ class PowerSupplyEpicsSync:
         self._set_pwrstate_sel(value)
 
     def _set_pwrstate_sel(self, value):
-        self._lock = False
+        if not local:
+            self._lock = False
         self._pwrstate_sel = value
         for psname, pv in self._pvs['PwrState-Sel'].items():
             pv.put(self._pwrstate_sel, wait=PowerSupplyEpicsSync.wait_pv_put)
-        self._lock = True
+        if not local:
+            self._lock = True
 
     @property
     def pwrstate_sts(self):
@@ -604,6 +625,11 @@ class PowerSupplyEpicsSync:
                 self._vaca_prefix = _envars.vaca_prefix
         else:
             self._vaca_prefix = ''
+
+        if local:
+            self._current = 0.0
+            self._opmode_sel = 0
+            self._pwrstate_sel = 0
 
         properties = {
             'OpMode-Sel'     : self._pvchange_opmode_sel,
@@ -641,8 +667,6 @@ class PowerSupplyEpicsSync:
         self._current_mon = self._pvs['Current-Mon'][psname].value
 
         self._lock = lock
-        #print('init current_sp: ', self._current_sp)
-        #print('end of create lock state: ', self._lock)
 
     def _force_lock(self):
         self._finished = False
@@ -661,24 +685,40 @@ class PowerSupplyEpicsSync:
                     if  pwrstate_sel_value != self.pwrstate_sel:
                         self._pvs['PwrState-Sel'][psname].put(self._pwrstate_sel, wait=PowerSupplyEpicsSync.wait_pv_put)
 
+    def _clear_threads(self):
+        self._threads = [t for t in self._threads if t.is_alive]
+
     def _pvchange_opmode_sel(self, pvname, value, **kwargs):
-        #self._opmode_sel = value
-        pass
+        if not local:
+            pass
+        if local:
+            if self._lock:
+                if value != self._opmode_sel:
+                    self._clear_threads()
+                    self._threads.append(_threading.Thread(target=self._set_opmode_sel, args=[self._opmode_sel]))
+                    self._threads[-1].start()
     def _pvchange_opmode_sts(self, pvname, value, **kwargs):
         self._opmode_sts = value
     def _pvchange_pwrstate_sel(self, pvname, value, **kwargs):
-        #self._pwrstate_sel = value
-        pass
+        if not local:
+            pass
+        if local:
+            if self._lock:
+                if value != self._pwrstate_sel:
+                    self._clear_threads()
+                    self._threads.append(_threading.Thread(target=self._set_pwrstate_sel, args=[self._pwrstate_sel]))
+                    self._threads[-1].start()
     def _pvchange_pwrstate_sts(self, pvname, value, **kwargs):
         self._pwrstate_sts = value
     def _pvchange_current_sp(self, pvname, value, **kwargs):
-        # if self._lock:
-        #     if value != self._current_sp:
-        #         thread = _threading.Thread(target=self._set_current_sp, args=(self._current_sp,))
-        #         thread.start()
-        # else:
-        #     self._current_sp = value
-        pass
+        if not local:
+            pass
+        if local:
+            if self._lock:
+                if value != self._current_sp:
+                    self._clear_threads()
+                    self._threads.append(_threading.Thread(target=self._set_current_sp, args=[self._current_sp]))
+                    self._threads[-1].start()
     def _pvchange_current_rb(self, pvname, value, **kwargs):
         self._current_rb = value
     def _pvchange_currentref_mon(self, pvname, value, **kwargs):
