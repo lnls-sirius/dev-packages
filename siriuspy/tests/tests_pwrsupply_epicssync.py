@@ -13,7 +13,6 @@ from siriuspy.search import PSSearch as _PSSearch
 class TestSet1(unittest.TestCase):
 
 
-
     def assertEqualTimeout(self, value, obj, attr, timeout):
         t0 = time.time();
         while (time.time() - t0 < timeout) and getattr(obj, attr) != value:
