@@ -1,4 +1,5 @@
 import siriuspy.servweb as _web
+from siriuspy.namesys import SiriusPVName as _PVName
 import copy as _copy
 
 _timeout = 1.0
@@ -16,12 +17,13 @@ class _BPMsData:
         if _web.server_online():
             if _LOCAL:
                 with open('/home/fac_files/lnls-sirius/control-system-constants/'+
-                          'diagnostics/crates-connection.txt','r') as f:
+                          'diagnostics/bpms-data.txt','r') as f:
                     text = f.read()
             else:
-                text = _web.crate_to_bpm_mapping(timeout=_timeout)
+                text = _web.bpms_data(timeout=_timeout)
             self._mapping = self._get_mapping(text)
-            self._build_inv_mapping()
+            self._build_crates_to_bpm_mapping()
+            self._build_data()
 
     @staticmethod
     def _get_mapping(text):
@@ -30,40 +32,57 @@ class _BPMsData:
         for line in lines:
             line = line.strip()
             if not line or line[0] == '#': continue # empty line
-            key,*val = line.split()
+            key,pos,crate,*_ = line.split()
+            key   = _PVName(key)
+            crate = _PVName(crate)
             if key in mapping.keys():
-                mapping[key] += tuple(val)
+                raise Exception('BPM {0:s} double entry.'.format(key))
             else:
-                mapping[key] = tuple(val)
+                mapping[key] = {'position':float(pos),'crate':crate}
         return mapping
 
-    def _build_inv_mapping(self):
-        inv_mapping = dict()
-        for k,vs in self._mapping.items():
-            for v in vs: inv_mapping[v] = k
-        self._inv_mapping = inv_mapping
+    def _build_crates_to_bpm_mapping(self):
+        crates_mapping = dict()
+        for k,v in self._mapping.items():
+            k2 = v['crate']
+            if k2 in crates_mapping.keys():
+                crates_mapping[k2] += tuple(k)
+            else:
+                crates_mapping[k2] = tuple(k)
+        self._crates_mapping = crates_mapping
+
+    def _build_data(self):
+        data = {k:v for k,v in self.map.items() if k.section=='SI'}
+        self._names = sorted(data.keys())
+        self._pos = [data[k]['position'] for k in self._names]
 
     @property
     def map(self): return _copy.deepcopy(self._mapping)
 
     @property
-    def inverse_map(self): return _copy.deepcopy(self._inv_mapping)
+    def names(self): return _copy.deepcopy(self._names)
 
-_cratesdata = None
-def  _get_cratesdata():
-    # encapsulating _cratesdata within a function avoid creating the global object
+    @property
+    def positions(self): return _copy.deepcopy(self._pos)
+
+    @property
+    def crates_map(self): return _copy.deepcopy(self._crates_mapping)
+
+_bpmsdata = None
+def  _get_bpmsdata():
+    # encapsulating _bpmsdata within a function avoid creating the global object
     # (which is time consuming) at module load time.
-    global _cratesdata
-    if _cratesdata is None:
-        _cratesdata = _BPMsData()
-    return _cratesdata
+    global _bpmsdata
+    if _bpmsdata is None:
+        _bpmsdata = _BPMsData()
+    return _bpmsdata
 
 
 # BPMsDATA API
 # ==========
 def reset():
-    global _cratesdata
-    _cratesdata = _BPMsData()
+    global _bpmsdata
+    _bpmsdata = _BPMsData()
 
 def server_online():
     """Return True/False if Sirius web server is online."""
@@ -71,10 +90,20 @@ def server_online():
 
 def get_mapping():
     """Return a dictionary with the beaglebone to power supply mapping."""
-    cratesdata =  _get_cratesdata()
-    return cratesdata.map
+    bpmsdata =  _get_bpmsdata()
+    return bpmsdata.map
 
-def get_inverse_mapping():
+def get_names():
+    """Return a dictionary with the beaglebone to power supply mapping."""
+    bpmsdata =  _get_bpmsdata()
+    return bpmsdata.names
+
+def get_positions():
+    """Return a dictionary with the beaglebone to power supply mapping."""
+    bpmsdata =  _get_bpmsdata()
+    return bpmsdata.positions
+
+def get_crates_mapping():
     """Return a dictionary with the power supply to beaglebone mapping."""
-    cratesdata =  _get_cratesdata()
-    return cratesdata.inverse_map
+    bpmsdata =  _get_bpmsdata()
+    return bpmsdata.crates_map
