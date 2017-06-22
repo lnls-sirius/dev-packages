@@ -124,6 +124,23 @@ class App:
     def _call_callback(self,pv,value):
         self._update_driver(self.prefix + pv, value)
 
+    def _update_driver(self,pvname,value,**kwargs):
+        _log.debug('PV {0:s} updated in driver database with value {1:s}'.format(pvname,str(value)))
+        self._driver.setParam(pvname,value)
+        self._driver.updatePVs()
+
+    def _isValid(self,reason,value):
+        if reason.endswith(('-Sts','-RB', '-Mon')):
+            _log.debug('App: PV {0:s} is read only.'.format(reason))
+            return False
+        enums = self._database[reason].get('enums')
+        if enums is not None:
+            len_ = len(enums)
+            if int(value) >= len_:
+                _log.warning('App: value {0:d} too large for PV {1:s} of type enum'.format(value,reason))
+                return False
+        return True
+
     def _abort_measure_response_matrix(self, value):
         print('here')
         if not self.measuring_resp_matrix:
@@ -266,23 +283,6 @@ class App:
         self._call_callback('Log-Mon',str_ + 'kicks.')
         if any(kicks):
             self.correctors.apply_kicks(kicks)
-        return True
-
-    def _update_driver(self,pvname,value,**kwargs):
-        _log.debug('PV {0:s} updated in driver database with value {1:s}'.format(pvname,str(value)))
-        self._driver.setParam(pvname,value)
-        self._driver.updatePVs()
-
-    def _isValid(self,reason,value):
-        if reason.endswith(('-Sts','-RB', '-Mon')):
-            _log.debug('App: PV {0:s} is read only.'.format(reason))
-            return False
-        enums = self._database[reason].get('enums')
-        if enums is not None:
-            len_ = len(enums)
-            if int(value) >= len_:
-                _log.warning('App: value {0:d} too large for PV {1:s} of type enum'.format(value,reason))
-                return False
         return True
 
 
