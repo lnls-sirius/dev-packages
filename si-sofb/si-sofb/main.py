@@ -310,8 +310,11 @@ class Orbit:
         db[pre + 'setRefwithGolden-Cmd'] = {'type':'int','value':0,
                                             'unit':'Set the reference orbit with the Golden Orbit',
                                             'fun_set_pv':self._set_ref_with_golden}
-        db[pre + 'OrbitX-Mon']      = {'type':'float','count':NR_BPMS,'value':NR_BPMS*[0]}
-        db[pre + 'OrbitY-Mon']      = {'type':'float','count':NR_BPMS,'value':NR_BPMS*[0]}
+        db[pre + 'CorrOrbitX-Mon']   = {'type':'float','count':NR_BPMS,'value':NR_BPMS*[0]}
+        db[pre + 'CorrOrbitY-Mon']   = {'type':'float','count':NR_BPMS,'value':NR_BPMS*[0]}
+        db[pre + 'OnlineOrbitX-Mon'] = {'type':'float','count':NR_BPMS,'value':NR_BPMS*[0]}
+        db[pre + 'OnlineOrbitY-Mon'] = {'type':'float','count':NR_BPMS,'value':NR_BPMS*[0]}
+
         db[pre + 'OfflineOrbitX-SP'] = {'type':'float','count':NR_BPMS,'value':NR_BPMS*[0],
                                         'fun_set_pv':lambda x: self._set_offline_orbit('x',x)}
         db[pre + 'OfflineOrbitX-RB'] = {'type':'float','count':NR_BPMS,'value':NR_BPMS*[0]}
@@ -367,8 +370,8 @@ class Orbit:
             self._reset_orbs('y')
         refx = self.ref_orbit['x']
         refy = self.ref_orbit['y']
-        self._call_callback('OrbitX-Mon',list(orbx))
-        self._call_callback('OrbitY-Mon',list(orby))
+        self._call_callback('CorrOrbitX-Mon',list(orbx))
+        self._call_callback('CorrOrbitY-Mon',list(orby))
         return _np.hstack([orbx-refx, orby-refy])
 
     def _on_connection(self,pvname,conn,pv):
@@ -412,7 +415,7 @@ class Orbit:
 
     def _update_orbs(self,plane):
         def update(pvname,value,**kwargs):
-            if value is None or not self.acquire[plane]: return True
+            if value is None or not (self.acquire[plane] and self._continuous): return True
             if len(self.orbs[plane]) < (self.orbit_points_num):
                 orb = _np.array(value, dtype=float)
                 self.orbs[plane].append(orb)
@@ -422,6 +425,8 @@ class Orbit:
                 else:
                     self.orb[plane] = self.orbs[plane][0]
                 self.acquire[plane] = False
+            self._call_callback('OnlineOrbitX-Mon',list(orbx))
+            self._call_callback('OnlineOrbitY-Mon',list(orby))
             return True
         return update
 
@@ -444,7 +449,7 @@ class Orbit:
 
     def _set_ref_orbit(self,plane,orb):
         self._call_callback('Log-Mon','Setting New Reference Orbit.')
-        if len(value) != NR_BPMS:
+        if len(orb) != NR_BPMS:
             self._call_callback('Log-Mon','Err: Wrong Size.')
             return False
         self._save_ref_orbit(plane,orb)
@@ -575,7 +580,9 @@ class Matrix:
         self._call_callback('Log-Mon','Setting {0:s} Enable List'.format(key.upper()))
         copy_ = self.select_items[key]
         new_ = _np.array(val,dtype=bool)
-        if len(new_) >= len(copy_):
+        if key == 'rf':
+            new_ = val
+        elif len(new_) >= len(copy_):
             new_ = new_[:len(copy_)]
         else:
             new2_ = copy_.copy()
@@ -689,20 +696,20 @@ class Correctors:
     def connect(self):
         ch_names = _PSSearch.get_psnames({'section':'SI','discipline':'PS','device':'CH'})
         cv_names = _PSSearch.get_psnames({'section':'SI','discipline':'PS','device':'CV'})
-        ma_names = ch_names + cv_names
+        self.corr_names = ch_names + cv_names
 
-        for dev in ma_names:
+        for dev in self.corr_names:
             self.corr_pvs_opmode_sel.append(_epics.PV(LL_PREF+dev+':OpMode-Sel',
                                                       connection_timeout=_TIMEOUT))
             self.corr_pvs_opmode_sts.append(_epics.PV(LL_PREF+dev+':OpMode-Sts',
-                                            connection_timeout=_TIMEOUT,
-                                            callback=self._corrIsOnMode))
+                                                      connection_timeout=_TIMEOUT,
+                                                      callback=self._corrIsOnMode))
             self.corr_pvs_opmode_ready[LL_PREF+dev+':OpMode-Sts'] = False
             self.corr_pvs_sp.append(_epics.PV(LL_PREF+dev+':Current-SP',
                                               connection_timeout=_TIMEOUT,))
             self.corr_pvs_rb.append(_epics.PV(LL_PREF+dev+':Current-RB',
-                                    connection_timeout=_TIMEOUT,
-                                    callback=self._corrIsReady))
+                                              connection_timeout=_TIMEOUT,
+                                              callback=self._corrIsReady))
             self.corr_pvs_ready[LL_PREF+dev+':Current-RB'] = False
         self.rf_pv_sp = _epics.PV(LL_PREF+SECTION + '-Glob:RF-P5Cav:Freq-SP')
         self.rf_pv_rb = _epics.PV(LL_PREF+SECTION + '-Glob:RF-P5Cav:Freq-RB')
@@ -776,8 +783,8 @@ class Correctors:
         return True
 
     def _corrIsReady(self,pvname,value,**kwargs):
-        name = pvname.replace('-RB','-SP')
-        if abs(self.corr_pvs_sp[name].value - value) <= 1e-3:
+        ind = self.corr_names.index(pvname.strip(LL_PREF).strip(':Current-RB'))
+        if abs(self.corr_pvs_sp[ind].value - value) <= 1e-3:
             self.corr_pvs_ready[pvname] = True
 
     def _corrIsOnMode(self,pvname,value,**kwargs):
