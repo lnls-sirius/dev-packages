@@ -16,7 +16,6 @@ from siriuspy import envars as _envars
 
 _connection_timeout = 0.1
 
-
 class PowerSupply(_PSData):
 
     def __init__(self, psname,
@@ -418,7 +417,6 @@ class PowerSupply(_PSData):
                 elif pvname == 'current_load':
                     callback(self.psname + ':Current-Mon', value, **kwargs)
 
-
 class PowerSupplySim(PowerSupply):
 
     def __init__(self,
@@ -434,7 +432,6 @@ class PowerSupplySim(PowerSupply):
                          enum_keys=enum_keys
                          )
 
-
 local = True
 class PowerSupplyEpicsSync:
 
@@ -446,7 +443,10 @@ class PowerSupplyEpicsSync:
                  use_vaca=False,
                  vaca_prefix=None,
                  lock=True,
+                 callback=None,
                  connection_timeout=None):
+
+        self._callback = callback
 
         if local:
             self._finish = False
@@ -516,7 +516,6 @@ class PowerSupplyEpicsSync:
         return tuple([psname in self._psnames])
 
     # Current getters/setters
-
     @property
     def current_sp(self):
         return self._current_sp
@@ -631,7 +630,7 @@ class PowerSupplyEpicsSync:
             self._opmode_sel = 0
             self._pwrstate_sel = 0
 
-        properties = {
+        self._properties = {
             'OpMode-Sel'     : self._pvchange_opmode_sel,
             'OpMode-Sts'     : self._pvchange_opmode_sts,
             'PwrState-Sel'   : self._pvchange_pwrstate_sel,
@@ -647,11 +646,11 @@ class PowerSupplyEpicsSync:
 
         self._pvs = {}
         index = None
-        for propty in properties:
+        for propty in self._properties:
             self._pvs[propty] = {}
         for psname in self._psnames:
             pv = self._vaca_prefix + psname
-            for propty, callback in properties.items():
+            for propty, callback in self._properties.items():
                 self._pvs[propty][psname] = _PV(pv + ':' + propty, connection_timeout=self._connection_timeout)
                 self._pvs[propty][psname].wait_for_connection(timeout=self._connection_timeout)
                 index = self._pvs[propty][psname].add_callback(callback=callback, index=index)
@@ -688,6 +687,10 @@ class PowerSupplyEpicsSync:
     def _clear_threads(self):
         self._threads = [t for t in self._threads if t.is_alive]
 
+    def _trigger_callback(self, pvname, value, **kwargs):
+        if self._callback:
+            self._callback(pvname, value, **kwargs)
+
     def _pvchange_opmode_sel(self, pvname, value, **kwargs):
         if not local:
             pass
@@ -697,8 +700,11 @@ class PowerSupplyEpicsSync:
                     self._clear_threads()
                     self._threads.append(_threading.Thread(target=self._set_opmode_sel, args=[self._opmode_sel]))
                     self._threads[-1].start()
+                else:
+                    self._trigger_callback(pvname, value, **kwargs)
     def _pvchange_opmode_sts(self, pvname, value, **kwargs):
         self._opmode_sts = value
+        self._trigger_callback(pvname, value, **kwargs)
     def _pvchange_pwrstate_sel(self, pvname, value, **kwargs):
         if not local:
             pass
@@ -708,8 +714,11 @@ class PowerSupplyEpicsSync:
                     self._clear_threads()
                     self._threads.append(_threading.Thread(target=self._set_pwrstate_sel, args=[self._pwrstate_sel]))
                     self._threads[-1].start()
+                else:
+                    self._trigger_callback(pvname, value, **kwargs)
     def _pvchange_pwrstate_sts(self, pvname, value, **kwargs):
         self._pwrstate_sts = value
+        self._trigger_callback(pvname, value, **kwargs)
     def _pvchange_current_sp(self, pvname, value, **kwargs):
         if not local:
             pass
@@ -719,15 +728,29 @@ class PowerSupplyEpicsSync:
                     self._clear_threads()
                     self._threads.append(_threading.Thread(target=self._set_current_sp, args=[self._current_sp]))
                     self._threads[-1].start()
+                else:
+                    self._trigger_callback(pvname, value, **kwargs)
     def _pvchange_current_rb(self, pvname, value, **kwargs):
         self._current_rb = value
+        self._trigger_callback(pvname, value, **kwargs)
     def _pvchange_currentref_mon(self, pvname, value, **kwargs):
         self._currentref_mon = value
+        self._trigger_callback(pvname, value, **kwargs)
     def _pvchange_current_mon(self, pvname, value, **kwargs):
         self._current_mon = value
+        self._trigger_callback(pvname, value, **kwargs)
 
+    @property
+    def database(self):
+        return _get_database()
 
+    def _get_database(self):
+        db = dict()
+        for prop in self._properties:
+            attr = prop.replace("-", "_").lower()
+            db[prop] = getattr(self, attr)
 
+        return db
 
 
 
