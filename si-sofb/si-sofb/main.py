@@ -337,6 +337,7 @@ class Orbit:
         self.relative = True
         self._load_basic_orbits()
         self.orbit_points_num = 1
+        self._continuous = False
         self.pv = {'x':None, 'y':None}
 
     def connect(self):
@@ -415,7 +416,7 @@ class Orbit:
 
     def _update_orbs(self,plane):
         def update(pvname,value,**kwargs):
-            if value is None or not (self.acquire[plane] and self._continuous): return True
+            if value is None or not (self.acquire[plane] or self._continuous): return True
             if len(self.orbs[plane]) < (self.orbit_points_num):
                 orb = _np.array(value, dtype=float)
                 self.orbs[plane].append(orb)
@@ -424,9 +425,9 @@ class Orbit:
                     self.orb[plane] = _np.median(_np.array(self.orbs[plane]), axis=0)
                 else:
                     self.orb[plane] = self.orbs[plane][0]
+                self._call_callback('OnlineOrbitX-Mon',list(self.orb['x']))
+                self._call_callback('OnlineOrbitY-Mon',list(self.orb['y']))
                 self.acquire[plane] = False
-            self._call_callback('OnlineOrbitX-Mon',list(orbx))
-            self._call_callback('OnlineOrbitY-Mon',list(orby))
             return True
         return update
 
