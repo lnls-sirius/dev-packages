@@ -4,9 +4,8 @@ import unittest
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.pwrsupply.model import PowerSupply
 from siriuspy.pwrsupply.model import PowerSupplySim
-from siriuspy.pwrsupply.model import PowerSupplySync
+#from siriuspy.pwrsupply.model import PowerSupplySync
 
-#from siriuspy.magnet.model import PowerSupplyMA
 
 class PowerSupplyTest(unittest.TestCase):
     def assert_currents(self, sp, rb, ref, mon):
@@ -567,49 +566,49 @@ class PowerSupplySimGeneralTest(PowerSupplyTest):
         self.assertEqual(self.ps.wfmindex_mon, 0)
         self.assertEqual(self.ps_enum.wfmindex_mon, 0)
 
-class PowerSupplySyncSimTest(PowerSupplyTest):
-
-    def setUp(self):
-        if hasattr(self, 'ps'):
-            del self.ps
-
-    def test_lock_off(self):
-        self.ps = PowerSupplySync(psnames=['SI-Fam:PS-B1B2-1','SI-Fam:PS-B1B2-2'],
-                                  controller_type='ControllerSim',
-                                  lock=False,
-                                  enum_keys=False)
-        # basic synched set of pwrstate
-        self.ps.pwrstate_sel = 'On'
-        self.assertEqual(self.ps._controllers[0].pwrstate, _et.idx.On)
-        self.assertEqual(self.ps._controllers[1].pwrstate, _et.idx.On)
-        self.ps.current_sp = 10.0
-        self.assert_currents(10.0, 10.0, 10.0, 10.0)
-        self.ps._controllers[0].current_sp = 5.0
-        self.assertEqual(self.ps._controllers[0].current_sp, 5.0)
-        self.assertEqual(self.ps._controllers[1].current_sp, 10.0)
-        self.ps.current_sp = 10.0
-        self.assertEqual(self.ps._controllers[0].current_sp, 10.0)
-        self.ps.pwrstate_sel = 'Off'
-        self.assertEqual(self.ps._controllers[0].pwrstate, _et.idx.Off)
-        self.assertEqual(self.ps._controllers[1].pwrstate, _et.idx.Off)
-
-    def test_lock_on(self):
-        self.ps = PowerSupplySync(psnames=['SI-Fam:PS-B1B2-1','SI-Fam:PS-B1B2-2'],
-                                  controller_type='ControllerSim',
-                                  lock=True,
-                                  enum_keys=False)
-        # basic synched set of pwrstate
-        self.ps.pwrstate_sel = 'On'
-        self.assertEqual(self.ps._controllers[0].pwrstate, _et.idx.On)
-        self.assertEqual(self.ps._controllers[1].pwrstate, _et.idx.On)
-        self.ps.current_sp = 10.0
-        self.assert_currents(10.0, 10.0, 10.0, 10.0)
-        self.ps._controllers[0].current_sp = 5.0
-        self.assertEqual(self.ps._controllers[0].current_sp, 10.0)
-        self.assertEqual(self.ps._controllers[1].current_sp, 10.0)
-        self.ps.pwrstate_sel = 'Off'
-        self.assertEqual(self.ps._controllers[0].pwrstate, _et.idx.Off)
-        self.assertEqual(self.ps._controllers[1].pwrstate, _et.idx.Off)
+# class PowerSupplySyncSimTest(PowerSupplyTest):
+#
+#     def setUp(self):
+#         if hasattr(self, 'ps'):
+#             del self.ps
+#
+#     def test_lock_off(self):
+#         self.ps = PowerSupplySync(psnames=['SI-Fam:PS-B1B2-1','SI-Fam:PS-B1B2-2'],
+#                                   controller_type='ControllerSim',
+#                                   lock=False,
+#                                   enum_keys=False)
+#         # basic synched set of pwrstate
+#         self.ps.pwrstate_sel = 'On'
+#         self.assertEqual(self.ps._controllers[0].pwrstate, _et.idx.On)
+#         self.assertEqual(self.ps._controllers[1].pwrstate, _et.idx.On)
+#         self.ps.current_sp = 10.0
+#         self.assert_currents(10.0, 10.0, 10.0, 10.0)
+#         self.ps._controllers[0].current_sp = 5.0
+#         self.assertEqual(self.ps._controllers[0].current_sp, 5.0)
+#         self.assertEqual(self.ps._controllers[1].current_sp, 10.0)
+#         self.ps.current_sp = 10.0
+#         self.assertEqual(self.ps._controllers[0].current_sp, 10.0)
+#         self.ps.pwrstate_sel = 'Off'
+#         self.assertEqual(self.ps._controllers[0].pwrstate, _et.idx.Off)
+#         self.assertEqual(self.ps._controllers[1].pwrstate, _et.idx.Off)
+#
+#     def test_lock_on(self):
+#         self.ps = PowerSupplySync(psnames=['SI-Fam:PS-B1B2-1','SI-Fam:PS-B1B2-2'],
+#                                   controller_type='ControllerSim',
+#                                   lock=True,
+#                                   enum_keys=False)
+#         # basic synched set of pwrstate
+#         self.ps.pwrstate_sel = 'On'
+#         self.assertEqual(self.ps._controllers[0].pwrstate, _et.idx.On)
+#         self.assertEqual(self.ps._controllers[1].pwrstate, _et.idx.On)
+#         self.ps.current_sp = 10.0
+#         self.assert_currents(10.0, 10.0, 10.0, 10.0)
+#         self.ps._controllers[0].current_sp = 5.0
+#         self.assertEqual(self.ps._controllers[0].current_sp, 10.0)
+#         self.assertEqual(self.ps._controllers[1].current_sp, 10.0)
+#         self.ps.pwrstate_sel = 'Off'
+#         self.assertEqual(self.ps._controllers[0].pwrstate, _et.idx.Off)
+#         self.assertEqual(self.ps._controllers[1].pwrstate, _et.idx.Off)
 
 
 if __name__ == '__main__':

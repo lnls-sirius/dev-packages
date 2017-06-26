@@ -2,11 +2,18 @@
 
 import inspect
 import unittest
-import tests_controller
-import tests_pwrsupply
-import tests_pwrsupply_epics
 
-modules = [tests_controller, tests_pwrsupply]
+import tests_search
+import tests_pwrsupply_controller
+import tests_pwrsupply_sim
+import tests_pwrsupply_epicssync
+
+modules = [
+    tests_search,
+    tests_pwrsupply_controller,
+    tests_pwrsupply_sim,
+    tests_pwrsupply_epicssync,
+]
 
 
 def get_test_classes(module_name):

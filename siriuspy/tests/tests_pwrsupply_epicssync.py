@@ -6,6 +6,7 @@ import time
 import numpy
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.pwrsupply.model import PowerSupplyEpicsSync
+from siriuspy.pwrsupply.model import PowerSupplyEpicsSync2
 import random as _random
 from siriuspy.search import PSSearch as _PSSearch
 
@@ -22,7 +23,16 @@ class TestSet1(unittest.TestCase):
     def setUp(self):
         self.ps = PowerSupplyEpicsSync(maname='SI-Fam:MA-B1B2',
                                        use_vaca=True,
-                                       lock=True)
+                                       lock=True,
+                                       connection_timeout=3.0)
+
+
+
+        # self.ps = PowerSupplyEpicsSync2(psnames=['SI-Fam:PS-B1B2-1','SI-Fam:PS-B1B2-2'],
+        #                                use_vaca=True,
+        #                                lock=True,
+        #                                connection_timeout=3.0)
+
         self.ps.opmode_sel = _et.idx.SlowRef
         self.ps.pwrstate_sel = _et.idx.On
         self.ps.current_sp = 5.5
@@ -39,7 +49,10 @@ class TestSet1(unittest.TestCase):
         self.lower_alarm_limit = _PSSearch.get_splim('si-dipole-b1b2-fam','LOLO')
 
     def tearDown(self):
-        self.ps.finished()
+        self.ps.disconnect()
+
+    def test_setup(self):
+        pass
 
     def test_limits(self):
         self.assertEqual(self.ps.upper_alarm_limit, self.upper_alarm_limit)
@@ -56,7 +69,7 @@ class TestSet1(unittest.TestCase):
             self.ps.pwrstate_sel = value
             self.ps._pvs['PwrState-Sel'][psname].put(0, wait=True)
         self.assertEqualTimeout(values[-1],self.ps._pvs['PwrState-Sel'][psname],'value',3.0)
-        self.ps.finished()
+        self.ps.disconnect()
 
     def test_lock_opmode_sel(self):
         psname = self.ps._psnames[0]
@@ -86,7 +99,7 @@ class TestSet1(unittest.TestCase):
         self.assertEqual(self.ps.current_mon, values[-1])
         self.assertEqualTimeout(values[-1],self.ps._pvs['Current-Mon']['SI-Fam:PS-B1B2-1'],'value',3.0)
         self.assertEqualTimeout(values[-1],self.ps._pvs['Current-Mon']['SI-Fam:PS-B1B2-2'],'value',3.0)
-        self.ps.finished()
+        self.ps.disconnect()
 
 
 if __name__ == '__main__':
