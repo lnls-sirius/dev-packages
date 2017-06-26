@@ -513,7 +513,7 @@ class PowerSupplyEpicsSync:
 
     @property
     def psnames(self):
-        return tuple([psname in self._psnames])
+        return tuple([psname for psname in self._psnames])
 
     # Current getters/setters
     @property
@@ -769,7 +769,7 @@ class PowerSupplyEpicsSync2:
 
         self._callback = callback
         self._thread_local = thread_local
-        
+
         if self._thread_local:
             self._finish = False
             self._threads = list()
@@ -835,6 +835,11 @@ class PowerSupplyEpicsSync2:
         #                 pv.disconnect()
 
         #print('disconnect()')
+
+    @property
+    def psnames(self):
+        return tuple([psname for psname in self._psnames])
+
 
     @property
     def opmode_sel(self):
