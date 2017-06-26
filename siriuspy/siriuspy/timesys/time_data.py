@@ -161,9 +161,7 @@ class _TimeDevData:
         self._final_receiver_devs = self._dev_twds_evg.keys() - self._dev_from_evg.keys()
         self._all_devices         = self._dev_from_evg.keys() | self._dev_twds_evg.keys()
         self._build_hierarchy_map()
-        self._build_positions()
-        self._build_colors()
-        self._build_arrow_colors()
+        self._isGraphUpToDate = False
 
     def _get_dev_and_channel(self,txt):
         type_chan = num_chan = None
@@ -251,6 +249,11 @@ class _TimeDevData:
             txt.set_text(self._inv_positions[pos])
             f.canvas.draw()
 
+        if not self._isGraphUpToDate:
+            self._build_positions()
+            self._build_colors()
+            self._build_arrow_colors()
+            self._isGraphUpToDate = True
 
         f  = _plt.figure(figsize=(20,20))
         f.canvas.mpl_connect('motion_notify_event',on_motion)
