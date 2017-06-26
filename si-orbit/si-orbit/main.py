@@ -29,9 +29,9 @@ class App:
         pre = self.prefix
         db[pre + 'Log-Mon'] = {'type':'string','value':''}
         db[pre + 'NumBPM-Mon'] = {'type':'int','value':self.nr_bpms}
-        db[pre + 'PosX-Mon'] = {'type':'float','count':self.nr_bpms,'value':self.nr_bpms*[0]}
-        db[pre + 'PosY-Mon'] = {'type':'float','count':self.nr_bpms,'value':self.nr_bpms*[0]}
-        db[pre + 'PosS-Mon'] = {'type':'float','count':self.nr_bpms,'value':self.bpm_pos}
+        db[pre + 'PosX-Mon'] = {'type':'float','unit':'nm','count':self.nr_bpms,'value':self.nr_bpms*[0]}
+        db[pre + 'PosY-Mon'] = {'type':'float','unit':'nm','count':self.nr_bpms,'value':self.nr_bpms*[0]}
+        db[pre + 'PosS-Mon'] = {'type':'float','unit':'m','count':self.nr_bpms,'value':self.bpm_pos}
         return db
 
     def __init__(self,driver=None):

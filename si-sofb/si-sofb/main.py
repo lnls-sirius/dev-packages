@@ -117,6 +117,7 @@ class App:
         self._call_callback('Log-Mon', 'Connecting to Low Level PVs')
         self.orbit.connect()
         _log.info('All Orbit connection opened.')
+        self.matrix.connect()
         _log.info('Connecting to Correctors PVs:')
         self.correctors.connect()
         _log.info('All Correctors connection opened.')
@@ -335,12 +336,12 @@ class Orbit:
         self.offline_orbit = {'x':_np.zeros(NR_BPMS),'y':_np.zeros(NR_BPMS)}
         self.acquire = {'x':False,'y':False}
         self.relative = True
-        self._load_basic_orbits()
         self.orbit_points_num = 1
-        self._continuous = False
+        self._continuous = True
         self.pv = {'x':None, 'y':None}
 
     def connect(self):
+        self._load_basic_orbits()
         self.pv ={'x':_epics.PV(SECTION + '-Glob:AP-Orbit:PosX-Mon',
                                 callback=self._update_orbs('x'),
                                 connection_callback= self._on_connection ),
@@ -357,10 +358,8 @@ class Orbit:
             orbx = self.offline_orbit['x']
             orby = self.offline_orbit['y']
         else:
-            self.acquire = {'x':True,'y':True}
-            for i in range(NUM_TIMEOUT):
-                if not any(self.acquire.values()): break
-                _time.sleep(TINY_INTERVAL)
+            orbx = self.orb['x']
+            orby = self.orb['y']
             else:
                 self._call_callback('Log-Mon','Err: get orbit function timeout.')
                 self.orb['x'] =  self.ref_orbit['x']
@@ -425,8 +424,8 @@ class Orbit:
                     self.orb[plane] = _np.median(_np.array(self.orbs[plane]), axis=0)
                 else:
                     self.orb[plane] = self.orbs[plane][0]
-                self._call_callback('OnlineOrbitX-Mon',list(self.orb['x']))
-                self._call_callback('OnlineOrbitY-Mon',list(self.orb['y']))
+                self._call_callback('OnlineOrbit'+plane.upper()+'-Mon',list(self.orb[plane]))
+                self._call_callback('CorrOrbit'+plane.upper()+'-Mon',list(self.orb[plane]))
                 self.acquire[plane] = False
             return True
         return update
@@ -550,11 +549,13 @@ class Matrix:
         self.sing_values = _np.zeros(NR_CORRS,dtype=float)
         self.response_matrix = _np.zeros([2*NR_BPMS,NR_CORRS])
         self.inv_response_matrix = _np.zeros([2*NR_BPMS,NR_CORRS]).T
+
+    def connect(self):
         self._load_response_matrix()
 
     def set_resp_matrix(self,mat):
         self._call_callback('Log-Mon','Setting New RSP Matrix.')
-        if len(value) != MTX_SZ:
+        if len(mat) != MTX_SZ:
             self._call_callback('Log-Mon','Err: Wrong Size.')
             return False
         mat = _np.reshape(mat,[2*NR_BPMS,NR_CORRS])
@@ -619,8 +620,9 @@ class Matrix:
         inv_s[self.num_sing_values:] = 0
         Inv_S = _np.diag(inv_s)
         inv_mat = _np.dot(  _np.dot( V.T, Inv_S ),  U.T  )
-        valid_ = _np.any(   _np.bitwise_or( _np.isnan(inv_mat), _np.isinf(inv_mat) )   )
-        if not valid_:
+        isNan = _np.any(  _np.isnan(inv_mat)  )
+        isInf = _np.any(  _np.isinf(inv_mat)  )
+        if isNan or isInf:
             self._call_callback('Log-Mon','Pseudo inverse contains nan or inf.')
             return False
 
