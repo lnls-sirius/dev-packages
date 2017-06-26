@@ -6,6 +6,7 @@ import numpy as _np
 import threading as _threading
 from epics import PV as _PV
 from siriuspy import envars as _envars
+from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.pwrsupply.data import PSData as _PSData
 from siriuspy.pwrsupply.controller import ControllerSim as _ControllerSim
@@ -431,6 +432,7 @@ class PowerSupplySim(PowerSupply):
                          enum_keys=enum_keys
                          )
 
+
 class PowerSupplyEpicsSync:
 
     wait_pv_put   = True
@@ -452,12 +454,14 @@ class PowerSupplyEpicsSync:
             self._finish = False
             self._threads = list()
 
-        self._maname = maname
+        self._maname = _SiriusPVName(maname)
         self._use_vaca = use_vaca
         self._vaca_prefix = vaca_prefix
         self._connection_timeout = connection_timeout
         self._lock = lock
         self._set_psnames()
+        self._psname_master = self._psnames[0]
+        #super().__init__(psname=self._psname_master)
         self._create_epics_pvs()
 
         if not self._thread_local:
@@ -776,6 +780,7 @@ class PowerSupplyEpicsSync2:
 
         self._psnames = psnames
         self._psname_master = self._psnames[0]
+        #super().__init__(psname=self._psname_master)
         self._connection_timeout = connection_timeout
         self._lock = lock
         self._set_vaca_prefix(use_vaca,vaca_prefix)
