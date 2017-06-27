@@ -10,12 +10,14 @@ MagnetPowerSupplyTrim
 
 import math as _math
 import re as _re
+import numpy as _np
 from siriuspy import util as _util
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.pwrsupply.controller import ControllerEpics as _ControllerEpics
 from siriuspy.pwrsupply.model import PowerSupplyEpicsSync \
     as _PowerSupplyEpicsSync
 from siriuspy.magnet import util as _mutil
+from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.magnet.data import MAData as _MAData
 from siriuspy.magnet.data import MAStrengthDip as _MAStrengthDip
 from siriuspy.magnet.data import MAStrength as _MAStrength
@@ -227,34 +229,32 @@ class MagnetPowerSupplyDipole(_PowerSupplyEpicsSync):
                          callback=callback,
                          connection_timeout=connection_timeout)
 
-
         self._strength_sp = self.conv_current_2_strength(self.current_sp)
         self._strength_rb = self.conv_current_2_strength(self.current_rb)
         self._strengthref_mon = self.conv_current_2_strength(
             self.currentref_mon)
         self._strength_mon = self.conv_current_2_strength(self.current_mon)
 
-
     def _set_reference_dipole_data(self):
         ang = MagnetPowerSupplyDipole._ref_angles
         if self._maname.section == 'SI':
-            self._ref_energy = 3.0 #[GeV]
+            self._ref_energy = 3.0  # [GeV]
             self._ref_brho = _util.beam_rigidity(self._ref_energy)
-            self._ref_BL_BC =  - self._ref_brho * ang['SI_BC']
+            self._ref_BL_BC = - self._ref_brho * ang['SI_BC']
             self._ref_angle = ang['SI_B1'] + ang['SI_B2'] + ang['SI_BC']
             self._ref_BL = - self._ref_brho * self._ref_angle - self._ref_BL_BC
         elif self._maname.section == 'BO':
-            self._ref_energy = 3.0 #[GeV]
+            self._ref_energy = 3.0  # [GeV]
             self._ref_brho = _util.beam_rigidity(self._ref_energy)
             self._ref_angle = ang['BO']
             self._ref_BL = - self._ref_brho * self._ref_angle
         elif self._maname.section == 'TS':
-            self._ref_energy = 3.0 #[GeV]
+            self._ref_energy = 3.0  # [GeV]
             self._ref_brho = _util.beam_rigidity(self._ref_energy)
             self._ref_angle = ang['TS']
             self._ref_BL = - self._ref_brho * self._ref_angle
         elif self._maname.section == 'TB':
-            self._ref_energy = 0.150 #[GeV]
+            self._ref_energy = 0.150  # [GeV]
             self._ref_brho = _util.beam_rigidity(self._ref_energy)
             self._ref_angle = ang['TB']
             self._ref_BL = - self._ref_brho * self._ref_angle
@@ -303,7 +303,6 @@ class MagnetPowerSupplyDipole(_PowerSupplyEpicsSync):
                                    left=self._left, right=self._right)
         return current
 
-
     @property
     def strength_sp(self):
         """Return strength set point."""
@@ -335,25 +334,84 @@ class MagnetPowerSupplyDipole(_PowerSupplyEpicsSync):
 
     def _trigger_callback(self, pvname, value, **kwargs):
         for callback in self._callbacks.values():
-            callback(pvname.replace(":PS", ":MA"), value, **kwargs)
+            pvname = pvname.replace(":PS", ":MA")
+            pvname = pvname.replace("-1", "")
+            pvname = pvname.replace("-2", "")
+            callback(pvname, value, **kwargs)
 
     def _pvchange_current_rb(self, pvname, value, **kwargs):
         super()._pvchange_current_rb(pvname, value, **kwargs)
         self._strength_rb = self.conv_current_2_strength(value)
         self._trigger_callback(pvname.replace('Current', 'Energy'),
-                               value, **kwargs)
+                               self._strength_rb, **kwargs)
 
     def _pvchange_currentref_mon(self, pvname, value, **kwargs):
         super()._pvchange_currentref_mon(pvname, value, **kwargs)
         self._strengthref_mon = self.conv_current_2_strength(value)
         self._trigger_callback(pvname.replace('Current', 'Energy'),
-                               value, **kwargs)
+                               self._strengthref_mon, **kwargs)
 
     def _pvchange_current_mon(self, pvname, value, **kwargs):
         super()._pvchange_current_mon(pvname, value, **kwargs)
         self._strength_mon = self.conv_current_2_strength(value)
         self._trigger_callback(pvname.replace('Current', 'Energy'),
-                               value, **kwargs)
+                               self._strength_mon, **kwargs)
+
+    def _get_database(self, prefix=''):
+        """Return an updated PV database. Keys correspond to PS properties."""
+        db = self._madata._propty_databases[self._psnames[0]]
+        # value = self.ctrlmode_mon
+        # db['CtrlMode-Mon']['value'] = _et.enums('RmtLocTyp').index(value) \
+        #     if self._enum_keys else value
+        value = self.opmode_sel
+        db['OpMode-Sel']['value'] = _et.enums('PSOpModeTyp').index(value) \
+            if self._enum_keys else value
+        value = self.opmode_sts
+        db['OpMode-Sts']['value'] = _et.enums('PSOpModeTyp').index(value) \
+            if self._enum_keys else value
+        value = self.pwrstate_sel
+        db['PwrState-Sel']['value'] = _et.enums('OffOnTyp').index(value) \
+            if self._enum_keys else value
+        value = self.pwrstate_sts
+        db['PwrState-Sts']['value'] = _et.enums('OffOnTyp').index(value) \
+            if self._enum_keys else value
+        # db['Reset-Cmd']['value'] = self.reset
+        # db['Abort-Cmd']['value'] = self.abort
+        # wfmlabels = self._get_wfmlabels_mon()
+        # db['WfmLoad-Sel']['enums'] = wfmlabels
+        # db['WfmLoad-Sts']['enums'] = wfmlabels
+        # value = self.wfmload_sel
+        # db['WfmLoad-Sel']['value'] = _np.where(wfmlabels == value)[0][0] \
+        #     if self._enum_keys else value
+        # value = self.wfmload_sts
+        # db['WfmLoad-Sts']['value'] = _np.where(wfmlabels == value)[0][0] \
+        #     if self._enum_keys else value
+        # db['WfmLabel-SP']['value'] = self.wfmlabel_sp
+        # db['WfmLabel-RB']['value'] = self.wfmlabel_rb
+        # db['WfmLabels-Mon']['value'] = self.wfmlabels_mon
+        # db['WfmData-SP']['value'] = self.wfmdata_sp
+        # db['WfmData-RB']['value'] = self.wfmdata_rb
+        # db['WfmSave-Cmd']['value'] = self.wfmsave_cmd
+        # db['WfmIndex-Mon']['value'] = self.wfmindex_mon
+        db['Current-SP']['value'] = self.current_sp
+        db['Current-RB']['value'] = self.current_rb
+        db['CurrentRef-Mon']['value'] = self.currentref_mon
+        db['Current-Mon']['value'] = self.current_mon
+        # db['Intlk-Mon']['value'] = self.intlk_mon
+
+        strength = "Energy"
+
+        # Set strength values
+        db[strength + '-SP']['value'] = self.strength_sp
+        db[strength + '-RB']['value'] = self.strength_rb
+        db[strength + 'Ref-Mon']['value'] = self.strengthref_mon
+        db[strength + '-Mon']['value'] = self.strength_mon
+
+        prefixed_db = dict()
+        for key, value in db.items():
+            prefixed_db[prefix + ':' + key] = value
+
+        return prefixed_db
 
 
 class MagnetPowerSupply(_PowerSupplyEpicsSync):
@@ -365,8 +423,10 @@ class MagnetPowerSupply(_PowerSupplyEpicsSync):
                  callback=None,
                  connection_timeout=None):
         """Class constructor."""
+        self._maname = _SiriusPVName(maname)
+        self._madata = _MAData(maname=self._maname)
         self._dipole = dipole
-        # self._dipole.add_callback()
+        self._dipole.add_callback(self._dipole_updated)
 
         if _re.search("(?:QD|QF|Q[0-9]|QS).*", maname):
             self._strength = "KL"
@@ -394,11 +454,11 @@ class MagnetPowerSupply(_PowerSupplyEpicsSync):
 
     def _conv_current_2_strength(self, current, dipole_current):
         intfield = current/2.0
-        brho = self._dipole.get_brho(dipole_current)
+        brho = self._dipole.conv_current_2_brho(dipole_current)
         return intfield/brho
 
     def _conv_strength_2_current(self, strength, dipole_current):
-        brho = self._dipole.get_brho(dipole_current)
+        brho = self._dipole.conv_current_2_brho(dipole_current)
         intfield = strength*brho
         return intfield*2
 
@@ -429,8 +489,11 @@ class MagnetPowerSupply(_PowerSupplyEpicsSync):
 
     def _set_current_sp(self, value):
         super()._set_current_sp(value)
+        self._set_strength_sp(value, self._dipole.current_sp)
+
+    def _set_strength_sp(self, value, current_dipole):
         self._strength_sp = self._conv_current_2_strength(
-            value, self._dipole.current_sp)
+            value, current_dipole)
 
     def _trigger_callback(self, pvname, value, **kwargs):
         for callback in self._callbacks.values():
@@ -441,21 +504,123 @@ class MagnetPowerSupply(_PowerSupplyEpicsSync):
         self._strength_rb = self._conv_current_2_strength(
             value, self._dipole.current_rb)
         self._trigger_callback(
-            pvname.replace('Current', self._strength), value, **kwargs)
+            pvname.replace('Current', self._strength),
+            self._strength_rb, **kwargs)
 
     def _pvchange_currentref_mon(self, pvname, value, **kwargs):
         super()._pvchange_currentref_mon(pvname, value, **kwargs)
         self._strengthref_mon = self._conv_current_2_strength(
             value, self._dipole.currentref_mon)
         self._trigger_callback(
-            pvname.replace('Current', self._strength), value, **kwargs)
+            pvname.replace(
+                'Current', self._strength), self._strengthref_mon, **kwargs)
 
     def _pvchange_current_mon(self, pvname, value, **kwargs):
         super()._pvchange_current_mon(pvname, value, **kwargs)
         self._strength_mon = self._conv_current_2_strength(
             value, self._dipole.current_mon)
         self._trigger_callback(
-            pvname.replace('Current', self._strength), value, **kwargs)
+            pvname.replace(
+                'Current', self._strength), self._strength_mon, **kwargs)
+
+    def _dipole_updated(self, pvname, value, **kwargs):
+        # Get dipole new current and update self current value
+        trigger_callback = False
+        new_value = None
+        field = None
+        if "Current-SP" in pvname:
+            self._set_strength_sp(self.current_sp, value)
+            new_value = self._strength_sp
+            field = "-SP"
+            trigger_callback = True
+        if "Current-RB" in pvname:
+            self._strength_rb = self._conv_current_2_strength(
+                self._current_rb, value)
+            new_value = self._strength_rb
+            field = "-RB"
+            trigger_callback = True
+        if "CurrentRef-Mon" in pvname:
+            self._strengthref_mon = self._conv_current_2_strength(
+                self._currentref_mon, value)
+            new_value = self._strengthref_mon
+            field = "Ref-Mon"
+            trigger_callback = True
+        if "Current-Mon" in pvname:
+            self._strength_mon = self._conv_current_2_strength(
+                self._current_mon, value)
+            new_value = self._strength_mon
+            field = "-Mon"
+            trigger_callback = True
+
+        if trigger_callback:
+            self._trigger_callback(
+                self._maname + ":" + self._strength + field,
+                new_value, **kwargs)
+
+    def _get_database(self, prefix=''):
+        """Return an updated PV database."""
+        db = self._madata._propty_databases[self._psnames[0]]
+        # value = self.ctrlmode_mon
+        # db['CtrlMode-Mon']['value'] = _et.enums('RmtLocTyp').index(value) \
+        #     if self._enum_keys else value
+        value = self.opmode_sel
+        db['OpMode-Sel']['value'] = _et.enums('PSOpModeTyp').index(value) \
+            if self._enum_keys else value
+        value = self.opmode_sts
+        db['OpMode-Sts']['value'] = _et.enums('PSOpModeTyp').index(value) \
+            if self._enum_keys else value
+        value = self.pwrstate_sel
+        db['PwrState-Sel']['value'] = _et.enums('OffOnTyp').index(value) \
+            if self._enum_keys else value
+        value = self.pwrstate_sts
+        db['PwrState-Sts']['value'] = _et.enums('OffOnTyp').index(value) \
+            if self._enum_keys else value
+        # db['Reset-Cmd']['value'] = self.reset
+        # db['Abort-Cmd']['value'] = self.abort
+        # wfmlabels = self._get_wfmlabels_mon()
+        # db['WfmLoad-Sel']['enums'] = wfmlabels
+        # db['WfmLoad-Sts']['enums'] = wfmlabels
+        # value = self.wfmload_sel
+        # db['WfmLoad-Sel']['value'] = _np.where(wfmlabels == value)[0][0] \
+        #     if self._enum_keys else value
+        # value = self.wfmload_sts
+        # db['WfmLoad-Sts']['value'] = _np.where(wfmlabels == value)[0][0] \
+        #     if self._enum_keys else value
+        # db['WfmLabel-SP']['value'] = self.wfmlabel_sp
+        # db['WfmLabel-RB']['value'] = self.wfmlabel_rb
+        # db['WfmLabels-Mon']['value'] = self.wfmlabels_mon
+        # db['WfmData-SP']['value'] = self.wfmdata_sp
+        # db['WfmData-RB']['value'] = self.wfmdata_rb
+        # db['WfmSave-Cmd']['value'] = self.wfmsave_cmd
+        # db['WfmIndex-Mon']['value'] = self.wfmindex_mon
+        db['Current-SP']['value'] = self.current_sp
+        db['Current-RB']['value'] = self.current_rb
+        db['CurrentRef-Mon']['value'] = self.currentref_mon
+        db['Current-Mon']['value'] = self.current_mon
+        # db['Intlk-Mon']['value'] = self.intlk_mon
+
+        if 'KL-SP' in db:
+            strength = 'KL'
+        elif 'SL-SP' in db:
+            strength = 'SL'
+        elif 'Energy-SP' in db:
+            strength = 'Energy'
+        elif 'Kick-SP' in db:
+            strength = 'Kick'
+        else:
+            raise ValueError("No strength defined")
+
+        # Set strength values
+        db[strength + '-SP']['value'] = self.strength_sp
+        db[strength + '-RB']['value'] = self.strength_rb
+        db[strength + 'Ref-Mon']['value'] = self.strengthref_mon
+        db[strength + '-Mon']['value'] = self.strength_mon
+
+        prefixed_db = dict()
+        for key, value in db.items():
+            prefixed_db[prefix + ':' + key] = value
+
+        return prefixed_db
 
 
 class MagnetPowerSupplyTrim(_PowerSupplyEpicsSync):
@@ -467,10 +632,12 @@ class MagnetPowerSupplyTrim(_PowerSupplyEpicsSync):
                  callback=None,
                  connection_timeout=None):
         """Class constructor."""
+        self._maname = _SiriusPVName(maname)
+        self._madata = _MAData(maname=self._maname)
         self._dipole = dipole
-        # self._dipole.add_callback()
+        self._dipole.add_callback(self._dipole_updated)
         self._fam = fam
-        # self._fam.add_callback()
+        self._fam.add_callback(self._family_updated)
 
         if _re.search("(?:QD|QF|Q[0-9]|QS).*", maname):
             self._strength = "KL"
@@ -495,7 +662,7 @@ class MagnetPowerSupplyTrim(_PowerSupplyEpicsSync):
 
     def _conv_current_2_strength(self, current, current_dipole, current_fam):
         intfield_trim = current/2.0
-        brho = self._dipole.get_brho(current_dipole)
+        brho = self._dipole.conv_current_2_brho(current_dipole)
         strength_trim = intfield_trim/brho
         strength_fam = self._fam._conv_current_2_strength(
             current_fam, current_dipole)
@@ -505,7 +672,7 @@ class MagnetPowerSupplyTrim(_PowerSupplyEpicsSync):
         strength_fam = self._fam._conv_current_2_strength(
             current_fam, current_dipole)
         strength_trim = strength - strength_fam
-        brho = self._dipole.get_brho(current_dipole)
+        brho = self._dipole.conv_current_2_brho(current_dipole)
         intfield = strength_trim*brho
         return intfield*2
 
@@ -537,8 +704,12 @@ class MagnetPowerSupplyTrim(_PowerSupplyEpicsSync):
 
     def _set_current_sp(self, value):
         super()._set_current_sp(value)
-        self._strength_sp = self._conv_current_2_strength(
+        self._set_strength_sp(
             value, self._dipole.current_sp, self._fam.current_sp)
+
+    def _set_strength_sp(self, value, current_dipole, current_fam):
+        self._strength_sp = self._conv_current_2_strength(
+            value, current_dipole, current_fam)
 
     def _trigger_callback(self, pvname, value, **kwargs):
         for callback in self._callbacks.values():
@@ -549,21 +720,159 @@ class MagnetPowerSupplyTrim(_PowerSupplyEpicsSync):
         self._strength_rb = self._conv_current_2_strength(
             value, self._dipole.current_rb, self._fam.current_rb)
         self._trigger_callback(
-            pvname.replace('Current', self._strength), value, **kwargs)
+            pvname.replace(
+                'Current', self._strength), self._strength_rb, **kwargs)
 
     def _pvchange_currentref_mon(self, pvname, value, **kwargs):
         super()._pvchange_currentref_mon(pvname, value, **kwargs)
         self._strengthref_mon = self._conv_current_2_strength(
             value, self._dipole.currentref_mon, self._fam.currentref_mon)
         self._trigger_callback(
-            pvname.replace('Current', self._strength), value, **kwargs)
+            pvname.replace(
+                'Current', self._strength), self._strengthref_mon, **kwargs)
 
     def _pvchange_current_mon(self, pvname, value, **kwargs):
         super()._pvchange_current_mon(pvname, value, **kwargs)
         self._strength_mon = self._conv_current_2_strength(
             value, self._dipole.current_mon, self._fam.current_mon)
         self._trigger_callback(
-            pvname.replace('Current', self._strength), value, **kwargs)
+            pvname.replace(
+                'Current', self._strength), self._strength_mon, **kwargs)
+
+    def _dipole_updated(self, pvname, value, **kwargs):
+        # Get dipole new current and update self strength value
+        trigger_callback = False
+        new_value = None
+        field = None
+        if "Current-SP" in pvname:
+            self._set_strength_sp(
+                self._current_sp, value, self._fam.current_sp)
+            new_value = self._strength_sp
+            field = "-SP"
+            trigger_callback = True
+        if "Current-RB" in pvname:
+            self._strength_rb = self._conv_current_2_strength(
+                self._current_rb, value, self._fam.current_rb)
+            new_value = self._strength_rb
+            field = "-RB"
+            trigger_callback = True
+        if "CurrentRef-Mon" in pvname:
+            self._strengthref_mon = self._conv_current_2_strength(
+                self._currentref_mon, value, self._fam.currentref_mon)
+            new_value = self._strengthref_mon
+            field = "Ref-Mon"
+            trigger_callback = True
+        if "Current-Mon" in pvname:
+            self._strength_mon = self._conv_current_2_strength(
+                self._current_mon, value, self._fam.current_mon)
+            new_value = self._strength_mon
+            field = "-Mon"
+            trigger_callback = True
+
+        if trigger_callback:
+            self._trigger_callback(
+                self._maname + ":" + self._strength + field,
+                new_value, **kwargs)
+
+    def _family_updated(self, pvname, value, **kwargs):
+        # Get family new current and update self strength value
+        trigger_callback = False
+        new_value = None
+        field = None
+        if "Current-SP" in pvname:
+            self._set_strength_sp(
+                self._current_sp, self._dipole.current_sp, value)
+            new_value = self._strength_sp
+            field = "-SP"
+            trigger_callback = True
+        if "Current-RB" in pvname:
+            self._strength_rb = self._conv_current_2_strength(
+                self._current_rb, self._dipole.current_rb, value)
+            new_value = self._strength_rb
+            field = "-RB"
+            trigger_callback = True
+        if "CurrentRef-Mon" in pvname:
+            self._strengthref_mon = self._conv_current_2_strength(
+                self._currentref_mon, self._dipole.currentref_mon, value)
+            new_value = self._strengthref_mon
+            field = "Ref-Mon"
+            trigger_callback = True
+        if "Current-Mon" in pvname:
+            self._strength_mon = self._conv_current_2_strength(
+                self._current_mon, self._dipole.current_mon, value)
+            new_value = self._strength_mon
+            field = "-Mon"
+            trigger_callback = True
+
+        if trigger_callback:
+            self._trigger_callback(
+                self._maname + ":" + self._strength + field,
+                new_value, **kwargs)
+
+    def _get_database(self, prefix=''):
+        """Return an updated PV database."""
+        db = self._madata._propty_databases[self._psnames[0]]
+        # value = self.ctrlmode_mon
+        # db['CtrlMode-Mon']['value'] = _et.enums('RmtLocTyp').index(value) \
+        #     if self._enum_keys else value
+        value = self.opmode_sel
+        db['OpMode-Sel']['value'] = _et.enums('PSOpModeTyp').index(value) \
+            if self._enum_keys else value
+        value = self.opmode_sts
+        db['OpMode-Sts']['value'] = _et.enums('PSOpModeTyp').index(value) \
+            if self._enum_keys else value
+        value = self.pwrstate_sel
+        db['PwrState-Sel']['value'] = _et.enums('OffOnTyp').index(value) \
+            if self._enum_keys else value
+        value = self.pwrstate_sts
+        db['PwrState-Sts']['value'] = _et.enums('OffOnTyp').index(value) \
+            if self._enum_keys else value
+        # db['Reset-Cmd']['value'] = self.reset
+        # db['Abort-Cmd']['value'] = self.abort
+        # wfmlabels = self._get_wfmlabels_mon()
+        # db['WfmLoad-Sel']['enums'] = wfmlabels
+        # db['WfmLoad-Sts']['enums'] = wfmlabels
+        # value = self.wfmload_sel
+        # db['WfmLoad-Sel']['value'] = _np.where(wfmlabels == value)[0][0] \
+        #     if self._enum_keys else value
+        # value = self.wfmload_sts
+        # db['WfmLoad-Sts']['value'] = _np.where(wfmlabels == value)[0][0] \
+        #     if self._enum_keys else value
+        # db['WfmLabel-SP']['value'] = self.wfmlabel_sp
+        # db['WfmLabel-RB']['value'] = self.wfmlabel_rb
+        # db['WfmLabels-Mon']['value'] = self.wfmlabels_mon
+        # db['WfmData-SP']['value'] = self.wfmdata_sp
+        # db['WfmData-RB']['value'] = self.wfmdata_rb
+        # db['WfmSave-Cmd']['value'] = self.wfmsave_cmd
+        # db['WfmIndex-Mon']['value'] = self.wfmindex_mon
+        db['Current-SP']['value'] = self.current_sp
+        db['Current-RB']['value'] = self.current_rb
+        db['CurrentRef-Mon']['value'] = self.currentref_mon
+        db['Current-Mon']['value'] = self.current_mon
+        # db['Intlk-Mon']['value'] = self.intlk_mon
+
+        if 'KL-SP' in db:
+            strength = 'KL'
+        elif 'SL-SP' in db:
+            strength = 'SL'
+        elif 'Energy-SP' in db:
+            strength = 'Energy'
+        elif 'Kick-SP' in db:
+            strength = 'Kick'
+        else:
+            raise ValueError("No strength defined")
+
+        # Set strength values
+        db[strength + '-SP']['value'] = self.strength_sp
+        db[strength + '-RB']['value'] = self.strength_rb
+        db[strength + 'Ref-Mon']['value'] = self.strengthref_mon
+        db[strength + '-Mon']['value'] = self.strength_mon
+
+        prefixed_db = dict()
+        for key, value in db.items():
+            prefixed_db[prefix + ':' + key] = value
+
+        return prefixed_db
 
 
 class MagnetFactory:
@@ -615,10 +924,6 @@ class MagnetFactory:
 
         elif maname.subsection == "Fam" or \
                 _re.match("(?:CH|FCH|CV|FCV|QS|SD|SF).*", maname.dev_type):
-                # maname.dev_type in ("corrector-vertical",
-                #                     "corrector-horizontal",
-                #                     "quadrupole-skew",
-                #                     "sextupole"):
             if not isinstance(dipole, MagnetPowerSupplyDipole):
                 raise ValueError(
                     "Dipole must be of MagnetPowerSupplyDipole type")

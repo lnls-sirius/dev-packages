@@ -12,13 +12,13 @@ class MagnetPowerSupplyDipoleTest(unittest.TestCase):
 
 
     def assertEqualTimeout(self, value, obj, attr, timeout):
-        t0 = time.time();
+        t0 = time.time()
         while (time.time() - t0 < timeout) and getattr(obj, attr) != value:
             pass
         self.assertEqual(getattr(obj, attr), value)
 
     def assertAlmostEqualTimeout(self, value, obj, attr, timeout):
-        t0 = time.time();
+        t0 = time.time()
         while (time.time() - t0 < timeout) and getattr(obj, attr) != value:
             pass
         self.assertAlmostEqual(getattr(obj, attr), value)
@@ -38,11 +38,7 @@ class MagnetPowerSupplyDipoleTest(unittest.TestCase):
         self.assertAlmostEqualTimeout(0.0, self.ma, 'current_mon', 2.0)
 
     def tearDown(self):
-        #self.ma.finished()
         self.ma.disconnect()
-
-    def test_setup(self):
-        pass
 
     #test strength
     def test_set_strength(self):
@@ -64,15 +60,22 @@ class MagnetPowerSupplyDipoleTest(unittest.TestCase):
         self.assertAlmostEqualTimeout(1.4, self.ma, 'strength_mon', 2.0)
 
     def test_loop_set_strength(self):
-        currents = numpy.linspace(0,120.0,101)
-        strengths = [self.ma.conv_current_2_strength(current) for current in currents]
+        currents = numpy.linspace(0, 120.0, 101)
+        strengths = [self.ma.conv_current_2_strength(current)
+                     for current in currents]
         for strength in strengths:
             self.ma.strength_sp = strength
-        self.assertAlmostEqualTimeout(strengths[-1], self.ma, 'strength_sp', timeout=2.0)
-        self.assertAlmostEqualTimeout(strengths[-1], self.ma, 'strength_rb', timeout=2.0)
-        self.assertAlmostEqualTimeout(strengths[-1], self.ma, 'strengthref_mon', timeout=2.0)
-        self.assertAlmostEqualTimeout(strengths[-1], self.ma, 'strength_mon', timeout=2.0)
-        self.assertAlmostEqualTimeout(currents[-1], self.ma, 'current_sp', timeout=2.0, )
+            time.sleep(0.01)
+        self.assertAlmostEqualTimeout(
+            strengths[-1], self.ma, 'strength_sp', timeout=2.0)
+        self.assertAlmostEqualTimeout(
+            strengths[-1], self.ma, 'strength_rb', timeout=2.0)
+        self.assertAlmostEqualTimeout(
+            strengths[-1], self.ma, 'strengthref_mon', timeout=2.0)
+        self.assertAlmostEqualTimeout(
+            strengths[-1], self.ma, 'strength_mon', timeout=2.0)
+        self.assertAlmostEqualTimeout(
+            currents[-1], self.ma, 'current_sp', timeout=2.0)
 
     #
     # def test_strength_limit(self):

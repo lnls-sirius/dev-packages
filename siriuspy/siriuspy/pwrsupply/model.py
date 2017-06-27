@@ -449,6 +449,7 @@ class PowerSupplyEpicsSync:
 
         self._thread_local = thread_local
         self._callbacks = {} if callback is None else {_uuid.uuid4():callback}
+        self._enum_keys = False
 
         if self._thread_local:
             self._finish = False
@@ -631,9 +632,14 @@ class PowerSupplyEpicsSync:
 
         # put it back !!!
         if self._thread_local:
-            self._current = 0.0
+            self._current_sp = 0.0
             self._opmode_sel = 0
             self._pwrstate_sel = 0
+            self._opmode_sts = 0
+            self._pwrstate_sts = 0
+            self._current_rb = 0.0
+            self._currentref_mon = 0.0
+            self._current_mon = 0.0
 
         self._properties = {
             'OpMode-Sel'     : self._pvchange_opmode_sel,
@@ -690,12 +696,13 @@ class PowerSupplyEpicsSync:
                         self._pvs['PwrState-Sel'][psname].put(self._pwrstate_sel, wait=PowerSupplyEpicsSync.wait_pv_put)
 
     def _clear_threads(self):
-        self._threads = [t for t in self._threads if t.is_alive]
+        pass
+        # self._threads = [t for t in self._threads if t.is_alive()]
 
     @property
-    def callback(self):
+    def callbacks(self):
         """Return callback."""
-        return self._callback
+        return self._callbacks
 
     def add_callback(self, callback, index=None):
         """Add a callback."""
@@ -717,7 +724,8 @@ class PowerSupplyEpicsSync:
                     self._threads.append(_threading.Thread(target=self._set_opmode_sel, args=[self._opmode_sel]))
                     self._threads[-1].start()
                 else:
-                    self._trigger_callback(pvname, value, **kwargs)
+                    pass
+                    # self._trigger_callback(pvname, value, **kwargs)
     def _pvchange_opmode_sts(self, pvname, value, **kwargs):
         self._opmode_sts = value
         self._trigger_callback(pvname, value, **kwargs)
@@ -731,7 +739,8 @@ class PowerSupplyEpicsSync:
                     self._threads.append(_threading.Thread(target=self._set_pwrstate_sel, args=[self._pwrstate_sel]))
                     self._threads[-1].start()
                 else:
-                    self._trigger_callback(pvname, value, **kwargs)
+                    pass
+                    # self._trigger_callback(pvname, value, **kwargs)
     def _pvchange_pwrstate_sts(self, pvname, value, **kwargs):
         self._pwrstate_sts = value
         self._trigger_callback(pvname, value, **kwargs)
@@ -745,7 +754,8 @@ class PowerSupplyEpicsSync:
                     self._threads.append(_threading.Thread(target=self._set_current_sp, args=[self._current_sp]))
                     self._threads[-1].start()
                 else:
-                    self._trigger_callback(pvname, value, **kwargs)
+                    pass
+                    # self._trigger_callback(pvname, value, **kwargs)
     def _pvchange_current_rb(self, pvname, value, **kwargs):
         self._current_rb = value
         self._trigger_callback(pvname, value, **kwargs)
@@ -759,15 +769,6 @@ class PowerSupplyEpicsSync:
     @property
     def database(self):
         return _get_database()
-
-    def _get_database(self, prefix=""):
-        db = dict()
-        for prop in self._properties:
-            attr = prop.replace("-", "_").lower()
-            db[prefix + ":" + prop] = {}
-            db[prefix + ":" + prop]['value'] = getattr(self, attr)
-
-        return db
 
 
 class PowerSupplyEpicsSync2:
