@@ -1,5 +1,5 @@
 SI-Glob:AP-Orbit:Log-Mon
-SI-Glob:AP-Orbit:NumBPM-Mon
-SI-Glob:AP-Orbit:PosS-Mon
-SI-Glob:AP-Orbit:PosX-Mon
-SI-Glob:AP-Orbit:PosY-Mon
+SI-Glob:AP-Orbit:NumBPM-Cte
+SI-Glob:AP-Orbit:OrbitX-Mon
+SI-Glob:AP-Orbit:OrbitY-Mon
+SI-Glob:AP-Orbit:PosS-Cte

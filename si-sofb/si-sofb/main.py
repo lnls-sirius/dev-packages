@@ -341,10 +341,10 @@ class Orbit:
 
     def connect(self):
         self._load_basic_orbits()
-        self.pv ={'x':_epics.PV(SECTION + '-Glob:AP-Orbit:PosX-Mon',
+        self.pv ={'x':_epics.PV(SECTION + '-Glob:AP-Orbit:OrbitX-Mon',
                                 callback=self._update_orbs('x'),
                                 connection_callback= self._on_connection ),
-                  'y':_epics.PV(SECTION + '-Glob:AP-Orbit:PosY-Mon',
+                  'y':_epics.PV(SECTION + '-Glob:AP-Orbit:OrbitY-Mon',
                                 callback=self._update_orbs('y'),
                                 connection_callback= self._on_connection )  }
         if not self.pv['x'].connected or not self.pv['y'].connected:
@@ -429,7 +429,6 @@ class Orbit:
                 self._call_callback('OnlineOrbit'+plane.upper()+'-Mon',list(self.orb[plane]))
                 if self.correction_mode:
                     self._call_callback('CorrOrbit'+plane.upper()+'-Mon',list(self.orb[plane]))
-                self.acquire[plane] = False
             return True
         return update
 
