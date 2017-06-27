@@ -186,10 +186,10 @@ class App:
             kicks = _np.zeros(NR_CORRS)
             kicks[i] = delta/2
             self.correctors.apply_kicks(kicks)
-            orbp = self.orbit.get_orbit(1)
+            orbp = self.orbit.get_orbit()
             kicks[i] = -delta
             self.correctors.apply_kicks(kicks)
-            orbn = self.orbit.get_orbit(1)
+            orbn = self.orbit.get_orbit()
             kicks[i] = delta/2
             self.correctors.apply_kicks(kicks)
             mat[:,i] = (orbp-orbn)/delta
@@ -224,7 +224,7 @@ class App:
         self._call_callback('AutoCorrState-Sts',1)
         while self.auto_corr:
             t0 = _time.time()
-            orb = self.orbit.get_orbit(self.correction_mode)
+            orb = self.orbit.get_orbit()
             self.dtheta = self.matrix.calc_kicks(orb)
             self.correctors.apply_kicks(self.dtheta, limit=True)
             tf = _time.time()
@@ -240,9 +240,10 @@ class App:
 
     def _toggle_correction_mode(self,value):
         self.correction_mode = value
+        self.orbit.correction_mode = value
         self._call_callback('Log-Mon', 'Changing to {0:s} mode.'.format('Online' if value else 'Offline'))
         self._call_callback('CorrectionMode-Sts',value)
-        self.orbit.get_orbit(value)
+        self.orbit.get_orbit()
         return True
 
     def _set_auto_corr_frequency(self,value):
@@ -255,7 +256,7 @@ class App:
             self._call_callback('Log-Mon','Err: AutoCorr or MeasRSPMtx is On.')
             return False
         self._call_callback('Log-Mon', 'Getting the orbit.')
-        orb = self.orbit.get_orbit(self.correction_mode)
+        orb = self.orbit.get_orbit()
         self._call_callback('Log-Mon', 'Calculating the kicks.')
         self.dtheta = self.matrix.calc_kicks(orb)
         return True
@@ -334,10 +335,8 @@ class Orbit:
         self.orbs = {'x':[],'y':[]}
         self.orb = {'x':None,'y':None}
         self.offline_orbit = {'x':_np.zeros(NR_BPMS),'y':_np.zeros(NR_BPMS)}
-        self.acquire = {'x':False,'y':False}
-        self.relative = True
         self.orbit_points_num = 1
-        self._continuous = True
+        self.correction_mode = 1
         self.pv = {'x':None, 'y':None}
 
     def connect(self):
@@ -353,25 +352,25 @@ class Orbit:
         if self.pv['x'].count != NR_BPMS:
             self._call_callback('Log-Mon','Orbit length not consistent')
 
-    def get_orbit(self, mode):
-        if not mode:
+    def get_orbit(self):
+        if not self.correction_mode:
             orbx = self.offline_orbit['x']
             orby = self.offline_orbit['y']
+            self._call_callback('CorrOrbitX-Mon',list(orbx))
+            self._call_callback('CorrOrbitY-Mon',list(orby))
         else:
-            orbx = self.orb['x']
-            orby = self.orb['y']
+            for i in range(NUM_TIMEOUT):
+                if self.orb['x'] is not None and self.orb['y'] is not None:
+                    orbx = self.orb['x']
+                    orby = self.orb['y']
+                    break
+                _time.sleep(TINY_INTERVAL)
             else:
                 self._call_callback('Log-Mon','Err: get orbit function timeout.')
-                self.orb['x'] =  self.ref_orbit['x']
-                self.orb['y'] =  self.ref_orbit['y']
-            orbx = self.orb['x']
-            orby = self.orb['y']
-            self._reset_orbs('x')
-            self._reset_orbs('y')
+                orbx =  self.ref_orbit['x']
+                orby =  self.ref_orbit['y']
         refx = self.ref_orbit['x']
         refy = self.ref_orbit['y']
-        self._call_callback('CorrOrbitX-Mon',list(orbx))
-        self._call_callback('CorrOrbitY-Mon',list(orby))
         return _np.hstack([orbx-refx, orby-refy])
 
     def _on_connection(self,pvname,conn,pv):
@@ -415,17 +414,21 @@ class Orbit:
 
     def _update_orbs(self,plane):
         def update(pvname,value,**kwargs):
-            if value is None or not (self.acquire[plane] or self._continuous): return True
-            if len(self.orbs[plane]) < (self.orbit_points_num):
-                orb = _np.array(value, dtype=float)
+            if value is None: return True
+            orb = _np.array(value, dtype=float)
+            if len(self.orbs[plane]) < self.orbit_points_num:
+                self.orbs[plane].append(orb)
+            else:
+                self.orbs[plane] = self.orbs[plane][1:]
                 self.orbs[plane].append(orb)
             if len(self.orbs[plane]) == self.orbit_points_num:
                 if self.orbit_points_num > 1:
-                    self.orb[plane] = _np.median(_np.array(self.orbs[plane]), axis=0)
+                    self.orb[plane] = _np.mean(self.orbs[plane], axis=0)
                 else:
                     self.orb[plane] = self.orbs[plane][0]
                 self._call_callback('OnlineOrbit'+plane.upper()+'-Mon',list(self.orb[plane]))
-                self._call_callback('CorrOrbit'+plane.upper()+'-Mon',list(self.orb[plane]))
+                if self.correction_mode:
+                    self._call_callback('CorrOrbit'+plane.upper()+'-Mon',list(self.orb[plane]))
                 self.acquire[plane] = False
             return True
         return update
