@@ -65,7 +65,7 @@ class MagnetPowerSupplyDipoleTest(unittest.TestCase):
 
     def test_loop_set_strength(self):
         currents = numpy.linspace(0,120.0,101)
-        strengths = [self.ma._conv_current_2_strength(current) for current in currents]
+        strengths = [self.ma.conv_current_2_strength(current) for current in currents]
         for strength in strengths:
             self.ma.strength_sp = strength
         self.assertAlmostEqualTimeout(strengths[-1], self.ma, 'strength_sp', timeout=2.0)
