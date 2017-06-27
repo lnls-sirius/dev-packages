@@ -7,6 +7,7 @@ import numpy
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.pwrsupply.model import PowerSupplyEpicsSync
 from siriuspy.pwrsupply.model import PowerSupplyEpicsSync2
+from siriuspy.pwrsupply.model import PowerSupplyEpicsSync3
 import random as _random
 from siriuspy.search import PSSearch as _PSSearch
 
@@ -23,24 +24,54 @@ class TestSet1B1B2(unittest.TestCase):
                   vaca_prefix,
                   lock,
                   with_ioc,
-                  new_pses):
+                  pses_type):
 
-            if new_pses:
+            if pses_type == 2:
                 ps = PowerSupplyEpicsSync2(psnames=['SI-Fam:PS-B1B2-1','SI-Fam:PS-B1B2-2'],
                                            use_vaca=use_vaca,
                                            vaca_prefix=vaca_prefix,
                                            lock=lock)
+                b1b2_1 = PowerSupplyEpicsSync2(psnames=['SI-Fam:PS-B1B2-1',],
+                                               use_vaca=use_vaca,
+                                               vaca_prefix=vaca_prefix,
+                                               lock=False)
+                b1b2_2 = PowerSupplyEpicsSync2(psnames=['SI-Fam:PS-B1B2-2',],
+                                               use_vaca=use_vaca,
+                                               vaca_prefix=vaca_prefix,
+                                               lock=False)
                 if with_ioc:
                     if not ps.wait_for_connection(timeout=5.0):
                         raise Exception('Epics IOC does not seem to be running!!!')
                 else:
                     self.assertEqual(ps.wait_for_connection(timeout=1.0), False)
-            else:
+            elif pses_type == 1:
                 ps = PowerSupplyEpicsSync(maname='SI-Fam:MA-B1B2',
                                           use_vaca=use_vaca,
                                           lock=lock,
                                           connection_timeout=3.0)
+
+
+            elif pses_type == 3:
+                ps = PowerSupplyEpicsSync3(psnames=['SI-Fam:PS-B1B2-1','SI-Fam:PS-B1B2-2'],
+                                           use_vaca=use_vaca,
+                                           vaca_prefix=vaca_prefix,
+                                           lock=lock)
+                # b1b2_1 = PowerSupplyEpicsSync3(psnames=['SI-Fam:PS-B1B2-1',],
+                #                                use_vaca=use_vaca,
+                #                                vaca_prefix=vaca_prefix,
+                #                                lock=False)
+                # b1b2_2 = PowerSupplyEpicsSync3(psnames=['SI-Fam:PS-B1B2-2',],
+                #                                use_vaca=use_vaca,
+                #                                vaca_prefix=vaca_prefix,
+                #                                lock=False)
+                if with_ioc:
+                    if not ps.wait_for_connection(timeout=5.0):
+                        raise Exception('Epics IOC does not seem to be running!!!')
+                else:
+                    self.assertEqual(ps.wait_for_connection(timeout=1.0), False)
+
             return ps
+            #return ps, b1b2_1, b1b2_2
 
     def assertEqualTimeout(self, value, obj, attr, timeout):
         t0 = time.time();
@@ -61,6 +92,13 @@ class TestSet1B1B2(unittest.TestCase):
         self.assertEqual(getattr(obj, 'currentref_mon'), value)
         self.assertLessEqual(abs(getattr(obj, 'current_mon')-value), tol)
 
+    def get_pvs(self, ps, propty):
+        pvs = []
+        for pvname, pv in ps._pvs.items():
+            if propty in pvname:
+                pvs.append(pv)
+        return pvs
+
     def setUp(self):
         self.upper_alarm_limit = _PSSearch.get_splim('si-dipole-b1b2-fam','HIHI')
         self.upper_warning_limit = _PSSearch.get_splim('si-dipole-b1b2-fam','HIGH')
@@ -69,22 +107,18 @@ class TestSet1B1B2(unittest.TestCase):
         self.lower_warning_limit = _PSSearch.get_splim('si-dipole-b1b2-fam','LOW')
         self.lower_alarm_limit = _PSSearch.get_splim('si-dipole-b1b2-fam','LOLO')
 
-    def test_init_write_noIOC_lockFalse(self):
-        ps = self.create_ps(use_vaca=True, vaca_prefix='DummyPrefix', lock=False, with_ioc=False, new_pses=True)
-
+    def _test_init_write_noIOC_lockFalse(self):
+        ps = self.create_ps(use_vaca=True, vaca_prefix='DummyPrefix', lock=False, with_ioc=False, pses_type=3)
         self.assertEqual(ps.opmode_sel, None)
         self.assertEqual(ps.opmode_sts, None)
         self.assertEqual(ps.pwrstate_sel, None)
         self.assertEqual(ps.pwrstate_sts, None)
-
         ps.opmode_sel = _et.idx.SlowRef
         self.assertEqual(ps.opmode_sel, _et.idx.SlowRef)
         self.assertEqual(ps.opmode_sts, None)
-
         ps.pwrstate_sel = _et.idx.On
         self.assertEqual(ps.pwrstate_sel, _et.idx.On)
         self.assertEqual(ps.pwrstate_sts, None)
-
         value = 13.34; ps.current_sp = value
         self.assertEqual(ps.current_sp, value)
         self.assertEqual(ps.current_rb, None)
@@ -93,8 +127,8 @@ class TestSet1B1B2(unittest.TestCase):
 
         ps.disconnect()
 
-    def test_limits_lockFalse(self):
-        ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=False, with_ioc=True, new_pses=new_pses)
+    def _test_limits_lockFalse(self):
+        ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=False, with_ioc=True, pses_type=3)
         self.assertEqual(ps.upper_alarm_limit, self.upper_alarm_limit)
         self.assertEqual(ps.upper_warning_limit, self.upper_warning_limit)
         self.assertEqual(ps.upper_disp_limit, self.upper_disp_limit)
@@ -103,174 +137,243 @@ class TestSet1B1B2(unittest.TestCase):
         self.assertEqual(ps.lower_alarm_limit, self.lower_alarm_limit)
         ps.disconnect()
 
-    def test_lockTrue_pwrstate_sel(self):
-        ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=True, with_ioc=True, new_pses=new_pses)
+    def _test_lockTrue_pwrstate_sel(self):
+        ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=True, with_ioc=True, pses_type=3)
+        # inits
         ps.opmode_sel = 0
         ps.pwrstate_sel = 1
-        psname = ps.psnames[0]
-        self.assertEqualTimeout(0,ps._pvs['OpMode-Sts'][psname],'value',3.0)
-        self.assertEqualTimeout(1,ps._pvs['PwrState-Sts'][psname],'value',3.0)
-
-        psname = ps._psnames[0]
+        ps.process_puts(wait=1.0)
+        self.assertEqual(0, ps.opmode_sel)
+        self.assertEqual(1, ps.pwrstate_sel)
+        # loops
         values = [0,1,0,1,0,1,1,0,1,0,1,1,0,0,1,0,1,0,1]
+        pv1, pv2 = self.get_pvs(ps, 'PwrState-Sel')
         for value in values:
             ps.pwrstate_sel = value
-            ps._pvs['PwrState-Sel'][psname].put(0, wait=True)
-        self.assertEqualTimeout(values[-1],ps._pvs['PwrState-Sel'][psname],'value',3.0)
+            pv1.put(0, wait=True)
+            pv2.put(0, wait=True)
+        # test
+        ps.process_puts(wait=0.5); time.sleep(1.0)
+        value = values[-1]
+        self.assertEqual(value, ps.pwrstate_sel)
+        self.assertEqual(value, ps.pwrstate_sts)
+        self.assertEqual(value, pv1.value)
+        self.assertEqual(value, pv2.value)
         ps.disconnect()
 
-    def test_lockTrue_opmode_sel(self):
-        ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=True, with_ioc=True, new_pses=new_pses)
+    def _test_lockTrue_opmode_sel(self):
+        # init and test
+        ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=True, with_ioc=True, pses_type=3)
         ps.opmode_sel = 0
         ps.pwrstate_sel = 1
-        psname = ps.psnames[0]
-        self.assertEqualTimeout(0,ps._pvs['OpMode-Sts'][psname],'value',3.0)
-        self.assertEqualTimeout(1,ps._pvs['PwrState-Sts'][psname],'value',3.0)
-
-        psname = ps._psnames[0]
+        ps.process_puts(wait=1.0)
+        self.assertEqual(0, ps.opmode_sel)
+        self.assertEqual(1, ps.pwrstate_sel)
+        ps.process_puts(wait=0.5); time.sleep(1.0)
+        pv1, pv2 = self.get_pvs(ps, 'OpMode-Sts')
+        self.assertEqual(0, pv1.value)
+        self.assertEqual(0, pv2.value)
+        pv1, pv2 = self.get_pvs(ps, 'PwrState-Sts')
+        self.assertEqual(1, pv1.value)
+        self.assertEqual(1, pv2.value)
+        # loop
         values = [0,1,0,1,0,1,1,0,1,0,1,1,0,0,1,0,1,0]
+        pv1, pv2 = self.get_pvs(ps, 'OpMode-Sel')
         for value in values:
             ps.opmode_sel = value
-            ps._pvs['OpMode-Sel'][psname].put(1, wait=True)
-        self.assertEqualTimeout(values[-1],ps._pvs['OpMode-Sel'][psname],'value',3.0)
+            pv1.put(1, wait=True)
+            pv2.put(1, wait=True)
+        # test
+        ps.process_puts(wait=0.5); time.sleep(1.0)
+        value = values[-1]
+        self.assertEqual(value, ps.opmode_sel)
+        self.assertEqual(value, ps.opmode_sts)
+        self.assertEqual(value, pv1.value)
+        self.assertEqual(value, pv2.value)
         ps.disconnect()
 
-    def test_lockTrue_current_sp(self):
-        ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=True, with_ioc=True, new_pses=new_pses)
+    def _test_lockTrue_current_sp(self):
+        # init and test
+        ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=True, with_ioc=True, pses_type=3)
         ps.opmode_sel = 0
         ps.pwrstate_sel = 1
-        psname = ps.psnames[0]
-        self.assertEqualTimeout(0,ps._pvs['OpMode-Sts'][psname],'value',3.0)
-        self.assertEqualTimeout(1,ps._pvs['PwrState-Sts'][psname],'value',3.0)
-
-        psname = ps._psnames[0]
+        ps.process_puts(wait=0.5); time.sleep(1.0)
+        pv1, pv2 = self.get_pvs(ps, 'OpMode-Sts')
+        self.assertEqual(0, pv1.value)
+        self.assertEqual(0, pv2.value)
+        pv1, pv2 = self.get_pvs(ps, 'PwrState-Sts')
+        self.assertEqual(1, pv1.value)
+        self.assertEqual(1, pv2.value)
+        # loop
+        pv1, pv2 = self.get_pvs(ps, 'Current-SP')
         values = numpy.linspace(0, 10.0, 51)
         for value in values:
             ps.current_sp = value
-            ps._pvs['Current-SP'][psname].put(1.0, wait=True)
-        self.assertEqualTimeout(values[-1],ps._pvs['Current-SP'][psname],'value',3.0)
+            pv1.put(1.0, wait=True)
+            pv2.put(2.0, wait=True)
+        # test
+        ps.process_puts(wait=0.5); time.sleep(1.0)
+        value = values[-1]
+        self.assertEqual(value, ps.current_sp)
+        self.assertEqual(value, ps.current_rb)
+        self.assertEqual(value, ps.currentref_mon)
+        self.assertEqual(value, ps.current_mon)
+        pv1, pv2 = self.get_pvs(ps, 'Current-SP')
+        self.assertEqual(value, pv1.value)
+        self.assertEqual(value, pv2.value)
+        pv1, pv2 = self.get_pvs(ps, 'Current-RB')
+        self.assertEqual(value, pv1.value)
+        self.assertEqual(value, pv2.value)
+        pv1, pv2 = self.get_pvs(ps, 'CurrentRef-Mon')
+        self.assertEqual(value, pv1.value)
+        self.assertEqual(value, pv2.value)
+        pv1, pv2 = self.get_pvs(ps, 'Current-Mon')
+        self.assertEqual(value, pv1.value)
+        self.assertEqual(value, pv2.value)
         ps.disconnect()
 
-    def test_lockTrue_current_sp_long_loops(self):
-        ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=True, with_ioc=True, new_pses=new_pses)
+
+    def _test_lockTrue_current_sp_long_loops(self):
+        # init
+        ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=True, with_ioc=True, pses_type=3)
         ps.opmode_sel = 0
         ps.pwrstate_sel = 1
-        psname = ps.psnames[0]
-        self.assertEqualTimeout(0,ps._pvs['OpMode-Sts'][psname],'value',3.0)
-        self.assertEqualTimeout(1,ps._pvs['PwrState-Sts'][psname],'value',3.0)
-
+        ps.process_puts(wait=0.5); time.sleep(1.0)
+        pv1, pv2 = self.get_pvs(ps, 'OpMode-Sts')
+        self.assertEqual(0, pv1.value)
+        self.assertEqual(0, pv2.value)
+        pv1, pv2 = self.get_pvs(ps, 'PwrState-Sts')
+        self.assertEqual(1, pv1.value)
+        self.assertEqual(1, pv2.value)
+        # loop
         """ Test current_rb set up when current_sp is set """
         values = numpy.linspace(0, 10.0, 51)
         for value in values:
             ps.current_sp = value
-        self.assertEqualTimeoutCurrents(values[-1], ps, 3.0, 0.0)
-        self.assertEqualTimeout(values[-1],ps._pvs['Current-Mon']['SI-Fam:PS-B1B2-1'],'value',3.0)
-        self.assertEqualTimeout(values[-1],ps._pvs['Current-Mon']['SI-Fam:PS-B1B2-2'],'value',3.0)
+        ps.process_puts(wait=0.5); time.sleep(1.0); value=values[-1]
+        self.assertEqual(value, ps.current_sp)
+        pv1, pv2 = self.get_pvs(ps, 'Current-SP')
+        self.assertEqual(value, pv1.value)
+        self.assertEqual(value, pv2.value)
+        pv1, pv2 = self.get_pvs(ps, 'Current-RB')
+        self.assertEqual(value, pv1.value)
+        self.assertEqual(value, pv2.value)
+        pv1, pv2 = self.get_pvs(ps, 'CurrentRef-Mon')
+        self.assertEqual(value, pv1.value)
+        self.assertEqual(value, pv2.value)
+        pv1, pv2 = self.get_pvs(ps, 'Current-Mon')
+        self.assertEqual(value, pv1.value)
+        self.assertEqual(value, pv2.value)
         ps.disconnect()
 
-    def test_write_lockFalse(self):
-        ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=False, with_ioc=True, new_pses=new_pses)
+    def _test_write_lockFalse(self):
+        ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=False, with_ioc=True, pses_type=3)
         ps.opmode_sel = 0
         ps.pwrstate_sel = 1
-        psname = ps.psnames[0]
-        self.assertEqualTimeout(0,ps._pvs['OpMode-Sts'][psname],'value',3.0)
-        self.assertEqualTimeout(1,ps._pvs['PwrState-Sts'][psname],'value',3.0)
-
+        ps.process_puts(wait=0.5); time.sleep(1.0)
+        pv1, pv2 = self.get_pvs(ps, 'OpMode-Sts')
+        self.assertEqual(0, pv1.value)
+        self.assertEqual(0, pv2.value)
+        pv1, pv2 = self.get_pvs(ps, 'PwrState-Sts')
+        self.assertEqual(1, pv1.value)
+        self.assertEqual(1, pv2.value)
+        # tests
         ps.opmode_sel = _et.idx.SlowRef
         self.assertEqual(ps.opmode_sel, _et.idx.SlowRef)
-        self.assertEqualTimeout(_et.idx.SlowRef, ps, 'opmode_sts', 3.0)
+        ps.process_puts(wait=0.5); time.sleep(1.0)
+        self.assertEqual(_et.idx.SlowRef, ps.opmode_sts)
         ps.opmode_sel = _et.idx.SlowRefSync
         self.assertEqual(ps.opmode_sel, _et.idx.SlowRefSync)
-        self.assertEqualTimeout(_et.idx.SlowRefSync, ps, 'opmode_sts', 3.0)
-
+        ps.process_puts(wait=0.5); time.sleep(1.0)
+        self.assertEqual(_et.idx.SlowRefSync, ps.opmode_sts)
         ps.pwrstate_sel = _et.idx.On
         self.assertEqual(ps.pwrstate_sel, _et.idx.On)
-        self.assertEqualTimeout(_et.idx.On, ps, 'pwrstate_sts', 3.0)
+        ps.process_puts(wait=0.5); time.sleep(1.0)
+        self.assertEqual(_et.idx.On, ps.pwrstate_sts)
         ps.pwrstate_sel = _et.idx.Off
         self.assertEqual(ps.pwrstate_sel, _et.idx.Off)
-        self.assertEqualTimeout(_et.idx.Off, ps, 'pwrstate_sts', 3.0)
-
+        ps.process_puts(wait=0.5); time.sleep(1.0)
+        self.assertEqual(_et.idx.Off, ps.pwrstate_sts)
         value = 1.2345; ps.current_sp = value
+        ps.process_puts(wait=0.5); time.sleep(1.0)
         self.assertEqualTimeoutCurrents(value, ps, 3.0, 0.0)
         value = 5.4321; ps.current_sp = value
         self.assertEqualTimeoutCurrents(value, ps, 3.0, 0.0)
         ps.disconnect()
 
-    def test_loopwrite_lockTrue(self):
-        ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=True, with_ioc=True, new_pses=new_pses)
-        ps.opmode_sel = 0
+    def _test_loopwrite_lockTrue(self):
+        # init
+        ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=True, with_ioc=True, pses_type=3)
         ps.pwrstate_sel = 1
-        psname = ps.psnames[0]
-        self.assertEqualTimeout(0,ps._pvs['OpMode-Sts'][psname],'value',3.0)
-        self.assertEqualTimeout(1,ps._pvs['PwrState-Sts'][psname],'value',3.0)
-
         ps.opmode_sel = _et.idx.SlowRef
         self.assertEqual(ps.opmode_sel, _et.idx.SlowRef)
-        self.assertEqualTimeout(_et.idx.SlowRef, ps, 'opmode_sts', 3.0)
+        ps.process_puts(wait=0.5); time.sleep(0.3)
+        self.assertEqual(_et.idx.SlowRef, ps.opmode_sts)
         ps.opmode_sel = _et.idx.SlowRefSync
         self.assertEqual(ps.opmode_sel, _et.idx.SlowRefSync)
-        self.assertEqualTimeout(_et.idx.SlowRefSync, ps, 'opmode_sts', 3.0)
-
-        ps.pwrstate_sel = _et.idx.On
-        self.assertEqual(ps.pwrstate_sel, _et.idx.On)
-        self.assertEqualTimeout(_et.idx.On, ps, 'pwrstate_sts', 3.0)
+        ps.process_puts(wait=0.5); time.sleep(0.3)
+        self.assertEqual(_et.idx.SlowRefSync, ps.opmode_sts)
         ps.pwrstate_sel = _et.idx.Off
         self.assertEqual(ps.pwrstate_sel, _et.idx.Off)
-        self.assertEqualTimeout(_et.idx.Off, ps, 'pwrstate_sts', 3.0)
-
+        ps.process_puts(wait=0.5); time.sleep(0.3)
+        self.assertEqual(_et.idx.Off, ps.pwrstate_sts)
+        ps.pwrstate_sel = _et.idx.On
+        self.assertEqual(ps.pwrstate_sel, _et.idx.On)
+        ps.process_puts(wait=0.5); time.sleep(0.3)
+        self.assertEqual(_et.idx.On, ps.pwrstate_sts)
+        # loop
         for i in range(11):
-            #print(i)
             value = 4.2345; ps.current_sp = value
             self.assertEqual(ps.current_sp, value)
-            self.assertEqualTimeout(value, ps, 'current_rb', 3.0)
-            self.assertEqualTimeout(value, ps, 'currentref_mon', 3.0)
-            self.assertEqualTimeout(value, ps, 'current_mon', 3.0)
+            ps.process_puts(wait=0.1); time.sleep(0.2)
+            self.assertEqualTimeoutCurrents(value, ps, 3.0, 0.0)
             value = 6.4321; ps.current_sp = value
             self.assertEqual(ps.current_sp, value)
-            ps._pvs['Current-SP']['SI-Fam:PS-B1B2-1'].put(13,wait=True)
-            ps._pvs['Current-SP']['SI-Fam:PS-B1B2-2'].put(12,wait=True)
-            self.assertEqualTimeout(value, ps, 'current_mon', 3.0)
+            ps.process_puts(wait=0.1); time.sleep(0.2)
+            self.assertEqualTimeoutCurrents(value, ps, 3.0, 0.0)
+            pv1, pv2 = self.get_pvs(ps, 'Current-SP')
+            pv1.put(13,wait=True)
+            pv2.put(12,wait=True)
+            ps.process_puts(wait=0.1); time.sleep(0.2)
+            self.assertEqualTimeoutCurrents(value, ps, 3.0, 0.0)
         ps.disconnect()
 
     def test_loopwrite_externalput_lockTrue(self):
-        ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=True, with_ioc=True, new_pses=new_pses)
-        ps.opmode_sel = 0
-        ps.pwrstate_sel = 1
-        psname = ps.psnames[0]
-        self.assertEqualTimeout(0,ps._pvs['OpMode-Sts'][psname],'value',3.0)
-        self.assertEqualTimeout(1,ps._pvs['PwrState-Sts'][psname],'value',3.0)
-
+        # init
+        ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=True, with_ioc=True, pses_type=3)
         ps.opmode_sel = _et.idx.SlowRef
+        ps.pwrstate_sel = _et.idx.On
         self.assertEqual(ps.opmode_sel, _et.idx.SlowRef)
-        self.assertEqualTimeout(_et.idx.SlowRef, ps, 'opmode_sts', 3.0)
+        ps.process_puts(wait=0.5); time.sleep(0.3)
+        self.assertEqual(_et.idx.SlowRef, ps.opmode_sts)
         ps.opmode_sel = _et.idx.SlowRefSync
         self.assertEqual(ps.opmode_sel, _et.idx.SlowRefSync)
-        self.assertEqualTimeout(_et.idx.SlowRefSync, ps, 'opmode_sts', 3.0)
-
-        ps.pwrstate_sel = _et.idx.On
-        self.assertEqual(ps.pwrstate_sel, _et.idx.On)
-        self.assertEqualTimeout(_et.idx.On, ps, 'pwrstate_sts', 3.0)
-        ps.pwrstate_sel = _et.idx.Off
-        self.assertEqual(ps.pwrstate_sel, _et.idx.Off)
-        self.assertEqualTimeout(_et.idx.Off, ps, 'pwrstate_sts', 3.0)
-
+        ps.process_puts(wait=0.5); time.sleep(0.3)
+        self.assertEqual(_et.idx.SlowRefSync, ps.opmode_sts)
+        self.assertEqual(_et.idx.On, ps.pwrstate_sts)
+        # loop
         for i in range(41):
-            #print(i)
+            print(i)
             value = 1.2345; ps.current_sp = value
             self.assertEqual(ps.current_sp, value)
-            self.assertEqualTimeout(value, ps, 'current_rb', 3.0)
-            ps._pvs['Current-SP']['SI-Fam:PS-B1B2-1'].put(13,wait=True)
-            ps._pvs['Current-SP']['SI-Fam:PS-B1B2-2'].put(12,wait=True)
-            self.assertEqualTimeout(value, ps, 'currentref_mon', 3.0)
-            self.assertEqualTimeout(value, ps, 'current_mon', 3.0)
+            ps.process_puts(wait=0.5); time.sleep(0.2)
+            self.assertEqualTimeoutCurrents(value, ps, 3.0, 0.0)
+            pv1, pv2 = self.get_pvs(ps, 'Current-SP')
+            pv1.put(13, wait=True)
+            pv2.put(12, wait=True)
+            ps.process_puts(wait=0.5); time.sleep(0.2)
+            self.assertEqualTimeoutCurrents(value, ps, 3.0, 0.0)
             value = 5.4321; ps.current_sp = value
             self.assertEqual(ps.current_sp, value)
-            self.assertEqualTimeout(value, ps, 'current_rb', 3.0)
-            self.assertEqualTimeout(value, ps, 'currentref_mon', 3.0)
-            ps._pvs['Current-SP']['SI-Fam:PS-B1B2-1'].put(13,wait=True)
-            ps._pvs['Current-SP']['SI-Fam:PS-B1B2-2'].put(12,wait=True)
-            self.assertEqualTimeout(value, ps, 'current_mon', 3.0)
+            ps.process_puts(wait=0.5); time.sleep(0.2)
+            self.assertEqualTimeoutCurrents(value, ps, 3.0, 0.0)
+            pv1, pv2 = self.get_pvs(ps, 'Current-SP')
+            pv1.put(13, wait=True)
+            pv2.put(12, wait=True)
+            ps.process_puts(wait=0.5); time.sleep(0.2)
+            self.assertEqualTimeoutCurrents(value, ps, 3.0, 0.0)
         ps.disconnect()
+
 
 
 
