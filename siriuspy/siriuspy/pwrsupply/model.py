@@ -4,6 +4,7 @@ import time as _time
 import uuid as _uuid
 import numpy as _np
 import threading as _threading
+import collections as _collections
 from epics import PV as _PV
 from siriuspy import envars as _envars
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
@@ -416,6 +417,7 @@ class PowerSupply(_PSData):
                     callback(self.psname + ':CurrentRef-Mon', value, **kwargs)
                 elif pvname == 'current_load':
                     callback(self.psname + ':Current-Mon', value, **kwargs)
+
 
 class PowerSupplySim(PowerSupply):
 
@@ -1058,6 +1060,284 @@ class PowerSupplyEpicsSync2:
         *_, propty = pvname.split(':')
         self._propty[propty] = value
         self._trigger_callback(pvname, value, **kwargs)
+
+
+class PowerSupplyEpicsSync3:
+
+    class PVsPutThread:
+
+        def __init__(self, pvs_dict, get_disconnect_state):
+
+            self._pvs_dict = pvs_dict
+            self._get_disconnect_state = get_disconnect_state
+            self._thread = _threading.Thread(target=self.process)
+            self._lock = _threading.Lock()
+            self._sp_pvnames = _collections.deque()
+            self._sp_values = _collections.deque()
+
+        def _add_put_locked2(self, pvname, value):
+            self._lock.acquire()
+            try:
+                try:
+                    # I think I should change this to accept all puts
+                    idx = self._sp_pvnames.index(pvname)
+                    self._sp_values[idx] = value
+                except ValueError:
+                    self._sp_pvnames.append(pvname)
+                    self._sp_values.append(value)
+            finally:
+                self._lock.release()
+
+        def _add_put_locked(self, pvname, value):
+            self._lock.acquire()
+            try:
+                self._sp_pvnames.append(pvname)
+                self._sp_values.append(value)
+            finally:
+                self._lock.release()
+
+        def _retrieve_put_locked(self):
+            self._lock.acquire()
+            try:
+                if self._sp_pvnames:
+                    pvname = self._sp_pvnames.popleft()
+                    value = self._sp_values.popleft()
+                else:
+                    return None, None, True
+            finally:
+                self._lock.release()
+            return pvname, value, False
+
+        def put(self, pvname, value):
+            #print('add setpoint: ', pvname, value)
+            if pvname not in self._pvs_dict:
+                raise ValueError('invalid pvname "' + pvname + '" in add_setpoint')
+            self._add_put_locked(pvname, value)
+            if not self._thread.is_alive():
+                self._thread = _threading.Thread(target=self.process)
+                self._thread.start()
+
+        def process(self):
+            while not self._get_disconnect_state():
+            #while True:
+                pvname, value, empty_buffer = self._retrieve_put_locked()
+                if empty_buffer:
+                    break
+                try:
+                    if self._pvs_dict[pvname].connected:
+                        # if PV is connected push put down
+                        self._pvs_dict[pvname].value = value
+                    else:
+                        # if PV not connected move put to end of queue
+                        self._add_put_locked(pvname, value)
+                except:
+                    pass
+
+        def join(self):
+            if self._thread.is_alive():
+                self._thread.join()
+
+        @property
+        def queu_length(self):
+            self._lock.acquire()
+            try:
+                l = len(self._sp_pvnames)
+            finally:
+                self._lock.release()
+            return l
+
+
+    def __init__(self,
+                 psnames,
+                 use_vaca=False,
+                 vaca_prefix=None,
+                 lock=True,
+                 ):
+
+        self._psnames = psnames
+        self._lock = lock
+        self._disconnect = False
+        self._disconnect_lock = _threading.Lock()
+        self._set_vaca_prefix(use_vaca,vaca_prefix)
+        self._init_pvs()
+        self._put_thread = PowerSupplyEpicsSync3.PVsPutThread(self._pvs, self._get_disconnect_state)
+
+    def _set_vaca_prefix(self, use_vaca, vaca_prefix):
+        if use_vaca:
+            if vaca_prefix is None:
+                self._vaca_prefix = _envars.vaca_prefix
+            else:
+                self._vaca_prefix = vaca_prefix
+        else:
+            self._vaca_prefix = ''
+
+    def _init_pvs(self):
+
+        propty_callbacks = {
+            'OpMode-Sel'     : self._callback_change_sp_pv,
+            'OpMode-Sts'     : self._callback_change_rb_pv,
+            'PwrState-Sel'   : self._callback_change_sp_pv,
+            'PwrState-Sts'   : self._callback_change_rb_pv,
+            'Current-SP'     : self._callback_change_sp_pv,
+            'Current-RB'     : self._callback_change_rb_pv,
+            'CurrentRef-Mon' : self._callback_change_rb_pv,
+            'Current-Mon'    : self._callback_change_rb_pv,
+        }
+
+        self._propty = {propty:None for propty in propty_callbacks}
+
+        self._pvs = {}
+        for psname in self._psnames:
+            for propty, callback in propty_callbacks.items():
+                pvname = self._vaca_prefix + psname + ':' + propty
+                self._pvs[pvname] = _PV(pvname=pvname,
+                                        connection_callback=None,
+                                        connection_timeout=None)
+                self._pvs[pvname].add_callback(callback)
+
+    def wait_for_connection(self, timeout=None):
+        #print('wait_for_connection()')
+        if timeout is None:
+            while True:
+                if self.connected:
+                    return True
+                _time.sleep(0.1)
+        else:
+            t0 = _time.time()
+            while _time.time() - t0 < timeout:
+                if self.connected:
+                    return True
+                _time.sleep(min(timeout/2.0,0.1))
+        return False
+
+    @property
+    def connected(self):
+        for _,pv in self._pvs.items():
+            if not pv.connected:
+                return False
+        return True
+
+    @property
+    def opmode_sel(self):
+        return self._propty['OpMode-Sel']
+
+    @opmode_sel.setter
+    def opmode_sel(self, value):
+        value = int(value)
+        self._put_sp_property('OpMode-Sel', value)
+
+    @property
+    def opmode_sts(self):
+        return self._propty['OpMode-Sts']
+
+    @property
+    def pwrstate_sel(self):
+        return self._propty['PwrState-Sel']
+
+    @pwrstate_sel.setter
+    def pwrstate_sel(self, value):
+        value = int(value)
+        self._put_sp_property('PwrState-Sel', value)
+
+    @property
+    def pwrstate_sts(self):
+        return self._propty['PwrState-Sts']
+
+    @property
+    def current_sp(self):
+        return self._propty['Current-SP']
+
+    @current_sp.setter
+    def current_sp(self, value):
+        value = float(value)
+        self._put_sp_property('Current-SP', value)
+
+    @property
+    def current_rb(self):
+        return self._propty['Current-RB']
+
+    @property
+    def currentref_mon(self):
+        return self._propty['CurrentRef-Mon']
+
+    @property
+    def current_mon(self):
+        return self._propty['Current-Mon']
+
+    def _put_sp_property(self, propty, value):
+        self._propty[propty] = value
+        for pvname, pv in self._pvs.items():
+            if propty in pvname:
+                disconnect = self._get_disconnect_state()
+                if not disconnect:
+                    self._put_thread.put(pvname=pvname, value=value)
+
+    def _get_disconnect_state(self):
+        self._disconnect_lock.acquire()
+        try:
+            disconnect = self._disconnect
+        finally:
+            self._disconnect_lock.release()
+        return disconnect
+
+    def _callback_change_sp_pv(self, pvname, value, **kwargs):
+        # *parts, propty = pvname.split(':')
+        # if self._propty[propty] is None:
+        #     self._propty[propty] = value
+        # elif value != self._propty[propty]:
+        #     disconnect = self._get_disconnect_state()
+        #     if not disconnect:
+        #         self._put_thread.put(pvname, self._propty[propty])
+        *parts, propty = pvname.split(':')
+        if self._propty[propty] is None:
+            # init property with value from IOC
+            self._propty[propty] = value
+            self._put_sp_property(propty, value)
+        else:
+            if self._lock:
+                if value != self._propty[propty]:
+                    disconnect = self._get_disconnect_state()
+                    if not disconnect:
+                        self._put_thread.put(pvname, self._propty[propty])
+            else:
+                if value != self._propty[propty]:
+                    self._propty[propty] = value
+                    self._put_sp_property(propty, value)
+
+
+
+    def _callback_change_rb_pv(self, pvname, value, **kwargs):
+        #print('callback_change_rb_pv: ', pvname, value)
+        *parts, propty = pvname.split(':')
+        self._propty[propty] = value
+
+    def process_puts(self, wait=None):
+        if self.connected:
+            t0 = _time.time()
+            while (wait is None or (_time.time() - t0 < wait)) and self._put_thread.queu_length > 0:
+                _time.sleep(0.010)
+        else:
+            if wait is not None:
+                _time.sleep(wait)
+
+    def disconnect(self, wait=None):
+
+        # wait for synchronization
+        self.process_puts(wait=wait)
+
+        # signal disconnect triggered
+        self._disconnect_lock.acquire()
+        try:
+            self._disconnect = True
+        finally:
+            self._disconnect_lock.release()
+
+        # wait for threads to finish
+        self._put_thread.join()
+
+        #disconnect all PVs (clearing all callbacks)
+        for pvname, pv in self._pvs.items():
+            pv.disconnect()
 
 
 # Previous Classes:
