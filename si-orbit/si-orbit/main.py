@@ -28,10 +28,10 @@ class App:
         db = dict()
         pre = self.prefix
         db[pre + 'Log-Mon'] = {'type':'string','value':''}
-        db[pre + 'NumBPM-Mon'] = {'type':'int','value':self.nr_bpms}
-        db[pre + 'PosX-Mon'] = {'type':'float','unit':'nm','count':self.nr_bpms,'value':self.nr_bpms*[0]}
-        db[pre + 'PosY-Mon'] = {'type':'float','unit':'nm','count':self.nr_bpms,'value':self.nr_bpms*[0]}
-        db[pre + 'PosS-Mon'] = {'type':'float','unit':'m','count':self.nr_bpms,'value':self.bpm_pos}
+        db[pre + 'NumBPM-Cte'] = {'type':'int','value':self.nr_bpms}
+        db[pre + 'OrbitX-Mon'] = {'type':'float','unit':'nm','count':self.nr_bpms,'value':self.nr_bpms*[0]}
+        db[pre + 'OrbitY-Mon'] = {'type':'float','unit':'nm','count':self.nr_bpms,'value':self.nr_bpms*[0]}
+        db[pre + 'PosS-Cte'] = {'type':'float','unit':'m','count':self.nr_bpms,'value':self.bpm_pos}
         return db
 
     def __init__(self,driver=None):
@@ -111,6 +111,5 @@ class App:
             pvy = self.pvs_posy[name]
             self.orbx[i] = pvx.value if pvx.connected else 0.0
             self.orby[i] = pvy.value if pvy.connected else 0.0
-        self._call_callback('PosX-Mon',self.orbx)
-        self._call_callback('PosY-Mon',self.orby)
-        self._call_callback('NumBPM-Mon', self.nr_bpms)
+        self._call_callback('OrbitX-Mon',self.orbx)
+        self._call_callback('OrbitY-Mon',self.orby)
