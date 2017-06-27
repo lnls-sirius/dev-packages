@@ -448,7 +448,7 @@ class PowerSupplyEpicsSync:
                  connection_timeout=None):
 
         self._thread_local = thread_local
-        self._callback = callback
+        self._callbacks = {} if callback is None else {_uuid.uuid4():callback}
 
         if self._thread_local:
             self._finish = False
@@ -692,9 +692,20 @@ class PowerSupplyEpicsSync:
     def _clear_threads(self):
         self._threads = [t for t in self._threads if t.is_alive]
 
+    @property
+    def callback(self):
+        """Return callback."""
+        return self._callback
+
+    def add_callback(self, callback, index=None):
+        """Add a callback."""
+        index = _uuid.uuid4() if index is None else index
+        self._callbacks[index] = callback
+        return index
+
     def _trigger_callback(self, pvname, value, **kwargs):
-        if self._callback:
-            self._callback(pvname, value, **kwargs)
+        for callback in self._callbacks.values():
+            callback(pvname, value, **kwargs)
 
     def _pvchange_opmode_sel(self, pvname, value, **kwargs):
         if not self._thread_local:
@@ -749,11 +760,12 @@ class PowerSupplyEpicsSync:
     def database(self):
         return _get_database()
 
-    def _get_database(self):
+    def _get_database(self, prefix=""):
         db = dict()
         for prop in self._properties:
             attr = prop.replace("-", "_").lower()
-            db[prop] = getattr(self, attr)
+            db[prefix + ":" + prop] = {}
+            db[prefix + ":" + prop]['value'] = getattr(self, attr)
 
         return db
 
@@ -953,7 +965,7 @@ class PowerSupplyEpicsSync2:
             pv = self._vaca_prefix + psname
             for propty, callbacks in self._propty_names.items():
                 connection_callback, callback = callbacks
-                self._pvs[propty][psname] = _PV(pv + ':' + propty, connection_callback=connection_callback, connection_timeout=0.010)
+                self._pvs[propty][psname] = _PV(pv + ':' + propty, connection_callback=self._conn_cb, connection_timeout=0.010)
                 #self._pvs[propty][psname].wait_for_connection(timeout=3.0)
                 self._callback_index = self._pvs[propty][psname].add_callback(callback=callback, index=self._callback_index)
 
@@ -986,6 +998,9 @@ class PowerSupplyEpicsSync2:
                     pwrstate_sel_value = self._pvs['PwrState-Sel'][psname].value
                     if  pwrstate_sel_value != self.pwrstate_sel:
                         self._pvs['PwrState-Sel'][psname].put(self._pwrstate_sel, wait=PowerSupplyEpicsSync2.wait_pv_put)
+
+    def _conn_cb(self, pvname, conn, **kwargs):
+        print("[CONN CB]", pvname, conn)
 
     def _clear_threads(self):
         self._threads = [t for t in self._threads if t.is_alive]

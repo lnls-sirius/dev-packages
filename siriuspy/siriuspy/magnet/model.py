@@ -333,6 +333,10 @@ class MagnetPowerSupplyDipole(_PowerSupplyEpicsSync):
         super()._set_current_sp(value)
         self._strength_sp = self.conv_current_2_strength(value)
 
+    def _trigger_callback(self, pvname, value, **kwargs):
+        for callback in self._callbacks.values():
+            callback(pvname.replace(":PS", ":MA"), value, **kwargs)
+
     def _pvchange_current_rb(self, pvname, value, **kwargs):
         super()._pvchange_current_rb(pvname, value, **kwargs)
         self._strength_rb = self.conv_current_2_strength(value)
@@ -362,6 +366,7 @@ class MagnetPowerSupply(_PowerSupplyEpicsSync):
                  connection_timeout=None):
         """Class constructor."""
         self._dipole = dipole
+        # self._dipole.add_callback()
 
         if _re.search("(?:QD|QF|Q[0-9]|QS).*", maname):
             self._strength = "KL"
@@ -427,6 +432,10 @@ class MagnetPowerSupply(_PowerSupplyEpicsSync):
         self._strength_sp = self._conv_current_2_strength(
             value, self._dipole.current_sp)
 
+    def _trigger_callback(self, pvname, value, **kwargs):
+        for callback in self._callbacks.values():
+            callback(pvname.replace(":PS", ":MA"), value, **kwargs)
+
     def _pvchange_current_rb(self, pvname, value, **kwargs):
         super()._pvchange_current_rb(pvname, value, **kwargs)
         self._strength_rb = self._conv_current_2_strength(
@@ -459,7 +468,9 @@ class MagnetPowerSupplyTrim(_PowerSupplyEpicsSync):
                  connection_timeout=None):
         """Class constructor."""
         self._dipole = dipole
+        # self._dipole.add_callback()
         self._fam = fam
+        # self._fam.add_callback()
 
         if _re.search("(?:QD|QF|Q[0-9]|QS).*", maname):
             self._strength = "KL"
@@ -529,6 +540,10 @@ class MagnetPowerSupplyTrim(_PowerSupplyEpicsSync):
         self._strength_sp = self._conv_current_2_strength(
             value, self._dipole.current_sp, self._fam.current_sp)
 
+    def _trigger_callback(self, pvname, value, **kwargs):
+        for callback in self._callbacks.values():
+            callback(pvname.replace(":PS", ":MA"), value, **kwargs)
+
     def _pvchange_current_rb(self, pvname, value, **kwargs):
         super()._pvchange_current_rb(pvname, value, **kwargs)
         self._strength_rb = self._conv_current_2_strength(
@@ -549,6 +564,91 @@ class MagnetPowerSupplyTrim(_PowerSupplyEpicsSync):
             value, self._dipole.current_mon, self._fam.current_mon)
         self._trigger_callback(
             pvname.replace('Current', self._strength), value, **kwargs)
+
+
+class MagnetFactory:
+    """Return proper magnet object, given the device name."""
+
+    @staticmethod
+    def get_dipole(maname):
+        """Return corresponding dipole."""
+        maname = _SiriusPVName(maname)
+        if _re.match("B.*", maname.dev_type):
+            return None
+        elif maname.section == "SI":
+            return "SI-Fam:MA-B1B2"
+        elif maname.section == "BO":
+            return "BO-Fam:MA-B"
+        elif maname.section == "TB":
+            raise NotImplementedError
+        elif maname.section == "TS":
+            raise NotImplementedError
+        else:
+            return None
+
+    @staticmethod
+    def get_fam(maname):
+        """Static factory method."""
+        maname = _SiriusPVName(maname)
+        if maname.section == "SI" \
+                and maname.subsection != "Fam" \
+                and _re.match("(?:QD|QF|Q[0-9]).*", maname.dev_type):
+            return _re.sub("SI-\d{2}\w{2}:", "SI-Fam:", maname)
+        else:
+            return None
+
+    @staticmethod
+    def factory(maname, dipole, fam,
+                use_vaca=False,
+                vaca_prefix=None,
+                callback=None,
+                connection_timeout=None):
+        """Static factory method."""
+        maname = _SiriusPVName(maname)
+        if _re.match("B.*", maname.dev_type):
+            return MagnetPowerSupplyDipole(
+                maname=maname,
+                callback=callback,
+                use_vaca=use_vaca,
+                vaca_prefix=vaca_prefix,
+                connection_timeout=connection_timeout)
+
+        elif maname.subsection == "Fam" or \
+                _re.match("(?:CH|FCH|CV|FCV|QS|SD|SF).*", maname.dev_type):
+                # maname.dev_type in ("corrector-vertical",
+                #                     "corrector-horizontal",
+                #                     "quadrupole-skew",
+                #                     "sextupole"):
+            if not isinstance(dipole, MagnetPowerSupplyDipole):
+                raise ValueError(
+                    "Dipole must be of MagnetPowerSupplyDipole type")
+
+            return MagnetPowerSupply(
+                maname=maname,
+                dipole=dipole,
+                callback=callback,
+                use_vaca=use_vaca,
+                vaca_prefix=vaca_prefix,
+                connection_timeout=connection_timeout)
+
+        elif _re.match("(?:QD|QD|Q[0-9]).*", maname.dev_type):
+            if not isinstance(dipole, MagnetPowerSupplyDipole):
+                raise ValueError(
+                    "Dipole must be of MagnetPowerSupplyDipole type")
+            if not isinstance(fam, MagnetPowerSupply):
+                raise ValueError(
+                    "Family magnet must be of MagnetPowerSupply type")
+
+            return MagnetPowerSupplyTrim(
+                maname=maname,
+                dipole=dipole,
+                fam=fam,
+                callback=callback,
+                use_vaca=use_vaca,
+                vaca_prefix=vaca_prefix,
+                connection_timeout=connection_timeout)
+        else:
+            raise NotImplementedError
 
 
 # class PowerSupplyMA(_PowerSupplySync):
