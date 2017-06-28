@@ -362,6 +362,14 @@ class MagnetPowerSupply(_PowerSupplyEpicsSync):
                  connection_timeout=None):
         """Class constructor."""
         self._dipole = dipole
+        self._maname = _SiriusPVName(maname)
+        self._madata = _MAData(maname=self._maname)
+        self._magfunc = _MAData.magfunc(self._psname_master)
+
+        if self._magfunc in ('quadrupole', 'quadrupole-skew':
+            self._strength = "KL"
+        elif self._magfunc == 'sextupole':
+            self._strength = "SL"
 
         if _re.search("(?:QD|QF|Q[0-9]|QS).*", maname):
             self._strength = "KL"
@@ -378,16 +386,57 @@ class MagnetPowerSupply(_PowerSupplyEpicsSync):
                          callback=callback,
                          connection_timeout=connection_timeout)
 
-        self._strength_sp = self._conv_current_2_strength(
+        self._strength_sp = self.conv_current_2_strength(
             self.current_sp, self._dipole.current_sp)
-        self._strength_rb = self._conv_current_2_strength(
+        self._strength_rb = self.conv_current_2_strength(
             self.current_rb, self._dipole.current_sp)
-        self._strengthref_mon = self._conv_current_2_strength(
+        self._strengthref_mon = self.conv_current_2_strength(
             self.currentref_mon, self._dipole.current_sp)
-        self._strength_mon = self._conv_current_2_strength(
+        self._strength_mon = self.conv_current_2_strength(
             self.current_mon, self._dipole.current_sp)
 
+    def conv_current_2_multipoles(self, current):
+        msum = {}
+        for psname in self._madata.psnames:
+            excdata = self._madata.excdata(psname)
+            m = excdata.interp_curr2mult(current)
+            msum = _mutil.sum_magnetic_multipoles(msum, m)
+        return msum
+
+    def conv_current_2_intfield(self, current):
+        m = self.conv_current_2_multipoles(current)
+        mf = _magfuncs['dipole']
+        intfield = m[mf['type']][mf['harmonic']]
+        return intfield
+
+    def conv_current_2_strength(self, current):
+        intfield = self.conv_current_2_intfield(current)
+        if self._maname.section == 'SI':
+            strength = (self._ref_energy / self._ref_brho) * (- intfield - self._ref_BL_BC) / self._ref_angle
+        else:
+            strength = (self._ref_energy / self._ref_brho) * (-intfield) / self._ref_angle
+        return strength
+
+    def conv_current_2_brho(self, current):
+        """Get Magnetic Rigidity."""
+        energy = self.conv_current_2_strength(current=current)
+        brho = _util.beam_rigidity(energy)
+        return brho
+
+    def conv_strength_2_current(self, strength):
+        if self._maname.section == 'SI':
+            intfield = - self._ref_angle * (self._ref_brho / self._ref_energy) * strength - self._ref_BL_BC
+        else:
+            intfield = - self._ref_angle * (self._ref_brho / self._ref_energy) * strength
+        mf = _magfuncs['dipole']
+        excdata = self._madata.excdata(self._psname_master)
+        current = excdata.interp_mult2curr(intfield, mf['harmonic'], mf['type'],
+                                   left=self._left, right=self._right)
+        return current
+
+
     def _conv_current_2_strength(self, current, dipole_current):
+
         intfield = current/2.0
         brho = self._dipole.get_brho(dipole_current)
         return intfield/brho
