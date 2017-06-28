@@ -68,7 +68,7 @@ class MagnetPowerSupplyFamilyTest(unittest.TestCase):
         self.dipole.current_sp = 400
         self.assertEqualTimeout(400, self.dipole, 'current_sp', 2.0)
         expected_strength = \
-            self.ma._conv_current_2_strength(self.ma._current_sp, 400)
+            self.ma._conv_current_2_strength(self.ma.current_sp, 400)
         self.assertEqualTimeout(
             sp, self.ma, 'strength_sp', 3.0)
         self.assertEqualTimeout(
@@ -84,7 +84,7 @@ class MagnetPowerSupplyFamilyTest(unittest.TestCase):
         self.dipole.strength_sp = 2.0
         self.assertEqualTimeout(2.0, self.dipole, 'strength_sp', 2.0)
         expected_strength = self.ma._conv_current_2_strength(
-            self.ma._current_sp, self.dipole.current_sp)
+            self.ma.current_sp, self.dipole.current_sp)
         self.assertEqualTimeout(
             sp, self.ma, 'strength_sp', 2.0)
         self.assertEqualTimeout(

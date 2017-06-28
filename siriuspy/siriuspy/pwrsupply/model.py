@@ -1149,12 +1149,17 @@ class PowerSupplyEpicsSync3:
 
     def __init__(self,
                  psnames,
+                 callback=None,
                  use_vaca=False,
                  vaca_prefix=None,
                  lock=True,
                  ):
 
+        self._callbacks = {} if callback is None else {_uuid.uuid4():callback}
+        self._enum_keys = False
+
         self._psnames = psnames
+        self._psname_master = self._psnames[0]
         self._lock = lock
         self._disconnect = False
         self._disconnect_lock = _threading.Lock()
@@ -1285,6 +1290,21 @@ class PowerSupplyEpicsSync3:
             self._disconnect_lock.release()
         return disconnect
 
+    @property
+    def callbacks(self):
+        """Return callback."""
+        return self._callbacks
+
+    def add_callback(self, callback, index=None):
+        """Add a callback."""
+        index = _uuid.uuid4() if index is None else index
+        self._callbacks[index] = callback
+        return index
+
+    def _trigger_callback(self, pvname, value, **kwargs):
+        for callback in self._callbacks.values():
+            callback(pvname, value, **kwargs)
+
     def _callback_change_sp_pv(self, pvname, value, **kwargs):
         # *parts, propty = pvname.split(':')
         # if self._propty[propty] is None:
@@ -1309,12 +1329,11 @@ class PowerSupplyEpicsSync3:
                     self._propty[propty] = value
                     self._put_sp_property(propty, value)
 
-
-
     def _callback_change_rb_pv(self, pvname, value, **kwargs):
         #print('callback_change_rb_pv: ', pvname, value)
         *parts, propty = pvname.split(':')
         self._propty[propty] = value
+        self._trigger_callback(pvname, value, **kwargs)
 
     def process_puts(self, wait=None):
         if self.connected:
@@ -1343,8 +1362,6 @@ class PowerSupplyEpicsSync3:
         #disconnect all PVs (clearing all callbacks)
         for pvname, pv in self._pvs.items():
             pv.disconnect()
-
-        print('disconnect')
 
 
 # Previous Classes:
