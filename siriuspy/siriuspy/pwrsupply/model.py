@@ -1344,6 +1344,8 @@ class PowerSupplyEpicsSync3:
         for pvname, pv in self._pvs.items():
             pv.disconnect()
 
+        print('disconnect')
+
 
 # Previous Classes:
 # =================

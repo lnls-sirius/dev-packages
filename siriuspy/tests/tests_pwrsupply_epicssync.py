@@ -105,6 +105,7 @@ class TestSet1B1B2(unittest.TestCase):
         self.lower_alarm_limit = _PSSearch.get_splim('si-dipole-b1b2-fam','LOLO')
 
     def test_init_write_noIOC_lockFalse(self):
+        print('test_init_write_noIOC_lockFalse')
         ps = self.create_ps(use_vaca=True, vaca_prefix='DummyPrefix', lock=False, with_ioc=False, pses_type=3)
         self.assertEqual(ps.opmode_sel, None)
         self.assertEqual(ps.opmode_sts, None)
@@ -134,6 +135,7 @@ class TestSet1B1B2(unittest.TestCase):
         ps.disconnect()
 
     def test_lockTrue_pwrstate_sel(self):
+        print('test_lockTrue_pwrstate_sel')
         ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=True, with_ioc=True, pses_type=3)
         # inits
         ps.opmode_sel = 0
@@ -158,6 +160,7 @@ class TestSet1B1B2(unittest.TestCase):
         ps.disconnect()
 
     def test_lockTrue_opmode_sel(self):
+        print('test_lockTrue_opmode_sel')
         # init and test
         ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=True, with_ioc=True, pses_type=3)
         ps.opmode_sel = 0
@@ -188,6 +191,7 @@ class TestSet1B1B2(unittest.TestCase):
         ps.disconnect()
 
     def test_lockTrue_current_sp(self):
+        print('test_lockTrue_current_sp')
         # init and test
         ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=True, with_ioc=True, pses_type=3)
         ps.opmode_sel = 0
@@ -228,6 +232,7 @@ class TestSet1B1B2(unittest.TestCase):
         ps.disconnect()
 
     def test_lockTrue_current_sp_long_loops(self):
+        print('test_lockTrue_current_sp_long_loops')
         # init
         ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=True, with_ioc=True, pses_type=3)
         ps.opmode_sel = 0
@@ -261,6 +266,7 @@ class TestSet1B1B2(unittest.TestCase):
         ps.disconnect()
 
     def test_write_lockFalse(self):
+        print('test_write_lockFalse')
         ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=False, with_ioc=True, pses_type=3)
         ps.opmode_sel = 0
         ps.pwrstate_sel = 1
@@ -296,6 +302,7 @@ class TestSet1B1B2(unittest.TestCase):
         ps.disconnect()
 
     def test_loopwrite_lockTrue(self):
+        print('test_loopwrite_lockTrue')
         # init
         ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=True, with_ioc=True, pses_type=3)
         ps.pwrstate_sel = _et.idx.On
@@ -315,6 +322,7 @@ class TestSet1B1B2(unittest.TestCase):
         ps.disconnect()
 
     def test_loopwrite_externalput_lockTrue(self):
+        print('test_loopwrite_externalput_lockTrue')
         # init
         ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=True, with_ioc=True, pses_type=3)
         ps.pwrstate_sel = _et.idx.On
