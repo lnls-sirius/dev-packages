@@ -1328,6 +1328,7 @@ class PowerSupplyEpicsSync3:
                 if value != self._propty[propty]:
                     self._propty[propty] = value
                     self._put_sp_property(propty, value)
+        self._trigger_callback(pvname, value, **kwargs)
 
     def _callback_change_rb_pv(self, pvname, value, **kwargs):
         #print('callback_change_rb_pv: ', pvname, value)

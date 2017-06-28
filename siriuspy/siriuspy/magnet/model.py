@@ -318,8 +318,11 @@ class MagnetPowerSupplyDipole(_PowerSupplyEpicsSync3):
 
     @strength_sp.setter
     def strength_sp(self, value):
-        current = self.conv_strength_2_current(value)
-        self.current_sp = current
+        value = float(value)
+        self._strength_sp = value
+        self.current_sp = self.conv_strength_2_current(value)
+        self._trigger_callback(pvname.replace('Current', 'Energy'),
+                               value, **kwargs)
 
     @property
     def strength_rb(self):
@@ -336,23 +339,12 @@ class MagnetPowerSupplyDipole(_PowerSupplyEpicsSync3):
         """Return strength mon."""
         return self._strength_mon
 
-    def _set_current_sp(self, value):
-        super()._set_current_sp(value)
-        self._strength_sp = self.conv_current_2_strength(value)
-
     def _trigger_callback(self, pvname, value, **kwargs):
         for callback in self._callbacks.values():
             pvname = pvname.replace(":PS", ":MA")
             pvname = pvname.replace("-1", "")
             pvname = pvname.replace("-2", "")
             callback(pvname, value, **kwargs)
-
-    def _callback_change_sp_pv(self, pvname, value, **kwargs):
-        super()._callback_change_sp_pv(pvname, value, **kwargs)
-        if "Current" in pvname:
-            self._strength_sp = self.conv_current_2_strength(value)
-            self._trigger_callback(pvname.replace('Current', 'Energy'),
-                                   self._strength_sp, **kwargs)
 
     def _callback_change_rb_pv(self, pvname, value, **kwargs):
         super()._callback_change_rb_pv(pvname, value, **kwargs)
