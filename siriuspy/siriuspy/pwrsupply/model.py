@@ -1160,7 +1160,6 @@ class PowerSupplyEpicsSync3:
         self._disconnect_lock = _threading.Lock()
         self._set_vaca_prefix(use_vaca,vaca_prefix)
         self._init_pvs()
-        self._put_thread = PowerSupplyEpicsSync3.PVsPutThread(self._pvs, self._get_disconnect_state)
 
     def _set_vaca_prefix(self, use_vaca, vaca_prefix):
         if use_vaca:
@@ -1193,6 +1192,12 @@ class PowerSupplyEpicsSync3:
                 self._pvs[pvname] = _PV(pvname=pvname,
                                         connection_callback=None,
                                         connection_timeout=None)
+
+        self._put_thread = PowerSupplyEpicsSync3.PVsPutThread(self._pvs, self._get_disconnect_state)
+
+        for psname in self._psnames:
+            for propty, callback in propty_callbacks.items():
+                pvname = self._vaca_prefix + psname + ':' + propty
                 self._pvs[pvname].add_callback(callback)
 
     def wait_for_connection(self, timeout=None):
