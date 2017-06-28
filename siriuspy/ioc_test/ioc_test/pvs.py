@@ -124,8 +124,8 @@ def get_ps_devices():
         #Create objects that'll handle the magnets
         for ps in pwr_supplies:
             if 'PS-QDA' in ps or 'B1B2' in ps or _re.match("SI-\d\w{2}:PS-QDA", ps):
-                #ps_devices[ps] = _PowerSupplySim(psname=ps)
-                ps_devices[ps] = PS(psname=ps)
+                ps_devices[ps] = _PowerSupplySim(psname=ps)
+                #ps_devices[ps] = PS(psname=ps)
 
     return ps_devices
 

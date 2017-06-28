@@ -961,7 +961,6 @@ class ControllerSim(Controller):
             raise Exception('Could not write file "' + fname+'.txt' + '"!')
 Controller.register(ControllerSim)
 
-
 class ControllerEpics(Controller):
 
     def __init__(self, psname,
@@ -1249,4 +1248,8 @@ class ControllerEpics(Controller):
             pv.remove_callback(index=index)
         if hasattr(super(), '__del__'):
             super().__del__()
+Controller.register(ControllerEpics)
+
+class ControllerUDC(Controller):
+    pass
 Controller.register(ControllerEpics)

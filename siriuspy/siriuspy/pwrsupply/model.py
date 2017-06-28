@@ -1343,8 +1343,7 @@ class PowerSupplyEpicsSync3:
         #disconnect all PVs (clearing all callbacks)
         for pvname, pv in self._pvs.items():
             pv.disconnect()
-
-        print('disconnect')
+        #print('disconnect')
 
 
 # Previous Classes:

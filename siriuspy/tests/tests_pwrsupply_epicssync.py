@@ -108,7 +108,7 @@ class TestSet1B1B2(unittest.TestCase):
         self.ps.disconnect()
 
     def test_init_write_noIOC_lockFalse(self):
-        print('test_init_write_noIOC_lockFalse')
+        #print('test_init_write_noIOC_lockFalse')
         self.ps = self.create_ps(use_vaca=True, vaca_prefix='DummyPrefix', lock=False, with_ioc=False, pses_type=3)
         self.assertEqual(self.ps.opmode_sel, None)
         self.assertEqual(self.ps.opmode_sts, None)
@@ -136,7 +136,7 @@ class TestSet1B1B2(unittest.TestCase):
         self.assertEqual(self.ps.lower_alarm_limit, self.lower_alarm_limit)
 
     def test_lockTrue_pwrstate_sel(self):
-        print('test_lockTrue_pwrstate_sel')
+        #print('test_lockTrue_pwrstate_sel')
         self.ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=True, with_ioc=True, pses_type=3)
         # inits
         self.ps.opmode_sel = 0
@@ -160,7 +160,7 @@ class TestSet1B1B2(unittest.TestCase):
         self.assertEqual(value, pv2.value)
 
     def test_lockTrue_opmode_sel(self):
-        print('test_lockTrue_opmode_sel')
+        #print('test_lockTrue_opmode_sel')
         # init and test
         self.ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=True, with_ioc=True, pses_type=3)
         self.ps.opmode_sel = 0
@@ -190,7 +190,7 @@ class TestSet1B1B2(unittest.TestCase):
         self.assertEqual(value, pv2.value)
 
     def test_lockTrue_current_sp(self):
-        print('test_lockTrue_current_sp')
+        #print('test_lockTrue_current_sp')
         # init and test
         self.ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=True, with_ioc=True, pses_type=3)
         self.ps.opmode_sel = 0
@@ -230,7 +230,7 @@ class TestSet1B1B2(unittest.TestCase):
         self.assertEqual(value, pv2.value)
 
     def test_lockTrue_current_sp_long_loops(self):
-        print('test_lockTrue_current_sp_long_loops')
+        #print('test_lockTrue_current_sp_long_loops')
         # init
         self.ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=True, with_ioc=True, pses_type=3)
         self.ps.opmode_sel = 0
@@ -263,7 +263,7 @@ class TestSet1B1B2(unittest.TestCase):
         self.assertEqual(value, pv2.value)
 
     def test_write_lockFalse(self):
-        print('test_write_lockFalse')
+        #print('test_write_lockFalse')
         self.ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=False, with_ioc=True, pses_type=3)
         self.ps.opmode_sel = 0
         self.ps.pwrstate_sel = 1
@@ -298,7 +298,7 @@ class TestSet1B1B2(unittest.TestCase):
         self.assertEqual(pv2.value, value)
 
     def test_loopwrite_lockTrue(self):
-        print('test_loopwrite_lockTrue')
+        #print('test_loopwrite_lockTrue')
         # init
         self.ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=True, with_ioc=True, pses_type=3)
         self.ps.pwrstate_sel = _et.idx.On
@@ -317,7 +317,7 @@ class TestSet1B1B2(unittest.TestCase):
         self.assertEqualTimeoutCurrents(value, self.ps, 3.0, 0.0)
 
     def test_loopwrite_externalput_lockTrue(self):
-        print('test_loopwrite_externalput_lockTrue')
+        #print('test_loopwrite_externalput_lockTrue')
         # init
         self.ps = self.create_ps(use_vaca=True, vaca_prefix=None, lock=True, with_ioc=True, pses_type=3)
         self.ps.pwrstate_sel = _et.idx.On
