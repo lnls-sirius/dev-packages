@@ -5,8 +5,8 @@ import time
 import numpy
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.pwrsupply.model import PowerSupplyEpicsSync
-from siriuspy.pwrsupply.model import PowerSupplyEpicsSync2
-from siriuspy.pwrsupply.model import PowerSupplyEpicsSync3
+#from siriuspy.pwrsupply.model import PowerSupplyEpicsSync2
+#from siriuspy.pwrsupply.model import PowerSupplyEpicsSync3
 from siriuspy.search import PSSearch as _PSSearch
 
 
@@ -49,7 +49,7 @@ class TestSet1B1B2(unittest.TestCase):
 
 
             elif pses_type == 3:
-                ps = PowerSupplyEpicsSync3(psnames=['SI-Fam:PS-B1B2-1','SI-Fam:PS-B1B2-2'],
+                ps = PowerSupplyEpicsSync(psnames=['SI-Fam:PS-B1B2-1','SI-Fam:PS-B1B2-2'],
                                            use_vaca=use_vaca,
                                            vaca_prefix=vaca_prefix,
                                            lock=lock)
