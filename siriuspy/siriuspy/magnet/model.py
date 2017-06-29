@@ -25,8 +25,6 @@ from siriuspy.magnet.data import MAStrengthTrim as _MAStrengthTrim
 from abc import abstractmethod as _abstractmethod
 from abc import ABCMeta as _ABCMeta
 
-
-
 _connection_timeout = None
 
 _magfuncs = _mutil.get_magfunc_2_multipole_dict()
@@ -44,19 +42,32 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
 
         self._maname = _SiriusPVName(maname)
         self._madata = _MAData(maname=self._maname)
+        self._magfunc = self._madata.magfunc(self._madata.psnames[0])
         self._left = left
         self._right = right
-        self._mfmult = _magfuncs[self._get_magfunc()]
-        self._strength_label = self._get_strength_sp()
+        self._mfmult = _magfuncs[self.magfunc]
+        self._strength_label = self._get_strength_label()
+
+        self._child_init()
 
         super().__init__(psnames=self._madata.psnames,
                          use_vaca=use_vaca,
                          vaca_prefix=vaca_prefix,
                          lock=True)
 
+    def _init_propty(self):
+        super()._init_propty()
+        self._propty[self._strength_label + '-SP'] = None
+        self._propty[self._strength_label + '-RB'] = None
+        self._propty[self._strength_label + 'Ref-Mon'] = None
+        self._propty[self._strength_label + '-Mon'] = None
+
+    def _child_init(self):
+        pass
+
     @property
     def magfunc(self):
-        return self._get_magfunc()
+        return self._magfunc
 
     @property
     def current_sp(self):
@@ -71,7 +82,7 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
 
     @property
     def strength_sp(self):
-        return self._get_strength_sp()
+        return self._propty[self._strength_label+'-SP']
 
     @strength_sp.setter
     def strength_sp(self, value):
@@ -93,8 +104,8 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
         return self._propty[self._strength_label+'-Mon']
 
     def conv_current_2_multipoles(self, current):
+        msum = {}
         if self.magfunc != 'dipole':
-            msum = {}
             for psname in self._madata.psnames:
                 excdata = self._madata.excdata(psname)
                 m = excdata.interp_curr2mult(current, left=self._left, right=self._right)
@@ -125,19 +136,19 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
     def conv_strength_2_current(self, strength):
         intfield = self.conv_strength_2_intfield(strength)
         mf = self._mfmult
-        excdata = self._get_main_excdata()
-        current = excdata.interp_mult2curr(intfield, mf['harmonic'], mf['type'],
-                                   left=self._left, right=self._right)
+        # excdata = self._get_main_excdata()
+        excdata = self._madata.excdata(self._psname_master)
+        current = excdata.interp_mult2curr(intfield, mf['harmonic'], mf['type'], left=self._left, right=self._right)
         return current
 
     def _get_strength_label(self):
         if self.magfunc == 'dipole':
             return 'Energy'
-        elif self.magfunc in ('quadrupole','quarupole-skew'):
+        elif self.magfunc in ('quadrupole', 'quarupole-skew'):
             return 'KL'
-        elif sel.magafunc in ('sextupole',):
+        elif self.magafunc in ('sextupole',):
             return 'SL'
-        elif sel.magafunc in ('corrector-horizontal','corrector-vertical'):
+        elif self.magafunc in ('corrector-horizontal', 'corrector-vertical'):
             return 'Kick'
 
     def _callback_change_sp_pv(self, pvname, value, **kwargs):
@@ -145,7 +156,7 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
         *parts, propty = pvname.split(':')
         label = self._strength_label
         if self._propty[label+'-SP'] is None and propty == 'Current-SP':
-            propty_strength = propty.replace('Current',label)
+            propty_strength = propty.replace('Current', label)
             strength = self.conv_current_2_strength(value)
             self._propty[propty_strength] = strength
             pvname = self._maname + ':'+label+'-SP'
@@ -156,7 +167,7 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
         *parts, propty = pvname.split(':')
         if "Current" in propty:
             label = self._strength_label
-            propty_strength = propty.replace('Current',label)
+            propty_strength = propty.replace('Current', label)
             strength = self.conv_current_2_strength(value)
             self._propty[propty_strength] = strength
             pvname = self._maname + ':' + propty_strength
@@ -220,28 +231,17 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
 
 
     # --- methods below this line need implementation in subclasses
-
-
     def _get_main_excdata(self):
         #return self._madata.excdata(self._psname_master)
         raise NotImplementedError
 
-    def _get_magfunc(self):
-        #return 'dipole'
-        raise NotImplementedError
-
-    def _get_strength_sp(self):
-        #return self._propty['Energy-SP']
-        raise NotImplementedError
-
     def _set_strength_sp(self, strength):
-        # self._propty['Energy-SP'] = strength
-        # pvname = self._maname + ':' + 'Energy-SP'
-        # self._trigger_callback(pvname, strength)
-        raise NotImplementedError
+        self._propty[self._strength_label + '-SP'] = strength
+        pvname = self._maname + ':' + self._strength_label + '-SP'
+        self._trigger_callback(pvname, strength)
+        #raise NotImplementedError
 
-    def _get_energy(self, current):
-        #energy = self.conv_current_2_strength(current=current)
+    def _get_energy(self, current_dipole):
         raise NotImplementedError
 
     def conv_intfield_2_strength(self, intfield):
@@ -259,18 +259,126 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
         raise NotImplementedError
 
     def _trigger_callback(self, pvname, value, **kwargs):
-        # for callback in self._callbacks.values():
-        #     pvname = pvname.replace(":PS", ":MA")
-        #     pvname = pvname.replace("-1", "")
-        #     pvname = pvname.replace("-2", "")
-        #     callback(pvname, value, **kwargs)
-        raise NotImplementedError
+        for callback in self._callbacks.values():
+            pvname = pvname.replace(":PS", ":MA")
+            callback(pvname, value, **kwargs)
 
 
+class MagnetPowerSupplyDipole(_MagnetPowerSupply):
+
+    _ref_angles = {
+        'SI_BC': _math.radians(4.2966),
+        'SI_B1': _math.radians(2.7553),
+        'SI_B2': _math.radians(4.0964),
+        'TS': _math.radians(5.3333),
+        'BO': _math.radians(7.2000),
+        'TB': _math.radians(15.000),
+    }
+
+    def _child_init(self):
+        self._set_reference_dipole_data()
+
+    def _set_reference_dipole_data(self):
+        ang = MagnetPowerSupplyDipole._ref_angles
+        if self._maname.section == 'SI':
+            self._ref_energy = 3.0  # [GeV]
+            self._ref_brho = _util.beam_rigidity(self._ref_energy)
+            self._ref_BL_BC = - self._ref_brho * ang['SI_BC']
+            self._ref_angle = ang['SI_B1'] + ang['SI_B2'] + ang['SI_BC']
+            self._ref_BL = - self._ref_brho * self._ref_angle - self._ref_BL_BC
+        elif self._maname.section == 'BO':
+            self._ref_energy = 3.0  # [GeV]
+            self._ref_brho = _util.beam_rigidity(self._ref_energy)
+            self._ref_angle = ang['BO']
+            self._ref_BL = - self._ref_brho * self._ref_angle
+        elif self._maname.section == 'TS':
+            self._ref_energy = 3.0  # [GeV]
+            self._ref_brho = _util.beam_rigidity(self._ref_energy)
+            self._ref_angle = ang['TS']
+            self._ref_BL = - self._ref_brho * self._ref_angle
+        elif self._maname.section == 'TB':
+            self._ref_energy = 0.150  # [GeV]
+            self._ref_brho = _util.beam_rigidity(self._ref_energy)
+            self._ref_angle = ang['TB']
+            self._ref_BL = - self._ref_brho * self._ref_angle
+        else:
+            raise NotImplementedError
+
+    # def _set_strength_sp(self, strength):
+    #     self._propty["Energy-SP"] = strength
+    #     pvname = self._maname + ":Energy-SP"
+    #     self._trigger_callback(pvname, strength)
+
+    def _get_energy(self, current_dipole):
+        return self.conv_current_2_strength(current=current_dipole)
+
+    def conv_strength_2_intfield(self, strength):
+        if self._maname.section == 'SI':
+            intfield = - self._ref_angle * (self._ref_brho / self._ref_energy) * strength - self._ref_BL_BC
+        else:
+            intfield = - self._ref_angle * (self._ref_brho / self._ref_energy) * strength
+
+        return intfield
+
+    def conv_intfield_2_strength(self, intfield):
+        if self._maname.section == 'SI':
+            strength = (self._ref_energy / self._ref_brho) * (- intfield - self._ref_BL_BC) / self._ref_angle
+        else:
+            strength = (self._ref_energy / self._ref_brho) * (-intfield) / self._ref_angle
+
+        return strength
+
+    def _trigger_callback(self, pvname, value, **kwargs):
+        for callback in self._callbacks.values():
+            pvname = pvname.replace(":PS", ":MA")
+            pvname = pvname.replace("-1", "")
+            pvname = pvname.replace("-2", "")
+            callback(pvname, value, **kwargs)
 
 
+class MagnetPowerSupply(_MagnetPowerSupply):
 
-class MagnetPowerSupplyDipole(_PowerSupplyEpicsSync):
+    def __init__(self, maname, dipole, **kwargs):
+        self._dipole = dipole
+        self._dipole.add_callback(self._dipole_updated)
+        super().__init__(self, maname, **kwargs)
+
+    def _dipole_updated(self, pvname, value, **kwargs):
+        # Get dipole new current and update self current value
+        trigger_callback = False
+        new_value = None
+        field = None
+        if "Current-SP" in pvname:
+            self._setpropty['Strength-SP'](self.current_sp, value)
+            new_value = self._propty['Strength-SP']
+            field = "-SP"
+            trigger_callback = True
+        if "Current-RB" in pvname:
+            self._propty['Strength-RB'] = self._conv_current_2_strength(
+                self.current_rb, value)
+            new_value = self._propty['Strength-RB']
+            field = "-RB"
+            trigger_callback = True
+        if "CurrentRef-Mon" in pvname:
+            self._propty['StrengthRef-Mon'] = self._conv_current_2_strength(
+                self.currentref_mon, value)
+            new_value = self._propty['StrengthRef-Mon']
+            field = "Ref-Mon"
+            trigger_callback = True
+        if "Current-Mon" in pvname:
+            self._propty['Strength-Mon'] = self._conv_current_2_strength(
+                self.current_mon, value)
+            new_value = self._propty['Strength-Mon']
+            field = "-Mon"
+            trigger_callback = True
+
+        if trigger_callback:
+            self._trigger_callback(
+                self._maname + ":" + self._strength_label + field,
+                new_value, **kwargs)
+
+
+class MagnetPowerSupplyDipoleOld(_PowerSupplyEpicsSync):
     """Class responsible for controlling a Magnet of type dipole."""
 
     _ref_angles = {
@@ -502,7 +610,7 @@ class MagnetPowerSupplyDipole(_PowerSupplyEpicsSync):
         return prefixed_db
 
 
-class MagnetPowerSupply(_PowerSupplyEpicsSync):
+class MagnetPowerSupplyOld(_PowerSupplyEpicsSync):
     """Class responsible for controlling family and individual magnets."""
 
     def __init__(self, maname, dipole,
