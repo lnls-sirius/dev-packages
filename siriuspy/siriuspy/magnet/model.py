@@ -352,7 +352,6 @@ class MagnetPowerSupplyDipole(_MagnetPowerSupply):
         return strength
 
 
-
 class MagnetPowerSupply(_MagnetPowerSupply):
 
     def __init__(self, maname, dipole, **kwargs):
@@ -400,7 +399,7 @@ class MagnetPowerSupply(_MagnetPowerSupply):
         if 'Current' in propty:
             strength = self.conv_current_2_strength(current=self._propty[propty], current_dipole=value)
             propty_strength = propty.replace('Current', label)
-            print(propty_strength, strength)
+            # print(propty_strength, strength)
             self._propty[propty_strength] = strength
             pvname = self._maname + ':' + propty_strength
             self._trigger_callback(pvname, strength)

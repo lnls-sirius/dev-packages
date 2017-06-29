@@ -14,6 +14,8 @@ class MagnetPowerSupplyFamilyTest(unittest.TestCase):
     Test setting the strength repeatedly.
     Test changing the dipole current.
     Test changing the dipole strength.
+    TODO:
+        Test setting the current.
     """
 
     def setUp(self):
@@ -39,64 +41,63 @@ class MagnetPowerSupplyFamilyTest(unittest.TestCase):
     def test_set_strength_sp(self):
         """Test setting strength set point."""
         self.mysetUp()
-        self.ma.strength_sp = -3.0
-        self.ma.process_puts(wait=0.2); time.sleep(1.2)
-        self.assertEqual(-3.0, self.ma.strength_sp)
-        self.assertEqual(-3.0, self.ma.strength_rb)
-        self.assertEqual(-3.0, self.ma.strengthref_mon)
-        self.assertEqual(-3.0, self.ma.strength_mon)
+        self.ma.strength_sp = -0.40
+        self.ma.process_puts(wait=0.2)
+        time.sleep(1.2)
+        self.assertEqual(-0.4, self.ma.strength_sp)
+        self.assertEqual(-0.4, self.ma.strength_rb)
+        self.assertEqual(-0.4, self.ma.strengthref_mon)
+        self.assertEqual(-0.4, self.ma.strength_mon)
 
-    def _test_loop_set_strength(self):
+    def test_loop_set_strength(self):
         """Test setting strength set point repeatedly."""
-        timeout = 2.0
+        self.mysetUp()
         currents = numpy.linspace(0, 120.0, 100)
-        strengths = [self.ma._conv_current_2_strength(
-            current, self.ma._dipole.current_sp) for current in currents]
+        strengths = [self.ma.conv_current_2_strength(
+            current, current_dipole=self.ma._dipole.current_sp)
+            for current in currents]
         for strength in strengths:
             time.sleep(0.01)
             self.ma.strength_sp = strength
-        self.assertEqualTimeout(
-            strengths[-1], self.ma, 'strength_sp', timeout=timeout)
-        self.assertEqualTimeout(
-            strengths[-1], self.ma, 'strengthref_mon', timeout=timeout)
-        self.assertEqualTimeout(
-            strengths[-1], self.ma, 'strength_mon', timeout=timeout)
-        self.assertEqualTimeout(
-            strengths[-1], self.ma, 'strength_rb', timeout=timeout)
-        self.assertEqualTimeout(
-            currents[-1], self.ma, 'current_sp', timeout=timeout)
 
-    def _test_change_dipole_current(self):
+        time.sleep(1)
+        self.assertAlmostEqual(strengths[-1], self.ma.strength_sp)
+        self.assertAlmostEqual(strengths[-1], self.ma.strengthref_mon)
+        self.assertAlmostEqual(strengths[-1], self.ma.strength_mon)
+        self.assertAlmostEqual(strengths[-1], self.ma.strength_rb)
+        self.assertAlmostEqual(currents[-1], self.ma.current_sp)
+
+    def test_change_dipole_current(self):
         """Change dipole current and assert magnet strength is set properly."""
-        sp = self.ma.strength_sp
-        self.dipole.current_sp = 400
-        self.assertEqualTimeout(400, self.dipole, 'current_sp', 2.0)
-        expected_strength = \
-            self.ma._conv_current_2_strength(self.ma.current_sp, 400)
-        self.assertEqualTimeout(
-            sp, self.ma, 'strength_sp', 3.0)
-        self.assertEqualTimeout(
-            expected_strength, self.ma, 'strength_rb', 2.0)
-        self.assertEqualTimeout(
-            expected_strength, self.ma, 'strengthref_mon', 2.0)
-        self.assertEqualTimeout(
-            expected_strength, self.ma, 'strength_mon', 2.0)
+        self.mysetUp()
+        time.sleep(0.2)
 
-    def _test_change_dipole_strength(self):
+        expected_strength = self.ma.conv_current_2_strength(
+            self.ma.current_sp, current_dipole=400)
+        self.dipole.current_sp = 400
+        time.sleep(0.2)
+
+        self.assertEqual(400, self.dipole.current_sp)
+        self.assertEqual(expected_strength, self.ma.strength_sp)
+        self.assertEqual(expected_strength, self.ma.strength_rb)
+        self.assertEqual(expected_strength, self.ma.strengthref_mon)
+        self.assertEqual(expected_strength, self.ma.strength_mon)
+
+    def test_change_dipole_strength(self):
         """Change dipole energy and assert magnet strength is set properly."""
-        sp = self.ma.strength_sp
+        self.mysetUp()
+        time.sleep(0.2)
+
         self.dipole.strength_sp = 2.0
-        self.assertEqualTimeout(2.0, self.dipole, 'strength_sp', 2.0)
-        expected_strength = self.ma._conv_current_2_strength(
-            self.ma.current_sp, self.dipole.current_sp)
-        self.assertEqualTimeout(
-            sp, self.ma, 'strength_sp', 2.0)
-        self.assertEqualTimeout(
-            expected_strength, self.ma, 'strength_rb', 2.0)
-        self.assertEqualTimeout(
-            expected_strength, self.ma, 'strengthref_mon', 2.0)
-        self.assertEqualTimeout(
-            expected_strength, self.ma, 'strength_mon', 2.0)
+        time.sleep(0.2)
+
+        expected_strength = self.ma.conv_current_2_strength(
+            self.ma.current_sp, current_dipole=self.dipole.current_sp)
+        self.assertEqual(2.0, self.dipole.strength_sp)
+        self.assertEqual(expected_strength, self.ma.strength_sp)
+        self.assertEqual(expected_strength, self.ma.strength_rb)
+        self.assertEqual(expected_strength, self.ma.strengthref_mon)
+        self.assertEqual(expected_strength, self.ma.strength_mon)
 
 
 if __name__ == "__main__":
