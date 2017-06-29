@@ -10,18 +10,17 @@ from siriuspy.magnet.model import MagnetPowerSupplyDipole
 
 class MagnetPowerSupplyDipoleTest(unittest.TestCase):
 
-
-    def assertEqualTimeout(self, value, obj, attr, timeout):
-        t0 = time.time()
-        while (time.time() - t0 < timeout) and getattr(obj, attr) != value:
-            pass
-        self.assertEqual(getattr(obj, attr), value)
-
-    def assertAlmostEqualTimeout(self, value, obj, attr, timeout):
-        t0 = time.time()
-        while (time.time() - t0 < timeout) and getattr(obj, attr) != value:
-            pass
-        self.assertAlmostEqual(getattr(obj, attr), value)
+    # def assertEqualTimeout(self, value, obj, attr, timeout):
+    #     t0 = time.time()
+    #     while (time.time() - t0 < timeout) and getattr(obj, attr) != value:
+    #         pass
+    #     self.assertEqual(getattr(obj, attr), value)
+    #
+    # def assertAlmostEqualTimeout(self, value, obj, attr, timeout):
+    #     t0 = time.time()
+    #     while (time.time() - t0 < timeout) and getattr(obj, attr) != value:
+    #         pass
+    #     self.assertAlmostEqual(getattr(obj, attr), value)
 
     def setUp(self):
         pass
