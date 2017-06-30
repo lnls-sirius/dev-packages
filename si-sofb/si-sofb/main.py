@@ -6,28 +6,14 @@ from matrix import Matrix
 from orbit import Orbit
 from correctors import Correctors
 
-# Coding guidelines:
-# =================
-# 01 - pay special attention to code readability
-# 02 - simplify logic as much as possible
-# 03 - unroll expressions in order to simplify code
-# 04 - dont be afraid to generate simingly repeatitive flat code (they may be easier to read!)
-# 05 - 'copy and paste' is your friend and it allows you to code 'repeatitive' (but clearer) sections fast.
-# 06 - be consistent in coding style (variable naming, spacings, prefixes, suffixes, etc)
-
 with open('VERSION') as f:
     __version__ = f.read()
 _TIMEOUT = 0.05
-
-TINY_INTERVAL = 0.001
-NUM_TIMEOUT = 6000
-WAIT_FOR_SIMULATOR = 0.5
 
 NR_BPMS  = 160
 NR_CH    = 120
 NR_CV    = 160
 NR_CORRS = NR_CH + NR_CV + 1
-MTX_SZ   = (2*NR_BPMS) * NR_CORRS
 DANG = 2E-1
 DFREQ = 200
 SECTION = 'SI'

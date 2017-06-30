@@ -72,26 +72,30 @@ class Correctors:
         Thread(target=self._apply_kicks,kwargs={'values':values,'delta':delta},daemon=True).start()
 
     def _apply_kicks(self,values,delta=False):
+        def _equalKick(val1,val2):
+            if abs(val1-val2)/max(abs(val1),abs(val2)) <= 1e-6:
+                return True
+            return False
         if delta: values = self.get_correctors_strength() + values
         #apply the RF kick
-        if values[-1]:
-            if self.rf_pv_sp.connected:
-                self.rf_pv_sp.value = self.corr_values[-1] + streng['rf']*values[-1]
-            else:
-                self._call_callback('Log-Mon','PV '+self.rf_pv_sp.pvname+' Not Connected.')
+        if self.rf_pv_sp.connected:
+            if not _equalKick(values[-1],self.rf_pv_sp):
+                self.rf_pv_sp.value = values[-1]
+        else:
+            self._call_callback('Log-Mon','PV '+self.rf_pv_sp.pvname+' Not Connected.')
         #Send correctors setpoint
         for i, pv in enumerate(self.corr_pvs_sp):
             pvname_rb = pv.pvname.replace('-SP','-RB')
             pvname_ref = pv.pvname.replace('-SP','Ref-Mon')
             self.corr_pvs_ready[pvname_rb] = True
             self.corr_pvs_applied[pvname_ref] = True
-            if not values[i]: continue
             if not pv.connected:
                 self._call_callback('Log-Mon','Err: PV '+pv.pvname+' Not Connected.')
-            plane = 'ch' if i<NR_CH else 'cv'
+                continue
+            if _equalKick(values[i],pv.value): continue
             self.corr_pvs_ready[pvname_rb] = False
             self.corr_pvs_applied[pvname_ref] = False
-            pv.value = self.corr_values[i] + streng[plane] * values[i]
+            pv.value = values[i]
         #Wait for readbacks to be updated
         for i in range(NUM_TIMEOUT):
             if all(self.corr_pvs_ready.values()): break
@@ -105,6 +109,7 @@ class Correctors:
                 self.event_pv_sp.value = 1
             else:
                 self._call_callback('Log-Mon','Kicks not sent, Timing PV Disconnected.')
+                return
 
         #Wait for references to be updated
         for i in range(NUM_TIMEOUT):
