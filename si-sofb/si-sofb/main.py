@@ -1,6 +1,6 @@
 import time as _time
 import numpy as _np
-from threading import Thread as _Thread
+from threading import Thread
 import logging as _log
 from matrix import Matrix
 from orbit import Orbit
@@ -54,12 +54,18 @@ class App:
         db[pre + 'RFStrength-SP'] = {'type':'float','value':0,'unit':'%','lolim':-1000, 'hilim':1000,
                                     'prec':2, 'fun_set_pv':lambda x:self._set_strength('rf',x)}
         db[pre + 'RFStrength-RB'] = {'type':'float','value':0,'prec':2, 'unit':'%'}
-        db[pre + 'MaxKickStrength-SP'] =  {'type':'float','value':300,'unit':'urad','lolim':0, 'hilim':1000,
-                                    'prec':3, 'fun_set_pv':self._set_max_kick}
-        db[pre + 'MaxKickStrength-RB'] = {'type':'float','value':300,'prec':2, 'unit':'urad'}
+        db[pre + 'CHMaxKick-SP'] =  {'type':'float','value':300,'unit':'urad','lolim':0, 'hilim':1000,
+                                    'prec':3, 'fun_set_pv':lambda x: self._set_max_kick('ch',x)}
+        db[pre + 'CHMaxKick-RB'] = {'type':'float','value':300,'prec':2, 'unit':'urad'}
+        db[pre + 'CVMaxKick-SP'] =  {'type':'float','value':300,'unit':'urad','lolim':0, 'hilim':1000,
+                                    'prec':3, 'fun_set_pv':lambda x: self._set_max_kick('cv',x)}
+        db[pre + 'CVMaxKick-RB'] = {'type':'float','value':300,'prec':2, 'unit':'urad'}
+        db[pre + 'RFMaxKick-SP'] =  {'type':'float','value':3000,'unit':'Hz','lolim':0, 'hilim':10000,
+                                    'prec':3, 'fun_set_pv':lambda x: self._set_max_kick('rf',x)}
+        db[pre + 'RFMaxKick-RB'] = {'type':'float','value':3000,'prec':2, 'unit':'Hz'}
         db[pre + 'ApplyKicks-Cmd']   = {'type':'enum','enums':('CH','CV','RF','All'),'value':0,
                                         'unit':'Apply last calculated kicks.',
-                                        'fun_set_pv':self._apply_kicks}
+                                        'fun_set_pv':self.apply_kicks}
         return db
 
     def __init__(self,driver=None):
@@ -170,29 +176,30 @@ class App:
             return False
         self.measuring_resp_matrix = True
         self._call_callback('Log-Mon', 'Starting RSP Matrix measurement.')
-        self._thread = _Thread(target=self._measure_response_matrix,daemon=True)
+        self._thread = Thread(target=self._measure_response_matrix,daemon=True)
         self._thread.start()
         return True
 
     def _measure_response_matrix(self):
         self._call_callback('MeasRSPMtxState-Sts',1)
         mat = _np.zeros([2*NR_BPMS,NR_CORRS])
+        orig_kicks = self.correctors.get_correctors_strength()
         for i in range(NR_CORRS):
             if not self.measuring_resp_matrix:
                 self._call_callback('MeasRSPMtxState-Sts',3)
+                self.correctors.apply_kicks(orig_kicks,delta=False)
                 return
             self._call_callback('Log-Mon', 'Varying Corrector {0:d} of {1:d}'.format(i,NR_CORRS))
             delta = DANG if i<NR_CORRS-1 else DFREQ
-            kicks = _np.zeros(NR_CORRS)
-            kicks[i] = delta/2
-            self.correctors.apply_kicks(kicks,delta=True)
+            kicks = orig_kicks.copy()
+            kicks[i] += delta/2
+            self.correctors.apply_kicks(kicks,delta=False)
             orbp = self.orbit.get_orbit(True)
-            kicks[i] = -delta
-            self.correctors.apply_kicks(kicks,no_scaling=True)
+            kicks[i] += -delta
+            self.correctors.apply_kicks(kicks,delta=False)
             orbn = self.orbit.get_orbit(True)
             mat[:,i] = (orbp-orbn)/delta
-            kicks[i] = delta/2
-            self.correctors.apply_kicks(kicks,no_scaling=True)
+        self.correctors.apply_kicks(orig_kicks,delta=False)
         self._call_callback('Log-Mon', 'Measurement Completed.')
         self.matrix.set_resp_matrix(list(mat.flatten()))
         self._call_callback('MeasRSPMtxState-Sts',2)
@@ -208,7 +215,7 @@ class App:
                 self._call_callback('Log-Mon','Err: Cannot Correct, Measuring RSPMtx.')
                 return False
             self._call_callback('Log-Mon', 'Turning Auto Correction On.')
-            self._thread = _Thread(target=self._automatic_correction,daemon=True)
+            self._thread = Thread(target=self._automatic_correction,daemon=True)
             self._thread.start()
         else:
             self._call_callback('Log-Mon', 'Turning Auto Correction Off.')
@@ -225,9 +232,9 @@ class App:
         while self.auto_corr:
             t0 = _time.time()
             orb = self.orbit.get_orbit()
-            self.dtheta = self.matrix.calc_kicks(orb)
-            kicks = self.process_kicks()
-            self.correctors.apply_kicks(self.dtheta, delta=True)
+            kicks = self.matrix.calc_kicks(orb)
+            kicks = self._process_kicks(kicks)
+            self.correctors.apply_kicks(kicks, delta=True)
             tf = _time.time()
             dt = (tf-t0)
             interval = 1/self.auto_corr_freq
@@ -266,9 +273,9 @@ class App:
         self.corr_kicks = self.correctors.get_correctors_strength()
         self.dtheta = self.matrix.calc_kicks(orb)
 
-    def _set_max_kick(self,value):
-        self._max_kick = float(value)
-        self._call_callback('MaxKickStrength-RB', float(value))
+    def _set_max_kick(self,plane, value):
+        self._max_kick[plane] = float(value)
+        self._call_callback(plane.upper()+'MaxKick-RB', float(value))
 
     def _set_strength(self,plane,value):
         self.strengths[plane] = value/100
@@ -276,13 +283,40 @@ class App:
         self._call_callback(plane.upper() + 'Strength-RB', value)
         return True
 
-    def _apply_kicks(self,code):
+    def _process_kicks(self, kicks):
+        kicks[:NR_CH] *= self.strengths['ch']
+        kicks[NR_CH:-1] *= self.strengths['cv']
+        kicks[-1] *= self.strengths['rf']
+
+        max_kick_ch = max(abs(kicks[:NR_CH]))
+        if max_kick_ch > self.max_kick['ch']:
+            kicks[:NR_CH] *= self.max_kick['ch']/max_kick_ch
+            percent = self.strengths['ch'] * (self.max_kick['ch']/max_kick_ch)  * 100
+            self._call_callback('Log-Mon','Warn: CH kick > CHMaxKick. Using {0:5.2f}%'.format(percent))
+        max_kick_cv = max(abs(kicks[NR_CH:-1]))
+        if max_kick_cv > self.max_kick['cv']:
+            kicks[NR_CH:-1] *= self.max_kick['cv']/max_kick_cv
+            percent = self.strengths['cv'] * (self.max_kick['cv']/max_kick_cv)  * 100
+            self._call_callback('Log-Mon','Warn: CV kick > CVMaxKick. Using {0:5.2f}%'.format(percent))
+        if abs(kicks[-1]) > self.max_kick['rf']:
+            kicks[-1] *= self.max_kick['rf']/abs(kick[-1])
+            percent = self.strengths['rf'] * (self.max_kick['rf']/max_kick_rf)  * 100
+            self._call_callback('Log-Mon','Warn: RF kick > RFMaxKick. Using {0:5.2f}%'.format(percent))
+
+    def apply_kicks(self,code):
         if not self.correction_mode:
             self._call_callback('Log-Mon','Err: Offline, cannot apply kicks.')
             return False
         if self._thread and self._thread.isAlive():
             self._call_callback('Log-Mon','Err: AutoCorr or MeasRSPMtx is On.')
             return False
+        if self.dtheta is None:
+            self._call_callback('Log-Mon','Err: Cannot Apply Kick. Calc Corr first.')
+            return False
+        Thread(target=self._apply_kicks,kwargs={'code':code},daemon=True).start()
+        return True
+
+    def _apply_kicks(self,code):
         kicks = self.dtheta.copy()
         str_ = 'Applying '
         if code == 0:
@@ -298,7 +332,6 @@ class App:
         elif code == 3:
             str_ += 'All '
         self._call_callback('Log-Mon',str_ + 'kicks.')
-        kicks = self.process_kicks(kicks)
+        kicks = self._process_kicks(kicks)
         if any(kicks):
             self.correctors.apply_kicks(self.corr_kicks + kicks, delta=False)
-        return True

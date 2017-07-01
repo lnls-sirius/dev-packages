@@ -82,6 +82,7 @@ class Orbit:
         self.offline_orbit = {'x':_np.zeros(NR_BPMS),'y':_np.zeros(NR_BPMS)}
         self.orbit_points_num = 1
         self.correction_mode = 1
+        self.count = 0
         self.pv = {'x':None, 'y':None}
 
     def connect(self):

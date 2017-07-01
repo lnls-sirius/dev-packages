@@ -72,14 +72,10 @@ class Correctors:
         Thread(target=self._apply_kicks,kwargs={'values':values,'delta':delta},daemon=True).start()
 
     def _apply_kicks(self,values,delta=False):
-        def _equalKick(val1,val2):
-            if abs(val1-val2)/max(abs(val1),abs(val2)) <= 1e-6:
-                return True
-            return False
         if delta: values = self.get_correctors_strength() + values
         #apply the RF kick
         if self.rf_pv_sp.connected:
-            if not _equalKick(values[-1],self.rf_pv_sp):
+            if not self._equalKick(values[-1],self.rf_pv_sp):
                 self.rf_pv_sp.value = values[-1]
         else:
             self._call_callback('Log-Mon','PV '+self.rf_pv_sp.pvname+' Not Connected.')
@@ -92,7 +88,7 @@ class Correctors:
             if not pv.connected:
                 self._call_callback('Log-Mon','Err: PV '+pv.pvname+' Not Connected.')
                 continue
-            if _equalKick(values[i],pv.value): continue
+            if self._equalKick(values[i],pv.value): continue
             self.corr_pvs_ready[pvname_rb] = False
             self.corr_pvs_applied[pvname_ref] = False
             pv.value = values[i]
@@ -121,8 +117,8 @@ class Correctors:
 
         if WAIT_FOR_SIMULATOR: _time.sleep(WAIT_FOR_SIMULATOR)
 
-    def register_correctors_strength(self):
-        corr_values = np.zeros(len(self.corr_names)+1)
+    def get_correctors_strength(self):
+        corr_values = _np.zeros(len(self.corr_names)+1)
         for i, pv in enumerate(self.corr_pvs_ref):
             corr_values[i] = pv.value
         corr_values[-1] = self.rf_pv_rb.value
@@ -141,15 +137,20 @@ class Correctors:
         self._call_callback('SyncKicks-Sts', value)
         return True
 
+    @staticmethod
+    def _equalKick(val1,val2):
+        max_ = max(abs(val1),abs(val2))
+        if not max_: return True
+        if abs(val1-val2)/max_ <= 1e-6:  return True
+        return False
+
     def _corrIsReady(self,pvname,value,**kwargs):
         ind = self.corr_names.index(pvname.strip(LL_PREF).strip(':Current-RB'))
-        if abs(self.corr_pvs_sp[ind].value - value) <= 1e-3:
-            self.corr_pvs_ready[pvname] = True
+        self.corr_pvs_ready[pvname] = self._equalKick(self.corr_pvs_sp[ind].value, value)
 
     def _kickApplied(self,pvname,value,**kwargs):
         ind = self.corr_names.index(pvname.strip(LL_PREF).strip(':CurrentRef-Mon'))
-        if abs(self.corr_pvs_sp[ind].value - value) <= 1e-3:
-            self.corr_pvs_applied[pvname] = True
+        self.corr_pvs_applied[pvname] = self._equalKick(self.corr_pvs_sp[ind].value, value)
 
     def _corrIsOnMode(self,pvname,value,**kwargs):
         val = self.SLOW_REF_SYNC if self.sync_kicks else self.SLOW_REF
