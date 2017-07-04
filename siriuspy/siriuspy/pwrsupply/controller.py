@@ -910,10 +910,10 @@ class ControllerSim(Controller):
                 callback(pvname='wfmsave', value=self._wfmsave)
         elif pvname == 'reset':
             for callback in self._callbacks.values():
-                callback(pvname='reset', value=self._wfmsave)
+                callback(pvname='reset', value=self._reset_counter)
         elif pvname == 'abort':
             for callback in self._callbacks.values():
-                callback(pvname='abort', value=self._wfmsave)
+                callback(pvname='abort', value=self._abort_counter)
         else:
             raise NotImplementedError
 

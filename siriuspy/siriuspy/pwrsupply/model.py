@@ -12,6 +12,7 @@ from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.pwrsupply.data import PSData as _PSData
 from siriuspy.pwrsupply.controller import ControllerSim as _ControllerSim
 from siriuspy.pwrsupply.controller import ControllerEpics as _ControllerEpics
+from numpy import ndarray
 
 
 _connection_timeout = 0.1
@@ -417,6 +418,10 @@ class PowerSupply(_PSData):
                     callback(self.psname + ':CurrentRef-Mon', value, **kwargs)
                 elif pvname == 'current_load':
                     callback(self.psname + ':Current-Mon', value, **kwargs)
+                elif pvname == 'abort':
+                    callback(self.psname + ':Abort-Cmd', value, **kwargs)
+                elif pvname == 'reset':
+                    callback(self.psname + ':Reset-Cmd', value, **kwargs)
 
 
 class PowerSupplySim(PowerSupply):
@@ -545,6 +550,7 @@ class PowerSupplyEpicsSync:
         self._set_vaca_prefix(use_vaca,vaca_prefix)
 
         self._propty_callbacks = {
+            'CtrlMode-Mon'   : self._callback_change_rb_pv,
             'OpMode-Sel'     : self._callback_change_sp_pv,
             'OpMode-Sts'     : self._callback_change_rb_pv,
             'PwrState-Sel'   : self._callback_change_sp_pv,
@@ -553,6 +559,20 @@ class PowerSupplyEpicsSync:
             'Current-RB'     : self._callback_change_rb_pv,
             'CurrentRef-Mon' : self._callback_change_rb_pv,
             'Current-Mon'    : self._callback_change_rb_pv,
+            'Reset-Cmd'      : self._callback_change_rb_pv,
+            'Abort-Cmd'      : self._callback_change_rb_pv,
+            'WfmSave-Cmd'    : self._callback_change_rb_pv,
+            'WfmIndex-Mon'   : self._callback_change_rb_pv,
+            'WfmLabels-Mon'  : self._callback_change_rb_pv,
+            'WfmLabel-SP'    : self._callback_change_sp_pv,
+            'WfmLabel-RB'    : self._callback_change_rb_pv,
+            'WfmLoad-Sel'    : self._callback_change_sp_pv,
+            'WfmLoad-Sts'    : self._callback_change_rb_pv,
+            'WfmData-SP'     : self._callback_change_sp_pv,
+            'WfmData-RB'     : self._callback_change_rb_pv,
+            'Intlk-Mon'      : self._callback_change_rb_pv,
+            'IntlkLabels-Cte': self._callback_change_rb_pv
+
         }
         self._init_propty()
         self._init_pvs()
@@ -593,6 +613,12 @@ class PowerSupplyEpicsSync:
                 pvname = self._vaca_prefix + psname + ':' + propty
                 self._pvs[pvname].add_callback(callback)
 
+    def _conn_cb(self, pvname, conn, **kwargs):
+        if conn:
+            print('connected', pvname)
+            propty = pvname.split(":")[-1]
+            self._trigger_callback(pvname=pvname, value=self._propty[propty])
+
     def wait_for_connection(self, timeout=None):
         #print('wait_for_connection()')
         if timeout is None:
@@ -614,6 +640,10 @@ class PowerSupplyEpicsSync:
             if not pv.connected:
                 return False
         return True
+
+    @property
+    def ctrlmode_mon(self):
+        return self._propty['CtrlMode-Mon']
 
     @property
     def opmode_sel(self):
@@ -665,8 +695,88 @@ class PowerSupplyEpicsSync:
     def current_mon(self):
         return self._propty['Current-Mon']
 
+    @property
+    def reset_cmd(self):
+        return self._propty['Reset-Cmd']
+
+    @reset_cmd.setter
+    def reset_cmd(self, value):
+        self._put_sp_property('Reset-Cmd', value)
+
+    @property
+    def abort_cmd(self):
+        return self._propty['Abort-Cmd']
+
+    @abort_cmd.setter
+    def abort_cmd(self, value):
+        self._put_sp_property('Abort-Cmd', value)
+
+    @property
+    def wfmsave_cmd(self):
+        return self._propty['WfmSave-Cmd']
+
+    @wfmsave_cmd.setter
+    def wfmsave_cmd(self, value):
+        self._put_sp_property('WfmSave-Cmd', value)
+
+    @property
+    def wfmindex_mon(self):
+        return self._propty['WfmIndex-Mon']
+
+    @property
+    def wfmlabels_mon(self):
+        return self._propty['WfmLabels-Mon']
+
+    @property
+    def wfmlabel_sp(self):
+        return self._propty['WfmLabel-SP']
+
+    @wfmlabel_sp.setter
+    def wfmlabel_sp(self, value):
+        value = int(value)
+        self._put_sp_property('WfmLabel-SP', value)
+
+    @property
+    def wfmlabel_rb(self):
+        return self._propty['WfmLabel-RB']
+
+    @property
+    def wfmload_sel(self):
+        return self._propty['WfmLoad-Sel']
+
+    @wfmload_sel.setter
+    def wfmload_sel(self, value):
+        value = int(value)
+        self._set_propty_sp('WfmLoad-Sel', value)
+
+    @property
+    def wfmload_sts(self):
+        return self._propty['WfmLoad-Sts']
+
+    @property
+    def wfmdata_sp(self):
+        return self._propty['WfmData-SP']
+
+    @wfmdata_sp.setter
+    def wfmdata_sp(self, value):
+        value = ndarray(value)
+        self._set_propty_sp('WfmData-SP', value)
+
+    @property
+    def wfmdata_rb(self):
+        return self._propty['WfmData-RB']
+
+    @property
+    def intlk_mon(self):
+        return self._propty['Intlk-Mon']
+
+    @property
+    def intlklabels_cte(self):
+        return self._propty['IntlkLabels-Cte']
+
     def _put_sp_property(self, propty, value):
-        self._propty[propty] = value
+        if 'Cmd' not in propty:
+            self._propty[propty] = value
         for pvname, pv in self._pvs.items():
             if propty in pvname:
                 disconnect = self._get_disconnect_state()
@@ -711,13 +821,19 @@ class PowerSupplyEpicsSync:
             self._propty[propty] = value
             self._put_sp_property(propty, value)
         else:
+            if isinstance(value, ndarray):
+                changed = (value != self._propty[propty]).any()
+            else:
+                changed = (value != self._propty[propty])
             if self._lock:
-                if value != self._propty[propty]:
+                # if value != self._propty[propty]:
+                if changed:
                     disconnect = self._get_disconnect_state()
                     if not disconnect:
                         self._put_thread.put(pvname, self._propty[propty])
             else:
-                if value != self._propty[propty]:
+                # if value != self._propty[propty]:
+                if changed:
                     self._propty[propty] = value
                     self._put_sp_property(propty, value)
         self._trigger_callback(pvname, value, **kwargs)
