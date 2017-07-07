@@ -27,7 +27,9 @@ class PCASDriver(_pcaspy.Driver):
     def read(self, reason):
         value = self.app.read(reason)
         if value is None:
-            return super().read(reason)
+            val =  super().read(reason)
+            print(val)
+            return val
         else:
             return value
 
