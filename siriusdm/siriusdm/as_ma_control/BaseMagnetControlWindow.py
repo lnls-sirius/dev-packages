@@ -1,6 +1,5 @@
 #!/usr/local/bin/python3.6
-import re
-from pydm.PyQt.QtGui import QDialog, QTabWidget, QVBoxLayout, QPushButton, QApplication
+from pydm.PyQt.QtGui import QDialog, QTabWidget, QVBoxLayout, QApplication
 from .MagnetDetailWindow import MagnetDetailWindow
 from .MagnetTrimWindow import MagnetTrimWindow
 
@@ -10,20 +9,21 @@ class BaseMagnetControlWindow(QDialog):
 
     _window = None
 
+    STYLESHEET = """
+    * {font-size: 16px;}
+    .QGroupBox {
+        font-size: 20px;
+        font-weight: bold;
+    }
+    .PyDMScrollBar {
+        border: 1px solid black;
+    }
+    """
+
     def __init__(self, parent=None):
         super(BaseMagnetControlWindow, self).__init__(parent)
         self._setupUi()
-        self.setStyleSheet(
-        """
-        QGroupBox {
-            font-size:14pt;
-            font-weight:bold;
-        }
-
-        QScrollBar {
-            border: 1px solid black;
-        }
-        """)
+        self.setStyleSheet(self.STYLESHEET)
 
         self.app = QApplication.instance()
         self.app.establish_widget_connections(self)

@@ -1,14 +1,14 @@
 import re
 from pydm.PyQt.QtGui import QPushButton
-from siriuspy.pwrsupply import psdata
+from siriuspy.search import MASearch
 from .BaseMagnetControlWindow import BaseMagnetControlWindow
-from .BaseMagnetControlWidget import BaseMagnetControlWidget
-from .SlowCorrectorControlWidget import TBSlowCorrectorControlWidget
-from .MagnetDetailWidget import MagnetDetailWidget
+from .control_widget.BaseMagnetControlWidget import BaseMagnetControlWidget
+from .control_widget.SlowCorrectorControlWidget import TBSlowCorrectorControlWidget
+from .detail_widget.MagnetDetailWidget import MagnetDetailWidget
 
 class ToBoosterMagnetControlWindow(BaseMagnetControlWindow):
     def __init__(self, parent=None):
-        self._magnets = [re.sub("PS-", "MA-", x) for x in psdata.get_names() if re.match("^TB", x)]
+        self._magnets = [re.sub("PS-", "MA-", x) for x in MASearch.get_manames([{"section": "TB"}])]
         super(ToBoosterMagnetControlWindow, self).__init__(parent)
         self.setWindowTitle('LTB Magnet Control Panel')
 

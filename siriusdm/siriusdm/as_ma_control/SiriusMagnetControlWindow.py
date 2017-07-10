@@ -1,17 +1,17 @@
 import re
 from pydm.PyQt.QtGui import QPushButton
-from siriuspy.pwrsupply import psdata
+from siriuspy.search import MASearch
 from .BaseMagnetControlWindow import BaseMagnetControlWindow
-from .DipoleDetailWidget import DipoleDetailWidget
-from .FamQuadrupoleControlWidget import SiFamQuadrupoleControlWidget
-from .FamSextupoleControlWidget import SiFamSextupoleControlWidget
-from .SlowCorrectorControlWidget import SiSlowCorrectorControlWidget
-from .FastCorrectorControlWidget import SiFastCorrectorControlWidget
-from .SkewQuadControlWidget import SiSkewQuadControlWidget
+from .detail_widget.DipoleDetailWidget import DipoleDetailWidget
+from .control_widget.FamQuadrupoleControlWidget import SiFamQuadrupoleControlWidget
+from .control_widget.FamSextupoleControlWidget import SiFamSextupoleControlWidget
+from .control_widget.SlowCorrectorControlWidget import SiSlowCorrectorControlWidget
+from .control_widget.FastCorrectorControlWidget import SiFastCorrectorControlWidget
+from .control_widget.SkewQuadControlWidget import SiSkewQuadControlWidget
 
 class SiriusMagnetControlWindow(BaseMagnetControlWindow):
     def __init__(self, parent=None):
-        self._magnets = [re.sub("PS-", "MA-", x) for x in psdata.get_names() if re.match("^SI", x)]
+        self._magnets = [re.sub("PS-", "MA-", x) for x in MASearch.get_manames([{"section": "SI"}])]
         super(SiriusMagnetControlWindow, self).__init__(parent)
         self.setWindowTitle('Sirius Magnet Control Panel')
 

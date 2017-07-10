@@ -1,20 +1,36 @@
-import sys
+"""Defines window class to show trims of a magnet."""
 import re
 from pydm.PyQt.QtCore import Qt
 from pydm.PyQt.QtGui import QLabel, QDialog, QGridLayout, QGroupBox, \
-        QHBoxLayout, QApplication, QScrollArea, QWidget
-from pydm import PyDMApplication
+        QHBoxLayout, QApplication, QSizePolicy, QWidget, QDoubleValidator, \
+        QPushButton
 from pydm.widgets.label import PyDMLabel
-from pydm.widgets.enum_combo_box import PyDMEnumComboBox
 from pydm.widgets.line_edit import PyDMLineEdit
 from pydm.widgets.led import PyDMLed
 from pydm.widgets.scrollbar import PyDMScrollBar
-from siriuspy.magnet import magdata
+from siriuspy.search import MASearch
+from .MagnetDetailWindow import MagnetDetailWindow
+
 
 class MagnetTrimWindow(QDialog):
-    STYLESHEET = """QGroupBox {font-size: 11pt; font-weight: bold;}"""
+    """Allow controlling the trims of a given magnet."""
+
+    STYLESHEET = """
+    * {
+        font-size: 16px;
+    }
+    .QGroupBox {
+        width: 600px;
+    }
+    """
+    # Widthes
+    LEDW = 30
+    NAMEW = 150
+    BARW = 80
+    VALUEW = 120
 
     def __init__(self, ma_name, parent=None):
+        """Class constructor."""
         super(MagnetTrimWindow, self).__init__(parent)
 
         self._ma = ma_name
@@ -31,56 +47,99 @@ class MagnetTrimWindow(QDialog):
 
         self.layout = QGridLayout()
 
-        #Magnet
-        self.ma_box = QGroupBox(self._ma)
+        self.fam_magnet = QWidget()
+        self.fam_magnet.layout = QHBoxLayout()
 
-        ma_box_layout = QHBoxLayout()
-        self.ma_led = PyDMLed(self, "ca://" + self._ma + ":PwrState-Sts")
-        self.ma_label = QLabel(self._ma, self)
-        self.ma_current_sb = PyDMScrollBar(self, Qt.Horizontal, "ca://" + self._ma + ":Current-SP")
-        self.ma_current_sp = PyDMLineEdit(self, "ca://" + self._ma + ":Current-SP")
-        self.ma_current_rb = PyDMLabel(self, "ca://" + self._ma + ":Current-RB")
-        self.ma_kl = PyDMLineEdit(self, "ca://" + self._ma + ":KL-SP")
+        # Fam Magnet
+        self.fam_box = QGroupBox(self._ma)
 
-        ma_box_layout.addWidget(self.ma_led)
-        ma_box_layout.addWidget(self.ma_label)
-        ma_box_layout.addWidget(self.ma_current_sb)
-        ma_box_layout.addWidget(self.ma_current_sp)
-        ma_box_layout.addWidget(self.ma_current_rb)
-        ma_box_layout.addWidget(self.ma_kl)
+        fam_box_layout = QHBoxLayout()
+        self.fam_led = PyDMLed(self, "ca://" + self._ma + ":PwrState-Sts")
+        self.fam_label = QLabel(self._ma, self)
+        self.fam_current_sb = PyDMScrollBar(
+            self, Qt.Horizontal, "ca://" + self._ma + ":Current-SP")
+        self.fam_current_sp = PyDMLineEdit(
+            self, "ca://" + self._ma + ":Current-SP")
+        self.fam_current_rb = PyDMLabel(
+            self, "ca://" + self._ma + ":Current-RB")
+        self.fam_kl = PyDMLineEdit(self, "ca://" + self._ma + ":KL-SP")
 
-        self.ma_box.setLayout(ma_box_layout)
+        # Led config
+        self.fam_led.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.fam_led.setMinimumSize(
+            self.LEDW, self.fam_led.minimumSize().height())
+        # Label config
+        self.fam_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.fam_label.setMinimumSize(
+            self.NAMEW, self.fam_label.minimumSize().height())
+        # Scroll bar config
+        self.fam_current_sb.setMinimumSize(self.BARW, 15)
+        self.fam_current_sb.limitsFromPV = True
+        self.fam_current_sb.setSizePolicy(
+            QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
+        # SP Line edit config
+        self.fam_current_sp.setSizePolicy(
+            QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.fam_current_sp.setMinimumSize(
+            self.VALUEW, self.fam_current_sp.minimumSize().height())
+        self.fam_current_sp.setValidator(QDoubleValidator())
+        self.fam_current_sp._useunits = False
+        # RB label config
+        self.fam_current_rb.setSizePolicy(
+            QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.fam_current_rb.setMinimumSize(
+            self.VALUEW, self.fam_current_sp.minimumSize().height())
+        # KL Line edit config
+        self.fam_kl.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.fam_kl.setMinimumSize(
+            self.VALUEW, self.fam_kl.minimumSize().height())
+        self.fam_kl.setValidator(QDoubleValidator())
+        self.fam_kl._useunits = False
 
-        #Trims
+        self.fam_magnet.layout.addWidget(self.fam_led)
+        self.fam_magnet.layout.addWidget(self.fam_label)
+        self.fam_magnet.layout.addWidget(self.fam_current_sb)
+        self.fam_magnet.layout.addWidget(self.fam_current_sp)
+        self.fam_magnet.layout.addWidget(self.fam_current_rb)
+        self.fam_magnet.layout.addWidget(self.fam_kl)
+
+        self.fam_magnet.setLayout(self.fam_magnet.layout)
+        fam_box_layout.addWidget(self.fam_magnet)
+        self.fam_box.setLayout(fam_box_layout)
+
+        # Trims
         trims = self._getTrims()
+        print(trims)
 
         self.trims_group_1 = QGroupBox()
         self.trims_group_2 = QGroupBox()
-        self.scroll_area_1 = QScrollArea()
-        self.scroll_area_2 = QScrollArea()
+        # self.scroll_area_1 = QScrollArea()
+        # self.scroll_area_2 = QScrollArea()
 
         self.trims_group_1.setLayout(self._createGroupBoxLayout(trims[::2]))
         self.trims_group_2.setLayout(self._createGroupBoxLayout(trims[1::2]))
-        self.scroll_area_1.setWidget(self.trims_group_1)
-        self.scroll_area_2.setWidget(self.trims_group_2)
+        # self.scroll_area_1.setWidget(self.trims_group_1)
+        # self.scroll_area_2.setWidget(self.trims_group_2)
 
-        #Widgets options and signals
-        self.ma_current_sb.setMinimumWidth(150)
-        self.ma_current_sp.receivePrecision(3)
-        self.ma_current_rb.setPrecision(3)
-        self.ma_kl.receivePrecision(3)
-        self.scroll_area_1.setMinimumWidth(self.trims_group_1.sizeHint().width() + \
-                self.scroll_area_1.verticalScrollBar().sizeHint().width())
-        self.scroll_area_2.setMinimumWidth(self.trims_group_1.sizeHint().width() + \
-                self.scroll_area_2.verticalScrollBar().sizeHint().width())
-        self.scroll_area_1.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.scroll_area_2.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        # Widgets options and signals
+        # self.ma_current_sb.setMinimumWidth(150)
+        # self.ma_current_sp.receivePrecision(3)
+        # self.ma_current_rb.setPrecision(3)
+        # self.ma_kl.receivePrecision(3)
+        # self.scroll_area_1.setMinimumWidth(
+        #    self.trims_group_1.sizeHint().width() +
+        #   self.scroll_area_1.verticalScrollBar().sizeHint().width())
+        # self.scroll_area_2.setMinimumWidth(
+        #    self.trims_group_1.sizeHint().width() + \
+        #   self.scroll_area_2.verticalScrollBar().sizeHint().width())
+        # self.scroll_area_1.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        # self.scroll_area_2.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
-        #Set layout
-        self.layout.addWidget(self.ma_box, 0, 0)
-        self.layout.addWidget(self.scroll_area_1, 1, 0)
-        self.layout.addWidget(self.scroll_area_2, 1, 1)
-        #Set widget layout
+        # Set layout
+        self.layout.addWidget(self.fam_box, 0, 0)
+        self.layout.addWidget(self.trims_group_1, 1, 0)
+        self.layout.addWidget(self.trims_group_2, 1, 1)
+        # Set widget layout
         self.setLayout(self.layout)
 
     def _createGroupBoxLayout(self, magnets):
@@ -93,18 +152,52 @@ class MagnetTrimWindow(QDialog):
 
         for i, magnet in enumerate(magnets):
             state_led = PyDMLed(self, "ca://" + magnet + ":PwrState-Sts")
-            name_label = QLabel(magnet, self)
-            setpoint_sb = PyDMScrollBar(self, Qt.Horizontal, "ca://" + magnet + ":Current-SP")
+            # name_label = QLabel(magnet, self)
+            name_label = QPushButton(magnet, self)
+            setpoint_sb = PyDMScrollBar(
+                self, Qt.Horizontal, "ca://" + magnet + ":Current-SP")
             current_sp = PyDMLineEdit(self, "ca://" + magnet + ":Current-SP")
-            current_rb = PyDMLabel(self, "ca://" + magnet + ":Current-RB")
-            kl_trim = PyDMLineEdit(self, "ca://" + magnet + ":KLTrim-SP")
-            kl_total = PyDMLabel(self, "ca://" + magnet + ":KL-RB")
+            current_rb = PyDMLabel(self, "ca://" + magnet + ":Current-Mon")
+            kl_trim = PyDMLineEdit(self, "ca://" + magnet + ":KL-SP")
+            kl_total = PyDMLabel(self, "ca://" + magnet + ":KL-Mon")
 
-            setpoint_sb.setMinimumWidth(80)
-            current_sp.setMinimumWidth(80)
-            current_rb.setMinimumWidth(80)
-            kl_trim.setMinimumWidth(80)
-            kl_total.setMinimumWidth(80)
+            # Led config
+            state_led.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+            state_led.setMinimumSize(
+                self.LEDW, self.fam_led.minimumSize().height())
+            # Label config
+            name_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+            name_label.setMinimumSize(
+                150, self.fam_label.minimumSize().height())
+            name_label.clicked.connect(lambda: self._openDetailWindow(magnet))
+            # Scroll bar config
+            setpoint_sb.setMinimumSize(80, 15)
+            setpoint_sb.limitsFromPV = True
+            setpoint_sb.setSizePolicy(
+                QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
+            # SP Line edit config
+            current_sp.setSizePolicy(
+                QSizePolicy.Minimum, QSizePolicy.Fixed)
+            current_sp.setMinimumSize(
+                self.VALUEW, self.fam_current_sp.minimumSize().height())
+            current_sp.setValidator(QDoubleValidator())
+            current_sp._useunits = False
+            # RB label config
+            current_rb.setSizePolicy(
+                QSizePolicy.Minimum, QSizePolicy.Fixed)
+            current_rb.setMinimumSize(
+                self.VALUEW, self.fam_current_sp.minimumSize().height())
+            # KL Line edit config
+            kl_trim.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+            kl_trim.setMinimumSize(
+                self.VALUEW, self.fam_kl.minimumSize().height())
+            kl_trim.setValidator(QDoubleValidator())
+            kl_trim._useunits = False
+            # RB label config
+            kl_total.setSizePolicy(
+                QSizePolicy.Minimum, QSizePolicy.Fixed)
+            kl_total.setMinimumSize(
+                self.VALUEW, self.fam_current_sp.minimumSize().height())
 
             layout.addWidget(state_led, i + 1, 0)
             layout.addWidget(name_label, i + 1, 1)
@@ -119,12 +212,14 @@ class MagnetTrimWindow(QDialog):
 
         return layout
 
-
+    def _openDetailWindow(self, magnet):
+        self._window = MagnetDetailWindow(magnet, self)
+        self._window.exec_()
 
     def _getTrims(self):
         trims = list()
-        ma_pattern = re.compile(re.sub("Fam", "[0-9][0-9][A-Z][0-9]",self._ma))
-        for magnet in magdata.get_magps_names():
+        ma_pattern = re.compile(re.sub("Fam", "\d{2}[A-Z]\d", self._ma))
+        for magnet in MASearch.get_manames():
             if ma_pattern.match(magnet):
                 trims.append(magnet)
 
@@ -133,4 +228,6 @@ class MagnetTrimWindow(QDialog):
         return trims
 
     def closeEvent(self, event):
+        """Reimplement close event to close widget connections."""
         self.app.close_widget_connections(self)
+        super().closeEvent(event)
