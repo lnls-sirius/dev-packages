@@ -63,11 +63,15 @@ class App:
         else:
             print('{0:<15s}: '.format('ioc write'), reason)
         try:
+            if ps_propty in ('abort_cmd', 'reset_cmd'):
+                setattr(_pvs.ps_devices[psname], ps_propty.replace("_cmd", ""), value)
+                return
             setattr(_pvs.ps_devices[psname], ps_propty, value)
             self._driver.setParam(reason, value)
             self._driver.updatePVs()
         except AttributeError:
-            pass
+            print('attr error', ps_propty)
+
         t1 = _time.time()
         ttime += t1-t0
         #print(ttime)

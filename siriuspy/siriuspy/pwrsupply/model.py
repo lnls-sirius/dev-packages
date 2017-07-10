@@ -596,7 +596,7 @@ class PowerSupplyEpicsSync:
         # for propty in propty_callback:
         #     self._propty[propty] = None
 
-        #self._propty = {propty:None for propty in propty_callbacks}
+        # self._propty = {propty:None for propty in propty_callbacks}
 
         self._pvs = {}
         for psname in self._psnames:
@@ -615,12 +615,11 @@ class PowerSupplyEpicsSync:
 
     def _conn_cb(self, pvname, conn, **kwargs):
         if conn:
-            print('connected', pvname)
             propty = pvname.split(":")[-1]
             self._trigger_callback(pvname=pvname, value=self._propty[propty])
 
     def wait_for_connection(self, timeout=None):
-        #print('wait_for_connection()')
+        # print('wait_for_connection()')
         if timeout is None:
             while True:
                 if self.connected:
@@ -631,12 +630,12 @@ class PowerSupplyEpicsSync:
             while _time.time() - t0 < timeout:
                 if self.connected:
                     return True
-                _time.sleep(min(timeout/2.0,0.1))
+                _time.sleep(min(timeout/2.0, 0.1))
         return False
 
     @property
     def connected(self):
-        for _,pv in self._pvs.items():
+        for _, pv in self._pvs.items():
             if not pv.connected:
                 return False
         return True

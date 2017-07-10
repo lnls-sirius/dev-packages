@@ -166,10 +166,11 @@ class MagnetTrimWindow(QDialog):
             state_led.setMinimumSize(
                 self.LEDW, self.fam_led.minimumSize().height())
             # Label config
+            name_label.setObjectName("button_" + magnet)
             name_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
             name_label.setMinimumSize(
                 150, self.fam_label.minimumSize().height())
-            name_label.clicked.connect(lambda: self._openDetailWindow(magnet))
+            name_label.clicked.connect(self._openDetailWindow)
             # Scroll bar config
             setpoint_sb.setMinimumSize(80, 15)
             setpoint_sb.limitsFromPV = True
@@ -212,8 +213,12 @@ class MagnetTrimWindow(QDialog):
 
         return layout
 
-    def _openDetailWindow(self, magnet):
-        self._window = MagnetDetailWindow(magnet, self)
+    def _openDetailWindow(self):
+        sender = self.sender()
+
+        _, ma = sender.objectName().split("_")
+
+        self._window = MagnetDetailWindow(ma, self)
         self._window.exec_()
 
     def _getTrims(self):

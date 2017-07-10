@@ -21,14 +21,11 @@ class BaseMagnetControlWidget(QWidget):
     STYLESHEET = """
     .QPushButton,
     .PyDMLineEdit,
-    .QLabel,
     .PyDMLabel
     {
         margin: 0 5px 0 5px;
     }
-    .PyDMLineEdit,
-    .PyDMLabel
-    {
+    .PyDMLineEdit {
         width: 100px;
     }
     # QWidget {
@@ -153,9 +150,9 @@ class BaseMagnetControlWidget(QWidget):
 
         current_sp = PyDMLineEdit(self, "ca://" + ma + ":Current-SP")
         current_sp.setObjectName("current-sp_" + ma)
-        current_sp.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
         current_sp.setMinimumSize(
-            value_width, name_label.minimumSize().height())
+            value_width, current_sp.minimumSize().height())
+        current_sp.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         # current_sp.receivePrecision(3)
         current_sp.setValidator(QDoubleValidator())
         current_sp._useunits = False
@@ -164,9 +161,9 @@ class BaseMagnetControlWidget(QWidget):
 
         current_rb = PyDMLabel(self, "ca://" + ma + ":Current-Mon")
         current_rb.setObjectName("current-mon_" + ma)
-        current_rb.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        current_rb.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         current_rb.setMinimumSize(
-            value_width, name_label.minimumSize().height())
+            value_width, current_rb.minimumSize().height())
         current_rb.precFromPV = True
         # current_rb.setPrecision(3)
         magnet_widgets.append(current_rb)
@@ -175,9 +172,9 @@ class BaseMagnetControlWidget(QWidget):
         metric_rb = PyDMLineEdit(
             self, "ca://" + ma + ":" + self._getMetric() + "-SP")
         metric_rb.setObjectName("metric-sp_" + ma)
-        metric_rb.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+        metric_rb.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         metric_rb.setMinimumSize(
-            value_width, name_label.minimumSize().height())
+            value_width, metric_rb.minimumSize().height())
         metric_rb._useunits = False
         # metric_rb.receivePrecision(3)
         # metric_rb.setMinimumWidth(80)

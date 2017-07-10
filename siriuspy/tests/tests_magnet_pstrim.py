@@ -25,6 +25,7 @@ class MagnetPowerSupplyTrimTest(unittest.TestCase):
         self.dipole.current_sp = 394.0
         self.fam = MagnetPowerSupply(
             "SI-Fam:MA-QDA", self.dipole, use_vaca=True)
+        self.fam.strength_sp = 0.0
         self.ma = MagnetPowerSupplyTrim(
             "SI-01M1:MA-QDA", self.dipole, self.fam, use_vaca=True)
 
@@ -36,6 +37,7 @@ class MagnetPowerSupplyTrimTest(unittest.TestCase):
 
         self.ma.opmode_sel = 0
         self.ma.pwrstate_sel = 1
+        time.sleep(0.6)
 
     def tearDown(self):
         """Execute after every test."""
@@ -45,18 +47,15 @@ class MagnetPowerSupplyTrimTest(unittest.TestCase):
 
     def test_set_strength_sp(self):
         """Test setting strength set point."""
-        fam_strength = -3.0
+        #fam_strength = -3.0
         trim_strength = 0.25
-        self.fam.strength_sp = fam_strength
+        #self.fam.strength_sp = fam_strength
         self.ma.strength_sp = trim_strength
-        self.assertEqualTimeout(
-            trim_strength + fam_strength, self.ma, 'strength_sp', 3.0)
-        self.assertEqualTimeout(
-            trim_strength + fam_strength, self.ma, 'strength_rb', 3.0)
-        self.assertEqualTimeout(
-            trim_strength + fam_strength, self.ma, 'strengthref_mon', 3.0)
-        self.assertEqualTimeout(
-            trim_strength + fam_strength, self.ma, 'strength_mon', 3.0)
+        self.assertEqual(trim_strength, self.ma.strength_sp)
+        time.sleep(0.2)
+        self.assertEqual(trim_strength, self.ma.strength_rb)
+        self.assertEqual(trim_strength, self.ma.strengthref_mon)
+        self.assertEqual(trim_strength, self.ma.strength_mon)
 
     # def test_loop_set_strength(self):
     #     """Test setting strength set point repeatedly."""

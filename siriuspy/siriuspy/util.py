@@ -117,7 +117,10 @@ def beam_rigidity(energy):
 
     electron_rest_energy_eV = joule_2_eV * electron_rest_energy
     gamma = energy*1e9/electron_rest_energy_eV
-    beta = _math.sqrt(((gamma-1.0)/gamma)*((gamma+1.0)/gamma))
+    try:
+        beta = _math.sqrt(((gamma-1.0)/gamma)*((gamma+1.0)/gamma))
+    except Exception:
+        return 0
     brho = beta * (energy*1e9) / light_speed
     return brho
 
