@@ -17,7 +17,7 @@ with open('VERSION', 'r') as _f:
 _connection_timeout = None
 
 _PREFIX_VACA = _vaca_prefix
-_PREFIX = 'SI-'
+_PREFIX = 'TS-'
 
 _ma_devices = None
 
@@ -30,38 +30,11 @@ def get_ma_devices():
         # Create filter, only getting Fam Quads
         filters = [
             dict(
-                section="SI",
-                sub_section="Fam",
-                discipline="MA",
-                device="B.*"
-            ),
-            dict(
-                section="SI",
-                sub_section="Fam",
-                discipline="MA"
-            ),
+                section="TS"
+            )
         ]
         # Get magnets
         magnets = _MASearch.get_manames(filters)
-        # Trim quadrupole
-        trim_filter = [
-            dict(
-                section="SI",
-                sub_section="\d{2}\w{0,2}",
-                discipline="PS",
-                device="(QD).*"
-            )
-        ]
-        trims = _PSSearch.get_psnames(trim_filter)
-        # magnets = ["SI-Fam:MA-B1B2", "SI-Fam:MA-QDA"]
-        # trims = ['SI-01M1:PS-QDA', 'SI-01M2:PS-QDA', 'SI-05M1:PS-QDA',
-        #          'SI-05M2:PS-QDA', 'SI-09M1:PS-QDA', 'SI-09M2:PS-QDA',
-        #          'SI-13M1:PS-QDA', 'SI-13M2:PS-QDA', 'SI-17M1:PS-QDA',
-        #          'SI-17M2:PS-QDA']
-
-        trims = [x.replace(":PS", ":MA") for x in trims]
-        magnets += trims
-        # Create objects that'll handle the magnets
         for magnet in magnets:
             _, device = magnet.split(_PREFIX)
 
@@ -69,9 +42,6 @@ def get_ma_devices():
             dipole = MagnetFactory.get_dipole(magnet)
             if dipole:
                 _, dipole_name = dipole.split(_PREFIX)
-                # print(magnet)
-                # print(dipole_name)
-                # print(_ma_devices.keys())
                 if dipole_name not in _ma_devices:
                     raise KeyError("Dipole not created yet!")
                 dipole = _ma_devices[dipole_name]

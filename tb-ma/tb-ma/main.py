@@ -21,7 +21,13 @@ __version__ = _pvs.__version__
 
 
 class App:
-    """"""
+    """Main application for handling TB magnets.
+
+    write:
+        writes to MA object and updates db
+    read:
+        always return None, delegating read to database
+    """
 
     ma_devices = _pvs.get_ma_devices()
     pvs_database = _pvs.get_pvs_database()
@@ -32,9 +38,9 @@ class App:
     def __init__(self, driver):
         """Class constructor."""
         _siriuspy.util.print_ioc_banner(
-            ioc_name='si-ma',
+            ioc_name='tb-ma',
             db=App.pvs_database,
-            description='SI Magnet Power Supply Soft IOC',
+            description='TB Magnet Power Supply Soft IOC',
             version=__version__,
             prefix=_pvs._PREFIX)
 
@@ -77,6 +83,7 @@ class App:
             print('{0:<15s}: '.format('ioc write'), reason)
         setattr(ma, attr, value)
         # Update IOC database
+        # print("ioc_write", reason, value)
         self._driver.setParam(reason, value)
         self._driver.updatePVs()
 
@@ -86,17 +93,20 @@ class App:
         """Break a reason into its sub parts."""
         sub_section, discdev, pfield = reason.split(':')
         propty, field = pfield.split('-')
-        discipline, device = discdev.split('-')
+        discipline, *device = discdev.split('-')
+        device = '-'.join(device)
         return (sub_section, discipline, device, propty, field)
 
     def _set_callback(self):
         for family, device in App.ma_devices.items():
+            # variavel nao esta sendo usada
             # uid = device.add_callback(self._mycallback)
             # device._controller.update_state()
             device.add_callback(self._mycallback)
 
     def _mycallback(self, pvname, value, **kwargs):
-        _, reason = pvname.split(_pvs._PREFIX)
+        print('{0:<15s}: '.format('ioc callback'), pvname, value)
+        *parts, reason = pvname.split(_pvs._PREFIX)
         self._driver.setParam(reason, value)
         if 'hilim' in kwargs or 'lolim' in kwargs:
             self._driver.setParamInfo(reason, kwargs)
