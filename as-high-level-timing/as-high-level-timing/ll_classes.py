@@ -43,8 +43,6 @@ def get_ll_trigger_object(channel,callback,connection_callback,initial_hl2ll):
     return cls_(channel, int(conn_num), callback, connection_callback, initial_hl2ll)
 
 class _LL_Base:
-
-
     def __init__(self, callback, connection_callback, initial_hl2ll):
         self._HLPROP_FUNS = self._get_HLPROP_FUNS()
         self._LLPROP_FUNS = self._get_LLPROP_FUNS()
@@ -164,7 +162,6 @@ class _LL_Base:
         if fun is None:  return False
         fun(value)
         return True
-
 
 
 class LL_Clock(_LL_Base):
