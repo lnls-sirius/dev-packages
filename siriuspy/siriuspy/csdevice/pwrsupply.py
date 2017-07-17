@@ -91,7 +91,7 @@ def get_ma_propty_database(maname):
         db[psname]["Current-RB"]['prec'] = 6
         db[psname]["CurrentRef-Mon"]['prec'] = 6
         db[psname]["Current-Mon"]['prec'] = 6
-        if magfunc == 'quadrupole':
+        if magfunc in ('quadrupole', 'quadrupole-skew'):
             db[psname]['KL-SP']     = _copy.deepcopy(db[psname]['Current-SP']); db[psname]['KL-SP']['unit'] = '1/m'
             db[psname]['KL-RB']     = _copy.deepcopy(db[psname]['Current-RB']); db[psname]['KL-RB']['unit'] = '1/m'
             db[psname]['KLRef-Mon'] = _copy.deepcopy(db[psname]['CurrentRef-Mon']); db[psname]['KLRef-Mon']['unit'] = '1/m'

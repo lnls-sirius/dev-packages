@@ -64,7 +64,7 @@ class TestSet1(unittest.TestCase):
 
     def test_lock_pwrstate_sel(self):
         psname = self.ps._psnames[0]
-        values = [0,1,0,1,0,1,1,0,1,0,1,1,0,0,1,0,1,0,1]
+        values = [0, 1, 0, 1, 0, 1, 1, 0 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1]
         for value in values:
             self.ps.pwrstate_sel = value
             self.ps._pvs['PwrState-Sel'][psname].put(0, wait=True)
@@ -73,7 +73,7 @@ class TestSet1(unittest.TestCase):
 
     def test_lock_opmode_sel(self):
         psname = self.ps._psnames[0]
-        values = [0,1,0,1,0,1,1,0,1,0,1,1,0,0,1,0,1,0]
+        values = [0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0]
         for value in values:
             self.ps.opmode_sel = value
             self.ps._pvs['OpMode-Sel'][psname].put(1, wait=True)

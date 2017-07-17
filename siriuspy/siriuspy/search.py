@@ -95,6 +95,7 @@ class PSSearch:
 
     @staticmethod
     def conv_psname_2_pstype(name):
+        print(name)
         """Return the power supply type of a given power supply name."""
         if PSSearch._pstype_2_names_dict is None: PSSearch.reload_pstype_2_names_dict()
         for pstype,names in PSSearch._pstype_2_names_dict.items():
