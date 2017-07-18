@@ -528,37 +528,36 @@ class MagnetPowerSupply(_MagnetPowerSupply):
         # Get dipole new current and update self current value
         label = self._strength_label
         *parts, propty = pvname.split(':')
+        _, field = propty.split('-')
+
         if 'Current' in propty:
 
             if '-SP' in propty:
-                # self._dipole_current_sp = value
                 self._dipole_current_sp = value
             elif '-RB' in propty:
-                # self._dipole_current_rb = value
                 self._dipole_current_rb = value
             elif 'Ref-Mon' in propty:
-                # self._dipole_currentref_mon = value
                 self._dipole_currentref_mon = value
             elif '-Mon' in propty:
-                # self._dipole_current_mon = value
                 self._dipole_current_mon = value
 
-            propty_strength = propty.replace('Current', label)
-
+            kwargs = self._get_currents_dict(propty)
             strength = self._strength_obj.conv_current_2_strength(
-                current=self._propty[propty], current_dipole=value)
+                current=self._propty[propty], **kwargs)
+
+            propty_strength = propty.replace('Current', label)
             self._propty[propty_strength] = strength
 
             pvname = self._maname + ':' + propty_strength
             try:
-                hilim, lolim = self._get_strength_limit(current_dipole=value)
+                hilim, lolim = self._get_strength_limit(**kwargs)
                 self._trigger_callback(
                     pvname, strength, hilim=hilim, lolim=lolim)
             except (KeyError, AttributeError):
                 self._trigger_callback(pvname, strength)
 
 
-class MagnetPowerSupplyTrim(_MagnetPowerSupply):
+class MagnetPowerSupplyTrim(MagnetPowerSupply):
     """Handle trim magnets.
 
     Two callbacks are defined so the objects can update itself when the
@@ -567,13 +566,14 @@ class MagnetPowerSupplyTrim(_MagnetPowerSupply):
 
     def _init_subclass(self):
         attrs = ('Current-SP', 'Current-RB', 'CurrentRef-Mon', 'Current-Mon')
-        self._dipole = _epics.Device(self._dipole_name, delim=':', attrs=attrs)
+        super(MagnetPowerSupplyTrim, self)._init_subclass()
+        # self._dipole = _epics.Device(self._dipole_name,delim=':',attrs=attrs)
         self._fam = _epics.Device(self._fam_name, delim=':', attrs=attrs)
 
-        self._dipole_current_sp = self._dipole.get('Current-SP')
-        self._dipole_current_rb = self._dipole.get('Current-RB')
-        self._dipole_currentref_mon = self._dipole.get('CurrentRef-Mon')
-        self._dipole_current_mon = self._dipole.get('Current-Mon')
+        # self._dipole_current_sp = self._dipole.get('Current-SP')
+        # self._dipole_current_rb = self._dipole.get('Current-RB')
+        # self._dipole_currentref_mon = self._dipole.get('CurrentRef-Mon')
+        # self._dipole_current_mon = self._dipole.get('Current-Mon')
 
         self._fam_current_sp = self._fam.get('Current-SP')
         self._fam_current_rb = self._fam.get('Current-RB')
@@ -581,7 +581,7 @@ class MagnetPowerSupplyTrim(_MagnetPowerSupply):
         self._fam_current_mon = self._fam.get('Current-Mon')
 
         for attr in attrs:
-            self._dipole.add_callback(attr, self._callback_dipole_updated)
+            # self._dipole.add_callback(attr, self._callback_dipole_updated)
             self._fam.add_callback(attr, self._callback_family_updated)
 
     def _get_strength_obj(self):
@@ -611,35 +611,56 @@ class MagnetPowerSupplyTrim(_MagnetPowerSupply):
         return {'current_dipole': current_dipole,
                 'current_family': current_family}
 
-    def _callback_dipole_updated(self, pvname, value, **kwargs):
-        # Get dipole new current and update self current value
-        label = self._strength_label
-        *parts, propty = pvname.split(':')
-        _, field = propty.split('-')
-
-        if 'Current' in propty:
-            strength = self._strength_obj.conv_current_2_strength(
-                current=self._propty[propty],
-                current_dipole=value,
-                current_family=getattr(self, "_fam_current_"+field.lower()))
-
-            propty_strength = propty.replace('Current', label)
-            self._propty[propty_strength] = strength
-
-            pvname = self._maname + ':' + propty_strength
-            self._trigger_callback(pvname, strength)
+    # def _callback_dipole_updated(self, pvname, value, **kwargs):
+    #     # Get dipole new current and update self current value
+    #     label = self._strength_label
+    #     *parts, propty = pvname.split(':')
+    #
+    #     if 'Current' in propty:
+    #
+    #         if '-SP' in propty:
+    #             self._dipole_current_sp = value
+    #         elif '-RB' in propty:
+    #             self._dipole_current_rb = value
+    #         elif 'Ref-Mon' in propty:
+    #             self._dipole_currentref_mon = value
+    #         elif '-Mon' in propty:
+    #             self._dipole_current_mon = value
+    #
+    #         kwargs = self._get_currents_dict(propty)
+    #         strength = self._strength_obj.conv_current_2_strength(
+    #             current=self._propty[propty], **kwargs)
+    #
+    #         propty_strength = propty.replace('Current', label)
+    #         self._propty[propty_strength] = strength
+    #
+    #         pvname = self._maname + ':' + propty_strength
+    #         try:
+    #             hilim, lolim = self._get_strength_limit(**kwargs)
+    #             self._trigger_callback(
+    #                 pvname, strength, hilim=hilim, lolim=lolim)
+    #         except (KeyError, AttributeError):
+    #             self._trigger_callback(pvname, strength)
 
     def _callback_family_updated(self, pvname, value, **kwargs):
         # Get dipole new current and update self current value
         label = self._strength_label
         *parts, propty = pvname.split(':')
-        _, field = propty.split('-')
 
         if 'Current' in propty:
+
+            if '-SP' in propty:
+                self._fam_current_sp = value
+            elif '-RB' in propty:
+                self._fam_current_rb = value
+            elif 'Ref-Mon' in propty:
+                self._fam_currentref_mon = value
+            elif '-Mon' in propty:
+                self._fam_current_mon = value
+
+            kwargs = self._get_currents_dict(propty)
             strength = self._strength_obj.conv_current_2_strength(
-                current=self._propty[propty],
-                current_dipole=getattr(self, "_dipole_current_"+field.lower()),
-                current_family=value)
+                current=self._propty[propty], **kwargs)
 
             propty_strength = propty.replace('Current', label)
             self._propty[propty_strength] = strength

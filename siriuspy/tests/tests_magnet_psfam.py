@@ -4,7 +4,7 @@
 import unittest
 import time
 import numpy
-from siriuspy.magnet.model import MagnetPowerSupplyDipole, MagnetPowerSupply
+from siriuspy.magnet.model import MagnetPowerSupply
 
 
 class MagnetPowerSupplyFamilyTest(unittest.TestCase):
@@ -13,8 +13,8 @@ class MagnetPowerSupplyFamilyTest(unittest.TestCase):
     Test setting the strength.
     Test setting the strength repeatedly.
     Test changing the dipole current.
-    Test changing the dipole strength.
     TODO:
+        Test changing the dipole strength.
         Test setting the current.
     """
 
