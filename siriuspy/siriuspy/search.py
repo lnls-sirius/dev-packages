@@ -1,11 +1,12 @@
-
 import copy as _copy
-import types as _types
 import re as _re
-import siriuspy.util as _util
-from siriuspy.namesys import SiriusPVName as _PVName
-import siriuspy.servweb as _web
+import types as _types
 
+from siriuspy import util as _util
+from siriuspy.namesys import Filter as _Filter
+from siriuspy.namesys import SiriusPVName as _SiriusPVName
+from siriuspy import servweb as _web
+from siriuspy.magnet.excdata import ExcitationData as _ExcitationData
 
 class PSSearch:
 
@@ -13,28 +14,12 @@ class PSSearch:
     _pstype_dict          = None
     _pstype_2_names_dict  = None
     _pstype_2_splims_dict = None
+
+    _pstype_2_excdat_dict = dict()
+
     _splims_labels        = None
     _splims_unit          = None
     _psnames_list         = None
-
-    filters = _types.SimpleNamespace()
-    filters.FAM = 'Fam'
-    filters.TRIM = '\d{2}\w{0,2}'
-    filters.DIPOLE = 'B.*'
-    filters.QUADRUPOLE = '(?:QD|QF|Q[0-9]).*'
-    filters.QUADRUPOLE_SKEW = 'QS'
-    filters.QD = 'QD.*'
-    filters.QF = 'QF.*'
-    filters.SEXTUPOLE = 'S(?:D|F)*'
-    filters.SD = 'SD.*'
-    filters.SF = 'SF.*'
-    filters.CORRECTOR = '(?:C|FC).*'
-    filters.SLOW_CHV = 'C(?:H|V).*'
-    filters.SLOW_CH = 'CH.*'
-    filters.SLOW_CV = 'CV.*'
-    filters.FAST_CHV = 'FC.*'
-    filters.FAST_CH = 'FCH.*'
-    filters.FAST_CV = 'FCV.*'
 
     @staticmethod
     def reload_pstype_dict():
@@ -59,7 +44,7 @@ class PSSearch:
         for pstype in pstypes:
             text = _web.power_supplies_pstype_data_read(pstype + '.txt', timeout=PSSearch._connection_timeout)
             data, param_dict = _util.read_text_data(text)
-            psnames = [_PVName(datum[0]) for datum in data]
+            psnames = [_SiriusPVName(datum[0]) for datum in data]
             PSSearch._pstype_2_names_dict[pstype] = psnames
             PSSearch._psnames_list += psnames
         PSSearch._psnames_list = sorted(PSSearch._psnames_list)
@@ -74,6 +59,14 @@ class PSSearch:
         for datum in data:
             pstype, *lims = datum
             PSSearch._pstype_2_splims_dict[pstype] = {PSSearch._splims_labels[i]:float(lims[i]) for i in range(len(lims))}
+
+    @staticmethod
+    def reload_pstype_2_excdat_dict(pstype):
+        """ Load power supply excitatiom data """
+        if _web.server_online():
+            PSSearch._pstype_2_excdat_dict[pstype] = _ExcitationData(filename_web=pstype + '.txt')
+        else:
+            raise Exception('could not read "' + str(pstype) + '" from web server!')
 
     @staticmethod
     def get_pstype_dict():
@@ -131,8 +124,17 @@ class PSSearch:
         return _copy.deepcopy(PSSearch._pstype_2_splims_dict[pstype])
 
     @staticmethod
+    def conv_psname_2_excdata(name):
+        pstype = PSSearch.conv_psname_2_pstype(name)
+        if pstype not in PSSearch._pstype_2_excdat_dict:
+            PSSearch.reload_pstype_2_excdat_dict(pstype)
+
+        return PSSearch._pstype_2_excdat_dict[pstype]
+
+    @staticmethod
     def get_splim(pstype, label):
-        """Return setpoint limit corresponding to given lavel (either epics' or pcaspy's)."""
+        """Return setpoint limit corresponding to given label (either epics' or pcaspy's)."""
+        if PSSearch._pstype_2_splims_dict is None: PSSearch.reload_pstype_2_splims_dict()
         if label in PSSearch._splims_labels:
             return PSSearch._pstype_2_splims_dict[pstype][label]
         else:
@@ -146,33 +148,7 @@ class PSSearch:
     def get_psnames(filters=None):
         """Return a sorted and filtered list of all power supply names."""
         if PSSearch._pstype_2_names_dict is None: PSSearch.reload_pstype_2_names_dict()
-        if filters is None: return PSSearch._psnames_list
-
-        # build filter regexp
-        if isinstance(filters, dict):
-            filters = [filters]
-        fs = []
-        for f in filters:
-            if 'section' not in f or f['section'] is None:
-                f['section'] = '[A-Z]{2}'
-            if 'sub_section' not in f or f['sub_section'] is None:
-                f['sub_section'] = '\w{2,4}'
-            if 'discipline' not in f or f['discipline'] is None:
-                f['discipline'] = '[A-Z]{2,6}'
-            if 'device' not in f or f['device'] is None:
-                f['device'] = '.+'
-            pattern = f['section'] + '-' + f['sub_section'] + ':' + f['discipline'] + '-' + f['device']
-            regexp = _re.compile(pattern)
-            fs.append(regexp)
-
-        # filter list
-        filtered_list = list()
-        for ps in PSSearch._psnames_list:
-            for pattern in fs:
-                if pattern.match(ps):
-                    filtered_list.append(ps)
-                    break
-        return filtered_list
+        return _Filter.process_filters(PSSearch._psnames_list, filters=filters)
 
     @staticmethod
     def get_pstype_2_splims_dict():
@@ -189,3 +165,106 @@ class PSSearch:
     def get_splims_labels():
         if PSSearch._pstype_2_splims_dict is None: PSSearch.reload_pstype_2_splims_dict()
         return PSSearch._splims_labels
+
+
+class MASearch:
+    ''' Searches magnets data in static files '''
+
+    _manames_list            = None
+
+    _maname_2_splims_dict   = None #magnets-stpoint-limits file
+    _maname_2_psnames_dict  = None #magnet-excitation-ps file
+    _maname_2_trim_dict     = None
+    _splims_labels          = None
+    _splims_unit            = None
+
+    @staticmethod
+    def reload_maname_2_splims_dict():
+        '''  Build dict with limits for each magnet '''
+        if _web.server_online():
+            text = _web. magnets_setpoint_limits(timeout=PSSearch._connection_timeout)
+            data, param_dict = _util.read_text_data(text)
+            MASearch._splims_unit = tuple(param_dict['unit'])
+            MASearch._splims_labels = tuple(param_dict['power_supply_type'])
+            MASearch._maname_2_splims_dict = {}
+            for datum in data:
+                maname, *limits = datum
+                db = {MASearch._splims_labels[i]:float(limits[i]) for i in range(len(MASearch._splims_labels))}
+                MASearch._maname_2_splims_dict[maname] = db
+        else:
+            raise Exception('could not read magnet splims from web server!')
+
+    @staticmethod
+    def reload_maname_2_psnames_dict():
+        ''' Build a dict of tuples with power supplies of each magnet '''
+        if _web.server_online():
+            text = _web.magnets_excitation_ps_read(timeout=PSSearch._connection_timeout)
+            data, param_dict = _util.read_text_data(text)
+            MASearch._maname_2_psnames_dict  = {}
+            MASearch._maname_2_trim_dict = {}
+            MASearch._manames_list = []
+            for datum in data:
+                magnet, *ps_names = datum
+                MASearch._manames_list.append(magnet)
+                MASearch._maname_2_psnames_dict[magnet] = tuple(ps_names)
+                if 'Fam' not in magnet:
+                    famname = _SiriusPVName(magnet)
+                    famname = famname.replace(famname.subsection, 'Fam').replace('MA-','PS-')
+                    if '-Fam:PS-Q' in famname and famname in ps_names:
+                        ps_names.remove(famname)
+                        maname = famname.replace('PS-','MA-')
+                        if maname not in MASearch._maname_2_trim_dict:
+                            MASearch._maname_2_trim_dict[maname] = tuple(ps_names)
+                        else:
+                            MASearch._maname_2_trim_dict[maname] += tuple(ps_names)
+        else:
+            raise Exception('could not read magnet-excitation-ps from web server!')
+
+    @staticmethod
+    def get_splims_unit():
+        if MASearch._maname_2_splims_dict is None: MASearch.reload_maname_2_splims_dict()
+        return MASearch._splims_unit
+
+    @staticmethod
+    def get_splim(maname, label):
+        """Return setpoint limit corresponding to given label (either epics' or pcaspy's)."""
+        if MASearch._maname_2_splims_dict is None: MASearch.reload_maname_2_splims_dict()
+        if label in MASearch._splims_labels:
+            return MASearch._maname_2_splims_dict[maname][label]
+        else:
+            label = _util.conv_splims_labels(label)
+            if label is None:
+                return None
+            else:
+                return MASearch._maname_2_splims_dict[maname][label]
+
+    @staticmethod
+    def conv_maname_2_trims(maname):
+        if MASearch._maname_2_trim_dict is None: MASearch.reload_maname_2_psnames_dict()
+        return MASearch._maname_2_trim_dict.get(maname, None)
+
+    @staticmethod
+    def conv_maname_2_magfunc(maname):
+        """Returns a dict mapping power supplies functions for given magnet."""
+        if MASearch._maname_2_psnames_dict is None: MASearch.reload_maname_2_psnames_dict()
+        ps = MASearch._maname_2_psnames_dict[maname]
+        ps_types = tuple(map(PSSearch.conv_psname_2_pstype, ps))
+        ma_func = tuple(map(PSSearch.conv_pstype_2_magfunc, ps_types))
+
+        ret = dict()
+        for i, psname in enumerate(ps):
+            ret[psname] = ma_func[i]
+
+        return ret
+
+    @staticmethod
+    def conv_maname_2_psnames(maname):
+        """Return list of power supplies associated with a given magnet."""
+        if MASearch._maname_2_psnames_dict is None: MASearch.reload_maname_2_psnames_dict()
+        return MASearch._maname_2_psnames_dict[maname]
+
+    @staticmethod
+    def get_manames(filters=None):
+        """Return a sorted and filtered list of all magnet names."""
+        if MASearch._manames_list is None: MASearch.reload_maname_2_psnames_dict()
+        return _Filter.process_filters(MASearch._manames_list, filters=filters)

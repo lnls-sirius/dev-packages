@@ -1,18 +1,15 @@
 from .BaseMagnetControlWidget import BaseMagnetControlWidget
 
 class SiFastCorrectorControlWidget(BaseMagnetControlWidget):
-    def __init__(self, magnet_list, orientation=0, parent=None):
-        super(SiFastCorrectorControlWidget, self).__init__(magnet_list, orientation, parent)
-        self._setupUi()
 
     def _getPattern(self):
         return "SI-\w{3,4}:MA-(FCH|FCV)(-[1-2])*"
 
     def _getMetric(self):
-        return "Angle"
+        return "Kick"
 
     def _getHeader(self):
-        return [None, None, None, "Setpoint [A]", "Readback [A]", "Angle [mrad]"]
+        return [None, None, None, "Setpoint [A]", "Cur-Mon [A]", "Kick [mrad]"]
 
     def _hasTrimButton(self):
         return False

@@ -1,5 +1,6 @@
 import os as _os
 import time as _time
+import math as _math
 import datetime as _datetime
 from . import envars as _envars
 
@@ -9,7 +10,6 @@ def get_timestamp(now = None):
     st = _datetime.datetime.fromtimestamp(now).strftime('%Y-%m-%d-%H:%M:%S')
     st = st + '.{0:03d}'.format(int(1000*(now-int(now))))
     return st
-
 
 # this function can be substituted with fernando's implementation in VACA
 def get_prop_types():
@@ -76,20 +76,19 @@ def print_ioc_banner(ioc_name, db, description, version, prefix, ):
             print(''); new_line=False
     if new_line: print('')
 
-
 def conv_splims_labels(label):
     """Convert setpoint limit labels from pcaspy to epics and vice-versa."""
     labels_dict = {
-        'DRVL' : 'DRVL',
-        'LOLO' : 'lolo',
-        'LOW'  : 'low',
-        'LOPR' : 'lolim',
-        'HOPR' : 'hilim',
-        'HIGH' : 'high',
-        'HIHI' : 'hihi',
-        'DRVH' : 'DRVH',
-        'TSTV' : 'TSTV',
-        'TSTR' : 'TSTR',
+        'DRVH' : 'DRVH',   # ??? [pyepics]
+        'HIHI' : 'hihi',   # upper_alarm_limit [pyepics]
+        'HIGH' : 'high',   # upper_warning_limit [pyepics]
+        'HOPR' : 'hilim',  # upper_disp_limit & upper_ctrl_limit [pyepics]
+        'LOPR' : 'lolim',  # lower_disp_limit & lower_ctrl_limit [pyepics]
+        'LOW'  : 'low',    # lower_warning_limit [pyepics]
+        'LOLO' : 'lolo',   # lower_alarm_limit [pyepics]
+        'DRVL' : 'DRVL',   # ??? [pyepics]
+        'TSTV' : 'TSTV',   # ---
+        'TSTR' : 'TSTR',   # ---
     }
     if label in labels_dict:
         # epics -> pcaspy
@@ -101,11 +100,32 @@ def conv_splims_labels(label):
                 return k
         return None
 
+def beam_rigidity(energy):
+    """Return beam rigidity give its energy [GeV]."""
+    second  = 1.0; meter    = 1.0; kilogram = 1.0; ampere   = 1.0
+    newton  = kilogram * meter / second
+    joule   = newton * meter
+    watt    = joule / second
+    coulomb = second * ampere
+    volt    = watt / ampere
+    light_speed    = 299792458 * (meter/second)    # [m/s]   - definition
+    electron_mass  = 9.10938291e-31   * kilogram   # 2014-06-11 - http://physics.nist.gov/cgi-bin/cuu/Value?me
+    elementary_charge = 1.602176565e-19  * coulomb                                    # 2014-06-11 - http://physics.nist.gov/cgi-bin/cuu/Value?e
+    electron_volt  = elementary_charge * volt
+    joule_2_eV = (joule / electron_volt)
+    electron_rest_energy = electron_mass * _math.pow(light_speed,2) # [Kg̣*m^2/s^2] - derived
 
+    electron_rest_energy_eV = joule_2_eV * electron_rest_energy
+    gamma = energy*1e9/electron_rest_energy_eV
+    try:
+        beta = _math.sqrt(((gamma-1.0)/gamma)*((gamma+1.0)/gamma))
+    except Exception:
+        return 0
+    brho = beta * (energy*1e9) / light_speed
+    return brho
 
-
-# Is this being used ?!?!
-def set_ioc_ca_port_number(ioc_name):
-    envar, default_port = _envars.ioc_ca_ports_dict[ioc_name]
-    port = _os.environ.get(envar, default=default_port)
-    _os.environ['EPICS_CA_SERVER_PORT'] = port
+# # Is this being used ?!?!
+# def set_ioc_ca_port_number(ioc_name):
+#     envar, default_port = _envars.ioc_ca_ports_dict[ioc_name]
+#     port = _os.environ.get(envar, default=default_port)
+#     _os.environ['EPICS_CA_SERVER_PORT'] = port

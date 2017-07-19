@@ -1,42 +1,45 @@
-#!/usr/local/bin/python3.6
-import re
-from pydm.PyQt.QtGui import QDialog, QTabWidget, QVBoxLayout, QPushButton, QApplication
+"""Defines a class to control elements from a given class."""
+from pydm.PyQt.QtGui import QDialog, QTabWidget, QVBoxLayout, QApplication
 from .MagnetDetailWindow import MagnetDetailWindow
 from .MagnetTrimWindow import MagnetTrimWindow
 
+
 class BaseMagnetControlWindow(QDialog):
+    """Base window class to control elements of a given section."""
+
     DETAIL = 0
     TRIM = 1
 
     _window = None
 
+    STYLESHEET = """
+    * {font-size: 16px;}
+    .QGroupBox {
+        font-size: 20px;
+        font-weight: bold;
+    }
+    .PyDMScrollBar {
+        border: 1px solid black;
+    }
+    """
+
     def __init__(self, parent=None):
+        """Class constructor."""
         super(BaseMagnetControlWindow, self).__init__(parent)
         self._setupUi()
-        self.setStyleSheet(
-        """
-        QGroupBox {
-            font-size:14pt;
-            font-weight:bold;
-        }
-
-        QScrollBar {
-            border: 1px solid black;
-        }
-        """)
+        self.setStyleSheet(self.STYLESHEET)
 
         self.app = QApplication.instance()
         self.app.establish_widget_connections(self)
 
-
     def _setupUi(self):
         self.layout = QVBoxLayout()
 
-        #Create Tabs
+        # Create Tabs
         self.tabs = QTabWidget()
         self._addTabs()
 
-        #Set widget layout
+        # Set widget layout
         self.layout.addWidget(self.tabs)
         self.setLayout(self.layout)
 
@@ -48,7 +51,7 @@ class BaseMagnetControlWindow(QDialog):
                 type_ = button.objectName().split("_")[0]
                 if type_ in ["label", "trim"]:
                     button.clicked.connect(self._openWindow)
-            except:
+            except Exception:
                 pass
 
     def _openWindow(self):
@@ -67,13 +70,6 @@ class BaseMagnetControlWindow(QDialog):
         self._window.exec_()
 
     def closeEvent(self, event):
+        """Reimplement closed event to close widget connections."""
         self.app.close_widget_connections(self)
-
-
-if __name__ == '__main__':
-    import sys
-    from pydm import PyDMApplication
-    app = PyDMApplication(None, sys.argv)
-    window = MagnetControlWindow()
-    window.show()
-    app.exec_()
+        super().closeEvent(event)

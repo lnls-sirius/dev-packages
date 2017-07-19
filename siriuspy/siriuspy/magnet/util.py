@@ -1,4 +1,14 @@
+def get_magfunc_2_multipole_dict():
 
+    _magfuncs = {
+        'dipole' : {'type':'normal', 'harmonic':0},
+        'corrector-horizontal' : {'type':'normal', 'harmonic':0},
+        'corrector-vertical' : {'type':'skew', 'harmonic':0},
+        'quadrupole' : {'type':'normal', 'harmonic':1},
+        'quadrupole-skew' : {'type':'skew', 'harmonic':1},
+        'sextupole' : {'type':'normal', 'harmonic':2},
+    }
+    return _magfuncs
 
 def get_multipole_name(harmonic, suffix='pole'):
 
@@ -34,14 +44,18 @@ def linear_extrapolation(x,x1,x2,y1,y2):
     else:
         return y1 + (y2-y1)*(x-x1)/(x2-x1)
 
-
-def add_multipoles(multipoles_list):
-    r = {'normal':{}, 'skew':{}}
-    for m in multipoles_list:
-        for mtype, mult in m.items():
-            for harm,value in mult.items():
-                try:
-                    r[mtype][harm] += value
-                except:
-                    r[mtype][harm] = value
-    return r
+def sum_magnetic_multipoles(*multipoles_list):
+    """Sum an iterable composed of multipoles dictionaries."""
+    res = {}
+    for multipoles in multipoles_list:
+        m = multipoles.get('normal',{})
+        s = res.get('normal', {})
+        for h,m in m.items():
+            s[h] = s.get(h,0.0) + m
+        if s: res['normal'] = s
+        m = multipoles.get('skew',{})
+        s = res.get('skew', {})
+        for h,m in m.items():
+            s[h] = s.get(h,0.0) + m
+        if s: res['skew'] = s
+    return res

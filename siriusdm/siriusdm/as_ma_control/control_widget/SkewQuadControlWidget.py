@@ -1,9 +1,6 @@
 from .BaseMagnetControlWidget import BaseMagnetControlWidget
 
 class SiSkewQuadControlWidget(BaseMagnetControlWidget):
-    def __init__(self, magnet_list, orientation=0, parent=None):
-        super(SiSkewQuadControlWidget, self).__init__(magnet_list, orientation, parent)
-        self._setupUi()
 
     def _getPattern(self):
         return "SI-\w{4}:MA-QS"
@@ -12,7 +9,7 @@ class SiSkewQuadControlWidget(BaseMagnetControlWidget):
         return "KL"
 
     def _getHeader(self):
-        return [None, None, None, "Setpoint [A]", "Readback [A]", "KL [1/m]"]
+        return [None, None, None, "Setpoint [A]", "Cur-Mon [A]", "KL [1/m]"]
 
     def _hasTrimButton(self):
         return False

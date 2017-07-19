@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 
 import unittest
-from siriuspy.pwrsupply import PowerSupply
+from siriuspy.csdevice.enumtypes import EnumTypes as _et
+from siriuspy.pwrsupply.model import PowerSupply
+from siriuspy.pwrsupply.model import PowerSupplySim
+#from siriuspy.pwrsupply.model import PowerSupplySync
+
 
 class PowerSupplyTest(unittest.TestCase):
     def assert_currents(self, sp, rb, ref, mon):
@@ -10,12 +14,11 @@ class PowerSupplyTest(unittest.TestCase):
         self.assertEqual(self.ps.currentref_mon, ref)
         self.assertEqual(self.ps.current_mon, mon)
 
-class PowerSupplyOnSlowRefTest(PowerSupplyTest):
+class PowerSupplySimOnSlowRefTest(PowerSupplyTest):
 
     def setUp(self):
-        self.ps = PowerSupply(psname='SI-Fam:PS-QDA')
+        self.ps = PowerSupplySim(psname='SI-Fam:PS-QDA')
         self.initial_labels = self.ps.wfmlabels_mon
-
         self.ps.opmode_sel = 0
         self.ps.pwrstate_sel = 1
 
@@ -47,10 +50,10 @@ class PowerSupplyOnSlowRefTest(PowerSupplyTest):
         self.ps.abort = 1
         self.assert_currents(3.14, 3.14, 3.14, 3.14)
 
-class PowerSupplyOnSlowRefSyncTest(PowerSupplyTest):
+class PowerSupplySimOnSlowRefSyncTest(PowerSupplyTest):
 
     def setUp(self):
-        self.ps = PowerSupply(psname='SI-Fam:PS-QDA')
+        self.ps = PowerSupplySim(psname='SI-Fam:PS-QDA')
         self.initial_labels = self.ps.wfmlabels_mon
 
         self.ps.opmode_sel = 1
@@ -97,9 +100,9 @@ class PowerSupplyOnSlowRefSyncTest(PowerSupplyTest):
         self.ps.abort = 1
         self.assert_currents(1.45, 3.14, 3.14, 3.14)
 
-class PowerSupplyOnFastRefTest(PowerSupplyTest):
+class PowerSupplySimOnFastRefTest(PowerSupplyTest):
     def setUp(self):
-        self.ps = PowerSupply(psname='SI-Fam:PS-QDA', enum_keys=True)
+        self.ps = PowerSupplySim(psname='SI-Fam:PS-QDA', enum_keys=True)
         self.initial_labels = self.ps.wfmlabels_mon
 
         self.ps.opmode_sel = 'FastRef'
@@ -146,9 +149,9 @@ class PowerSupplyOnFastRefTest(PowerSupplyTest):
         self.ps.abort = 1
         self.assert_currents(1.45, 0.0, 0.0, 0.0)
 
-class PowerSupplyOnRmpWfmTest(PowerSupplyTest):
+class PowerSupplySimOnRmpWfmTest(PowerSupplyTest):
     def setUp(self):
-        self.ps = PowerSupply(psname='SI-Fam:PS-QDA', enum_keys=True)
+        self.ps = PowerSupplySim(psname='SI-Fam:PS-QDA', enum_keys=True)
 
         self.ps.wfmload_sel = 'Waveform2'
         self.ps.wfmdata_sp = list(range(2000))
@@ -205,9 +208,20 @@ class PowerSupplyOnRmpWfmTest(PowerSupplyTest):
 
     def test_opmode_on_abort(self):
         ''' Test abort emitted when on RmpWfm '''
+        # abort right away, if no trigger signal has arrived
         self.assertEqual(self.ps.opmode_sts, 'RmpWfm')
         self.ps.abort = 1
+        self.assertEqual(self.ps.opmode_sts, 'SlowRef')
+        # waits till end of ramp if first signal had arrived
+        self.ps.opmode_sel = 'RmpWfm'
+        self.ps._controller.trigger_timeout = 10000
+        self.ps._controller.trigger_signal()
+        self.ps.abort = 1
         self.assertEqual(self.ps.opmode_sts, 'RmpWfm')
+        while self.ps.wfmindex_mon != 0:
+            self.ps._controller.trigger_signal()
+        self.assertEqual(self.ps.opmode_sts, 'SlowRef')
+
 
     def test_opmode_on_abort_after_scan(self):
         ''' Test abort emitted when on RmpWfm '''
@@ -257,9 +271,9 @@ class PowerSupplyOnRmpWfmTest(PowerSupplyTest):
             cur = (2000 - i) if (2000 - i) < self.ps.splims['HIGH'] else self.ps.splims['HIGH']
             self.assert_currents(0.0, 0.0, cur, cur)
 
-class PowerSupplyOnMigWfmTest(PowerSupplyTest):
+class PowerSupplySimOnMigWfmTest(PowerSupplyTest):
     def setUp(self):
-        self.ps = PowerSupply(psname='SI-Fam:PS-QDA', enum_keys=True)
+        self.ps = PowerSupplySim(psname='SI-Fam:PS-QDA', enum_keys=True)
 
         self.ps.wfmload_sel = 'Waveform2'
         self.ps.wfmdata_sp = list(range(2000))
@@ -332,94 +346,54 @@ class PowerSupplyOnMigWfmTest(PowerSupplyTest):
         self.assert_currents(3.14, 2.0, 2.0, 2.0)
         self.assertEqual(self.ps.wfmindex_mon, 0)
 
-# class PowerSupplyOnCycleTest(PowerSupplyTest):
-#     def setUp(self):
-#         self.ps = PowerSupply(psname='SI-Fam:PS-QDA', enum_keys=True)
-#
-#         self.ps.wfmload_sel = 'Waveform2'
-#         self.ps.wfmdata_sp = list(range(2000))
-#         self.ps.opmode_sel = 'Cycle'
-#         self.ps.pwrstate_sel = 'On'
-#
-#     def test_wfmindex(self):
-#         self.assertEqual(self.ps.wfmindex_mon, 0)
-#         self.assert_currents(0.0, 0.0, 0.0, 0.0)
-#         self.ps._controller.trigger_signal()
-#         self.assert_currents(0.0, 0.0, 0.0, 0.0)
-#         self.ps._controller.trigger_signal()
-#         self.assert_currents(0.0, 0.0, 1.0, 1.0)
-#
-#     def test_wfm_loaded(self):
-#         self.assertEqual(self.ps.wfmload_sts, 'Waveform2')
-#
-#     def test_wfm_values_loaded(self):
-#         for i in range(2000):
-#             self.assertEqual(self.ps.wfmdata_rb[i], float(i))
-#
-#     def test_wfm_loop(self):
-#         self.ps.current_sp = 3.14
-#         for i in range(1999):
-#             self.ps._controller.trigger_signal()
-#             val = i if i < self.ps.splims['HIGH'] else self.ps.splims['HIGH']
-#             self.assert_currents(3.14, 3.14, val, val)
-#         self.ps._controller.trigger_signal()
-#         val = self.ps.splims['HIGH']
-#         self.assert_currents(3.14, val, val, val)
-#         self.assertEqual(self.ps.opmode_sts, 'SlowRef')
-#
-#     def test_set_current(self):
-#         ''' Test set current_sp  on MigWfm '''
-#         self.ps.current_sp = 3.14
-#         self.assert_currents(3.14, 3.14, 0.0, 0.0)
-#         self.ps._controller.trigger_signal()
-#         self.ps._controller.trigger_signal()
-#         self.assert_currents(3.14, 3.14, 1.0, 1.0)
-#
-#     def test_opmode_on_reset(self):
-#         ''' Test opmode change on reset when on MigWfm '''
-#         self.assertEqual(self.ps.opmode_sts, 'MigWfm')
-#         self.ps.reset = 1
-#         self.assertEqual(self.ps.opmode_sts, 'SlowRef')
-#
-#     def test_currents_on_reset(self):
-#         ''' Test currents change on reset when on MigWfm '''
-#         self.ps.current_sp = 3.14
-#         self.ps._controller.trigger_signal()
-#         self.ps._controller.trigger_signal()
-#         self.ps._controller.trigger_signal()
-#         self.ps.reset = 1
-#         self.assert_currents(3.14, 0.0, 0.0, 0.0)
-#         self.assertEqual(self.ps.wfmindex_mon, 0)
-#
-#     def test_opmode_on_abort(self):
-#         ''' Test abort emitted when on MigWfm '''
-#         self.assertEqual(self.ps.opmode_sts, 'MigWfm')
-#         self.ps.abort = 1
-#         self.assertEqual(self.ps.opmode_sts, 'SlowRef')
-#
-#     def test_current_on_abort(self):
-#         ''' Test current change when abort is emitted on MigWfm '''
-#         self.ps.current_sp = 3.14
-#         self.ps._controller.trigger_signal()
-#         self.ps._controller.trigger_signal()
-#         self.ps._controller.trigger_signal()
-#         self.ps.abort = 1
-#         self.assert_currents(3.14, 2.0, 2.0, 2.0)
-#         self.assertEqual(self.ps.wfmindex_mon, 0)
+class PowerSupplySimOnCycleTest(PowerSupplyTest):
+    def setUp(self):
+        self.ps = PowerSupplySim(psname='SI-Fam:PS-QDA', enum_keys=True)
 
-class PowerSupplyGeneralTest(PowerSupplyTest):
+        self.ps.wfmload_sel = 'Waveform2'
+        self.ps.wfmdata_sp = list(range(2000))
+        self.ps.opmode_sel = 'Cycle'
+        self.ps.pwrstate_sel = 'On'
+
+        self.ps._controller.trigger_signal()
+
+    def test_wfm_loaded(self):
+        self.assertEqual(self.ps.wfmload_sts, 'Waveform2')
+
+    def test_wfm_values_loaded(self):
+        for i in range(2000):
+            self.assertEqual(self.ps.wfmdata_rb[i], float(i))
+
+    def test_opmode_on_reset(self):
+        ''' Test opmode change on reset when on MigWfm '''
+        self.assertEqual(self.ps.opmode_sts, 'Cycle')
+        self.ps.reset = 1
+        self.assertEqual(self.ps.opmode_sts, 'SlowRef')
+
+    def test_currents_on_reset(self):
+        ''' Test currents change on reset when on MigWfm '''
+        self.ps.reset = 1
+        self.assert_currents(0.0, 0.0, 0.0, 0.0)
+        self.assertEqual(self.ps.wfmindex_mon, 0)
+
+    def test_opmode_on_abort(self):
+        ''' Test abort emitted when on MigWfm '''
+        self.assertEqual(self.ps.opmode_sts, 'Cycle')
+        self.ps.abort = 1
+        self.assertEqual(self.ps.opmode_sts, 'SlowRef')
+
+class PowerSupplySimGeneralTest(PowerSupplyTest):
 
     def setUp(self):
-        self.ps = PowerSupply(psname='SI-Fam:PS-QDA')
-        self.ps_enum = PowerSupply(psname='SI-Fam:PS-QDA', enum_keys=True)
-
+        self.ps = PowerSupplySim(psname='SI-Fam:PS-QDA')
+        self.ps_enum = PowerSupplySim(psname='SI-Fam:PS-QDA', enum_keys=True)
         self.default_labels = self.ps.wfmlabels_mon
         self.default_labels_e = self.ps.wfmlabels_mon
 
     def test_initialization(self):
         self.assertEqual(self.ps.psname, 'SI-Fam:PS-QDA')
         self.assertEqual(self.ps._enum_keys, False)
-        self.assertEqual(self.ps.callback, None)
+        self.assertEqual(self.ps._callbacks, {})
 
     def test_initial_ctrlmode(self):
         self.assertEqual(self.ps.ctrlmode_mon, 0)
@@ -553,7 +527,7 @@ class PowerSupplyGeneralTest(PowerSupplyTest):
         self.ps.wfmlabel_sp = new_label_name
         self.ps.wfmsave_cmd = 1
         del self.ps
-        self.ps = PowerSupply(psname='SI-Fam:PS-QDA')
+        self.ps = PowerSupplySim(psname='SI-Fam:PS-QDA')
 
         labels = self.ps.wfmlabels_mon
         self.assertEqual(labels[idx_changed], new_label_name)
@@ -562,7 +536,7 @@ class PowerSupplyGeneralTest(PowerSupplyTest):
         self.ps.wfmlabel_sp = old_label_name
         self.ps.wfmsave_cmd = 1
         del self.ps
-        self.ps = PowerSupply(psname='SI-Fam:PS-QDA')
+        self.ps = PowerSupplySim(psname='SI-Fam:PS-QDA')
 
         self.assertEqual(self.default_labels[idx_changed], old_label_name)
 
@@ -575,7 +549,7 @@ class PowerSupplyGeneralTest(PowerSupplyTest):
         self.ps.wfmdata_sp = new_data
         self.ps.wfmsave_cmd = 1
         del self.ps
-        self.ps = PowerSupply(psname='SI-Fam:PS-QDA')
+        self.ps = PowerSupplySim(psname='SI-Fam:PS-QDA')
 
         self.ps.wfmload_sel = idx_changed
         self.assertEqual(True, (self.ps.wfmdata_rb == new_data).all())
@@ -583,7 +557,7 @@ class PowerSupplyGeneralTest(PowerSupplyTest):
         self.ps.wfmdata_sp = old_data
         self.ps.wfmsave_cmd = 1
         del self.ps
-        self.ps = PowerSupply(psname='SI-Fam:PS-QDA')
+        self.ps = PowerSupplySim(psname='SI-Fam:PS-QDA')
 
         self.ps.wfmload_sel = idx_changed
         self.assertEqual(True, (self.ps.wfmdata_rb == old_data).all())
@@ -591,6 +565,50 @@ class PowerSupplyGeneralTest(PowerSupplyTest):
     def test_initial_label_wfmindex(self):
         self.assertEqual(self.ps.wfmindex_mon, 0)
         self.assertEqual(self.ps_enum.wfmindex_mon, 0)
+
+# class PowerSupplySyncSimTest(PowerSupplyTest):
+#
+#     def setUp(self):
+#         if hasattr(self, 'ps'):
+#             del self.ps
+#
+#     def test_lock_off(self):
+#         self.ps = PowerSupplySync(psnames=['SI-Fam:PS-B1B2-1','SI-Fam:PS-B1B2-2'],
+#                                   controller_type='ControllerSim',
+#                                   lock=False,
+#                                   enum_keys=False)
+#         # basic synched set of pwrstate
+#         self.ps.pwrstate_sel = 'On'
+#         self.assertEqual(self.ps._controllers[0].pwrstate, _et.idx.On)
+#         self.assertEqual(self.ps._controllers[1].pwrstate, _et.idx.On)
+#         self.ps.current_sp = 10.0
+#         self.assert_currents(10.0, 10.0, 10.0, 10.0)
+#         self.ps._controllers[0].current_sp = 5.0
+#         self.assertEqual(self.ps._controllers[0].current_sp, 5.0)
+#         self.assertEqual(self.ps._controllers[1].current_sp, 10.0)
+#         self.ps.current_sp = 10.0
+#         self.assertEqual(self.ps._controllers[0].current_sp, 10.0)
+#         self.ps.pwrstate_sel = 'Off'
+#         self.assertEqual(self.ps._controllers[0].pwrstate, _et.idx.Off)
+#         self.assertEqual(self.ps._controllers[1].pwrstate, _et.idx.Off)
+#
+#     def test_lock_on(self):
+#         self.ps = PowerSupplySync(psnames=['SI-Fam:PS-B1B2-1','SI-Fam:PS-B1B2-2'],
+#                                   controller_type='ControllerSim',
+#                                   lock=True,
+#                                   enum_keys=False)
+#         # basic synched set of pwrstate
+#         self.ps.pwrstate_sel = 'On'
+#         self.assertEqual(self.ps._controllers[0].pwrstate, _et.idx.On)
+#         self.assertEqual(self.ps._controllers[1].pwrstate, _et.idx.On)
+#         self.ps.current_sp = 10.0
+#         self.assert_currents(10.0, 10.0, 10.0, 10.0)
+#         self.ps._controllers[0].current_sp = 5.0
+#         self.assertEqual(self.ps._controllers[0].current_sp, 10.0)
+#         self.assertEqual(self.ps._controllers[1].current_sp, 10.0)
+#         self.ps.pwrstate_sel = 'Off'
+#         self.assertEqual(self.ps._controllers[0].pwrstate, _et.idx.Off)
+#         self.assertEqual(self.ps._controllers[1].pwrstate, _et.idx.Off)
 
 
 if __name__ == '__main__':

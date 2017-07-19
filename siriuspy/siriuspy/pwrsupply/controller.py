@@ -5,18 +5,22 @@ import math as _math
 import copy as _copy
 import random as _random
 import numpy as _np
-from siriuspy.csdevice.enumtypes import EnumTypes as _et
-from siriuspy.csdevice.pwrsupply import default_wfmlabels as _default_wfmlabels
-from siriuspy.csdevice.pwrsupply import default_intlklabels as _default_intlklabels
-from siriuspy.util import get_timestamp as _get_timestamp
-from .waveform import PSWaveForm as _PSWaveForm
-from .cycgen import PSCycGenerator as _PSCycGenerator
+import threading
 from abc import abstractmethod as _abstractmethod
 from abc import ABCMeta as _ABCMeta
 from epics import PV as _PV
+from siriuspy.util import get_timestamp as _get_timestamp
+from siriuspy import envars as _envars
+from siriuspy.csdevice.enumtypes import EnumTypes as _et
+from siriuspy.csdevice.pwrsupply import default_wfmlabels as _default_wfmlabels
+from siriuspy.csdevice.pwrsupply import default_intlklabels as _default_intlklabels
+from .waveform import PSWaveForm as _PSWaveForm
+from .cycgen import PSCycGenerator as _PSCycGenerator
 
 
-_connection_timeout = 0.05 # [seconds]
+_connection_timeout       = 0.9 # [seconds]
+_trigger_timeout_default  = 0.002 # [seconds]
+_trigger_interval_default = 0.490/2000.0 # [seconds]
 
 
 class Controller(metaclass=_ABCMeta):
@@ -27,18 +31,44 @@ class Controller(metaclass=_ABCMeta):
     implemented in sub classes. It also contains methods that implement
     most of the controller logic."""
 
-    trigger_timeout = 10000000 # [seconds]
-    #trigger_timout  = 0.002 # [seconds]
-
     def __init__(self, callback=None, psname=None, cycgen=None):
-        self._callback = callback
         self._psname = psname
         self._init_cycgen(cycgen)
         self._set_cycling_state(False)
         self._set_timestamp_cycling(None)
+        self._trigger_timeout = _trigger_timeout_default
+        self._trigger_interval = _trigger_interval_default
+        self._callbacks = {} if callback is None else {_uuid.uuid4():callback}
         self.update_state(init=True)
 
     # --- class interface - properties ---
+
+    @property
+    def psname(self):
+        return self._psname
+
+    @property
+    def connected(self):
+        return True
+
+    @property
+    def trigger_timeout(self):
+        return self._trigger_timeout
+
+    @trigger_timeout.setter
+    def trigger_timeout(self, value):
+        value = float(value) if value > 0.0 else 0.0
+        if value != self._trigger_timeout:
+            self._trigger_timeout = value
+            self.update_state(trigger_timeout=True)
+
+    @property
+    def trigger_interval(self):
+        return self._trigger_interval
+
+    @trigger_interval.setter
+    def trigger_interval(self, value):
+        self._trigger_interval = float(value) if value > 0.0 else 0.0
 
     @property
     def pwrstate(self):
@@ -47,9 +77,11 @@ class Controller(metaclass=_ABCMeta):
     @pwrstate.setter
     def pwrstate(self, value):
         if value not in _et.values('OffOnTyp'): return
-        if value != self.pwrstate:
-            self._set_pwrstate(value)
-            self.update_state(pwrstate=True)
+        # if value != self.pwrstate:
+        #     self._set_pwrstate(value)
+        #     self.update_state(pwrstate=True)
+        self._set_pwrstate(value)
+        self.update_state(pwrstate=True)
 
     @property
     def opmode(self):
@@ -58,16 +90,25 @@ class Controller(metaclass=_ABCMeta):
     @opmode.setter
     def opmode(self, value):
         if value not in _et.values('PSOpModeTyp'): return
-        if value != self.opmode:
-            self._set_cycling_state(False)
-            self._set_timestamp_trigger(None)
-            self._set_timestamp_cycling(None)
-            self._set_wfmindex(0)
-            self._set_cmd_abort_issued(False)
-            if value in (_et.idx.SlowRef,_et.idx.SlowRefSync):
-                self.current_sp = self.current_ref
-            self._set_opmode(value)
-            self.update_state(opmode=True)
+        # if value != self.opmode:
+        #     self._set_cycling_state(False)
+        #     self._set_timestamp_trigger(None)
+        #     self._set_timestamp_cycling(None)
+        #     self._set_wfmindex(0)
+        #     self._set_cmd_abort_issued(False)
+        #     if value in (_et.idx.SlowRef,_et.idx.SlowRefSync):
+        #         self.current_sp = self.current_ref
+        #     self._set_opmode(value)
+        #     self.update_state(opmode=True)
+        self._set_cycling_state(False)
+        self._set_timestamp_trigger(None)
+        self._set_timestamp_cycling(None)
+        self._set_wfmindex(0)
+        self._set_cmd_abort_issued(False)
+        if value in (_et.idx.SlowRef,_et.idx.SlowRefSync):
+            self.current_sp = self.current_ref
+        self._set_opmode(value)
+        self.update_state(opmode=True)
 
     @property
     def reset_counter(self):
@@ -87,7 +128,7 @@ class Controller(metaclass=_ABCMeta):
 
     def abort(self):
         self._inc_abort_counter()
-        if self.opmode in (_et.idx.SlowRefSync, _et.idx.FastRef, _et.idx.MigWfm):
+        if self.opmode in (_et.idx.SlowRefSync, _et.idx.FastRef, _et.idx.MigWfm, _et.idx.Cycle):
             self.opmode = _et.idx.SlowRef
         elif self.opmode == _et.idx.RmpWfm:
             self._set_cmd_abort_issued(True)
@@ -95,10 +136,12 @@ class Controller(metaclass=_ABCMeta):
 
     @property
     def timestamp_trigger(self):
+        self._process_trigger_timed_out()
         return self._get_timestamp_trigger()
 
     @property
     def trigger_timed_out(self):
+        self._process_trigger_timed_out()
         return self._get_trigger_timed_out()
 
     @property
@@ -137,9 +180,13 @@ class Controller(metaclass=_ABCMeta):
 
     @current_sp.setter
     def current_sp(self, value):
-        if value != self.current_sp:
-            self._set_current_sp(float(value))
-            self.update_state(current_sp=True)
+        # if value != self.current_sp:
+        #     #print('controller:', value)
+        #     self._set_current_sp(float(value))
+        #     self.update_state(current_sp=True)
+        #print('controller:', value)
+        self._set_current_sp(float(value))
+        self.update_state(current_sp=True)
 
     @property
     def current_ref(self):
@@ -163,9 +210,11 @@ class Controller(metaclass=_ABCMeta):
 
     @wfmlabel.setter
     def wfmlabel(self, value):
-        if value != self.wfmlabel:
-            self._set_wfmlabel(value)
-            self.update_state(wfmlabel=True)
+        # if value != self.wfmlabel:
+        #     self._set_wfmlabel(value)
+        #     self.update_state(wfmlabel=True)
+        self._set_wfmlabel(value)
+        self.update_state(wfmlabel=True)
 
     @property
     def wfmload(self):
@@ -191,10 +240,13 @@ class Controller(metaclass=_ABCMeta):
 
     @wfmdata.setter
     def wfmdata(self, value):
-        if (value != self.wfmdata).any():
-            self._set_wfmdata_changed(True)
-            self._set_wfmdata(value)
-            self.update_state(wfmdata=True)
+        # if (value != self.wfmdata).any():
+        #     self._set_wfmdata_changed(True)
+        #     self._set_wfmdata(value)
+        #     self.update_state(wfmdata=True)
+        self._set_wfmdata_changed(True)
+        self._set_wfmdata(value)
+        self.update_state(wfmdata=True)
 
     @property
     def _wfmdata_changed(self):
@@ -217,27 +269,27 @@ class Controller(metaclass=_ABCMeta):
     def time(self):
         return self._get_time()
 
-    @property
-    def callback(self):
-        return self._callback
+    def add_callback(self, callback, index=None):
+        index = _uuid.uuid4() if index is None else index
+        self._callbacks[index] = callback
+        return index
 
-    @callback.setter
-    def callback(self, value):
-        if callable(value):
-            self._callback = value
-        else:
-            self._callback = None
+    def remove_callback(self, index):
+        if index in self._callbacks:
+            del self._callbacks[index]
 
+    def clear_callbacks(self):
+        self._callbacks.clear()
 
     # --- class interface - methods ---
 
-    def trigger_signal(self, delay=0, nrpts=1, width=0.0):
+    def trigger_signal(self, delay=0, nrpts=1):
         if delay != 0: _time.sleep(delay)
-        self._process_trigger_timeout()
-        self._process_trigger_signal(nrpts,width)
+        self._process_trigger_timed_out()
+        self._process_trigger_signal(nrpts)
 
     def update_state(self, **kwargs):
-        self._process_trigger_timeout()
+        self._process_trigger_timed_out()
         self._process_pending_waveform_update()
         if self.opmode == _et.idx.SlowRef:
             self._update_SlowRef(**kwargs)
@@ -255,8 +307,10 @@ class Controller(metaclass=_ABCMeta):
             pass
             #raise Exception('Invalid controller opmode')
 
-    def fofb_signal(self):
-        pass
+    def fofb_signal(self, current):
+        if self.opmode == _et.idx.FastRef:
+            self._set_current_ref(float(current))
+            self.update_state(fofb_signal=True)
 
     def _init_cycgen(self, cycgen):
         if cycgen is not None:
@@ -269,10 +323,11 @@ class Controller(metaclass=_ABCMeta):
             else:
                 self._cycgen = _PSCycGenerator(interval=30.0, cycgen_type='exp_cos', period=2.0, tau=10, amplitude=abs(self.current_max))
 
-    def _process_trigger_timeout(self):
+    def _process_trigger_timed_out(self):
         if self.opmode != _et.idx.RmpWfm: return
-        if self.trigger_timed_out:
-            self.wfmindex = 0
+        if self._get_trigger_timed_out():
+            self._set_wfmindex(0)
+            # self._get_timestamp_trigger = None # this is none when changing opmode to SlowRef
 
     def _process_pending_waveform_update(self):
         if self.wfmindex == 0:
@@ -307,12 +362,15 @@ class Controller(metaclass=_ABCMeta):
         pass
 
     def _update_RmpWfm(self, **kwargs):
+        #print('abort_issued', self._cmd_abort_issued)
         if 'trigger_signal' in kwargs:
             scan_value = self._wfmdata_in_use[self._wfmindex]
             self._wfmindex = (self._wfmindex + 1) % len(self._wfmdata_in_use)
             if self._cmd_abort_issued and self._wfmindex == 0:
                 self.opmode = _et.idx.SlowRef
         else:
+            if self._cmd_abort_issued and self._wfmindex == 0:
+                self.opmode = _et.idx.SlowRef
             scan_value = self.current_ref
         self._update_current_ref(scan_value)
 
@@ -333,7 +391,6 @@ class Controller(metaclass=_ABCMeta):
         if 'trigger_signal' in kwargs:
             self._set_cycling_state(True)
         self._process_Cycle()
-
 
     def _check_current_ref_limits(self, value):
         value = value if self.current_min is None else max(value,self.current_min)
@@ -571,7 +628,7 @@ class Controller(metaclass=_ABCMeta):
         pass
 
     @_abstractmethod
-    def _process_trigger_signal(self, nrpts, width):
+    def _process_trigger_signal(self, nrpts):
         pass
 
     @_abstractmethod
@@ -589,11 +646,11 @@ class Controller(metaclass=_ABCMeta):
 
 class ControllerSim(Controller):
 
-    def __init__(self, current_min=None,
+    def __init__(self, psname=None,
+                       current_min=None,
                        current_max=None,
                        current_std=0.0,
                        random_seed=None,
-                       psname=None,
                        **kwargs):
 
         self._time_simulated  = None
@@ -604,7 +661,7 @@ class ControllerSim(Controller):
         self._pwrstate    = _et.idx.Off          # power state
         self._timestamp_pwrstate = now           # last time pwrstate was changed
         self._opmode      = _et.idx.SlowRef      # operation mode state
-        self._timestamp_opmode  = now           # last time opmode was changed
+        self._timestamp_opmode  = now            # last time opmode was changed
         self._abort_counter = 0                  # abort command counter
         self._cmd_abort_issued = False
         self._reset_counter = 0                  # reset command counter
@@ -612,7 +669,6 @@ class ControllerSim(Controller):
         self._intlk = 0                          # interlock signals
         self._intlklabels = _default_intlklabels
         self._timestamp_trigger  = None          # last time trigger signal was received
-
         self.current_max = current_max
         self.current_min = current_min
         self._current_std = current_std          # standard dev of error added to output current
@@ -765,7 +821,7 @@ class ControllerSim(Controller):
         self._mycallback(pvname='wfmsave')
 
     def _get_trigger_timed_out(self):
-        if self._timestamp_trigger is not None and self.time - self._timestamp_trigger > Controller.trigger_timeout:
+        if self._timestamp_trigger is not None and self.time - self._timestamp_trigger > self._trigger_timeout:
             return True
         else:
             return False
@@ -779,7 +835,7 @@ class ControllerSim(Controller):
         else:
             return self._time_simulated
 
-    def _process_trigger_signal(self, nrpts, width):
+    def _process_trigger_signal(self, nrpts):
         now = self.time
         if nrpts == 1:
             self._set_timestamp_trigger(now)
@@ -787,7 +843,7 @@ class ControllerSim(Controller):
         else:
             self._time_simulated = now
             for i in range(nrpts):
-                self._time_simulated = now + i * width
+                self._time_simulated = now + i * self.trigger_interval
                 self._set_timestamp_trigger(self._time_simulated)
                 self.update_state(trigger_signal=True)
             self._time_simulated = None
@@ -796,8 +852,8 @@ class ControllerSim(Controller):
         if value != self._current_ref:
             self._current_ref = value
             self._mycallback(pvname='current_ref')
-        if self._time_simulated is not None:
-            _random.seed(self._time_simulated) # if time is frozen, generated same error.
+        #if self._time_simulated is not None:
+        #    _random.seed(self._time_simulated) # if time is frozen, generated same error.
         value = _random.gauss(self._current_ref, self._current_std)
         if value != self._current_load:
             self._current_load = value
@@ -821,30 +877,43 @@ class ControllerSim(Controller):
                 self._update_current_ref(scan_value)
 
     def _mycallback(self, pvname):
-        if self._callback is None:
-            return
+        # if self._callback is None:
+        #     return
+        if not self._callbacks: return
+
         elif pvname == 'pwrstate':
-            self._callback(pvname='pwrstate', value=self._pwrstate)
+            for callback in self._callbacks.values():
+                callback(pvname='pwrstate', value=self._pwrstate)
         elif pvname == 'opmode':
-            self._callback(pvname='opmode', value=self._opmode)
+            for callback in self._callbacks.values():
+                callback(pvname='opmode', value=self._opmode)
         elif pvname == 'current_sp':
-            self._callback(pvname='current_sp', value=self._current_sp)
+            for callback in self._callbacks.values():
+                callback(pvname='current_sp', value=self._current_sp)
         elif pvname == 'current_ref':
-            self._callback(pvname='current_ref', value=self._current_ref)
+            for callback in self._callbacks.values():
+                callback(pvname='current_ref', value=self._current_ref)
         elif pvname == 'current_load':
-            self._callback(pvname='current_load', value=self._current_load)
+            for callback in self._callbacks.values():
+                callback(pvname='current_load', value=self._current_load)
         elif pvname == 'wfmload':
-            self._callback(pvname='wfmload', value=self._wfmslot)
+            for callback in self._callbacks.values():
+                callback(pvname='wfmload', value=self._wfmslot)
         elif pvname == 'wfmdata':
-            self._callback(pvname='wfmdata', value=self._waveform.data)
+            for callback in self._callbacks.values():
+                callback(pvname='wfmdata', value=self._waveform.data)
         elif pvname == 'wfmlabel':
-            self._callback(pvname='wfmlabel', value=self._waveform.label)
+            for callback in self._callbacks.values():
+                callback(pvname='wfmlabel', value=self._waveform.label)
         elif pvname == 'wfmsave':
-            self._callback(pvname='wfmsave', value=self._wfmsave)
+            for callback in self._callbacks.values():
+                callback(pvname='wfmsave', value=self._wfmsave)
         elif pvname == 'reset':
-            self._callback(pvname='reset', value=self._wfmsave)
+            for callback in self._callbacks.values():
+                callback(pvname='reset', value=self._reset_counter)
         elif pvname == 'abort':
-            self._callback(pvname='abort', value=self._wfmsave)
+            for callback in self._callbacks.values():
+                callback(pvname='abort', value=self._abort_counter)
         else:
             raise NotImplementedError
 
@@ -890,23 +959,21 @@ class ControllerSim(Controller):
             self._waveform.save_to_file(filename=fname+'.txt')
         except PermissionError:
             raise Exception('Could not write file "' + fname+'.txt' + '"!')
-
 Controller.register(ControllerSim)
-
 
 class ControllerEpics(Controller):
 
     def __init__(self, psname,
                        connection_timeout=_connection_timeout,
+                       use_vaca=False,
+                       vaca_prefix=None,
                        **kwargs):
 
         self._psname = psname
         self._connection_timeout = connection_timeout
-        self._callback = None
-        self._create_epics_pvs()
+        self._callbacks = {}
+        self._create_epics_pvs(use_vaca=use_vaca,vaca_prefix=vaca_prefix)
         super().__init__(psname=psname,**kwargs)
-
-
         now = self.time
         self._timestamp_pwrstate = now # last time pwrstate was changed
         self._timestamp_opmode   = now # last time opmode was changed
@@ -922,18 +989,22 @@ class ControllerEpics(Controller):
 
     def _set_pwrstate(self, value):
         if value not in _et.values('OffOnTyp'): raise Exception('Invalid value of pwrstate_sel')
-        if value != self.pwrstate:
-            self._pvs['PwrState-Sel'].value = value
-            self.update_state(pwrstate=True)
+        # if value != self.pwrstate:
+        #     self._pvs['PwrState-Sel'].value = value
+        #     self.update_state(pwrstate=True)
+        self._pvs['PwrState-Sel'].value = value
+        self.update_state(pwrstate=True)
 
     def _get_opmode(self):
         return self._pvs['OpMode-Sts'].get(timeout=self._connection_timeout)
 
     def _set_opmode(self, value):
         if value not in _et.values('OffOnTyp'): raise Exception('Invalid value of pwrstate_sel')
-        if value != self.opmode:
-            self._pvs['OpMode-Sel'].value = value
-            self.update_state(opmode=True)
+        # if value != self.opmode:
+        #     self._pvs['OpMode-Sel'].value = value
+        #     self.update_state(opmode=True)
+        self._pvs['OpMode-Sel'].value = value
+        self.update_state(opmode=True)
 
     def _set_cmd_abort_issued(self, value):
         pass
@@ -995,9 +1066,11 @@ class ControllerEpics(Controller):
         return self._pvs['Current-SP'].get(timeout=self._connection_timeout)
 
     def _set_current_sp(self, value):
-        if value != self.current_sp:
-            self._pvs['Current-SP'].value = value
-            self.update_state(current_sp=True)
+        # if value != self.current_sp:
+        #     self._pvs['Current-SP'].value = value
+        #     self.update_state(current_sp=True)
+        self._pvs['Current-SP'].value = value
+        self.update_state(current_sp=True)
 
     def _get_current_ref(self):
         return self._pvs['CurrentRef-Mon'].get(timeout=self._connection_timeout)
@@ -1018,17 +1091,21 @@ class ControllerEpics(Controller):
         return self._pvs['WfmLabel-RB'].get(timeout=self._connection_timeout)
 
     def _set_wfmlabel(self, value):
-        if value != self.wfmlabel:
-            self._pvs['WfmLabel-SP'].value = value
-            self.update_state(wfmlabel=True)
+        # if value != self.wfmlabel:
+        #     self._pvs['WfmLabel-SP'].value = value
+        #     self.update_state(wfmlabel=True)
+        self._pvs['WfmLabel-SP'].value = value
+        self.update_state(wfmlabel=True)
 
     def _get_wfmload(self):
         return self._pvs['WfmLoad-Sts'].get(timeout=self._connection_timeout)
 
     def _set_wfmload(self, value):
-        if value != self.wfmload:
-            self._pvs['WfmLoad-Sel'].value = value
-            self.update_state(wfmload=True)
+        # if value != self.wfmload:
+        #     self._pvs['WfmLoad-Sel'].value = value
+        #     self.update_state(wfmload=True)
+        self._pvs['WfmLoad-Sel'].value = value
+        self.update_state(wfmload=True)
 
     def _get_wfmload_changed(self):
         return False
@@ -1040,9 +1117,11 @@ class ControllerEpics(Controller):
         return self._pvs['WfmData-RB'].get(timeout=self._connection_timeout)
 
     def _set_wfmdata(self, value):
-        if (value != self.wfmdata).any():
-            self._pvs['WfmData-SP'].value = value
-            self.update_state(wfmdata=True)
+        # if (value != self.wfmdata).any():
+        #     self._pvs['WfmData-SP'].value = value
+        #     self.update_state(wfmdata=True)
+        self._pvs['WfmData-SP'].value = value
+        self.update_state(wfmdata=True)
 
     def _get_wfmdata_changed(self):
         return False
@@ -1066,7 +1145,7 @@ class ControllerEpics(Controller):
     def _get_time(self):
         return _time.time()
 
-    def _process_trigger_signal(self, nrpts, width):
+    def _process_trigger_signal(self, nrpts):
         pass
 
     def _set_current_ref(self, value):
@@ -1082,14 +1161,20 @@ class ControllerEpics(Controller):
         pass
 
     def _mycallback(self, pvname, value, **kwargs):
-        if self._callback is None:
-            return
-        else:
-            self._callback(pvname=pvname, value=value, **kwargs)
+        #print('[CE] [callback] ', pvname, value)
+        if self._callbacks:
+            for callback in self._callbacks.values():
+                callback(pvname=pvname, value=value, **kwargs)
 
-    def _create_epics_pvs(self):
+    def _create_epics_pvs(self, use_vaca, vaca_prefix):
         self._pvs = {}
-        pv = self._psname
+        if use_vaca:
+            if vaca_prefix is None:
+                vaca_prefix = _envars.vaca_prefix
+        else:
+            vaca_prefix = ''
+        pv = vaca_prefix + self._psname
+        # eventually get this list from csdevice !!!
         self._pvs['PwrState-Sel']    = _PV(pv + ':PwrState-Sel',    connection_timeout=self._connection_timeout)
         self._pvs['PwrState-Sts']    = _PV(pv + ':PwrState-Sts',    connection_timeout=self._connection_timeout)
         self._pvs['OpMode-Sel']      = _PV(pv + ':OpMode-Sel',      connection_timeout=self._connection_timeout)
@@ -1135,27 +1220,36 @@ class ControllerEpics(Controller):
         self._pvs['WfmSave-Cmd'].wait_for_connection(timeout=self._connection_timeout)
 
         # add callback
-        uuid = _uuid.uuid4()
-        self._pvs['PwrState-Sel'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['PwrState-Sts'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['OpMode-Sel'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['OpMode-Sts'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['Reset-Cmd'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['Abort-Cmd'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['Intlk-Mon'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['IntlkLabels-Cte'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['Current-SP'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['Current-RB'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['CurrentRef-Mon'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['Current-Mon'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['WfmIndex-Mon'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['WfmLabels-Mon'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['WfmLabel-SP'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['WfmLabel-RB'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['WfmLoad-Sel'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['WfmLoad-Sts'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['WfmData-SP'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['WfmData-RB'].add_callback(callback=self._mycallback, index=uuid)
-        self._pvs['WfmSave-Cmd'].add_callback(callback=self._mycallback, index=uuid)
+        index = None
+        index = self._pvs['PwrState-Sel'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['PwrState-Sts'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['OpMode-Sel'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['OpMode-Sts'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['Reset-Cmd'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['Abort-Cmd'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['Intlk-Mon'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['IntlkLabels-Cte'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['Current-SP'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['Current-RB'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['CurrentRef-Mon'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['Current-Mon'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['WfmIndex-Mon'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['WfmLabels-Mon'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['WfmLabel-SP'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['WfmLabel-RB'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['WfmLoad-Sel'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['WfmLoad-Sts'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['WfmData-SP'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['WfmData-RB'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['WfmSave-Cmd'].add_callback(callback=self._mycallback, index=index)
 
+    def __del__(self):
+        for index,pv in self._pvs.items():
+            pv.remove_callback(index=index)
+        if hasattr(super(), '__del__'):
+            super().__del__()
+Controller.register(ControllerEpics)
+
+class ControllerUDC(Controller):
+    pass
 Controller.register(ControllerEpics)

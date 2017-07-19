@@ -1,18 +1,16 @@
 from .BaseMagnetControlWidget import BaseMagnetControlWidget
 
+
 class SiSlowCorrectorControlWidget(BaseMagnetControlWidget):
-    def __init__(self, magnet_list, orientation=0, parent=None):
-        super(SiSlowCorrectorControlWidget, self).__init__(magnet_list, orientation, parent)
-        self._setupUi()
 
     def _getPattern(self):
         return "SI-\w{4}:MA-(CH|CV)(-[1-2])*"
 
     def _getMetric(self):
-        return "Angle"
+        return "Kick"
 
     def _getHeader(self):
-        return [None, None, None, "Setpoint [A]", "Readback [A]", "Angle [mrad]"]
+        return [None, None, None, "Setpoint [A]", "Cur-Mon [A]", "Kick [mrad]"]
 
     def _hasTrimButton(self):
         return False
@@ -24,8 +22,9 @@ class SiSlowCorrectorControlWidget(BaseMagnetControlWidget):
         return True
 
     def _getGroups(self):
-        return [    ('Horizontal Slow Correctors', '-CH'),
-                    ('Vertical Slow Corretors', '-CV')]
+        return [('Horizontal Slow Correctors', '-CH'),
+                ('Vertical Slow Corretors', '-CV')]
+
 
 class BoSlowCorrectorControlWidget(SiSlowCorrectorControlWidget):
     def _getPattern(self):
@@ -34,15 +33,17 @@ class BoSlowCorrectorControlWidget(SiSlowCorrectorControlWidget):
     def _divideBySection(self):
         return False
 
+
 class TBSlowCorrectorControlWidget(SiSlowCorrectorControlWidget):
     def _getPattern(self):
-        return "TB-\w{2}:MA-(CH|CV)(-[1-2])*"
+        return "TB-\d{2}:MA-(CH|CV).*"
 
     def _hasScrollArea(self):
         return False
 
     def _divideBySection(self):
-        return False
+        return True
+
 
 class TSSlowCorrectorControlWidget(SiSlowCorrectorControlWidget):
     def _getPattern(self):
@@ -52,4 +53,4 @@ class TSSlowCorrectorControlWidget(SiSlowCorrectorControlWidget):
         return False
 
     def _divideBySection(self):
-        return False
+        return True

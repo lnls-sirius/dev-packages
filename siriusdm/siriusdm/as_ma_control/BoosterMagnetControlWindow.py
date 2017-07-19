@@ -1,17 +1,21 @@
+""""""
 import re
 from pydm.PyQt.QtGui import QPushButton
-from siriuspy.pwrsupply import psdata
+from siriuspy.search import MASearch
 from .BaseMagnetControlWindow import BaseMagnetControlWindow
-from .BaseMagnetControlWidget import BaseMagnetControlWidget
-from .DipoleDetailWidget import DipoleDetailWidget
-from .FamQuadrupoleControlWidget import BoFamQuadrupoleControlWidget
-from .FamSextupoleControlWidget import BoFamSextupoleControlWidget
-from .SlowCorrectorControlWidget import BoSlowCorrectorControlWidget
-from .SkewQuadControlWidget import BoSkewQuadControlWidget
+from .control_widget.BaseMagnetControlWidget import BaseMagnetControlWidget
+from .detail_widget.DipoleDetailWidget import DipoleDetailWidget
+from .control_widget.FamQuadrupoleControlWidget import BoFamQuadrupoleControlWidget
+from .control_widget.FamSextupoleControlWidget import BoFamSextupoleControlWidget
+from .control_widget.SlowCorrectorControlWidget import BoSlowCorrectorControlWidget
+from .control_widget.SkewQuadControlWidget import BoSkewQuadControlWidget
 
 class BoosterMagnetControlWindow(BaseMagnetControlWindow):
+    """"""
+
     def __init__(self, parent=None):
-        self._magnets = [re.sub("PS-", "MA-", x) for x in psdata.get_names() if re.match("^BO", x)]
+        """Class constructor."""
+        self._magnets = [re.sub("PS-", "MA-", x) for x in MASearch.get_manames([{"section": "BO"}])]
         super(BoosterMagnetControlWindow, self).__init__(parent)
         self.setWindowTitle('Booster Magnet Control Panel')
 
