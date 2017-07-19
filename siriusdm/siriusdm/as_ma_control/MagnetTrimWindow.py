@@ -109,7 +109,7 @@ class MagnetTrimWindow(QDialog):
 
         # Trims
         trims = self._getTrims()
-        print(trims)
+        # print(trims)
 
         self.trims_group_1 = QGroupBox()
         self.trims_group_2 = QGroupBox()

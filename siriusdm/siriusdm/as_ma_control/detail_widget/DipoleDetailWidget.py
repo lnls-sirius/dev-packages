@@ -132,6 +132,7 @@ class DipoleDetailWidget(MagnetDetailWidget):
 
         self.current_rb_val = PyDMLabel(
             self, "ca://" + self._magnet_name + ":Current-RB")
+        self.current_rb_val.precFromPV = True
         # self.current_rb_val.setPrecision(3)
 
         self.current_sp_val = PyDMLineEdit(
