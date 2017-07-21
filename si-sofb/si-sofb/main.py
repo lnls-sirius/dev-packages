@@ -129,6 +129,39 @@ class App:
         self.correctors.connect()
         _log.info('All Correctors connection opened.')
 
+    def apply_kicks(self,code):
+        if not self.correction_mode:
+            self._call_callback('Log-Mon','Err: Offline, cannot apply kicks.')
+            return False
+        if self._thread and self._thread.isAlive():
+            self._call_callback('Log-Mon','Err: AutoCorr or MeasRSPMtx is On.')
+            return False
+        if self.dtheta is None:
+            self._call_callback('Log-Mon','Err: Cannot Apply Kick. Calc Corr first.')
+            return False
+        Thread(target=self._apply_kicks,kwargs={'code':code},daemon=True).start()
+        return True
+
+    def _apply_kicks(self,code):
+        kicks = self.dtheta.copy()
+        str_ = 'Applying '
+        if code == 0:
+            str_ += 'CH '
+            kicks[NR_CH:] = 0
+        elif code == 1:
+            str_ += 'CV '
+            kicks[:NR_CH] = 0
+            kicks[-1] = 0
+        elif code == 2:
+            str_ += 'RF '
+            kicks[:-1] = 0
+        elif code == 3:
+            str_ += 'All '
+        self._call_callback('Log-Mon',str_ + 'kicks.')
+        kicks = self._process_kicks(kicks)
+        if any(kicks):
+            self.correctors.apply_kicks(self.corr_kicks + kicks, delta=False)
+
     def _call_callback(self,pv,value):
         self._update_driver(self.prefix + pv, value)
 
@@ -302,36 +335,3 @@ class App:
             kicks[-1] *= self.max_kick['rf']/abs(kick[-1])
             percent = self.strengths['rf'] * (self.max_kick['rf']/max_kick_rf)  * 100
             self._call_callback('Log-Mon','Warn: RF kick > RFMaxKick. Using {0:5.2f}%'.format(percent))
-
-    def apply_kicks(self,code):
-        if not self.correction_mode:
-            self._call_callback('Log-Mon','Err: Offline, cannot apply kicks.')
-            return False
-        if self._thread and self._thread.isAlive():
-            self._call_callback('Log-Mon','Err: AutoCorr or MeasRSPMtx is On.')
-            return False
-        if self.dtheta is None:
-            self._call_callback('Log-Mon','Err: Cannot Apply Kick. Calc Corr first.')
-            return False
-        Thread(target=self._apply_kicks,kwargs={'code':code},daemon=True).start()
-        return True
-
-    def _apply_kicks(self,code):
-        kicks = self.dtheta.copy()
-        str_ = 'Applying '
-        if code == 0:
-            str_ += 'CH '
-            kicks[NR_CH:] = 0
-        elif code == 1:
-            str_ += 'CV '
-            kicks[:NR_CH] = 0
-            kicks[-1] = 0
-        elif code == 2:
-            str_ += 'RF '
-            kicks[:-1] = 0
-        elif code == 3:
-            str_ += 'All '
-        self._call_callback('Log-Mon',str_ + 'kicks.')
-        kicks = self._process_kicks(kicks)
-        if any(kicks):
-            self.correctors.apply_kicks(self.corr_kicks + kicks, delta=False)

@@ -9,7 +9,7 @@ _TIMEOUT = 0.05
 
 TINY_INTERVAL = 0.01
 NUM_TIMEOUT = 1000
-WAIT_FOR_SIMULATOR = 0.5
+WAIT_FOR_SIMULATOR = 3
 
 NR_CH    = 120
 NR_CV    = 160
@@ -63,19 +63,16 @@ class Correctors:
                                               callback=self._kickApplied))
             self.corr_pvs_ready[LL_PREF+dev+':Current-RB'] = False
             self.corr_pvs_applied[LL_PREF+dev+':CurrentRef-Mon'] = False
-        self.rf_pv_sp = _epics.PV(LL_PREF+SECTION + '-Glob:RF-SRFCav:Freq-SP')
-        self.rf_pv_rb = _epics.PV(LL_PREF+SECTION + '-Glob:RF-SRFCav:Freq-RB')
+        self.rf_pv_sp = _epics.PV(LL_PREF+SECTION + '-03SP:RF-SRFCav:Freq-SP')
+        self.rf_pv_rb = _epics.PV(LL_PREF+SECTION + '-03SP:RF-SRFCav:Freq-RB')
         self.event_pv_mode_sel = _epics.PV(SECTION + '-Glob:TI-Event:OrbitMode-Sel')
         self.event_pv_sp = _epics.PV(SECTION + '-Glob:TI-Event:OrbitExtTrig-Cmd')
 
     def apply_kicks(self,values, delta=False):
-        Thread(target=self._apply_kicks,kwargs={'values':values,'delta':delta},daemon=True).start()
-
-    def _apply_kicks(self,values,delta=False):
         if delta: values = self.get_correctors_strength() + values
         #apply the RF kick
         if self.rf_pv_sp.connected:
-            if not self._equalKick(values[-1],self.rf_pv_sp):
+            if not self._equalKick(values[-1],self.rf_pv_sp.value):
                 self.rf_pv_sp.value = values[-1]
         else:
             self._call_callback('Log-Mon','PV '+self.rf_pv_sp.pvname+' Not Connected.')
