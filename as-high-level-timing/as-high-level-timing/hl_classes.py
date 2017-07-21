@@ -52,7 +52,6 @@ class _HL_Base:
         self._ll_objs_names = self._get_LL_OBJS_NAMES(channels)
         _log.debug(self.prefix+ ' LL names: '+' '.join([tr for tr in self._ll_objs_names]))
         len_rb = len(self._ll_objs_names)
-        self._values_rb = {  key:len_rb*[val] for key,val in self._hl2ll.items()  }
         self._ll_objs = dict()
         self._ll_objs_conn_sts = list()
 
@@ -74,22 +73,21 @@ class _HL_Base:
         }
         return map_
 
-    def _get_LL_OBJS_NAMES(self,channels=None):
+    def _get_LL_OBJS_NAMES(self, channels=None):
         return None
 
-    def _get_LL_OBJ(self,**kwargs):
-        return None # must return the low level object.
+    def _get_LL_OBJ(self, **kwargs):
+        return None  # must return the low level object.
 
     def connect(self):
         _log.info(self.prefix+' -> connecting to LL Devices')
         for chan in self._ll_objs_names:
-            _log.debug(self.prefix +' -> connecting to {0:s}'.format(chan))
+            _log.debug(self.prefix + ' -> connecting to {0:s}'.format(chan))
             low_lev_obj = self._get_LL_OBJ(
-                                channel = chan,
-                                callback = self._pvs_values_rb,
-                                connection_callback = self._ll_on_connection,
-                                initial_hl2ll=_copy.deepcopy(self._hl2ll),
-                                )
+                                channel=chan,
+                                callback=self._pvs_values_rb,
+                                connection_callback=self._ll_on_connection,
+                                initial_hl2ll=_copy.deepcopy(self._hl2ll))
             self._ll_objs[chan] = low_lev_obj
             self._ll_objs_conn_sts.append(0)
 
@@ -97,15 +95,22 @@ class _HL_Base:
         for obj in self._ll_objs.values():
             obj.check()
 
-    def _ll_on_connection(self,channel,status):
+    def _ll_on_connection(self, channel, status):
         ind = self._ll_objs_names.index(channel)
-        _log.debug(self.prefix+' channel = {0:s}; status = {1:d}; ind = {2:d}; len(_ll_objs) = {3:d}'.format(channel,int(status),ind,len(self._ll_objs_conn_sts)))
+        _log.debug(
+            self.prefix +
+            ' channel = {0:s};'.format(channel) +
+            ' status = {1:d};'.format(int(status)) +
+            ' ind = {2:d};'.format(ind) +
+            ' len(_ll_objs) = {3:d}'.format(len(self._ll_objs_conn_sts))
+            )
+
         if len(self._ll_objs_conn_sts) > ind:
             self._ll_objs_conn_sts[ind] = int(status)
         else:
             _log.error(self.prefix + 'ind > _ll_objs_conn_sts.')
         status = all(self._ll_objs_conn_sts)
-        self.callback( self.prefix + 'Connections-Mon', self._ll_objs_conn_sts )
+        self.callback(self.prefix + 'Connection-Mon', status)
 
     def _get_initial_hl2ll(self):
         map_ = {
@@ -115,56 +120,74 @@ class _HL_Base:
     def _pvs_values_rb(self, channel, prop, value):
         if prop not in self._HL_PROPS:
             if self._hl2ll[prop] != value:
-                _log.warning(self.prefix+' RB propty = '+prop+' (not HL); '+' LL Device = '+channel+
-                            '; New Value = '+str(value)+'; Expected Value = '+str(self._hl2ll[prop]))
+                _log.warning(self.prefix + ' RB propty = ' + prop +
+                             ' (not HL); ' + ' LL Device = ' + channel +
+                             '; New Value = ' + str(value) +
+                             '; Expected Value = ' + str(self._hl2ll[prop]))
             return
-        _log.debug(self.prefix+' RB propty = {0:s}; LL Device = {1:s}; New Value = {2:s}'.format(prop,channel,str(value)))
-        ind = self._ll_objs_names.index(channel)
-        self._values_rb[prop][ind] = self._RB_FUNS[prop](value)
-        self.callback( self.prefix + self._HLPROP_2_PVRB[prop], self._values_rb[prop]  )
+        _log.debug(self.prefix +
+                   ' RB propty = {0:s};'.format(prop) +
+                   ' LL Device = {1:s};'.format(channel) +
+                   ' New Value = {2:s}'.format(str(value)))
+        self.callback(self.prefix + self._HLPROP_2_PVRB[prop],
+                      self._RB_FUNS[prop](value))
 
-    def set_propty(self,prop,value):
-        _log.debug(self.prefix+' propty {0:10s}; Value = {1:s}'.format(prop,str(value)))
+    def set_propty(self, prop, value):
+        _log.debug(self.prefix +
+                   ' propty {0:10s};'.format(prop) +
+                   ' Value = {1:s}'.format(str(value)))
         if value == self._hl2ll[prop]:
             _log.debug(self.prefix+' new value = old value.')
             return True
         v = self._SP_FUNS[prop](value)
-        _log.debug(self.prefix+' propty {0:10s}; Value = {1:s} -> {2:s}'.format(prop,str(value),str(v)))
+        _log.debug(self.prefix +
+                   ' propty {0:10s};'.format(prop) +
+                   ' Value = {1:s} -> {2:s}'.format(str(value), str(v)))
         self._hl2ll[prop] = v
         for dev, obj in self._ll_objs.items():
             _log.debug(self.prefix+' Sending to LL device = {0:s}'.format(dev))
-            obj.set_propty(prop,self._hl2ll[prop])
+            obj.set_propty(prop, self._hl2ll[prop])
         return True
 
 
 class HL_Event(_HL_Base):
+    """This Class is the High Level control of the Events of the EVG."""
 
-    _HL_PROPS = {'delay','mode','delay_type'}
+    _HL_PROPS = {'delay', 'mode', 'delay_type'}
 
     def get_database(self):
+        """Create the database of the class."""
         db = dict()
         pre = self.prefix
         len_rb = len(self._ll_objs_names)
-        db[pre + 'Delay-SP']      = {'type' : 'float', 'count': 1, 'value': 0.0, 'unit':'us', 'prec': 3,
-                                     'fun_set_pv':lambda x: self.set_propty('delay',x)}
-        db[pre + 'Delay-RB']      = {'type' : 'float', 'count': len_rb, 'value': 0.0, 'unit':'us','prec': 3}
-        db[pre + 'Mode-Sel']      = {'type' : 'enum', 'enums':Events.MODES, 'value':1,
-                                     'fun_set_pv':lambda x: self.set_propty('mode',x)}
-        db[pre + 'Mode-Sts']      = {'type' : 'int', 'value':1, 'count':len_rb}
-        db[pre + 'DelayType-Sel'] = {'type' : 'enum', 'enums':Events.DELAY_TYPES, 'value':1,
-                                     'fun_set_pv':lambda x: self.set_propty('delay_type',x)}
-        db[pre + 'DelayType-Sts'] = {'type' : 'int', 'value':1, 'count':len_rb}
-        db[pre + 'Connections-Mon']  = {'type':'int', 'value':0, 'count':len_rb}
+        db[pre + 'Delay-SP'] = {
+            'type': 'float', 'count': 1, 'value': 0.0, 'unit': 'us',
+            'prec': 3, 'fun_set_pv': lambda x: self.set_propty('delay', x)}
+        db[pre + 'Delay-RB'] = {
+            'type': 'float', 'count': len_rb,
+            'value': 0.0, 'unit': 'us', 'prec': 3}
+        db[pre + 'Mode-Sel'] = {
+            'type': 'enum', 'enums': Events.MODES, 'value': 1,
+            'fun_set_pv': lambda x: self.set_propty('mode', x)}
+        db[pre + 'Mode-Sts'] = {'type': 'int', 'value': 1, 'count': len_rb}
+        db[pre + 'DelayType-Sel'] = {
+            'type': 'enum', 'enums': Events.DELAY_TYPES, 'value': 1,
+            'fun_set_pv': lambda x: self.set_propty('delay_type', x)}
+        db[pre + 'DelayType-Sts'] = {
+            'type': 'int', 'value': 1, 'count': len_rb}
+        db[pre + 'Connections-Mon'] = {
+            'type': 'int', 'value': 0, 'count': len_rb}
         return db
 
-    def __init__(self,prefix,callback,code):
-        super().__init__(prefix,callback,code)
+    def __init__(self, prefix, callback, code):
+        """Initialize object."""
+        super().__init__(prefix, callback, code)
 
     def _get_initial_hl2ll(self):
         map_ = {
-            'delay'      : 0,
-            'mode'       : 0,
-            'delay_type' : 0,
+            'delay': 0,
+            'mode': 0,
+            'delay_type': 0,
             }
         return map_
 
