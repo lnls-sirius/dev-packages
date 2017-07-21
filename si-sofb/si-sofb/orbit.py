@@ -82,7 +82,7 @@ class Orbit:
         self.offline_orbit = {'x':_np.zeros(NR_BPMS),'y':_np.zeros(NR_BPMS)}
         self.orbit_points_num = 1
         self.correction_mode = 1
-        self.count = 0
+        self.count = {'x':0, 'y':0}
         self.pv = {'x':None, 'y':None}
 
     def connect(self):
@@ -106,7 +106,7 @@ class Orbit:
             self._call_callback('CorrOrbitY-Mon',list(orby))
         else:
             if reset: self._reset_orbs()
-            for i in range(2 * self.orbit_points_num):
+            for i in range(3 * self.orbit_points_num):
                 if self.orb['x'] is not None and self.orb['y'] is not None:
                     orbx = self.orb['x']
                     orby = self.orb['y']
@@ -156,9 +156,8 @@ class Orbit:
         _np.savetxt(self.GOLDEN_ORBIT_FILENAME+plane.upper() + self.EXT,orb)
 
     def _reset_orbs(self):
-        self.count = 0
-        self.orb['x'] = None
-        self.orb['y'] = None
+        self.count = {'x':0, 'y':0}
+        self.orb = {'x':None, 'y':None}
 
     def _update_orbs(self,plane):
         def update(pvname,value,**kwargs):
@@ -173,8 +172,8 @@ class Orbit:
             self._call_callback('OnlineOrbit'+plane.upper()+'-Mon',list(orb))
             if self.correction_mode:
                 self._call_callback('CorrOrbit'+plane.upper()+'-Mon',list(orb))
-            self.count += 1
-            if self.count >= self.orbit_points_num:
+            self.count[plane] += 1
+            if self.count[plane] >= self.orbit_points_num:
                 self.orb[plane] = orb
             return True
         return update
