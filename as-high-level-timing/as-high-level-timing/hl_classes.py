@@ -34,24 +34,25 @@ class _HL_Base:
     _HL_PROPS = {}
 
     def get_database(self):
-        db = dict() # deictionary must have key fun_set_pv for the driver to use in write method
-        pre = self.prefix
+        db = dict()   # dictionary must have key fun_set_pv
         return db
 
-    def __init__(self,prefix,callback,channels):
-        _log.info(prefix+' Starting.')
+    def __init__(self, prefix, callback, channels):
+        _log.info(prefix + ' Starting.')
         self._HLPROP_2_PVSP = self._get_HLPROP_2_PVSP()
-        self._PVSP_2_HLPROP = {  val:key for key,val in self._HLPROP_2_PVSP.items()  }
+        self._PVSP_2_HLPROP = {val: key
+                               for key, val in self._HLPROP_2_PVSP.items()}
         self._HLPROP_2_PVRB = self._get_HLPROP_2_PVRB()
-        self._PVRB_2_HLPROP = {  val:key for key,val in self._HLPROP_2_PVRB.items()  }
-        self._RB_FUNS  = self._get_RB_FUNS()
+        self._PVRB_2_HLPROP = {val: key
+                               for key, val in self._HLPROP_2_PVRB.items()}
+        self._RB_FUNS = self._get_RB_FUNS()
         self._SP_FUNS = self._get_SP_FUNS()
         self.callback = callback
         self.prefix = prefix
         self._hl2ll = self._get_initial_hl2ll()
         self._ll_objs_names = self._get_LL_OBJS_NAMES(channels)
-        _log.debug(self.prefix+ ' LL names: '+' '.join([tr for tr in self._ll_objs_names]))
-        len_rb = len(self._ll_objs_names)
+        _log.debug(self.prefix + ' LL names: ' +
+                   ' '.join([tr for tr in self._ll_objs_names]))
         self._ll_objs = dict()
         self._ll_objs_conn_sts = list()
 
