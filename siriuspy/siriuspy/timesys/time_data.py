@@ -118,12 +118,12 @@ class IOs:
 
     @staticmethod
     def ios_meaning(conn=None):
-        print(  '{0:13s} {1:s}'.format('Connection', 'Meaning')  )
-        print(  '{0:13s} {1:s}'.format('MFIO', 'Multi Fibre Input/Output')  )
-        print(  '{0:13s} {1:s}'.format('OPTIO', 'Optical Fibre Input/Output')  )
-        print(  '{0:13s} {1:s}'.format('SRIO', 'RS485 Serial Network')  )
-        print(  '{0:13s} {1:s}'.format('LVEIO', 'Low Voltage Eletric Input/Output')  )
-        print(  '{0:13s} {1:s}'.format('HVEIO', 'High Voltage Eletric Input/Output')  )
+        print('{0:13s} {1:s}'.format('Connection', 'Meaning'))
+        print('{0:13s} {1:s}'.format('MFIO', 'Multi Fibre Input/Output'))
+        print('{0:13s} {1:s}'.format('OPTIO', 'Optical Fibre Input/Output'))
+        print('{0:13s} {1:s}'.format('SRIO', 'RS485 Serial Network'))
+        print('{0:13s} {1:s}'.format('LVEIO', 'Low Voltage Eletric Input/Output'))
+        print('{0:13s} {1:s}'.format('HVEIO', 'High Voltage Eletric Input/Output'))
 
 
 _LOCAL = False
@@ -135,20 +135,21 @@ class _TimeDevData:
     _spacing_for_plot = 10
 
     def __init__(self, timeout=_timeout):
-        self._conn_from_evg       = dict()
-        self._conn_twrds_evg      = dict()
-        self._devices_relations   = dict()
-        self._top_chain_devs      = set()
+        self._conn_from_evg = dict()
+        self._conn_twrds_evg = dict()
+        self._devices_relations = dict()
+        self._top_chain_devs = set()
         self._final_receiver_devs = set()
-        self._all_devices         = set()
-        self._hierarchy_map       = list()
-        self._positions           = dict()
-        self._colors              = dict()
-        self._arrow_colors        = dict()
+        self._all_devices = set()
+        self._hierarchy_map = list()
+        self._positions = dict()
+        self._colors = dict()
+        self._arrow_colors = dict()
         if _web.server_online():
             if _LOCAL:
-                with open('/home/fac_files/lnls-sirius/control-system-constants/'+
-                          'timesys/timing-devices-connection.txt','r') as f:
+                with open('/home/fac_files/lnls-sirius/' +
+                          'control-system-constants/' +
+                          'timesys/timing-devices-connection.txt', 'r') as f:
                     text = f.read()
             else:
                 text = _web.timing_devices_mapping(timeout=_timeout)
@@ -157,9 +158,9 @@ class _TimeDevData:
 
     def _update_related_maps(self):
         self._build_devices_relations()
-        self._top_chain_devs      = self._dev_from_evg.keys() - self._dev_twds_evg.keys()
+        self._top_chain_devs = self._dev_from_evg.keys() - self._dev_twds_evg.keys()
         self._final_receiver_devs = self._dev_twds_evg.keys() - self._dev_from_evg.keys()
-        self._all_devices         = self._dev_from_evg.keys() | self._dev_twds_evg.keys()
+        self._all_devices = self._dev_from_evg.keys() | self._dev_twds_evg.keys()
         self._build_hierarchy_map()
         self._isGraphUpToDate = False
 
@@ -179,7 +180,7 @@ class _TimeDevData:
         for n,line in enumerate(lines,1):
             line = line.strip()
             if not line or line[0] == '#': continue # empty line
-            out,inn,*_ = line.split()
+            out, inn = line.split()[:2]
             out, inn = _PVName(out), _PVName(inn)
             send, ochn, octyp, ocn = self._get_dev_and_channel(out)
             recv, ichn, ictyp, icn = self._get_dev_and_channel(inn)
