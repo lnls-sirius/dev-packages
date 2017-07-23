@@ -226,7 +226,7 @@ class App:
         self._call_callback('Log-Mon', str_ + 'kicks.')
         kicks = self._process_kicks(kicks)
         if any(kicks):
-            self.correctors.apply_kicks(self.corr_kicks + kicks, delta=False)
+            self.correctors.apply_kicks(self.corr_kicks + kicks)
 
     def _call_callback(self, pv, value):
         self._update_driver(self.prefix + pv, value)
@@ -292,7 +292,7 @@ class App:
         for i in range(NR_CORRS):
             if not self.measuring_resp_matrix:
                 self._call_callback('MeasRSPMtxState-Sts', 3)
-                self.correctors.apply_kicks(orig_kicks, delta=False)
+                self.correctors.apply_kicks(orig_kicks)
                 return
             self._call_callback(
                 'Log-Mon',
@@ -301,13 +301,13 @@ class App:
             delta = DANG if i < NR_CORRS-1 else DFREQ
             kicks = orig_kicks.copy()
             kicks[i] += delta/2
-            self.correctors.apply_kicks(kicks, delta=False)
+            self.correctors.apply_kicks(kicks)
             orbp = self.orbit.get_orbit(True)
             kicks[i] += -delta
-            self.correctors.apply_kicks(kicks, delta=False)
+            self.correctors.apply_kicks(kicks)
             orbn = self.orbit.get_orbit(True)
             mat[:, i] = (orbp-orbn)/delta
-        self.correctors.apply_kicks(orig_kicks, delta=False)
+        self.correctors.apply_kicks(orig_kicks)
         self._call_callback('Log-Mon', 'Measurement Completed.')
         self.matrix.set_resp_matrix(list(mat.flatten()))
         self._call_callback('MeasRSPMtxState-Sts', 2)
@@ -345,6 +345,7 @@ class App:
             orb = self.orbit.get_orbit()
             kicks = self.matrix.calc_kicks(orb)
             kicks = self._process_kicks(kicks)
+            kicks += self.correctors.get_correctors_strength()
             self.correctors.apply_kicks(kicks, delta=True)
             tf = _time.time()
             dt = (tf-t0)

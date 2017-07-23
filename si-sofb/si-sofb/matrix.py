@@ -1,3 +1,5 @@
+"""Class of the Response Matrix."""
+
 import os as _os
 import numpy as _np
 
@@ -9,11 +11,14 @@ MTX_SZ = (2*NR_BPMS) * NR_CORRS
 
 
 class Matrix:
+    """Class of the Response Matrix."""
+
     RF_ENBL_ENUMS = ('No', 'Yes')
     RSP_MTX_FILENAME = 'data/response_matrix'
     EXT = '.sirspmtx'
 
     def get_database(self):
+        """Get the database of the class."""
         db = dict()
         pre = self.prefix
         db[pre + 'RSPMatrix-SP'] = {
@@ -82,6 +87,7 @@ class Matrix:
         return db
 
     def __init__(self, prefix, callback):
+        """Initialize the instance."""
         self.callback = callback
         self.prefix = prefix
         self.select_items = {
@@ -104,9 +110,11 @@ class Matrix:
         self.inv_response_matrix = _np.zeros([2*NR_BPMS, NR_CORRS]).T
 
     def connect(self):
+        """Load the response matrix from file."""
         self._load_response_matrix()
 
     def set_resp_matrix(self, mat):
+        """Set the response matrix in memory and save it in file."""
         self._call_callback('Log-Mon', 'Setting New RSP Matrix.')
         if len(mat) != MTX_SZ:
             self._call_callback('Log-Mon', 'Err: Wrong Size.')
@@ -123,6 +131,7 @@ class Matrix:
         return True
 
     def calc_kicks(self, orbit):
+        """Calculate the kick from the orbit distortion given."""
         kicks = _np.dot(-self.inv_response_matrix, orbit)
         self._call_callback('CHCalcdKicks-Mon', list(kicks[:NR_CH]))
         self._call_callback('CVCalcdKicks-Mon', list(kicks[NR_CH:NR_CH+NR_CV]))

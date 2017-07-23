@@ -89,10 +89,8 @@ class Correctors:
         self.event_pv_sp = _epics.PV(SECTION +
                                      '-Glob:TI-Event:OrbitExtTrig-Cmd')
 
-    def apply_kicks(self, values, delta=False):
+    def apply_kicks(self, values):
         """Apply kicks."""
-        if delta:
-            values = self.get_correctors_strength() + values
         # apply the RF kick
         if self.rf_pv_sp.connected:
             if not self._equalKick(values[-1], self.rf_pv_sp.value):
@@ -118,11 +116,7 @@ class Correctors:
             self.corr_pvs_applied[pvname_ref] = False
             pv.value = values[i]
         # Wait for readbacks to be updated
-        for i in range(NUM_TIMEOUT):
-            if all(self.corr_pvs_ready.values()):
-                break
-            _time.sleep(TINY_INTERVAL)
-        else:
+        if self._timed_out(self.corr_pvs_ready):
             self._call_callback('Log-Mon',
                                 'Err: Timeout waiting Correctors RB')
             return
@@ -134,19 +128,21 @@ class Correctors:
                 self._call_callback('Log-Mon',
                                     'Kicks not sent, Timing PV Disconnected.')
                 return
-
         # Wait for references to be updated
-        for i in range(NUM_TIMEOUT):
-            if all(self.corr_pvs_applied.values()):
-                break
-            _time.sleep(TINY_INTERVAL)
-        else:
+        if self._timed_out(self.corr_pvs_ready):
             self._call_callback('Log-Mon',
                                 'Err: Timeout waiting Correctors Ref')
             return
+        # wait for simulator to compute the orbit.
+        _time.sleep(WAIT_FOR_SIMULATOR)
 
-        if WAIT_FOR_SIMULATOR:
-            _time.sleep(WAIT_FOR_SIMULATOR)
+    @staticmethod
+    def _timed_out(wait_dict):
+        for i in range(NUM_TIMEOUT):
+            if all(wait_dict.values()):
+                return False
+            _time.sleep(TINY_INTERVAL)
+        return True
 
     def get_correctors_strength(self):
         """Get the correctors strengths."""

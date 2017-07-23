@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-
+"""Setup Module."""
 from setuptools import setup
 
-with open('VERSION','r') as _f:
+with open('VERSION', 'r') as _f:
     __version__ = _f.read().strip()
 
 setup(
