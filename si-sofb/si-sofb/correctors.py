@@ -174,7 +174,7 @@ class Correctors:
         max_ = max(abs(val1), abs(val2))
         if not max_:
             return True
-        if abs(val1-val2)/max_ <= 1e-6:
+        if abs(val1-val2)/max_ <= 1e-12:
             return True
         return False
 

@@ -26,16 +26,16 @@ D1_STEP = RF_PER * 4
 D2_STEP = RF_PER * 4 / 20
 D3_STEP = 5e-6                  # five picoseconds
 
-def get_ll_trigger_object(channel,callback,connection_callback,initial_hl2ll):
+def get_ll_trigger_object(channel, callback, connection_callback, initial_hl2ll):
     LL_TRIGGER_CLASSES = {
-        ('EVR','MF'): _LL_TrigEVRMF,
-        ('EVR','OPT'): _LL_TrigEVROPT,
-        ('EVE','LVE'): _LL_TrigEVELVE,
-        ('AFC','LVE'): _LL_TrigAFCLVE,
-        ('AFC','OPT'): _LL_TrigAFCOPT,
+        ('EVR', 'MF'): _LL_TrigEVRMF,
+        ('EVR', 'OPT'): _LL_TrigEVROPT,
+        ('EVE', 'LVE'): _LL_TrigEVELVE,
+        ('AFC', 'LVE'): _LL_TrigAFCLVE,
+        ('AFC', 'OPT'): _LL_TrigAFCOPT,
         }
     chan = _PVName(channel)
-    conn_ty,conn_conf, conn_num = IOs.LL_RGX.findall(chan.propty)[0]
+    conn_ty, conn_conf, conn_num = IOs.LL_RGX.findall(chan.propty)[0]
     key = (chan.dev_type, conn_ty)
     cls_ = LL_TRIGGER_CLASSES.get(key)
     if not cls_:
@@ -47,9 +47,9 @@ class _LL_Base:
         self._HLPROP_FUNS = self._get_HLPROP_FUNS()
         self._LLPROP_FUNS = self._get_LLPROP_FUNS()
         self._LLPROP_2_PVSP = self._get_LLPROP_2_PVSP()
-        self._channel = { val:key for key,val in self._LLPROP_2_PVSP.items() }
+        self._channel = { val: key for key, val in self._LLPROP_2_PVSP.items() }
         self._LLPROP_2_PVRB = self._get_LLPROP_2_PVRB()
-        self._PVRB_2_LLPROP = { val:key for key,val in self._LLPROP_2_PVRB.items() }
+        self._PVRB_2_LLPROP = { val: key for key, val in self._LLPROP_2_PVRB.items() }
         self.callback = callback
         self.conn_callback = connection_callback
         self._hl2ll = initial_hl2ll
@@ -92,61 +92,61 @@ class _LL_Base:
         map_ = dict()
         return map_
 
-    def _pvs_on_connection(self,pvname,conn,pv):
+    def _pvs_on_connection(self, pvname, conn, pv):
         _log.debug(self.channel+' PV {0:10s} {1:s}connected'.format(pvname, '' if conn else 'dis'))
         previous = all(self._pvs_conn_sts.values())
         self._pvs_conn_sts[pvname] = conn
         current = all(self._pvs_conn_sts.values())
         if current is not previous:
             _log.info(self.channel+' {0:s}all PVs connected.'.format('' if current else 'NOT '))
-            self.conn_callback(self.channel,current)
+            self.conn_callback(self.channel, current)
 
     def check(self):
-        for ll_prop,pv in self._pvs_sp.items():
+        for ll_prop, pv in self._pvs_sp.items():
             if pv.connected and self._pvs_sp_canput[pv.pvname]:
                 v = pv.get(timeout=_TIMEOUT)
                 if v is None:
                     _log.debug(self.channel+' propty = {0:s} is None '.format(ll_prop))
                     continue
                 props = self._LLPROP_FUNS[ll_prop](v, ty='sp')
-                for hl_prop,val in props.items():
+                for hl_prop, val in props.items():
                     my_val = self._hl2ll[hl_prop]
                     if my_val == val: continue
-                    _log.debug(self.channel+' propty = {0:s} Value = {1:s} '.format(hl_prop,str(my_val)))
+                    _log.debug(self.channel+' propty = {0:s} Value = {1:s} '.format(hl_prop, str(my_val)))
                     self.set_propty(hl_prop, my_val)
 
-    def _pvs_rb_callback(self,pvname,value,**kwargs):
+    def _pvs_rb_callback(self, pvname, value,**kwargs):
         if value is None:
             _log.debug(self.channel+' pvs_rb_callback; {0:s} received None'.format(pvname))
             return
-        _log.debug(self.channel+' pvs_rb_callback; PV = {0:s} New Value = {1:s} '.format(pvname,str(value)))
+        _log.debug(self.channel+' pvs_rb_callback; PV = {0:s} New Value = {1:s} '.format(pvname, str(value)))
         props = self._LLPROP_FUNS[ self._PVRB_2_LLPROP[pvname] ](value)
-        for hl_prop,val in props.items():
-            _log.debug(self.channel+' pvs_rb_callback; Sending to HL;  propty = {0:s} Value = {1:s} '.format(hl_prop,str(val)))
+        for hl_prop, val in props.items():
+            _log.debug(self.channel+' pvs_rb_callback; Sending to HL;  propty = {0:s} Value = {1:s} '.format(hl_prop, str(val)))
             self.callback(self.channel, hl_prop, val)
 
-    def _pvs_sp_callback(self,pvname,value,**kwargs):
+    def _pvs_sp_callback(self, pvname, value,**kwargs):
         if value is None:
             _log.debug(self.channel+' pvs_sp_callback; {0:s} received None'.format(pvname))
             return
-        _log.debug(self.channel+' pvs_sp_callback; PV = {0:s} New Value = {1:s} '.format(pvname,str(value)))
+        _log.debug(self.channel+' pvs_sp_callback; PV = {0:s} New Value = {1:s} '.format(pvname, str(value)))
         if not _FORCE_EQUAL: return
         props = self._LLPROP_FUNS[ self._PVSP_2_LLPROP[pvname] ](value, ty='sp')
-        for hl_prop,val in props.items():
+        for hl_prop, val in props.items():
             my_val = self._hl2ll[hl_prop]
             if my_val != val:
-                _log.debug(self.channel+' pvs_sp_callback; Forcing  propty = {0:s} Value = {1:s} '.format(hl_prop,str(my_val)))
+                _log.debug(self.channel+' pvs_sp_callback; Forcing  propty = {0:s} Value = {1:s} '.format(hl_prop, str(my_val)))
                 self.set_propty(hl_prop, my_val)
 
-    def _put_complete(self,pvname,**kwargs):
+    def _put_complete(self, pvname,**kwargs):
         self._pvs_sp_canput[pvname] = True
 
-    def _put_on_pv(self,pv,value):
+    def _put_on_pv(self, pv, value):
         self._pvs_sp_canput[pv.pvname] = False
-        pv.put(value,callback=self._put_complete)
+        pv.put(value, callback=self._put_complete)
 
-    def _set_simple(self,prop,value):
-        _log.debug(self.channel+' propty = {0:s}, value = {1:s}.'.format(prop,str(value)))
+    def _set_simple(self, prop, value):
+        _log.debug(self.channel+' propty = {0:s}, value = {1:s}.'.format(prop, str(value)))
         pv = self._pvs_sp[prop]
         if not pv.connected:
             _log.debug(self.channel+' PV '+pv.pvname+' NOT connected.')
@@ -155,9 +155,9 @@ class _LL_Base:
         _log.debug(self.channel+' Setting PV '+pv.pvname+', value = {0:s}.'.format(str(value)))
         self._put_on_pv(pv, value)
 
-    def set_propty(self,prop,value):
+    def set_propty(self, prop, value):
         _log.debug(self.channel+' set_propty receive propty = {0:s}; Value = {1:s}'.format(
-                                                                prop,str(value)))
+                                                                prop, str(value)))
         fun = self._HLPROP_FUNS.get(prop)
         if fun is None:  return False
         fun(value)
@@ -169,7 +169,7 @@ class LL_Clock(_LL_Base):
     def __init__(self, channel,  callback, connection_callback, initial_hl2ll):
         self.prefix = LL_PREFIX + channel
         self.channel = channel
-        super().__init__(callback,connection_callback,initial_hl2ll)
+        super().__init__(callback, connection_callback, initial_hl2ll)
 
     def _get_LLPROP_2_PVSP(self):
         map_ = {
@@ -187,15 +187,15 @@ class LL_Clock(_LL_Base):
 
     def _get_HLPROP_FUNS(self):
         map_ = {
-            'frequency' : lambda x: self._set_simple('frequency',x),
-            'state'     : lambda x: self._set_simple('state',x),
+            'frequency' : lambda x: self._set_simple('frequency', x),
+            'state'     : lambda x: self._set_simple('state', x),
             }
         return map_
 
     def _get_LLPROP_FUNS(self):
         map_ = {
-            'frequency' : lambda x,ty=None: {'frequency':x},
-            'state'     : lambda x,ty=None: {'state':x},
+            'frequency' : lambda x, ty=None: {'frequency': x},
+            'state'     : lambda x, ty=None: {'state': x},
             }
         return map_
 
@@ -205,7 +205,7 @@ class LL_Event(_LL_Base):
     def __init__(self, channel,  callback, connection_callback, initial_hl2ll):
         self.prefix = LL_PREFIX + channel
         self.channel = channel
-        super().__init__(callback,connection_callback,initial_hl2ll)
+        super().__init__(callback, connection_callback, initial_hl2ll)
 
     def _get_LLPROP_2_PVSP(self):
         map_ = {
@@ -225,17 +225,17 @@ class LL_Event(_LL_Base):
 
     def _get_HLPROP_FUNS(self):
         map_ = {
-            'delay'      : lambda x: self._set_simple('delay',x),
-            'mode'       : lambda x: self._set_simple('mode',x),
-            'delay_type' : lambda x: self._set_simple('delay_type',x),
+            'delay'      : lambda x: self._set_simple('delay', x),
+            'mode'       : lambda x: self._set_simple('mode', x),
+            'delay_type' : lambda x: self._set_simple('delay_type', x),
             }
         return map_
 
     def _get_LLPROP_FUNS(self):
         map_ = {
-            'delay'      : lambda x,ty=None: {'delay':x},
-            'mode'       : lambda x,ty=None: {'mode':x},
-            'delay_type' : lambda x,ty=None: {'delay_type':x},
+            'delay'      : lambda x, ty=None: {'delay': x},
+            'mode'       : lambda x, ty=None: {'mode': x},
+            'delay_type' : lambda x, ty=None: {'delay_type': x},
             }
         return map_
 
@@ -251,7 +251,7 @@ class _LL_TrigEVRMF(_LL_Base):
         self._internal_trigger = self._get_num_int(conn_num)
         self._OUTLB = self._OUTTMP.format(conn_num)
         self._INTLB = self._INTTMP.format(self._internal_trigger)
-        self.prefix = LL_PREFIX + _PVName(channel).dev_name + ':'
+        self.prefix = LL_PREFIX + _PVName(channel).dev_name + ': '
         self.channel = channel
         super().__init__(callback,connection_callback,initial_hl2ll)
 

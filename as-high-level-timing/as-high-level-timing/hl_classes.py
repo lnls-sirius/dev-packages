@@ -1,20 +1,24 @@
+"""Define the high level classes."""
+
 import logging as _log
 import copy as _copy
-from siriuspy.timesys.time_data import Connections, IOs, Triggers, Clocks, Events
+from siriuspy.timesys.time_data import Connections, IOs, Triggers
+from siriuspy.timesys.time_data import Clocks, Events
 from siriuspy.namesys import SiriusPVName as _PVName
 from ll_classes import get_ll_trigger_object
 from ll_classes import LL_Event, LL_Clock
 
 Connections.add_bbb_info()
 Connections.add_crates_info()
-EVG  = Connections.get_devices('EVG').pop()
+EVG = Connections.get_devices('EVG').pop()
 EVRs = Connections.get_devices('EVR')
 EVEs = Connections.get_devices('EVE')
 AFCs = Connections.get_devices('AFC')
 twds_evg = Connections.get_connections_twds_evg()
 
 
-def get_hl_trigger_object(prefix,callback,channels,events,trigger_type):
+def get_hl_trigger_object(prefix, callback, channels, events, trigger_type):
+    """Get High Level trigger object."""
     HL_TRIGGER_CLASSES = {
         'simple':   _HL_TrigSimple,
         'rmpbo':    _HL_TrigRmpBO,
@@ -25,8 +29,9 @@ def get_hl_trigger_object(prefix,callback,channels,events,trigger_type):
     ty = trigger_type
     cls_ = HL_TRIGGER_CLASSES.get(ty)
     if not cls_:
-        raise Exception('High Level Trigger Class not defined for trigger type '+ty+'.')
-    return cls_(prefix,callback,channels,events)
+        raise Exception('High Level Trigger Class not ' +
+                        'defined for trigger type '+ty+'.')
+    return cls_(prefix, callback, channels, events)
 
 
 class _HL_Base:
@@ -152,7 +157,7 @@ class _HL_Base:
 
 
 class HL_Event(_HL_Base):
-    """This Class is the High Level control of the Events of the EVG."""
+    """High Level control of the Events of the EVG."""
 
     _HL_PROPS = {'delay', 'mode', 'delay_type'}
 
@@ -193,241 +198,274 @@ class HL_Event(_HL_Base):
         return map_
 
     def _get_HLPROP_2_PVSP(self):
-        map_ = { # This dictionary converts the internal property name to the SP pv name
-            'delay'      : 'Delay-SP',
-            'mode'       : 'Mode-Sel',
-            'delay_type' : 'DelayType-Sel',
+        map_ = {  # Converts the internal property name to the SP pv name
+            'delay': 'Delay-SP',
+            'mode': 'Mode-Sel',
+            'delay_type': 'DelayType-Sel',
             }
         return map_
 
     def _get_HLPROP_2_PVRB(self):
         map_ = {
-            'delay'      : 'Delay-RB',
-            'mode'       : 'Mode-Sts',
-            'delay_type' : 'DelayType-Sts',
+            'delay': 'Delay-RB',
+            'mode': 'Mode-Sts',
+            'delay_type': 'DelayType-Sts',
             }
         return map_
 
     def _get_SP_FUNS(self):
         map_ = {
-            'delay'      : lambda x: x,
-            'mode'       : lambda x: x,
-            'delay_type' : lambda x: x,
+            'delay': lambda x: x,
+            'mode': lambda x: x,
+            'delay_type': lambda x: x,
             }
         return map_
 
     def _get_RB_FUNS(self):
         map_ = {
-            'delay'      : lambda x: x,
-            'mode'       : lambda x: x,
-            'delay_type' : lambda x: x,
+            'delay': lambda x: x,
+            'mode': lambda x: x,
+            'delay_type': lambda x: x,
             }
         return map_
 
-    def _get_LL_OBJS_NAMES(self,code):
-        channels = [EVG + ':' + Events.LL_TMP.format(code) ]
+    def _get_LL_OBJS_NAMES(self, code):
+        channels = [EVG + ':' + Events.LL_TMP.format(code)]
         return channels
 
-    def _get_LL_OBJ(self,**kwargs):
+    def _get_LL_OBJ(self, **kwargs):
         return LL_Event(**kwargs)
 
 
 class HL_Clock(_HL_Base):
+    """High Level control of the Clocks of the EVG."""
 
-    _HL_PROPS = {'frequency','state'}
+    _HL_PROPS = {'frequency', 'state'}
 
     def get_database(self):
+        """Get the database."""
         db = dict()
         pre = self.prefix
         len_rb = len(self._ll_objs_names)
-        db[pre + 'Freq-SP']      = {'type' : 'float', 'value': 1.0, 'unit':'kHz', 'prec': 10,
-                                     'fun_set_pv':lambda x: self.set_propty('frequency',x)}
-        db[pre + 'Freq-RB']      = {'type' : 'float', 'count': len_rb, 'value': 0.0, 'unit':'kHz','prec': 10}
-        db[pre + 'State-Sel']      = {'type' : 'enum', 'enums':Clocks.STATES, 'value':0,
-                                     'fun_set_pv':lambda x: self.set_propty('state',x)}
-        db[pre + 'State-Sts']      = {'type' : 'int', 'value':1, 'count':len_rb}
-        db[pre + 'Connections-Mon']  = {'type':'int', 'value':0, 'count':len_rb}
+        db[pre + 'Freq-SP'] = {
+            'type': 'float', 'value': 1.0, 'unit': 'kHz', 'prec': 10,
+            'fun_set_pv': lambda x: self.set_propty('frequency', x)}
+        db[pre + 'Freq-RB'] = {
+            'type': 'float', 'count': len_rb, 'value': 0.0,
+            'unit': 'kHz', 'prec': 10}
+        db[pre + 'State-Sel'] = {
+            'type': 'enum', 'enums': Clocks.STATES, 'value': 0,
+            'fun_set_pv': lambda x: self.set_propty('state', x)}
+        db[pre + 'State-Sts'] = {
+            'type': 'int', 'value': 1, 'count': len_rb}
+        db[pre + 'Connections-Mon'] = {
+            'type': 'int', 'value': 0, 'count': len_rb}
         return db
 
-    def __init__(self,prefix,callback,number):
-        super().__init__(prefix,callback,number)
+    def __init__(self, prefix, callback, number):
+        """Initialize the instance."""
+        super().__init__(prefix, callback, number)
 
     def _get_initial_hl2ll(self):
         map_ = {
-            'frequency' : 0,
-            'state'     : 0,
+            'frequency': 0,
+            'state': 0,
             }
         return map_
 
     def _get_HLPROP_2_PVSP(self):
-        map_ = { # This dictionary converts the internal property name to the SP pv name
-            'frequency' : 'Freq-SP',
-            'state'     : 'State-Sel',
+        map_ = {  # Converts the internal property name to the SP pv name
+            'frequency': 'Freq-SP',
+            'state': 'State-Sel',
             }
         return map_
 
     def _get_HLPROP_2_PVRB(self):
         map_ = {
-            'frequency' : 'Freq-RB',
-            'state'     : 'State-Sts',
+            'frequency': 'Freq-RB',
+            'state': 'State-Sts',
             }
         return map_
 
     def _get_SP_FUNS(self):
         map_ = {
-            'frequency' : lambda x: x,
-            'state'     : lambda x: x,
+            'frequency': lambda x: x,
+            'state': lambda x: x,
             }
         return map_
 
     def _get_RB_FUNS(self):
         map_ = {
-            'frequency' : lambda x: x,
-            'state'     : lambda x: x,
+            'frequency': lambda x: x,
+            'state': lambda x: x,
             }
         return map_
 
-    def _get_LL_OBJS_NAMES(self,number):
-        channels = [EVG + ':' + Clocks.LL_TMP.format(number) ]
+    def _get_LL_OBJS_NAMES(self, number):
+        channels = [EVG + ':' + Clocks.LL_TMP.format(number)]
         return channels
 
-    def _get_LL_OBJ(self,**kwargs):
+    def _get_LL_OBJ(self, **kwargs):
         return LL_Clock(**kwargs)
 
 
 class _HL_TrigBase(_HL_Base):
     _WORKAS_ENUMS = ('Trigger', 'Clock')
 
-    _HL_PROPS = {'work_as','clock','event','delay','pulses','width','state','polarity'}
+    _HL_PROPS = {'work_as', 'clock', 'event', 'delay',
+                 'pulses', 'width', 'state', 'polarity'}
 
     def get_database(self):
         db = dict()
         pre = self.prefix
         len_rb = len(self._ll_objs_names)
-        db[pre + 'State-Sel']   = {'type':'enum', 'value':0, 'enums':Triggers.STATES,
-                                   'fun_set_pv':lambda x: self.set_propty('state',x)}
-        db[pre + 'State-Sts']   = {'type':'int',  'value':0, 'count':len_rb}
-        db[pre + 'WorkAs-Sel']  = {'type':'enum', 'value':0, 'enums':self._WORKAS_ENUMS,
-                                   'fun_set_pv':lambda x: self.set_propty('work_as',x)}
-        db[pre + 'WorkAs-Sts']  = {'type':'int',  'value':0, 'count':len_rb}
-        db[pre + 'Event-Sel']   = {'type':'enum', 'value':0, 'enums':self._EVENTS,
-                                   'fun_set_pv':lambda x: self.set_propty('event',x)}
-        db[pre + 'Event-Sts']   = {'type':'int',  'value':0, 'count':len_rb}
-        db[pre + 'Clock-Sel']   = {'type':'enum', 'value':0, 'enums':Triggers.CLOCKS,
-                                   'fun_set_pv':lambda x: self.set_propty('clock',x)}
-        db[pre + 'Clock-Sts']   = {'type':'int',  'value':0, 'count':len_rb}
-        db[pre + 'Delay-SP']    = {'type':'float','value':0.0, 'unit':'us', 'prec': 4,
-                                   'fun_set_pv':lambda x: self.set_propty('delay',x)}
-        db[pre + 'Delay-RB']    = {'type':'float','value':0.0, 'unit':'us', 'prec': 4, 'count':len_rb}
-        db[pre + 'Pulses-SP']   = {'type':'int',  'value':1,
-                                   'fun_set_pv':lambda x: self.set_propty('pulses',x)}
-        db[pre + 'Pulses-RB']   = {'type':'int',  'value':1, 'count':len_rb}
-        db[pre + 'Duration-SP'] = {'type':'float','value':0.0, 'unit':'ms', 'prec': 4,
-                                   'fun_set_pv':lambda x: self.set_propty('width',x)}
-        db[pre + 'Duration-RB'] = {'type':'float','value':0.0, 'unit':'ms', 'prec': 4, 'count':len_rb}
-        db[pre + 'Polrty-Sel']  = {'type':'enum', 'value':0, 'enums':Triggers.POLARITIES,
-                                   'fun_set_pv':lambda x: self.set_propty('polarity',x)}
-        db[pre + 'Polrty-Sts']  = {'type':'int',  'value':0, 'count':len_rb}
+        db[pre + 'State-Sel'] = {
+            'type': 'enum', 'value': 0, 'enums': Triggers.STATES,
+            'fun_set_pv': lambda x: self.set_propty('state', x)}
+        db[pre + 'State-Sts'] = {
+            'type': 'int',  'value': 0, 'count': len_rb}
+        db[pre + 'WorkAs-Sel'] = {
+            'type': 'enum', 'value': 0, 'enums': self._WORKAS_ENUMS,
+            'fun_set_pv': lambda x: self.set_propty('work_as', x)}
+        db[pre + 'WorkAs-Sts'] = {
+            'type': 'int',  'value': 0, 'count': len_rb}
+        db[pre + 'Event-Sel'] = {
+            'type': 'enum', 'value': 0, 'enums': self._EVENTS,
+            'fun_set_pv': lambda x: self.set_propty('event', x)}
+        db[pre + 'Event-Sts'] = {
+            'type': 'int',  'value': 0, 'count': len_rb}
+        db[pre + 'Clock-Sel'] = {
+            'type': 'enum', 'value': 0, 'enums': Triggers.CLOCKS,
+            'fun_set_pv': lambda x: self.set_propty('clock', x)}
+        db[pre + 'Clock-Sts'] = {
+            'type': 'int',  'value': 0, 'count': len_rb}
+        db[pre + 'Delay-SP'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'us', 'prec': 4,
+            'fun_set_pv': lambda x: self.set_propty('delay', x)}
+        db[pre + 'Delay-RB'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'us',
+            'prec': 4, 'count': len_rb}
+        db[pre + 'Pulses-SP'] = {
+            'type': 'int',  'value': 1,
+            'fun_set_pv': lambda x: self.set_propty('pulses', x)}
+        db[pre + 'Pulses-RB'] = {
+            'type': 'int',  'value': 1, 'count': len_rb}
+        db[pre + 'Duration-SP'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'ms', 'prec': 4,
+            'fun_set_pv': lambda x: self.set_propty('width', x)}
+        db[pre + 'Duration-RB'] = {
+            'type': 'float', 'value': 0.0, 'unit': 'ms',
+            'prec': 4, 'count': len_rb}
+        db[pre + 'Polrty-Sel'] = {
+            'type': 'enum', 'value': 0, 'enums': Triggers.POLARITIES,
+            'fun_set_pv': lambda x: self.set_propty('polarity', x)}
+        db[pre + 'Polrty-Sts'] = {
+            'type': 'int',  'value': 0, 'count': len_rb}
         db2 = dict()
         for prop in self._HL_PROPS:
-            db2[pre + self._HLPROP_2_PVSP[prop]] = db[pre + self._HLPROP_2_PVSP[prop]]
-            db2[pre + self._HLPROP_2_PVRB[prop]] = db[pre + self._HLPROP_2_PVRB[prop]]
+            name = pre + self._HLPROP_2_PVSP[prop]
+            db2[name] = db[name]
+            name = pre + self._HLPROP_2_PVRB[prop]
+            db2[name] = db[name]
 
-        db2[pre + 'Connections-Mon']  = {'type':'int',  'value':0, 'count':len_rb}
+        db2[pre + 'Connections-Mon'] = {
+            'type': 'int',  'value': 0, 'count': len_rb}
         return db2
 
-    def __init__(self,prefix,callback,channels,events):
-        super().__init__(prefix,callback,channels)
+    def __init__(self, prefix, callback, channels, events):
+        super().__init__(prefix, callback, channels)
         self._EVENTS = events
 
     def _get_initial_hl2ll(self):
         map_ = {
-            'work_as'    : 0,
-            'clock'      : 0,
-            'event'      : 0,
-            'delay'      : 0.0,
-            'pulses'     : 1,
-            'width'      : 150,
-            'state'      : 0,
-            'polarity'   : 0,
+            'work_as': 0,
+            'clock': 0,
+            'event': 0,
+            'delay': 0.0,
+            'pulses': 1,
+            'width': 150,
+            'state': 0,
+            'polarity': 0,
             }
         return map_
 
     def _get_HLPROP_2_PVSP(self):
         map_ = {
-            'work_as'    :'WorkAs-Sel',
-            'clock'      :'Clock-Sel',
-            'event'      :'Event-Sel',
-            'delay'      :'Delay-SP',
-            'delay_type' :'DelayType-Sel',
-            'pulses'     :'Pulses-SP',
-            'width'      :'Duration-SP',
-            'state'      :'State-Sel',
-            'polarity'   :'Polrty-Sel',
+            'work_as': 'WorkAs-Sel',
+            'clock': 'Clock-Sel',
+            'event': 'Event-Sel',
+            'delay': 'Delay-SP',
+            'delay_type': 'DelayType-Sel',
+            'pulses': 'Pulses-SP',
+            'width': 'Duration-SP',
+            'state': 'State-Sel',
+            'polarity': 'Polrty-Sel',
             }
         return map_
 
     def _get_HLPROP_2_PVRB(self):
         map_ = {
-            'work_as'    :'WorkAs-Sts',
-            'clock'      :'Clock-Sts',
-            'event'      :'Event-Sts',
-            'delay'      :'Delay-RB',
-            'delay_type' :'DelayType-Sts',
-            'pulses'     :'Pulses-RB',
-            'width'      :'Duration-RB',
-            'state'      :'State-Sts',
-            'polarity'   :'Polrty-Sts',
+            'work_as': 'WorkAs-Sts',
+            'clock': 'Clock-Sts',
+            'event': 'Event-Sts',
+            'delay': 'Delay-RB',
+            'delay_type': 'DelayType-Sts',
+            'pulses': 'Pulses-RB',
+            'width': 'Duration-RB',
+            'state': 'State-Sts',
+            'polarity': 'Polrty-Sts',
             }
         return map_
 
     def _get_SP_FUNS(self):
         map_ = {
-            'work_as'    : lambda x: x,
-            'clock'      : lambda x: x,
-            'event'      : lambda x: Events.HL2LL_MAP[self._EVENTS[x]],
-            'delay'      : lambda x: x,
-            'pulses'     : lambda x: x,
-            'width'      : lambda x: x / self._hl2ll['pulses']*1e3,
-            'state'      : lambda x: x,
-            'polarity'   : lambda x: x,
+            'work_as': lambda x: x,
+            'clock': lambda x: x,
+            'event': lambda x: Events.HL2LL_MAP[self._EVENTS[x]],
+            'delay': lambda x: x,
+            'pulses': lambda x: x,
+            'width': lambda x: x / self._hl2ll['pulses']*1e3,
+            'state': lambda x: x,
+            'polarity': lambda x: x,
             }
         return map_
 
     def _get_RB_FUNS(self):
         map_ = {
-            'work_as'    : lambda x: x,
-            'clock'      : lambda x: x,
-            'event'      : self._get_event,
-            'delay'      : lambda x: x,
-            'pulses'     : lambda x: x,
-            'width'      : lambda x: x * self._hl2ll['pulses'] * 1e-3,
-            'state'      : lambda x: x,
-            'polarity'   : lambda x: x,
+            'work_as': lambda x: x,
+            'clock': lambda x: x,
+            'event': self._get_event,
+            'delay': lambda x: x,
+            'pulses': lambda x: x,
+            'width': lambda x: x * self._hl2ll['pulses'] * 1e-3,
+            'state': lambda x: x,
+            'polarity': lambda x: x,
             }
         return map_
 
-    def _get_LL_OBJS_NAMES(self,chans):
+    def _get_LL_OBJS_NAMES(self, chans):
         channels = set()
         for chan in chans:
             up_dev = _PVName(list(twds_evg[chan])[0])
             while up_dev.dev_name not in EVRs | EVEs | AFCs:
-                tmp_ = IOs.O2I_MAP[ up_dev.dev_type ]
-                conn_up = tmp_.get( up_dev.propty )
+                tmp_ = IOs.O2I_MAP[up_dev.dev_type]
+                conn_up = tmp_.get(up_dev.propty)
                 if conn_up is None:
                     print(IOs.O2I_MAP)
                     print(up_dev.dev_type, up_dev.propty)
-                up_dev = _PVName(  list(twds_evg[ up_dev.dev_name +':'+ conn_up ])[0]  )
+                up_dev = _PVName(list(twds_evg[up_dev.dev_name +
+                                               ': ' + conn_up])[0])
             channels |= {up_dev}
         return sorted(channels)
 
-    def _get_LL_OBJ(self,**kwargs):
+    def _get_LL_OBJ(self, **kwargs):
         return get_ll_trigger_object(**kwargs)
 
-    def _get_event(self,x):
+    def _get_event(self, x):
         _log.debug(self.prefix+' ll_event = '+str(x))
         hl = Events.LL2HL_MAP[x]
-        _log.debug(self.prefix+' hl_event = '+hl+' possible hl_events = '+str(self._EVENTS))
+        _log.debug(self.prefix+' hl_event = ' + hl +
+                   ' possible hl_events = ' + str(self._EVENTS))
         val = 1000
         if hl in self._EVENTS:
             val = self._EVENTS.index(hl)
@@ -435,11 +473,11 @@ class _HL_TrigBase(_HL_Base):
 
 
 class _HL_TrigSimple(_HL_TrigBase):
-    _HL_PROPS = {'event','delay','state'}
+    _HL_PROPS = {'event', 'delay', 'state'}
 
 
 class _HL_TrigRmpBO(_HL_TrigBase):
-    _HL_PROPS = {'event','state'}
+    _HL_PROPS = {'event', 'state'}
 
     def _get_initial_hl2ll(self):
         map_ = super()._get_initial_hl2ll()
@@ -449,11 +487,11 @@ class _HL_TrigRmpBO(_HL_TrigBase):
 
 
 class _HL_TrigCavity(_HL_TrigRmpBO):
-    _HL_PROPS = {'event','state','pulses'}
+    _HL_PROPS = {'event', 'state', 'pulses'}
 
 
 class _HL_TrigPSSI(_HL_TrigBase):
-    _HL_PROPS = {'event','state','width','work_as','clock'}
+    _HL_PROPS = {'event', 'state', 'width', 'work_as', 'clock'}
 
     def _get_initial_hl2ll(self):
         map_ = super()._get_initial_hl2ll()
@@ -466,7 +504,7 @@ class _HL_TrigPSSI(_HL_TrigBase):
         map_['event'] = lambda x: self._set_event(x)
         return map_
 
-    def _set_event(self,ev):
+    def _set_event(self, ev):
         _log.debug('enter.')
         props = []
         if ev == 0:
@@ -485,7 +523,7 @@ class _HL_TrigPSSI(_HL_TrigBase):
                 props.append('pulses')
         for prop in props:
             for dev, obj in self._ll_objs.items():
-                obj.set_propty(prop,self._hl2ll[prop])
+                obj.set_propty(prop, self._hl2ll[prop])
 
         res_ = Events.HL2LL_MAP[self._EVENTS[ev]]
         _log.debug('exit.')
@@ -493,4 +531,4 @@ class _HL_TrigPSSI(_HL_TrigBase):
 
 
 class _HL_TrigGeneric(_HL_TrigBase):
-    _HL_PROPS = {'event','state','pulses','width','work_as','clock'}
+    _HL_PROPS = {'event', 'state', 'pulses', 'width', 'work_as', 'clock'}
