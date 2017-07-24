@@ -1,0 +1,276 @@
+TB-01:PS-QD1
+TB-01:PS-QD1
+TB-01:PS-QD1
+TB-01:PS-QD1
+TB-01:PS-QD1
+TB-01:PS-QD1
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-01:PS-QF1
+TB-01:PS-QF1
+TB-01:PS-QF1
+TB-01:PS-QF1
+TB-01:PS-QF1
+TB-01:PS-QF1
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-02:PS-QD2A
+TB-02:PS-QD2A
+TB-02:PS-QD2A
+TB-02:PS-QD2A
+TB-02:PS-QD2A
+TB-02:PS-QD2A
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-02:PS-QF2A
+TB-02:PS-QF2A
+TB-02:PS-QF2A
+TB-02:PS-QF2A
+TB-02:PS-QF2A
+TB-02:PS-QF2A
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-02:PS-QF2B
+TB-02:PS-QF2B
+TB-02:PS-QF2B
+TB-02:PS-QF2B
+TB-02:PS-QF2B
+TB-02:PS-QF2B
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-02:PS-QD2B
+TB-02:PS-QD2B
+TB-02:PS-QD2B
+TB-02:PS-QD2B
+TB-02:PS-QD2B
+TB-02:PS-QD2B
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-03:PS-QF3
+TB-03:PS-QF3
+TB-03:PS-QF3
+TB-03:PS-QF3
+TB-03:PS-QF3
+TB-03:PS-QF3
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-03:PS-QD3
+TB-03:PS-QD3
+TB-03:PS-QD3
+TB-03:PS-QD3
+TB-03:PS-QD3
+TB-03:PS-QD3
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-04:PS-QF4
+TB-04:PS-QF4
+TB-04:PS-QF4
+TB-04:PS-QF4
+TB-04:PS-QF4
+TB-04:PS-QF4
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-04:PS-QD4
+TB-04:PS-QD4
+TB-04:PS-QD4
+TB-04:PS-QD4
+TB-04:PS-QD4
+TB-04:PS-QD4
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-01:PS-CH-1
+TB-01:PS-CH-1
+TB-01:PS-CH-1
+TB-01:PS-CH-1
+TB-01:PS-CH-1
+TB-01:PS-CH-1
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-01:PS-CH-2
+TB-01:PS-CH-2
+TB-01:PS-CH-2
+TB-01:PS-CH-2
+TB-01:PS-CH-2
+TB-01:PS-CH-2
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-02:PS-CH-1
+TB-02:PS-CH-1
+TB-02:PS-CH-1
+TB-02:PS-CH-1
+TB-02:PS-CH-1
+TB-02:PS-CH-1
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-02:PS-CH-2
+TB-02:PS-CH-2
+TB-02:PS-CH-2
+TB-02:PS-CH-2
+TB-02:PS-CH-2
+TB-02:PS-CH-2
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-03:PS-CH
+TB-03:PS-CH
+TB-03:PS-CH
+TB-03:PS-CH
+TB-03:PS-CH
+TB-03:PS-CH
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-01:PS-CV-1
+TB-01:PS-CV-1
+TB-01:PS-CV-1
+TB-01:PS-CV-1
+TB-01:PS-CV-1
+TB-01:PS-CV-1
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-01:PS-CV-2
+TB-01:PS-CV-2
+TB-01:PS-CV-2
+TB-01:PS-CV-2
+TB-01:PS-CV-2
+TB-01:PS-CV-2
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-02:PS-CV-1
+TB-02:PS-CV-1
+TB-02:PS-CV-1
+TB-02:PS-CV-1
+TB-02:PS-CV-1
+TB-02:PS-CV-1
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-02:PS-CV-2
+TB-02:PS-CV-2
+TB-02:PS-CV-2
+TB-02:PS-CV-2
+TB-02:PS-CV-2
+TB-02:PS-CV-2
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-04:PS-CV-1
+TB-04:PS-CV-1
+TB-04:PS-CV-1
+TB-04:PS-CV-1
+TB-04:PS-CV-1
+TB-04:PS-CV-1
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-04:PS-CV-2
+TB-04:PS-CV-2
+TB-04:PS-CV-2
+TB-04:PS-CV-2
+TB-04:PS-CV-2
+TB-04:PS-CV-2
+TB-Fam:PS-B
+TB-Fam:PS-B
+TB-Fam:PS-B
+===================================
+               ts-ma               
+===================================
+TS Magnet Power Supply Soft IOC
+FAC@LNLS,   Sirius Project.
+Version   : 0.4.0
+Timestamp : 2017-07-20-15:14:36.087
+Prefix    : TB-
+
+0001 01:MA-CH-1:Abort-Cmd          0002 01:MA-CH-1:CtrlMode-Mon       0003 01:MA-CH-1:Current-Mon        0004 01:MA-CH-1:Current-RB         0005 01:MA-CH-1:Current-SP         
+0006 01:MA-CH-1:CurrentRef-Mon     0007 01:MA-CH-1:Intlk-Mon          0008 01:MA-CH-1:IntlkLabels-Cte    0009 01:MA-CH-1:Kick-Mon           0010 01:MA-CH-1:Kick-RB            
+0011 01:MA-CH-1:Kick-SP            0012 01:MA-CH-1:KickRef-Mon        0013 01:MA-CH-1:OpMode-Sel         0014 01:MA-CH-1:OpMode-Sts         0015 01:MA-CH-1:PwrState-Sel       
+0016 01:MA-CH-1:PwrState-Sts       0017 01:MA-CH-1:Reset-Cmd          0018 01:MA-CH-1:WfmData-RB         0019 01:MA-CH-1:WfmData-SP         0020 01:MA-CH-1:WfmIndex-Mon       
+0021 01:MA-CH-1:WfmLabel-RB        0022 01:MA-CH-1:WfmLabel-SP        0023 01:MA-CH-1:WfmLabels-Mon      0024 01:MA-CH-1:WfmLoad-Sel        0025 01:MA-CH-1:WfmLoad-Sts        
+0026 01:MA-CH-1:WfmSave-Cmd        0027 01:MA-CH-2:Abort-Cmd          0028 01:MA-CH-2:CtrlMode-Mon       0029 01:MA-CH-2:Current-Mon        0030 01:MA-CH-2:Current-RB         
+0031 01:MA-CH-2:Current-SP         0032 01:MA-CH-2:CurrentRef-Mon     0033 01:MA-CH-2:Intlk-Mon          0034 01:MA-CH-2:IntlkLabels-Cte    0035 01:MA-CH-2:Kick-Mon           
+0036 01:MA-CH-2:Kick-RB            0037 01:MA-CH-2:Kick-SP            0038 01:MA-CH-2:KickRef-Mon        0039 01:MA-CH-2:OpMode-Sel         0040 01:MA-CH-2:OpMode-Sts         
+0041 01:MA-CH-2:PwrState-Sel       0042 01:MA-CH-2:PwrState-Sts       0043 01:MA-CH-2:Reset-Cmd          0044 01:MA-CH-2:WfmData-RB         0045 01:MA-CH-2:WfmData-SP         
+0046 01:MA-CH-2:WfmIndex-Mon       0047 01:MA-CH-2:WfmLabel-RB        0048 01:MA-CH-2:WfmLabel-SP        0049 01:MA-CH-2:WfmLabels-Mon      0050 01:MA-CH-2:WfmLoad-Sel        
+0051 01:MA-CH-2:WfmLoad-Sts        0052 01:MA-CH-2:WfmSave-Cmd        0053 01:MA-CV-1:Abort-Cmd          0054 01:MA-CV-1:CtrlMode-Mon       0055 01:MA-CV-1:Current-Mon        
+0056 01:MA-CV-1:Current-RB         0057 01:MA-CV-1:Current-SP         0058 01:MA-CV-1:CurrentRef-Mon     0059 01:MA-CV-1:Intlk-Mon          0060 01:MA-CV-1:IntlkLabels-Cte    
+0061 01:MA-CV-1:Kick-Mon           0062 01:MA-CV-1:Kick-RB            0063 01:MA-CV-1:Kick-SP            0064 01:MA-CV-1:KickRef-Mon        0065 01:MA-CV-1:OpMode-Sel         
+0066 01:MA-CV-1:OpMode-Sts         0067 01:MA-CV-1:PwrState-Sel       0068 01:MA-CV-1:PwrState-Sts       0069 01:MA-CV-1:Reset-Cmd          0070 01:MA-CV-1:WfmData-RB         
+0071 01:MA-CV-1:WfmData-SP         0072 01:MA-CV-1:WfmIndex-Mon       0073 01:MA-CV-1:WfmLabel-RB        0074 01:MA-CV-1:WfmLabel-SP        0075 01:MA-CV-1:WfmLabels-Mon      
+0076 01:MA-CV-1:WfmLoad-Sel        0077 01:MA-CV-1:WfmLoad-Sts        0078 01:MA-CV-1:WfmSave-Cmd        0079 01:MA-CV-2:Abort-Cmd          0080 01:MA-CV-2:CtrlMode-Mon       
+0081 01:MA-CV-2:Current-Mon        0082 01:MA-CV-2:Current-RB         0083 01:MA-CV-2:Current-SP         0084 01:MA-CV-2:CurrentRef-Mon     0085 01:MA-CV-2:Intlk-Mon          
+0086 01:MA-CV-2:IntlkLabels-Cte    0087 01:MA-CV-2:Kick-Mon           0088 01:MA-CV-2:Kick-RB            0089 01:MA-CV-2:Kick-SP            0090 01:MA-CV-2:KickRef-Mon        
+0091 01:MA-CV-2:OpMode-Sel         0092 01:MA-CV-2:OpMode-Sts         0093 01:MA-CV-2:PwrState-Sel       0094 01:MA-CV-2:PwrState-Sts       0095 01:MA-CV-2:Reset-Cmd          
+0096 01:MA-CV-2:WfmData-RB         0097 01:MA-CV-2:WfmData-SP         0098 01:MA-CV-2:WfmIndex-Mon       0099 01:MA-CV-2:WfmLabel-RB        0100 01:MA-CV-2:WfmLabel-SP        
+0101 01:MA-CV-2:WfmLabels-Mon      0102 01:MA-CV-2:WfmLoad-Sel        0103 01:MA-CV-2:WfmLoad-Sts        0104 01:MA-CV-2:WfmSave-Cmd        0105 01:MA-QD1:Abort-Cmd           
+0106 01:MA-QD1:CtrlMode-Mon        0107 01:MA-QD1:Current-Mon         0108 01:MA-QD1:Current-RB          0109 01:MA-QD1:Current-SP          0110 01:MA-QD1:CurrentRef-Mon      
+0111 01:MA-QD1:Intlk-Mon           0112 01:MA-QD1:IntlkLabels-Cte     0113 01:MA-QD1:KL-Mon              0114 01:MA-QD1:KL-RB               0115 01:MA-QD1:KL-SP               
+0116 01:MA-QD1:KLRef-Mon           0117 01:MA-QD1:OpMode-Sel          0118 01:MA-QD1:OpMode-Sts          0119 01:MA-QD1:PwrState-Sel        0120 01:MA-QD1:PwrState-Sts        
+0121 01:MA-QD1:Reset-Cmd           0122 01:MA-QD1:WfmData-RB          0123 01:MA-QD1:WfmData-SP          0124 01:MA-QD1:WfmIndex-Mon        0125 01:MA-QD1:WfmLabel-RB         
+0126 01:MA-QD1:WfmLabel-SP         0127 01:MA-QD1:WfmLabels-Mon       0128 01:MA-QD1:WfmLoad-Sel         0129 01:MA-QD1:WfmLoad-Sts         0130 01:MA-QD1:WfmSave-Cmd         
+0131 01:MA-QF1:Abort-Cmd           0132 01:MA-QF1:CtrlMode-Mon        0133 01:MA-QF1:Current-Mon         0134 01:MA-QF1:Current-RB          0135 01:MA-QF1:Current-SP          
+0136 01:MA-QF1:CurrentRef-Mon      0137 01:MA-QF1:Intlk-Mon           0138 01:MA-QF1:IntlkLabels-Cte     0139 01:MA-QF1:KL-Mon              0140 01:MA-QF1:KL-RB               
+0141 01:MA-QF1:KL-SP               0142 01:MA-QF1:KLRef-Mon           0143 01:MA-QF1:OpMode-Sel          0144 01:MA-QF1:OpMode-Sts          0145 01:MA-QF1:PwrState-Sel        
+0146 01:MA-QF1:PwrState-Sts        0147 01:MA-QF1:Reset-Cmd           0148 01:MA-QF1:WfmData-RB          0149 01:MA-QF1:WfmData-SP          0150 01:MA-QF1:WfmIndex-Mon        
+0151 01:MA-QF1:WfmLabel-RB         0152 01:MA-QF1:WfmLabel-SP         0153 01:MA-QF1:WfmLabels-Mon       0154 01:MA-QF1:WfmLoad-Sel         0155 01:MA-QF1:WfmLoad-Sts         
+0156 01:MA-QF1:WfmSave-Cmd         0157 02:MA-CH-1:Abort-Cmd          0158 02:MA-CH-1:CtrlMode-Mon       0159 02:MA-CH-1:Current-Mon        0160 02:MA-CH-1:Current-RB         
+0161 02:MA-CH-1:Current-SP         0162 02:MA-CH-1:CurrentRef-Mon     0163 02:MA-CH-1:Intlk-Mon          0164 02:MA-CH-1:IntlkLabels-Cte    0165 02:MA-CH-1:Kick-Mon           
+0166 02:MA-CH-1:Kick-RB            0167 02:MA-CH-1:Kick-SP            0168 02:MA-CH-1:KickRef-Mon        0169 02:MA-CH-1:OpMode-Sel         0170 02:MA-CH-1:OpMode-Sts         
+0171 02:MA-CH-1:PwrState-Sel       0172 02:MA-CH-1:PwrState-Sts       0173 02:MA-CH-1:Reset-Cmd          0174 02:MA-CH-1:WfmData-RB         0175 02:MA-CH-1:WfmData-SP         
+0176 02:MA-CH-1:WfmIndex-Mon       0177 02:MA-CH-1:WfmLabel-RB        0178 02:MA-CH-1:WfmLabel-SP        0179 02:MA-CH-1:WfmLabels-Mon      0180 02:MA-CH-1:WfmLoad-Sel        
+0181 02:MA-CH-1:WfmLoad-Sts        0182 02:MA-CH-1:WfmSave-Cmd        0183 02:MA-CH-2:Abort-Cmd          0184 02:MA-CH-2:CtrlMode-Mon       0185 02:MA-CH-2:Current-Mon        
+0186 02:MA-CH-2:Current-RB         0187 02:MA-CH-2:Current-SP         0188 02:MA-CH-2:CurrentRef-Mon     0189 02:MA-CH-2:Intlk-Mon          0190 02:MA-CH-2:IntlkLabels-Cte    
+0191 02:MA-CH-2:Kick-Mon           0192 02:MA-CH-2:Kick-RB            0193 02:MA-CH-2:Kick-SP            0194 02:MA-CH-2:KickRef-Mon        0195 02:MA-CH-2:OpMode-Sel         
+0196 02:MA-CH-2:OpMode-Sts         0197 02:MA-CH-2:PwrState-Sel       0198 02:MA-CH-2:PwrState-Sts       0199 02:MA-CH-2:Reset-Cmd          0200 02:MA-CH-2:WfmData-RB         
+0201 02:MA-CH-2:WfmData-SP         0202 02:MA-CH-2:WfmIndex-Mon       0203 02:MA-CH-2:WfmLabel-RB        0204 02:MA-CH-2:WfmLabel-SP        0205 02:MA-CH-2:WfmLabels-Mon      
+0206 02:MA-CH-2:WfmLoad-Sel        0207 02:MA-CH-2:WfmLoad-Sts        0208 02:MA-CH-2:WfmSave-Cmd        0209 02:MA-CV-1:Abort-Cmd          0210 02:MA-CV-1:CtrlMode-Mon       
+0211 02:MA-CV-1:Current-Mon        0212 02:MA-CV-1:Current-RB         0213 02:MA-CV-1:Current-SP         0214 02:MA-CV-1:CurrentRef-Mon     0215 02:MA-CV-1:Intlk-Mon          
+0216 02:MA-CV-1:IntlkLabels-Cte    0217 02:MA-CV-1:Kick-Mon           0218 02:MA-CV-1:Kick-RB            0219 02:MA-CV-1:Kick-SP            0220 02:MA-CV-1:KickRef-Mon        
+0221 02:MA-CV-1:OpMode-Sel         0222 02:MA-CV-1:OpMode-Sts         0223 02:MA-CV-1:PwrState-Sel       0224 02:MA-CV-1:PwrState-Sts       0225 02:MA-CV-1:Reset-Cmd          
+0226 02:MA-CV-1:WfmData-RB         0227 02:MA-CV-1:WfmData-SP         0228 02:MA-CV-1:WfmIndex-Mon       0229 02:MA-CV-1:WfmLabel-RB        0230 02:MA-CV-1:WfmLabel-SP        
+0231 02:MA-CV-1:WfmLabels-Mon      0232 02:MA-CV-1:WfmLoad-Sel        0233 02:MA-CV-1:WfmLoad-Sts        0234 02:MA-CV-1:WfmSave-Cmd        0235 02:MA-CV-2:Abort-Cmd          
+0236 02:MA-CV-2:CtrlMode-Mon       0237 02:MA-CV-2:Current-Mon        0238 02:MA-CV-2:Current-RB         0239 02:MA-CV-2:Current-SP         0240 02:MA-CV-2:CurrentRef-Mon     
+0241 02:MA-CV-2:Intlk-Mon          0242 02:MA-CV-2:IntlkLabels-Cte    0243 02:MA-CV-2:Kick-Mon           0244 02:MA-CV-2:Kick-RB            0245 02:MA-CV-2:Kick-SP            
+0246 02:MA-CV-2:KickRef-Mon        0247 02:MA-CV-2:OpMode-Sel         0248 02:MA-CV-2:OpMode-Sts         0249 02:MA-CV-2:PwrState-Sel       0250 02:MA-CV-2:PwrState-Sts       
+0251 02:MA-CV-2:Reset-Cmd          0252 02:MA-CV-2:WfmData-RB         0253 02:MA-CV-2:WfmData-SP         0254 02:MA-CV-2:WfmIndex-Mon       0255 02:MA-CV-2:WfmLabel-RB        
+0256 02:MA-CV-2:WfmLabel-SP        0257 02:MA-CV-2:WfmLabels-Mon      0258 02:MA-CV-2:WfmLoad-Sel        0259 02:MA-CV-2:WfmLoad-Sts        0260 02:MA-CV-2:WfmSave-Cmd        
+0261 02:MA-QD2A:Abort-Cmd          0262 02:MA-QD2A:CtrlMode-Mon       0263 02:MA-QD2A:Current-Mon        0264 02:MA-QD2A:Current-RB         0265 02:MA-QD2A:Current-SP         
+0266 02:MA-QD2A:CurrentRef-Mon     0267 02:MA-QD2A:Intlk-Mon          0268 02:MA-QD2A:IntlkLabels-Cte    0269 02:MA-QD2A:KL-Mon             0270 02:MA-QD2A:KL-RB              
+0271 02:MA-QD2A:KL-SP              0272 02:MA-QD2A:KLRef-Mon          0273 02:MA-QD2A:OpMode-Sel         0274 02:MA-QD2A:OpMode-Sts         0275 02:MA-QD2A:PwrState-Sel       
+0276 02:MA-QD2A:PwrState-Sts       0277 02:MA-QD2A:Reset-Cmd          0278 02:MA-QD2A:WfmData-RB         0279 02:MA-QD2A:WfmData-SP         0280 02:MA-QD2A:WfmIndex-Mon       
+0281 02:MA-QD2A:WfmLabel-RB        0282 02:MA-QD2A:WfmLabel-SP        0283 02:MA-QD2A:WfmLabels-Mon      0284 02:MA-QD2A:WfmLoad-Sel        0285 02:MA-QD2A:WfmLoad-Sts        
+0286 02:MA-QD2A:WfmSave-Cmd        0287 02:MA-QD2B:Abort-Cmd          0288 02:MA-QD2B:CtrlMode-Mon       0289 02:MA-QD2B:Current-Mon        0290 02:MA-QD2B:Current-RB         
+0291 02:MA-QD2B:Current-SP         0292 02:MA-QD2B:CurrentRef-Mon     0293 02:MA-QD2B:Intlk-Mon          0294 02:MA-QD2B:IntlkLabels-Cte    0295 02:MA-QD2B:KL-Mon             
+0296 02:MA-QD2B:KL-RB              0297 02:MA-QD2B:KL-SP              0298 02:MA-QD2B:KLRef-Mon          0299 02:MA-QD2B:OpMode-Sel         0300 02:MA-QD2B:OpMode-Sts         
+0301 02:MA-QD2B:PwrState-Sel       0302 02:MA-QD2B:PwrState-Sts       0303 02:MA-QD2B:Reset-Cmd          0304 02:MA-QD2B:WfmData-RB         0305 02:MA-QD2B:WfmData-SP         
+0306 02:MA-QD2B:WfmIndex-Mon       0307 02:MA-QD2B:WfmLabel-RB        0308 02:MA-QD2B:WfmLabel-SP        0309 02:MA-QD2B:WfmLabels-Mon      0310 02:MA-QD2B:WfmLoad-Sel        
+0311 02:MA-QD2B:WfmLoad-Sts        0312 02:MA-QD2B:WfmSave-Cmd        0313 02:MA-QF2A:Abort-Cmd          0314 02:MA-QF2A:CtrlMode-Mon       0315 02:MA-QF2A:Current-Mon        
+0316 02:MA-QF2A:Current-RB         0317 02:MA-QF2A:Current-SP         0318 02:MA-QF2A:CurrentRef-Mon     0319 02:MA-QF2A:Intlk-Mon          0320 02:MA-QF2A:IntlkLabels-Cte    
+0321 02:MA-QF2A:KL-Mon             0322 02:MA-QF2A:KL-RB              0323 02:MA-QF2A:KL-SP              0324 02:MA-QF2A:KLRef-Mon          0325 02:MA-QF2A:OpMode-Sel         
+0326 02:MA-QF2A:OpMode-Sts         0327 02:MA-QF2A:PwrState-Sel       0328 02:MA-QF2A:PwrState-Sts       0329 02:MA-QF2A:Reset-Cmd          0330 02:MA-QF2A:WfmData-RB         
+0331 02:MA-QF2A:WfmData-SP         0332 02:MA-QF2A:WfmIndex-Mon       0333 02:MA-QF2A:WfmLabel-RB        0334 02:MA-QF2A:WfmLabel-SP        0335 02:MA-QF2A:WfmLabels-Mon      
+0336 02:MA-QF2A:WfmLoad-Sel        0337 02:MA-QF2A:WfmLoad-Sts        0338 02:MA-QF2A:WfmSave-Cmd        0339 02:MA-QF2B:Abort-Cmd          0340 02:MA-QF2B:CtrlMode-Mon       
+0341 02:MA-QF2B:Current-Mon        0342 02:MA-QF2B:Current-RB         0343 02:MA-QF2B:Current-SP         0344 02:MA-QF2B:CurrentRef-Mon     0345 02:MA-QF2B:Intlk-Mon          
+0346 02:MA-QF2B:IntlkLabels-Cte    0347 02:MA-QF2B:KL-Mon             0348 02:MA-QF2B:KL-RB              0349 02:MA-QF2B:KL-SP              0350 02:MA-QF2B:KLRef-Mon          
+0351 02:MA-QF2B:OpMode-Sel         0352 02:MA-QF2B:OpMode-Sts         0353 02:MA-QF2B:PwrState-Sel       0354 02:MA-QF2B:PwrState-Sts       0355 02:MA-QF2B:Reset-Cmd          
+0356 02:MA-QF2B:WfmData-RB         0357 02:MA-QF2B:WfmData-SP         0358 02:MA-QF2B:WfmIndex-Mon       0359 02:MA-QF2B:WfmLabel-RB        0360 02:MA-QF2B:WfmLabel-SP        
+0361 02:MA-QF2B:WfmLabels-Mon      0362 02:MA-QF2B:WfmLoad-Sel        0363 02:MA-QF2B:WfmLoad-Sts        0364 02:MA-QF2B:WfmSave-Cmd        0365 03:MA-CH:Abort-Cmd            
+0366 03:MA-CH:CtrlMode-Mon         0367 03:MA-CH:Current-Mon          0368 03:MA-CH:Current-RB           0369 03:MA-CH:Current-SP           0370 03:MA-CH:CurrentRef-Mon       
+0371 03:MA-CH:Intlk-Mon            0372 03:MA-CH:IntlkLabels-Cte      0373 03:MA-CH:Kick-Mon             0374 03:MA-CH:Kick-RB              0375 03:MA-CH:Kick-SP              
+0376 03:MA-CH:KickRef-Mon          0377 03:MA-CH:OpMode-Sel           0378 03:MA-CH:OpMode-Sts           0379 03:MA-CH:PwrState-Sel         0380 03:MA-CH:PwrState-Sts         
+0381 03:MA-CH:Reset-Cmd            0382 03:MA-CH:WfmData-RB           0383 03:MA-CH:WfmData-SP           0384 03:MA-CH:WfmIndex-Mon         0385 03:MA-CH:WfmLabel-RB          
+0386 03:MA-CH:WfmLabel-SP          0387 03:MA-CH:WfmLabels-Mon        0388 03:MA-CH:WfmLoad-Sel          0389 03:MA-CH:WfmLoad-Sts          

@@ -1,0 +1,329 @@
+SI-Fam:PS-SDA0
+SI-Fam:PS-SDA0
+SI-Fam:PS-SDA0
+SI-Fam:PS-SDA0
+SI-Fam:PS-SDA0
+SI-Fam:PS-SDA0
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-SDA1
+SI-Fam:PS-SDA1
+SI-Fam:PS-SDA1
+SI-Fam:PS-SDA1
+SI-Fam:PS-SDA1
+SI-Fam:PS-SDA1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-SDA2
+SI-Fam:PS-SDA2
+SI-Fam:PS-SDA2
+SI-Fam:PS-SDA2
+SI-Fam:PS-SDA2
+SI-Fam:PS-SDA2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-SDA3
+SI-Fam:PS-SDA3
+SI-Fam:PS-SDA3
+SI-Fam:PS-SDA3
+SI-Fam:PS-SDA3
+SI-Fam:PS-SDA3
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-SDB0
+SI-Fam:PS-SDB0
+SI-Fam:PS-SDB0
+SI-Fam:PS-SDB0
+SI-Fam:PS-SDB0
+SI-Fam:PS-SDB0
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-SDB1
+SI-Fam:PS-SDB1
+SI-Fam:PS-SDB1
+SI-Fam:PS-SDB1
+SI-Fam:PS-SDB1
+SI-Fam:PS-SDB1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-SDB2
+SI-Fam:PS-SDB2
+SI-Fam:PS-SDB2
+SI-Fam:PS-SDB2
+SI-Fam:PS-SDB2
+SI-Fam:PS-SDB2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-SDB3
+SI-Fam:PS-SDB3
+SI-Fam:PS-SDB3
+SI-Fam:PS-SDB3
+SI-Fam:PS-SDB3
+SI-Fam:PS-SDB3
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-SDP0
+SI-Fam:PS-SDP0
+SI-Fam:PS-SDP0
+SI-Fam:PS-SDP0
+SI-Fam:PS-SDP0
+SI-Fam:PS-SDP0
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-SDP1
+SI-Fam:PS-SDP1
+SI-Fam:PS-SDP1
+SI-Fam:PS-SDP1
+SI-Fam:PS-SDP1
+SI-Fam:PS-SDP1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-SDP2
+SI-Fam:PS-SDP2
+SI-Fam:PS-SDP2
+SI-Fam:PS-SDP2
+SI-Fam:PS-SDP2
+SI-Fam:PS-SDP2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-SDP3
+SI-Fam:PS-SDP3
+SI-Fam:PS-SDP3
+SI-Fam:PS-SDP3
+SI-Fam:PS-SDP3
+SI-Fam:PS-SDP3
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-SFA0
+SI-Fam:PS-SFA0
+SI-Fam:PS-SFA0
+SI-Fam:PS-SFA0
+SI-Fam:PS-SFA0
+SI-Fam:PS-SFA0
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-SFA1
+SI-Fam:PS-SFA1
+SI-Fam:PS-SFA1
+SI-Fam:PS-SFA1
+SI-Fam:PS-SFA1
+SI-Fam:PS-SFA1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-SFA2
+SI-Fam:PS-SFA2
+SI-Fam:PS-SFA2
+SI-Fam:PS-SFA2
+SI-Fam:PS-SFA2
+SI-Fam:PS-SFA2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-SFB0
+SI-Fam:PS-SFB0
+SI-Fam:PS-SFB0
+SI-Fam:PS-SFB0
+SI-Fam:PS-SFB0
+SI-Fam:PS-SFB0
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-SFB1
+SI-Fam:PS-SFB1
+SI-Fam:PS-SFB1
+SI-Fam:PS-SFB1
+SI-Fam:PS-SFB1
+SI-Fam:PS-SFB1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-SFB2
+SI-Fam:PS-SFB2
+SI-Fam:PS-SFB2
+SI-Fam:PS-SFB2
+SI-Fam:PS-SFB2
+SI-Fam:PS-SFB2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-SFP0
+SI-Fam:PS-SFP0
+SI-Fam:PS-SFP0
+SI-Fam:PS-SFP0
+SI-Fam:PS-SFP0
+SI-Fam:PS-SFP0
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-SFP1
+SI-Fam:PS-SFP1
+SI-Fam:PS-SFP1
+SI-Fam:PS-SFP1
+SI-Fam:PS-SFP1
+SI-Fam:PS-SFP1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-SFP2
+SI-Fam:PS-SFP2
+SI-Fam:PS-SFP2
+SI-Fam:PS-SFP2
+SI-Fam:PS-SFP2
+SI-Fam:PS-SFP2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+===================================
+               ts-ma               
+===================================
+TS Magnet Power Supply Soft IOC
+FAC@LNLS,   Sirius Project.
+Version   : 0.4.0
+Timestamp : 2017-07-20-15:14:43.178
+Prefix    : SI-
+
+0001 Fam:MA-SDA0:Abort-Cmd          0002 Fam:MA-SDA0:CtrlMode-Mon       0003 Fam:MA-SDA0:Current-Mon        0004 Fam:MA-SDA0:Current-RB         0005 Fam:MA-SDA0:Current-SP         
+0006 Fam:MA-SDA0:CurrentRef-Mon     0007 Fam:MA-SDA0:Intlk-Mon          0008 Fam:MA-SDA0:IntlkLabels-Cte    0009 Fam:MA-SDA0:OpMode-Sel         0010 Fam:MA-SDA0:OpMode-Sts         
+0011 Fam:MA-SDA0:PwrState-Sel       0012 Fam:MA-SDA0:PwrState-Sts       0013 Fam:MA-SDA0:Reset-Cmd          0014 Fam:MA-SDA0:SL-Mon             0015 Fam:MA-SDA0:SL-RB              
+0016 Fam:MA-SDA0:SL-SP              0017 Fam:MA-SDA0:SLRef-Mon          0018 Fam:MA-SDA0:WfmData-RB         0019 Fam:MA-SDA0:WfmData-SP         0020 Fam:MA-SDA0:WfmIndex-Mon       
+0021 Fam:MA-SDA0:WfmLabel-RB        0022 Fam:MA-SDA0:WfmLabel-SP        0023 Fam:MA-SDA0:WfmLabels-Mon      0024 Fam:MA-SDA0:WfmLoad-Sel        0025 Fam:MA-SDA0:WfmLoad-Sts        
+0026 Fam:MA-SDA0:WfmSave-Cmd        0027 Fam:MA-SDA1:Abort-Cmd          0028 Fam:MA-SDA1:CtrlMode-Mon       0029 Fam:MA-SDA1:Current-Mon        0030 Fam:MA-SDA1:Current-RB         
+0031 Fam:MA-SDA1:Current-SP         0032 Fam:MA-SDA1:CurrentRef-Mon     0033 Fam:MA-SDA1:Intlk-Mon          0034 Fam:MA-SDA1:IntlkLabels-Cte    0035 Fam:MA-SDA1:OpMode-Sel         
+0036 Fam:MA-SDA1:OpMode-Sts         0037 Fam:MA-SDA1:PwrState-Sel       0038 Fam:MA-SDA1:PwrState-Sts       0039 Fam:MA-SDA1:Reset-Cmd          0040 Fam:MA-SDA1:SL-Mon             
+0041 Fam:MA-SDA1:SL-RB              0042 Fam:MA-SDA1:SL-SP              0043 Fam:MA-SDA1:SLRef-Mon          0044 Fam:MA-SDA1:WfmData-RB         0045 Fam:MA-SDA1:WfmData-SP         
+0046 Fam:MA-SDA1:WfmIndex-Mon       0047 Fam:MA-SDA1:WfmLabel-RB        0048 Fam:MA-SDA1:WfmLabel-SP        0049 Fam:MA-SDA1:WfmLabels-Mon      0050 Fam:MA-SDA1:WfmLoad-Sel        
+0051 Fam:MA-SDA1:WfmLoad-Sts        0052 Fam:MA-SDA1:WfmSave-Cmd        0053 Fam:MA-SDA2:Abort-Cmd          0054 Fam:MA-SDA2:CtrlMode-Mon       0055 Fam:MA-SDA2:Current-Mon        
+0056 Fam:MA-SDA2:Current-RB         0057 Fam:MA-SDA2:Current-SP         0058 Fam:MA-SDA2:CurrentRef-Mon     0059 Fam:MA-SDA2:Intlk-Mon          0060 Fam:MA-SDA2:IntlkLabels-Cte    
+0061 Fam:MA-SDA2:OpMode-Sel         0062 Fam:MA-SDA2:OpMode-Sts         0063 Fam:MA-SDA2:PwrState-Sel       0064 Fam:MA-SDA2:PwrState-Sts       0065 Fam:MA-SDA2:Reset-Cmd          
+0066 Fam:MA-SDA2:SL-Mon             0067 Fam:MA-SDA2:SL-RB              0068 Fam:MA-SDA2:SL-SP              0069 Fam:MA-SDA2:SLRef-Mon          0070 Fam:MA-SDA2:WfmData-RB         
+0071 Fam:MA-SDA2:WfmData-SP         0072 Fam:MA-SDA2:WfmIndex-Mon       0073 Fam:MA-SDA2:WfmLabel-RB        0074 Fam:MA-SDA2:WfmLabel-SP        0075 Fam:MA-SDA2:WfmLabels-Mon      
+0076 Fam:MA-SDA2:WfmLoad-Sel        0077 Fam:MA-SDA2:WfmLoad-Sts        0078 Fam:MA-SDA2:WfmSave-Cmd        0079 Fam:MA-SDA3:Abort-Cmd          0080 Fam:MA-SDA3:CtrlMode-Mon       
+0081 Fam:MA-SDA3:Current-Mon        0082 Fam:MA-SDA3:Current-RB         0083 Fam:MA-SDA3:Current-SP         0084 Fam:MA-SDA3:CurrentRef-Mon     0085 Fam:MA-SDA3:Intlk-Mon          
+0086 Fam:MA-SDA3:IntlkLabels-Cte    0087 Fam:MA-SDA3:OpMode-Sel         0088 Fam:MA-SDA3:OpMode-Sts         0089 Fam:MA-SDA3:PwrState-Sel       0090 Fam:MA-SDA3:PwrState-Sts       
+0091 Fam:MA-SDA3:Reset-Cmd          0092 Fam:MA-SDA3:SL-Mon             0093 Fam:MA-SDA3:SL-RB              0094 Fam:MA-SDA3:SL-SP              0095 Fam:MA-SDA3:SLRef-Mon          
+0096 Fam:MA-SDA3:WfmData-RB         0097 Fam:MA-SDA3:WfmData-SP         0098 Fam:MA-SDA3:WfmIndex-Mon       0099 Fam:MA-SDA3:WfmLabel-RB        0100 Fam:MA-SDA3:WfmLabel-SP        
+0101 Fam:MA-SDA3:WfmLabels-Mon      0102 Fam:MA-SDA3:WfmLoad-Sel        0103 Fam:MA-SDA3:WfmLoad-Sts        0104 Fam:MA-SDA3:WfmSave-Cmd        0105 Fam:MA-SDB0:Abort-Cmd          
+0106 Fam:MA-SDB0:CtrlMode-Mon       0107 Fam:MA-SDB0:Current-Mon        0108 Fam:MA-SDB0:Current-RB         0109 Fam:MA-SDB0:Current-SP         0110 Fam:MA-SDB0:CurrentRef-Mon     
+0111 Fam:MA-SDB0:Intlk-Mon          0112 Fam:MA-SDB0:IntlkLabels-Cte    0113 Fam:MA-SDB0:OpMode-Sel         0114 Fam:MA-SDB0:OpMode-Sts         0115 Fam:MA-SDB0:PwrState-Sel       
+0116 Fam:MA-SDB0:PwrState-Sts       0117 Fam:MA-SDB0:Reset-Cmd          0118 Fam:MA-SDB0:SL-Mon             0119 Fam:MA-SDB0:SL-RB              0120 Fam:MA-SDB0:SL-SP              
+0121 Fam:MA-SDB0:SLRef-Mon          0122 Fam:MA-SDB0:WfmData-RB         0123 Fam:MA-SDB0:WfmData-SP         0124 Fam:MA-SDB0:WfmIndex-Mon       0125 Fam:MA-SDB0:WfmLabel-RB        
+0126 Fam:MA-SDB0:WfmLabel-SP        0127 Fam:MA-SDB0:WfmLabels-Mon      0128 Fam:MA-SDB0:WfmLoad-Sel        0129 Fam:MA-SDB0:WfmLoad-Sts        0130 Fam:MA-SDB0:WfmSave-Cmd        
+0131 Fam:MA-SDB1:Abort-Cmd          0132 Fam:MA-SDB1:CtrlMode-Mon       0133 Fam:MA-SDB1:Current-Mon        0134 Fam:MA-SDB1:Current-RB         0135 Fam:MA-SDB1:Current-SP         
+0136 Fam:MA-SDB1:CurrentRef-Mon     0137 Fam:MA-SDB1:Intlk-Mon          0138 Fam:MA-SDB1:IntlkLabels-Cte    0139 Fam:MA-SDB1:OpMode-Sel         0140 Fam:MA-SDB1:OpMode-Sts         
+0141 Fam:MA-SDB1:PwrState-Sel       0142 Fam:MA-SDB1:PwrState-Sts       0143 Fam:MA-SDB1:Reset-Cmd          0144 Fam:MA-SDB1:SL-Mon             0145 Fam:MA-SDB1:SL-RB              
+0146 Fam:MA-SDB1:SL-SP              0147 Fam:MA-SDB1:SLRef-Mon          0148 Fam:MA-SDB1:WfmData-RB         0149 Fam:MA-SDB1:WfmData-SP         0150 Fam:MA-SDB1:WfmIndex-Mon       
+0151 Fam:MA-SDB1:WfmLabel-RB        0152 Fam:MA-SDB1:WfmLabel-SP        0153 Fam:MA-SDB1:WfmLabels-Mon      0154 Fam:MA-SDB1:WfmLoad-Sel        0155 Fam:MA-SDB1:WfmLoad-Sts        
+0156 Fam:MA-SDB1:WfmSave-Cmd        0157 Fam:MA-SDB2:Abort-Cmd          0158 Fam:MA-SDB2:CtrlMode-Mon       0159 Fam:MA-SDB2:Current-Mon        0160 Fam:MA-SDB2:Current-RB         
+0161 Fam:MA-SDB2:Current-SP         0162 Fam:MA-SDB2:CurrentRef-Mon     0163 Fam:MA-SDB2:Intlk-Mon          0164 Fam:MA-SDB2:IntlkLabels-Cte    0165 Fam:MA-SDB2:OpMode-Sel         
+0166 Fam:MA-SDB2:OpMode-Sts         0167 Fam:MA-SDB2:PwrState-Sel       0168 Fam:MA-SDB2:PwrState-Sts       0169 Fam:MA-SDB2:Reset-Cmd          0170 Fam:MA-SDB2:SL-Mon             
+0171 Fam:MA-SDB2:SL-RB              0172 Fam:MA-SDB2:SL-SP              0173 Fam:MA-SDB2:SLRef-Mon          0174 Fam:MA-SDB2:WfmData-RB         0175 Fam:MA-SDB2:WfmData-SP         
+0176 Fam:MA-SDB2:WfmIndex-Mon       0177 Fam:MA-SDB2:WfmLabel-RB        0178 Fam:MA-SDB2:WfmLabel-SP        0179 Fam:MA-SDB2:WfmLabels-Mon      0180 Fam:MA-SDB2:WfmLoad-Sel        
+0181 Fam:MA-SDB2:WfmLoad-Sts        0182 Fam:MA-SDB2:WfmSave-Cmd        0183 Fam:MA-SDB3:Abort-Cmd          0184 Fam:MA-SDB3:CtrlMode-Mon       0185 Fam:MA-SDB3:Current-Mon        
+0186 Fam:MA-SDB3:Current-RB         0187 Fam:MA-SDB3:Current-SP         0188 Fam:MA-SDB3:CurrentRef-Mon     0189 Fam:MA-SDB3:Intlk-Mon          0190 Fam:MA-SDB3:IntlkLabels-Cte    
+0191 Fam:MA-SDB3:OpMode-Sel         0192 Fam:MA-SDB3:OpMode-Sts         0193 Fam:MA-SDB3:PwrState-Sel       0194 Fam:MA-SDB3:PwrState-Sts       0195 Fam:MA-SDB3:Reset-Cmd          
+0196 Fam:MA-SDB3:SL-Mon             0197 Fam:MA-SDB3:SL-RB              0198 Fam:MA-SDB3:SL-SP              0199 Fam:MA-SDB3:SLRef-Mon          0200 Fam:MA-SDB3:WfmData-RB         
+0201 Fam:MA-SDB3:WfmData-SP         0202 Fam:MA-SDB3:WfmIndex-Mon       0203 Fam:MA-SDB3:WfmLabel-RB        0204 Fam:MA-SDB3:WfmLabel-SP        0205 Fam:MA-SDB3:WfmLabels-Mon      
+0206 Fam:MA-SDB3:WfmLoad-Sel        0207 Fam:MA-SDB3:WfmLoad-Sts        0208 Fam:MA-SDB3:WfmSave-Cmd        0209 Fam:MA-SDP0:Abort-Cmd          0210 Fam:MA-SDP0:CtrlMode-Mon       
+0211 Fam:MA-SDP0:Current-Mon        0212 Fam:MA-SDP0:Current-RB         0213 Fam:MA-SDP0:Current-SP         0214 Fam:MA-SDP0:CurrentRef-Mon     0215 Fam:MA-SDP0:Intlk-Mon          
+0216 Fam:MA-SDP0:IntlkLabels-Cte    0217 Fam:MA-SDP0:OpMode-Sel         0218 Fam:MA-SDP0:OpMode-Sts         0219 Fam:MA-SDP0:PwrState-Sel       0220 Fam:MA-SDP0:PwrState-Sts       
+0221 Fam:MA-SDP0:Reset-Cmd          0222 Fam:MA-SDP0:SL-Mon             0223 Fam:MA-SDP0:SL-RB              0224 Fam:MA-SDP0:SL-SP              0225 Fam:MA-SDP0:SLRef-Mon          
+0226 Fam:MA-SDP0:WfmData-RB         0227 Fam:MA-SDP0:WfmData-SP         0228 Fam:MA-SDP0:WfmIndex-Mon       0229 Fam:MA-SDP0:WfmLabel-RB        0230 Fam:MA-SDP0:WfmLabel-SP        
+0231 Fam:MA-SDP0:WfmLabels-Mon      0232 Fam:MA-SDP0:WfmLoad-Sel        0233 Fam:MA-SDP0:WfmLoad-Sts        0234 Fam:MA-SDP0:WfmSave-Cmd        0235 Fam:MA-SDP1:Abort-Cmd          
+0236 Fam:MA-SDP1:CtrlMode-Mon       0237 Fam:MA-SDP1:Current-Mon        0238 Fam:MA-SDP1:Current-RB         0239 Fam:MA-SDP1:Current-SP         0240 Fam:MA-SDP1:CurrentRef-Mon     
+0241 Fam:MA-SDP1:Intlk-Mon          0242 Fam:MA-SDP1:IntlkLabels-Cte    0243 Fam:MA-SDP1:OpMode-Sel         0244 Fam:MA-SDP1:OpMode-Sts         0245 Fam:MA-SDP1:PwrState-Sel       
+0246 Fam:MA-SDP1:PwrState-Sts       0247 Fam:MA-SDP1:Reset-Cmd          0248 Fam:MA-SDP1:SL-Mon             0249 Fam:MA-SDP1:SL-RB              0250 Fam:MA-SDP1:SL-SP              
+0251 Fam:MA-SDP1:SLRef-Mon          0252 Fam:MA-SDP1:WfmData-RB         0253 Fam:MA-SDP1:WfmData-SP         0254 Fam:MA-SDP1:WfmIndex-Mon       0255 Fam:MA-SDP1:WfmLabel-RB        
+0256 Fam:MA-SDP1:WfmLabel-SP        0257 Fam:MA-SDP1:WfmLabels-Mon      0258 Fam:MA-SDP1:WfmLoad-Sel        0259 Fam:MA-SDP1:WfmLoad-Sts        0260 Fam:MA-SDP1:WfmSave-Cmd        
+0261 Fam:MA-SDP2:Abort-Cmd          0262 Fam:MA-SDP2:CtrlMode-Mon       0263 Fam:MA-SDP2:Current-Mon        0264 Fam:MA-SDP2:Current-RB         0265 Fam:MA-SDP2:Current-SP         
+0266 Fam:MA-SDP2:CurrentRef-Mon     0267 Fam:MA-SDP2:Intlk-Mon          0268 Fam:MA-SDP2:IntlkLabels-Cte    0269 Fam:MA-SDP2:OpMode-Sel         0270 Fam:MA-SDP2:OpMode-Sts         
+0271 Fam:MA-SDP2:PwrState-Sel       0272 Fam:MA-SDP2:PwrState-Sts       0273 Fam:MA-SDP2:Reset-Cmd          0274 Fam:MA-SDP2:SL-Mon             0275 Fam:MA-SDP2:SL-RB              
+0276 Fam:MA-SDP2:SL-SP              0277 Fam:MA-SDP2:SLRef-Mon          0278 Fam:MA-SDP2:WfmData-RB         0279 Fam:MA-SDP2:WfmData-SP         0280 Fam:MA-SDP2:WfmIndex-Mon       
+0281 Fam:MA-SDP2:WfmLabel-RB        0282 Fam:MA-SDP2:WfmLabel-SP        0283 Fam:MA-SDP2:WfmLabels-Mon      0284 Fam:MA-SDP2:WfmLoad-Sel        0285 Fam:MA-SDP2:WfmLoad-Sts        
+0286 Fam:MA-SDP2:WfmSave-Cmd        0287 Fam:MA-SDP3:Abort-Cmd          0288 Fam:MA-SDP3:CtrlMode-Mon       0289 Fam:MA-SDP3:Current-Mon        0290 Fam:MA-SDP3:Current-RB         
+0291 Fam:MA-SDP3:Current-SP         0292 Fam:MA-SDP3:CurrentRef-Mon     0293 Fam:MA-SDP3:Intlk-Mon          0294 Fam:MA-SDP3:IntlkLabels-Cte    0295 Fam:MA-SDP3:OpMode-Sel         
+0296 Fam:MA-SDP3:OpMode-Sts         0297 Fam:MA-SDP3:PwrState-Sel       0298 Fam:MA-SDP3:PwrState-Sts       0299 Fam:MA-SDP3:Reset-Cmd          0300 Fam:MA-SDP3:SL-Mon             
+0301 Fam:MA-SDP3:SL-RB              0302 Fam:MA-SDP3:SL-SP              0303 Fam:MA-SDP3:SLRef-Mon          0304 Fam:MA-SDP3:WfmData-RB         0305 Fam:MA-SDP3:WfmData-SP         
+0306 Fam:MA-SDP3:WfmIndex-Mon       0307 Fam:MA-SDP3:WfmLabel-RB        0308 Fam:MA-SDP3:WfmLabel-SP        0309 Fam:MA-SDP3:WfmLabels-Mon      0310 Fam:MA-SDP3:WfmLoad-Sel        
+0311 Fam:MA-SDP3:WfmLoad-Sts        0312 Fam:MA-SDP3:WfmSave-Cmd        0313 Fam:MA-SFA0:Abort-Cmd          0314 Fam:MA-SFA0:CtrlMode-Mon       0315 Fam:MA-SFA0:Current-Mon        
+0316 Fam:MA-SFA0:Current-RB         0317 Fam:MA-SFA0:Current-SP         0318 Fam:MA-SFA0:CurrentRef-Mon     0319 Fam:MA-SFA0:Intlk-Mon          0320 Fam:MA-SFA0:IntlkLabels-Cte    
+0321 Fam:MA-SFA0:OpMode-Sel         0322 Fam:MA-SFA0:OpMode-Sts         0323 Fam:MA-SFA0:PwrState-Sel       0324 Fam:MA-SFA0:PwrState-Sts       0325 Fam:MA-SFA0:Reset-Cmd          
+0326 Fam:MA-SFA0:SL-Mon             0327 Fam:MA-SFA0:SL-RB              0328 Fam:MA-SFA0:SL-SP              0329 Fam:MA-SFA0:SLRef-Mon          0330 Fam:MA-SFA0:WfmData-RB         
+0331 Fam:MA-SFA0:WfmData-SP         0332 Fam:MA-SFA0:WfmIndex-Mon       0333 Fam:MA-SFA0:WfmLabel-RB        0334 Fam:MA-SFA0:WfmLabel-SP        0335 Fam:MA-SFA0:WfmLabels-Mon      
+0336 Fam:MA-SFA0:WfmLoad-Sel        
