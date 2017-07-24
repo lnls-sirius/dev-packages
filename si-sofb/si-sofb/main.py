@@ -346,7 +346,7 @@ class App:
             kicks = self.matrix.calc_kicks(orb)
             kicks = self._process_kicks(kicks)
             kicks += self.correctors.get_correctors_strength()
-            self.correctors.apply_kicks(kicks, delta=True)
+            self.correctors.apply_kicks(kicks)
             tf = _time.time()
             dt = (tf-t0)
             interval = 1/self.auto_corr_freq
