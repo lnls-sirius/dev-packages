@@ -1,6 +1,5 @@
 """Module with main IOC Class."""
 
-import pvs as _pvs
 import time as _time
 import logging as _log
 from siriuspy.timesys.time_data import Connections, Events, Clocks
@@ -8,7 +7,9 @@ from siriuspy.namesys import SiriusPVName as _PVName
 from data.triggers import get_triggers as _get_triggers
 from hl_classes import get_hl_trigger_object, HL_Event, HL_Clock
 
-__version__ = _pvs.__version__
+with open('VERSION', 'r') as _f:
+    __version__ = _f.read().strip()
+
 _TIMEOUT = 0.05
 
 
@@ -49,7 +50,7 @@ class App:
 
     def get_database(self):
         """Get the database."""
-        db = dict()
+        db = {'Version-Cte': {'type': 'string', 'value': __version__}}
         for cl in self._clocks.values():
             db.update(cl.get_database())
         for ev in self._events.values():

@@ -59,7 +59,6 @@ class _HL_Base:
         _log.debug(self.prefix + ' LL names: ' +
                    ' '.join([tr for tr in self._ll_objs_names]))
         self._ll_objs = dict()
-        self._ll_objs_conn_sts = list()
 
     def _get_HLPROP_2_PVSP(self):
         map_ = dict()
@@ -92,31 +91,12 @@ class _HL_Base:
             low_lev_obj = self._get_LL_OBJ(
                                 channel=chan,
                                 callback=self._pvs_values_rb,
-                                connection_callback=self._ll_on_connection,
                                 initial_hl2ll=_copy.deepcopy(self._hl2ll))
             self._ll_objs[chan] = low_lev_obj
-            self._ll_objs_conn_sts.append(0)
 
     def check(self):
         for obj in self._ll_objs.values():
             obj.check()
-
-    def _ll_on_connection(self, channel, status):
-        ind = self._ll_objs_names.index(channel)
-        _log.debug(
-            self.prefix +
-            ' channel = {0:s};'.format(channel) +
-            ' status = {1:d};'.format(int(status)) +
-            ' ind = {2:d};'.format(ind) +
-            ' len(_ll_objs) = {3:d}'.format(len(self._ll_objs_conn_sts))
-            )
-
-        if len(self._ll_objs_conn_sts) > ind:
-            self._ll_objs_conn_sts[ind] = int(status)
-        else:
-            _log.error(self.prefix + 'ind > _ll_objs_conn_sts.')
-        status = all(self._ll_objs_conn_sts)
-        self.callback(self.prefix + 'Connection-Mon', status)
 
     def _get_initial_hl2ll(self):
         map_ = {
@@ -133,22 +113,22 @@ class _HL_Base:
             return
         _log.debug(self.prefix +
                    ' RB propty = {0:s};'.format(prop) +
-                   ' LL Device = {1:s};'.format(channel) +
-                   ' New Value = {2:s}'.format(str(value)))
+                   ' LL Device = {0:s};'.format(channel) +
+                   ' New Value = {0:s}'.format(str(value)))
         self.callback(self.prefix + self._HLPROP_2_PVRB[prop],
                       self._RB_FUNS[prop](value))
 
     def set_propty(self, prop, value):
         _log.debug(self.prefix +
                    ' propty {0:10s};'.format(prop) +
-                   ' Value = {1:s}'.format(str(value)))
+                   ' Value = {0:s}'.format(str(value)))
         if value == self._hl2ll[prop]:
             _log.debug(self.prefix+' new value = old value.')
             return True
         v = self._SP_FUNS[prop](value)
         _log.debug(self.prefix +
                    ' propty {0:10s};'.format(prop) +
-                   ' Value = {1:s} -> {2:s}'.format(str(value), str(v)))
+                   ' Value = {0:s} -> {1:s}'.format(str(value), str(v)))
         self._hl2ll[prop] = v
         for dev, obj in self._ll_objs.items():
             _log.debug(self.prefix+' Sending to LL device = {0:s}'.format(dev))
@@ -258,8 +238,6 @@ class HL_Clock(_HL_Base):
             'fun_set_pv': lambda x: self.set_propty('state', x)}
         db[pre + 'State-Sts'] = {
             'type': 'int', 'value': 1, 'count': len_rb}
-        db[pre + 'Connections-Mon'] = {
-            'type': 'int', 'value': 0, 'count': len_rb}
         return db
 
     def __init__(self, prefix, callback, number):
@@ -367,9 +345,6 @@ class _HL_TrigBase(_HL_Base):
             db2[name] = db[name]
             name = pre + self._HLPROP_2_PVRB[prop]
             db2[name] = db[name]
-
-        db2[pre + 'Connections-Mon'] = {
-            'type': 'int',  'value': 0, 'count': len_rb}
         return db2
 
     def __init__(self, prefix, callback, channels, events):
@@ -454,7 +429,7 @@ class _HL_TrigBase(_HL_Base):
                     print(IOs.O2I_MAP)
                     print(up_dev.dev_type, up_dev.propty)
                 up_dev = _PVName(list(twds_evg[up_dev.dev_name +
-                                               ': ' + conn_up])[0])
+                                               ':' + conn_up])[0])
             channels |= {up_dev}
         return sorted(channels)
 

@@ -17,8 +17,7 @@ D2_STEP = RF_PER * 4 / 20
 D3_STEP = 5e-6                  # five picoseconds
 
 
-def get_ll_trigger_object(channel, callback, connection_callback,
-                          initial_hl2ll):
+def get_ll_trigger_object(channel, callback, initial_hl2ll):
     """Get Low Level trigger objects."""
     LL_TRIGGER_CLASSES = {
         ('EVR', 'MF'): _LL_TrigEVRMF,
@@ -34,12 +33,11 @@ def get_ll_trigger_object(channel, callback, connection_callback,
     if not cls_:
         raise Exception('Low Level Trigger Class not defined for device ' +
                         'type '+key[0]+' and connection type '+key[1]+'.')
-    return cls_(channel, int(conn_num), callback, connection_callback,
-                initial_hl2ll)
+    return cls_(channel, int(conn_num), callback, initial_hl2ll)
 
 
 class _LL_Base:
-    def __init__(self, callback, connection_callback, initial_hl2ll):
+    def __init__(self, callback, initial_hl2ll):
         self._HLPROP_FUNS = self._get_HLPROP_FUNS()
         self._LLPROP_FUNS = self._get_LLPROP_FUNS()
         self._LLPROP_2_PVSP = self._get_LLPROP_2_PVSP()
@@ -48,7 +46,6 @@ class _LL_Base:
         self._PVRB_2_LLPROP = {val: key
                                for key, val in self._LLPROP_2_PVRB.items()}
         self.callback = callback
-        self.conn_callback = connection_callback
         self._hl2ll = initial_hl2ll
         self._pvs_sp = dict()
         self._pvs_rb = dict()
@@ -100,7 +97,6 @@ class _LL_Base:
         if current is not previous:
             _log.info(self.channel + ' {0:s}all PVs connected.'
                       .format('' if current else 'NOT '))
-            self.conn_callback(self.channel, current)
 
     def check(self):
         for ll_prop, pv in self._pvs_sp.items():
@@ -185,11 +181,11 @@ class _LL_Base:
 class LL_Clock(_LL_Base):
     """Define the Low Level Clock Class."""
 
-    def __init__(self, channel,  callback, connection_callback, initial_hl2ll):
+    def __init__(self, channel,  callback, initial_hl2ll):
         """Initialize the instance."""
         self.prefix = LL_PREFIX + channel
         self.channel = channel
-        super().__init__(callback, connection_callback, initial_hl2ll)
+        super().__init__(callback, initial_hl2ll)
 
     def _get_LLPROP_2_PVSP(self):
         map_ = {
@@ -223,11 +219,11 @@ class LL_Clock(_LL_Base):
 class LL_Event(_LL_Base):
     """Define the Low Level Event Class."""
 
-    def __init__(self, channel, callback, connection_callback, initial_hl2ll):
+    def __init__(self, channel, callback, initial_hl2ll):
         """Initialize the instance."""
         self.prefix = LL_PREFIX + channel
         self.channel = channel
-        super().__init__(callback, connection_callback, initial_hl2ll)
+        super().__init__(callback, initial_hl2ll)
 
     def _get_LLPROP_2_PVSP(self):
         map_ = {
@@ -269,14 +265,13 @@ class _LL_TrigEVRMF(_LL_Base):
     _OUTTMP = 'MFO{0:d}'
     _REMOVE_PROPS = {}
 
-    def __init__(self, channel, conn_num,  callback,
-                 connection_callback, initial_hl2ll):
+    def __init__(self, channel, conn_num,  callback, initial_hl2ll):
         self._internal_trigger = self._get_num_int(conn_num)
         self._OUTLB = self._OUTTMP.format(conn_num)
         self._INTLB = self._INTTMP.format(self._internal_trigger)
         self.prefix = LL_PREFIX + _PVName(channel).dev_name + ':'
         self.channel = channel
-        super().__init__(callback, connection_callback, initial_hl2ll)
+        super().__init__(callback, initial_hl2ll)
 
     def _get_num_int(self, num):
         return self._NUM_OPT + num
