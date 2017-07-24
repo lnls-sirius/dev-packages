@@ -29,12 +29,12 @@ class App:
                  'KickRef']
     writable_fields = ['SP', 'Sel', 'Cmd']
 
-    def __init__(self, driver):
+    def __init__(self, driver, *args):
         """Class constructor."""
         _siriuspy.util.print_ioc_banner(
             ioc_name='si-ma',
             db=App.pvs_database,
-            description='SI Magnet Power Supply Soft IOC',
+            description='SI Dipoles Magnet Power Supply Soft IOC',
             version=__version__,
             prefix=_pvs._PREFIX)
 
@@ -96,6 +96,7 @@ class App:
             device.add_callback(self._mycallback)
 
     def _mycallback(self, pvname, value, **kwargs):
+        print('{0:<15s}: '.format('ioc callback'), pvname, value)
         _, reason = pvname.split(_pvs._PREFIX)
         self._driver.setParam(reason, value)
         if 'hilim' in kwargs or 'lolim' in kwargs:
