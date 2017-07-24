@@ -1,0 +1,443 @@
+SI-Fam:PS-QDP1
+SI-03M1:PS-QDP1
+SI-Fam:PS-QDP1
+SI-Fam:PS-QDP1
+SI-03M1:PS-QDP1
+SI-03M1:PS-QDP1
+SI-Fam:PS-QDP1
+SI-03M1:PS-QDP1
+SI-Fam:PS-QDP1
+SI-Fam:PS-QDP1
+SI-03M1:PS-QDP1
+SI-03M1:PS-QDP1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-QDP1
+SI-Fam:PS-QDP1
+SI-Fam:PS-QDP1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-QDP1
+SI-03M2:PS-QDP1
+SI-Fam:PS-QDP1
+SI-Fam:PS-QDP1
+SI-03M2:PS-QDP1
+SI-03M2:PS-QDP1
+SI-Fam:PS-QDP1
+SI-03M2:PS-QDP1
+SI-Fam:PS-QDP1
+SI-Fam:PS-QDP1
+SI-03M2:PS-QDP1
+SI-03M2:PS-QDP1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-QDP1
+SI-Fam:PS-QDP1
+SI-Fam:PS-QDP1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-QFP
+SI-03M1:PS-QFP
+SI-Fam:PS-QFP
+SI-Fam:PS-QFP
+SI-03M1:PS-QFP
+SI-03M1:PS-QFP
+SI-Fam:PS-QFP
+SI-03M1:PS-QFP
+SI-Fam:PS-QFP
+SI-Fam:PS-QFP
+SI-03M1:PS-QFP
+SI-03M1:PS-QFP
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-QFP
+SI-Fam:PS-QFP
+SI-Fam:PS-QFP
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-QFP
+SI-03M2:PS-QFP
+SI-Fam:PS-QFP
+SI-Fam:PS-QFP
+SI-03M2:PS-QFP
+SI-03M2:PS-QFP
+SI-Fam:PS-QFP
+SI-03M2:PS-QFP
+SI-Fam:PS-QFP
+SI-Fam:PS-QFP
+SI-03M2:PS-QFP
+SI-03M2:PS-QFP
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-QFP
+SI-Fam:PS-QFP
+SI-Fam:PS-QFP
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-QDP2
+SI-03M1:PS-QDP2
+SI-Fam:PS-QDP2
+SI-Fam:PS-QDP2
+SI-03M1:PS-QDP2
+SI-03M1:PS-QDP2
+SI-Fam:PS-QDP2
+SI-03M1:PS-QDP2
+SI-Fam:PS-QDP2
+SI-Fam:PS-QDP2
+SI-03M1:PS-QDP2
+SI-03M1:PS-QDP2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-QDP2
+SI-Fam:PS-QDP2
+SI-Fam:PS-QDP2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-QDP2
+SI-03M2:PS-QDP2
+SI-Fam:PS-QDP2
+SI-Fam:PS-QDP2
+SI-03M2:PS-QDP2
+SI-03M2:PS-QDP2
+SI-Fam:PS-QDP2
+SI-03M2:PS-QDP2
+SI-Fam:PS-QDP2
+SI-Fam:PS-QDP2
+SI-03M2:PS-QDP2
+SI-03M2:PS-QDP2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-QDP2
+SI-Fam:PS-QDP2
+SI-Fam:PS-QDP2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-Q1
+SI-03C1:PS-Q1
+SI-Fam:PS-Q1
+SI-Fam:PS-Q1
+SI-03C1:PS-Q1
+SI-03C1:PS-Q1
+SI-Fam:PS-Q1
+SI-03C1:PS-Q1
+SI-Fam:PS-Q1
+SI-Fam:PS-Q1
+SI-03C1:PS-Q1
+SI-03C1:PS-Q1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-Q1
+SI-Fam:PS-Q1
+SI-Fam:PS-Q1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-Q1
+SI-03C4:PS-Q1
+SI-Fam:PS-Q1
+SI-Fam:PS-Q1
+SI-03C4:PS-Q1
+SI-03C4:PS-Q1
+SI-Fam:PS-Q1
+SI-03C4:PS-Q1
+SI-Fam:PS-Q1
+SI-Fam:PS-Q1
+SI-03C4:PS-Q1
+SI-03C4:PS-Q1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-Q1
+SI-Fam:PS-Q1
+SI-Fam:PS-Q1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-Q2
+SI-03C1:PS-Q2
+SI-Fam:PS-Q2
+SI-Fam:PS-Q2
+SI-03C1:PS-Q2
+SI-03C1:PS-Q2
+SI-Fam:PS-Q2
+SI-03C1:PS-Q2
+SI-Fam:PS-Q2
+SI-Fam:PS-Q2
+SI-03C1:PS-Q2
+SI-03C1:PS-Q2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-Q2
+SI-Fam:PS-Q2
+SI-Fam:PS-Q2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-Q2
+SI-03C4:PS-Q2
+SI-Fam:PS-Q2
+SI-Fam:PS-Q2
+SI-03C4:PS-Q2
+SI-03C4:PS-Q2
+SI-Fam:PS-Q2
+SI-03C4:PS-Q2
+SI-Fam:PS-Q2
+SI-Fam:PS-Q2
+SI-03C4:PS-Q2
+SI-03C4:PS-Q2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-Q2
+SI-Fam:PS-Q2
+SI-Fam:PS-Q2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-Q3
+SI-03C2:PS-Q3
+SI-Fam:PS-Q3
+SI-Fam:PS-Q3
+SI-03C2:PS-Q3
+SI-03C2:PS-Q3
+SI-Fam:PS-Q3
+SI-03C2:PS-Q3
+SI-Fam:PS-Q3
+SI-Fam:PS-Q3
+SI-03C2:PS-Q3
+SI-03C2:PS-Q3
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-Q3
+SI-Fam:PS-Q3
+SI-Fam:PS-Q3
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-Q3
+SI-03C3:PS-Q3
+SI-Fam:PS-Q3
+SI-Fam:PS-Q3
+SI-03C3:PS-Q3
+SI-03C3:PS-Q3
+SI-Fam:PS-Q3
+SI-03C3:PS-Q3
+SI-Fam:PS-Q3
+SI-Fam:PS-Q3
+SI-03C3:PS-Q3
+SI-03C3:PS-Q3
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-Q3
+SI-Fam:PS-Q3
+SI-Fam:PS-Q3
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-Q4
+SI-03C2:PS-Q4
+SI-Fam:PS-Q4
+SI-Fam:PS-Q4
+SI-03C2:PS-Q4
+SI-03C2:PS-Q4
+SI-Fam:PS-Q4
+SI-03C2:PS-Q4
+SI-Fam:PS-Q4
+SI-Fam:PS-Q4
+SI-03C2:PS-Q4
+SI-03C2:PS-Q4
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-Q4
+SI-Fam:PS-Q4
+SI-Fam:PS-Q4
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-Q4
+SI-03C3:PS-Q4
+SI-Fam:PS-Q4
+SI-Fam:PS-Q4
+SI-03C3:PS-Q4
+SI-03C3:PS-Q4
+SI-Fam:PS-Q4
+SI-03C3:PS-Q4
+SI-Fam:PS-Q4
+SI-Fam:PS-Q4
+SI-03C3:PS-Q4
+SI-03C3:PS-Q4
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-Q4
+SI-Fam:PS-Q4
+SI-Fam:PS-Q4
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2
+SI-Fam:PS-B1B2-2
+===================================
+               ts-ma               
+===================================
+TS Magnet Power Supply Soft IOC
+FAC@LNLS,   Sirius Project.
+Version   : 0.4.0
+Timestamp : 2017-07-20-15:14:46.573
+Prefix    : SI-
+
+0001 03C1:MA-Q1:Abort-Cmd            0002 03C1:MA-Q1:CtrlMode-Mon         0003 03C1:MA-Q1:Current-Mon          0004 03C1:MA-Q1:Current-RB           0005 03C1:MA-Q1:Current-SP           
+0006 03C1:MA-Q1:CurrentRef-Mon       0007 03C1:MA-Q1:Intlk-Mon            0008 03C1:MA-Q1:IntlkLabels-Cte      0009 03C1:MA-Q1:KL-Mon               0010 03C1:MA-Q1:KL-RB                
+0011 03C1:MA-Q1:KL-SP                0012 03C1:MA-Q1:KLRef-Mon            0013 03C1:MA-Q1:OpMode-Sel           0014 03C1:MA-Q1:OpMode-Sts           0015 03C1:MA-Q1:PwrState-Sel         
+0016 03C1:MA-Q1:PwrState-Sts         0017 03C1:MA-Q1:Reset-Cmd            0018 03C1:MA-Q1:WfmData-RB           0019 03C1:MA-Q1:WfmData-SP           0020 03C1:MA-Q1:WfmIndex-Mon         
+0021 03C1:MA-Q1:WfmLabel-RB          0022 03C1:MA-Q1:WfmLabel-SP          0023 03C1:MA-Q1:WfmLabels-Mon        0024 03C1:MA-Q1:WfmLoad-Sel          0025 03C1:MA-Q1:WfmLoad-Sts          
+0026 03C1:MA-Q1:WfmSave-Cmd          0027 03C1:MA-Q2:Abort-Cmd            0028 03C1:MA-Q2:CtrlMode-Mon         0029 03C1:MA-Q2:Current-Mon          0030 03C1:MA-Q2:Current-RB           
+0031 03C1:MA-Q2:Current-SP           0032 03C1:MA-Q2:CurrentRef-Mon       0033 03C1:MA-Q2:Intlk-Mon            0034 03C1:MA-Q2:IntlkLabels-Cte      0035 03C1:MA-Q2:KL-Mon               
+0036 03C1:MA-Q2:KL-RB                0037 03C1:MA-Q2:KL-SP                0038 03C1:MA-Q2:KLRef-Mon            0039 03C1:MA-Q2:OpMode-Sel           0040 03C1:MA-Q2:OpMode-Sts           
+0041 03C1:MA-Q2:PwrState-Sel         0042 03C1:MA-Q2:PwrState-Sts         0043 03C1:MA-Q2:Reset-Cmd            0044 03C1:MA-Q2:WfmData-RB           0045 03C1:MA-Q2:WfmData-SP           
+0046 03C1:MA-Q2:WfmIndex-Mon         0047 03C1:MA-Q2:WfmLabel-RB          0048 03C1:MA-Q2:WfmLabel-SP          0049 03C1:MA-Q2:WfmLabels-Mon        0050 03C1:MA-Q2:WfmLoad-Sel          
+0051 03C1:MA-Q2:WfmLoad-Sts          0052 03C1:MA-Q2:WfmSave-Cmd          0053 03C2:MA-Q3:Abort-Cmd            0054 03C2:MA-Q3:CtrlMode-Mon         0055 03C2:MA-Q3:Current-Mon          
+0056 03C2:MA-Q3:Current-RB           0057 03C2:MA-Q3:Current-SP           0058 03C2:MA-Q3:CurrentRef-Mon       0059 03C2:MA-Q3:Intlk-Mon            0060 03C2:MA-Q3:IntlkLabels-Cte      
+0061 03C2:MA-Q3:KL-Mon               0062 03C2:MA-Q3:KL-RB                0063 03C2:MA-Q3:KL-SP                0064 03C2:MA-Q3:KLRef-Mon            0065 03C2:MA-Q3:OpMode-Sel           
+0066 03C2:MA-Q3:OpMode-Sts           0067 03C2:MA-Q3:PwrState-Sel         0068 03C2:MA-Q3:PwrState-Sts         0069 03C2:MA-Q3:Reset-Cmd            0070 03C2:MA-Q3:WfmData-RB           
+0071 03C2:MA-Q3:WfmData-SP           0072 03C2:MA-Q3:WfmIndex-Mon         0073 03C2:MA-Q3:WfmLabel-RB          0074 03C2:MA-Q3:WfmLabel-SP          0075 03C2:MA-Q3:WfmLabels-Mon        
+0076 03C2:MA-Q3:WfmLoad-Sel          0077 03C2:MA-Q3:WfmLoad-Sts          0078 03C2:MA-Q3:WfmSave-Cmd          0079 03C2:MA-Q4:Abort-Cmd            0080 03C2:MA-Q4:CtrlMode-Mon         
+0081 03C2:MA-Q4:Current-Mon          0082 03C2:MA-Q4:Current-RB           0083 03C2:MA-Q4:Current-SP           0084 03C2:MA-Q4:CurrentRef-Mon       0085 03C2:MA-Q4:Intlk-Mon            
+0086 03C2:MA-Q4:IntlkLabels-Cte      0087 03C2:MA-Q4:KL-Mon               0088 03C2:MA-Q4:KL-RB                0089 03C2:MA-Q4:KL-SP                0090 03C2:MA-Q4:KLRef-Mon            
+0091 03C2:MA-Q4:OpMode-Sel           0092 03C2:MA-Q4:OpMode-Sts           0093 03C2:MA-Q4:PwrState-Sel         0094 03C2:MA-Q4:PwrState-Sts         0095 03C2:MA-Q4:Reset-Cmd            
+0096 03C2:MA-Q4:WfmData-RB           0097 03C2:MA-Q4:WfmData-SP           0098 03C2:MA-Q4:WfmIndex-Mon         0099 03C2:MA-Q4:WfmLabel-RB          0100 03C2:MA-Q4:WfmLabel-SP          
+0101 03C2:MA-Q4:WfmLabels-Mon        0102 03C2:MA-Q4:WfmLoad-Sel          0103 03C2:MA-Q4:WfmLoad-Sts          0104 03C2:MA-Q4:WfmSave-Cmd          0105 03C3:MA-Q3:Abort-Cmd            
+0106 03C3:MA-Q3:CtrlMode-Mon         0107 03C3:MA-Q3:Current-Mon          0108 03C3:MA-Q3:Current-RB           0109 03C3:MA-Q3:Current-SP           0110 03C3:MA-Q3:CurrentRef-Mon       
+0111 03C3:MA-Q3:Intlk-Mon            0112 03C3:MA-Q3:IntlkLabels-Cte      0113 03C3:MA-Q3:KL-Mon               0114 03C3:MA-Q3:KL-RB                0115 03C3:MA-Q3:KL-SP                
+0116 03C3:MA-Q3:KLRef-Mon            0117 03C3:MA-Q3:OpMode-Sel           0118 03C3:MA-Q3:OpMode-Sts           0119 03C3:MA-Q3:PwrState-Sel         0120 03C3:MA-Q3:PwrState-Sts         
+0121 03C3:MA-Q3:Reset-Cmd            0122 03C3:MA-Q3:WfmData-RB           0123 03C3:MA-Q3:WfmData-SP           0124 03C3:MA-Q3:WfmIndex-Mon         0125 03C3:MA-Q3:WfmLabel-RB          
+0126 03C3:MA-Q3:WfmLabel-SP          0127 03C3:MA-Q3:WfmLabels-Mon        0128 03C3:MA-Q3:WfmLoad-Sel          0129 03C3:MA-Q3:WfmLoad-Sts          0130 03C3:MA-Q3:WfmSave-Cmd          
+0131 03C3:MA-Q4:Abort-Cmd            0132 03C3:MA-Q4:CtrlMode-Mon         0133 03C3:MA-Q4:Current-Mon          0134 03C3:MA-Q4:Current-RB           0135 03C3:MA-Q4:Current-SP           
+0136 03C3:MA-Q4:CurrentRef-Mon       0137 03C3:MA-Q4:Intlk-Mon            0138 03C3:MA-Q4:IntlkLabels-Cte      0139 03C3:MA-Q4:KL-Mon               0140 03C3:MA-Q4:KL-RB                
+0141 03C3:MA-Q4:KL-SP                0142 03C3:MA-Q4:KLRef-Mon            0143 03C3:MA-Q4:OpMode-Sel           0144 03C3:MA-Q4:OpMode-Sts           0145 03C3:MA-Q4:PwrState-Sel         
+0146 03C3:MA-Q4:PwrState-Sts         0147 03C3:MA-Q4:Reset-Cmd            0148 03C3:MA-Q4:WfmData-RB           0149 03C3:MA-Q4:WfmData-SP           0150 03C3:MA-Q4:WfmIndex-Mon         
+0151 03C3:MA-Q4:WfmLabel-RB          0152 03C3:MA-Q4:WfmLabel-SP          0153 03C3:MA-Q4:WfmLabels-Mon        0154 03C3:MA-Q4:WfmLoad-Sel          0155 03C3:MA-Q4:WfmLoad-Sts          
+0156 03C3:MA-Q4:WfmSave-Cmd          0157 03C4:MA-Q1:Abort-Cmd            0158 03C4:MA-Q1:CtrlMode-Mon         0159 03C4:MA-Q1:Current-Mon          0160 03C4:MA-Q1:Current-RB           
+0161 03C4:MA-Q1:Current-SP           0162 03C4:MA-Q1:CurrentRef-Mon       0163 03C4:MA-Q1:Intlk-Mon            0164 03C4:MA-Q1:IntlkLabels-Cte      0165 03C4:MA-Q1:KL-Mon               
+0166 03C4:MA-Q1:KL-RB                0167 03C4:MA-Q1:KL-SP                0168 03C4:MA-Q1:KLRef-Mon            0169 03C4:MA-Q1:OpMode-Sel           0170 03C4:MA-Q1:OpMode-Sts           
+0171 03C4:MA-Q1:PwrState-Sel         0172 03C4:MA-Q1:PwrState-Sts         0173 03C4:MA-Q1:Reset-Cmd            0174 03C4:MA-Q1:WfmData-RB           0175 03C4:MA-Q1:WfmData-SP           
+0176 03C4:MA-Q1:WfmIndex-Mon         0177 03C4:MA-Q1:WfmLabel-RB          0178 03C4:MA-Q1:WfmLabel-SP          0179 03C4:MA-Q1:WfmLabels-Mon        0180 03C4:MA-Q1:WfmLoad-Sel          
+0181 03C4:MA-Q1:WfmLoad-Sts          0182 03C4:MA-Q1:WfmSave-Cmd          0183 03C4:MA-Q2:Abort-Cmd            0184 03C4:MA-Q2:CtrlMode-Mon         0185 03C4:MA-Q2:Current-Mon          
+0186 03C4:MA-Q2:Current-RB           0187 03C4:MA-Q2:Current-SP           0188 03C4:MA-Q2:CurrentRef-Mon       0189 03C4:MA-Q2:Intlk-Mon            0190 03C4:MA-Q2:IntlkLabels-Cte      
+0191 03C4:MA-Q2:KL-Mon               0192 03C4:MA-Q2:KL-RB                0193 03C4:MA-Q2:KL-SP                0194 03C4:MA-Q2:KLRef-Mon            0195 03C4:MA-Q2:OpMode-Sel           
+0196 03C4:MA-Q2:OpMode-Sts           0197 03C4:MA-Q2:PwrState-Sel         0198 03C4:MA-Q2:PwrState-Sts         0199 03C4:MA-Q2:Reset-Cmd            0200 03C4:MA-Q2:WfmData-RB           
+0201 03C4:MA-Q2:WfmData-SP           0202 03C4:MA-Q2:WfmIndex-Mon         0203 03C4:MA-Q2:WfmLabel-RB          0204 03C4:MA-Q2:WfmLabel-SP          0205 03C4:MA-Q2:WfmLabels-Mon        
+0206 03C4:MA-Q2:WfmLoad-Sel          0207 03C4:MA-Q2:WfmLoad-Sts          0208 03C4:MA-Q2:WfmSave-Cmd          0209 03M1:MA-QDP1:Abort-Cmd          0210 03M1:MA-QDP1:CtrlMode-Mon       
+0211 03M1:MA-QDP1:Current-Mon        0212 03M1:MA-QDP1:Current-RB         0213 03M1:MA-QDP1:Current-SP         0214 03M1:MA-QDP1:CurrentRef-Mon     0215 03M1:MA-QDP1:Intlk-Mon          
+0216 03M1:MA-QDP1:IntlkLabels-Cte    0217 03M1:MA-QDP1:KL-Mon             0218 03M1:MA-QDP1:KL-RB              0219 03M1:MA-QDP1:KL-SP              0220 03M1:MA-QDP1:KLRef-Mon          
+0221 03M1:MA-QDP1:OpMode-Sel         0222 03M1:MA-QDP1:OpMode-Sts         0223 03M1:MA-QDP1:PwrState-Sel       0224 03M1:MA-QDP1:PwrState-Sts       0225 03M1:MA-QDP1:Reset-Cmd          
+0226 03M1:MA-QDP1:WfmData-RB         0227 03M1:MA-QDP1:WfmData-SP         0228 03M1:MA-QDP1:WfmIndex-Mon       0229 03M1:MA-QDP1:WfmLabel-RB        0230 03M1:MA-QDP1:WfmLabel-SP        
+0231 03M1:MA-QDP1:WfmLabels-Mon      0232 03M1:MA-QDP1:WfmLoad-Sel        0233 03M1:MA-QDP1:WfmLoad-Sts        0234 03M1:MA-QDP1:WfmSave-Cmd        0235 03M1:MA-QDP2:Abort-Cmd          
+0236 03M1:MA-QDP2:CtrlMode-Mon       0237 03M1:MA-QDP2:Current-Mon        0238 03M1:MA-QDP2:Current-RB         0239 03M1:MA-QDP2:Current-SP         0240 03M1:MA-QDP2:CurrentRef-Mon     
+0241 03M1:MA-QDP2:Intlk-Mon          0242 03M1:MA-QDP2:IntlkLabels-Cte    0243 03M1:MA-QDP2:KL-Mon             0244 03M1:MA-QDP2:KL-RB              0245 03M1:MA-QDP2:KL-SP              
+0246 03M1:MA-QDP2:KLRef-Mon          0247 03M1:MA-QDP2:OpMode-Sel         0248 03M1:MA-QDP2:OpMode-Sts         0249 03M1:MA-QDP2:PwrState-Sel       0250 03M1:MA-QDP2:PwrState-Sts       
+0251 03M1:MA-QDP2:Reset-Cmd          0252 03M1:MA-QDP2:WfmData-RB         0253 03M1:MA-QDP2:WfmData-SP         0254 03M1:MA-QDP2:WfmIndex-Mon       0255 03M1:MA-QDP2:WfmLabel-RB        
+0256 03M1:MA-QDP2:WfmLabel-SP        0257 03M1:MA-QDP2:WfmLabels-Mon      0258 03M1:MA-QDP2:WfmLoad-Sel        0259 03M1:MA-QDP2:WfmLoad-Sts        0260 03M1:MA-QDP2:WfmSave-Cmd        
+0261 03M1:MA-QFP:Abort-Cmd           0262 03M1:MA-QFP:CtrlMode-Mon        0263 03M1:MA-QFP:Current-Mon         0264 03M1:MA-QFP:Current-RB          0265 03M1:MA-QFP:Current-SP          
+0266 03M1:MA-QFP:CurrentRef-Mon      0267 03M1:MA-QFP:Intlk-Mon           0268 03M1:MA-QFP:IntlkLabels-Cte     0269 03M1:MA-QFP:KL-Mon              0270 03M1:MA-QFP:KL-RB               
+0271 03M1:MA-QFP:KL-SP               0272 03M1:MA-QFP:KLRef-Mon           0273 03M1:MA-QFP:OpMode-Sel          0274 03M1:MA-QFP:OpMode-Sts          0275 03M1:MA-QFP:PwrState-Sel        
+0276 03M1:MA-QFP:PwrState-Sts        0277 03M1:MA-QFP:Reset-Cmd           0278 03M1:MA-QFP:WfmData-RB          0279 03M1:MA-QFP:WfmData-SP          

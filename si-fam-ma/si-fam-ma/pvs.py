@@ -6,7 +6,6 @@ get_pvs_database
     Function that builds the IOC database
 """
 from siriuspy.search import MASearch as _MASearch
-from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.magnet.model import MagnetFactory
 from siriuspy.envars import vaca_prefix as _vaca_prefix
 
@@ -40,27 +39,33 @@ def get_ma_devices():
                 sub_section="Fam",
                 discipline="MA"
             ),
+            dict(
+                section="SI",
+                sub_section="\d{2}\w{0,2}",
+                discipline="MA",
+                device="(Q|CH|CV).*"
+            )
         ]
         # Get magnets
         magnets = _MASearch.get_manames(filters)
         # Trim quadrupole
-        trim_filter = [
-            dict(
-                section="SI",
-                sub_section="\d{2}\w{0,2}",
-                discipline="PS",
-                device="(QD).*"
-            )
-        ]
-        trims = _PSSearch.get_psnames(trim_filter)
-        # magnets = ["SI-Fam:MA-B1B2", "SI-Fam:MA-QDA"]
-        # trims = ['SI-01M1:PS-QDA', 'SI-01M2:PS-QDA', 'SI-05M1:PS-QDA',
-        #          'SI-05M2:PS-QDA', 'SI-09M1:PS-QDA', 'SI-09M2:PS-QDA',
-        #          'SI-13M1:PS-QDA', 'SI-13M2:PS-QDA', 'SI-17M1:PS-QDA',
-        #          'SI-17M2:PS-QDA']
-
-        trims = [x.replace(":PS", ":MA") for x in trims]
-        magnets += trims
+        # trim_filter = [
+        #     dict(
+        #         section="SI",
+        #         sub_section="\d{2}\w{0,2}",
+        #         discipline="PS",
+        #         device="(QD).*"
+        #     )
+        # ]
+        # trims = _PSSearch.get_psnames(trim_filter)
+        # # magnets = ["SI-Fam:MA-B1B2", "SI-Fam:MA-QDA"]
+        # # trims = ['SI-01M1:PS-QDA', 'SI-01M2:PS-QDA', 'SI-05M1:PS-QDA',
+        # #          'SI-05M2:PS-QDA', 'SI-09M1:PS-QDA', 'SI-09M2:PS-QDA',
+        # #          'SI-13M1:PS-QDA', 'SI-13M2:PS-QDA', 'SI-17M1:PS-QDA',
+        # #          'SI-17M2:PS-QDA']
+        #
+        # trims = [x.replace(":PS", ":MA") for x in trims]
+        # magnets += trims
         # Create objects that'll handle the magnets
         for magnet in magnets:
             _, device = magnet.split(_PREFIX)
