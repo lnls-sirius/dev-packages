@@ -288,6 +288,7 @@ class _EventIOC(_BaseIOC):
         'mode_rb': 'Mode-Sts',
         'delay_type_sp': 'DelayType-Sel',
         'delay_type_rb': 'DelayType-Sts',
+        'exttrig': 'ExtTrig-Cmd'
         }
 
     @classmethod
@@ -305,6 +306,8 @@ class _EventIOC(_BaseIOC):
             'type': 'enum', 'enums': _EventIOC._delay_types, 'value': 1}
         db[prefix + 'DelayType-Sts'] = {
             'type': 'enum', 'enums': _EventIOC._delay_types, 'value': 1}
+        db[prefix + 'ExtTrig-Cmd'] = {
+            'type': 'int', 'value': 0}
         return db
 
     def __init__(self, base_freq, callbacks=None, prefix=None, control=None):
@@ -315,6 +318,7 @@ class _EventIOC(_BaseIOC):
             'mode_rb': lambda x: x,
             'delay_type_sp': lambda x: int(x),
             'delay_type_rb': lambda x: x,
+            'exttrig': lambda x: x,
             }
         if control is None:
             control = _EventSim(base_freq)
@@ -414,9 +418,9 @@ class EVGIOC(_BaseIOC):
         db[p + 'ContinuousState-Sts'] = {
             'type': 'enum', 'enums': EVGIOC._states, 'value': 1}
         db[p + 'BucketList-SP'] = {
-            'type': 'int', 'count': 864, 'value': 0}
+            'type': 'int', 'count': 864, 'value': 864*[0]}
         db[p + 'BucketList-RB'] = {
-            'type': 'int', 'count': 864, 'value': 0}
+            'type': 'int', 'count': 864, 'value': 864*[0]}
         db[p + 'RepRate-SP'] = {
             'type': 'float', 'unit': 'Hz', 'value': 2.0, 'prec': 5}
         db[p + 'RepRate-RB'] = {
@@ -476,12 +480,6 @@ class EVGIOC(_BaseIOC):
                 break
             bucket.append(int((value[i]-1) % 864) + 1)
         return bucket + (864-len(bucket)) * [0]
-
-    def _set_init_values(self):
-        super()._set_init_values()
-        db = self.get_database()
-        self._bucket_list_sp = 864*[db['BucketList-SP']['value']]
-        self._bucket_list_rb = 864*[db['BucketList-RB']['value']]
 
     def _ioc_callback(self, propty, value, **kwargs):
         self._call_callbacks(propty, value, **kwargs)

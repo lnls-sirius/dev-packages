@@ -26,7 +26,7 @@ class Events:
     LL2HL_MAP = {val: key for key, val in HL2LL_MAP.items()}
     LL_CODES = list(range(50)) + list(range(80, 120)) + list(range(160, 256))
 
-    MODES = ('Disabled', 'Continuous', 'Injection', 'Single')
+    MODES = ('Disabled', 'Continuous', 'Injection', 'External')
     DELAY_TYPES = ('Incr', 'Fixed')
 
     LL_TMP = 'Event{0:02x}'
