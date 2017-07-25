@@ -675,10 +675,6 @@ class _EVRTriggerIOC(_BaseIOC):
             self.optic_channel_rb = value
 
 
-class _EVETriggerIOC(_EVRTriggerIOC):
-    pass
-
-
 class _OpticChannelIOC(_BaseIOC):
 
     _states = Triggers.STATES
@@ -767,7 +763,7 @@ class EVRIOC(_BaseIOC):
 
     _ClassSim = _EVRSim
     _ClassTrigIOC = _EVRTriggerIOC
-    _OUTTMP = 'MFO{0:d}'
+    _OUTTMP = 'OTP{0:d}'
     _INTTMP = 'IntTrig{0:02d}'
 
     _states = ('Dsbl', 'Enbl')
@@ -867,8 +863,8 @@ class EVEIOC(EVRIOC):
     """Class to simulate the EVE."""
 
     _ClassSim = _EVESim
-    _ClassTrigIOC = _EVETriggerIOC
-    _OUTTMP = 'LVEO{0:d}'
+    _ClassTrigIOC = _EVRTriggerIOC
+    _OUTTMP = 'OUT{0:d}'
 
 
 class AFCIOC(EVRIOC):
@@ -876,5 +872,5 @@ class AFCIOC(EVRIOC):
 
     _ClassSim = _AFCSim
     _ClassTrigIOC = _OpticChannelIOC
-    _OUTTMP = 'LVEIO{0:d}'
-    _INTTMP = 'OPTO{0:02d}'
+    _OUTTMP = 'CRT{0:d}'
+    _INTTMP = 'FMC{0:02d}'

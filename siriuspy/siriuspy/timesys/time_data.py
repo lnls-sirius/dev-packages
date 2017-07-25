@@ -69,59 +69,62 @@ class IOs:
     # that are possible taking into consideration only the devices architecture
     I2O_MAP = {
         'EVR': {
-            'MFIO': (
-                'OPTO00', 'OPTO00', 'OPTO00', 'OPTO03', 'OPTO04', 'OPTO05',
-                'OPTO06', 'OPTO07', 'OPTO08', 'OPTO09', 'OPTO10', 'OPTO11',
-                'MFO0', 'MFO1', 'MFO2', 'MFO3', 'MFO4', 'MFO5', 'MFO6', 'MFO7',
+            'UPLINK': (
+                'OTP00', 'OTP00', 'OTP00', 'OTP03', 'OTP04', 'OTP05',
+                'OTP06', 'OTP07', 'OTP08', 'OTP09', 'OTP10', 'OTP11',
+                'OUT0', 'OUT1', 'OUT2', 'OUT3', 'OUT4', 'OUT5', 'OUT6', 'OUT7',
                 ),
             },
         'EVE': {
-            'MFIO': (
-                'LVEO00', 'LVEO01', 'LVEO02', 'LVEO03', 'LVEO04',
-                'LVEO05', 'LVEO06', 'LVEO07', 'LVEO08',
+            'UPLINK': (
+                'OUT0', 'OUT1', 'OUT2', 'OUT3', 'OUT4',
+                'OUT5', 'OUT6', 'OUT7', 'OUT8',
                 ),
             },
         'AFC': {
-            'MFIO': (
-                'OPTO00', 'OPTO00', 'OPTO00', 'OPTO03', 'OPTO04',
-                'OPTO05', 'OPTO06', 'OPTO07', 'OPTO08', 'OPTO09',
-                'LVEIO0', 'LVEIO1', 'LVEIO2', 'LVEIO3', 'LVEIO4',
-                'LVEIO5', 'LVEIO6', 'LVEIO7', 'LVEIO8',
+            'SFP6': (
+                'FMC0', 'FMC1', 'FMC2', 'FMC3', 'FMC4',
+                'FMC5', 'FMC6', 'FMC7', 'FMC8', 'FMC9',
+                'CRT0', 'CRT1', 'CRT2', 'CRT3', 'CRT4',
+                'CRT5', 'CRT6', 'CRT7',
                 ),
             },
         'STDMOE': {
-            'MFI0': ('HVEO0',),
-            'MFI1': ('HVEO1',),
-            'MFI2': ('HVEO2',),
-            'MFI3': ('HVEO3',),
+            'OE1': ('OUT0',),
+            'OE2': ('OUT1',),
+            'OE3': ('OUT2',),
+            'OE4': ('OUT3',),
             },
         'STDSOE': {
-            'OPTI0': ('HVEO0',),
-            'OPTI1': ('HVEO1',),
-            'OPTI2': ('HVEO2',),
-            'OPTI3': ('HVEO3',),
+            'IN1': ('OUT0',),
+            'IN2': ('OUT1',),
+            'IN3': ('OUT2',),
+            'IN4': ('OUT3',),
             },
         'SOE': {
-            'OPTI': ('HVEO',),
+            'IN': ('OUT',),
+            },
+        'MOE': {
+            'INRX': ('OUT', 'INTX'),
             },
         'FOUT': {
-            'MFIO': (
+            'UPLINK': (
                 'MFIO0', 'MFIO1', 'MFIO2', 'MFIO3',
                 'MFIO4', 'MFIO5', 'MFIO6', 'MFIO7',
                 ),
             },
         'BBB': {
-            'OPTI': ('RSIO',),
+            'IN': ('RSIO',),
             },
         'Crate': {
-            'LVEIO0': ('LVEIO0',),
-            'LVEIO1': ('LVEIO1',),
-            'LVEIO2': ('LVEIO2',),
-            'LVEIO3': ('LVEIO3',),
-            'LVEIO4': ('LVEIO4',),
-            'LVEIO5': ('LVEIO5',),
-            'LVEIO6': ('LVEIO6',),
-            'LVEIO7': ('LVEIO7',),
+            'CRT0': ('CRT0',),
+            'CRT1': ('CRT1',),
+            'CRT2': ('CRT2',),
+            'CRT3': ('CRT3',),
+            'CRT4': ('CRT4',),
+            'CRT5': ('CRT5',),
+            'CRT6': ('CRT6',),
+            'CRT7': ('CRT7',),
             },
         }
 
