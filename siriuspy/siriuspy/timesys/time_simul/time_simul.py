@@ -75,14 +75,6 @@ class TimingSimulation(_device_models.CallBack):
         """Remove injection callback."""
         self.evg.remove_injection_callback(uuid)
 
-    def add_single_callback(self, uuid, callback):
-        """Add single callback."""
-        self.evg.add_single_callback(uuid, callback)
-
-    def remove_single_callback(self, uuid):
-        """Remove single callback."""
-        self.evg.remove_single_callback(uuid)
-
     def get_propty(self, reason):
         """Get property by PV name."""
         reason = reason[len(self.prefix):]

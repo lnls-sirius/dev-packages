@@ -86,7 +86,9 @@ class _BaseIOC(CallBack):
         if name in self.__class__._attr2pvname.keys():
             return self.__dict__['_'+name]
         else:
-            return super().__getattr__(name)
+            raise AttributeError(
+                self.__class__.__name__ +
+                " object has no attribute '_" + name + "'")
 
     def __setattr__(self, name, value):
         if name in self.__class__._attr2pvname.keys():
@@ -98,6 +100,8 @@ class _BaseIOC(CallBack):
             elif name.endswith(('_rb', '_sts')):
                 self.__dict__['_'+name] = pvalue
                 self._call_callbacks(self._attr2pvname[name], pvalue)
+            elif name.endswith(('_cmd',)):
+                self.__dict__['_'+name] = pvalue
         else:
             super().__setattr__(name, value)
 
@@ -169,8 +173,6 @@ class _EVGSim(_BaseSim):
         self._injection = 0
         self._injection_callbacks = dict()
         self._cyclic_injection = 0
-        self._single = 0
-        self._single_callbacks = dict()
         self._bucket_list = [0.0]*864
         self._repetition_rate = 30
         self.events = list()
@@ -189,21 +191,6 @@ class _EVGSim(_BaseSim):
             else:
                 self._injection = value
             self._call_callbacks('injection', value)
-        elif attr == 'single':
-            if value:
-                if not self._single:
-                    self._single = value
-                    if not self._continuous:
-                        return
-                    evnts = self._generate_events(3)
-                    triggers = dict()
-                    for callback in self._pending_devices_callbacks.values():
-                        triggers.update(callback(0, evnts))
-                    for callback in self._single_callbacks.values():
-                        callback(triggers)
-            else:
-                self._single = value
-            self._call_callbacks('single', value)
         else:
             super().__setattr__(attr, value)
 
@@ -247,14 +234,6 @@ class _EVGSim(_BaseSim):
         return True
     ######################################################################
 
-    # ########## Functions related to Single Pulse simulation #############
-    def add_single_callback(self, uuid, callback):
-        self._single_callbacks.update({uuid: callback})
-
-    def remove_single_callback(self, uuid):
-        self._single_callbacks.pop(uuid, None)
-    ##########################################################################
-
     def _generate_events(self, tables):
         tables = tables if isinstance(tables, (list, tuple)) else (tables,)
         events = dict()
@@ -288,7 +267,7 @@ class _EventIOC(_BaseIOC):
         'mode_rb': 'Mode-Sts',
         'delay_type_sp': 'DelayType-Sel',
         'delay_type_rb': 'DelayType-Sts',
-        'exttrig': 'ExtTrig-Cmd'
+        'exttrig_cmd': 'ExtTrig-Cmd'
         }
 
     @classmethod
@@ -318,7 +297,7 @@ class _EventIOC(_BaseIOC):
             'mode_rb': lambda x: x,
             'delay_type_sp': lambda x: int(x),
             'delay_type_rb': lambda x: x,
-            'exttrig': lambda x: x,
+            'exttrig_cmd': lambda x: x,
             }
         if control is None:
             control = _EventSim(base_freq)
@@ -498,10 +477,6 @@ class EVGIOC(_BaseIOC):
             if value != self._injection_sp:
                 self._injection_sp = value
                 self._call_callbacks('InjectionState-Sel', value)
-        elif propty == 'single':
-            self.single_rb = value
-            self._single_sp = value
-            self._call_callbacks('SingleState-Sel', value)
 
     def add_injection_callback(self, uuid, callback):
         """Add injection callback."""
@@ -510,14 +485,6 @@ class EVGIOC(_BaseIOC):
     def remove_injection_callback(self, uuid):
         """Remove injection callback."""
         self._control.remove_injection_callback(uuid)
-
-    def add_single_callback(self, uuid, callback):
-        """Add single callback."""
-        self._control.add_single_callback(uuid, callback)
-
-    def remove_single_callback(self, uuid):
-        """Remove single callback."""
-        self._control.remove_single_callback(uuid)
 
     def add_pending_devices_callback(self, uuid, callback):
         """Add pending devices callback."""
