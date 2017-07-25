@@ -2,7 +2,7 @@
 
 from setuptools import setup, find_packages
 
-with open('VERSION','r') as _f:
+with open('VERSION', 'r') as _f:
     __version__ = _f.read().strip()
 
 setup(
