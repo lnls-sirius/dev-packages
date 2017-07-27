@@ -60,7 +60,6 @@ class Triggers:
 
     def __init__(self):
         """Initialize the Instance."""
-        HL_TRIGGS = {}  # the execution of text will create this variable.
         text = ''
         if _LOCAL:
             with open('/home/fac_files/lnls-sirius/' +
@@ -70,8 +69,9 @@ class Triggers:
         else:
             if _web.server_online():
                 text = _web.high_level_triggers(timeout=_timeout)
+        # the execution of text will create the HL_TRIGGS variable.
         exec(text)
-        self._hl_triggers = HL_TRIGGS
+        self._hl_triggers = locals()['HL_TRIGGS']
         self.check_triggers_consistency()
 
     @property
@@ -98,6 +98,10 @@ class Triggers:
                         'Device ' + chan +
                         ' defined in the high level trigger ' +
                         trig + ' not specified in timing connections data.')
+                if not tmp:
+                    raise Exception('Device ' + chan +
+                                    ' defined in the high level trigger ' +
+                                    trig + ' maybe were already used.')
                 up_dev = tmp.pop()
                 diff_devs = from_evg[up_dev] - chans
                 if diff_devs and not chan.dev_type.endswith('BPM'):
@@ -107,8 +111,6 @@ class Triggers:
                         up_dev + ' as ' + chan +
                         ' but are not related to the sam trigger (' +
                         trig + ').')
-
-        return True
 
 
 class IOs:
