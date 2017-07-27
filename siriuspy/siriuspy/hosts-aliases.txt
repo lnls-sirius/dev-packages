@@ -12,3 +12,4 @@
 10.0.21.92 naming-service-wildfly
 10.0.21.92 rbac
 10.0.21.92 ccdb
+10.0.21.92 sirius-consts.lnls.br
