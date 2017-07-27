@@ -17,7 +17,7 @@ def read_url(url, timeout=_timeout):
         response = _urllib_request.urlopen(url, timeout=timeout)
         data = response.read()
         text = data.decode('utf-8')
-    except Exception():
+    except Exception:
         errtxt = 'Error reading url "' + url + '"!'
         raise Exception(errtxt)
 
@@ -30,7 +30,7 @@ def server_online():
     try:
         read_url(url, timeout=_timeout)
         return True
-    except Exception():
+    except Exception:
         return False
 
 
