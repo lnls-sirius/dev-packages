@@ -1,6 +1,6 @@
+"""Impletentation of webserver data retrievement functions."""
 import urllib.request as _urllib_request
 import siriuspy.envars as _envars
-
 
 _timeout = 1.0
 _excdat_folder = '/magnet/excitation-data/'
@@ -11,29 +11,31 @@ _diag_folder = '/diagnostics/'
 _timesys_folder = '/timesys/'
 
 
-
 def read_url(url, timeout=_timeout):
+    """Read URL from server."""
     try:
         response = _urllib_request.urlopen(url, timeout=timeout)
         data = response.read()
         text = data.decode('utf-8')
-    except:
+    except Exception():
         errtxt = 'Error reading url "' + url + '"!'
         raise Exception(errtxt)
 
     return text
 
+
 def server_online():
+    """Verify if server is online."""
     url = _envars.server_url_web
     try:
-        index_html = read_url(url, timeout=_timeout)
+        read_url(url, timeout=_timeout)
         return True
-    except:
+    except Exception():
         return False
+
 
 def magnets_excitation_data_get_filenames_list(timeout=_timeout):
     """Get list of filenames in magnet excitation data folder at web server."""
-
     url = _envars.server_url_web + _excdat_folder
     response = _urllib_request.urlopen(url, timeout=timeout)
     data = response.read()
@@ -45,46 +47,66 @@ def magnets_excitation_data_get_filenames_list(timeout=_timeout):
         fname_list.append(fname[0])
     return fname_list
 
-def magnets_excitation_data_read(filename, timeout=_timeout):
-    """Return the text of the corresponding retrieved magnet excitation data from the web server."""
 
+def magnets_excitation_data_read(filename, timeout=_timeout):
+    """Return the text of the retrieved magnet excitation data."""
     url = _envars.server_url_web + _excdat_folder + filename
     return read_url(url, timeout=timeout)
 
-def magnets_setpoint_limits(timeout = _timeout):
-    url = _envars.server_url_web + _magnet_folder + 'magnet-setpoint-limits.txt'
+
+def magnets_setpoint_limits(timeout=_timeout):
+    """Get the magnet setpoint limits."""
+    url = (_envars.server_url_web +
+           _magnet_folder +
+           'magnet-setpoint-limits.txt')
     return read_url(url, timeout=timeout)
 
+
 def magnets_excitation_ps_read(timeout=_timeout):
+    """Return the power supply excitation data."""
     url = _envars.server_url_web + _magnet_folder + 'magnet-excitation-ps.txt'
     return read_url(url, timeout=timeout)
 
-def power_supplies_pstypes_names_read(timeout=_timeout):
-    """Return the text of the corresponding retrieved power supplies type from the web server."""
 
+def power_supplies_pstypes_names_read(timeout=_timeout):
+    """Return the text of the power supplies type."""
     url = _envars.server_url_web + _ps_folder + 'pstypes-names.txt'
     return read_url(url, timeout=timeout)
 
+
 def power_supplies_pstype_data_read(filename, timeout=_timeout):
+    """Return the power supply data."""
     url = _envars.server_url_web + _pstypes_data_folder + filename
     return read_url(url, timeout=timeout)
 
-def power_supplies_pstype_setpoint_limits(timeout = _timeout):
+
+def power_supplies_pstype_setpoint_limits(timeout=_timeout):
+    """Return the power supply setpoint limits data."""
     url = _envars.server_url_web + _ps_folder + 'pstypes-setpoint-limits.txt'
     return read_url(url, timeout=timeout)
 
-def beaglebone_power_supplies_mapping(timeout = _timeout):
+
+def beaglebone_power_supplies_mapping(timeout=_timeout):
+    """Return the beaglebone Black connections list."""
     url = _envars.server_url_web + _ps_folder + 'beaglebone-mapping.txt'
     return read_url(url, timeout=timeout)
 
-def crate_to_bpm_mapping(timeout = _timeout):
+
+def crate_to_bpm_mapping(timeout=_timeout):
+    """Return the crate to bpm mapping."""
     url = _envars.server_url_web + _diag_folder + 'crates-connection.txt'
     return read_url(url, timeout=timeout)
 
-def bpms_data(timeout = _timeout):
+
+def bpms_data(timeout=_timeout):
+    """Return the BPMs data."""
     url = _envars.server_url_web + _diag_folder + 'bpms-data.txt'
     return read_url(url, timeout=timeout)
 
-def timing_devices_mapping(timeout = _timeout):
-    url = _envars.server_url_web + _timesys_folder + 'timing-devices-connection.txt'
+
+def timing_devices_mapping(timeout=_timeout):
+    """Return the timing devices connections mapping."""
+    url = (_envars.server_url_web +
+           _timesys_folder +
+           'timing-devices-connection.txt')
     return read_url(url, timeout=timeout)
