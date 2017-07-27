@@ -2,7 +2,7 @@ import siriuspy.servweb as _web
 import copy as _copy
 
 _timeout = 1.0
-_LOCAL = True
+_LOCAL = False
 
 class _CratesData:
     """Class with mapping of BeagleBoneBlack and the power supplies connected to them.

@@ -18,7 +18,7 @@ _LOCAL = False
 
 
 class Events:
-    """Contian properties of the Events."""
+    """Contain properties of the Events."""
 
     HL2LL_MAP = {'Linac': 0, 'InjBO': 1, 'InjSI': 2, 'RmpBO': 3, 'MigSI': 4,
                  'DigLI': 5, 'DigTB': 6, 'DigBO': 7, 'DigTS': 8, 'DigSI': 9,
@@ -58,11 +58,63 @@ class Triggers:
     POLARITIES = ('Normal', 'Inverse')
     CLOCKS = tuple(Clocks.HL2LL_MAP.keys())
 
+    def __init__(self):
+        """Initialize the Instance."""
+        HL_TRIGGS = {}  # the execution of text will create this variable.
+        text = ''
+        if _LOCAL:
+            with open('/home/fac_files/lnls-sirius/' +
+                      'control-system-constants/' +
+                      'timesys/high-level-triggers.txt', 'r') as f:
+                text = f.read()
+        else:
+            if _web.server_online():
+                text = _web.high_level_triggers(timeout=_timeout)
+        exec(text)
+        self._hl_triggers = HL_TRIGGS
+        self.check_triggers_consistency()
+
+    @property
+    def hl_triggers(self):
+        """Dictionary with high level trigger properties."""
+        return _copy.deepcopy(self._hl_triggers)
+
+    def check_triggers_consistency(self):
+        """Check consitency of Triggers definition.
+
+        Check if High Level definition of Triggers is consistent with
+        Low Level connections of the timing devices.
+        """
+        Connections.add_bbb_info()
+        Connections.add_crates_info()
+        from_evg = Connections.get_connections_from_evg()
+        twds_evg = Connections.get_connections_twds_evg()
+        for trig, val in self.hl_triggers.items():
+            chans = {_PVName(chan) for chan in val['channels']}
+            for chan in chans:
+                tmp = twds_evg.get(chan)
+                if tmp is None:
+                    raise Exception(
+                        'Device ' + chan +
+                        ' defined in the high level trigger ' +
+                        trig + ' not specified in timing connections data.')
+                up_dev = tmp.pop()
+                diff_devs = from_evg[up_dev] - chans
+                if diff_devs and not chan.dev_type.endswith('BPM'):
+                    raise Exception(
+                        'Devices: ' + ' '.join(diff_devs) +
+                        ' are connected to the same output of ' +
+                        up_dev + ' as ' + chan +
+                        ' but are not related to the sam trigger (' +
+                        trig + ').')
+
+        return True
+
 
 class IOs:
     """Contain the properties of the connections."""
 
-    LL_RGX = _re.compile('([OPTMFLHVESR]{2,3})([IO]{1,2})([0-9]{0,2})',
+    LL_RGX = _re.compile('([A-Z]+)([0-9]{0,2})',
                          _re.IGNORECASE)
 
     # defines the relations between input and output of the timing devices
@@ -72,17 +124,19 @@ class IOs:
             'UPLINK': (
                 'OTP00', 'OTP00', 'OTP00', 'OTP03', 'OTP04', 'OTP05',
                 'OTP06', 'OTP07', 'OTP08', 'OTP09', 'OTP10', 'OTP11',
-                'OUT0', 'OUT1', 'OUT2', 'OUT3', 'OUT4', 'OUT5', 'OUT6', 'OUT7',
+                'OUT0', 'OUT1', 'OUT2', 'OUT3',
+                'OUT4', 'OUT5', 'OUT6', 'OUT7',
                 ),
             },
         'EVE': {
             'UPLINK': (
-                'OUT0', 'OUT1', 'OUT2', 'OUT3', 'OUT4',
-                'OUT5', 'OUT6', 'OUT7', 'OUT8',
+                'OUT0', 'OUT1', 'OUT2', 'OUT3',
+                'OUT4', 'OUT5', 'OUT6', 'OUT7',
+                'RFOUT',
                 ),
             },
         'AFC': {
-            'SFP6': (
+            'SFP': (
                 'FMC0', 'FMC1', 'FMC2', 'FMC3', 'FMC4',
                 'FMC5', 'FMC6', 'FMC7', 'FMC8', 'FMC9',
                 'CRT0', 'CRT1', 'CRT2', 'CRT3', 'CRT4',
@@ -90,16 +144,16 @@ class IOs:
                 ),
             },
         'STDMOE': {
-            'OE1': ('OUT0',),
-            'OE2': ('OUT1',),
-            'OE3': ('OUT2',),
-            'OE4': ('OUT3',),
+            'OE1': ('OUT1',),
+            'OE2': ('OUT2',),
+            'OE3': ('OUT3',),
+            'OE4': ('OUT4',),
             },
         'STDSOE': {
-            'IN1': ('OUT0',),
-            'IN2': ('OUT1',),
-            'IN3': ('OUT2',),
-            'IN4': ('OUT3',),
+            'IN1': ('OUT1',),
+            'IN2': ('OUT2',),
+            'IN3': ('OUT3',),
+            'IN4': ('OUT4',),
             },
         'SOE': {
             'IN': ('OUT',),
@@ -109,8 +163,8 @@ class IOs:
             },
         'FOUT': {
             'UPLINK': (
-                'MFIO0', 'MFIO1', 'MFIO2', 'MFIO3',
-                'MFIO4', 'MFIO5', 'MFIO6', 'MFIO7',
+                'OUT0', 'OUT1', 'OUT2', 'OUT3',
+                'OUT4', 'OUT5', 'OUT6', 'OUT7',
                 ),
             },
         'BBB': {
@@ -136,18 +190,6 @@ class IOs:
             for conn2 in conns:
                 dic_[conn2] = conn1
 
-    @staticmethod
-    def ios_meaning(conn=None):
-        """Print description of connection initials."""
-        print('{0:13s} {1:s}'.format('Connection', 'Meaning'))
-        print('{0:13s} {1:s}'.format('MFIO', 'Multi Fibre Input/Output'))
-        print('{0:13s} {1:s}'.format('OPTIO', 'Optical Fibre Input/Output'))
-        print('{0:13s} {1:s}'.format('SRIO', 'RS485 Serial Network'))
-        print('{0:13s} {1:s}'.format('LVEIO',
-                                     'Low Voltage Eletric Input/Output'))
-        print('{0:13s} {1:s}'.format('HVEIO',
-                                     'High Voltage Eletric Input/Output'))
-
 
 class _TimeDevData:
     """Class with mapping of timing devices and triggers receivers connections.
@@ -168,16 +210,16 @@ class _TimeDevData:
         self._positions = dict()
         self._colors = dict()
         self._arrow_colors = dict()
-        if _web.server_online():
-            if _LOCAL:
-                with open('/home/fac_files/lnls-sirius/' +
-                          'control-system-constants/' +
-                          'timesys/timing-devices-connection.txt', 'r') as f:
-                    text = f.read()
-            else:
+        if _LOCAL:
+            with open('/home/fac_files/lnls-sirius/' +
+                      'control-system-constants/' +
+                      'timesys/timing-devices-connection.txt', 'r') as f:
+                text = f.read()
+        else:
+            if _web.server_online():
                 text = _web.timing_devices_mapping(timeout=_timeout)
-            self._parse_text_and_build_connection_mappings(text)
-            self._update_related_maps()
+        self._parse_text_and_build_connection_mappings(text)
+        self._update_related_maps()
 
     def _update_related_maps(self):
         self._build_devices_relations()
@@ -196,7 +238,7 @@ class _TimeDevData:
         chan = txt.propty
         reg_match = IOs.LL_RGX.findall(chan)
         if reg_match:
-            type_chan, io_chan, num_chan = reg_match[0]
+            type_chan, num_chan = reg_match[0]
             return dev, chan, type_chan, num_chan
 
     def _parse_text_and_build_connection_mappings(self, text):
@@ -219,10 +261,6 @@ class _TimeDevData:
                 print('Sintaxe error in definition of ' +
                       '{0:s} channel in line {1:d}:\n\t {2:s}'
                       .format('output' if not octyp else 'input', n, line))
-                return
-            elif octyp != ictyp:
-                print('Channel types do not match in line {0:d}:\n\t {1:s}'
-                      .format(n, line))
                 return
             else:
                 if out in from_evg.keys():
@@ -318,22 +356,25 @@ class _TimeDevData:
                 ax.arrow(x, y, dx, dy,
                          fc=cor, ec=cor, length_includes_head=True)
 
-    def _build_positions(self):
-        def dist(x):
-            return self._spacing_for_plot/_math.sqrt(2*(1-_math.cos(x)))
+    @classmethod
+    def _dist(cls, x):
+        return cls._spacing_for_plot/_math.sqrt(2*(1-_math.cos(x)))
 
-        def pol2cart(x, y):
-            return (x*_math.cos((y[0]+y[1])/2), x*_math.sin((y[0]+y[1])/2))
+    @staticmethod
+    def _pol2cart(x, y):
+        return (x*_math.cos((y[0]+y[1])/2), x*_math.sin((y[0]+y[1])/2))
+
+    def _build_positions(self):
 
         pi2 = _math.pi*2
         nevgs = len(self._hierarchy_map[0])
         radia = [0] * len(self._hierarchy_map)
-        radia[0] = 0 if nevgs == 1 else dist(pi2/nevgs)
+        radia[0] = 0 if nevgs == 1 else self._dist(pi2/nevgs)
         angles = dict()
         positions = dict()
         for i, dev in enumerate(self._hierarchy_map[0]):
             angles[dev] = (i*pi2/nevgs, (i+1)*pi2/nevgs)
-            positions[dev] = pol2cart(radia[0], angles[dev])
+            positions[dev] = self._pol2cart(radia[0], angles[dev])
 
         # find angles and radia
         for n, devs in enumerate(self._hierarchy_map):
@@ -346,7 +387,7 @@ class _TimeDevData:
                 min_ang = min(min_ang, dang, dang/nr if nr else min_ang)
                 for i, dev2 in enumerate(devs2):
                     angles[dev2] = (i*dang/nr + angi, (i+1)*dang/nr + angi)
-            r = dist(min_ang)
+            r = self._dist(min_ang)
             if n > 0 and r <= radia[n-1]:
                 radia[n] = 2*radia[n-1]
             else:
@@ -357,7 +398,7 @@ class _TimeDevData:
             for dev in devs:
                 devs2 = self._dev_from_evg.get(dev, set())
                 for i, dev2 in enumerate(devs2):
-                    positions[dev2] = pol2cart(radia[n], angles[dev2])
+                    positions[dev2] = self._pol2cart(radia[n], angles[dev2])
 
         self._positions = positions
         self._inv_positions = {xy: dev for dev, xy in positions.items()}
@@ -561,6 +602,7 @@ class Connections:
         timedata = cls._get_timedata()
         if connections_dict is None:
             from siriuspy import pwrsupply
+            pwrsupply.bbbdata._LOCAL = _LOCAL
             connections_dict = pwrsupply.bbbdata.get_mapping()
         return timedata.add_bbb_info(connections_dict)
 
@@ -570,6 +612,7 @@ class Connections:
         timedata = cls._get_timedata()
         if connections_dict is None:
             from siriuspy import diagnostics
+            diagnostics.cratesdata._LOCAL = _LOCAL
             connections_dict = diagnostics.cratesdata.get_mapping()
         return timedata.add_crates_info(connections_dict)
 
