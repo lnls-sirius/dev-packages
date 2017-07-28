@@ -23,26 +23,26 @@ class PsCycleWindow(QDialog):
 
         self._setupUi()
 
-    #Actions
+    # Actions
     def _prepareToCycle(self):
         ''' Prepare chosen PS to be cycled. '''
         if self._ready_to_cycle:
-            #Reset
+            # Reset
             self._ready_to_cycle = False
             self.prepareButton.setText("Set to Cycle")
             self.cycleButton.setEnabled(False)
             self._enableCheckBoxes(True)
         else:
-            #Set Pwr Supplies to be cycled
+            # Set Pwr Supplies to be cycled
             self._ps_cycle.power_supplies = self._getSelectedPowerSupplies()
-            #Thread that'll execute the cycling
+            # Thread that'll execute the cycling
             t = PrepareCycleThread(self._ps_cycle, self)
-            #Dlg with a progress bar
+            # Dlg with a progress bar
             dlg = LoadingDlg("Preparing to Cycle", len(self._selected_ps), self)
-            #Signals/Slots to update progress bar and close it
+            # Signals/Slots to update progress bar and close it
             t.taskUpdated.connect(dlg.update)
             t.taskFinished.connect(dlg.done)
-            #Start thread and open dlg
+            # Start thread and open dlg
             t.start()
             ret = dlg.exec_()
 
@@ -52,7 +52,7 @@ class PsCycleWindow(QDialog):
                 self.prepareButton.setText("Reset")
                 self._enableCheckBoxes(False)
             else:
-                #SHOW MESSAGE
+                # SHOW MESSAGE
                 pass
 
     def _cycle(self):
@@ -83,11 +83,11 @@ class PsCycleWindow(QDialog):
         else:
             self._selected_devices.remove((section, sub_section, device))
 
-    #Interface setup
+    # Interface setup
     def _setupUi(self):
         self.setWindowTitle("Power Supply Cycling")
 
-        #Anel
+        # Anel
         self.siDCkB = QCheckBox("Dipoles")
         self.siDCkB.setObjectName("si_b")
         self.siDCkB.stateChanged.connect(
@@ -108,7 +108,7 @@ class PsCycleWindow(QDialog):
         self.siCCkB.stateChanged.connect(
             lambda state: self.changePsSet(
                 state, 'SI', psdata.filters.TRIM, psdata.filters.CORR))
-        #Linhas de transpote
+        # Linhas de transpote
         self.ltDCkB = QCheckBox("Dipoles")
         self.ltDCkB.setObjectName("lt_b")
         self.ltDCkB.stateChanged.connect(
@@ -124,7 +124,7 @@ class PsCycleWindow(QDialog):
         self.ltCCkB.stateChanged.connect(
             lambda state: self.changePsSet(
                 state, 'LT', psdata.filters.TRIM, psdata.filters.CORR))
-        #Linac
+        # Linac
         self.liQCkB = QCheckBox("Quadrupoles")
         self.liQCkB.setObjectName("li_q")
         self.liQCkB.stateChanged.connect(
@@ -135,13 +135,13 @@ class PsCycleWindow(QDialog):
         self.liCCkb.stateChanged.connect(
             lambda state: self.changePsSet(
                 state, 'LI', psdata.filters.TRIM, psdata.filters.CORR))
-        #Create Group Boxes
+        # Create Group Boxes
         siPsBox = self._createCheckBoxGroup("Ring", [self.siDCkB, self.siQCkB, \
                 self.siSCkB, self.siCCkB ])
         ltPsBox = self._createCheckBoxGroup("Tansport Lines", [self.ltDCkB, \
                 self.ltQCkB, self.ltCCkB ])
         liPsBox = self._createCheckBoxGroup("Linac", [self.liQCkB, self.liCCkb])
-        #Create command buttons
+        # Create command buttons
         self.prepareButton = QPushButton("Set to Cycle")
         self.prepareButton.clicked.connect(self._prepareToCycle)
         self.cycleButton = QPushButton("Cycle")
@@ -153,7 +153,7 @@ class PsCycleWindow(QDialog):
         buttonLayout.addStretch()
         buttonLayout.addWidget(self.prepareButton)
         buttonLayout.addWidget(self.cycleButton)
-        #Build grid containing the main menu
+        # Build grid containing the main menu
         menu_grid = QGridLayout()
         menu_grid.addWidget(siPsBox, 0, 0)
         menu_grid.addWidget(ltPsBox, 0, 1)

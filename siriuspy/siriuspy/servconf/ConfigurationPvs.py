@@ -1,52 +1,64 @@
+"""This module has classes that defines different configurations of PVs."""
 import re
-from ..pwrsupply import psdata
+from ..search import MASearch
+
 
 class ConfigurationPvs:
+    """Base class that defines a group of PVs."""
+
     def pvs(self):
+        """Return pvs that belong to this configuration.
+
+        This function must be overriden by sub classes.
+        """
         return self._getPvs()
 
     @staticmethod
-    def getForce(slot):
-        if re.match("^[A-Z]{2}-\w{2,4}:PS-B", slot):
+    def getStrengthName(slot):
+        """Return strength name for given device."""
+        if re.match("^[A-Z]{2}-\w{2,4}:[A-Z]{2}-B", slot):
             return "Energy"
-        elif re.match("^[A-Z]{2}-\w{2,4}:PS-Q", slot):
+        elif re.match("^[A-Z]{2}-\w{2,4}:[A-Z]{2}-Q", slot):
             return "KL"
-        elif re.match("^[A-Z]{2}-\w{2,4}:PS-S", slot):
+        elif re.match("^[A-Z]{2}-\w{2,4}:[A-Z]{2}-S", slot):
             return "SL"
-        elif re.match("^[A-Z]{2}-\w{2,4}:PS-(C|F)", slot):
-            return "Angle"
+        elif re.match("^[A-Z]{2}-\w{2,4}:[A-Z]{2}-(C|F)", slot):
+            return "Kick"
         else:
-            return "???"
+            raise NotImplementedError
 
-    def _getPvs(self): pass
+    def _getPvs(self):
+        raise NotImplementedError
 
-class BoForcePvs(ConfigurationPvs):
-    def __init__(self):
-        super(BoForcePvs, self).__init__()
+
+class BoStrengthPvs(ConfigurationPvs):
+    """Configuration of strength PVs from booster elements."""
 
     def _getPvs(self):
         pvs = dict()
-        slots = psdata.get_names()
+        slots = MASearch.get_manames()
         if slots:
             for slot in slots:
-                pv = slot + ":" + ConfigurationPvs.getForce(slot) + "-RB"
-                if re.match("^BO-\w{2,4}:PS-(B|Q|S|C|F)", pv):
+                strength_name = ConfigurationPvs.getStrengthName(slot)
+                pv = slot + ":" + strength_name + "-RB"
+                if re.match("^BO-\w{2,4}:MA-(B|Q|S|C|F)", pv):
                     pvs[pv] = float
 
         return pvs
 
 
-class SiForcePvs(ConfigurationPvs):
-    def __init__(self):
-        super(SiForcePvs, self).__init__()
+class SiStrengthPvs(ConfigurationPvs):
+    """Configuration of strength PVs from sirius elements."""
 
     def _getPvs(self):
         pvs = dict()
-        slots = psdata.get_names()
+        slots = MASearch.get_manames()
         if slots:
             for slot in slots:
-                pv = slot + ":" + ConfigurationPvs.getForce(slot) + "-RB"
-                if re.match("^SI-\w{2,4}:PS-(B|Q|S|C|F)", pv):
+                strength_name = ConfigurationPvs.getStrengthName(slot)
+                pv = slot + ":" + strength_name + "-RB"
+                if re.match("^SI-Fam:MA-(B|Q|S)", pv) or \
+                        re.match("^SI-\d{2}[A-Z]\d:MA-(:?Q|CH|CV|FCH|FCV).*", pv):
                     pvs[pv] = float
 
         return pvs

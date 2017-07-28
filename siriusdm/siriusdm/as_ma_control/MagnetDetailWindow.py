@@ -20,7 +20,7 @@ class MagnetDetailWindow(QDialog):
         self.app.establish_widget_connections(self)
 
     def _setupUi(self):
-        #Set window layout
+        # Set window layout
         self.layout = QVBoxLayout()
 
         self.widget = MagnetDetailWidget(self._ma, self)
