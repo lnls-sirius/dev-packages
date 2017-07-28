@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python-sirius
 
 import unittest
 from siriuspy.csdevice.enumtypes import EnumTypes as _et

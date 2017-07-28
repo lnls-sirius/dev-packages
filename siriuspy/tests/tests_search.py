@@ -1,4 +1,5 @@
-#!/usr/local/bin/python3.6
+#!/usr/local/bin/env python-sirius
+
 import unittest
 from siriuspy.search import MASearch
 
