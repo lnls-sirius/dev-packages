@@ -1,0 +1,22 @@
+
+# FAC members' workstations
+
+10.0.21.133 lnls210-linux alexandre-linux
+10.0.21.92  lnls449-linux ximenes-linux
+10.0.21.150 lnls451-linux liulin-linux
+10.0.21.93  lnls452-linux fernando-linux
+10.0.21.66  lnls454-linux ana-linux
+10.0.21.138 lnls455-linux guilherme-linux
+
+# FAC computers
+
+10.0.21.65   lnls209-linux
+10.0.21.122  lnls208-linux
+10.0.21.96   fac8-linux glauber-linux
+
+# EPICS support applications
+
+10.0.21.92 naming-service-wildfly
+10.0.21.92 rbac
+10.0.21.92 ccdb
+10.0.21.92 sirius-consts.lnls.br

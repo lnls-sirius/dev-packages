@@ -123,9 +123,3 @@ def beam_rigidity(energy):
         return 0
     brho = beta * (energy*1e9) / light_speed
     return brho
-
-# # Is this being used ?!?!
-# def set_ioc_ca_port_number(ioc_name):
-#     envar, default_port = _envars.ioc_ca_ports_dict[ioc_name]
-#     port = _os.environ.get(envar, default=default_port)
-#     _os.environ['EPICS_CA_SERVER_PORT'] = port
