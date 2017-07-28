@@ -3,7 +3,7 @@
 import time as _time
 import logging as _log
 from siriuspy.timesys.time_data import Events, Clocks, Triggers
-from hl_classes import get_hl_trigger_object, HL_Event, HL_Clock
+from hl_classes import HL_Event, HL_Clock, HL_Trigger
 
 with open('VERSION', 'r') as _f:
     __version__ = _f.read().strip()
@@ -41,8 +41,8 @@ class App:
             self._events[event] = HL_Event(event, self._update_driver, code)
         _log.info('Creating High Level Triggers:')
         self._triggers = dict()
-        for pref, prop in Triggers().hl_triggers:
-            self._triggers[pref] = get_hl_trigger_object(
+        for pref, prop in Triggers().hl_triggers.items():
+            self._triggers[pref] = HL_Trigger(
                                             pref, self._update_driver, **prop)
         self._database = self.get_database()
 
