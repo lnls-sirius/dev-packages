@@ -14,7 +14,7 @@ if _importlib.find_loader('matplotlib') is not None:
     import matplotlib.cm as _cmap
 
 _timeout = 1.0
-_LOCAL = False
+_LOCAL = True
 
 
 class Events:
@@ -141,8 +141,8 @@ class IOs:
             'SFP': (
                 'FMC0', 'FMC1', 'FMC2', 'FMC3', 'FMC4',
                 'FMC5', 'FMC6', 'FMC7', 'FMC8', 'FMC9',
-                'CRT0', 'CRT1', 'CRT2', 'CRT3', 'CRT4',
-                'CRT5', 'CRT6', 'CRT7',
+                'OUT0', 'OUT1', 'OUT2', 'OUT3', 'OUT4',
+                'OUT5', 'OUT6', 'OUT7',
                 ),
             },
         'STDMOE': {
