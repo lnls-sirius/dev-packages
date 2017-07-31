@@ -1,21 +1,20 @@
+"""Main module of AS-MA IOC."""
+
 import pvs as _pvs
 import time as _time
 import siriuspy as _siriuspy
-import uuid as _uuid
-import re as _re
-from siriuspy.search import MASearch as _MASearch
-import threading
-from epics import caget
-from numpy import ndarray
 
 # Coding guidelines:
 # =================
 # 01 - pay special attention to code readability
 # 02 - simplify logic as much as possible
 # 03 - unroll expressions in order to simplify code
-# 04 - dont be afraid to generate simingly repeatitive flat code (they may be easier to read!)
-# 05 - 'copy and paste' is your friend and it allows you to code 'repeatitive' (but clearer) sections fast.
-# 06 - be consistent in coding style (variable naming, spacings, prefixes, suffixes, etc)
+# 04 - dont be afraid to generate simingly repeatitive flat code (they may be
+#      easier to read!)
+# 05 - 'copy and paste' is your friend and it allows you to code 'repeatitive'
+#      (but clearer) sections fast.
+# 06 - be consistent in coding style (variable naming, spacings, prefixes,
+#      suffixes, etc)
 
 __version__ = _pvs.__version__
 
@@ -42,9 +41,9 @@ class App:
     def __init__(self, driver, *args):
         """Class constructor."""
         _siriuspy.util.print_ioc_banner(
-            ioc_name='ts-ma',
+            ioc_name='AS-MA',
             db=App.pvs_database,
-            description='TS Magnet Power Supply Soft IOC',
+            description='AS-MA Magnet Power Supply Soft IOC',
             version=__version__,
             prefix=_pvs._PREFIX)
 
