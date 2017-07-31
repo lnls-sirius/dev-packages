@@ -2,47 +2,13 @@
 
 import time as _time
 import logging as _log
-from siriuspy.timesys.time_data import Connections, Events, Clocks
-from siriuspy.namesys import SiriusPVName as _PVName
-from data.triggers import get_triggers as _get_triggers
+from siriuspy.timesys.time_data import Events, Clocks, Triggers
 from hl_classes import get_hl_trigger_object, HL_Event, HL_Clock
 
 with open('VERSION', 'r') as _f:
     __version__ = _f.read().strip()
 
 _TIMEOUT = 0.05
-
-
-def check_triggers_consistency():
-    """Check consitency of Triggers definition.
-
-    Check if High Level definition of Triggers is consistent with
-    Low Level connections of the timing devices.
-    """
-    triggers = _get_triggers()
-    Connections.add_bbb_info()
-    Connections.add_crates_info()
-    from_evg = Connections.get_connections_from_evg()
-    twds_evg = Connections.get_connections_twds_evg()
-    for trig, val in triggers.items():
-        chans = {_PVName(chan) for chan in val['channels']}
-        for chan in chans:
-            tmp = twds_evg.get(chan)
-            if tmp is None:
-                _log.warning('Device ' + chan +
-                             ' defined in the high level trigger ' + trig +
-                             ' not specified in timing connections data.')
-                return False
-            up_dev = tmp.pop()
-            diff_devs = from_evg[up_dev] - chans
-            if diff_devs and not chan.dev_type.endswith('BPM'):
-                _log.warning('Devices: ' + ' '.join(diff_devs) +
-                             ' are connected to the same output of ' +
-                             up_dev + ' as ' + chan +
-                             ' but are not related to the sam trigger (' +
-                             trig + ').')
-                # return False
-    return True
 
 
 class App:
@@ -63,8 +29,6 @@ class App:
         """Initialize the instance."""
         _log.info('Starting App...')
         self._driver = driver
-        if not check_triggers_consistency():
-            raise Exception('Triggers not consistent.')
         _log.info('Creating High Level Clocks:')
         self._clocks = dict()
         for cl, num in Clocks.HL2LL_MAP.items():
@@ -77,11 +41,9 @@ class App:
             self._events[event] = HL_Event(event, self._update_driver, code)
         _log.info('Creating High Level Triggers:')
         self._triggers = dict()
-        triggers = _get_triggers()
-        for prefix, prop in triggers.items():
-            trig = get_hl_trigger_object(prefix, self._update_driver, **prop)
-            self._triggers[prefix] = trig
-
+        for pref, prop in Triggers().hl_triggers:
+            self._triggers[pref] = get_hl_trigger_object(
+                                            pref, self._update_driver, **prop)
         self._database = self.get_database()
 
     def connect(self):
