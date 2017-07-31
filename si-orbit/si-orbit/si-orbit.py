@@ -11,7 +11,7 @@ INTERVAL = 0.1
 stop_event = False  # _multiprocessing.Event()
 PREFIX = ''
 DB_FILENAME = 'my_pvs.txt'
-LOG_FILENAME = 'si-orbit'
+LOG_FILENAME = 'si-orbit.log'
 
 
 def _stop_now(signum, frame):
