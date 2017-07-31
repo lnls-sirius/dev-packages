@@ -6,7 +6,7 @@ function save_pid {
 }
 
 function exec_ioc {
-  python3.6 as-ma.py "$1" "$2" "$3" "$4" "$5" 1>"logs/$6_stdout.txt" 2>"logs/$6_stderror.txt" &
+  python-sirius as-ma.py "$1" "$2" "$3" "$4" "$5" 1>"logs/$6_stdout.txt" 2>"logs/$6_stderror.txt" &
   save_pid
   echo "Created $6 IOC [$!]"
 }
