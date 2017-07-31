@@ -43,12 +43,7 @@ class BaseMagnetControlWidget(QWidget):
         self.setStyleSheet(self.STYLESHEET)
 
     def _setupUi(self):
-        if self._orientation == self.SQUARE:
-            self.layout = QGridLayout()
-        elif self._orientation == self.HORIZONTAL:
-            self.layout = QHBoxLayout()
-        else:
-            self.layout = QVBoxLayout()
+        self.layout = self._getLayout()
 
         groups = self._getGroups()
         last_section = 0
@@ -99,14 +94,6 @@ class BaseMagnetControlWidget(QWidget):
             else:
                 self.layout.addWidget(widget)
 
-        if self._orientation == self.SQUARE:
-            # self.layout.setRowStretch(len(groups)/2+2, 1)
-            pass
-        elif self._orientation == self.HORIZONTAL:
-            pass
-        else:
-            pass
-
         self.setLayout(self.layout)
 
     def _createGroupWidgets(self, ma):
@@ -132,7 +119,8 @@ class BaseMagnetControlWidget(QWidget):
         name_label = QPushButton(ma, self)
         name_label.setObjectName("label_" + ma)
         name_label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        name_label.setMinimumSize(150, name_label.minimumSize().height())
+        name_label.setMinimumSize(
+            name_width, name_label.minimumSize().height())
         # name_label.setFlat(True) #Trasparent button
         magnet_widgets.append(name_label)
         magnet_widget.layout.addWidget(name_label)
@@ -141,7 +129,7 @@ class BaseMagnetControlWidget(QWidget):
             self, orientation=Qt.Horizontal,
             init_channel="ca://" + ma + ":Current-SP")
         scroll_bar.setObjectName("current-sp_" + ma)
-        scroll_bar.setMinimumSize(80, 15)
+        scroll_bar.setMinimumSize(bar_width, 15)
         scroll_bar.limitsFromPV = True
         scroll_bar.setSizePolicy(
             QSizePolicy.MinimumExpanding, QSizePolicy.Fixed)
@@ -237,3 +225,11 @@ class BaseMagnetControlWidget(QWidget):
             return 0
 
         return int(section)
+
+    def _getLayout(self):
+        if self._orientation == self.SQUARE:
+            return QGridLayout()
+        elif self._orientation == self.HORIZONTAL:
+            return QHBoxLayout()
+        else:
+            return QVBoxLayout()

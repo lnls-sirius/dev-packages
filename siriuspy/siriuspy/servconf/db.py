@@ -5,7 +5,7 @@ _connection = None
 def get_connection():
     global _connection
     if not _connection:
-        _connection = pymysql.connect(host='10.0.21.65',
+        _connection = pymysql.connect(host='127.0.0.1',
                                       user='root',
                                       password='root',
                                       db='sirius',

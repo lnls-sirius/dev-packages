@@ -45,17 +45,17 @@ class ConfigManagerWindow(QMainWindow):
         self.button_box.addWidget(self.ld_cur_state_btn)
         self.button_box.addStretch()
 
-        #TableView
+        # TableView
         self.table = QTableView(self)
         self.table.setModel(self._model)
         self.table.setItemDelegate(self._delegate)
-        #self.table.setSelectionBehavior(QAbstractItemView.SelectColumns)
+        # self.table.setSelectionBehavior(QAbstractItemView.SelectColumns)
         self.table.setContextMenuPolicy(Qt.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self._showHeaderMenu)
         self.table.resizeColumnsToContents()
         self.table.resizeRowsToContents()
 
-        #TableView Headers
+        # TableView Headers
         self.headers = self.table.horizontalHeader()
         self.headers.setContextMenuPolicy(Qt.CustomContextMenu)
         self.headers.customContextMenuRequested.connect(self._showHeaderMenu)
@@ -64,7 +64,7 @@ class ConfigManagerWindow(QMainWindow):
         self.central_widget.layout.addWidget(self.table)
         self.central_widget.setLayout(self.central_widget.layout)
 
-        #Set widget
+        # Set widget
         self.setCentralWidget(self.central_widget)
 
     def closeEvent(self, event):
@@ -99,7 +99,7 @@ class ConfigManagerWindow(QMainWindow):
         if column == -1:
             return
         menu = QMenu(self)
-        #Actions
+        # Actions
         cols = self.table.selectionModel().selectedColumns()
         if len(cols) != 2 or column not in [col.column() for col in cols]:
             self.table.selectColumn(column)
@@ -141,7 +141,7 @@ class ConfigManagerWindow(QMainWindow):
         point.setX(point.x() + vheader_offset)
         menu.popup(self.mapToGlobal(point))
 
-    #ContextMenu Actions
+    # ContextMenu Actions
     @pyqtSlot(int)
     def _saveConfiguration(self, column):
         try:
