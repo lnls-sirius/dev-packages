@@ -117,11 +117,17 @@ class App:
         if reason.endswith(('-Sts', '-RB', '-Mon')):
             _log.debug('App: PV {0:s} is read only.'.format(reason))
             return False
-        enums = self._database[reason].get('enums')
+        enums = (self._database[reason].get('enums') or
+                 self._database[reason].get('Enums'))
         if enums is not None:
-            len_ = len(enums)
-            if int(value) >= len_:
-                _log.warning('App: value {0:d} too large for '.format(value) +
-                             'PV {0:s} of type enum'.format(reason))
-                return False
+            if isinstance(value, int):
+                len_ = len(enums)
+                if value >= len_:
+                    _log.warning('App: value {0:d} too large '.format(value) +
+                                 'for PV {0:s} of type enum'.format(reason))
+                    return False
+            elif isinstance(value, str):
+                if value not in enums:
+                    _log.warning('Value {0:s} not permited'.format(value))
+                    return False
         return True
