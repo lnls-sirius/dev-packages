@@ -1,29 +1,38 @@
+"""Main module of AS-MA IOC."""
+
 import pvs as _pvs
 import time as _time
 import siriuspy as _siriuspy
-import uuid as _uuid
-import re as _re
-from siriuspy.search import MASearch as _MASearch
-import threading
-from epics import caget
-from numpy import ndarray
 
 # Coding guidelines:
 # =================
 # 01 - pay special attention to code readability
 # 02 - simplify logic as much as possible
 # 03 - unroll expressions in order to simplify code
-# 04 - dont be afraid to generate simingly repeatitive flat code (they may be easier to read!)
-# 05 - 'copy and paste' is your friend and it allows you to code 'repeatitive' (but clearer) sections fast.
-# 06 - be consistent in coding style (variable naming, spacings, prefixes, suffixes, etc)
+# 04 - dont be afraid to generate simingly repeatitive flat code (they may be
+#      easier to read!)
+# 05 - 'copy and paste' is your friend and it allows you to code 'repeatitive'
+#      (but clearer) sections fast.
+# 06 - be consistent in coding style (variable naming, spacings, prefixes,
+#      suffixes, etc)
 
 __version__ = _pvs.__version__
 
 
-class App:
-    """"""
+import sys
+args = sys.argv
 
-    ma_devices = _pvs.get_ma_devices()
+
+class App:
+    """Main application for handling TS magnets.
+
+    write:
+        writes to MA object and updates db
+    read:
+        always return None, delegating read to database
+    """
+
+    ma_devices = _pvs.get_ma_devices(args)
     pvs_database = _pvs.get_pvs_database()
     strengths = ['Energy', 'KL', 'SL', 'Kick', 'EnergyRef, ''KLRef', 'SLRef',
                  'KickRef']
@@ -32,9 +41,9 @@ class App:
     def __init__(self, driver, *args):
         """Class constructor."""
         _siriuspy.util.print_ioc_banner(
-            ioc_name='si-ma',
+            ioc_name='AS-MA',
             db=App.pvs_database,
-            description='SI Dipoles Magnet Power Supply Soft IOC',
+            description='AS-MA Magnet Power Supply Soft IOC',
             version=__version__,
             prefix=_pvs._PREFIX)
 
@@ -72,7 +81,8 @@ class App:
         slot_name = sub_section + ':' + discipline + '-' + device
         ma = self.ma_devices[slot_name]
         if isinstance(value, float) or isinstance(value, int):
-            print('{0:<15s} {1:s} [{2:f}]: '.format('ioc write', reason, value))
+            print(
+                '{0:<15s} {1:s} [{2:f}]: '.format('ioc write', reason, value))
         else:
             print('{0:<15s}: '.format('ioc write'), reason)
         setattr(ma, attr, value)
@@ -86,19 +96,19 @@ class App:
         """Break a reason into its sub parts."""
         sub_section, discdev, pfield = reason.split(':')
         propty, field = pfield.split('-')
-        discipline, device = discdev.split('-')
+        discipline, *device = discdev.split('-')
+        device = '-'.join(device)
         return (sub_section, discipline, device, propty, field)
 
     def _set_callback(self):
         for family, device in App.ma_devices.items():
-            # uid = device.add_callback(self._mycallback)
-            # device._controller.update_state()
             device.add_callback(self._mycallback)
 
     def _mycallback(self, pvname, value, **kwargs):
-        print('{0:<15s}: '.format('ioc callback'), pvname, value)
-        _, reason = pvname.split(_pvs._PREFIX)
+        *parts, reason = pvname.split(_pvs._PREFIX)
         self._driver.setParam(reason, value)
         if 'hilim' in kwargs or 'lolim' in kwargs:
+            # print("changing upper limit", pvname, kwargs)
             self._driver.setParamInfo(reason, kwargs)
+            self._driver.callbackPV(reason)
         self._driver.updatePVs()

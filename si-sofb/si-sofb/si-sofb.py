@@ -8,10 +8,10 @@ import main as _main
 
 
 INTERVAL = 0.1
-stop_event = False  # _multiprocessing.Event()
+stop_event = False   # _multiprocessing.Event()
 PREFIX = ''
 DB_FILENAME = 'my_pvs.txt'
-LOG_FILENAME = 'as-hl-timing.log'
+LOG_FILENAME = 'si-sofb'
 
 
 def _stop_now(signum, frame):
@@ -35,23 +35,17 @@ class _PCASDriver(_pcaspy.Driver):
         self.app.driver = self
 
     def read(self, reason):
-        _log.debug("Sending read of {0:s} to App.".format(reason))
-        value = self.app.read(reason)
-        if value is None:
-            _log.debug("PV {0:s} read by App. Trying drivers database."
-                       .format(reason))
-            return super().read(reason)
-        else:
-            _log.debug("App returned {0:s} for PV {1:s}."
-                       .format(str(value), reason))
-            return value
+        _log.debug("Reading {0:s}.".format(reason))
+        return super().read(reason)
 
     def write(self, reason, value):
         app_ret = self.app.write(reason, value)
         if app_ret:
             self.setParam(reason, value)
+        else:
+            self.setParam(reason, self.getParam(reason))
         self.updatePVs()
-        return app_ret
+        return True
 
 
 def run():
