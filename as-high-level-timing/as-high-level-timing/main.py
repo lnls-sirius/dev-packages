@@ -31,14 +31,14 @@ class App:
         self._driver = driver
         _log.info('Creating High Level Clocks:')
         self._clocks = dict()
-        for cl, num in Clocks.HL2LL_MAP.items():
-            clock = Clocks.HL_PREF + cl
-            self._clocks[clock] = HL_Clock(clock, self._update_driver, num)
+        for cl_hl, cl_ll in Clocks.HL2LL_MAP.items():
+            clock = Clocks.HL_PREF + cl_hl
+            self._clocks[clock] = HL_Clock(clock, self._update_driver, cl_ll)
         _log.info('Creating High Level Events:')
         self._events = dict()
-        for ev, code in Events.HL2LL_MAP.items():
-            event = Events.HL_PREF + ev
-            self._events[event] = HL_Event(event, self._update_driver, code)
+        for ev_hl, ev_ll in Events.HL2LL_MAP.items():
+            event = Events.HL_PREF + ev_hl
+            self._events[event] = HL_Event(event, self._update_driver, ev_ll)
         _log.info('Creating High Level Triggers:')
         self._triggers = dict()
         for pref, prop in Triggers().hl_triggers.items():

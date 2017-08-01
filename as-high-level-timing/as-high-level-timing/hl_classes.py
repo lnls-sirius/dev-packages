@@ -108,24 +108,24 @@ class HL_Event(_HL_Base):
         """Create the database of the class."""
         db = dict()
         pre = self.prefix
-        len_rb = len(self._ll_objs_names)
         db[pre + 'Delay-SP'] = {
-            'type': 'float', 'count': 1, 'value': 0.0, 'unit': 'us',
+            'type': 'float', 'value': 0.0, 'unit': 'us',
             'prec': 3, 'fun_set_pv': lambda x: self.set_propty('delay', x)}
         db[pre + 'Delay-RB'] = {
-            'type': 'float', 'count': len_rb,
-            'value': 0.0, 'unit': 'us', 'prec': 3}
+            'type': 'float', 'value': 0.0, 'unit': 'us', 'prec': 3}
         db[pre + 'Mode-Sel'] = {
             'type': 'enum', 'enums': Events.MODES, 'value': 1,
             'fun_set_pv': lambda x: self.set_propty('mode', x)}
-        db[pre + 'Mode-Sts'] = {'type': 'int', 'value': 1, 'count': len_rb}
+        db[pre + 'Mode-Sts'] = {'type': 'int', 'value': 1}
         db[pre + 'DelayType-Sel'] = {
             'type': 'enum', 'enums': Events.DELAY_TYPES, 'value': 1,
             'fun_set_pv': lambda x: self.set_propty('delay_type', x)}
         db[pre + 'DelayType-Sts'] = {
-            'type': 'int', 'value': 1, 'count': len_rb}
-        db[pre + 'Connections-Mon'] = {
-            'type': 'int', 'value': 0, 'count': len_rb}
+            'type': 'int', 'value': 1}
+        db[pre + 'ExtTrig-Cmd'] = {
+            'type': 'int', 'value': 0,
+            'unit': 'When in External Mode generates Event.',
+            'fun_set_pv': lambda x: self.set_propty('ext_trig', x)}
         return db
 
     def __init__(self, prefix, callback, code):
@@ -143,6 +143,7 @@ class HL_Event(_HL_Base):
             'delay': 'Delay-RB',
             'mode': 'Mode-Sts',
             'delay_type': 'DelayType-Sts',
+            'ext_trig': 'ExtTrig-Cmd',
             }
 
     def _get_LL_OBJS_NAMES(self, code):
@@ -159,18 +160,16 @@ class HL_Clock(_HL_Base):
         """Get the database."""
         db = dict()
         pre = self.prefix
-        len_rb = len(self._ll_objs_names)
         db[pre + 'Freq-SP'] = {
             'type': 'float', 'value': 1.0, 'unit': 'kHz', 'prec': 10,
             'fun_set_pv': lambda x: self.set_propty('frequency', x)}
         db[pre + 'Freq-RB'] = {
-            'type': 'float', 'count': len_rb, 'value': 0.0,
-            'unit': 'kHz', 'prec': 10}
+            'type': 'float', 'value': 0.0, 'unit': 'kHz', 'prec': 10}
         db[pre + 'State-Sel'] = {
             'type': 'enum', 'enums': Clocks.STATES, 'value': 0,
             'fun_set_pv': lambda x: self.set_propty('state', x)}
         db[pre + 'State-Sts'] = {
-            'type': 'int', 'value': 1, 'count': len_rb}
+            'type': 'int', 'value': 1}
         return db
 
     def __init__(self, prefix, callback, number):

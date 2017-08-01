@@ -235,6 +235,7 @@ class LL_Event(_LL_Base):
             'delay': self.prefix + 'Delay-RB',
             'mode': self.prefix + 'Mode-Sts',
             'delay_type': self.prefix + 'DelayType-Sts',
+            'ext_trig': self.prefix + 'ExtTrig-Cmd',
             }
 
     def _get_HLPROP_FUNS(self):
@@ -242,6 +243,7 @@ class LL_Event(_LL_Base):
             'delay': lambda x: self._set_simple('delay', x),
             'mode': lambda x: self._set_simple('mode', x),
             'delay_type': lambda x: self._set_simple('delay_type', x),
+            'ext_trig': lambda x: self._set_simple('ext_trig', x),
             }
 
     def _get_LLPROP_FUNS(self):
@@ -249,6 +251,7 @@ class LL_Event(_LL_Base):
             'delay': lambda x: {'delay': x},
             'mode': lambda x: {'mode': x},
             'delay_type': lambda x: {'delay_type': x},
+            'ext_trig': lambda x: {'ext_trig': x},
             }
 
 
@@ -432,7 +435,7 @@ class _LL_TrigAFCOUT(_LL_TrigEVROUT):
 
     def _get_LLPROP_2_PVRB(self):
         map_ = super()._get_LLPROP_2_PVRB()
-        map_['event'] = self.prefix + self._INTLB + 'EVGParam-RB'
+        map_['event'] = self.prefix + self._INTLB + 'EVGParam-Sts'
         return map_
 
     def _get_HLPROP_FUNS(self):
