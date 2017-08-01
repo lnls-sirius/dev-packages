@@ -20,35 +20,43 @@ _LOCAL = True
 class Events:
     """Contain properties of the Events."""
 
-    HL2LL_MAP = {'Linac': 0, 'InjBO': 1, 'InjSI': 2, 'RmpBO': 3, 'MigSI': 4,
-                 'DigLI': 5, 'DigTB': 6, 'DigBO': 7, 'DigTS': 8, 'DigSI': 9,
-                 'Orbit': 10, 'Coupl': 11, 'Tunes': 12, 'Study': 13}
+    HL2LL_MAP = {'Linac': 'Event00', 'InjBO': 'Event01',
+                 'InjSI': 'Event02', 'RmpBO': 'Event03',
+                 'MigSI': 'Event04', 'DigLI': 'Event05',
+                 'DigTB': 'Event06', 'DigBO': 'Event07',
+                 'DigTS': 'Event08', 'DigSI': 'Event09',
+                 'Orbit': 'Event0A', 'Coupl': 'Event0B',
+                 'Tunes': 'Event0C', 'Study': 'Event0D'}
     LL2HL_MAP = {val: key for key, val in HL2LL_MAP.items()}
+
+    LL_TMP = 'Event{0:02X}'
+    LL_RGX = _re.compile('Event([0-9A-E]{2})([a-z-\.]*)', _re.IGNORECASE)
+    HL_RGX = _re.compile('('+'|'.join(list(HL2LL_MAP.keys())) +
+                         ')([a-z-\.]*)', _re.IGNORECASE)
+    HL_PREF = 'AS-Glob:TI-Event:'
+
     LL_CODES = list(range(50)) + list(range(80, 120)) + list(range(160, 256))
+    LL_EVENTS = []
+    for i in LL_CODES:
+        LL_EVENTS.append(LL_TMP.format(i))
 
     MODES = ('Disabled', 'Continuous', 'Injection', 'External')
     DELAY_TYPES = ('Incr', 'Fixed')
-
-    LL_TMP = 'Event{0:02x}'
-    LL_RGX = _re.compile('Event([0-9a-f]{2})([a-z-\.]*)', _re.IGNORECASE)
-    HL_TMP = 'Event{0:s}'
-    HL_RGX = _re.compile('Event('+'|'.join(list(HL2LL_MAP.keys())) +
-                         ')([a-z-\.]*)', _re.IGNORECASE)
-    HL_PREF = 'AS-Glob:TI-Event:'
 
 
 class Clocks:
     """Contain properties of the Clocks."""
 
     STATES = ('Dsbl', 'Enbl')
+
     LL_TMP = 'Clock{0:d}'
     HL_TMP = 'Clock{0:d}'
     HL_PREF = 'AS-Glob:TI-Clock:'
 
-
-# Issue with dict comprehensions
-Clocks.HL2LL_MAP = {Clocks.HL_TMP.format(i): i for i in range(8)}
-Clocks.LL2HL_MAP = {val: key for key, val in Clocks.HL2LL_MAP.items()}
+    HL2LL_MAP = dict()
+    for i in range(8):
+        HL2LL_MAP[HL_TMP.format(i)] = LL_TMP.format(i)
+    LL2HL_MAP = {val: key for key, val in HL2LL_MAP.items()}
 
 
 class Triggers:
@@ -56,7 +64,6 @@ class Triggers:
 
     STATES = ('Dsbl', 'Enbl')
     POLARITIES = ('Normal', 'Inverse')
-    CLOCKS = tuple(Clocks.HL2LL_MAP.keys())
 
     def __init__(self):
         """Initialize the Instance."""
@@ -116,8 +123,7 @@ class Triggers:
 class IOs:
     """Contain the properties of the connections."""
 
-    LL_RGX = _re.compile('([A-Z]+)([0-9]{0,2})',
-                         _re.IGNORECASE)
+    LL_RGX = _re.compile('([A-Z]+)([0-9]{0,2})', _re.IGNORECASE)
 
     # defines the relations between input and output of the timing devices
     # that are possible taking into consideration only the devices architecture
