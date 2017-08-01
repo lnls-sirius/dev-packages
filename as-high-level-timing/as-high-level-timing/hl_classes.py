@@ -146,8 +146,8 @@ class HL_Event(_HL_Base):
             'ext_trig': 'ExtTrig-Cmd',
             }
 
-    def _get_LL_OBJS_NAMES(self, code):
-        return [EVG + ':' + Events.LL_TMP.format(code)]
+    def _get_LL_OBJS_NAMES(self, ev_ll):
+        return [EVG + ':' + ev_ll]
 
     def _get_LL_OBJ(self, **kwargs):
         return LL_Event(**kwargs)
@@ -181,8 +181,8 @@ class HL_Clock(_HL_Base):
     def _get_HLPROP_2_PVRB(self):
         return {'frequency': 'Freq-RB', 'state': 'State-Sts'}
 
-    def _get_LL_OBJS_NAMES(self, number):
-        return [EVG + ':' + Clocks.LL_TMP.format(number)]
+    def _get_LL_OBJS_NAMES(self, cl_ll):
+        return [EVG + ':' + cl_ll]
 
     def _get_LL_OBJ(self, **kwargs):
         return LL_Clock(**kwargs)
