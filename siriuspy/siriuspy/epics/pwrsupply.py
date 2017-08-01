@@ -4,7 +4,7 @@ import copy as _copy
 import siriuspy.csdevice as _csdevice
 from siriuspy.epics import SiriusPVsSet as _SiriusPVsSet
 from siriuspy import namesys as _namesys
-from siriuspy.pwrsupply.psdata import conv_psname_2_pstype as _conv_psname_2_pstype
+from siriuspy.search import PSSearch
 
 
 class MagnetPSDevice:
@@ -24,7 +24,7 @@ class MagnetPSDevice:
 
         self._uuid = _uuid.uuid4()         # unique ID for the class object
         self._ps_name = ps_name            # power supply device name
-        self._pstype_name = conv_psname_2_pstype(ps_name)
+        self._pstype_name = PSSearch.conv_psname_2_pstype(ps_name)
         self._database = _csdevice.get_database(self._pstype_name)
 
         if self._database is None:
