@@ -460,20 +460,24 @@ class _LL_TrigAFCOUT(_LL_TrigEVROUT):
         self._ll_props['delay1'] = delay1
         self._put_on_pv(pv, delay1)
 
-    def _process_event(self, x):
-        if x not in Events.LL2HL_MAP.keys():
-            _log.warning(self.prefix + 'Low Level event not in ' +
-                         'High Level list os possible events.')
-        pname = Events.LL2HL_MAP[x]
-        if pname not in self._EVGParam_ENUMS:
-            _log.warning(self.prefix + 'High Level event not in allowed' +
-                         ' list os possible events for this trigger.')
-            return dict()
-        return {'evg_param': self._EVGParam_ENUMS.index(pname)}
+    def _process_event(self, evg_par_str):
+        if evg_par_str.startswith('Clock'):
+            val = Clocks.LL2HL_MAP[evg_par_str]
+        else:
+            if evg_par_str not in Events.LL2HL_MAP.keys():
+                _log.warning(self.prefix + 'Low Level event not in ' +
+                             'High Level list os possible events.')
+                return
+            val = Events.LL2HL_MAP[evg_par_str]
+        if val not in self._EVGParam_ENUMS:
+            _log.warning(self.prefix + 'EVG param ' + val +
+                         ' Not allowed for this trigger.')
+            return
+        return {'evg_param': self._EVGParam_ENUMS.index(val)}
 
     def _set_evg_param(self, value):
-        _log.debug(self.channel+' Setting evg_param, value = {0:s}.'
-                   .format(str(value)))
+        _log.debug(self.channel +
+                   ' Setting evg_param, value = {0:s}.'.format(str(value)))
         self._hl_props['evg_param'] = value
         pname = self._EVGParam_ENUMS[value]
         if pname.startswith('Clock'):

@@ -20,9 +20,20 @@ twds_evg = Connections.get_connections_twds_evg()
 class _HL_Base:
 
     def get_database(self):
+        """Get the database."""
         return dict()   # dictionary must have key fun_set_pv
 
     def __init__(self, prefix, callback, channels):
+        """Appropriately initialize the instance.
+
+        prefix = is the first part of the pv name of this object.
+        callback = is the callable to be called when readbacks are updated.
+        channels = is a list of unique identifiers for all the low level
+          objects associated with this object:
+            Events: low level event code
+            Clocks: clock number
+            trigger: <DeviceName>:<Output>
+        """
         _log.info(prefix + ' Starting.')
         self._HLPROP_2_PVRB = self._get_HLPROP_2_PVRB()
         self.callback = callback
@@ -33,6 +44,7 @@ class _HL_Base:
         _log.debug(self.prefix + ' LL names: ' +
                    ' '.join([tr for tr in self._ll_objs_names]))
         self._ll_objs = dict()
+        self._connect_kwargs = dict()
 
     def _get_HLPROP_2_PVRB(self):
         return dict()
@@ -50,7 +62,8 @@ class _HL_Base:
             self._ll_objs[chan] = self._get_LL_OBJ(
                                 channel=chan,
                                 callback=self._on_change_pvs_rb,
-                                init_hl_props=_copy.deepcopy(self._hl_props))
+                                init_hl_props=_copy.deepcopy(self._hl_props),
+                                **self._connect_kwargs)
 
     def _on_change_pvs_rb(self, channel, prop, value):
         if prop not in self._interface_props:
@@ -67,6 +80,11 @@ class _HL_Base:
         self.callback(self.prefix + self._HLPROP_2_PVRB[prop], value)
 
     def set_propty(self, prop, value):
+        """Function to be called by the IOC to set high level properties.
+
+        It not only sets the new high level property value but also forwards it
+        to the low level classes.
+        """
         _log.debug(self.prefix +
                    ' propty {0:10s};'.format(prop) +
                    ' Value = {0:s}'.format(str(value)))
@@ -175,6 +193,7 @@ class HL_Trigger(_HL_Base):
     """High level Trigger interface."""
 
     def get_database(self):
+        """Get the database."""
         db = dict()
         pre = self.prefix
         db[pre + 'State-Sel'] = {
@@ -218,12 +237,21 @@ class HL_Trigger(_HL_Base):
 
     def __init__(self, prefix, callback, channels,
                  events, hl_props, init_vals):
+        """Appropriately initialize the instance.
+
+        events = is the list of possible high level events of this trigger.
+        hl_props = is a set with high level properties that will be available
+          for changes in the High Level Interface. All the possible values are:
+            {'evg_param', 'delay', 'pulses', 'duration', 'state', 'polarity'}
+        init_vals = initial values for all the high level properties.
+        """
         super().__init__(prefix, callback, channels)
-        #  {'evg_param', 'delay', 'pulses', 'duration', 'state', 'polarity'}
+
         self._interface_props = hl_props
         self._EVENTS = events
         self._hl_props = init_vals
         self._set_EVGParams_ENUMS()
+        self._connect_kwargs = {'evg_params': self._EVGParam_ENUMS}
 
     def _set_EVGParams_ENUMS(self):
         has_clock = []
@@ -273,13 +301,3 @@ class HL_Trigger(_HL_Base):
 
     def _get_LL_OBJ(self, **kwargs):
         return get_ll_trigger_object(**kwargs)
-
-    def connect(self):
-        _log.info(self.prefix+' -> connecting to LL Devices')
-        for chan in self._ll_objs_names:
-            _log.debug(self.prefix + ' -> connecting to {0:s}'.format(chan))
-            self._ll_objs[chan] = self._get_LL_OBJ(
-                                channel=chan,
-                                callback=self._on_change_pvs_rb,
-                                init_hl_props=_copy.deepcopy(self._hl_props),
-                                evg_params=self._EVGParam_ENUMS)
