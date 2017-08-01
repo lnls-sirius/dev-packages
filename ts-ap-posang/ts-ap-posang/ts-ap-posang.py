@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.6
 
 import pcaspy as _pcaspy
 import pcaspy.tools as _pcaspy_tools
