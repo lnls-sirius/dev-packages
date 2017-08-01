@@ -75,7 +75,6 @@ class App:
         """Run continuously in the main thread."""
         t0 = _time.time()
         # _log.debug('App: Executing check.')
-        self.check()
         tf = _time.time()
         dt = (tf-t0)
         if dt > 0.2:
@@ -90,7 +89,7 @@ class App:
         return None  # Driver will read from database
 
     def write(self, reason, value):
-        """Write PV in database."""
+        """Write PV in the model."""
         _log.debug('App: Writing PV {0:s} with value {1:s}'
                    .format(reason, str(value)))
         if not self._isValid(reason, value):
@@ -107,13 +106,6 @@ class App:
             _log.warning('App: Unsuccessful write of PV {0:s}; value = {1:s}.'
                          .format(reason, str(value)))
         return ret_val
-
-    def check(self):
-        """Trigger exectution of function to lock external PVs."""
-        for ev in self._events.values():
-            ev.check()
-        for tr in self._triggers.values():
-            tr.check()
 
     def _update_driver(self, pvname, value, **kwargs):
         _log.debug('PV {0:s} updated in driver database with value {1:s}'
