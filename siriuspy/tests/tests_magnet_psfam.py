@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python-sirius
+
 """Test of the MagnetPowerSupply class."""
 
 import unittest
