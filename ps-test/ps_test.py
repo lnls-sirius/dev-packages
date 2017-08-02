@@ -1,4 +1,3 @@
-#!/usr/bin/env python3.6
 
 import pcaspy as _pcaspy
 import pcaspy.tools as _pcaspy_tools
@@ -13,9 +12,8 @@ stop_event = False # _multiprocessing.Event()
 
 
 def stop_now(signum, frame):
-    global stop_event
-    stop_event = True
     print(' - SIGINT received.')
+    return stop_event.set()
 
 
 class PCASDriver(_pcaspy.Driver):
@@ -32,10 +30,7 @@ class PCASDriver(_pcaspy.Driver):
             return value
 
     def write(self, reason, value):
-        if self.app.write(reason, value):
-            super().write(reason, value)
-        else:
-            return False
+        return self.app.write(reason, value)
 
 
 def run():
@@ -45,7 +40,7 @@ def run():
 
     # create a new simple pcaspy server and driver to responde client's requests
     server = _pcaspy.SimpleServer()
-    for prefix, database in _main.App.pvs_database.items():
+    for prefix, database in _main.App.get_pvs_database().items():
         server.createPV(prefix, database)
     pcas_driver = PCASDriver()
 
@@ -62,7 +57,3 @@ def run():
     # sends stop signal to server thread
     server_thread.stop()
     server_thread.join()
-
-
-if __name__ == '__main__':
-    run()

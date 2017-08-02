@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-
+"""Setup Module."""
 from setuptools import setup
 
 with open('VERSION', 'r') as _f:
     __version__ = _f.read().strip()
 
 setup(
-    name='PROJECT-NAME',
+    name='SOFB',
     version=__version__,
     author='lnls-sirius',
-    description='PROJECT-DESCRIPTION',
+    description='Slow Orbit Feedback System for Sirius',
     url='PROJECT-URL',
     download_url='PROJECT-DOWNLOAD-URL',
     license='MIT License',
@@ -18,8 +18,8 @@ setup(
         'Programming Language :: Python',
         'Topic :: Scientific/Engineering'
     ],
-    packages=['PROJECT-NAME'],
-    package_data={'PROJECT-NAME': ['VERSION']},
+    packages=['SOFB'],
+    package_data={'SOFB': ['VERSION']},
     scripts=[],
     zip_safe=False
 )

@@ -1,4 +1,4 @@
-#!/usr/bin/env python-sirius
+#!/usr/bin/env python3
 """IOC Module."""
 import logging as _log
 import pcaspy as _pcaspy
@@ -8,10 +8,10 @@ import main as _main
 
 
 INTERVAL = 0.1
-stop_event = False
+stop_event = False   # _multiprocessing.Event()
 PREFIX = ''
 DB_FILENAME = 'my_pvs.txt'
-LOG_FILENAME = 'as-hl-timing.log'
+LOG_FILENAME = 'si-sofb.log'
 
 
 def _stop_now(signum, frame):
@@ -35,39 +35,31 @@ class _PCASDriver(_pcaspy.Driver):
         self.app.driver = self
 
     def read(self, reason):
-        _log.debug("Sending read of {0:s} to App.".format(reason))
-        value = self.app.read(reason)
-        if value is None:
-            _log.debug("PV {0:s} read by App. Trying drivers database."
-                       .format(reason))
-            return super().read(reason)
-        else:
-            _log.debug("App returned {0:s} for PV {1:s}."
-                       .format(str(value), reason))
-            return value
+        _log.debug("Reading {0:s}.".format(reason))
+        return super().read(reason)
 
     def write(self, reason, value):
         app_ret = self.app.write(reason, value)
         if app_ret:
             self.setParam(reason, value)
+        else:
+            self.setParam(reason, self.getParam(reason))
         self.updatePVs()
-        return app_ret
+        return True
 
 
 def run():
     """Start the IOC."""
-    level = _log.INFO
     fmt = ('%(levelname)7s | %(asctime)s | ' +
            '%(module)15s.%(funcName)20s[%(lineno)4d] ::: %(message)s')
     _log.basicConfig(format=fmt, datefmt='%F %T',
-                     filename=LOG_FILENAME, filemode='w', level=level)
+                     filename=LOG_FILENAME, filemode='w', level=_log.DEBUG)
     # _log.basicConfig(format=fmt, datefmt='%F %T',
     #                  filename=LOG_FILENAME, filemode='w', level=_log.INFO)
     _log.info('Starting...')
 
     # define abort function
     _signal.signal(_signal.SIGINT, _stop_now)
-    _signal.signal(_signal.SIGTERM, _stop_now)
 
     # Creates App object
     _log.info('Creating App.')

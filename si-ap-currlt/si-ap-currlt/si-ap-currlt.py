@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.6
 
 #import siriuspy as _siriuspy
 #_siriuspy.util.set_ioc_ca_port_number('si-ap-currlt')
