@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python-sirius
 """IOC Module."""
 import logging as _log
 import pcaspy as _pcaspy
@@ -8,7 +8,7 @@ import main as _main
 
 
 INTERVAL = 0.1
-stop_event = False  # _multiprocessing.Event()
+stop_event = False
 PREFIX = ''
 DB_FILENAME = 'my_pvs.txt'
 LOG_FILENAME = 'as-hl-timing.log'
@@ -56,16 +56,18 @@ class _PCASDriver(_pcaspy.Driver):
 
 def run():
     """Start the IOC."""
+    level = _log.INFO
     fmt = ('%(levelname)7s | %(asctime)s | ' +
            '%(module)15s.%(funcName)20s[%(lineno)4d] ::: %(message)s')
     _log.basicConfig(format=fmt, datefmt='%F %T',
-                     filename=LOG_FILENAME, filemode='w', level=_log.DEBUG)
+                     filename=LOG_FILENAME, filemode='w', level=level)
     # _log.basicConfig(format=fmt, datefmt='%F %T',
     #                  filename=LOG_FILENAME, filemode='w', level=_log.INFO)
     _log.info('Starting...')
 
     # define abort function
     _signal.signal(_signal.SIGINT, _stop_now)
+    _signal.signal(_signal.SIGTERM, _stop_now)
 
     # Creates App object
     _log.info('Creating App.')

@@ -3,7 +3,7 @@
 import time as _time
 import logging as _log
 from siriuspy.timesys.time_data import Events, Clocks, Triggers
-from hl_classes import get_hl_trigger_object, HL_Event, HL_Clock
+from hl_classes import HL_Event, HL_Clock, HL_Trigger
 
 with open('VERSION', 'r') as _f:
     __version__ = _f.read().strip()
@@ -31,18 +31,18 @@ class App:
         self._driver = driver
         _log.info('Creating High Level Clocks:')
         self._clocks = dict()
-        for cl, num in Clocks.HL2LL_MAP.items():
-            clock = Clocks.HL_PREF + cl
-            self._clocks[clock] = HL_Clock(clock, self._update_driver, num)
+        for cl_hl, cl_ll in Clocks.HL2LL_MAP.items():
+            clock = Clocks.HL_PREF + cl_hl
+            self._clocks[clock] = HL_Clock(clock, self._update_driver, cl_ll)
         _log.info('Creating High Level Events:')
         self._events = dict()
-        for ev, code in Events.HL2LL_MAP.items():
-            event = Events.HL_PREF + ev
-            self._events[event] = HL_Event(event, self._update_driver, code)
+        for ev_hl, ev_ll in Events.HL2LL_MAP.items():
+            event = Events.HL_PREF + ev_hl
+            self._events[event] = HL_Event(event, self._update_driver, ev_ll)
         _log.info('Creating High Level Triggers:')
         self._triggers = dict()
-        for pref, prop in Triggers().hl_triggers:
-            self._triggers[pref] = get_hl_trigger_object(
+        for pref, prop in Triggers().hl_triggers.items():
+            self._triggers[pref] = HL_Trigger(
                                             pref, self._update_driver, **prop)
         self._database = self.get_database()
 
@@ -75,7 +75,6 @@ class App:
         """Run continuously in the main thread."""
         t0 = _time.time()
         # _log.debug('App: Executing check.')
-        self.check()
         tf = _time.time()
         dt = (tf-t0)
         if dt > 0.2:
@@ -90,7 +89,7 @@ class App:
         return None  # Driver will read from database
 
     def write(self, reason, value):
-        """Write PV in database."""
+        """Write PV in the model."""
         _log.debug('App: Writing PV {0:s} with value {1:s}'
                    .format(reason, str(value)))
         if not self._isValid(reason, value):
@@ -108,13 +107,6 @@ class App:
                          .format(reason, str(value)))
         return ret_val
 
-    def check(self):
-        """Trigger exectution of function to lock external PVs."""
-        for ev in self._events.values():
-            ev.check()
-        for tr in self._triggers.values():
-            tr.check()
-
     def _update_driver(self, pvname, value, **kwargs):
         _log.debug('PV {0:s} updated in driver database with value {1:s}'
                    .format(pvname, str(value)))
@@ -125,11 +117,17 @@ class App:
         if reason.endswith(('-Sts', '-RB', '-Mon')):
             _log.debug('App: PV {0:s} is read only.'.format(reason))
             return False
-        enums = self._database[reason].get('enums')
+        enums = (self._database[reason].get('enums') or
+                 self._database[reason].get('Enums'))
         if enums is not None:
-            len_ = len(enums)
-            if int(value) >= len_:
-                _log.warning('App: value {0:d} too large for '.format(value) +
-                             'PV {0:s} of type enum'.format(reason))
-                return False
+            if isinstance(value, int):
+                len_ = len(enums)
+                if value >= len_:
+                    _log.warning('App: value {0:d} too large '.format(value) +
+                                 'for PV {0:s} of type enum'.format(reason))
+                    return False
+            elif isinstance(value, str):
+                if value not in enums:
+                    _log.warning('Value {0:s} not permited'.format(value))
+                    return False
         return True
