@@ -1,0 +1,13 @@
+[Unit]
+Description=Soft IOC for SI quadrupole families
+After=multi-user.target
+Requires=sirius-ioc-as-ma-si-dipole-fam
+
+[Service]
+Group=fac
+User=fac
+Type=simple
+WorkingDirectory=/usr/local/bin/sirius-iocs/as-ma
+StandardOutput=syslog
+StandardError=syslog
+ExecStart=/usr/local/bin/sirius-iocs/as-ma/si-quadrupoles-fam.bash

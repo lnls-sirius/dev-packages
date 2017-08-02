@@ -1,5 +1,3 @@
-#!/usr/bin/python-sirius -u
-
 """AS-MA IOC."""
 
 import sys as _sys
@@ -66,7 +64,3 @@ def run():
     # sends stop signal to server thread
     server_thread.stop()
     server_thread.join()
-
-
-if __name__ == '__main__':
-    run()
