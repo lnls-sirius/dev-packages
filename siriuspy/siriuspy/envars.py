@@ -3,7 +3,6 @@ import os as _os
 
 
 # --- folders ---
-
 folder_root = _os.environ.get('ROOT_GROUP',
                               default='/home/fac_files')
 folder_epics_base = _os.environ.get('EPICS_DIR',
