@@ -46,6 +46,10 @@ class _HL_Base:
         self._ll_objs = dict()
         self._connect_kwargs = dict()
 
+    def _get_setpoint_name(self, pvname):
+        """Convert readback PV names to setpoint PV names."""
+        return pvname.replace('-RB', '-SP').replace('-Sts', '-Sel')
+
     def _get_HLPROP_2_PVRB(self):
         return dict()
 
@@ -133,10 +137,6 @@ class HL_Event(_HL_Base):
         super().__init__(prefix, callback, code)
         self._interface_props = {'delay', 'mode', 'delay_type'}
         self._hl_props = {'delay': 0, 'mode': 0, 'delay_type': 0}
-
-    def _get_setpoint_name(self, pvname):
-        """Convert readback PV names to setpoint PV names."""
-        return pvname.replace('-RB', '-SP').replace('-Sts', '-Sel')
 
     def _get_HLPROP_2_PVRB(self):
         return {
@@ -249,6 +249,7 @@ class HL_Trigger(_HL_Base):
         self._interface_props = hl_props
         self._EVENTS = events
         self._hl_props = init_vals
+        self._hl_props['ext_trig'] = 0
         self._set_EVGParams_ENUMS()
         self._connect_kwargs = {'evg_params': self._EVGParam_ENUMS}
 

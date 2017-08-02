@@ -37,7 +37,7 @@ class _Timer(_Thread):
         self.stopped.set()
 
 
-def get_ll_trigger_object(channel, callback, init_hl_props):
+def get_ll_trigger_object(channel, callback, init_hl_props, evg_params):
     """Get Low Level trigger objects."""
     LL_TRIGGER_CLASSES = {
         ('EVR', 'OUT'): _LL_TrigEVROUT,
@@ -47,13 +47,13 @@ def get_ll_trigger_object(channel, callback, init_hl_props):
         ('AFC', 'FMC'): _LL_TrigAFCFMC,
         }
     chan = _PVName(channel)
-    conn_ty, conn_conf, conn_num = IOs.LL_RGX.findall(chan.propty)[0]
+    conn_ty, conn_num = IOs.LL_RGX.findall(chan.propty)[0]
     key = (chan.dev_type, conn_ty)
     cls_ = LL_TRIGGER_CLASSES.get(key)
     if not cls_:
         raise Exception('Low Level Trigger Class not defined for device ' +
                         'type '+key[0]+' and connection type '+key[1]+'.')
-    return cls_(channel, int(conn_num), callback, init_hl_props)
+    return cls_(channel, int(conn_num), callback, init_hl_props, evg_params)
 
 
 class _LL_Base:
@@ -292,10 +292,10 @@ class _LL_TrigEVROUT(_LL_Base):
 
     def _get_HLPROP_FUNS(self):
         map_ = {
-            'evg_param': lambda x: self._set_evg_param,
+            'evg_param': self._set_evg_param,
             'delay': self._set_delay,
             'pulses': lambda x: self._set_simple('pulses', x),
-            'duration': lambda x: self._set_duration,
+            'duration': self._set_duration,
             'state': lambda x: self._set_simple('state', x),
             'polarity': lambda x: self._set_simple('polarity', x),
             }
@@ -309,7 +309,7 @@ class _LL_TrigEVROUT(_LL_Base):
             'delay2': self._get_delay,
             'delay3': self._get_delay,
             'pulses': lambda x: {'pulses': x},
-            'width': lambda x: self._get_duration,
+            'width': self._get_duration,
             'state': lambda x: {'state': x},
             'polarity': lambda x: {'polarity': x},
             }
@@ -354,7 +354,7 @@ class _LL_TrigEVROUT(_LL_Base):
             return dict()
 
     def _process_event(self, x):
-        if self.hl_props['evg_param'].startswith('Clock'):
+        if self._hl_props['evg_param'].startswith('Clock'):
             return dict()
         _log.debug(self.prefix + ' ll_event = ' + str(x))
         if x not in Events.LL2HL_MAP.keys():
@@ -440,8 +440,8 @@ class _LL_TrigAFCOUT(_LL_TrigEVROUT):
 
     def _get_HLPROP_FUNS(self):
         map_ = super()._get_HLPROP_FUNS()
-        map_['event'] = lambda x: self._set_evg_param('event', x)
-        map_['delay'] = self.set_delay
+        map_['event'] = self._set_evg_param
+        map_['delay'] = self._set_delay
         return map_
 
     def _get_LLPROP_FUNS(self):
