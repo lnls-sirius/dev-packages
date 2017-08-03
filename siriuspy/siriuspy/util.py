@@ -1,5 +1,8 @@
 """Util module."""
 
+import os as _os
+import inspect as _inspect
+import subprocess as _sp
 import time as _time
 import math as _math
 import datetime as _datetime
@@ -40,6 +43,15 @@ def get_signal_names():
         30: 'SIGPWR',	    # Power failure restart (System V)
     }
     return signal_names
+
+
+def get_last_commit_hash():
+    """Get commit Hash of the repository of the calling file."""
+    fname = _os.path.realpath(_inspect.stack()[1][1])
+    path = fname.rpartition(_os.path.sep)[0]
+    pwd = _os.path.abspath('.')
+    return _sp.getoutput('cd ' + path +
+                         '; git log --format=%h -1; cd ' + pwd)
 
 
 def get_timestamp(now=None):
