@@ -1,10 +1,8 @@
-<<<<<<< HEAD:machine_apps/as-ma/as-ma/main.py
 """Generic IOC App."""
 import sys
 import pvs as _pvs
 import time as _time
 import siriuspy as _siriuspy
-=======
 """Main module of AS-MA IOC."""
 
 import pvs as _pvs
@@ -22,7 +20,6 @@ import siriuspy as _siriuspy
 #      (but clearer) sections fast.
 # 06 - be consistent in coding style (variable naming, spacings, prefixes,
 #      suffixes, etc)
->>>>>>> 40e9d6e1c09a0fd5da4578d1691d7e9383594897:machine_apps/as-ma/main.py
 
 
 __version__ = _pvs.__version__
