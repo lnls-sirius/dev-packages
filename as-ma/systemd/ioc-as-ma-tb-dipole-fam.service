@@ -1,5 +1,5 @@
 [Unit]
-Description=Soft IOC for TB dipole families
+Description=Soft IOC for TB dipole magnet families
 After=multi-user.target
 
 [Service]

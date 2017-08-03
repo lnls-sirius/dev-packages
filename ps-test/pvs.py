@@ -1,31 +1,34 @@
+"""Module to create PV database."""
+
 from siriuspy.pwrsupply import PowerSupplySim as _PowerSupplySim
 from siriuspy import envars as _envars
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
-import re as _re
 
-_prefix = _envars.vaca_prefix
+_PREFIX = _envars.vaca_prefix
 
 
 ps_devices = None
 
 
 try:
-    with open('VERSION','r') as _f:
+    with open('VERSION', 'r') as _f:
         __version__ = _f.read().strip()
 except:
     __version__ = 'not defined'
 
 
 class PS:
+    """PS Class."""
 
     def __init__(self, psname):
-        self._callback    = None
+        """Init method."""
+        self._callback = None
         self.psname = psname
         self.pstype = _PSSearch.conv_psname_2_pstype(self.psname)
-        self.opmode_sel   = 0
+        self.opmode_sel = 0
         self.pwrstate_sel = 0
-        self.current_sp   = 0
+        self.current_sp = 0
 
     @property
     def opmode_sel(self):
@@ -113,26 +116,25 @@ class PS:
 
 
 def get_ps_devices():
-    ''' Create/Returns PowerSupplyMA objects for each magnet. '''
+    """Create/Return PowerSupplyMA objects for each magnet."""
     global ps_devices
     if ps_devices is None:
         ps_devices = {}
-        #Create filter, only getting Fam Quads
-        filters = []
-        #Get magnets
+        # Get magnets
         pwr_supplies = _PSSearch.get_psnames()
-        #Create objects that'll handle the magnets
+        # Create objects that'll handle the magnets
+        print('creating pv database...', end=None)
         for ps in pwr_supplies:
-            # if 'PS-QDA' in ps or 'B1B2' in ps or _re.match("SI-\d\w{2}:PS-QDA", ps):
-            #     ps_devices[ps] = _PowerSupplySim(psname=ps)
-            #     #ps_devices[ps] = PS(psname=ps)
+            # print(ps)
             ps_devices[ps] = _PowerSupplySim(psname=ps)
+        print('finished.')
 
     return ps_devices
 
-def get_database():
 
-    #global ps_devices
+def get_database():
+    """Return PV database."""
+    global ps_devices
 
     ps_devices = get_ps_devices()
 
@@ -142,4 +144,4 @@ def get_database():
         props = list(ps_db.keys())
         for i in range(len(props)):
             db[psname + ':' + props[i]] = ps_db[props[i]]
-    return {_prefix:db}
+    return {_PREFIX: db}
