@@ -363,8 +363,8 @@ class EVGIOC(_BaseIOC):
     _attr2pvname = {
         'injection_sp': 'InjectionState-Sel',
         'injection_rb': 'InjectionState-Sts',
-        'cyclic_injection_sp': 'InjCyclic-Sel',
-        'cyclic_injection_rb': 'InjCyclic-Sts',
+        'cyclic_injection_sp': 'InjectionCyc-Sel',
+        'cyclic_injection_rb': 'InjectionCyc-Sts',
         'continuous_sp': 'ContinuousState-Sel',
         'continuous_rb': 'ContinuousState-Sts',
         'repetition_rate_sp': 'RepRate-SP',
@@ -382,9 +382,9 @@ class EVGIOC(_BaseIOC):
             'type': 'enum', 'enums': EVGIOC._states, 'value': 0}
         db[p + 'InjectionState-Sts'] = {
             'type': 'enum', 'enums': EVGIOC._states, 'value': 0}
-        db[p + 'InjCyclic-Sel'] = {
+        db[p + 'InjectionCyc-Sel'] = {
             'type': 'enum', 'enums': EVGIOC._cyclic_types, 'value': 0}
-        db[p + 'InjCyclic-Sts'] = {
+        db[p + 'InjectionCyc-Sts'] = {
             'type': 'enum', 'enums': EVGIOC._cyclic_types, 'value': 0}
         db[p + 'ContinuousState-Sel'] = {
             'type': 'enum', 'enums': EVGIOC._states, 'value': 1}
