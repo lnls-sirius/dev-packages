@@ -1,14 +1,16 @@
 """Impletentation of webserver data retrievement functions."""
 import urllib.request as _urllib_request
 import siriuspy.envars as _envars
+import siriuspy.util as _util
 
-_timeout = 1.0
+_timeout = 1.0  # [seconds]
 _excdat_folder = '/magnet/excitation-data/'
 _magnet_folder = '/magnet/'
 _ps_folder = '/pwrsupply/'
 _pstypes_data_folder = '/pwrsupply/pstypes-data/'
 _diag_folder = '/diagnostics/'
 _timesys_folder = '/timesys/'
+_respm_folder = '/respm/'
 
 
 def read_url(url, timeout=_timeout):
@@ -120,3 +122,11 @@ def high_level_triggers(timeout=_timeout):
            _timesys_folder +
            'high-level-triggers.txt')
     return read_url(url, timeout=timeout)
+
+
+def response_matrix_read(filename, timeout=_timeout):
+    """Return response matrices."""
+    url = _envars.server_url_consts + _respm_folder + filename
+    text = read_url(url, timeout=timeout)
+    data, parameters = _util.read_text_data(text)
+    return data, parameters
