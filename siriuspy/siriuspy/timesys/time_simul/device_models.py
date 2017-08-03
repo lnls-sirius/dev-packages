@@ -444,6 +444,8 @@ class EVGIOC(_BaseIOC):
 
     def _bucket_list_setter(self, value):
         bucket = []
+        if isinstance(value, (int, float, str)):
+            value = [value]
         for i in range(min(len(value), 864)):
             if value[i] <= 0:
                 break
