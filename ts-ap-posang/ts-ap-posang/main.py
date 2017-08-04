@@ -141,6 +141,9 @@ class App:
             return orby_respmat
 
     def _update_delta(self,delta_pos,delta_ang,respmat,c1_kick_sp_pv,c2_kick_sp_pv,c1_kickref,c2_kickref,c1_pwrstate_sts_pv,c2_pwrstate_sts_pv):
+        delta_pos_meters = delta_pos/1000;
+        delta_ang_rad =    delta_ang/1000;
+
         if not c1_kick_sp_pv.connected:
             print('First corrector pv is disconnected')
             return False
@@ -148,8 +151,8 @@ class App:
             print('Second corrector pv is disconnected')
             return False
         else:
-            delta_kick_c1 = ( respmat[3]*delta_pos-respmat[1]*delta_ang)/(respmat[0]*respmat[3]-respmat[1]*respmat[2])
-            delta_kick_c2 = (-respmat[2]*delta_pos+respmat[0]*delta_ang)/(respmat[0]*respmat[3]-respmat[1]*respmat[2])
+            delta_kick_c1 = ( respmat[3]*delta_pos_meters-respmat[1]*delta_ang_rad)/(respmat[0]*respmat[3]-respmat[1]*respmat[2])
+            delta_kick_c2 = (-respmat[2]*delta_pos_meters+respmat[0]*delta_ang_rad)/(respmat[0]*respmat[3]-respmat[1]*respmat[2])
             print('delta_c1:' + str(delta_kick_c1))
             print('delta_c2:' + str(delta_kick_c2))
 
