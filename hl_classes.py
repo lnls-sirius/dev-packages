@@ -123,13 +123,15 @@ class HL_Event(_HL_Base):
             'value': self._hl_props['mode'],
             'fun_set_pv': lambda x: self.set_propty('mode', x)}
         db[pre + 'Mode-Sts'] = {
-            'type': 'int', 'value': self._hl_props['mode']}
+            'type': 'enum', 'enums': Events.MODES,
+            'value': self._hl_props['mode']}
         db[pre + 'DelayType-Sel'] = {
             'type': 'enum', 'enums': Events.DELAY_TYPES,
             'value': self._hl_props['delay_type'],
             'fun_set_pv': lambda x: self.set_propty('delay_type', x)}
         db[pre + 'DelayType-Sts'] = {
-            'type': 'int', 'value': self._hl_props['delay_type']}
+            'type': 'enum', 'enums': Events.DELAY_TYPES,
+            'value': self._hl_props['delay_type']}
         db[pre + 'ExtTrig-Cmd'] = {
             'type': 'int', 'value': self._hl_props['ext_trig'],
             'unit': 'When in External Mode generates Event.',
@@ -177,7 +179,8 @@ class HL_Clock(_HL_Base):
             'value': self._hl_props['state'],
             'fun_set_pv': lambda x: self.set_propty('state', x)}
         db[pre + 'State-Sts'] = {
-            'type': 'int', 'value': self._hl_props['state']}
+            'type': 'enum', 'enums': Clocks.STATES,
+            'value': self._hl_props['state']}
         return db
 
     def __init__(self, prefix, callback, number):
@@ -204,11 +207,12 @@ class HL_Trigger(_HL_Base):
         db = dict()
         pre = self.prefix
         db[pre + 'State-Sel'] = {
-            'type': 'enum', 'value': self._hl_props['state'],
-            'enums': Triggers.STATES,
+            'type': 'enum', 'enums': Triggers.STATES,
+            'value': self._hl_props['state'],
             'fun_set_pv': lambda x: self.set_propty('state', x)}
         db[pre + 'State-Sts'] = {
-            'type': 'int',  'value': self._hl_props['state']}
+            'type': 'enum', 'enums': Triggers.STATES,
+            'value': self._hl_props['state']}
         db[pre + 'EVGParam-Sel'] = {
             'type': 'enum', 'value': self._hl_props['evg_param'],
             'enums': self._EVGParam_ENUMS,
@@ -240,7 +244,8 @@ class HL_Trigger(_HL_Base):
             'enums': Triggers.POLARITIES,
             'fun_set_pv': lambda x: self.set_propty('polarity', x)}
         db[pre + 'Polrty-Sts'] = {
-            'type': 'int',  'value': self._hl_props['polarity']}
+            'type': 'enum', 'value': self._hl_props['polarity'],
+            'enums': Triggers.POLARITIES}
         db2 = dict()
         for prop in self._interface_props:
             rb_name = self._HLPROP_2_PVRB[prop]
