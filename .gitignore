@@ -68,9 +68,9 @@ coverage.xml
 *.log
 
 # Sphinx documentation
-*/*/docs/_build/
+*/docs/_build/
 
 # Doxygen documentation
-*/*/doc/doxygen/html/
-*/*/doc/doxygen/documentation.html
+*/doc/doxygen/html/
+*/doc/doxygen/documentation.html
 

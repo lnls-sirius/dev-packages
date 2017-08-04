@@ -1,11 +1,14 @@
+"""Main module of AS-AP-PosAng IOC."""
 import pvs as _pvs
 import time as _time
 import epics as _epics
 import pyaccel as _pyaccel
 import pymodels as _pymodels
+import siriuspy as _siriuspy
 import siriuspy.servweb as _siriuspy_servweb
 import numpy as np
 from math import *
+import sys as _sys
 
 # Coding guidelines:
 # =================
@@ -18,25 +21,52 @@ from math import *
 
 __version__ = _pvs.__version__
 
+
+args = _sys.argv
+TL = args[1].lower()
+
+
 class App:
 
-    pvs_database = _pvs.pvs_database
+    pvs_database = _pvs.get_pvs_database()
 
-    def __init__(self,driver):
+    def __init__(self, driver):
+        """Class constructor."""
+        _siriuspy.util.print_ioc_banner(
+            ioc_name='AS-AP-PosAng',
+            db=App.pvs_database,
+            description='AS-AP-PosAng Soft IOC',
+            version=__version__,
+            prefix=_pvs._PREFIX)
+
         self._driver = driver
-        self._pvs_database        = _pvs.pvs_database
-        self._ch1_kick_mon_pv     = _epics.PV('TS-04:MA-CH:Kick-Mon', connection_timeout=0.05)
-        self._ch2_kick_mon_pv     = _epics.PV('TS-04:PM-InjSF:Kick-Mon', connection_timeout=0.05)
-        self._cv1_kick_mon_pv     = _epics.PV('TS-04:MA-CV-1:Kick-Mon', connection_timeout=0.05)
-        self._cv2_kick_mon_pv     = _epics.PV('TS-04:MA-CV-2:Kick-Mon', connection_timeout=0.05)
-        self._ch1_kick_sp_pv      = _epics.PV('TS-04:MA-CH:Kick-SP', connection_timeout=0.05)
-        self._ch2_kick_sp_pv      = _epics.PV('TS-04:PM-InjSF:Kick-SP', connection_timeout=0.05)
-        self._cv1_kick_sp_pv      = _epics.PV('TS-04:MA-CV-1:Kick-SP', connection_timeout=0.05)
-        self._cv2_kick_sp_pv      = _epics.PV('TS-04:MA-CV-2:Kick-SP', connection_timeout=0.05)
-        self._ch1_pwrstate_sts_pv = _epics.PV('TS-04:MA-CH:PwrState-Sts', connection_timeout=0.05)
-        self._ch2_pwrstate_sts_pv = _epics.PV('TS-04:PM-InjSF:PwrState-Sts', connection_timeout=0.05)
-        self._cv1_pwrstate_sts_pv = _epics.PV('TS-04:MA-CV-1:PwrState-Sts', connection_timeout=0.05)
-        self._cv2_pwrstate_sts_pv = _epics.PV('TS-04:MA-CV-2:PwrState-Sts', connection_timeout=0.05)
+        self._pvs_database        = App.pvs_database
+        if TL == 'ts':
+            self._ch1_kick_mon_pv     = _epics.PV(_pvs._PREFIX_VACA + 'TS-04:MA-CH:Kick-Mon', connection_timeout=0.05)
+            self._ch2_kick_mon_pv     = _epics.PV(_pvs._PREFIX_VACA + 'TS-04:PM-InjSF:Kick-Mon', connection_timeout=0.05)
+            self._cv1_kick_mon_pv     = _epics.PV(_pvs._PREFIX_VACA + 'TS-04:MA-CV-1:Kick-Mon', connection_timeout=0.05)
+            self._cv2_kick_mon_pv     = _epics.PV(_pvs._PREFIX_VACA + 'TS-04:MA-CV-2:Kick-Mon', connection_timeout=0.05)
+            self._ch1_kick_sp_pv      = _epics.PV(_pvs._PREFIX_VACA + 'TS-04:MA-CH:Kick-SP', connection_timeout=0.05)
+            self._ch2_kick_sp_pv      = _epics.PV(_pvs._PREFIX_VACA + 'TS-04:PM-InjSF:Kick-SP', connection_timeout=0.05)
+            self._cv1_kick_sp_pv      = _epics.PV(_pvs._PREFIX_VACA + 'TS-04:MA-CV-1:Kick-SP', connection_timeout=0.05)
+            self._cv2_kick_sp_pv      = _epics.PV(_pvs._PREFIX_VACA + 'TS-04:MA-CV-2:Kick-SP', connection_timeout=0.05)
+            self._ch1_pwrstate_sts_pv = _epics.PV(_pvs._PREFIX_VACA + 'TS-04:MA-CH:PwrState-Sts', connection_timeout=0.05)
+            self._ch2_pwrstate_sts_pv = _epics.PV(_pvs._PREFIX_VACA + 'TS-04:PM-InjSF:PwrState-Sts', connection_timeout=0.05)
+            self._cv1_pwrstate_sts_pv = _epics.PV(_pvs._PREFIX_VACA + 'TS-04:MA-CV-1:PwrState-Sts', connection_timeout=0.05)
+            self._cv2_pwrstate_sts_pv = _epics.PV(_pvs._PREFIX_VACA + 'TS-04:MA-CV-2:PwrState-Sts', connection_timeout=0.05)
+        elif TL == 'tb':
+            self._ch1_kick_mon_pv     = _epics.PV(_pvs._PREFIX_VACA + 'TB-03:MA-CH:Kick-Mon', connection_timeout=0.05)
+            self._ch2_kick_mon_pv     = _epics.PV(_pvs._PREFIX_VACA + 'TB-04:PM-InjS:Kick-Mon', connection_timeout=0.05)
+            self._cv1_kick_mon_pv     = _epics.PV(_pvs._PREFIX_VACA + 'TB-04:MA-CV-1:Kick-Mon', connection_timeout=0.05)
+            self._cv2_kick_mon_pv     = _epics.PV(_pvs._PREFIX_VACA + 'TB-04:MA-CV-2:Kick-Mon', connection_timeout=0.05)
+            self._ch1_kick_sp_pv      = _epics.PV(_pvs._PREFIX_VACA + 'TB-03:MA-CH:Kick-SP', connection_timeout=0.05)
+            self._ch2_kick_sp_pv      = _epics.PV(_pvs._PREFIX_VACA + 'TB-04:PM-InjS:Kick-SP', connection_timeout=0.05)
+            self._cv1_kick_sp_pv      = _epics.PV(_pvs._PREFIX_VACA + 'TB-04:MA-CV-1:Kick-SP', connection_timeout=0.05)
+            self._cv2_kick_sp_pv      = _epics.PV(_pvs._PREFIX_VACA + 'TB-04:MA-CV-2:Kick-SP', connection_timeout=0.05)
+            self._ch1_pwrstate_sts_pv = _epics.PV(_pvs._PREFIX_VACA + 'TB-03:MA-CH:PwrState-Sts', connection_timeout=0.05)
+            self._ch2_pwrstate_sts_pv = _epics.PV(_pvs._PREFIX_VACA + 'TB-04:PM-InjS:PwrState-Sts', connection_timeout=0.05)
+            self._cv1_pwrstate_sts_pv = _epics.PV(_pvs._PREFIX_VACA + 'TB-04:MA-CV-1:PwrState-Sts', connection_timeout=0.05)
+            self._cv2_pwrstate_sts_pv = _epics.PV(_pvs._PREFIX_VACA + 'TB-04:MA-CV-2:PwrState-Sts', connection_timeout=0.05)
         self._orbx_respmat        = self._get_respmat('x')
         self._orby_respmat        = self._get_respmat('y')
         self._ch1_kickref         = self._ch1_kick_mon_pv.get()
@@ -50,17 +80,19 @@ class App:
 
     @property
     def driver(self):
+        """Return driver."""
         return self._driver
 
-    def process(self,interval):
+    def process(self, interval):
+        """Sleep."""
         _time.sleep(interval)
 
-    def read(self,reason):
-        value = None # implementation here
-        #self.driver.updatePVs() # this should be used in case PV states change.
-        return value
+    def read(self, reason):
+        """Read from IOC database."""
+        return None
 
-    def write(self,reason,value):
+    def write(self, reason, value):
+        """Write value to reason and let callback update PV database."""
         status = False
         if reason == 'OrbXDeltaPos-SP':
             print('orbx deltapos')
@@ -118,7 +150,7 @@ class App:
     def _get_respmat(self,orb):
         if orb == 'x':
             orbx_respmat = [0,0,0,0]
-            m, _ = _siriuspy_servweb.response_matrix_read('ts-posang-correction-horizontal.txt')
+            m, _ = _siriuspy_servweb.response_matrix_read(TL + '-posang-correction-horizontal.txt')
             orbx_respmat[0] = float(m[0][0])
             orbx_respmat[1] = float(m[0][1])
             orbx_respmat[2] = float(m[1][0])
@@ -130,7 +162,7 @@ class App:
 
         if orb == 'y':
             orby_respmat = [0,0,0,0]
-            m, _ = _siriuspy_servweb.response_matrix_read('ts-posang-correction-vertical.txt')
+            m, _ = _siriuspy_servweb.response_matrix_read(TL + '-posang-correction-vertical.txt')
             orby_respmat[0] = float(m[0][0])
             orby_respmat[1] = float(m[0][1])
             orby_respmat[2] = float(m[1][0])
