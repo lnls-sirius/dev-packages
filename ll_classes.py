@@ -43,7 +43,7 @@ def get_ll_trigger_object(channel, callback, init_hl_props, evg_params):
         ('EVR', 'OUT'): _LL_TrigEVROUT,
         ('EVR', 'OTP'): _LL_TrigEVROTP,
         ('EVE', 'OUT'): _LL_TrigEVEOUT,
-        ('AFC', 'OUT'): _LL_TrigAFCOUT,
+        ('AFC', 'CRT'): _LL_TrigAFCCRT,
         ('AFC', 'FMC'): _LL_TrigAFCFMC,
         }
     chan = _PVName(channel)
@@ -438,9 +438,9 @@ class _LL_TrigEVEOUT(_LL_TrigEVROUT):
     _OUTTMP = 'OUT{0:d}'
 
 
-class _LL_TrigAFCOUT(_LL_TrigEVROUT):
+class _LL_TrigAFCCRT(_LL_TrigEVROUT):
     _NUM_OPT = 0
-    _INTTMP = 'OUT{0:d}'
+    _INTTMP = 'CRT{0:d}'
     _REMOVE_PROPS = {'delay2', 'delay3', 'int_trig'}
 
     def _get_LLPROP_2_PVRB(self):
@@ -495,5 +495,5 @@ class _LL_TrigAFCOUT(_LL_TrigEVROUT):
         self._ll_props['event'] = val
 
 
-class _LL_TrigAFCFMC(_LL_TrigAFCOUT):
+class _LL_TrigAFCFMC(_LL_TrigAFCCRT):
     _INTTMP = 'FMC{0:d}'
