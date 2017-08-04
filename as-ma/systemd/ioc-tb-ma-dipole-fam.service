@@ -1,5 +1,5 @@
 [Unit]
-Description=Soft IOC for TB quadrupole and sextupole magnets
+Description=Soft IOC for TB dipole magnet families
 After=multi-user.target
 
 [Service]
@@ -9,4 +9,4 @@ Type=simple
 WorkingDirectory=/usr/local/bin/sirius-iocs/as-ma
 StandardOutput=syslog
 StandardError=syslog
-ExecStart=/usr/local/bin/sirius-iocs/as-ma/ioc-as-ma-tb-multipole.bash
+ExecStart=/usr/local/bin/sirius-iocs/as-ma/ioc-tb-ma-dipole-fam.bash
