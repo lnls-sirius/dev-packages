@@ -1,7 +1,7 @@
 # Destination directory
 DEST_DIR = /usr/local/bin/sirius-iocs
 
-IOC_DIR = ps-test
+IOC_DIR = as-ps-test
 
 CWD = $(shell pwd)
 
@@ -19,15 +19,15 @@ install-module-links:
 
 install-service-links:
 	@echo " --- install service links ---"
-	sudo ln -sf $(CWD)/systemd/ioc-ps-test.service /etc/systemd/system/
-	sudo ln -sf $(CWD)/systemd/ioc-ps-test.bash $(DEST_DIR)/$(IOC_DIR)/
+	sudo ln -sf $(CWD)/systemd/ioc-as-ps-test.service /etc/systemd/system/
+	sudo ln -sf $(CWD)/systemd/ioc-as-ps-test.bash $(DEST_DIR)/$(IOC_DIR)/
 	sudo systemctl daemon-reload
 
 
-start-ioc-ps-test:
-	@echo " --- start ioc-ps-test ---"
-	sudo systemctl start ioc-ps-test.service
+start-ioc-as-ps-test:
+	@echo " --- start ioc-as-ps-test ---"
+	sudo systemctl start ioc-as-ps-test.service
 
-stop-ioc-ps-test:
-	@echo " --- stop ioc-ps-test ---"
-	sudo systemctl stop ioc-ps-test.service
+stop-ioc-as-ps-test:
+	@echo " --- stop ioc-as-ps-test ---"
+	sudo systemctl stop ioc-as-ps-test.service

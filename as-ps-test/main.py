@@ -25,7 +25,7 @@ class App:
     """App class."""
 
     ps_devices = None
-    pvs_database = None
+    pvs_database = _pvs.get_pvs_database()
 
     def __init__(self, driver):
         """Init."""
@@ -43,7 +43,7 @@ class App:
     def get_pvs_database():
         """Get pvs database."""
         if App.pvs_database is None:
-            App.pvs_database = _pvs.get_database()
+            App.pvs_database = _pvs.get_pvs_database()
         return App.pvs_database
 
     @staticmethod
