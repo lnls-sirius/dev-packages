@@ -16,7 +16,7 @@ import siriuspy as _siriuspy
 # 06 - be consistent in coding style (variable naming, spacings, prefixes,
 #      suffixes, etc)
 
-__version__ = _pvs.__version__
+__version__ = _pvs._COMMIT_HASH
 
 ttime = 0.0
 

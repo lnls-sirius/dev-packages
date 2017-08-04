@@ -4,15 +4,20 @@ import pcaspy as _pcaspy
 import pcaspy.tools as _pcaspy_tools
 import signal as _signal
 import main as _main
-
+import siriuspy.util as _util
+import sys as _sys
 
 INTERVAL = 0.1
 stop_event = False  # _multiprocessing.Event()
 
 
 def _stop_now(signum, frame):
-    print(' - SIGINT received.')
-    return stop_event.set()
+    global stop_event
+    signames = _util.get_signal_names()
+    print(signames[signum] + ' received at ' + _util.get_timestamp())
+    _sys.stdout.flush()
+    _sys.stderr.flush()
+    stop_event = True
 
 
 class _PCASDriver(_pcaspy.Driver):

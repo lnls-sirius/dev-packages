@@ -4,18 +4,14 @@ from siriuspy.pwrsupply import PowerSupplySim as _PowerSupplySim
 from siriuspy import envars as _envars
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
+import siriuspy.util as _util
 
 _PREFIX = _envars.vaca_prefix
 
 
 ps_devices = None
 
-
-try:
-    with open('VERSION', 'r') as _f:
-        __version__ = _f.read().strip()
-except:
-    __version__ = 'not defined'
+_COMMIT_HASH = _util.get_last_commit_hash()
 
 
 class PS:
@@ -123,7 +119,7 @@ def get_ps_devices():
         # Get magnets
         pwr_supplies = _PSSearch.get_psnames()
         # Create objects that'll handle the magnets
-        print('creating pv database...', end=None)
+        print('creating pv database...')
         for ps in pwr_supplies:
             # print(ps)
             ps_devices[ps] = _PowerSupplySim(psname=ps)
@@ -137,8 +133,8 @@ def get_database():
     global ps_devices
 
     ps_devices = get_ps_devices()
-
-    db = {}
+    db = {'AS-Glob:PS-Test:Version-Cte':
+          {'type': 'str', 'value': _COMMIT_HASH}}
     for psname in ps_devices:
         ps_db = ps_devices[psname].database
         props = list(ps_db.keys())
