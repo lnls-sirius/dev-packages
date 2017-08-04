@@ -1,6 +1,11 @@
 import pvs as _pvs
 import time as _time
 import epics as _epics
+import pyaccel as _pyaccel
+import pymodels as _pymodels
+import siriuspy.servweb as _siriuspy_servweb
+import numpy as np
+from math import *
 
 # Coding guidelines:
 # =================
@@ -107,15 +112,33 @@ class App:
                 status = True
         elif reason == 'SetNewRef':
             self._update_ref()
-            self.driver.updatePVs()
-        #self.driver.updatePVs() # this should be used in case PV states change.
+            self.driver.updatePVs() # this should be used in case PV states change.
         return status # when returning True super().write of PCASDrive is invoked
 
     def _get_respmat(self,orb):
         if orb == 'x':
-            return [1,2,3,4]
+            orbx_respmat = [0,0,0,0]
+            m, _ = _siriuspy_servweb.response_matrix_read('ts-posang-correction-horizontal.txt')
+            orbx_respmat[0] = float(m[0][0])
+            orbx_respmat[1] = float(m[0][1])
+            orbx_respmat[2] = float(m[1][0])
+            orbx_respmat[3] = float(m[1][1])
+            self.driver.setParam('OrbXRespMat',orbx_respmat)
+            self.driver.updatePVs()
+            print(orbx_respmat)
+            return orbx_respmat
+
         if orb == 'y':
-            return [1,2,3,4]
+            orby_respmat = [0,0,0,0]
+            m, _ = _siriuspy_servweb.response_matrix_read('ts-posang-correction-vertical.txt')
+            orby_respmat[0] = float(m[0][0])
+            orby_respmat[1] = float(m[0][1])
+            orby_respmat[2] = float(m[1][0])
+            orby_respmat[3] = float(m[1][1])
+            self.driver.setParam('OrbYRespMat',orby_respmat)
+            self.driver.updatePVs()
+            print(orby_respmat)
+            return orby_respmat
 
     def _update_delta(self,delta_pos,delta_ang,respmat,c1_kick_sp_pv,c2_kick_sp_pv,c1_kickref,c2_kickref,c1_pwrstate_sts_pv,c2_pwrstate_sts_pv):
         if not c1_kick_sp_pv.connected:
