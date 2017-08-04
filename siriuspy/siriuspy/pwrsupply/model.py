@@ -547,7 +547,7 @@ class PowerSupplyEpicsSync:
         self._lock = lock
         self._disconnect = False
         self._disconnect_lock = _threading.Lock()
-        self._set_vaca_prefix(use_vaca,vaca_prefix)
+        self._set_vaca_prefix(use_vaca, vaca_prefix)
 
         self._propty_callbacks = {
             'CtrlMode-Mon'   : self._callback_change_rb_pv,
@@ -585,6 +585,7 @@ class PowerSupplyEpicsSync:
                 self._vaca_prefix = vaca_prefix
         else:
             self._vaca_prefix = ''
+
 
     def _init_propty(self):
         self._propty = {propty:None for propty in self._propty_callbacks}
@@ -884,631 +885,631 @@ class PowerSupplyEpicsSync:
 
 # old classes:
 
-class PowerSupplyEpicsSyncOrig1:
-
-    wait_pv_put   = True
-    sync_interval = 1.0
-
-    def __init__(self,
-                 maname,
-                 use_vaca=False,
-                 vaca_prefix=None,
-                 lock=True,
-                 callback=None,
-                 thread_local=True,
-                 connection_timeout=None):
-
-        self._thread_local = thread_local
-        self._callbacks = {} if callback is None else {_uuid.uuid4():callback}
-        self._enum_keys = False
-
-        if self._thread_local:
-            self._finish = False
-            self._threads = list()
-
-        self._maname = _SiriusPVName(maname)
-        self._use_vaca = use_vaca
-        self._vaca_prefix = vaca_prefix
-        self._connection_timeout = connection_timeout
-        self._lock = lock
-        self._set_psnames()
-        self._psname_master = self._psnames[0]
-        #super().__init__(psname=self._psname_master)
-        self._create_epics_pvs()
-
-        if not self._thread_local:
-            if self._lock:
-                self._thread = _threading.Thread(target=self._force_lock)
-                self._thread.start()
-
-    @property
-    def connected(self):
-        for pv_dict in self._pvs.values():
-            for pv in pv_dict.values():
-                if not pv.connected:
-                    return False
-        return True
-
-    def disconnect(self):
-        if not self._thread_local:
-            self._finished = True
-        if self._thread_local:
-            self._lock = False
-            if self._threads:
-                for t in self._threads:
-                    if t.is_alive():
-                        t.join()
-
-    @property
-    def upper_alarm_limit(self):
-        return self._get_limit('upper_alarm_limit', min)
-
-    @property
-    def upper_warning_limit(self):
-        return self._get_limit('upper_warning_limit', min)
-
-    @property
-    def upper_disp_limit(self):
-        return self._get_limit('upper_disp_limit', min)
-
-    @property
-    def lower_disp_limit(self):
-        return self._get_limit('lower_disp_limit', max)
-
-    @property
-    def lower_warning_limit(self):
-        return self._get_limit('lower_warning_limit', max)
-
-    @property
-    def lower_alarm_limit(self):
-        return self._get_limit('lower_alarm_limit', max)
-
-    @property
-    def maname(self):
-        return self._maname
-
-    @property
-    def psnames(self):
-        return tuple([psname for psname in self._psnames])
-
-    # Current getters/setters
-    @property
-    def current_sp(self):
-        return self._current_sp
-
-    @property
-    def current_rb(self):
-        return self._current_rb
-
-    @property
-    def currentref_mon(self):
-        return self._currentref_mon
-
-    @property
-    def current_mon(self):
-        return self._current_mon
-
-    @current_sp.setter
-    def current_sp(self, value):
-        self._set_current_sp(value)
-
-    def _set_current_sp(self, value):
-        if not self._thread_local:
-            self._lock = False
-        self._current_sp = value
-        for psname, pv in self._pvs['Current-SP'].items():
-            pv.put(self._current_sp, wait=PowerSupplyEpicsSyncOrig1.wait_pv_put)
-        if not self._thread_local:
-            self._lock = True
-
-    @current_rb.setter
-    def current_rb(self, value):
-        raise NotImplementedError
-
-    @currentref_mon.setter
-    def currentref_mon(self, value):
-        raise NotImplementedError
-
-    @current_mon.setter
-    def current_mon(self, value):
-        raise NotImplementedError
-
-    #OpMode getter/setter
-    @property
-    def opmode_sel(self):
-        return self._opmode_sel
-
-    @opmode_sel.setter
-    def opmode_sel(self, value):
-        self._set_opmode_sel(value)
-
-    def _set_opmode_sel(self, value):
-        if not self._thread_local:
-            self._lock = False
-        self._opmode_sel = value
-        for psname, pv in self._pvs['OpMode-Sel'].items():
-            pv.put(self._opmode_sel, wait=PowerSupplyEpicsSyncOrig1.wait_pv_put)
-        if not self._thread_local:
-            self._lock = True
-
-    @property
-    def opmode_sts(self):
-        return self._opmode_sts
-
-    @property
-    def pwrstate_sel(self):
-        return self._pwrstate_sel
-
-    @pwrstate_sel.setter
-    def pwrstate_sel(self, value):
-        self._set_pwrstate_sel(value)
-
-    def _set_pwrstate_sel(self, value):
-        if not self._thread_local:
-            self._lock = False
-        self._pwrstate_sel = value
-        for psname, pv in self._pvs['PwrState-Sel'].items():
-            pv.put(self._pwrstate_sel, wait=PowerSupplyEpicsSyncOrig1.wait_pv_put)
-        if not self._thread_local:
-            self._lock = True
-
-    @property
-    def pwrstate_sts(self):
-        return self._pwrstate_sts
-
-    def _get_limit(self, attr, maxmin):
-        if not self.connected: return None
-        lim = None
-        for psname in self._psnames:
-            pv = self._pvs['Current-SP'][psname]
-            value = getattr(pv, attr)
-            lim = value if lim is None else maxmin(lim,value)
-        return lim
-
-    def _set_psnames(self):
-        if 'MA-B1B2' in self._maname:
-            self._psnames = ['SI-Fam:PS-B1B2-1','SI-Fam:PS-B1B2-2']
-        elif 'MA-B-' in self._maname:
-            self._psnames = ['BO-Fam:PS-B-1','BO-Fam:PS-B-2']
-        else:
-            self._psnames = [self._maname.replace('MA-','PS-'),]
-
-    def _create_epics_pvs(self):
-
-        if self._use_vaca:
-            if self._vaca_prefix is None:
-                self._vaca_prefix = _envars.vaca_prefix
-        else:
-            self._vaca_prefix = ''
-
-        # put it back !!!
-        if self._thread_local:
-            self._current_sp = 0.0
-            self._opmode_sel = 0
-            self._pwrstate_sel = 0
-            self._opmode_sts = 0
-            self._pwrstate_sts = 0
-            self._current_rb = 0.0
-            self._currentref_mon = 0.0
-            self._current_mon = 0.0
-
-        self._properties = {
-            'OpMode-Sel'     : self._pvchange_opmode_sel,
-            'OpMode-Sts'     : self._pvchange_opmode_sts,
-            'PwrState-Sel'   : self._pvchange_pwrstate_sel,
-            'PwrState-Sts'   : self._pvchange_pwrstate_sts,
-            'Current-SP'     : self._pvchange_current_sp,
-            'Current-RB'     : self._pvchange_current_rb,
-            'CurrentRef-Mon' : self._pvchange_currentref_mon,
-            'Current-Mon'    : self._pvchange_current_mon,
-        }
-
-        lock = self._lock
-        self._lock = False
-
-        self._pvs = {}
-        index = None
-        for propty in self._properties:
-            self._pvs[propty] = {}
-        for psname in self._psnames:
-            pv = self._vaca_prefix + psname
-            for propty, callback in self._properties.items():
-                self._pvs[propty][psname] = _PV(pv + ':' + propty, connection_timeout=self._connection_timeout)
-                self._pvs[propty][psname].wait_for_connection(timeout=self._connection_timeout)
-                index = self._pvs[propty][psname].add_callback(callback=callback, index=index)
-
-        psname = self._psnames[0]
-        self.opmode_sel = self._pvs['OpMode-Sel'][psname].value
-        self._opmode_sts = self._pvs['OpMode-Sts'][psname].value
-        self.pwrstate_sel = self._pvs['PwrState-Sel'][psname].value
-        self._pwrstate_sts = self._pvs['PwrState-Sts'][psname].value
-        self.current_sp = self._pvs['Current-SP'][psname].value
-        self._current_rb = self._pvs['Current-RB'][psname].value
-        self._currentref_mon = self._pvs['CurrentRef-Mon'][psname].value
-        self._current_mon = self._pvs['Current-Mon'][psname].value
-
-        self._lock = lock
-
-    def _force_lock(self):
-        self._finished = False
-        while not self._finished:
-            #print('looping force')
-            if self._lock:
-                _time.sleep(PowerSupplyEpicsSyncOrig1.sync_interval)
-                for psname in self._psnames:
-                    ps_value = self._pvs['Current-SP'][psname].value
-                    if  ps_value != self._current_sp:
-                        self._pvs['Current-SP'][psname].put(self._current_sp, wait=PowerSupplyEpicsSyncOrig1.wait_pv_put)
-                    opmode_sel_value = self._pvs['OpMode-Sel'][psname].value
-                    if  opmode_sel_value != self.opmode_sel:
-                        self._pvs['OpMode-Sel'][psname].put(self._opmode_sel, wait=PowerSupplyEpicsSyncOrig1.wait_pv_put)
-                    pwrstate_sel_value = self._pvs['PwrState-Sel'][psname].value
-                    if  pwrstate_sel_value != self.pwrstate_sel:
-                        self._pvs['PwrState-Sel'][psname].put(self._pwrstate_sel, wait=PowerSupplyEpicsSyncOrig1.wait_pv_put)
-
-    def _clear_threads(self):
-        pass
-        # self._threads = [t for t in self._threads if t.is_alive()]
-
-    @property
-    def callbacks(self):
-        """Return callback."""
-        return self._callbacks
-
-    def add_callback(self, callback, index=None):
-        """Add a callback."""
-        index = _uuid.uuid4() if index is None else index
-        self._callbacks[index] = callback
-        return index
-
-    def _trigger_callback(self, pvname, value, **kwargs):
-        for callback in self._callbacks.values():
-            callback(pvname, value, **kwargs)
-
-    def _pvchange_opmode_sel(self, pvname, value, **kwargs):
-        if not self._thread_local:
-            pass
-        if self._thread_local:
-            if self._lock:
-                if value != self._opmode_sel:
-                    self._clear_threads()
-                    self._threads.append(_threading.Thread(target=self._set_opmode_sel, args=[self._opmode_sel]))
-                    self._threads[-1].start()
-                else:
-                    pass
-                    # self._trigger_callback(pvname, value, **kwargs)
-    def _pvchange_opmode_sts(self, pvname, value, **kwargs):
-        self._opmode_sts = value
-        self._trigger_callback(pvname, value, **kwargs)
-    def _pvchange_pwrstate_sel(self, pvname, value, **kwargs):
-        if not self._thread_local:
-            pass
-        if self._thread_local:
-            if self._lock:
-                if value != self._pwrstate_sel:
-                    self._clear_threads()
-                    self._threads.append(_threading.Thread(target=self._set_pwrstate_sel, args=[self._pwrstate_sel]))
-                    self._threads[-1].start()
-                else:
-                    pass
-                    # self._trigger_callback(pvname, value, **kwargs)
-    def _pvchange_pwrstate_sts(self, pvname, value, **kwargs):
-        self._pwrstate_sts = value
-        self._trigger_callback(pvname, value, **kwargs)
-    def _pvchange_current_sp(self, pvname, value, **kwargs):
-        if not self._thread_local:
-            pass
-        if self._thread_local:
-            if self._lock:
-                if value != self._current_sp:
-                    self._clear_threads()
-                    self._threads.append(_threading.Thread(target=self._set_current_sp, args=[self._current_sp]))
-                    self._threads[-1].start()
-                else:
-                    pass
-                    # self._trigger_callback(pvname, value, **kwargs)
-    def _pvchange_current_rb(self, pvname, value, **kwargs):
-        self._current_rb = value
-        self._trigger_callback(pvname, value, **kwargs)
-    def _pvchange_currentref_mon(self, pvname, value, **kwargs):
-        self._currentref_mon = value
-        self._trigger_callback(pvname, value, **kwargs)
-    def _pvchange_current_mon(self, pvname, value, **kwargs):
-        self._current_mon = value
-        self._trigger_callback(pvname, value, **kwargs)
-
-    @property
-    def database(self):
-        return _get_database()
-
-
-class PowerSupplyEpicsSyncOrig2:
-
-    wait_pv_put   = True
-    sync_interval = 1.0
-
-    def __init__(self, psnames,
-                       use_vaca=False,
-                       vaca_prefix=None,
-                       lock=True,
-                       callback=None,
-                       thread_local=True,
-                       connection_timeout=None):
-
-        self._callback = callback
-        self._thread_local = thread_local
-
-        if self._thread_local:
-            self._finish = False
-            self._threads = list()
-
-        self._psnames = psnames
-        self._psname_master = self._psnames[0]
-        #super().__init__(psname=self._psname_master)
-        self._connection_timeout = connection_timeout
-        self._lock = lock
-        self._set_vaca_prefix(use_vaca,vaca_prefix)
-        self._create_pvs()
-
-    @property
-    def connected(self):
-        for pv_dict in self._pvs.values():
-            for pv in pv_dict.values():
-                if not pv.connected:
-                    return False
-        return True
-
-    def wait_for_connection(self, timeout=None):
-        #print('wait_for_connection()')
-        if timeout is None:
-            while True:
-                if self.connected:
-                    return True
-                _time.sleep(0.1)
-        else:
-            t0 = _time.time()
-            while _time.time() - t0 < timeout:
-                if self.connected:
-                    return True
-                _time.sleep(min(timeout/2.0,0.1))
-        return False
-
-    def disconnect(self):
-        if not self._thread_local:
-            self._finished = True
-        if self._thread_local:
-            self._lock = False
-            if self._threads:
-                for t in self._threads:
-                    if t.is_alive():
-                        t.join()
-
-        # if 'Current-SP' in self._scheduled and self._scheduled['Current-SP'] != self._propty['Current-SP']:
-        #     self._clear_threads()
-        #     thread = _threading.Thread(target=self._set_current_sp, args=[self._propty[propty]])
-        #     self._threads.append(thread)
-        #     thread.start()
-        #
-        # for t in self._threads:
-        #     if t.is_alive():
-        #         t.join()
-        #
-        # nr_pvs = len(self._pvs) * len(self._psnames)
-        # pvs_ok = {}
-        # while len(pvs_ok) < nr_pvs:
-        #     for pv_dict in self._pvs.values():
-        #         for pv in pv_dict.values():
-        #             if pv.put_complete:
-        #                 pvs_ok[pv.pvname] = True
-        #                 pv.clear_callbacks()
-        #                 pv.disconnect()
-
-        #print('disconnect()')
-
-    @property
-    def psnames(self):
-        return tuple([psname for psname in self._psnames])
-
-
-    @property
-    def opmode_sel(self):
-        return self._propty['OpMode-Sel']
-
-    @opmode_sel.setter
-    def opmode_sel(self, value):
-        #self._set_opmode_sel(value)
-        self._set_propty_sp(value, 'OpMode-Sel')
-
-    @property
-    def opmode_sts(self):
-        return self._propty['OpMode-Sts']
-
-    @property
-    def pwrstate_sel(self):
-        return self._propty['PwrState-Sel']
-
-    @pwrstate_sel.setter
-    def pwrstate_sel(self, value):
-        #self._set_pwrstate_sel(value)
-        self._set_propty_sp(value, 'PwrState-Sel')
-
-    @property
-    def pwrstate_sts(self):
-        return self._propty['PwrState-Sts']
-
-    @property
-    def current_sp(self):
-        return self._propty['Current-SP']
-
-    @current_sp.setter
-    def current_sp(self, value):
-        #self._set_current_sp(value)
-        self._set_propty_sp(value, 'Current-SP')
-
-    @property
-    def current_rb(self):
-        return self._propty['Current-RB']
-
-    @property
-    def currentref_mon(self):
-        return self._propty['CurrentRef-Mon']
-
-    @property
-    def current_mon(self):
-        return self._propty['Current-Mon']
-
-    @property
-    def upper_alarm_limit(self):
-        return self._get_limit('upper_alarm_limit', min)
-
-    @property
-    def upper_warning_limit(self):
-        return self._get_limit('upper_warning_limit', min)
-
-    @property
-    def upper_disp_limit(self):
-        return self._get_limit('upper_disp_limit', min)
-
-    @property
-    def lower_disp_limit(self):
-        return self._get_limit('lower_disp_limit', max)
-
-    @property
-    def lower_warning_limit(self):
-        return self._get_limit('lower_warning_limit', max)
-
-    @property
-    def lower_alarm_limit(self):
-        return self._get_limit('lower_alarm_limit', max)
-
-    def _set_vaca_prefix(self, use_vaca, vaca_prefix):
-        if use_vaca:
-            if vaca_prefix is None:
-                self._vaca_prefix = _envars.vaca_prefix
-            else:
-                self._vaca_prefix = vaca_prefix
-        else:
-            self._vaca_prefix = ''
-
-    def _create_pvs(self):
-
-        self._propty_names = {
-            'OpMode-Sel'     : (self._callback_connection_sp_pvs, self._callback_pvchange_sp_pvs),
-            'OpMode-Sts'     : (self._callback_connection_rb_pvs, self._callback_pvchange_rb_pvs),
-            'PwrState-Sel'   : (self._callback_connection_sp_pvs, self._callback_pvchange_sp_pvs),
-            'PwrState-Sts'   : (self._callback_connection_rb_pvs, self._callback_pvchange_rb_pvs),
-            'Current-SP'     : (self._callback_connection_sp_pvs, self._callback_pvchange_sp_pvs),
-            'Current-RB'     : (self._callback_connection_rb_pvs, self._callback_pvchange_rb_pvs),
-            'CurrentRef-Mon' : (self._callback_connection_rb_pvs, self._callback_pvchange_rb_pvs),
-            'Current-Mon'    : (self._callback_connection_rb_pvs, self._callback_pvchange_rb_pvs),
-        }
-
-        # init _local properties
-        self._propty = {propty:None for propty in self._propty_names}
-
-        lock = self._lock
-        self._lock = False
-
-        self._callback_index = None
-        self._pvs = {}
-        for propty in self._propty_names:
-            self._pvs[propty] = {}
-        for psname in self._psnames:
-            pv = self._vaca_prefix + psname
-            for propty, callbacks in self._propty_names.items():
-                connection_callback, callback = callbacks
-                self._pvs[propty][psname] = _PV(pv + ':' + propty, connection_callback=self._conn_cb, connection_timeout=0.010)
-                #self._pvs[propty][psname].wait_for_connection(timeout=3.0)
-                self._callback_index = self._pvs[propty][psname].add_callback(callback=callback, index=self._callback_index)
-
-        if self.connected:
-            psname = self._psname_master
-            propty='OpMode-Sel'; self._propty[propty] = self._pvs[propty][psname].value
-            propty='OpMode-Sts'; self._propty[propty] = self._pvs[propty][psname].value
-            propty='PwrState-Sel'; self._propty[propty] = self._pvs[propty][psname].value
-            propty='PwrState-Sts'; self._propty[propty] = self._pvs[propty][psname].value
-            propty='Current-SP'; self._propty[propty] = self._pvs[propty][psname].value
-            propty='Current-RB'; self._propty[propty] = self._pvs[propty][psname].value
-            propty='CurrentRef-Mon'; self._propty[propty] = self._pvs[propty][psname].value
-            propty='Current-Mon'; self._propty[propty] = self._pvs[propty][psname].value
-
-        self._lock = lock
-
-    def _force_lock(self):
-        self._finished = False
-        while not self._finished:
-            #print('looping force')
-            if self._lock:
-                _time.sleep(PowerSupplyEpicsSyncOrig2.sync_interval)
-                for psname in self._psnames:
-                    ps_value = self._pvs['Current-SP'][psname].value
-                    if  ps_value != self._current_sp:
-                        self._pvs['Current-SP'][psname].put(self._current_sp, wait=PowerSupplyEpicsSyncOrig2.wait_pv_put)
-                    opmode_sel_value = self._pvs['OpMode-Sel'][psname].value
-                    if  opmode_sel_value != self.opmode_sel:
-                        self._pvs['OpMode-Sel'][psname].put(self._opmode_sel, wait=PowerSupplyEpicsSyncOrig2.wait_pv_put)
-                    pwrstate_sel_value = self._pvs['PwrState-Sel'][psname].value
-                    if  pwrstate_sel_value != self.pwrstate_sel:
-                        self._pvs['PwrState-Sel'][psname].put(self._pwrstate_sel, wait=PowerSupplyEpicsSyncOrig2.wait_pv_put)
-
-    def _conn_cb(self, pvname, conn, **kwargs):
-        print("[CONN CB]", pvname, conn)
-
-    def _clear_threads(self):
-        self._threads = [t for t in self._threads if t.is_alive]
-
-    def _get_limit(self, attr, maxmin):
-        if not self.connected: return None
-        lim = None
-        for psname in self._psnames:
-            pv = self._pvs['Current-SP'][psname]
-            value = getattr(pv, attr)
-            lim = value if lim is None else maxmin(lim,value)
-        return lim
-
-    def _set_propty_sp(self, value, propty):
-        if not self._thread_local:
-            self._lock = False
-        self._propty[propty] = value
-        for psname, pv in self._pvs[propty].items():
-            pv.put(self._propty[propty], wait=PowerSupplyEpicsSyncOrig1.wait_pv_put)
-        if not self._thread_local:
-            self._lock = True
-
-    def _trigger_callback(self, pvname, value, **kwargs):
-        if self._callback:
-            self._callback(pvname, value, **kwargs)
-
-    def _callback_connection_sp_pvs(self, pvname, conn,**kwargs):
-        #print('callback_connection_sp: ', pvname, conn)
-        pass
-
-    def _callback_connection_rb_pvs(self, pvname, conn,**kwargs):
-        #print('callback_connection_rb: ', pvname, conn)
-        pass
-
-    def _callback_pvchange_sp_pvs(self, pvname, value, **kwargs):
-        #print('callback_pvchange_sp: ', pvname, value)
-        *parts, propty = pvname.split(':')
-        if self._propty[propty] is None:
-            self._propty[propty] = value
-            return
-        if not self._thread_local:
-            pass
-        if self._thread_local:
-            if self._lock:
-                if value != self._propty[propty]:
-                    self._clear_threads()
-                    self._threads.append(_threading.Thread(target=self._set_propty_sp, args=[self._propty[propty], propty]))
-                    self._threads[-1].start()
-                else:
-                    self._trigger_callback(pvname, value, **kwargs)
-
-    def _callback_pvchange_rb_pvs(self, pvname, value, **kwargs):
-        #print('callback_pvchange_sp: ', pvname, value)
-        *_, propty = pvname.split(':')
-        self._propty[propty] = value
-        self._trigger_callback(pvname, value, **kwargs)
+# class PowerSupplyEpicsSyncOrig1:
+#
+#     wait_pv_put   = True
+#     sync_interval = 1.0
+#
+#     def __init__(self,
+#                  maname,
+#                  use_vaca=False,
+#                  vaca_prefix=None,
+#                  lock=True,
+#                  callback=None,
+#                  thread_local=True,
+#                  connection_timeout=None):
+#
+#         self._thread_local = thread_local
+#         self._callbacks = {} if callback is None else {_uuid.uuid4():callback}
+#         self._enum_keys = False
+#
+#         if self._thread_local:
+#             self._finish = False
+#             self._threads = list()
+#
+#         self._maname = _SiriusPVName(maname)
+#         self._use_vaca = use_vaca
+#         self._vaca_prefix = vaca_prefix
+#         self._connection_timeout = connection_timeout
+#         self._lock = lock
+#         self._set_psnames()
+#         self._psname_master = self._psnames[0]
+#         #super().__init__(psname=self._psname_master)
+#         self._create_epics_pvs()
+#
+#         if not self._thread_local:
+#             if self._lock:
+#                 self._thread = _threading.Thread(target=self._force_lock)
+#                 self._thread.start()
+#
+#     @property
+#     def connected(self):
+#         for pv_dict in self._pvs.values():
+#             for pv in pv_dict.values():
+#                 if not pv.connected:
+#                     return False
+#         return True
+#
+#     def disconnect(self):
+#         if not self._thread_local:
+#             self._finished = True
+#         if self._thread_local:
+#             self._lock = False
+#             if self._threads:
+#                 for t in self._threads:
+#                     if t.is_alive():
+#                         t.join()
+#
+#     @property
+#     def upper_alarm_limit(self):
+#         return self._get_limit('upper_alarm_limit', min)
+#
+#     @property
+#     def upper_warning_limit(self):
+#         return self._get_limit('upper_warning_limit', min)
+#
+#     @property
+#     def upper_disp_limit(self):
+#         return self._get_limit('upper_disp_limit', min)
+#
+#     @property
+#     def lower_disp_limit(self):
+#         return self._get_limit('lower_disp_limit', max)
+#
+#     @property
+#     def lower_warning_limit(self):
+#         return self._get_limit('lower_warning_limit', max)
+#
+#     @property
+#     def lower_alarm_limit(self):
+#         return self._get_limit('lower_alarm_limit', max)
+#
+#     @property
+#     def maname(self):
+#         return self._maname
+#
+#     @property
+#     def psnames(self):
+#         return tuple([psname for psname in self._psnames])
+#
+#     # Current getters/setters
+#     @property
+#     def current_sp(self):
+#         return self._current_sp
+#
+#     @property
+#     def current_rb(self):
+#         return self._current_rb
+#
+#     @property
+#     def currentref_mon(self):
+#         return self._currentref_mon
+#
+#     @property
+#     def current_mon(self):
+#         return self._current_mon
+#
+#     @current_sp.setter
+#     def current_sp(self, value):
+#         self._set_current_sp(value)
+#
+#     def _set_current_sp(self, value):
+#         if not self._thread_local:
+#             self._lock = False
+#         self._current_sp = value
+#         for psname, pv in self._pvs['Current-SP'].items():
+#             pv.put(self._current_sp, wait=PowerSupplyEpicsSyncOrig1.wait_pv_put)
+#         if not self._thread_local:
+#             self._lock = True
+#
+#     @current_rb.setter
+#     def current_rb(self, value):
+#         raise NotImplementedError
+#
+#     @currentref_mon.setter
+#     def currentref_mon(self, value):
+#         raise NotImplementedError
+#
+#     @current_mon.setter
+#     def current_mon(self, value):
+#         raise NotImplementedError
+#
+#     #OpMode getter/setter
+#     @property
+#     def opmode_sel(self):
+#         return self._opmode_sel
+#
+#     @opmode_sel.setter
+#     def opmode_sel(self, value):
+#         self._set_opmode_sel(value)
+#
+#     def _set_opmode_sel(self, value):
+#         if not self._thread_local:
+#             self._lock = False
+#         self._opmode_sel = value
+#         for psname, pv in self._pvs['OpMode-Sel'].items():
+#             pv.put(self._opmode_sel, wait=PowerSupplyEpicsSyncOrig1.wait_pv_put)
+#         if not self._thread_local:
+#             self._lock = True
+#
+#     @property
+#     def opmode_sts(self):
+#         return self._opmode_sts
+#
+#     @property
+#     def pwrstate_sel(self):
+#         return self._pwrstate_sel
+#
+#     @pwrstate_sel.setter
+#     def pwrstate_sel(self, value):
+#         self._set_pwrstate_sel(value)
+#
+#     def _set_pwrstate_sel(self, value):
+#         if not self._thread_local:
+#             self._lock = False
+#         self._pwrstate_sel = value
+#         for psname, pv in self._pvs['PwrState-Sel'].items():
+#             pv.put(self._pwrstate_sel, wait=PowerSupplyEpicsSyncOrig1.wait_pv_put)
+#         if not self._thread_local:
+#             self._lock = True
+#
+#     @property
+#     def pwrstate_sts(self):
+#         return self._pwrstate_sts
+#
+#     def _get_limit(self, attr, maxmin):
+#         if not self.connected: return None
+#         lim = None
+#         for psname in self._psnames:
+#             pv = self._pvs['Current-SP'][psname]
+#             value = getattr(pv, attr)
+#             lim = value if lim is None else maxmin(lim,value)
+#         return lim
+#
+#     def _set_psnames(self):
+#         if 'MA-B1B2' in self._maname:
+#             self._psnames = ['SI-Fam:PS-B1B2-1','SI-Fam:PS-B1B2-2']
+#         elif 'MA-B-' in self._maname:
+#             self._psnames = ['BO-Fam:PS-B-1','BO-Fam:PS-B-2']
+#         else:
+#             self._psnames = [self._maname.replace('MA-','PS-'),]
+#
+#     def _create_epics_pvs(self):
+#
+#         if self._use_vaca:
+#             if self._vaca_prefix is None:
+#                 self._vaca_prefix = _envars.vaca_prefix
+#         else:
+#             self._vaca_prefix = ''
+#
+#         # put it back !!!
+#         if self._thread_local:
+#             self._current_sp = 0.0
+#             self._opmode_sel = 0
+#             self._pwrstate_sel = 0
+#             self._opmode_sts = 0
+#             self._pwrstate_sts = 0
+#             self._current_rb = 0.0
+#             self._currentref_mon = 0.0
+#             self._current_mon = 0.0
+#
+#         self._properties = {
+#             'OpMode-Sel'     : self._pvchange_opmode_sel,
+#             'OpMode-Sts'     : self._pvchange_opmode_sts,
+#             'PwrState-Sel'   : self._pvchange_pwrstate_sel,
+#             'PwrState-Sts'   : self._pvchange_pwrstate_sts,
+#             'Current-SP'     : self._pvchange_current_sp,
+#             'Current-RB'     : self._pvchange_current_rb,
+#             'CurrentRef-Mon' : self._pvchange_currentref_mon,
+#             'Current-Mon'    : self._pvchange_current_mon,
+#         }
+#
+#         lock = self._lock
+#         self._lock = False
+#
+#         self._pvs = {}
+#         index = None
+#         for propty in self._properties:
+#             self._pvs[propty] = {}
+#         for psname in self._psnames:
+#             pv = self._vaca_prefix + psname
+#             for propty, callback in self._properties.items():
+#                 self._pvs[propty][psname] = _PV(pv + ':' + propty, connection_timeout=self._connection_timeout)
+#                 self._pvs[propty][psname].wait_for_connection(timeout=self._connection_timeout)
+#                 index = self._pvs[propty][psname].add_callback(callback=callback, index=index)
+#
+#         psname = self._psnames[0]
+#         self.opmode_sel = self._pvs['OpMode-Sel'][psname].value
+#         self._opmode_sts = self._pvs['OpMode-Sts'][psname].value
+#         self.pwrstate_sel = self._pvs['PwrState-Sel'][psname].value
+#         self._pwrstate_sts = self._pvs['PwrState-Sts'][psname].value
+#         self.current_sp = self._pvs['Current-SP'][psname].value
+#         self._current_rb = self._pvs['Current-RB'][psname].value
+#         self._currentref_mon = self._pvs['CurrentRef-Mon'][psname].value
+#         self._current_mon = self._pvs['Current-Mon'][psname].value
+#
+#         self._lock = lock
+#
+#     def _force_lock(self):
+#         self._finished = False
+#         while not self._finished:
+#             #print('looping force')
+#             if self._lock:
+#                 _time.sleep(PowerSupplyEpicsSyncOrig1.sync_interval)
+#                 for psname in self._psnames:
+#                     ps_value = self._pvs['Current-SP'][psname].value
+#                     if  ps_value != self._current_sp:
+#                         self._pvs['Current-SP'][psname].put(self._current_sp, wait=PowerSupplyEpicsSyncOrig1.wait_pv_put)
+#                     opmode_sel_value = self._pvs['OpMode-Sel'][psname].value
+#                     if  opmode_sel_value != self.opmode_sel:
+#                         self._pvs['OpMode-Sel'][psname].put(self._opmode_sel, wait=PowerSupplyEpicsSyncOrig1.wait_pv_put)
+#                     pwrstate_sel_value = self._pvs['PwrState-Sel'][psname].value
+#                     if  pwrstate_sel_value != self.pwrstate_sel:
+#                         self._pvs['PwrState-Sel'][psname].put(self._pwrstate_sel, wait=PowerSupplyEpicsSyncOrig1.wait_pv_put)
+#
+#     def _clear_threads(self):
+#         pass
+#         # self._threads = [t for t in self._threads if t.is_alive()]
+#
+#     @property
+#     def callbacks(self):
+#         """Return callback."""
+#         return self._callbacks
+#
+#     def add_callback(self, callback, index=None):
+#         """Add a callback."""
+#         index = _uuid.uuid4() if index is None else index
+#         self._callbacks[index] = callback
+#         return index
+#
+#     def _trigger_callback(self, pvname, value, **kwargs):
+#         for callback in self._callbacks.values():
+#             callback(pvname, value, **kwargs)
+#
+#     def _pvchange_opmode_sel(self, pvname, value, **kwargs):
+#         if not self._thread_local:
+#             pass
+#         if self._thread_local:
+#             if self._lock:
+#                 if value != self._opmode_sel:
+#                     self._clear_threads()
+#                     self._threads.append(_threading.Thread(target=self._set_opmode_sel, args=[self._opmode_sel]))
+#                     self._threads[-1].start()
+#                 else:
+#                     pass
+#                     # self._trigger_callback(pvname, value, **kwargs)
+#     def _pvchange_opmode_sts(self, pvname, value, **kwargs):
+#         self._opmode_sts = value
+#         self._trigger_callback(pvname, value, **kwargs)
+#     def _pvchange_pwrstate_sel(self, pvname, value, **kwargs):
+#         if not self._thread_local:
+#             pass
+#         if self._thread_local:
+#             if self._lock:
+#                 if value != self._pwrstate_sel:
+#                     self._clear_threads()
+#                     self._threads.append(_threading.Thread(target=self._set_pwrstate_sel, args=[self._pwrstate_sel]))
+#                     self._threads[-1].start()
+#                 else:
+#                     pass
+#                     # self._trigger_callback(pvname, value, **kwargs)
+#     def _pvchange_pwrstate_sts(self, pvname, value, **kwargs):
+#         self._pwrstate_sts = value
+#         self._trigger_callback(pvname, value, **kwargs)
+#     def _pvchange_current_sp(self, pvname, value, **kwargs):
+#         if not self._thread_local:
+#             pass
+#         if self._thread_local:
+#             if self._lock:
+#                 if value != self._current_sp:
+#                     self._clear_threads()
+#                     self._threads.append(_threading.Thread(target=self._set_current_sp, args=[self._current_sp]))
+#                     self._threads[-1].start()
+#                 else:
+#                     pass
+#                     # self._trigger_callback(pvname, value, **kwargs)
+#     def _pvchange_current_rb(self, pvname, value, **kwargs):
+#         self._current_rb = value
+#         self._trigger_callback(pvname, value, **kwargs)
+#     def _pvchange_currentref_mon(self, pvname, value, **kwargs):
+#         self._currentref_mon = value
+#         self._trigger_callback(pvname, value, **kwargs)
+#     def _pvchange_current_mon(self, pvname, value, **kwargs):
+#         self._current_mon = value
+#         self._trigger_callback(pvname, value, **kwargs)
+#
+#     @property
+#     def database(self):
+#         return _get_database()
+#
+#
+# class PowerSupplyEpicsSyncOrig2:
+#
+#     wait_pv_put   = True
+#     sync_interval = 1.0
+#
+#     def __init__(self, psnames,
+#                        use_vaca=False,
+#                        vaca_prefix=None,
+#                        lock=True,
+#                        callback=None,
+#                        thread_local=True,
+#                        connection_timeout=None):
+#
+#         self._callback = callback
+#         self._thread_local = thread_local
+#
+#         if self._thread_local:
+#             self._finish = False
+#             self._threads = list()
+#
+#         self._psnames = psnames
+#         self._psname_master = self._psnames[0]
+#         #super().__init__(psname=self._psname_master)
+#         self._connection_timeout = connection_timeout
+#         self._lock = lock
+#         self._set_vaca_prefix(use_vaca,vaca_prefix)
+#         self._create_pvs()
+#
+#     @property
+#     def connected(self):
+#         for pv_dict in self._pvs.values():
+#             for pv in pv_dict.values():
+#                 if not pv.connected:
+#                     return False
+#         return True
+#
+#     def wait_for_connection(self, timeout=None):
+#         #print('wait_for_connection()')
+#         if timeout is None:
+#             while True:
+#                 if self.connected:
+#                     return True
+#                 _time.sleep(0.1)
+#         else:
+#             t0 = _time.time()
+#             while _time.time() - t0 < timeout:
+#                 if self.connected:
+#                     return True
+#                 _time.sleep(min(timeout/2.0,0.1))
+#         return False
+#
+#     def disconnect(self):
+#         if not self._thread_local:
+#             self._finished = True
+#         if self._thread_local:
+#             self._lock = False
+#             if self._threads:
+#                 for t in self._threads:
+#                     if t.is_alive():
+#                         t.join()
+#
+#         # if 'Current-SP' in self._scheduled and self._scheduled['Current-SP'] != self._propty['Current-SP']:
+#         #     self._clear_threads()
+#         #     thread = _threading.Thread(target=self._set_current_sp, args=[self._propty[propty]])
+#         #     self._threads.append(thread)
+#         #     thread.start()
+#         #
+#         # for t in self._threads:
+#         #     if t.is_alive():
+#         #         t.join()
+#         #
+#         # nr_pvs = len(self._pvs) * len(self._psnames)
+#         # pvs_ok = {}
+#         # while len(pvs_ok) < nr_pvs:
+#         #     for pv_dict in self._pvs.values():
+#         #         for pv in pv_dict.values():
+#         #             if pv.put_complete:
+#         #                 pvs_ok[pv.pvname] = True
+#         #                 pv.clear_callbacks()
+#         #                 pv.disconnect()
+#
+#         #print('disconnect()')
+#
+#     @property
+#     def psnames(self):
+#         return tuple([psname for psname in self._psnames])
+#
+#
+#     @property
+#     def opmode_sel(self):
+#         return self._propty['OpMode-Sel']
+#
+#     @opmode_sel.setter
+#     def opmode_sel(self, value):
+#         #self._set_opmode_sel(value)
+#         self._set_propty_sp(value, 'OpMode-Sel')
+#
+#     @property
+#     def opmode_sts(self):
+#         return self._propty['OpMode-Sts']
+#
+#     @property
+#     def pwrstate_sel(self):
+#         return self._propty['PwrState-Sel']
+#
+#     @pwrstate_sel.setter
+#     def pwrstate_sel(self, value):
+#         #self._set_pwrstate_sel(value)
+#         self._set_propty_sp(value, 'PwrState-Sel')
+#
+#     @property
+#     def pwrstate_sts(self):
+#         return self._propty['PwrState-Sts']
+#
+#     @property
+#     def current_sp(self):
+#         return self._propty['Current-SP']
+#
+#     @current_sp.setter
+#     def current_sp(self, value):
+#         #self._set_current_sp(value)
+#         self._set_propty_sp(value, 'Current-SP')
+#
+#     @property
+#     def current_rb(self):
+#         return self._propty['Current-RB']
+#
+#     @property
+#     def currentref_mon(self):
+#         return self._propty['CurrentRef-Mon']
+#
+#     @property
+#     def current_mon(self):
+#         return self._propty['Current-Mon']
+#
+#     @property
+#     def upper_alarm_limit(self):
+#         return self._get_limit('upper_alarm_limit', min)
+#
+#     @property
+#     def upper_warning_limit(self):
+#         return self._get_limit('upper_warning_limit', min)
+#
+#     @property
+#     def upper_disp_limit(self):
+#         return self._get_limit('upper_disp_limit', min)
+#
+#     @property
+#     def lower_disp_limit(self):
+#         return self._get_limit('lower_disp_limit', max)
+#
+#     @property
+#     def lower_warning_limit(self):
+#         return self._get_limit('lower_warning_limit', max)
+#
+#     @property
+#     def lower_alarm_limit(self):
+#         return self._get_limit('lower_alarm_limit', max)
+#
+#     def _set_vaca_prefix(self, use_vaca, vaca_prefix):
+#         if use_vaca:
+#             if vaca_prefix is None:
+#                 self._vaca_prefix = _envars.vaca_prefix
+#             else:
+#                 self._vaca_prefix = vaca_prefix
+#         else:
+#             self._vaca_prefix = ''
+#
+#     def _create_pvs(self):
+#
+#         self._propty_names = {
+#             'OpMode-Sel'     : (self._callback_connection_sp_pvs, self._callback_pvchange_sp_pvs),
+#             'OpMode-Sts'     : (self._callback_connection_rb_pvs, self._callback_pvchange_rb_pvs),
+#             'PwrState-Sel'   : (self._callback_connection_sp_pvs, self._callback_pvchange_sp_pvs),
+#             'PwrState-Sts'   : (self._callback_connection_rb_pvs, self._callback_pvchange_rb_pvs),
+#             'Current-SP'     : (self._callback_connection_sp_pvs, self._callback_pvchange_sp_pvs),
+#             'Current-RB'     : (self._callback_connection_rb_pvs, self._callback_pvchange_rb_pvs),
+#             'CurrentRef-Mon' : (self._callback_connection_rb_pvs, self._callback_pvchange_rb_pvs),
+#             'Current-Mon'    : (self._callback_connection_rb_pvs, self._callback_pvchange_rb_pvs),
+#         }
+#
+#         # init _local properties
+#         self._propty = {propty:None for propty in self._propty_names}
+#
+#         lock = self._lock
+#         self._lock = False
+#
+#         self._callback_index = None
+#         self._pvs = {}
+#         for propty in self._propty_names:
+#             self._pvs[propty] = {}
+#         for psname in self._psnames:
+#             pv = self._vaca_prefix + psname
+#             for propty, callbacks in self._propty_names.items():
+#                 connection_callback, callback = callbacks
+#                 self._pvs[propty][psname] = _PV(pv + ':' + propty, connection_callback=self._conn_cb, connection_timeout=0.010)
+#                 #self._pvs[propty][psname].wait_for_connection(timeout=3.0)
+#                 self._callback_index = self._pvs[propty][psname].add_callback(callback=callback, index=self._callback_index)
+#
+#         if self.connected:
+#             psname = self._psname_master
+#             propty='OpMode-Sel'; self._propty[propty] = self._pvs[propty][psname].value
+#             propty='OpMode-Sts'; self._propty[propty] = self._pvs[propty][psname].value
+#             propty='PwrState-Sel'; self._propty[propty] = self._pvs[propty][psname].value
+#             propty='PwrState-Sts'; self._propty[propty] = self._pvs[propty][psname].value
+#             propty='Current-SP'; self._propty[propty] = self._pvs[propty][psname].value
+#             propty='Current-RB'; self._propty[propty] = self._pvs[propty][psname].value
+#             propty='CurrentRef-Mon'; self._propty[propty] = self._pvs[propty][psname].value
+#             propty='Current-Mon'; self._propty[propty] = self._pvs[propty][psname].value
+#
+#         self._lock = lock
+#
+#     def _force_lock(self):
+#         self._finished = False
+#         while not self._finished:
+#             #print('looping force')
+#             if self._lock:
+#                 _time.sleep(PowerSupplyEpicsSyncOrig2.sync_interval)
+#                 for psname in self._psnames:
+#                     ps_value = self._pvs['Current-SP'][psname].value
+#                     if  ps_value != self._current_sp:
+#                         self._pvs['Current-SP'][psname].put(self._current_sp, wait=PowerSupplyEpicsSyncOrig2.wait_pv_put)
+#                     opmode_sel_value = self._pvs['OpMode-Sel'][psname].value
+#                     if  opmode_sel_value != self.opmode_sel:
+#                         self._pvs['OpMode-Sel'][psname].put(self._opmode_sel, wait=PowerSupplyEpicsSyncOrig2.wait_pv_put)
+#                     pwrstate_sel_value = self._pvs['PwrState-Sel'][psname].value
+#                     if  pwrstate_sel_value != self.pwrstate_sel:
+#                         self._pvs['PwrState-Sel'][psname].put(self._pwrstate_sel, wait=PowerSupplyEpicsSyncOrig2.wait_pv_put)
+#
+#     def _conn_cb(self, pvname, conn, **kwargs):
+#         print("[CONN CB]", pvname, conn)
+#
+#     def _clear_threads(self):
+#         self._threads = [t for t in self._threads if t.is_alive]
+#
+#     def _get_limit(self, attr, maxmin):
+#         if not self.connected: return None
+#         lim = None
+#         for psname in self._psnames:
+#             pv = self._pvs['Current-SP'][psname]
+#             value = getattr(pv, attr)
+#             lim = value if lim is None else maxmin(lim,value)
+#         return lim
+#
+#     def _set_propty_sp(self, value, propty):
+#         if not self._thread_local:
+#             self._lock = False
+#         self._propty[propty] = value
+#         for psname, pv in self._pvs[propty].items():
+#             pv.put(self._propty[propty], wait=PowerSupplyEpicsSyncOrig1.wait_pv_put)
+#         if not self._thread_local:
+#             self._lock = True
+#
+#     def _trigger_callback(self, pvname, value, **kwargs):
+#         if self._callback:
+#             self._callback(pvname, value, **kwargs)
+#
+#     def _callback_connection_sp_pvs(self, pvname, conn,**kwargs):
+#         #print('callback_connection_sp: ', pvname, conn)
+#         pass
+#
+#     def _callback_connection_rb_pvs(self, pvname, conn,**kwargs):
+#         #print('callback_connection_rb: ', pvname, conn)
+#         pass
+#
+#     def _callback_pvchange_sp_pvs(self, pvname, value, **kwargs):
+#         #print('callback_pvchange_sp: ', pvname, value)
+#         *parts, propty = pvname.split(':')
+#         if self._propty[propty] is None:
+#             self._propty[propty] = value
+#             return
+#         if not self._thread_local:
+#             pass
+#         if self._thread_local:
+#             if self._lock:
+#                 if value != self._propty[propty]:
+#                     self._clear_threads()
+#                     self._threads.append(_threading.Thread(target=self._set_propty_sp, args=[self._propty[propty], propty]))
+#                     self._threads[-1].start()
+#                 else:
+#                     self._trigger_callback(pvname, value, **kwargs)
+#
+#     def _callback_pvchange_rb_pvs(self, pvname, value, **kwargs):
+#         #print('callback_pvchange_sp: ', pvname, value)
+#         *_, propty = pvname.split(':')
+#         self._propty[propty] = value
+#         self._trigger_callback(pvname, value, **kwargs)
 
 
 # Previous Classes:

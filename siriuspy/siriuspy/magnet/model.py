@@ -17,6 +17,7 @@ from siriuspy.pwrsupply.model import PowerSupplyEpicsSync \
     as _PowerSupplyEpicsSync
 from siriuspy.magnet import util as _mutil
 from siriuspy.magnet.data import MAData as _MAData
+from siriuspy import envars as _envars
 
 _connection_timeout = None
 
@@ -240,12 +241,23 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
 
         self._strength_label = self._get_strength_label()
 
+        self._set_vaca_prefix(use_vaca, vaca_prefix)
+
         self._init_subclass()
 
         super().__init__(psnames=self._power_supplies(),
                          use_vaca=use_vaca,
                          vaca_prefix=vaca_prefix,
                          lock=True)
+
+    def _set_vaca_prefix(self, use_vaca, vaca_prefix):
+        if use_vaca:
+            if vaca_prefix is None:
+                self._vaca_prefix = _envars.vaca_prefix
+            else:
+                self._vaca_prefix = vaca_prefix
+        else:
+            self._vaca_prefix = ''
 
     def _init_propty(self):
         super()._init_propty()
@@ -494,7 +506,8 @@ class MagnetPowerSupply(_MagnetPowerSupply):
 
     def _init_subclass(self):
         attrs = ('Current-SP', 'Current-RB', 'CurrentRef-Mon', 'Current-Mon')
-        self._dipole = _epics.Device(self._dipole_name, delim=':', attrs=attrs)
+        prefix = self._vaca_prefix + self._dipole_name
+        self._dipole = _epics.Device(prefix, delim=':', attrs=attrs)
 
         self._dipole_current_sp = self._dipole.get('Current-SP')
         self._dipole_current_rb = self._dipole.get('Current-RB')
@@ -564,11 +577,12 @@ class MagnetPowerSupplyTrim(MagnetPowerSupply):
     reference dipole or the family power supply have their currents changed.
     """
 
-    def _init_subclass(self):
+    def _init_subclass(self, use_vaca, vaca_prefix):
         attrs = ('Current-SP', 'Current-RB', 'CurrentRef-Mon', 'Current-Mon')
         super(MagnetPowerSupplyTrim, self)._init_subclass()
         # self._dipole = _epics.Device(self._dipole_name,delim=':',attrs=attrs)
-        self._fam = _epics.Device(self._fam_name, delim=':', attrs=attrs)
+        prefix = self._vaca_prefix + self._fam_name
+        self._fam = _epics.Device(prefix, delim=':', attrs=attrs)
 
         # self._dipole_current_sp = self._dipole.get('Current-SP')
         # self._dipole_current_rb = self._dipole.get('Current-RB')
