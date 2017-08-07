@@ -3,18 +3,21 @@
 
 import numpy as _np
 from siriuspy.csdevice.pwrsupply import default_wfmsize as _default_wfmsize
-from siriuspy.csdevice.enumtypes import EnumTypes as _et
 import os as _os
 
 
 
 class PSWaveForm:
 
-    path = _os.path.join(_os.environ.get('HOME','./'), '.siriuspy', 'pwrsupply')
+    path = _os.path.join(_os.environ.get('HOME', './'), 'sirius-iocs',
+                         'waveforms')
 
     @staticmethod
-    def wfm_constant(label, nr_points=_default_wfmsize, value=0.0, filename=None):
-        wfm = PSWaveForm(label=label, data=_np.array([value for i in range(nr_points)]))
+    def wfm_constant(label, nr_points=_default_wfmsize, value=0.0,
+                     filename=None):
+        """Static method that buils constant waveform."""
+        wfm = PSWaveForm(label=label,
+                         data=_np.array([value for i in range(nr_points)]))
         wfm._filename = filename
         return wfm
 
