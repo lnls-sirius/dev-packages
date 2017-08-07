@@ -2,6 +2,7 @@
 
 import logging as _log
 import epics as _epics
+from siriuspy.envars import vaca_prefix as LL_PREFIX
 from siriuspy.namesys import SiriusPVName as _PVName
 from siriuspy.timesys.time_data import IOs
 from siriuspy.timesys.time_data import Clocks, Events
@@ -11,8 +12,6 @@ from threading import Thread as _Thread
 _TIMEOUT = 0.05
 _FORCE_EQUAL = True
 _INTERVAL = 0.1
-
-LL_PREFIX = 'VAF-'
 
 RFFREQ = 299792458/518.396*864  # Should be read from the RF generator Setpoint
 RF_PER = 1/RFFREQ * 1e6         # In micro seconds
