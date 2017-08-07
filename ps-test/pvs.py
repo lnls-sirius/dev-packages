@@ -1,8 +1,10 @@
+"""Create all PS PVs."""
 from siriuspy.pwrsupply import PowerSupplySim as _PowerSupplySim
+from siriuspy.pulsedps.model \
+    import PulsedPowerSupplySim as _PulsedPowerSupplySim
 from siriuspy import envars as _envars
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
-import re as _re
 
 _prefix = _envars.vaca_prefix
 
@@ -126,7 +128,11 @@ def get_ps_devices():
             # if 'PS-QDA' in ps or 'B1B2' in ps or _re.match("SI-\d\w{2}:PS-QDA", ps):
             #     ps_devices[ps] = _PowerSupplySim(psname=ps)
             #     #ps_devices[ps] = PS(psname=ps)
-            ps_devices[ps] = _PowerSupplySim(psname=ps)
+            if "PU" in ps:
+                ps_devices[ps] = _PulsedPowerSupplySim(psname=ps)
+            else:
+                ps_devices[ps] = _PowerSupplySim(psname=ps)
+
 
     return ps_devices
 

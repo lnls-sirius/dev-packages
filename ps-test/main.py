@@ -19,7 +19,7 @@ class App:
     ps_devices = None
     pvs_database = None
 
-    def __init__(self,driver):
+    def __init__(self, driver):
         self._driver = driver
         for psname in _pvs.ps_devices:
             _pvs.ps_devices[psname].add_callback(self._mycallback)
@@ -40,15 +40,10 @@ class App:
     def driver(self):
         return self._driver
 
-    def process(self,interval):
+    def process(self, interval):
         _time.sleep(interval)
 
     def read(self, reason):
-        '''psname, prop = reason.split(':')
-        if 'Current-SP' in prop:
-            return _pvs.ps[psname].current_sp
-        elif 'Current-Mon' in prop:
-            return _pvs.ps[psname].current_mon'''
         return None
 
     def write(self, reason, value):
@@ -57,14 +52,18 @@ class App:
         parts = reason.split(':')
         propty = parts[-1]
         psname = ':'.join(parts[:2])
-        ps_propty = propty.replace('-','_').lower()
+        ps_propty = propty.replace('-', '_').lower()
         if isinstance(value, float) or isinstance(value, int):
-            print('{0:<15s} {1:s} [{2:f}]: '.format('ioc write', reason, value))
+            print('{0:<15s} {1:s} [{2:f}]: '.format('ioc write',
+                                                    reason,
+                                                    value))
         else:
             print('{0:<15s}: '.format('ioc write'), reason)
         try:
             if ps_propty in ('abort_cmd', 'reset_cmd'):
-                setattr(_pvs.ps_devices[psname], ps_propty.replace("_cmd", ""), value)
+                setattr(_pvs.ps_devices[psname],
+                        ps_propty.replace("_cmd", ""),
+                        value)
                 return
             setattr(_pvs.ps_devices[psname], ps_propty, value)
             self._driver.setParam(reason, value)
@@ -74,7 +73,7 @@ class App:
 
         t1 = _time.time()
         ttime += t1-t0
-        #print(ttime)
+        # print(ttime)
         return True
 
     def _mycallback(self, pvname, value, **kwargs):

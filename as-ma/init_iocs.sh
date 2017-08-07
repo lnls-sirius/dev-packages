@@ -20,7 +20,7 @@ fi
 # BO
 if [ "$1" = "bo" -o "$1" = "all" ]; then
   exec_ioc "BO-" "BO" ".*" "MA" "B.*" "3_bo_dipole"
-  exec_ioc "BO-" "BO" ".*" "MA" "(Q|CH|CV|FCH|FCV).*" "4_bo" # missing sextupoles
+  exec_ioc "BO-" "BO" ".*" "MA" "(Q|S|CH|CV|FCH|FCV).*" "4_bo" # missing sextupoles
 fi
 # TS
 if [ "$1" = "ts" -o "$1" = "all" -o "$1" = "lt" ]; then
