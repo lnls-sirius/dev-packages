@@ -90,6 +90,13 @@ def power_supplies_pstype_setpoint_limits(timeout=_timeout):
     return read_url(url, timeout=timeout)
 
 
+def pulsed_power_supplies_pstype_setpoint_limits(timeout=_timeout):
+    """Return the power supply setpoint limits data."""
+    url = (_envars.server_url_consts + _ps_folder +
+           'putypes-setpoint-limits.txt')
+    return read_url(url, timeout=timeout)
+
+
 def beaglebone_power_supplies_mapping(timeout=_timeout):
     """Return the beaglebone Black connections list."""
     url = _envars.server_url_consts + _ps_folder + 'beaglebone-mapping.txt'
