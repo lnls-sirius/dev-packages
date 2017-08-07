@@ -112,26 +112,27 @@ class HL_Event(_HL_Base):
         """Create the database of the class."""
         db = dict()
         pre = self.prefix
-        db[pre + 'Delay-SP'] = {
-            'type': 'float', 'value': self._hl_props['delay'], 'unit': 'us',
-            'prec': 3, 'fun_set_pv': lambda x: self.set_propty('delay', x)}
-        db[pre + 'Delay-RB'] = {
-            'type': 'float', 'value': self._hl_props['delay'],
-            'unit': 'us', 'prec': 3}
-        db[pre + 'Mode-Sel'] = {
-            'type': 'enum', 'enums': Events.MODES,
-            'value': self._hl_props['mode'],
-            'fun_set_pv': lambda x: self.set_propty('mode', x)}
-        db[pre + 'Mode-Sts'] = {
-            'type': 'enum', 'enums': Events.MODES,
-            'value': self._hl_props['mode']}
-        db[pre + 'DelayType-Sel'] = {
-            'type': 'enum', 'enums': Events.DELAY_TYPES,
-            'value': self._hl_props['delay_type'],
-            'fun_set_pv': lambda x: self.set_propty('delay_type', x)}
-        db[pre + 'DelayType-Sts'] = {
-            'type': 'enum', 'enums': Events.DELAY_TYPES,
-            'value': self._hl_props['delay_type']}
+
+        dic_ = {'type': 'float', 'unit': 'us', 'prec': 3,
+                'value': self._hl_props['delay'],
+                'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+                'hilim': 500000, 'high': 1000000, 'hihi': 10000000}
+        db[pre + 'Delay-RB'] = _copy.deepcopy(dic_)
+        dic_['fun_set_pv'] = lambda x: self.set_propty('delay', x)
+        db[pre + 'Delay-SP'] = dic_
+
+        dic_ = {'type': 'enum', 'enums': Events.MODES,
+                'value': self._hl_props['mode']}
+        db[pre + 'Mode-Sts'] = _copy.deepcopy(dic_)
+        dic_['fun_set_pv'] = lambda x: self.set_propty('mode', x)
+        db[pre + 'Mode-Sel'] = dic_
+
+        dic_ = {'type': 'enum', 'enums': Events.DELAY_TYPES,
+                'value': self._hl_props['delay_type']}
+        db[pre + 'DelayType-Sts'] = _copy.deepcopy(dic_)
+        dic_['fun_set_pv'] = lambda x: self.set_propty('delay_type', x)
+        db[pre + 'DelayType-Sel'] = dic_
+
         db[pre + 'ExtTrig-Cmd'] = {
             'type': 'int', 'value': self._hl_props['ext_trig'],
             'unit': 'When in External Mode generates Event.',
