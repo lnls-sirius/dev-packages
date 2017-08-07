@@ -12,29 +12,28 @@ from siriuspy import util as _util
 
 
 _COMMIT_HASH = _util.get_last_commit_hash()
-with open('VERSION', 'r') as _f:
-    __version__ = _f.read().strip()
-
 
 _connection_timeout = None
 
 _PREFIX_VACA = _vaca_prefix
-_PREFIX_SECTOR = None  # this will be updated
 _PREFIX = None  # this will be updated
+_IOC_TYPE = None  # this will be updated
+_PREFIX_SECTOR = None  # this will be updated
 
 _ma_devices = None
 
 
 def get_ma_devices(args=[]):
     """Create/Return PowerSupplyMA objects for each magnet."""
-    global _ma_devices, _PREFIX_SECTOR, _PREFIX
+    global _ma_devices, _PREFIX_SECTOR, _PREFIX, _IOC_TYPE
 
     if len(args) > 0:
-        _PREFIX_SECTOR = args[1]
-        section = args[2]
-        sub_section = args[3]
-        discipline = args[4]
-        device = args[5]
+        _IOC_TYPE = args[1]
+        _PREFIX_SECTOR = args[2]
+        section = args[3]
+        sub_section = args[4]
+        discipline = args[5]
+        device = args[6]
         _PREFIX = _PREFIX_VACA + _PREFIX_SECTOR
 
     if _ma_devices is None:
@@ -52,7 +51,6 @@ def get_ma_devices(args=[]):
         magnets = _MASearch.get_manames(filters)
         for magnet in magnets:
             _, device = magnet.split(_PREFIX_SECTOR)
-
             # Get dipole object
             _ma_devices[device] = \
                 MagnetFactory.factory(magnet)
@@ -62,8 +60,11 @@ def get_ma_devices(args=[]):
 
 def get_pvs_database():
     """Return IOC dagtabase."""
-    # pv_database = {'IOC:Version-Cte': {'type': 'str', 'value': __version__}}
-    pv_database = {}
+    if _IOC_TYPE is None:
+        return {}
+    pv_database = {_IOC_TYPE + ':Version-Cte':
+                   {'type': 'str', 'value': _COMMIT_HASH}}
+    # pv_database = {}
     ma_devices = get_ma_devices()
     for device_name, ma_device in ma_devices.items():
         # for ps_name in ma_device.ps_names:

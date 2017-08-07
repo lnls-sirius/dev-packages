@@ -16,7 +16,7 @@ import siriuspy as _siriuspy
 # 06 - be consistent in coding style (variable naming, spacings, prefixes,
 #      suffixes, etc)
 
-__version__ = _pvs.__version__
+__version__ = _pvs._COMMIT_HASH
 
 
 args = _sys.argv
@@ -42,7 +42,7 @@ class App:
         _siriuspy.util.print_ioc_banner(
             ioc_name='AS-MA',
             db=App.pvs_database,
-            description='AS-MA Magnet Power Supply Soft IOC',
+            description='AS-PS Test Soft IOC',
             version=__version__,
             prefix=_pvs._PREFIX)
 
