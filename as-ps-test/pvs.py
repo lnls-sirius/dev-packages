@@ -122,8 +122,8 @@ def get_ps_devices():
         print('creating pv database...')
         for ps in pwr_supplies:
             # print(ps)
-            if 'B1B2' in ps:
-                ps_devices[ps] = _PowerSupplySim(psname=ps)
+            # if 'B1B2' in ps:
+            ps_devices[ps] = _PowerSupplySim(psname=ps)
         print('finished.')
 
     return ps_devices

@@ -42,7 +42,7 @@ class App:
         _siriuspy.util.print_ioc_banner(
             ioc_name='AS-MA',
             db=App.pvs_database,
-            description='AS-PS Test Soft IOC',
+            description='AS-MA Soft IOC',
             version=__version__,
             prefix=_pvs._PREFIX)
 
