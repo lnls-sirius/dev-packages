@@ -51,7 +51,7 @@ class Clocks:
 
     LL_TMP = 'Clock{0:d}'
     HL_TMP = 'Clock{0:d}'
-    HL_PREF = 'AS-Glob:TI-Clock:'
+    HL_PREF = 'AS-Glob:TI-EVG:'
 
     HL2LL_MAP = dict()
     for i in range(8):
