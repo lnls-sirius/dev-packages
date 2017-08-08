@@ -14,7 +14,7 @@ if _importlib.find_loader('matplotlib') is not None:
     import matplotlib.cm as _cmap
 
 _timeout = 1.0
-_LOCAL = True
+_LOCAL = False
 
 
 class Events:
@@ -33,7 +33,7 @@ class Events:
     LL_RGX = _re.compile('Event([0-9A-E]{2})([a-z-\.]*)', _re.IGNORECASE)
     HL_RGX = _re.compile('('+'|'.join(list(HL2LL_MAP.keys())) +
                          ')([a-z-\.]*)', _re.IGNORECASE)
-    HL_PREF = 'AS-Glob:TI-Event:'
+    HL_PREF = 'AS-Glob:TI-EVG:'
 
     LL_CODES = list(range(50)) + list(range(80, 120)) + list(range(160, 256))
     LL_EVENTS = []
@@ -51,7 +51,7 @@ class Clocks:
 
     LL_TMP = 'Clock{0:d}'
     HL_TMP = 'Clock{0:d}'
-    HL_PREF = 'AS-Glob:TI-Clock:'
+    HL_PREF = 'AS-Glob:TI-EVG:'
 
     HL2LL_MAP = dict()
     for i in range(8):
@@ -147,8 +147,8 @@ class IOs:
             'SFP': (
                 'FMC0', 'FMC1', 'FMC2', 'FMC3', 'FMC4',
                 'FMC5', 'FMC6', 'FMC7', 'FMC8', 'FMC9',
-                'OUT0', 'OUT1', 'OUT2', 'OUT3', 'OUT4',
-                'OUT5', 'OUT6', 'OUT7',
+                'CRT0', 'CRT1', 'CRT2', 'CRT3', 'CRT4',
+                'CRT5', 'CRT6', 'CRT7',
                 ),
             },
         'STDMOE': {
