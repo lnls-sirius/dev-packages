@@ -661,8 +661,8 @@ class _EVROutputIOC(_BaseIOC):
         self._attr2expr = {
             'fine_delay_sp': lambda x: int(round((x*1e-12)/_FINE_DELAY_STEP)),
             'fine_delay_rb': lambda x: x * _FINE_DELAY_STEP * 1e12,
-            'delay_sp': lambda x: int(round((x*1e-6) * self.base_freq)),
-            'delay_rb': lambda x: x * (1e6 / self.base_freq),
+            'delay_sp': lambda x: int(round((x*1e-6) * (20*self.base_freq))),
+            'delay_rb': lambda x: x * (1e6 / (20*self.base_freq)),
             'optic_channel_sp': lambda x: x,
             'optic_channel_rb': lambda x: x,
             }
@@ -677,6 +677,12 @@ class _EVROutputIOC(_BaseIOC):
             self.fine_delay_rb = value
         if propty == 'optic_channel':
             self.optic_channel_rb = value
+
+
+class _EVEOutputIOC(_EVROutputIOC):
+
+    _int_chan_enums = (['IntTrig{0:02d}'.format(i) for i in range(16)] +
+                       sorted(Clocks.LL2HL_MAP.keys()))
 
 
 class _InternTrigIOC(_BaseIOC):
@@ -714,7 +720,7 @@ class _InternTrigIOC(_BaseIOC):
         db[prefix + 'Width-SP'] = _copy.deepcopy(dic_)
         db[prefix + 'Width-RB'] = dic_
 
-        dic_ = {'type': 'float', 'unit': 'us', 'prec': 3,
+        dic_ = {'type': 'float', 'unit': 'us', 'prec': 3, 'value': 0.0,
                 'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
                 'hilim': 500000, 'high': 1000000, 'hihi': 10000000}
         db[prefix + 'Delay-SP'] = _copy.deepcopy(dic_)
@@ -729,7 +735,7 @@ class _InternTrigIOC(_BaseIOC):
             'type': 'string', 'value': 'Event00', 'Enums': cls._event_enums}
 
         dic_ = {'type': 'int', 'unit': 'numer of pulses', 'prec': 0,
-                'lolo': 1, 'low': 1, 'lolim': 1,
+                'value': 1, 'lolo': 1, 'low': 1, 'lolim': 1,
                 'hilim': 1000000000, 'high': 1000000000, 'hihi': 1000000000}
         db[prefix + 'Pulses-SP'] = _copy.deepcopy(dic_)
         db[prefix + 'Pulses-RB'] = dic_
@@ -775,7 +781,7 @@ class EVRIOC(_BaseIOC):
     _ClassSim = _EVRSim
     _ClassOutIOC = _EVROutputIOC
     _ClassIntTrigIOC = _InternTrigIOC
-    _OUTTMP = 'OTP{0:d}'
+    _OUTTMP = 'OUT{0:d}'
     _INTTMP = 'IntTrig{0:02d}'
 
     _states = ('Dsbl', 'Enbl')
@@ -875,8 +881,7 @@ class EVEIOC(EVRIOC):
     """Class to simulate the EVE."""
 
     _ClassSim = _EVESim
-    _ClassOutIOC = _EVROutputIOC
-    _OUTTMP = 'OUT{0:d}'
+    _ClassOutIOC = _EVEOutputIOC
 
 
 class _AFCTrigIOC(_InternTrigIOC):
