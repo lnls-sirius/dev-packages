@@ -1,8 +1,9 @@
 """Define Classes to simulate timing objects."""
 
+import time as _time
+import copy as _copy
 import uuid as _uuid
 from threading import Thread as _Thread
-import time as _time
 from ..time_data import Events, Clocks, Triggers
 
 _PwrFreq = 60
@@ -273,10 +274,11 @@ class _EventIOC(_BaseIOC):
     @classmethod
     def get_database(cls, prefix=''):
         db = dict()
-        db[prefix + 'Delay-SP'] = {
-            'type': 'float', 'count': 1, 'value': 0.0, 'unit': 'us', 'prec': 3}
-        db[prefix + 'Delay-RB'] = {
-            'type': 'float', 'count': 1, 'value': 0.0, 'unit': 'us', 'prec': 3}
+        dic_ = {'type': 'float', 'unit': 'us', 'prec': 3, 'value': 0.0,
+                'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+                'hilim': 500000, 'high': 1000000, 'hihi': 10000000}
+        db[prefix + 'Delay-SP'] = _copy.deepcopy(dic_)
+        db[prefix + 'Delay-RB'] = dic_
         db[prefix + 'Mode-Sel'] = {
             'type': 'enum', 'enums': _EventIOC._modes, 'value': 1}
         db[prefix + 'Mode-Sts'] = {
@@ -326,10 +328,11 @@ class _ClockIOC(_BaseIOC):
     @classmethod
     def get_database(cls, prefix=''):
         db = dict()
-        db[prefix + 'Freq-SP'] = {
-            'type': 'float', 'value': 1.0, 'unit': 'kHz', 'prec': 10}
-        db[prefix + 'Freq-RB'] = {
-            'type': 'float', 'value': 1.0, 'unit': 'kHz', 'prec': 10}
+        dic_ = {'type': 'float', 'value': 1.0, 'unit': 'kHz', 'prec': 5,
+                'lolo': 0.00002, 'low': 0.00002, 'lolim': 0.00002,
+                'hilim': 100000, 'high': 100000, 'hihi': 100000}
+        db[prefix + 'Freq-SP'] = _copy.deepcopy(dic_)
+        db[prefix + 'Freq-RB'] = dic_
         db[prefix + 'State-Sel'] = {
             'type': 'enum', 'enums': _ClockIOC._states, 'value': 0}
         db[prefix + 'State-Sts'] = {
@@ -394,10 +397,11 @@ class EVGIOC(_BaseIOC):
             'type': 'int', 'count': 864, 'value': 864*[0]}
         db[p + 'BucketList-RB'] = {
             'type': 'int', 'count': 864, 'value': 864*[0]}
-        db[p + 'RepRate-SP'] = {
-            'type': 'float', 'unit': 'Hz', 'value': 2.0, 'prec': 5}
-        db[p + 'RepRate-RB'] = {
-            'type': 'float', 'unit': 'Hz', 'value': 2.0, 'prec': 5}
+        dic_ = {'type': 'float', 'unit': 'Hz', 'prec': 3, 'value': 2.0,
+                'lolo': 0.001, 'low': 0.001, 'lolim': 0.001,
+                'hilim': 60, 'high': 60, 'hihi': 60}
+        db[p + 'RepRate-SP'] = _copy.deepcopy(dic_)
+        db[p + 'RepRate-RB'] = dic_
         for clc in Clocks.LL2HL_MAP.keys():
             p = prefix + clc
             db.update(_ClockIOC.get_database(p))
@@ -633,14 +637,18 @@ class _EVROutputIOC(_BaseIOC):
     @classmethod
     def get_database(cls, prefix=''):
         db = dict()
-        db[prefix + 'FineDelay-SP'] = {
-            'type': 'float', 'unit': 'ns', 'value': 0.0, 'prec': 0}
-        db[prefix + 'FineDelay-RB'] = {
-            'type': 'float', 'unit': 'ns', 'value': 0.0, 'prec': 0}
-        db[prefix + 'Delay-SP'] = {
-            'type': 'float', 'unit': 'us', 'value': 0.0, 'prec': 0}
-        db[prefix + 'Delay-RB'] = {
-            'type': 'float', 'unit': 'us', 'value': 0.0, 'prec': 0}
+        dic_ = {'type': 'float', 'unit': 'ps', 'prec': 0, 'value': 0.0,
+                'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+                'hilim': 1000, 'high': 1000, 'hihi': 1000}
+        db[prefix + 'FineDelay-SP'] = _copy.deepcopy(dic_)
+        db[prefix + 'FineDelay-RB'] = dic_
+
+        dic_ = {'type': 'float', 'unit': 'us', 'prec': 4, 'value': 0.0,
+                'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+                'hilim': 500000, 'high': 1000000, 'hihi': 10000000}
+        db[prefix + 'Delay-SP'] = _copy.deepcopy(dic_)
+        db[prefix + 'Delay-RB'] = dic_
+
         db[prefix + 'IntChan-Sel'] = {
             'type': 'string', 'value': 'IntTrig00',
             'Enums': cls._int_chan_enums}
@@ -651,8 +659,8 @@ class _EVROutputIOC(_BaseIOC):
 
     def __init__(self, base_freq, callbacks=None, prefix=None, control=None):
         self._attr2expr = {
-            'fine_delay_sp': lambda x: int(round((x*1e-9) / _FINE_DELAY_STEP)),
-            'fine_delay_rb': lambda x: x * _FINE_DELAY_STEP * 1e9,
+            'fine_delay_sp': lambda x: int(round((x*1e-12)/_FINE_DELAY_STEP)),
+            'fine_delay_rb': lambda x: x * _FINE_DELAY_STEP * 1e12,
             'delay_sp': lambda x: int(round((x*1e-6) * self.base_freq)),
             'delay_rb': lambda x: x * (1e6 / self.base_freq),
             'optic_channel_sp': lambda x: x,
@@ -699,14 +707,18 @@ class _InternTrigIOC(_BaseIOC):
             'type': 'enum', 'enums': cls._states, 'value': 0}
         db[prefix + 'State-Sts'] = {
             'type': 'enum', 'enums': cls._states, 'value': 0}
-        db[prefix + 'Width-SP'] = {
-            'type': 'float', 'value': 0.0, 'unit': 'ns', 'prec': 3}
-        db[prefix + 'Width-RB'] = {
-            'type': 'float', 'value': 0.0, 'unit': 'ns', 'prec': 3}
-        db[prefix + 'Delay-SP'] = {
-            'type': 'float', 'value': 0.0, 'unit': 'us', 'prec': 3}
-        db[prefix + 'Delay-RB'] = {
-            'type': 'float', 'value': 0.0, 'unit': 'us', 'prec': 3}
+
+        dic_ = {'type': 'float', 'unit': 'us', 'prec': 3, 'value': 0.008,
+                'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+                'hilim': 500000, 'high': 1000000, 'hihi': 10000000}
+        db[prefix + 'Width-SP'] = _copy.deepcopy(dic_)
+        db[prefix + 'Width-RB'] = dic_
+
+        dic_ = {'type': 'float', 'unit': 'us', 'prec': 3,
+                'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+                'hilim': 500000, 'high': 1000000, 'hihi': 10000000}
+        db[prefix + 'Delay-SP'] = _copy.deepcopy(dic_)
+        db[prefix + 'Delay-RB'] = dic_
         db[prefix + 'Polrty-Sel'] = {
             'type': 'enum', 'enums': cls._polarities, 'value': 0}
         db[prefix + 'Polrty-Sts'] = {
@@ -715,10 +727,12 @@ class _InternTrigIOC(_BaseIOC):
             'type': 'string', 'value': 'Event00', 'Enums': cls._event_enums}
         db[prefix + 'Event-Sts'] = {
             'type': 'string', 'value': 'Event00', 'Enums': cls._event_enums}
-        db[prefix + 'Pulses-SP'] = {
-            'type': 'int', 'value': 1}
-        db[prefix + 'Pulses-RB'] = {
-            'type': 'int', 'value': 1}
+
+        dic_ = {'type': 'int', 'unit': 'numer of pulses', 'prec': 0,
+                'lolo': 1, 'low': 1, 'lolim': 1,
+                'hilim': 1000000000, 'high': 1000000000, 'hihi': 1000000000}
+        db[prefix + 'Pulses-SP'] = _copy.deepcopy(dic_)
+        db[prefix + 'Pulses-RB'] = dic_
         return db
 
     def __init__(self, base_freq, callbacks=None, prefix=None, control=None):
