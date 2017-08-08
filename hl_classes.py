@@ -236,9 +236,9 @@ class HL_Trigger(_HL_Base):
         dic_['fun_set_pv'] = lambda x: self.set_propty('pulses', x)
         db[pre + 'Pulses-SP'] = dic_
 
-        dic_ = {'type': 'float', 'unit': 'ms', 'prec': 4,
-                'lolo': 0.008, 'low': 0.008, 'lolim': 0.008,
-                'hilim': 500000, 'high': 1000000, 'hihi': 10000000}
+        dic_ = {'type': 'float', 'unit': 'ms', 'prec': 6,
+                'lolo': 0.000008, 'low': 0.000008, 'lolim': 0.000008,
+                'hilim': 500, 'high': 1000, 'hihi': 10000}
         dic_.update(self._ioc_params['duration'])
         db[pre + 'Duration-RB'] = _copy.deepcopy(dic_)
         dic_['fun_set_pv'] = lambda x: self.set_propty('duration', x)
