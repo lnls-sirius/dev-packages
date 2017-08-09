@@ -59,16 +59,9 @@ class App:
         return self._driver
 
     def process(self, interval):
-        """Process method."""
         _time.sleep(interval)
 
     def read(self, reason):
-        """Read method."""
-        '''psname, prop = reason.split(':')
-        if 'Current-SP' in prop:
-            return _pvs.ps[psname].current_sp
-        elif 'Current-Mon' in prop:
-            return _pvs.ps[psname].current_mon'''
         return None
 
     def write(self, reason, value):
