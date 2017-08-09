@@ -577,7 +577,7 @@ class MagnetPowerSupplyTrim(MagnetPowerSupply):
     reference dipole or the family power supply have their currents changed.
     """
 
-    def _init_subclass(self, use_vaca, vaca_prefix):
+    def _init_subclass(self):
         attrs = ('Current-SP', 'Current-RB', 'CurrentRef-Mon', 'Current-Mon')
         super(MagnetPowerSupplyTrim, self)._init_subclass()
         # self._dipole = _epics.Device(self._dipole_name,delim=':',attrs=attrs)
