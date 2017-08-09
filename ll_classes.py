@@ -21,16 +21,23 @@ D3_STEP = 5e-6                  # five picoseconds
 
 
 class _Timer(_Thread):
-    def __init__(self, interval, function, args=tuple()):
+    def __init__(self, interval, function, args=tuple(), niter=100):
         super().__init__(daemon=True)
         self.interval = interval
         self.function = function
         self.args = args
+        self.niters = niter
+        self.cur_iter = 0
         self.stopped = _Event()
 
     def run(self):
-        while not self.stopped.wait(self.interval):
+        while (not self.stopped.wait(self.interval)) and \
+                    self.niters >= self.cur_iter:
+            self.cur_iter += 1
             self.function(*self.args)
+
+    def reset(self):
+        self.cur_iter = 0
 
     def stop(self):
         self.stopped.set()
@@ -71,6 +78,7 @@ class _LL_Base:
         self.callback = callback
         self._hl_props = init_hl_props
         self._ll_props = dict()
+        self.timer = None
         self._initialize_ll_props()
         self._pvs_sp = dict()
         self._pvs_rb = dict()
@@ -89,11 +97,21 @@ class _LL_Base:
             self._pvs_sp_canput[pv_name_sp] = True
             self._pvs_sp[prop] = _epics.PV(
                 pv_name_sp,
+                callback=self._on_change_pvs_sp,
                 connection_timeout=_TIMEOUT)
         _log.info(self.channel + ': Done.')
         # Timer to force equality between high and low level:
         self.timer = _Timer(_INTERVAL, self._force_equal)
-        self.timer.start()
+        self.start_timer()
+
+    def start_timer(self):
+        if self.timer is None:
+            return
+        if self.timer.isAlive():
+            self.timer.reset()
+        else:
+            self.timer = _Timer(_INTERVAL, self._force_equal)
+            self.timer.start()
 
     def _get_setpoint_name(self, pvname):
         """Convert readback PV names to setpoint PV names."""
@@ -161,6 +179,9 @@ class _LL_Base:
                    ', value = {0:s}.'.format(str(value)))
         pv.put(value, callback=self._put_complete)
 
+    def _on_change_pvs_sp(self, pvname, value, **kwargs):
+        self.start_timer()
+
     def _on_change_pvs_rb(self, pvname, value, **kwargs):
         if value is None:
             _log.debug(self.channel+' pvs_rb_callback; {0:s} received None'
@@ -197,6 +218,7 @@ class _LL_Base:
         if fun is None:
             return False
         fun(value)
+        self.start_timer()
         return True
 
 
