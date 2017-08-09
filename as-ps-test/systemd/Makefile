@@ -12,7 +12,7 @@ install-services:
 	  cp -rf $$ser /etc/systemd/system/ ; \
 	done
 	systemctl daemon-reload
-	mkdir -p /fac/sirius-iocs/as-ma; chown -R fac.fac /fac/sirius-iocs/as-ma;
+	mkdir -p /fac/sirius-iocs/as-ps-test; chown -R fac.fac /fac/sirius-iocs/as-ps-test
 
 stop-services:
 	@echo " --- stop services ---"
