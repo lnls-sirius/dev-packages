@@ -1,10 +1,5 @@
-"""Generic IOC App."""
-import sys
-import pvs as _pvs
-import time as _time
-import siriuspy as _siriuspy
 """Main module of AS-MA IOC."""
-
+import sys as _sys
 import pvs as _pvs
 import time as _time
 import siriuspy as _siriuspy
@@ -21,10 +16,10 @@ import siriuspy as _siriuspy
 # 06 - be consistent in coding style (variable naming, spacings, prefixes,
 #      suffixes, etc)
 
+__version__ = _pvs._COMMIT_HASH
 
-__version__ = _pvs.__version__
 
-args = sys.argv
+args = _sys.argv
 
 
 class App:
@@ -47,7 +42,7 @@ class App:
         _siriuspy.util.print_ioc_banner(
             ioc_name='AS-MA',
             db=App.pvs_database,
-            description='AS-MA Magnet Power Supply Soft IOC',
+            description='AS-MA Soft IOC',
             version=__version__,
             prefix=_pvs._PREFIX)
 
@@ -109,7 +104,7 @@ class App:
             device.add_callback(self._mycallback)
 
     def _mycallback(self, pvname, value, **kwargs):
-        *parts, reason = pvname.split(_pvs._PREFIX)
+        *parts, reason = pvname.split(_pvs._PREFIX_SECTOR)
         self._driver.setParam(reason, value)
         if 'hilim' in kwargs or 'lolim' in kwargs:
             # print("changing upper limit", pvname, kwargs)

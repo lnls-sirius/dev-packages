@@ -1,0 +1,12 @@
+[Unit]
+Description=Soft IOC for simulation of all power supplies
+After=multi-user.target
+
+[Service]
+Group=fac
+User=fac
+Type=simple
+WorkingDirectory=/usr/local/bin/sirius-iocs/as-ps-test
+StandardOutput=syslog
+StandardError=syslog
+ExecStart=/usr/local/bin/sirius-iocs/as-ps-test/ioc-as-ps-test.bash

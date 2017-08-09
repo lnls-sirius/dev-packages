@@ -1,12 +1,12 @@
 #!/usr/local/bin/python-sirius -u
-"""AS MA IOC executable."""
+"""AS PS Test IOC executable."""
 
 import sys
-import as_ma as ioc_module
+import ps_test as ioc_module
 
 ioc_name = 'AS-MA'
-ioc_description = 'AS-MA Magnet Power Supply Soft IOC'
-ioc_database = ioc_module._main.App.pvs_database
+ioc_description = '       AS-PS Test Soft IOC'
+(_, ioc_database), = ioc_module._main.App.pvs_database.items()
 ioc_version = ioc_module._main._pvs._COMMIT_HASH
 ioc_prefix = ioc_module._main._pvs._PREFIX
 
