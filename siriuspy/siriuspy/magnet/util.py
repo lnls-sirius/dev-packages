@@ -1,14 +1,18 @@
-def get_magfunc_2_multipole_dict():
+"""Magnet utils."""
 
+
+def get_magfunc_2_multipole_dict():
+    """Return multipole dict given the magnetic function."""
     _magfuncs = {
-        'dipole' : {'type':'normal', 'harmonic':0},
-        'corrector-horizontal' : {'type':'normal', 'harmonic':0},
-        'corrector-vertical' : {'type':'skew', 'harmonic':0},
-        'quadrupole' : {'type':'normal', 'harmonic':1},
-        'quadrupole-skew' : {'type':'skew', 'harmonic':1},
-        'sextupole' : {'type':'normal', 'harmonic':2},
+        'dipole': {'type': 'normal', 'harmonic': 0},
+        'corrector-horizontal': {'type': 'normal', 'harmonic': 0},
+        'corrector-vertical': {'type': 'skew', 'harmonic': 0},
+        'quadrupole': {'type': 'normal', 'harmonic': 1},
+        'quadrupole-skew': {'type': 'skew', 'harmonic': 1},
+        'sextupole': {'type': 'normal', 'harmonic': 2},
     }
     return _magfuncs
+
 
 def get_multipole_name(harmonic, suffix='pole'):
 
@@ -43,6 +47,7 @@ def linear_extrapolation(x,x1,x2,y1,y2):
         return min(y1,y2,key=abs)
     else:
         return y1 + (y2-y1)*(x-x1)/(x2-x1)
+
 
 def sum_magnetic_multipoles(*multipoles_list):
     """Sum an iterable composed of multipoles dictionaries."""

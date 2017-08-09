@@ -52,6 +52,23 @@ class PulsedPowerSupplyTest(unittest.TestCase):
         self.ps.enablepulses_sel = 1
         mock_put.assert_called_with(self.ps._controller, attr, 1)
 
+    @mock.patch.object(epics.Device, "add_callback", autospec=True)
+    def test_callback(self, mock_dev):
+        """Test setting a callback."""
+        def foo():
+            print("x")
+        self.ps.add_callback(properties.TensionSP, foo)
+        mock_dev.assert_called_with(
+            self.ps._controller, properties.TensionSP, foo)
+
+    @mock.patch.object(epics.Device, "add_callback", autospec=True)
+    def test_callback_exception(self, mock_dev):
+        """Test exception is raised when a non callable is passed as cb."""
+        foo = 1
+        self.assertRaises(
+            AssertionError, self.ps.add_callback, properties.TensionSP, foo)
+        mock_dev.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()

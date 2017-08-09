@@ -64,6 +64,14 @@ def magnets_setpoint_limits(timeout=_timeout):
     return read_url(url, timeout=timeout)
 
 
+def pulsed_magnets_setpoint_limits(timeout=_timeout):
+    """Get the magnet setpoint limits."""
+    url = (_envars.server_url_consts +
+           _magnet_folder +
+           'pulsed-magnet-setpoint-limits.txt')
+    return read_url(url, timeout=timeout)
+
+
 def magnets_excitation_ps_read(timeout=_timeout):
     """Return the power supply excitation data."""
     url = (_envars.server_url_consts + _magnet_folder +

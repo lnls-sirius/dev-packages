@@ -20,19 +20,13 @@ class PulsedPowerSupply:
             whether to add a vaca prefix or not
             optional vaca prefix; username and hostname will be used otherwise
         """
-        self._vaca_prefix = ""
-        if use_vaca:
-            if vaca_prefix:
-                self._vaca_prefix = vaca_prefix
-            else:
-                self._vaca_prefix = getuser() + "-" + gethostname() + "-"
+        self._set_vaca_prefix(use_vaca, vaca_prefix)
 
         self._psname = psname
         self._prefix = self._vaca_prefix + self._psname
 
-        self._data = _PUData(self._psname)
-        self._controller = Device(prefix=self._prefix, delim=":",
-                                  attrs=properties.PulsedPowerSupplyAttrs)
+        self._init_data()
+        self._init_controller()
 
     def __repr__(self):
         """Overload repr func."""
@@ -62,7 +56,10 @@ class PulsedPowerSupply:
 
     def add_callback(self, attr, func):
         """Add func as a callback to given attribute."""
-        self._controller.add_callback(attr, func)
+        if callable(func):
+            self._controller.add_callback(attr, func)
+        else:
+            raise AssertionError("Callback must be a callable type.")
 
     @property
     def tension_sp(self):
@@ -71,7 +68,6 @@ class PulsedPowerSupply:
 
     @tension_sp.setter
     def tension_sp(self, value):
-        print("setting tension setpoint")
         self._controller.put(properties.TensionSP, value)
 
     @property
@@ -159,6 +155,21 @@ class PulsedPowerSupply:
 
         return db
 
+    def _set_vaca_prefix(self, use_vaca, vaca_prefix):
+        self._vaca_prefix = ""
+        if use_vaca:
+            if vaca_prefix:
+                self._vaca_prefix = vaca_prefix
+            else:
+                self._vaca_prefix = getuser() + "-" + gethostname() + "-"
+
+    def _init_data(self):
+        self._data = _PUData(self._psname)
+
+    def _init_controller(self):
+        self._controller = Device(prefix=self._prefix, delim=":",
+                                  attrs=properties.PulsedPowerSupplyAttrs)
+
 
 class PulsedPowerSupplySim:
     """Simulation of a pulsed power supply."""
@@ -198,8 +209,9 @@ class PulsedPowerSupplySim:
 
     @tension_sp.setter
     def tension_sp(self, value):
-        self._tension_sp = value
-        self._issue_callback(properties.TensionSP, value)
+        if not self._reset_issued:
+            self._tension_sp = value
+            self._issue_callback(properties.TensionSP, value)
         self._tension_rb = value
         self._issue_callback(properties.TensionRB, value)
         self._set_tensionref_mon(value)
@@ -222,8 +234,9 @@ class PulsedPowerSupplySim:
 
     @pwrstate_sel.setter
     def pwrstate_sel(self, value):
-        self._pwrstate_sel = value
-        self._issue_callback(properties.PwrStateSel, value)
+        if not self._reset_issued:
+            self._pwrstate_sel = value
+            self._issue_callback(properties.PwrStateSel, value)
         self._set_pwrstate_sts(value)
 
     @property
@@ -243,8 +256,9 @@ class PulsedPowerSupplySim:
 
     @enablepulses_sel.setter
     def enablepulses_sel(self, value):
-        self._enablepulses_sel = value
-        self._issue_callback(properties.EnablePulsesSel, value)
+        if not self._reset_issued:
+            self._enablepulses_sel = value
+            self._issue_callback(properties.EnablePulsesSel, value)
         self._set_enable_pulses_sts(value)
 
     @property
@@ -320,6 +334,12 @@ class PulsedPowerSupplySim:
                 self._reset_issued:
             self._pwrstate_sts = value
             self._issue_callback(properties.PwrStateSts, value)
+            if value == 1:
+                self._set_tensionref_mon(self.tension_sp)
+                self._set_tension_mon(self.tension_sp)
+            else:
+                self._set_tensionref_mon(0)
+                self._set_tension_mon(0)
 
     def _set_enable_pulses_sts(self, value):
         if self._ctrlmode_mon == 0 and \

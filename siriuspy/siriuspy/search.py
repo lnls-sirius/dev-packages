@@ -1,6 +1,5 @@
+"""Search module."""
 import copy as _copy
-import re as _re
-import types as _types
 
 from siriuspy import util as _util
 from siriuspy.namesys import Filter as _Filter
@@ -64,10 +63,8 @@ class PSSearch:
         pu_data, pu_param_dict = _util.read_text_data(text)
 
         units = [ps_param_dict['unit'], pu_param_dict['unit']]
-
         types = ps_param_dict['power_supply_type'] + \
             pu_param_dict['power_supply_type']
-
         data = ps_data + pu_data
 
         PSSearch._splims_unit = tuple(units)
@@ -207,39 +204,53 @@ class PSSearch:
 
 
 class MASearch:
-    ''' Searches magnets data in static files '''
+    """Searches magnets data in static files."""
 
-    _manames_list            = None
+    _manames_list = None
 
-    _maname_2_splims_dict   = None #magnets-stpoint-limits file
-    _maname_2_psnames_dict  = None #magnet-excitation-ps file
-    _maname_2_trim_dict     = None
-    _splims_labels          = None
-    _splims_unit            = None
+    _maname_2_splims_dict = None  # magnets-stpoint-limits file
+    _maname_2_psnames_dict = None  # magnet-excitation-ps file
+    _maname_2_trim_dict = None
+    _splims_labels = None
+    _splims_unit = None
 
     @staticmethod
     def reload_maname_2_splims_dict():
-        '''  Build dict with limits for each magnet '''
+        """Build dict with limits for each magnet."""
         if _web.server_online():
-            text = _web. magnets_setpoint_limits(timeout=PSSearch._connection_timeout)
-            data, param_dict = _util.read_text_data(text)
-            MASearch._splims_unit = tuple(param_dict['unit'])
-            MASearch._splims_labels = tuple(param_dict['power_supply_type'])
+            # MA data
+            text = _web.magnets_setpoint_limits(
+                timeout=PSSearch._connection_timeout)
+            ma_data, ma_param_dict = _util.read_text_data(text)
+            # PM data
+            text = _web.pulsed_magnets_setpoint_limits(
+                timeout=PSSearch._connection_timeout)
+            pm_data, pm_param_dict = _util.read_text_data(text)
+
+            units = [ma_param_dict['unit'], pm_param_dict['unit']]
+            types = ma_param_dict['power_supply_type']
+            data = ma_data + pm_data
+
+            MASearch._splims_unit = tuple(units)
+            MASearch._splims_labels = tuple(types)
             MASearch._maname_2_splims_dict = {}
+
             for datum in data:
                 maname, *limits = datum
-                db = {MASearch._splims_labels[i]:float(limits[i]) for i in range(len(MASearch._splims_labels))}
+                db = {MASearch._splims_labels[i]: float(limits[i])
+                      for i in range(len(MASearch._splims_labels))}
                 MASearch._maname_2_splims_dict[maname] = db
         else:
             raise Exception('could not read magnet splims from web server!')
 
     @staticmethod
     def reload_maname_2_psnames_dict():
-        ''' Build a dict of tuples with power supplies of each magnet '''
+        """Build a dict of tuples with power supplies of each magnet."""
         if _web.server_online():
-            text = _web.magnets_excitation_ps_read(timeout=PSSearch._connection_timeout)
+            text = _web.magnets_excitation_ps_read(
+                timeout=PSSearch._connection_timeout)
             data, param_dict = _util.read_text_data(text)
-            MASearch._maname_2_psnames_dict  = {}
+            MASearch._maname_2_psnames_dict = {}
             MASearch._maname_2_trim_dict = {}
             MASearch._manames_list = []
             for datum in data:
@@ -248,20 +259,25 @@ class MASearch:
                 MASearch._maname_2_psnames_dict[magnet] = tuple(ps_names)
                 if 'Fam' not in magnet:
                     famname = _SiriusPVName(magnet)
-                    famname = famname.replace(famname.subsection, 'Fam').replace('MA-','PS-')
+                    famname = famname.replace(
+                        famname.subsection, 'Fam').replace('MA-', 'PS-')
                     if '-Fam:PS-Q' in famname and famname in ps_names:
                         ps_names.remove(famname)
-                        maname = famname.replace('PS-','MA-')
+                        maname = famname.replace('PS-', 'MA-')
                         if maname not in MASearch._maname_2_trim_dict:
-                            MASearch._maname_2_trim_dict[maname] = tuple(ps_names)
+                            MASearch._maname_2_trim_dict[maname] = \
+                                tuple(ps_names)
                         else:
-                            MASearch._maname_2_trim_dict[maname] += tuple(ps_names)
+                            MASearch._maname_2_trim_dict[maname] += \
+                                tuple(ps_names)
         else:
-            raise Exception('could not read magnet-excitation-ps from web server!')
+            raise Exception(
+                'could not read magnet-excitation-ps from web server!')
 
     @staticmethod
     def get_splims_unit():
-        if MASearch._maname_2_splims_dict is None: MASearch.reload_maname_2_splims_dict()
+        if MASearch._maname_2_splims_dict is None:
+            MASearch.reload_maname_2_splims_dict()
         return MASearch._splims_unit
 
     @staticmethod
