@@ -6,7 +6,7 @@ get_pvs_database
     Function that builds the IOC database
 """
 from siriuspy.search import MASearch as _MASearch
-from siriuspy.magnet.model import MagnetFactory as _MagnetFactory
+from siriuspy.factory import MagnetFactory as _MagnetFactory
 from siriuspy.envars import vaca_prefix as _vaca_prefix
 from siriuspy import util as _util
 
@@ -108,7 +108,7 @@ _ioc_dict = {
                               'type': 'Glob:MA-Mpole',
                               'prefix_sector': 'SI-',
                               'section': 'SI',
-                              'sub_section': '.*',
+                              'sub_section': 'Fam',
                               'discipline': 'MA',
                               'device': '(Q|S).*'},
     'si-ma-quadrupole-trim': {'name': 'si-ma-quadrupole-trim',
