@@ -41,7 +41,7 @@ def get_ps_propty_database(pstype):
     """Returns property database of a power supply type device."""
     propty_db = create_commun_propty_database()
     units = _PSSearch.get_splims_unit()
-    for propty,db in propty_db.items():
+    for propty, db in propty_db.items():
         # set setpoint limits in database
         if propty in ('Current-SP',):
             label='lolo';  db[label] = _PSSearch.get_splim(pstype,label)
@@ -51,10 +51,12 @@ def get_ps_propty_database(pstype):
             label='high';  db[label] = _PSSearch.get_splim(pstype,label)
             label='hihi';  db[label] = _PSSearch.get_splim(pstype,label)
         # define unit of current
-        if propty in ('Current-SP','Current-RB','CurrentRef-Mon','Current-Mon'):
-            db['unit'] = units[0]
+        if propty in \
+                ('Current-SP', 'Current-RB', 'CurrentRef-Mon', 'Current-Mon'):
+            db['unit'] = units
 
     return propty_db
+
 
 def get_ma_propty_database(maname):
     propty_db = create_commun_propty_database()
@@ -62,25 +64,29 @@ def get_ma_propty_database(maname):
     magfunc_dict = _MASearch.conv_maname_2_magfunc(maname)
     db = {}
     for psname, magfunc in magfunc_dict.items():
-    #psnames = _MASearch.conv_maname_2_psnames(maname)
+        # psnames = _MASearch.conv_maname_2_psnames(maname)
         db[psname] = _copy.deepcopy(propty_db)
         # for propty,pdb in propty_db.items():
         #     # set setpoint limits in database
-        #     # if propty in ('Current-SP',):
-        #     #     label='lolo';  pdb[label] = _MASearch.get_splim(maname,label)
-        #     #     label='low';   pdb[label] = _MASearch.get_splim(maname,label)
-        #     #     label='lolim'; pdb[label] = _MASearch.get_splim(maname,label)
-        #     #     label='hilim'; pdb[label] = _MASearch.get_splim(maname,label)
-        #     #     label='high';  pdb[label] = _MASearch.get_splim(maname,label)
-        #     #     label='hihi';  pdb[label] = _MASearch.get_splim(maname,label)
+        #     if propty in ('Current-SP',):
+        #         label='lolo';  pdb[label] = _MASearch.get_splim(maname,label)
+        #         label='low';   pdb[label] = _MASearch.get_splim(maname,label)
+        #         label='lolim'; pdb[label] = _MASearch.get_splim(maname,label)
+        #         label='hilim'; pdb[label] = _MASearch.get_splim(maname,label)
+        #         label='high';  pdb[label] = _MASearch.get_splim(maname,label)
+        #         label='hihi';  pdb[label] = _MASearch.get_splim(maname,label)
         #     # define unit of current
-        #     if propty in ('Current-SP','Current-RB','CurrentRef-Mon','Current-Mon'):
+        #     if propty in \
+        #           ('Current-SP', 'Current-RB', 'CurrentRef-Mon',
+        #            'Current-Mon'):
         #         #db[psname]['unit'] = units[0]
         #         pdb['unit'] = units[0]
         db[psname]["Current-SP"]['lolo'] = _MASearch.get_splim(maname, 'lolo')
         db[psname]["Current-SP"]['low'] = _MASearch.get_splim(maname, 'low')
-        db[psname]["Current-SP"]['lolim'] = _MASearch.get_splim(maname, 'lolim')
-        db[psname]["Current-SP"]['hilim'] = _MASearch.get_splim(maname, 'hilim')
+        db[psname]["Current-SP"]['lolim'] = \
+            _MASearch.get_splim(maname, 'lolim')
+        db[psname]["Current-SP"]['hilim'] = \
+            _MASearch.get_splim(maname, 'hilim')
         db[psname]["Current-SP"]['high'] = _MASearch.get_splim(maname, 'high')
         db[psname]["Current-SP"]['hihi'] = _MASearch.get_splim(maname, 'hihi')
         db[psname]["Current-SP"]['unit'] = units[0]
@@ -92,10 +98,10 @@ def get_ma_propty_database(maname):
         db[psname]["CurrentRef-Mon"]['prec'] = 6
         db[psname]["Current-Mon"]['prec'] = 6
         if magfunc in ('quadrupole', 'quadrupole-skew'):
-            db[psname]['KL-SP']     = _copy.deepcopy(db[psname]['Current-SP']); db[psname]['KL-SP']['unit'] = '1/m'
-            db[psname]['KL-RB']     = _copy.deepcopy(db[psname]['Current-RB']); db[psname]['KL-RB']['unit'] = '1/m'
+            db[psname]['KL-SP'] = _copy.deepcopy(db[psname]['Current-SP']); db[psname]['KL-SP']['unit'] = '1/m'
+            db[psname]['KL-RB'] = _copy.deepcopy(db[psname]['Current-RB']); db[psname]['KL-RB']['unit'] = '1/m'
             db[psname]['KLRef-Mon'] = _copy.deepcopy(db[psname]['CurrentRef-Mon']); db[psname]['KLRef-Mon']['unit'] = '1/m'
-            db[psname]['KL-Mon']    = _copy.deepcopy(db[psname]['Current-Mon']); db[psname]['KL-Mon']['unit'] = '1/m'
+            db[psname]['KL-Mon'] = _copy.deepcopy(db[psname]['Current-Mon']); db[psname]['KL-Mon']['unit'] = '1/m'
         elif magfunc == 'sextupole':
             db[psname]['SL-SP']     = _copy.deepcopy(db[psname]['Current-SP']); db[psname]['SL-SP']['unit'] = '1/m'
             db[psname]['SL-RB']     = _copy.deepcopy(db[psname]['Current-RB']); db[psname]['SL-RB']['unit'] = '1/m'

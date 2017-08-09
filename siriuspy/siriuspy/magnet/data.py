@@ -1,4 +1,4 @@
-
+"""MA data class definition."""
 import math as _math
 from abc import abstractmethod as _abstractmethod
 from abc import ABCMeta as _ABCMeta
@@ -6,13 +6,15 @@ import siriuspy.util as _util
 from siriuspy.search import MASearch as _MASearch
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.pwrsupply.data import PSData as _PSData
-from siriuspy.csdevice.pwrsupply import get_ma_propty_database as _get_ma_propty_database
+from siriuspy.csdevice.pwrsupply \
+    import get_ma_propty_database as _get_ma_propty_database
+
 
 class MAData:
 
     def __init__(self, maname):
         self._maname = _SiriusPVName(maname)
-        self._splims_unit = _MASearch.get_splims_unit()
+        self._splims_unit = _MASearch.get_splims_unit()[0]
         psnames = _MASearch.conv_maname_2_psnames(self._maname)
         self._propty_databases = _get_ma_propty_database(self._maname)
         self._psdata = {}

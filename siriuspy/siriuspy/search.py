@@ -1,6 +1,5 @@
+"""Search module."""
 import copy as _copy
-import re as _re
-import types as _types
 
 from siriuspy import util as _util
 from siriuspy.namesys import Filter as _Filter
@@ -10,22 +9,23 @@ from siriuspy.magnet.excdata import ExcitationData as _ExcitationData
 
 class PSSearch:
 
-    _connection_timeout   = None
-    _pstype_dict          = None
-    _pstype_2_names_dict  = None
+    _connection_timeout = None
+    _pstype_dict = None
+    _pstype_2_names_dict = None
     _pstype_2_splims_dict = None
 
     _pstype_2_excdat_dict = dict()
 
-    _splims_labels        = None
-    _splims_unit          = None
-    _psnames_list         = None
+    _splims_labels = None
+    _splims_unit = None
+    _psnames_list = None
 
     @staticmethod
     def reload_pstype_dict():
         """Reload power supply type dictionary from web server."""
         if _web.server_online():
-            text = _web.power_supplies_pstypes_names_read(timeout=PSSearch._connection_timeout)
+            text = _web.power_supplies_pstypes_names_read(
+                timeout=PSSearch._connection_timeout)
             data, params_dict = _util.read_text_data(text)
             PSSearch._pstype_dict = {}
             for datum in data:
@@ -37,12 +37,14 @@ class PSSearch:
     @staticmethod
     def reload_pstype_2_names_dict():
         """Reload power supply type to power supply names dictionary from web server."""
-        if PSSearch._pstype_dict is None: PSSearch.reload_pstype_dict()
+        if PSSearch._pstype_dict is None:
+            PSSearch.reload_pstype_dict()
         pstypes = sorted(set(PSSearch._pstype_dict.keys()))
         PSSearch._pstype_2_names_dict = {}
         PSSearch._psnames_list = []
         for pstype in pstypes:
-            text = _web.power_supplies_pstype_data_read(pstype + '.txt', timeout=PSSearch._connection_timeout)
+            text = _web.power_supplies_pstype_data_read(
+                pstype + '.txt', timeout=PSSearch._connection_timeout)
             data, param_dict = _util.read_text_data(text)
             psnames = [_SiriusPVName(datum[0]) for datum in data]
             PSSearch._pstype_2_names_dict[pstype] = psnames
@@ -51,76 +53,105 @@ class PSSearch:
 
     @staticmethod
     def reload_pstype_2_splims_dict():
-        text = _web.power_supplies_pstype_setpoint_limits(timeout=PSSearch._connection_timeout)
-        data, param_dict = _util.read_text_data(text)
-        PSSearch._splims_unit = tuple(param_dict['unit'])
-        PSSearch._splims_labels = tuple(param_dict['power_supply_type'])
+        # ps data
+        text = _web.power_supplies_pstype_setpoint_limits(
+            timeout=PSSearch._connection_timeout)
+        ps_data, ps_param_dict = _util.read_text_data(text)
+        # pu data
+        text = _web.pulsed_power_supplies_pstype_setpoint_limits(
+            timeout=PSSearch._connection_timeout)
+        pu_data, pu_param_dict = _util.read_text_data(text)
+
+        units = [ps_param_dict['unit'], pu_param_dict['unit']]
+        types = ps_param_dict['power_supply_type'] + \
+            pu_param_dict['power_supply_type']
+        data = ps_data + pu_data
+
+        PSSearch._splims_unit = tuple(units)
+        PSSearch._splims_labels = tuple(types)
         PSSearch._pstype_2_splims_dict = {}
         for datum in data:
             pstype, *lims = datum
-            PSSearch._pstype_2_splims_dict[pstype] = {PSSearch._splims_labels[i]:float(lims[i]) for i in range(len(lims))}
+            PSSearch._pstype_2_splims_dict[pstype] = \
+                {PSSearch._splims_labels[i]:
+                    float(lims[i]) for i in range(len(lims))}
 
     @staticmethod
     def reload_pstype_2_excdat_dict(pstype):
-        """ Load power supply excitatiom data """
+        """Load power supply excitatiom data."""
         if _web.server_online():
-            PSSearch._pstype_2_excdat_dict[pstype] = _ExcitationData(filename_web=pstype + '.txt')
+            PSSearch._pstype_2_excdat_dict[pstype] = \
+                _ExcitationData(filename_web=pstype + '.txt')
         else:
-            raise Exception('could not read "' + str(pstype) + '" from web server!')
+            raise Exception(
+                'could not read "' + str(pstype) + '" from web server!')
 
     @staticmethod
     def get_pstype_dict():
         """Return dictionary with key,value pairs of power supply types and corresponding (polarities,mag_function)."""
-        if PSSearch._pstype_dict is None: PSSearch.reload_pstype_dict()
+        if PSSearch._pstype_dict is None:
+            PSSearch.reload_pstype_dict()
         return _copy.deepcopy(PSSearch._pstype_dict)
 
     @staticmethod
     def get_pstype_names():
         """Return sorted list of power supply types."""
-        if PSSearch._pstype_dict is None: PSSearch.reload_pstype_dict()
+        if PSSearch._pstype_dict is None:
+            PSSearch.reload_pstype_dict()
         return sorted(set(PSSearch._pstype_dict.keys()))
 
     @staticmethod
     def get_polarities():
         """Return sorted list of power supply polarities."""
-        if PSSearch._pstype_dict is None: PSSearch.reload_pstype_dict()
+        if PSSearch._pstype_dict is None:
+            PSSearch.reload_pstype_dict()
         p = [datum[0] for datum in PSSearch._pstype_dict.values()]
         return sorted(set(p))
 
     @staticmethod
     def get_pstype_2_names_dict():
         """Return dictionary of power supply type and corresponding power supply names."""
-        if PSSearch._pstype_2_names_dict is None: PSSearch.reload_pstype_2_names_dict()
+        if PSSearch._pstype_2_names_dict is None:
+            PSSearch.reload_pstype_2_names_dict()
         return _copy.deepcopy(PSSearch._pstype_2_names_dict)
 
     @staticmethod
     def conv_psname_2_pstype(name):
         """Return the power supply type of a given power supply name."""
-        if PSSearch._pstype_2_names_dict is None: PSSearch.reload_pstype_2_names_dict()
-        for pstype,names in PSSearch._pstype_2_names_dict.items():
-            if name in names: return pstype
+        if PSSearch._pstype_2_names_dict is None:
+            PSSearch.reload_pstype_2_names_dict()
+        for pstype, names in PSSearch._pstype_2_names_dict.items():
+            if name in names:
+                return pstype
+        print(name)
         return None
 
     @staticmethod
     def conv_pstype_2_polarity(pstype):
         """Return polarity of a given power supply type."""
-        if PSSearch._pstype_dict is None: PSSearch.reload_pstype_dict()
-        for key,value in PSSearch._pstype_dict.items():
-            if key == pstype: return value[0]
+        if PSSearch._pstype_dict is None:
+            PSSearch.reload_pstype_dict()
+        for key, value in PSSearch._pstype_dict.items():
+            if key == pstype:
+                return value[0]
         return None
 
     @staticmethod
     def conv_pstype_2_magfunc(pstype):
         """Return magnetic function of a given power supply type."""
-        if PSSearch._pstype_dict is None: PSSearch.reload_pstype_dict()
-        for key,value in PSSearch._pstype_dict.items():
-            if key == pstype: return value[1]
+        if PSSearch._pstype_dict is None:
+            PSSearch.reload_pstype_dict()
+        for key, value in PSSearch._pstype_dict.items():
+            if key == pstype:
+                return value[1]
         return None
 
     @staticmethod
     def conv_pstype_2_splims(pstype):
-        if pstype is None: return None
-        if PSSearch._pstype_2_splims_dict is None: PSSearch.reload_pstype_2_splims_dict()
+        if pstype is None:
+            return None
+        if PSSearch._pstype_2_splims_dict is None:
+            PSSearch.reload_pstype_2_splims_dict()
         return _copy.deepcopy(PSSearch._pstype_2_splims_dict[pstype])
 
     @staticmethod
@@ -134,7 +165,8 @@ class PSSearch:
     @staticmethod
     def get_splim(pstype, label):
         """Return setpoint limit corresponding to given label (either epics' or pcaspy's)."""
-        if PSSearch._pstype_2_splims_dict is None: PSSearch.reload_pstype_2_splims_dict()
+        if PSSearch._pstype_2_splims_dict is None:
+            PSSearch.reload_pstype_2_splims_dict()
         if label in PSSearch._splims_labels:
             return PSSearch._pstype_2_splims_dict[pstype][label]
         else:
@@ -147,60 +179,78 @@ class PSSearch:
     @staticmethod
     def get_psnames(filters=None):
         """Return a sorted and filtered list of all power supply names."""
-        if PSSearch._pstype_2_names_dict is None: PSSearch.reload_pstype_2_names_dict()
+        if PSSearch._pstype_2_names_dict is None:
+            PSSearch.reload_pstype_2_names_dict()
         return _Filter.process_filters(PSSearch._psnames_list, filters=filters)
 
     @staticmethod
     def get_pstype_2_splims_dict():
         """Return a dictionary of power supply type and corresponding setpoint limits."""
-        if PSSearch._pstype_2_splims_dict is None: PSSearch.reload_pstype_2_splims_dict()
+        if PSSearch._pstype_2_splims_dict is None:
+            PSSearch.reload_pstype_2_splims_dict()
         return _copy.deepcopy(PSSearch._pstype_2_splims_dict)
 
     @staticmethod
     def get_splims_unit():
-        if PSSearch._pstype_2_splims_dict is None: PSSearch.reload_pstype_2_splims_dict()
+        if PSSearch._pstype_2_splims_dict is None:
+            PSSearch.reload_pstype_2_splims_dict()
         return PSSearch._splims_unit
 
     @staticmethod
     def get_splims_labels():
-        if PSSearch._pstype_2_splims_dict is None: PSSearch.reload_pstype_2_splims_dict()
+        if PSSearch._pstype_2_splims_dict is None:
+            PSSearch.reload_pstype_2_splims_dict()
         return PSSearch._splims_labels
 
 
 class MASearch:
-    ''' Searches magnets data in static files '''
+    """Searches magnets data in static files."""
 
-    _manames_list            = None
+    _manames_list = None
 
-    _maname_2_splims_dict   = None #magnets-stpoint-limits file
-    _maname_2_psnames_dict  = None #magnet-excitation-ps file
-    _maname_2_trim_dict     = None
-    _splims_labels          = None
-    _splims_unit            = None
+    _maname_2_splims_dict = None  # magnets-stpoint-limits file
+    _maname_2_psnames_dict = None  # magnet-excitation-ps file
+    _maname_2_trim_dict = None
+    _splims_labels = None
+    _splims_unit = None
 
     @staticmethod
     def reload_maname_2_splims_dict():
-        '''  Build dict with limits for each magnet '''
+        """Build dict with limits for each magnet."""
         if _web.server_online():
-            text = _web. magnets_setpoint_limits(timeout=PSSearch._connection_timeout)
-            data, param_dict = _util.read_text_data(text)
-            MASearch._splims_unit = tuple(param_dict['unit'])
-            MASearch._splims_labels = tuple(param_dict['power_supply_type'])
+            # MA data
+            text = _web.magnets_setpoint_limits(
+                timeout=PSSearch._connection_timeout)
+            ma_data, ma_param_dict = _util.read_text_data(text)
+            # PM data
+            text = _web.pulsed_magnets_setpoint_limits(
+                timeout=PSSearch._connection_timeout)
+            pm_data, pm_param_dict = _util.read_text_data(text)
+
+            units = [ma_param_dict['unit'], pm_param_dict['unit']]
+            types = ma_param_dict['power_supply_type']
+            data = ma_data + pm_data
+
+            MASearch._splims_unit = tuple(units)
+            MASearch._splims_labels = tuple(types)
             MASearch._maname_2_splims_dict = {}
+
             for datum in data:
                 maname, *limits = datum
-                db = {MASearch._splims_labels[i]:float(limits[i]) for i in range(len(MASearch._splims_labels))}
+                db = {MASearch._splims_labels[i]: float(limits[i])
+                      for i in range(len(MASearch._splims_labels))}
                 MASearch._maname_2_splims_dict[maname] = db
         else:
             raise Exception('could not read magnet splims from web server!')
 
     @staticmethod
     def reload_maname_2_psnames_dict():
-        ''' Build a dict of tuples with power supplies of each magnet '''
+        """Build a dict of tuples with power supplies of each magnet."""
         if _web.server_online():
-            text = _web.magnets_excitation_ps_read(timeout=PSSearch._connection_timeout)
+            text = _web.magnets_excitation_ps_read(
+                timeout=PSSearch._connection_timeout)
             data, param_dict = _util.read_text_data(text)
-            MASearch._maname_2_psnames_dict  = {}
+            MASearch._maname_2_psnames_dict = {}
             MASearch._maname_2_trim_dict = {}
             MASearch._manames_list = []
             for datum in data:
@@ -209,20 +259,25 @@ class MASearch:
                 MASearch._maname_2_psnames_dict[magnet] = tuple(ps_names)
                 if 'Fam' not in magnet:
                     famname = _SiriusPVName(magnet)
-                    famname = famname.replace(famname.subsection, 'Fam').replace('MA-','PS-')
+                    famname = famname.replace(
+                        famname.subsection, 'Fam').replace('MA-', 'PS-')
                     if '-Fam:PS-Q' in famname and famname in ps_names:
                         ps_names.remove(famname)
-                        maname = famname.replace('PS-','MA-')
+                        maname = famname.replace('PS-', 'MA-')
                         if maname not in MASearch._maname_2_trim_dict:
-                            MASearch._maname_2_trim_dict[maname] = tuple(ps_names)
+                            MASearch._maname_2_trim_dict[maname] = \
+                                tuple(ps_names)
                         else:
-                            MASearch._maname_2_trim_dict[maname] += tuple(ps_names)
+                            MASearch._maname_2_trim_dict[maname] += \
+                                tuple(ps_names)
         else:
-            raise Exception('could not read magnet-excitation-ps from web server!')
+            raise Exception(
+                'could not read magnet-excitation-ps from web server!')
 
     @staticmethod
     def get_splims_unit():
-        if MASearch._maname_2_splims_dict is None: MASearch.reload_maname_2_splims_dict()
+        if MASearch._maname_2_splims_dict is None:
+            MASearch.reload_maname_2_splims_dict()
         return MASearch._splims_unit
 
     @staticmethod

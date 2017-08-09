@@ -33,7 +33,7 @@ class Events:
     LL_RGX = _re.compile('Event([0-9A-E]{2})([a-z-\.]*)', _re.IGNORECASE)
     HL_RGX = _re.compile('('+'|'.join(list(HL2LL_MAP.keys())) +
                          ')([a-z-\.]*)', _re.IGNORECASE)
-    HL_PREF = 'AS-Glob:timing_devices_mapping:'
+    HL_PREF = 'AS-Glob:TI-EVG:'
 
     LL_CODES = list(range(50)) + list(range(80, 120)) + list(range(160, 256))
     LL_EVENTS = []
@@ -51,7 +51,7 @@ class Clocks:
 
     LL_TMP = 'Clock{0:d}'
     HL_TMP = 'Clock{0:d}'
-    HL_PREF = 'AS-Glob:TI-Clock:'
+    HL_PREF = 'AS-Glob:TI-EVG:'
 
     HL2LL_MAP = dict()
     for i in range(8):
