@@ -1,5 +1,5 @@
 [Unit]
-Description=Soft IOC for BO dipole magnet family
+Description=Soft IOC for BO quadrupole and magnet families.
 After=multi-user.target
 
 [Service]

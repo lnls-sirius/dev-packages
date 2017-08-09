@@ -1,11 +1,11 @@
-"""AS-MA IOC."""
+"""AS-MA IOC Module."""
 
 import sys as _sys
 import pcaspy as _pcaspy
 import pcaspy.tools as _pcaspy_tools
-import pvs as _pvs
+import as_ma.pvs as _pvs
 import signal as _signal
-import main as _main
+import as_ma.main as _main
 from siriuspy import util as _util
 
 
@@ -40,8 +40,11 @@ class _PCASDriver(_pcaspy.Driver):
         self.app.write(reason, value)
 
 
-def run():
+def run(ioc_name):
     """Main module function."""
+    _pvs.select_ioc(ioc_name)
+    _main.App.init_class()
+
     # define abort function
     _signal.signal(_signal.SIGINT, _stop_now)
     _signal.signal(_signal.SIGTERM, _stop_now)
