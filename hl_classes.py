@@ -19,9 +19,16 @@ twds_evg = Connections.get_connections_twds_evg()
 
 class _HL_Base:
 
-    def get_database(self):
+    def get_database(self, db):
         """Get the database."""
-        return dict()   # dictionary must have key fun_set_pv
+        db2 = dict()
+        for prop in self._interface_props:
+            rb_name = self._HLPROP_2_PVRB[prop]
+            name = self.prefix + rb_name
+            db2[name] = db[name]
+            name = self.prefix + self._get_setpoint_name(rb_name)
+            db2[name] = db[name]
+        return db2      # dictionary must have key fun_set_pv
 
     def __init__(self, prefix, callback, channels):
         """Appropriately initialize the instance.
@@ -137,12 +144,12 @@ class HL_Event(_HL_Base):
             'type': 'int', 'value': self._hl_props['ext_trig'],
             'unit': 'When in External Mode generates Event.',
             'fun_set_pv': lambda x: self.set_propty('ext_trig', x)}
-        return db
+        return super().get_database(db)
 
     def __init__(self, prefix, callback, code):
         """Initialize object."""
         super().__init__(prefix, callback, code)
-        self._interface_props = {'delay', 'mode', 'delay_type', 'ext_trig'}
+        self._interface_props = {'delay', 'mode', 'ext_trig'}
         self._hl_props = {'delay': 0, 'mode': 1,
                           'delay_type': 1, 'ext_trig': 0}
 
@@ -182,7 +189,7 @@ class HL_Clock(_HL_Base):
         db[pre + 'State-Sts'] = {
             'type': 'enum', 'enums': Clocks.STATES,
             'value': self._hl_props['state']}
-        return db
+        return super().get_database(db)
 
     def __init__(self, prefix, callback, number):
         """Initialize the instance."""
@@ -250,14 +257,7 @@ class HL_Trigger(_HL_Base):
         dic_['fun_set_pv'] = lambda x: self.set_propty('polarity', x)
         db[pre + 'Polrty-Sel'] = dic_
 
-        db2 = dict()
-        for prop in self._interface_props:
-            rb_name = self._HLPROP_2_PVRB[prop]
-            name = pre + rb_name
-            db2[name] = db[name]
-            name = pre + self._get_setpoint_name(rb_name)
-            db2[name] = db[name]
-        return db2
+        return super().get_database(db)
 
     def __init__(self, prefix, callback, channels, hl_props, ioc_params):
         """Appropriately initialize the instance.
