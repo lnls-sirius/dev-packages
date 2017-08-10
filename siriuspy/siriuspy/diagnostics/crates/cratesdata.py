@@ -17,15 +17,16 @@ class _CratesData:
     def __init__(self, timeout=_timeout):
         self._mapping = None
         self._inv_mapping = None
-        if _web.server_online():
-            if _LOCAL:
-                repo = '/home/fac_files/lnls-sirius/control-system-constants/'
-                with open(repo+'diagnostics/crates-connection.txt', 'r') as f:
-                    text = f.read()
-            else:
+        text = ''
+        if _LOCAL:
+            repo = '/home/fac_files/lnls-sirius/control-system-constants/'
+            with open(repo+'diagnostics/crates-connection.txt', 'r') as f:
+                text = f.read()
+        else:
+            if _web.server_online():
                 text = _web.crate_to_bpm_mapping(timeout=_timeout)
-            self._mapping = self._get_mapping(text)
-            self._build_inv_mapping()
+        self._mapping = self._get_mapping(text)
+        self._build_inv_mapping()
 
     @staticmethod
     def _get_mapping(text):

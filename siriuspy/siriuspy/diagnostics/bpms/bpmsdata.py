@@ -18,16 +18,17 @@ class _BPMsData:
     def __init__(self, timeout=_timeout):
         self._mapping = None
         self._inv_mapping = None
-        if _web.server_online():
-            if _LOCAL:
-                repo = '/home/fac_files/lnls-sirius/control-system-constants/'
-                with open(repo + 'diagnostics/bpms-data.txt', 'r') as f:
-                    text = f.read()
-            else:
+        text = ''
+        if _LOCAL:
+            repo = '/home/fac_files/lnls-sirius/control-system-constants/'
+            with open(repo + 'diagnostics/bpms-data.txt', 'r') as f:
+                text = f.read()
+        else:
+            if _web.server_online():
                 text = _web.bpms_data(timeout=_timeout)
-            self._mapping = self._get_mapping(text)
-            self._build_crates_to_bpm_mapping()
-            self._build_data()
+        self._mapping = self._get_mapping(text)
+        self._build_crates_to_bpm_mapping()
+        self._build_data()
 
     @staticmethod
     def _get_mapping(text):
