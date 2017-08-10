@@ -1,5 +1,5 @@
-SI-Glob:AP-Orbit:Log-Mon
-SI-Glob:AP-Orbit:NumBPM-Cte
-SI-Glob:AP-Orbit:OrbitX-Mon
-SI-Glob:AP-Orbit:OrbitY-Mon
-SI-Glob:AP-Orbit:PosS-Cte
+fac-lnls452-linux-SI-Glob:AP-Orbit:Log-Mon             
+fac-lnls452-linux-SI-Glob:AP-Orbit:NumBPM-Cte          
+fac-lnls452-linux-SI-Glob:AP-Orbit:OrbitX-Mon          
+fac-lnls452-linux-SI-Glob:AP-Orbit:OrbitY-Mon          
+fac-lnls452-linux-SI-Glob:AP-Orbit:PosS-Cte            

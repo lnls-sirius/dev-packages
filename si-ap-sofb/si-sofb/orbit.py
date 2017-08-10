@@ -4,6 +4,7 @@ import time as _time
 import os as _os
 import numpy as _np
 import epics as _epics
+from siriuspy.envars import vaca_prefix as LL_PREF
 
 with open('VERSION') as f:
     __version__ = f.read()
@@ -21,7 +22,7 @@ MTX_SZ = (2*NR_BPMS) * NR_CORRS
 DANG = 2E-1
 DFREQ = 200
 SECTION = 'SI'
-LL_PREF = 'VAF-'
+LL_PREF += SECTION + '-Glob:AP-Orbit:'
 
 
 class Orbit:
@@ -100,10 +101,10 @@ class Orbit:
     def connect(self):
         """Connect to external PVs."""
         self._load_basic_orbits()
-        self.pv = {'x': _epics.PV(SECTION + '-Glob:AP-Orbit:OrbitX-Mon',
+        self.pv = {'x': _epics.PV(LL_PREF + 'OrbitX-Mon',
                                   callback=self._update_orbs('x'),
                                   connection_callback=self._on_connection),
-                   'y': _epics.PV(SECTION + '-Glob:AP-Orbit:OrbitY-Mon',
+                   'y': _epics.PV(LL_PREF + 'OrbitY-Mon',
                                   callback=self._update_orbs('y'),
                                   connection_callback=self._on_connection)
                    }
