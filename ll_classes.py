@@ -31,8 +31,9 @@ class _Timer(_Thread):
         self.stopped = _Event()
 
     def run(self):
-        while (not self.stopped.wait(self.interval)) and \
-                    self.niters >= self.cur_iter:
+        self.function(*self.args)
+        while ((not self.stopped.wait(self.interval)) and
+               self.niters > self.cur_iter):
             self.cur_iter += 1
             self.function(*self.args)
 
@@ -110,7 +111,7 @@ class _LL_Base:
         if self.timer.isAlive():
             self.timer.reset()
         else:
-            self.timer = _Timer(_INTERVAL, self._force_equal)
+            self.timer = _Timer(_INTERVAL, self._force_equal, niter=10)
             self.timer.start()
 
     def _get_setpoint_name(self, pvname):
@@ -162,6 +163,13 @@ class _LL_Base:
             if my_val is None:
                 raise Exception(self.prefix + ' ll_prop = ' +
                                 ll_prop + ' not in dict.')
+            # If pv is a command, it must be sent only once
+            if pv.pvname.endswith('-Cmd'):
+                if self._ll_props[ll_prop]:
+                    self._put_on_pv(pv, self._ll_props[ll_prop])
+                    self._ll_props[ll_prop] = 0
+                return
+
             if my_val == v:
                 continue
             self._put_on_pv(pv, my_val)
@@ -180,6 +188,7 @@ class _LL_Base:
         pv.put(value, callback=self._put_complete)
 
     def _on_change_pvs_sp(self, pvname, value, **kwargs):
+        _log.debug('PV: '+pvname+'.  Calling Timer.')
         self.start_timer()
 
     def _on_change_pvs_rb(self, pvname, value, **kwargs):

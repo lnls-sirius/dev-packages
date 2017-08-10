@@ -143,7 +143,7 @@ class HL_Event(_HL_Base):
         db[pre + 'ExtTrig-Cmd'] = {
             'type': 'int', 'value': self._hl_props['ext_trig'],
             'unit': 'When in External Mode generates Event.',
-            'fun_set_pv': lambda x: self.set_propty('ext_trig', x)}
+            'fun_set_pv': self.set_ext_trig}
         return super().get_database(db)
 
     def __init__(self, prefix, callback, code):
@@ -166,6 +166,10 @@ class HL_Event(_HL_Base):
 
     def _get_LL_OBJ(self, **kwargs):
         return LL_Event(**kwargs)
+
+    def set_ext_trig(self, value):
+        self._hl_props['ext_trig'] = 0
+        return self.set_propty('ext_trig', value)
 
 
 class HL_Clock(_HL_Base):
