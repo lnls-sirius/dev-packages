@@ -54,10 +54,17 @@ class PulsedPowerSupply:
                          properties.TensionRefMon, self.tensionref_mon,
                          properties.TensionMon, self.tension_mon)
 
-    def add_callback(self, attr, func):
+    def add_callback_to_pv(self, attr, func):
         """Add func as a callback to given attribute."""
         if callable(func):
             self._controller.add_callback(attr, func)
+        else:
+            raise AssertionError("Callback must be a callable type.")
+
+    def add_callback(self, func):
+        """Register a callback."""
+        if callable(func):
+            self._callback = func
         else:
             raise AssertionError("Callback must be a callable type.")
 
@@ -198,6 +205,7 @@ class PulsedPowerSupplySim:
         self._callback = None
         self._reset_issued = False
 
+    # Public interface
     def add_callback(self, func):
         """Add a callback to be called when pv changes."""
         self._callback = func
@@ -205,10 +213,84 @@ class PulsedPowerSupplySim:
     @property
     def tension_sp(self):
         """Return tension_sp."""
-        return self._tension_sp
+        return self._get_tension_sp()
 
     @tension_sp.setter
     def tension_sp(self, value):
+        self._set_tension_sp(value)
+
+    @property
+    def tension_rb(self):
+        """Return tension_rb."""
+        return self._get_tension_rb()
+
+    @property
+    def tensionref_mon(self):
+        """Return tension ref mon."""
+        return self._get_tensionref_mon()
+
+    @property
+    def tension_mon(self):
+        """Return tension mon."""
+        return self._get_tension_mon()
+
+    @property
+    def pwrstate_sel(self):
+        """Return power state sel value."""
+        return self._get_pwrstate_sel()
+
+    @pwrstate_sel.setter
+    def pwrstate_sel(self, value):
+        self._set_pwrstate_sel(value)
+
+    @property
+    def pwrstate_sts(self):
+        """Return power state status."""
+        return self._get_pwrstate_sts()
+
+    @property
+    def enablepulses_sel(self):
+        """Return setpoint for pulses enabled."""
+        return self._get_enable_pulses_sel()
+
+    @enablepulses_sel.setter
+    def enablepulses_sel(self, value):
+        self._set_enable_pulses_sel(value)
+
+    @property
+    def enablepulses_sts(self):
+        """Return wether pulses are enabled or not."""
+        return self._get_enable_pulses_sts()
+
+    @property
+    def reset(self):
+        """Return number of reset commands issued."""
+        return self._get_reset_cmd()
+
+    @reset.setter
+    def reset(self, value):
+        self._set_reset(value)
+
+    @property
+    def intlk_mon(self):
+        """Return interlock mask."""
+        return self._get_intlk_mon()
+
+    @property
+    def ctrlmode_mon(self):
+        """Return control mode."""
+        return self._get_ctrlmode_mon()
+
+    @property
+    def database(self):
+        """Return pulsed ps database as a dict."""
+        return self._data.propty_database
+
+    # Private methods
+    def _get_tension_sp(self):
+        return self._tension_sp
+
+    def _set_tension_sp(self, value):
         if not self._reset_issued:
             self._tension_sp = value
             self._issue_callback(properties.TensionSP, value)
@@ -217,63 +299,91 @@ class PulsedPowerSupplySim:
         self._set_tensionref_mon(value)
         self._set_tension_mon(value)
 
-    @property
-    def tension_rb(self):
-        """Return tension_rb."""
+    def _get_tension_rb(self):
         return self._tension_rb
 
-    @property
-    def tensionref_mon(self):
-        """Return tension ref mon."""
+    def _set_tension_rb(self, value):
+        # Will be implemented by PS
+        self._tension_rb = value
+
+    def _get_tensionref_mon(self):
         return self._tensionref_mon
 
-    @property
-    def pwrstate_sel(self):
-        """Return power state sel value."""
-        return self._pwrstate_sel
+    def _set_tensionref_mon(self, value):
+        if self._ctrlmode_mon == 0 and \
+                self._pwrstate_sts == 1 or \
+                self._reset_issued:
+            max_tension = \
+                self._data.propty_database[properties.TensionRefMon]["hihi"]
+            if value > max_tension:
+                value = max_tension
 
-    @pwrstate_sel.setter
-    def pwrstate_sel(self, value):
+            self._tensionref_mon = value
+            self._issue_callback(properties.TensionRefMon, value)
+
+    def _get_tension_mon(self):
+        return self._tension_mon
+
+    def _set_tension_mon(self, value):
+        if self._ctrlmode_mon == 0 and \
+                self._pwrstate_sts == 1 or \
+                self._reset_issued:
+            max_tension = \
+                self._data.propty_database[properties.TensionRefMon]["hihi"]
+            if value > max_tension:
+                value = max_tension
+
+            self._tension_mon = value
+            self._issue_callback(properties.TensionMon, value)
+
+    def _get_pwrstate_sel(self):
+        return self._pwrstate_sts
+
+    def _set_pwrstate_sel(self, value):
         if not self._reset_issued:
             self._pwrstate_sel = value
             self._issue_callback(properties.PwrStateSel, value)
         self._set_pwrstate_sts(value)
 
-    @property
-    def tension_mon(self):
-        """Return tension mon."""
-        return self._tension_mon
+    def _get_pwrstate_sts(self):
+        return self._pwrstate_sel
 
-    @property
-    def pwrstate_sts(self):
-        """Return power state status."""
-        return self._pwrstate_sts
+    def _set_pwrstate_sts(self, value):
+        if self._ctrlmode_mon == 0 or \
+                self._reset_issued:
+            self._pwrstate_sts = value
+            self._issue_callback(properties.PwrStateSts, value)
+            if value == 1:
+                self._set_tensionref_mon(self.tension_sp)
+                self._set_tension_mon(self.tension_sp)
+            else:
+                self._set_tensionref_mon(0)
+                self._set_tension_mon(0)
 
-    @property
-    def enablepulses_sel(self):
-        """Return setpoint for pulses enabled."""
-        return self._enablepulses_sel
+    def _get_enable_pulses_sts(self):
+        return self._enablepulses_sts
 
-    @enablepulses_sel.setter
-    def enablepulses_sel(self, value):
+    def _set_enable_pulses_sel(self, value):
         if not self._reset_issued:
             self._enablepulses_sel = value
             self._issue_callback(properties.EnablePulsesSel, value)
         self._set_enable_pulses_sts(value)
 
-    @property
-    def enablepulses_sts(self):
-        """Return wether pulses are enabled or not."""
-        return self._enablepulses_sts
+    def _get_enable_pulses_sel(self):
+        return self._enablepulses_sel
 
-    @property
-    def reset(self):
-        """Return number of reset commands issued."""
+    def _set_enable_pulses_sts(self, value):
+        if self._ctrlmode_mon == 0 and \
+                self._pwrstate_sts == 1 or \
+                self._reset_issued:
+            self._enablepulses_sts = value
+            self._issue_callback(properties.EnablePulsesSts, value)
+
+    def _get_reset(self):
         return self._reset_cmd
 
-    @reset.setter
-    def reset(self, value):
-        if self._ctrlmode_mon == 1:  # Local mode
+    def _set_reset(self, value):
+        if self.ctrlmode_mon == 1:  # Local mode
             return
         self._reset_issued = True
         self._reset()
@@ -288,69 +398,15 @@ class PulsedPowerSupplySim:
         self.enablepulses_sel = 0
         self._set_intlk_mon(0)
 
-    @property
-    def intlk_mon(self):
-        """Return interlock mask."""
+    def _get_intlk_mon(self):
         return self._intlk_mon
-
-    @property
-    def ctrlmode_mon(self):
-        """Return control mode."""
-        return self._ctrlmode_mon
-
-    @property
-    def database(self):
-        """Return pulsed ps database as a dict."""
-        return self._data.propty_database
-
-    def _set_tensionref_mon(self, value):
-        # Check limits
-        if self._ctrlmode_mon == 0 and \
-                self._pwrstate_sts == 1 or \
-                self._reset_issued:
-            max_tension = \
-                self._data.propty_database[properties.TensionRefMon]["hihi"]
-            if value > max_tension:
-                value = max_tension
-
-            self._tensionref_mon = value
-            self._issue_callback(properties.TensionRefMon, value)
-
-    def _set_tension_mon(self, value):
-        # Check limits
-        if self._ctrlmode_mon == 0 and \
-                self._pwrstate_sts == 1 or \
-                self._reset_issued:
-            max_tension = \
-                self._data.propty_database[properties.TensionRefMon]["hihi"]
-            if value > max_tension:
-                value = max_tension
-
-            self._tension_mon = value
-            self._issue_callback(properties.TensionMon, value)
-
-    def _set_pwrstate_sts(self, value):
-        if self._ctrlmode_mon == 0 or \
-                self._reset_issued:
-            self._pwrstate_sts = value
-            self._issue_callback(properties.PwrStateSts, value)
-            if value == 1:
-                self._set_tensionref_mon(self.tension_sp)
-                self._set_tension_mon(self.tension_sp)
-            else:
-                self._set_tensionref_mon(0)
-                self._set_tension_mon(0)
-
-    def _set_enable_pulses_sts(self, value):
-        if self._ctrlmode_mon == 0 and \
-                self._pwrstate_sts == 1 or \
-                self._reset_issued:
-            self._enablepulses_sts = value
-            self._issue_callback(properties.EnablePulsesSts, value)
 
     def _set_intlk_mon(self, value):
         self._intlk_mon = 0
         self._issue_callback(properties.ExternalInterlock, value)
+
+    def _get_ctrlmode_mon(self):
+        return self._ctrlmode_mon
 
     def _issue_callback(self, attr, value):
         if self._callback:

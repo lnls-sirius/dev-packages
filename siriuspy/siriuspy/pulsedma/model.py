@@ -239,6 +239,31 @@ class PulsedMagnetPowerSupply(PulsedPowerSupply):
         """Return strength set point."""
         return self._strength_mon
 
+    def _get_database(self, prefix):
+        db = self._data.get_database(self._data.psnames[0])
+
+        db[pu_props.PwrStateSel]["value"] = self.pwrstate_sel
+        db[pu_props.PwrStateSts]["value"] = self.pwrstate_sts
+        db[pu_props.EnablePulsesSel]["value"] = self.enablepulses_sel
+        db[pu_props.EnablePulsesSts]["value"] = self.enablepulses_sts
+        db[pu_props.ResetCmd]["value"] = self.reset_cmd
+        db[pu_props.CtrlMode]["value"] = self.ctrlmode_mon
+        db[pu_props.ExternalInterlock]["value"] = self.intlk_mon
+        db[pu_props.TensionSP]["value"] = self.tension_sp
+        db[pu_props.TensionRB]["value"] = self.tension_rb
+        db[pu_props.TensionRefMon]["value"] = self.tensionref_mon
+        db[pu_props.TensionMon]["value"] = self.tension_mon
+        db[pm_props.StrengthSP]["value"] = self.strength_sp
+        db[pm_props.StrengthRB]["value"] = self.strength_rb
+        db[pm_props.StrengthRefMon]["value"] = self.strengthref_mon
+        db[pm_props.StrengthMon]["value"] = self.strength_mon
+
+        prefixed_db = {}
+        for key, value in db.items():
+            prefixed_db[prefix + ":" + key] = value
+
+        return prefixed_db
+
     def _init_data(self):
         self._data = _PMData(self._maname)
 
@@ -338,43 +363,33 @@ class PulsedMagnetPowerSupply(PulsedPowerSupply):
                                         args=(pm_props.StrengthMon, value,
                                               self._dipole_current_mon)))
             self._threads[-1].start()
-        # elif pfield == pu_props.PwrStateSts:
-        #     self._pwrstate_sts = value
-        # elif pfield == pu_props.EnablePulsesSts:
-        #     self._enablepulses_sts = value
-        # elif pfield == pu_props.ResetCmd:
-        #     self._reset_cmd = value
-        # elif pfield == pu_props.ExternalInterlock:
-        #     self._intlk_mon = value
-        # elif pfield == pu_props.CtrlMode:
-        #     self._ctrlmode_mon = value
-        # elif pfield == pu_props.TensionSP:
-        #     self._pwrstate_sel = value
-        # elif pfield == pu_props.PwrStateSel:
-        #     self._pwrstate_sel = value
-        # elif pfield == pu_props.EnablePulsesSel:
-        #     self._pwrstate_sel = value
 
         self._issue_callback(pfield, value, **kwargs)
 
     def _set_pv_callbacks(self):
         for prop in pu_props.PulsedPowerSupplyAttrs:
-            self.add_callback(prop, self._value_changed_callback)
+            self.add_callback_to_pv(prop, self._value_changed_callback)
 
     def _update_strength(self, pfield, tension, dipole_current):
 
         if pfield == pm_props.StrengthSP:
             self._strength_sp = \
                 self._strobj.conv_tension_2_strength(tension, dipole_current)
+            strength = self._strength_sp
         elif pfield == pm_props.StrengthRB:
             self._strength_rb = \
                 self._strobj.conv_tension_2_strength(tension, dipole_current)
+            strength = self._strength_rb
         elif pfield == pm_props.StrengthRefMon:
             self._strengthref_mon = \
                 self._strobj.conv_tension_2_strength(tension, dipole_current)
+            strength = self._strengthref_mon
         elif pfield == pm_props.StrengthMon:
             self._strength_mon = \
                 self._strobj.conv_tension_2_strength(tension, dipole_current)
+            strength = self._strength_mon
+
+        self._issue_callback(pfield, strength)
 
     def _update_strengths(self):
         self._update_strength(pm_props.StrengthSP, self.tension_sp,
