@@ -1,0 +1,14 @@
+[Unit]
+Description=Soft IOC for pulsed magnets
+After=multi-user.target
+
+[Service]
+Group=fac
+User=fac
+Type=simple
+WorkingDirectory=/home/fac/sirius-iocs/as-ma
+StandardOutput=syslog
+StandardError=syslog
+ExecStartPre=/bin/bash --login -c 'env > /tmp/bashrc-sirius-ioc-as-pm'
+EnvironmentFile=-/tmp/bashrc-sirius-ioc-as-pm
+ExecStart=/usr/local/bin/sirius-ioc-as-pm.py
