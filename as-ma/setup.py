@@ -35,6 +35,7 @@ setup(
              'scripts/sirius-ioc-si-ma-corrector-fast.py',
              'scripts/sirius-ioc-si-ma-multipole-fam.py',
              'scripts/sirius-ioc-si-ma-quadrupole-trim.py',
+             'scripts/sirius-ioc-as-pm.py'
              ],
     zip_safe=False
 )

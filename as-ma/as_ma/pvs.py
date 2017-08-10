@@ -80,7 +80,7 @@ _ioc_dict = {
                               'type': 'Glob:MA-Mpole',
                               'prefix_sector': 'BO-',
                               'section': 'BO',
-                              'sub_section': '.*',
+                              'sub_section': 'Fam',
                               'discipline': 'MA',
                               'device': '(Q|S).*'},
     'si-ma-dipole-fam':      {'name': 'si-ma-dipole-fam',
@@ -118,6 +118,13 @@ _ioc_dict = {
                               'sub_section': '\d\d.*',
                               'discipline': 'MA',
                               'device': 'Q.*'},
+    'as-pm':                 {'name': 'as-pu',
+                              'type': 'Glob:PM',
+                              'prefix_sector': '',
+                              'section': '.*',
+                              'sub_section': '.*',
+                              'discipline': 'PM',
+                              'device': '.*'},
 }
 
 
@@ -158,7 +165,10 @@ def get_ma_devices():
         _MA_DEVICES = {}
         magnets = _MASearch.get_manames(_IOC)
         for magnet in magnets:
-            _, device = magnet.split(_PREFIX_SECTOR)
+            if _PREFIX_SECTOR:
+                _, device = magnet.split(_PREFIX_SECTOR)
+            else:
+                device = magnet
             # Get dipole object
             _MA_DEVICES[device] = \
                 _MagnetFactory.factory(magnet)

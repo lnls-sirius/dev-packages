@@ -47,6 +47,9 @@ class App:
             description='AS-MA Soft IOC',
             version=__version__,
             prefix=_pvs._PREFIX)
+        _siriuspy.util.save_ioc_pv_list(_pvs._IOC["name"],
+                                        (_pvs._PREFIX_SECTOR, _pvs._PREFIX_VACA),
+                                        App.pvs_database)
 
         self._driver = driver
         self._set_callback()
@@ -112,7 +115,10 @@ class App:
             device.add_callback(self._mycallback)
 
     def _mycallback(self, pvname, value, **kwargs):
-        *parts, reason = pvname.split(_pvs._PREFIX_SECTOR)
+        if _pvs._PREFIX_SECTOR:
+            *parts, reason = pvname.split(_pvs._PREFIX_SECTOR)
+        else:
+            reason = pvname
         self._driver.setParam(reason, value)
         if 'hilim' in kwargs or 'lolim' in kwargs:
             # print("changing upper limit", pvname, kwargs)
