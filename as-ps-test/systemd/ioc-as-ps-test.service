@@ -1,12 +1,14 @@
 [Unit]
-Description=Soft IOC for simulation of all power supplies
+Description=Soft IOC for simulation of all magnet power supplies
 After=multi-user.target
 
 [Service]
 Group=fac
 User=fac
 Type=simple
-WorkingDirectory=/usr/local/bin/sirius-iocs/as-ps-test
+WorkingDirectory=/home/fac/sirius-iocs/as-ps-test
 StandardOutput=syslog
 StandardError=syslog
-ExecStart=/usr/local/bin/sirius-iocs/as-ps-test/ioc-as-ps-test.bash
+ExecStartPre=/bin/bash --login -c 'env > /tmp/bashrc-sirius-ioc-as-ps-test'
+EnvironmentFile=-/tmp/bashrc-sirius-ioc-as-ps-test
+ExecStart=/usr/local/bin/sirius-ioc-as-ps-test.py

@@ -1,0 +1,12 @@
+[Unit]
+Description=Soft IOC for SI quadrupole trims
+After=multi-user.target
+
+[Service]
+Group=fac
+User=fac
+Type=simple
+WorkingDirectory=/usr/local/bin/sirius-iocs/as-ma
+StandardOutput=syslog
+StandardError=syslog
+ExecStart=/usr/local/bin/sirius-iocs/as-ma/ioc-si-ma-quadrupole-trim.bash

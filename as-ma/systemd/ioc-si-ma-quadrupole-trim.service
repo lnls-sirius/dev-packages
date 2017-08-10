@@ -1,12 +1,14 @@
 [Unit]
-Description=Soft IOC for SI quadrupole trims
+Description=Soft IOC for SI dipole magnet families
 After=multi-user.target
 
 [Service]
 Group=fac
 User=fac
 Type=simple
-WorkingDirectory=/usr/local/bin/sirius-iocs/as-ma
+WorkingDirectory=/home/fac/sirius-iocs/as-ma
 StandardOutput=syslog
 StandardError=syslog
-ExecStart=/usr/local/bin/sirius-iocs/as-ma/ioc-si-ma-quadrupole-trim.bash
+ExecStartPre=/bin/bash --login -c 'env > /tmp/bashrc-sirius-ioc-si-ma-quadrupole-trim'
+EnvironmentFile=-/tmp/bashrc-sirius-ioc-si-ma-quadrupole-trim
+ExecStart=/usr/local/bin/sirius-ioc-si-ma-quadrupole-trim.py

@@ -1,6 +1,8 @@
 """Module to create PV database."""
 
 from siriuspy.pwrsupply import PowerSupplySim as _PowerSupplySim
+from siriuspy.pulsedps.model \
+    import PulsedPowerSupplySim as _PulsedPowerSupplySim
 from siriuspy import envars as _envars
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
@@ -121,10 +123,15 @@ def get_ps_devices():
         # Create objects that'll handle the magnets
         print('creating pv database...')
         for ps in pwr_supplies:
-            # print(ps)
-            # if 'B1B2' in ps:
-            ps_devices[ps] = _PowerSupplySim(psname=ps)
-        print('finished.')
+            # if 'PS-QDA' in ps or 'B1B2' in ps or _re.match("SI-\d\w{2}:PS-QDA", ps):
+            #     ps_devices[ps] = _PowerSupplySim(psname=ps)
+            #     #ps_devices[ps] = PS(psname=ps)
+            if "PU" in ps:
+                ps_devices[ps] = _PulsedPowerSupplySim(psname=ps)
+            else:
+                ps_devices[ps] = _PowerSupplySim(psname=ps)
+        print('finished')
+
 
     return ps_devices
 

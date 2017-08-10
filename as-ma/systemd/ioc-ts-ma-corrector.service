@@ -1,12 +1,14 @@
 [Unit]
-Description=Soft IOC for TS corrector magnets
+Description=Soft IOC for SI dipole magnet families
 After=multi-user.target
 
 [Service]
 Group=fac
 User=fac
 Type=simple
-WorkingDirectory=/usr/local/bin/sirius-iocs/as-ma
+WorkingDirectory=/home/fac/sirius-iocs/as-ma
 StandardOutput=syslog
 StandardError=syslog
-ExecStart=/usr/local/bin/sirius-iocs/as-ma/ioc-ts-ma-corrector.bash
+ExecStartPre=/bin/bash --login -c 'env > /tmp/bashrc-sirius-ioc-ts-ma-corrector'
+EnvironmentFile=-/tmp/bashrc-sirius-ioc-ts-ma-corrector
+ExecStart=/usr/local/bin/sirius-ioc-ts-ma-corrector.py

@@ -1,6 +1,6 @@
 """Main module of AS-MA IOC."""
 import sys as _sys
-import pvs as _pvs
+import as_ma.pvs as _pvs
 import time as _time
 import siriuspy as _siriuspy
 
@@ -31,23 +31,34 @@ class App:
         always return None, delegating read to database
     """
 
-    ma_devices = _pvs.get_ma_devices(args)
-    pvs_database = _pvs.get_pvs_database()
+    ma_devices = None
+    pvs_database = None
+
     strengths = ['Energy', 'KL', 'SL', 'Kick', 'EnergyRef, ''KLRef', 'SLRef',
                  'KickRef']
     writable_fields = ['SP', 'Sel', 'Cmd']
 
     def __init__(self, driver, *args):
         """Class constructor."""
+        App.init_class()
         _siriuspy.util.print_ioc_banner(
             ioc_name='AS-MA',
             db=App.pvs_database,
             description='AS-MA Soft IOC',
             version=__version__,
             prefix=_pvs._PREFIX)
+        _siriuspy.util.save_ioc_pv_list(_pvs._IOC["name"],
+                                        (_pvs._PREFIX_SECTOR, _pvs._PREFIX_VACA),
+                                        App.pvs_database)
 
         self._driver = driver
         self._set_callback()
+
+    @staticmethod
+    def init_class():
+        """Init class."""
+        App.ma_devices = _pvs.get_ma_devices()
+        App.pvs_database = _pvs.get_pvs_database()
 
     @property
     def driver(self):
@@ -104,7 +115,10 @@ class App:
             device.add_callback(self._mycallback)
 
     def _mycallback(self, pvname, value, **kwargs):
-        *parts, reason = pvname.split(_pvs._PREFIX_SECTOR)
+        if _pvs._PREFIX_SECTOR:
+            *parts, reason = pvname.split(_pvs._PREFIX_SECTOR)
+        else:
+            reason = pvname
         self._driver.setParam(reason, value)
         if 'hilim' in kwargs or 'lolim' in kwargs:
             # print("changing upper limit", pvname, kwargs)
