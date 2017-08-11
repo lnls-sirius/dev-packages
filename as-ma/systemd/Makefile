@@ -14,8 +14,7 @@ install-services:
 	systemctl daemon-reload
 	mkdir -p /home/fac/sirius-iocs/as-ma
 	mkdir -p /home/fac/sirius-iocs/pvs
-	chown -R fac.fac /home/fac/sirius-iocs/as-ma
-	chown -R fac.fac /home/fac/sirius-iocs/pvs
+	chown -R fac.fac /home/fac/sirius-iocs
 
 stop-services:
 	@echo " --- stop services ---"
