@@ -2,8 +2,6 @@
 import pvs as _pvs
 import time as _time
 import epics as _epics
-import pyaccel as _pyaccel
-import pymodels as _pymodels
 import siriuspy as _siriuspy
 import siriuspy.servweb as _siriuspy_servweb
 import numpy as np
@@ -94,7 +92,7 @@ class App:
     def write(self, reason, value):
         """Write value to reason and let callback update PV database."""
         status = False
-        if reason == 'OrbXDeltaPos-SP':
+        if reason == 'DeltaPosX-SP':
             print('orbx deltapos')
             updated = self._update_delta(value, self._orbx_deltaang,
                                         self._orbx_respmat,
@@ -103,10 +101,10 @@ class App:
                                         self._ch1_pwrstate_sts_pv,self._ch2_pwrstate_sts_pv)
             if updated:
                 self._orbx_deltapos = value
-                self.driver.setParam('OrbXDeltaPos-RB',value)
+                self.driver.setParam('DeltaPosX-RB',value)
                 self.driver.updatePVs()
                 status = True
-        elif reason == 'OrbXDeltaAng-SP':
+        elif reason == 'DeltaAngX-SP':
             print('orbx deltaang')
             updated = self._update_delta(self._orbx_deltapos, value,
                                         self._orbx_respmat,
@@ -115,10 +113,10 @@ class App:
                                         self._ch1_pwrstate_sts_pv,self._ch2_pwrstate_sts_pv)
             if updated:
                 self._orbx_deltaang = value
-                self.driver.setParam('OrbXDeltaAng-RB',value)
+                self.driver.setParam('DeltaAngX-RB',value)
                 self.driver.updatePVs()
                 status = True
-        elif reason == 'OrbYDeltaPos-SP':
+        elif reason == 'DeltaPosY-SP':
             print('orby deltapos')
             updated = self._update_delta(value, self._orby_deltaang,
                                         self._orby_respmat,
@@ -127,10 +125,10 @@ class App:
                                         self._cv1_pwrstate_sts_pv,self._cv2_pwrstate_sts_pv)
             if updated:
                 self._orby_deltapos = value
-                self.driver.setParam('OrbYDeltaPos-RB',value)
+                self.driver.setParam('DeltaPosY-RB',value)
                 self.driver.updatePVs()
                 status = True
-        elif reason == 'OrbYDeltaAng-SP':
+        elif reason == 'DeltaAngY-SP':
             print('orby deltaang')
             updated = self._update_delta(self._orby_deltapos, value,
                                         self._orby_respmat,
@@ -139,10 +137,10 @@ class App:
                                         self._cv1_pwrstate_sts_pv,self._cv2_pwrstate_sts_pv)
             if updated:
                 self._orby_deltaang = value
-                self.driver.setParam('OrbYDeltaAng-RB',value)
+                self.driver.setParam('DeltaAngY-RB',value)
                 self.driver.updatePVs()
                 status = True
-        elif reason == 'SetNewRef':
+        elif reason == 'SetNewRef-Cmd':
             self._update_ref()
             self.driver.updatePVs() # this should be used in case PV states change.
         return status # when returning True super().write of PCASDrive is invoked
@@ -155,7 +153,7 @@ class App:
             orbx_respmat[1] = float(m[0][1])
             orbx_respmat[2] = float(m[1][0])
             orbx_respmat[3] = float(m[1][1])
-            self.driver.setParam('OrbXRespMat',orbx_respmat)
+            self.driver.setParam('RespMatX',orbx_respmat)
             self.driver.updatePVs()
             print(orbx_respmat)
             return orbx_respmat
@@ -167,7 +165,7 @@ class App:
             orby_respmat[1] = float(m[0][1])
             orby_respmat[2] = float(m[1][0])
             orby_respmat[3] = float(m[1][1])
-            self.driver.setParam('OrbYRespMat',orby_respmat)
+            self.driver.setParam('RespMatY',orby_respmat)
             self.driver.updatePVs()
             print(orby_respmat)
             return orby_respmat
@@ -214,11 +212,11 @@ class App:
         self._orby_deltapos = 0
         self._orbx_deltaang = 0
         self._orby_deltaang = 0
-        self.driver.setParam('OrbXDeltaPos-SP', self._orbx_deltapos)
-        self.driver.setParam('OrbXDeltaPos-RB', self._orbx_deltapos)
-        self.driver.setParam('OrbXDeltaAng-SP', self._orbx_deltaang)
-        self.driver.setParam('OrbXDeltaAng-RB', self._orbx_deltaang)
-        self.driver.setParam('OrbYDeltaPos-SP', self._orby_deltapos)
-        self.driver.setParam('OrbYDeltaPos-RB', self._orby_deltapos)
-        self.driver.setParam('OrbYDeltaAng-SP', self._orby_deltaang)
-        self.driver.setParam('OrbYDeltaAng-RB', self._orby_deltaang)
+        self.driver.setParam('DeltaPosX-SP', self._orbx_deltapos)
+        self.driver.setParam('DeltaPosX-RB', self._orbx_deltapos)
+        self.driver.setParam('DeltaAngX-SP', self._orbx_deltaang)
+        self.driver.setParam('DeltaAngX-RB', self._orbx_deltaang)
+        self.driver.setParam('DeltaPosY-SP', self._orby_deltapos)
+        self.driver.setParam('DeltaPosY-RB', self._orby_deltapos)
+        self.driver.setParam('DeltaAngY-SP', self._orby_deltaang)
+        self.driver.setParam('DeltaAngY-RB', self._orby_deltaang)
