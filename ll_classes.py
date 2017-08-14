@@ -261,7 +261,7 @@ class LL_Clock(_LL_Base):
             }
 
     def _set_frequency(self, value):
-        value *= 1e3 # kHz
+        value *= 1e3  # kHz
         n = round(BFREQ/value)
         self._hl_props['frequency'] = n * BFREQ * 1e-3
         self._ll_props['frequency'] = n
@@ -391,9 +391,9 @@ class _LL_TrigEVROUT(_LL_Base):
     def _set_delay(self, value):
         _log.debug(self.channel+' Setting propty = {0:s}, value = {1:s}.'
                    .format('delay', str(value)))
-       value *= 1e-6  # us
-       delay1 = value // BDEL
-       self._ll_props['delay1'] = delay1
+        value *= 1e-6  # us
+        delay1 = value // BDEL
+        self._ll_props['delay1'] = delay1
         if not self._hl_props['delay_type']:
             value -= delay1 * BDEL
             delay2 = value // RDEL
