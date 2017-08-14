@@ -274,9 +274,9 @@ class _EventIOC(_BaseIOC):
     @classmethod
     def get_database(cls, prefix=''):
         db = dict()
-        dic_ = {'type': 'float', 'unit': 'us', 'prec': 3, 'value': 0.0,
-                'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
-                'hilim': 500000, 'high': 1000000, 'hihi': 10000000}
+        dic_ = {'type': 'int', 'value': 0,
+                'lolo': 0, 'low': 0, 'lolim': 0,
+                'hilim': 4294967295, 'high': 4294967295, 'hihi': 4294967295}
         db[prefix + 'Delay-SP'] = _copy.deepcopy(dic_)
         db[prefix + 'Delay-RB'] = dic_
         db[prefix + 'Mode-Sel'] = {
@@ -293,8 +293,8 @@ class _EventIOC(_BaseIOC):
 
     def __init__(self, base_freq, callbacks=None, prefix=None, control=None):
         self._attr2expr = {
-            'delay_sp': lambda x: int(round((x*1e-6) * self.base_freq)),
-            'delay_rb': lambda x: x * (1e6/self.base_freq),
+            'delay_sp': lambda x: int(x),
+            'delay_rb': lambda x: x,
             'mode_sp': lambda x: int(x),
             'mode_rb': lambda x: x,
             'delay_type_sp': lambda x: int(x),
@@ -319,30 +319,30 @@ class _ClockIOC(_BaseIOC):
     _states = ('Dsbl', 'Enbl')
 
     _attr2pvname = {
-        'frequency_sp': 'Freq-SP',
-        'frequency_rb': 'Freq-RB',
-        'state_sp': 'State-Sel',
-        'state_rb': 'State-Sts',
+        'frequency_sp': 'MuxDiv-SP',
+        'frequency_rb': 'MuxDiv-RB',
+        'state_sp': 'MuxEnbl-Sel',
+        'state_rb': 'MuxEnbl-Sts',
         }
 
     @classmethod
     def get_database(cls, prefix=''):
         db = dict()
-        dic_ = {'type': 'float', 'value': 1.0, 'unit': 'kHz', 'prec': 5,
-                'lolo': 0.00002, 'low': 0.00002, 'lolim': 0.00002,
-                'hilim': 100000, 'high': 100000, 'hihi': 100000}
-        db[prefix + 'Freq-SP'] = _copy.deepcopy(dic_)
-        db[prefix + 'Freq-RB'] = dic_
-        db[prefix + 'State-Sel'] = {
+        dic_ = {'type': 'int', 'value': 499792458,
+                'lolo': 1, 'low': 1, 'lolim': 1,
+                'hilim': 4294967296, 'high': 4294967296, 'hihi': 4294967296}
+        db[prefix + 'MuxDiv-SP'] = _copy.deepcopy(dic_)
+        db[prefix + 'MuxDiv-RB'] = dic_
+        db[prefix + 'MuxEnbl-Sel'] = {
             'type': 'enum', 'enums': _ClockIOC._states, 'value': 0}
-        db[prefix + 'State-Sts'] = {
+        db[prefix + 'MuxEnbl-Sts'] = {
             'type': 'enum', 'enums': _ClockIOC._states, 'value': 0}
         return db
 
     def __init__(self, base_freq, callbacks=None, prefix=None, control=None):
         self._attr2expr = {
-            'frequency_sp': lambda x: int(round(1e-3*self.base_freq / x)),
-            'frequency_rb': lambda x: 1e-3*self.base_freq / x,
+            'frequency_sp': lambda x: int(x),
+            'frequency_rb': lambda x: x,
             'state_sp': lambda x: int(x),
             'state_rb': lambda x: x,
             }
@@ -397,11 +397,11 @@ class EVGIOC(_BaseIOC):
             'type': 'int', 'count': 864, 'value': 864*[0]}
         db[p + 'BucketList-RB'] = {
             'type': 'int', 'count': 864, 'value': 864*[0]}
-        dic_ = {'type': 'float', 'unit': 'Hz', 'prec': 3, 'value': 2.0,
-                'lolo': 0.001, 'low': 0.001, 'lolim': 0.001,
+        dic_ = {'type': 'int', 'value': 30,
+                'lolo': 1, 'low': 1, 'lolim': 1,
                 'hilim': 60, 'high': 60, 'hihi': 60}
-        db[p + 'RepRate-SP'] = _copy.deepcopy(dic_)
-        db[p + 'RepRate-RB'] = dic_
+        db[p + 'ACDiv-SP'] = _copy.deepcopy(dic_)
+        db[p + 'ACDiv-RB'] = dic_
         for clc in Clocks.LL2HL_MAP.keys():
             p = prefix + clc
             db.update(_ClockIOC.get_database(p))
@@ -420,8 +420,8 @@ class EVGIOC(_BaseIOC):
             'cyclic_injection_rb': lambda x: x,
             'continuous_sp': lambda x: int(x),
             'continuous_rb': lambda x: x,
-            'repetition_rate_sp': lambda x: int(round(_PwrFreq / x)),
-            'repetition_rate_rb': lambda x: _PwrFreq / x,
+            'repetition_rate_sp': lambda x: int(x),
+            'repetition_rate_rb': lambda x: x,
             'bucket_list_sp': self._bucket_list_setter,
             'bucket_list_rb': lambda x: x,
             }
@@ -625,8 +625,8 @@ class _EVROutputIOC(_BaseIOC):
     _attr2pvname = {
         'fine_delay_sp':    'FineDelay-SP',
         'fine_delay_rb':    'FineDelay-RB',
-        'delay_sp':         'Delay-SP',
-        'delay_rb':         'Delay-RB',
+        'delay_sp':         'RFDelay-SP',
+        'delay_rb':         'RFDelay-RB',
         'optic_channel_sp': 'IntChan-Sel',
         'optic_channel_rb': 'IntChan-Sts',
         }
@@ -637,17 +637,17 @@ class _EVROutputIOC(_BaseIOC):
     @classmethod
     def get_database(cls, prefix=''):
         db = dict()
-        dic_ = {'type': 'float', 'unit': 'ps', 'prec': 0, 'value': 0.0,
-                'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
-                'hilim': 1000, 'high': 1000, 'hihi': 1000}
+        dic_ = {'type': 'int', 'value': 0,
+                'lolo': 0, 'low': 0, 'lolim': 0,
+                'hilim': 200, 'high': 200, 'hihi': 200}
         db[prefix + 'FineDelay-SP'] = _copy.deepcopy(dic_)
         db[prefix + 'FineDelay-RB'] = dic_
 
-        dic_ = {'type': 'float', 'unit': 'us', 'prec': 4, 'value': 0.0,
-                'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
-                'hilim': 500000, 'high': 1000000, 'hihi': 10000000}
-        db[prefix + 'Delay-SP'] = _copy.deepcopy(dic_)
-        db[prefix + 'Delay-RB'] = dic_
+        dic_ = {'type': 'int', 'value': 0,
+                'lolo': 0, 'low': 0, 'lolim': 0,
+                'hilim': 30, 'high': 31, 'hihi': 31}
+        db[prefix + 'RFDelay-SP'] = _copy.deepcopy(dic_)
+        db[prefix + 'RFDelay-RB'] = dic_
 
         db[prefix + 'IntChan-Sel'] = {
             'type': 'string', 'value': 'IntTrig00',
@@ -659,10 +659,10 @@ class _EVROutputIOC(_BaseIOC):
 
     def __init__(self, base_freq, callbacks=None, prefix=None, control=None):
         self._attr2expr = {
-            'fine_delay_sp': lambda x: int(round((x*1e-12)/_FINE_DELAY_STEP)),
-            'fine_delay_rb': lambda x: x * _FINE_DELAY_STEP * 1e12,
-            'delay_sp': lambda x: int(round((x*1e-6) * (20*self.base_freq))),
-            'delay_rb': lambda x: x * (1e6 / (20*self.base_freq)),
+            'fine_delay_sp': lambda x: int(x),
+            'fine_delay_rb': lambda x: x,
+            'delay_sp': lambda x: int(x),
+            'delay_rb': lambda x: x,
             'optic_channel_sp': lambda x: x,
             'optic_channel_rb': lambda x: x,
             }
@@ -714,15 +714,15 @@ class _InternTrigIOC(_BaseIOC):
         db[prefix + 'State-Sts'] = {
             'type': 'enum', 'enums': cls._states, 'value': 0}
 
-        dic_ = {'type': 'float', 'unit': 'us', 'prec': 3, 'value': 0.008,
-                'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
-                'hilim': 500000, 'high': 1000000, 'hihi': 10000000}
+        dic_ = {'type': 'int', 'value': 1,
+                'lolo': 1, 'low': 1, 'lolim': 1,
+                'hilim': 4294967295, 'high': 4294967295, 'hihi': 4294967295}
         db[prefix + 'Width-SP'] = _copy.deepcopy(dic_)
         db[prefix + 'Width-RB'] = dic_
 
-        dic_ = {'type': 'float', 'unit': 'us', 'prec': 3, 'value': 0.0,
+        dic_ = {'type': 'int', 'value': 0,
                 'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
-                'hilim': 500000, 'high': 1000000, 'hihi': 10000000}
+                'hilim': 4294967295, 'high': 4294967295, 'hihi': 4294967295}
         db[prefix + 'Delay-SP'] = _copy.deepcopy(dic_)
         db[prefix + 'Delay-RB'] = dic_
         db[prefix + 'Polrty-Sel'] = {
@@ -734,9 +734,9 @@ class _InternTrigIOC(_BaseIOC):
         db[prefix + 'Event-Sts'] = {
             'type': 'string', 'value': 'Event00', 'Enums': cls._event_enums}
 
-        dic_ = {'type': 'int', 'unit': 'numer of pulses', 'prec': 0,
+        dic_ = {'type': 'int', 'unit': 'numer of pulses',
                 'value': 1, 'lolo': 1, 'low': 1, 'lolim': 1,
-                'hilim': 1000000000, 'high': 1000000000, 'hihi': 1000000000}
+                'hilim': 4294967295, 'high': 4294967295, 'hihi': 4294967295}
         db[prefix + 'Pulses-SP'] = _copy.deepcopy(dic_)
         db[prefix + 'Pulses-RB'] = dic_
         return db
@@ -745,10 +745,10 @@ class _InternTrigIOC(_BaseIOC):
         self._attr2expr = {
             'state_sp': lambda x: int(x),
             'state_rb': lambda x: x,
-            'width_sp': lambda x: int(round((x*1e-6) * self.base_freq)),
-            'width_rb': lambda x: x * (1e6/self.base_freq),
-            'delay_sp': lambda x: int(round((x*1e-6) * self.base_freq)),
-            'delay_rb': lambda x: x * (1e6/self.base_freq),
+            'width_sp': lambda x: int(x),
+            'width_rb': lambda x: x,
+            'delay_sp': lambda x: int(x),
+            'delay_rb': lambda x: x,
             'polarity_sp': lambda x: int(x),
             'polarity_rb': lambda x: x,
             'event_sp': lambda x: x,

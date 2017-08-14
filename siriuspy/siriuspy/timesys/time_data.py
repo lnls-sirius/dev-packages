@@ -16,6 +16,15 @@ if _importlib.find_loader('matplotlib') is not None:
 _timeout = 1.0
 _LOCAL = False
 
+AC_FREQUENCY = 60
+RF_DIVISION = 4
+RF_FREQUENCY = 299792458/518.396*864
+BASE_FREQUENCY = RF_FREQUENCY / RF_DIVISION
+RF_PERIOD = 1/RF_FREQUENCY
+BASE_DELAY = 1 / BASE_FREQUENCY
+RF_DELAY = BASE_DELAY / 20
+FINE_DELAY = 5e-12                  # five picoseconds
+
 
 class Events:
     """Contain properties of the Events."""
