@@ -42,12 +42,13 @@ class _PCASDriver(_pcaspy.Driver):
 
 def run(ioc_name):
     """Main module function."""
-    _pvs.select_ioc(ioc_name)
-    _main.App.init_class()
-
     # define abort function
     _signal.signal(_signal.SIGINT, _stop_now)
     _signal.signal(_signal.SIGTERM, _stop_now)
+
+    # define IOC and initializes it
+    _pvs.select_ioc(ioc_name)
+    _main.App.init_class()
 
     # create a new simple pcaspy server and driver to respond client's requests
     server = _pcaspy.SimpleServer()

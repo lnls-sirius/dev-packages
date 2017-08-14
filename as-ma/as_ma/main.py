@@ -19,11 +19,8 @@ import siriuspy as _siriuspy
 __version__ = _pvs._COMMIT_HASH
 
 
-args = _sys.argv
-
-
 class App:
-    """Main application for handling TS magnets.
+    """Main application for handling magnet power supplies.
 
     write:
         writes to MA object and updates db
@@ -40,7 +37,7 @@ class App:
 
     def __init__(self, driver, *args):
         """Class constructor."""
-        App.init_class()
+        App.init_class()  # Is This really necessary?
         _siriuspy.util.print_ioc_banner(
             ioc_name='AS-MA',
             db=App.pvs_database,
@@ -48,7 +45,8 @@ class App:
             version=__version__,
             prefix=_pvs._PREFIX)
         _siriuspy.util.save_ioc_pv_list(_pvs._IOC["name"],
-                                        (_pvs._PREFIX_SECTOR, _pvs._PREFIX_VACA),
+                                        (_pvs._PREFIX_SECTOR,
+                                         _pvs._PREFIX_VACA),
                                         App.pvs_database)
 
         self._driver = driver
