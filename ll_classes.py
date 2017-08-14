@@ -1,25 +1,21 @@
 """Define the low level classes which will connect to Timing Devices IOC."""
 
 import logging as _log
+from threading import Event as _Event
+from threading import Thread as _Thread
 import epics as _epics
 from siriuspy.envars import vaca_prefix as LL_PREFIX
 from siriuspy.namesys import SiriusPVName as _PVName
 from siriuspy.timesys.time_data import IOs
 from siriuspy.timesys.time_data import Clocks, Events
-from threading import Event as _Event
-from threading import Thread as _Thread
+from siriuspy.timesys.time_data import AC_FREQUENCY as ACFREQ
+from siriuspy.timesys.time_data import BASE_FREQUENCY as BFREQ
+from siriuspy.timesys.time_data import BASE_DELAY as BDEL
+from siriuspy.timesys.time_data import RF_DELAY as RDEL
+from siriuspy.timesys.time_data import FINE_DELAY as FDEL
 
 _TIMEOUT = 0.05
-_FORCE_EQUAL = True
 _INTERVAL = 0.1
-
-DIV = 4
-RFFREQ = 299792458/518.396*864  # Should be read from the RF generator Setpoint
-BFREQ = RFFREQ / DIV
-RF_PER = 1/RFFREQ
-BDEL = 1 / BFREQ
-RDEL = BDEL / 20
-FDEL = 5e-12                  # five picoseconds
 
 
 class _Timer(_Thread):
@@ -231,6 +227,33 @@ class _LL_Base:
         fun(value)
         self.start_timer()
         return True
+
+
+class LL_EVG(_LL_Base):
+    """Define the Low Level EVG Class."""
+
+    def __init__(self, channel,  callback, init_hl_props):
+        """Initialize the instance."""
+        self.prefix = LL_PREFIX + channel
+        self.channel = channel
+        super().__init__(callback, init_hl_props)
+
+    def _get_LLPROP_2_PVRB(self):
+        return {'frequency': self.prefix + 'ACDiv-RB'}
+
+    def _get_HLPROP_FUNS(self):
+        return {'frequency': self._set_frequency}
+
+    def _get_LLPROP_FUNS(self):
+        return {'frequency': self._get_frequency}
+
+    def _set_frequency(self, value):
+        n = round(ACFREQ/value)
+        self._hl_props['frequency'] = n * ACFREQ
+        self._ll_props['frequency'] = n
+
+    def _get_frequency(self, value):
+        return {'frequency': value * ACFREQ}
 
 
 class LL_Clock(_LL_Base):

@@ -6,7 +6,7 @@ from siriuspy.timesys.time_data import Connections, IOs, Triggers
 from siriuspy.timesys.time_data import Clocks, Events
 from siriuspy.namesys import SiriusPVName as _PVName
 from as_ti_control.ll_classes import get_ll_trigger_object
-from as_ti_control.ll_classes import LL_Event, LL_Clock
+from as_ti_control.ll_classes import LL_Event, LL_Clock, LL_EVG
 
 Connections.add_bbb_info()
 Connections.add_crates_info()
@@ -30,7 +30,7 @@ class _HL_Base:
             db2[name] = db[name]
         return db2      # dictionary must have key fun_set_pv
 
-    def __init__(self, prefix, callback, channels):
+    def __init__(self, prefix, callback, channels=None):
         """Appropriately initialize the instance.
 
         prefix = is the first part of the pv name of this object.
@@ -110,6 +110,38 @@ class _HL_Base:
             _log.debug(self.prefix+' Sending to LL device = {0:s}'.format(dev))
             obj.set_propty(prop, value)
         return True
+
+
+class HL_EVG(_HL_Base):
+    """High Level control of the EVG."""
+
+    def get_database(self):
+        """Get the database."""
+        db = dict()
+        pre = self.prefix
+        db[pre + 'RepRate-SP'] = {
+            'type': 'float', 'value': self._hl_props['frequency'],
+            'unit': 'Hz', 'prec': 5,
+            'fun_set_pv': lambda x: self.set_propty('frequency', x)}
+        db[pre + 'RepRate-RB'] = {
+            'type': 'float', 'value': self._hl_props['frequency'],
+            'unit': 'Hz', 'prec': 5}
+        return super().get_database(db)
+
+    def __init__(self, callback):
+        """Initialize the instance."""
+        super().__init__(EVG + ':', callback)
+        self._interface_props = {'frequency'}
+        self._hl_props = {'frequency': 2.0}
+
+    def _get_HLPROP_2_PVRB(self):
+        return {'frequency': 'RepRate-RB'}
+
+    def _get_LL_OBJS_NAMES(self, dummy=None):
+        return [EVG + ':', ]
+
+    def _get_LL_OBJ(self, **kwargs):
+        return LL_EVG(**kwargs)
 
 
 class HL_Event(_HL_Base):
