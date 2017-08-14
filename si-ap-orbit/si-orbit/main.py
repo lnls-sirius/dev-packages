@@ -3,6 +3,7 @@ import time as _time
 import logging as _log
 import epics as _epics
 from siriuspy.diagnostics import bpmsdata as _bpmsdata
+from siriuspy.envars import vaca_prefix as PREFIX
 
 
 with open('VERSION') as f:
@@ -19,17 +20,16 @@ class App:
     def get_database(self):
         """Get the database of the class."""
         db = dict()
-        pre = self.prefix
-        db[pre + 'Log-Mon'] = {'type': 'string', 'value': ''}
-        db[pre + 'NumBPM-Cte'] = {
+        db['Log-Mon'] = {'type': 'string', 'value': ''}
+        db['NumBPM-Cte'] = {
             'type': 'int', 'value': self.nr_bpms}
-        db[pre + 'OrbitX-Mon'] = {
+        db['OrbitX-Mon'] = {
             'type': 'float', 'unit': 'nm',
             'count': self.nr_bpms, 'value': self.nr_bpms*[0]}
-        db[pre + 'OrbitY-Mon'] = {
+        db['OrbitY-Mon'] = {
             'type': 'float', 'unit': 'nm',
             'count': self.nr_bpms, 'value': self.nr_bpms*[0]}
-        db[pre + 'PosS-Cte'] = {
+        db['PosS-Cte'] = {
             'type': 'float', 'unit': 'm',
             'count': self.nr_bpms, 'value': self.bpm_pos}
         return db
@@ -37,13 +37,12 @@ class App:
     def __init__(self, driver=None):
         """Initialize the instance."""
         _log.info('Starting App...')
-        self.bpm_names = _bpmsdata.get_names()
+        self.bpm_names = [PREFIX + n for n in _bpmsdata.get_names()]
         self.bpm_pos = _bpmsdata.get_positions()
         self.nr_bpms = len(self.bpm_names)
         self.orbx = self.nr_bpms*[0.0]  # _np.zeros(self.nr_bpms, dtype=float)
         self.orby = self.nr_bpms*[0.0]  # _np.zeros(self.nr_bpms, dtype=float)
         self._driver = driver
-        self.prefix = 'SI-Glob:AP-Orbit:'
         self._database = self.get_database()
 
     @property
@@ -99,7 +98,7 @@ class App:
         _log.info('All Orbit connection opened.')
 
     def _call_callback(self, pv, value):
-        self._update_driver(self.prefix + pv, value)
+        self._update_driver(pv, value)
 
     def _update_driver(self, pvname, value, **kwargs):
         _log.debug('PV {0:s} updated in driver '.format(pvname) +

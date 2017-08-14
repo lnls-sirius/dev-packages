@@ -5,11 +5,11 @@ import pcaspy as _pcaspy
 import pcaspy.tools as _pcaspy_tools
 import signal as _signal
 import main as _main
+from siriuspy.envars import vaca_prefix as PREFIX
 
 
 INTERVAL = 0.1
 stop_event = False   # _multiprocessing.Event()
-PREFIX = ''
 DB_FILENAME = 'my_pvs.txt'
 LOG_FILENAME = 'si-sofb.log'
 

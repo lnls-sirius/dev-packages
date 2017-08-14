@@ -19,7 +19,6 @@ NR_CORRS = NR_CH + NR_CV + 1
 DANG = 2E-1
 DFREQ = 200
 SECTION = 'SI'
-LL_PREF = 'VAF-'
 
 
 class App:
