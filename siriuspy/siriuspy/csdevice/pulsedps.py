@@ -63,7 +63,7 @@ def get_pulsed_ps_propty_database(pstype):
 def get_pm_propty_database(maname, psdata):
     """Return database for a pulsed magnet."""
     unit = _MASearch.get_splims_unit()[1]
-    precision = 4
+    precision = 6
 
     db = {}
     print(psdata)

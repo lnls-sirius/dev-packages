@@ -258,6 +258,17 @@ class PulsedMagnetPowerSupply(PulsedPowerSupply):
         db[pm_props.StrengthRefMon]["value"] = self.strengthref_mon
         db[pm_props.StrengthMon]["value"] = self.strength_mon
 
+        hilim = self._strobj.conv_tension_2_strength(
+            db[pu_props.TensionSP]["hilim"], self._dipole_current_sp)
+        lolim = self._strobj.conv_tension_2_strength(
+            db[pu_props.TensionSP]["lolim"], self._dipole_current_sp)
+
+        if hilim < lolim:
+            hilim, lolim = lolim, hilim
+
+        db[pm_props.StrengthSP]["hilim"] = hilim
+        db[pm_props.StrengthSP]["lolim"] = lolim
+
         prefixed_db = {}
         for key, value in db.items():
             prefixed_db[prefix + ":" + key] = value
@@ -268,6 +279,7 @@ class PulsedMagnetPowerSupply(PulsedPowerSupply):
         self._data = _PMData(self._maname)
 
     def _init_controller(self):
+        print(self._vaca_prefix)
         self._controller = self.CompositeController(
             [Device(prefix=self._vaca_prefix + psname, delim=":",
                     attrs=pu_props.PulsedPowerSupplyAttrs)

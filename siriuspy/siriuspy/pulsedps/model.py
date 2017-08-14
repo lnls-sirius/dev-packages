@@ -1,10 +1,8 @@
 #!/usr/local/bin/python-sirius
 """PulsedPowerSupply definition."""
-from socket import gethostname
-from getpass import getuser
-
 from epics import Device
 
+from siriuspy.envars import vaca_prefix
 from siriuspy.pulsedps import properties
 from siriuspy.pulsedps.data import PUData as _PUData
 
@@ -168,7 +166,7 @@ class PulsedPowerSupply:
             if vaca_prefix:
                 self._vaca_prefix = vaca_prefix
             else:
-                self._vaca_prefix = getuser() + "-" + gethostname() + "-"
+                self._vaca_prefix = vaca_prefix
 
     def _init_data(self):
         self._data = _PUData(self._psname)
