@@ -64,6 +64,7 @@ class Triggers:
 
     STATES = ('Dsbl', 'Enbl')
     POLARITIES = ('Normal', 'Inverse')
+    DELAY_TYPES = ('Fixed', 'Incr')
 
     def __init__(self):
         """Initialize the Instance."""
