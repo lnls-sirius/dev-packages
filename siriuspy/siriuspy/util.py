@@ -6,7 +6,6 @@ import subprocess as _sp
 import time as _time
 import math as _math
 import datetime as _datetime
-from getpass import getuser
 
 
 def get_signal_names():
@@ -147,18 +146,17 @@ def print_ioc_banner(ioc_name, db, description, version, prefix, ):
 
 
 def save_ioc_pv_list(ioc_name, prefix, db):
-    """Save a list of the pvs being created by given IOC."""
-    user = getuser()
-    path = "/home/{}/sirius-iocs/pvs".format(user)
+    """Save a list of the IOC pvs."""
+    home = _os.path.expanduser('~')
+    path = _os.path.join(home, 'sirius-iocs', 'pvs')
     filename = ioc_name + ".txt"
 
-    if _os.path.exists(path):
-        with open(path + "/" + filename, "w") as fd:
-            fd.write("{}\n".format(prefix[1]))
-            for pv in db:
-                fd.write("{}\n".format(prefix[0] + pv))
-    else:
-        raise FileNotFoundError("{} not found.".format(path))
+    if not _os.path.exists(path):
+        _os.makedirs(path)
+    with open(path + "/" + filename, "w") as fd:
+        fd.write("{}\n".format(prefix[1]))
+        for pv in db:
+            fd.write("{}\n".format(prefix[0] + pv))
 
 
 def conv_splims_labels(label):
