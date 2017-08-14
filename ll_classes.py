@@ -332,6 +332,7 @@ class _LL_TrigEVROUT(_LL_Base):
         map_ = {
             'evg_param': self._set_evg_param,
             'delay': self._set_delay,
+            'delay_type': self._set_delay_type,
             'pulses': self._set_pulses,
             'duration': self._set_duration,
             'state': lambda x: self._set_simple('state', x),
@@ -355,25 +356,39 @@ class _LL_TrigEVROUT(_LL_Base):
             map_.pop(prop)
         return map_
 
-    def _get_delay(self, value, ty=None):
+    def _get_delay(self, value):
         pvs = self._pvs_rb
-        delay = pvs['delay1'].get() or 0.0
-        delay += pvs['delay2'].get() or 0.0
-        delay += (pvs['delay3'].get() or 0.0)*1e-6  # psec
-        return {'delay': delay}
+        delay1 = pvs['delay1'].get() or 0.0
+        delay2 = pvs['delay2'].get() or 0.0
+        delay3 = (pvs['delay3'].get() or 0.0)*1e-6  # psec
+        if (delay2 // D2_STEP) == 31:
+            return {'delay': delay1 + delay3, 'delay_type': 1}
+        else:
+            return {'delay': delay1 + delay2 + delay3, 'delay_type': 0}
 
     def _set_delay(self, value):
         _log.debug(self.channel+' Setting propty = {0:s}, value = {1:s}.'
                    .format('delay', str(value)))
-        delay1 = (value // D1_STEP) * D1_STEP
-        value -= delay1
-        delay2 = (value // D2_STEP) * D2_STEP
-        value -= delay2
-        delay3 = (value // D3_STEP) * D3_STEP * 1e3  # in nanoseconds
-        self._hl_props['delay'] = delay1 + delay2 + delay3/1e3
-        self._ll_props['delay1'] = delay1
-        self._ll_props['delay2'] = delay2
-        self._ll_props['delay3'] = delay3
+        if not self._hl_props['delay_type']:
+            delay1 = (value // D1_STEP) * D1_STEP
+            value -= delay1
+            delay2 = (value // D2_STEP) * D2_STEP
+            value -= delay2
+            delay3 = (value // D3_STEP) * D3_STEP * 1e6  # in nanoseconds
+            self._hl_props['delay'] = delay1 + delay2 + delay3/1e6
+            self._ll_props['delay1'] = delay1
+            self._ll_props['delay2'] = delay2
+            self._ll_props['delay3'] = delay3
+        else:
+            delay1 = (value // D1_STEP) * D1_STEP
+            self._hl_props['delay'] = delay1
+            self._ll_props['delay1'] = delay1
+            self._ll_props['delay2'] = 31 * D2_STEP
+            self._ll_props['delay3'] = 0
+
+    def _set_delay_type(self, value):
+        self._hl_props['delay_type'] = value
+        self._set_delay(self._hl_props['delay'])
 
     def _process_int_trig(self, value):
         if value == self._INTLB:
@@ -461,6 +476,9 @@ class _LL_TrigEVROTP(_LL_TrigEVROUT):
         self._hl_props['delay'] = delay1
         self._ll_props['delay1'] = delay1
 
+    def _set_delay_type(self, value):
+        self._hl_props['delay_type'] = 0
+
 
 class _LL_TrigEVEOUT(_LL_TrigEVROUT):
     _NUM_OPT = 0
@@ -497,6 +515,9 @@ class _LL_TrigAFCCRT(_LL_TrigEVROUT):
         _log.debug(self.channel+' Delay1 = {}.'.format(str(delay1)))
         self._hl_props['delay'] = delay1
         self._ll_props['delay1'] = delay1
+
+    def _set_delay_type(self, value):
+        self._hl_props['delay_type'] = 0
 
     def _process_event(self, evg_par_str):
         if evg_par_str.startswith('Clock'):

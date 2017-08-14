@@ -168,6 +168,7 @@ class HL_Event(_HL_Base):
         return LL_Event(**kwargs)
 
     def set_ext_trig(self, value):
+        """Set the external trigger command."""
         self._hl_props['ext_trig'] = 0
         return self.set_propty('ext_trig', value)
 
@@ -239,6 +240,12 @@ class HL_Trigger(_HL_Base):
         dic_['fun_set_pv'] = lambda x: self.set_propty('delay', x)
         db[pre + 'Delay-SP'] = dic_
 
+        dic_ = {'type': 'enum'}
+        dic_.update(self._ioc_params['delay_type'])
+        db[pre + 'DelayType-Sts'] = _copy.deepcopy(dic_)
+        dic_['fun_set_pv'] = lambda x: self.set_propty('delay_type', x)
+        db[pre + 'DelayType-Sel'] = dic_
+
         dic_ = {'type': 'int', 'unit': 'numer of pulses', 'prec': 0,
                 'lolo': 1, 'low': 1, 'lolim': 1,
                 'hilim': 2001, 'high': 10000, 'hihi': 100000}
@@ -276,26 +283,43 @@ class HL_Trigger(_HL_Base):
         self._interface_props = hl_props
         self._ioc_params = ioc_params
         self._hl_props = {k: v['value'] for k, v in ioc_params.items()}
-        self._set_EVGParams_ENUMS()
+        self._set_non_homogeneous_params()
         self._connect_kwargs = {'evg_params': self._EVGParam_ENUMS}
 
-    def _set_EVGParams_ENUMS(self):
+    def _has_delay_type(self, name):
+        if name.dev_type in ('EVR', 'EVE') and name.propty.startswith('OUT'):
+            return True
+        else:
+            return False
+
+    def _has_clock(self, name):
+        if name.dev_type in {'EVE', 'AFC'}:
+            return True
+        elif name.dev_type == 'EVR':
+            return True if name.propty.startswith('OUT') else False
+        else:
+            raise Exception('Error: ' + name)
+
+    def _set_non_homogeneous_params(self):
         has_clock = []
+        has_delay_type = []
         for name in self._ll_objs_names:
-            if name.dev_type in {'EVE', 'AFC'}:
-                has_clock.append(True)
-            elif name.dev_type == 'EVR':
-                if name.propty.startswith('OUT'):
-                    has_clock.append(True)
-                else:
-                    has_clock.append(False)
-            else:
-                raise Exception('Error: ' + name)
+            has_clock.append(self._has_clock(name))
+            has_delay_type.append(self._has_delay_type(name))
         dic_ = self._ioc_params['evg_param']
+        # EVG_params_ENUMS
         if all(has_clock):
             dic_['enums'] += tuple(sorted(Clocks.HL2LL_MAP.keys()))
+        elif any(has_clock):
+            _log.warning('Some triggers of ' + self.prefix +
+                         ' are connected to unsimiliar low level devices.')
         self._EVGParam_ENUMS = list(dic_['enums'])
-        if any(has_clock):
+        # Delay Typess
+        dic_ = self._ioc_params['delay_type']
+        dic_['enums'] = (Triggers.DELAY_TYPES[0], )
+        if all(has_delay_type):
+            dic_['enums'] = Triggers.DELAY_TYPES
+        elif any(has_delay_type):
             _log.warning('Some triggers of ' + self.prefix +
                          ' are connected to unsimiliar low level devices.')
 
