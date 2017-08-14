@@ -41,7 +41,7 @@ class Events:
         LL_EVENTS.append(LL_TMP.format(i))
 
     MODES = ('Disabled', 'Continuous', 'Injection', 'External')
-    DELAY_TYPES = ('Incr', 'Fixed')
+    DELAY_TYPES = ('Fixed', 'Incr')
 
 
 class Clocks:
