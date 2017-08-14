@@ -2,7 +2,7 @@
 """PulsedPowerSupply definition."""
 from epics import Device
 
-from siriuspy.envars import vaca_prefix
+from siriuspy import envars
 from siriuspy.pulsedps import properties
 from siriuspy.pulsedps.data import PUData as _PUData
 
@@ -166,7 +166,7 @@ class PulsedPowerSupply:
             if vaca_prefix:
                 self._vaca_prefix = vaca_prefix
             else:
-                self._vaca_prefix = vaca_prefix
+                self._vaca_prefix = envars.vaca_prefix
 
     def _init_data(self):
         self._data = _PUData(self._psname)

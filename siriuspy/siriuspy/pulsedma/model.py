@@ -92,7 +92,7 @@ class PulsedMagnetPowerSupply(PulsedPowerSupply):
             for device in self._devices:
                 device.add_callback(attr, callback)
 
-    def __init__(self, maname, use_vaca=True, vaca_prefix="", callback=None):
+    def __init__(self, maname, use_vaca=False, vaca_prefix="", callback=None):
         """Class constructor."""
         self._set_vaca_prefix(use_vaca, vaca_prefix)
 
