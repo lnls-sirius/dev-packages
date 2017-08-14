@@ -337,7 +337,7 @@ class _LL_TrigEVROUT(_LL_Base):
             'int_trig': self.prefix + self._OUTLB + 'IntChan-Sts',
             'event': self.prefix + self._INTLB + 'Event-Sts',
             'delay1': self.prefix + self._INTLB + 'Delay-RB',
-            'delay2': self.prefix + self._OUTLB + 'Delay-RB',
+            'delay2': self.prefix + self._OUTLB + 'RFDelay-RB',
             'delay3': self.prefix + self._OUTLB + 'FineDelay-RB',
             'pulses': self.prefix + self._INTLB + 'Pulses-RB',
             'width': self.prefix + self._INTLB + 'Width-RB',
@@ -385,7 +385,7 @@ class _LL_TrigEVROUT(_LL_Base):
             delay = (delay1*BDEL + delay3*FDEL) * 1e6
             return {'delay': delay, 'delay_type': 1}
         else:
-            delay = (delay1*BDEL + delay2*FDEL + delay3*FDEL) * 1e6
+            delay = (delay1*BDEL + delay2*RDEL + delay3*FDEL) * 1e6
             return {'delay': delay, 'delay_type': 0}
 
     def _set_delay(self, value):
@@ -477,7 +477,7 @@ class _LL_TrigEVROUT(_LL_Base):
     def _set_pulses(self, value):
         self._hl_props['pulses'] = value
         self._ll_props['pulses'] = value
-        self._ll_props['width'] = self._hl_props['duration']*1e3/value
+        self._set_duration(self._hl_props['duration'])
 
 
 class _LL_TrigEVROTP(_LL_TrigEVROUT):
@@ -490,15 +490,19 @@ class _LL_TrigEVROTP(_LL_TrigEVROUT):
 
     def _get_LLPROP_FUNS(self):
         map_ = super()._get_LLPROP_FUNS()
-        map_['delay1'] = lambda x: {'delay': x}
+        map_['delay1'] = self._get_delay
         return map_
+
+    def _get_delay(self, value):
+        return {'delay': value * BDEL * 1e6}
 
     def _set_delay(self, value):
         _log.debug(self.channel+' Setting propty = {0:s}, value = {1:s}.'
                    .format('delay', str(value)))
-        delay1 = (value // BDEL) * BDEL
+        value *= 1e-6
+        delay1 = round(value // BDEL)
         _log.debug(self.channel+' Delay1 = {}.'.format(str(delay1)))
-        self._hl_props['delay'] = delay1
+        self._hl_props['delay'] = delay1 * BDEL * 1e6
         self._ll_props['delay1'] = delay1
 
     def _set_delay_type(self, value):
@@ -530,15 +534,19 @@ class _LL_TrigAFCCRT(_LL_TrigEVROUT):
     def _get_LLPROP_FUNS(self):
         map_ = super()._get_LLPROP_FUNS()
         map_['event'] = self._process_event
-        map_['delay1'] = lambda x: {'delay': x}
+        map_['delay1'] = self._get_delay
         return map_
+
+    def _get_delay(self, value):
+        return {'delay': value * BDEL * 1e6}
 
     def _set_delay(self, value):
         _log.debug(self.channel+' Setting propty = {0:s}, value = {1:s}.'
                    .format('delay', str(value)))
-        delay1 = (value // BDEL) * BDEL
+        value *= 1e-6
+        delay1 = round(value // BDEL)
         _log.debug(self.channel+' Delay1 = {}.'.format(str(delay1)))
-        self._hl_props['delay'] = delay1
+        self._hl_props['delay'] = delay1 * BDEL * 1e6
         self._ll_props['delay1'] = delay1
 
     def _set_delay_type(self, value):
