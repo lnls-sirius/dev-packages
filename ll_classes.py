@@ -267,11 +267,11 @@ class LL_EVG(_LL_Base):
 
     def _set_frequency(self, value):
         n = round(ACFREQ/value)
-        self._hl_props['frequency'] = n * ACFREQ
+        self._hl_props['frequency'] = ACFREQ / n
         self._ll_props['frequency'] = n
 
     def _get_frequency(self, value):
-        return {'frequency': value * ACFREQ}
+        return {'frequency': ACFREQ / value}
 
 
 class LL_Clock(_LL_Base):
@@ -303,12 +303,12 @@ class LL_Clock(_LL_Base):
 
     def _set_frequency(self, value):
         value *= 1e3  # kHz
-        n = round(BFREQ/value)
-        self._hl_props['frequency'] = n * BFREQ * 1e-3
+        n = round(self._base_freq/value)
+        self._hl_props['frequency'] = self._base_freq / n * 1e-3
         self._ll_props['frequency'] = n
 
     def _get_frequency(self, value):
-        return {'frequency': value * BFREQ * 1e-3}
+        return {'frequency': self._base_freq / value * 1e-3}
 
 
 class LL_Event(_LL_Base):
@@ -330,7 +330,7 @@ class LL_Event(_LL_Base):
 
     def _get_HLPROP_FUNS(self):
         return {
-            'delay': lambda x: self._set_simple('delay', x),
+            'delay': self._set_delay,
             'mode': lambda x: self._set_simple('mode', x),
             'delay_type': lambda x: self._set_simple('delay_type', x),
             'ext_trig': lambda x: self._set_simple('ext_trig', x),
@@ -338,7 +338,7 @@ class LL_Event(_LL_Base):
 
     def _get_LLPROP_FUNS(self):
         return {
-            'delay': lambda x: {'delay': x},
+            'delay': self._get_delay,
             'mode': lambda x: {'mode': x},
             'delay_type': lambda x: {'delay_type': x},
             'ext_trig': lambda x: {'ext_trig': x},
@@ -346,12 +346,12 @@ class LL_Event(_LL_Base):
 
     def _set_delay(self, value):
         value *= 1e-6  # us
-        n = round(value / BDEL)
-        self._hl_props['delay'] = n * BDEL * 1e6
+        n = round(value / self._base_del)
+        self._hl_props['delay'] = n * self._base_del * 1e6
         self._ll_props['delay'] = n
 
     def _get_delay(self, value):
-        return {'delay': value * BDEL * 1e6}
+        return {'delay': value * self._base_del * 1e6}
 
 
 class _LL_TrigEVROUT(_LL_Base):
@@ -423,29 +423,33 @@ class _LL_TrigEVROUT(_LL_Base):
         delay2 = pvs['delay2'].get() or 0
         delay3 = pvs['delay3'].get() or 0
         if delay2 == 31:
-            delay = (delay1*BDEL + delay3*FDEL) * 1e6
+            delay = (delay1*self._base_del + delay3*FDEL) * 1e6
             return {'delay': delay, 'delay_type': 1}
         else:
-            delay = (delay1*BDEL + delay2*RDEL + delay3*FDEL) * 1e6
+            delay = (delay1*self._base_del +
+                     delay2*self._rf_del +
+                     delay3*FDEL) * 1e6
             return {'delay': delay, 'delay_type': 0}
 
     def _set_delay(self, value):
-        _log.debug(self.channel+' Setting propty = {0:s}, value = {1:s}.'
-                   .format('delay', str(value)))
+        _log.debug(self.channel+' Setting propty =' +
+                   ' {0:s}, value = {1:s}.'.format('delay', str(value)))
         value *= 1e-6  # us
-        delay1 = value // BDEL
+        delay1 = value // self._base_del
         self._ll_props['delay1'] = delay1
         if not self._hl_props['delay_type']:
-            value -= delay1 * BDEL
-            delay2 = value // RDEL
-            value -= delay2 * RDEL
-            delay3 = value // FDEL
-            delay = (delay1*BDEL + delay2*FDEL + delay3*FDEL) * 1e6
+            value -= delay1 * self._base_del
+            delay2 = value // self._rf_del
+            value -= delay2 * self._rf_del
+            delay3 = round(value / FDEL)
+            delay = (delay1*self._base_del +
+                     delay2*self._rf_del +
+                     delay3*FDEL) * 1e6
             self._hl_props['delay'] = delay
             self._ll_props['delay2'] = delay2
             self._ll_props['delay3'] = delay3
         else:
-            self._hl_props['delay'] = delay1 * BDEL * 1e6
+            self._hl_props['delay'] = delay1 * self._base_del * 1e6
             self._ll_props['delay2'] = 31
             self._ll_props['delay3'] = 0
 
@@ -506,13 +510,14 @@ class _LL_TrigEVROUT(_LL_Base):
                 self._ll_props['int_trig'] = self._INTLB
 
     def _get_duration(self, width):
-        return {'duration': width * BDEL * self._hl_props['pulses'] * 1e3}
+        return {'duration': width*self._base_del*self._hl_props['pulses']*1e3}
 
     def _set_duration(self, value):
         value *= 1e-3  # ms
-        n = round(value / BDEL / self._hl_props['pulses'])
+        pul = self._hl_props['pulses']
+        n = round(value / self._base_del / pul)
         n = n if n >= 1 else 1
-        self._hl_props['duration'] = n * BDEL * self._hl_props['pulses'] * 1e3
+        self._hl_props['duration'] = n * self._base_del * pul * 1e3
         self._ll_props['width'] = n
 
     def _set_pulses(self, value):
@@ -535,15 +540,15 @@ class _LL_TrigEVROTP(_LL_TrigEVROUT):
         return map_
 
     def _get_delay(self, value):
-        return {'delay': value * BDEL * 1e6}
+        return {'delay': value * self._base_del * 1e6}
 
     def _set_delay(self, value):
         _log.debug(self.channel+' Setting propty = {0:s}, value = {1:s}.'
                    .format('delay', str(value)))
         value *= 1e-6
-        delay1 = round(value // BDEL)
+        delay1 = round(value // self._base_del)
         _log.debug(self.channel+' Delay1 = {}.'.format(str(delay1)))
-        self._hl_props['delay'] = delay1 * BDEL * 1e6
+        self._hl_props['delay'] = delay1 * self._base_del * 1e6
         self._ll_props['delay1'] = delay1
 
     def _set_delay_type(self, value):
@@ -579,15 +584,15 @@ class _LL_TrigAFCCRT(_LL_TrigEVROUT):
         return map_
 
     def _get_delay(self, value):
-        return {'delay': value * BDEL * 1e6}
+        return {'delay': value * self._base_del * 1e6}
 
     def _set_delay(self, value):
         _log.debug(self.channel+' Setting propty = {0:s}, value = {1:s}.'
                    .format('delay', str(value)))
         value *= 1e-6
-        delay1 = round(value // BDEL)
+        delay1 = round(value // self._base_del)
         _log.debug(self.channel+' Delay1 = {}.'.format(str(delay1)))
-        self._hl_props['delay'] = delay1 * BDEL * 1e6
+        self._hl_props['delay'] = delay1 * self._base_del * 1e6
         self._ll_props['delay1'] = delay1
 
     def _set_delay_type(self, value):

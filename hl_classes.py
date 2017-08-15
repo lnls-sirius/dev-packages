@@ -119,13 +119,13 @@ class HL_EVG(_HL_Base):
         """Get the database."""
         db = dict()
         pre = self.prefix
-        db[pre + 'RepRate-SP'] = {
-            'type': 'float', 'value': self._hl_props['frequency'],
-            'unit': 'Hz', 'prec': 5,
-            'fun_set_pv': lambda x: self.set_propty('frequency', x)}
-        db[pre + 'RepRate-RB'] = {
-            'type': 'float', 'value': self._hl_props['frequency'],
-            'unit': 'Hz', 'prec': 5}
+        dic_ = {'type': 'float', 'value': self._hl_props['frequency'],
+                'unit': 'Hz', 'prec': 6,
+                'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+                'hilim': 60, 'high': 60, 'hihi': 60}
+        db[pre + 'RepRate-RB'] = _copy.deepcopy(dic_)
+        dic_['fun_set_pv'] = lambda x: self.set_propty('frequency', x)
+        db[pre + 'RepRate-SP'] = dic_
         return super().get_database(db)
 
     def __init__(self, callback):
@@ -152,7 +152,7 @@ class HL_Event(_HL_Base):
         db = dict()
         pre = self.prefix
 
-        dic_ = {'type': 'float', 'unit': 'us', 'prec': 3,
+        dic_ = {'type': 'float', 'unit': 'us', 'prec': 4,
                 'value': self._hl_props['delay'],
                 'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
                 'hilim': 500000, 'high': 1000000, 'hihi': 10000000}
@@ -212,13 +212,15 @@ class HL_Clock(_HL_Base):
         """Get the database."""
         db = dict()
         pre = self.prefix
-        db[pre + 'Freq-SP'] = {
+        dic_ = {
             'type': 'float', 'value': self._hl_props['frequency'],
-            'unit': 'kHz', 'prec': 10,
-            'fun_set_pv': lambda x: self.set_propty('frequency', x)}
-        db[pre + 'Freq-RB'] = {
-            'type': 'float', 'value': self._hl_props['frequency'],
-            'unit': 'kHz', 'prec': 10}
+            'unit': 'kHz', 'prec': 6,
+            'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+            'hilim': 125000000, 'high': 125000000, 'hihi': 125000000}
+        db[pre + 'Freq-RB'] = _copy.deepcopy(dic_)
+        dic_['fun_set_pv'] = lambda x: self.set_propty('frequency', x)
+        db[pre + 'Freq-SP'] = dic_
+
         db[pre + 'State-Sel'] = {
             'type': 'enum', 'enums': Clocks.STATES,
             'value': self._hl_props['state'],
@@ -264,7 +266,7 @@ class HL_Trigger(_HL_Base):
         dic_['fun_set_pv'] = lambda x: self.set_propty('evg_param', x)
         db[pre + 'EVGParam-Sel'] = dic_
 
-        dic_ = {'type': 'float', 'unit': 'us', 'prec': 4,
+        dic_ = {'type': 'float', 'unit': 'us', 'prec': 6,
                 'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
                 'hilim': 500000, 'high': 1000000, 'hihi': 10000000}
         dic_.update(self._ioc_params['delay'])
@@ -278,7 +280,7 @@ class HL_Trigger(_HL_Base):
         dic_['fun_set_pv'] = lambda x: self.set_propty('delay_type', x)
         db[pre + 'DelayType-Sel'] = dic_
 
-        dic_ = {'type': 'int', 'unit': 'numer of pulses', 'prec': 0,
+        dic_ = {'type': 'int', 'unit': 'numer of pulses',
                 'lolo': 1, 'low': 1, 'lolim': 1,
                 'hilim': 2001, 'high': 10000, 'hihi': 100000}
         dic_.update(self._ioc_params['pulses'])
