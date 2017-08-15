@@ -11,9 +11,6 @@ from siriuspy.timesys.time_data import Clocks, Events
 from siriuspy.timesys.time_data import RF_FREQUENCY as RFFREQ
 from siriuspy.timesys.time_data import RF_DIVISION as RFDIV
 from siriuspy.timesys.time_data import AC_FREQUENCY as ACFREQ
-from siriuspy.timesys.time_data import BASE_FREQUENCY as BFREQ
-from siriuspy.timesys.time_data import BASE_DELAY as BDEL
-from siriuspy.timesys.time_data import RF_DELAY as RDEL
 from siriuspy.timesys.time_data import FINE_DELAY as FDEL
 
 _TIMEOUT = 0.05
@@ -81,12 +78,12 @@ class _LL_Base:
         self._rf_freq = RFFREQ
         self._rf_div = RFDIV
         self._rf_freq_pv = _epics.PV(LL_PREFIX + 'SI-03SP:RF-SRFCav:Freq-SP',
-                                     callback=self._set_base_freq,
                                      connection_callback=_TIMEOUT)
         self._rf_div_pv = _epics.PV(LL_PREFIX + 'AS-Glob:TI-EVG:RFDiv-SP',
-                                    callback=self._set_base_freq,
                                     connection_callback=_TIMEOUT)
         self._set_base_freq()
+        self._rf_freq_pv.add_callback(self._set_base_freq)
+        self._rf_div_pv.add_callback(self._set_base_freq)
         self._ll_props = dict()
         self.timer = None
         self._initialize_ll_props()
