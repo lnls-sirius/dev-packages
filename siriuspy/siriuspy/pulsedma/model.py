@@ -133,6 +133,7 @@ class PulsedMagnetPowerSupply(PulsedPowerSupply):
             self._dipole_controller.get("CurrentRef-Mon")
         self._dipole_current_mon = self._dipole_controller.get("Current-Mon")
         # Set callback to keep pu properties updated
+        self._create_database()
         self._update_strengths()
         self._set_pv_callbacks()
 
@@ -239,38 +240,33 @@ class PulsedMagnetPowerSupply(PulsedPowerSupply):
         """Return strength set point."""
         return self._strength_mon
 
+    def _create_database(self):
+        self.db = self._data.get_database(self._data.psnames[0])
+
+        self.db[pu_props.PwrStateSel]["value"] = self.pwrstate_sel
+        self.db[pu_props.PwrStateSts]["value"] = self.pwrstate_sts
+        self.db[pu_props.EnablePulsesSel]["value"] = self.enablepulses_sel
+        self.db[pu_props.EnablePulsesSts]["value"] = self.enablepulses_sts
+        self.db[pu_props.ResetCmd]["value"] = self.reset_cmd
+        self.db[pu_props.CtrlMode]["value"] = self.ctrlmode_mon
+        self.db[pu_props.ExternalInterlock]["value"] = self.intlk_mon
+        self.db[pu_props.TensionSP]["value"] = self.tension_sp
+        self.db[pu_props.TensionRB]["value"] = self.tension_rb
+        self.db[pu_props.TensionRefMon]["value"] = self.tensionref_mon
+        self.db[pu_props.TensionMon]["value"] = self.tension_mon
+        self.db[pm_props.StrengthSP]["value"] = self.strength_sp
+        self.db[pm_props.StrengthRB]["value"] = self.strength_rb
+        self.db[pm_props.StrengthRefMon]["value"] = self.strengthref_mon
+        self.db[pm_props.StrengthMon]["value"] = self.strength_mon
+
+        self._calc_new_limits()
+
+        self.db[pm_props.StrengthSP]["hilim"] = self.hilim
+        self.db[pm_props.StrengthSP]["lolim"] = self.lolim
+
     def _get_database(self, prefix):
-        db = self._data.get_database(self._data.psnames[0])
-
-        db[pu_props.PwrStateSel]["value"] = self.pwrstate_sel
-        db[pu_props.PwrStateSts]["value"] = self.pwrstate_sts
-        db[pu_props.EnablePulsesSel]["value"] = self.enablepulses_sel
-        db[pu_props.EnablePulsesSts]["value"] = self.enablepulses_sts
-        db[pu_props.ResetCmd]["value"] = self.reset_cmd
-        db[pu_props.CtrlMode]["value"] = self.ctrlmode_mon
-        db[pu_props.ExternalInterlock]["value"] = self.intlk_mon
-        db[pu_props.TensionSP]["value"] = self.tension_sp
-        db[pu_props.TensionRB]["value"] = self.tension_rb
-        db[pu_props.TensionRefMon]["value"] = self.tensionref_mon
-        db[pu_props.TensionMon]["value"] = self.tension_mon
-        db[pm_props.StrengthSP]["value"] = self.strength_sp
-        db[pm_props.StrengthRB]["value"] = self.strength_rb
-        db[pm_props.StrengthRefMon]["value"] = self.strengthref_mon
-        db[pm_props.StrengthMon]["value"] = self.strength_mon
-
-        hilim = self._strobj.conv_tension_2_strength(
-            db[pu_props.TensionSP]["hilim"], self._dipole_current_sp)
-        lolim = self._strobj.conv_tension_2_strength(
-            db[pu_props.TensionSP]["lolim"], self._dipole_current_sp)
-
-        if hilim < lolim:
-            hilim, lolim = lolim, hilim
-
-        db[pm_props.StrengthSP]["hilim"] = hilim
-        db[pm_props.StrengthSP]["lolim"] = lolim
-
         prefixed_db = {}
-        for key, value in db.items():
+        for key, value in self.db.items():
             prefixed_db[prefix + ":" + key] = value
 
         return prefixed_db
@@ -314,6 +310,15 @@ class PulsedMagnetPowerSupply(PulsedPowerSupply):
             pvname = self._maname + ":" + pfield
             self._callback(pvname, value, **kwargs)
 
+    def _calc_new_limits(self):
+        self.hilim = self._strobj.conv_tension_2_strength(
+            self.db[pu_props.TensionSP]["hilim"], self._dipole_current_sp)
+        self.lolim = self._strobj.conv_tension_2_strength(
+            self.db[pu_props.TensionSP]["lolim"], self._dipole_current_sp)
+
+        if self.hilim < self.lolim:
+            self.hilim, self.lolim = self.lolim, self.hilim
+
     def _dipole_changed_callback(self, pvname, value, **kwargs):
         pfield = pvname.split(":")[-1]
 
@@ -321,6 +326,7 @@ class PulsedMagnetPowerSupply(PulsedPowerSupply):
 
         if pfield == "Current-SP":
             self._dipole_current_sp = value
+            self._calc_new_limits()
             self._threads.append(
                 Thread(target=self._update_strength,
                        args=(pm_props.StrengthSP,
@@ -401,7 +407,8 @@ class PulsedMagnetPowerSupply(PulsedPowerSupply):
                 self._strobj.conv_tension_2_strength(tension, dipole_current)
             strength = self._strength_mon
 
-        self._issue_callback(pfield, strength)
+        self._issue_callback(pfield, strength,
+                             hilim=self.hilim, lolim=self.lolim)
 
     def _update_strengths(self):
         self._update_strength(pm_props.StrengthSP, self.tension_sp,
