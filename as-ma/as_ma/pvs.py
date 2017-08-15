@@ -118,7 +118,7 @@ _ioc_dict = {
                               'sub_section': '\d\d.*',
                               'discipline': 'MA',
                               'device': 'Q.*'},
-    'as-pm':                 {'name': 'as-pu',
+    'as-pm':                 {'name': 'as-pm',
                               'type': 'Glob:PM',
                               'prefix_sector': '',
                               'section': '.*',
