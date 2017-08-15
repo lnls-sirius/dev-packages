@@ -1,6 +1,8 @@
 """Main Module of the program."""
 import time as _time
 import logging as _log
+from numpy import zeros as _zeros
+from numpy.random import uniform as _rand
 import epics as _epics
 from siriuspy.diagnostics import bpmsdata as _bpmsdata
 from siriuspy.envars import vaca_prefix as PREFIX
@@ -12,6 +14,7 @@ _TIMEOUT = 0.05
 
 TINY_INTERVAL = 0.001
 NUM_TIMEOUT = 2000
+NOISE_LEVEL = 80
 
 
 class App:
@@ -40,9 +43,10 @@ class App:
         self.bpm_names = [PREFIX + n for n in _bpmsdata.get_names()]
         self.bpm_pos = _bpmsdata.get_positions()
         self.nr_bpms = len(self.bpm_names)
-        self.orbx = self.nr_bpms*[0.0]  # _np.zeros(self.nr_bpms, dtype=float)
-        self.orby = self.nr_bpms*[0.0]  # _np.zeros(self.nr_bpms, dtype=float)
+        self.orbx = _zeros(self.nr_bpms, dtype=float)
+        self.orby = _zeros(self.nr_bpms, dtype=float)
         self._driver = driver
+        self._add_noise = False
         self._database = self.get_database()
 
     @property
@@ -54,6 +58,16 @@ class App:
     def driver(self, driver):
         _log.debug("Setting App's driver.")
         self._driver = driver
+
+    @property
+    def add_noise(self):
+        """Define if noise will be added to the read values."""
+        return self._add_noise
+
+    @add_noise.setter
+    def add_noise(self, value):
+        _log.debug("Setting App's add_noise.")
+        self._add_noise = bool(value)
 
     def write(self, reason, value):
         """Write the PV on memory."""
@@ -131,5 +145,10 @@ class App:
             pvy = self.pvs_posy[name]
             self.orbx[i] = pvx.value if pvx.connected else 0.0
             self.orby[i] = pvy.value if pvy.connected else 0.0
+
+        if self._add_noise:
+            self.orbx += NOISE_LEVEL * _rand(-0.5, 0.5, self.nr_bpms)
+            self.orby += NOISE_LEVEL * _rand(-0.5, 0.5, self.nr_bpms)
+
         self._call_callback('OrbitX-Mon', self.orbx)
         self._call_callback('OrbitY-Mon', self.orby)
