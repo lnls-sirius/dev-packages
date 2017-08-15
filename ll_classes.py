@@ -8,6 +8,8 @@ from siriuspy.envars import vaca_prefix as LL_PREFIX
 from siriuspy.namesys import SiriusPVName as _PVName
 from siriuspy.timesys.time_data import IOs
 from siriuspy.timesys.time_data import Clocks, Events
+from siriuspy.timesys.time_data import RF_FREQUENCY as RFFREQ
+from siriuspy.timesys.time_data import RF_DIVISION as RFDIV
 from siriuspy.timesys.time_data import AC_FREQUENCY as ACFREQ
 from siriuspy.timesys.time_data import BASE_FREQUENCY as BFREQ
 from siriuspy.timesys.time_data import BASE_DELAY as BDEL
@@ -76,6 +78,15 @@ class _LL_Base:
                                for key, val in self._LLPROP_2_PVRB.items()}
         self.callback = callback
         self._hl_props = init_hl_props
+        self._rf_freq = RFFREQ
+        self._rf_div = RFDIV
+        self._rf_freq_pv = _epics.PV(LL_PREFIX + 'SI-03SP:RF-SRFCav:Freq-SP',
+                                     callback=self._set_base_freq,
+                                     connection_callback=_TIMEOUT)
+        self._rf_div_pv = _epics.PV(LL_PREFIX + 'AS-Glob:TI-EVG:RFDiv-SP',
+                                    callback=self._set_base_freq,
+                                    connection_callback=_TIMEOUT)
+        self._set_base_freq()
         self._ll_props = dict()
         self.timer = None
         self._initialize_ll_props()
@@ -111,6 +122,13 @@ class _LL_Base:
         else:
             self.timer = _Timer(_INTERVAL, self._force_equal, niter=10)
             self.timer.start()
+
+    def _set_base_freq(self, **kwargs):
+        self._rf_freq = self._rf_freq_pv.get() or self._rf_freq
+        self._rf_div = self._rf_div_pv.get() or self._rf_div
+        self._base_freq = self._rf_freq / self._rf_div
+        self._base_del = 1/self._base_freq
+        self._rf_del = self._base_del / 20
 
     def _get_setpoint_name(self, pvname):
         """Convert readback PV names to setpoint PV names."""
