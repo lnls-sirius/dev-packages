@@ -3,7 +3,8 @@
 import uuid as _uuid
 from siriuspy.namesys import SiriusPVName as _PVName
 from . import device_models as _device_models
-from ..time_data import Connections as _Connections
+from siriuspy.timesys.time_data import Connections as _Connections
+from siriuspy.timesys.time_data import RF_DIVISION as RFDIV
 
 
 class TimingSimulation(_device_models.CallBack):
@@ -43,7 +44,7 @@ class TimingSimulation(_device_models.CallBack):
         self.evrs = dict()
         for dev in self.EVRs:
             pref = prefix + dev + ':'
-            evr = _device_models.EVRIOC(rf_freq/_device_models.RF_FREQ_DIV,
+            evr = _device_models.EVRIOC(rf_freq/RFDIV,
                                         callbacks={self.uuid: self._callback},
                                         prefix=pref)
             self.evg.add_pending_devices_callback(evr.uuid, evr.receive_events)
@@ -52,7 +53,7 @@ class TimingSimulation(_device_models.CallBack):
         self.eves = dict()
         for dev in self.EVEs:
             pref = prefix + dev + ':'
-            eve = _device_models.EVEIOC(rf_freq/_device_models.RF_FREQ_DIV,
+            eve = _device_models.EVEIOC(rf_freq/RFDIV,
                                         callbacks={self.uuid: self._callback},
                                         prefix=pref)
             self.evg.add_pending_devices_callback(eve.uuid, eve.receive_events)
@@ -61,7 +62,7 @@ class TimingSimulation(_device_models.CallBack):
         self.afcs = dict()
         for dev in self.AFCs:
             pref = prefix + dev + ':'
-            afc = _device_models.AFCIOC(rf_freq/_device_models.RF_FREQ_DIV,
+            afc = _device_models.AFCIOC(rf_freq/RFDIV,
                                         callbacks={self.uuid: self._callback},
                                         prefix=pref)
             self.evg.add_pending_devices_callback(afc.uuid, afc.receive_events)

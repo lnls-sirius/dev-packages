@@ -4,11 +4,9 @@ import time as _time
 import copy as _copy
 import uuid as _uuid
 from threading import Thread as _Thread
-from ..time_data import Events, Clocks, Triggers
-
-_PwrFreq = 60
-_FINE_DELAY_STEP = 5e-12
-RF_FREQ_DIV = 4
+from siriuspy.timesys.time_data import Events, Clocks, Triggers
+from siriuspy.timesys.time_data import AC_FREQUENCY as _PwrFreq
+from siriuspy.timesys.time_data import FINE_DELAY as _FINE_DELAY_STEP
 
 _EVENT_SIM_TMP = 'Ev{0:02x}'
 _CLOCK_SIM_TMP = 'Cl{0:1d}'
@@ -176,12 +174,13 @@ class _EVGSim(_BaseSim):
         self._cyclic_injection = 0
         self._bucket_list = [0.0]*864
         self._repetition_rate = 30
+        self._rf_division = 4
         self.events = list()
         for i in Events.LL_CODES:
-            self.events.append(_EventSim(self.base_freq/RF_FREQ_DIV))
+            self.events.append(_EventSim(self.base_freq/self._rf_division))
         self.clocks = list()
         for i in sorted(Clocks.LL2HL_MAP.keys()):
-            self.clocks.append(_ClockSim(self.base_freq/RF_FREQ_DIV))
+            self.clocks.append(_ClockSim(self.base_freq/self._rf_division))
 
     def __setattr__(self, attr, value):
         if attr == 'injection':
@@ -328,7 +327,7 @@ class _ClockIOC(_BaseIOC):
     @classmethod
     def get_database(cls, prefix=''):
         db = dict()
-        dic_ = {'type': 'int', 'value': 499792458,
+        dic_ = {'type': 'int', 'value': 124948114,
                 'lolo': 1, 'low': 1, 'lolim': 1,
                 'hilim': 4294967296, 'high': 4294967296, 'hihi': 4294967296}
         db[prefix + 'MuxDiv-SP'] = _copy.deepcopy(dic_)
@@ -370,8 +369,10 @@ class EVGIOC(_BaseIOC):
         'cyclic_injection_rb': 'InjectionCyc-Sts',
         'continuous_sp': 'ContinuousState-Sel',
         'continuous_rb': 'ContinuousState-Sts',
-        'repetition_rate_sp': 'RepRate-SP',
-        'repetition_rate_rb': 'RepRate-RB',
+        'repetition_rate_sp': 'ACDiv-SP',
+        'repetition_rate_rb': 'ACDiv-RB',
+        'rf_division_sp': 'RFDiv-SP',
+        'rf_division_rb': 'RFDiv-RB',
         'bucket_list_sp': 'BucketList-SP',
         'bucket_list_rb': 'BucketList-RB',
         }
@@ -402,6 +403,11 @@ class EVGIOC(_BaseIOC):
                 'hilim': 60, 'high': 60, 'hihi': 60}
         db[p + 'ACDiv-SP'] = _copy.deepcopy(dic_)
         db[p + 'ACDiv-RB'] = dic_
+        dic_ = {'type': 'int', 'value': 4,
+                'lolo': 1, 'low': 1, 'lolim': 1,
+                'hilim': 10, 'high': 20, 'hihi': 20}
+        db[p + 'RFDiv-SP'] = _copy.deepcopy(dic_)
+        db[p + 'RFDiv-RB'] = dic_
         for clc in Clocks.LL2HL_MAP.keys():
             p = prefix + clc
             db.update(_ClockIOC.get_database(p))
@@ -422,6 +428,8 @@ class EVGIOC(_BaseIOC):
             'continuous_rb': lambda x: x,
             'repetition_rate_sp': lambda x: int(x),
             'repetition_rate_rb': lambda x: x,
+            'rf_division_sp': lambda x: int(x),
+            'rf_division_rb': lambda x: x,
             'bucket_list_sp': self._bucket_list_setter,
             'bucket_list_rb': lambda x: x,
             }
@@ -433,7 +441,7 @@ class EVGIOC(_BaseIOC):
         for i, ev in enumerate(Events.LL_EVENTS):
             cntler = self._control.events[i]
             self.events[ev] = _EventIOC(
-                self.base_freq/RF_FREQ_DIV,
+                self.base_freq/self._control._rf_division,
                 callbacks={self.uuid: self._ioc_callback},
                 prefix=ev,
                 control=cntler)
@@ -441,7 +449,7 @@ class EVGIOC(_BaseIOC):
         for i, clc in enumerate(sorted(Clocks.LL2HL_MAP.keys())):
             cntler = self._control.clocks[i]
             self.clocks[clc] = _ClockIOC(
-                self.base_freq/RF_FREQ_DIV,
+                self.base_freq/self._control._rf_division,
                 callbacks={self.uuid: self._ioc_callback},
                 prefix=clc,
                 control=cntler)
@@ -468,6 +476,8 @@ class EVGIOC(_BaseIOC):
             self.bucket_list_rb = value
         elif propty == 'repetition_rate':
             self.repetition_rate_rb = value
+        elif propty == 'rf_division':
+            self.rf_division_rb = value
         elif propty == 'injection':
             self.injection_rb = value
             if value != self._injection_sp:
