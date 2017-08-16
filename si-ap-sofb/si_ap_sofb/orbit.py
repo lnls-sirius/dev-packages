@@ -5,6 +5,7 @@ import os as _os
 import numpy as _np
 import epics as _epics
 from siriuspy.envars import vaca_prefix as LL_PREF
+from si_ap_sofb.si_ap_sofb import SECTION
 
 with open('VERSION') as f:
     __version__ = f.read()
@@ -21,7 +22,6 @@ NR_CORRS = NR_CH + NR_CV + 1
 MTX_SZ = (2*NR_BPMS) * NR_CORRS
 DANG = 2E-1
 DFREQ = 200
-SECTION = 'SI'
 LL_PREF += SECTION + '-Glob:AP-Orbit:'
 
 

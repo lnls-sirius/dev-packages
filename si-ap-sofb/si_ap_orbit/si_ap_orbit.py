@@ -1,22 +1,23 @@
 #!/usr/bin/env python3
 """IOC Module."""
+import sys as _sys
 import logging as _log
 import pcaspy as _pcaspy
 import pcaspy.tools as _pcaspy_tools
 import signal as _signal
 import main as _main
+from siriuspy.util import get_last_commit_hash as _get_version
 from siriuspy.envars import vaca_prefix as PREFIX
 
-
+__version__ = _get_version()
 INTERVAL = 0.1
 stop_event = False  # _multiprocessing.Event()
-PREFIX = 'fac' + PREFIX[8:] + 'SI-Glob:AP-Orbit:'
-DB_FILENAME = 'my_pvs.txt'
-LOG_FILENAME = 'si-orbit.log'
+PREFIX += 'SI-Glob:AP-Orbit:'
+DB_FILENAME = 'pvs/si-ap-orbit-pvs.txt'
 
 
 def _stop_now(signum, frame):
-    _log.info('SIGINT received')
+    _log.info('SIGNAL received')
     global stop_event
     stop_event = True
 
@@ -49,24 +50,27 @@ class _PCASDriver(_pcaspy.Driver):
         return True
 
 
-def run():
+def run(add_noise=False, debug=False):
     """Start the IOC."""
+    level = _log.DEBUG if debug else _log.INFO
     fmt = ('%(levelname)7s | %(asctime)s | ' +
            '%(module)15s.%(funcName)20s[%(lineno)4d] ::: %(message)s')
-    # _log.basicConfig(format=fmt, datefmt='%F %T',
-    #                  filename=LOG_FILENAME, filemode='w', level=_log.DEBUG)
-    _log.basicConfig(format=fmt, datefmt='%F %T',
-                     filename=LOG_FILENAME, filemode='w', level=_log.INFO)
+    _log.basicConfig(format=fmt, datefmt='%F %T', level=level,
+                     stream=_sys.stdout)
+    #  filename=LOG_FILENAME, filemode='w')
     _log.info('Starting...')
 
     # define abort function
     _signal.signal(_signal.SIGINT, _stop_now)
+    _signal.signal(_signal.SIGTERM, _stop_now)
 
     # Creates App object
     _log.info('Creating App.')
     app = _main.App()
+    app.add_noise = add_noise
     _log.info('Generating database file.')
     db = app.get_database()
+    db.update({PREFIX+'Version-Cte': {'type': 'string', 'value': __version__}})
     _print_pvs_in_file(db)
 
     # create a new simple pcaspy server and driver to respond client's requests
@@ -97,7 +101,3 @@ def run():
     server_thread.join()
     _log.info('Server Thread stopped.')
     _log.info('Good Bye.')
-
-
-if __name__ == '__main__':
-    run()

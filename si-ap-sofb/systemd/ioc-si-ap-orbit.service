@@ -1,0 +1,14 @@
+[Unit]
+Description=Soft IOC for High Level Events Control
+After=multi-user.target
+
+[Service]
+Group=fac
+User=fac
+Type=simple
+WorkingDirectory=/home/fac/sirius-iocs/si-ap-orbit
+StandardOutput=syslog
+StandardError=syslog
+ExecStartPre=/bin/bash --login -c 'env > /tmp/.magic-environment-file'
+EnvironmentFile=-/tmp/.magic-environment-file
+ExecStart=/usr/local/bin/sirius-ioc-si-ap-orbit.py -n

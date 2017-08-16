@@ -5,6 +5,7 @@ import numpy as _np
 import epics as _epics
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.envars import vaca_prefix as LL_PREF
+from si_ap_sofb.si_ap_sofb import SECTION
 
 _TIMEOUT = 0.05
 
@@ -14,7 +15,6 @@ WAIT_FOR_SIMULATOR = 3
 
 NR_CH = 120
 NR_CV = 160
-SECTION = 'SI'
 
 
 class Correctors:
@@ -50,10 +50,10 @@ class Correctors:
 
     def connect(self):
         """Connect to external PVs."""
-        ch_names = _PSSearch.get_psnames({'section': 'SI',
+        ch_names = _PSSearch.get_psnames({'section': SECTION,
                                           'discipline': 'PS',
                                           'device': 'CH'})
-        cv_names = _PSSearch.get_psnames({'section': 'SI',
+        cv_names = _PSSearch.get_psnames({'section': SECTION,
                                           'discipline': 'PS',
                                           'device': 'CV'})
         self.corr_names = ch_names + cv_names

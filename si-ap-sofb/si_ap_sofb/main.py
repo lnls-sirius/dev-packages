@@ -112,7 +112,7 @@ class App:
         """Initialize Object."""
         _log.info('Starting App...')
         self._driver = driver
-        self.prefix = SECTION+'-Glob:AP-SOFB:'
+        self.prefix = ''
         self.orbit = Orbit(prefix=self.prefix, callback=self._update_driver)
         self.correctors = Correctors(prefix=self.prefix,
                                      callback=self._update_driver)
