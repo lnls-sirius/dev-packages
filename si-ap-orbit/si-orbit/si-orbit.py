@@ -5,11 +5,12 @@ import pcaspy as _pcaspy
 import pcaspy.tools as _pcaspy_tools
 import signal as _signal
 import main as _main
+from siriuspy.envars import vaca_prefix as PREFIX
 
 
 INTERVAL = 0.1
 stop_event = False  # _multiprocessing.Event()
-PREFIX = ''
+PREFIX = 'fac' + PREFIX[8:] + 'SI-Glob:AP-Orbit:'
 DB_FILENAME = 'my_pvs.txt'
 LOG_FILENAME = 'si-orbit.log'
 
@@ -23,7 +24,7 @@ def _stop_now(signum, frame):
 def _print_pvs_in_file(db):
     with open(DB_FILENAME, 'w') as f:
         for key in sorted(db.keys()):
-            f.write('{0:20s}\n'.format(key))
+            f.write(PREFIX+'{0:20s}\n'.format(key))
     _log.info(DB_FILENAME+' file generated with {0:d} pvs.'.format(len(db)))
 
 

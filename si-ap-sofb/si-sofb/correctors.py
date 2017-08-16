@@ -4,6 +4,7 @@ import time as _time
 import numpy as _np
 import epics as _epics
 from siriuspy.search import PSSearch as _PSSearch
+from siriuspy.envars import vaca_prefix as LL_PREF
 
 _TIMEOUT = 0.05
 
@@ -14,7 +15,6 @@ WAIT_FOR_SIMULATOR = 3
 NR_CH = 120
 NR_CV = 160
 SECTION = 'SI'
-LL_PREF = 'VAF-'
 
 
 class Correctors:
