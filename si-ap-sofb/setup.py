@@ -1,5 +1,6 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python-sirius
 """Setup Module."""
+
 from setuptools import setup
 
 with open('VERSION', 'r') as _f:
@@ -20,7 +21,7 @@ setup(
     ],
     packages=['si_ap_orbit', 'si_ap_sofb'],
     package_data={'si_ap_orbit': [], 'si_ap_sofb': []},
-    scripts=['scripts/sirius-ioc-si-ap-orbit',
-             'scripts/sirius-ioc-si-ap-sofb'],
+    scripts=['scripts/sirius-ioc-si-ap-orbit.py',
+             'scripts/sirius-ioc-si-ap-sofb.py'],
     zip_safe=False
 )

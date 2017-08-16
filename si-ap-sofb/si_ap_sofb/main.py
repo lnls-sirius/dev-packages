@@ -4,21 +4,10 @@ import time as _time
 import numpy as _np
 from threading import Thread
 import logging as _log
-from matrix import Matrix
-from orbit import Orbit
-from correctors import Correctors
-
-with open('VERSION') as f:
-    __version__ = f.read()
-_TIMEOUT = 0.05
-
-NR_BPMS = 160
-NR_CH = 120
-NR_CV = 160
-NR_CORRS = NR_CH + NR_CV + 1
-DANG = 2E-1
-DFREQ = 200
-SECTION = 'SI'
+from si_ap_sofb.matrix import Matrix
+from si_ap_sofb.orbit import Orbit
+from si_ap_sofb.correctors import Correctors
+from si_ap_sofb.definitions import NR_BPMS, NR_CH, NR_CORRS, DANG, DFREQ
 
 
 class App:

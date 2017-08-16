@@ -5,29 +5,17 @@ import logging as _log
 import pcaspy as _pcaspy
 import pcaspy.tools as _pcaspy_tools
 import signal as _signal
-import main as _main
-from siriuspy.util import get_last_commit_hash as _get_version
-from siriuspy.envars import vaca_prefix as PREFIX
+from si_ap_sofb import main as _main
+from si_ap_sofb.definitions import print_pvs_in_file
+from si_ap_sofb.definitions import __version__, PREFIX, INTERVAL
 
-__version__ = _get_version()
-INTERVAL = 0.1
-stop_event = False   # _multiprocessing.Event()
-DB_FILENAME = 'ioc-si-ap-sofb-pvs.txt'
-SECTION = 'SI'
-PREFIX += SECTION+'-Glob:AP-SOFB:'
+stop_event = False
 
 
 def _stop_now(signum, frame):
     _log.info('SIGNAL received')
     global stop_event
     stop_event = True
-
-
-def _print_pvs_in_file(db):
-    with open(DB_FILENAME, 'w') as f:
-        for key in sorted(db.keys()):
-            f.write(PREFIX + '{0:20s}\n'.format(key))
-    _log.info(DB_FILENAME+' file generated with {0:d} pvs.'.format(len(db)))
 
 
 class _PCASDriver(_pcaspy.Driver):
@@ -71,7 +59,7 @@ def run(debug=False):
     _log.info('Generating database file.')
     db = app.get_database()
     db.update({'Version-Cte': {'type': 'string', 'value': __version__}})
-    _print_pvs_in_file(db)
+    print_pvs_in_file(PREFIX, db)
 
     # create a new simple pcaspy server and driver to respond client's requests
     _log.info('Creating Server.')

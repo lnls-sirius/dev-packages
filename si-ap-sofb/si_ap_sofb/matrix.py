@@ -2,12 +2,7 @@
 
 import os as _os
 import numpy as _np
-
-NR_BPMS = 160
-NR_CH = 120
-NR_CV = 160
-NR_CORRS = NR_CH + NR_CV + 1
-MTX_SZ = (2*NR_BPMS) * NR_CORRS
+from si_ap_sofb.definitions import NR_BPMS, NR_CH, NR_CV, NR_CORRS, MTX_SZ
 
 
 class Matrix:
