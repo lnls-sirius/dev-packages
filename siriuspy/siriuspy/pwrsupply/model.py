@@ -492,7 +492,7 @@ class PowerSupplyEpicsSync:
                 raise ValueError('invalid pvname "' + pvname + '" in add_setpoint')
             self._add_put_locked(pvname, value)
             if not self._thread.is_alive():
-                self._thread = _threading.Thread(target=self.processm daemon=True)
+                self._thread = _threading.Thread(target=self.process, daemon=True)
                 self._thread.start()
 
         def process(self):
