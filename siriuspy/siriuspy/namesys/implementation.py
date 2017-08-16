@@ -3,9 +3,9 @@ import re as _re
 
 
 def join_name(section, discipline, device, subsection, prefix=None,
-              instance=None, proper=None, field=None):
-
-    name = prefix + '-' if prefix else ''
+              channel_type=None, instance=None, proper=None, field=None):
+    name = channel_type + '://' if channel_type else ''
+    name += prefix + '-' if prefix else ''
     name += (section.upper() + '-' + subsection + ':' +
              discipline.upper() + '-' + device)
     name += ('-' + instance) if instance else ""
@@ -16,6 +16,11 @@ def join_name(section, discipline, device, subsection, prefix=None,
 
 def split_name(pvname):
     dic_ = {}
+    dic_['channel_type'] = ''
+    if pvname.startswith('ca://'):
+        dic_['channel_type'] = 'ca'
+        pvname = pvname[5:]
+
     list_ = pvname.split(':')
     slist_ = list_[0].split('-')
     dic_['prefix'] = '-'.join([s for s in slist_[:-2]])
@@ -55,6 +60,7 @@ class SiriusPVName(str):
     def __new__(cls, pv_name):
         name = split_name(pv_name)
         obj = super().__new__(cls, pv_name)
+        obj.channel_type = name['channel_type']
         obj.prefix = name['prefix']
         obj.area_name = name['area_name']
         obj.dev_name = name['dev_name']
