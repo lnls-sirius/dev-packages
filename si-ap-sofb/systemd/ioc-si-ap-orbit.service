@@ -1,5 +1,5 @@
 [Unit]
-Description=Soft IOC for High Level Events Control
+Description=Soft IOC for Sirius Orbit acquisition.
 After=multi-user.target
 
 [Service]
