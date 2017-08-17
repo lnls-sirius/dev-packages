@@ -78,9 +78,9 @@ class _LL_Base:
         self._rf_freq = RFFREQ
         self._rf_div = RFDIV
         self._rf_freq_pv = _epics.PV(LL_PREFIX + 'SI-03SP:RF-SRFCav:Freq-SP',
-                                     connection_callback=_TIMEOUT)
+                                     connection_timeout=_TIMEOUT)
         self._rf_div_pv = _epics.PV(LL_PREFIX + 'AS-Glob:TI-EVG:RFDiv-SP',
-                                    connection_callback=_TIMEOUT)
+                                    connection_timeout=_TIMEOUT)
         self._set_base_freq()
         self._rf_freq_pv.add_callback(self._set_base_freq)
         self._rf_div_pv.add_callback(self._set_base_freq)
@@ -89,7 +89,6 @@ class _LL_Base:
         self._initialize_ll_props()
         self._pvs_sp = dict()
         self._pvs_rb = dict()
-        self._pvs_sp_canput = dict()
         _log.info(self.channel+': Starting.')
         _log.info(self.channel+': Creating PVs.')
         for prop, pv_name in self._LLPROP_2_PVRB.items():
@@ -101,19 +100,21 @@ class _LL_Base:
             # Now the setpoints
             pv_name_sp = self._get_setpoint_name(pv_name)
             _log.debug(self.channel + ' -> creating {0:s}'.format(pv_name_sp))
-            self._pvs_sp_canput[pv_name_sp] = True
             self._pvs_sp[prop] = _epics.PV(
                 pv_name_sp,
                 callback=self._on_change_pvs_sp,
                 connection_timeout=_TIMEOUT)
-        _log.info(self.channel + ': Done.')
         # Timer to force equality between high and low level:
+        _log.debug('Starting Timer.')
         self.timer = _Timer(_INTERVAL, self._force_equal)
+        self.timer.start()
         self.start_timer()
+        _log.info(self.channel + ': Done.')
 
     def start_timer(self):
         if self.timer is None:
             return
+        _log.debug('Starting Timer.')
         if self.timer.isAlive():
             self.timer.reset()
         else:
@@ -121,8 +122,8 @@ class _LL_Base:
             self.timer.start()
 
     def _set_base_freq(self, **kwargs):
-        self._rf_freq = self._rf_freq_pv.get() or self._rf_freq
-        self._rf_div = self._rf_div_pv.get() or self._rf_div
+        self._rf_freq = self._rf_freq_pv.get(timeout=_TIMEOUT) or self._rf_freq
+        self._rf_div = self._rf_div_pv.get(timeout=_TIMEOUT) or self._rf_div
         self._base_freq = self._rf_freq / self._rf_div
         self._base_del = 1/self._base_freq
         self._rf_del = self._base_del / 20
@@ -165,9 +166,13 @@ class _LL_Base:
 
     def _force_equal(self):
         for ll_prop, pv in self._pvs_sp.items():
-            if not pv.connected or not self._pvs_sp_canput[pv.pvname]:
+            if not pv.connected:
+                _log.debug(self.prefix + 'll_prop = ' +
+                           ll_prop + 'not connected.')
                 continue
-            v = pv.get()
+            if not pv.put_complete:
+                continue
+            v = pv.get(timeout=_TIMEOUT)
             if v is None:
                 _log.debug(self.channel +
                            ' propty = {0:s} is None '.format(ll_prop))
@@ -176,29 +181,20 @@ class _LL_Base:
             if my_val is None:
                 raise Exception(self.prefix + ' ll_prop = ' +
                                 ll_prop + ' not in dict.')
+            if my_val == v:
+                continue
             # If pv is a command, it must be sent only once
             if pv.pvname.endswith('-Cmd'):
                 if self._ll_props[ll_prop]:
                     self._put_on_pv(pv, self._ll_props[ll_prop])
                     self._ll_props[ll_prop] = 0
                 return
-
-            if my_val == v:
-                continue
             self._put_on_pv(pv, my_val)
 
-    def _put_complete(self, pvname, **kwargs):
-        self._pvs_sp_canput[pvname] = True
-
     def _put_on_pv(self, pv, value):
-        if not pv.connected:
-            _log.debug(self.channel + ' PV ' +
-                       pv.pvname + ' NOT connected.')
-            return
-        self._pvs_sp_canput[pv.pvname] = False
         _log.debug(self.channel + ' Setting PV ' + pv.pvname +
                    ', value = {0:s}.'.format(str(value)))
-        pv.put(value, callback=self._put_complete)
+        pv.put(value, use_complete=True)
 
     def _on_change_pvs_sp(self, pvname, value, **kwargs):
         _log.debug('PV: '+pvname+'.  Calling Timer.')
@@ -416,9 +412,9 @@ class _LL_TrigEVROUT(_LL_Base):
 
     def _get_delay(self, value):
         pvs = self._pvs_rb
-        delay1 = pvs['delay1'].get() or 0
-        delay2 = pvs['delay2'].get() or 0
-        delay3 = pvs['delay3'].get() or 0
+        delay1 = pvs['delay1'].get(timeout=_TIMEOUT) or 0
+        delay2 = pvs['delay2'].get(timeout=_TIMEOUT) or 0
+        delay3 = pvs['delay3'].get(timeout=_TIMEOUT) or 0
         if delay2 == 31:
             delay = (delay1*self._base_del + delay3*FDEL) * 1e6
             return {'delay': delay, 'delay_type': 1}
@@ -456,7 +452,7 @@ class _LL_TrigEVROUT(_LL_Base):
 
     def _process_int_trig(self, value):
         if value == self._INTLB:
-            val = self._pvs_rb['event'].get()
+            val = self._pvs_rb['event'].get(timeout=_TIMEOUT)
             if val is None:
                 _log.debug(self.channel + 'read None from PV ' +
                            self._pvs_rb['event'].pvname)
