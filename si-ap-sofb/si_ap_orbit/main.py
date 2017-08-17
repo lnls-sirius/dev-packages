@@ -1,16 +1,14 @@
 """Main Module of the program."""
 import time as _time
 import logging as _log
+from numpy import zeros as _zeros
+from numpy.random import uniform as _rand
 import epics as _epics
+from siriuspy.namesys import SiriusPVName as _PVName
 from siriuspy.diagnostics import bpmsdata as _bpmsdata
+from siriuspy.envars import vaca_prefix as PREFIX
 
-
-with open('VERSION') as f:
-    __version__ = f.read()
-_TIMEOUT = 0.05
-
-TINY_INTERVAL = 0.001
-NUM_TIMEOUT = 2000
+NOISE_LEVEL = 80  # nanometer
 
 
 class App:
@@ -19,31 +17,34 @@ class App:
     def get_database(self):
         """Get the database of the class."""
         db = dict()
-        pre = self.prefix
-        db[pre + 'Log-Mon'] = {'type': 'string', 'value': ''}
-        db[pre + 'NumBPM-Cte'] = {
+        db['Log-Mon'] = {'type': 'string', 'value': ''}
+        db['NumBPM-Cte'] = {
             'type': 'int', 'value': self.nr_bpms}
-        db[pre + 'OrbitX-Mon'] = {
+        db['PosX-Mon'] = {
             'type': 'float', 'unit': 'nm',
             'count': self.nr_bpms, 'value': self.nr_bpms*[0]}
-        db[pre + 'OrbitY-Mon'] = {
+        db['PosY-Mon'] = {
             'type': 'float', 'unit': 'nm',
             'count': self.nr_bpms, 'value': self.nr_bpms*[0]}
-        db[pre + 'PosS-Cte'] = {
+        db['PosS-Cte'] = {
             'type': 'float', 'unit': 'm',
             'count': self.nr_bpms, 'value': self.bpm_pos}
+        db['BPMNickName-Cte'] = {
+            'type': 'string', 'unit': 'shotname for the bpms.',
+            'count': self.nr_bpms, 'value': self.bpm_nicknames}
         return db
 
     def __init__(self, driver=None):
         """Initialize the instance."""
         _log.info('Starting App...')
-        self.bpm_names = _bpmsdata.get_names()
+        self.bpm_names = [_PVName(PREFIX + n) for n in _bpmsdata.get_names()]
+        self.bpm_nicknames = self._get_bpms_nickname()
         self.bpm_pos = _bpmsdata.get_positions()
         self.nr_bpms = len(self.bpm_names)
-        self.orbx = self.nr_bpms*[0.0]  # _np.zeros(self.nr_bpms, dtype=float)
-        self.orby = self.nr_bpms*[0.0]  # _np.zeros(self.nr_bpms, dtype=float)
+        self.orbx = _zeros(self.nr_bpms, dtype=float)
+        self.orby = _zeros(self.nr_bpms, dtype=float)
         self._driver = driver
-        self.prefix = 'SI-Glob:AP-Orbit:'
+        self._add_noise = False
         self._database = self.get_database()
 
     @property
@@ -55,6 +56,16 @@ class App:
     def driver(self, driver):
         _log.debug("Setting App's driver.")
         self._driver = driver
+
+    @property
+    def add_noise(self):
+        """Define if noise will be added to the read values."""
+        return self._add_noise
+
+    @add_noise.setter
+    def add_noise(self, value):
+        _log.debug("Setting App's add_noise.")
+        self._add_noise = bool(value)
 
     def write(self, reason, value):
         """Write the PV on memory."""
@@ -98,8 +109,17 @@ class App:
                          for name in self.bpm_names}
         _log.info('All Orbit connection opened.')
 
+    def _get_bpms_nickname(self):
+        nicknames = []
+        for bpm in self.bpm_names:
+            nick = bpm.subsection
+            if bpm.dev_instance:
+                nick += '-' + bpm.dev_instance
+            nicknames.append(nick)
+        return nicknames
+
     def _call_callback(self, pv, value):
-        self._update_driver(self.prefix + pv, value)
+        self._update_driver(pv, value)
 
     def _update_driver(self, pvname, value, **kwargs):
         _log.debug('PV {0:s} updated in driver '.format(pvname) +
@@ -132,5 +152,10 @@ class App:
             pvy = self.pvs_posy[name]
             self.orbx[i] = pvx.value if pvx.connected else 0.0
             self.orby[i] = pvy.value if pvy.connected else 0.0
-        self._call_callback('OrbitX-Mon', self.orbx)
-        self._call_callback('OrbitY-Mon', self.orby)
+
+        if self._add_noise:
+            self.orbx += NOISE_LEVEL * _rand(-0.5, 0.5, self.nr_bpms)
+            self.orby += NOISE_LEVEL * _rand(-0.5, 0.5, self.nr_bpms)
+
+        self._call_callback('PosX-Mon', list(self.orbx))
+        self._call_callback('PosY-Mon', list(self.orby))

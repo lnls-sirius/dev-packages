@@ -1,5 +1,4 @@
 """Main module of AS-MA IOC."""
-import sys as _sys
 import as_ma.pvs as _pvs
 import time as _time
 import siriuspy as _siriuspy

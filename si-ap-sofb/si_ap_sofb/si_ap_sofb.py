@@ -1,30 +1,21 @@
 #!/usr/bin/env python3
 """IOC Module."""
+import sys as _sys
 import logging as _log
 import pcaspy as _pcaspy
 import pcaspy.tools as _pcaspy_tools
 import signal as _signal
-import main as _main
+from si_ap_sofb import main as _main
+from si_ap_sofb.definitions import print_pvs_in_file
+from si_ap_sofb.definitions import __version__, PREFIX, INTERVAL
 
-
-INTERVAL = 0.1
-stop_event = False   # _multiprocessing.Event()
-PREFIX = ''
-DB_FILENAME = 'my_pvs.txt'
-LOG_FILENAME = 'si-sofb.log'
+stop_event = False
 
 
 def _stop_now(signum, frame):
-    _log.info('SIGINT received')
+    _log.info('SIGNAL received')
     global stop_event
     stop_event = True
-
-
-def _print_pvs_in_file(db):
-    with open(DB_FILENAME, 'w') as f:
-        for key in sorted(db.keys()):
-            f.write('{0:20s}\n'.format(key))
-    _log.info(DB_FILENAME+' file generated with {0:d} pvs.'.format(len(db)))
 
 
 class _PCASDriver(_pcaspy.Driver):
@@ -48,25 +39,27 @@ class _PCASDriver(_pcaspy.Driver):
         return True
 
 
-def run():
+def run(debug=False):
     """Start the IOC."""
+    level = _log.DEBUG if debug else _log.INFO
     fmt = ('%(levelname)7s | %(asctime)s | ' +
            '%(module)15s.%(funcName)20s[%(lineno)4d] ::: %(message)s')
-    _log.basicConfig(format=fmt, datefmt='%F %T',
-                     filename=LOG_FILENAME, filemode='w', level=_log.DEBUG)
-    # _log.basicConfig(format=fmt, datefmt='%F %T',
-    #                  filename=LOG_FILENAME, filemode='w', level=_log.INFO)
+    _log.basicConfig(format=fmt, datefmt='%F %T', level=level,
+                     stream=_sys.stdout)
+    #  filename=LOG_FILENAME, filemode='w')
     _log.info('Starting...')
 
     # define abort function
     _signal.signal(_signal.SIGINT, _stop_now)
+    _signal.signal(_signal.SIGTERM, _stop_now)
 
     # Creates App object
     _log.info('Creating App.')
     app = _main.App()
     _log.info('Generating database file.')
     db = app.get_database()
-    _print_pvs_in_file(db)
+    db.update({'Version-Cte': {'type': 'string', 'value': __version__}})
+    print_pvs_in_file(PREFIX, db)
 
     # create a new simple pcaspy server and driver to respond client's requests
     _log.info('Creating Server.')

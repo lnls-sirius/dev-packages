@@ -4,17 +4,10 @@ import time as _time
 import numpy as _np
 import epics as _epics
 from siriuspy.search import PSSearch as _PSSearch
+from siriuspy.envars import vaca_prefix as LL_PREF
+from si_ap_sofb.definitions import SECTION, WAIT_FOR_SIMULATOR, timed_out
 
 _TIMEOUT = 0.05
-
-TINY_INTERVAL = 0.01
-NUM_TIMEOUT = 1000
-WAIT_FOR_SIMULATOR = 3
-
-NR_CH = 120
-NR_CV = 160
-SECTION = 'SI'
-LL_PREF = 'VAF-'
 
 
 class Correctors:
@@ -50,10 +43,10 @@ class Correctors:
 
     def connect(self):
         """Connect to external PVs."""
-        ch_names = _PSSearch.get_psnames({'section': 'SI',
+        ch_names = _PSSearch.get_psnames({'section': SECTION,
                                           'discipline': 'PS',
                                           'device': 'CH'})
-        cv_names = _PSSearch.get_psnames({'section': 'SI',
+        cv_names = _PSSearch.get_psnames({'section': SECTION,
                                           'discipline': 'PS',
                                           'device': 'CV'})
         self.corr_names = ch_names + cv_names
@@ -85,9 +78,9 @@ class Correctors:
         self.rf_pv_rb = _epics.PV(LL_PREF + SECTION +
                                   '-03SP:RF-SRFCav:Freq-RB')
         self.event_pv_mode_sel = _epics.PV(SECTION +
-                                           '-Glob:TI-Event:OrbitMode-Sel')
+                                           '-Glob:TI-EVG:OrbitMode-Sel')
         self.event_pv_sp = _epics.PV(SECTION +
-                                     '-Glob:TI-Event:OrbitExtTrig-Cmd')
+                                     '-Glob:TI-EVG:OrbitExtTrig-Cmd')
 
     def apply_kicks(self, values):
         """Apply kicks."""
@@ -116,7 +109,7 @@ class Correctors:
             self.corr_pvs_applied[pvname_ref] = False
             pv.value = values[i]
         # Wait for readbacks to be updated
-        if self._timed_out(self.corr_pvs_ready):
+        if timed_out(self.corr_pvs_ready):
             self._call_callback('Log-Mon',
                                 'Err: Timeout waiting Correctors RB')
             return
@@ -129,20 +122,12 @@ class Correctors:
                                     'Kicks not sent, Timing PV Disconnected.')
                 return
         # Wait for references to be updated
-        if self._timed_out(self.corr_pvs_ready):
+        if timed_out(self.corr_pvs_ready):
             self._call_callback('Log-Mon',
                                 'Err: Timeout waiting Correctors Ref')
             return
-        # wait for simulator to compute the orbit.
+        # wait for simulator to compute  and update the orbit.
         _time.sleep(WAIT_FOR_SIMULATOR)
-
-    @staticmethod
-    def _timed_out(wait_dict):
-        for i in range(NUM_TIMEOUT):
-            if all(wait_dict.values()):
-                return False
-            _time.sleep(TINY_INTERVAL)
-        return True
 
     def get_correctors_strength(self):
         """Get the correctors strengths."""
