@@ -12,7 +12,7 @@ setup(
     description='Sirius python packages',
     url='https://github.com/lnls-sirius/dev-packages',
     download_url='https://github.com/lnls-sirius/dev-packages',
-    license='MIT License',
+    license='GNU GPLv3',
     classifiers=[
         'Intended Audience :: Science/Research',
         'Programming Language :: Python',

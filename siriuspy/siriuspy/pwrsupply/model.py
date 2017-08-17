@@ -12,7 +12,7 @@ from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.pwrsupply.data import PSData as _PSData
 from siriuspy.pwrsupply.controller import ControllerSim as _ControllerSim
 from siriuspy.pwrsupply.controller import ControllerEpics as _ControllerEpics
-from numpy import ndarray
+from numpy import ndarray as _ndarray
 
 
 _connection_timeout = 0.1
@@ -448,7 +448,7 @@ class PowerSupplyEpicsSync:
 
             self._pvs_dict = pvs_dict
             self._get_disconnect_state = get_disconnect_state
-            self._thread = _threading.Thread(target=self.process)
+            self._thread = _threading.Thread(target=self.process, daemon=True)
             self._lock = _threading.Lock()
             self._sp_pvnames = _collections.deque()
             self._sp_values = _collections.deque()
@@ -492,7 +492,7 @@ class PowerSupplyEpicsSync:
                 raise ValueError('invalid pvname "' + pvname + '" in add_setpoint')
             self._add_put_locked(pvname, value)
             if not self._thread.is_alive():
-                self._thread = _threading.Thread(target=self.process)
+                self._thread = _threading.Thread(target=self.process, daemon=True)
                 self._thread.start()
 
         def process(self):
@@ -759,7 +759,7 @@ class PowerSupplyEpicsSync:
 
     @wfmdata_sp.setter
     def wfmdata_sp(self, value):
-        value = ndarray(value)
+        value = _ndarray(value)
         self._set_propty_sp('WfmData-SP', value)
 
     @property
@@ -821,7 +821,7 @@ class PowerSupplyEpicsSync:
             self._propty[propty] = value
             self._put_sp_property(propty, value)
         else:
-            if isinstance(value, ndarray):
+            if isinstance(value, _ndarray):
                 changed = (value != self._propty[propty]).any()
             else:
                 changed = (value != self._propty[propty])
@@ -1510,7 +1510,6 @@ class PowerSupplyEpicsSync:
 #         *_, propty = pvname.split(':')
 #         self._propty[propty] = value
 #         self._trigger_callback(pvname, value, **kwargs)
-
 
 # Previous Classes:
 # =================
