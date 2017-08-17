@@ -2,8 +2,8 @@ import types as _types
 import re as _re
 
 
-def join_name(section, discipline, device, subsection, prefix=None,
-              channel_type=None, instance=None, proper=None, field=None):
+def join_name(section, discipline, device, subsection, instance=None,
+              proper=None, field=None,  prefix=None, channel_type=None):
     name = channel_type + '://' if channel_type else ''
     name += prefix + '-' if prefix else ''
     name += (section.upper() + '-' + subsection + ':' +
