@@ -30,6 +30,9 @@ folder_lnls_sirius_hla = _os.path.join(folder_lnls_sirius, 'hla')
 
 # --- support applications IPs/URLs ---
 
+server_url_rbac_auth = \
+    _os.environ.get('SIRIUS_URL_RBAC_AUTH',
+                    default='https://sirius-rbac-auth.lnls.br')
 server_url_rbac = _os.environ.get('SIRIUS_URL_RBAC',
                                   default='https://rbac:8445')
 server_url_ns = _os.environ.get(
