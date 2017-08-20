@@ -1,9 +1,10 @@
+import os as _os
 import siriuspy.servweb as _web
 import copy as _copy
 
 _timeout = 1.0
 _bbbdata = None
-_LOCAL = False
+_LOCAL = _os.environ.get('CS-CONSTS-MODE', default='remote')
 
 
 class _BBBData:
@@ -15,7 +16,7 @@ class _BBBData:
     def __init__(self, timeout=_timeout):
         self._mapping = None
         self._inv_mapping = None
-        if _LOCAL:
+        if not _LOCAL.lower().startswith('remote'):
             with open('/home/fac_files/lnls-sirius/' +
                       'control-system-constants/' +
                       'pwrsupply/beaglebone-mapping.txt', 'r') as f:

@@ -1,20 +1,21 @@
 """Define properties of all timing devices and their connections."""
 
-from siriuspy import servweb as _web
-from siriuspy.namesys import SiriusPVName as _PVName
-import copy as _copy
+import os as _os
 import re as _re
 import sys as _sys
+import copy as _copy
 import math as _math
 import numpy as _np
 import importlib as _importlib
+from siriuspy import servweb as _web
+from siriuspy.namesys import SiriusPVName as _PVName
 if _importlib.find_loader('matplotlib') is not None:
     import matplotlib.pyplot as _plt
     import matplotlib.gridspec as _gridspec
     import matplotlib.cm as _cmap
 
 _timeout = 1.0
-_LOCAL = False
+_LOCAL = _os.environ.get('CS-CONSTS-MODE', default='remote')
 
 AC_FREQUENCY = 60
 RF_DIVISION = 4
@@ -78,7 +79,7 @@ class Triggers:
     def __init__(self):
         """Initialize the Instance."""
         text = ''
-        if _LOCAL:
+        if not _LOCAL.lower().startswith('remote'):
             with open('/home/fac_files/lnls-sirius/' +
                       'control-system-constants/' +
                       'timesys/high-level-triggers.txt', 'r') as f:
@@ -228,7 +229,7 @@ class _TimeDevData:
         self._positions = dict()
         self._colors = dict()
         self._arrow_colors = dict()
-        if _LOCAL:
+        if not _LOCAL.lower().startswith('remote'):
             with open('/home/fac_files/lnls-sirius/' +
                       'control-system-constants/' +
                       'timesys/timing-devices-connection.txt', 'r') as f:
