@@ -87,8 +87,10 @@ repo_names = {
 
     'lnls-sirius': ['control-system-constants',
                     'discs-management',
+                    'epics-dev',
                     'org.csstudio.product',
                     'dev-packages',
+                    'machine-applications',
                     'hla',
                     'pydm'],
 
