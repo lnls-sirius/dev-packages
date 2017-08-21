@@ -8,7 +8,6 @@ from siriuspy.timesys.time_data import Events, Clocks, Triggers
 from siriuspy.timesys.time_data import AC_FREQUENCY as _PwrFreq
 from siriuspy.timesys.time_data import FINE_DELAY as _FINE_DELAY_STEP
 
-_EVENT_SIM_TMP = 'Ev{0:02x}'
 _CLOCK_SIM_TMP = 'Cl{0:1d}'
 _OPT_SIM_TMP = 'IntTrig{0:02d}'
 _OUT_SIM_TMP = 'OUT{0:d}'
@@ -176,10 +175,10 @@ class _EVGSim(_BaseSim):
         self._repetition_rate = 30
         self._rf_division = 4
         self.events = list()
-        for i in Events.LL_CODES:
+        for _ in Events.LL_CODES:
             self.events.append(_EventSim(self.base_freq/self._rf_division))
         self.clocks = list()
-        for i in sorted(Clocks.LL2HL_MAP.keys()):
+        for _ in sorted(Clocks.LL2HL_MAP.keys()):
             self.clocks.append(_ClockSim(self.base_freq/self._rf_division))
 
     def __setattr__(self, attr, value):
@@ -238,13 +237,12 @@ class _EVGSim(_BaseSim):
         tables = tables if isinstance(tables, (list, tuple)) else (tables,)
         events = dict()
         for i, ev in enumerate(self.events):
-            ev_nr = Events.LL_CODES[i]
+            lab = Events.LL_EVENTS[i]
             if ev.mode not in tables:
                 continue
             dic = ev.generate()
             if not dic:
                 continue
-            lab = _EVENT_SIM_TMP.format(ev_nr)
             events.update({lab: dic})
         for i, cl in enumerate(self.clocks):
             dic = cl.generate()
@@ -565,8 +563,7 @@ class _InternTrigSim(_BaseSim):
     def receive_events(self, bucket, events):
         if self._state == 0:
             return
-        lab = _EVENT_SIM_TMP.format(self._event)
-        ev = events.get(lab, None)
+        ev = events.get(self._event, None)
         if ev is None:
             return
         delay = ev['delay'] + self._delay/self.base_freq
