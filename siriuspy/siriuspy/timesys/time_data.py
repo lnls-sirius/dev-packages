@@ -1,21 +1,19 @@
 """Define properties of all timing devices and their connections."""
 
-from siriuspy import servweb as _web
-from siriuspy.namesys import SiriusPVName as _PVName
-import copy as _copy
 import re as _re
 import sys as _sys
+import copy as _copy
 import math as _math
 import numpy as _np
 import importlib as _importlib
+from siriuspy import servweb as _web
+from siriuspy.namesys import SiriusPVName as _PVName
 if _importlib.find_loader('matplotlib') is not None:
     import matplotlib.pyplot as _plt
     import matplotlib.gridspec as _gridspec
     import matplotlib.cm as _cmap
 
 _timeout = 1.0
-_LOCAL = False
-
 AC_FREQUENCY = 60
 RF_DIVISION = 4
 RF_FREQUENCY = 299792458/518.396*864
@@ -78,14 +76,8 @@ class Triggers:
     def __init__(self):
         """Initialize the Instance."""
         text = ''
-        if _LOCAL:
-            with open('/home/fac_files/lnls-sirius/' +
-                      'control-system-constants/' +
-                      'timesys/high-level-triggers.txt', 'r') as f:
-                text = f.read()
-        else:
-            if _web.server_online():
-                text = _web.high_level_triggers(timeout=_timeout)
+        if _web.server_online():
+            text = _web.high_level_triggers(timeout=_timeout)
         # the execution of text will create the HL_TRIGGS variable.
         exec(text)
         self._hl_triggers = locals()['HL_TRIGGS']
@@ -228,14 +220,8 @@ class _TimeDevData:
         self._positions = dict()
         self._colors = dict()
         self._arrow_colors = dict()
-        if _LOCAL:
-            with open('/home/fac_files/lnls-sirius/' +
-                      'control-system-constants/' +
-                      'timesys/timing-devices-connection.txt', 'r') as f:
-                text = f.read()
-        else:
-            if _web.server_online():
-                text = _web.timing_devices_mapping(timeout=_timeout)
+        if _web.server_online():
+            text = _web.timing_devices_mapping(timeout=_timeout)
         self._parse_text_and_build_connection_mappings(text)
         self._update_related_maps()
 
@@ -620,7 +606,6 @@ class Connections:
         timedata = cls._get_timedata()
         if connections_dict is None:
             from siriuspy import pwrsupply
-            pwrsupply.bbbdata._LOCAL = _LOCAL
             connections_dict = pwrsupply.bbbdata.get_mapping()
         return timedata.add_bbb_info(connections_dict)
 
@@ -630,7 +615,6 @@ class Connections:
         timedata = cls._get_timedata()
         if connections_dict is None:
             from siriuspy import diagnostics
-            diagnostics.cratesdata._LOCAL = _LOCAL
             connections_dict = diagnostics.cratesdata.get_mapping()
         return timedata.add_crates_info(connections_dict)
 

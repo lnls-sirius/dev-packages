@@ -3,7 +3,6 @@ import copy as _copy
 
 _timeout = 1.0
 _bbbdata = None
-_LOCAL = False
 
 
 class _BBBData:
@@ -15,14 +14,8 @@ class _BBBData:
     def __init__(self, timeout=_timeout):
         self._mapping = None
         self._inv_mapping = None
-        if _LOCAL:
-            with open('/home/fac_files/lnls-sirius/' +
-                      'control-system-constants/' +
-                      'pwrsupply/beaglebone-mapping.txt', 'r') as f:
-                text = f.read()
-        else:
-            if _web.server_online():
-                text = _web.beaglebone_power_supplies_mapping(timeout=_timeout)
+        if _web.server_online():
+            text = _web.beaglebone_power_supplies_mapping(timeout=_timeout)
         self._mapping = self._get_mapping(text)
         self._build_inv_mapping()
 
