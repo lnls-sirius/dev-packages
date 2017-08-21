@@ -69,7 +69,7 @@ class PulsedPowerSupply:
     @property
     def tension_sp(self):
         """Return tension_sp."""
-        return self._controller.get(properties.TensionSP)
+        return (self._controller.get(properties.TensionSP) or 0.0)
 
     @tension_sp.setter
     def tension_sp(self, value):
@@ -78,17 +78,17 @@ class PulsedPowerSupply:
     @property
     def tension_rb(self):
         """Return tension_rb."""
-        return self._controller.get(properties.TensionRB)
+        return (self._controller.get(properties.TensionRB) or 0.0)
 
     @property
     def tensionref_mon(self):
         """Return tension ref mon."""
-        return self._controller.get(properties.TensionRefMon)
+        return (self._controller.get(properties.TensionRefMon) or 0.0)
 
     @property
     def tension_mon(self):
         """Return tension mon."""
-        return self._controller.get(properties.TensionMon)
+        return (self._controller.get(properties.TensionMon) or 0.0)
 
     @property
     def pwrstate_sel(self):

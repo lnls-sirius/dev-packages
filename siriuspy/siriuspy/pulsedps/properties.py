@@ -1,4 +1,4 @@
-"""Pulsed power supply field names."""
+"""Pulsed power supply prop-field names."""
 
 TensionSP = "Tension-SP"
 TensionRB = "Tension-RB"
