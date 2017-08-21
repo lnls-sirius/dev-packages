@@ -66,7 +66,6 @@ def get_pm_propty_database(maname, psdata):
     precision = 6
 
     db = {}
-    print(psdata)
     for psname, data in psdata.items():
         db[psname] = data.propty_database
 

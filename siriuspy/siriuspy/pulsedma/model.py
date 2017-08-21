@@ -127,14 +127,20 @@ class PulsedMagnetPowerSupply(PulsedPowerSupply):
         self._strengthref_mon = 0.0
         self._strength_mon = 0.0
         # Ref dipole properties
-        self._dipole_current_sp = self._dipole_controller.get("Current-SP")
-        self._dipole_current_rb = self._dipole_controller.get("Current-RB")
+        print("Getting dipole values")
+        self._dipole_current_sp = \
+            (self._dipole_controller.get("Current-SP") or 0.0)
+        self._dipole_current_rb = \
+            (self._dipole_controller.get("Current-RB") or 0.0)
         self._dipole_currentref_mon = \
-            self._dipole_controller.get("CurrentRef-Mon")
-        self._dipole_current_mon = self._dipole_controller.get("Current-Mon")
+            (self._dipole_controller.get("CurrentRef-Mon") or 0.0)
+        self._dipole_current_mon = \
+            (self._dipole_controller.get("Current-Mon") or 0.0)
         # Set callback to keep pu properties updated
+        print("Creating database")
         self._create_database()
         self._update_strengths()
+        print("Setting pv callbacks")
         self._set_pv_callbacks()
 
     def __repr__(self):
@@ -205,7 +211,7 @@ class PulsedMagnetPowerSupply(PulsedPowerSupply):
     @property
     def tension_sp(self):
         """Return tension set point."""
-        return self._controller.get(pu_props.TensionSP)
+        return (self._controller.get(pu_props.TensionSP) or 0.0)
 
     @tension_sp.setter
     def tension_sp(self, value):
@@ -275,7 +281,8 @@ class PulsedMagnetPowerSupply(PulsedPowerSupply):
         self._data = _PMData(self._maname)
 
     def _init_controller(self):
-        print(self._vaca_prefix)
+        # print(self._vaca_prefix)
+        print("Creating device controller")
         self._controller = self.CompositeController(
             [Device(prefix=self._vaca_prefix + psname, delim=":",
                     attrs=pu_props.PulsedPowerSupplyAttrs)
@@ -283,12 +290,15 @@ class PulsedMagnetPowerSupply(PulsedPowerSupply):
 
         attrs = ("Current-SP", "Current-RB", "CurrentRef-Mon", "Current-Mon")
         dipole_prefix = self._vaca_prefix + self._dipole_name
+        print("Creating dipole controller")
         self._dipole_controller = \
             Device(prefix=dipole_prefix, delim=":", attrs=attrs)
         # Set dipole callbacks
+        print("Adding dipole callbacks")
         for attr in attrs:
             self._dipole_controller.add_callback(
                 attr, self._dipole_changed_callback)
+        print("Finished adding dipole callbacks")
 
     def _get_dipole_name(self):
         if _re.match("B.*", self._maname.dev_type):
