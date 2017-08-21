@@ -29,9 +29,8 @@ def read_url(url, timeout=_timeout):
 
 def server_online():
     """Verify if the server is online."""
-    url = _envars.server_url_consts
     try:
-        read_url(url, timeout=_timeout)
+        read_url('', timeout=_timeout)
         return True
     except Exception:
         return False
