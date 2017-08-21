@@ -1,13 +1,10 @@
 """Load and process BBB to PS data from static table in remote server."""
 
-import os as _os
 import siriuspy.servweb as _web
 from siriuspy.namesys import SiriusPVName as _PVName
 import copy as _copy
 
 _timeout = 1.0
-
-_LOCAL = _os.environ.get('CS-CONSTS-MODE', default='remote')
 _bpmsdata = None
 
 
@@ -21,13 +18,8 @@ class _BPMsData:
         self._mapping = None
         self._inv_mapping = None
         text = ''
-        if not _LOCAL.lower().startswith('remote'):
-            repo = '/home/fac_files/lnls-sirius/control-system-constants/'
-            with open(repo + 'diagnostics/bpms-data.txt', 'r') as f:
-                text = f.read()
-        else:
-            if _web.server_online():
-                text = _web.bpms_data(timeout=_timeout)
+        if _web.server_online():
+            text = _web.bpms_data(timeout=_timeout)
         self._mapping = self._get_mapping(text)
         self._build_crates_to_bpm_mapping()
         self._build_data()
