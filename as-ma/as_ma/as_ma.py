@@ -50,6 +50,14 @@ def run(ioc_name):
     _pvs.select_ioc(ioc_name)
     _main.App.init_class()
 
+    # check if IOC is already running
+    pvname = _pvs._PREFIX + next(iter(_main.App.pvs_database.keys()))
+    running = _util.check_running_ioc(
+        pvname=pvname, use_prefix=False, timeout=0.5)
+    if running:
+        print('Another ' + ioc_name + ' IOC is already running!')
+        return
+
     # create a new simple pcaspy server and driver to respond client's requests
     server = _pcaspy.SimpleServer()
     # for prefix, database in _main.App.pvs_database.items():
