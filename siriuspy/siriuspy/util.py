@@ -6,6 +6,8 @@ import subprocess as _sp
 import time as _time
 import math as _math
 import datetime as _datetime
+import siriuspy.envars as _envars
+import epics as _epics
 
 
 def get_signal_names():
@@ -212,3 +214,12 @@ def beam_rigidity(energy):
         return 0
     brho = beta * (energy*1e9) / light_speed
     return brho
+
+
+def check_running_ioc(pvname, timeout=1.0, use_prefix=True):
+    """Return whether a PV is online."""
+    if use_prefix:
+        pvname = _envars.vaca_prefix + pvname
+    pv = _epics.PV(pvname=pvname, connection_timeout=timeout)
+    status = pv.wait_for_connection(timeout=timeout)
+    return status
