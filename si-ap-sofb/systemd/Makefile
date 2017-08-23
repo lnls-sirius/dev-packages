@@ -12,19 +12,20 @@ install-services:
 	  cp -rf $$ser /etc/systemd/system/ ; \
 	done
 	systemctl daemon-reload
+	mkdir -p /home/fac/sirius-iocs/si-ap-sofb
 	mkdir -p /home/fac/sirius-iocs/pvs
 	chown -R fac.fac /home/fac/sirius-iocs
 
 stop-services:
-	@echo " --- stop services ---"
+	@echo " --- stoping services ---"
 	for ser in $(SERVICES) ; do \
 	  systemctl stop $$ser ; \
 	done
 
 start-services: install-services
-	@echo " --- start services ---"
+	@echo " --- start-services ---"
 	for ser in $(SERVICES) ; do \
-	  #systemctl enable $$ser ; \
+	  systemctl enable $$ser ; \
 	  systemctl start $$ser  ; \
 	done
 

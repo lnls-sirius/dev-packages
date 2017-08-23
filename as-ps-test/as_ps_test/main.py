@@ -25,7 +25,7 @@ class App:
     """App class."""
 
     ps_devices = None
-    pvs_database = _pvs.get_pvs_database()
+    pvs_database = None
 
     def __init__(self, driver):
         """Init."""
@@ -35,9 +35,19 @@ class App:
             description='PS-TEST Test Power Supply Soft IOC',
             version=__version__,
             prefix=_pvs._PREFIX)
+        _siriuspy.util.save_ioc_pv_list('as-ps-test',
+                                        ('',
+                                         _pvs._PREFIX),
+                                        App.pvs_database[_pvs._PREFIX])
         self._driver = driver
         for psname in _pvs.ps_devices:
             _pvs.ps_devices[psname].add_callback(self._mycallback)
+
+    @staticmethod
+    def init_class():
+        """Init class."""
+        App.ps_devices = _pvs.get_ps_devices()
+        App.pvs_database = _pvs.get_pvs_database()
 
     @staticmethod
     def get_pvs_database():
@@ -59,13 +69,15 @@ class App:
         return self._driver
 
     def process(self, interval):
+        """Process method."""
         _time.sleep(interval)
 
     def read(self, reason):
+        """Read pv method."""
         return None
 
     def write(self, reason, value):
-        """Write method."""
+        """Write pv method."""
         global ttime
         t0 = _time.time()
         parts = reason.split(':')
@@ -94,7 +106,8 @@ class App:
         return True
 
     def _mycallback(self, pvname, value, **kwargs):
-        #print('{0:<15s}: '.format('ioc callback'), pvname, value)
+        """Mycallback method."""
+        # print('{0:<15s}: '.format('ioc callback'), pvname, value)
         reason = pvname
         prev_value = self._driver.getParam(reason)
         if value != prev_value:

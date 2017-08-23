@@ -13,7 +13,7 @@ setup(
     description='IOC for High Level control of Magnet Power Supplies.',
     url='https://github.com/lnls-sirius/machine-applications',
     download_url='https://github.com/lnls-sirius/machine-applications',
-    license='MIT License',
+    license='GNU GPLv3',
     classifiers=[
         'Intended Audience :: Science/Research',
         'Programming Language :: Python',

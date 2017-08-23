@@ -1,0 +1,14 @@
+[Unit]
+Description=Soft IOC for Sirius SOFB.
+After=multi-user.target
+
+[Service]
+Group=fac
+User=fac
+Type=simple
+WorkingDirectory=/home/fac/sirius-iocs/si-ap-sofb
+StandardOutput=syslog
+StandardError=syslog
+ExecStartPre=/bin/bash --login -c 'env > /tmp/.magic-environment-file'
+EnvironmentFile=-/tmp/.magic-environment-file
+ExecStart=/usr/local/bin/sirius-ioc-si-ap-sofb.py

@@ -76,7 +76,7 @@ _ioc_dict = {
                               'sub_section': '.*',
                               'discipline': 'MA',
                               'device': '(CH|CV).*'},
-    'bo-ma-multipole-fam':   {'name': 'bo-ma-multipole',
+    'bo-ma-multipole-fam':   {'name': 'bo-ma-multipole-fam',
                               'type': 'Glob:MA-Mpole',
                               'prefix_sector': 'BO-',
                               'section': 'BO',
