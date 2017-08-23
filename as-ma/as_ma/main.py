@@ -123,5 +123,5 @@ class App:
         if 'hilim' in kwargs or 'lolim' in kwargs:
             # print("changing upper limit", pvname, kwargs)
             self._driver.setParamInfo(reason, kwargs)
-            self._driver.callbackPV(reason)
+            # self._driver.callbackPV(reason)
         self._driver.updatePVs()
