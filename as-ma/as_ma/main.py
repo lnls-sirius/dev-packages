@@ -110,8 +110,16 @@ class App:
     def _set_callback(self):
         for family, device in App.ma_devices.items():
             device.add_callback(self._mycallback)
+            *_, prefix = device.maname.split(_pvs._PREFIX_SECTOR)
+            db = device._get_database(prefix=prefix)
+            for reason, ddb in db.items():
+                value = ddb['value']
+                # print(reason, value)
+                self._driver.setParam(reason, value)
+            self._driver.updatePVs()
 
     def _mycallback(self, pvname, value, **kwargs):
+        # print(pvname, value)
         if _pvs._PREFIX_SECTOR:
             *parts, reason = pvname.split(_pvs._PREFIX_SECTOR)
         else:

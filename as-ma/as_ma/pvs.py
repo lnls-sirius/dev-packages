@@ -150,7 +150,9 @@ def get_pvs_database():
                        {'type': 'str', 'value': _COMMIT_HASH}}
         for device_name, ma_device in MA_DEVICES.items():
             # for ps_name in ma_device.ps_names:
-            pv_database.update(ma_device._get_database(device_name))
+            # print(device_name)
+            db = ma_device._get_database(device_name)
+            pv_database.update(db)
         return pv_database
     else:
         return {}
