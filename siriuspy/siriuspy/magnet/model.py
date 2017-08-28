@@ -270,6 +270,10 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
         raise NotImplementedError
 
     @property
+    def maname(self):
+        return self._maname
+
+    @property
     def magfunc(self):
         return self._magfunc
 
@@ -394,52 +398,54 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
     def _get_database(self, prefix=''):
         """Return an updated PV database. Keys correspond to PS properties."""
         self._db = self._madata._propty_databases[self._psnames[0]]
-        # value = self.ctrlmode_mon
-        # self._db['CtrlMode-Mon']['value'] = \
-        #   _et.enums('RmtLocTyp').index(value) if self._enum_keys else value
-        # value = self.opmode_sel
-        # self._db['OpMode-Sel']['value'] = \
-        #   _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
-        # value = self.opmode_sts
-        # self._db['OpMode-Sts']['value'] = \
-        #   _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
-        # value = self.pwrstate_sel
-        # self._db['PwrState-Sel']['value'] = \
-        #   _et.enums('OffOnTyp').index(value) if self._enum_keys else value
-        # value = self.pwrstate_sts
-        # self._db['PwrState-Sts']['value'] = \
-        #   _et.enums('OffOnTyp').index(value) if self._enum_keys else value
-        # self._db['Reset-Cmd']['value'] = self.reset_cmd
-        # self._db['Abort-Cmd']['value'] = self.abort_cmd
-        # wfmlabels = self.wfmlabels_mon
-        # self._db['WfmLoad-Sel']['enums'] = wfmlabels
-        # self._db['WfmLoad-Sts']['enums'] = wfmlabels
-        # value = self.wfmload_sel
-        # self._db['WfmLoad-Sel']['value'] = \
-        #   _np.where(wfmlabels == value)[0][0] if self._enum_keys else value
-        # value = self.wfmload_sts
-        # self._db['WfmLoad-Sts']['value'] = \
-        #   _np.where(wfmlabels == value)[0][0] if self._enum_keys else value
-        # self._db['WfmLabel-SP']['value'] = self.wfmlabel_sp
-        # self._db['WfmLabel-RB']['value'] = self.wfmlabel_rb
-        # self._db['WfmLabels-Mon']['value'] = self.wfmlabels_mon
-        # self._db['WfmData-SP']['value'] = self.wfmdata_sp
-        # self._db['WfmData-RB']['value'] = self.wfmdata_rb
-        # self._db['WfmSave-Cmd']['value'] = self.wfmsave_cmd
-        # self._db['WfmIndex-Mon']['value'] = self.wfmindex_mon
-        # self._db['Current-SP']['value'] = self.current_sp
-        # self._db['Current-RB']['value'] = self.current_rb
-        # self._db['CurrentRef-Mon']['value'] = self.currentref_mon
-        # self._db['Current-Mon']['value'] = self.current_mon
-        # self._db['Intlk-Mon']['value'] = self.intlk_mon
-        #
-        # label = self._strength_label
-        #
-        # # Set strength values
-        # self._db[label + '-SP']['value'] = self.strength_sp
-        # self._db[label + '-RB']['value'] = self.strength_rb
-        # self._db[label + '-Mon']['value'] = self.strength_mon
-        # self._db[label + 'Ref-Mon']['value'] = self.strengthref_mon
+
+        if self.connected:
+            value = self.ctrlmode_mon
+            self._db['CtrlMode-Mon']['value'] = \
+              _et.enums('RmtLocTyp').index(value) if self._enum_keys else value
+            value = self.opmode_sel
+            self._db['OpMode-Sel']['value'] = \
+              _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
+            value = self.opmode_sts
+            self._db['OpMode-Sts']['value'] = \
+              _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
+            value = self.pwrstate_sel
+            self._db['PwrState-Sel']['value'] = \
+              _et.enums('OffOnTyp').index(value) if self._enum_keys else value
+            value = self.pwrstate_sts
+            self._db['PwrState-Sts']['value'] = \
+              _et.enums('OffOnTyp').index(value) if self._enum_keys else value
+            self._db['Reset-Cmd']['value'] = self.reset_cmd
+            self._db['Abort-Cmd']['value'] = self.abort_cmd
+            wfmlabels = self.wfmlabels_mon
+            self._db['WfmLoad-Sel']['enums'] = wfmlabels
+            self._db['WfmLoad-Sts']['enums'] = wfmlabels
+            value = self.wfmload_sel
+            self._db['WfmLoad-Sel']['value'] = \
+              _np.where(wfmlabels == value)[0][0] if self._enum_keys else value
+            value = self.wfmload_sts
+            self._db['WfmLoad-Sts']['value'] = \
+              _np.where(wfmlabels == value)[0][0] if self._enum_keys else value
+            self._db['WfmLabel-SP']['value'] = self.wfmlabel_sp
+            self._db['WfmLabel-RB']['value'] = self.wfmlabel_rb
+            self._db['WfmLabels-Mon']['value'] = self.wfmlabels_mon
+            self._db['WfmData-SP']['value'] = self.wfmdata_sp
+            self._db['WfmData-RB']['value'] = self.wfmdata_rb
+            self._db['WfmSave-Cmd']['value'] = self.wfmsave_cmd
+            self._db['WfmIndex-Mon']['value'] = self.wfmindex_mon
+            self._db['Current-SP']['value'] = self.current_sp
+            self._db['Current-RB']['value'] = self.current_rb
+            self._db['CurrentRef-Mon']['value'] = self.currentref_mon
+            self._db['Current-Mon']['value'] = self.current_mon
+            self._db['Intlk-Mon']['value'] = self.intlk_mon
+
+        label = self._strength_label
+
+        # Set strength values
+        self._db[label + '-SP']['value'] = self.strength_sp
+        self._db[label + '-RB']['value'] = self.strength_rb
+        self._db[label + '-Mon']['value'] = self.strength_mon
+        self._db[label + 'Ref-Mon']['value'] = self.strengthref_mon
 
         label = self._strength_label
 

@@ -586,7 +586,6 @@ class PowerSupplyEpicsSync:
         else:
             self._vaca_prefix = ''
 
-
     def _init_propty(self):
         self._propty = {propty:None for propty in self._propty_callbacks}
 
@@ -784,7 +783,7 @@ class PowerSupplyEpicsSync:
                     self._put_thread.put(pvname=pvname, value=value)
 
     def _get_disconnect_state(self):
-        #return self._disconnect
+        # return self._disconnect
         self._disconnect_lock.acquire()
         try:
             disconnect = self._disconnect
@@ -839,7 +838,6 @@ class PowerSupplyEpicsSync:
         self._trigger_callback(pvname, value, **kwargs)
 
     def _callback_change_rb_pv(self, pvname, value, **kwargs):
-        #print('callback_change_rb_pv: ', pvname, value)
         *parts, propty = pvname.split(':')
         self._propty[propty] = value
         self._trigger_callback(pvname, value, **kwargs)
