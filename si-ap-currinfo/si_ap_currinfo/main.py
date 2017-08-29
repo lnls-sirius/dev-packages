@@ -39,8 +39,8 @@ class App:
             version=__version__,
             prefix=_pvs._PREFIX)
         _siriuspy.util.save_ioc_pv_list('si-ap-currinfo-' + _pvs._INFO,
-                                        ('',
-                                         _pvs._PREFIX),
+                                        (_pvs._DEVICE,
+                                         _pvs._PREFIX_VACA),
                                         App.pvs_database)
         self._driver = driver
         self._pvs_database = App.pvs_database

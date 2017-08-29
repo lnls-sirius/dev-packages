@@ -6,7 +6,8 @@ from siriuspy import util as _util
 
 _COMMIT_HASH = _util.get_last_commit_hash()
 _PREFIX_VACA = _vaca_prefix
-_PREFIX = _PREFIX_VACA + 'SI-Glob:AP-CurrInfo:'
+_DEVICE = 'SI-Glob:AP-CurrInfo:'
+_PREFIX = _PREFIX_VACA + _DEVICE
 _INFO = None
 
 
