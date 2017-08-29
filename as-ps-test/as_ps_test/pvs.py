@@ -153,5 +153,7 @@ def get_pvs_database():
         ps_db = ps_devices[psname].database
         props = list(ps_db.keys())
         for i in range(len(props)):
+            # if props[i] == 'Current-SP':
+            #     ps_db[props[i]]['value'] = 1.0
             db[psname + ':' + props[i]] = ps_db[props[i]]
     return {_PREFIX: db}

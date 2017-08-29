@@ -115,7 +115,8 @@ class App:
             for reason, ddb in db.items():
                 value = ddb['value']
                 # print(reason, value)
-                self._driver.setParam(reason, value)
+                if value is not None:
+                    self._driver.setParam(reason, value)
             self._driver.updatePVs()
 
     def _mycallback(self, pvname, value, **kwargs):
