@@ -137,10 +137,8 @@ class PulsedMagnetPowerSupply(PulsedPowerSupply):
         self._dipole_current_mon = \
             (self._dipole_controller.get("Current-Mon") or 0.0)
         # Set callback to keep pu properties updated
-        print("Creating database")
         self._create_database()
         self._update_strengths()
-        print("Setting pv callbacks")
         self._set_pv_callbacks()
 
     def __repr__(self):
@@ -197,6 +195,11 @@ class PulsedMagnetPowerSupply(PulsedPowerSupply):
         return rep + ")"
 
     @property
+    def maname(self):
+        """Return magnet name."""
+        return self._maname
+
+    @property
     def callback(self):
         """Callback property used by client to receive pv updates."""
         return self._callback
@@ -211,7 +214,7 @@ class PulsedMagnetPowerSupply(PulsedPowerSupply):
     @property
     def tension_sp(self):
         """Return tension set point."""
-        return (self._controller.get(pu_props.TensionSP) or 0.0)
+        return self._controller.get(pu_props.TensionSP)
 
     @tension_sp.setter
     def tension_sp(self, value):
@@ -256,7 +259,7 @@ class PulsedMagnetPowerSupply(PulsedPowerSupply):
         self.db[pu_props.ResetCmd]["value"] = self.reset_cmd
         self.db[pu_props.CtrlMode]["value"] = self.ctrlmode_mon
         self.db[pu_props.ExternalInterlock]["value"] = self.intlk_mon
-        self.db[pu_props.TensionSP]["value"] = self.tension_sp
+        self.db[pu_props.TensionSP]["value"] = (self.tension_sp or 0.0)
         self.db[pu_props.TensionRB]["value"] = self.tension_rb
         self.db[pu_props.TensionRefMon]["value"] = self.tensionref_mon
         self.db[pu_props.TensionMon]["value"] = self.tension_mon
