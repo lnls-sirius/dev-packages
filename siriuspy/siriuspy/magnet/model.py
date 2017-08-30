@@ -80,7 +80,7 @@ class _MagnetNormalizer:
     def conv_current_2_strength(self, current, **kwargs):
         intfield = self._conv_current_2_intfield(current)
         if intfield is None:
-            return None
+            return 0.0
         strength = self._conv_intfield_2_strength(intfield, **kwargs)
         return strength
 
