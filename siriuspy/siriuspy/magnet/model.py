@@ -101,14 +101,7 @@ class _MagnetNormalizer:
 class DipoleNormalizer(_MagnetNormalizer):
     """Convert magnet current to strength and vice versa."""
 
-    _ref_angles = {
-        'SI_BC': _math.radians(4.2966),
-        'SI_B1': _math.radians(2.7553),
-        'SI_B2': _math.radians(4.0964),
-        'TS': _math.radians(5.3333),
-        'BO': _math.radians(7.2000),
-        'TB': _math.radians(15.000),
-    }
+    _ref_angles = _mutil.get_nominal_dipole_angles()
 
     def __init__(self, maname, **kwargs):
         """Class constructor."""
