@@ -30,7 +30,7 @@ class App:
     ma_devices = None
     pvs_database = None
 
-    strengths = ['Energy', 'KL', 'SL', 'Kick', 'EnergyRef, ''KLRef', 'SLRef',
+    strengths = ['Energy', 'KL', 'SL', 'Kick', 'EnergyRef', 'KLRef', 'SLRef',
                  'KickRef']
     writable_fields = ['SP', 'Sel', 'Cmd']
 
@@ -110,7 +110,10 @@ class App:
     def _set_callback(self):
         for family, device in App.ma_devices.items():
             device.add_callback(self._mycallback)
-            *_, prefix = device.maname.split(_pvs._PREFIX_SECTOR)
+            if _pvs._PREFIX_SECTOR:
+                *parts, prefix = device.maname.split(_pvs._PREFIX_SECTOR)
+            else:
+                prefix = device.maname
             db = device._get_database(prefix=prefix)
             for reason, ddb in db.items():
                 value = ddb['value']
