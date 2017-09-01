@@ -103,10 +103,10 @@ def get_ma_propty_database(maname):
             db[psname]['KLRef-Mon'] = _copy.deepcopy(db[psname]['CurrentRef-Mon']); db[psname]['KLRef-Mon']['unit'] = '1/m'
             db[psname]['KL-Mon'] = _copy.deepcopy(db[psname]['Current-Mon']); db[psname]['KL-Mon']['unit'] = '1/m'
         elif magfunc == 'sextupole':
-            db[psname]['SL-SP']     = _copy.deepcopy(db[psname]['Current-SP']); db[psname]['SL-SP']['unit'] = '1/m'
-            db[psname]['SL-RB']     = _copy.deepcopy(db[psname]['Current-RB']); db[psname]['SL-RB']['unit'] = '1/m'
-            db[psname]['SLRef-Mon'] = _copy.deepcopy(db[psname]['CurrentRef-Mon']); db[psname]['SLRef-Mon']['unit'] = '1/m'
-            db[psname]['SL-Mon']    = _copy.deepcopy(db[psname]['Current-Mon']); db[psname]['SL-Mon']['unit'] = '1/m'
+            db[psname]['SL-SP']     = _copy.deepcopy(db[psname]['Current-SP']); db[psname]['SL-SP']['unit'] = '1/m^2'
+            db[psname]['SL-RB']     = _copy.deepcopy(db[psname]['Current-RB']); db[psname]['SL-RB']['unit'] = '1/m^2'
+            db[psname]['SLRef-Mon'] = _copy.deepcopy(db[psname]['CurrentRef-Mon']); db[psname]['SLRef-Mon']['unit'] = '1/m^2'
+            db[psname]['SL-Mon']    = _copy.deepcopy(db[psname]['Current-Mon']); db[psname]['SL-Mon']['unit'] = '1/m^2'
         elif magfunc == 'dipole':
             db[psname]['Energy-SP']     = _copy.deepcopy(db[psname]['Current-SP']); db[psname]['Energy-SP']['unit'] = 'GeV'
             db[psname]['Energy-RB']     = _copy.deepcopy(db[psname]['Current-RB']); db[psname]['Energy-RB']['unit'] = 'GeV'
