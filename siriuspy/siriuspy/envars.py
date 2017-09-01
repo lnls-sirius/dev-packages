@@ -44,6 +44,9 @@ server_url_cables = _os.environ.get('SIRIUS_URL_CABLES',
                                     default='http://cables:8086')
 server_url_consts = _os.environ.get('SIRIUS_URL_CONSTS',
                                     default='http://sirius-consts.lnls.br')
+server_url_logbook = _os.environ.get('SIRIUS_URL_LOGBOOK',
+                                     default='http://sirius-logbook.lnls.br')
+
 vaca_prefix = _os.environ.get('VACA_PREFIX',   default='VA-')
 
 # --- repositories ---
