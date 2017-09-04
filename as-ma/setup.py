@@ -27,6 +27,7 @@ setup(
              'scripts/sirius-ioc-bo-ma-dipole-fam.py',
              'scripts/sirius-ioc-bo-ma-corrector.py',
              'scripts/sirius-ioc-bo-ma-multipole-fam.py',
+             'scripts/sirius-ioc-bo-ma-quadrupole-skew.py',
              'scripts/sirius-ioc-ts-ma-dipole-fam.py',
              'scripts/sirius-ioc-ts-ma-corrector.py',
              'scripts/sirius-ioc-ts-ma-multipole.py',
@@ -35,6 +36,7 @@ setup(
              'scripts/sirius-ioc-si-ma-corrector-fast.py',
              'scripts/sirius-ioc-si-ma-multipole-fam.py',
              'scripts/sirius-ioc-si-ma-quadrupole-trim.py',
+             'scripts/sirius-ioc-si-ma-quadrupole-skew.py',
              'scripts/sirius-ioc-as-pm.py'
              ],
     zip_safe=False
