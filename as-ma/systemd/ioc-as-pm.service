@@ -1,5 +1,6 @@
 [Unit]
 Description=Soft IOC for pulsed magnets
+Requires=ioc-si-ma-dipole-fam.service ioc-ts-ma-dipole-fam.service ioc-bo-ma-dipole-fam.service ioc-tb-ma-dipole-fam.service
 After=multi-user.target
 
 [Service]

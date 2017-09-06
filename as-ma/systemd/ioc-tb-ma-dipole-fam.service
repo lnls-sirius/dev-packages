@@ -1,5 +1,6 @@
 [Unit]
 Description=Soft IOC for SI dipole magnet families
+Requires=ioc-as-ps-test.service
 After=multi-user.target
 
 [Service]

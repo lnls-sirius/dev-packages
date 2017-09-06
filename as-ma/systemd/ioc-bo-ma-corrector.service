@@ -1,5 +1,6 @@
 [Unit]
 Description=Soft IOC for BO corrector magnets
+Requires=ioc-bo-ma-dipole-fam.service
 After=multi-user.target
 
 [Service]
