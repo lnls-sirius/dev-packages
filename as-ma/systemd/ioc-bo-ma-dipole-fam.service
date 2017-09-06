@@ -1,6 +1,5 @@
 [Unit]
 Description=Soft IOC for BO dipole magnet family
-Requires=ioc-as-ps-test.service
 After=multi-user.target
 
 [Service]
