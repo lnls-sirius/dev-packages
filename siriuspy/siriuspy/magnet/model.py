@@ -272,6 +272,19 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
             min(value, self.current_max)
         return float(value)
 
+    def _check_strength_limits(self, value):
+        """Check strength limits."""
+        kwargs = self._get_currents_dict('Current-SP')
+        high, low = self._get_strength_limit(**kwargs)
+        print(high, low)
+
+        if value > high:
+            value = high
+        elif value < low:
+            value = low
+
+        return value
+
     @property
     def current_min(self):
         return self._current_min
@@ -308,7 +321,7 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
 
     @strength_sp.setter
     def strength_sp(self, value):
-        value = float(value)
+        value = self._check_strength_limits(value)
         self._propty[self._strength_label + '-SP'] = value
         pvname = self._maname + ':' + self._strength_label + '-SP'
         self._trigger_callback(pvname, value)
@@ -475,9 +488,9 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
 
     def _get_strength_limit(self, **kwargs):
         high = self._strength_obj.conv_current_2_strength(
-            self._db['Current-SP']['hilim'], **kwargs)
+            self._current_max, **kwargs)
         low = self._strength_obj.conv_current_2_strength(
-            self._db['Current-SP']['lolim'], **kwargs)
+            self._current_min, **kwargs)
 
         if high > low:
             hihi = high
