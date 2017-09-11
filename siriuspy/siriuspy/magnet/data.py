@@ -14,6 +14,7 @@ class MAData:
 
     def __init__(self, maname):
         self._maname = _SiriusPVName(maname)
+        self._splims = _MASearch.conv_maname_2_splims(self._maname)
         self._splims_unit = _MASearch.get_splims_unit()[0]
         psnames = _MASearch.conv_maname_2_psnames(self._maname)
         self._propty_databases = _get_ma_propty_database(self._maname)
@@ -31,7 +32,10 @@ class MAData:
 
     @property
     def splims(self):
-        return _MASearch.get_splim(self._maname)
+        if self._splims is None:
+            return None
+        else:
+            return self._splims.copy()
 
     @property
     def psnames(self):

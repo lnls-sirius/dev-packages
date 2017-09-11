@@ -282,8 +282,10 @@ class MASearch:
 
     @staticmethod
     def get_splim(maname, label):
-        """Return setpoint limit corresponding to given label (either epics' or pcaspy's)."""
-        if MASearch._maname_2_splims_dict is None: MASearch.reload_maname_2_splims_dict()
+        """Return setpoint limit corresponding to given label
+        (either epics' or pcaspy's)."""
+        if MASearch._maname_2_splims_dict is None:
+            MASearch.reload_maname_2_splims_dict()
         if label in MASearch._splims_labels:
             return MASearch._maname_2_splims_dict[maname][label]
         else:
@@ -311,6 +313,14 @@ class MASearch:
             ret[psname] = ma_func[i]
 
         return ret
+
+    @staticmethod
+    def conv_maname_2_splims(maname):
+        if maname is None:
+            return None
+        if MASearch._maname_2_splims_dict is None:
+            MASearch.reload_maname_2_splims_dict()
+        return _copy.deepcopy(MASearch._maname_2_splims_dict[maname])
 
     @staticmethod
     def conv_maname_2_psnames(maname):

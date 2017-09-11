@@ -229,6 +229,8 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
         self._left = left
         self._right = right
         self._mfmult = _magfuncs[self.magfunc]
+        self._current_min = self._madata._splims['DRVL']
+        self._current_max = self._madata._splims['DRVH']
 
         self._strength_obj = self._get_strength_obj()
 
@@ -262,6 +264,22 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
     def _init_subclass(self):
         raise NotImplementedError
 
+    def _check_current_limits(self, value):
+        """Check current limits."""
+        value = value if self.current_min is None else \
+            max(value, self.current_min)
+        value = value if self.current_max is None else \
+            min(value, self.current_max)
+        return float(value)
+
+    @property
+    def current_min(self):
+        return self._current_min
+
+    @property
+    def current_max(self):
+        return self._current_max
+
     @property
     def maname(self):
         return self._maname
@@ -276,7 +294,7 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
 
     @current_sp.setter
     def current_sp(self, value):
-        value = float(value)
+        value = self._check_current_limits(value)
         self._set_current_sp(value)
         kwargs = self._get_currents_dict('Current-SP')
         strength = self._strength_obj.conv_current_2_strength(value, **kwargs)
