@@ -1,5 +1,6 @@
 [Unit]
 Description=Soft IOC for simulation of all magnet power supplies
+Conflicts=ioc-as-vaca.service
 After=multi-user.target
 
 [Service]
