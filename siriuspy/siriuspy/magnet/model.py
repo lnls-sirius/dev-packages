@@ -277,7 +277,6 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
         kwargs = self._get_currents_dict('Current-SP')
         low, high, lolo, hihi, lolim, hilim = \
             self._get_strength_limit(**kwargs)
-        print(high, low)
 
         if value > hilim:
             value = hilim
@@ -475,7 +474,6 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
             self._db[label + '-RB']['value'] = self.strength_rb
             self._db[label + '-Mon']['value'] = self.strength_mon
             self._db[label + 'Ref-Mon']['value'] = self.strengthref_mon
-        # print(self._db)
 
         kwargs = self._get_currents_dict('Current-SP')
         # low_curr, high_curr = (self._db["Current-SP"]["low"],
@@ -489,7 +487,6 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
         # hilim, lolim = self._get_strength_limit(low_curr, high_curr, **kwargs)
         low, high, lolo, hihi, lolim, hilim = \
             self._get_strength_limit(**kwargs)
-        print(hilim, lolim)
 
         # Set strength values
         self._db[label + '-SP']['high'] = high
