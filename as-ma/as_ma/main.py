@@ -94,7 +94,7 @@ class App:
             print('{0:<15s}: '.format('ioc write'), reason)
         setattr(ma, attr, value)
         # Update IOC database
-        self._driver.setParam(reason, value)
+        self._driver.setParam(reason, getattr(ma, attr))
         self._driver.updatePVs()
 
         return
