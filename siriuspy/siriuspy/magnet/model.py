@@ -286,6 +286,10 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
         return value
 
     @property
+    def database(self):
+        return self._get_database()
+
+    @property
     def current_min(self):
         return self._current_min
 
@@ -419,9 +423,11 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
                 pvname = self._maname + ':' + propty_strength
                 self._trigger_callback(pvname, strength, **kwargs)
 
-    def _get_database(self, prefix=''):
+    def _get_database(self, prefix=None):
         """Return an updated PV database. Keys correspond to PS properties."""
         self._db = self._madata._propty_databases[self._psnames[0]]
+
+        label = self._strength_label
 
         if self.connected:
             value = self.ctrlmode_mon
@@ -463,27 +469,27 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
             self._db['Current-Mon']['value'] = self.current_mon
             self._db['Intlk-Mon']['value'] = self.intlk_mon
 
-        label = self._strength_label
-
-        # Set strength values
-        self._db[label + '-SP']['value'] = self.strength_sp
-        self._db[label + '-RB']['value'] = self.strength_rb
-        self._db[label + '-Mon']['value'] = self.strength_mon
-        self._db[label + 'Ref-Mon']['value'] = self.strengthref_mon
-
-        label = self._strength_label
+            # Set strength values
+            self._db[label + '-SP']['value'] = self.strength_sp
+            self._db[label + '-RB']['value'] = self.strength_rb
+            self._db[label + '-Mon']['value'] = self.strength_mon
+            self._db[label + 'Ref-Mon']['value'] = self.strengthref_mon
 
         kwargs = self._get_currents_dict('Current-SP')
         hihi, lolo = self._get_strength_limit(**kwargs)
+
+        print(hihi, lolo)
 
         # Set strength values
         self._db[label + '-SP']['hilim'] = hihi
         self._db[label + '-SP']['lolim'] = lolo
 
+        if prefix is None:
+            return self._db
+
         prefixed_db = dict()
         for key, value in self._db.items():
             prefixed_db[prefix + ':' + key] = value
-
         return prefixed_db
 
     def _get_strength_limit(self, **kwargs):
@@ -537,7 +543,7 @@ class MagnetPowerSupply(_MagnetPowerSupply):
     def _init_subclass(self):
         attrs = ('Current-SP', 'Current-RB', 'CurrentRef-Mon', 'Current-Mon')
         prefix = self._vaca_prefix + self._dipole_name
-        self._dipole = _epics.Device(prefix, delim=':', attrs=attrs)
+        self._dipole = _epics.Device(prefix, delim=':', attrs=attrs, timeout=None)
 
         self._dipole_current_sp = self._dipole.get('Current-SP')
         self._dipole_current_rb = self._dipole.get('Current-RB')
