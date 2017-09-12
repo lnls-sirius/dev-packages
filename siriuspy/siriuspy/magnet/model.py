@@ -238,7 +238,6 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
 
         self._set_vaca_prefix(use_vaca, vaca_prefix)
 
-
         super().__init__(psnames=self._power_supplies(),
                          use_vaca=use_vaca,
                          vaca_prefix=vaca_prefix,
@@ -276,13 +275,14 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
     def _check_strength_limits(self, value):
         """Check strength limits."""
         kwargs = self._get_currents_dict('Current-SP')
-        high, low = self._get_strength_limit(**kwargs)
+        low, high, lolo, hihi, lolim, hilim = \
+            self._get_strength_limit(**kwargs)
         print(high, low)
 
-        if value > high:
-            value = high
-        elif value < low:
-            value = low
+        if value > hilim:
+            value = hilim
+        elif value < lolim:
+            value = lolim
 
         return value
 
@@ -475,15 +475,29 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
             self._db[label + '-RB']['value'] = self.strength_rb
             self._db[label + '-Mon']['value'] = self.strength_mon
             self._db[label + 'Ref-Mon']['value'] = self.strengthref_mon
+        # print(self._db)
 
         kwargs = self._get_currents_dict('Current-SP')
-        hihi, lolo = self._get_strength_limit(**kwargs)
-
-        print(hihi, lolo)
+        # low_curr, high_curr = (self._db["Current-SP"]["low"],
+        #                        self._db["Current-SP"]["high"])
+        # high, low = self._get_strength_limit(low_curr, high_curr, **kwargs)
+        # low_curr, high_curr = (self._db["Current-SP"]["lolo"],
+        #                        self._db["Current-SP"]["hihi"])
+        # hihi, lolo = self._get_strength_limit(low_curr, high_curr, **kwargs)
+        # low_curr, high_curr = (self._db["Current-SP"]["lolim"],
+        #                        self._db["Current-SP"]["hilim"])
+        # hilim, lolim = self._get_strength_limit(low_curr, high_curr, **kwargs)
+        low, high, lolo, hihi, lolim, hilim = \
+            self._get_strength_limit(**kwargs)
+        print(hilim, lolim)
 
         # Set strength values
-        self._db[label + '-SP']['hilim'] = hihi
-        self._db[label + '-SP']['lolim'] = lolo
+        self._db[label + '-SP']['high'] = high
+        self._db[label + '-SP']['low'] = low
+        self._db[label + '-SP']['hilim'] = hilim
+        self._db[label + '-SP']['lolim'] = lolim
+        self._db[label + '-SP']['hihi'] = hihi
+        self._db[label + '-SP']['lolo'] = lolo
 
         if prefix is None:
             return self._db
@@ -494,19 +508,28 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
         return prefixed_db
 
     def _get_strength_limit(self, **kwargs):
-        high = self._strength_obj.conv_current_2_strength(
-            self._current_max, **kwargs)
         low = self._strength_obj.conv_current_2_strength(
-            self._current_min, **kwargs)
+            self._db["Current-SP"]["low"], **kwargs)
+        high = self._strength_obj.conv_current_2_strength(
+            self._db["Current-SP"]["high"], **kwargs)
+        if high < low:
+            high, low = low, high
 
-        if high > low:
-            hihi = high
-            lolo = low
-        else:
-            hihi = low
-            lolo = high
+        lolo = self._strength_obj.conv_current_2_strength(
+            self._db["Current-SP"]["lolo"], **kwargs)
+        hihi = self._strength_obj.conv_current_2_strength(
+            self._db["Current-SP"]["hihi"], **kwargs)
+        if hihi < lolo:
+            hihi, lolo = lolo, hihi
 
-        return (hihi, lolo)
+        lolim = self._strength_obj.conv_current_2_strength(
+            self._db["Current-SP"]["lolim"], **kwargs)
+        hilim = self._strength_obj.conv_current_2_strength(
+            self._db["Current-SP"]["hilim"], **kwargs)
+        if hilim < lolim:
+            hilim, lolim = lolim, hilim
+
+        return (low, high, lolo, hihi, lolim, hilim)
 
     def _power_supplies(self):
         return [self._maname.replace(":MA", ":PS")]
@@ -606,9 +629,11 @@ class MagnetPowerSupply(_MagnetPowerSupply):
 
             pvname = self._maname + ':' + propty_strength
             try:
-                hilim, lolim = self._get_strength_limit(**kwargs)
+                low, high, lolo, hihi, lolim, hilim = \
+                    self._get_strength_limit(**kwargs)
                 self._trigger_callback(
-                    pvname, strength, hilim=hilim, lolim=lolim)
+                    pvname, strength, high=high, low=low, hihi=hihi, lolo=lolo,
+                    hilim=hilim, lolim=lolim)
             except (KeyError, AttributeError):
                 self._trigger_callback(pvname, strength)
 
