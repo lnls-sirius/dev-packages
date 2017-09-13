@@ -571,6 +571,10 @@ class MagnetPowerSupply(_MagnetPowerSupply):
         self._dipole_current_rb = 0.0
         self._dipole_currentref_mon = 0.0
         self._dipole_current_mon = 0.0
+        self._fam_current_sp = 0.0
+        self._fam_current_rb = 0.0
+        self._fam_currentref_mon = 0.0
+        self._fam_current_mon = 0.0
         # self._dipole_current_sp = self._dipole.get('Current-SP')
         # self._dipole_current_rb = self._dipole.get('Current-RB')
         # self._dipole_currentref_mon = self._dipole.get('CurrentRef-Mon')
@@ -645,27 +649,22 @@ class MagnetPowerSupplyTrim(MagnetPowerSupply):
     def _init_subclass(self):
         attrs = ('Current-SP', 'Current-RB', 'CurrentRef-Mon', 'Current-Mon')
         super(MagnetPowerSupplyTrim, self)._init_subclass()
-        # self._dipole = _epics.Device(self._dipole_name,delim=':',attrs=attrs)
+        self._fam = {}
         prefix = self._vaca_prefix + self._fam_name
-        self._fam = _epics.Device(prefix, delim=':', attrs=attrs)
+        # self._fam = _epics.Device(prefix, delim=':', attrs=attrs)
 
-        self._dipole_current_sp = 0.0
-        self._dipole_current_rb = 0.0
-        self._dipole_currentref_mon = 0.0
-        self._dipole_current_mon = 0.0
-        # self._dipole_current_sp = self._dipole.get('Current-SP')
-        # self._dipole_current_rb = self._dipole.get('Current-RB')
-        # self._dipole_currentref_mon = self._dipole.get('CurrentRef-Mon')
-        # self._dipole_current_mon = self._dipole.get('Current-Mon')
-
-        self._fam_current_sp = self._fam.get('Current-SP')
-        self._fam_current_rb = self._fam.get('Current-RB')
-        self._fam_currentref_mon = self._fam.get('CurrentRef-Mon')
-        self._fam_current_mon = self._fam.get('Current-Mon')
+        # self._fam_current_sp = 0.0
+        # self._fam_current_rb = 0.0
+        # self._fam_currentref_mon = 0.0
+        # self._fam_current_mon = 0.0
+        # self._fam_current_sp = self._fam.get('Current-SP')
+        # self._fam_current_rb = self._fam.get('Current-RB')
+        # self._fam_currentref_mon = self._fam.get('CurrentRef-Mon')
+        # self._fam_current_mon = self._fam.get('Current-Mon')
 
         for attr in attrs:
-            # self._dipole.add_callback(attr, self._callback_dipole_updated)
-            self._fam.add_callback(attr, self._callback_family_updated)
+            self._fam[attr] = _epics.PV(pvname=prefix + ":" + attr)
+            self._fam[attr].add_callback(self._callback_family_updated)
 
     def _get_strength_obj(self):
         return TrimNormalizer(self._maname, dipole_name=self._dipole_name,
