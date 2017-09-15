@@ -1,6 +1,7 @@
 """Magnet utils."""
 
 import math as _math
+import numpy as _numpy
 
 
 def get_nominal_dipole_angles():
@@ -81,3 +82,48 @@ def sum_magnetic_multipoles(*multipoles_list):
         if s:
             res['skew'] = s
     return res
+
+
+def generate_normalized_ramp(interval=500, nrpts=2000,
+                             ti=None, fi=None, forms=None):
+    """Generate normalized ramp."""
+    t = interval * _numpy.linspace(0, 1.0, nrpts)
+    if ti is None:
+        ti = interval * _numpy.array([0, 13, 310,
+                                      322, 330, 342, 480, 500])/500.0
+    if fi is None:
+        fi = _numpy.array([0.01, 0.02625, 1.0339285714,
+                           1.05, 1.05, 1, 0.07, 0.01])
+    if forms is None:
+        forms = ['cube', 'injection', 'cube', 'line', 'cube', 'line', 'cube']
+
+    # brho_3gev = 10.00692271077752  # [T.m]
+    # brho_150mev = 0.5003432394479871  # [T.m]
+
+    ramp = _numpy.zeros(len(t))
+    a1 = _numpy.zeros(len(ti))
+    dti = _numpy.zeros(len(forms))
+
+    # findout the initial derivatives and delta ts from the straigth lines
+    for i, fo in enumerate(forms):
+        dti[i] = (ti[i+1]-ti[i])
+        if fo.startswith(('l', 'i')) or fo == 0:
+            equal_previous = False
+            a1[i] = (fi[i+1]-fi[i])/dti[i]
+            a1[i+1] = a1[i]
+        else:
+            equal_previous = True
+        if equal_previous:
+            a1[i] = a1[i-1]
+
+    # calculate the ramp:
+    for i, fo in enumerate(forms):
+        ind = _numpy.bitwise_and(ti[i] <= t, t <= ti[i+1])
+        dt = t[ind] - ti[i]
+        a2, a3 = 0, 0
+        if fo.startswith(('c', 'i')):
+            a2 = (-3*(fi[i]-fi[i+1]) - dti[i] * (2*a1[i]+a1[i+1]))/dti[i]**2
+            a3 = (2*(fi[i]-fi[i+1]) + dti[i] * (a1[i]+a1[i+1]))/dti[i]**3
+        ramp[ind] = fi[i] + a1[i]*dt + a2*dt**2 + a3*dt**3
+
+    return ramp
