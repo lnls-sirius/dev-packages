@@ -1,10 +1,13 @@
 #!/usr/local/bin/python-sirius
 """PulsedPowerSupply definition."""
-from epics import Device
+import logging
+from epics import PV
 
 from siriuspy import envars
 from siriuspy.pulsedps import properties
 from siriuspy.pulsedps.data import PUData as _PUData
+
+logging.basicConfig(level=logging.WARNING)
 
 
 class PulsedPowerSupply:
@@ -55,87 +58,101 @@ class PulsedPowerSupply:
     def add_callback_to_pv(self, attr, func):
         """Add func as a callback to given attribute."""
         if callable(func):
-            self._controller.add_callback(attr, func)
+            self._controller[attr].add_callback(func)
         else:
             raise AssertionError("Callback must be a callable type.")
 
     def add_callback(self, func):
         """Register a callback."""
         if callable(func):
-            self._callback = func
+            self.callback = func
         else:
             raise AssertionError("Callback must be a callable type.")
+
+    def read(self, controller, attr):
+        """Do not hang."""
+        # print("Connected?: ", attr, controller[attr].connected)
+        if controller[attr].connected:
+            return controller[attr].get()
+        else:
+            logging.warning("Failed to get initial value for {}".format(attr))
 
     @property
     def tension_sp(self):
         """Return tension_sp."""
-        return (self._controller.get(properties.TensionSP) or 0.0)
+        return self._controller[properties.TensionSP].get()
 
     @tension_sp.setter
     def tension_sp(self, value):
-        self._controller.put(properties.TensionSP, value)
+        upper_limit = self._db[properties.TensionSP]["hilim"]
+        lower_limit = self._db[properties.TensionSP]["lolim"]
+        if value > upper_limit:
+            value = upper_limit
+        elif value < lower_limit:
+            value = lower_limit
+        self._controller[properties.TensionSP].put(value)
 
     @property
     def tension_rb(self):
         """Return tension_rb."""
-        return (self._controller.get(properties.TensionRB) or 0.0)
+        return self._controller[properties.TensionRB].get()
 
     @property
     def tensionref_mon(self):
         """Return tension ref mon."""
-        return (self._controller.get(properties.TensionRefMon) or 0.0)
+        return self._controller[properties.TensionRefMon].get()
 
     @property
     def tension_mon(self):
         """Return tension mon."""
-        return (self._controller.get(properties.TensionMon) or 0.0)
+        return self._controller[properties.TensionMon].get()
 
     @property
     def pwrstate_sel(self):
         """Return power state sel value."""
-        return self._controller.get(properties.PwrStateSel)
+        return self._controller[properties.PwrStateSel].get()
 
     @pwrstate_sel.setter
     def pwrstate_sel(self, value):
-        self._controller.put(properties.PwrStateSel, value)
+        self._controller[properties.PwrStateSel].put(value)
 
     @property
     def pwrstate_sts(self):
         """Return power state status."""
-        return self._controller.get(properties.PwrStateSts)
+        return self._controller[properties.PwrStateSts].get()
 
     @property
     def enablepulses_sel(self):
         """Return setpoint for pulses enabled."""
-        return self._controller.get(properties.EnablePulsesSel)
+        return self._controller[properties.EnablePulsesSel].get()
 
     @enablepulses_sel.setter
     def enablepulses_sel(self, value):
-        self._controller.put(properties.EnablePulsesSel, value)
+        self._controller[properties.EnablePulsesSel].put(value)
 
     @property
     def enablepulses_sts(self):
         """Return wether pulses are enabled or not."""
-        return self._controller.get(properties.EnablePulsesSts)
+        return self._controller[properties.EnablePulsesSts].get()
 
     @property
     def reset_cmd(self):
         """Return number of reset commands issued."""
-        return self._controller.get(properties.ResetCmd)
+        return self._controller[properties.ResetCmd].get()
 
     @reset_cmd.setter
     def reset_cmd(self, value):
-        self._controller.put(properties.ResetCmd, value)
+        self._controller[properties.ResetCmd].put(value)
 
     @property
     def intlk_mon(self):
         """Return interlock mask."""
-        return self._controller.get(properties.ExternalInterlock)
+        return self._controller[properties.ExternalInterlock].get()
 
     @property
     def ctrlmode_mon(self):
         """Return control mode."""
-        return self._controller.get(properties.CtrlMode)
+        return self._controller[properties.CtrlMode].get()
 
     @property
     def database(self):
@@ -144,21 +161,12 @@ class PulsedPowerSupply:
 
     # Private methods
     def _get_database(self):
-        db = self._data.propty_database
+        for attr in properties.PulsedPowerSupplyAttrs:
+            value = self.read(self._controller, attr)
+            if value is not None:
+                self._db[attr]["value"] = value
 
-        db[properties.PwrStateSel]["value"] = self.pwrstate_sel
-        db[properties.PwrStateSts]["value"] = self.pwrstate_sts
-        db[properties.EnablePulsesSel]["value"] = self.enablepulses_sel
-        db[properties.EnablePulsesSts]["value"] = self.enablepulses_sts
-        db[properties.ResetCmd]["value"] = self.reset_cmd
-        db[properties.CtrlMode]["value"] = self.ctrlmode_mon
-        db[properties.ExternalInterlock]["value"] = self.intlk_mon
-        db[properties.TensionSP]["value"] = self.tension_sp
-        db[properties.TensionRB]["value"] = self.tension_rb
-        db[properties.TensionRefMon]["value"] = self.tensionref_mon
-        db[properties.TensionMon]["value"] = self.tension_mon
-
-        return db
+        return self._db
 
     def _set_vaca_prefix(self, use_vaca, vaca_prefix):
         self._vaca_prefix = ""
@@ -170,10 +178,13 @@ class PulsedPowerSupply:
 
     def _init_data(self):
         self._data = _PUData(self._psname)
+        self._db = self._data.propty_database
 
     def _init_controller(self):
-        self._controller = Device(prefix=self._prefix, delim=":",
-                                  attrs=properties.PulsedPowerSupplyAttrs)
+        self._controller = {}
+        for attr in properties.PulsedPowerSupplyAttrs:
+            self._controller[attr] = PV(
+                self._vaca_prefix + self._psname + ":" + attr)
 
 
 class PulsedPowerSupplySim:
