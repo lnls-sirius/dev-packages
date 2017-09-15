@@ -36,7 +36,7 @@ class App:
 
     def __init__(self, driver, *args):
         """Class constructor."""
-        App.init_class()  # Is This really necessary?
+        # App.init_class()  # Is This really necessary?
         _siriuspy.util.print_ioc_banner(
             ioc_name='AS-MA',
             db=App.pvs_database,
@@ -94,7 +94,7 @@ class App:
             print('{0:<15s}: '.format('ioc write'), reason)
         setattr(ma, attr, value)
         # Update IOC database
-        self._driver.setParam(reason, getattr(ma, attr))
+        self._driver.setParam(reason, value)
         self._driver.updatePVs()
 
         return
@@ -110,6 +110,7 @@ class App:
     def _set_callback(self):
         for family, device in App.ma_devices.items():
             device.add_callback(self._mycallback)
+            # ?
             if _pvs._PREFIX_SECTOR:
                 *parts, prefix = device.maname.split(_pvs._PREFIX_SECTOR)
             else:
@@ -123,7 +124,8 @@ class App:
             self._driver.updatePVs()
 
     def _mycallback(self, pvname, value, **kwargs):
-        # print(pvname, value)
+        pvname = pvname.replace("PU-", "PM-")
+        pvname = pvname.replace(_pvs._PREFIX_VACA, "")
         if _pvs._PREFIX_SECTOR:
             *parts, reason = pvname.split(_pvs._PREFIX_SECTOR)
         else:
