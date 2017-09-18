@@ -50,8 +50,11 @@ class ComputedPV:
 
     def put(self, value):
         """Put `value` to the first pv of the pv list."""
-        values = [pv.get() for pv in self.pvs]
-        self.pvs[0].put(self.computer.compute_put(value, *values))
+        # values = [pv.get() for pv in self.pvs]
+        # new_val = self.computer.compute_put(value, *values)
+        # print(new_val)
+        # self.pvs[0].put(new_val)
+        self.computer.compute_put(value, *self.pvs)
 
     def add_callback(self, func):
         """Add callback to computed PV."""

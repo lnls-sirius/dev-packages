@@ -110,8 +110,12 @@ class PulsedMagnetPowerSupply(PulsedPowerSupply):
         # # Denormalize and set tension
         # self.tension_sp = self._strobj.conv_strength_2_tension(
         #     value, self._dipole_current_sp)
-        upper_limit = self._db[pm_props.StrengthSP]["hilim"]
-        lower_limit = self._db[pm_props.StrengthSP]["lolim"]
+        upper_limit = self._controller[pm_props.StrengthSP].upper_disp_limit
+        lower_limit = self._controller[pm_props.StrengthSP].lower_disp_limit
+
+        if upper_limit is None or lower_limit is None:
+            return
+
         if value > upper_limit:
             value = upper_limit
         elif value < lower_limit:

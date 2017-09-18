@@ -45,10 +45,11 @@ class PulsedMagnetNormalizer:
 
         return kwret
 
-    def compute_put(self, value, *args):
+    def compute_put(self, value, *pvs):
         """Convert strength to tension."""
-        return self.conv_strength_2_tension(
-            strength=value, current_dipole=args[1])
+        tension = self.conv_strength_2_tension(
+            strength=value, current_dipole=pvs[1].get())
+        pvs[0].put(tension)
 
     def compute_limits(self, *pvs):
         """Compute limits to normalized strength."""
