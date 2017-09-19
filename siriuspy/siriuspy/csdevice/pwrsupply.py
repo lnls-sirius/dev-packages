@@ -33,7 +33,7 @@ def create_commun_propty_database():
         'Current-SP'         : {'type': 'float',  'value': 0.0, 'prec': 4},
         'Current-RB'         : {'type': 'float',  'value': 0.0, 'prec': 4},
         'CurrentRef-Mon'     : {'type': 'float',  'value': 0.0, 'prec': 4},
-        'Current-Mon'        : {'type': 'float',  'value': 0.0, 'prec': 6},
+        'Current-Mon'        : {'type': 'float',  'value': 0.0, 'prec': 4},
     }
     return db
 
