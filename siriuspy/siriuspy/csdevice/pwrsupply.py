@@ -12,28 +12,36 @@ default_intlklabels = _et.enums('PSIntlkLabelsTyp')
 
 def create_commun_propty_database():
     db = {
-        'CtrlMode-Mon'       : {'type': 'enum',   'enums':_et.enums('RmtLocTyp'),   'value':_et.idx.Remote},
-        'PwrState-Sel'       : {'type': 'enum',   'enums':_et.enums('OffOnTyp'),    'value':_et.idx.Off},
-        'PwrState-Sts'       : {'type': 'enum',   'enums':_et.enums('OffOnTyp'),    'value':_et.idx.Off},
-        'OpMode-Sel'         : {'type': 'enum',   'enums':_et.enums('PSOpModeTyp'), 'value':_et.idx.SlowRef},
-        'OpMode-Sts'         : {'type': 'enum',   'enums':_et.enums('PSOpModeTyp'), 'value':_et.idx.SlowRef},
-        'Reset-Cmd'          : {'type': 'int',    'value': 0},
-        'Abort-Cmd'          : {'type': 'int',    'value': 0},
-        'WfmIndex-Mon'       : {'type': 'int',    'value': 0},
-        'WfmLabels-Mon'      : {'type': 'string', 'count': len(default_wfmlabels), 'value': default_wfmlabels},
-        'WfmLabel-SP'        : {'type': 'string', 'value': default_wfmlabels[0]},
-        'WfmLabel-RB'        : {'type': 'string', 'value': default_wfmlabels[0]},
-        'WfmLoad-Sel'        : {'type': 'enum',   'enums': default_wfmlabels,    'value': 0},
-        'WfmLoad-Sts'        : {'type': 'enum',   'enums': default_wfmlabels,    'value': 0},
-        'WfmData-SP'         : {'type': 'float',  'count': default_wfmsize, 'value': [0.0 for datum in range(default_wfmsize)], 'unit':'A'},
-        'WfmData-RB'         : {'type': 'float',  'count': default_wfmsize, 'value': [0.0 for datum in range(default_wfmsize)], 'unit':'A'},
-        'WfmSave-Cmd'        : {'type': 'int',    'value': 0},
-        'Intlk-Mon'          : {'type': 'int',    'value': 0},
-        'IntlkLabels-Cte'    : {'type': 'string', 'count': 8, 'value': default_intlklabels},
-        'Current-SP'         : {'type': 'float',  'value': 0.0, 'prec': 4},
-        'Current-RB'         : {'type': 'float',  'value': 0.0, 'prec': 4},
-        'CurrentRef-Mon'     : {'type': 'float',  'value': 0.0, 'prec': 4},
-        'Current-Mon'        : {'type': 'float',  'value': 0.0, 'prec': 4},
+        'CtrlMode-Mon':     {'type': 'enum', 'enums': _et.enums('RmtLocTyp'),
+                             'value': _et.idx.Remote},
+        'PwrState-Sel':     {'type': 'enum', 'enums': _et.enums('OffOnTyp'),
+                             'value': _et.idx.Off},
+        'PwrState-Sts':     {'type': 'enum', 'enums': _et.enums('OffOnTyp'),
+                             'value': _et.idx.Off},
+        'OpMode-Sel':       {'type': 'enum', 'enums': _et.enums('PSOpModeTyp'),
+                             'value': _et.idx.SlowRef},
+        'OpMode-Sts':       {'type': 'enum', 'enums': _et.enums('PSOpModeTyp'),
+                             'value': _et.idx.SlowRef},
+        'Reset-Cmd':        {'type': 'int', 'value': 0},
+        'Abort-Cmd':        {'type': 'int', 'value': 0},
+        'WfmIndex-Mon':     {'type': 'int', 'value': 0},
+        'WfmLabels-Mon':    {'type': 'string', 'count': len(default_wfmlabels),
+                             'value': default_wfmlabels},
+        'WfmLabel-SP':      {'type': 'string', 'value': default_wfmlabels[0]},
+        'WfmLabel-RB':      {'type': 'string', 'value': default_wfmlabels[0]},
+        'WfmLoad-Sel':      {'type': 'enum',   'enums': default_wfmlabels,
+                             'value': 0},
+        'WfmLoad-Sts':      {'type': 'enum',   'enums': default_wfmlabels,
+                             'value': 0},
+        'WfmData-SP':       {'type': 'float',  'count': default_wfmsize, 'value': [0.0 for datum in range(default_wfmsize)]},
+        'WfmData-RB':       {'type': 'float',  'count': default_wfmsize, 'value': [0.0 for datum in range(default_wfmsize)]},
+        'WfmSave-Cmd':      {'type': 'int',    'value': 0},
+        'Intlk-Mon':        {'type': 'int',    'value': 0},
+        'IntlkLabels-Cte':  {'type': 'string', 'count': 8, 'value': default_intlklabels},
+        'Current-SP':       {'type': 'float',  'value': 0.0, 'prec': 4},
+        'Current-RB':       {'type': 'float',  'value': 0.0, 'prec': 4},
+        'CurrentRef-Mon':   {'type': 'float',  'value': 0.0, 'prec': 4},
+        'Current-Mon':      {'type': 'float',  'value': 0.0, 'prec': 4},
     }
     return db
 
@@ -52,7 +60,8 @@ def get_ps_propty_database(pstype):
             label='hihi';  db[label] = _PSSearch.get_splim(pstype,label)
         # define unit of current
         if propty in \
-                ('Current-SP', 'Current-RB', 'CurrentRef-Mon', 'Current-Mon'):
+                ('Current-SP', 'Current-RB', 'CurrentRef-Mon', 'Current-Mon',
+                 'WfmData-SP', 'WfmData-RB'):
             db['unit'] = units
 
     return propty_db
@@ -93,10 +102,10 @@ def get_ma_propty_database(maname):
         db[psname]["Current-RB"]['unit'] = units[0]
         db[psname]["CurrentRef-Mon"]['unit'] = units[0]
         db[psname]["Current-Mon"]['unit'] = units[0]
-        db[psname]["Current-SP"]['prec'] = 6
-        db[psname]["Current-RB"]['prec'] = 6
-        db[psname]["CurrentRef-Mon"]['prec'] = 6
-        db[psname]["Current-Mon"]['prec'] = 6
+        # db[psname]["Current-SP"]['prec'] = 6
+        # db[psname]["Current-RB"]['prec'] = 6
+        # db[psname]["CurrentRef-Mon"]['prec'] = 6
+        # db[psname]["Current-Mon"]['prec'] = 6
         if magfunc in ('quadrupole', 'quadrupole-skew'):
             db[psname]['KL-SP'] = _copy.deepcopy(db[psname]['Current-SP']); db[psname]['KL-SP']['unit'] = '1/m'
             db[psname]['KL-RB'] = _copy.deepcopy(db[psname]['Current-RB']); db[psname]['KL-RB']['unit'] = '1/m'
