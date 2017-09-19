@@ -184,6 +184,7 @@ class App:
             status = True
         elif reason == 'BuffRst-Cmd':
             self._rstbuff_cmd_count += 1
+            self.driver.setParam('BuffRst-Cmd', self._rstbuff_cmd_count)
             self._clear_buffer()
         elif reason == 'BuffAutoRst-Sel':
             self._update_buffautorst_mode(value)
