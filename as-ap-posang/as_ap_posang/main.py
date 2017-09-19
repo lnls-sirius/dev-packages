@@ -123,6 +123,7 @@ class App:
         self._orby_deltapos = 0
         self._orbx_deltaang = 0
         self._orby_deltaang = 0
+        self._setnewref_cmd_count = 0
 
     @staticmethod
     def init_class():
@@ -198,6 +199,8 @@ class App:
                 self.driver.updatePVs()
                 status = True
         elif reason == 'SetNewRef-Cmd':
+            self._setnewref_cmd_count += 1
+            self.driver.setParam('SetNewRef-Cmd', self._setnewref_cmd_count)
             self._update_ref()
             self.driver.updatePVs()  # in case PV states change.
         return status  # return True to invoke super().write of PCASDrive
