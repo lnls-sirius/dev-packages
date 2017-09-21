@@ -4,7 +4,7 @@ from siriuspy.magnet import util as _util
 
 class ExcitationData:
 
-    def __init__(self,filename_web=None, filename=None, text=None):
+    def __init__(self, filename_web=None, filename=None, text=None):
 
         self._init()
 
@@ -154,7 +154,8 @@ class ExcitationData:
 
         return multipoles
 
-    def interp_mult2curr(self, multipole, harmonic, multipole_type, left='linear', right='linear'):
+    def interp_mult2curr(self, multipole, harmonic, multipole_type,
+                         left='linear', right='linear'):
         """Interpolate current from a specific multipole value."""
 
         multipoles = self.multipoles[multipole_type.lower()][harmonic]
@@ -162,21 +163,28 @@ class ExcitationData:
         extrap_typ = 'interp'
         x = self.multipoles[multipole_type.lower()][harmonic]
         if multipole < min(x):
-            if isinstance(left,str):
+            if isinstance(left, str):
                 if left.lower() == 'linear':
-                    extrap_typ = 'extrap_linear_left'
+                    if x[1] >= x[0]:
+                        extrap_typ = 'extrap_linear_left'
+                    else:
+                        extrap_typ = 'extrap_linear_right'
                 elif left.lower() == 'exception':
                     raise Exception('current value is left-out of range')
                 else:
                     raise Exception('invalid string value for "left" argument')
         elif multipole > max(x):
-            if isinstance(right,str):
+            if isinstance(right, str):
                 if right.lower() == 'linear':
-                    extrap_typ = 'extrap_linear_right'
+                    if x[-1] >= x[-2]:
+                        extrap_typ = 'extrap_linear_right'
+                    else:
+                        extrap_typ = 'extrap_linear_left'
                 elif left.lower() == 'exception':
                     raise Exception('current value is right-out of range')
                 else:
-                    raise Exception('invalid string value for "right" argument')
+                    raise Exception(
+                            'invalid string value for "right" argument')
         else:
             left = right = None
 
