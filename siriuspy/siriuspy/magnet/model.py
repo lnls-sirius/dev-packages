@@ -44,11 +44,11 @@ class _MagnetNormalizer:
             return None
         msum = {}
         if self._magfunc != 'dipole':
-            for psname in self._madata.psnames:
-                excdata = self._madata.excdata(psname)
-                m = excdata.interp_curr2mult(
-                    current, left=self._left, right=self._right)
-                msum = _mutil.sum_magnetic_multipoles(msum, m)
+            # for psname in self._madata.psnames:
+            excdata = self._madata.excdata(self._psname)
+            m = excdata.interp_curr2mult(
+                current, left=self._left, right=self._right)
+            msum = _mutil.sum_magnetic_multipoles(msum, m)
         else:
             excdata = self._madata.excdata(self._psname)
             m = excdata.interp_curr2mult(
@@ -61,6 +61,7 @@ class _MagnetNormalizer:
         if m is None:
             return None
         mf = self._mfmult
+        # print(mf['type'], mf['harmonic'])
         intfield = m[mf['type']][mf['harmonic']]
         return intfield
 
@@ -475,26 +476,17 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
             self._db[label + '-Mon']['value'] = self.strength_mon
             self._db[label + 'Ref-Mon']['value'] = self.strengthref_mon
 
-        kwargs = self._get_currents_dict('Current-SP')
-        # low_curr, high_curr = (self._db["Current-SP"]["low"],
-        #                        self._db["Current-SP"]["high"])
-        # high, low = self._get_strength_limit(low_curr, high_curr, **kwargs)
-        # low_curr, high_curr = (self._db["Current-SP"]["lolo"],
-        #                        self._db["Current-SP"]["hihi"])
-        # hihi, lolo = self._get_strength_limit(low_curr, high_curr, **kwargs)
-        # low_curr, high_curr = (self._db["Current-SP"]["lolim"],
-        #                        self._db["Current-SP"]["hilim"])
-        # hilim, lolim = self._get_strength_limit(low_curr, high_curr, **kwargs)
-        low, high, lolo, hihi, lolim, hilim = \
-            self._get_strength_limit(**kwargs)
+            kwargs = self._get_currents_dict('Current-SP')
+            low, high, lolo, hihi, lolim, hilim = \
+                self._get_strength_limit(**kwargs)
 
-        # Set strength values
-        self._db[label + '-SP']['high'] = high
-        self._db[label + '-SP']['low'] = low
-        self._db[label + '-SP']['hilim'] = hilim
-        self._db[label + '-SP']['lolim'] = lolim
-        self._db[label + '-SP']['hihi'] = hihi
-        self._db[label + '-SP']['lolo'] = lolo
+            # Set strength values
+            self._db[label + '-SP']['high'] = high
+            self._db[label + '-SP']['low'] = low
+            self._db[label + '-SP']['hilim'] = hilim
+            self._db[label + '-SP']['lolim'] = lolim
+            self._db[label + '-SP']['hihi'] = hihi
+            self._db[label + '-SP']['lolo'] = lolo
 
         if prefix is None:
             return self._db
@@ -565,7 +557,6 @@ class MagnetPowerSupply(_MagnetPowerSupply):
         attrs = ('Current-SP', 'Current-RB', 'CurrentRef-Mon', 'Current-Mon')
         self._dipole = {}
         prefix = self._vaca_prefix + self._dipole_name
-        # self._dipole = _epics.Device(prefix, delim=':', attrs=attrs, timeout=None)
 
         self._dipole_current_sp = 0.0
         self._dipole_current_rb = 0.0
@@ -724,6 +715,8 @@ class MagnetPowerSupplyTrim(MagnetPowerSupply):
     #         except (KeyError, AttributeError):
     #             self._trigger_callback(pvname, strength)
 
+
+
     def _callback_family_updated(self, pvname, value, **kwargs):
         # Get dipole new current and update self current value
         label = self._strength_label
@@ -748,4 +741,11 @@ class MagnetPowerSupplyTrim(MagnetPowerSupply):
             self._propty[propty_strength] = strength
 
             pvname = self._maname + ':' + propty_strength
-            self._trigger_callback(pvname, strength)
+            try:
+                low, high, lolo, hihi, lolim, hilim = \
+                    self._get_strength_limit(**kwargs)
+                self._trigger_callback(
+                    pvname, strength, high=high, low=low, hihi=hihi, lolo=lolo,
+                    hilim=hilim, lolim=lolim)
+            except (KeyError, AttributeError) as e:
+                self._trigger_callback(pvname, strength)
