@@ -431,50 +431,96 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
         label = self._strength_label
 
         if self.connected:
+
             value = self.ctrlmode_mon
-            self._db['CtrlMode-Mon']['value'] = \
-              _et.enums('RmtLocTyp').index(value) if self._enum_keys else value
+            if value is not None:
+                self._db['CtrlMode-Mon']['value'] = \
+                    _et.enums('RmtLocTyp').index(value) if self._enum_keys else value
             value = self.opmode_sel
-            self._db['OpMode-Sel']['value'] = \
-              _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
+            if value is not None:
+                self._db['OpMode-Sel']['value'] = \
+                    _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
             value = self.opmode_sts
-            self._db['OpMode-Sts']['value'] = \
-              _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
+            if value is not None:
+                self._db['OpMode-Sts']['value'] = \
+                    _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
             value = self.pwrstate_sel
-            self._db['PwrState-Sel']['value'] = \
-              _et.enums('OffOnTyp').index(value) if self._enum_keys else value
+            if value is not None:
+                self._db['PwrState-Sel']['value'] = \
+                    _et.enums('OffOnTyp').index(value) if self._enum_keys else value
             value = self.pwrstate_sts
-            self._db['PwrState-Sts']['value'] = \
-              _et.enums('OffOnTyp').index(value) if self._enum_keys else value
-            self._db['Reset-Cmd']['value'] = self.reset_cmd
-            self._db['Abort-Cmd']['value'] = self.abort_cmd
-            wfmlabels = self.wfmlabels_mon
-            self._db['WfmLoad-Sel']['enums'] = wfmlabels
-            self._db['WfmLoad-Sts']['enums'] = wfmlabels
+            if value is not None:
+                self._db['PwrState-Sts']['value'] = \
+                _et.enums('OffOnTyp').index(value) if self._enum_keys else value
+            value = self.reset_cmd
+            if value is not None:
+                self._db['Reset-Cmd']['value'] = self.reset_cmd
+            value = self.abort_cmd
+            if value is not None:
+                self._db['Abort-Cmd']['value'] = self.abort_cmd
+            value = self.wfmlabels_mon
+            if value is not None:
+                self._db['WfmLoad-Sel']['enums'] = value
+                self._db['WfmLoad-Sts']['enums'] = value
             value = self.wfmload_sel
-            self._db['WfmLoad-Sel']['value'] = \
-              _np.where(wfmlabels == value)[0][0] if self._enum_keys else value
+            if value is not None:
+                self._db['WfmLoad-Sel']['value'] = \
+                    _np.where(wfmlabels == value)[0][0] if self._enum_keys else value
             value = self.wfmload_sts
-            self._db['WfmLoad-Sts']['value'] = \
-              _np.where(wfmlabels == value)[0][0] if self._enum_keys else value
-            self._db['WfmLabel-SP']['value'] = self.wfmlabel_sp
-            self._db['WfmLabel-RB']['value'] = self.wfmlabel_rb
-            self._db['WfmLabels-Mon']['value'] = self.wfmlabels_mon
-            self._db['WfmData-SP']['value'] = self.wfmdata_sp
-            self._db['WfmData-RB']['value'] = self.wfmdata_rb
-            self._db['WfmSave-Cmd']['value'] = self.wfmsave_cmd
-            self._db['WfmIndex-Mon']['value'] = self.wfmindex_mon
-            self._db['Current-SP']['value'] = self.current_sp
-            self._db['Current-RB']['value'] = self.current_rb
-            self._db['CurrentRef-Mon']['value'] = self.currentref_mon
-            self._db['Current-Mon']['value'] = self.current_mon
-            self._db['Intlk-Mon']['value'] = self.intlk_mon
+            if value is not None:
+                self._db['WfmLoad-Sts']['value'] = \
+                    _np.where(wfmlabels == value)[0][0] if self._enum_keys else value
+
+            value = self.wfmlabel_sp
+            if value is not None:
+                self._db['WfmLabel-SP']['value'] = self.wfmlabel_sp
+            value = self.wfmlabel_rb
+            if value is not None:
+                self._db['WfmLabel-RB']['value'] = self.wfmlabel_rb
+            value = self.wfmlabels_mon
+            if value is not None:
+                self._db['WfmLabels-Mon']['value'] = self.wfmlabels_mon
+            value = self.wfmdata_sp
+            if value is not None:
+                self._db['WfmData-SP']['value'] = self.wfmdata_sp
+            value = self.wfmdata_rb
+            if value is not None:
+                self._db['WfmData-RB']['value'] = self.wfmdata_rb
+            value = self.wfmsave_cmd
+            if value is not None:
+                self._db['WfmSave-Cmd']['value'] = self.wfmsave_cmd
+            value = self.wfmindex_mon
+            if value is not None:
+                self._db['WfmIndex-Mon']['value'] = self.wfmindex_mon
+            value = self.current_sp
+            if value is not None:
+                self._db['Current-SP']['value'] = self.current_sp
+            value = self.current_rb
+            if value is not None:
+                self._db['Current-RB']['value'] = self.current_rb
+            value = self.currentref_mon
+            if value is not None:
+                self._db['CurrentRef-Mon']['value'] = self.currentref_mon
+            value = self.current_mon
+            if value is not None:
+                self._db['Current-Mon']['value'] = self.current_mon
+            value = self.intlk_mon
+            if value is not None:
+                self._db['Intlk-Mon']['value'] = self.intlk_mon
 
             # Set strength values
-            self._db[label + '-SP']['value'] = self.strength_sp
-            self._db[label + '-RB']['value'] = self.strength_rb
-            self._db[label + '-Mon']['value'] = self.strength_mon
-            self._db[label + 'Ref-Mon']['value'] = self.strengthref_mon
+            value = self.strength_sp
+            if value is not None:
+                self._db[label + '-SP']['value'] = self.strength_sp
+            value = self.strength_rb
+            if value is not None:
+                self._db[label + '-RB']['value'] = self.strength_rb
+            value = self.strength_mon
+            if value is not None:
+                self._db[label + '-Mon']['value'] = self.strength_mon
+            value = self.strengthref_mon
+            if value is not None:
+                self._db[label + 'Ref-Mon']['value'] = self.strengthref_mon
 
             kwargs = self._get_currents_dict('Current-SP')
             low, high, lolo, hihi, lolim, hilim = \
