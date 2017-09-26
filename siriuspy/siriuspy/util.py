@@ -10,6 +10,43 @@ import siriuspy.envars as _envars
 import epics as _epics
 
 
+def conv_splims_labels(label):
+    """Convert setpoint limit labels from pcaspy to epics and vice-versa."""
+    # Limits description:
+    # -------------------
+    # DRVH      driver high level limit
+    # HIHI      high-high level limit (ALARM)
+    # HIGH      IOC high level limit (ALARM)
+    #  DRVL     driver low level limit
+    #  LOLO     IOC low-low level limit (ALARM)
+    #  LOW      IOC low level limit (ALARM)
+    #  LOPR     Low operating range
+    #  HOPR     High operating range
+    labels_dict = {
+        # Epics-DB  pcaspy    PyEpics
+        # ===========================
+        'DRVH':     'DRVH',   # ???
+        'HIHI':     'hihi',   # upper_alarm_limit
+        'HIGH':     'high',   # upper_warning_limit
+        'HOPR':     'hilim',  # upper_disp_limit & upper_ctrl_limit
+        'LOPR':     'lolim',  # lower_disp_limit & lower_ctrl_limit
+        'LOW':      'low',    # lower_warning_limit
+        'LOLO':     'lolo',   # lower_alarm_limit
+        'DRVL':     'DRVL',   # ???
+        'TSTV':     'TSTV',   # ---
+        'TSTR':     'TSTR',   # ---
+    }
+    if label in labels_dict:
+        # epics -> pcaspy
+        return labels_dict[label]
+    else:
+        for k, v in labels_dict.items():
+            if v == label:
+                # pcaspy -> epics
+                return k
+        return None
+
+
 def get_signal_names():
     """Get signal names."""
     signal_names = {
@@ -159,31 +196,6 @@ def save_ioc_pv_list(ioc_name, prefix, db):
         fd.write("{}\n".format(prefix[1]))
         for pv in db:
             fd.write("{}\n".format(prefix[0] + pv))
-
-
-def conv_splims_labels(label):
-    """Convert setpoint limit labels from pcaspy to epics and vice-versa."""
-    labels_dict = {
-        'DRVH': 'DRVH',   # ??? [pyepics]
-        'HIHI': 'hihi',   # upper_alarm_limit [pyepics]
-        'HIGH': 'high',   # upper_warning_limit [pyepics]
-        'HOPR': 'hilim',  # upper_disp_limit & upper_ctrl_limit [pyepics]
-        'LOPR': 'lolim',  # lower_disp_limit & lower_ctrl_limit [pyepics]
-        'LOW':  'low',    # lower_warning_limit [pyepics]
-        'LOLO': 'lolo',   # lower_alarm_limit [pyepics]
-        'DRVL': 'DRVL',   # ??? [pyepics]
-        'TSTV': 'TSTV',   # ---
-        'TSTR': 'TSTR',   # ---
-    }
-    if label in labels_dict:
-        # epics -> pcaspy
-        return labels_dict[label]
-    else:
-        for k, v in labels_dict.items():
-            if v == label:
-                # pcaspy -> epics
-                return k
-        return None
 
 
 def beam_rigidity(energy):
