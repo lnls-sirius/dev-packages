@@ -65,7 +65,7 @@ def get_pvs_database():
         #                        'value': 0, 'prec': 6, 'unit':
         #                        'Considers Quadrupoles + Dipoles Multipoles'},
 
-        # Delete these pvs if access to chrom0 is ennable to control system
+        # Delete these pvs if access to chrom0 is enable to control system
         'InitialChromX-Mon':  {'type': 'float', 'count': 1,
                                'value': 0, 'prec': 6, 'unit':
                                'Considers Quadrupoles + Dipoles Multipoles'},

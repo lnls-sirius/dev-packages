@@ -57,7 +57,7 @@ class OpticsCorr:
         """Set Initial Chromaticity.
 
         Receive:
-        chrom0 -- List correspondent to initial chromaticity, in float format
+        chrom0 -- List correspondent to initial chromaticity, in float format.
                   [chrom0x, chrom0y]-like
                   Considers Quadrupoles and Dipoles Multipoles.
         Return (in C-like format):
@@ -70,7 +70,7 @@ class OpticsCorr:
         self.chrom0 = chrom0
         return (list(chrom0.flatten()))
 
-    def calc_delta_kl(self, delta_tunex, delta_tuney):
+    def calc_deltakl(self, delta_tunex, delta_tuney):
         """Calculate delta on Quadrupoles KLs from delta tunes.
 
         Receive:
@@ -78,17 +78,17 @@ class OpticsCorr:
         delta_tuney -- Float correspondent to delta in vertical tune
 
         Return:
-        qfam_delta_kl -- Flat list correspondent to delta KLs in each
+        qfam_delta_kl -- Flat list correspondent to delta KLs of each Booster
                          quadrupole family (same order of correction matrix).
+                         To Storage Ring (that uses proportional method), it is
+                         correspondent to proportional factor of each
+                         quadrupole family.
         """
         delta_tune = _np.array([[delta_tunex], [delta_tuney]])
 
         qfam_delta_kl = _np.dot(self.tunecorr_invmat,
                                 delta_tune)
 
-        # for i in range(len(self.qfam_delta_kl)):
-        #     print('delta kl fam index ' +
-        #           str(i) + ':' + str(self.qfam_delta_kl[i]))
         return list(qfam_delta_kl.flatten())
 
     def calc_sl(self, chromx, chromy):
@@ -99,8 +99,11 @@ class OpticsCorr:
         chromy -- Float correspondent to final vertical chromaticity
 
         Return:
-        sfam_delta_sl -- Flat list correspondent to delta SLs in each
-                         sextupole family (same order of correction matrix).
+        sfam_sl -- Flat list correspondent to SLs of each Booster sextupole
+                   family (same order of correction matrix).
+                   To Storage Ring (that uses proportional method), it is
+                   correspondent to (1 + proportional factor) of each sextupole
+                   family.
         """
         final_chrom = _np.array([[chromx], [chromy]])
         delta_chrom = (final_chrom - self.chrom0)

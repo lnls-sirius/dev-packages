@@ -60,15 +60,18 @@ class App:
                 connection_timeout=0.05)
             self._qfam_klrefs[fam] = self._qfam_kl_mon_pvs[fam].get()
 
-        self._lastcalcd_delta_kl = len(_pvs._QFAMS)*[0]
+        self._lastcalcd_deltakl = len(_pvs._QFAMS)*[0]
         self._update_ref()
 
         self._opticscorrection = OpticsCorr()
+
         # Initialize from static tables
-        # If needed to set chrom 0 and corrmat from control system, discomment
-        # code (main and pvs) related to these pvs and change initialize method
+        # If needed to set corrmat from control system, discomment code
+        # (main and pvs) related to these pvs and change initializing
+        # Using grouping and proportional method, the number of famlies is 2:
+        # Focusing and Defocusing Groups
         mat, invmat = self._opticscorrection.set_corr_mat(
-            'tune', len(_pvs._QFAMS), self._get_corrmat())
+            'tune', 2, self._get_corrmat())
         # self.driver.setParam('TuneCorrMat-RB', mat)
         # self.driver.setParam('TuneCorrInvMat-Mon', invmat)
         # self.driver.updatePVs()
@@ -76,8 +79,8 @@ class App:
         self._delta_tunex = 0
         self._delta_tuney = 0
         self._corr_factor = 0.0
-        self._calc_delta_kl_cmd_count = 0
-        self._apply_delta_kl_cmd_count = 0
+        self._calc_deltakl_cmd_count = 0
+        self._apply_deltakl_cmd_count = 0
         self._set_new_kl_ref_cmd_count = 0
 
     @staticmethod
@@ -113,20 +116,19 @@ class App:
             status = True
 
         elif reason == 'CalcDeltaKL-Cmd':
-            self._calc_delta_kl_cmd_count += 1
+            self._calc_deltakl_cmd_count += 1
             self.driver.setParam('CalcDeltaKL-Cmd',
-                                 self._calc_delta_kl_cmd_count)
-            self._lastcalcd_delta_kl = self._opticscorrection.calc_delta_kl(
-                self._delta_tunex, self._delta_tuney)
+                                 self._calc_deltakl_cmd_count)
+            self._calc_deltakl()
             for fam in _pvs._QFAMS:
                 fam_index = _pvs._QFAMS.index(fam)
                 self.driver.setParam('LastCalcd' + fam + 'DeltaKL-Mon',
-                                     self._lastcalcd_delta_kl[fam_index])
+                                     self._lastcalcd_deltakl[fam_index])
             self.driver.updatePVs()
         elif reason == 'ApplyDeltaKL-Cmd':
-            self._apply_delta_kl_cmd_count += 1
+            self._apply_deltakl_cmd_count += 1
             self.driver.setParam('ApplyDeltaKL-Cmd',
-                                 self._apply_delta_kl_cmd_count)
+                                 self._apply_deltakl_cmd_count)
             self._apply_deltakl()
             self.driver.updatePVs()
 
@@ -152,16 +154,33 @@ class App:
         return status  # return True to invoke super().write of PCASDriver
 
     def _get_corrmat(self):
-        tune_corrmat = len(_pvs._QFAMS)*2*[0]
         m, _ = _siriuspy_servweb.response_matrix_read(
             _pvs._ACC.lower()+'-optics-correction-tune.txt')
 
+        tune_corrmat = 2*2*[0]  # Just 2 columns: SFs and SDs
         index = 0
         for coordinate in [0, 1]:  # Read in C-like format
-            for fam in range(len(_pvs._QFAMS)):
+            for fam in [0, 1]:  # Just 2 columns: SFs and SDs
                 tune_corrmat[index] = float(m[coordinate][fam])
                 index += 1
         return tune_corrmat
+
+    def _calc_deltakl(self):
+        if _pvs._ACC == 'SI':
+            lastcalcd_propfactor = self._opticscorrection.calc_deltakl(
+                self._delta_tunex, self._delta_tuney)
+            for fam in _pvs._QFAMS:
+                fam_index = _pvs._QFAMS.index(fam)
+                if 'QF' in fam:
+                    self._lastcalcd_deltakl[fam_index] = (
+                        self._qfam_klrefs[fam]*lastcalcd_propfactor[0])
+                elif 'QD' in fam:
+                    self._lastcalcd_deltakl[fam_index] = (
+                        self._qfam_klrefs[fam]*lastcalcd_propfactor[1])
+
+        elif _pvs._ACC == 'BO':
+            self._lastcalcd_deltakl = self._opticscorrection.calc_deltakl(
+                self._delta_tunex, self._delta_tuney)
 
     def _apply_deltakl(self):
         for fam in self._qfam_kl_sp_pvs:
@@ -173,14 +192,14 @@ class App:
         for fam in self._qfam_pwrstate_sts_pvs:
             pv = self._qfam_pwrstate_sts_pvs[fam]
             if pv.get() != 1:
-                print(pv.pvname + ' is powered off')
+                print(pv.pvname + ' is off')
                 return False
 
         for fam in self._qfam_kl_sp_pvs:
             fam_index = _pvs._QFAMS.index(fam)
             pv = self._qfam_kl_sp_pvs[fam]
             pv.put(self._qfam_klrefs[fam] +
-                   self._corr_factor*self._lastcalcd_delta_kl[fam_index]/100)
+                   self._corr_factor*self._lastcalcd_deltakl[fam_index]/100)
         return True
 
     def _update_ref(self):
@@ -190,9 +209,9 @@ class App:
             self.driver.setParam(fam + 'KLRef-Mon', self._qfam_klrefs[fam])
 
             fam_index = _pvs._QFAMS.index(fam)
-            self._lastcalcd_delta_kl[fam_index] = 0
+            self._lastcalcd_deltakl[fam_index] = 0
             self.driver.setParam('LastCalcd' + fam + 'DeltaKL-Mon',
-                                 self._lastcalcd_delta_kl[fam_index])
+                                 self._lastcalcd_deltakl[fam_index])
 
         # the deltas from new kl references are zero
         self._delta_tunex = 0
