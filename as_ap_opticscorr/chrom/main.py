@@ -59,14 +59,25 @@ class App:
                 _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':PwrState-Sts',
                 connection_timeout=0.05)
 
-        self._opticscorrection = OpticsCorr()
         # Initialize from static tables
         # If needed to set chrom 0 and corrmat from control system, discomment
-        # code (main and pvs) related to these pvs and change initialize method
-        corrmat, chrom0 = self._get_corrmat_and_chrom0()
+        # code (main and pvs) related to these pvs and change initializing
+
+        self._lastcalcd_sl = len(_pvs._SFAMS)*[0]
+
+        if _pvs._ACC == 'BO':
+            corrmat, chrom0 = self._get_srefs_corrmat_and_chrom0()
+        elif _pvs._ACC == 'SI':
+            corrmat, chrom0, srefs = self._get_srefs_corrmat_and_chrom0()
+            # Reference SL are SLnom for initial case
+            self._sfam_slrefs = srefs
+
+        self._opticscorrection = OpticsCorr()
+
+        # Using grouping and proportional method, the number of famlies is 2:
+        # Focusing and Defocusing Groups
         mat, invmat = self._opticscorrection.set_corr_mat(
-            'chrom', len(_pvs._SFAMS), corrmat)
-        chrom0 = self._opticscorrection.set_chrom0(chrom0[0], chrom0[1])
+            'chrom', 2, corrmat)
         # self.driver.setParam('ChromCorrMat-RB', mat)
         # self.driver.setParam('ChromCorrInvMat-Mon', invmat)
         # self.driver.setParam('InitialChrom-RB', chrom0)
@@ -74,14 +85,14 @@ class App:
 
         # Change these lines if initializing considers last set tune that can
         # be in a local archive
+        chrom0 = self._opticscorrection.set_chrom0(chrom0[0], chrom0[1])
         self._chromx = chrom0[0]
         self.driver.setParam('ChromX-SP', chrom0[0])
         self.driver.setParam('ChromX-RB', chrom0[0])
         self._chromy = chrom0[1]
         self.driver.setParam('ChromY-SP', chrom0[1])
         self.driver.setParam('ChromY-RB', chrom0[1])
-
-        # Delete these pvs if access to chrom0 is ennable to control system
+        # Delete these pvs if access to chrom0 is enable to control system
         self.driver.setParam('InitialChromX-Mon', chrom0[0])
         self.driver.setParam('InitialChromY-Mon', chrom0[1])
         self.driver.updatePVs()
@@ -126,8 +137,7 @@ class App:
             self._calc_sl_cmd_count += 1
             self.driver.setParam('CalcSL-Cmd',
                                  self._calc_sl_cmd_count)
-            self._lastcalcd_sl = self._opticscorrection.calc_sl(
-                self._chromx, self._chromy)
+            self._calc_sl()
             for fam in _pvs._SFAMS:
                 fam_index = _pvs._SFAMS.index(fam)
                 self.driver.setParam('LastCalcd' + fam + 'SL-Mon',
@@ -159,8 +169,7 @@ class App:
         #     status = True
         return status  # return True to invoke super().write of PCASDriver
 
-    def _get_corrmat_and_chrom0(self):
-        chrom_corrmat = len(_pvs._SFAMS)*2*[0]
+    def _get_srefs_corrmat_and_chrom0(self):
         m, _ = _siriuspy_servweb.response_matrix_read(
             _pvs._ACC.lower()+'-optics-correction-chromaticity.txt')
 
@@ -168,13 +177,40 @@ class App:
         chrom0[0] = float(m[0][0])
         chrom0[1] = float(m[0][1])
 
+        chrom_corrmat = 2*2*[0]  # Just 2 columns: SFs and SDs
         index = 0
         for coordinate in [1, 2]:  # Read in C-like format
-            for fam in range(len(_pvs._SFAMS)):
+            for fam in [0, 1]:  # Just 2 columns: SFs and SDs
                 chrom_corrmat[index] = float(m[coordinate][fam])
                 index += 1
 
-        return chrom_corrmat, chrom0
+        if _pvs._ACC == 'BO':
+            return chrom_corrmat, chrom0
+
+        srefs = {}
+        if _pvs._ACC == 'SI':
+            for fam in _pvs._SFAMS:
+                fam_index = _pvs._SFAMS.index(fam)
+                srefs[fam] = float(m[3][fam_index])
+
+            return chrom_corrmat, chrom0, srefs
+
+    def _calc_sl(self):
+        if _pvs._ACC == 'SI':
+            lastcalcd_propfactor = self._opticscorrection.calc_sl(
+                self._chromx, self._chromy)
+            for fam in _pvs._SFAMS:
+                fam_index = _pvs._SFAMS.index(fam)
+                if 'SF' in fam:
+                    self._lastcalcd_sl[fam_index] = (
+                        self._sfam_slrefs[fam]*lastcalcd_propfactor[0])
+                elif 'SD' in fam:
+                    self._lastcalcd_sl[fam_index] = (
+                        self._sfam_slrefs[fam]*(lastcalcd_propfactor[1]))
+
+        elif _pvs._ACC == 'BO':
+            self._lastcalcd_sl = self._opticscorrection.calc_sl(
+                self._chromx, self._chromy)
 
     def _apply_sl(self):
         for fam in self._sfam_sl_sp_pvs:
