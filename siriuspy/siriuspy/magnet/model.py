@@ -244,6 +244,8 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
                          vaca_prefix=vaca_prefix,
                          lock=True)
 
+        self._db = self._madata._propty_databases[self._psnames[0]]
+
         self._init_subclass()
 
     def _set_vaca_prefix(self, use_vaca, vaca_prefix):
@@ -426,8 +428,6 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
 
     def _get_database(self, prefix=None):
         """Return an updated PV database. Keys correspond to PS properties."""
-        self._db = self._madata._propty_databases[self._psnames[0]]
-
         label = self._strength_label
 
         if self.connected:
@@ -522,17 +522,17 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
             if value is not None:
                 self._db[label + 'Ref-Mon']['value'] = self.strengthref_mon
 
-            kwargs = self._get_currents_dict('Current-SP')
-            low, high, lolo, hihi, lolim, hilim = \
-                self._get_strength_limit(**kwargs)
+        kwargs = self._get_currents_dict('Current-SP')
+        low, high, lolo, hihi, lolim, hilim = \
+            self._get_strength_limit(**kwargs)
 
-            # Set strength values
-            self._db[label + '-SP']['high'] = high
-            self._db[label + '-SP']['low'] = low
-            self._db[label + '-SP']['hilim'] = hilim
-            self._db[label + '-SP']['lolim'] = lolim
-            self._db[label + '-SP']['hihi'] = hihi
-            self._db[label + '-SP']['lolo'] = lolo
+        # Set strength values
+        self._db[label + '-SP']['high'] = high
+        self._db[label + '-SP']['low'] = low
+        self._db[label + '-SP']['hilim'] = hilim
+        self._db[label + '-SP']['lolim'] = lolim
+        self._db[label + '-SP']['hihi'] = hihi
+        self._db[label + '-SP']['lolo'] = lolo
 
         if prefix is None:
             return self._db
@@ -729,39 +729,6 @@ class MagnetPowerSupplyTrim(MagnetPowerSupply):
 
         return {'current_dipole': current_dipole,
                 'current_family': current_family}
-
-    # def _callback_dipole_updated(self, pvname, value, **kwargs):
-    #     # Get dipole new current and update self current value
-    #     label = self._strength_label
-    #     *parts, propty = pvname.split(':')
-    #
-    #     if 'Current' in propty:
-    #
-    #         if '-SP' in propty:
-    #             self._dipole_current_sp = value
-    #         elif '-RB' in propty:
-    #             self._dipole_current_rb = value
-    #         elif 'Ref-Mon' in propty:
-    #             self._dipole_currentref_mon = value
-    #         elif '-Mon' in propty:
-    #             self._dipole_current_mon = value
-    #
-    #         kwargs = self._get_currents_dict(propty)
-    #         strength = self._strength_obj.conv_current_2_strength(
-    #             current=self._propty[propty], **kwargs)
-    #
-    #         propty_strength = propty.replace('Current', label)
-    #         self._propty[propty_strength] = strength
-    #
-    #         pvname = self._maname + ':' + propty_strength
-    #         try:
-    #             hilim, lolim = self._get_strength_limit(**kwargs)
-    #             self._trigger_callback(
-    #                 pvname, strength, hilim=hilim, lolim=lolim)
-    #         except (KeyError, AttributeError):
-    #             self._trigger_callback(pvname, strength)
-
-
 
     def _callback_family_updated(self, pvname, value, **kwargs):
         # Get dipole new current and update self current value
