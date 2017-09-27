@@ -161,23 +161,30 @@ class DipoleNormalizer(_MagnetNormalizer):
 
 
 class MagnetNormalizer(_MagnetNormalizer):
-    """Convert magnet current to strength and vice versa."""
+    """Convert magnet current to strength and vice versa.
 
-    def __init__(self, maname, dipole_name, **kwargs):
+    Since we decided to match signs of Kick-Mon and direction
+    of the beam kick, as we do in beam dynamic models, we have
+    to treat horizontal and vertical correctors differently in the
+    conversion from current to strength and vice-versa.
+    """
+
+    def __init__(self, maname, dipole_name, magnet_conv_sign=-1.0, **kwargs):
         """Call super and initializes a dipole."""
         super(MagnetNormalizer, self).__init__(maname, **kwargs)
         self._dipole = DipoleNormalizer(dipole_name, **kwargs)
+        self._magnet_conv_sign = magnet_conv_sign
 
     def _conv_strength_2_intfield(self, strength, **kwargs):
         brho = self._get_brho(current_dipole=kwargs['current_dipole'])
-        intfield = - brho * strength
+        intfield = self._magnet_conv_sign * brho * strength
         return intfield
 
     def _conv_intfield_2_strength(self, intfield, **kwargs):
         brho = self._get_brho(current_dipole=kwargs['current_dipole'])
         if brho == 0:
             return 0
-        strength = - intfield / brho
+        strength = self._magnet_conv_sign * intfield / brho
         return strength
 
 
@@ -622,8 +629,16 @@ class MagnetPowerSupply(_MagnetPowerSupply):
             self._dipole[attr].add_callback(self._callback_dipole_updated)
 
     def _get_strength_obj(self):
-        return MagnetNormalizer(self._maname, dipole_name=self._dipole_name,
-                                left=self._left, right=self._right)
+        if self.magfunc == 'corrector-horizontal':
+            return MagnetNormalizer(self._maname,
+                                    dipole_name=self._dipole_name,
+                                    magnet_conv_sign=-1.0,
+                                    left=self._left, right=self._right)
+        else:
+            return MagnetNormalizer(self._maname,
+                                    dipole_name=self._dipole_name,
+                                    magnet_conv_sign=-1.0,
+                                    left=self._left, right=self._right)
 
     def _get_currents_dict(self, current_attr):
         if current_attr == 'Current-SP':
