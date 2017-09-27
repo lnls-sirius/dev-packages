@@ -121,10 +121,10 @@ def get_ma_propty_database(maname):
             db[psname]['Energy-RB']     = _copy.deepcopy(db[psname]['Current-RB']); db[psname]['Energy-RB']['unit'] = 'GeV'
             db[psname]['EnergyRef-Mon'] = _copy.deepcopy(db[psname]['CurrentRef-Mon']); db[psname]['EnergyRef-Mon']['unit'] = 'GeV'
             db[psname]['Energy-Mon']    = _copy.deepcopy(db[psname]['Current-Mon']); db[psname]['Energy-Mon']['unit'] = 'GeV'
-            db[psname]['Energy-SP']['prec'] = 6
+            #db[psname]['Energy-SP']['prec'] = 6
         elif magfunc in ('corrector-vertical', 'corrector-horizontal'):
             db[psname]['Kick-SP'] = _copy.deepcopy(db[psname]['Current-SP'])
-            db[psname]['Kick-SP']['prec'] = 6
+            #db[psname]['Kick-SP']['prec'] = 6
             db[psname]['Kick-SP']['unit'] = 'rad'
             db[psname]['Kick-RB']     = _copy.deepcopy(db[psname]['Current-RB']); db[psname]['Kick-RB']['unit'] = 'rad'
             db[psname]['KickRef-Mon'] = _copy.deepcopy(db[psname]['CurrentRef-Mon']); db[psname]['KickRef-Mon']['unit'] = 'rad'
