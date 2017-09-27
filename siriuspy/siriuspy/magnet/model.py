@@ -632,7 +632,7 @@ class MagnetPowerSupply(_MagnetPowerSupply):
         if self.magfunc == 'corrector-horizontal':
             return MagnetNormalizer(self._maname,
                                     dipole_name=self._dipole_name,
-                                    magnet_conv_sign=-1.0,
+                                    magnet_conv_sign=+1.0,
                                     left=self._left, right=self._right)
         else:
             return MagnetNormalizer(self._maname,

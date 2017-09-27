@@ -22,6 +22,12 @@ def conv_splims_labels(label):
     #  LOW      IOC low level limit (ALARM)
     #  LOPR     Low operating range
     #  HOPR     High operating range
+    #
+    # Rules
+    # -----
+    # LOLO <= LO <= HI <= HIHI
+    # DRVL <= LOPR <= HOPR <= DRVH.
+    #
     labels_dict = {
         # Epics-DB  pcaspy    PyEpics
         # ===========================
