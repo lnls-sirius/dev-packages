@@ -87,12 +87,13 @@ class App:
         # Update MA Object
         slot_name = sub_section + ':' + discipline + '-' + device
         ma = self.ma_devices[slot_name]
+        setattr(ma, attr, value)
+        value = getattr(ma, attr)
         if isinstance(value, float) or isinstance(value, int):
             print(
                 '{0:<15s} {1:s} [{2:f}]: '.format('ioc write', reason, value))
         else:
             print('{0:<15s}: '.format('ioc write'), reason)
-        setattr(ma, attr, value)
         # Update IOC database
         self._driver.setParam(reason, value)
         self._driver.updatePVs()
