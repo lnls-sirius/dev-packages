@@ -8,7 +8,6 @@ MagnetPowerSupplyTrim
     Handle trim magnets.
 """
 
-import math as _math
 import re as _re
 import epics as _epics
 from siriuspy import util as _util
@@ -629,7 +628,7 @@ class MagnetPowerSupply(_MagnetPowerSupply):
             self._dipole[attr].add_callback(self._callback_dipole_updated)
 
     def _get_strength_obj(self):
-        if self.magfunc == 'corrector-horizontal':
+        if self.magfunc in ('corrector-horizontal', 'quadrupole-skew'):
             return MagnetNormalizer(self._maname,
                                     dipole_name=self._dipole_name,
                                     magnet_conv_sign=+1.0,
