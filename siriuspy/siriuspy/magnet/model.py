@@ -12,6 +12,7 @@ import re as _re
 import epics as _epics
 from siriuspy import util as _util
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
+from siriuspy.pwrsupply.model import PowerSupplySim as _PowerSupplySim
 from siriuspy.pwrsupply.model import PowerSupplyEpicsSync \
     as _PowerSupplyEpicsSync
 from siriuspy.magnet import util as _mutil
@@ -245,6 +246,7 @@ def create_magnet_normalizer(magnet):
 
 
 class _MagnetPowerSupply(_PowerSupplyEpicsSync):
+# class _MagnetPowerSupply(_PowerSupplySim):
     """Base class for handling magnets."""
 
     def __init__(self, maname,
@@ -265,7 +267,6 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
         self._mfmult = _magfuncs[self.magfunc]
         self._current_min = self._madata._splims['DRVL']
         self._current_max = self._madata._splims['DRVH']
-        # self._strength_obj = self._get_strength_obj()
         self._strength_obj = create_magnet_normalizer(self)
         self._strength_label = _mutil.get_strength_label(self._magfunc)
         self._set_vaca_prefix(use_vaca, vaca_prefix)
