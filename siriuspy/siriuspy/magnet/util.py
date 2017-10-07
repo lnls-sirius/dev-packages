@@ -2,6 +2,8 @@
 
 import math as _math
 import numpy as _numpy
+import re as _re
+from siriuspy.namesys import SiriusPVName as _SiriusPVName
 
 
 def get_nominal_dipole_angles():
@@ -127,3 +129,35 @@ def generate_normalized_ramp(interval=500, nrpts=2000,
         ramp[ind] = fi[i] + a1[i]*dt + a2*dt**2 + a3*dt**3
 
     return ramp
+
+
+def get_strength_label(magfunc):
+    """Return strength label, depending on magnet function."""
+    if magfunc == 'dipole':
+        return 'Energy'
+    elif magfunc in ('quadrupole', 'quadrupole-skew'):
+        return 'KL'
+    elif magfunc in ('sextupole',):
+        return 'SL'
+    elif magfunc in ('corrector-horizontal', 'corrector-vertical'):
+        return 'Kick'
+    else:
+        raise NotImplementedError("magfunc {}".format(magfunc))
+
+
+def get_section_dipole_name(maname):
+    """Return name of dipole in the same section of given magnet name."""
+    maname = _SiriusPVName(maname)
+    if _re.match("B.*", maname.dev_type):
+        return None
+    elif maname.section == "SI":
+        return "SI-Fam:MA-B1B2"
+    elif maname.section == "BO":
+        return "BO-Fam:MA-B"
+    elif maname.section == "TB":
+        return "TB-Fam:MA-B"
+    elif maname.section == "TS":
+        return "TS-Fam:MA-B"
+    else:
+        raise NotImplementedError(
+            "No section named {}".format(maname.section))
