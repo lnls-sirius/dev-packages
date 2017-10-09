@@ -1,3 +1,4 @@
+"""Power Supply Models."""
 
 import copy as _copy
 import time as _time
@@ -7,15 +8,12 @@ import threading as _threading
 import collections as _collections
 from epics import PV as _PV
 from siriuspy import envars as _envars
-from siriuspy.namesys import SiriusPVName as _SiriusPVName
+# from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.pwrsupply.data import PSData as _PSData
 from siriuspy.pwrsupply.controller import ControllerSim as _ControllerSim
 from siriuspy.pwrsupply.controller import ControllerEpics as _ControllerEpics
 from numpy import ndarray as _ndarray
-
-
-_connection_timeout = 0.1
 
 
 class PowerSupply(_PSData):
