@@ -12,7 +12,6 @@ import re as _re
 import epics as _epics
 from siriuspy import util as _util
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
-from siriuspy.pwrsupply.model import PowerSupplySim as _PowerSupplySim
 from siriuspy.pwrsupply.model import PowerSupplyEpicsSync \
     as _PowerSupplyEpicsSync
 from siriuspy.magnet import util as _mutil
@@ -246,7 +245,6 @@ def create_magnet_normalizer(magnet):
 
 
 class _MagnetPowerSupply(_PowerSupplyEpicsSync):
-# class _MagnetPowerSupply(_PowerSupplySim):
     """Base class for handling magnets."""
 
     def __init__(self, maname,
@@ -259,7 +257,7 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
 
         self._maname = _SiriusPVName(maname)
         self._dipole_name = _mutil.get_section_dipole_name(self._maname)
-        self._fam_name = self._get_fam_name()
+        self._fam_name = _mutil.get_magnet_fam_name(self._maname)
         self._madata = _MAData(maname=self._maname)
         self._magfunc = self._madata.magfunc(self._madata.psnames[0])
         self._left = left
@@ -388,14 +386,6 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
     @property
     def strength_mon(self):
         return self._propty[self._strength_label+'-Mon']
-
-    def _get_fam_name(self):
-        if self._maname.section == "SI" \
-                and self._maname.subsection != "Fam" \
-                and _re.match("(?:QD|QF|Q[0-9]).*", self._maname.dev_type):
-            return _re.sub("SI-\d{2}\w{2}:", "SI-Fam:", self._maname)
-        else:
-            return None
 
     def _trigger_callback(self, pvname, value, **kwargs):
         *parts, propty = pvname.split(':')

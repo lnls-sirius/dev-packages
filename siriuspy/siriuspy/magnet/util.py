@@ -161,3 +161,14 @@ def get_section_dipole_name(maname):
     else:
         raise NotImplementedError(
             "No section named {}".format(maname.section))
+
+
+def get_magnet_fam_name(maname):
+    """Return family name associated with a given magnet name."""
+    maname = _SiriusPVName(maname)
+    if maname.section == "SI" and \
+       maname.subsection != "Fam" and \
+       _re.match("(?:QD|QF|Q[0-9]).*", maname.dev_type):
+            return _re.sub("SI-\d{2}\w{2}:", "SI-Fam:", maname)
+    else:
+        return None
