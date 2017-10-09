@@ -33,11 +33,14 @@ def create_commun_propty_database():
                              'value': 0},
         'WfmLoad-Sts':      {'type': 'enum',   'enums': default_wfmlabels,
                              'value': 0},
-        'WfmData-SP':       {'type': 'float',  'count': default_wfmsize, 'value': [0.0 for datum in range(default_wfmsize)]},
-        'WfmData-RB':       {'type': 'float',  'count': default_wfmsize, 'value': [0.0 for datum in range(default_wfmsize)]},
+        'WfmData-SP':     {'type': 'float',  'count': default_wfmsize,
+                           'value': [0.0 for datum in range(default_wfmsize)]},
+        'WfmData-RB':     {'type': 'float',  'count': default_wfmsize,
+                           'value': [0.0 for datum in range(default_wfmsize)]},
         'WfmSave-Cmd':      {'type': 'int',    'value': 0},
         'Intlk-Mon':        {'type': 'int',    'value': 0},
-        'IntlkLabels-Cte':  {'type': 'string', 'count': 8, 'value': default_intlklabels},
+        'IntlkLabels-Cte':  {'type': 'string', 'count': 8,
+                             'value': default_intlklabels},
         'Current-SP':       {'type': 'float',  'value': 0.0, 'prec': 4},
         'Current-RB':       {'type': 'float',  'value': 0.0, 'prec': 4},
         'CurrentRef-Mon':   {'type': 'float',  'value': 0.0, 'prec': 4},
@@ -52,12 +55,18 @@ def get_ps_propty_database(pstype):
     for propty, db in propty_db.items():
         # set setpoint limits in database
         if propty in ('Current-SP',):
-            label='lolo';  db[label] = _PSSearch.get_splim(pstype,label)
-            label='low';   db[label] = _PSSearch.get_splim(pstype,label)
-            label='lolim'; db[label] = _PSSearch.get_splim(pstype,label)
-            label='hilim'; db[label] = _PSSearch.get_splim(pstype,label)
-            label='high';  db[label] = _PSSearch.get_splim(pstype,label)
-            label='hihi';  db[label] = _PSSearch.get_splim(pstype,label)
+            label = 'lolo'
+            db[label] = _PSSearch.get_splim(pstype, label)
+            label = 'low'
+            db[label] = _PSSearch.get_splim(pstype, label)
+            label = 'lolim'
+            db[label] = _PSSearch.get_splim(pstype, label)
+            label = 'hilim'
+            db[label] = _PSSearch.get_splim(pstype, label)
+            label = 'high'
+            db[label] = _PSSearch.get_splim(pstype, label)
+            label = 'hihi'
+            db[label] = _PSSearch.get_splim(pstype, label)
         # define unit of current
         if propty in \
                 ('Current-SP', 'Current-RB', 'CurrentRef-Mon', 'Current-Mon',

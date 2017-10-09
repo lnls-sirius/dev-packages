@@ -540,7 +540,7 @@ class PowerSupplyEpicsSync:
                  ):
         """Init method of PowerSupplyEpicsSync."""
         self._callbacks = {} if callback is None else {_uuid.uuid4(): callback}
-        self._enum_keys = False
+        #self._enum_keys = False
         self._psnames = psnames
         self._psname_master = self._psnames[0]
         self._lock = lock
@@ -844,28 +844,20 @@ class PowerSupplyEpicsSync:
                 _time.sleep(wait)
 
     def disconnect(self, wait=None):
-
-        #print('here1')
+        """Disconnect PVs method."""
         # wait for synchronization
         self.process_puts(wait=wait)
 
-        #print('here2')
-        #print('disconnect: ', self._disconnect)
         # signal disconnect triggered
         self._disconnect_lock.acquire()
         try:
             self._disconnect = True
         finally:
             self._disconnect_lock.release()
-        #print('disconnect: ', self._disconnect)
 
-        #print('here3')
         # wait for threads to finish
         self._put_thread.join()
 
-        #print('here4')
-        #disconnect all PVs (clearing all callbacks)
+        # disconnect all PVs (clearing all callbacks)
         for pvname, pv in self._pvs.items():
             pv.disconnect()
-
-        #print('here5')
