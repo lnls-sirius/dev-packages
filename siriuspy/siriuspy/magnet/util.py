@@ -86,7 +86,7 @@ def sum_magnetic_multipoles(*multipoles_list):
     return res
 
 
-def generate_normalized_ramp(interval=500, nrpts=2000,
+def get_default_ramp_waveform(interval=500, nrpts=2000,
                              ti=None, fi=None, forms=None):
     """Generate normalized ramp."""
     t = interval * _numpy.linspace(0, 1.0, nrpts)
