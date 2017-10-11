@@ -87,7 +87,7 @@ def sum_magnetic_multipoles(*multipoles_list):
 
 
 def get_default_ramp_waveform(interval=500, nrpts=2000,
-                             ti=None, fi=None, forms=None):
+                              ti=None, fi=None, forms=None):
     """Generate normalized ramp."""
     t = interval * _numpy.linspace(0, 1.0, nrpts)
     if ti is None:
@@ -129,20 +129,6 @@ def get_default_ramp_waveform(interval=500, nrpts=2000,
         ramp[ind] = fi[i] + a1[i]*dt + a2*dt**2 + a3*dt**3
 
     return ramp
-
-
-def get_strength_label(magfunc):
-    """Return strength label, depending on magnet function."""
-    if magfunc == 'dipole':
-        return 'Energy'
-    elif magfunc in ('quadrupole', 'quadrupole-skew'):
-        return 'KL'
-    elif magfunc in ('sextupole',):
-        return 'SL'
-    elif magfunc in ('corrector-horizontal', 'corrector-vertical'):
-        return 'Kick'
-    else:
-        raise NotImplementedError("magfunc {}".format(magfunc))
 
 
 def get_section_dipole_name(maname):

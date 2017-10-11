@@ -8,7 +8,6 @@ MagnetPowerSupplyTrim
     Handle trim magnets.
 """
 
-import re as _re
 import epics as _epics
 from siriuspy import util as _util
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
@@ -20,7 +19,6 @@ from siriuspy import envars as _envars
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 
 _connection_timeout = None
-
 _magfuncs = _mutil.get_magfunc_2_multipole_dict()
 
 
@@ -266,7 +264,7 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
         self._current_min = self._madata._splims['DRVL']
         self._current_max = self._madata._splims['DRVH']
         self._strength_obj = create_magnet_normalizer(self)
-        self._strength_label = _mutil.get_strength_label(self._magfunc)
+        self._strength_label = _util.get_strength_label(self._magfunc)
         self._set_vaca_prefix(use_vaca, vaca_prefix)
 
         super().__init__(psnames=self._power_supplies(),
