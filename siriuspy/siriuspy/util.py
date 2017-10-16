@@ -22,6 +22,12 @@ def conv_splims_labels(label):
     #  LOW      IOC low level limit (ALARM)
     #  LOPR     Low operating range
     #  HOPR     High operating range
+    #
+    # Rules
+    # -----
+    # LOLO <= LO <= HI <= HIHI
+    # DRVL <= LOPR <= HOPR <= DRVH.
+    #
     labels_dict = {
         # Epics-DB  pcaspy    PyEpics
         # ===========================
@@ -235,3 +241,34 @@ def check_running_ioc(pvname, timeout=1.0, use_prefix=True):
     pv = _epics.PV(pvname=pvname, connection_timeout=timeout)
     status = pv.wait_for_connection(timeout=timeout)
     return status
+
+
+def get_strength_label(magfunc):
+    """Return strength label, depending on magnet function."""
+    if magfunc == 'dipole':
+        return 'Energy'
+    elif magfunc in ('quadrupole', 'quadrupole-skew'):
+        return 'KL'
+    elif magfunc in ('sextupole',):
+        return 'SL'
+    elif magfunc in ('corrector-horizontal', 'corrector-vertical'):
+        return 'Kick'
+    else:
+        raise NotImplementedError("magfunc {}".format(magfunc))
+
+
+def get_strength_units(magfunc, section=None):
+    """Return strength units."""
+    if magfunc == 'dipole':
+        return 'GeV'
+    elif magfunc in ('quadrupole', 'quadrupole-skew'):
+        return '1/m'
+    elif magfunc in ('sextupole',):
+        return '1/m^2'
+    elif magfunc in ('corrector-horizontal', 'corrector-vertical'):
+        if section in ('SI', 'BO'):
+            return 'urad'
+        elif section in ('TB', 'TS', 'LI'):
+            return 'mrad'
+    else:
+        raise NotImplementedError("magfunc {}".format(magfunc))

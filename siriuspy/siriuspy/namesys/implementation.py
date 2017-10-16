@@ -15,6 +15,7 @@ def join_name(section, discipline, device, subsection, instance=None,
 
 
 def split_name(pvname):
+    """Return dict with PV name split into fields."""
     dic_ = {}
     dic_['channel_type'] = ''
     if pvname.startswith('ca://'):
@@ -53,7 +54,6 @@ def split_name(pvname):
                           (':' + dic_['propty'] if dic_['propty'] else '') +
                           ('.' + dic_['field'] if dic_['field'] else ''))
     return dic_
-
 
 class SiriusPVName(str):
 

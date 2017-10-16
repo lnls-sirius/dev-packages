@@ -2,6 +2,8 @@
 
 import math as _math
 import numpy as _numpy
+import re as _re
+from siriuspy.namesys import SiriusPVName as _SiriusPVName
 
 
 def get_nominal_dipole_angles():
@@ -84,8 +86,8 @@ def sum_magnetic_multipoles(*multipoles_list):
     return res
 
 
-def generate_normalized_ramp(interval=500, nrpts=2000,
-                             ti=None, fi=None, forms=None):
+def get_default_ramp_waveform(interval=500, nrpts=2000,
+                              ti=None, fi=None, forms=None):
     """Generate normalized ramp."""
     t = interval * _numpy.linspace(0, 1.0, nrpts)
     if ti is None:
@@ -127,3 +129,32 @@ def generate_normalized_ramp(interval=500, nrpts=2000,
         ramp[ind] = fi[i] + a1[i]*dt + a2*dt**2 + a3*dt**3
 
     return ramp
+
+
+def get_section_dipole_name(maname):
+    """Return name of dipole in the same section of given magnet name."""
+    maname = _SiriusPVName(maname)
+    if _re.match("B.*", maname.dev_type):
+        return None
+    elif maname.section == "SI":
+        return "SI-Fam:MA-B1B2"
+    elif maname.section == "BO":
+        return "BO-Fam:MA-B"
+    elif maname.section == "TB":
+        return "TB-Fam:MA-B"
+    elif maname.section == "TS":
+        return "TS-Fam:MA-B"
+    else:
+        raise NotImplementedError(
+            "No section named {}".format(maname.section))
+
+
+def get_magnet_fam_name(maname):
+    """Return family name associated with a given magnet name."""
+    maname = _SiriusPVName(maname)
+    if maname.section == "SI" and \
+       maname.subsection != "Fam" and \
+       _re.match("(?:QD|QF|Q[0-9]).*", maname.dev_type):
+            return _re.sub("SI-\d{2}\w{2}:", "SI-Fam:", maname)
+    else:
+        return None
