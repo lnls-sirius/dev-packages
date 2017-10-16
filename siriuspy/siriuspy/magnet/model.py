@@ -248,6 +248,7 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
     def __init__(self, maname,
                  use_vaca=False,
                  vaca_prefix=None,
+                 lock=True,
                  callback=None,
                  connection_timeout=None,
                  left='linear',
@@ -270,7 +271,7 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
         super().__init__(psnames=self._power_supplies(),
                          use_vaca=use_vaca,
                          vaca_prefix=vaca_prefix,
-                         lock=True)
+                         lock=lock)
 
         self._db = self._madata._propty_databases[self._psnames[0]]
 
