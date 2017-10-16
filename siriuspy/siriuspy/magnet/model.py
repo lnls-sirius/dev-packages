@@ -317,6 +317,10 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
         return value
 
     @property
+    def dipole_name(self):
+        return self._dipole_name
+
+    @property
     def left(self):
         return self._left
 
