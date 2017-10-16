@@ -28,8 +28,7 @@ class _MagnetNormalizer:
     def __init__(self, maname, magnet_conv_sign=-1,
                  left='linear', right='linear'):
         """Class constructor."""
-        self._maname = _SiriusPVName(maname)
-
+        self._maname = _SiriusPVName(maname) if type(maname) == str else maname
         self._madata = _MAData(maname=self._maname)
         self._magfunc = self._madata.magfunc(self._madata.psnames[0])
         self._magnet_conv_sign = magnet_conv_sign
@@ -224,12 +223,14 @@ def create_magnet_normalizer(magnet):
         return DipoleNormalizer(magnet.maname,
                                 magnet_conv_sign=-1.0,
                                 left=magnet.left, right=magnet.right)
-    elif magnet.magfunc == 'quadrupole' and magnet.maname.subsection != 'Fam':
-        return TrimNormalizer(magnet.maname,
-                              magnet_conv_sign=-1.0,
-                              dipole_name=magnet.dipole_name,
-                              fam_name=magnet.fam_name,
-                              left=magnet.left, right=magnet.right)
+    elif magnet.magfunc == 'quadrupole' and \
+            magnet.maname.section == 'SI' and \
+            magnet.maname.subsection != 'Fam':
+            return TrimNormalizer(magnet.maname,
+                                  magnet_conv_sign=-1.0,
+                                  dipole_name=magnet.dipole_name,
+                                  fam_name=magnet.fam_name,
+                                  left=magnet.left, right=magnet.right)
     elif magnet.magfunc in ('corrector-horizontal', 'quadrupole-skew'):
         return MagnetNormalizer(magnet.maname,
                                 dipole_name=magnet.dipole_name,
@@ -253,7 +254,6 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
                  connection_timeout=None,
                  left='linear',
                  right='linear'):
-
         self._maname = _SiriusPVName(maname)
         self._dipole_name = _mutil.get_section_dipole_name(self._maname)
         self._fam_name = _mutil.get_magnet_fam_name(self._maname)
@@ -320,6 +320,10 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
     @property
     def dipole_name(self):
         return self._dipole_name
+
+    @property
+    def fam_name(self):
+        return self._fam_name
 
     @property
     def left(self):
