@@ -36,7 +36,7 @@ class BoStrengthPvs(ConfigurationPvs):
 
     def _getPvs(self):
         pvs = dict()
-        slots = MASearch.get_manames()
+        slots = MASearch.get_manames({"discipline": "MA"})
         if slots:
             for slot in slots:
                 strength_name = ConfigurationPvs.getStrengthName(slot)
@@ -52,7 +52,7 @@ class SiStrengthPvs(ConfigurationPvs):
 
     def _getPvs(self):
         pvs = dict()
-        slots = MASearch.get_manames()
+        slots = MASearch.get_manames({"discipline": "MA"})
         if slots:
             for slot in slots:
                 strength_name = ConfigurationPvs.getStrengthName(slot)
