@@ -192,14 +192,17 @@ class PulsedMagnetPowerSupply(_PulsedPowerSupply):
         dipole_prefix = self._vaca_prefix + self._dipole_name
 
         computed_pvs = {
-            _pm_props.StrengthSP: [dipole_prefix + ":" + "Current-SP",
-                                  ma_prefix + ":" + _pu_props.TensionSP],
-            _pm_props.StrengthRB: [dipole_prefix + ":" + "Current-RB",
-                                  ma_prefix + ":" + _pu_props.TensionRB],
-            _pm_props.StrengthRefMon: [dipole_prefix + ":" + "CurrentRef-Mon",
-                                      ma_prefix + ":" + _pu_props.TensionRefMon],
+            _pm_props.StrengthSP: [
+                dipole_prefix + ":" + "Current-SP",
+                ma_prefix + ":" + _pu_props.TensionSP],
+            _pm_props.StrengthRB: [
+                dipole_prefix + ":" + "Current-RB",
+                ma_prefix + ":" + _pu_props.TensionRB],
+            _pm_props.StrengthRefMon:
+                [dipole_prefix + ":" + "CurrentRef-Mon",
+                 ma_prefix + ":" + _pu_props.TensionRefMon],
             _pm_props.StrengthMon: [dipole_prefix + ":" + "Current-Mon",
-                                   ma_prefix + ":" + _pu_props.TensionMon]}
+                                    ma_prefix + ":" + _pu_props.TensionMon]}
         # Add PVs as computed PVs
         for attr, params in computed_pvs.items():
             pvname = self.maname + ":" + attr
