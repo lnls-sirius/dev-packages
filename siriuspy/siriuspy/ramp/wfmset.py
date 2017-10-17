@@ -1,5 +1,6 @@
 """wfm utilities."""
 
+import math as _math
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.ramp.magnet import Magnet as _Magnet
 from siriuspy.ramp.optics import _nominal_intkl
@@ -58,6 +59,24 @@ class WfmSet:
         """Return name of dipole in the wfm set."""
         return self._dipole_name
 
+    @property
+    def index_energy_inj(self):
+        """Return waveform index corresponding to the injection energy."""
+        wfm_strength = self.get_wfm_strength(maname=self.dipole_name)
+        for i in range(len(wfm_strength)-1):
+            if wfm_strength[i] <= WfmSet.energy_inj_gev < wfm_strength[i+1]:
+                break
+        return i
+
+    @property
+    def index_energy_eje(self):
+        """Return waveform index corresponding to the ejection energy."""
+        wfm_strength = self.get_wfm_strength(maname=self.dipole_name)
+        for i in range(len(wfm_strength)-1):
+            if wfm_strength[i] < WfmSet.energy_eje_gev <= wfm_strength[i+1]:
+                break
+        return i
+
     # --- public methods ---
 
     def set_wfm_strength(self, maname, wfm=None):
@@ -105,19 +124,44 @@ class WfmSet:
 
     def get_wfm_strength(self, maname):
         """Return strength wfm of given magnet."""
-        return self._wfms_strength[maname]
+        return self._wfms_strength[maname].copy()
 
     def get_wfm_current(self, maname):
         """Return current wfm of given magnet."""
-        return self._wfms_current[maname]
+        return self._wfms_current[maname].copy()
 
-    def add_wfm_strength(self, maname, start=None, end=None, width=0):
-        """Add strength bump to waveform."""
-        if start is None:
-            start = 0
-        if end is None:
-            end = -1
-        self.get_wfm_strength()
+    def add_wfm_strength(self, maname, delta, start=None, stop=None, width=0):
+        """Add strength bump to waveform.
+
+            Add strength bump to waveform in a specified region and with a
+        certain number of smoothening left and right points.
+
+        Parameters
+        ----------
+
+        maname : str | SiriusPVName
+            magnet device name whose waveform strength is to be modified.
+        delta : float
+            strength delta value to be added to the waveform.
+        start : int
+            index of the initial point (inclusive) in the waveform to which
+            the bump will be added.
+        stop : int
+            index of the final point (exclusive) in the waveform to which
+            the bump will be added.
+        width : int
+            the number of left and right points in the waveform to whose values
+            a partial bump will be added in otrder to smoothen the bump.
+            A cubic fitting is used that guarantees continous first derivatives
+            for the bump.
+        """
+        wfm = self.get_wfm_strength(maname)
+        start = 0 if start is None else max(0, int(start))
+        stop = len(wfm) if stop is None else min(len(wfm), stop)
+        width = max(0, int(width))
+        # wfm = self._add_smooth_delta_cubic(wfm, delta, start, stop, width)
+        wfm = self._add_smooth_delta_tanh(wfm, delta, start, stop, width)
+        self.set_wfm_strength(maname, wfm=wfm)
 
     # --- private methods ---
 
@@ -243,3 +287,37 @@ class WfmSet:
             self._update_family_wfm(maname, wfm_strength, wfm_current)
         else:
             self._update_trim_wfm(maname, wfm_strength, wfm_current)
+
+    @staticmethod
+    def _add_smooth_delta_cubic(wfm, D, start, stop, d):
+        # left side smoothing
+        wfm = wfm.copy()
+        if d > 0:
+            for i in range(0, d+1):
+                f = i / (d+1)
+                idx = i + start - (d+1)
+                if idx >= 0:
+                    wfm[idx] += D*f**2*(3-2*f)
+        # center bump
+        for i in range(start, stop):
+            wfm[i] += D
+        # right side smoothing
+        if d > 0:
+            for i in range(0, d+1):
+                f = i / (d+1)
+                idx = stop + (d+1) - i - 1
+                if idx >= 0:
+                    wfm[idx] += D*f**2*(3-2*f)
+        return wfm
+
+    @staticmethod
+    def _add_smooth_delta_tanh(wfm, D, start, stop, width):
+        xm = 0.5*(start+stop-1)
+        Dstar = 2*D/(1+_math.tanh((xm-start)/width))
+        for i in range(len(wfm)):
+            if i <= xm:
+                dy = 0.5*Dstar*(1+_math.tanh((1.0*i-start)/width))
+            else:
+                dy = 0.5*Dstar*(1+_math.tanh((1.0*stop-1-i)/width))
+            wfm[i] += dy
+        return wfm
