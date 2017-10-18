@@ -1,12 +1,13 @@
 
 """Define a class to communicate with configuration database API."""
-import json
-import logging
-import os
-from urllib.request import Request, urlopen
-from urllib.error import URLError
+import json as _json
+import logging as _logging
+import siriuspy.envars as _envars
+from urllib.request import Request as _Request
+from urllib.request import urlopen as _urlopen
+from urllib.error import URLError as _URLError
 
-logging.basicConfig(level=logging.DEBUG)
+_logging.basicConfig(level=_logging.DEBUG)
 
 
 class ConfigurationService:
@@ -17,29 +18,27 @@ class ConfigurationService:
     def __init__(self, url=None):
         """Class constructor.
 
-        Parameters:
-            - url: configuration service host address
+        Parameters
+        ----------
+        url : str | None
+            Configuration service host address. For default 'None' value
+            the URL defined in siripy.envars is used.
         """
         if url is None:
-            self._url = os.getenv("SIRIUS_URL_CONFIGDB")
+            self._url = _envars.server_url_configdb
         else:
             self._url = url
-
-        logging.info("HTTP request will be made to {}".format(self._url))
-
-    # def get_result(self):
-    #     """Get result from last operation."""
-    #     return self._result
+        _logging.info("HTTP request will be made to {}".format(self._url))
 
     def _make_request(self, request):
         try:
-            response = json.loads(urlopen(request).read().decode("utf-8"))
-        except URLError as e:
+            response = _json.loads(_urlopen(request).read().decode("utf-8"))
+        except _URLError as e:
             return {"code": 111, "message": "Connection refused"}
-        except json.JSONDecodeError as e:
+        except _json.JSONDecodeError as e:
             return {"code": -1, "message": "JSON decode error"}
         except Exception as e:
-            logging.critical("{}".format(e))
+            _logging.critical("{}".format(e))
         else:
             return response
 
@@ -48,13 +47,13 @@ class ConfigurationService:
         """Get all configs or find config that meet `find_params`."""
         url = self._url + self.CONFIGS_ENDPOINT
         if find_params is None:
-            request = Request(url=url, method="GET")
+            request = _Request(url=url, method="GET")
         else:
             if type(find_params) is not dict:
                 raise AttributeError("`find_params` must be a dict")
-            request = Request(url=url, method="GET",
-                              headers={"Content-Type": "application/json"},
-                              data=json.dumps(find_params).encode())
+            request = _Request(url=url, method="GET",
+                               headers={"Content-Type": "application/json"},
+                               data=_json.dumps(find_params).encode())
         return self._make_request(request)
 
     def insert_config(self, name, config_type, value):
@@ -64,16 +63,16 @@ class ConfigurationService:
         """
         url = self._url + self.CONFIGS_ENDPOINT
         data = {"name": name, "config_type": config_type, "value": value}
-        request = Request(url=url, method="POST",
-                          headers={"Content-Type": "application/json"},
-                          data=json.dumps(data).encode())
+        request = _Request(url=url, method="POST",
+                           headers={"Content-Type": "application/json"},
+                           data=_json.dumps(data).encode())
         return self._make_request(request)
 
     def get_config(self, name, config_type):
         """Get lists by name and config."""
         url_params = "/{}/{}".format(config_type, name)
         url = self._url + self.CONFIGS_ENDPOINT + url_params
-        request = Request(url=url, method="GET")
+        request = _Request(url=url, method="GET")
         return self._make_request(request)
 
     def update_config(self, name, config_type, update_params):
@@ -87,16 +86,16 @@ class ConfigurationService:
         url = self._url + self.CONFIGS_ENDPOINT + url_params
         if type(update_params) is not dict:
             raise AttributeError("`update_params` must be dict")
-        request = Request(url=url, method="PUT",
-                          headers={"Content-Type": "application/json"},
-                          data=json.dumps(update_params).encode())
+        request = _Request(url=url, method="PUT",
+                           headers={"Content-Type": "application/json"},
+                           data=_json.dumps(update_params).encode())
         return self._make_request(request)
 
     def delete_config(self, name, config_type):
         """Delete a config."""
         url_params = "/{}/{}".format(config_type, name)
         url = self._url + self.CONFIGS_ENDPOINT + url_params
-        request = Request(url=url, method="DELETE")
+        request = _Request(url=url, method="DELETE")
         return self._make_request(request)
 
     # Pv Configuration
@@ -108,7 +107,7 @@ class ConfigurationService:
     #     else:
     #         request = Request(url=url, method="GET",
     #                           headers={"Content-Type": "application/json"},
-    #                           data=json.dumps(data).encode())
+    #                           data=_json.dumps(data).encode())
     #     return self._make_request(request)
     #
     # def insert_pv_configuration(self, name, config_type, values=[]):
@@ -118,7 +117,7 @@ class ConfigurationService:
     #             "values": values}
     #     request = Request(url=url, method="POST",
     #                       headers={"Content-Type": "application/json"},
-    #                       data=json.dumps(data).encode())
+    #                       data=_json.dumps(data).encode())
     #     return self._make_request(request)
     #
     # def get_pv_configuration_by_id(self, id):
