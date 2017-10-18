@@ -1,8 +1,11 @@
 
 """Define a class to communicate with configuration database API."""
 import json
+import logging
 from urllib.request import Request, urlopen
-from urllib.error import HTTPError
+from urllib.error import URLError
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 class ConfigurationService:
@@ -17,19 +20,21 @@ class ConfigurationService:
         self._host = host
         self._result = None
 
-    def get_result(self):
-        """Get result from last operation."""
-        return self._result
+    # def get_result(self):
+    #     """Get result from last operation."""
+    #     return self._result
 
     def _make_request(self, request):
         try:
-            response = urlopen(request).read().decode("utf-8")
-            self._result = json.loads(response)["result"]
-            return 200
-        except HTTPError as e:
-            return e.code
+            response = json.loads(urlopen(request).read().decode("utf-8"))
+        except URLError as e:
+            return {"code": 111, "message": "Connection refused"}
+        except json.JSONDecodeError as e:
+            return {"code": -1, "message": "JSON decode error"}
         except Exception as e:
-            return -1
+            logging.critical("{}".format(e))
+        else:
+            return response
 
     # Pv Configuration
     def get_pv_configurations(self, data=None):
@@ -46,7 +51,8 @@ class ConfigurationService:
     def insert_pv_configuration(self, name, config_type, values=[]):
         """Insert new PV convfiguration."""
         url = "http://{}/pvs".format(self._host)
-        data = {"name": name, "config_type": config_type, "values": values}
+        data = {"name": name, "config_type": config_type,
+                "values": values}
         request = Request(url=url, method="POST",
                           headers={"Content-Type": "application/json"},
                           data=json.dumps(data).encode())
@@ -86,7 +92,7 @@ class ConfigurationService:
         # Build data
         data = {}
         data["pv_name"] = pv_name
-        data["pv_type"] = str(type(value))
+        # data["pv_type"] = str(type(value))
         data["value"] = value
         # Build request
         request = Request(url=url, method="POST",
@@ -120,19 +126,24 @@ class ConfigurationService:
         return self._make_request(request)
 
     # List collection
-    def get_all_lists(self):
+    def get_all_lists(self, data=None):
         """Get all lists."""
         url = "http://{}/lists".format(self._host)
-        request = Request(url=url, method="GET")
+        if data is None:
+            request = Request(url=url, method="GET")
+        else:
+            request = Request(url=url, method="GET",
+                              headers={"Content-Type": "application/json"},
+                              data=json.dumps(data).encode())
         return self._make_request(request)
 
-    def insert_list(self, name, value=None):
+    def insert_list(self, name, config_type, value=None):
         """Insert a new list.
 
         Value must me a list.
         """
         url = "http://{}/lists".format(self._host)
-        data = {"name": name}
+        data = {"name": name, "config_type": config_type}
         if value is not None:
             data["value"] = value
         request = Request(url=url, method="POST",
