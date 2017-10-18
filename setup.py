@@ -1,13 +1,13 @@
 #!/usr/bin/env python-sirius
 
+import versioneer
 from setuptools import setup
 
-with open('VERSION','r') as _f:
-    __version__ = _f.read().strip()
 
 setup(
     name='mathphys',
-    version=__version__,
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     author='lnls-fac',
     description='LNLS Math and Physics utilities',
     url='https://github.com/lnls-fac/mathphys',

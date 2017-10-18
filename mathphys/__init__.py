@@ -12,5 +12,7 @@ import mathphys.utils as utils
 __all__ = ['base_units', 'units', 'constants', 'functions', 'beam_optics',
     'beam_lifetime', 'utils']
 
-with open(_os.path.join(__path__[0], 'VERSION'), 'r') as _f:
-    __version__ = _f.read().strip()
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions
+
