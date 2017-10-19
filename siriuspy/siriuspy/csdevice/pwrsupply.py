@@ -6,7 +6,7 @@ from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.search import MASearch as _MASearch
 
 
-default_wfmsize = 2000
+default_wfmsize = 4000
 default_wfmlabels = _et.enums('PSWfmLabelsTyp')
 default_intlklabels = _et.enums('PSIntlkLabelsTyp')
 
