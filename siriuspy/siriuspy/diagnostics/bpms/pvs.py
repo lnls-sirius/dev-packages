@@ -6,6 +6,7 @@ processed_data = ['PosX', 'PosY', 'PosQ', 'PosS',
                   'AmpA', 'AmpB', 'AmpC', 'AmpD']
 raw_data = ['AntA', 'AntB', 'AntC', 'AntD']
 slopes = ['Positive', 'Negative']
+acq_repeat = ['Dsbl', 'Enbl']
 
 acq_types = ['TbT', 'ADC', 'SOFB']
 acq_states = ['Idle', 'Waiting', 'Acquiring', 'Error', 'Aborted']
@@ -68,9 +69,9 @@ pvs_definitions = {
         'AcqTrigType-Sts': {
             'type': 'enum', 'enums': acq_trig_types, 'value': 1},
         'AcqTrigRep-Sel': {
-            'type': 'enum', 'enums': ['Dsbl', 'Enbl'], 'value': 0},
+            'type': 'enum', 'enums': acq_repeat, 'value': 0},
         'AcqTrigRep-Sts': {
-            'type': 'enum', 'enums': ['Dsbl', 'Enbl'], 'value': 0},
+            'type': 'enum', 'enums': acq_repeat, 'value': 0},
         'AcqTrigExt-Sel': {
             'type': 'enum', 'enums': acq_trig_exter, 'value': 0},
         'AcqTrigExt-Sts': {
@@ -121,9 +122,9 @@ pvs_definitions = {
         'SglAntD-Mon': {
             'type': 'float', 'value': _np.array(1000*[0.0]), 'count': 1000},
         'SglTrigType-Sel': {
-            'type': 'enum', 'enums': ['Auto', 'External'], 'value': 1},
+            'type': 'enum', 'enums': acq_trig_types, 'value': 1},
         'SglTrigType-Sts': {
-            'type': 'enum', 'enums': ['Auto', 'External'], 'value': 1},
+            'type': 'enum', 'enums': acq_trig_types, 'value': 1},
         'SglDelay-SP': {
             'type': 'float', 'value': 0.0},
         'SglDelay-RB': {

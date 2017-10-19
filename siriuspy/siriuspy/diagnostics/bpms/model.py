@@ -7,6 +7,8 @@ from .pvs import op_modes as _op_modes
 from .pvs import acq_types as _acq_types
 from .pvs import acq_trig_types as _acq_trig_types
 from .pvs import acq_trig_exter as _acq_trig_exter
+from .pvs import slopes as _slopes
+from .pvs import processed_data as _processed_data
 from .fake_bpm import BPMFake
 from .epics_bpm import BPMEpics
 
@@ -130,38 +132,52 @@ class BPMSet(_OrderedDict):
         if isinstance(Type, str):
             Type = _acq_types.index(Type)
         if isinstance(Channel, str):
-            Channel = _acq_trig_types.index(Channel)
+            Channel = _processed_data.index(Channel)
         if isinstance(Slope, str):
-            Slope = _acq_trig_exter.index(Slope)
-        rearm_trig = 0 if RearmTrigger else 1
+            Slope = _slopes.index(Slope)
         for name, bpm in self.items():
-            bpm.acqrate_sel = AcqRate
-            ok &= bpm.acqrate_sel == AcqRate
+            bpm.acqtrigauto_sel = Type
+            ok &= bpm.acqtrigauto_sel == Type
 
-            bpm.acqnrsmplspre_sp = NrSamplePre
-            ok &= bpm.acqnrsmplspre_sp == NrSamplePre
+            bpm.acqtrigautoch_sel = Channel
+            ok &= bpm.acqtrigautoch_sel == Channel
 
-            bpm.acqnrsmplspos_sp = NrSamplePos
-            ok &= bpm.acqnrsmplspos_sp == NrSamplePos
+            bpm.acqtrigautothres_sp = Threshold
+            ok &= bpm.acqtrigautothres_sp == Threshold
 
-            bpm.acqnrshots_sp = NrShots
-            ok &= bpm.acqnrshots_sp == NrShots
+            bpm.acqtrigautoslope_sel = Slope
+            ok &= bpm.acqtrigautoslope_sel == Slope
 
-            bpm.acqdelay_sp = Delay
-            ok &= bpm.acqdelay_sp == Delay
+            bpm.acqtrigautohyst_sp = Hysteresis
+            ok &= bpm.acqtrigautohyst_sp == Hysteresis
 
-            bpm.acqtrigtype_sel = TriggerType
-            ok &= bpm.acqtrigtype_sel == TriggerType
-
-            bpm.acqtrigext_sel = ExternalTrigger
-            ok &= bpm.acqtrigext_sel == ExternalTrigger
-
-            bpm.acqtrigrep_sel = rearm_trig
-            ok &= bpm.acqtrigrep_sel == rearm_trig
         return ok
 
     def get_configuration_acquisition_auto_trigger(self):
-        return dict()
+        bpm = self[self.bpm_names[0]]
+        Type = bpm.acqtrigauto_sel
+        Channel = bpm.acqtrigautoch_sel
+        Threshold = bpm.acqtrigautothres_sp
+        Slope = bpm.acqtrigautoslope_sel
+        Hysteresis = bpm.acqtrigautohyst_sp
+        for name, bpm in self.items():
+            if bpm.acqtrigauto_sel != Type:
+                Type = None
+            if bpm.acqtrigautoch_sel != Channel:
+                Channel = None
+            if bpm.acqtrigautothres_sp != Threshold:
+                Threshold = None
+            if bpm.acqtrigautoslope_sel != Slope:
+                Slope = None
+            if bpm.acqtrigautohyst_sp != Hysteresis:
+                Hysteresis = None
+        dic_ = dict()
+        dic_['Type'] = Type
+        dic_['Channel'] = Channel
+        dic_['Threshold'] = Threshold
+        dic_['Slope'] = Slope
+        dic_['Hysteresis'] = Hysteresis
+        return dic_
 
     def is_acquisition_prepared(self,):
         return True
