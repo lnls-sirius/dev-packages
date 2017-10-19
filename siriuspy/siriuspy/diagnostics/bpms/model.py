@@ -1,30 +1,176 @@
-import epics
-
-_slow_props = ['posX', 'posY', 'posQ', 'posS', 'ampA', 'ampB', 'ampC', 'ampD']
-_slow_props_def = """
-    @property
-    def {0:s}(self):
-        if self._pvs['{0:s}'].is_connected():
-            return self._pvs['{0:s}'].value
-
-    @{0:s}.setter
-    def {0:s}(self, value):
-        if self._pvs['{0:s}'].is_connected():
-            self._pvs['{0:s}'].value = value
-"""
+from collections import OrderedDict as _OrderedDict
+import numpy as _np
+import copy as _copy
+from epics import PV as _PV
+from .pvs import pvs_definitions as pvDB
+from .pvs import op_modes as _op_modes
+from .pvs import acq_types as _acq_types
+from .pvs import acq_trig_types as _acq_trig_types
+from .pvs import acq_trig_exter as _acq_trig_exter
+from .fake_bpm import BPMFake
+from .epics_bpm import BPMEpics
 
 
-class BPM:
+class BPMSet(_OrderedDict):
 
-    def __init__(self, bpm_name):
-        self._pvs['posX'] = epics.PV(bpm_name + ':PosX-Mon')
-        self._pvs['posY'] = epics.PV(bpm_name + ':PosY-Mon')
-        self._pvs['posQ'] = epics.PV(bpm_name + ':PosQ-Mon')
-        self._pvs['posS'] = epics.PV(bpm_name + ':PosS-Mon')
-        self._pvs['ampA'] = epics.PV(bpm_name + ':AmpA-Mon')
-        self._pvs['ampB'] = epics.PV(bpm_name + ':AmpB-Mon')
-        self._pvs['ampC'] = epics.PV(bpm_name + ':AmpC-Mon')
-        self._pvs['ampD'] = epics.PV(bpm_name + ':AmpD-Mon')
+    def __init__(self, bpm_names, bpm_class=None):
+        self.bpm_names = list(bpm_names)
+        self.bpm_class = bpm_class if bpm_class else BPMFake
+        for bpm in bpm_names:
+            self[bpm] = self.bpm_class(bpm)
+        self._operation_mode = ''
+        self._configuration_acquisition = dict()
+        self._configuration_acquisition_auto_trigger = dict()
 
-    for prop in _slow_props:
-        exec(_slow_props_def.format(prop))
+    def set_operation_mode(self, mode='Continuous'):
+        ok = True
+        mode = _op_modes.index(mode)
+        for name, bpm in self.items():
+            bpm.opmode_sel = mode
+            ok &= bpm.opmode_sel == mode
+        return ok
+
+    def get_operation_mode(self):
+        _mode = self[self.bpm_names[0]].opmode_sts
+        for name, bpm in self.items():
+            if bpm.opmode_sts != _mode:
+                return None
+        return _mode
+
+    def set_configuration_acquisition(self,
+                                      AcqRate='TbT',
+                                      NrSamplePre=1000,
+                                      NrSamplePos=1000,
+                                      NrShots=1,
+                                      Delay=0.0,
+                                      TriggerType='External',
+                                      ExternalTrigger='Trig1',
+                                      RearmTrigger=False,
+                                      ):
+        ok = True
+        if isinstance(AcqRate, str):
+            AcqRate = _acq_types.index(AcqRate)
+        if isinstance(TriggerType, str):
+            TriggerType = _acq_trig_types.index(TriggerType)
+        if isinstance(ExternalTrigger, str):
+            ExternalTrigger = _acq_trig_exter.index(ExternalTrigger)
+        rearm_trig = 0 if RearmTrigger else 1
+        for name, bpm in self.items():
+            bpm.acqrate_sel = AcqRate
+            ok &= bpm.acqrate_sel == AcqRate
+
+            bpm.acqnrsmplspre_sp = NrSamplePre
+            ok &= bpm.acqnrsmplspre_sp == NrSamplePre
+
+            bpm.acqnrsmplspos_sp = NrSamplePos
+            ok &= bpm.acqnrsmplspos_sp == NrSamplePos
+
+            bpm.acqnrshots_sp = NrShots
+            ok &= bpm.acqnrshots_sp == NrShots
+
+            bpm.acqdelay_sp = Delay
+            ok &= bpm.acqdelay_sp == Delay
+
+            bpm.acqtrigtype_sel = TriggerType
+            ok &= bpm.acqtrigtype_sel == TriggerType
+
+            bpm.acqtrigext_sel = ExternalTrigger
+            ok &= bpm.acqtrigext_sel == ExternalTrigger
+
+            bpm.acqtrigrep_sel = rearm_trig
+            ok &= bpm.acqtrigrep_sel == rearm_trig
+        return ok
+
+    def get_configuration_acquisition(self):
+        bpm = self[self.bpm_names[0]]
+        AcqRate = bpm.acqrate_sts
+        NrSamplePre = bpm.acqnrsmplspre_sp
+        NrSamplePos = bpm.acqnrsmplspos_sp
+        NrShots = bpm.acqnrshots_sp
+        Delay = bpm.acqdelay_sp
+        TriggerType = bpm.acqtrigtype_sts
+        ExternalTrigger = bpm.acqtrigext_sts
+        RearmTrigger = bpm.acqtrigrep_sts
+        for name, bpm in self.items():
+            if bpm.acqrate_sts != AcqRate:
+                AcqRate = None
+            if bpm.acqnrsmplspre_rb != NrSamplePre:
+                NrSamplePre = None
+            if bpm.acqnrsmplspos_rb != NrSamplePos:
+                NrSamplePos = None
+            if bpm.acqnrshots_rb != NrShots:
+                NrShots = None
+            if bpm.acqdelay_rb != Delay:
+                Delay = None
+            if bpm.acqtrigtype_sts != TriggerType:
+                TriggerType = None
+            if bpm.acqtrigext_sts != ExternalTrigger:
+                ExternalTrigger = None
+            if bpm.acqtrigrep_sts != RearmTrigger:
+                RearmTrigger = None
+        dic_ = dict()
+        dic_['AcqRate'] = AcqRate
+        dic_['NrSamplePre'] = NrSamplePre
+        dic_['NrSamplePos'] = NrSamplePos
+        dic_['NrShots'] = NrShots
+        dic_['Delay'] = Delay
+        dic_['TriggerType'] = TriggerType
+        dic_['ExternalTrigger'] = ExternalTrigger
+        dic_['RearmTrigger'] = RearmTrigger
+        return dic_
+
+    def set_configuration_acquisition_auto_trigger(self,
+                                                   Type='TbT',
+                                                   Channel='PosS',
+                                                   Threshold=1,
+                                                   Slope='Positive',
+                                                   Hysteresis=1
+                                                   ):
+        ok = True
+        if isinstance(Type, str):
+            Type = _acq_types.index(Type)
+        if isinstance(Channel, str):
+            Channel = _acq_trig_types.index(Channel)
+        if isinstance(Slope, str):
+            Slope = _acq_trig_exter.index(Slope)
+        rearm_trig = 0 if RearmTrigger else 1
+        for name, bpm in self.items():
+            bpm.acqrate_sel = AcqRate
+            ok &= bpm.acqrate_sel == AcqRate
+
+            bpm.acqnrsmplspre_sp = NrSamplePre
+            ok &= bpm.acqnrsmplspre_sp == NrSamplePre
+
+            bpm.acqnrsmplspos_sp = NrSamplePos
+            ok &= bpm.acqnrsmplspos_sp == NrSamplePos
+
+            bpm.acqnrshots_sp = NrShots
+            ok &= bpm.acqnrshots_sp == NrShots
+
+            bpm.acqdelay_sp = Delay
+            ok &= bpm.acqdelay_sp == Delay
+
+            bpm.acqtrigtype_sel = TriggerType
+            ok &= bpm.acqtrigtype_sel == TriggerType
+
+            bpm.acqtrigext_sel = ExternalTrigger
+            ok &= bpm.acqtrigext_sel == ExternalTrigger
+
+            bpm.acqtrigrep_sel = rearm_trig
+            ok &= bpm.acqtrigrep_sel == rearm_trig
+        return ok
+
+    def get_configuration_acquisition_auto_trigger(self):
+        return dict()
+
+    def is_acquisition_prepared(self,):
+        return True
+
+    def start_acquisition(self):
+        return
+
+    def stop_acquisition(self):
+        return
+
+    def is_acquisition_finished(self):
+        return True
