@@ -1,4 +1,4 @@
-"""wfm utilities."""
+"""Waveform Set Module."""
 
 import numpy as _np
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
