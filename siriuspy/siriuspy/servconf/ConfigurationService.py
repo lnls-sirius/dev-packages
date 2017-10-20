@@ -1,6 +1,6 @@
 
 """Define a class to communicate with configuration database API."""
-import copy as _copy
+# import copy as _copy
 import json as _json
 import logging as _logging
 import siriuspy.envars as _envars
@@ -9,7 +9,7 @@ from urllib.request import urlopen as _urlopen
 from urllib.error import URLError as _URLError
 import siriuspy.servconf.ConfigType as _ConfigType
 
-_logging.basicConfig(level=_logging.WARNING)
+_logging.basicConfig(level=_logging.DEBUG)
 
 
 class ConfigurationService:
@@ -44,25 +44,27 @@ class ConfigurationService:
         request = _Request(url=url, method="GET")
         return self._make_request(request)
 
-    def update_config(self, obj_dict, new_name=None):
+    def update_config(self, obj_dict):
         """Update an existing configuration."""
         if type(obj_dict) is not dict:
             raise AttributeError('"obj_dict" is not a dictionary')
-        obj_dict = _copy.deepcopy(obj_dict)
+        id = obj_dict["_id"]
         config_type = obj_dict['config_type']
-        name = obj_dict['name']
-        if new_name is not None:
-            obj_dict['name'] = new_name
+        # Check value format
         if not _ConfigType.check_value(config_type, obj_dict['value']):
             raise TypeError('Incompatible configuration value!')
-
-        obj_dict.pop('timestamp', None)
-        obj_dict.pop('_id', None)
-        url_params = "/{}/{}".format(config_type, name)
+        # Get params allowed to be updated
+        update_dict = {
+            "name": obj_dict["name"],
+            "value": obj_dict["value"],
+            "deleted": obj_dict["deleted"]
+        }
+        # Build URL a make PUT request
+        url_params = "/{}".format(id)
         url = self._url + self.CONFIGS_ENDPOINT + url_params
         request = _Request(url=url, method="PUT",
                            headers={"Content-Type": "application/json"},
-                           data=_json.dumps(obj_dict).encode())
+                           data=_json.dumps(update_dict).encode())
         return self._make_request(request)
 
     def insert_config(self, config_type, name, value):
@@ -80,7 +82,8 @@ class ConfigurationService:
                      config_type=None,
                      name=None,
                      begin=None,
-                     end=None):
+                     end=None,
+                     deleted=False):
         """Find configurations matching search criteria."""
         # build search dictionary
         find_dict = {}
@@ -94,6 +97,8 @@ class ConfigurationService:
                 find_dict['timestamp']['$gte'] = begin
             if end is not None:
                 find_dict['timestamp']['$lte'] = end
+        if deleted is not None:
+            find_dict["deleted"] = deleted
 
         # request data
         return self.request_configs(find_dict=find_dict)
@@ -111,16 +116,20 @@ class ConfigurationService:
                                data=_json.dumps(find_dict).encode())
         return self._make_request(request)
 
-    def delete_config(self, name, config_type):
+    def delete_config(self, obj_dict):
         """Mark a configuration as deletable."""
-        url_params = "/{}/{}".format(config_type, name)
+        url_params = "/{}".format(obj_dict["_id"])
         url = self._url + self.CONFIGS_ENDPOINT + url_params
-        request = _Request(url=url, method="DELETE")
+        request = _Request(url=url, method="PUT",
+                           headers={"Content-Type": "application/json"},
+                           data=_json.dumps({"deleted": True}).encode())
         return self._make_request(request)
 
     def query_db_size(self):
         """Return estimated size of configuration database."""
-        pass
+        url = self._url + self.CONFIGS_ENDPOINT + "/stats/size"
+        request = _Request(url=url, method="GET")
+        return self._make_request(request)
 
     def query_db_size_deletable(self):
         """Return estimated size of deleted configurations data."""
