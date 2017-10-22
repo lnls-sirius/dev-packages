@@ -21,8 +21,20 @@ from epics.ca import HAS_NUMPY
 
 _PVcache_ = {}
 
-_TYPES = {'float': dbr.DOUBLE, 'int': dbr.LONG, 'bool': dbr.INT,
-          'string': dbr.STRING, 'enum': dbr.ENUM, 'char': dbr.STRING}
+_PYTYPES = {'float': float, 'int': int, 'bool': int,
+            'string': str, 'enum': int, 'char': str}
+_CATYPES = {'float': dbr.DOUBLE, 'int': dbr.LONG, 'bool': dbr.INT,
+            'string': dbr.STRING, 'enum': dbr.ENUM, 'char': dbr.STRING}
+
+_database = dict()
+
+
+def add_to_database(db):
+    _database.update(copy.deepcopy(db))
+
+
+def clear_database():
+    _database.clear()
 
 
 def fmt_time(tstamp=None):
@@ -38,7 +50,7 @@ def fmt_time(tstamp=None):
 def promote_type(tp, use_time=False, use_ctrl=False):
     """promotes the native field type of a ``chid`` to its TIME or CTRL variant.
     Returns the integer corresponding to the promoted field value."""
-    ftype = _TYPES[tp]
+    ftype = _CATYPES[tp]
     print(ftype, tp)
     if use_ctrl:
         ftype += dbr.CTRL_STRING
@@ -88,12 +100,16 @@ class PVFake(object):
                'lower_alarm_limit', 'lower_warning_limit',
                'upper_warning_limit', 'upper_ctrl_limit', 'lower_ctrl_limit')
 
-    def __init__(self, pvname, db, callback=None, form='time',
+    def __init__(self, pvname, callback=None, form='time',
                  verbose=False, auto_monitor=None, count=None,
                  connection_callback=None,
                  connection_timeout=None,
                  access_callback=None):
-
+        db = _database.get(pvname)
+        if db is None:
+            raise Exception(
+                'PV not existent in local database. Configure database ' +
+                'first with add_to_database module function.')
         self.pvname = pvname.strip()
         self.form = form.lower()
         self.verbose = verbose
@@ -123,8 +139,22 @@ class PVFake(object):
         self._args['upper_warning_limit'] = db.get('lolo')
         self._args['upper_ctrl_limit'] = db.get('hilim')
         self._args['upper_ctrl_limit'] = db.get('lolim')
-        self.connection_callbacks = []
 
+        self.context = dbr.ECA_NORMAL
+
+        self._pytype = _PYTYPES[db['type']]
+        self.ftype = promote_type(db['type'],
+                                  use_ctrl=self.form == 'ctrl',
+                                  use_time=self.form == 'time')
+        self._args['type'] = dbr.Name(self.ftype).lower()
+
+        self._args['chid'] = dbr.chid_t(_randint(1, 10000000))
+        self.__on_connect(pvname=pvname, chid=self._args['chid'])
+        self.chid = self._args['chid']
+
+        self.__on_access_rights_event(read_access=True, write_access=True)
+
+        self.connection_callbacks = []
         if connection_callback is not None:
             self.connection_callbacks = [connection_callback]
 
@@ -140,20 +170,6 @@ class PVFake(object):
                     self.callbacks[i] = (thiscb, {})
         elif hasattr(callback, '__call__'):
             self.callbacks[0] = (callback, {})
-
-        self.context = dbr.ECA_NORMAL
-
-        self.ftype = promote_type(db['type'],
-                                  use_ctrl=self.form == 'ctrl',
-                                  use_time=self.form == 'time')
-        self._args['type'] = dbr.Name(self.ftype).lower()
-
-
-        self._args['chid'] = dbr.chid_t(_randint(1, 10000000))
-        self.__on_connect(pvname=pvname, chid=self._args['chid'])
-        self.chid = self._args['chid']
-
-        self.__on_access_rights_event(read_access=True, write_access=True)
 
         pvid = (self.pvname, self.form, self.context)
         if pvid not in _PVcache_:
@@ -329,8 +345,10 @@ class PVFake(object):
         if not self.wait_for_connection():
             return None
 
-        if self.ftype in (dbr.ENUM, dbr.TIME_ENUM, dbr.CTRL_ENUM) and\
-           isinstance(value, str):
+        if value is None:
+            return None
+        elif (self.ftype in (dbr.ENUM, dbr.TIME_ENUM, dbr.CTRL_ENUM) and
+              isinstance(value, str)):
             if self._args['enum_strs'] is None:
                 self.get_ctrlvars()
             if value in self._args['enum_strs']:
@@ -340,6 +358,11 @@ class PVFake(object):
                     if val == value:
                         value = ival
                         break
+        elif not isinstance(value, self._pytype):
+            try:
+                value = self._pytype(value)
+            except Exception:
+                return None
         if use_complete and callback is None:
             callback = self.__putCallbackStub
         self.__on_changes(value=value)
