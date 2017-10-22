@@ -6,6 +6,16 @@ from .pvs import pvs_definitions as pvDB
 _TYPES = {'float': float, 'int': int, 'bool': int, 'string': str,
           'enum': int, 'char': str}
 
+_cmd_prop = """
+@property
+def {0}_{1}(self):
+    return _copy.deepcopy(self._{0}_{1})
+
+@{0}_{1}.setter
+def {0}_{1}(self, new_val):
+    self._{0}_{1} += 1
+"""
+
 _wr_prop = """
 @property
 def {0}_{1}(self):
@@ -57,6 +67,29 @@ _rb_prop = """
 @property
 def {0}_{1}(self):
     return _copy.deepcopy(self._{0}_{1})
+"""
+
+_callbacks = """
+def {0}_{1}_add_callback(self, callback, index=None):
+    if index is None:
+        if not self._{0}_{1}_callbacks:
+            index = 1
+        else:
+            index = max(self._{0}_{1}_callbacks.keys())+1
+    self._{0}_{1}_callbacks[index] = callback
+    return index
+
+def {0}_{1}_remove_callback(self, index):
+    if index in self._{0}_{1}_callbacks:
+        del self._{0}_{1}_callbacks[index]
+
+def {0}_{1}_clear_callbacks(self):
+    self._{0}_{1}_callbacks.clear()
+
+def {0}_{1}_run_callbacks(self):
+    kwargs = {'value': self._{0}_{1}}
+    for index in sorted(self._{0}_{1}_callbacks.keys()):
+        self._{0}_{1}_callbacks[index](**kwargs)
 """
 
 

@@ -179,14 +179,22 @@ class BPMSet(_OrderedDict):
         dic_['Hysteresis'] = Hysteresis
         return dic_
 
-    def is_acquisition_prepared(self,):
-        return True
+    def is_acquisition_started(self):
+        ok = True
+        for name, bpm in self.items():
+            ok &= bpm.acqstate_sts in ('Waiting', 'Acquiring')
+        return ok
 
-    def start_acquisition(self):
-        return
+    def set_start_acquisition(self):
+        for name, bpm in self.items():
+            bpm.acqstart_cmd = 1
 
     def stop_acquisition(self):
-        return
+        for name, bpm in self.items():
+            bpm.acqstop_cmd = 1
 
     def is_acquisition_finished(self):
-        return True
+        ok = True
+        for name, bpm in self.items():
+            ok &= bpm.acqstate_sts in ('Idle', 'Error', 'Aborted')
+        return ok

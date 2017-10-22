@@ -59,9 +59,9 @@ pvs_definitions = {
         'AcqNrSmplsPos-RB': {
             'type': 'int', 'value': 1000},
         'AcqStart-Cmd': {
-            'type': 'int', 'value': 1},
+            'type': 'int', 'value': 0},
         'AcqStop-Cmd': {
-            'type': 'int', 'value': 1},
+            'type': 'int', 'value': 0},
         'AcqState-Sts': {
             'type': 'enum', 'enums': acq_states, 'value': 0},
         'AcqTrigType-Sel': {
