@@ -59,7 +59,7 @@ class ConfigService:
         update_dict = {
             "name": obj_dict["name"],
             "value": obj_dict["value"],
-            "deletable": obj_dict["deletable"]
+            "discarded": obj_dict["discarded"]
         }
         # Build URL a make PUT request
         url_params = "/{}".format(id)
@@ -85,7 +85,7 @@ class ConfigService:
                      name=None,
                      begin=None,
                      end=None,
-                     deleted=False):
+                     discarded=False):
         """Find configurations matching search criteria."""
         # build search dictionary
         find_dict = {}
@@ -99,8 +99,8 @@ class ConfigService:
                 find_dict['timestamp']['$gte'] = begin
             if end is not None:
                 find_dict['timestamp']['$lte'] = end
-        if deleted is not None:
-            find_dict["deletable"] = deleted
+        if discarded is not None:
+            find_dict["discarded"] = discarded
 
         # request data
         return self.request_configs(find_dict=find_dict)
@@ -110,7 +110,7 @@ class ConfigService:
                         name=None,
                         begin=None,
                         end=None,
-                        deleted=False):
+                        discarded=False):
         """Return number of configurations matching search criteria."""
         # build search dictionary
         find_dict = {}
@@ -124,8 +124,8 @@ class ConfigService:
                 find_dict['timestamp']['$gte'] = begin
             if end is not None:
                 find_dict['timestamp']['$lte'] = end
-        if deleted is not None:
-            find_dict["deletable"] = deleted
+        if discarded is not None:
+            find_dict["discarded"] = discarded
 
         return self.request_count(find_dict=find_dict)
 
@@ -156,12 +156,12 @@ class ConfigService:
         return self._make_request(request)
 
     def delete_config(self, obj_dict):
-        """Mark a configuration as deletable."""
+        """Mark a configuration as discarded."""
         url_params = "/{}".format(obj_dict["_id"])
         url = self._url + self.CONFIGS_ENDPOINT + url_params
         request = _Request(url=url, method="PUT",
                            headers={"Content-Type": "application/json"},
-                           data=_json.dumps({"deletable": True}).encode())
+                           data=_json.dumps({"discarded": True}).encode())
         return self._make_request(request)
 
     def query_db_size(self):
@@ -170,8 +170,8 @@ class ConfigService:
         request = _Request(url=url, method="GET")
         return self._make_request(request)
 
-    def query_db_size_deletable(self):
-        """Return estimated size of deleted configurations data."""
+    def query_db_size_discarded(self):
+        """Return estimated size of discarded configurations data."""
         pass
 
     @staticmethod
