@@ -1,11 +1,30 @@
 """Waveform Set Module."""
 
 import numpy as _np
+from siriuspy.csdevice.pwrsupply import default_wfmsize as _default_wfmsize
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.ramp.magnet import Magnet as _Magnet
 from siriuspy.ramp.optics import _nominal_intkl
 from siriuspy.magnet import util as _mutil
 
+
+class WfmParams:
+    """Waveform parameter class."""
+
+    def __init__(self,
+                 y_left=None,
+                 y_right=None,
+                 x_points=None,
+                 y_points=None):
+        """Init method."""
+        self._init_params(y_left, y_right, x_points, y_points)
+        
+
+    def _init_params(self,
+                     y_left,
+                     y_right,
+                     x_points,
+                     y_points)
 
 class WfmSet:
     """Class WfmSet."""
