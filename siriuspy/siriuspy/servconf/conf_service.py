@@ -3,10 +3,12 @@
 # import copy as _copy
 import json as _json
 import logging as _logging
-import siriuspy.envars as _envars
+import dateutil.parser
 from urllib.request import Request as _Request
 from urllib.request import urlopen as _urlopen
 from urllib.error import URLError as _URLError
+
+import siriuspy.envars as _envars
 import siriuspy.servconf.conf_types as _config_types
 
 _logging.basicConfig(level=_logging.WARNING)
@@ -91,7 +93,7 @@ class ConfigService:
             find_dict['config_type'] = config_type
         if name is not None:
             find_dict['name'] = name
-        if None not in (begin, end):
+        if begin is not None or end is not None:
             find_dict['timestamp'] = {}
             if begin is not None:
                 find_dict['timestamp']['$gte'] = begin
@@ -110,7 +112,35 @@ class ConfigService:
                         end=None,
                         deleted=False):
         """Return number of configurations matching search criteria."""
-        raise NotADirectoryError
+        # build search dictionary
+        find_dict = {}
+        if config_type is not None:
+            find_dict['config_type'] = config_type
+        if name is not None:
+            find_dict['name'] = name
+        if begin is not None or end is not None:
+            find_dict['timestamp'] = {}
+            if begin is not None:
+                find_dict['timestamp']['$gte'] = begin
+            if end is not None:
+                find_dict['timestamp']['$lte'] = end
+        if deleted is not None:
+            find_dict["deletable"] = deleted
+
+        return self.request_count(find_dict=find_dict)
+
+    def request_count(self, find_dict=None):
+        """Return number of configurations matching search criteria."""
+        url = self._url + self.CONFIGS_ENDPOINT + "/count"
+        if find_dict is None or not find_dict:
+            request = _Request(url=url, method="GET")
+        else:
+            if type(find_dict) is not dict:
+                raise AttributeError("`find_dict` is not a dict")
+            request = _Request(url=url, method="GET",
+                               headers={"Content-Type": "application/json"},
+                               data=_json.dumps(find_dict).encode())
+        return self._make_request(request)
 
     def request_configs(self, find_dict=None):
         """Request configurations matching search criteria."""
@@ -131,7 +161,7 @@ class ConfigService:
         url = self._url + self.CONFIGS_ENDPOINT + url_params
         request = _Request(url=url, method="PUT",
                            headers={"Content-Type": "application/json"},
-                           data=_json.dumps({"deleted": True}).encode())
+                           data=_json.dumps({"deletable": True}).encode())
         return self._make_request(request)
 
     def query_db_size(self):
@@ -144,9 +174,10 @@ class ConfigService:
         """Return estimated size of deleted configurations data."""
         pass
 
-    def conv_timestamp(timestamp):
+    @staticmethod
+    def conv_timestamp(datestring):
         """Convert timestamp format from text to double."""
-        raise NotImplementedError
+        return dateutil.parser.parse(datestring).timestamp()
 
     # --- private methods ---
 
