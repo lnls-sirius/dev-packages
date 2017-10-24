@@ -102,11 +102,11 @@ class ConfigService:
         if name is not None:
             find_dict['name'] = name
         if begin is not None or end is not None:
-            find_dict['timestamp'] = {}
+            find_dict['created'] = {}
             if begin is not None:
-                find_dict['timestamp']['$gte'] = begin
+                find_dict['created']['$gte'] = begin
             if end is not None:
-                find_dict['timestamp']['$lte'] = end
+                find_dict['created']['$lte'] = end
         if discarded is not None:
             find_dict["discarded"] = discarded
 
@@ -127,11 +127,11 @@ class ConfigService:
         if name is not None:
             find_dict['name'] = name
         if begin is not None or end is not None:
-            find_dict['timestamp'] = {}
+            find_dict['created'] = {}
             if begin is not None:
-                find_dict['timestamp']['$gte'] = begin
+                find_dict['created']['$gte'] = begin
             if end is not None:
-                find_dict['timestamp']['$lte'] = end
+                find_dict['created']['$lte'] = end
         if discarded is not None:
             find_dict["discarded"] = discarded
 
