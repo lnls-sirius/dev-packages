@@ -8,23 +8,133 @@ from siriuspy.ramp.optics import _nominal_intkl
 from siriuspy.magnet import util as _mutil
 
 
-class WfmParams:
+class WfmParam:
     """Waveform parameter class."""
 
     def __init__(self,
-                 y_left=None,
-                 y_right=None,
-                 x_points=None,
-                 y_points=None):
+                 vL=None,
+                 vR=None,
+                 i05=None,
+                 v05=None):
         """Init method."""
-        self._init_params(y_left, y_right, x_points, y_points)
-        
+        self._init_params(vL, vR, i05, v05)
 
-    def _init_params(self,
-                     y_left,
-                     y_right,
-                     x_points,
-                     y_points)
+    def _init_params(self, vL, vR, i05, v05):
+        self._vL = 0.01 if vL is None else vL
+        self._vR = 0.01 if vR is None else vR
+        if i05 is None:
+            i05 = (_default_wfmsize/500) * \
+                    _np.array([13, 310, 322, 330, 342, 480])
+        if v05 is None:
+            v05 = _np.array([0.02625, 1.0339285714, 1.05, 1.05, 1, 0.07])
+        try:
+            if len(i05) != 6:
+                raise ValueError('Lenght of i05 is not 6 !')
+            if i05[0] <= 0:
+                raise ValueError('i0 <= 0 !')
+            if i05[5] >= _default_wfmsize:
+                raise ValueError('i5 >= {} !'.format(_default_wfmsize))
+            for i in range(0, len(i05)-1):
+                if i05[i+1] <= i05[i]:
+                    raise ValueError('i05 is not sorted !')
+            self._i = i05.copy()
+        except TypeError:
+            raise TypeError('Invalid type of i05 !')
+        try:
+            v05[0]
+            if len(v05) != 6:
+                raise ValueError('Lenght of v05 is not 6 !')
+            self._v = v05.copy()
+        except TypeError:
+            raise TypeError('Invalid type v05 !')
+        self._coeffs = [None] * 7
+        D0 = (self._v[1] - self._v[0]) / (self._i[1] - self._i[0])
+        D2 = (self._v[3] - self._v[2]) / (self._i[3] - self._i[2])
+        D4 = (self._v[5] - self._v[4]) / (self._i[5] - self._i[4])
+        # region left
+        x = self._i05[0]
+        m = [[1, 0, 0, 0],
+             [0, 1, 0, 0],
+             [0, 0, x**2, x**3],
+             [0, 0, 2*x, 3*x**2]]
+        self._coeffs[0] = _np.linalg.solve(m, [0, 0, self._v[0] - self.vL, D0])
+        # region R0
+        self._coeffs[1] = [0, D0, 0, 0]
+
+        # region 2
+        self._b2 = (self._v[1] - self._v[0]) / (self._i[1] - self._i[0])
+        # region 1
+        d = self._i[0] - 0.0
+        D = self._v[0] - self._vL
+        self._c1 = 3.0 * D / d**2 - self._b2 / d
+        self._d1 = -2.0 * D / d**3 + self._b2 / d**2
+        # region 3
+        d = self._i[2] - self._i[1]
+        D = self._v[2] - self._v[1]
+        self._c3 = -3.0 * D / d**2 + self._b2 / d
+        self._d3 = -2.0 * D / d**3 + self._b2 / d**2
+        # region 4
+        self._b4 = (self._v[3] - self._v[2]) / (self._i[3] - self._i[2])
+        # region 6
+        self._b6 = (self._v[5] - self._v[4]) / (self._i[5] - self._i[4])
+        # region 5
+        d = self._i[4] - self._i[3]
+        D = self._v[4] - self._v[3]
+        self._c5 = 3.0 * D / d**2 - self._b6 / d
+        self._d5 = -2.0 * D / d**3 + self._b6 / d**2
+        # region 7
+        d = _default_wfmsize - self._i[5]
+        D = self._vR - self._v[5]
+        self._c7 = -3.0 * D / d**2 + self._b6 / d
+        self._d7 = -2.0 * D / d**3 + self._b6 / d**2
+
+
+    def eval(self, x):
+        """Evaulate waveform at x values."""
+        try:
+            if type(x) == _np.ndarray:
+                y = _np.zeros(x.shape)
+            else:
+                y = [0.0] * len(x)
+            for i in range(len(x)):
+                y[i] = self._eval(x[i])
+            return y
+        except TypeError:
+            return self._eval(x)
+
+    def _eval(self, x):
+        if x < 0 or x >= _default_wfmsize:
+            print(_default_wfmsize, x)
+            raise ValueError('x value out of range: {}!'.format(x))
+        if x <= self._i[0]:
+            # region 1
+            dy = self._c1 * x**2 + self._d1 * x**3
+            return self._vL + dy
+        elif x <= self._i[1]:
+            # region 2
+            dy = self._b2*(x - self._i[0])
+            return self._v[0] + dy
+        elif x <= self._i[2]:
+            # region 3
+            dy = self._c3 * (x-self._i[2])**2 + self._d3 * (x-self._i[2])**3
+            return self._v[2] + dy
+        elif x <= self._i[3]:
+            # region 4
+            dy = self._b4*(x - self._i[2])
+            return self._v[2] + dy
+        elif x <= self._i[4]:
+            # region 5
+            dy = self._c5 * (x-self._i[3])**2 + self._d5 * (x-self._i[3])**3
+            return self._v[3] + dy
+        elif x <= self._i[5]:
+            # region 6
+            dy = self._b6*(x - self._i[4])
+            return self._v[4] + dy
+        else:
+            # region 7
+            dy = self._c7 * (x-self._i[5])**2 + self._d7 * (x-self._i[5])**3
+            return self._v[5] + dy
+
 
 class WfmSet:
     """Class WfmSet."""
