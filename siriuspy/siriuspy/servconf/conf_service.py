@@ -86,7 +86,15 @@ class ConfigService:
                      begin=None,
                      end=None,
                      discarded=False):
-        """Find configurations matching search criteria."""
+        """Find configurations matching search criteria.
+
+        Parameters
+        ----------
+            discarded : True | False (default) | None
+            If True, return only discarded configurations, if False, return
+            only configurations in use. If None, return all configurations
+            matching the other criteria.
+        """
         # build search dictionary
         find_dict = {}
         if config_type is not None:
