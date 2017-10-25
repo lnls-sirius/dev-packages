@@ -1,0 +1,29 @@
+# Chromaticity Correction Parameters for Booster
+#
+# | ChromX |   | NominalChromX |   | m11  m12 |   | SL BO-Fam:MA-SF |
+# |        | = |               | + |          | * |                 |
+# | ChromY |   | NominalChromY |   | m21  m22 |   | SL BO-Fam:MA-SD |
+#
+# Natural Chromaticity (considers Quadrupoles and Dipoles Multipoles)
+#   NaturalChromX   NaturalChromY
+#
+# Nominal Chromaticity
+#   NominalChromX   NominalChromY
+#
+# Correction Matrix of Additional Method
+#   m11   m12
+#   m21   m22
+#
+# Nominals SLs
+# [sextupole_order  SF  SD]
+
+
+   0.0   0.0
+
+
+   30.0   0.3
+  -8.0  -2.8
+
+
+   1.2   0.5
+

@@ -16,7 +16,7 @@ def select_ioc(acc):
     """Select IOC to build database for."""
     global _ACC, _PREFIX, _SFAMS, _DEVICE
     _ACC = acc.upper()
-    _DEVICE = _ACC + '-Glob:AP-OpticsCorr:'
+    _DEVICE = _ACC + '-Glob:AP-ChromCorr:'
     _PREFIX = _PREFIX_VACA + _DEVICE
     if _ACC == 'BO':
         _SFAMS = ['SF', 'SD']
@@ -27,55 +27,60 @@ def select_ioc(acc):
 
 
 def get_pvs_database():
-    """Return IOC dagtabase."""
-    # global _SFAMS
-    # corrmat_size = len(_SFAMS)*2
+    """Return IOC database."""
+    global _SFAMS
+    corrmat_size = len(_SFAMS)*2
 
     pvs_database = {
         'Version-Cte':          {'type': 'string', 'value': _COMMIT_HASH},
 
+        'Log-Mon':              {'type': 'string', 'value': 'Starting...'},
+
         'ChromX-SP':            {'type': 'float', 'value': 0, 'prec': 6,
-                                 'hilim': 40, 'lolim': -40},
+                                 'hilim': 10, 'lolim': -10},
         'ChromX-RB':            {'type': 'float', 'value': 0, 'prec': 6},
         'ChromY-SP':            {'type': 'float', 'value': 0, 'prec': 6,
-                                 'hilim': 40, 'lolim': -40},
+                                 'hilim': 10, 'lolim': -10},
         'ChromY-RB':            {'type': 'float', 'value': 0, 'prec': 6},
 
-        'CalcSL-Cmd':           {'type': 'int', 'value': 0},
         'ApplySL-Cmd':          {'type': 'int', 'value': 0},
 
-        # 'ChromCorrMat-SP':    {'type': 'float', 'count': corrmat_size,
-        #                        'value': corrmat_size*[0], 'prec': 6, 'unit':
-        #                        '(dChromX/dSLSFam0,..,dChromY/dSLSFam0,..)'},
-        # 'ChromCorrMat-RB':    {'type': 'float', 'count': corrmat_size,
-        #                        'value': corrmat_size*[0], 'prec': 6, 'unit':
-        #                        '(dChromX/dSLSFam0,..,dChromY/dSLSFam0,..)'},
-        # 'ChromCorrInvMat-Mon':{'type': 'float', 'count': corrmat_size,
-        #                        'value': corrmat_size*[0], 'prec': 6},
-        # 'InitialChromX-SP':   {'type': 'float', 'count': 1,
-        #                        'value': 0, 'prec': 6, 'unit':
-        #                        'Considers Quadrupoles + Dipoles Multipoles'},
-        # 'InitialChromX-RB':   {'type': 'float', 'count': 1,
-        #                        'value': 0, 'prec': 6, 'unit':
-        #                        'Considers Quadrupoles + Dipoles Multipoles'},
-        # 'InitialChromY-SP':   {'type': 'float', 'count': 1,
-        #                        'value': 0, 'prec': 6, 'unit':
-        #                        'Considers Quadrupoles + Dipoles Multipoles'},
-        # 'InitialChromY-RB':   {'type': 'float', 'count': 1,
-        #                        'value': 0, 'prec': 6, 'unit':
-        #                        'Considers Quadrupoles + Dipoles Multipoles'},
+        'CorrMat-SP':           {'type': 'float', 'count': corrmat_size,
+                                 'value': corrmat_size*[0], 'prec': 6, 'unit':
+                                 'Chrom x SFams (Matrix of add method)'},
+        'CorrMat-RB':           {'type': 'float', 'count': corrmat_size,
+                                 'value': corrmat_size*[0], 'prec': 6, 'unit':
+                                 'Chrom x SFams (Matrix of add method)'},
+        'NominalChrom-SP':      {'type': 'float', 'count': 2, 'value': 2*[0],
+                                 'prec': 6},
+        'NominalChrom-RB':      {'type': 'float', 'count': 2, 'value': 2*[0],
+                                 'prec': 6},
+        'NominalSL-SP':         {'type': 'float', 'count': len(_SFAMS),
+                                 'value': len(_SFAMS)*[0], 'prec': 6},
+        'NominalSL-RB':         {'type': 'float', 'count': len(_SFAMS),
+                                 'value': len(_SFAMS)*[0], 'prec': 6},
 
-        # Delete these pvs if access to chrom0 is enable to control system
-        'InitialChromX-Mon':  {'type': 'float', 'count': 1,
-                               'value': 0, 'prec': 6, 'unit':
-                               'Considers Quadrupoles + Dipoles Multipoles'},
-        'InitialChromY-Mon':  {'type': 'float', 'count': 1,
-                               'value': 0, 'prec': 6, 'unit':
-                               'Considers Quadrupoles + Dipoles Multipoles'},
+        'SyncCorr-Sel':         {'type': 'enum', 'value': 0,
+                                 'enums': ['Off', 'On']},
+        'SyncCorr-Sts':         {'type': 'enum', 'value': 0,
+                                 'enums': ['Off', 'On']},
+
+        'ConfigPS-Cmd':         {'type': 'int', 'value': 0},
+        'ConfigTiming-Cmd':     {'type': 'int', 'value': 0},
+
+        'Status-Mon':           {'type': 'int', 'value': 0},
+        'Status-Cte':           {'type': 'string', 'count': 5, 'value':
+                                 ('PS Connection', 'PS PwrState', 'PS OpMode',
+                                  'PS CtrlMode', 'Timing Config')},
     }
 
     for fam in _SFAMS:
         pvs_database['LastCalcd' + fam + 'SL-Mon'] = {'type': 'float',
-                                                      'value': 0, 'prec': 6,
+                                                      'value': 0, 'prec': 4,
                                                       'unit': '1/m^2'}
+    if _ACC == 'SI':
+        pvs_database['CorrMeth-Sel'] = {'type': 'enum', 'value': 0, 'enums':
+                                        ['Proportional', 'Additional']}
+        pvs_database['CorrMeth-Sts'] = {'type': 'enum', 'value': 0, 'enums':
+                                        ['Proportional', 'Additional']}
     return pvs_database
