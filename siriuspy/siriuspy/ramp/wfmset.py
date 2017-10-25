@@ -20,6 +20,8 @@ class WfmParam:
         self._init_params(vL, vR, i05, v05)
 
     def _init_params(self, vL, vR, i05, v05):
+        def getm(d):
+            return [[d, d**2, d**3], [1, 0, 0], [1, 2*d, 3*d**2]]
         self._vL = 0.01 if vL is None else vL
         self._vR = 0.01 if vR is None else vR
         if i05 is None:
@@ -52,14 +54,23 @@ class WfmParam:
         D2 = (self._v[3] - self._v[2]) / (self._i[3] - self._i[2])
         D4 = (self._v[5] - self._v[4]) / (self._i[5] - self._i[4])
         # region left
-        x = self._i05[0]
-        m = [[1, 0, 0, 0],
-             [0, 1, 0, 0],
-             [0, 0, x**2, x**3],
-             [0, 0, 2*x, 3*x**2]]
-        self._coeffs[0] = _np.linalg.solve(m, [0, 0, self._v[0] - self.vL, D0])
+        di = self._i05[0] - 0.0
+        dv = self._v05[0] - self._yL
+        self._coeffs[0] = _np.linalg.solve(getm(di), [dv, 0, D0])
         # region R0
         self._coeffs[1] = [0, D0, 0, 0]
+        # region R1
+        di = self._i05[2] - self._i05[1]
+        dv = self._v05[2] - self._v05[1]
+        self._coeffs[2] = _np.linalg.solve(getm(di), [dv, D0, D2])
+        # region R2
+        self._coeffs[3] = [D2, 0, 0]
+        # region R3
+        di = self._i05[4] - self._i05[3]
+        dv = self._v05[4] - self._v05[3]
+        self._coeffs[4] = _np.linalg.solve(getm(di), [dv, D2, D4])
+        # region R4
+        self._coeffs[3] = [D4, 0, 0]
 
         # region 2
         self._b2 = (self._v[1] - self._v[0]) / (self._i[1] - self._i[0])

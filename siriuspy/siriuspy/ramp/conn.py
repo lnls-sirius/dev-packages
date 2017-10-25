@@ -8,6 +8,7 @@ ConfigDB service.
 from siriuspy.factory import MagnetFactory as _MagnetFactory
 from siriuspy import envars as _envars
 
+
 class ConnMagnet:
     """Magnet Connector Class."""
 
@@ -50,7 +51,35 @@ class ConnMagnet:
                                             )
 
 
+class ConnOrbit:
+    """Connector class to interact with SOFT IOCs."""
+
+    pass
+
+
+class ConnTune:
+    """Connector class to interact with TuneCorr IOCs."""
+
+    pass
+
+
+class ConnChrom:
+    """Connector class to interact with ChromCorr IOCs."""
+
+    pass
+
+
 class ConnConfigDB:
     """Config DB connector class."""
 
     def __init__(self, url=_envars.server_url_configdb):
+        """Init method."""
+        pass
+
+    def insert_config(section, wfmset, name):
+        """Insert ramp configurationin ConfigDB."""
+        pass
+
+    def get_config(section, wfmset, name):
+        """Get ramp configuration from configDB and set appropriate objects."""
+        pass
