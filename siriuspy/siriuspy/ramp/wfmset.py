@@ -19,6 +19,59 @@ class WfmParam:
         """Init method."""
         self._init_params(vL, vR, i05, v05)
 
+    # --- properties ---
+
+    @property
+    def idx_boundary1(self):
+        """Return index of the first region boundary."""
+        return self._i[0]
+
+    @property
+    def idx_boundary2(self):
+        """Return index of the second region boundary."""
+        return self._i[1]
+
+    @property
+    def idx_boundary3(self):
+        """Return index of the third region boundary."""
+        return self._i[2]
+
+    @property
+    def idx_boundary4(self):
+        """Return index of the fourth region boundary."""
+        return self._i[3]
+
+    @property
+    def idx_boundary5(self):
+        """Return index of the fifth region boundary."""
+        return self._i[4]
+
+    @property
+    def idx_boundary6(self):
+        """Return index of the sixth region boundary."""
+        return self._i[5]
+
+    # --- public methods ---
+
+    def eval(self, idx=None):
+        """Evaluate waveform at idx values or at index values."""
+        if idx is None:
+            # return waveform at index value
+            return self._eval_index()
+        # return waveform as idx values
+        try:
+            if type(idx) == _np.ndarray:
+                v = _np.zeros(idx.shape)
+            else:
+                v = [0.0] * len(idx)
+            for i in range(len(idx)):
+                v[i] = self._eval_point(idx[i])
+            return v
+        except TypeError:
+            return self._eval_point(idx)
+
+    # --- private methods ---
+
     def _init_params(self, vL, vR, i05, v05):
         def getm(d):
             return [[d, d**2, d**3], [1, 0, 0], [1, 2*d, 3*d**2]]
@@ -39,7 +92,7 @@ class WfmParam:
             for i in range(0, len(i05)-1):
                 if i05[i+1] <= i05[i]:
                     raise ValueError('i05 is not sorted !')
-            self._i = i05.copy()
+            self._i = [int(i) for i in i05]
         except TypeError:
             raise TypeError('Invalid type of i05 !')
         try:
@@ -54,97 +107,78 @@ class WfmParam:
         D2 = (self._v[3] - self._v[2]) / (self._i[3] - self._i[2])
         D4 = (self._v[5] - self._v[4]) / (self._i[5] - self._i[4])
         # region left
-        di = self._i05[0] - 0.0
-        dv = self._v05[0] - self._yL
+        di = self._i[0] - 0.0
+        dv = self._v[0] - self._vL
         self._coeffs[0] = _np.linalg.solve(getm(di), [dv, 0, D0])
         # region R0
-        self._coeffs[1] = [0, D0, 0, 0]
+        self._coeffs[1] = [D0, 0, 0]
         # region R1
-        di = self._i05[2] - self._i05[1]
-        dv = self._v05[2] - self._v05[1]
+        di = self._i[2] - self._i[1]
+        dv = self._v[2] - self._v[1]
         self._coeffs[2] = _np.linalg.solve(getm(di), [dv, D0, D2])
         # region R2
         self._coeffs[3] = [D2, 0, 0]
         # region R3
-        di = self._i05[4] - self._i05[3]
-        dv = self._v05[4] - self._v05[3]
+        di = self._i[4] - self._i[3]
+        dv = self._v[4] - self._v[3]
         self._coeffs[4] = _np.linalg.solve(getm(di), [dv, D2, D4])
         # region R4
-        self._coeffs[3] = [D4, 0, 0]
+        self._coeffs[5] = [D4, 0, 0]
+        # region right
+        di = _default_wfmsize-1 - self._i[5]
+        dv = self._vR - self._v[5]
+        self._coeffs[6] = _np.linalg.solve(getm(di), [dv, D4, 0])
 
-        # region 2
-        self._b2 = (self._v[1] - self._v[0]) / (self._i[1] - self._i[0])
-        # region 1
-        d = self._i[0] - 0.0
-        D = self._v[0] - self._vL
-        self._c1 = 3.0 * D / d**2 - self._b2 / d
-        self._d1 = -2.0 * D / d**3 + self._b2 / d**2
-        # region 3
-        d = self._i[2] - self._i[1]
-        D = self._v[2] - self._v[1]
-        self._c3 = -3.0 * D / d**2 + self._b2 / d
-        self._d3 = -2.0 * D / d**3 + self._b2 / d**2
-        # region 4
-        self._b4 = (self._v[3] - self._v[2]) / (self._i[3] - self._i[2])
-        # region 6
-        self._b6 = (self._v[5] - self._v[4]) / (self._i[5] - self._i[4])
-        # region 5
-        d = self._i[4] - self._i[3]
-        D = self._v[4] - self._v[3]
-        self._c5 = 3.0 * D / d**2 - self._b6 / d
-        self._d5 = -2.0 * D / d**3 + self._b6 / d**2
-        # region 7
-        d = _default_wfmsize - self._i[5]
-        D = self._vR - self._v[5]
-        self._c7 = -3.0 * D / d**2 + self._b6 / d
-        self._d7 = -2.0 * D / d**3 + self._b6 / d**2
+    def _eval_index(self):
 
+        def calcdv(idx, i0, coeffs):
+            return coeffs[0] * (idx - i0) + \
+                   coeffs[1] * (idx - i0)**2 + \
+                   coeffs[2] * (idx - i0)**3
 
-    def eval(self, x):
-        """Evaulate waveform at x values."""
-        try:
-            if type(x) == _np.ndarray:
-                y = _np.zeros(x.shape)
-            else:
-                y = [0.0] * len(x)
-            for i in range(len(x)):
-                y[i] = self._eval(x[i])
-            return y
-        except TypeError:
-            return self._eval(x)
+        wfm = []
+        # region left
+        coeffs = self._coeffs[0]
+        i0, v0 = 0, self._vL
+        idx = _np.array(tuple(range(self._i[0])))
+        dv = calcdv(idx, i0, coeffs)
+        wfm.extend(v0 + dv)
+        # regions R0...R4
+        for i in range(len(self._coeffs)-2):
+            coeffs = self._coeffs[i+1]
+            i0, v0 = self._i[i], self._v[i]
+            idx = _np.array(tuple(range(self._i[i], self._i[i+1])))
+            dv = calcdv(idx, i0, coeffs)
+            wfm.extend(v0 + dv)
+        # region right
+        coeffs = self._coeffs[6]
+        i0, v0 = self._i[5], self._v[5]
+        idx = _np.array(tuple(range(self._i[5], _default_wfmsize)))
+        dv = calcdv(idx, i0, coeffs)
+        wfm.extend(v0 + dv)
+        return wfm
 
-    def _eval(self, x):
-        if x < 0 or x >= _default_wfmsize:
-            print(_default_wfmsize, x)
-            raise ValueError('x value out of range: {}!'.format(x))
-        if x <= self._i[0]:
-            # region 1
-            dy = self._c1 * x**2 + self._d1 * x**3
-            return self._vL + dy
-        elif x <= self._i[1]:
-            # region 2
-            dy = self._b2*(x - self._i[0])
-            return self._v[0] + dy
-        elif x <= self._i[2]:
-            # region 3
-            dy = self._c3 * (x-self._i[2])**2 + self._d3 * (x-self._i[2])**3
-            return self._v[2] + dy
-        elif x <= self._i[3]:
-            # region 4
-            dy = self._b4*(x - self._i[2])
-            return self._v[2] + dy
-        elif x <= self._i[4]:
-            # region 5
-            dy = self._c5 * (x-self._i[3])**2 + self._d5 * (x-self._i[3])**3
-            return self._v[3] + dy
-        elif x <= self._i[5]:
-            # region 6
-            dy = self._b6*(x - self._i[4])
-            return self._v[4] + dy
+    def _eval_point(self, idx):
+        if idx < 0 or idx >= _default_wfmsize:
+            raise ValueError('idx value out of range: {}!'.format(idx))
+        coeffs, v0 = None, None
+        if idx < self._i[0]:
+            coeffs = self._coeffs[0]
+            i0, v0 = 0, self._vL
+        elif idx > self._i[5]:
+            coeffs = self._coeffs[6]
+            i0, v0 = self._i[5], self._v[5]
         else:
-            # region 7
-            dy = self._c7 * (x-self._i[5])**2 + self._d7 * (x-self._i[5])**3
-            return self._v[5] + dy
+            for i in range(len(self._i)):
+                if idx <= self._i[i]:
+                    i0, v0 = self._i[i-1], self._v[i-1]
+                    coeffs = self._coeffs[i]
+                    break
+        dv = \
+            coeffs[0] * (idx - i0) + \
+            coeffs[1] * (idx - i0)**2 + \
+            coeffs[2] * (idx - i0)**3
+        return v0 + dv
 
 
 class WfmSet:
