@@ -99,6 +99,7 @@ class App:
                 _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':SL-SP',
                 connection_callback=self._connection_callback_sfam_sl_pvs)
             self._sfam_sl_sp_pvs[fam].wait_for_connection(timeout=0.05)
+
             self._sfam_sl_rb_pvs[fam] = _epics.PV(
                 _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':SL-RB',
                 connection_callback=self._connection_callback_sfam_sl_pvs)
@@ -126,6 +127,10 @@ class App:
 
         for fam in _pvs._SFAMS:
             fam_index = _pvs._SFAMS.index(fam)
+            if self._sfam_sl_sp_pvs[fam].value is not None:
+                self._lastcalcd_sl[fam_index] = self._sfam_sl_sp_pvs[fam].value
+            self.driver.setParam('LastCalcd' + fam + 'SL-Mon',
+                                 self._lastcalcd_sl[fam_index])
             self._sfam_sl_rb_pvs[fam].add_callback(self._callback_sfam_sl_rb)
 
             self._sfam_pwrstate_sts_pvs[fam].add_callback(
@@ -341,6 +346,16 @@ class App:
         elif reason == 'SyncCorr-Sel':
             if value != self._sync_corr:
                 self._sync_corr = value
+                for fam in _pvs._SFAMS:
+                    fam_index = _pvs._SFAMS.index(fam)
+                    self._sfam_check_opmode_sts[fam_index] = (
+                        self._sfam_opmode_sts_pvs[fam].value)
+                if not any(op == self._sync_corr
+                           for op in self._sfam_check_opmode_sts):
+                    self._status = self._status | 0x04
+                else:
+                    self._status = self._status & 0x1b
+                self.driver.setParam('Status-Mon', self._status)
                 self.driver.setParam('SyncCorr-Sts', self._sync_corr)
                 self.driver.updatePVs()
                 status = True
