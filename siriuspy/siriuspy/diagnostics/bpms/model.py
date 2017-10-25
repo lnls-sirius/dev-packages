@@ -9,8 +9,25 @@ from .pvs import acq_trig_types as _acq_trig_types
 from .pvs import acq_trig_exter as _acq_trig_exter
 from .pvs import slopes as _slopes
 from .pvs import processed_data as _processed_data
-from .fake_bpm import BPMFake
-from .epics_bpm import BPMEpics
+from .bpm_plugins import BPMEpics, BPMFake, get_prop_and_suffix
+
+_sp_prop = """
+@property
+def {0}_{1}(self):
+    return _copy.deepcopy(self._{0}_{1})
+
+@{0}_{1}.setter
+def {0}_{1}(self, new_val):
+    self._{0}_{1} = new_val
+    for bpm in self.values():
+        bpm.{0}_{1} = new_val
+"""
+
+_rb_prop = """
+@property
+def {0}_{1}(self):
+    return str(self._{0}_{1})
+"""
 
 
 class BPMSet(_OrderedDict):
@@ -20,9 +37,29 @@ class BPMSet(_OrderedDict):
         self.bpm_class = bpm_class if bpm_class else BPMFake
         for bpm in bpm_names:
             self[bpm] = self.bpm_class(bpm)
+
+        for pv, db in pvDB.items():
+            prop, suf = get_prop_and_suffix(pv)
+            # Create all properties
+            attr = '{0}_{1}'.format(prop, suf)
+            if suf in ('sp', 'cmd', 'sel'):
+                val = getattr(self[self.bpm_names[0]], attr)
+                setattr(self, '_'+attr, val)
+            elif suf in ('rb', 'sts'):
+                setattr(self, '_'+attr, 'Inconsistent')
+
         self._operation_mode = ''
         self._configuration_acquisition = dict()
         self._configuration_acquisition_auto_trigger = dict()
+
+    for pv, db in pvDB.items():
+        prop, suf = get_prop_and_suffix(pv)
+        # Create all properties
+        if suf in ('sp', 'cmd', 'sel'):
+            exec(_sp_prop.format(prop, suf))
+        elif suf in ('rb', 'sts'):
+            exec(_rb_prop.format(prop, suf))
+    del pv, db, prop, suf
 
     def set_operation_mode(self, mode='Continuous'):
         ok = True
