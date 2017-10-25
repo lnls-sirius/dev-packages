@@ -29,8 +29,11 @@ _CATYPES = {'float': dbr.DOUBLE, 'int': dbr.LONG, 'bool': dbr.INT,
 _database = dict()
 
 
-def add_to_database(db):
-    _database.update(copy.deepcopy(db))
+def add_to_database(db, prefix=''):
+    if not db:
+        return
+    for key, val in db.items():
+        _database.update({prefix+key: copy.deepcopy(val)})
 
 
 def clear_database():
@@ -51,7 +54,6 @@ def promote_type(tp, use_time=False, use_ctrl=False):
     """promotes the native field type of a ``chid`` to its TIME or CTRL variant.
     Returns the integer corresponding to the promoted field value."""
     ftype = _CATYPES[tp]
-    print(ftype, tp)
     if use_ctrl:
         ftype += dbr.CTRL_STRING
     elif use_time:
@@ -108,7 +110,7 @@ class PVFake(object):
         db = _database.get(pvname)
         if db is None:
             raise Exception(
-                'PV not existent in local database. Configure database ' +
+                'PV does not exist in local database. Configure database ' +
                 'first with add_to_database module function.')
         self.pvname = pvname.strip()
         self.form = form.lower()
@@ -139,6 +141,7 @@ class PVFake(object):
         self._args['upper_warning_limit'] = db.get('lolo')
         self._args['upper_ctrl_limit'] = db.get('hilim')
         self._args['upper_ctrl_limit'] = db.get('lolim')
+        self._args['enum_strs'] = db.get('enums')
 
         self.context = dbr.ECA_NORMAL
 
@@ -147,12 +150,6 @@ class PVFake(object):
                                   use_ctrl=self.form == 'ctrl',
                                   use_time=self.form == 'time')
         self._args['type'] = dbr.Name(self.ftype).lower()
-
-        self._args['chid'] = dbr.chid_t(_randint(1, 10000000))
-        self.__on_connect(pvname=pvname, chid=self._args['chid'])
-        self.chid = self._args['chid']
-
-        self.__on_access_rights_event(read_access=True, write_access=True)
 
         self.connection_callbacks = []
         if connection_callback is not None:
@@ -170,6 +167,12 @@ class PVFake(object):
                     self.callbacks[i] = (thiscb, {})
         elif hasattr(callback, '__call__'):
             self.callbacks[0] = (callback, {})
+
+        self._args['chid'] = dbr.chid_t(_randint(1, 10000000))
+        self.__on_connect(pvname=pvname, chid=self._args['chid'])
+        self.chid = self._args['chid']
+
+        self.__on_access_rights_event(read_access=True, write_access=True)
 
         pvid = (self.pvname, self.form, self.context)
         if pvid not in _PVcache_:
@@ -216,12 +219,11 @@ class PVFake(object):
             count = self._args['nelm']
             if self._args['count'] is not None:
                 count = min(count, self._args['count'])
-                self._args['count'] = count
+            self._args['count'] = count
 
             self._args['host'] = 'localhost:00000'
 
             _ftype_ = dbr.Name(self.ftype).lower()
-            print(_ftype_, self.ftype)
             self._args['type'] = _ftype_
             self._args['typefull'] = _ftype_
             self._args['ftype'] = dbr.Name(_ftype_, reverse=True)
@@ -358,15 +360,18 @@ class PVFake(object):
                     if val == value:
                         value = ival
                         break
-        elif not isinstance(value, self._pytype):
+        elif (not isinstance(value, _np.ndarray) and
+              not isinstance(value, self._pytype)):
             try:
                 value = self._pytype(value)
             except Exception:
                 return None
-        if use_complete and callback is None:
+        if callback is None:
             callback = self.__putCallbackStub
         self.__on_changes(value=value)
-        callback(**callback_data) if callback_data else callback()
+        kws = {'pvname': self.pvname}
+        kws.update(callback_data if callback_data else {})
+        callback(**kws)
 
     def __putCallbackStub(self, pvname=None, **kws):
         "null put-calback, so that the put_complete attribute is valid"
