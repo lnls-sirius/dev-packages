@@ -7,7 +7,9 @@ from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy import servweb as _web
 from siriuspy.magnet.excdata import ExcitationData as _ExcitationData
 
+
 class PSSearch:
+    """Power Supply Search Class."""
 
     _connection_timeout = None
     _pstype_dict = None
@@ -36,7 +38,7 @@ class PSSearch:
 
     @staticmethod
     def reload_pstype_2_names_dict():
-        """Reload power supply type to power supply names dictionary from web server."""
+        """Reload power supply type to power supply names dictionary."""
         if PSSearch._pstype_dict is None:
             PSSearch.reload_pstype_dict()
         pstypes = sorted(set(PSSearch._pstype_dict.keys()))
@@ -53,6 +55,7 @@ class PSSearch:
 
     @staticmethod
     def reload_pstype_2_splims_dict():
+        """Reload pstype to splims dictionary."""
         # ps data
         text = _web.power_supplies_pstype_setpoint_limits(
             timeout=PSSearch._connection_timeout)
@@ -88,7 +91,11 @@ class PSSearch:
 
     @staticmethod
     def get_pstype_dict():
-        """Return dictionary with key,value pairs of power supply types and corresponding (polarities,mag_function)."""
+        """Return pstype dictionary.
+
+        With key,value pairs of power supply types and corresponding
+        (polarities,mag_function).
+        """
         if PSSearch._pstype_dict is None:
             PSSearch.reload_pstype_dict()
         return _copy.deepcopy(PSSearch._pstype_dict)
@@ -110,7 +117,7 @@ class PSSearch:
 
     @staticmethod
     def get_pstype_2_names_dict():
-        """Return dictionary of power supply type and corresponding power supply names."""
+        """Return dictionary of power supply type and power supply names."""
         if PSSearch._pstype_2_names_dict is None:
             PSSearch.reload_pstype_2_names_dict()
         return _copy.deepcopy(PSSearch._pstype_2_names_dict)
@@ -148,6 +155,7 @@ class PSSearch:
 
     @staticmethod
     def conv_pstype_2_splims(pstype):
+        """Convert pstype to splims."""
         if pstype is None:
             return None
         if PSSearch._pstype_2_splims_dict is None:
@@ -156,6 +164,7 @@ class PSSearch:
 
     @staticmethod
     def conv_psname_2_excdata(name):
+        """Convert psname to excdata."""
         pstype = PSSearch.conv_psname_2_pstype(name)
         if pstype not in PSSearch._pstype_2_excdat_dict:
             PSSearch.reload_pstype_2_excdat_dict(pstype)
@@ -164,7 +173,10 @@ class PSSearch:
 
     @staticmethod
     def get_splim(pstype, label):
-        """Return setpoint limit corresponding to given label (either epics' or pcaspy's)."""
+        """Return setpoint limit corresponding to given label.
+
+        The label can be either epics' or pcaspy's.
+        """
         if PSSearch._pstype_2_splims_dict is None:
             PSSearch.reload_pstype_2_splims_dict()
         if label in PSSearch._splims_labels:
@@ -185,26 +197,28 @@ class PSSearch:
 
     @staticmethod
     def get_pstype_2_splims_dict():
-        """Return a dictionary of power supply type and corresponding setpoint limits."""
+        """Return a dictionary of power supply type and setpoint limits."""
         if PSSearch._pstype_2_splims_dict is None:
             PSSearch.reload_pstype_2_splims_dict()
         return _copy.deepcopy(PSSearch._pstype_2_splims_dict)
 
     @staticmethod
     def get_splims_unit():
+        """Return SP limts unit."""
         if PSSearch._pstype_2_splims_dict is None:
             PSSearch.reload_pstype_2_splims_dict()
         return PSSearch._splims_unit
 
     @staticmethod
     def get_splims_labels():
+        """Return labels in SP limits dictionary."""
         if PSSearch._pstype_2_splims_dict is None:
             PSSearch.reload_pstype_2_splims_dict()
         return PSSearch._splims_labels
 
 
 class MASearch:
-    """Searches magnets data in static files."""
+    """Magnet Search class."""
 
     _manames_list = None
 
@@ -276,14 +290,17 @@ class MASearch:
 
     @staticmethod
     def get_splims_unit():
+        """Get unit of SP limits."""
         if MASearch._maname_2_splims_dict is None:
             MASearch.reload_maname_2_splims_dict()
         return MASearch._splims_unit
 
     @staticmethod
     def get_splim(maname, label):
-        """Return setpoint limit corresponding to given label
-        (either epics' or pcaspy's)."""
+        """Return setpoint limits.
+
+        that correspond to given label (either epics' or pcaspy's).
+        """
         if MASearch._maname_2_splims_dict is None:
             MASearch.reload_maname_2_splims_dict()
         if label in MASearch._splims_labels:
@@ -297,13 +314,16 @@ class MASearch:
 
     @staticmethod
     def conv_maname_2_trims(maname):
-        if MASearch._maname_2_trim_dict is None: MASearch.reload_maname_2_psnames_dict()
+        """Convert maname to trims."""
+        if MASearch._maname_2_trim_dict is None:
+            MASearch.reload_maname_2_psnames_dict()
         return MASearch._maname_2_trim_dict.get(maname, None)
 
     @staticmethod
     def conv_maname_2_magfunc(maname):
-        """Returns a dict mapping power supplies functions for given magnet."""
-        if MASearch._maname_2_psnames_dict is None: MASearch.reload_maname_2_psnames_dict()
+        """Return a dict mapping power supplies functions for given magnet."""
+        if MASearch._maname_2_psnames_dict is None:
+            MASearch.reload_maname_2_psnames_dict()
         ps = MASearch._maname_2_psnames_dict[maname]
         ps_types = tuple(map(PSSearch.conv_psname_2_pstype, ps))
         ma_func = tuple(map(PSSearch.conv_pstype_2_magfunc, ps_types))
@@ -316,6 +336,7 @@ class MASearch:
 
     @staticmethod
     def conv_maname_2_splims(maname):
+        """Convert maname to splims."""
         if maname is None:
             return None
         if MASearch._maname_2_splims_dict is None:
@@ -325,11 +346,15 @@ class MASearch:
     @staticmethod
     def conv_maname_2_psnames(maname):
         """Return list of power supplies associated with a given magnet."""
-        if MASearch._maname_2_psnames_dict is None: MASearch.reload_maname_2_psnames_dict()
+        if MASearch._maname_2_psnames_dict is None:
+            MASearch.reload_maname_2_psnames_dict()
         return MASearch._maname_2_psnames_dict[maname]
 
     @staticmethod
-    def get_manames(filters=None):
+    def get_manames(filters=None, sorting=None):
         """Return a sorted and filtered list of all magnet names."""
-        if MASearch._manames_list is None: MASearch.reload_maname_2_psnames_dict()
-        return _Filter.process_filters(MASearch._manames_list, filters=filters)
+        if MASearch._manames_list is None:
+            MASearch.reload_maname_2_psnames_dict()
+        return _Filter.process_filters(MASearch._manames_list,
+                                       filters=filters,
+                                       sorting=sorting)

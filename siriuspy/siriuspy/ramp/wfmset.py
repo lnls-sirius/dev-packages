@@ -17,39 +17,181 @@ class WfmParam:
                  i05=None,
                  v05=None):
         """Init method."""
-        self._init_params(vL, vR, i05, v05)
+        self._set_params(vL, vR, i05, v05)
+        self._set_coeffs()
 
     # --- properties ---
 
     @property
-    def idx_boundary1(self):
+    def idx0(self):
         """Return index of the first region boundary."""
         return self._i[0]
 
     @property
-    def idx_boundary2(self):
+    def idx1(self):
         """Return index of the second region boundary."""
         return self._i[1]
 
     @property
-    def idx_boundary3(self):
+    def idx2(self):
         """Return index of the third region boundary."""
         return self._i[2]
 
     @property
-    def idx_boundary4(self):
+    def idx3(self):
         """Return index of the fourth region boundary."""
         return self._i[3]
 
     @property
-    def idx_boundary5(self):
+    def idx4(self):
         """Return index of the fifth region boundary."""
         return self._i[4]
 
     @property
-    def idx_boundary6(self):
+    def idx5(self):
         """Return index of the sixth region boundary."""
         return self._i[5]
+
+    @property
+    def valueL(self):
+        """Return waveform value at the left-end boundary."""
+        return self._vL
+
+    @property
+    def value0(self):
+        """Return waveform value at the first region boundary."""
+        return self._v[0]
+
+    @property
+    def value1(self):
+        """Return waveform value at the second region boundary."""
+        return self._v[1]
+
+    @property
+    def value23(self):
+        """Return waveform value at the third and fourth region boundaries."""
+        if self._v[2] != self._v[3]:
+            raise ValueError(('Value at thrid and fourth region boundaries '
+                              'is not unique'))
+        return self._v[2]
+
+    @property
+    def value4(self):
+        """Return waveform value at the fifth region boundary."""
+        return self._v[4]
+
+    @property
+    def value5(self):
+        """Return waveform value at the sixth region boundary."""
+        return self._v[5]
+
+    @property
+    def valueR(self):
+        """Return waveform value at the right-end boundary."""
+        return self._vR
+
+    @idx0.setter
+    def idx0(self, idx):
+        """Set index of the first region boundary."""
+        i = 0
+        if 0 <= idx <= self._i[i+1]:
+            self._i[i] = idx
+        else:
+            raise ValueError(('Index is inconsistent with labeled '
+                              'region boundary points.'))
+        self._set_coeffs()
+
+    @idx1.setter
+    def idx1(self, idx):
+        """Set index of the second region boundary."""
+        i = 1
+        if self.i[i-1] <= idx <= self._i[i+1]:
+            self._i[i] = idx
+        else:
+            raise ValueError(('Index is inconsistent with labeled '
+                              'region boundary points.'))
+        self._set_coeffs()
+
+    @idx2.setter
+    def idx2(self, idx):
+        """Set index of the third region boundary."""
+        i = 2
+        if self.i[i-1] <= idx <= self._i[i+1]:
+            self._i[i] = idx
+        else:
+            raise ValueError(('Index is inconsistent with labeled '
+                              'region boundary points.'))
+        self._set_coeffs()
+
+    @idx3.setter
+    def idx3(self, idx):
+        """Set index of the fourth region boundary."""
+        i = 3
+        if self.i[i-1] <= idx <= self._i[i+1]:
+            self._i[i] = idx
+        else:
+            raise ValueError(('Index is inconsistent with labeled '
+                              'region boundary points.'))
+        self._set_coeffs()
+
+    @idx4.setter
+    def idx4(self, idx):
+        """Set index of the fifth region boundary."""
+        i = 4
+        if self.i[i-1] <= idx <= self._i[i+1]:
+            self._i[i] = idx
+        else:
+            raise ValueError(('Index is inconsistent with labeled '
+                              'region boundary points.'))
+        self._set_coeffs()
+
+    @idx5.setter
+    def idx5(self, idx):
+        """Set index of the sixth region boundary."""
+        i = 5
+        if self.i[i-1] <= idx < _default_wfmsize:
+            self._i[i] = idx
+        else:
+            raise ValueError(('Index is inconsistent with labeled '
+                              'region boundary points.'))
+        self._set_coeffs()
+
+    @valueL.setter
+    def valueL(self, value):
+        """Set waveform value at the left-end boundary."""
+        self._vL = value
+        self._set_coeffs()
+
+    @value0.setter
+    def value0(self, value):
+        """Set waveform value at the first region boundary."""
+        self._v[0] = value
+        self._set_coeffs()
+
+    @value1.setter
+    def value1(self, value):
+        """Set waveform value at the second region boundary."""
+        self._v[1] = value
+        self._set_coeffs()
+
+    @value23.setter
+    def value23(self, value):
+        """Set waveform value at the third and fourth region boundaries."""
+        self._v[2] = value
+        self._v[3] = value
+        self._set_coeffs()
+
+    @value4.setter
+    def value4(self, value):
+        """Set waveform value at the fifth region boundary."""
+        self._v[4] = value
+        self._set_coeffs()
+
+    @value5.setter
+    def value5(self, value):
+        """Set waveform value at the sixth region boundary."""
+        self._v[5] = value
+        self._set_coeffs()
 
     # --- public methods ---
 
@@ -72,9 +214,7 @@ class WfmParam:
 
     # --- private methods ---
 
-    def _init_params(self, vL, vR, i05, v05):
-        def getm(d):
-            return [[d, d**2, d**3], [1, 0, 0], [1, 2*d, 3*d**2]]
+    def _set_params(self, vL, vR, i05, v05):
         self._vL = 0.01 if vL is None else vL
         self._vR = 0.01 if vR is None else vR
         if i05 is None:
@@ -102,6 +242,10 @@ class WfmParam:
             self._v = v05.copy()
         except TypeError:
             raise TypeError('Invalid type v05 !')
+
+    def _set_coeffs(self):
+        def getm(d):
+            return [[d, d**2, d**3], [1, 0, 0], [1, 2*d, 3*d**2]]
         self._coeffs = [None] * 7
         D0 = (self._v[1] - self._v[0]) / (self._i[1] - self._i[0])
         D2 = (self._v[3] - self._v[2]) / (self._i[3] - self._i[2])
