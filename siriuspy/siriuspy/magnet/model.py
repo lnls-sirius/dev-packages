@@ -25,15 +25,12 @@ _magfuncs = _mutil.get_magfunc_2_multipole_dict()
 class _MagnetNormalizer:
     """Base class for converting magnet properties: current and strength."""
 
-    def __init__(self, maname, magnet_conv_sign=-1,
-                 left='linear', right='linear'):
+    def __init__(self, maname, magnet_conv_sign=-1):
         """Class constructor."""
         self._maname = _SiriusPVName(maname) if type(maname) == str else maname
         self._madata = _MAData(maname=self._maname)
         self._magfunc = self._madata.magfunc(self._madata.psnames[0])
         self._magnet_conv_sign = magnet_conv_sign
-        self._left = left
-        self._right = right
         self._mfmult = _magfuncs[self._magfunc]
         self._psname = self._power_supplies()[0]
 
@@ -44,13 +41,11 @@ class _MagnetNormalizer:
         if self._magfunc != 'dipole':
             # for psname in self._madata.psnames:
             excdata = self._madata.excdata(self._psname)
-            m = excdata.interp_curr2mult(
-                current, left=self._left, right=self._right)
+            m = excdata.interp_curr2mult(current)
             msum = _mutil.sum_magnetic_multipoles(msum, m)
         else:
             excdata = self._madata.excdata(self._psname)
-            m = excdata.interp_curr2mult(
-                current, left=self._left, right=self._right)
+            m = excdata.interp_curr2mult(current)
             msum = _mutil.sum_magnetic_multipoles(msum, m)
         return msum
 
@@ -89,8 +84,7 @@ class _MagnetNormalizer:
         # excdata = self._get_main_excdata()
         excdata = self._madata.excdata(self._psname)
         current = excdata.interp_mult2curr(
-            intfield, mf['harmonic'], mf['type'],
-            left=self._left, right=self._right)
+            intfield, mf['harmonic'], mf['type'])
         return current
 
     def _power_supplies(self):
@@ -220,27 +214,22 @@ class TrimNormalizer(_MagnetNormalizer):
 def create_magnet_normalizer(magnet):
     """Return appropriate normalizer object for a magnet."""
     if magnet.magfunc in ('dipole'):
-        return DipoleNormalizer(magnet.maname,
-                                magnet_conv_sign=-1.0,
-                                left=magnet.left, right=magnet.right)
+        return DipoleNormalizer(magnet.maname, magnet_conv_sign=-1.0)
     elif magnet.magfunc == 'quadrupole' and \
             magnet.maname.section == 'SI' and \
             magnet.maname.subsection != 'Fam':
             return TrimNormalizer(magnet.maname,
                                   magnet_conv_sign=-1.0,
                                   dipole_name=magnet.dipole_name,
-                                  fam_name=magnet.fam_name,
-                                  left=magnet.left, right=magnet.right)
+                                  fam_name=magnet.fam_name)
     elif magnet.magfunc in ('corrector-horizontal', 'quadrupole-skew'):
         return MagnetNormalizer(magnet.maname,
                                 dipole_name=magnet.dipole_name,
-                                magnet_conv_sign=+1.0,
-                                left=magnet.left, right=magnet.right)
+                                magnet_conv_sign=+1.0)
     else:
         return MagnetNormalizer(magnet.maname,
                                 dipole_name=magnet.dipole_name,
-                                magnet_conv_sign=-1.0,
-                                left=magnet.left, right=magnet.right)
+                                magnet_conv_sign=-1.0)
 
 
 class _MagnetPowerSupply(_PowerSupplyEpicsSync):
@@ -251,16 +240,12 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
                  vaca_prefix=None,
                  lock=True,
                  callback=None,
-                 connection_timeout=None,
-                 left='linear',
-                 right='linear'):
+                 connection_timeout=None):
         self._maname = _SiriusPVName(maname)
         self._dipole_name = _mutil.get_section_dipole_name(self._maname)
         self._fam_name = _mutil.get_magnet_fam_name(self._maname)
         self._madata = _MAData(maname=self._maname)
         self._magfunc = self._madata.magfunc(self._madata.psnames[0])
-        self._left = left
-        self._right = right
         self._mfmult = _magfuncs[self.magfunc]
         self._current_min = self._madata._splims['DRVL']
         self._current_max = self._madata._splims['DRVH']
@@ -324,14 +309,6 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
     @property
     def fam_name(self):
         return self._fam_name
-
-    @property
-    def left(self):
-        return self._left
-
-    @property
-    def right(self):
-        return self._right
 
     @property
     def database(self):
@@ -591,10 +568,6 @@ class MagnetPowerSupplyDipole(_MagnetPowerSupply):
     def _init_subclass(self):
         pass
 
-    # def _get_strength_obj(self):
-    #     return DipoleNormalizer(
-    #         self._maname, left=self._left, right=self._right)
-
     def _get_currents_dict(self, current_attr):
         return {}
 
@@ -631,17 +604,6 @@ class MagnetPowerSupply(_MagnetPowerSupply):
             self._dipole[attr] = _epics.PV(pvname=prefix + ":" + attr)
             self._dipole[attr].add_callback(self._callback_dipole_updated)
 
-    # def _get_strength_obj(self):
-    #     if self.magfunc in ('corrector-horizontal', 'quadrupole-skew'):
-    #         return MagnetNormalizer(self._maname,
-    #                                 dipole_name=self._dipole_name,
-    #                                 magnet_conv_sign=+1.0,
-    #                                 left=self._left, right=self._right)
-    #     else:
-    #         return MagnetNormalizer(self._maname,
-    #                                 dipole_name=self._dipole_name,
-    #                                 magnet_conv_sign=-1.0,
-    #                                 left=self._left, right=self._right)
 
     def _get_currents_dict(self, current_attr):
         if current_attr == 'Current-SP':
@@ -720,11 +682,6 @@ class MagnetPowerSupplyTrim(MagnetPowerSupply):
         for attr in attrs:
             self._fam[attr] = _epics.PV(pvname=prefix + ":" + attr)
             self._fam[attr].add_callback(self._callback_family_updated)
-
-    # def _get_strength_obj(self):
-    #     return TrimNormalizer(self._maname, dipole_name=self._dipole_name,
-    #                           fam_name=self._fam_name, left=self._left,
-    #                           right=self._right)
 
     def _get_currents_dict(self, current_attr):
         if current_attr == 'Current-SP':

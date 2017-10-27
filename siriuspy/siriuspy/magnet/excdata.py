@@ -67,45 +67,24 @@ class ExcitationData:
         multipoles = self.multipoles[multipole_type.lower()][harmonic]
         return min(multipoles) <= value <= max(multipoles)
 
-    def interp_curr2mult(self, current, left='linear', right='linear'):
+    def interp_curr2mult(self, current):
         """Interpolate multipoles for current values."""
         extrap_typ = 'interp'
         x = self.currents
         if current < x[0]:
-            if isinstance(left, str):
-                if left.lower() == 'linear':
-                    extrap_typ = 'extrap_linear_left'
-                elif left.lower() == 'exception':
-                    raise Exception('Current value is left-out of range')
-                else:
-                    raise Exception('Invalid string value for "left" argument')
+            extrap_typ = 'extrap_linear_left'
         elif current > x[-1]:
-            if isinstance(right, str):
-                if right.lower() == 'linear':
-                    extrap_typ = 'extrap_linear_right'
-                elif left.lower() == 'exception':
-                    raise Exception('Current value is right-out of range')
-                else:
-                    raise Exception(('Invalid string value for '
-                                     '"right" argument'))
-        else:
-            left = right = None
+            extrap_typ = 'extrap_linear_right'
 
         multipoles = {'normal': {}, 'skew': {}}
         for h in self.harmonics:
             if extrap_typ == 'interp':
-                if isinstance(left, str):
-                    left = None
-                if isinstance(right, str):
-                    right = None
                 y = self.multipoles['normal'][h]
                 multipoles['normal'][h] = \
-                    _numpy.interp(current, self.currents, y,
-                                  left=left, right=right)
+                    _numpy.interp(current, self.currents, y)
                 y = self.multipoles['skew'][h]
                 multipoles['skew'][h] = \
-                    _numpy.interp(current, self.currents, y,
-                                  left=left, right=right)
+                    _numpy.interp(current, self.currents, y)
             elif extrap_typ == 'extrap_linear_left':
                 y = self.multipoles['normal'][h]
                 multipoles['normal'][h] = \
@@ -127,49 +106,27 @@ class ExcitationData:
 
         return multipoles
 
-    def interp_mult2curr(self, multipole, harmonic, multipole_type,
-                         left='linear', right='linear'):
+    def interp_mult2curr(self, multipole, harmonic, multipole_type):
         """Interpolate current from a specific multipole value."""
         extrap_typ = 'interp'
         x = self.multipoles[multipole_type.lower()][harmonic]
         if multipole < min(x):
-            if isinstance(left, str):
-                if left.lower() == 'linear':
-                    if x[1] >= x[0]:
-                        extrap_typ = 'extrap_linear_left'
-                    else:
-                        extrap_typ = 'extrap_linear_right'
-                elif left.lower() == 'exception':
-                    raise Exception('current value is left-out of range')
-                else:
-                    raise Exception('invalid string value for "left" argument')
+            if x[1] >= x[0]:
+                extrap_typ = 'extrap_linear_left'
+            else:
+                extrap_typ = 'extrap_linear_right'
         elif multipole > max(x):
-            if isinstance(right, str):
-                if right.lower() == 'linear':
-                    if x[-1] >= x[-2]:
-                        extrap_typ = 'extrap_linear_right'
-                    else:
-                        extrap_typ = 'extrap_linear_left'
-                elif left.lower() == 'exception':
-                    raise Exception('current value is right-out of range')
-                else:
-                    raise Exception(
-                            'invalid string value for "right" argument')
-        else:
-            left = right = None
+            if x[-1] >= x[-2]:
+                extrap_typ = 'extrap_linear_right'
+            else:
+                extrap_typ = 'extrap_linear_left'
 
         if extrap_typ == 'interp':
-            if isinstance(left, str):
-                left = None
-            if isinstance(right, str):
-                right = None
             if x[-1] < x[0]:
                 current = _numpy.interp(multipole, x[::-1],
-                                        self.currents[::-1],
-                                        left=left, right=right)
+                                        self.currents[::-1])
             else:
-                current = _numpy.interp(multipole, x, self.currents,
-                                        left=left, right=right)
+                current = _numpy.interp(multipole, x, self.currents)
         elif extrap_typ == 'extrap_linear_left':
             current = _util.linear_extrapolation(multipole, x[0], x[1],
                                                  self.currents[0],
