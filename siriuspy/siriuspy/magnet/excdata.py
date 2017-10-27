@@ -1,6 +1,6 @@
 """EXcitation Data."""
 
-import numpy as _numpy
+import numpy as _np
 import siriuspy.servweb as _web
 from siriuspy.magnet import util as _util
 
@@ -67,78 +67,53 @@ class ExcitationData:
         multipoles = self.multipoles[multipole_type.lower()][harmonic]
         return min(multipoles) <= value <= max(multipoles)
 
-    def interp_curr2mult(self, current):
+    def interp_curr2mult(self, currents):
         """Interpolate multipoles for current values."""
-        extrap_typ = 'interp'
-        x = self.currents
-        if current < x[0]:
-            extrap_typ = 'extrap_linear_left'
-        elif current > x[-1]:
-            extrap_typ = 'extrap_linear_right'
-
+        ct = self.currents
         multipoles = {'normal': {}, 'skew': {}}
-        for h in self.harmonics:
-            if extrap_typ == 'interp':
-                y = self.multipoles['normal'][h]
-                multipoles['normal'][h] = \
-                    _numpy.interp(current, self.currents, y)
-                y = self.multipoles['skew'][h]
-                multipoles['skew'][h] = \
-                    _numpy.interp(current, self.currents, y)
-            elif extrap_typ == 'extrap_linear_left':
-                y = self.multipoles['normal'][h]
-                multipoles['normal'][h] = \
-                    _util.linear_extrapolation(current, x[0], x[1], y[0], y[1])
-                y = self.multipoles['skew'][h]
-                multipoles['skew'][h] = \
-                    _util.linear_extrapolation(current, x[0], x[1], y[0], y[1])
-            elif extrap_typ == 'extrap_linear_right':
-                y = self.multipoles['normal'][h]
-                multipoles['normal'][h] = \
-                    _util.linear_extrapolation(current, x[-1], x[-2],
-                                               y[-1], y[-2])
-                y = self.multipoles['skew'][h]
-                multipoles['skew'][h] = \
-                    _util.linear_extrapolation(current, x[-1], x[-2],
-                                               y[-1], y[-2])
-            else:
-                pass  # this point should never be reached
-
+        if type(currents) in (int, float):
+            currents = _np.array([currents])
+            for h in self.harmonics:
+                # normal component
+                mt = self.multipoles['normal'][h]
+                interp = ExcitationData._calc_interp(ct, mt, currents)
+                multipoles['normal'][h] = interp[0]
+                # skew component
+                mt = self.multipoles['skew'][h]
+                interp = ExcitationData._calc_interp(ct, mt, currents)
+                multipoles['skew'][h] = interp[0]
+        else:
+            currents = _np.array(currents)
+            for h in self.harmonics:
+                # normal component
+                mt = self.multipoles['normal'][h]
+                interp = ExcitationData._calc_interp(ct, mt, currents)
+                multipoles['normal'][h] = interp
+                # skew component
+                mt = self.multipoles['skew'][h]
+                interp = ExcitationData._calc_interp(ct, mt, currents)
+                multipoles['skew'][h] = interp
         return multipoles
 
-    def interp_mult2curr(self, multipole, harmonic, multipole_type):
+    def interp_mult2curr(self, multipoles, harmonic, multipole_type):
         """Interpolate current from a specific multipole value."""
-        extrap_typ = 'interp'
-        x = self.multipoles[multipole_type.lower()][harmonic]
-        if multipole < min(x):
-            if x[1] >= x[0]:
-                extrap_typ = 'extrap_linear_left'
-            else:
-                extrap_typ = 'extrap_linear_right'
-        elif multipole > max(x):
-            if x[-1] >= x[-2]:
-                extrap_typ = 'extrap_linear_right'
-            else:
-                extrap_typ = 'extrap_linear_left'
-
-        if extrap_typ == 'interp':
-            if x[-1] < x[0]:
-                current = _numpy.interp(multipole, x[::-1],
-                                        self.currents[::-1])
-            else:
-                current = _numpy.interp(multipole, x, self.currents)
-        elif extrap_typ == 'extrap_linear_left':
-            current = _util.linear_extrapolation(multipole, x[0], x[1],
-                                                 self.currents[0],
-                                                 self.currents[1])
-        elif extrap_typ == 'extrap_linear_right':
-            current = _util.linear_extrapolation(multipole, x[-1], x[-2],
-                                                 self.currents[-1],
-                                                 self.currents[-2])
+        # sort correctly tabulated lists
+        mt = self.multipoles[multipole_type.lower()][harmonic]
+        if mt[-1] >= mt[0]:
+            mt = mt[::-1]
+            ct = self.currents[::-1]
         else:
-            pass  # this should never be reached
-
-        return current
+            ct = self.currents
+        # do conversion
+        if type(multipoles) in (int, float):
+            multipoles = _np.array([multipoles])
+            interp = ExcitationData._calc_interp(mt, ct, multipoles)
+            currents = interp[0]
+        else:
+            multipoles = _np.array(multipoles)
+            interp = ExcitationData._calc_interp(mt, ct, multipoles)
+            currents = interp
+        return currents
 
     # --- private methods ---
 
@@ -169,6 +144,20 @@ class ExcitationData:
                     self.multipoles['skew'][h][i])
             st += '\n'
         return st
+
+    @staticmethod
+    def _calc_interp(xt, yt, x):
+        interp = _np.interp(x, xt, yt,
+                            left=float('nan'), right=float('inf'))
+        nan = _np.isnan(interp)
+        inf = _np.isinf(interp)
+        v = _util.linear_extrapolation(x[nan],
+                                       xt[0], xt[1], yt[0], yt[1])
+        interp[nan] = v
+        v = _util.linear_extrapolation(x[inf],
+                                       xt[-1], xt[-2], yt[-1], yt[-2])
+        interp[inf] = v
+        return interp
 
     def _read_text(self, text):
 
@@ -210,7 +199,7 @@ class ExcitationData:
                     self.multipoles['normal'][h].append(float(exc[j*2+0]))
                     self.multipoles['skew'][h].append(float(exc[j*2+1]))
         # sort data
-        idx = _numpy.argsort(self.currents)
+        idx = _np.argsort(self.currents)
         self.currents = [self.currents[idx[i]] for i in range(len(idx))]
         for h in self._harmonics:
             self.multipoles['normal'][h] = \
