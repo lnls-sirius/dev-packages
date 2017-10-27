@@ -5,6 +5,7 @@ from siriuspy import util as _util
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.magnet import util as _mutil
 from siriuspy.magnet.data import MAData as _MAData
+import numpy as _np
 
 _magfuncs = _mutil.get_magfunc_2_multipole_dict()
 
@@ -49,11 +50,11 @@ class _MagnetNormalizer:
 
     def _get_brho(self, currents_dipole):
         """Get Magnetic Rigidity."""
-        if not currents_dipole:
+        if currents_dipole is None:
             return 0
         energies = self._get_energy(currents_dipole)
-        if not energies:
-            return 0
+        # if not energies:
+        #     return 0
         brho = _util.beam_rigidity(energies)
         return brho
 

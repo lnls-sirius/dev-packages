@@ -330,7 +330,7 @@ class WfmSet:
 
     energy_inj_gev = 0.150  # [GeV]
     energy_eje_gev = 3.000  # [GeV]
-    _default_wfm = _mutil.get_default_ramp_waveform()
+    _default_wfm = _np.array(_mutil.get_default_ramp_waveform())
 
     def __init__(self,
                  dipole_maname,
@@ -519,23 +519,29 @@ class WfmSet:
                             maname + '"!')
         if wfm_strength is None and wfm_current is None:
             if self.section == 'BO' and m.magfunc == 'dipole':
-                wfm_strength = \
-                    [WfmSet.energy_eje_gev * v for v in WfmSet._default_wfm]
+                wfm_strength = WfmSet.energy_eje_gev * WfmSet._default_wfm
+                # wfm_strength = \
+                #     [WfmSet.energy_eje_gev * v for v in WfmSet._default_wfm]
             elif self.section in ('SI', 'TS') and m.magfunc == 'dipole':
                 wfm_strength = \
-                    [WfmSet.energy_eje_gev for _ in WfmSet._default_wfm]
+                    WfmSet.energy_eje_gev * _np.ones(WfmSet._default_wfm.shape)
+                # wfm_strength = \
+                #     [WfmSet.energy_eje_gev for _ in WfmSet._default_wfm]
             elif self.section == 'TB' and m.magfunc == 'dipole':
                 wfm_strength = \
-                    [WfmSet.energy_inj_gev for _ in WfmSet._default_wfm]
+                    WfmSet.energy_inj_gev * _np.ones(WfmSet._default_wfm.shape)
+                # wfm_strength = \
+                #     [WfmSet.energy_inj_gev for _ in WfmSet._default_wfm]
             elif maname in _nominal_intkl:
-                wfm_strength = _nominal_intkl[maname]
+                wfm_strength = _nominal_intkl[maname] * \
+                    _np.ones(WfmSet._default_wfm.shape)
             else:
-                wfm_strength = [0.0 for _ in WfmSet._default_wfm]
+                wfm_strength = _np.zeros(WfmSet._default_wfm.shape)
             self._wfms_strength[maname] = wfm_strength
         if type(wfm_strength) in (int, float):
-            wfm_strength = [wfm_strength for _ in WfmSet._default_wfm]
+            wfm_strength = wfm_strength * _np.ones(WfmSet._default_wfm.shape)
         if type(wfm_current) in (int, float):
-            wfm_current = [wfm_current for _ in WfmSet._default_wfm]
+            wfm_current = wfm_current * _np.ones(WfmSet._default_wfm.shape)
         return wfm_strength, wfm_current
 
     def _update_dipole_wfm(self,
@@ -543,12 +549,14 @@ class WfmSet:
                            wfm_strength,
                            wfm_current):
         m = self._magnets[maname]
-        if wfm_strength:
-            wfm_current = \
-                [m.conv_strength_2_current(v) for v in wfm_strength]
+        if wfm_strength is not None:
+            wfm_current = m.conv_strength_2_current(wfm_strength)
+            # wfm_current = \
+            #     [m.conv_strength_2_current(v) for v in wfm_strength]
         else:
-            wfm_strength = \
-                [m.conv_current_2_strength(v) for v in wfm_current]
+            wfm_strength = m.conv_current_2_strength(wfm_current)
+            # wfm_strength = \
+            #     [m.conv_current_2_strength(v) for v in wfm_current]
         self._wfms_current[maname] = wfm_current
         self._wfms_strength[maname] = wfm_strength
         # recursively invoke itself to update families
@@ -564,16 +572,16 @@ class WfmSet:
                            wfm_current):
         m = self._magnets[maname]
         c_dip = self._wfms_current[self._dipole_maname]
-        if wfm_strength:
-            wfm_current = [m.conv_strength_2_current(
-                           wfm_strength[i],
-                           current_dipole=c_dip[i])
-                           for i in range(len(wfm_strength))]
+        if wfm_strength is not None:
+            wfm_current = m.conv_strength_2_current(
+                wfm_strength, currents_dipole=c_dip)
+            # wfm_current = [m.conv_strength_2_current(
+            #                wfm_strength[i],
+            #                currents_dipole=c_dip[i])
+            #                for i in range(len(wfm_strength))]
         else:
-            wfm_strength = [m.conv_current_2_strength(
-                            wfm_current[i],
-                            current_dipole=c_dip[i])
-                            for i in range(len(wfm_current))]
+            wfm_strength = m.conv_current_2_strength(
+                wfm_current, currents_dipole=c_dip)
         self._wfms_current[maname] = wfm_current
         self._wfms_strength[maname] = wfm_strength
         # recursively invoke itself to update trims
@@ -593,14 +601,14 @@ class WfmSet:
         if wfm_strength:
             wfm_current = [m.conv_strength_2_current(
                            wfm_strength[i],
-                           current_dipole=c_dip[i],
-                           current_family=c_fam[i])
+                           currents_dipole=c_dip[i],
+                           currents_family=c_fam[i])
                            for i in range(len(wfm_strength))]
         else:
             wfm_strength = [m.conv_current_2_strength(
                             wfm_current[i],
-                            current_dipole=c_dip[i],
-                            current_family=c_fam[i])
+                            currents_dipole=c_dip[i],
+                            currents_family=c_fam[i])
                             for i in range(len(wfm_current))]
         self._wfms_current[maname] = wfm_current
         self._wfms_strength[maname] = wfm_strength
