@@ -2,7 +2,7 @@
 
 from siriuspy.magnet import util as _mutil
 from siriuspy.pulsedma.data import PMData as _PMData
-from siriuspy.magnet.model import DipoleNormalizer
+from siriuspy.magnet.normalizer import DipoleNormalizer as _DipoleNormalizer
 
 
 class PulsedMagnetNormalizer:
@@ -13,7 +13,7 @@ class PulsedMagnetNormalizer:
         self._maname = maname
         self._data = _PMData(self._maname)
         self.dipole_name = dipole_name
-        self._dipole = DipoleNormalizer(dipole_name)
+        self._dipole = _DipoleNormalizer(dipole_name)
         self._magfunc = self._data.magfunc(self._data.psnames[0])
         self._mfmult = _mutil.get_magfunc_2_multipole_dict()[self._magfunc]
 

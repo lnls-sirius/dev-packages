@@ -71,7 +71,7 @@ class ExcitationData:
         """Interpolate multipoles for current values."""
         ct = self.currents
         multipoles = {'normal': {}, 'skew': {}}
-        if type(currents) in (int, float):
+        if _np.isscalar(currents):
             currents = _np.array([currents])
             for h in self.harmonics:
                 # normal component
@@ -105,7 +105,7 @@ class ExcitationData:
         else:
             ct = self.currents
         # do conversion
-        if type(multipoles) in (int, float):
+        if _np.isscalar(multipoles):
             multipoles = _np.array([multipoles])
             interp = ExcitationData._calc_interp(mt, ct, multipoles)
             currents = interp[0]
