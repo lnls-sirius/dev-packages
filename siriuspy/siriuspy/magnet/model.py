@@ -34,58 +34,57 @@ class _MagnetNormalizer:
         self._mfmult = _magfuncs[self._magfunc]
         self._psname = self._power_supplies()[0]
 
-    def _conv_current_2_multipoles(self, current):
-        if current is None:
+    def _conv_current_2_multipoles(self, currents):
+        if currents is None:
             return None
         msum = {}
         if self._magfunc != 'dipole':
             # for psname in self._madata.psnames:
             excdata = self._madata.excdata(self._psname)
-            m = excdata.interp_curr2mult(current)
+            m = excdata.interp_curr2mult(currents)
             msum = _mutil.sum_magnetic_multipoles(msum, m)
         else:
             excdata = self._madata.excdata(self._psname)
-            m = excdata.interp_curr2mult(current)
+            m = excdata.interp_curr2mult(currents)
             msum = _mutil.sum_magnetic_multipoles(msum, m)
         return msum
 
-    def _conv_current_2_intfield(self, current):
-        m = self._conv_current_2_multipoles(current)
+    def _conv_current_2_intfield(self, currents):
+        m = self._conv_current_2_multipoles(currents)
         if m is None:
             return None
         mf = self._mfmult
-        # print(mf['type'], mf['harmonic'])
         intfield = m[mf['type']][mf['harmonic']]
         return intfield
 
     def _get_energy(self, current_dipole):
-        return self._dipole.conv_current_2_strength(current=current_dipole)
+        return self._dipole.conv_current_2_strength(currents=current_dipole)
 
-    def _get_brho(self, current_dipole):
+    def _get_brho(self, currents_dipole):
         """Get Magnetic Rigidity."""
-        if not current_dipole:
+        if not currents_dipole:
             return 0
-        energy = self._get_energy(current_dipole)
-        if not energy:
+        energies = self._get_energy(currents_dipole)
+        if not energies:
             return 0
-        brho = _util.beam_rigidity(energy)
+        brho = _util.beam_rigidity(energies)
         return brho
 
-    def conv_current_2_strength(self, current, **kwargs):
-        intfield = self._conv_current_2_intfield(current)
-        if intfield is None:
+    def conv_current_2_strength(self, currents, **kwargs):
+        intfields = self._conv_current_2_intfield(currents)
+        if intfields is None:
             return 0.0
-        strength = self._conv_intfield_2_strength(intfield, **kwargs)
-        return strength
+        strengths = self._conv_intfield_2_strength(intfields, **kwargs)
+        return strengths
 
-    def conv_strength_2_current(self, strength, **kwargs):
-        intfield = self._conv_strength_2_intfield(strength, **kwargs)
+    def conv_strength_2_current(self, strengths, **kwargs):
+        intfields = self._conv_strength_2_intfield(strengths, **kwargs)
         mf = self._mfmult
         # excdata = self._get_main_excdata()
         excdata = self._madata.excdata(self._psname)
-        current = excdata.interp_mult2curr(
-            intfield, mf['harmonic'], mf['type'])
-        return current
+        currents = excdata.interp_mult2curr(
+            intfields, mf['harmonic'], mf['type'])
+        return currents
 
     def _power_supplies(self):
         return [self._maname.replace(":MA", ":PS")]
@@ -127,28 +126,30 @@ class DipoleNormalizer(_MagnetNormalizer):
         else:
             raise NotImplementedError
 
-    def _get_energy(self, current_dipole):
-        return self.conv_current_2_strength(current=current_dipole)
+    def _get_energy(self, currents_dipole):
+        return self.conv_current_2_strength(currents=currents_dipole)
 
-    def _conv_strength_2_intfield(self, strength, **kwargs):
+    def _conv_strength_2_intfield(self, strengths, **kwargs):
         if self._maname.section == 'SI':
-            intfield = (- self._ref_angle * (self._ref_brho / self._ref_energy)
-                        * strength - self._ref_BL_BC)
+            intfields = (- self._ref_angle *
+                         (self._ref_brho / self._ref_energy)
+                         * strengths - self._ref_BL_BC)
         else:
-            intfield = (- self._ref_angle * (self._ref_brho / self._ref_energy)
-                        * strength)
-        return intfield
+            intfields = (- self._ref_angle *
+                         (self._ref_brho / self._ref_energy)
+                         * strengths)
+        return intfields
 
-    def _conv_intfield_2_strength(self, intfield, **kwargs):
+    def _conv_intfield_2_strength(self, intfields, **kwargs):
         if self._maname.section == 'SI':
-            strength = -self._magnet_conv_sign * \
+            strengths = -self._magnet_conv_sign * \
                         ((self._ref_energy / self._ref_brho) *
-                         (- intfield - self._ref_BL_BC) / self._ref_angle)
+                         (- intfields - self._ref_BL_BC) / self._ref_angle)
         else:
-            strength = -self._magnet_conv_sign * \
+            strengths = -self._magnet_conv_sign * \
                         ((self._ref_energy / self._ref_brho) *
-                         (-intfield) / self._ref_angle)
-        return strength
+                         (-intfields) / self._ref_angle)
+        return strengths
 
     def _power_supplies(self):
         return self._madata.psnames
@@ -169,17 +170,17 @@ class MagnetNormalizer(_MagnetNormalizer):
         self._dipole = DipoleNormalizer(dipole_name, **kwargs)
         # self._magnet_conv_sign = magnet_conv_sign
 
-    def _conv_strength_2_intfield(self, strength, **kwargs):
-        brho = self._get_brho(current_dipole=kwargs['current_dipole'])
-        intfield = self._magnet_conv_sign * brho * strength
-        return intfield
+    def _conv_strength_2_intfield(self, strengths, **kwargs):
+        brhos = self._get_brho(currents_dipole=kwargs['currents_dipole'])
+        intfields = self._magnet_conv_sign * brhos * strengths
+        return intfields
 
-    def _conv_intfield_2_strength(self, intfield, **kwargs):
-        brho = self._get_brho(current_dipole=kwargs['current_dipole'])
-        if brho == 0:
+    def _conv_intfield_2_strength(self, intfields, **kwargs):
+        brhos = self._get_brho(currents_dipole=kwargs['currents_dipole'])
+        if brhos == 0:
             return 0
-        strength = self._magnet_conv_sign * intfield / brho
-        return strength
+        strengths = self._magnet_conv_sign * intfields / brhos
+        return strengths
 
 
 class TrimNormalizer(_MagnetNormalizer):
@@ -192,23 +193,23 @@ class TrimNormalizer(_MagnetNormalizer):
         self._dipole = DipoleNormalizer(dipole_name, **kwargs)
         self._fam = MagnetNormalizer(fam_name, dipole_name, **kwargs)
 
-    def _conv_strength_2_intfield(self, strength, **kwargs):
-        strength_fam = self._fam.conv_current_2_strength(
-            current=kwargs["current_family"],
-            current_dipole=kwargs["current_dipole"])
-        brho = self._get_brho(current_dipole=kwargs['current_dipole'])
-        intfield = - brho * (strength - strength_fam)
-        return intfield
+    def _conv_strength_2_intfield(self, strengths, **kwargs):
+        strengths_fam = self._fam.conv_current_2_strength(
+            currents=kwargs["currents_family"],
+            currents_dipole=kwargs["currents_dipole"])
+        brhos = self._get_brho(currents_dipole=kwargs['currents_dipole'])
+        intfields = - brhos * (strengths - strengths_fam)
+        return intfields
 
-    def _conv_intfield_2_strength(self, intfield, **kwargs):
-        brho = self._get_brho(current_dipole=kwargs['current_dipole'])
-        if brho == 0:
+    def _conv_intfield_2_strength(self, intfields, **kwargs):
+        brhos = self._get_brho(currents_dipole=kwargs['currents_dipole'])
+        if brhos == 0:
             return 0
-        strength_trim = - intfield / brho
-        strength_fam = self._fam.conv_current_2_strength(
-            current=kwargs["current_family"],
-            current_dipole=kwargs["current_dipole"])
-        return strength_trim + strength_fam
+        strengths_trim = - intfields / brhos
+        strengths_fam = self._fam.conv_current_2_strength(
+            currents=kwargs["currents_family"],
+            currents_dipole=kwargs["currents_dipole"])
+        return strengths_trim + strengths_fam
 
 
 def create_magnet_normalizer(magnet):
@@ -421,24 +422,19 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
 
             value = self.ctrlmode_mon
             if value is not None:
-                self._db['CtrlMode-Mon']['value'] = \
-                    _et.enums('RmtLocTyp').index(value) if self._enum_keys else value
+                self._db['CtrlMode-Mon']['value'] = value
             value = self.opmode_sel
             if value is not None:
-                self._db['OpMode-Sel']['value'] = \
-                    _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
+                self._db['OpMode-Sel']['value'] = value
             value = self.opmode_sts
             if value is not None:
-                self._db['OpMode-Sts']['value'] = \
-                    _et.enums('PSOpModeTyp').index(value) if self._enum_keys else value
+                self._db['OpMode-Sts']['value'] = value
             value = self.pwrstate_sel
             if value is not None:
-                self._db['PwrState-Sel']['value'] = \
-                    _et.enums('OffOnTyp').index(value) if self._enum_keys else value
+                self._db['PwrState-Sel']['value'] = value
             value = self.pwrstate_sts
             if value is not None:
-                self._db['PwrState-Sts']['value'] = \
-                _et.enums('OffOnTyp').index(value) if self._enum_keys else value
+                self._db['PwrState-Sts']['value'] = value
             value = self.reset_cmd
             if value is not None:
                 self._db['Reset-Cmd']['value'] = self.reset_cmd
@@ -451,12 +447,10 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
                 self._db['WfmLoad-Sts']['enums'] = value
             value = self.wfmload_sel
             if value is not None:
-                self._db['WfmLoad-Sel']['value'] = \
-                    _np.where(wfmlabels == value)[0][0] if self._enum_keys else value
+                self._db['WfmLoad-Sel']['value'] = value
             value = self.wfmload_sts
             if value is not None:
-                self._db['WfmLoad-Sts']['value'] = \
-                    _np.where(wfmlabels == value)[0][0] if self._enum_keys else value
+                self._db['WfmLoad-Sts']['value'] = value
 
             value = self.wfmlabel_sp
             if value is not None:
@@ -619,7 +613,7 @@ class MagnetPowerSupply(_MagnetPowerSupply):
                 'Invalid argument "' +
                 str(current_attr) +
                 '" to _get_currents_dict!')
-        return {'current_dipole': current}
+        return {'currents_dipole': current}
 
     def _callback_dipole_updated(self, pvname, value, **kwargs):
         # Get dipole new current and update self current value
@@ -702,8 +696,8 @@ class MagnetPowerSupplyTrim(MagnetPowerSupply):
                 str(current_attr) +
                 '" to _get_currents_dict!')
 
-        return {'current_dipole': current_dipole,
-                'current_family': current_family}
+        return {'currents_dipole': current_dipole,
+                'currents_family': current_family}
 
     def _callback_family_updated(self, pvname, value, **kwargs):
         # Get dipole new current and update self current value
