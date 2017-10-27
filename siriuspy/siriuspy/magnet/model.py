@@ -443,7 +443,7 @@ class MagnetPowerSupply(_MagnetPowerSupply):
 
             kwargs = self._get_currents_dict(propty)
             strength = self._strength_obj.conv_current_2_strength(
-                current=self._propty[propty], **kwargs)
+                currents=self._propty[propty], **kwargs)
 
             propty_strength = propty.replace('Current', label)
             self._propty[propty_strength] = strength
@@ -526,7 +526,7 @@ class MagnetPowerSupplyTrim(MagnetPowerSupply):
 
             kwargs = self._get_currents_dict(propty)
             strength = self._strength_obj.conv_current_2_strength(
-                current=self._propty[propty], **kwargs)
+                currents=self._propty[propty], **kwargs)
 
             propty_strength = propty.replace('Current', label)
             self._propty[propty_strength] = strength
