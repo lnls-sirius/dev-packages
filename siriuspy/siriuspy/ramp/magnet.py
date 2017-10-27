@@ -19,17 +19,13 @@ _magfuncs = _mutil.get_magfunc_2_multipole_dict()
 class Magnet(object):
     """Base class for handling magnets."""
 
-    def __init__(self, maname,
-                 left='linear',
-                 right='linear'):
+    def __init__(self, maname):
         """Init method."""
         self._maname = _SiriusPVName(maname)
         self._madata = _MAData(maname=self._maname)
         self._dipole_name = _mutil.get_section_dipole_name(self._maname)
         self._family_name = _mutil.get_magnet_fam_name(self._maname)
         self._magfunc = self._madata.magfunc(self._madata.psnames[0])
-        self._left = left
-        self._right = right
         self._mfmult = _magfuncs[self.magfunc]
         self._strength_obj = _model.create_magnet_normalizer(self)
         self._strength_label = _util.get_strength_label(self._magfunc)
@@ -60,16 +56,6 @@ class Magnet(object):
     def magfunc(self):
         """Return magnet function."""
         return self._magfunc
-
-    @property
-    def left(self):
-        """Return method for left excitation curve extrapolation."""
-        return self._left
-
-    @property
-    def right(self):
-        """Return method for right excitation curve extrapolation."""
-        return self._right
 
     @property
     def strength_label(self):
@@ -116,8 +102,6 @@ class Magnet(object):
         s += '\ndipole_name    : {}'.format(self.dipole_name)
         s += '\nfamily_name    : {}'.format(self.family_name)
         s += '\nmagfunc        : {}'.format(self.magfunc)
-        s += '\nleft           : {}'.format(self.left)
-        s += '\nright          : {}'.format(self.right)
         s += '\nstrength_label : {}'.format(self.strength_label)
         s += '\nstrength_units : {}'.format(self.strength_units)
         s += '\ncurrent_min    : {}'.format(self.current_min)

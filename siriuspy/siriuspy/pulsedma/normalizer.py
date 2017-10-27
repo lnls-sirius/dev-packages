@@ -2,20 +2,18 @@
 
 from siriuspy.magnet import util as _mutil
 from siriuspy.pulsedma.data import PMData as _PMData
-from siriuspy.magnet.model import DipoleNormalizer
+from siriuspy.magnet.normalizer import DipoleNormalizer as _DipoleNormalizer
 
 
 class PulsedMagnetNormalizer:
     """Calculate normalized tensions for pulsed magnets."""
 
-    def __init__(self, maname, dipole_name, left="linear", right="linear"):
+    def __init__(self, maname, dipole_name):
         """Class constructor."""
         self._maname = maname
         self._data = _PMData(self._maname)
         self.dipole_name = dipole_name
-        self._dipole = DipoleNormalizer(dipole_name, left=left, right=right)
-        self._left = left
-        self._right = right
+        self._dipole = _DipoleNormalizer(dipole_name)
         self._magfunc = self._data.magfunc(self._data.psnames[0])
         self._mfmult = _mutil.get_magfunc_2_multipole_dict()[self._magfunc]
 
@@ -96,16 +94,14 @@ class PulsedMagnetNormalizer:
         mf = self._mfmult
         excdata = self._data.excdata(self._data.psnames[0])
         tension = excdata.interp_mult2curr(intfield, mf["harmonic"],
-                                           mf["type"], left=self._left,
-                                           right=self._right)
+                                           mf["type"])
         return tension
 
     # Private methods
     def _conv_tension_2_multipoles(self, tension):
         msum = {}
         excdata = self._data.excdata(self._data.psnames[0])
-        m = excdata.interp_curr2mult(
-            tension, left=self._left, right=self._right)
+        m = excdata.interp_curr2mult(tension)
         msum = _mutil.sum_magnetic_multipoles(msum, m)
         return msum
 
