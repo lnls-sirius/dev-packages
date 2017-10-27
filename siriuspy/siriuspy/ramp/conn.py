@@ -80,7 +80,7 @@ class ConnConfigDB:
     def insert_config(self, wfmset, name):
         """Insert ramp configuration ConfigDB."""
         # Build config settings
-        config_type = wfmset.section.lower() + "_ramp_ps"
+        config_type = "rmp_" + wfmset.section.lower() + "_ps"
         value = self._get_config_value(wfmset)
         # Insert in DB
         response = self._conn.insert_config(
@@ -93,7 +93,7 @@ class ConnConfigDB:
 
     def get_config(self, wfmset, name):
         """Get ramp configuration from configDB and set appropriate objects."""
-        config_type = wfmset.section.lower() + "_ramp_ps"
+        config_type = "rmp_" + wfmset.section.lower() + "_ps"
         response = self._conn.get_config(config_type=config_type, name=name)
 
         if "result" in response:
