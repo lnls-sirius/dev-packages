@@ -176,7 +176,7 @@ class Filter:
             filters.append(f)
         return filters
 
-    def process_filters(pvnames, filters=None, ordering=None):
+    def process_filters(pvnames, filters=None, sorting=None):
         """ Return a sorted and filtered list of given pv name lists.
 
         'filters' is either a dictionary of a list of dictionaries whose keys
@@ -213,8 +213,8 @@ class Filter:
                     filtered_list.append(pvname)
                     break
 
-        if ordering is None:
+        if sorting is None:
             sorted_filtered_list = filtered_list
-        elif ordering == 'length':
+        elif sorting == 'length':
             raise NotImplementedError
         return sorted_filtered_list
