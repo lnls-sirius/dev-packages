@@ -6,11 +6,7 @@ from epics import PV as _PV
 from siriuspy.epics.fake_pv import PVFake as _PVFake
 from siriuspy.epics.fake_pv import add_to_database as _add_to_database
 from .pvs import pvs_definitions as pvDB
-from .pvs import additional_acq_data_props as _additional_acq_data_props
-from .pvs import additional_acq_data_props as _additional_acq_data_props
-from .pvs import existent_acq_data_props as _existent_acq_data_props
-from .pvs import max_number_of_shots as _max_number_of_shots
-
+from .pvs import fft_writable_props
 
 def get_prop_and_suffix(name):
     prop = name.lower().replace('-', '_').replace('.', '')
@@ -77,53 +73,16 @@ def {0}_{1}_run_callbacks(self):
 
 class BPM:
     _PV_class = None
-    _PV_add_class = None
 
-    def __init__(self, bpm_name, prefix=''):
+    def __init__(self, bpm_name, prefix='', callback=None):
         self.pv_prefix = prefix + bpm_name + ':'
         _add_to_database(pvDB, prefix=self.pv_prefix)
         self.pvs = dict()
         self.bpm_name = bpm_name
         for pv, db in pvDB.items():
-            if pv in _additional_acq_data_props:
-                self.pvs[pv] = self._PV_add_class(self.pv_prefix + pv)
-            else:
-                self.pvs[pv] = self._PV_class(self.pv_prefix + pv)
-            if self._PV_add_class == _PVFake and\
-               pv in _existent_acq_data_props and\
-               pv.endswith('-Mon'):
-                self.pvs[pv].add_callback(self.__update_shots_pvs)
-
-    def __update_shots_pvs(self, pvname, value, **kwargs):
-        self._calc_statistics_fft(pvname, value, is_shot=True)
-
-    def _calc_statistics_fft(self, pvname, value, is_shot=False):
-        nr_shots = self.acqnrshots_rb if is_shot else 1
-        value = value.reshape(nr_shots, -1)
-        max_ = value.max(axis=1)
-        min_ = value.min(axis=1)
-        ave_ = value.mean(axis=1)
-        std_ = value.std(axis=1)
-        nr_points = value.shape[1]
-        fft = _np.fft.rfft(value)
-        freq = _np.fft.rfftfreq(nr_points)
-        loop = list(range(1, _max_number_of_shots+1)) if is_shot else (0,)
-        for i in loop:
-            ind, fac = (i-1, 1.0) if i <= nr_shots else (0, 0.0)
-            name = pvname.replace(self.pv_prefix, '')[:-4]
-            if is_shot:
-                name += 'Shot{0}'.format(i)
-                self.pvs[name+'-Mon'].value = value[ind, :] * fac
-            self.pvs[name+'Max'].value = max_[ind] * fac
-            self.pvs[name+'Min'].value = min_[ind] * fac
-            self.pvs[name+'Ave'].value = ave_[ind] * fac
-            self.pvs[name+'Std'].value = std_[ind] * fac
-            self.pvs[name+'FFT.SPAN'].value = nr_points
-            self.pvs[name+'FFT.FREQ'].value = freq
-            self.pvs[name+'FFT.AMP'].value = _np.abs(fft[ind, :]) * fac
-            self.pvs[name+'FFT.PHA'].value = _np.angle(fft[ind, :]) * fac
-            self.pvs[name+'FFT.SIN'].value = fft[ind, :].imag * fac
-            self.pvs[name+'FFT.COS'].value = fft[ind, :].real * fac
+            self.pvs[pv] = self._PV_class(self.pv_prefix + pv)
+            if callback:
+                self.pvs[pv].add_callback(callback)
 
     for pv, db in pvDB.items():
         prop, suf = get_prop_and_suffix(pv)
@@ -131,7 +90,7 @@ class BPM:
         exec(_callbacks.format(prop, suf, pv))
         # Create all properties
         exec(_rb_prop.format(prop, suf, pv))
-        if suf in ('sp', 'cmd', 'sel'):
+        if suf in ('sp', 'cmd', 'sel') or pv in fft_writable_props:
             exec(_sp_prop.format(prop, suf, pv))
         else:
             exec(_rb_prop.format(prop, suf, pv))
@@ -151,8 +110,8 @@ class BPMFake(BPM):
                    [-2,  0, -2,  0],
                    [-2, -2, -2, -2]])
 
-    def __init__(self, bpm_name, prefix=''):
-        super().__init__(bpm_name=bpm_name, prefix=prefix)
+    def __init__(self, bpm_name, prefix='', callback=None):
+        super().__init__(bpm_name=bpm_name, prefix=prefix, callback=callback)
         self._x_ref = 0
         self._y_ref = 0
         self._q_ref = 0
@@ -165,22 +124,18 @@ class BPMFake(BPM):
             if suf in ('sp', 'sel'):
                 self.pvs[name].add_callback(self.__set_readback)
             # update statistics after measurements
-            if name in _existent_acq_data_props and\
-               name.endswith('-Mon'):
+            if name.endswith('ArrayData-Mon'):
                 self.pvs[name].add_callback(self.__update_stats_fft)
 
-        # simulate triggered acquisition
-        self.pvs['AcqStart-Cmd'].add_callback(self.__do_acquisition)
+        # simulate triggered acquisition (includes single pass)
+        self.pvs['ACQTriggerEvent-Sts'].add_callback(self.__do_acquisition)
 
-        # simulate single pass
-        self.pvs['SglStart-Cmd'].add_callback(self.__do_single_pass)
+        # simulate Post Mortem
+        self.pvs['ACQ_PMTriggerEvent-Sts'].add_callback(self.__do_post_mortem)
 
         # create timer to simulate slow measurements:
         self.timer = _Timer(0.5, self.__monitor_pos)
         self.timer.start()
-
-        # change operation mode
-        self.pvs['OpMode-Sel'].add_callback(self.__change_operation_mode)
 
     def set_ref_pos(self, x=None, y=None, q=None):
         if x is not None:
@@ -191,7 +146,22 @@ class BPMFake(BPM):
             self._q_ref = float(q)
 
     def __update_stats_fft(self, pvname, value, **kws):
-        self._calc_statistics_fft(pvname, value, is_shot=False)
+        self._calc_statistics_fft(pvname, value)
+
+    def __calc_statistics_fft(self, pvname, value):
+        fft = _np.fft.rfft(value)
+        freq = _np.fft.rfftfreq(len(fft))
+        name = pvname.replace(self.pv_prefix, '')[:-4]
+        self.pvs[name+'_STATSMaxValue_RBV'].value = value.max()
+        self.pvs[name+'_STATSMeanValue_RBV'].value = value.min()
+        self.pvs[name+'_STATSMinValue_RBV'].value = value.mean()
+        self.pvs[name+'_STATSSigma_RBV'].value = value.std()
+        self.pvs[name+'FFTFreq-Mon'].value = freq
+        self.pvs[name+'FFTData.AMP'].value = _np.abs(fft)
+        self.pvs[name+'FFTData.PHA'].value = _np.angle(fft)
+        self.pvs[name+'FFTData.SIN'].value = fft.imag
+        self.pvs[name+'FFTData.COS'].value = fft.real
+        self.pvs[name+'FFTData.WAVN'].value = freq
 
     def __set_readback(self, pvname, value=None, **kws):
         name = pvname.replace(self.pv_prefix, '')
@@ -203,35 +173,35 @@ class BPMFake(BPM):
             raise Exception('Internal Error: PV is not SP nor Sel.')
         self.pvs[name].value = value
 
-    def __change_operation_mode(self, pvname, value, **kws):
+    def __do_post_mortem(self, pvname, value=None, **kws):
+        self.__do_acquisition(pvname, value=value, post_morten=True, **kws)
+
+    def __do_acquisition(self, pvname, value=None, post_morten=False, **kws):
         if value:
-            self.timer.stop()
-        else:
-            self.timer.restart()
+            returns
+        pref = 'ACQ'
+        pref += '_PM' if post_morten else ''
+        if not post_morten and self.pvs[pref+'BPMMode-Sts'].value:
+            self.__do_single_pass(pvname, value=value, **kws)
 
-    def __do_acquisition(self, pvname, value=None, **kws):
-        if self.opmode_sts:
-            return
-
-        self.pvs['AcqState-Sts'].value = 2
-        acq_type = self.acqrate_sts
-        acq_type = self.pvs['AcqRate-Sts'].enum_strs[acq_type]
-        acq_spl_pre = self.acqnrsmplspre_rb
-        acq_spl_pos = self.acqnrsmplspos_rb
-        acq_shots = self.acqnrshots_rb
+        self.pvs[pref+'Status-Sts'].value = 2
+        acq_type = self.pvs[pref+'Channel-Sts'].char_value
+        acq_spl_pre = self.pvs[pref+'SamplesPre-RB']
+        acq_spl_pos = self.pvs[pref+'SamplesPost-RB']
+        acq_shots = self.pvs[pref+'Shots-RB']
         nr = (acq_spl_pre + acq_spl_pos) * acq_shots
-        t = _np.linspace(0, 1, nr)
-        freq = _np.random.rand()/2
+        t = _np.arange(nr)
+        freq = _np.random.rand()/10
         phi = _np.random.rand()*_np.pi
         amp = _np.random.rand()*1e-4
         posx = amp*_np.cos(2*_np.pi*freq*t + phi) + self._x
 
-        freq = _np.random.rand()/2
+        freq = _np.random.rand()/10
         phi = _np.random.rand()*_np.pi
         amp = _np.random.rand()*5e-5
         posy = amp*_np.cos(2*_np.pi*freq*t + phi) + self._y
 
-        freq = _np.random.rand()/2
+        freq = _np.random.rand()/10
         phi = _np.random.rand()*_np.pi
         amp = _np.random.rand()*1e-5
         posq = amp*_np.cos(2*_np.pi*freq*t + phi) + self._q
@@ -239,70 +209,70 @@ class BPMFake(BPM):
         poss = _np.ones(nr)
         M = self.M
         Amps = _np.dot(M, _np.array([posx, posy, posq, poss]))
-        if acq_type in ('TbT', 'FOFB'):
-            self.pvs[acq_type+'PosX-Mon'].value = posx
-            self.pvs[acq_type+'PosY-Mon'].value = posy
-            self.pvs[acq_type+'PosQ-Mon'].value = posq
-            self.pvs[acq_type+'PosS-Mon'].value = poss
-            self.pvs[acq_type+'AmpA-Mon'].value = Amps[0, :]
-            self.pvs[acq_type+'AmpB-Mon'].value = Amps[1, :]
-            self.pvs[acq_type+'AmpC-Mon'].value = Amps[2, :]
-            self.pvs[acq_type+'AmpD-Mon'].value = Amps[3, :]
-        else:
-            self.pvs[acq_type+'AntA-Mon'].value = Amps[0, :]
-            self.pvs[acq_type+'AntB-Mon'].value = Amps[1, :]
-            self.pvs[acq_type+'AntC-Mon'].value = Amps[2, :]
-            self.pvs[acq_type+'AntD-Mon'].value = Amps[3, :]
-        self.pvs['AcqState-Sts'].value = 0
+        dt_nm = 'PM_' if post_morten else 'GEN_'
+        self.pvs[dt_nm+'AArrayData-Mon'].value = Amps[0, :]
+        self.pvs[dt_nm+'BArrayData-Mon'].value = Amps[1, :]
+        self.pvs[dt_nm+'CArrayData-Mon'].value = Amps[2, :]
+        self.pvs[dt_nm+'DArrayData-Mon'].value = Amps[3, :]
+        if not acq_type.startswith('adc'):
+            self.pvs[dt_nm+'XArrayData-Mon'].value = posx
+            self.pvs[dt_nm+'YArrayData-Mon'].value = posy
+            self.pvs[dt_nm+'QArrayData-Mon'].value = posq
+            self.pvs[dt_nm+'SumArrayData-Mon'].value = poss
+        self.pvs[pref+'Status-Sts'].value = 0
 
     def __monitor_pos(self):
-        self._x = self._x_ref + _np.random.rand()*80e-9
-        self._y = self._y_ref + _np.random.rand()*80e-9
-        self._q = self._q_ref + _np.random.rand()*80e-9
+        self._x = self._x_ref + _np.random.rand()*80
+        self._y = self._y_ref + _np.random.rand()*80
+        self._q = self._q_ref + _np.random.rand()*80
         self.pvs['PosX-Mon'].value = self._x
         self.pvs['PosY-Mon'].value = self._y
         self.pvs['PosQ-Mon'].value = self._q
-        self.pvs['PosS-Mon'].value = 1 + _np.random.rand()*80e-9
+        self.pvs['Sum-Mon'].value = 1 + _np.random.rand()*80e-9
         v = _np.array([[self._x], [self._y], [self._q], [1]])
         amps = _np.dot(self.M, v)
-        self.pvs['AmpA-Mon'].value = amps[0]
-        self.pvs['AmpB-Mon'].value = amps[1]
-        self.pvs['AmpC-Mon'].value = amps[2]
-        self.pvs['AmpD-Mon'].value = amps[3]
+        self.pvs['AmplA-Mon'].value = amps[0]
+        self.pvs['AmplB-Mon'].value = amps[1]
+        self.pvs['AmplC-Mon'].value = amps[2]
+        self.pvs['AmplD-Mon'].value = amps[3]
 
     def __do_single_pass(self, pvname, value=None, **kws):
         if not self.opmode_sts:
             return
 
-        self.pvs['SglState-Sts'].value = 2
-        t = _np.linspace(0, 1, 1000)
+        self.pvs['ACQStatus-Sts'].value = 2
+        acq_spl_pre = self.pvs['ACQSamplesPre-RB']
+        acq_spl_pos = self.pvs['ACQSamplesPost-RB']
+        acq_shots = self.pvs['ACQShots-RB']
+        nr = (acq_spl_pre + acq_spl_pos) * acq_shots
+        t = _np.linspace(0, 1, nr)
 
         t0 = _np.random.rand()
         sig = _np.random.rand()*3e-2
         amp = _np.random.rand()*1e-3
-        posx = amp*_np.exp((t-t0)**2/2/sig**2)
+        posx = amp*_np.exp(-(t-t0)**2/2/sig**2)
 
         sig = _np.random.rand()*3e-2
         amp = _np.random.rand()*1e-3
-        posy = amp*_np.exp((t-t0)**2/2/sig**2)
+        posy = amp*_np.exp(-(t-t0)**2/2/sig**2)
 
         sig = _np.random.rand()*3e-2
         amp = _np.random.rand()*1e-3
-        posq = amp*_np.exp((t-t0)**2/2/sig**2)
+        posq = amp*_np.exp(-(t-t0)**2/2/sig**2)
 
-        poss = _np.ones(1000)
+        poss = _np.ones(nr)
         M = self.M
         Amps = _np.dot(M, _np.array([posx, posy, posq, poss]))
-        self.pvs['SglPosX-Mon'].value = posx.mean()
-        self.pvs['SglPosY-Mon'].value = posy.mean()
-        self.pvs['SglPosQ-Mon'].value = posq.mean()
-        self.pvs['SglPosS-Mon'].value = poss.mean()
-        self.pvs['SglAmpA-Mon'].value = Amps[0, :].mean()
-        self.pvs['SglAmpB-Mon'].value = Amps[1, :].mean()
-        self.pvs['SglAmpC-Mon'].value = Amps[2, :].mean()
-        self.pvs['SglAmpD-Mon'].value = Amps[3, :].mean()
-        self.pvs['SglAntA-Mon'].value = Amps[0, :]
-        self.pvs['SglAntB-Mon'].value = Amps[1, :]
-        self.pvs['SglAntC-Mon'].value = Amps[2, :]
-        self.pvs['SglAntD-Mon'].value = Amps[3, :]
-        self.pvs['SglState-Sts'].value = 0
+        self.pvs['SPPosX-Mon'].value = posx.mean()
+        self.pvs['SPPosY-Mon'].value = posy.mean()
+        self.pvs['SPPosQ-Mon'].value = posq.mean()
+        self.pvs['SPSum-Mon'].value = poss.mean()
+        self.pvs['SPAmplA-Mon'].value = Amps[0, :].mean()
+        self.pvs['SPAmplB-Mon'].value = Amps[1, :].mean()
+        self.pvs['SPAmplC-Mon'].value = Amps[2, :].mean()
+        self.pvs['SPAmplD-Mon'].value = Amps[3, :].mean()
+        self.pvs['SP_AArrayData-Mon'].value = Amps[0, :]
+        self.pvs['SP_BArrayData-Mon'].value = Amps[1, :]
+        self.pvs['SP_CArrayData-Mon'].value = Amps[2, :]
+        self.pvs['SP_DArrayData-Mon'].value = Amps[3, :]
+        self.pvs['ACQStatus-Sts'].value = 0
