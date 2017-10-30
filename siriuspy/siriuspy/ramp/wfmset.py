@@ -595,7 +595,8 @@ class WfmSet:
             if mag.dipole_name is not None and mag.family_name is None:
                 # update all families
                 strength = self._wfms_strength[name]
-                self._update_family_wfm(name, wfm_strength=strength)
+                self._update_family_wfm(
+                    name, wfm_strength=strength, wfm_current=wfm_current)
 
     def _update_family_wfm(self,
                            maname,
@@ -620,7 +621,8 @@ class WfmSet:
             if mag.dipole_name is not None and mag.family_name is not None:
                 # update all trims
                 strength = self._wfms_strength[name]
-                self._update_trim_wfm(name, wfm_strength=strength)
+                self._update_trim_wfm(
+                    name, wfm_strength=strength, wfm_current=wfm_current)
 
     def _update_trim_wfm(self,
                          maname,

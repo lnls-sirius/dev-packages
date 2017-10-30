@@ -192,6 +192,7 @@ class PowerSupply(_PSData):
     @wfmdata_sp.setter
     def wfmdata_sp(self, value):
         if self._ctrlmode_mon != _et.idx.Remote: return
+        value = _np.array(value)
         if (value != self.wfmdata_rb).any():
             self._wfmdata_sp = _np.array(value)
             self._set_wfmdata_sp(value)
