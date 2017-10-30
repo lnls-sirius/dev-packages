@@ -1,12 +1,15 @@
 # Tune Correction Response Matrix for Booster
 #
-#  | DeltaTuneX |    | m11  m12 |   | KL BO-Fam:MA-QF |
-#  |            | =  |          | * |                 |
-#  | DeltaTuneY |    | m21  m22 |   | KL BO-Fam:MA-QD |
+# | DeltaTuneX |   | m11  m12 |   | KL BO-Fam:MA-QF |
+# |            | = |          | * |                 |
+# | DeltaTuneY |   | m21  m22 |   | KL BO-Fam:MA-QD |
 #
-# Correction Matrix of Additional Method
-#         m11   m12
-#         m21   m22
+# Correction Matrix
+#   m11   m12
+#   m21   m22
 
-   92.6700   4.1235
+
+   92.67   4.1235
   -21.1067  -38.7467
+
+

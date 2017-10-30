@@ -270,8 +270,9 @@ class App:
                 self.driver.setParam('CorrMat-RB', value)
 
                 # Update matrix used
+                corrmat = value
                 if _pvs._ACC == 'SI':
-                    corrmat = self._calc_matrix(value)
+                    corrmat = self._calc_matrix(corrmat)
                 self._mat, _ = self._opticscorr.set_corr_mat(2, corrmat)
                 self._calc_deltakl()
                 self.driver.updatePVs()
