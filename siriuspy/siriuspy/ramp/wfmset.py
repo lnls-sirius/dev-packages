@@ -8,19 +8,32 @@ from siriuspy.ramp.optics import _nominal_intkl
 from siriuspy.magnet import util as _mutil
 
 
-class WfmParam:
+class Waveform:
     """Waveform parameter class."""
 
     def __init__(self,
                  vL=None,
                  vR=None,
                  i05=None,
-                 v05=None):
+                 v05=None,
+                 waveform=None):
         """Init method."""
         self._set_params(vL, vR, i05, v05)
-        self._set_coeffs()
+        self._update_wfm_parms()
+        self._update_wfm_bumps(waveform)
 
     # --- properties ---
+
+    @property
+    def waveform(self):
+        """Return waveform."""
+        if self._deprecated:
+            self._update_wfm_parms()
+        return self._wfm_parms + self._wfm_bumps
+
+    @waveform.setter
+    def waveform(self, waveform):
+        self._update_wfm_bumps(waveform)
 
     @property
     def idx0(self):
@@ -99,120 +112,138 @@ class WfmParam:
         else:
             raise ValueError(('Index is inconsistent with labeled '
                               'region boundary points.'))
-        self._set_coeffs()
+        self._deprecated = True
 
     @idx1.setter
     def idx1(self, idx):
         """Set index of the second region boundary."""
         i = 1
-        if self.i[i-1] <= idx <= self._i[i+1]:
+        if self._i[i-1] <= idx <= self._i[i+1]:
             self._i[i] = idx
         else:
             raise ValueError(('Index is inconsistent with labeled '
                               'region boundary points.'))
-        self._set_coeffs()
+        self._deprecated = True
 
     @idx2.setter
     def idx2(self, idx):
         """Set index of the third region boundary."""
         i = 2
-        if self.i[i-1] <= idx <= self._i[i+1]:
+        if self._i[i-1] <= idx <= self._i[i+1]:
             self._i[i] = idx
         else:
             raise ValueError(('Index is inconsistent with labeled '
                               'region boundary points.'))
-        self._set_coeffs()
+        self._deprecated = True
 
     @idx3.setter
     def idx3(self, idx):
         """Set index of the fourth region boundary."""
         i = 3
-        if self.i[i-1] <= idx <= self._i[i+1]:
+        if self._i[i-1] <= idx <= self._i[i+1]:
             self._i[i] = idx
         else:
             raise ValueError(('Index is inconsistent with labeled '
                               'region boundary points.'))
-        self._set_coeffs()
+        self._deprecated = True
 
     @idx4.setter
     def idx4(self, idx):
         """Set index of the fifth region boundary."""
         i = 4
-        if self.i[i-1] <= idx <= self._i[i+1]:
+        if self._i[i-1] <= idx <= self._i[i+1]:
             self._i[i] = idx
         else:
             raise ValueError(('Index is inconsistent with labeled '
                               'region boundary points.'))
-        self._set_coeffs()
+        self._deprecated = True
 
     @idx5.setter
     def idx5(self, idx):
         """Set index of the sixth region boundary."""
         i = 5
-        if self.i[i-1] <= idx < _default_wfmsize:
+        if self._i[i-1] <= idx < _default_wfmsize:
             self._i[i] = idx
         else:
             raise ValueError(('Index is inconsistent with labeled '
                               'region boundary points.'))
-        self._set_coeffs()
+        self._deprecated = True
 
     @valueL.setter
     def valueL(self, value):
         """Set waveform value at the left-end boundary."""
         self._vL = value
-        self._set_coeffs()
+        self._deprecated = True
 
     @value0.setter
     def value0(self, value):
         """Set waveform value at the first region boundary."""
         self._v[0] = value
-        self._set_coeffs()
+        self._deprecated = True
 
     @value1.setter
     def value1(self, value):
         """Set waveform value at the second region boundary."""
         self._v[1] = value
-        self._set_coeffs()
+        self._deprecated = True
 
     @value23.setter
     def value23(self, value):
         """Set waveform value at the third and fourth region boundaries."""
         self._v[2] = value
         self._v[3] = value
-        self._set_coeffs()
+        self._deprecated = True
 
     @value4.setter
     def value4(self, value):
         """Set waveform value at the fifth region boundary."""
         self._v[4] = value
-        self._set_coeffs()
+        self._deprecated = True
 
     @value5.setter
     def value5(self, value):
         """Set waveform value at the sixth region boundary."""
         self._v[5] = value
-        self._set_coeffs()
+        self._deprecated = True
 
-    # --- public methods ---
-
-    def eval(self, idx=None):
-        """Evaluate waveform at idx values or at index values."""
-        if idx is None:
-            # return waveform at index value
-            return self._eval_index()
-        # return waveform as idx values
-        try:
-            if type(idx) == _np.ndarray:
-                v = _np.zeros(idx.shape)
-            else:
-                v = [0.0] * len(idx)
-            for i in range(len(idx)):
-                v[i] = self._eval_point(idx[i])
-            return v
-        except TypeError:
-            return self._eval_point(idx)
+    # # --- public methods ---
+    #
+    # def eval(self, idx=None):
+    #     """Evaluate parameterized waveform at idx values or at index
+    #     values.
+    #     """
+    #     if self._deprecated:
+    #         self._set_coeffs()
+    #         self._deprecated = False
+    #     if idx is None:
+    #         # return waveform at index value
+    #         return self._eval_index()
+    #     # return waveform as idx values
+    #     try:
+    #         if type(idx) == _np.ndarray:
+    #             v = _np.zeros(idx.shape)
+    #         else:
+    #             v = [0.0] * len(idx)
+    #         for i in range(len(idx)):
+    #             v[i] = self._eval_point(idx[i])
+    #         return v
+    #     except TypeError:
+    #         return self._eval_point(idx)
 
     # --- private methods ---
+
+    def _update_wfm_parms(self):
+        self._set_coeffs()
+        self._wfm_parms = self._eval_index()
+        self._deprecated = False
+
+    def _update_wfm_bumps(self, waveform):
+        if waveform is None:
+            self._wfm_bumps = _np.zeros((_default_wfmsize, ))
+        else:
+            if self._deprecated:
+                self._update_wfm_parms()
+            self._wfm_bumps = _np.array(waveform) - self._wfm_parms
 
     def _set_params(self, vL, vR, i05, v05):
         self._vL = 0.01 if vL is None else vL
@@ -300,29 +331,29 @@ class WfmParam:
         idx = _np.array(tuple(range(self._i[5], _default_wfmsize)))
         dv = calcdv(idx, i0, coeffs)
         wfm.extend(v0 + dv)
-        return wfm
+        return _np.array(wfm)
 
-    def _eval_point(self, idx):
-        if idx < 0 or idx >= _default_wfmsize:
-            raise ValueError('idx value out of range: {}!'.format(idx))
-        coeffs, v0 = None, None
-        if idx < self._i[0]:
-            coeffs = self._coeffs[0]
-            i0, v0 = 0, self._vL
-        elif idx > self._i[5]:
-            coeffs = self._coeffs[6]
-            i0, v0 = self._i[5], self._v[5]
-        else:
-            for i in range(len(self._i)):
-                if idx <= self._i[i]:
-                    i0, v0 = self._i[i-1], self._v[i-1]
-                    coeffs = self._coeffs[i]
-                    break
-        dv = \
-            coeffs[0] * (idx - i0) + \
-            coeffs[1] * (idx - i0)**2 + \
-            coeffs[2] * (idx - i0)**3
-        return v0 + dv
+    # def _eval_point(self, idx):
+    #     if idx < 0 or idx >= _default_wfmsize:
+    #         raise ValueError('idx value out of range: {}!'.format(idx))
+    #     coeffs, v0 = None, None
+    #     if idx < self._i[0]:
+    #         coeffs = self._coeffs[0]
+    #         i0, v0 = 0, self._vL
+    #     elif idx > self._i[5]:
+    #         coeffs = self._coeffs[6]
+    #         i0, v0 = self._i[5], self._v[5]
+    #     else:
+    #         for i in range(len(self._i)):
+    #             if idx <= self._i[i]:
+    #                 i0, v0 = self._i[i-1], self._v[i-1]
+    #                 coeffs = self._coeffs[i]
+    #                 break
+    #     dv = \
+    #         coeffs[0] * (idx - i0) + \
+    #         coeffs[1] * (idx - i0)**2 + \
+    #         coeffs[2] * (idx - i0)**3
+    #     return v0 + dv
 
 
 class WfmSet:
