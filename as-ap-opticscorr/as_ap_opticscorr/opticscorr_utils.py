@@ -219,7 +219,7 @@ def save_corrparams(filename, corrmat, num_fam,
                       "#\n"
                       "# Nominals KLs\n"
                       "# [quadrupole_order"
-                      "   QFA  QFB  QFP  QDA  QDB1  QDB2  QDP1  QDP2]\n\n\n)")
+                      "   QFA  QFB  QFP  QDA  QDB1  QDB2  QDP1  QDP2]\n\n\n")
 
             if nomintstren is not None:
                 for sl in range(len(nomintstren)):
