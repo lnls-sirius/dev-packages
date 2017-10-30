@@ -98,7 +98,7 @@ class App:
             self._driver.setParam(reason, value)
             self._driver.updatePVs()
         except AttributeError:
-            print('attr error', ps_propty)
+            print('AttributeError: ', reason, value)
 
         t1 = _time.time()
         ttime += t1-t0
