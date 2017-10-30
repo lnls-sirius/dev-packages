@@ -13,6 +13,7 @@ from siriuspy.util import get_timestamp as _get_timestamp
 from siriuspy import envars as _envars
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.csdevice.pwrsupply import default_wfmlabels as _default_wfmlabels
+from siriuspy.csdevice.pwrsupply import default_wfmsize as _default_wfmsize
 from siriuspy.csdevice.pwrsupply import default_intlklabels as _default_intlklabels
 from .waveform import PSWaveForm as _PSWaveForm
 from .cycgen import PSCycGenerator as _PSCycGenerator
@@ -937,9 +938,15 @@ class ControllerSim(Controller):
         else:
             fname = _default_wfmlabels[slot]
         try:
-            return _PSWaveForm(label= _default_wfmlabels[slot],filename=fname+'.txt')
-        except FileNotFoundError:
-            wfm = _PSWaveForm.wfm_constant(label= _default_wfmlabels[slot],filename=fname+'.txt')
+            pswfm = _PSWaveForm(
+                label=_default_wfmlabels[slot],
+                filename=fname + '.txt')
+            if pswfm.nr_points != _default_wfmsize:
+                raise ValueError
+            return pswfm
+        except (FileNotFoundError, ValueError):
+            wfm = _PSWaveForm.wfm_constant(
+                label=_default_wfmlabels[slot], filename=fname + '.txt')
             wfm.save_to_file(filename=fname+'.txt')
             return wfm
 
