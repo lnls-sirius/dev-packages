@@ -32,11 +32,10 @@ class OpticsCorr:
         self.nomchrom = nomchrom
         return (list(nomchrom.flatten()))
 
-    def set_corr_mat(self, optics, num_fam, corrmat):
+    def set_corr_mat(self, num_fam, corrmat):
         """Set Correction Matrix and calculate Inverse Matrix.
 
         Receive:
-        optics      -- Optics parameter to handle, can be 'tune' or 'chrom'
         num_fam     -- Number of families used in the correction
         corrmat     -- List correspondent to correction matrix
 
@@ -105,6 +104,27 @@ class OpticsCorr:
 
         return list(sfam_deltasl.flatten())
 
+    def estimate_current_deltatune(self, corrmat, current_deltakl):
+        """Calculate a estimative to current delta tune.
+
+        Based on the difference between the values of KL_RB pvs and the
+        reference KL values received on current_deltakl.
+
+        Receive:
+        current_deltakl -- Flat list containing current delta KL
+
+        Return:
+        deltatune       -- Flat list containing an estimative to current
+                           delta tune
+        """
+        corrmat = _np.array(corrmat)
+        corrmat = _np.reshape(corrmat, [2, len(current_deltakl)])
+
+        current_deltakl = _np.array([current_deltakl]).transpose()
+
+        deltatune = _np.dot(corrmat, current_deltakl)
+        return list(deltatune.flatten())
+
     def estimate_current_chrom(self, current_deltasl):
         """Calculate a estimative to current chromaticity.
 
@@ -144,15 +164,16 @@ def read_corrparams(filename):
     return data, parameters
 
 
-def save_corrparams(filename, corrmat, num_fam, nomchrom='', nomsl=''):
+def save_corrparams(filename, corrmat, num_fam,
+                    nomintstren=None, nomchrom=None):
     """Generate Soft IOC correction parameters local files on "filename".
 
     Receive:
-    filename -- complete name of the file
-    corrmat  -- correction matrix on flat list format
-    num_fam  -- number of families used on correction
-    nomchrom -- nominal chromaticity on flat list format
-    nomsl    -- nominal sextupoles integrated strengths on flat list format
+    filename    -- complete name of the file
+    corrmat     -- correction matrix on flat list format
+    num_fam     -- number of families used on correction
+    nomintstren -- nominal integrated strengths on flat list format
+    nomchrom    -- nominal chromaticity on flat list format
 
     Return:
     text     -- the text that will be written on file
@@ -164,7 +185,7 @@ def save_corrparams(filename, corrmat, num_fam, nomchrom='', nomsl=''):
     header = ''
     NominalChrom = ''
     m = ''
-    NominalsSLs = ''
+    NominalIntStren = ''
 
     if opticsparam == 'tunecorr':
         if acc == 'bo':
@@ -178,15 +199,38 @@ def save_corrparams(filename, corrmat, num_fam, nomchrom='', nomsl=''):
                       "#   m21   m22\n\n\n")
 
         elif acc == 'si':
-            header = ("# Tune Correction Response Matrix for Storage Ring\n#\n"
-                      "# | DeltaTuneX |   | m11  m12 |   | f_QF All SI QF |\n"
-                      "# |            | = |          | * |                |\n"
-                      "# | DeltaTuneY |   | m21  m22 |   | f_QD All SI QD |\n"
+            header = ("# Tune Correction Parameters for Storage Ring\n#\n"
+                      "#  | DeltaTuneX |    | m11  m12...m18 |"
+                      "   | f SI QFA  |\n"
+                      "#  |            | =  |                |"
+                      " * |     .     |\n"
+                      "#  | DeltaTuneY |    | m21  m22...m28 |"
+                      "   |     .     |\n"
+                      "#                                      "
+                      "   |     .     |\n"
+                      "#                                      "
+                      "   | f SI QDP2 |\n"
                       "# Where (1+f)KL = KL + DeltaKL.\n"
                       "#\n"
-                      "# Correction Matrix of Proportional and Group Method\n"
-                      "#   m11   m12\n"
-                      "#   m21   m22\n\n\n")
+                      "# Correction Matrix of Svd and Additional Method "
+                      "(obtained by matlab lnls_correct_tunes routine)\n"
+                      "#   m11   m12...m18\n"
+                      "#   m21   m22...m28\n"
+                      "#\n"
+                      "# Nominals KLs\n"
+                      "# [quadrupole_order"
+                      "   QFA  QFB  QFP  QDA  QDB1  QDB2  QDP1  QDP2]\n\n\n)")
+
+            if nomintstren is not None:
+                for sl in range(len(nomintstren)):
+                    if nomintstren[sl] < 0:
+                        space = '  '
+                    else:
+                        space = '   '
+                    NominalIntStren += space + str(nomintstren[sl])
+                NominalIntStren += '\n\n'
+            else:
+                return False
 
     elif opticsparam == 'chromcorr':
         if acc == 'bo':
@@ -239,16 +283,22 @@ def save_corrparams(filename, corrmat, num_fam, nomchrom='', nomsl=''):
                       "  SFB2  SDB1  SDB2  SDB3  SFP1  SFP2  SDP1  SDP2  SDP3]"
                       "\n\n\n")
 
-        NominalChrom = ('   ' + str(nomchrom[0]) +
-                        '   ' + str(nomchrom[1]) + '\n\n\n')
+        if nomchrom is not None:
+            NominalChrom = ('   ' + str(nomchrom[0]) +
+                            '   ' + str(nomchrom[1]) + '\n\n\n')
+        else:
+            return False
 
-        for sl in range(len(nomsl)):
-            if nomsl[sl] < 0:
-                space = '  '
-            else:
-                space = '   '
-            NominalsSLs += space + str(nomsl[sl])
-        NominalsSLs += '\n\n'
+        if nomintstren is not None:
+            for sl in range(len(nomintstren)):
+                if nomintstren[sl] < 0:
+                    space = '  '
+                else:
+                    space = '   '
+                NominalIntStren += space + str(nomintstren[sl])
+            NominalIntStren += '\n\n'
+        else:
+            return False
 
     index = 0
     for row in range(2):
@@ -262,7 +312,7 @@ def save_corrparams(filename, corrmat, num_fam, nomchrom='', nomsl=''):
         m += '\n'
     m += '\n\n'
     m
-    text = header + NominalChrom + m + NominalsSLs
+    text = header + NominalChrom + m + NominalIntStren
 
     f = open(filename, 'w')
     f.write(text)
