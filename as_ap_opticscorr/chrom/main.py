@@ -64,9 +64,10 @@ class App:
         self._opticscorr = OpticsCorr()
 
         corrmat, nomchrom, nomsl = self._get_corrparams()
-        self._sfam_slrefs = nomsl
-        self.driver.setParam('NominalSL-SP', self._sfam_slrefs)
-        self.driver.setParam('NominalSL-RB', self._sfam_slrefs)
+
+        self._sfam_nomsl = nomsl
+        self.driver.setParam('NominalSL-SP', self._sfam_nomsl)
+        self.driver.setParam('NominalSL-RB', self._sfam_nomsl)
 
         if _pvs._ACC.lower() == 'si':
             self._corr_method = 0
@@ -74,8 +75,8 @@ class App:
         else:
             self._corr_method = 1
 
-        self._mat, invmat = self._opticscorr.set_corr_mat(
-            'chrom', len(_pvs._SFAMS), corrmat)
+        self._mat, _ = self._opticscorr.set_corr_mat(
+            len(_pvs._SFAMS), corrmat)
         self.driver.setParam('CorrMat-SP', self._mat)
         self.driver.setParam('CorrMat-RB', self._mat)
 
@@ -127,10 +128,14 @@ class App:
 
         for fam in _pvs._SFAMS:
             fam_index = _pvs._SFAMS.index(fam)
+            self._sfam_check_connection[fam_index] = (
+                self._sfam_sl_sp_pvs[fam].connected)
+
             if self._sfam_sl_sp_pvs[fam].value is not None:
                 self._lastcalcd_sl[fam_index] = self._sfam_sl_sp_pvs[fam].value
             self.driver.setParam('LastCalcd' + fam + 'SL-Mon',
                                  self._lastcalcd_sl[fam_index])
+
             self._sfam_sl_rb_pvs[fam].add_callback(self._callback_sfam_sl_rb)
 
             self._sfam_pwrstate_sts_pvs[fam].add_callback(
@@ -149,13 +154,13 @@ class App:
                 self._sfam_ctrlmode_mon_pvs[fam].value)
 
         # Initialize chromaticity values
-        self._chromx_sp, self._chromy_sp = self._estim_current_chrom('sp')
-        self.driver.setParam('ChromX-SP', self._chromx_sp)
-        self.driver.setParam('ChromY-SP', self._chromy_sp)
+        self._chromx, self._chromy = self._estim_current_chrom('sp')
+        self.driver.setParam('ChromX-SP', self._chromx)
+        self.driver.setParam('ChromY-SP', self._chromy)
 
-        self._chromx_rb, self._chromy_rb = self._estim_current_chrom('rb')
-        self.driver.setParam('ChromX-RB', self._chromx_rb)
-        self.driver.setParam('ChromY-RB', self._chromy_rb)
+        chromx_rb, chromy_rb = self._estim_current_chrom('rb')
+        self.driver.setParam('ChromX-RB', chromx_rb)
+        self.driver.setParam('ChromY-RB', chromy_rb)
 
         # Connect to Timing
         self._timing_sexts_state_sel = _epics.PV(
@@ -192,25 +197,25 @@ class App:
         self._timing_sexts_duration_rb.add_callback(
             self._callback_timing_state)
 
-        self._timing_evg_chrommode_sel = _epics.PV(
+        self._timing_evg_chromsmode_sel = _epics.PV(
             _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'ChromsMode-Sel',
             connection_timeout=0.05)
-        self._timing_evg_chrommode_sts = _epics.PV(
+        self._timing_evg_chromsmode_sts = _epics.PV(
             _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'ChromsMode-Sts',
             connection_timeout=0.05)
-        self._timing_evg_chrommode_sts.add_callback(
+        self._timing_evg_chromsmode_sts.add_callback(
             self._callback_timing_state)
 
-        self._timing_evg_chromdelay_sp = _epics.PV(
+        self._timing_evg_chromsdelay_sp = _epics.PV(
             _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'ChromsDelay-SP',
             connection_timeout=0.05)
-        self._timing_evg_chromdelay_rb = _epics.PV(
+        self._timing_evg_chromsdelay_rb = _epics.PV(
             _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'ChromsDelay-RB',
             connection_timeout=0.05)
-        self._timing_evg_chromdelay_rb.add_callback(
+        self._timing_evg_chromsdelay_rb.add_callback(
             self._callback_timing_state)
 
-        self._timing_evg_chromexttrig_cmd = _epics.PV(
+        self._timing_evg_chromsexttrig_cmd = _epics.PV(
             _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'ChromsExtTrig-Cmd',
             connection_timeout=0.05)
 
@@ -252,13 +257,13 @@ class App:
         """Write value to reason and let callback update PV database."""
         status = False
         if reason == 'ChromX-SP':
-            self._chromx_sp = value
+            self._chromx = value
             self._calc_sl()
             self.driver.updatePVs()
             status = True
 
         elif reason == 'ChromY-SP':
-            self._chromy_sp = value
+            self._chromy = value
             self._calc_sl()
             self.driver.updatePVs()
             status = True
@@ -272,62 +277,64 @@ class App:
 
         elif reason == 'CorrMat-SP':
             # Update local file
-            save_corrparams(
+            done = save_corrparams(
                 '/home/fac_files/lnls-sirius/machine-applications'
                 '/as-ap-opticscorr/as_ap_opticscorr/chrom/' +
                 _pvs._ACC.lower() + '-chromcorr.txt',
-                value, len(_pvs._SFAMS), self._nomchrom, self._sfam_slrefs)
-            self.driver.setParam('CorrMat-RB', value)
+                value, len(_pvs._SFAMS), self._sfam_nomsl, self._nomchrom)
+            if done:
+                self.driver.setParam('CorrMat-RB', value)
 
-            # Update matrix used
-            corrmat = value
-            if self._corr_method == 0:
-                corrmat = self._calc_prop_matrix(corrmat)
-            self._mat, invmat = self._opticscorr.set_corr_mat(
-                'chrom', len(_pvs._SFAMS), corrmat)
-            self._calc_sl()
-            self.driver.updatePVs()
-            status = True
+                # Update matrix used
+                corrmat = value
+                if self._corr_method == 0:
+                    corrmat = self._calc_prop_matrix(corrmat)
+                self._mat, _ = self._opticscorr.set_corr_mat(
+                    len(_pvs._SFAMS), corrmat)
+                self._calc_sl()
+                self.driver.updatePVs()
+                status = True
 
         elif reason == 'NominalChrom-SP':
             # Update local file
             corrmat, _, _ = self._get_corrparams()
-            save_corrparams(
+            done = save_corrparams(
                 '/home/fac_files/lnls-sirius/machine-applications'
                 '/as-ap-opticscorr/as_ap_opticscorr/chrom/' +
                 _pvs._ACC.lower() + '-chromcorr.txt',
-                corrmat, len(_pvs._SFAMS), value, self._sfam_slrefs)
-            self.driver.setParam('NominalChrom-RB', value)
-            self.driver.updatePVs()
+                corrmat, len(_pvs._SFAMS), self._sfam_nomsl, value)
+            if done:
+                self.driver.setParam('NominalChrom-RB', value)
+                self.driver.updatePVs()
 
-            # Update nomchrom used
-            self._nomchrom = self._opticscorr.set_nomchrom(
-                value[0], value[1])
-            self._calc_sl()
-            self.driver.updatePVs()
-            status = True
+                # Update nomchrom used
+                self._nomchrom = self._opticscorr.set_nomchrom(
+                    value[0], value[1])
+                self._calc_sl()
+                self.driver.updatePVs()
+                status = True
 
         elif reason == 'NominalSL-SP':
-            corrmat, _, _ = self._get_corrparams()
             # Update local file
-            save_corrparams(
+            corrmat, _, _ = self._get_corrparams()
+            done = save_corrparams(
                 '/home/fac_files/lnls-sirius/machine-applications'
                 '/as-ap-opticscorr/as_ap_opticscorr/chrom/' +
                 _pvs._ACC.lower() + '-chromcorr.txt',
-                corrmat, len(_pvs._SFAMS), self._nomchrom, value)
-            self.driver.setParam('NominalSL-RB', value)
-            self.driver.updatePVs()
+                corrmat, len(_pvs._SFAMS), value, self._nomchrom)
+            if done:
+                self.driver.setParam('NominalSL-RB', value)
+                self.driver.updatePVs()
 
-            # Update nomsl and matrix used according to the corr. method
-            self._sfam_slrefs = value
-            if self._corr_method == 0:
-                corrmat, _, _ = self._get_corrparams()
-                corrmat = self._calc_prop_matrix(corrmat)
-                self._mat, invmat = self._opticscorr.set_corr_mat(
-                    'chrom', len(_pvs._SFAMS), corrmat)
-            self._calc_sl()
-            self.driver.updatePVs()
-            status = True
+                # Update nomsl and matrix used according to the corr. method
+                self._sfam_nomsl = value
+                if self._corr_method == 0:
+                    corrmat = self._calc_prop_matrix(corrmat)
+                    self._mat, _ = self._opticscorr.set_corr_mat(
+                        len(_pvs._SFAMS), corrmat)
+                self._calc_sl()
+                self.driver.updatePVs()
+                status = True
 
         elif reason == 'CorrMeth-Sel':
             if value != self._corr_method:
@@ -337,8 +344,8 @@ class App:
                 corrmat, _, _ = self._get_corrparams()
                 if value == 0:
                     corrmat = self._calc_prop_matrix(corrmat)
-                self._mat, invmat = self._opticscorr.set_corr_mat(
-                    'chrom', len(_pvs._SFAMS), corrmat)
+                self._mat, _ = self._opticscorr.set_corr_mat(
+                    len(_pvs._SFAMS), corrmat)
                 self._calc_sl()
                 self.driver.updatePVs()
                 status = True
@@ -401,23 +408,30 @@ class App:
             nomsl[fam_index] = float(m[3][fam_index])
         return chrom_corrmat, nomchrom, nomsl
 
+    def _calc_prop_matrix(self, corrmat):
+        corrmat = _np.array(corrmat)
+        corrmat = _np.reshape(corrmat, [2, len(_pvs._SFAMS)])
+        corrmat = corrmat*_np.array(self._sfam_nomsl)
+        corrmat = list(corrmat.flatten())
+        return corrmat
+
     def _calc_sl(self):
         if _pvs._ACC == 'SI' and self._corr_method == 0:
             lastcalcd_propfactor = self._opticscorr.calc_deltasl(
-                self._chromx_sp, self._chromy_sp)
+                self._chromx, self._chromy)
             for fam in _pvs._SFAMS:
                 fam_index = _pvs._SFAMS.index(fam)
                 self._lastcalcd_sl[fam_index] = (
-                    self._sfam_slrefs[fam_index] *
+                    self._sfam_nomsl[fam_index] *
                     (1+lastcalcd_propfactor[fam_index]))
         else:
             # if ACC=='BO' or (ACC=='SI' and corr_method==1)
             lastcalcd_deltasl = self._opticscorr.calc_deltasl(
-                self._chromx_sp, self._chromy_sp)
+                self._chromx, self._chromy)
             for fam in _pvs._SFAMS:
                 fam_index = _pvs._SFAMS.index(fam)
                 self._lastcalcd_sl[fam_index] = (
-                    self._sfam_slrefs[fam_index] +
+                    self._sfam_nomsl[fam_index] +
                     lastcalcd_deltasl[fam_index])
 
         self.driver.setParam('Log-Mon', 'Calculated SL')
@@ -429,9 +443,9 @@ class App:
         self.driver.updatePVs()
 
     def _apply_sl(self):
-        pvs = self._sfam_sl_sp_pvs
         if ((self._status == 0x00 and self._sync_corr == 1) or
                 (self._status == 0x10 and self._sync_corr == 0)):
+            pvs = self._sfam_sl_sp_pvs
             for fam in pvs:
                 fam_index = _pvs._SFAMS.index(fam)
                 pv = pvs[fam]
@@ -440,7 +454,7 @@ class App:
             self.driver.updatePVs()
 
             if self._sync_corr == 1:
-                self._timing_evg_chromexttrig_cmd.put(0)
+                self._timing_evg_chromsexttrig_cmd.put(0)
                 self.driver.setParam('Log-Mon', 'Generated trigger')
                 self.driver.updatePVs()
             return True
@@ -455,29 +469,24 @@ class App:
         elif pv_type == 'rb':
             pvs = self._sfam_sl_rb_pvs
 
-        sfam_sl = len(_pvs._SFAMS)*[0]
-        sfam_deltasl = len(_pvs._SFAMS)*[0]
         if ((not any(s == 0 for s in self._sfam_check_connection)) and
                 (not any(s == 0 for s in self._sfam_check_pwrstate_sts))):
+            sfam_deltasl = len(_pvs._SFAMS)*[0]
             for fam in _pvs._SFAMS:
                 fam_index = _pvs._SFAMS.index(fam)
                 pv = pvs[fam]
-                sfam_sl[fam_index] = pv.get()
-                sfam_deltasl[fam_index] = (
-                    sfam_sl[fam_index]-self._sfam_slrefs[fam_index])
-                if self._corr_method == 0:
+                sfam_sl = pv.get()
+                if (sfam_sl is None):
+                    return [0, 0]
+                else:
                     sfam_deltasl[fam_index] = (
-                        sfam_deltasl[fam_index]/self._sfam_slrefs[fam_index])
+                        sfam_sl-self._sfam_nomsl[fam_index])
+                    if self._corr_method == 0:
+                        sfam_deltasl[fam_index] = (sfam_deltasl[fam_index] /
+                                                   self._sfam_nomsl[fam_index])
             return self._opticscorr.estimate_current_chrom(sfam_deltasl)
         else:
             return [0, 0]
-
-    def _calc_prop_matrix(self, corrmat):
-        corrmat = _np.array(corrmat)
-        corrmat = _np.reshape(corrmat, [2, len(_pvs._SFAMS)])
-        corrmat = corrmat*_np.array(self._sfam_slrefs)
-        corrmat = list(corrmat.flatten())
-        return corrmat
 
     def _connection_callback_sfam_sl_pvs(self, pvname, conn, **kws):
         ps = pvname.split(_pvs._PREFIX_VACA)[1]
@@ -500,9 +509,9 @@ class App:
         self.driver.updatePVs()
 
     def _callback_sfam_sl_rb(self, **kws):
-        self._chromx_rb, self._chromy_rb = self._estim_current_chrom('rb')
-        self.driver.setParam('ChromX-RB', self._chromx_rb)
-        self.driver.setParam('ChromY-RB', self._chromy_rb)
+        chromx_rb, chromy_rb = self._estim_current_chrom('rb')
+        self.driver.setParam('ChromX-RB', chromx_rb)
+        self.driver.setParam('ChromY-RB', chromy_rb)
         self.driver.updatePVs()
 
     def _callback_sfam_pwrstate_sts(self, pvname, value, **kws):
@@ -605,20 +614,23 @@ class App:
         return True
 
     def _config_timing(self):
-        self._timing_sexts_state_sel.put(1)
-        self._timing_sexts_evgparam_sel.put(1)
-        self._timing_sexts_pulses_sp.put(1)
-        self._timing_sexts_duration_sp.put(0.15)
-        self._timing_evg_chrommode_sel.put(3)
-        self._timing_evg_chromdelay_sp.put(0)
-        _time.sleep(0.05)
-        if any(index == 0 for index in self._timing_check_config):
-            self.driver.setParam('Log-Mon',
-                                 'ERR:Timing configuration failed')
-            self.driver.updatePVs()
-            return False
-        else:
-            self.driver.setParam('Log-Mon',
-                                 'Configurated timing')
+        if not any(pv.connected is False for pv in [
+                self._timing_sexts_state_sel,
+                self._timing_sexts_evgparam_sel,
+                self._timing_sexts_pulses_sp,
+                self._timing_sexts_duration_sp,
+                self._timing_evg_chromsmode_sel,
+                self._timing_evg_chromsdelay_sp]):
+            self._timing_sexts_state_sel.put(1)
+            self._timing_sexts_evgparam_sel.put(1)
+            self._timing_sexts_pulses_sp.put(1)
+            self._timing_sexts_duration_sp.put(0.15)
+            self._timing_evg_chromsmode_sel.put(3)
+            self._timing_evg_chromsdelay_sp.put(0)
+            self.driver.setParam('Log-Mon', 'Sent configuration to timing')
             self.driver.updatePVs()
             return True
+        else:
+            self.driver.setParam('Log-Mon', 'ERR:Some pv is disconnected')
+            self.driver.updatePVs()
+            return False
