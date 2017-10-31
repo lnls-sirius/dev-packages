@@ -627,12 +627,23 @@ class App:
         return True
 
     def _config_timing(self):
-        self._timing_quads_state_sel.put(1)
-        self._timing_quads_evgparam_sel.put(1)
-        self._timing_quads_pulses_sp.put(1)
-        self._timing_quads_duration_sp.put(0.15)
-        self._timing_evg_tunesmode_sel.put(3)
-        self._timing_evg_tunesdelay_sp.put(0)
-        self.driver.setParam('Log-Mon', 'Sent configuration to timing')
-        self.driver.updatePVs()
-        return True
+        if not any(pv.connected is False for pv in [
+                              self._timing_quads_state_sel,
+                              self._timing_quads_evgparam_sel,
+                              self._timing_quads_pulses_sp,
+                              self._timing_quads_duration_sp,
+                              self._timing_evg_tunesmode_sel,
+                              self._timing_evg_tunesdelay_sp]):
+            self._timing_quads_state_sel.put(1)
+            self._timing_quads_evgparam_sel.put(1)
+            self._timing_quads_pulses_sp.put(1)
+            self._timing_quads_duration_sp.put(0.15)
+            self._timing_evg_tunesmode_sel.put(3)
+            self._timing_evg_tunesdelay_sp.put(0)
+            self.driver.setParam('Log-Mon', 'Sent configuration to timing')
+            self.driver.updatePVs()
+            return True
+        else:
+            self.driver.setParam('Log-Mon', 'ERR:Some pv is disconnected')
+            self.driver.updatePVs()
+            return False
