@@ -1,11 +1,8 @@
+"""Controller classes."""
 
 import time as _time
-import uuid as _uuid
-import math as _math
-import copy as _copy
 import random as _random
 import numpy as _np
-import threading
 from abc import abstractmethod as _abstractmethod
 from abc import ABCMeta as _ABCMeta
 from epics import PV as _PV
@@ -14,14 +11,15 @@ from siriuspy import envars as _envars
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.csdevice.pwrsupply import default_wfmlabels as _default_wfmlabels
 from siriuspy.csdevice.pwrsupply import default_wfmsize as _default_wfmsize
-from siriuspy.csdevice.pwrsupply import default_intlklabels as _default_intlklabels
+from siriuspy.csdevice.pwrsupply import default_intlklabels as \
+    _default_intlklabels
 from .waveform import PSWaveForm as _PSWaveForm
 from .cycgen import PSCycGenerator as _PSCycGenerator
 
 
-_connection_timeout       = 0.9 # [seconds]
-_trigger_timeout_default  = 0.002 # [seconds]
-_trigger_interval_default = 0.490/_default_wfmsize # [seconds]
+_connection_timeout = 0.9  # [seconds]
+_trigger_timeout_default = 0.002  # [seconds]
+_trigger_interval_default = 0.490/_default_wfmsize  # [seconds]
 
 
 class Controller(metaclass=_ABCMeta):
@@ -1188,116 +1186,159 @@ class ControllerEpics(Controller):
         # eventually get this list from csdevice !!!
         self._pvs['PwrState-Sel'] = \
             _PV(pv + ':PwrState-Sel',
-            connection_timeout=self._connection_timeout)
+                connection_timeout=self._connection_timeout)
         self._pvs['PwrState-Sts'] = \
             _PV(pv + ':PwrState-Sts',
-            connection_timeout=self._connection_timeout)
+                connection_timeout=self._connection_timeout)
         self._pvs['OpMode-Sel'] = \
             _PV(pv + ':OpMode-Sel',
-            connection_timeout=self._connection_timeout)
+                connection_timeout=self._connection_timeout)
         self._pvs['OpMode-Sts'] = \
             _PV(pv + ':OpMode-Sts',
-            connection_timeout=self._connection_timeout)
+                connection_timeout=self._connection_timeout)
         self._pvs['Reset-Cmd'] = \
             _PV(pv + ':Reset-Cmd',
-            connection_timeout=self._connection_timeout)
+                connection_timeout=self._connection_timeout)
         self._pvs['Abort-Cmd'] = \
             _PV(pv + ':Abort-Cmd',
-            connection_timeout=self._connection_timeout)
+                connection_timeout=self._connection_timeout)
         self._pvs['Intlk-Mon'] = \
             _PV(pv + ':Intlk-Mon',
-            connection_timeout=self._connection_timeout)
-        self._pvs['IntlkLabels-Cte'] =
+                connection_timeout=self._connection_timeout)
+        self._pvs['IntlkLabels-Cte'] = \
             _PV(pv + ':IntlkLabels-Cte',
                 connection_timeout=self._connection_timeout)
         self._pvs['Current-SP'] = \
             _PV(pv + ':Current-SP',
                 connection_timeout=self._connection_timeout)
         self._pvs['Current-RB'] = \
-                _PV(pv + ':Current-RB',
+            _PV(pv + ':Current-RB',
                 connection_timeout=self._connection_timeout)
         self._pvs['CurrentRef-Mon'] = \
-                _PV(pv + ':CurrentRef-Mon',
+            _PV(pv + ':CurrentRef-Mon',
                 connection_timeout=self._connection_timeout)
         self._pvs['Current-Mon'] = \
-                _PV(pv + ':Current-Mon',
+            _PV(pv + ':Current-Mon',
                 connection_timeout=self._connection_timeout)
         self._pvs['WfmIndex-Mon'] = \
-                _PV(pv + ':WfmIndex-Mon',
+            _PV(pv + ':WfmIndex-Mon',
                 connection_timeout=self._connection_timeout)
         self._pvs['WfmLabels-Mon'] = \
-                _PV(pv + ':WfmLabels-Mon',
+            _PV(pv + ':WfmLabels-Mon',
                 connection_timeout=self._connection_timeout)
         self._pvs['WfmLabel-SP'] = \
-                _PV(pv + ':WfmLabel-SP',
+            _PV(pv + ':WfmLabel-SP',
                 connection_timeout=self._connection_timeout)
         self._pvs['WfmLabel-RB'] = \
-                _PV(pv + ':WfmLabel-RB',
+            _PV(pv + ':WfmLabel-RB',
                 connection_timeout=self._connection_timeout)
         self._pvs['WfmLoad-Sel'] = \
-                _PV(pv + ':WfmLoad-Sel',
+            _PV(pv + ':WfmLoad-Sel',
                 connection_timeout=self._connection_timeout)
         self._pvs['WfmLoad-Sts'] = \
-                _PV(pv + ':WfmLoad-Sts',
+            _PV(pv + ':WfmLoad-Sts',
                 connection_timeout=self._connection_timeout)
         self._pvs['WfmData-SP'] = \
-                _PV(pv + ':WfmData-SP',
+            _PV(pv + ':WfmData-SP',
                 connection_timeout=self._connection_timeout)
         self._pvs['WfmData-RB'] = \
-                _PV(pv + ':WfmData-RB',
+            _PV(pv + ':WfmData-RB',
                 connection_timeout=self._connection_timeout)
         self._pvs['WfmSave-Cmd'] = \
-                _PV(pv + ':WfmSave-Cmd',
+            _PV(pv + ':WfmSave-Cmd',
                 connection_timeout=self._connection_timeout)
 
-        self._pvs['PwrState-Sel'].wait_for_connection(timeout=self._connection_timeout)
-        self._pvs['PwrState-Sts'].wait_for_connection(timeout=self._connection_timeout)
-        self._pvs['OpMode-Sel'].wait_for_connection(timeout=self._connection_timeout)
-        self._pvs['OpMode-Sts'].wait_for_connection(timeout=self._connection_timeout)
-        self._pvs['Reset-Cmd'].wait_for_connection(timeout=self._connection_timeout)
-        self._pvs['Abort-Cmd'].wait_for_connection(timeout=self._connection_timeout)
-        self._pvs['Intlk-Mon'].wait_for_connection(timeout=self._connection_timeout)
-        self._pvs['IntlkLabels-Cte'].wait_for_connection(timeout=self._connection_timeout)
-        self._pvs['Current-SP'].wait_for_connection(timeout=self._connection_timeout)
-        self._pvs['Current-RB'].wait_for_connection(timeout=self._connection_timeout)
-        self._pvs['CurrentRef-Mon'].wait_for_connection(timeout=self._connection_timeout)
-        self._pvs['Current-Mon'].wait_for_connection(timeout=self._connection_timeout)
-        self._pvs['WfmIndex-Mon'].wait_for_connection(timeout=self._connection_timeout)
-        self._pvs['WfmLabels-Mon'].wait_for_connection(timeout=self._connection_timeout)
-        self._pvs['WfmLabel-SP'].wait_for_connection(timeout=self._connection_timeout)
-        self._pvs['WfmLabel-RB'].wait_for_connection(timeout=self._connection_timeout)
-        self._pvs['WfmLoad-Sel'].wait_for_connection(timeout=self._connection_timeout)
-        self._pvs['WfmLoad-Sts'].wait_for_connection(timeout=self._connection_timeout)
-        self._pvs['WfmData-SP'].wait_for_connection(timeout=self._connection_timeout)
-        self._pvs['WfmData-RB'].wait_for_connection(timeout=self._connection_timeout)
-        self._pvs['WfmSave-Cmd'].wait_for_connection(timeout=self._connection_timeout)
+        self._pvs['PwrState-Sel'].wait_for_connection(
+            timeout=self._connection_timeout)
+        self._pvs['PwrState-Sts'].wait_for_connection(
+            timeout=self._connection_timeout)
+        self._pvs['OpMode-Sel'].wait_for_connection(
+            timeout=self._connection_timeout)
+        self._pvs['OpMode-Sts'].wait_for_connection(
+            timeout=self._connection_timeout)
+        self._pvs['Reset-Cmd'].wait_for_connection(
+            timeout=self._connection_timeout)
+        self._pvs['Abort-Cmd'].wait_for_connection(
+            timeout=self._connection_timeout)
+        self._pvs['Intlk-Mon'].wait_for_connection(
+            timeout=self._connection_timeout)
+        self._pvs['IntlkLabels-Cte'].wait_for_connection(
+            timeout=self._connection_timeout)
+        self._pvs['Current-SP'].wait_for_connection(
+            timeout=self._connection_timeout)
+        self._pvs['Current-RB'].wait_for_connection(
+            timeout=self._connection_timeout)
+        self._pvs['CurrentRef-Mon'].wait_for_connection(
+            timeout=self._connection_timeout)
+        self._pvs['Current-Mon'].wait_for_connection(
+            timeout=self._connection_timeout)
+        self._pvs['WfmIndex-Mon'].wait_for_connection(
+            timeout=self._connection_timeout)
+        self._pvs['WfmLabels-Mon'].wait_for_connection(
+            timeout=self._connection_timeout)
+        self._pvs['WfmLabel-SP'].wait_for_connection(
+            timeout=self._connection_timeout)
+        self._pvs['WfmLabel-RB'].wait_for_connection(
+            timeout=self._connection_timeout)
+        self._pvs['WfmLoad-Sel'].wait_for_connection(
+            timeout=self._connection_timeout)
+        self._pvs['WfmLoad-Sts'].wait_for_connection(
+            timeout=self._connection_timeout)
+        self._pvs['WfmData-SP'].wait_for_connection(
+            timeout=self._connection_timeout)
+        self._pvs['WfmData-RB'].wait_for_connection(
+            timeout=self._connection_timeout)
+        self._pvs['WfmSave-Cmd'].wait_for_connection(
+            timeout=self._connection_timeout)
 
         # add callback
         index = None
-        index = self._pvs['PwrState-Sel'].add_callback(callback=self._mycallback, index=index)
-        index = self._pvs['PwrState-Sts'].add_callback(callback=self._mycallback, index=index)
-        index = self._pvs['OpMode-Sel'].add_callback(callback=self._mycallback, index=index)
-        index = self._pvs['OpMode-Sts'].add_callback(callback=self._mycallback, index=index)
-        index = self._pvs['Reset-Cmd'].add_callback(callback=self._mycallback, index=index)
-        index = self._pvs['Abort-Cmd'].add_callback(callback=self._mycallback, index=index)
-        index = self._pvs['Intlk-Mon'].add_callback(callback=self._mycallback, index=index)
-        index = self._pvs['IntlkLabels-Cte'].add_callback(callback=self._mycallback, index=index)
-        index = self._pvs['Current-SP'].add_callback(callback=self._mycallback, index=index)
-        index = self._pvs['Current-RB'].add_callback(callback=self._mycallback, index=index)
-        index = self._pvs['CurrentRef-Mon'].add_callback(callback=self._mycallback, index=index)
-        index = self._pvs['Current-Mon'].add_callback(callback=self._mycallback, index=index)
-        index = self._pvs['WfmIndex-Mon'].add_callback(callback=self._mycallback, index=index)
-        index = self._pvs['WfmLabels-Mon'].add_callback(callback=self._mycallback, index=index)
-        index = self._pvs['WfmLabel-SP'].add_callback(callback=self._mycallback, index=index)
-        index = self._pvs['WfmLabel-RB'].add_callback(callback=self._mycallback, index=index)
-        index = self._pvs['WfmLoad-Sel'].add_callback(callback=self._mycallback, index=index)
-        index = self._pvs['WfmLoad-Sts'].add_callback(callback=self._mycallback, index=index)
-        index = self._pvs['WfmData-SP'].add_callback(callback=self._mycallback, index=index)
-        index = self._pvs['WfmData-RB'].add_callback(callback=self._mycallback, index=index)
-        index = self._pvs['WfmSave-Cmd'].add_callback(callback=self._mycallback, index=index)
+        index = self._pvs['PwrState-Sel'].add_callback(
+            callback=self._mycallback, index=index)
+        index = self._pvs['PwrState-Sts'].add_callback(
+            callback=self._mycallback, index=index)
+        index = self._pvs['OpMode-Sel'].add_callback(
+            callback=self._mycallback, index=index)
+        index = self._pvs['OpMode-Sts'].add_callback(
+            callback=self._mycallback, index=index)
+        index = self._pvs['Reset-Cmd'].add_callback(
+            callback=self._mycallback, index=index)
+        index = self._pvs['Abort-Cmd'].add_callback(
+            callback=self._mycallback, index=index)
+        index = self._pvs['Intlk-Mon'].add_callback(
+            callback=self._mycallback, index=index)
+        index = self._pvs['IntlkLabels-Cte'].add_callback(
+            callback=self._mycallback, index=index)
+        index = self._pvs['Current-SP'].add_callback(
+            callback=self._mycallback, index=index)
+        index = self._pvs['Current-RB'].add_callback(
+            callback=self._mycallback, index=index)
+        index = self._pvs['CurrentRef-Mon'].add_callback(
+            callback=self._mycallback, index=index)
+        index = self._pvs['Current-Mon'].add_callback(
+            callback=self._mycallback, index=index)
+        index = self._pvs['WfmIndex-Mon'].add_callback(
+            callback=self._mycallback, index=index)
+        index = self._pvs['WfmLabels-Mon'].add_callback(
+            callback=self._mycallback, index=index)
+        index = self._pvs['WfmLabel-SP'].add_callback(
+            callback=self._mycallback, index=index)
+        index = self._pvs['WfmLabel-RB'].add_callback(
+            callback=self._mycallback, index=index)
+        index = self._pvs['WfmLoad-Sel'].add_callback(
+            callback=self._mycallback, index=index)
+        index = self._pvs['WfmLoad-Sts'].add_callback(
+            callback=self._mycallback, index=index)
+        index = self._pvs['WfmData-SP'].add_callback(
+            callback=self._mycallback, index=index)
+        index = self._pvs['WfmData-RB'].add_callback(
+            callback=self._mycallback, index=index)
+        index = self._pvs['WfmSave-Cmd'].add_callback(
+            callback=self._mycallback, index=index)
 
     def __del__(self):
-        for index,pv in self._pvs.items():
+        """Del method."""
+        for index, pv in self._pvs.items():
             pv.remove_callback(index=index)
         if hasattr(super(), '__del__'):
             super().__del__()
