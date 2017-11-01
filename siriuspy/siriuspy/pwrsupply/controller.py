@@ -1,6 +1,7 @@
 """Controller classes."""
 
 import time as _time
+import uuid as _uuid
 import random as _random
 import numpy as _np
 from abc import abstractmethod as _abstractmethod
