@@ -269,8 +269,8 @@ class App:
             status = True
 
         elif reason == 'ApplySL-Cmd':
-            status = self._apply_sl()
-            if status:
+            done = self._apply_sl()
+            if done:
                 self._apply_sl_cmd_count += 1
                 self.driver.setParam('ApplySL-Cmd', self._apply_sl_cmd_count)
                 self.driver.updatePVs()
@@ -368,16 +368,16 @@ class App:
                 status = True
 
         elif reason == 'ConfigPS-Cmd':
-            status = self._config_sfam_ps()
-            if status:
+            done = self._config_sfam_ps()
+            if done:
                 self._config_sfam_ps_cmd_count += 1
                 self.driver.setParam('ConfigPS-Cmd',
                                      self._config_sfam_ps_cmd_count)
                 self.driver.updatePVs()
 
         elif reason == 'ConfigTiming-Cmd':
-            status = self._config_timing()
-            if status:
+            done = self._config_timing()
+            if done:
                 self._config_timing_cmd_count += 1
                 self.driver.setParam('ConfigTiming-Cmd',
                                      self._config_timing_cmd_count)
