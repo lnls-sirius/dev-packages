@@ -96,10 +96,12 @@ class App:
         for fam in _pvs._QFAMS:
             self._qfam_kl_sp_pvs[fam] = _epics.PV(
                 _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':KL-SP',
-                connection_timeout=0.05)
+                connection_callback=self._connection_callback_qfam_kl_pvs)
+            self._qfam_kl_sp_pvs[fam].wait_for_connection(timeout=0.05)
             self._qfam_kl_rb_pvs[fam] = _epics.PV(
                 _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':KL-RB',
-                connection_timeout=0.05)
+                connection_callback=self._connection_callback_qfam_kl_pvs)
+            self._qfam_kl_rb_pvs[fam].wait_for_connection(timeout=0.05)
 
             self._qfam_pwrstate_sel_pvs[fam] = _epics.PV(
                 _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':PwrState-Sel',
@@ -335,16 +337,16 @@ class App:
                 status = True
 
         elif reason == 'ConfigPS-Cmd':
-            status = self._config_qfam_ps()
-            if status:
+            done = self._config_qfam_ps()
+            if done:
                 self._config_qfam_ps_cmd_count += 1
                 self.driver.setParam('ConfigPS-Cmd',
                                      self._config_qfam_ps_cmd_count)
                 self.driver.updatePVs()
 
         elif reason == 'ConfigTiming-Cmd':
-            status = self._config_timing()
-            if status:
+            done = self._config_timing()
+            if done:
                 self._config_timing_cmd_count += 1
                 self.driver.setParam('ConfigTiming-Cmd',
                                      self._config_timing_cmd_count)
