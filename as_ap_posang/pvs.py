@@ -18,39 +18,55 @@ def select_ioc(transport_line):
 
 
 def get_pvs_database():
-    """Return IOC dagtabase."""
+    """Return IOC database."""
     if _TL is None:
         return {}
     pvs_database = {
         'Version-Cte':    {'type': 'string', 'value': _COMMIT_HASH},
-        'DeltaPosX-SP':   {'type': 'float', 'count': 1, 'value': 0, 'prec': 3,
+
+        'Log-Mon':        {'type': 'string', 'value': 'Starting...'},
+
+        'DeltaPosX-SP':   {'type': 'float', 'count': 1, 'value': 0, 'prec': 6,
                            'unit': 'mm', 'hilim': 5, 'lolim': -5},
-        'DeltaPosX-RB':   {'type': 'float', 'count': 1, 'value': 0, 'prec': 3,
+        'DeltaPosX-RB':   {'type': 'float', 'count': 1, 'value': 0, 'prec': 6,
                            'unit': 'mm'},
-        'DeltaAngX-SP':   {'type': 'float', 'count': 1, 'value': 0, 'prec': 3,
+        'DeltaAngX-SP':   {'type': 'float', 'count': 1, 'value': 0, 'prec': 6,
                            'unit': 'mrad', 'hilim': 4, 'lolim': -4},
-        'DeltaAngX-RB':   {'type': 'float', 'count': 1, 'value': 0, 'prec': 3,
+        'DeltaAngX-RB':   {'type': 'float', 'count': 1, 'value': 0, 'prec': 6,
                            'unit': 'mrad'},
-        'RespMatX-Cte':   {'type': 'float', 'count': 4, 'value': 4*[0],
+        'RespMatX-SP':    {'type': 'float', 'count': 4, 'value': 4*[0],
                            'prec': 3},
-        'DeltaPosY-SP':   {'type': 'float', 'count': 1, 'value': 0, 'prec': 3,
+        'RespMatX-RB':    {'type': 'float', 'count': 4, 'value': 4*[0],
+                           'prec': 3},
+
+        'DeltaPosY-SP':   {'type': 'float', 'count': 1, 'value': 0, 'prec': 6,
                            'unit': 'mm', 'hilim': 5, 'lolim': -5},
-        'DeltaPosY-RB':   {'type': 'float', 'count': 1, 'value': 0, 'prec': 3,
+        'DeltaPosY-RB':   {'type': 'float', 'count': 1, 'value': 0, 'prec': 6,
                            'unit': 'mm'},
-        'DeltaAngY-SP':   {'type': 'float', 'count': 1, 'value': 0, 'prec': 3,
+        'DeltaAngY-SP':   {'type': 'float', 'count': 1, 'value': 0, 'prec': 6,
                            'unit': 'mrad', 'hilim': 4, 'lolim': -4},
-        'DeltaAngY-RB':   {'type': 'float', 'count': 1, 'value': 0, 'prec': 3,
+        'DeltaAngY-RB':   {'type': 'float', 'count': 1, 'value': 0, 'prec': 6,
                            'unit': 'mrad'},
-        'RespMatY-Cte':   {'type': 'float', 'count': 4, 'value': 4*[0],
+        'RespMatY-SP':    {'type': 'float', 'count': 4, 'value': 4*[0],
                            'prec': 3},
-        'CH1KickRef-Mon': {'type': 'float', 'count': 1, 'value': 0, 'prec': 3,
+        'RespMatY-RB':    {'type': 'float', 'count': 4, 'value': 4*[0],
+                           'prec': 3},
+
+        'CH1RefKick-Mon': {'type': 'float', 'count': 1, 'value': 0, 'prec': 6,
                            'unit': 'mrad'},
-        'CH2KickRef-Mon': {'type': 'float', 'count': 1, 'value': 0, 'prec': 3,
+        'CH2RefKick-Mon': {'type': 'float', 'count': 1, 'value': 0, 'prec': 6,
                            'unit': 'mrad'},
-        'CV1KickRef-Mon': {'type': 'float', 'count': 1, 'value': 0, 'prec': 3,
+        'CV1RefKick-Mon': {'type': 'float', 'count': 1, 'value': 0, 'prec': 6,
                            'unit': 'mrad'},
-        'CV2KickRef-Mon': {'type': 'float', 'count': 1, 'value': 0, 'prec': 3,
+        'CV2RefKick-Mon': {'type': 'float', 'count': 1, 'value': 0, 'prec': 6,
                            'unit': 'mrad'},
         'SetNewRef-Cmd':  {'type': 'int',   'count': 1, 'value': 0},
+
+        'ConfigPS-Cmd':   {'type': 'int', 'value': 0},
+
+        'Status-Mon':     {'type': 'int', 'value': 0},
+        'Status-Cte':     {'type': 'string', 'count': 4, 'value':
+                           ('PS Connection', 'PS PwrState', 'PS OpMode',
+                            'PS CtrlMode')},
     }
     return pvs_database

@@ -7,7 +7,7 @@ import numpy as np
 from math import sqrt, cos, sin
 
 
-def get_respmat(self, orb):
+def get_ts_respmat(orb):
     """Calculate and check posang correction response matrices."""
     ts, twiss_in = _pymodels.ts.create_accelerator()
     ts_m44, ts_cumul_trans_matrices = _pyaccel.tracking.find_m44(ts)
@@ -37,15 +37,10 @@ def get_respmat(self, orb):
         mat_transf_x[0] = m_ch12end[0, 1]
         print(mat_transf_x[0])
         print(sqrt(betax1*betax0)*sin(mux1-mux0))
-        if mat_transf_x[0] == sqrt(betax1*betax0)*sin(mux1-mux0):
-            print('ok element 0 matrix x')
 
         mat_transf_x[2] = m_ch12end[1, 1]
         print(mat_transf_x[2])
         print(sqrt(betax0/betax1)*(cos(mux1-mux0)-alphax1*sin(mux1-mux0)))
-        if mat_transf_x[2] == sqrt(betax0/betax1)*(
-           cos(mux1-mux0)-alphax1*sin(mux1-mux0)):
-            print('ok element 2 matrix x')
 
         betax0 = ts_twiss[158].betax
         mux0 = ts_twiss[158].mux
@@ -53,15 +48,10 @@ def get_respmat(self, orb):
         mat_transf_x[1] = m_ch22end[0, 1]
         print(mat_transf_x[1])
         print(sqrt(betax1*betax0)*sin(mux1-mux0))
-        if mat_transf_x[1] == sqrt(betax1*betax0)*sin(mux1-mux0):
-            print('ok element 1 matrix x')
 
         mat_transf_x[3] = m_ch22end[1, 1]
         print(mat_transf_x[3])
         print(sqrt(betax0/betax1)*(cos(mux1-mux0)-alphax1*sin(mux1-mux0)))
-        if mat_transf_x[3] == sqrt(betax0/betax1)*(
-           cos(mux1-mux0)-alphax1*sin(mux1-mux0)):
-            print('ok element 3 matrix x')
 
         print(mat_transf_x)
         return mat_transf_x
@@ -82,15 +72,10 @@ def get_respmat(self, orb):
         mat_transf_y[0] = m_cv12end[2, 3]
         print(mat_transf_y[0])
         print(sqrt(betay1*betay0)*sin(muy1-muy0))
-        if mat_transf_y[0] == sqrt(betay1*betay0)*sin(muy1-muy0):
-            print('ok element 0 matrix y')
 
         mat_transf_y[2] = m_cv12end[3, 3]
         print(mat_transf_y[2])
         print(sqrt(betay0/betay1)*(cos(muy1-muy0)-alphay1*sin(muy1-muy0)))
-        if mat_transf_y[2] == sqrt(betay0/betay1)*(
-           cos(muy1-muy0)-alphay1*sin(muy1-muy0)):
-            print('ok element 2 matrix y')
 
         betay0 = ts_twiss[141].betay
         muy0 = ts_twiss[141].muy
@@ -98,20 +83,102 @@ def get_respmat(self, orb):
         mat_transf_y[1] = m_cv22end[2, 3]
         print(mat_transf_y[1])
         print(sqrt(betay1*betay0)*sin(muy1-muy0))
-        if mat_transf_y[1] == sqrt(betay1*betay0)*sin(muy1-muy0):
-            print('ok element 1 matrix y')
 
         mat_transf_y[3] = m_cv22end[3, 3]
         print(mat_transf_y[3])
         print(sqrt(betay0/betay1)*(cos(muy1-muy0)-alphay1*sin(muy1-muy0)))
-        if mat_transf_y[3] == sqrt(betay0/betay1)*(
-           cos(muy1-muy0)-alphay1*sin(muy1-muy0)):
-            print('ok element 3 matrix y')
+
+        print(mat_transf_y)
+        return mat_transf_y
+
+
+def get_tb_respmat(orb):
+    """Calculate and check posang correction response matrices."""
+    tb, twiss_in = _pymodels.tb.create_accelerator()
+    tb_m44, tb_cumul_trans_matrices = _pyaccel.tracking.find_m44(tb)
+
+    tb_twiss, _ = _pyaccel.optics.calc_twiss(accelerator=tb,
+                                             init_twiss=twiss_in)
+    betax1 = tb_twiss[136].betax
+    alphax1 = tb_twiss[136].alphax
+    mux1 = tb_twiss[136].mux
+    betay1 = tb_twiss[136].betay
+    alphay1 = tb_twiss[136].alphay
+    muy1 = tb_twiss[136].muy
+
+    if orb == 'x':
+        # element that corresponds to the end of 04:CH
+        m_ch1 = tb_cumul_trans_matrices[110]
+        m_ch12end = np.dot(tb_m44, np.linalg.inv(m_ch1))
+        # element that corresponds to the end of 04:InjSF
+        m_ch2 = tb_cumul_trans_matrices[135]
+        m_ch22end = np.dot(tb_m44, np.linalg.inv(m_ch2))
+
+        mat_transf_x = [0, 0, 0, 0]
+
+        betax0 = tb_twiss[110].betax
+        mux0 = tb_twiss[110].mux
+
+        mat_transf_x[0] = m_ch12end[0, 1]
+        print(mat_transf_x[0])
+        print(sqrt(betax1*betax0)*sin(mux1-mux0))
+
+        mat_transf_x[2] = m_ch12end[1, 1]
+        print(mat_transf_x[2])
+        print(sqrt(betax0/betax1)*(cos(mux1-mux0)-alphax1*sin(mux1-mux0)))
+
+        betax0 = tb_twiss[135].betax
+        mux0 = tb_twiss[135].mux
+
+        mat_transf_x[1] = m_ch22end[0, 1]
+        print(mat_transf_x[1])
+        print(sqrt(betax1*betax0)*sin(mux1-mux0))
+
+        mat_transf_x[3] = m_ch22end[1, 1]
+        print(mat_transf_x[3])
+        print(sqrt(betax0/betax1)*(cos(mux1-mux0)-alphax1*sin(mux1-mux0)))
+
+        print(mat_transf_x)
+        return mat_transf_x
+
+    elif orb == 'y':
+        # element that corresponds to the end of 04:CV-1
+        m_cv1 = tb_cumul_trans_matrices[115]
+        m_cv12end = np.dot(tb_m44, np.linalg.inv(m_cv1))
+        # element that corresponds to the end of 04:CV-2
+        m_cv2 = tb_cumul_trans_matrices[131]
+        m_cv22end = np.dot(tb_m44, np.linalg.inv(m_cv2))
+
+        mat_transf_y = [0, 0, 0, 0]
+
+        betay0 = tb_twiss[115].betay
+        muy0 = tb_twiss[115].muy
+
+        mat_transf_y[0] = m_cv12end[2, 3]
+        print(mat_transf_y[0])
+        print(sqrt(betay1*betay0)*sin(muy1-muy0))
+
+        mat_transf_y[2] = m_cv12end[3, 3]
+        print(mat_transf_y[2])
+        print(sqrt(betay0/betay1)*(cos(muy1-muy0)-alphay1*sin(muy1-muy0)))
+
+        betay0 = tb_twiss[131].betay
+        muy0 = tb_twiss[131].muy
+
+        mat_transf_y[1] = m_cv22end[2, 3]
+        print(mat_transf_y[1])
+        print(sqrt(betay1*betay0)*sin(muy1-muy0))
+
+        mat_transf_y[3] = m_cv22end[3, 3]
+        print(mat_transf_y[3])
+        print(sqrt(betay0/betay1)*(cos(muy1-muy0)-alphay1*sin(muy1-muy0)))
 
         print(mat_transf_y)
         return mat_transf_y
 
 
 if __name__ == '__main__':
-    respmatx = get_respmat('x')
-    respmaty = get_respmat('y')
+    ts_respmatx = get_ts_respmat('x')
+    ts_respmaty = get_ts_respmat('y')
+    tb_respmatx = get_tb_respmat('x')
+    tb_respmaty = get_tb_respmat('y')
