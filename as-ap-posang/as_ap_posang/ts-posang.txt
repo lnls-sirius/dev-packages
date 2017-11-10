@@ -1,0 +1,32 @@
+# Position-Angle Correction Response Matrices for the Storage Ring Injection (TS correctors)
+#
+# Horizontal Matrix:
+#
+#  | DeltaPosX @ TS-04:DI-Scrn-3 |    | h11  h12 |   | Kick TS-04:MA-CH    |
+#  |                             | =  |          | * |                     |
+#  | DeltaAngX @ TS-04:DI-Scrn-3 |    | h21  h22 |   | Kick TS-04:PM-InjSF |
+#
+# Data structure:
+#         h11   h12
+#         h21   h22
+
+
+   4.34446442719   0.2886143835
+   0.93275939885   1.00037029766
+
+
+
+# Vertical Matrix:
+#
+#  | DeltaPosY @ TS-04:DI-Scrn-3 |    | v11  v12 |   | Kick TS-04:MA-CV-1 |
+#  |                             | =  |          | * |                    |
+#  | DeltaAngY @ TS-04:DI-Scrn-3 |    | v21  v22 |   | Kick TS-04:MA-CV-2 |
+#
+# Data structure:
+#         v11   v12
+#         v21   v22
+
+
+   5.66045588278   2.4137865916
+   1.06585017097   0.97674894478
+
