@@ -78,15 +78,18 @@ class PulsedMagnetNormalizer:
     def conv_tension_2_strength(self, tension, current_dipole):
         """Normalize tension into kick."""
         # Get integrated field
-        if tension is None:
+        if tension is None or current_dipole is None:
             return 0
         intfield = self._conv_tension_2_intfield(tension)
         # Get magnetic rigidity
         brho = self._dipole._get_brho(current_dipole)
-        try:
-            return intfield/brho
-        except ZeroDivisionError:
+        if brho == 0:
             return 0
+        return intfield/brho
+        # try:
+        #     return intfield/brho
+        # except ZeroDivisionError:
+        #     return 0
 
     def conv_strength_2_tension(self, strength, current_dipole):
         """Denormalize the strength returning the tension."""

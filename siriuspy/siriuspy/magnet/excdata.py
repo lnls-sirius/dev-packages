@@ -99,7 +99,7 @@ class ExcitationData:
         """Interpolate current from a specific multipole value."""
         # sort correctly tabulated lists
         mt = self.multipoles[multipole_type.lower()][harmonic]
-        if mt[-1] >= mt[0]:
+        if mt[-1] <= mt[0]:
             mt = mt[::-1]
             ct = self.currents[::-1]
         else:

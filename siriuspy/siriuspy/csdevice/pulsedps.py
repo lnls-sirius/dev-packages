@@ -70,13 +70,13 @@ def get_pm_propty_database(maname, psdata):
         db[psname] = data.propty_database
 
         db[psname][pm_props.StrengthSP] = \
-            {"type": "float", "unit": unit[0], "value": 0.0, "prec": precision}
+            {"type": "float", "unit": "rad", "value": 0.0, "prec": precision}
         db[psname][pm_props.StrengthRB] = \
-            {"type": "float", "unit": unit[0], "value": 0.0, "prec": precision}
+            {"type": "float", "unit": "rad", "value": 0.0, "prec": precision}
         db[psname][pm_props.StrengthRefMon] = \
-            {"type": "float", "unit": unit[0], "value": 0.0, "prec": precision}
+            {"type": "float", "unit": "rad", "value": 0.0, "prec": precision}
         db[psname][pm_props.StrengthMon] = \
-            {"type": "float", "unit": unit[0], "value": 0.0, "prec": precision}
+            {"type": "float", "unit": "rad", "value": 0.0, "prec": precision}
 
         strength_list = [pm_props.StrengthSP, pm_props.StrengthRB,
                          pm_props.StrengthRefMon, pm_props.StrengthMon]
