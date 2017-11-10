@@ -14,11 +14,11 @@ class Waveform:
     def __init__(self,
                  vL=None,
                  vR=None,
-                 i05=None,
-                 v05=None,
+                 i07=None,
+                 v07=None,
                  waveform=None):
         """Init method."""
-        self._set_params(vL, vR, i05, v05)
+        self._set_params(vL, vR, i07, v07)
         self._update_wfm_parms()
         self._update_wfm_bumps(waveform)
 
@@ -36,75 +36,82 @@ class Waveform:
         self._update_wfm_bumps(waveform)
 
     @property
-    def idx0(self):
+    def i0(self):
         """Return index of the first region boundary."""
         return self._i[0]
 
     @property
-    def idx1(self):
+    def i1(self):
         """Return index of the second region boundary."""
         return self._i[1]
 
     @property
-    def idx2(self):
+    def i2(self):
         """Return index of the third region boundary."""
         return self._i[2]
 
     @property
-    def idx3(self):
+    def i3(self):
         """Return index of the fourth region boundary."""
         return self._i[3]
 
     @property
-    def idx4(self):
+    def i4(self):
         """Return index of the fifth region boundary."""
         return self._i[4]
 
     @property
-    def idx5(self):
+    def i5(self):
         """Return index of the sixth region boundary."""
         return self._i[5]
 
     @property
-    def valueL(self):
-        """Return waveform value at the left-end boundary."""
+    def i6(self):
+        """Return index of the seventh region boundary."""
+        return self._i[6]
+
+    @property
+    def i7(self):
+        """Return index of the eightth region boundary."""
+        return self._i[7]
+
+    @property
+    def vL0(self):
+        """Return waveform value at the left-end and first region boundary."""
         return self._vL
 
     @property
-    def value0(self):
-        """Return waveform value at the first region boundary."""
-        return self._v[0]
-
-    @property
-    def value1(self):
+    def v1(self):
         """Return waveform value at the second region boundary."""
         return self._v[1]
 
     @property
-    def value23(self):
-        """Return waveform value at the third and fourth region boundaries."""
-        if self._v[2] != self._v[3]:
-            raise ValueError(('Value at thrid and fourth region boundaries '
-                              'is not unique'))
+    def v2(self):
+        """Return waveform value at the 3rd region boundary."""
         return self._v[2]
 
     @property
-    def value4(self):
-        """Return waveform value at the fifth region boundary."""
-        return self._v[4]
+    def v34(self):
+        """Return waveform value at the 4th and 5th region boundaries."""
+        return self._v[3]
 
     @property
-    def value5(self):
-        """Return waveform value at the sixth region boundary."""
+    def v5(self):
+        """Return waveform value at the 6h region boundary."""
         return self._v[5]
 
     @property
-    def valueR(self):
-        """Return waveform value at the right-end boundary."""
+    def v6(self):
+        """Return waveform value at the 7th region boundary."""
+        return self._v[6]
+
+    @property
+    def v7R(self):
+        """Return waveform value at the 8th and right-end region boundaries."""
         return self._vR
 
-    @idx0.setter
-    def idx0(self, idx):
+    @i0.setter
+    def i0(self, idx):
         """Set index of the first region boundary."""
         i = 0
         if 0 <= idx <= self._i[i+1]:
@@ -114,8 +121,8 @@ class Waveform:
                               'region boundary points.'))
         self._deprecated = True
 
-    @idx1.setter
-    def idx1(self, idx):
+    @i1.setter
+    def i1(self, idx):
         """Set index of the second region boundary."""
         i = 1
         if self._i[i-1] <= idx <= self._i[i+1]:
@@ -125,8 +132,8 @@ class Waveform:
                               'region boundary points.'))
         self._deprecated = True
 
-    @idx2.setter
-    def idx2(self, idx):
+    @i2.setter
+    def i2(self, idx):
         """Set index of the third region boundary."""
         i = 2
         if self._i[i-1] <= idx <= self._i[i+1]:
@@ -136,8 +143,8 @@ class Waveform:
                               'region boundary points.'))
         self._deprecated = True
 
-    @idx3.setter
-    def idx3(self, idx):
+    @i3.setter
+    def i3(self, idx):
         """Set index of the fourth region boundary."""
         i = 3
         if self._i[i-1] <= idx <= self._i[i+1]:
@@ -147,8 +154,8 @@ class Waveform:
                               'region boundary points.'))
         self._deprecated = True
 
-    @idx4.setter
-    def idx4(self, idx):
+    @i4.setter
+    def i4(self, idx):
         """Set index of the fifth region boundary."""
         i = 4
         if self._i[i-1] <= idx <= self._i[i+1]:
@@ -158,8 +165,8 @@ class Waveform:
                               'region boundary points.'))
         self._deprecated = True
 
-    @idx5.setter
-    def idx5(self, idx):
+    @i5.setter
+    def i5(self, idx):
         """Set index of the sixth region boundary."""
         i = 5
         if self._i[i-1] <= idx < _default_wfmsize:
@@ -169,41 +176,71 @@ class Waveform:
                               'region boundary points.'))
         self._deprecated = True
 
-    @valueL.setter
-    def valueL(self, value):
-        """Set waveform value at the left-end boundary."""
-        self._vL = value
+    @i6.setter
+    def i6(self, idx):
+        """Set index of the 7th region boundary."""
+        i = 6
+        if self._i[i-1] <= idx < _default_wfmsize:
+            self._i[i] = idx
+        else:
+            raise ValueError(('Index is inconsistent with labeled '
+                              'region boundary points.'))
         self._deprecated = True
 
-    @value0.setter
-    def value0(self, value):
-        """Set waveform value at the first region boundary."""
+    @i7.setter
+    def i7(self, idx):
+        """Set index of the 8th region boundary."""
+        i = 7
+        if self._i[i-1] <= idx < _default_wfmsize:
+            self._i[i] = idx
+        else:
+            raise ValueError(('Index is inconsistent with labeled '
+                              'region boundary points.'))
+        self._deprecated = True
+
+    @vL0.setter
+    def vL0(self, value):
+        """Set waveform value at the left-end and 1st boundary."""
+        self._vL = value
         self._v[0] = value
         self._deprecated = True
 
-    @value1.setter
-    def value1(self, value):
-        """Set waveform value at the second region boundary."""
+    @v1.setter
+    def v1(self, value):
+        """Set waveform value at the 2nd region boundary."""
         self._v[1] = value
         self._deprecated = True
 
-    @value23.setter
-    def value23(self, value):
-        """Set waveform value at the third and fourth region boundaries."""
+    @v2.setter
+    def v2(self, value):
+        """Set waveform value at the 3rd region boundary."""
         self._v[2] = value
-        self._v[3] = value
         self._deprecated = True
 
-    @value4.setter
-    def value4(self, value):
-        """Set waveform value at the fifth region boundary."""
+    @v34.setter
+    def v34(self, value):
+        """Set waveform value at the 4th and 5th region boundaries."""
+        self._v[3] = value
         self._v[4] = value
         self._deprecated = True
 
-    @value5.setter
-    def value5(self, value):
-        """Set waveform value at the sixth region boundary."""
+    @v5.setter
+    def v5(self, value):
+        """Set waveform value at the 6th region boundary."""
         self._v[5] = value
+        self._deprecated = True
+
+    @v6.setter
+    def v6(self, value):
+        """Set waveform value at the 7th region boundary."""
+        self._v[6] = value
+        self._deprecated = True
+
+    @v7R.setter
+    def v7R(self, value):
+        """Set waveform value at the 8th and right-end region boundaries."""
+        self._v[7] = value
+        self._vR = value
         self._deprecated = True
 
     # # --- public methods ---
@@ -230,12 +267,182 @@ class Waveform:
     #     except TypeError:
     #         return self._eval_point(idx)
 
+    def change_rampup(self, i1, i2, v1, v2):
+        """Change rampup."""
+        if i1 < self._i[0] or i2 <= i1 or i2 >= self._i[4] or v1 >= v2:
+            raise ValueError('Invalid ramp parameters !')
+        i3 = self._find_i3(i1, i2, v1, v2)
+        if i3 is not None:
+            self._i[1] = i1
+            self._i[2] = i2
+            self._i[3] = i3
+            self._v[1] = v1
+            self._v[2] = v2
+            self._deprecated = True
+        else:
+            raise ValueError('Could not find solution for i3 !')
+
     # --- private methods ---
 
     def _update_wfm_parms(self):
         self._set_coeffs()
         self._wfm_parms = self._eval_index()
         self._deprecated = False
+
+    @staticmethod
+    def _calccoeffs(d, dv, DL, DR):
+        v1 = dv - DL * d
+        v2 = DR - DL
+        m11 = 3.0/d**2
+        m12 = -1.0/d
+        m21 = -2.0/d**3
+        m22 = 1.0/d**2
+        a0 = DL
+        b0 = m11 * v1 + m12 * v2
+        c0 = m21 * v1 + m22 * v2
+        coeffs = [a0, b0, c0]
+        return coeffs
+
+    def _set_coeffs(self):
+        self._coeffs = [None] * 9
+        if self._i[0] == 0:
+            self._D0 = 0.0
+        else:
+            self._D0 = (self._v[0] - self._vL) / (self._i[0] - 0)
+        self._D2 = (self._v[2] - self._v[1]) / (self._i[2] - self._i[1])
+        self._D4 = (self._v[4] - self._v[3]) / (self._i[4] - self._i[3])
+        self._D6 = (self._v[6] - self._v[5]) / (self._i[6] - self._i[5])
+        if self._i[7] == _default_wfmsize:
+            self._D8 = 0.0
+        else:
+            self._D8 = (self._vR - self._v[7]) / \
+                       (_default_wfmsize - self._i[7])
+        # region 0
+        self._coeffs[0] = _np.array([self._D0, 0.0, 0.0])
+        # region 1
+        d = self._i[1] - self._i[0]
+        dv = self._v[1] - self._v[0]
+        self._coeffs[1] = Waveform._calccoeffs(d, dv, self._D0, self._D2)
+        # region 2
+        self._coeffs[2] = _np.array([self._D2, 0.0, 0.0])
+        # region 3
+        d = self._i[3] - self._i[2]
+        dv = self._v[3] - self._v[2]
+        self._coeffs[3] = Waveform._calccoeffs(d, dv, self._D2, self._D4)
+        # region 4
+        self._coeffs[4] = _np.array([self._D4, 0.0, 0.0])
+        # region 5
+        d = self._i[5] - self._i[4]
+        dv = self._v[5] - self._v[4]
+        self._coeffs[5] = Waveform._calccoeffs(d, dv, self._D4, self._D6)
+        # region 6
+        self._coeffs[6] = [self._D6, 0.0, 0.0]
+        # region 7
+        d = self._i[7] - self._i[6]
+        dv = self._v[7] - self._v[6]
+        self._coeffs[7] = Waveform._calccoeffs(d, dv, self._D6, self._D8)
+        # region 8
+        self._coeffs[8] = [self._D8, 0.0, 0.0]
+
+    def _eval_index(self):
+
+        def calcdv(i, iref, coeffs):
+            return coeffs[0] * (i - iref) + \
+                   coeffs[1] * (i - iref)**2 + \
+                   coeffs[2] * (i - iref)**3
+
+        wfm = []
+        # region 0
+        coeffs = self._coeffs[0]
+        iref, vref = 0, self._vL
+        i = _np.array(tuple(range(self._i[0])))
+        dv = calcdv(i, iref, coeffs)
+        wfm.extend(vref + dv)
+        # regions 1...7
+        for i in range(1, 8):
+            coeffs = self._coeffs[i]
+            iref, vref = self._i[i-1], self._v[i-1]
+            i = _np.array(tuple(range(self._i[i-1], self._i[i])))
+            dv = calcdv(i, iref, coeffs)
+            wfm.extend(vref + dv)
+        # region 8
+        coeffs = self._coeffs[8]
+        iref, vref = self._i[7], self._v[7]
+        i = _np.array(tuple(range(self._i[7], _default_wfmsize)))
+        dv = calcdv(i, iref, coeffs)
+        wfm.extend(vref + dv)
+        return _np.array(wfm)
+
+    def _find_i3(self, i1, i2, v1, v2):
+        D2 = (v2 - v1) / (i2 - i1)
+        dv = self._v[3] - v2
+        i3 = _np.arange(i2+1, self._i[4])
+        i3_new = self._find_new_i3(i2, i3, dv, D2)
+        return i3_new
+
+    def _find_new_i3(self, i2, i3, dv, D2):
+        D4 = (self._v[4] - self._v[3]) / (self._i[4] - i3)
+        d = i3 - i2
+        a, b, c = Waveform._calccoeffs(d, dv, D2, D4)
+        phi = b**2 - 3*c*a
+        i3_r1 = i2 + (-2*b + _np.sqrt(phi))/3.0/c
+        i3_r2 = i2 + (-2*b - _np.sqrt(phi))/3.0/c
+        cond = ((i3_r1 < i2) | (i3_r1 >= i3)) & ((i3_r2 < i2) | (i3_r2 >= i3))
+        i3_solutions = i3[cond]
+        if i3_solutions.size:
+            i3_delta = min(i3_solutions - self._i[3])
+            return self._i[3] + i3_delta
+        else:
+            return None
+
+    def _check_if_minimum_in_i1_i2(self, i2, i1, dV, D0):
+        d = i2 - i1
+        if i2 != self._i[3]:
+            D2 = (self._v[3] - self._v[2]) / (self._i[3] - i2)
+        else:
+            D2 = 0.0
+        try:
+            coeffs = _np.linalg.solve(
+                [[d, d**2, d**3], [1, 0, 0], [1, 2*d, 3*d**2]],
+                [dV, D0, D2])
+        except _np.linalg.LinAlgError:
+            return True
+        b, c, d = coeffs
+        phi = c**2 - 3*b*d
+        if phi < 0.0:
+            # negative discriminant means no root -> no place
+            # where f'=0
+            return False
+        d1 = (-c + _np.sqrt(phi))/(3*d)
+        d2 = (-c - _np.sqrt(phi))/(3*d)
+        i2_r1 = i1 + d1
+        i2_r2 = i1 + d2
+        if (i2_r1 < i1 or i2_r1 >= i2) and (i2_r2 < i1 or i2_r2 >= i2):
+            # roots are outside interval.
+            return False
+        return True
+
+    def _find_i2(self, i0, i1, v0, v1):
+        # search new value for i2
+        D0 = (v1 - v0)/(i1 - i0)
+        dV = self._v[2] - v1
+        i3 = self._i[3]
+        delta_i_max = max(i3-self._i[2]+1, self._i[2]-i1+1)
+        for delta_i in range(delta_i_max):
+            # positive
+            i2 = self._i[2] + delta_i
+            found = not self._check_if_minimum_in_i1_i2(i2, i1, dV, D0)
+            if found:
+                break
+            # negative
+            i2 = self._i[2] - delta_i
+            found = not self._check_if_minimum_in_i1_i2(i2, i1, dV, D0)
+            if found:
+                break
+        if found:
+            return i2
+        else:
+            return None
 
     def _update_wfm_bumps(self, waveform):
         if waveform is None:
@@ -245,93 +452,38 @@ class Waveform:
                 self._update_wfm_parms()
             self._wfm_bumps = _np.array(waveform) - self._wfm_parms
 
-    def _set_params(self, vL, vR, i05, v05):
+    def _set_params(self, vL, vR, i07, v07):
         self._vL = 0.01 if vL is None else vL
         self._vR = 0.01 if vR is None else vR
-        if i05 is None:
-            i05 = (_default_wfmsize/500) * \
-                    _np.array([13, 310, 322, 330, 342, 480])
-        if v05 is None:
-            v05 = _np.array([0.02625, 1.0339285714, 1.05, 1.05, 1, 0.07])
+        if i07 is None:
+            i07 = (_default_wfmsize/500) * \
+                    _np.array([0, 13, 310, 322, 330, 342, 480, 500])
+        if v07 is None:
+            v07 = _np.array([0.01, 0.02625, 1.0339285714, 1.05,
+                             1.05, 1, 0.07, 0.01])
         try:
-            if len(i05) != 6:
-                raise ValueError('Lenght of i05 is not 6 !')
-            if i05[0] <= 0:
-                raise ValueError('i0 <= 0 !')
-            if i05[5] >= _default_wfmsize:
-                raise ValueError('i5 >= {} !'.format(_default_wfmsize))
-            for i in range(0, len(i05)-1):
-                if i05[i+1] <= i05[i]:
-                    raise ValueError('i05 is not sorted !')
-            self._i = [int(i) for i in i05]
+            if len(i07) != 8:
+                raise ValueError('Lenght of i07 is not 6 !')
+            if i07[0] < 0:
+                raise ValueError('i0 < 0 !')
+            if i07[-1] > _default_wfmsize:
+                raise ValueError('i7 >= {} !'.format(_default_wfmsize))
+            for i in range(0, len(i07)-1):
+                if i07[i+1] < i07[i]:
+                    raise ValueError('i07 is not sorted !')
+            self._i = [int(i) for i in i07]
         except TypeError:
-            raise TypeError('Invalid type of i05 !')
+            raise TypeError('Invalid type of i07 !')
         try:
-            v05[0]
-            if len(v05) != 6:
-                raise ValueError('Lenght of v05 is not 6 !')
-            self._v = v05.copy()
+            v07[0]
+            if len(v07) != 8:
+                raise ValueError('Lenght of v07 is not 8 !')
+            self._v = v07.copy()
         except TypeError:
-            raise TypeError('Invalid type v05 !')
+            raise TypeError('Invalid type v07 !')
 
-    def _set_coeffs(self):
-        def getm(d):
-            return [[d, d**2, d**3], [1, 0, 0], [1, 2*d, 3*d**2]]
-        self._coeffs = [None] * 7
-        D0 = (self._v[1] - self._v[0]) / (self._i[1] - self._i[0])
-        D2 = (self._v[3] - self._v[2]) / (self._i[3] - self._i[2])
-        D4 = (self._v[5] - self._v[4]) / (self._i[5] - self._i[4])
-        # region left
-        di = self._i[0] - 0.0
-        dv = self._v[0] - self._vL
-        self._coeffs[0] = _np.linalg.solve(getm(di), [dv, 0, D0])
-        # region R0
-        self._coeffs[1] = [D0, 0, 0]
-        # region R1
-        di = self._i[2] - self._i[1]
-        dv = self._v[2] - self._v[1]
-        self._coeffs[2] = _np.linalg.solve(getm(di), [dv, D0, D2])
-        # region R2
-        self._coeffs[3] = [D2, 0, 0]
-        # region R3
-        di = self._i[4] - self._i[3]
-        dv = self._v[4] - self._v[3]
-        self._coeffs[4] = _np.linalg.solve(getm(di), [dv, D2, D4])
-        # region R4
-        self._coeffs[5] = [D4, 0, 0]
-        # region right
-        di = _default_wfmsize-1 - self._i[5]
-        dv = self._vR - self._v[5]
-        self._coeffs[6] = _np.linalg.solve(getm(di), [dv, D4, 0])
 
-    def _eval_index(self):
 
-        def calcdv(idx, i0, coeffs):
-            return coeffs[0] * (idx - i0) + \
-                   coeffs[1] * (idx - i0)**2 + \
-                   coeffs[2] * (idx - i0)**3
-
-        wfm = []
-        # region left
-        coeffs = self._coeffs[0]
-        i0, v0 = 0, self._vL
-        idx = _np.array(tuple(range(self._i[0])))
-        dv = calcdv(idx, i0, coeffs)
-        wfm.extend(v0 + dv)
-        # regions R0...R4
-        for i in range(len(self._coeffs)-2):
-            coeffs = self._coeffs[i+1]
-            i0, v0 = self._i[i], self._v[i]
-            idx = _np.array(tuple(range(self._i[i], self._i[i+1])))
-            dv = calcdv(idx, i0, coeffs)
-            wfm.extend(v0 + dv)
-        # region right
-        coeffs = self._coeffs[6]
-        i0, v0 = self._i[5], self._v[5]
-        idx = _np.array(tuple(range(self._i[5], _default_wfmsize)))
-        dv = calcdv(idx, i0, coeffs)
-        wfm.extend(v0 + dv)
-        return _np.array(wfm)
 
     # def _eval_point(self, idx):
     #     if idx < 0 or idx >= _default_wfmsize:
