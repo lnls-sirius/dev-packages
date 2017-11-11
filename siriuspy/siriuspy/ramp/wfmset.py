@@ -272,7 +272,8 @@ class Waveform:
 
     def change_rampup(self, i1, i2, v1, v2):
         """Change rampup."""
-        if i1 < self._i[0] or i2 <= i1 or i2 >= self._i[4] or v1 >= v2:
+        if i1 < self._i[0] or i2 <= i1 or i2 >= self._i[4] or
+           v1 >= v2 or v1 <= self._v[0] or v2 >= self._v[3]:
             raise ValueError('Invalid ramp parameters !')
         i3 = self._find_i3(i1, i2, v1, v2)
         i0 = self._find_i0(i1, i2, v1, v2)
@@ -307,6 +308,35 @@ class Waveform:
         c0 = m21 * v1 + m22 * v2
         coeffs = [a0, b0, c0]
         return coeffs
+
+    def _set_params(self, vL, vR, i07, v07):
+        self._vL = 0.01 if vL is None else vL
+        self._vR = 0.01 if vR is None else vR
+        if i07 is None:
+            i07 = _np.array([0, 104, 2480, 2576, 2640, 2736, 3840, 4000])
+        if v07 is None:
+            v07 = _np.array([0.01, 0.02625, 1.0339285714, 1.05,
+                             1.05, 1,0, 0.07, 0.01])
+        try:
+            if len(i07) != 8:
+                raise ValueError('Lenght of i07 is not 6 !')
+            if i07[0] < 0:
+                raise ValueError('i0 < 0 !')
+            if i07[-1] > _default_wfmsize:
+                raise ValueError('i7 >= {} !'.format(_default_wfmsize))
+            for i in range(0, len(i07)-1):
+                if i07[i+1] < i07[i]:
+                    raise ValueError('i07 is not sorted !')
+            self._i = [int(i) for i in i07]
+        except TypeError:
+            raise TypeError('Invalid type of i07 !')
+        try:
+            v07[0]
+            if len(v07) != 8:
+                raise ValueError('Lenght of v07 is not 8 !')
+            self._v = v07.copy()
+        except TypeError:
+            raise TypeError('Invalid type v07 !')
 
     def _set_coeffs(self):
         self._coeffs = [None] * 9
@@ -388,8 +418,6 @@ class Waveform:
         phi = b**2 - 3*c*a
         i3_r1 = i2 + (-b + _np.sqrt(phi))/3.0/c
         i3_r2 = i2 + (-b - _np.sqrt(phi))/3.0/c
-        self._i3_r1 = i3_r1
-        self._i3_r2 = i3_r2
         cond = ((i3_r1 < i2) | (i3_r1 >= i3) | _np.isnan(i3_r1)) & \
                ((i3_r2 < i2) | (i3_r2 >= i3) | _np.isnan(i3_r2))
         # for i in range(len(i3)):
@@ -405,79 +433,21 @@ class Waveform:
             return None
 
     def _find_i0(self, i1, i2, v1, v2):
-        D2 = (v2 - v1) / (i2 - i1)
-        dv = v1 - self._v[0]
-        i0 = _np.arange(1, self._i[2])
         D0 = (self._v[0] - self._vL) / (self._i[0] - 0)
-        d = i0 - 0
-        a, b, c = Waveform._calccoeffs(d, dv, D2, D4)
+        dv = v1 - self._v[0]
+        i0 = _np.arange(1, i1)
+        D2 = (v2 - v1) / (i2 - i1)
+        d = i1 - i0
+        a, b, c = Waveform._calccoeffs(d, dv, D0, D2)
         phi = b**2 - 3*c*a
-        i3_r1 = i2 + (-b + _np.sqrt(phi))/3.0/c
-        i3_r2 = i2 + (-b - _np.sqrt(phi))/3.0/c
-        self._i3_r1 = i3_r1
-        self._i3_r2 = i3_r2
-        cond = ((i3_r1 < i2) | (i3_r1 >= i3) | _np.isnan(i3_r1)) & \
-               ((i3_r2 < i2) | (i3_r2 >= i3) | _np.isnan(i3_r2))
-        # for i in range(len(i3)):
-        #     di = i3[i] - self._i[3]
-        #     print(('{},  d:{}, i3_r1:{:.1f}, i3_r2:{:.1f}, '
-        #            'i2:{}, i3:{}').format(cond[i], di, i3_r1[i], i3_r2[i],
-        #                                   i2, i3[i]))
-        i3_solutions = i3[cond]
-        if i3_solutions.size:
-            i3_delta = min(i3_solutions - self._i[3], key=abs)
-            return self._i[3] + i3_delta
-        else:
-            return None
-
-
-
-    def _check_if_minimum_in_i1_i2(self, i2, i1, dV, D0):
-        d = i2 - i1
-        if i2 != self._i[3]:
-            D2 = (self._v[3] - self._v[2]) / (self._i[3] - i2)
-        else:
-            D2 = 0.0
-        try:
-            coeffs = _np.linalg.solve(
-                [[d, d**2, d**3], [1, 0, 0], [1, 2*d, 3*d**2]],
-                [dV, D0, D2])
-        except _np.linalg.LinAlgError:
-            return True
-        b, c, d = coeffs
-        phi = c**2 - 3*b*d
-        if phi < 0.0:
-            # negative discriminant means no root -> no place
-            # where f'=0
-            return False
-        d1 = (-c + _np.sqrt(phi))/(3*d)
-        d2 = (-c - _np.sqrt(phi))/(3*d)
-        i2_r1 = i1 + d1
-        i2_r2 = i1 + d2
-        if (i2_r1 < i1 or i2_r1 >= i2) and (i2_r2 < i1 or i2_r2 >= i2):
-            # roots are outside interval.
-            return False
-        return True
-
-    def _find_i2(self, i0, i1, v0, v1):
-        # search new value for i2
-        D0 = (v1 - v0)/(i1 - i0)
-        dV = self._v[2] - v1
-        i3 = self._i[3]
-        delta_i_max = max(i3-self._i[2]+1, self._i[2]-i1+1)
-        for delta_i in range(delta_i_max):
-            # positive
-            i2 = self._i[2] + delta_i
-            found = not self._check_if_minimum_in_i1_i2(i2, i1, dV, D0)
-            if found:
-                break
-            # negative
-            i2 = self._i[2] - delta_i
-            found = not self._check_if_minimum_in_i1_i2(i2, i1, dV, D0)
-            if found:
-                break
-        if found:
-            return i2
+        i0_r1 = i0 + (-b + _np.sqrt(phi))/3.0/c
+        i0_r2 = i0 + (-b - _np.sqrt(phi))/3.0/c
+        cond = ((i0_r1 <= i0) | (i0_r1 >= i3) | _np.isnan(i0_r1)) & \
+               ((i0_r2 <= i0) | (i0_r2 >= i3) | _np.isnan(i0_r2))
+        i0_solutions = i0[cond]
+        if i0_solutions.size:
+            i0_delta = min(i0_solutions - self._i[0], key=abs)
+            return self._i[0] + i0_delta
         else:
             return None
 
@@ -488,36 +458,6 @@ class Waveform:
             if self._deprecated:
                 self._update_wfm_parms()
             self._wfm_bumps = _np.array(waveform) - self._wfm_parms
-
-    def _set_params(self, vL, vR, i07, v07):
-        self._vL = 0.01 if vL is None else vL
-        self._vR = 0.01 if vR is None else vR
-        if i07 is None:
-            i07 = (_default_wfmsize/500) * \
-                    _np.array([0, 13, 310, 322, 330, 342, 480, 500])
-        if v07 is None:
-            v07 = _np.array([0.01, 0.02625, 1.0339285714, 1.05,
-                             1.05, 1, 0.07, 0.01])
-        try:
-            if len(i07) != 8:
-                raise ValueError('Lenght of i07 is not 6 !')
-            if i07[0] < 0:
-                raise ValueError('i0 < 0 !')
-            if i07[-1] > _default_wfmsize:
-                raise ValueError('i7 >= {} !'.format(_default_wfmsize))
-            for i in range(0, len(i07)-1):
-                if i07[i+1] < i07[i]:
-                    raise ValueError('i07 is not sorted !')
-            self._i = [int(i) for i in i07]
-        except TypeError:
-            raise TypeError('Invalid type of i07 !')
-        try:
-            v07[0]
-            if len(v07) != 8:
-                raise ValueError('Lenght of v07 is not 8 !')
-            self._v = v07.copy()
-        except TypeError:
-            raise TypeError('Invalid type v07 !')
 
 
 
