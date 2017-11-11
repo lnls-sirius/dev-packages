@@ -8,6 +8,9 @@ from siriuspy.ramp.optics import _nominal_intkl
 from siriuspy.magnet import util as _mutil
 
 
+_np.seterr(all='ignore')
+
+
 class Waveform:
     """Waveform parameter class."""
 
@@ -272,7 +275,9 @@ class Waveform:
         if i1 < self._i[0] or i2 <= i1 or i2 >= self._i[4] or v1 >= v2:
             raise ValueError('Invalid ramp parameters !')
         i3 = self._find_i3(i1, i2, v1, v2)
-        if i3 is not None:
+        i0 = self._find_i0(i1, i2, v1, v2)
+        if i3 is not None and i0 is not None:
+            self._i[0] = i0
             self._i[1] = i1
             self._i[2] = i2
             self._i[3] = i3
@@ -377,23 +382,55 @@ class Waveform:
         D2 = (v2 - v1) / (i2 - i1)
         dv = self._v[3] - v2
         i3 = _np.arange(i2+1, self._i[4])
-        i3_new = self._find_new_i3(i2, i3, dv, D2)
-        return i3_new
-
-    def _find_new_i3(self, i2, i3, dv, D2):
         D4 = (self._v[4] - self._v[3]) / (self._i[4] - i3)
         d = i3 - i2
         a, b, c = Waveform._calccoeffs(d, dv, D2, D4)
         phi = b**2 - 3*c*a
-        i3_r1 = i2 + (-2*b + _np.sqrt(phi))/3.0/c
-        i3_r2 = i2 + (-2*b - _np.sqrt(phi))/3.0/c
-        cond = ((i3_r1 < i2) | (i3_r1 >= i3)) & ((i3_r2 < i2) | (i3_r2 >= i3))
+        i3_r1 = i2 + (-b + _np.sqrt(phi))/3.0/c
+        i3_r2 = i2 + (-b - _np.sqrt(phi))/3.0/c
+        self._i3_r1 = i3_r1
+        self._i3_r2 = i3_r2
+        cond = ((i3_r1 < i2) | (i3_r1 >= i3) | _np.isnan(i3_r1)) & \
+               ((i3_r2 < i2) | (i3_r2 >= i3) | _np.isnan(i3_r2))
+        # for i in range(len(i3)):
+        #     di = i3[i] - self._i[3]
+        #     print(('{},  d:{}, i3_r1:{:.1f}, i3_r2:{:.1f}, '
+        #            'i2:{}, i3:{}').format(cond[i], di, i3_r1[i], i3_r2[i],
+        #                                   i2, i3[i]))
         i3_solutions = i3[cond]
         if i3_solutions.size:
-            i3_delta = min(i3_solutions - self._i[3])
+            i3_delta = min(i3_solutions - self._i[3], key=abs)
             return self._i[3] + i3_delta
         else:
             return None
+
+    def _find_i0(self, i1, i2, v1, v2):
+        D2 = (v2 - v1) / (i2 - i1)
+        dv = v1 - self._v[0]
+        i0 = _np.arange(1, self._i[2])
+        D0 = (self._v[0] - self._vL) / (self._i[0] - 0)
+        d = i0 - 0
+        a, b, c = Waveform._calccoeffs(d, dv, D2, D4)
+        phi = b**2 - 3*c*a
+        i3_r1 = i2 + (-b + _np.sqrt(phi))/3.0/c
+        i3_r2 = i2 + (-b - _np.sqrt(phi))/3.0/c
+        self._i3_r1 = i3_r1
+        self._i3_r2 = i3_r2
+        cond = ((i3_r1 < i2) | (i3_r1 >= i3) | _np.isnan(i3_r1)) & \
+               ((i3_r2 < i2) | (i3_r2 >= i3) | _np.isnan(i3_r2))
+        # for i in range(len(i3)):
+        #     di = i3[i] - self._i[3]
+        #     print(('{},  d:{}, i3_r1:{:.1f}, i3_r2:{:.1f}, '
+        #            'i2:{}, i3:{}').format(cond[i], di, i3_r1[i], i3_r2[i],
+        #                                   i2, i3[i]))
+        i3_solutions = i3[cond]
+        if i3_solutions.size:
+            i3_delta = min(i3_solutions - self._i[3], key=abs)
+            return self._i[3] + i3_delta
+        else:
+            return None
+
+
 
     def _check_if_minimum_in_i1_i2(self, i2, i1, dV, D0):
         d = i2 - i1
