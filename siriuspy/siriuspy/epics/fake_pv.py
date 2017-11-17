@@ -172,6 +172,8 @@ class PVFake(object):
         self.__on_connect(pvname=pvname, chid=self._args['chid'])
         self.chid = self._args['chid']
 
+        self._set_charval(self._args['value'], call_ca=False)
+
         self.__on_access_rights_event(read_access=True, write_access=True)
 
         pvid = (self.pvname, self.form, self.context)
