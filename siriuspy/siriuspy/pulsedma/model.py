@@ -5,7 +5,7 @@ import logging as _logging
 from . import properties as _pm_props
 from .data import PMData as _PMData
 from .ComputedPV import ComputedPV as _ComputedPV
-from .PulsedMagnetNormalizer import PulsedMagnetNormalizer as \
+from .normalizer import PulsedMagnetNormalizer as \
     _PulsedMagnetNormalizer
 from ..namesys import SiriusPVName as _SiriusPVName
 from ..pulsedps import properties as _pu_props

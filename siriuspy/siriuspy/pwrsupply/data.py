@@ -42,14 +42,14 @@ class PSData:
     def magfunc(self):
         return self._magfunc
 
-    def multipole_main(self, current, left='linear', right='linear'):
+    def multipole_main(self, current):
         m_harm = self._excdata.main_multipole_harmonic
         m_type = self._excdata.main_multipole_type
-        m = self._excdata.interp_curr2mult(self, current, left=left, right=right)
+        m = self._excdata.interp_curr2mult(self, current)
         return m[m_type][m_harm]
 
-    def multipole_main(self, current, left='linear', right='linear'):
-        return self._excdata.interp_curr2mult(self, current, left=left, right=right)
+    def multipole_main(self, current):
+        return self._excdata.interp_curr2mult(self, current)
 
     @property
     def splims(self):
