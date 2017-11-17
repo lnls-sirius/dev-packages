@@ -270,23 +270,43 @@ class Waveform:
     #     except TypeError:
     #         return self._eval_point(idx)
 
-    def change_rampup(self, i1, i2, v1, v2):
+    def change_ramp_up(self, i1, i2, v1, v2):
         """Change rampup."""
-        if i1 < self._i[0] or i2 <= i1 or i2 >= self._i[4] or
+        if i1 < self._i[0] or i2 <= i1 or i2 >= self._i[4] or \
            v1 >= v2 or v1 <= self._v[0] or v2 >= self._v[3]:
             raise ValueError('Invalid ramp parameters !')
         i3 = self._find_i3(i1, i2, v1, v2)
-        i0 = self._find_i0(i1, i2, v1, v2)
-        if i3 is not None and i0 is not None:
-            self._i[0] = i0
-            self._i[1] = i1
-            self._i[2] = i2
-            self._i[3] = i3
-            self._v[1] = v1
-            self._v[2] = v2
-            self._deprecated = True
-        else:
+        if i3 is None:
             raise ValueError('Could not find solution for i3 !')
+        i0 = self._find_i0(i1, i2, v1, v2)
+        if i0 is None:
+            raise ValueError('Could not find solution for i0 !')
+        self._i[0] = i0
+        self._i[1] = i1
+        self._i[2] = i2
+        self._i[3] = i3
+        self._v[1] = v1
+        self._v[2] = v2
+        self._deprecated = True
+
+    def change_ramp_down(self, i5, i6, v5, v6):
+        """Change rampup."""
+        if i5 < self._i[4] or i6 <= i5 or i6 >= _default_wfmsize or \
+           v5 <= v6 or v5 >= self._v[4] or v6 <= self._v[7]:
+            raise ValueError('Invalid ramp parameters !')
+        i7 = self._find_i7(i5, i6, v5, v6)
+        if i7 is None:
+            raise ValueError('Could not find solution for i7 !')
+        i4 = self._find_i4(i5, i6, v5, v6)
+        if i4 is None:
+            raise ValueError('Could not find solution for i4 !')
+        self._i[4] = i4
+        self._i[5] = i5
+        self._i[6] = i6
+        self._i[7] = i7
+        self._v[5] = v5
+        self._v[6] = v6
+        self._deprecated = True
 
     # --- private methods ---
 
@@ -316,7 +336,7 @@ class Waveform:
             i07 = _np.array([0, 104, 2480, 2576, 2640, 2736, 3840, 4000])
         if v07 is None:
             v07 = _np.array([0.01, 0.02625, 1.0339285714, 1.05,
-                             1.05, 1,0, 0.07, 0.01])
+                             1.05, 1.0, 0.07, 0.01])
         try:
             if len(i07) != 8:
                 raise ValueError('Lenght of i07 is not 6 !')
@@ -433,21 +453,45 @@ class Waveform:
             return None
 
     def _find_i0(self, i1, i2, v1, v2):
-        D0 = (self._v[0] - self._vL) / (self._i[0] - 0)
+        D2 = (v2 - v1) / (i2 - i1)
         dv = v1 - self._v[0]
         i0 = _np.arange(1, i1)
-        D2 = (v2 - v1) / (i2 - i1)
+        D0 = (self._v[0] - self._vL) / (i0 - 0)
         d = i1 - i0
         a, b, c = Waveform._calccoeffs(d, dv, D0, D2)
         phi = b**2 - 3*c*a
         i0_r1 = i0 + (-b + _np.sqrt(phi))/3.0/c
         i0_r2 = i0 + (-b - _np.sqrt(phi))/3.0/c
-        cond = ((i0_r1 <= i0) | (i0_r1 >= i3) | _np.isnan(i0_r1)) & \
-               ((i0_r2 <= i0) | (i0_r2 >= i3) | _np.isnan(i0_r2))
+        cond = ((i0_r1 <= i0) | (i0_r1 >= i1) | _np.isnan(i0_r1)) & \
+               ((i0_r2 <= i0) | (i0_r2 >= i1) | _np.isnan(i0_r2))
         i0_solutions = i0[cond]
         if i0_solutions.size:
             i0_delta = min(i0_solutions - self._i[0], key=abs)
             return self._i[0] + i0_delta
+        else:
+            return None
+
+    def _find_i7(self, i5, i6, v5, v6):
+        D6 = (v6 - v5) / (i6 - i5)
+        dv = self._v[3] - v2
+        i3 = _np.arange(i2+1, self._i[4])
+        D4 = (self._v[4] - self._v[3]) / (self._i[4] - i3)
+        d = i3 - i2
+        a, b, c = Waveform._calccoeffs(d, dv, D2, D4)
+        phi = b**2 - 3*c*a
+        i3_r1 = i2 + (-b + _np.sqrt(phi))/3.0/c
+        i3_r2 = i2 + (-b - _np.sqrt(phi))/3.0/c
+        cond = ((i3_r1 < i2) | (i3_r1 >= i3) | _np.isnan(i3_r1)) & \
+               ((i3_r2 < i2) | (i3_r2 >= i3) | _np.isnan(i3_r2))
+        # for i in range(len(i3)):
+        #     di = i3[i] - self._i[3]
+        #     print(('{},  d:{}, i3_r1:{:.1f}, i3_r2:{:.1f}, '
+        #            'i2:{}, i3:{}').format(cond[i], di, i3_r1[i], i3_r2[i],
+        #                                   i2, i3[i]))
+        i3_solutions = i3[cond]
+        if i3_solutions.size:
+            i3_delta = min(i3_solutions - self._i[3], key=abs)
+            return self._i[3] + i3_delta
         else:
             return None
 
