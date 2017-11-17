@@ -12,12 +12,83 @@ polarity = ['positive', 'negative']
 acq_repeat = ['normal', 'repetitive']
 acq_events = ['start', 'stop', 'abort', 'reset']
 
+acq_datasel_types = ['A', 'B', 'C', 'D', 'X', 'Y', 'Sum', 'Q']
 acq_types = ['adc', 'adcswp', 'tbt', 'sofb', 'tbtpha', 'fofbpha']
 acq_states = ['Idle', 'Waiting', 'Acquiring', 'Error', 'Aborted']
 acq_trig_types = ['now', 'external', 'data', 'software']
 acq_trig_exter = ['Trig1', 'Trig2', 'Trig3', 'Trig4', 'Trig5']
 
+config_pvs = {
+    'Channel-Sel': {
+        'type': 'enum', 'enums': acq_types, 'value': 0},
+    'Channel-Sts': {
+        'type': 'enum', 'enums': acq_types, 'value': 0},
+    'Shots-SP': {
+        'type': 'int', 'value': 1, 'low': 0, 'high': 65536},
+    'Shots-RB': {
+        'type': 'int', 'value': 1, 'low': 0, 'high': 65536},
+    'TriggerHwDly-SP': {
+        'type': 'float', 'value': 0.0, 'low': 0.0, 'high': 1e9},
+    'TriggerHwDly-RB': {
+        'type': 'float', 'value': 0.0, 'low': 0.0, 'high': 1e9},
+    'UpdateTime-SP': {
+        'type': 'float', 'value': 1.0, 'low': 0.0, 'high': 1e9},
+    'UpdateTime-RB': {
+        'type': 'float', 'value': 1.0, 'low': 0.0, 'high': 1e9},
+    'SamplesPre-SP': {
+        'type': 'int', 'value': 1000, 'low': 0, 'high': 100000},
+    'SamplesPre-RB': {
+        'type': 'int', 'value': 1000, 'low': 0, 'high': 100000},
+    'SamplesPost-SP': {
+        'type': 'int', 'value': 1000, 'low': 0, 'high': 100000},
+    'SamplesPost-RB': {
+        'type': 'int', 'value': 1000, 'low': 0, 'high': 100000},
+    'TriggerEvent-Sel': {
+        'type': 'enum', 'enums': acq_events, 'value': 0},
+    'TriggerEvent-Sts': {
+        'type': 'enum', 'enums': acq_events, 'value': 0},
+    'Status-Sts': {
+        'type': 'enum', 'enums': acq_states, 'value': 0},
+    'Trigger-Sel': {
+        'type': 'enum', 'enums': acq_trig_types, 'value': 1},
+    'Trigger-Sts': {
+        'type': 'enum', 'enums': acq_trig_types, 'value': 1},
+    'TriggerRep-Sel': {
+        'type': 'enum', 'enums': acq_repeat, 'value': 0},
+    'TriggerRep-Sts': {
+        'type': 'enum', 'enums': acq_repeat, 'value': 0},
+    'TriggerExternalChan-Sel': {
+        'type': 'enum', 'enums': acq_trig_exter, 'value': 0},
+    'TriggerExternalChan-Sts': {
+        'type': 'enum', 'enums': acq_trig_exter, 'value': 0},
+    'TriggerDataChan-Sel': {
+        'type': 'enum', 'enums': acq_types, 'value': 0},
+    'TriggerDataChan-Sts': {
+        'type': 'enum', 'enums': acq_types, 'value': 0},
+    'TriggerDataSel-Sel': {
+        'type': 'enum', 'enums': acq_datasel_types, 'value': 0},
+    'TriggerDataSel-Sts': {
+        'type': 'enum', 'enums': acq_datasel_types, 'value': 0},
+    'TriggerDataThres-SP': {
+        'type': 'int', 'value': 1, 'low': 0, 'high': 2**16 - 1},
+    'TriggerDataThres-RB': {
+        'type': 'int', 'value': 1, 'low': 0, 'high': 2**16 - 1},
+    'TriggerDataPol-Sel': {
+        'type': 'enum', 'enums': polarity, 'value': 0},
+    'TriggerDataPol-Sts': {
+        'type': 'enum', 'enums': polarity, 'value': 0},
+    'TriggerDataHyst-SP': {
+        'type': 'int', 'value': 0, 'low': 0, 'high': 2**16 - 1},
+    'TriggerDataHyst-RB': {
+        'type': 'int', 'value': 0, 'low': 0, 'high': 2**16 - 1},
+    }
+
 pvs_definitions = {
+    'ACQBPMMode-Sel': {
+        'type': 'enum', 'enums': op_modes, 'value': 0},
+    'ACQBPMMode-Sts': {
+        'type': 'enum', 'enums': op_modes, 'value': 0},
+
     'asyn.ENBL': {
         'type': 'enum', 'enums': ['Disable', 'Enable'], 'value': 0},
     'asyn.CNCT': {
@@ -38,10 +109,7 @@ pvs_definitions = {
         'type': 'int', 'value': 382, 'low': 0, 'high': 2**32-1},
     'INFOTBTRate-RB': {
         'type': 'int', 'value': 382, 'low': 0, 'high': 2**32-1},
-    'ACQBPMMode-Sel': {
-        'type': 'enum', 'enums': op_modes, 'value': 0},
-    'ACQBPMMode-Sts': {
-        'type': 'enum', 'enums': op_modes, 'value': 0},
+
     'PosQOffset-SP': {
         'type': 'float', 'value': 0.0, 'low': -1e12, 'high': 1e12},
     'PosQOffset-RB': {
@@ -70,6 +138,7 @@ pvs_definitions = {
         'type': 'float', 'value': 0.0, 'low': -1e12, 'high': 1e12},
     'PosKy-RB': {
         'type': 'float', 'value': 0.0, 'low': -1e12, 'high': 1e12},
+
     'PosX-Mon': {
         'type': 'float', 'value': 0.0, 'low': -1e12, 'high': 1e12},
     'PosY-Mon': {
@@ -86,131 +155,6 @@ pvs_definitions = {
         'type': 'float', 'value': 0.0, 'low': -1e12, 'high': 1e12},
     'AmplD-Mon': {
         'type': 'float', 'value': 0.0, 'low': -1e12, 'high': 1e12},
-    'ACQChannel-Sel': {
-        'type': 'enum', 'enums': acq_types, 'value': 0},
-    'ACQChannel-Sts': {
-        'type': 'enum', 'enums': acq_types, 'value': 0},
-    'ACQShots-SP': {
-        'type': 'int', 'value': 1, 'low': 0, 'high': 65536},
-    'ACQShots-RB': {
-        'type': 'int', 'value': 1, 'low': 0, 'high': 65536},
-    'ACQTriggerHwDly-SP': {
-        'type': 'float', 'value': 0.0, 'low': 0.0, 'high': 1e9},
-    'ACQTriggerHwDly-RB': {
-        'type': 'float', 'value': 0.0, 'low': 0.0, 'high': 1e9},
-    'ACQUpdateTime-SP': {
-        'type': 'float', 'value': 1.0, 'low': 0.0, 'high': 1e9},
-    'ACQUpdateTime-RB': {
-        'type': 'float', 'value': 1.0, 'low': 0.0, 'high': 1e9},
-    'ACQSamplesPre-SP': {
-        'type': 'int', 'value': 1000, 'low': 0, 'high': 100000},
-    'ACQSamplesPre-RB': {
-        'type': 'int', 'value': 1000, 'low': 0, 'high': 100000},
-    'ACQSamplesPost-SP': {
-        'type': 'int', 'value': 1000, 'low': 0, 'high': 100000},
-    'ACQSamplesPost-RB': {
-        'type': 'int', 'value': 1000, 'low': 0, 'high': 100000},
-    'ACQTriggerEvent-Sel': {
-        'type': 'enum', 'enums': acq_events, 'value': 0},
-    'ACQTriggerEvent-Sts': {
-        'type': 'enum', 'enums': acq_events, 'value': 0},
-    'ACQStatus-Sts': {
-        'type': 'enum', 'enums': acq_states, 'value': 0},
-    'ACQTrigger-Sel': {
-        'type': 'enum', 'enums': acq_trig_types, 'value': 1},
-    'ACQTrigger-Sts': {
-        'type': 'enum', 'enums': acq_trig_types, 'value': 1},
-    'ACQTriggerRep-Sel': {
-        'type': 'enum', 'enums': acq_repeat, 'value': 0},
-    'ACQTriggerRep-Sts': {
-        'type': 'enum', 'enums': acq_repeat, 'value': 0},
-    'ACQExtTrigChan-Sel': {
-        'type': 'enum', 'enums': acq_trig_exter, 'value': 0},
-    'ACQExtTrigChan-Sts': {
-        'type': 'enum', 'enums': acq_trig_exter, 'value': 0},
-    'ACQDataTrigChan-Sel': {
-        'type': 'enum', 'enums': acq_types, 'value': 0},
-    'ACQDataTrigChan-Sts': {
-        'type': 'enum', 'enums': acq_types, 'value': 0},
-    'ACQTriggerDataSel-SP': {
-        'type': 'int', 'value': 0, 'low': 0, 'high': 7},
-    'ACQTriggerDataSel-RB': {
-        'type': 'int', 'value': 0, 'low': 0, 'high': 7},
-    'ACQTriggerDataThres-SP': {
-        'type': 'int', 'value': 1, 'low': 0, 'high': 2**16 - 1},
-    'ACQTriggerDataThres-RB': {
-        'type': 'int', 'value': 1, 'low': 0, 'high': 2**16 - 1},
-    'ACQTriggerDataPol-Sel': {
-        'type': 'enum', 'enums': polarity, 'value': 0},
-    'ACQTriggerDataPol-Sts': {
-        'type': 'enum', 'enums': polarity, 'value': 0},
-    'ACQTriggerDataHyst-SP': {
-        'type': 'int', 'value': 0, 'low': 0, 'high': 2**16 - 1},
-    'ACQTriggerDataHyst-RB': {
-        'type': 'int', 'value': 0, 'low': 0, 'high': 2**16 - 1},
-
-    'ACQ_PMChannel-Sel': {
-        'type': 'enum', 'enums': acq_types, 'value': 0},
-    'ACQ_PMChannel-Sts': {
-        'type': 'enum', 'enums': acq_types, 'value': 0},
-    'ACQ_PMShots-SP': {
-        'type': 'int', 'value': 1, 'low': 0, 'high': 65536},
-    'ACQ_PMShots-RB': {
-        'type': 'int', 'value': 1, 'low': 0, 'high': 65536},
-    'ACQ_PMTriggerHwDly-SP': {
-        'type': 'float', 'value': 0.0, 'low': 0.0, 'high': 1e9},
-    'ACQ_PMTriggerHwDly-RB': {
-        'type': 'float', 'value': 0.0, 'low': 0.0, 'high': 1e9},
-    'ACQ_PMUpdateTime-SP': {
-        'type': 'float', 'value': 1.0, 'low': 0.0, 'high': 1e9},
-    'ACQ_PMUpdateTime-RB': {
-        'type': 'float', 'value': 1.0, 'low': 0.0, 'high': 1e9},
-    'ACQ_PMSamplesPre-SP': {
-        'type': 'int', 'value': 1000, 'low': 0, 'high': 100000},
-    'ACQ_PMSamplesPre-RB': {
-        'type': 'int', 'value': 1000, 'low': 0, 'high': 100000},
-    'ACQ_PMSamplesPost-SP': {
-        'type': 'int', 'value': 1000, 'low': 0, 'high': 100000},
-    'ACQ_PMSamplesPost-RB': {
-        'type': 'int', 'value': 1000, 'low': 0, 'high': 100000},
-    'ACQ_PMTriggerEvent-Sel': {
-        'type': 'enum', 'enums': acq_events, 'value': 0},
-    'ACQ_PMTriggerEvent-Sts': {
-        'type': 'enum', 'enums': acq_events, 'value': 0},
-    'ACQ_PMStatus-Sts': {
-        'type': 'enum', 'enums': acq_states, 'value': 0},
-    'ACQ_PMTrigger-Sel': {
-        'type': 'enum', 'enums': acq_trig_types, 'value': 1},
-    'ACQ_PMTrigger-Sts': {
-        'type': 'enum', 'enums': acq_trig_types, 'value': 1},
-    'ACQ_PMTriggerRep-Sel': {
-        'type': 'enum', 'enums': acq_repeat, 'value': 0},
-    'ACQ_PMTriggerRep-Sts': {
-        'type': 'enum', 'enums': acq_repeat, 'value': 0},
-    'ACQ_PMExtTrigChan-Sel': {
-        'type': 'enum', 'enums': acq_trig_exter, 'value': 0},
-    'ACQ_PMExtTrigChan-Sts': {
-        'type': 'enum', 'enums': acq_trig_exter, 'value': 0},
-    'ACQ_PMDataTrigChan-Sel': {
-        'type': 'enum', 'enums': acq_types, 'value': 0},
-    'ACQ_PMDataTrigChan-Sts': {
-        'type': 'enum', 'enums': acq_types, 'value': 0},
-    'ACQ_PMTriggerDataSel-SP': {
-        'type': 'int', 'value': 0, 'low': 0, 'high': 7},
-    'ACQ_PMTriggerDataSel-RB': {
-        'type': 'int', 'value': 0, 'low': 0, 'high': 7},
-    'ACQ_PMTriggerDataThres-SP': {
-        'type': 'int', 'value': 1, 'low': 0, 'high': 2**16 - 1},
-    'ACQ_PMTriggerDataThres-RB': {
-        'type': 'int', 'value': 1, 'low': 0, 'high': 2**16 - 1},
-    'ACQ_PMTriggerDataPol-Sel': {
-        'type': 'enum', 'enums': polarity, 'value': 0},
-    'ACQ_PMTriggerDataPol-Sts': {
-        'type': 'enum', 'enums': polarity, 'value': 0},
-    'ACQ_PMTriggerDataHyst-SP': {
-        'type': 'int', 'value': 0, 'low': 0, 'high': 2**16 - 1},
-    'ACQ_PMTriggerDataHyst-RB': {
-        'type': 'int', 'value': 0, 'low': 0, 'high': 2**16 - 1},
 
     'SPPosX-Mon': {
         'type': 'float', 'value': 0.0, 'low': -1e12, 'high': 1e12},
@@ -250,14 +194,14 @@ for acq_tp in ['GEN', 'SP', 'PM']:
         pvs_loc[nm + '_STATSMinValue_RBV'] = _copy(acq_data_stat_db)
         pvs_loc[nm + '_STATSSigma_RBV'] = _copy(acq_data_stat_db)
         pvs_loc[nm + 'FFTFreq-Mon'] = _copy(acq_data_prop_db)
-        pvs_loc[nm + 'FFTData.SPAN'] = {
-                'type': 'int', 'value': 0, 'low': 0, 'high': 100000}
+        pvs_loc[nm + 'FFTData.SPAN'] = _copy(acq_int_db)
         pvs_loc[nm + 'FFTData.AMP'] = _copy(acq_data_prop_db)
         pvs_loc[nm + 'FFTData.PHA'] = _copy(acq_data_prop_db)
         pvs_loc[nm + 'FFTData.SIN'] = _copy(acq_data_prop_db)
         pvs_loc[nm + 'FFTData.COS'] = _copy(acq_data_prop_db)
-        pvs_loc[nm + 'FFTData.INDX'] = _copy(acq_data_prop_db)
-        pvs_loc[nm + 'FFTData.MXIX'] = _copy(acq_data_prop_db)
+        pvs_loc[nm + 'FFTData.WAVN'] = _copy(acq_data_prop_db)
+        pvs_loc[nm + 'FFTData.INDX'] = _copy(acq_int_db)
+        pvs_loc[nm + 'FFTData.MXIX'] = _copy(acq_int_db)
         pvs_loc[nm + 'FFTData.WIND'] = {
                 'type': 'enum', 'enums': fft_window_types, 'value': 0}
         pvs_loc[nm + 'FFTData.CDIR'] = {
@@ -265,3 +209,15 @@ for acq_tp in ['GEN', 'SP', 'PM']:
         pvs_loc[nm + 'FFTData.ASUB'] = {
                 'type': 'enum', 'enums': fft_average_subtraction, 'value': 0}
         pvs_definitions.update(pvs_loc)
+
+for acq_md in ['ACQ', 'ACQ_PM']:
+    for key, value in config_pvs.items():
+        pvs_definitions[acq_md+key] = _copy(value)
+
+for k, v in pvs_definitions.items():
+    if 'low' in v:
+        v['lolo'] = v['low']
+        v['lolim'] = v['low']
+    if 'high' in v:
+        v['hihi'] = v['high']
+        v['hilim'] = v['high']

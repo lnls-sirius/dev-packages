@@ -8,6 +8,7 @@ from siriuspy.epics.fake_pv import add_to_database as _add_to_database
 from .pvs import pvs_definitions as pvDB
 from .pvs import fft_writable_props
 
+
 def get_prop_and_suffix(name):
     prop = name.lower().replace('-', '_').replace('.', '')
     prop = prop.split('_')
@@ -146,15 +147,15 @@ class BPMFake(BPM):
             self._q_ref = float(q)
 
     def __update_stats_fft(self, pvname, value, **kws):
-        self._calc_statistics_fft(pvname, value)
+        self.__calc_statistics_fft(pvname, value)
 
     def __calc_statistics_fft(self, pvname, value):
         fft = _np.fft.rfft(value)
         freq = _np.fft.rfftfreq(len(fft))
-        name = pvname.replace(self.pv_prefix, '')[:-4]
+        name = pvname.replace(self.pv_prefix, '')[:-13]
         self.pvs[name+'_STATSMaxValue_RBV'].value = value.max()
-        self.pvs[name+'_STATSMeanValue_RBV'].value = value.min()
-        self.pvs[name+'_STATSMinValue_RBV'].value = value.mean()
+        self.pvs[name+'_STATSMinValue_RBV'].value = value.min()
+        self.pvs[name+'_STATSMeanValue_RBV'].value = value.mean()
         self.pvs[name+'_STATSSigma_RBV'].value = value.std()
         self.pvs[name+'FFTFreq-Mon'].value = freq
         self.pvs[name+'FFTData.AMP'].value = _np.abs(fft)
@@ -178,32 +179,31 @@ class BPMFake(BPM):
 
     def __do_acquisition(self, pvname, value=None, post_morten=False, **kws):
         if value:
-            returns
+            return
         pref = 'ACQ'
         pref += '_PM' if post_morten else ''
         if not post_morten and self.pvs[pref+'BPMMode-Sts'].value:
             self.__do_single_pass(pvname, value=value, **kws)
 
         self.pvs[pref+'Status-Sts'].value = 2
-        acq_type = self.pvs[pref+'Channel-Sts'].char_value
-        acq_spl_pre = self.pvs[pref+'SamplesPre-RB']
-        acq_spl_pos = self.pvs[pref+'SamplesPost-RB']
-        acq_shots = self.pvs[pref+'Shots-RB']
+        acq_spl_pre = self.pvs[pref+'SamplesPre-RB'].value
+        acq_spl_pos = self.pvs[pref+'SamplesPost-RB'].value
+        acq_shots = self.pvs[pref+'Shots-RB'].value
         nr = (acq_spl_pre + acq_spl_pos) * acq_shots
         t = _np.arange(nr)
         freq = _np.random.rand()/10
         phi = _np.random.rand()*_np.pi
-        amp = _np.random.rand()*1e-4
+        amp = _np.random.rand()*50
         posx = amp*_np.cos(2*_np.pi*freq*t + phi) + self._x
 
         freq = _np.random.rand()/10
         phi = _np.random.rand()*_np.pi
-        amp = _np.random.rand()*5e-5
+        amp = _np.random.rand()*50
         posy = amp*_np.cos(2*_np.pi*freq*t + phi) + self._y
 
         freq = _np.random.rand()/10
         phi = _np.random.rand()*_np.pi
-        amp = _np.random.rand()*1e-5
+        amp = _np.random.rand()*10
         posq = amp*_np.cos(2*_np.pi*freq*t + phi) + self._q
 
         poss = _np.ones(nr)
@@ -214,6 +214,7 @@ class BPMFake(BPM):
         self.pvs[dt_nm+'BArrayData-Mon'].value = Amps[1, :]
         self.pvs[dt_nm+'CArrayData-Mon'].value = Amps[2, :]
         self.pvs[dt_nm+'DArrayData-Mon'].value = Amps[3, :]
+        acq_type = self.pvs[pref+'Channel-Sts'].char_value
         if not acq_type.startswith('adc'):
             self.pvs[dt_nm+'XArrayData-Mon'].value = posx
             self.pvs[dt_nm+'YArrayData-Mon'].value = posy
@@ -237,27 +238,27 @@ class BPMFake(BPM):
         self.pvs['AmplD-Mon'].value = amps[3]
 
     def __do_single_pass(self, pvname, value=None, **kws):
-        if not self.opmode_sts:
+        if not self.acqbpmmode_sts:
             return
 
         self.pvs['ACQStatus-Sts'].value = 2
-        acq_spl_pre = self.pvs['ACQSamplesPre-RB']
-        acq_spl_pos = self.pvs['ACQSamplesPost-RB']
-        acq_shots = self.pvs['ACQShots-RB']
+        acq_spl_pre = self.pvs['ACQSamplesPre-RB'].value
+        acq_spl_pos = self.pvs['ACQSamplesPost-RB'].value
+        acq_shots = self.pvs['ACQShots-RB'].value
         nr = (acq_spl_pre + acq_spl_pos) * acq_shots
         t = _np.linspace(0, 1, nr)
 
         t0 = _np.random.rand()
         sig = _np.random.rand()*3e-2
-        amp = _np.random.rand()*1e-3
+        amp = _np.random.rand()*100
         posx = amp*_np.exp(-(t-t0)**2/2/sig**2)
 
         sig = _np.random.rand()*3e-2
-        amp = _np.random.rand()*1e-3
+        amp = _np.random.rand()*200
         posy = amp*_np.exp(-(t-t0)**2/2/sig**2)
 
         sig = _np.random.rand()*3e-2
-        amp = _np.random.rand()*1e-3
+        amp = _np.random.rand()*10
         posq = amp*_np.exp(-(t-t0)**2/2/sig**2)
 
         poss = _np.ones(nr)

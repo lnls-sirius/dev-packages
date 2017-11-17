@@ -164,4 +164,4 @@ def run(bpms_list=[], debug=False):
 
 
 if __name__ == '__main__':
-    run(['SI-01M1:DI-BPM'])
+    run(['SI-01M1:DI-BPM', 'SI-01M2:DI-BPM', 'SI-01C1-1:DI-BPM'])
