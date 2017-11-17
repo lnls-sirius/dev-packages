@@ -11,7 +11,7 @@ from siriuspy.magnet import util as _mutil
 _np.seterr(all='ignore')
 
 
-class Waveform:
+class Waveform():
     """Waveform parameter class."""
 
     def __init__(self,
@@ -34,9 +34,38 @@ class Waveform:
             self._update_wfm_parms()
         return self._wfm_parms + self._wfm_bumps
 
+    @property
+    def waveform_parms(self):
+        """Return parameterized waveform component."""
+        if self._deprecated:
+            self._update_wfm_parms()
+        return self._wfm_parms
+
+    @property
+    def waveform_bumps(self):
+        """Return bumps waveform component."""
+        if self._deprecated:
+            self._update_wfm_parms()
+        return self._wfm_bumps
+
     @waveform.setter
     def waveform(self, waveform):
-        self._update_wfm_bumps(waveform)
+        if len(waveform) == _default_wfmsize:
+            self._update_wfm_bumps(waveform)
+        else:
+            raise ValueError('Invalid waveform length!')
+
+    @waveform_bumps.setter
+    def waveform_bumps(self, waveform_bumps):
+        if len(waveform_bumps) == _default_wfmsize:
+            self._wfm_bumps = _np.array(waveform_bumps)
+        else:
+            raise ValueError('Invalid bumps waveform length!')
+
+    @property
+    def i07(self):
+        """Return list of regions boundaries."""
+        return [i for i in self._i]
 
     @property
     def i0(self):
@@ -246,29 +275,7 @@ class Waveform:
         self._vR = value
         self._deprecated = True
 
-    # # --- public methods ---
-    #
-    # def eval(self, idx=None):
-    #     """Evaluate parameterized waveform at idx values or at index
-    #     values.
-    #     """
-    #     if self._deprecated:
-    #         self._set_coeffs()
-    #         self._deprecated = False
-    #     if idx is None:
-    #         # return waveform at index value
-    #         return self._eval_index()
-    #     # return waveform as idx values
-    #     try:
-    #         if type(idx) == _np.ndarray:
-    #             v = _np.zeros(idx.shape)
-    #         else:
-    #             v = [0.0] * len(idx)
-    #         for i in range(len(idx)):
-    #             v[i] = self._eval_point(idx[i])
-    #         return v
-    #     except TypeError:
-    #         return self._eval_point(idx)
+    # --- public methods ---
 
     def change_ramp_up(self, i1, i2, v1, v2):
         """Change rampup."""
@@ -308,6 +315,59 @@ class Waveform:
         self._v[6] = v6
         self._deprecated = True
 
+    # --- list methods ---
+
+    def __getitem__(self, index):
+        """Return waveform at index."""
+        if self._deprecated:
+            self._update_wfm_parms()
+        if isinstance(index, slice):
+            wp = self._wfm_parms[index]
+            wb = self._wfm_bumps[index]
+            return _np.array([wp[i] + wb[i] for i in range(len(wp))])
+        elif isinstance(index, int):
+            return self._wfm_parms[index] + self._wfm_bumps[index]
+        else:
+            raise IndexError
+
+    def __setitem__(self, index, value):
+        """Set waveform at index."""
+        if self._deprecated:
+            self._update_wfm_parms()
+        if isinstance(index, slice):
+            wp = self._wfm_parms[index]
+            self._wfm_bumps[index] = [value[i] - wp[i] for i in range(len(wp))]
+        elif isinstance(index, int):
+            self._wfm_bumps[index] = value - self._wfm_parms[index]
+        else:
+            raise IndexError
+
+    def __iter__(self):
+        """Return iterator for waveform."""
+        if self._deprecated:
+            self._update_wfm_parms()
+        for i in range(len(self._wfm_parms)):
+            yield(self._wfm_parms[i] + self._wfm_bumps[i])
+
+    def __reversed__(self):
+        """Return reverse iterator for waveform."""
+        if self._deprecated:
+            self._update_wfm_parms()
+        for i in range(len(self._wfm_parms)-1, -1, -1):
+            yield(self._wfm_parms[i] + self._wfm_bumps[i])
+
+    def __len__(self):
+        """Return length of waveform."""
+        return _default_wfmsize
+
+    def __contains__(self, value):
+        """Check whether value is in waveform."""
+        return value in self.waveform
+
+    def __eq__(self, value):
+        """Compare waveforms."""
+        return self.waveform == value
+
     # --- private methods ---
 
     def _update_wfm_parms(self):
@@ -333,10 +393,11 @@ class Waveform:
         self._vL = 0.01 if vL is None else vL
         self._vR = 0.01 if vR is None else vR
         if i07 is None:
-            i07 = _np.array([0, 104, 2480, 2576, 2640, 2736, 3840, 4000])
+            i07 = _np.array([0, 104, 2480,
+                             2576, 2640, 2736, 3840, 4000])
         if v07 is None:
-            v07 = _np.array([0.01, 0.02625, 1.0339285714, 1.05,
-                             1.05, 1.0, 0.07, 0.01])
+            v07 = _np.array([0.01, 0.026250000000000006, 1.0339285714285713,
+                             1.05, 1.05, 1.0, 0.07, 0.01])
         try:
             if len(i07) != 8:
                 raise ValueError('Lenght of i07 is not 6 !')
@@ -503,30 +564,6 @@ class Waveform:
                 self._update_wfm_parms()
             self._wfm_bumps = _np.array(waveform) - self._wfm_parms
 
-
-
-
-    # def _eval_point(self, idx):
-    #     if idx < 0 or idx >= _default_wfmsize:
-    #         raise ValueError('idx value out of range: {}!'.format(idx))
-    #     coeffs, v0 = None, None
-    #     if idx < self._i[0]:
-    #         coeffs = self._coeffs[0]
-    #         i0, v0 = 0, self._vL
-    #     elif idx > self._i[5]:
-    #         coeffs = self._coeffs[6]
-    #         i0, v0 = self._i[5], self._v[5]
-    #     else:
-    #         for i in range(len(self._i)):
-    #             if idx <= self._i[i]:
-    #                 i0, v0 = self._i[i-1], self._v[i-1]
-    #                 coeffs = self._coeffs[i]
-    #                 break
-    #     dv = \
-    #         coeffs[0] * (idx - i0) + \
-    #         coeffs[1] * (idx - i0)**2 + \
-    #         coeffs[2] * (idx - i0)**3
-    #     return v0 + dv
 
 
 class WfmSet:
