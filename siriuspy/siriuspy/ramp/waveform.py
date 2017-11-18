@@ -146,7 +146,7 @@ class Waveform():
     def i0(self, idx):
         """Set index of the first region boundary."""
         i = 0
-        if 0 <= idx <= self._i[i+1]:
+        if 0 < idx <= self._i[i+1]:
             self._i[i] = idx
         else:
             raise ValueError(('Index is inconsistent with labeled '
@@ -277,43 +277,58 @@ class Waveform():
 
     # --- public methods ---
 
-    def change_ramp_up(self, i1, i2, v1, v2):
-        """Change rampup."""
-        if i1 < self._i[0] or i2 <= i1 or i2 >= self._i[4] or \
-           v1 >= v2 or v1 <= self._v[0] or v2 >= self._v[3]:
-            raise ValueError('Invalid ramp parameters !')
+    def change_plateau(self, value):
+        """Change waveform plateau value."""
+        if value < self.v2 or value < self.v5:
+            raise ValueError('Invalid plateau parameter !')
+        self.v34 = value
+
+    def change_ramp_up(self, i1=None, i2=None, v1=None, v2=None):
+        """Change waveform ramp up."""
+        i1 = self.i1 if i1 is None else i1
+        i2 = self.i2 if i2 is None else i2
+        v1 = self.v1 if v1 is None else v1
+        v2 = self.v2 if v2 is None else v2
+        if i1 < self.i0 or i2 <= i1 or i2 >= self.i4 or \
+           v1 >= v2 or v1 <= self.vL0 or v2 >= self.v34:
+            raise ValueError('Invalid ramp up parameters !')
         i3 = self._find_i3(i1, i2, v1, v2)
         if i3 is None:
             raise ValueError('Could not find solution for i3 !')
         i0 = self._find_i0(i1, i2, v1, v2)
         if i0 is None:
             raise ValueError('Could not find solution for i0 !')
-        self._i[0] = i0
-        self._i[1] = i1
-        self._i[2] = i2
-        self._i[3] = i3
-        self._v[1] = v1
-        self._v[2] = v2
-        self._deprecated = True
+        # change internal data - deprecated is automatically set to True.
+        self.i1 = i1
+        self.i2 = i2
+        self.v1 = v1
+        self.v2 = v2
+        self.i3 = i3
+        self.i0 = i0
 
-    def change_ramp_down(self, i5, i6, v5, v6):
-        """Change rampup."""
-        if i5 < self._i[4] or i6 <= i5 or i6 >= _default_wfmsize or \
-           v5 <= v6 or v5 >= self._v[4] or v6 <= self._v[7]:
-            raise ValueError('Invalid ramp parameters !')
+    def change_ramp_down(self, i5=None, i6=None, v5=None, v6=None):
+        """Change waveform ramp down."""
+        i5 = self.i5 if i5 is None else i5
+        i6 = self.i6 if i6 is None else i6
+        v5 = self.v5 if v5 is None else v5
+        v6 = self.v6 if v6 is None else v6
+        if i5 < self.i4 or i6 <= i5 or i6 >= _default_wfmsize or \
+           v5 <= v6 or v5 >= self.v34 or v6 <= self.v7R:
+            raise ValueError('Invalid ramp down parameters !')
         i7 = self._find_i7(i5, i6, v5, v6)
         if i7 is None:
             raise ValueError('Could not find solution for i7 !')
         i4 = self._find_i4(i5, i6, v5, v6)
         if i4 is None:
             raise ValueError('Could not find solution for i4 !')
-        self._i[4] = i4
-        self._i[5] = i5
-        self._i[6] = i6
-        self._i[7] = i7
-        self._v[5] = v5
-        self._v[6] = v6
-        self._deprecated = True
+        # change internal data - deprecated is automatically set to True.
+        self.i5 = i5
+        self.i6 = i6
+        self.v5 = v5
+        self.v6 = v6
+        self.i7 = i7
+        self.i4 = i4
+
 
     # --- list methods ---
 
@@ -393,8 +408,8 @@ class Waveform():
         self._vL = 0.01 if vL is None else vL
         self._vR = 0.01 if vR is None else vR
         if i07 is None:
-            i07 = _np.array([0, 104, 2480,
-                             2576, 2640, 2736, 3840, 4000])
+            i07 = _np.array([1, 104, 2480,
+                             2576, 2640, 2736, 3840, 3999])
         if v07 is None:
             v07 = _np.array([0.01, 0.026250000000000006, 1.0339285714285713,
                              1.05, 1.05, 1.0, 0.07, 0.01])
@@ -421,18 +436,11 @@ class Waveform():
 
     def _set_coeffs(self):
         self._coeffs = [None] * 9
-        if self._i[0] == 0:
-            self._D0 = 0.0
-        else:
-            self._D0 = (self._v[0] - self._vL) / (self._i[0] - 0)
+        self._D0 = (self._v[0] - self._vL) / (self._i[0] - 0)
         self._D2 = (self._v[2] - self._v[1]) / (self._i[2] - self._i[1])
         self._D4 = (self._v[4] - self._v[3]) / (self._i[4] - self._i[3])
         self._D6 = (self._v[6] - self._v[5]) / (self._i[6] - self._i[5])
-        if self._i[7] == _default_wfmsize:
-            self._D8 = 0.0
-        else:
-            self._D8 = (self._vR - self._v[7]) / \
-                       (_default_wfmsize - self._i[7])
+        self._D8 = (self._vR - self._v[7]) / (_default_wfmsize - self._i[7])
         # region 0
         self._coeffs[0] = _np.array([self._D0, 0.0, 0.0])
         # region 1
@@ -490,22 +498,23 @@ class Waveform():
         return _np.array(wfm)
 
     def _find_i3(self, i1, i2, v1, v2):
+        # first calculate polynomial fit coeffs (a,b,c) as function
+        # of tentative i3
         D2 = (v2 - v1) / (i2 - i1)
         dv = self._v[3] - v2
         i3 = _np.arange(i2+1, self._i[4])
         D4 = (self._v[4] - self._v[3]) / (self._i[4] - i3)
         d = i3 - i2
         a, b, c = Waveform._calccoeffs(d, dv, D2, D4)
+        # now, we find there the first derivative of waveform within region R3
+        # is for each value of i3.
         phi = b**2 - 3*c*a
         i3_r1 = i2 + (-b + _np.sqrt(phi))/3.0/c
         i3_r2 = i2 + (-b - _np.sqrt(phi))/3.0/c
         cond = ((i3_r1 < i2) | (i3_r1 >= i3) | _np.isnan(i3_r1)) & \
                ((i3_r2 < i2) | (i3_r2 >= i3) | _np.isnan(i3_r2))
-        # for i in range(len(i3)):
-        #     di = i3[i] - self._i[3]
-        #     print(('{},  d:{}, i3_r1:{:.1f}, i3_r2:{:.1f}, '
-        #            'i2:{}, i3:{}').format(cond[i], di, i3_r1[i], i3_r2[i],
-        #                                   i2, i3[i]))
+        # we accept a solution only if both roots of null first derivatives
+        # equation fall outside region.
         i3_solutions = i3[cond]
         if i3_solutions.size:
             i3_delta = min(i3_solutions - self._i[3], key=abs)
@@ -534,25 +543,47 @@ class Waveform():
 
     def _find_i7(self, i5, i6, v5, v6):
         D6 = (v6 - v5) / (i6 - i5)
-        dv = self._v[3] - v2
-        i3 = _np.arange(i2+1, self._i[4])
-        D4 = (self._v[4] - self._v[3]) / (self._i[4] - i3)
-        d = i3 - i2
-        a, b, c = Waveform._calccoeffs(d, dv, D2, D4)
+        dv = self._v[7] - v6
+        iR = _default_wfmsize
+        i7 = _np.arange(i6+1, iR)
+        D8 = (self._vR - self._v[7]) / (iR - i7)
+        d = i7 - i6
+        a, b, c = Waveform._calccoeffs(d, dv, D6, D8)
         phi = b**2 - 3*c*a
-        i3_r1 = i2 + (-b + _np.sqrt(phi))/3.0/c
-        i3_r2 = i2 + (-b - _np.sqrt(phi))/3.0/c
-        cond = ((i3_r1 < i2) | (i3_r1 >= i3) | _np.isnan(i3_r1)) & \
-               ((i3_r2 < i2) | (i3_r2 >= i3) | _np.isnan(i3_r2))
-        # for i in range(len(i3)):
-        #     di = i3[i] - self._i[3]
-        #     print(('{},  d:{}, i3_r1:{:.1f}, i3_r2:{:.1f}, '
-        #            'i2:{}, i3:{}').format(cond[i], di, i3_r1[i], i3_r2[i],
-        #                                   i2, i3[i]))
-        i3_solutions = i3[cond]
-        if i3_solutions.size:
-            i3_delta = min(i3_solutions - self._i[3], key=abs)
-            return self._i[3] + i3_delta
+        i7_r1 = i7 + (-b + _np.sqrt(phi))/3.0/c
+        i7_r2 = i7 + (-b - _np.sqrt(phi))/3.0/c
+        # print(_np.isnan(i7_r1))
+        # print(_np.isnan(i7_r2))
+        cond = ((i7_r1 < i6) | (i7_r1 >= i7) | _np.isnan(i7_r1)) & \
+               ((i7_r2 < i6) | (i7_r2 >= i7) | _np.isnan(i7_r2))
+        for i in range(len(i7)):
+            di = i7[i] - self._i[7]
+            print(('{},  d:{}, i7_r1:{:.1f}, i7_r2:{:.1f}, '
+                   'i6:{}, i7:{}').format(cond[i], di, i7_r1[i], i7_r2[i],
+                                          i6, i7[i]))
+        i7_solutions = i7[cond]
+        if i7_solutions.size:
+            i7_delta = min(i7_solutions - self._i[7], key=abs)
+            return self._i[7] + i7_delta
+        else:
+            return None
+
+    def _find_i4(self, i5, i6, v5, v6):
+        D6 = (v6 - v5) / (i6 - i5)
+        dv = v5 - self._v[4]
+        i4 = _np.arange(self._i[3]+1, self._i[5])
+        D4 = (self._v[4] - self._v[3]) / (i4 - self._i[3])
+        d = i5 - i4
+        a, b, c = Waveform._calccoeffs(d, dv, D4, D6)
+        phi = b**2 - 3*c*a
+        i4_r1 = i4 + (-b + _np.sqrt(phi))/3.0/c
+        i4_r2 = i4 + (-b - _np.sqrt(phi))/3.0/c
+        cond = ((i4_r1 <= i4) | (i4_r1 >= i5) | _np.isnan(i4_r1)) & \
+               ((i4_r2 <= i4) | (i4_r2 >= i5) | _np.isnan(i4_r2))
+        i4_solutions = i4[cond]
+        if i4_solutions.size:
+            i4_delta = min(i4_solutions - self._i[4], key=abs)
+            return self._i[4] + i4_delta
         else:
             return None
 
