@@ -1,5 +1,5 @@
 [Unit]
-Description=Soft IOC for SI Current Lifetime Calculation
+Description=Soft IOC for SI-AP-CurrentInfo-Lifetime Calculation
 After=multi-user.target
 
 [Service]

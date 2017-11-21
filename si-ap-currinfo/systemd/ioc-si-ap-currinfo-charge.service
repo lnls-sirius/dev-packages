@@ -1,5 +1,5 @@
 [Unit]
-Description=Soft IOC for SI Current Accumulated Charge Calculation
+Description=Soft IOC for SI-AP-CurrentInfo-Charge Calculation
 After=multi-user.target
 
 [Service]

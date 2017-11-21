@@ -1,5 +1,5 @@
 [Unit]
-Description=Soft IOC for SI Current Handling
+Description=Soft IOC for SI-AP-CurrentInfo-Current Handling
 After=multi-user.target
 
 [Service]

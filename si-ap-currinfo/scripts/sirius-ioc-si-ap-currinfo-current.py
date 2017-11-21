@@ -1,5 +1,5 @@
 #!/usr/local/bin/python-sirius -u
-"""SI AP Current IOC executable."""
+"""SI-AP-CurrentInfo-Current IOC executable."""
 
-from si_ap_currinfo import si_ap_currinfo as ioc_module
-ioc_module.run('current')
+from si_ap_currinfo.current import current as ioc_module
+ioc_module.run()

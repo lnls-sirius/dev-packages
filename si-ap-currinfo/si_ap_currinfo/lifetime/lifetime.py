@@ -1,12 +1,12 @@
 """SI-AP-CurrInfo IOC."""
 
 import sys as _sys
+import signal as _signal
 import pcaspy as _pcaspy
 import pcaspy.tools as _pcaspy_tools
-import si_ap_currinfo.pvs as _pvs
-import signal as _signal
-import si_ap_currinfo.main as _main
 from siriuspy import util as _util
+import si_ap_currinfo.lifetime.main as _main
+import si_ap_currinfo.lifetime.pvs as _pvs
 
 
 INTERVAL = 0.1
@@ -45,14 +45,13 @@ class _PCASDriver(_pcaspy.Driver):
             return False
 
 
-def run(info):
+def run():
     """Main module function."""
     # define abort function
     _signal.signal(_signal.SIGINT, _stop_now)
     _signal.signal(_signal.SIGTERM, _stop_now)
 
     # Init pvs database
-    _pvs.select_ioc(info)
     _main.App.init_class()
 
     # create a new simple pcaspy server and driver to respond client's requests
