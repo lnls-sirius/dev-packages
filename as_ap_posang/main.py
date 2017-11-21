@@ -4,7 +4,7 @@ import as_ap_posang.pvs as _pvs
 import time as _time
 import epics as _epics
 import siriuspy as _siriuspy
-from siriuspy import util as _util
+from siriuspy.servconf.conf_service import ConfigService as _ConfigService
 
 # Coding guidelines:
 # =================
@@ -54,7 +54,12 @@ class App:
         self._corr_check_opmode_sts = 4*[0]
         self._corr_check_ctrlmode_mon = 4*[0]
 
-        self._respmat_x, self._respmat_y = self._get_respmat()
+        config_name = self._get_config_name()
+        self._get_respmat(config_name)
+        self.driver.setParam('RespMatConfigName-SP', config_name)
+        self.driver.setParam('RespMatConfigName-RB', config_name)
+        self.driver.setParam('RespMatX-Mon', self._respmat_x)
+        self.driver.setParam('RespMatY-Mon', self._respmat_y)
 
         # The correctors are listed as:
         # First horizontal corretor, second horizontal corretor,
@@ -237,156 +242,80 @@ class App:
                                      self._config_corr_ps_cmd_count)
                 self.driver.updatePVs()
 
-        elif reason == 'RespMatX-SP':
-            self._respmat_x = value
-            self._set_respmat(value, self._respmat_y)
-            updated = self._update_delta(
-                self._orbx_deltapos, self._orbx_deltaang,
-                self._respmat_x,
-                self._corr_kick_sp_pvs[self._correctors[0]],
-                self._corr_kick_sp_pvs[self._correctors[1]],
-                self._corr_kickref[self._correctors[0]],
-                self._corr_kickref[self._correctors[1]])
-            self.driver.setParam('RespMatX-RB', value)
-            self.driver.updatePVs()
-            status = True
-
-        elif reason == 'RespMatY-SP':
-            self._respmat_y = value
-            self._set_respmat(self._respmat_x, value)
-            updated = self._update_delta(
-                self._orby_deltapos, self._orby_deltaang,
-                self._respmat_y,
-                self._corr_kick_sp_pvs[self._correctors[0]],
-                self._corr_kick_sp_pvs[self._correctors[1]],
-                self._corr_kickref[self._correctors[0]],
-                self._corr_kickref[self._correctors[1]])
-            self.driver.setParam('RespMatY-RB', value)
-            self.driver.updatePVs()
-            status = True
+        elif reason == 'RespMatConfigName-SP':
+            done = self._get_respmat(value)
+            if done:
+                self._set_config_name(value)
+                updated = self._update_delta(
+                    self._orbx_deltapos, self._orbx_deltaang,
+                    self._respmat_x,
+                    self._corr_kick_sp_pvs[self._correctors[0]],
+                    self._corr_kick_sp_pvs[self._correctors[1]],
+                    self._corr_kickref[self._correctors[0]],
+                    self._corr_kickref[self._correctors[1]])
+                updated = self._update_delta(
+                    self._orby_deltapos, self._orby_deltaang,
+                    self._respmat_y,
+                    self._corr_kick_sp_pvs[self._correctors[0]],
+                    self._corr_kick_sp_pvs[self._correctors[1]],
+                    self._corr_kickref[self._correctors[0]],
+                    self._corr_kickref[self._correctors[1]])
+                self.driver.setParam('RespMatConfigName-RB', value)
+                self.driver.setParam('RespMatX-Mon', self._respmat_x)
+                self.driver.setParam('RespMatY-Mon', self._respmat_y)
+                self.driver.setParam('Log-Mon', 'Updated correction matrices.')
+                self.driver.updatePVs()
+                status = True
+            else:
+                self.driver.setParam(
+                    'Log-Mon', 'ERR:Configuration not found in configdb.')
+                self.driver.updatePVs()
 
         return status  # return True to invoke super().write of PCASDrive
 
-    def _get_respmat(self):
-        """Get response matrix from local file."""
+    def _get_respmat(self, config_name):
+        """Get response matrix from configurations database."""
+        cs = _ConfigService()
+        q = cs.get_config(_pvs._TL.lower()+'_posang_respm', config_name)
+        done = q['code']
+
+        if done == 200:
+            done = True
+            mats = q['result']['value']
+            mx = mats['respm-x']
+            my = mats['respm-y']
+
+            respmat_x = 4*[0]
+            respmat_x[0] = float(mx[0][0])
+            respmat_x[1] = float(mx[0][1])
+            respmat_x[2] = float(mx[1][0])
+            respmat_x[3] = float(mx[1][1])
+            self._respmat_x = respmat_x
+
+            respmat_y = 4*[0]
+            respmat_y[0] = float(my[0][0])
+            respmat_y[1] = float(my[0][1])
+            respmat_y[2] = float(my[1][0])
+            respmat_y[3] = float(my[1][1])
+            self._respmat_y = respmat_y
+        else:
+            done = False
+        return done
+
+    def _get_config_name(self):
         f = open('/home/fac_files/lnls-sirius/machine-applications'
                  '/as-ap-posang/as_ap_posang/' + _pvs._TL.lower() +
                  '-posang.txt', 'r')
-        text = f.read()
+        config_name = f.read().strip('\n')
         f.close()
-        m, _ = _util.read_text_data(text)
+        return config_name
 
-        respmat_x = 4*[0]
-        respmat_x[0] = float(m[0][0])
-        respmat_x[1] = float(m[0][1])
-        respmat_x[2] = float(m[1][0])
-        respmat_x[3] = float(m[1][1])
-
-        respmat_y = 4*[0]
-        respmat_y[0] = float(m[2][0])
-        respmat_y[1] = float(m[2][1])
-        respmat_y[2] = float(m[3][0])
-        respmat_y[3] = float(m[3][1])
-        self.driver.setParam('RespMatX-SP', respmat_x)
-        self.driver.setParam('RespMatX-RB', respmat_x)
-        self.driver.setParam('RespMatY-SP', respmat_y)
-        self.driver.setParam('RespMatY-RB', respmat_y)
-        self.driver.updatePVs()
-        return respmat_x, respmat_y
-
-    def _set_respmat(self, respmat_x, respmat_y):
-        m = ['', '']
-        header = ['', '']
-        if _pvs._TL.lower() == 'tb':
-            header[0] = (
-                "# Position-Angle Correction Response Matrices for the Booster"
-                " Injection (TB correctors)\n"
-                "#\n"
-                "# Horizontal Matrix:\n"
-                "#\n"
-                "#  | DeltaPosX @ TB-04:PM-InjS |    | h11  h12 |"
-                "   | Kick TB-03:MA-CH   |\n"
-                "#  |                           | =  |          |"
-                " * |                    |\n"
-                "#  | DeltaAngX @ TB-04:PM-InjS |    | h21  h22 |"
-                "   | Kick TB-04:PM-InjS |\n"
-                "#\n"
-                "# Data structure:\n"
-                "#         h11   h12\n"
-                "#         h21   h22\n\n\n")
-
-            header[1] = (
-                "\n\n"
-                "# Vertical Matrix:\n"
-                "#\n"
-                "#  | DeltaPosY @ TB-04:PM-InjS |    | v11  v12 |"
-                "   | Kick TB-04:MA-CV-1 |\n"
-                "#  |                           | =  |          |"
-                " * |                    |\n"
-                "#  | DeltaAngY @ TB-04:PM-InjS |    | v21  v22 |"
-                "   | Kick TB-04:MA-CV-2 |\n"
-                "#\n"
-                "# Data structure:\n"
-                "#         v11   v12\n"
-                "#         v21   v22\n\n\n")
-
-        elif _pvs._TL.lower() == 'ts':
-            header[0] = (
-                "# Position-Angle Correction Response Matrices for the Storage"
-                " Ring Injection (TS correctors)\n"
-                "#\n"
-                "# Horizontal Matrix:\n"
-                "#\n"
-                "#  | DeltaPosX @ TS-04:DI-Scrn-3 |    | h11  h12 |"
-                "   | Kick TS-04:MA-CH    |\n"
-                "#  |                             | =  |          |"
-                " * |                     |\n"
-                "#  | DeltaAngX @ TS-04:DI-Scrn-3 |    | h21  h22 |"
-                "   | Kick TS-04:PM-InjSF |\n"
-                "#\n"
-                "# Data structure:\n"
-                "#         h11   h12\n"
-                "#         h21   h22\n\n\n")
-
-            header[1] = (
-                "\n\n"
-                "# Vertical Matrix:\n"
-                "#\n"
-                "#  | DeltaPosY @ TS-04:DI-Scrn-3 |    | v11  v12 |"
-                "   | Kick TS-04:MA-CV-1 |\n"
-                "#  |                             | =  |          |"
-                " * |                    |\n"
-                "#  | DeltaAngY @ TS-04:DI-Scrn-3 |    | v21  v22 |"
-                "   | Kick TS-04:MA-CV-2 |\n"
-                "#\n"
-                "# Data structure:\n"
-                "#         v11   v12\n"
-                "#         v21   v22\n\n\n")
-
-        orb = 0
-        for mat in [respmat_x, respmat_y]:
-            index = 0
-            m[orb] = ''
-            for row in range(2):
-                for col in range(2):
-                    if mat[index] < 0:
-                        space = '  '
-                    else:
-                        space = '   '
-                    m[orb] += space + str(mat[index])
-                    index += 1
-                m[orb] += '\n'
-            m[orb] += '\n'
-            orb += 1
-
-        text = header[0] + m[0] + header[1] + m[1]
-
+    def _set_config_name(self, config_name):
         f = open('/home/fac_files/lnls-sirius/machine-applications'
                  '/as-ap-posang/as_ap_posang/' + _pvs._TL.lower() +
                  '-posang.txt', 'w')
-        f.write(text)
+        f.write(config_name)
         f.close()
-        return text
 
     def _update_delta(self, delta_pos, delta_ang, respmat, c1_kick_sp_pv,
                       c2_kick_sp_pv, c1_kickref, c2_kickref):
@@ -454,7 +383,7 @@ class App:
     def _connection_callback_corr_kick_pvs(self, pvname, conn, **kws):
         ps = pvname.split(_pvs._PREFIX_VACA)[1]
         if not conn:
-            self.driver.setParam('Log-Mon', 'WARN:'+ps+' disconnected')
+            self.driver.setParam('Log-Mon', 'WARN:'+ps+' disconnected.')
             self.driver.updatePVs()
 
         corr = ps.split(':')[0]+':'+ps.split(':')[1]
@@ -474,7 +403,7 @@ class App:
     def _callback_corr_pwrstate_sts(self, pvname, value, **kws):
         ps = pvname.split(_pvs._PREFIX_VACA)[1]
         if value == 0:
-            self.driver.setParam('Log-Mon', 'WARN:'+ps+' is Off')
+            self.driver.setParam('Log-Mon', 'WARN:'+ps+' is Off.')
 
         corr = ps.split(':')[0]+':'+ps.split(':')[1]
         corr_index = self._correctors.index(corr)
@@ -492,7 +421,7 @@ class App:
 
     def _callback_corr_opmode_sts(self, pvname, value, **kws):
         ps = pvname.split(_pvs._PREFIX_VACA)[1]
-        self.driver.setParam('Log-Mon', 'WARN:'+ps+' changed')
+        self.driver.setParam('Log-Mon', 'WARN:'+ps+' changed.')
         self.driver.updatePVs()
 
         corr = ps.split(':')[0]+':'+ps.split(':')[1]
@@ -512,7 +441,7 @@ class App:
     def _callback_corr_ctrlmode_mon(self,  pvname, value, **kws):
         ps = pvname.split(_pvs._PREFIX_VACA)[1]
         if value == 1:
-            self.driver.setParam('Log-Mon', 'WARN:'+ps+' is Local')
+            self.driver.setParam('Log-Mon', 'WARN:'+ps+' is Local.')
             self.driver.updatePVs()
 
         corr = ps.split(':')[0]+':'+ps.split(':')[1]
@@ -538,9 +467,9 @@ class App:
                     self._corr_opmode_sel_pvs[corr].put(0)
             else:
                 self.driver.setParam('Log-Mon',
-                                     'ERR:' + corr + ' is disconnected')
+                                     'ERR:' + corr + ' is disconnected.')
                 self.driver.updatePVs()
                 return False
-        self.driver.setParam('Log-Mon', 'Sent configuration to correctors')
+        self.driver.setParam('Log-Mon', 'Sent configuration to correctors.')
         self.driver.updatePVs()
         return True
