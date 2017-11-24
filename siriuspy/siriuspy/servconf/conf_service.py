@@ -11,7 +11,15 @@ from urllib.error import URLError as _URLError
 import siriuspy.envars as _envars
 import siriuspy.servconf.conf_types as _config_types
 
-_logging.basicConfig(level=_logging.WARNING)
+# Creates a main logger specific to this module and set level to WARNING
+ch = _logging.StreamHandler()
+formatter = _logging.Formatter(
+    '%(asctime)s %(levelname)8s %(name)s | %(message)s')
+ch.setFormatter(formatter)
+
+logger = _logging.getLogger(__name__)
+logger.addHandler(ch)
+logger.setLevel(_logging.WARNING)  # This toggles all the logging in your app
 
 
 class ConfigService:
@@ -32,7 +40,8 @@ class ConfigService:
             self._url = _envars.server_url_configdb
         else:
             self._url = url
-        _logging.info("HTTP request will be made to {}".format(self._url))
+        _logging.getLogger(__name__).\
+            info("HTTP request will be made to {}".format(self._url))
 
     @staticmethod
     def get_config_types():
@@ -119,7 +128,19 @@ class ConfigService:
                         begin=None,
                         end=None,
                         discarded=False):
-        """Return number of configurations matching search criteria."""
+        """Return number of configurations matching search criteria.
+
+        Parameters
+        ----------
+        config_type: Configuration type.
+        name:        Name of the configuration.
+        begin:       Begin timestamp elapsed since Unix time epoch (double).
+        end:         End timestamp elapsed since Unix time epoch (double).
+        discarded:   False | True | None
+                     For False the search returns the valid configurations.
+                     For True, the discarded configurations.
+                     For None, the valid and the discarded configurations.
+        """
         # build search dictionary
         find_dict = {}
         if config_type is not None:
@@ -197,10 +218,9 @@ class ConfigService:
         except _json.JSONDecodeError as e:
             return {"code": -1, "message": "JSON decode error"}
         except Exception as e:
-            _logging.critical("{}".format(e))
+            _logging.getLogger(__name__).critical("{}".format(e))
         else:
             return response
-
 
     # Pv Configuration
     # def get_pv_configurations(self, data=None):
