@@ -68,7 +68,7 @@ def get_pvs_database():
         'ConfigPS-Cmd':         {'type': 'int', 'value': 0},
         'ConfigTiming-Cmd':     {'type': 'int', 'value': 0},
 
-        'Status-Mon':           {'type': 'int', 'value': 0},
+        'Status-Mon':           {'type': 'int', 'value': 0x1f},
         'Status-Cte':           {'type': 'string', 'count': 5, 'value':
                                  ('PS Connection', 'PS PwrState', 'PS OpMode',
                                   'PS CtrlMode', 'Timing Config')},
