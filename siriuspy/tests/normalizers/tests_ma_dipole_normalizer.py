@@ -1,3 +1,5 @@
+#!/usr/bin/env python-sirius
+
 """Test DipoleNormalizer.
 
 Requirements:

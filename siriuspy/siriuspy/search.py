@@ -358,3 +358,13 @@ class MASearch:
         return _Filter.process_filters(MASearch._manames_list,
                                        filters=filters,
                                        sorting=sorting)
+
+    @staticmethod
+    def get_pwrsupply_manames(filters=None, sorting=None):
+        """Return a sorted and filtered list of all pwrsupply magnet names."""
+        if MASearch._maname_2_splims_dict is None:
+            MASearch.reload_maname_2_splims_dict()
+        ps_manames_list = list(MASearch._maname_2_splims_dict.keys())
+        return _Filter.process_filters(ps_manames_list,
+                                       filters=filters,
+                                       sorting=sorting)

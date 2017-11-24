@@ -2,10 +2,6 @@
 
 import numpy as _np
 from siriuspy.csdevice.pwrsupply import default_wfmsize as _default_wfmsize
-from siriuspy.namesys import SiriusPVName as _SiriusPVName
-from siriuspy.ramp.magnet import Magnet as _Magnet
-from siriuspy.ramp.optics import _nominal_intkl
-from siriuspy.magnet import util as _mutil
 
 
 _np.seterr(all='ignore')
@@ -14,18 +10,26 @@ _np.seterr(all='ignore')
 class Waveform():
     """Waveform parameter class."""
 
+    wfmsize = _default_wfmsize
+
     def __init__(self,
+                 scale=None,
                  vL=None,
                  vR=None,
                  i07=None,
                  v07=None,
                  waveform=None):
         """Init method."""
-        self._set_params(vL, vR, i07, v07)
+        self._set_params(scale, vL, vR, i07, v07)
         self._update_wfm_parms()
         self._update_wfm_bumps(waveform)
 
     # --- properties ---
+
+    @property
+    def deprecated(self):
+        """Deprecated state."""
+        return self._deprecated
 
     @property
     def waveform(self):
@@ -50,14 +54,19 @@ class Waveform():
 
     @waveform.setter
     def waveform(self, waveform):
-        if len(waveform) == _default_wfmsize:
+        if type(waveform) in (int, float, _np.float64):
+            self._vL = waveform
+            self._vR = waveform
+            self._v = [waveform for _ in self._v]
+            self._deprecated = True
+        elif len(waveform) == Waveform.wfmsize:
             self._update_wfm_bumps(waveform)
         else:
             raise ValueError('Invalid waveform length!')
 
     @waveform_bumps.setter
     def waveform_bumps(self, waveform_bumps):
-        if len(waveform_bumps) == _default_wfmsize:
+        if len(waveform_bumps) == Waveform.wfmsize:
             self._wfm_bumps = _np.array(waveform_bumps)
         else:
             raise ValueError('Invalid bumps waveform length!')
@@ -201,7 +210,7 @@ class Waveform():
     def i5(self, idx):
         """Set index of the sixth region boundary."""
         i = 5
-        if self._i[i-1] <= idx < _default_wfmsize:
+        if self._i[i-1] <= idx < Waveform.wfmsize:
             self._i[i] = idx
         else:
             raise ValueError(('Index is inconsistent with labeled '
@@ -212,7 +221,7 @@ class Waveform():
     def i6(self, idx):
         """Set index of the 7th region boundary."""
         i = 6
-        if self._i[i-1] <= idx < _default_wfmsize:
+        if self._i[i-1] <= idx < Waveform.wfmsize:
             self._i[i] = idx
         else:
             raise ValueError(('Index is inconsistent with labeled '
@@ -223,7 +232,7 @@ class Waveform():
     def i7(self, idx):
         """Set index of the 8th region boundary."""
         i = 7
-        if self._i[i-1] <= idx < _default_wfmsize:
+        if self._i[i-1] <= idx < Waveform.wfmsize:
             self._i[i] = idx
         else:
             raise ValueError(('Index is inconsistent with labeled '
@@ -312,7 +321,7 @@ class Waveform():
         i6 = self.i6 if i6 is None else i6
         v5 = self.v5 if v5 is None else v5
         v6 = self.v6 if v6 is None else v6
-        if i5 < self.i4 or i6 <= i5 or i6 >= _default_wfmsize or \
+        if i5 < self.i4 or i6 <= i5 or i6 >= Waveform.wfmsize or \
            v5 <= v6 or v5 >= self.v34 or v6 <= self.v7R:
             raise ValueError('Invalid ramp down parameters !')
         i7 = self._find_i7(i5, i6, v5, v6)
@@ -329,6 +338,9 @@ class Waveform():
         self.i7 = i7
         self.i4 = i4
 
+    def clear_bumps(self):
+        """Clear waveform bumps."""
+        self._wfm_bumps *= 0.0
 
     # --- list methods ---
 
@@ -373,7 +385,7 @@ class Waveform():
 
     def __len__(self):
         """Return length of waveform."""
-        return _default_wfmsize
+        return Waveform.wfmsize
 
     def __contains__(self, value):
         """Check whether value is in waveform."""
@@ -404,22 +416,24 @@ class Waveform():
         coeffs = [a0, b0, c0]
         return coeffs
 
-    def _set_params(self, vL, vR, i07, v07):
-        self._vL = 0.01 if vL is None else vL
-        self._vR = 0.01 if vR is None else vR
+    def _set_params(self, scale, vL, vR, i07, v07):
+        scale = 1.0 if scale is None else scale
+        self._vL = 0.01*scale if vL is None else vL
+        self._vR = 0.01*scale if vR is None else vR
         if i07 is None:
             i07 = _np.array([1, 104, 2480,
                              2576, 2640, 2736, 3840, 3999])
         if v07 is None:
-            v07 = _np.array([0.01, 0.026250000000000006, 1.0339285714285713,
-                             1.05, 1.05, 1.0, 0.07, 0.01])
+            v07 = scale * _np.array([0.01, 0.026250000000000006,
+                                     1.0339285714285713, 1.05, 1.05, 1.0, 0.07,
+                                     0.01])
         try:
             if len(i07) != 8:
                 raise ValueError('Lenght of i07 is not 6 !')
             if i07[0] < 0:
                 raise ValueError('i0 < 0 !')
-            if i07[-1] > _default_wfmsize:
-                raise ValueError('i7 >= {} !'.format(_default_wfmsize))
+            if i07[-1] > Waveform.wfmsize:
+                raise ValueError('i7 >= {} !'.format(Waveform.wfmsize))
             for i in range(0, len(i07)-1):
                 if i07[i+1] < i07[i]:
                     raise ValueError('i07 is not sorted !')
@@ -440,7 +454,7 @@ class Waveform():
         self._D2 = (self._v[2] - self._v[1]) / (self._i[2] - self._i[1])
         self._D4 = (self._v[4] - self._v[3]) / (self._i[4] - self._i[3])
         self._D6 = (self._v[6] - self._v[5]) / (self._i[6] - self._i[5])
-        self._D8 = (self._vR - self._v[7]) / (_default_wfmsize - self._i[7])
+        self._D8 = (self._vR - self._v[7]) / (Waveform.wfmsize - self._i[7])
         # region 0
         self._coeffs[0] = _np.array([self._D0, 0.0, 0.0])
         # region 1
@@ -492,7 +506,7 @@ class Waveform():
         # region 8
         coeffs = self._coeffs[8]
         iref, vref = self._i[7], self._v[7]
-        i = _np.array(tuple(range(self._i[7], _default_wfmsize)))
+        i = _np.array(tuple(range(self._i[7], Waveform.wfmsize)))
         dv = calcdv(i, iref, coeffs)
         wfm.extend(vref + dv)
         return _np.array(wfm)
@@ -544,7 +558,7 @@ class Waveform():
     def _find_i7(self, i5, i6, v5, v6):
         D6 = (v6 - v5) / (i6 - i5)
         dv = self._v[7] - v6
-        iR = _default_wfmsize
+        iR = Waveform.wfmsize
         i7 = _np.arange(i6+1, iR)
         D8 = (self._vR - self._v[7]) / (iR - i7)
         d = i7 - i6
@@ -556,11 +570,11 @@ class Waveform():
         # print(_np.isnan(i7_r2))
         cond = ((i7_r1 < i6) | (i7_r1 >= i7) | _np.isnan(i7_r1)) & \
                ((i7_r2 < i6) | (i7_r2 >= i7) | _np.isnan(i7_r2))
-        for i in range(len(i7)):
-            di = i7[i] - self._i[7]
-            print(('{},  d:{}, i7_r1:{:.1f}, i7_r2:{:.1f}, '
-                   'i6:{}, i7:{}').format(cond[i], di, i7_r1[i], i7_r2[i],
-                                          i6, i7[i]))
+        # for i in range(len(i7)):
+        #     di = i7[i] - self._i[7]
+        #     print(('{},  d:{}, i7_r1:{:.1f}, i7_r2:{:.1f}, '
+        #            'i6:{}, i7:{}').format(cond[i], di, i7_r1[i], i7_r2[i],
+        #                                   i6, i7[i]))
         i7_solutions = i7[cond]
         if i7_solutions.size:
             i7_delta = min(i7_solutions - self._i[7], key=abs)
@@ -589,358 +603,8 @@ class Waveform():
 
     def _update_wfm_bumps(self, waveform):
         if waveform is None:
-            self._wfm_bumps = _np.zeros((_default_wfmsize, ))
+            self._wfm_bumps = _np.zeros((Waveform.wfmsize, ))
         else:
             if self._deprecated:
                 self._update_wfm_parms()
             self._wfm_bumps = _np.array(waveform) - self._wfm_parms
-
-
-
-class WfmSet:
-    """Class WfmSet."""
-
-    energy_inj_gev = 0.150  # [GeV]
-    energy_eje_gev = 3.000  # [GeV]
-    _default_wfm = _np.array(_mutil.get_default_ramp_waveform())
-
-    def __init__(self,
-                 dipole_maname,
-                 dipole_wfm_strength=None,
-                 dipole_wfm_current=None):
-        """Init method.
-
-        Parameters
-        ----------
-        dipole_maname : str | SiriusPVName
-            dipole magnet device name for the wfm set.
-        dipole_wfm_strength : list | int | float
-            dipole wfm in current units.
-        dipole_wfm_current : list | int | float
-            dipole wfm in strength units.
-
-        """
-        self._magnets = {}
-        self._wfms_strength = {}
-        self._wfms_current = {}
-        self._set_dipole(dipole_maname,
-                         dipole_wfm_strength,
-                         dipole_wfm_current)
-
-    # --- properties ---
-
-    @staticmethod
-    def get_default_wfm_form(scale=1.0):
-        """Return default wfm form."""
-        return [scale * v for v in WfmSet._default_wfm]
-
-    @property
-    def magnets(self):
-        """Return list of magnet names in wfm set."""
-        return list(self._magnets.keys())
-
-    @property
-    def section(self):
-        """Return section of wfm set."""
-        return self._section
-
-    @property
-    def dipole_maname(self):
-        """Return name of dipole in the wfm set."""
-        return self._dipole_maname
-
-    @property
-    def index_energy_inj(self):
-        """Return waveform index corresponding to the injection energy."""
-        wfm_strength = self.get_wfm_strength(maname=self.dipole_maname)
-        for i in range(len(wfm_strength)-1):
-            if wfm_strength[i] <= WfmSet.energy_inj_gev < wfm_strength[i+1]:
-                break
-        return i
-
-    @property
-    def index_energy_eje(self):
-        """Return waveform index corresponding to the ejection energy."""
-        wfm_strength = self.get_wfm_strength(maname=self.dipole_maname)
-        for i in range(len(wfm_strength)-1):
-            if wfm_strength[i] < WfmSet.energy_eje_gev <= wfm_strength[i+1]:
-                break
-        return i
-
-    # --- public methods ---
-
-    def index_energy(self, energy, ramp_down=False):
-        """Return waveform index corresponding to a given energy."""
-        wfm = self._wfms_strength[self.dipole_maname]
-        if not ramp_down:
-            for i in range(1, len(wfm)):
-                if wfm[i-1] <= energy < wfm[i]:
-                    return i
-        else:
-            for i in range(1, len(wfm)):
-                if wfm[i] <= energy < wfm[i-1]:
-                    return i-1
-
-    def set_wfm_strength(self, maname, wfm=None):
-        """Set strength wfm for a specific magnet.
-
-        Parameters
-        ----------
-        maname : str | SiriusPVName
-            magnet device name.
-        wfm : list | int | float
-            magnet wfm in strength units.
-        """
-        self._update_magnet_wfm(maname, wfm_strength=wfm, wfm_current=None)
-
-    def set_wfm_current(self, maname, wfm=None):
-        """Set current wfm for a specific magnet.
-
-        Parameters
-        ----------
-        maname : str | SiriusPVName
-            magnet device name.
-        wfm : list | int | float
-            magnet wfm in current units.
-        """
-        self._update_magnet_wfm(maname, wfm_strength=None, wfm_current=wfm)
-
-    def set_wfm_default(self):
-        """Set wfm of quadrupoles and sextupoles.
-
-        According to default nominal optics.
-        """
-        # zero trim power supplies first
-        for maname, m in self._magnets.items():
-            if m.family_name is not None and m.family_name in _nominal_intkl:
-                strength = _nominal_intkl[maname]
-                self._wfms_current[maname] = \
-                    [0.0 for _ in WfmSet._default_wfm]
-                self._wfms_strength[maname] = \
-                    [strength for _ in WfmSet._default_wfm]
-        # next, update all family power supplies
-        for maname, strength in _nominal_intkl.items():
-            maname = _SiriusPVName(maname)
-            if maname.section == self.section:
-                self.set_wfm_strength(maname, strength)
-
-    def get_wfm_strength(self, maname):
-        """Return strength wfm of given magnet."""
-        return self._wfms_strength[maname].copy()
-
-    def get_wfm_current(self, maname):
-        """Return current wfm of given magnet."""
-        return self._wfms_current[maname].copy()
-
-    def add_wfm_strength(self, maname, delta,
-                         start=None, stop=None, border=0,
-                         method=None):
-        """Add strength bump to waveform.
-
-            Add strength bump to waveform in a specified region and with a
-        certain number of smoothening left and right points.
-
-        Parameters
-        ----------
-
-        maname : str | SiriusPVName
-            magnet device name whose waveform strength is to be modified.
-        delta : float
-            strength delta value to be added to the waveform.
-        start : int | float | None
-            index of the initial point (inclusive) in the waveform to which
-            the bump will be added.
-        stop : int | float | None
-            index of the final point (exclusive) in the waveform to which
-            the bump will be added.
-        border : int (default 0)| float
-            the number of left and right points in the waveform to whose values
-            a partial bump will be added in order to smoothen the bump.
-            Cubic or tanh fitting is used to smooth the bump. For the Cubic
-            fitting continuous first derivatives at both ends are guaranteed.
-        method : 'tanh' (default) | 'cubic' | None (default)
-            smoothening method to be applied.
-        """
-        wfm = self.get_wfm_strength(maname)
-        start = 0 if start is None else start
-        stop = len(wfm) if stop is None else stop
-        if method == 'cubic':
-            wfm = self._add_smooth_delta_cubic(wfm, delta, start, stop, border)
-        else:
-            wfm = self._add_smooth_delta_tanh(wfm, delta, start, stop, border)
-        self.set_wfm_strength(maname, wfm=wfm)
-
-    # --- private methods ---
-
-    def _set_dipole(self,
-                    dipole_maname,
-                    dipole_wfm_strength,
-                    dipole_wfm_current):
-        m = _Magnet(dipole_maname)
-        self._dipole_maname = dipole_maname
-        self._section = m.maname.section
-        self._update_magnet_wfm(dipole_maname,
-                                dipole_wfm_strength,
-                                dipole_wfm_current)
-
-    def _process_wfm_inputs(self, maname, wfm_strength, wfm_current):
-        m = self._magnets[maname]
-        # strength or current setpoint?
-        if wfm_strength and wfm_current:
-            raise Exception('Specify either strength or current wfm for "' +
-                            maname + '"!')
-        if wfm_strength is None and wfm_current is None:
-            if self.section == 'BO' and m.magfunc == 'dipole':
-                wfm_strength = WfmSet.energy_eje_gev * WfmSet._default_wfm
-                # wfm_strength = \
-                #     [WfmSet.energy_eje_gev * v for v in WfmSet._default_wfm]
-            elif self.section in ('SI', 'TS') and m.magfunc == 'dipole':
-                wfm_strength = \
-                    WfmSet.energy_eje_gev * _np.ones(WfmSet._default_wfm.shape)
-                # wfm_strength = \
-                #     [WfmSet.energy_eje_gev for _ in WfmSet._default_wfm]
-            elif self.section == 'TB' and m.magfunc == 'dipole':
-                wfm_strength = \
-                    WfmSet.energy_inj_gev * _np.ones(WfmSet._default_wfm.shape)
-                # wfm_strength = \
-                #     [WfmSet.energy_inj_gev for _ in WfmSet._default_wfm]
-            elif maname in _nominal_intkl:
-                wfm_strength = _nominal_intkl[maname] * \
-                    _np.ones(WfmSet._default_wfm.shape)
-            else:
-                wfm_strength = _np.zeros(WfmSet._default_wfm.shape)
-            self._wfms_strength[maname] = wfm_strength
-        if type(wfm_strength) in (int, float):
-            wfm_strength = wfm_strength * _np.ones(WfmSet._default_wfm.shape)
-        if type(wfm_current) in (int, float):
-            wfm_current = wfm_current * _np.ones(WfmSet._default_wfm.shape)
-        return wfm_strength, wfm_current
-
-    def _update_dipole_wfm(self,
-                           maname,
-                           wfm_strength,
-                           wfm_current):
-        m = self._magnets[maname]
-        if wfm_strength is not None:
-            wfm_current = m.conv_strength_2_current(wfm_strength)
-            # wfm_current = \
-            #     [m.conv_strength_2_current(v) for v in wfm_strength]
-        else:
-            wfm_strength = m.conv_current_2_strength(wfm_current)
-            # wfm_strength = \
-            #     [m.conv_current_2_strength(v) for v in wfm_current]
-        self._wfms_current[maname] = wfm_current
-        self._wfms_strength[maname] = wfm_strength
-        # recursively invoke itself to update families
-        for name, mag in self._magnets.items():
-            if mag.dipole_name is not None and mag.family_name is None:
-                # update all families
-                strength = self._wfms_strength[name]
-                self._update_family_wfm(
-                    name, wfm_strength=strength, wfm_current=wfm_current)
-
-    def _update_family_wfm(self,
-                           maname,
-                           wfm_strength,
-                           wfm_current):
-        m = self._magnets[maname]
-        c_dip = self._wfms_current[self._dipole_maname]
-        if wfm_strength is not None:
-            wfm_current = m.conv_strength_2_current(
-                wfm_strength, currents_dipole=c_dip)
-            # wfm_current = [m.conv_strength_2_current(
-            #                wfm_strength[i],
-            #                currents_dipole=c_dip[i])
-            #                for i in range(len(wfm_strength))]
-        else:
-            wfm_strength = m.conv_current_2_strength(
-                wfm_current, currents_dipole=c_dip)
-        self._wfms_current[maname] = wfm_current
-        self._wfms_strength[maname] = wfm_strength
-        # recursively invoke itself to update trims
-        for name, mag in self._magnets.items():
-            if mag.dipole_name is not None and mag.family_name is not None:
-                # update all trims
-                strength = self._wfms_strength[name]
-                self._update_trim_wfm(
-                    name, wfm_strength=strength, wfm_current=wfm_current)
-
-    def _update_trim_wfm(self,
-                         maname,
-                         wfm_strength,
-                         wfm_current):
-        m = self._magnets[maname]
-        c_dip = self._wfms_current[self._dipole_maname]
-        c_fam = self._wfms_current[self._family_name]
-        if wfm_strength:
-            wfm_current = [m.conv_strength_2_current(
-                           wfm_strength[i],
-                           currents_dipole=c_dip[i],
-                           currents_family=c_fam[i])
-                           for i in range(len(wfm_strength))]
-        else:
-            wfm_strength = [m.conv_current_2_strength(
-                            wfm_current[i],
-                            currents_dipole=c_dip[i],
-                            currents_family=c_fam[i])
-                            for i in range(len(wfm_current))]
-        self._wfms_current[maname] = wfm_current
-        self._wfms_strength[maname] = wfm_strength
-
-    def _update_magnet_wfm(self,
-                           maname,
-                           wfm_strength,
-                           wfm_current):
-        # add magnet in dict if not there yet.
-        if maname not in self._magnets:
-            self._magnets[maname] = _Magnet(maname)
-
-        wfm_strength, wfm_current = \
-            self._process_wfm_inputs(maname, wfm_strength, wfm_current)
-
-        m = self._magnets[maname]
-        # set wfm acoording to type of magnet
-        if m.dipole_name is None:
-            self._update_dipole_wfm(maname, wfm_strength, wfm_current)
-        elif m.family_name is None:
-            self._update_family_wfm(maname, wfm_strength, wfm_current)
-        else:
-            self._update_trim_wfm(maname, wfm_strength, wfm_current)
-
-    @staticmethod
-    def _add_smooth_delta_cubic(wfm, D, start, stop, d):
-        # left side smoothing
-        wfm = wfm.copy()
-        if d > 0:
-            for i in range(0, d+1):
-                f = i / (d+1)
-                idx = i + start - (d+1)
-                if idx >= 0:
-                    wfm[idx] += D*f**2*(3-2*f)
-        # center bump
-        for i in range(start, stop):
-            wfm[i] += D
-        # right side smoothing
-        if d > 0:
-            for i in range(0, d+1):
-                f = i / (d+1)
-                idx = stop + (d+1) - i - 1
-                if idx >= 0:
-                    wfm[idx] += D*f**2*(3-2*f)
-        return wfm
-
-    @staticmethod
-    def _add_smooth_delta_tanh(wfm, D, start, stop, border):
-        if border == 0.0:
-            wfm = wfm.copy()
-            for i in range(max(0, int(start)), min(len(wfm), stop)):
-                wfm[i] += D
-        else:
-            x = _np.linspace(0, len(wfm)-1.0, len(wfm))
-            wL, wR = border, border
-            xL, xR = start, stop-1
-            dx = xR - xL
-            Dstar = 2*D/(_np.tanh(dx/2.0/wL)+_np.tanh(dx/2.0/wR))
-            dy = (Dstar/2.0) * (_np.tanh((x-xL)/wL) - _np.tanh((x-xR)/wR))
-            wfm = [wfm[i]+dy[i] for i in range(len(wfm))]
-        return wfm
