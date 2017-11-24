@@ -23,8 +23,24 @@ import as_ap_opticscorr.tune.pvs as _pvs
 __version__ = _pvs._COMMIT_HASH
 
 
+# Constants to masks
+SETBIT0 = 0x01
+SETBIT1 = 0x02
+SETBIT2 = 0x04
+SETBIT3 = 0x08
+SETBIT4 = 0x10
+ALLSET = 0x1f
+CLRBIT0 = 0x1e
+CLRBIT1 = 0x1d
+CLRBIT2 = 0x1b
+CLRBIT3 = 0x17
+CLRBIT4 = 0x0f
+ALLCLR_SYNCON = 0x00
+ALLCLR_SYNCOFF = 0x10
+
+
 class App:
-    """Main application for handling injection in transport lines."""
+    """Main application for handling tune correction."""
 
     pvs_database = None
 
@@ -45,17 +61,19 @@ class App:
         self._driver = driver
         self._pvs_database = App.pvs_database
 
-        self._status = 0x1f
+        self._status = ALLSET
         self._qfam_check_connection = len(_pvs._QFAMS)*[0]
         self._qfam_check_pwrstate_sts = len(_pvs._QFAMS)*[0]
-        self._qfam_check_opmode_sts = len(_pvs._QFAMS)*[0]
-        self._qfam_check_ctrlmode_mon = len(_pvs._QFAMS)*[0]
+        self._qfam_check_opmode_sts = len(_pvs._QFAMS)*[-1]
+        self._qfam_check_ctrlmode_mon = len(_pvs._QFAMS)*[1]
 
         self._corr_factor = 0.0
         self._set_new_refkl_cmd_count = 0
         self._config_qfam_ps_cmd_count = 0
         self._apply_deltakl_cmd_count = 0
         self._lastcalcd_deltakl = len(_pvs._QFAMS)*[0]
+
+        self._qfam_kl_rb = len(_pvs._QFAMS)*[0]
 
         self._sync_corr = 0
         self._sync_corr_cmd_count = 0
@@ -95,127 +113,74 @@ class App:
 
         for fam in _pvs._QFAMS:
             self._qfam_kl_sp_pvs[fam] = _epics.PV(
-                _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':KL-SP',
-                connection_callback=self._connection_callback_qfam_kl_pvs)
-            self._qfam_kl_sp_pvs[fam].wait_for_connection(timeout=0.05)
+                _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':KL-SP')
+
+            self._qfam_refkl[fam] = 0
             self._qfam_kl_rb_pvs[fam] = _epics.PV(
                 _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':KL-RB',
-                connection_callback=self._connection_callback_qfam_kl_pvs)
-            self._qfam_kl_rb_pvs[fam].wait_for_connection(timeout=0.05)
+                callback=[self._callback_init_refkl,
+                          self._callback_estimate_deltatune],
+                connection_callback=self._connection_callback_qfam_kl_rb)
 
             self._qfam_pwrstate_sel_pvs[fam] = _epics.PV(
-                _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':PwrState-Sel',
-                connection_timeout=0.05)
+                _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':PwrState-Sel')
             self._qfam_pwrstate_sts_pvs[fam] = _epics.PV(
                 _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':PwrState-Sts',
-                connection_timeout=0.05)
+                callback=self._callback_qfam_pwrstate_sts)
 
             self._qfam_opmode_sel_pvs[fam] = _epics.PV(
-                _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':OpMode-Sel',
-                connection_timeout=0.05)
+                _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':OpMode-Sel')
             self._qfam_opmode_sts_pvs[fam] = _epics.PV(
                 _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':OpMode-Sts',
-                connection_timeout=0.05)
+                callback=self._callback_qfam_opmode_sts)
 
             self._qfam_ctrlmode_mon_pvs[fam] = _epics.PV(
                 _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':CtrlMode-Mon',
-                connection_timeout=0.05)
+                callback=self._callback_qfam_ctrlmode_mon)
 
-        self._update_ref()
         self._delta_tunex = 0
         self._delta_tuney = 0
         self._lastcalcd_deltakl = len(_pvs._QFAMS)*[0]
 
-        for fam in _pvs._QFAMS:
-            fam_index = _pvs._QFAMS.index(fam)
-            self._qfam_check_connection[fam_index] = (
-                self._qfam_kl_sp_pvs[fam].connected)
-            self._qfam_kl_rb_pvs[fam].add_callback(self._callback_qfam_kl_rb)
-
-            self._qfam_pwrstate_sts_pvs[fam].add_callback(
-                self._callback_qfam_pwrstate_sts)
-            self._qfam_check_pwrstate_sts[fam_index] = (
-                self._qfam_pwrstate_sts_pvs[fam].value)
-
-            self._qfam_opmode_sts_pvs[fam].add_callback(
-                self._callback_qfam_opmode_sts)
-            self._qfam_check_opmode_sts[fam_index] = (
-                self._qfam_opmode_sts_pvs[fam].value)
-
-            self._qfam_ctrlmode_mon_pvs[fam].add_callback(
-                self._callback_qfam_ctrlmode_mon)
-            self._qfam_check_ctrlmode_mon[fam_index] = (
-                self._qfam_ctrlmode_mon_pvs[fam].value)
-
         # Connect to Timing
         self._timing_quads_state_sel = _epics.PV(
-            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Quads:State-Sel',
-            connection_timeout=0.05)
+            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Quads:State-Sel')
         self._timing_quads_state_sts = _epics.PV(
             _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Quads:State-Sts',
-            connection_timeout=0.05)
-        self._timing_quads_state_sts.add_callback(self._callback_timing_state)
+            callback=self._callback_timing_state)
 
         self._timing_quads_evgparam_sel = _epics.PV(
-            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Quads:EVGParam-Sel',
-            connection_timeout=0.05)
+            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Quads:EVGParam-Sel')
         self._timing_quads_evgparam_sts = _epics.PV(
             _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Quads:EVGParam-Sts',
-            connection_timeout=0.05)
-        self._timing_quads_evgparam_sts.add_callback(
-            self._callback_timing_state)
+            callback=self._callback_timing_state)
 
         self._timing_quads_pulses_sp = _epics.PV(
-            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Quads:Pulses-SP',
-            connection_timeout=0.05)
+            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Quads:Pulses-SP')
         self._timing_quads_pulses_rb = _epics.PV(
             _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Quads:Pulses-RB',
-            connection_timeout=0.05)
-        self._timing_quads_pulses_rb.add_callback(self._callback_timing_state)
+            callback=self._callback_timing_state)
 
         self._timing_quads_duration_sp = _epics.PV(
-            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Quads:Duration-SP',
-            connection_timeout=0.05)
+            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Quads:Duration-SP')
         self._timing_quads_duration_rb = _epics.PV(
             _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Quads:Duration-RB',
-            connection_timeout=0.05)
-        self._timing_quads_duration_rb.add_callback(
-            self._callback_timing_state)
+            callback=self._callback_timing_state)
 
         self._timing_evg_tunesmode_sel = _epics.PV(
-            _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'TunesMode-Sel',
-            connection_timeout=0.05)
+            _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'TunesMode-Sel')
         self._timing_evg_tunemode_sts = _epics.PV(
             _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'TunesMode-Sts',
-            connection_timeout=0.05)
-        self._timing_evg_tunemode_sts.add_callback(
-            self._callback_timing_state)
+            callback=self._callback_timing_state)
 
         self._timing_evg_tunesdelay_sp = _epics.PV(
-            _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'TunesDelay-SP',
-            connection_timeout=0.05)
+            _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'TunesDelay-SP')
         self._timing_evg_tunesdelay_rb = _epics.PV(
             _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'TunesDelay-RB',
-            connection_timeout=0.05)
-        self._timing_evg_tunesdelay_rb.add_callback(
-            self._callback_timing_state)
+            callback=self._callback_timing_state)
 
         self._timing_evg_tunesexttrig_cmd = _epics.PV(
-            _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'TunesExtTrig-Cmd',
-            connection_timeout=0.05)
-
-        # Set current status
-        if all(conn == 1 for conn in self._qfam_check_connection):
-            self._status = self._status & 0x1e
-        if all(pwr == 1 for pwr in self._qfam_check_pwrstate_sts):
-            self._status = self._status & 0x1d
-        if all(op == self._sync_corr for op in self._qfam_check_opmode_sts):
-            self._status = self._status & 0x1b
-        if all(ctrl == 0 for ctrl in self._qfam_check_ctrlmode_mon):
-            self._status = self._status & 0x17
-        if all(conf == 1 for conf in self._timing_check_config):
-            self._status = self._status & 0x0f
-        self.driver.setParam('Status-Mon', self._status)
+            _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'TunesExtTrig-Cmd')
 
         self.driver.setParam('Log-Mon', 'Started.')
         self.driver.updatePVs()
@@ -326,11 +291,11 @@ class App:
                     fam_index = _pvs._QFAMS.index(fam)
                     self._qfam_check_opmode_sts[fam_index] = (
                         self._qfam_opmode_sts_pvs[fam].value)
-                if not any(op == self._sync_corr
-                           for op in self._qfam_check_opmode_sts):
-                    self._status = self._status | 0x04
+                if any(op != self._sync_corr
+                       for op in self._qfam_check_opmode_sts):
+                    self._update_status('set', SETBIT2)
                 else:
-                    self._status = self._status & 0x1b
+                    self._update_status('clr', CLRBIT2)
                 self.driver.setParam('Status-Mon', self._status)
                 self.driver.setParam('SyncCorr-Sts', self._sync_corr)
                 self.driver.updatePVs()
@@ -442,8 +407,8 @@ class App:
         self.driver.updatePVs()
 
     def _apply_deltakl(self):
-        if ((self._status == 0x00 and self._sync_corr == 1) or
-                (self._status == 0x10 and self._sync_corr == 0)):
+        if ((self._status == ALLCLR_SYNCON and self._sync_corr == 1) or
+                (self._status == ALLCLR_SYNCOFF and self._sync_corr == 0)):
             for fam in self._qfam_kl_sp_pvs:
                 fam_index = _pvs._QFAMS.index(fam)
                 pv = self._qfam_kl_sp_pvs[fam]
@@ -482,28 +447,38 @@ class App:
         self.driver.setParam('DeltaTuneX-RB', delta_tunex)
         self.driver.setParam('DeltaTuneY-RB', delta_tuney)
 
-        self.driver.setParam('Log-Mon', 'Updated KL reference')
+        self.driver.setParam('Log-Mon', 'Updated KL reference.')
         self.driver.updatePVs()
 
     def _estim_current_deltatune(self):
-        if ((not any(q == 0 for q in self._qfam_check_connection)) and
-                (not any(q == 0 for q in self._qfam_check_pwrstate_sts))):
-            qfam_deltakl = len(_pvs._QFAMS)*[0]
-            for fam in _pvs._QFAMS:
-                fam_index = _pvs._QFAMS.index(fam)
-                pv = self._qfam_kl_sp_pvs[fam]
-                qfam_kl = pv.get()
-                if (qfam_kl is None) or (self._qfam_refkl[fam] is None):
-                    return [0, 0]
-                else:
-                    qfam_deltakl[fam_index] = qfam_kl-self._qfam_refkl[fam]
-            corrmat, _ = self._get_corrparams()
-            return self._opticscorr.estimate_current_deltatune(
-                corrmat, qfam_deltakl)
-        else:
-            return [0, 0]
+        qfam_deltakl = len(_pvs._QFAMS)*[0]
+        for fam in _pvs._QFAMS:
+            fam_index = _pvs._QFAMS.index(fam)
+            qfam_deltakl[fam_index] = (
+                self._qfam_kl_rb[fam_index] - self._qfam_refkl[fam])
+        corrmat, _ = self._get_corrparams()
+        return self._opticscorr.estimate_current_deltatune(
+            corrmat, qfam_deltakl)
 
-    def _connection_callback_qfam_kl_pvs(self, pvname, conn, **kws):
+    def _update_status(self, update, mask):
+        if update == 'set':
+            self._status = self._status | mask
+        elif update == 'clr':
+            self._status = self._status & mask
+
+    def _callback_init_refkl(self, pvname, value, cb_info, **kws):
+        """Initialize RefKL-Mon pvs and remove this callback."""
+        ps = pvname.split(_pvs._PREFIX_VACA)[1]
+        fam = ps.split(':')[1].split('-')[1]
+
+        # Get reference
+        self._qfam_refkl[fam] = value
+        self.driver.setParam(fam + 'RefKL-Mon', self._qfam_refkl[fam])
+
+        # Remove callback
+        cb_info[1].remove_callback(cb_info[0])
+
+    def _connection_callback_qfam_kl_rb(self, pvname, conn, **kws):
         ps = pvname.split(_pvs._PREFIX_VACA)[1]
         if not conn:
             self.driver.setParam('Log-Mon', 'WARN:'+ps+' disconnected')
@@ -515,15 +490,18 @@ class App:
 
         # Change the first bit of correction status
         if any(q == 0 for q in self._qfam_check_connection):
-            conn_status = 0x01
-            self._status = self._status | conn_status
+            self._update_status('set', SETBIT0)
         else:
-            conn_status = 0x1e
-            self._status = self._status & conn_status
+            self._update_status('clr', CLRBIT0)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
-    def _callback_qfam_kl_rb(self, **kws):
+    def _callback_estimate_deltatune(self, pvname, value, **kws):
+        ps = pvname.split(_pvs._PREFIX_VACA)[1]
+        fam = ps.split(':')[1].split('-')[1]
+        fam_index = _pvs._QFAMS.index(fam)
+        self._qfam_kl_rb[fam_index] = value
+
         delta_tunex, delta_tuney = self._estim_current_deltatune()
         self.driver.setParam('DeltaTuneX-RB', delta_tunex)
         self.driver.setParam('DeltaTuneY-RB', delta_tuney)
@@ -541,11 +519,9 @@ class App:
 
         # Change the second bit of correction status
         if any(q == 0 for q in self._qfam_check_pwrstate_sts):
-            conn_status = 0x02
-            self._status = self._status | conn_status
+            self._update_status('set', SETBIT1)
         else:
-            conn_status = 0x1d
-            self._status = self._status & conn_status
+            self._update_status('clr', CLRBIT1)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
@@ -561,11 +537,9 @@ class App:
         # Change the third bit of correction status
         opmode = self._sync_corr
         if any(s != opmode for s in self._qfam_check_opmode_sts):
-            conn_status = 0x04
-            self._status = self._status | conn_status
+            self._update_status('set', SETBIT2)
         else:
-            conn_status = 0x1b
-            self._status = self._status & conn_status
+            self._update_status('clr', CLRBIT2)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
@@ -581,11 +555,9 @@ class App:
 
         # Change the fourth bit of correction status
         if any(q == 1 for q in self._qfam_check_ctrlmode_mon):
-            conn_status = 0x08
-            self._status = self._status | conn_status
+            self._update_status('set', SETBIT3)
         else:
-            conn_status = 0x17
-            self._status = self._status & conn_status
+            self._update_status('clr', CLRBIT3)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
@@ -605,11 +577,9 @@ class App:
 
         # Change the fifth bit of correction status
         if any(index == 0 for index in self._timing_check_config):
-            conn_status = 0x10
-            self._status = self._status | conn_status
+            self._update_status('set', SETBIT4)
         else:
-            conn_status = 0x0f
-            self._status = self._status & conn_status
+            self._update_status('clr', CLRBIT4)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 

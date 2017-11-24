@@ -23,6 +23,22 @@ import as_ap_opticscorr.chrom.pvs as _pvs
 __version__ = _pvs._COMMIT_HASH
 
 
+# Constants to masks
+SETBIT0 = 0x01
+SETBIT1 = 0x02
+SETBIT2 = 0x04
+SETBIT3 = 0x08
+SETBIT4 = 0x10
+ALLSET = 0x1f
+CLRBIT0 = 0x1e
+CLRBIT1 = 0x1d
+CLRBIT2 = 0x1b
+CLRBIT3 = 0x17
+CLRBIT4 = 0x0f
+ALLCLR_SYNCON = 0x00
+ALLCLR_SYNCOFF = 0x10
+
+
 class App:
     """Main application for handling chromaticity correction."""
 
@@ -45,15 +61,20 @@ class App:
         self._driver = driver
         self._pvs_database = App.pvs_database
 
-        self._status = 0x1f
+        self._chromx = 0
+        self._chromy = 0
+
+        self._status = ALLSET
         self._sfam_check_connection = len(_pvs._SFAMS)*[0]
         self._sfam_check_pwrstate_sts = len(_pvs._SFAMS)*[0]
-        self._sfam_check_opmode_sts = len(_pvs._SFAMS)*[0]
-        self._sfam_check_ctrlmode_mon = len(_pvs._SFAMS)*[0]
+        self._sfam_check_opmode_sts = len(_pvs._SFAMS)*[-1]
+        self._sfam_check_ctrlmode_mon = len(_pvs._SFAMS)*[1]
 
         self._apply_sl_cmd_count = 0
         self._config_sfam_ps_cmd_count = 0
         self._lastcalcd_sl = len(_pvs._SFAMS)*[0]
+
+        self._sfam_sl_rb = len(_pvs._SFAMS)*[0]
 
         self._sync_corr = 0
         self._sync_corr_cmd_count = 0
@@ -95,142 +116,69 @@ class App:
         self._sfam_ctrlmode_mon_pvs = {}
 
         for fam in _pvs._SFAMS:
-            fam_index = _pvs._SFAMS.index(fam)
             self._sfam_sl_sp_pvs[fam] = _epics.PV(
-                _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':SL-SP',
-                connection_callback=self._connection_callback_sfam_sl_pvs)
-            self._sfam_sl_sp_pvs[fam].wait_for_connection(timeout=0.05)
+                _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':SL-SP')
 
             self._sfam_sl_rb_pvs[fam] = _epics.PV(
                 _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':SL-RB',
-                connection_callback=self._connection_callback_sfam_sl_pvs)
-            self._sfam_sl_rb_pvs[fam].wait_for_connection(timeout=0.05)
-            self._sfam_check_connection[fam_index] = (
-                self._sfam_sl_sp_pvs[fam].connected)
+                callback=self._callback_estimate_chrom,
+                connection_callback=self._connection_callback_sfam_sl_rb)
 
             self._sfam_pwrstate_sel_pvs[fam] = _epics.PV(
-                _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':PwrState-Sel',
-                connection_timeout=0.05)
+                _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':PwrState-Sel')
             self._sfam_pwrstate_sts_pvs[fam] = _epics.PV(
                 _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':PwrState-Sts',
-                connection_timeout=0.05)
+                callback=self._callback_sfam_pwrstate_sts)
 
             self._sfam_opmode_sel_pvs[fam] = _epics.PV(
-                _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':OpMode-Sel',
-                connection_timeout=0.05)
+                _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':OpMode-Sel')
             self._sfam_opmode_sts_pvs[fam] = _epics.PV(
                 _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':OpMode-Sts',
-                connection_timeout=0.05)
+                callback=self._callback_sfam_opmode_sts)
 
             self._sfam_ctrlmode_mon_pvs[fam] = _epics.PV(
                 _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':CtrlMode-Mon',
-                connection_timeout=0.05)
-
-        for fam in _pvs._SFAMS:
-            fam_index = _pvs._SFAMS.index(fam)
-            self._sfam_check_connection[fam_index] = (
-                self._sfam_sl_sp_pvs[fam].connected)
-
-            if self._sfam_sl_sp_pvs[fam].value is not None:
-                self._lastcalcd_sl[fam_index] = self._sfam_sl_sp_pvs[fam].value
-            self.driver.setParam('LastCalcd' + fam + 'SL-Mon',
-                                 self._lastcalcd_sl[fam_index])
-
-            self._sfam_sl_rb_pvs[fam].add_callback(self._callback_sfam_sl_rb)
-
-            self._sfam_pwrstate_sts_pvs[fam].add_callback(
-                self._callback_sfam_pwrstate_sts)
-            self._sfam_check_pwrstate_sts[fam_index] = (
-                self._sfam_pwrstate_sts_pvs[fam].value)
-
-            self._sfam_opmode_sts_pvs[fam].add_callback(
-                self._callback_sfam_opmode_sts)
-            self._sfam_check_opmode_sts[fam_index] = (
-                self._sfam_opmode_sts_pvs[fam].value)
-
-            self._sfam_ctrlmode_mon_pvs[fam].add_callback(
-                self._callback_sfam_ctrlmode_mon)
-            self._sfam_check_ctrlmode_mon[fam_index] = (
-                self._sfam_ctrlmode_mon_pvs[fam].value)
-
-        # Initialize chromaticity values
-        self._chromx, self._chromy = self._estim_current_chrom('sp')
-        self.driver.setParam('ChromX-SP', self._chromx)
-        self.driver.setParam('ChromY-SP', self._chromy)
-
-        chromx_rb, chromy_rb = self._estim_current_chrom('rb')
-        self.driver.setParam('ChromX-RB', chromx_rb)
-        self.driver.setParam('ChromY-RB', chromy_rb)
+                callback=self._callback_sfam_ctrlmode_mon)
 
         # Connect to Timing
         self._timing_sexts_state_sel = _epics.PV(
-            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Sexts:State-Sel',
-            connection_timeout=0.05)
+            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Sexts:State-Sel')
         self._timing_sexts_state_sts = _epics.PV(
             _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Sexts:State-Sts',
-            connection_timeout=0.05)
-        self._timing_sexts_state_sts.add_callback(self._callback_timing_state)
+            callback=self._callback_timing_state)
 
         self._timing_sexts_evgparam_sel = _epics.PV(
-            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Sexts:EVGParam-Sel',
-            connection_timeout=0.05)
+            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Sexts:EVGParam-Sel')
         self._timing_sexts_evgparam_sts = _epics.PV(
             _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Sexts:EVGParam-Sts',
-            connection_timeout=0.05)
-        self._timing_sexts_evgparam_sts.add_callback(
-            self._callback_timing_state)
+            callback=self._callback_timing_state)
 
         self._timing_sexts_pulses_sp = _epics.PV(
-            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Sexts:Pulses-SP',
-            connection_timeout=0.05)
+            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Sexts:Pulses-SP')
         self._timing_sexts_pulses_rb = _epics.PV(
             _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Sexts:Pulses-RB',
-            connection_timeout=0.05)
-        self._timing_sexts_pulses_rb.add_callback(self._callback_timing_state)
+            callback=self._callback_timing_state)
 
         self._timing_sexts_duration_sp = _epics.PV(
-            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Sexts:Duration-SP',
-            connection_timeout=0.05)
+            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Sexts:Duration-SP')
         self._timing_sexts_duration_rb = _epics.PV(
             _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Sexts:Duration-RB',
-            connection_timeout=0.05)
-        self._timing_sexts_duration_rb.add_callback(
-            self._callback_timing_state)
+            callback=self._callback_timing_state)
 
         self._timing_evg_chromsmode_sel = _epics.PV(
-            _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'ChromsMode-Sel',
-            connection_timeout=0.05)
+            _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'ChromsMode-Sel')
         self._timing_evg_chromsmode_sts = _epics.PV(
             _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'ChromsMode-Sts',
-            connection_timeout=0.05)
-        self._timing_evg_chromsmode_sts.add_callback(
-            self._callback_timing_state)
+            callback=self._callback_timing_state)
 
         self._timing_evg_chromsdelay_sp = _epics.PV(
-            _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'ChromsDelay-SP',
-            connection_timeout=0.05)
+            _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'ChromsDelay-SP')
         self._timing_evg_chromsdelay_rb = _epics.PV(
             _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'ChromsDelay-RB',
-            connection_timeout=0.05)
-        self._timing_evg_chromsdelay_rb.add_callback(
-            self._callback_timing_state)
+            callback=self._callback_timing_state)
 
         self._timing_evg_chromsexttrig_cmd = _epics.PV(
-            _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'ChromsExtTrig-Cmd',
-            connection_timeout=0.05)
-
-        # Set current status
-        if all(conn == 1 for conn in self._sfam_check_connection):
-            self._status = self._status & 0x1e
-        if all(pwr == 1 for pwr in self._sfam_check_pwrstate_sts):
-            self._status = self._status & 0x1d
-        if all(op == self._sync_corr for op in self._sfam_check_opmode_sts):
-            self._status = self._status & 0x1b
-        if all(ctrl == 0 for ctrl in self._sfam_check_ctrlmode_mon):
-            self._status = self._status & 0x17
-        if all(conf == 1 for conf in self._timing_check_config):
-            self._status = self._status & 0x0f
-        self.driver.setParam('Status-Mon', self._status)
+            _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'ChromsExtTrig-Cmd')
 
         self.driver.setParam('Log-Mon', 'Started.')
         self.driver.updatePVs()
@@ -357,11 +305,11 @@ class App:
                     fam_index = _pvs._SFAMS.index(fam)
                     self._sfam_check_opmode_sts[fam_index] = (
                         self._sfam_opmode_sts_pvs[fam].value)
-                if not any(op == self._sync_corr
-                           for op in self._sfam_check_opmode_sts):
-                    self._status = self._status | 0x04
+                if any(op != self._sync_corr
+                       for op in self._sfam_check_opmode_sts):
+                    self._update_status('set', SETBIT2)
                 else:
-                    self._status = self._status & 0x1b
+                    self._update_status('clr', CLRBIT2)
                 self.driver.setParam('Status-Mon', self._status)
                 self.driver.setParam('SyncCorr-Sts', self._sync_corr)
                 self.driver.updatePVs()
@@ -443,8 +391,8 @@ class App:
         self.driver.updatePVs()
 
     def _apply_sl(self):
-        if ((self._status == 0x00 and self._sync_corr == 1) or
-                (self._status == 0x10 and self._sync_corr == 0)):
+        if ((self._status == ALLCLR_SYNCON and self._sync_corr == 1) or
+                (self._status == ALLCLR_SYNCOFF and self._sync_corr == 0)):
             pvs = self._sfam_sl_sp_pvs
             for fam in pvs:
                 fam_index = _pvs._SFAMS.index(fam)
@@ -463,32 +411,24 @@ class App:
             self.driver.updatePVs()
         return False
 
-    def _estim_current_chrom(self, pv_type):
-        if pv_type == 'sp':
-            pvs = self._sfam_sl_sp_pvs
-        elif pv_type == 'rb':
-            pvs = self._sfam_sl_rb_pvs
+    def _estimate_current_chrom(self):
+        sfam_deltasl = len(_pvs._SFAMS)*[0]
+        for fam in _pvs._SFAMS:
+            fam_index = _pvs._SFAMS.index(fam)
+            sfam_deltasl[fam_index] = (
+                self._sfam_sl_rb[fam_index] - self._sfam_nomsl[fam_index])
+            if self._corr_method == 0:
+                sfam_deltasl[fam_index] = (sfam_deltasl[fam_index] /
+                                           self._sfam_nomsl[fam_index])
+        return self._opticscorr.estimate_current_chrom(sfam_deltasl)
 
-        if ((not any(s == 0 for s in self._sfam_check_connection)) and
-                (not any(s == 0 for s in self._sfam_check_pwrstate_sts))):
-            sfam_deltasl = len(_pvs._SFAMS)*[0]
-            for fam in _pvs._SFAMS:
-                fam_index = _pvs._SFAMS.index(fam)
-                pv = pvs[fam]
-                sfam_sl = pv.get()
-                if (sfam_sl is None):
-                    return [0, 0]
-                else:
-                    sfam_deltasl[fam_index] = (
-                        sfam_sl-self._sfam_nomsl[fam_index])
-                    if self._corr_method == 0:
-                        sfam_deltasl[fam_index] = (sfam_deltasl[fam_index] /
-                                                   self._sfam_nomsl[fam_index])
-            return self._opticscorr.estimate_current_chrom(sfam_deltasl)
-        else:
-            return [0, 0]
+    def _update_status(self, update, mask):
+        if update == 'set':
+            self._status = self._status | mask
+        elif update == 'clr':
+            self._status = self._status & mask
 
-    def _connection_callback_sfam_sl_pvs(self, pvname, conn, **kws):
+    def _connection_callback_sfam_sl_rb(self, pvname, conn, **kws):
         ps = pvname.split(_pvs._PREFIX_VACA)[1]
         if not conn:
             self.driver.setParam('Log-Mon', 'WARN:'+ps+' disconnected')
@@ -500,16 +440,19 @@ class App:
 
         # Change the first bit of correction status
         if any(s == 0 for s in self._sfam_check_connection):
-            conn_status = 0x01
-            self._status = self._status | conn_status
+            self._update_status('set', SETBIT0)
         else:
-            conn_status = 0x1e
-            self._status = self._status & conn_status
+            self._update_status('clr', CLRBIT0)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
-    def _callback_sfam_sl_rb(self, **kws):
-        chromx_rb, chromy_rb = self._estim_current_chrom('rb')
+    def _callback_estimate_chrom(self, pvname, value, **kws):
+        ps = pvname.split(_pvs._PREFIX_VACA)[1]
+        fam = ps.split(':')[1].split('-')[1]
+        fam_index = _pvs._SFAMS.index(fam)
+        self._sfam_sl_rb[fam_index] = value
+
+        chromx_rb, chromy_rb = self._estimate_current_chrom()
         self.driver.setParam('ChromX-RB', chromx_rb)
         self.driver.setParam('ChromY-RB', chromy_rb)
         self.driver.updatePVs()
@@ -526,11 +469,9 @@ class App:
 
         # Change the second bit of correction status
         if any(s == 0 for s in self._sfam_check_pwrstate_sts):
-            conn_status = 0x02
-            self._status = self._status | conn_status
+            self._update_status('set', SETBIT1)
         else:
-            conn_status = 0x1d
-            self._status = self._status & conn_status
+            self._update_status('clr', CLRBIT1)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
@@ -546,11 +487,9 @@ class App:
         # Change the third bit of correction status
         opmode = self._sync_corr
         if any(s != opmode for s in self._sfam_check_opmode_sts):
-            conn_status = 0x04
-            self._status = self._status | conn_status
+            self._update_status('set', SETBIT2)
         else:
-            conn_status = 0x1b
-            self._status = self._status & conn_status
+            self._update_status('clr', CLRBIT2)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
@@ -566,11 +505,9 @@ class App:
 
         # Change the fourth bit of correction status
         if any(s == 1 for s in self._sfam_check_ctrlmode_mon):
-            conn_status = 0x08
-            self._status = self._status | conn_status
+            self._update_status('set', SETBIT3)
         else:
-            conn_status = 0x17
-            self._status = self._status & conn_status
+            self._update_status('clr', CLRBIT3)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
@@ -590,11 +527,9 @@ class App:
 
         # Change the fifth bit of correction status
         if any(index == 0 for index in self._timing_check_config):
-            conn_status = 0x10
-            self._status = self._status | conn_status
+            self._update_status('set', SETBIT4)
         else:
-            conn_status = 0x0f
-            self._status = self._status & conn_status
+            self._update_status('clr', CLRBIT4)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
