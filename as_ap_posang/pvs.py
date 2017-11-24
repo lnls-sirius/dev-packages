@@ -63,7 +63,7 @@ def get_pvs_database():
 
         'ConfigPS-Cmd':         {'type': 'int', 'value': 0},
 
-        'Status-Mon':           {'type': 'int', 'value': 0},
+        'Status-Mon':           {'type': 'int', 'value': 0xf},
         'Status-Cte':           {'type': 'string', 'count': 4, 'value':
                                  ('PS Connection', 'PS PwrState',
                                   'PS OpMode', 'PS CtrlMode')},
