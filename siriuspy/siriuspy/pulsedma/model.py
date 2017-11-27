@@ -108,15 +108,10 @@ class PulsedMagnetPowerSupply(_PulsedPowerSupply):
     @property
     def strength_sp(self):
         """Return strength set point."""
-        # return self._strength_sp
-        return self._controller[_pm_props.StrengthSP].get()
+        return self.read(self._controller, _pm_props.StrengthSP)
 
     @strength_sp.setter
     def strength_sp(self, value):
-        # self._strength_sp = value
-        # # Denormalize and set tension
-        # self.tension_sp = self._strobj.conv_strength_2_tension(
-        #     value, self._dipole_current_sp)
         upper_limit = self._controller[_pm_props.StrengthSP].upper_disp_limit
         lower_limit = self._controller[_pm_props.StrengthSP].lower_disp_limit
 
@@ -127,7 +122,7 @@ class PulsedMagnetPowerSupply(_PulsedPowerSupply):
             value = upper_limit
         elif value < lower_limit:
             value = lower_limit
-        self._controller[_pm_props.StrengthSP].put(value)
+        self.write(self._controller, _pm_props.StrengthSP, value)
 
     @property
     def strength_rb(self):
