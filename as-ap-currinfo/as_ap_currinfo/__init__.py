@@ -1,3 +1,3 @@
-"""SI AP Current Info package."""
+"""AS AP Current Info package."""
 
 __all__ = ('charge', 'current', 'lifetime')

@@ -1,12 +1,12 @@
-"""SI-AP-CurrInfo IOC."""
+"""SI-AP-CurrInfo-Charge Soft IOC."""
 
 import sys as _sys
 import signal as _signal
 import pcaspy as _pcaspy
 import pcaspy.tools as _pcaspy_tools
 from siriuspy import util as _util
-import si_ap_currinfo.lifetime.main as _main
-import si_ap_currinfo.lifetime.pvs as _pvs
+import as_ap_currinfo.charge.main as _main
+import as_ap_currinfo.charge.pvs as _pvs
 
 
 INTERVAL = 0.1

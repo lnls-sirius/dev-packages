@@ -1,12 +1,12 @@
-"""SI-AP-CurrInfo-Charge Soft IOC."""
+"""SI-AP-CurrInfo IOC."""
 
 import sys as _sys
 import signal as _signal
 import pcaspy as _pcaspy
 import pcaspy.tools as _pcaspy_tools
 from siriuspy import util as _util
-import si_ap_currinfo.charge.main as _main
-import si_ap_currinfo.charge.pvs as _pvs
+import as_ap_currinfo.current.main as _main
+import as_ap_currinfo.current.pvs as _pvs
 
 
 INTERVAL = 0.1
@@ -45,19 +45,18 @@ class _PCASDriver(_pcaspy.Driver):
             return False
 
 
-def run():
+def run(acc):
     """Main module function."""
     # define abort function
     _signal.signal(_signal.SIGINT, _stop_now)
     _signal.signal(_signal.SIGTERM, _stop_now)
 
-    # Init pvs database
+    # define IOC and init pvs database
+    _pvs.select_ioc(acc)
     _main.App.init_class()
 
     # create a new simple pcaspy server and driver to respond client's requests
     server = _pcaspy.SimpleServer()
-    # for prefix, database in _main.App.pvs_database.items():
-    #     server.createPV(prefix, database)
     server.createPV(_pvs._PREFIX, _main.App.pvs_database)
     pcas_driver = _PCASDriver()
 

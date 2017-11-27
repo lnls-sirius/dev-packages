@@ -6,8 +6,17 @@ from siriuspy import util as _util
 
 _COMMIT_HASH = _util.get_last_commit_hash()
 _PREFIX_VACA = _vaca_prefix
-_DEVICE = 'SI-Glob:AP-CurrInfo:'
-_PREFIX = _PREFIX_VACA + _DEVICE
+_ACC = None
+_DEVICE = None
+_PREFIX = None
+
+
+def select_ioc(acc):
+    """Select IOC to build database for."""
+    global _ACC, _PREFIX, _DEVICE
+    _ACC = acc.upper()
+    _DEVICE = _ACC + '-Glob:AP-CurrInfo:'
+    _PREFIX = _PREFIX_VACA + _DEVICE
 
 
 def get_pvs_database():
@@ -25,9 +34,9 @@ def get_pvs_database():
                             'lolo': 0, 'hihi': 3600, 'value': 10},
         'SplIntvl-RB':	   {'type': 'int', 'value': 10, 'unit': 's'},
         'BuffRst-Cmd':     {'type': 'int', 'value': 0},
-        'BuffAutoRst-Sel': {'type': 'enum', 'value': 0,
+        'BuffAutoRst-Sel': {'type': 'enum', 'value': 1,
                             'enums': ['PVsTrig', 'DCurrCheck', 'Off']},
-        'BuffAutoRst-Sts': {'type': 'enum', 'value': 0,
+        'BuffAutoRst-Sts': {'type': 'enum', 'value': 1,
                             'enums': ['PVsTrig', 'DCurrCheck', 'Off']},
         'DCurrFactor-Cte': {'type': 'float', 'value': 0.003, 'prec': 2,
                             'unit': 'mA'}

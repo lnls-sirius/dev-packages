@@ -7,7 +7,7 @@ import siriuspy as _siriuspy
 import siriuspy.envars as _siriuspy_envars
 import siriuspy.epics as _siriuspy_epics
 import siriuspy.util as _siriuspy_util
-import si_ap_currinfo.lifetime.pvs as _pvs
+import as_ap_currinfo.lifetime.pvs as _pvs
 
 # Coding guidelines:
 # =================
@@ -33,31 +33,32 @@ class App:
     def __init__(self, driver):
         """Class constructor."""
         _siriuspy_util.print_ioc_banner(
-            ioc_name='si-ap-currinfo-lifetime',
+            ioc_name=_pvs._ACC.lower()+'-ap-currinfo-lifetime',
             db=App.pvs_database,
-            description='SI-AP-CurrInfo-Lifetime Soft IOC',
+            description=_pvs._ACC.upper()+'-AP-CurrInfo-Lifetime Soft IOC',
             version=__version__,
             prefix=_pvs._PREFIX)
-        _siriuspy.util.save_ioc_pv_list('si-ap-currinfo-lifetime',
-                                        (_pvs._DEVICE,
-                                         _pvs._PREFIX_VACA),
-                                        App.pvs_database)
+        _siriuspy.util.save_ioc_pv_list(
+            _pvs._ACC.lower()+'-ap-currinfo-lifetime',
+            (_pvs._DEVICE, _pvs._PREFIX_VACA),
+            App.pvs_database)
+
         self._driver = driver
         self._pvs_database = App.pvs_database
 
         self._current_pv = _epics.PV(
-            _ioc_prefix + 'SI-Glob:AP-CurrInfo:Current-Mon',
+            _ioc_prefix+_pvs._ACC.upper()+'-Glob:AP-CurrInfo:Current-Mon',
             connection_timeout=0.05)
         self._storedebeam_pv = _epics.PV(
-            _ioc_prefix + 'SI-Glob:AP-CurrInfo:StoredEBeam-Mon')
+            _ioc_prefix+_pvs._ACC.upper()+'-Glob:AP-CurrInfo:StoredEBeam-Mon')
         self._storedebeam_pv.wait_for_connection(timeout=0.05)
         self._injstate_pv = _epics.PV(
-            _ioc_prefix + 'AS-Glob:TI-EVG:InjectionState-Sts',
+            _ioc_prefix+'AS-Glob:TI-EVG:InjectionState-Sts',
             connection_timeout=0.05)
 
         self._lifetime = 0
         self._rstbuff_cmd_count = 0
-        self._buffautorst_mode = 0
+        self._buffautorst_mode = 1
         if self._injstate_pv.connected:
             self._is_injecting = self._injstate_pv.value
             self._changeinjstate_timestamp = self._injstate_pv.timestamp

@@ -5,7 +5,7 @@ import epics as _epics
 import siriuspy as _siriuspy
 import siriuspy.envars as _siriuspy_envars
 import siriuspy.util as _siriuspy_util
-import si_ap_currinfo.charge.pvs as _pvs
+import as_ap_currinfo.charge.pvs as _pvs
 
 # Coding guidelines:
 # =================
@@ -50,7 +50,7 @@ class App:
         self._current_pv.add_callback(self._callback_calccharge)
         self._time0 = _time.time()
         self._arq = open('/home/fac_files/lnls-sirius/machine-applications/'
-                         'si-ap-currinfo/si_ap_currinfo/charge/charge.txt',
+                         'as-ap-currinfo/as_ap_currinfo/charge/charge.txt',
                          'r')
         self._charge = float(self._arq.readline())
         self._arq.close()
@@ -98,8 +98,8 @@ class App:
             self._charge += (1/3600000)*self._current_value*(
                             self._time1 - self._time0)  # Charge in A.h
             self._arq = open('/home/fac_files/lnls-sirius'
-                             '/machine-applications/si-ap-currinfo'
-                             '/si_ap_currinfo/charge/charge.txt',
+                             '/machine-applications/as-ap-currinfo'
+                             '/as_ap_currinfo/charge/charge.txt',
                              'w')
             self._arq.write(str(self._charge))
             self._arq.close()

@@ -5,7 +5,7 @@ import epics as _epics
 import siriuspy as _siriuspy
 import siriuspy.envars as _siriuspy_envars
 import siriuspy.util as _siriuspy_util
-import si_ap_currinfo.current.pvs as _pvs
+import as_ap_currinfo.current.pvs as _pvs
 
 # Coding guidelines:
 # =================
@@ -31,58 +31,75 @@ class App:
     def __init__(self, driver):
         """Class constructor."""
         _siriuspy_util.print_ioc_banner(
-            ioc_name='si-ap-currinfo-current',
+            ioc_name=_pvs._ACC.lower()+'-ap-currinfo-current',
             db=App.pvs_database,
-            description='SI-AP-CurrInfo-Current Soft IOC',
+            description=_pvs._ACC.upper()+'-AP-CurrInfo-Current Soft IOC',
             version=__version__,
             prefix=_pvs._PREFIX)
-        _siriuspy.util.save_ioc_pv_list('si-ap-currinfo-current',
-                                        (_pvs._DEVICE,
-                                         _pvs._PREFIX_VACA),
-                                        App.pvs_database)
+        _siriuspy.util.save_ioc_pv_list(
+            _pvs._ACC.lower()+'-ap-currinfo-current',
+            (_pvs._DEVICE, _pvs._PREFIX_VACA),
+            App.pvs_database)
+
         self._driver = driver
         self._pvs_database = App.pvs_database
 
-        self._current_13C4_pv = _epics.PV(
-            _ioc_prefix + 'SI-13C4:DI-DCCT:Current-Mon',
-            connection_callback=self._connection_callback_current_DCCT13C4,
-            connection_timeout=0.05)
-        self._current_14C4_pv = _epics.PV(
-            _ioc_prefix + 'SI-14C4:DI-DCCT:Current-Mon',
-            connection_callback=self._connection_callback_current_DCCT14C4,
-            connection_timeout=0.05)
-        self._storedebeam_13C4_pv = _epics.PV(
-            _ioc_prefix + 'SI-13C4:DI-DCCT:StoredEBeam-Mon',
-            connection_timeout=0.05)
-        self._storedebeam_14C4_pv = _epics.PV(
-            _ioc_prefix + 'SI-14C4:DI-DCCT:StoredEBeam-Mon',
-            connection_timeout=0.05)
-        self._hwflt_13C4_pv = _epics.PV(
-            _ioc_prefix + 'SI-13C4:DI-DCCT:HwFlt-Mon',
-            connection_timeout=0.05)
-        self._hwflt_14C4_pv = _epics.PV(
-            _ioc_prefix + 'SI-14C4:DI-DCCT:HwFlt-Mon',
-            connection_timeout=0.05)
+        if _pvs._ACC.upper() == 'BO':
+            self._current_bo_pv = _epics.PV(
+                _ioc_prefix + 'BO-35D:DI-DCCT:Current-Mon',
+                connection_timeout=0.05)
+            self._storedebeam_bo_pv = _epics.PV(
+                _ioc_prefix + 'BO-35D:DI-DCCT:StoredEBeam-Mon',
+                connection_timeout=0.05)
 
-        self._dcct_mode = 0
-        self._dcctfltcheck_mode = 0
-        self._hwflt_13C4_value = 0
-        self._hwflt_14C4_value = 0
-        if not self._storedebeam_13C4_pv.connected:
-            self._getebeam13C4cbindex = self._current_13C4_pv.add_callback(
-                                    self._callback_get_ebeam_fromcurrent)
-        if not self._storedebeam_14C4_pv.connected:
-            self._getebeam14C4cbindex = self._current_14C4_pv.add_callback(
-                                    self._callback_get_ebeam_fromcurrent)
+            self._current_bo_pv.add_callback(self._callback_get_current_bo)
+            self._storedebeam_bo_pv.add_callback(
+                self._callback_get_storedebeam_bo)
+            if not self._storedebeam_bo_pv.connected:
+                self._getebeamcbindex = self._current_bo_pv.add_callback(
+                    self._callback_get_ebeam_fromcurrent_bo)
 
-        self._current_13C4_pv.add_callback(self._callback_get_dcct_current)
-        self._current_14C4_pv.add_callback(self._callback_get_dcct_current)
-        self._storedebeam_13C4_pv.add_callback(
-                                        self._callback_get_storedebeam)
-        self._storedebeam_14C4_pv.add_callback(
-                                        self._callback_get_storedebeam)
-        self._hwflt_13C4_pv.add_callback(self._callback_get_hwflt)
-        self._hwflt_14C4_pv.add_callback(self._callback_get_hwflt)
+        elif _pvs._ACC.upper() == 'SI':
+            self._current_13C4_pv = _epics.PV(
+                _ioc_prefix + 'SI-13C4:DI-DCCT:Current-Mon',
+                connection_callback=self._connection_callback_current_DCCT13C4,
+                connection_timeout=0.05)
+            self._current_14C4_pv = _epics.PV(
+                _ioc_prefix + 'SI-14C4:DI-DCCT:Current-Mon',
+                connection_callback=self._connection_callback_current_DCCT14C4,
+                connection_timeout=0.05)
+            self._storedebeam_13C4_pv = _epics.PV(
+                _ioc_prefix + 'SI-13C4:DI-DCCT:StoredEBeam-Mon',
+                connection_timeout=0.05)
+            self._storedebeam_14C4_pv = _epics.PV(
+                _ioc_prefix + 'SI-14C4:DI-DCCT:StoredEBeam-Mon',
+                connection_timeout=0.05)
+            self._hwflt_13C4_pv = _epics.PV(
+                _ioc_prefix + 'SI-13C4:DI-DCCT:HwFlt-Mon',
+                connection_timeout=0.05)
+            self._hwflt_14C4_pv = _epics.PV(
+                _ioc_prefix + 'SI-14C4:DI-DCCT:HwFlt-Mon',
+                connection_timeout=0.05)
+
+            self._dcct_mode = 0
+            self._dcctfltcheck_mode = 0
+            self._hwflt_13C4_value = 0
+            self._hwflt_14C4_value = 0
+            if not self._storedebeam_13C4_pv.connected:
+                self._getebeam13C4cbindex = self._current_13C4_pv.add_callback(
+                                        self._callback_get_ebeam_fromcurrent)
+            if not self._storedebeam_14C4_pv.connected:
+                self._getebeam14C4cbindex = self._current_14C4_pv.add_callback(
+                                        self._callback_get_ebeam_fromcurrent)
+
+            self._current_13C4_pv.add_callback(self._callback_get_dcct_current)
+            self._current_14C4_pv.add_callback(self._callback_get_dcct_current)
+            self._storedebeam_13C4_pv.add_callback(
+                                            self._callback_get_storedebeam)
+            self._storedebeam_14C4_pv.add_callback(
+                                            self._callback_get_storedebeam)
+            self._hwflt_13C4_pv.add_callback(self._callback_get_hwflt)
+            self._hwflt_14C4_pv.add_callback(self._callback_get_hwflt)
 
     @staticmethod
     def init_class():
@@ -118,6 +135,25 @@ class App:
             self.driver.updatePVs()
             status = True
         return status
+
+    # BO-AP-CurrInfo Modules
+
+    def _callback_get_current_bo(self, value, **kws):
+        self.driver.setParam('Current-Mon', value)
+        self.driver.updatePVs()
+
+    def _callback_get_storedebeam_bo(self, value, **kws):
+        self.driver.setParam('StoredEBeam-Mon', value)
+        self.driver.updatePVs()
+
+    def _callback_get_ebeam_fromcurrent_bo(self, value, **kws):
+        if value > 0:
+            self.driver.setParam('StoredEBeam-Mon', 1)
+        else:
+            self.driver.setParam('StoredEBeam-Mon', 0)
+        self.driver.updatePVs()
+
+    # SI-AP-CurrInfo Modules
 
     def _update_dcct_mode(self, value):
         if self._dcct_mode != value:
