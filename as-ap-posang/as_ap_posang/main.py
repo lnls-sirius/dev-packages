@@ -21,16 +21,8 @@ from siriuspy.servconf.conf_service import ConfigService as _ConfigService
 __version__ = _pvs._COMMIT_HASH
 
 
-# Constants to masks
-SETBIT0 = 0x1
-SETBIT1 = 0x2
-SETBIT2 = 0x4
-SETBIT3 = 0x8
+# Constants
 ALLSET = 0xf
-CLRBIT0 = 0xe
-CLRBIT1 = 0xd
-CLRBIT2 = 0xb
-CLRBIT3 = 0x7
 ALLCLR = 0x0
 
 
@@ -354,12 +346,6 @@ class App:
         self.driver.setParam('Log-Mon', 'Updated Kick References.')
         self.driver.updatePVs()
 
-    def _update_status(self, update, mask):
-        if update == 'set':
-            self._status = self._status | mask
-        elif update == 'clr':
-            self._status = self._status & mask
-
     def _callback_init_kickref(self, pvname, value, cb_info, **kws):
         """Initialize RefKick-Mon pvs and remove this callback."""
         ps = pvname.split(_pvs._PREFIX_VACA)[1]
@@ -387,9 +373,11 @@ class App:
 
         # Change the first bit of correction status
         if any(q == 0 for q in self._corr_check_connection):
-            self._update_status('set', SETBIT0)
+            self._status = _siriuspy.util.update_bit_of_integer(
+                integer=self._status, number_of_bits=4, put=1, bit=0)
         else:
-            self._update_status('clr', CLRBIT0)
+            self._status = _siriuspy.util.update_bit_of_integer(
+                integer=self._status, number_of_bits=4, put=0, bit=0)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
@@ -404,9 +392,11 @@ class App:
 
         # Change the second bit of correction status
         if any(q == 0 for q in self._corr_check_pwrstate_sts):
-            self._update_status('set', SETBIT1)
+            self._status = _siriuspy.util.update_bit_of_integer(
+                integer=self._status, number_of_bits=4, put=1, bit=1)
         else:
-            self._update_status('clr', CLRBIT1)
+            self._status = _siriuspy.util.update_bit_of_integer(
+                integer=self._status, number_of_bits=5, put=0, bit=1)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
@@ -421,9 +411,11 @@ class App:
 
         # Change the third bit of correction status
         if any(s != 0 for s in self._corr_check_opmode_sts):
-            self._update_status('set', SETBIT2)
+            self._status = _siriuspy.util.update_bit_of_integer(
+                integer=self._status, number_of_bits=4, put=1, bit=2)
         else:
-            self._update_status('clr', CLRBIT2)
+            self._status = _siriuspy.util.update_bit_of_integer(
+                integer=self._status, number_of_bits=4, put=0, bit=2)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
@@ -439,9 +431,11 @@ class App:
 
         # Change the fourth bit of correction status
         if any(q == 1 for q in self._corr_check_ctrlmode_mon):
-            self._update_status('set', SETBIT3)
+            self._status = _siriuspy.util.update_bit_of_integer(
+                integer=self._status, number_of_bits=4, put=1, bit=3)
         else:
-            self._update_status('clr', CLRBIT3)
+            self._status = _siriuspy.util.update_bit_of_integer(
+                integer=self._status, number_of_bits=4, put=0, bit=3)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
