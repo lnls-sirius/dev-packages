@@ -23,18 +23,8 @@ import as_ap_opticscorr.tune.pvs as _pvs
 __version__ = _pvs._COMMIT_HASH
 
 
-# Constants to masks
-SETBIT0 = 0x01
-SETBIT1 = 0x02
-SETBIT2 = 0x04
-SETBIT3 = 0x08
-SETBIT4 = 0x10
+# Constants
 ALLSET = 0x1f
-CLRBIT0 = 0x1e
-CLRBIT1 = 0x1d
-CLRBIT2 = 0x1b
-CLRBIT3 = 0x17
-CLRBIT4 = 0x0f
 ALLCLR_SYNCON = 0x00
 ALLCLR_SYNCOFF = 0x10
 
@@ -293,9 +283,11 @@ class App:
                         self._qfam_opmode_sts_pvs[fam].value)
                 if any(op != self._sync_corr
                        for op in self._qfam_check_opmode_sts):
-                    self._update_status('set', SETBIT2)
+                    self._status = _siriuspy.util.update_bit_of_integer(
+                        integer=self._status, number_of_bits=5, put=1, bit=2)
                 else:
-                    self._update_status('clr', CLRBIT2)
+                    self._status = _siriuspy.util.update_bit_of_integer(
+                        integer=self._status, number_of_bits=5, put=0, bit=2)
                 self.driver.setParam('Status-Mon', self._status)
                 self.driver.setParam('SyncCorr-Sts', self._sync_corr)
                 self.driver.updatePVs()
@@ -408,7 +400,8 @@ class App:
 
     def _apply_deltakl(self):
         if ((self._status == ALLCLR_SYNCON and self._sync_corr == 1) or
-                (self._status == ALLCLR_SYNCOFF and self._sync_corr == 0)):
+                ((self._status == ALLCLR_SYNCOFF or
+                  self._status == ALLCLR_SYNCON) and self._sync_corr == 0)):
             for fam in self._qfam_kl_sp_pvs:
                 fam_index = _pvs._QFAMS.index(fam)
                 pv = self._qfam_kl_sp_pvs[fam]
@@ -460,12 +453,6 @@ class App:
         return self._opticscorr.estimate_current_deltatune(
             corrmat, qfam_deltakl)
 
-    def _update_status(self, update, mask):
-        if update == 'set':
-            self._status = self._status | mask
-        elif update == 'clr':
-            self._status = self._status & mask
-
     def _callback_init_refkl(self, pvname, value, cb_info, **kws):
         """Initialize RefKL-Mon pvs and remove this callback."""
         ps = pvname.split(_pvs._PREFIX_VACA)[1]
@@ -490,9 +477,11 @@ class App:
 
         # Change the first bit of correction status
         if any(q == 0 for q in self._qfam_check_connection):
-            self._update_status('set', SETBIT0)
+            self._status = _siriuspy.util.update_bit_of_integer(
+                integer=self._status, number_of_bits=5, put=1, bit=0)
         else:
-            self._update_status('clr', CLRBIT0)
+            self._status = _siriuspy.util.update_bit_of_integer(
+                integer=self._status, number_of_bits=5, put=0, bit=0)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
@@ -519,9 +508,11 @@ class App:
 
         # Change the second bit of correction status
         if any(q == 0 for q in self._qfam_check_pwrstate_sts):
-            self._update_status('set', SETBIT1)
+            self._status = _siriuspy.util.update_bit_of_integer(
+                integer=self._status, number_of_bits=5, put=1, bit=1)
         else:
-            self._update_status('clr', CLRBIT1)
+            self._status = _siriuspy.util.update_bit_of_integer(
+                integer=self._status, number_of_bits=5, put=0, bit=1)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
@@ -537,9 +528,11 @@ class App:
         # Change the third bit of correction status
         opmode = self._sync_corr
         if any(s != opmode for s in self._qfam_check_opmode_sts):
-            self._update_status('set', SETBIT2)
+            self._status = _siriuspy.util.update_bit_of_integer(
+                integer=self._status, number_of_bits=5, put=1, bit=2)
         else:
-            self._update_status('clr', CLRBIT2)
+            self._status = _siriuspy.util.update_bit_of_integer(
+                integer=self._status, number_of_bits=5, put=0, bit=2)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
@@ -555,9 +548,11 @@ class App:
 
         # Change the fourth bit of correction status
         if any(q == 1 for q in self._qfam_check_ctrlmode_mon):
-            self._update_status('set', SETBIT3)
+            self._status = _siriuspy.util.update_bit_of_integer(
+                integer=self._status, number_of_bits=5, put=1, bit=3)
         else:
-            self._update_status('clr', CLRBIT3)
+            self._status = _siriuspy.util.update_bit_of_integer(
+                integer=self._status, number_of_bits=5, put=0, bit=3)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
@@ -577,9 +572,11 @@ class App:
 
         # Change the fifth bit of correction status
         if any(index == 0 for index in self._timing_check_config):
-            self._update_status('set', SETBIT4)
+            self._status = _siriuspy.util.update_bit_of_integer(
+                integer=self._status, number_of_bits=5, put=1, bit=4)
         else:
-            self._update_status('clr', CLRBIT4)
+            self._status = _siriuspy.util.update_bit_of_integer(
+                integer=self._status, number_of_bits=5, put=0, bit=4)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
