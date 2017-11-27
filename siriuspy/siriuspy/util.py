@@ -272,3 +272,30 @@ def get_strength_units(magfunc, section=None):
             return 'mrad'
     else:
         raise NotImplementedError("magfunc {}".format(magfunc))
+
+
+def update_bit_of_integer(integer, number_of_bits, put, bit):
+    """Function to update a bit of integer.
+
+    Parameters
+    ----------
+    integer: int
+        Integer whose bit will be updated.
+    number_of_bits: (>=1)
+        Number of bit  of the integer whose bit will be updated.
+    put: 0 | 1
+        Value to put on the bit.
+    bit: (>=0)
+        The number of the bit (>=0).
+    """
+    allset = 1
+    for i in range(number_of_bits):
+        allset = 2*allset + 1
+
+    if put == 1:
+        mask = 1 << bit
+        integer = integer | mask
+    elif put == 0:
+        mask = (1 << bit) ^ allset
+        integer = integer & mask
+    return integer
