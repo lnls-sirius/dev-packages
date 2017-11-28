@@ -292,8 +292,14 @@ class Waveform():
             raise ValueError('Invalid plateau parameter !')
         self.v34 = value
 
-    def change_ramp_up(self, i1=None, i2=None, v1=None, v2=None):
+    def change_ramp_up(self,
+                       start=None, stop=None,
+                       start_value=None, stop_value=None):
         """Change waveform ramp up."""
+        i1 = start
+        i2 = stop
+        v1 = start_value
+        v2 = stop_value
         i1 = self.i1 if i1 is None else i1
         i2 = self.i2 if i2 is None else i2
         v1 = self.v1 if v1 is None else v1
@@ -315,8 +321,14 @@ class Waveform():
         self.i3 = i3
         self.i0 = i0
 
-    def change_ramp_down(self, i5=None, i6=None, v5=None, v6=None):
+    def change_ramp_down(self,
+                         start=None, stop=None,
+                         start_value=None, stop_value=None):
         """Change waveform ramp down."""
+        i5 = start
+        i6 = stop
+        v5 = start_value
+        v6 = stop_value
         i5 = self.i5 if i5 is None else i5
         i6 = self.i6 if i6 is None else i6
         v5 = self.v5 if v5 is None else v5

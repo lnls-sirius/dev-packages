@@ -294,13 +294,25 @@ class MagnetWaveform(_Magnet):
         current = self._calc_currents(value)
         self._waveform.change_plateau(current)
 
-    def change_ramp_up(self, i1=None, i2=None, v1=None, v2=None):
+    def change_ramp_up(self,
+                       start=None, stop=None,
+                       start_value=None, stop_value=None):
         """Change waveform ramp up."""
+        i1 = start
+        i2 = stop
+        v1 = start_value
+        v2 = stop_value
         c1, c2 = self._calc_currents([v1, v2])
         self._waveform.change_ramp_up(i1=i1, i2=i2, v1=c1, v2=c2)
 
-    def change_ramp_down(self, i5=None, i6=None, v5=None, v6=None):
+    def change_ramp_down(self,
+                         start=None, stop=None,
+                         start_value=None, stop_value=None):
         """Change waveform ramp down."""
+        i5 = start
+        i6 = stop
+        v5 = start_value
+        v6 = stop_value
         c5, c6 = self._calc_currents([v5, v6])
         self._waveform.change_ramp_down(i5=i5, i6=i6, v5=c5, v6=c6)
 
