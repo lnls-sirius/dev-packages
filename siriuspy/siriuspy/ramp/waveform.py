@@ -576,10 +576,8 @@ class Waveform():
         d = i7 - i6
         a, b, c = Waveform._calccoeffs(d, dv, D6, D8)
         phi = b**2 - 3*c*a
-        i7_r1 = i7 + (-b + _np.sqrt(phi))/3.0/c
-        i7_r2 = i7 + (-b - _np.sqrt(phi))/3.0/c
-        # print(_np.isnan(i7_r1))
-        # print(_np.isnan(i7_r2))
+        i7_r1 = i6 + (-b + _np.sqrt(phi))/3.0/c
+        i7_r2 = i6 + (-b - _np.sqrt(phi))/3.0/c
         cond = ((i7_r1 < i6) | (i7_r1 >= i7) | _np.isnan(i7_r1)) & \
                ((i7_r2 < i6) | (i7_r2 >= i7) | _np.isnan(i7_r2))
         # for i in range(len(i7)):
