@@ -73,7 +73,8 @@ class _MagnetNormalizer:
         return currents
 
     def _power_supplies(self):
-        return [self._maname.replace(":MA", ":PS")]
+        psname = self._maname.replace(":MA", ":PS").replace(':PM', ':PU')
+        return [psname]
 
 
 class DipoleNormalizer(_MagnetNormalizer):
