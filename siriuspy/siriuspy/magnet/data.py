@@ -40,6 +40,7 @@ class MAData:
 
     @property
     def psnames(self):
+        """List of power supply names that excite the magnet."""
         return list(self._psdata.keys())
 
     def magfunc(self, psname):
