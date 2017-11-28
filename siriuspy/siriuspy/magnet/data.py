@@ -9,7 +9,7 @@ from siriuspy.csdevice.pwrsupply \
 class MAData:
     """MAData Class.
 
-    Class objects group magnet data.
+    Class objects that group magnet data.
     """
 
     def __init__(self, maname):

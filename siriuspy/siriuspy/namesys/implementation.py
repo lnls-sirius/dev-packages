@@ -1,9 +1,12 @@
+"""Implementation of namesys functions nad classes."""
+
 import types as _types
 import re as _re
 
 
 def join_name(section, discipline, device, subsection, instance=None,
               proper=None, field=None,  prefix=None, channel_type=None):
+    """Join PV name substrings."""
     name = channel_type + '://' if channel_type else ''
     name += prefix + '-' if prefix else ''
     name += (section.upper() + '-' + subsection + ':' +
@@ -55,9 +58,12 @@ def split_name(pvname):
                           ('.' + dic_['field'] if dic_['field'] else ''))
     return dic_
 
+
 class SiriusPVName(str):
+    """Sirius PV Name Class."""
 
     def __new__(cls, pv_name):
+        """New method."""
         name = split_name(pv_name)
         obj = super().__new__(cls, pv_name)
         obj.channel_type = name['channel_type']
@@ -77,21 +83,26 @@ class SiriusPVName(str):
         return obj
 
     def __lt__(self, other):
+        """Less-than operator."""
         cond = ((type(other) == type(self)) and
                 (self.section == other.section) and
                 (self.subsection != other.subsection))
         return self._subsec_comp(other) if cond else super().__lt__(other)
 
     def __gt__(self, other):
+        """Greater-than operator."""
         return other.__lt__(self)
 
     def __le__(self, other):
+        """Less-or-equal operator."""
         return self.__lt__(other) or self.__eq__(other)
 
     def __ge__(self, other):
+        """Greater-or-equal operator."""
         return self.__gt__(other) or self.__eq__(other)
 
     def _subsec_comp(self, other):
+        """Subsection comparison."""
         my_ssec = self.subsection
         th_ssec = other.subsection
         if my_ssec == 'Glob':
@@ -177,7 +188,7 @@ class Filter:
         return filters
 
     def process_filters(pvnames, filters=None, sorting=None):
-        """ Return a sorted and filtered list of given pv name lists.
+        """Return a sorted and filtered list of given pv name lists.
 
         'filters' is either a dictionary of a list of dictionaries whose keys
         are pv sub parts and the values are the desired patterns

@@ -23,71 +23,28 @@ class PSSearch:
     _psnames_list = None
 
     @staticmethod
-    def _reload_pstype_dict():
-        """Reload power supply type dictionary from web server."""
-        if _web.server_online():
-            text = _web.power_supplies_pstypes_names_read(
-                timeout=PSSearch._connection_timeout)
-            data, params_dict = _util.read_text_data(text)
-            PSSearch._pstype_dict = {}
-            for datum in data:
-                name, polarity, magfunc = datum[0], datum[1], datum[2]
-                PSSearch._pstype_dict[name] = (polarity, magfunc)
+    def get_psnames(filters=None):
+        """Return a sorted and filtered list of all power supply names."""
+        if PSSearch._pstype_2_names_dict is None:
+            PSSearch._reload_pstype_2_names_dict()
+        return _Filter.process_filters(PSSearch._psnames_list, filters=filters)
+
+    @staticmethod
+    def get_splim(pstype, label):
+        """Return setpoint limit corresponding to given label.
+
+        The label can be either epics' or pcaspy's.
+        """
+        if PSSearch._pstype_2_splims_dict is None:
+            PSSearch._reload_pstype_2_splims_dict()
+        if label in PSSearch._splims_labels:
+            return PSSearch._pstype_2_splims_dict[pstype][label]
         else:
-            raise Exception('could not read pstypes from web server!')
-
-    @staticmethod
-    def _reload_pstype_2_names_dict():
-        """Reload power supply type to power supply names dictionary."""
-        if PSSearch._pstype_dict is None:
-            PSSearch._reload_pstype_dict()
-        pstypes = sorted(set(PSSearch._pstype_dict.keys()))
-        PSSearch._pstype_2_names_dict = {}
-        PSSearch._psnames_list = []
-        for pstype in pstypes:
-            text = _web.power_supplies_pstype_data_read(
-                pstype + '.txt', timeout=PSSearch._connection_timeout)
-            data, param_dict = _util.read_text_data(text)
-            psnames = [_SiriusPVName(datum[0]) for datum in data]
-            PSSearch._pstype_2_names_dict[pstype] = psnames
-            PSSearch._psnames_list += psnames
-        PSSearch._psnames_list = sorted(PSSearch._psnames_list)
-
-    @staticmethod
-    def _reload_pstype_2_splims_dict():
-        """Reload pstype to splims dictionary."""
-        # ps data
-        text = _web.power_supplies_pstype_setpoint_limits(
-            timeout=PSSearch._connection_timeout)
-        ps_data, ps_param_dict = _util.read_text_data(text)
-        # pu data
-        text = _web.pulsed_power_supplies_pstype_setpoint_limits(
-            timeout=PSSearch._connection_timeout)
-        pu_data, pu_param_dict = _util.read_text_data(text)
-
-        units = [ps_param_dict['unit'], pu_param_dict['unit']]
-        types = ps_param_dict['power_supply_type'] + \
-            pu_param_dict['power_supply_type']
-        data = ps_data + pu_data
-
-        PSSearch._splims_unit = tuple(units)
-        PSSearch._splims_labels = tuple(types)
-        PSSearch._pstype_2_splims_dict = {}
-        for datum in data:
-            pstype, *lims = datum
-            PSSearch._pstype_2_splims_dict[pstype] = \
-                {PSSearch._splims_labels[i]:
-                    float(lims[i]) for i in range(len(lims))}
-
-    @staticmethod
-    def _reload_pstype_2_excdat_dict(pstype):
-        """Load power supply excitatiom data."""
-        if _web.server_online():
-            PSSearch._pstype_2_excdat_dict[pstype] = \
-                _ExcitationData(filename_web=pstype + '.txt')
-        else:
-            raise Exception(
-                'could not read "' + str(pstype) + '" from web server!')
+            label = _util.conv_splims_labels(label)
+            if label is None:
+                return None
+            else:
+                return PSSearch._pstype_2_splims_dict[pstype][label]
 
     @staticmethod
     def get_pstype_dict():
@@ -172,30 +129,6 @@ class PSSearch:
         return PSSearch._pstype_2_excdat_dict[pstype]
 
     @staticmethod
-    def get_splim(pstype, label):
-        """Return setpoint limit corresponding to given label.
-
-        The label can be either epics' or pcaspy's.
-        """
-        if PSSearch._pstype_2_splims_dict is None:
-            PSSearch._reload_pstype_2_splims_dict()
-        if label in PSSearch._splims_labels:
-            return PSSearch._pstype_2_splims_dict[pstype][label]
-        else:
-            label = _util.conv_splims_labels(label)
-            if label is None:
-                return None
-            else:
-                return PSSearch._pstype_2_splims_dict[pstype][label]
-
-    @staticmethod
-    def get_psnames(filters=None):
-        """Return a sorted and filtered list of all power supply names."""
-        if PSSearch._pstype_2_names_dict is None:
-            PSSearch._reload_pstype_2_names_dict()
-        return _Filter.process_filters(PSSearch._psnames_list, filters=filters)
-
-    @staticmethod
     def get_pstype_2_splims_dict():
         """Return a dictionary of power supply type and setpoint limits."""
         if PSSearch._pstype_2_splims_dict is None:
@@ -215,6 +148,75 @@ class PSSearch:
         if PSSearch._pstype_2_splims_dict is None:
             PSSearch._reload_pstype_2_splims_dict()
         return PSSearch._splims_labels
+
+    # --- private methods ---
+
+    @staticmethod
+    def _reload_pstype_dict():
+        """Reload power supply type dictionary from web server."""
+        if _web.server_online():
+            text = _web.power_supplies_pstypes_names_read(
+                timeout=PSSearch._connection_timeout)
+            data, params_dict = _util.read_text_data(text)
+            PSSearch._pstype_dict = {}
+            for datum in data:
+                name, polarity, magfunc = datum[0], datum[1], datum[2]
+                PSSearch._pstype_dict[name] = (polarity, magfunc)
+        else:
+            raise Exception('could not read pstypes from web server!')
+
+    @staticmethod
+    def _reload_pstype_2_names_dict():
+        """Reload power supply type to power supply names dictionary."""
+        if PSSearch._pstype_dict is None:
+            PSSearch._reload_pstype_dict()
+        pstypes = sorted(set(PSSearch._pstype_dict.keys()))
+        PSSearch._pstype_2_names_dict = {}
+        PSSearch._psnames_list = []
+        for pstype in pstypes:
+            text = _web.power_supplies_pstype_data_read(
+                pstype + '.txt', timeout=PSSearch._connection_timeout)
+            data, param_dict = _util.read_text_data(text)
+            psnames = [_SiriusPVName(datum[0]) for datum in data]
+            PSSearch._pstype_2_names_dict[pstype] = psnames
+            PSSearch._psnames_list += psnames
+        PSSearch._psnames_list = sorted(PSSearch._psnames_list)
+
+    @staticmethod
+    def _reload_pstype_2_splims_dict():
+        """Reload pstype to splims dictionary."""
+        # ps data
+        text = _web.power_supplies_pstype_setpoint_limits(
+            timeout=PSSearch._connection_timeout)
+        ps_data, ps_param_dict = _util.read_text_data(text)
+        # pu data
+        text = _web.pulsed_power_supplies_pstype_setpoint_limits(
+            timeout=PSSearch._connection_timeout)
+        pu_data, pu_param_dict = _util.read_text_data(text)
+
+        units = [ps_param_dict['unit'], pu_param_dict['unit']]
+        types = ps_param_dict['power_supply_type'] + \
+            pu_param_dict['power_supply_type']
+        data = ps_data + pu_data
+
+        PSSearch._splims_unit = tuple(units)
+        PSSearch._splims_labels = tuple(types)
+        PSSearch._pstype_2_splims_dict = {}
+        for datum in data:
+            pstype, *lims = datum
+            PSSearch._pstype_2_splims_dict[pstype] = \
+                {PSSearch._splims_labels[i]:
+                    float(lims[i]) for i in range(len(lims))}
+
+    @staticmethod
+    def _reload_pstype_2_excdat_dict(pstype):
+        """Load power supply excitatiom data."""
+        if _web.server_online():
+            PSSearch._pstype_2_excdat_dict[pstype] = \
+                _ExcitationData(filename_web=pstype + '.txt')
+        else:
+            raise Exception(
+                'could not read "' + str(pstype) + '" from web server!')
 
 
 class MASearch:
