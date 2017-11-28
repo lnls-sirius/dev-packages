@@ -1,8 +1,4 @@
 """MA data class definition."""
-import math as _math
-from abc import abstractmethod as _abstractmethod
-from abc import ABCMeta as _ABCMeta
-import siriuspy.util as _util
 from siriuspy.search import MASearch as _MASearch
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.pwrsupply.data import PSData as _PSData
@@ -11,8 +7,13 @@ from siriuspy.csdevice.pwrsupply \
 
 
 class MAData:
+    """MAData Class.
+
+    Class objects group magnet data.
+    """
 
     def __init__(self, maname):
+        """Init method."""
         self._maname = _SiriusPVName(maname)
         self._splims = _MASearch.conv_maname_2_splims(self._maname)
         self._splims_unit = _MASearch.get_splims_unit()[0]
