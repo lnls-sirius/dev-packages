@@ -6,9 +6,13 @@ MagnetFacoty
 import re as _re
 
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
-from siriuspy.magnet.model import MagnetPowerSupplyDipole, MagnetPowerSupply, \
-    MagnetPowerSupplyTrim
-from siriuspy.pulsedma.model import PulsedMagnetPowerSupply
+from siriuspy.magnet.model import MagnetPowerSupply as _MagnetPowerSupply
+from siriuspy.magnet.model import MagnetPowerSupplyDipole as \
+    _MagnetPowerSupplyDipole
+from siriuspy.magnet.model import MagnetPowerSupplyTrim as \
+    _MagnetPowerSupplyTrim
+from siriuspy.pulsedma.model import PulsedMagnetPowerSupply as \
+    _PulsedMagnetPowerSupply
 
 
 class MagnetFactory:
@@ -22,22 +26,22 @@ class MagnetFactory:
         dipole = _re.compile("B.*")
         trim = _re.compile("SI-\d{2}\w\d:MA-(QD|QF|Q\d).*")
         if pulsed_discipline.match(maname.discipline):
-            return PulsedMagnetPowerSupply(maname,
-                                           use_vaca=use_vaca,
-                                           vaca_prefix=vaca_prefix,
-                                           lock=lock)
+            return _PulsedMagnetPowerSupply(maname,
+                                            use_vaca=use_vaca,
+                                            vaca_prefix=vaca_prefix,
+                                            lock=lock)
         elif dipole.match(maname.dev_type):
-            return MagnetPowerSupplyDipole(maname,
-                                           use_vaca=use_vaca,
-                                           vaca_prefix=vaca_prefix,
-                                           lock=lock)
+            return _MagnetPowerSupplyDipole(maname,
+                                            use_vaca=use_vaca,
+                                            vaca_prefix=vaca_prefix,
+                                            lock=lock)
         elif trim.match(maname):
-            return MagnetPowerSupplyTrim(maname,
-                                         use_vaca=use_vaca,
-                                         vaca_prefix=vaca_prefix,
-                                         lock=lock)
+            return _MagnetPowerSupplyTrim(maname,
+                                          use_vaca=use_vaca,
+                                          vaca_prefix=vaca_prefix,
+                                          lock=lock)
         else:
-            return MagnetPowerSupply(maname,
-                                     use_vaca=use_vaca,
-                                     vaca_prefix=vaca_prefix,
-                                     lock=lock)
+            return _MagnetPowerSupply(maname,
+                                      use_vaca=use_vaca,
+                                      vaca_prefix=vaca_prefix,
+                                      lock=lock)

@@ -53,8 +53,6 @@ class _MagnetNormalizer:
         if currents_dipole is None:
             return 0
         energies = self._get_energy(currents_dipole)
-        # if not energies:
-        #     return 0
         brho = _util.beam_rigidity(energies)
         return brho
 
@@ -75,7 +73,8 @@ class _MagnetNormalizer:
         return currents
 
     def _power_supplies(self):
-        return [self._maname.replace(":MA", ":PS")]
+        psname = self._maname.replace(":MA", ":PS").replace(':PM', ':PU')
+        return [psname]
 
 
 class DipoleNormalizer(_MagnetNormalizer):
@@ -165,21 +164,26 @@ class MagnetNormalizer(_MagnetNormalizer):
 
     def _conv_intfield_2_strength(self, intfields, **kwargs):
         brhos = self._get_brho(currents_dipole=kwargs['currents_dipole'])
-        if brhos == 0:
-            return 0
-        strengths = self._magnet_conv_sign * intfields / brhos
+        if isinstance(brhos, _np.ndarray):
+            strengths = self._magnet_conv_sign * intfields / brhos
+            strengths[brhos == 0] = 0.0
+        else:
+            if brhos == 0:
+                strengths = 0.0
+            else:
+                strengths = self._magnet_conv_sign * intfields / brhos
         return strengths
 
 
 class TrimNormalizer(_MagnetNormalizer):
     """Convert trim magnet current to strength and vice versa."""
 
-    def __init__(self, maname, dipole_name, fam_name, magnet_conv_sign=-1.0,
+    def __init__(self, maname, dipole_name, family_name, magnet_conv_sign=-1.0,
                  **kwargs):
         """Call super and initializes a dipole and the family magnet."""
         super(TrimNormalizer, self).__init__(maname, **kwargs)
         self._dipole = DipoleNormalizer(dipole_name, **kwargs)
-        self._fam = MagnetNormalizer(fam_name, dipole_name, **kwargs)
+        self._fam = MagnetNormalizer(family_name, dipole_name, **kwargs)
 
     def _conv_strength_2_intfield(self, strengths, **kwargs):
         strengths_fam = self._fam.conv_current_2_strength(
