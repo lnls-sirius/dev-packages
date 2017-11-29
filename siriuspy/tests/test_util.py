@@ -3,8 +3,12 @@
 """Unittest module for util.py."""
 
 import unittest
-import siriuspy.util as util
+from unittest import mock
 from io import StringIO
+
+import epics
+
+import siriuspy.util as util
 
 
 class TestUtil(unittest.TestCase):
@@ -99,6 +103,52 @@ class TestUtil(unittest.TestCase):
                               '1.0.0', 'PREFIX', file=file)
         text = file.getvalue()
         self.assertEqual(len(text.splitlines()), 12)
+
+    def test_check_running_ioc(self):
+        """Test check_running_ioc."""
+        with mock.patch.object(epics.PV,
+                               "wait_for_connection",
+                               return_value=True) as mock_conn:
+            status = util.check_running_ioc("FakePV")
+        self.assertEqual(status, True)
+        mock_conn.assert_called()
+
+    def test_get_strength_label(self):
+        """Test get_strength_label."""
+        self.assertEqual("Energy", util.get_strength_label("dipole"))
+        self.assertEqual("KL", util.get_strength_label("quadrupole"))
+        self.assertEqual("KL", util.get_strength_label("quadrupole-skew"))
+        self.assertEqual("SL", util.get_strength_label("sextupole"))
+        self.assertEqual("Kick",
+                         util.get_strength_label("corrector-horizontal"))
+        self.assertEqual("Kick", util.get_strength_label("corrector-vertical"))
+
+    def test_get_strength_units(self):
+        """Test get_strength_units."""
+        self.assertEqual("GeV", util.get_strength_units("dipole"))
+        self.assertEqual("1/m", util.get_strength_units("quadrupole"))
+        self.assertEqual("1/m", util.get_strength_units("quadrupole-skew"))
+        self.assertEqual("1/m^2", util.get_strength_units("sextupole"))
+        self.assertEqual(
+            "urad", util.get_strength_units("corrector-horizontal", "SI"))
+        self.assertEqual(
+            "urad", util.get_strength_units("corrector-horizontal", "BO"))
+        self.assertEqual(
+            "urad", util.get_strength_units("corrector-vertical", "SI"))
+        self.assertEqual(
+            "urad", util.get_strength_units("corrector-vertical", "BO"))
+        self.assertEqual(
+            "mrad", util.get_strength_units("corrector-horizontal", "TB"))
+        self.assertEqual(
+            "mrad", util.get_strength_units("corrector-horizontal", "TS"))
+        self.assertEqual(
+            "mrad", util.get_strength_units("corrector-horizontal", "LI"))
+        self.assertEqual(
+            "mrad", util.get_strength_units("corrector-vertical", "TB"))
+        self.assertEqual(
+            "mrad", util.get_strength_units("corrector-vertical", "TS"))
+        self.assertEqual(
+            "mrad", util.get_strength_units("corrector-vertical", "LI"))
 
 
 if __name__ == "__main__":
