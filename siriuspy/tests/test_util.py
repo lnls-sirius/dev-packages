@@ -104,13 +104,19 @@ class TestUtil(unittest.TestCase):
         text = file.getvalue()
         self.assertEqual(len(text.splitlines()), 12)
 
-    def test_check_running_ioc(self):
-        """Test check_running_ioc."""
+    def test_check_pv_online(self):
+        """Test check_pv_online."""
         with mock.patch.object(epics.PV,
                                "wait_for_connection",
                                return_value=True) as mock_conn:
-            status = util.check_running_ioc("FakePV")
+            status = util.check_pv_online("FakePV")
         self.assertEqual(status, True)
+        mock_conn.assert_called()
+        with mock.patch.object(epics.PV,
+                               "wait_for_connection",
+                               return_value=False) as mock_conn:
+            status = util.check_pv_online("FakePV")
+        self.assertEqual(status, False)
         mock_conn.assert_called()
 
     def test_get_strength_label(self):

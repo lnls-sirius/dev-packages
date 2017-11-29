@@ -168,6 +168,8 @@ def save_ioc_pv_list(ioc_name, prefix, db, filename=None):
         home = _os.path.expanduser('~')
         path = _os.path.join(home, 'sirius-iocs', 'pvs')
         filename = ioc_name + ".txt"
+    else:
+        path = _os.path.join(home, 'sirius-iocs', 'pvs')
 
     if not _os.path.exists(path):
         _os.makedirs(path)
@@ -211,7 +213,7 @@ def beam_rigidity(energy):
     return brho
 
 
-def check_running_ioc(pvname, timeout=1.0, use_prefix=True):
+def check_pv_online(pvname, timeout=1.0, use_prefix=True):
     """Return whether a PV is online."""
     if use_prefix:
         pvname = _envars.vaca_prefix + pvname
