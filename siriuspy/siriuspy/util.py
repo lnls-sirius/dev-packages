@@ -1,4 +1,8 @@
-"""Util module."""
+"""Util module.
+
+    Implementation of general-purpose classes and functions used in IOCs, HLAS
+and siriuspy subpackages and modules.
+"""
 
 import os as _os
 import inspect as _inspect
@@ -9,20 +13,21 @@ import datetime as _datetime
 import siriuspy.envars as _envars
 import epics as _epics
 import numpy as _np
+import sys as _sys
 
 
 def conv_splims_labels(label):
     """Convert setpoint limit labels from pcaspy to epics and vice-versa."""
     # Limits description:
     # -------------------
-    # DRVH      driver high level limit
-    # HIHI      high-high level limit (ALARM)
-    # HIGH      IOC high level limit (ALARM)
-    #  DRVL     driver low level limit
-    #  LOLO     IOC low-low level limit (ALARM)
-    #  LOW      IOC low level limit (ALARM)
-    #  LOPR     Low operating range
-    #  HOPR     High operating range
+    # DRVH     driver high level limit
+    # HIHI     high-high level limit (ALARM)
+    # HIGH     IOC high level limit (ALARM)
+    # DRVL     driver low level limit
+    # LOLO     IOC low-low level limit (ALARM)
+    # LOW      IOC low level limit (ALARM)
+    # LOPR     Low operating range
+    # HOPR     High operating range
     #
     # Rules
     # -----
@@ -40,8 +45,8 @@ def conv_splims_labels(label):
         'LOW':      'low',    # lower_warning_limit
         'LOLO':     'lolo',   # lower_alarm_limit
         'DRVL':     'DRVL',   # ???
-        'TSTV':     'TSTV',   # ---
-        'TSTR':     'TSTR',   # ---
+        'TSTV':     'TSTV',   # SIRIUS specific (Test value)
+        'TSTR':     'TSTR',   # SIRIUS specific (Test acceptable range)
     }
     if label in labels_dict:
         # epics -> pcaspy
@@ -52,43 +57,6 @@ def conv_splims_labels(label):
                 # pcaspy -> epics
                 return k
         return None
-
-
-def get_signal_names():
-    """Get signal names."""
-    signal_names = {
-        1: 'SIGHUP',		# Hangup (POSIX)
-        2: 'SIGINT',		# Terminal interrupt (ANSI)
-        3: 'SIGQUIT',		# Terminal quit (POSIX)
-        4: 'SIGILL',		# Illegal instruction (ANSI)
-        5: 'SIGTRAP',		# Trace trap (POSIX)
-        6: 'SIGIOT',		# IOT Trap (4.2 BSD)
-        7: 'SIGBUS',		# BUS error (4.2 BSD)
-        8: 'SIGFPE',		# Floating point exception (ANSI)
-        9: 'SIGKILL',		# Kill(can't be caught or ignored) (POSIX)
-        10: 'SIGUSR1',		# User defined SIGnal 1 (POSIX)
-        11: 'SIGSEGV',		# Invalid memory segment access (ANSI)
-        12: 'SIGUSR2',		# User defined SIGnal 2 (POSIX)
-        13: 'SIGPIPE',		# Write on a pipe with no reader, Broken pipe (POSIX)
-        14: 'SIGALRM',		# Alarm clock (POSIX)
-        15: 'SIGTERM',		# Termination (ANSI)
-        16: 'SIGSTKFLT',    # Stack fault
-        17: 'SIGCHLD',		# Child process has stopped or exited, changed (POSIX)
-        18: 'SIGCONT',		# Continue executing, if stopped (POSIX)
-        19: 'SIGSTOP',		# Stop executing(can't be caught or ignored) (POSIX)
-        20: 'SIGTSTP',		# Terminal stop SIGnal (POSIX)
-        21: 'SIGTTIN',		# Background process trying to read, from TTY (POSIX)
-        22: 'SIGTTOU',		# Background process trying to write, to TTY (POSIX)
-        23: 'SIGURG',		# Urgent condition on socket (4.2 BSD)
-        34: 'SIGXCPU',		# CPU limit exceeded (4.2 BSD)
-        25: 'SIGXFSZ',		# File size limit exceeded (4.2 BSD)
-        26: 'SIGVTALRM',    # Virtual alarm clock (4.2 BSD)
-        27: 'SIGPROF',		# Profiling alarm clock (4.2 BSD)
-        28: 'SIGWINCH',		# Window size change (4.3 BSD, Sun)
-        29: 'SIGIO',	    # I/O now possible (4.2 BSD)
-        30: 'SIGPWR',	    # Power failure restart (System V)
-    }
-    return signal_names
 
 
 def get_last_commit_hash():
@@ -109,33 +77,33 @@ def get_timestamp(now=None):
     return st
 
 
-def get_prop_types():
-    """Get attribute dictionary if PV properties."""
-    prop_types = {
-        'RB':  {'read': True,  'write': False, 'enum': False},
-        'SP':  {'read': True,  'write': True,  'enum': False},
-        'Sel': {'read': True,  'write': True,  'enum': True},
-        'Sts': {'read': True,  'write': False, 'enum': True},
-        'Cmd': {'read': False, 'write': True,  'enum': False},
-    }
-    return prop_types
+# def get_prop_types():
+#     """Get attribute dictionary if PV properties."""
+#     prop_types = {
+#         'RB':  {'read': True,  'write': False, 'enum': False},
+#         'SP':  {'read': True,  'write': True,  'enum': False},
+#         'Sel': {'read': True,  'write': True,  'enum': True},
+#         'Sts': {'read': True,  'write': False, 'enum': True},
+#         'Cmd': {'read': False, 'write': True,  'enum': False},
+#     }
+#     return prop_types
 
 
-def get_prop_suffix(prop):
-    """Get property suffix."""
-    if prop[-3:] == '-RB':
-        return 'RB'
-    if prop[-3:] == '-SP':
-        return 'SP'
-    if prop[-4:] == '-Sel':
-        return 'Sel'
-    if prop[-4:] == '-Sts':
-        return 'Sts'
-    if prop[-4:] == '-Mon':
-        return 'Mon'
-    if prop[-4:] == '-Cmd':
-        return 'Cmd'
-    return None
+# def get_prop_suffix(prop):
+#     """Get property suffix."""
+#     if prop[-3:] == '-RB':
+#         return 'RB'
+#     if prop[-3:] == '-SP':
+#         return 'SP'
+#     if prop[-4:] == '-Sel':
+#         return 'Sel'
+#     if prop[-4:] == '-Sts':
+#         return 'Sts'
+#     if prop[-4:] == '-Mon':
+#         return 'Mon'
+#     if prop[-4:] == '-Cmd':
+#         return 'Cmd'
+#     return None
 
 
 def read_text_data(text):
@@ -160,19 +128,20 @@ def read_text_data(text):
     return data, parameters
 
 
-def print_ioc_banner(ioc_name, db, description, version, prefix, ):
+def print_ioc_banner(ioc_name, db, description, version, prefix, file=None):
     """IOC banner."""
+    file = _sys.stdout if file is None else file
     ld = '==================================='
     nw = (len(ld)-len(ioc_name))//2
     line = ' '*nw + ioc_name + ' '*nw
-    print(ld)
-    print(line)
-    print(ld)
-    print(description)
-    print('FAC@LNLS,   Sirius Project.')
-    print('Version   : ' + version)
-    print('Timestamp : ' + get_timestamp())
-    print('Prefix    : ' + prefix)
+    print(ld, file=file)
+    print(line, file=file)
+    print(ld, file=file)
+    print(description, file=file)
+    print('FAC@LNLS,   Sirius Project.', file=file)
+    print('Version   : ' + version, file=file)
+    print('Timestamp : ' + get_timestamp(), file=file)
+    print('Prefix    : ' + prefix, file=file)
     print()
     pvs = sorted(tuple(db.keys()))
     max_len = 0
@@ -180,22 +149,25 @@ def print_ioc_banner(ioc_name, db, description, version, prefix, ):
         if len(pv) > max_len:
             max_len = len(pv)
     i = 1
+    new_line = False
     for pv in pvs:
-        print(('{0:04d} {1:<'+str(max_len+2)+'}  ').format(i, pv), end='')
+        print(('{0:04d} {1:<'+str(max_len+2)+'}  ').format(i, pv),
+              end='', file=file)
         new_line = True
         i += 1
         if not (i-1) % 5:
-            print('')
+            print('', file=file)
             new_line = False
     if new_line:
-        print('')
+        print('', file=file)
 
 
-def save_ioc_pv_list(ioc_name, prefix, db):
+def save_ioc_pv_list(ioc_name, prefix, db, filename=None):
     """Save a list of the IOC pvs."""
-    home = _os.path.expanduser('~')
-    path = _os.path.join(home, 'sirius-iocs', 'pvs')
-    filename = ioc_name + ".txt"
+    if filename is None:
+        home = _os.path.expanduser('~')
+        path = _os.path.join(home, 'sirius-iocs', 'pvs')
+        filename = ioc_name + ".txt"
 
     if not _os.path.exists(path):
         _os.makedirs(path)

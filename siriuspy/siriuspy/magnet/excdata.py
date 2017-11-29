@@ -1,12 +1,17 @@
 """EXcitation Data."""
 
 import numpy as _np
-import siriuspy.servweb as _web
+from siriuspy.servweb import magnets_excitation_data_read \
+    as _magnets_excitation_data_read
 from siriuspy.magnet import util as _util
 
 
 class ExcitationData:
-    """ExcitationData class."""
+    """ExcitationData Class.
+
+    This class implements access to excitation data paremeters and
+    current - integrated field conversions.
+    """
 
     def __init__(self, filename_web=None, filename=None, text=None):
         """Init method."""
@@ -115,7 +120,7 @@ class ExcitationData:
             currents = interp
         return currents
 
-    # --- private methods ---
+    # --- special methods ---
 
     def __str__(self):
         """Str method."""
@@ -145,6 +150,8 @@ class ExcitationData:
             st += '\n'
         return st
 
+    # --- private methods ---
+
     @staticmethod
     def _calc_interp(xt, yt, x):
         interp = _np.interp(x, xt, yt,
@@ -159,8 +166,38 @@ class ExcitationData:
         interp[inf] = v
         return interp
 
-    def _read_text(self, text):
+    def _process_comment_line(self, line):
+        if len(line[1:].strip()) > 0:
+            token, *words = line[1:].split()
+            if token.lower() == 'label':
+                self.label = words[0]
+            if token.lower() == 'harmonics':
+                self._harmonics = [int(v) for v in words]
+            if token.lower() == 'main_harmonic':
+                self._main_multipole_harmonic = int(words[0])
+                self._main_multipole_type = words[1].lower()
+            if token.lower() == 'main_multipole_harmonic':
+                self._main_multipole_harmonic = int(words[0])
+            if token.lower() == 'main_multipole_type':
+                self._main_multipole_type = words[0]
+            if token.lower() == 'units':
+                self.column_units = ' '.join(words)
+            if token.lower() == 'column_units':
+                self.column_units = ' '.join(words)
 
+    def _process_data(self, line):
+        if not self.multipoles:
+            self.multipoles['normal'] = \
+                {h: [] for h in self._harmonics}
+            self.multipoles['skew'] = {h: [] for h in self._harmonics}
+        cur, *exc = line.split()
+        self.currents.append(float(cur))
+        for j in range(len(self._harmonics)):
+            h = self._harmonics[j]
+            self.multipoles['normal'][h].append(float(exc[j*2+0]))
+            self.multipoles['skew'][h].append(float(exc[j*2+1]))
+
+    def _read_text(self, text):
         self._init()
         lines = text.splitlines()
         self.currents = []
@@ -170,34 +207,9 @@ class ExcitationData:
             if not line:
                 continue  # empty line
             if line[0] == '#':
-                if len(line[1:].strip()) > 0:
-                    token, *words = line[1:].split()
-                    if token.lower() == 'label':
-                        self.label = words[0]
-                    if token.lower() == 'harmonics':
-                        self._harmonics = [int(v) for v in words]
-                    if token.lower() == 'main_harmonic':
-                        self._main_multipole_harmonic = int(words[0])
-                        self._main_multipole_type = words[1].lower()
-                    if token.lower() == 'main_multipole_harmonic':
-                        self._main_multipole_harmonic = int(words[0])
-                    if token.lower() == 'main_multipole_type':
-                        self._main_multipole_type = words[0]
-                    if token.lower() == 'units':
-                        self.column_units = ' '.join(words)
-                    if token.lower() == 'column_units':
-                        self.column_units = ' '.join(words)
+                self._process_comment_line(line)
             else:
-                if not self.multipoles:
-                    self.multipoles['normal'] = \
-                        {h: [] for h in self._harmonics}
-                    self.multipoles['skew'] = {h: [] for h in self._harmonics}
-                cur, *exc = line.split()
-                self.currents.append(float(cur))
-                for j in range(len(self._harmonics)):
-                    h = self._harmonics[j]
-                    self.multipoles['normal'][h].append(float(exc[j*2+0]))
-                    self.multipoles['skew'][h].append(float(exc[j*2+1]))
+                self._process_data(line)
         # sort data
         idx = _np.argsort(self.currents)
         self.currents = [self.currents[idx[i]] for i in range(len(idx))]
@@ -218,5 +230,5 @@ class ExcitationData:
     def _read_webs(self, label):
 
         self._fname = label
-        text = _web.magnets_excitation_data_read(label)
+        text = _magnets_excitation_data_read(label)
         self._read_text(text)

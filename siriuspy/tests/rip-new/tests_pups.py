@@ -1,4 +1,4 @@
-#!/usr/local/bin/python-sirius
+#!/usr/bin/env python-sirius
 """Test PulsedPowerSupply class.
 
 Requirements:

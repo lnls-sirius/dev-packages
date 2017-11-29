@@ -7,7 +7,7 @@ from siriuspy.namesys import SiriusPVName as _SiriusPVName
 
 
 def get_nominal_dipole_angles():
-    """Return nominal angles of all Sirius individual dipole types."""
+    """Return individual nominal angles [rad] of all Sirius dipole types."""
     ref_angles = {
         'SI_BC': _math.radians(4.296600),
         'SI_B1': _math.radians(2.755300),
@@ -20,7 +20,12 @@ def get_nominal_dipole_angles():
 
 
 def get_magfunc_2_multipole_dict():
-    """Return multipole dict given the magnetic function."""
+    """Return multipole dict given the magnetic function.
+
+    Conventions:
+        1. harmonics: 0 (dipole), 1 (quadrupole), 2 (sectupole), etc
+        2. 'normal' for  normal field and 'skew' for skew field.
+    """
     _magfuncs = {
         'dipole': {'type': 'normal', 'harmonic': 0},
         'corrector-horizontal': {'type': 'normal', 'harmonic': 0},
@@ -32,7 +37,7 @@ def get_magfunc_2_multipole_dict():
     return _magfuncs
 
 
-def get_multipole_name(harmonic, suffix='pole'):
+def get_multipole_name(harmonic, suffix=None):
     """Return names of multipoles, given harmonic number."""
     names = {0: 'dipole',
              1: 'quadrupole',
@@ -40,10 +45,10 @@ def get_multipole_name(harmonic, suffix='pole'):
              3: 'octupole',
              4: 'decapole',
              5: 'dodecapole', }
-
-    if harmonic <= max(names.keys()):
+    suffix = 'pole' if suffix is None else suffix
+    try:
         return names[harmonic].replace('pole', suffix)
-    else:
+    except KeyError:
         return '{0:d}-pole'.format((harmonic+1)*2).replace('pole', suffix)
 
 

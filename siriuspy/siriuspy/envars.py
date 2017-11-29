@@ -7,7 +7,7 @@ import os as _os
 folder_root = _os.environ.get(
     'ROOT_GROUP',   default='/home/fac_files')
 folder_epics_base = _os.environ.get(
-    'EPICS_DIR',    default='/usr/local/epics')
+    'EPICS_BASE',    default='/opt/epics/base')
 folder_lnls_sirius = _os.environ.get(
     'LNLS_SIRIUS',  default=_os.path.join(folder_root, 'lnls-sirius'))
 folder_lnls_fac = _os.environ.get(

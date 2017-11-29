@@ -1,3 +1,5 @@
+#!/usr/bin/env python-sirius
+
 """Test PSData class.
 
 Test PSData properties:
@@ -20,7 +22,8 @@ from siriuspy.pwrsupply.data import PSData
 class TestPSDataProperties(unittest.TestCase):
     """Test PSData properties are set correctly."""
 
-    @mock.patch('siriuspy.pwrsupply.data._get_ps_propty_database', autospec=True)
+    @mock.patch('siriuspy.pwrsupply.data._get_ps_propty_database',
+                autospec=True)
     @mock.patch('siriuspy.pwrsupply.data._PSSearch', autospec=True)
     def setUp(self, mock_search, mock_db):
         """Common setup for all test.
@@ -129,3 +132,7 @@ class TestPSDataException(unittest.TestCase):
         mock_search.get_psnames.return_value = ["RealPS1", "RealPS2"]
         with self.assertRaises(ValueError):
             PSData("NonExistentPS")
+
+
+if __name__ == "__main__":
+    unittest.main()
