@@ -53,7 +53,7 @@ class _MagnetNormalizer:
         if currents_dipole is None:
             return 0
         energies = self._get_energy(currents_dipole)
-        brho = _util.beam_rigidity(energies)
+        brho, *_ = _util.beam_rigidity(energies)
         return brho
 
     def conv_current_2_strength(self, currents, **kwargs):
@@ -91,23 +91,23 @@ class DipoleNormalizer(_MagnetNormalizer):
         ang = DipoleNormalizer._ref_angles
         if self._maname.section == 'SI':
             self._ref_energy = 3.0  # [GeV]
-            self._ref_brho = _util.beam_rigidity(self._ref_energy)
+            self._ref_brho, *_ = _util.beam_rigidity(self._ref_energy)
             self._ref_BL_BC = - self._ref_brho * ang['SI_BC']
             self._ref_angle = ang['SI_B1'] + ang['SI_B2'] + ang['SI_BC']
             self._ref_BL = - self._ref_brho * self._ref_angle - self._ref_BL_BC
         elif self._maname.section == 'BO':
             self._ref_energy = 3.0  # [GeV]
-            self._ref_brho = _util.beam_rigidity(self._ref_energy)
+            self._ref_brho, *_ = _util.beam_rigidity(self._ref_energy)
             self._ref_angle = ang['BO']
             self._ref_BL = - self._ref_brho * self._ref_angle
         elif self._maname.section == 'TS':
             self._ref_energy = 3.0  # [GeV]
-            self._ref_brho = _util.beam_rigidity(self._ref_energy)
+            self._ref_brho, *_ = _util.beam_rigidity(self._ref_energy)
             self._ref_angle = ang['TS']
             self._ref_BL = - self._ref_brho * self._ref_angle
         elif self._maname.section == 'TB':
             self._ref_energy = 0.150  # [GeV]
-            self._ref_brho = _util.beam_rigidity(self._ref_energy)
+            self._ref_brho, *_ = _util.beam_rigidity(self._ref_energy)
             self._ref_angle = ang['TB']
             self._ref_BL = - self._ref_brho * self._ref_angle
         else:

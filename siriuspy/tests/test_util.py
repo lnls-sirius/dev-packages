@@ -5,7 +5,7 @@
 import unittest
 from unittest import mock
 from io import StringIO
-
+import numpy as np
 import epics
 
 import siriuspy.util as util
@@ -85,6 +85,7 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(parameters['parameter3'][2], 'v5')
 
     def test_save_ioc_pv_list(self):
+        """Test save_ioc_pv_list."""
         m = mock.mock_open()
         db = ['pv1', 'pv2']
         with mock.patch('siriuspy.util.open', m, create=True):
@@ -115,6 +116,44 @@ class TestUtil(unittest.TestCase):
         text = file.getvalue()
         self.assertEqual(len(text.splitlines()), 12)
 
+    def test_beam_rigidity(self):
+        """Test beam_rigidity."""
+        e0 = 510998.92760316096/1e9  # electron rest energy [GeV]
+        tol = 1e-12
+        # float arg
+        r, b, g = util.beam_rigidity(3.0)
+        self.assertIsInstance(r, float)
+        self.assertAlmostEqual(r, 10.00692271077752, delta=tol)
+        self.assertAlmostEqual(b, 0.9999999854933386, delta=tol)
+        self.assertAlmostEqual(g, 5870.853807994258, delta=tol)
+        r, *_ = util.beam_rigidity(energy=1.001*e0)
+        self.assertIsInstance(r, float)
+        self.assertAlmostEqual(r, 7.624701218711276e-05, delta=tol)
+        self.assertRaises(ValueError, util.beam_rigidity, energy=0.0)
+        self.assertRaises(ValueError, util.beam_rigidity, energy=0.999*e0)
+        # list arg
+        r, *_ = util.beam_rigidity([0.5, 3.0])
+        self.assertIsInstance(r, np.ndarray)
+        self.assertAlmostEqual(r[0], 1.6678196049882876, delta=tol)
+        self.assertAlmostEqual(r[1], 10.00692271077752, delta=tol)
+        # tuple arg
+        r, *_ = util.beam_rigidity((0.5, 3.0))
+        self.assertIsInstance(r, np.ndarray)
+        self.assertAlmostEqual(r[0], 1.6678196049882876, delta=tol)
+        self.assertAlmostEqual(r[1], 10.00692271077752, delta=tol)
+        # numpy.ndarray arg
+        r, *_ = util.beam_rigidity(np.array([0.5, 3.0]))
+        self.assertIsInstance(r, np.ndarray)
+        self.assertAlmostEqual(r[0], 1.6678196049882876, delta=tol)
+        self.assertAlmostEqual(r[1], 10.00692271077752, delta=tol)
+        r, *_ = util.beam_rigidity(energy=np.array([1.001*e0, 3.0]))
+        self.assertIsInstance(r, np.ndarray)
+        self.assertAlmostEqual(r[0], 7.624701218711276e-05, delta=tol)
+        self.assertRaises(ValueError, util.beam_rigidity,
+                          energy=np.array([0.0, 3]))
+        self.assertRaises(ValueError, util.beam_rigidity,
+                          energy=np.array([0.999*e0, 3.0]))
+
     def test_check_pv_online(self):
         """Test check_pv_online."""
         with mock.patch.object(epics.PV,
@@ -139,6 +178,7 @@ class TestUtil(unittest.TestCase):
         self.assertEqual("Kick",
                          util.get_strength_label("corrector-horizontal"))
         self.assertEqual("Kick", util.get_strength_label("corrector-vertical"))
+        self.assertRaises(ValueError, util.get_strength_label, magfunc='')
 
     def test_get_strength_units(self):
         """Test get_strength_units."""
@@ -166,6 +206,7 @@ class TestUtil(unittest.TestCase):
             "mrad", util.get_strength_units("corrector-vertical", "TS"))
         self.assertEqual(
             "mrad", util.get_strength_units("corrector-vertical", "LI"))
+        self.assertRaises(ValueError, util.get_strength_units, magfunc='')
 
 
 if __name__ == "__main__":

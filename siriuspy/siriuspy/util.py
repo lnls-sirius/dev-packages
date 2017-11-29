@@ -180,7 +180,9 @@ def save_ioc_pv_list(ioc_name, prefix, db, filename=None):
 
 
 def beam_rigidity(energy):
-    """Return beam rigidity give its energy [GeV]."""
+    """Return beam rigidity, beta amd game, given its energy [GeV]."""
+    if isinstance(energy, (list, tuple)):
+        energy = _np.array(energy)
     second = 1.0
     meter = 1.0
     kilogram = 1.0
@@ -202,15 +204,18 @@ def beam_rigidity(energy):
     electron_rest_energy_eV = joule_2_eV * electron_rest_energy
     gamma = energy*1e9/electron_rest_energy_eV
     if isinstance(gamma, _np.ndarray):
+        if _np.any(energy*1e9 < electron_rest_energy_eV):
+            raise ValueError('Electron energy less than its rest energy!')
         beta = _np.sqrt(((gamma-1.0)/gamma)*((gamma+1.0)/gamma))
-        beta[gamma < 1.0] = 0.0
+        # beta[gamma < 1.0] = 0.0
     else:
-        if gamma < 1.0:
-            beta = 0.0
+        if energy*1e9 < electron_rest_energy_eV:
+            raise ValueError('Electron energy less than its rest energy!')
+            # beta = 0.0
         else:
             beta = _math.sqrt(((gamma-1.0)/gamma)*((gamma+1.0)/gamma))
     brho = beta * (energy*1e9) / light_speed
-    return brho
+    return brho, beta, gamma
 
 
 def check_pv_online(pvname, timeout=1.0, use_prefix=True):
@@ -223,7 +228,7 @@ def check_pv_online(pvname, timeout=1.0, use_prefix=True):
 
 
 def get_strength_label(magfunc):
-    """Return strength label, depending on magnet function."""
+    """Return magnetic function strength label."""
     if magfunc == 'dipole':
         return 'Energy'
     elif magfunc in ('quadrupole', 'quadrupole-skew'):
@@ -233,7 +238,7 @@ def get_strength_label(magfunc):
     elif magfunc in ('corrector-horizontal', 'corrector-vertical'):
         return 'Kick'
     else:
-        raise NotImplementedError("magfunc {}".format(magfunc))
+        raise ValueError('magfunc "{}" not defined!'.format(magfunc))
 
 
 def get_strength_units(magfunc, section=None):
@@ -250,11 +255,11 @@ def get_strength_units(magfunc, section=None):
         elif section in ('TB', 'TS', 'LI'):
             return 'mrad'
     else:
-        raise NotImplementedError("magfunc {}".format(magfunc))
+        raise ValueError('magfunc "{}" not defined!'.format(magfunc))
 
 
-def update_bit_of_integer(integer, number_of_bits, put, bit):
-    """Function to update a bit of integer.
+def update_integer_bit(integer, number_of_bits, put, bit):
+    """Update a specific integer bit.
 
     Parameters
     ----------
