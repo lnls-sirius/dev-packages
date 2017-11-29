@@ -84,6 +84,17 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(parameters['parameter3'][1], 'v4')
         self.assertEqual(parameters['parameter3'][2], 'v5')
 
+    def test_save_ioc_pv_list(self):
+        m = mock.mock_open()
+        db = ['pv1', 'pv2']
+        with mock.patch('siriuspy.util.open', m, create=True):
+            util.save_ioc_pv_list('ioc', ('p0', 'p1'), db)
+
+        # print(m.mock_calls)
+        calls = [mock.call('p1\n'), mock.call('p0pv1\n'),
+                 mock.call('p0pv2\n')]
+        self.assertEqual(m().write.call_args_list, calls)
+
     def test_print_ioc_banner(self):
         """Test print_ioc_banner."""
         db = {}
