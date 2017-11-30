@@ -315,7 +315,8 @@ class MagnetWaveform(_Magnet):
         v5 = start_value
         v6 = stop_value
         c5, c6 = self._calc_currents([v5, v6])
-        self._waveform.change_ramp_down(i5=i5, i6=i6, v5=c5, v6=c6)
+        self._waveform.change_ramp_down(start=i5, stop=i6,
+                                        start_value=c5, stop_value=c6)
 
     def clear_bumps(self):
         """Clear waveform bumps."""
