@@ -34,6 +34,18 @@ class TestUtil(unittest.TestCase):
         valid = util.check_public_interface(util, valid_interface)
         self.assertTrue(valid)
 
+    def test_check_public_interface(self):
+        """Test check_public_interface."""
+        class namespace:
+            A = None
+            B = None
+        valid_interface = ('A', 'B', )
+        valid = util.check_public_interface(namespace, valid_interface)
+        self.assertTrue(valid)
+        namespace.C = None
+        valid = util.check_public_interface(namespace, valid_interface)
+        self.assertFalse(valid)
+
     def test_conv_splims_labels(self):
         """Test conv_splims_labels."""
         self.assertEqual(util.conv_splims_labels('HOPR'), 'hilim')
