@@ -15,7 +15,7 @@ stop_event = False
 
 def _stop_now(signum, frame):
     global stop_event
-    print(_signal.Signals(signum).name + ' received at ' + _util.get_timestamp())
+    print(_signal.Signals(signum).name+' received at '+_util.get_timestamp())
     _sys.stdout.flush()
     _sys.stderr.flush()
     stop_event = True
