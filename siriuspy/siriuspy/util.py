@@ -258,7 +258,7 @@ def get_strength_units(magfunc, section=None):
         raise ValueError('magfunc "{}" not defined!'.format(magfunc))
 
 
-def update_integer_bit(integer, number_of_bits, put, bit):
+def update_integer_bit(integer, number_of_bits, value, bit):
     """Update a specific integer bit.
 
     Parameters
@@ -266,22 +266,32 @@ def update_integer_bit(integer, number_of_bits, put, bit):
     integer: int
         Integer whose bit will be updated.
     number_of_bits: (>=1)
-        Number of bit  of the integer whose bit will be updated.
-    put: 0 | 1
+        Number of bits of the integer whose bit will be updated.
+    value: 0 | 1
         Value to put on the bit.
-    bit: (>=0)
-        The number of the bit (>=0).
+    bit: (0 <= bit < number_of_bits)
+        The number of the bit.
     """
+    if not isinstance(integer, int):
+        raise TypeError
+
+    if value > 1 or value < 0:
+        raise ValueError
+
+    if bit >= number_of_bits:
+        raise ValueError
+
     allset = 1
-    for i in range(number_of_bits):
+    for i in range(number_of_bits-1):
         allset = 2*allset + 1
 
-    if put == 1:
+    if value == 1:
         mask = 1 << bit
         integer = integer | mask
-    elif put == 0:
+    elif value == 0:
         mask = (1 << bit) ^ allset
         integer = integer & mask
+
     return integer
 
 

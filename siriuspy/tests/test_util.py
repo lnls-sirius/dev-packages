@@ -240,6 +240,22 @@ class TestUtil(unittest.TestCase):
             "mrad", util.get_strength_units("corrector-vertical", "LI"))
         self.assertRaises(ValueError, util.get_strength_units, magfunc='')
 
+    def test_update_integer_bit(self):
+        """Test update_integer_bit."""
+        with self.assertRaises(TypeError):
+            util.update_integer_bit(integer=0.1, number_of_bits=1,
+                                    value=0, bit=0)
+        with self.assertRaises(ValueError):
+            util.update_integer_bit(integer=0x2, number_of_bits=2,
+                                    value=2, bit=1)
+        with self.assertRaises(ValueError):
+            util.update_integer_bit(integer=0x2, number_of_bits=1,
+                                    value=0, bit=1)
+        self.assertEqual(0xff, util.update_integer_bit(
+            integer=0xdf, number_of_bits=8, value=1, bit=5))
+        self.assertEqual(0x00, util.update_integer_bit(
+            integer=0x10, number_of_bits=6, value=0, bit=4))
+
 
 if __name__ == "__main__":
     unittest.main()
