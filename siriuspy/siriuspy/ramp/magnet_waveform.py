@@ -1,511 +1,413 @@
-"""Waveform Set Module."""
+"""MagnetWaveform Module."""
 
 import numpy as _np
-from siriuspy.csdevice.pwrsupply import default_wfmsize as _default_wfmsize
-from siriuspy.namesys import SiriusPVName as _SiriusPVName
+import weakref as _weakref
+from siriuspy.ramp.waveform import Waveform as _Waveform
 from siriuspy.ramp.magnet import Magnet as _Magnet
+from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.ramp.optics import _nominal_intkl
 from siriuspy.magnet import util as _mutil
 
 
-class Waveform:
-    """Waveform parameter class."""
+_nominal_strengths = {
+    'SI-Fam:MA-QFA': +0.7146305692912001,
+    'SI-Fam:MA-QDA': -0.2270152048045000,
+    'SI-Fam:MA-QFB': +1.2344424683922000,
+    'SI-Fam:MA-QDB2': -0.4782973132726601,
+    'SI-Fam:MA-QDB1': -0.2808906119138000,
+    'SI-Fam:MA-QFP': +1.2344424683922000,
+    'SI-Fam:MA-QDP2': -0.4782973132726601,
+    'SI-Fam:MA-QDP1': -0.2808906119138000,
+    'SI-Fam:MA-Q1': +0.5631612043340000,
+    'SI-Fam:MA-Q2': +0.8684629376249999,
+    'SI-Fam:MA-Q3': +0.6471254242426001,
+    'SI-Fam:MA-Q4': +0.7867827142062001,
+    'SI-Fam:MA-SDA0': -12.1250549999999979,
+    'SI-Fam:MA-SDB0': -09.7413299999999996,
+    'SI-Fam:MA-SDP0': -09.7413299999999996,
+    'SI-Fam:MA-SDA1': -24.4479749999999996,
+    'SI-Fam:MA-SDB1': -21.2453849999999989,
+    'SI-Fam:MA-SDP1': -21.3459000000000003,
+    'SI-Fam:MA-SDA2': -13.3280999999999992,
+    'SI-Fam:MA-SDB2': -18.3342150000000004,
+    'SI-Fam:MA-SDP2': -18.3421500000000002,
+    'SI-Fam:MA-SDA3': -20.9911199999999987,
+    'SI-Fam:MA-SDB3': -26.0718599999999974,
+    'SI-Fam:MA-SDP3': -26.1236099999999993,
+    'SI-Fam:MA-SFA0': +07.8854400000000000,
+    'SI-Fam:MA-SFB0': +11.0610149999999994,
+    'SI-Fam:MA-SFP0': +11.0610149999999994,
+    'SI-Fam:MA-SFA1': +28.7742599999999982,
+    'SI-Fam:MA-SFB1': +34.1821950000000001,
+    'SI-Fam:MA-SFP1': +34.3873949999999979,
+    'SI-Fam:MA-SFA2': +22.6153800000000018,
+    'SI-Fam:MA-SFB2': +29.6730900000000020,
+    'SI-Fam:MA-SFP2': +29.7755099999999970,
+    'BO-Fam:MA-QD': +0.0011197961538728,
+    'BO-Fam:MA-QF': +0.3770999232791374,
+    'BO-Fam:MA-SD': +0.5258382119529604,
+    'BO-Fam:MA-SF': +1.1898514030258744,
+}
+
+
+class MagnetWaveform(_Magnet):
+    """MagnetWaveform Class."""
 
     def __init__(self,
-                 vL=None,
-                 vR=None,
-                 i07=None,
-                 v07=None,
-                 waveform=None):
-        """Init method."""
-        self._set_params(vL, vR, i07, v07)
-        self._update_wfm_parms()
-        self._update_wfm_bumps(waveform)
+                 maname,
+                 dipole=None,
+                 family=None):
+        """Class init."""
+        self._dependents = set()
+        _Magnet.__init__(self, maname=maname)
+        self._dipole = dipole
+        if self._dipole is not None:
+            self._dipole._add_dep_magwfm(self)
+        self._family = family
+        if self._family is not None:
+            self._family._add_dep_magwfm(self)
+        self._init_waveform()
 
     # --- properties ---
 
     @property
-    def waveform(self):
-        """Return waveform."""
-        if self._deprecated:
-            self._update_wfm_parms()
-        return self._wfm_parms + self._wfm_bumps
+    def deprecated(self):
+        """Deprecated state."""
+        return self._deprecated or self._waveform.deprecated
 
-    @waveform.setter
-    def waveform(self, waveform):
-        self._update_wfm_bumps(waveform)
+    @property
+    def waveform(self):
+        """Return current waveform."""
+        return self._waveform
+
+    @property
+    def currents(self):
+        """Return waveform currents values."""
+        return self._waveform.waveform
+
+    @currents.setter
+    def currents(self, currents):
+        """Waveform currents."""
+        self._waveform.waveform = currents  # This will set deprecated state.
+
+    @property
+    def strengths(self):
+        """Return strength waveform."""
+        if self.deprecated:
+            self._update_strength()
+        return self._strengths
+
+    @strengths.setter
+    def strengths(self, strengths):
+        """Waveform strengths."""
+        currents = self._calc_currents(strengths)
+        self._waveform.waveform = currents  # This will set deprecated state.
+
+    @property
+    def i07(self):
+        """Return list of regions boundaries."""
+        return self._waveform.i07
 
     @property
     def i0(self):
         """Return index of the first region boundary."""
-        return self._i[0]
+        return self._waveform.i0
 
     @property
     def i1(self):
         """Return index of the second region boundary."""
-        return self._i[1]
+        return self._waveform.i1
 
     @property
     def i2(self):
         """Return index of the third region boundary."""
-        return self._i[2]
+        return self._waveform.i2
 
     @property
     def i3(self):
         """Return index of the fourth region boundary."""
-        return self._i[3]
+        return self._waveform.i3
 
     @property
     def i4(self):
         """Return index of the fifth region boundary."""
-        return self._i[4]
+        return self._waveform.i4
 
     @property
     def i5(self):
         """Return index of the sixth region boundary."""
-        return self._i[5]
+        return self._waveform.i5
 
     @property
     def i6(self):
         """Return index of the seventh region boundary."""
-        return self._i[6]
+        return self._waveform.i6
 
     @property
     def i7(self):
         """Return index of the eightth region boundary."""
-        return self._i[7]
+        return self._waveform.i7
 
     @property
     def vL0(self):
         """Return waveform value at the left-end and first region boundary."""
-        return self._vL
+        if self.deprecated:
+            self._update_strength()
+        return self._strengths[self._waveform.i0]
 
     @property
     def v1(self):
         """Return waveform value at the second region boundary."""
-        return self._v[1]
+        if self.deprecated:
+            self._update_strength()
+        return self._strengths[self._waveform.i1]
 
     @property
     def v2(self):
         """Return waveform value at the 3rd region boundary."""
-        return self._v[2]
+        if self.deprecated:
+            self._update_strength()
+        return self._strengths[self._waveform.i2]
 
     @property
     def v34(self):
         """Return waveform value at the 4th and 5th region boundaries."""
-        return self._v[3]
+        if self.deprecated:
+            self._update_strength()
+        return self._strengths[self._waveform.i3]
 
     @property
     def v5(self):
         """Return waveform value at the 6h region boundary."""
-        return self._v[5]
+        if self.deprecated:
+            self._update_strength()
+        return self._strengths[self._waveform.i5]
 
     @property
     def v6(self):
         """Return waveform value at the 7th region boundary."""
-        return self._v[6]
+        if self.deprecated:
+            self._update_strength()
+        return self._strengths[self._waveform.i6]
 
     @property
     def v7R(self):
         """Return waveform value at the 8th and right-end region boundaries."""
-        return self._vR
+        if self.deprecated:
+            self._update_strength()
+        return self._strengths[self._waveform.i7]
 
     @i0.setter
     def i0(self, idx):
         """Set index of the first region boundary."""
-        i = 0
-        if 0 <= idx <= self._i[i+1]:
-            self._i[i] = idx
-        else:
-            raise ValueError(('Index is inconsistent with labeled '
-                              'region boundary points.'))
-        self._deprecated = True
+        self._waveform.i0 = idx
+        self._set_deprecated(True)
 
     @i1.setter
     def i1(self, idx):
         """Set index of the second region boundary."""
-        i = 1
-        if self._i[i-1] <= idx <= self._i[i+1]:
-            self._i[i] = idx
-        else:
-            raise ValueError(('Index is inconsistent with labeled '
-                              'region boundary points.'))
-        self._deprecated = True
+        self._waveform.i1 = idx
+        self._set_deprecated(True)
 
     @i2.setter
     def i2(self, idx):
         """Set index of the third region boundary."""
-        i = 2
-        if self._i[i-1] <= idx <= self._i[i+1]:
-            self._i[i] = idx
-        else:
-            raise ValueError(('Index is inconsistent with labeled '
-                              'region boundary points.'))
-        self._deprecated = True
+        self._waveform.i2 = idx
+        self._set_deprecated(True)
 
     @i3.setter
     def i3(self, idx):
         """Set index of the fourth region boundary."""
-        i = 3
-        if self._i[i-1] <= idx <= self._i[i+1]:
-            self._i[i] = idx
-        else:
-            raise ValueError(('Index is inconsistent with labeled '
-                              'region boundary points.'))
-        self._deprecated = True
+        self._waveform.i3 = idx
+        self._set_deprecated(True)
 
     @i4.setter
     def i4(self, idx):
         """Set index of the fifth region boundary."""
-        i = 4
-        if self._i[i-1] <= idx <= self._i[i+1]:
-            self._i[i] = idx
-        else:
-            raise ValueError(('Index is inconsistent with labeled '
-                              'region boundary points.'))
-        self._deprecated = True
+        self._waveform.i4 = idx
+        self._set_deprecated(True)
 
     @i5.setter
     def i5(self, idx):
         """Set index of the sixth region boundary."""
-        i = 5
-        if self._i[i-1] <= idx < _default_wfmsize:
-            self._i[i] = idx
-        else:
-            raise ValueError(('Index is inconsistent with labeled '
-                              'region boundary points.'))
-        self._deprecated = True
+        self._waveform.i5 = idx
+        self._set_deprecated(True)
 
     @i6.setter
     def i6(self, idx):
         """Set index of the 7th region boundary."""
-        i = 6
-        if self._i[i-1] <= idx < _default_wfmsize:
-            self._i[i] = idx
-        else:
-            raise ValueError(('Index is inconsistent with labeled '
-                              'region boundary points.'))
-        self._deprecated = True
+        self._waveform.i7 = idx
+        self._set_deprecated(True)
 
     @i7.setter
     def i7(self, idx):
         """Set index of the 8th region boundary."""
-        i = 7
-        if self._i[i-1] <= idx < _default_wfmsize:
-            self._i[i] = idx
-        else:
-            raise ValueError(('Index is inconsistent with labeled '
-                              'region boundary points.'))
-        self._deprecated = True
+        self._waveform.i7 = idx
+        self._set_deprecated(True)
 
     @vL0.setter
     def vL0(self, value):
         """Set waveform value at the left-end and 1st boundary."""
-        self._vL = value
-        self._v[0] = value
-        self._deprecated = True
+        current = self._calc_currents(value)
+        self._waveform.vL0 = current  # This will set deprecated state.
 
     @v1.setter
     def v1(self, value):
         """Set waveform value at the 2nd region boundary."""
-        self._v[1] = value
-        self._deprecated = True
+        current = self._calc_currents(value)
+        self._waveform.v1 = current  # This will set deprecated state.
 
     @v2.setter
     def v2(self, value):
         """Set waveform value at the 3rd region boundary."""
-        self._v[2] = value
-        self._deprecated = True
+        current = self._calc_currents(value)
+        self._waveform.v2 = current  # This will set deprecated state.
 
     @v34.setter
     def v34(self, value):
         """Set waveform value at the 4th and 5th region boundaries."""
-        self._v[3] = value
-        self._v[4] = value
-        self._deprecated = True
+        current = self._calc_currents(value)
+        self._waveform.v34 = current  # This will set deprecated state.
 
     @v5.setter
     def v5(self, value):
         """Set waveform value at the 6th region boundary."""
-        self._v[5] = value
-        self._deprecated = True
+        current = self._calc_currents(value)
+        self._waveform.v5 = current  # This will set deprecated state.
 
     @v6.setter
     def v6(self, value):
         """Set waveform value at the 7th region boundary."""
-        self._v[6] = value
-        self._deprecated = True
+        current = self._calc_currents(value)
+        self._waveform.v6 = current  # This will set deprecated state.
 
     @v7R.setter
     def v7R(self, value):
         """Set waveform value at the 8th and right-end region boundaries."""
-        self._v[7] = value
-        self._vR = value
-        self._deprecated = True
+        current = self._calc_currents(value)
+        self._waveform.v7R = current  # This will set deprecated state.
 
-    # # --- public methods ---
-    #
-    # def eval(self, idx=None):
-    #     """Evaluate parameterized waveform at idx values or at index
-    #     values.
-    #     """
-    #     if self._deprecated:
-    #         self._set_coeffs()
-    #         self._deprecated = False
-    #     if idx is None:
-    #         # return waveform at index value
-    #         return self._eval_index()
-    #     # return waveform as idx values
-    #     try:
-    #         if type(idx) == _np.ndarray:
-    #             v = _np.zeros(idx.shape)
-    #         else:
-    #             v = [0.0] * len(idx)
-    #         for i in range(len(idx)):
-    #             v[i] = self._eval_point(idx[i])
-    #         return v
-    #     except TypeError:
-    #         return self._eval_point(idx)
+    # --- public methods ---
 
-    def change_rampup(self, i1, i2, v1, v2):
-        """Change rampup."""
-        if i1 < self._i[0] or i2 <= i1 or i2 >= self._i[4] or v1 >= v2:
-            raise ValueError('Invalid ramp parameters !')
-        i3 = self._find_i3(i1, i2, v1, v2)
-        if i3 is not None:
-            self._i[1] = i1
-            self._i[2] = i2
-            self._i[3] = i3
-            self._v[1] = v1
-            self._v[2] = v2
-            self._deprecated = True
-        else:
-            raise ValueError('Could not find solution for i3 !')
+    def change_plateau(self, value):
+        """Change waveform plateau value."""
+        current = self._calc_currents(value)
+        self._waveform.change_plateau(current)
+
+    def change_ramp_up(self,
+                       start=None, stop=None,
+                       start_value=None, stop_value=None):
+        """Change waveform ramp up."""
+        i1 = start
+        i2 = stop
+        v1 = start_value
+        v2 = stop_value
+        c1, c2 = self._calc_currents([v1, v2])
+        self._waveform.change_ramp_up(i1=i1, i2=i2, v1=c1, v2=c2)
+
+    def change_ramp_down(self,
+                         start=None, stop=None,
+                         start_value=None, stop_value=None):
+        """Change waveform ramp down."""
+        i5 = start
+        i6 = stop
+        v5 = start_value
+        v6 = stop_value
+        c5, c6 = self._calc_currents([v5, v6])
+        self._waveform.change_ramp_down(i5=i5, i6=i6, v5=c5, v6=c6)
+
+    def clear_bumps(self):
+        """Clear waveform bumps."""
+        self._waveform.clear_bumps()
+        self._set_deprecated(True)  # clear_bumps DOES NOT set deprecated.
 
     # --- private methods ---
 
-    def _update_wfm_parms(self):
-        self._set_coeffs()
-        self._wfm_parms = self._eval_index()
-        self._deprecated = False
-
-    @staticmethod
-    def _calccoeffs(d, dv, DL, DR):
-        v1 = dv - DL * d
-        v2 = DR - DL
-        m11 = 3.0/d**2
-        m12 = -1.0/d
-        m21 = -2.0/d**3
-        m22 = 1.0/d**2
-        a0 = DL
-        b0 = m11 * v1 + m12 * v2
-        c0 = m21 * v1 + m22 * v2
-        coeffs = [a0, b0, c0]
-        return coeffs
-
-    def _set_coeffs(self):
-        self._coeffs = [None] * 9
-        if self._i[0] == 0:
-            self._D0 = 0.0
+    def _add_dep_magwfm(self, magwfm):
+        """Add dependent magnet waveform."""
+        if isinstance(magwfm, MagnetWaveform):
+            # add weakref of magwfm object.
+            # this way the GC can delete it.
+            self._dependents.add(_weakref.ref(magwfm))
         else:
-            self._D0 = (self._v[0] - self._vL) / (self._i[0] - 0)
-        self._D2 = (self._v[2] - self._v[1]) / (self._i[2] - self._i[1])
-        self._D4 = (self._v[4] - self._v[3]) / (self._i[4] - self._i[3])
-        self._D6 = (self._v[6] - self._v[5]) / (self._i[6] - self._i[5])
-        if self._i[7] == _default_wfmsize:
-            self._D8 = 0.0
-        else:
-            self._D8 = (self._vR - self._v[7]) / \
-                       (_default_wfmsize - self._i[7])
-        # region 0
-        self._coeffs[0] = _np.array([self._D0, 0.0, 0.0])
-        # region 1
-        d = self._i[1] - self._i[0]
-        dv = self._v[1] - self._v[0]
-        self._coeffs[1] = Waveform._calccoeffs(d, dv, self._D0, self._D2)
-        # region 2
-        self._coeffs[2] = _np.array([self._D2, 0.0, 0.0])
-        # region 3
-        d = self._i[3] - self._i[2]
-        dv = self._v[3] - self._v[2]
-        self._coeffs[3] = Waveform._calccoeffs(d, dv, self._D2, self._D4)
-        # region 4
-        self._coeffs[4] = _np.array([self._D4, 0.0, 0.0])
-        # region 5
-        d = self._i[5] - self._i[4]
-        dv = self._v[5] - self._v[4]
-        self._coeffs[5] = Waveform._calccoeffs(d, dv, self._D4, self._D6)
-        # region 6
-        self._coeffs[6] = [self._D6, 0.0, 0.0]
-        # region 7
-        d = self._i[7] - self._i[6]
-        dv = self._v[7] - self._v[6]
-        self._coeffs[7] = Waveform._calccoeffs(d, dv, self._D6, self._D8)
-        # region 8
-        self._coeffs[8] = [self._D8, 0.0, 0.0]
+            raise TypeError('Invalid argument type!')
 
-    def _eval_index(self):
-
-        def calcdv(i, iref, coeffs):
-            return coeffs[0] * (i - iref) + \
-                   coeffs[1] * (i - iref)**2 + \
-                   coeffs[2] * (i - iref)**3
-
-        wfm = []
-        # region 0
-        coeffs = self._coeffs[0]
-        iref, vref = 0, self._vL
-        i = _np.array(tuple(range(self._i[0])))
-        dv = calcdv(i, iref, coeffs)
-        wfm.extend(vref + dv)
-        # regions 1...7
-        for i in range(1, 8):
-            coeffs = self._coeffs[i]
-            iref, vref = self._i[i-1], self._v[i-1]
-            i = _np.array(tuple(range(self._i[i-1], self._i[i])))
-            dv = calcdv(i, iref, coeffs)
-            wfm.extend(vref + dv)
-        # region 8
-        coeffs = self._coeffs[8]
-        iref, vref = self._i[7], self._v[7]
-        i = _np.array(tuple(range(self._i[7], _default_wfmsize)))
-        dv = calcdv(i, iref, coeffs)
-        wfm.extend(vref + dv)
-        return _np.array(wfm)
-
-    def _find_i3(self, i1, i2, v1, v2):
-        D2 = (v2 - v1) / (i2 - i1)
-        dv = self._v[3] - v2
-        i3 = _np.arange(i2+1, self._i[4])
-        i3_new = self._find_new_i3(i2, i3, dv, D2)
-        return i3_new
-
-    def _find_new_i3(self, i2, i3, dv, D2):
-        D4 = (self._v[4] - self._v[3]) / (self._i[4] - i3)
-        d = i3 - i2
-        a, b, c = Waveform._calccoeffs(d, dv, D2, D4)
-        phi = b**2 - 3*c*a
-        i3_r1 = i2 + (-2*b + _np.sqrt(phi))/3.0/c
-        i3_r2 = i2 + (-2*b - _np.sqrt(phi))/3.0/c
-        cond = ((i3_r1 < i2) | (i3_r1 >= i3)) & ((i3_r2 < i2) | (i3_r2 >= i3))
-        i3_solutions = i3[cond]
-        if i3_solutions.size:
-            i3_delta = min(i3_solutions - self._i[3])
-            return self._i[3] + i3_delta
-        else:
-            return None
-
-    def _check_if_minimum_in_i1_i2(self, i2, i1, dV, D0):
-        d = i2 - i1
-        if i2 != self._i[3]:
-            D2 = (self._v[3] - self._v[2]) / (self._i[3] - i2)
-        else:
-            D2 = 0.0
+    def _remove_dep_magwfm(self, magwfm):
+        """Remove dependent magnet waveform."""
         try:
-            coeffs = _np.linalg.solve(
-                [[d, d**2, d**3], [1, 0, 0], [1, 2*d, 3*d**2]],
-                [dV, D0, D2])
-        except _np.linalg.LinAlgError:
-            return True
-        b, c, d = coeffs
-        phi = c**2 - 3*b*d
-        if phi < 0.0:
-            # negative discriminant means no root -> no place
-            # where f'=0
-            return False
-        d1 = (-c + _np.sqrt(phi))/(3*d)
-        d2 = (-c - _np.sqrt(phi))/(3*d)
-        i2_r1 = i1 + d1
-        i2_r2 = i1 + d2
-        if (i2_r1 < i1 or i2_r1 >= i2) and (i2_r2 < i1 or i2_r2 >= i2):
-            # roots are outside interval.
-            return False
-        return True
+            self.remove(_weakref.ref(magwfm))
+        except KeyError:
+            pass
 
-    def _find_i2(self, i0, i1, v0, v1):
-        # search new value for i2
-        D0 = (v1 - v0)/(i1 - i0)
-        dV = self._v[2] - v1
-        i3 = self._i[3]
-        delta_i_max = max(i3-self._i[2]+1, self._i[2]-i1+1)
-        for delta_i in range(delta_i_max):
-            # positive
-            i2 = self._i[2] + delta_i
-            found = not self._check_if_minimum_in_i1_i2(i2, i1, dV, D0)
-            if found:
-                break
-            # negative
-            i2 = self._i[2] - delta_i
-            found = not self._check_if_minimum_in_i1_i2(i2, i1, dV, D0)
-            if found:
-                break
-        if found:
-            return i2
+    def _calc_strengths(self, waveform):
+        kwargs = {'currents': waveform}
+        if self._dipole is not None:
+            kwargs['currents_dipole'] = self._dipole.waveform
+        if self._family is not None:
+            kwargs['currents_family'] = self._family.waveform
+        strengths = self.conv_current_2_strength(**kwargs)
+        return strengths
+
+    def _calc_currents(self, strength):
+        kwargs = {'strengths': strength}
+        if self._dipole is not None:
+            kwargs['currents_dipole'] = self._dipole.currents
+        if self._family is not None:
+            kwargs['currents_family'] = self._family.currents
+        currents = self.conv_strength_2_current(**kwargs)
+        return currents
+
+    def _update_strength(self):
+        currents = self.currents  # This updates waveform.
+        self._strengths = self._calc_strengths(currents)
+        self._set_deprecated(False)
+
+    def _init_waveform(self):
+        if self.maname == 'BO-Fam:MA-B':
+            eje_energy = 3.0  # [GeV]
+            eje_current = self.conv_strength_2_current(eje_energy)
+            self._waveform = \
+                _Waveform(scale=eje_current)
+        elif self.maname == 'SI-Fam:MA-B1B2':
+            eje_energy = 3.0  # [GeV]
+            eje_current = self.conv_strength_2_current(eje_energy)
+            self._waveform = _Waveform()
+            self._waveform.waveform = eje_current
+        elif self.maname in _nominal_strengths:
+            strengths = _nominal_strengths[self.maname] * \
+                _np.ones(_Waveform.wfmsize)
+            currents = self._calc_currents(strengths)
+            self._waveform = _Waveform()
+            v07 = currents[self._waveform.i07]
+            self._waveform.vL0 = currents[0]
+            self._waveform.v1 = v07[1]
+            self._waveform.v2 = v07[2]
+            self._waveform.v34 = v07[3]
+            self._waveform.v5 = v07[5]
+            self._waveform.v6 = v07[6]
+            self._waveform.v7R = currents[-1]
+            # in general, if excitation curves are not exactly linear, a
+            # parameterized current waveform becomes, when converted to
+            # strength, a waveform that cannot be parameterized using the
+            # same polynomials. Therefore waveform_bumps have to accomodate
+            # the difference between the closest parameterized current
+            # waveform and the waveform that coresponds to the general
+            # strength ramp.
+            self._waveform.waveform = currents  # force wfm_bumps calculation.
         else:
-            return None
+            self._waveform = _Waveform(scale=0.0)
+        self._set_deprecated(True)
 
-    def _update_wfm_bumps(self, waveform):
-        if waveform is None:
-            self._wfm_bumps = _np.zeros((_default_wfmsize, ))
-        else:
-            if self._deprecated:
-                self._update_wfm_parms()
-            self._wfm_bumps = _np.array(waveform) - self._wfm_parms
-
-    def _set_params(self, vL, vR, i07, v07):
-        self._vL = 0.01 if vL is None else vL
-        self._vR = 0.01 if vR is None else vR
-        if i07 is None:
-            i07 = (_default_wfmsize/500) * \
-                    _np.array([0, 13, 310, 322, 330, 342, 480, 500])
-        if v07 is None:
-            v07 = _np.array([0.01, 0.02625, 1.0339285714, 1.05,
-                             1.05, 1, 0.07, 0.01])
-        try:
-            if len(i07) != 8:
-                raise ValueError('Lenght of i07 is not 6 !')
-            if i07[0] < 0:
-                raise ValueError('i0 < 0 !')
-            if i07[-1] > _default_wfmsize:
-                raise ValueError('i7 >= {} !'.format(_default_wfmsize))
-            for i in range(0, len(i07)-1):
-                if i07[i+1] < i07[i]:
-                    raise ValueError('i07 is not sorted !')
-            self._i = [int(i) for i in i07]
-        except TypeError:
-            raise TypeError('Invalid type of i07 !')
-        try:
-            v07[0]
-            if len(v07) != 8:
-                raise ValueError('Lenght of v07 is not 8 !')
-            self._v = v07.copy()
-        except TypeError:
-            raise TypeError('Invalid type v07 !')
-
-
-
-
-    # def _eval_point(self, idx):
-    #     if idx < 0 or idx >= _default_wfmsize:
-    #         raise ValueError('idx value out of range: {}!'.format(idx))
-    #     coeffs, v0 = None, None
-    #     if idx < self._i[0]:
-    #         coeffs = self._coeffs[0]
-    #         i0, v0 = 0, self._vL
-    #     elif idx > self._i[5]:
-    #         coeffs = self._coeffs[6]
-    #         i0, v0 = self._i[5], self._v[5]
-    #     else:
-    #         for i in range(len(self._i)):
-    #             if idx <= self._i[i]:
-    #                 i0, v0 = self._i[i-1], self._v[i-1]
-    #                 coeffs = self._coeffs[i]
-    #                 break
-    #     dv = \
-    #         coeffs[0] * (idx - i0) + \
-    #         coeffs[1] * (idx - i0)**2 + \
-    #         coeffs[2] * (idx - i0)**3
-    #     return v0 + dv
+    def _set_deprecated(self, state):
+        self._deprecated = state
+        if state is True:
+            for dependent in self._dependents:
+                obj = dependent()
+                # only sets deprecated state of object if its weakref is valid.
+                if obj is None:
+                    self._dependents.remove(obj)
+                else:
+                    obj._set_deprecated()
 
 
 class WfmSet:

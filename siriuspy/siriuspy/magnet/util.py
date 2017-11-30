@@ -150,7 +150,7 @@ def get_section_dipole_name(maname):
             "No section named {}".format(maname.section))
 
 
-def get_magnet_fam_name(maname):
+def get_magnet_family_name(maname):
     """Return family name associated with a given magnet name."""
     maname = _SiriusPVName(maname)
     if maname.section == "SI" and \

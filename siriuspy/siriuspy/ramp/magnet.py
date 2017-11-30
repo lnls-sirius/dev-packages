@@ -24,7 +24,7 @@ class Magnet(object):
         self._maname = _SiriusPVName(maname)
         self._madata = _MAData(maname=self._maname)
         self._dipole_name = _mutil.get_section_dipole_name(self._maname)
-        self._family_name = _mutil.get_magnet_fam_name(self._maname)
+        self._family_name = _mutil.get_magnet_family_name(self._maname)
         self._magfunc = self._madata.magfunc(self._madata.psnames[0])
         self._mfmult = _magfuncs[self.magfunc]
         self._strength_obj = _model.create_magnet_normalizer(self)
@@ -82,15 +82,15 @@ class Magnet(object):
         """Magnet SP limits."""
         return self._madata.splims
 
-    def conv_current_2_strength(self, current, **kwargs):
+    def conv_current_2_strength(self, currents, **kwargs):
         """Return strength value from current(s)."""
-        strength = self._strength_obj.conv_current_2_strength(current,
+        strength = self._strength_obj.conv_current_2_strength(currents,
                                                               **kwargs)
         return strength
 
-    def conv_strength_2_current(self, strength, **kwargs):
+    def conv_strength_2_current(self, strengths, **kwargs):
         """Return current value from strengths(s)."""
-        current = self._strength_obj.conv_strength_2_current(strength,
+        current = self._strength_obj.conv_strength_2_current(strengths,
                                                              **kwargs)
         return current
 

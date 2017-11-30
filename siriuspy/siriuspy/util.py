@@ -8,6 +8,7 @@ import math as _math
 import datetime as _datetime
 import siriuspy.envars as _envars
 import epics as _epics
+import numpy as _np
 
 
 def conv_splims_labels(label):
@@ -226,10 +227,14 @@ def beam_rigidity(energy):
     # [Kg̣*m^2/s^2] - derived
     electron_rest_energy_eV = joule_2_eV * electron_rest_energy
     gamma = energy*1e9/electron_rest_energy_eV
-    try:
-        beta = _math.sqrt(((gamma-1.0)/gamma)*((gamma+1.0)/gamma))
-    except Exception:
-        return 0
+    if isinstance(gamma, _np.ndarray):
+        beta = _np.sqrt(((gamma-1.0)/gamma)*((gamma+1.0)/gamma))
+        beta[gamma < 1.0] = 0.0
+    else:
+        if gamma < 1.0:
+            beta = 0.0
+        else:
+            beta = _math.sqrt(((gamma-1.0)/gamma)*((gamma+1.0)/gamma))
     brho = beta * (energy*1e9) / light_speed
     return brho
 
