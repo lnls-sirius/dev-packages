@@ -40,37 +40,33 @@ class EnumTypes:
     _types.update(_types_sofb)
 
     @staticmethod
-    def enums(typ):
-        """Return enum values of a given enumerate type."""
-        if typ not in EnumTypes._types:
-            return None
-        return EnumTypes._types[typ]
+    def types():
+        """Return a copy of the enumerate types dictionary."""
+        return _copy.deepcopy(EnumTypes._types)
 
     @staticmethod
-    def get_idx(typ, value):
-        """Return enumerate index of a given value of a given enum mtype."""
-        values = EnumTypes.enums(typ)
-        if value not in values:
-            return None
-        return values.index(value)
-
-    @staticmethod
-    def key(typ, idx):
-        """Return enumerate value corresponding to a given index and type."""
-        if idx is None:
-            return 'None'
-        values = EnumTypes.enums(typ)
-        return values[idx]
-
-    @staticmethod
-    def values(typ):
+    def indices(typ):
         """Return valid index list of a given enumerate type."""
         return tuple(range(len(EnumTypes._types[typ])))
 
     @staticmethod
-    def types():
-        """Return a copy of the enumerate types dictionary."""
-        return _copy.deepcopy(EnumTypes._types)
+    def enums(typ):
+        """Return enum values of a given enumerate type."""
+        return EnumTypes._types[typ]
+
+    @staticmethod
+    def conv_key2idx(typ, key):
+        """Return enumerate index of a given key of a given enum mtype."""
+        values = EnumTypes.enums(typ)
+        return values.index(key)
+
+    @staticmethod
+    def conv_idx2key(typ, idx):
+        """Return enumerate keys corresponding to a given index and type."""
+        # if idx is None:
+        #     return 'None'
+        values = EnumTypes.enums(typ)
+        return values[idx]
 
     @_ClassProperty
     @classmethod
@@ -79,7 +75,7 @@ class EnumTypes:
         return tuple(cls._types.keys())
 
 
-# create class attribute 'idx' object with all constants
+# create class attribute 'idx' object with all constant indices.
 EnumTypes.idx = _types.SimpleNamespace()
 for k, v in EnumTypes._types.items():
     for i in range(len(v)):

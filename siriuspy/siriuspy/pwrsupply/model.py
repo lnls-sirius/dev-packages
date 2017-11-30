@@ -369,10 +369,10 @@ class PowerSupply(_PSData):
                 if isinstance(value, str):
                     return value
                 else:
-                    return _et.key(typ, value)
+                    return _et.conv_idx2key(typ, value)
             else:
                 if isinstance(value, str):
-                    return _et.get_idx(typ, value)
+                    return _et.conv_key2idx(typ, value)
                 else:
                     return value
         except:

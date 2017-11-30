@@ -1,4 +1,4 @@
-"""Controller classes."""
+_et.indices"""Controller classes."""
 
 import time as _time
 import uuid as _uuid
@@ -76,7 +76,7 @@ class Controller(metaclass=_ABCMeta):
 
     @pwrstate.setter
     def pwrstate(self, value):
-        if value not in _et.values('OffOnTyp'): return
+        if value not in _et.indices('OffOnTyp'): return
         # if value != self.pwrstate:
         #     self._set_pwrstate(value)
         #     self.update_state(pwrstate=True)
@@ -89,7 +89,7 @@ class Controller(metaclass=_ABCMeta):
 
     @opmode.setter
     def opmode(self, value):
-        if value not in _et.values('PSOpModeTyp'): return
+        if value not in _et.indices('PSOpModeTyp'): return
         # if value != self.opmode:
         #     self._set_cycling_state(False)
         #     self._set_timestamp_trigger(None)
@@ -400,8 +400,8 @@ class Controller(metaclass=_ABCMeta):
     def __str__(self):
         self.update_state()
         st = '--- Controller ---\n'
-        propty = 'opmode'; st += '\n{0:<25s}: {1}'.format(propty, _et.key('PSOpModeTyp', self.opmode))
-        propty = 'pwrstate'; st += '\n{0:<25s}: {1}'.format(propty, _et.key('OffOnTyp', self.pwrstate))
+        propty = 'opmode'; st += '\n{0:<25s}: {1}'.format(propty, _et.conv_idx2key('PSOpModeTyp', self.opmode))
+        propty = 'pwrstate'; st += '\n{0:<25s}: {1}'.format(propty, _et.conv_idx2key('OffOnTyp', self.pwrstate))
         propty = 'intlk'; st += '\n{0:<25s}: {1}'.format(propty, self.intlk)
         propty = 'intlklabels'; st += '\n{0:<25s}: {1}'.format(propty, self.intlklabels)
         propty = 'reset_counter'; st += '\n{0:<25s}: {1}'.format(propty, self.reset_counter)
@@ -998,7 +998,7 @@ class ControllerEpics(Controller):
         return self._pvs['PwrState-Sts'].get(timeout=self._connection_timeout)
 
     def _set_pwrstate(self, value):
-        if value not in _et.values('OffOnTyp'): raise Exception('Invalid value of pwrstate_sel')
+        if value not in _et.indices('OffOnTyp'): raise Exception('Invalid value of pwrstate_sel')
         # if value != self.pwrstate:
         #     self._pvs['PwrState-Sel'].value = value
         #     self.update_state(pwrstate=True)
@@ -1009,7 +1009,7 @@ class ControllerEpics(Controller):
         return self._pvs['OpMode-Sts'].get(timeout=self._connection_timeout)
 
     def _set_opmode(self, value):
-        if value not in _et.values('OffOnTyp'): raise Exception('Invalid value of pwrstate_sel')
+        if value not in _et.indices('OffOnTyp'): raise Exception('Invalid value of pwrstate_sel')
         # if value != self.opmode:
         #     self._pvs['OpMode-Sel'].value = value
         #     self.update_state(opmode=True)
