@@ -293,3 +293,14 @@ def update_integer_bit(integer, number_of_bits, value, bit):
         integer = integer & mask
 
     return integer
+
+
+def check_public_interface(namespace, valid_interface):
+    """Function to be used in unittests to test module's public interface."""
+    valid = True
+    for name in namespace.__dict__:
+        if not name.startswith('_') and name not in valid_interface:
+            print('Invalid public name: ', name)
+            valid = False
+            break
+    return valid

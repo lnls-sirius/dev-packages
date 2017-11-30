@@ -2,17 +2,49 @@
 
 """Unittest module for util.py."""
 
-import unittest
-from unittest import mock
 from io import StringIO
 import numpy as np
 import epics
-
+import unittest
+from unittest import mock
 import siriuspy.util as util
+
+
+valid_interface = (
+    'conv_splims_labels',
+    'get_last_commit_hash',
+    'get_timestamp',
+    'read_text_data',
+    'print_ioc_banner',
+    'save_ioc_pv_list',
+    'beam_rigidity',
+    'check_pv_online',
+    'get_strength_label',
+    'get_strength_units',
+    'update_integer_bit',
+    'check_public_interface',
+)
 
 
 class TestUtil(unittest.TestCase):
     """Test util."""
+
+    def test_public_interface(self):
+        """Test module's public interface."""
+        valid = util.check_public_interface(util, valid_interface)
+        self.assertTrue(valid)
+
+    def test_check_public_interface(self):
+        """Test check_public_interface."""
+        class namespace:
+            A = None
+            B = None
+        valid_interface = ('A', 'B', )
+        valid = util.check_public_interface(namespace, valid_interface)
+        self.assertTrue(valid)
+        namespace.C = None
+        valid = util.check_public_interface(namespace, valid_interface)
+        self.assertFalse(valid)
 
     def test_conv_splims_labels(self):
         """Test conv_splims_labels."""

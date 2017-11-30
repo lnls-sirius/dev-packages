@@ -3,11 +3,24 @@
 """Unittest module for search.py."""
 
 import unittest
+from siriuspy import util
+from siriuspy import search
 from siriuspy.search import MASearch
+
+
+valid_interface = (
+    'PSSearch',
+    'MASearch',
+)
 
 
 class TestMASearch(unittest.TestCase):
     """Test MASearch."""
+
+    def test_public_interface(self):
+        """Test module's public interface."""
+        valid = util.check_public_interface(search, valid_interface)
+        self.assertTrue(valid)
 
     def test_manames_getsplim(self):
         """Test get_pwrsupply_manames and getsplim."""
