@@ -34,18 +34,6 @@ class TestUtil(unittest.TestCase):
         valid = util.check_public_interface(util, valid_interface)
         self.assertTrue(valid)
 
-    def test_check_public_interface(self):
-        """Test check_public_interface."""
-        class namespace:
-            A = None
-            B = None
-        valid_interface = ('A', 'B', )
-        valid = util.check_public_interface(namespace, valid_interface)
-        self.assertTrue(valid)
-        namespace.C = None
-        valid = util.check_public_interface(namespace, valid_interface)
-        self.assertFalse(valid)
-
     def test_conv_splims_labels(self):
         """Test conv_splims_labels."""
         self.assertEqual(util.conv_splims_labels('HOPR'), 'hilim')
@@ -255,6 +243,21 @@ class TestUtil(unittest.TestCase):
             integer=0xdf, number_of_bits=8, value=1, bit=5))
         self.assertEqual(0x00, util.update_integer_bit(
             integer=0x10, number_of_bits=6, value=0, bit=4))
+
+    def test_check_public_interface(self):
+        """Test check_public_interface."""
+        class namespace:
+            A = None
+            B = None
+        valid_interface = ('A', 'B', )
+        valid = util.check_public_interface(namespace, valid_interface)
+        self.assertTrue(valid)
+        namespace.C = None
+        valid = util.check_public_interface(namespace, valid_interface, False)
+        self.assertFalse(valid)
+        valid_interface = ('A', 'B', 'missing_symbol')
+        valid = util.check_public_interface(namespace, valid_interface, False)
+        self.assertFalse(valid)
 
 
 if __name__ == "__main__":

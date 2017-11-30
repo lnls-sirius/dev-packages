@@ -7,7 +7,7 @@ import siriuspy.csdevice.enumtypes as enumtypes
 from siriuspy.csdevice.enumtypes import EnumTypes
 import siriuspy.util as util
 
-valid_interface = ('EnumTypes', )
+public_interface = ('EnumTypes', )
 
 
 class TestEnumtypes(unittest.TestCase):
@@ -15,14 +15,14 @@ class TestEnumtypes(unittest.TestCase):
 
     def test_public_interface(self):
         """Test module's public interface."""
-        valid = util.check_public_interface(enumtypes, valid_interface)
+        valid = util.check_public_interface(enumtypes, public_interface)
         self.assertTrue(valid)
 
 
 class TestEnumTypes(unittest.TestCase):
     """Test EnumTypes class."""
 
-    valid_interface = (
+    public_interface = (
         'enums',
         'conv_key2idx',
         'conv_idx2key',
@@ -35,7 +35,7 @@ class TestEnumTypes(unittest.TestCase):
     def test_public_interface(self):
         """Test EnumTypes class interface."""
         valid = util.check_public_interface(EnumTypes,
-                                            TestEnumTypes.valid_interface)
+                                            TestEnumTypes.public_interface)
         self.assertTrue(valid)
 
     def test_types(self):

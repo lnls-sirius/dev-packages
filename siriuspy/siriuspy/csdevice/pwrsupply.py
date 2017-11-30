@@ -4,15 +4,17 @@ import copy as _copy
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.search import MASearch as _MASearch
-from siriuspy.csdevice import ps_properties as ps_props
+from siriuspy.csdevice import ps_properties as _ps_props
 
 default_wfmsize = 4000
 default_wfmlabels = _et.enums('PSWfmLabelsTyp')
 default_intlklabels = _et.enums('PSIntlkLabelsTyp')
+default_ps_current_precision = 4
+default_ps_current_unit = _PSSearch.get_splims_unit()
 
 
-def create_commun_propty_database():
-    """Return database of commun to all pwrsupply PVs."""
+def get_common_propty_database():
+    """Return database entries to all power-supply-like devices."""
     db = {
         'CtrlMode-Mon':     {'type': 'enum', 'enums': _et.enums('RmtLocTyp'),
                              'value': _et.idx.Remote},
@@ -20,61 +22,70 @@ def create_commun_propty_database():
                              'value': _et.idx.Off},
         'PwrState-Sts':     {'type': 'enum', 'enums': _et.enums('OffOnTyp'),
                              'value': _et.idx.Off},
-        'OpMode-Sel':       {'type': 'enum', 'enums': _et.enums('PSOpModeTyp'),
-                             'value': _et.idx.SlowRef},
-        'OpMode-Sts':       {'type': 'enum', 'enums': _et.enums('PSOpModeTyp'),
-                             'value': _et.idx.SlowRef},
-        'Reset-Cmd':        {'type': 'int', 'value': 0},
-        'Abort-Cmd':        {'type': 'int', 'value': 0},
-        'WfmIndex-Mon':     {'type': 'int', 'value': 0},
-        'WfmLabels-Mon':    {'type': 'string', 'count': len(default_wfmlabels),
-                             'value': default_wfmlabels},
-        'WfmLabel-SP':      {'type': 'string', 'value': default_wfmlabels[0]},
-        'WfmLabel-RB':      {'type': 'string', 'value': default_wfmlabels[0]},
-        'WfmLoad-Sel':      {'type': 'enum',   'enums': default_wfmlabels,
-                             'value': 0},
-        'WfmLoad-Sts':      {'type': 'enum',   'enums': default_wfmlabels,
-                             'value': 0},
-        'WfmData-SP':     {'type': 'float',  'count': default_wfmsize,
-                           'value': [0.0 for datum in range(default_wfmsize)]},
-        'WfmData-RB':     {'type': 'float',  'count': default_wfmsize,
-                           'value': [0.0 for datum in range(default_wfmsize)]},
-        'WfmSave-Cmd':      {'type': 'int',    'value': 0},
         'Intlk-Mon':        {'type': 'int',    'value': 0},
-        'IntlkLabels-Cte':  {'type': 'string', 'count': 8,
+        'IntlkLabels-Cte':  {'type': 'string',
+                             'count': len(default_intlklabels),
                              'value': default_intlklabels},
-        'Current-SP':       {'type': 'float',  'value': 0.0, 'prec': 4},
-        'Current-RB':       {'type': 'float',  'value': 0.0, 'prec': 4},
-        'CurrentRef-Mon':   {'type': 'float',  'value': 0.0, 'prec': 4},
-        'Current-Mon':      {'type': 'float',  'value': 0.0, 'prec': 4},
     }
     return db
 
 
+def get_common_ps_propty_database():
+    """Return database of commun to all pwrsupply PVs."""
+    db = get_common_propty_database()
+    db_ps = {
+        'OpMode-Sel': {'type': 'enum', 'enums': _et.enums('PSOpModeTyp'),
+                       'value': _et.idx.SlowRef},
+        'OpMode-Sts': {'type': 'enum', 'enums': _et.enums('PSOpModeTyp'),
+                       'value': _et.idx.SlowRef},
+        'Reset-Cmd': {'type': 'int', 'value': 0},
+        'Abort-Cmd': {'type': 'int', 'value': 0},
+        'WfmIndex-Mon': {'type': 'int', 'value': 0},
+        'WfmLabels-Mon': {'type': 'string', 'count': len(default_wfmlabels),
+                          'value': default_wfmlabels},
+        'WfmLabel-SP': {'type': 'string', 'value': default_wfmlabels[0]},
+        'WfmLabel-RB': {'type': 'string', 'value': default_wfmlabels[0]},
+        'WfmLoad-Sel': {'type': 'enum', 'enums': default_wfmlabels,
+                        'value': 0},
+        'WfmLoad-Sts': {'type': 'enum', 'enums': default_wfmlabels,
+                        'value': 0},
+        'WfmData-SP': {'type': 'float', 'count': default_wfmsize,
+                       'prec': default_ps_current_precision,
+                       'value': [0.0 for datum in range(default_wfmsize)]},
+        'WfmData-RB': {'type': 'float', 'count': default_wfmsize,
+                       'prec': default_ps_current_precision,
+                       'value': [0.0 for datum in range(default_wfmsize)]},
+        'WfmSave-Cmd': {'type': 'int', 'value': 0},
+        'Current-SP': {'type': 'float', 'value': 0.0,
+                       'prec': default_ps_current_precision},
+        'Current-RB': {'type': 'float', 'value': 0.0,
+                       'prec': default_ps_current_precision},
+        'CurrentRef-Mon': {'type': 'float', 'value': 0.0,
+                           'prec': default_ps_current_precision},
+        'Current-Mon': {'type': 'float',  'value': 0.0,
+                        'prec': default_ps_current_precision},
+    }
+    db.update(db_ps)
+    return db
+
+
 def get_ps_propty_database(pstype):
-    """Return property database of a power supply type device."""
-    propty_db = create_commun_propty_database()
-    units = _PSSearch.get_splims_unit()
+    """Return property database of a LNLS power supply type device."""
+    propty_db = get_common_ps_propty_database()
     for propty, db in propty_db.items():
         # set setpoint limits in database
         if propty in ('Current-SP',):
-            label = 'lolo'
-            db[label] = _PSSearch.get_splim(pstype, label)
-            label = 'low'
-            db[label] = _PSSearch.get_splim(pstype, label)
-            label = 'lolim'
-            db[label] = _PSSearch.get_splim(pstype, label)
-            label = 'hilim'
-            db[label] = _PSSearch.get_splim(pstype, label)
-            label = 'high'
-            db[label] = _PSSearch.get_splim(pstype, label)
-            label = 'hihi'
-            db[label] = _PSSearch.get_splim(pstype, label)
+            db['lolo'] = _PSSearch.get_splim(pstype, 'lolo')
+            db['low'] = _PSSearch.get_splim(pstype, 'low')
+            db['lolim'] = _PSSearch.get_splim(pstype, 'lolim')
+            db['hilim'] = _PSSearch.get_splim(pstype, 'hilim')
+            db['high'] = _PSSearch.get_splim(pstype, 'high')
+            db['hihi'] = _PSSearch.get_splim(pstype, 'hihi')
         # define unit of current
         if propty in \
                 ('Current-SP', 'Current-RB', 'CurrentRef-Mon', 'Current-Mon',
                  'WfmData-SP', 'WfmData-RB'):
-            db['unit'] = units
+            db['unit'] = default_ps_current_unit
 
     return propty_db
 
@@ -86,41 +97,41 @@ def get_pu_propty_database(pstype):
 
     db = {
         # Digital signals
-        ps_props.PwrStateSel: {"type": "enum",
-                               "enums": _et.enums("OffOnTyp"),
-                               "value": _et.idx.Off},
-        ps_props.PwrStateSts: {"type": "enum",
-                               "enums": _et.enums("OffOnTyp"),
-                               "value": _et.idx.Off},
-        ps_props.EnablePulsesSel: {"type": "enum",
-                                   "enums": _et.enums("DsblEnblTyp"),
-                                   "value": _et.idx.Dsbl},
-        ps_props.EnablePulsesSts: {"type": "enum",
-                                   "enums": _et.enums("DsblEnblTyp"),
-                                   "value": _et.idx.Dsbl},
-        ps_props.ResetCmd: {"type": "int", "value": 0},
+        _ps_props.PwrStateSel: {"type": "enum",
+                                "enums": _et.enums("OffOnTyp"),
+                                "value": _et.idx.Off},
+        _ps_props.PwrStateSts: {"type": "enum",
+                                "enums": _et.enums("OffOnTyp"),
+                                "value": _et.idx.Off},
+        _ps_props.EnablePulsesSel: {"type": "enum",
+                                    "enums": _et.enums("DsblEnblTyp"),
+                                    "value": _et.idx.Dsbl},
+        _ps_props.EnablePulsesSts: {"type": "enum",
+                                    "enums": _et.enums("DsblEnblTyp"),
+                                    "value": _et.idx.Dsbl},
+        _ps_props.ResetCmd: {"type": "int", "value": 0},
 
         # Waveform
 
         # Read only digital signals
-        ps_props.CtrlMode: {"type": "enum",
-                            "enums": _et.enums('RmtLocTyp'),
-                            "value": _et.idx.Remote},
-        ps_props.ExternalInterlock: {"type": "int", "value": 0},
+        _ps_props.CtrlMode: {"type": "enum",
+                             "enums": _et.enums('RmtLocTyp'),
+                             "value": _et.idx.Remote},
+        _ps_props.ExternalInterlock: {"type": "int", "value": 0},
 
         # Analog signals
-        ps_props.TensionSP: {"type": "float", "unit": units[0],
-                             "value": 0.0, "prec": precision},
-        ps_props.TensionRB: {"type": "float", "unit": units[0],
-                             "value": 0.0, "prec": precision},
-        ps_props.TensionRefMon: {"type": "float", "unit": units[0],
-                                 "value": 0.0, "prec": precision},
-        ps_props.TensionMon: {"type": "float", "unit": units[0],
-                              "value": 0.0, "prec": precision}
+        _ps_props.TensionSP: {"type": "float", "unit": units[0],
+                              "value": 0.0, "prec": precision},
+        _ps_props.TensionRB: {"type": "float", "unit": units[0],
+                              "value": 0.0, "prec": precision},
+        _ps_props.TensionRefMon: {"type": "float", "unit": units[0],
+                                  "value": 0.0, "prec": precision},
+        _ps_props.TensionMon: {"type": "float", "unit": units[0],
+                               "value": 0.0, "prec": precision}
     }
     # Get tension limits
-    analog_signals = [ps_props.TensionSP, ps_props.TensionRB,
-                      ps_props.TensionRefMon, ps_props.TensionMon]
+    analog_signals = [_ps_props.TensionSP, _ps_props.TensionRB,
+                      _ps_props.TensionRefMon, _ps_props.TensionMon]
 
     for signal in analog_signals:
         db[signal]["lolo"] = _PSSearch.get_splim(pstype, "lolo")
@@ -135,7 +146,7 @@ def get_pu_propty_database(pstype):
 
 def get_ma_propty_database(maname):
     """Return property database of a magnet type device."""
-    propty_db = create_commun_propty_database()
+    propty_db = get_common_ps_propty_database()
     units = _MASearch.get_splims_unit()
     magfunc_dict = _MASearch.conv_maname_2_magfunc(maname)
     db = {}
@@ -227,17 +238,17 @@ def get_pm_propty_database(maname, psdata):
     for psname, data in psdata.items():
         db[psname] = data.propty_database
 
-        db[psname][ps_props.StrengthSP] = \
+        db[psname][_ps_props.StrengthSP] = \
             {"type": "float", "unit": "mrad", "value": 0.0, "prec": precision}
-        db[psname][ps_props.StrengthRB] = \
+        db[psname][_ps_props.StrengthRB] = \
             {"type": "float", "unit": "mrad", "value": 0.0, "prec": precision}
-        db[psname][ps_props.StrengthRefMon] = \
+        db[psname][_ps_props.StrengthRefMon] = \
             {"type": "float", "unit": "mrad", "value": 0.0, "prec": precision}
-        db[psname][ps_props.StrengthMon] = \
+        db[psname][_ps_props.StrengthMon] = \
             {"type": "float", "unit": "mrad", "value": 0.0, "prec": precision}
 
-        strength_list = [ps_props.StrengthSP, ps_props.StrengthRB,
-                         ps_props.StrengthRefMon, ps_props.StrengthMon]
+        strength_list = [_ps_props.StrengthSP, _ps_props.StrengthRB,
+                         _ps_props.StrengthRefMon, _ps_props.StrengthMon]
 
         for strength in strength_list:
             db[psname][strength]["lolo"] = _MASearch.get_splim(maname, "lolo")
