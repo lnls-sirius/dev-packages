@@ -84,3 +84,4 @@ EnumTypes.idx = _types.SimpleNamespace()
 for k, v in EnumTypes._types.items():
     for i in range(len(v)):
         setattr(EnumTypes.idx, v[i], i)
+del(k, v, i)

@@ -1,21 +1,26 @@
 #!/usr/bin/env python-sirius
 
-"""Unittest module for factory.py."""
+"""Unittest module for enumtypes.py."""
 
 import unittest
-from siriuspy.factory import MagnetFactory
+import siriuspy.csdevice.enumtypes as enumtypes
+import siriuspy.util as util
+
+valid_interface = ('EnumTypes', )
 
 
-class TestMagnetFactory(unittest.TestCase):
-    """Test MagnetFactory."""
+class TestEnumTypes(unittest.TestCase):
+    """Test EnumTypes."""
 
-    def test_manames_getsplim(self):
-        """Test get_pwrsupply_manames and getsplim."""
-        maname = 'SI-Fam:MA-B1B2'
-        magnet = MagnetFactory.factory(maname=maname,
-                                       use_vaca=False,
-                                       vaca_prefix=None, lock=False)
-        self.assertEqual(magnet.maname, maname)
+    def test_public_interface(self):
+        """Test module's public interface."""
+        valid = util.check_public_interface(enumtypes, valid_interface)
+        self.assertTrue(valid)
+
+    def test_class_interface(self):
+        """Test module's public interface."""
+        valid = util.check_public_interface(enumtypes, valid_interface)
+        self.assertTrue(valid)
 
 
 if __name__ == "__main__":
