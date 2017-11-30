@@ -4,7 +4,7 @@ import logging as _logging
 from epics import PV as _PV
 
 from siriuspy import envars as _envars
-from siriuspy.pulsedps import properties as _properties
+from siriuspy.csdevice import ps_properties as _properties
 from siriuspy.pulsedps.data import PUData as _PUData
 
 _logging.basicConfig(level=_logging.WARNING)

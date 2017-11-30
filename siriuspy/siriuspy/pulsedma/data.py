@@ -1,6 +1,6 @@
 """Pulsed magnet data class definition."""
 from siriuspy.magnet.data import MAData as _MAData
-from siriuspy.csdevice.pulsedps \
+from siriuspy.csdevice.pwrsupply \
     import get_pm_propty_database as _get_pm_propty_database
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.search import MASearch as _MASearch

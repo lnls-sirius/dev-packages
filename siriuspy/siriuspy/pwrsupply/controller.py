@@ -1,4 +1,4 @@
-_et.indices"""Controller classes."""
+"""Controller classes."""
 
 import time as _time
 import uuid as _uuid

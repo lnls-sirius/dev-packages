@@ -4,7 +4,7 @@ import copy as _copy
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.search import MASearch as _MASearch
-
+from siriuspy.csdevice import ps_properties as ps_props
 
 default_wfmsize = 4000
 default_wfmlabels = _et.enums('PSWfmLabelsTyp')
@@ -77,6 +77,60 @@ def get_ps_propty_database(pstype):
             db['unit'] = units
 
     return propty_db
+
+
+def get_pu_propty_database(pstype):
+    """Return database definition for a pulsed power supply."""
+    units = _PSSearch.get_splims_unit()[1]
+    precision = 4
+
+    db = {
+        # Digital signals
+        ps_props.PwrStateSel: {"type": "enum",
+                               "enums": _et.enums("OffOnTyp"),
+                               "value": _et.idx.Off},
+        ps_props.PwrStateSts: {"type": "enum",
+                               "enums": _et.enums("OffOnTyp"),
+                               "value": _et.idx.Off},
+        ps_props.EnablePulsesSel: {"type": "enum",
+                                   "enums": _et.enums("DsblEnblTyp"),
+                                   "value": _et.idx.Dsbl},
+        ps_props.EnablePulsesSts: {"type": "enum",
+                                   "enums": _et.enums("DsblEnblTyp"),
+                                   "value": _et.idx.Dsbl},
+        ps_props.ResetCmd: {"type": "int", "value": 0},
+
+        # Waveform
+
+        # Read only digital signals
+        ps_props.CtrlMode: {"type": "enum",
+                            "enums": _et.enums('RmtLocTyp'),
+                            "value": _et.idx.Remote},
+        ps_props.ExternalInterlock: {"type": "int", "value": 0},
+
+        # Analog signals
+        ps_props.TensionSP: {"type": "float", "unit": units[0],
+                             "value": 0.0, "prec": precision},
+        ps_props.TensionRB: {"type": "float", "unit": units[0],
+                             "value": 0.0, "prec": precision},
+        ps_props.TensionRefMon: {"type": "float", "unit": units[0],
+                                 "value": 0.0, "prec": precision},
+        ps_props.TensionMon: {"type": "float", "unit": units[0],
+                              "value": 0.0, "prec": precision}
+    }
+    # Get tension limits
+    analog_signals = [ps_props.TensionSP, ps_props.TensionRB,
+                      ps_props.TensionRefMon, ps_props.TensionMon]
+
+    for signal in analog_signals:
+        db[signal]["lolo"] = _PSSearch.get_splim(pstype, "lolo")
+        db[signal]["low"] = _PSSearch.get_splim(pstype, "low")
+        db[signal]["lolim"] = _PSSearch.get_splim(pstype, "lolim")
+        db[signal]["hihi"] = _PSSearch.get_splim(pstype, "hihi")
+        db[signal]["high"] = _PSSearch.get_splim(pstype, "high")
+        db[signal]["hilim"] = _PSSearch.get_splim(pstype, "hilim")
+
+    return db
 
 
 def get_ma_propty_database(maname):
@@ -162,4 +216,37 @@ def get_ma_propty_database(maname):
             db[psname]['KickRef-Mon']['unit'] = 'rad'
             db[psname]['Kick-Mon'] = _copy.deepcopy(db[psname]['Current-Mon'])
             db[psname]['Kick-Mon']['unit'] = 'rad'
+    return db
+
+
+def get_pm_propty_database(maname, psdata):
+    """Return database for a pulsed magnet."""
+    precision = 6
+
+    db = {}
+    for psname, data in psdata.items():
+        db[psname] = data.propty_database
+
+        db[psname][ps_props.StrengthSP] = \
+            {"type": "float", "unit": "mrad", "value": 0.0, "prec": precision}
+        db[psname][ps_props.StrengthRB] = \
+            {"type": "float", "unit": "mrad", "value": 0.0, "prec": precision}
+        db[psname][ps_props.StrengthRefMon] = \
+            {"type": "float", "unit": "mrad", "value": 0.0, "prec": precision}
+        db[psname][ps_props.StrengthMon] = \
+            {"type": "float", "unit": "mrad", "value": 0.0, "prec": precision}
+
+        strength_list = [ps_props.StrengthSP, ps_props.StrengthRB,
+                         ps_props.StrengthRefMon, ps_props.StrengthMon]
+
+        for strength in strength_list:
+            db[psname][strength]["lolo"] = _MASearch.get_splim(maname, "lolo")
+            db[psname][strength]["low"] = _MASearch.get_splim(maname, "low")
+            db[psname][strength]["lolim"] = \
+                _MASearch.get_splim(maname, "lolim")
+            db[psname][strength]["hihi"] = _MASearch.get_splim(maname, "hihi")
+            db[psname][strength]["high"] = _MASearch.get_splim(maname, "high")
+            db[psname][strength]["hilim"] = \
+                _MASearch.get_splim(maname, "hilim")
+
     return db

@@ -16,12 +16,12 @@ valid_interface = (
 class TestMagnetFactory(unittest.TestCase):
     """Test MagnetFactory."""
 
-    def test_public_interface(self):
+    def _test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface(factory, valid_interface)
         self.assertTrue(valid)
 
-    def test_manames_getsplim(self):
+    def _test_manames_getsplim(self):
         """Test get_pwrsupply_manames and getsplim."""
         maname = 'SI-Fam:MA-B1B2'
         magnet = MagnetFactory.factory(maname=maname,

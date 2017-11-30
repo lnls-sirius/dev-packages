@@ -1,8 +1,8 @@
 """Defines data class for pulsed power supplies."""
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.pwrsupply.data import PSData as _PSData
-from siriuspy.csdevice.pulsedps \
-    import get_pulsed_ps_propty_database as _get_pulsed_ps_propty_database
+from siriuspy.csdevice.pwrsupply \
+    import get_pu_propty_database as _get_pu_propty_database
 
 
 class PUData(_PSData):
@@ -17,4 +17,4 @@ class PUData(_PSData):
         self._splims = _PSSearch.conv_pstype_2_splims(self._pstype)
         self._splims_unit = _PSSearch.get_splims_unit()[1]
         self._excdata = _PSSearch.conv_psname_2_excdata(self._psname)
-        self._propty_database = _get_pulsed_ps_propty_database(self._pstype)
+        self._propty_database = _get_pu_propty_database(self._pstype)

@@ -1,4 +1,4 @@
-"""Pulsed power supply prop-field names."""
+"""Pulsed power supply and magnet prop-field names."""
 
 TensionSP = "Tension-SP"
 TensionRB = "Tension-RB"
@@ -20,3 +20,11 @@ PulsedPowerSupplyAttrs = [TensionSP, TensionRB, TensionRefMon, TensionMon,
                           PwrStateSel, PwrStateSts, EnablePulsesSel,
                           EnablePulsesSts, ResetCmd, ExternalInterlock,
                           CtrlMode]
+
+StrengthSP = "Kick-SP"
+StrengthRB = "Kick-RB"
+StrengthRefMon = "KickRef-Mon"
+StrengthMon = "Kick-Mon"
+
+PulsedMagnetAttrs = PulsedPowerSupplyAttrs + \
+    [StrengthSP, StrengthRB, StrengthRefMon, StrengthMon]

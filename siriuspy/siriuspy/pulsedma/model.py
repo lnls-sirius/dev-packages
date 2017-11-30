@@ -2,13 +2,12 @@
 import re as _re
 import logging as _logging
 
-from . import properties as _pm_props
+from siriuspy.csdevice import ps_properties as _ps_props
 from .data import PMData as _PMData
 from .ComputedPV import ComputedPV as _ComputedPV
 from .normalizer import PulsedMagnetNormalizer as \
     _PulsedMagnetNormalizer
 from ..namesys import SiriusPVName as _SiriusPVName
-from ..pulsedps import properties as _pu_props
 from ..pulsedps.model import PulsedPowerSupply as _PulsedPowerSupply
 
 _logging.basicConfig(level=_logging.WARNING)
@@ -43,10 +42,10 @@ class PulsedMagnetPowerSupply(_PulsedPowerSupply):
                 "\t{:16s} - {}\n"
                 "\t{:16s} - {}\n\n"
                 ).format(self.maname,
-                         _pm_props.StrengthSP, self.strength_sp,
-                         _pm_props.StrengthRB, self.strength_rb,
-                         _pm_props.StrengthRefMon, self.strengthref_mon,
-                         _pm_props.StrengthMon, self.strength_mon)
+                         _ps_props.StrengthSP, self.strength_sp,
+                         _ps_props.StrengthRB, self.strength_rb,
+                         _ps_props.StrengthRefMon, self.strengthref_mon,
+                         _ps_props.StrengthMon, self.strength_mon)
 
         """rep += ("\tDipole\n"
                 "\t{:16s} - {}\n"
@@ -72,17 +71,17 @@ class PulsedMagnetPowerSupply(_PulsedPowerSupply):
                 "\t{:16s} - {}\n"
                 "\t{:16s} - {}\n"
                 ).format(self._psname,
-                         _pu_props.CtrlMode, self.ctrlmode_mon,
-                         _pu_props.PwrStateSel, self.pwrstate_sel,
-                         _pu_props.PwrStateSts, self.pwrstate_sts,
-                         _pu_props.EnablePulsesSel, self.enablepulses_sel,
-                         _pu_props.EnablePulsesSts, self.enablepulses_sts,
-                         _pu_props.ResetCmd, self.reset_cmd,
-                         _pu_props.ExternalInterlock, self.intlk_mon,
-                         _pu_props.TensionSP, self.tension_sp,
-                         _pu_props.TensionRB, self.tension_rb,
-                         _pu_props.TensionRefMon, self.tensionref_mon,
-                         _pu_props.TensionMon, self.tension_mon)
+                         _ps_props.CtrlMode, self.ctrlmode_mon,
+                         _ps_props.PwrStateSel, self.pwrstate_sel,
+                         _ps_props.PwrStateSts, self.pwrstate_sts,
+                         _ps_props.EnablePulsesSel, self.enablepulses_sel,
+                         _ps_props.EnablePulsesSts, self.enablepulses_sts,
+                         _ps_props.ResetCmd, self.reset_cmd,
+                         _ps_props.ExternalInterlock, self.intlk_mon,
+                         _ps_props.TensionSP, self.tension_sp,
+                         _ps_props.TensionRB, self.tension_rb,
+                         _ps_props.TensionRefMon, self.tensionref_mon,
+                         _ps_props.TensionMon, self.tension_mon)
 
         return rep + ")"
 
@@ -108,12 +107,12 @@ class PulsedMagnetPowerSupply(_PulsedPowerSupply):
     @property
     def strength_sp(self):
         """Return strength set point."""
-        return self.read(self._controller, _pm_props.StrengthSP)
+        return self.read(self._controller, _ps_props.StrengthSP)
 
     @strength_sp.setter
     def strength_sp(self, value):
-        upper_limit = self._controller[_pm_props.StrengthSP].upper_disp_limit
-        lower_limit = self._controller[_pm_props.StrengthSP].lower_disp_limit
+        upper_limit = self._controller[_ps_props.StrengthSP].upper_disp_limit
+        lower_limit = self._controller[_ps_props.StrengthSP].lower_disp_limit
 
         if upper_limit is None or lower_limit is None:
             return
@@ -122,25 +121,25 @@ class PulsedMagnetPowerSupply(_PulsedPowerSupply):
             value = upper_limit
         elif value < lower_limit:
             value = lower_limit
-        self.write(self._controller, _pm_props.StrengthSP, value)
+        self.write(self._controller, _ps_props.StrengthSP, value)
 
     @property
     def strength_rb(self):
         """Return strength set point."""
         # return self._strength_rb
-        return self._controller[_pm_props.StrengthRB].get()
+        return self._controller[_ps_props.StrengthRB].get()
 
     @property
     def strengthref_mon(self):
         """Return strength set point."""
         # return self._strengthref_mon
-        return self._controller[_pm_props.StrengthRefMon].get()
+        return self._controller[_ps_props.StrengthRefMon].get()
 
     @property
     def strength_mon(self):
         """Return strength set point."""
         # return self._strength_mon
-        return self._controller[_pm_props.StrengthMon].get()
+        return self._controller[_ps_props.StrengthMon].get()
 
     @property
     def database(self):
@@ -148,23 +147,23 @@ class PulsedMagnetPowerSupply(_PulsedPowerSupply):
         return self._get_database()
 
     def _get_database(self, prefix=None):
-        for attr in _pm_props.PulsedMagnetAttrs:
+        for attr in _ps_props.PulsedMagnetAttrs:
             value = self.read(self._controller, attr)
             if value is not None:
                 self._db[attr]["value"] = value
 
-        self._db[_pm_props.StrengthSP]["high"] = \
-            (self._controller[_pm_props.StrengthSP].upper_warning_limit or 0.0)
-        self._db[_pm_props.StrengthSP]["low"] = \
-            (self._controller[_pm_props.StrengthSP].lower_warning_limit or 0.0)
-        self._db[_pm_props.StrengthSP]["hihi"] = \
-            (self._controller[_pm_props.StrengthSP].upper_alarm_limit or 0.0)
-        self._db[_pm_props.StrengthSP]["lolo"] = \
-            (self._controller[_pm_props.StrengthSP].lower_alarm_limit or 0.0)
-        self._db[_pm_props.StrengthSP]["hilim"] = \
-            (self._controller[_pm_props.StrengthSP].upper_disp_limit or 0.0)
-        self._db[_pm_props.StrengthSP]["lolim"] = \
-            (self._controller[_pm_props.StrengthSP].lower_disp_limit or 0.0)
+        self._db[_ps_props.StrengthSP]["high"] = \
+            (self._controller[_ps_props.StrengthSP].upper_warning_limit or 0.0)
+        self._db[_ps_props.StrengthSP]["low"] = \
+            (self._controller[_ps_props.StrengthSP].lower_warning_limit or 0.0)
+        self._db[_ps_props.StrengthSP]["hihi"] = \
+            (self._controller[_ps_props.StrengthSP].upper_alarm_limit or 0.0)
+        self._db[_ps_props.StrengthSP]["lolo"] = \
+            (self._controller[_ps_props.StrengthSP].lower_alarm_limit or 0.0)
+        self._db[_ps_props.StrengthSP]["hilim"] = \
+            (self._controller[_ps_props.StrengthSP].upper_disp_limit or 0.0)
+        self._db[_ps_props.StrengthSP]["lolim"] = \
+            (self._controller[_ps_props.StrengthSP].lower_disp_limit or 0.0)
 
         if prefix is None:
             return self._db
@@ -187,17 +186,17 @@ class PulsedMagnetPowerSupply(_PulsedPowerSupply):
         dipole_prefix = self._vaca_prefix + self._dipole_name
 
         computed_pvs = {
-            _pm_props.StrengthSP: [
+            _ps_props.StrengthSP: [
                 dipole_prefix + ":" + "Current-SP",
-                ma_prefix + ":" + _pu_props.TensionSP],
-            _pm_props.StrengthRB: [
+                ma_prefix + ":" + _ps_props.TensionSP],
+            _ps_props.StrengthRB: [
                 dipole_prefix + ":" + "Current-RB",
-                ma_prefix + ":" + _pu_props.TensionRB],
-            _pm_props.StrengthRefMon:
+                ma_prefix + ":" + _ps_props.TensionRB],
+            _ps_props.StrengthRefMon:
                 [dipole_prefix + ":" + "CurrentRef-Mon",
-                 ma_prefix + ":" + _pu_props.TensionRefMon],
-            _pm_props.StrengthMon: [dipole_prefix + ":" + "Current-Mon",
-                                    ma_prefix + ":" + _pu_props.TensionMon]}
+                 ma_prefix + ":" + _ps_props.TensionRefMon],
+            _ps_props.StrengthMon: [dipole_prefix + ":" + "Current-Mon",
+                                    ma_prefix + ":" + _ps_props.TensionMon]}
         # Add PVs as computed PVs
         for attr, params in computed_pvs.items():
             pvname = self.maname + ":" + attr
