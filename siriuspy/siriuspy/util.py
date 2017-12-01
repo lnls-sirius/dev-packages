@@ -295,7 +295,8 @@ def update_integer_bit(integer, number_of_bits, value, bit):
     return integer
 
 
-def check_public_interface(namespace, valid_interface, print_flag=True):
+def check_public_interface_namespace(namespace, valid_interface,
+                                     print_flag=True):
     """Function to be used in unittests to test module's public interface."""
     for name in namespace.__dict__:
         if not name.startswith('_') and name not in valid_interface:

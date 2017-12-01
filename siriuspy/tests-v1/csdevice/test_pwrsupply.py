@@ -51,7 +51,7 @@ class TestPwrSupply(unittest.TestCase):
             self.assertEqual(db[propty]['prec'],
                              pwrsupply.default_ps_current_precision)
 
-    def _test_ps_propty_database(self):
+    def test_ps_propty_database(self):
         """Test ps_propty_database."""
         current_alarm = ('Current-SP', 'Current-RB',
                          'CurrentRef-Mon', 'Current-Mon', )

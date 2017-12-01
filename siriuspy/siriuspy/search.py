@@ -11,16 +11,14 @@ from siriuspy.magnet.excdata import ExcitationData as _ExcitationData
 class PSSearch:
     """PS and PU Power Supply Search Class."""
 
-    _connection_timeout = None
     _pstype_dict = None
+    _splims_labels = None
+    _splims_ps_unit = None
+    _splims_pu_unit = None
+    _psnames_list = None
     _pstype_2_names_dict = None
     _pstype_2_splims_dict = None
-
     _pstype_2_excdat_dict = dict()
-
-    _splims_labels = None
-    _splims_unit = None
-    _psnames_list = None
 
     @staticmethod
     def get_psnames(filters=None):
@@ -30,7 +28,7 @@ class PSSearch:
         return _Filter.process_filters(PSSearch._psnames_list, filters=filters)
 
     @staticmethod
-    def get_splim(pstype, label):
+    def get_splims(pstype, label):
         """Return setpoint limit corresponding to given label.
 
         The label can be either epics' or pcaspy's.
@@ -147,11 +145,14 @@ class PSSearch:
         return _copy.deepcopy(PSSearch._pstype_2_splims_dict)
 
     @staticmethod
-    def get_splims_unit():
-        """Return SP limts unit."""
+    def get_splims_unit(ispulsed):
+        """Return SP limits unit."""
         if PSSearch._pstype_2_splims_dict is None:
             PSSearch._reload_pstype_2_splims_dict()
-        return PSSearch._splims_unit
+        if ispulsed:
+            return PSSearch._splims_pu_unit
+        else:
+            return PSSearch._splims_ps_unit
 
     @staticmethod
     def get_splims_labels():
@@ -166,8 +167,7 @@ class PSSearch:
     def _reload_pstype_dict():
         """Reload power supply type dictionary from web server."""
         if _web.server_online():
-            text = _web.power_supplies_pstypes_names_read(
-                timeout=PSSearch._connection_timeout)
+            text = _web.power_supplies_pstypes_names_read()
             data, params_dict = _util.read_text_data(text)
             PSSearch._pstype_dict = {}
             for datum in data:
@@ -185,8 +185,7 @@ class PSSearch:
         PSSearch._pstype_2_names_dict = {}
         PSSearch._psnames_list = []
         for pstype in pstypes:
-            text = _web.power_supplies_pstype_data_read(
-                pstype + '.txt', timeout=PSSearch._connection_timeout)
+            text = _web.power_supplies_pstype_data_read(pstype + '.txt')
             data, param_dict = _util.read_text_data(text)
             psnames = [_SiriusPVName(datum[0]) for datum in data]
             PSSearch._pstype_2_names_dict[pstype] = psnames
@@ -197,12 +196,10 @@ class PSSearch:
     def _reload_pstype_2_splims_dict():
         """Reload pstype to splims dictionary."""
         # ps data
-        text = _web.power_supplies_pstype_setpoint_limits(
-            timeout=PSSearch._connection_timeout)
+        text = _web.power_supplies_pstype_setpoint_limits()
         ps_data, ps_param_dict = _util.read_text_data(text)
         # pu data
-        text = _web.pulsed_power_supplies_pstype_setpoint_limits(
-            timeout=PSSearch._connection_timeout)
+        text = _web.pulsed_power_supplies_pstype_setpoint_limits()
         pu_data, pu_param_dict = _util.read_text_data(text)
 
         units = [ps_param_dict['unit'], pu_param_dict['unit']]
@@ -233,9 +230,7 @@ class PSSearch:
 class MASearch:
     """MA and PM Magnet Search class."""
 
-    _connection_timeout = None
     _manames_list = None
-
     _maname_2_splims_dict = None  # magnets-stpoint-limits file
     _maname_2_psnames_dict = None  # magnet-excitation-ps file
     _maname_2_trim_dict = None
@@ -247,12 +242,10 @@ class MASearch:
         """Build dict with limits for each magnet."""
         if _web.server_online():
             # MA data
-            text = _web.magnets_setpoint_limits(
-                timeout=MASearch._connection_timeout)
+            text = _web.magnets_setpoint_limits()
             ma_data, ma_param_dict = _util.read_text_data(text)
             # PM data
-            text = _web.pulsed_magnets_setpoint_limits(
-                timeout=MASearch._connection_timeout)
+            text = _web.pulsed_magnets_setpoint_limits()
             pm_data, pm_param_dict = _util.read_text_data(text)
 
             units = [ma_param_dict['unit'], pm_param_dict['unit']]
@@ -275,8 +268,7 @@ class MASearch:
     def _reload_maname_2_psnames_dict():
         """Build a dict of tuples with power supplies of each magnet."""
         if _web.server_online():
-            text = _web.magnets_excitation_ps_read(
-                timeout=MASearch._connection_timeout)
+            text = _web.magnets_excitation_ps_read()
             data, param_dict = _util.read_text_data(text)
             MASearch._maname_2_psnames_dict = {}
             MASearch._maname_2_trim_dict = {}

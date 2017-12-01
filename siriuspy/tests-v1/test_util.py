@@ -22,7 +22,7 @@ valid_interface = (
     'get_strength_label',
     'get_strength_units',
     'update_integer_bit',
-    'check_public_interface',
+    'check_public_interface_namespace',
 )
 
 
@@ -31,7 +31,7 @@ class TestUtil(unittest.TestCase):
 
     def test_public_interface(self):
         """Test module's public interface."""
-        valid = util.check_public_interface(util, valid_interface)
+        valid = util.check_public_interface_namespace(util, valid_interface)
         self.assertTrue(valid)
 
     def test_conv_splims_labels(self):
@@ -244,19 +244,22 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(0x00, util.update_integer_bit(
             integer=0x10, number_of_bits=6, value=0, bit=4))
 
-    def test_check_public_interface(self):
-        """Test check_public_interface."""
+    def test_check_public_interface_namespace(self):
+        """Test check_public_interface_namespace."""
         class namespace:
             A = None
             B = None
         valid_interface = ('A', 'B', )
-        valid = util.check_public_interface(namespace, valid_interface)
+        valid = util.check_public_interface_namespace(
+            namespace, valid_interface)
         self.assertTrue(valid)
         namespace.C = None
-        valid = util.check_public_interface(namespace, valid_interface, False)
+        valid = util.check_public_interface_namespace(
+            namespace, valid_interface, False)
         self.assertFalse(valid)
         valid_interface = ('A', 'B', 'missing_symbol')
-        valid = util.check_public_interface(namespace, valid_interface, False)
+        valid = util.check_public_interface_namespace(
+            namespace, valid_interface, False)
         self.assertFalse(valid)
 
 
