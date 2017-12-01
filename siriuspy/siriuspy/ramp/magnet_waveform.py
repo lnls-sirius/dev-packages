@@ -104,219 +104,199 @@ class MagnetWaveform(_Magnet):
         self._waveform.waveform = currents  # This will set deprecated state.
 
     @property
-    def i07(self):
+    def boundary_indices(self):
         """Return list of regions boundaries."""
-        return self._waveform.i07
+        return self._waveform.boundary_indices
 
     @property
-    def i0(self):
-        """Return index of the first region boundary."""
-        return self._waveform.i0
-
-    @property
-    def i1(self):
+    def rampup_start_index(self):
         """Return index of the second region boundary."""
-        return self._waveform.i1
+        return self._waveform.rampup_start_index
 
     @property
-    def i2(self):
+    def rampup_stop_index(self):
         """Return index of the third region boundary."""
-        return self._waveform.i2
+        return self._waveform.rampup_stop_index
 
     @property
-    def i3(self):
+    def plateau_start_index(self):
         """Return index of the fourth region boundary."""
-        return self._waveform.i3
+        return self._waveform.plateau_start_index
 
     @property
-    def i4(self):
+    def plateau_stop_index(self):
         """Return index of the fifth region boundary."""
-        return self._waveform.i4
+        return self._waveform.plateau_stop_index
 
     @property
-    def i5(self):
+    def rampdown_start_index(self):
         """Return index of the sixth region boundary."""
-        return self._waveform.i5
+        return self._waveform.rampdown_start_index
 
     @property
-    def i6(self):
+    def rampdown_stop_index(self):
         """Return index of the seventh region boundary."""
-        return self._waveform.i6
+        return self._waveform.rampdown_stop_index
 
     @property
-    def i7(self):
-        """Return index of the eightth region boundary."""
-        return self._waveform.i7
-
-    @property
-    def vL0(self):
+    def start_value(self):
         """Return waveform value at the left-end and first region boundary."""
         if self.deprecated:
             self._update_strength()
-        return self._strengths[self._waveform.i0]
+        return self._strengths[0]
 
     @property
-    def v1(self):
+    def rampup_start_value(self):
         """Return waveform value at the second region boundary."""
         if self.deprecated:
             self._update_strength()
-        return self._strengths[self._waveform.i1]
+        return self._strengths[self._waveform.rampup_start_index]
 
     @property
-    def v2(self):
+    def rampup_stop_value(self):
         """Return waveform value at the 3rd region boundary."""
         if self.deprecated:
             self._update_strength()
-        return self._strengths[self._waveform.i2]
+        return self._strengths[self._waveform.rampup_stop_index]
 
     @property
-    def v34(self):
+    def plateau_value(self):
         """Return waveform value at the 4th and 5th region boundaries."""
         if self.deprecated:
             self._update_strength()
-        return self._strengths[self._waveform.i3]
+        return self._strengths[self._waveform.plateau_start_index]
 
     @property
-    def v5(self):
+    def rampdown_start_value(self):
         """Return waveform value at the 6h region boundary."""
         if self.deprecated:
             self._update_strength()
-        return self._strengths[self._waveform.i5]
+        return self._strengths[self._waveform.rampdown_start_index]
 
     @property
-    def v6(self):
+    def rampdown_stop_value(self):
         """Return waveform value at the 7th region boundary."""
         if self.deprecated:
             self._update_strength()
-        return self._strengths[self._waveform.i6]
+        return self._strengths[self._waveform.rampdown_stop_index]
 
     @property
-    def v7R(self):
+    def stop_value(self):
         """Return waveform value at the 8th and right-end region boundaries."""
         if self.deprecated:
             self._update_strength()
-        return self._strengths[self._waveform.i7]
+        return self._strengths[-1]
 
-    @i0.setter
-    def i0(self, idx):
-        """Set index of the first region boundary."""
-        self._waveform.i0 = idx
-        self._set_deprecated(True)
-
-    @i1.setter
-    def i1(self, idx):
+    @rampup_start_index.setter
+    def rampup_start_index(self, idx):
         """Set index of the second region boundary."""
-        self._waveform.i1 = idx
+        self._waveform.rampup_start_index = idx
         self._set_deprecated(True)
 
-    @i2.setter
-    def i2(self, idx):
+    @rampup_stop_index.setter
+    def rampup_stop_index(self, idx):
         """Set index of the third region boundary."""
-        self._waveform.i2 = idx
+        self._waveform.rampup_stop_index = idx
         self._set_deprecated(True)
 
-    @i3.setter
-    def i3(self, idx):
+    @plateau_start_index.setter
+    def plateau_start_index(self, idx):
         """Set index of the fourth region boundary."""
-        self._waveform.i3 = idx
+        self._waveform.plateau_start_index = idx
         self._set_deprecated(True)
 
-    @i4.setter
-    def i4(self, idx):
+    @plateau_stop_index.setter
+    def plateau_stop_index(self, idx):
         """Set index of the fifth region boundary."""
-        self._waveform.i4 = idx
+        self._waveform.plateau_stop_index = idx
         self._set_deprecated(True)
 
-    @i5.setter
-    def i5(self, idx):
+    @rampdown_start_index.setter
+    def rampdown_start_index(self, idx):
         """Set index of the sixth region boundary."""
-        self._waveform.i5 = idx
+        self._waveform.rampdown_start_index = idx
         self._set_deprecated(True)
 
-    @i6.setter
-    def i6(self, idx):
+    @rampdown_stop_index.setter
+    def rampdown_stop_index(self, idx):
         """Set index of the 7th region boundary."""
-        self._waveform.i7 = idx
+        self._waveform.rampdown_stop_index = idx
         self._set_deprecated(True)
 
-    @i7.setter
-    def i7(self, idx):
-        """Set index of the 8th region boundary."""
-        self._waveform.i7 = idx
-        self._set_deprecated(True)
-
-    @vL0.setter
-    def vL0(self, value):
+    @start_value.setter
+    def start_value(self, value):
         """Set waveform value at the left-end and 1st boundary."""
         current = self._calc_currents(value)
-        self._waveform.vL0 = current  # This will set deprecated state.
+        # The next statement will set deprecated state.
+        self._waveform.start_value = current
 
-    @v1.setter
-    def v1(self, value):
+    @rampup_start_value.setter
+    def rampup_start_value(self, value):
         """Set waveform value at the 2nd region boundary."""
         current = self._calc_currents(value)
-        self._waveform.v1 = current  # This will set deprecated state.
+        # The next statement will set deprecated state.
+        self._waveform.rampup_start_value = current
 
-    @v2.setter
-    def v2(self, value):
+    @rampup_stop_value.setter
+    def rampup_stop_value(self, value):
         """Set waveform value at the 3rd region boundary."""
         current = self._calc_currents(value)
-        self._waveform.v2 = current  # This will set deprecated state.
+        # The next statement will set deprecated state.
+        self._waveform.rampup_stop_value = current
 
-    @v34.setter
-    def v34(self, value):
+    @plateau_value.setter
+    def plateau_value(self, value):
         """Set waveform value at the 4th and 5th region boundaries."""
         current = self._calc_currents(value)
-        self._waveform.v34 = current  # This will set deprecated state.
+        # The next statement will set deprecated state.
+        self._waveform.plateau_value = current
 
-    @v5.setter
-    def v5(self, value):
+    @rampdown_start_value.setter
+    def rampdown_start_value(self, value):
         """Set waveform value at the 6th region boundary."""
         current = self._calc_currents(value)
-        self._waveform.v5 = current  # This will set deprecated state.
+        # The next statement will set deprecated state.
+        self._waveform.rampdown_start_value = current
 
-    @v6.setter
-    def v6(self, value):
+    @rampdown_stop_value.setter
+    def rampdown_stop_value(self, value):
         """Set waveform value at the 7th region boundary."""
         current = self._calc_currents(value)
-        self._waveform.v6 = current  # This will set deprecated state.
+        # The next statement will set deprecated state.
+        self._waveform.rampdown_stop_value = current
 
-    @v7R.setter
-    def v7R(self, value):
+    @stop_value.setter
+    def stop_value(self, value):
         """Set waveform value at the 8th and right-end region boundaries."""
         current = self._calc_currents(value)
-        self._waveform.v7R = current  # This will set deprecated state.
+        # The next statement will set deprecated state.
+        self._waveform.stop_value = current
 
     # --- public methods ---
 
-    def change_plateau(self, value):
-        """Change waveform plateau value."""
-        current = self._calc_currents(value)
-        self._waveform.change_plateau(current)
-
-    def change_ramp_up(self,
-                       start=None, stop=None,
-                       start_value=None, stop_value=None):
+    def rampup_change(self,
+                      start=None, stop=None,
+                      start_value=None, stop_value=None):
         """Change waveform ramp up."""
         i1 = start
         i2 = stop
         v1 = start_value
         v2 = stop_value
         c1, c2 = self._calc_currents([v1, v2])
-        self._waveform.change_ramp_up(start=i1, stop=i2,
-                                      start_value=c1, stop_value=c2)
+        self._waveform.rampup_change(start=i1, stop=i2,
+                                     start_value=c1, stop_value=c2)
 
-    def change_ramp_down(self,
-                         start=None, stop=None,
-                         start_value=None, stop_value=None):
+    def rampdown_change(self,
+                        start=None, stop=None,
+                        start_value=None, stop_value=None):
         """Change waveform ramp down."""
         i5 = start
         i6 = stop
         v5 = start_value
         v6 = stop_value
         c5, c6 = self._calc_currents([v5, v6])
-        self._waveform.change_ramp_down(start=i5, stop=i6,
-                                        start_value=c5, stop_value=c6)
+        self._waveform.rampdown_change(start=i5, stop=i6,
+                                       start_value=c5, stop_value=c6)
 
     def clear_bumps(self):
         """Clear waveform bumps."""
@@ -380,14 +360,14 @@ class MagnetWaveform(_Magnet):
                 _np.ones(_Waveform.wfmsize)
             currents = self._calc_currents(strengths)
             self._waveform = _Waveform()
-            v07 = currents[self._waveform.i07]
-            self._waveform.vL0 = currents[0]
-            self._waveform.v1 = v07[1]
-            self._waveform.v2 = v07[2]
-            self._waveform.v34 = v07[3]
-            self._waveform.v5 = v07[5]
-            self._waveform.v6 = v07[6]
-            self._waveform.v7R = currents[-1]
+            v07 = currents[self._waveform.boundary_indices]
+            self._waveform.start_value = currents[0]
+            self._waveform.rampup_start_value = v07[1]
+            self._waveform.rampup_stop_value = v07[2]
+            self._waveform.plateau_value = v07[3]
+            self._waveform.rampdown_start_value = v07[5]
+            self._waveform.rampdown_stop_value = v07[6]
+            self._waveform.stop_value = currents[-1]
             # in general, if excitation curves are not exactly linear, a
             # parameterized current waveform becomes, when converted to
             # strength, a waveform that cannot be parameterized using the

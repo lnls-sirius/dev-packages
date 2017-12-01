@@ -14,13 +14,15 @@ class Waveform():
 
     def __init__(self,
                  scale=None,
-                 vL=None,
-                 vR=None,
-                 i07=None,
-                 v07=None,
+                 start_value=None,
+                 stop_value=None,
+                 boundary_indices=None,
+                 boundary_values=None,
                  waveform=None):
         """Init method."""
-        self._set_params(scale, vL, vR, i07, v07)
+        self._set_params(scale,
+                         vL=start_value, vR=stop_value,
+                         i07=boundary_indices, v07=boundary_values)
         self._update_wfm_parms()
         self._update_wfm_bumps(waveform)
 
@@ -72,98 +74,77 @@ class Waveform():
             raise ValueError('Invalid bumps waveform length!')
 
     @property
-    def i07(self):
+    def boundary_indices(self):
         """Return list of regions boundaries."""
         return [i for i in self._i]
 
     @property
-    def i0(self):
-        """Return index of the first region boundary."""
-        return self._i[0]
-
-    @property
-    def i1(self):
+    def rampup_start_index(self):
         """Return index of the second region boundary."""
         return self._i[1]
 
     @property
-    def i2(self):
+    def rampup_stop_index(self):
         """Return index of the third region boundary."""
         return self._i[2]
 
     @property
-    def i3(self):
+    def plateau_start_index(self):
         """Return index of the fourth region boundary."""
         return self._i[3]
 
     @property
-    def i4(self):
+    def plateau_stop_index(self):
         """Return index of the fifth region boundary."""
         return self._i[4]
 
     @property
-    def i5(self):
+    def rampdown_start_index(self):
         """Return index of the sixth region boundary."""
         return self._i[5]
 
     @property
-    def i6(self):
+    def rampdown_stop_index(self):
         """Return index of the seventh region boundary."""
         return self._i[6]
 
     @property
-    def i7(self):
-        """Return index of the eightth region boundary."""
-        return self._i[7]
-
-    @property
-    def vL0(self):
+    def start_value(self):
         """Return waveform value at the left-end and first region boundary."""
         return self._vL
 
     @property
-    def v1(self):
+    def rampup_start_value(self):
         """Return waveform value at the second region boundary."""
         return self._v[1]
 
     @property
-    def v2(self):
+    def rampup_stop_value(self):
         """Return waveform value at the 3rd region boundary."""
         return self._v[2]
 
     @property
-    def v34(self):
+    def plateau_value(self):
         """Return waveform value at the 4th and 5th region boundaries."""
         return self._v[3]
 
     @property
-    def v5(self):
+    def rampdown_start_value(self):
         """Return waveform value at the 6h region boundary."""
         return self._v[5]
 
     @property
-    def v6(self):
+    def rampdown_stop_value(self):
         """Return waveform value at the 7th region boundary."""
         return self._v[6]
 
     @property
-    def v7R(self):
+    def stop_value(self):
         """Return waveform value at the 8th and right-end region boundaries."""
         return self._vR
 
-    @i0.setter
-    def i0(self, idx):
-        """Set index of the first region boundary."""
-        i = 0
-        if 0 < idx <= self._i[i+1]:
-            self._i[i] = idx
-        else:
-            raise ValueError(('Index is inconsistent with labeled '
-                              'region boundary points.'))
-        self._deprecated = True
-
-    @i1.setter
-    def i1(self, idx):
+    @rampup_start_index.setter
+    def rampup_start_index(self, idx):
         """Set index of the second region boundary."""
         i = 1
         if self._i[i-1] <= idx <= self._i[i+1]:
@@ -173,8 +154,8 @@ class Waveform():
                               'region boundary points.'))
         self._deprecated = True
 
-    @i2.setter
-    def i2(self, idx):
+    @rampup_stop_index.setter
+    def rampup_stop_index(self, idx):
         """Set index of the third region boundary."""
         i = 2
         if self._i[i-1] <= idx <= self._i[i+1]:
@@ -184,8 +165,8 @@ class Waveform():
                               'region boundary points.'))
         self._deprecated = True
 
-    @i3.setter
-    def i3(self, idx):
+    @plateau_start_index.setter
+    def plateau_start_index(self, idx):
         """Set index of the fourth region boundary."""
         i = 3
         if self._i[i-1] <= idx <= self._i[i+1]:
@@ -195,8 +176,8 @@ class Waveform():
                               'region boundary points.'))
         self._deprecated = True
 
-    @i4.setter
-    def i4(self, idx):
+    @plateau_stop_index.setter
+    def plateau_stop_index(self, idx):
         """Set index of the fifth region boundary."""
         i = 4
         if self._i[i-1] <= idx <= self._i[i+1]:
@@ -206,8 +187,8 @@ class Waveform():
                               'region boundary points.'))
         self._deprecated = True
 
-    @i5.setter
-    def i5(self, idx):
+    @rampdown_start_index.setter
+    def rampdown_start_index(self, idx):
         """Set index of the sixth region boundary."""
         i = 5
         if self._i[i-1] <= idx < Waveform.wfmsize:
@@ -217,8 +198,8 @@ class Waveform():
                               'region boundary points.'))
         self._deprecated = True
 
-    @i6.setter
-    def i6(self, idx):
+    @rampdown_stop_index.setter
+    def rampdown_stop_index(self, idx):
         """Set index of the 7th region boundary."""
         i = 6
         if self._i[i-1] <= idx < Waveform.wfmsize:
@@ -228,57 +209,48 @@ class Waveform():
                               'region boundary points.'))
         self._deprecated = True
 
-    @i7.setter
-    def i7(self, idx):
-        """Set index of the 8th region boundary."""
-        i = 7
-        if self._i[i-1] <= idx < Waveform.wfmsize:
-            self._i[i] = idx
-        else:
-            raise ValueError(('Index is inconsistent with labeled '
-                              'region boundary points.'))
-        self._deprecated = True
-
-    @vL0.setter
-    def vL0(self, value):
+    @start_value.setter
+    def start_value(self, value):
         """Set waveform value at the left-end and 1st boundary."""
         self._vL = value
         self._v[0] = value
         self._deprecated = True
 
-    @v1.setter
-    def v1(self, value):
+    @rampup_start_value.setter
+    def rampup_start_value(self, value):
         """Set waveform value at the 2nd region boundary."""
         self._v[1] = value
         self._deprecated = True
 
-    @v2.setter
-    def v2(self, value):
+    @rampup_stop_value.setter
+    def rampup_stop_value(self, value):
         """Set waveform value at the 3rd region boundary."""
         self._v[2] = value
         self._deprecated = True
 
-    @v34.setter
-    def v34(self, value):
+    @plateau_value.setter
+    def plateau_value(self, value):
         """Set waveform value at the 4th and 5th region boundaries."""
+        if value < self.rampup_stop_value or value < self.rampdown_start_value:
+            raise ValueError('Invalid plateau parameter !')
         self._v[3] = value
         self._v[4] = value
         self._deprecated = True
 
-    @v5.setter
-    def v5(self, value):
+    @rampdown_start_value.setter
+    def rampdown_start_value(self, value):
         """Set waveform value at the 6th region boundary."""
         self._v[5] = value
         self._deprecated = True
 
-    @v6.setter
-    def v6(self, value):
+    @rampdown_stop_value.setter
+    def rampdown_stop_value(self, value):
         """Set waveform value at the 7th region boundary."""
         self._v[6] = value
         self._deprecated = True
 
-    @v7R.setter
-    def v7R(self, value):
+    @stop_value.setter
+    def stop_value(self, value):
         """Set waveform value at the 8th and right-end region boundaries."""
         self._v[7] = value
         self._vR = value
@@ -286,69 +258,66 @@ class Waveform():
 
     # --- public methods ---
 
-    def change_plateau(self, value):
-        """Change waveform plateau value."""
-        if value < self.v2 or value < self.v5:
-            raise ValueError('Invalid plateau parameter !')
-        self.v34 = value
-
-    def change_ramp_up(self,
-                       start=None, stop=None,
-                       start_value=None, stop_value=None):
-        """Change waveform ramp up."""
+    def rampup_change(self,
+                      start=None, stop=None,
+                      start_value=None, stop_value=None):
+        """Change waveform ramp up avoiding overshootings."""
         i1 = start
         i2 = stop
         v1 = start_value
         v2 = stop_value
-        i1 = self.i1 if i1 is None else i1
-        i2 = self.i2 if i2 is None else i2
-        v1 = self.v1 if v1 is None else v1
-        v2 = self.v2 if v2 is None else v2
-        if i1 < self.i0 or i2 <= i1 or i2 >= self.i4 or \
-           v1 >= v2 or v1 <= self.vL0 or v2 >= self.v34:
+        i1 = self.rampup_start_index if i1 is None else i1
+        i2 = self.rampup_stop_index if i2 is None else i2
+        v1 = self.rampup_start_value if v1 is None else v1
+        v2 = self.rampup_stop_value if v2 is None else v2
+        if i1 < self._i[0] or i2 <= i1 or i2 >= self.plateau_stop_index or \
+           v1 >= v2 or v1 <= self.start_value or v2 >= self.plateau_value:
             raise ValueError('Invalid ramp up parameters !')
         i3 = self._find_i3(i1, i2, v1, v2)
         if i3 is None:
-            raise ValueError('Could not find solution for i3 !')
+            raise ValueError('Could not find solution '
+                             'for plateau_start_index !')
         i0 = self._find_i0(i1, i2, v1, v2)
         if i0 is None:
             raise ValueError('Could not find solution for i0 !')
         # change internal data - deprecated is automatically set to True.
-        self.i1 = i1
-        self.i2 = i2
-        self.v1 = v1
-        self.v2 = v2
-        self.i3 = i3
-        self.i0 = i0
+        self.rampup_start_index = i1
+        self.rampup_stop_index = i2
+        self.rampup_start_value = v1
+        self.rampup_stop_value = v2
+        self.plateau_start_index = i3
+        self._i[0], self._deprecated = i0, True
 
-    def change_ramp_down(self,
-                         start=None, stop=None,
-                         start_value=None, stop_value=None):
+    def rampdown_change(self,
+                        start=None, stop=None,
+                        start_value=None, stop_value=None):
         """Change waveform ramp down."""
         i5 = start
         i6 = stop
         v5 = start_value
         v6 = stop_value
-        i5 = self.i5 if i5 is None else i5
-        i6 = self.i6 if i6 is None else i6
-        v5 = self.v5 if v5 is None else v5
-        v6 = self.v6 if v6 is None else v6
-        if i5 < self.i4 or i6 <= i5 or i6 >= Waveform.wfmsize or \
-           v5 <= v6 or v5 >= self.v34 or v6 <= self.v7R:
+        i5 = self.rampdown_start_index if i5 is None else i5
+        i6 = self.rampdown_stop_index if i6 is None else i6
+        v5 = self.rampdown_start_value if v5 is None else v5
+        v6 = self.rampdown_stop_value if v6 is None else v6
+        if i5 < self.plateau_stop_index or i6 <= i5 or \
+           i6 >= Waveform.wfmsize or v5 <= v6 or \
+           v5 >= self.plateau_value or v6 <= self.stop_value:
             raise ValueError('Invalid ramp down parameters !')
         i7 = self._find_i7(i5, i6, v5, v6)
         if i7 is None:
             raise ValueError('Could not find solution for i7 !')
         i4 = self._find_i4(i5, i6, v5, v6)
         if i4 is None:
-            raise ValueError('Could not find solution for i4 !')
+            raise ValueError('Could not find solution '
+                             'for plateau_stop_index !')
         # change internal data - deprecated is automatically set to True.
-        self.i5 = i5
-        self.i6 = i6
-        self.v5 = v5
-        self.v6 = v6
-        self.i7 = i7
-        self.i4 = i4
+        self.rampdown_start_index = i5
+        self.rampdown_stop_index = i6
+        self.rampdown_start_value = v5
+        self.rampdown_stop_value = v6
+        self._i[7], self._deprecated = i7, True
+        self.plateau_stop_index = i4
 
     def clear_bumps(self):
         """Clear waveform bumps."""
@@ -441,24 +410,24 @@ class Waveform():
                                      0.01])
         try:
             if len(i07) != 8:
-                raise ValueError('Lenght of i07 is not 6 !')
+                raise ValueError('Lenght of boundary indices list is not 6 !')
             if i07[0] < 0:
                 raise ValueError('i0 < 0 !')
             if i07[-1] > Waveform.wfmsize:
                 raise ValueError('i7 >= {} !'.format(Waveform.wfmsize))
             for i in range(0, len(i07)-1):
                 if i07[i+1] < i07[i]:
-                    raise ValueError('i07 is not sorted !')
+                    raise ValueError('Boundary indices list is not sorted!')
             self._i = [int(i) for i in i07]
         except TypeError:
-            raise TypeError('Invalid type of i07 !')
+            raise TypeError('Invalid type of boundary indices list!')
         try:
             v07[0]
             if len(v07) != 8:
-                raise ValueError('Lenght of v07 is not 8 !')
+                raise ValueError('Lenght of boundary values list is not 8 !')
             self._v = v07.copy()
         except TypeError:
-            raise TypeError('Invalid type v07 !')
+            raise TypeError('Invalid type boundary values list!')
 
     def _set_coeffs(self):
         self._coeffs = [None] * 9

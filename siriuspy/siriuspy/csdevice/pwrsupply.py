@@ -79,12 +79,12 @@ def get_ps_propty_database(pstype):
     for propty, db in propty_db.items():
         # set setpoint limits in database
         if propty in current_alarm:
-            db['lolo'] = _PSSearch.get_splim(pstype, 'lolo')
-            db['low'] = _PSSearch.get_splim(pstype, 'low')
-            db['lolim'] = _PSSearch.get_splim(pstype, 'lolim')
-            db['hilim'] = _PSSearch.get_splim(pstype, 'hilim')
-            db['high'] = _PSSearch.get_splim(pstype, 'high')
-            db['hihi'] = _PSSearch.get_splim(pstype, 'hihi')
+            db['lolo'] = _PSSearch.get_splims(pstype, 'lolo')
+            db['low'] = _PSSearch.get_splims(pstype, 'low')
+            db['lolim'] = _PSSearch.get_splims(pstype, 'lolim')
+            db['hilim'] = _PSSearch.get_splims(pstype, 'hilim')
+            db['high'] = _PSSearch.get_splims(pstype, 'high')
+            db['hihi'] = _PSSearch.get_splims(pstype, 'hihi')
         # define unit of current
         if propty in current_pvs:
             db['unit'] = default_ps_current_unit
