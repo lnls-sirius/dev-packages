@@ -10,7 +10,8 @@ default_wfmsize = 4000
 default_wfmlabels = _et.enums('PSWfmLabelsTyp')
 default_intlklabels = _et.enums('PSIntlkLabelsTyp')
 default_ps_current_precision = 4
-default_ps_current_unit = _PSSearch.get_splims_unit()
+default_ps_current_unit = _PSSearch.get_splims_unit(ispulsed=False)
+default_pu_current_unit = _PSSearch.get_splims_unit(ispulsed=True)
 
 
 def get_common_propty_database():

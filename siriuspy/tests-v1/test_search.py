@@ -5,21 +5,84 @@
 import unittest
 from siriuspy import util
 from siriuspy import search
+from siriuspy.search import PSSearch
 from siriuspy.search import MASearch
 
 
-valid_interface = (
+public_interface = (
     'PSSearch',
     'MASearch',
 )
 
 
-class TestMASearch(unittest.TestCase):
-    """Test MASearch."""
+class TestSearch(unittest.TestCase):
+    """Test Search module."""
 
     def test_public_interface(self):
         """Test module's public interface."""
-        valid = util.check_public_interface(search, valid_interface)
+        valid = util.check_public_interface_namespace(search, public_interface)
+        self.assertTrue(valid)
+
+
+class TestPSSearch(unittest.TestCase):
+    """Test PSSearch."""
+
+    public_interface = (
+        'get_psnames',
+        'get_splims',
+        'get_pstype_dict',
+        'get_pstype_names',
+        'get_polarities',
+        'get_pstype_2_names_dict',
+        'conv_psname_2_pstype',
+        'conv_pstype_2_polarity',
+        'conv_pstype_2_magfunc',
+        'conv_pstype_2_splims',
+        'conv_psname_2_excdata',
+        'conv_psname_2_ispulsed',
+        'get_pstype_2_splims_dict',
+        'get_splims_unit',
+        'get_splims_labels',
+    )
+
+    sample = (
+        'SI-Fam:PS-B1B2-1', 'SI-Fam:PS-QDA', 'SI-Fam:PS-SDB2',
+        'SI-01C1:PS-CH', 'SI-02C3:PS-CV-2', 'SI-03M1:PS-QS',
+        'SI-02M1:PS-FCV', 'BO-48D:PU-EjeK', 'SI-01SA:PU-HPing',
+        'SI-01SA:PU-InjDpK', 'SI-01SA:PU-InjNLK', 'SI-19C4:PU-VPing',
+        'TB-04:PU-InjS', 'TS-01:PU-EjeSF', 'TS-01:PU-EjeSG', 'TS-04:PU-InjSF',
+        'TS-04:PU-InjSG-1', 'TS-04:PU-InjSG-2',
+    )
+
+    def test_public_interface(self):
+        """Test class public interface."""
+        valid = util.check_public_interface_namespace(
+            PSSearch, TestPSSearch.public_interface)
+        self.assertTrue(valid)
+
+    def test_get_psnames(self):
+        """Test get_psnames."""
+        # raw
+        psnames = PSSearch.get_psnames()
+        self.assertIsInstance(psnames, (list, tuple))
+        for psname in TestPSSearch.sample:
+            self.assertIn(psname, psnames)
+        # filtering
+        psnames = PSSearch.get_psnames({'discipline': 'PU'})
+        print(psnames)
+
+
+class TestMASearch(unittest.TestCase):
+    """Test MASearch."""
+
+    public_interface = (
+        None,
+    )
+
+    def _test_public_interface(self):
+        """Test class public interface."""
+        valid = util.check_public_interface_namespace(
+            search, TestMASearch.public_interface)
         self.assertTrue(valid)
 
     def test_manames_getsplim(self):

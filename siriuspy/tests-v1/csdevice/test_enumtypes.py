@@ -15,7 +15,8 @@ class TestEnumtypes(unittest.TestCase):
 
     def test_public_interface(self):
         """Test module's public interface."""
-        valid = util.check_public_interface(enumtypes, public_interface)
+        valid = util.check_public_interface_namespace(
+            enumtypes, public_interface)
         self.assertTrue(valid)
 
 
@@ -34,8 +35,8 @@ class TestEnumTypes(unittest.TestCase):
 
     def test_public_interface(self):
         """Test EnumTypes class interface."""
-        valid = util.check_public_interface(EnumTypes,
-                                            TestEnumTypes.public_interface)
+        valid = util.check_public_interface_namespace(
+            EnumTypes, TestEnumTypes.public_interface)
         self.assertTrue(valid)
 
     def test_types(self):

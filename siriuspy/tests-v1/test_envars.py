@@ -53,7 +53,7 @@ class TestEnvars(unittest.TestCase):
 
     def test_public_interface(self):
         """Test module's public interface."""
-        valid = util.check_public_interface(envars, valid_interface)
+        valid = util.check_public_interface_namespace(envars, valid_interface)
         self.assertTrue(valid)
 
     def test_folders(self):
