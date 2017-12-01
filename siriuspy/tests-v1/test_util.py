@@ -38,7 +38,7 @@ class TestUtil(unittest.TestCase):
         """Test conv_splims_labels."""
         self.assertEqual(util.conv_splims_labels('HOPR'), 'hilim')
         self.assertEqual(util.conv_splims_labels('lolo'), 'LOLO')
-        self.assertIs(util.conv_splims_labels('dumb'), None)
+        self.assertRaises(KeyError, util.conv_splims_labels, label='dummmy')
 
     def test_get_last_commit_hash(self):
         """Test get_signal_names."""

@@ -21,8 +21,8 @@ class TestMagnetFactory(unittest.TestCase):
         valid = util.check_public_interface_namespace(factory, valid_interface)
         self.assertTrue(valid)
 
-    def test_manames_getsplim(self):
-        """Test get_pwrsupply_manames and getsplim."""
+    def test_manames_get_splims(self):
+        """Test constructor."""
         maname = 'SI-Fam:MA-B1B2'
         magnet = MagnetFactory.factory(maname=maname,
                                        use_vaca=False,

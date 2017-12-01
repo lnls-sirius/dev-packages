@@ -39,10 +39,7 @@ class PSSearch:
             return PSSearch._pstype_2_splims_dict[pstype][label]
         else:
             label = _util.conv_splims_labels(label)
-            if label is None:
-                return None
-            else:
-                return PSSearch._pstype_2_splims_dict[pstype][label]
+            return PSSearch._pstype_2_splims_dict[pstype][label]
 
     @staticmethod
     def get_pstype_dict():
@@ -85,7 +82,6 @@ class PSSearch:
         for pstype, names in PSSearch._pstype_2_names_dict.items():
             if name in names:
                 return pstype
-        print(name)
         return None
 
     @staticmethod
@@ -207,6 +203,9 @@ class PSSearch:
             pu_param_dict['power_supply_type']
         data = ps_data + pu_data
 
+        PSSearch._splims_ps_unit = ps_param_dict['unit']
+        PSSearch._splims_pu_unit = pu_param_dict['unit']
+
         PSSearch._splims_unit = tuple(units)
         PSSearch._splims_labels = tuple(types)
         PSSearch._pstype_2_splims_dict = {}
@@ -302,7 +301,7 @@ class MASearch:
         return MASearch._splims_unit
 
     @staticmethod
-    def get_splim(maname, label):
+    def get_splims(maname, label):
         """Return setpoint limits.
 
         that correspond to given label (either epics' or pcaspy's).

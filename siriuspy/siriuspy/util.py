@@ -56,7 +56,7 @@ def conv_splims_labels(label):
             if v == label:
                 # pcaspy -> epics
                 return k
-        return None
+        raise KeyError('Invalid splims label "' + label + '"!')
 
 
 def get_last_commit_hash():

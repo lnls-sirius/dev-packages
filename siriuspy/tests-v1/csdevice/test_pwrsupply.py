@@ -14,6 +14,7 @@ public_interface = (
     'default_intlklabels',
     'default_ps_current_precision',
     'default_ps_current_unit',
+    'default_pu_current_unit',
     'get_common_propty_database',
     'get_common_ps_propty_database',
     'get_ps_propty_database',
@@ -28,7 +29,8 @@ class TestPwrSupply(unittest.TestCase):
 
     def test_public_interface(self):
         """Test module's public interface."""
-        valid = util.check_public_interface(pwrsupply, public_interface)
+        valid = util.check_public_interface_namespace(
+            pwrsupply, public_interface)
         self.assertTrue(valid)
 
     def test_common_propty_database(self):
@@ -60,18 +62,16 @@ class TestPwrSupply(unittest.TestCase):
         for pstype in pstypes:
             db = pwrsupply.get_ps_propty_database(pstype)
             unit = db['Current-SP']['unit']
-            print(unit)
-            self.assertIsInstance(unit, str)
-            for propty, db in db.items():
+            for propty, dbi in db.items():
                 # set setpoint limits in database
                 if propty in current_alarm:
-                    self.assertLessEqual(db['lolo'], db['low'])
-                    self.assertLessEqual(db['low'], db['lolim'])
-                    self.assertLessEqual(db['lolim'], db['hilim'])
-                    self.assertLessEqual(db['hilim'], db['high'])
-                    self.assertLessEqual(db['high'], db['hihi'])
+                    self.assertLessEqual(dbi['lolo'], dbi['low'])
+                    self.assertLessEqual(dbi['low'], dbi['lolim'])
+                    self.assertLessEqual(dbi['lolim'], dbi['hilim'])
+                    self.assertLessEqual(dbi['hilim'], dbi['high'])
+                    self.assertLessEqual(dbi['high'], dbi['hihi'])
                 if propty in current_pvs:
-                    self.assertEqual(propty['unit'], unit)
+                    self.assertEqual(dbi['unit'], unit)
 
 
 if __name__ == "__main__":

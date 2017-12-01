@@ -62,14 +62,41 @@ class TestPSSearch(unittest.TestCase):
 
     def test_get_psnames(self):
         """Test get_psnames."""
-        # raw
+        # without filters
         psnames = PSSearch.get_psnames()
         self.assertIsInstance(psnames, (list, tuple))
         for psname in TestPSSearch.sample:
             self.assertIn(psname, psnames)
-        # filtering
+        # check sorted
+        sorted_psnames = sorted(psnames)
+        self.assertEqual(psnames, sorted_psnames)
+        # with filters
         psnames = PSSearch.get_psnames({'discipline': 'PU'})
-        print(psnames)
+        self.assertEqual(len(psnames), 12)
+        for name in psnames:
+            self.assertIn('PU', name)
+        psnames = PSSearch.get_psnames({'sub_section': '0.M1'})
+        self.assertEqual(len(psnames), 69)
+        # exceptions
+        self.assertRaises(TypeError, PSSearch.get_psnames, filters=23)
+        self.assertRaises(TypeError, PSSearch.get_psnames, filters=23.4)
+        self.assertRaises(TypeError, PSSearch.get_psnames, filters=[0, ])
+        self.assertRaises(TypeError, PSSearch.get_psnames, filters=(0.0, ))
+
+    def test_get_splims(self):
+        """Test get_splims."""
+        l1 = PSSearch.get_splims(
+             pstype='si-quadrupole-q30-trim', label='lolo')
+        l2 = PSSearch.get_splims(
+             pstype='si-quadrupole-q30-trim', label='hihi')
+        self.assertGreater(l2, l1)
+        # exceptions
+        self.assertRaises(
+            KeyError, PSSearch.get_splims,
+            pstype='dummy', label='low')
+        self.assertRaises(
+            KeyError, PSSearch.get_splims,
+            pstype='bo-corrector-ch', label='dummy')
 
 
 class TestMASearch(unittest.TestCase):
@@ -85,14 +112,14 @@ class TestMASearch(unittest.TestCase):
             search, TestMASearch.public_interface)
         self.assertTrue(valid)
 
-    def test_manames_getsplim(self):
-        """Test get_pwrsupply_manames and getsplim."""
+    def test_manames_get_splims(self):
+        """Test get_pwrsupply_manames and get_splims."""
         manames = MASearch.get_pwrsupply_manames()
         for maname in manames:
-            lolo = MASearch.get_splim(maname, 'lolo')
-            low = MASearch.get_splim(maname, 'low')
-            high = MASearch.get_splim(maname, 'HIGH')
-            hihi = MASearch.get_splim(maname, 'HIHI')
+            lolo = MASearch.get_splims(maname, 'lolo')
+            low = MASearch.get_splims(maname, 'low')
+            high = MASearch.get_splims(maname, 'HIGH')
+            hihi = MASearch.get_splims(maname, 'HIHI')
 
             self.assertGreaterEqual(hihi, high)
             self.assertGreater(high, lolo)
@@ -164,9 +191,9 @@ class TestMASearchLimitLabels(unittest.TestCase):
 class TestMASearchLoading(unittest.TestCase):
     """Test Loading methods."""
 
-    def test_masearch_load_from_get_splim(self):
+    def test_masearch_load_from_get_splims(self):
         """Test _maname_2_splims_dict."""
-        MASearch.get_splim('SI-Fam:MA-QDA', 'lolo')
+        MASearch.get_splims('SI-Fam:MA-QDA', 'lolo')
         self.assertEqual(MASearch._maname_2_splims_dict is not None, True)
 
     def test_masearch_load_from_get_splims_unit(self):

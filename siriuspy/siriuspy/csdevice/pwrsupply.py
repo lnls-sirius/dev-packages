@@ -136,12 +136,12 @@ def get_pu_propty_database(pstype):
                       _ps_props.TensionRefMon, _ps_props.TensionMon]
 
     for signal in analog_signals:
-        db[signal]["lolo"] = _PSSearch.get_splim(pstype, "lolo")
-        db[signal]["low"] = _PSSearch.get_splim(pstype, "low")
-        db[signal]["lolim"] = _PSSearch.get_splim(pstype, "lolim")
-        db[signal]["hihi"] = _PSSearch.get_splim(pstype, "hihi")
-        db[signal]["high"] = _PSSearch.get_splim(pstype, "high")
-        db[signal]["hilim"] = _PSSearch.get_splim(pstype, "hilim")
+        db[signal]["lolo"] = _PSSearch.get_splims(pstype, "lolo")
+        db[signal]["low"] = _PSSearch.get_splims(pstype, "low")
+        db[signal]["lolim"] = _PSSearch.get_splims(pstype, "lolim")
+        db[signal]["hihi"] = _PSSearch.get_splims(pstype, "hihi")
+        db[signal]["high"] = _PSSearch.get_splims(pstype, "high")
+        db[signal]["hilim"] = _PSSearch.get_splims(pstype, "hilim")
 
     return db
 
@@ -155,37 +155,18 @@ def get_ma_propty_database(maname):
     for psname, magfunc in magfunc_dict.items():
         # psnames = _MASearch.conv_maname_2_psnames(maname)
         db[psname] = _copy.deepcopy(propty_db)
-        # for propty,pdb in propty_db.items():
-        #     # set setpoint limits in database
-        #     if propty in ('Current-SP',):
-        #         label='lolo';  pdb[label] = _MASearch.get_splim(maname,label)
-        #         label='low';   pdb[label] = _MASearch.get_splim(maname,label)
-        #         label='lolim'; pdb[label] = _MASearch.get_splim(maname,label)
-        #         label='hilim'; pdb[label] = _MASearch.get_splim(maname,label)
-        #         label='high';  pdb[label] = _MASearch.get_splim(maname,label)
-        #         label='hihi';  pdb[label] = _MASearch.get_splim(maname,label)
-        #     # define unit of current
-        #     if propty in \
-        #           ('Current-SP', 'Current-RB', 'CurrentRef-Mon',
-        #            'Current-Mon'):
-        #         #db[psname]['unit'] = units[0]
-        #         pdb['unit'] = units[0]
-        db[psname]["Current-SP"]['lolo'] = _MASearch.get_splim(maname, 'lolo')
-        db[psname]["Current-SP"]['low'] = _MASearch.get_splim(maname, 'low')
+        db[psname]["Current-SP"]['lolo'] = _MASearch.get_splims(maname, 'lolo')
+        db[psname]["Current-SP"]['low'] = _MASearch.get_splims(maname, 'low')
         db[psname]["Current-SP"]['lolim'] = \
-            _MASearch.get_splim(maname, 'lolim')
+            _MASearch.get_splims(maname, 'lolim')
         db[psname]["Current-SP"]['hilim'] = \
-            _MASearch.get_splim(maname, 'hilim')
-        db[psname]["Current-SP"]['high'] = _MASearch.get_splim(maname, 'high')
-        db[psname]["Current-SP"]['hihi'] = _MASearch.get_splim(maname, 'hihi')
+            _MASearch.get_splims(maname, 'hilim')
+        db[psname]["Current-SP"]['high'] = _MASearch.get_splims(maname, 'high')
+        db[psname]["Current-SP"]['hihi'] = _MASearch.get_splims(maname, 'hihi')
         db[psname]["Current-SP"]['unit'] = units[0]
         db[psname]["Current-RB"]['unit'] = units[0]
         db[psname]["CurrentRef-Mon"]['unit'] = units[0]
         db[psname]["Current-Mon"]['unit'] = units[0]
-        # db[psname]["Current-SP"]['prec'] = 6
-        # db[psname]["Current-RB"]['prec'] = 6
-        # db[psname]["CurrentRef-Mon"]['prec'] = 6
-        # db[psname]["Current-Mon"]['prec'] = 6
         if magfunc in ('quadrupole', 'quadrupole-skew'):
             db[psname]['KL-SP'] = _copy.deepcopy(db[psname]['Current-SP'])
             db[psname]['KL-SP']['unit'] = '1/m'
@@ -253,13 +234,13 @@ def get_pm_propty_database(maname, psdata):
                          _ps_props.StrengthRefMon, _ps_props.StrengthMon]
 
         for strength in strength_list:
-            db[psname][strength]["lolo"] = _MASearch.get_splim(maname, "lolo")
-            db[psname][strength]["low"] = _MASearch.get_splim(maname, "low")
+            db[psname][strength]["lolo"] = _MASearch.get_splims(maname, "lolo")
+            db[psname][strength]["low"] = _MASearch.get_splims(maname, "low")
             db[psname][strength]["lolim"] = \
-                _MASearch.get_splim(maname, "lolim")
-            db[psname][strength]["hihi"] = _MASearch.get_splim(maname, "hihi")
-            db[psname][strength]["high"] = _MASearch.get_splim(maname, "high")
+                _MASearch.get_splims(maname, "lolim")
+            db[psname][strength]["hihi"] = _MASearch.get_splims(maname, "hihi")
+            db[psname][strength]["high"] = _MASearch.get_splims(maname, "high")
             db[psname][strength]["hilim"] = \
-                _MASearch.get_splim(maname, "hilim")
+                _MASearch.get_splims(maname, "hilim")
 
     return db

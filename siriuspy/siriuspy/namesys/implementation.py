@@ -197,7 +197,7 @@ class Filter:
             return pvnames
         if isinstance(filters, dict):
             filters = [filters]
-        if isinstance(pvnames, str):
+        elif isinstance(pvnames, str):
             pvnames = [pvnames]
 
         # build filter regexp
