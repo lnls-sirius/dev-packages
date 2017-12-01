@@ -120,13 +120,24 @@ class PSSearch:
         return _copy.deepcopy(PSSearch._pstype_2_splims_dict[pstype])
 
     @staticmethod
-    def conv_psname_2_excdata(name):
+    def conv_psname_2_excdata(psname):
         """Convert psname to excdata."""
-        pstype = PSSearch.conv_psname_2_pstype(name)
+        pstype = PSSearch.conv_psname_2_pstype(psname)
         if pstype not in PSSearch._pstype_2_excdat_dict:
             PSSearch._reload_pstype_2_excdat_dict(pstype)
 
         return PSSearch._pstype_2_excdat_dict[pstype]
+
+    @staticmethod
+    def conv_psname_2_ispulsed(psname):
+        """Return True if psname is a pulsed power supply, False otherwise."""
+        devname = _SiriusPVName(psname)
+        if _SiriusPVName(devname).discipline == 'PU':
+            return True
+        elif _SiriusPVName(devname).discipline == 'PS':
+            return False
+        else:
+            raise ValueError('Invalid psname "' + psname + '"!')
 
     @staticmethod
     def get_pstype_2_splims_dict():

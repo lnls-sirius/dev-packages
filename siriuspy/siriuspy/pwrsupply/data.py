@@ -28,6 +28,7 @@ class PSData:
             raise ValueError(psname + ' is not a valid power supply name.')
         self._psname = psname
         self._pstype = _PSSearch.conv_psname_2_pstype(self._psname)
+        self._ispulsed = _PSSearch.conv_psname_2_ispulsed(self._psname)
         self._polarity = _PSSearch.conv_pstype_2_polarity(self._pstype)
         self._magfunc = _PSSearch.conv_pstype_2_magfunc(self._pstype)
         self._splims = _PSSearch.conv_pstype_2_splims(self._pstype)

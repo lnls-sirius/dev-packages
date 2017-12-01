@@ -3,6 +3,7 @@
 """Unittest module for enumtypes.py."""
 
 import unittest
+from siriuspy.search import PSSearch
 import siriuspy.csdevice.pwrsupply as pwrsupply
 import siriuspy.util as util
 
@@ -49,6 +50,28 @@ class TestPwrSupply(unittest.TestCase):
         for propty in proptys:
             self.assertEqual(db[propty]['prec'],
                              pwrsupply.default_ps_current_precision)
+
+    def _test_ps_propty_database(self):
+        """Test ps_propty_database."""
+        current_alarm = ('Current-SP', 'Current-RB',
+                         'CurrentRef-Mon', 'Current-Mon', )
+        current_pvs = current_alarm + ('WfmData-SP', 'WfmData-RB')
+        pstypes = PSSearch.get_pstype_names()
+        for pstype in pstypes:
+            db = pwrsupply.get_ps_propty_database(pstype)
+            unit = db['Current-SP']['unit']
+            print(unit)
+            self.assertIsInstance(unit, str)
+            for propty, db in db.items():
+                # set setpoint limits in database
+                if propty in current_alarm:
+                    self.assertLessEqual(db['lolo'], db['low'])
+                    self.assertLessEqual(db['low'], db['lolim'])
+                    self.assertLessEqual(db['lolim'], db['hilim'])
+                    self.assertLessEqual(db['hilim'], db['high'])
+                    self.assertLessEqual(db['high'], db['hihi'])
+                if propty in current_pvs:
+                    self.assertEqual(propty['unit'], unit)
 
 
 if __name__ == "__main__":

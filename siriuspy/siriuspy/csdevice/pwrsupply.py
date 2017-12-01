@@ -72,9 +72,12 @@ def get_common_ps_propty_database():
 def get_ps_propty_database(pstype):
     """Return property database of a LNLS power supply type device."""
     propty_db = get_common_ps_propty_database()
+    current_alarm = ('Current-SP', 'Current-RB',
+                     'CurrentRef-Mon', 'Current-Mon', )
+    current_pvs = current_alarm + ('WfmData-SP', 'WfmData-RB')
     for propty, db in propty_db.items():
         # set setpoint limits in database
-        if propty in ('Current-SP',):
+        if propty in current_alarm:
             db['lolo'] = _PSSearch.get_splim(pstype, 'lolo')
             db['low'] = _PSSearch.get_splim(pstype, 'low')
             db['lolim'] = _PSSearch.get_splim(pstype, 'lolim')
@@ -82,9 +85,7 @@ def get_ps_propty_database(pstype):
             db['high'] = _PSSearch.get_splim(pstype, 'high')
             db['hihi'] = _PSSearch.get_splim(pstype, 'hihi')
         # define unit of current
-        if propty in \
-                ('Current-SP', 'Current-RB', 'CurrentRef-Mon', 'Current-Mon',
-                 'WfmData-SP', 'WfmData-RB'):
+        if propty in current_pvs:
             db['unit'] = default_ps_current_unit
 
     return propty_db
