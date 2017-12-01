@@ -155,16 +155,6 @@ def get_ma_propty_database(maname):
     for psname, magfunc in magfunc_dict.items():
         # psnames = _MASearch.conv_maname_2_psnames(maname)
         db[psname] = _copy.deepcopy(propty_db)
-<<<<<<< Updated upstream
-        db[psname]["Current-SP"]['lolo'] = _MASearch.get_splims(maname, 'lolo')
-        db[psname]["Current-SP"]['low'] = _MASearch.get_splims(maname, 'low')
-        db[psname]["Current-SP"]['lolim'] = \
-            _MASearch.get_splims(maname, 'lolim')
-        db[psname]["Current-SP"]['hilim'] = \
-            _MASearch.get_splims(maname, 'hilim')
-        db[psname]["Current-SP"]['high'] = _MASearch.get_splims(maname, 'high')
-        db[psname]["Current-SP"]['hihi'] = _MASearch.get_splims(maname, 'hihi')
-=======
         # for propty,pdb in propty_db.items():
         #     # set setpoint limits in database
         #     if propty in ('Current-SP',):
@@ -194,7 +184,6 @@ def get_ma_propty_database(maname):
             db[psname]["Current" + field]['hihi'] = \
                 _MASearch.get_splim(maname, 'hihi')
 
->>>>>>> Stashed changes
         db[psname]["Current-SP"]['unit'] = units[0]
         db[psname]["Current-RB"]['unit'] = units[0]
         db[psname]["CurrentRef-Mon"]['unit'] = units[0]
