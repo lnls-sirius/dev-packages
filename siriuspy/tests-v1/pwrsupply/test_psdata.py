@@ -57,7 +57,7 @@ class TestPSDataProperties(unittest.TestCase):
         mock_search.conv_pstype_2_splims.return_value = \
             self.properties['splims']
         mock_search.get_splims_unit.return_value = \
-            [self.properties['splims_unit'], 'garbage']
+            self.properties['splims_unit']
         mock_search.conv_psname_2_excdata.return_value = \
             self.properties['excdata']
 
