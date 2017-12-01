@@ -1,3 +1,5 @@
+#!/usr/bin/env python-sirius
+
 """Test DipoleNormalizer.
 
 Requirements:
@@ -7,7 +9,7 @@ Requirements:
 """
 import unittest
 
-from siriuspy.magnet.model import DipoleNormalizer
+from siriuspy.magnet.normalizer import DipoleNormalizer
 
 
 class DipoleNormalizerTest(unittest.TestCase):
@@ -16,16 +18,16 @@ class DipoleNormalizerTest(unittest.TestCase):
     settings = {
         "TB": {"name": "TB-Fam:MA-B",
                "current": 476.0,
-               "strength": 0.15},
+               "strength": 0.14998905968836743},
         "BO": {"name": "BO-Fam:MA-B",
                "current": 981.778,
-               "strength": 3.0},
+               "strength": 2.9999833123899702},
         "TS": {"name": "TS-Fam:MA-B",
                "current": 680.1,
-               "strength": 3.0},
+               "strength": 3.0001213317838813},
         "SI": {"name": "SI-Fam:MA-B1B2",
                "current": 394.1,
-               "strength": 3.0}
+               "strength": 3.0000383740663543}
     }
 
     def setUp(self):

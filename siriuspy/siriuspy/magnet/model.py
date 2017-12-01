@@ -32,7 +32,7 @@ def create_magnet_normalizer(magnet):
             return _norm.TrimNormalizer(magnet.maname,
                                         magnet_conv_sign=-1.0,
                                         dipole_name=magnet.dipole_name,
-                                        fam_name=magnet.fam_name)
+                                        family_name=magnet.family_name)
     elif magnet.magfunc in ('corrector-horizontal', 'quadrupole-skew'):
         return _norm.MagnetNormalizer(magnet.maname,
                                       dipole_name=magnet.dipole_name,
@@ -54,7 +54,7 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
                  connection_timeout=None):
         self._maname = _SiriusPVName(maname)
         self._dipole_name = _mutil.get_section_dipole_name(self._maname)
-        self._fam_name = _mutil.get_magnet_fam_name(self._maname)
+        self._family_name = _mutil.get_magnet_family_name(self._maname)
         self._madata = _MAData(maname=self._maname)
         self._magfunc = self._madata.magfunc(self._madata.psnames[0])
         self._mfmult = _magfuncs[self.magfunc]
@@ -118,8 +118,8 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
         return self._dipole_name
 
     @property
-    def fam_name(self):
-        return self._fam_name
+    def family_name(self):
+        return self._family_name
 
     @property
     def database(self):
@@ -470,7 +470,7 @@ class MagnetPowerSupplyTrim(MagnetPowerSupply):
         attrs = ('Current-SP', 'Current-RB', 'CurrentRef-Mon', 'Current-Mon')
         super(MagnetPowerSupplyTrim, self)._init_subclass()
         self._fam = {}
-        prefix = self._vaca_prefix + self._fam_name
+        prefix = self._vaca_prefix + self._family_name
         # self._fam = _epics.Device(prefix, delim=':', attrs=attrs)
 
         # self._fam_current_sp = 0.0

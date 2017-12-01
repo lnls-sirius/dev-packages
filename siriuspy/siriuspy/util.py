@@ -8,6 +8,7 @@ import math as _math
 import datetime as _datetime
 import siriuspy.envars as _envars
 import epics as _epics
+import numpy as _np
 
 
 def conv_splims_labels(label):
@@ -226,10 +227,14 @@ def beam_rigidity(energy):
     # [Kg̣*m^2/s^2] - derived
     electron_rest_energy_eV = joule_2_eV * electron_rest_energy
     gamma = energy*1e9/electron_rest_energy_eV
-    try:
-        beta = _math.sqrt(((gamma-1.0)/gamma)*((gamma+1.0)/gamma))
-    except Exception:
-        return 0
+    if isinstance(gamma, _np.ndarray):
+        beta = _np.sqrt(((gamma-1.0)/gamma)*((gamma+1.0)/gamma))
+        beta[gamma < 1.0] = 0.0
+    else:
+        if gamma < 1.0:
+            beta = 0.0
+        else:
+            beta = _math.sqrt(((gamma-1.0)/gamma)*((gamma+1.0)/gamma))
     brho = beta * (energy*1e9) / light_speed
     return brho
 
@@ -272,3 +277,30 @@ def get_strength_units(magfunc, section=None):
             return 'mrad'
     else:
         raise NotImplementedError("magfunc {}".format(magfunc))
+
+
+def update_bit_of_integer(integer, number_of_bits, put, bit):
+    """Function to update a bit of integer.
+
+    Parameters
+    ----------
+    integer: int
+        Integer whose bit will be updated.
+    number_of_bits: (>=1)
+        Number of bit  of the integer whose bit will be updated.
+    put: 0 | 1
+        Value to put on the bit.
+    bit: (>=0)
+        The number of the bit (>=0).
+    """
+    allset = 1
+    for i in range(number_of_bits):
+        allset = 2*allset + 1
+
+    if put == 1:
+        mask = 1 << bit
+        integer = integer | mask
+    elif put == 0:
+        mask = (1 << bit) ^ allset
+        integer = integer & mask
+    return integer
