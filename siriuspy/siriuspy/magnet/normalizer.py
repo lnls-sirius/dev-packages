@@ -117,6 +117,8 @@ class DipoleNormalizer(_MagnetNormalizer):
         return self.conv_current_2_strength(currents=currents_dipole)
 
     def _conv_strength_2_intfield(self, strengths, **kwargs):
+        if isinstance(strengths, list):
+            strengths = _np.array(strengths)
         if self._maname.section == 'SI':
             intfields = (- self._ref_angle *
                          (self._ref_brho / self._ref_energy)
@@ -128,6 +130,8 @@ class DipoleNormalizer(_MagnetNormalizer):
         return intfields
 
     def _conv_intfield_2_strength(self, intfields, **kwargs):
+        if isinstance(intfields, list):
+            intfields = _np.array(intfields)
         if self._maname.section == 'SI':
             strengths = -self._magnet_conv_sign * \
                         ((self._ref_energy / self._ref_brho) *
@@ -158,11 +162,15 @@ class MagnetNormalizer(_MagnetNormalizer):
         # self._magnet_conv_sign = magnet_conv_sign
 
     def _conv_strength_2_intfield(self, strengths, **kwargs):
+        if isinstance(strengths, list):
+            strengths = _np.array(strengths)
         brhos = self._get_brho(currents_dipole=kwargs['currents_dipole'])
         intfields = self._magnet_conv_sign * brhos * strengths
         return intfields
 
     def _conv_intfield_2_strength(self, intfields, **kwargs):
+        if isinstance(intfields, list):
+            intfields = _np.array(intfields)
         brhos = self._get_brho(currents_dipole=kwargs['currents_dipole'])
         if isinstance(brhos, _np.ndarray):
             strengths = self._magnet_conv_sign * intfields / brhos
@@ -186,6 +194,8 @@ class TrimNormalizer(_MagnetNormalizer):
         self._fam = MagnetNormalizer(family_name, dipole_name, **kwargs)
 
     def _conv_strength_2_intfield(self, strengths, **kwargs):
+        if isinstance(strengths, list):
+            strengths = _np.array(strengths)
         strengths_fam = self._fam.conv_current_2_strength(
             currents=kwargs["currents_family"],
             currents_dipole=kwargs["currents_dipole"])
@@ -194,6 +204,8 @@ class TrimNormalizer(_MagnetNormalizer):
         return intfields
 
     def _conv_intfield_2_strength(self, intfields, **kwargs):
+        if isinstance(intfields, list):
+            intfields = _np.array(intfields)
         brhos = self._get_brho(currents_dipole=kwargs['currents_dipole'])
         if brhos == 0:
             return 0
