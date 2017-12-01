@@ -13,6 +13,7 @@ public_interface = (
     'default_wfmlabels',
     'default_intlklabels',
     'default_ps_current_precision',
+    'default_pu_current_precision',
     'default_ps_current_unit',
     'default_pu_current_unit',
     'get_common_propty_database',

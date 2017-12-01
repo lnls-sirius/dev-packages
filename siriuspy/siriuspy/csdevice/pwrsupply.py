@@ -10,6 +10,7 @@ default_wfmsize = 4000
 default_wfmlabels = _et.enums('PSWfmLabelsTyp')
 default_intlklabels = _et.enums('PSIntlkLabelsTyp')
 default_ps_current_precision = 4
+default_pu_current_precision = 4
 default_ps_current_unit = _PSSearch.get_splims_unit(ispulsed=False)
 default_pu_current_unit = _PSSearch.get_splims_unit(ispulsed=True)
 
@@ -122,14 +123,15 @@ def get_pu_propty_database(pstype):
         _ps_props.ExternalInterlock: {"type": "int", "value": 0},
 
         # Analog signals
-        _ps_props.TensionSP: {"type": "float", "unit": units[0],
-                              "value": 0.0, "prec": precision},
-        _ps_props.TensionRB: {"type": "float", "unit": units[0],
-                              "value": 0.0, "prec": precision},
+        _ps_props.TensionSP: {"type": "float", "unit": units[0], "value": 0.0,
+                              "prec": default_pu_current_precision},
+        _ps_props.TensionRB: {"type": "float", "unit": units[0], "value": 0.0,
+                              "prec": precision},
         _ps_props.TensionRefMon: {"type": "float", "unit": units[0],
-                                  "value": 0.0, "prec": precision},
-        _ps_props.TensionMon: {"type": "float", "unit": units[0],
-                               "value": 0.0, "prec": precision}
+                                  "value": 0.0,
+                                  "prec": default_pu_current_precision},
+        _ps_props.TensionMon: {"type": "float", "unit": units[0], "value": 0.0,
+                               "prec": default_pu_current_precision}
     }
     # Get tension limits
     analog_signals = [_ps_props.TensionSP, _ps_props.TensionRB,
@@ -172,17 +174,17 @@ def get_ma_propty_database(maname):
         #         pdb['unit'] = units[0]
         for field in ["-SP", "-RB", "Ref-Mon", "-Mon"]:
             db[psname]["Current" + field]['lolo'] = \
-                _MASearch.get_splim(maname, 'lolo')
+                _MASearch.get_splims(maname, 'lolo')
             db[psname]["Current" + field]['low'] = \
-                _MASearch.get_splim(maname, 'low')
+                _MASearch.get_splims(maname, 'low')
             db[psname]["Current" + field]['lolim'] = \
-                _MASearch.get_splim(maname, 'lolim')
+                _MASearch.get_splims(maname, 'lolim')
             db[psname]["Current" + field]['hilim'] = \
-                _MASearch.get_splim(maname, 'hilim')
+                _MASearch.get_splims(maname, 'hilim')
             db[psname]["Current" + field]['high'] = \
-                _MASearch.get_splim(maname, 'high')
+                _MASearch.get_splims(maname, 'high')
             db[psname]["Current" + field]['hihi'] = \
-                _MASearch.get_splim(maname, 'hihi')
+                _MASearch.get_splims(maname, 'hihi')
 
         db[psname]["Current-SP"]['unit'] = units[0]
         db[psname]["Current-RB"]['unit'] = units[0]
