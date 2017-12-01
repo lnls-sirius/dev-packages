@@ -28,6 +28,13 @@ class PSSearch:
         return _Filter.process_filters(PSSearch._psnames_list, filters=filters)
 
     @staticmethod
+    def get_pstype_names():
+        """Return sorted list of power supply types."""
+        if PSSearch._pstype_dict is None:
+            PSSearch._reload_pstype_dict()
+        return sorted(set(PSSearch._pstype_dict.keys()))
+
+    @staticmethod
     def get_splims(pstype, label):
         """Return setpoint limit corresponding to given label.
 
@@ -53,13 +60,6 @@ class PSSearch:
         return _copy.deepcopy(PSSearch._pstype_dict)
 
     @staticmethod
-    def get_pstype_names():
-        """Return sorted list of power supply types."""
-        if PSSearch._pstype_dict is None:
-            PSSearch._reload_pstype_dict()
-        return sorted(set(PSSearch._pstype_dict.keys()))
-
-    @staticmethod
     def get_polarities():
         """Return sorted list of power supply polarities."""
         if PSSearch._pstype_dict is None:
@@ -67,22 +67,22 @@ class PSSearch:
         p = [datum[0] for datum in PSSearch._pstype_dict.values()]
         return sorted(set(p))
 
-    @staticmethod
-    def get_pstype_2_names_dict():
-        """Return dictionary of power supply type and power supply names."""
-        if PSSearch._pstype_2_names_dict is None:
-            PSSearch._reload_pstype_2_names_dict()
-        return _copy.deepcopy(PSSearch._pstype_2_names_dict)
+    # @staticmethod
+    # def get_pstype_2_names_dict():
+    #     """Return dictionary of power supply type and power supply names."""
+    #     if PSSearch._pstype_2_names_dict is None:
+    #         PSSearch._reload_pstype_2_names_dict()
+    #     return _copy.deepcopy(PSSearch._pstype_2_names_dict)
 
     @staticmethod
-    def conv_psname_2_pstype(name):
+    def conv_psname_2_pstype(psname):
         """Return the power supply type of a given power supply name."""
         if PSSearch._pstype_2_names_dict is None:
             PSSearch._reload_pstype_2_names_dict()
-        for pstype, names in PSSearch._pstype_2_names_dict.items():
-            if name in names:
+        for pstype, psnames in PSSearch._pstype_2_names_dict.items():
+            if psname in psnames:
                 return pstype
-        return None
+        raise KeyError('Invalid psname "' + psname + '"!')
 
     @staticmethod
     def conv_pstype_2_polarity(pstype):
@@ -198,17 +198,19 @@ class PSSearch:
         text = _web.pulsed_power_supplies_pstype_setpoint_limits()
         pu_data, pu_param_dict = _util.read_text_data(text)
 
-        units = [ps_param_dict['unit'], pu_param_dict['unit']]
-        types = ps_param_dict['power_supply_type'] + \
-            pu_param_dict['power_supply_type']
-        data = ps_data + pu_data
+        # checks consistency between PS and PU static tables.
+        # this should be implemented elsewhere, not in PSSearch!
+        if sorted(ps_param_dict['power_supply_type']) != \
+                sorted(pu_param_dict['power_supply_type']):
+            raise ValueError(('Inconsistent limit labels between PS '
+                              'and PU static tables!'))
 
         PSSearch._splims_ps_unit = ps_param_dict['unit']
         PSSearch._splims_pu_unit = pu_param_dict['unit']
+        PSSearch._splims_labels = ps_param_dict['power_supply_type']
 
-        PSSearch._splims_unit = tuple(units)
-        PSSearch._splims_labels = tuple(types)
         PSSearch._pstype_2_splims_dict = {}
+        data = ps_data + pu_data
         for datum in data:
             pstype, *lims = datum
             PSSearch._pstype_2_splims_dict[pstype] = \
