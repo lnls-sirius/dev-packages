@@ -4,8 +4,7 @@
 # |        | = |               | + |          | * |                 |
 # | ChromY |   | NominalChromY |   | m21  m22 |   | SL BO-Fam:MA-SD |
 #
-# Natural Chromaticity (considers Quadrupoles and Dipoles Multipoles)
-#   NaturalChromX   NaturalChromY
+# Data ordering:
 #
 # Nominal Chromaticity
 #   NominalChromX   NominalChromY
@@ -18,12 +17,11 @@
 # [sextupole_order  SF  SD]
 
 
-   0.0   0.0
+   0.4999   0.5
 
 
-   30.0   0.3
-  -8.0  -2.8
+   29.9748   0.2953
+  -8.1096  -2.7802
 
 
-   1.2   0.5
-
+   1.1899   0.5258
