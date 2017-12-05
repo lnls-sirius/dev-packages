@@ -38,7 +38,9 @@ class TestPSSearch(unittest.TestCase):
         'conv_pstype_2_magfunc',
         'conv_pstype_2_splims',
         'conv_psname_2_excdata',
-        'conv_psname_2_ispulsed',
+        'check_psname_ispulsed',
+        'check_pstype_ispulsed',
+        'get_pstype_2_psnames_dict',
         'get_pstype_2_splims_dict',
         'get_splims_unit',
         'get_splims_labels',
@@ -141,6 +143,12 @@ class TestPSSearch(unittest.TestCase):
         self.assertRaises(
             KeyError, PSSearch.conv_psname_2_pstype, psname='dummy')
 
+    def test_conv_pstype_2_polarity(self):
+        """Test conv_pstype_2_polarity."""
+
+    def test_conv_pstype_2_magfunc(self):
+        """Test conv_pstype_2_magfunc."""
+        raise NotImplemented
 
 class TestMASearch(unittest.TestCase):
     """Test MASearch."""

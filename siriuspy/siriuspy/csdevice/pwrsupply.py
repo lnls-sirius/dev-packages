@@ -94,57 +94,27 @@ def get_ps_propty_database(pstype):
 
 
 def get_pu_propty_database(pstype):
-    """Return database definition for a pulsed power supply."""
-    units = _PSSearch.get_splims_unit()[1]
-    precision = 4
-
-    db = {
-        # Digital signals
-        _ps_props.PwrStateSel: {"type": "enum",
-                                "enums": _et.enums("OffOnTyp"),
-                                "value": _et.idx.Off},
-        _ps_props.PwrStateSts: {"type": "enum",
-                                "enums": _et.enums("OffOnTyp"),
-                                "value": _et.idx.Off},
-        _ps_props.EnablePulsesSel: {"type": "enum",
-                                    "enums": _et.enums("DsblEnblTyp"),
-                                    "value": _et.idx.Dsbl},
-        _ps_props.EnablePulsesSts: {"type": "enum",
-                                    "enums": _et.enums("DsblEnblTyp"),
-                                    "value": _et.idx.Dsbl},
-        _ps_props.ResetCmd: {"type": "int", "value": 0},
-
-        # Waveform
-
-        # Read only digital signals
-        _ps_props.CtrlMode: {"type": "enum",
-                             "enums": _et.enums('RmtLocTyp'),
-                             "value": _et.idx.Remote},
-        _ps_props.ExternalInterlock: {"type": "int", "value": 0},
-
-        # Analog signals
-        _ps_props.TensionSP: {"type": "float", "unit": units[0], "value": 0.0,
-                              "prec": default_pu_current_precision},
-        _ps_props.TensionRB: {"type": "float", "unit": units[0], "value": 0.0,
-                              "prec": precision},
-        _ps_props.TensionRefMon: {"type": "float", "unit": units[0],
-                                  "value": 0.0,
-                                  "prec": default_pu_current_precision},
-        _ps_props.TensionMon: {"type": "float", "unit": units[0], "value": 0.0,
-                               "prec": default_pu_current_precision}
+    """Return database definition for a pulsed power supply type."""
+    db = get_common_propty_database()
+    db_p = {'type': 'enum', 'enums': _et.enums('DsblEnblTyp'),
+            'value': _et.idx.Dsbl},
+    db_pu = {
+        'Pulsed-Sel': _copy.deepcopy(db_p),
+        'Pulsed-Sts': _copy.deepcopy(db_p),
     }
-    # Get tension limits
-    analog_signals = [_ps_props.TensionSP, _ps_props.TensionRB,
-                      _ps_props.TensionRefMon, _ps_props.TensionMon]
-
-    for signal in analog_signals:
-        db[signal]["lolo"] = _PSSearch.get_splims(pstype, "lolo")
-        db[signal]["low"] = _PSSearch.get_splims(pstype, "low")
-        db[signal]["lolim"] = _PSSearch.get_splims(pstype, "lolim")
-        db[signal]["hihi"] = _PSSearch.get_splims(pstype, "hihi")
-        db[signal]["high"] = _PSSearch.get_splims(pstype, "high")
-        db[signal]["hilim"] = _PSSearch.get_splims(pstype, "hilim")
-
+    signals = ('Voltage-SP', 'Voltage-RB', 'Voltage-Mon')
+    db_v = {'type': 'float', 'unit': default_pu_current_unit, 'value': 0.0,
+            'prec': default_pu_current_precision},
+    for signal in signals:
+        db_v = _copy.deepcopy(db_v)
+        db_v['lolo'] = _PSSearch.get_splims(pstype, 'lolo')
+        db_v['low'] = _PSSearch.get_splims(pstype, 'low')
+        db_v['lolim'] = _PSSearch.get_splims(pstype, 'lolim')
+        db_v['hihi'] = _PSSearch.get_splims(pstype, 'hihi')
+        db_v['high'] = _PSSearch.get_splims(pstype, 'high')
+        db_v['hilim'] = _PSSearch.get_splims(pstype, 'hilim')
+        db_pu.update({signal: db_v})
+    db.update(db_pu)
     return db
 
 
