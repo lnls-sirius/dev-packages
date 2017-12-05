@@ -74,6 +74,9 @@ class TestPwrSupply(unittest.TestCase):
                 if propty in current_pvs:
                     self.assertEqual(dbi['unit'], unit)
 
+    def test_pu_propty_database(self):
+        """Test pu_propty_database."""
+
 
 if __name__ == "__main__":
     unittest.main()

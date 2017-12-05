@@ -16,15 +16,15 @@ class PSSearch:
     _splims_ps_unit = None
     _splims_pu_unit = None
     _psnames_list = None
-    _pstype_2_names_dict = None
+    _pstype_2_psnames_dict = None
     _pstype_2_splims_dict = None
     _pstype_2_excdat_dict = dict()
 
     @staticmethod
     def get_psnames(filters=None):
         """Return a sorted and filtered list of all power supply names."""
-        if PSSearch._pstype_2_names_dict is None:
-            PSSearch._reload_pstype_2_names_dict()
+        if PSSearch._pstype_2_psnames_dict is None:
+            PSSearch._reload_pstype_2_psnames_dict()
         return _Filter.process_filters(PSSearch._psnames_list, filters=filters)
 
     @staticmethod
@@ -67,19 +67,12 @@ class PSSearch:
         p = [datum[0] for datum in PSSearch._pstype_dict.values()]
         return sorted(set(p))
 
-    # @staticmethod
-    # def get_pstype_2_names_dict():
-    #     """Return dictionary of power supply type and power supply names."""
-    #     if PSSearch._pstype_2_names_dict is None:
-    #         PSSearch._reload_pstype_2_names_dict()
-    #     return _copy.deepcopy(PSSearch._pstype_2_names_dict)
-
     @staticmethod
     def conv_psname_2_pstype(psname):
         """Return the power supply type of a given power supply name."""
-        if PSSearch._pstype_2_names_dict is None:
-            PSSearch._reload_pstype_2_names_dict()
-        for pstype, psnames in PSSearch._pstype_2_names_dict.items():
+        if PSSearch._pstype_2_psnames_dict is None:
+            PSSearch._reload_pstype_2_psnames_dict()
+        for pstype, psnames in PSSearch._pstype_2_psnames_dict.items():
             if psname in psnames:
                 return pstype
         raise KeyError('Invalid psname "' + psname + '"!')
@@ -123,7 +116,7 @@ class PSSearch:
         return PSSearch._pstype_2_excdat_dict[pstype]
 
     @staticmethod
-    def conv_psname_2_ispulsed(psname):
+    def check_psname_ispulsed(psname):
         """Return True if psname is a pulsed power supply, False otherwise."""
         devname = _SiriusPVName(psname)
         if _SiriusPVName(devname).discipline == 'PU':
@@ -132,6 +125,24 @@ class PSSearch:
             return False
         else:
             raise ValueError('Invalid psname "' + psname + '"!')
+
+    @staticmethod
+    def check_pstype_ispulsed(pstype):
+        """Return True if pstype is of a pulsed pwrsupply type, False o.w."""
+        if PSSearch._pstype_2_psnames_dict is None:
+            PSSearch._reload_pstype_2_psnames_dict()
+        psnames = PSSearch._reload_pstype_2_psnames_dict[pstype]
+        for psname in psnames:
+            if ':PU' in psname:
+                return True
+        return False
+
+    @staticmethod
+    def get_pstype_2_psnames_dict():
+        """Return dictionary of power supply type and power supply names."""
+        if PSSearch._pstype_2_psnames_dict is None:
+            PSSearch._reload_pstype_2_psnames_dict()
+        return _copy.deepcopy(PSSearch._pstype_2_psnames_dict)
 
     @staticmethod
     def get_pstype_2_splims_dict():
@@ -173,18 +184,18 @@ class PSSearch:
             raise Exception('could not read pstypes from web server!')
 
     @staticmethod
-    def _reload_pstype_2_names_dict():
+    def _reload_pstype_2_psnames_dict():
         """Reload power supply type to power supply names dictionary."""
         if PSSearch._pstype_dict is None:
             PSSearch._reload_pstype_dict()
         pstypes = sorted(set(PSSearch._pstype_dict.keys()))
-        PSSearch._pstype_2_names_dict = {}
+        PSSearch._pstype_2_psnames_dict = {}
         PSSearch._psnames_list = []
         for pstype in pstypes:
             text = _web.power_supplies_pstype_data_read(pstype + '.txt')
             data, param_dict = _util.read_text_data(text)
             psnames = [_SiriusPVName(datum[0]) for datum in data]
-            PSSearch._pstype_2_names_dict[pstype] = psnames
+            PSSearch._pstype_2_psnames_dict[pstype] = psnames
             PSSearch._psnames_list += psnames
         PSSearch._psnames_list = sorted(PSSearch._psnames_list)
 

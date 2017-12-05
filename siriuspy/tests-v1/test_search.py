@@ -47,7 +47,9 @@ class TestPSSearch(unittest.TestCase):
         'conv_pstype_2_magfunc',
         'conv_pstype_2_splims',
         'conv_psname_2_excdata',
-        'conv_psname_2_ispulsed',
+        'check_psname_ispulsed',
+        'check_pstype_ispulsed',
+        'get_pstype_2_psnames_dict',
         'get_pstype_2_splims_dict',
         'get_splims_unit',
         'get_splims_labels',
@@ -269,6 +271,7 @@ class TestPSSearch(unittest.TestCase):
 
     def test_conv_pstype_2_polarity(self):
         """Test conv_pstype_2_polarity."""
+<<<<<<< HEAD
         for pstype, polarity in TestPSSearch.pstype2polarity.items():
             self.assertEqual(
                 PSSearch.conv_pstype_2_polarity(pstype), polarity)
@@ -327,6 +330,12 @@ class TestPSSearch(unittest.TestCase):
                          ['DRVL', 'LOLO', 'LOW', 'LOPR',
                           'HOPR', 'HIGH', 'HIHI', 'DRVH'])
 
+=======
+
+    def test_conv_pstype_2_magfunc(self):
+        """Test conv_pstype_2_magfunc."""
+        raise NotImplemented
+>>>>>>> 54296ed48a5678500dafa21f799c46cecb3ff055
 
 class TestMASearch(unittest.TestCase):
     """Test MASearch."""
