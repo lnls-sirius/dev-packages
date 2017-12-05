@@ -121,7 +121,7 @@ def get_pu_propty_database(pstype):
 def get_ma_propty_database(maname):
     """Return property database of a magnet type device."""
     propty_db = get_common_ps_propty_database()
-    units = _MASearch.get_splims_unit()
+    units = _MASearch.get_splims_unit(ispulsed=False)
     magfunc_dict = _MASearch.conv_maname_2_magfunc(maname)
     db = {}
     for psname, magfunc in magfunc_dict.items():
