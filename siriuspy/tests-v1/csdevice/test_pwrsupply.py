@@ -76,7 +76,9 @@ class TestPwrSupply(unittest.TestCase):
 
     def test_pu_propty_database(self):
         """Test pu_propty_database."""
-
+        pstypes = PSSearch.get_pstype_names()
+        for pstype in pstypes:
+            db = pwrsupply.get_ps_propty_database(pstype)
 
 if __name__ == "__main__":
     unittest.main()

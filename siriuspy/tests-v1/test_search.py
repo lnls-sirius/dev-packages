@@ -9,7 +9,6 @@ from siriuspy import util
 from siriuspy import search
 from siriuspy.search import PSSearch
 from siriuspy.search import MASearch
-from siriuspy.magnet.excdata import ExcitationData
 
 
 public_interface = (
@@ -20,7 +19,7 @@ public_interface = (
 
 def read_test_file(path):
     """Read a file."""
-    with open('test_data/' + path, "r") as fd:
+    with open('test_data/servweb/' + path, "r") as fd:
         return fd.read()
 
 
@@ -274,16 +273,18 @@ class TestPSSearch(unittest.TestCase):
         for pstype, polarity in TestPSSearch.pstype2polarity.items():
             self.assertEqual(
                 PSSearch.conv_pstype_2_polarity(pstype), polarity)
-        # Non existent pstype return None
-        self.assertIsNone(PSSearch.conv_pstype_2_polarity('dummy'))
+        # Non existent pstype raises KeyError
+        self.assertRaises(KeyError,
+                          PSSearch.conv_pstype_2_polarity, pstype='dummy')
 
     def test_conv_pstype_2_magfunc(self):
         """Test conv_pstype_2_polarity."""
         for pstype, magfunc in TestPSSearch.pstype2magfunc.items():
             self.assertEqual(
                 PSSearch.conv_pstype_2_magfunc(pstype), magfunc)
-        # Non existent pstype return None
-        self.assertIsNone(PSSearch.conv_pstype_2_magfunc('dummy'))
+        # Non existent pstype raises KeyError
+        self.assertRaises(KeyError,
+                          PSSearch.conv_pstype_2_magfunc, pstype='dummy')
 
     def test_conv_pstype_2_splims(self):
         """Test conv_pstype_2_polarity."""
@@ -300,16 +301,26 @@ class TestPSSearch(unittest.TestCase):
         self.mock_excdata.assert_called()
         pass
 
-    def test_conv_psname_2_ispulsed(self):
-        """Test conv_psname_2_ispulsed."""
+    def test_check_psname_ispulsed(self):
+        """Test check_psname_ispulsed."""
         for psname in TestPSSearch.sample:
-            if "PU" in psname:
-                self.assertTrue(PSSearch.conv_psname_2_ispulsed(psname))
-            elif "PS" in psname:
-                self.assertFalse(PSSearch.conv_psname_2_ispulsed(psname))
-            else:
-                self.assertRaises(
-                    ValueError, PSSearch.conv_psname_2_ispulsed, psname=psname)
+            if ":PU" in psname:
+                self.assertTrue(PSSearch.check_psname_ispulsed(psname))
+            elif ":PS" in psname:
+                self.assertFalse(PSSearch.check_psname_ispulsed(psname))
+        self.assertRaises(KeyError,
+                          PSSearch.check_psname_ispulsed, psname='dummy')
+
+    def test_check_pstype_ispulsed(self):
+        """Test check_pstype_isplused."""
+        pstypes = PSSearch.get_pstype_names()
+        for pstype in pstypes:
+            if ":PU" in pstype:
+                self.assertTrue(PSSearch.check_pstype_ispulsed(pstype))
+            elif ":PS" in pstype:
+                self.assertFalse(PSSearch.check_pstype_ispulsed(pstype))
+        self.assertRaises(KeyError,
+                          PSSearch.check_pstype_ispulsed, pstype='dummy')
 
     def test_conv_psname_2_splims_dict(self):
         """Test conv psname_2_splims_dict."""

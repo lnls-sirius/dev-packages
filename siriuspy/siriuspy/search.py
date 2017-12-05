@@ -82,10 +82,7 @@ class PSSearch:
         """Return polarity of a given power supply type."""
         if PSSearch._pstype_dict is None:
             PSSearch._reload_pstype_dict()
-        for key, value in PSSearch._pstype_dict.items():
-            if key == pstype:
-                return value[0]
-        return None
+        return PSSearch._pstype_dict[pstype][0]
 
     @staticmethod
     def conv_pstype_2_magfunc(pstype):
@@ -95,7 +92,7 @@ class PSSearch:
         for key, value in PSSearch._pstype_dict.items():
             if key == pstype:
                 return value[1]
-        return None
+        raise KeyError('Invalid pstype "'+pstype+'"!')
 
     @staticmethod
     def conv_pstype_2_splims(pstype):
@@ -124,14 +121,14 @@ class PSSearch:
         elif _SiriusPVName(devname).discipline == 'PS':
             return False
         else:
-            raise ValueError('Invalid psname "' + psname + '"!')
+            raise KeyError('Invalid psname "' + psname + '"!')
 
     @staticmethod
     def check_pstype_ispulsed(pstype):
         """Return True if pstype is of a pulsed pwrsupply type, False o.w."""
         if PSSearch._pstype_2_psnames_dict is None:
             PSSearch._reload_pstype_2_psnames_dict()
-        psnames = PSSearch._reload_pstype_2_psnames_dict[pstype]
+        psnames = PSSearch._pstype_2_psnames_dict[pstype]
         for psname in psnames:
             if ':PU' in psname:
                 return True

@@ -1,8 +1,0 @@
-# List of power supplies of type ts-quadrupole-q20
-# ================================================
-
-# number of power supplies: 6
-
-TS-02:PS-QF2
-TS-03:PS-QF3
-TS-04:PS-QF4

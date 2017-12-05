@@ -1,6 +1,0 @@
-# List of power supplies of type ts-ejeseptum-thick
-# =================================================
-
-# number of power supplies: 1
-
-TS-01:PU-EjeSG

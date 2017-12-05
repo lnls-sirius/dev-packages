@@ -19,13 +19,34 @@ def join_name(section, discipline, device, subsection, instance=None,
 
 def split_name(pvname):
     """Return dict with PV name split into fields."""
-    dic_ = {}
+    dic_ = {
+        'channel_type': '',
+        'prefix': '',
+        'area_name': '',
+        'dev_name': '',
+        'section': '',
+        'subsection': '',
+        'discipline': '',
+        'dev_type': '',
+        'dev_idx': '',
+        'propty': '',
+        'propty_name': '',
+        'propty_sufix': '',
+        'field': '',
+        'dev_propty': '',
+    }
+
     dic_['channel_type'] = ''
     if pvname.startswith('ca://'):
         dic_['channel_type'] = 'ca'
         pvname = pvname[5:]
 
     list_ = pvname.split(':')
+
+    if len(list_) == 1:
+        dic_['propty'] = list_[0]
+        return dic_
+
     slist_ = list_[0].split('-')
     dic_['prefix'] = '-'.join([s for s in slist_[:-2]])
     dic_['area_name'] = '-'.join([s for s in slist_[-2:]])

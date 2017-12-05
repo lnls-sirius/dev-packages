@@ -1,7 +1,0 @@
-# List of power supplies of type ts-injseptum-thick
-# =================================================
-
-# number of power supplies: 2
-
-TS-04:PU-InjSG-1
-TS-04:PU-InjSG-2

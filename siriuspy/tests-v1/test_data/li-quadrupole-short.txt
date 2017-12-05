@@ -1,8 +1,0 @@
-# List of power supplies of type li-quadrupole-short
-# ==================================================
-
-# number of power supplies: 3
-
-LI-Fam:PS-QF1
-LI-Fam:PS-QF2
-LI-01:PS-QF3

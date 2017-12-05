@@ -1,6 +1,0 @@
-# List of power supplies of type bo-quadrupole-qs
-# ===============================================
-
-# number of power supplies: 1
-
-BO-02D:PS-QS
