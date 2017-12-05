@@ -239,68 +239,36 @@ class MASearch:
     _splims_unit = None
 
     @staticmethod
-    def _reload_maname_2_splims_dict():
-        """Build dict with limits for each magnet."""
-        if _web.server_online():
-            # MA data
-            text = _web.magnets_setpoint_limits()
-            ma_data, ma_param_dict = _util.read_text_data(text)
-            # PM data
-            text = _web.pulsed_magnets_setpoint_limits()
-            pm_data, pm_param_dict = _util.read_text_data(text)
+    def get_manames(filters=None, sorting=None):
+        """Return a sorted and filtered list of all magnet names.
 
-            units = [ma_param_dict['unit'], pm_param_dict['unit']]
-            types = ma_param_dict['power_supply_type']
-            data = ma_data + pm_data
-
-            MASearch._splims_unit = tuple(units)
-            MASearch._splims_labels = tuple(types)
-            MASearch._maname_2_splims_dict = {}
-
-            for datum in data:
-                maname, *limits = datum
-                db = {MASearch._splims_labels[i]: float(limits[i])
-                      for i in range(len(MASearch._splims_labels))}
-                MASearch._maname_2_splims_dict[maname] = db
-        else:
-            raise Exception('could not read magnet splims from web server!')
+        This list also includes pulsed magnets (PM).
+        """
+        if MASearch._manames_list is None:
+            MASearch._reload_maname_2_psnames_dict()
+        return _Filter.process_filters(MASearch._manames_list,
+                                       filters=filters,
+                                       sorting=sorting)
 
     @staticmethod
-    def _reload_maname_2_psnames_dict():
-        """Build a dict of tuples with power supplies of each magnet."""
-        if _web.server_online():
-            text = _web.magnets_excitation_ps_read()
-            data, param_dict = _util.read_text_data(text)
-            MASearch._maname_2_psnames_dict = {}
-            MASearch._maname_2_trim_dict = {}
-            MASearch._manames_list = []
-            for datum in data:
-                magnet, *ps_names = datum
-                MASearch._manames_list.append(magnet)
-                MASearch._maname_2_psnames_dict[magnet] = tuple(ps_names)
-                if 'Fam' not in magnet:
-                    famname = _SiriusPVName(magnet)
-                    famname = famname.replace(
-                        famname.subsection, 'Fam').replace('MA-', 'PS-')
-                    if '-Fam:PS-Q' in famname and famname in ps_names:
-                        ps_names.remove(famname)
-                        maname = famname.replace('PS-', 'MA-')
-                        if maname not in MASearch._maname_2_trim_dict:
-                            MASearch._maname_2_trim_dict[maname] = \
-                                tuple(ps_names)
-                        else:
-                            MASearch._maname_2_trim_dict[maname] += \
-                                tuple(ps_names)
-        else:
-            raise Exception(
-                'could not read magnet-excitation-ps from web server!')
+    def get_pwrsupply_manames(filters=None, sorting=None):
+        """Return a sorted and filtered list of all pwrsupply magnet names."""
+        if MASearch._maname_2_splims_dict is None:
+            MASearch._reload_maname_2_splims_dict()
+        ps_manames_list = list(MASearch._maname_2_splims_dict.keys())
+        return _Filter.process_filters(ps_manames_list,
+                                       filters=filters,
+                                       sorting=sorting)
 
     @staticmethod
-    def get_splims_unit():
+    def get_splims_unit(ispulsed):
         """Get unit of SP limits."""
         if MASearch._maname_2_splims_dict is None:
             MASearch._reload_maname_2_splims_dict()
-        return MASearch._splims_unit
+        if ispulsed:
+            return MASearch._splims_pm_unit
+        else:
+            return MASearch._splims_ma_unit
 
     @staticmethod
     def get_splims(maname, label):
@@ -357,24 +325,62 @@ class MASearch:
             MASearch._reload_maname_2_psnames_dict()
         return MASearch._maname_2_psnames_dict[maname]
 
+    # Private methods
     @staticmethod
-    def get_manames(filters=None, sorting=None):
-        """Return a sorted and filtered list of all magnet names.
+    def _reload_maname_2_splims_dict():
+        """Build dict with limits for each magnet."""
+        if _web.server_online():
+            # MA data
+            text = _web.magnets_setpoint_limits()
+            ma_data, ma_param_dict = _util.read_text_data(text)
+            # PM data
+            text = _web.pulsed_magnets_setpoint_limits()
+            pm_data, pm_param_dict = _util.read_text_data(text)
 
-        This list also includes pulsed magnets (PM).
-        """
-        if MASearch._manames_list is None:
-            MASearch._reload_maname_2_psnames_dict()
-        return _Filter.process_filters(MASearch._manames_list,
-                                       filters=filters,
-                                       sorting=sorting)
+            # units = [ma_param_dict['unit'], pm_param_dict['unit']]
+            types = ma_param_dict['power_supply_type']
+            data = ma_data + pm_data
+
+            # MASearch._splims_unit = tuple(units)
+            MASearch._splims_ma_unit = ma_param_dict['unit']
+            MASearch._splims_pm_unit = pm_param_dict['unit']
+            MASearch._splims_labels = tuple(types)
+            MASearch._maname_2_splims_dict = {}
+
+            for datum in data:
+                maname, *limits = datum
+                db = {MASearch._splims_labels[i]: float(limits[i])
+                      for i in range(len(MASearch._splims_labels))}
+                MASearch._maname_2_splims_dict[maname] = db
+        else:
+            raise Exception('could not read magnet splims from web server!')
 
     @staticmethod
-    def get_pwrsupply_manames(filters=None, sorting=None):
-        """Return a sorted and filtered list of all pwrsupply magnet names."""
-        if MASearch._maname_2_splims_dict is None:
-            MASearch._reload_maname_2_splims_dict()
-        ps_manames_list = list(MASearch._maname_2_splims_dict.keys())
-        return _Filter.process_filters(ps_manames_list,
-                                       filters=filters,
-                                       sorting=sorting)
+    def _reload_maname_2_psnames_dict():
+        """Build a dict of tuples with power supplies of each magnet."""
+        if _web.server_online():
+            text = _web.magnets_excitation_ps_read()
+            data, param_dict = _util.read_text_data(text)
+            MASearch._maname_2_psnames_dict = {}
+            MASearch._maname_2_trim_dict = {}
+            MASearch._manames_list = []
+            for datum in data:
+                magnet, *ps_names = datum
+                MASearch._manames_list.append(magnet)
+                MASearch._maname_2_psnames_dict[magnet] = tuple(ps_names)
+                if 'Fam' not in magnet:
+                    famname = _SiriusPVName(magnet)
+                    famname = famname.replace(
+                        famname.subsection, 'Fam').replace('MA-', 'PS-')
+                    if '-Fam:PS-Q' in famname and famname in ps_names:
+                        ps_names.remove(famname)
+                        maname = famname.replace('PS-', 'MA-')
+                        if maname not in MASearch._maname_2_trim_dict:
+                            MASearch._maname_2_trim_dict[maname] = \
+                                tuple(ps_names)
+                        else:
+                            MASearch._maname_2_trim_dict[maname] += \
+                                tuple(ps_names)
+        else:
+            raise Exception(
+                'could not read magnet-excitation-ps from web server!')
