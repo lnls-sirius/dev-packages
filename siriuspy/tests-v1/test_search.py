@@ -26,7 +26,7 @@ def read_test_file(path):
 class TestSearch(unittest.TestCase):
     """Test Search module."""
 
-    def test_public_interface(self):
+    def _test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(search, public_interface)
         self.assertTrue(valid)
@@ -169,12 +169,14 @@ class TestPSSearch(unittest.TestCase):
              'HOPR': 995.0, 'HIGH': 1000.0, 'HIHI': 1000.0, 'DRVH': 1000.0},
     }
 
-    @mock.patch('siriuspy.search._ExcitationData', autospec=True)
+    @mock.patch('siriuspy.search._ExcitationData')
     @mock.patch('siriuspy.search._web', autospec=True)
     def setUp(self, mock_web, mock_excdata):
         """Common setup for all tests."""
         self.mock_excdata = mock_excdata
         self.mock_web = mock_web
+
+        mock_excdata.return_value = 10
 
         mock_web.server_online.return_value = True
         mock_web.power_supplies_pstypes_names_read.return_value = \
@@ -295,11 +297,11 @@ class TestPSSearch(unittest.TestCase):
         self.assertRaises(
             KeyError, PSSearch.conv_pstype_2_splims, pstype='dummy')
 
-    def _test_conv_psname_2_excdata(self):
+    def test_conv_psname_2_excdata(self):
         """Test conv_psname_2_excdata."""
-        PSSearch.conv_psname_2_excdata("SI-Fam:PS-QDA")
-        self.mock_excdata.assert_called()
-        pass
+        for ps in TestPSSearch.sample:
+            self.assertIsInstance(PSSearch.conv_psname_2_excdata(ps),
+                                  search._ExcitationData)
 
     def test_check_psname_ispulsed(self):
         """Test check_psname_ispulsed."""
@@ -349,18 +351,97 @@ class TestMASearch(unittest.TestCase):
     )
 
     maname2trims = {
+        "SI-Fam:MA-B1B2": None,
+        "SI-Fam:MA-QDA": ('SI-01M1:PS-QDA', 'SI-01M2:PS-QDA', 'SI-05M1:PS-QDA',
+                          'SI-05M2:PS-QDA', 'SI-09M1:PS-QDA', 'SI-09M2:PS-QDA',
+                          'SI-13M1:PS-QDA', 'SI-13M2:PS-QDA', 'SI-17M1:PS-QDA',
+                          'SI-17M2:PS-QDA'),
+        "SI-14M2:MA-QDB1": None,
+        "SI-09M2:MA-SDA0": None,
+        "SI-07C4:MA-CH": None,
+        "BO-15U:MA-CV": None,
+        "TB-03:MA-QF3": None,
+        "TS-01:MA-CV-2": None,
+        "BO-01D:PM-InjK": None,
+        "TB-04:PM-InjS": None,
+        "SI-01SA:PM-InjNLK": None,
+    }
+
+    maname2magfuncs = {
+        "SI-Fam:MA-B1B2": {"SI-Fam:PS-B1B2-1": "dipole",
+                           "SI-Fam:PS-B1B2-2": "dipole"},
+        "SI-Fam:MA-QDA": {'SI-Fam:PS-QDA': 'quadrupole'},
+        "SI-14M2:MA-QDB1": {'SI-14M2:PS-QDB1': 'quadrupole',
+                            'SI-Fam:PS-QDB1': 'quadrupole'},
+        "SI-09M2:MA-SDA0": {'SI-09M2:PS-CH': 'corrector-horizontal',
+                            'SI-09M2:PS-CV': 'corrector-vertical',
+                            'SI-Fam:PS-SDA0': 'sextupole'},
+        "SI-07C4:MA-CH": {'SI-07C4:PS-CH': 'corrector-horizontal'},
+        "BO-15U:MA-CV": {'BO-15U:PS-CV': 'corrector-vertical'},
+        "TB-03:MA-QF3": {'TB-03:PS-QF3': 'quadrupole'},
+        "TS-01:MA-CV-2": {'TS-01:PS-CV-2': 'corrector-vertical'},
+        "BO-01D:PM-InjK": {'BO-01D:PU-InjK': 'corrector-horizontal'},
+        "TB-04:PM-InjS": {'TB-04:PU-InjS': 'corrector-horizontal'},
+        "SI-01SA:PM-InjNLK": {'SI-01SA:PU-InjNLK': 'corrector-horizontal'},
+    }
+
+    maname2splims = {
+        "SI-Fam:MA-B1B2": {'DRVL': 0.0, 'LOLO': 0.0, 'LOW': 0.0, 'LOPR': 0.0,
+                           'HOPR': 400.0, 'HIGH': 405.0, 'HIHI': 405.0,
+                           'DRVH': 405.0, 'TSTV': 394.0, 'TSTR': 0.5},
+        "SI-Fam:MA-QDA": {'DRVL': 0.0, 'LOLO': 0.0, 'LOW': 0.0, 'LOPR': 0.0,
+                          'HOPR': 160.0, 'HIGH': 165.0, 'HIHI': 165.0,
+                          'DRVH': 165.0, 'TSTV': 62.5, 'TSTR': 0.5},
+        "SI-14M2:MA-QDB1": {'DRVL': -10.0, 'LOLO': -10.0, 'LOW': -10.0,
+                            'LOPR': -9.9, 'HOPR': 9.9, 'HIGH': 10.0,
+                            'HIHI': 10.0, 'DRVH': 10.0, 'TSTV': 5.0,
+                            'TSTR': 0.5},
+        "SI-Fam:MA-SDA0": {'DRVL': 0.0, 'LOLO': 0.0, 'LOW': 0.0, 'LOPR': 0.0,
+                           'HOPR': 160.0, 'HIGH': 165.0, 'HIHI': 165.0,
+                           'DRVH': 165.0, 'TSTV': 76.0, 'TSTR': 0.5},
+        "SI-07C4:MA-CH": {'DRVL': -10.0, 'LOLO': -10.0, 'LOW': -10.0,
+                          'LOPR': -9.9, 'HOPR': 9.9, 'HIGH': 10.0,
+                          'HIHI': 10.0, 'DRVH': 10.0, 'TSTV': 5.0,
+                          'TSTR': 0.5},
+        "BO-15U:MA-CV": {'DRVL': -9.0, 'LOLO': -9.0, 'LOW': -9.0,
+                         'LOPR': -8.9, 'HOPR': 8.9, 'HIGH': 9.0,
+                         'HIHI': 9.0, 'DRVH': 9.0, 'TSTV': 4.5,
+                         'TSTR': 0.5},
+        "TB-03:MA-QF3": {'DRVL': -9.0, 'LOLO': -9.0, 'LOW': -9.0,
+                         'LOPR': -8.9, 'HOPR': 8.9, 'HIGH': 9.0,
+                         'HIHI': 9.0, 'DRVH': 9.0, 'TSTV': 4.5,
+                         'TSTR': 0.5},
+        "TS-01:MA-CV-2": {'DRVL': -9.0, 'LOLO': -9.0, 'LOW': -9.0,
+                          'LOPR': -8.9, 'HOPR': 8.9, 'HIGH': 9.0,
+                          'HIHI': 9.0, 'DRVH': 9.0, 'TSTV': 4.5,
+                          'TSTR': 0.5},
+        "BO-01D:PM-InjK": {'DRVL': 0.0, 'LOLO': 0.0, 'LOW': 0.0,
+                           'LOPR': 0.0, 'HOPR': 995.0, 'HIGH': 1000.0,
+                           'HIHI': 1000.0, 'DRVH': 1000.0, 'TSTV': 500.0,
+                           'TSTR': 0.5},
+        "TB-04:PM-InjS": {'DRVL': 0.0, 'LOLO': 0.0, 'LOW': 0.0,
+                          'LOPR': 0.0, 'HOPR': 995.0, 'HIGH': 1000.0,
+                          'HIHI': 1000.0, 'DRVH': 1000.0, 'TSTV': 500.0,
+                          'TSTR': 0.5},
+        "SI-01SA:PM-InjNLK": {'DRVL': 0.0, 'LOLO': 0.0, 'LOW': 0.0,
+                              'LOPR': 0.0, 'HOPR': 995.0, 'HIGH': 1000.0,
+                              'HIHI': 1000.0, 'DRVH': 1000.0, 'TSTV': 500.0,
+                              'TSTR': 0.5},
+    }
+
+    maname2psnames = {
         "SI-Fam:MA-B1B2": ("SI-Fam:PS-B1B2-1", "SI-Fam:PS-B1B2-2"),
-        "SI-Fam:MA-QDA": ("SI-Fam:PS-QDA", ),
-        "SI-14M2:MA-QDB1": ("SI-Fam:PS-QDB1", "SI-14M2:PS-QDB1"),
-        "SI-09M2:MA-SDA0":
-            ("SI-Fam:PS-SDA0", "SI-09M2:PS-CH", "SI-09M2:PS-CV"),
-        "SI-07C4:MA-CH": ("SI-07C4:PS-CH",),
-        "BO-15U:MA-CV": ("BO-15U:PS-CV",),
-        "TB-03:MA-QF3": ("TB-03:PS-QF3",),
-        "TS-01:MA-CV-2": ("TS-01:PS-CV-2",),
-        "BO-01D:PM-InjK": ("BO-01D:PU-InjK",),
-        "TB-04:PM-InjS": ("TB-04:PU-InjS",),
-        "SI-01SA:PM-InjNLK": ("SI-01SA:PU-InjNLK",),
+        "SI-Fam:MA-QDA": ('SI-Fam:PS-QDA',),
+        "SI-14M2:MA-QDB1": ('SI-Fam:PS-QDB1', 'SI-14M2:PS-QDB1'),
+        "SI-09M2:MA-SDA0": ('SI-Fam:PS-SDA0', 'SI-09M2:PS-CH',
+                            'SI-09M2:PS-CV'),
+        "SI-07C4:MA-CH": ('SI-07C4:PS-CH',),
+        "BO-15U:MA-CV": ('BO-15U:PS-CV',),
+        "TB-03:MA-QF3": ('TB-03:PS-QF3',),
+        "TS-01:MA-CV-2": ('TS-01:PS-CV-2',),
+        "BO-01D:PM-InjK": ('BO-01D:PU-InjK',),
+        "TB-04:PM-InjS": ('TB-04:PU-InjS',),
+        "SI-01SA:PM-InjNLK": ('SI-01SA:PU-InjNLK',),
     }
 
     @mock.patch('siriuspy.search._web', autospec=True)
@@ -417,9 +498,26 @@ class TestMASearch(unittest.TestCase):
         self.assertEqual(MASearch.get_splims_unit(True), ['V', 'Voltage'])
         self.assertEqual(MASearch.get_splims_unit(False), ['A', 'Ampere'])
 
+    def test_conv_maname_2_trims(self):
+        """Test conv_maname_2_trims."""
+        for ma, trims in TestMASearch.maname2trims.items():
+            self.assertEqual(MASearch.conv_maname_2_trims(ma), trims)
 
-#
-#
+    def test_conv_maname_2_magfunc(self):
+        """Test conv_maname_2_magfunc."""
+        for ma, magfuncs in TestMASearch.maname2magfuncs.items():
+            self.assertEqual(MASearch.conv_maname_2_magfunc(ma), magfuncs)
+
+    def test_conv_maname_2_splims(self):
+        """Test conv_maname_2_splims."""
+        for ma, splims in TestMASearch.maname2splims.items():
+            self.assertEqual(MASearch.conv_maname_2_splims(ma), splims)
+
+    def test_conv_maname_2_psnames(self):
+        """Test conv_maname_2_psnames."""
+        for ma, psnames in TestMASearch.maname2psnames.items():
+            self.assertEqual(MASearch.conv_maname_2_psnames(ma), psnames)
+
 # class TestMASearchMagFunc(unittest.TestCase):
 #     """MASearch class."""
 #
