@@ -518,6 +518,15 @@ class TestMASearch(unittest.TestCase):
         for ma, psnames in TestMASearch.maname2psnames.items():
             self.assertEqual(MASearch.conv_maname_2_psnames(ma), psnames)
 
+    def test_check_maname_ispulsed(self):
+        """Test check_maname_ispulsed."""
+        for maname in TestMASearch.maname2trims:
+            if ":PM" in maname:
+                self.assertTrue(MASearch.check_maname_ispulsed(maname))
+            elif ":MA" in maname:
+                self.assertFalse(MASearch.check_maname_ispulsed(maname))
+        self.assertRaises(KeyError,
+                          MASearch.check_maname_ispulsed, maname='dummy')
 # class TestMASearchMagFunc(unittest.TestCase):
 #     """MASearch class."""
 #

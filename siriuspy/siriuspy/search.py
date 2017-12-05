@@ -333,6 +333,17 @@ class MASearch:
             MASearch._reload_maname_2_psnames_dict()
         return MASearch._maname_2_psnames_dict[maname]
 
+    @staticmethod
+    def check_maname_ispulsed(maname):
+        """Return True if psname is a pulsed power supply, False otherwise."""
+        devname = _SiriusPVName(maname)
+        if devname.discipline == 'PM':
+            return True
+        elif devname.discipline == 'MA':
+            return False
+        else:
+            raise KeyError('Invalid maname "' + maname + '"!')
+
     # Private methods
     @staticmethod
     def _reload_maname_2_splims_dict():
