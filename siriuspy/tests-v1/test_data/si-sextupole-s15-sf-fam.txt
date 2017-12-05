@@ -1,0 +1,14 @@
+# List of power supplies of type si-sextupole-s15-sf-fam
+# ======================================================
+
+# number of power supplies: 9
+
+SI-Fam:PS-SFA0
+SI-Fam:PS-SFA1
+SI-Fam:PS-SFA2
+SI-Fam:PS-SFB0
+SI-Fam:PS-SFB1
+SI-Fam:PS-SFB2
+SI-Fam:PS-SFP0
+SI-Fam:PS-SFP1
+SI-Fam:PS-SFP2

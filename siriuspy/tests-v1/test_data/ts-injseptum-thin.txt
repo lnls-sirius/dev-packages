@@ -1,0 +1,6 @@
+# List of power supplies of type ts-injseptum-thin
+# ================================================
+
+# number of power supplies: 1
+
+TS-04:PU-InjSF

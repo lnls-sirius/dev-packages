@@ -1,0 +1,7 @@
+# List of power supplies of type si-dipoles-b1b2-fam
+# ==================================================
+
+# number of power supplies: 2
+
+SI-Fam:PS-B1B2-1
+SI-Fam:PS-B1B2-2

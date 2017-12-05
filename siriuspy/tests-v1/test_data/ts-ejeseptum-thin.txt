@@ -1,0 +1,6 @@
+# List of power supplies of type ts-ejeseptum-thin
+# ================================================
+
+# number of power supplies: 1
+
+TS-01:PU-EjeSF

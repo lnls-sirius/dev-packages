@@ -1,0 +1,67 @@
+# Tension setpoint limits of pulsed power supplies
+# =========================================
+
+#  DRVL  driver low level limit
+#  LOLO  IOC low-low level limit (ALARM)
+#  LOW   IOC low level limit (ALARM)
+#  LOPR  Low operating range
+#  HOPR  High operating range
+#  HIGH  IOC high level limit (ALARM)
+#  HIHI  IOC high-high level limit (ALARM)
+#  DRVH  driver high level limit
+#  TSTV  Test value for setpoint load current.
+#  TSTR  Range for load current variation in tests.
+
+# Test
+# ----
+#       |--------------------|--------------------|
+#  TSTV - TSTR/2           TSTV              TSTV + TSTR/2
+
+# Rules
+# -----
+# LOLO <= LO <= HI <= HIHI
+# DRVL <= LOPR <= HOPR <= DRVH.
+
+
+# [unit]  V  Voltage
+
+# [power_supply_type]        DRVL      LOLO      LOW       LOPR      HOPR      HIGH      HIHI      DRVH      TSTV      TSTR
+#---------------------------|---------|---------|---------|---------|---------|---------|---------|---------|---------|---------
+
+
+# --- PULSED MAGNET FAMILY POWER SUPPLIES ---
+
+
+# --- ts-injseptum-thick ---
+TS-04:PM-InjSG-1             +0000.0   +0000.0   +0000.0   +0000.0   +0995.0   +1000.0   +1000.0   +1000.0   +0500.0   +0000.5
+TS-04:PM-InjSG-2             +0000.0   +0000.0   +0000.0   +0000.0   +0995.0   +1000.0   +1000.0   +1000.0   +0500.0   +0000.5
+
+# --- ts-injseptum-thin ---
+TS-04:PM-InjSF               +0000.0   +0000.0   +0000.0   +0000.0   +0995.0   +1000.0   +1000.0   +1000.0   +0500.0   +0000.5
+
+# --- ts-ejeseptum-thick ---
+TS-01:PM-EjeSG               +0000.0   +0000.0   +0000.0   +0000.0   +0995.0   +1000.0   +1000.0   +1000.0   +0500.0   +0000.5
+
+# --- ts-ejeseptum-thin ---
+TS-01:PM-EjeSF               +0000.0   +0000.0   +0000.0   +0000.0   +0995.0   +1000.0   +1000.0   +1000.0   +0500.0   +0000.5
+
+# --- bo-injkicker ---
+BO-01D:PM-InjK               +0000.0   +0000.0   +0000.0   +0000.0   +0995.0   +1000.0   +1000.0   +1000.0   +0500.0   +0000.5
+
+# --- bo-ejekicker ---
+BO-48D:PM-EjeK               +0000.0   +0000.0   +0000.0   +0000.0   +0995.0   +1000.0   +1000.0   +1000.0   +0500.0   +0000.5
+
+# --- tb-injseptum ---
+TB-04:PM-InjS                +0000.0   +0000.0   +0000.0   +0000.0   +0995.0   +1000.0   +1000.0   +1000.0   +0500.0   +0000.5
+
+# --- si-injdpk ---
+SI-01SA:PM-InjDpK            +0000.0   +0000.0   +0000.0   +0000.0   +0995.0   +1000.0   +1000.0   +1000.0   +0500.0   +0000.5
+
+# --- si-injnlk ---
+SI-01SA:PM-InjNLK            +0000.0   +0000.0   +0000.0   +0000.0   +0995.0   +1000.0   +1000.0   +1000.0   +0500.0   +0000.5
+
+# --- si-hping ---
+SI-01SA:PM-HPing             +0000.0   +0000.0   +0000.0   +0000.0   +0995.0   +1000.0   +1000.0   +1000.0   +0500.0   +0000.5
+
+# --- si-vping ---
+SI-19C4:PM-VPing             +0000.0   +0000.0   +0000.0   +0000.0   +0995.0   +1000.0   +1000.0   +1000.0   +0500.0   +0000.5

@@ -1,0 +1,62 @@
+# Power supply type names
+# =======================
+
+# pstype                     polarity         magnetic_function
+# -------------------------------------------------------------
+
+si-dipole-b1b2-fam           monopolar        dipole
+si-quadrupole-q14-fam        monopolar        quadrupole
+si-quadrupole-q20-fam        monopolar        quadrupole
+si-quadrupole-q30-fam        monopolar        quadrupole
+si-sextupole-s15-sf-fam      monopolar        sextupole
+si-sextupole-s15-sd-fam      monopolar        sextupole
+si-injdpk                    monopolar        corrector-horizontal
+si-injnlk                    monopolar        corrector-horizontal
+bo-dipole-b-fam              monopolar        dipole
+bo-quadrupole-qd-fam         monopolar        quadrupole
+bo-quadrupole-qf-fam         monopolar        quadrupole
+bo-sextupole-sd-fam          monopolar        sextupole
+bo-sextupole-sf-fam          monopolar        sextupole
+bo-injkicker                 monopolar        corrector-horizontal
+bo-ejekicker                 monopolar        corrector-horizontal
+ts-dipole-b-fam              monopolar        dipole
+ts-injseptum-thick           monopolar        corrector-horizontal
+ts-injseptum-thin            monopolar        corrector-horizontal
+ts-ejeseptum-thick           monopolar        corrector-horizontal
+ts-ejeseptum-thin            monopolar        corrector-horizontal
+tb-dipole-b-fam              monopolar        dipole
+tb-injseptum                 monopolar        corrector-horizontal
+li-solenoid-fam              monopolar        solenoid
+li-solenoid                  monopolar        solenoid
+li-spect                     monopolar        dipole
+
+
+si-quadrupole-q14-trim       bipolar        quadrupole
+si-quadrupole-q20-trim       bipolar        quadrupole
+si-quadrupole-q30-trim       bipolar        quadrupole
+si-quadrupole-qs             bipolar        quadrupole-skew
+si-sextupole-s15-ch          bipolar        corrector-horizontal
+si-sextupole-s15-cv          bipolar        corrector-vertical
+si-sextupole-s15-qs          bipolar        quadrupole-skew
+si-corrector-cv              bipolar        corrector-vertical
+si-corrector-fch             bipolar        corrector-horizontal
+si-corrector-fcv             bipolar        corrector-vertical
+si-hping                     bipolar        corrector-horizontal
+si-vping                     bipolar        corrector-vertical
+bo-quadrupole-qs             bipolar        quadrupole-skew
+bo-corrector-ch              bipolar        corrector-horizontal
+bo-corrector-cv              bipolar        corrector-vertical
+ts-quadrupole-q14            bipolar        quadrupole
+ts-quadrupole-q20            bipolar        quadrupole
+ts-corrector-ch              bipolar        corrector-horizontal
+ts-corrector-cv              bipolar        corrector-vertical
+tb-quadrupole                bipolar        quadrupole
+tb-corrector-ch              bipolar        corrector-horizontal
+tb-corrector-cv              bipolar        corrector-vertical
+li-quadrupole-long           bipolar        quadrupole
+li-quadrupole-short          bipolar        quadrupole
+li-lens                      bipolar        lens
+li-corrector-ch-long         bipolar        corrector-horizontal
+li-corrector-cv-long         bipolar        corrector-vertical
+li-corrector-ch-short        bipolar        corrector-horizontal
+li-corrector-cv-short        bipolar        corrector-vertical

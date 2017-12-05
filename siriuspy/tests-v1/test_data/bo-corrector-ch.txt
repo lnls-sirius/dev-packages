@@ -1,0 +1,30 @@
+# List of power supplies of type bo-corrector-ch
+# ==============================================
+
+# number of power supplies: 25
+
+BO-01U:PS-CH
+BO-03U:PS-CH
+BO-05U:PS-CH
+BO-07U:PS-CH
+BO-09U:PS-CH
+BO-11U:PS-CH
+BO-13U:PS-CH
+BO-15U:PS-CH
+BO-17U:PS-CH
+BO-19U:PS-CH
+BO-21U:PS-CH
+BO-23U:PS-CH
+BO-25U:PS-CH
+BO-27U:PS-CH
+BO-29U:PS-CH
+BO-31U:PS-CH
+BO-33U:PS-CH
+BO-35U:PS-CH
+BO-37U:PS-CH
+BO-39U:PS-CH
+BO-41U:PS-CH
+BO-43U:PS-CH
+BO-45U:PS-CH
+BO-47U:PS-CH
+BO-49D:PS-CH
