@@ -121,7 +121,7 @@ def get_pu_propty_database(pstype):
     }
     signals = ('Voltage-SP', 'Voltage-RB', 'Voltage-Mon')
     db_v = {'type': 'float', 'unit': get_pu_current_unit(), 'value': 0.0,
-            'prec': default_pu_current_precision},
+            'prec': default_pu_current_precision}
     for signal in signals:
         db_v = _copy.deepcopy(db_v)
         db_v['lolo'] = _PSSearch.get_splims(pstype, 'lolo')
@@ -137,6 +137,9 @@ def get_pu_propty_database(pstype):
 
 def get_ma_propty_database(maname):
     """Return property database of a magnet type device."""
+    current_alarm = ('Current-SP', 'Current-RB',
+                     'CurrentRef-Mon', 'Current-Mon', )
+    current_pvs = current_alarm + ('WfmData-SP', 'WfmData-RB')
     propty_db = get_common_ps_propty_database()
     units = _MASearch.get_splims_unit(ispulsed=False)
     magfunc_dict = _MASearch.conv_maname_2_magfunc(maname)
@@ -173,10 +176,8 @@ def get_ma_propty_database(maname):
             db[psname]["Current" + field]['hihi'] = \
                 _MASearch.get_splims(maname, 'hihi')
 
-        db[psname]["Current-SP"]['unit'] = units[0]
-        db[psname]["Current-RB"]['unit'] = units[0]
-        db[psname]["CurrentRef-Mon"]['unit'] = units[0]
-        db[psname]["Current-Mon"]['unit'] = units[0]
+        for propty in current_pvs:
+            db[psname][propty]['unit'] = units[0]
         if magfunc in ('quadrupole', 'quadrupole-skew'):
             db[psname]['KL-SP'] = _copy.deepcopy(db[psname]['Current-SP'])
             db[psname]['KL-SP']['unit'] = '1/m'
@@ -225,20 +226,23 @@ def get_ma_propty_database(maname):
 
 def get_pm_propty_database(maname, psdata):
     """Return database for a pulsed magnet."""
-    precision = 6
 
     db = {}
     for psname, data in psdata.items():
         db[psname] = data.propty_database
 
         db[psname][_ps_props.StrengthSP] = \
-            {"type": "float", "unit": "mrad", "value": 0.0, "prec": precision}
+            {"type": "float", "unit": "mrad", "value": 0.0,
+             "prec": default_pu_current_precision}
         db[psname][_ps_props.StrengthRB] = \
-            {"type": "float", "unit": "mrad", "value": 0.0, "prec": precision}
+            {"type": "float", "unit": "mrad", "value": 0.0,
+             "prec": default_pu_current_precision}
         db[psname][_ps_props.StrengthRefMon] = \
-            {"type": "float", "unit": "mrad", "value": 0.0, "prec": precision}
+            {"type": "float", "unit": "mrad", "value": 0.0,
+             "prec": default_pu_current_precision}
         db[psname][_ps_props.StrengthMon] = \
-            {"type": "float", "unit": "mrad", "value": 0.0, "prec": precision}
+            {"type": "float", "unit": "mrad", "value": 0.0,
+             "prec": default_pu_current_precision}
 
         strength_list = [_ps_props.StrengthSP, _ps_props.StrengthRB,
                          _ps_props.StrengthRefMon, _ps_props.StrengthMon]

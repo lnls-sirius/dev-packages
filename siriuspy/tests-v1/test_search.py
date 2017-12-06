@@ -9,7 +9,7 @@ from siriuspy import util
 from siriuspy import search
 from siriuspy.search import PSSearch
 from siriuspy.search import MASearch
-
+import siriuspy.servweb
 
 public_interface = (
     'PSSearch',
@@ -169,21 +169,24 @@ class TestPSSearch(unittest.TestCase):
     #          'HOPR': 995.0, 'HIGH': 1000.0, 'HIHI': 1000.0, 'DRVH': 1000.0},
     # }
 
-    @mock.patch('siriuspy.search._ExcitationData')
-    @mock.patch('siriuspy.search._web', autospec=True)
-    def setUp(self, mock_web, mock_excdata):
+    def setUp(self):
         """Common setup for all tests."""
-        self.mock_excdata = mock_excdata
-        self.mock_web = mock_web
-
-        mock_web.server_online.return_value = True
-        mock_web.power_supplies_pstypes_names_read.return_value = \
+        # Create Mocks
+        web_patcher = mock.patch('siriuspy.search._web', autospec=True)
+        excdata_patcher = mock.patch(
+            'siriuspy.search._ExcitationData', autospec=True)
+        self.addCleanup(web_patcher.stop)
+        self.addCleanup(excdata_patcher.stop)
+        self.mock_web = web_patcher.start()
+        self.mock_excdata = excdata_patcher.start()
+        # Set mocked functions behaviour
+        self.mock_web.server_online.return_value = True
+        self.mock_web.ps_pstypes_names_read.return_value = \
             read_test_file('pstypes-names.txt')
-        mock_web.power_supplies_pstype_data_read.side_effect = \
-            read_test_file
-        mock_web.power_supplies_pstype_setpoint_limits.return_value = \
+        self.mock_web.ps_pstype_data_read.side_effect = read_test_file
+        self.mock_web.ps_pstype_setpoint_limits.return_value = \
             read_test_file('pstypes-setpoint-limits.txt')
-        mock_web.pulsed_power_supplies_pstype_setpoint_limits.return_value = \
+        self.mock_web.pu_pstype_setpoint_limits.return_value = \
             read_test_file('putypes-setpoint-limits.txt')
 
     def test_public_interface(self):
@@ -295,9 +298,12 @@ class TestPSSearch(unittest.TestCase):
 
     def test_conv_psname_2_excdata(self):
         """Test conv_psname_2_excdata."""
-        for ps in TestPSSearch.sample:
-            self.assertIsInstance(PSSearch.conv_psname_2_excdata(ps),
-                                  search._ExcitationData)
+        calls = []
+        for ps, pstype in TestPSSearch.sample.items():
+            if pstype in PSSearch._pstype_2_excdat_dict:
+                calls.append(mock.call(filename_web=pstype + '.txt'))
+            PSSearch.conv_psname_2_pstype(ps)
+        self.mock_excdata.assert_has_calls(calls)
 
     def test_check_psname_ispulsed(self):
         """Test check_psname_ispulsed."""
@@ -361,7 +367,15 @@ class TestMASearch(unittest.TestCase):
     """Test MASearch."""
 
     public_interface = (
-        None,
+        'get_manames',
+        'get_pwrsupply_manames',
+        'get_splims_unit',
+        'get_splims',
+        'conv_maname_2_trims',
+        'conv_maname_2_magfunc',
+        'conv_maname_2_splims',
+        'conv_maname_2_psnames',
+        'check_maname_ispulsed'
     )
 
     maname2trims = {
@@ -458,23 +472,34 @@ class TestMASearch(unittest.TestCase):
         "SI-01SA:PM-InjNLK": ('SI-01SA:PU-InjNLK',),
     }
 
-    @mock.patch('siriuspy.search._web', autospec=True)
-    def setUp(self, mock_web):
+    def setUp(self):
         """Common setup for all tests."""
-        self.mock_web = mock_web
-
-        mock_web.server_online.return_value = True
-        mock_web.magnets_excitation_ps_read.return_value = \
+        # Create Mocks
+        web_patcher = mock.patch('siriuspy.search._web')
+        self.addCleanup(web_patcher.stop)
+        self.mock_web = web_patcher.start()
+        # MASearch funcs
+        self.mock_web.server_online.return_value = True
+        self.mock_web.magnets_excitation_ps_read.return_value = \
             read_test_file('magnet-excitation-ps.txt')
-        mock_web.magnets_setpoint_limits.return_value = \
+        self.mock_web.magnets_setpoint_limits.return_value = \
             read_test_file('magnet-setpoint-limits.txt')
-        mock_web.pulsed_magnets_setpoint_limits.return_value = \
+        self.mock_web.pulsed_magnets_setpoint_limits.return_value = \
             read_test_file('pulsed-magnet-setpoint-limits.txt')
+        # PSSearch funcs
+        self.mock_web.power_supplies_pstypes_names_read.return_value = \
+            read_test_file('pstypes-names.txt')
+        self.mock_web.power_supplies_pstype_data_read.side_effect = \
+            read_test_file
+        self.mock_web.power_supplies_pstype_setpoint_limits.return_value = \
+            read_test_file('pstypes-setpoint-limits.txt')
+        self.mock_web.pulsed_power_supplies_pstype_setpoint_limits.return_value = \
+            read_test_file('putypes-setpoint-limits.txt')
 
-    def _test_public_interface(self):
+    def test_public_interface(self):
         """Test class public interface."""
         valid = util.check_public_interface_namespace(
-            search, TestMASearch.public_interface)
+            search.MASearch, TestMASearch.public_interface)
         self.assertTrue(valid)
 
     def test_get_manames(self):
@@ -541,6 +566,8 @@ class TestMASearch(unittest.TestCase):
                 self.assertFalse(MASearch.check_maname_ispulsed(maname))
         self.assertRaises(KeyError,
                           MASearch.check_maname_ispulsed, maname='dummy')
+
+
 # class TestMASearchMagFunc(unittest.TestCase):
 #     """MASearch class."""
 #
@@ -620,7 +647,6 @@ class TestMASearch(unittest.TestCase):
     #     """Test _maname_2_psnames_dict."""
     #     MASearch.conv_maname_2_magfunc('SI-Fam:MA-QDA')
     #     self.assertEqual(MASearch._maname_2_psnames_dict is not None, True)
-
 
 if __name__ == "__main__":
     unittest.main()

@@ -70,25 +70,25 @@ def magnets_excitation_ps_read(timeout=_timeout):
     return read_url(url, timeout=timeout)
 
 
-def power_supplies_pstypes_names_read(timeout=_timeout):
+def ps_pstypes_names_read(timeout=_timeout):
     """Return the text of the power supplies type."""
     url = _ps_folder + 'pstypes-names.txt'
     return read_url(url, timeout=timeout)
 
 
-def power_supplies_pstype_data_read(filename, timeout=_timeout):
+def ps_pstype_data_read(filename, timeout=_timeout):
     """Return the power supply data."""
     url = _pstypes_data_folder + filename
     return read_url(url, timeout=timeout)
 
 
-def power_supplies_pstype_setpoint_limits(timeout=_timeout):
+def ps_pstype_setpoint_limits(timeout=_timeout):
     """Return the power supply setpoint limits data."""
     url = _ps_folder + 'pstypes-setpoint-limits.txt'
     return read_url(url, timeout=timeout)
 
 
-def pulsed_power_supplies_pstype_setpoint_limits(timeout=_timeout):
+def pu_pstype_setpoint_limits(timeout=_timeout):
     """Return the power supply setpoint limits data."""
     url = _ps_folder + 'putypes-setpoint-limits.txt'
     return read_url(url, timeout=timeout)

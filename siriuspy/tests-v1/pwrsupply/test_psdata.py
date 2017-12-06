@@ -128,7 +128,7 @@ class TestPSDataException(unittest.TestCase):
 
     @mock.patch('siriuspy.pwrsupply.data._PSSearch', autospec=True)
     def test_init(self, mock_search):
-        """Test exception is risen when unknown pv is passed to PSData."""
+        """Test exception is raised when unknown pv is passed to PSData."""
         mock_search.get_psnames.return_value = ["RealPS1", "RealPS2"]
         with self.assertRaises(ValueError):
             PSData("NonExistentPS")

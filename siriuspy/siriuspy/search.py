@@ -173,7 +173,7 @@ class PSSearch:
     def _reload_pstype_dict():
         """Reload power supply type dictionary from web server."""
         if _web.server_online():
-            text = _web.power_supplies_pstypes_names_read()
+            text = _web.ps_pstypes_names_read()
             data, params_dict = _util.read_text_data(text)
             PSSearch._pstype_dict = {}
             for datum in data:
@@ -191,7 +191,7 @@ class PSSearch:
         PSSearch._pstype_2_psnames_dict = {}
         PSSearch._psnames_list = []
         for pstype in pstypes:
-            text = _web.power_supplies_pstype_data_read(pstype + '.txt')
+            text = _web.ps_pstype_data_read(pstype + '.txt')
             data, param_dict = _util.read_text_data(text)
             psnames = [_SiriusPVName(datum[0]) for datum in data]
             PSSearch._pstype_2_psnames_dict[pstype] = psnames
@@ -202,10 +202,10 @@ class PSSearch:
     def _reload_pstype_2_splims_dict():
         """Reload pstype to splims dictionary."""
         # ps data
-        text = _web.power_supplies_pstype_setpoint_limits()
+        text = _web.ps_pstype_setpoint_limits()
         ps_data, ps_param_dict = _util.read_text_data(text)
         # pu data
-        text = _web.pulsed_power_supplies_pstype_setpoint_limits()
+        text = _web.pu_pstype_setpoint_limits()
         pu_data, pu_param_dict = _util.read_text_data(text)
 
         # checks consistency between PS and PU static tables.

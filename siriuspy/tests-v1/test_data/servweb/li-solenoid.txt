@@ -1,7 +1,18 @@
-# label           li-solenoid
-# harmonics       0
-# main_harmonic   0 normal
-# units           Ampere T*m T*m
-#
--1.00e+01	+3.50e-03 +0.00e+00
-+1.00e+01	-3.50e-03 +0.00e+00
+# List of power supplies of type li-solenoid
+# ==========================================
+
+# number of power supplies: 13
+
+LI-01:PS-Slnd01
+LI-01:PS-Slnd02
+LI-01:PS-Slnd03
+LI-01:PS-Slnd04
+LI-01:PS-Slnd05
+LI-01:PS-Slnd06
+LI-01:PS-Slnd07
+LI-01:PS-Slnd08
+LI-01:PS-Slnd09
+LI-01:PS-Slnd10
+LI-01:PS-Slnd11
+LI-01:PS-Slnd12
+LI-01:PS-Slnd13
