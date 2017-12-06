@@ -1,8 +1,9 @@
-# label           li-lens
-# harmonics       1
-# main_harmonic   1 normal
-# units           Ampere T T
-#
--125.0   -20.0000e-00  +0.0000e+00
-+0.00     +0.0000e+00  +0.0000e+00
-+125.0   +20.0000e-00  +0.0000e+00
+# List of power supplies of type li-lens
+# ======================================
+
+# number of power supplies: 4
+
+LI-01:PS-Lens-1
+LI-01:PS-Lens-2
+LI-01:PS-Lens-3
+LI-01:PS-Lens-4

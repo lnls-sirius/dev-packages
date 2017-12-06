@@ -1,8 +1,6 @@
-# label           si-vping
-# harmonics       0
-# main_harmonic   0 skew
-# units           Volt T*m T*m
-#
-+0.00     +0.0000e+00 +0.00000e-00
-+7210.00  +0.0000e+00 +6.10000e-02
-+7920.00  +0.0000e+00 +6.70000e-02
+# List of power supplies of type si-vping
+# =======================================
+
+# number of power supplies: 1
+
+SI-19C4:PU-VPing

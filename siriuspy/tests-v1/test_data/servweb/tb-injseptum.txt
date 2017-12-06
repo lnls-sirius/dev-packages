@@ -1,7 +1,6 @@
-# label           tb-injseptum
-# harmonics       0
-# main_harmonic   0 normal
-# units           Volt T*m T*m
-#
-+0.00     +0.00000000e-00  +0.0000e+00
-+406.00   -1.89934853e-01  +0.0000e+00
+# List of power supplies of type tb-injseptum
+# ===========================================
+
+# number of power supplies: 1
+
+TB-04:PU-InjS

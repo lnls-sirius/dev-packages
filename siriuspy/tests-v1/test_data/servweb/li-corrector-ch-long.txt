@@ -1,7 +1,10 @@
-# label           li-corrector-ch-long
-# harmonics       0
-# main_harmonic   0 normal
-# units           Ampere T*m T*m
-#
--1.00e+01	+3.50e-03 +0.00e+00
-+1.00e+01	-3.50e-03 +0.00e+00
+# List of power supplies of type li-corrector-ch-long
+# ===================================================
+
+# number of power supplies: 5
+
+LI-01:PS-CH-3
+LI-01:PS-CH-4
+LI-01:PS-CH-5
+LI-01:PS-CH-6
+LI-01:PS-CH-7

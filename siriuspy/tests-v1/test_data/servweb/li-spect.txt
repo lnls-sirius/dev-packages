@@ -1,7 +1,6 @@
-# label           li-spect
-# harmonics       0
-# main_harmonic   0 normal
-# units           Ampere T*m T*m
-#
--100.00   +4.5000e-01  +0.0000e+00
-+100.00   -4.5000e-01  +0.0000e+00
+# List of power supplies of type li-spect
+# =======================================
+
+# number of power supplies: 1
+
+LI-01:PS-Spect
