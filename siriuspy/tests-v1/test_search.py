@@ -189,7 +189,7 @@ class TestPSSearch(unittest.TestCase):
         self.mock_web.pulsed_power_supplies_pstype_setpoint_limits.return_value = \
             read_test_file('putypes-setpoint-limits.txt')
 
-    def _test_public_interface(self):
+    def test_public_interface(self):
         """Test class public interface."""
         valid = util.check_public_interface_namespace(
             PSSearch, TestPSSearch.public_interface)
@@ -299,8 +299,10 @@ class TestPSSearch(unittest.TestCase):
         """Test conv_psname_2_excdata."""
         calls = []
         for ps, pstype in TestPSSearch.sample.items():
-            PSSearch.conv_psname_2_excdata(ps)
-            calls.append(mock.call({'filename_web': pstype + '.txt'}))
+            if pstype in PSSearch._pstype_2_excdat_dict:
+                calls.append(mock.call(filename_web=pstype + '.txt'))
+            PSSearch.conv_psname_2_pstype(ps)
+        self.mock_excdata.assert_has_calls(calls)
 
     def test_check_psname_ispulsed(self):
         """Test check_psname_ispulsed."""
