@@ -172,8 +172,8 @@ class TestPSSearch(unittest.TestCase):
     def setUp(self):
         """Common setup for all tests."""
         # Create Mocks
-        web_patcher = mock.patch('__main__.search._web')
-        excdata_patcher = mock.patch('__main__.search._ExcitationData')
+        web_patcher = mock.patch('siriuspy.search._web')
+        excdata_patcher = mock.patch('siriuspy.search._ExcitationData')
         self.addCleanup(web_patcher.stop)
         self.addCleanup(excdata_patcher.stop)
         self.mock_web = web_patcher.start()
@@ -454,7 +454,7 @@ class TestMASearch(unittest.TestCase):
     def setUp(self):
         """Common setup for all tests."""
         # Create Mocks
-        web_patcher = mock.patch('__main__.search._web')
+        web_patcher = mock.patch('siriuspy.search._web')
         self.addCleanup(web_patcher.stop)
         self.mock_web = web_patcher.start()
         # MASearch funcs
