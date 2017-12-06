@@ -115,59 +115,59 @@ class TestPSSearch(unittest.TestCase):
         'ts-injseptum-thick': 'corrector-horizontal',
     }
 
-    pstype2splims = {
-        'si-dipole-b1b2-fam':
-            {'DRVL': 0.0, 'LOLO': 0.0, 'LOW': 0.0, 'LOPR': 0.0,
-             'HOPR': 410.0, 'HIGH': 450.0, 'HIHI': 450.0, 'DRVH': 450.0},
-        'si-quadrupole-q14-fam':
-            {'DRVL': 0.0, 'LOLO': 0.0, 'LOW': 0.0, 'LOPR': 0.0,
-             'HOPR': 160.0, 'HIGH': 165.0, 'HIHI': 165.0, 'DRVH': 165.0},
-        'si-sextupole-s15-sd-fam':
-            {'DRVL': 0.0, 'LOLO': 0.0, 'LOW': 0.0, 'LOPR': 0.0,
-             'HOPR': 160.0, 'HIGH': 165.0, 'HIHI': 165.0, 'DRVH': 165.0},
-        'si-sextupole-s15-ch':
-            {'DRVL': -10.0, 'LOLO': -10.0, 'LOW': -10.0, 'LOPR': -9.9,
-             'HOPR': 9.9, 'HIGH': 10.0, 'HIHI': 10.0, 'DRVH': 10.0},
-        'si-sextupole-s15-cv':
-            {'DRVL': -10.0, 'LOLO': -10.0, 'LOW': -10.0, 'LOPR': -9.9,
-             'HOPR': 9.9, 'HIGH': 10.0, 'HIHI': 10.0, 'DRVH': 10.0},
-        'si-sextupole-s15-qs':
-            {'DRVL': -10.0, 'LOLO': -10.0, 'LOW': -10.0, 'LOPR': -9.9,
-             'HOPR': 9.9, 'HIGH': 10.0, 'HIHI': 10.0, 'DRVH': 10.0},
-        'si-corrector-fcv':
-            {'DRVL': -9.0, 'LOLO': -9.0, 'LOW': -9.0, 'LOPR': -8.9,
-             'HOPR': 8.9, 'HIGH': 9.0, 'HIHI': 9.0, 'DRVH': 9.0},
-        'bo-ejekicker':
-            {'DRVL': 0.0, 'LOLO': 0.0, 'LOW': 0.0, 'LOPR': 0.0,
-             'HOPR': 995.0, 'HIGH': 1000.0, 'HIHI': 1000.0, 'DRVH': 1000.0},
-        'si-hping':
-            {'DRVL': -10.0, 'LOLO': -10.0, 'LOW': -10.0, 'LOPR': -9.9,
-             'HOPR': 9.9, 'HIGH': 10.0, 'HIHI': 10.0, 'DRVH': 10.0},
-        'si-injdpk':
-            {'DRVL': 0.0, 'LOLO': 0.0, 'LOW': 0.0, 'LOPR': 0.0,
-             'HOPR': 995.0, 'HIGH': 1000.0, 'HIHI': 1000.0, 'DRVH': 1000.0},
-        'si-injnlk':
-            {'DRVL': 0.0, 'LOLO': 0.0, 'LOW': 0.0, 'LOPR': 0.0,
-             'HOPR': 995.0, 'HIGH': 1000.0, 'HIHI': 1000.0, 'DRVH': 1000.0},
-        'si-vping':
-            {'DRVL': -10.0, 'LOLO': -10.0, 'LOW': -10.0, 'LOPR': -9.9,
-             'HOPR': 9.9, 'HIGH': 10.0, 'HIHI': 10.0, 'DRVH': 10.0},
-        'tb-injseptum':
-            {'DRVL': 0.0, 'LOLO': 0.0, 'LOW': 0.0, 'LOPR': 0.0,
-             'HOPR': 995.0, 'HIGH': 1000.0, 'HIHI': 1000.0, 'DRVH': 1000.0},
-        'ts-ejeseptum-thin':
-            {'DRVL': 0.0, 'LOLO': 0.0, 'LOW': 0.0, 'LOPR': 0.0,
-             'HOPR': 995.0, 'HIGH': 1000.0, 'HIHI': 1000.0, 'DRVH': 1000.0},
-        'ts-ejeseptum-thick':
-            {'DRVL': 0.0, 'LOLO': 0.0, 'LOW': 0.0, 'LOPR': 0.0,
-             'HOPR': 995.0, 'HIGH': 1000.0, 'HIHI': 1000.0, 'DRVH': 1000.0},
-        'ts-injseptum-thin':
-            {'DRVL': 0.0, 'LOLO': 0.0, 'LOW': 0.0, 'LOPR': 0.0,
-             'HOPR': 995.0, 'HIGH': 1000.0, 'HIHI': 1000.0, 'DRVH': 1000.0},
-        'ts-injseptum-thick':
-            {'DRVL': 0.0, 'LOLO': 0.0, 'LOW': 0.0, 'LOPR': 0.0,
-             'HOPR': 995.0, 'HIGH': 1000.0, 'HIHI': 1000.0, 'DRVH': 1000.0},
-    }
+    # pstype2splims = {
+    #     'si-dipole-b1b2-fam':
+    #         {'DRVL': 0.0, 'LOLO': 0.0, 'LOW': 0.0, 'LOPR': 0.0,
+    #          'HOPR': 410.0, 'HIGH': 450.0, 'HIHI': 450.0, 'DRVH': 450.0},
+    #     'si-quadrupole-q14-fam':
+    #         {'DRVL': 0.0, 'LOLO': 0.0, 'LOW': 0.0, 'LOPR': 0.0,
+    #          'HOPR': 160.0, 'HIGH': 165.0, 'HIHI': 165.0, 'DRVH': 165.0},
+    #     'si-sextupole-s15-sd-fam':
+    #         {'DRVL': 0.0, 'LOLO': 0.0, 'LOW': 0.0, 'LOPR': 0.0,
+    #          'HOPR': 160.0, 'HIGH': 165.0, 'HIHI': 165.0, 'DRVH': 165.0},
+    #     'si-sextupole-s15-ch':
+    #         {'DRVL': -10.0, 'LOLO': -10.0, 'LOW': -10.0, 'LOPR': -9.9,
+    #          'HOPR': 9.9, 'HIGH': 10.0, 'HIHI': 10.0, 'DRVH': 10.0},
+    #     'si-sextupole-s15-cv':
+    #         {'DRVL': -10.0, 'LOLO': -10.0, 'LOW': -10.0, 'LOPR': -9.9,
+    #          'HOPR': 9.9, 'HIGH': 10.0, 'HIHI': 10.0, 'DRVH': 10.0},
+    #     'si-sextupole-s15-qs':
+    #         {'DRVL': -10.0, 'LOLO': -10.0, 'LOW': -10.0, 'LOPR': -9.9,
+    #          'HOPR': 9.9, 'HIGH': 10.0, 'HIHI': 10.0, 'DRVH': 10.0},
+    #     'si-corrector-fcv':
+    #         {'DRVL': -9.0, 'LOLO': -9.0, 'LOW': -9.0, 'LOPR': -8.9,
+    #          'HOPR': 8.9, 'HIGH': 9.0, 'HIHI': 9.0, 'DRVH': 9.0},
+    #     'bo-ejekicker':
+    #         {'DRVL': 0.0, 'LOLO': 0.0, 'LOW': 0.0, 'LOPR': 0.0,
+    #          'HOPR': 995.0, 'HIGH': 1000.0, 'HIHI': 1000.0, 'DRVH': 1000.0},
+    #     'si-hping':
+    #         {'DRVL': -10.0, 'LOLO': -10.0, 'LOW': -10.0, 'LOPR': -9.9,
+    #          'HOPR': 9.9, 'HIGH': 10.0, 'HIHI': 10.0, 'DRVH': 10.0},
+    #     'si-injdpk':
+    #         {'DRVL': 0.0, 'LOLO': 0.0, 'LOW': 0.0, 'LOPR': 0.0,
+    #          'HOPR': 995.0, 'HIGH': 1000.0, 'HIHI': 1000.0, 'DRVH': 1000.0},
+    #     'si-injnlk':
+    #         {'DRVL': 0.0, 'LOLO': 0.0, 'LOW': 0.0, 'LOPR': 0.0,
+    #          'HOPR': 995.0, 'HIGH': 1000.0, 'HIHI': 1000.0, 'DRVH': 1000.0},
+    #     'si-vping':
+    #         {'DRVL': -10.0, 'LOLO': -10.0, 'LOW': -10.0, 'LOPR': -9.9,
+    #          'HOPR': 9.9, 'HIGH': 10.0, 'HIHI': 10.0, 'DRVH': 10.0},
+    #     'tb-injseptum':
+    #         {'DRVL': 0.0, 'LOLO': 0.0, 'LOW': 0.0, 'LOPR': 0.0,
+    #          'HOPR': 995.0, 'HIGH': 1000.0, 'HIHI': 1000.0, 'DRVH': 1000.0},
+    #     'ts-ejeseptum-thin':
+    #         {'DRVL': 0.0, 'LOLO': 0.0, 'LOW': 0.0, 'LOPR': 0.0,
+    #          'HOPR': 995.0, 'HIGH': 1000.0, 'HIHI': 1000.0, 'DRVH': 1000.0},
+    #     'ts-ejeseptum-thick':
+    #         {'DRVL': 0.0, 'LOLO': 0.0, 'LOW': 0.0, 'LOPR': 0.0,
+    #          'HOPR': 995.0, 'HIGH': 1000.0, 'HIHI': 1000.0, 'DRVH': 1000.0},
+    #     'ts-injseptum-thin':
+    #         {'DRVL': 0.0, 'LOLO': 0.0, 'LOW': 0.0, 'LOPR': 0.0,
+    #          'HOPR': 995.0, 'HIGH': 1000.0, 'HIHI': 1000.0, 'DRVH': 1000.0},
+    #     'ts-injseptum-thick':
+    #         {'DRVL': 0.0, 'LOLO': 0.0, 'LOW': 0.0, 'LOPR': 0.0,
+    #          'HOPR': 995.0, 'HIGH': 1000.0, 'HIHI': 1000.0, 'DRVH': 1000.0},
+    # }
 
     @mock.patch('siriuspy.search._ExcitationData')
     @mock.patch('siriuspy.search._web', autospec=True)
@@ -175,8 +175,6 @@ class TestPSSearch(unittest.TestCase):
         """Common setup for all tests."""
         self.mock_excdata = mock_excdata
         self.mock_web = mock_web
-
-        mock_excdata.return_value = 10
 
         mock_web.server_online.return_value = True
         mock_web.power_supplies_pstypes_names_read.return_value = \
@@ -187,9 +185,6 @@ class TestPSSearch(unittest.TestCase):
             read_test_file('pstypes-setpoint-limits.txt')
         mock_web.pulsed_power_supplies_pstype_setpoint_limits.return_value = \
             read_test_file('putypes-setpoint-limits.txt')
-
-        # self.psnames = PSSearch.get_psnames()
-        # self.pstypes = PSSearch.get_pstype_names()
 
     def test_public_interface(self):
         """Test class public interface."""
@@ -290,9 +285,10 @@ class TestPSSearch(unittest.TestCase):
 
     def test_conv_pstype_2_splims(self):
         """Test conv_pstype_2_polarity."""
-        for pstype, splims in TestPSSearch.pstype2splims.items():
-            self.assertEqual(
-                PSSearch.conv_pstype_2_splims(pstype), splims)
+        pstypes = tuple(TestPSSearch.pstype2polarity.keys())
+        for pstype in pstypes:
+            splims = PSSearch.conv_pstype_2_splims(pstype)
+            self.assertIsInstance(splims, dict)
         # Non existent pstype return None
         self.assertRaises(
             KeyError, PSSearch.conv_pstype_2_splims, pstype='dummy')
@@ -324,17 +320,35 @@ class TestPSSearch(unittest.TestCase):
         self.assertRaises(KeyError,
                           PSSearch.check_pstype_ispulsed, pstype='dummy')
 
+    def test_get_pstype_2_psnames_dict(self):
+        """Test get_pstype_2_psnames_dict."""
+        typ2name = PSSearch.get_pstype_2_psnames_dict()
+        self.assertIsInstance(typ2name, dict)
+        for pstype, psnames in typ2name.items():
+            self.assertIsInstance(pstype, str)
+            self.assertIsInstance(psnames, (tuple, list))
+            self.assertTrue(len(psnames) > 0)
+
     def test_conv_psname_2_splims_dict(self):
         """Test conv psname_2_splims_dict."""
+        limlabels = ('DRVL', 'LOLO', 'LOW', 'LOPR',
+                     'HOPR', 'HIGH', 'HIHI', 'DRVH')
         splims_dict = PSSearch.get_pstype_2_splims_dict()
-        for pstype, splims in TestPSSearch.pstype2splims.items():
-            self.assertIn(pstype, splims_dict)
-            self.assertEqual(splims, splims_dict[pstype])
+        self.assertIsInstance(splims_dict, dict)
+        for pstype, splims in splims_dict.items():
+            self.assertIsInstance(pstype, str)
+            self.assertIsInstance(splims, dict)
+            for limlabel in limlabels:
+                self.assertIn(limlabel, splims)
+            self.assertTrue(splims['LOLO'] <= splims['LOW'])
+            self.assertTrue(splims['LOW'] < splims['HIGH'])
+            self.assertTrue(splims['HIGH'] <= splims['HIHI'])
 
     def test_get_splims_unit(self):
         """Test get_splims_unit."""
         self.assertEqual(PSSearch.get_splims_unit(True), ['V', 'Voltage'])
         self.assertEqual(PSSearch.get_splims_unit(False), ['A', 'Ampere'])
+        self.assertRaises(ValueError, PSSearch.get_splims_unit, ispulsed='')
 
     def test_get_splims_labels(self):
         """Test get_splims_labels."""

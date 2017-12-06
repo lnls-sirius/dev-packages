@@ -115,10 +115,10 @@ class PSSearch:
     @staticmethod
     def check_psname_ispulsed(psname):
         """Return True if psname is a pulsed power supply, False otherwise."""
-        devname = _SiriusPVName(psname)
-        if _SiriusPVName(devname).discipline == 'PU':
+        spvname = _SiriusPVName(psname)
+        if spvname.discipline == 'PU':
             return True
-        elif _SiriusPVName(devname).discipline == 'PS':
+        elif spvname.discipline == 'PS':
             return False
         else:
             raise KeyError('Invalid psname "' + psname + '"!')
@@ -153,10 +153,12 @@ class PSSearch:
         """Return SP limits unit."""
         if PSSearch._pstype_2_splims_dict is None:
             PSSearch._reload_pstype_2_splims_dict()
-        if ispulsed:
+        if ispulsed is True:
             return PSSearch._splims_pu_unit
-        else:
+        elif ispulsed is False:
             return PSSearch._splims_ps_unit
+        else:
+            raise ValueError
 
     @staticmethod
     def get_splims_labels():

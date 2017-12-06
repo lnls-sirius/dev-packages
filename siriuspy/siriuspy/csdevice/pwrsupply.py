@@ -11,8 +11,25 @@ default_wfmlabels = _et.enums('PSWfmLabelsTyp')
 default_intlklabels = _et.enums('PSIntlkLabelsTyp')
 default_ps_current_precision = 4
 default_pu_current_precision = 4
-default_ps_current_unit = _PSSearch.get_splims_unit(ispulsed=False)
-default_pu_current_unit = _PSSearch.get_splims_unit(ispulsed=True)
+
+_default_ps_current_unit = None
+_default_pu_current_unit = None
+
+
+def get_ps_current_unit():
+    """Return power supply current unit."""
+    global _default_ps_current_unit
+    if _default_ps_current_unit is None:
+        _default_ps_current_unit = _PSSearch.get_splims_unit(ispulsed=False)
+    return _default_ps_current_unit
+
+
+def get_pu_current_unit():
+    """Return pulsed power supply 'current' unit."""
+    global _default_pu_current_unit
+    if _default_pu_current_unit is None:
+        _default_pu_current_unit = _PSSearch.get_splims_unit(ispulsed=True)
+    return _default_pu_current_unit
 
 
 def get_common_propty_database():
@@ -88,7 +105,7 @@ def get_ps_propty_database(pstype):
             db['hihi'] = _PSSearch.get_splims(pstype, 'hihi')
         # define unit of current
         if propty in current_pvs:
-            db['unit'] = default_ps_current_unit
+            db['unit'] = get_ps_current_unit()
 
     return propty_db
 
@@ -103,7 +120,7 @@ def get_pu_propty_database(pstype):
         'Pulsed-Sts': _copy.deepcopy(db_p),
     }
     signals = ('Voltage-SP', 'Voltage-RB', 'Voltage-Mon')
-    db_v = {'type': 'float', 'unit': default_pu_current_unit, 'value': 0.0,
+    db_v = {'type': 'float', 'unit': get_pu_current_unit(), 'value': 0.0,
             'prec': default_pu_current_precision},
     for signal in signals:
         db_v = _copy.deepcopy(db_v)

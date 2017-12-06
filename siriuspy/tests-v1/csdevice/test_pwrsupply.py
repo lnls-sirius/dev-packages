@@ -14,8 +14,8 @@ public_interface = (
     'default_intlklabels',
     'default_ps_current_precision',
     'default_pu_current_precision',
-    'default_ps_current_unit',
-    'default_pu_current_unit',
+    'get_ps_current_unit',
+    'get_pu_current_unit',
     'get_common_propty_database',
     'get_common_ps_propty_database',
     'get_ps_propty_database',
@@ -33,6 +33,10 @@ class TestPwrSupply(unittest.TestCase):
         valid = util.check_public_interface_namespace(
             pwrsupply, public_interface)
         self.assertTrue(valid)
+
+    def test_ps_current_unit(self):
+        """Test  ps_current_unit."""
+        pass
 
     def test_common_propty_database(self):
         """Test common_propty_database."""
