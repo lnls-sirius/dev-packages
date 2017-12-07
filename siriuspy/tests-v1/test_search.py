@@ -487,13 +487,12 @@ class TestMASearch(unittest.TestCase):
         self.mock_web.pulsed_magnets_setpoint_limits.return_value = \
             read_test_file('pulsed-magnet-setpoint-limits.txt')
         # PSSearch funcs
-        self.mock_web.power_supplies_pstypes_names_read.return_value = \
+        self.mock_web.ps_pstypes_names_read.return_value = \
             read_test_file('pstypes-names.txt')
-        self.mock_web.power_supplies_pstype_data_read.side_effect = \
-            read_test_file
-        self.mock_web.power_supplies_pstype_setpoint_limits.return_value = \
+        self.mock_web.ps_pstype_data_read.side_effect = read_test_file
+        self.mock_web.ps_pstype_setpoint_limits.return_value = \
             read_test_file('pstypes-setpoint-limits.txt')
-        self.mock_web.pulsed_power_supplies_pstype_setpoint_limits.return_value = \
+        self.mock_web.pu_pstype_setpoint_limits.return_value = \
             read_test_file('putypes-setpoint-limits.txt')
 
     def test_public_interface(self):
