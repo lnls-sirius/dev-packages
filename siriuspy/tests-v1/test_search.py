@@ -36,9 +36,9 @@ class TestPSSearch(unittest.TestCase):
 
     public_interface = (
         'get_psnames',
+        'get_pstype_names',
         'get_splims',
         'get_pstype_dict',
-        'get_pstype_names',
         'get_polarities',
         'conv_psname_2_pstype',
         'conv_pstype_2_polarity',
@@ -194,7 +194,6 @@ class TestPSSearch(unittest.TestCase):
             PSSearch, TestPSSearch.public_interface)
         self.assertTrue(valid)
 
-    # get_pstype_names
     def test_get_pstype_names(self):
         """Test get_pstype_names."""
         pstypes = PSSearch.get_pstype_names()
@@ -202,7 +201,6 @@ class TestPSSearch(unittest.TestCase):
         for pstype in pstypes:
             self.assertIsInstance(pstype, str)
 
-    # get_psnames
     def test_get_psnames(self):
         """Test get_psnames."""
         # without filters
@@ -226,7 +224,6 @@ class TestPSSearch(unittest.TestCase):
         self.assertRaises(TypeError, PSSearch.get_psnames, filters=[0, ])
         self.assertRaises(TypeError, PSSearch.get_psnames, filters=(0.0, ))
 
-    # get_splims
     def test_get_splims(self):
         """Test get_splims."""
         l1 = PSSearch.get_splims(

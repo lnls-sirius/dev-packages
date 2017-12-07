@@ -23,6 +23,7 @@ public_interface = (
     'get_pu_current_unit',
     'get_common_propty_database',
     'get_common_ps_propty_database',
+    'get_common_pu_propty_database',
     'get_ps_propty_database',
     'get_pu_propty_database',
     'get_ma_propty_database',
@@ -85,12 +86,20 @@ class TestPwrSupply(unittest.TestCase):
                   'high': 4.0, 'hihi': 5.0}
             return db[alarm]
 
+        def get_splims_unit(ispulsed):
+            if ispulsed is True:
+                return ['V', 'Voltage']
+            elif ispulsed is False:
+                return ['A', 'Ampere']
+            else:
+                raise ValueError
+
         if _mock_flag:
             _PSSearch_patcher = mock.patch(
                 'siriuspy.csdevice.pwrsupply._PSSearch', autospec=True)
             self.addCleanup(_PSSearch_patcher.stop)
             self.m_PSSearch = _PSSearch_patcher.start()
-            self.m_PSSearch.get_splims_unit.return_value = ['A', 'Ampere']
+            self.m_PSSearch.get_splims_unit.side_effect = get_splims_unit
             self.m_PSSearch.get_pstype_names.return_value = \
                 TestPwrSupply.pstypes
             self.m_PSSearch.get_splims.side_effect = get_splims
@@ -107,6 +116,13 @@ class TestPwrSupply(unittest.TestCase):
         self.assertIsInstance(unit, (list, tuple))
         self.assertEqual(unit[0], 'A')
         self.assertEqual(unit[1], 'Ampere')
+
+    def test_pu_current_unit(self):
+        """Test  pu_current_unit."""
+        unit = pwrsupply.get_pu_current_unit()
+        self.assertIsInstance(unit, (list, tuple))
+        self.assertEqual(unit[0], 'V')
+        self.assertEqual(unit[1], 'Voltage')
 
     def test_common_propty_database(self):
         """Test common_propty_database."""
@@ -221,12 +237,9 @@ class TestPwrSupply(unittest.TestCase):
                 # check PM database
                 self.assertIn(convname, db_ps)
                 self.assertIn(convname.replace('-SP', '-RB'), db_ps)
-                self.assertIn(convname.replace('-SP', 'Ref-Mon'), db_ps)
                 self.assertIn(convname.replace('-SP', '-Mon'), db_ps)
                 self.assertIn('unit', db_ps[convname])
                 self.assertIn('unit', db_ps[convname.replace('-SP', '-RB')])
-                self.assertIn('unit',
-                              db_ps[convname.replace('-SP', 'Ref-Mon')])
                 self.assertIn('unit', db_ps[convname.replace('-SP', '-Mon')])
 
 

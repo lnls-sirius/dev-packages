@@ -4,7 +4,7 @@ import copy as _copy
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.search import MASearch as _MASearch
-from siriuspy.csdevice import ps_properties as _ps_props
+# from siriuspy.csdevice import ps_properties as _ps_props
 
 default_wfmsize = 4000
 default_wfmlabels = _et.enums('PSWfmLabelsTyp')
@@ -88,15 +88,33 @@ def get_common_ps_propty_database():
     return db
 
 
+def get_common_pu_propty_database():
+    """Return database of commun to all pulsed pwrsupply PVs."""
+    db = get_common_propty_database()
+    db_p = {'type': 'enum', 'enums': _et.enums('DsblEnblTyp'),
+            'value': _et.idx.Dsbl}
+    db_v = {'type': 'float', 'value': 0.0,
+            'prec': default_pu_current_precision}
+    db_pu = {
+        'Pulsed-Sel': _copy.deepcopy(db_p),
+        'Pulsed-Sts': _copy.deepcopy(db_p),
+        'Voltage-SP': _copy.deepcopy(db_v),
+        'Voltage-RB': _copy.deepcopy(db_v),
+        'Voltage-Mon': _copy.deepcopy(db_v),
+    }
+    db.update(db_pu)
+    return db
+
+
 def get_ps_propty_database(pstype):
     """Return property database of a LNLS power supply type device."""
     propty_db = get_common_ps_propty_database()
-    current_alarm = ('Current-SP', 'Current-RB',
-                     'CurrentRef-Mon', 'Current-Mon', )
-    current_pvs = current_alarm + ('WfmData-SP', 'WfmData-RB')
+    signals_lims = ('Current-SP', 'Current-RB',
+                    'CurrentRef-Mon', 'Current-Mon', )
+    signals_unit = signals_lims + ('WfmData-SP', 'WfmData-RB')
     for propty, db in propty_db.items():
         # set setpoint limits in database
-        if propty in current_alarm:
+        if propty in signals_lims:
             db['lolo'] = _PSSearch.get_splims(pstype, 'lolo')
             db['low'] = _PSSearch.get_splims(pstype, 'low')
             db['lolim'] = _PSSearch.get_splims(pstype, 'lolim')
@@ -104,35 +122,29 @@ def get_ps_propty_database(pstype):
             db['high'] = _PSSearch.get_splims(pstype, 'high')
             db['hihi'] = _PSSearch.get_splims(pstype, 'hihi')
         # define unit of current
-        if propty in current_pvs:
+        if propty in signals_unit:
             db['unit'] = get_ps_current_unit()
-
     return propty_db
 
 
 def get_pu_propty_database(pstype):
     """Return database definition for a pulsed power supply type."""
-    db = get_common_propty_database()
-    db_p = {'type': 'enum', 'enums': _et.enums('DsblEnblTyp'),
-            'value': _et.idx.Dsbl},
-    db_pu = {
-        'Pulsed-Sel': _copy.deepcopy(db_p),
-        'Pulsed-Sts': _copy.deepcopy(db_p),
-    }
-    signals = ('Voltage-SP', 'Voltage-RB', 'Voltage-Mon')
-    db_v = {'type': 'float', 'unit': get_pu_current_unit(), 'value': 0.0,
-            'prec': default_pu_current_precision}
-    for signal in signals:
-        db_v = _copy.deepcopy(db_v)
-        db_v['lolo'] = _PSSearch.get_splims(pstype, 'lolo')
-        db_v['low'] = _PSSearch.get_splims(pstype, 'low')
-        db_v['lolim'] = _PSSearch.get_splims(pstype, 'lolim')
-        db_v['hihi'] = _PSSearch.get_splims(pstype, 'hihi')
-        db_v['high'] = _PSSearch.get_splims(pstype, 'high')
-        db_v['hilim'] = _PSSearch.get_splims(pstype, 'hilim')
-        db_pu.update({signal: db_v})
-    db.update(db_pu)
-    return db
+    propty_db = get_common_pu_propty_database()
+    signals_lims = ('Voltage-SP', 'Voltage-RB', 'Voltage-Mon')
+    signals_unit = signals_lims
+    for propty, db in propty_db.items():
+        # set setpoint limits in database
+        if propty in signals_lims:
+            db['lolo'] = _PSSearch.get_splims(pstype, 'lolo')
+            db['low'] = _PSSearch.get_splims(pstype, 'low')
+            db['lolim'] = _PSSearch.get_splims(pstype, 'lolim')
+            db['hilim'] = _PSSearch.get_splims(pstype, 'hilim')
+            db['high'] = _PSSearch.get_splims(pstype, 'high')
+            db['hihi'] = _PSSearch.get_splims(pstype, 'hihi')
+        # define unit of current
+        if propty in signals_unit:
+            db['unit'] = get_ps_current_unit()
+    return propty_db
 
 
 def get_ma_propty_database(maname):
@@ -141,43 +153,29 @@ def get_ma_propty_database(maname):
                      'CurrentRef-Mon', 'Current-Mon', )
     current_pvs = current_alarm + ('WfmData-SP', 'WfmData-RB')
     propty_db = get_common_ps_propty_database()
-    units = _MASearch.get_splims_unit(ispulsed=False)
+    unit = _MASearch.get_splims_unit(ispulsed=False)
     magfunc_dict = _MASearch.conv_maname_2_magfunc(maname)
     db = {}
-    for psname, magfunc in magfunc_dict.items():
-        # psnames = _MASearch.conv_maname_2_psnames(maname)
-        db[psname] = _copy.deepcopy(propty_db)
-        # for propty,pdb in propty_db.items():
-        #     # set setpoint limits in database
-        #     if propty in ('Current-SP',):
-        #         label='lolo';  pdb[label] = _MASearch.get_splim(maname,label)
-        #         label='low';   pdb[label] = _MASearch.get_splim(maname,label)
-        #         label='lolim'; pdb[label] = _MASearch.get_splim(maname,label)
-        #         label='hilim'; pdb[label] = _MASearch.get_splim(maname,label)
-        #         label='high';  pdb[label] = _MASearch.get_splim(maname,label)
-        #         label='hihi';  pdb[label] = _MASearch.get_splim(maname,label)
-        #     # define unit of current
-        #     if propty in \
-        #           ('Current-SP', 'Current-RB', 'CurrentRef-Mon',
-        #            'Current-Mon'):
-        #         #db[psname]['unit'] = units[0]
-        #         pdb['unit'] = units[0]
-        for field in ["-SP", "-RB", "Ref-Mon", "-Mon"]:
-            db[psname]["Current" + field]['lolo'] = \
-                _MASearch.get_splims(maname, 'lolo')
-            db[psname]["Current" + field]['low'] = \
-                _MASearch.get_splims(maname, 'low')
-            db[psname]["Current" + field]['lolim'] = \
-                _MASearch.get_splims(maname, 'lolim')
-            db[psname]["Current" + field]['hilim'] = \
-                _MASearch.get_splims(maname, 'hilim')
-            db[psname]["Current" + field]['high'] = \
-                _MASearch.get_splims(maname, 'high')
-            db[psname]["Current" + field]['hihi'] = \
-                _MASearch.get_splims(maname, 'hihi')
 
+    for psname, magfunc in magfunc_dict.items():
+        db[psname] = _copy.deepcopy(propty_db)
+        # set appropriate PS limits and unit
+        for field in ["-SP", "-RB", "Ref-Mon", "-Mon"]:
+            db[psname]['Current' + field]['lolo'] = \
+                _MASearch.get_splims(maname, 'lolo')
+            db[psname]['Current' + field]['low'] = \
+                _MASearch.get_splims(maname, 'low')
+            db[psname]['Current' + field]['lolim'] = \
+                _MASearch.get_splims(maname, 'lolim')
+            db[psname]['Current' + field]['hilim'] = \
+                _MASearch.get_splims(maname, 'hilim')
+            db[psname]['Current' + field]['high'] = \
+                _MASearch.get_splims(maname, 'high')
+            db[psname]['Current' + field]['hihi'] = \
+                _MASearch.get_splims(maname, 'hihi')
         for propty in current_pvs:
-            db[psname][propty]['unit'] = units[0]
+            db[psname][propty]['unit'] = unit[0]
+        # set approriate MA limits and unit
         if magfunc in ('quadrupole', 'quadrupole-skew'):
             db[psname]['KL-SP'] = _copy.deepcopy(db[psname]['Current-SP'])
             db[psname]['KL-SP']['unit'] = '1/m'
@@ -209,10 +207,8 @@ def get_ma_propty_database(maname):
             db[psname]['Energy-Mon'] = \
                 _copy.deepcopy(db[psname]['Current-Mon'])
             db[psname]['Energy-Mon']['unit'] = 'GeV'
-            # db[psname]['Energy-SP']['prec'] = 6
         elif magfunc in ('corrector-vertical', 'corrector-horizontal'):
             db[psname]['Kick-SP'] = _copy.deepcopy(db[psname]['Current-SP'])
-            # db[psname]['Kick-SP']['prec'] = 6
             db[psname]['Kick-SP']['unit'] = 'rad'
             db[psname]['Kick-RB'] = _copy.deepcopy(db[psname]['Current-RB'])
             db[psname]['Kick-RB']['unit'] = 'rad'
@@ -224,37 +220,73 @@ def get_ma_propty_database(maname):
     return db
 
 
-def get_pm_propty_database(maname, psdata):
-    """Return database for a pulsed magnet."""
-
+def get_pm_propty_database(maname):
+    """Return property database of a pulsed magnet type device."""
+    propty_db = get_common_pu_propty_database()
+    current_alarm = ('Voltage-SP', 'Voltage-RB', 'Voltage-Mon', )
+    unit = _MASearch.get_splims_unit(ispulsed=True)
+    magfunc_dict = _MASearch.conv_maname_2_magfunc(maname)
     db = {}
-    for psname, data in psdata.items():
-        db[psname] = data.propty_database
-
-        db[psname][_ps_props.StrengthSP] = \
-            {"type": "float", "unit": "mrad", "value": 0.0,
-             "prec": default_pu_current_precision}
-        db[psname][_ps_props.StrengthRB] = \
-            {"type": "float", "unit": "mrad", "value": 0.0,
-             "prec": default_pu_current_precision}
-        db[psname][_ps_props.StrengthRefMon] = \
-            {"type": "float", "unit": "mrad", "value": 0.0,
-             "prec": default_pu_current_precision}
-        db[psname][_ps_props.StrengthMon] = \
-            {"type": "float", "unit": "mrad", "value": 0.0,
-             "prec": default_pu_current_precision}
-
-        strength_list = [_ps_props.StrengthSP, _ps_props.StrengthRB,
-                         _ps_props.StrengthRefMon, _ps_props.StrengthMon]
-
-        for strength in strength_list:
-            db[psname][strength]["lolo"] = _MASearch.get_splims(maname, "lolo")
-            db[psname][strength]["low"] = _MASearch.get_splims(maname, "low")
-            db[psname][strength]["lolim"] = \
-                _MASearch.get_splims(maname, "lolim")
-            db[psname][strength]["hihi"] = _MASearch.get_splims(maname, "hihi")
-            db[psname][strength]["high"] = _MASearch.get_splims(maname, "high")
-            db[psname][strength]["hilim"] = \
-                _MASearch.get_splims(maname, "hilim")
-
+    for psname, magfunc in magfunc_dict.items():
+        db[psname] = _copy.deepcopy(propty_db)
+        # set appropriate PS limits and unit
+        for field in ["-SP", "-RB", "-Mon"]:
+            db[psname]['Voltage' + field]['lolo'] = \
+                _MASearch.get_splims(maname, 'lolo')
+            db[psname]['Voltage' + field]['low'] = \
+                _MASearch.get_splims(maname, 'low')
+            db[psname]['Voltage' + field]['lolim'] = \
+                _MASearch.get_splims(maname, 'lolim')
+            db[psname]['Voltage' + field]['hilim'] = \
+                _MASearch.get_splims(maname, 'hilim')
+            db[psname]['Voltage' + field]['high'] = \
+                _MASearch.get_splims(maname, 'high')
+            db[psname]['Voltage' + field]['hihi'] = \
+                _MASearch.get_splims(maname, 'hihi')
+        for propty in current_alarm:
+            db[psname][propty]['unit'] = unit[0]
+        # set approriate MA limits and unit
+        if magfunc in ('corrector-vertical', 'corrector-horizontal'):
+            db[psname]['Kick-SP'] = _copy.deepcopy(db[psname]['Voltage-SP'])
+            db[psname]['Kick-SP']['unit'] = 'rad'
+            db[psname]['Kick-RB'] = _copy.deepcopy(db[psname]['Voltage-RB'])
+            db[psname]['Kick-RB']['unit'] = 'rad'
+            db[psname]['Kick-Mon'] = _copy.deepcopy(db[psname]['Voltage-Mon'])
+            db[psname]['Kick-Mon']['unit'] = 'rad'
+        else:
+            raise ValueError('Invalid pulsed magnet power supply type!')
     return db
+
+# def get_pm_propty_database(maname, psdata):
+#     """Return database for a pulsed magnet."""
+#     db = {}
+#     for psname, data in psdata.items():
+#         db[psname] = data.propty_database
+#
+#         db[psname][_ps_props.StrengthSP] = \
+#             {"type": "float", "unit": "mrad", "value": 0.0,
+#              "prec": default_pu_current_precision}
+#         db[psname][_ps_props.StrengthRB] = \
+#             {"type": "float", "unit": "mrad", "value": 0.0,
+#              "prec": default_pu_current_precision}
+#         db[psname][_ps_props.StrengthRefMon] = \
+#             {"type": "float", "unit": "mrad", "value": 0.0,
+#              "prec": default_pu_current_precision}
+#         db[psname][_ps_props.StrengthMon] = \
+#             {"type": "float", "unit": "mrad", "value": 0.0,
+#              "prec": default_pu_current_precision}
+#
+#         strength_list = [_ps_props.StrengthSP, _ps_props.StrengthRB,
+#                          _ps_props.StrengthRefMon, _ps_props.StrengthMon]
+#
+#         for strength in strength_list:
+#             db[psname][strength]["lolo"] = _MASearch.get_splims(maname, "lolo")
+#             db[psname][strength]["low"] = _MASearch.get_splims(maname, "low")
+#             db[psname][strength]["lolim"] = \
+#                 _MASearch.get_splims(maname, "lolim")
+#             db[psname][strength]["hihi"] = _MASearch.get_splims(maname, "hihi")
+#             db[psname][strength]["high"] = _MASearch.get_splims(maname, "high")
+#             db[psname][strength]["hilim"] = \
+#                 _MASearch.get_splims(maname, "hilim")
+#
+#     return db
