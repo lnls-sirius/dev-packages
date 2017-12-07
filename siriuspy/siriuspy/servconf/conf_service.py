@@ -58,7 +58,7 @@ class ConfigService:
     def update_config(self, obj_dict):
         """Update an existing configuration."""
         if type(obj_dict) is not dict:
-            raise AttributeError('"obj_dict" is not a dictionary')
+            raise ValueError('"obj_dict" is not a dictionary')
         id = obj_dict["_id"]
         config_type = obj_dict['config_type']
         # Check value format
@@ -81,7 +81,7 @@ class ConfigService:
     def insert_config(self, config_type, name, value):
         """Insert configuration into database."""
         if not _config_types.check_value(config_type, value):
-            raise ValueError('Incompatible configuration value!')
+            raise TypeError('Incompatible configuration value!')
         url = self._url + self.CONFIGS_ENDPOINT
         data = {"config_type": config_type, "name": name, "value": value}
         request = _Request(url=url, method="POST",
