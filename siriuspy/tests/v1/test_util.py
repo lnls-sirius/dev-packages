@@ -10,7 +10,7 @@ from unittest import mock
 import siriuspy.util as util
 
 
-valid_interface = (
+public_interface = (
     'conv_splims_labels',
     'get_last_commit_hash',
     'get_timestamp',
@@ -31,7 +31,7 @@ class TestUtil(unittest.TestCase):
 
     def test_public_interface(self):
         """Test module's public interface."""
-        valid = util.check_public_interface_namespace(util, valid_interface)
+        valid = util.check_public_interface_namespace(util, public_interface)
         self.assertTrue(valid)
 
     def test_conv_splims_labels(self):
@@ -104,18 +104,6 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(parameters['parameter3'][1], 'v4')
         self.assertEqual(parameters['parameter3'][2], 'v5')
 
-    def test_save_ioc_pv_list(self):
-        """Test save_ioc_pv_list."""
-        m = mock.mock_open()
-        db = ['pv1', 'pv2']
-        with mock.patch('siriuspy.util.open', m, create=True):
-            util.save_ioc_pv_list('ioc', ('p0', 'p1'), db)
-
-        # print(m.mock_calls)
-        calls = [mock.call('p1\n'), mock.call('p0pv1\n'),
-                 mock.call('p0pv2\n')]
-        self.assertEqual(m().write.call_args_list, calls)
-
     def test_print_ioc_banner(self):
         """Test print_ioc_banner."""
         db = {}
@@ -135,6 +123,18 @@ class TestUtil(unittest.TestCase):
                               '1.0.0', 'PREFIX', file=file)
         text = file.getvalue()
         self.assertEqual(len(text.splitlines()), 12)
+
+    def test_save_ioc_pv_list(self):
+        """Test save_ioc_pv_list."""
+        m = mock.mock_open()
+        db = ['pv1', 'pv2']
+        with mock.patch('siriuspy.util.open', m, create=True):
+            util.save_ioc_pv_list('ioc', ('p0', 'p1'), db)
+
+        # print(m.mock_calls)
+        calls = [mock.call('p1\n'), mock.call('p0pv1\n'),
+                 mock.call('p0pv2\n')]
+        self.assertEqual(m().write.call_args_list, calls)
 
     def test_beam_rigidity(self):
         """Test beam_rigidity."""
@@ -249,17 +249,17 @@ class TestUtil(unittest.TestCase):
         class namespace:
             A = None
             B = None
-        valid_interface = ('A', 'B', )
+        public_interface = ('A', 'B', )
         valid = util.check_public_interface_namespace(
-            namespace, valid_interface)
+            namespace, public_interface)
         self.assertTrue(valid)
         namespace.C = None
         valid = util.check_public_interface_namespace(
-            namespace, valid_interface, False)
+            namespace, public_interface, False)
         self.assertFalse(valid)
-        valid_interface = ('A', 'B', 'missing_symbol')
+        public_interface = ('A', 'B', 'missing_symbol')
         valid = util.check_public_interface_namespace(
-            namespace, valid_interface, False)
+            namespace, public_interface, False)
         self.assertFalse(valid)
 
 

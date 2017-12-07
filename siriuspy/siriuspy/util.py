@@ -77,35 +77,6 @@ def get_timestamp(now=None):
     return st
 
 
-# def get_prop_types():
-#     """Get attribute dictionary if PV properties."""
-#     prop_types = {
-#         'RB':  {'read': True,  'write': False, 'enum': False},
-#         'SP':  {'read': True,  'write': True,  'enum': False},
-#         'Sel': {'read': True,  'write': True,  'enum': True},
-#         'Sts': {'read': True,  'write': False, 'enum': True},
-#         'Cmd': {'read': False, 'write': True,  'enum': False},
-#     }
-#     return prop_types
-
-
-# def get_prop_suffix(prop):
-#     """Get property suffix."""
-#     if prop[-3:] == '-RB':
-#         return 'RB'
-#     if prop[-3:] == '-SP':
-#         return 'SP'
-#     if prop[-4:] == '-Sel':
-#         return 'Sel'
-#     if prop[-4:] == '-Sts':
-#         return 'Sts'
-#     if prop[-4:] == '-Mon':
-#         return 'Mon'
-#     if prop[-4:] == '-Cmd':
-#         return 'Cmd'
-#     return None
-
-
 def read_text_data(text):
     """Parse text data from sirius-consts web server."""
     lines = text.splitlines()

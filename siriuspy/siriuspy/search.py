@@ -346,6 +346,13 @@ class MASearch:
         else:
             raise KeyError('Invalid maname "' + maname + '"!')
 
+    @staticmethod
+    def get_maname_2_splims_dict():
+        """Return a dictionary of power supply magnet and setpoint limits."""
+        if MASearch._maname_2_splims_dict is None:
+            MASearch._reload_maname_2_splims_dict()
+        return _copy.deepcopy(MASearch._maname_2_splims_dict)
+
     # Private methods
     @staticmethod
     def _reload_maname_2_splims_dict():

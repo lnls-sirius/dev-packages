@@ -44,7 +44,7 @@ misc = (
     '__file__',
 )
 
-valid_interface = folders + servers + \
+public_interface = folders + servers + \
                   ('vaca_prefix', 'org_folders', 'repo_names')
 
 
@@ -53,7 +53,7 @@ class TestEnvars(unittest.TestCase):
 
     def test_public_interface(self):
         """Test module's public interface."""
-        valid = util.check_public_interface_namespace(envars, valid_interface)
+        valid = util.check_public_interface_namespace(envars, public_interface)
         self.assertTrue(valid)
 
     def test_folders(self):
