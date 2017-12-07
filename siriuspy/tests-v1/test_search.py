@@ -9,7 +9,6 @@ from siriuspy import util
 from siriuspy import search
 from siriuspy.search import PSSearch
 from siriuspy.search import MASearch
-import siriuspy.servweb
 
 public_interface = (
     'PSSearch',
