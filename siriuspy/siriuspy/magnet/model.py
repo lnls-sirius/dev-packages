@@ -27,8 +27,8 @@ def create_magnet_normalizer(magnet):
     if magnet.magfunc in ('dipole'):
         return _norm.DipoleNormalizer(magnet.maname, magnet_conv_sign=-1.0)
     elif magnet.magfunc == 'quadrupole' and \
-            magnet.maname.section == 'SI' and \
-            magnet.maname.subsection != 'Fam':
+            magnet.maname.sec == 'SI' and \
+            magnet.maname.sub != 'Fam':
             return _norm.TrimNormalizer(magnet.maname,
                                         magnet_conv_sign=-1.0,
                                         dipole_name=magnet.dipole_name,

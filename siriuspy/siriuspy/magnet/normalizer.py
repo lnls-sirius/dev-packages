@@ -119,7 +119,7 @@ class DipoleNormalizer(_MagnetNormalizer):
     def _conv_strength_2_intfield(self, strengths, **kwargs):
         if isinstance(strengths, list):
             strengths = _np.array(strengths)
-        if self._maname.section == 'SI':
+        if self._maname.sec == 'SI':
             intfields = (- self._ref_angle *
                          (self._ref_brho / self._ref_energy)
                          * strengths - self._ref_BL_BC)
@@ -132,7 +132,7 @@ class DipoleNormalizer(_MagnetNormalizer):
     def _conv_intfield_2_strength(self, intfields, **kwargs):
         if isinstance(intfields, list):
             intfields = _np.array(intfields)
-        if self._maname.section == 'SI':
+        if self._maname.sec == 'SI':
             strengths = -self._magnet_conv_sign * \
                         ((self._ref_energy / self._ref_brho) *
                          (- intfields - self._ref_BL_BC) / self._ref_angle)
