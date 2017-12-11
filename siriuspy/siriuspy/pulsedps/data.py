@@ -15,6 +15,6 @@ class PUData(_PSData):
         self._polarity = _PSSearch.conv_pstype_2_polarity(self._pstype)
         self._magfunc = _PSSearch.conv_pstype_2_magfunc(self._pstype)
         self._splims = _PSSearch.conv_pstype_2_splims(self._pstype)
-        self._splims_unit = _PSSearch.get_splims_unit()[1]
+        self._splims_unit = _PSSearch.get_splims_unit(ispulsed=True)[1]
         self._excdata = _PSSearch.conv_psname_2_excdata(self._psname)
         self._propty_database = _get_pu_propty_database(self._pstype)
