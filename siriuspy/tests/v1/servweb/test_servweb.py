@@ -2,9 +2,10 @@
 """Test webserver implementation module."""
 import unittest
 from unittest import mock
+from urllib.request import URLError
 
 from siriuspy.servweb import implementation
-from urllib.request import URLError
+import siriuspy.util as util
 
 # Dependencies
 # _envars.server_url_consts
@@ -55,6 +56,30 @@ class TestServWebReadUrl(unittest.TestCase):
                    return_value="FakeResponse")
 class TestServWeb(unittest.TestCase):
     """Test servweb."""
+
+    api = {
+        "read_url",
+        "server_online",
+        "magnets_excitation_data_read",
+        "magnets_setpoint_limits",
+        "pulsed_magnets_setpoint_limits",
+        "magnets_excitation_ps_read",
+        "ps_pstypes_names_read",
+        "ps_pstype_data_read",
+        "ps_pstype_setpoint_limits",
+        "pu_pstype_setpoint_limits",
+        "beaglebone_power_supplies_mapping",
+        "crate_to_bpm_mapping",
+        "bpms_data",
+        "timing_devices_mapping",
+        "high_level_triggers"
+    }
+
+    def test_api(self, mock_read):
+        """Test api."""
+        valid = util.check_public_interface_namespace(
+            implementation, TestServWeb.api)
+        self.assertTrue(valid)
 
     def test_server_online(self, mock_read):
         """Test server_online return True when no exception is issued."""
