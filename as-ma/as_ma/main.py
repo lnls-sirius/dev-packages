@@ -73,6 +73,7 @@ class App:
     def write(self, reason, value):
         """Write value to reason and let callback update PV database."""
         # Get property and field
+        # use SiriusPVName !!!!
         sub_section, discipline, device, propty, field = \
             self._break_name(reason)
         # Check if field is writable
@@ -102,6 +103,7 @@ class App:
 
     def _break_name(self, reason):
         """Break a reason into its sub parts."""
+        # use SiriusPV Name !!!
         sub_section, discdev, pfield = reason.split(':')
         propty, field = pfield.split('-')
         discipline, *device = discdev.split('-')
