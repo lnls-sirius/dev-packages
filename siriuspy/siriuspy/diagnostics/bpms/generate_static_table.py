@@ -12,7 +12,7 @@ def func(model, acc, label, section):
     insts = fam_data['BPM']['instance']
     bpm_data = dict()
     for ind,inst,sub in zip(inds,insts,subs):
-        name = join_name(section=section,discipline='DI',device='BPM',subsection=sub, instance=inst)
+        name = join_name(sec=section, dis='DI', dev='BPM', sub=sub, idx=inst)
         bpm_data[name] = {'pos':pos[ind], 'crate':crates[name]}
 
     bpms = sorted(bpm_data.keys())

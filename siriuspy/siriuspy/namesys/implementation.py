@@ -4,79 +4,89 @@ import types as _types
 import re as _re
 
 
-def join_name(section, discipline, device, subsection, instance=None,
-              proper=None, field=None,  prefix=None, channel_type=None):
-    """Join PV name substrings."""
+_attrs = (
+    'channel_type',
+    'prefix',
+    'sec',
+    'sub',
+    'dis',
+    'dev',
+    'idx',
+    'propty',
+    'field',
+    'device_name',
+    'area_name',
+    'propty_name',
+    'propty_suffix',
+    'device_propty',
+)
+
+
+def get_siriuspvname_attrs():
+    """Return SiriusPVName attributes."""
+    return [attr for attr in _attrs]
+
+
+def join_name(sec, sub, dis, dev,
+              idx=None, propty=None, field=None,
+              prefix=None, channel_type=None):
+    """Return SiriusPVName object."""
     name = channel_type + '://' if channel_type else ''
     name += prefix + '-' if prefix else ''
-    name += (section.upper() + '-' + subsection + ':' +
-             discipline.upper() + '-' + device)
-    name += ('-' + instance) if instance else ""
-    name += (':' + proper) if proper else ""
+    name += (sec.upper() + '-' + sub + ':' +
+             dis.upper() + '-' + dev)
+    name += ('-' + idx) if idx else ""
+    name += (':' + propty) if propty else ""
     name += ('.' + field) if field else ""
     return SiriusPVName(name)
 
 
 def split_name(pvname):
     """Return dict with PV name split into fields."""
-    dic_ = {
-        'channel_type': '',
-        'prefix': '',
-        'area_name': '',
-        'dev_name': '',
-        'section': '',
-        'subsection': '',
-        'discipline': '',
-        'dev_type': '',
-        'dev_idx': '',
-        'propty': '',
-        'propty_name': '',
-        'propty_sufix': '',
-        'field': '',
-        'dev_propty': '',
-    }
+    # empty dictionary
+    dic_ = {attr: '' for attr in _attrs}
+    # strip PV name
+    pvname = pvname.strip()
+    if len(pvname) == 0:
+        return dic_
 
+    # deals with channel
     dic_['channel_type'] = ''
     if pvname.startswith('ca://'):
         dic_['channel_type'] = 'ca'
         pvname = pvname[5:]
 
     list_ = pvname.split(':')
-
-    if len(list_) == 1:
-        dic_['propty'] = list_[0]
-        return dic_
-
     slist_ = list_[0].split('-')
     dic_['prefix'] = '-'.join([s for s in slist_[:-2]])
     dic_['area_name'] = '-'.join([s for s in slist_[-2:]])
-    dic_['dev_name'] = dic_['area_name'] + ':' + list_[1]
+    dic_['device_name'] = dic_['area_name'] + ':' + list_[1]
 
-    dic_['section'] = slist_[-2]
-    dic_['subsection'] = slist_[-1]
+    dic_['sec'] = slist_[-2]
+    dic_['sub'] = slist_[-1]
 
     slist_ = list_[1].split('-')
-    dic_['discipline'] = slist_[0]
-    dic_['dev_type'] = slist_[1]
-    dic_['dev_idx'] = slist_[2] if len(slist_) >= 3 else ''
+    dic_['dis'] = slist_[0]
+    dic_['dev'] = slist_[1]
+    dic_['idx'] = slist_[2] if len(slist_) >= 3 else ''
 
     if len(list_) > 2:
         slist_ = list_[2].split('.')
         sslist_ = slist_[0].split('-')
         dic_['propty'] = slist_[0]
         dic_['propty_name'] = sslist_[0]
-        dic_['propty_sufix'] = sslist_[1] if len(sslist_) > 1 else ''
+        dic_['propty_suffix'] = sslist_[1] if len(sslist_) > 1 else ''
         dic_['field'] = slist_[1] if len(slist_) >= 2 else ''
     else:
         dic_['propty'] = ''
         dic_['propty_name'] = ''
-        dic_['propty_sufix'] = ''
+        dic_['propty_suffix'] = ''
         dic_['field'] = ''
 
-    dic_['dev_propty'] = (dic_['dev_type'] +
-                          ('-' + dic_['dev_idx'] if dic_['dev_idx'] else '') +
-                          (':' + dic_['propty'] if dic_['propty'] else '') +
-                          ('.' + dic_['field'] if dic_['field'] else ''))
+    dic_['device_propty'] = (dic_['dev'] +
+                             ('-' + dic_['idx'] if dic_['idx'] else '') +
+                             (':' + dic_['propty'] if dic_['propty'] else '') +
+                             ('.' + dic_['field'] if dic_['field'] else ''))
     return dic_
 
 
@@ -89,25 +99,25 @@ class SiriusPVName(str):
         obj = super().__new__(cls, pv_name)
         obj.channel_type = name['channel_type']
         obj.prefix = name['prefix']
+        obj.sec = name['sec']
+        obj.sub = name['sub']
         obj.area_name = name['area_name']
-        obj.dev_name = name['dev_name']
-        obj.section = name['section']
-        obj.subsection = name['subsection']
-        obj.discipline = name['discipline']
-        obj.dev_type = name['dev_type']
-        obj.dev_instance = name['dev_idx']
-        obj.propty = name['propty']
+        obj.dis = name['dis']
+        obj.dev = name['dev']
+        obj.idx = name['idx']
+        obj.device_name = name['device_name']
         obj.propty_name = name['propty_name']
-        obj.propty_sufix = name['propty_sufix']
+        obj.propty_suffix = name['propty_suffix']
+        obj.propty = name['propty']
+        obj.device_propty = name['device_propty']
         obj.field = name['field']
-        obj.dev_propty = name['dev_propty']
         return obj
 
     def __lt__(self, other):
         """Less-than operator."""
         cond = ((type(other) == type(self)) and
-                (self.section == other.section) and
-                (self.subsection != other.subsection))
+                (self.sec == other.sec) and
+                (self.sub != other.sub))
         return self._subsec_comp(other) if cond else super().__lt__(other)
 
     def __gt__(self, other):
@@ -124,8 +134,8 @@ class SiriusPVName(str):
 
     def _subsec_comp(self, other):
         """Subsection comparison."""
-        my_ssec = self.subsection
-        th_ssec = other.subsection
+        my_ssec = self.sub
+        th_ssec = other.sub
         if my_ssec == 'Glob':
             return False
         elif th_ssec == 'Glob':
@@ -173,37 +183,37 @@ class Filter:
     patterns.FAST_CV = 'FCV.*'
 
     filters = _types.SimpleNamespace()
-    filters.FAM = {'sub_section': patterns.FAM}
-    filters.TRIM = {'sub_section': patterns.TRIM}
-    filters.DIPOLE = {'device': patterns.DIPOLE}
-    filters.QUADRUPOLE = {'device': patterns.QUADRUPOLE}
-    filters.QUADRUPOLE_SKEW = {'device': patterns.QUADRUPOLE_SKEW}
-    filters.QD = {'device': patterns.QD}
-    filters.QF = {'device': patterns.QF}
-    filters.SEXTUPOLE = {'device': patterns.SEXTUPOLE}
-    filters.SD = {'device': patterns.SD}
-    filters.SF = {'device': patterns.SF}
-    filters.CORRECTOR = {'device': patterns.CORRECTOR}
-    filters.SLOW_CHV = {'device': patterns.SLOW_CHV}
-    filters.SLOW_CH = {'device': patterns.SLOW_CH}
-    filters.SLOW_CV = {'device': patterns.SLOW_CV}
-    filters.FAST_CHV = {'device': patterns.FAST_CHV}
-    filters.FAST_CH = {'device': patterns.FAST_CH}
-    filters.FAST_CV = {'device': patterns.FAST_CV}
+    filters.FAM = {'sub': patterns.FAM}
+    filters.TRIM = {'sub': patterns.TRIM}
+    filters.DIPOLE = {'dev': patterns.DIPOLE}
+    filters.QUADRUPOLE = {'dev': patterns.QUADRUPOLE}
+    filters.QUADRUPOLE_SKEW = {'dev': patterns.QUADRUPOLE_SKEW}
+    filters.QD = {'dev': patterns.QD}
+    filters.QF = {'dev': patterns.QF}
+    filters.SEXTUPOLE = {'dev': patterns.SEXTUPOLE}
+    filters.SD = {'dev': patterns.SD}
+    filters.SF = {'dev': patterns.SF}
+    filters.CORRECTOR = {'dev': patterns.CORRECTOR}
+    filters.SLOW_CHV = {'dev': patterns.SLOW_CHV}
+    filters.SLOW_CH = {'dev': patterns.SLOW_CH}
+    filters.SLOW_CV = {'dev': patterns.SLOW_CV}
+    filters.FAST_CHV = {'dev': patterns.FAST_CHV}
+    filters.FAST_CH = {'dev': patterns.FAST_CH}
+    filters.FAST_CV = {'dev': patterns.FAST_CV}
 
-    def add_filter(filters=None, section=None, sub_section=None,
-                   discipline=None, device=None):
+    def add_filter(filters=None, sec=None, sub=None,
+                   dis=None, dev=None):
         if filters is None:
             filters = []
         f = {}
-        if section is not None:
-            f['section'] = section
-        if sub_section is not None:
-            f['sub_section'] = sub_section
-        if discipline is not None:
-            f['discipline'] = discipline
-        if device is not None:
-            f['device'] = device
+        if sec is not None:
+            f['sec'] = sec
+        if sub is not None:
+            f['sub'] = sub
+        if dis is not None:
+            f['dis'] = dis
+        if dev is not None:
+            f['dev'] = dev
         if f:
             filters.append(f)
         return filters
@@ -224,16 +234,16 @@ class Filter:
         # build filter regexp
         fs = []
         for f in filters:
-            if 'section' not in f or f['section'] is None:
-                f['section'] = '[A-Z]{2}'
-            if 'sub_section' not in f or f['sub_section'] is None:
-                f['sub_section'] = '\w{2,4}'
-            if 'discipline' not in f or f['discipline'] is None:
-                f['discipline'] = '[A-Z]{2,6}'
-            if 'device' not in f or f['device'] is None:
-                f['device'] = '.+'
-            pattern = (f['section'] + '-' + f['sub_section'] + ':' +
-                       f['discipline'] + '-' + f['device'])
+            if 'sec' not in f or f['sec'] is None:
+                f['sec'] = '[A-Z]{2}'
+            if 'sub' not in f or f['sub'] is None:
+                f['sub'] = '\w{2,4}'
+            if 'dis' not in f or f['dis'] is None:
+                f['dis'] = '[A-Z]{2,6}'
+            if 'dev' not in f or f['dev'] is None:
+                f['dev'] = '.+'
+            pattern = (f['sec'] + '-' + f['sub'] + ':' +
+                       f['dis'] + '-' + f['dev'])
             regexp = _re.compile(pattern)
             fs.append(regexp)
 

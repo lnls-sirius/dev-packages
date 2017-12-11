@@ -25,12 +25,12 @@ class MagnetFactory:
         pulsed_discipline = _re.compile("PM")
         dipole = _re.compile("B.*")
         trim = _re.compile("SI-\d{2}\w\d:MA-(QD|QF|Q\d).*")
-        if pulsed_discipline.match(maname.discipline):
+        if pulsed_discipline.match(maname.dis):
             return _PulsedMagnetPowerSupply(maname,
                                             use_vaca=use_vaca,
                                             vaca_prefix=vaca_prefix,
                                             lock=lock)
-        elif dipole.match(maname.dev_type):
+        elif dipole.match(maname.dev):
             return _MagnetPowerSupplyDipole(maname,
                                             use_vaca=use_vaca,
                                             vaca_prefix=vaca_prefix,

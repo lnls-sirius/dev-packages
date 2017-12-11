@@ -267,9 +267,16 @@ def update_integer_bit(integer, number_of_bits, value, bit):
 
 
 def check_public_interface_namespace(namespace, valid_interface,
+                                     checkdoc_flag=True,
                                      print_flag=True):
     """Function to be used in unittests to test module's public interface."""
     for name in namespace.__dict__:
+        if checkdoc_flag:
+            doc = getattr(name, '__doc__')
+            if doc is None or len(doc) < 5:
+                if print_flag:
+                    print('"' + name + '" has an invalid docstring!')
+                return False
         if not name.startswith('_') and name not in valid_interface:
             if print_flag:
                 print('Invalid symbol: ', name)

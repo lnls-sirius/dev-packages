@@ -28,7 +28,7 @@ def read_test_file(path):
 class TestSearch(unittest.TestCase):
     """Test Search module."""
 
-    def _test_public_interface(self):
+    def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(search, public_interface)
         self.assertTrue(valid)
@@ -155,11 +155,11 @@ class TestPSSearch(unittest.TestCase):
         sorted_psnames = sorted(psnames)
         self.assertEqual(psnames, sorted_psnames)
         # with filters
-        psnames = PSSearch.get_psnames({'discipline': 'PU'})
+        psnames = PSSearch.get_psnames({'dis': 'PU'})
         self.assertEqual(len(psnames), 12)
         for name in psnames:
             self.assertIn('PU', name)
-        psnames = PSSearch.get_psnames({'sub_section': '0.M1'})
+        psnames = PSSearch.get_psnames({'sub': '0.M1'})
         self.assertEqual(len(psnames), 69)
         # exceptions
         self.assertRaises(TypeError, PSSearch.get_psnames, filters=23)
@@ -260,7 +260,7 @@ class TestPSSearch(unittest.TestCase):
             elif ":PS" in psname:
                 self.assertFalse(PSSearch.check_psname_ispulsed(psname))
         self.assertRaises(KeyError,
-                          PSSearch.check_psname_ispulsed, psname='dummy')
+                          PSSearch.check_psname_ispulsed, psname='A-B:C-D:E')
 
     def test_check_pstype_ispulsed(self):
         """Test check_pstype_isplused."""
@@ -416,11 +416,11 @@ class TestMASearch(unittest.TestCase):
         # sorted_manames = sorted(manames)
         # self.assertEqual(manames, sorted_manames)
         # with filters
-        manames = MASearch.get_manames({'discipline': 'PM'})
+        manames = MASearch.get_manames({'dis': 'PM'})
         self.assertEqual(len(manames), 12)
         for name in manames:
             self.assertIn('PM', name)
-        manames = MASearch.get_manames({'sub_section': '0.M1'})
+        manames = MASearch.get_manames({'sub': '0.M1'})
         self.assertEqual(len(manames), 84)
 
     def test_get_pwrsupply_manames(self):
@@ -487,7 +487,7 @@ class TestMASearch(unittest.TestCase):
             elif ":MA" in maname:
                 self.assertFalse(MASearch.check_maname_ispulsed(maname))
         self.assertRaises(KeyError,
-                          MASearch.check_maname_ispulsed, maname='dummy')
+                          MASearch.check_maname_ispulsed, maname='A-B:C-D:E')
 
     def test_get_maname_2_splims_dict(self):
         """Test get_maname_2_splims_dict."""

@@ -116,9 +116,9 @@ class PSSearch:
     def check_psname_ispulsed(psname):
         """Return True if psname is a pulsed power supply, False otherwise."""
         spvname = _SiriusPVName(psname)
-        if spvname.discipline == 'PU':
+        if spvname.dis == 'PU':
             return True
-        elif spvname.discipline == 'PS':
+        elif spvname.dis == 'PS':
             return False
         else:
             raise KeyError('Invalid psname "' + psname + '"!')
@@ -339,9 +339,9 @@ class MASearch:
     def check_maname_ispulsed(maname):
         """Return True if psname is a pulsed power supply, False otherwise."""
         devname = _SiriusPVName(maname)
-        if devname.discipline == 'PM':
+        if devname.dis == 'PM':
             return True
-        elif devname.discipline == 'MA':
+        elif devname.dis == 'MA':
             return False
         else:
             raise KeyError('Invalid maname "' + maname + '"!')
@@ -399,7 +399,7 @@ class MASearch:
                 if 'Fam' not in magnet:
                     famname = _SiriusPVName(magnet)
                     famname = famname.replace(
-                        famname.subsection, 'Fam').replace('MA-', 'PS-')
+                        famname.sub, 'Fam').replace('MA-', 'PS-')
                     if '-Fam:PS-Q' in famname and famname in ps_names:
                         ps_names.remove(famname)
                         maname = famname.replace('PS-', 'MA-')

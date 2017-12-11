@@ -87,7 +87,7 @@ class MagnetPSDevice:
 
     def _pvs_callback(self, pvname, value, **kwargs):
         names = _namesys.split_name(pvname)
-        propty = names['Property']
+        propty = names['propty']
         self._database[propty]['value'] = value
         for index,function in self._callback_functions.items():
             function(family_name=self._family_name,

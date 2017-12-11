@@ -89,23 +89,23 @@ class DipoleNormalizer(_MagnetNormalizer):
 
     def _set_reference_dipole_data(self):
         ang = DipoleNormalizer._ref_angles
-        if self._maname.section == 'SI':
+        if self._maname.sec == 'SI':
             self._ref_energy = 3.0  # [GeV]
             self._ref_brho, *_ = _util.beam_rigidity(self._ref_energy)
             self._ref_BL_BC = - self._ref_brho * ang['SI_BC']
             self._ref_angle = ang['SI_B1'] + ang['SI_B2'] + ang['SI_BC']
             self._ref_BL = - self._ref_brho * self._ref_angle - self._ref_BL_BC
-        elif self._maname.section == 'BO':
+        elif self._maname.sec == 'BO':
             self._ref_energy = 3.0  # [GeV]
             self._ref_brho, *_ = _util.beam_rigidity(self._ref_energy)
             self._ref_angle = ang['BO']
             self._ref_BL = - self._ref_brho * self._ref_angle
-        elif self._maname.section == 'TS':
+        elif self._maname.sec == 'TS':
             self._ref_energy = 3.0  # [GeV]
             self._ref_brho, *_ = _util.beam_rigidity(self._ref_energy)
             self._ref_angle = ang['TS']
             self._ref_BL = - self._ref_brho * self._ref_angle
-        elif self._maname.section == 'TB':
+        elif self._maname.sec == 'TB':
             self._ref_energy = 0.150  # [GeV]
             self._ref_brho, *_ = _util.beam_rigidity(self._ref_energy)
             self._ref_angle = ang['TB']
