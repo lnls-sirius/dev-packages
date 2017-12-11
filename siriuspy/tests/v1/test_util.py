@@ -259,7 +259,7 @@ class TestUtil(unittest.TestCase):
         self.assertFalse(valid)
         public_interface = ('A', 'B', 'missing_symbol')
         valid = util.check_public_interface_namespace(
-            namespace, public_interface, False)
+            namespace, public_interface, print_flag=False)
         self.assertFalse(valid)
 
 

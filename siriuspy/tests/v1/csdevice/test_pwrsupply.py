@@ -5,7 +5,6 @@
 import unittest
 from unittest import mock
 from siriuspy.search import PSSearch
-from siriuspy.search import MASearch
 import siriuspy.csdevice.pwrsupply as pwrsupply
 import siriuspy.util as util
 
@@ -103,6 +102,11 @@ class TestPwrSupply(unittest.TestCase):
             self.m_PSSearch.get_pstype_names.return_value = \
                 TestPwrSupply.pstypes
             self.m_PSSearch.get_splims.side_effect = get_splims
+            _MASearch_patcher = mock.patch(
+                'siriuspy.csdevice.pwrsupply._MASearch', autospec=True)
+            self.addCleanup(_MASearch_patcher.stop)
+            self.m_MASearch = _MASearch_patcher.start()
+            self.m_MASearch.get_splims_unit.side_effect = get_splims_unit
 
     def test_public_interface(self):
         """Test module's public interface."""
@@ -147,8 +151,7 @@ class TestPwrSupply(unittest.TestCase):
         """Test ps_propty_database."""
         current_pvs = TestPwrSupply.ps_alarm + \
             ('WfmData-SP', 'WfmData-RB')
-        pstypes = PSSearch.get_pstype_names()
-        for pstype in pstypes:
+        for pstype in TestPwrSupply.pstypes:
             db = pwrsupply.get_ps_propty_database(pstype)
             unit = db['Current-SP']['unit']
             for propty, dbi in db.items():
@@ -165,8 +168,7 @@ class TestPwrSupply(unittest.TestCase):
     def test_pu_propty_database(self):
         """Test pu_propty_database."""
         current_pvs = TestPwrSupply.pu_alarm
-        pstypes = PSSearch.get_pstype_names()
-        for pstype in pstypes:
+        for pstype in TestPwrSupply.pstypes:
             db = pwrsupply.get_pu_propty_database(pstype)
             unit = db['Voltage-SP']['unit']
             for propty, dbi in db.items():
