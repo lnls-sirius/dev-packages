@@ -178,7 +178,7 @@ class ConfigService:
             request = _Request(url=url, method="GET")
         else:
             if type(find_dict) is not dict:
-                raise AttributeError("`find_dict` is not a dict")
+                raise ValueError("`find_dict` is not a dict")
             request = _Request(url=url, method="GET",
                                headers={"Content-Type": "application/json"},
                                data=_json.dumps(find_dict).encode())
