@@ -26,7 +26,7 @@ class TestMagnetFactory(unittest.TestCase):
 
     @mock.patch('siriuspy.factory._MagnetPowerSupplyDipole', autospec=True)
     def test_dipole_creation(self, mock_ma):
-        """Test Factory.factory."""
+        """Test Factory.factory. dipole creation."""
         maname = 'SI-Fam:MA-B1B2'
         magnet = MagnetFactory.factory(maname=maname,
                                        use_vaca=False,
@@ -35,7 +35,7 @@ class TestMagnetFactory(unittest.TestCase):
 
     @mock.patch('siriuspy.factory._MagnetPowerSupply', autospec=True)
     def test_magnet_creation(self, mock_ma):
-        """Test Factory.factory."""
+        """Test Factory.factory magnet creation."""
         maname = 'SI-Fam:MA-QDA'
         magnet = MagnetFactory.factory(maname=maname,
                                        use_vaca=False,
@@ -44,11 +44,12 @@ class TestMagnetFactory(unittest.TestCase):
 
     @mock.patch('siriuspy.factory._MagnetPowerSupplyTrim', autospec=True)
     def test_trim_creation(self, mock_ma):
-        """Test Factory.factory."""
+        """Test Factory.factory. trim creation."""
         maname = 'SI-01M1:MA-QDA'
         magnet = MagnetFactory.factory(maname=maname,
                                        use_vaca=False,
                                        vaca_prefix=None, lock=False)
+        self.assertIsInstance(magnet, MagnetPowerSupply)
         self.assertIsInstance(magnet, MagnetPowerSupplyTrim)
 
 

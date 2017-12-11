@@ -36,15 +36,16 @@ def server_online():
         return False
 
 
-def magnets_excitation_data_get_filenames_list(timeout=_timeout):
-    """Get list of filenames in magnet excitation data folder at web server."""
-    text = read_url(_excdat_folder, timeout=timeout)
-    words = text.split('"[TXT]"></td><td><a href="')
-    fname_list = []
-    for word in words[1:]:
-        fname = word.split('.txt">')[1].split('</a></td><td')
-        fname_list.append(fname[0])
-    return fname_list
+# def magnets_excitation_data_get_filenames_list(timeout=_timeout):
+#     """Get list of filenames in magnet
+#        excitation data folder at web server."""
+#     text = read_url(_excdat_folder, timeout=timeout)
+#     words = text.split('"[TXT]"></td><td><a href="')
+#     fname_list = []
+#     for word in words[1:]:
+#         fname = word.split('.txt">')[1].split('</a></td><td')
+#         fname_list.append(fname[0])
+#     return fname_list
 
 
 def magnets_excitation_data_read(filename, timeout=_timeout):
@@ -122,11 +123,3 @@ def high_level_triggers(timeout=_timeout):
     """Return the data defining the high level triggers."""
     url = _timesys_folder + 'high-level-triggers.txt'
     return read_url(url, timeout=timeout)
-
-
-def response_matrix_read(filename, timeout=_timeout):
-    """Return response matrices."""
-    url = _respm_folder + filename
-    text = read_url(url, timeout=timeout)
-    data, parameters = _util.read_text_data(text)
-    return data, parameters

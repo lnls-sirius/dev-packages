@@ -10,6 +10,7 @@ import siriuspy.util as util
 # Dependecies
 #   - _config_types (get_config_types, check_value)
 #   - _urlopen (read)
+#   - _Request
 
 
 class TestConfigService(unittest.TestCase):
