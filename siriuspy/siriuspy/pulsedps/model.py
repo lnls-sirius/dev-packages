@@ -4,7 +4,6 @@ import logging as _logging
 from epics import PV as _PV
 
 from siriuspy import envars as _envars
-from siriuspy.csdevice import ps_properties as _properties
 from siriuspy.pulsedps.data import PUData as _PUData
 
 _logging.basicConfig(level=_logging.WARNING)
@@ -41,19 +40,17 @@ class PulsedPowerSupply:
                 "\t{:16s} - {:b}\n"
                 "\t{:16s} - {}\n"
                 "\t{:16s} - {}\n"
-                "\t{:16s} - {}\n"
                 "\t{:16s} - {})"
-                ).format(_properties.CtrlMode, self.ctrlmode_mon,
-                         _properties.PwrStateSel, self.pwrstate_sel,
-                         _properties.PwrStateSts, self.pwrstate_sts,
-                         _properties.EnablePulsesSel, self.enablepulses_sel,
-                         _properties.EnablePulsesSts, self.enablepulses_sts,
-                         _properties.ResetCmd, self.reset_cmd,
-                         _properties.ExternalInterlock, self.intlk_mon,
-                         _properties.TensionSP, self.tension_sp,
-                         _properties.TensionRB, self.tension_rb,
-                         _properties.TensionRefMon, self.tensionref_mon,
-                         _properties.TensionMon, self.tension_mon)
+                ).format('CtrlMode-Mon', self.ctrlmode_mon,
+                         'PwrState-Sel', self.pwrstate_sel,
+                         'PwrState-Sts', self.pwrstate_sts,
+                         'Pulsed-Sel', self.pulsed_sel,
+                         'Pulsed-Sts', self.pulsed_sts,
+                         'Reset-Cmd', self.reset_cmd,
+                         'Intlk-Mon', self.intlk_mon,
+                         'Voltage-SP', self.voltage_sp,
+                         'Voltage-RB', self.voltage_rb,
+                         'Voltage-Mon', self.voltage_mon)
 
     def add_callback_to_pv(self, attr, func):
         """Add func as a callback to given attribute."""
@@ -85,87 +82,82 @@ class PulsedPowerSupply:
             _logging.warning("Failed to write to {}".format(attr))
 
     @property
-    def tension_sp(self):
-        """Return tension_sp."""
-        return self.read(self._controller, _properties.TensionSP)
+    def voltage_sp(self):
+        """Return voltage_sp."""
+        return self.read(self._controller, 'Voltage-SP')
 
-    @tension_sp.setter
-    def tension_sp(self, value):
-        upper_limit = self._db[_properties.TensionSP]["hilim"]
-        lower_limit = self._db[_properties.TensionSP]["lolim"]
+    @voltage_sp.setter
+    def voltage_sp(self, value):
+        upper_limit = self._db['Voltage-SP']["hilim"]
+        lower_limit = self._db['Voltage-SP']["lolim"]
         if value > upper_limit:
             value = upper_limit
         elif value < lower_limit:
             value = lower_limit
-        self.write(self._controller, _properties.TensionSP, value)
+        self.write(self._controller, 'Voltage-SP', value)
 
     @property
-    def tension_rb(self):
-        """Return tension_rb."""
-        return self._controller[_properties.TensionRB].get()
+    def voltage_rb(self):
+        """Return voltage_rb."""
+        return self._controller['Voltage-RB'].get()
 
     @property
-    def tensionref_mon(self):
-        """Return tension ref mon."""
-        return self._controller[_properties.TensionRefMon].get()
-
-    @property
-    def tension_mon(self):
-        """Return tension mon."""
-        return self._controller[_properties.TensionMon].get()
+    def voltage_mon(self):
+        """Return voltage mon."""
+        return self._controller['Voltage-Mon'].get()
 
     @property
     def pwrstate_sel(self):
         """Return power state sel value."""
-        # return self._controller[_properties.PwrStateSel].get()
-        return self.read(self._controller, _properties.PwrStateSel)
+        # return self._controller['PwrState-Sel'].get()
+        return self.read(self._controller, 'PwrState-Sel')
 
     @pwrstate_sel.setter
     def pwrstate_sel(self, value):
-        # self._controller[_properties.PwrStateSel].put(value)
-        self.write(self._controller, _properties.PwrStateSel, value)
+        # self._controller['PwrState-Sel'].put(value)
+        self.write(self._controller, 'PwrState-Sel', value)
 
     @property
     def pwrstate_sts(self):
         """Return power state status."""
-        return self._controller[_properties.PwrStateSts].get()
+        return self._controller['PwrState-Sts'].get()
 
     @property
-    def enablepulses_sel(self):
+    def pulsed_sel(self):
         """Return setpoint for pulses enabled."""
-        return self.read(self._controller, _properties.EnablePulsesSel)
-        # return self._controller[_properties.EnablePulsesSel].get()
+        return self.read(self._controller, 'Pulsed-Sel')
+        # return self._controller['Pulsed-Sel'].get()
 
-    @enablepulses_sel.setter
-    def enablepulses_sel(self, value):
-        # self._controller[_properties.EnablePulsesSel].put(value)
-        self.write(self._controller, _properties.EnablePulsesSel, value)
+    @pulsed_sel.setter
+    def pulsed_sel(self, value):
+        # self._controller['Pulsed-Sel'].put(value)
+        self.write(self._controller, 'Pulsed-Sel', value)
 
     @property
-    def enablepulses_sts(self):
+    def pulsed_sts(self):
         """Return wether pulses are enabled or not."""
-        return self._controller[_properties.EnablePulsesSts].get()
+        return self._controller['Pulsed-Sts'].get()
 
     @property
     def reset_cmd(self):
         """Return number of reset commands issued."""
-        return self.read(self._controller, _properties.ResetCmd)
-        # return self._controller[_properties.ResetCmd].get()
+        return self.read(self._controller, 'Reset-Cmd')
+        # return self._controller['Reset-Cmd'].get()
 
     @reset_cmd.setter
     def reset_cmd(self, value):
-        # self._controller[_properties.ResetCmd].put(value)
-        self.write(self._controller, _properties.ResetCmd, value)
+        # self._controller['Reset-Cmd'].put(value)
+        self.write(self._controller, 'Reset-Cmd', value)
 
     @property
     def intlk_mon(self):
         """Return interlock mask."""
-        return self._controller[_properties.ExternalInterlock].get()
+        return self._controller['Intlk-Mon'].get()
 
     @property
     def ctrlmode_mon(self):
         """Return control mode."""
-        return self._controller[_properties.CtrlMode].get()
+        return self._controller['CtrlMode-Mon'].get()
 
     @property
     def database(self):
@@ -174,7 +166,7 @@ class PulsedPowerSupply:
 
     # Private methods
     def _get_database(self):
-        for attr in _properties.PulsedPowerSupplyAttrs:
+        for attr in ('Kick-SP', 'Kick-RB', 'Kick-Mon'):
             value = self.read(self._controller, attr)
             if value is not None:
                 self._db[attr]["value"] = value
@@ -198,11 +190,12 @@ class PulsedPowerSupply:
 
     def _init_controller(self):
         self._controller = {}
-        for attr in _properties.PulsedPowerSupplyAttrs:
+        for attr in ('Kick-SP', 'Kick-RB', 'Kick-Mon'):
             self._controller[attr] = _PV(
-                self._vaca_prefix + self._psname + ":" + attr, connection_callback=self._init_value)
+                self._vaca_prefix + self._psname + ":" +
+                attr, connection_callback=self._init_value)
 
-    def _init_value(self, pvname, status, **kwargs):
+    def _init_value(self, pvname, value, status, **kwargs):
         if status:
             if "PwrState-Sel" in pvname:
                 self.pwrstate_sel = value
@@ -220,14 +213,13 @@ class PulsedPowerSupplySim:
         self._psname = psname
         self._data = _PUData(self._psname)
         # Properties
-        self._tension_sp = 0
-        self._tension_rb = 0
-        self._tensionref_mon = 0
-        self._tension_mon = 0
+        self._voltage_sp = 0
+        self._voltage_rb = 0
+        self._voltage_mon = 0
         self._pwrstate_sel = 0
         self._pwrstate_sts = 0
-        self._enablepulses_sel = 0
-        self._enablepulses_sts = 0
+        self._pulsed_sel = 0
+        self._pulsed_sts = 0
         self._reset_cmd = 0
         self._intlk_mon = 0
         self._ctrlmode_mon = 0
@@ -241,28 +233,23 @@ class PulsedPowerSupplySim:
         self._callback = func
 
     @property
-    def tension_sp(self):
-        """Return tension_sp."""
-        return self._get_tension_sp()
+    def voltage_sp(self):
+        """Return voltage_sp."""
+        return self._get_voltage_sp()
 
-    @tension_sp.setter
-    def tension_sp(self, value):
-        self._set_tension_sp(value)
-
-    @property
-    def tension_rb(self):
-        """Return tension_rb."""
-        return self._get_tension_rb()
+    @voltage_sp.setter
+    def voltage_sp(self, value):
+        self._set_voltage_sp(value)
 
     @property
-    def tensionref_mon(self):
-        """Return tension ref mon."""
-        return self._get_tensionref_mon()
+    def voltage_rb(self):
+        """Return voltage_rb."""
+        return self._get_voltage_rb()
 
     @property
-    def tension_mon(self):
-        """Return tension mon."""
-        return self._get_tension_mon()
+    def voltage_mon(self):
+        """Return voltage mon."""
+        return self._get_voltage_mon()
 
     @property
     def pwrstate_sel(self):
@@ -279,16 +266,16 @@ class PulsedPowerSupplySim:
         return self._get_pwrstate_sts()
 
     @property
-    def enablepulses_sel(self):
+    def pulsed_sel(self):
         """Return setpoint for pulses enabled."""
         return self._get_enable_pulses_sel()
 
-    @enablepulses_sel.setter
-    def enablepulses_sel(self, value):
+    @pulsed_sel.setter
+    def pulsed_sel(self, value):
         self._set_enable_pulses_sel(value)
 
     @property
-    def enablepulses_sts(self):
+    def pulsed_sts(self):
         """Return wether pulses are enabled or not."""
         return self._get_enable_pulses_sts()
 
@@ -317,54 +304,39 @@ class PulsedPowerSupplySim:
         return self._data.propty_database
 
     # Private methods
-    def _get_tension_sp(self):
-        return self._tension_sp
+    def _get_voltage_sp(self):
+        return self._voltage_sp
 
-    def _set_tension_sp(self, value):
+    def _set_voltage_sp(self, value):
         if not self._reset_issued:
-            self._tension_sp = value
-            self._issue_callback(_properties.TensionSP, value)
-        self._tension_rb = value
-        self._issue_callback(_properties.TensionRB, value)
-        self._set_tensionref_mon(value)
-        self._set_tension_mon(value)
+            self._voltage_sp = value
+            self._issue_callback('Voltage-SP', value)
+        self._voltage_rb = value
+        self._issue_callback('Voltage-RB', value)
+        self._set_voltageref_mon(value)
+        self._set_voltage_mon(value)
 
-    def _get_tension_rb(self):
-        return self._tension_rb
+    def _get_voltage_rb(self):
+        return self._voltage_rb
 
-    def _set_tension_rb(self, value):
+    def _set_voltage_rb(self, value):
         # Will be implemented by PS
-        self._tension_rb = value
+        self._voltage_rb = value
 
-    def _get_tensionref_mon(self):
-        return self._tensionref_mon
+    def _get_voltage_mon(self):
+        return self._voltage_mon
 
-    def _set_tensionref_mon(self, value):
+    def _set_voltage_mon(self, value):
         if self._ctrlmode_mon == 0 and \
                 self._pwrstate_sts == 1 or \
                 self._reset_issued:
-            max_tension = \
-                self._data.propty_database[_properties.TensionRefMon]["hihi"]
-            if value > max_tension:
-                value = max_tension
+            max_voltage = \
+                self._data.propty_database['Voltage-Mon']["hihi"]
+            if value > max_voltage:
+                value = max_voltage
 
-            self._tensionref_mon = value
-            self._issue_callback(_properties.TensionRefMon, value)
-
-    def _get_tension_mon(self):
-        return self._tension_mon
-
-    def _set_tension_mon(self, value):
-        if self._ctrlmode_mon == 0 and \
-                self._pwrstate_sts == 1 or \
-                self._reset_issued:
-            max_tension = \
-                self._data.propty_database[_properties.TensionRefMon]["hihi"]
-            if value > max_tension:
-                value = max_tension
-
-            self._tension_mon = value
-            self._issue_callback(_properties.TensionMon, value)
+            self._voltage_mon = value
+            self._issue_callback('Voltage-Mon', value)
 
     def _get_pwrstate_sel(self):
         return self._pwrstate_sts
@@ -372,7 +344,7 @@ class PulsedPowerSupplySim:
     def _set_pwrstate_sel(self, value):
         if not self._reset_issued:
             self._pwrstate_sel = value
-            self._issue_callback(_properties.PwrStateSel, value)
+            self._issue_callback('PwrState-Sel', value)
         self._set_pwrstate_sts(value)
 
     def _get_pwrstate_sts(self):
@@ -383,32 +355,30 @@ class PulsedPowerSupplySim:
                 self._reset_issued:
             if value == 1:
                 self._pwrstate_sts = value
-                self._set_tensionref_mon(self.tension_sp)
-                self._set_tension_mon(self.tension_sp)
+                self._set_voltage_mon(self.voltage_sp)
             else:
-                self._set_tensionref_mon(0)
-                self._set_tension_mon(0)
+                self._set_voltage_mon(0)
                 self._pwrstate_sts = value
-            self._issue_callback(_properties.PwrStateSts, value)
+            self._issue_callback('PwrState-Sts', value)
 
     def _get_enable_pulses_sts(self):
-        return self._enablepulses_sts
+        return self._pulsed_sts
 
     def _set_enable_pulses_sel(self, value):
         if not self._reset_issued:
-            self._enablepulses_sel = value
-            self._issue_callback(_properties.EnablePulsesSel, value)
+            self._pulsed_sel = value
+            self._issue_callback('Pulsed-Sel', value)
         self._set_enable_pulses_sts(value)
 
     def _get_enable_pulses_sel(self):
-        return self._enablepulses_sel
+        return self._pulsed_sel
 
     def _set_enable_pulses_sts(self, value):
         if self._ctrlmode_mon == 0 and \
                 self._pwrstate_sts == 1 or \
                 self._reset_issued:
-            self._enablepulses_sts = value
-            self._issue_callback(_properties.EnablePulsesSts, value)
+            self._pulsed_sts = value
+            self._issue_callback('Pulsed-Sts', value)
 
     def _get_reset(self):
         return self._reset_cmd
@@ -422,11 +392,11 @@ class PulsedPowerSupplySim:
 
     def _reset(self):
         self._reset_cmd += 1
-        self._issue_callback(_properties.ResetCmd, self._reset_cmd)
+        self._issue_callback('Reset-Cmd', self._reset_cmd)
 
-        self.tension_sp = 0
+        self.voltage_sp = 0
         self.pwrstate_sel = 0
-        self.enablepulses_sel = 0
+        self.pulsed_sel = 0
         self._set_intlk_mon(0)
 
     def _get_intlk_mon(self):
@@ -434,7 +404,7 @@ class PulsedPowerSupplySim:
 
     def _set_intlk_mon(self, value):
         self._intlk_mon = 0
-        self._issue_callback(_properties.ExternalInterlock, value)
+        self._issue_callback('Intlk-Mon', value)
 
     def _get_ctrlmode_mon(self):
         return self._ctrlmode_mon
