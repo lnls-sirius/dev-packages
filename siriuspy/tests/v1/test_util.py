@@ -17,6 +17,7 @@ public_interface = (
     'read_text_data',
     'print_ioc_banner',
     'save_ioc_pv_list',
+    'get_electron_rest_energy',
     'beam_rigidity',
     'check_pv_online',
     'get_strength_label',
@@ -135,6 +136,11 @@ class TestUtil(unittest.TestCase):
         calls = [mock.call('p1\n'), mock.call('p0pv1\n'),
                  mock.call('p0pv2\n')]
         self.assertEqual(m().write.call_args_list, calls)
+
+    def test_get_electron_rest_energy(self):
+        """Test get_electron_rest_energy."""
+        energy = util.get_electron_rest_energy()
+        self.assertAlmostEqual(energy, 0.000510998927603161, 14)
 
     def test_beam_rigidity(self):
         """Test beam_rigidity."""

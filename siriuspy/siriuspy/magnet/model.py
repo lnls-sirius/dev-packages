@@ -68,9 +68,7 @@ class _MagnetPowerSupply(_PowerSupplyEpicsSync):
                          use_vaca=use_vaca,
                          vaca_prefix=vaca_prefix,
                          lock=lock)
-
         self._db = self._madata._propty_databases[self._psnames[0]]
-
         self._init_subclass()
 
     def _set_vaca_prefix(self, use_vaca, vaca_prefix):

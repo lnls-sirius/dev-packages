@@ -150,10 +150,8 @@ def save_ioc_pv_list(ioc_name, prefix, db, filename=None):
             fd.write("{}\n".format(prefix[0] + pv))
 
 
-def beam_rigidity(energy):
-    """Return beam rigidity, beta amd game, given its energy [GeV]."""
-    if isinstance(energy, (list, tuple)):
-        energy = _np.array(energy)
+def get_electron_rest_energy():
+    """Return electron rest energy [GeV]."""
     second = 1.0
     meter = 1.0
     kilogram = 1.0
@@ -172,16 +170,27 @@ def beam_rigidity(energy):
     joule_2_eV = (joule / electron_volt)
     electron_rest_energy = electron_mass * _math.pow(light_speed, 2)
     # [Kg̣*m^2/s^2] - derived
-    electron_rest_energy_eV = joule_2_eV * electron_rest_energy
-    gamma = energy*1e9/electron_rest_energy_eV
+    electron_rest_energy = joule_2_eV * electron_rest_energy / 1e9
+    return electron_rest_energy
+
+
+def beam_rigidity(energy):
+    """Return beam rigidity, beta amd game, given its energy [GeV]."""
+    if isinstance(energy, (list, tuple)):
+        energy = _np.array(energy)
+    second = 1.0
+    meter = 1.0
+    light_speed = 299792458 * (meter/second)    # [m/s]   - definition
+    electron_rest_energy = get_electron_rest_energy()
+    gamma = energy/electron_rest_energy
     if isinstance(gamma, _np.ndarray):
-        if _np.any(energy*1e9 < electron_rest_energy_eV):
-            raise ValueError('Electron energy less than its rest energy!')
+        if _np.any(energy < electron_rest_energy):
+            raise ValueError('Electron energy less than rest energy!')
         beta = _np.sqrt(((gamma-1.0)/gamma)*((gamma+1.0)/gamma))
         # beta[gamma < 1.0] = 0.0
     else:
-        if energy*1e9 < electron_rest_energy_eV:
-            raise ValueError('Electron energy less than its rest energy!')
+        if energy < electron_rest_energy:
+            raise ValueError('Electron energy less than rest energy!')
             # beta = 0.0
         else:
             beta = _math.sqrt(((gamma-1.0)/gamma)*((gamma+1.0)/gamma))

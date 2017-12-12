@@ -8,6 +8,7 @@ from siriuspy.magnet.data import MAData as _MAData
 import numpy as _np
 
 _magfuncs = _mutil.get_magfunc_2_multipole_dict()
+_electron_rest_energy = _util.get_electron_rest_energy()
 
 
 class _MagnetNormalizer:
@@ -140,6 +141,12 @@ class DipoleNormalizer(_MagnetNormalizer):
             strengths = -self._magnet_conv_sign * \
                         ((self._ref_energy / self._ref_brho) *
                          (-intfields) / self._ref_angle)
+        if isinstance(strengths, _np.ndarray):
+            sel = strengths < _electron_rest_energy
+            strengths[sel] = _electron_rest_energy
+        else:
+            if strengths < _electron_rest_energy:
+                strengths = _electron_rest_energy
         return strengths
 
     def _power_supplies(self):
