@@ -15,8 +15,7 @@ stop_event = False
 
 def _stop_now(signum, frame):
     global stop_event
-    signames = _util.get_signal_names()
-    print(signames[signum] + ' received at ' + _util.get_timestamp())
+    print(_signal.Signals(signum).name + ' received at ' + _util.get_timestamp())
     _sys.stdout.flush()
     _sys.stderr.flush()
     stop_event = True
@@ -52,7 +51,7 @@ def run(ioc_name):
 
     # check if IOC is already running
     pvname = _pvs._PREFIX + next(iter(_main.App.pvs_database.keys()))
-    running = _util.check_running_ioc(
+    running = _util.check_pv_online(
         pvname=pvname, use_prefix=False, timeout=0.5)
     if running:
         print('Another ' + ioc_name + ' IOC is already running!')

@@ -112,9 +112,9 @@ class App:
     def _get_bpms_nickname(self):
         nicknames = []
         for bpm in self.bpm_names:
-            nick = bpm.subsection
-            if bpm.dev_instance:
-                nick += '-' + bpm.dev_instance
+            nick = bpm.sub
+            if bpm.idx:
+                nick += '-' + bpm.idx
             nicknames.append(nick)
         return nicknames
 
