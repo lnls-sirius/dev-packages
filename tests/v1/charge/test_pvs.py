@@ -38,11 +38,13 @@ class TestASAPCurrInfoChargePvs(unittest.TestCase):
         """Test get_pvs_database."""
         self.assertIsInstance(pvs.get_pvs_database(), dict)
 
+        # Test IOC interface: pv names
         self.assertTrue('Version-Cte' in pvs.get_pvs_database())
         self.assertTrue('Charge-Mon' in pvs.get_pvs_database())
         self.assertTrue('ChargeCalcIntvl-SP' in pvs.get_pvs_database())
         self.assertTrue('ChargeCalcIntvl-RB' in pvs.get_pvs_database())
 
+        # Test IOC interface: pvs units
         self.assertEqual(
             pvs.get_pvs_database()['Charge-Mon']['unit'], 'A.h')
         self.assertEqual(

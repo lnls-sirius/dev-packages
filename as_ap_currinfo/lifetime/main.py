@@ -3,10 +3,7 @@
 import time as _time
 import numpy as _numpy
 import epics as _epics
-import siriuspy as _siriuspy
-import siriuspy.envars as _siriuspy_envars
 import siriuspy.epics as _siriuspy_epics
-import siriuspy.util as _siriuspy_util
 import as_ap_currinfo.lifetime.pvs as _pvs
 
 # Coding guidelines:
@@ -21,9 +18,6 @@ import as_ap_currinfo.lifetime.pvs as _pvs
 # 06 - be consistent in coding style (variable naming, spacings, prefixes,
 #      suffixes, etc)
 
-__version__ = _pvs._COMMIT_HASH
-_ioc_prefix = _siriuspy_envars.vaca_prefix
-
 
 class App:
     """Main Class of the IOC Logic."""
@@ -32,29 +26,21 @@ class App:
 
     def __init__(self, driver):
         """Class constructor."""
-        _siriuspy_util.print_ioc_banner(
-            ioc_name=_pvs._ACC.lower()+'-ap-currinfo-lifetime',
-            db=App.pvs_database,
-            description=_pvs._ACC.upper()+'-AP-CurrInfo-Lifetime Soft IOC',
-            version=__version__,
-            prefix=_pvs._PREFIX)
-        _siriuspy.util.save_ioc_pv_list(
-            _pvs._ACC.lower()+'-ap-currinfo-lifetime',
-            (_pvs._DEVICE, _pvs._PREFIX_VACA),
-            App.pvs_database)
+        _pvs.print_banner_and_save_pv_list()
 
         self._driver = driver
         self._pvs_database = App.pvs_database
 
         self._current_pv = _epics.PV(
-            _ioc_prefix+_pvs._ACC.upper()+'-Glob:AP-CurrInfo:Current-Mon',
-            connection_timeout=0.05)
+            _pvs.get_pvs_vaca_prefix() + _pvs.get_pvs_section().upper() +
+            '-Glob:AP-CurrInfo:Current-Mon',
+            callback=self._callback_calclifetime)
         self._storedebeam_pv = _epics.PV(
-            _ioc_prefix+_pvs._ACC.upper()+'-Glob:AP-CurrInfo:StoredEBeam-Mon')
-        self._storedebeam_pv.wait_for_connection(timeout=0.05)
+            _pvs.get_pvs_vaca_prefix() + _pvs.get_pvs_section().upper() +
+            '-Glob:AP-CurrInfo:StoredEBeam-Mon')
         self._injstate_pv = _epics.PV(
-            _ioc_prefix+'AS-Glob:TI-EVG:InjectionState-Sts',
-            connection_timeout=0.05)
+            _pvs.get_pvs_vaca_prefix()+'AS-Glob:TI-EVG:InjectionState-Sts',
+            callback=self._callback_get_injstate)
 
         self._lifetime = 0
         self._rstbuff_cmd_count = 0
@@ -74,9 +60,6 @@ class App:
                                nr_max_points=None,
                                time_min_interval=0.0,
                                mode=0)
-
-        self._injstate_pv.add_callback(self._callback_get_injstate)
-        self._current_pv.add_callback(self._callback_calclifetime)
 
     @staticmethod
     def init_class():

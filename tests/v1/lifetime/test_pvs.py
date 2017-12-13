@@ -1,11 +1,11 @@
 #!/usr/bin/env python3.6
 
-"""Module to test AS-AP-CurrInfo Current Soft IOC pvs module."""
+"""Module to test AS-AP-CurrInfo Lifetime Soft IOC pvs module."""
 
 import unittest
 from unittest import mock
 import siriuspy.util as util
-import as_ap_currinfo.current.pvs as pvs
+import as_ap_currinfo.lifetime.pvs as pvs
 
 
 valid_interface = (
@@ -18,8 +18,8 @@ valid_interface = (
 )
 
 
-class TestASAPCurrInfoCurrentPvs(unittest.TestCase):
-    """Test AS-AP-CurrInfo Current Soft IOC."""
+class TestASAPCurrInfoLifetimePvs(unittest.TestCase):
+    """Test AS-AP-CurrInfo Lifetime Soft IOC."""
 
     def test_public_interface(self):
         """Test module's public interface."""
@@ -59,32 +59,33 @@ class TestASAPCurrInfoCurrentPvs(unittest.TestCase):
 
     def test_get_pvs_database(self):
         """Test get_pvs_database."""
-
-        # Test IOC interface: pv names
         pvs.select_ioc('Accelerator')
         self.assertIsInstance(pvs.get_pvs_database(), dict)
+
+        # Test IOC interface: pv names
         self.assertTrue('Version-Cte' in pvs.get_pvs_database())
-        self.assertTrue('Current-Mon' in pvs.get_pvs_database())
-        self.assertTrue('StoredEBeam-Mon' in pvs.get_pvs_database())
-
-        pvs.select_ioc('SI')
-        self.assertIsInstance(pvs.get_pvs_database(), dict)
-        self.assertTrue('DCCT-Sel' in pvs.get_pvs_database())
-        self.assertTrue('DCCT-Sts' in pvs.get_pvs_database())
-        self.assertTrue('DCCTFltCheck-Sel' in pvs.get_pvs_database())
-        self.assertTrue('DCCTFltCheck-Sts' in pvs.get_pvs_database())
-
-        pvs.select_ioc('BO')
-        self.assertIsInstance(pvs.get_pvs_database(), dict)
-        self.assertFalse('DCCT-Sel' in pvs.get_pvs_database())
-        self.assertFalse('DCCT-Sts' in pvs.get_pvs_database())
-        self.assertFalse('DCCTFltCheck-Sel' in pvs.get_pvs_database())
-        self.assertFalse('DCCTFltCheck-Sts' in pvs.get_pvs_database())
+        self.assertTrue('Lifetime-Mon' in pvs.get_pvs_database())
+        self.assertTrue('BuffSizeMax-SP' in pvs.get_pvs_database())
+        self.assertTrue('BuffSizeMax-RB' in pvs.get_pvs_database())
+        self.assertTrue('BuffSize-Mon' in pvs.get_pvs_database())
+        self.assertTrue('SplIntvl-SP' in pvs.get_pvs_database())
+        self.assertTrue('SplIntvl-RB' in pvs.get_pvs_database())
+        self.assertTrue('BuffRst-Cmd' in pvs.get_pvs_database())
+        self.assertTrue('BuffAutoRst-Sel' in pvs.get_pvs_database())
+        self.assertTrue('BuffAutoRst-Sts' in pvs.get_pvs_database())
+        self.assertTrue('DCurrFactor-Cte' in pvs.get_pvs_database())
 
         # Test IOC interface: pvs units
-        self.assertEqual(pvs.get_pvs_database()['Current-Mon']['unit'], 'mA')
+        self.assertEqual(
+            pvs.get_pvs_database()['Lifetime-Mon']['unit'], 's')
+        self.assertEqual(
+            pvs.get_pvs_database()['SplIntvl-SP']['unit'], 's')
+        self.assertEqual(
+            pvs.get_pvs_database()['SplIntvl-RB']['unit'], 's')
+        self.assertEqual(
+            pvs.get_pvs_database()['DCurrFactor-Cte']['unit'], 'mA')
 
-    @mock.patch("as_ap_currinfo.current.pvs._util")
+    @mock.patch("as_ap_currinfo.lifetime.pvs._util")
     def test_print_banner_and_save_pv_list(self, util):
         """Test print_banner_and_save_pv_list."""
         pvs.print_banner_and_save_pv_list()
