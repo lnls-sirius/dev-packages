@@ -4,6 +4,8 @@ import copy as _copy
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.csdevice.pwrsupply import get_ps_propty_database as \
     _get_ps_propty_database
+from siriuspy.csdevice.pwrsupply import get_pu_propty_database as \
+    _get_pu_propty_database
 
 
 class PSData:
@@ -34,7 +36,10 @@ class PSData:
         self._splims = _PSSearch.conv_pstype_2_splims(self._pstype)
         self._splims_unit = _PSSearch.get_splims_unit(self._ispulsed)
         self._excdata = _PSSearch.conv_psname_2_excdata(self._psname)
-        self._propty_database = _get_ps_propty_database(self._pstype)
+        if self._ispulsed:
+            self._propty_database = _get_pu_propty_database(self._pstype)
+        else:
+            self._propty_database = _get_ps_propty_database(self._pstype)
 
     @property
     def psname(self):
