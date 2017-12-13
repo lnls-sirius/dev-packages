@@ -39,7 +39,7 @@ def get_pvs_prefix():
 
 def get_pvs_database():
     """Return Soft IOC database."""
-    global _TL
+    global _TL, _COMMIT_HASH
     if (_TL is None) or (_TL == ''):
         raise Exception('Transport Line not defined.')
     pvs_database = {
