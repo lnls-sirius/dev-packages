@@ -24,6 +24,7 @@ def get_pvs_prefix():
 
 def get_pvs_database():
     """Return Soft IOC database."""
+    global _COMMIT_HASH
     pvs_database = {
         'Version-Cte':        {'type': 'string', 'value': _COMMIT_HASH},
         'Charge-Mon':         {'type': 'float', 'value': 0.0, 'prec': 10,
