@@ -190,15 +190,10 @@ class PulsedPowerSupply:
 
     def _init_controller(self):
         self._controller = {}
-        for attr in ('Kick-SP', 'Kick-RB', 'Kick-Mon'):
+        attrs = list(self._db.keys()) + ['Kick-SP', 'Kick-RB', 'Kick-Mon']
+        for attr in attrs:
             self._controller[attr] = _PV(
-                self._vaca_prefix + self._psname + ":" +
-                attr, connection_callback=self._init_value)
-
-    def _init_value(self, pvname, value, status, **kwargs):
-        if status:
-            if "PwrState-Sel" in pvname:
-                self.pwrstate_sel = value
+                self._vaca_prefix + self._psname + ":" + attr)
 
 
 class PulsedPowerSupplySim:
