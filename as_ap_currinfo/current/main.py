@@ -2,9 +2,6 @@
 
 import time as _time
 import epics as _epics
-import siriuspy as _siriuspy
-import siriuspy.envars as _siriuspy_envars
-import siriuspy.util as _siriuspy_util
 import as_ap_currinfo.current.pvs as _pvs
 
 # Coding guidelines:
@@ -19,9 +16,6 @@ import as_ap_currinfo.current.pvs as _pvs
 # 06 - be consistent in coding style (variable naming, spacings, prefixes,
 #      suffixes, etc)
 
-__version__ = _pvs._COMMIT_HASH
-_ioc_prefix = _siriuspy_envars.vaca_prefix
-
 
 class App:
     """Main Class of the IOC Logic."""
@@ -30,27 +24,15 @@ class App:
 
     def __init__(self, driver):
         """Class constructor."""
-        _siriuspy_util.print_ioc_banner(
-            ioc_name=_pvs._ACC.lower()+'-ap-currinfo-current',
-            db=App.pvs_database,
-            description=_pvs._ACC.upper()+'-AP-CurrInfo-Current Soft IOC',
-            version=__version__,
-            prefix=_pvs._PREFIX)
-        _siriuspy.util.save_ioc_pv_list(
-            _pvs._ACC.lower()+'-ap-currinfo-current',
-            (_pvs._DEVICE, _pvs._PREFIX_VACA),
-            App.pvs_database)
+        _pvs.print_banner_and_save_pv_list()
 
         self._driver = driver
-        self._pvs_database = App.pvs_database
 
-        if _pvs._ACC.upper() == 'BO':
+        if _pvs.get_pvs_section().upper() == 'BO':
             self._current_bo_pv = _epics.PV(
-                _ioc_prefix + 'BO-35D:DI-DCCT:Current-Mon',
-                connection_timeout=0.05)
+                _pvs.get_pvs_vaca_prefix()+'BO-35D:DI-DCCT:Current-Mon')
             self._storedebeam_bo_pv = _epics.PV(
-                _ioc_prefix + 'BO-35D:DI-DCCT:StoredEBeam-Mon',
-                connection_timeout=0.05)
+                _pvs.get_pvs_vaca_prefix()+'BO-35D:DI-DCCT:StoredEBeam-Mon')
 
             self._current_bo_pv.add_callback(self._callback_get_current_bo)
             self._storedebeam_bo_pv.add_callback(
@@ -59,27 +41,27 @@ class App:
                 self._getebeamcbindex = self._current_bo_pv.add_callback(
                     self._callback_get_ebeam_fromcurrent_bo)
 
-        elif _pvs._ACC.upper() == 'SI':
+        elif _pvs.get_pvs_section().upper() == 'SI':
             self._current_13C4_pv = _epics.PV(
-                _ioc_prefix + 'SI-13C4:DI-DCCT:Current-Mon',
+                _pvs.get_pvs_vaca_prefix()+'SI-13C4:DI-DCCT:Current-Mon',
                 connection_callback=self._connection_callback_current_DCCT13C4,
-                connection_timeout=0.05)
+                callback=self._callback_get_dcct_current)
             self._current_14C4_pv = _epics.PV(
-                _ioc_prefix + 'SI-14C4:DI-DCCT:Current-Mon',
+                _pvs.get_pvs_vaca_prefix()+'SI-14C4:DI-DCCT:Current-Mon',
                 connection_callback=self._connection_callback_current_DCCT14C4,
-                connection_timeout=0.05)
+                callback=self._callback_get_dcct_current)
             self._storedebeam_13C4_pv = _epics.PV(
-                _ioc_prefix + 'SI-13C4:DI-DCCT:StoredEBeam-Mon',
-                connection_timeout=0.05)
+                _pvs.get_pvs_vaca_prefix()+'SI-13C4:DI-DCCT:StoredEBeam-Mon',
+                callback=self._callback_get_storedebeam)
             self._storedebeam_14C4_pv = _epics.PV(
-                _ioc_prefix + 'SI-14C4:DI-DCCT:StoredEBeam-Mon',
-                connection_timeout=0.05)
+                _pvs.get_pvs_vaca_prefix()+'SI-14C4:DI-DCCT:StoredEBeam-Mon',
+                callback=self._callback_get_storedebeam)
             self._hwflt_13C4_pv = _epics.PV(
-                _ioc_prefix + 'SI-13C4:DI-DCCT:HwFlt-Mon',
-                connection_timeout=0.05)
+                _pvs.get_pvs_vaca_prefix()+'SI-13C4:DI-DCCT:HwFlt-Mon',
+                callback=self._callback_get_hwflt)
             self._hwflt_14C4_pv = _epics.PV(
-                _ioc_prefix + 'SI-14C4:DI-DCCT:HwFlt-Mon',
-                connection_timeout=0.05)
+                _pvs.get_pvs_vaca_prefix()+'SI-14C4:DI-DCCT:HwFlt-Mon',
+                callback=self._callback_get_hwflt)
 
             self._dcct_mode = 0
             self._dcctfltcheck_mode = 0
@@ -91,15 +73,6 @@ class App:
             if not self._storedebeam_14C4_pv.connected:
                 self._getebeam14C4cbindex = self._current_14C4_pv.add_callback(
                                         self._callback_get_ebeam_fromcurrent)
-
-            self._current_13C4_pv.add_callback(self._callback_get_dcct_current)
-            self._current_14C4_pv.add_callback(self._callback_get_dcct_current)
-            self._storedebeam_13C4_pv.add_callback(
-                                            self._callback_get_storedebeam)
-            self._storedebeam_14C4_pv.add_callback(
-                                            self._callback_get_storedebeam)
-            self._hwflt_13C4_pv.add_callback(self._callback_get_hwflt)
-            self._hwflt_14C4_pv.add_callback(self._callback_get_hwflt)
 
     @staticmethod
     def init_class():
@@ -211,9 +184,9 @@ class App:
             self.driver.updatePVs()
 
     def _callback_get_dcct_current(self, pvname, value, **kws):
-        if pvname == _ioc_prefix + 'SI-13C4:DI-DCCT:Current-Mon':
+        if '13C4' in pvname:
             self._current_13C4_value = value
-        elif pvname == _ioc_prefix + 'SI-14C4:DI-DCCT:Current-Mon':
+        elif '14C4' in pvname:
             self._current_14C4_value = value
 
         if self._dcct_mode == 0:  # Avg
@@ -245,9 +218,9 @@ class App:
                                         self._callback_get_ebeam_fromcurrent)
 
     def _callback_get_storedebeam(self, pvname, value, **kws):
-        if pvname == _ioc_prefix + 'SI-13C4:DI-DCCT:StoredEBeam-Mon':
+        if '13C4' in pvname:
             self._storedebeam_13C4_value = value
-        elif pvname == _ioc_prefix + 'SI-14C4:DI-DCCT:StoredEBeam-Mon':
+        elif '14C4' in pvname:
             self._storedebeam_14C4_value = value
 
         elif self._dcct_mode == 0:  # Avg
@@ -268,9 +241,9 @@ class App:
         self.driver.updatePVs()
 
     def _callback_get_hwflt(self, pvname, value, **kws):
-        if pvname == _ioc_prefix + 'SI-13C4:DI-DCCT:HwFlt-Mon':
+        if '13C4' in pvname:
             self._hwflt_13C4_value = value
-        elif pvname == _ioc_prefix + 'SI-14C4:DI-DCCT:HwFlt-Mon':
+        elif '14C4' in pvname:
             self._hwflt_14C4_value = value
 
         if self._dcctfltcheck_mode == 0:  # DCCTFltCheck On
