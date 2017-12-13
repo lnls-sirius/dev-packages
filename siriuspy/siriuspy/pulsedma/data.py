@@ -14,7 +14,6 @@ class PMData(_MAData):
         """Class constructor."""
         self._maname = _SiriusPVName(maname)
         self._splims_unit = _MASearch.get_splims_unit(ispulsed=True)[1]
-        print(self._splims_unit)
         self._psnames = _MASearch.conv_maname_2_psnames(self._maname)
         self._psdata = {}
         for psname in self._psnames:
