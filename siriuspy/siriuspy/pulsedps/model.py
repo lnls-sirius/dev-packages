@@ -308,7 +308,7 @@ class PulsedPowerSupplySim:
             self._issue_callback('Voltage-SP', value)
         self._voltage_rb = value
         self._issue_callback('Voltage-RB', value)
-        self._set_voltageref_mon(value)
+        # self._set_voltageref_mon(value)
         self._set_voltage_mon(value)
 
     def _get_voltage_rb(self):
