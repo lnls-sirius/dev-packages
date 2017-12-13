@@ -13,10 +13,11 @@ class PMData(_MAData):
     def __init__(self, maname):
         """Class constructor."""
         self._maname = _SiriusPVName(maname)
-        self._splims_unit = _MASearch.get_splims_unit()[1]
+        self._splims_unit = _MASearch.get_splims_unit(ispulsed=True)[1]
+        print(self._splims_unit)
         self._psnames = _MASearch.conv_maname_2_psnames(self._maname)
         self._psdata = {}
         for psname in self._psnames:
             self._psdata[psname] = _PUData(psname=psname)
         self._propty_databases = \
-            _get_pm_propty_database(self._maname, self._psdata)
+            _get_pm_propty_database(self._maname)
