@@ -2,9 +2,6 @@
 
 import time as _time
 import epics as _epics
-import siriuspy as _siriuspy
-import siriuspy.envars as _siriuspy_envars
-import siriuspy.util as _siriuspy_util
 import as_ap_currinfo.charge.pvs as _pvs
 
 # Coding guidelines:
@@ -19,9 +16,6 @@ import as_ap_currinfo.charge.pvs as _pvs
 # 06 - be consistent in coding style (variable naming, spacings, prefixes,
 #      suffixes, etc)
 
-__version__ = _pvs._COMMIT_HASH
-_ioc_prefix = _siriuspy_envars.vaca_prefix
-
 
 class App:
     """Main Class of the IOC Logic."""
@@ -30,22 +24,16 @@ class App:
 
     def __init__(self, driver):
         """Class constructor."""
-        _siriuspy_util.print_ioc_banner(
-            ioc_name='si-ap-currinfo-charge',
-            db=App.pvs_database,
-            description='SI-AP-CurrInfo-Charge Soft IOC',
-            version=__version__,
-            prefix=_pvs._PREFIX)
-        _siriuspy.util.save_ioc_pv_list('si-ap-currinfo-charge',
-                                        (_pvs._DEVICE,
-                                         _pvs._PREFIX_VACA),
-                                        App.pvs_database)
+        _pvs.print_banner_and_save_pv_list()
+
+        self._PREFIX_VACA = _pvs.get_pvs_vaca_prefix()
+        self._PREFIX = _pvs.get_pvs_prefix()
+
         self._driver = driver
-        self._pvs_database = App.pvs_database
 
         self._chargecalcintvl = 100.0
         self._current_pv = _epics.PV(
-            _ioc_prefix + 'SI-Glob:AP-CurrInfo:Current-Mon',
+            self._PREFIX_VACA + 'SI-Glob:AP-CurrInfo:Current-Mon',
             connection_timeout=0.05)
         self._current_pv.add_callback(self._callback_calccharge)
         self._time0 = _time.time()
