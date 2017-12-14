@@ -4,8 +4,8 @@ import time as _time
 import numpy as _np
 import epics as _epics
 import siriuspy as _siriuspy
+from siriuspy.servconf.conf_service import ConfigService as _ConfigService
 from as_ap_opticscorr.opticscorr_utils import OpticsCorr
-from as_ap_opticscorr.opticscorr_utils import read_corrparams, save_corrparams
 import as_ap_opticscorr.chrom.pvs as _pvs
 
 # Coding guidelines:
@@ -20,13 +20,11 @@ import as_ap_opticscorr.chrom.pvs as _pvs
 # 06 - be consistent in coding style (variable naming, spacings, prefixes,
 #      suffixes, etc)
 
-__version__ = _pvs._COMMIT_HASH
-
 
 # Constants
-ALLSET = 0x1f
-ALLCLR_SYNCON = 0x00
-ALLCLR_SYNCOFF = 0x10
+_ALLSET = 0x1f
+_ALLCLR_SYNCON = 0x00
+_ALLCLR_SYNCOFF = 0x10
 
 
 class App:
@@ -36,35 +34,27 @@ class App:
 
     def __init__(self, driver):
         """Class constructor."""
-        _siriuspy.util.print_ioc_banner(
-            ioc_name=_pvs._ACC+'-AP-ChromCorr',
-            db=App.pvs_database,
-            description=_pvs._ACC+'-AP-ChromCorr Soft IOC',
-            version=__version__,
-            prefix=_pvs._PREFIX)
-        _siriuspy.util.save_ioc_pv_list(
-            _pvs._ACC.lower()+'-ap-chromcorr',
-            (_pvs._DEVICE,
-             _pvs._PREFIX_VACA),
-            App.pvs_database)
+        _pvs.print_banner_and_save_pv_list()
+        self._SFAMS = _pvs.get_corr_fams()
+        self._ACC = _pvs.get_pvs_section()
+        self._PREFIX_VACA = _pvs.get_pvs_vaca_prefix()
 
         self._driver = driver
-        self._pvs_database = App.pvs_database
 
         self._chromx = 0
         self._chromy = 0
 
-        self._status = ALLSET
-        self._sfam_check_connection = len(_pvs._SFAMS)*[0]
-        self._sfam_check_pwrstate_sts = len(_pvs._SFAMS)*[0]
-        self._sfam_check_opmode_sts = len(_pvs._SFAMS)*[-1]
-        self._sfam_check_ctrlmode_mon = len(_pvs._SFAMS)*[1]
+        self._status = _ALLSET
+        self._sfam_check_connection = len(self._SFAMS)*[0]
+        self._sfam_check_pwrstate_sts = len(self._SFAMS)*[0]
+        self._sfam_check_opmode_sts = len(self._SFAMS)*[-1]
+        self._sfam_check_ctrlmode_mon = len(self._SFAMS)*[1]
 
         self._apply_sl_cmd_count = 0
         self._config_sfam_ps_cmd_count = 0
-        self._lastcalcd_sl = len(_pvs._SFAMS)*[0]
+        self._lastcalcd_sl = len(self._SFAMS)*[0]
 
-        self._sfam_sl_rb = len(_pvs._SFAMS)*[0]
+        self._sfam_sl_rb = len(self._SFAMS)*[0]
 
         self._sync_corr = 0
         self._sync_corr_cmd_count = 0
@@ -74,27 +64,18 @@ class App:
         # Initialize correction parameters from local file
         self._opticscorr = OpticsCorr()
 
-        corrmat, nomchrom, nomsl = self._get_corrparams()
-
-        self._sfam_nomsl = nomsl
-        self.driver.setParam('NominalSL-SP', self._sfam_nomsl)
-        self.driver.setParam('NominalSL-RB', self._sfam_nomsl)
-
-        if _pvs._ACC.lower() == 'si':
+        if self._ACC.lower() == 'si':
             self._corr_method = 0
-            corrmat = self._calc_prop_matrix(corrmat)
         else:
             self._corr_method = 1
 
-        self._mat, _ = self._opticscorr.set_corr_mat(
-            len(_pvs._SFAMS), corrmat)
-        self.driver.setParam('CorrMat-SP', self._mat)
-        self.driver.setParam('CorrMat-RB', self._mat)
-
-        self._nomchrom = self._opticscorr.set_nomchrom(
-            nomchrom[0], nomchrom[1])
-        self.driver.setParam('NominalChrom-SP', self._nomchrom)
-        self.driver.setParam('NominalChrom-RB', self._nomchrom)
+        config_name = self._get_config_name()
+        self._get_corrparams(config_name)
+        self.driver.setParam('CorrParamsConfigName-SP', config_name)
+        self.driver.setParam('CorrParamsConfigName-RB', config_name)
+        self.driver.setParam('CorrMat-Mon', self._corrmat_add_svd)
+        self.driver.setParam('NominalSL-Mon', self._sfam_nomsl)
+        self.driver.setParam('NominalChrom-Mon', self._nomchrom)
 
         # Connect to Sextupoles Families
         self._sfam_sl_sp_pvs = {}
@@ -105,70 +86,70 @@ class App:
         self._sfam_opmode_sts_pvs = {}
         self._sfam_ctrlmode_mon_pvs = {}
 
-        for fam in _pvs._SFAMS:
+        for fam in self._SFAMS:
             self._sfam_sl_sp_pvs[fam] = _epics.PV(
-                _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':SL-SP')
+                self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':SL-SP')
 
             self._sfam_sl_rb_pvs[fam] = _epics.PV(
-                _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':SL-RB',
+                self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':SL-RB',
                 callback=self._callback_estimate_chrom,
                 connection_callback=self._connection_callback_sfam_sl_rb)
 
             self._sfam_pwrstate_sel_pvs[fam] = _epics.PV(
-                _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':PwrState-Sel')
+                self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':PwrState-Sel')
             self._sfam_pwrstate_sts_pvs[fam] = _epics.PV(
-                _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':PwrState-Sts',
+                self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':PwrState-Sts',
                 callback=self._callback_sfam_pwrstate_sts)
 
             self._sfam_opmode_sel_pvs[fam] = _epics.PV(
-                _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':OpMode-Sel')
+                self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':OpMode-Sel')
             self._sfam_opmode_sts_pvs[fam] = _epics.PV(
-                _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':OpMode-Sts',
+                self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':OpMode-Sts',
                 callback=self._callback_sfam_opmode_sts)
 
             self._sfam_ctrlmode_mon_pvs[fam] = _epics.PV(
-                _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':CtrlMode-Mon',
+                self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':CtrlMode-Mon',
                 callback=self._callback_sfam_ctrlmode_mon)
 
         # Connect to Timing
         self._timing_sexts_state_sel = _epics.PV(
-            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Sexts:State-Sel')
+            self._PREFIX_VACA+self._ACC+'-Glob:TI-Sexts:State-Sel')
         self._timing_sexts_state_sts = _epics.PV(
-            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Sexts:State-Sts',
+            self._PREFIX_VACA+self._ACC+'-Glob:TI-Sexts:State-Sts',
             callback=self._callback_timing_state)
 
         self._timing_sexts_evgparam_sel = _epics.PV(
-            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Sexts:EVGParam-Sel')
+            self._PREFIX_VACA+self._ACC+'-Glob:TI-Sexts:EVGParam-Sel')
         self._timing_sexts_evgparam_sts = _epics.PV(
-            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Sexts:EVGParam-Sts',
+            self._PREFIX_VACA+self._ACC+'-Glob:TI-Sexts:EVGParam-Sts',
             callback=self._callback_timing_state)
 
         self._timing_sexts_pulses_sp = _epics.PV(
-            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Sexts:Pulses-SP')
+            self._PREFIX_VACA+self._ACC+'-Glob:TI-Sexts:Pulses-SP')
         self._timing_sexts_pulses_rb = _epics.PV(
-            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Sexts:Pulses-RB',
+            self._PREFIX_VACA+self._ACC+'-Glob:TI-Sexts:Pulses-RB',
             callback=self._callback_timing_state)
 
         self._timing_sexts_duration_sp = _epics.PV(
-            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Sexts:Duration-SP')
+            self._PREFIX_VACA+self._ACC+'-Glob:TI-Sexts:Duration-SP')
         self._timing_sexts_duration_rb = _epics.PV(
-            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Sexts:Duration-RB',
+            self._PREFIX_VACA+self._ACC+'-Glob:TI-Sexts:Duration-RB',
             callback=self._callback_timing_state)
 
         self._timing_evg_chromsmode_sel = _epics.PV(
-            _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'ChromsMode-Sel')
+            self._PREFIX_VACA+'AS-Glob:TI-EVG:'+self._ACC+'ChromsMode-Sel')
         self._timing_evg_chromsmode_sts = _epics.PV(
-            _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'ChromsMode-Sts',
+            self._PREFIX_VACA+'AS-Glob:TI-EVG:'+self._ACC+'ChromsMode-Sts',
             callback=self._callback_timing_state)
 
         self._timing_evg_chromsdelay_sp = _epics.PV(
-            _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'ChromsDelay-SP')
+            self._PREFIX_VACA+'AS-Glob:TI-EVG:'+self._ACC+'ChromsDelay-SP')
         self._timing_evg_chromsdelay_rb = _epics.PV(
-            _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'ChromsDelay-RB',
+            self._PREFIX_VACA+'AS-Glob:TI-EVG:'+self._ACC+'ChromsDelay-RB',
             callback=self._callback_timing_state)
 
         self._timing_evg_chromsexttrig_cmd = _epics.PV(
-            _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'ChromsExtTrig-Cmd')
+            self._PREFIX_VACA+'AS-Glob:TI-EVG:'+self._ACC+'ChromsExtTrig-Cmd')
 
         self.driver.setParam('Log-Mon', 'Started.')
         self.driver.updatePVs()
@@ -213,66 +194,23 @@ class App:
                 self.driver.setParam('ApplySL-Cmd', self._apply_sl_cmd_count)
                 self.driver.updatePVs()
 
-        elif reason == 'CorrMat-SP':
-            # Update local file
-            done = save_corrparams(
-                '/home/fac_files/lnls-sirius/machine-applications'
-                '/as-ap-opticscorr/as_ap_opticscorr/chrom/' +
-                _pvs._ACC.lower() + '-chromcorr.txt',
-                value, len(_pvs._SFAMS), self._sfam_nomsl, self._nomchrom)
+        elif reason == 'CorrParamsConfigName-SP':
+            done = self._get_corrparams(value)
             if done:
-                self.driver.setParam('CorrMat-RB', value)
-
-                # Update matrix used
-                corrmat = value
-                if self._corr_method == 0:
-                    corrmat = self._calc_prop_matrix(corrmat)
-                self._mat, _ = self._opticscorr.set_corr_mat(
-                    len(_pvs._SFAMS), corrmat)
+                self._set_config_name(value)
                 self._calc_sl()
+                self.driver.setParam('CorrParamsConfigName-RB', value)
+                self.driver.setParam('CorrMat-Mon', self._corrmat_add_svd)
+                self.driver.setParam('NominalChrom-Mon', self._nomchrom)
+                self.driver.setParam('NominalSL-Mon', self._sfam_nomsl)
+                self.driver.setParam('Log-Mon',
+                                     'Updated correction parameters.')
                 self.driver.updatePVs()
                 status = True
-
-        elif reason == 'NominalChrom-SP':
-            # Update local file
-            corrmat, _, _ = self._get_corrparams()
-            done = save_corrparams(
-                '/home/fac_files/lnls-sirius/machine-applications'
-                '/as-ap-opticscorr/as_ap_opticscorr/chrom/' +
-                _pvs._ACC.lower() + '-chromcorr.txt',
-                corrmat, len(_pvs._SFAMS), self._sfam_nomsl, value)
-            if done:
-                self.driver.setParam('NominalChrom-RB', value)
+            else:
+                self.driver.setParam(
+                    'Log-Mon', 'ERR:Configuration not found in configdb.')
                 self.driver.updatePVs()
-
-                # Update nomchrom used
-                self._nomchrom = self._opticscorr.set_nomchrom(
-                    value[0], value[1])
-                self._calc_sl()
-                self.driver.updatePVs()
-                status = True
-
-        elif reason == 'NominalSL-SP':
-            # Update local file
-            corrmat, _, _ = self._get_corrparams()
-            done = save_corrparams(
-                '/home/fac_files/lnls-sirius/machine-applications'
-                '/as-ap-opticscorr/as_ap_opticscorr/chrom/' +
-                _pvs._ACC.lower() + '-chromcorr.txt',
-                corrmat, len(_pvs._SFAMS), value, self._nomchrom)
-            if done:
-                self.driver.setParam('NominalSL-RB', value)
-                self.driver.updatePVs()
-
-                # Update nomsl and matrix used according to the corr. method
-                self._sfam_nomsl = value
-                if self._corr_method == 0:
-                    corrmat = self._calc_prop_matrix(corrmat)
-                    self._mat, _ = self._opticscorr.set_corr_mat(
-                        len(_pvs._SFAMS), corrmat)
-                self._calc_sl()
-                self.driver.updatePVs()
-                status = True
 
         elif reason == 'CorrMeth-Sel':
             if value != self._corr_method:
@@ -283,7 +221,7 @@ class App:
                 if value == 0:
                     corrmat = self._calc_prop_matrix(corrmat)
                 self._mat, _ = self._opticscorr.set_corr_mat(
-                    len(_pvs._SFAMS), corrmat)
+                    len(self._SFAMS), corrmat)
                 self._calc_sl()
                 self.driver.updatePVs()
                 status = True
@@ -291,8 +229,8 @@ class App:
         elif reason == 'SyncCorr-Sel':
             if value != self._sync_corr:
                 self._sync_corr = value
-                for fam in _pvs._SFAMS:
-                    fam_index = _pvs._SFAMS.index(fam)
+                for fam in self._SFAMS:
+                    fam_index = self._SFAMS.index(fam)
                     self._sfam_check_opmode_sts[fam_index] = (
                         self._sfam_opmode_sts_pvs[fam].value)
                 if any(op != self._sync_corr
@@ -329,42 +267,62 @@ class App:
 
         return status  # return True to invoke super().write of PCASDriver
 
-    def _get_corrparams(self):
-        m, _ = read_corrparams(
-            '/home/fac_files/lnls-sirius/machine-applications'
-            '/as-ap-opticscorr/as_ap_opticscorr/chrom/' +
-            _pvs._ACC.lower() + '-chromcorr.txt')
+    def _get_corrparams(self, config_name):
+        """Get response matrix from configurations database."""
+        cs = _ConfigService()
+        q = cs.get_config(self._ACC.lower()+'_chromcorr_params', config_name)
+        done = q['code']
 
-        nomchrom = [0, 0]
-        nomchrom[0] = float(m[0][0])
-        nomchrom[1] = float(m[0][1])
+        if done == 200:
+            done = True
+            params = q['result']['value']
 
-        chrom_corrmat = len(_pvs._SFAMS)*2*[0]
-        index = 0
-        for coordinate in [1, 2]:  # Read in C-like format
-            for fam in range(len(_pvs._SFAMS)):
-                chrom_corrmat[index] = float(m[coordinate][fam])
-                index += 1
+            self._corrmat_add_svd = [item for sublist in params['matrix']
+                                     for item in sublist]
+            self._sfam_nomsl = params['nominal SLs']
 
-        nomsl = len(_pvs._SFAMS)*[0]
-        for fam in _pvs._SFAMS:
-            fam_index = _pvs._SFAMS.index(fam)
-            nomsl[fam_index] = float(m[3][fam_index])
-        return chrom_corrmat, nomchrom, nomsl
+            if self._corr_method == 0:
+                corrmat = self._calc_prop_matrix(self._corrmat_add_svd)
+            else:
+                corrmat = self._corrmat_add_svd
+            self._mat, _ = self._opticscorr.set_corr_mat(
+                len(self._SFAMS), corrmat)
+
+            nomchrom = params['nominal chrom']
+            self._nomchrom = self._opticscorr.set_nomchrom(
+                             nomchrom[0], nomchrom[1])
+        else:
+            done = False
+        return done
+
+    def _get_config_name(self):
+        f = open('/home/fac_files/lnls-sirius/machine-applications'
+                 '/as-ap-opticscorr/as_ap_opticscorr/chrom/' +
+                 self._ACC.lower() + '-chromcorr.txt', 'r')
+        config_name = f.read().strip('\n')
+        f.close()
+        return config_name
+
+    def _set_config_name(self, config_name):
+        f = open('/home/fac_files/lnls-sirius/machine-applications'
+                 '/as-ap-opticscorr/as_ap_opticscorr/chrom/' +
+                 self._ACC.lower() + '-chromcorr.txt', 'w')
+        f.write(config_name)
+        f.close()
 
     def _calc_prop_matrix(self, corrmat):
         corrmat = _np.array(corrmat)
-        corrmat = _np.reshape(corrmat, [2, len(_pvs._SFAMS)])
+        corrmat = _np.reshape(corrmat, [2, len(self._SFAMS)])
         corrmat = corrmat*_np.array(self._sfam_nomsl)
         corrmat = list(corrmat.flatten())
         return corrmat
 
     def _calc_sl(self):
-        if _pvs._ACC == 'SI' and self._corr_method == 0:
+        if self._ACC == 'SI' and self._corr_method == 0:
             lastcalcd_propfactor = self._opticscorr.calc_deltasl(
                 self._chromx, self._chromy)
-            for fam in _pvs._SFAMS:
-                fam_index = _pvs._SFAMS.index(fam)
+            for fam in self._SFAMS:
+                fam_index = self._SFAMS.index(fam)
                 self._lastcalcd_sl[fam_index] = (
                     self._sfam_nomsl[fam_index] *
                     (1+lastcalcd_propfactor[fam_index]))
@@ -372,27 +330,27 @@ class App:
             # if ACC=='BO' or (ACC=='SI' and corr_method==1)
             lastcalcd_deltasl = self._opticscorr.calc_deltasl(
                 self._chromx, self._chromy)
-            for fam in _pvs._SFAMS:
-                fam_index = _pvs._SFAMS.index(fam)
+            for fam in self._SFAMS:
+                fam_index = self._SFAMS.index(fam)
                 self._lastcalcd_sl[fam_index] = (
                     self._sfam_nomsl[fam_index] +
                     lastcalcd_deltasl[fam_index])
 
         self.driver.setParam('Log-Mon', 'Calculated SL')
 
-        for fam in _pvs._SFAMS:
-            fam_index = _pvs._SFAMS.index(fam)
+        for fam in self._SFAMS:
+            fam_index = self._SFAMS.index(fam)
             self.driver.setParam('LastCalcd' + fam + 'SL-Mon',
                                  self._lastcalcd_sl[fam_index])
         self.driver.updatePVs()
 
     def _apply_sl(self):
-        if ((self._status == ALLCLR_SYNCON and self._sync_corr == 1) or
-                ((self._status == ALLCLR_SYNCOFF or
-                  self._status == ALLCLR_SYNCON) and self._sync_corr == 0)):
+        if ((self._status == _ALLCLR_SYNCON and self._sync_corr == 1) or
+                ((self._status == _ALLCLR_SYNCOFF or
+                  self._status == _ALLCLR_SYNCON) and self._sync_corr == 0)):
             pvs = self._sfam_sl_sp_pvs
             for fam in pvs:
-                fam_index = _pvs._SFAMS.index(fam)
+                fam_index = self._SFAMS.index(fam)
                 pv = pvs[fam]
                 pv.put(self._lastcalcd_sl[fam_index])
             self.driver.setParam('Log-Mon', 'Applied SL')
@@ -409,9 +367,9 @@ class App:
         return False
 
     def _estimate_current_chrom(self):
-        sfam_deltasl = len(_pvs._SFAMS)*[0]
-        for fam in _pvs._SFAMS:
-            fam_index = _pvs._SFAMS.index(fam)
+        sfam_deltasl = len(self._SFAMS)*[0]
+        for fam in self._SFAMS:
+            fam_index = self._SFAMS.index(fam)
             sfam_deltasl[fam_index] = (
                 self._sfam_sl_rb[fam_index] - self._sfam_nomsl[fam_index])
             if self._corr_method == 0:
@@ -420,13 +378,13 @@ class App:
         return self._opticscorr.estimate_current_chrom(sfam_deltasl)
 
     def _connection_callback_sfam_sl_rb(self, pvname, conn, **kws):
-        ps = pvname.split(_pvs._PREFIX_VACA)[1]
+        ps = pvname.split(self._PREFIX_VACA)[1]
         if not conn:
             self.driver.setParam('Log-Mon', 'WARN:'+ps+' disconnected')
             self.driver.updatePVs()
 
         fam = ps.split(':')[1].split('-')[1]
-        fam_index = _pvs._SFAMS.index(fam)
+        fam_index = self._SFAMS.index(fam)
         self._sfam_check_connection[fam_index] = (1 if conn else 0)
 
         # Change the first bit of correction status
@@ -440,9 +398,9 @@ class App:
         self.driver.updatePVs()
 
     def _callback_estimate_chrom(self, pvname, value, **kws):
-        ps = pvname.split(_pvs._PREFIX_VACA)[1]
+        ps = pvname.split(self._PREFIX_VACA)[1]
         fam = ps.split(':')[1].split('-')[1]
-        fam_index = _pvs._SFAMS.index(fam)
+        fam_index = self._SFAMS.index(fam)
         self._sfam_sl_rb[fam_index] = value
 
         chromx_rb, chromy_rb = self._estimate_current_chrom()
@@ -451,13 +409,13 @@ class App:
         self.driver.updatePVs()
 
     def _callback_sfam_pwrstate_sts(self, pvname, value, **kws):
-        ps = pvname.split(_pvs._PREFIX_VACA)[1]
+        ps = pvname.split(self._PREFIX_VACA)[1]
         if value == 0:
             self.driver.setParam('Log-Mon', 'WARN:'+ps+' is Off')
             self.driver.updatePVs()
 
         fam = ps.split(':')[1].split('-')[1]
-        fam_index = _pvs._SFAMS.index(fam)
+        fam_index = self._SFAMS.index(fam)
         self._sfam_check_pwrstate_sts[fam_index] = value
 
         # Change the second bit of correction status
@@ -471,12 +429,12 @@ class App:
         self.driver.updatePVs()
 
     def _callback_sfam_opmode_sts(self, pvname, value, **kws):
-        ps = pvname.split(_pvs._PREFIX_VACA)[1]
+        ps = pvname.split(self._PREFIX_VACA)[1]
         self.driver.setParam('Log-Mon', 'WARN:'+ps+' changed')
         self.driver.updatePVs()
 
         fam = ps.split(':')[1].split('-')[1]
-        fam_index = _pvs._SFAMS.index(fam)
+        fam_index = self._SFAMS.index(fam)
         self._sfam_check_opmode_sts[fam_index] = value
 
         # Change the third bit of correction status
@@ -491,13 +449,13 @@ class App:
         self.driver.updatePVs()
 
     def _callback_sfam_ctrlmode_mon(self,  pvname, value, **kws):
-        ps = pvname.split(_pvs._PREFIX_VACA)[1]
+        ps = pvname.split(self._PREFIX_VACA)[1]
         if value == 1:
             self.driver.setParam('Log-Mon', 'WARN:'+ps+' is Local')
             self.driver.updatePVs()
 
         fam = ps.split(':')[1].split('-')[1]
-        fam_index = _pvs._SFAMS.index(fam)
+        fam_index = self._SFAMS.index(fam)
         self._sfam_check_ctrlmode_mon[fam_index] = value
 
         # Change the fourth bit of correction status
@@ -536,7 +494,7 @@ class App:
 
     def _config_sfam_ps(self):
         opmode = self._sync_corr
-        for fam in _pvs._SFAMS:
+        for fam in self._SFAMS:
             if self._sfam_pwrstate_sel_pvs[fam].connected:
                 self._sfam_pwrstate_sel_pvs[fam].put(1)
                 self._sfam_opmode_sel_pvs[fam].put(opmode)
