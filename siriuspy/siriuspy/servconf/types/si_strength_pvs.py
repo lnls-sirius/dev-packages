@@ -7,7 +7,7 @@ def get_dict():
     """Return SI PVs as dict."""
     module_name = __name__.split('.')[-1]
     pvs = dict()
-    slots = MASearch.get_manames({"discipline": "MA"})
+    slots = MASearch.get_manames({"dis": "MA"})
     if slots:
         for slot in slots:
             strength_name = getStrengthName(slot)
