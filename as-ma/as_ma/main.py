@@ -116,9 +116,9 @@ class App:
             device.add_callback(self._mycallback)
             # ?
             if _pvs._PREFIX_SECTOR:
-                *parts, prefix = device.maname.split(_pvs._PREFIX_SECTOR)
+                *parts, prefix = device._maname.split(_pvs._PREFIX_SECTOR)
             else:
-                prefix = device.maname
+                prefix = device._maname
             db = device.get_database(prefix=prefix)
             for reason, ddb in db.items():
                 value = ddb['value']
