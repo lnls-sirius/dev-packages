@@ -177,46 +177,39 @@ def get_ma_propty_database(maname):
             db[psname][propty]['unit'] = unit[0]
         # set approriate MA limits and unit
         if magfunc in ('quadrupole', 'quadrupole-skew'):
-            db[psname]['KL-SP'] = _copy.deepcopy(db[psname]['Current-SP'])
-            db[psname]['KL-SP']['unit'] = '1/m'
-            db[psname]['KL-RB'] = _copy.deepcopy(db[psname]['Current-RB'])
-            db[psname]['KL-RB']['unit'] = '1/m'
-            db[psname]['KLRef-Mon'] = \
-                _copy.deepcopy(db[psname]['CurrentRef-Mon'])
-            db[psname]['KLRef-Mon']['unit'] = '1/m'
-            db[psname]['KL-Mon'] = _copy.deepcopy(db[psname]['Current-Mon'])
-            db[psname]['KL-Mon']['unit'] = '1/m'
+            strength_name = 'KL'
+            unit = '1/m'
         elif magfunc == 'sextupole':
-            db[psname]['SL-SP'] = _copy.deepcopy(db[psname]['Current-SP'])
-            db[psname]['SL-SP']['unit'] = '1/m^2'
-            db[psname]['SL-RB'] = _copy.deepcopy(db[psname]['Current-RB'])
-            db[psname]['SL-RB']['unit'] = '1/m^2'
-            db[psname]['SLRef-Mon'] = \
-                _copy.deepcopy(db[psname]['CurrentRef-Mon'])
-            db[psname]['SLRef-Mon']['unit'] = '1/m^2'
-            db[psname]['SL-Mon'] = _copy.deepcopy(db[psname]['Current-Mon'])
-            db[psname]['SL-Mon']['unit'] = '1/m^2'
+            strength_name = 'SL'
+            unit = '1/m^2'
         elif magfunc == 'dipole':
-            db[psname]['Energy-SP'] = _copy.deepcopy(db[psname]['Current-SP'])
-            db[psname]['Energy-SP']['unit'] = 'GeV'
-            db[psname]['Energy-RB'] = _copy.deepcopy(db[psname]['Current-RB'])
-            db[psname]['Energy-RB']['unit'] = 'GeV'
-            db[psname]['EnergyRef-Mon'] = \
-                _copy.deepcopy(db[psname]['CurrentRef-Mon'])
-            db[psname]['EnergyRef-Mon']['unit'] = 'GeV'
-            db[psname]['Energy-Mon'] = \
-                _copy.deepcopy(db[psname]['Current-Mon'])
-            db[psname]['Energy-Mon']['unit'] = 'GeV'
+            strength_name = 'Energy'
+            unit = 'Gev'
         elif magfunc in ('corrector-vertical', 'corrector-horizontal'):
-            db[psname]['Kick-SP'] = _copy.deepcopy(db[psname]['Current-SP'])
-            db[psname]['Kick-SP']['unit'] = 'rad'
-            db[psname]['Kick-RB'] = _copy.deepcopy(db[psname]['Current-RB'])
-            db[psname]['Kick-RB']['unit'] = 'rad'
-            db[psname]['KickRef-Mon'] = \
-                _copy.deepcopy(db[psname]['CurrentRef-Mon'])
-            db[psname]['KickRef-Mon']['unit'] = 'rad'
-            db[psname]['Kick-Mon'] = _copy.deepcopy(db[psname]['Current-Mon'])
-            db[psname]['Kick-Mon']['unit'] = 'rad'
+            strength_name = 'Kick'
+            unit = 'rad'
+
+        db[psname][strength_name + '-SP'] = \
+            _copy.deepcopy(db[psname]['Current-SP'])
+        db[psname][strength_name + '-SP']['unit'] = unit
+        db[psname][strength_name + '-RB'] = \
+            _copy.deepcopy(db[psname]['Current-RB'])
+        db[psname][strength_name + '-RB']['unit'] = unit
+        db[psname][strength_name + 'Ref-Mon'] = \
+            _copy.deepcopy(db[psname]['CurrentRef-Mon'])
+        db[psname][strength_name + 'Ref-Mon']['unit'] = unit
+        db[psname][strength_name + '-Mon'] = \
+            _copy.deepcopy(db[psname]['Current-Mon'])
+        db[psname][strength_name + '-Mon']['unit'] = unit
+
+        for field in ["-SP", "-RB", "Ref-Mon", "-Mon"]:
+            db[psname][strength_name + field]['lolo'] = 0.0
+            db[psname][strength_name + field]['low'] = 0.0
+            db[psname][strength_name + field]['lolim'] = 0.0
+            db[psname][strength_name + field]['hilim'] = 0.0
+            db[psname][strength_name + field]['high'] = 0.0
+            db[psname][strength_name + field]['hihi'] = 0.0
+
     return db
 
 
@@ -253,6 +246,14 @@ def get_pm_propty_database(maname):
             db[psname]['Kick-RB']['unit'] = 'rad'
             db[psname]['Kick-Mon'] = _copy.deepcopy(db[psname]['Voltage-Mon'])
             db[psname]['Kick-Mon']['unit'] = 'rad'
+
+            for field in ["-SP", "-RB", "-Mon"]:
+                db[psname]['Kick' + field]['lolo'] = 0.0
+                db[psname]['Kick' + field]['low'] = 0.0
+                db[psname]['Kick' + field]['lolim'] = 0.0
+                db[psname]['Kick' + field]['hilim'] = 0.0
+                db[psname]['Kick' + field]['high'] = 0.0
+                db[psname]['Kick' + field]['hihi'] = 0.0
         else:
             raise ValueError('Invalid pulsed magnet power supply type!')
     return db
