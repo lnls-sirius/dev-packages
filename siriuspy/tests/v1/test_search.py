@@ -248,8 +248,9 @@ class TestPSSearch(unittest.TestCase):
         for ps, pstype in TestPSSearch.sample.items():
             if pstype in PSSearch._pstype_2_excdat_dict:
                 calls.append(mock.call(filename_web=pstype + '.txt'))
-            PSSearch.conv_psname_2_pstype(ps)
+            PSSearch.conv_psname_2_excdata(ps)
         if mock_flag:
+            self.mock_excdata.assert_called()
             self.mock_excdata.assert_has_calls(calls)
 
     def test_check_psname_ispulsed(self):
