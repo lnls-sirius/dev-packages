@@ -1,5 +1,5 @@
 """This module contain classes for normalizing currents."""
-
+import re as _re
 
 from siriuspy import util as _util
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
@@ -10,6 +10,9 @@ import numpy as _np
 _magfuncs = _mutil.get_magfunc_2_multipole_dict()
 _electron_rest_energy = _util.get_electron_rest_energy()
 
+_is_dipole = _re.compile(".*:[A-Z]{2}-B.*:.+$")
+_is_fam = _re.compile(".*[A-Z]{2}-Fam:[A-Z]{2}-.+$")
+
 
 class _MagnetNormalizer:
     """Base class for converting magnet properties: current and strength."""
@@ -17,11 +20,111 @@ class _MagnetNormalizer:
     def __init__(self, maname, magnet_conv_sign=-1):
         """Class constructor."""
         self._maname = _SiriusPVName(maname) if type(maname) == str else maname
-        self._madata = _MAData(maname=self._maname)
+        self._madata = _MAData(maname=maname)
         self._magfunc = self._madata.magfunc(self._madata.psnames[0])
         self._magnet_conv_sign = magnet_conv_sign
         self._mfmult = _magfuncs[self._magfunc]
         self._psname = self._power_supplies()[0]
+
+    # Computer interface
+    def compute_put(self, computed_pv, value):
+        """Put strength value."""
+        # Convert strength to current
+        kwargs = self._get_params(computed_pv)
+        current = self.conv_strength_2_current(value, **kwargs)
+        computed_pv.pvs[0].put(current)
+
+    def compute_update(self, computed_pv, updated_pv_name, value):
+        """Convert current to strength."""
+        kwret = {}
+        # Convert current to strength
+        kwret["value"] = self._compute_new_value(
+            computed_pv, updated_pv_name, value)
+        # In case limits neeed to be recalculated compute new limits
+        # llim, ulim = computed_pv.lower_disp_limit, computed_pv.upper_disp_limit
+        # print(llim, ulim)
+        # if ((ulim is None or llim == ulim) or
+        #         (len(computed_pv.pvs) == 2 and
+        #          _is_dipole.match(updated_pv_name)) or
+        #         (len(computed_pv.pvs) == 3 and
+        #          (_is_dipole.match(updated_pv_name) or
+        #           _is_fam.match(updated_pv_name)))):
+        low, high, lolo, hihi, lolim, hilim = \
+            self.compute_limits(computed_pv)
+        kwret["low"] = low
+        kwret["high"] = high
+        kwret["lolo"] = lolo
+        kwret["hihi"] = hihi
+        kwret["lolim"] = lolim
+        kwret["hilim"] = hilim
+
+        return kwret
+
+    def compute_limits(self, computed_pv):
+        """Compute limits to normalized strength."""
+        kwargs = self._get_params(computed_pv)
+        high = self.conv_current_2_strength(
+            self._madata.splims['HIGH'], **kwargs)
+        low = self.conv_current_2_strength(
+            self._madata.splims['LOW'], **kwargs)
+        if high < low:
+            high, low = low, high
+
+        hihi = self.conv_current_2_strength(
+            self._madata.splims["HIHI"], **kwargs)
+        lolo = self.conv_current_2_strength(
+            self._madata.splims["LOLO"], **kwargs)
+        if hihi < lolo:
+            hihi, lolo = lolo, hihi
+
+        hilim = self.conv_current_2_strength(
+            self._madata.splims["HOPR"], **kwargs)
+        lolim = self.conv_current_2_strength(
+            self._madata.splims["LOPR"], **kwargs)
+        if hilim < lolim:
+            hilim, lolim = lolim, hilim
+
+        return (low, high, lolo, hihi, lolim, hilim)
+
+    # Computer Helper
+    def _get_params(self, computed_pv):
+        if len(computed_pv.pvs) == 1:
+            return {}
+        elif len(computed_pv.pvs) == 2:
+            return {"currents_dipole": computed_pv.pvs[1].get()}
+        elif len(computed_pv.pvs) == 3:
+            return {"currents_dipole": computed_pv.pvs[1].get(),
+                    "currents_family": computed_pv.pvs[2].get()}
+
+    def _compute_new_value(self, computed_pv, updated_pv_name, value):
+        # Return new computed value
+        if len(computed_pv.pvs) == 1:  # Dipole
+            return self.conv_current_2_strength(value)
+        elif len(computed_pv.pvs) == 2:  # Standard Magnet
+            if _is_dipole.match(updated_pv_name):  # Use regexp?
+                current = computed_pv.pvs[0].get()
+                current_dipole = value
+            else:
+                current = value
+                current_dipole = computed_pv.pvs[1].get()
+            return self.conv_current_2_strength(
+                currents=current, currents_dipole=current_dipole)
+        elif len(computed_pv.pvs) == 3:  # Trim Magnet
+            if not _is_fam.match(updated_pv_name):  # Use Regexp?
+                current = value
+                current_dipole = computed_pv.pvs[1].get()
+                current_family = computed_pv.pvs[2].get()
+            elif _is_dipole.match(updated_pv_name):
+                current = computed_pv.pvs[0].get()
+                current_dipole = value
+                current_family = computed_pv.pvs[2].get()
+            else:
+                current = computed_pv.pvs[0].get()
+                current_dipole = computed_pv.pvs[1].get()
+                current_family = value
+            return self.conv_current_2_strength(currents=current,
+                                                currents_dipole=current_dipole,
+                                                currents_family=current_family)
 
     def _conv_current_2_multipoles(self, currents):
         if currents is None:
