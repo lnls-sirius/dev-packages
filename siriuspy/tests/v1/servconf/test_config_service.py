@@ -1,3 +1,5 @@
+#!/usr/bin/env python-sirius
+
 """Test the configuration service class."""
 import unittest
 from unittest import mock
