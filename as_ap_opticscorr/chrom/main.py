@@ -217,11 +217,8 @@ class App:
                 self._corr_method = value
                 self.driver.setParam('CorrMeth-Sts', self._corr_method)
 
-                corrmat, _, _ = self._get_corrparams()
-                if value == 0:
-                    corrmat = self._calc_prop_matrix(corrmat)
-                self._mat, _ = self._opticscorr.set_corr_mat(
-                    len(self._SFAMS), corrmat)
+                config_name = self._get_config_name()
+                self._get_corrparams(config_name)
                 self._calc_sl()
                 self.driver.updatePVs()
                 status = True
@@ -235,15 +232,11 @@ class App:
                         self._sfam_opmode_sts_pvs[fam].value)
                 if any(op != self._sync_corr
                        for op in self._sfam_check_opmode_sts):
-                    self._status = self._status = \
-                        _siriuspy.util.update_integer_bit(
-                            integer=self._status, number_of_bits=5,
-                            value=1, bit=2)
+                    self._status = _siriuspy.util.update_integer_bit(
+                        integer=self._status, number_of_bits=5, value=1, bit=2)
                 else:
-                    self._status = self._status = \
-                        _siriuspy.util.update_integer_bit(
-                            integer=self._status, number_of_bits=5,
-                            value=0, bit=2)
+                    self._status = _siriuspy.util.update_integer_bit(
+                        integer=self._status, number_of_bits=5, value=0, bit=2)
                 self.driver.setParam('Status-Mon', self._status)
                 self.driver.setParam('SyncCorr-Sts', self._sync_corr)
                 self.driver.updatePVs()
@@ -345,9 +338,8 @@ class App:
         self.driver.updatePVs()
 
     def _apply_sl(self):
-        if ((self._status == _ALLCLR_SYNCON and self._sync_corr == 1) or
-                ((self._status == _ALLCLR_SYNCOFF or
-                  self._status == _ALLCLR_SYNCON) and self._sync_corr == 0)):
+        if ((self._status == _ALLCLR_SYNCOFF and self._sync_corr == 0) or
+                self._status == _ALLCLR_SYNCON):
             pvs = self._sfam_sl_sp_pvs
             for fam in pvs:
                 fam_index = self._SFAMS.index(fam)
