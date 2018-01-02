@@ -59,7 +59,7 @@ def run(debug=False):
     _log.info('Generating database file.')
     db = app.get_database()
     db.update({'Version-Cte': {'type': 'string', 'value': __version__}})
-    print_pvs_in_file(PREFIX, db)
+    print_pvs_in_file(db)
 
     # create a new simple pcaspy server and driver to respond client's requests
     _log.info('Creating Server.')

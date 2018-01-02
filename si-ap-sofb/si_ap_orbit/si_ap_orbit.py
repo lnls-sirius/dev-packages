@@ -7,13 +7,13 @@ import pcaspy.tools as _pcaspy_tools
 import signal as _signal
 from si_ap_orbit import main as _main
 from siriuspy.util import get_last_commit_hash as _get_version
-from siriuspy.envars import vaca_prefix as PREFIX
+from siriuspy.envars import vaca_prefix as _vaca_prefix
+import siriuspy.util as _util
 
 __version__ = _get_version()
 INTERVAL = 0.1
 stop_event = False
-PREFIX += 'SI-Glob:AP-Orbit:'
-DB_FILENAME = 'pvs/si-ap-orbit-pvs.txt'
+PREFIX = _vaca_prefix + 'SI-Glob:AP-Orbit:'
 
 
 def _stop_now(signum, frame):
@@ -22,11 +22,12 @@ def _stop_now(signum, frame):
     stop_event = True
 
 
-def _print_pvs_in_file(prefix, db):
-    with open(DB_FILENAME, 'w') as f:
-        for key in sorted(db.keys()):
-            f.write(prefix + '{0:20s}\n'.format(key))
-    _log.info(DB_FILENAME+' file generated with {0:d} pvs.'.format(len(db)))
+def _print_pvs_in_file(db):
+    """Save pv list in file."""
+    _util.save_ioc_pv_list(ioc_name='si-ap-orbit',
+                           prefix=('SI-Glob:AP-Orbit:', _vaca_prefix),
+                           db=db)
+    _log.info('si-ap-orbit.txt file generated with {0:d} pvs.'.format(len(db)))
 
 
 class _PCASDriver(_pcaspy.Driver):
@@ -71,7 +72,7 @@ def run(add_noise=False, debug=False):
     _log.info('Generating database file.')
     db = app.get_database()
     db.update({PREFIX+'Version-Cte': {'type': 'string', 'value': __version__}})
-    _print_pvs_in_file(PREFIX, db)
+    _print_pvs_in_file(db)
 
     # create a new simple pcaspy server and driver to respond client's requests
     _log.info('Creating Server.')
