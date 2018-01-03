@@ -5,7 +5,7 @@ import re as _re
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.magnet import util as _mutil
 from siriuspy.epics.computed_pv import ComputedPV as _ComputedPV
-from siriuspy.powersupply import sync as _sync
+from siriuspy.pwrsupply import sync as _sync
 from siriuspy.factory import NormalizerFactory as _NormalizerFactory
 
 
