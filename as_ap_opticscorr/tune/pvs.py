@@ -14,7 +14,7 @@ _DEVICE = None
 
 def select_ioc(acc):
     """Select IOC to build database for."""
-    global _ACC, _PREFIX, _QFAMS, _DEVICE
+    global _ACC, _PREFIX, _PREFIX_VACA, _QFAMS, _DEVICE
     _ACC = acc.upper()
     _DEVICE = _ACC + '-Glob:AP-TuneCorr:'
     _PREFIX = _PREFIX_VACA + _DEVICE
@@ -25,9 +25,33 @@ def select_ioc(acc):
                   'QDA', 'QDB1', 'QDB2', 'QDP1', 'QDP2']
 
 
+def get_pvs_section():
+    """Return Soft IOC section/accelerator."""
+    global _ACC
+    return _ACC
+
+
+def get_pvs_vaca_prefix():
+    """Return Soft IOC vaca prefix."""
+    global _PREFIX_VACA
+    return _PREFIX_VACA
+
+
+def get_pvs_prefix():
+    """Return Soft IOC prefix."""
+    global _PREFIX
+    return _PREFIX
+
+
+def get_corr_fams():
+    """Return list of magnet families used on correction."""
+    global _QFAMS
+    return _QFAMS
+
+
 def get_pvs_database():
     """Return IOC database."""
-    global _QFAMS
+    global _COMMIT_HASH, _ACC, _QFAMS
     corrmat_size = len(_QFAMS)*2
 
     pvs_database = {
@@ -88,3 +112,18 @@ def get_pvs_database():
         pvs_database['NominalKL-RB'] = {'type': 'float', 'count': len(_QFAMS),
                                         'value': len(_QFAMS)*[0], 'prec': 6}
     return pvs_database
+
+
+def print_banner_and_save_pv_list():
+    """Print Soft IOC banner."""
+    global _COMMIT_HASH, _PREFIX_VACA, _ACC, _PREFIX, _DEVICE
+    _util.print_ioc_banner(
+        ioc_name=_ACC+'-AP-TuneCorr',
+        db=get_pvs_database(),
+        description=_ACC+'-AP-TuneCorr Soft IOC',
+        version=_COMMIT_HASH,
+        prefix=_PREFIX)
+    _util.save_ioc_pv_list(
+        _ACC.lower()+'-ap-tunecorr',
+        (_DEVICE, _PREFIX_VACA),
+        get_pvs_database())
