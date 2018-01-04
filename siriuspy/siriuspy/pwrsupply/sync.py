@@ -1,10 +1,14 @@
 """Sync computer objects definition."""
+
+from siriuspy.computer import Computer as _Computer
+
+
 from numpy import ndarray as _ndarray
 
 _master_pv_index = 0
 
 
-class SyncWrite:
+class SyncWrite(_Computer):
     """Class that syncs all pvs."""
 
     # Computer Interface
@@ -58,7 +62,7 @@ class SyncWrite:
             computed_pv.pvs[_master_pv_index].lower_disp_limit
 
 
-class SyncRead:
+class SyncRead(_Computer):
     """Class that syncs all pvs."""
 
     # Computer Interface

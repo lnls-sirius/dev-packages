@@ -6,8 +6,6 @@ from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.magnet import util as _mutil
 from siriuspy.magnet.data import MAData as _MAData
 import numpy as _np
-from siriuspy.computer import Computer as _Computer
-
 
 _magfuncs = _mutil.get_magfunc_2_multipole_dict()
 _electron_rest_energy = _util.get_electron_rest_energy()
@@ -16,7 +14,7 @@ _is_dipole = _re.compile(".*:[A-Z]{2}-B.*:.+$")
 _is_fam = _re.compile(".*[A-Z]{2}-Fam:[A-Z]{2}-.+$")
 
 
-class _MagnetNormalizer(_Computer):
+class _MagnetNormalizer:
     """Base class for converting magnet properties: current and strength."""
 
     def __init__(self, maname, magnet_conv_sign=-1):
@@ -40,8 +38,17 @@ class _MagnetNormalizer(_Computer):
         """Convert current to strength."""
         kwret = {}
         # Convert current to strength
-        kwret["value"] = self._compute_new_value(computed_pv,
-                                                 updated_pv_name, value)
+        kwret["value"] = self._compute_new_value(
+            computed_pv, updated_pv_name, value)
+        # In case limits neeed to be recalculated compute new limits
+        # llim, ulim = computed_pv.lower_disp_limit, computed_pv.upper_disp_limit
+        # print(llim, ulim)
+        # if ((ulim is None or llim == ulim) or
+        #         (len(computed_pv.pvs) == 2 and
+        #          _is_dipole.match(updated_pv_name)) or
+        #         (len(computed_pv.pvs) == 3 and
+        #          (_is_dipole.match(updated_pv_name) or
+        #           _is_fam.match(updated_pv_name)))):
         low, high, lolo, hihi, lolim, hilim = \
             self.compute_limits(computed_pv)
         kwret["low"] = low

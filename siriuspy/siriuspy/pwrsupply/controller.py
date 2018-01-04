@@ -9,15 +9,21 @@ from siriuspy.pwrsupply import sync as _sync
 from siriuspy.factory import NormalizerFactory as _NormalizerFactory
 
 
-class PSEpicsController:
+class Controller:
+    """Base class defining controller interface."""
+
+    pass
+
+
+class PSEpicsController(Controller):
     """Create real PVs to control PS attributes."""
 
     def __init__(self, psnames, fields, prefix='', device_name=''):
         """Create epics PVs and expose them through public controller API."""
         # Attributes use build a full PV address
         self._psnames = psnames
-        self.fields = fields
-        self.prefix = prefix
+        self._fields = fields
+        self._prefix = prefix
         if device_name:
             self.device_name = device_name
         else:
@@ -56,7 +62,7 @@ class PSEpicsController:
         # In case the device is a Magnet with a normalized force being supplied
         # as one of the fields, a NormalizedPV is created
 
-        for field in self.fields:
+        for field in self._fields:
             self._pvs[field] = self._create_pv(field)
 
     def _get_sync_obj(self, field):
@@ -72,7 +78,7 @@ class PSEpicsController:
             # Sync object used to sync pvs
             sync = self._get_sync_obj(field)
             # Real PVs(names) supplied to ComputedPV
-            pvs = [self.prefix + device_name + ":" + field
+            pvs = [self._prefix + device_name + ":" + field
                    for device_name in self._psnames]
             # Name of the ComputedPV
             pvname = self.device_name + ":" + field
@@ -80,7 +86,7 @@ class PSEpicsController:
             x = _ComputedPV(pvname, sync, *pvs)
             return x
         else:
-            return _PV(self.prefix + self.device_name + ":" + field)
+            return _PV(self._prefix + self.device_name + ":" + field)
 
 
 class MAEpicsController(PSEpicsController):
@@ -102,14 +108,14 @@ class MAEpicsController(PSEpicsController):
         if MAEpicsController._is_strength.match(field):  # NormalizedPV
             # if len(self._maname) > 1:
             #     raise ValueError("Syncing Magnets?")
-            pvname = self.prefix + self._maname + ":" + field
-            str_obj = self._get_str_obj(self._maname)
+            pvname = self._prefix + self._maname + ":" + field
+            str_obj = self._get_normalizer(self._maname)
             pvs = self._get_str_pv(field)
             return _ComputedPV(pvname, str_obj, *pvs)
         else:
             return super()._create_pv(field)
 
-    def _get_str_obj(self, device_name):
+    def _get_normalizer(self, device_name):
         # Return Normalizer object
         return _NormalizerFactory.factory(device_name)
 
@@ -119,21 +125,21 @@ class MAEpicsController(PSEpicsController):
             return [self._pvs[field.replace('Energy', 'Current')], ]
         elif 'pulsed' == ma_class:
             dipole_name = _mutil.get_section_dipole_name(self._maname)
-            dipole = self.prefix + dipole_name
+            dipole = self._prefix + dipole_name
             return [self._pvs[field.replace('Kick', 'Voltage')],
                     dipole + ":" + field.replace('Kick', 'Current')]
         elif 'trim' == ma_class:
             dipole_name = _mutil.get_section_dipole_name(self._maname)
-            dipole = self.prefix + dipole_name
+            dipole = self._prefix + dipole_name
             fam_name = _mutil.get_magnet_family_name(self._maname)
-            fam = self.prefix + fam_name
+            fam = self._prefix + fam_name
             field = field.replace('KL', 'Current')
             return [self._pvs[field],
                     dipole + ':' + field,
                     fam + ':' + field]
         else:
             dipole_name = _mutil.get_section_dipole_name(self._maname)
-            dipole = self.prefix + dipole_name
+            dipole = self._prefix + dipole_name
             field = field.replace('KL', 'Current').replace('SL', 'Current')\
                 .replace('Kick', 'Current')
             return [self._pvs[field],
@@ -150,3 +156,9 @@ class MAEpicsController(PSEpicsController):
             return [self._maname.replace(':PM', ':PU')]
 
         return [self._maname.replace(':MA', ':PS')]
+
+
+class UDCController(Controller):
+    """UDC Controller."""
+
+    pass

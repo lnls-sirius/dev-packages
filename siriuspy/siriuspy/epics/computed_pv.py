@@ -29,7 +29,7 @@ class QueueThread(Thread):
             if self._funcs:
                 func_item = self._funcs.pop(0)
                 function, args = func_item
-                function(args)
+                function(*args)
             else:
                 _time.sleep(0.1)
 
