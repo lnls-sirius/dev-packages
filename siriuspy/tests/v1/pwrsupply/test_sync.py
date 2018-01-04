@@ -1,3 +1,5 @@
+#!/usr/bin/env python-sirius
+
 """Test Sync class."""
 import unittest
 from unittest import mock

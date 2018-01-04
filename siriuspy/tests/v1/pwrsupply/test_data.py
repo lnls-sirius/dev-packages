@@ -95,7 +95,7 @@ class TestPSDataProperties(unittest.TestCase):
         self.assertEqual(self.data.psname, self.properties['psname'])
 
     def test_pstype(self):
-        """Test wether pstype property is set correctly."""
+        """Test whether pstype property is set correctly."""
         self.assertEqual(self.data.pstype, self.properties['pstype'])
 
     def test_polarity(self):
@@ -157,14 +157,14 @@ class TestPSDataDb(unittest.TestCase):
     def test_ps_db(self):
         """Test ps db is called when a ps is passed."""
         self.search_mock.check_psname_ispulsed.return_value = False
-        data = PSData(self.psname)
+        PSData(self.psname)
         self.pu_db_mock.assert_not_called()
         self.ps_db_mock.assert_called_once_with(pstype=self.pstype)
 
     def test_pu_db(self):
         """Test pu db is called when a pu is passed."""
         self.search_mock.check_psname_ispulsed.return_value = True
-        data = PSData(self.psname)
+        PSData(self.psname)
         self.pu_db_mock.assert_called_once_with(pstype=self.pstype)
         self.ps_db_mock.assert_not_called()
 

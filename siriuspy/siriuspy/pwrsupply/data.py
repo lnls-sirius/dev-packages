@@ -14,16 +14,6 @@ class PSData:
     Class objects that group power supply data.
     """
 
-    # really necessary ?
-    # _multipole_dict = {
-    #     'dipole': ('normal', 0),
-    #     'quadrupole': ('normal', 1),
-    #     'sextupole': ('normal', 2),
-    #     'corrector-horizontal': ('normal', 0),
-    #     'corrector-vertical': ('skew', 0),
-    #     'quadrupole-skew': ('skew', 1),
-    # }
-
     def __init__(self, psname):
         """Init method."""
         if psname not in _PSSearch.get_psnames():
@@ -63,16 +53,6 @@ class PSData:
     def magfunc(self):
         """Magnetic function the power supply excites."""
         return self._magfunc
-
-    # def multipole_main(self, current):
-    #     """Return the main multipole corresponding to given current."""
-    #     m_harm = self._excdata.main_multipole_harmonic
-    #     m_type = self._excdata.main_multipole_type
-    #     m = self._excdata.interp_curr2mult(self, current)
-    #     return m[m_type][m_harm]
-    #
-    # def multipole_main(self, current):
-    #     return self._excdata.interp_curr2mult(self, current)
 
     @property
     def splims(self):
