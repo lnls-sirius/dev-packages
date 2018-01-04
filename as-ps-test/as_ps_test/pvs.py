@@ -1,7 +1,7 @@
 """Module to create PV database."""
 
 import os as _os
-from siriuspy.pwrsupply import PowerSupplySim as _PowerSupplySim
+from siriuspy.pwrsupply_orig import PowerSupplySim as _PowerSupplySim
 from siriuspy.pulsedps.model \
     import PulsedPowerSupplySim as _PulsedPowerSupplySim
 from siriuspy import envars as _envars
