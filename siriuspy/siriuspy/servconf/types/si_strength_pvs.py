@@ -7,14 +7,14 @@ def get_dict():
     """Return SI PVs as dict."""
     module_name = __name__.split('.')[-1]
     pvs = dict()
-    slots = MASearch.get_manames({"dis": "MA"})
+    slots = MASearch.get_manames({"sec": "SI", "dis": "MA"})
     if slots:
         for slot in slots:
             strength_name = getStrengthName(slot)
             pv = slot + ":" + strength_name + "-RB"
-            if re.match("^SI-Fam:MA-(B|Q|S)", pv) or \
-                    re.match("^SI-\d{2}[A-Z]\d:MA-(:?Q|CH|CV|FCH|FCV).*", pv):
-                pvs[pv] = 0.0
+            # if re.match("^SI-Fam:MA-(B|Q|S)", pv) or \
+            #       re.match("^SI-\d{2}[A-Z]\d:MA-(:?Q|CH|CV|FCH|FCV).*", pv):
+            pvs[pv] = 0.0
     _dict = {
         'config_type_name': module_name,
         'value': pvs
@@ -30,7 +30,8 @@ def getStrengthName(slot):
         return "KL"
     elif re.match("^[A-Z]{2}-\w{2,4}:[A-Z]{2}-S", slot):
         return "SL"
-    elif re.match("^[A-Z]{2}-\w{2,4}:[A-Z]{2}-(C|F)", slot):
+    # elif re.match("^[A-Z]{2}-\w{2,4}:[A-Z]{2}-(C|F)", slot):
+    elif re.match("^[A-Z]{2}-\w{2,4}:(PS|PU|MA|PM)-", slot):
         return "Kick"
     else:
         raise NotImplementedError

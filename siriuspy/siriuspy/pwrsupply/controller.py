@@ -18,11 +18,14 @@ class Controller:
 class PSEpicsController(Controller):
     """Create real PVs to control PS attributes."""
 
+    _is_strength = _re.compile('(Energy|KL|SL|Kick).+$')
+
     def __init__(self, psnames, fields, prefix='', device_name=''):
         """Create epics PVs and expose them through public controller API."""
         # Attributes use build a full PV address
         self._psnames = psnames
         self._fields = fields
+        self._sort_fields()
         self._prefix = prefix
         if device_name:
             self.device_name = device_name
@@ -61,9 +64,18 @@ class PSEpicsController(Controller):
         # In case more than one source is supplied creates a SyncPV
         # In case the device is a Magnet with a normalized force being supplied
         # as one of the fields, a NormalizedPV is created
-
         for field in self._fields:
             self._pvs[field] = self._create_pv(field)
+
+    def _sort_fields(self):
+        fields = []
+        for field in self._fields:
+            if not self._is_strength.match(field):
+                fields.insert(0, field)
+            else:
+                fields.append(field)
+
+        self.fields = fields
 
     def _get_sync_obj(self, field):
         # Return SyncWrite or SyncRead object
@@ -91,8 +103,6 @@ class PSEpicsController(Controller):
 
 class MAEpicsController(PSEpicsController):
     """Create real PVs to control PS attributes."""
-
-    _is_strength = _re.compile('(Energy|KL|SL|Kick).+$')
 
     def __init__(self, maname, **kwargs):
         """Create epics PVs and expose them through public controller API."""
