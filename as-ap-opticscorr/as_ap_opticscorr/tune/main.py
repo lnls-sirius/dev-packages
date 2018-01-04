@@ -20,13 +20,11 @@ import as_ap_opticscorr.tune.pvs as _pvs
 # 06 - be consistent in coding style (variable naming, spacings, prefixes,
 #      suffixes, etc)
 
-__version__ = _pvs._COMMIT_HASH
-
 
 # Constants
-ALLSET = 0x1f
-ALLCLR_SYNCON = 0x00
-ALLCLR_SYNCOFF = 0x10
+_ALLSET = 0x1f
+_ALLCLR_SYNCON = 0x00
+_ALLCLR_SYNCOFF = 0x10
 
 
 class App:
@@ -36,34 +34,26 @@ class App:
 
     def __init__(self, driver):
         """Class constructor."""
-        _siriuspy.util.print_ioc_banner(
-            ioc_name=_pvs._ACC+'-AP-TuneCorr',
-            db=App.pvs_database,
-            description=_pvs._ACC+'-AP-TuneCorr Soft IOC',
-            version=__version__,
-            prefix=_pvs._PREFIX)
-        _siriuspy.util.save_ioc_pv_list(
-            _pvs._ACC.lower()+'-ap-tunecorr',
-            (_pvs._DEVICE,
-             _pvs._PREFIX_VACA),
-            App.pvs_database)
+        _pvs.print_banner_and_save_pv_list()
+        self._PREFIX_VACA = _pvs.get_pvs_vaca_prefix()
+        self._ACC = _pvs.get_pvs_section()
+        self._QFAMS = _pvs.get_corr_fams()
 
         self._driver = driver
-        self._pvs_database = App.pvs_database
 
-        self._status = ALLSET
-        self._qfam_check_connection = len(_pvs._QFAMS)*[0]
-        self._qfam_check_pwrstate_sts = len(_pvs._QFAMS)*[0]
-        self._qfam_check_opmode_sts = len(_pvs._QFAMS)*[-1]
-        self._qfam_check_ctrlmode_mon = len(_pvs._QFAMS)*[1]
+        self._status = _ALLSET
+        self._qfam_check_connection = len(self._QFAMS)*[0]
+        self._qfam_check_pwrstate_sts = len(self._QFAMS)*[0]
+        self._qfam_check_opmode_sts = len(self._QFAMS)*[-1]
+        self._qfam_check_ctrlmode_mon = len(self._QFAMS)*[1]
 
         self._corr_factor = 0.0
         self._set_new_refkl_cmd_count = 0
         self._config_qfam_ps_cmd_count = 0
         self._apply_deltakl_cmd_count = 0
-        self._lastcalcd_deltakl = len(_pvs._QFAMS)*[0]
+        self._lastcalcd_deltakl = len(self._QFAMS)*[0]
 
-        self._qfam_kl_rb = len(_pvs._QFAMS)*[0]
+        self._qfam_kl_rb = len(self._QFAMS)*[0]
 
         self._sync_corr = 0
         self._sync_corr_cmd_count = 0
@@ -77,7 +67,7 @@ class App:
         # Focusing and Defocusing
         corrmat, nomkl = self._get_corrparams()
 
-        if _pvs._ACC == 'SI':
+        if self._ACC == 'SI':
             self._qfam_nomkl = nomkl
             self.driver.setParam('NominalKL-SP', self._qfam_nomkl)
             self.driver.setParam('NominalKL-RB', self._qfam_nomkl)
@@ -101,76 +91,76 @@ class App:
         self._qfam_ctrlmode_mon_pvs = {}
         self._qfam_refkl = {}
 
-        for fam in _pvs._QFAMS:
+        for fam in self._QFAMS:
             self._qfam_kl_sp_pvs[fam] = _epics.PV(
-                _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':KL-SP')
+                self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':KL-SP')
 
             self._qfam_refkl[fam] = 0
             self._qfam_kl_rb_pvs[fam] = _epics.PV(
-                _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':KL-RB',
+                self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':KL-RB',
                 callback=[self._callback_init_refkl,
                           self._callback_estimate_deltatune],
                 connection_callback=self._connection_callback_qfam_kl_rb)
 
             self._qfam_pwrstate_sel_pvs[fam] = _epics.PV(
-                _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':PwrState-Sel')
+                self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':PwrState-Sel')
             self._qfam_pwrstate_sts_pvs[fam] = _epics.PV(
-                _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':PwrState-Sts',
+                self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':PwrState-Sts',
                 callback=self._callback_qfam_pwrstate_sts)
 
             self._qfam_opmode_sel_pvs[fam] = _epics.PV(
-                _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':OpMode-Sel')
+                self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':OpMode-Sel')
             self._qfam_opmode_sts_pvs[fam] = _epics.PV(
-                _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':OpMode-Sts',
+                self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':OpMode-Sts',
                 callback=self._callback_qfam_opmode_sts)
 
             self._qfam_ctrlmode_mon_pvs[fam] = _epics.PV(
-                _pvs._PREFIX_VACA+_pvs._ACC+'-Fam:MA-'+fam+':CtrlMode-Mon',
+                self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':CtrlMode-Mon',
                 callback=self._callback_qfam_ctrlmode_mon)
 
         self._delta_tunex = 0
         self._delta_tuney = 0
-        self._lastcalcd_deltakl = len(_pvs._QFAMS)*[0]
+        self._lastcalcd_deltakl = len(self._QFAMS)*[0]
 
         # Connect to Timing
         self._timing_quads_state_sel = _epics.PV(
-            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Quads:State-Sel')
+            self._PREFIX_VACA+self._ACC+'-Glob:TI-Quads:State-Sel')
         self._timing_quads_state_sts = _epics.PV(
-            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Quads:State-Sts',
+            self._PREFIX_VACA+self._ACC+'-Glob:TI-Quads:State-Sts',
             callback=self._callback_timing_state)
 
         self._timing_quads_evgparam_sel = _epics.PV(
-            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Quads:EVGParam-Sel')
+            self._PREFIX_VACA+self._ACC+'-Glob:TI-Quads:EVGParam-Sel')
         self._timing_quads_evgparam_sts = _epics.PV(
-            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Quads:EVGParam-Sts',
+            self._PREFIX_VACA+self._ACC+'-Glob:TI-Quads:EVGParam-Sts',
             callback=self._callback_timing_state)
 
         self._timing_quads_pulses_sp = _epics.PV(
-            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Quads:Pulses-SP')
+            self._PREFIX_VACA+self._ACC+'-Glob:TI-Quads:Pulses-SP')
         self._timing_quads_pulses_rb = _epics.PV(
-            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Quads:Pulses-RB',
+            self._PREFIX_VACA+self._ACC+'-Glob:TI-Quads:Pulses-RB',
             callback=self._callback_timing_state)
 
         self._timing_quads_duration_sp = _epics.PV(
-            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Quads:Duration-SP')
+            self._PREFIX_VACA+self._ACC+'-Glob:TI-Quads:Duration-SP')
         self._timing_quads_duration_rb = _epics.PV(
-            _pvs._PREFIX_VACA+_pvs._ACC+'-Glob:TI-Quads:Duration-RB',
+            self._PREFIX_VACA+self._ACC+'-Glob:TI-Quads:Duration-RB',
             callback=self._callback_timing_state)
 
         self._timing_evg_tunesmode_sel = _epics.PV(
-            _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'TunesMode-Sel')
+            self._PREFIX_VACA+'AS-Glob:TI-EVG:'+self._ACC+'TunesMode-Sel')
         self._timing_evg_tunemode_sts = _epics.PV(
-            _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'TunesMode-Sts',
+            self._PREFIX_VACA+'AS-Glob:TI-EVG:'+self._ACC+'TunesMode-Sts',
             callback=self._callback_timing_state)
 
         self._timing_evg_tunesdelay_sp = _epics.PV(
-            _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'TunesDelay-SP')
+            self._PREFIX_VACA+'AS-Glob:TI-EVG:'+self._ACC+'TunesDelay-SP')
         self._timing_evg_tunesdelay_rb = _epics.PV(
-            _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'TunesDelay-RB',
+            self._PREFIX_VACA+'AS-Glob:TI-EVG:'+self._ACC+'TunesDelay-RB',
             callback=self._callback_timing_state)
 
         self._timing_evg_tunesexttrig_cmd = _epics.PV(
-            _pvs._PREFIX_VACA+'AS-Glob:TI-EVG:'+_pvs._ACC+'TunesExtTrig-Cmd')
+            self._PREFIX_VACA+'AS-Glob:TI-EVG:'+self._ACC+'TunesExtTrig-Cmd')
 
         self.driver.setParam('Log-Mon', 'Started.')
         self.driver.updatePVs()
@@ -221,14 +211,14 @@ class App:
             done = save_corrparams(
                 '/home/fac_files/lnls-sirius/machine-applications'
                 '/as-ap-opticscorr/as_ap_opticscorr/tune/' +
-                _pvs._ACC.lower() + '-tunecorr.txt',
-                value, len(_pvs._QFAMS), self._qfam_nomkl)
+                self._ACC.lower() + '-tunecorr.txt',
+                value, len(self._QFAMS), self._qfam_nomkl)
             if done:
                 self.driver.setParam('CorrMat-RB', value)
 
                 # Update matrix used
                 corrmat = value
-                if _pvs._ACC == 'SI':
+                if self._ACC == 'SI':
                     corrmat = self._calc_matrix(corrmat)
                 self._mat, _ = self._opticscorr.set_corr_mat(2, corrmat)
                 self._calc_deltakl()
@@ -241,14 +231,14 @@ class App:
             done = save_corrparams(
                 '/home/fac_files/lnls-sirius/machine-applications'
                 '/as-ap-opticscorr/as_ap_opticscorr/tune/' +
-                _pvs._ACC.lower() + '-tunecorr.txt',
-                corrmat, len(_pvs._QFAMS), value)
+                self._ACC.lower() + '-tunecorr.txt',
+                corrmat, len(self._QFAMS), value)
             if done:
                 self.driver.setParam('NominalKL-RB', value)
 
                 # Update nomkl and matrix used according to the corr. method
                 self._qfam_nomkl = value
-                if _pvs._ACC == 'SI':
+                if self._ACC == 'SI':
                     corrmat = self._calc_matrix(corrmat)
                 self._mat, _ = self._opticscorr.set_corr_mat(2, corrmat)
                 self._calc_deltakl()
@@ -261,7 +251,7 @@ class App:
                 self.driver.setParam('CorrMeth-Sts', self._corr_method)
 
                 corrmat, _ = self._get_corrparams()
-                if _pvs._ACC == 'SI':
+                if self._ACC == 'SI':
                     corrmat = self._calc_matrix(corrmat)
                 self._mat, _ = self._opticscorr.set_corr_mat(2, corrmat)
                 self._calc_deltakl()
@@ -277,8 +267,8 @@ class App:
         elif reason == 'SyncCorr-Sel':
             if value != self._sync_corr:
                 self._sync_corr = value
-                for fam in _pvs._QFAMS:
-                    fam_index = _pvs._QFAMS.index(fam)
+                for fam in self._QFAMS:
+                    fam_index = self._QFAMS.index(fam)
                     self._qfam_check_opmode_sts[fam_index] = (
                         self._qfam_opmode_sts_pvs[fam].value)
                 if any(op != self._sync_corr
@@ -322,27 +312,27 @@ class App:
         m, _ = read_corrparams(
             '/home/fac_files/lnls-sirius/machine-applications'
             '/as-ap-opticscorr/as_ap_opticscorr/tune/' +
-            _pvs._ACC.lower() + '-tunecorr.txt')
+            self._ACC.lower() + '-tunecorr.txt')
 
-        tune_corrmat = len(_pvs._QFAMS)*2*[0]
+        tune_corrmat = len(self._QFAMS)*2*[0]
         index = 0
         for coordinate in [0, 1]:  # Read in C-like format
-            for fam in range(len(_pvs._QFAMS)):
+            for fam in range(len(self._QFAMS)):
                 tune_corrmat[index] = float(m[coordinate][fam])
                 index += 1
 
-        nomkl = len(_pvs._QFAMS)*[0]
+        nomkl = len(self._QFAMS)*[0]
 
-        if _pvs._ACC == 'SI':
-            for fam in _pvs._QFAMS:
-                fam_index = _pvs._QFAMS.index(fam)
+        if self._ACC == 'SI':
+            for fam in self._QFAMS:
+                fam_index = self._QFAMS.index(fam)
                 nomkl[fam_index] = float(m[2][fam_index])
 
         return tune_corrmat, nomkl
 
     def _calc_matrix(self, corrmat_svd):
         corrmat_svd = _np.array(corrmat_svd)
-        corrmat_svd = _np.reshape(corrmat_svd, [2, len(_pvs._QFAMS)])
+        corrmat_svd = _np.reshape(corrmat_svd, [2, len(self._QFAMS)])
         if self._corr_method == 0:
             corrmat_svd = corrmat_svd*_np.array(self._qfam_nomkl)
 
@@ -363,22 +353,22 @@ class App:
         return corrmat_group
 
     def _calc_deltakl(self):
-        if _pvs._ACC == 'SI' and self._corr_method == 0:
+        if self._ACC == 'SI' and self._corr_method == 0:
             lastcalcd_grouppropfactor = self._opticscorr.calc_deltakl(
                 self._delta_tunex, self._delta_tuney)
-            for fam in _pvs._QFAMS:
-                fam_index = _pvs._QFAMS.index(fam)
+            for fam in self._QFAMS:
+                fam_index = self._QFAMS.index(fam)
                 if 'QF' in fam:
                     self._lastcalcd_deltakl[fam_index] = (
                         self._qfam_refkl[fam]*lastcalcd_grouppropfactor[0])
                 elif 'QD' in fam:
                     self._lastcalcd_deltakl[fam_index] = (
                         self._qfam_refkl[fam]*lastcalcd_grouppropfactor[1])
-        elif _pvs._ACC == 'SI' and self._corr_method == 1:
+        elif self._ACC == 'SI' and self._corr_method == 1:
             lastcalcd_groupdeltakl = self._opticscorr.calc_deltakl(
                 self._delta_tunex, self._delta_tuney)
-            for fam in _pvs._QFAMS:
-                fam_index = _pvs._QFAMS.index(fam)
+            for fam in self._QFAMS:
+                fam_index = self._QFAMS.index(fam)
                 if 'QF' in fam:
                     self._lastcalcd_deltakl[fam_index] = (
                         lastcalcd_groupdeltakl[0])
@@ -392,18 +382,17 @@ class App:
 
         self.driver.setParam('Log-Mon', 'Calculated Delta KL')
 
-        for fam in _pvs._QFAMS:
-            fam_index = _pvs._QFAMS.index(fam)
+        for fam in self._QFAMS:
+            fam_index = self._QFAMS.index(fam)
             self.driver.setParam('LastCalcd' + fam + 'DeltaKL-Mon',
                                  self._lastcalcd_deltakl[fam_index])
         self.driver.updatePVs()
 
     def _apply_deltakl(self):
-        if ((self._status == ALLCLR_SYNCON and self._sync_corr == 1) or
-                ((self._status == ALLCLR_SYNCOFF or
-                  self._status == ALLCLR_SYNCON) and self._sync_corr == 0)):
+        if ((self._status == _ALLCLR_SYNCOFF and self._sync_corr == 0) or
+                self._status == _ALLCLR_SYNCON):
             for fam in self._qfam_kl_sp_pvs:
-                fam_index = _pvs._QFAMS.index(fam)
+                fam_index = self._QFAMS.index(fam)
                 pv = self._qfam_kl_sp_pvs[fam]
                 pv.put(self._qfam_refkl[fam] + (self._corr_factor/100) *
                        self._lastcalcd_deltakl[fam_index])
@@ -422,11 +411,11 @@ class App:
 
     def _update_ref(self):
         # updates reference
-        for fam in _pvs._QFAMS:
+        for fam in self._QFAMS:
             self._qfam_refkl[fam] = self._qfam_kl_rb_pvs[fam].get()
             self.driver.setParam(fam + 'RefKL-Mon', self._qfam_refkl[fam])
 
-            fam_index = _pvs._QFAMS.index(fam)
+            fam_index = self._QFAMS.index(fam)
             self._lastcalcd_deltakl[fam_index] = 0
             self.driver.setParam('LastCalcd' + fam + 'DeltaKL-Mon',
                                  self._lastcalcd_deltakl[fam_index])
@@ -444,9 +433,9 @@ class App:
         self.driver.updatePVs()
 
     def _estim_current_deltatune(self):
-        qfam_deltakl = len(_pvs._QFAMS)*[0]
-        for fam in _pvs._QFAMS:
-            fam_index = _pvs._QFAMS.index(fam)
+        qfam_deltakl = len(self._QFAMS)*[0]
+        for fam in self._QFAMS:
+            fam_index = self._QFAMS.index(fam)
             qfam_deltakl[fam_index] = (
                 self._qfam_kl_rb[fam_index] - self._qfam_refkl[fam])
         corrmat, _ = self._get_corrparams()
@@ -455,7 +444,7 @@ class App:
 
     def _callback_init_refkl(self, pvname, value, cb_info, **kws):
         """Initialize RefKL-Mon pvs and remove this callback."""
-        ps = pvname.split(_pvs._PREFIX_VACA)[1]
+        ps = pvname.split(self._PREFIX_VACA)[1]
         fam = ps.split(':')[1].split('-')[1]
 
         # Get reference
@@ -466,13 +455,13 @@ class App:
         cb_info[1].remove_callback(cb_info[0])
 
     def _connection_callback_qfam_kl_rb(self, pvname, conn, **kws):
-        ps = pvname.split(_pvs._PREFIX_VACA)[1]
+        ps = pvname.split(self._PREFIX_VACA)[1]
         if not conn:
             self.driver.setParam('Log-Mon', 'WARN:'+ps+' disconnected')
             self.driver.updatePVs()
 
         fam = ps.split(':')[1].split('-')[1]
-        fam_index = _pvs._QFAMS.index(fam)
+        fam_index = self._QFAMS.index(fam)
         self._qfam_check_connection[fam_index] = (1 if conn else 0)
 
         # Change the first bit of correction status
@@ -486,9 +475,9 @@ class App:
         self.driver.updatePVs()
 
     def _callback_estimate_deltatune(self, pvname, value, **kws):
-        ps = pvname.split(_pvs._PREFIX_VACA)[1]
+        ps = pvname.split(self._PREFIX_VACA)[1]
         fam = ps.split(':')[1].split('-')[1]
-        fam_index = _pvs._QFAMS.index(fam)
+        fam_index = self._QFAMS.index(fam)
         self._qfam_kl_rb[fam_index] = value
 
         delta_tunex, delta_tuney = self._estim_current_deltatune()
@@ -497,13 +486,13 @@ class App:
         self.driver.updatePVs()
 
     def _callback_qfam_pwrstate_sts(self, pvname, value, **kws):
-        ps = pvname.split(_pvs._PREFIX_VACA)[1]
+        ps = pvname.split(self._PREFIX_VACA)[1]
         if value == 0:
             self.driver.setParam('Log-Mon', 'WARN:'+ps+' is Off')
             self.driver.updatePVs()
 
         fam = ps.split(':')[1].split('-')[1]
-        fam_index = _pvs._QFAMS.index(fam)
+        fam_index = self._QFAMS.index(fam)
         self._qfam_check_pwrstate_sts[fam_index] = value
 
         # Change the second bit of correction status
@@ -517,12 +506,12 @@ class App:
         self.driver.updatePVs()
 
     def _callback_qfam_opmode_sts(self, pvname, value, **kws):
-        ps = pvname.split(_pvs._PREFIX_VACA)[1]
+        ps = pvname.split(self._PREFIX_VACA)[1]
         self.driver.setParam('Log-Mon', 'WARN:'+ps+' changed')
         self.driver.updatePVs()
 
         fam = ps.split(':')[1].split('-')[1]
-        fam_index = _pvs._QFAMS.index(fam)
+        fam_index = self._QFAMS.index(fam)
         self._qfam_check_opmode_sts[fam_index] = value
 
         # Change the third bit of correction status
@@ -537,13 +526,13 @@ class App:
         self.driver.updatePVs()
 
     def _callback_qfam_ctrlmode_mon(self,  pvname, value, **kws):
-        ps = pvname.split(_pvs._PREFIX_VACA)[1]
+        ps = pvname.split(self._PREFIX_VACA)[1]
         if value == 1:
             self.driver.setParam('Log-Mon', 'WARN:'+ps+' is Local')
             self.driver.updatePVs()
 
         fam = ps.split(':')[1].split('-')[1]
-        fam_index = _pvs._QFAMS.index(fam)
+        fam_index = self._QFAMS.index(fam)
         self._qfam_check_ctrlmode_mon[fam_index] = value
 
         # Change the fourth bit of correction status
@@ -582,7 +571,7 @@ class App:
 
     def _config_qfam_ps(self):
         opmode = self._sync_corr
-        for fam in _pvs._QFAMS:
+        for fam in self._QFAMS:
             if self._qfam_pwrstate_sel_pvs[fam].connected:
                 self._qfam_pwrstate_sel_pvs[fam].put(1)
                 self._qfam_opmode_sel_pvs[fam].put(opmode)

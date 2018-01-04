@@ -27,7 +27,7 @@ def select_ioc(acc):
 
 
 def get_pvs_section():
-    """Return Soft IOC transport line."""
+    """Return Soft IOC section/accelerator."""
     global _ACC
     return _ACC
 

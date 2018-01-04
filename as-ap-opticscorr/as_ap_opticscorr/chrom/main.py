@@ -35,9 +35,9 @@ class App:
     def __init__(self, driver):
         """Class constructor."""
         _pvs.print_banner_and_save_pv_list()
-        self._SFAMS = _pvs.get_corr_fams()
-        self._ACC = _pvs.get_pvs_section()
         self._PREFIX_VACA = _pvs.get_pvs_vaca_prefix()
+        self._ACC = _pvs.get_pvs_section()
+        self._SFAMS = _pvs.get_corr_fams()
 
         self._driver = driver
 
@@ -70,12 +70,16 @@ class App:
             self._corr_method = 1
 
         config_name = self._get_config_name()
-        self._get_corrparams(config_name)
-        self.driver.setParam('CorrParamsConfigName-SP', config_name)
-        self.driver.setParam('CorrParamsConfigName-RB', config_name)
-        self.driver.setParam('CorrMat-Mon', self._corrmat_add_svd)
-        self.driver.setParam('NominalSL-Mon', self._sfam_nomsl)
-        self.driver.setParam('NominalChrom-Mon', self._nomchrom)
+        done = self._get_corrparams(config_name)
+        if done:
+            self.driver.setParam('CorrParamsConfigName-SP', config_name)
+            self.driver.setParam('CorrParamsConfigName-RB', config_name)
+            self.driver.setParam('CorrMat-Mon', self._corrmat_add_svd)
+            self.driver.setParam('NominalSL-Mon', self._sfam_nomsl)
+            self.driver.setParam('NominalChrom-Mon', self._nomchrom)
+        else:
+            raise Exception("Could not read correction parameters from "
+                            "configdb.")
 
         # Connect to Sextupoles Families
         self._sfam_sl_sp_pvs = {}
