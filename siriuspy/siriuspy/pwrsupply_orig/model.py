@@ -10,9 +10,9 @@ from epics import PV as _PV
 from siriuspy import envars as _envars
 # from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
-from siriuspy.pwrsupply.data import PSData as _PSData
-from siriuspy.pwrsupply.controller import ControllerSim as _ControllerSim
-from siriuspy.pwrsupply.controller import ControllerEpics as _ControllerEpics
+from siriuspy.pwrsupply_orig.data import PSData as _PSData
+from siriuspy.pwrsupply_orig.controller import ControllerSim as _ControllerSim
+from siriuspy.pwrsupply_orig.controller import ControllerEpics as _ControllerEpics
 from numpy import ndarray as _ndarray
 
 

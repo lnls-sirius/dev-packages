@@ -1,9 +1,11 @@
 """Sync computer objects definition."""
 from numpy import ndarray as _ndarray
 
+_master_pv_index = 0
+
 
 class SyncWrite:
-    """Class that sync all pvs."""
+    """Class that syncs all pvs."""
 
     # Computer Interface
     def compute_update(self, computed_pv, updated_pv_name, value):
@@ -43,17 +45,21 @@ class SyncWrite:
     def compute_limits(self, computed_pv):
         """Compute limits from real pvs."""
         computed_pv.upper_warning_limit = \
-            computed_pv.pvs[0].upper_warning_limit
+            computed_pv.pvs[_master_pv_index].upper_warning_limit
         computed_pv.lower_warning_limit = \
-            computed_pv.pvs[0].lower_warning_limit
-        computed_pv.upper_alarm_limit = computed_pv.pvs[0].upper_alarm_limit
-        computed_pv.lower_alarm_limit = computed_pv.pvs[0].lower_alarm_limit
-        computed_pv.upper_disp_limit = computed_pv.pvs[0].upper_disp_limit
-        computed_pv.lower_disp_limit = computed_pv.pvs[0].lower_disp_limit
+            computed_pv.pvs[_master_pv_index].lower_warning_limit
+        computed_pv.upper_alarm_limit = \
+            computed_pv.pvs[_master_pv_index].upper_alarm_limit
+        computed_pv.lower_alarm_limit = \
+            computed_pv.pvs[_master_pv_index].lower_alarm_limit
+        computed_pv.upper_disp_limit = \
+            computed_pv.pvs[_master_pv_index].upper_disp_limit
+        computed_pv.lower_disp_limit = \
+            computed_pv.pvs[_master_pv_index].lower_disp_limit
 
 
 class SyncRead:
-    """Class that sync all pvs."""
+    """Class that syncs all pvs."""
 
     # Computer Interface
     def compute_update(self, computed_pv, update_pv_name, value):

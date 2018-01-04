@@ -4,36 +4,50 @@ from threading import Thread
 import time as _time
 
 
-class MyThread(Thread):
+class QueueThread(Thread):
+    """Callback queue class."""
 
     def __init__(self):
+        """Init method."""
         super().__init__(daemon=True)
         self._funcs = []
-        self.running = False
+        self._running = False
+
+    @property
+    def running(self):
+        """Return whether thread is running."""
+        return self._running
 
     def add_callback(self, func, pvname, value):
+        """Add callback."""
         self._funcs.append((func, [pvname, value]))
 
     def run(self):
-        self.running = True
-        while True:
+        """Run method."""
+        self._running = True
+        while self.running:
             if self._funcs:
-                self._funcs[0][0](*self._funcs[0][1])
-                self._funcs.pop(0)
+                func_item = self._funcs.pop(0)
+                function, args = func_item
+                function(args)
             else:
                 _time.sleep(0.1)
+
+    def stop(self):
+        """Stop queue thread."""
+        self._running = False
 
 
 class ComputedPV:
     """Simulates an epics PV object."""
 
-    thread = MyThread()
+    queue = QueueThread()
 
     def __init__(self, pvname, computer, *pvs):
         """Initialize PVs."""
         # ComputedPV properties
-        if not ComputedPV.thread.running:
-            ComputedPV.thread.start()
+        if not ComputedPV.queue.running:
+            ComputedPV.queue.start()
         self.value = None
         self.upper_warning_limit = None
         self.lower_warning_limit = None
@@ -43,31 +57,23 @@ class ComputedPV:
         self.lower_disp_limit = None
 
         self.pvname = pvname
-        # List with PVs used by the computed PV
-        self.pvs = list()
-        # self.pvs = dict()
         # Object that know how to compute the PV props based on the PV list
         self.computer = computer
         # Thread used to update values, thus letting the callback return
-        self._thread = None
         self._callbacks = []
         # Get pvs
+        self.pvs = list()  # List with PVs used by the computed PV
         for pv in pvs:
-            if isinstance(pv, str):
+            if isinstance(pv, str):  # give up string option.
                 self.pvs.append(get_pv(pv))
             else:
                 self.pvs.append(pv)
-            # self.pvs[pv] = get_pv(pv)
         # Add callback
         for pv in self.pvs:
             pv.add_callback(self._value_update_callback)
         # Init limits
         if self.connected:
             self.computer.compute_limits(self)
-        # Wait
-        # for pv in self.pvs:
-        #     print("Waiting for connection to {}".format(pv))
-        #     pv.wait_for_connection(timeout=1e-3)
 
     # Public interface
     @property
@@ -116,11 +122,7 @@ class ComputedPV:
 
     def _value_update_callback(self, pvname, value, **kwargs):
         if self.connected:
-            # Update value in a thread, this way callback can finish
-            # self._thread = Thread(target=self._update_value,
-            #                       args=[pvname, value])
-            # self._thread.start()
-            ComputedPV.thread.add_callback(self._update_value, pvname, value)
+            ComputedPV.queue.add_callback(self._update_value, pvname, value)
 
     def _issue_callback(self, **kwargs):
         if self._callbacks:
