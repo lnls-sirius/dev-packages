@@ -68,10 +68,9 @@ def get_pvs_database():
 
         'ApplyDeltaKL-Cmd':     {'type': 'int', 'value': 0},
 
-        'CorrMat-SP':           {'type': 'float', 'count': corrmat_size,
-                                 'value': corrmat_size*[0], 'prec': 6, 'unit':
-                                 'Tune x KFams (Matrix of add method)'},
-        'CorrMat-RB':           {'type': 'float', 'count': corrmat_size,
+        'CorrParamsConfigName-SP': {'type': 'string', 'value': ''},
+        'CorrParamsConfigName-RB': {'type': 'string', 'value': ''},
+        'CorrMat-Mon':          {'type': 'float', 'count': corrmat_size,
                                  'value': corrmat_size*[0], 'prec': 6, 'unit':
                                  'Tune x KFams (Matrix of add method)'},
 
@@ -107,10 +106,8 @@ def get_pvs_database():
                                         ['Proportional', 'Additional']}
         pvs_database['CorrMeth-Sts'] = {'type': 'enum', 'value': 0, 'enums':
                                         ['Proportional', 'Additional']}
-        pvs_database['NominalKL-SP'] = {'type': 'float', 'count': len(_QFAMS),
-                                        'value': len(_QFAMS)*[0], 'prec': 6}
-        pvs_database['NominalKL-RB'] = {'type': 'float', 'count': len(_QFAMS),
-                                        'value': len(_QFAMS)*[0], 'prec': 6}
+        pvs_database['NominalKL-Mon'] = {'type': 'float', 'count': len(_QFAMS),
+                                         'value': len(_QFAMS)*[0], 'prec': 6}
     return pvs_database
 
 
