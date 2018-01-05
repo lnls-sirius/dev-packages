@@ -4,8 +4,8 @@ import time as _time
 import numpy as _np
 import epics as _epics
 import siriuspy as _siriuspy
+from siriuspy.servconf.conf_service import ConfigService as _ConfigService
 from as_ap_opticscorr.opticscorr_utils import OpticsCorr
-from as_ap_opticscorr.opticscorr_utils import read_corrparams, save_corrparams
 import as_ap_opticscorr.tune.pvs as _pvs
 
 # Coding guidelines:
@@ -41,6 +41,9 @@ class App:
 
         self._driver = driver
 
+        self._delta_tunex = 0
+        self._delta_tuney = 0
+
         self._status = _ALLSET
         self._qfam_check_connection = len(self._QFAMS)*[0]
         self._qfam_check_pwrstate_sts = len(self._QFAMS)*[0]
@@ -60,26 +63,25 @@ class App:
         self._config_timing_cmd_count = 0
         self._timing_check_config = 6*[0]
 
-        # Initialize correction parameters from local file
+        # Initialize correction parameters from local file and configdb
         self._opticscorr = OpticsCorr()
 
-        # Using grouped and proportional method, the number of famlies is 2:
-        # Focusing and Defocusing
-        corrmat, nomkl = self._get_corrparams()
-
-        if self._ACC == 'SI':
-            self._qfam_nomkl = nomkl
-            self.driver.setParam('NominalKL-SP', self._qfam_nomkl)
-            self.driver.setParam('NominalKL-RB', self._qfam_nomkl)
+        if self._ACC.lower() == 'si':
             self._corr_method = 0
-            corrmat = self._calc_matrix(corrmat)
         else:
-            self._qfam_nomkl = None
             self._corr_method = 1
 
-        self._mat, _ = self._opticscorr.set_corr_mat(2, corrmat)
-        self.driver.setParam('CorrMat-SP', self._mat)
-        self.driver.setParam('CorrMat-RB', self._mat)
+        config_name = self._get_config_name()
+        done = self._get_corrparams(config_name)
+        if done:
+            self.driver.setParam('CorrParamsConfigName-SP', config_name)
+            self.driver.setParam('CorrParamsConfigName-RB', config_name)
+            self.driver.setParam('CorrMat-Mon', self._corrmat_add_svd)
+            if self._ACC.lower() == 'si':
+                self.driver.setParam('NominalKL-Mon', self._qfam_nomkl)
+        else:
+            raise Exception("Could not read correction parameters from "
+                            "configdb.")
 
         # Connect to Quadrupoles Families
         self._qfam_kl_sp_pvs = {}
@@ -118,8 +120,6 @@ class App:
                 self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':CtrlMode-Mon',
                 callback=self._callback_qfam_ctrlmode_mon)
 
-        self._delta_tunex = 0
-        self._delta_tuney = 0
         self._lastcalcd_deltakl = len(self._QFAMS)*[0]
 
         # Connect to Timing
@@ -206,54 +206,30 @@ class App:
                                      self._apply_deltakl_cmd_count)
                 self.driver.updatePVs()
 
-        elif reason == 'CorrMat-SP':
-            # Update local file
-            done = save_corrparams(
-                '/home/fac_files/lnls-sirius/machine-applications'
-                '/as-ap-opticscorr/as_ap_opticscorr/tune/' +
-                self._ACC.lower() + '-tunecorr.txt',
-                value, len(self._QFAMS), self._qfam_nomkl)
+        elif reason == 'CorrParamsConfigName-SP':
+            done = self._get_corrparams(value)
             if done:
-                self.driver.setParam('CorrMat-RB', value)
-
-                # Update matrix used
-                corrmat = value
-                if self._ACC == 'SI':
-                    corrmat = self._calc_matrix(corrmat)
-                self._mat, _ = self._opticscorr.set_corr_mat(2, corrmat)
+                self._set_config_name(value)
                 self._calc_deltakl()
+                self.driver.setParam('CorrParamsConfigName-RB', value)
+                self.driver.setParam('CorrMat-Mon', self._corrmat_add_svd)
+                self.driver.setParam('NominalKL-Mon', self._qfam_nomkl)
+                self.driver.setParam('Log-Mon',
+                                     'Updated correction parameters.')
                 self.driver.updatePVs()
                 status = True
-
-        elif reason == 'NominalKL-SP':
-            # Update local file
-            corrmat, _ = self._get_corrparams()
-            done = save_corrparams(
-                '/home/fac_files/lnls-sirius/machine-applications'
-                '/as-ap-opticscorr/as_ap_opticscorr/tune/' +
-                self._ACC.lower() + '-tunecorr.txt',
-                corrmat, len(self._QFAMS), value)
-            if done:
-                self.driver.setParam('NominalKL-RB', value)
-
-                # Update nomkl and matrix used according to the corr. method
-                self._qfam_nomkl = value
-                if self._ACC == 'SI':
-                    corrmat = self._calc_matrix(corrmat)
-                self._mat, _ = self._opticscorr.set_corr_mat(2, corrmat)
-                self._calc_deltakl()
+            else:
+                self.driver.setParam(
+                    'Log-Mon', 'ERR:Configuration not found in configdb.')
                 self.driver.updatePVs()
-                status = True
 
         elif reason == 'CorrMeth-Sel':
             if value != self._corr_method:
                 self._corr_method = value
                 self.driver.setParam('CorrMeth-Sts', self._corr_method)
 
-                corrmat, _ = self._get_corrparams()
-                if self._ACC == 'SI':
-                    corrmat = self._calc_matrix(corrmat)
-                self._mat, _ = self._opticscorr.set_corr_mat(2, corrmat)
+                config_name = self._get_config_name()
+                self._get_corrparams(config_name)
                 self._calc_deltakl()
                 self.driver.updatePVs()
                 status = True
@@ -308,27 +284,47 @@ class App:
 
         return status  # return True to invoke super().write of PCASDriver
 
-    def _get_corrparams(self):
-        m, _ = read_corrparams(
-            '/home/fac_files/lnls-sirius/machine-applications'
-            '/as-ap-opticscorr/as_ap_opticscorr/tune/' +
-            self._ACC.lower() + '-tunecorr.txt')
+    def _get_corrparams(self, config_name):
+        """Get response matrix from configurations database."""
+        cs = _ConfigService()
+        q = cs.get_config(self._ACC.lower()+'_tunecorr_params', config_name)
+        done = q['code']
 
-        tune_corrmat = len(self._QFAMS)*2*[0]
-        index = 0
-        for coordinate in [0, 1]:  # Read in C-like format
-            for fam in range(len(self._QFAMS)):
-                tune_corrmat[index] = float(m[coordinate][fam])
-                index += 1
+        if done == 200:
+            done = True
+            params = q['result']['value']
 
-        nomkl = len(self._QFAMS)*[0]
+            self._corrmat_add_svd = [item for sublist in params['matrix']
+                                     for item in sublist]
 
-        if self._ACC == 'SI':
-            for fam in self._QFAMS:
-                fam_index = self._QFAMS.index(fam)
-                nomkl[fam_index] = float(m[2][fam_index])
+            if self._ACC.lower() == 'si':
+                self._qfam_nomkl = params['nominal KLs']
+                corrmat = self._calc_matrix(self._corrmat_add_svd)
+            else:
+                self._qfam_nomkl = None
+                corrmat = self._corrmat_add_svd
 
-        return tune_corrmat, nomkl
+            # Using grouped and proportional method, the number of families is
+            # the number of groups, 2: Focusing and Defocusing
+            self._mat, _ = self._opticscorr.set_corr_mat(2, corrmat)
+        else:
+            done = False
+        return done
+
+    def _get_config_name(self):
+        f = open('/home/fac_files/lnls-sirius/machine-applications'
+                 '/as-ap-opticscorr/as_ap_opticscorr/tune/' +
+                 self._ACC.lower() + '-tunecorr.txt', 'r')
+        config_name = f.read().strip('\n')
+        f.close()
+        return config_name
+
+    def _set_config_name(self, config_name):
+        f = open('/home/fac_files/lnls-sirius/machine-applications'
+                 '/as-ap-opticscorr/as_ap_opticscorr/tune/' +
+                 self._ACC.lower() + '-tunecorr.txt', 'w')
+        f.write(config_name)
+        f.close()
 
     def _calc_matrix(self, corrmat_svd):
         corrmat_svd = _np.array(corrmat_svd)

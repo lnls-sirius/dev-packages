@@ -61,7 +61,7 @@ class App:
         self._config_timing_cmd_count = 0
         self._timing_check_config = 6*[0]
 
-        # Initialize correction parameters from local file
+        # Initialize correction parameters from local file and configdb
         self._opticscorr = OpticsCorr()
 
         if self._ACC.lower() == 'si':
