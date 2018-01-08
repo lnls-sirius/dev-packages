@@ -270,6 +270,8 @@ class _BaseControllerSim(Controller):
 
     def write(self, field, value):
         """Set field value."""
+        if isinstance(value, (list, tuple)):
+            value = _np.array(value)
         if field in self._meth_dict_write:
             setattr(self, self._meth_dict_write[field], value)
         else:
@@ -1234,7 +1236,7 @@ class PUControllerSim(Controller):
 
     def write(self, field, value):
         """Write value to field."""
-        print("Writing {}".format(field, value))
+        # print("Writing {}".format(field, value))
         if field == "Voltage-SP":
             self._ps.voltage_sp = value
         elif field == "PwrState-Sel":
