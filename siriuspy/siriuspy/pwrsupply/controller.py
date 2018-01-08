@@ -220,6 +220,7 @@ class _BaseControllerSim(Controller):
         self.update_state(init=True)
 
         self._meth_dict_read = {
+            'CtrlMode-Mon': 'ctrlmode',
             'PwrState-Sel': 'pwrstate',
             'PwrState-Sts': 'pwrstate',
             'OpMode-Sel': 'opmode',
@@ -234,9 +235,14 @@ class _BaseControllerSim(Controller):
             'Current-Mon': 'current_load',
             'WfmIndex-SP': 'wfmindex',
             'WfmIndex-RB': 'wfmindex',
+            'WfmIndex-Mon': 'wfmindex',
+            'WfmLabel-SP': 'wfmlabel',
+            'WfmLabel-RB': 'wfmlabel',
             'WfmLabels-Mon': 'wfmlabels',
             'WfmData-SP': 'wfmdata',
             'WfmData-RB': 'wfmdata',
+            'WfmLoad-Sel': 'wfmload',
+            'WfmLoad-Sts': 'wfmload',
             'WfmSave-Cmd': 'wfmsave',
         }
 
@@ -294,6 +300,10 @@ class _BaseControllerSim(Controller):
     @trigger_interval.setter
     def trigger_interval(self, value):
         self._trigger_interval = float(value) if value > 0.0 else 0.0
+
+    @property
+    def ctrlmode(self):
+        return self._get_ctrlmode()
 
     @property
     def pwrstate(self):
@@ -702,6 +712,9 @@ class _BaseControllerSim(Controller):
 
     # --- pure virtual methods ---
 
+    def _get_ctrlmode(self):
+        pass
+
     def _get_pwrstate(self):
         pass
 
@@ -866,6 +879,7 @@ class ControllerSim(_BaseControllerSim):
         if random_seed is not None:
             _random.seed(random_seed)
         self._psname = psname
+        self._ctrlmode = _et.idx.Remote # CtrlMode state
         self._pwrstate = _et.idx.Off  # power state
         self._timestamp_pwrstate = now  # last time pwrstate was changed
         self._opmode = _et.idx.SlowRef  # operation mode state
@@ -886,6 +900,9 @@ class ControllerSim(_BaseControllerSim):
         self._init_waveforms()  # initialize waveform data
 
         super().__init__(psname=psname, **kwargs)
+
+    def _get_ctrlmode(self):
+        return self._ctrlmode
 
     def _get_pwrstate(self):
         return self._pwrstate
