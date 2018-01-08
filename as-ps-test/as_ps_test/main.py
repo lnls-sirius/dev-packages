@@ -3,6 +3,8 @@
 import as_ps_test.pvs as _pvs
 import time as _time
 import siriuspy as _siriuspy
+import numpy as _np
+
 
 # Coding guidelines:
 # =================
@@ -103,6 +105,11 @@ class App:
         # print('{0:<15s}: '.format('ioc callback'), pvname, value)
         reason = pvname
         prev_value = self._driver.getParam(reason)
-        if value != prev_value:
-            self._driver.setParam(reason, value)
-            self._driver.updatePVs()
+        if isinstance(value, _np.ndarray):
+            if _np.any(value != prev_value):
+                self._driver.setParam(reason, value)
+                self._driver.updatePVs()
+        else:
+            if value != prev_value:
+                self._driver.setParam(reason, value)
+                self._driver.updatePVs()
