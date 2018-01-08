@@ -85,7 +85,7 @@ class PulsedPowerSupplySim:
     @property
     def reset(self):
         """Return number of reset commands issued."""
-        return self._get_reset_cmd()
+        return self._get_reset()
 
     @reset.setter
     def reset(self, value):
