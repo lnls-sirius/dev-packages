@@ -254,7 +254,7 @@ class _BaseControllerSim(Controller):
             'Abort-Cmd': 'abort',
             'Reset-Cmd': 'reset',
             'WfmLabel-SP': 'wfmlabel',
-            'WfmLoad-SP': 'wfmload',
+            'WfmLoad-Sel': 'wfmload',
             'WfmData-SP': 'wfmdata',
             'WfmSave-SP': 'wfmsave',
         }
