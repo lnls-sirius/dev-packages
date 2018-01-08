@@ -1,5 +1,6 @@
 #!/usr/local/bin/python-sirius
 """PulsedPowerSupply definition."""
+import numpy as _np
 from siriuspy.pwrsupply.data import PSData as _PSData
 
 
@@ -94,6 +95,11 @@ class PulsedPowerSupplySim:
     def intlk_mon(self):
         """Return interlock mask."""
         return self._get_intlk_mon()
+
+    @property
+    def intlklabels_cte(self):
+        """Return interlock labels."""
+        return self._get_intlk_labels()
 
     @property
     def ctrlmode_mon(self):
@@ -207,6 +213,10 @@ class PulsedPowerSupplySim:
     def _set_intlk_mon(self, value):
         self._intlk_mon = 0
         self._issue_callback('Intlk-Mon', value)
+
+    def _get_intlk_labels(self):
+        return _np.array(
+            ['Bit 0', 'Bit 1', 'Bit 2', 'Bit 3', 'Bit 4', 'Bit 5'])
 
     def _get_ctrlmode_mon(self):
         return self._ctrlmode_mon
