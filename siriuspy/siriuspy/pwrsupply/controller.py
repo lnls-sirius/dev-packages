@@ -18,7 +18,8 @@ from siriuspy.csdevice.pwrsupply import default_intlklabels as \
     _default_intlklabels
 from siriuspy.pwrsupply_orig.waveform import PSWaveForm as _PSWaveForm
 from siriuspy.pwrsupply_orig.cycgen import PSCycGenerator as _PSCycGenerator
-from siriuspy.pulsedps.model import PulsedPowerSupplySim
+from siriuspy.pulsedps.model import PulsedPowerSupplySim as \
+    _PulsedPowerSupplySim
 
 _trigger_timeout_default = 0.002  # [seconds]
 _trigger_interval_default = 0.490/_default_wfmsize  # [seconds]
@@ -910,7 +911,7 @@ class ControllerSim(_BaseControllerSim):
     def _set_pwrstate(self, value):
         self._timestamp_pwrstate = self.time
         self._pwrstate = value
-        self._mycallback(pvname='pwrstate')
+        self._issue_callback(field='PwrState-Sts', value=value)
 
     def _get_opmode(self):
         return self._opmode
@@ -918,7 +919,7 @@ class ControllerSim(_BaseControllerSim):
     def _set_opmode(self, value):
         self._timestamp_opmode = self.time
         self._opmode = value
-        self._mycallback(pvname='opmode')
+        self._issue_callback(field='OpMode-Sts', value=value)
 
     def _set_cmd_abort_issued(self, value):
         self._cmd_abort_issued = value
@@ -928,14 +929,14 @@ class ControllerSim(_BaseControllerSim):
 
     def _inc_reset_counter(self):
         self._reset_counter += 1
-        self._mycallback(pvname='reset')
+        self._issue_callback(field='Reset-Cmd', value=self._reset_counter)
 
     def _get_abort_counter(self):
         return self._abort_counter
 
     def _inc_abort_counter(self):
         self._abort_counter += 1
-        self._mycallback(pvname='abort')
+        self._issue_callback(field='Abort-Cmd', value=self._abort_counter)
 
     def _get_timestamp_trigger(self):
         return self._timestamp_trigger
@@ -981,7 +982,7 @@ class ControllerSim(_BaseControllerSim):
 
     def _set_current_sp(self, value):
         self._current_sp = value
-        self._mycallback(pvname='current_sp')
+        self._issue_callback(field='Current-RB', value=value)
 
     def _get_current_ref(self):
         return self._current_ref
@@ -1004,7 +1005,7 @@ class ControllerSim(_BaseControllerSim):
     def _set_wfmlabel(self, value):
         self._waveform.label = value
         self._wfmlabels[self._wfmslot] = value
-        self._mycallback(pvname='wfmlabel')
+        self._issue_callback(field='WfmLabel-RB', value=value)
 
     def _get_wfmload(self):
         return self._wfmslot
@@ -1016,7 +1017,7 @@ class ControllerSim(_BaseControllerSim):
         if wfm != self._waveform:
             self._pending_wfmload = True
             self._waveform = wfm
-            self._mycallback(pvname='wfmload')
+            self._issue_callback(field='WfmLoad-Sts', value=value)
 
     def _get_wfmload_changed(self):
         return self._wfmload_changed_state
@@ -1029,7 +1030,7 @@ class ControllerSim(_BaseControllerSim):
 
     def _set_wfmdata(self, value):
         self._waveform.data = _np.array(value)
-        self._mycallback(pvname='wfmdata')
+        self._issue_callback(field='WfmData-RB', value=value)
 
     def _get_wfmdata_changed(self):
         return self._wfmdata_changed_state
@@ -1043,7 +1044,7 @@ class ControllerSim(_BaseControllerSim):
     def _set_wfmsave(self, value):
         self._wfmsave += 1
         self._save_waveform_to_slot(self._wfmslot)
-        self._mycallback(pvname='wfmsave')
+        self._issue_callback(field='WfmSaved-Cmd', value=value)
 
     def _get_trigger_timed_out(self):
         if self._timestamp_trigger is not None and \
@@ -1077,11 +1078,11 @@ class ControllerSim(_BaseControllerSim):
     def _set_current_ref(self, value):
         if value != self._current_ref:
             self._current_ref = value
-            self._mycallback(pvname='current_ref')
+            self._issue_callback(field='CurrentRef-Mon', value=value)
         value = _random.gauss(self._current_ref, self._current_std)
         if value != self._current_load:
             self._current_load = value
-            self._mycallback(pvname='current_load')
+            self._issue_callback(field='Current-Mon', value=value)
 
     def _get_cycling_state(self):
         return self._cycling_state
@@ -1100,46 +1101,51 @@ class ControllerSim(_BaseControllerSim):
                 scan_value = self._cycgen.get_signal(dt)
                 self._update_current_ref(scan_value)
 
-    def _mycallback(self, pvname):
-        # if self._callback is None:
-        #     return
-        if not self._callbacks:
-            return
-        elif pvname == 'pwrstate':
-            for callback in self._callbacks.values():
-                callback(pvname='pwrstate', value=self._pwrstate)
-        elif pvname == 'opmode':
-            for callback in self._callbacks.values():
-                callback(pvname='opmode', value=self._opmode)
-        elif pvname == 'current_sp':
-            for callback in self._callbacks.values():
-                callback(pvname='current_sp', value=self._current_sp)
-        elif pvname == 'current_ref':
-            for callback in self._callbacks.values():
-                callback(pvname='current_ref', value=self._current_ref)
-        elif pvname == 'current_load':
-            for callback in self._callbacks.values():
-                callback(pvname='current_load', value=self._current_load)
-        elif pvname == 'wfmload':
-            for callback in self._callbacks.values():
-                callback(pvname='wfmload', value=self._wfmslot)
-        elif pvname == 'wfmdata':
-            for callback in self._callbacks.values():
-                callback(pvname='wfmdata', value=self._waveform.data)
-        elif pvname == 'wfmlabel':
-            for callback in self._callbacks.values():
-                callback(pvname='wfmlabel', value=self._waveform.label)
-        elif pvname == 'wfmsave':
-            for callback in self._callbacks.values():
-                callback(pvname='wfmsave', value=self._wfmsave)
-        elif pvname == 'reset':
-            for callback in self._callbacks.values():
-                callback(pvname='reset', value=self._reset_counter)
-        elif pvname == 'abort':
-            for callback in self._callbacks.values():
-                callback(pvname='abort', value=self._abort_counter)
-        else:
-            raise NotImplementedError
+    def _issue_callback(self, field, value):
+        pvname = self.psname + ':' + field
+        for callback in self._callbacks.values():
+            callback(pvname=pvname, value=value)
+
+    # def _mycallback(self, pvname):
+    #     # if self._callback is None:
+    #     #     return
+    #     if not self._callbacks:
+    #         return
+    #     elif pvname == 'pwrstate':
+    #         for callback in self._callbacks.values():
+    #             callback(pvname='pwrstate', value=self._pwrstate)
+    #     elif pvname == 'opmode':
+    #         for callback in self._callbacks.values():
+    #             callback(pvname='opmode', value=self._opmode)
+    #     elif pvname == 'current_sp':
+    #         for callback in self._callbacks.values():
+    #             callback(pvname='current_sp', value=self._current_sp)
+    #     elif pvname == 'current_ref':
+    #         for callback in self._callbacks.values():
+    #             callback(pvname='current_ref', value=self._current_ref)
+    #     elif pvname == 'current_load':
+    #         for callback in self._callbacks.values():
+    #             callback(pvname='current_load', value=self._current_load)
+    #     elif pvname == 'wfmload':
+    #         for callback in self._callbacks.values():
+    #             callback(pvname='wfmload', value=self._wfmslot)
+    #     elif pvname == 'wfmdata':
+    #         for callback in self._callbacks.values():
+    #             callback(pvname='wfmdata', value=self._waveform.data)
+    #     elif pvname == 'wfmlabel':
+    #         for callback in self._callbacks.values():
+    #             callback(pvname='wfmlabel', value=self._waveform.label)
+    #     elif pvname == 'wfmsave':
+    #         for callback in self._callbacks.values():
+    #             callback(pvname='wfmsave', value=self._wfmsave)
+    #     elif pvname == 'reset':
+    #         for callback in self._callbacks.values():
+    #             callback(pvname='reset', value=self._reset_counter)
+    #     elif pvname == 'abort':
+    #         for callback in self._callbacks.values():
+    #             callback(pvname='abort', value=self._abort_counter)
+    #     else:
+    #         raise NotImplementedError
 
     def _init_waveforms(self):
         # updated index selecting value of current in waveform in use
@@ -1197,7 +1203,7 @@ class PUControllerSim(Controller):
 
     def __init__(self, psname):
         """Create object responsible for the simulatiion."""
-        self._ps = PulsedPowerSupplySim(psname)
+        self._ps = _PulsedPowerSupplySim(psname)
 
     def read(self, field):
         """Return field value."""
