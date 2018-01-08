@@ -246,5 +246,30 @@ class TestPUPowerSupplySimLocalMode(unittest.TestCase):
         self.assertEqual(self._ps.pulsed_sts, 1)
 
 
+class TestPUPowerSupplySimLimits(unittest.TestCase):
+    """Test voltage limits."""
+
+    def setUp(self):
+        """Create ps."""
+        mock_psdata(self)
+        self._ps = PulsedPowerSupplySim(psname='SI-01SA:PU-InjDpK')
+
+        self._ps.pwrstate_sel = 1
+
+    def test_set_voltage_above_limit(self):
+        """Test setting voltage sp above limit."""
+        self._ps.voltage_sp = 12.5
+        self.assertEqual(self._ps.voltage_sp, 12.5)
+        self.assertEqual(self._ps.voltage_rb, 12)
+        self.assertEqual(self._ps.voltage_mon, 12)
+
+    def test_set_voltage_below_limit(self):
+        """Test setting voltage sp below limit."""
+        self._ps.voltage_sp = -1.5
+        self.assertEqual(self._ps.voltage_sp, -1.5)
+        self.assertEqual(self._ps.voltage_rb, 0)
+        self.assertEqual(self._ps.voltage_mon, 0)
+
+
 if __name__ == "__main__":
     unittest.main()
