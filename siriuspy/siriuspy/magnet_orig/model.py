@@ -11,12 +11,12 @@ MagnetPowerSupplyTrim
 import epics as _epics
 from siriuspy import util as _util
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
-from siriuspy.pwrsupply.model import PowerSupplyEpicsSync \
+from siriuspy.pwrsupply_orig.model import PowerSupplyEpicsSync \
     as _PowerSupplyEpicsSync
-from siriuspy.magnet import util as _mutil
-from siriuspy.magnet.data import MAData as _MAData
+from siriuspy.magnet_orig import util as _mutil
+from siriuspy.magnet_orig.data import MAData as _MAData
 from siriuspy import envars as _envars
-from siriuspy.magnet import normalizer as _norm
+from siriuspy.magnet_orig import normalizer as _norm
 
 _connection_timeout = None
 _magfuncs = _mutil.get_magfunc_2_multipole_dict()

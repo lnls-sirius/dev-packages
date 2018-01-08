@@ -4,8 +4,8 @@
 import siriuspy.util as _util
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.magnet.data import MAData as _MAData
-from siriuspy.magnet import util as _mutil
-from siriuspy.magnet import model as _model
+from siriuspy.magnet_orig import util as _mutil
+from siriuspy.magnet_orig import model as _model
 
 # import siriuspy.magnet.model as _model
 # from siriuspy import util as _util
@@ -30,7 +30,7 @@ class Magnet(object):
         self._strength_obj = _model.create_magnet_normalizer(self)
         self._strength_label = _util.get_strength_label(self._magfunc)
         self._strength_units = _util.get_strength_units(self._magfunc,
-                                                        self._maname.section)
+                                                        self._maname.sec)
 
     @property
     def maname(self):
@@ -40,7 +40,7 @@ class Magnet(object):
     @property
     def section(self):
         """Section the magnet belongs to."""
-        return self._maname.section
+        return self._maname.sec
 
     @property
     def dipole_name(self):
