@@ -18,9 +18,12 @@ from siriuspy.csdevice.pwrsupply import default_intlklabels as \
     _default_intlklabels
 from siriuspy.pwrsupply_orig.waveform import PSWaveForm as _PSWaveForm
 from siriuspy.pwrsupply_orig.cycgen import PSCycGenerator as _PSCycGenerator
+from siriuspy.pulsedps.model import PulsedPowerSupplySim
 
 _trigger_timeout_default = 0.002  # [seconds]
 _trigger_interval_default = 0.490/_default_wfmsize  # [seconds]
+
+
 
 
 class Controller:
@@ -1170,3 +1173,59 @@ class ControllerSim(_BaseControllerSim):
             self._waveform.save_to_file(filename=fname+'.txt')
         except PermissionError:
             raise Exception('Could not write file "' + fname+'.txt' + '"!')
+
+
+class PUControllerSim(Controller):
+    """Controller that simulates the behavior of pulsed power supply."""
+
+    def __init__(self, psname):
+        """Create object responsible for the simulatiion."""
+        self._ps = PulsedPowerSupplySim(psname)
+
+    def read(self, field):
+        """Return field value."""
+        if field == "Voltage-SP":
+            return self._ps.voltage_sp
+        elif field == "Voltage-RB":
+            return self._ps.voltage_rb
+        elif field == "Voltage-Mon":
+            return self._ps.voltage_mon
+        elif field == "PwrState-Sel":
+            return self._ps.pwrstate_sel
+        elif field == "PwrState-Sts":
+            return self._ps.pwrstate_sts
+        elif field == "Pulsed-Sel":
+            return self._ps.pulsed_sel
+        elif field == "Pulsed-Sts":
+            return self._ps.pulsed_sts
+        elif field == "CtrlMode-Mon":
+            return self._ps.ctrlmode_mon
+        elif field == "Intlk-Mon":
+            return self._ps.intlk_mon
+        elif field == "IntlkLabels-Cte":
+            return self._ps.intlklabels_cte
+        elif field == "Reset-Cmd":
+            return self._ps.reset
+        else:
+            raise ValueError("Unknown field {}".format(field))
+
+    def write(self, field, value):
+        """Write value to field."""
+        print("Writing {}".format(field, value))
+        if field == "Voltage-SP":
+            self._ps.voltage_sp = value
+        elif field == "PwrState-Sel":
+            self._ps.pwrstate_sel = value
+        elif field == "Pulsed-Sel":
+            self._ps.pulsed_sel = value
+        elif field == "Reset-Cmd":
+            self._ps.reset = value
+        else:
+            # Warn?
+            pass
+
+        return 1
+
+    def add_callback(self, func):
+        """Add callback."""
+        self._ps.add_callback(func)

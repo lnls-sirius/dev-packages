@@ -45,6 +45,7 @@ def get_common_propty_database():
         'IntlkLabels-Cte':  {'type': 'string',
                              'count': len(default_intlklabels),
                              'value': default_intlklabels},
+        'Reset-Cmd': {'type': 'int', 'value': 0},
     }
     return db
 
@@ -57,7 +58,6 @@ def get_common_ps_propty_database():
                        'value': _et.idx.SlowRef},
         'OpMode-Sts': {'type': 'enum', 'enums': _et.enums('PSOpModeTyp'),
                        'value': _et.idx.SlowRef},
-        'Reset-Cmd': {'type': 'int', 'value': 0},
         'Abort-Cmd': {'type': 'int', 'value': 0},
         'WfmIndex-Mon': {'type': 'int', 'value': 0},
         'WfmLabels-Mon': {'type': 'string', 'count': len(default_wfmlabels),
