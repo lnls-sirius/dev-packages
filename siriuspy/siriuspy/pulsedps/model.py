@@ -119,9 +119,10 @@ class PulsedPowerSupplySim:
         if not self._reset_issued:
             self._voltage_sp = value
             self._issue_callback('Voltage-SP', value)
-        self._voltage_rb = value
-        self._issue_callback('Voltage-RB', value)
+        # self._voltage_rb = value
+        # self._issue_callback('Voltage-RB', value)
         # self._set_voltageref_mon(value)
+        self._set_voltage_rb(value)
         self._set_voltage_mon(value)
 
     def _get_voltage_rb(self):
@@ -129,7 +130,17 @@ class PulsedPowerSupplySim:
 
     def _set_voltage_rb(self, value):
         # Will be implemented by PS
-        self._voltage_rb = value
+        # self._voltage_rb = value
+        if self._ctrlmode_mon == 0 or \
+                self._reset_issued:
+            max_voltage = \
+                self._data.propty_database['Voltage-RB']["hihi"]
+            # print(self._data.propty_database)
+            if value > max_voltage:
+                value = max_voltage
+
+            self._voltage_rb = value
+            self._issue_callback('Voltage-RB', value)
 
     def _get_voltage_mon(self):
         return self._voltage_mon
@@ -147,7 +158,7 @@ class PulsedPowerSupplySim:
             self._issue_callback('Voltage-Mon', value)
 
     def _get_pwrstate_sel(self):
-        return self._pwrstate_sts
+        return self._pwrstate_sel
 
     def _set_pwrstate_sel(self, value):
         if not self._reset_issued:
@@ -156,7 +167,7 @@ class PulsedPowerSupplySim:
         self._set_pwrstate_sts(value)
 
     def _get_pwrstate_sts(self):
-        return self._pwrstate_sel
+        return self._pwrstate_sts
 
     def _set_pwrstate_sts(self, value):
         if self._ctrlmode_mon == 0 or \
@@ -192,6 +203,7 @@ class PulsedPowerSupplySim:
         return self._reset_cmd
 
     def _set_reset(self, value):
+        self._reset_cmd += 1
         if self.ctrlmode_mon == 1:  # Local mode
             return
         self._reset_issued = True
@@ -199,7 +211,6 @@ class PulsedPowerSupplySim:
         self._reset_issued = False
 
     def _reset(self):
-        self._reset_cmd += 1
         self._issue_callback('Reset-Cmd', self._reset_cmd)
 
         self.voltage_sp = 0
