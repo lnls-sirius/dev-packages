@@ -31,14 +31,13 @@ def get_ps_devices():
         for ps in pwr_supplies:
             if ps in ps_exc_list:
                 continue
-            if 'B1B2' not in ps:
-                continue
+            # if 'B1B2' not in ps:
+            #     continue
             if 'PU' in ps:
                 c = _PUControllerSim(psname=ps)
             else:
                 c = _ControllerSim(psname=ps)
-            if 'B1B2' in ps:
-                ps_devices[ps] = _PowerSupply(controller=c, psnames=[ps, ])
+            ps_devices[ps] = _PowerSupply(controller=c, psnames=[ps, ])
         print('finished')
 
     return ps_devices
