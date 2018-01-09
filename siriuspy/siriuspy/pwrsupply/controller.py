@@ -25,8 +25,6 @@ _trigger_timeout_default = 0.002  # [seconds]
 _trigger_interval_default = 0.490/_default_wfmsize  # [seconds]
 
 
-
-
 class Controller:
     """Base class defining controller interface."""
 
