@@ -218,7 +218,7 @@ class TestPUPowerSupplySimLocalMode(unittest.TestCase):
     def test_reset(self):
         """Test reset does not affect the ps."""
         self._ps.reset = 10
-        self.assertEqual(self._ps.reset, 1)
+        self.assertEqual(self._ps.reset, 0)
         self.assertEqual(self._ps.voltage_rb, 10.5)
         self.assertEqual(self._ps.voltage_mon, 10.5)
         self.assertEqual(self._ps.pwrstate_sel, 1)
@@ -229,20 +229,20 @@ class TestPUPowerSupplySimLocalMode(unittest.TestCase):
     def test_voltage_sp(self):
         """Test voltage sp does not affect the ps."""
         self._ps.voltage_sp = 5.1
-        self.assertEqual(self._ps.voltage_sp, 5.1)
+        self.assertEqual(self._ps.voltage_sp, 10.5)
         self.assertEqual(self._ps.voltage_rb, 10.5)
         self.assertEqual(self._ps.voltage_mon, 10.5)
 
     def test_pwrstate_sel(self):
         """Test voltage sp does not affect the ps."""
         self._ps.pwrstate_sel = 0
-        self.assertEqual(self._ps.pwrstate_sel, 0)
+        self.assertEqual(self._ps.pwrstate_sel, 1)
         self.assertEqual(self._ps.pwrstate_sts, 1)
 
     def test_pulsed_sel(self):
         """Test pulsed sel does not affect the ps."""
         self._ps.pulsed_sel = 0
-        self.assertEqual(self._ps.pulsed_sel, 0)
+        self.assertEqual(self._ps.pulsed_sel, 1)
         self.assertEqual(self._ps.pulsed_sts, 1)
 
 
