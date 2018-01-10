@@ -1,11 +1,11 @@
 #!/usr/bin/env python3.6
 
-"""Module to test AS-AP-ChromCorr Soft IOC pvs module."""
+"""Module to test AS-AP-TuneCorr Soft IOC pvs module."""
 
 import unittest
 from unittest import mock
 import siriuspy.util as util
-import as_ap_opticscorr.chrom.pvs as pvs
+import as_ap_opticscorr.tune.pvs as pvs
 
 
 valid_interface = (
@@ -19,15 +19,14 @@ valid_interface = (
 )
 
 
-class TestASAPOpticsCorrChromPvs(unittest.TestCase):
-    """Test AS-AP-ChromCorr Soft IOC."""
+class TestASAPOpticsCorrTunePvs(unittest.TestCase):
+    """Test AS-AP-TuneCorr Soft IOC."""
 
     def setUp(self):
         """Setup tests."""
-        self.si_sfams = ['SFA1', 'SFA2', 'SDA1', 'SDA2', 'SDA3',
-                         'SFB1', 'SFB2', 'SDB1', 'SDB2', 'SDB3',
-                         'SFP1', 'SFP2', 'SDP1', 'SDP2', 'SDP3']
-        self.bo_sfams = ['SF', 'SD']
+        self.si_qfams = ['QFA', 'QFB', 'QFP',
+                         'QDA', 'QDB1', 'QDB2', 'QDP1', 'QDP2']
+        self.bo_qfams = ['QF', 'QD']
 
     def test_public_interface(self):
         """Test module's public interface."""
@@ -42,11 +41,11 @@ class TestASAPOpticsCorrChromPvs(unittest.TestCase):
             acc = pvs.get_pvs_section()
             vaca_prefix = pvs.get_pvs_vaca_prefix()
             prefix = pvs.get_pvs_prefix()
-            sfams = pvs.get_corr_fams()
+            qfams = pvs.get_corr_fams()
             self.assertIn(acc.lower(), prefix.lower())
             self.assertIn(vaca_prefix.lower(), prefix.lower())
-            self.assertIn('ChromCorr', prefix)
-            self.assertGreaterEqual(len(sfams), 2)
+            self.assertIn('TuneCorr', prefix)
+            self.assertGreaterEqual(len(qfams), 2)
 
     def test_get_pvs_section(self):
         """Test get_pvs_section."""
@@ -63,44 +62,44 @@ class TestASAPOpticsCorrChromPvs(unittest.TestCase):
         """Test get_pvs_prefix."""
         pvs.select_ioc('Accelerator')
         self.assertIsInstance(pvs.get_pvs_prefix(), str)
-        self.assertIn('ChromCorr', pvs.get_pvs_prefix())
+        self.assertIn('TuneCorr', pvs.get_pvs_prefix())
 
     def test_get_corr_fams(self):
         """Test get_corr_fams."""
         pvs.select_ioc('SI')
         self.assertIsInstance(pvs.get_corr_fams(), list)
-        self.assertEqual(len(pvs.get_corr_fams()), 15)
-        for fam in self.si_sfams:
+        self.assertEqual(len(pvs.get_corr_fams()), 8)
+        for fam in self.si_qfams:
             self.assertIn(fam, pvs.get_corr_fams())
 
         pvs.select_ioc('BO')
         self.assertIsInstance(pvs.get_corr_fams(), list)
         self.assertEqual(len(pvs.get_corr_fams()), 2)
-        for fam in self.bo_sfams:
+        for fam in self.bo_qfams:
             self.assertIn(fam, pvs.get_corr_fams())
 
     def test_get_pvs_database(self):
         """Test get_pvs_database."""
         for accelerator in ['SI', 'BO']:
             if accelerator == 'SI':
-                sfams = self.si_sfams
+                qfams = self.si_qfams
             elif accelerator == 'BO':
-                sfams = self.bo_sfams
+                qfams = self.bo_qfams
             pvs.select_ioc(accelerator)
             db = pvs.get_pvs_database()
             self.assertIsInstance(db, dict)
             self.assertTrue('Version-Cte' in db)
             self.assertTrue('Log-Mon' in db)
-            self.assertTrue('ChromX-SP' in db)
-            self.assertTrue('ChromX-RB' in db)
-            self.assertTrue('ChromY-SP' in db)
-            self.assertTrue('ChromY-RB' in db)
-            self.assertTrue('ApplySL-Cmd' in db)
+            self.assertTrue('DeltaTuneX-SP' in db)
+            self.assertTrue('DeltaTuneX-RB' in db)
+            self.assertTrue('DeltaTuneY-SP' in db)
+            self.assertTrue('DeltaTuneY-RB' in db)
+            self.assertTrue('ApplyDeltaKL-Cmd' in db)
             self.assertTrue('CorrParamsConfigName-SP' in db)
             self.assertTrue('CorrParamsConfigName-RB' in db)
             self.assertTrue('CorrMat-Mon' in db)
-            self.assertTrue('NominalChrom-Mon' in db)
-            self.assertTrue('NominalSL-Mon' in db)
+            self.assertTrue('CorrFactor-SP' in db)
+            self.assertTrue('CorrFactor-RB' in db)
             self.assertTrue('SyncCorr-Sel' in db)
             self.assertTrue('SyncCorr-Sts' in db)
             self.assertTrue('ConfigPS-Cmd' in db)
@@ -108,15 +107,18 @@ class TestASAPOpticsCorrChromPvs(unittest.TestCase):
             self.assertTrue('Status-Mon' in db)
             self.assertTrue('Status-Cte' in db)
 
-            for fam in sfams:
-                self.assertTrue('LastCalcd' + fam + 'SL-Mon' in db)
-                self.assertEqual(db['LastCalcd' + fam + 'SL-Mon']['unit'],
-                                 '1/m^2')
+            for fam in qfams:
+                self.assertTrue(fam + 'RefKL-Mon' in db)
+                self.assertEqual(db[fam + 'RefKL-Mon']['unit'], '1/m')
+                self.assertTrue('LastCalcd' + fam + 'DeltaKL-Mon' in db)
+                self.assertEqual(db['LastCalcd' + fam + 'DeltaKL-Mon']['unit'],
+                                 '1/m')
             if accelerator == 'SI':
                 self.assertTrue('CorrMeth-Sel' in db)
                 self.assertTrue('CorrMeth-Sts' in db)
+                self.assertTrue('NominalKL-Mon' in db)
 
-    @mock.patch("as_ap_opticscorr.chrom.pvs._util")
+    @mock.patch("as_ap_opticscorr.tune.pvs._util")
     def test_print_banner_and_save_pv_list(self, util):
         """Test print_banner_and_save_pv_list."""
         pvs.select_ioc('Accelerator')

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3.6
 
-"""Module to test AS-AP-PosAng Soft IOC main module."""
+"""Module to test AS-AP-ChromCorr Soft IOC main module."""
 
 import unittest
 from unittest import mock
