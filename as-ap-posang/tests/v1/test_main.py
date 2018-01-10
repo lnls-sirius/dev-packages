@@ -148,7 +148,7 @@ class TestASAPPosAngMain(unittest.TestCase):
              mock.call(0), mock.call(0), mock.call(0)], any_order=True)
         self.mock_driver.setParam.assert_called_with('ConfigPS-Cmd', 1)
 
-    def test_write_connerror_Cmd(self):
+    def test_write_connerror_Cmds(self):
         """Test write SetNewRef-Cmd and ConfigPS-Cmd on connection error."""
         self.mock_cs().get_config.return_value = self.q_ok
         self.mock_epics.PV.return_value.connected = False

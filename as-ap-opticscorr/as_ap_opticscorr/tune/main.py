@@ -406,37 +406,38 @@ class App:
         return False
 
     def _update_ref(self):
-        # updates reference
-        for fam in self._QFAMS:
-            self._qfam_refkl[fam] = self._qfam_kl_rb_pvs[fam].get()
-            self.driver.setParam(fam + 'RefKL-Mon', self._qfam_refkl[fam])
+        if (self._status & 0x1) == 0:  # Check connection
+            # updates reference
+            for fam in self._QFAMS:
+                self._qfam_refkl[fam] = self._qfam_kl_rb_pvs[fam].get()
+                self.driver.setParam(fam + 'RefKL-Mon', self._qfam_refkl[fam])
 
-            fam_index = self._QFAMS.index(fam)
-            self._lastcalcd_deltakl[fam_index] = 0
-            self.driver.setParam('LastCalcd' + fam + 'DeltaKL-Mon',
-                                 self._lastcalcd_deltakl[fam_index])
+                fam_index = self._QFAMS.index(fam)
+                self._lastcalcd_deltakl[fam_index] = 0
+                self.driver.setParam('LastCalcd' + fam + 'DeltaKL-Mon', 0)
 
-        # the deltas from new kl references are zero
-        self._delta_tunex = 0
-        self._delta_tuney = 0
-        self.driver.setParam('DeltaTuneX-SP', self._delta_tunex)
-        self.driver.setParam('DeltaTuneY-SP', self._delta_tuney)
-        delta_tunex, delta_tuney = self._estim_current_deltatune()
-        self.driver.setParam('DeltaTuneX-RB', delta_tunex)
-        self.driver.setParam('DeltaTuneY-RB', delta_tuney)
+            # the deltas from new kl references are zero
+            self._delta_tunex = 0
+            self._delta_tuney = 0
+            self.driver.setParam('DeltaTuneX-SP', self._delta_tunex)
+            self.driver.setParam('DeltaTuneY-SP', self._delta_tuney)
+            delta_tunex, delta_tuney = self._estimate_current_deltatune()
+            self.driver.setParam('DeltaTuneX-RB', delta_tunex)
+            self.driver.setParam('DeltaTuneY-RB', delta_tuney)
 
-        self.driver.setParam('Log-Mon', 'Updated KL reference.')
+            self.driver.setParam('Log-Mon', 'Updated KL references.')
+        else:
+            self.driver.setParam('Log-Mon', 'ERR:Some pv is disconnected.')
         self.driver.updatePVs()
 
-    def _estim_current_deltatune(self):
+    def _estimate_current_deltatune(self):
         qfam_deltakl = len(self._QFAMS)*[0]
         for fam in self._QFAMS:
             fam_index = self._QFAMS.index(fam)
             qfam_deltakl[fam_index] = (
                 self._qfam_kl_rb[fam_index] - self._qfam_refkl[fam])
-        corrmat, _ = self._get_corrparams()
         return self._opticscorr.estimate_current_deltatune(
-            corrmat, qfam_deltakl)
+            self._corrmat_add_svd, qfam_deltakl)
 
     def _callback_init_refkl(self, pvname, value, cb_info, **kws):
         """Initialize RefKL-Mon pvs and remove this callback."""
@@ -476,7 +477,7 @@ class App:
         fam_index = self._QFAMS.index(fam)
         self._qfam_kl_rb[fam_index] = value
 
-        delta_tunex, delta_tuney = self._estim_current_deltatune()
+        delta_tunex, delta_tuney = self._estimate_current_deltatune()
         self.driver.setParam('DeltaTuneX-RB', delta_tunex)
         self.driver.setParam('DeltaTuneY-RB', delta_tuney)
         self.driver.updatePVs()

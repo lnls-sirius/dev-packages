@@ -100,7 +100,8 @@ def get_pvs_database():
                                            'prec': 6, 'unit': '1/m'}
         pvs_database['LastCalcd' + fam + 'DeltaKL-Mon'] = {'type': 'float',
                                                            'value': 0,
-                                                           'prec': 6}
+                                                           'prec': 6,
+                                                           'unit': '1/m'}
     if _ACC == 'SI':
         pvs_database['CorrMeth-Sel'] = {'type': 'enum', 'value': 0, 'enums':
                                         ['Proportional', 'Additional']}
