@@ -4,7 +4,6 @@ import copy as _copy
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.search import MASearch as _MASearch
-# from siriuspy.csdevice import ps_properties as _ps_props
 
 default_wfmsize = 4000
 default_wfmlabels = _et.enums('PSWfmLabelsTyp')
@@ -16,6 +15,63 @@ _default_ps_current_unit = None
 _default_pu_current_unit = None
 
 
+# --- power supply enums ---
+ps_models = ('FBP', 'FAP', 'FAP_4P_Master', 'FAP_4P_Slave',
+             'FAP_2P2S_Master', 'FAP_2P2S_Slave', 'FAC', 'FAC_2S_ACDC',
+             'FAC_2S_DCDC', 'FAC_2P4S_ACDC', 'FAC_2P4S_DCDC',)
+ps_dsblenbl = ('Dsbl', 'Enbl')
+ps_interface = ('Remote', 'Local', 'PCHost')
+ps_openloop = ('Closed', 'Open')
+ps_pwrstate = ('Off', 'On')
+ps_states = ('Off', 'Interlock', 'Initializing',
+             'SlowRef', 'SlowRefSync', 'FastRef', 'RmpWfm', 'MigWfm', 'Cycle')
+ps_cmdack = ('OK', 'Local', 'PCHost', 'Interlocked', 'UDC_locked',
+             'DSP_TimeOut', 'DSP_Busy', 'Invalid',)
+ps_soft_interlock = ('IGBT1_OVERTEMP', 'IGBT2_OVERTEMP', 'L1_OVERTEMP',
+                     'L2_OVERTEMP', 'HEATSINK_OVERTEMP', 'WATER_OVERTEMP',
+                     'RECTFIER1_OVERTEMP', 'RECTFIER2_OVERTEMP',
+                     'AC_TRANSF_OVERTEMP', 'WATER_FLUX_FAULT',
+                     'OVER_HUMIDITY_FAULT',)
+ps_hard_interlock = ('LOAD_OVERCURRENT', 'EXTERNAL_INTERLOCK', 'AC_FAULT',
+                     'ACDC_FAULT', 'DCDC_FAULT', 'LOAD_OVERVOLTAGE',
+                     'PRECHARGERS_FAULT', 'OUTPUT_CAP_CHARGE_FAULT',
+                     'EMERGENCY_BUTTON', 'OUT_OVERVOLTAGE', 'IN_OVERVOLTAGE',
+                     'ARM1_OVERCURRENT', 'ARM2_OVERCURRENT', 'IN_OVERCURRENT',
+                     'DRIVER1_FAULT', 'DRIVER2_FAULT', 'OUT1_OVERCURRENT',
+                     'OUT2_OVERCURRENT', 'OUT1_OVERVOLTAGE',
+                     'OUT2_OVERVOLTAGE', 'LEAKAGE_OVERCURRENT',
+                     'AC_OVERCURRENT',)
+
+# --- power supply constants definition class ---
+class Const:
+    """Const class defining power supply constants."""
+
+    @staticmethod
+    def _init():
+        """Create class constants."""
+        for i in range(len(ps_dsblenbl)):
+            Const._add_const(ps_dsblenbl[i], i)
+        for i in range(len(ps_interface)):
+            Const._add_const(ps_interface[i], i)
+        for i in range(len(ps_openloop)):
+            Const._add_const(ps_openloop[i], i)
+        for i in range(len(ps_pwrstate)):
+            Const._add_const(ps_pwrstate[i], i)
+        for i in range(len(ps_states)):
+            Const._add_const(ps_states[i], i)
+
+    @staticmethod
+    def _add_const(const, i):
+        if hasattr(Const, const) and getattr(Const, const) != i:
+            raise ValueError('Constant "{}" already defined!'.format(const))
+        else:
+            setattr(Const, const, i)
+
+
+Const._init()
+
+
+# --- power supply databases ---
 def get_ps_current_unit():
     """Return power supply current unit."""
     global _default_ps_current_unit
@@ -35,11 +91,11 @@ def get_pu_current_unit():
 def get_common_propty_database():
     """Return database entries to all power-supply-like devices."""
     db = {
-        'CtrlMode-Mon':     {'type': 'enum', 'enums': _et.enums('RmtLocTyp'),
+        'CtrlMode-Mon':     {'type': 'enum', 'enums': ps_interface,
                              'value': _et.idx.Remote},
-        'PwrState-Sel':     {'type': 'enum', 'enums': _et.enums('OffOnTyp'),
+        'PwrState-Sel':     {'type': 'enum', 'enums': ps_pwrstate,
                              'value': _et.idx.Off},
-        'PwrState-Sts':     {'type': 'enum', 'enums': _et.enums('OffOnTyp'),
+        'PwrState-Sts':     {'type': 'enum', 'enums': ps_pwrstate,
                              'value': _et.idx.Off},
         'Intlk-Mon':        {'type': 'int',    'value': 0},
         'IntlkLabels-Cte':  {'type': 'string',
@@ -54,9 +110,9 @@ def get_common_ps_propty_database():
     """Return database of commun to all pwrsupply PVs."""
     db = get_common_propty_database()
     db_ps = {
-        'OpMode-Sel': {'type': 'enum', 'enums': _et.enums('PSOpModeTyp'),
+        'OpMode-Sel': {'type': 'enum', 'enums': ps_states,
                        'value': _et.idx.SlowRef},
-        'OpMode-Sts': {'type': 'enum', 'enums': _et.enums('PSOpModeTyp'),
+        'OpMode-Sts': {'type': 'enum', 'enums': ps_states,
                        'value': _et.idx.SlowRef},
         'Abort-Cmd': {'type': 'int', 'value': 0},
         'WfmIndex-Mon': {'type': 'int', 'value': 0},
@@ -257,37 +313,3 @@ def get_pm_propty_database(maname):
         else:
             raise ValueError('Invalid pulsed magnet power supply type!')
     return db
-
-# def get_pm_propty_database(maname, psdata):
-#     """Return database for a pulsed magnet."""
-#     db = {}
-#     for psname, data in psdata.items():
-#         db[psname] = data.propty_database
-#
-#         db[psname][_ps_props.StrengthSP] = \
-#             {"type": "float", "unit": "mrad", "value": 0.0,
-#              "prec": default_pu_current_precision}
-#         db[psname][_ps_props.StrengthRB] = \
-#             {"type": "float", "unit": "mrad", "value": 0.0,
-#              "prec": default_pu_current_precision}
-#         db[psname][_ps_props.StrengthRefMon] = \
-#             {"type": "float", "unit": "mrad", "value": 0.0,
-#              "prec": default_pu_current_precision}
-#         db[psname][_ps_props.StrengthMon] = \
-#             {"type": "float", "unit": "mrad", "value": 0.0,
-#              "prec": default_pu_current_precision}
-#
-#         strength_list = [_ps_props.StrengthSP, _ps_props.StrengthRB,
-#                          _ps_props.StrengthRefMon, _ps_props.StrengthMon]
-#
-#         for strength in strength_list:
-#             db[psname][strength]["lolo"] = _MASearch.get_splims(maname, "lolo")
-#             db[psname][strength]["low"] = _MASearch.get_splims(maname, "low")
-#             db[psname][strength]["lolim"] = \
-#                 _MASearch.get_splims(maname, "lolim")
-#             db[psname][strength]["hihi"] = _MASearch.get_splims(maname, "hihi")
-#             db[psname][strength]["high"] = _MASearch.get_splims(maname, "high")
-#             db[psname][strength]["hilim"] = \
-#                 _MASearch.get_splims(maname, "hilim")
-#
-#     return db

@@ -18,10 +18,11 @@ class EnumTypes:
         'OffOnTyp': ('Off', 'On'),
         'OffOnWaitTyp': ('Off', 'On', 'Wait'),
         'DsblEnblTyp': ('Dsbl', 'Enbl'),
-        'RmtLocTyp': ('Remote', 'Local', 'PCHost'),
     }
 
     _types_ps = {
+        'PSPwrStateTyp': ('Off', 'On', 'Initiali'),
+        'PSRmtLocTyp': ('Remote', 'Local', 'PCHost'),
         'PSOpModeTyp': ('SlowRef', 'SlowRefSync', 'FastRef',
                         'RmpWfm', 'MigWfm', 'Cycle'),
         'PSWfmLabelsTyp': ('Waveform1', 'Waveform2', 'Waveform3',

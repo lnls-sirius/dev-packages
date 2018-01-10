@@ -1,176 +1,323 @@
-"""Controller defitions."""
-from epics import PV as _PV
-import time as _time
-import uuid as _uuid
-import random as _random
-import numpy as _np
-import re as _re
+"""Power supply controller classes."""
 
-from siriuspy.csdevice.enumtypes import EnumTypes as _et
-from siriuspy.namesys import SiriusPVName as _SiriusPVName
-from siriuspy.magnet import util as _mutil
-from siriuspy.epics.computed_pv import ComputedPV as _ComputedPV
-from siriuspy.pwrsupply import sync as _sync
-from siriuspy.factory import NormalizerFactory as _NormalizerFactory
-from siriuspy.csdevice.pwrsupply import default_wfmlabels as _default_wfmlabels
-from siriuspy.csdevice.pwrsupply import default_wfmsize as _default_wfmsize
-from siriuspy.csdevice.pwrsupply import default_intlklabels as \
-    _default_intlklabels
+from siriuspy.csdevice.pwrsupply import ps_models as _ps_models
+from siriuspy.csdevice.pwrsupply import ps_dsblenbl as _ps_dsblenbl
+from siriuspy.csdevice.pwrsupply import ps_interface as _ps_interface
+from siriuspy.csdevice.pwrsupply import ps_openloop as _ps_openloop
+from siriuspy.csdevice.pwrsupply import ps_pwrstate as _ps_pwrstate
+from siriuspy.csdevice.pwrsupply import ps_states as _ps_states
+from siriuspy.csdevice.pwrsupply import ps_cmdack as _ps_cmdack
+from siriuspy.csdevice.pwrsupply import ps_soft_interlock as _ps_soft_interlock
+from siriuspy.csdevice.pwrsupply import ps_hard_interlock as _ps_hard_interlock
+from siriuspy.csdevice.pwrsupply import Const as _Const
 from siriuspy.csdevice.pwrsupply import get_common_ps_propty_database as \
     _get_common_ps_propty_database
-from siriuspy.pwrsupply_orig.waveform import PSWaveForm as _PSWaveForm
-from siriuspy.pwrsupply_orig.cycgen import PSCycGenerator as _PSCycGenerator
-from siriuspy.pulsedps.model import PulsedPowerSupplySim as \
-    _PulsedPowerSupplySim
 
-_trigger_timeout_default = 0.002  # [seconds]
-_trigger_interval_default = 0.490/_default_wfmsize  # [seconds]
+# from siriuspy.csdevice.enumtypes import EnumTypes as _et
+# from epics import PV as _PV
+# import time as _time
+# import uuid as _uuid
+# import random as _random
+# import numpy as _np
+# import re as _re
+#
+# from siriuspy.namesys import SiriusPVName as _SiriusPVName
+# from siriuspy.magnet import util as _mutil
+# from siriuspy.epics.computed_pv import ComputedPV as _ComputedPV
+# from siriuspy.pwrsupply import sync as _sync
+# from siriuspy.factory import NormalizerFactory as _NormalizerFactory
+# from siriuspy.csdevice.pwrsupply import default_wfmlabels as \
+#     _default_wfmlabels
+# from siriuspy.csdevice.pwrsupply import default_wfmsize as _default_wfmsize
+# from siriuspy.csdevice.pwrsupply import default_intlklabels as \
+#     _default_intlklabels
+# from siriuspy.pwrsupply_orig.waveform import PSWaveForm as _PSWaveForm
+# from siriuspy.pwrsupply_orig.cycgen import PSCycGenerator as _PSCycGenerator
+# from siriuspy.pulsedps.model import PulsedPowerSupplySim as \
+#     _PulsedPowerSupplySim
+#
+# _trigger_timeout_default = 0.002  # [seconds]
+# _trigger_interval_default = 0.490/_default_wfmsize  # [seconds]
 
 
 # loads power supply database with default initial values
 _db_ps = _get_common_ps_propty_database()
-_const = _et.idx
 
 
 def _init_value(propty):
     return _db_ps[propty]['value']
 
 
-ps_Models = (
-    'FBP_100kHz'
-    'FBP_Parallel_100kHz'
-    'FAC_ACDC_10kHz'
-    'FAC_DCDC_20kHz'
-    'FAC_Full_ACDC_10kHz'
-    'FAC_Full_DCDC_20kHz'
-    'FAP_ACDC'
-    'FAP_DCDC_20kHz'
-    'TEST_HRPWM'
-    'TEST_HRADC'
-    'JIGA_HRADC'
-    'FAP_DCDC_15kHz_225A'
-    'FBPx4_100kHz'
-    'FAP_6U_DCDC_20kHz'
-    'JIGA_BASTIDOR'
-)
+class Status:
+    """Power supply status class."""
 
-ps_cmd_ack = {
-    'OK': 0,
-    'Local': 1,
-    'PCHost': 2,
-    'SoftInterlocked': 3,
-    'HardInterlocked': 4,
-    'DSP_TimeOut': 5,
-    'DSP_Busy': 6,
-    'Invalid': 7,
-}
+    _mask_state = 0b0000000000001111
+    _mask_oloop = 0b0000000000010000
+    _mask_intfc = 0b0000000001100000
+    _mask_activ = 0b0000000010000000
+    _mask_model = 0b0001111100000000
+    _mask_unlck = 0b0010000000000000
+    _mask_rsrvd = 0b1100000000000000
+
+    @staticmethod
+    def state(status, label=False):
+        """Return state of power supply."""
+        index = (status & (0b1111 << 0)) >> 0
+        return _ps_states[index] if label else index
+
+    @staticmethod
+    def set_state(status, value):
+        """Set state in power supply status."""
+        if not (0 <= value < len(_ps_states)):
+            raise ValueError('Invalid state number!')
+        status = status & ~Status._mask_state
+        status += value << 0
+        return status
+
+    @staticmethod
+    def openloop(status, label=False):
+        """Return open-loop state index of power supply."""
+        index = (status & (0b1 << 4)) >> 4
+        return _ps_openloop[index] if label else index
+
+    @staticmethod
+    def set_openloop(status, value):
+        """Set openloop in power supply status."""
+        if not (0 <= value < len(_ps_openloop)):
+            raise ValueError('Invalid openloop number!')
+        status = status & ~Status._mask_oloop
+        status += value << 4
+        return status
+
+    @staticmethod
+    def interface(status, label=False):
+        """Return interface index of power supply."""
+        index = (status & (0b11 << 5)) >> 5
+        return _ps_interface[index] if label else index
+
+    @staticmethod
+    def set_interface(status, value):
+        """Set interface index in power supply status."""
+        if not (0 <= value < len(_ps_interface)):
+            raise ValueError('Invalid interface number!')
+        status = status & ~Status._mask_intfc
+        status += value << 5
+        return status
+
+    @staticmethod
+    def active(status, label=False):
+        """Return active index of power supply."""
+        return (status & (0b1 << 7)) >> 7
+
+    @staticmethod
+    def set_active(status, value):
+        """Set active index in power supply status."""
+        if not (0 <= value <= 1):
+            raise ValueError('Invalid active number!')
+        status = status & ~Status._mask_activ
+        status += value << 7
+        return status
+
+    @staticmethod
+    def model(status, label=False):
+        """Return model index for power supply."""
+        index = (status & Status._mask_model) >> 8
+        return _ps_models[index] if label else index
+
+    @staticmethod
+    def set_model(status, value):
+        """Set model in power supply status."""
+        if not (0 <= value < len(_ps_models)):
+            raise ValueError('Invalid model number!')
+        status = status & ~Status._mask_model
+        status += value << 8
+        return status
+
+    @staticmethod
+    def unlocked(status, label=False):
+        """Return unlocked index for power supply."""
+        return (status & (0b1 << 13)) >> 13
+
+    @staticmethod
+    def set_unlocked(status, value):
+        """Set unlocked in power supply status."""
+        if not (0 <= value <= 1):
+            raise ValueError('Invalid unlocked number!')
+        status = status & ~Status._mask_unlck
+        status += value << 13
+        return status
+
+
+class _Interlock:
+    """Interlock class."""
+
+    @property
+    def labels(self):
+        """Return list of all interlock labels."""
+        return [interlock for interlock in self._labels]
+
+    def label(self, i):
+        """Convert bit index to its interlock label."""
+        return self._labels[i]
+
+    def interlock_set(self, interlock):
+        """Return a list of active interlocks."""
+        interlock_list = []
+        for i in range(len(self.labels)):
+            label = self.label(i)
+            if interlock & (1 << i):
+                interlock_list.append(label)
+        return interlock_list
+
+    def _init(self):
+        # set properties corresponding to interlock bit labels.
+        for i in range(len(self.labels)):
+            label = self.label(i)
+            setattr(_Interlock, 'bit_' + label, 1 << i)
+
+
+class _InterlockSoft(_Interlock):
+    """Power supply soft iterlocks."""
+
+    def __init__(self):
+        self._labels = _ps_soft_interlock
+        self._init()
+
+
+class _InterlockHard(_Interlock):
+    """Power supply hard iterlocks."""
+
+    def __init__(self):
+        self._labels = _ps_hard_interlock
+        self._init()
+
+
+InterlockSoft = _InterlockSoft()
+InterlockHard = _InterlockHard()
 
 
 class Controller:
-    """Controlle class."""
+    """Controller class."""
 
-    def __init__(self, ps_Model):
-        """Init method."""
-        if ps_Model not in ps_Models:
-            raise ValueError('Model "' + ps_Model + '" is not valid!')
+    # conversion dict from PS fields to DSP properties for read method.
+    _read_field2propty = {
+        'CtrlMode-Mon': 'ps_Remote',
+        'OpMode-Sel': 'ps_OpMode',
+        'OpMode-Sts': 'ps_OpMode',
+    }
 
-    @property
-    def iLoad1(self):
-        """DCCT1 current measurement."""
-        return self._get_iLoad1()
-
-    @property
-    def ps_OnOff(self):
-        """Return On|Off power supply status."""
-        return self._get_ps_OnOff()
+    # --- general power supply properties ---
 
     @property
-    def ps_OpMode(self):
-        """Return power supply operation mode."""
-        return self._get_ps_OpMode()
+    def ps_status(self):
+        """Return power supply status."""
+        return self._get_ps_status()
 
     @property
-    def ps_Remote(self):
-        """Return power supply control mode."""
-        return self._get_ps_Remote()
+    def ps_setpoint(self):
+        """Return of power supply last setpoint."""
+        return self._get_ps_setpoint()
 
     @property
-    def iRef(self):
-        """Return power supply reference current."""
-        return self._get_iRef()
+    def ps_reference(self):
+        """Return of power supply reference setpoint.
 
-    def cmd_TurnOn(self):
-        """Turn power supply On."""
+        It may differ from 'ps_setpoint' due to various limitions.
+        """
+        return self._get_ps_reference()
+
+    # --- FBP power supply properties ---
+
+    @property
+    def ps_soft_interlocks(self):
+        """Return soft interlock integer."""
+        return self._get_ps_soft_interlocks
+
+    @property
+    def ps_hard_interlocks(self):
+        """Return hard interlock integer."""
+        return self._get_ps_hard_interlocks
+
+    @property
+    def i_load(self):
+        """Return power supply current load."""
+        return self._get_i_load()
+
+    def cmd_turn_on(self):
+        """Turn power supply on."""
         # check if ps is in remote ctrlmode
-        ctrlm, ack = self.ps_Remote, ps_cmd_ack
-        if ctrlm != _const.Remote:
-            return ack['Local'] if ctrlm == _const.Local else ack['PCHost']
-        # execute valid cmd
-        return self._cmd_TurnOn()
+        ret = self._check_interface()
+        return ret is ret if not None else self._cmd_turn_on()
 
-    def cmd_TurnOff(self):
-        """Turn power supply On."""
+    def cmd_turn_off(self):
+        """Turn power supply off."""
         # check if ps is in remote ctrlmode
-        ctrlm, ack = self.ps_Remote, ps_cmd_ack
-        if ctrlm != _const.Remote:
-            return ack['Local'] if ctrlm == _const.Local else ack['PCHost']
-        # execute valid cmd
-        return self._cmd_TurnOff()
+        ret = self._check_interface()
+        return ret is ret if not None else self._cmd_turn_off()
 
-    def cmd_OpMode(self, opmode):
-        """Set power supply operation mode."""
-        # check if ps is in remote ctrlmode
-        ctrlm, ack = self.ps_Remote, ps_cmd_ack
-        if ctrlm != _const.Remote:
-            return ack['Local'] if ctrlm == _const.Local else ack['PCHost']
-        # execute valid cmd
-        return self._cmd_OpMode(opmode)
+    def _check_interface(self):
+        interface, ack = Status.interface(self.status), _ps_cmdack
+        if interface != _Const.Remote:
+            if interface == _Const.Local:
+                return ack[_Const.Local]
+            else:
+                return ack[_Const.PCHost]
+        return None  # in Remote interface
 
 
 class ControllerSim(Controller):
     """Simulation Controller class."""
 
-    def __init__(self, ps_Model):
+    def __init__(self, model):
         """Init method."""
-        super().__init__(ps_Model=ps_Model)
-        self._ps_Model = ps_Model
-        self._iLoad1 = _init_value('Current-Mon')
-        self._ps_OnOff = _init_value('Current-Mon')
-        self._ps_OpMode = _init_value('OpMode-Sts')
-        self._ps_Remote = _init_value('CtrlMode-Mon')
-        self._iRef = _init_value('CurrentRef-Mon')
+        if not (0 <= model < len(_ps_models)):
+            raise ValueError('Model index {} is not valid!'.format(model))
+        self._ps_status = self._build_status(model)
+        self._ps_setpoint = _init_value('Current-SP')
+        self._ps_reference = _init_value('CurrentRef-Mon')
+        self._ps_soft_interlocks = 0
+        self._ps_hard_interlocks = 0
+        self._i_load = _init_value('Current-Mon')
 
-    def _get_iload1(self):
-        return self._iLoad1
+    def _build_status(self, model):
+        status = 0
+        status = Status.set_state(status, _init_value('PwrState-Sts'))
+        status = Status.set_openloop(status, _Const.Closed)
+        status = Status.set_interface(status, _init_value('CtrlMode-Mon'))
+        status = Status.set_active(status, 1)
+        status = Status.set_model(status, model)
+        status = Status.set_unlocked(status, 1)
+        return status
 
-    def _get_ps_OnOff(self):
-        return self._ps_OnOff
+    def _get_ps_status(self):
+        return self._ps_status
 
-    def _get_ps_OpMode(self):
-        return self._ps_OpMode
+    def _get_ps_setpoint(self):
+        return self._ps_setpoint
 
-    def _get_ps_Remote(self):
-        return self._ps_Remote
+    def _get_ps_reference(self):
+        return self._ps_reference
 
-    def _get_iRef(self):
-        return self._iLoad1
+    def _get_i_load(self):
+        return self._i_load
 
-    def _cmd_TurnOn(self):
-        self.ps_OnOff = _const.On
-        return ps_cmd_ack['OK']
+    def _cmd_turn_on(self):
+        # update ps_status
+        status = self.ps_status
+        status = Status.set_state(status, _Const.SlowRef)
+        self._ps_status = status
+        # update current load
+        self._i_load = self._ps_reference
+        return _ps_cmdack[_Const.OK]
 
-    def _cmd_TurnOff(self):
-        self.ps_OnOff = _const.Off
-        return ps_cmd_ack['OK']
-
-    def _cmd_OpMode(self, opmode):
-        opmodes = _db_ps['OpMode-Sel']['enums']
-        # check if opmode integer is valid
-        if not (0 <= opmode < len(opmodes)):
-            return ps_cmd_ack['Invalid']
-        self._ps_OpMode = opmode
-        return ps_cmd_ack['OK']
-
+    def _cmd_turn_off(self):
+        # update ps_status
+        status = self.ps_status
+        status = Status.set_state(status, _Const.Off)
+        self._ps_status = status
+        # update current load
+        self._i_load = 0.0
+        return _ps_cmdack[_Const.OK]
 
 
 class ControllerSerial(Controller):
@@ -182,8 +329,6 @@ class ControllerSerial(Controller):
 
     def _get_iLoad1(self):
         return 0.0
-
-
 
 
 # class Controller:
