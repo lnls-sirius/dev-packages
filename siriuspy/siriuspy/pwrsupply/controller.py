@@ -16,6 +16,8 @@ from siriuspy.csdevice.pwrsupply import default_wfmlabels as _default_wfmlabels
 from siriuspy.csdevice.pwrsupply import default_wfmsize as _default_wfmsize
 from siriuspy.csdevice.pwrsupply import default_intlklabels as \
     _default_intlklabels
+from siriuspy.csdevice.pwrsupply import get_common_ps_propty_database as \
+    _get_common_ps_propty_database
 from siriuspy.pwrsupply_orig.waveform import PSWaveForm as _PSWaveForm
 from siriuspy.pwrsupply_orig.cycgen import PSCycGenerator as _PSCycGenerator
 from siriuspy.pulsedps.model import PulsedPowerSupplySim as \
@@ -25,16 +27,162 @@ _trigger_timeout_default = 0.002  # [seconds]
 _trigger_interval_default = 0.490/_default_wfmsize  # [seconds]
 
 
+# loads power supply database with default initial values
+_db_ps = _get_common_ps_propty_database()
+_const = _et.idx
+
+
+def _init_value(propty):
+    return _db_ps[propty]['value']
+
+
+ps_Models = (
+    'FBP_100kHz'
+    'FBP_Parallel_100kHz'
+    'FAC_ACDC_10kHz'
+    'FAC_DCDC_20kHz'
+    'FAC_Full_ACDC_10kHz'
+    'FAC_Full_DCDC_20kHz'
+    'FAP_ACDC'
+    'FAP_DCDC_20kHz'
+    'TEST_HRPWM'
+    'TEST_HRADC'
+    'JIGA_HRADC'
+    'FAP_DCDC_15kHz_225A'
+    'FBPx4_100kHz'
+    'FAP_6U_DCDC_20kHz'
+    'JIGA_BASTIDOR'
+)
+
+ps_cmd_ack = {
+    'OK': 0,
+    'Local': 1,
+    'PCHost': 2,
+    'SoftInterlocked': 3,
+    'HardInterlocked': 4,
+    'DSP_TimeOut': 5,
+    'DSP_Busy': 6,
+    'Invalid': 7,
+}
+
+
 class Controller:
-    pass
+    """Controlle class."""
+
+    def __init__(self, ps_Model):
+        """Init method."""
+        if ps_Model not in ps_Models:
+            raise ValueError('Model "' + ps_Model + '" is not valid!')
+
+    @property
+    def iLoad1(self):
+        """DCCT1 current measurement."""
+        return self._get_iLoad1()
+
+    @property
+    def ps_OnOff(self):
+        """Return On|Off power supply status."""
+        return self._get_ps_OnOff()
+
+    @property
+    def ps_OpMode(self):
+        """Return power supply operation mode."""
+        return self._get_ps_OpMode()
+
+    @property
+    def ps_Remote(self):
+        """Return power supply control mode."""
+        return self._get_ps_Remote()
+
+    @property
+    def iRef(self):
+        """Return power supply reference current."""
+        return self._get_iRef()
+
+    def cmd_TurnOn(self):
+        """Turn power supply On."""
+        # check if ps is in remote ctrlmode
+        ctrlm, ack = self.ps_Remote, ps_cmd_ack
+        if ctrlm != _const.Remote:
+            return ack['Local'] if ctrlm == _const.Local else ack['PCHost']
+        # execute valid cmd
+        return self._cmd_TurnOn()
+
+    def cmd_TurnOff(self):
+        """Turn power supply On."""
+        # check if ps is in remote ctrlmode
+        ctrlm, ack = self.ps_Remote, ps_cmd_ack
+        if ctrlm != _const.Remote:
+            return ack['Local'] if ctrlm == _const.Local else ack['PCHost']
+        # execute valid cmd
+        return self._cmd_TurnOff()
+
+    def cmd_OpMode(self, opmode):
+        """Set power supply operation mode."""
+        # check if ps is in remote ctrlmode
+        ctrlm, ack = self.ps_Remote, ps_cmd_ack
+        if ctrlm != _const.Remote:
+            return ack['Local'] if ctrlm == _const.Local else ack['PCHost']
+        # execute valid cmd
+        return self._cmd_OpMode(opmode)
 
 
 class ControllerSim(Controller):
-    pass
+    """Simulation Controller class."""
+
+    def __init__(self, ps_Model):
+        """Init method."""
+        super().__init__(ps_Model=ps_Model)
+        self._ps_Model = ps_Model
+        self._iLoad1 = _init_value('Current-Mon')
+        self._ps_OnOff = _init_value('Current-Mon')
+        self._ps_OpMode = _init_value('OpMode-Sts')
+        self._ps_Remote = _init_value('CtrlMode-Mon')
+        self._iRef = _init_value('CurrentRef-Mon')
+
+    def _get_iload1(self):
+        return self._iLoad1
+
+    def _get_ps_OnOff(self):
+        return self._ps_OnOff
+
+    def _get_ps_OpMode(self):
+        return self._ps_OpMode
+
+    def _get_ps_Remote(self):
+        return self._ps_Remote
+
+    def _get_iRef(self):
+        return self._iLoad1
+
+    def _cmd_TurnOn(self):
+        self.ps_OnOff = _const.On
+        return ps_cmd_ack['OK']
+
+    def _cmd_TurnOff(self):
+        self.ps_OnOff = _const.Off
+        return ps_cmd_ack['OK']
+
+    def _cmd_OpMode(self, opmode):
+        opmodes = _db_ps['OpMode-Sel']['enums']
+        # check if opmode integer is valid
+        if not (0 <= opmode < len(opmodes)):
+            return ps_cmd_ack['Invalid']
+        self._ps_OpMode = opmode
+        return ps_cmd_ack['OK']
+
 
 
 class ControllerSerial(Controller):
-    pass
+    """Serial Controller class."""
+
+    def __init__(self):
+        """Init method."""
+        pass
+
+    def _get_iLoad1(self):
+        return 0.0
+
 
 
 

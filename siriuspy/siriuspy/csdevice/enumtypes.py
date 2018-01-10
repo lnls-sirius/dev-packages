@@ -18,7 +18,7 @@ class EnumTypes:
         'OffOnTyp': ('Off', 'On'),
         'OffOnWaitTyp': ('Off', 'On', 'Wait'),
         'DsblEnblTyp': ('Dsbl', 'Enbl'),
-        'RmtLocTyp': ('Remote', 'Local'),
+        'RmtLocTyp': ('Remote', 'Local', 'PCHost'),
     }
 
     _types_ps = {
