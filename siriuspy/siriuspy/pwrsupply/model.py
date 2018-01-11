@@ -35,53 +35,24 @@ class PowerSupply(PSComm):
 
     _is_setpoint = _re.compile('.*-(SP|Sel)$')
 
-    _read_ps2dsp = {
-        'PwrState-Sts'
-    }
-    
     def __init__(self, controller):
         """Init method."""
         self._controller = controller
-        # Setpoints
-        self._pwrstate_sel = 0
-        self._current_sp = 0.0
-        self._wfmload_sel = 0
-        self._wfmlabel = ''
-        self._wfmdata_sp = []
-        self._abort_count = 0
+        self._setpoints = self._build_setpoints()
 
     def read(self, field):
         """Read field value."""
         # Check CtrlMode?
         if PowerSupply._is_setpoint.match(field):
-            return self._get_setpoint_value(field)
+            return self._setpoints[field]['value']
         return self._controller.read(field)
 
     def write(self, field, value):
         """Write value to field."""
-        # Check CtrlMode
-        # if self.read('CtrlMode-Mon') == 1:
-        #     return
-
-        # if field in ('PwrState-Sel', 'Current-SP', 'WfmLabel-SP',
-        #              'WfmData-SP', 'WfmLoad-Sel'):
-        #     self._controller.write(field, value)
-
-        if field == 'PwrState-Sel':
-            return self._set_pwrstate(value)
-        elif field == 'Current-SP':
-            return self._set_current(value)
-        elif field == 'WfmLoad-Sel':
-            return self._set_wfmload(value)
-        elif field == 'WfmLabel-SP':
-            return self._set_wfmlabel(value)
-        elif field == 'WfmData-SP':
-            return self._set_wfmdata(value)
-        elif field == 'Abort-Cmd':
-            return self._abort()
+        return self._setpoints[field]['write'](value)
 
     def add_callback(self, func):
-        """"""
+        """Add callback."""
         pass
 
     def get_database(self, prefix=""):
@@ -89,45 +60,68 @@ class PowerSupply(PSComm):
         pass
 
     # Private methods
-    def _get_setpoint_value(self, field):
-        if field == 'PwrState-Sel':
-            return self._pwrstate_sel
-        elif field == 'Current-SP':
-            return self._current_sp
-        elif field == 'WfmLoad-Sel':
-            return self._wfmload_sel
-        elif field == 'WfmLabel-SP':
-            return self._wfmlabel_sp
-        elif field == 'WfmData-SP':
-            return self._wfmdata_sp
-        elif field == 'Abort-Cmd':
-            return self._abort_count
-        else:
-            raise ValueError('Invalid "{}" field!'.format(field))
+    def _build_setpoints(self):
+        """Foo."""
+        # TODO: Get from csdevice
+        setpoints = ['PwrState-Sel', 'OpMode-Sel', 'Current-SP', 'WfmLoad-Sel',
+                     'WfmLabel-SP', 'WfmData-SP', 'Abort-Cmd']
+        sp = dict()
+        for field in setpoints:
+            sp[field] = dict()
+            if field == 'PwrState-Sel':
+                sp[field]['write'] = self._set_pwrstate
+                sp[field]['value'] = 0.0
+            elif field == 'OpMode-Sel':
+                sp[field]['write'] = self._set_opmode
+                sp[field]['value'] = 0
+            elif field == 'Current-SP':
+                sp[field]['write'] = self._set_current
+                sp[field]['value'] = 0.0
+            elif field == 'WfmLoad-Sel':
+                sp[field]['write'] = self._set_wfmload
+                sp[field]['value'] = 0
+            elif field == 'WfmLabel-SP':
+                sp[field]['write'] = self._set_wfmlabel
+                sp[field]['value'] = ''
+            elif field == 'WfmData-SP':
+                sp[field]['write'] = self._set_wfmdata
+                sp[field]['value'] = []
+            elif field == 'Abort-Cmd':
+                sp[field]['write'] = self._abort
+                sp[field]['value'] = 0
+
+        return sp
 
     def _set_pwrstate(self, value):
-        self._pwrstate_sel = value
+        self._setpoints['PwrState-Sel']['value'] = value
         return self._controller.write('PwrState-Sel', value)
 
+    def _set_opmode(self, value):
+        self._setpoints['OpMode-Sel']['value'] = value
+        return self._controller.write('OpMode-Sel', value)
+
     def _set_current(self, value):
-        self._current_sp = value
+        self._setpoints['Current-SP']['value'] = value
         return self._controller.write('Current-SP', value)
 
     def _set_wfmload(self, value):
         self._wfmload_sel = value
+        self._setpoints['WfmLoad-Sel']['value'] = value
         return self._controller.write('WfmLoad-Sel', value)
 
     def _set_wfmlabel(self, value):
         self._wfmlabel_sp = value
+        self._setpoints['WfmLabel-SP']['value'] = value
         return self._controller.write('WfmLabel-SP', value)
 
     def _set_wfmdata(self, value):
         self._wfmdata_sp = value
+        self._setpoints['WfmData-SP']['value'] = value
         return self._controller.write('WfmData-SP', value)
 
-    def _abort(self):
+    def _abort(self, value):
         op_mode = self.read('OpMode-Sts')
-        self._abort_count += 1
+        self._setpoints['Abort-Cmd'].value += 1
         if op_mode in (1, 2, 4, 5):
             self._controller.write('OpMode-Sel', 0)  # Set to SlowRef
         elif op_mode == 3:
