@@ -4,7 +4,8 @@ from siriuspy.csdevice.pwrsupply import ps_models as _ps_models
 from siriuspy.csdevice.pwrsupply import ps_interface as _ps_interface
 from siriuspy.csdevice.pwrsupply import ps_openloop as _ps_openloop
 from siriuspy.csdevice.pwrsupply import ps_states as _ps_states
-from siriuspy.csdevice.pwrsupply import ps_cmdack as _ps_cmdack
+from siriuspy.csdevice.pwrsupply import ps_pwrstate_sel as _ps_pwrstate_sel
+from siriuspy.csdevice.pwrsupply import ps_opmode as _ps_opmode
 from siriuspy.csdevice.pwrsupply import ps_soft_interlock as _ps_soft_interlock
 from siriuspy.csdevice.pwrsupply import ps_hard_interlock as _ps_hard_interlock
 from siriuspy.csdevice.pwrsupply import get_common_ps_propty_database as \
@@ -54,9 +55,21 @@ class Status:
     _mask_unlck = 0b0010000000000000
     _mask_rsrvd = 0b1100000000000000
 
+    _dsp2ps_state = {
+        Const.States.Off: Const.OpMode.SlowRef,
+        Const.States.Interlock: Const.OpMode.SlowRef,
+        Const.States.Initializing: Const.OpMode.SlowRef,
+        Const.States.SlowRef: Const.OpMode.SlowRef,
+        Const.States.SlowRefSync: Const.OpMode.SlowRefSync,
+        Const.States.FastRef: Const.OpMode.FastRef,
+        Const.States.RmpWfm: Const.OpMode.RmpWfm,
+        Const.States.MigWfm: Const.OpMode.MigWfm,
+        Const.States.Cycle: Const.OpMode.Cycle,
+    }
+
     @staticmethod
     def state(status, label=False):
-        """Return state of power supply."""
+        """Return DSP state of power supply."""
         index = (status & (0b1111 << 0)) >> 0
         return _ps_states[index] if label else index
 
@@ -64,10 +77,36 @@ class Status:
     def set_state(status, value):
         """Set state in power supply status."""
         if not (0 <= value < len(_ps_states)):
-            raise ValueError('Invalid state number!')
+            raise ValueError('Invalid state value!')
         status = status & ~Status._mask_state
         status += value << 0
         return status
+
+    @staticmethod
+    def pwrstate(status, label=False):
+        """Return PS powerstate."""
+        state = Status.state(status, label=False)
+        index = Const.PwrState.Off if state == Const.States.Off else \
+            Const.PwrState.On
+        return _ps_pwrstate_sel[index] if label else index
+
+    @staticmethod
+    def set_pwrstate(status, value):
+        """Set pwrstate in power supply status."""
+        if not (0 <= value < len(_ps_pwrstate_sel)):
+            raise ValueError('Invalid pwrstate value!')
+        status = status & ~Status._mask_state
+        value = Const.States.Off if value == Const.PwrState.Off else \
+            Const.States.SlowRef
+        status += value << 0
+        return status
+
+    @staticmethod
+    def opmode(status, label=False):
+        """Return PS opmode."""
+        state = Status.state(status, label=False)
+        index = Status._dsp2ps_state[state]
+        return _ps_opmode[index] if label else index
 
     @staticmethod
     def openloop(status, label=False):
@@ -79,7 +118,7 @@ class Status:
     def set_openloop(status, value):
         """Set openloop in power supply status."""
         if not (0 <= value < len(_ps_openloop)):
-            raise ValueError('Invalid openloop number!')
+            raise ValueError('Invalid openloop value!')
         status = status & ~Status._mask_oloop
         status += value << 4
         return status
@@ -196,12 +235,14 @@ class Controller:
     """Controller class."""
 
     # conversion dict from PS fields to DSP properties for read method.
-    _read_field2propty = {
-        'CtrlMode-Mon': '_read_ctrlmode',
-        'PwrState-Sel': '_read_pwrstate',
-        'PwrState-Sts': '_read_pwrstate',
-        'OpMode-Sel': '_read_state',
-        'OpMode-Sts': '_read_state',
+    _read_field2func = {
+        'CtrlMode-Mon': 'read_ctrlmode',
+        'PwrState-Sts': 'read_pwrstate',
+        'OpMode-Sts': 'read_opmode',
+    }
+
+    _write_field2func = {
+        'PwrState-Sel': 'write_pwrstate',
     }
 
     # --- API: general power supply 'variables' ---
@@ -257,13 +298,13 @@ class Controller:
         """Turn power supply on."""
         # check if ps is in remote ctrlmode
         ret = self._check_interface()
-        return ret is ret if not None else self._cmd_turn_on()
+        return ret if ret is not None else self._cmd_turn_on()
 
     def cmd_turn_off(self):
         """Turn power supply off."""
         # check if ps is in remote ctrlmode
         ret = self._check_interface()
-        return ret is ret if not None else self._cmd_turn_off()
+        return ret if ret is not None else self._cmd_turn_off()
 
     def cmd_open_loop(self):
         """Open DSP control loop."""
@@ -286,6 +327,52 @@ class Controller:
         """Set SlowRef reference value."""
         ret = self._check_interface()
         return ret is ret if not None else self._cmd_set_slowref(ref)
+
+    # --- API: public properties and methods ---
+
+    def read_ctrlmode(self):
+        """Return controller CtrlMode."""
+        ps_status = self.ps_status
+        return Status.interface(ps_status)
+
+    def read_pwrstate(self):
+        """Return controller PwrState."""
+        ps_status = self.ps_status
+        value = Status.pwrstate(ps_status)
+        return value
+
+    def read_opmode(self):
+        """Return controller OpMode."""
+        ps_status = self.ps_status
+        value = Status.opmode(ps_status)
+        return value
+
+    def write_pwrstate(self, value):
+        """Set pwrstate state."""
+        if value == Const.PwrState.Off:
+            return self.cmd_turn_off()
+        elif value == Const.PwrState.On:
+            return self.cmd_turn_on()
+        else:
+            raise ValueError('Invalid pwrstate value "{}"!'.format(value))
+
+    def read(self, field):
+        """Return value of a field."""
+        if field in Controller._read_field2func:
+            func = getattr(self, Controller._read_field2func[field])
+            value = func()
+            return value
+        else:
+            raise ValueError('Field "{}"" not valid!'.format(field))
+
+    def write(self, field, value):
+        """Write value to a field."""
+        if field in Controller._write_field2func:
+            func = getattr(self, Controller._write_field2func[field])
+            ret = func(value)
+            return ret
+        else:
+            raise ValueError('Field "{}"" not valid!'.format(field))
 
     # --- pure virtual methods ---
 
@@ -328,25 +415,17 @@ class Controller:
     # --- auxilliary private methods ---
 
     def _check_interface(self):
-        interface, ack = Status.interface(self.status), _ps_cmdack
-        if interface != Const.CtrlMode.Remote:
-            if interface == Const.CtrlMode.Local:
-                return ack[Const.CmdAck.Local]
+        interface = Status.interface(self.ps_status)
+        if interface != Const.Interface.Remote:
+            if interface == Const.Interface.Local:
+                return Const.CmdAck.Local
             else:
-                return ack[Const.CmdAck.PCHost]
+                return Const.CmdAck.PCHost
         return None  # in Remote interface
 
     def _read_ctrlmode(self):
         ps_status = self.ps_status
         return Status.interface(ps_status)
-
-    def _read_pwrstate(self):
-        ps_status = self.ps_status
-        state = Status.interface(ps_status)
-        if state == Const.States.Off:
-            return Const.PwrState.Off
-        else:
-            return Const.PwrState.On
 
     def _read_state(self):
         ps_status = self.ps_status
@@ -407,40 +486,41 @@ class ControllerSim(Controller):
     def _cmd_turn_on(self):
         # update ps_status
         status = self.ps_status
-        status = Status.set_state(status, Const.State.SlowRef)
+        status = Status.set_state(status, Const.States.SlowRef)
         self._ps_status = status
         # update current load
         self._i_load = self._ps_reference
-        return _ps_cmdack[Const.CmdAck.OK]
+        return Const.CmdAck.OK
 
     def _cmd_turn_off(self):
         # update ps_status
         status = self.ps_status
-        status = Status.set_state(status, Const.State.Off)
+        status = Status.set_state(status, Const.States.Off)
         self._ps_status = status
         # update load current
         self._i_load = 0.0
-        return _ps_cmdack[Const.CmdAck.OK]
+        return Const.CmdAck.OK
 
     def _cmd_open_loop(self):
         # update ps_status
         status = self.ps_status
         status = Status.set_openloop(status, Const.Openloop.Open)
         self._ps_status = status
-        return _ps_cmdack[Const.CmdAck.OK]
+        return Const.CmdAck.OK
 
     def _cmd_close_loop(self):
         # update ps_status
         status = self.ps_status
         status = Status.set_openloop(status, Const.Openloop.Closed)
         self._ps_status = status
+        return Const.CmdAck.OK
 
     def _cmd_reset_interlocks(self):
         self._reset_interlocks()
         if self.ps_soft_interlocks == 0 and self.ps_hard_interlocks == 0:
             status = self.ps_status
             status = Status.set_state(status, self._last_state)
-        return _ps_cmdack[Const.CmdAck.OK]
+        return Const.CmdAck.OK
 
     def _cmd_set_slowref(self, ref):
         self._ps_setpoint = ref
@@ -454,7 +534,7 @@ class ControllerSim(Controller):
 
     def _build_status(self, model):
         status = 0
-        status = Status.set_state(status, ControllerSim.Const.States.Off)
+        status = Status.set_state(status, Const.States.Off)
         status = Status.set_openloop(status, Const.Openloop.Closed)
         status = Status.set_interface(status, Const.Interface.Remote)
         status = Status.set_active(status, 1)
@@ -471,7 +551,7 @@ class ControllerSim(Controller):
         # in some situations setpoint is not passed to reference.
         self._ps_reference = setpoint
         self._i_load = self._ps_reference
-        return _ps_cmdack[Const.CmdAck.OK]
+        return Const.CmdAck.OK
 
 
 class ControllerSerial(Controller):

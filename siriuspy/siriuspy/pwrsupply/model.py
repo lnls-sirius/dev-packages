@@ -35,6 +35,10 @@ class PowerSupply(PSComm):
 
     _is_setpoint = _re.compile('.*-(SP|Sel)$')
 
+    _read_ps2dsp = {
+        'PwrState-Sts'
+    }
+    
     def __init__(self, controller):
         """Init method."""
         self._controller = controller
@@ -98,6 +102,8 @@ class PowerSupply(PSComm):
             return self._wfmdata_sp
         elif field == 'Abort-Cmd':
             return self._abort_count
+        else:
+            raise ValueError('Invalid "{}" field!'.format(field))
 
     def _set_pwrstate(self, value):
         self._pwrstate_sel = value

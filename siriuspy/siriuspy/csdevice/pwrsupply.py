@@ -23,9 +23,11 @@ ps_models = ('FBP', 'FAP', 'FAP_4P_Master', 'FAP_4P_Slave',
 ps_dsblenbl = ('Dsbl', 'Enbl')
 ps_interface = ('Remote', 'Local', 'PCHost')
 ps_openloop = ('Closed', 'Open')
-ps_pwrstate = ('Off', 'On')
 ps_states = ('Off', 'Interlock', 'Initializing',
              'SlowRef', 'SlowRefSync', 'FastRef', 'RmpWfm', 'MigWfm', 'Cycle')
+ps_pwrstate_sel = ('Off', 'On', 'Initializing')
+ps_pwrstate_sts = ('Off', 'On')
+ps_opmode = ('SlowRef', 'SlowRefSync', 'FastRef', 'RmpWfm', 'MigWfm', 'Cycle')
 ps_cmdack = ('OK', 'Local', 'PCHost', 'Interlocked', 'UDC_locked',
              'DSP_TimeOut', 'DSP_Busy', 'Invalid',)
 ps_soft_interlock = ('IGBT1_OVERTEMP', 'IGBT2_OVERTEMP', 'L1_OVERTEMP',
@@ -56,13 +58,15 @@ class Const:
         for i in range(len(ps_dsblenbl)):
             Const._add_const('DsblEnbl', ps_dsblenbl[i], i)
         for i in range(len(ps_interface)):
-            Const._add_const('CtrlMode', ps_interface[i], i)
+            Const._add_const('Interface', ps_interface[i], i)
         for i in range(len(ps_openloop)):
             Const._add_const('Openloop', ps_openloop[i], i)
-        for i in range(len(ps_pwrstate)):
-            Const._add_const('PwrState', ps_pwrstate[i], i)
         for i in range(len(ps_states)):
             Const._add_const('States', ps_states[i], i)
+        for i in range(len(ps_pwrstate_sel)):
+            Const._add_const('PwrState', ps_pwrstate_sel[i], i)
+        for i in range(len(ps_opmode)):
+            Const._add_const('OpMode', ps_opmode[i], i)
         for i in range(len(ps_cmdack)):
             Const._add_const('CmdAck', ps_cmdack[i], i)
 
@@ -99,9 +103,9 @@ def get_common_propty_database():
     db = {
         'CtrlMode-Mon':     {'type': 'enum', 'enums': ps_interface,
                              'value': _et.idx.Remote},
-        'PwrState-Sel':     {'type': 'enum', 'enums': ps_pwrstate,
+        'PwrState-Sel':     {'type': 'enum', 'enums': ps_pwrstate_sel,
                              'value': _et.idx.Off},
-        'PwrState-Sts':     {'type': 'enum', 'enums': ps_pwrstate,
+        'PwrState-Sts':     {'type': 'enum', 'enums': ps_pwrstate_sts,
                              'value': _et.idx.Off},
         'Intlk-Mon':        {'type': 'int',    'value': 0},
         'IntlkLabels-Cte':  {'type': 'string',
