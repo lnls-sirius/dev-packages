@@ -1,17 +1,16 @@
 """Power supply controller classes."""
 
 from siriuspy.csdevice.pwrsupply import ps_models as _ps_models
-from siriuspy.csdevice.pwrsupply import ps_dsblenbl as _ps_dsblenbl
 from siriuspy.csdevice.pwrsupply import ps_interface as _ps_interface
 from siriuspy.csdevice.pwrsupply import ps_openloop as _ps_openloop
-from siriuspy.csdevice.pwrsupply import ps_pwrstate as _ps_pwrstate
 from siriuspy.csdevice.pwrsupply import ps_states as _ps_states
 from siriuspy.csdevice.pwrsupply import ps_cmdack as _ps_cmdack
 from siriuspy.csdevice.pwrsupply import ps_soft_interlock as _ps_soft_interlock
 from siriuspy.csdevice.pwrsupply import ps_hard_interlock as _ps_hard_interlock
-from siriuspy.csdevice.pwrsupply import Const as _Const
 from siriuspy.csdevice.pwrsupply import get_common_ps_propty_database as \
     _get_common_ps_propty_database
+from siriuspy.csdevice.pwrsupply import Const as Const  # Intentionally in API.
+
 
 # from siriuspy.csdevice.enumtypes import EnumTypes as _et
 # from epics import PV as _PV
@@ -42,10 +41,6 @@ from siriuspy.csdevice.pwrsupply import get_common_ps_propty_database as \
 
 # loads power supply database with default initial values
 _db_ps = _get_common_ps_propty_database()
-
-
-def _init_value(propty):
-    return _db_ps[propty]['value']
 
 
 class Status:
@@ -192,6 +187,7 @@ class _InterlockHard(_Interlock):
         self._init()
 
 
+# the following variables can be used to manipulate interlock bits.
 InterlockSoft = _InterlockSoft()
 InterlockHard = _InterlockHard()
 
@@ -201,12 +197,14 @@ class Controller:
 
     # conversion dict from PS fields to DSP properties for read method.
     _read_field2propty = {
-        'CtrlMode-Mon': 'ps_Remote',
-        'OpMode-Sel': 'ps_OpMode',
-        'OpMode-Sts': 'ps_OpMode',
+        'CtrlMode-Mon': '_read_ctrlmode',
+        'PwrState-Sel': '_read_pwrstate',
+        'PwrState-Sts': '_read_pwrstate',
+        'OpMode-Sel': '_read_state',
+        'OpMode-Sts': '_read_state',
     }
 
-    # --- general power supply properties ---
+    # --- API: general power supply 'variables' ---
 
     @property
     def ps_status(self):
@@ -226,22 +224,34 @@ class Controller:
         """
         return self._get_ps_reference()
 
-    # --- FBP power supply properties ---
+    # --- API: FBP power supply 'variables' ---
 
     @property
     def ps_soft_interlocks(self):
-        """Return soft interlock integer."""
+        """Return soft interlock state."""
         return self._get_ps_soft_interlocks
 
     @property
     def ps_hard_interlocks(self):
-        """Return hard interlock integer."""
+        """Return hard interlock state."""
         return self._get_ps_hard_interlocks
 
     @property
     def i_load(self):
-        """Return power supply current load."""
+        """Return power supply load current."""
         return self._get_i_load()
+
+    @property
+    def v_load(self):
+        """Return power supply load voltage."""
+        return self._get_v_load()
+
+    @property
+    def v_dclink(self):
+        """Return DC-link voltage."""
+        return self._get_dclink()
+
+    # --- API: power supply 'functions' ---
 
     def cmd_turn_on(self):
         """Turn power supply on."""
@@ -255,39 +265,120 @@ class Controller:
         ret = self._check_interface()
         return ret is ret if not None else self._cmd_turn_off()
 
+    def cmd_open_loop(self):
+        """Open DSP control loop."""
+        # check if ps is in remote ctrlmode
+        ret = self._check_interface()
+        return ret is ret if not None else self._cmd_open_loop()
+
+    def cmd_close_loop(self):
+        """Open DSP control loop."""
+        # check if ps is in remote ctrlmode
+        ret = self._check_interface()
+        return ret is ret if not None else self._cmd_close_loop()
+
+    def cmd_reset_interlocks(self):
+        """Reset interlocks."""
+        ret = self._check_interface()
+        return ret is ret if not None else self._cmd_reset_interlocks()
+
+    def cmd_set_slowref(self, ref):
+        """Set SlowRef reference value."""
+        ret = self._check_interface()
+        return ret is ret if not None else self._cmd_set_slowref(ref)
+
+    # --- pure virtual methods ---
+
+    def _get_ps_status(self):
+        raise NotImplementedError
+
+    def _get_ps_setpoint(self):
+        raise NotImplementedError
+
+    def _get_ps_reference(self):
+        raise NotImplementedError
+
+    def _get_ps_soft_interlocks(self):
+        raise NotImplementedError
+
+    def _get_ps_hard_interlocks(self):
+        raise NotImplementedError
+
+    def _get_i_load(self):
+        raise NotImplementedError
+
+    def _get_v_load(self):
+        raise NotImplementedError
+
+    def _get_dclink(self):
+        raise NotImplementedError
+
+    def _cmd_open_loop(self):
+        raise NotImplementedError
+
+    def _cmd_close_loop(self):
+        raise NotImplementedError
+
+    def _cmd_reset_interlocks(self):
+        raise NotImplementedError
+
+    def _cmd_set_slowref(self, ref):
+        raise NotImplementedError
+
+    # --- auxilliary private methods ---
+
     def _check_interface(self):
         interface, ack = Status.interface(self.status), _ps_cmdack
-        if interface != _Const.Remote:
-            if interface == _Const.Local:
-                return ack[_Const.Local]
+        if interface != Const.CtrlMode.Remote:
+            if interface == Const.CtrlMode.Local:
+                return ack[Const.CmdAck.Local]
             else:
-                return ack[_Const.PCHost]
+                return ack[Const.CmdAck.PCHost]
         return None  # in Remote interface
+
+    def _read_ctrlmode(self):
+        ps_status = self.ps_status
+        return Status.interface(ps_status)
+
+    def _read_pwrstate(self):
+        ps_status = self.ps_status
+        state = Status.interface(ps_status)
+        if state == Const.States.Off:
+            return Const.PwrState.Off
+        else:
+            return Const.PwrState.On
+
+    def _read_state(self):
+        ps_status = self.ps_status
+        return Status.state(ps_status)
 
 
 class ControllerSim(Controller):
     """Simulation Controller class."""
 
-    def __init__(self, model):
+    def __init__(self, model, psname=None):
         """Init method."""
+        # --- BSMP interface ---
         if not (0 <= model < len(_ps_models)):
             raise ValueError('Model index {} is not valid!'.format(model))
         self._ps_status = self._build_status(model)
-        self._ps_setpoint = _init_value('Current-SP')
-        self._ps_reference = _init_value('CurrentRef-Mon')
-        self._ps_soft_interlocks = 0
-        self._ps_hard_interlocks = 0
-        self._i_load = _init_value('Current-Mon')
+        self._ps_setpoint = ControllerSim._init_value('Current-SP')
+        self._ps_reference = ControllerSim._init_value('CurrentRef-Mon')
+        self._reset_interlocks()
+        self._i_load = ControllerSim._init_value('Current-Mon')
 
-    def _build_status(self, model):
-        status = 0
-        status = Status.set_state(status, _init_value('PwrState-Sts'))
-        status = Status.set_openloop(status, _Const.Closed)
-        status = Status.set_interface(status, _init_value('CtrlMode-Mon'))
-        status = Status.set_active(status, 1)
-        status = Status.set_model(status, model)
-        status = Status.set_unlocked(status, 1)
-        return status
+        # --- simulation aux. attributes
+
+        # psname can be used to eventually simulate PS resistance:
+        self._psname = psname
+        # resitance bellow is arbitrary. this should be corrected:
+        self._resistance = 0.5
+        # controller has to store its last opmode in order to deal with
+        # the implementation of come of the commands|functions.
+        # we should talk to ELP staff to clarify this point:
+        self._last_state = Status.state(self._ps_status)
+
+    # --- pure virtual methods (Controller): implementation ---
 
     def _get_ps_status(self):
         return self._ps_status
@@ -298,37 +389,100 @@ class ControllerSim(Controller):
     def _get_ps_reference(self):
         return self._ps_reference
 
+    def _get_ps_soft_interlocks(self):
+        return self._ps_soft_interlocks
+
+    def _get_ps_hard_interlocks(self):
+        return self._ps_hard_interlocks
+
     def _get_i_load(self):
         return self._i_load
+
+    def _get_v_load(self):
+        return self._resistance * self._i_load
+
+    def _get_dclink(self):
+        raise NotImplementedError
 
     def _cmd_turn_on(self):
         # update ps_status
         status = self.ps_status
-        status = Status.set_state(status, _Const.SlowRef)
+        status = Status.set_state(status, Const.State.SlowRef)
         self._ps_status = status
         # update current load
         self._i_load = self._ps_reference
-        return _ps_cmdack[_Const.OK]
+        return _ps_cmdack[Const.CmdAck.OK]
 
     def _cmd_turn_off(self):
         # update ps_status
         status = self.ps_status
-        status = Status.set_state(status, _Const.Off)
+        status = Status.set_state(status, Const.State.Off)
         self._ps_status = status
-        # update current load
+        # update load current
         self._i_load = 0.0
-        return _ps_cmdack[_Const.OK]
+        return _ps_cmdack[Const.CmdAck.OK]
+
+    def _cmd_open_loop(self):
+        # update ps_status
+        status = self.ps_status
+        status = Status.set_openloop(status, Const.Openloop.Open)
+        self._ps_status = status
+        return _ps_cmdack[Const.CmdAck.OK]
+
+    def _cmd_close_loop(self):
+        # update ps_status
+        status = self.ps_status
+        status = Status.set_openloop(status, Const.Openloop.Closed)
+        self._ps_status = status
+
+    def _cmd_reset_interlocks(self):
+        self._reset_interlocks()
+        if self.ps_soft_interlocks == 0 and self.ps_hard_interlocks == 0:
+            status = self.ps_status
+            status = Status.set_state(status, self._last_state)
+        return _ps_cmdack[Const.CmdAck.OK]
+
+    def _cmd_set_slowref(self, ref):
+        self._ps_setpoint = ref
+        return self._set_reference(setpoint=self._ps_setpoint)
+
+    # --- auxilliary methods ---
+
+    @staticmethod
+    def _init_value(propty):
+        return _db_ps[propty]['value']
+
+    def _build_status(self, model):
+        status = 0
+        status = Status.set_state(status, ControllerSim.Const.States.Off)
+        status = Status.set_openloop(status, Const.Openloop.Closed)
+        status = Status.set_interface(status, Const.Interface.Remote)
+        status = Status.set_active(status, 1)
+        status = Status.set_model(status, model)
+        status = Status.set_unlocked(status, 1)
+        return status
+
+    def _reset_interlocks(self):
+        self._ps_soft_interlocks = 0
+        self._ps_hard_interlocks = 0
+
+    def _set_reference(self, setpoint):
+        # this needs elaboration:
+        # in some situations setpoint is not passed to reference.
+        self._ps_reference = setpoint
+        self._i_load = self._ps_reference
+        return _ps_cmdack[Const.CmdAck.OK]
 
 
 class ControllerSerial(Controller):
-    """Serial Controller class."""
+    """Serial Controller class.
 
-    def __init__(self):
-        """Init method."""
-        pass
+    This class should encapsulate all comunications between the power supply
+    IOC and the controller|DSP  through the serial port.
+    """
 
-    def _get_iLoad1(self):
-        return 0.0
+    pass
+
 
 
 # class Controller:
