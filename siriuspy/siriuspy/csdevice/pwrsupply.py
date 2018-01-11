@@ -4,6 +4,7 @@ import copy as _copy
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.search import MASearch as _MASearch
+from collections import namedtuple as _namedtuple
 
 default_wfmsize = 4000
 default_wfmlabels = _et.enums('PSWfmLabelsTyp')
@@ -42,6 +43,7 @@ ps_hard_interlock = ('LOAD_OVERCURRENT', 'EXTERNAL_INTERLOCK', 'AC_FAULT',
                      'OUT2_OVERVOLTAGE', 'LEAKAGE_OVERCURRENT',
                      'AC_OVERCURRENT',)
 
+
 # --- power supply constants definition class ---
 class Const:
     """Const class defining power supply constants."""
@@ -49,23 +51,27 @@ class Const:
     @staticmethod
     def _init():
         """Create class constants."""
+        for i in range(len(ps_models)):
+            Const._add_const('Models', ps_models[i], i)
         for i in range(len(ps_dsblenbl)):
-            Const._add_const(ps_dsblenbl[i], i)
+            Const._add_const('DsblEnbl', ps_dsblenbl[i], i)
         for i in range(len(ps_interface)):
-            Const._add_const(ps_interface[i], i)
+            Const._add_const('CtrlMode', ps_interface[i], i)
         for i in range(len(ps_openloop)):
-            Const._add_const(ps_openloop[i], i)
+            Const._add_const('Openloop', ps_openloop[i], i)
         for i in range(len(ps_pwrstate)):
-            Const._add_const(ps_pwrstate[i], i)
+            Const._add_const('PwrState', ps_pwrstate[i], i)
         for i in range(len(ps_states)):
-            Const._add_const(ps_states[i], i)
+            Const._add_const('States', ps_states[i], i)
+        for i in range(len(ps_cmdack)):
+            Const._add_const('CmdAck', ps_cmdack[i], i)
 
     @staticmethod
-    def _add_const(const, i):
-        if hasattr(Const, const) and getattr(Const, const) != i:
-            raise ValueError('Constant "{}" already defined!'.format(const))
-        else:
-            setattr(Const, const, i)
+    def _add_const(group, const, i):
+        if not hasattr(Const, group):
+            setattr(Const, group, _namedtuple(group, ''))
+        obj = getattr(Const, group)
+        setattr(obj, const, i)
 
 
 Const._init()
