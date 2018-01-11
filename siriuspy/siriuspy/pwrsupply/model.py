@@ -44,6 +44,7 @@ class PowerSupply(PSComm):
         self._wfmload_sel = 0
         self._wfmlabel = ''
         self._wfmdata_sp = []
+        self._abort_count = 0
 
     def read(self, field):
         """Read field value."""
@@ -84,6 +85,20 @@ class PowerSupply(PSComm):
         pass
 
     # Private methods
+    def _get_setpoint_value(self, field):
+        if field == 'PwrState-Sel':
+            return self._pwrstate_sel
+        elif field == 'Current-SP':
+            return self._current_sp
+        elif field == 'WfmLoad-Sel':
+            return self._wfmload_sel
+        elif field == 'WfmLabel-SP':
+            return self._wfmlabel_sp
+        elif field == 'WfmData-SP':
+            return self._wfmdata_sp
+        elif field == 'Abort-Cmd':
+            return self._abort_count
+
     def _set_pwrstate(self, value):
         self._pwrstate_sel = value
         return self._controller.write('PwrState-Sel', value)
@@ -106,7 +121,7 @@ class PowerSupply(PSComm):
 
     def _abort(self):
         op_mode = self.read('OpMode-Sts')
-        self._abort += 1
+        self._abort_count += 1
         if op_mode in (1, 2, 4, 5):
             self._controller.write('OpMode-Sel', 0)  # Set to SlowRef
         elif op_mode == 3:
