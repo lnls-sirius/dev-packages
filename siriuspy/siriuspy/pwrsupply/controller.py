@@ -67,6 +67,15 @@ class Status:
         Const.States.Cycle: Const.OpMode.Cycle,
     }
 
+    _ps2dsp_state = {
+        Const.OpMode.SlowRef: Const.States.SlowRef,
+        Const.OpMode.SlowRefSync: Const.States.SlowRefSync,
+        Const.OpMode.FastRef: Const.States.FastRef,
+        Const.OpMode.RmpWfm: Const.States.RmpWfm,
+        Const.OpMode.MigWfm: Const.States.MigWfm,
+        Const.OpMode.Cycle: Const.States.Cycle,
+    }
+
     @staticmethod
     def state(status, label=False):
         """Return DSP state of power supply."""
@@ -107,6 +116,15 @@ class Status:
         state = Status.state(status, label=False)
         index = Status._dsp2ps_state[state]
         return _ps_opmode[index] if label else index
+
+    @staticmethod
+    def set_opmode(status, value):
+        """Set power supply opmode."""
+        if not (0 <= value < len(_ps_opmode)):
+            raise ValueError('Invalid opmode value!')
+        value = Status._ps2dsp_state[value]
+        status = Status.set_state(status, value)
+        return status
 
     @staticmethod
     def openloop(status, label=False):
@@ -239,10 +257,15 @@ class Controller:
         'CtrlMode-Mon': 'read_ctrlmode',
         'PwrState-Sts': 'read_pwrstate',
         'OpMode-Sts': 'read_opmode',
+        'Current-RB': '_get_ps_setpoint',
+        'CurrentRef-Mon': '_get_ps_reference',
+        'Current-Mon': '_get_i_load',
     }
 
     _write_field2func = {
         'PwrState-Sel': 'write_pwrstate',
+        'OpMode-Sel': 'write_opmode',
+        'Current-SP': 'cmd_set_slowref',
     }
 
     # --- API: general power supply 'variables' ---
@@ -328,6 +351,12 @@ class Controller:
         ret = self._check_interface()
         return ret is ret if not None else self._cmd_set_slowref(ref)
 
+    def cmd_cfg_op_mode(self, state):
+        """Set controller operation mode."""
+        # check if ps is in remote ctrlmode
+        ret = self._check_interface()
+        return ret is ret if not None else self._cmd_cfg_op_mode(state)
+
     # --- API: public properties and methods ---
 
     def read_ctrlmode(self):
@@ -356,6 +385,12 @@ class Controller:
         else:
             raise ValueError('Invalid pwrstate value "{}"!'.format(value))
 
+    def write_opmode(self, value):
+        """Set opmode."""
+        ps_status = Status.set_opmode(self.ps_status, value)
+        state = Status.state(ps_status)
+        self.cmd_cfg_op_mode(state)
+
     def read(self, field):
         """Return value of a field."""
         if field in Controller._read_field2func:
@@ -375,6 +410,7 @@ class Controller:
             raise ValueError('Field "{}"" not valid!'.format(field))
 
     # --- pure virtual methods ---
+    #     These are the functions that all subclass have to implement!
 
     def _get_ps_status(self):
         raise NotImplementedError
@@ -410,6 +446,9 @@ class Controller:
         raise NotImplementedError
 
     def _cmd_set_slowref(self, ref):
+        raise NotImplementedError
+
+    def _cmd_cfg_op_mode(self, state):
         raise NotImplementedError
 
     # --- auxilliary private methods ---
@@ -525,6 +564,9 @@ class ControllerSim(Controller):
     def _cmd_set_slowref(self, ref):
         self._ps_setpoint = ref
         return self._set_reference(setpoint=self._ps_setpoint)
+
+    def _cmd_cfg_op_mode(self, state):
+        self._ps_status = Status.set_state(state)
 
     # --- auxilliary methods ---
 
