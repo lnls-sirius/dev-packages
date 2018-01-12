@@ -358,11 +358,11 @@ class Controller:
         ret = self._check_interface()
         return ret if ret is not None else self._cmd_set_slowref(ref)
 
-    def cmd_cfg_op_mode(self, state):
+    def cmd_cfg_op_mode(self, opmode):
         """Set controller operation mode."""
         # check if ps is in remote ctrlmode
         ret = self._check_interface()
-        return ret is ret if not None else self._cmd_cfg_op_mode(state)
+        return ret if ret is not None else self._cmd_cfg_op_mode(opmode)
 
     # --- API: public properties and methods ---
 
@@ -394,9 +394,9 @@ class Controller:
 
     def write_opmode(self, value):
         """Set opmode."""
-        ps_status = Status.set_opmode(self.ps_status, value)
-        state = Status.state(ps_status)
-        self.cmd_cfg_op_mode(state)
+        # status = Status.set_opmode(self.ps_status, value)
+        # state = Status.state(status)
+        self.cmd_cfg_op_mode(value)
 
     def read(self, field):
         """Return value of a field."""
@@ -572,8 +572,11 @@ class ControllerSim(Controller):
         self._ps_setpoint = ref
         return self._set_reference(setpoint=self._ps_setpoint)
 
-    def _cmd_cfg_op_mode(self, state):
-        self._ps_status = Status.set_state(state)
+    def _cmd_cfg_op_mode(self, opmode):
+        status = self.ps_status
+        status = Status.set_opmode(status, opmode)
+        self._ps_status = status
+        return Const.CmdAck.OK
 
     # --- auxilliary methods ---
 
