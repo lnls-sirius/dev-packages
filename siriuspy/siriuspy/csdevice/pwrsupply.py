@@ -120,9 +120,9 @@ def get_common_ps_propty_database():
     """Return database of commun to all pwrsupply PVs."""
     db = get_common_propty_database()
     db_ps = {
-        'OpMode-Sel': {'type': 'enum', 'enums': ps_states,
+        'OpMode-Sel': {'type': 'enum', 'enums': ps_opmode,
                        'value': _et.idx.SlowRef},
-        'OpMode-Sts': {'type': 'enum', 'enums': ps_states,
+        'OpMode-Sts': {'type': 'enum', 'enums': ps_opmode,
                        'value': _et.idx.SlowRef},
         'Abort-Cmd': {'type': 'int', 'value': 0},
         'WfmIndex-Mon': {'type': 'int', 'value': 0},

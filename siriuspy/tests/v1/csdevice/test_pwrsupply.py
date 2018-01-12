@@ -4,7 +4,6 @@
 
 import unittest
 from unittest import mock
-from siriuspy.search import PSSearch
 import siriuspy.csdevice.pwrsupply as pwrsupply
 import siriuspy.util as util
 
@@ -18,6 +17,18 @@ public_interface = (
     'default_intlklabels',
     'default_ps_current_precision',
     'default_pu_current_precision',
+    'ps_models',
+    'ps_dsblenbl',
+    'ps_interface',
+    'ps_openloop',
+    'ps_states',
+    'ps_pwrstate_sel',
+    'ps_pwrstate_sts',
+    'ps_opmode',
+    'ps_cmdack',
+    'Const',
+    'ps_soft_interlock',
+    'ps_hard_interlock',
     'get_ps_current_unit',
     'get_pu_current_unit',
     'get_common_propty_database',

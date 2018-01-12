@@ -44,9 +44,10 @@ class TestEnumTypes(unittest.TestCase):
         # check format of output
         types = EnumTypes.types()
         self.assertIn('OffOnTyp', types)
-        self.assertIn('OffOnWaitTyp', types)
+        self.assertIn('OffOnInitTyp', types)
         self.assertIn('DsblEnblTyp', types)
-        self.assertIn('RmtLocTyp', types)
+        self.assertIn('PSRmtLocTyp', types)
+        self.assertIn('PSPwrStateTyp', types)
         self.assertIsInstance(types, dict)
         for typ in types:
             self.assertIsInstance(typ, str)
@@ -70,9 +71,10 @@ class TestEnumTypes(unittest.TestCase):
         # check format of output
         types = EnumTypes.types()
         self.assertIn('OffOnTyp', types)
-        self.assertIn('OffOnWaitTyp', types)
+        self.assertIn('OffOnTyp', types)
         self.assertIn('DsblEnblTyp', types)
-        self.assertIn('RmtLocTyp', types)
+        self.assertIn('OffOnInitTyp', types)
+        self.assertIn('PSRmtLocTyp', types)
         self.assertIsInstance(types, dict)
         for typ in types:
             self.assertIsInstance(typ, str)
@@ -90,9 +92,10 @@ class TestEnumTypes(unittest.TestCase):
                           typ='OffOnTyp', key='')
         self.assertEqual(EnumTypes.conv_key2idx('OffOnTyp', 'Off'), 0)
         self.assertEqual(EnumTypes.conv_key2idx('OffOnTyp', 'On'), 1)
-        self.assertEqual(EnumTypes.conv_key2idx('OffOnWaitTyp', 'Off'), 0)
-        self.assertEqual(EnumTypes.conv_key2idx('OffOnWaitTyp', 'On'), 1)
-        self.assertEqual(EnumTypes.conv_key2idx('OffOnWaitTyp', 'Wait'), 2)
+        self.assertEqual(EnumTypes.conv_key2idx('OffOnInitTyp', 'Off'), 0)
+        self.assertEqual(EnumTypes.conv_key2idx('OffOnInitTyp', 'On'), 1)
+        self.assertEqual(EnumTypes.conv_key2idx('OffOnInitTyp',
+                                                'Initializing'), 2)
 
     def test_conv_idx2key(self):
         """Test conv_idx2key."""
@@ -102,17 +105,19 @@ class TestEnumTypes(unittest.TestCase):
                           typ='OffOnTyp', idx=5)
         self.assertEqual(EnumTypes.conv_idx2key('OffOnTyp', 0), 'Off')
         self.assertEqual(EnumTypes.conv_idx2key('OffOnTyp', 1), 'On')
-        self.assertEqual(EnumTypes.conv_idx2key('OffOnWaitTyp', 0), 'Off')
-        self.assertEqual(EnumTypes.conv_idx2key('OffOnWaitTyp', 1), 'On')
-        self.assertEqual(EnumTypes.conv_idx2key('OffOnWaitTyp', 2), 'Wait')
+        self.assertEqual(EnumTypes.conv_idx2key('OffOnInitTyp', 0), 'Off')
+        self.assertEqual(EnumTypes.conv_idx2key('OffOnInitTyp', 1), 'On')
+        self.assertEqual(EnumTypes.conv_idx2key('OffOnInitTyp', 2),
+                         'Initializing')
 
     def test_idx(self):
         """Test a few class indices."""
         self.assertEqual(EnumTypes.idx.Off, 0)
         self.assertEqual(EnumTypes.idx.On, 1)
-        self.assertEqual(EnumTypes.idx.Wait, 2)
+        self.assertEqual(EnumTypes.idx.Initializing, 2)
         self.assertEqual(EnumTypes.idx.Remote, 0)
         self.assertEqual(EnumTypes.idx.Local, 1)
+        self.assertEqual(EnumTypes.idx.PCHost, 2)
         self.assertEqual(EnumTypes.idx.Dsbl, 0)
         self.assertEqual(EnumTypes.idx.Enbl, 1)
 
