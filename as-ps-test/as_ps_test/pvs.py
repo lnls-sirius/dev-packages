@@ -5,7 +5,7 @@ from siriuspy import envars as _envars
 from siriuspy.search import PSSearch as _PSSearch
 import siriuspy.util as _util
 from siriuspy.pwrsupply.controller import ControllerSim as _ControllerSim
-from siriuspy.pwrsupply.controller import PUControllerSim as _PUControllerSim
+# from siriuspy.pwrsupply.controller import PUControllerSim as _PUControllerSim
 from siriuspy.pwrsupply.model import PowerSupply as _PowerSupply
 
 
@@ -25,7 +25,7 @@ def get_ps_devices():
         print('PS_EXCLUSION_LIST: ', ps_exc_list)
         ps_devices = {}
         # Get magnets
-        pwr_supplies = _PSSearch.get_psnames()
+        pwr_supplies = _PSSearch.get_psnames({'dis': 'PS', 'dev': 'B.*'})
         # Create objects that'll handle the magnets
         print('creating pv database...')
         for ps in pwr_supplies:
@@ -34,10 +34,11 @@ def get_ps_devices():
             # if 'B1B2' not in ps:
             #     continue
             if 'PU' in ps:
-                c = _PUControllerSim(psname=ps)
+                # c = _PUControllerSim(psname=ps)
+                pass
             else:
-                c = _ControllerSim(psname=ps)
-            ps_devices[ps] = _PowerSupply(controller=c, psnames=[ps, ])
+                c = _ControllerSim(model=0)
+            ps_devices[ps] = _PowerSupply(controller=c, psname=ps)
         print('finished')
 
     return ps_devices
