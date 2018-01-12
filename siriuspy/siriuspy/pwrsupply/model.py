@@ -1,5 +1,7 @@
 """Define a Pulsed Power Supply class to handle IOC connections."""
 import re as _re
+from threading import Thread
+import time
 
 from epics import PV as _PV
 
@@ -33,12 +35,19 @@ class PSComm:
 class PowerSupply(PSComm):
     """PowerSupply class with ps logic."""
 
-    _is_setpoint = _re.compile('.*-(SP|Sel)$')
+    _is_setpoint = _re.compile('.*-(SP|Sel|Cmd)$')
 
-    def __init__(self, controller):
+    def __init__(self, psname, controller):
         """Init method."""
+        self._psname = psname
         self._controller = controller
+        self._base_db = self._get_base_db()
         self._setpoints = self._build_setpoints()
+        self._callback = None
+
+        self.t = Thread(target=self._scan_controller)
+        self.t.setDaemon(True)
+        self.t.start()
 
     def read(self, field):
         """Read field value."""
@@ -49,24 +58,35 @@ class PowerSupply(PSComm):
 
     def write(self, field, value):
         """Write value to field."""
-        return self._setpoints[field]['write'](value)
+        write = self._setpoints[field]['write']
+        return write(value)
 
     def add_callback(self, func):
-        """Add callback."""
-        pass
+        """"""
+        self._callback = func
 
     def get_database(self, prefix=""):
-        """Return database."""
-        pass
+        """Fill base DB with values and limits read from PVs.
+
+        Optionally add a prefix to the dict keys.
+        """
+        db = self._fill_database()
+
+        if prefix:
+            prefixed_db = {}
+            for key, value in db.items():
+                prefixed_db[prefix + ":" + key] = value
+            return prefixed_db
+        else:
+            return db
 
     # Private methods
     def _build_setpoints(self):
         """Foo."""
-        # TODO: Get from csdevice
-        setpoints = ['PwrState-Sel', 'OpMode-Sel', 'Current-SP', 'WfmLoad-Sel',
-                     'WfmLabel-SP', 'WfmData-SP', 'Abort-Cmd']
         sp = dict()
-        for field in setpoints:
+        for field in self._get_fields():
+            if not PowerSupply._is_setpoint.match(field):
+                continue
             sp[field] = dict()
             if field == 'PwrState-Sel':
                 sp[field]['write'] = self._set_pwrstate
@@ -88,6 +108,9 @@ class PowerSupply(PSComm):
                 sp[field]['value'] = []
             elif field == 'Abort-Cmd':
                 sp[field]['write'] = self._abort
+                sp[field]['value'] = 0
+            elif field == 'Reset-Cmd':
+                sp[field]['write'] = self._reset
                 sp[field]['value'] = 0
 
         return sp
@@ -120,12 +143,47 @@ class PowerSupply(PSComm):
         return self._controller.write('WfmData-SP', value)
 
     def _abort(self, value):
-        op_mode = self.read('OpMode-Sts')
+        # op_mode = self.read('OpMode-Sts')
         self._setpoints['Abort-Cmd'].value += 1
-        if op_mode in (1, 2, 4, 5):
-            self._controller.write('OpMode-Sel', 0)  # Set to SlowRef
-        elif op_mode == 3:
-            pass
+        self._controller.write('OpMode-Sel', 0)  # Set to SlowRef
+        self._controller.wirte(
+            'Current-SP', self._setpoints['Current-SP']['value'])
+
+    def _reset(self, value):
+        self._setpoints['Reset-Cmd'].value += 1
+        self.write('Current-SP', 0)
+        self.write('OpMode-Sel', 0)
+        # Reset interlocks
+
+    def _get_base_db(self):
+        return _PSData(self._psname).propty_database
+
+    def _get_fields(self):
+        return self._base_db.keys()
+
+    def _fill_database(self):
+        db = dict()
+        db.update(self._base_db)
+        for field in db:
+            if field in ('Intlk-Mon', 'IntlkLabels-Cte', 'WfmIndex-Mon',
+                         'WfmLabels-Mon', 'WfmLabel-RB', 'WfmLoad-Sts',
+                         'WfmData-RB', 'WfmSave-Cmd'):
+                continue
+            value = self.read(field)
+            if value is not None:
+                db[field]["value"] = value
+
+        return db
+
+    def _scan_controller(self):
+        """Scans the controller."""
+        while True:
+            for field in ('Current-RB', 'CurrentRef-Mon', 'Current-Mon',
+                          'PwrState-Sts'):
+                value = self.read(field)
+                if self._callback:
+                    self._callback(pvname=self._psname + ':' + field, value=value)
+            time.sleep(.5)
 
 
 class PSEpics(PSComm):
