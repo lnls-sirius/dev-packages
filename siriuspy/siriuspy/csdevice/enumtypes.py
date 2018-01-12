@@ -16,12 +16,12 @@ class EnumTypes:
 
     _types_general = {
         'OffOnTyp': ('Off', 'On'),
-        'OffOnWaitTyp': ('Off', 'On', 'Wait'),
+        'OffOnInitTyp': ('Off', 'On', 'Initializing'),
         'DsblEnblTyp': ('Dsbl', 'Enbl'),
     }
 
     _types_ps = {
-        'PSPwrStateTyp': ('Off', 'On', 'Initiali'),
+        'PSPwrStateTyp': ('Off', 'On', 'Initializing', 'Interlock'),
         'PSRmtLocTyp': ('Remote', 'Local', 'PCHost'),
         'PSOpModeTyp': ('SlowRef', 'SlowRefSync', 'FastRef',
                         'RmpWfm', 'MigWfm', 'Cycle'),

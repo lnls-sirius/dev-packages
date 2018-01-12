@@ -44,6 +44,13 @@ from siriuspy.csdevice.pwrsupply import Const as Const  # Intentionally in API.
 _db_ps = _get_common_ps_propty_database()
 
 
+BSMP_variables = {
+    0: ('ps_status', 'R', 'ps_status_t'),
+    1: ('ps_setpoint', 'R', 'float'),
+    2: ('ps_reference', 'R', 'float'),
+}
+
+
 class Status:
     """Power supply status class."""
 
@@ -349,7 +356,7 @@ class Controller:
     def cmd_set_slowref(self, ref):
         """Set SlowRef reference value."""
         ret = self._check_interface()
-        return ret is ret if not None else self._cmd_set_slowref(ref)
+        return ret if ret is not None else self._cmd_set_slowref(ref)
 
     def cmd_cfg_op_mode(self, state):
         """Set controller operation mode."""
@@ -596,11 +603,11 @@ class ControllerSim(Controller):
         return Const.CmdAck.OK
 
 
-class ControllerSerial(Controller):
-    """Serial Controller class.
+class ControllerRS485(Controller):
+    """Serial RS485 Controller class.
 
     This class should encapsulate all comunications between the power supply
-    IOC and the controller|DSP  through the serial port.
+    IOC and the DSP through the RS485 serial port.
     """
 
     pass
