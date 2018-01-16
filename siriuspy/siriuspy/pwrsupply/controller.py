@@ -99,7 +99,7 @@ class Controller():
     def ps_setpoint(self):
         """Return of power supply last setpoint."""
         value = self._serial_comm.cmd_0x10(
-            ID_slave=self._.ID_device,
+            ID_slave=self._ID_device,
             ID_variable=_Const.ps_setpoint)
         return value
 
