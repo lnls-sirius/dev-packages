@@ -1,8 +1,7 @@
 """Power Supply BSMP implementation."""
 
-# from siriuspy.bsmp import BSMPVariable as _BSMPVariable
-# from siriuspy.bsmp import BSMPFunction as _BSMPFunction
-from siriuspy.bsmp import BSMPDevice as _BSMPDevice
+from siriuspy.bsmp import BSMPDeviceMaster as _BSMPDeviceMaster
+from siriuspy.bsmp import BSMPDeviceSlave as _BSMPDeviceSlave
 from siriuspy.pwrsupply.status import Status as _Status
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 
@@ -88,16 +87,15 @@ def get_functions():
     return functions
 
 
-class SerialComm(_BSMPDevice):
+class SerialComm(_BSMPDeviceMaster):
     """Master BSMP device for FBP power supplies."""
 
     def __init__(self, slaves=None):
         """Init method."""
-        _BSMPDevice.__init__(self,
-                             variables=get_variables_FBP(),
-                             functions=get_functions(),
-                             ID_device=None,
-                             slaves=slaves)
+        _BSMPDeviceMaster.__init__(self,
+                                   variables=get_variables_FBP(),
+                                   functions=get_functions(),
+                                   slaves=slaves)
 
         # serial line mode
         self._sync_mode = False
@@ -109,15 +107,15 @@ class SerialComm(_BSMPDevice):
         # Implement threaded queue as in IOC.py
 
 
-class SlaveSim(_BSMPDevice):
+class SlaveSim(_BSMPDeviceSlave):
     """Simulated BSMP slave device for power supplies."""
 
     def __init__(self, ID_device):
         """Init method."""
-        _BSMPDevice.__init__(self,
-                             variables=get_variables_FBP(),
-                             functions=get_functions(),
-                             ID_device=ID_device)
+        _BSMPDeviceSlave.__init__(self,
+                                  variables=get_variables_FBP(),
+                                  functions=get_functions(),
+                                  ID_device=ID_device)
 
         self._init_state()
 
@@ -157,19 +155,30 @@ class SlaveSim(_BSMPDevice):
             status = self._state[Const.ps_status]
             status = _Status.set_state(status, _PSConst.States.SlowRef)
             self._state[Const.ps_status] = status
+            self._state[Const.i_load] = self._state[Const.ps_reference]
         elif ID_function == Const.turn_off:
             status = self._state[Const.ps_status]
             status = _Status.set_state(status, _PSConst.States.Off)
             self._state[Const.ps_status] = status
+            self._state[Const.i_load] = 0.0
+        elif ID_function == Const.set_slowref:
+            self._set_slowref(**kwargs)
         else:
             raise NotImplementedError
 
+    def _set_slowref(self, **kwargs):
+        self._state[Const.ps_setpoint] = kwargs['setpoint']
+        self._state[Const.ps_reference] = self._state[Const.ps_setpoint]
+        status = self._state[Const.ps_status]
+        if _Status.pwrstate(status) == _PSConst.PwrState.On:
+            self._state[Const.i_load] = self._state[Const.ps_reference]
 
-class SlaveRS485(_BSMPDevice):
+
+class SlaveRS485(_BSMPDeviceSlave):
     """Transport layer to interact with BSMP slave device through RS485."""
 
     def __init__(ID_device):
         """Init method."""
-        _BSMPDevice.__init__(variables=get_variables_FBP(),
-                             functions=get_functions(),
-                             ID_device=ID_device)
+        _BSMPDeviceSlave.__init__(variables=get_variables_FBP(),
+                                  functions=get_functions(),
+                                  ID_device=ID_device)

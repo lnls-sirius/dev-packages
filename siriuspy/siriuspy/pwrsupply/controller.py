@@ -155,13 +155,13 @@ class Controller():
         """Reset interlocks."""
         return self._run_bsmp_function(_Const.reset_interlocks)
 
-    def cmd_set_slowref(self, ref):
+    def cmd_set_slowref(self, setpoint):
         """Set SlowRef reference value."""
-        return self._run_bsmp_function(_Const.set_slowref, ref)
+        return self._run_bsmp_function(_Const.set_slowref, setpoint=setpoint)
 
-    def cmd_cfg_op_mode(self, state):
+    def cmd_cfg_op_mode(self, op_mode):
         """Set controller operation mode."""
-        return self._run_bsmp_function(_Const.cfg_op_mode, state)
+        return self._run_bsmp_function(_Const.cfg_op_mode, op_mode=op_mode)
 
     # --- API: public properties and methods ---
 
@@ -256,7 +256,7 @@ class Controller():
         ps_status = self._get_ps_status()
         ps_status = _Status.set_opmode(ps_status, value)
         state = _Status.state(ps_status)
-        self.cmd_cfg_op_mode(_Const.cfg_op_mode, state=state)
+        self.cmd_cfg_op_mode(_Const.cfg_op_mode, op_mode=state)
 
     def _check_interface(self):
         ps_status = self._get_ps_status()
