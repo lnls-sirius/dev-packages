@@ -162,16 +162,23 @@ class SlaveSim(_BSMPDeviceSlave):
             self._state[Const.ps_status] = status
             self._state[Const.i_load] = 0.0
         elif ID_function == Const.set_slowref:
-            self._set_slowref(**kwargs)
+            self._cmd_set_slowref(**kwargs)
+        elif ID_function == Const.cfg_op_mode:
+            self._cmd_cfg_op_mode(**kwargs)
         else:
             raise NotImplementedError
 
-    def _set_slowref(self, **kwargs):
+    def _cmd_set_slowref(self, **kwargs):
         self._state[Const.ps_setpoint] = kwargs['setpoint']
         self._state[Const.ps_reference] = self._state[Const.ps_setpoint]
         status = self._state[Const.ps_status]
         if _Status.pwrstate(status) == _PSConst.PwrState.On:
             self._state[Const.i_load] = self._state[Const.ps_reference]
+
+    def _cmd_cfg_op_mode(self, **kwargs):
+        status = self._state[Const.ps_status]
+        status = _Status.set_state(status, kwargs['op_mode'])
+        self._state[Const.ps_status] = status
 
 
 class SlaveRS485(_BSMPDeviceSlave):

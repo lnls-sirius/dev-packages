@@ -73,6 +73,7 @@ class Controller():
         'Current-RB': '_get_ps_setpoint',
         'CurrentRef-Mon': '_get_ps_reference',
         'Current-Mon': '_get_i_load',
+        'IntlkSoft-Mon': '_get_ps_soft_interlocks',
     }
 
     _write_field2func = {
@@ -257,7 +258,7 @@ class Controller():
         ps_status = self._get_ps_status()
         ps_status = _Status.set_opmode(ps_status, value)
         state = _Status.state(ps_status)
-        self.cmd_cfg_op_mode(_Const.cfg_op_mode, op_mode=state)
+        self.cmd_cfg_op_mode(op_mode=state)
 
     def _check_interface(self):
         ps_status = self._get_ps_status()
