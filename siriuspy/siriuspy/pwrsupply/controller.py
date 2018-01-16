@@ -7,6 +7,7 @@ from siriuspy.csdevice.pwrsupply import get_common_ps_propty_database as \
 
 from siriuspy.pwrsupply.status import Status as _Status
 from siriuspy.pwrsupply.bsmp import Const as _Const
+from siriuspy.csdevice.pwrsupply import Const as _PSConst
 
 # loads power supply database with default initial values
 _db_ps = _get_common_ps_propty_database()
@@ -66,17 +67,17 @@ class Controller():
 
     # conversion dict from PS fields to DSP properties for read method.
     _read_field2func = {
-        'CtrlMode-Mon': 'read_ctrlmode',
-        'PwrState-Sts': 'read_pwrstate',
-        'OpMode-Sts': 'read_opmode',
+        'CtrlMode-Mon': '_get_ctrlmode',
+        'PwrState-Sts': '_get_pwrstate',
+        'OpMode-Sts': '_get_opmode',
         'Current-RB': '_get_ps_setpoint',
         'CurrentRef-Mon': '_get_ps_reference',
         'Current-Mon': '_get_i_load',
     }
 
     _write_field2func = {
-        'PwrState-Sel': 'write_pwrstate',
-        'OpMode-Sel': 'write_opmode',
+        'PwrState-Sel': '_set_pwrstate',
+        'OpMode-Sel': '_set_opmode',
         'Current-SP': 'cmd_set_slowref',
     }
 
@@ -88,17 +89,17 @@ class Controller():
         self._serial_comm = serial_comm
 
     @property
-    def ps_status(self):
+    def var_ps_status(self):
         """Return power supply status."""
         return self._get_ps_status()
 
     @property
-    def ps_setpoint(self):
+    def var_ps_setpoint(self):
         """Return of power supply last setpoint."""
         return self._get_ps_setpoint()
 
     @property
-    def ps_reference(self):
+    def var_ps_reference(self):
         """Return of power supply reference setpoint.
 
         It may differ from 'ps_setpoint' due to various limitions.
@@ -108,119 +109,62 @@ class Controller():
     # --- API: FBP power supply 'variables' ---
 
     @property
-    def ps_soft_interlocks(self):
+    def var_ps_soft_interlocks(self):
         """Return soft interlock state."""
-        value = self._serial_comm.cmd_0x10(
-            ID_slave=self._ID_device,
-            ID_variable=_Const.ps_soft_interlocks)
-        return value
+        return self._get_ps_soft_interlocks()
 
     @property
-    def ps_hard_interlocks(self):
+    def var_ps_hard_interlocks(self):
         """Return hard interlock state."""
-        value = self._serial_comm.cmd_0x10(
-            ID_slave=self._ID_device,
-            ID_variable=_Const.ps_hard_interlocks)
-        return value
+        return self._get_ps_hard_interlocks()
 
     @property
-    def i_load(self):
+    def var_i_load(self):
         """Return power supply load current."""
         return self._get_i_load()
 
     @property
-    def v_load(self):
+    def var_v_load(self):
         """Return power supply load voltage."""
-        value = self._serial_comm.cmd_0x10(
-            ID_slave=self._bsmp_slave.ID_device,
-            ID_variable=_Const.v_load)
-        return value
+        return self._get_v_load()
 
     @property
-    def v_dclink(self):
+    def var_v_dclink(self):
         """Return DC-link voltage."""
-        value = self._serial_comm.cmd_0x10(
-            ID_slave=self._bsmp_slave.ID_device,
-            ID_variable=_Const.v_cdlink)
-        return value
+        return self._get_v_dclink()
 
     # --- API: power supply 'functions' ---
 
     def cmd_turn_on(self):
         """Turn power supply on."""
-        # check if ps is in remote ctrlmode
-        ret = self._check_interface()
-        return ret if ret is not None else self._cmd_turn_on()
+        return self._run_bsmp_function(_Const.turn_on)
 
     def cmd_turn_off(self):
         """Turn power supply off."""
-        # check if ps is in remote ctrlmode
-        ret = self._check_interface()
-        return ret if ret is not None else self._cmd_turn_off()
+        return self._run_bsmp_function(_Const.turn_off)
 
     def cmd_open_loop(self):
         """Open DSP control loop."""
-        # check if ps is in remote ctrlmode
-        ret = self._check_interface()
-        return ret is ret if not None else self._cmd_open_loop()
+        return self._run_bsmp_function(_Const.open_loop)
 
     def cmd_close_loop(self):
         """Open DSP control loop."""
-        # check if ps is in remote ctrlmode
-        ret = self._check_interface()
-        return ret is ret if not None else self._cmd_close_loop()
+        return self._run_bsmp_function(_Const.close_loop)
 
     def cmd_reset_interlocks(self):
         """Reset interlocks."""
-        ret = self._check_interface()
-        return ret is ret if not None else self._cmd_reset_interlocks()
+        return self._run_bsmp_function(_Const.reset_interlocks)
 
     def cmd_set_slowref(self, ref):
         """Set SlowRef reference value."""
-        ret = self._check_interface()
-        return ret if ret is not None else self._cmd_set_slowref(ref)
+        return self._run_bsmp_function(_Const.set_slowref, ref)
 
-    def cmd_cfg_op_mode(self, opmode):
+    def cmd_cfg_op_mode(self, state):
         """Set controller operation mode."""
-        # check if ps is in remote ctrlmode
-        ret = self._check_interface()
-        return ret if ret is not None else self._cmd_cfg_op_mode(opmode)
+        return self._run_bsmp_function(_Const.cfg_op_mode, state)
 
     # --- API: public properties and methods ---
 
-    def read_ctrlmode(self):
-        """Return controller CtrlMode."""
-        ps_status = self.ps_status
-        value = _Status.interface(ps_status)
-        return value
-
-    def read_pwrstate(self):
-        """Return controller PwrState."""
-        ps_status = self.ps_status
-        value = _Status.pwrstate(ps_status)
-        return value
-
-    def read_opmode(self):
-        """Return controller OpMode."""
-        ps_status = self.ps_status
-        value = _Status.opmode(ps_status)
-        return value
-
-    # def write_pwrstate(self, value):
-    #     """Set pwrstate state."""
-    #     if value == Const.PwrState.Off:
-    #         return self.cmd_turn_off()
-    #     elif value == Const.PwrState.On:
-    #         return self.cmd_turn_on()
-    #     else:
-    #         raise ValueError('Invalid pwrstate value "{}"!'.format(value))
-    #
-    # def write_opmode(self, value):
-    #     """Set opmode."""
-    #     # status = Status.set_opmode(self.ps_status, value)
-    #     # state = Status.state(status)
-    #     self.cmd_cfg_op_mode(value)
-    #
     def read(self, field):
         """Return value of a field."""
         if field in Controller._read_field2func:
@@ -239,90 +183,90 @@ class Controller():
         else:
             raise ValueError('Field "{}"" not valid!'.format(field))
 
-    # --- pure virtual methods ---
+    # --- private methods ---
     #     These are the functions that all subclass have to implement!
 
     def _get_ps_status(self):
-        value = self._serial_comm.cmd_0x10(
-            ID_slave=self._ID_device,
-            ID_variable=_Const.ps_status)
-        return value
+        return self._get_bsmp_variable(_Const.ps_status)
 
     def _get_ps_setpoint(self):
-        value = self._serial_comm.cmd_0x10(
-            ID_slave=self._ID_device,
-            ID_variable=_Const.ps_setpoint)
-        return value
+        return self._get_bsmp_variable(_Const.ps_setpoint)
 
     def _get_ps_reference(self):
-        value = self._serial_comm.cmd_0x10(
-            ID_slave=self._ID_device,
-            ID_variable=_Const.ps_reference)
-        return value
+        return self._get_bsmp_variable(_Const.ps_reference)
+
+    def _get_ps_soft_interlocks(self):
+        return self._get_bsmp_variable(_Const.ps_soft_interlocks)
+
+    def _get_ps_hard_interlocks(self):
+        return self._get_bsmp_variable(_Const.ps_hard_interlocks)
 
     def _get_i_load(self):
+        return self._get_bsmp_variable(_Const.i_load)
+
+    def _get_v_load(self):
+        return self._get_bsmp_variable(_Const.v_load)
+
+    def _get_v_dclink(self):
+        return self._get_bsmp_variable(_Const.v_dclink)
+
+    def _get_bsmp_variable(self, ID_variable):
         value = self._serial_comm.cmd_0x10(
             ID_slave=self._ID_device,
-            ID_variable=_Const.i_load)
+            ID_variable=ID_variable)
         return value
 
-    # def _get_ps_status(self):
-    #     raise NotImplementedError
-    #
-    # def _get_ps_setpoint(self):
-    #     raise NotImplementedError
-    #
-    # def _get_ps_reference(self):
-    #     raise NotImplementedError
-    #
-    # def _get_ps_soft_interlocks(self):
-    #     raise NotImplementedError
-    #
-    # def _get_ps_hard_interlocks(self):
-    #     raise NotImplementedError
-    #
-    # def _get_i_load(self):
-    #     raise NotImplementedError
-    #
-    # def _get_v_load(self):
-    #     raise NotImplementedError
-    #
-    # def _get_dclink(self):
-    #     raise NotImplementedError
-    #
-    # def _cmd_open_loop(self):
-    #     raise NotImplementedError
-    #
-    # def _cmd_close_loop(self):
-    #     raise NotImplementedError
-    #
-    # def _cmd_reset_interlocks(self):
-    #     raise NotImplementedError
-    #
-    # def _cmd_set_slowref(self, ref):
-    #     raise NotImplementedError
-    #
-    # def _cmd_cfg_op_mode(self, state):
-    #     raise NotImplementedError
-    #
-    # # --- auxilliary private methods ---
-    #
-    # def _check_interface(self):
-    #     interface = Status.interface(self.ps_status)
-    #     if interface != Const.Interface.Remote:
-    #         if interface == Const.Interface.Local:
-    #             return Const.CmdAck.Local
-    #         else:
-    #             return Const.CmdAck.PCHost
-    #     return None  # in Remote interface
-    #
-    # def _read_ctrlmode(self):
-    #     ps_status = self.ps_status
-    #     return Status.interface(ps_status)
-    #
-    # def _read_state(self):
-    #     ps_status = self.ps_status
-    #     return Status.state(ps_status)
+    def _run_bsmp_function(self, ID_function, **kwargs):
+        # check if ps is in remote ctrlmode
+        ret = self._check_interface()
+        if ret is not None:
+            return ret
+        else:
+            ret = self._serial_comm.cmd_0x50(
+                    ID_slave=self._ID_device,
+                    ID_function=ID_function)
+            return ret
+
+    def _get_ctrlmode(self):
+        ps_status = self._get_ps_status()
+        value = _Status.interface(ps_status)
+        return value
+
+    def _get_pwrstate(self):
+        ps_status = self._get_ps_status()
+        value = _Status.pwrstate(ps_status)
+        return value
+
+    def _get_opmode(self):
+        ps_status = self._get_ps_status()
+        value = _Status.opmode(ps_status)
+        return value
+
+    def _set_pwrstate(self, value):
+        """Set pwrstate state."""
+        if value == _PSConst.PwrState.Off:
+            return self.cmd_turn_off()
+        elif value == _PSConst.PwrState.On:
+            return self.cmd_turn_on()
+        else:
+            raise ValueError('Invalid pwrstate value "{}"!'.format(value))
+
+    def _set_opmode(self, value):
+        """Set pwrstate state."""
+        ps_status = self._get_ps_status()
+        ps_status = _Status.set_opmode(ps_status, value)
+        state = _Status.state(ps_status)
+        self.cmd_cfg_op_mode(_Const.cfg_op_mode, state=state)
+
+    def _check_interface(self):
+        ps_status = self._get_ps_status()
+        interface = _Status.interface(ps_status)
+        if interface != _PSConst.Interface.Remote:
+            if interface == _PSConst.Interface.Local:
+                return _PSConst.CmdAck.Local
+            else:
+                return _PSConst.CmdAck.PCHost
+        return None  # in Remote interface
 
 
 # class ControllerSim(Controller):

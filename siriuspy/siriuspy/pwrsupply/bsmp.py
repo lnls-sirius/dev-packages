@@ -106,7 +106,6 @@ class SerialComm(_BSMPDevice):
         IDs_variable = tuple(self.variables.keys())
         self.cmd_0x30(IDs_variable=IDs_variable)
 
-
         # Implement threaded queue as in IOC.py
 
 
@@ -155,11 +154,11 @@ class SlaveSim(_BSMPDevice):
     def ack_0x50(self, ID_function, **kwargs):
         """Slave response to function execution."""
         if ID_function == Const.turn_on:
-            status = self._data[Const.ps_status]
+            status = self._state[Const.ps_status]
             status = _Status.set_state(status, _PSConst.States.SlowRef)
             self._state[Const.ps_status] = status
         elif ID_function == Const.turn_off:
-            status = self._data[Const.ps_status]
+            status = self._state[Const.ps_status]
             status = _Status.set_state(status, _PSConst.States.Off)
             self._state[Const.ps_status] = status
         else:
