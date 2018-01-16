@@ -88,7 +88,7 @@ def get_functions():
     return functions
 
 
-class MasterFBP(_BSMPDevice):
+class SerialComm(_BSMPDevice):
     """Master BSMP device for FBP power supplies."""
 
     def __init__(self, slaves=None):
@@ -99,9 +99,13 @@ class MasterFBP(_BSMPDevice):
                              ID_device=None,
                              slaves=slaves)
 
+        # serial line mode
+        self._sync_mode = False
+
         # create group for all variables.
         IDs_variable = tuple(self.variables.keys())
         self.cmd_0x30(IDs_variable=IDs_variable)
+
 
         # Implement threaded queue as in IOC.py
 
