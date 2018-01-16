@@ -15,8 +15,8 @@ default_pu_current_precision = 4
 _default_ps_current_unit = None
 _default_pu_current_unit = None
 
-
 # --- power supply enums ---
+
 ps_models = ('FBP', 'FAP', 'FAP_4P_Master', 'FAP_4P_Slave',
              'FAP_2P2S_Master', 'FAP_2P2S_Slave', 'FAC', 'FAC_2S_ACDC',
              'FAC_2S_DCDC', 'FAC_2P4S_ACDC', 'FAC_2P4S_DCDC',)
@@ -30,23 +30,21 @@ ps_pwrstate_sts = ('Off', 'On')
 ps_opmode = ('SlowRef', 'SlowRefSync', 'FastRef', 'RmpWfm', 'MigWfm', 'Cycle')
 ps_cmdack = ('OK', 'Local', 'PCHost', 'Interlocked', 'UDC_locked',
              'DSP_TimeOut', 'DSP_Busy', 'Invalid',)
-ps_soft_interlock = ('IGBT1_OVERTEMP', 'IGBT2_OVERTEMP', 'L1_OVERTEMP',
-                     'L2_OVERTEMP', 'HEATSINK_OVERTEMP', 'WATER_OVERTEMP',
-                     'RECTFIER1_OVERTEMP', 'RECTFIER2_OVERTEMP',
-                     'AC_TRANSF_OVERTEMP', 'WATER_FLUX_FAULT',
-                     'OVER_HUMIDITY_FAULT',)
-ps_hard_interlock = ('LOAD_OVERCURRENT', 'EXTERNAL_INTERLOCK', 'AC_FAULT',
-                     'ACDC_FAULT', 'DCDC_FAULT', 'LOAD_OVERVOLTAGE',
-                     'PRECHARGERS_FAULT', 'OUTPUT_CAP_CHARGE_FAULT',
-                     'EMERGENCY_BUTTON', 'OUT_OVERVOLTAGE', 'IN_OVERVOLTAGE',
-                     'ARM1_OVERCURRENT', 'ARM2_OVERCURRENT', 'IN_OVERCURRENT',
-                     'DRIVER1_FAULT', 'DRIVER2_FAULT', 'OUT1_OVERCURRENT',
-                     'OUT2_OVERCURRENT', 'OUT1_OVERVOLTAGE',
-                     'OUT2_OVERVOLTAGE', 'LEAKAGE_OVERCURRENT',
-                     'AC_OVERCURRENT',)
+ps_soft_interlock = ('Module over-temperature',
+                     'Reseved', 'Reseved', 'Reseved',
+                     'Reseved', 'Reseved', 'Reseved', 'Reseved',
+                     'Reseved', 'Reseved', 'Reseved', 'Reseved',
+                     'Reseved', 'Reseved', 'Reseved', 'Reseved',)
+ps_hard_interlock = ('Load over-current', 'Load over-voltage',
+                     'DCLink over-voltage', 'DCLink under-voltage',
+                     'DCLink fault 1', 'DCLink fault 2',
+                     'Module driver fault', 'Reserved',
+                     'Reseved', 'Reseved', 'Reseved', 'Reseved',
+                     'Reseved', 'Reseved', 'Reseved', 'Reseved',)
 
 
 # --- power supply constants definition class ---
+
 class Const:
     """Const class defining power supply constants."""
 
