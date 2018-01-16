@@ -11,6 +11,10 @@ _master_pv_index = 0
 class SyncWrite(_Computer):
     """Class that syncs all pvs."""
 
+    def __init__(self, lock=False):
+        """Set lock."""
+        self._lock = lock
+
     # Computer Interface
     def compute_update(self, computed_pv, updated_pv_name, value):
         """Force value to not change."""
@@ -26,18 +30,20 @@ class SyncWrite(_Computer):
         # Init pvs
         if computed_pv.value is None:
             computed_pv.put(value)
-            kwargs = {}
-            kwargs["value"] = value
-            return kwargs  # issue calback
-        else:  # Lock
+            # kwargs = {}
+            # kwargs["value"] = value
+            return kwargs  # issue callback
+        else:
             if isinstance(value, _ndarray):
                 changed = (computed_pv.value != value).any()
             else:
                 changed = (computed_pv.value != value)
 
-            if changed:
+            if changed and self._lock:
                 computed_pv.put(computed_pv.value)
                 return None
+            elif changed and not self._lock:
+                return kwargs
 
         return kwargs  # issue callback
 
