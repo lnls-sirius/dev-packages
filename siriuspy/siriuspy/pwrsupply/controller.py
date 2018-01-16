@@ -69,9 +69,9 @@ class Controller():
         'CtrlMode-Mon': 'read_ctrlmode',
         'PwrState-Sts': 'read_pwrstate',
         'OpMode-Sts': 'read_opmode',
-        'Current-RB': '_get_ps_setpoint',
-        'CurrentRef-Mon': '_get_ps_reference',
-        'Current-Mon': '_get_i_load',
+        'Current-RB': 'ps_setpoint',
+        'CurrentRef-Mon': 'ps_reference',
+        'Current-Mon': 'i_load',
     }
 
     _write_field2func = {
