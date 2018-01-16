@@ -224,7 +224,8 @@ class Controller():
         else:
             ret = self._serial_comm.cmd_0x50(
                     ID_slave=self._ID_device,
-                    ID_function=ID_function)
+                    ID_function=ID_function,
+                    **kwargs)
             return ret
 
     def _get_ctrlmode(self):
