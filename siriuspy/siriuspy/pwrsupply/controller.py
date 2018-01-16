@@ -262,7 +262,7 @@ class Controller():
 
     def _get_i_load(self):
         value = self._serial_comm.cmd_0x10(
-            ID_slave=self._bsmp_slave.ID_device,
+            ID_slave=self._ID_device,
             ID_variable=_Const.i_load)
         return value
 
