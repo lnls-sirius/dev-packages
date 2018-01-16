@@ -69,9 +69,9 @@ class Controller():
         'CtrlMode-Mon': 'read_ctrlmode',
         'PwrState-Sts': 'read_pwrstate',
         'OpMode-Sts': 'read_opmode',
-        'Current-RB': 'ps_setpoint',
-        'CurrentRef-Mon': 'ps_reference',
-        'Current-Mon': 'i_load',
+        'Current-RB': '_get_ps_setpoint',
+        'CurrentRef-Mon': '_get_ps_reference',
+        'Current-Mon': '_get_i_load',
     }
 
     _write_field2func = {
@@ -90,18 +90,12 @@ class Controller():
     @property
     def ps_status(self):
         """Return power supply status."""
-        value = self._serial_comm.cmd_0x10(
-            ID_slave=self._ID_device,
-            ID_variable=_Const.ps_status)
-        return value
+        return self._get_ps_status()
 
     @property
     def ps_setpoint(self):
         """Return of power supply last setpoint."""
-        value = self._serial_comm.cmd_0x10(
-            ID_slave=self._ID_device,
-            ID_variable=_Const.ps_setpoint)
-        return value
+        return self._get_ps_setpoint()
 
     @property
     def ps_reference(self):
@@ -109,10 +103,7 @@ class Controller():
 
         It may differ from 'ps_setpoint' due to various limitions.
         """
-        value = self._serial_comm.cmd_0x10(
-            ID_slave=self._ID_device,
-            ID_variable=_Const.ps_reference)
-        return value
+        return self._get_ps_reference()
 
     # --- API: FBP power supply 'variables' ---
 
@@ -135,10 +126,7 @@ class Controller():
     @property
     def i_load(self):
         """Return power supply load current."""
-        value = self._serial_comm.cmd_0x10(
-            ID_slave=self._bsmp_slave.ID_device,
-            ID_variable=_Const.i_load)
-        return value
+        return self._get_i_load()
 
     @property
     def v_load(self):
@@ -253,6 +241,30 @@ class Controller():
 
     # --- pure virtual methods ---
     #     These are the functions that all subclass have to implement!
+
+    def _get_ps_status(self):
+        value = self._serial_comm.cmd_0x10(
+            ID_slave=self._ID_device,
+            ID_variable=_Const.ps_status)
+        return value
+
+    def _get_ps_setpoint(self):
+        value = self._serial_comm.cmd_0x10(
+            ID_slave=self._ID_device,
+            ID_variable=_Const.ps_setpoint)
+        return value
+
+    def _get_ps_reference(self):
+        value = self._serial_comm.cmd_0x10(
+            ID_slave=self._ID_device,
+            ID_variable=_Const.ps_reference)
+        return value
+
+    def _get_i_load(self):
+        value = self._serial_comm.cmd_0x10(
+            ID_slave=self._bsmp_slave.ID_device,
+            ID_variable=_Const.i_load)
+        return value
 
     # def _get_ps_status(self):
     #     raise NotImplementedError
