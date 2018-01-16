@@ -62,7 +62,7 @@ class PowerSupply(PSComm):
         return write(value)
 
     def add_callback(self, func):
-        """"""
+        """Add callback to be issued when a PV is updated."""
         self._callback = func
 
     def get_database(self, prefix=""):
@@ -144,14 +144,13 @@ class PowerSupply(PSComm):
 
     def _abort(self, value):
         # op_mode = self.read('OpMode-Sts')
-        self._setpoints['Abort-Cmd'].value += 1
-        self._controller.write('OpMode-Sel', 0)  # Set to SlowRef
-        self._controller.wirte(
-            'Current-SP', self._setpoints['Current-SP']['value'])
+        self._setpoints['Abort-Cmd']['value'] += 1
+        self.write('OpMode-Sel', 0)  # Set to SlowRef
+        self.write('Current-SP', 0.0)
 
     def _reset(self, value):
-        self._setpoints['Reset-Cmd'].value += 1
-        self.write('Current-SP', 0)
+        self._setpoints['Reset-Cmd']['value'] += 1
+        self.write('Current-SP', 0.0)
         self.write('OpMode-Sel', 0)
         # Reset interlocks
 
@@ -176,18 +175,25 @@ class PowerSupply(PSComm):
         return db
 
     def _scan_controller(self):
-        """Scans the controller."""
+        """Scan the controller."""
         while True:
-            for field in ('Current-RB', 'CurrentRef-Mon', 'Current-Mon',
-                          'PwrState-Sts'):
+            for field in ('Current-SP', 'Current-RB', 'CurrentRef-Mon',
+                          'Current-Mon', 'PwrState-Sel', 'PwrState-Sts',
+                          'OpMode-Sel', 'OpMode-Sts'):
                 value = self.read(field)
                 if self._callback:
-                    self._callback(pvname=self._psname + ':' + field, value=value)
+                    self._callback(
+                        pvname=self._psname + ':' + field, value=value)
             time.sleep(.5)
 
 
 class PSEpics(PSComm):
     """Power supply with Epics communication."""
+
+    valid_fields = ('Current-SP', 'Current-RB', 'CurrentRef-Mon',
+                    'Current-Mon', 'PwrState-Sel', 'PwrState-Sts',
+                    'OpMode-Sel', 'OpMode-Sts', 'Energy-SP', 'Energy-RB',
+                    'EnergyRef-Mon', 'Energy-Mon', 'Reset-Cmd', 'Abort-Cmd')
 
     def __init__(self, psname, fields=None, use_vaca=True):
         """Create epics PVs and expose them through public controller API."""
@@ -212,6 +218,8 @@ class PSEpics(PSComm):
     # Public PSComm interface API
     def read(self, field):
         """Read a field value."""
+        if field not in self.valid_fields:
+            return None
         if self._pvs[field].connected:
             return self._pvs[field].get()
         else:
@@ -220,6 +228,9 @@ class PSEpics(PSComm):
 
     def write(self, field, value):
         """Write a value to a field."""
+        # Check wether value is valid and return 0
+        if field not in self.valid_fields:
+            return None
         if self._pvs[field].connected:
             return self._pvs[field].put(value)
         else:
@@ -231,8 +242,10 @@ class PSEpics(PSComm):
         if not callable(func):
             raise ValueError("Tried to set non callable as a callback")
         else:
-            for pv in self._pvs.values():
-                pv.add_callback(func)
+            for pvname, pv in self._pvs.items():
+                field = pvname.split(':')[-1]
+                if field in self.valid_fields:
+                    pv.add_callback(func)
 
     def get_database(self, prefix=""):
         """Fill base DB with values and limits read from PVs.
@@ -256,7 +269,8 @@ class PSEpics(PSComm):
         # In case the device is a Magnet with a normalized force being supplied
         # as one of the fields, a NormalizedPV is created
         for field in self._fields:
-            self._pvs[field] = self._create_pv(field)
+            if field in self.valid_fields:
+                self._pvs[field] = self._create_pv(field)
             # return _PV(self._prefix + self.psname + ":" + field)
 
     def _create_pv(self, field):
@@ -279,19 +293,20 @@ class PSEpics(PSComm):
         return db
 
 
-class MAEpics(PSComm):
+class MAEpics(PSEpics):
     """Magnet power supply with Epics communication."""
 
     _is_strength = _re.compile('(Energy|KL|SL|Kick).+$')
     _is_multi_ps = _re.compile('(SI|BO)-\w{2,4}:MA-B.*$')
 
-    def __init__(self, maname, lock=True, **kwargs):
+    def __init__(self, maname, lock=False, **kwargs):
         """Create epics PVs and expose them through public controller API."""
         # Attributes use build a full PV address
         self._maname = _SiriusPVName(maname)
         self._madata = _MAData(maname)
+        self._lock = lock
         super().__init__(
-            psname=self._maname.replace("MA", "PS").replace("PM", "PU"),
+            self._maname.replace("MA", "PS").replace("PM", "PU"),
             **kwargs)
 
     # Virtual Methods
@@ -331,12 +346,13 @@ class MAEpics(PSComm):
     def _get_sync_obj(self, field):
         # Return SyncWrite or SyncRead object
         if "SP" in field or "Sel" in field or "Cmd" in field:
-            return _sync.SyncWrite()
+            return _sync.SyncWrite(lock=self._lock)
         else:
             return _sync.SyncRead()
 
     def _get_str_pv(self, field):
         ma_class = _mutil.magnet_class(self._maname)
+        print(self._pvs)
         if 'dipole' == ma_class:
             return [self._pvs[field.replace('Energy', 'Current')], ]
         elif 'pulsed' == ma_class:
@@ -373,15 +389,15 @@ class MAEpics(PSComm):
 
         return [self._maname.replace(':MA', ':PS')]
 
-    # def _sort_fields(self):
-    #     fields = []
-    #     for field in self._fields:
-    #         if not self._is_strength.match(field):
-    #             fields.insert(0, field)
-    #         else:
-    #             fields.append(field)
-    #
-    #     self.fields = fields
+    def _sort_fields(self):
+        fields = []
+        for field in self._fields:
+            if not self._is_strength.match(field):
+                fields.insert(0, field)
+            else:
+                fields.append(field)
+
+        self.fields = fields
 
 
 # class PSEpicsController(Controller):
