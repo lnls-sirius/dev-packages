@@ -102,12 +102,10 @@ class SerialComm(_BSMPDeviceMaster):
                                    slaves=slaves)
 
         self._PRU = PRU
-        self._state = None
         self._queue = _Queue()
-
-        # serial line mode
         self._sync_mode = False
         self._sync_counter = 0
+        self._init_state()
 
     @property
     def sync_mode(self):
@@ -137,7 +135,7 @@ class SerialComm(_BSMPDeviceMaster):
 
     def get_variable(self, ID_variable):
         """Return a BSMP variable."""
-        pass
+        return self._state[ID_variable]
 
     def process_thread(self):
         """Process queue."""
@@ -155,6 +153,24 @@ class SerialComm(_BSMPDeviceMaster):
             else:
                 # self.event.wait(1)
                 _time.sleep(1.0)
+
+    def _init_state(self):
+        self._state = {}
+        for ID_variable, variable in self.variables.items():
+            name, type_t, writable = variable
+            if type_t == Const.t_float:
+                value = 0.0
+            elif type_t in (Const.t_status,
+                            Const.t_state,
+                            Const.t_remote,
+                            Const.t_model,
+                            Const.t_uint8,
+                            Const.t_uint16,
+                            Const.t_uint32):
+                value = 0
+            else:
+                raise ValueError('Invalid BSMP variable type!')
+            self._state[ID_variable] = value
 
 
 class DevSlaveSim(_BSMPDeviceSlave):
