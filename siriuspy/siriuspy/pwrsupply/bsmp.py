@@ -2,6 +2,8 @@
 
 import time as _time
 from Queue import Queue as _Queue
+from threading import Thread as _Thread
+
 from siriuspy.bsmp import __version__ as __bsmp_version__
 from siriuspy.bsmp import Const as _ack
 from siriuspy.bsmp import BSMPDeviceMaster as _BSMPDeviceMaster
@@ -106,6 +108,13 @@ class SerialComm(_BSMPDeviceMaster):
         self._sync_mode = False
         self._sync_counter = 0
         self._init_state()
+
+        # Cria, configura e inicializa as duas threads auxiliares
+        self.process = _Thread(target=self.process_thread, daemon=True)
+        self.scan = _Thread(target=self.scan_thread, daemon=True)
+
+        self.process.start()
+        self.scan.start()
 
     @property
     def sync_mode(self):
