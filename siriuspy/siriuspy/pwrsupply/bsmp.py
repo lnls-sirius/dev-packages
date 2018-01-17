@@ -1,5 +1,6 @@
 """Power Supply BSMP implementation."""
 
+from Queue import Queue as _Queue
 from siriuspy.bsmp import __version__ as __bsmp_version__
 from siriuspy.bsmp import Const as _ack
 from siriuspy.bsmp import BSMPDeviceMaster as _BSMPDeviceMaster
@@ -92,15 +93,31 @@ def get_functions():
 class SerialComm(_BSMPDeviceMaster):
     """Master BSMP device for FBP power supplies."""
 
-    def __init__(self, slaves=None):
+    def __init__(self, PRU, slaves=None):
         """Init method."""
         _BSMPDeviceMaster.__init__(self,
                                    variables=get_variables_FBP(),
                                    functions=get_functions(),
                                    slaves=slaves)
 
+        self._PRU = PRU
+        self._state = None
+        self._queue = _Queue()
+
         # serial line mode
         self._sync_mode = False
+        self._sync_counter = 0
+
+    @property
+    def sync_mode(self):
+        """Return sync mode of PRU."""
+        return self._sync_mode
+
+    @sync_mode.setter
+    def sync_mode(self, value):
+        """Set PRU sync mode."""
+        self._sync_mode = value
+        raise NotImplementedError
 
     def add_slave(self, slave):
         """Add slave to slave pool controlled by master BSMP device."""
@@ -108,9 +125,35 @@ class SerialComm(_BSMPDeviceMaster):
         _BSMPDeviceMaster.add_slave(self, slave)
         IDs_variable = tuple(self.variables.keys())
         ack, *_ = self.cmd_0x30(ID_slave=slave.ID_device,
+                                ID_group=3,
                                 IDs_variable=IDs_variable)
         if ack != _ack.ok:
             raise Exception('Could not create variables group!')
+
+    def put(self, ID_device, cmd, value):
+        """Put a SBMP command request in queue."""
+        self._queue.put((ID_device, cmd, value))
+
+    def get_variable(self, ID_variable):
+        """Return a BSMP variable."""
+        pass
+
+    def process_thread(self):
+        """Process queue."""
+        pass
+
+    def scan_thread(self):
+        """Add scan puts into queue."""
+        while (True):
+            self._sync_counter = self._PRU.read_pulse_count_sync()
+            for ID_slave in self._slaves:
+                self._queue.put((ID_slave, 'cmd_0x10', {'ID_group': 3}))
+            if not self._sync_mode:
+                # self.event.wait(0.1)
+                _time.sleep(0.1)
+            else:
+                # self.event.wait(1)
+                _time.sleep(1.0)
 
 
 class DevSlaveSim(_BSMPDeviceSlave):
@@ -221,16 +264,18 @@ class DevSlave(_BSMPDeviceSlave):
                                   functions=get_functions(),
                                   ID_device=ID_device)
 
+        self._PRU = None
+
     def cmd_0x01(self):
         """Respond BSMP protocol version."""
         receiver = chr(self.ID_device)
         stream = DevSlaveSim.includeChecksum(
             [receiver, "\x00", "\x00", "\x00"])
-        answer = PRUserial485_write(stream, timeout=10)
+        answer = self._PRU.write(stream, timeout=10)
         if len(answer) != 8:
-
-        # needs checking !!!
-        return _ack.ok, ''.join(answer)
+            return _ack.invalid_message, None
+        version_str = '.'.join(answer[4:7])
+        return _ack.ok, version_str
 
     @staticmethod
     def includeChecksum(string):
