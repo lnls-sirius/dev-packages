@@ -1,5 +1,6 @@
 """Power Supply BSMP implementation."""
 
+import time as _time
 from Queue import Queue as _Queue
 from siriuspy.bsmp import __version__ as __bsmp_version__
 from siriuspy.bsmp import Const as _ack
