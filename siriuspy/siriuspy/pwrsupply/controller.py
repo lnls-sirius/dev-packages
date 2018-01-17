@@ -131,50 +131,50 @@ class Controller():
             op_mode = _Status.set_opmode(ps_status, value)
             self.cmd_cfg_op_mode(op_mode)
 
-    @property
-    def var_ps_status(self):
-        """Return power supply status."""
-        return self._get_ps_status()
+    # @property
+    # def var_ps_status(self):
+    #     """Return power supply status."""
+    #     return self._get_ps_status()
 
-    @property
-    def var_ps_setpoint(self):
-        """Return of power supply last setpoint."""
-        return self._get_ps_setpoint()
-
-    @property
-    def var_ps_reference(self):
-        """Return of power supply reference setpoint.
-
-        It may differ from 'ps_setpoint' due to various limitions.
-        """
-        return self._get_ps_reference()
+    # @property
+    # def var_ps_setpoint(self):
+    #     """Return of power supply last setpoint."""
+    #     return self._get_ps_setpoint()
+    #
+    # @property
+    # def var_ps_reference(self):
+    #     """Return of power supply reference setpoint.
+    #
+    #     It may differ from 'ps_setpoint' due to various limitions.
+    #     """
+    #     return self._get_ps_reference()
 
     # --- API: FBP power supply 'variables' ---
 
-    @property
-    def var_ps_soft_interlocks(self):
-        """Return soft interlock state."""
-        return self._get_ps_soft_interlocks()
-
-    @property
-    def var_ps_hard_interlocks(self):
-        """Return hard interlock state."""
-        return self._get_ps_hard_interlocks()
-
-    @property
-    def var_i_load(self):
-        """Return power supply load current."""
-        return self._get_i_load()
-
-    @property
-    def var_v_load(self):
-        """Return power supply load voltage."""
-        return self._get_v_load()
-
-    @property
-    def var_v_dclink(self):
-        """Return DC-link voltage."""
-        return self._get_v_dclink()
+    # @property
+    # def var_ps_soft_interlocks(self):
+    #     """Return soft interlock state."""
+    #     return self._get_ps_soft_interlocks()
+    #
+    # @property
+    # def var_ps_hard_interlocks(self):
+    #     """Return hard interlock state."""
+    #     return self._get_ps_hard_interlocks()
+    #
+    # @property
+    # def var_i_load(self):
+    #     """Return power supply load current."""
+    #     return self._get_i_load()
+    #
+    # @property
+    # def var_v_load(self):
+    #     """Return power supply load voltage."""
+    #     return self._get_v_load()
+    #
+    # @property
+    # def var_v_dclink(self):
+    #     """Return DC-link voltage."""
+    #     return self._get_v_dclink()
 
     # --- API: power supply 'functions' ---
 

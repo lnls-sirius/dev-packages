@@ -143,7 +143,7 @@ class DevSlaveSim(_BSMPDeviceSlave):
                 raise ValueError('Invalid BSMP variable type!')
             self._state[ID_variable] = value
 
-    def _create_group(self, IDs_variable):
+    def _create_group(self, ID_group, IDs_variable):
         ID_group = len(self._groups)
         self._groups[ID_group] = IDs_variable[:]
         return _ack.ok, None
@@ -206,6 +206,11 @@ class DevSlaveSim(_BSMPDeviceSlave):
         return _ack.ok, None
 
 
+def PRUserial485_write(stream, timeout):
+    """Write stream to RS485."""
+    return 0
+
+
 class DevSlave(_BSMPDeviceSlave):
     """Transport BSMP layer interacting with real slave device."""
 
@@ -215,3 +220,26 @@ class DevSlave(_BSMPDeviceSlave):
                                   variables=get_variables_FBP(),
                                   functions=get_functions(),
                                   ID_device=ID_device)
+
+    def cmd_0x01(self):
+        """Respond BSMP protocol version."""
+        receiver = chr(self.ID_device)
+        stream = DevSlaveSim.includeChecksum(
+            [receiver, "\x00", "\x00", "\x00"])
+        answer = PRUserial485_write(stream, timeout=10)
+        if len(answer) != 8:
+
+        # needs checking !!!
+        return _ack.ok, ''.join(answer)
+
+    @staticmethod
+    def includeChecksum(string):
+        """Return string checksum."""
+        counter = 0
+        i = 0
+        while (i < len(string)):
+            counter += ord(string[i])
+            i += 1
+        counter = (counter & 0xFF)
+        counter = (256 - counter) & 0xFF
+        return(string + [chr(counter)])

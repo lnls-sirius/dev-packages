@@ -43,6 +43,7 @@ class BSMPDeviceMaster(BSMPDevice):
     def __init__(self, variables, functions, slaves=None):
         """Init method."""
         BSMPDevice.__init__(self, variables=variables, functions=functions)
+        self._ID_device = 0
         self._slaves = {}
         if slaves is not None:
             for slave in slaves:
@@ -60,7 +61,7 @@ class BSMPDeviceMaster(BSMPDevice):
     def cmd_0x00(self, ID_slave):
         """Query BSMP protocol version."""
         slave = self._slaves[ID_slave]
-        return slave.query(0x01)
+        return slave.query(0x00)
 
     def cmd_0x10(self, ID_slave, ID_variable):
         """Query BSMP variable."""
@@ -72,10 +73,12 @@ class BSMPDeviceMaster(BSMPDevice):
         slave = self._slaves[ID_slave]
         return slave.query(0x12, ID_group=ID_group)
 
-    def cmd_0x30(self, ID_slave, IDs_variable):
+    def cmd_0x30(self, ID_slave, ID_group, IDs_variable):
         """Query create BSMP variables group."""
         slave = self._slaves[ID_slave]
-        return slave.query(0x30, IDs_variable=IDs_variable)
+        if ID_group < 3:
+            raise ValueError('Invalid group ID number!')
+        return slave.query(0x30, ID_group=ID_group, IDs_variable=IDs_variable)
 
     def cmd_0x32(self, ID_slave):
         """Query remove all BSMP variables groups."""
@@ -91,12 +94,19 @@ class BSMPDeviceMaster(BSMPDevice):
 class BSMPDeviceSlave(BSMPDevice):
     """BSMP class."""
 
-    def __init__(self, variables, functions,
-                 ID_device=None):
+    def __init__(self, ID_device, variables, functions):
         """Init method."""
         BSMPDevice.__init__(self, variables=variables, functions=functions)
+        if ID_device < 1:
+            raise ValueError('Invalid ID_device number!')
         self._ID_device = ID_device
         self._groups = {}
+        # create group with ID 0
+        self._groups[0] = [] # all variables
+        self._groups[1] = [] # all read-variables
+        self._groups[2] = [] # all write-variables
+        for variable in variables:
+            variable
 
     _query2resp = {
         0x00: 'cmd_0x01',
@@ -136,10 +146,8 @@ class BSMPDeviceSlave(BSMPDevice):
         """Respond execute BSMP function."""
         raise NotImplementedError
 
-    def _create_group(self, IDs_variable):
+    def _create_group(self, ID_group, IDs_variable):
         """Respond create BSMP bariables group."""
-        # ID_group = len(self._groups)
-        # self._groups[ID_group] = IDs_variable[:]
         raise NotImplementedError
 
     def _remove_groups(self):
