@@ -1,10 +1,12 @@
 """Power supply controller classes."""
 
+from siriuspy.csdevice.pwrsupply import ps_opmode as _ps_opmode
 from siriuspy.csdevice.pwrsupply import ps_soft_interlock as _ps_soft_interlock
 from siriuspy.csdevice.pwrsupply import ps_hard_interlock as _ps_hard_interlock
 from siriuspy.csdevice.pwrsupply import get_common_ps_propty_database as \
     _get_common_ps_propty_database
 
+from siriuspy.bsmp import Const as _ack
 from siriuspy.pwrsupply.status import Status as _Status
 from siriuspy.pwrsupply.bsmp import Const as _Const
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
@@ -88,6 +90,46 @@ class Controller():
         """Init method."""
         self._ID_device = ID_device
         self._serial_comm = serial_comm
+        ps_status = self._get_ps_status()
+        self._pwrstate = _Status.pwrstate(ps_status)
+        self._opmode = _Status.opmode(ps_status)
+
+    @property
+    def pwrstate(self):
+        """Return PS power state."""
+        return self._pwrstate
+
+    @pwrstate.setter
+    def pwrstate(self, value):
+        """Set PS power state."""
+        if value == _PSConst.PwrState.Off:
+            self._pwrstate = value
+            self.cmd_turn_off()
+        elif value == _PSConst.PwrState.On:
+            # turn ps on
+            self._pwrstate = value
+            self.cmd_turn_on()
+            # set ps opmode to stored value
+            self.opmode = self._opmode
+        else:
+            raise ValueError
+
+    @property
+    def opmode(self):
+        """Return PS opmode."""
+        return self._opmode
+
+    @opmode.setter
+    def opmode(self, value):
+        """Set PS opmode."""
+        if not(0 <= value < len(_ps_opmode)):
+            raise ValueError
+        # set opmode state
+        self._opmode = value
+        if self.pwrstate == _PSConst.PwrState.On:
+            ps_status = self._get_ps_status()
+            op_mode = _Status.set_opmode(ps_status, value)
+            self.cmd_cfg_op_mode(op_mode)
 
     @property
     def var_ps_status(self):
@@ -212,9 +254,11 @@ class Controller():
         return self._get_bsmp_variable(_Const.v_dclink)
 
     def _get_bsmp_variable(self, ID_variable):
-        value = self._serial_comm.cmd_0x10(
+        ack, value = self._serial_comm.cmd_0x10(
             ID_slave=self._ID_device,
             ID_variable=ID_variable)
+        if ack != _ack.ok:
+            raise Exception('Error message in BSMP variable cmd!')
         return value
 
     def _run_bsmp_function(self, ID_function, **kwargs):
@@ -223,10 +267,12 @@ class Controller():
         if ret is not None:
             return ret
         else:
-            ret = self._serial_comm.cmd_0x50(
+            ack, ret = self._serial_comm.cmd_0x50(
                     ID_slave=self._ID_device,
                     ID_function=ID_function,
                     **kwargs)
+            if ack != _ack.ok:
+                raise Exception('Error message in BSMP function cmd!')
             return ret
 
     def _get_ctrlmode(self):
@@ -235,30 +281,18 @@ class Controller():
         return value
 
     def _get_pwrstate(self):
-        ps_status = self._get_ps_status()
-        value = _Status.pwrstate(ps_status)
-        return value
+        return self.pwrstate
 
     def _get_opmode(self):
-        ps_status = self._get_ps_status()
-        value = _Status.opmode(ps_status)
-        return value
+        return self.opmode
 
     def _set_pwrstate(self, value):
         """Set pwrstate state."""
-        if value == _PSConst.PwrState.Off:
-            return self.cmd_turn_off()
-        elif value == _PSConst.PwrState.On:
-            return self.cmd_turn_on()
-        else:
-            raise ValueError('Invalid pwrstate value "{}"!'.format(value))
+        self.pwrstate = value
 
     def _set_opmode(self, value):
         """Set pwrstate state."""
-        ps_status = self._get_ps_status()
-        ps_status = _Status.set_opmode(ps_status, value)
-        state = _Status.state(ps_status)
-        self.cmd_cfg_op_mode(op_mode=state)
+        self.opmode = value
 
     def _check_interface(self):
         ps_status = self._get_ps_status()
@@ -269,7 +303,6 @@ class Controller():
             else:
                 return _PSConst.CmdAck.PCHost
         return None  # in Remote interface
-
 
 # class ControllerSim(Controller):
 #     """Simulation Controller class."""

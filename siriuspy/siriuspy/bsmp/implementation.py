@@ -1,255 +1,147 @@
 """Module implementing BSMP protocol."""
 
+
 __version__ = '2.20'
 
 
+class Const:
+    """BSMP constants."""
 
-
-class BSMPDeviceMaster:
-    """BSMP class."""
-
-    def __init__(self, variables, functions, slaves=None):
-        """Init method."""
-        self._variables = {ID: value for ID, value in variables.items()}
-        self._functions = {ID: value for ID, value in functions.items()}
-        self._groups = {}
-        self._slaves = {}
-        if slaves is not None:
-            if isinstance(slaves, (list, tuple)):
-                for i in range(len(slaves)):
-                    self._slaves[i] = slaves[i]
-            elif isinstance(slaves, dict):
-                for k, v in slaves.items():
-                    self._slaves[k] = v
-
-    @property
-    def slaves(self):
-        """Return slave devices."""
-        return self._slaves
-
-    @slaves.setter
-    def slaves(self, value):
-        """Set slaves devices."""
-        self._slaves = value
-        self._broadcast_master()
-
-    def add_slave(self, slave):
-        """Add slave."""
-        self._slaves[slave.ID_device] = slave
-
-    @property
-    def variables(self):
-        """Return variables dictionary."""
-        return self._variables
-
-    # --- master commands ---
-
-    def cmd_0x00(self):
-        """Return BSMP protocol version."""
-        return __version__
-
-    def cmd_0x10(self, ID_slave, ID_variable):
-        """Read variable identified by its ID."""
-        slave = self._slaves[ID_slave]
-        return slave.ack_0x10(ID_variable)
-
-    def cmd_0x12(self, ID_slave, ID_group):
-        """Read group variables identified by its ID."""
-        slave = self._slaves[ID_slave]
-        return slave.ack_0x12(ID_group)
-
-    def cmd_0x30(self, IDs_variable):
-        """Create group of variables."""
-        ID_group = len(self._groups)
-        self._groups[ID_group] = IDs_variable[:]
-        # broadcast command to slaves
-        if self.slaves:
-            for slave in self.slaves:
-                self.slave.cmd_0x30(IDs_variable)
-
-    def cmd_0x32(self):
-        """Remove all groups of variables."""
-        self._groups = []
-        # broadcast command to slaves
-        if self.slaves:
-            for slave in self.slaves:
-                self.slave.cmd_0x32()
-
-    def cmd_0x50(self, ID_slave, ID_function, **kwargs):
-        """Execute function identified by its ID."""
-        slave = self._slaves[ID_slave]
-        return slave.ack_0x50(ID_function, **kwargs)
-
-    # --- private methods ---
-
-    # def _broadcast_master(self):
-    #     if self._slaves:
-    #         for slave in self._slaves:
-    #             slave.master = self
-
-
-class BSMPDeviceSlave:
-    """BSMP class."""
-
-    def __init__(self, variables, functions,
-                 ID_device=None):
-        """Init method."""
-        self._ID_device = ID_device
-        self._variables = {ID: value for ID, value in variables.items()}
-        self._functions = {ID: value for ID, value in functions.items()}
-        self._groups = {}
-
-    @property
-    def ID_device(self):
-        """Return the BSMP ID for the device."""
-        return self._ID_device
-
-    @property
-    def master(self):
-        """Return master device."""
-        return self._master
-
-    @master.setter
-    def master(self, value):
-        """Set master device."""
-        self._master = value
-
-    @property
-    def variables(self):
-        """Return variables dictionary."""
-        return self._variables
-
-    def ack_0x10(self, ID_variable):
-        """Read variable identified by its ID."""
-        raise NotImplementedError
-
-    def ack_0x12(self, ID_group):
-        """Read group variables identified by its ID (slave)."""
-        raise NotImplementedError
-
-    def ack_0x50(self, ID_function, **kwargs):
-        """Slave response to function execution."""
-        raise NotImplementedError
-
-    # --- private methods ---
-
-    # def _broadcast_master(self):
-    #     if self._slaves:
-    #         for slave in self._slaves:
-    #             slave.master = self
-
+    ok = 0xE0,
+    invalid_message = 0xE1,
+    operation_not_supported = 0xE2,
+    invalid_id = 0xE3,
+    invalid_value = 0xE4,
+    invalid_data_length = 0xE5,
+    read_only = 0xE6,
+    insufficient_memory = 0xE7,
+    busy_resource = 0xE8,
 
 
 class BSMPDevice:
     """BSMP class."""
 
-    def __init__(self, variables, functions,
-                 ID_device=None, master=None, slaves=None):
+    def __init__(self, variables, functions):
         """Init method."""
-        self._ID_device = ID_device
         self._variables = {ID: value for ID, value in variables.items()}
         self._functions = {ID: value for ID, value in functions.items()}
-        self._groups = {}
-        self.master = master
-        self._slaves = {}
-        if slaves is not None:
-            if isinstance(slaves, (list, tuple)):
-                for i in range(len(slaves)):
-                    self._slaves[i] = slaves[i]
-            elif isinstance(slaves, dict):
-                for k, v in slaves.items():
-                    self._slaves[k] = v
-
-    @property
-    def ID_device(self):
-        """Return the BSMP ID for the device."""
-        return self._ID_device
-
-    @property
-    def master(self):
-        """Return master device."""
-        return self._master
-
-    @master.setter
-    def master(self, value):
-        """Set master device."""
-        self._master = value
-
-    @property
-    def slaves(self):
-        """Return slave devices."""
-        return self._slaves
-
-    @slaves.setter
-    def slaves(self, value):
-        """Set slaves devices."""
-        self._slaves = value
-        self._broadcast_master()
-
-    def add_slave(self, slave):
-        """Add slave."""
-        self._slaves[slave.ID_device] = slave
 
     @property
     def variables(self):
         """Return variables dictionary."""
         return self._variables
 
-    # --- master commands ---
+    @property
+    def functions(self):
+        """Return functions dictionary."""
+        return self._functions
 
-    def cmd_0x00(self):
-        """Return BSMP protocol version."""
-        return __version__
+
+class BSMPDeviceMaster(BSMPDevice):
+    """BSMP Master class."""
+
+    def __init__(self, variables, functions, slaves=None):
+        """Init method."""
+        BSMPDevice.__init__(self, variables=variables, functions=functions)
+        self._slaves = {}
+        if slaves is not None:
+            for slave in slaves:
+                self.add_slave(slave)
+
+    @property
+    def slaves(self):
+        """Return slave devices."""
+        return self._slaves
+
+    def add_slave(self, slave):
+        """Add slave."""
+        self._slaves[slave.ID_device] = slave
+
+    def cmd_0x00(self, ID_slave):
+        """Query BSMP protocol version."""
+        slave = self._slaves[ID_slave]
+        return slave.query(0x01)
 
     def cmd_0x10(self, ID_slave, ID_variable):
-        """Read variable identified by its ID."""
+        """Query BSMP variable."""
         slave = self._slaves[ID_slave]
-        return slave.ack_0x10(ID_variable)
+        return slave.query(0x10, ID_variable=ID_variable)
 
     def cmd_0x12(self, ID_slave, ID_group):
-        """Read group variables identified by its ID."""
+        """Query BSMP variables group."""
         slave = self._slaves[ID_slave]
-        return slave.ack_0x12(ID_group)
+        return slave.query(0x12, ID_group=ID_group)
 
-    def cmd_0x30(self, IDs_variable):
-        """Create group of variables."""
-        ID_group = len(self._groups)
-        self._groups[ID_group] = IDs_variable[:]
-        # broadcast command to slaves
-        if self.slaves:
-            for slave in self.slaves:
-                self.slave.cmd_0x30(IDs_variable)
+    def cmd_0x30(self, ID_slave, IDs_variable):
+        """Query create BSMP variables group."""
+        slave = self._slaves[ID_slave]
+        return slave.query(0x30, IDs_variable=IDs_variable)
 
-    def cmd_0x32(self):
-        """Remove all groups of variables."""
-        self._groups = []
-        # broadcast command to slaves
-        if self.slaves:
-            for slave in self.slaves:
-                self.slave.cmd_0x32()
+    def cmd_0x32(self, ID_slave):
+        """Query remove all BSMP variables groups."""
+        slave = self._slaves[ID_slave]
+        return slave.query(0x32)
 
     def cmd_0x50(self, ID_slave, ID_function, **kwargs):
-        """Execute function identified by its ID."""
+        """Query execute BSMP function."""
         slave = self._slaves[ID_slave]
-        return slave.ack_0x50(ID_function, **kwargs)
+        return slave.query(0x50, ID_function=ID_function, **kwargs)
 
-    # --- slave acknowledgments ---
 
-    def ack_0x10(self, ID_variable):
-        """Read variable identified by its ID."""
+class BSMPDeviceSlave(BSMPDevice):
+    """BSMP class."""
+
+    def __init__(self, variables, functions,
+                 ID_device=None):
+        """Init method."""
+        BSMPDevice.__init__(self, variables=variables, functions=functions)
+        self._ID_device = ID_device
+        self._groups = {}
+
+    _query2resp = {
+        0x00: 'cmd_0x01',
+        0x10: 'cmd_0x11',
+        0x12: 'cmd_0x13',
+        0x30: '_create_group',
+        0x32: '_remove_groups',
+        0x50: 'cmd_0x51',
+    }
+
+    @property
+    def ID_device(self):
+        """Return BSMP protocol version."""
+        return self._ID_device
+
+    def query(self, cmd, **kwargs):
+        """Receive a command from master."""
+        if cmd not in BSMPDeviceSlave._query2resp:
+            raise NotImplementedError(
+                'command {} for implemented'.format(hex(cmd)))
+        func = getattr(self, BSMPDeviceSlave._query2resp[cmd])
+        return func(**kwargs)
+
+    def cmd_0x01(self):
+        """Respond BSMP protocol version."""
         raise NotImplementedError
 
-    def ack_0x12(self, ID_group):
-        """Read group variables identified by its ID (slave)."""
+    def cmd_0x11(self, ID_variable):
+        """Respond BSMP variable."""
         raise NotImplementedError
 
-    def ack_0x50(self, ID_function, **kwargs):
-        """Slave response to function execution."""
+    def cmd_0x13(self, ID_group):
+        """Respond BSMP variables group."""
         raise NotImplementedError
 
-    # --- private methods ---
+    def cmd_0x51(self, ID_function, **kwargs):
+        """Respond execute BSMP function."""
+        raise NotImplementedError
 
-    def _broadcast_master(self):
-        if self._slaves:
-            for slave in self._slaves:
-                slave.master = self
+    def _create_group(self, IDs_variable):
+        """Respond create BSMP bariables group."""
+        # ID_group = len(self._groups)
+        # self._groups[ID_group] = IDs_variable[:]
+        raise NotImplementedError
+
+    def _remove_groups(self):
+        """Respond remove all BSMP variables groups."""
+        raise NotImplementedError

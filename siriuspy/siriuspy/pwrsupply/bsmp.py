@@ -1,5 +1,7 @@
 """Power Supply BSMP implementation."""
 
+from siriuspy.bsmp import __version__ as __bsmp_version__
+from siriuspy.bsmp import Const as _ack
 from siriuspy.bsmp import BSMPDeviceMaster as _BSMPDeviceMaster
 from siriuspy.bsmp import BSMPDeviceSlave as _BSMPDeviceSlave
 from siriuspy.pwrsupply.status import Status as _Status
@@ -100,15 +102,19 @@ class SerialComm(_BSMPDeviceMaster):
         # serial line mode
         self._sync_mode = False
 
+    def add_slave(self, slave):
+        """Add slave to slave pool controlled by master BSMP device."""
         # create group for all variables.
+        _BSMPDeviceMaster.add_slave(self, slave)
         IDs_variable = tuple(self.variables.keys())
-        self.cmd_0x30(IDs_variable=IDs_variable)
+        ack, *_ = self.cmd_0x30(ID_slave=slave.ID_device,
+                                IDs_variable=IDs_variable)
+        if ack != _ack.ok:
+            raise Exception('Could not create variables group!')
 
-        # Implement threaded queue as in IOC.py
 
-
-class SlaveSim(_BSMPDeviceSlave):
-    """Simulated BSMP slave device for power supplies."""
+class DevSlaveSim(_BSMPDeviceSlave):
+    """Transport BSMP layer interacting with simulated slave device."""
 
     def __init__(self, ID_device):
         """Init method."""
@@ -137,34 +143,51 @@ class SlaveSim(_BSMPDeviceSlave):
                 raise ValueError('Invalid BSMP variable type!')
             self._state[ID_variable] = value
 
-    def ack_0x10(self, ID_variable):
-        """Read variable identified by its ID."""
-        return self._state[ID_variable]
+    def _create_group(self, IDs_variable):
+        ID_group = len(self._groups)
+        self._groups[ID_group] = IDs_variable[:]
+        return _ack.ok, None
 
-    def ack_0x12(self, ID_group):
-        """Read group variables identified by its ID (slave)."""
+    def _delete_groups(self):
+        self._groups = {}
+        return _ack.ok, None
+
+    def cmd_0x01(self):
+        """Respond BSMP protocol version."""
+        return _ack.ok, __bsmp_version__
+
+    def cmd_0x11(self, ID_variable):
+        """Respond BSMP variable."""
+        if ID_variable not in self._variables.keys():
+            return _ack.invalid_id, None
+        return _ack.ok, self._state[ID_variable]
+
+    def cmd_0x13(self, ID_group):
+        """Respond SBMP variable group."""
         IDs_variable = self._groups[ID_group]
         data = {}
         for ID_variable in IDs_variable:
             data[ID_variable] = self._state[ID_variable]
-        return data
+        return _ack.ok, data
 
-    def ack_0x50(self, ID_function, **kwargs):
-        """Slave response to function execution."""
+    def cmd_0x51(self, ID_function, **kwargs):
+        """Respond execute BSMP function."""
         if ID_function == Const.turn_on:
             status = self._state[Const.ps_status]
             status = _Status.set_state(status, _PSConst.States.SlowRef)
             self._state[Const.ps_status] = status
             self._state[Const.i_load] = self._state[Const.ps_reference]
+            return _ack.ok, None
         elif ID_function == Const.turn_off:
             status = self._state[Const.ps_status]
             status = _Status.set_state(status, _PSConst.States.Off)
             self._state[Const.ps_status] = status
             self._state[Const.i_load] = 0.0
+            return _ack.ok, None
         elif ID_function == Const.set_slowref:
-            self._cmd_set_slowref(**kwargs)
+            return self._cmd_set_slowref(**kwargs)
         elif ID_function == Const.cfg_op_mode:
-            self._cmd_cfg_op_mode(**kwargs)
+            return self._cmd_cfg_op_mode(**kwargs)
         else:
             raise NotImplementedError
 
@@ -174,18 +197,21 @@ class SlaveSim(_BSMPDeviceSlave):
         status = self._state[Const.ps_status]
         if _Status.pwrstate(status) == _PSConst.PwrState.On:
             self._state[Const.i_load] = self._state[Const.ps_reference]
+        return _ack.ok, None
 
     def _cmd_cfg_op_mode(self, **kwargs):
         status = self._state[Const.ps_status]
         status = _Status.set_state(status, kwargs['op_mode'])
         self._state[Const.ps_status] = status
+        return _ack.ok, None
 
 
-class SlaveRS485(_BSMPDeviceSlave):
-    """Transport layer to interact with BSMP slave device through RS485."""
+class DevSlave(_BSMPDeviceSlave):
+    """Transport BSMP layer interacting with real slave device."""
 
-    def __init__(ID_device):
+    def __init__(self, ID_device):
         """Init method."""
-        _BSMPDeviceSlave.__init__(variables=get_variables_FBP(),
+        _BSMPDeviceSlave.__init__(self,
+                                  variables=get_variables_FBP(),
                                   functions=get_functions(),
                                   ID_device=ID_device)
