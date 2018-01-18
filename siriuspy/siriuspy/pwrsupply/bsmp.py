@@ -127,7 +127,7 @@ class _PRUInterface:
 
     # --- pure virtual method ---
 
-    def _get_pulse_count_sync(self):
+    def _get_sync_pulse_count(self):
         raise NotImplementedError
 
     def _set_sync_mode(self, value):
@@ -282,7 +282,7 @@ class SerialComm(_BSMPDeviceMaster):
     def _scan_thread(self):
         """Add scan puts into queue."""
         while (True):
-            self._sync_counter = self._PRU.pulse_count_sync
+            self._sync_counter = self._PRU.sync_pulse_count
             for ID_slave in self._slaves:
                 self._queue.put((ID_slave, 'cmd_0x10', {'ID_group': 3}))
             if self._PRU.sync_mode:
