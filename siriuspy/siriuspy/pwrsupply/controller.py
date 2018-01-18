@@ -180,15 +180,15 @@ class Controller():
 
     def cmd_turn_on(self):
         """Turn power supply on."""
-        return self._run_bsmp_function(_Const.turn_on)
+        return self._run_bsmp_function(ID_function=_Const.turn_on)
 
     def cmd_turn_off(self):
         """Turn power supply off."""
-        return self._run_bsmp_function(_Const.turn_off)
+        return self._run_bsmp_function(ID_function=_Const.turn_off)
 
     def cmd_open_loop(self):
         """Open DSP control loop."""
-        return self._run_bsmp_function(_Const.open_loop)
+        return self._run_bsmp_function(ID_function=_Const.open_loop)
 
     def cmd_close_loop(self):
         """Open DSP control loop."""
@@ -200,7 +200,8 @@ class Controller():
 
     def cmd_set_slowref(self, setpoint):
         """Set SlowRef reference value."""
-        return self._run_bsmp_function(_Const.set_slowref, setpoint=setpoint)
+        return self._run_bsmp_function(ID_function=_Const.set_slowref,
+                                       setpoint=setpoint)
 
     def cmd_cfg_op_mode(self, op_mode):
         """Set controller operation mode."""
@@ -254,27 +255,20 @@ class Controller():
         return self._get_bsmp_variable(_Const.v_dclink)
 
     def _get_bsmp_variable(self, ID_variable):
-
-        ack, value = self._serial_comm.cmd_0x10(
-            ID_slave=self._ID_device,
+        value = self._serial_comm.get_variable(
+            ID_device=self._ID_device,
             ID_variable=ID_variable)
-        if ack != _ack.ok:
-            raise Exception('Error message in BSMP variable cmd!')
         return value
 
     def _run_bsmp_function(self, ID_function, **kwargs):
         # check if ps is in remote ctrlmode
         ret = self._check_interface()
         if ret is not None:
-            return ret
+            return None
         else:
-            ack, ret = self._serial_comm.cmd_0x50(
-                    ID_slave=self._ID_device,
-                    ID_function=ID_function,
-                    **kwargs)
-            if ack != _ack.ok:
-                raise Exception('Error message in BSMP function cmd!')
-            return ret
+            self._serial_comm.put(ID_device=self._ID_device,
+                                  cmd=0x50,
+                                  kwargs={'ID_function': ID_function})
 
     def _get_ctrlmode(self):
         ps_status = self._get_ps_status()

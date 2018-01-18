@@ -250,18 +250,16 @@ class SerialComm(_BSMPDeviceMaster):
     def add_slave(self, slave):
         """Add slave to slave pool controlled by master BSMP device."""
         # create group for all variables.
-        _BSMPDeviceMaster.add_slave(self, slave)
         slave.serial_comm = self
         IDs_variable = tuple(self.variables.keys())
-        ack, *_ = self.cmd_0x30(ID_slave=slave.ID_device,
-                                ID_group=3,
-                                IDs_variable=IDs_variable)
-        if ack != _ack.ok:
-            raise Exception('Could not create variables group!')
+        self.put(ID_device=slave.ID_device,
+                 cmd=0x30,
+                 kwargs={'ID_group': 3, 'IDs_variable': IDs_variable})
+        _BSMPDeviceMaster.add_slave(self, slave)
 
-    def put(self, ID_device, cmd, value):
+    def put(self, ID_device, cmd, kwargs):
         """Put a SBMP command request in queue."""
-        self._queue.put((ID_device, cmd, value))
+        self._queue.put((ID_device, cmd, kwargs))
 
     def get_variable(self, ID_device, ID_variable):
         """Return a BSMP variable."""
@@ -270,21 +268,17 @@ class SerialComm(_BSMPDeviceMaster):
     def _process_thread(self):
         """Process queue."""
         item = self._queue.get()
-        id_slave = item[0]
-        operation = item[1]
-        try:
-            kwargs = item[2]
-        except KeyError:
-            kwargs = {}
-
-        answer = getattr(self.slaves[id_slave], operation)(**kwargs)
+        id_slave, id_cmd, kwargs = item
+        print(id_slave, id_cmd, kwargs)
+        func = 'cmd_' + str(hex(id_cmd))
+        ack, load = getattr(self, func)(ID_slave=id_slave, **kwargs)
 
     def _scan_thread(self):
         """Add scan puts into queue."""
         while (True):
             self._sync_counter = self._PRU.sync_pulse_count
             for ID_slave in self._slaves:
-                self._queue.put((ID_slave, 'cmd_0x10', {'ID_group': 3}))
+                self._queue.put((ID_slave, 0x10, {'ID_group': 3}))
             if self._PRU.sync_mode:
                 # self.event.wait(1)
                 _time.sleep(SerialComm._SCAN_INTERVAL_SYNC_MODE_ON)
@@ -304,12 +298,14 @@ class DevSlaveSim(_BSMPDeviceSlave):
                                   ID_device=ID_device)
         self._state = PSState(variables=self.variables)
 
-    def _create_group(self, ID_group, IDs_variable):
+    def create_group(self, ID_group, IDs_variable):
+        """Create group of BSMP variables."""
         ID_group = len(self._groups)
         self._groups[ID_group] = IDs_variable[:]
         return _ack.ok, None
 
-    def _delete_groups(self):
+    def delete_groups(self):
+        """Delete all groups of BSMP variables."""
         self._groups = {}
         return _ack.ok, None
 

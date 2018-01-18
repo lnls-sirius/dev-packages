@@ -4,6 +4,37 @@
 __version__ = '2.20.0'
 
 
+# class SerialLine:
+#
+#     def write(self):
+#         pass
+#
+#     def read(self):
+#         pass
+#
+#
+# class BSMP:
+#
+#     def __init__(self, serial_line):
+#
+#     def cmd_0x00(self, ID_slave):
+#         """Query BSMP protocol version."""
+#         slave = self._slaves[ID_slave]
+#         serial_line.write(receiver=ID_slave, cmd=0x00)
+#         data = serial_line.read()
+#         return data
+#
+#     def cmd_0x10(self, ID_slave, ID_variable):
+#         """Read variable."""
+#
+#     def cmd_0x10_rite(self, ID_slave, ID_variable):
+#         """Read variable."""
+#
+#
+#     def
+
+
+
 class Const:
     """BSMP constants."""
 
@@ -112,8 +143,8 @@ class BSMPDeviceSlave(BSMPDevice):
         0x00: 'cmd_0x01',
         0x10: 'cmd_0x11',
         0x12: 'cmd_0x13',
-        0x30: '_create_group',
-        0x32: '_remove_groups',
+        0x30: 'create_group',
+        0x32: 'remove_groups',
         0x50: 'cmd_0x51',
     }
 
@@ -129,6 +160,14 @@ class BSMPDeviceSlave(BSMPDevice):
                 'command {} for implemented'.format(hex(cmd)))
         func = getattr(self, BSMPDeviceSlave._query2resp[cmd])
         return func(**kwargs)
+
+    def create_group(self, ID_group, IDs_variable):
+        """Create group of BSMP variables."""
+        raise NotImplementedError
+
+    def delete_groups(self, ID_group):
+        """Delete all groups of BSMP variables."""
+        raise NotImplementedError
 
     def cmd_0x01(self):
         """Respond BSMP protocol version."""
