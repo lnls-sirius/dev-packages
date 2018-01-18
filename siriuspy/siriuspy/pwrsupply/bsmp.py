@@ -1,4 +1,4 @@
-"""Power Supply BSMP implementation."""
+"""BSMP entities definitions for the power supply devices."""
 
 import time as _time
 from Queue import Queue as _Queue
@@ -10,6 +10,9 @@ from siriuspy.bsmp import BSMPDeviceMaster as _BSMPDeviceMaster
 from siriuspy.bsmp import BSMPDeviceSlave as _BSMPDeviceSlave
 from siriuspy.pwrsupply.status import Status as _Status
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
+
+# import PRUserial485 as _PRUserial485
+_PRUserial485 = None
 
 
 class Const:
@@ -93,44 +96,157 @@ def get_functions():
     return functions
 
 
-class SerialComm(_BSMPDeviceMaster):
-    """Master BSMP device for FBP power supplies."""
+class _PRUInterface:
+    """Interface class for programmable real-time units."""
 
-    def __init__(self, PRU, slaves=None):
+    def __init__(self):
         """Init method."""
-        _BSMPDeviceMaster.__init__(self,
-                                   variables=get_variables_FBP(),
-                                   functions=get_functions(),
-                                   slaves=slaves)
-
-        self._PRU = PRU
-        self._queue = _Queue()
         self._sync_mode = False
-        self._sync_counter = 0
-        self._init_state()
 
-        # Cria, configura e inicializa as duas threads auxiliares
-        self.process = _Thread(target=self.process_thread, daemon=True)
-        self.scan = _Thread(target=self.scan_thread, daemon=True)
-
-        self.process.start()
-        self.scan.start()
+    # --- interface ---
 
     @property
     def sync_mode(self):
-        """Return sync mode of PRU."""
+        """Return sync mode."""
         return self._sync_mode
 
     @sync_mode.setter
     def sync_mode(self, value):
-        """Set PRU sync mode."""
+        """Set sync mode."""
+        self._set_sync_mode(value)
         self._sync_mode = value
+
+    @property
+    def pulse_count_sync(self):
+        """Return synchronism pulse count."""
+        return self._get_pulse_count_sync()
+
+    def write(self, stream, timeout):
+        """Write stream to serial line."""
         raise NotImplementedError
+
+    # --- pure virtual method ---
+
+    def _get_pulse_count_sync(self):
+        raise NotImplementedError
+
+    def _set_sync_mode(self, value):
+        raise NotImplementedError
+
+
+class PRUSim(_PRUInterface):
+    """Simulated PRU."""
+
+    def __init__(self):
+        """Init method."""
+        _PRUInterface.__init__(self)
+        self._pulse_count_sync = 0
+
+    def process_sync_signal(self):
+        """Process synchronization signal."""
+        self._pulse_count_sync += 1
+
+    def _get_pulse_count_sync(self):
+        return self._pulse_count_sync
+
+    def _set_sync_mode(self, value):
+        pass
+
+    def _write(self, stream, timeout):
+        # not used!
+        raise NotImplementedError
+
+
+class PRU(_PRUInterface):
+    """Programmable real-time unit."""
+
+    def _get_pulse_count_sync(self):
+        return _PRUserial485.PRUserial485_read_pulse_count_sync()
+
+    def _get_sync_mode(self):
+        return self._sync_mode
+
+    def _set_sync_mode(self, value):
+        self._sync_mode = value
+
+    def _write(self, stream, timeout):
+        raise NotImplementedError(('This method should not be called '
+                                  'for objects of this class'))
+
+
+class PSState:
+    """Power supply state."""
+
+    def __init__(self, variables):
+        """Init method."""
+        self._state = {}
+        for ID_variable, variable in variables.items():
+            name, type_t, writable = variable
+            if type_t == Const.t_float:
+                value = 0.0
+            elif type_t in (Const.t_status,
+                            Const.t_state,
+                            Const.t_remote,
+                            Const.t_model,
+                            Const.t_uint8,
+                            Const.t_uint16,
+                            Const.t_uint32):
+                value = 0
+            else:
+                raise ValueError('Invalid BSMP variable type!')
+            self._state[ID_variable] = value
+
+    def __getitem__(self, key):
+        """Return value corresponfing to a certain key (ps_variable)."""
+        return self._state[key]
+
+    def __setitem__(self, key, value):
+        """Set value for a certain key (ps_variable)."""
+        self._state[key] = value
+        return value
+
+
+class SerialComm(_BSMPDeviceMaster):
+    """Master BSMP device for FBP power supplies."""
+
+    _SCAN_INTERVAL_SYNC_MODE_OFF = 0.1  # [s]
+    _SCAN_INTERVAL_SYNC_MODE_ON = 1.0  # [s]
+
+    def __init__(self, PRU, slaves=None):
+        """Init method."""
+        variables = get_variables_FBP()
+        _BSMPDeviceMaster.__init__(self,
+                                   variables=variables,
+                                   functions=get_functions(),
+                                   slaves=slaves)
+        self._PRU = PRU
+        self._queue = _Queue()
+        self._state = PSState(variables=variables)
+        # Cria, configura e inicializa as duas threads auxiliares
+        self._process = _Thread(target=self._process_thread, daemon=True)
+        self._scan = _Thread(target=self._scan_thread, daemon=True)
+        self._process.start()
+        self._scan.start()
+
+    @property
+    def sync_mode(self):
+        """Return sync mode of PRU."""
+        return self._PRU.sync_mode
+
+    @sync_mode.setter
+    def sync_mode(self, value):
+        """Set PRU sync mode."""
+        self._PRU.sync_mode = value
+
+    def write(self, stream, timeout):
+        """Write stream to controlled serial line."""
+        self._PRU.write(stream, timeout)
 
     def add_slave(self, slave):
         """Add slave to slave pool controlled by master BSMP device."""
         # create group for all variables.
         _BSMPDeviceMaster.add_slave(self, slave)
+        slave.serial_comm = self
         IDs_variable = tuple(self.variables.keys())
         ack, *_ = self.cmd_0x30(ID_slave=slave.ID_device,
                                 ID_group=3,
@@ -142,44 +258,26 @@ class SerialComm(_BSMPDeviceMaster):
         """Put a SBMP command request in queue."""
         self._queue.put((ID_device, cmd, value))
 
-    def get_variable(self, ID_variable):
+    def get_variable(self, ID_slave, ID_variable):
         """Return a BSMP variable."""
         return self._state[ID_variable]
 
-    def process_thread(self):
+    def _process_thread(self):
         """Process queue."""
         pass
 
-    def scan_thread(self):
+    def _scan_thread(self):
         """Add scan puts into queue."""
         while (True):
-            self._sync_counter = self._PRU.read_pulse_count_sync()
+            self._sync_counter = self._PRU.pulse_count_sync
             for ID_slave in self._slaves:
                 self._queue.put((ID_slave, 'cmd_0x10', {'ID_group': 3}))
-            if not self._sync_mode:
-                # self.event.wait(0.1)
-                _time.sleep(0.1)
-            else:
+            if self._PRU.sync_mode:
                 # self.event.wait(1)
-                _time.sleep(1.0)
-
-    def _init_state(self):
-        self._state = {}
-        for ID_variable, variable in self.variables.items():
-            name, type_t, writable = variable
-            if type_t == Const.t_float:
-                value = 0.0
-            elif type_t in (Const.t_status,
-                            Const.t_state,
-                            Const.t_remote,
-                            Const.t_model,
-                            Const.t_uint8,
-                            Const.t_uint16,
-                            Const.t_uint32):
-                value = 0
+                _time.sleep(SerialComm._SCAN_INTERVAL_SYNC_MODE_ON)
             else:
-                raise ValueError('Invalid BSMP variable type!')
-            self._state[ID_variable] = value
+                # self.event.wait(0.1)
+                _time.sleep(SerialComm._SCAN_INTERVAL_SYNC_MODE_OFF)
 
 
 class DevSlaveSim(_BSMPDeviceSlave):
@@ -191,26 +289,7 @@ class DevSlaveSim(_BSMPDeviceSlave):
                                   variables=get_variables_FBP(),
                                   functions=get_functions(),
                                   ID_device=ID_device)
-
-        self._init_state()
-
-    def _init_state(self):
-        self._state = {}
-        for ID_variable, variable in self.variables.items():
-            name, type_t, writable = variable
-            if type_t == Const.t_float:
-                value = 0.0
-            elif type_t in (Const.t_status,
-                            Const.t_state,
-                            Const.t_remote,
-                            Const.t_model,
-                            Const.t_uint8,
-                            Const.t_uint16,
-                            Const.t_uint32):
-                value = 0
-            else:
-                raise ValueError('Invalid BSMP variable type!')
-            self._state[ID_variable] = value
+        self._state = PSState(variables=self.variables)
 
     def _create_group(self, ID_group, IDs_variable):
         ID_group = len(self._groups)
@@ -254,13 +333,13 @@ class DevSlaveSim(_BSMPDeviceSlave):
             self._state[Const.i_load] = 0.0
             return _ack.ok, None
         elif ID_function == Const.set_slowref:
-            return self._cmd_set_slowref(**kwargs)
+            return self._func_set_slowref(**kwargs)
         elif ID_function == Const.cfg_op_mode:
-            return self._cmd_cfg_op_mode(**kwargs)
+            return self._func_cfg_op_mode(**kwargs)
         else:
             raise NotImplementedError
 
-    def _cmd_set_slowref(self, **kwargs):
+    def _func_set_slowref(self, **kwargs):
         self._state[Const.ps_setpoint] = kwargs['setpoint']
         self._state[Const.ps_reference] = self._state[Const.ps_setpoint]
         status = self._state[Const.ps_status]
@@ -268,16 +347,11 @@ class DevSlaveSim(_BSMPDeviceSlave):
             self._state[Const.i_load] = self._state[Const.ps_reference]
         return _ack.ok, None
 
-    def _cmd_cfg_op_mode(self, **kwargs):
+    def _func_cfg_op_mode(self, **kwargs):
         status = self._state[Const.ps_status]
         status = _Status.set_state(status, kwargs['op_mode'])
         self._state[Const.ps_status] = status
         return _ack.ok, None
-
-
-def PRUserial485_write(stream, timeout):
-    """Write stream to RS485."""
-    return 0
 
 
 class DevSlave(_BSMPDeviceSlave):
@@ -290,17 +364,27 @@ class DevSlave(_BSMPDeviceSlave):
                                   functions=get_functions(),
                                   ID_device=ID_device)
 
-        self._PRU = None
+        self._serial_comm = None
+
+    @property
+    def serial_comm(self):
+        """Return associated SerialComm object."""
+        return self._serial_comm
+
+    @serial_comm.setter
+    def serial_comm(self, value):
+        """Set associated SerialComm object."""
+        self._serial_comm = value
 
     def cmd_0x01(self):
         """Respond BSMP protocol version."""
-        receiver = chr(self.ID_device)
-        stream = DevSlaveSim.includeChecksum(
-            [receiver, "\x00", "\x00", "\x00"])
-        answer = self._PRU.write(stream, timeout=10)
+        ID_receiver = chr(self.ID_device)
+        stream = [ID_receiver, "\x00", "\x00", "\x00"]
+        stream = DevSlaveSim.includeChecksum(stream)
+        answer = self._serial_comm.write(stream, timeout=10)
         if len(answer) != 8:
             return _ack.invalid_message, None
-        version_str = '.'.join(answer[4:7])
+        version_str = '.'.join([str(ord(c)) for c in answer[4:7]])
         return _ack.ok, version_str
 
     @staticmethod

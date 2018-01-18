@@ -254,6 +254,7 @@ class Controller():
         return self._get_bsmp_variable(_Const.v_dclink)
 
     def _get_bsmp_variable(self, ID_variable):
+
         ack, value = self._serial_comm.cmd_0x10(
             ID_slave=self._ID_device,
             ID_variable=ID_variable)
