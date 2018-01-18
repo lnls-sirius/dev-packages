@@ -117,9 +117,9 @@ class _PRUInterface:
         self._sync_mode = value
 
     @property
-    def pulse_count_sync(self):
+    def sync_pulse_count(self):
         """Return synchronism pulse count."""
-        return self._get_pulse_count_sync()
+        return self._get_sync_pulse_count()
 
     def write(self, stream, timeout):
         """Write stream to serial line."""
@@ -140,14 +140,14 @@ class PRUSim(_PRUInterface):
     def __init__(self):
         """Init method."""
         _PRUInterface.__init__(self)
-        self._pulse_count_sync = 0
+        self._sync_pulse_count = 0
 
     def process_sync_signal(self):
         """Process synchronization signal."""
-        self._pulse_count_sync += 1
+        self._sync_pulse_count += 1
 
-    def _get_pulse_count_sync(self):
-        return self._pulse_count_sync
+    def _get_sync_pulse_count(self):
+        return self._sync_pulse_count
 
     def _set_sync_mode(self, value):
         pass
@@ -160,7 +160,7 @@ class PRUSim(_PRUInterface):
 class PRU(_PRUInterface):
     """Programmable real-time unit."""
 
-    def _get_pulse_count_sync(self):
+    def _get_sync_pulse_count(self):
         return _PRUserial485.PRUserial485_read_pulse_count_sync()
 
     def _get_sync_mode(self):
@@ -237,6 +237,11 @@ class SerialComm(_BSMPDeviceMaster):
     def sync_mode(self, value):
         """Set PRU sync mode."""
         self._PRU.sync_mode = value
+
+    @property
+    def sync_pulse_count(self):
+        """Return synchronism pulse count."""
+        return self._PRU.sync_pulse_count
 
     def write(self, stream, timeout):
         """Write stream to controlled serial line."""
