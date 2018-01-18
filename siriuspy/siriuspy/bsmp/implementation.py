@@ -1,7 +1,7 @@
 """Module implementing BSMP protocol."""
 
 
-__version__ = '2.20'
+__version__ = '2.20.0'
 
 
 class Const:
@@ -102,9 +102,9 @@ class BSMPDeviceSlave(BSMPDevice):
         self._ID_device = ID_device
         self._groups = {}
         # create group with ID 0
-        self._groups[0] = [] # all variables
-        self._groups[1] = [] # all read-variables
-        self._groups[2] = [] # all write-variables
+        self._groups[0] = []  # all variables
+        self._groups[1] = []  # all read-variables
+        self._groups[2] = []  # all write-variables
         for variable in variables:
             variable
 

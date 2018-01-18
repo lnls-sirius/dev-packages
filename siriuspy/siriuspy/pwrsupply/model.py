@@ -11,13 +11,12 @@ from siriuspy.magnet.data import MAData as _MAData
 from siriuspy.magnet import util as _mutil
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.envars import vaca_prefix as _VACA_PREFIX
-from . import controller as _controller
 from siriuspy.factory import NormalizerFactory as _NormalizerFactory
 from siriuspy.pwrsupply import sync as _sync
 
 
-class PSComm:
-    """Communication class for power supplies."""
+class _PSCommInterface:
+    """Communication inerface class for power supplies."""
 
     def read(self, field):
         """Return field value."""
@@ -32,7 +31,7 @@ class PSComm:
         raise NotImplementedError
 
 
-class PowerSupply(PSComm):
+class PowerSupply(_PSCommInterface):
     """PowerSupply class with ps logic."""
 
     _is_setpoint = _re.compile('.*-(SP|Sel|Cmd)$')
@@ -48,6 +47,8 @@ class PowerSupply(PSComm):
         self.t = Thread(target=self._scan_controller)
         self.t.setDaemon(True)
         self.t.start()
+
+    # --- public PSComm interface API ---
 
     def read(self, field):
         """Read field value."""
@@ -80,9 +81,9 @@ class PowerSupply(PSComm):
         else:
             return db
 
-    # Private methods
+    # -- private methods ---
+
     def _build_setpoints(self):
-        """Foo."""
         sp = dict()
         for field in self._get_fields():
             if not PowerSupply._is_setpoint.match(field):
@@ -187,7 +188,7 @@ class PowerSupply(PSComm):
             time.sleep(.5)
 
 
-class PSEpics(PSComm):
+class PSEpics(_PSCommInterface):
     """Power supply with Epics communication."""
 
     valid_fields = ('Current-SP', 'Current-RB', 'CurrentRef-Mon',
@@ -215,7 +216,8 @@ class PSEpics(PSComm):
         self._pvs = dict()
         self._create_pvs()
 
-    # Public PSComm interface API
+    # --- public PSComm interface API ---
+
     def read(self, field):
         """Read a field value."""
         if field not in self.valid_fields:
@@ -262,7 +264,8 @@ class PSEpics(PSComm):
         else:
             return db
 
-    # Private
+    # --- private methods ---
+
     def _create_pvs(self):
         # Normally create normal PV objects
         # In case more than one source is supplied creates a SyncPV
