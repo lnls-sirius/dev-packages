@@ -148,7 +148,15 @@ class SerialComm(_BSMPDeviceMaster):
 
     def process_thread(self):
         """Process queue."""
-        pass
+        item = self._queue.get()
+        id_slave = item[0]
+        operation = item[1]
+        try:
+            kwargs = item[2]
+        except KeyError:
+            kwargs = {}
+
+        answer = getattr(self.slaves[id_slave], operation)(**kwargs)
 
     def scan_thread(self):
         """Add scan puts into queue."""
