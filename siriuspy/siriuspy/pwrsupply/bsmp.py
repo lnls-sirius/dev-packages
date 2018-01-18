@@ -1,7 +1,7 @@
 """BSMP entities definitions for the power supply devices."""
 
 import time as _time
-from Queue import Queue as _Queue
+from queue import Queue as _Queue
 from threading import Thread as _Thread
 
 from siriuspy.bsmp import __version__ as __bsmp_version__
@@ -258,7 +258,7 @@ class SerialComm(_BSMPDeviceMaster):
         """Put a SBMP command request in queue."""
         self._queue.put((ID_device, cmd, value))
 
-    def get_variable(self, ID_slave, ID_variable):
+    def get_variable(self, ID_device, ID_variable):
         """Return a BSMP variable."""
         return self._state[ID_variable]
 
