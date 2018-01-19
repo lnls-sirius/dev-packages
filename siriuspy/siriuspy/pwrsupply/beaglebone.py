@@ -11,16 +11,16 @@ class BeagleBone:
         self._pwrsupplies = None
 
     @property
-    def ps_names(self):
+    def psnames(self):
         """Return power supply names."""
         raise NotImplementedError
 
     @property
-    def read(self, ps_name, field):
+    def read(self, psname, field):
         """Return power supply field."""
-        return self._pwrsupplies[ps_name].read(field)
+        return self._pwrsupplies[psname].read(field)
 
     @property
-    def write(self, ps_name, field, value):
+    def write(self, psname, field, value):
         """Write value to field of power supply."""
-        return self._pwrsupplies[ps_name].write(field, value)
+        return self._pwrsupplies[psname].write(field, value)

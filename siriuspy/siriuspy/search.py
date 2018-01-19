@@ -415,22 +415,22 @@ class MASearch:
             MASearch._maname_2_trim_dict = {}
             MASearch._manames_list = []
             for datum in data:
-                magnet, *ps_names = datum
+                magnet, *psnames = datum
                 MASearch._manames_list.append(magnet)
-                MASearch._maname_2_psnames_dict[magnet] = tuple(ps_names)
+                MASearch._maname_2_psnames_dict[magnet] = tuple(psnames)
                 if 'Fam' not in magnet:
                     famname = _SiriusPVName(magnet)
                     famname = famname.replace(
                         famname.sub, 'Fam').replace('MA-', 'PS-')
-                    if '-Fam:PS-Q' in famname and famname in ps_names:
-                        ps_names.remove(famname)
+                    if '-Fam:PS-Q' in famname and famname in psnames:
+                        psnames.remove(famname)
                         maname = famname.replace('PS-', 'MA-')
                         if maname not in MASearch._maname_2_trim_dict:
                             MASearch._maname_2_trim_dict[maname] = \
-                                tuple(ps_names)
+                                tuple(psnames)
                         else:
                             MASearch._maname_2_trim_dict[maname] += \
-                                tuple(ps_names)
+                                tuple(psnames)
         else:
             raise Exception(
                 'could not read magnet-excitation-ps from web server!')
