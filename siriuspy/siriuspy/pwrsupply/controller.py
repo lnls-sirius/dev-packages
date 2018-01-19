@@ -120,7 +120,7 @@ class _PRUInterface:
 
 
 class PRUSim(_PRUInterface):
-    """Simulated PRU."""
+    """Functions for simulated programmable real-time unit."""
 
     def __init__(self):
         """Init method."""
@@ -143,7 +143,7 @@ class PRUSim(_PRUInterface):
 
 
 class PRU(_PRUInterface):
-    """Programmable real-time unit."""
+    """Functions for the programmable real-time unit."""
 
     def _get_sync_pulse_count(self):
         return _PRUserial485.PRUserial485_read_pulse_count_sync()
@@ -160,7 +160,11 @@ class PRU(_PRUInterface):
 
 
 class PSState:
-    """Power supply state."""
+    """Power supply state.
+
+    Objects of this class have a dictionary that stores the state of
+    power supplies, as defined by its list of BSMP variables.
+    """
 
     def __init__(self, variables):
         """Init method."""
@@ -192,7 +196,7 @@ class PSState:
 
 
 class SerialComm(_BSMPDeviceMaster):
-    """Master BSMP device for FBP power supplies."""
+    """Master BSMP device for power supplies."""
 
     _SCAN_INTERVAL_SYNC_MODE_OFF = 0.1  # [s]
     _SCAN_INTERVAL_SYNC_MODE_ON = 1.0  # [s]
@@ -210,7 +214,7 @@ class SerialComm(_BSMPDeviceMaster):
         self._state = PSState(variables=variables)
         # Cria, configura e inicializa as duas threads auxiliares
         self._thread_queue = _Thread(target=self._process_queue, daemon=True)
-        self._thread_scan = _Thread(target=self._variables_scan, daemon=True)
+        self._thread_scan = _Thread(target=self._scan_variables, daemon=True)
         self._thread_queue.start()
         self._thread_scan.start()
 
@@ -276,7 +280,7 @@ class SerialComm(_BSMPDeviceMaster):
             err_str = 'BSMP cmd {} not implemented in process_thread!'
             raise NotImplementedError(err_str.format(hex(id_cmd)))
 
-    def _variables_scan(self):
+    def _scan_variables(self):
         """Add scan puts into queue."""
         while (True):
             self._sync_counter = self._PRU.sync_pulse_count
@@ -534,32 +538,32 @@ class Controller():
 
     def cmd_turn_on(self):
         """Turn power supply on."""
-        return self._run_bsmp_function(ID_function=_BSMPConst.turn_on)
+        return self._bsmp_run_function(ID_function=_BSMPConst.turn_on)
 
     def cmd_turn_off(self):
         """Turn power supply off."""
-        return self._run_bsmp_function(ID_function=_BSMPConst.turn_off)
+        return self._bsmp_run_function(ID_function=_BSMPConst.turn_off)
 
     def cmd_open_loop(self):
         """Open DSP control loop."""
-        return self._run_bsmp_function(ID_function=_BSMPConst.open_loop)
+        return self._bsmp_run_function(ID_function=_BSMPConst.open_loop)
 
     def cmd_close_loop(self):
         """Open DSP control loop."""
-        return self._run_bsmp_function(_BSMPConst.close_loop)
+        return self._bsmp_run_function(_BSMPConst.close_loop)
 
     def cmd_reset_interlocks(self):
         """Reset interlocks."""
-        return self._run_bsmp_function(_BSMPConst.reset_interlocks)
+        return self._bsmp_run_function(_BSMPConst.reset_interlocks)
 
     def cmd_set_slowref(self, setpoint):
         """Set SlowRef reference value."""
-        return self._run_bsmp_function(ID_function=_BSMPConst.set_slowref,
+        return self._bsmp_run_function(ID_function=_BSMPConst.set_slowref,
                                        setpoint=setpoint)
 
     def cmd_cfg_op_mode(self, op_mode):
         """Set controller operation mode."""
-        return self._run_bsmp_function(_BSMPConst.cfg_op_mode, op_mode=op_mode)
+        return self._bsmp_run_function(_BSMPConst.cfg_op_mode, op_mode=op_mode)
 
     # --- API: public properties and methods ---
 
@@ -585,45 +589,44 @@ class Controller():
     #     These are the functions that all subclass have to implement!
 
     def _get_ps_status(self):
-        return self._get_bsmp_variable(_BSMPConst.ps_status)
+        return self._bsmp_get_variable(_BSMPConst.ps_status)
 
     def _get_ps_setpoint(self):
-        return self._get_bsmp_variable(_BSMPConst.ps_setpoint)
+        return self._bsmp_get_variable(_BSMPConst.ps_setpoint)
 
     def _get_ps_reference(self):
-        return self._get_bsmp_variable(_BSMPConst.ps_reference)
+        return self._bsmp_get_variable(_BSMPConst.ps_reference)
 
     def _get_ps_soft_interlocks(self):
-        return self._get_bsmp_variable(_BSMPConst.ps_soft_interlocks)
+        return self._bsmp_get_variable(_BSMPConst.ps_soft_interlocks)
 
     def _get_ps_hard_interlocks(self):
-        return self._get_bsmp_variable(_BSMPConst.ps_hard_interlocks)
+        return self._bsmp_get_variable(_BSMPConst.ps_hard_interlocks)
 
     def _get_i_load(self):
-        return self._get_bsmp_variable(_BSMPConst.i_load)
+        return self._bsmp_get_variable(_BSMPConst.i_load)
 
     def _get_v_load(self):
-        return self._get_bsmp_variable(_BSMPConst.v_load)
+        return self._bsmp_get_variable(_BSMPConst.v_load)
 
     def _get_v_dclink(self):
-        return self._get_bsmp_variable(_BSMPConst.v_dclink)
+        return self._bsmp_get_variable(_BSMPConst.v_dclink)
 
-    def _get_bsmp_variable(self, ID_variable):
+    def _bsmp_get_variable(self, ID_variable):
+        # read ps_variable as mirrored in the serial_comm object.
         value = self._serial_comm.get_variable(
             ID_device=self._ID_device,
             ID_variable=ID_variable)
         return value
 
-    def _run_bsmp_function(self, ID_function, **kwargs):
+    def _bsmp_run_function(self, ID_function, **kwargs):
         # check if ps is in remote ctrlmode
-        ret = self._check_interface()
-        if ret is not None:
-            return None
-        else:
-            kwargs.update({'ID_function': ID_function})
-            self._serial_comm.put(ID_device=self._ID_device,
-                                  cmd=0x50,
-                                  kwargs=kwargs)
+        if not self._ps_interface_in_remote():
+            return
+        kwargs.update({'ID_function': ID_function})
+        self._serial_comm.put(ID_device=self._ID_device,
+                              cmd=0x50,
+                              kwargs=kwargs)
 
     def _get_ctrlmode(self):
         ps_status = self._get_ps_status()
@@ -644,15 +647,11 @@ class Controller():
         """Set pwrstate state."""
         self.opmode = value
 
-    def _check_interface(self):
+    def _ps_interface_in_remote(self):
         ps_status = self._get_ps_status()
         interface = _Status.interface(ps_status)
-        if interface != _PSConst.Interface.Remote:
-            if interface == _PSConst.Interface.Local:
-                return _PSConst.CmdAck.Local
-            else:
-                return _PSConst.CmdAck.PCHost
-        return None  # in Remote interface
+        return interface == _PSConst.Interface.Remote
+
 
 # class ControllerSim(Controller):
 #     """Simulation Controller class."""

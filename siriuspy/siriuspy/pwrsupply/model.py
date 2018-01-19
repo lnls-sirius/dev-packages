@@ -34,6 +34,7 @@ class _PSCommInterface:
 class PowerSupply(_PSCommInterface):
     """PowerSupply class with ps logic."""
 
+    _SCAN_INTERVAL = 0.1  # [s]
     _is_setpoint = _re.compile('.*-(SP|Sel|Cmd)$')
 
     def __init__(self, psname, controller):
@@ -44,9 +45,9 @@ class PowerSupply(_PSCommInterface):
         self._setpoints = self._build_setpoints()
         self._callback = None
 
-        self.t = Thread(target=self._scan_controller)
-        self.t.setDaemon(True)
-        self.t.start()
+        self._thread_scan = Thread(target=self._scan_fields)
+        self._thread_scan.setDaemon(True)
+        self._thread_scan.start()
 
     # --- public PSComm interface API ---
 
@@ -89,32 +90,34 @@ class PowerSupply(_PSCommInterface):
             if not PowerSupply._is_setpoint.match(field):
                 continue
             sp[field] = dict()
-            if field == 'PwrState-Sel':
-                sp[field]['write'] = self._set_pwrstate
-                sp[field]['value'] = 0.0
-            elif field == 'OpMode-Sel':
-                sp[field]['write'] = self._set_opmode
-                sp[field]['value'] = 0
-            elif field == 'Current-SP':
-                sp[field]['write'] = self._set_current
-                sp[field]['value'] = 0.0
-            elif field == 'WfmLoad-Sel':
-                sp[field]['write'] = self._set_wfmload
-                sp[field]['value'] = 0
-            elif field == 'WfmLabel-SP':
-                sp[field]['write'] = self._set_wfmlabel
-                sp[field]['value'] = ''
-            elif field == 'WfmData-SP':
-                sp[field]['write'] = self._set_wfmdata
-                sp[field]['value'] = []
-            elif field == 'Abort-Cmd':
-                sp[field]['write'] = self._abort
-                sp[field]['value'] = 0
-            elif field == 'Reset-Cmd':
-                sp[field]['write'] = self._reset
-                sp[field]['value'] = 0
-
+            self._set_field_setpoint(sp[field], field)
         return sp
+
+    def _set_field_setpoint(self, keyvalue, field):
+        if field == 'PwrState-Sel':
+            keyvalue['write'] = self._set_pwrstate
+            keyvalue['value'] = 0.0
+        elif field == 'OpMode-Sel':
+            keyvalue['write'] = self._set_opmode
+            keyvalue['value'] = 0
+        elif field == 'Current-SP':
+            keyvalue['write'] = self._set_current
+            keyvalue['value'] = 0.0
+        elif field == 'WfmLoad-Sel':
+            keyvalue['write'] = self._set_wfmload
+            keyvalue['value'] = 0
+        elif field == 'WfmLabel-SP':
+            keyvalue['write'] = self._set_wfmlabel
+            keyvalue['value'] = ''
+        elif field == 'WfmData-SP':
+            keyvalue['write'] = self._set_wfmdata
+            keyvalue['value'] = []
+        elif field == 'Abort-Cmd':
+            keyvalue['write'] = self._abort
+            keyvalue['value'] = 0
+        elif field == 'Reset-Cmd':
+            keyvalue['write'] = self._reset
+            keyvalue['value'] = 0
 
     def _set_pwrstate(self, value):
         self._setpoints['PwrState-Sel']['value'] = value
@@ -175,17 +178,17 @@ class PowerSupply(_PSCommInterface):
 
         return db
 
-    def _scan_controller(self):
-        """Scan the controller."""
+    def _scan_fields(self):
+        """Scan fields."""
         while True:
             for field in ('Current-SP', 'Current-RB', 'CurrentRef-Mon',
                           'Current-Mon', 'PwrState-Sel', 'PwrState-Sts',
-                          'OpMode-Sel', 'OpMode-Sts'):
+                          'OpMode-Sel', 'OpMode-Sts', 'CtrlMode-Mon'):
                 value = self.read(field)
                 if self._callback:
                     self._callback(
                         pvname=self._psname + ':' + field, value=value)
-            time.sleep(.5)
+            time.sleep(PowerSupply._SCAN_INTERVAL)
 
 
 class PSEpics(_PSCommInterface):
