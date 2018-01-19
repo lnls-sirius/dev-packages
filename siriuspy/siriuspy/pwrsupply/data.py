@@ -20,6 +20,7 @@ class PSData:
             raise ValueError(psname + ' is not a valid power supply name.')
         self._psname = psname
         self._pstype = _PSSearch.conv_psname_2_pstype(self._psname)
+        self._psmodel = _PSSearch.conv_psname_2_psmodel(self._psname)
         self._ispulsed = _PSSearch.check_psname_ispulsed(self._psname)
         self._polarity = _PSSearch.conv_pstype_2_polarity(self._pstype)
         self._magfunc = _PSSearch.conv_pstype_2_magfunc(self._pstype)
@@ -40,6 +41,11 @@ class PSData:
     def pstype(self):
         """Power supply type."""
         return self._pstype
+
+    @property
+    def psmodel(self):
+        """Power supply model."""
+        return self._psmodel
 
     @property
     def polarity(self):
