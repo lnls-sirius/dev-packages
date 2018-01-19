@@ -19,6 +19,7 @@ class PSSearch:
     _pstype_2_psnames_dict = None
     _pstype_2_splims_dict = None
     _pstype_2_excdat_dict = dict()
+    _psname_2_psmodel_dict = None
 
     @staticmethod
     def get_psnames(filters=None):
@@ -122,6 +123,13 @@ class PSSearch:
             return False
         else:
             raise KeyError('Invalid psname "' + psname + '"!')
+
+    @staticmethod
+    def conv_psname_psmodel(psname):
+        """Conver psname to psmodel."""
+        if PSSearch._psname_2_psmodel_dict is None:
+            PSSearch._reload_psname_2_psmodel_dict()
+        return PSSearch._psname_2_psmodel_dict[psname]
 
     @staticmethod
     def check_pstype_ispulsed(pstype):
@@ -236,6 +244,19 @@ class PSSearch:
         else:
             raise Exception(
                 'could not read "' + str(pstype) + '" from web server!')
+
+    @staticmethod
+    def _reload_psname_2_psmodel_dict():
+        """Load psmodels by psname to a dict."""
+        if _web.server_online():
+            text = _web.ps_psmodels_read()
+            data, params_dict = _util.read_text_data(text)
+            PSSearch._psname_2_psmodel_dict = dict()
+            for d in data:
+                psname, psmodel = d
+                PSSearch._psname_2_psmodel_dict[psname] = psmodel
+        else:
+            raise Exception('could not read psmodels from web server')
 
 
 class MASearch:
