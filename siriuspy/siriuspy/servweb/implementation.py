@@ -1,7 +1,6 @@
 """Impletentation of webserver data retrievement functions."""
 import urllib.request as _urllib_request
 import siriuspy.envars as _envars
-import siriuspy.util as _util
 
 _timeout = 1.0  # [seconds]
 _excdat_folder = '/magnet/excitation-data/'
@@ -98,6 +97,12 @@ def pu_pstype_setpoint_limits(timeout=_timeout):
 def ps_psmodels_read(timeout=_timeout):
     """Return the psmodels file."""
     url = _ps_folder + 'psmodels.txt'
+    return read_url(url, timeout=timeout)
+
+
+def pu_psmodels_read(timeout=_timeout):
+    """Return the pumodels file."""
+    url = _ps_folder + 'pumodels.txt'
     return read_url(url, timeout=timeout)
 
 
