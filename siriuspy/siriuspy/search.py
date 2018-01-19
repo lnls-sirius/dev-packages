@@ -249,8 +249,9 @@ class PSSearch:
     def _reload_psname_2_psmodel_dict():
         """Load psmodels by psname to a dict."""
         if _web.server_online():
-            text = _web.ps_psmodels_read()
-            data, params_dict = _util.read_text_data(text)
+            ps_data, _ = _util.read_text_data(_web.ps_psmodels_read())
+            pu_data, _ = _util.read_text_data(_web.ps_pumodels_read())
+            data = ps_data + pu_data
             PSSearch._psname_2_psmodel_dict = dict()
             for d in data:
                 psname, psmodel = d
