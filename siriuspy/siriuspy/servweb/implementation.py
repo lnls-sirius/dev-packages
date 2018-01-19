@@ -95,6 +95,12 @@ def pu_pstype_setpoint_limits(timeout=_timeout):
     return read_url(url, timeout=timeout)
 
 
+def ps_psmodels_read(timeout=_timeout):
+    """Return the psmodels file."""
+    url = _ps_folder + 'psmodels.txt'
+    return read_url(url, timeout=timeout)
+
+
 def beaglebone_power_supplies_mapping(timeout=_timeout):
     """Return the beaglebone Black connections list."""
     url = _ps_folder + 'beaglebone-mapping.txt'
