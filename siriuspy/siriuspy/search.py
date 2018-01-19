@@ -249,12 +249,20 @@ class PSSearch:
     def _reload_psname_2_psmodel_dict():
         """Load psmodels by psname to a dict."""
         if _web.server_online():
+            # from psmodel
             text = _web.ps_psmodels_read()
             data, params_dict = _util.read_text_data(text)
             PSSearch._psname_2_psmodel_dict = dict()
             for d in data:
                 psname, psmodel = d
                 PSSearch._psname_2_psmodel_dict[psname] = psmodel
+            # from pumodel
+            text = _web.pu_psmodels_read()
+            data, params_dict = _util.read_text_data(text)
+            PSSearch._psname_2_psmodel_dict = dict()
+            for d in data:
+                puname, pumodel = d
+                PSSearch._psname_2_psmodel_dict[puname] = pumodel
         else:
             raise Exception('could not read psmodels from web server')
 

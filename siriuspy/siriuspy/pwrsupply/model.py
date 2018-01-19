@@ -1,7 +1,7 @@
 """Define a Pulsed Power Supply class to handle IOC connections."""
 import re as _re
-from threading import Thread
-import time
+from threading import Thread as _Thread
+import time as _time
 
 from epics import PV as _PV
 
@@ -45,7 +45,7 @@ class PowerSupply(_PSCommInterface):
         self._setpoints = self._build_setpoints()
         self._callback = None
 
-        self._thread_scan = Thread(target=self._scan_fields)
+        self._thread_scan = _Thread(target=self._scan_fields)
         self._thread_scan.setDaemon(True)
         self._thread_scan.start()
 
@@ -181,14 +181,16 @@ class PowerSupply(_PSCommInterface):
     def _scan_fields(self):
         """Scan fields."""
         while True:
-            for field in ('Current-SP', 'Current-RB', 'CurrentRef-Mon',
-                          'Current-Mon', 'PwrState-Sel', 'PwrState-Sts',
-                          'OpMode-Sel', 'OpMode-Sts', 'CtrlMode-Mon'):
+            for field in self._base_db:
+                if field not in ('Current-SP', 'Current-RB', 'CurrentRef-Mon',
+                                 'Current-Mon', 'PwrState-Sel', 'PwrState-Sts',
+                                 'OpMode-Sel', 'OpMode-Sts', 'CtrlMode-Mon'):
+                    continue
                 value = self.read(field)
                 if self._callback:
                     self._callback(
                         pvname=self._psname + ':' + field, value=value)
-            time.sleep(PowerSupply._SCAN_INTERVAL)
+            _time.sleep(PowerSupply._SCAN_INTERVAL)
 
 
 class PSEpics(_PSCommInterface):
