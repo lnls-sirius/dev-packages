@@ -211,6 +211,7 @@ class SerialComm(_BSMPDeviceMaster):
 
     _SCAN_INTERVAL_SYNC_MODE_OFF = 0.1  # [s]
     _SCAN_INTERVAL_SYNC_MODE_ON = 1.0  # [s]
+    _SCAN_VARIABLES_GROUP_ID = 3
 
     def __init__(self, PRU, slaves=None):
         """Init method."""
@@ -223,10 +224,10 @@ class SerialComm(_BSMPDeviceMaster):
         self._queue = _Queue()
         self._state = PSState(variables=variables)
         # Cria, configura e inicializa as duas threads auxiliares
-        self._process = _Thread(target=self._process_thread, daemon=True)
-        self._scan = _Thread(target=self._scan_thread, daemon=True)
-        self._process.start()
-        self._scan.start()
+        self._thread_queue = _Thread(target=self._process_queue, daemon=True)
+        self._thread_scan = _Thread(target=self._variables_scan, daemon=True)
+        self._thread_queue.start()
+        self._thread_scan.start()
 
     @property
     def sync_mode(self):
@@ -254,7 +255,8 @@ class SerialComm(_BSMPDeviceMaster):
         IDs_variable = tuple(self.variables.keys())
         self.put(ID_device=slave.ID_device,
                  cmd=0x30,
-                 kwargs={'ID_group': 3, 'IDs_variable': IDs_variable})
+                 kwargs={'ID_group': SerialComm._SCAN_VARIABLES_GROUP_ID,
+                         'IDs_variable': IDs_variable})
         _BSMPDeviceMaster.add_slave(self, slave)
 
     def put(self, ID_device, cmd, kwargs):
@@ -265,20 +267,38 @@ class SerialComm(_BSMPDeviceMaster):
         """Return a BSMP variable."""
         return self._state[ID_variable]
 
-    def _process_thread(self):
+    def _process_queue(self):
         """Process queue."""
-        item = self._queue.get()
-        id_slave, id_cmd, kwargs = item
-        print(id_slave, id_cmd, kwargs)
-        func = 'cmd_' + str(hex(id_cmd))
-        ack, load = getattr(self, func)(ID_slave=id_slave, **kwargs)
+        while True:
+            item = self._queue.get()
+            id_slave, id_cmd, kwargs = item
+            # print('ID_slave:{}, ID_cmd:{}, kwargs:{}'.format(id_slave,
+            #                                                  hex(id_cmd),
+            #                                                  kwargs))
+            func = 'cmd_' + str(hex(id_cmd))
+            ack, load = getattr(self, func)(ID_slave=id_slave, **kwargs)
+            if ack != _ack.ok:
+                # needs implementation
+                raise NotImplementedError('Error returned in BSMP command!')
+            elif load is not None:
+                self._process_load(id_cmd, load)
 
-    def _scan_thread(self):
+    def _process_load(self, id_cmd, load):
+        if id_cmd == 0x12:
+            for variable, value in load.items():
+                self._state[variable] = value
+        else:
+            err_str = 'BSMP cmd {} not implemented in process_thread!'
+            raise NotImplementedError(err_str.format(hex(id_cmd)))
+
+    def _variables_scan(self):
         """Add scan puts into queue."""
         while (True):
             self._sync_counter = self._PRU.sync_pulse_count
             for ID_slave in self._slaves:
-                self._queue.put((ID_slave, 0x10, {'ID_group': 3}))
+                self._queue.put(
+                    (ID_slave, 0x12,
+                     {'ID_group': SerialComm._SCAN_VARIABLES_GROUP_ID}))
             if self._PRU.sync_mode:
                 # self.event.wait(1)
                 _time.sleep(SerialComm._SCAN_INTERVAL_SYNC_MODE_ON)
@@ -322,10 +342,11 @@ class DevSlaveSim(_BSMPDeviceSlave):
     def cmd_0x13(self, ID_group):
         """Respond SBMP variable group."""
         IDs_variable = self._groups[ID_group]
-        data = {}
+        load = {}
         for ID_variable in IDs_variable:
-            data[ID_variable] = self._state[ID_variable]
-        return _ack.ok, data
+            # check if variable value copying is needed!
+            load[ID_variable] = self._state[ID_variable]
+        return _ack.ok, load
 
     def cmd_0x51(self, ID_function, **kwargs):
         """Respond execute BSMP function."""

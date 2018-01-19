@@ -129,7 +129,7 @@ class Controller():
         if self.pwrstate == _PSConst.PwrState.On:
             ps_status = self._get_ps_status()
             op_mode = _Status.set_opmode(ps_status, value)
-            self.cmd_cfg_op_mode(op_mode)
+            self.cmd_cfg_op_mode(op_mode=op_mode)
 
     # @property
     # def var_ps_status(self):
@@ -266,9 +266,10 @@ class Controller():
         if ret is not None:
             return None
         else:
+            kwargs.update({'ID_function': ID_function})
             self._serial_comm.put(ID_device=self._ID_device,
                                   cmd=0x50,
-                                  kwargs={'ID_function': ID_function})
+                                  kwargs=kwargs)
 
     def _get_ctrlmode(self):
         ps_status = self._get_ps_status()
