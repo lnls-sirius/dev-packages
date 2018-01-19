@@ -125,7 +125,7 @@ class PSSearch:
             raise KeyError('Invalid psname "' + psname + '"!')
 
     @staticmethod
-    def conv_psname_psmodel(psname):
+    def conv_psname_2_psmodel(psname):
         """Conver psname to psmodel."""
         if PSSearch._psname_2_psmodel_dict is None:
             PSSearch._reload_psname_2_psmodel_dict()
