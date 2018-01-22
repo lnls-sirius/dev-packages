@@ -52,7 +52,7 @@ def get_ll_trigger_object(channel, callback, init_hl_props, evg_params):
         }
     chan = _PVName(channel)
     conn_ty, conn_num = IOs.LL_RGX.findall(chan.propty)[0]
-    key = (chan.dev_type, conn_ty)
+    key = (chan.dev, conn_ty)
     cls_ = LL_TRIGGER_CLASSES.get(key)
     if not cls_:
         raise Exception('Low Level Trigger Class not defined for device ' +
@@ -358,7 +358,7 @@ class _LL_TrigEVROUT(_LL_Base):
         self._internal_trigger = self._get_num_int(conn_num)
         self._OUTLB = self._OUTTMP.format(conn_num)
         self._INTLB = self._INTTMP.format(self._internal_trigger)
-        self.prefix = LL_PREFIX + _PVName(channel).dev_name + ':'
+        self.prefix = LL_PREFIX + _PVName(channel).device_name + ':'
         self.channel = channel
         self._EVGParam_ENUMS = evg_params
         super().__init__(callback, init_hl_props)

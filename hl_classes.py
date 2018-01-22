@@ -321,15 +321,15 @@ class HL_Trigger(_HL_Base):
         self._connect_kwargs = {'evg_params': self._EVGParam_ENUMS}
 
     def _has_delay_type(self, name):
-        if name.dev_type in ('EVR', 'EVE') and name.propty.startswith('OUT'):
+        if name.dev in ('EVR', 'EVE') and name.propty.startswith('OUT'):
             return True
         else:
             return False
 
     def _has_clock(self, name):
-        if name.dev_type in {'EVE', 'AFC'}:
+        if name.dev in {'EVE', 'AFC'}:
             return True
-        elif name.dev_type == 'EVR':
+        elif name.dev == 'EVR':
             return True if name.propty.startswith('OUT') else False
         else:
             raise Exception('Error: ' + name)
@@ -372,13 +372,13 @@ class HL_Trigger(_HL_Base):
         channels = set()
         for chan in chans:
             up_dev = _PVName(list(twds_evg[chan])[0])
-            while up_dev.dev_name not in EVRs | EVEs | AFCs:
-                tmp_ = IOs.O2I_MAP[up_dev.dev_type]
+            while up_dev.device_name not in EVRs | EVEs | AFCs:
+                tmp_ = IOs.O2I_MAP[up_dev.dev]
                 conn_up = tmp_.get(up_dev.propty)
                 if conn_up is None:
                     print(IOs.O2I_MAP)
-                    print(up_dev.dev_type, up_dev.propty)
-                up_dev = _PVName(list(twds_evg[up_dev.dev_name +
+                    print(up_dev.dev, up_dev.propty)
+                up_dev = _PVName(list(twds_evg[up_dev.device_name +
                                                ':' + conn_up])[0])
             channels |= {up_dev}
         # print(channels)
