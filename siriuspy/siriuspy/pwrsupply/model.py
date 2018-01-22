@@ -168,7 +168,9 @@ class PowerSupply(_PSCommInterface):
         db = dict()
         db.update(self._base_db)
         for field in db:
-            if field in ('Intlk-Mon', 'IntlkLabels-Cte', 'WfmIndex-Mon',
+            if field in ('IntlkSoft-Mon', 'IntlkSoftLabels-Cte',
+                         'IntlkHard-Mon', 'IntlkHardLabels-Cte',
+                         'WfmIndex-Mon',
                          'WfmLabels-Mon', 'WfmLabel-RB', 'WfmLoad-Sts',
                          'WfmData-RB', 'WfmSave-Cmd'):
                 continue
