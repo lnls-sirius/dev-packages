@@ -1,7 +1,7 @@
 """Beagle Bone implementation module."""
 
 
-class BeagleBone:
+class _BeagleBone:
     """BeagleBone class."""
 
     def __init__(self, bbb_name):

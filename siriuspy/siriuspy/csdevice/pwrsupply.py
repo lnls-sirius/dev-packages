@@ -8,7 +8,7 @@ from collections import namedtuple as _namedtuple
 
 default_wfmsize = 4000
 default_wfmlabels = _et.enums('PSWfmLabelsTyp')
-default_intlklabels = _et.enums('PSIntlkLabelsTyp')
+# default_intlklabels = _et.enums('PSIntlkLabelsTyp')
 default_ps_current_precision = 4
 default_pu_current_precision = 4
 
@@ -105,10 +105,14 @@ def get_common_propty_database():
                              'value': _et.idx.Off},
         'PwrState-Sts':     {'type': 'enum', 'enums': ps_pwrstate_sts,
                              'value': _et.idx.Off},
-        'Intlk-Mon':        {'type': 'int',    'value': 0},
-        'IntlkLabels-Cte':  {'type': 'string',
-                             'count': len(default_intlklabels),
-                             'value': default_intlklabels},
+        'IntlkSoft-Mon':    {'type': 'int',    'value': 0},
+        'IntlkHard-Mon':    {'type': 'int',    'value': 0},
+        'IntlkSoftLabels-Cte':  {'type': 'string',
+                                 'count': len(ps_soft_interlock),
+                                 'value': ps_soft_interlock},
+        'IntlkHardLabels-Cte':  {'type': 'string',
+                                 'count': len(ps_hard_interlock),
+                                 'value': ps_hard_interlock},
         'Reset-Cmd': {'type': 'int', 'value': 0},
     }
     return db
