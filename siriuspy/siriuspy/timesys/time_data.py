@@ -113,7 +113,7 @@ class Triggers:
                                     trig + ' maybe were already used.')
                 up_dev = tmp.pop()
                 diff_devs = from_evg[up_dev] - chans
-                if diff_devs and not chan.dev_type.endswith('BPM'):
+                if diff_devs and not chan.dev.endswith('BPM'):
                     raise Exception(
                         'Devices: ' + ' '.join(diff_devs) +
                         ' are connected to the same output of ' +
@@ -238,7 +238,7 @@ class _TimeDevData:
 
     def _get_dev_and_channel(self, txt):
         type_chan = num_chan = None
-        dev = txt.dev_name
+        dev = txt.device_name
         chan = txt.propty
         reg_match = IOs.LL_RGX.findall(chan)
         if reg_match:
@@ -284,9 +284,9 @@ class _TimeDevData:
     def _build_devices_relations(self):
         simple_map = dict()
         for k, vs in self._conn_from_evg.items():
-            devs = {v.dev_name for v in vs}
-            devs |= simple_map.get(k.dev_name, set())
-            simple_map[k.dev_name] = devs
+            devs = {v.device_name for v in vs}
+            devs |= simple_map.get(k.device_name, set())
+            simple_map[k.device_name] = devs
 
         inv_map = dict()
         for k, vs in simple_map.items():
@@ -413,7 +413,7 @@ class _TimeDevData:
             return
         dev_types = set()
         for dev in self._all_devices:
-            dev_types.add(_PVName(dev).dev_type)
+            dev_types.add(_PVName(dev).dev)
 
         nr = len(dev_types)+2
         color_types = dict()
@@ -422,7 +422,7 @@ class _TimeDevData:
 
         colors = dict()
         for dev in self._all_devices:
-            colors[dev] = color_types[_PVName(dev).dev_type]
+            colors[dev] = color_types[_PVName(dev).dev]
 
         self._colors = colors
 
@@ -444,8 +444,8 @@ class _TimeDevData:
         for chan1, conns in self._conn_from_evg.items():
                 chan_type = IOs.LL_RGX.findall(chan1.propty)[0][0]
                 for chan2 in conns:
-                    colors[(chan1.dev_name,
-                            chan2.dev_name)] = color_types[chan_type]
+                    colors[(chan1.device_name,
+                            chan2.device_name)] = color_types[chan_type]
 
         self._arrow_colors = colors
 
@@ -453,15 +453,15 @@ class _TimeDevData:
         used = set()
         twds_evg = self.conn_twds_evg
         for chan in twds_evg.keys():
-            bpms = connections_dict.get(chan.dev_name)
+            bpms = connections_dict.get(chan.device_name)
             if bpms is None:
                 continue
-            used.add(chan.dev_name)
+            used.add(chan.device_name)
             for bpm in bpms:
                 self._add_entry_to_map(which_map='from', conn=chan.propty,
-                                       ele1=chan.dev_name, ele2=bpm)
+                                       ele1=chan.device_name, ele2=bpm)
                 self._add_entry_to_map(which_map='twds', conn=chan.propty,
-                                       ele1=bpm, ele2=chan.dev_name)
+                                       ele1=bpm, ele2=chan.device_name)
         self._update_related_maps()
         return (connections_dict.keys() - used)
 
@@ -470,15 +470,15 @@ class _TimeDevData:
         used = set()
         twds_evg = self.conn_twds_evg
         for chan in twds_evg.keys():
-            pss = connections_dict.get(chan.dev_name)
+            pss = connections_dict.get(chan.device_name)
             if pss is None:
                 continue
-            used.add(chan.dev_name)
+            used.add(chan.device_name)
             for ps in pss:
                 self._add_entry_to_map(which_map='from', conn=conn,
-                                       ele1=chan.dev_name, ele2=ps)
+                                       ele1=chan.device_name, ele2=ps)
                 self._add_entry_to_map(which_map='twds', conn=conn,
-                                       ele1=ps, ele2=chan.dev_name)
+                                       ele1=ps, ele2=chan.device_name)
         self._update_related_maps()
         return (connections_dict.keys() - used)
 
@@ -497,7 +497,7 @@ class _TimeDevData:
 
     def get_devices_by_type(self, type_dev):
         def _pv_fun(x, y):
-            return _PVName(x).dev_type == y
+            return _PVName(x).dev == y
 
         return {dev for dev in self._all_devices if _pv_fun(dev, type_dev)}
 
