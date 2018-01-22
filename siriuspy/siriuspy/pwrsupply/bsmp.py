@@ -2,6 +2,8 @@
 
 
 from siriuspy.bsmp import __version__ as __bsmp_version__
+from siriuspy.csdevice.pwrsupply import ps_soft_interlock as _ps_soft_interlock
+from siriuspy.csdevice.pwrsupply import ps_hard_interlock as _ps_hard_interlock
 
 
 class Const:
@@ -42,6 +44,86 @@ class Const:
     reset_interlocks = 6
     cfg_op_mode = 12
     set_slowref = 16
+
+
+class StreamChecksum:
+    """Methods to include and verify stream checksum."""
+
+    @staticmethod
+    def includeChecksum(stream):
+        """Return stream with checksum byte at end of message."""
+        counter = 0
+        i = 0
+        while (i < len(stream)):
+            counter += ord(stream[i])
+            i += 1
+        counter = (counter & 0xFF)
+        counter = (256 - counter) & 0xFF
+        return(stream + [chr(counter)])
+
+    @staticmethod
+    def _verifyChecksum(stream):
+        """Verify stream checksum."""
+        counter = 0
+        i = 0
+        while (i < len(stream) - 1):
+            counter += ord(stream[i])
+            i += 1
+        counter = (counter & 0xFF)
+        counter = (256 - counter) & 0xFF
+        if (stream[len(stream) - 1] == chr(counter)):
+            return(True)
+        else:
+            return(False)
+
+
+class _Interlock:
+    """Interlock class."""
+
+    @property
+    def labels(self):
+        """Return list of all interlock labels."""
+        return [interlock for interlock in self._labels]
+
+    def label(self, i):
+        """Convert bit index to its interlock label."""
+        return self._labels[i]
+
+    def interlock_set(self, interlock):
+        """Return a list of active interlocks."""
+        interlock_list = []
+        for i in range(len(self.labels)):
+            label = self.label(i)
+            if interlock & (1 << i):
+                interlock_list.append(label)
+        return interlock_list
+
+    def _init(self):
+        # set properties corresponding to interlock bit labels.
+        for i in range(len(self.labels)):
+            label = self.label(i)
+            setattr(_Interlock, 'bit_' + label, 1 << i)
+
+
+class _InterlockSoft(_Interlock):
+    """Power supply soft iterlocks."""
+
+    def __init__(self):
+        self._labels = _ps_soft_interlock
+        self._init()
+
+
+class _InterlockHard(_Interlock):
+    """Power supply hard iterlocks."""
+
+    def __init__(self):
+        self._labels = _ps_hard_interlock
+        self._init()
+
+
+# the following variables can be used to manipulate interlock bits.
+InterlockSoft = _InterlockSoft()
+InterlockHard = _InterlockHard()
 
 
 def get_variables_common():

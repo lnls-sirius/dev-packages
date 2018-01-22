@@ -11,82 +11,52 @@ from siriuspy.pwrsupply.controller import PRUSim as _PRUSim
 from siriuspy.pwrsupply.model import PowerSupply as _PowerSupply
 
 
-class _BeagleBone:
-    """BeagleBone class."""
-
-    def __init__(self, bbb_name):
-        """Init method."""
-        self._bbb_name = bbb_name
-        self._serial_comm = None
-        self._pwrsupplies = None
-
-    @property
-    def psnames(self):
-        """Return power supply names."""
-        raise NotImplementedError
-
-    @property
-    def read(self, psname, field):
-        """Return power supply field."""
-        return self._pwrsupplies[psname].read(field)
-
-    @property
-    def write(self, psname, field, value):
-        """Write value to field of power supply."""
-        return self._pwrsupplies[psname].write(field, value)
-
-
-class BeagleBoneSim(_BeagleBone):
-
-    def __init__(self, bbb_name):
-        """Init method."""
-        self._bbb_name = bbb_name
-        self._create_pwrsupply_dict()
-
-    def _create_pwrsupply_dict(self):
-        pass
-
-
-class BeagleBone:
+class BeagleBone():
     """Responsible for handling BBB objects."""
 
     def __init__(self, bbbname, simulate=True):
         """Retrieve power supplies."""
         self._bbbname = bbbname
-        self._simulate = True
+        self._simulate = simulate
         self._psnames = _PSSearch.conv_bbbname_2_psnames(bbbname)
 
-        if self._simulate:
-            self._pru = _PRUSim()
-        else:
-            self._pru = _PRU()
-
+        # create PRU and serial_comm
+        self._pru = _PRUSim() if self._simulate else _PRU()
         self._serial_comm = _SerialComm(PRU=self._pru)
+        # create power supplies dictionary
         self._power_supplies = self._get_power_supplies()
 
     @property
-    def serial_comm(self):
-        """Return serial_comm object."""
-        return self._serial_comm
+    def psnames(self):
+        """Return list of power supply names."""
+        return self._psnames.copy()
 
     @property
-    def power_supplies(self):
-        """Return dict with all power supplies objects."""
-        return self._power_supplies
+    def scanning(self):
+        """Return ps variable scanning state."""
+        return self._serial_comm.scanning
+
+    @scanning.setter
+    def scanning(self, value):
+        """Set ps variable scanning state."""
+        self._serial_comm.scanning = value
 
     def _get_power_supplies(self):
-        """Build power supply objects."""
+        # Return dict of power supply objects
         power_supplies = dict()
         for i, psname in enumerate(self._psnames):
-            id_device = i + 1
-
-            if self._simulate:
-                self._serial_comm.add_slave(_DevSlaveSim(ID_device=id_device))
-            else:
-                self._serial_comm.add_slave(
-                    _DevSlave(ID_device=id_device, PRU=self._pru))
-
-            c = _Controller(serial_comm=self._serial_comm, ID_device=id_device)
+            ID_device = i + 1
+            ps = _DevSlaveSim(ID_device=ID_device) if self._simulate else \
+                _DevSlave(ID_device=ID_device, PRU=self._pru)
+            self._serial_comm.add_slave(ps)
+            c = _Controller(serial_comm=self._serial_comm, ID_device=ID_device)
             power_supplies[psname] = _PowerSupply(controller=c, psname=psname)
-
         return power_supplies
+
+    def __getitem__(self, psname):
+        """Return corresponding power supply object."""
+        return self._power_supplies[psname]
+
+    def __contains__(self, psname):
+        """Test is psname is in psname list."""
+        return psname in self._psnames
