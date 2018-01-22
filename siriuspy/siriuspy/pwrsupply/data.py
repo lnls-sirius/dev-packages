@@ -27,6 +27,7 @@ class PSData:
         self._splims = _PSSearch.conv_pstype_2_splims(self._pstype)
         self._splims_unit = _PSSearch.get_splims_unit(self._ispulsed)
         self._excdata = _PSSearch.conv_psname_2_excdata(self._psname)
+        self._bbbname = _PSSearch.conv_psname_2_bbbname(self._psname)
         if self._ispulsed:
             self._propty_database = _get_pu_propty_database(self._pstype)
         else:
@@ -87,6 +88,11 @@ class PSData:
     def excdata(self):
         """Excitation data associated with the power supply."""
         return self._excdata
+
+    @property
+    def bbbname(self):
+        """Name of the BBB that controls this power supply."""
+        return self._bbbname
 
     def __str__(self):
         """__str__ method."""

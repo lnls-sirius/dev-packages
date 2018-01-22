@@ -20,6 +20,8 @@ class PSSearch:
     _pstype_2_splims_dict = None
     _pstype_2_excdat_dict = dict()
     _psname_2_psmodel_dict = None
+    _psname_2_bbbname_dict = None
+    _bbbname_2_psnames_dict = None
 
     @staticmethod
     def get_psnames(filters=None):
@@ -143,6 +145,20 @@ class PSSearch:
         return False
 
     @staticmethod
+    def conv_psname_2_bbbname(psname):
+        """Given psname return the bbb name."""
+        if PSSearch._psname_2_bbbname_dict is None:
+            PSSearch._reload_bbb_2_psname_dict()
+        return PSSearch._psname_2_bbbname_dict[psname]
+
+    @staticmethod
+    def conv_bbbname_2_psnames(bbbname):
+        """Given bbb name return the psnames."""
+        if PSSearch._bbbname_2_psnames_dict is None:
+            PSSearch._reload_bbb_2_psname_dict()
+        return PSSearch._bbbname_2_psnames_dict[bbbname]
+
+    @staticmethod
     def get_pstype_2_psnames_dict():
         """Return dictionary of power supply type and power supply names."""
         if PSSearch._pstype_2_psnames_dict is None:
@@ -258,6 +274,28 @@ class PSSearch:
                 PSSearch._psname_2_psmodel_dict[psname] = psmodel
         else:
             raise Exception('could not read psmodels from web server')
+
+    @staticmethod
+    def _reload_bbb_2_psname_dict():
+        """Load psnames mapped to BBB names and vice versa."""
+        PSSearch._psname_2_bbbname_dict = dict()
+        PSSearch._bbbname_2_psnames_dict = dict()
+        data, _ = \
+            _util.read_text_data(_web.beaglebone_power_supplies_mapping())
+
+        for d in data:
+            bbb_name = d[0]
+            psnames = d[1:]
+            # bbb -> ps
+            if bbb_name in PSSearch._bbbname_2_psnames_dict:
+                PSSearch._bbbname_2_psnames_dict[bbb_name] += psnames
+            else:
+                PSSearch._bbbname_2_psnames_dict[bbb_name] = psnames
+            # ps -> bbb
+            for psname in psnames:
+                if psname in PSSearch._psname_2_bbbname_dict:
+                    raise ValueError("Repeated power supply {}".format(psname))
+                PSSearch._psname_2_bbbname_dict[psname] = bbb_name
 
 
 class MASearch:
