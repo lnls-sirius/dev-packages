@@ -337,26 +337,26 @@ class SerialComm(_BSMPDeviceMaster):
                   'IDs_variable': IDs_variable}
         self.put(ID_device=slave.ID_device, ID_cmd=0x30, kwargs=kwargs)
 
-        # reset ps interlocks
-        kwargs = {'ID_function': _BSMPConst.reset_interlocks}
-        self.put(ID_device=slave.ID_device, ID_cmd=0x50, kwargs=kwargs)
-
-        # turn ps on
-        kwargs = {'ID_function': _BSMPConst.turn_on}
-        self.put(ID_device=slave.ID_device, ID_cmd=0x50, kwargs=kwargs)
-
-        # close ps control loop.
-        kwargs = {'ID_function': _BSMPConst.close_loop}
-        self.put(ID_device=slave.ID_device, ID_cmd=0x50, kwargs=kwargs)
-
-        # set slowref to zero
-        kwargs = {'ID_function': _BSMPConst.set_slowref,
-                  'setpoint': 0.0}
-        self.put(ID_device=slave.ID_device, ID_cmd=0x50, kwargs=kwargs)
-
-        # # Espera 1 s
+        # # reset ps interlocks
+        # kwargs = {'ID_function': _BSMPConst.reset_interlocks}
+        # self.put(ID_device=slave.ID_device, ID_cmd=0x50, kwargs=kwargs)
         #
-        # time.sleep(1) #  not necessary!
+        # # turn ps on
+        # kwargs = {'ID_function': _BSMPConst.turn_on}
+        # self.put(ID_device=slave.ID_device, ID_cmd=0x50, kwargs=kwargs)
+        #
+        # # close ps control loop.
+        # kwargs = {'ID_function': _BSMPConst.close_loop}
+        # self.put(ID_device=slave.ID_device, ID_cmd=0x50, kwargs=kwargs)
+        #
+        # # set slowref to zero
+        # kwargs = {'ID_function': _BSMPConst.set_slowref,
+        #           'setpoint': 0.0}
+        # self.put(ID_device=slave.ID_device, ID_cmd=0x50, kwargs=kwargs)
+        #
+        # # # Espera 1 s
+        # #
+        # # time.sleep(1) #  not necessary!
 
 
 class DevSlaveSim(_BSMPDeviceSlave):
@@ -565,9 +565,22 @@ class Controller():
         """Init method."""
         self._ID_device = ID_device
         self._serial_comm = serial_comm
-        ps_status = self._get_ps_status()
-        self._pwrstate = _Status.pwrstate(ps_status)
-        self._opmode = _Status.opmode(ps_status)
+        self._opmode = _PSConst.OpMode.SlowRef
+
+        # reset interlocks
+        self.cmd_reset_interlocks()
+
+        # turn ps on
+        self.pwrstate = _PSConst.PwrState.On
+
+        # set opmode do SlowRef
+        self.opmode = _PSConst.OpMode.SlowRef
+
+        # close control loop
+        self.cmd_close_loop()
+
+        # set reference current to zero
+        self.cmd_set_slowref(0.0)
 
     @property
     def pwrstate(self):
@@ -605,51 +618,6 @@ class Controller():
             ps_status = self._get_ps_status()
             op_mode = _Status.set_opmode(ps_status, value)
             self.cmd_cfg_op_mode(op_mode=op_mode)
-
-    # @property
-    # def var_ps_status(self):
-    #     """Return power supply status."""
-    #     return self._get_ps_status()
-
-    # @property
-    # def var_ps_setpoint(self):
-    #     """Return of power supply last setpoint."""
-    #     return self._get_ps_setpoint()
-    #
-    # @property
-    # def var_ps_reference(self):
-    #     """Return of power supply reference setpoint.
-    #
-    #     It may differ from 'ps_setpoint' due to various limitions.
-    #     """
-    #     return self._get_ps_reference()
-
-    # --- API: FBP power supply 'variables' ---
-
-    # @property
-    # def var_ps_soft_interlocks(self):
-    #     """Return soft interlock state."""
-    #     return self._get_ps_soft_interlocks()
-    #
-    # @property
-    # def var_ps_hard_interlocks(self):
-    #     """Return hard interlock state."""
-    #     return self._get_ps_hard_interlocks()
-    #
-    # @property
-    # def var_i_load(self):
-    #     """Return power supply load current."""
-    #     return self._get_i_load()
-    #
-    # @property
-    # def var_v_load(self):
-    #     """Return power supply load voltage."""
-    #     return self._get_v_load()
-    #
-    # @property
-    # def var_v_dclink(self):
-    #     """Return DC-link voltage."""
-    #     return self._get_v_dclink()
 
     # --- API: power supply 'functions' ---
 
@@ -771,6 +739,7 @@ class Controller():
         ps_status = self._get_ps_status()
         interface = _Status.interface(ps_status)
         return interface == _PSConst.Interface.Remote
+
 
 
 # class ControllerSim(Controller):

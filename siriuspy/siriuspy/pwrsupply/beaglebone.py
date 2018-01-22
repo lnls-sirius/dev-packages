@@ -1,5 +1,6 @@
 """Beagle Bone implementation module."""
 
+import siriuspy.serach
 
 class _BeagleBone:
     """BeagleBone class."""
@@ -24,3 +25,14 @@ class _BeagleBone:
     def write(self, psname, field, value):
         """Write value to field of power supply."""
         return self._pwrsupplies[psname].write(field, value)
+
+
+class BeagleBoneSim(_BeagleBone):
+
+    def __init__(self, bbb_name):
+        """Init method."""
+        self._bbb_name = bbb_name
+        self._create_pwrsupply_dict()
+
+    def _create_pwrsupply_dict(self):
+        pass
