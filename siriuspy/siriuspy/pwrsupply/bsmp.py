@@ -19,12 +19,15 @@ class Const:
     t_uint8 = 5
     t_uint16 = 6
     t_uint32 = 7
+
     # --- common variables ---
     ps_status = 0
     ps_setpoint = 1
     ps_reference = 2
+    frmware_version = 3  # a new PS definition will eventually implement this.
+
     # --- FSB variables ---
-    ps_soft_interlocks = 25
+    ps_soft_interlocks = 25  # BSMP def says ID numbering should be continous!
     ps_hard_interlocks = 26
     i_load = 27
     v_load = 28
@@ -44,6 +47,8 @@ class Const:
 def get_variables_common():
     """Return common power supply BSMP variables."""
     variables = {
+        Const.frmware_version: ('frmware_version',
+                                Const.t_uint16, False),
         Const.ps_status: ('ps_status', Const.t_status, False),
         Const.ps_setpoint: ('ps_setpoint', Const.t_float, False),
         Const.ps_reference: ('ps_reference', Const.t_float, False),
@@ -86,3 +91,13 @@ def get_functions():
             ('set_slowref', Const.t_uint8, [Const.t_float]),
     }
     return functions
+
+
+def get_value_from_load(variables, ID_variable, load):
+    """Build variable value from message load."""
+    var_name, var_typ, var_writable = variables[ID_variable]
+    if var_typ == Const.t_uint16:
+        value = load[0] + (load[1] << 8)
+    else:
+        raise NotImplementedError
+    return value
