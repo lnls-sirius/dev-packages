@@ -2,6 +2,7 @@
 
 
 from siriuspy.bsmp import __version__ as __bsmp_version__
+from siriuspy.bsmp import BSMP as _BSMP
 from siriuspy.csdevice.pwrsupply import ps_soft_interlock as _ps_soft_interlock
 from siriuspy.csdevice.pwrsupply import ps_hard_interlock as _ps_hard_interlock
 
@@ -122,6 +123,15 @@ class _InterlockHard(_Interlock):
     def __init__(self):
         self._labels = _ps_hard_interlock
         self._init()
+
+
+class BSMPStream():
+    """Class to process BSMP streams."""
+
+    @staticmethod
+    def process(stream):
+        """Process BSMP stream."""
+        ID_receiver, ID_cmd, load_size, load = _BSMP.parse_stream(stream)
 
 
 # the following variables can be used to manipulate interlock bits.
