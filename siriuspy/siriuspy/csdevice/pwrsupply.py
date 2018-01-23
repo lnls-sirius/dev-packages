@@ -31,16 +31,16 @@ ps_opmode = ('SlowRef', 'SlowRefSync', 'FastRef', 'RmpWfm', 'MigWfm', 'Cycle')
 ps_cmdack = ('OK', 'Local', 'PCHost', 'Interlocked', 'UDC_locked',
              'DSP_TimeOut', 'DSP_Busy', 'Invalid',)
 ps_soft_interlock = ('Module over-temperature',
-                     'Reseved', 'Reseved', 'Reseved',
-                     'Reseved', 'Reseved', 'Reseved', 'Reseved',
-                     'Reseved', 'Reseved', 'Reseved', 'Reseved',
-                     'Reseved', 'Reseved', 'Reseved', 'Reseved',)
+                     'Reserved', 'Reserved', 'Reserved',
+                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
+                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
+                     'Reserved', 'Reserved', 'Reserved', 'Reserved',)
 ps_hard_interlock = ('Load over-current', 'Load over-voltage',
                      'DCLink over-voltage', 'DCLink under-voltage',
                      'DCLink fault 1', 'DCLink fault 2',
                      'Module driver fault', 'Reserved',
-                     'Reseved', 'Reseved', 'Reseved', 'Reseved',
-                     'Reseved', 'Reseved', 'Reseved', 'Reseved',)
+                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
+                     'Reserved', 'Reserved', 'Reserved', 'Reserved',)
 
 
 # --- power supply constants definition class ---
