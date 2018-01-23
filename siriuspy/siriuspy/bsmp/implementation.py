@@ -60,14 +60,14 @@ class BSMP:
         return self._functions
 
     @staticmethod
-    def parse_parse_stream(parse_stream):
+    def parse_stream(stream):
         """Return parsed message from stream."""
-        if len(parse_stream) < 5:
+        if len(stream) < 5:
             raise ValueError('BSMP message too short!')
-        if not BSMP._verifyChecksum(parse_stream):
+        if not BSMP._verifyChecksum(stream):
             raise ValueError('BSMP message checksum failed!')
-        ID_receiver = parse_stream[0]
-        ID_cmd = ord(parse_stream[1])
+        ID_receiver = stream[0]
+        ID_cmd = ord(stream[1])
         load_size = (ord(stream[3]) << 8) + ord(stream[2])
         load = stream[4:-1]
         return ID_receiver, ID_cmd, load_size, load
