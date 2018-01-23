@@ -17,6 +17,23 @@ class Const:
     insufficient_memory = 0xE7,
     busy_resource = 0xE8,
 
+    _labels = {
+        0xE0: 'Ok',
+        0xE1: 'invalid_message',
+        0xE2: 'operation_not_supported',
+        0xE3: 'invalid_id',
+        0xE4: 'invalid_value',
+        0xE5: 'invalid_data_length',
+        0xE6: 'read_only',
+        0xE7: 'insufficient_memory',
+        0xE8: 'busy_resource',
+    }
+
+    @staticmethod
+    def conv_ID2label(ID_cmd):
+        """Return label of a given error command ID."""
+        return Const._labels[ID_cmd]
+
 
 class BSMP:
     """BSMP class."""
@@ -45,13 +62,15 @@ class BSMP:
     @staticmethod
     def parse_stream(stream):
         """Return parsed message from stream."""
+        if len(stream) < 5:
+            raise ValueError('BSMP message too short!')
         if not BSMP._verifyChecksum(stream):
             raise ValueError('BSMP message checksum failed!')
         ID_receiver = stream[0]
         ID_cmd = ord(stream[1])
-        load_size = ord(stream[2]) + (ord(stream[3]) << 8)
-        load_stream = stream[4:-1]
-        return ID_receiver, ID_cmd, load_size, load_stream
+        load_size = (ord(stream[3]) << 8) + ord(stream[2])
+        load = stream[4:-1]
+        return ID_receiver, ID_cmd, load_size, load
 
     @staticmethod
     def _verifyChecksum(stream):

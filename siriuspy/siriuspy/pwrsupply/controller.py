@@ -399,47 +399,63 @@ class BSMPResponse(_BSMPResponse, _StreamChecksum):
 
         self._pru = PRU
 
-    def create_group(self, ID_receiver):
+    def create_group(self, ID_receiver, ID_group, IDs_variable):
         """Create group of BSMP variables."""
-        pass
+        n = len(IDs_variable)
+        hb, lb = (n & 0xFF00) >> 8, n & 0xFF
+        stream = [chr(ID_receiver), "\x30", chr(hb), chr(lb)] + \
+            [chr(ID_variable) for ID_variable in IDs_variable]
+        stream = BSMPResponse.includeChecksum(stream)
+        self._pru.UART_write(stream, timeout=100)
+        response = self._pru.UART_read()
+        ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
+        return ID_cmd, None
+
+    def delete_groups(self, ID_receiver):
+        """Delete all groups of BSMP variables."""
+        stream = [chr(ID_receiver), "\x32", '\x00', '\x00']
+        stream = BSMPResponse.includeChecksum(stream)
+        self._pru.UART_write(stream, timeout=100)
+        response = self._pru.UART_read()
+        ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
+        return ID_cmd, None
 
     def cmd_0x01(self, ID_receiver):
         """Respond BSMP protocol version."""
-        stream = [ID_receiver, "\x00", "\x00", "\x00"]
+        stream = [chr(ID_receiver), "\x00", "\x00", "\x00"]
         stream = BSMPResponse.includeChecksum(stream)
-        self._pru.UART_write(stream, timeout=10)
-        answer = self._pru.UART_read()
-        # invoke checksum
-        if len(answer) != 8:
+        self._pru.UART_write(stream, timeout=100)
+        response = self._pru.UART_read()
+        ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
+        if len(load) != 3:
             return _ack.invalid_message, None
-        version_str = '.'.join([str(ord(c)) for c in answer[4:7]])
-        return _ack.ok, version_str
+        version_str = '.'.join([str(ord(c)) for c in load])
+        return ID_cmd, version_str
 
     def cmd_0x11(self, ID_receiver, ID_variable):
         """Respond BSMP variable."""
-        # get answer
+        # query power supply
         if ID_variable == _BSMPConst.frmware_version:
+            # simulate response to firmware version
             ID_master = 0
-            answer = [chr(ID_master), '\x11', '\x00', '\x02'] + \
+            response = [chr(ID_master), '\x11', '\x00', '\x02'] + \
                 BSMPResponse._FAKE_FRMWARE_VERSION
-            answer = BSMPResponse.includeChecksum(answer)
+            response = BSMPResponse.includeChecksum(response)
         else:
-            stream = [ID_receiver, "\x10", "\x00", "\x01", ID_variable]
+            stream = [chr(ID_receiver),
+                      '\x10', '\x00', '\x01', chr(ID_variable)]
             stream = BSMPResponse.includeChecksum(stream)
-            self._pru.UART_write(stream, timeout=10)
-            answer = self._pru.UART_read()
-        # process answer
-        ID_master, ID_cmd, load_size, load_stream = \
-            BSMPResponse.parse_stream(answer)
-        if ID_cmd != 0x11 or load_size != 2:
-            raise ValueError(
-                'Incorrect response from slave: {}'.format(answer))
+            self._pru.UART_write(stream, timeout=10)  # 10 or 100 for timeout?
+            response = self._pru.UART_read()
+        # process response
+        ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
+        if len(load) != 2:
+            return _ack.invalid_message, None
         if ID_variable == _BSMPConst.frmware_version:
-            value = _get_value_from_load(self._variables,
-                                         ID_variable, load_stream)
-            return _ack.ok, value
+            value = _get_value_from_load(self._variables, ID_variable, load)
         else:
             raise NotImplementedError
+        return ID_cmd, value
 
 
 class Controller():
