@@ -4,13 +4,14 @@ import time as _time
 from queue import Queue as _Queue
 from threading import Thread as _Thread
 
+from siriuspy import __version__
 from siriuspy.csdevice.pwrsupply import ps_opmode as _ps_opmode
 from siriuspy.csdevice.pwrsupply import get_common_ps_propty_database as \
     _get_common_ps_propty_database
 
 from siriuspy.bsmp import Const as _ack
-from siriuspy.bsmp import BSMPDeviceMaster as _BSMPDeviceMaster
-from siriuspy.bsmp import BSMPDeviceSlave as _BSMPDeviceSlave
+from siriuspy.bsmp import BSMPQuery as _BSMPQuery
+from siriuspy.bsmp import BSMPResponse as _BSMPResponse
 from siriuspy.pwrsupply.status import Status as _Status
 from siriuspy.pwrsupply.bsmp import Const as _BSMPConst
 from siriuspy.pwrsupply.bsmp import StreamChecksum as _StreamChecksum
@@ -157,7 +158,7 @@ class PSState:
         return value
 
 
-class SerialComm(_BSMPDeviceMaster):
+class SerialComm(_BSMPQuery):
     """Serial communiationMaster BSMP device for power supplies."""
 
     _SCAN_INTERVAL_SYNC_MODE_OFF = 0.1  # [s]
@@ -167,10 +168,10 @@ class SerialComm(_BSMPDeviceMaster):
     def __init__(self, PRU, slaves=None):
         """Init method."""
         variables = _get_variables_FBP()
-        _BSMPDeviceMaster.__init__(self,
-                                   variables=variables,
-                                   functions=_get_functions(),
-                                   slaves=slaves)
+        _BSMPQuery.__init__(self,
+                            variables=variables,
+                            functions=_get_functions(),
+                            slaves=slaves)
         self._PRU = PRU
         self._queue = _Queue()
         self._state = PSState(variables=variables)
@@ -216,7 +217,7 @@ class SerialComm(_BSMPDeviceMaster):
     def add_slave(self, slave):
         """Add slave to slave pool controlled by master BSMP device."""
         # insert slave into pool
-        _BSMPDeviceMaster.add_slave(self, slave)
+        _BSMPQuery.add_slave(self, slave)
         # init pwrsupply slave
         self._init_pwrsupply(slave)
 
@@ -290,23 +291,23 @@ class SerialComm(_BSMPDeviceMaster):
         # # set slowref to zero
 
 
-class DevSlaveSim(_BSMPDeviceSlave):
+class BSMPResponseSim(_BSMPResponse):
     """Transport BSMP layer interacting with simulated slave device."""
 
     def __init__(self, ID_device):
         """Init method."""
-        _BSMPDeviceSlave.__init__(self,
-                                  variables=_get_variables_FBP(),
-                                  functions=_get_functions(),
-                                  ID_device=ID_device)
+        _BSMPResponse.__init__(self,
+                               variables=_get_variables_FBP(),
+                               functions=_get_functions(),
+                               ID_device=ID_device)
         self._state = PSState(variables=self.variables)
 
-    def create_group(self, ID_group, IDs_variable):
+    def create_group(self, ID_receiver, ID_group, IDs_variable):
         """Create group of BSMP variables."""
         self._groups[ID_group] = IDs_variable[:]
         return _ack.ok, None
 
-    def remove_groups(self):
+    def remove_groups(self, ID_receiver):
         """Delete all groups of BSMP variables."""
         self._groups = {}
         return _ack.ok, None
@@ -384,24 +385,28 @@ class DevSlaveSim(_BSMPDeviceSlave):
         return _ack.ok, None
 
 
-class DevSlave(_BSMPDeviceSlave, _StreamChecksum):
+class BSMPResponse(_BSMPResponse, _StreamChecksum):
     """Transport BSMP layer interacting with real slave device."""
 
     _FAKE_FRMWARE_VERSION = ['\x00', '\x00']
 
     def __init__(self, ID_device, PRU):
         """Init method."""
-        _BSMPDeviceSlave.__init__(self,
-                                  variables=_get_variables_FBP(),
-                                  functions=_get_functions(),
-                                  ID_device=ID_device)
+        _BSMPResponse.__init__(self,
+                               variables=_get_variables_FBP(),
+                               functions=_get_functions(),
+                               ID_device=ID_device)
 
         self._pru = PRU
+
+    def create_group(self, ID_receiver):
+        """Create group of BSMP variables."""
+        pass
 
     def cmd_0x01(self, ID_receiver):
         """Respond BSMP protocol version."""
         stream = [ID_receiver, "\x00", "\x00", "\x00"]
-        stream = DevSlave.includeChecksum(stream)
+        stream = BSMPResponse.includeChecksum(stream)
         self._pru.UART_write(stream, timeout=10)
         answer = self._pru.UART_read()
         # invoke checksum
@@ -416,16 +421,16 @@ class DevSlave(_BSMPDeviceSlave, _StreamChecksum):
         if ID_variable == _BSMPConst.frmware_version:
             ID_master = 0
             answer = [chr(ID_master), '\x11', '\x00', '\x02'] + \
-                DevSlave._FAKE_FRMWARE_VERSION
-            answer = DevSlave.includeChecksum(answer)
+                BSMPResponse._FAKE_FRMWARE_VERSION
+            answer = BSMPResponse.includeChecksum(answer)
         else:
             stream = [ID_receiver, "\x10", "\x00", "\x01", ID_variable]
-            stream = DevSlaveSim.includeChecksum(stream)
+            stream = BSMPResponse.includeChecksum(stream)
             self._pru.UART_write(stream, timeout=10)
             answer = self._pru.UART_read()
         # process answer
         ID_master, ID_cmd, load_size, load_stream = \
-            DevSlave.parse_stream(answer)
+            BSMPResponse.parse_stream(answer)
         if ID_cmd != 0x11 or load_size != 2:
             raise ValueError(
                 'Incorrect response from slave: {}'.format(answer))
@@ -574,7 +579,11 @@ class Controller():
     #     These are the functions that all subclass have to implement!
 
     def _get_frmware_version(self):
-        return self._bsmp_get_variable(_BSMPConst.frmware_version)
+        value = self._bsmp_get_variable(_BSMPConst.frmware_version)
+        vmajor = str((value & 0xFF00) >> 8)
+        vminor = str(value & 0xFF)
+        frmware_ver = '.'.join([vmajor, vminor])
+        return __version__ + '-' + frmware_ver
 
     def _get_ps_status(self):
         return self._bsmp_get_variable(_BSMPConst.ps_status)

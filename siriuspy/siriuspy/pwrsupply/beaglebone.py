@@ -3,8 +3,8 @@
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.pwrsupply.controller import Controller as _Controller
 from siriuspy.pwrsupply.controller import SerialComm as _SerialComm
-from siriuspy.pwrsupply.controller import DevSlave as _DevSlave
-from siriuspy.pwrsupply.controller import DevSlaveSim as _DevSlaveSim
+from siriuspy.pwrsupply.controller import BSMPResponse as _BSMPResponse
+from siriuspy.pwrsupply.controller import BSMPResponseSim as _BSMPResponseSim
 from siriuspy.pwrsupply.controller import PRU as _PRU
 from siriuspy.pwrsupply.controller import PRUSim as _PRUSim
 # from siriuspy.pwrsupply.controller import PUControllerSim as _PUControllerSim
@@ -46,8 +46,8 @@ class BeagleBone():
         power_supplies = dict()
         for i, psname in enumerate(self._psnames):
             ID_device = i + 1
-            ps = _DevSlaveSim(ID_device=ID_device) if self._simulate else \
-                _DevSlave(ID_device=ID_device, PRU=self._pru)
+            ps = _BSMPResponseSim(ID_device=ID_device) if self._simulate else \
+                _BSMPResponse(ID_device=ID_device, PRU=self._pru)
             self._serial_comm.add_slave(ps)
             c = _Controller(serial_comm=self._serial_comm, ID_device=ID_device)
             power_supplies[psname] = _PowerSupply(controller=c, psname=psname)

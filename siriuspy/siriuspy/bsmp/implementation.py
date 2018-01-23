@@ -18,18 +18,19 @@ class Const:
     busy_resource = 0xE8,
 
 
-class BSMPDevice:
+class BSMP:
     """BSMP class."""
 
-    def __init__(self, variables, functions):
+    def __init__(self, ID_device, variables, functions):
         """Init method."""
+        self._ID_device = ID_device
         self._variables = {ID: value for ID, value in variables.items()}
         self._functions = {ID: value for ID, value in functions.items()}
 
     @property
     def ID_device(self):
         """Return ID of BSMP device."""
-        return self._get_ID_device()
+        return self._ID_device
 
     @property
     def variables(self):
@@ -44,7 +45,7 @@ class BSMPDevice:
     @staticmethod
     def parse_stream(stream):
         """Return parsed message from stream."""
-        if not BSMPDevice._verifyChecksum(stream):
+        if not BSMP._verifyChecksum(stream):
             raise ValueError('BSMP message checksum failed!')
         ID_receiver = stream[0]
         ID_cmd = ord(stream[1])
@@ -58,13 +59,13 @@ class BSMPDevice:
         raise NotImplementedError
 
 
-class BSMPDeviceMaster(BSMPDevice):
-    """BSMP master device class."""
+class BSMPQuery(BSMP):
+    """BSMP query commands."""
 
     def __init__(self, variables, functions, slaves=None):
         """Init method."""
-        BSMPDevice.__init__(self, variables=variables, functions=functions)
-        self._ID_device = 0
+        BSMP.__init__(self, ID_device=0,
+                      variables=variables, functions=functions)
         self._slaves = {}
         if slaves is not None:
             for slave in slaves:
@@ -101,31 +102,29 @@ class BSMPDeviceMaster(BSMPDevice):
         slave = self._slaves[ID_receiver]
         if ID_group < 3:
             raise ValueError('Invalid group ID number!')
-        return slave.query(0x30, ID_group=ID_group, IDs_variable=IDs_variable)
+        return slave.query(0x30, ID_receiver=ID_receiver,
+                           ID_group=ID_group, IDs_variable=IDs_variable)
 
     def cmd_0x32(self, ID_receiver):
         """Query remove all BSMP variables groups."""
         slave = self._slaves[ID_receiver]
-        return slave.query(0x32)
+        return slave.query(0x32, ID_receiver=ID_receiver)
 
     def cmd_0x50(self, ID_receiver, **kwargs):
         """Query execute BSMP function."""
         slave = self._slaves[ID_receiver]
         return slave.query(0x50, ID_receiver=self.ID_device, **kwargs)
 
-    def _get_ID_device(self):
-        return self._ID_device
 
-
-class BSMPDeviceSlave(BSMPDevice):
-    """BSMP slave device class."""
+class BSMPResponse(BSMP):
+    """BSMP response commands."""
 
     def __init__(self, ID_device, variables, functions):
         """Init method."""
-        BSMPDevice.__init__(self, variables=variables, functions=functions)
         if ID_device < 1 or ID_device > 31:
             raise ValueError('Invalid or reserved ID_device number!')
-        self._ID_device = ID_device
+        BSMP.__init__(self, ID_device=ID_device,
+                      variables=variables, functions=functions)
         self._groups = {}
         # create group with ID 0
         self._groups[0] = []  # all variables
@@ -143,18 +142,21 @@ class BSMPDeviceSlave(BSMPDevice):
         0x50: 'cmd_0x51',
     }
 
-    @property
-    def ID_device(self):
-        """Return BSMP protocol version."""
-        return self._ID_device
-
-    def query(self, cmd, **kwargs):
+    def query(self, cmd, ID_receiver, **kwargs):
         """Receive a command from master."""
-        if cmd not in BSMPDeviceSlave._query2resp:
+        if cmd not in BSMPResponse._query2resp:
             raise NotImplementedError(
                 'command {} for implemented'.format(hex(cmd)))
-        func = getattr(self, BSMPDeviceSlave._query2resp[cmd])
-        return func(**kwargs)
+        func = getattr(self, BSMPResponse._query2resp[cmd])
+        return func(ID_receiver=ID_receiver, **kwargs)
+
+    def create_group(self, ID_receiver, ID_group, IDs_variable):
+        """Respond create BSMP bariables group."""
+        raise NotImplementedError
+
+    def remove_groups(self, ID_receiver):
+        """Respond remove all BSMP variables groups."""
+        raise NotImplementedError
 
     def cmd_0x01(self, ID_receiver):
         """Respond BSMP protocol version."""
@@ -171,14 +173,3 @@ class BSMPDeviceSlave(BSMPDevice):
     def cmd_0x51(self, ID_receiver, ID_function, **kwargs):
         """Respond execute BSMP function."""
         raise NotImplementedError
-
-    def create_group(self, ID_group, IDs_variable):
-        """Respond create BSMP bariables group."""
-        raise NotImplementedError
-
-    def remove_groups(self):
-        """Respond remove all BSMP variables groups."""
-        raise NotImplementedError
-
-    def _get_ID_device(self):
-        return self._ID_device

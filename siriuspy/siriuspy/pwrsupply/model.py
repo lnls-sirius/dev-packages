@@ -171,7 +171,8 @@ class PowerSupply(_PSCommInterface):
                          'IntlkHard-Mon', 'IntlkHardLabels-Cte',
                          'WfmIndex-Mon',
                          'WfmLabels-Mon', 'WfmLabel-RB', 'WfmLoad-Sts',
-                         'WfmData-RB', 'WfmSave-Cmd'):
+                         'WfmData-RB', 'WfmSave-Cmd',
+                         'Version-Cte'):
                 continue
             value = self.read(field)
             if value is not None:
@@ -185,7 +186,8 @@ class PowerSupply(_PSCommInterface):
             for field in self._base_db:
                 if field not in ('Current-SP', 'Current-RB', 'CurrentRef-Mon',
                                  'Current-Mon', 'PwrState-Sel', 'PwrState-Sts',
-                                 'OpMode-Sel', 'OpMode-Sts', 'CtrlMode-Mon'):
+                                 'OpMode-Sel', 'OpMode-Sts', 'CtrlMode-Mon',
+                                 'Version-Cte'):
                     continue
                 value = self.read(field)
                 if self._callback:
