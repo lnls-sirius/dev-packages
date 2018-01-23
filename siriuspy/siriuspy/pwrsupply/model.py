@@ -36,6 +36,11 @@ class PowerSupply(_PSCommInterface):
     _SCAN_INTERVAL = 0.1  # [s]
     _is_setpoint = _re.compile('.*-(SP|Sel|Cmd)$')
 
+    # power supply, not controller, objet is responsible to provide state
+    # of the following fields:
+    _ps_const_fields = ('IntlkSoftLabels-Cte',
+                        'IntlkHardLabels-Cte')
+
     def __init__(self, psname, controller):
         """Init method."""
         self._psname = psname
@@ -55,6 +60,8 @@ class PowerSupply(_PSCommInterface):
         # Check CtrlMode?
         if PowerSupply._is_setpoint.match(field):
             return self._setpoints[field]['value']
+        if field in PowerSupply._ps_const_fields:
+            return self._base_db[field]['value']
         return self._controller.read(field)
 
     def write(self, field, value):
