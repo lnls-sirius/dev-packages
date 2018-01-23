@@ -38,14 +38,14 @@ class _PCASDriver(_pcaspy.Driver):
         return self.app.write(reason, value)
 
 
-def run():
+def run(bbblist):
     """Main function."""
     # define abort function
     _signal.signal(_signal.SIGINT, _stop_now)
     _signal.signal(_signal.SIGTERM, _stop_now)
 
     # define IOC and initializes it
-    _main.App.init_class()
+    _main.App.init_class(bbblist)
 
     # check if IOC is already running
     p = next(iter(_main.App.pvs_database.keys()))
@@ -75,3 +75,7 @@ def run():
     # sends stop signal to server thread
     server_thread.stop()
     server_thread.join()
+
+
+if __name__ == "__main__":
+    run()

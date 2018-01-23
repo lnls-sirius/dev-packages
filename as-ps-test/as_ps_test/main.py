@@ -44,10 +44,10 @@ class App:
             _pvs.ps_devices[psname].add_callback(self._mycallback)
 
     @staticmethod
-    def init_class():
+    def init_class(bbblist):
         """Init class."""
-        App.ps_devices = _pvs.get_ps_devices()
-        App.pvs_database = _pvs.get_pvs_database()
+        App.ps_devices = _pvs.get_ps_devices(bbblist)
+        App.pvs_database = _pvs.get_pvs_database(bbblist)
 
     @staticmethod
     def get_pvs_database():
@@ -78,6 +78,7 @@ class App:
 
     def write(self, reason, value):
         """Write pv method."""
+        print('write', reason, value)
         parts = reason.split(':')
         propty = parts[-1]
         psname = ':'.join(parts[:2])
