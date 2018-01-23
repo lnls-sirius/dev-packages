@@ -37,12 +37,13 @@ class Status:
     }
 
     _ps2dsp_state = {
+        # current PS version implements only SlowRef!
         Const.OpMode.SlowRef: Const.States.SlowRef,
-        Const.OpMode.SlowRefSync: Const.States.SlowRefSync,
-        Const.OpMode.FastRef: Const.States.FastRef,
-        Const.OpMode.RmpWfm: Const.States.RmpWfm,
-        Const.OpMode.MigWfm: Const.States.MigWfm,
-        Const.OpMode.Cycle: Const.States.Cycle,
+        Const.OpMode.SlowRefSync: Const.States.SlowRef,
+        Const.OpMode.FastRef: Const.States.SlowRef,
+        Const.OpMode.RmpWfm: Const.States.SlowRef,
+        Const.OpMode.MigWfm: Const.States.SlowRef,
+        Const.OpMode.Cycle: Const.States.SlowRef,
     }
 
     @staticmethod

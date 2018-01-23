@@ -1,6 +1,7 @@
 """Power supply controller classes."""
 
 import time as _time
+import struct as _struct
 from queue import Queue as _Queue
 from threading import Thread as _Thread
 
@@ -56,7 +57,7 @@ class _PRUInterface:
 
     def UART_write(self, stream, timeout):
         """Write stream to serial port."""
-        return self._UART_write(stream)
+        return self._UART_write(stream, timeout=timeout)
 
     def UART_read(self):
         """Return read from UART."""
@@ -64,13 +65,16 @@ class _PRUInterface:
 
     # --- pure virtual method ---
 
-    def _uart_write(self, stream, timeout):
-        raise NotImplementedError
-
     def _get_sync_pulse_count(self):
         raise NotImplementedError
 
     def _set_sync_mode(self, value):
+        raise NotImplementedError
+
+    def _UART_write(stream, timeout):
+        raise NotImplementedError
+
+    def _UART_read(stream):
         raise NotImplementedError
 
 
@@ -422,7 +426,7 @@ class BSMPResponse(_BSMPResponse, _StreamChecksum):
     def cmd_0x01(self, ID_receiver):
         """Respond BSMP protocol version."""
         query = [chr(ID_receiver), "\x00", "\x00", "\x00"]
-        query = BSMPResponse.includeChecksum(stream)
+        query = BSMPResponse.includeChecksum(query)
         self._pru.UART_write(query, timeout=100)
         response = self._pru.UART_read()
         ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
@@ -453,7 +457,8 @@ class BSMPResponse(_BSMPResponse, _StreamChecksum):
                 return _ack.invalid_message, None
             value = _get_value_from_load(self._variables, ID_variable, load)
         else:
-            raise NotImplementedError
+            raise NotImplementedError(
+                'This power supply cmd is not defined for this variable ID!')
         return ID_cmd, value
 
     def cmd_0x13(self, ID_receiver, ID_group):
@@ -465,30 +470,43 @@ class BSMPResponse(_BSMPResponse, _StreamChecksum):
         response = self._pru.UART_read()
         # process response
         ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
-        # if ID_group == _BSMPConst.group_id:
-        #     ps_status = ord(response[4]) + (ord(response[5]) << 8)
-        #     ps_setpoint = _struct.unpack("<f", "".join(response[6:10]))
-        #     ps_soft_interlocks = ord(response[14]) + (ord(response[15]) << 8)
-        #     ps_hard_interlocks = ord(response[16]) + (ord(response[17]) << 8)
-        #     self.updatePV(ps_name + ":Current-Mon", struct.unpack("<f", "".join(answer[18:22]))[0])
+        if ID_group == _BSMPConst.group_id:
+            value = dict()
+            value['ps_status'] = ord(response[4]) + (ord(response[5]) << 8)
+            value['ps_setpoint'] = \
+                _struct.unpack("<f", "".join(response[6:10]))
+            value['ps_soft_interlocks'] = \
+                ord(response[14]) + (ord(response[15]) << 8)
+            value['ps_hard_interlocks'] = \
+                ord(response[16]) + (ord(response[17]) << 8)
+            value['i_load'] = \
+                _struct.unpack("<f", "".join(response[18:22]))
+        else:
+            raise ValueError('Invalid group ID!')
+        return ID_cmd, value
 
-
-
-
-
-        stream = BSMPResponse.includeChecksum(stream)
-        self._pru.UART_write(stream, timeout=10)  # 10 or 100 for timeout?
-        response = self._pru.UART_read()
-
-        # process response
-        ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
-        if ID_variable == _BSMPConst.frmware_version:
-            if len(load) != 2:
-                return _ack.invalid_message, None
-            value = _get_value_from_load(self._variables, ID_variable, load)
+    def cmd_0x51(self, ID_receiver, ID_function, **kwargs):
+        """Respond to execute BSMP function."""
+        # execute function in power supply
+        if ID_function in (_BSMPConst.turn_on,
+                           _BSMPConst.turn_off,
+                           _BSMPConst.open_loop,
+                           _BSMPConst.close_loop,
+                           _BSMPConst.reset_interlocks):
+            load = []
+        elif ID_function == _BSMPConst.set_slowref:
+            load = list(_struct.pack("<f", kwargs['setpoint']))
         else:
             raise NotImplementedError
-        return ID_cmd, value
+        n = len(load)
+        hb, lb = (n & 0xFF00) >> 8, n & 0xFF
+        query = [chr(ID_receiver), '\x50', chr(hb), chr(lb),
+                 chr(ID_function)] + load
+        self._pru.UART_write(query, timeout=100)
+        response = self._pru.UART_read()
+        # process response
+        ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
+        return ID_cmd, None
 
 
 class Controller():
@@ -524,14 +542,11 @@ class Controller():
         # reset interlocks
         self.cmd_reset_interlocks()
 
-        # turn ps on
+        # turn ps on and implicitly close control loop
         self.pwrstate = _PSConst.PwrState.On
 
         # set opmode do SlowRef
         self.opmode = _PSConst.OpMode.SlowRef
-
-        # close control loop
-        self.cmd_close_loop()
 
         # set reference current to zero
         self.cmd_set_slowref(0.0)
@@ -551,6 +566,8 @@ class Controller():
             # turn ps on
             self._pwrstate = value
             self.cmd_turn_on()
+            # close control loop
+            self.cmd_close_loop()
             # set ps opmode to stored value
             self.opmode = self._opmode
         else:
@@ -571,7 +588,7 @@ class Controller():
         if self.pwrstate == _PSConst.PwrState.On:
             ps_status = self._get_ps_status()
             op_mode = _Status.set_opmode(ps_status, value)
-            self.cmd_cfg_op_mode(op_mode=op_mode)
+            self._cmd_cfg_op_mode(op_mode=op_mode)
 
     # --- API: power supply 'functions' ---
 
@@ -599,10 +616,6 @@ class Controller():
         """Set SlowRef reference value."""
         return self._bsmp_run_function(ID_function=_BSMPConst.set_slowref,
                                        setpoint=setpoint)
-
-    def cmd_cfg_op_mode(self, op_mode):
-        """Set controller operation mode."""
-        return self._bsmp_run_function(_BSMPConst.cfg_op_mode, op_mode=op_mode)
 
     # --- API: public properties and methods ---
 
@@ -692,6 +705,10 @@ class Controller():
     def _set_opmode(self, value):
         """Set pwrstate state."""
         self.opmode = value
+
+    def _cmd_cfg_op_mode(self, op_mode):
+        """Set controller operation mode."""
+        return self._bsmp_run_function(_BSMPConst.cfg_op_mode, op_mode=op_mode)
 
     def _ps_interface_in_remote(self):
         ps_status = self._get_ps_status()

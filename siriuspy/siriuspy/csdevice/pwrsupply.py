@@ -30,20 +30,20 @@ ps_pwrstate_sts = ('Off', 'On')
 ps_opmode = ('SlowRef', 'SlowRefSync', 'FastRef', 'RmpWfm', 'MigWfm', 'Cycle')
 ps_cmdack = ('OK', 'Local', 'PCHost', 'Interlocked', 'UDC_locked',
              'DSP_TimeOut', 'DSP_Busy', 'Invalid',)
-ps_soft_interlock = ('Module over-temperature',
-                     'Reserved', 'Reserved', 'Reserved',
+ps_soft_interlock = ('Overtemperature on module', 'Reserved',
+                     'Reserved', 'Reserved',
                      'Reserved', 'Reserved', 'Reserved', 'Reserved',
                      'Reserved', 'Reserved', 'Reserved', 'Reserved',
                      'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-ps_hard_interlock = ('Load over-current', 'Load over-voltage',
-                     'DCLink over-voltage', 'DCLink under-voltage',
-                     'DCLink fault 1', 'DCLink fault 2',
-                     'Module driver fault', 'Reserved',
+ps_hard_interlock = ('Overvoltage on load', 'Overvoltage on DC-Link',
+                     'Undervoltage on DC-Link', 'DC-Link input relay fail',
+                     'DC-Link input fuse fail', 'Fail on module drivers',
+                     'Reserved', 'Reserved',
                      'Reserved', 'Reserved', 'Reserved', 'Reserved',
                      'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-
 
 # --- power supply constants definition class ---
+
 
 class Const:
     """Const class defining power supply constants."""

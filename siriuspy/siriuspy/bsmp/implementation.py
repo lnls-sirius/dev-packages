@@ -30,7 +30,7 @@ class Const:
     }
 
     @staticmethod
-    def conv_ID2label(ID_cmd):
+    def conv_error2label(ID_cmd):
         """Return label of a given error command ID."""
         return Const._labels[ID_cmd]
 
