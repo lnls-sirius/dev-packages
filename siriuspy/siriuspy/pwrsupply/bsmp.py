@@ -45,6 +45,9 @@ class Const:
     cfg_op_mode = 12
     set_slowref = 16
 
+    # --- variables groups ---
+    group_id = 3
+
 
 class StreamChecksum:
     """Methods to include and verify stream checksum."""
