@@ -552,6 +552,16 @@ class Controller():
         self.cmd_set_slowref(0.0)
 
     @property
+    def scanning(self):
+        """Return scanning state."""
+        return self._serial_comm.scanning
+
+    @scanning.setter
+    def scanning(self, value):
+        """Set scanning state."""
+        self._serial_comm.scanning = value
+
+    @property
     def pwrstate(self):
         """Return PS power state."""
         return self._pwrstate

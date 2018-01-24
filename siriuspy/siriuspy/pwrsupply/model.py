@@ -36,22 +36,37 @@ class PowerSupply(_PSCommInterface):
     _SCAN_INTERVAL = 0.1  # [s]
     _is_setpoint = _re.compile('.*-(SP|Sel|Cmd)$')
 
-    # power supply, not controller, objet is responsible to provide state
+    # power supply objet, not controller's, is responsible to provide state
     # of the following fields:
-    _ps_const_fields = ('IntlkSoftLabels-Cte',
+    _db_const_fields = ('IntlkSoftLabels-Cte',
                         'IntlkHardLabels-Cte')
 
     def __init__(self, psname, controller):
         """Init method."""
-        self._psname = psname
+        self._psdata = _PSData(psname=psname)
         self._controller = controller
         self._base_db = self._get_base_db()
         self._setpoints = self._build_setpoints()
         self._callback = None
-
+        self._scanning = True
         self._thread_scan = _Thread(target=self._scan_fields)
         self._thread_scan.setDaemon(True)
         self._thread_scan.start()
+
+    @property
+    def psdata(self):
+        """Return PSData object."""
+        return self._psdata
+
+    @property
+    def scanning(self):
+        """Return scanning state."""
+        return self._controller.scanning
+
+    @scanning.setter
+    def scanning(self, value):
+        """Set scanning state."""
+        self._controller.scanning = value
 
     # --- public PSComm interface API ---
 
@@ -60,7 +75,7 @@ class PowerSupply(_PSCommInterface):
         # Check CtrlMode?
         if PowerSupply._is_setpoint.match(field):
             return self._setpoints[field]['value']
-        if field in PowerSupply._ps_const_fields:
+        if field in PowerSupply._db_const_fields:
             return self._base_db[field]['value']
         return self._controller.read(field)
 
@@ -165,7 +180,7 @@ class PowerSupply(_PSCommInterface):
         # Reset interlocks
 
     def _get_base_db(self):
-        return _PSData(self._psname).propty_database
+        return self._psdata.propty_database
 
     def _get_fields(self):
         return self._base_db.keys()
@@ -174,13 +189,6 @@ class PowerSupply(_PSCommInterface):
         db = dict()
         db.update(self._base_db)
         for field in db:
-            if field in ('IntlkSoft-Mon', 'IntlkSoftLabels-Cte',
-                         'IntlkHard-Mon', 'IntlkHardLabels-Cte',
-                         'WfmIndex-Mon',
-                         'WfmLabels-Mon', 'WfmLabel-RB', 'WfmLoad-Sts',
-                         'WfmData-RB', 'WfmSave-Cmd',
-                         'Version-Cte'):
-                continue
             value = self.read(field)
             if value is not None:
                 db[field]["value"] = value
@@ -190,16 +198,15 @@ class PowerSupply(_PSCommInterface):
     def _scan_fields(self):
         """Scan fields."""
         while True:
-            for field in self._base_db:
-                if field not in ('Current-SP', 'Current-RB', 'CurrentRef-Mon',
-                                 'Current-Mon', 'PwrState-Sel', 'PwrState-Sts',
-                                 'OpMode-Sel', 'OpMode-Sts', 'CtrlMode-Mon',
-                                 'Version-Cte'):
-                    continue
-                value = self.read(field)
-                if self._callback:
-                    self._callback(
-                        pvname=self._psname + ':' + field, value=value)
+            if self._controller.scanning:
+                for field in self._base_db:
+                    if field in PowerSupply._db_const_fields:
+                        continue
+                    value = self.read(field)
+                    if self._callback:
+                        self._callback(
+                            pvname=self._psdata.psname + ':' + field,
+                            value=value)
             _time.sleep(PowerSupply._SCAN_INTERVAL)
 
 
