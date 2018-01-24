@@ -177,7 +177,7 @@ class SerialComm(_BSMPQuery):
                             slaves=slaves)
         self._PRU = PRU
         self._queue = _Queue()
-        self._state = PSState(variables=variables)
+        self._states = {}
         # does not start variables scanning just yet.
         self._scanning = False
         # create, configure and start auxilliary threads.
@@ -221,8 +221,10 @@ class SerialComm(_BSMPQuery):
         """Add slave to slave pool controlled by master BSMP device."""
         # insert slave into pool
         _BSMPQuery.add_slave(self, slave)
+        # create mirrored state for slave
+        self._states[slave.ID_device] = PSState(variables=self._variables)
         # init pwrsupply slave
-        self._init_pwrsupply(slave)
+        self._init_controller(slave)
 
     def put(self, ID_device, ID_cmd, kwargs):
         """Put a SBMP command request in queue."""
@@ -231,15 +233,15 @@ class SerialComm(_BSMPQuery):
 
     def get_variable(self, ID_device, ID_variable):
         """Return a BSMP variable."""
-        return self._state[ID_variable]
+        return self._states[ID_device][ID_variable]
 
     def _process_queue(self):
         """Process queue."""
         while True:
             item = self._queue.get()
-            ID_device, id_cmd, kwargs = item
+            ID_device, ID_cmd, kwargs = item
             # print('get :', ID_device, hex(id_cmd), kwargs)
-            cmd = 'cmd_' + str(hex(id_cmd))
+            cmd = 'cmd_' + str(hex(ID_cmd))
             method = getattr(self, cmd)
             ack, load = method(ID_receiver=ID_device, **kwargs)
             if ack != _ack.ok:
@@ -247,22 +249,22 @@ class SerialComm(_BSMPQuery):
                 raise NotImplementedError(
                     'Error returned in BSMP command!')
             elif load is not None:
-                self._process_load(id_cmd, load)
+                self._process_load(ID_device, ID_cmd, load)
 
-    def _process_load(self, id_cmd, load):
-        if id_cmd == 0x12:
+    def _process_load(self, ID_device, ID_cmd, load):
+        if ID_cmd == 0x12:
             for variable, value in load.items():
-                self._state[variable] = value
+                self._states[ID_device][variable] = value
         else:
             err_str = 'BSMP cmd {} not implemented in process_thread!'
-            raise NotImplementedError(err_str.format(hex(id_cmd)))
+            raise NotImplementedError(err_str.format(hex(ID_cmd)))
 
     def _process_scan(self):
         """Scan power supply variables, adding puts into queue."""
         while True:
             if self._scanning:
                 self._sync_counter = self._PRU.sync_pulse_count
-                self._insert_variable_group_reads()
+                self._insert_variables_group_read()
             if self._PRU.sync_mode:
                 # self.event.wait(1)
                 _time.sleep(SerialComm._SCAN_INTERVAL_SYNC_MODE_ON)
@@ -270,12 +272,12 @@ class SerialComm(_BSMPQuery):
                 # self.event.wait(0.1)
                 _time.sleep(SerialComm._SCAN_INTERVAL_SYNC_MODE_OFF)
 
-    def _insert_variable_group_reads(self):
+    def _insert_variables_group_read(self):
         kwargs = {'ID_group': _BSMPConst.group_id}
         for ID_receiver in self._slaves:
             self.put(ID_device=ID_receiver, ID_cmd=0x12, kwargs=kwargs)
 
-    def _init_pwrsupply(self, slave):
+    def _init_controller(self, slave):
         # clean variable groups in slave
         kwargs = {}
         self.put(ID_device=slave.ID_device, ID_cmd=0x32, kwargs=kwargs)
@@ -553,13 +555,8 @@ class Controller():
 
     @property
     def scanning(self):
-        """Return scanning state."""
+        """Return scanning state of serial comm."""
         return self._serial_comm.scanning
-
-    @scanning.setter
-    def scanning(self, value):
-        """Set scanning state."""
-        self._serial_comm.scanning = value
 
     @property
     def pwrstate(self):

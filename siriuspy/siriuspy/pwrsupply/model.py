@@ -45,10 +45,10 @@ class PowerSupply(_PSCommInterface):
         """Init method."""
         self._psdata = _PSData(psname=psname)
         self._controller = controller
+        self._updating = True
         self._base_db = self._get_base_db()
         self._setpoints = self._build_setpoints()
         self._callback = None
-        self._scanning = True
         self._thread_scan = _Thread(target=self._scan_fields)
         self._thread_scan.setDaemon(True)
         self._thread_scan.start()
@@ -59,14 +59,14 @@ class PowerSupply(_PSCommInterface):
         return self._psdata
 
     @property
-    def scanning(self):
-        """Return scanning state."""
-        return self._controller.scanning
+    def updating(self):
+        """Return updating state."""
+        return self._updating
 
-    @scanning.setter
-    def scanning(self, value):
-        """Set scanning state."""
-        self._controller.scanning = value
+    @updating.setter
+    def updating(self, value):
+        """Set updating state."""
+        self._updating = value
 
     # --- public PSComm interface API ---
 
@@ -74,10 +74,12 @@ class PowerSupply(_PSCommInterface):
         """Read field value."""
         # Check CtrlMode?
         if PowerSupply._is_setpoint.match(field):
+            # why not use _base_db to store setpoints?
             return self._setpoints[field]['value']
         if field in PowerSupply._db_const_fields:
-            return self._base_db[field]['value']
-        return self._controller.read(field)
+                return self._base_db[field]['value']
+        else:
+            return self._controller.read(field)
 
     def write(self, field, value):
         """Write value to field."""
@@ -198,11 +200,14 @@ class PowerSupply(_PSCommInterface):
     def _scan_fields(self):
         """Scan fields."""
         while True:
-            if self._controller.scanning:
+            if self._updating:
                 for field in self._base_db:
                     if field in PowerSupply._db_const_fields:
                         continue
                     value = self.read(field)
+                    # if _base_db is a updated copy of ps state, users (IOC)
+                    # of powersupply could access it directly, without the
+                    # the need of callback registration!
                     if self._callback:
                         self._callback(
                             pvname=self._psdata.psname + ':' + field,
