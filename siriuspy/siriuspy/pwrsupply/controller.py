@@ -341,6 +341,7 @@ class BSMPResponseSim(_BSMPResponse):
         for ID_variable in IDs_variable:
             # check if variable value copying is needed!
             load[ID_variable] = self._state[ID_variable]
+        load[_BSMPConst.i_load] += self._i_load_fluctuation
         return _ack.ok, load
 
     def cmd_0x51(self, ID_receiver, ID_function, **kwargs):
