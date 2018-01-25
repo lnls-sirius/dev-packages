@@ -46,7 +46,7 @@ class BeagleBone():
         power_supplies = dict()
         for i, psname in enumerate(self._psnames):
             ID_device = i + 1
-            ps = _BSMPResponseSim(ID_device=ID_device) if self._simulate else \
+            ps = _BSMPResponseSim(ID_device=ID_device, i_load_fluctuation_rms=0.0001) if self._simulate else \
                 _BSMPResponse(ID_device=ID_device, PRU=self._pru)
             self._serial_comm.add_slave(ps)
             c = _Controller(serial_comm=self._serial_comm, ID_device=ID_device)
