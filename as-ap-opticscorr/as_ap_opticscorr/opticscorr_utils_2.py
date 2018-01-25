@@ -92,7 +92,7 @@ class OpticsCorr:
         self._nominal_intstrengths = intstrengths
 
         if self._initialized:
-            self._matrix_prop_svd = self._calculate_matrix_prop_svd()
+            self._matrix_prop_svd = self._calculate_matrix_svd(method=0)
             self._matrix_prop_2knobs = self._calculate_matrix_2knobs(method=0)
             self._inverse_matrix_prop_svd = (
                 self._calculate_inverse(method=0, grouping='svd'))
