@@ -220,8 +220,12 @@ class PSEpics(_PSCommInterface):
 
     valid_fields = ('Current-SP', 'Current-RB', 'CurrentRef-Mon',
                     'Current-Mon', 'PwrState-Sel', 'PwrState-Sts',
-                    'OpMode-Sel', 'OpMode-Sts', 'Energy-SP', 'Energy-RB',
-                    'EnergyRef-Mon', 'Energy-Mon', 'Reset-Cmd', 'Abort-Cmd')
+                    'OpMode-Sel', 'OpMode-Sts',
+                    'Energy-SP', 'Energy-RB', 'EnergyRef-Mon', 'Energy-Mon',
+                    'KL-SP', 'KL-RB', 'KLRef-Mon', 'KL-Mon',
+                    'SL-SP', 'SL-RB', 'SLRef-Mon', 'SL-Mon',
+                    'Kick-SP', 'Kick-RB', 'KickRef-Mon', 'Kick-Mon',
+                    'Reset-Cmd', 'Abort-Cmd')
 
     def __init__(self, psname, fields=None, use_vaca=True):
         """Create epics PVs and expose them through public controller API."""
@@ -273,8 +277,8 @@ class PSEpics(_PSCommInterface):
         else:
             for pvname, pv in self._pvs.items():
                 field = pvname.split(':')[-1]
-                if field in self.valid_fields:
-                    pv.add_callback(func)
+                # if field in self.valid_fields:
+                pv.add_callback(func)
 
     def get_database(self, prefix=""):
         """Fill base DB with values and limits read from PVs.
@@ -294,13 +298,14 @@ class PSEpics(_PSCommInterface):
     # --- private methods ---
 
     def _create_pvs(self):
-        # Normally create normal PV objects
+        # No/rmally create normal PV objects
         # In case more than one source is supplied creates a SyncPV
         # In case the device is a Magnet with a normalized force being supplied
         # as one of the fields, a NormalizedPV is created
+        self._sort_fields()
         for field in self._fields:
-            if field in self.valid_fields:
-                self._pvs[field] = self._create_pv(field)
+            # if field in self.valid_fields:
+            self._pvs[field] = self._create_pv(field)
             # return _PV(self._prefix + self.psname + ":" + field)
 
     def _create_pv(self, field):
@@ -321,6 +326,16 @@ class PSEpics(_PSCommInterface):
                 db[field]["value"] = value
 
         return db
+
+    def _sort_fields(self):
+        fields = []
+        for field in self._fields:
+            if not self._is_strength.match(field):
+                fields.insert(0, field)
+            else:
+                fields.append(field)
+
+        self._fields = fields
 
 
 class MAEpics(PSEpics):
@@ -382,7 +397,6 @@ class MAEpics(PSEpics):
 
     def _get_str_pv(self, field):
         ma_class = _mutil.magnet_class(self._maname)
-        print(self._pvs)
         if 'dipole' == ma_class:
             return [self._pvs[field.replace('Energy', 'Current')], ]
         elif 'pulsed' == ma_class:
@@ -418,13 +432,3 @@ class MAEpics(PSEpics):
             return [self._maname.replace(':PM', ':PU')]
 
         return [self._maname.replace(':MA', ':PS')]
-
-    def _sort_fields(self):
-        fields = []
-        for field in self._fields:
-            if not self._is_strength.match(field):
-                fields.insert(0, field)
-            else:
-                fields.append(field)
-
-        self.fields = fields
