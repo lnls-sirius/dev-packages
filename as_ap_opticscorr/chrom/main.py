@@ -1,11 +1,10 @@
 """Main module of AS-AP-ChromCorr IOC."""
 
 import time as _time
-import numpy as _np
 import epics as _epics
 import siriuspy as _siriuspy
 from siriuspy.servconf.conf_service import ConfigService as _ConfigService
-from as_ap_opticscorr.opticscorr_utils import OpticsCorr
+from as_ap_opticscorr.opticscorr_utils_2 import OpticsCorr
 import as_ap_opticscorr.chrom.pvs as _pvs
 
 # Coding guidelines:
@@ -61,22 +60,39 @@ class App:
         self._config_timing_cmd_count = 0
         self._timing_check_config = 6*[0]
 
-        # Initialize correction parameters from local file and configdb
-        self._opticscorr = OpticsCorr()
-
         if self._ACC.lower() == 'si':
             self._corr_method = 0
         else:
             self._corr_method = 1
 
+        # Get focusing and defocusing families
+        sfam_focusing = []
+        sfam_defocusing = []
+        for fam in self._SFAMS:
+            if 'SF' in fam:
+                sfam_focusing.append(fam)
+            else:
+                sfam_defocusing.append(fam)
+
+        # Initialize correction parameters from local file and configdb
         config_name = self._get_config_name()
-        done = self._get_corrparams(config_name)
+        [done, corrparams] = self._get_corrparams(config_name)
         if done:
             self.driver.setParam('CorrParamsConfigName-SP', config_name)
             self.driver.setParam('CorrParamsConfigName-RB', config_name)
-            self.driver.setParam('CorrMat-Mon', self._corrmat_add_svd)
+            self._nominal_matrix = corrparams[0]
+            self.driver.setParam('CorrMat-Mon', self._nominal_matrix)
+            self._sfam_nomsl = corrparams[1]
             self.driver.setParam('NominalSL-Mon', self._sfam_nomsl)
+            self._nomchrom = corrparams[2]
             self.driver.setParam('NominalChrom-Mon', self._nomchrom)
+            self._opticscorr = OpticsCorr(
+                magnetfams_ordering=self._SFAMS,
+                nominal_matrix=self._nominal_matrix,
+                nominal_intstrengths=self._sfam_nomsl,
+                nominal_opticsparam=self._nomchrom,
+                magnetfams_focusing=sfam_focusing,
+                magnetfams_defocusing=sfam_defocusing)
         else:
             raise Exception("Could not read correction parameters from "
                             "configdb.")
@@ -199,14 +215,20 @@ class App:
                 self.driver.updatePVs()
 
         elif reason == 'CorrParamsConfigName-SP':
-            done = self._get_corrparams(value)
+            [done, corrparams] = self._get_corrparams(value)
             if done:
                 self._set_config_name(value)
-                self._calc_sl()
                 self.driver.setParam('CorrParamsConfigName-RB', value)
-                self.driver.setParam('CorrMat-Mon', self._corrmat_add_svd)
-                self.driver.setParam('NominalChrom-Mon', self._nomchrom)
+                self._nominal_matrix = corrparams[0]
+                self.driver.setParam('CorrMat-Mon', self._nominal_matrix)
+                self._sfam_nomsl = corrparams[1]
                 self.driver.setParam('NominalSL-Mon', self._sfam_nomsl)
+                self._nomchrom = corrparams[2]
+                self.driver.setParam('NominalChrom-Mon', self._nomchrom)
+                self._opticscorr.nominal_matrix = self._nominal_matrix
+                self._opticscorr.nominal_intstrengths = self._sfam_nomsl
+                self._opticscorr.nominal_opticsparam = self._nomchrom
+                self._calc_sl()
                 self.driver.setParam('Log-Mon',
                                      'Updated correction parameters.')
                 self.driver.updatePVs()
@@ -220,9 +242,6 @@ class App:
             if value != self._corr_method:
                 self._corr_method = value
                 self.driver.setParam('CorrMeth-Sts', self._corr_method)
-
-                config_name = self._get_config_name()
-                self._get_corrparams(config_name)
                 self._calc_sl()
                 self.driver.updatePVs()
                 status = True
@@ -230,17 +249,18 @@ class App:
         elif reason == 'SyncCorr-Sel':
             if value != self._sync_corr:
                 self._sync_corr = value
+
                 for fam in self._SFAMS:
                     fam_index = self._SFAMS.index(fam)
                     self._sfam_check_opmode_sts[fam_index] = (
                         self._sfam_opmode_sts_pvs[fam].value)
-                if any(op != self._sync_corr
-                       for op in self._sfam_check_opmode_sts):
-                    self._status = _siriuspy.util.update_integer_bit(
-                        integer=self._status, number_of_bits=5, value=1, bit=2)
-                else:
-                    self._status = _siriuspy.util.update_integer_bit(
-                        integer=self._status, number_of_bits=5, value=0, bit=2)
+
+                val = (1 if any(op != value for op in
+                                self._sfam_check_opmode_sts)
+                       else 0)
+                self._status = _siriuspy.util.update_integer_bit(
+                    integer=self._status, number_of_bits=5, value=val, bit=2)
+
                 self.driver.setParam('Status-Mon', self._status)
                 self.driver.setParam('SyncCorr-Sts', self._sync_corr)
                 self.driver.updatePVs()
@@ -267,30 +287,22 @@ class App:
     def _get_corrparams(self, config_name):
         """Get response matrix from configurations database."""
         cs = _ConfigService()
-        q = cs.get_config(self._ACC.lower()+'_chromcorr_params', config_name)
-        done = q['code']
+        querry = cs.get_config(self._ACC.lower()+'_chromcorr_params',
+                               config_name)
+        querry_result = querry['code']
 
-        if done == 200:
+        if querry_result == 200:
             done = True
-            params = q['result']['value']
+            params = querry['result']['value']
 
-            self._corrmat_add_svd = [item for sublist in params['matrix']
-                                     for item in sublist]
-            self._sfam_nomsl = params['nominal SLs']
-
-            if self._corr_method == 0:
-                corrmat = self._calc_prop_matrix(self._corrmat_add_svd)
-            else:
-                corrmat = self._corrmat_add_svd
-            self._mat, _ = self._opticscorr.set_corr_mat(
-                len(self._SFAMS), corrmat)
-
-            nomchrom = params['nominal chrom']
-            self._nomchrom = self._opticscorr.set_nomchrom(
-                             nomchrom[0], nomchrom[1])
+            nominal_matrix = [item for sublist in params['matrix']
+                              for item in sublist]
+            nominal_sl = params['nominal SLs']
+            nominal_chrom = params['nominal chrom']
+            return [done, [nominal_matrix, nominal_sl, nominal_chrom]]
         else:
             done = False
-        return done
+            return [done, []]
 
     def _get_config_name(self):
         f = open('/home/fac_files/lnls-sirius/machine-applications'
@@ -307,36 +319,22 @@ class App:
         f.write(config_name)
         f.close()
 
-    def _calc_prop_matrix(self, corrmat):
-        corrmat = _np.array(corrmat)
-        corrmat = _np.reshape(corrmat, [2, len(self._SFAMS)])
-        corrmat = corrmat*_np.array(self._sfam_nomsl)
-        corrmat = list(corrmat.flatten())
-        return corrmat
-
     def _calc_sl(self):
-        if self._ACC == 'SI' and self._corr_method == 0:
-            lastcalcd_propfactor = self._opticscorr.calc_deltasl(
-                self._chromx, self._chromy)
-            for fam in self._SFAMS:
-                fam_index = self._SFAMS.index(fam)
-                self._lastcalcd_sl[fam_index] = (
-                    self._sfam_nomsl[fam_index] *
-                    (1+lastcalcd_propfactor[fam_index]))
+        if self._corr_method == 0:
+            lastcalcd_deltasl = self._opticscorr.calculate_delta_intstrengths(
+                method=0, grouping='svd',
+                opticsparam=[self._chromx, self._chromy])
         else:
-            # if ACC=='BO' or (ACC=='SI' and corr_method==1)
-            lastcalcd_deltasl = self._opticscorr.calc_deltasl(
-                self._chromx, self._chromy)
-            for fam in self._SFAMS:
-                fam_index = self._SFAMS.index(fam)
-                self._lastcalcd_sl[fam_index] = (
-                    self._sfam_nomsl[fam_index] +
-                    lastcalcd_deltasl[fam_index])
+            lastcalcd_deltasl = self._opticscorr.calculate_delta_intstrengths(
+                method=1, grouping='svd',
+                opticsparam=[self._chromx, self._chromy])
 
-        self.driver.setParam('Log-Mon', 'Calculated SL')
+        self.driver.setParam('Log-Mon', 'Calculated SL.')
 
         for fam in self._SFAMS:
             fam_index = self._SFAMS.index(fam)
+            self._lastcalcd_sl[fam_index] = (self._sfam_nomsl[fam_index] +
+                                             lastcalcd_deltasl[fam_index])
             self.driver.setParam('LastCalcd' + fam + 'SL-Mon',
                                  self._lastcalcd_sl[fam_index])
         self.driver.updatePVs()
@@ -349,29 +347,18 @@ class App:
                 fam_index = self._SFAMS.index(fam)
                 pv = pvs[fam]
                 pv.put(self._lastcalcd_sl[fam_index])
-            self.driver.setParam('Log-Mon', 'Applied SL')
+            self.driver.setParam('Log-Mon', 'Applied SL.')
             self.driver.updatePVs()
 
             if self._sync_corr == 1:
                 self._timing_evg_chromsexttrig_cmd.put(0)
-                self.driver.setParam('Log-Mon', 'Generated trigger')
+                self.driver.setParam('Log-Mon', 'Generated trigger.')
                 self.driver.updatePVs()
             return True
         else:
-            self.driver.setParam('Log-Mon', 'ERR:ApplySL-Cmd failed')
+            self.driver.setParam('Log-Mon', 'ERR:ApplySL-Cmd failed.')
             self.driver.updatePVs()
         return False
-
-    def _estimate_current_chrom(self):
-        sfam_deltasl = len(self._SFAMS)*[0]
-        for fam in self._SFAMS:
-            fam_index = self._SFAMS.index(fam)
-            sfam_deltasl[fam_index] = (
-                self._sfam_sl_rb[fam_index] - self._sfam_nomsl[fam_index])
-            if self._corr_method == 0:
-                sfam_deltasl[fam_index] = (sfam_deltasl[fam_index] /
-                                           self._sfam_nomsl[fam_index])
-        return self._opticscorr.estimate_current_chrom(sfam_deltasl)
 
     def _connection_callback_sfam_sl_rb(self, pvname, conn, **kws):
         ps = pvname.split(self._PREFIX_VACA)[1]
@@ -384,12 +371,9 @@ class App:
         self._sfam_check_connection[fam_index] = (1 if conn else 0)
 
         # Change the first bit of correction status
-        if any(s == 0 for s in self._sfam_check_connection):
-            self._status = self._status = _siriuspy.util.update_integer_bit(
-                integer=self._status, number_of_bits=5, value=1, bit=0)
-        else:
-            self._status = self._status = _siriuspy.util.update_integer_bit(
-                integer=self._status, number_of_bits=5, value=0, bit=0)
+        val = (1 if any(s == 0 for s in self._sfam_check_connection) else 0)
+        self._status = self._status = _siriuspy.util.update_integer_bit(
+            integer=self._status, number_of_bits=5, value=val, bit=0)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
@@ -399,9 +383,15 @@ class App:
         fam_index = self._SFAMS.index(fam)
         self._sfam_sl_rb[fam_index] = value
 
-        chromx_rb, chromy_rb = self._estimate_current_chrom()
-        self.driver.setParam('ChromX-RB', chromx_rb)
-        self.driver.setParam('ChromY-RB', chromy_rb)
+        sfam_deltasl = len(self._SFAMS)*[0]
+        for fam in self._SFAMS:
+            fam_index = self._SFAMS.index(fam)
+            sfam_deltasl[fam_index] = (self._sfam_sl_rb[fam_index] -
+                                       self._sfam_nomsl[fam_index])
+
+        chrom_rb = self._opticscorr.calculate_opticsparam(sfam_deltasl)
+        self.driver.setParam('ChromX-RB', chrom_rb[0])
+        self.driver.setParam('ChromY-RB', chrom_rb[1])
         self.driver.updatePVs()
 
     def _callback_sfam_pwrstate_sts(self, pvname, value, **kws):
@@ -415,12 +405,10 @@ class App:
         self._sfam_check_pwrstate_sts[fam_index] = value
 
         # Change the second bit of correction status
-        if any(s == 0 for s in self._sfam_check_pwrstate_sts):
-            self._status = self._status = _siriuspy.util.update_integer_bit(
-                integer=self._status, number_of_bits=5, value=1, bit=1)
-        else:
-            self._status = self._status = _siriuspy.util.update_integer_bit(
-                integer=self._status, number_of_bits=5, value=0, bit=1)
+        val = (1 if any(s == 0 for s in self._sfam_check_pwrstate_sts)
+               else 0)
+        self._status = self._status = _siriuspy.util.update_integer_bit(
+            integer=self._status, number_of_bits=5, value=val, bit=1)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
@@ -435,12 +423,10 @@ class App:
 
         # Change the third bit of correction status
         opmode = self._sync_corr
-        if any(s != opmode for s in self._sfam_check_opmode_sts):
-            self._status = self._status = _siriuspy.util.update_integer_bit(
-                integer=self._status, number_of_bits=5, value=1, bit=2)
-        else:
-            self._status = self._status = _siriuspy.util.update_integer_bit(
-                integer=self._status, number_of_bits=5, value=0, bit=2)
+        val = (1 if any(s != opmode for s in self._sfam_check_opmode_sts)
+               else 0)
+        self._status = self._status = _siriuspy.util.update_integer_bit(
+            integer=self._status, number_of_bits=5, value=val, bit=2)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
@@ -455,12 +441,10 @@ class App:
         self._sfam_check_ctrlmode_mon[fam_index] = value
 
         # Change the fourth bit of correction status
-        if any(s == 1 for s in self._sfam_check_ctrlmode_mon):
-            self._status = self._status = _siriuspy.util.update_integer_bit(
-                integer=self._status, number_of_bits=5, value=1, bit=3)
-        else:
-            self._status = self._status = _siriuspy.util.update_integer_bit(
-                integer=self._status, number_of_bits=5, value=0, bit=3)
+        val = (1 if any(s == 1 for s in self._sfam_check_ctrlmode_mon)
+               else 0)
+        self._status = self._status = _siriuspy.util.update_integer_bit(
+            integer=self._status, number_of_bits=5, value=val, bit=3)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
@@ -479,12 +463,10 @@ class App:
             self._timing_check_config[5] = (1 if value == 0 else 0)  # 0s
 
         # Change the fifth bit of correction status
-        if any(index == 0 for index in self._timing_check_config):
-            self._status = self._status = _siriuspy.util.update_integer_bit(
-                integer=self._status, number_of_bits=5, value=1, bit=4)
-        else:
-            self._status = self._status = _siriuspy.util.update_integer_bit(
-                integer=self._status, number_of_bits=5, value=0, bit=4)
+        val = (1 if any(index == 0 for index in self._timing_check_config)
+               else 0)
+        self._status = self._status = _siriuspy.util.update_integer_bit(
+            integer=self._status, number_of_bits=5, value=val, bit=4)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
