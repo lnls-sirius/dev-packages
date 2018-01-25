@@ -396,7 +396,7 @@ class BSMPResponseSim(_BSMPResponse):
         status = _Status.set_openloop(status, 0)
         return _ack.ok, None
 
-    def _uṕdate_state(self):
+    def _update_state(self):
         if self._i_load_fluctuaton_rms != 0.0:
             self._i_load_fluctuation = \
                 _random.gauss(0.0, self._i_load_fluctuaton_rms)
