@@ -109,6 +109,12 @@ class PRUSim(_PRUInterface):
 class PRU(_PRUInterface):
     """Functions for the programmable real-time unit."""
 
+    def __init__(self):
+        """Init method."""
+        _PRUInterface.__init__(self)
+        # signal use of PRU and shared memory.
+        return _PRUserial485.PRUserial485_open(6, b"M")
+
     def _get_sync_pulse_count(self):
         return _PRUserial485.PRUserial485_read_pulse_count_sync()
 
@@ -122,7 +128,7 @@ class PRU(_PRUInterface):
         # this method send streams through UART to the RS-485 line.
         return _PRUserial485.PRUserial485_write(stream, timeout)
 
-    def _UART_read(self, stream, timeout):
+    def _UART_read(self):
         # this method send streams through UART to the RS-485 line.
         return _PRUserial485.PRUserial485_read()
 
@@ -241,10 +247,13 @@ class SerialComm(_BSMPQuery):
         while True:
             item = self._queue.get()
             ID_device, ID_cmd, kwargs = item
-            # print('get :', ID_device, hex(id_cmd), kwargs)
+            # print('get :', ID_device, hex(ID_cmd), kwargs)
             cmd = 'cmd_' + str(hex(ID_cmd))
             method = getattr(self, cmd)
             ack, load = method(ID_receiver=ID_device, **kwargs)
+            # print('cmd: ', cmd)
+            # print('ack: ', hex(ack))
+            # print('load: ', load)
             if ack != _ack.ok:
                 # needs implementation
                 raise NotImplementedError(
@@ -403,7 +412,6 @@ class BSMPResponseSim(_BSMPResponse):
                 _random.gauss(0.0, self._i_load_fluctuaton_rms)
 
 
-
 class BSMPResponse(_BSMPResponse, _StreamChecksum):
     """Transport BSMP layer interacting with real slave device."""
 
@@ -424,13 +432,17 @@ class BSMPResponse(_BSMPResponse, _StreamChecksum):
         hb, lb = (n & 0xFF00) >> 8, n & 0xFF
         query = [chr(ID_receiver), "\x30", chr(hb), chr(lb)] + \
             [chr(ID_variable) for ID_variable in IDs_variable]
+        # print('ID_receiver: ', ID_receiver)
+        # print('ID_group: ', ID_group)
+        # print('IDs_variable:', IDs_variable)
+        # print('query: ', query)
         query = BSMPResponse.includeChecksum(query)
         self._pru.UART_write(query, timeout=100)
         response = self._pru.UART_read()
         ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
         return ID_cmd, None
 
-    def delete_groups(self, ID_receiver):
+    def remove_groups(self, ID_receiver):
         """Delete all groups of BSMP variables."""
         query = [chr(ID_receiver), "\x32", '\x00', '\x00']
         query = BSMPResponse.includeChecksum(query)
@@ -484,22 +496,30 @@ class BSMPResponse(_BSMPResponse, _StreamChecksum):
         query = BSMPResponse.includeChecksum(query)
         self._pru.UART_write(query, timeout=10)
         response = self._pru.UART_read()
+        # print('ID_receiver: ', ID_receiver)
+        # print('ID_group: ', ID_group)
+        # print('response: ', response)
         # process response
         ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
+        if ID_cmd != 0x13:
+            return ID_cmd, None
         if ID_group == _BSMPConst.group_id:
             value = dict()
             value['ps_status'] = ord(response[4]) + (ord(response[5]) << 8)
-            value['ps_setpoint'] = \
-                _struct.unpack("<f", "".join(response[6:10]))
+            # value['ps_setpoint'] = \
+            #     _struct.unpack("<f", "".join(response[6:10]))
             value['ps_soft_interlocks'] = \
                 ord(response[14]) + (ord(response[15]) << 8)
             value['ps_hard_interlocks'] = \
                 ord(response[16]) + (ord(response[17]) << 8)
-            value['i_load'] = \
-                _struct.unpack("<f", "".join(response[18:22]))
+            # value['i_load'] = \
+            #     _struct.unpack("<f", "".join(response[18:22]))
+            value['ps_setpoint'] = _struct.unpack("<f", bytes([ord(element) for element in response[6:10]]))[0]
+            value['ps_reference'] = _struct.unpack("<f", bytes([ord(element) for element in response[10:14]]))[0]
+            value['i_load'] = _struct.unpack("<f", bytes([ord(element) for element in response[18:22]]))[0]
         else:
             raise ValueError('Invalid group ID!')
-        return ID_cmd, value
+        return _ack.ok, value
 
     def cmd_0x51(self, ID_receiver, ID_function, **kwargs):
         """Respond to execute BSMP function."""

@@ -142,8 +142,8 @@ InterlockHard = _InterlockHard()
 def get_variables_common():
     """Return common power supply BSMP variables."""
     variables = {
-        Const.frmware_version: ('frmware_version',
-                                Const.t_uint16, False),
+        # Const.frmware_version: ('frmware_version',
+        #                         Const.t_uint16, False),
         Const.ps_status: ('ps_status', Const.t_status, False),
         Const.ps_setpoint: ('ps_setpoint', Const.t_float, False),
         Const.ps_reference: ('ps_reference', Const.t_float, False),

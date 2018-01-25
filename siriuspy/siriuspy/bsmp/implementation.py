@@ -7,15 +7,15 @@ __version__ = '2.20.0'
 class Const:
     """BSMP constants."""
 
-    ok = 0xE0,
-    invalid_message = 0xE1,
-    operation_not_supported = 0xE2,
-    invalid_id = 0xE3,
-    invalid_value = 0xE4,
-    invalid_data_length = 0xE5,
-    read_only = 0xE6,
-    insufficient_memory = 0xE7,
-    busy_resource = 0xE8,
+    ok = 0xE0
+    invalid_message = 0xE1
+    operation_not_supported = 0xE2
+    invalid_id = 0xE3
+    invalid_value = 0xE4
+    invalid_data_length = 0xE5
+    read_only = 0xE6
+    insufficient_memory = 0xE7
+    busy_resource = 0xE8
 
     _labels = {
         0xE0: 'Ok',
@@ -72,10 +72,25 @@ class BSMP:
         load = stream[4:-1]
         return ID_receiver, ID_cmd, load_size, load
 
+    # @staticmethod
+    # def _verifyChecksum(stream):
+    #     """Return True if checksum matches load."""
+    #     raise NotImplementedError
+
     @staticmethod
     def _verifyChecksum(stream):
-        """Return True if checksum matches load."""
-        raise NotImplementedError
+        """Verify stream checksum."""
+        counter = 0
+        i = 0
+        while (i < len(stream) - 1):
+            counter += ord(stream[i])
+            i += 1
+        counter = (counter & 0xFF)
+        counter = (256 - counter) & 0xFF
+        if (stream[len(stream) - 1] == chr(counter)):
+            return(True)
+        else:
+            return(False)
 
 
 class BSMPQuery(BSMP):
@@ -102,18 +117,18 @@ class BSMPQuery(BSMP):
     def cmd_0x00(self, ID_receiver):
         """Query BSMP protocol version."""
         slave = self._slaves[ID_receiver]
-        return slave.query(0x00, ID_receiver=self.ID_device)
+        return slave.query(0x00, ID_receiver=ID_receiver)
 
     def cmd_0x10(self, ID_receiver, ID_variable):
         """Query BSMP variable."""
         slave = self._slaves[ID_receiver]
-        return slave.query(0x10, ID_receiver=self.ID_device,
+        return slave.query(0x10, ID_receiver=ID_receiver,
                            ID_variable=ID_variable)
 
     def cmd_0x12(self, ID_receiver, ID_group):
         """Query BSMP variables group."""
         slave = self._slaves[ID_receiver]
-        return slave.query(0x12, ID_receiver=self.ID_device,
+        return slave.query(0x12, ID_receiver=ID_receiver,
                            ID_group=ID_group)
 
     def cmd_0x30(self, ID_receiver, ID_group, IDs_variable):
@@ -132,7 +147,7 @@ class BSMPQuery(BSMP):
     def cmd_0x50(self, ID_receiver, **kwargs):
         """Query execute BSMP function."""
         slave = self._slaves[ID_receiver]
-        return slave.query(0x50, ID_receiver=self.ID_device, **kwargs)
+        return slave.query(0x50, ID_receiver=ID_receiver, **kwargs)
 
 
 class BSMPResponse(BSMP):
