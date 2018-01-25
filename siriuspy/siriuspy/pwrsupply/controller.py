@@ -4,6 +4,7 @@ import time as _time
 import struct as _struct
 from queue import Queue as _Queue
 from threading import Thread as _Thread
+import random as _random
 
 from siriuspy import __version__
 from siriuspy.csdevice.pwrsupply import ps_opmode as _ps_opmode
@@ -299,13 +300,15 @@ class SerialComm(_BSMPQuery):
 class BSMPResponseSim(_BSMPResponse):
     """Transport BSMP layer interacting with simulated slave device."""
 
-    def __init__(self, ID_device):
+    def __init__(self, ID_device, i_load_fluctuation_rms=0.0):
         """Init method."""
         _BSMPResponse.__init__(self,
                                variables=_get_variables_FBP(),
                                functions=_get_functions(),
                                ID_device=ID_device)
         self._state = PSState(variables=self.variables)
+        self._i_load_fluctuaton_rms = i_load_fluctuation_rms
+        self._i_load_fluctuation = 0.0
 
     def create_group(self, ID_receiver, ID_group, IDs_variable):
         """Create group of BSMP variables."""
@@ -323,12 +326,14 @@ class BSMPResponseSim(_BSMPResponse):
 
     def cmd_0x11(self, ID_receiver, ID_variable):
         """Respond BSMP variable."""
+        self._update_state()
         if ID_variable not in self._variables.keys():
             return _ack.invalid_id, None
         return _ack.ok, self._state[ID_variable]
 
     def cmd_0x13(self, ID_receiver, ID_group):
         """Respond SBMP variable group."""
+        self._update_state()
         if ID_group not in self._groups:
             return _ack.invalid_id, None
         IDs_variable = self._groups[ID_group]
@@ -340,6 +345,7 @@ class BSMPResponseSim(_BSMPResponse):
 
     def cmd_0x51(self, ID_receiver, ID_function, **kwargs):
         """Respond to execute BSMP function."""
+        self._update_state()
         if ID_function == _BSMPConst.set_slowref:
             return self._func_set_slowref(**kwargs)
         elif ID_function == _BSMPConst.cfg_op_mode:
@@ -349,13 +355,14 @@ class BSMPResponseSim(_BSMPResponse):
             status = _Status.set_state(status, _PSConst.States.SlowRef)
             self._state[_BSMPConst.ps_status] = status
             self._state[_BSMPConst.i_load] = \
-                self._state[_BSMPConst.ps_reference]
+                self._state[_BSMPConst.ps_reference] + \
+                self._i_load_fluctuation
             return _ack.ok, None
         elif ID_function == _BSMPConst.turn_off:
             status = self._state[_BSMPConst.ps_status]
             status = _Status.set_state(status, _PSConst.States.Off)
             self._state[_BSMPConst.ps_status] = status
-            self._state[_BSMPConst.i_load] = 0.0
+            self._state[_BSMPConst.i_load] = 0.0 + self._i_load_fluctuation
             return _ack.ok, None
         elif ID_function == _BSMPConst.reset_interlocks:
             self._state[_BSMPConst.ps_soft_interlocks] = 0
@@ -375,7 +382,7 @@ class BSMPResponseSim(_BSMPResponse):
         if _Status.pwrstate(status) == _PSConst.PwrState.On:
             # i_load <= ps_reference
             self._state[_BSMPConst.i_load] = \
-                self._state[_BSMPConst.ps_reference]
+                self._state[_BSMPConst.ps_reference] + self._i_load_fluctuation
         return _ack.ok, None
 
     def _func_cfg_op_mode(self, **kwargs):
@@ -388,6 +395,12 @@ class BSMPResponseSim(_BSMPResponse):
         status = self._state[_BSMPConst.ps_status]
         status = _Status.set_openloop(status, 0)
         return _ack.ok, None
+
+    def _uṕdate_state(self):
+        if self._i_load_fluctuaton_rms != 0.0:
+            self._i_load_fluctuation = \
+                _random.gauss(0.0, self._i_load_fluctuaton_rms)
+
 
 
 class BSMPResponse(_BSMPResponse, _StreamChecksum):
