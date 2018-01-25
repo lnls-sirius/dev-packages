@@ -11,7 +11,7 @@ import time as _time
 import math as _math
 import datetime as _datetime
 import siriuspy.envars as _envars
-#import epics as _epics
+import epics as _epics
 import numpy as _np
 import sys as _sys
 
