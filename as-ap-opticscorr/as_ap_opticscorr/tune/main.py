@@ -5,6 +5,7 @@ import epics as _epics
 import siriuspy as _siriuspy
 from siriuspy.servconf.conf_service import ConfigService as _ConfigService
 from as_ap_opticscorr.opticscorr_utils import OpticsCorr
+from as_ap_opticscorr.opticscorr_utils import get_config_name, set_config_name
 import as_ap_opticscorr.tune.pvs as _pvs
 
 # Coding guidelines:
@@ -77,7 +78,8 @@ class App:
                 qfam_defocusing.append(fam)
 
         # Initialize correction parameters from local file and configdb
-        config_name = self._get_config_name()
+        config_name = get_config_name(acc=self._ACC.lower(),
+                                      opticsparam='tune')
         [done, corrparams] = self._get_corrparams(config_name)
         if done:
             self.driver.setParam('CorrParamsConfigName-SP', config_name)
@@ -224,7 +226,9 @@ class App:
         elif reason == 'CorrParamsConfigName-SP':
             [done, corrparams] = self._get_corrparams(value)
             if done:
-                self._set_config_name(value)
+                set_config_name(acc=self._ACC.lower(),
+                                opticsparam='tune',
+                                config_name=value)
                 self.driver.setParam('CorrParamsConfigName-RB', value)
                 self._nominal_matrix = corrparams[0]
                 self.driver.setParam('CorrMat-Mon', self._nominal_matrix)
@@ -323,21 +327,6 @@ class App:
         else:
             done = False
             return [done, []]
-
-    def _get_config_name(self):
-        f = open('/home/fac_files/lnls-sirius/machine-applications'
-                 '/as-ap-opticscorr/as_ap_opticscorr/tune/' +
-                 self._ACC.lower() + '-tunecorr.txt', 'r')
-        config_name = f.read().strip('\n')
-        f.close()
-        return config_name
-
-    def _set_config_name(self, config_name):
-        f = open('/home/fac_files/lnls-sirius/machine-applications'
-                 '/as-ap-opticscorr/as_ap_opticscorr/tune/' +
-                 self._ACC.lower() + '-tunecorr.txt', 'w')
-        f.write(config_name)
-        f.close()
 
     def _calc_deltakl(self):
         if self._corr_method == 0:

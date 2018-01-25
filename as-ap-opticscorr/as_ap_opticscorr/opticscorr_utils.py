@@ -395,3 +395,34 @@ class OpticsCorr:
             elif grouping == '2knobs':
                 m = self.inverse_matrix_add_2knobs
         return m
+
+
+def get_config_name(acc, opticsparam):
+    """Get the configuration name in file."""
+    if not (acc in ['bo', 'si']):
+        raise ValueError("'acc' must be 'bo' or 'si' instance.")
+    if not (opticsparam in ['tune', 'chrom']):
+        raise ValueError("'opticsparam' must be 'tune' or 'chrom' instance.")
+
+    f = open('/home/fac_files/lnls-sirius/machine-applications'
+             '/as-ap-opticscorr/as_ap_opticscorr/' + opticsparam +
+             '/' + acc + '-' + opticsparam + 'corr.txt', 'r')
+    config_name = f.read().strip('\n')
+    f.close()
+    return config_name
+
+
+def set_config_name(acc, opticsparam, config_name):
+    """Set the configuration name in file."""
+    if not (acc in ['bo', 'si']):
+        raise ValueError("'acc' must be 'bo' or 'si' instance.")
+    if not (opticsparam in ['tune', 'chrom']):
+        raise ValueError("'opticsparam' must be 'tune' or 'chrom' instance.")
+    if not isinstance(config_name, str):
+        raise TypeError("'config_name' must be a string.")
+
+    f = open('/home/fac_files/lnls-sirius/machine-applications'
+             '/as-ap-opticscorr/as_ap_opticscorr/' + opticsparam +
+             '/' + acc + '-' + opticsparam + 'corr.txt', 'w')
+    f.write(config_name)
+    f.close()

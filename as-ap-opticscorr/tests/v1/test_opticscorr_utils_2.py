@@ -5,9 +5,11 @@
 import unittest
 import numpy as np
 from siriuspy import util
-from as_ap_opticscorr.opticscorr_utils_2 import OpticsCorr
+from as_ap_opticscorr import opticscorr_utils
+from as_ap_opticscorr.opticscorr_utils import OpticsCorr
+from as_ap_opticscorr.opticscorr_utils import get_config_name, set_config_name
 
-valid_interface = (
+valid_interface_opticscorrclass = (
     'magnetfams_ordering',
     'nominal_matrix',
     'nominal_intstrengths',
@@ -24,6 +26,12 @@ valid_interface = (
     'inverse_matrix_prop_2knobs',
     'calculate_delta_intstrengths',
     'calculate_opticsparam'
+)
+
+valid_interface_functions = (
+    'OpticsCorr',
+    'get_config_name',
+    'set_config_name'
 )
 
 
@@ -81,7 +89,10 @@ class TestOpticsCorr(unittest.TestCase):
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-            OpticsCorr, valid_interface, print_flag=True)
+            OpticsCorr, valid_interface_opticscorrclass, print_flag=True)
+        self.assertTrue(valid)
+        valid = util.check_public_interface_namespace(
+            opticscorr_utils, valid_interface_functions, print_flag=True)
         self.assertTrue(valid)
 
     def test_type_errors(self):
@@ -502,6 +513,23 @@ class TestOpticsCorr(unittest.TestCase):
         expected = [0.02, 0]
         for i in range(len(opticsparam)):
             self.assertAlmostEqual(opticsparam[i], expected[i])
+
+    def test_get_config_name(self):
+        """Test get_config_name function."""
+        with self.assertRaises(ValueError):
+            get_config_name('', 'tune')
+        with self.assertRaises(ValueError):
+            get_config_name('si', '')
+        self.assertIsInstance(get_config_name('si', 'tune'), str)
+
+    def test_set_config_name(self):
+        """Test set_config_name function."""
+        with self.assertRaises(ValueError):
+            set_config_name('', 'tune', 'Default')
+        with self.assertRaises(ValueError):
+            set_config_name('si', '', 'Default')
+        with self.assertRaises(TypeError):
+            set_config_name('si', 'tune', 1)
 
 
 if __name__ == "__main__":
