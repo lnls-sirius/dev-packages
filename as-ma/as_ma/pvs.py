@@ -6,7 +6,7 @@ get_pvs_database
     Function that builds the IOC database
 """
 from siriuspy.search import MASearch as _MASearch
-from siriuspy.pwrsupply.model import Magnet as _Magnet
+from siriuspy.pwrsupply.model import MAEpics as _Magnet
 from siriuspy.envars import vaca_prefix as _vaca_prefix
 from siriuspy import util as _util
 
@@ -187,6 +187,6 @@ def get_ma_devices():
                 device = magnet
             # Get dipole object
             _MA_DEVICES[device] = \
-                _Magnet(magnet, use_vaca=True)
+                _Magnet(magnet, lock=False)
 
     return _MA_DEVICES
