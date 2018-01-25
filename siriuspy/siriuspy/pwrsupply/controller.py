@@ -24,8 +24,8 @@ from siriuspy.pwrsupply.bsmp import get_value_from_load as \
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 
 # Needs loading PRUserial485 package:
-# import PRUserial485 as _PRUserial485
-_PRUserial485 = None
+import PRUserial485.PRUserial485 as _PRUserial485
+#_PRUserial485 = None
 
 # loads power supply database with default initial values
 _db_ps = _get_common_ps_propty_database()
