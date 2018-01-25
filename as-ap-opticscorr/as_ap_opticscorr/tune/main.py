@@ -4,7 +4,7 @@ import time as _time
 import epics as _epics
 import siriuspy as _siriuspy
 from siriuspy.servconf.conf_service import ConfigService as _ConfigService
-from as_ap_opticscorr.opticscorr_utils_2 import OpticsCorr
+from as_ap_opticscorr.opticscorr_utils import OpticsCorr
 import as_ap_opticscorr.tune.pvs as _pvs
 
 # Coding guidelines:
