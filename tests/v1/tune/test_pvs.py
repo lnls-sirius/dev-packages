@@ -110,8 +110,8 @@ class TestASAPOpticsCorrTunePvs(unittest.TestCase):
             for fam in qfams:
                 self.assertTrue(fam + 'RefKL-Mon' in db)
                 self.assertEqual(db[fam + 'RefKL-Mon']['unit'], '1/m')
-                self.assertTrue('LastCalcd' + fam + 'DeltaKL-Mon' in db)
-                self.assertEqual(db['LastCalcd' + fam + 'DeltaKL-Mon']['unit'],
+                self.assertTrue('LastCalcd' + fam + 'KL-Mon' in db)
+                self.assertEqual(db['LastCalcd' + fam + 'KL-Mon']['unit'],
                                  '1/m')
             if accelerator == 'SI':
                 self.assertTrue('CorrMeth-Sel' in db)
