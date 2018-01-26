@@ -153,16 +153,25 @@ class TestASAPTuneCorrMain(unittest.TestCase):
     def test_write_DeltaTune_nearnominal(self):
         """Test write nominal values on DeltaTuneX-SP and DeltaTuneY-SP pvs."""
         self.mock_cs().get_config.return_value = self.q_ok
-
         app = App(self.mock_driver)
         app._status = 0
+        app._qfam_refkl = {'QFA': 0.7146,
+                           'QFB': 1.2344,
+                           'QFP': 1.2344,
+                           'QDA': -0.2270,
+                           'QDB1': -0.2809,
+                           'QDB2': -0.4783,
+                           'QDP1': -0.2809,
+                           'QDP2': -0.4783}
+
         for i in [0, 1]:
             app.write('CorrMeth-Sel', i)
             app.write('DeltaTuneX-SP', 0)
             app.write('DeltaTuneY-SP', 0)
             calls = []
             for fam in self.qfams:
-                calls.append(mock.call('LastCalcd' + fam + 'DeltaKL-Mon', 0))
+                calls.append(mock.call('LastCalcd' + fam + 'KL-Mon',
+                                       app._qfam_refkl[fam]))
             self.mock_driver.setParam.assert_has_calls(calls, any_order=True)
 
     def test_write_DeltaTuneX_anyvalue_ProportionalMeth(self):
@@ -186,10 +195,14 @@ class TestASAPTuneCorrMain(unittest.TestCase):
         app.write('DeltaTuneX-SP', 0.02)
         call_list = self.mock_driver.setParam.call_args_list
         for call in call_list:
-            if 'LastCalcd' in call[0][0]:
-                fam = call[0][0].split('LastCalcd')[1].split('DeltaKL-Mon')[0]
+            # Ignores the first call by app.write('CorrFactor-Sel', 100)
+            if ('LastCalcd' in call[0][0]):
+                fam = call[0][0].split('LastCalcd')[1].split('KL-Mon')[0]
                 fam_index = self.qfams.index(fam)
-                self.assertAlmostEqual(call[0][1], deltakl_prop_x[fam_index])
+                if call[0][1] != app._qfam_refkl[fam]:
+                    self.assertAlmostEqual(
+                        call[0][1],
+                        deltakl_prop_x[fam_index]+app._qfam_refkl[fam])
 
     def test_write_DeltaTuneY_anyvalue_ProportionalMeth(self):
         """Test write any values on DeltaTuneY-SP pvs."""
@@ -212,10 +225,14 @@ class TestASAPTuneCorrMain(unittest.TestCase):
         app.write('DeltaTuneY-SP', 0.01)
         call_list = self.mock_driver.setParam.call_args_list
         for call in call_list:
-            if 'LastCalcd' in call[0][0]:
-                fam = call[0][0].split('LastCalcd')[1].split('DeltaKL-Mon')[0]
+            # Ignores the first call by app.write('CorrFactor-Sel', 100)
+            if ('LastCalcd' in call[0][0]):
+                fam = call[0][0].split('LastCalcd')[1].split('KL-Mon')[0]
                 fam_index = self.qfams.index(fam)
-                self.assertAlmostEqual(call[0][1], deltakl_prop_y[fam_index])
+                if call[0][1] != app._qfam_refkl[fam]:
+                    self.assertAlmostEqual(
+                        call[0][1],
+                        deltakl_prop_y[fam_index]+app._qfam_refkl[fam])
 
     def test_write_DeltaTuneX_anyvalue_AdditionalMeth(self):
         """Test write any values on DeltaTuneX-SP pvs."""
@@ -230,19 +247,22 @@ class TestASAPTuneCorrMain(unittest.TestCase):
                            'QDB2': -0.4783,
                            'QDP1': -0.2809,
                            'QDP2': -0.4783}
-        deltakl_prop_x = [0.00155816, 0.00155816, 0.00155816, -0.00083726,
-                          -0.00083726, -0.00083726, -0.00083726, -0.00083726]
+        deltakl_add_x = [0.00155816, 0.00155816, 0.00155816, -0.00083726,
+                         -0.00083726, -0.00083726, -0.00083726, -0.00083726]
 
         app.write('CorrFactor-SP', 100)
         app.write('CorrMeth-Sel', 1)
         app.write('DeltaTuneX-SP', 0.02)
         call_list = self.mock_driver.setParam.call_args_list
         for call in call_list:
-            # Ignores the first call by app.write('CorrMeth-Sel', 1)
-            if 'LastCalcd' in call[0][0] and (call[0][1] != 0.0):
-                fam = call[0][0].split('LastCalcd')[1].split('DeltaKL-Mon')[0]
+            # Ignores the first call by app.write('CorrFactor-Sel', 100)
+            if ('LastCalcd' in call[0][0]):
+                fam = call[0][0].split('LastCalcd')[1].split('KL-Mon')[0]
                 fam_index = self.qfams.index(fam)
-                self.assertAlmostEqual(call[0][1], deltakl_prop_x[fam_index])
+                if call[0][1] != app._qfam_refkl[fam]:
+                    self.assertAlmostEqual(
+                        call[0][1],
+                        deltakl_add_x[fam_index]+app._qfam_refkl[fam])
 
     def test_write_DeltaTuneY_anyvalue_AdditionalMeth(self):
         """Test write any values on DeltaTuneY-SP pvs."""
@@ -257,19 +277,22 @@ class TestASAPTuneCorrMain(unittest.TestCase):
                            'QDB2': -0.4783,
                            'QDP1': -0.2809,
                            'QDP2': -0.4783}
-        deltakl_prop_y = [0.00032417, 0.00032417, 0.00032417, -0.00097811,
-                          -0.00097811, -0.00097811, -0.00097811, -0.00097811]
+        deltakl_add_y = [0.00032417, 0.00032417, 0.00032417, -0.00097811,
+                         -0.00097811, -0.00097811, -0.00097811, -0.00097811]
 
         app.write('CorrFactor-SP', 100)
         app.write('CorrMeth-Sel', 1)
         app.write('DeltaTuneY-SP', 0.01)
         call_list = self.mock_driver.setParam.call_args_list
         for call in call_list:
-            # Ignores the first call by app.write('CorrMeth-Sel', 1)
-            if ('LastCalcd' in call[0][0]) and (call[0][1] != 0.0):
-                fam = call[0][0].split('LastCalcd')[1].split('DeltaKL-Mon')[0]
+            # Ignores the first call by app.write('CorrFactor-Sel', 100)
+            if ('LastCalcd' in call[0][0]):
+                fam = call[0][0].split('LastCalcd')[1].split('KL-Mon')[0]
                 fam_index = self.qfams.index(fam)
-                self.assertAlmostEqual(call[0][1], deltakl_prop_y[fam_index])
+                if call[0][1] != app._qfam_refkl[fam]:
+                    self.assertAlmostEqual(
+                        call[0][1],
+                        deltakl_add_y[fam_index]+app._qfam_refkl[fam])
 
     def test_write_SyncCorr(self):
         """Test write on SyncCorr-Sel."""

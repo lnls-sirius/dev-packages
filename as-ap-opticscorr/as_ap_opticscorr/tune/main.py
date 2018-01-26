@@ -249,16 +249,18 @@ class App:
         elif reason == 'CorrMeth-Sel':
             if value != self._corr_method:
                 self._corr_method = value
-                self.driver.setParam('CorrMeth-Sts', self._corr_method)
+                self.driver.setParam('CorrMeth-Sts', value)
                 self._calc_deltakl()
                 self.driver.updatePVs()
                 status = True
 
         elif reason == 'CorrFactor-SP':
-            self._corr_factor = value
-            self.driver.setParam('CorrFactor-RB', value)
-            self.driver.updatePVs()
-            status = True
+            if value != self._corr_factor:
+                self._corr_factor = value
+                self.driver.setParam('CorrFactor-RB', value)
+                self._calc_deltakl()
+                self.driver.updatePVs()
+                status = True
 
         elif reason == 'SyncCorr-Sel':
             if value != self._sync_corr:
@@ -343,8 +345,9 @@ class App:
         self._lastcalcd_deltakl = lastcalcd_deltakl
         for fam in self._QFAMS:
             fam_index = self._QFAMS.index(fam)
-            self.driver.setParam('LastCalcd' + fam + 'DeltaKL-Mon',
-                                 self._lastcalcd_deltakl[fam_index])
+            self.driver.setParam(
+                'LastCalcd' + fam + 'KL-Mon', self._qfam_refkl[fam] +
+                (self._corr_factor/100) * self._lastcalcd_deltakl[fam_index])
         self.driver.updatePVs()
 
     def _apply_deltakl(self):
