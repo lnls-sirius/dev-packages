@@ -153,31 +153,30 @@ class TestASAPChromCorrMain(unittest.TestCase):
     def test_write_Chrom_nearnominal(self):
         """Test write nominal values on ChromX-SP and ChromY-SP pvs."""
         self.mock_cs().get_config.return_value = self.q_ok
-
+        self.mock_epics.PV.return_value.get.return_value = 100
         app = App(self.mock_driver)
         app._status = 0
+
         for i in [0, 1]:
             app.write('CorrMeth-Sel', i)
             app.write('ChromX-SP', 2.5756)
             app.write('ChromY-SP', 2.5033)
             calls = []
             for fam in self.sfams:
-                fam_index = self.sfams.index(fam)
-                calls.append(mock.call(
-                    'LastCalcd' + fam + 'SL-Mon',
-                    self.q_ok['result']['value']['nominal SLs'][fam_index]))
+                calls.append(mock.call('LastCalcd' + fam + 'SL-Mon', 100))
             self.mock_driver.setParam.assert_has_calls(calls, any_order=True)
 
     def test_write_Chrom_anyvalue_ProportionalMeth(self):
         """Test write any values on ChromX-SP and ChromY-SP pvs."""
         self.mock_cs().get_config.return_value = self.q_ok
+        self.mock_epics.PV.return_value.get.return_value = 100
         app = App(self.mock_driver)
         app._status = 0
 
-        sl_prop = [28.40235571,  22.37126168, -23.80279572, -13.19538641,
-                   -20.76940978,  33.06864496,  28.87618811, -20.31464041,
-                   -17.82846745, -25.38801553,  33.80336158,  29.40794805,
-                   -20.88520228, -18.10825997, -25.78754156]
+        sl_prop = [-0.37194429, -0.24413832,  0.64520428,  0.13271359,
+                   0.22169022, -1.11355504, -0.79691189,  0.93075959,
+                   0.50573255,  0.68388447, -0.58403842, -0.36755195,
+                   0.46069772,  0.23394003,  0.33605844]
 
         app.write('CorrMeth-Sel', 0)
         app.write('ChromX-SP', 0.0)
@@ -187,18 +186,19 @@ class TestASAPChromCorrMain(unittest.TestCase):
             if 'LastCalcd' in call[0][0]:
                 fam = call[0][0].split('LastCalcd')[1].split('SL-Mon')[0]
                 fam_index = self.sfams.index(fam)
-                self.assertAlmostEqual(call[0][1], sl_prop[fam_index])
+                self.assertAlmostEqual(call[0][1], sl_prop[fam_index]+100)
 
     def test_write_Chrom_anyvalue_AdditionalMeth(self):
         """Test write any values on ChromX-SP and ChromY-SP pvs."""
         self.mock_cs().get_config.return_value = self.q_ok
+        self.mock_epics.PV.return_value.get.return_value = 100
         app = App(self.mock_driver)
         app._status = 0
 
-        sl_add = [28.259838, 22.22098842, -23.91592367, -13.05041964,
-                  -20.7621013, 33.11110243, 28.91196549, -20.2501808,
-                  -17.77619777, -25.60488439, 33.83776046, 29.41858556,
-                  -20.85980462, -18.09975068, -25.90195616]
+        sl_add = [-0.514462, -0.39441158,  0.53207633,  0.27768036,
+                  0.2289987, -1.07109757, -0.76113451,  0.9952192,
+                  0.55800223,  0.46701561, -0.54963954, -0.35691444,
+                  0.48609538,  0.24244932,  0.22164384]
 
         app.write('CorrMeth-Sel', 1)
         app.write('ChromX-SP', 0.0)
@@ -208,7 +208,7 @@ class TestASAPChromCorrMain(unittest.TestCase):
             if 'LastCalcd' in call[0][0]:
                 fam = call[0][0].split('LastCalcd')[1].split('SL-Mon')[0]
                 fam_index = self.sfams.index(fam)
-                self.assertAlmostEqual(call[0][1], sl_add[fam_index])
+                self.assertAlmostEqual(call[0][1], sl_add[fam_index]+100)
 
     def test_write_SyncCorr(self):
         """Test write on SyncCorr-Sel."""

@@ -324,7 +324,8 @@ class App:
 
         for fam in self._SFAMS:
             fam_index = self._SFAMS.index(fam)
-            self._lastcalcd_sl[fam_index] = (self._sfam_nomsl[fam_index] +
+            current_sl = self._sfam_sl_rb_pvs[fam].get()
+            self._lastcalcd_sl[fam_index] = (current_sl +
                                              lastcalcd_deltasl[fam_index])
             self.driver.setParam('LastCalcd' + fam + 'SL-Mon',
                                  self._lastcalcd_sl[fam_index])

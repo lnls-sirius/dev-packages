@@ -382,7 +382,7 @@ class App:
 
                 fam_index = self._QFAMS.index(fam)
                 self._lastcalcd_deltakl[fam_index] = 0
-                self.driver.setParam('LastCalcd' + fam + 'DeltaKL-Mon', 0)
+                self.driver.setParam('LastCalcd' + fam + 'KL-Mon', 0)
 
             # the deltas from new kl references are zero
             self._delta_tunex = 0
