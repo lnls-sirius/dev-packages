@@ -4,8 +4,10 @@ import time as _time
 import epics as _epics
 import siriuspy as _siriuspy
 from siriuspy.servconf.conf_service import ConfigService as _ConfigService
-from as_ap_opticscorr.opticscorr_utils import OpticsCorr
-from as_ap_opticscorr.opticscorr_utils import get_config_name, set_config_name
+from as_ap_opticscorr.opticscorr_utils import (
+        OpticsCorr as _OpticsCorr,
+        get_config_name as _get_config_name,
+        set_config_name as _set_config_name)
 import as_ap_opticscorr.tune.pvs as _pvs
 
 # Coding guidelines:
@@ -78,8 +80,8 @@ class App:
                 qfam_defocusing.append(fam)
 
         # Initialize correction parameters from local file and configdb
-        config_name = get_config_name(acc=self._ACC.lower(),
-                                      opticsparam='tune')
+        config_name = _get_config_name(acc=self._ACC.lower(),
+                                       opticsparam='tune')
         [done, corrparams] = self._get_corrparams(config_name)
         if done:
             self.driver.setParam('CorrParamsConfigName-SP', config_name)
@@ -89,7 +91,7 @@ class App:
             if self._ACC.lower() == 'si':
                 self._qfam_nomkl = corrparams[1]
                 self.driver.setParam('NominalKL-Mon', self._qfam_nomkl)
-            self._opticscorr = OpticsCorr(
+            self._opticscorr = _OpticsCorr(
                 magnetfams_ordering=self._QFAMS,
                 nominal_matrix=self._nominal_matrix,
                 nominal_intstrengths=self._qfam_nomkl,
@@ -226,9 +228,9 @@ class App:
         elif reason == 'CorrParamsConfigName-SP':
             [done, corrparams] = self._get_corrparams(value)
             if done:
-                set_config_name(acc=self._ACC.lower(),
-                                opticsparam='tune',
-                                config_name=value)
+                _set_config_name(acc=self._ACC.lower(),
+                                 opticsparam='tune',
+                                 config_name=value)
                 self.driver.setParam('CorrParamsConfigName-RB', value)
                 self._nominal_matrix = corrparams[0]
                 self.driver.setParam('CorrMat-Mon', self._nominal_matrix)
