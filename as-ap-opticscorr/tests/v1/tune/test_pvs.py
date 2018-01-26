@@ -49,10 +49,11 @@ class TestASAPOpticsCorrTunePvs(unittest.TestCase):
 
     def test_get_pvs_section(self):
         """Test get_pvs_section."""
-        pvs.select_ioc('Accelerator')
-        self.assertIsInstance(pvs.get_pvs_section(), str)
-        self.assertEqual(pvs.get_pvs_section().lower(),
-                         'Accelerator'.lower())
+        for accelerator in ['SI', 'BO']:
+            pvs.select_ioc(accelerator)
+            self.assertIsInstance(pvs.get_pvs_section(), str)
+            self.assertEqual(pvs.get_pvs_section().lower(),
+                             accelerator.lower())
 
     def test_get_pvs_vaca_prefix(self):
         """Test get_pvs_vaca_prefix."""
@@ -60,9 +61,10 @@ class TestASAPOpticsCorrTunePvs(unittest.TestCase):
 
     def test_get_pvs_prefix(self):
         """Test get_pvs_prefix."""
-        pvs.select_ioc('Accelerator')
-        self.assertIsInstance(pvs.get_pvs_prefix(), str)
-        self.assertIn('TuneCorr', pvs.get_pvs_prefix())
+        for accelerator in ['SI', 'BO']:
+            pvs.select_ioc(accelerator)
+            self.assertIsInstance(pvs.get_pvs_prefix(), str)
+            self.assertIn('TuneCorr', pvs.get_pvs_prefix())
 
     def test_get_corr_fams(self):
         """Test get_corr_fams."""
@@ -121,10 +123,11 @@ class TestASAPOpticsCorrTunePvs(unittest.TestCase):
     @mock.patch("as_ap_opticscorr.tune.pvs._util")
     def test_print_banner_and_save_pv_list(self, util):
         """Test print_banner_and_save_pv_list."""
-        pvs.select_ioc('Accelerator')
-        pvs.print_banner_and_save_pv_list()
-        util.print_ioc_banner.assert_called()
-        util.save_ioc_pv_list.assert_called()
+        for accelerator in ['SI', 'BO']:
+            pvs.select_ioc(accelerator)
+            pvs.print_banner_and_save_pv_list()
+            util.print_ioc_banner.assert_called()
+            util.save_ioc_pv_list.assert_called()
 
 
 if __name__ == "__main__":

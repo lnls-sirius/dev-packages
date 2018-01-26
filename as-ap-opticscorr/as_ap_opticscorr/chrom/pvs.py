@@ -2,6 +2,7 @@
 
 from siriuspy.envars import vaca_prefix as _vaca_prefix
 from siriuspy import util as _util
+from siriuspy import search as _search
 
 
 _COMMIT_HASH = _util.get_last_commit_hash()
@@ -94,9 +95,16 @@ def get_pvs_database():
     }
 
     for fam in _SFAMS:
-        pvs_database['LastCalcd' + fam + 'SL-Mon'] = {'type': 'float',
-                                                      'value': 0, 'prec': 4,
-                                                      'unit': '1/m^2'}
+        pstype = _search.PSSearch.conv_psname_2_pstype(_ACC+'-Fam:PS-'+fam)
+        pvs_database['LastCalcd' + fam + 'SL-Mon'] = {
+            'type': 'float', 'value': 0, 'prec': 4, 'unit': '1/m^2',
+            'lolo': _search.PSSearch.get_splims(pstype, 'lolo'),
+            'low': _search.PSSearch.get_splims(pstype, 'low'),
+            'lolim': _search.PSSearch.get_splims(pstype, 'lolim'),
+            'hilim': _search.PSSearch.get_splims(pstype, 'hilim'),
+            'high': _search.PSSearch.get_splims(pstype, 'high'),
+            'hihi': _search.PSSearch.get_splims(pstype, 'hihi')}
+
     if _ACC == 'SI':
         pvs_database['CorrMeth-Sel'] = {'type': 'enum', 'value': 0, 'enums':
                                         ['Proportional', 'Additional']}
