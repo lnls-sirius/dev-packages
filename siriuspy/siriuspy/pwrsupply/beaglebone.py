@@ -1,14 +1,16 @@
 """Beagle Bone implementation module."""
 
 from siriuspy.search import PSSearch as _PSSearch
+from siriuspy.pwrsupply.pru import SerialComm as _SerialComm
+from siriuspy.pwrsupply.pru import PRU as _PRU
+from siriuspy.pwrsupply.pru import PRUSim as _PRUSim
+from siriuspy.pwrsupply.bsmp import BSMPResponse as _BSMPResponse
+from siriuspy.pwrsupply.bsmp import BSMPResponseSim as _BSMPResponseSim
 from siriuspy.pwrsupply.controller import Controller as _Controller
-from siriuspy.pwrsupply.controller import SerialComm as _SerialComm
-from siriuspy.pwrsupply.controller import BSMPResponse as _BSMPResponse
-from siriuspy.pwrsupply.controller import BSMPResponseSim as _BSMPResponseSim
-from siriuspy.pwrsupply.controller import PRU as _PRU
-from siriuspy.pwrsupply.controller import PRUSim as _PRUSim
-# from siriuspy.pwrsupply.controller import PUControllerSim as _PUControllerSim
 from siriuspy.pwrsupply.model import PowerSupply as _PowerSupply
+
+
+_I_LOAD_FLUCTUATION_RMS = 0.0001  # [A]
 
 
 class BeagleBone():
@@ -46,8 +48,12 @@ class BeagleBone():
         power_supplies = dict()
         for i, psname in enumerate(self._psnames):
             ID_device = i + 1
-            ps = _BSMPResponseSim(ID_device=ID_device, i_load_fluctuation_rms=0.0001) if self._simulate else \
-                _BSMPResponse(ID_device=ID_device, PRU=self._pru)
+            if self._simulate:
+                ps = _BSMPResponseSim(
+                    ID_device=ID_device,
+                    i_load_fluctuation_rms=_I_LOAD_FLUCTUATION_RMS)
+            else:
+                ps = _BSMPResponse(ID_device=ID_device, PRU=self._pru)
             self._serial_comm.add_slave(ps)
             c = _Controller(serial_comm=self._serial_comm, ID_device=ID_device)
             power_supplies[psname] = _PowerSupply(controller=c, psname=psname)

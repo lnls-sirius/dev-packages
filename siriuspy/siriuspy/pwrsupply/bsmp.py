@@ -1,8 +1,20 @@
 """BSMP entities definitions for the power supply devices."""
 
 
+import struct as _struct
+import random as _random
+
 from siriuspy.bsmp import __version__ as __bsmp_version__
 from siriuspy.bsmp import BSMP as _BSMP
+from siriuspy.bsmp import Const as _ack
+from siriuspy.bsmp import BSMPResponse as _BSMPResponse
+from siriuspy.csdevice.pwrsupply import ps_models as _ps_models
+from siriuspy.csdevice.pwrsupply import ps_interface as _ps_interface
+from siriuspy.csdevice.pwrsupply import ps_openloop as _ps_openloop
+from siriuspy.csdevice.pwrsupply import ps_states as _ps_states
+from siriuspy.csdevice.pwrsupply import ps_pwrstate_sel as _ps_pwrstate_sel
+from siriuspy.csdevice.pwrsupply import ps_opmode as _ps_opmode
+from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.csdevice.pwrsupply import ps_soft_interlock as _ps_soft_interlock
 from siriuspy.csdevice.pwrsupply import ps_hard_interlock as _ps_hard_interlock
 
@@ -48,95 +60,6 @@ class Const:
 
     # --- variables groups ---
     group_id = 3
-
-
-class StreamChecksum:
-    """Methods to include and verify stream checksum."""
-
-    @staticmethod
-    def includeChecksum(stream):
-        """Return stream with checksum byte at end of message."""
-        counter = 0
-        i = 0
-        while (i < len(stream)):
-            counter += ord(stream[i])
-            i += 1
-        counter = (counter & 0xFF)
-        counter = (256 - counter) & 0xFF
-        return(stream + [chr(counter)])
-
-    @staticmethod
-    def _verifyChecksum(stream):
-        """Verify stream checksum."""
-        counter = 0
-        i = 0
-        while (i < len(stream) - 1):
-            counter += ord(stream[i])
-            i += 1
-        counter = (counter & 0xFF)
-        counter = (256 - counter) & 0xFF
-        if (stream[len(stream) - 1] == chr(counter)):
-            return(True)
-        else:
-            return(False)
-
-
-class _Interlock:
-    """Interlock class."""
-
-    @property
-    def labels(self):
-        """Return list of all interlock labels."""
-        return [interlock for interlock in self._labels]
-
-    def label(self, i):
-        """Convert bit index to its interlock label."""
-        return self._labels[i]
-
-    def interlock_set(self, interlock):
-        """Return a list of active interlocks."""
-        interlock_list = []
-        for i in range(len(self.labels)):
-            label = self.label(i)
-            if interlock & (1 << i):
-                interlock_list.append(label)
-        return interlock_list
-
-    def _init(self):
-        # set properties corresponding to interlock bit labels.
-        for i in range(len(self.labels)):
-            label = self.label(i)
-            setattr(_Interlock, 'bit_' + label, 1 << i)
-
-
-class _InterlockSoft(_Interlock):
-    """Power supply soft iterlocks."""
-
-    def __init__(self):
-        self._labels = _ps_soft_interlock
-        self._init()
-
-
-class _InterlockHard(_Interlock):
-    """Power supply hard iterlocks."""
-
-    def __init__(self):
-        self._labels = _ps_hard_interlock
-        self._init()
-
-
-class BSMPStream():
-    """Class to process BSMP streams."""
-
-    @staticmethod
-    def process(stream):
-        """Process BSMP stream."""
-        ID_receiver, ID_cmd, load_size, load = _BSMP.parse_stream(stream)
-
-
-# the following variables can be used to manipulate interlock bits.
-InterlockSoft = _InterlockSoft()
-InterlockHard = _InterlockHard()
 
 
 def get_variables_common():
@@ -196,3 +119,523 @@ def get_value_from_load(variables, ID_variable, load):
     else:
         raise NotImplementedError
     return value
+
+
+class StreamChecksum:
+    """Methods to include and verify stream checksum."""
+
+    @staticmethod
+    def includeChecksum(stream):
+        """Return stream with checksum byte at end of message."""
+        counter = 0
+        i = 0
+        while (i < len(stream)):
+            counter += ord(stream[i])
+            i += 1
+        counter = (counter & 0xFF)
+        counter = (256 - counter) & 0xFF
+        return(stream + [chr(counter)])
+
+    @staticmethod
+    def _verifyChecksum(stream):
+        """Verify stream checksum."""
+        counter = 0
+        i = 0
+        while (i < len(stream) - 1):
+            counter += ord(stream[i])
+            i += 1
+        counter = (counter & 0xFF)
+        counter = (256 - counter) & 0xFF
+        if (stream[len(stream) - 1] == chr(counter)):
+            return(True)
+        else:
+            return(False)
+
+
+class BSMPStream():
+    """Class to process BSMP streams."""
+
+    # --- not used yet! ---
+    @staticmethod
+    def process(stream):
+        """Process BSMP stream."""
+        ID_receiver, ID_cmd, load_size, load = _BSMP.parse_stream(stream)
+
+
+# --- not used yet! ---
+
+class _Interlock:
+    """Interlock class."""
+
+    @property
+    def labels(self):
+        """Return list of all interlock labels."""
+        return [interlock for interlock in self._labels]
+
+    def label(self, i):
+        """Convert bit index to its interlock label."""
+        return self._labels[i]
+
+    def interlock_set(self, interlock):
+        """Return a list of active interlocks."""
+        interlock_list = []
+        for i in range(len(self.labels)):
+            label = self.label(i)
+            if interlock & (1 << i):
+                interlock_list.append(label)
+        return interlock_list
+
+    def _init(self):
+        # set properties corresponding to interlock bit labels.
+        for i in range(len(self.labels)):
+            label = self.label(i)
+            setattr(_Interlock, 'bit_' + label, 1 << i)
+
+
+class _InterlockSoft(_Interlock):
+    """Power supply soft iterlocks."""
+
+    def __init__(self):
+        self._labels = _ps_soft_interlock
+        self._init()
+
+
+class _InterlockHard(_Interlock):
+    """Power supply hard iterlocks."""
+
+    def __init__(self):
+        self._labels = _ps_hard_interlock
+        self._init()
+
+
+# the following variables can be used to manipulate interlock bits.
+InterlockSoft = _InterlockSoft()
+InterlockHard = _InterlockHard()
+
+
+class Status:
+    """Power supply status class."""
+
+    _mask_state = 0b0000000000001111
+    _mask_oloop = 0b0000000000010000
+    _mask_intfc = 0b0000000001100000
+    _mask_activ = 0b0000000010000000
+    _mask_model = 0b0001111100000000
+    _mask_unlck = 0b0010000000000000
+    _mask_rsrvd = 0b1100000000000000
+
+    _dsp2ps_state = {
+        _PSConst.States.Off: _PSConst.OpMode.SlowRef,
+        _PSConst.States.Interlock: _PSConst.OpMode.SlowRef,
+        _PSConst.States.Initializing: _PSConst.OpMode.SlowRef,
+        _PSConst.States.SlowRef: _PSConst.OpMode.SlowRef,
+        _PSConst.States.SlowRefSync: _PSConst.OpMode.SlowRefSync,
+        _PSConst.States.FastRef: _PSConst.OpMode.FastRef,
+        _PSConst.States.RmpWfm: _PSConst.OpMode.RmpWfm,
+        _PSConst.States.MigWfm: _PSConst.OpMode.MigWfm,
+        _PSConst.States.Cycle: _PSConst.OpMode.Cycle,
+    }
+
+    _ps2dsp_state = {
+        # current PS version implements only SlowRef!
+        _PSConst.OpMode.SlowRef: _PSConst.States.SlowRef,
+        _PSConst.OpMode.SlowRefSync: _PSConst.States.SlowRef,
+        _PSConst.OpMode.FastRef: _PSConst.States.SlowRef,
+        _PSConst.OpMode.RmpWfm: _PSConst.States.SlowRef,
+        _PSConst.OpMode.MigWfm: _PSConst.States.SlowRef,
+        _PSConst.OpMode.Cycle: _PSConst.States.SlowRef,
+    }
+
+    @staticmethod
+    def state(status, label=False):
+        """Return DSP state of power supply."""
+        index = (status & (0b1111 << 0)) >> 0
+        return _ps_states[index] if label else index
+
+    @staticmethod
+    def set_state(status, value):
+        """Set state in power supply status."""
+        if not (0 <= value < len(_ps_states)):
+            raise ValueError('Invalid state value!')
+        status = status & ~Status._mask_state
+        status += value << 0
+        return status
+
+    @staticmethod
+    def pwrstate(status, label=False):
+        """Return PS powerstate."""
+        state = Status.state(status, label=False)
+        index = _PSConst.PwrState.Off if state == _PSConst.States.Off else \
+            _PSConst.PwrState.On
+        return _ps_pwrstate_sel[index] if label else index
+
+    @staticmethod
+    def set_pwrstate(status, value):
+        """Set pwrstate in power supply status."""
+        if not (0 <= value < len(_ps_pwrstate_sel)):
+            raise ValueError('Invalid pwrstate value!')
+        status = status & ~Status._mask_state
+        value = _PSConst.States.Off if value == _PSConst.PwrState.Off else \
+            _PSConst.States.SlowRef
+        status += value << 0
+        return status
+
+    @staticmethod
+    def opmode(status, label=False):
+        """Return PS opmode."""
+        state = Status.state(status, label=False)
+        index = Status._dsp2ps_state[state]
+        return _ps_opmode[index] if label else index
+
+    @staticmethod
+    def set_opmode(status, value):
+        """Set power supply opmode."""
+        if not (0 <= value < len(_ps_opmode)):
+            raise ValueError('Invalid opmode value!')
+        value = Status._ps2dsp_state[value]
+        status = Status.set_state(status, value)
+        return status
+
+    @staticmethod
+    def openloop(status, label=False):
+        """Return open-loop state index of power supply."""
+        index = (status & (0b1 << 4)) >> 4
+        return _ps_openloop[index] if label else index
+
+    @staticmethod
+    def set_openloop(status, value):
+        """Set openloop in power supply status."""
+        if not (0 <= value < len(_ps_openloop)):
+            raise ValueError('Invalid openloop value!')
+        status = status & ~Status._mask_oloop
+        status += value << 4
+        return status
+
+    @staticmethod
+    def interface(status, label=False):
+        """Return interface index of power supply."""
+        index = (status & (0b11 << 5)) >> 5
+        return _ps_interface[index] if label else index
+
+    @staticmethod
+    def set_interface(status, value):
+        """Set interface index in power supply status."""
+        if not (0 <= value < len(_ps_interface)):
+            raise ValueError('Invalid interface number!')
+        status = status & ~Status._mask_intfc
+        status += value << 5
+        return status
+
+    @staticmethod
+    def active(status, label=False):
+        """Return active index of power supply."""
+        return (status & (0b1 << 7)) >> 7
+
+    @staticmethod
+    def set_active(status, value):
+        """Set active index in power supply status."""
+        if not (0 <= value <= 1):
+            raise ValueError('Invalid active number!')
+        status = status & ~Status._mask_activ
+        status += value << 7
+        return status
+
+    @staticmethod
+    def model(status, label=False):
+        """Return model index for power supply."""
+        index = (status & Status._mask_model) >> 8
+        return _ps_models[index] if label else index
+
+    @staticmethod
+    def set_model(status, value):
+        """Set model in power supply status."""
+        if not (0 <= value < len(_ps_models)):
+            raise ValueError('Invalid model number!')
+        status = status & ~Status._mask_model
+        status += value << 8
+        return status
+
+    @staticmethod
+    def unlocked(status, label=False):
+        """Return unlocked index for power supply."""
+        return (status & (0b1 << 13)) >> 13
+
+    @staticmethod
+    def set_unlocked(status, value):
+        """Set unlocked in power supply status."""
+        if not (0 <= value <= 1):
+            raise ValueError('Invalid unlocked number!')
+        status = status & ~Status._mask_unlck
+        status += value << 13
+        return status
+
+
+class PSState:
+    """Power supply state.
+
+    Objects of this class have a dictionary that stores the state of
+    power supplies, as defined by its list of BSMP variables.
+    """
+
+    def __init__(self, variables):
+        """Init method."""
+        self._state = {}
+        for ID_variable, variable in variables.items():
+            name, type_t, writable = variable
+            if type_t == Const.t_float:
+                value = 0.0
+            elif type_t in (Const.t_status,
+                            Const.t_state,
+                            Const.t_remote,
+                            Const.t_model,
+                            Const.t_uint8,
+                            Const.t_uint16,
+                            Const.t_uint32):
+                value = 0
+            else:
+                raise ValueError('Invalid BSMP variable type!')
+            self._state[ID_variable] = value
+
+    def __getitem__(self, key):
+        """Return value corresponfing to a certain key (ps_variable)."""
+        return self._state[key]
+
+    def __setitem__(self, key, value):
+        """Set value for a certain key (ps_variable)."""
+        self._state[key] = value
+        return value
+
+
+class BSMPResponseSim(_BSMPResponse):
+    """Transport BSMP layer interacting with simulated slave device."""
+
+    def __init__(self, ID_device, i_load_fluctuation_rms=0.0):
+        """Init method."""
+        _BSMPResponse.__init__(self,
+                               variables=get_variables_FBP(),
+                               functions=get_functions(),
+                               ID_device=ID_device)
+        self._state = PSState(variables=self.variables)
+        self._i_load_fluctuaton_rms = i_load_fluctuation_rms
+        self._i_load_fluctuation = 0.0
+
+    def create_group(self, ID_receiver, ID_group, IDs_variable):
+        """Create group of BSMP variables."""
+        self._groups[ID_group] = IDs_variable[:]
+        return _ack.ok, None
+
+    def remove_groups(self, ID_receiver):
+        """Delete all groups of BSMP variables."""
+        self._groups = {}
+        return _ack.ok, None
+
+    def cmd_0x01(self, ID_receiver):
+        """Respond BSMP protocol version."""
+        return _ack.ok, Const.version
+
+    def cmd_0x11(self, ID_receiver, ID_variable):
+        """Respond BSMP variable."""
+        self._update_state()
+        if ID_variable not in self._variables.keys():
+            return _ack.invalid_id, None
+        return _ack.ok, self._state[ID_variable]
+
+    def cmd_0x13(self, ID_receiver, ID_group):
+        """Respond SBMP variable group."""
+        self._update_state()
+        if ID_group not in self._groups:
+            return _ack.invalid_id, None
+        IDs_variable = self._groups[ID_group]
+        load = {}
+        for ID_variable in IDs_variable:
+            # check if variable value copying is needed!
+            load[ID_variable] = self._state[ID_variable]
+        load[Const.i_load] += self._i_load_fluctuation
+        return _ack.ok, load
+
+    def cmd_0x51(self, ID_receiver, ID_function, **kwargs):
+        """Respond to execute BSMP function."""
+        self._update_state()
+        if ID_function == Const.set_slowref:
+            return self._func_set_slowref(**kwargs)
+        elif ID_function == Const.cfg_op_mode:
+            return self._func_cfg_op_mode(**kwargs)
+        elif ID_function == Const.turn_on:
+            status = self._state[Const.ps_status]
+            status = Status.set_state(status, _PSConst.States.SlowRef)
+            self._state[Const.ps_status] = status
+            self._state[Const.i_load] = \
+                self._state[Const.ps_reference] + \
+                self._i_load_fluctuation
+            return _ack.ok, None
+        elif ID_function == Const.turn_off:
+            status = self._state[Const.ps_status]
+            status = Status.set_state(status, _PSConst.States.Off)
+            self._state[Const.ps_status] = status
+            self._state[Const.i_load] = 0.0 + self._i_load_fluctuation
+            return _ack.ok, None
+        elif ID_function == Const.reset_interlocks:
+            self._state[Const.ps_soft_interlocks] = 0
+            self._state[Const.ps_hard_interlocks] = 0
+            return _ack.ok, None
+        elif ID_function == Const.close_loop:
+            return self._func_close_loop()
+        else:
+            raise NotImplementedError(
+                'Run of {} function not implemented!'.format(hex(ID_function)))
+
+    def _func_set_slowref(self, **kwargs):
+        self._state[Const.ps_setpoint] = kwargs['setpoint']
+        self._state[Const.ps_reference] = \
+            self._state[Const.ps_setpoint]
+        status = self._state[Const.ps_status]
+        if Status.pwrstate(status) == _PSConst.PwrState.On:
+            # i_load <= ps_reference
+            self._state[Const.i_load] = \
+                self._state[Const.ps_reference] + self._i_load_fluctuation
+        return _ack.ok, None
+
+    def _func_cfg_op_mode(self, **kwargs):
+        status = self._state[Const.ps_status]
+        status = Status.set_state(status, kwargs['op_mode'])
+        self._state[Const.ps_status] = status
+        return _ack.ok, None
+
+    def _func_close_loop(self):
+        status = self._state[Const.ps_status]
+        status = Status.set_openloop(status, 0)
+        return _ack.ok, None
+
+    def _update_state(self):
+        if self._i_load_fluctuaton_rms != 0.0:
+            self._i_load_fluctuation = \
+                _random.gauss(0.0, self._i_load_fluctuaton_rms)
+
+
+class BSMPResponse(_BSMPResponse, StreamChecksum):
+    """Transport BSMP layer interacting with real slave device."""
+
+    _FAKE_FRMWARE_VERSION = ['\x00', '\x00']
+
+    def __init__(self, ID_device, PRU):
+        """Init method."""
+        _BSMPResponse.__init__(self,
+                               variables=get_variables_FBP(),
+                               functions=get_functions(),
+                               ID_device=ID_device)
+
+        self._pru = PRU
+
+    def create_group(self, ID_receiver, ID_group, IDs_variable):
+        """Create group of BSMP variables."""
+        n = len(IDs_variable)
+        hb, lb = (n & 0xFF00) >> 8, n & 0xFF
+        query = [chr(ID_receiver), "\x30", chr(hb), chr(lb)] + \
+            [chr(ID_variable) for ID_variable in IDs_variable]
+        # print('ID_receiver: ', ID_receiver)
+        # print('ID_group: ', ID_group)
+        # print('IDs_variable:', IDs_variable)
+        # print('query: ', query)
+        query = BSMPResponse.includeChecksum(query)
+        self._pru.UART_write(query, timeout=100)
+        response = self._pru.UART_read()
+        ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
+        return ID_cmd, None
+
+    def remove_groups(self, ID_receiver):
+        """Delete all groups of BSMP variables."""
+        query = [chr(ID_receiver), "\x32", '\x00', '\x00']
+        query = BSMPResponse.includeChecksum(query)
+        self._pru.UART_write(query, timeout=100)
+        response = self._pru.UART_read()
+        ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
+        return ID_cmd, None
+
+    def cmd_0x01(self, ID_receiver):
+        """Respond BSMP protocol version."""
+        query = [chr(ID_receiver), "\x00", "\x00", "\x00"]
+        query = BSMPResponse.includeChecksum(query)
+        self._pru.UART_write(query, timeout=100)
+        response = self._pru.UART_read()
+        ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
+        if len(load) != 3:
+            return _ack.invalid_message, None
+        version_str = '.'.join([str(ord(c)) for c in load])
+        return ID_cmd, version_str
+
+    def cmd_0x11(self, ID_receiver, ID_variable):
+        """Respond BSMP variable."""
+        # query power supply
+        if ID_variable == Const.frmware_version:
+            # simulate response to firmware version
+            # (This variable currently is not implemented  - see bsmp.py !!!)
+            ID_master = 0
+            response = [chr(ID_master), '\x11', '\x00', '\x02'] + \
+                BSMPResponse._FAKE_FRMWARE_VERSION
+            response = BSMPResponse.includeChecksum(response)
+        else:
+            query = [chr(ID_receiver),
+                     '\x10', '\x00', '\x01', chr(ID_variable)]
+            query = BSMPResponse.includeChecksum(query)
+            self._pru.UART_write(query, timeout=10)  # 10 or 100 for timeout?
+            response = self._pru.UART_read()
+        # process response
+        ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
+        if ID_variable == Const.frmware_version:
+            if len(load) != 2:
+                return _ack.invalid_message, None
+            value = get_value_from_load(self._variables, ID_variable, load)
+        else:
+            raise NotImplementedError(
+                'This power supply cmd is not defined for this variable ID!')
+        return ID_cmd, value
+
+    def cmd_0x13(self, ID_receiver, ID_group):
+        """Respond SBMP variable group."""
+        # query power supply
+        query = [chr(ID_receiver), '\x12', '\x00', '\x01', chr(ID_group)]
+        query = BSMPResponse.includeChecksum(query)
+        self._pru.UART_write(query, timeout=10)
+        response = self._pru.UART_read()
+        # print('ID_receiver: ', ID_receiver)
+        # print('ID_group: ', ID_group)
+        # print('response: ', response)
+        # process response
+        ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
+        if ID_cmd != 0x13:
+            return ID_cmd, None
+        if ID_group == Const.group_id:
+            data = [ord(element) for element in load]
+            value = dict()
+            value['ps_status'] = data[0] + (data[1] << 8)
+            value['ps_setpoint'] = _struct.unpack("<f", bytes(data[2:6]))[0]
+            value['ps_reference'] = _struct.unpack("<f", bytes(data[6:10]))[0]
+            value['ps_soft_interlocks'] = data[10] + (data[11] << 8)
+            value['ps_hard_interlocks'] = data[12] + (data[13] << 8)
+            value['i_load'] = _struct.unpack("<f", bytes(data[14:18]))[0]
+        else:
+            raise ValueError('Invalid group ID!')
+        return _ack.ok, value
+
+    def cmd_0x51(self, ID_receiver, ID_function, **kwargs):
+        """Respond to execute BSMP function."""
+        # execute function in power supply
+        if ID_function in (Const.turn_on,
+                           Const.turn_off,
+                           Const.open_loop,
+                           Const.close_loop,
+                           Const.reset_interlocks):
+            load = []
+        elif ID_function == Const.set_slowref:
+            load = list(_struct.pack("<f", kwargs['setpoint']))
+        else:
+            raise NotImplementedError
+        n = len(load)
+        hb, lb = (n & 0xFF00) >> 8, n & 0xFF
+        query = [chr(ID_receiver), '\x50', chr(hb), chr(lb),
+                 chr(ID_function)] + load
+        self._pru.UART_write(query, timeout=100)
+        response = self._pru.UART_read()
+        # process response
+        ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
+        return ID_cmd, None
