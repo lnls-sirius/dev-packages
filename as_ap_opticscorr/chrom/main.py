@@ -79,7 +79,7 @@ class App:
 
         # Initialize correction parameters from local file and configdb
         config_name = _get_config_name(acc=self._ACC.lower(),
-                                       opticsparam='tune')
+                                       opticsparam='chrom')
         [done, corrparams] = self._get_corrparams(config_name)
         if done:
             self.driver.setParam('CorrParamsConfigName-SP', config_name)

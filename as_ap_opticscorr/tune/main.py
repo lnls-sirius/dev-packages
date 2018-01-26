@@ -88,9 +88,8 @@ class App:
             self.driver.setParam('CorrParamsConfigName-RB', config_name)
             self._nominal_matrix = corrparams[0]
             self.driver.setParam('CorrMat-Mon', self._nominal_matrix)
-            if self._ACC.lower() == 'si':
-                self._qfam_nomkl = corrparams[1]
-                self.driver.setParam('NominalKL-Mon', self._qfam_nomkl)
+            self._qfam_nomkl = corrparams[1]
+            self.driver.setParam('NominalKL-Mon', self._qfam_nomkl)
             self._opticscorr = _OpticsCorr(
                 magnetfams_ordering=self._QFAMS,
                 nominal_matrix=self._nominal_matrix,
@@ -322,11 +321,7 @@ class App:
 
             nominal_matrix = [item for sublist in params['matrix']
                               for item in sublist]
-
-            if self._ACC.lower() == 'si':
-                nominal_kl = params['nominal KLs']
-            else:
-                nominal_kl = None
+            nominal_kl = params['nominal KLs']
             return [done, [nominal_matrix, nominal_kl]]
         else:
             done = False
