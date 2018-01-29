@@ -194,6 +194,20 @@ class App:
 
     def read(self, reason):
         """Read from IOC database."""
+        if reason == 'Version-Cte':
+            if (self._status & 0x1) == 0:  # Check connection
+                for fam in self._SFAMS:
+                    limits = {}
+                    data = self._sfam_sl_rb_pvs[fam].get_ctrlvars()
+                    if self._sfam_sl_rb_pvs[fam].upper_disp_limit is not None:
+                        limits['hilim'] = data['upper_disp_limit']
+                        limits['lolim'] = data['lower_disp_limit']
+                        limits['high'] = data['upper_alarm_limit']
+                        limits['low'] = data['lower_alarm_limit']
+                        limits['hihi'] = data['upper_warning_limit']
+                        limits['lolo'] = data['lower_warning_limit']
+                    self.driver.setParamInfo('LastCalcd'+fam+'SL-Mon', limits)
+                self.driver.updatePVs()
         return None
 
     def write(self, reason, value):

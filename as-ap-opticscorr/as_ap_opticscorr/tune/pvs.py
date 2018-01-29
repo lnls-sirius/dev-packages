@@ -2,7 +2,6 @@
 
 from siriuspy.envars import vaca_prefix as _vaca_prefix
 from siriuspy import util as _util
-from siriuspy import search as _search
 
 
 _COMMIT_HASH = _util.get_last_commit_hash()
@@ -56,16 +55,23 @@ def get_pvs_database():
     corrmat_size = len(_QFAMS)*2
 
     pvs_database = {
-        'Version-Cte':          {'type': 'string', 'value': _COMMIT_HASH},
+        'Version-Cte':          {'type': 'string', 'value': _COMMIT_HASH,
+                                 'scan': 1},
 
         'Log-Mon':              {'type': 'string', 'value': 'Starting...'},
 
         'DeltaTuneX-SP':        {'type': 'float', 'value': 0, 'prec': 6,
-                                 'hilim': 1, 'lolim': -1},
-        'DeltaTuneX-RB':        {'type': 'float', 'value': 0, 'prec': 6},
+                                 'hilim': 1, 'lolim': -1, 'high': 1, 'low': -1,
+                                 'hihi': 1, 'lolo': -1},
+        'DeltaTuneX-RB':        {'type': 'float', 'value': 0, 'prec': 6,
+                                 'hilim': 1, 'lolim': -1, 'high': 1, 'low': -1,
+                                 'hihi': 1, 'lolo': -1},
         'DeltaTuneY-SP':        {'type': 'float', 'value': 0, 'prec': 6,
-                                 'hilim': 1, 'lolim': -1},
-        'DeltaTuneY-RB':        {'type': 'float', 'value': 0, 'prec': 6},
+                                 'hilim': 1, 'lolim': -1, 'high': 1, 'low': -1,
+                                 'hihi': 1, 'lolo': -1},
+        'DeltaTuneY-RB':        {'type': 'float', 'value': 0, 'prec': 6,
+                                 'hilim': 1, 'lolim': -1, 'high': 1, 'low': -1,
+                                 'hihi': 1, 'lolo': -1},
 
         'ApplyDeltaKL-Cmd':     {'type': 'int', 'value': 0},
 
@@ -78,9 +84,13 @@ def get_pvs_database():
                                  'value': len(_QFAMS)*[0], 'prec': 6},
 
         'CorrFactor-SP':        {'type': 'float', 'value': 0, 'unit': '%',
-                                 'prec': 1, 'lolim': -1000, 'hilim': 1000},
+                                 'prec': 1, 'hilim': 1000, 'lolim': -1000,
+                                 'high': 1000, 'low': -1000, 'hihi': 1000,
+                                 'lolo': -1000},
         'CorrFactor-RB':        {'type': 'float', 'value': 0, 'unit': '%',
-                                 'prec': 1},
+                                 'prec': 1, 'hilim': 1000, 'lolim': -1000,
+                                 'high': 1000, 'low': -1000, 'hihi': 1000,
+                                 'lolo': -1000},
 
         'SyncCorr-Sel':         {'type': 'enum', 'value': 0,
                                  'enums': ['Off', 'On']},
@@ -102,15 +112,9 @@ def get_pvs_database():
         pvs_database[fam + 'RefKL-Mon'] = {'type': 'float', 'value': 0,
                                            'prec': 6, 'unit': '1/m'}
 
-        pstype = _search.PSSearch.conv_psname_2_pstype(_ACC+'-Fam:PS-'+fam)
         pvs_database['LastCalcd' + fam + 'KL-Mon'] = {
             'type': 'float', 'value': 0, 'prec': 6, 'unit': '1/m',
-            'lolo': _search.PSSearch.get_splims(pstype, 'lolo'),
-            'low': _search.PSSearch.get_splims(pstype, 'low'),
-            'lolim': _search.PSSearch.get_splims(pstype, 'lolim'),
-            'hilim': _search.PSSearch.get_splims(pstype, 'hilim'),
-            'high': _search.PSSearch.get_splims(pstype, 'high'),
-            'hihi': _search.PSSearch.get_splims(pstype, 'hihi')}
+            'lolim': 0, 'hilim': 0, 'low': 0, 'high': 0, 'lolo': 0, 'hihi': 0}
 
     if _ACC == 'SI':
         pvs_database['CorrMeth-Sel'] = {'type': 'enum', 'value': 0, 'enums':
