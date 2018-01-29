@@ -14,7 +14,7 @@ from siriuspy.bsmp import BSMPQuery as _BSMPQuery
 
 try:
     import PRUserial485.PRUserial485 as _PRUserial485
-except ModuleNotFoundError:
+except:
     _PRUserial485 = None
 
 

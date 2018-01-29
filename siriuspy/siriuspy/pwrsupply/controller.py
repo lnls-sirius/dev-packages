@@ -34,6 +34,7 @@ class Controller():
         'IntlkSoft-Mon': '_get_ps_soft_interlocks',
         'IntlkHard-Mon': '_get_ps_hard_interlocks',
         'Version-Cte': '_get_frmware_version',
+        'WfmIndex-Mon': '_get_wfmindex',
     }
 
     _write_field2func = {
@@ -142,7 +143,7 @@ class Controller():
             value = func()
             return value
         else:
-            raise ValueError('Field "{}"" not valid!'.format(field))
+            raise ValueError('Field "{}" not valid!'.format(field))
 
     def write(self, field, value):
         """Write value to a field."""
@@ -155,6 +156,9 @@ class Controller():
 
     # --- private methods ---
     #     These are the functions that all subclass have to implement!
+
+    def _get_wfmindex(self):
+        return self._serial_comm.sync_pulse_count
 
     def _get_frmware_version(self):
         value = self._bsmp_get_variable(_BSMPConst.frmware_version)

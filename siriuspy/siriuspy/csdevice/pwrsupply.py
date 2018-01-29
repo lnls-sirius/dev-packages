@@ -127,7 +127,7 @@ def get_common_ps_propty_database():
         'OpMode-Sts': {'type': 'enum', 'enums': ps_opmode,
                        'value': _et.idx.SlowRef},
         'Abort-Cmd': {'type': 'int', 'value': 0},
-        # 'WfmIndex-Mon': {'type': 'int', 'value': 0},
+        'WfmIndex-Mon': {'type': 'int', 'value': 0},
         # 'WfmLabels-Mon': {'type': 'string', 'count': len(default_wfmlabels),
         #                   'value': default_wfmlabels},
         # 'WfmLabel-SP': {'type': 'string', 'value': default_wfmlabels[0]},
