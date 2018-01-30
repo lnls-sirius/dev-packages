@@ -37,7 +37,8 @@ setup(
              'scripts/sirius-ioc-si-ma-multipole-fam.py',
              'scripts/sirius-ioc-si-ma-quadrupole-trim.py',
              'scripts/sirius-ioc-si-ma-quadrupole-skew.py',
-             'scripts/sirius-ioc-as-pm.py'
+             'scripts/sirius-ioc-as-pm.py',
+             'scripts/sirius-ioc-ma.py'
              ],
     zip_safe=False
 )

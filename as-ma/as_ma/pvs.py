@@ -5,7 +5,6 @@ get_ma_devices
 get_pvs_database
     Function that builds the IOC database
 """
-from siriuspy.search import MASearch as _MASearch
 from siriuspy.pwrsupply.model import MAEpics as _Magnet
 from siriuspy.envars import vaca_prefix as _vaca_prefix
 from siriuspy import util as _util
@@ -142,23 +141,28 @@ _ioc_dict = {
 }
 
 
-def select_ioc(ioc_name):
+# def select_ioc(ioc_name):
+def select_ioc(malist):
     """Set IOC."""
     global _IOC, _IOC_TYPE, _PREFIX_SECTOR, _PREFIX, _MA_DEVICES
-    if ioc_name in _ioc_dict:
-        if _IOC is not None and ioc_name != _IOC['name']:
-            _MA_DEVICES = None
-        _IOC = _ioc_dict[ioc_name]
-        _IOC_TYPE = _ioc_dict[ioc_name]['type']
-        _PREFIX_SECTOR = _ioc_dict[ioc_name]['prefix_sector']
-        _PREFIX = _PREFIX_VACA + _PREFIX_SECTOR
-    else:
-        raise Exception('IOC name not defined!')
+    _IOC = {'name': malist[0]}
+    _IOC_TYPE = malist[0]
+    _PREFIX_SECTOR = malist[0].split('-')[0]
+    _PREFIX = _PREFIX_VACA + _PREFIX_SECTOR
+    # if ioc_name in _ioc_dict:
+    #     if _IOC is not None and ioc_name != _IOC['name']:
+    #         _MA_DEVICES = None
+    #     _IOC = _ioc_dict[ioc_name]
+    #     _IOC_TYPE = _ioc_dict[ioc_name]['type']
+    #     _PREFIX_SECTOR = _ioc_dict[ioc_name]['prefix_sector']
+    #     _PREFIX = _PREFIX_VACA + _PREFIX_SECTOR
+    # else:
+    #     raise Exception('IOC name not defined!')
 
 
-def get_pvs_database():
+def get_pvs_database(malist):
     """Return IOC database."""
-    MA_DEVICES = get_ma_devices()
+    MA_DEVICES = get_ma_devices(malist)
     if MA_DEVICES:
         pv_database = {_IOC_TYPE + ':Version-Cte':
                        {'type': 'str', 'value': _COMMIT_HASH}}
@@ -172,21 +176,30 @@ def get_pvs_database():
         return {}
 
 
-def get_ma_devices():
+def get_ma_devices(malist):
     """Create/Return PowerSupplyMA objects for each magnet."""
     global _MA_DEVICES
-    if _IOC is None:
-        return []
+    # if _IOC is None:
+    #     return []
+    # if _MA_DEVICES is None:
+    #     _MA_DEVICES = {}
+    #     magnets = _MASearch.get_manames(_IOC)
+    #     for magnet in magnets:
+    #         if _PREFIX_SECTOR:
+    #             _, device = magnet.split(_PREFIX_SECTOR)
+    #         else:
+    #             device = magnet
+    #         # Get dipole object
+    #         _MA_DEVICES[device] = \
+    #             _Magnet(magnet, lock=False)
     if _MA_DEVICES is None:
         _MA_DEVICES = {}
-        magnets = _MASearch.get_manames(_IOC)
-        for magnet in magnets:
+        for magnet in malist:
             if _PREFIX_SECTOR:
                 _, device = magnet.split(_PREFIX_SECTOR)
             else:
                 device = magnet
             # Get dipole object
-            _MA_DEVICES[device] = \
-                _Magnet(magnet, lock=False)
+            _MA_DEVICES[device] = _Magnet(magnet, lock=False)
 
     return _MA_DEVICES

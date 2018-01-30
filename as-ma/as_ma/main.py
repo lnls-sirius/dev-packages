@@ -52,10 +52,10 @@ class App:
         self._set_callback()
 
     @staticmethod
-    def init_class():
+    def init_class(malist):
         """Init class."""
-        App.ma_devices = _pvs.get_ma_devices()
-        App.pvs_database = _pvs.get_pvs_database()
+        App.ma_devices = _pvs.get_ma_devices(malist)
+        App.pvs_database = _pvs.get_pvs_database(malist)
 
     @property
     def driver(self):

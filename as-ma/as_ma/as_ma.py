@@ -39,15 +39,16 @@ class _PCASDriver(_pcaspy.Driver):
         self.app.write(reason, value)
 
 
-def run(ioc_name):
+# def run(ioc_name):
+def run(malist):
     """Main module function."""
     # define abort function
     _signal.signal(_signal.SIGINT, _stop_now)
     _signal.signal(_signal.SIGTERM, _stop_now)
 
     # define IOC and initializes it
-    _pvs.select_ioc(ioc_name)
-    _main.App.init_class()
+    _pvs.select_ioc(malist)
+    _main.App.init_class(malist)
 
     # check if IOC is already running
     pvname = _pvs._PREFIX + next(iter(_main.App.pvs_database.keys()))
