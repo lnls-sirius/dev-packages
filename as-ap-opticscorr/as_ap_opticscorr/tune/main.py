@@ -345,11 +345,11 @@ class App:
         if self._corr_method == 0:
             lastcalcd_deltakl = self._opticscorr.calculate_delta_intstrengths(
                 method=0, grouping='2knobs',
-                opticsparam=[self._delta_tunex, self._delta_tuney])
+                delta_opticsparam=[self._delta_tunex, self._delta_tuney])
         else:
             lastcalcd_deltakl = self._opticscorr.calculate_delta_intstrengths(
                 method=1, grouping='2knobs',
-                opticsparam=[self._delta_tunex, self._delta_tuney])
+                delta_opticsparam=[self._delta_tunex, self._delta_tuney])
 
         self.driver.setParam('Log-Mon', 'Calculated Delta KL.')
 

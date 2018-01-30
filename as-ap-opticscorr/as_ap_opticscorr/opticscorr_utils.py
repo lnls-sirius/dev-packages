@@ -213,10 +213,11 @@ class OpticsCorr:
         """Inverse matrix of proportional method and 2 knobs."""
         return self._inverse_matrix_prop_2knobs
 
-    def calculate_delta_intstrengths(self, method, grouping, opticsparam):
+    def calculate_delta_intstrengths(self, method, grouping,
+                                     delta_opticsparam):
         """Calculate the delta on integrated strengths.
 
-        Based on the required optics parameter (tune or chromaticity).
+        Based on the required optics parameter delta (tune or chromaticity).
 
         Return a flat numpy.array of deltas of all magnet families of
         'magnetfams_ordering' property. Deltas will only be calculated for
@@ -224,9 +225,8 @@ class OpticsCorr:
         properties. The rest of the families will have null deltas.
         """
         inv = self._choose_inverse_matrix(method, grouping)
-        finalvalue_opticsparam = _np.array([[opticsparam[0]],
-                                            [opticsparam[1]]])
-        delta_opticsparam = (finalvalue_opticsparam - self.nominal_opticsparam)
+        delta_opticsparam = _np.array([[delta_opticsparam[0]],
+                                       [delta_opticsparam[1]]])
         magnetfams_delta_intstrengths = _np.zeros(
             len(self.magnetfams_ordering))
 
