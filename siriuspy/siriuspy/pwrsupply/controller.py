@@ -70,6 +70,7 @@ class Controller():
     @pwrstate.setter
     def pwrstate(self, value):
         """Set PS power state."""
+        value = int(value)
         if value == _PSConst.PwrState.Off:
             self._pwrstate = value
             self.cmd_turn_off()
@@ -92,6 +93,7 @@ class Controller():
     @opmode.setter
     def opmode(self, value):
         """Set PS opmode."""
+        value = int(value)
         if not(0 <= value < len(_ps_opmode)):
             raise ValueError
         # set opmode state
@@ -99,7 +101,7 @@ class Controller():
         if self.pwrstate == _PSConst.PwrState.On:
             ps_status = self._get_ps_status()
             op_mode = _Status.set_opmode(ps_status, value)
-            self._cmd_cfg_op_mode(op_mode=op_mode)
+            # self._cmd_cfg_op_mode(op_mode=op_mode)
 
     # --- API: power supply 'functions' ---
 

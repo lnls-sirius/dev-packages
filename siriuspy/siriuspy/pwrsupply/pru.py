@@ -130,11 +130,14 @@ class PRU(_PRUInterface):
 
     def _UART_write(self, stream, timeout):
         # this method send streams through UART to the RS-485 line.
+        # print('write: ', stream)
         return _PRUserial485.PRUserial485_write(stream, timeout)
 
     def _UART_read(self):
         # this method send streams through UART to the RS-485 line.
-        return _PRUserial485.PRUserial485_read()
+        stream = _PRUserial485.PRUserial485_read()
+        # print('read: ', stream)
+        return stream
 
     def _curve(self, curve1, curve2, curve3, curve4):
         _PRUserial485.PRUserial485_curve(curve1, curve2, curve3, curve4)
@@ -250,7 +253,7 @@ class SerialComm(_BSMPQuery):
         while True:
             item = self._queue.get()
             ID_device, ID_cmd, kwargs = item
-            # print('get :', ID_device, hex(ID_cmd), kwargs)
+            # print('process: ', ID_device, hex(ID_cmd), kwargs)
             cmd = 'cmd_' + str(hex(ID_cmd))
             method = getattr(self, cmd)
             ack, load = method(ID_receiver=ID_device, **kwargs)
@@ -260,7 +263,7 @@ class SerialComm(_BSMPQuery):
             if ack != _ack.ok:
                 # needs implementation
                 raise NotImplementedError(
-                    'Error returned in BSMP command!')
+                    'Error returned in BSMP command: {}!'.format(hex(ack)))
             elif load is not None:
                 self._process_load(ID_device, ID_cmd, load)
 
