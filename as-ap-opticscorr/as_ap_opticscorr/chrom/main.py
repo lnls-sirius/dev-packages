@@ -378,7 +378,7 @@ class App:
 
         # Change the first bit of correction status
         val = (1 if any(s == 0 for s in self._sfam_check_connection) else 0)
-        self._status = self._status = _siriuspy.util.update_integer_bit(
+        self._status = _siriuspy.util.update_integer_bit(
             integer=self._status, number_of_bits=5, value=val, bit=0)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
@@ -413,7 +413,7 @@ class App:
         # Change the second bit of correction status
         val = (1 if any(s == 0 for s in self._sfam_check_pwrstate_sts)
                else 0)
-        self._status = self._status = _siriuspy.util.update_integer_bit(
+        self._status = _siriuspy.util.update_integer_bit(
             integer=self._status, number_of_bits=5, value=val, bit=1)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
@@ -431,7 +431,7 @@ class App:
         opmode = self._sync_corr
         val = (1 if any(s != opmode for s in self._sfam_check_opmode_sts)
                else 0)
-        self._status = self._status = _siriuspy.util.update_integer_bit(
+        self._status = _siriuspy.util.update_integer_bit(
             integer=self._status, number_of_bits=5, value=val, bit=2)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
@@ -449,7 +449,7 @@ class App:
         # Change the fourth bit of correction status
         val = (1 if any(s == 1 for s in self._sfam_check_ctrlmode_mon)
                else 0)
-        self._status = self._status = _siriuspy.util.update_integer_bit(
+        self._status = _siriuspy.util.update_integer_bit(
             integer=self._status, number_of_bits=5, value=val, bit=3)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
@@ -471,7 +471,7 @@ class App:
         # Change the fifth bit of correction status
         val = (1 if any(index == 0 for index in self._timing_check_config)
                else 0)
-        self._status = self._status = _siriuspy.util.update_integer_bit(
+        self._status = _siriuspy.util.update_integer_bit(
             integer=self._status, number_of_bits=5, value=val, bit=4)
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
@@ -484,10 +484,10 @@ class App:
                 self._sfam_opmode_sel_pvs[fam].put(opmode)
             else:
                 self.driver.setParam('Log-Mon',
-                                     'ERR:' + fam + ' is disconnected')
+                                     'ERR:' + fam + ' is disconnected.')
                 self.driver.updatePVs()
                 return False
-        self.driver.setParam('Log-Mon', 'Sent configuration to sextupoles')
+        self.driver.setParam('Log-Mon', 'Sent configuration to sextupoles.')
         self.driver.updatePVs()
         return True
 
@@ -505,10 +505,10 @@ class App:
             self._timing_sexts_duration_sp.put(0.15)
             self._timing_evg_chromsmode_sel.put(3)
             self._timing_evg_chromsdelay_sp.put(0)
-            self.driver.setParam('Log-Mon', 'Sent configuration to timing')
+            self.driver.setParam('Log-Mon', 'Sent configuration to timing.')
             self.driver.updatePVs()
             return True
         else:
-            self.driver.setParam('Log-Mon', 'ERR:Some pv is disconnected')
+            self.driver.setParam('Log-Mon', 'ERR:Some pv is disconnected.')
             self.driver.updatePVs()
             return False
