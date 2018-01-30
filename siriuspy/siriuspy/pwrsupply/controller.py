@@ -1,23 +1,12 @@
 """Power supply controller classes."""
 
-# import time as _time
-# import struct as _struct
-# from queue import Queue as _Queue
-# from threading import Thread as _Thread
-# import random as _random
 from siriuspy import __version__
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.csdevice.pwrsupply import ps_opmode as _ps_opmode
 from siriuspy.pwrsupply.bsmp import Const as _BSMPConst
 from siriuspy.pwrsupply.bsmp import Status as _Status
-# from siriuspy.bsmp import Const as _ack
-# from siriuspy.bsmp import BSMPQuery as _BSMPQuery
-# from siriuspy.bsmp import BSMPResponse as _BSMPResponse
-# from siriuspy.pwrsupply.bsmp import StreamChecksum as _StreamChecksum
-# from siriuspy.pwrsupply.bsmp import get_variables_FBP as _get_variables_FBP
-# from siriuspy.pwrsupply.bsmp import get_functions as _get_functions
-# from siriuspy.pwrsupply.bsmp import get_value_from_load as \
-#     _get_value_from_load
+from siriuspy.csdevice.pwrsupply import get_common_ps_propty_database as \
+    _get_common_ps_propty_database
 
 
 class Controller():
@@ -35,13 +24,17 @@ class Controller():
         'IntlkHard-Mon': '_get_ps_hard_interlocks',
         'Version-Cte': '_get_frmware_version',
         'WfmIndex-Mon': '_get_wfmindex',
+        'WfmData-RB': '_get_wfmdata',
     }
 
     _write_field2func = {
         'PwrState-Sel': '_set_pwrstate',
         'OpMode-Sel': '_set_opmode',
         'Current-SP': 'cmd_set_slowref',
+        'WfmData-SP': '_set_wfmdata',
     }
+
+    _ps_db = _get_common_ps_propty_database()
 
     # --- API: general power supply 'variables' ---
 
@@ -50,6 +43,7 @@ class Controller():
         self._ID_device = ID_device
         self._serial_comm = serial_comm
         self._opmode = _PSConst.OpMode.SlowRef
+        self._wfmdata = [v for v in Controller._ps_db['WfmData-SP']['value']]
 
         # reset interlocks
         self.cmd_reset_interlocks()
@@ -157,6 +151,9 @@ class Controller():
     # --- private methods ---
     #     These are the functions that all subclass have to implement!
 
+    def _get_wfmdata(self):
+        return self._wfmdata
+
     def _get_wfmindex(self):
         return self._serial_comm.sync_pulse_count
 
@@ -225,6 +222,10 @@ class Controller():
     def _set_opmode(self, value):
         """Set pwrstate state."""
         self.opmode = value
+
+    def _set_wfmdata(self, value):
+        self._wfmdata = value[:]
+        self._serial_comm.set_wfmdata(self._ID_device, self._wfmdata)
 
     def _cmd_cfg_op_mode(self, op_mode):
         """Set controller operation mode."""

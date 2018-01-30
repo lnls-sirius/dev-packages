@@ -57,6 +57,7 @@ class Const:
     reset_interlocks = 6
     cfg_op_mode = 12
     set_slowref = 16
+    set_slowref_fbp = 17
 
     # --- variables groups ---
     group_id = 3
@@ -107,6 +108,10 @@ def get_functions():
             ('reset_interlocks', Const.t_uint8, []),
         Const.set_slowref:
             ('set_slowref', Const.t_uint8, [Const.t_float]),
+        Const.set_slowref_fbp:
+            ('set_slowref_fbp', Const.t_uint8,
+             [Const.t_float, Const.t_float,
+              Const.t_float, Const.t_float, ])
     }
     return functions
 

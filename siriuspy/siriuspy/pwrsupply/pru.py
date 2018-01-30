@@ -4,6 +4,7 @@ import time as _time
 from queue import Queue as _Queue
 from threading import Thread as _Thread
 
+from siriuspy.csdevice.pwrsupply import default_wfmsize as _default_wfmsize
 from siriuspy.pwrsupply.bsmp import Const as _BSMPConst
 from siriuspy.pwrsupply.bsmp import get_variables_FBP as _get_variables_FBP
 from siriuspy.pwrsupply.bsmp import get_functions as _get_functions
@@ -51,6 +52,10 @@ class _PRUInterface:
         """Return read from UART."""
         return self._UART_read()
 
+    def curve(self, curve1, curve2, curve3, curve4):
+        """Set waveforms for power supplies."""
+        return self._curve(curve1, curve2, curve3, curve4)
+
     # --- pure virtual method ---
 
     def _get_sync_pulse_count(self):
@@ -59,10 +64,13 @@ class _PRUInterface:
     def _set_sync_mode(self, value):
         raise NotImplementedError
 
-    def _UART_write(stream, timeout):
+    def _UART_write(self, stream, timeout):
         raise NotImplementedError
 
-    def _UART_read(stream):
+    def _UART_read(self, stream):
+        raise NotImplementedError
+
+    def _curve(self, curve1, curve2, curve3, curve4):
         raise NotImplementedError
 
 
@@ -92,6 +100,9 @@ class PRUSim(_PRUInterface):
         raise NotImplementedError(('This method should not be called '
                                   'for objects of this subclass'))
 
+    def _curve(self, curve1, curve2, curve3, curbe4):
+        pass
+
 
 class PRU(_PRUInterface):
     """Functions for the programmable real-time unit."""
@@ -111,7 +122,11 @@ class PRU(_PRUInterface):
         return self._sync_mode
 
     def _set_sync_mode(self, value):
-        self._sync_mode = value
+        ID_device = 1  # could it be any number?
+        if value:
+            _PRUserial485.PRUserial485_sync_start(ID_device, 100)
+        else:
+            _PRUserial485.PRUserial485_sync_stop()
 
     def _UART_write(self, stream, timeout):
         # this method send streams through UART to the RS-485 line.
@@ -121,12 +136,16 @@ class PRU(_PRUInterface):
         # this method send streams through UART to the RS-485 line.
         return _PRUserial485.PRUserial485_read()
 
+    def _curve(self, curve1, curve2, curve3, curve4):
+        _PRUserial485.PRUserial485_curve(curve1, curve2, curve3, curve4)
+
 
 class SerialComm(_BSMPQuery):
     """Serial communiationMaster BSMP device for power supplies."""
 
     _SCAN_INTERVAL_SYNC_MODE_OFF = 0.1  # [s]
     _SCAN_INTERVAL_SYNC_MODE_ON = 1.0  # [s]
+    _default_wfm = [0.0 for _ in range(_default_wfmsize)]
 
     def __init__(self, PRU, slaves=None):
         """Init method."""
@@ -138,6 +157,7 @@ class SerialComm(_BSMPQuery):
         self._PRU = PRU
         self._queue = _Queue()
         self._states = {}
+        self._waveforms = {}
         # does not start variables scanning just yet.
         self._scanning = False
         # create, configure and start auxilliary threads.
@@ -171,6 +191,34 @@ class SerialComm(_BSMPQuery):
         """Set scanning state."""
         self._scanning = value
 
+    def set_wfmdata(self, ID_device, wfmdata):
+        """Set waveform of a device."""
+        sorted_IDs = sorted(self._waveforms.keys())
+        if ID_device not in sorted_IDs:
+            raise ValueError
+        else:
+            self._waveforms[ID_device] = wfmdata[:]
+            if len(sorted_IDs) == 1:
+                self._PRU.curve(self._waveforms[sorted_IDs[0]],
+                                SerialComm._default_wfm,
+                                SerialComm._default_wfm,
+                                SerialComm._default_wfm)
+            elif len(sorted_IDs) == 2:
+                self._PRU.curve(self._waveforms[sorted_IDs[0]],
+                                self._waveforms[sorted_IDs[1]],
+                                SerialComm._default_wfm,
+                                SerialComm._default_wfm)
+            elif len(sorted_IDs) == 3:
+                self._PRU.curve(self._waveforms[sorted_IDs[0]],
+                                self._waveforms[sorted_IDs[1]],
+                                self._waveforms[sorted_IDs[2]],
+                                SerialComm._default_wfm)
+            elif len(sorted_IDs) > 3:
+                self._PRU.curve(self._waveforms[sorted_IDs[0]],
+                                self._waveforms[sorted_IDs[1]],
+                                self._waveforms[sorted_IDs[2]],
+                                self._waveforms[sorted_IDs[3]])
+
     def write(self, stream, timeout):
         """Return response to a BSMP stream command through UART."""
         self._PRU.UART_write(stream, timeout)
@@ -185,6 +233,8 @@ class SerialComm(_BSMPQuery):
         self._states[slave.ID_device] = _PSState(variables=self._variables)
         # init pwrsupply slave
         self._init_controller(slave)
+        # add entry in waveform dictionary
+        self._waveforms[slave.ID_device] = SerialComm._default_wfm
 
     def put(self, ID_device, ID_cmd, kwargs):
         """Put a SBMP command request in queue."""

@@ -83,8 +83,8 @@ class PowerSupply(_PSCommInterface):
 
     def write(self, field, value):
         """Write value to field."""
-        write = self._setpoints[field]['write']
-        return write(value)
+        func = self._setpoints[field]['func']
+        return func(value)
 
     def add_callback(self, func):
         """Add callback to be issued when a PV is updated."""
@@ -117,30 +117,32 @@ class PowerSupply(_PSCommInterface):
         return sp
 
     def _set_field_setpoint(self, keyvalue, field):
+        # should we use databse as setpoint state?!
+        db = self._base_db
         if field == 'PwrState-Sel':
-            keyvalue['write'] = self._set_pwrstate
-            keyvalue['value'] = 0.0
+            keyvalue['func'] = self._set_pwrstate
+            keyvalue['value'] = db['PwrState-Sel']['value']
         elif field == 'OpMode-Sel':
-            keyvalue['write'] = self._set_opmode
-            keyvalue['value'] = 0
+            keyvalue['func'] = self._set_opmode
+            keyvalue['value'] = db['OpMode-Sel']['value']
         elif field == 'Current-SP':
-            keyvalue['write'] = self._set_current
-            keyvalue['value'] = 0.0
+            keyvalue['func'] = self._set_current
+            keyvalue['value'] = db['Current-SP']['value']
         elif field == 'WfmLoad-Sel':
-            keyvalue['write'] = self._set_wfmload
-            keyvalue['value'] = 0
+            keyvalue['func'] = self._set_wfmload
+            keyvalue['value'] = db['WfmLoad-Sel']['value']
         elif field == 'WfmLabel-SP':
-            keyvalue['write'] = self._set_wfmlabel
-            keyvalue['value'] = ''
+            keyvalue['func'] = self._set_wfmlabel
+            keyvalue['value'] = db['WfmLabel-SP']['value']
         elif field == 'WfmData-SP':
-            keyvalue['write'] = self._set_wfmdata
-            keyvalue['value'] = []
+            keyvalue['func'] = self._set_wfmdata
+            keyvalue['value'] = [v for v in db['WfmData-SP']['value']]
         elif field == 'Abort-Cmd':
-            keyvalue['write'] = self._abort
-            keyvalue['value'] = 0
+            keyvalue['func'] = self._abort
+            keyvalue['value'] = db['Abort-Cmd']['value']
         elif field == 'Reset-Cmd':
-            keyvalue['write'] = self._reset
-            keyvalue['value'] = 0
+            keyvalue['func'] = self._reset
+            keyvalue['value'] = db['Reset-Cmd']['value']
 
     def _set_pwrstate(self, value):
         self._setpoints['PwrState-Sel']['value'] = value
