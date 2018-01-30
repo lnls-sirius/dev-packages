@@ -67,3 +67,38 @@ class BeagleBone():
     def __contains__(self, psname):
         """Test is psname is in psname list."""
         return psname in self._psnames
+
+
+class BeagleBoneTest(BeagleBone):
+    """Teste class."""
+
+    def __init__(self, pair=1):
+        """Retrieve power supplies."""
+        self._bbbname = 'teste'
+        self._simulate = False
+        self._pair = pair
+        if self._pair == 1:
+            self._psnames = ['BO-01U:PS-CH', 'BO-01U:PS-CV']
+        else:
+            self._psnames = ['BO-03U:PS-CH', 'BO-03U:PS-CV']
+
+        # create PRU and serial_comm
+        self._pru = _PRUSim() if self._simulate else _PRU()
+        self._serial_comm = _SerialComm(PRU=self._pru)
+        # create power supplies dictionary
+        self._power_supplies = self._get_power_supplies()
+
+    def _get_power_supplies(self):
+        # Return dict of power supply objects
+        power_supplies = dict()
+        if self._pair == 1:
+            IDs_device = (1, 2)
+        else:
+            IDs_device = (3, 4)
+        for i, psname in enumerate(self._psnames):
+            ID_device = IDs_device[i]
+            ps = _BSMPResponse(ID_device=ID_device, PRU=self._pru)
+            self._serial_comm.add_slave(ps)
+            c = _Controller(serial_comm=self._serial_comm, ID_device=ID_device)
+            power_supplies[psname] = _PowerSupply(controller=c, psname=psname)
+        return power_supplies
