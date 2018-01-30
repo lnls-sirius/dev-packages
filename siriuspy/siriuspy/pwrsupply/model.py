@@ -278,7 +278,7 @@ class PSEpics(_PSCommInterface):
             raise ValueError("Tried to set non callable as a callback")
         else:
             for pvname, pv in self._pvs.items():
-                field = pvname.split(':')[-1]
+                # field = pvname.split(':')[-1]
                 # if field in self.valid_fields:
                 pv.add_callback(func)
 
