@@ -156,6 +156,7 @@ class TestASAPChromCorrMain(unittest.TestCase):
         self.mock_epics.PV.return_value.get.return_value = 100
         app = App(self.mock_driver)
         app._status = 0
+        app._chrom_rb = [2.5756, 2.5033]
 
         for i in [0, 1]:
             app.write('CorrMeth-Sel', i)
@@ -172,6 +173,7 @@ class TestASAPChromCorrMain(unittest.TestCase):
         self.mock_epics.PV.return_value.get.return_value = 100
         app = App(self.mock_driver)
         app._status = 0
+        app._chrom_rb = [2.5756, 2.5033]
 
         sl_prop = [-0.37194429, -0.24413832,  0.64520428,  0.13271359,
                    0.22169022, -1.11355504, -0.79691189,  0.93075959,
@@ -194,6 +196,7 @@ class TestASAPChromCorrMain(unittest.TestCase):
         self.mock_epics.PV.return_value.get.return_value = 100
         app = App(self.mock_driver)
         app._status = 0
+        app._chrom_rb = [2.5756, 2.5033]
 
         sl_add = [-0.514462, -0.39441158,  0.53207633,  0.27768036,
                   0.2289987, -1.07109757, -0.76113451,  0.9952192,

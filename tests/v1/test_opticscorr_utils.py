@@ -450,14 +450,14 @@ class TestOpticsCorr(unittest.TestCase):
 
         # additional method
         delta_intstrengths = self.opticscorr.calculate_delta_intstrengths(
-            method=1, grouping='svd', opticsparam=delta_opticsparam)
+            method=1, grouping='svd', delta_opticsparam=delta_opticsparam)
         expected = [0.00027307, 0.00125755, 0.00063636, -0.00106541,
                     -0.00213666, -0.00032148, -0.00105963, -0.00015762]
         for i in range(len(delta_intstrengths)):
             self.assertAlmostEqual(delta_intstrengths[i], expected[i])
 
         delta_intstrengths = self.opticscorr.calculate_delta_intstrengths(
-            method=1, grouping='2knobs', opticsparam=delta_opticsparam)
+            method=1, grouping='2knobs', delta_opticsparam=delta_opticsparam)
         expected = [0.00110325, 0.00110325, 0.00110325, -0.00139674,
                     -0.00139674, -0.00139674, -0.00139674, -0.00139674]
         for i in range(len(delta_intstrengths)):
@@ -465,14 +465,14 @@ class TestOpticsCorr(unittest.TestCase):
 
         # proportional method
         delta_intstrengths = self.opticscorr.calculate_delta_intstrengths(
-            method=0, grouping='svd', opticsparam=delta_opticsparam)
+            method=0, grouping='svd', delta_opticsparam=delta_opticsparam)
         expected = [-0.00052788, 0.00164248, 0.00093635, -0.0006387,
                     -0.00196284, -0.00147348, -0.00097403, -0.00072931]
         for i in range(len(delta_intstrengths)):
             self.assertAlmostEqual(delta_intstrengths[i], expected[i])
 
         delta_intstrengths = self.opticscorr.calculate_delta_intstrengths(
-            method=0, grouping='2knobs', opticsparam=delta_opticsparam)
+            method=0, grouping='2knobs', delta_opticsparam=delta_opticsparam)
         expected = [0.00077053, 0.00133102, 0.00133102, -0.00104162,
                     -0.00128895, -0.00219475, -0.00128895, -0.00219475]
         for i in range(len(delta_intstrengths)):
@@ -490,7 +490,7 @@ class TestOpticsCorr(unittest.TestCase):
         delta_opticsparam = [0.01, 0.01]
 
         delta_intstrengths = self.opticscorr.calculate_delta_intstrengths(
-            method=1, grouping='svd', opticsparam=delta_opticsparam)
+            method=1, grouping='svd', delta_opticsparam=delta_opticsparam)
         expected = [0.00034033, 0.0015503, 0.,
                     -0.00127996, -0.00256688, -0.00037835, 0., 0.]
         for i in range(len(delta_intstrengths)):

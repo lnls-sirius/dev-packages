@@ -43,8 +43,8 @@ class App:
 
         self._driver = driver
 
-        self._chromx = 0
-        self._chromy = 0
+        self._chrom_sp = [0, 0]
+        self._chrom_rb = [0, 0]
 
         self._status = _ALLSET
         self._sfam_check_connection = len(self._SFAMS)*[0]
@@ -214,13 +214,13 @@ class App:
         """Write value to reason and let callback update PV database."""
         status = False
         if reason == 'ChromX-SP':
-            self._chromx = value
+            self._chrom_sp[0] = value
             self._calc_sl()
             self.driver.updatePVs()
             status = True
 
         elif reason == 'ChromY-SP':
-            self._chromy = value
+            self._chrom_sp[1] = value
             self._calc_sl()
             self.driver.updatePVs()
             status = True
@@ -236,7 +236,7 @@ class App:
             [done, corrparams] = self._get_corrparams(value)
             if done:
                 _set_config_name(acc=self._ACC.lower(),
-                                 opticsparam='tune',
+                                 opticsparam='chrom',
                                  config_name=value)
                 self.driver.setParam('CorrParamsConfigName-RB', value)
                 self._nominal_matrix = corrparams[0]
@@ -325,14 +325,17 @@ class App:
             return [done, []]
 
     def _calc_sl(self):
+        delta_chromx = self._chrom_sp[0]-self._chrom_rb[0]
+        delta_chromy = self._chrom_sp[1]-self._chrom_rb[1]
+
         if self._corr_method == 0:
             lastcalcd_deltasl = self._opticscorr.calculate_delta_intstrengths(
                 method=0, grouping='svd',
-                opticsparam=[self._chromx, self._chromy])
+                delta_opticsparam=[delta_chromx, delta_chromy])
         else:
             lastcalcd_deltasl = self._opticscorr.calculate_delta_intstrengths(
                 method=1, grouping='svd',
-                opticsparam=[self._chromx, self._chromy])
+                delta_opticsparam=[delta_chromx, delta_chromy])
 
         self.driver.setParam('Log-Mon', 'Calculated SL.')
 
@@ -395,9 +398,9 @@ class App:
             sfam_deltasl[fam_index] = (self._sfam_sl_rb[fam_index] -
                                        self._sfam_nomsl[fam_index])
 
-        chrom_rb = self._opticscorr.calculate_opticsparam(sfam_deltasl)
-        self.driver.setParam('ChromX-RB', chrom_rb[0])
-        self.driver.setParam('ChromY-RB', chrom_rb[1])
+        self._chrom_rb = self._opticscorr.calculate_opticsparam(sfam_deltasl)
+        self.driver.setParam('ChromX-RB', self._chrom_rb[0])
+        self.driver.setParam('ChromY-RB', self._chrom_rb[1])
         self.driver.updatePVs()
 
     def _callback_sfam_pwrstate_sts(self, pvname, value, **kws):
