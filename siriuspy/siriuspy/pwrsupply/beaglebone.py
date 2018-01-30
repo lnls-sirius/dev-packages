@@ -27,7 +27,7 @@ class BeagleBone():
         self._pru = _PRUSim() if self._simulate else _PRU()
         self._serial_comm = _SerialComm(PRU=self._pru)
         # create power supplies dictionary
-        self._power_supplies = self._get_power_supplies()
+        self._power_supplies = self._create_power_supplies()
 
     @property
     def psnames(self):
@@ -44,7 +44,11 @@ class BeagleBone():
         """Set ps variable scanning state."""
         self._serial_comm.scanning = value
 
-    def _get_power_supplies(self):
+    @property
+    def power_supplies(self):
+        return self._power_supplies.values()
+
+    def _create_power_supplies(self):
         # Return dict of power supply objects
         power_supplies = dict()
         for i, psname in enumerate(self._psnames):
@@ -94,7 +98,7 @@ class BeagleBoneTest(BeagleBone):
         if self._pair == 1:
             IDs_device = (1, 2)
         else:
-            IDs_device = (3, 4)
+            IDs_device = (5, 6)
         for i, psname in enumerate(self._psnames):
             ID_device = IDs_device[i]
             ps = _BSMPResponse(ID_device=ID_device, PRU=self._pru)

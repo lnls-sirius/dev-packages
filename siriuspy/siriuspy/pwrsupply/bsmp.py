@@ -612,12 +612,12 @@ class BSMPResponse(_BSMPResponse, StreamChecksum):
         if ID_group == Const.group_id:
             data = [ord(element) for element in load]
             value = dict()
-            value['ps_status'] = data[0] + (data[1] << 8)
-            value['ps_setpoint'] = _struct.unpack("<f", bytes(data[2:6]))[0]
-            value['ps_reference'] = _struct.unpack("<f", bytes(data[6:10]))[0]
-            value['ps_soft_interlocks'] = data[10] + (data[11] << 8)
-            value['ps_hard_interlocks'] = data[12] + (data[13] << 8)
-            value['i_load'] = _struct.unpack("<f", bytes(data[14:18]))[0]
+            value[Const.ps_status] = data[0] + (data[1] << 8)
+            value[Const.ps_setpoint] = _struct.unpack("<f", bytes(data[2:6]))[0]
+            value[Const.ps_reference] = _struct.unpack("<f", bytes(data[6:10]))[0]
+            value[Const.ps_soft_interlocks] = data[10] + (data[11] << 8)
+            value[Const.ps_hard_interlocks] = data[12] + (data[13] << 8)
+            value[Const.i_load] = _struct.unpack("<f", bytes(data[14:18]))[0]
         else:
             raise ValueError('Invalid group ID!')
         return _ack.ok, value
@@ -632,15 +632,24 @@ class BSMPResponse(_BSMPResponse, StreamChecksum):
                            Const.reset_interlocks):
             load = []
         elif ID_function == Const.set_slowref:
-            load = list(_struct.pack("<f", kwargs['setpoint']))
+            load = [chr(b) for b in _struct.pack("<f", kwargs['setpoint'])]
         else:
             raise NotImplementedError
-        n = len(load)
+        n = 1 + len(load)
         hb, lb = (n & 0xFF00) >> 8, n & 0xFF
         query = [chr(ID_receiver), '\x50', chr(hb), chr(lb),
                  chr(ID_function)] + load
+        query = BSMPResponse.includeChecksum(query)
+        # print('cmd_0x51: ', n, query)
         self._pru.UART_write(query, timeout=100)
         response = self._pru.UART_read()
         # process response
         ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
-        return ID_cmd, None
+        if ID_cmd != 0x51:
+            # currently ps slaves are returning 0x53 sometimes !!!
+            # print('anomalous response!')
+            # print('query    : ', [hex(ord(c)) for c in query])
+            # print('response : ', [hex(ord(c)) for c in response])
+            # return ID_cmd, load
+            return _ack.ok, None
+        return _ack.ok, None
