@@ -1,6 +1,6 @@
 """Search module."""
-import copy as _copy
 
+import copy as _copy
 from siriuspy import util as _util
 from siriuspy.namesys import Filter as _Filter
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
@@ -426,7 +426,8 @@ class MASearch:
             MASearch._reload_maname_2_splims_dict()
         return _copy.deepcopy(MASearch._maname_2_splims_dict)
 
-    # Private methods
+    # --- private methods ---
+
     @staticmethod
     def _reload_maname_2_splims_dict():
         """Build dict with limits for each magnet."""

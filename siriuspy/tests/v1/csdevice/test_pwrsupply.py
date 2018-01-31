@@ -14,7 +14,6 @@ _mock_flag = True
 public_interface = (
     'default_wfmsize',
     'default_wfmlabels',
-    'default_intlklabels',
     'default_ps_current_precision',
     'default_pu_current_precision',
     'ps_models',
@@ -26,9 +25,11 @@ public_interface = (
     'ps_pwrstate_sts',
     'ps_opmode',
     'ps_cmdack',
-    'Const',
     'ps_soft_interlock',
     'ps_hard_interlock',
+
+    'Const',
+
     'get_ps_current_unit',
     'get_pu_current_unit',
     'get_common_propty_database',
