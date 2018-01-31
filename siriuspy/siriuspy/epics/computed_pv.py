@@ -101,6 +101,18 @@ class ComputedPV:
         self._callbacks.append(func)
         return len(self._callbacks) - 1
 
+    def run_callbacks(self):
+        """Run all callbacks."""
+        self._issue_callback(**{
+            'pvname': self.pvname,
+            'value': self.value,
+            'high': self.upper_warning_limit,
+            'low': self.lower_warning_limit,
+            'hihi': self.upper_alarm_limit,
+            'lolo': self.lower_alarm_limit,
+            'hilim': self.upper_disp_limit,
+            'lolim': self.lower_disp_limit})
+
     def wait_for_connection(self, timeout):
         """Wait util computed PV is connected or until timeout."""
         pass
