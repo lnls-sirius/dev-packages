@@ -16,6 +16,7 @@ class PSSearch:
     _splims_ps_unit = None
     _splims_pu_unit = None
     _psnames_list = None
+    _bbbnames_list = None
     _pstype_2_psnames_dict = None
     _pstype_2_splims_dict = None
     _pstype_2_excdat_dict = dict()
@@ -28,7 +29,8 @@ class PSSearch:
         """Return a sorted and filtered list of all power supply names."""
         if PSSearch._pstype_2_psnames_dict is None:
             PSSearch._reload_pstype_2_psnames_dict()
-        return _Filter.process_filters(PSSearch._psnames_list, filters=filters)
+        return sorted(_Filter.process_filters(PSSearch._psnames_list,
+                                              filters=filters))
 
     @staticmethod
     def get_pstype_names():
@@ -36,6 +38,14 @@ class PSSearch:
         if PSSearch._pstype_dict is None:
             PSSearch._reload_pstype_dict()
         return sorted(set(PSSearch._pstype_dict.keys()))
+
+    @staticmethod
+    def get_bbbnames(filters=None):
+        """Return a sorted and filtered list of all beaglebone names."""
+        if PSSearch._psname_2_bbbname_dict is None:
+            PSSearch._reload_bbb_2_psname_dict()
+        return sorted(_Filter.process_filters(PSSearch._bbbnames_list,
+                                              filters=filters))
 
     @staticmethod
     def get_splims(pstype, label):
@@ -283,19 +293,22 @@ class PSSearch:
         data, _ = \
             _util.read_text_data(_web.beaglebone_power_supplies_mapping())
 
+        PSSearch._bbbnames_list = []
         for d in data:
-            bbb_name = d[0]
+            bbbname = d[0]
             psnames = d[1:]
+            PSSearch._bbbnames_list.append(bbbname)
             # bbb -> ps
-            if bbb_name in PSSearch._bbbname_2_psnames_dict:
-                PSSearch._bbbname_2_psnames_dict[bbb_name] += psnames
+            if bbbname in PSSearch._bbbname_2_psnames_dict:
+                PSSearch._bbbname_2_psnames_dict[bbbname] += psnames
             else:
-                PSSearch._bbbname_2_psnames_dict[bbb_name] = psnames
+                PSSearch._bbbname_2_psnames_dict[bbbname] = psnames
             # ps -> bbb
             for psname in psnames:
                 if psname in PSSearch._psname_2_bbbname_dict:
                     raise ValueError("Repeated power supply {}".format(psname))
-                PSSearch._psname_2_bbbname_dict[psname] = bbb_name
+                PSSearch._psname_2_bbbname_dict[psname] = bbbname
+            PSSearch._bbbnames_list = sorted(set(PSSearch._bbbnames_list))
 
 
 class MASearch:

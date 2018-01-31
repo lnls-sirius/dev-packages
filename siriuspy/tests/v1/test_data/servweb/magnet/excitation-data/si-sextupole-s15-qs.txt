@@ -1,0 +1,68 @@
+# HEADER
+# ======
+# label           si-sextupole-s15-qs
+# harmonics       0 1 2 3 4 6 7 8 9 10 13 14
+# main_harmonic   1 skew
+# units           Ampere  T*m T*m  T T  T.m/m^1 T.m/m^1  T.m/m^2 T.m/m^2  T.m/m^3 T.m/m^3  T.m/m^5 T.m/m^5  T.m/m^6 T.m/m^6  T.m/m^7 T.m/m^7  T.m/m^8 T.m/m^8  T.m/m^9 T.m/m^9  T.m/m^12 T.m/m^12  T.m/m^13 T.m/m^13
+
+# EXCITATION DATA
+# ===============
+-004.300  +1.3783e-05 +3.6062e-08  -0.0000e+00 -9.9958e-02  -8.0000e-02 +3.2650e-04  -0.0000e+00 +4.0074e+02  -1.6072e+02 +7.0328e+01  +5.2210e+06 -2.4692e+06  -0.0000e+00 -7.0534e+08  -3.0740e+10 +2.6476e+10  -0.0000e+00 -4.5194e+12  -0.0000e+00 -9.0382e+13  -0.0000e+00 +3.5912e+19  +8.1400e+20 -0.0000e+00
++004.300  -1.3783e-05 -3.6062e-08  +0.0000e+00 +9.9958e-02  +8.0000e-02 -3.2650e-04  +0.0000e+00 -4.0074e+02  +1.6072e+02 -7.0328e+01  -5.2210e+06 +2.4692e+06  +0.0000e+00 +7.0534e+08  +3.0740e+10 -2.6476e+10  +0.0000e+00 +4.5194e+12  +0.0000e+00 +9.0382e+13  +0.0000e+00 -3.5912e+19  -8.1400e+20 +0.0000e+00
+
+# COMMENTS
+# ========
+# 1. data from (SX+QS): https://github.com/lnls-ima/si-sextupoles-s15/blob/master/links-official-sx-qs/analysis.txt
+#              (SX)   : https://github.com/lnls-ima/si-sextupoles-s15/blob/master/links-official-sx/analysis.txt
+# 2. multipoles for QS are given the difference (SX+QS) - (SX) from data in above analysis files.
+
+# POLARITY TABLE
+# ==============
+#
+# Magnet function         | IntStrength(1) | IntField(2) | ConvSign(3) | Current(4)
+# ------------------------|----------------|-------------|-------------|-----------
+# dipole                  | Angle > 0      | BYL  < 0    | -1.0        | I > 0
+# corrector-horizontal    | HKick > 0      | BYL  > 0    | +1.0        | I > 0
+# corrector-vertical      | VKick > 0      | BXL  < 0    | -1.0        | I > 0
+# quadrupole (focusing)   | KL    > 0      | D1NL < 0    | -1.0        | I > 0
+# quadrupole (defocusing) | KL    < 0      | D1NL > 0    | -1.0        | I > 0
+# quadrupole (skew)       | KL    > 0      | D1SL > 0    | +1.0        | I > 0
+# sextupole  (focusing)   | SL    > 0      | D2NL < 0    | -1.0        | I > 0
+# sextupole  (defocusing) | SL    < 0      | D2NL > 0    | -1.0        | I > 0
+#
+# Defs:
+# ----
+# BYL   := \int{dz By|_{x=y=0}}.
+# BXL   := \int{dz Bx|_{x=y=0}}.
+# D1NL  := \int{dz \frac{dBy}{dx}_{x=y=0}}
+# D2NL  := (1/2!) \int{dz \frac{d^2By}{dx^2}_{x=y=0}}
+# D1SL  := \int{dz \frac{dBx}{dx}_{x=y=0}}
+# Brho  := magnetic rigidity.
+# Angle := ConvSign * BYL / abs(Brho)
+# HKick := ConvSign * BYL / abs(Brho)
+# VKick := ConvSign * BXL / abs(Brho)
+# KL    := ConvSign * D1NL / abs(Brho)
+# SL    := ConvSign * D2NL / abs(Brho)
+#
+# Obs:
+# ---
+# (1) Parameter definition.
+#     IntStrength values correspond to integrated PolynomA and PolynomB parameters
+#     of usual beam tracking codes, with the exception that VKick has its sign
+#     reversed with respecto to its corresponding value in PolynomA.
+# (2) Sirius coordinate system and Lorentz force.
+# (3) Conversion sign for IntField <-> IntStrength
+# (4) Convention of magnet excitation polarity, so that when I > 0 the strength
+#     of the magnet has the expected conventional sign.
+
+# STATIC DATA FILE FORMAT
+# =======================
+#
+# These static data files should comply with the following formatting rules:
+# 1. If the first alphanumeric character of the line is not the pound sign
+#    then the lines is a comment.
+# 2. If the first alphanumeric character is '#' then if
+#    a) it is followed by '[<parameter>] <value>' a parameter names <parameter>
+#       is define with value <value>. if the string <value> has spaces in it
+#       it is split as a list of strings.
+#    b) otherwise the line is ignored as a comment line.

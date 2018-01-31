@@ -9,7 +9,7 @@ from siriuspy import util
 from siriuspy import search
 from siriuspy.search import PSSearch
 from siriuspy.search import MASearch
-
+from siriuspy.magnet.excdata import ExcitationData
 
 mock_flag = True
 
@@ -22,6 +22,18 @@ public_interface = (
 def read_test_file(path):
     """Read a file."""
     with open('test_data/servweb/' + path, "r") as fd:
+        return fd.read()
+
+
+def read_test_ps_pstypes(path):
+    """Read a file."""
+    with open('test_data/servweb/pwrsupply/pstypes-data/' + path, "r") as fd:
+        return fd.read()
+
+
+def read_test_ma_excdata(path):
+    """Read a file."""
+    with open('test_data/servweb/magnet/excitation-data/' + path, "r") as fd:
         return fd.read()
 
 
@@ -40,6 +52,7 @@ class TestPSSearch(unittest.TestCase):
     public_interface = (
         'get_psnames',
         'get_pstype_names',
+        'get_bbbnames',
         'get_splims',
         'get_pstype_dict',
         'get_polarities',
@@ -78,6 +91,11 @@ class TestPSSearch(unittest.TestCase):
         'TS-04:PU-InjSF': 'ts-injseptum-thin',
         'TS-04:PU-InjSG-1': 'ts-injseptum-thick',
         'TS-04:PU-InjSG-2': 'ts-injseptum-thick',
+    }
+
+    sample_bbb = {
+        'BO-Glob:CO-BBB-1': None,
+        'BO-Glob:CO-BBB-2': None,
     }
 
     pstype2polarity = {
@@ -134,16 +152,20 @@ class TestPSSearch(unittest.TestCase):
             # Set mocked functions behaviour
             self.mock_web.server_online.return_value = True
             self.mock_web.ps_pstypes_names_read.return_value = \
-                read_test_file('pstypes-names.txt')
-            self.mock_web.ps_pstype_data_read.side_effect = read_test_file
+                read_test_file('pwrsupply/pstypes-names.txt')
+            self.mock_web.ps_pstype_data_read.side_effect = \
+                read_test_ps_pstypes
             self.mock_web.ps_pstype_setpoint_limits.return_value = \
-                read_test_file('pstypes-setpoint-limits.txt')
+                read_test_file('pwrsupply/pstypes-setpoint-limits.txt')
             self.mock_web.pu_pstype_setpoint_limits.return_value = \
-                read_test_file('putypes-setpoint-limits.txt')
+                read_test_file('pwrsupply/putypes-setpoint-limits.txt')
             self.mock_web.ps_psmodels_read.return_value = \
-                read_test_file('psmodels.txt')
+                read_test_file('pwrsupply/psmodels.txt')
             self.mock_web.pu_psmodels_read.return_value = \
-                read_test_file('pumodels.txt')
+                read_test_file('pwrsupply/pumodels.txt')
+            self.mock_web.beaglebone_power_supplies_mapping.return_value = \
+                read_test_file(
+                    'pwrsupply/beaglebone-mapping.txt')
 
     def test_public_interface(self):
         """Test class public interface."""
@@ -155,33 +177,56 @@ class TestPSSearch(unittest.TestCase):
         """Test get_psnames."""
         # without filters
         psnames = PSSearch.get_psnames()
-        # self.assertIsInstance(psnames, (list, tuple))
-        # for psname in TestPSSearch.sample:
-        #     self.assertIn(psname, psnames)
-        # # check sorted
-        # sorted_psnames = sorted(psnames)
-        # self.assertEqual(psnames, sorted_psnames)
-        # # with filters
-        # psnames = PSSearch.get_psnames({'dis': 'PU'})
-        # self.assertEqual(len(psnames), 12)
-        # for name in psnames:
-        #     self.assertIn('PU', name)
-        # psnames = PSSearch.get_psnames({'sub': '0.M1'})
-        # self.assertEqual(len(psnames), 69)
-        # # exceptions
-        # self.assertRaises(TypeError, PSSearch.get_psnames, filters=23)
-        # self.assertRaises(TypeError, PSSearch.get_psnames, filters=23.4)
-        # self.assertRaises(TypeError, PSSearch.get_psnames, filters=[0, ])
-        # self.assertRaises(TypeError, PSSearch.get_psnames, filters=(0.0, ))
+        self.assertIsInstance(psnames, (list, tuple))
+        for psname in TestPSSearch.sample:
+            self.assertIn(psname, psnames)
+        # check sorted
+        sorted_psnames = sorted(psnames)
+        self.assertEqual(psnames, sorted_psnames)
+        # with filters
+        psnames = PSSearch.get_psnames({'dis': 'PU'})
+        self.assertEqual(len(psnames), 12)
+        for name in psnames:
+            self.assertIn('PU', name)
+        psnames = PSSearch.get_psnames({'sub': '0.M1'})
+        self.assertEqual(len(psnames), 69)
+        # exceptions
+        self.assertRaises(TypeError, PSSearch.get_psnames, filters=23)
+        self.assertRaises(TypeError, PSSearch.get_psnames, filters=23.4)
+        self.assertRaises(TypeError, PSSearch.get_psnames, filters=[0, ])
+        self.assertRaises(TypeError, PSSearch.get_psnames, filters=(0.0, ))
 
-    def _test_get_pstype_names(self):
+    def test_get_pstype_names(self):
         """Test get_pstype_names."""
         pstypes = PSSearch.get_pstype_names()
         self.assertIsInstance(pstypes, list)
         for pstype in pstypes:
             self.assertIsInstance(pstype, str)
 
-    def _test_get_splims(self):
+    def test_get_bbbnames(self):
+        """Test get_bbbnames."""
+        # without filters
+        bbbnames = PSSearch.get_bbbnames()
+        self.assertIsInstance(bbbnames, (list, tuple))
+        for bbbname in TestPSSearch.sample_bbb:
+            self.assertIn(bbbname, bbbnames)
+        # check sorted
+        sorted_bbbnames = sorted(bbbnames)
+        self.assertEqual(bbbnames, sorted_bbbnames)
+        # with filters
+        bbbnames = PSSearch.get_bbbnames({'dis': 'CO'})
+        self.assertEqual(len(bbbnames), 214)
+        for name in bbbnames:
+            self.assertIn('CO', name)
+        bbbnames = PSSearch.get_bbbnames({'sub': 'Glob'})
+        self.assertEqual(len(bbbnames), 14)
+        # exceptions
+        self.assertRaises(TypeError, PSSearch.get_psnames, filters=23)
+        self.assertRaises(TypeError, PSSearch.get_psnames, filters=23.4)
+        self.assertRaises(TypeError, PSSearch.get_psnames, filters=[0, ])
+        self.assertRaises(TypeError, PSSearch.get_psnames, filters=(0.0, ))
+
+    def test_get_splims(self):
         """Test get_splims."""
         l1 = PSSearch.get_splims(
              pstype='si-quadrupole-q30-trim', label='lolo')
@@ -196,7 +241,7 @@ class TestPSSearch(unittest.TestCase):
             KeyError, PSSearch.get_splims,
             pstype='bo-corrector-ch', label='dummy')
 
-    def _test_get_pstype_dict(self):
+    def test_get_pstype_dict(self):
         """Test get_pstype_dict."""
         d = PSSearch.get_pstype_dict()
         self.assertIsInstance(d, dict)
@@ -204,7 +249,7 @@ class TestPSSearch(unittest.TestCase):
         pstypes = sorted(PSSearch.get_pstype_names())
         self.assertEqual(pstypes_d, pstypes)
 
-    def _test_get_polarities(self):
+    def test_get_polarities(self):
         """Test get_polarities."""
         polarities = PSSearch.get_polarities()
         self.assertIsInstance(polarities, list)
@@ -213,7 +258,7 @@ class TestPSSearch(unittest.TestCase):
         self.assertIn('bipolar', polarities)
         self.assertIn('monopolar', polarities)
 
-    def _test_conv_psname_2_pstypes(self):
+    def test_conv_psname_2_pstypes(self):
         """Test conv_psname_2_pstype."""
         for psname, pstype in TestPSSearch.sample.items():
             self.assertEqual(PSSearch.conv_psname_2_pstype(psname), pstype)
@@ -221,7 +266,7 @@ class TestPSSearch(unittest.TestCase):
         self.assertRaises(
             KeyError, PSSearch.conv_psname_2_pstype, psname='dummy')
 
-    def _test_conv_pstype_2_polarity(self):
+    def test_conv_pstype_2_polarity(self):
         """Test conv_pstype_2_polarity."""
         for pstype, polarity in TestPSSearch.pstype2polarity.items():
             self.assertEqual(
@@ -230,7 +275,7 @@ class TestPSSearch(unittest.TestCase):
         self.assertRaises(KeyError,
                           PSSearch.conv_pstype_2_polarity, pstype='dummy')
 
-    def _test_conv_pstype_2_magfunc(self):
+    def test_conv_pstype_2_magfunc(self):
         """Test conv_pstype_2_polarity."""
         for pstype, magfunc in TestPSSearch.pstype2magfunc.items():
             self.assertEqual(
@@ -239,7 +284,7 @@ class TestPSSearch(unittest.TestCase):
         self.assertRaises(KeyError,
                           PSSearch.conv_pstype_2_magfunc, pstype='dummy')
 
-    def _test_conv_pstype_2_splims(self):
+    def test_conv_pstype_2_splims(self):
         """Test conv_pstype_2_polarity."""
         pstypes = tuple(TestPSSearch.pstype2polarity.keys())
         for pstype in pstypes:
@@ -249,18 +294,19 @@ class TestPSSearch(unittest.TestCase):
         self.assertRaises(
             KeyError, PSSearch.conv_pstype_2_splims, pstype='dummy')
 
-    def _test_conv_psname_2_excdata(self):
+    def test_conv_psname_2_excdata(self):
         """Test conv_psname_2_excdata."""
         calls = []
         for ps, pstype in TestPSSearch.sample.items():
             if pstype in PSSearch._pstype_2_excdat_dict:
                 calls.append(mock.call(filename_web=pstype + '.txt'))
-            PSSearch.conv_psname_2_excdata(ps)
+            excdata = PSSearch.conv_psname_2_excdata(ps)
+            self.assertIsInstance(excdata, ExcitationData)
         if mock_flag:
             self.mock_excdata.assert_called()
             self.mock_excdata.assert_has_calls(calls)
 
-    def _test_check_psname_ispulsed(self):
+    def test_check_psname_ispulsed(self):
         """Test check_psname_ispulsed."""
         for psname in TestPSSearch.sample:
             if ":PU" in psname:
@@ -270,13 +316,13 @@ class TestPSSearch(unittest.TestCase):
         self.assertRaises(KeyError,
                           PSSearch.check_psname_ispulsed, psname='A-B:C-D:E')
 
-    def _test_conv_psname_2_psmodel(self):
-        """Test check_psname_ispulsed."""
+    def test_conv_psname_2_psmodel(self):
+        """Test conv_psname_2_psmodel."""
         for ps, pstype in TestPSSearch.sample.items():
-            # PSSearch.conv_psname_2_psmodel(psname=ps)
-            pass
+            model = PSSearch.conv_psname_2_psmodel(psname=ps)
+            self.assertIsInstance(model, str)
 
-    def _test_check_pstype_ispulsed(self):
+    def test_check_pstype_ispulsed(self):
         """Test check_pstype_isplused."""
         pstypes = PSSearch.get_pstype_names()
         for pstype in pstypes:
@@ -287,7 +333,16 @@ class TestPSSearch(unittest.TestCase):
         self.assertRaises(KeyError,
                           PSSearch.check_pstype_ispulsed, pstype='dummy')
 
-    def _test_get_pstype_2_psnames_dict(self):
+    def test_conv_bbbname_2_psnames(self):
+        """Test conv_bbbname_2_psnames."""
+        self.assertRaises(TypeError, PSSearch.conv_bbbname_2_psnames)
+        self.assertRaises(KeyError, PSSearch.conv_bbbname_2_psnames, '')
+        psnames = PSSearch.conv_bbbname_2_psnames(bbbname='SI-Glob:CO-BBB-1')
+        self.assertIsInstance(psnames, list)
+        self.assertGreater(len(psnames), 0)
+        self.assertIsInstance(psnames[0], str)
+
+    def test_get_pstype_2_psnames_dict(self):
         """Test get_pstype_2_psnames_dict."""
         typ2name = PSSearch.get_pstype_2_psnames_dict()
         self.assertIsInstance(typ2name, dict)
@@ -296,7 +351,7 @@ class TestPSSearch(unittest.TestCase):
             self.assertIsInstance(psnames, (tuple, list))
             self.assertTrue(len(psnames) > 0)
 
-    def _test_get_psname_2_splims_dict(self):
+    def test_get_psname_2_splims_dict(self):
         """Test conv psname_2_splims_dict."""
         limlabels = ('DRVL', 'LOLO', 'LOW', 'LOPR',
                      'HOPR', 'HIGH', 'HIHI', 'DRVH')
@@ -311,13 +366,13 @@ class TestPSSearch(unittest.TestCase):
             self.assertTrue(splims['LOW'] < splims['HIGH'])
             self.assertTrue(splims['HIGH'] <= splims['HIHI'])
 
-    def _test_get_splims_unit(self):
+    def test_get_splims_unit(self):
         """Test get_splims_unit."""
         self.assertEqual(PSSearch.get_splims_unit(True), ['V', 'Voltage'])
         self.assertEqual(PSSearch.get_splims_unit(False), ['A', 'Ampere'])
         self.assertRaises(ValueError, PSSearch.get_splims_unit, ispulsed='')
 
-    def _test_get_splims_labels(self):
+    def test_get_splims_labels(self):
         """Test get_splims_labels."""
         self.assertEqual(PSSearch.get_splims_labels(),
                          ['DRVL', 'LOLO', 'LOW', 'LOPR',
@@ -400,27 +455,28 @@ class TestMASearch(unittest.TestCase):
             # MASearch funcs
             self.mock_web.server_online.return_value = True
             self.mock_web.magnets_excitation_ps_read.return_value = \
-                read_test_file('magnet-excitation-ps.txt')
+                read_test_file('magnet/magnet-excitation-ps.txt')
             self.mock_web.magnets_setpoint_limits.return_value = \
-                read_test_file('magnet-setpoint-limits.txt')
+                read_test_file('magnet/magnet-setpoint-limits.txt')
             self.mock_web.pulsed_magnets_setpoint_limits.return_value = \
-                read_test_file('pulsed-magnet-setpoint-limits.txt')
+                read_test_file('magnet/pulsed-magnet-setpoint-limits.txt')
             # PSSearch funcs
             self.mock_web.ps_pstypes_names_read.return_value = \
-                read_test_file('pstypes-names.txt')
-            self.mock_web.ps_pstype_data_read.side_effect = read_test_file
+                read_test_file('pwrsupply/pstypes-names.txt')
+            self.mock_web.ps_pstype_data_read.side_effect = \
+                read_test_ps_pstypes
             self.mock_web.ps_pstype_setpoint_limits.return_value = \
-                read_test_file('pstypes-setpoint-limits.txt')
+                read_test_file('pwrsupply/pstypes-setpoint-limits.txt')
             self.mock_web.pu_pstype_setpoint_limits.return_value = \
-                read_test_file('putypes-setpoint-limits.txt')
+                read_test_file('pwrsupply/putypes-setpoint-limits.txt')
 
-    def _test_public_interface(self):
+    def test_public_interface(self):
         """Test class public interface."""
         valid = util.check_public_interface_namespace(
             search.MASearch, TestMASearch.public_interface)
         self.assertTrue(valid)
 
-    def _test_get_manames(self):
+    def test_get_manames(self):
         """Test get_manames."""
         manames = MASearch.get_manames()
         self.assertIsInstance(manames, (list, tuple))
@@ -437,7 +493,7 @@ class TestMASearch(unittest.TestCase):
         manames = MASearch.get_manames({'sub': '0.M1'})
         self.assertEqual(len(manames), 84)
 
-    def _test_get_pwrsupply_manames(self):
+    def test_get_pwrsupply_manames(self):
         """Test get_pwrsupply_manames."""
         ps_manames = MASearch.get_pwrsupply_manames()
         self.assertIsInstance(ps_manames, (list, tuple))
@@ -445,12 +501,12 @@ class TestMASearch(unittest.TestCase):
         for ps_maname in ps_manames:
             self.assertIn(ps_maname, manames)
 
-    def _test_get_splims_unit(self):
+    def test_get_splims_unit(self):
         """Test get_splims_unit."""
         self.assertEqual(MASearch.get_splims_unit(True), ['V', 'Voltage'])
         self.assertEqual(MASearch.get_splims_unit(False), ['A', 'Ampere'])
 
-    def _test_get_splims(self):
+    def test_get_splims(self):
         """Test get_pwrsupply_manames and get_splims."""
         manames = MASearch.get_pwrsupply_manames()
         for maname in manames:
@@ -463,17 +519,17 @@ class TestMASearch(unittest.TestCase):
             self.assertGreater(high, lolo)
             self.assertGreaterEqual(low, lolo)
 
-    def _test_conv_maname_2_trims(self):
+    def test_conv_maname_2_trims(self):
         """Test conv_maname_2_trims."""
         for ma, trims in TestMASearch.maname2trims.items():
             self.assertEqual(MASearch.conv_maname_2_trims(ma), trims)
 
-    def _test_conv_maname_2_magfunc(self):
+    def test_conv_maname_2_magfunc(self):
         """Test conv_maname_2_magfunc."""
         for ma, magfuncs in TestMASearch.maname2magfuncs.items():
             self.assertEqual(MASearch.conv_maname_2_magfunc(ma), magfuncs)
 
-    def _test_conv_maname_2_splims(self):
+    def test_conv_maname_2_splims(self):
         """Test conv_maname_2_splims."""
         limlabels = ('DRVL', 'LOLO', 'LOW', 'LOPR',
                      'HOPR', 'HIGH', 'HIHI', 'DRVH')
@@ -488,12 +544,12 @@ class TestMASearch(unittest.TestCase):
             self.assertTrue(splims['LOW'] < splims['HIGH'])
             self.assertTrue(splims['HIGH'] <= splims['HIHI'])
 
-    def _test_conv_maname_2_psnames(self):
+    def test_conv_maname_2_psnames(self):
         """Test conv_maname_2_psnames."""
         for ma, psnames in TestMASearch.maname2psnames.items():
             self.assertEqual(MASearch.conv_maname_2_psnames(ma), psnames)
 
-    def _test_check_maname_ispulsed(self):
+    def test_check_maname_ispulsed(self):
         """Test check_maname_ispulsed."""
         for maname in TestMASearch.maname2trims:
             if ":PM" in maname:
@@ -503,7 +559,7 @@ class TestMASearch(unittest.TestCase):
         self.assertRaises(KeyError,
                           MASearch.check_maname_ispulsed, maname='A-B:C-D:E')
 
-    def _test_get_maname_2_splims_dict(self):
+    def test_get_maname_2_splims_dict(self):
         """Test get_maname_2_splims_dict."""
         limlabels = ('DRVL', 'LOLO', 'LOW', 'LOPR',
                      'HOPR', 'HIGH', 'HIHI', 'DRVH')
