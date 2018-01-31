@@ -110,7 +110,7 @@ class PRU(_PRUInterface):
     def __init__(self):
         """Init method."""
         if _PRUserial485 is None:
-            raise ModuleNotFoundError('module PRUserial485 is not installed!')
+            raise ValueError('module PRUserial485 is not installed!')
         _PRUInterface.__init__(self)
         # signal use of PRU and shared memory.
         _PRUserial485.PRUserial485_open(6, b"M")

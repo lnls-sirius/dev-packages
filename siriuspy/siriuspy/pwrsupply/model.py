@@ -121,16 +121,20 @@ class PowerSupply(_PSCommInterface):
         db = self._base_db
         if field == 'PwrState-Sel':
             keyvalue['func'] = self._set_pwrstate
-            keyvalue['value'] = db['PwrState-Sel']['value']
+            # keyvalue['value'] = db['PwrState-Sel']['value']
+            keyvalue['value'] = self._controller.read('PwrState-Sts')
         elif field == 'OpMode-Sel':
             keyvalue['func'] = self._set_opmode
-            keyvalue['value'] = db['OpMode-Sel']['value']
+            # keyvalue['value'] = db['OpMode-Sel']['value']
+            keyvalue['value'] = self._controller.read('OpMode-Sts')
         elif field == 'Current-SP':
             keyvalue['func'] = self._set_current
-            keyvalue['value'] = db['Current-SP']['value']
+            # keyvalue['value'] = db['Current-SP']['value']
+            keyvalue['value'] = self._controller.read('Current-RB')
         elif field == 'WfmLoad-Sel':
             keyvalue['func'] = self._set_wfmload
-            keyvalue['value'] = db['WfmLoad-Sel']['value']
+            # keyvalue['value'] = db['WfmLoad-Sel']['value']
+            keyvalue['value'] = self._controller.read('Current-RB')
         elif field == 'WfmLabel-SP':
             keyvalue['func'] = self._set_wfmlabel
             keyvalue['value'] = db['WfmLabel-SP']['value']

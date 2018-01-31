@@ -613,8 +613,10 @@ class BSMPResponse(_BSMPResponse, StreamChecksum):
             data = [ord(element) for element in load]
             value = dict()
             value[Const.ps_status] = data[0] + (data[1] << 8)
-            value[Const.ps_setpoint] = _struct.unpack("<f", bytes(data[2:6]))[0]
-            value[Const.ps_reference] = _struct.unpack("<f", bytes(data[6:10]))[0]
+            value[Const.ps_setpoint] = \
+                _struct.unpack("<f", bytes(data[2:6]))[0]
+            value[Const.ps_reference] = \
+                _struct.unpack("<f", bytes(data[6:10]))[0]
             value[Const.ps_soft_interlocks] = data[10] + (data[11] << 8)
             value[Const.ps_hard_interlocks] = data[12] + (data[13] << 8)
             value[Const.i_load] = _struct.unpack("<f", bytes(data[14:18]))[0]

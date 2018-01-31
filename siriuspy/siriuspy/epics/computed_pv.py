@@ -4,6 +4,9 @@ from threading import Thread
 import time as _time
 
 
+_QUEUE_INTERVAL = 0.1  # [s]
+
+
 class QueueThread(Thread):
     """Callback queue class."""
 
@@ -31,7 +34,7 @@ class QueueThread(Thread):
                 function, args = func_item
                 function(*args)
             else:
-                _time.sleep(0.1)
+                _time.sleep(_QUEUE_INTERVAL)
 
     def stop(self):
         """Stop queue thread."""
@@ -71,6 +74,7 @@ class ComputedPV:
         # Add callback
         for pv in self.pvs:
             pv.add_callback(self._value_update_callback)
+
         # Init limits
         if self.connected:
             self.computer.compute_limits(self)
