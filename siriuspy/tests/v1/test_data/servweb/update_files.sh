@@ -8,6 +8,8 @@ MA_PATH=$WEB_PATH/magnet
 cp -rf $PS_PATH/pstypes-names.txt ./
 cp -rf $PS_PATH/pstypes-setpoint-limits.txt ./
 cp -rf $PS_PATH/putypes-setpoint-limits.txt ./
+cp -rf $PS_PATH/psmodels.txt ./
+cp -rf $PS_PATH/pumodels.txt ./
 
 # --- Magnets ---
 cp -rf $MA_PATH/excitation-data/* ./
