@@ -78,7 +78,10 @@ class App:
 
     def write(self, reason, value):
         """Write pv method."""
-        print('write', reason, value)
+        if isinstance(value, (int, float)):
+            print('write', reason, value)
+        else:
+            print('write', reason)
         parts = reason.split(':')
         propty = parts[-1]
         psname = ':'.join(parts[:2])

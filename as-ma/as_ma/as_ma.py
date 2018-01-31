@@ -15,7 +15,8 @@ stop_event = False
 
 def _stop_now(signum, frame):
     global stop_event
-    print(_signal.Signals(signum).name + ' received at ' + _util.get_timestamp())
+    print(_signal.Signals(signum).name +
+          ' received at ' + _util.get_timestamp())
     _sys.stdout.flush()
     _sys.stderr.flush()
     stop_event = True
@@ -55,7 +56,8 @@ def run(malist):
     running = _util.check_pv_online(
         pvname=pvname, use_prefix=False, timeout=0.5)
     if running:
-        print('Another ' + ioc_name + ' IOC is already running!')
+        # print('Another ' + ioc_name + ' IOC is already running!')
+        print('Another IOC providing "' + pvname + '"is already running!')
         return
 
     # create a new simple pcaspy server and driver to respond client's requests
