@@ -281,14 +281,17 @@ class App:
             if value != self._sync_corr:
                 self._sync_corr = value
 
-                for fam in self._QFAMS:
-                    fam_index = self._QFAMS.index(fam)
-                    self._qfam_check_opmode_sts[fam_index] = (
-                        self._qfam_opmode_sts_pvs[fam].value)
+                if (self._status & 0x1) == 0:
+                    for fam in self._QFAMS:
+                        fam_index = self._QFAMS.index(fam)
+                        self._qfam_check_opmode_sts[fam_index] = (
+                            self._qfam_opmode_sts_pvs[fam].value)
 
-                val = (1 if any(op != self._sync_corr for op in
-                                self._qfam_check_opmode_sts)
-                       else 0)
+                    val = (1 if any(op != value for op in
+                                    self._qfam_check_opmode_sts) else 0)
+                else:
+                    val = 1
+
                 self._status = _siriuspy.util.update_integer_bit(
                     integer=self._status, number_of_bits=5, value=val, bit=2)
 
