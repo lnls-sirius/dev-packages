@@ -9,27 +9,27 @@ from siriuspy.search import PSSearch
 
 MAX_N_DEV = 4  # Max number of devices an IOC may handle
 
-accelerator_structure = sys.argv[1]
-try:
-    device = sys.argv[2]
-except IndexError:
-    device = None
+if len(sys.argv) == 1:
+    sec, sub, dev = '.*', '.*', '.*'
+elif len(sys.argv) == 2:
+    sec, sub, dev = sys.argv[1], '.*', '.*'
+elif len(sys.argv) == 3:
+    sec, sub, dev = *sys.argv[1:3], '.*'
+else:
+    sec, sub, dev = sys.argv[1:]
 
 
-def get_bbbmap(accelerator_structure, device):
+def get_bbbmap(sec, sub, dev):
     """Return a dict mapping each BBB to a list of magnets."""
     si_bo_dipoles = re.compile('.*(SI|BO)-Fam:PS-B.*$')
     # Get section
-    if accelerator_structure == 'AS':
+    if sec == 'AS':
         section = '.*'
     else:
-        section = accelerator_structure
-    # Get pslist based on section and device pattern
-    if device is None:
-        pslist = PSSearch.get_psnames({'sec': section, 'dis': 'PS'})
-    else:
-        pslist = PSSearch.get_psnames(
-            {'sec': section, 'dis': 'PS', 'dev': device})
+        section = sec
+    # Get pslist based on section and dev pattern
+    pslist = PSSearch.get_psnames(
+            {'sec': section, 'sub': sub, 'dis': 'PS', 'dev': dev})
     bbbmap = {}
     # Iter pslist and build a dict mapping each BBB to a list of magnets
     for psname in pslist:
@@ -57,7 +57,7 @@ def get_bbbmap(accelerator_structure, device):
 processes = list()
 
 # Start IOC as processes for each MAX_N_DEV magnets
-for bbb, pslist in get_bbbmap(accelerator_structure, device).items():
+for bbb, pslist in get_bbbmap(sec, sub, dev).items():
     n_ps = len(pslist)
     n_dev = MAX_N_DEV
     p = 1 if n_ps % n_dev > 0 else 0
