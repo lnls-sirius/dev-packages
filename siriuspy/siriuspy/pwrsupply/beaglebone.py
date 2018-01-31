@@ -46,6 +46,7 @@ class BeagleBone():
 
     @property
     def power_supplies(self):
+        """Return list of power supplies."""
         return self._power_supplies.values()
 
     def _create_power_supplies(self):
@@ -74,7 +75,7 @@ class BeagleBone():
 
 
 class BeagleBoneTest(BeagleBone):
-    """Teste class."""
+    """Test class for ps-test-bench."""
 
     def __init__(self, pair=1):
         """Retrieve power supplies."""
