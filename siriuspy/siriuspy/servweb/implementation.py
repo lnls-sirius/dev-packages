@@ -35,18 +35,6 @@ def server_online():
         return False
 
 
-# def magnets_excitation_data_get_filenames_list(timeout=_timeout):
-#     """Get list of filenames in magnet
-#        excitation data folder at web server."""
-#     text = read_url(_excdat_folder, timeout=timeout)
-#     words = text.split('"[TXT]"></td><td><a href="')
-#     fname_list = []
-#     for word in words[1:]:
-#         fname = word.split('.txt">')[1].split('</a></td><td')
-#         fname_list.append(fname[0])
-#     return fname_list
-
-
 def magnets_excitation_data_read(filename, timeout=_timeout):
     """Return the text of the retrieved magnet excitation data."""
     return read_url(_excdat_folder + filename, timeout=timeout)

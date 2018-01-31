@@ -58,21 +58,23 @@ class TestServWeb(unittest.TestCase):
     """Test servweb."""
 
     api = {
-        "read_url",
-        "server_online",
-        "magnets_excitation_data_read",
-        "magnets_setpoint_limits",
-        "pulsed_magnets_setpoint_limits",
-        "magnets_excitation_ps_read",
-        "ps_pstypes_names_read",
-        "ps_pstype_data_read",
-        "ps_pstype_setpoint_limits",
-        "pu_pstype_setpoint_limits",
-        "beaglebone_power_supplies_mapping",
-        "crate_to_bpm_mapping",
-        "bpms_data",
-        "timing_devices_mapping",
-        "high_level_triggers"
+        'read_url',
+        'server_online',
+        'magnets_excitation_data_read',
+        'magnets_setpoint_limits',
+        'pulsed_magnets_setpoint_limits',
+        'magnets_excitation_ps_read',
+        'ps_pstypes_names_read',
+        'ps_pstype_data_read',
+        'ps_pstype_setpoint_limits',
+        'pu_pstype_setpoint_limits',
+        'ps_psmodels_read',
+        'pu_psmodels_read',
+        'beaglebone_power_supplies_mapping',
+        'crate_to_bpm_mapping',
+        'bpms_data',
+        'timing_devices_mapping',
+        'high_level_triggers'
     }
 
     def test_api(self, mock_read):
