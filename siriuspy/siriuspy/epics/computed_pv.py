@@ -79,6 +79,9 @@ class ComputedPV:
         if self.connected:
             self.computer.compute_limits(self)
 
+        for pv in self.pvs:
+            pv.run_callbacks()
+
     # Public interface
     @property
     def connected(self):
