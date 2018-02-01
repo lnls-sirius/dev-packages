@@ -54,7 +54,7 @@ class App:
 
         self._apply_sl_cmd_count = 0
         self._config_sfam_ps_cmd_count = 0
-        self._lastcalcd_sl = len(self._SFAMS)*[0]
+        self._lastcalc_sl = len(self._SFAMS)*[0]
 
         self._sfam_sl_rb = len(self._SFAMS)*[0]
 
@@ -206,7 +206,7 @@ class App:
                         limits['low'] = data['lower_alarm_limit']
                         limits['hihi'] = data['upper_warning_limit']
                         limits['lolo'] = data['lower_warning_limit']
-                    self.driver.setParamInfo('LastCalcd'+fam+'SL-Mon', limits)
+                    self.driver.setParamInfo('LastCalc'+fam+'SL-Mon', limits)
                 self.driver.updatePVs()
         return None
 
@@ -332,11 +332,11 @@ class App:
         delta_chromy = self._chrom_sp[1]-self._chrom_rb[1]
 
         if self._corr_method == 0:
-            lastcalcd_deltasl = self._opticscorr.calculate_delta_intstrengths(
+            lastcalc_deltasl = self._opticscorr.calculate_delta_intstrengths(
                 method=0, grouping='svd',
                 delta_opticsparam=[delta_chromx, delta_chromy])
         else:
-            lastcalcd_deltasl = self._opticscorr.calculate_delta_intstrengths(
+            lastcalc_deltasl = self._opticscorr.calculate_delta_intstrengths(
                 method=1, grouping='svd',
                 delta_opticsparam=[delta_chromx, delta_chromy])
 
@@ -345,10 +345,10 @@ class App:
         for fam in self._SFAMS:
             fam_index = self._SFAMS.index(fam)
             current_sl = self._sfam_sl_rb_pvs[fam].get()
-            self._lastcalcd_sl[fam_index] = (current_sl +
-                                             lastcalcd_deltasl[fam_index])
-            self.driver.setParam('LastCalcd' + fam + 'SL-Mon',
-                                 self._lastcalcd_sl[fam_index])
+            self._lastcalc_sl[fam_index] = (current_sl +
+                                            lastcalc_deltasl[fam_index])
+            self.driver.setParam('LastCalc' + fam + 'SL-Mon',
+                                 self._lastcalc_sl[fam_index])
         self.driver.updatePVs()
 
     def _apply_sl(self):
@@ -358,7 +358,7 @@ class App:
             for fam in pvs:
                 fam_index = self._SFAMS.index(fam)
                 pv = pvs[fam]
-                pv.put(self._lastcalcd_sl[fam_index])
+                pv.put(self._lastcalc_sl[fam_index])
             self.driver.setParam('Log-Mon', 'Applied SL.')
             self.driver.updatePVs()
 

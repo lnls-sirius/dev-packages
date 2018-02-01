@@ -111,8 +111,8 @@ class TestASAPOpticsCorrChromPvs(unittest.TestCase):
             self.assertTrue('Status-Cte' in db)
 
             for fam in sfams:
-                self.assertTrue('LastCalcd' + fam + 'SL-Mon' in db)
-                self.assertEqual(db['LastCalcd' + fam + 'SL-Mon']['unit'],
+                self.assertTrue('LastCalc' + fam + 'SL-Mon' in db)
+                self.assertEqual(db['LastCalc' + fam + 'SL-Mon']['unit'],
                                  '1/m^2')
             if accelerator == 'SI':
                 self.assertTrue('CorrMeth-Sel' in db)

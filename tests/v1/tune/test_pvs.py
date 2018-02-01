@@ -96,7 +96,7 @@ class TestASAPOpticsCorrTunePvs(unittest.TestCase):
             self.assertTrue('DeltaTuneX-RB' in db)
             self.assertTrue('DeltaTuneY-SP' in db)
             self.assertTrue('DeltaTuneY-RB' in db)
-            self.assertTrue('ApplyDeltaKL-Cmd' in db)
+            self.assertTrue('ApplyKL-Cmd' in db)
             self.assertTrue('CorrParamsConfigName-SP' in db)
             self.assertTrue('CorrParamsConfigName-RB' in db)
             self.assertTrue('CorrMat-Mon' in db)
@@ -113,8 +113,8 @@ class TestASAPOpticsCorrTunePvs(unittest.TestCase):
             for fam in qfams:
                 self.assertTrue(fam + 'RefKL-Mon' in db)
                 self.assertEqual(db[fam + 'RefKL-Mon']['unit'], '1/m')
-                self.assertTrue('LastCalcd' + fam + 'KL-Mon' in db)
-                self.assertEqual(db['LastCalcd' + fam + 'KL-Mon']['unit'],
+                self.assertTrue('LastCalc' + fam + 'KL-Mon' in db)
+                self.assertEqual(db['LastCalc' + fam + 'KL-Mon']['unit'],
                                  '1/m')
             if accelerator == 'SI':
                 self.assertTrue('CorrMeth-Sel' in db)

@@ -73,7 +73,7 @@ def get_pvs_database():
                                  'hilim': 1, 'lolim': -1, 'high': 1, 'low': -1,
                                  'hihi': 1, 'lolo': -1},
 
-        'ApplyDeltaKL-Cmd':     {'type': 'int', 'value': 0},
+        'ApplyKL-Cmd':     {'type': 'int', 'value': 0},
 
         'CorrParamsConfigName-SP': {'type': 'string', 'value': ''},
         'CorrParamsConfigName-RB': {'type': 'string', 'value': ''},
@@ -112,7 +112,7 @@ def get_pvs_database():
         pvs_database[fam + 'RefKL-Mon'] = {'type': 'float', 'value': 0,
                                            'prec': 6, 'unit': '1/m'}
 
-        pvs_database['LastCalcd' + fam + 'KL-Mon'] = {
+        pvs_database['LastCalc' + fam + 'KL-Mon'] = {
             'type': 'float', 'value': 0, 'prec': 6, 'unit': '1/m',
             'lolim': 0, 'hilim': 0, 'low': 0, 'high': 0, 'lolo': 0, 'hihi': 0}
 
