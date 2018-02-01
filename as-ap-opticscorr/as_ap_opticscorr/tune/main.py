@@ -54,9 +54,9 @@ class App:
 
         self._corr_factor = 0.0
         self._set_new_refkl_cmd_count = 0
-        self._apply_deltakl_cmd_count = 0
+        self._apply_kl_cmd_count = 0
         self._config_qfam_ps_cmd_count = 0
-        self._lastcalcd_deltakl = len(self._QFAMS)*[0]
+        self._lastcalc_deltakl = len(self._QFAMS)*[0]
 
         self._qfam_kl_rb = len(self._QFAMS)*[0]
 
@@ -138,7 +138,7 @@ class App:
                 self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':CtrlMode-Mon',
                 callback=self._callback_qfam_ctrlmode_mon)
 
-        self._lastcalcd_deltakl = len(self._QFAMS)*[0]
+        self._lastcalc_deltakl = len(self._QFAMS)*[0]
 
         # Connect to Timing
         self._timing_quads_state_sel = _epics.PV(
@@ -211,7 +211,7 @@ class App:
                         limits['low'] = data['lower_alarm_limit']
                         limits['hihi'] = data['upper_warning_limit']
                         limits['lolo'] = data['lower_warning_limit']
-                    self.driver.setParamInfo('LastCalcd'+fam+'KL-Mon', limits)
+                    self.driver.setParamInfo('LastCalc'+fam+'KL-Mon', limits)
                 self.driver.updatePVs()
         return None
 
@@ -230,12 +230,12 @@ class App:
             self.driver.updatePVs()
             status = True
 
-        elif reason == 'ApplyDeltaKL-Cmd':
-            done = self._apply_deltakl()
+        elif reason == 'ApplyKL-Cmd':
+            done = self._apply_kl()
             if done:
-                self._apply_deltakl_cmd_count += 1
-                self.driver.setParam('ApplyDeltaKL-Cmd',
-                                     self._apply_deltakl_cmd_count)
+                self._apply_kl_cmd_count += 1
+                self.driver.setParam('ApplyKL-Cmd',
+                                     self._apply_kl_cmd_count)
                 self.driver.updatePVs()
 
         elif reason == 'CorrParamsConfigName-SP':
@@ -346,33 +346,33 @@ class App:
 
     def _calc_deltakl(self):
         if self._corr_method == 0:
-            lastcalcd_deltakl = self._opticscorr.calculate_delta_intstrengths(
+            lastcalc_deltakl = self._opticscorr.calculate_delta_intstrengths(
                 method=0, grouping='2knobs',
                 delta_opticsparam=[self._delta_tunex, self._delta_tuney])
         else:
-            lastcalcd_deltakl = self._opticscorr.calculate_delta_intstrengths(
+            lastcalc_deltakl = self._opticscorr.calculate_delta_intstrengths(
                 method=1, grouping='2knobs',
                 delta_opticsparam=[self._delta_tunex, self._delta_tuney])
 
-        self.driver.setParam('Log-Mon', 'Calculated Delta KL.')
+        self.driver.setParam('Log-Mon', 'Calculated KL.')
 
-        self._lastcalcd_deltakl = lastcalcd_deltakl
+        self._lastcalc_deltakl = lastcalc_deltakl
         for fam in self._QFAMS:
             fam_index = self._QFAMS.index(fam)
             self.driver.setParam(
-                'LastCalcd' + fam + 'KL-Mon', self._qfam_refkl[fam] +
-                (self._corr_factor/100) * self._lastcalcd_deltakl[fam_index])
+                'LastCalc' + fam + 'KL-Mon', self._qfam_refkl[fam] +
+                (self._corr_factor/100) * self._lastcalc_deltakl[fam_index])
         self.driver.updatePVs()
 
-    def _apply_deltakl(self):
+    def _apply_kl(self):
         if ((self._status == _ALLCLR_SYNCOFF and self._sync_corr == 0) or
                 self._status == _ALLCLR_SYNCON):
             for fam in self._qfam_kl_sp_pvs:
                 fam_index = self._QFAMS.index(fam)
                 pv = self._qfam_kl_sp_pvs[fam]
                 pv.put(self._qfam_refkl[fam] + (self._corr_factor/100) *
-                       self._lastcalcd_deltakl[fam_index])
-            self.driver.setParam('Log-Mon', 'Applied Delta KL.')
+                       self._lastcalc_deltakl[fam_index])
+            self.driver.setParam('Log-Mon', 'Applied KL.')
             self.driver.updatePVs()
 
             if self._sync_corr == 1:
@@ -393,8 +393,8 @@ class App:
                 self.driver.setParam(fam + 'RefKL-Mon', self._qfam_refkl[fam])
 
                 fam_index = self._QFAMS.index(fam)
-                self._lastcalcd_deltakl[fam_index] = 0
-                self.driver.setParam('LastCalcd' + fam + 'KL-Mon', 0)
+                self._lastcalc_deltakl[fam_index] = 0
+                self.driver.setParam('LastCalc' + fam + 'KL-Mon', 0)
 
             # the deltas from new kl references are zero
             self._delta_tunex = 0

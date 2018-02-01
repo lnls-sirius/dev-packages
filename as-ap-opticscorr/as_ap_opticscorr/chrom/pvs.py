@@ -97,7 +97,7 @@ def get_pvs_database():
     }
 
     for fam in _SFAMS:
-        pvs_database['LastCalcd' + fam + 'SL-Mon'] = {
+        pvs_database['LastCalc' + fam + 'SL-Mon'] = {
             'type': 'float', 'value': 0, 'prec': 4, 'unit': '1/m^2',
             'lolim': 0, 'hilim': 0, 'low': 0, 'high': 0, 'lolo': 0, 'hihi': 0}
 

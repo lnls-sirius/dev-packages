@@ -121,7 +121,7 @@ class TestASAPChromCorrMain(unittest.TestCase):
         call_list = self.mock_driver.setParam.call_args_list
         count = 0
         for call in call_list:
-            if 'LastCalcd' in call[0][0]:
+            if 'LastCalc' in call[0][0]:
                 count += 1
         self.assertEqual(count, len(self.sfams))
 
@@ -146,7 +146,7 @@ class TestASAPChromCorrMain(unittest.TestCase):
         call_list = self.mock_driver.setParam.call_args_list
         count = 0
         for call in call_list:
-            if 'LastCalcd' in call[0][0]:
+            if 'LastCalc' in call[0][0]:
                 count += 1
         self.assertEqual(count, len(self.sfams))
 
@@ -164,7 +164,7 @@ class TestASAPChromCorrMain(unittest.TestCase):
             app.write('ChromY-SP', 2.5033)
             calls = []
             for fam in self.sfams:
-                calls.append(mock.call('LastCalcd' + fam + 'SL-Mon', 100))
+                calls.append(mock.call('LastCalc' + fam + 'SL-Mon', 100))
             self.mock_driver.setParam.assert_has_calls(calls, any_order=True)
 
     def test_write_Chrom_anyvalue_ProportionalMeth(self):
@@ -185,8 +185,8 @@ class TestASAPChromCorrMain(unittest.TestCase):
         app.write('ChromY-SP', 0.0)
         call_list = self.mock_driver.setParam.call_args_list
         for call in call_list:
-            if 'LastCalcd' in call[0][0]:
-                fam = call[0][0].split('LastCalcd')[1].split('SL-Mon')[0]
+            if 'LastCalc' in call[0][0]:
+                fam = call[0][0].split('LastCalc')[1].split('SL-Mon')[0]
                 fam_index = self.sfams.index(fam)
                 self.assertAlmostEqual(call[0][1], sl_prop[fam_index]+100)
 
@@ -208,8 +208,8 @@ class TestASAPChromCorrMain(unittest.TestCase):
         app.write('ChromY-SP', 0.0)
         call_list = self.mock_driver.setParam.call_args_list
         for call in call_list:
-            if 'LastCalcd' in call[0][0]:
-                fam = call[0][0].split('LastCalcd')[1].split('SL-Mon')[0]
+            if 'LastCalc' in call[0][0]:
+                fam = call[0][0].split('LastCalc')[1].split('SL-Mon')[0]
                 fam_index = self.sfams.index(fam)
                 self.assertAlmostEqual(call[0][1], sl_add[fam_index]+100)
 
