@@ -4,6 +4,7 @@ import re as _re
 from threading import Thread as _Thread
 import time as _time
 from epics import PV as _PV
+from siriuspy.epics import connection_timeout as _connection_timeout
 from siriuspy.epics.computed_pv import ComputedPV as _ComputedPV
 from siriuspy.pwrsupply.data import PSData as _PSData
 from siriuspy.magnet.data import MAData as _MAData
@@ -315,7 +316,8 @@ class PSEpics(_PSCommInterface):
             # return _PV(self._prefix + self.psname + ":" + field)
 
     def _create_pv(self, field):
-        return _PV(self._prefix + self._psname + ":" + field)
+        return _PV(self._prefix + self._psname + ":" + field,
+                   connection_timeout=_connection_timeout)
 
     def _get_base_db(self):
         return _PSData(self._psname).propty_database

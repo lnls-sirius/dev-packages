@@ -2,7 +2,7 @@
 from epics import get_pv
 from threading import Thread
 import time as _time
-
+from siriuspy.epics import connection_timeout as _connection_timeout
 
 _QUEUE_INTERVAL = 0.1  # [s]
 
@@ -68,7 +68,8 @@ class ComputedPV:
         self.pvs = list()  # List with PVs used by the computed PV
         for pv in pvs:
             if isinstance(pv, str):  # give up string option.
-                self.pvs.append(get_pv(pv))
+                tpv = get_pv(pv, connection_timeout=_connection_timeout)
+                self.pvs.append(tpv)
             else:
                 self.pvs.append(pv)
         # Add callback

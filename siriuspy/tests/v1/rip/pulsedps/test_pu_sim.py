@@ -2,13 +2,13 @@
 """Test simulation of pulsed power supply."""
 import unittest
 from unittest import mock
-from siriuspy.pulsedps.model import PulsedPowerSupplySim
+from siriuspy.pulsedps_orig.model import PulsedPowerSupplySim
 
 
 def mock_psdata(testcase):
     """Mock PSData."""
     data_patcher = mock.patch(
-        'siriuspy.pulsedps.model._PSData', autospec=True)
+        'siriuspy.pulsedps_orig.model._PSData', autospec=True)
     testcase.addCleanup(data_patcher.stop)
     testcase.data_mock = data_patcher.start()
     type(testcase.data_mock.return_value).propty_database = \
