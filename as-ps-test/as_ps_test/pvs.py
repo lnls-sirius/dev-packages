@@ -41,6 +41,7 @@ def get_pvs_database(bbblist):
     ps_devices = get_ps_devices(bbblist)
     db = {bbblist[0] + '-Glob:PS-Test:Version-Cte':
           {'type': 'str', 'value': _COMMIT_HASH}}
+    db = {}
     for psname in ps_devices:
         ps_db = ps_devices[psname].get_database()
         props = list(ps_db.keys())
