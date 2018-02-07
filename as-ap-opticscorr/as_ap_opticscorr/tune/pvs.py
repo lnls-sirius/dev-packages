@@ -14,7 +14,7 @@ _DEVICE = None
 
 def select_ioc(acc):
     """Select IOC to build database for."""
-    global _ACC, _PREFIX, _QFAMS, _DEVICE
+    global _ACC, _PREFIX, _PREFIX_VACA, _QFAMS, _DEVICE
     _ACC = acc.upper()
     _DEVICE = _ACC + '-Glob:AP-TuneCorr:'
     _PREFIX = _PREFIX_VACA + _DEVICE
@@ -25,36 +25,72 @@ def select_ioc(acc):
                   'QDA', 'QDB1', 'QDB2', 'QDP1', 'QDP2']
 
 
+def get_pvs_section():
+    """Return Soft IOC section/accelerator."""
+    global _ACC
+    return _ACC
+
+
+def get_pvs_vaca_prefix():
+    """Return Soft IOC vaca prefix."""
+    global _PREFIX_VACA
+    return _PREFIX_VACA
+
+
+def get_pvs_prefix():
+    """Return Soft IOC prefix."""
+    global _PREFIX
+    return _PREFIX
+
+
+def get_corr_fams():
+    """Return list of magnet families used on correction."""
+    global _QFAMS
+    return _QFAMS
+
+
 def get_pvs_database():
     """Return IOC database."""
-    global _QFAMS
+    global _COMMIT_HASH, _ACC, _QFAMS
     corrmat_size = len(_QFAMS)*2
 
     pvs_database = {
-        'Version-Cte':          {'type': 'string', 'value': _COMMIT_HASH},
+        'Version-Cte':          {'type': 'string', 'value': _COMMIT_HASH,
+                                 'scan': 1},
 
         'Log-Mon':              {'type': 'string', 'value': 'Starting...'},
 
         'DeltaTuneX-SP':        {'type': 'float', 'value': 0, 'prec': 6,
-                                 'hilim': 1, 'lolim': -1},
-        'DeltaTuneX-RB':        {'type': 'float', 'value': 0, 'prec': 6},
+                                 'hilim': 1, 'lolim': -1, 'high': 1, 'low': -1,
+                                 'hihi': 1, 'lolo': -1},
+        'DeltaTuneX-RB':        {'type': 'float', 'value': 0, 'prec': 6,
+                                 'hilim': 1, 'lolim': -1, 'high': 1, 'low': -1,
+                                 'hihi': 1, 'lolo': -1},
         'DeltaTuneY-SP':        {'type': 'float', 'value': 0, 'prec': 6,
-                                 'hilim': 1, 'lolim': -1},
-        'DeltaTuneY-RB':        {'type': 'float', 'value': 0, 'prec': 6},
+                                 'hilim': 1, 'lolim': -1, 'high': 1, 'low': -1,
+                                 'hihi': 1, 'lolo': -1},
+        'DeltaTuneY-RB':        {'type': 'float', 'value': 0, 'prec': 6,
+                                 'hilim': 1, 'lolim': -1, 'high': 1, 'low': -1,
+                                 'hihi': 1, 'lolo': -1},
 
-        'ApplyDeltaKL-Cmd':     {'type': 'int', 'value': 0},
+        'ApplyKL-Cmd':     {'type': 'int', 'value': 0},
 
-        'CorrMat-SP':           {'type': 'float', 'count': corrmat_size,
+        'CorrParamsConfigName-SP': {'type': 'string', 'value': ''},
+        'CorrParamsConfigName-RB': {'type': 'string', 'value': ''},
+        'CorrMat-Mon':          {'type': 'float', 'count': corrmat_size,
                                  'value': corrmat_size*[0], 'prec': 6, 'unit':
                                  'Tune x KFams (Matrix of add method)'},
-        'CorrMat-RB':           {'type': 'float', 'count': corrmat_size,
-                                 'value': corrmat_size*[0], 'prec': 6, 'unit':
-                                 'Tune x KFams (Matrix of add method)'},
+        'NominalKL-Mon':        {'type': 'float', 'count': len(_QFAMS),
+                                 'value': len(_QFAMS)*[0], 'prec': 6},
 
         'CorrFactor-SP':        {'type': 'float', 'value': 0, 'unit': '%',
-                                 'prec': 1, 'lolim': -1000, 'hilim': 1000},
+                                 'prec': 1, 'hilim': 1000, 'lolim': -1000,
+                                 'high': 1000, 'low': -1000, 'hihi': 1000,
+                                 'lolo': -1000},
         'CorrFactor-RB':        {'type': 'float', 'value': 0, 'unit': '%',
-                                 'prec': 1},
+                                 'prec': 1, 'hilim': 1000, 'lolim': -1000,
+                                 'high': 1000, 'low': -1000, 'hihi': 1000,
+                                 'lolo': -1000},
 
         'SyncCorr-Sel':         {'type': 'enum', 'value': 0,
                                  'enums': ['Off', 'On']},
@@ -75,16 +111,29 @@ def get_pvs_database():
     for fam in _QFAMS:
         pvs_database[fam + 'RefKL-Mon'] = {'type': 'float', 'value': 0,
                                            'prec': 6, 'unit': '1/m'}
-        pvs_database['LastCalcd' + fam + 'DeltaKL-Mon'] = {'type': 'float',
-                                                           'value': 0,
-                                                           'prec': 6}
+
+        pvs_database['LastCalc' + fam + 'KL-Mon'] = {
+            'type': 'float', 'value': 0, 'prec': 6, 'unit': '1/m',
+            'lolim': 0, 'hilim': 0, 'low': 0, 'high': 0, 'lolo': 0, 'hihi': 0}
+
     if _ACC == 'SI':
         pvs_database['CorrMeth-Sel'] = {'type': 'enum', 'value': 0, 'enums':
                                         ['Proportional', 'Additional']}
         pvs_database['CorrMeth-Sts'] = {'type': 'enum', 'value': 0, 'enums':
                                         ['Proportional', 'Additional']}
-        pvs_database['NominalKL-SP'] = {'type': 'float', 'count': len(_QFAMS),
-                                        'value': len(_QFAMS)*[0], 'prec': 6}
-        pvs_database['NominalKL-RB'] = {'type': 'float', 'count': len(_QFAMS),
-                                        'value': len(_QFAMS)*[0], 'prec': 6}
     return pvs_database
+
+
+def print_banner_and_save_pv_list():
+    """Print Soft IOC banner."""
+    global _COMMIT_HASH, _PREFIX_VACA, _ACC, _PREFIX, _DEVICE
+    _util.print_ioc_banner(
+        ioc_name=_ACC+'-AP-TuneCorr',
+        db=get_pvs_database(),
+        description=_ACC+'-AP-TuneCorr Soft IOC',
+        version=_COMMIT_HASH,
+        prefix=_PREFIX)
+    _util.save_ioc_pv_list(
+        _ACC.lower()+'-ap-tunecorr',
+        (_DEVICE, _PREFIX_VACA),
+        get_pvs_database())

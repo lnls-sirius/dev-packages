@@ -1,11 +1,12 @@
 """PS Test IOC."""
 
+import sys as _sys
+import signal as _signal
 import pcaspy as _pcaspy
 import pcaspy.tools as _pcaspy_tools
-import signal as _signal
-import as_ps_test.main as _main
 import siriuspy.util as _util
-import sys as _sys
+import as_ps_test.main as _main
+import as_ps_test.pvs as _pvs
 
 INTERVAL = 0.1
 stop_event = False  # _multiprocessing.Event()
@@ -13,7 +14,8 @@ stop_event = False  # _multiprocessing.Event()
 
 def _stop_now(signum, frame):
     global stop_event
-    print(_signal.Signals(signum).name + ' received at ' + _util.get_timestamp())
+    print(_signal.Signals(signum).name + ' received at ' +
+          _util.get_timestamp())
     _sys.stdout.flush()
     _sys.stderr.flush()
     stop_event = True
@@ -36,14 +38,23 @@ class _PCASDriver(_pcaspy.Driver):
         return self.app.write(reason, value)
 
 
-def run():
+def run(bbblist):
     """Main function."""
     # define abort function
     _signal.signal(_signal.SIGINT, _stop_now)
     _signal.signal(_signal.SIGTERM, _stop_now)
 
     # define IOC and initializes it
-    _main.App.init_class()
+    _main.App.init_class(bbblist)
+
+    # check if IOC is already running
+    p = next(iter(_main.App.pvs_database.keys()))
+    pvname = _pvs._PREFIX + next(iter(_main.App.pvs_database[p].keys()))
+    running = _util.check_pv_online(
+        pvname=pvname, use_prefix=False, timeout=0.5)
+    if running:
+        print('Another PS IOC is already running!')
+        return
 
     # create a new simple pcaspy server and driver to respond client's requests
     server = _pcaspy.SimpleServer()
@@ -64,3 +75,7 @@ def run():
     # sends stop signal to server thread
     server_thread.stop()
     server_thread.join()
+
+
+if __name__ == "__main__":
+    run()

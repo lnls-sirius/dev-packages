@@ -26,38 +26,60 @@ def select_ioc(acc):
                   'SFP1', 'SFP2', 'SDP1', 'SDP2', 'SDP3']
 
 
+def get_pvs_section():
+    """Return Soft IOC section/accelerator."""
+    global _ACC
+    return _ACC
+
+
+def get_pvs_vaca_prefix():
+    """Return Soft IOC vaca prefix."""
+    global _PREFIX_VACA
+    return _PREFIX_VACA
+
+
+def get_pvs_prefix():
+    """Return Soft IOC prefix."""
+    global _PREFIX
+    return _PREFIX
+
+
+def get_corr_fams():
+    """Return list of magnet families used on correction."""
+    global _SFAMS
+    return _SFAMS
+
+
 def get_pvs_database():
     """Return IOC database."""
-    global _SFAMS
+    global _SFAMS, _COMMIT_HASH
     corrmat_size = len(_SFAMS)*2
 
     pvs_database = {
-        'Version-Cte':          {'type': 'string', 'value': _COMMIT_HASH},
+        'Version-Cte':          {'type': 'string', 'value': _COMMIT_HASH,
+                                 'scan': 0.1},
 
         'Log-Mon':              {'type': 'string', 'value': 'Starting...'},
 
         'ChromX-SP':            {'type': 'float', 'value': 0, 'prec': 6,
-                                 'hilim': 10, 'lolim': -10},
+                                 'hilim': 10, 'lolim': -10, 'high': 10,
+                                 'low': -10, 'hihi': 10, 'lolo': -10},
         'ChromX-RB':            {'type': 'float', 'value': 0, 'prec': 6},
         'ChromY-SP':            {'type': 'float', 'value': 0, 'prec': 6,
-                                 'hilim': 10, 'lolim': -10},
+                                 'hilim': 10, 'lolim': -10, 'high': 10,
+                                 'low': -10, 'hihi': 10, 'lolo': -10},
         'ChromY-RB':            {'type': 'float', 'value': 0, 'prec': 6},
 
         'ApplySL-Cmd':          {'type': 'int', 'value': 0},
 
-        'CorrMat-SP':           {'type': 'float', 'count': corrmat_size,
+        'CorrParamsConfigName-SP': {'type': 'string', 'value': ''},
+        'CorrParamsConfigName-RB': {'type': 'string', 'value': ''},
+        'CorrMat-Mon':          {'type': 'float', 'count': corrmat_size,
                                  'value': corrmat_size*[0], 'prec': 6, 'unit':
                                  'Chrom x SFams (Matrix of add method)'},
-        'CorrMat-RB':           {'type': 'float', 'count': corrmat_size,
-                                 'value': corrmat_size*[0], 'prec': 6, 'unit':
-                                 'Chrom x SFams (Matrix of add method)'},
-        'NominalChrom-SP':      {'type': 'float', 'count': 2, 'value': 2*[0],
+        'NominalChrom-Mon':     {'type': 'float', 'count': 2, 'value': 2*[0],
                                  'prec': 6},
-        'NominalChrom-RB':      {'type': 'float', 'count': 2, 'value': 2*[0],
-                                 'prec': 6},
-        'NominalSL-SP':         {'type': 'float', 'count': len(_SFAMS),
-                                 'value': len(_SFAMS)*[0], 'prec': 6},
-        'NominalSL-RB':         {'type': 'float', 'count': len(_SFAMS),
+        'NominalSL-Mon':        {'type': 'float', 'count': len(_SFAMS),
                                  'value': len(_SFAMS)*[0], 'prec': 6},
 
         'SyncCorr-Sel':         {'type': 'enum', 'value': 0,
@@ -75,12 +97,28 @@ def get_pvs_database():
     }
 
     for fam in _SFAMS:
-        pvs_database['LastCalcd' + fam + 'SL-Mon'] = {'type': 'float',
-                                                      'value': 0, 'prec': 4,
-                                                      'unit': '1/m^2'}
+        pvs_database['LastCalc' + fam + 'SL-Mon'] = {
+            'type': 'float', 'value': 0, 'prec': 4, 'unit': '1/m^2',
+            'lolim': 0, 'hilim': 0, 'low': 0, 'high': 0, 'lolo': 0, 'hihi': 0}
+
     if _ACC == 'SI':
         pvs_database['CorrMeth-Sel'] = {'type': 'enum', 'value': 0, 'enums':
                                         ['Proportional', 'Additional']}
         pvs_database['CorrMeth-Sts'] = {'type': 'enum', 'value': 0, 'enums':
                                         ['Proportional', 'Additional']}
     return pvs_database
+
+
+def print_banner_and_save_pv_list():
+    """Print Soft IOC banner."""
+    global _COMMIT_HASH, _PREFIX_VACA, _ACC, _DEVICE, _PREFIX
+    _util.print_ioc_banner(
+        ioc_name=_ACC+'-AP-ChromCorr',
+        db=get_pvs_database(),
+        description=_ACC+'-AP-ChromCorr Soft IOC',
+        version=_COMMIT_HASH,
+        prefix=_PREFIX)
+    _util.save_ioc_pv_list(
+        _ACC.lower()+'-ap-chromcorr',
+        (_DEVICE, _PREFIX_VACA),
+        get_pvs_database())

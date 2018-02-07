@@ -3,6 +3,8 @@
 import as_ps_test.pvs as _pvs
 import time as _time
 import siriuspy as _siriuspy
+import numpy as _np
+
 
 # Coding guidelines:
 # =================
@@ -17,8 +19,6 @@ import siriuspy as _siriuspy
 #      suffixes, etc)
 
 __version__ = _pvs._COMMIT_HASH
-
-ttime = 0.0
 
 
 class App:
@@ -44,10 +44,10 @@ class App:
             _pvs.ps_devices[psname].add_callback(self._mycallback)
 
     @staticmethod
-    def init_class():
+    def init_class(bbblist):
         """Init class."""
-        App.ps_devices = _pvs.get_ps_devices()
-        App.pvs_database = _pvs.get_pvs_database()
+        App.ps_devices = _pvs.get_ps_devices(bbblist)
+        App.pvs_database = _pvs.get_pvs_database(bbblist)
 
     @staticmethod
     def get_pvs_database():
@@ -78,31 +78,30 @@ class App:
 
     def write(self, reason, value):
         """Write pv method."""
-        global ttime
-        t0 = _time.time()
+        if isinstance(value, (int, float)):
+            print('write', reason, value)
+        else:
+            print('write', reason)
         parts = reason.split(':')
         propty = parts[-1]
         psname = ':'.join(parts[:2])
-        ps_propty = propty.replace('-', '_').lower()
-        # if isinstance(value, float) or isinstance(value, int):
-        #     fmtstr = '{0:<15s} {1:s} [{2:f}]: '
-        #     print(fmtstr.format('ioc write', reason, value))
-        # else:
-        #     print('{0:<15s}: '.format('ioc write'), reason)
-        try:
-            if ps_propty in ('abort_cmd', 'reset_cmd'):
-                setattr(_pvs.ps_devices[psname],
-                        ps_propty.replace("_cmd", ""), value)
-                return
-            setattr(_pvs.ps_devices[psname], ps_propty, value)
-            self._driver.setParam(reason, value)
-            self._driver.updatePVs()
-        except AttributeError:
-            print('AttributeError: ', reason, value)
+        ps = _pvs.ps_devices[psname]
+        ps.write(field=propty, value=value)
+        self._driver.setParam(reason, value)
+        self._driver.updatePVs()
 
-        t1 = _time.time()
-        ttime += t1-t0
-        # print(ttime)
+        # ps_propty = propty.replace('-', '_').lower()
+        # try:
+        #     if ps_propty in ('abort_cmd', 'reset_cmd'):
+        #         setattr(_pvs.ps_devices[psname],
+        #                 ps_propty.replace("_cmd", ""), value)
+        #         return
+        #     setattr(_pvs.ps_devices[psname], ps_propty, value)
+        #     self._driver.setParam(reason, value)
+        #     self._driver.updatePVs()
+        # except AttributeError:
+        #     print('attr error', ps_propty)
+
         return True
 
     def _mycallback(self, pvname, value, **kwargs):
@@ -110,6 +109,11 @@ class App:
         # print('{0:<15s}: '.format('ioc callback'), pvname, value)
         reason = pvname
         prev_value = self._driver.getParam(reason)
-        if value != prev_value:
-            self._driver.setParam(reason, value)
-            self._driver.updatePVs()
+        if isinstance(value, _np.ndarray):
+            if _np.any(value != prev_value):
+                self._driver.setParam(reason, value)
+                self._driver.updatePVs()
+        else:
+            if value != prev_value:
+                self._driver.setParam(reason, value)
+                self._driver.updatePVs()

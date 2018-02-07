@@ -37,25 +37,25 @@ class App:
     def __init__(self, driver, *args):
         """Class constructor."""
         # App.init_class()  # Is This really necessary?
-        _siriuspy.util.print_ioc_banner(
-            ioc_name='AS-MA',
-            db=App.pvs_database,
-            description='AS-MA Soft IOC',
-            version=__version__,
-            prefix=_pvs._PREFIX)
-        _siriuspy.util.save_ioc_pv_list(_pvs._IOC["name"],
-                                        (_pvs._PREFIX_SECTOR,
-                                         _pvs._PREFIX_VACA),
-                                        App.pvs_database)
+        # _siriuspy.util.print_ioc_banner(
+        #     ioc_name='AS-MA',
+        #     db=App.pvs_database,
+        #     description='AS-MA Soft IOC',
+        #     version=__version__,
+        #     prefix=_pvs._PREFIX)
+        # _siriuspy.util.save_ioc_pv_list(_pvs._IOC["name"],
+        #                                 (_pvs._PREFIX_SECTOR,
+        #                                  _pvs._PREFIX_VACA),
+        #                                 App.pvs_database)
 
         self._driver = driver
         self._set_callback()
 
     @staticmethod
-    def init_class():
+    def init_class(malist):
         """Init class."""
-        App.ma_devices = _pvs.get_ma_devices()
-        App.pvs_database = _pvs.get_pvs_database()
+        App.ma_devices = _pvs.get_ma_devices(malist)
+        App.pvs_database = _pvs.get_pvs_database(malist)
 
     @property
     def driver(self):
@@ -80,16 +80,17 @@ class App:
         if field not in App.writable_fields:
             return
         # Build attribute name
-        if propty in App.strengths:
-            attr = 'strength_' + field
-        else:
-            attr = propty + '_' + field
-        attr = attr.lower()
+        # if propty in App.strengths:
+        #     attr = 'strength_' + field
+        # else:
+        #     attr = propty + '_' + field
+        # attr = attr.lower()
         # Update MA Object
         slot_name = sub_section + ':' + discipline + '-' + device
         ma = self.ma_devices[slot_name]
-        setattr(ma, attr, value)
-        value = getattr(ma, attr)
+        ma.write(propty + "-" + field, value)
+        # setattr(ma, attr, value)
+        # value = getattr(ma, attr)
         if isinstance(value, float) or isinstance(value, int):
             print(
                 '{0:<15s} {1:s} [{2:f}]: '.format('ioc write', reason, value))
@@ -115,10 +116,10 @@ class App:
             device.add_callback(self._mycallback)
             # ?
             if _pvs._PREFIX_SECTOR:
-                *parts, prefix = device.maname.split(_pvs._PREFIX_SECTOR)
+                *parts, prefix = device._maname.split(_pvs._PREFIX_SECTOR)
             else:
-                prefix = device.maname
-            db = device._get_database(prefix=prefix)
+                prefix = device._maname
+            db = device.get_database(prefix=prefix)
             for reason, ddb in db.items():
                 value = ddb['value']
                 # print(reason, value)
@@ -127,7 +128,7 @@ class App:
             self._driver.updatePVs()
 
     def _mycallback(self, pvname, value, **kwargs):
-        pvname = pvname.replace("PU-", "PM-")
+        pvname = pvname.replace("PU-", "PM-").replace(":PS-", ":MA-")
         pvname = pvname.replace(_pvs._PREFIX_VACA, "")
         if _pvs._PREFIX_SECTOR:
             *parts, reason = pvname.split(_pvs._PREFIX_SECTOR)
