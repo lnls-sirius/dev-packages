@@ -1,7 +1,7 @@
 """Optics correction utilities method."""
 
+
 import numpy as _np
-from siriuspy import util as _util
 
 
 class OpticsCorr:
@@ -11,309 +11,418 @@ class OpticsCorr:
     Store all correction parameters.
     """
 
-    def __init__(self):
+    def __init__(self, magnetfams_ordering,
+                 nominal_matrix, nominal_intstrengths, nominal_opticsparam,
+                 magnetfams_focusing, magnetfams_defocusing):
         """Class constructor."""
-        self.corr_mat = None
-        self.corr_invmat = None
-        self.nomchrom = None
+        self._initialized = False
+        self._set_magnetfams_ordering(magnetfams_ordering)
+        self.nominal_matrix = nominal_matrix
+        self.nominal_intstrengths = nominal_intstrengths
+        self.nominal_opticsparam = nominal_opticsparam
+        self.magnetfams_focusing = magnetfams_focusing
+        self.magnetfams_defocusing = magnetfams_defocusing
 
-    def set_nomchrom(self, nomchromx, nomchromy):
-        """Set Nominal Chromaticity.
+        self._calculate_matrices()
+        self._initialized = True
 
-        Receive:
-        nomchromx -- Value correspondent to nominal horizontal chromaticity
-        nomchromy -- Value correspondent to nominal vertical chromaticity
+    @property
+    def magnetfams_ordering(self):
+        """List of strings of the order of magnet families used on correction.
 
-        Return (in C-like format):
-        nomchrom  -- List of correspondents nominal chromaticities
+        Correction matrix and nominal integrated strengths must be coherent to
+        this property.
         """
-        nomchrom = _np.array([[nomchromx], [nomchromy]])
-        nomchrom = _np.reshape(nomchrom, [2, 1])
-        self.nomchrom = nomchrom
-        return (list(nomchrom.flatten()))
+        return self._magnetfams_ordering
 
-    def set_corr_mat(self, num_fam, corrmat):
-        """Set Correction Matrix and calculate Inverse Matrix.
+    def _set_magnetfams_ordering(self, value):
+        """Set magnetfams_ordering_svd property."""
+        if not isinstance(value, list):
+            raise TypeError("Value must be a list.")
+        for item in value:
+            if not isinstance(item, str):
+                raise TypeError("List elements must be strings.")
+        if len(value) < 2:
+            raise ValueError("At least 2 magnet families are necessary to "
+                             "correction!")
 
-        Receive:
-        num_fam     -- Number of families used in the correction
-        corrmat     -- List correspondent to correction matrix
+        self._magnetfams_ordering = value
 
-        Return (in C-like format):
-        corrmat     -- Flat list correspondent to correction matrix
-        corr_invmat -- Flat list correspondent to inverse of correction matrix
+    @property
+    def nominal_matrix(self):
+        """Nominal matrix, correspondent to add method and multiple knobs.
+
+        Considers all knobs listed in 'magnetfams_ordering' property.
         """
-        corr_mat = _np.array(corrmat)
-        corr_mat = _np.reshape(corr_mat, [2, num_fam])
+        return self._nominal_matrix
+
+    @nominal_matrix.setter
+    def nominal_matrix(self, value):
+        if not isinstance(value, list):
+            raise TypeError("Value must be a flat list (C-like format.")
+        for item in value:
+            if not isinstance(item, float):
+                raise TypeError("List elements must be floats.")
+
+        m = _np.array(value)
+        m = _np.reshape(m, [2, len(self._magnetfams_ordering)])
+
+        self._nominal_matrix = m
+
+        if self._initialized:
+            self._calculate_matrices()
+
+    @property
+    def nominal_intstrengths(self):
+        """Nominal integrated strengths."""
+        return self._nominal_intstrengths
+
+    @nominal_intstrengths.setter
+    def nominal_intstrengths(self, value):
+        if not isinstance(value, list):
+            raise TypeError("Value must be a flat list (C-like format.")
+        for item in value:
+            if not isinstance(item, float):
+                raise TypeError("List elements must be floats.")
+
+        intstrengths = _np.array(value)
+        intstrengths = _np.reshape(intstrengths,
+                                   [1, len(self._magnetfams_ordering)])
+
+        self._nominal_intstrengths = intstrengths
+
+        if self._initialized:
+            self._matrix_prop_svd = self._calculate_matrix_svd(method=0)
+            self._matrix_prop_2knobs = self._calculate_matrix_2knobs(method=0)
+            self._inverse_matrix_prop_svd = (
+                self._calculate_inverse(method=0, grouping='svd'))
+            self._inverse_matrix_prop_2knobs = (
+                self._calculate_inverse(method=0, grouping='2knobs'))
+
+    @property
+    def nominal_opticsparam(self):
+        """Nominal optics parameter."""
+        return self._nominal_opticsparam
+
+    @nominal_opticsparam.setter
+    def nominal_opticsparam(self, value):
+        if not isinstance(value, list):
+            raise TypeError("Value must be a flat list (C-like format.")
+        for item in value:
+            if not isinstance(item, float):
+                raise TypeError("List elements must be floats.")
+
+        opticsparam = _np.array(value)
+        opticsparam = _np.reshape(opticsparam, [2, 1])
+
+        self._nominal_opticsparam = opticsparam
+
+    @property
+    def magnetfams_focusing(self):
+        """List of strings of focusing magnet families used on correction.
+
+        It corresponds to the first correction knob magnet families.
+        """
+        return self._magnetfams_focusing
+
+    @magnetfams_focusing.setter
+    def magnetfams_focusing(self, value):
+        if not isinstance(value, list):
+            raise TypeError("Value must be a list.")
+        for item in value:
+            if not isinstance(item, str):
+                raise TypeError("List elements must be strings.")
+        if len(value) < 1:
+            raise ValueError("At least one focusing magnet family is "
+                             "necessary to correction!")
+        if not all(item in self._magnetfams_ordering for item in value):
+            raise ValueError("Focusing magnet families must be part of the "
+                             "'magnetfams_ordering' property!")
+
+        self._magnetfams_focusing = sorted(
+            value, key=lambda x: self.magnetfams_ordering.index(x))
+
+        if self._initialized:
+            self._calculate_matrices()
+
+    @property
+    def magnetfams_defocusing(self):
+        """List of strings of defocusing magnet families used on correction.
+
+        It corresponds to the second correction knob magnet families.
+        """
+        return self._magnetfams_defocusing
+
+    @magnetfams_defocusing.setter
+    def magnetfams_defocusing(self, value):
+        if not isinstance(value, list):
+            raise TypeError("Value must be a list.")
+        for item in value:
+            if not isinstance(item, str):
+                raise TypeError("List elements must be strings.")
+        if len(value) < 1:
+            raise ValueError("At least one defocusing magnet family is "
+                             "necessary to correction!")
+        if not all(item in self._magnetfams_ordering for item in value):
+            raise ValueError("Defocusing magnet families must be part of the "
+                             "'magnetfams_ordering_svd' property!")
+
+        self._magnetfams_defocusing = sorted(
+            value, key=lambda x: self.magnetfams_ordering.index(x))
+
+        if self._initialized:
+            self._calculate_matrices()
+
+    @property
+    def matrix_add_svd(self):
+        """Matrix of additional method and multiple knobs."""
+        return self._matrix_add_svd
+
+    @property
+    def matrix_prop_svd(self):
+        """Matrix of proportional method and multiple knobs."""
+        return self._matrix_prop_svd
+
+    @property
+    def matrix_add_2knobs(self):
+        """Matrix of additional method and 2 knobs."""
+        return self._matrix_add_2knobs
+
+    @property
+    def matrix_prop_2knobs(self):
+        """Matrix of proportional method and 2 knobs."""
+        return self._matrix_prop_2knobs
+
+    @property
+    def inverse_matrix_add_svd(self):
+        """Inverse matrix of additional method and multiple knobs."""
+        return self._inverse_matrix_add_svd
+
+    @property
+    def inverse_matrix_prop_svd(self):
+        """Inverse matrix of proportional method and multiple knobs."""
+        return self._inverse_matrix_prop_svd
+
+    @property
+    def inverse_matrix_add_2knobs(self):
+        """Inverse matrix of additional method and 2 knobs."""
+        return self._inverse_matrix_add_2knobs
+
+    @property
+    def inverse_matrix_prop_2knobs(self):
+        """Inverse matrix of proportional method and 2 knobs."""
+        return self._inverse_matrix_prop_2knobs
+
+    def calculate_delta_intstrengths(self, method, grouping,
+                                     delta_opticsparam):
+        """Calculate the delta on integrated strengths.
+
+        Based on the required optics parameter delta (tune or chromaticity).
+
+        Return a flat numpy.array of deltas of all magnet families of
+        'magnetfams_ordering' property. Deltas will only be calculated for
+        families listed on 'magnetfams_focusing' and 'magnetfams_defocusing'
+        properties. The rest of the families will have null deltas.
+        """
+        inv = self._choose_inverse_matrix(method, grouping)
+        delta_opticsparam = _np.array([[delta_opticsparam[0]],
+                                       [delta_opticsparam[1]]])
+        magnetfams_delta_intstrengths = _np.zeros(
+            len(self.magnetfams_ordering))
+
+        delta = _np.dot(inv, delta_opticsparam).T.flatten()
+
+        f = len(self.magnetfams_focusing)
+        d = len(self.magnetfams_defocusing)
+        if method == 0:
+            if grouping == 'svd':
+                for i in range(f):
+                    index = self.magnetfams_ordering.index(
+                            self.magnetfams_focusing[i])
+                    magnetfams_delta_intstrengths[index] = (
+                        self.nominal_intstrengths[0, index] * delta[i])
+                for i in range(d):
+                    index = self.magnetfams_ordering.index(
+                            self.magnetfams_defocusing[i])
+                    magnetfams_delta_intstrengths[index] = (
+                        self.nominal_intstrengths[0, index] * delta[i+f])
+            elif grouping == '2knobs':
+                for i in range(f):
+                    index = self.magnetfams_ordering.index(
+                            self.magnetfams_focusing[i])
+                    magnetfams_delta_intstrengths[index] = (
+                        self.nominal_intstrengths[0, index] * delta[0])
+                for i in range(d):
+                    index = self.magnetfams_ordering.index(
+                            self.magnetfams_defocusing[i])
+                    magnetfams_delta_intstrengths[index] = (
+                        self.nominal_intstrengths[0, index] * delta[1])
+        elif method == 1:
+            if grouping == 'svd':
+                for i in range(f):
+                    index = self.magnetfams_ordering.index(
+                            self.magnetfams_focusing[i])
+                    magnetfams_delta_intstrengths[index] = delta[i]
+                for i in range(d):
+                    index = self.magnetfams_ordering.index(
+                            self.magnetfams_defocusing[i])
+                    magnetfams_delta_intstrengths[index] = delta[i+f]
+            elif grouping == '2knobs':
+                for i in range(f):
+                    index = self.magnetfams_ordering.index(
+                            self.magnetfams_focusing[i])
+                    magnetfams_delta_intstrengths[index] = delta[0]
+                for i in range(d):
+                    index = self.magnetfams_ordering.index(
+                            self.magnetfams_defocusing[i])
+                    magnetfams_delta_intstrengths[index] = delta[1]
+
+        return magnetfams_delta_intstrengths.flatten()
+
+    def calculate_opticsparam(self, delta_intstrengths):
+        """Calculate the optics parameter (tune or chromaticity).
+
+        Based on the required integrated strengths.
+        """
+        delta_intstrengths = _np.array([delta_intstrengths]).transpose()
+
+        delta_opticsparam = _np.dot(self.nominal_matrix, delta_intstrengths)
+        opticsparam = self.nominal_opticsparam + delta_opticsparam
+
+        return opticsparam.flatten()
+
+    # Private methods
+
+    def _calculate_matrices(self):
+        """Recalculate all matrices and their ineverse matrices."""
+        self._matrix_add_svd = self._calculate_matrix_svd(method=1)
+        self._matrix_prop_svd = self._calculate_matrix_svd(method=0)
+        self._matrix_add_2knobs = self._calculate_matrix_2knobs(method=1)
+        self._matrix_prop_2knobs = self._calculate_matrix_2knobs(method=0)
+        self._inverse_matrix_add_svd = self._calculate_inverse(
+            method=1, grouping='svd')
+        self._inverse_matrix_prop_svd = self._calculate_inverse(
+            method=0, grouping='svd')
+        self._inverse_matrix_add_2knobs = self._calculate_inverse(
+            method=1, grouping='2knobs')
+        self._inverse_matrix_prop_2knobs = self._calculate_inverse(
+            method=0, grouping='2knobs')
+
+    def _calculate_matrix_svd(self, method):
+        """Calculate matrix of multiple knobs (svd)."""
+        if method == 0:  # proportional method
+            m = self.nominal_matrix*self.nominal_intstrengths
+        elif method == 1:  # additional method
+            m = self.nominal_matrix
+
+        f = len(self.magnetfams_focusing)
+        d = len(self.magnetfams_defocusing)
+        mat_svd = _np.zeros([2, f+d])
+
+        for i in range(f):
+            c = self.magnetfams_ordering.index(self.magnetfams_focusing[i])
+            mat_svd[0, i] = m[0, c]
+            mat_svd[1, i] = m[1, c]
+        for i in range(d):
+            c = self.magnetfams_ordering.index(self.magnetfams_defocusing[i])
+            mat_svd[0, i+f] = m[0, c]
+            mat_svd[1, i+f] = m[1, c]
+
+        return mat_svd
+
+    def _calculate_matrix_2knobs(self, method):
+        """Calculate matrices of 2 knobs."""
+        if method == 0:  # proportional method
+            m = self.nominal_matrix*self.nominal_intstrengths
+        elif method == 1:  # additional method
+            m = self.nominal_matrix
+
+        mat_2knobs = _np.array([[0.0, 0.0], [0.0, 0.0]])
+        # matrix indices are organized like:
+        # [focusing magnet fams, X plan    defocusing magnet fams, X plan]
+        # [focusing magnet fams, Y plan    defocusing magnet fams, Y plan]
+
+        for fam in self.magnetfams_focusing:
+            index = self.magnetfams_ordering.index(fam)
+            mat_2knobs[0, 0] += m[0, index]
+            mat_2knobs[1, 0] += m[1, index]
+
+        for fam in self.magnetfams_defocusing:
+            index = self.magnetfams_ordering.index(fam)
+            mat_2knobs[0, 1] += m[0, index]
+            mat_2knobs[1, 1] += m[1, index]
+
+        return mat_2knobs
+
+    def _calculate_inverse(self, method, grouping):
+        """Calculate inverse of a matrix using SVD."""
+        m = self._choose_matrix(method, grouping)
+
         try:
-            U, S, V = _np.linalg.svd(corr_mat, full_matrices=False)
+            U, S, V = _np.linalg.svd(m, full_matrices=False)
         except _np.linalg.LinAlgError():
-            print('Could not calculate SVD')
-            return None, None
-        corr_invmat = _np.dot(_np.dot(V.T, _np.diag(1/S)), U.T)
-        isNan = _np.any(_np.isnan(corr_invmat))
-        isInf = _np.any(_np.isinf(corr_invmat))
+            raise Exception("Could not calculate SVD.")
+        inv = _np.dot(_np.dot(V.T, _np.diag(1/S)), U.T)
+        isNan = _np.any(_np.isnan(inv))
+        isInf = _np.any(_np.isinf(inv))
         if isNan or isInf:
-            print('Pseudo inverse contains nan or inf.')
-            return None, None
+            raise Exception("Pseudo inverse contains nan or inf.")
 
-        self.corr_mat = corr_mat
-        self.corr_invmat = corr_invmat
+        return inv
 
-        return (list(corr_mat.flatten()),
-                list(corr_invmat.flatten()))
+    def _choose_matrix(self, method, grouping):
+        if method == 0:
+            if grouping == 'svd':
+                m = self.matrix_prop_svd
+            elif grouping == '2knobs':
+                m = self.matrix_prop_2knobs
+        elif method == 1:
+            if grouping == 'svd':
+                m = self.matrix_add_svd
+            elif grouping == '2knobs':
+                m = self.matrix_add_2knobs
+        return m
 
-    def calc_deltakl(self, delta_tunex, delta_tuney):
-        """Calculate delta on Quadrupoles KLs from delta tunes.
-
-        Receive:
-        delta_tunex   -- Value correspondent to delta in horizontal tune
-        delta_tuney   -- Value correspondent to delta in vertical tune
-
-        Return:
-        qfam_delta_kl -- Flat list correspondent to delta KLs of each Booster
-                         quadrupole family (same order of correction matrix)
-                         To Storage Ring (that uses proportional method), it is
-                         correspondent to proportional factor of each
-                         quadrupole family
-        """
-        delta_tune = _np.array([[delta_tunex], [delta_tuney]])
-
-        qfam_delta_kl = _np.dot(self.corr_invmat,
-                                delta_tune)
-
-        return list(qfam_delta_kl.flatten())
-
-    def calc_deltasl(self, chromx, chromy):
-        """Calculate Sextupoles SLs from chromaticities.
-
-        Receive:
-        chromx       -- Value correspondent to final horizontal chromaticity
-        chromy       -- Value correspondent to final vertical chromaticity
-
-        Return:
-        sfam_deltasl -- Flat list correspondent to SLs of each sextupole family
-                        (same order of correction matrix)
-                        To proportional method, it is correspondent to
-                        proportional factor of each sextupole family
-        """
-        final_chrom = _np.array([[chromx], [chromy]])
-        delta_chrom = (final_chrom - self.nomchrom)
-
-        sfam_deltasl = _np.dot(self.corr_invmat, delta_chrom)
-
-        return list(sfam_deltasl.flatten())
-
-    def estimate_current_deltatune(self, corrmat, current_deltakl):
-        """Calculate a estimative to current delta tune.
-
-        Based on the difference between the values of KL_RB pvs and the
-        reference KL values received on current_deltakl.
-
-        Receive:
-        current_deltakl -- Flat list containing current delta KL
-
-        Return:
-        deltatune       -- Flat list containing an estimative to current
-                           delta tune
-        """
-        corrmat = _np.array(corrmat)
-        corrmat = _np.reshape(corrmat, [2, len(current_deltakl)])
-
-        current_deltakl = _np.array([current_deltakl]).transpose()
-
-        deltatune = _np.dot(corrmat, current_deltakl)
-        return list(deltatune.flatten())
-
-    def estimate_current_chrom(self, current_deltasl):
-        """Calculate a estimative to current chromaticity.
-
-        Based on the difference between the values of SL-RB pvs and the nominal
-        SL values received on current_deltasl.
-
-        Receive:
-        current_deltasl -- Flat list containing current delta SL
-
-        Return:
-        chrom           -- Flat list containing an estimative to current
-                           chromaticity
-        """
-        current_deltasl = _np.array([current_deltasl]).transpose()
-
-        deltachrom = _np.dot(self.corr_mat, current_deltasl)
-        chrom = self.nomchrom + deltachrom
-
-        return list(chrom.flatten())
+    def _choose_inverse_matrix(self, method, grouping):
+        if method == 0:
+            if grouping == 'svd':
+                m = self.inverse_matrix_prop_svd
+            elif grouping == '2knobs':
+                m = self.inverse_matrix_prop_2knobs
+        elif method == 1:
+            if grouping == 'svd':
+                m = self.inverse_matrix_add_svd
+            elif grouping == '2knobs':
+                m = self.inverse_matrix_add_2knobs
+        return m
 
 
-def read_corrparams(filename):
-    """Read correction parameters from Soft IOC local file on "filename".
+def get_config_name(acc, opticsparam):
+    """Get the configuration name in file."""
+    if not (acc in ['bo', 'si']):
+        raise ValueError("'acc' must be 'bo' or 'si' instance.")
+    if not (opticsparam in ['tune', 'chrom']):
+        raise ValueError("'opticsparam' must be 'tune' or 'chrom' instance.")
 
-    Receive:
-    filename   -- complete name of the file
-
-    Return:
-    data       -- matrix containing correction parameters in the order
-                  explained on the header of the file
-    parameters -- parameters contained on header of the file
-    """
-    f = open(filename, 'r')
-    text = f.read()
+    f = open('/home/fac_files/lnls-sirius/machine-applications'
+             '/as-ap-opticscorr/as_ap_opticscorr/' + opticsparam +
+             '/' + acc + '-' + opticsparam + 'corr.txt', 'r')
+    config_name = f.read().strip('\n')
     f.close()
-    data, parameters = _util.read_text_data(text)
-    return data, parameters
+    return config_name
 
 
-def save_corrparams(filename, corrmat, num_fam,
-                    nomintstren=None, nomchrom=None):
-    """Generate Soft IOC correction parameters local files on "filename".
+def set_config_name(acc, opticsparam, config_name):
+    """Set the configuration name in file."""
+    if not (acc in ['bo', 'si']):
+        raise ValueError("'acc' must be 'bo' or 'si' instance.")
+    if not (opticsparam in ['tune', 'chrom']):
+        raise ValueError("'opticsparam' must be 'tune' or 'chrom' instance.")
+    if not isinstance(config_name, str):
+        raise TypeError("'config_name' must be a string.")
 
-    Receive:
-    filename    -- complete name of the file
-    corrmat     -- correction matrix on flat list format
-    num_fam     -- number of families used on correction
-    nomintstren -- nominal integrated strengths on flat list format
-    nomchrom    -- nominal chromaticity on flat list format
-
-    Return:
-    text     -- the text that will be written on file
-    """
-    name = filename.split('/')[-1].strip('.txt')
-    acc = name.split('-')[0]
-    opticsparam = name.split('-')[-1]
-    text = ''
-    header = ''
-    NominalChrom = ''
-    m = ''
-    NominalIntStren = ''
-
-    if opticsparam == 'tunecorr':
-        if acc == 'bo':
-            header = ("# Tune Correction Response Matrix for Booster\n#\n"
-                      "# | DeltaTuneX |   | m11  m12 |   | KL BO-Fam:MA-QF |\n"
-                      "# |            | = |          | * |                 |\n"
-                      "# | DeltaTuneY |   | m21  m22 |   | KL BO-Fam:MA-QD |\n"
-                      "#\n"
-                      "# Correction Matrix\n"
-                      "#   m11   m12\n"
-                      "#   m21   m22\n\n\n")
-
-        elif acc == 'si':
-            header = ("# Tune Correction Parameters for Storage Ring\n#\n"
-                      "#  | DeltaTuneX |    | m11  m12...m18 |"
-                      "   | f SI QFA  |\n"
-                      "#  |            | =  |                |"
-                      " * |     .     |\n"
-                      "#  | DeltaTuneY |    | m21  m22...m28 |"
-                      "   |     .     |\n"
-                      "#                                      "
-                      "   |     .     |\n"
-                      "#                                      "
-                      "   | f SI QDP2 |\n"
-                      "# Where (1+f)KL = KL + DeltaKL.\n"
-                      "#\n"
-                      "# Correction Matrix of Svd and Additional Method "
-                      "(obtained by matlab lnls_correct_tunes routine)\n"
-                      "#   m11   m12...m18\n"
-                      "#   m21   m22...m28\n"
-                      "#\n"
-                      "# Nominals KLs\n"
-                      "# [quadrupole_order"
-                      "   QFA  QFB  QFP  QDA  QDB1  QDB2  QDP1  QDP2]\n\n\n")
-
-            if nomintstren is not None:
-                for sl in range(len(nomintstren)):
-                    if nomintstren[sl] < 0:
-                        space = '  '
-                    else:
-                        space = '   '
-                    NominalIntStren += space + str(nomintstren[sl])
-                NominalIntStren += '\n\n'
-            else:
-                return False
-
-    elif opticsparam == 'chromcorr':
-        if acc == 'bo':
-            header = ("# Chromaticity Correction Parameters for Booster\n#\n"
-                      "# | ChromX |   | NominalChromX |   | m11  m12 |"
-                      "   | SL BO-Fam:MA-SF |\n"
-                      "# |        | = |               | + |          |"
-                      " * |                 |\n"
-                      "# | ChromY |   | NominalChromY |   | m21  m22 |"
-                      "   | SL BO-Fam:MA-SD |\n"
-                      "#\n"
-                      "# Data ordering:\n"
-                      "#\n"
-                      "# Nominal Chromaticity\n"
-                      "#   NominalChromX   NominalChromY\n"
-                      "#\n"
-                      "# Correction Matrix of Additional Method\n"
-                      "#   m11   m12\n"
-                      "#   m21   m22\n"
-                      "#\n"
-                      "# Nominals SLs\n"
-                      "# [sextupole_order  SF  SD]\n\n\n")
-
-        elif acc == 'si':
-            header = ("# Chromaticity Correction Parameters for Storage Ring\n"
-                      "#\n"
-                      "# | ChromX |   | NominalChromX |   | m11  m12...m115 |"
-                      "   | 1+f_SFA1 SI SFA1 |\n"
-                      "# |        | = |               | + |                 |"
-                      " * |          .       |\n"
-                      "# | ChromY |   | NominalChromY |   | m21  m22...m215 |"
-                      "   |          .       |\n"
-                      "#                                                     "
-                      "   |          .       |\n"
-                      "#                                                     "
-                      "   | 1+f_SDP3 SI SDP3 |\n"
-                      "# Where (1+f)SLnom = SLnom + DeltaSLnom\n#\n"
-                      "# Data ordering:\n#\n"
-                      "# Nominal Chromaticity\n"
-                      "#    NominalChromX    NominalChromY\n"
-                      "#\n"
-                      "# Correction Matrix of Additional Method\n"
-                      "#   m11   m12 ... m115\n"
-                      "#   m21   m22 ... m215\n"
-                      "#\n"
-                      "# Nominals SLs\n"
-                      "# [sextupole_order  SFA1  SFA2  SDA1  SDA2  SDA3  SFB1"
-                      "  SFB2  SDB1  SDB2  SDB3  SFP1  SFP2  SDP1  SDP2  SDP3]"
-                      "\n\n\n")
-
-        if nomchrom is not None:
-            NominalChrom = ('   ' + str(nomchrom[0]) +
-                            '   ' + str(nomchrom[1]) + '\n\n\n')
-        else:
-            return False
-
-        if nomintstren is not None:
-            for sl in range(len(nomintstren)):
-                if nomintstren[sl] < 0:
-                    space = '  '
-                else:
-                    space = '   '
-                NominalIntStren += space + str(nomintstren[sl])
-            NominalIntStren += '\n\n'
-        else:
-            return False
-
-    index = 0
-    for row in range(2):
-        for col in range(num_fam):
-            if corrmat[index] < 0:
-                space = '  '
-            else:
-                space = '   '
-            m += space + str(corrmat[index])
-            index += 1
-        m += '\n'
-    m += '\n\n'
-    m
-    text = header + NominalChrom + m + NominalIntStren
-
-    f = open(filename, 'w')
-    f.write(text)
+    f = open('/home/fac_files/lnls-sirius/machine-applications'
+             '/as-ap-opticscorr/as_ap_opticscorr/' + opticsparam +
+             '/' + acc + '-' + opticsparam + 'corr.txt', 'w')
+    f.write(config_name)
     f.close()
-
-    return text

@@ -7,20 +7,41 @@ from siriuspy import util as _util
 _COMMIT_HASH = _util.get_last_commit_hash()
 _PREFIX_VACA = _vaca_prefix
 _TL = None
+_DEVICE = None
 _PREFIX = None
 
 
 def select_ioc(transport_line):
     """Select IOC to build database for."""
-    global _TL, _PREFIX
+    global _TL, _PREFIX, _DEVICE, _PREFIX_VACA
     _TL = transport_line.upper()
-    _PREFIX = _PREFIX_VACA + _TL + '-Glob:AP-PosAng:'
+    _DEVICE = _TL + '-Glob:AP-PosAng:'
+    _PREFIX = _PREFIX_VACA + _DEVICE
+
+
+def get_pvs_section():
+    """Return Soft IOC transport line."""
+    global _TL
+    return _TL
+
+
+def get_pvs_vaca_prefix():
+    """Return Soft IOC vaca prefix."""
+    global _PREFIX_VACA
+    return _PREFIX_VACA
+
+
+def get_pvs_prefix():
+    """Return Soft IOC prefix."""
+    global _PREFIX
+    return _PREFIX
 
 
 def get_pvs_database():
-    """Return IOC database."""
-    if _TL is None:
-        return {}
+    """Return Soft IOC database."""
+    global _TL, _COMMIT_HASH
+    if (_TL is None) or (_TL == ''):
+        raise Exception('Transport Line not defined.')
     pvs_database = {
         'Version-Cte':          {'type': 'string', 'value': _COMMIT_HASH},
 
@@ -69,3 +90,17 @@ def get_pvs_database():
                                   'PS OpMode', 'PS CtrlMode')},
     }
     return pvs_database
+
+
+def print_banner_and_save_pv_list():
+    """Print Soft IOC banner."""
+    global _TL, _PREFIX, _COMMIT_HASH, _DEVICE, _PREFIX_VACA
+    _util.print_ioc_banner(
+        ioc_name=_TL + '-AP-PosAng',
+        db=get_pvs_database(),
+        description=_TL+'-AP-PosAng Soft IOC',
+        version=_COMMIT_HASH,
+        prefix=_PREFIX)
+    _util.save_ioc_pv_list(_TL.lower()+'-ap-posang',
+                           (_DEVICE, _PREFIX_VACA),
+                           get_pvs_database())
