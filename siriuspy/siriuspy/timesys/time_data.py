@@ -413,7 +413,7 @@ class _TimeDevData:
             return
         dev_types = set()
         for dev in self._all_devices:
-            dev_types.add(_PVName(dev).dev_type)
+            dev_types.add(_PVName(dev).dev)
 
         nr = len(dev_types)+2
         color_types = dict()
@@ -422,7 +422,7 @@ class _TimeDevData:
 
         colors = dict()
         for dev in self._all_devices:
-            colors[dev] = color_types[_PVName(dev).dev_type]
+            colors[dev] = color_types[_PVName(dev).dev]
 
         self._colors = colors
 
@@ -497,7 +497,7 @@ class _TimeDevData:
 
     def get_devices_by_type(self, type_dev):
         def _pv_fun(x, y):
-            return _PVName(x).dev_type == y
+            return _PVName(x).dev == y
 
         return {dev for dev in self._all_devices if _pv_fun(dev, type_dev)}
 
