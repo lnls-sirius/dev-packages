@@ -73,6 +73,16 @@ class PSSearch:
         return _copy.deepcopy(PSSearch._pstype_dict)
 
     @staticmethod
+    def get_bbbname_dict():
+        """Return bbbname dictionary.
+
+        With key,value pairs of bbbname and corresponding power supplies.
+        """
+        if PSSearch._bbbname_2_psnames_dict is None:
+            PSSearch._reload_bbb_2_psname_dict()
+        return _copy.deepcopy(PSSearch._bbbname_2_psnames_dict)
+
+    @staticmethod
     def get_polarities():
         """Return sorted list of power supply polarities."""
         if PSSearch._pstype_dict is None:
