@@ -38,7 +38,7 @@ class QueueThread(Thread):
                 func_item = self._funcs.get()
                 function, args = func_item
                 # print(len(self._funcs))
-                print(self._funcs.qsize())
+                # print(self._funcs.qsize())
                 function(*args)
             else:
                 _time.sleep(_QUEUE_INTERVAL)
