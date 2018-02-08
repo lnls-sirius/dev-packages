@@ -30,9 +30,9 @@ class App:
     def __init__(self, driver):
         """Init."""
         _siriuspy.util.print_ioc_banner(
-            ioc_name='PS-TEST',
+            ioc_name='BeagleBone',
             db=App.pvs_database[_pvs._PREFIX],
-            description='PS-TEST Test Power Supply Soft IOC',
+            description='BeagleBone Power Supply IOC',
             version=__version__,
             prefix=_pvs._PREFIX)
         _siriuspy.util.save_ioc_pv_list('as-ps-test',

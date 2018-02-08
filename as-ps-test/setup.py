@@ -21,6 +21,6 @@ setup(
     ],
     packages=['as_ps_test'],
     package_data={'as_ps_test': ['VERSION']},
-    scripts=['scripts/sirius-ioc-as-ps-test.py', ],
+    scripts=['scripts/sirius-ioc-as-ps-test.py', 'scripts/sirius-ioc-as-bbb.py'],
     zip_safe=False
 )
