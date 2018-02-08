@@ -5,7 +5,7 @@ import time as _time
 from siriuspy.epics import connection_timeout as _connection_timeout
 from queue import Queue as _Queue
 
-_QUEUE_INTERVAL = 0.1  # [s]
+_QUEUE_SLEEP_TIME = None  # [s]
 
 
 class QueueThread(Thread):
@@ -14,8 +14,8 @@ class QueueThread(Thread):
     def __init__(self):
         """Init method."""
         super().__init__(daemon=True)
-        # self._funcs = []
-        self._funcs = _Queue(maxsize=50)
+        # self._queue = []
+        self._queue = _Queue(maxsize=50)
         self._running = False
 
     @property
@@ -25,23 +25,23 @@ class QueueThread(Thread):
 
     def add_callback(self, func, pvname, value):
         """Add callback."""
-        # self._funcs.append((func, [pvname, value]))
-        if self._funcs.full():
-            self._funcs.get()
-        self._funcs.put((func, [pvname, value]))
+        # self._queue.append((func, [pvname, value]))
+        if self._queue.full():
+            self._queue.get()
+        self._queue.put((func, [pvname, value]))
 
     def run(self):
         """Run method."""
         self._running = True
         while self.running:
-            if self._funcs:
-                func_item = self._funcs.get()
+            if self._queue:
+                func_item = self._queue.get()
                 function, args = func_item
-                # print(len(self._funcs))
-                # print(self._funcs.qsize())
+                # print(len(self._queue))
+                # print(self._queue.qsize())
                 function(*args)
-            else:
-                _time.sleep(_QUEUE_INTERVAL)
+            elif _QUEUE_SLEEP_TIME is not None:
+                _time.sleep(_QUEUE_SLEEP_TIME)
 
     def stop(self):
         """Stop queue thread."""
