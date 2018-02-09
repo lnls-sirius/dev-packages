@@ -52,10 +52,10 @@ class App:
         self._set_callback()
 
     @staticmethod
-    def init_class(malist):
+    def init_class(manames):
         """Init class."""
-        App.ma_devices = _pvs.get_ma_devices(malist)
-        App.pvs_database = _pvs.get_pvs_database(malist)
+        App.ma_devices = _pvs.get_ma_devices(manames)
+        App.pvs_database = _pvs.get_pvs_database(manames)
 
     @property
     def driver(self):

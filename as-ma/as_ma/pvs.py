@@ -142,12 +142,12 @@ _ioc_dict = {
 
 
 # def select_ioc(ioc_name):
-def select_ioc(malist):
+def select_ioc(manames):
     """Set IOC."""
     global _IOC, _IOC_TYPE, _PREFIX_SECTOR, _PREFIX, _MA_DEVICES
-    _IOC = {'name': malist[0]}
-    _IOC_TYPE = malist[0]
-    _PREFIX_SECTOR = malist[0].split('-')[0]
+    _IOC = {'name': manames[0]}
+    _IOC_TYPE = manames[0]
+    _PREFIX_SECTOR = manames[0].split('-')[0]
     _PREFIX = _PREFIX_VACA + _PREFIX_SECTOR
     # if ioc_name in _ioc_dict:
     #     if _IOC is not None and ioc_name != _IOC['name']:
@@ -160,9 +160,9 @@ def select_ioc(malist):
     #     raise Exception('IOC name not defined!')
 
 
-def get_pvs_database(malist):
+def get_pvs_database(manames):
     """Return IOC database."""
-    MA_DEVICES = get_ma_devices(malist)
+    MA_DEVICES = get_ma_devices(manames)
     if MA_DEVICES:
         pv_database = {_IOC_TYPE + ':Version-Cte':
                        {'type': 'str', 'value': _COMMIT_HASH}}
@@ -176,7 +176,7 @@ def get_pvs_database(malist):
         return {}
 
 
-def get_ma_devices(malist):
+def get_ma_devices(manames):
     """Create/Return PowerSupplyMA objects for each magnet."""
     global _MA_DEVICES
     # if _IOC is None:
@@ -194,7 +194,7 @@ def get_ma_devices(malist):
     #             _Magnet(magnet, lock=False)
     if _MA_DEVICES is None:
         _MA_DEVICES = {}
-        for magnet in malist:
+        for magnet in manames:
             if _PREFIX_SECTOR:
                 _, device = magnet.split(_PREFIX_SECTOR)
             else:

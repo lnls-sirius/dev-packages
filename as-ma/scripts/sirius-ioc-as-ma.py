@@ -1,22 +1,25 @@
 #!/usr/local/bin/python-sirius -u
-"""BeagleBone Black IOCs Launcher."""
+"""Power Supply Magnet IOC Launcher."""
 import sys
 import os
-from as_ps_test import as_ps_test as ioc_module
+# import re
+# from multiprocessing import Process
+from as_ma import as_ma as ioc_module
 from siriuspy.search import PSSearch
+from siriuspy.search import MASearch
 
 
 def print_help():
     """Print help."""
     name = os.path.basename(sys.argv[0])
     print('NAME')
-    print('       {} - start beaglebone black IOC.'.format(name))
+    print('       {} - start power supply magnet IOC.'.format(name))
     print()
     print('SYNOPSIS')
     print('       {} [BBBNAME] []...'.format(name))
     print()
     print('DESCRIPTION')
-    print('       Start execution of BeagleBone Black IOC.')
+    print('       Start execution of power supply magnet IOC.')
     print()
     print('       <no arguments>')
     print('               list all beablebone black names and power supplies.')
@@ -30,34 +33,43 @@ def print_help():
     print()
 
 
+def get_manames(bbbname):
+    """Return list of manames for a list of bbbnames."""
+    manames = set()
+    psnames = PSSearch.conv_bbbname_2_psnames(bbbname)
+    for psname in psnames:
+        maname = MASearch.conv_psname_2_maname(psname)
+        manames.add(maname)
+    return list(manames)
+
+
 def main():
     """Launch BBB IOC."""
+    manames = get_manames
     bbb_dict = PSSearch.get_bbbname_dict()
     bbbnames = sorted(bbb_dict.keys())
+
     if len(sys.argv) == 1:
         print_help()
         print('List of beaglebone black names:')
         print()
-        for i in range(len(bbbnames)):
-            bbbname = bbbnames[i]
+        bbbnames = PSSearch.get_bbbnames()
+        for bbbname in bbbnames:
             print('{:<20s} '.format(bbbname), end='')
-            psnames = bbb_dict[bbbname]
-            for psname in psnames:
-                print('{:<16s} '.format(psname), end='')
+            manames = get_manames(bbbname)
+            for maname in manames:
+                print('{:<16s} '.format(maname), end='')
             print()
     else:
         args = [arg for arg in sys.argv[1:]]
-        if '--real' in args:
-            simulate = False
-            args.remove('--real')
-        elif '--help' in args:
+        if '--help' in args:
             args.remove('--help')
             print_help()
-        else:
-            simulate = True
-
         if args:
-            ioc_module.run(args, simulate=simulate)
+            manames = set()
+            for arg in args:
+                manames += get_manames(bbbname=arg)
+            ioc_module.run(manames=list(manames))
 
 
 if __name__ == "__main__":
