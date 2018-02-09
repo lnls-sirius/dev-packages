@@ -1,11 +1,8 @@
 """Definition of ComputedPV class that simulates a PV composed of epics PVs."""
 from epics import get_pv
 from threading import Thread
-import time as _time
 from siriuspy.epics import connection_timeout as _connection_timeout
 from queue import Queue as _Queue
-
-_QUEUE_INTERVAL = 0.1  # [s]
 
 
 class QueueThread(Thread):
@@ -14,8 +11,8 @@ class QueueThread(Thread):
     def __init__(self):
         """Init method."""
         super().__init__(daemon=True)
-        # self._funcs = []
-        self._funcs = _Queue(maxsize=50)
+        # self._queue = []
+        self._queue = _Queue()
         self._running = False
 
     @property
@@ -25,23 +22,16 @@ class QueueThread(Thread):
 
     def add_callback(self, func, pvname, value):
         """Add callback."""
-        # self._funcs.append((func, [pvname, value]))
-        if self._funcs.full():
-            self._funcs.get()
-        self._funcs.put((func, [pvname, value]))
+        self._queue.put((func, [pvname, value]))
 
     def run(self):
         """Run method."""
         self._running = True
         while self.running:
-            if self._funcs:
-                func_item = self._funcs.get()
-                function, args = func_item
-                # print(len(self._funcs))
-                # print(self._funcs.qsize())
-                function(*args)
-            else:
-                _time.sleep(_QUEUE_INTERVAL)
+            func_item = self._queue.get()
+            # print(queue_size)
+            function, args = func_item
+            function(*args)  # run the show!
 
     def stop(self):
         """Stop queue thread."""

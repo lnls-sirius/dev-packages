@@ -263,7 +263,7 @@ class PSEpics(_PSCommInterface):
         if self._pvs[field].connected:
             return self._pvs[field].get()
         else:
-            print("Not connected")
+            # print("Not connected")
             return None
 
     def write(self, field, value):
@@ -274,7 +274,7 @@ class PSEpics(_PSCommInterface):
         if self._pvs[field].connected:
             return self._pvs[field].put(value)
         else:
-            print("Not connected")
+            # print("Not connected")
             return None
 
     def add_callback(self, func):

@@ -55,6 +55,7 @@ class TestPSSearch(unittest.TestCase):
         'get_bbbnames',
         'get_splims',
         'get_pstype_dict',
+        'get_bbbname_dict',
         'get_polarities',
         'conv_psname_2_pstype',
         'conv_pstype_2_polarity',
