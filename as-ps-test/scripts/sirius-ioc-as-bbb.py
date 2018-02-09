@@ -13,13 +13,20 @@ def print_help():
     print('       {} - start beaglebone black IOC.'.format(name))
     print()
     print('SYNOPSIS')
-    print('       {} [BBBNAME]...'.format(name))
+    print('       {} [BBBNAME] []...'.format(name))
     print()
     print('DESCRIPTION')
     print('       Start execution of BeagleBone Black IOC.')
     print()
     print('       <no arguments>')
     print('               list all beablebone black names and power supplies.')
+    print()
+    print('       --help')
+    print('               print this help.')
+    print()
+    print('       --real')
+    print('               creates real PRU and SerialComm objects, not '
+          'simulated ones.')
     print()
 
 
@@ -37,4 +44,15 @@ if len(sys.argv) == 1:
             print('{:<16s} '.format(psname), end='')
         print()
 else:
-    ioc_module.run((sys.argv[1],))
+    args = [arg for arg in sys.argv[1:]]
+    if '--real' in args:
+        simulate = False
+        args.remove('--real')
+    elif '--help' in args:
+        args.remove('--help')
+        print_help()
+    else:
+        simulate = True
+
+    if args:
+        ioc_module.run(args, simulate=simulate)

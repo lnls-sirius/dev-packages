@@ -44,10 +44,10 @@ class App:
             _pvs.ps_devices[psname].add_callback(self._mycallback)
 
     @staticmethod
-    def init_class(bbblist):
+    def init_class(bbblist, simulate=True):
         """Init class."""
-        App.ps_devices = _pvs.get_ps_devices(bbblist)
-        App.pvs_database = _pvs.get_pvs_database(bbblist)
+        App.ps_devices = _pvs.get_ps_devices(bbblist, simulate=simulate)
+        App.pvs_database = _pvs.get_pvs_database(bbblist, simulate=simulate)
 
     @staticmethod
     def get_pvs_database():
