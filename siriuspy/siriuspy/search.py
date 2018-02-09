@@ -419,6 +419,15 @@ class MASearch:
         return MASearch._maname_2_psnames_dict[maname]
 
     @staticmethod
+    def conv_psname_2_maname(psname):
+        """Return maname for a given psname."""
+        manames = MASearch.get_manames()
+        for maname in manames:
+            if psname in MASearch._maname_2_psnames_dict[maname]:
+                return maname
+        return None
+
+    @staticmethod
     def check_maname_ispulsed(maname):
         """Return True if psname is a pulsed power supply, False otherwise."""
         devname = _SiriusPVName(maname)
