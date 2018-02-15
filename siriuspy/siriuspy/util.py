@@ -126,7 +126,7 @@ def print_ioc_banner(ioc_name, db, description, version, prefix, file=None):
               end='', file=file)
         new_line = True
         i += 1
-        if not (i-1) % 5:
+        if not (i-1) % 1:
             print('', file=file)
             new_line = False
     if new_line:
