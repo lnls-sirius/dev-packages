@@ -68,7 +68,7 @@ def main():
         if args:
             manames = set()
             for arg in args:
-                manames += get_manames(bbbname=arg)
+                manames |= set(get_manames(bbbname=arg))
             ioc_module.run(manames=list(manames))
 
 
