@@ -354,7 +354,7 @@ class App:
                 method=1, grouping='svd',
                 delta_opticsparam=[delta_chromx, delta_chromy])
 
-        self.driver.setParam('Log-Mon', 'Calculated SL.')
+        self.driver.setParam('Log-Mon', 'Calculated SL values.')
 
         for fam in self._SFAMS:
             fam_index = self._SFAMS.index(fam)
@@ -389,7 +389,7 @@ class App:
     def _connection_callback_sfam_sl_rb(self, pvname, conn, **kws):
         ps = pvname.split(self._PREFIX_VACA)[1]
         if not conn:
-            self.driver.setParam('Log-Mon', 'WARN:'+ps+' disconnected')
+            self.driver.setParam('Log-Mon', 'WARN:'+ps+' disconnected.')
             self.driver.updatePVs()
 
         fam = ps.split(':')[1].split('-')[1]
@@ -423,7 +423,7 @@ class App:
     def _callback_sfam_pwrstate_sts(self, pvname, value, **kws):
         ps = pvname.split(self._PREFIX_VACA)[1]
         if value == 0:
-            self.driver.setParam('Log-Mon', 'WARN:'+ps+' is Off')
+            self.driver.setParam('Log-Mon', 'WARN:'+ps+' is Off.')
             self.driver.updatePVs()
 
         fam = ps.split(':')[1].split('-')[1]
@@ -440,7 +440,7 @@ class App:
 
     def _callback_sfam_opmode_sts(self, pvname, value, **kws):
         ps = pvname.split(self._PREFIX_VACA)[1]
-        self.driver.setParam('Log-Mon', 'WARN:'+ps+' changed')
+        self.driver.setParam('Log-Mon', 'WARN:'+ps+' changed.')
         self.driver.updatePVs()
 
         fam = ps.split(':')[1].split('-')[1]
@@ -459,7 +459,7 @@ class App:
     def _callback_sfam_ctrlmode_mon(self,  pvname, value, **kws):
         ps = pvname.split(self._PREFIX_VACA)[1]
         if value == 1:
-            self.driver.setParam('Log-Mon', 'WARN:'+ps+' is Local')
+            self.driver.setParam('Log-Mon', 'WARN:'+ps+' is Local.')
             self.driver.updatePVs()
 
         fam = ps.split(':')[1].split('-')[1]
@@ -529,6 +529,7 @@ class App:
             self.driver.updatePVs()
             return True
         else:
-            self.driver.setParam('Log-Mon', 'ERR:Some pv is disconnected.')
+            self.driver.setParam('Log-Mon',
+                                 'ERR:Some timing PV is disconnected.')
             self.driver.updatePVs()
             return False

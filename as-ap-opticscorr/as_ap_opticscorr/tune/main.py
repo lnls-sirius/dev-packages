@@ -353,7 +353,7 @@ class App:
                 method=1, grouping='2knobs',
                 delta_opticsparam=[self._delta_tunex, self._delta_tuney])
 
-        self.driver.setParam('Log-Mon', 'Calculated KL.')
+        self.driver.setParam('Log-Mon', 'Calculated KL values.')
 
         self._lastcalc_deltakl = lastcalc_deltakl
         for fam in self._QFAMS:
@@ -407,7 +407,8 @@ class App:
 
             self.driver.setParam('Log-Mon', 'Updated KL references.')
         else:
-            self.driver.setParam('Log-Mon', 'ERR:Some pv is disconnected.')
+            self.driver.setParam('Log-Mon',
+                                 'ERR:Some magnet family is disconnected.')
         self.driver.updatePVs()
 
     def _estimate_current_deltatune(self):
@@ -566,6 +567,7 @@ class App:
             self.driver.updatePVs()
             return True
         else:
-            self.driver.setParam('Log-Mon', 'ERR:Some pv is disconnected.')
+            self.driver.setParam('Log-Mon',
+                                 'ERR:Some timing PV is disconnected.')
             self.driver.updatePVs()
             return False
