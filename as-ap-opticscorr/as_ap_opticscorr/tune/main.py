@@ -54,8 +54,8 @@ class App:
 
         self._corr_factor = 0.0
         self._set_new_refkl_cmd_count = 0
-        self._apply_kl_cmd_count = 0
-        self._config_qfam_ps_cmd_count = 0
+        self._apply_corr_cmd_count = 0
+        self._config_ma_cmd_count = 0
         self._lastcalc_deltakl = len(self._QFAMS)*[0]
 
         self._qfam_kl_rb = len(self._QFAMS)*[0]
@@ -84,10 +84,10 @@ class App:
                                        opticsparam='tune')
         [done, corrparams] = self._get_corrparams(config_name)
         if done:
-            self.driver.setParam('CorrParamsConfigName-SP', config_name)
-            self.driver.setParam('CorrParamsConfigName-RB', config_name)
+            self.driver.setParam('ConfigName-SP', config_name)
+            self.driver.setParam('ConfigName-RB', config_name)
             self._nominal_matrix = corrparams[0]
-            self.driver.setParam('CorrMat-Mon', self._nominal_matrix)
+            self.driver.setParam('RespMat-Mon', self._nominal_matrix)
             self._qfam_nomkl = corrparams[1]
             self.driver.setParam('NominalKL-Mon', self._qfam_nomkl)
             self._opticscorr = _OpticsCorr(
@@ -199,20 +199,6 @@ class App:
 
     def read(self, reason):
         """Read from IOC database."""
-        if reason == 'Version-Cte':
-            if (self._status & 0x1) == 0:  # Check connection
-                for fam in self._QFAMS:
-                    limits = {}
-                    data = self._qfam_kl_rb_pvs[fam].get_ctrlvars()
-                    if self._qfam_kl_rb_pvs[fam].upper_disp_limit is not None:
-                        limits['hilim'] = data['upper_disp_limit']
-                        limits['lolim'] = data['lower_disp_limit']
-                        limits['high'] = data['upper_alarm_limit']
-                        limits['low'] = data['lower_alarm_limit']
-                        limits['hihi'] = data['upper_warning_limit']
-                        limits['lolo'] = data['lower_warning_limit']
-                    self.driver.setParamInfo('LastCalc'+fam+'KL-Mon', limits)
-                self.driver.updatePVs()
         return None
 
     def write(self, reason, value):
@@ -230,23 +216,23 @@ class App:
             self.driver.updatePVs()
             status = True
 
-        elif reason == 'ApplyKL-Cmd':
-            done = self._apply_kl()
+        elif reason == 'ApplyCorr-Cmd':
+            done = self._apply_corr()
             if done:
-                self._apply_kl_cmd_count += 1
-                self.driver.setParam('ApplyKL-Cmd',
-                                     self._apply_kl_cmd_count)
+                self._apply_corr_cmd_count += 1
+                self.driver.setParam('ApplyCorr-Cmd',
+                                     self._apply_corr_cmd_count)
                 self.driver.updatePVs()
 
-        elif reason == 'CorrParamsConfigName-SP':
+        elif reason == 'ConfigName-SP':
             [done, corrparams] = self._get_corrparams(value)
             if done:
                 _set_config_name(acc=self._ACC.lower(),
                                  opticsparam='tune',
                                  config_name=value)
-                self.driver.setParam('CorrParamsConfigName-RB', value)
+                self.driver.setParam('ConfigName-RB', value)
                 self._nominal_matrix = corrparams[0]
-                self.driver.setParam('CorrMat-Mon', self._nominal_matrix)
+                self.driver.setParam('RespMat-Mon', self._nominal_matrix)
                 self._qfam_nomkl = corrparams[1]
                 self.driver.setParam('NominalKL-Mon', self._qfam_nomkl)
                 self._opticscorr.nominal_matrix = self._nominal_matrix
@@ -281,6 +267,19 @@ class App:
             if value != self._sync_corr:
                 self._sync_corr = value
 
+                done = self._config_ma()
+                if done:
+                    self._config_ma_cmd_count += 1
+                    self.driver.setParam('ConfigMA-Cmd',
+                                         self._config_ma_cmd_count)
+
+                if value == 1:
+                    done = self._config_timing()
+                    if done:
+                        self._config_timing_cmd_count += 1
+                        self.driver.setParam('ConfigTiming-Cmd',
+                                             self._config_timing_cmd_count)
+
                 if (self._status & 0x1) == 0:
                     for fam in self._QFAMS:
                         fam_index = self._QFAMS.index(fam)
@@ -300,12 +299,12 @@ class App:
                 self.driver.updatePVs()
                 status = True
 
-        elif reason == 'ConfigPS-Cmd':
-            done = self._config_qfam_ps()
+        elif reason == 'ConfigMA-Cmd':
+            done = self._config_ma()
             if done:
-                self._config_qfam_ps_cmd_count += 1
-                self.driver.setParam('ConfigPS-Cmd',
-                                     self._config_qfam_ps_cmd_count)
+                self._config_ma_cmd_count += 1
+                self.driver.setParam('ConfigMA-Cmd',
+                                     self._config_ma_cmd_count)
                 self.driver.updatePVs()
 
         elif reason == 'ConfigTiming-Cmd':
@@ -360,11 +359,11 @@ class App:
         for fam in self._QFAMS:
             fam_index = self._QFAMS.index(fam)
             self.driver.setParam(
-                'LastCalc' + fam + 'KL-Mon', self._qfam_refkl[fam] +
+                'DeltaKL' + fam + '-Mon',
                 (self._corr_factor/100) * self._lastcalc_deltakl[fam_index])
         self.driver.updatePVs()
 
-    def _apply_kl(self):
+    def _apply_corr(self):
         if ((self._status == _ALLCLR_SYNCOFF and self._sync_corr == 0) or
                 self._status == _ALLCLR_SYNCON):
             for fam in self._qfam_kl_sp_pvs:
@@ -372,7 +371,7 @@ class App:
                 pv = self._qfam_kl_sp_pvs[fam]
                 pv.put(self._qfam_refkl[fam] + (self._corr_factor/100) *
                        self._lastcalc_deltakl[fam_index])
-            self.driver.setParam('Log-Mon', 'Applied KL.')
+            self.driver.setParam('Log-Mon', 'Applied correction.')
             self.driver.updatePVs()
 
             if self._sync_corr == 1:
@@ -381,7 +380,7 @@ class App:
                 self.driver.updatePVs()
             return True
         else:
-            self.driver.setParam('Log-Mon', 'ERR:ApplyKL-Cmd failed.')
+            self.driver.setParam('Log-Mon', 'ERR:ApplyCorr-Cmd failed.')
             self.driver.updatePVs()
         return False
 
@@ -390,11 +389,12 @@ class App:
             # updates reference
             for fam in self._QFAMS:
                 self._qfam_refkl[fam] = self._qfam_kl_rb_pvs[fam].get()
-                self.driver.setParam(fam + 'RefKL-Mon', self._qfam_refkl[fam])
+                self.driver.setParam('RefKL' + fam + '-Mon',
+                                     self._qfam_refkl[fam])
 
                 fam_index = self._QFAMS.index(fam)
                 self._lastcalc_deltakl[fam_index] = 0
-                self.driver.setParam('LastCalc' + fam + 'KL-Mon', 0)
+                self.driver.setParam('DeltaKL' + fam + '-Mon', 0)
 
             # the deltas from new kl references are zero
             self._delta_tunex = 0
@@ -425,7 +425,7 @@ class App:
 
         # Get reference
         self._qfam_refkl[fam] = value
-        self.driver.setParam(fam + 'RefKL-Mon', self._qfam_refkl[fam])
+        self.driver.setParam('RefKL' + fam + '-Mon', self._qfam_refkl[fam])
 
         # Remove callback
         cb_info[1].remove_callback(cb_info[0])
@@ -433,7 +433,7 @@ class App:
     def _connection_callback_qfam_kl_rb(self, pvname, conn, **kws):
         ps = pvname.split(self._PREFIX_VACA)[1]
         if not conn:
-            self.driver.setParam('Log-Mon', 'WARN:'+ps+' disconnected')
+            self.driver.setParam('Log-Mon', 'WARN:'+ps+' disconnected.')
             self.driver.updatePVs()
 
         fam = ps.split(':')[1].split('-')[1]
@@ -461,7 +461,7 @@ class App:
     def _callback_qfam_pwrstate_sts(self, pvname, value, **kws):
         ps = pvname.split(self._PREFIX_VACA)[1]
         if value == 0:
-            self.driver.setParam('Log-Mon', 'WARN:'+ps+' is Off')
+            self.driver.setParam('Log-Mon', 'WARN:'+ps+' is Off.')
             self.driver.updatePVs()
 
         fam = ps.split(':')[1].split('-')[1]
@@ -477,7 +477,7 @@ class App:
 
     def _callback_qfam_opmode_sts(self, pvname, value, **kws):
         ps = pvname.split(self._PREFIX_VACA)[1]
-        self.driver.setParam('Log-Mon', 'WARN:'+ps+' changed')
+        self.driver.setParam('Log-Mon', 'WARN:'+ps+' changed.')
         self.driver.updatePVs()
 
         fam = ps.split(':')[1].split('-')[1]
@@ -496,7 +496,7 @@ class App:
     def _callback_qfam_ctrlmode_mon(self,  pvname, value, **kws):
         ps = pvname.split(self._PREFIX_VACA)[1]
         if value == 1:
-            self.driver.setParam('Log-Mon', 'WARN:'+ps+' is Local')
+            self.driver.setParam('Log-Mon', 'WARN:'+ps+' is Local.')
             self.driver.updatePVs()
 
         fam = ps.split(':')[1].split('-')[1]
@@ -533,7 +533,7 @@ class App:
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
-    def _config_qfam_ps(self):
+    def _config_ma(self):
         opmode = self._sync_corr
         for fam in self._QFAMS:
             if self._qfam_pwrstate_sel_pvs[fam].connected:
@@ -541,10 +541,10 @@ class App:
                 self._qfam_opmode_sel_pvs[fam].put(opmode)
             else:
                 self.driver.setParam('Log-Mon',
-                                     'ERR:' + fam + ' is disconnected')
+                                     'ERR:' + fam + ' is disconnected.')
                 self.driver.updatePVs()
                 return False
-        self.driver.setParam('Log-Mon', 'Sent configuration to quadrupoles')
+        self.driver.setParam('Log-Mon', 'Sent configuration to quadrupoles.')
         self.driver.updatePVs()
         return True
 
@@ -562,10 +562,10 @@ class App:
             self._timing_quads_duration_sp.put(0.15)
             self._timing_evg_tunesmode_sel.put(3)
             self._timing_evg_tunesdelay_sp.put(0)
-            self.driver.setParam('Log-Mon', 'Sent configuration to timing')
+            self.driver.setParam('Log-Mon', 'Sent configuration to timing.')
             self.driver.updatePVs()
             return True
         else:
-            self.driver.setParam('Log-Mon', 'ERR:Some pv is disconnected')
+            self.driver.setParam('Log-Mon', 'ERR:Some pv is disconnected.')
             self.driver.updatePVs()
             return False
