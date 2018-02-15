@@ -2,8 +2,6 @@
 """Power Supply Magnet IOC Launcher."""
 import sys
 import os
-# import re
-# from multiprocessing import Process
 from as_ma import as_ma as ioc_module
 from siriuspy.search import PSSearch
 from siriuspy.search import MASearch
@@ -22,7 +20,7 @@ def print_help():
     print('       Start execution of power supply magnet IOC.')
     print()
     print('       <no arguments>')
-    print('               list all beablebone black names and power supplies.')
+    print('               list all beaglebone black names and power supplies.')
     print()
     print('       --help')
     print('               print this help.')
@@ -45,7 +43,6 @@ def get_manames(bbbname):
 
 def main():
     """Launch BBB IOC."""
-    manames = get_manames
     bbb_dict = PSSearch.get_bbbname_dict()
     bbbnames = sorted(bbb_dict.keys())
 
