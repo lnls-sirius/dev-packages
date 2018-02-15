@@ -57,7 +57,7 @@ def get_pvs_database():
 
     pvs_database = {
         'Version-Cte':          {'type': 'string', 'value': _COMMIT_HASH,
-                                 'scan': 0.1},
+                                 'scan': 0.25},
 
         'Log-Mon':              {'type': 'string', 'value': 'Starting...'},
 
@@ -70,11 +70,11 @@ def get_pvs_database():
                                  'low': -10, 'hihi': 10, 'lolo': -10},
         'ChromY-RB':            {'type': 'float', 'value': 0, 'prec': 6},
 
-        'ApplySL-Cmd':          {'type': 'int', 'value': 0},
+        'ApplyCorr-Cmd':        {'type': 'int', 'value': 0},
 
-        'CorrParamsConfigName-SP': {'type': 'string', 'value': ''},
-        'CorrParamsConfigName-RB': {'type': 'string', 'value': ''},
-        'CorrMat-Mon':          {'type': 'float', 'count': corrmat_size,
+        'ConfigName-SP':        {'type': 'string', 'value': ''},
+        'ConfigName-RB':        {'type': 'string', 'value': ''},
+        'RespMat-Mon':          {'type': 'float', 'count': corrmat_size,
                                  'value': corrmat_size*[0], 'prec': 6, 'unit':
                                  'Chrom x SFams (Matrix of add method)'},
         'NominalChrom-Mon':     {'type': 'float', 'count': 2, 'value': 2*[0],
@@ -87,17 +87,17 @@ def get_pvs_database():
         'SyncCorr-Sts':         {'type': 'enum', 'value': 0,
                                  'enums': ['Off', 'On']},
 
-        'ConfigPS-Cmd':         {'type': 'int', 'value': 0},
+        'ConfigMA-Cmd':         {'type': 'int', 'value': 0},
         'ConfigTiming-Cmd':     {'type': 'int', 'value': 0},
 
         'Status-Mon':           {'type': 'int', 'value': 0x1f},
         'Status-Cte':           {'type': 'string', 'count': 5, 'value':
-                                 ('PS Connection', 'PS PwrState', 'PS OpMode',
-                                  'PS CtrlMode', 'Timing Config')},
+                                 ('MA Connection', 'MA PwrState', 'MA OpMode',
+                                  'MA CtrlMode', 'Timing Config')},
     }
 
     for fam in _SFAMS:
-        pvs_database['LastCalc' + fam + 'SL-Mon'] = {
+        pvs_database['SL' + fam + '-Mon'] = {
             'type': 'float', 'value': 0, 'prec': 4, 'unit': '1/m^2',
             'lolim': 0, 'hilim': 0, 'low': 0, 'high': 0, 'lolo': 0, 'hihi': 0}
 

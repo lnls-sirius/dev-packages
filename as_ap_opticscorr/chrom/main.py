@@ -52,8 +52,8 @@ class App:
         self._sfam_check_opmode_sts = len(self._SFAMS)*[-1]
         self._sfam_check_ctrlmode_mon = len(self._SFAMS)*[1]
 
-        self._apply_sl_cmd_count = 0
-        self._config_sfam_ps_cmd_count = 0
+        self._apply_corr_cmd_count = 0
+        self._config_ma_cmd_count = 0
         self._lastcalc_sl = len(self._SFAMS)*[0]
 
         self._sfam_sl_rb = len(self._SFAMS)*[0]
@@ -82,10 +82,10 @@ class App:
                                        opticsparam='chrom')
         [done, corrparams] = self._get_corrparams(config_name)
         if done:
-            self.driver.setParam('CorrParamsConfigName-SP', config_name)
-            self.driver.setParam('CorrParamsConfigName-RB', config_name)
+            self.driver.setParam('ConfigName-SP', config_name)
+            self.driver.setParam('ConfigName-RB', config_name)
             self._nominal_matrix = corrparams[0]
-            self.driver.setParam('CorrMat-Mon', self._nominal_matrix)
+            self.driver.setParam('RespMat-Mon', self._nominal_matrix)
             self._sfam_nomsl = corrparams[1]
             self.driver.setParam('NominalSL-Mon', self._sfam_nomsl)
             self._nomchrom = corrparams[2]
@@ -206,7 +206,7 @@ class App:
                         limits['low'] = data['lower_alarm_limit']
                         limits['hihi'] = data['upper_warning_limit']
                         limits['lolo'] = data['lower_warning_limit']
-                    self.driver.setParamInfo('LastCalc'+fam+'SL-Mon', limits)
+                    self.driver.setParamInfo('SL'+fam+'-Mon', limits)
                 self.driver.updatePVs()
         return None
 
@@ -225,22 +225,23 @@ class App:
             self.driver.updatePVs()
             status = True
 
-        elif reason == 'ApplySL-Cmd':
-            done = self._apply_sl()
+        elif reason == 'ApplyCorr-Cmd':
+            done = self._apply_corr()
             if done:
-                self._apply_sl_cmd_count += 1
-                self.driver.setParam('ApplySL-Cmd', self._apply_sl_cmd_count)
+                self._apply_corr_cmd_count += 1
+                self.driver.setParam('ApplyCorr-Cmd',
+                                     self._apply_corr_cmd_count)
                 self.driver.updatePVs()
 
-        elif reason == 'CorrParamsConfigName-SP':
+        elif reason == 'ConfigName-SP':
             [done, corrparams] = self._get_corrparams(value)
             if done:
                 _set_config_name(acc=self._ACC.lower(),
                                  opticsparam='chrom',
                                  config_name=value)
-                self.driver.setParam('CorrParamsConfigName-RB', value)
+                self.driver.setParam('ConfigName-RB', value)
                 self._nominal_matrix = corrparams[0]
-                self.driver.setParam('CorrMat-Mon', self._nominal_matrix)
+                self.driver.setParam('RespMat-Mon', self._nominal_matrix)
                 self._sfam_nomsl = corrparams[1]
                 self.driver.setParam('NominalSL-Mon', self._sfam_nomsl)
                 self._nomchrom = corrparams[2]
@@ -270,6 +271,19 @@ class App:
             if value != self._sync_corr:
                 self._sync_corr = value
 
+                done = self._config_ma()
+                if done:
+                    self._config_ma_cmd_count += 1
+                    self.driver.setParam('ConfigMA-Cmd',
+                                         self._config_ma_cmd_count)
+
+                if value == 1:
+                    done = self._config_timing()
+                    if done:
+                        self._config_timing_cmd_count += 1
+                        self.driver.setParam('ConfigTiming-Cmd',
+                                             self._config_timing_cmd_count)
+
                 if (self._status & 0x1) == 0:
                     for fam in self._SFAMS:
                         fam_index = self._SFAMS.index(fam)
@@ -289,12 +303,12 @@ class App:
                 self.driver.updatePVs()
                 status = True
 
-        elif reason == 'ConfigPS-Cmd':
-            done = self._config_sfam_ps()
+        elif reason == 'ConfigMA-Cmd':
+            done = self._config_ma()
             if done:
-                self._config_sfam_ps_cmd_count += 1
-                self.driver.setParam('ConfigPS-Cmd',
-                                     self._config_sfam_ps_cmd_count)
+                self._config_ma_cmd_count += 1
+                self.driver.setParam('ConfigMA-Cmd',
+                                     self._config_ma_cmd_count)
                 self.driver.updatePVs()
 
         elif reason == 'ConfigTiming-Cmd':
@@ -347,11 +361,11 @@ class App:
             current_sl = self._sfam_sl_rb_pvs[fam].get()
             self._lastcalc_sl[fam_index] = (current_sl +
                                             lastcalc_deltasl[fam_index])
-            self.driver.setParam('LastCalc' + fam + 'SL-Mon',
+            self.driver.setParam('SL' + fam + '-Mon',
                                  self._lastcalc_sl[fam_index])
         self.driver.updatePVs()
 
-    def _apply_sl(self):
+    def _apply_corr(self):
         if ((self._status == _ALLCLR_SYNCOFF and self._sync_corr == 0) or
                 self._status == _ALLCLR_SYNCON):
             pvs = self._sfam_sl_sp_pvs
@@ -359,7 +373,7 @@ class App:
                 fam_index = self._SFAMS.index(fam)
                 pv = pvs[fam]
                 pv.put(self._lastcalc_sl[fam_index])
-            self.driver.setParam('Log-Mon', 'Applied SL.')
+            self.driver.setParam('Log-Mon', 'Applied correction.')
             self.driver.updatePVs()
 
             if self._sync_corr == 1:
@@ -368,7 +382,7 @@ class App:
                 self.driver.updatePVs()
             return True
         else:
-            self.driver.setParam('Log-Mon', 'ERR:ApplySL-Cmd failed.')
+            self.driver.setParam('Log-Mon', 'ERR:ApplyCorr-Cmd failed.')
             self.driver.updatePVs()
         return False
 
@@ -482,7 +496,7 @@ class App:
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
-    def _config_sfam_ps(self):
+    def _config_ma(self):
         opmode = self._sync_corr
         for fam in self._SFAMS:
             if self._sfam_pwrstate_sel_pvs[fam].connected:
