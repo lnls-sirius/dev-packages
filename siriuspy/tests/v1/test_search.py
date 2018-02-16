@@ -392,6 +392,7 @@ class TestMASearch(unittest.TestCase):
         'conv_maname_2_magfunc',
         'conv_maname_2_splims',
         'conv_maname_2_psnames',
+        'conv_psname_2_maname',
         'get_maname_2_splims_dict',
         'check_maname_ispulsed'
     )

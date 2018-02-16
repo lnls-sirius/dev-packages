@@ -115,7 +115,7 @@ class TestUtil(unittest.TestCase):
                               'Test-ioc for util module unittest',
                               '1.0.0', 'PREFIX', file=file)
         text = file.getvalue()
-        self.assertEqual(len(text.splitlines()), 10)
+        self.assertEqual(len(text.splitlines()), 16)
         db.update({'PV09': None, 'PV10': None, 'PV11': None, 'PV12': None, })
         db.update({'PV13': None, 'PV14': None, 'PV15': None, 'PV16': None, })
         file = StringIO()
@@ -123,7 +123,7 @@ class TestUtil(unittest.TestCase):
                               'Test-ioc for util module unittest',
                               '1.0.0', 'PREFIX', file=file)
         text = file.getvalue()
-        self.assertEqual(len(text.splitlines()), 12)
+        self.assertEqual(len(text.splitlines()), 24)
 
     def test_save_ioc_pv_list(self):
         """Test save_ioc_pv_list."""
