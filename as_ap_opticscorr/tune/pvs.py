@@ -91,13 +91,7 @@ def get_pvs_database():
                                  'high': 1000, 'low': -1000, 'hihi': 1000,
                                  'lolo': -1000},
 
-        'SyncCorr-Sel':         {'type': 'enum', 'value': 0,
-                                 'enums': ['Off', 'On']},
-        'SyncCorr-Sts':         {'type': 'enum', 'value': 0,
-                                 'enums': ['Off', 'On']},
-
         'ConfigMA-Cmd':         {'type': 'int', 'value': 0},
-        'ConfigTiming-Cmd':     {'type': 'int', 'value': 0},
 
         'SetNewRefKL-Cmd':      {'type': 'int', 'value': 0},
 
@@ -120,6 +114,11 @@ def get_pvs_database():
                                         ['Proportional', 'Additional']}
         pvs_database['CorrMeth-Sts'] = {'type': 'enum', 'value': 0, 'enums':
                                         ['Proportional', 'Additional']}
+        pvs_database['SyncCorr-Sel'] = {'type': 'enum', 'value': 0,
+                                        'enums': ['Off', 'On']}
+        pvs_database['SyncCorr-Sts'] = {'type': 'enum', 'value': 0,
+                                        'enums': ['Off', 'On']}
+        pvs_database['ConfigTiming-Cmd'] = {'type': 'int', 'value': 0}
     return pvs_database
 
 

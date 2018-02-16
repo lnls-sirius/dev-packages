@@ -103,10 +103,7 @@ class TestASAPOpticsCorrTunePvs(unittest.TestCase):
             self.assertTrue('NominalKL-Mon' in db)
             self.assertTrue('CorrFactor-SP' in db)
             self.assertTrue('CorrFactor-RB' in db)
-            self.assertTrue('SyncCorr-Sel' in db)
-            self.assertTrue('SyncCorr-Sts' in db)
             self.assertTrue('ConfigMA-Cmd' in db)
-            self.assertTrue('ConfigTiming-Cmd' in db)
             self.assertTrue('Status-Mon' in db)
             self.assertTrue('Status-Cte' in db)
 
@@ -119,6 +116,9 @@ class TestASAPOpticsCorrTunePvs(unittest.TestCase):
             if accelerator == 'SI':
                 self.assertTrue('CorrMeth-Sel' in db)
                 self.assertTrue('CorrMeth-Sts' in db)
+                self.assertTrue('SyncCorr-Sel' in db)
+                self.assertTrue('SyncCorr-Sts' in db)
+                self.assertTrue('ConfigTiming-Cmd' in db)
 
     @mock.patch("as_ap_opticscorr.tune.pvs._util")
     def test_print_banner_and_save_pv_list(self, util):

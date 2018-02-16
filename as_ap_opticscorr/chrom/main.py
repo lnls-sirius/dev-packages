@@ -58,15 +58,14 @@ class App:
 
         self._sfam_sl_rb = len(self._SFAMS)*[0]
 
-        self._sync_corr = 0
-        self._sync_corr_cmd_count = 0
-        self._config_timing_cmd_count = 0
-        self._timing_check_config = 6*[0]
-
         if self._ACC.lower() == 'si':
             self._corr_method = 0
+            self._sync_corr = 0
+            self._config_timing_cmd_count = 0
+            self._timing_check_config = 6*[0]
         else:
             self._corr_method = 1
+            self._sync_corr = 0
 
         # Get focusing and defocusing families
         sfam_focusing = []
@@ -136,44 +135,45 @@ class App:
                 callback=self._callback_sfam_ctrlmode_mon)
 
         # Connect to Timing
-        self._timing_sexts_state_sel = _epics.PV(
-            self._PREFIX_VACA+self._ACC+'-Glob:TI-Sexts:State-Sel')
-        self._timing_sexts_state_sts = _epics.PV(
-            self._PREFIX_VACA+self._ACC+'-Glob:TI-Sexts:State-Sts',
-            callback=self._callback_timing_state)
+        if self._ACC == 'SI':
+            self._timing_sexts_state_sel = _epics.PV(
+                self._PREFIX_VACA+'SI-Glob:TI-Sexts:State-Sel')
+            self._timing_sexts_state_sts = _epics.PV(
+                self._PREFIX_VACA+'SI-Glob:TI-Sexts:State-Sts',
+                callback=self._callback_timing_state)
 
-        self._timing_sexts_evgparam_sel = _epics.PV(
-            self._PREFIX_VACA+self._ACC+'-Glob:TI-Sexts:EVGParam-Sel')
-        self._timing_sexts_evgparam_sts = _epics.PV(
-            self._PREFIX_VACA+self._ACC+'-Glob:TI-Sexts:EVGParam-Sts',
-            callback=self._callback_timing_state)
+            self._timing_sexts_evgparam_sel = _epics.PV(
+                self._PREFIX_VACA+'SI-Glob:TI-Sexts:EVGParam-Sel')
+            self._timing_sexts_evgparam_sts = _epics.PV(
+                self._PREFIX_VACA+'SI-Glob:TI-Sexts:EVGParam-Sts',
+                callback=self._callback_timing_state)
 
-        self._timing_sexts_pulses_sp = _epics.PV(
-            self._PREFIX_VACA+self._ACC+'-Glob:TI-Sexts:Pulses-SP')
-        self._timing_sexts_pulses_rb = _epics.PV(
-            self._PREFIX_VACA+self._ACC+'-Glob:TI-Sexts:Pulses-RB',
-            callback=self._callback_timing_state)
+            self._timing_sexts_pulses_sp = _epics.PV(
+                self._PREFIX_VACA+'SI-Glob:TI-Sexts:Pulses-SP')
+            self._timing_sexts_pulses_rb = _epics.PV(
+                self._PREFIX_VACA+'SI-Glob:TI-Sexts:Pulses-RB',
+                callback=self._callback_timing_state)
 
-        self._timing_sexts_duration_sp = _epics.PV(
-            self._PREFIX_VACA+self._ACC+'-Glob:TI-Sexts:Duration-SP')
-        self._timing_sexts_duration_rb = _epics.PV(
-            self._PREFIX_VACA+self._ACC+'-Glob:TI-Sexts:Duration-RB',
-            callback=self._callback_timing_state)
+            self._timing_sexts_duration_sp = _epics.PV(
+                self._PREFIX_VACA+'SI-Glob:TI-Sexts:Duration-SP')
+            self._timing_sexts_duration_rb = _epics.PV(
+                self._PREFIX_VACA+'SI-Glob:TI-Sexts:Duration-RB',
+                callback=self._callback_timing_state)
 
-        self._timing_evg_chromsmode_sel = _epics.PV(
-            self._PREFIX_VACA+'AS-Glob:TI-EVG:'+self._ACC+'ChromsMode-Sel')
-        self._timing_evg_chromsmode_sts = _epics.PV(
-            self._PREFIX_VACA+'AS-Glob:TI-EVG:'+self._ACC+'ChromsMode-Sts',
-            callback=self._callback_timing_state)
+            self._timing_evg_chromsmode_sel = _epics.PV(
+                self._PREFIX_VACA+'SI-Glob:TI-EVG:ChromsMode-Sel')
+            self._timing_evg_chromsmode_sts = _epics.PV(
+                self._PREFIX_VACA+'SI-Glob:TI-EVG:ChromsMode-Sts',
+                callback=self._callback_timing_state)
 
-        self._timing_evg_chromsdelay_sp = _epics.PV(
-            self._PREFIX_VACA+'AS-Glob:TI-EVG:'+self._ACC+'ChromsDelay-SP')
-        self._timing_evg_chromsdelay_rb = _epics.PV(
-            self._PREFIX_VACA+'AS-Glob:TI-EVG:'+self._ACC+'ChromsDelay-RB',
-            callback=self._callback_timing_state)
+            self._timing_evg_chromsdelay_sp = _epics.PV(
+                self._PREFIX_VACA+'SI-Glob:TI-EVG:ChromsDelay-SP')
+            self._timing_evg_chromsdelay_rb = _epics.PV(
+                self._PREFIX_VACA+'SI-Glob:TI-EVG:ChromsDelay-RB',
+                callback=self._callback_timing_state)
 
-        self._timing_evg_chromsexttrig_cmd = _epics.PV(
-            self._PREFIX_VACA+'AS-Glob:TI-EVG:'+self._ACC+'ChromsExtTrig-Cmd')
+            self._timing_evg_chromsexttrig_cmd = _epics.PV(
+                self._PREFIX_VACA+'SI-Glob:TI-EVG:ChromsExtTrig-Cmd')
 
         self.driver.setParam('Log-Mon', 'Started.')
         self.driver.updatePVs()
