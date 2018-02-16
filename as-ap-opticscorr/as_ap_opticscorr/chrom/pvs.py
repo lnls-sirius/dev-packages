@@ -82,13 +82,7 @@ def get_pvs_database():
         'NominalSL-Mon':        {'type': 'float', 'count': len(_SFAMS),
                                  'value': len(_SFAMS)*[0], 'prec': 6},
 
-        'SyncCorr-Sel':         {'type': 'enum', 'value': 0,
-                                 'enums': ['Off', 'On']},
-        'SyncCorr-Sts':         {'type': 'enum', 'value': 0,
-                                 'enums': ['Off', 'On']},
-
         'ConfigMA-Cmd':         {'type': 'int', 'value': 0},
-        'ConfigTiming-Cmd':     {'type': 'int', 'value': 0},
 
         'Status-Mon':           {'type': 'int', 'value': 0x1f},
         'Status-Cte':           {'type': 'string', 'count': 5, 'value':
@@ -106,6 +100,11 @@ def get_pvs_database():
                                         ['Proportional', 'Additional']}
         pvs_database['CorrMeth-Sts'] = {'type': 'enum', 'value': 0, 'enums':
                                         ['Proportional', 'Additional']}
+        pvs_database['SyncCorr-Sel'] = {'type': 'enum', 'value': 0,
+                                        'enums': ['Off', 'On']}
+        pvs_database['SyncCorr-Sts'] = {'type': 'enum', 'value': 0,
+                                        'enums': ['Off', 'On']}
+        pvs_database['ConfigTiming-Cmd'] = {'type': 'int', 'value': 0}
     return pvs_database
 
 

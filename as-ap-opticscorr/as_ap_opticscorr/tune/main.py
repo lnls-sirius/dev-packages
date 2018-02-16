@@ -60,15 +60,14 @@ class App:
 
         self._qfam_kl_rb = len(self._QFAMS)*[0]
 
-        self._sync_corr = 0
-        self._sync_corr_cmd_count = 0
-        self._config_timing_cmd_count = 0
-        self._timing_check_config = 6*[0]
-
         if self._ACC.lower() == 'si':
             self._corr_method = 0
+            self._sync_corr = 0
+            self._config_timing_cmd_count = 0
+            self._timing_check_config = 6*[0]
         else:
             self._corr_method = 1
+            self._sync_corr = 0
 
         # Get focusing and defocusing families
         qfam_focusing = []
@@ -138,47 +137,46 @@ class App:
                 self._PREFIX_VACA+self._ACC+'-Fam:MA-'+fam+':CtrlMode-Mon',
                 callback=self._callback_qfam_ctrlmode_mon)
 
-        self._lastcalc_deltakl = len(self._QFAMS)*[0]
-
         # Connect to Timing
-        self._timing_quads_state_sel = _epics.PV(
-            self._PREFIX_VACA+self._ACC+'-Glob:TI-Quads:State-Sel')
-        self._timing_quads_state_sts = _epics.PV(
-            self._PREFIX_VACA+self._ACC+'-Glob:TI-Quads:State-Sts',
-            callback=self._callback_timing_state)
+        if self._ACC == 'SI':
+            self._timing_quads_state_sel = _epics.PV(
+                self._PREFIX_VACA+'SI-Glob:TI-Quads:State-Sel')
+            self._timing_quads_state_sts = _epics.PV(
+                self._PREFIX_VACA+'SI-Glob:TI-Quads:State-Sts',
+                callback=self._callback_timing_state)
 
-        self._timing_quads_evgparam_sel = _epics.PV(
-            self._PREFIX_VACA+self._ACC+'-Glob:TI-Quads:EVGParam-Sel')
-        self._timing_quads_evgparam_sts = _epics.PV(
-            self._PREFIX_VACA+self._ACC+'-Glob:TI-Quads:EVGParam-Sts',
-            callback=self._callback_timing_state)
+            self._timing_quads_evgparam_sel = _epics.PV(
+                self._PREFIX_VACA+'SI-Glob:TI-Quads:EVGParam-Sel')
+            self._timing_quads_evgparam_sts = _epics.PV(
+                self._PREFIX_VACA+'SI-Glob:TI-Quads:EVGParam-Sts',
+                callback=self._callback_timing_state)
 
-        self._timing_quads_pulses_sp = _epics.PV(
-            self._PREFIX_VACA+self._ACC+'-Glob:TI-Quads:Pulses-SP')
-        self._timing_quads_pulses_rb = _epics.PV(
-            self._PREFIX_VACA+self._ACC+'-Glob:TI-Quads:Pulses-RB',
-            callback=self._callback_timing_state)
+            self._timing_quads_pulses_sp = _epics.PV(
+                self._PREFIX_VACA+'SI-Glob:TI-Quads:Pulses-SP')
+            self._timing_quads_pulses_rb = _epics.PV(
+                self._PREFIX_VACA+'SI-Glob:TI-Quads:Pulses-RB',
+                callback=self._callback_timing_state)
 
-        self._timing_quads_duration_sp = _epics.PV(
-            self._PREFIX_VACA+self._ACC+'-Glob:TI-Quads:Duration-SP')
-        self._timing_quads_duration_rb = _epics.PV(
-            self._PREFIX_VACA+self._ACC+'-Glob:TI-Quads:Duration-RB',
-            callback=self._callback_timing_state)
+            self._timing_quads_duration_sp = _epics.PV(
+                self._PREFIX_VACA+'SI-Glob:TI-Quads:Duration-SP')
+            self._timing_quads_duration_rb = _epics.PV(
+                self._PREFIX_VACA+'SI-Glob:TI-Quads:Duration-RB',
+                callback=self._callback_timing_state)
 
-        self._timing_evg_tunesmode_sel = _epics.PV(
-            self._PREFIX_VACA+'AS-Glob:TI-EVG:'+self._ACC+'TunesMode-Sel')
-        self._timing_evg_tunemode_sts = _epics.PV(
-            self._PREFIX_VACA+'AS-Glob:TI-EVG:'+self._ACC+'TunesMode-Sts',
-            callback=self._callback_timing_state)
+            self._timing_evg_tunesmode_sel = _epics.PV(
+                self._PREFIX_VACA+'SI-Glob:TI-EVG:TunesMode-Sel')
+            self._timing_evg_tunemode_sts = _epics.PV(
+                self._PREFIX_VACA+'SI-Glob:TI-EVG:TunesMode-Sts',
+                callback=self._callback_timing_state)
 
-        self._timing_evg_tunesdelay_sp = _epics.PV(
-            self._PREFIX_VACA+'AS-Glob:TI-EVG:'+self._ACC+'TunesDelay-SP')
-        self._timing_evg_tunesdelay_rb = _epics.PV(
-            self._PREFIX_VACA+'AS-Glob:TI-EVG:'+self._ACC+'TunesDelay-RB',
-            callback=self._callback_timing_state)
+            self._timing_evg_tunesdelay_sp = _epics.PV(
+                self._PREFIX_VACA+'SI-Glob:TI-EVG:TunesDelay-SP')
+            self._timing_evg_tunesdelay_rb = _epics.PV(
+                self._PREFIX_VACA+'SI-Glob:TI-EVG:TunesDelay-RB',
+                callback=self._callback_timing_state)
 
-        self._timing_evg_tunesexttrig_cmd = _epics.PV(
-            self._PREFIX_VACA+'AS-Glob:TI-EVG:'+self._ACC+'TunesExtTrig-Cmd')
+            self._timing_evg_tunesexttrig_cmd = _epics.PV(
+                self._PREFIX_VACA+'SI-Glob:TI-EVG:TunesExtTrig-Cmd')
 
         self.driver.setParam('Log-Mon', 'Started.')
         self.driver.updatePVs()
