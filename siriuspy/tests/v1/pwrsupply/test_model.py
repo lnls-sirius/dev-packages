@@ -9,56 +9,53 @@ from siriuspy.pwrsupply.model import PowerSupply
 class PowerSupplyTest(unittest.TestCase):
     """Tests."""
 
-    @mock.patch.object(PowerSupply, '_get_base_db', autospec=True)
-    def setUp(self, mock_db):
+    def setUp(self):
         """Common setup for all test."""
-        self.db = {
-            "attr1": {"value": {'a': 'a', 'b': 'b', 'c': 'c'}},
-            "attr2": {"value": 10},
-            "attr3": {"value": [1, 2, 3, 4, 5]},
-            "attr4": {"value": 'string'},
-            "attr5": {"value": 0}
-        }
-        mock_db.return_value = self.db
-
-        def read_db(attr):
-            return self.db[attr]
-
+        thread_patcher = mock.patch('siriuspy.pwrsupply.model._Thread')
+        self.addCleanup(thread_patcher.stop)
+        self.thread_mock = thread_patcher.start()
         self.controller = mock.Mock()
-        self.controller.read.side_effect = read_db
-        self.ps = PowerSupply(('FakePV', ), controller=self.controller)
+        # Set read return value to 'read'
+        self.controller.read.return_value = 'read'
+
+        self.ps = PowerSupply(
+            psname='SI-Fam:PS-QDA', controller=self.controller)
+
+    def test_read_sp(self):
+        """Test read method."""
+        self.assertEqual(self.ps.read('Current-SP'), 'read')
+
+    def test_read_cte(self):
+        """Test reading a cte."""
+        self.assertEqual(len(self.ps.read('IntlkSoftLabels-Cte')), 32)
+
+    def test_read_mon(self):
+        """Test read a mon pv."""
+        field = "Current-Mon"
+        value = self.ps.read(field)
+        self.assertEqual(value, 'read')
+        self.controller.read.assert_called_with(field)
 
     def test_write(self):
         """Test write method."""
-        self.ps.write("attr2", 100)
-        self.assertEqual(
-            self.controller.write.call_args_list, [mock.call('attr2', 100)])
+        field = 'Current-SP'
+        value = 10.9
+        self.ps.write(field, value)
+        self.controller.write.assert_called_with(field, value)
+        self.assertEqual(self.ps.read(field), value)
 
-    def test_read(self):
-        """Test read method."""
-        r = self.ps.read('attr2')
-        self.assertEqual(
-            self.controller.read.call_args_list, [mock.call('attr2')])
-        self.assertEqual(r, self.db['attr2'])
+    def test_write_readable(self):
+        """Test an exception is raised when trying to set a read-only field."""
+        with self.assertRaises(KeyError):
+            self.ps.write('Current-Mon', 10.0)
 
-    def test_set_callback(self):
+    def _test_set_callback(self):
         """Test set callback is called."""
-        def dummy_callback(x):
-            print(x)
-        # Assert callback were set
-        self.ps.add_callback(dummy_callback)
-        self.assertEqual(
-            self.controller.add_callback.call_args_list,
-            [mock.call(dummy_callback)])
+        pass
 
-    def test_get_database(self):
+    def _test_get_database(self):
         """Test database is returned."""
-        db = self.ps.get_database()
-        calls = []
-        for field in self.db:
-            calls.append(mock.call(field))
-        self.assertEqual(self.controller.read.call_args_list, calls)
-        self.assertEqual(db, self.db)
+        pass
 
 
 if __name__ == "__main__":
