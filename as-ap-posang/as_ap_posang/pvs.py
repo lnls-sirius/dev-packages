@@ -39,55 +39,53 @@ def get_pvs_prefix():
 
 def get_pvs_database():
     """Return Soft IOC database."""
-    global _TL, _COMMIT_HASH
-    if (_TL is None) or (_TL == ''):
-        raise Exception('Transport Line not defined.')
+    global _COMMIT_HASH
     pvs_database = {
-        'Version-Cte':          {'type': 'string', 'value': _COMMIT_HASH},
+        'Version-Cte':       {'type': 'string', 'value': _COMMIT_HASH},
 
-        'Log-Mon':              {'type': 'string', 'value': 'Starting...'},
+        'Log-Mon':           {'type': 'string', 'value': 'Starting...'},
 
-        'DeltaPosX-SP':         {'type': 'float', 'value': 0, 'prec': 6,
-                                 'unit': 'mm', 'hilim': 5, 'lolim': -5},
-        'DeltaPosX-RB':         {'type': 'float', 'value': 0, 'prec': 6,
-                                 'unit': 'mm'},
-        'DeltaAngX-SP':         {'type': 'float', 'value': 0, 'prec': 6,
-                                 'unit': 'mrad', 'hilim': 4, 'lolim': -4},
-        'DeltaAngX-RB':         {'type': 'float', 'value': 0, 'prec': 6,
-                                 'unit': 'mrad'},
+        'DeltaPosX-SP':      {'type': 'float', 'value': 0, 'prec': 6,
+                              'unit': 'mm', 'hilim': 5, 'lolim': -5},
+        'DeltaPosX-RB':      {'type': 'float', 'value': 0, 'prec': 6,
+                              'unit': 'mm'},
+        'DeltaAngX-SP':      {'type': 'float', 'value': 0, 'prec': 6,
+                              'unit': 'mrad', 'hilim': 4, 'lolim': -4},
+        'DeltaAngX-RB':      {'type': 'float', 'value': 0, 'prec': 6,
+                              'unit': 'mrad'},
 
-        'DeltaPosY-SP':         {'type': 'float', 'value': 0, 'prec': 6,
-                                 'unit': 'mm', 'hilim': 5, 'lolim': -5},
-        'DeltaPosY-RB':         {'type': 'float', 'value': 0, 'prec': 6,
-                                 'unit': 'mm'},
-        'DeltaAngY-SP':         {'type': 'float', 'value': 0, 'prec': 6,
-                                 'unit': 'mrad', 'hilim': 4, 'lolim': -4},
-        'DeltaAngY-RB':         {'type': 'float', 'value': 0, 'prec': 6,
-                                 'unit': 'mrad'},
+        'DeltaPosY-SP':      {'type': 'float', 'value': 0, 'prec': 6,
+                              'unit': 'mm', 'hilim': 5, 'lolim': -5},
+        'DeltaPosY-RB':      {'type': 'float', 'value': 0, 'prec': 6,
+                              'unit': 'mm'},
+        'DeltaAngY-SP':      {'type': 'float', 'value': 0, 'prec': 6,
+                              'unit': 'mrad', 'hilim': 4, 'lolim': -4},
+        'DeltaAngY-RB':      {'type': 'float', 'value': 0, 'prec': 6,
+                              'unit': 'mrad'},
 
-        'RespMatConfigName-SP': {'type': 'string', 'value': ''},
-        'RespMatConfigName-RB': {'type': 'string', 'value': ''},
-        'RespMatX-Mon':         {'type': 'float', 'value': 4*[0], 'prec': 3,
-                                 'count': 4},
-        'RespMatY-Mon':         {'type': 'float', 'value': 4*[0], 'prec': 3,
-                                 'count': 4},
+        'ConfigName-SP':     {'type': 'string', 'value': ''},
+        'ConfigName-RB':     {'type': 'string', 'value': ''},
+        'RespMatX-Mon':      {'type': 'float', 'value': 4*[0], 'prec': 3,
+                              'count': 4},
+        'RespMatY-Mon':      {'type': 'float', 'value': 4*[0], 'prec': 3,
+                              'count': 4},
 
-        'CH1RefKick-Mon':       {'type': 'float', 'value': 0, 'prec': 6,
-                                 'unit': 'mrad'},
-        'CH2RefKick-Mon':       {'type': 'float', 'value': 0, 'prec': 6,
-                                 'unit': 'mrad'},
-        'CV1RefKick-Mon':       {'type': 'float', 'value': 0, 'prec': 6,
-                                 'unit': 'mrad'},
-        'CV2RefKick-Mon':       {'type': 'float', 'value': 0, 'prec': 6,
-                                 'unit': 'mrad'},
-        'SetNewRef-Cmd':        {'type': 'int', 'value': 0},
+        'RefKickCH1-Mon':    {'type': 'float', 'value': 0, 'prec': 6,
+                              'unit': 'mrad'},
+        'RefKickCH2-Mon':    {'type': 'float', 'value': 0, 'prec': 6,
+                              'unit': 'mrad'},
+        'RefKickCV1-Mon':    {'type': 'float', 'value': 0, 'prec': 6,
+                              'unit': 'mrad'},
+        'RefKickCV2-Mon':    {'type': 'float', 'value': 0, 'prec': 6,
+                              'unit': 'mrad'},
+        'SetNewRefKick-Cmd': {'type': 'int', 'value': 0},
 
-        'ConfigPS-Cmd':         {'type': 'int', 'value': 0},
+        'ConfigMA-Cmd':   {'type': 'int', 'value': 0},
 
-        'Status-Mon':           {'type': 'int', 'value': 0xf},
-        'Status-Cte':           {'type': 'string', 'count': 4, 'value':
-                                 ('PS Connection', 'PS PwrState',
-                                  'PS OpMode', 'PS CtrlMode')},
+        'Status-Mon':     {'type': 'int', 'value': 0xf},
+        'Status-Cte':     {'type': 'string', 'count': 4, 'value':
+                           ('MA Connection', 'MA PwrState',
+                            'MA OpMode', 'MA CtrlMode')},
     }
     return pvs_database
 

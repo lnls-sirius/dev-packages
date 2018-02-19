@@ -111,15 +111,14 @@ class TestASAPPosAngMain(unittest.TestCase):
         app.write('DeltaAngY-SP', 0.01)
         self.mock_epics.PV.return_value.put.assert_not_called()
 
-    def test_write_ok_CmdSetNewRef(self):
-        """Test write SetNewRef-Cmd in normal operation."""
+    def test_write_ok_SetNewRefKick(self):
+        """Test write SetNewRefKick-Cmd in normal operation."""
         self.mock_epics.PV.return_value.get.return_value = self.get_value
         self.mock_cs().get_config.return_value = self.q_ok
 
         app = App(self.mock_driver)
         app._status = 0
-
-        app.write('SetNewRef-Cmd', 0)
+        app.write('SetNewRefKick-Cmd', 0)
         calls = [mock.call('DeltaPosX-SP', 0),
                  mock.call('DeltaPosX-RB', 0),
                  mock.call('DeltaAngX-SP', 0),
@@ -128,46 +127,46 @@ class TestASAPPosAngMain(unittest.TestCase):
                  mock.call('DeltaPosY-RB', 0),
                  mock.call('DeltaAngY-SP', 0),
                  mock.call('DeltaAngY-RB', 0),
-                 mock.call('CH1RefKick-Mon', self.get_value*1000),  # mrad
-                 mock.call('CH2RefKick-Mon', self.get_value*1000),  # mrad
-                 mock.call('CV1RefKick-Mon', self.get_value*1000),  # mrad
-                 mock.call('CV2RefKick-Mon', self.get_value*1000),  # mrad
-                 mock.call('SetNewRef-Cmd', 1)]
+                 mock.call('RefKickCH1-Mon', self.get_value*1000),  # mrad
+                 mock.call('RefKickCH2-Mon', self.get_value*1000),  # mrad
+                 mock.call('RefKickCV1-Mon', self.get_value*1000),  # mrad
+                 mock.call('RefKickCV2-Mon', self.get_value*1000),  # mrad
+                 mock.call('SetNewRefKick-Cmd', 1)]
         self.mock_driver.setParam.assert_has_calls(calls, any_order=True)
 
-    def test_write_ok_CmdConfigPS(self):
+    def test_write_ok_ConfigMA(self):
         """Test write ConfigPS-Cmd in normal operation."""
         self.mock_cs().get_config.return_value = self.q_ok
         self.mock_epics.PV.return_value.connected = True
 
         app = App(self.mock_driver)
 
-        app.write('ConfigPS-Cmd', 0)
+        app.write('ConfigMA-Cmd', 0)
         self.mock_epics.PV.return_value.put.assert_has_calls(
             [mock.call(1), mock.call(1), mock.call(1), mock.call(1),
              mock.call(0), mock.call(0), mock.call(0)], any_order=True)
-        self.mock_driver.setParam.assert_called_with('ConfigPS-Cmd', 1)
+        self.mock_driver.setParam.assert_called_with('ConfigMA-Cmd', 1)
 
     def test_write_connerror_Cmds(self):
-        """Test write SetNewRef-Cmd and ConfigPS-Cmd on connection error."""
+        """Test write SetNewRefKick-Cmd/ConfigMA-Cmd on connection error."""
         self.mock_cs().get_config.return_value = self.q_ok
         self.mock_epics.PV.return_value.connected = False
 
         app = App(self.mock_driver)
 
-        app.write('SetNewRef-Cmd', 0)
-        app.write('ConfigPS-Cmd', 0)
+        app.write('SetNewRefKick-Cmd', 0)
+        app.write('ConfigMA-Cmd', 0)
         self.mock_epics.PV.return_value.get.assert_not_called()
         self.mock_epics.PV.return_value.put.assert_not_called()
 
-    def test_write_ok_RespMatConfigName(self):
-        """Test write RespMatConfigName-SP in normal operation."""
+    def test_write_ok_ConfigName(self):
+        """Test write ConfigName-SP in normal operation."""
         self.mock_cs().get_config.return_value = self.q_ok
 
         app = App(self.mock_driver)
         app._status = 0
 
-        app.write('RespMatConfigName-SP', 'Default')
+        app.write('ConfigName-SP', 'Default')
         flat_mx = [item for sublist in self.q_ok['result']['value']['respm-x']
                    for item in sublist]
         flat_my = [item for sublist in self.q_ok['result']['value']['respm-y']
@@ -176,7 +175,7 @@ class TestASAPPosAngMain(unittest.TestCase):
                  mock.call('RespMatY-Mon', flat_my)]
         self.mock_driver.setParam.assert_has_calls(calls, any_order=True)
 
-    def test_write_configdberror_RespMatConfigName(self):
+    def test_write_configdberror_ConfigName(self):
         """Test write DeltaPosY-SP & DeltaAngY-SP on configdb error."""
         self.mock_epics.PV.return_value.get.return_value = self.get_value
         self.mock_cs().get_config.return_value = self.q_ok
