@@ -190,8 +190,8 @@ def beam_rigidity(energy):
         # beta[gamma < 1.0] = 0.0
     else:
         if energy < electron_rest_energy:
-            raise ValueError('Electron energy less than rest energy!')
-            # beta = 0.0
+            # raise ValueError('Electron energy less than rest energy!')
+            beta = 0.0
         else:
             beta = _math.sqrt(((gamma-1.0)/gamma)*((gamma+1.0)/gamma))
     brho = beta * (energy*1e9) / light_speed

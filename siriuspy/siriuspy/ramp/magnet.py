@@ -4,13 +4,8 @@
 import siriuspy.util as _util
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.magnet.data import MAData as _MAData
-from siriuspy.magnet_orig import util as _mutil
-from siriuspy.magnet_orig import model as _model
-
-# import siriuspy.magnet.model as _model
-# from siriuspy import util as _util
-# from siriuspy import envars as _envars
-# from siriuspy.csdevice.enumtypes import EnumTypes as _et
+from siriuspy.magnet import util as _mutil
+from siriuspy.factory import NormalizerFactory as _NormalizerFactory
 
 
 _magfuncs = _mutil.get_magfunc_2_multipole_dict()
@@ -27,7 +22,7 @@ class Magnet(object):
         self._family_name = _mutil.get_magnet_family_name(self._maname)
         self._magfunc = self._madata.magfunc(self._madata.psnames[0])
         self._mfmult = _magfuncs[self.magfunc]
-        self._strength_obj = _model.create_magnet_normalizer(self)
+        self._strength_obj = _NormalizerFactory.factory(maname)
         self._strength_label = _util.get_strength_label(self._magfunc)
         self._strength_units = _util.get_strength_units(self._magfunc,
                                                         self._maname.sec)
