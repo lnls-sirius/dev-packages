@@ -1,5 +1,6 @@
 """Power supply controller classes."""
 
+import time as _time
 from siriuspy import __version__
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.csdevice.pwrsupply import ps_opmode as _ps_opmode
@@ -104,11 +105,15 @@ class Controller():
 
     def cmd_turn_on(self):
         """Turn power supply on."""
-        return self._bsmp_run_function(ID_function=_BSMPConst.turn_on)
+        r = self._bsmp_run_function(ID_function=_BSMPConst.turn_on)
+        _time.sleep(0.3) # Eduardo-CON said it is necessary!
+        return r
 
     def cmd_turn_off(self):
         """Turn power supply off."""
-        return self._bsmp_run_function(ID_function=_BSMPConst.turn_off)
+        r = self._bsmp_run_function(ID_function=_BSMPConst.turn_off)
+        _time.sleep(0.3) # Eduardo-CON said it is necessary!
+        return r
 
     def cmd_open_loop(self):
         """Open DSP control loop."""
@@ -120,7 +125,9 @@ class Controller():
 
     def cmd_reset_interlocks(self):
         """Reset interlocks."""
-        return self._bsmp_run_function(_BSMPConst.reset_interlocks)
+        r = self._bsmp_run_function(_BSMPConst.reset_interlocks)
+        _time.sleep(0.1)  # Eduardo-CON said it is necessary!
+        return r
 
     def cmd_set_slowref(self, setpoint):
         """Set SlowRef reference value."""
