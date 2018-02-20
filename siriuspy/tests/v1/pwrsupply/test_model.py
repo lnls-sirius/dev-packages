@@ -28,6 +28,7 @@ class PowerSupplyTest(unittest.TestCase):
     def test_read_cte(self):
         """Test reading a cte."""
         self.assertEqual(len(self.ps.read('IntlkSoftLabels-Cte')), 32)
+        self.assertEqual(len(self.ps.read('IntlkHardLabels-Cte')), 32)
 
     def test_read_mon(self):
         """Test read a mon pv."""
