@@ -55,6 +55,7 @@ class TestPSSearch(unittest.TestCase):
         'get_bbbnames',
         'get_splims',
         'get_pstype_dict',
+        'get_bbbname_dict',
         'get_polarities',
         'conv_psname_2_pstype',
         'conv_pstype_2_polarity',
@@ -391,6 +392,7 @@ class TestMASearch(unittest.TestCase):
         'conv_maname_2_magfunc',
         'conv_maname_2_splims',
         'conv_maname_2_psnames',
+        'conv_psname_2_maname',
         'get_maname_2_splims_dict',
         'check_maname_ispulsed'
     )

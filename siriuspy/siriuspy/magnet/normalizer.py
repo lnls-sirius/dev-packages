@@ -148,7 +148,7 @@ class _MagnetNormalizer(_Computer):
     def _get_brho(self, currents_dipole):
         """Get Magnetic Rigidity."""
         if currents_dipole is None:
-            return 0
+            return 0  # is this really necessary?! in what case?
         energies = self._get_energy(currents_dipole)
         brho, *_ = _util.beam_rigidity(energies)
         return brho
@@ -237,12 +237,12 @@ class DipoleNormalizer(_MagnetNormalizer):
             strengths = -self._magnet_conv_sign * \
                         ((self._ref_energy / self._ref_brho) *
                          (-intfields) / self._ref_angle)
-        if isinstance(strengths, _np.ndarray):
-            sel = strengths < _electron_rest_energy
-            strengths[sel] = _electron_rest_energy
-        else:
-            if strengths < _electron_rest_energy:
-                strengths = _electron_rest_energy
+        # if isinstance(strengths, _np.ndarray):
+        #     sel = strengths < _electron_rest_energy
+        #     strengths[sel] = _electron_rest_energy
+        # else:
+        #     if strengths < _electron_rest_energy:
+        #         strengths = _electron_rest_energy
         return strengths
 
     def _power_supplies(self):

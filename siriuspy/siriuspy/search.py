@@ -73,6 +73,16 @@ class PSSearch:
         return _copy.deepcopy(PSSearch._pstype_dict)
 
     @staticmethod
+    def get_bbbname_dict():
+        """Return bbbname dictionary.
+
+        With key,value pairs of bbbname and corresponding power supplies.
+        """
+        if PSSearch._bbbname_2_psnames_dict is None:
+            PSSearch._reload_bbb_2_psname_dict()
+        return _copy.deepcopy(PSSearch._bbbname_2_psnames_dict)
+
+    @staticmethod
     def get_polarities():
         """Return sorted list of power supply polarities."""
         if PSSearch._pstype_dict is None:
@@ -407,6 +417,15 @@ class MASearch:
         if MASearch._maname_2_psnames_dict is None:
             MASearch._reload_maname_2_psnames_dict()
         return MASearch._maname_2_psnames_dict[maname]
+
+    @staticmethod
+    def conv_psname_2_maname(psname):
+        """Return maname for a given psname."""
+        manames = MASearch.get_manames()
+        for maname in manames:
+            if psname in MASearch._maname_2_psnames_dict[maname]:
+                return maname
+        return None
 
     @staticmethod
     def check_maname_ispulsed(maname):

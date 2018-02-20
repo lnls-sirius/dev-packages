@@ -455,7 +455,9 @@ class BSMPResponseSim(_BSMPResponse):
         for ID_variable in IDs_variable:
             # check if variable value copying is needed!
             load[ID_variable] = self._state[ID_variable]
-        load[Const.i_load] += self._i_load_fluctuation
+        # TODO: is this correct?
+        if Const.i_load in load:
+            load[Const.i_load] += self._i_load_fluctuation
         return _ack.ok, load
 
     def cmd_0x51(self, ID_receiver, ID_function, **kwargs):
@@ -607,6 +609,7 @@ class BSMPResponse(_BSMPResponse, StreamChecksum):
         # print('response: ', response)
         # process response
         ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
+        print(ID_receiver, ID_cmd, load_size, load)
         if ID_cmd != 0x13:
             return ID_cmd, None
         if ID_group == Const.group_id:

@@ -153,14 +153,15 @@ class SerialComm(_BSMPQuery):
     def __init__(self, PRU, slaves=None):
         """Init method."""
         variables = _get_variables_FBP()
+        self._states = {}
+        self._queue = _Queue()
+        self._waveforms = {}
+
         _BSMPQuery.__init__(self,
                             variables=variables,
                             functions=_get_functions(),
                             slaves=slaves)
         self._PRU = PRU
-        self._queue = _Queue()
-        self._states = {}
-        self._waveforms = {}
         # does not start variables scanning just yet.
         self._scanning = False
         # create, configure and start auxilliary threads.

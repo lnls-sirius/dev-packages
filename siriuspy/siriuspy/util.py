@@ -109,7 +109,7 @@ def print_ioc_banner(ioc_name, db, description, version, prefix, file=None):
     print(line, file=file)
     print(ld, file=file)
     print(description, file=file)
-    print('FAC@LNLS,   Sirius Project.', file=file)
+    print('LNLS, Sirius Project.', file=file)
     print('Version   : ' + version, file=file)
     print('Timestamp : ' + get_timestamp(), file=file)
     print('Prefix    : ' + prefix, file=file)
@@ -126,7 +126,7 @@ def print_ioc_banner(ioc_name, db, description, version, prefix, file=None):
               end='', file=file)
         new_line = True
         i += 1
-        if not (i-1) % 5:
+        if not (i-1) % 1:
             print('', file=file)
             new_line = False
     if new_line:
@@ -190,8 +190,8 @@ def beam_rigidity(energy):
         # beta[gamma < 1.0] = 0.0
     else:
         if energy < electron_rest_energy:
-            raise ValueError('Electron energy less than rest energy!')
-            # beta = 0.0
+            # raise ValueError('Electron energy less than rest energy!')
+            beta = 0.0
         else:
             beta = _math.sqrt(((gamma-1.0)/gamma)*((gamma+1.0)/gamma))
     brho = beta * (energy*1e9) / light_speed
