@@ -147,8 +147,8 @@ class IOs:
             },
         'AFC': {
             'SFP': (
-                'FMC0', 'FMC1', 'FMC2', 'FMC3', 'FMC4',
-                'FMC5', 'FMC6', 'FMC7', 'FMC8', 'FMC9',
+                'FMC1CH1', 'FMC1CH2', 'FMC1CH3', 'FMC1CH4', 'FMC1CH5',
+                'FMC2CH1', 'FMC2CH2', 'FMC2CH3', 'FMC2CH4', 'FMC2CH5',
                 'CRT0', 'CRT1', 'CRT2', 'CRT3', 'CRT4',
                 'CRT5', 'CRT6', 'CRT7',
                 ),
