@@ -120,6 +120,9 @@ class TestSerialComm(unittest.TestCase):
 
     def setUp(self):
         """Common setup for all tests."""
+        thread_patcher = mock.patch('siriuspy.pwrsupply.pru._Thread')
+        self.addCleanup(thread_patcher.stop)
+        self.thread_mock = thread_patcher.start()
         pru = mock.Mock()
         type(pru).sync_pulse_count = mock.PropertyMock(return_value=10)
         pru.UART_read.return_value = ['\x00']

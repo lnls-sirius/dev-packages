@@ -50,7 +50,7 @@ class SyncWriteUpdateCmdTest(unittest.TestCase):
         self.mock_put = mock_put
         self.mock_callback = mock_callback
 
-        sync = SyncWrite()
+        sync = SyncWrite(lock=True)
         self.pv = ComputedPV("FakePV", sync,
                              "fakepv-1:Reset-Cmd", "fakepv-2:Reset-Cmd")
         # Issue update value
@@ -99,7 +99,7 @@ class SyncWriteUpdateWhenNoneTest(unittest.TestCase):
         self.mock_limits = mock_limits
         self.mock_callback = mock_callback
 
-        sync = SyncWrite()
+        sync = SyncWrite(lock=True)
         self.pv = ComputedPV("FakePV", sync, "fakepv-1", "fakepv-2")
         # Issue update value
         self.update_value = 100
@@ -157,7 +157,7 @@ class SyncWriteUpdateValueChangedTest(unittest.TestCase):
         self.mock_limits = mock_limits
         self.mock_callback = mock_callback
 
-        sync = SyncWrite()
+        sync = SyncWrite(lock=True)
         self.pv = ComputedPV("FakePV", sync, "fakepv-1", "fakepv-2")
         # Issue update value
         self.initial_value = 99
@@ -218,7 +218,7 @@ class SyncWriteUpdateValueNotChangedTest(unittest.TestCase):
         self.mock_limits = mock_limits
         self.mock_callback = mock_callback
 
-        sync = SyncWrite()
+        sync = SyncWrite(lock=True)
         self.pv = ComputedPV("FakePV", sync, "fakepv-1", "fakepv-2")
         # Issue update value
         self.initial_value = 99
