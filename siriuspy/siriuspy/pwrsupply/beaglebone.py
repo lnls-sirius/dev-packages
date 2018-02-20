@@ -55,7 +55,7 @@ class BeagleBone():
         # Return dict of power supply objects
         power_supplies = dict()
         for i, psname in enumerate(self._psnames):
-            ID_device = i + 1
+            ID_device = i + 1  # This will have to change !!!
             if self._simulate:
                 ps = _BSMPResponseSim(
                     ID_device=ID_device,
