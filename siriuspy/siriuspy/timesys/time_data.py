@@ -27,13 +27,13 @@ FINE_DELAY = 5e-12                  # five picoseconds
 class Events:
     """Contain properties of the Events."""
 
-    HL2LL_MAP = {'Linac': 'Event00', 'InjBO': 'Event01',
-                 'InjSI': 'Event02', 'RmpBO': 'Event03',
-                 'MigSI': 'Event04', 'DigLI': 'Event05',
-                 'DigTB': 'Event06', 'DigBO': 'Event07',
-                 'DigTS': 'Event08', 'DigSI': 'Event09',
-                 'Orbit': 'Event0A', 'Coupl': 'Event0B',
-                 'Tunes': 'Event0C', 'Study': 'Event0D'}
+    HL2LL_MAP = {'Linac': 'Event01', 'InjBO': 'Event02',
+                 'InjSI': 'Event03', 'RmpBO': 'Event04',
+                 'MigSI': 'Event05', 'DigLI': 'Event06',
+                 'DigTB': 'Event07', 'DigBO': 'Event08',
+                 'DigTS': 'Event09', 'DigSI': 'Event0A',
+                 'Orbit': 'Event0B', 'Coupl': 'Event0C',
+                 'Tunes': 'Event0D', 'Study': 'Event0E'}
     LL2HL_MAP = {val: key for key, val in HL2LL_MAP.items()}
 
     LL_TMP = 'Event{0:02X}'
