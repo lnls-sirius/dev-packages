@@ -5,8 +5,6 @@ from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.csdevice.pwrsupply import ps_opmode as _ps_opmode
 from siriuspy.pwrsupply.bsmp import Const as _BSMPConst
 from siriuspy.pwrsupply.bsmp import Status as _Status
-from siriuspy.csdevice.pwrsupply import get_common_ps_propty_database as \
-    _get_common_ps_propty_database
 
 
 class Controller():
@@ -34,16 +32,15 @@ class Controller():
         'WfmData-SP': '_set_wfmdata',
     }
 
-    _ps_db = _get_common_ps_propty_database()
-
     # --- API: general power supply 'variables' ---
 
-    def __init__(self, serial_comm, ID_device):
+    def __init__(self, serial_comm, ID_device, ps_database):
         """Init method."""
-        self._ID_device = ID_device
         self._serial_comm = serial_comm
+        self._ID_device = ID_device
+        self._ps_db = ps_database
         self._opmode = _PSConst.OpMode.SlowRef
-        self._wfmdata = [v for v in Controller._ps_db['WfmData-SP']['value']]
+        self._wfmdata = [v for v in self._ps_db['WfmData-SP']['value']]
 
         # reset interlocks
         self.cmd_reset_interlocks()
@@ -127,6 +124,8 @@ class Controller():
 
     def cmd_set_slowref(self, setpoint):
         """Set SlowRef reference value."""
+        setpoint = max(self._ps_db['Current-SP']['lolo'], setpoint)
+        setpoint = min(self._ps_db['Current-SP']['hihi'], setpoint)
         return self._bsmp_run_function(ID_function=_BSMPConst.set_slowref,
                                        setpoint=setpoint)
 

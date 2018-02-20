@@ -1,6 +1,8 @@
 """Beagle Bone implementation module."""
 
 from siriuspy.search import PSSearch as _PSSearch
+from siriuspy.csdevice.pwrsupply import get_ps_propty_database as \
+    _get_ps_propty_database
 from siriuspy.pwrsupply.pru import SerialComm as _SerialComm
 from siriuspy.pwrsupply.pru import PRU as _PRU
 from siriuspy.pwrsupply.pru import PRUSim as _PRUSim
@@ -61,7 +63,11 @@ class BeagleBone():
             else:
                 ps = _BSMPResponse(ID_device=ID_device, PRU=self._pru)
             self._serial_comm.add_slave(ps)
-            c = _Controller(serial_comm=self._serial_comm, ID_device=ID_device)
+            ps_database = _get_ps_propty_database(
+                pstype=_PSSearch.conv_psname_2_pstype(psname))
+            c = _Controller(serial_comm=self._serial_comm,
+                            ID_device=ID_device,
+                            ps_database=ps_database)
             power_supplies[psname] = _PowerSupply(controller=c, psname=psname)
         return power_supplies
 
@@ -104,6 +110,10 @@ class BeagleBoneTest(BeagleBone):
             ID_device = IDs_device[i]
             ps = _BSMPResponse(ID_device=ID_device, PRU=self._pru)
             self._serial_comm.add_slave(ps)
-            c = _Controller(serial_comm=self._serial_comm, ID_device=ID_device)
+            ps_database = _get_ps_propty_database(
+                pstype=_PSSearch.conv_psname_2_pstype(psname))
+            c = _Controller(serial_comm=self._serial_comm,
+                            ID_device=ID_device,
+                            ps_database=ps_database)
             power_supplies[psname] = _PowerSupply(controller=c, psname=psname)
         return power_supplies

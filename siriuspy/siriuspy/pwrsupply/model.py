@@ -389,7 +389,28 @@ class MAEpics(PSEpics):
                 return super()._create_pv(field)
 
     def _get_base_db(self):
-        return self._madata.get_database(self._madata.psnames[0])
+        # set dipole energy limits
+        n, db = None, self._madata.get_database(self._madata.psnames[0])
+        for pvname in db:
+            if 'Energy' in pvname:
+                pvname_ps = pvname.replace('Energy', 'Current')
+                if n is None:
+                    n = _NormalizerFactory.factory(maname=self._maname)
+                currents = []
+                currents.append(db[pvname_ps]['lolo'])
+                currents.append(db[pvname_ps]['low'])
+                currents.append(db[pvname_ps]['lolim'])
+                currents.append(db[pvname_ps]['hilim'])
+                currents.append(db[pvname_ps]['high'])
+                currents.append(db[pvname_ps]['hihi'])
+                lims = sorted(n.conv_current_2_strength(currents=currents))
+                db[pvname]['lolo'] = lims[0]
+                db[pvname]['low'] = lims[1]
+                db[pvname]['lolim'] = lims[2]
+                db[pvname]['hilim'] = lims[3]
+                db[pvname]['high'] = lims[4]
+                db[pvname]['hihi'] = lims[5]
+        return db
 
     # Class methods
     def _get_normalizer(self, device_name):
