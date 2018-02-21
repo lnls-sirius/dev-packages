@@ -12,7 +12,7 @@ from siriuspy.pwrsupply.controller import Controller as _Controller
 from siriuspy.pwrsupply.model import PowerSupply as _PowerSupply
 
 
-_I_LOAD_FLUCTUATION_RMS = 0.0001  # [A]
+_I_LOAD_FLUCTUATION_RMS = 0.01  # [A]
 # _I_LOAD_FLUCTUATION_RMS = 0.0000  # [A]
 
 

@@ -362,7 +362,8 @@ class MAEpics(PSEpics):
             self._maname.replace("MA", "PS").replace("PM", "PU"),
             **kwargs)
 
-    # Virtual Methods
+    # --- virtual methods ---
+
     def _create_pvs(self):
         self._sort_fields()
         super()._create_pvs()
@@ -412,7 +413,8 @@ class MAEpics(PSEpics):
                 db[pvname]['hihi'] = lims[5]
         return db
 
-    # Class methods
+    # --- class methods ---
+
     def _get_normalizer(self, device_name):
         # Return Normalizer object
         return _NormalizerFactory.factory(device_name)
@@ -440,15 +442,15 @@ class MAEpics(PSEpics):
             fam = self._prefix + fam_name
             field = field.replace('KL', 'Current')
             return [self._pvs[field],
-                    dipole + ':' + field,
-                    fam + ':' + field]
+                    dipole + ':' + field.replace('Current', 'Energy'),
+                    fam + ':' + field.replace('Current', 'KL')]
         else:
             dipole_name = _mutil.get_section_dipole_name(self._maname)
             dipole = self._prefix + dipole_name
             field = field.replace('KL', 'Current').replace('SL', 'Current')\
                 .replace('Kick', 'Current')
             return [self._pvs[field],
-                    dipole + ":" + field]
+                    dipole + ":" + field.replace('Current', 'Energy')]
 
     def _psnames(self):
         ma_class = _mutil.magnet_class(self._maname)
