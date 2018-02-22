@@ -33,11 +33,20 @@ ps_soft_interlock = ('Overtemperature on module', 'Reserved',
                      'Reserved', 'Reserved',
                      'Reserved', 'Reserved', 'Reserved', 'Reserved',
                      'Reserved', 'Reserved', 'Reserved', 'Reserved',
-                     'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
+                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
+                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
+                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
+                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
+                     )
 ps_hard_interlock = ('Overvoltage on load', 'Overvoltage on DC-Link',
                      'Undervoltage on DC-Link', 'DC-Link input relay fail',
                      'DC-Link input fuse fail', 'Fail on module drivers',
                      'Reserved', 'Reserved',
+                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
+                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
+                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
+                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
                      'Reserved', 'Reserved', 'Reserved', 'Reserved',
                      'Reserved', 'Reserved', 'Reserved', 'Reserved',)
 
