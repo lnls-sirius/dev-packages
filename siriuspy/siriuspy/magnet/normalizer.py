@@ -42,14 +42,15 @@ class _MagnetNormalizer(_Computer):
         # Convert current to strength
         kwret["value"] = self._compute_new_value(computed_pv,
                                                  updated_pv_name, value)
-        low, high, lolo, hihi, lolim, hilim = \
-            self.compute_limits(computed_pv)
-        kwret["low"] = low
-        kwret["high"] = high
-        kwret["lolo"] = lolo
-        kwret["hihi"] = hihi
-        kwret["lolim"] = lolim
-        kwret["hilim"] = hilim
+
+        lims = self.compute_limits(computed_pv)
+        if lims is not None:
+            kwret["hihi"] = lims[0]
+            kwret["high"] = lims[1]
+            kwret["hilim"] = lims[2]
+            kwret["lolim"] = lims[3]
+            kwret["low"] = lims[4]
+            kwret["lolo"] = lims[5]
 
         return kwret
 
@@ -77,7 +78,7 @@ class _MagnetNormalizer(_Computer):
         if hilim < lolim:
             hilim, lolim = lolim, hilim
 
-        return (low, high, lolo, hihi, lolim, hilim)
+        return hihi, high, hilim, lolim, low, lolo
 
     # Computer Helper
     def _get_params(self, computed_pv):
@@ -247,6 +248,15 @@ class DipoleNormalizer(_MagnetNormalizer):
 
     def _power_supplies(self):
         return self._madata.psnames
+
+    def compute_limits(self, computed_pv):
+        """Compute limits to normalized strength."""
+        if computed_pv.upper_alarm_limit is None:
+            # initialization of limits
+            return _MagnetNormalizer.compute_limits(self, computed_pv)
+        else:
+            # limits have already been calculated.
+            return None
 
 
 class MagnetNormalizer(_MagnetNormalizer):
