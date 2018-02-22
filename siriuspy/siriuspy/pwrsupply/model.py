@@ -432,28 +432,36 @@ class MAEpics(PSEpics):
     def _get_str_pv(self, field):
         ma_class = _mutil.magnet_class(self._maname)
         if 'dipole' == ma_class:
-            return [self._pvs[field.replace('Energy', 'Current')], ]
+            field = field.replace('Energy', 'Current')
+            return [self._pvs[field], ]
         elif 'pulsed' == ma_class:
             dipole_name = _mutil.get_section_dipole_name(self._maname)
             dipole = self._prefix + dipole_name
+            dipole_pv = dipole + ':' + field.replace('Kick', 'Current')
             return [self._pvs[field.replace('Kick', 'Voltage')],
-                    dipole + ":" + field.replace('Kick', 'Current')]
+                    dipole_pv]
         elif 'trim' == ma_class:
+            field = field.replace('KL', 'Current')
             dipole_name = _mutil.get_section_dipole_name(self._maname)
             dipole = self._prefix + dipole_name
+            dipole_pv = dipole + ':' + field.replace('Current', 'Energy')
             fam_name = _mutil.get_magnet_family_name(self._maname)
             fam = self._prefix + fam_name
-            field = field.replace('KL', 'Current')
-            return [self._pvs[field],
-                    dipole + ':' + field.replace('Current', 'Energy').replace('Energy-Mon', 'EnergyRef-Mon'),
-                    fam + ':' + field.replace('Current', 'KL').replace('KL-Mon', 'KLRef-Mon')]
+            family_pv = fam + ':' + field.replace('Current', 'KL')
+            # use Ref-Mon, instead of -Mon
+            dipole_pv = dipole_pv.replace('Energy-Mon', 'EnergyRef-Mon')
+            family_pv = family_pv.replace('KL-Mon', 'KLRef-Mon')
+            return [self._pvs[field], dipole_pv, family_pv]
         else:
+            field = field.replace('KL', 'Current')
+            field = field.replace('SL', 'Current')
+            field = field.replace('Kick', 'Current')
             dipole_name = _mutil.get_section_dipole_name(self._maname)
             dipole = self._prefix + dipole_name
-            field = field.replace('KL', 'Current').replace('SL', 'Current')\
-                .replace('Kick', 'Current')
-            return [self._pvs[field],
-                    dipole + ":" + field.replace('Current', 'Energy').replace('Energy-Mon', 'EnergyRef-Mon')]
+            dipole_pv = dipole + ':' + field.replace('Current', 'Energy')
+            # use Ref-Mon, instead of -Mon
+            dipole_pv = dipole_pv.replace('Energy-Mon', 'EnergyRef-Mon')
+            return [self._pvs[field], dipole_pv]
 
     def _psnames(self):
         ma_class = _mutil.magnet_class(self._maname)
