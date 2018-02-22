@@ -16,6 +16,8 @@ from siriuspy.bsmp import BSMPQuery as _BSMPQuery
 try:
     import PRUserial485.PRUserial485 as _PRUserial485
 except:
+    # in case the PRUserial library is not installed and
+    # this module is used only for simulating PRUs.
     _PRUserial485 = None
 
 
@@ -144,7 +146,7 @@ class PRU(_PRUInterface):
 
 
 class SerialComm(_BSMPQuery):
-    """Serial communiationMaster BSMP device for power supplies."""
+    """Serial communiation Master BSMP device for power supplies."""
 
     _SCAN_INTERVAL_SYNC_MODE_OFF = 1.0/10  # [s]
     _SCAN_INTERVAL_SYNC_MODE_ON = 1.0  # [s]

@@ -31,7 +31,7 @@ class QueueThread(Thread):
             func_item = self._queue.get()
             # print(queue_size)
             n = self._queue.qsize()
-            if n % 500 == 0:
+            if n and n % 500 == 0:
                 print("Warning: ComputedPV Queue size is {}!".format(n))
             function, args = func_item
             # print(args[0])

@@ -106,13 +106,13 @@ class Controller():
     def cmd_turn_on(self):
         """Turn power supply on."""
         r = self._bsmp_run_function(ID_function=_BSMPConst.turn_on)
-        _time.sleep(0.3) # Eduardo-CON said it is necessary!
+        _time.sleep(0.3)  # Eduardo-CON said it is necessary!
         return r
 
     def cmd_turn_off(self):
         """Turn power supply off."""
         r = self._bsmp_run_function(ID_function=_BSMPConst.turn_off)
-        _time.sleep(0.3) # Eduardo-CON said it is necessary!
+        _time.sleep(0.3)  # Eduardo-CON said it is necessary!
         return r
 
     def cmd_open_loop(self):
