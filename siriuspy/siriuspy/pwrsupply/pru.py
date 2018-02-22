@@ -146,7 +146,7 @@ class PRU(_PRUInterface):
 class SerialComm(_BSMPQuery):
     """Serial communiationMaster BSMP device for power supplies."""
 
-    _SCAN_INTERVAL_SYNC_MODE_OFF = 0.1  # [s]
+    _SCAN_INTERVAL_SYNC_MODE_OFF = 1.0/10  # [s]
     _SCAN_INTERVAL_SYNC_MODE_ON = 1.0  # [s]
     _default_wfm = [0.0 for _ in range(_default_wfmsize)]
 
