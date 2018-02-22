@@ -27,13 +27,13 @@ FINE_DELAY = 5e-12                  # five picoseconds
 class Events:
     """Contain properties of the Events."""
 
-    HL2LL_MAP = {'Linac': 'Event00', 'InjBO': 'Event01',
-                 'InjSI': 'Event02', 'RmpBO': 'Event03',
-                 'MigSI': 'Event04', 'DigLI': 'Event05',
-                 'DigTB': 'Event06', 'DigBO': 'Event07',
-                 'DigTS': 'Event08', 'DigSI': 'Event09',
-                 'Orbit': 'Event0A', 'Coupl': 'Event0B',
-                 'Tunes': 'Event0C', 'Study': 'Event0D'}
+    HL2LL_MAP = {'Linac': 'Event01', 'InjBO': 'Event02',
+                 'InjSI': 'Event03', 'RmpBO': 'Event04',
+                 'MigSI': 'Event05', 'DigLI': 'Event06',
+                 'DigTB': 'Event07', 'DigBO': 'Event08',
+                 'DigTS': 'Event09', 'DigSI': 'Event0A',
+                 'Orbit': 'Event0B', 'Coupl': 'Event0C',
+                 'Tunes': 'Event0D', 'Study': 'Event0E'}
     LL2HL_MAP = {val: key for key, val in HL2LL_MAP.items()}
 
     LL_TMP = 'Event{0:02X}'
@@ -147,8 +147,8 @@ class IOs:
             },
         'AFC': {
             'SFP': (
-                'FMC0', 'FMC1', 'FMC2', 'FMC3', 'FMC4',
-                'FMC5', 'FMC6', 'FMC7', 'FMC8', 'FMC9',
+                'FMC1CH1', 'FMC1CH2', 'FMC1CH3', 'FMC1CH4', 'FMC1CH5',
+                'FMC2CH1', 'FMC2CH2', 'FMC2CH3', 'FMC2CH4', 'FMC2CH5',
                 'CRT0', 'CRT1', 'CRT2', 'CRT3', 'CRT4',
                 'CRT5', 'CRT6', 'CRT7',
                 ),
@@ -211,7 +211,7 @@ class _TimeDevData:
 
     def __init__(self, timeout=_timeout):
         self._conn_from_evg = dict()
-        self._conn_twrds_evg = dict()
+        self._conn_twds_evg = dict()
         self._devices_relations = dict()
         self._top_chain_devs = set()
         self._final_receiver_devs = set()
@@ -605,8 +605,8 @@ class Connections:
         """Return a dictionary with the beaglebone to power supply mapping."""
         timedata = cls._get_timedata()
         if connections_dict is None:
-            from siriuspy import pwrsupply
-            connections_dict = pwrsupply.bbbdata.get_mapping()
+            from siriuspy import search
+            connections_dict = search.PSSearch.get_bbbname_dict()
         return timedata.add_bbb_info(connections_dict)
 
     @classmethod
