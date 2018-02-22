@@ -97,26 +97,26 @@ class TestASAPOpticsCorrChromPvs(unittest.TestCase):
             self.assertTrue('ChromX-RB' in db)
             self.assertTrue('ChromY-SP' in db)
             self.assertTrue('ChromY-RB' in db)
-            self.assertTrue('ApplySL-Cmd' in db)
-            self.assertTrue('CorrParamsConfigName-SP' in db)
-            self.assertTrue('CorrParamsConfigName-RB' in db)
-            self.assertTrue('CorrMat-Mon' in db)
+            self.assertTrue('ApplyCorr-Cmd' in db)
+            self.assertTrue('ConfigName-SP' in db)
+            self.assertTrue('ConfigName-RB' in db)
+            self.assertTrue('RespMat-Mon' in db)
             self.assertTrue('NominalChrom-Mon' in db)
             self.assertTrue('NominalSL-Mon' in db)
-            self.assertTrue('SyncCorr-Sel' in db)
-            self.assertTrue('SyncCorr-Sts' in db)
-            self.assertTrue('ConfigPS-Cmd' in db)
-            self.assertTrue('ConfigTiming-Cmd' in db)
+            self.assertTrue('ConfigMA-Cmd' in db)
             self.assertTrue('Status-Mon' in db)
             self.assertTrue('Status-Cte' in db)
 
             for fam in sfams:
-                self.assertTrue('LastCalc' + fam + 'SL-Mon' in db)
-                self.assertEqual(db['LastCalc' + fam + 'SL-Mon']['unit'],
+                self.assertTrue('SL' + fam + '-Mon' in db)
+                self.assertEqual(db['SL' + fam + '-Mon']['unit'],
                                  '1/m^2')
             if accelerator == 'SI':
                 self.assertTrue('CorrMeth-Sel' in db)
                 self.assertTrue('CorrMeth-Sts' in db)
+                self.assertTrue('SyncCorr-Sel' in db)
+                self.assertTrue('SyncCorr-Sts' in db)
+                self.assertTrue('ConfigTiming-Cmd' in db)
 
     @mock.patch("as_ap_opticscorr.chrom.pvs._util")
     def test_print_banner_and_save_pv_list(self, util):

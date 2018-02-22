@@ -96,29 +96,29 @@ class TestASAPOpticsCorrTunePvs(unittest.TestCase):
             self.assertTrue('DeltaTuneX-RB' in db)
             self.assertTrue('DeltaTuneY-SP' in db)
             self.assertTrue('DeltaTuneY-RB' in db)
-            self.assertTrue('ApplyKL-Cmd' in db)
-            self.assertTrue('CorrParamsConfigName-SP' in db)
-            self.assertTrue('CorrParamsConfigName-RB' in db)
-            self.assertTrue('CorrMat-Mon' in db)
+            self.assertTrue('ApplyCorr-Cmd' in db)
+            self.assertTrue('ConfigName-SP' in db)
+            self.assertTrue('ConfigName-RB' in db)
+            self.assertTrue('RespMat-Mon' in db)
             self.assertTrue('NominalKL-Mon' in db)
             self.assertTrue('CorrFactor-SP' in db)
             self.assertTrue('CorrFactor-RB' in db)
-            self.assertTrue('SyncCorr-Sel' in db)
-            self.assertTrue('SyncCorr-Sts' in db)
-            self.assertTrue('ConfigPS-Cmd' in db)
-            self.assertTrue('ConfigTiming-Cmd' in db)
+            self.assertTrue('ConfigMA-Cmd' in db)
             self.assertTrue('Status-Mon' in db)
             self.assertTrue('Status-Cte' in db)
 
             for fam in qfams:
-                self.assertTrue(fam + 'RefKL-Mon' in db)
-                self.assertEqual(db[fam + 'RefKL-Mon']['unit'], '1/m')
-                self.assertTrue('LastCalc' + fam + 'KL-Mon' in db)
-                self.assertEqual(db['LastCalc' + fam + 'KL-Mon']['unit'],
+                self.assertTrue('RefKL' + fam + '-Mon' in db)
+                self.assertEqual(db['RefKL' + fam + '-Mon']['unit'], '1/m')
+                self.assertTrue('DeltaKL' + fam + '-Mon' in db)
+                self.assertEqual(db['DeltaKL' + fam + '-Mon']['unit'],
                                  '1/m')
             if accelerator == 'SI':
                 self.assertTrue('CorrMeth-Sel' in db)
                 self.assertTrue('CorrMeth-Sts' in db)
+                self.assertTrue('SyncCorr-Sel' in db)
+                self.assertTrue('SyncCorr-Sts' in db)
+                self.assertTrue('ConfigTiming-Cmd' in db)
 
     @mock.patch("as_ap_opticscorr.tune.pvs._util")
     def test_print_banner_and_save_pv_list(self, util):

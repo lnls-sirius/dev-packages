@@ -37,25 +37,25 @@ class App:
     def __init__(self, driver, *args):
         """Class constructor."""
         # App.init_class()  # Is This really necessary?
-        # _siriuspy.util.print_ioc_banner(
-        #     ioc_name='AS-MA',
-        #     db=App.pvs_database,
-        #     description='AS-MA Soft IOC',
-        #     version=__version__,
-        #     prefix=_pvs._PREFIX)
-        # _siriuspy.util.save_ioc_pv_list(_pvs._IOC["name"],
-        #                                 (_pvs._PREFIX_SECTOR,
-        #                                  _pvs._PREFIX_VACA),
-        #                                 App.pvs_database)
+        _siriuspy.util.print_ioc_banner(
+            ioc_name='AS-MA',
+            db=App.pvs_database,
+            description='AS-MA Soft IOC',
+            version=__version__,
+            prefix=_pvs._PREFIX)
+        _siriuspy.util.save_ioc_pv_list(_pvs._IOC["name"],
+                                        (_pvs._PREFIX_SECTOR,
+                                         _pvs._PREFIX_VACA),
+                                        App.pvs_database)
 
         self._driver = driver
         self._set_callback()
 
     @staticmethod
-    def init_class(malist):
+    def init_class(manames):
         """Init class."""
-        App.ma_devices = _pvs.get_ma_devices(malist)
-        App.pvs_database = _pvs.get_pvs_database(malist)
+        App.ma_devices = _pvs.get_ma_devices(manames)
+        App.pvs_database = _pvs.get_pvs_database(manames)
 
     @property
     def driver(self):

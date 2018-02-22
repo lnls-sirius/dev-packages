@@ -73,16 +73,16 @@ class TestASAPPosAngPvs(unittest.TestCase):
         self.assertTrue('DeltaPosY-RB' in pvs.get_pvs_database())
         self.assertTrue('DeltaAngY-SP' in pvs.get_pvs_database())
         self.assertTrue('DeltaAngY-RB' in pvs.get_pvs_database())
-        self.assertTrue('RespMatConfigName-SP' in pvs.get_pvs_database())
-        self.assertTrue('RespMatConfigName-RB' in pvs.get_pvs_database())
+        self.assertTrue('ConfigName-SP' in pvs.get_pvs_database())
+        self.assertTrue('ConfigName-RB' in pvs.get_pvs_database())
         self.assertTrue('RespMatX-Mon' in pvs.get_pvs_database())
         self.assertTrue('RespMatY-Mon' in pvs.get_pvs_database())
-        self.assertTrue('CH1RefKick-Mon' in pvs.get_pvs_database())
-        self.assertTrue('CH2RefKick-Mon' in pvs.get_pvs_database())
-        self.assertTrue('CV1RefKick-Mon' in pvs.get_pvs_database())
-        self.assertTrue('CV2RefKick-Mon' in pvs.get_pvs_database())
-        self.assertTrue('SetNewRef-Cmd' in pvs.get_pvs_database())
-        self.assertTrue('ConfigPS-Cmd' in pvs.get_pvs_database())
+        self.assertTrue('RefKickCH1-Mon' in pvs.get_pvs_database())
+        self.assertTrue('RefKickCH2-Mon' in pvs.get_pvs_database())
+        self.assertTrue('RefKickCV1-Mon' in pvs.get_pvs_database())
+        self.assertTrue('RefKickCV2-Mon' in pvs.get_pvs_database())
+        self.assertTrue('SetNewRefKick-Cmd' in pvs.get_pvs_database())
+        self.assertTrue('ConfigMA-Cmd' in pvs.get_pvs_database())
         self.assertTrue('Status-Mon' in pvs.get_pvs_database())
         self.assertTrue('Status-Cte' in pvs.get_pvs_database())
 
@@ -104,13 +104,13 @@ class TestASAPPosAngPvs(unittest.TestCase):
         self.assertEqual(
             pvs.get_pvs_database()['DeltaAngY-RB']['unit'], 'mrad')
         self.assertEqual(
-            pvs.get_pvs_database()['CH1RefKick-Mon']['unit'], 'mrad')
+            pvs.get_pvs_database()['RefKickCH1-Mon']['unit'], 'mrad')
         self.assertEqual(
-            pvs.get_pvs_database()['CH2RefKick-Mon']['unit'], 'mrad')
+            pvs.get_pvs_database()['RefKickCH2-Mon']['unit'], 'mrad')
         self.assertEqual(
-            pvs.get_pvs_database()['CV1RefKick-Mon']['unit'], 'mrad')
+            pvs.get_pvs_database()['RefKickCV1-Mon']['unit'], 'mrad')
         self.assertEqual(
-            pvs.get_pvs_database()['CV2RefKick-Mon']['unit'], 'mrad')
+            pvs.get_pvs_database()['RefKickCV2-Mon']['unit'], 'mrad')
 
     @mock.patch("as_ap_posang.pvs._util")
     def test_print_banner_and_save_pv_list(self, util):
