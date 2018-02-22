@@ -605,8 +605,8 @@ class Connections:
         """Return a dictionary with the beaglebone to power supply mapping."""
         timedata = cls._get_timedata()
         if connections_dict is None:
-            from siriuspy import pwrsupply
-            connections_dict = pwrsupply.bbbdata.get_mapping()
+            from siriuspy import search
+            connections_dict = search.PSSearch.get_bbbname_dict()
         return timedata.add_bbb_info(connections_dict)
 
     @classmethod
