@@ -80,9 +80,9 @@ def get_variables_FBP():
     variables = get_variables_common()
     variables.update({
         Const.ps_soft_interlocks:
-            ('ps_soft_interlocks', Const.t_uint16, False),
+            ('ps_soft_interlocks', Const.t_uint32, False),
         Const.ps_hard_interlocks:
-            ('ps_hard_interlocks', Const.t_uint16, False),
+            ('ps_hard_interlocks', Const.t_uint32, False),
         Const.i_load:
             ('i_load', Const.t_float, False),
         Const.v_load:
@@ -620,9 +620,13 @@ class BSMPResponse(_BSMPResponse, StreamChecksum):
                 _struct.unpack("<f", bytes(data[2:6]))[0]
             value[Const.ps_reference] = \
                 _struct.unpack("<f", bytes(data[6:10]))[0]
-            value[Const.ps_soft_interlocks] = data[10] + (data[11] << 8)
-            value[Const.ps_hard_interlocks] = data[12] + (data[13] << 8)
-            value[Const.i_load] = _struct.unpack("<f", bytes(data[14:18]))[0]
+            value[Const.ps_soft_interlocks] = \
+                data[10] + (data[11] << 8) + \
+                (data[12] << 16) + (data[13] << 24)
+            value[Const.ps_hard_interlocks] = \
+                data[14] + (data[15] << 8) + \
+                (data[16] << 16) + (data[17] << 24)
+            value[Const.i_load] = _struct.unpack("<f", bytes(data[18:22]))[0]
         else:
             raise ValueError('Invalid group ID!')
         return _ack.ok, value
