@@ -324,9 +324,10 @@ class TrimNormalizer(_MagnetNormalizer):
     def _conv_strength_2_intfield(self, strengths, **kwargs):
         if isinstance(strengths, list):
             strengths = _np.array(strengths)
-        strengths_fam = self._fam.conv_current_2_strength(
-            currents=kwargs["strengths_family"],
-            currents_dipole=kwargs["strengths_dipole"])
+        # strengths_fam = self._fam.conv_current_2_strength(
+        #     currents=kwargs["strengths_family"],
+        #     currents_dipole=kwargs["strengths_dipole"])
+        strengths_fam = kwargs['strengths_family']
         brhos, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
         intfields = - brhos * (strengths - strengths_fam)
         return intfields
