@@ -370,13 +370,15 @@ class MAEpics(PSEpics):
 
     def _create_pv(self, field):
         # Build either a real or computed PV
-        if MAEpics._is_strength.match(field):  # NormalizedPV
+        if MAEpics._is_strength.match(field):
+            # Strength PVs
             pvname = self._prefix + self._maname + ":" + field
             str_obj = self._get_normalizer(self._maname)
             pvs = self._get_str_pv(field)
             return _ComputedPV(pvname, str_obj, *pvs)
         else:
             if len(self._psnames()) > 1:  # SyncPV
+                # SI and BO MA dipoles, for example.
                 # Sync object used to sync pvs
                 sync = self._get_sync_obj(field)
                 # Real PVs(names) supplied to ComputedPV
@@ -387,6 +389,7 @@ class MAEpics(PSEpics):
                 # Create a virtual PV (ComputedPV)
                 return _ComputedPV(pvname, sync, *pvs)
             else:
+                # Mirror of original PVs.
                 return super()._create_pv(field)
 
     def _get_base_db(self):
@@ -442,15 +445,15 @@ class MAEpics(PSEpics):
             fam = self._prefix + fam_name
             field = field.replace('KL', 'Current')
             return [self._pvs[field],
-                    dipole + ':' + field.replace('Current', 'Energy'),
-                    fam + ':' + field.replace('Current', 'KL')]
+                    dipole + ':' + field.replace('Current', 'Energy').replace('Energy-Mon', 'EnergyRef-Mon'),
+                    fam + ':' + field.replace('Current', 'KL').replace('KL-Mon', 'KLRef-Mon')]
         else:
             dipole_name = _mutil.get_section_dipole_name(self._maname)
             dipole = self._prefix + dipole_name
             field = field.replace('KL', 'Current').replace('SL', 'Current')\
                 .replace('Kick', 'Current')
             return [self._pvs[field],
-                    dipole + ":" + field.replace('Current', 'Energy')]
+                    dipole + ":" + field.replace('Current', 'Energy').replace('Energy-Mon', 'EnergyRef-Mon')]
 
     def _psnames(self):
         ma_class = _mutil.magnet_class(self._maname)
