@@ -211,7 +211,7 @@ class _TimeDevData:
 
     def __init__(self, timeout=_timeout):
         self._conn_from_evg = dict()
-        self._conn_twrds_evg = dict()
+        self._conn_twds_evg = dict()
         self._devices_relations = dict()
         self._top_chain_devs = set()
         self._final_receiver_devs = set()
