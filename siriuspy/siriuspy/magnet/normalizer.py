@@ -56,7 +56,7 @@ class _MagnetNormalizer(_Computer):
 
         return kwret
 
-    def compute_limits(self, computed_pv, update_pv_name=None):
+    def compute_limits(self, computed_pv, updated_pv_name=None):
         """Compute limits to normalized strength."""
         kwargs = self._get_params(computed_pv)
         high = self.conv_current_2_strength(
@@ -197,7 +197,7 @@ class DipoleNormalizer(_MagnetNormalizer):
 
     # --- computer interface ---
 
-    def compute_limits(self, computed_pv, update_pv_name=None):
+    def compute_limits(self, computed_pv, updated_pv_name=None):
         """Compute limits to normalized strength."""
         if computed_pv.upper_alarm_limit is None:
             # initialization of limits
@@ -292,16 +292,16 @@ class MagnetNormalizer(_MagnetNormalizer):
 
     # --- computer interface ---
 
-    def compute_limits(self, computed_pv, update_pv_name):
+    def compute_limits(self, computed_pv, updated_pv_name):
         """Compute limits to normalized strength."""
         if computed_pv.upper_alarm_limit is None:
             # initialization of limits
             return _MagnetNormalizer.compute_limits(self,
                                                     computed_pv,
-                                                    update_pv_name)
+                                                    updated_pv_name)
         else:
             # check if limits ready need calculation
-            if 'Energy' in update_pv_name:
+            if 'Energy' in updated_pv_name:
                 return _MagnetNormalizer.compute_limits(self, computed_pv)
             else:
                 return None
@@ -341,14 +341,14 @@ class TrimNormalizer(_MagnetNormalizer):
 
     # --- computer interface ---
 
-    def compute_limits(self, computed_pv, update_pv_name):
+    def compute_limits(self, computed_pv, updated_pv_name):
         """Compute limits to normalized strength."""
         if computed_pv.upper_alarm_limit is None:
             # initialization of limits
             return _MagnetNormalizer.compute_limits(self, computed_pv)
         else:
             # check if limits ready need calculation
-            if 'Energy' in update_pv_name or 'KL' in update_pv_name:
+            if 'Energy' in updated_pv_name or 'KL' in updated_pv_name:
                 return _MagnetNormalizer.compute_limits(self, computed_pv)
             else:
                 return None

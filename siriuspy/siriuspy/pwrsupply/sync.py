@@ -52,7 +52,7 @@ class SyncWrite(_Computer):
         for pv in computed_pv.pvs:
             pv.put(value)
 
-    def compute_limits(self, computed_pv, update_pv_name=None):
+    def compute_limits(self, computed_pv, updated_pv_name=None):
         """Compute limits from real pvs."""
         computed_pv.upper_warning_limit = \
             computed_pv.pvs[_master_pv_index].upper_warning_limit
@@ -72,7 +72,7 @@ class SyncRead(_Computer):
     """Class that syncs all pvs."""
 
     # Computer Interface
-    def compute_update(self, computed_pv, update_pv_name, value):
+    def compute_update(self, computed_pv, updated_pv_name, value):
         """Do not update."""
         if computed_pv.upper_disp_limit is None:
             self.compute_limits(computed_pv)
@@ -85,7 +85,7 @@ class SyncRead(_Computer):
         """Write to all pvs."""
         pass
 
-    def compute_limits(self, computed_pv, update_pv_name=None):
+    def compute_limits(self, computed_pv, updated_pv_name=None):
         """Compute limits from real pvs."""
         computed_pv.upper_warning_limit = \
             computed_pv.pvs[0].upper_warning_limit
