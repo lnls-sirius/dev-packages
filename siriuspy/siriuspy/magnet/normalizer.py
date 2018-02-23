@@ -203,7 +203,7 @@ class DipoleNormalizer(_MagnetNormalizer):
             # initialization of limits
             return _MagnetNormalizer.compute_limits(self,
                                                     computed_pv,
-                                                    update_pv_name)
+                                                    updated_pv_name)
         else:
             # limits have already been calculated.
             return None
