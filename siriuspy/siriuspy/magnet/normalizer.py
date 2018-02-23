@@ -102,8 +102,8 @@ class _MagnetNormalizer(_Computer):
 
     # --- computer aux. methods ---
 
-    def _compute_limits(self, computed_pv):
-        raise NotImplementedError
+    def _compute_limits(self, computed_pv, updated_pv_name):
+        return self.compute_limits(computed_pv)
 
     def _get_params(self, computed_pv):
         if len(computed_pv.pvs) == 1:
@@ -296,7 +296,8 @@ class MagnetNormalizer(_MagnetNormalizer):
 
     def _compute_limits(self, computed_pv, updated_pv_name):
         """Compute limits to normalized strength."""
-        # print('here: ', self._maname, computed_pv.pvname, computed_pv.upper_alarm_limit)
+        # print('here: ', self._maname, computed_pv.pvname,
+        #       computed_pv.upper_alarm_limit)
         if computed_pv.upper_alarm_limit is None:
             # initialization of limits
             return self.compute_limits(computed_pv)
@@ -344,12 +345,16 @@ class TrimNormalizer(_MagnetNormalizer):
 
     def _compute_limits(self, computed_pv, updated_pv_name):
         """Compute limits to normalized strength."""
+        # print('here: ', self._maname, computed_pv.pvname,
+        #       computed_pv.upper_alarm_limit)
         if computed_pv.upper_alarm_limit is None:
             # initialization of limits
+            # print('init')
             return self.compute_limits(computed_pv)
         else:
             # check if limits ready need calculation
             if 'Energy' in updated_pv_name or 'KL' in updated_pv_name:
+                # print('recalc')
                 return self.compute_limits(computed_pv)
             else:
                 return None

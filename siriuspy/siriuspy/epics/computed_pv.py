@@ -49,7 +49,7 @@ class ComputedPV:
 
     def __init__(self, pvname, computer, *pvs):
         """Initialize PVs."""
-        # ComputedPV properties
+        # computedPV properties
         if not ComputedPV.queue.running:
             ComputedPV.queue.start()
         self.value = None
@@ -61,11 +61,11 @@ class ComputedPV:
         self.lower_disp_limit = None
 
         self.pvname = pvname
-        # Object that know how to compute the PV props based on the PV list
+        # object that know how to compute the PV props based on the PV list
         self.computer = computer
-        # Thread used to update values, thus letting the callback return
+        # thread used to update values, thus letting the callback return
         self._callbacks = []
-        # Get pvs
+        # get pvs
         self.pvs = list()  # List with PVs used by the computed PV
         for pv in pvs:
             if isinstance(pv, str):  # give up string option.
@@ -73,13 +73,20 @@ class ComputedPV:
                 self.pvs.append(tpv)
             else:
                 self.pvs.append(pv)
-        # Add callback
+        # add callback
         for pv in self.pvs:
             pv.add_callback(self._value_update_callback)
 
-        # Init limits
+        # init limits
         if self.connected:
-            self.computer.compute_limits(self)
+            # print('connected')
+            lims = self.computer.compute_limits(self)
+            self.upper_alarm_limit = lims[0]
+            self.upper_warning_limit = lims[1]
+            self.upper_disp_limit = lims[2]
+            self.lower_disp_limit = lims[3]
+            self.lower_warning_limit = lims[4]
+            self.lower_alarm_limit = lims[5]
 
         for pv in self.pvs:
             pv.run_callbacks()
@@ -126,18 +133,22 @@ class ComputedPV:
     # Private methods
     def _update_value(self, pvname, value):
         # Get dict with pv props that changed
+        # print('update_value')
         kwargs = self.computer.compute_update(self, pvname, value)
 
         if kwargs is not None:
             self.value = kwargs["value"]
             # Check if limits are in the return dict and update them
             if "high" in kwargs:
-                self.upper_warning_limit = kwargs["high"]
-                self.lower_warning_limit = kwargs["low"]
+                # print('set_limits')
                 self.upper_alarm_limit = kwargs["hihi"]
-                self.lower_alarm_limit = kwargs["lolo"]
+                self.upper_warning_limit = kwargs["high"]
                 self.upper_disp_limit = kwargs["hilim"]
                 self.lower_disp_limit = kwargs["lolim"]
+                self.lower_warning_limit = kwargs["low"]
+                self.lower_alarm_limit = kwargs["lolo"]
+                # print('upper_alarm_limit:', self.upper_alarm_limit)
+                # print()
 
             self._issue_callback(pvname=self.pvname, **kwargs)
 

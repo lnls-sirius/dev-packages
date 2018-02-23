@@ -331,7 +331,25 @@ class PSEpics(_PSCommInterface):
         for field in db:
             value = self.read(field)
             if value is not None:
-                db[field]["value"] = value
+                db[field]['value'] = value
+
+                # calc pv limits
+                if 'KL' in field or 'Energy' in field or \
+                   'SL' in field or 'Kick' in field:
+                    cpv = self._pvs[field]
+                    lims = cpv.computer.compute_limits(cpv)
+                    # cpv.upper_alarm_limit = lims[0]
+                    # cpv.upper_warning_limit = lims[1]
+                    # cpv.upper_disp_limit = lims[2]
+                    # cpv.lower_disp_limit = lims[3]
+                    # cpv.lower_warning_limit = lims[4]
+                    # cpv.lower_alarm_limit = lims[5]
+                    db[field]['hihi'] = lims[0]
+                    db[field]['high'] = lims[1]
+                    db[field]['hilim'] = lims[2]
+                    db[field]['lolim'] = lims[3]
+                    db[field]['low'] = lims[4]
+                    db[field]['lolo'] = lims[5]
 
         return db
 
