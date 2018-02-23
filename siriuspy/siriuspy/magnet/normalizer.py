@@ -201,9 +201,7 @@ class DipoleNormalizer(_MagnetNormalizer):
         """Compute limits to normalized strength."""
         if computed_pv.upper_alarm_limit is None:
             # initialization of limits
-            return _MagnetNormalizer.compute_limits(self,
-                                                    computed_pv,
-                                                    updated_pv_name)
+            return _MagnetNormalizer.compute_limits(self, computed_pv)
         else:
             # limits have already been calculated.
             return None
@@ -296,9 +294,7 @@ class MagnetNormalizer(_MagnetNormalizer):
         """Compute limits to normalized strength."""
         if computed_pv.upper_alarm_limit is None:
             # initialization of limits
-            return _MagnetNormalizer.compute_limits(self,
-                                                    computed_pv,
-                                                    updated_pv_name)
+            return _MagnetNormalizer.compute_limits(self, computed_pv)
         else:
             # check if limits ready need calculation
             if 'Energy' in updated_pv_name:

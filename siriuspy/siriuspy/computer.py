@@ -19,6 +19,6 @@ class Computer:
         """Put value to all associated PVs."""
         raise NotImplementedError
 
-    def compute_limits(self, computed_pv, updated_pv_name):
+    def compute_limits(self, computed_pv, updated_pv_name=None):
         """Compute limits of associated PVs."""
         raise NotImplementedError
