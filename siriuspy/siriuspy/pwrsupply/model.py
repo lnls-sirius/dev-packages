@@ -225,14 +225,14 @@ class PowerSupply(_PSCommInterface):
 class PSEpics(_PSCommInterface):
     """Power supply with Epics communication."""
 
-    valid_fields = ('Current-SP', 'Current-RB', 'CurrentRef-Mon',
-                    'Current-Mon', 'PwrState-Sel', 'PwrState-Sts',
-                    'OpMode-Sel', 'OpMode-Sts',
-                    'Energy-SP', 'Energy-RB', 'EnergyRef-Mon', 'Energy-Mon',
-                    'KL-SP', 'KL-RB', 'KLRef-Mon', 'KL-Mon',
-                    'SL-SP', 'SL-RB', 'SLRef-Mon', 'SL-Mon',
-                    'Kick-SP', 'Kick-RB', 'KickRef-Mon', 'Kick-Mon',
-                    'Reset-Cmd', 'Abort-Cmd')
+    # valid_fields = ('Current-SP', 'Current-RB', 'CurrentRef-Mon',
+    #                 'Current-Mon', 'PwrState-Sel', 'PwrState-Sts',
+    #                 'OpMode-Sel', 'OpMode-Sts',
+    #                 'Energy-SP', 'Energy-RB', 'EnergyRef-Mon', 'Energy-Mon',
+    #                 'KL-SP', 'KL-RB', 'KLRef-Mon', 'KL-Mon',
+    #                 'SL-SP', 'SL-RB', 'SLRef-Mon', 'SL-Mon',
+    #                 'Kick-SP', 'Kick-RB', 'KickRef-Mon', 'Kick-Mon',
+    #                 'Reset-Cmd', 'Abort-Cmd')
 
     def __init__(self, psname, fields=None, use_vaca=True):
         """Create epics PVs and expose them through public controller API."""
@@ -258,8 +258,8 @@ class PSEpics(_PSCommInterface):
 
     def read(self, field):
         """Read a field value."""
-        if field not in self.valid_fields:
-            return None
+        # if field not in self.valid_fields:
+        #     return None
         if self._pvs[field].connected:
             return self._pvs[field].get()
         else:
@@ -269,8 +269,8 @@ class PSEpics(_PSCommInterface):
     def write(self, field, value):
         """Write a value to a field."""
         # Check wether value is valid and return 0
-        if field not in self.valid_fields:
-            return None
+        # if field not in self.valid_fields:
+        #     return None
         if self._pvs[field].connected:
             return self._pvs[field].put(value)
         else:
