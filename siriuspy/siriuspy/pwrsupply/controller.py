@@ -56,6 +56,11 @@ class Controller():
         self.cmd_set_slowref(0.0)
 
     @property
+    def connected(self):
+        """Return status of connection with BSMP slaves."""
+        return True
+
+    @property
     def scanning(self):
         """Return scanning state of serial comm."""
         return self._serial_comm.scanning

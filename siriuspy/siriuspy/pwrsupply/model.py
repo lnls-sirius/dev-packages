@@ -19,6 +19,11 @@ from siriuspy.pwrsupply import sync as _sync
 class _PSCommInterface:
     """Communication inerface class for power supplies."""
 
+    @property
+    def connected(self):
+        """Return connected status."""
+        return self._connected()
+
     def read(self, field):
         """Return field value."""
         raise NotImplementedError
@@ -29,6 +34,9 @@ class _PSCommInterface:
 
     def add_callback(self, func):
         """Add callback function."""
+        raise NotImplementedError
+
+    def _connected(self):
         raise NotImplementedError
 
 
@@ -70,7 +78,7 @@ class PowerSupply(_PSCommInterface):
         """Set updating state."""
         self._updating = value
 
-    # --- public PSComm interface API ---
+    # --- PSCommInterface implementation ---
 
     def read(self, field):
         """Read field value."""
@@ -91,6 +99,11 @@ class PowerSupply(_PSCommInterface):
     def add_callback(self, func):
         """Add callback to be issued when a PV is updated."""
         self._callback = func
+
+    def _connected(self):
+        return self._controller.connected
+
+    # --- public methods ---
 
     def get_database(self, prefix=""):
         """Fill base DB with values and limits read from PVs.
@@ -257,7 +270,7 @@ class PSEpics(_PSCommInterface):
         self._pvs = dict()
         self._create_pvs()
 
-    # --- public PSComm interface API ---
+    # --- PSCommInterface implementation ---
 
     def read(self, field):
         """Read a field value."""
@@ -289,6 +302,14 @@ class PSEpics(_PSCommInterface):
                 # field = pvname.split(':')[-1]
                 # if field in self.valid_fields:
                 pv.add_callback(func)
+
+    def _connected(self):
+        for pv in self._pvs.values():
+            if not pv.connected:
+                return False
+        return True
+
+    # --- public methods ---
 
     def get_database(self, prefix=""):
         """Fill base DB with values and limits read from PVs.
