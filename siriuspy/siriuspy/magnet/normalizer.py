@@ -59,27 +59,16 @@ class _MagnetNormalizer(_Computer):
     def compute_limits(self, computed_pv):
         """Compute limits to normalized strength."""
         kwargs = self._get_params(computed_pv)
-        high = self.conv_current_2_strength(
-            self._madata.splims['HIGH'], **kwargs)
-        low = self.conv_current_2_strength(
-            self._madata.splims['LOW'], **kwargs)
-        if high < low:
-            high, low = low, high
-
-        hihi = self.conv_current_2_strength(
-            self._madata.splims["HIHI"], **kwargs)
-        lolo = self.conv_current_2_strength(
-            self._madata.splims["LOLO"], **kwargs)
-        if hihi < lolo:
-            hihi, lolo = lolo, hihi
-
-        hilim = self.conv_current_2_strength(
-            self._madata.splims["HOPR"], **kwargs)
-        lolim = self.conv_current_2_strength(
-            self._madata.splims["LOPR"], **kwargs)
-        if hilim < lolim:
-            hilim, lolim = lolim, hilim
-
+        lims = self._madata.splims
+        lims = (lims['HIHI'], lims['HIGH'], lims['HOPR'],
+                lims['LOPR'], lims['LOW'], lims['LOLO'])
+        lims = self.conv_current_2_strength(lims, **kwargs)
+        tlim = (lims[0], lims[-1])
+        hihi, lolo = max(tlim), min(tlim)
+        tlim = (lims[1], lims[-2])
+        high, low = max(tlim), min(tlim)
+        tlim = (lims[2], lims[-3])
+        hilim, lolim = max(tlim), min(tlim)
         return hihi, high, hilim, lolim, low, lolo
 
     # --- normalizer interface ---
@@ -107,10 +96,13 @@ class _MagnetNormalizer(_Computer):
 
     def _get_params(self, computed_pv):
         if len(computed_pv.pvs) == 1:
+            # dipole normalizer
             return {}
         elif len(computed_pv.pvs) == 2:
+            # family|individual normalizer
             return {"strengths_dipole": computed_pv.pvs[1].get()}
         elif len(computed_pv.pvs) == 3:
+            # trim nornalizer
             return {"strengths_dipole": computed_pv.pvs[1].get(),
                     "strengths_family": computed_pv.pvs[2].get()}
 
