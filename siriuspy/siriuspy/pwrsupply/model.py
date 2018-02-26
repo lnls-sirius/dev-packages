@@ -5,6 +5,7 @@ from threading import Thread as _Thread
 import time as _time
 from epics import PV as _PV
 from siriuspy.epics import connection_timeout as _connection_timeout
+from siriuspy.epics.computed_pv import QueueThread as _QueueThread
 from siriuspy.epics.computed_pv import ComputedPV as _ComputedPV
 from siriuspy.pwrsupply.data import PSData as _PSData
 from siriuspy.magnet.data import MAData as _MAData
@@ -118,7 +119,7 @@ class PowerSupply(_PSCommInterface):
         return sp
 
     def _set_field_setpoint(self, keyvalue, field):
-        # should we use databse as setpoint state?!
+        # should we use database as setpoint state?!
         db = self._base_db
         if field == 'PwrState-Sel':
             keyvalue['func'] = self._set_pwrstate
@@ -376,6 +377,7 @@ class MAEpics(PSEpics):
         self._maname = _SiriusPVName(maname)
         self._madata = _MAData(maname)
         self._lock = lock
+        self._computed_pvs_queue = _QueueThread()
         super().__init__(
             self._maname.replace("MA", "PS").replace("PM", "PU"),
             **kwargs)
@@ -393,7 +395,8 @@ class MAEpics(PSEpics):
             pvname = self._prefix + self._maname + ":" + field
             str_obj = self._get_normalizer(self._maname)
             pvs = self._get_str_pv(field)
-            return _ComputedPV(pvname, str_obj, *pvs)
+            return _ComputedPV(pvname, str_obj,
+                               self._computed_pvs_queue, *pvs)
         else:
             if len(self._psnames()) > 1:  # SyncPV
                 # SI and BO MA dipoles, for example.
@@ -405,7 +408,8 @@ class MAEpics(PSEpics):
                 # Name of the ComputedPV
                 pvname = self._psname + ":" + field
                 # Create a virtual PV (ComputedPV)
-                return _ComputedPV(pvname, sync, *pvs)
+                return _ComputedPV(pvname, sync,
+                                   self._computed_pvs_queue, *pvs)
             else:
                 # Mirror of original PVs.
                 return super()._create_pv(field)

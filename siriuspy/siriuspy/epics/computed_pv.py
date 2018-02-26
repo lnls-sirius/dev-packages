@@ -1,11 +1,11 @@
 """Definition of ComputedPV class that simulates a PV composed of epics PVs."""
-from epics import get_pv
-from threading import Thread
-from siriuspy.epics import connection_timeout as _connection_timeout
+from threading import Thread as _Thread
 from queue import Queue as _Queue
+from epics import get_pv as _get_pv
+from siriuspy.epics import connection_timeout as _connection_timeout
 
 
-class QueueThread(Thread):
+class QueueThread(_Thread):
     """Callback queue class."""
 
     def __init__(self):
@@ -45,20 +45,19 @@ class QueueThread(Thread):
 class ComputedPV:
     """Simulates an epics PV object."""
 
-    queue = QueueThread()
-
-    def __init__(self, pvname, computer, *pvs):
+    def __init__(self, pvname, computer, queue, *pvs):
         """Initialize PVs."""
         # computedPV properties
-        if not ComputedPV.queue.running:
-            ComputedPV.queue.start()
+        self._queue = queue
+        if not self._queue.running:
+            self._queue.start()
         self.value = None
-        self.upper_warning_limit = None
-        self.lower_warning_limit = None
         self.upper_alarm_limit = None
-        self.lower_alarm_limit = None
+        self.upper_warning_limit = None
         self.upper_disp_limit = None
         self.lower_disp_limit = None
+        self.lower_warning_limit = None
+        self.lower_alarm_limit = None
 
         self.pvname = pvname
         # object that know how to compute the PV props based on the PV list
@@ -69,7 +68,7 @@ class ComputedPV:
         self.pvs = list()  # List with PVs used by the computed PV
         for pv in pvs:
             if isinstance(pv, str):  # give up string option.
-                tpv = get_pv(pv, connection_timeout=_connection_timeout)
+                tpv = _get_pv(pv, connection_timeout=_connection_timeout)
                 self.pvs.append(tpv)
             else:
                 self.pvs.append(pv)
@@ -158,8 +157,8 @@ class ComputedPV:
                 # add update_callback to queuethread only if updated_pv_name
                 # corresponds to the main magnet current, which is always the
                 # first PV in the list.
-                ComputedPV.queue.add_callback(self._update_value,
-                                              pvname, value)
+                self._queue.add_callback(self._update_value,
+                                         pvname, value)
 
     def _issue_callback(self, **kwargs):
         if self._callbacks:
