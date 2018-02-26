@@ -154,7 +154,12 @@ class ComputedPV:
 
     def _value_update_callback(self, pvname, value, **kwargs):
         if self.connected:
-            ComputedPV.queue.add_callback(self._update_value, pvname, value)
+            if pvname == self.pvs[0].pvname:
+                # add update_callback to queuethread only if updated_pv_name
+                # corresponds to the main magnet current, which is always the
+                # first PV in the list.
+                ComputedPV.queue.add_callback(self._update_value,
+                                              pvname, value)
 
     def _issue_callback(self, **kwargs):
         if self._callbacks:
