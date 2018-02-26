@@ -226,6 +226,8 @@ class PowerSupply(_PSCommInterface):
 class PSEpics(_PSCommInterface):
     """Power supply with Epics communication."""
 
+    # Should we merge this base class into MAEpics?
+
     # valid_fields = ('Current-SP', 'Current-RB', 'CurrentRef-Mon',
     #                 'Current-Mon', 'PwrState-Sel', 'PwrState-Sts',
     #                 'OpMode-Sel', 'OpMode-Sts',
@@ -391,7 +393,9 @@ class MAEpics(PSEpics):
     def _create_pv(self, field):
         # Build either a real or computed PV
         if MAEpics._is_strength.match(field):
-            # Strength PVs
+            # 1) STRENGTH magnet fields
+            # an intermediary computed_pv is created in order for the
+            # strength to be calculated from currents.
             pvname = self._prefix + self._maname + ":" + field
             str_obj = self._get_normalizer(self._maname)
             pvs = self._get_str_pv(field)
@@ -399,19 +403,18 @@ class MAEpics(PSEpics):
                                self._computed_pvs_queue, *pvs)
         else:
             if len(self._psnames()) > 1:  # SyncPV
-                # SI and BO MA dipoles, for example.
-                # Sync object used to sync pvs
+                # 2) SYNCPV fields
+                # this is used basically for SI and BO dipoles
                 sync = self._get_sync_obj(field)
-                # Real PVs(names) supplied to ComputedPV
                 pvs = [self._prefix + device_name + ":" + field
                        for device_name in self._psnames()]
-                # Name of the ComputedPV
                 pvname = self._psname + ":" + field
-                # Create a virtual PV (ComputedPV)
                 return _ComputedPV(pvname, sync,
                                    self._computed_pvs_queue, *pvs)
             else:
-                # Mirror of original PVs.
+                # 3) PV
+                # a normal pv mirroring the power supply pv.
+                # no computed_pv is needed.
                 return super()._create_pv(field)
 
     def _get_base_db(self):
@@ -423,19 +426,19 @@ class MAEpics(PSEpics):
                 if n is None:
                     n = _NormalizerFactory.factory(maname=self._maname)
                 currents = []
-                currents.append(db[pvname_ps]['lolo'])
-                currents.append(db[pvname_ps]['low'])
-                currents.append(db[pvname_ps]['lolim'])
-                currents.append(db[pvname_ps]['hilim'])
-                currents.append(db[pvname_ps]['high'])
                 currents.append(db[pvname_ps]['hihi'])
+                currents.append(db[pvname_ps]['high'])
+                currents.append(db[pvname_ps]['hilim'])
+                currents.append(db[pvname_ps]['lolim'])
+                currents.append(db[pvname_ps]['low'])
+                currents.append(db[pvname_ps]['lolo'])
                 lims = sorted(n.conv_current_2_strength(currents=currents))
-                db[pvname]['lolo'] = lims[0]
-                db[pvname]['low'] = lims[1]
-                db[pvname]['lolim'] = lims[2]
-                db[pvname]['hilim'] = lims[3]
-                db[pvname]['high'] = lims[4]
-                db[pvname]['hihi'] = lims[5]
+                db[pvname]['hihi'] = lims[0]
+                db[pvname]['high'] = lims[1]
+                db[pvname]['hilim'] = lims[2]
+                db[pvname]['lolim'] = lims[3]
+                db[pvname]['low'] = lims[4]
+                db[pvname]['lolo'] = lims[5]
         return db
 
     # --- class methods ---
