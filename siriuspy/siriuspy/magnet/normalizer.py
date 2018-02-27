@@ -337,16 +337,11 @@ class TrimNormalizer(_MagnetNormalizer):
 
     def _compute_limits(self, computed_pv, updated_pv_name):
         """Compute limits to normalized strength."""
-        # print('here: ', self._maname, computed_pv.pvname,
-        #       computed_pv.upper_alarm_limit)
         if computed_pv.upper_alarm_limit is None:
-            # initialization of limits
-            # print('init')
             return self.compute_limits(computed_pv)
         else:
             # check if limits ready need calculation
             if 'Energy' in updated_pv_name or 'KL' in updated_pv_name:
-                # print('recalc')
                 return self.compute_limits(computed_pv)
             else:
                 return None

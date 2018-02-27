@@ -66,12 +66,7 @@ class ComputedPV:
 
         self.pvname = pvname
         self.value = None
-        self.upper_alarm_limit = None
-        self.upper_warning_limit = None
-        self.upper_disp_limit = None
-        self.lower_disp_limit = None
-        self.lower_warning_limit = None
-        self.lower_alarm_limit = None
+        self._set_limits((None,)*6)
         self.computer = computer
         self.pvs = self._create_primary_pvs_list(pvs)
 
@@ -81,18 +76,19 @@ class ComputedPV:
 
         # add callback
         self._callbacks = []
-        for pv in self.pvs:
-            pv.add_callback(self._value_update_callback)
+        if self._monitor_pv:
+            # in order to optimize efficiency if computed pv is of the
+            # monitor type add callback only to the first primary pv, the one
+            # corresponding to the main current to the call
+            self.pvs[0].add_callback(self._value_update_callback)
+        else:
+            for pv in self.pvs:
+                pv.add_callback(self._value_update_callback)
 
         # init limits
         if self.connected:
             lims = self.computer.compute_limits(self)
-            self.upper_alarm_limit = lims[0]
-            self.upper_warning_limit = lims[1]
-            self.upper_disp_limit = lims[2]
-            self.lower_disp_limit = lims[3]
-            self.lower_warning_limit = lims[4]
-            self.lower_alarm_limit = lims[5]
+            self._set_limits(lims)
 
         for pv in self.pvs:
             pv.run_callbacks()
@@ -140,6 +136,14 @@ class ComputedPV:
 
     # --- private methods ---
 
+    def _set_limits(self, lims):
+        self.upper_alarm_limit = lims[0]
+        self.upper_warning_limit = lims[1]
+        self.upper_disp_limit = lims[2]
+        self.lower_disp_limit = lims[3]
+        self.lower_warning_limit = lims[4]
+        self.lower_alarm_limit = lims[5]
+
     def _create_primary_pvs_list(self, pvs):
         # get list of primary pvs
         ppvs = list()  # List with PVs used by the computed PV
@@ -160,26 +164,18 @@ class ComputedPV:
             self.value = kwargs["value"]
             # Check if limits are in the return dict and update them
             if "high" in kwargs:
-                # print('set_limits')
                 self.upper_alarm_limit = kwargs["hihi"]
                 self.upper_warning_limit = kwargs["high"]
                 self.upper_disp_limit = kwargs["hilim"]
                 self.lower_disp_limit = kwargs["lolim"]
                 self.lower_warning_limit = kwargs["low"]
                 self.lower_alarm_limit = kwargs["lolo"]
-                # print('upper_alarm_limit:', self.upper_alarm_limit)
-                # print()
 
             self._issue_callback(pvname=self.pvname, **kwargs)
 
     def _value_update_callback(self, pvname, value, **kwargs):
         if self.connected:
-            if self._monitor_pv and pvname == self.pvs[0].pvname:
-                # add update_callback to queuethread only if updated_pv_name
-                # corresponds to the main magnet current, which is always the
-                # first PV in the list.
-                self._queue.add_callback(self._update_value,
-                                         pvname, value)
+            self._queue.add_callback(self._update_value, pvname, value)
 
     def _issue_callback(self, **kwargs):
         if self._callbacks:
