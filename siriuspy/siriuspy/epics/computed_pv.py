@@ -6,7 +6,11 @@ from siriuspy.epics import connection_timeout as _connection_timeout
 
 
 class QueueThread(_Thread):
-    """Callback queue class."""
+    """Callback queue class.
+
+        Queues threads of this class are used to process callbacks of power
+    supplies (magnets) properties.
+    """
 
     def __init__(self):
         """Init method."""
@@ -43,14 +47,24 @@ class QueueThread(_Thread):
 
 
 class ComputedPV:
-    """Simulates an epics PV object."""
+    """Computed PV class.
+
+    Objects of this class are used for properties or process variables that are
+    computed from other primary process variables. magnet strengths which
+    are derived from power supply currents are typical examples of such
+    computed process variables.
+    """
 
     def __init__(self, pvname, computer, queue, *pvs):
         """Initialize PVs."""
-        # computedPV properties
+        # starts computer_pvs queue, if not started yet
         self._queue = queue
         if not self._queue.running:
             self._queue.start()
+
+        # --- properties ---
+
+        self.pvname = pvname
         self.value = None
         self.upper_alarm_limit = None
         self.upper_warning_limit = None
@@ -58,27 +72,20 @@ class ComputedPV:
         self.lower_disp_limit = None
         self.lower_warning_limit = None
         self.lower_alarm_limit = None
-
-        self.pvname = pvname
-        # object that know how to compute the PV props based on the PV list
         self.computer = computer
-        # thread used to update values, thus letting the callback return
-        self._callbacks = []
-        # get pvs
-        self.pvs = list()  # List with PVs used by the computed PV
-        for pv in pvs:
-            if isinstance(pv, str):  # give up string option.
-                tpv = _get_pv(pv, connection_timeout=_connection_timeout)
-                self.pvs.append(tpv)
-            else:
-                self.pvs.append(pv)
+        self.pvs = self._create_primary_pvs_list(pvs)
+
+        # flags if computed_pv is of the 'monitor' type.
+        self._monitor_pv = \
+            '-Mon' in self.pvname and 'Ref-Mon' not in self.pvname
+
         # add callback
+        self._callbacks = []
         for pv in self.pvs:
             pv.add_callback(self._value_update_callback)
 
         # init limits
         if self.connected:
-            # print('connected')
             lims = self.computer.compute_limits(self)
             self.upper_alarm_limit = lims[0]
             self.upper_warning_limit = lims[1]
@@ -90,7 +97,8 @@ class ComputedPV:
         for pv in self.pvs:
             pv.run_callbacks()
 
-    # Public interface
+    # --- public methods ---
+
     @property
     def connected(self):
         """Return wether all pvs are connected."""
@@ -118,18 +126,31 @@ class ComputedPV:
         self._issue_callback(**{
             'pvname': self.pvname,
             'value': self.value,
-            'high': self.upper_warning_limit,
-            'low': self.lower_warning_limit,
             'hihi': self.upper_alarm_limit,
-            'lolo': self.lower_alarm_limit,
+            'high': self.upper_warning_limit,
             'hilim': self.upper_disp_limit,
-            'lolim': self.lower_disp_limit})
+            'lolim': self.lower_disp_limit,
+            'low': self.lower_warning_limit,
+            'lolo': self.lower_alarm_limit,
+            })
 
     def wait_for_connection(self, timeout):
         """Wait util computed PV is connected or until timeout."""
         pass
 
-    # Private methods
+    # --- private methods ---
+
+    def _create_primary_pvs_list(self, pvs):
+        # get list of primary pvs
+        ppvs = list()  # List with PVs used by the computed PV
+        for pv in pvs:
+            if isinstance(pv, str):  # give up string option.
+                tpv = _get_pv(pv, connection_timeout=_connection_timeout)
+                ppvs.append(tpv)
+            else:
+                ppvs.append(pv)
+        return ppvs
+
     def _update_value(self, pvname, value):
         # Get dict with pv props that changed
         # print('update_value')
@@ -153,7 +174,7 @@ class ComputedPV:
 
     def _value_update_callback(self, pvname, value, **kwargs):
         if self.connected:
-            if pvname == self.pvs[0].pvname:
+            if self._monitor_pv and pvname == self.pvs[0].pvname:
                 # add update_callback to queuethread only if updated_pv_name
                 # corresponds to the main magnet current, which is always the
                 # first PV in the list.
