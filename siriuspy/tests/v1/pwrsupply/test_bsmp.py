@@ -59,9 +59,9 @@ class TestBSMPResponseSim(unittest.TestCase):
         sts, ret = self.resp.cmd_0x11(1, Const.ps_setpoint)
         self.assertEqual(ret, 5.0)
 
-    def test_cmd_0x51_cgf_op_mode(self):
-        """Test cmd_0x51 cfg_op_mode cmd."""
-        status, ret = self.resp.cmd_0x51(1, Const.cfg_op_mode, op_mode=1)
+    def test_cmd_0x51_select_op_mode(self):
+        """Test cmd_0x51 select_op_mode cmd."""
+        status, ret = self.resp.cmd_0x51(1, Const.selet_op_mode, op_mode=1)
         self.assertEqual(status, _ack.ok)
         self.assertEqual(ret, None)
         self.status_mock.set_state.assert_called_once()

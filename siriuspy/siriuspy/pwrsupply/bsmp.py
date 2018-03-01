@@ -1,4 +1,4 @@
-"""BSMP entities definitions for the power supply devices."""
+"""Module for definitions of BSMP entities of power supply devices."""
 
 
 import struct as _struct
@@ -20,7 +20,7 @@ from siriuspy.csdevice.pwrsupply import ps_hard_interlock as _ps_hard_interlock
 
 
 class Const:
-    """Power supply BSMP constants."""
+    """Namespace for organizing power supply BSMP constants."""
 
     # --- implemented protocol version ---
     version = __bsmp_version__
@@ -34,15 +34,27 @@ class Const:
     t_uint8 = 5
     t_uint16 = 6
     t_uint32 = 7
+    t_char128 = 8
+    t_float4 = 9
 
     # --- common variables ---
     ps_status = 0
     ps_setpoint = 1
     ps_reference = 2
-    frmware_version = 3  # a new PS definition will eventually implement this.
+    firmware_version = 3
+    counter_set_slowref = 4  # not implemented yet
+    counter_sync_pulse = 5  # not implemented yet
+    siggen_enable = 6  # not implemented yet
+    siggen_type = 7  # not implemented yet
+    siggen_num_cycles = 8  # not implemented yet
+    siggen_n = 9  # not implemented yet
+    siggen_freq = 10  # not implemented yet
+    siggen_amplitude = 11  # not implemented yet
+    siggen_offset = 12  # not implemented yet
+    siggen_aux_param = 13  # not implemented yet
 
     # --- FSB variables ---
-    ps_soft_interlocks = 25  # BSMP def says ID numbering should be continous!
+    ps_soft_interlocks = 25  # BSMP doc says ID numbering should be continous!
     ps_hard_interlocks = 26
     i_load = 27
     v_load = 28
@@ -54,23 +66,56 @@ class Const:
     turn_off = 1
     open_loop = 2
     close_loop = 3
+    select_op_mode = 4
     reset_interlocks = 6
-    cfg_op_mode = 12
+    set_serial_termination = 9  # not implemented yet
+    sync_pulse = 15  # not implemented yet
     set_slowref = 16
-    set_slowref_fbp = 17
+    set_slowref_fbp = 17  # not implemented yet
+    reset_counters = 18  # not implemented yet
+    cfg_siggen = 23  # not implemented yet
+    set_siggen = 24  # not implemented yet
+    enable_siggen = 25  # not implemented yet
+    disable_siggen = 26  # not implemented yet
+    set_slowref_readback = 27  # not implemented yet
+    set_slowref_fbp_readback = 28  # not implemented yet
 
     # --- variables groups ---
-    group_id = 3
+    group_id = 3  # default variables group ID defined for power supplies
 
 
 def get_variables_common():
     """Return common power supply BSMP variables."""
     variables = {
-        # Const.frmware_version: ('frmware_version',
-        #                         Const.t_uint16, False),
-        Const.ps_status: ('ps_status', Const.t_status, False),
-        Const.ps_setpoint: ('ps_setpoint', Const.t_float, False),
-        Const.ps_reference: ('ps_reference', Const.t_float, False),
+        # key (variable index): (variable name, variable type, writeable?)
+        Const.ps_status:
+            ('ps_status', Const.t_status, False),
+        Const.ps_setpoint:
+            ('ps_setpoint', Const.t_float, False),
+        Const.ps_reference:
+            ('ps_reference', Const.t_float, False),
+        Const.firmware_version:
+            ('firmaware_version', Const.t_char128, False),
+        # Const.counter_set_slowref:
+        #     ('counter_set_slowref', Const.t_uint32, False),
+        # Const.counter_sync_pulse:
+        #     ('counter_sync_pulse', Const.t_uint32, False),
+        # Const.siggen_enable:
+        #     ('siggen_enable', Const.t_uint16, False),
+        # Const.siggen_type:
+        #     ('siggen_type', Const.t_uint16, False),
+        # Const.siggen_num_cycles:
+        #     ('siggen_num_cycles', Const.t_uint16, False),
+        # Const.siggen_n:
+        #     ('siggen_n', Const.t_float, False),
+        # Const.siggen_freq:
+        #     ('siggen_freq', Const.t_float, False),
+        # Const.siggen_amplitude:
+        #     ('siggen_amplitude', Const.t_float, False),
+        # Const.siggen_offset:
+        #     ('siggen_offset', Const.t_float, False),
+        # Const.siggen_aux_param:
+        #     ('siggen_aux_param', Const.t_float4, False),
     }
     return variables
 
@@ -98,20 +143,46 @@ def get_variables_FBP():
 def get_functions():
     """Return power supply BSMP functions."""
     functions = {
-        Const.turn_on: ('turn_on', Const.t_uint8, []),
-        Const.turn_off: ('turn_off', Const.t_uint8, []),
-        Const.open_loop: ('open_loop', Const.t_uint8, []),
-        Const.close_loop: ('close_loop', Const.t_uint8, []),
-        Const.cfg_op_mode:
-            ('cfg_op_mode', Const.t_uint8, [Const.t_state]),
+        Const.turn_on:
+            ('turn_on', Const.t_uint8, []),
+        Const.turn_off:
+            ('turn_off', Const.t_uint8, []),
+        Const.open_loop:
+            ('open_loop', Const.t_uint8, []),
+        Const.close_loop:
+            ('close_loop', Const.t_uint8, []),
+        Const.select_op_mode:
+            ('select_op_mode', Const.t_uint8, [Const.t_state]),
         Const.reset_interlocks:
             ('reset_interlocks', Const.t_uint8, []),
+        Const.set_serial_termination:
+            ('set_serial_termination', Const.t_uint8, [Const.t_uint16]),
+        Const.sync_pulse:
+            ('sync_pulse', Const.t_uint8, []),
         Const.set_slowref:
             ('set_slowref', Const.t_uint8, [Const.t_float]),
         Const.set_slowref_fbp:
             ('set_slowref_fbp', Const.t_uint8,
-             [Const.t_float, Const.t_float,
-              Const.t_float, Const.t_float, ])
+             [Const.t_float, Const.t_float, Const.t_float, Const.t_float, ]),
+        Const.reset_counters:
+            ('reset_counters', Const.t_uint8, []),
+        Const.cfg_siggen:
+            ('cfg_siggen', Const.t_uint8,
+             [Const.t_uint8, Const.t_uint16,
+              Const.t_float, Const.t_float, Const.t_float, Const.t_float,
+              Const.t_float, Const.t_float, Const.t_float]),
+        Const.set_siggen:
+            ('set_siggen', Const.t_uint8,
+             [Const.t_float, Const.t_float, Const.t_float]),
+        Const.enable_siggen:
+            ('enable_siggen', Const.t_uint8, []),
+        Const.disable_siggen:
+            ('disble_siggen', Const.t_uint8, []),
+        Const.set_slowref_readback:
+            ('set_slowref_readback', Const.t_uint8, [Const.t_float]),
+        Const.set_slowref_fbp_readback:
+            ('set_slowref_fbp_readback', Const.t_uint8,
+             [Const.t_float, Const.t_float, Const.t_float, Const.t_float]),
     }
     return functions
 
@@ -235,10 +306,10 @@ class Status:
         _PSConst.States.Initializing: _PSConst.OpMode.SlowRef,
         _PSConst.States.SlowRef: _PSConst.OpMode.SlowRef,
         _PSConst.States.SlowRefSync: _PSConst.OpMode.SlowRefSync,
-        _PSConst.States.FastRef: _PSConst.OpMode.FastRef,
+        _PSConst.States.Cycle: _PSConst.OpMode.Cycle,
         _PSConst.States.RmpWfm: _PSConst.OpMode.RmpWfm,
         _PSConst.States.MigWfm: _PSConst.OpMode.MigWfm,
-        _PSConst.States.Cycle: _PSConst.OpMode.Cycle,
+        _PSConst.States.FastRef: _PSConst.OpMode.FastRef,
     }
 
     _ps2dsp_state = {
@@ -397,6 +468,10 @@ class PSState:
                             Const.t_uint16,
                             Const.t_uint32):
                 value = 0
+            elif type_t == Const.t_float4:
+                value = [0.0, 0.0, 0.0, 0.0]
+            elif type_t == Const.t_char128:
+                value = [chr(0), ] * 128
             else:
                 raise ValueError('Invalid BSMP variable type!')
             self._state[ID_variable] = value
@@ -411,8 +486,28 @@ class PSState:
         return value
 
 
-class BSMPResponseSim(_BSMPResponse):
-    """Transport BSMP layer interacting with simulated slave device."""
+class BSMPMasterSlaveSim(_BSMPResponse):
+    """Class used to perform BSMP comm between a master and simulated slave."""
+
+    funcs = {
+        Const.set_slowref: '_func_set_slowref',
+        Const.select_op_mode: '_func_select_op_mode',
+        Const.turn_on: '_func_turn_on',
+        Const.turn_off: '_func_turn_off',
+        Const.reset_interlocks: '_func_reset_interlocks',
+        Const.close_loop: '_func_close_loop',
+        # functions not not mplemented  yet:
+        Const.set_serial_termination: '_func_not_implemented',
+        Const.sync_pulse: '_func_not_implemented',
+        Const.set_slowref_fbp: '_func_not_implemented',
+        Const.reset_counters: '_func_not_implemented',
+        Const.cfg_siggen: '_func_not_implemented',
+        Const.set_siggen: '_func_not_implemented',
+        Const.enable_siggen: '_func_not_implemented',
+        Const.disable_siggen: '_func_not_implemented',
+        Const.set_slowref_readback: '_func_not_implemented',
+        Const.set_slowref_fbp_readback: '_func_not_implemented',
+    }
 
     def __init__(self, ID_device, i_load_fluctuation_rms=0.0):
         """Init method."""
@@ -460,36 +555,17 @@ class BSMPResponseSim(_BSMPResponse):
             load[Const.i_load] += self._i_load_fluctuation
         return _ack.ok, load
 
-    def cmd_0x51(self, ID_receiver, ID_function, **kwargs):
+    def cmd_0x51(self, ID_receiver, **kwargs):
         """Respond to execute BSMP function."""
+        ID_function = kwargs['ID_function']
         self._update_state()
-        if ID_function == Const.set_slowref:
-            return self._func_set_slowref(**kwargs)
-        elif ID_function == Const.cfg_op_mode:
-            return self._func_cfg_op_mode(**kwargs)
-        elif ID_function == Const.turn_on:
-            status = self._state[Const.ps_status]
-            status = Status.set_state(status, _PSConst.States.SlowRef)
-            self._state[Const.ps_status] = status
-            self._state[Const.i_load] = \
-                self._state[Const.ps_reference] + \
-                self._i_load_fluctuation
-            return _ack.ok, None
-        elif ID_function == Const.turn_off:
-            status = self._state[Const.ps_status]
-            status = Status.set_state(status, _PSConst.States.Off)
-            self._state[Const.ps_status] = status
-            self._state[Const.i_load] = 0.0 + self._i_load_fluctuation
-            return _ack.ok, None
-        elif ID_function == Const.reset_interlocks:
-            self._state[Const.ps_soft_interlocks] = 0
-            self._state[Const.ps_hard_interlocks] = 0
-            return _ack.ok, None
-        elif ID_function == Const.close_loop:
-            return self._func_close_loop()
+        if ID_function in BSMPMasterSlaveSim.funcs:
+            # if bsmp function is defined, get corresponding method and run it
+            func = getattr(self, BSMPMasterSlaveSim.funcs[ID_function])
+            return func(**kwargs)
         else:
-            raise NotImplementedError(
-                'Run of {} function not implemented!'.format(hex(ID_function)))
+            raise ValueError(
+                'Run of {} function not defined!'.format(hex(ID_function)))
 
     def _func_set_slowref(self, **kwargs):
         self._state[Const.ps_setpoint] = kwargs['setpoint']
@@ -502,16 +578,41 @@ class BSMPResponseSim(_BSMPResponse):
                 self._state[Const.ps_reference] + self._i_load_fluctuation
         return _ack.ok, None
 
-    def _func_cfg_op_mode(self, **kwargs):
+    def _func_select_op_mode(self, **kwargs):
         status = self._state[Const.ps_status]
         status = Status.set_state(status, kwargs['op_mode'])
         self._state[Const.ps_status] = status
         return _ack.ok, None
 
-    def _func_close_loop(self):
+    def _func_turn_on(self, **kwargs):
+        status = self._state[Const.ps_status]
+        status = Status.set_state(status, _PSConst.States.SlowRef)
+        self._state[Const.ps_status] = status
+        self._state[Const.i_load] = \
+            self._state[Const.ps_reference] + \
+            self._i_load_fluctuation
+        return _ack.ok, None
+
+    def _func_turn_off(self, **kwargs):
+        status = self._state[Const.ps_status]
+        status = Status.set_state(status, _PSConst.States.Off)
+        self._state[Const.ps_status] = status
+        self._state[Const.i_load] = 0.0 + self._i_load_fluctuation
+        return _ack.ok, None
+
+    def _func_reset_interlocks(self, **kwargs):
+        self._state[Const.ps_soft_interlocks] = 0
+        self._state[Const.ps_hard_interlocks] = 0
+        return _ack.ok, None
+
+    def _func_close_loop(self, **kwargs):
         status = self._state[Const.ps_status]
         status = Status.set_openloop(status, 0)
         return _ack.ok, None
+
+    def _func_not_implemented(self, **kwargs):
+        raise NotImplementedError(
+            'Run of function not defined!'.format(hex(kwargs['ID_function'])))
 
     def _update_state(self):
         if self._i_load_fluctuaton_rms != 0.0:
@@ -519,8 +620,8 @@ class BSMPResponseSim(_BSMPResponse):
                 _random.gauss(0.0, self._i_load_fluctuaton_rms)
 
 
-class BSMPResponse(_BSMPResponse, StreamChecksum):
-    """Transport BSMP layer interacting with real slave device."""
+class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
+    """Class used to perform BSMP comm between a master and slave."""
 
     _FAKE_FRMWARE_VERSION = ['\x00', '\x00']
 
@@ -543,7 +644,7 @@ class BSMPResponse(_BSMPResponse, StreamChecksum):
         # print('ID_group: ', ID_group)
         # print('IDs_variable:', IDs_variable)
         # print('query: ', query)
-        query = BSMPResponse.includeChecksum(query)
+        query = BSMPMasterSlave.includeChecksum(query)
         self._pru.UART_write(query, timeout=100)
         response = self._pru.UART_read()
         ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
@@ -552,7 +653,7 @@ class BSMPResponse(_BSMPResponse, StreamChecksum):
     def remove_groups(self, ID_receiver):
         """Delete all groups of BSMP variables."""
         query = [chr(ID_receiver), "\x32", '\x00', '\x00']
-        query = BSMPResponse.includeChecksum(query)
+        query = BSMPMasterSlave.includeChecksum(query)
         self._pru.UART_write(query, timeout=100)
         response = self._pru.UART_read()
         ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
@@ -561,7 +662,7 @@ class BSMPResponse(_BSMPResponse, StreamChecksum):
     def cmd_0x01(self, ID_receiver):
         """Respond BSMP protocol version."""
         query = [chr(ID_receiver), "\x00", "\x00", "\x00"]
-        query = BSMPResponse.includeChecksum(query)
+        query = BSMPMasterSlave.includeChecksum(query)
         self._pru.UART_write(query, timeout=100)
         response = self._pru.UART_read()
         ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
@@ -578,12 +679,12 @@ class BSMPResponse(_BSMPResponse, StreamChecksum):
             # (This variable currently is not implemented  - see bsmp.py !!!)
             ID_master = 0
             response = [chr(ID_master), '\x11', '\x00', '\x02'] + \
-                BSMPResponse._FAKE_FRMWARE_VERSION
-            response = BSMPResponse.includeChecksum(response)
+                BSMPMasterSlave._FAKE_FRMWARE_VERSION
+            response = BSMPMasterSlave.includeChecksum(response)
         else:
             query = [chr(ID_receiver),
                      '\x10', '\x00', '\x01', chr(ID_variable)]
-            query = BSMPResponse.includeChecksum(query)
+            query = BSMPMasterSlave.includeChecksum(query)
             self._pru.UART_write(query, timeout=10)  # 10 or 100 for timeout?
             response = self._pru.UART_read()
         # process response
@@ -601,7 +702,7 @@ class BSMPResponse(_BSMPResponse, StreamChecksum):
         """Respond SBMP variable group."""
         # query power supply
         query = [chr(ID_receiver), '\x12', '\x00', '\x01', chr(ID_group)]
-        query = BSMPResponse.includeChecksum(query)
+        query = BSMPMasterSlave.includeChecksum(query)
         self._pru.UART_write(query, timeout=10)
         response = self._pru.UART_read()
         # print('ID_receiver: ', ID_receiver)
@@ -648,7 +749,7 @@ class BSMPResponse(_BSMPResponse, StreamChecksum):
         hb, lb = (n & 0xFF00) >> 8, n & 0xFF
         query = [chr(ID_receiver), '\x50', chr(hb), chr(lb),
                  chr(ID_function)] + load
-        query = BSMPResponse.includeChecksum(query)
+        query = BSMPMasterSlave.includeChecksum(query)
         # print('cmd_0x51: ', n, query)
         self._pru.UART_write(query, timeout=100)
         response = self._pru.UART_read()

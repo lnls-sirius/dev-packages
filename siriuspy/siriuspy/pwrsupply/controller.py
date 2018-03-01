@@ -104,7 +104,7 @@ class Controller():
         if self.pwrstate == _PSConst.PwrState.On:
             ps_status = self._get_ps_status()
             op_mode = _Status.set_opmode(ps_status, value)
-            self._cmd_cfg_op_mode(op_mode=op_mode)
+            self._cmd_select_op_mode(op_mode=op_mode)
 
     # --- API: power supply 'functions' ---
 
@@ -240,9 +240,9 @@ class Controller():
         self._wfmdata = value[:]
         self._serial_comm.set_wfmdata(self._ID_device, self._wfmdata)
 
-    def _cmd_cfg_op_mode(self, op_mode):
+    def _cmd_select_op_mode(self, op_mode):
         """Set controller operation mode."""
-        # return self._bsmp_run_function(_BSMPConst.cfg_op_mode,
+        # return self._bsmp_run_function(_BSMPConst.select_op_mode,
         #                                op_mode=op_mode)
         pass
 

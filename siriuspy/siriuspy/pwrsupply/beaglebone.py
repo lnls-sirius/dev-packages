@@ -6,8 +6,8 @@ from siriuspy.csdevice.pwrsupply import get_ps_propty_database as \
 from siriuspy.pwrsupply.pru import SerialComm as _SerialComm
 from siriuspy.pwrsupply.pru import PRU as _PRU
 from siriuspy.pwrsupply.pru import PRUSim as _PRUSim
-from siriuspy.pwrsupply.bsmp import BSMPResponse as _BSMPResponse
-from siriuspy.pwrsupply.bsmp import BSMPResponseSim as _BSMPResponseSim
+from siriuspy.pwrsupply.bsmp import BSMPMasterSlave as _BSMPMasterSlave
+from siriuspy.pwrsupply.bsmp import BSMPMasterSlaveSim as _BSMPMasterSlaveSim
 from siriuspy.pwrsupply.controller import Controller as _Controller
 from siriuspy.pwrsupply.model import PowerSupply as _PowerSupply
 
@@ -57,11 +57,11 @@ class BeagleBone():
         for i, psname in enumerate(self._psnames):
             ID_device = i + 1  # This will have to change !!!
             if self._simulate:
-                ps = _BSMPResponseSim(
+                ps = _BSMPMasterSlaveSim(
                     ID_device=ID_device,
                     i_load_fluctuation_rms=_I_LOAD_FLUCTUATION_RMS)
             else:
-                ps = _BSMPResponse(ID_device=ID_device, PRU=self._pru)
+                ps = _BSMPMasterSlave(ID_device=ID_device, PRU=self._pru)
             self._serial_comm.add_slave(ps)
             ps_database = _get_ps_propty_database(
                 pstype=_PSSearch.conv_psname_2_pstype(psname))
@@ -108,7 +108,7 @@ class BeagleBoneTest(BeagleBone):
             IDs_device = (5, 6)
         for i, psname in enumerate(self._psnames):
             ID_device = IDs_device[i]
-            ps = _BSMPResponse(ID_device=ID_device, PRU=self._pru)
+            ps = _BSMPMasterSlave(ID_device=ID_device, PRU=self._pru)
             self._serial_comm.add_slave(ps)
             ps_database = _get_ps_propty_database(
                 pstype=_PSSearch.conv_psname_2_pstype(psname))
