@@ -710,7 +710,7 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
         # print('response: ', response)
         # process response
         ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
-        print(ID_receiver, ID_cmd, load_size, load)
+        # print(ID_receiver, ID_cmd, load_size, load)
         if ID_cmd != 0x13:
             return ID_cmd, None
         if ID_group == Const.group_id:
