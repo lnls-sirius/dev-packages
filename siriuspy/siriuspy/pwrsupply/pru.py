@@ -154,7 +154,7 @@ class SerialComm(_BSMPQuery):
 
     def __init__(self, PRU, slaves=None):
         """Init method."""
-        variables = _get_variables_FBP()
+        variables = _get_variables_FBP() # TODO: generalize for other PS types.
         self._states = {}
         self._queue = _Queue()
         self._waveforms = {}
@@ -261,7 +261,7 @@ class SerialComm(_BSMPQuery):
             method = getattr(self, cmd)
             ack, load = method(ID_receiver=ID_device, **kwargs)
             # print('cmd: ', cmd)
-            # print('ack: ', hex(ack))
+            # print('ack: ', hex(ack), hex(_ack.ok))
             # print('load: ', load)
             if ack != _ack.ok:
                 # needs implementation

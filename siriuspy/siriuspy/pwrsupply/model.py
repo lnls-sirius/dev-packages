@@ -120,7 +120,7 @@ class PowerSupply(_PSCommInterface):
         else:
             return db
 
-    # -- private methods ---
+    # --- private methods ---
 
     def _build_setpoints(self):
         sp = dict()
@@ -201,6 +201,7 @@ class PowerSupply(_PSCommInterface):
         self.write('Current-SP', 0.0)
         self.write('OpMode-Sel', 0)
         # Reset interlocks
+        self._controller.write('Reset-Cmd', 1)
 
     def _get_base_db(self):
         return self._psdata.propty_database
