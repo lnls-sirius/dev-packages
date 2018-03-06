@@ -74,9 +74,18 @@ class _MagnetNormalizer(_Computer):
     # --- normalizer interface ---
 
     def conv_current_2_strength(self, currents, **kwargs):
+        if currents is None:
+            return None
         intfields = self._conv_current_2_intfield(currents)
+
+        # TODO: really necessary? ---
         if intfields is None:
-            return 0.0
+            if isinstance(currents, (int, float)):
+                return 0.0
+            else:
+                return [0.0, ] * len(currents)
+        # ---
+
         strengths = self._conv_intfield_2_strength(intfields, **kwargs)
         return strengths
 
@@ -304,7 +313,6 @@ class MagnetNormalizer(_MagnetNormalizer):
         if isinstance(strengths, list):
             strengths = _np.array(strengths)
         brhos, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
-        # brhos = _np.array(brhos)  # TODO: necessary?
         intfields = self._magnet_conv_sign * brhos * strengths
         return intfields
 
@@ -320,6 +328,9 @@ class MagnetNormalizer(_MagnetNormalizer):
                 strengths = 0.0
             else:
                 strengths = self._magnet_conv_sign * intfields / brhos
+        if not isinstance(intfields, (int, float)):
+            if isinstance(strengths, (int, float)):
+                strengths = [strengths, ] * len(intfields)
         return strengths
 
 

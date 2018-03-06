@@ -3,7 +3,7 @@
 import unittest
 from unittest import mock
 
-from siriuspy.pwrsupply.bsmp import BSMPResponseSim, BSMPResponse
+from siriuspy.pwrsupply.bsmp import BSMPMasterSlaveSim, BSMPMasterSlave
 # Consts
 from siriuspy.pwrsupply.bsmp import Const
 from siriuspy.bsmp import Const as _ack
@@ -17,7 +17,7 @@ class TestBSMPResponseSim(unittest.TestCase):
         status_patcher = mock.patch('siriuspy.pwrsupply.bsmp.Status')
         self.addCleanup(status_patcher.stop)
         self.status_mock = status_patcher.start()
-        self.resp = BSMPResponseSim(ID_device=1, i_load_fluctuation_rms=0.0)
+        self.resp = BSMPMasterSlaveSim(ID_device=1, i_load_fluctuation_rms=0.0)
 
     def test_cmd_0x01(self):
         """Test cmd_0x01."""
