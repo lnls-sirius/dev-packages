@@ -31,6 +31,7 @@ class Controller():
         'OpMode-Sel': '_set_opmode',
         'Current-SP': 'cmd_set_slowref',
         'WfmData-SP': '_set_wfmdata',
+        'Reset-Cmd': '_reset',
     }
 
     # --- API: general power supply 'variables' ---
@@ -227,6 +228,9 @@ class Controller():
 
     def _get_opmode(self):
         return self.opmode
+
+    def _reset(self, value):
+        self.cmd_reset_interlocks()
 
     def _set_pwrstate(self, value):
         """Set pwrstate state."""

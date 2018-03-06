@@ -51,11 +51,23 @@ class BeagleBone():
         """Return list of power supplies."""
         return self._power_supplies.values()
 
+    def _get_bsmp_slave_IDs(self):
+        # This will have to be generalized!
+        if self._bbbname == 'BO-Glob:CO-BBB-T1':
+            # test-bench BBB # 1
+            return (1, 2)
+        elif self._bbbname == 'BO-Glob:CO-BBB-T2':
+            # test-bench BBB # 2
+            return (5, 6)
+        else:
+            return tuple(range(1,1+len(self._psnames)))
+
     def _create_power_supplies(self):
         # Return dict of power supply objects
+        slave_ids = self._get_bsmp_slave_IDs()
         power_supplies = dict()
         for i, psname in enumerate(self._psnames):
-            ID_device = i + 1  # This will have to change !!!
+            ID_device = slave_ids[i]
             if self._simulate:
                 ps = _BSMPMasterSlaveSim(
                     ID_device=ID_device,

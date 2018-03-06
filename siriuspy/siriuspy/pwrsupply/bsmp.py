@@ -41,7 +41,7 @@ class Const:
     ps_status = 0
     ps_setpoint = 1
     ps_reference = 2
-    firmware_version = 3
+    firmware_version = 3 # not implemented yet
     counter_set_slowref = 4  # not implemented yet
     counter_sync_pulse = 5  # not implemented yet
     siggen_enable = 6  # not implemented yet
@@ -94,8 +94,8 @@ def get_variables_common():
             ('ps_setpoint', Const.t_float, False),
         Const.ps_reference:
             ('ps_reference', Const.t_float, False),
-        Const.firmware_version:
-            ('firmaware_version', Const.t_char128, False),
+        # Const.firmware_version:
+        #     ('firmaware_version', Const.t_char128, False),
         # Const.counter_set_slowref:
         #     ('counter_set_slowref', Const.t_uint32, False),
         # Const.counter_sync_pulse:
@@ -710,7 +710,7 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
         # print('response: ', response)
         # process response
         ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
-        print(ID_receiver, ID_cmd, load_size, load)
+        # print(ID_receiver, ID_cmd, load_size, load)
         if ID_cmd != 0x13:
             return ID_cmd, None
         if ID_group == Const.group_id:
