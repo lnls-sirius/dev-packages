@@ -75,7 +75,7 @@ class ComputedPV:
             '-Mon' in self.pvname and 'Ref-Mon' not in self.pvname
 
         # add callback
-        self._callbacks = []
+        self._callbacks = {}
         if self._monitor_pv:
             # in order to optimize efficiency if computed pv is of the
             # monitor type add callback only to the first primary pv, the one
@@ -112,9 +112,14 @@ class ComputedPV:
         self.value = value
         self.computer.compute_put(self, value)
 
-    def add_callback(self, func):
-        """Add callback to computed PV."""
-        self._callbacks.append(func)
+    def add_callback(self, func, index=None):
+        """Add callback to be issued when a PV is updated."""
+        if not callable(func):
+            raise ValueError("Tried to set non callable as a callback")
+        if index is None:
+            index = 0 if len(self._callbacks) == 0 \
+                else max(self._callbacks.keys()) + 1
+        self._callbacks[index] = func
         return len(self._callbacks) - 1
 
     def run_callbacks(self):
@@ -178,6 +183,5 @@ class ComputedPV:
             self._queue.add_callback(self._update_value, pvname, value)
 
     def _issue_callback(self, **kwargs):
-        if self._callbacks:
-            for cb in self._callbacks:
-                cb(**kwargs)
+        for index, callback in self._callbacks.items():
+            callback(*kwargs)

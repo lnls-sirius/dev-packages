@@ -154,7 +154,7 @@ class SerialComm(_BSMPQuery):
 
     def __init__(self, PRU, slaves=None):
         """Init method."""
-        variables = _get_variables_FBP() # TODO: generalize for other PS types.
+        variables = _get_variables_FBP()  # TODO: generalize for other PS types
         self._states = {}
         self._queue = _Queue()
         self._waveforms = {}

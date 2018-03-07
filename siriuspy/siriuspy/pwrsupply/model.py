@@ -3,6 +3,8 @@
 import re as _re
 from threading import Thread as _Thread
 import time as _time
+import numpy as _np
+
 from epics import PV as _PV
 from siriuspy.epics import connection_timeout as _connection_timeout
 from siriuspy.epics.computed_pv import QueueThread as _QueueThread
@@ -53,12 +55,13 @@ class PowerSupply(_PSCommInterface):
 
     def __init__(self, psname, controller):
         """Init method."""
+        self._field_values = {}  # dict with last read field values
         self._psdata = _PSData(psname=psname)
         self._controller = controller
         self._updating = True
         self._base_db = self._get_base_db()
         self._setpoints = self._build_setpoints()
-        self._callback = None
+        self._callbacks = {}
         self._thread_scan = _Thread(target=self._scan_fields)
         self._thread_scan.setDaemon(True)
         self._thread_scan.start()
@@ -96,9 +99,14 @@ class PowerSupply(_PSCommInterface):
         func = self._setpoints[field]['func']
         return func(value)
 
-    def add_callback(self, func):
+    def add_callback(self, func, index=None):
         """Add callback to be issued when a PV is updated."""
-        self._callback = func
+        if not callable(func):
+            raise ValueError("Tried to set non callable as a callback")
+        if index is None:
+            index = 0 if len(self._callbacks) == 0 \
+                else max(self._callbacks.keys()) + 1
+        self._callbacks[index] = func
 
     def _connected(self):
         return self._controller.connected
@@ -230,11 +238,31 @@ class PowerSupply(_PSCommInterface):
                     # if _base_db is a updated copy of ps state, users (IOC)
                     # of powersupply could access it directly, without the
                     # the need of callback registration!
-                    if self._callback:
-                        self._callback(
-                            pvname=self._psdata.psname + ':' + field,
-                            value=value)
+
+                    # if value just read is not new, skipp.
+                    if field in self._field_values:
+                        prev_value = self._field_values[field]
+                        if isinstance(value, _np.ndarray):
+                            if _np.all(value == prev_value):
+                                continue
+                        else:
+                            if value == prev_value:
+                                continue
+
+                    # run callback function since field has a new value
+                    self._run_callbacks(field, value)
+
+                    # register read value of field
+                    self._field_values[field] = value
+
             _time.sleep(PowerSupply._SCAN_INTERVAL)
+
+    def _run_callbacks(self, field, value):
+        if self._callbacks:
+            for index, callback in self._callbacks.items():
+                callback(
+                    pvname=self._psdata.psname + ':' + field,
+                    value=value)
 
 
 class PSEpics(_PSCommInterface):
