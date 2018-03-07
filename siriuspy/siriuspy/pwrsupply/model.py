@@ -523,8 +523,13 @@ class MAEpics(PSEpics):
             fam_name = _mutil.get_magnet_family_name(self._maname)
             fam = self._prefix + fam_name
             family_pv = fam + ':' + field.replace('Current', 'KL')
+
             # use Ref-Mon, instead of -Mon
+            # (this is not necessary anymore for efficiency standpoint, since
+            #  now only the main current pv is being used to trigger
+            #  conversion. The line below may be commented out or deleted. )
             dipole_pv = dipole_pv.replace('Energy-Mon', 'EnergyRef-Mon')
+
             family_pv = family_pv.replace('KL-Mon', 'KLRef-Mon')
             return [self._pvs[field], dipole_pv, family_pv]
         else:
@@ -534,8 +539,13 @@ class MAEpics(PSEpics):
             dipole_name = _mutil.get_section_dipole_name(self._maname)
             dipole = self._prefix + dipole_name
             dipole_pv = dipole + ':' + field.replace('Current', 'Energy')
+
             # use Ref-Mon, instead of -Mon
+            # (this is not necessary anymore for efficiency standpoint, since
+            #  now only the main current pv is being used to trigger
+            #  conversion. The line below may be commented out or deleted. )
             dipole_pv = dipole_pv.replace('Energy-Mon', 'EnergyRef-Mon')
+
             return [self._pvs[field], dipole_pv]
 
     def _psnames(self):
