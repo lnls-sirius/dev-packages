@@ -173,11 +173,13 @@ class PowerSupply(_PSCommInterface):
 
     def _set_pwrstate(self, value):
         self._setpoints['PwrState-Sel']['value'] = value
-        return self._controller.write('PwrState-Sel', value)
+        if value >= 0 and value < len(self._base_db['PwrState-Sel']['enums']):
+            return self._controller.write('PwrState-Sel', value)
 
     def _set_opmode(self, value):
         self._setpoints['OpMode-Sel']['value'] = value
-        return self._controller.write('OpMode-Sel', value)
+        if value >= 0 and value < len(self._base_db['OpMode-Sel']['enums']):
+            return self._controller.write('OpMode-Sel', value)
 
     def _set_current(self, value):
         self._setpoints['Current-SP']['value'] = value
