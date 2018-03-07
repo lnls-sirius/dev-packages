@@ -148,8 +148,8 @@ class PRU(_PRUInterface):
 class SerialComm(_BSMPQuery):
     """Serial communiation Master BSMP device for power supplies."""
 
-    _SCAN_INTERVAL_SYNC_MODE_OFF = 1.0/10  # [s]
-    _SCAN_INTERVAL_SYNC_MODE_ON = 1.0  # [s]
+    _SCAN_FREQUENCY_SYNC_MODE_OFF = 10.0  # [Hz]
+    _SCAN_FREQUENCY_SYNC_MODE_ON = 1.0  # [Hz]
     _default_wfm = [0.0 for _ in range(_default_wfmsize)]
 
     def __init__(self, PRU, slaves=None):
@@ -280,16 +280,19 @@ class SerialComm(_BSMPQuery):
 
     def _process_scan(self):
         """Scan power supply variables, adding puts into queue."""
+        interval_sync_off = 1.0/SerialComm._SCAN_FREQUENCY_SYNC_MODE_OFF
+        interval_sync_on = 1.0/SerialComm._SCAN_FREQUENCY_SYNC_MODE_ON
         while True:
+            time_start = _time.time()
             if self._scanning:
                 self._sync_counter = self._PRU.sync_pulse_count
                 self._insert_variables_group_read()
-            if self._PRU.sync_mode:
-                # self.event.wait(1)
-                _time.sleep(SerialComm._SCAN_INTERVAL_SYNC_MODE_ON)
-            else:
-                # self.event.wait(0.1)
-                _time.sleep(SerialComm._SCAN_INTERVAL_SYNC_MODE_OFF)
+            time_end = _time.time()
+            interval = interval_sync_on if self._PRU.sync_mode else \
+                interval_sync_off
+            sleep_time = abs(interval - (time_end - time_start))
+            _time.sleep(sleep_time)
+
 
     def _insert_variables_group_read(self):
         kwargs = {'ID_group': _BSMPConst.group_id}

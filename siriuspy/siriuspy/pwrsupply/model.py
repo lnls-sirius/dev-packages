@@ -45,7 +45,7 @@ class _PSCommInterface:
 class PowerSupply(_PSCommInterface):
     """PowerSupply class with ps logic."""
 
-    _SCAN_INTERVAL = 0.1  # [s]
+    _SCAN_FREQUENCY = 10.0  # [Hz]
     _is_setpoint = _re.compile('.*-(SP|Sel|Cmd)$')
 
     # power supply objet, not controller's, is responsible to provide state
@@ -229,7 +229,9 @@ class PowerSupply(_PSCommInterface):
 
     def _scan_fields(self):
         """Scan fields."""
+        interval = 1.0/PowerSupply._SCAN_FREQUENCY
         while True:
+            time_start = _time.time()
             if self._updating:
                 for field in self._base_db:
                     if field in PowerSupply._db_const_fields:
@@ -254,8 +256,10 @@ class PowerSupply(_PSCommInterface):
 
                     # register read value of field
                     self._field_values[field] = value
-
-            _time.sleep(PowerSupply._SCAN_INTERVAL)
+            time_end = _time.time()
+            sleep_time = abs(interval - (time_end - time_start))
+            _time.sleep(sleep_time)
+            # _time.sleep(PowerSupply._SCAN_INTERVAL)
 
     def _run_callbacks(self, field, value):
         if self._callbacks:
