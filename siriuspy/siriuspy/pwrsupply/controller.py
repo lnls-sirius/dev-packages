@@ -92,17 +92,21 @@ class IOCController(PSCommInterface):
         self._opmode = _PSConst.OpMode.SlowRef
         self._wfmdata = [v for v in self._ps_db['WfmData-SP']['value']]
 
+        ps_status = self._get_ps_status()
+
         # reset interlocks
-        self.cmd_reset_interlocks()
+        # self.cmd_reset_interlocks()
 
         # turn ps on and implicitly close control loop
-        self.pwrstate = _PSConst.PwrState.On
+        # self.pwrstate = _PSConst.PwrState.On
+        self._pwrstate = _Status.pwrstate(ps_status)
 
         # set opmode do SlowRef
-        self.opmode = _PSConst.OpMode.SlowRef
+        # self.opmode = _PSConst.OpMode.SlowRef
+        self._opmode = _Status.opmode(ps_status)
 
         # set reference current to zero
-        self.cmd_set_slowref(0.0)
+        # self.cmd_set_slowref(0.0)
 
     @property
     def scanning(self):
@@ -401,8 +405,6 @@ class PSControllerSim:
         """Return ps variable."""
         state = self.state
         return state[key]
-
-
 
     def exec_function(self, ID_function, **kwargs):
         """Execute powr supply function."""

@@ -151,9 +151,9 @@ class PowerSupply(_PSCommInterface):
         self._setpoints['PwrState-Sel']['value'] = value
         if value >= 0 and value < len(self._base_db['PwrState-Sel']['enums']):
             ret = self._controller.write('PwrState-Sel', value)
-            # # zero PS current
-            # if value == _PSConst.PwrState.Off:
-            #     self._setpoints['Current-SP']['value'] = 0.0
+            # zero PS current
+            self._setpoints['Current-SP']['value'] = 0.0
+            self._controller.write('Current-SP', 0.0)
             return ret
 
     def _set_opmode(self, value):
