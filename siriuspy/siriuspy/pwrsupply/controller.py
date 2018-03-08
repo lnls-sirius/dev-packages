@@ -8,7 +8,47 @@ from siriuspy.pwrsupply.bsmp import Const as _BSMPConst
 from siriuspy.pwrsupply.bsmp import Status as _Status
 
 
-class Controller():
+class PSCommInterface:
+    """Communication interface class for power supplies."""
+
+    # --- public interface ---
+
+    def __init__(self):
+        """Init method."""
+        self._callbacks = {}
+
+    @property
+    def connected(self):
+        """Return connection status."""
+        return self._connected()
+
+    def read(self, field):
+        """Return field value."""
+        raise NotImplementedError
+
+    def write(self, field, value):
+        """Write value to a field.
+
+        Return write value if command suceeds or None if it fails.
+        """
+        raise NotImplementedError
+
+    def add_callback(self, func, index=None):
+        """Add callback function."""
+        if not callable(func):
+            raise ValueError("Tried to set non callable as a callback")
+        if index is None:
+            index = 0 if len(self._callbacks) == 0 \
+                else max(self._callbacks.keys()) + 1
+        self._callbacks[index] = func
+
+    # --- virtual private methods ---
+
+    def _connected(self):
+        raise NotImplementedError
+
+
+class Controller(PSCommInterface):
     """Controller class."""
 
     # conversion dict from PS fields to DSP properties for read method.
@@ -38,6 +78,7 @@ class Controller():
 
     def __init__(self, serial_comm, ID_device, ps_database):
         """Init method."""
+        PSCommInterface.__init__(self)
         self._serial_comm = serial_comm
         self._ID_device = ID_device
         self._ps_db = ps_database
@@ -55,11 +96,6 @@ class Controller():
 
         # set reference current to zero
         self.cmd_set_slowref(0.0)
-
-    @property
-    def connected(self):
-        """Return status of connection with BSMP slaves."""
-        return True
 
     @property
     def scanning(self):
@@ -137,10 +173,13 @@ class Controller():
 
     def cmd_set_slowref(self, setpoint):
         """Set SlowRef reference value."""
+        if not self._ps_interface_in_remote():
+            return
         setpoint = max(self._ps_db['Current-SP']['lolo'], setpoint)
         setpoint = min(self._ps_db['Current-SP']['hihi'], setpoint)
-        return self._bsmp_run_function(ID_function=_BSMPConst.set_slowref,
-                                       setpoint=setpoint)
+        self._bsmp_run_function(ID_function=_BSMPConst.set_slowref,
+                                setpoint=setpoint)
+        return setpoint
 
     # --- API: public properties and methods ---
 
@@ -159,11 +198,14 @@ class Controller():
             func = getattr(self, Controller._write_field2func[field])
             ret = func(value)
             return ret
-        else:
-            raise ValueError('Field "{}"" not valid!'.format(field))
 
     # --- private methods ---
     #     These are the functions that all subclass have to implement!
+
+    def _connected(self):
+        """Return status of connection with BSMP slaves."""
+        # TODO: read serial_comm and check whether conns to slaves are ok.
+        return True
 
     def _get_wfmdata(self):
         return self._wfmdata
@@ -235,14 +277,17 @@ class Controller():
     def _set_pwrstate(self, value):
         """Set pwrstate state."""
         self.pwrstate = value
+        return value
 
     def _set_opmode(self, value):
         """Set pwrstate state."""
         self.opmode = value
+        return value
 
     def _set_wfmdata(self, value):
         self._wfmdata = value[:]
         self._serial_comm.set_wfmdata(self._ID_device, self._wfmdata)
+        return value
 
     def _cmd_select_op_mode(self, op_mode):
         """Set controller operation mode."""

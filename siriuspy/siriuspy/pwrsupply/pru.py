@@ -58,7 +58,7 @@ class _PRUInterface:
         """Set waveforms for power supplies."""
         return self._curve(curve1, curve2, curve3, curve4)
 
-    # --- pure virtual method ---
+    # --- pure virtual methods ---
 
     def _get_sync_pulse_count(self):
         raise NotImplementedError
@@ -146,7 +146,7 @@ class PRU(_PRUInterface):
 
 
 class SerialComm(_BSMPQuery):
-    """Serial communiation Master BSMP device for power supplies."""
+    """Serial communication Master BSMP device for power supplies."""
 
     _SCAN_FREQUENCY_SYNC_MODE_OFF = 10.0  # [Hz]
     _SCAN_FREQUENCY_SYNC_MODE_ON = 1.0  # [Hz]
@@ -292,7 +292,6 @@ class SerialComm(_BSMPQuery):
                 interval_sync_off
             sleep_time = abs(interval - (time_end - time_start))
             _time.sleep(sleep_time)
-
 
     def _insert_variables_group_read(self):
         kwargs = {'ID_group': _BSMPConst.group_id}

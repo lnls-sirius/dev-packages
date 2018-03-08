@@ -60,7 +60,7 @@ class BeagleBone():
             # test-bench BBB # 2
             return (5, 6)
         else:
-            return tuple(range(1,1+len(self._psnames)))
+            return tuple(range(1, 1+len(self._psnames)))
 
     def _create_power_supplies(self):
         # Return dict of power supply objects

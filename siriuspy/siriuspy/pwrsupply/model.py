@@ -10,36 +10,13 @@ from siriuspy.epics import connection_timeout as _connection_timeout
 from siriuspy.epics.computed_pv import QueueThread as _QueueThread
 from siriuspy.epics.computed_pv import ComputedPV as _ComputedPV
 from siriuspy.pwrsupply.data import PSData as _PSData
+from siriuspy.pwrsupply.controller import PSCommInterface as _PSCommInterface
 from siriuspy.magnet.data import MAData as _MAData
 from siriuspy.magnet import util as _mutil
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.envars import vaca_prefix as _VACA_PREFIX
 from siriuspy.factory import NormalizerFactory as _NormalizerFactory
 from siriuspy.pwrsupply import sync as _sync
-
-
-class _PSCommInterface:
-    """Communication inerface class for power supplies."""
-
-    @property
-    def connected(self):
-        """Return connected status."""
-        return self._connected()
-
-    def read(self, field):
-        """Return field value."""
-        raise NotImplementedError
-
-    def write(self, field, value):
-        """Write value to a field."""
-        raise NotImplementedError
-
-    def add_callback(self, func):
-        """Add callback function."""
-        raise NotImplementedError
-
-    def _connected(self):
-        raise NotImplementedError
 
 
 class PowerSupply(_PSCommInterface):
@@ -55,6 +32,7 @@ class PowerSupply(_PSCommInterface):
 
     def __init__(self, psname, controller):
         """Init method."""
+        _PSCommInterface.__init__(self)
         self._field_values = {}  # dict with last read field values
         self._psdata = _PSData(psname=psname)
         self._controller = controller
@@ -96,17 +74,9 @@ class PowerSupply(_PSCommInterface):
 
     def write(self, field, value):
         """Write value to field."""
-        func = self._setpoints[field]['func']
-        return func(value)
-
-    def add_callback(self, func, index=None):
-        """Add callback to be issued when a PV is updated."""
-        if not callable(func):
-            raise ValueError("Tried to set non callable as a callback")
-        if index is None:
-            index = 0 if len(self._callbacks) == 0 \
-                else max(self._callbacks.keys()) + 1
-        self._callbacks[index] = func
+        if field in self._setpoints:
+            func = self._setpoints[field]['func']
+            return func(value)
 
     def _connected(self):
         return self._controller.connected
@@ -205,6 +175,7 @@ class PowerSupply(_PSCommInterface):
         self._setpoints['Abort-Cmd']['value'] += 1
         self.write('OpMode-Sel', 0)  # Set to SlowRef
         self.write('Current-SP', 0.0)
+        return self._setpoints['Abort-Cmd']['value']
 
     def _reset(self, value):
         self._setpoints['Reset-Cmd']['value'] += 1
@@ -212,6 +183,7 @@ class PowerSupply(_PSCommInterface):
         self.write('OpMode-Sel', 0)
         # Reset interlocks
         self._controller.write('Reset-Cmd', 1)
+        return self._setpoints['Reset-Cmd']['value']
 
     def _get_base_db(self):
         return self._psdata.propty_database
@@ -287,6 +259,7 @@ class PSEpics(_PSCommInterface):
 
     def __init__(self, psname, fields=None, use_vaca=True):
         """Create epics PVs and expose them through public controller API."""
+        _PSCommInterface.__init__(self)
         # Attributes use build a full PV address
         self._psname = psname
         # self._sort_fields()
