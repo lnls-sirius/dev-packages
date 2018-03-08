@@ -89,21 +89,21 @@ class IOCController(PSCommInterface):
         self._serial_comm = serial_comm
         self._ID_device = ID_device
         self._ps_db = ps_database
-        self._opmode = _PSConst.OpMode.SlowRef
+        # self._opmode = _PSConst.OpMode.SlowRef
         self._wfmdata = [v for v in self._ps_db['WfmData-SP']['value']]
 
-        ps_status = self._get_ps_status()
+        # ps_status = self._get_ps_status()
 
         # reset interlocks
         # self.cmd_reset_interlocks()
 
         # turn ps on and implicitly close control loop
         # self.pwrstate = _PSConst.PwrState.On
-        self._pwrstate = _Status.pwrstate(ps_status)
+        # self._pwrstate = _Status.pwrstate(ps_status)
 
         # set opmode do SlowRef
         # self.opmode = _PSConst.OpMode.SlowRef
-        self._opmode = _Status.opmode(ps_status)
+        # self._opmode = _Status.opmode(ps_status)
 
         # set reference current to zero
         # self.cmd_set_slowref(0.0)
@@ -113,48 +113,48 @@ class IOCController(PSCommInterface):
         """Return scanning state of serial comm."""
         return self._serial_comm.scanning
 
-    @property
-    def pwrstate(self):
-        """Return PS power state."""
-        return self._pwrstate
-
-    @pwrstate.setter
-    def pwrstate(self, value):
-        """Set PS power state."""
-        if not self._ps_interface_in_remote():
-            return
-        value = int(value)
-        if value == _PSConst.PwrState.Off:
-            self._pwrstate = value
-            self.cmd_turn_off()
-        elif value == _PSConst.PwrState.On:
-            # turn ps on
-            self._pwrstate = value
-            self.cmd_turn_on()
-            # close control loop
-            self.cmd_close_loop()
-            # set ps opmode to stored value
-            self.opmode = self._opmode
-
-    @property
-    def opmode(self):
-        """Return PS opmode."""
-        return self._opmode
-
-    @opmode.setter
-    def opmode(self, value):
-        """Set PS opmode."""
-        if not self._ps_interface_in_remote():
-            return
-        value = int(value)
-        if not(0 <= value < len(_ps_opmode)):
-            return None
-        # set opmode state
-        self._opmode = value
-        if self.pwrstate == _PSConst.PwrState.On:
-            ps_status = self._get_ps_status()
-            op_mode = _Status.set_opmode(ps_status, value)
-            self._cmd_select_op_mode(op_mode=op_mode)
+    # @property
+    # def pwrstate(self):
+    #     """Return PS power state."""
+    #     return self._pwrstate
+    #
+    # @pwrstate.setter
+    # def pwrstate(self, value):
+    #     """Set PS power state."""
+    #     if not self._ps_interface_in_remote():
+    #         return
+    #     value = int(value)
+    #     if value == _PSConst.PwrState.Off:
+    #         self._pwrstate = value
+    #         self.cmd_turn_off()
+    #     elif value == _PSConst.PwrState.On:
+    #         # turn ps on
+    #         self._pwrstate = value
+    #         self.cmd_turn_on()
+    #         # close control loop
+    #         self.cmd_close_loop()
+    #         # set ps opmode to stored value
+    #         self.opmode = self._opmode
+    #
+    # @property
+    # def opmode(self):
+    #     """Return PS opmode."""
+    #     return self._opmode
+    #
+    # @opmode.setter
+    # def opmode(self, value):
+    #     """Set PS opmode."""
+    #     if not self._ps_interface_in_remote():
+    #         return
+    #     value = int(value)
+    #     if not(0 <= value < len(_ps_opmode)):
+    #         return None
+    #     # set opmode state
+    #     self._opmode = value
+    #     if self.pwrstate == _PSConst.PwrState.On:
+    #         ps_status = self._get_ps_status()
+    #         op_mode = _Status.set_opmode(ps_status, value)
+    #         self._cmd_select_op_mode(op_mode=op_mode)
 
     # --- API: power supply 'functions' ---
 
@@ -280,22 +280,44 @@ class IOCController(PSCommInterface):
         return value
 
     def _get_pwrstate(self):
-        return self.pwrstate
+        ps_status = self._get_ps_status()
+        value = _Status.pwrstate(ps_status)
+        return value
 
     def _get_opmode(self):
-        return self.opmode
+        ps_status = self._get_ps_status()
+        value = _Status.opmode(ps_status)
+        return value
 
     def _reset(self, value):
         self.cmd_reset_interlocks()
 
     def _set_pwrstate(self, value):
         """Set pwrstate state."""
-        self.pwrstate = value
+        if not self._ps_interface_in_remote():
+            return
+        value = int(value)
+        if value == _PSConst.PwrState.Off:
+            self.cmd_turn_off()
+        elif value == _PSConst.PwrState.On:
+            # turn ps on
+            self.cmd_turn_on()
+            # close control loop
+            self.cmd_close_loop()
         return value
 
     def _set_opmode(self, value):
         """Set pwrstate state."""
-        self.opmode = value
+        if not self._ps_interface_in_remote():
+            return
+        value = int(value)
+        if not(0 <= value < len(_ps_opmode)):
+            return None
+        # set opmode state
+        if self.pwrstate == _PSConst.PwrState.On:
+            ps_status = self._get_ps_status()
+            op_mode = _Status.set_opmode(ps_status, value)
+            self._cmd_select_op_mode(op_mode=op_mode)
         return value
 
     def _set_wfmdata(self, value):
