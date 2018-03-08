@@ -8,7 +8,7 @@ from siriuspy.csdevice.pwrsupply import default_wfmsize as _default_wfmsize
 from siriuspy.pwrsupply.bsmp import Const as _BSMPConst
 from siriuspy.pwrsupply.bsmp import get_variables_FBP as _get_variables_FBP
 from siriuspy.pwrsupply.bsmp import get_functions as _get_functions
-from siriuspy.pwrsupply.bsmp import PSState as _PSState
+from siriuspy.pwrsupply.controller import PSState as _PSState
 from siriuspy.bsmp import Const as _ack
 from siriuspy.bsmp import BSMPQuery as _BSMPQuery
 

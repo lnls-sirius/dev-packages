@@ -6,6 +6,11 @@ import time as _time
 import numpy as _np
 
 from epics import PV as _PV
+
+from siriuspy.namesys import SiriusPVName as _SiriusPVName
+from siriuspy.envars import vaca_prefix as _VACA_PREFIX
+from siriuspy.factory import NormalizerFactory as _NormalizerFactory
+from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.epics import connection_timeout as _connection_timeout
 from siriuspy.epics.computed_pv import QueueThread as _QueueThread
 from siriuspy.epics.computed_pv import ComputedPV as _ComputedPV
@@ -13,14 +18,15 @@ from siriuspy.pwrsupply.data import PSData as _PSData
 from siriuspy.pwrsupply.controller import PSCommInterface as _PSCommInterface
 from siriuspy.magnet.data import MAData as _MAData
 from siriuspy.magnet import util as _mutil
-from siriuspy.namesys import SiriusPVName as _SiriusPVName
-from siriuspy.envars import vaca_prefix as _VACA_PREFIX
-from siriuspy.factory import NormalizerFactory as _NormalizerFactory
 from siriuspy.pwrsupply import sync as _sync
 
 
 class PowerSupply(_PSCommInterface):
-    """PowerSupply class with ps logic."""
+    """Abstract control-system power supply class.
+
+        Objects of this are used to interact with power supplies in the
+    control-system using the implemented PSCommInterface.
+    """
 
     _SCAN_FREQUENCY = 10.0  # [Hz]
     _is_setpoint = _re.compile('.*-(SP|Sel|Cmd)$')
@@ -144,7 +150,11 @@ class PowerSupply(_PSCommInterface):
     def _set_pwrstate(self, value):
         self._setpoints['PwrState-Sel']['value'] = value
         if value >= 0 and value < len(self._base_db['PwrState-Sel']['enums']):
-            return self._controller.write('PwrState-Sel', value)
+            ret = self._controller.write('PwrState-Sel', value)
+            # # zero PS current
+            # if value == _PSConst.PwrState.Off:
+            #     self._setpoints['Current-SP']['value'] = 0.0
+            return ret
 
     def _set_opmode(self, value):
         self._setpoints['OpMode-Sel']['value'] = value

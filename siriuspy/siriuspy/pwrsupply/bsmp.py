@@ -39,9 +39,9 @@ class Const:
 
     # --- common variables ---
     ps_status = 0
-    ps_setpoint = 1
-    ps_reference = 2
-    firmware_version = 3 # not implemented yet
+    ps_setpoint = 1  # corresponds to IOC CurrentRef-Mon
+    ps_reference = 2  # corresponds to IOC Current-Mon
+    firmware_version = 3  # not implemented yet
     counter_set_slowref = 4  # not implemented yet
     counter_sync_pulse = 5  # not implemented yet
     siggen_enable = 6  # not implemented yet
@@ -446,78 +446,16 @@ class Status:
         return status
 
 
-class PSState:
-    """Power supply state.
-
-    Objects of this class have a dictionary that stores the state of
-    power supplies, as defined by its list of BSMP variables.
-    """
-
-    def __init__(self, variables):
-        """Init method."""
-        self._state = {}
-        for ID_variable, variable in variables.items():
-            name, type_t, writable = variable
-            if type_t == Const.t_float:
-                value = 0.0
-            elif type_t in (Const.t_status,
-                            Const.t_state,
-                            Const.t_remote,
-                            Const.t_model,
-                            Const.t_uint8,
-                            Const.t_uint16,
-                            Const.t_uint32):
-                value = 0
-            elif type_t == Const.t_float4:
-                value = [0.0, 0.0, 0.0, 0.0]
-            elif type_t == Const.t_char128:
-                value = [chr(0), ] * 128
-            else:
-                raise ValueError('Invalid BSMP variable type!')
-            self._state[ID_variable] = value
-
-    def __getitem__(self, key):
-        """Return value corresponfing to a certain key (ps_variable)."""
-        return self._state[key]
-
-    def __setitem__(self, key, value):
-        """Set value for a certain key (ps_variable)."""
-        self._state[key] = value
-        return value
-
-
 class BSMPMasterSlaveSim(_BSMPResponse):
     """Class used to perform BSMP comm between a master and simulated slave."""
 
-    funcs = {
-        Const.set_slowref: '_func_set_slowref',
-        Const.select_op_mode: '_func_select_op_mode',
-        Const.turn_on: '_func_turn_on',
-        Const.turn_off: '_func_turn_off',
-        Const.reset_interlocks: '_func_reset_interlocks',
-        Const.close_loop: '_func_close_loop',
-        # functions not not mplemented  yet:
-        Const.set_serial_termination: '_func_not_implemented',
-        Const.sync_pulse: '_func_not_implemented',
-        Const.set_slowref_fbp: '_func_not_implemented',
-        Const.reset_counters: '_func_not_implemented',
-        Const.cfg_siggen: '_func_not_implemented',
-        Const.set_siggen: '_func_not_implemented',
-        Const.enable_siggen: '_func_not_implemented',
-        Const.disable_siggen: '_func_not_implemented',
-        Const.set_slowref_readback: '_func_not_implemented',
-        Const.set_slowref_fbp_readback: '_func_not_implemented',
-    }
-
-    def __init__(self, ID_device, i_load_fluctuation_rms=0.0):
+    def __init__(self, ID_device, pscontroller):
         """Init method."""
         _BSMPResponse.__init__(self,
                                variables=get_variables_FBP(),
                                functions=get_functions(),
                                ID_device=ID_device)
-        self._state = PSState(variables=self.variables)
-        self._i_load_fluctuaton_rms = i_load_fluctuation_rms
-        self._i_load_fluctuation = 0.0
+        self._pscontroler = pscontroller
 
     def create_group(self, ID_receiver, ID_group, IDs_variable):
         """Create group of BSMP variables."""
@@ -535,89 +473,25 @@ class BSMPMasterSlaveSim(_BSMPResponse):
 
     def cmd_0x11(self, ID_receiver, ID_variable):
         """Respond BSMP variable."""
-        self._update_state()
         if ID_variable not in self._variables.keys():
             return _ack.invalid_id, None
-        return _ack.ok, self._state[ID_variable]
+        return _ack.ok, self._pscontroller[ID_variable]
 
     def cmd_0x13(self, ID_receiver, ID_group):
         """Respond SBMP variable group."""
-        self._update_state()
         if ID_group not in self._groups:
             return _ack.invalid_id, None
         IDs_variable = self._groups[ID_group]
         load = {}
         for ID_variable in IDs_variable:
             # check if variable value copying is needed!
-            load[ID_variable] = self._state[ID_variable]
-        # TODO: is this correct?
-        if Const.i_load in load:
-            load[Const.i_load] += self._i_load_fluctuation
+            load[ID_variable] = self._pscontroler[ID_variable]
         return _ack.ok, load
 
     def cmd_0x51(self, ID_receiver, **kwargs):
         """Respond to execute BSMP function."""
-        ID_function = kwargs['ID_function']
-        self._update_state()
-        if ID_function in BSMPMasterSlaveSim.funcs:
-            # if bsmp function is defined, get corresponding method and run it
-            func = getattr(self, BSMPMasterSlaveSim.funcs[ID_function])
-            return func(**kwargs)
-        else:
-            raise ValueError(
-                'Run of {} function not defined!'.format(hex(ID_function)))
-
-    def _func_set_slowref(self, **kwargs):
-        self._state[Const.ps_setpoint] = kwargs['setpoint']
-        self._state[Const.ps_reference] = \
-            self._state[Const.ps_setpoint]
-        status = self._state[Const.ps_status]
-        if Status.pwrstate(status) == _PSConst.PwrState.On:
-            # i_load <= ps_reference
-            self._state[Const.i_load] = \
-                self._state[Const.ps_reference] + self._i_load_fluctuation
-        return _ack.ok, None
-
-    def _func_select_op_mode(self, **kwargs):
-        status = self._state[Const.ps_status]
-        status = Status.set_state(status, kwargs['op_mode'])
-        self._state[Const.ps_status] = status
-        return _ack.ok, None
-
-    def _func_turn_on(self, **kwargs):
-        status = self._state[Const.ps_status]
-        status = Status.set_state(status, _PSConst.States.SlowRef)
-        self._state[Const.ps_status] = status
-        self._state[Const.i_load] = \
-            self._state[Const.ps_reference] + \
-            self._i_load_fluctuation
-        return _ack.ok, None
-
-    def _func_turn_off(self, **kwargs):
-        status = self._state[Const.ps_status]
-        status = Status.set_state(status, _PSConst.States.Off)
-        self._state[Const.ps_status] = status
-        self._state[Const.i_load] = 0.0 + self._i_load_fluctuation
-        return _ack.ok, None
-
-    def _func_reset_interlocks(self, **kwargs):
-        self._state[Const.ps_soft_interlocks] = 0
-        self._state[Const.ps_hard_interlocks] = 0
-        return _ack.ok, None
-
-    def _func_close_loop(self, **kwargs):
-        status = self._state[Const.ps_status]
-        status = Status.set_openloop(status, 0)
-        return _ack.ok, None
-
-    def _func_not_implemented(self, **kwargs):
-        raise NotImplementedError(
-            'Run of function not defined!'.format(hex(kwargs['ID_function'])))
-
-    def _update_state(self):
-        if self._i_load_fluctuaton_rms != 0.0:
-            self._i_load_fluctuation = \
-                _random.gauss(0.0, self._i_load_fluctuaton_rms)
+        # ID_function = kwargs['ID_function']
+        return self._pscontroler.exec_function(**kwargs)
 
 
 class BSMPMasterSlave(_BSMPResponse, StreamChecksum):

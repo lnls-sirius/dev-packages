@@ -8,12 +8,9 @@ from siriuspy.pwrsupply.pru import PRU as _PRU
 from siriuspy.pwrsupply.pru import PRUSim as _PRUSim
 from siriuspy.pwrsupply.bsmp import BSMPMasterSlave as _BSMPMasterSlave
 from siriuspy.pwrsupply.bsmp import BSMPMasterSlaveSim as _BSMPMasterSlaveSim
-from siriuspy.pwrsupply.controller import Controller as _Controller
+from siriuspy.pwrsupply.controller import IOCController as _IOCController
+from siriuspy.pwrsupply.controller import PSControllerSim as _PSControllerSim
 from siriuspy.pwrsupply.model import PowerSupply as _PowerSupply
-
-
-_I_LOAD_FLUCTUATION_RMS = 0.01  # [A]
-# _I_LOAD_FLUCTUATION_RMS = 0.0000  # [A]
 
 
 class BeagleBone():
@@ -69,18 +66,19 @@ class BeagleBone():
         for i, psname in enumerate(self._psnames):
             ID_device = slave_ids[i]
             if self._simulate:
-                ps = _BSMPMasterSlaveSim(
-                    ID_device=ID_device,
-                    i_load_fluctuation_rms=_I_LOAD_FLUCTUATION_RMS)
+                ps_c = _PSControllerSim()
+                slave = _BSMPMasterSlaveSim(ID_device=ID_device,
+                                            pscontroller=ps_c)
             else:
-                ps = _BSMPMasterSlave(ID_device=ID_device, PRU=self._pru)
-            self._serial_comm.add_slave(ps)
+                slave = _BSMPMasterSlave(ID_device=ID_device, PRU=self._pru)
+            self._serial_comm.add_slave(slave)
             ps_database = _get_ps_propty_database(
                 pstype=_PSSearch.conv_psname_2_pstype(psname))
-            c = _Controller(serial_comm=self._serial_comm,
-                            ID_device=ID_device,
-                            ps_database=ps_database)
-            power_supplies[psname] = _PowerSupply(controller=c, psname=psname)
+            ioc_c = _IOCController(serial_comm=self._serial_comm,
+                                   ID_device=ID_device,
+                                   ps_database=ps_database)
+            power_supplies[psname] = _PowerSupply(controller=ioc_c,
+                                                  psname=psname)
         return power_supplies
 
     def __getitem__(self, psname):
@@ -90,42 +88,3 @@ class BeagleBone():
     def __contains__(self, psname):
         """Test is psname is in psname list."""
         return psname in self._psnames
-
-
-class BeagleBoneTest(BeagleBone):
-    """Test class for ps-test-bench."""
-
-    def __init__(self, pair=1):
-        """Retrieve power supplies."""
-        self._bbbname = 'teste'
-        self._simulate = False
-        self._pair = pair
-        if self._pair == 1:
-            self._psnames = ['BO-01U:PS-CH', 'BO-01U:PS-CV']
-        else:
-            self._psnames = ['BO-03U:PS-CH', 'BO-03U:PS-CV']
-
-        # create PRU and serial_comm
-        self._pru = _PRUSim() if self._simulate else _PRU()
-        self._serial_comm = _SerialComm(PRU=self._pru)
-        # create power supplies dictionary
-        self._power_supplies = self._get_power_supplies()
-
-    def _get_power_supplies(self):
-        # Return dict of power supply objects
-        power_supplies = dict()
-        if self._pair == 1:
-            IDs_device = (1, 2)
-        else:
-            IDs_device = (5, 6)
-        for i, psname in enumerate(self._psnames):
-            ID_device = IDs_device[i]
-            ps = _BSMPMasterSlave(ID_device=ID_device, PRU=self._pru)
-            self._serial_comm.add_slave(ps)
-            ps_database = _get_ps_propty_database(
-                pstype=_PSSearch.conv_psname_2_pstype(psname))
-            c = _Controller(serial_comm=self._serial_comm,
-                            ID_device=ID_device,
-                            ps_database=ps_database)
-            power_supplies[psname] = _PowerSupply(controller=c, psname=psname)
-        return power_supplies
