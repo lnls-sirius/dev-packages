@@ -231,7 +231,7 @@ class PowerSupply(_PSCommInterface):
                     # register read value of field
                     self._field_values[field] = value
             time_end = _time.time()
-            sleep_time = abs(interval - (time_end - time_start))
+            sleep_time = max(0, interval - (time_end - time_start))
             _time.sleep(sleep_time)
             # _time.sleep(PowerSupply._SCAN_INTERVAL)
 

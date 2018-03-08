@@ -290,7 +290,7 @@ class SerialComm(_BSMPQuery):
             time_end = _time.time()
             interval = interval_sync_on if self._PRU.sync_mode else \
                 interval_sync_off
-            sleep_time = abs(interval - (time_end - time_start))
+            sleep_time = max(0, interval - (time_end - time_start))
             _time.sleep(sleep_time)
 
     def _insert_variables_group_read(self):
