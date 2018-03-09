@@ -87,6 +87,16 @@ class PowerSupply(_PSCommInterface):
     def _connected(self):
         return self._controller.connected
 
+    def add_callback(self, func, index=None):
+        """Add callback function."""
+        _PSCommInterface.add_callback(self, func=func, index=index)
+        # send all data initially to registered callback function
+        for field in self._base_db:
+            if field in PowerSupply._db_const_fields:
+                continue
+            value = self.read(field)
+            self._run_callbacks(field, value)
+
     # --- public methods ---
 
     def get_database(self, prefix=""):
@@ -246,11 +256,10 @@ class PowerSupply(_PSCommInterface):
             # _time.sleep(PowerSupply._SCAN_INTERVAL)
 
     def _run_callbacks(self, field, value):
-        if self._callbacks:
-            for index, callback in self._callbacks.items():
-                callback(
-                    pvname=self._psdata.psname + ':' + field,
-                    value=value)
+        for index, callback in self._callbacks.items():
+            callback(
+                pvname=self._psdata.psname + ':' + field,
+                value=value)
 
 
 class PSEpics(_PSCommInterface):

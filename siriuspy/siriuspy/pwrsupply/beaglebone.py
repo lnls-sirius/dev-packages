@@ -4,8 +4,6 @@ from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.csdevice.pwrsupply import get_ps_propty_database as \
     _get_ps_propty_database
 from siriuspy.pwrsupply.pru import SerialComm as _SerialComm
-from siriuspy.pwrsupply.pru import PRU as _PRU
-from siriuspy.pwrsupply.pru import PRUSim as _PRUSim
 from siriuspy.pwrsupply.bsmp import BSMPMasterSlave as _BSMPMasterSlave
 from siriuspy.pwrsupply.bsmp import BSMPMasterSlaveSim as _BSMPMasterSlaveSim
 from siriuspy.pwrsupply.controller import IOCController as _IOCController
