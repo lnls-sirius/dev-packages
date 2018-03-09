@@ -10,7 +10,6 @@ from epics import PV as _PV
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.envars import vaca_prefix as _VACA_PREFIX
 from siriuspy.factory import NormalizerFactory as _NormalizerFactory
-from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.epics import connection_timeout as _connection_timeout
 from siriuspy.epics.computed_pv import QueueThread as _QueueThread
 from siriuspy.epics.computed_pv import ComputedPV as _ComputedPV
@@ -162,8 +161,8 @@ class PowerSupply(_PSCommInterface):
         if value >= 0 and value < len(self._base_db['PwrState-Sel']['enums']):
             ret = self._controller.write('PwrState-Sel', value)
             # zero PS current
-            self._setpoints['Current-SP']['value'] = 0.0
-            self._controller.write('Current-SP', 0.0)
+            # self._setpoints['Current-SP']['value'] = 0.0
+            # self._controller.write('Current-SP', 0.0)
             return ret
 
     def _set_opmode(self, value):
@@ -364,7 +363,6 @@ class PSEpics(_PSCommInterface):
         for field in self._fields:
             # if field in self.valid_fields:
             self._pvs[field] = self._create_pv(field)
-            # return _PV(self._prefix + self.psname + ":" + field)
 
     def _create_pv(self, field):
         return _PV(self._prefix + self._psname + ":" + field,

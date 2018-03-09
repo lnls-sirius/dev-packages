@@ -113,49 +113,6 @@ class IOCController(PSCommInterface):
         """Return scanning state of serial comm."""
         return self._serial_comm.scanning
 
-    # @property
-    # def pwrstate(self):
-    #     """Return PS power state."""
-    #     return self._pwrstate
-    #
-    # @pwrstate.setter
-    # def pwrstate(self, value):
-    #     """Set PS power state."""
-    #     if not self._ps_interface_in_remote():
-    #         return
-    #     value = int(value)
-    #     if value == _PSConst.PwrState.Off:
-    #         self._pwrstate = value
-    #         self.cmd_turn_off()
-    #     elif value == _PSConst.PwrState.On:
-    #         # turn ps on
-    #         self._pwrstate = value
-    #         self.cmd_turn_on()
-    #         # close control loop
-    #         self.cmd_close_loop()
-    #         # set ps opmode to stored value
-    #         self.opmode = self._opmode
-    #
-    # @property
-    # def opmode(self):
-    #     """Return PS opmode."""
-    #     return self._opmode
-    #
-    # @opmode.setter
-    # def opmode(self, value):
-    #     """Set PS opmode."""
-    #     if not self._ps_interface_in_remote():
-    #         return
-    #     value = int(value)
-    #     if not(0 <= value < len(_ps_opmode)):
-    #         return None
-    #     # set opmode state
-    #     self._opmode = value
-    #     if self.pwrstate == _PSConst.PwrState.On:
-    #         ps_status = self._get_ps_status()
-    #         op_mode = _Status.set_opmode(ps_status, value)
-    #         self._cmd_select_op_mode(op_mode=op_mode)
-
     # --- API: power supply 'functions' ---
 
     def cmd_turn_on(self):
