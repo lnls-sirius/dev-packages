@@ -152,18 +152,20 @@ class SerialComm(_BSMPQuery):
     _SCAN_FREQUENCY_SYNC_MODE_ON = 1.0  # [Hz]
     _default_wfm = [0.0 for _ in range(_default_wfmsize)]
 
-    def __init__(self, PRU, slaves=None):
+    def __init__(self, simulate=True, slaves=None):
         """Init method."""
         variables = _get_variables_FBP()  # TODO: generalize for other PS types
         self._states = {}
         self._queue = _Queue()
         self._waveforms = {}
+        self._simulate = simulate
 
         _BSMPQuery.__init__(self,
                             variables=variables,
                             functions=_get_functions(),
                             slaves=slaves)
-        self._PRU = PRU
+        # self._PRU = PRU
+        self._PRU = PRUSim() if self._simulate else PRU()
         # does not start variables scanning just yet.
         self._scanning = False
         # create, configure and start auxilliary threads.
@@ -171,6 +173,11 @@ class SerialComm(_BSMPQuery):
         self._thread_scan = _Thread(target=self._process_scan, daemon=True)
         self._thread_queue.start()
         self._thread_scan.start()
+
+    @property
+    def PRU(self):
+        """Return PRU object."""
+        return self._PRU
 
     @property
     def sync_mode(self):

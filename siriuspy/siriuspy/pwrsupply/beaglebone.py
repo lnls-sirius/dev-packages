@@ -23,8 +23,8 @@ class BeagleBone():
         self._psnames = _PSSearch.conv_bbbname_2_psnames(bbbname)
 
         # create PRU and serial_comm
-        self._pru = _PRUSim() if self._simulate else _PRU()
-        self._serial_comm = _SerialComm(PRU=self._pru)
+        # self._pru = _PRUSim() if self._simulate else _PRU()
+        self._serial_comm = _SerialComm(simulate=self._simulate)
         # create power supplies dictionary
         self._power_supplies = self._create_power_supplies()
 
@@ -70,7 +70,8 @@ class BeagleBone():
                 slave = _BSMPMasterSlaveSim(ID_device=ID_device,
                                             pscontroller=ps_c)
             else:
-                slave = _BSMPMasterSlave(ID_device=ID_device, PRU=self._pru)
+                slave = _BSMPMasterSlave(ID_device=ID_device,
+                                         PRU=self._serial_comm.PRU)
             self._serial_comm.add_slave(slave)
             ps_database = _get_ps_propty_database(
                 pstype=_PSSearch.conv_psname_2_pstype(psname))
