@@ -28,7 +28,7 @@ class PowerSupply(_PSCommInterface):
     control-system using the implemented PSCommInterface.
     """
 
-    _DISCONNECTED = 'DISCONNECTED'
+    CONNECTED = 'CONNECTED'
     SCAN_FREQUENCY = 10.0  # [Hz]
     _is_setpoint = _re.compile('.*-(SP|Sel|Cmd)$')
 
@@ -225,14 +225,16 @@ class PowerSupply(_PSCommInterface):
 
     def _scan_fields(self):
         """Scan fields."""
+        connected = None # keeps last connected state
         interval = 1.0/PowerSupply.SCAN_FREQUENCY
         while True:
             time_start = _time.time()
             if self._updating:
 
                 # check whether ControllerIOC is connected to ControllerPS
-                if not self._controller.connected:
-                    self._run_callbacks(PowerSupply._DISCONNECTED, 0)
+                if self._controller.connected != connected:
+                    connected = self._controller.connected
+                    self._run_callbacks(PowerSupply.CONNECTED, connected)
                     continue
 
                 # loop over power supply fields, invoking callback if its value

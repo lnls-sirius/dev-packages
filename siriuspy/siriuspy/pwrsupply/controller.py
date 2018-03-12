@@ -175,7 +175,7 @@ class ControllerIOC(PSCommInterface):
 
     def _connected(self):
         """Return status of connection with BSMP slaves."""
-        return self._serial_comm.connected
+        return self._serial_comm.get_connected(self._ID_device)
 
     def _get_wfmdata(self):
         return self._wfmdata

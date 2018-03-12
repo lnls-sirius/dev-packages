@@ -159,7 +159,7 @@ class SerialComm(_BSMPQuery):
         self._queue = _Queue()
         self._waveforms = {}
         self._simulate = simulate
-        self._connected = False
+        self._connected = {}
 
         _BSMPQuery.__init__(self,
                             variables=variables,
@@ -208,10 +208,9 @@ class SerialComm(_BSMPQuery):
         """Set scanning state."""
         self._scanning = value
 
-    @property
-    def connected(self):
-        """Return connected state."""
-        return self._connected
+    def get_connected(self, ID_device):
+        """Return connected state of ID_device."""
+        return self._connected[ID_device]
 
     def set_wfmdata(self, ID_device, wfmdata):
         """Set waveform of a device."""
@@ -270,6 +269,11 @@ class SerialComm(_BSMPQuery):
     def _process_queue(self):
         """Process queue."""
         while True:
+
+            # print(_time.time(), end='')
+            # for ID_device in self._connected:
+            #     print(self._connected[ID_device], end='')
+            # print('')
             item = self._queue.get()
             ID_device, ID_cmd, kwargs = item
             # print('process: ', ID_device, hex(ID_cmd), kwargs)
@@ -277,24 +281,26 @@ class SerialComm(_BSMPQuery):
             method = getattr(self, cmd)
             try:
                 ack, load = method(ID_receiver=ID_device, **kwargs)
-                self._connected = True
+                self._connected[ID_device] = True
             except Exception:
-                self._connected = False
+                self._connected[ID_device] = False
                 print('Exception raised while executing {}'.format(cmd))
 
             if ack != _ack.ok:
                 # needs implementation
-                self._connected = False
+                self._connected[ID_device] = False
                 print(
                     'Error returned in BSMP command: {}!'.format(hex(ack)))
             elif load is not None:
                 ret = self._process_load(ID_device, ID_cmd, load)
                 if ret is None:
-                    self._connected = False
+                    self._connected[ID_device] = False
 
     def _process_load(self, ID_device, ID_cmd, load):
         if ID_cmd == 0x12:
             for variable, value in load.items():
+                # if variable == 27:
+                #     print(value)
                 self._states[ID_device][variable] = value
             return 'Ok'
         else:
@@ -309,6 +315,10 @@ class SerialComm(_BSMPQuery):
         while True:
             time_start = _time.time()
             if self._scanning:
+                # init disconnected controllers
+                for ID_device in self._connected:
+                    if not self._connected[ID_device]:
+                        self._init_controller(self.slaves[ID_device])
                 self._sync_counter = self._PRU.sync_pulse_count
                 self._insert_variables_group_read()
             time_end = _time.time()
