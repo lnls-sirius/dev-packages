@@ -1,13 +1,14 @@
 """Beagle Bone implementation module."""
 
+import time as _time
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.csdevice.pwrsupply import get_ps_propty_database as \
     _get_ps_propty_database
 from siriuspy.pwrsupply.pru import SerialComm as _SerialComm
 from siriuspy.pwrsupply.bsmp import BSMPMasterSlave as _BSMPMasterSlave
 from siriuspy.pwrsupply.bsmp import BSMPMasterSlaveSim as _BSMPMasterSlaveSim
-from siriuspy.pwrsupply.controller import IOCController as _IOCController
-from siriuspy.pwrsupply.controller import PSControllerSim as _PSControllerSim
+from siriuspy.pwrsupply.controller import ControllerIOC as _ControllerIOC
+from siriuspy.pwrsupply.controller import ControllerPSSim as _ControllerPSSim
 from siriuspy.pwrsupply.model import PowerSupply as _PowerSupply
 
 
@@ -61,23 +62,32 @@ class BeagleBone():
         # Return dict of power supply objects
         slave_ids = self._get_bsmp_slave_IDs()
         power_supplies = dict()
+        # create serial_comm and add slaves
         for i, psname in enumerate(self._psnames):
             ID_device = slave_ids[i]
             if self._simulate:
-                ps_c = _PSControllerSim()
+                ps_c = _ControllerPSSim()
                 slave = _BSMPMasterSlaveSim(ID_device=ID_device,
                                             pscontroller=ps_c)
             else:
                 slave = _BSMPMasterSlave(ID_device=ID_device,
                                          PRU=self._serial_comm.PRU)
             self._serial_comm.add_slave(slave)
+        # turn serial_comm scanning on
+        self._serial_comm.scanning = True
+        scan_interval = 1.0/_PowerSupply.SCAN_FREQUENCY
+        _time.sleep(2*scan_interval)
+        # create power supply objects
+        for i, psname in enumerate(self._psnames):
+            ID_device = slave_ids[i]
             ps_database = _get_ps_propty_database(
                 pstype=_PSSearch.conv_psname_2_pstype(psname))
-            ioc_c = _IOCController(serial_comm=self._serial_comm,
+            ioc_c = _ControllerIOC(serial_comm=self._serial_comm,
                                    ID_device=ID_device,
                                    ps_database=ps_database)
             power_supplies[psname] = _PowerSupply(controller=ioc_c,
                                                   psname=psname)
+
         return power_supplies
 
     def __getitem__(self, psname):

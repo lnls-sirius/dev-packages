@@ -2,6 +2,7 @@
 
 import re as _re
 from threading import Thread as _Thread
+from threading import Lock as _Lock
 import time as _time
 import numpy as _np
 
@@ -27,7 +28,7 @@ class PowerSupply(_PSCommInterface):
     control-system using the implemented PSCommInterface.
     """
 
-    _SCAN_FREQUENCY = 10.0  # [Hz]
+    SCAN_FREQUENCY = 10.0  # [Hz]
     _is_setpoint = _re.compile('.*-(SP|Sel|Cmd)$')
 
     # power supply objet, not controller's, is responsible to provide state
@@ -38,7 +39,10 @@ class PowerSupply(_PSCommInterface):
     def __init__(self, psname, controller):
         """Init method."""
         _PSCommInterface.__init__(self)
+        self._lock = _Lock()
+        self._lock.acquire()
         self._field_values = {}  # dict with last read field values
+        self._lock.release()
         self._psdata = _PSData(psname=psname)
         self._controller = controller
         self._updating = True
@@ -90,11 +94,9 @@ class PowerSupply(_PSCommInterface):
         """Add callback function."""
         _PSCommInterface.add_callback(self, func=func, index=index)
         # send all data initially to registered callback function
-        for field in self._base_db:
-            if field in PowerSupply._db_const_fields:
-                continue
-            value = self.read(field)
-            self._run_callbacks(field, value)
+        self._lock.acquire()
+        self._field_values = {}  # dict with last read field values
+        self._lock.release()
 
     # --- public methods ---
 
@@ -161,8 +163,8 @@ class PowerSupply(_PSCommInterface):
         if value >= 0 and value < len(self._base_db['PwrState-Sel']['enums']):
             ret = self._controller.write('PwrState-Sel', value)
             # zero PS current
-            # self._setpoints['Current-SP']['value'] = 0.0
-            # self._controller.write('Current-SP', 0.0)
+            self._setpoints['Current-SP']['value'] = 0.0
+            self._controller.write('Current-SP', 0.0)
             return ret
 
     def _set_opmode(self, value):
@@ -222,7 +224,7 @@ class PowerSupply(_PSCommInterface):
 
     def _scan_fields(self):
         """Scan fields."""
-        interval = 1.0/PowerSupply._SCAN_FREQUENCY
+        interval = 1.0/PowerSupply.SCAN_FREQUENCY
         while True:
             time_start = _time.time()
             if self._updating:
@@ -230,25 +232,34 @@ class PowerSupply(_PSCommInterface):
                     if field in PowerSupply._db_const_fields:
                         continue
                     value = self.read(field)
+                    # if field == 'Current-SP':
+                    #     print('1. Current-SP', value)
                     # if _base_db is a updated copy of ps state, users (IOC)
                     # of powersupply could access it directly, without the
                     # the need of callback registration!
 
                     # if value just read is not new, skipp.
+                    self._lock.acquire()
                     if field in self._field_values:
                         prev_value = self._field_values[field]
                         if isinstance(value, _np.ndarray):
                             if _np.all(value == prev_value):
+                                self._lock.release()
                                 continue
                         else:
                             if value == prev_value:
+                                self._lock.release()
                                 continue
+
+                    # if field == 'Current-SP':
+                    #     print('2. Current-SP', value)
+                    # register read value of field
+                    self._field_values[field] = value
+                    self._lock.release()
 
                     # run callback function since field has a new value
                     self._run_callbacks(field, value)
 
-                    # register read value of field
-                    self._field_values[field] = value
             time_end = _time.time()
             sleep_time = max(0, interval - (time_end - time_start))
             _time.sleep(sleep_time)
@@ -525,8 +536,8 @@ class MAEpics(PSEpics):
             #  now only the main current pv is being used to trigger
             #  conversion. The line below may be commented out or deleted. )
             dipole_pv = dipole_pv.replace('Energy-Mon', 'EnergyRef-Mon')
-
             family_pv = family_pv.replace('KL-Mon', 'KLRef-Mon')
+
             return [self._pvs[field], dipole_pv, family_pv]
         else:
             field = field.replace('KL', 'Current')

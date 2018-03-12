@@ -51,8 +51,8 @@ class PSCommInterface:
         raise NotImplementedError
 
 
-class IOCController(PSCommInterface):
-    """IOCController class.
+class ControllerIOC(PSCommInterface):
+    """ControllerIOC class.
 
     This class implements
 
@@ -95,7 +95,7 @@ class IOCController(PSCommInterface):
         # ps_status = self._get_ps_status()
 
         # reset interlocks
-        # self.cmd_reset_interlocks()
+        self.cmd_reset_interlocks()
 
         # turn ps on and implicitly close control loop
         # self.pwrstate = _PSConst.PwrState.On
@@ -156,8 +156,8 @@ class IOCController(PSCommInterface):
 
     def read(self, field):
         """Return value of a field."""
-        if field in IOCController._read_field2func:
-            func = getattr(self, IOCController._read_field2func[field])
+        if field in ControllerIOC._read_field2func:
+            func = getattr(self, ControllerIOC._read_field2func[field])
             value = func()
             return value
         else:
@@ -165,8 +165,8 @@ class IOCController(PSCommInterface):
 
     def write(self, field, value):
         """Write value to a field."""
-        if field in IOCController._write_field2func:
-            func = getattr(self, IOCController._write_field2func[field])
+        if field in ControllerIOC._write_field2func:
+            func = getattr(self, ControllerIOC._write_field2func[field])
             ret = func(value)
             return ret
 
@@ -271,7 +271,7 @@ class IOCController(PSCommInterface):
         if not(0 <= value < len(_ps_opmode)):
             return None
         # set opmode state
-        if self.pwrstate == _PSConst.PwrState.On:
+        if self._get_pwrstate == _PSConst.PwrState.On:
             ps_status = self._get_ps_status()
             op_mode = _Status.set_opmode(ps_status, value)
             self._cmd_select_op_mode(op_mode=op_mode)
@@ -339,7 +339,7 @@ class PSState:
         return value
 
 
-class PSControllerSim:
+class ControllerPSSim:
     """Simulator of power supply controller."""
 
     _I_LOAD_FLUCTUATION_RMS = 0.01  # [A]
@@ -387,18 +387,18 @@ class PSControllerSim:
 
     def exec_function(self, ID_function, **kwargs):
         """Execute powr supply function."""
-        if ID_function in PSControllerSim.funcs:
+        if ID_function in ControllerPSSim.funcs:
             # if bsmp function is defined, get corresponding method and run it
-            func = getattr(self, PSControllerSim.funcs[ID_function])
+            func = getattr(self, ControllerPSSim.funcs[ID_function])
             return func(**kwargs)
         else:
             raise ValueError(
                 'Run of {} function not defined!'.format(hex(ID_function)))
 
     def _update_state(self):
-        if PSControllerSim._I_LOAD_FLUCTUATION_RMS != 0.0:
+        if ControllerPSSim._I_LOAD_FLUCTUATION_RMS != 0.0:
             self._i_load_fluctuation = \
-                _random.gauss(0.0, PSControllerSim._I_LOAD_FLUCTUATION_RMS)
+                _random.gauss(0.0, ControllerPSSim._I_LOAD_FLUCTUATION_RMS)
 
     def _func_set_slowref(self, **kwargs):
         self._state[_BSMPConst.ps_setpoint] = kwargs['setpoint']
