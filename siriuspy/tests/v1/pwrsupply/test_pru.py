@@ -123,9 +123,11 @@ class TestSerialComm(unittest.TestCase):
         thread_patcher = mock.patch('siriuspy.pwrsupply.pru._Thread')
         self.addCleanup(thread_patcher.stop)
         self.thread_mock = thread_patcher.start()
-        pru = mock.Mock()
-        type(pru).sync_pulse_count = mock.PropertyMock(return_value=10)
-        pru.UART_read.return_value = ['\x00']
+        pru_patcher = mock.patch('siriuspy.pwrsupply.pru.PRU')
+        self.addCleanup(pru_patcher.stop)
+        self.pru_mock = pru_patcher.start()
+        self.pru_mock.return_value.sync_pulse_count = 10
+        self.pru_mock.return_value.UART_read.return_value = ['\x00']
         # pru.sync_mode = mock.PropertyMock(return_value=True)
         slaves = list()
         # for i in range(3):
@@ -137,7 +139,7 @@ class TestSerialComm(unittest.TestCase):
             id_device = mock.PropertyMock(return_value=i+1)
             type(mock_obj).ID_device = id_device
             slaves.append(mock_obj)
-        self.serial_comm = SerialComm(PRU=pru, slaves=slaves)
+        self.serial_comm = SerialComm(simulate=False, slaves=slaves)
 
     def test_sync_mode(self):
         """Test sync mode."""
