@@ -164,10 +164,13 @@ class SerialComm(_BSMPQuery):
                             variables=variables,
                             functions=_get_functions(),
                             slaves=slaves)
+
         # self._PRU = PRU
         self._PRU = PRUSim() if self._simulate else PRU()
+
         # does not start variables scanning just yet.
         self._scanning = False
+
         # create, configure and start auxilliary threads.
         self._thread_queue = _Thread(target=self._process_queue, daemon=True)
         self._thread_scan = _Thread(target=self._process_scan, daemon=True)

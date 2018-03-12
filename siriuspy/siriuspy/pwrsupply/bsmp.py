@@ -39,8 +39,8 @@ class Const:
 
     # --- common variables ---
     ps_status = 0
-    ps_setpoint = 1  # corresponds to IOC CurrentRef-Mon
-    ps_reference = 2  # corresponds to IOC Current-Mon
+    ps_setpoint = 1  # corresponds to IOC Current-RB
+    ps_reference = 2  # corresponds to IOC CurrentRef-Mon
     firmware_version = 3  # not implemented yet
     counter_set_slowref = 4  # not implemented yet
     counter_sync_pulse = 5  # not implemented yet
@@ -56,7 +56,7 @@ class Const:
     # --- FSB variables ---
     ps_soft_interlocks = 25  # BSMP doc says ID numbering should be continous!
     ps_hard_interlocks = 26
-    i_load = 27
+    i_load = 27  # corresponds to IOC Current-Mon
     v_load = 28
     v_dclink = 29
     temp_switches = 30
