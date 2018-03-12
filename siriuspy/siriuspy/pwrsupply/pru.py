@@ -159,6 +159,7 @@ class SerialComm(_BSMPQuery):
         self._queue = _Queue()
         self._waveforms = {}
         self._simulate = simulate
+        self._connected = False
 
         _BSMPQuery.__init__(self,
                             variables=variables,
@@ -206,6 +207,11 @@ class SerialComm(_BSMPQuery):
     def scanning(self, value):
         """Set scanning state."""
         self._scanning = value
+
+    @property
+    def connected(self):
+        """Return connected state."""
+        return self._connected
 
     def set_wfmdata(self, ID_device, wfmdata):
         """Set waveform of a device."""
@@ -269,24 +275,32 @@ class SerialComm(_BSMPQuery):
             # print('process: ', ID_device, hex(ID_cmd), kwargs)
             cmd = 'cmd_' + str(hex(ID_cmd))
             method = getattr(self, cmd)
-            ack, load = method(ID_receiver=ID_device, **kwargs)
-            # print('cmd: ', cmd)
-            # print('ack: ', hex(ack), hex(_ack.ok))
-            # print('load: ', load)
+            try:
+                ack, load = method(ID_receiver=ID_device, **kwargs)
+                self._connected = True
+            except Exception:
+                self._connected = False
+                print('Exception raised while executing {}'.format(cmd))
+
             if ack != _ack.ok:
                 # needs implementation
-                raise NotImplementedError(
+                self._connected = False
+                print(
                     'Error returned in BSMP command: {}!'.format(hex(ack)))
             elif load is not None:
-                self._process_load(ID_device, ID_cmd, load)
+                ret = self._process_load(ID_device, ID_cmd, load)
+                if ret is None:
+                    self._connected = False
 
     def _process_load(self, ID_device, ID_cmd, load):
         if ID_cmd == 0x12:
             for variable, value in load.items():
                 self._states[ID_device][variable] = value
+            return 'Ok'
         else:
             err_str = 'BSMP cmd {} not implemented in process_thread!'
-            raise NotImplementedError(err_str.format(hex(ID_cmd)))
+            print(err_str)
+            return None
 
     def _process_scan(self):
         """Scan power supply variables, adding puts into queue."""

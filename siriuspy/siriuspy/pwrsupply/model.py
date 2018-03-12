@@ -28,6 +28,7 @@ class PowerSupply(_PSCommInterface):
     control-system using the implemented PSCommInterface.
     """
 
+    _DISCONNECTED = 'DISCONNECTED'
     SCAN_FREQUENCY = 10.0  # [Hz]
     _is_setpoint = _re.compile('.*-(SP|Sel|Cmd)$')
 
@@ -100,17 +101,17 @@ class PowerSupply(_PSCommInterface):
 
     # --- public methods ---
 
-    def get_database(self, prefix=""):
+    def get_database(self, prefix=None):
         """Fill base DB with values and limits read from PVs.
 
-        Optionally add a prefix to the dict keys.
+        Optionally add a prefix to dict keys.
         """
         db = self._fill_database()
-
+        prefix = '' if prefix is None else prefix
         if prefix:
             prefixed_db = {}
-            for key, value in db.items():
-                prefixed_db[prefix + ":" + key] = value
+            for field, value in db.items():
+                prefixed_db[prefix + ":" + field] = value
             return prefixed_db
         else:
             return db
@@ -228,42 +229,45 @@ class PowerSupply(_PSCommInterface):
         while True:
             time_start = _time.time()
             if self._updating:
+
+                # check whether ControllerIOC is connected to ControllerPS
+                if not self._controller.connected:
+                    self._run_callbacks(PowerSupply._DISCONNECTED, 0)
+                    continue
+
+                # loop over power supply fields, invoking callback if its value
+                # has changed.
                 for field in self._base_db:
                     if field in PowerSupply._db_const_fields:
                         continue
                     value = self.read(field)
-                    # if field == 'Current-SP':
-                    #     print('1. Current-SP', value)
-                    # if _base_db is a updated copy of ps state, users (IOC)
-                    # of powersupply could access it directly, without the
-                    # the need of callback registration!
 
-                    # if value just read is not new, skipp.
+                    # check whether current value is a new value
                     self._lock.acquire()
                     if field in self._field_values:
                         prev_value = self._field_values[field]
                         if isinstance(value, _np.ndarray):
                             if _np.all(value == prev_value):
+                                # skipp callback if not new
                                 self._lock.release()
                                 continue
                         else:
                             if value == prev_value:
+                                # skipp callback if not new
                                 self._lock.release()
                                 continue
 
-                    # if field == 'Current-SP':
-                    #     print('2. Current-SP', value)
-                    # register read value of field
+                    # register current value of field and releases lock
                     self._field_values[field] = value
                     self._lock.release()
 
                     # run callback function since field has a new value
                     self._run_callbacks(field, value)
 
+            # sleep if necessary until frequency interval is reached.
             time_end = _time.time()
             sleep_time = max(0, interval - (time_end - time_start))
             _time.sleep(sleep_time)
-            # _time.sleep(PowerSupply._SCAN_INTERVAL)
 
     def _run_callbacks(self, field, value):
         for index, callback in self._callbacks.items():
