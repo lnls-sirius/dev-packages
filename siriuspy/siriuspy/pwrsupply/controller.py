@@ -161,7 +161,7 @@ class ControllerIOC(PSCommInterface):
             value = func()
             return value
         else:
-            raise ValueError('Field "{}" not valid!'.format(field))
+            print('Invalid controller.reader of {}'.formar(field))
 
     def write(self, field, value):
         """Write value to a field."""
