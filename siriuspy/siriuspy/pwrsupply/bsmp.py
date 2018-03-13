@@ -95,7 +95,7 @@ def get_variables_common():
         Const.ps_reference:
             ('ps_reference', Const.t_float, False),
         # Const.firmware_version:
-        #     ('firmaware_version', Const.t_char128, False),
+        #     ('firmware_version', Const.t_char128, False),
         # Const.counter_set_slowref:
         #     ('counter_set_slowref', Const.t_uint32, False),
         # Const.counter_sync_pulse:

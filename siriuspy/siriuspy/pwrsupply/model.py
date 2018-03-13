@@ -225,7 +225,7 @@ class PowerSupply(_PSCommInterface):
 
     def _scan_fields(self):
         """Scan fields."""
-        connected = None # keeps last connected state
+        connected = None  # keeps last connected state
         interval = 1.0/PowerSupply.SCAN_FREQUENCY
         while True:
             time_start = _time.time()

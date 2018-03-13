@@ -2,13 +2,16 @@
 
 import time as _time
 import random as _random
-from siriuspy import __version__
+from siriuspy import util as _util
 from siriuspy.bsmp import Const as _ack
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.csdevice.pwrsupply import ps_opmode as _ps_opmode
 from siriuspy.pwrsupply.bsmp import Const as _BSMPConst
 from siriuspy.pwrsupply.bsmp import Status as _Status
 from siriuspy.pwrsupply.bsmp import get_variables_FBP as _get_variables_FBP
+
+
+__version__ = _util.get_last_commit_hash()
 
 
 class PSCommInterface:
@@ -60,6 +63,7 @@ class ControllerIOC(PSCommInterface):
 
     # conversion dict from PS fields to DSP properties for read method.
     _read_field2func = {
+        'Version-Cte': '_get_firmware_version',
         'CtrlMode-Mon': '_get_ctrlmode',
         'PwrState-Sts': '_get_pwrstate',
         'OpMode-Sts': '_get_opmode',
@@ -68,7 +72,6 @@ class ControllerIOC(PSCommInterface):
         'Current-Mon': '_get_i_load',
         'IntlkSoft-Mon': '_get_ps_soft_interlocks',
         'IntlkHard-Mon': '_get_ps_hard_interlocks',
-        'Version-Cte': '_get_frmware_version',
         'WfmIndex-Mon': '_get_wfmindex',
         'WfmData-RB': '_get_wfmdata',
     }
@@ -161,7 +164,7 @@ class ControllerIOC(PSCommInterface):
             value = func()
             return value
         else:
-            print('Invalid controller.reader of {}'.formar(field))
+            print('Invalid controller.reader of {}'.format(field))
 
     def write(self, field, value):
         """Write value to a field."""
@@ -183,12 +186,11 @@ class ControllerIOC(PSCommInterface):
     def _get_wfmindex(self):
         return self._serial_comm.sync_pulse_count
 
-    def _get_frmware_version(self):
-        value = self._bsmp_get_variable(_BSMPConst.frmware_version)
-        vmajor = str((value & 0xFF00) >> 8)
-        vminor = str(value & 0xFF)
-        frmware_ver = '.'.join([vmajor, vminor])
-        return __version__ + '-' + frmware_ver
+    def _get_firmware_version(self):
+        # value = self._bsmp_get_variable(_BSMPConst.firmware_version)
+        # firmware_version = __version__ + ':' + '-'.join([c for c in value])
+        firmware_version = __version__ + ':' + '0x00:0x00'
+        return firmware_version
 
     def _get_ps_status(self):
         return self._bsmp_get_variable(_BSMPConst.ps_status)
