@@ -299,10 +299,10 @@ class SerialComm(_BSMPQuery):
     def _process_load(self, ID_device, ID_cmd, load):
         if ID_cmd == 0x12:
             for variable, value in load.items():
-                # if variable == 27:
-                #     print(value)
+                # if variable == 0:
+                #     print(bin(value))
                 self._states[ID_device][variable] = value
-            return 'Ok'
+            return 0
         else:
             err_str = 'BSMP cmd {} not implemented in process_thread!'
             print(err_str)

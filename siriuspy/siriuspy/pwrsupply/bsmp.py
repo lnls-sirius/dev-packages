@@ -315,11 +315,11 @@ class Status:
     _ps2dsp_state = {
         # current PS version implements only SlowRef!
         _PSConst.OpMode.SlowRef: _PSConst.States.SlowRef,
-        _PSConst.OpMode.SlowRefSync: _PSConst.States.SlowRef,
+        _PSConst.OpMode.SlowRefSync: _PSConst.States.SlowRefSync,
         _PSConst.OpMode.FastRef: _PSConst.States.SlowRef,
         _PSConst.OpMode.RmpWfm: _PSConst.States.SlowRef,
         _PSConst.OpMode.MigWfm: _PSConst.States.SlowRef,
-        _PSConst.OpMode.Cycle: _PSConst.States.SlowRef,
+        _PSConst.OpMode.Cycle: _PSConst.States.Cycle,
     }
 
     @staticmethod
@@ -475,7 +475,7 @@ class BSMPMasterSlaveSim(_BSMPResponse):
         """Respond BSMP variable."""
         if ID_variable not in self._variables.keys():
             return _ack.invalid_id, None
-        return _ack.ok, self._pscontroler[ID_variable]
+        return _ack.ok, self._pscontroller[ID_variable]
 
     def cmd_0x13(self, ID_receiver, ID_group):
         """Respond SBMP variable group."""
@@ -609,6 +609,7 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
     def cmd_0x51(self, ID_receiver, ID_function, **kwargs):
         """Respond to execute BSMP function."""
         # execute function in power supply
+        # print('cmd_0x51', kwargs)
         if ID_function in (Const.turn_on,
                            Const.turn_off,
                            Const.open_loop,
@@ -617,6 +618,8 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
             load = []
         elif ID_function == Const.set_slowref:
             load = [chr(b) for b in _struct.pack("<f", kwargs['setpoint'])]
+        elif ID_function == Const.select_op_mode:
+            load = [chr(b) for b in _struct.pack("<f", kwargs['op_mode'])]
         else:
             raise NotImplementedError
         n = 1 + len(load)
@@ -627,6 +630,7 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
         # print('cmd_0x51: ', n, query)
         self._pru.UART_write(query, timeout=100)
         response = self._pru.UART_read()
+        # print(response)
         # process response
         ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
         if ID_cmd != 0x51:

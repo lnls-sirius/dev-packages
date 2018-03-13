@@ -266,15 +266,19 @@ class ControllerIOC(PSCommInterface):
 
     def _set_opmode(self, value):
         """Set pwrstate state."""
+        # print('1. set_opmode', value)
         if not self._ps_interface_in_remote():
             return
         value = int(value)
         if not(0 <= value < len(_ps_opmode)):
             return None
         # set opmode state
-        if self._get_pwrstate == _PSConst.PwrState.On:
+        # print('2. set_opmode', value)
+        if self._get_pwrstate() == _PSConst.PwrState.On:
             ps_status = self._get_ps_status()
-            op_mode = _Status.set_opmode(ps_status, value)
+            ps_status = _Status.set_opmode(ps_status, value)
+            op_mode = _Status.opmode(ps_status)
+            # print('3. set_opmode', op_mode)
             self._cmd_select_op_mode(op_mode=op_mode)
         return value
 
@@ -284,10 +288,8 @@ class ControllerIOC(PSCommInterface):
         return value
 
     def _cmd_select_op_mode(self, op_mode):
-        """Set controller operation mode."""
-        # return self._bsmp_run_function(_BSMPConst.select_op_mode,
-        #                                op_mode=op_mode)
-        pass
+        return self._bsmp_run_function(_BSMPConst.select_op_mode,
+                                       op_mode=op_mode)
 
     def _ps_interface_in_remote(self):
         ps_status = self._get_ps_status()
