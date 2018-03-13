@@ -43,6 +43,7 @@ class PowerSupply(_PSCommInterface):
         self._lock = _Lock()
         self._lock.acquire()
         self._field_values = {}  # dict with last read field values
+        self._initialized = False
         self._lock.release()
         self._psdata = _PSData(psname=psname)
         self._controller = controller
@@ -98,7 +99,7 @@ class PowerSupply(_PSCommInterface):
         self._lock.acquire()
         self._field_values = {}  # dict with last read field values
         self._lock.release()
-        # send CONNECTED/DISCONNECTED signal
+        # send connected/disconnected signal
         func(pvname=self._psdata.psname + ':' + PowerSupply.CONNECTED,
              value=self._controller.connected)
 
@@ -128,6 +129,8 @@ class PowerSupply(_PSCommInterface):
                 continue
             sp[field] = dict()
             self._set_field_setpoint(sp[field], field)
+        if self._controller.connected:
+            self._initialized = False
         return sp
 
     def _set_field_setpoint(self, keyvalue, field):
@@ -191,16 +194,8 @@ class PowerSupply(_PSCommInterface):
         return self._controller.write('WfmLabel-SP', value)
 
     def _set_wfmdata(self, value):
-        # make sure wfmdata has the correct length
-        n = len(self._setpoints['WfmData-SP']['value'])
-        if isinstance(value, (int, float)):
-            self._setpoints['WfmData-SP']['value'][0] = value
-        elif len(value) == n:
-            self._setpoints['WfmData-SP']['value'] = value
-        else:
-            for i in range(min(len(value), n)):
-                self._setpoints['WfmData-SP']['value'][i] = value[i]
-        value = self._setpoints['WfmData-SP']['value']
+        self._wfmdata_sp = value
+        self._setpoints['WfmData-SP']['value'] = value
         return self._controller.write('WfmData-SP', value)
 
     def _abort(self, value):
@@ -236,23 +231,19 @@ class PowerSupply(_PSCommInterface):
 
     def _scan_fields(self):
         """Scan fields."""
-        connected = None  # keeps last connected state
+        connected = None # keeps last connected state
         interval = 1.0/PowerSupply.SCAN_FREQUENCY
         while True:
             time_start = _time.time()
             if self._updating:
-
-                # check whether ControllerIOC is connected to ControllerPS
-                if self._controller.connected != connected:
-                    connected = self._controller.connected
-                    self._run_callbacks(PowerSupply.CONNECTED, connected)
-                    continue
 
                 # loop over power supply fields, invoking callback if its value
                 # has changed.
                 for field in self._base_db:
                     if field in PowerSupply._db_const_fields:
                         continue
+
+                    # read fielf current value
                     value = self.read(field)
 
                     # check whether current value is a new value
@@ -276,6 +267,14 @@ class PowerSupply(_PSCommInterface):
 
                     # run callback function since field has a new value
                     self._run_callbacks(field, value)
+
+                # check whether ControllerIOC is connected to ControllerPS
+                if self._controller.connected != connected:
+                    connected = self._controller.connected
+                    self._run_callbacks(PowerSupply.CONNECTED, connected)
+                    if connected and not self._initialized:
+                        self._setpoints = self._build_setpoints()
+
 
             # sleep if necessary until frequency interval is reached.
             time_end = _time.time()
