@@ -194,8 +194,16 @@ class PowerSupply(_PSCommInterface):
         return self._controller.write('WfmLabel-SP', value)
 
     def _set_wfmdata(self, value):
-        self._wfmdata_sp = value
-        self._setpoints['WfmData-SP']['value'] = value
+        # make sure wfmdata has the correct length
+        n = len(self._setpoints['WfmData-SP']['value'])
+        if isinstance(value, (int, float)):
+            self._setpoints['WfmData-SP']['value'][0] = value
+        elif len(value) == n:
+            self._setpoints['WfmData-SP']['value'] = value
+        else:
+            for i in range(min(len(value), n)):
+                self._setpoints['WfmData-SP']['value'][i] = value[i]
+        value = self._setpoints['WfmData-SP']['value']
         return self._controller.write('WfmData-SP', value)
 
     def _abort(self, value):
@@ -231,7 +239,7 @@ class PowerSupply(_PSCommInterface):
 
     def _scan_fields(self):
         """Scan fields."""
-        connected = None # keeps last connected state
+        connected = None  # keeps last connected state
         interval = 1.0/PowerSupply.SCAN_FREQUENCY
         while True:
             time_start = _time.time()

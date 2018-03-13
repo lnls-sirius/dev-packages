@@ -303,7 +303,7 @@ class SerialComm(_BSMPQuery):
                 # if variable == 27:
                 #     print(value)
                 self._states[ID_device][variable] = value
-            return 'Ok'
+            return 0
         else:
             err_str = 'BSMP cmd {} not implemented in process_thread!'
             # print(err_str)
