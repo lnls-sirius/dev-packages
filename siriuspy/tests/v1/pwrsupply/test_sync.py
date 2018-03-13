@@ -8,6 +8,7 @@ import epics
 
 from siriuspy.pwrsupply.sync import SyncWrite
 from siriuspy.epics.computed_pv import ComputedPV
+from siriuspy.epics.computed_pv import QueueThread
 
 
 class SyncWritePutTest(unittest.TestCase):
@@ -21,7 +22,7 @@ class SyncWritePutTest(unittest.TestCase):
     def test_put(self, mock_put):
         """Test put is called for all pvs."""
         sync = SyncWrite()
-        pv = ComputedPV("FakePV", sync, "fakepv-1", "fakepv-2")
+        pv = ComputedPV("FakePV", sync, QueueThread(), "fakepv-1", "fakepv-2")
 
         pv.put(10)
 
@@ -51,7 +52,7 @@ class SyncWriteUpdateCmdTest(unittest.TestCase):
         self.mock_callback = mock_callback
 
         sync = SyncWrite(lock=True)
-        self.pv = ComputedPV("FakePV", sync,
+        self.pv = ComputedPV("FakePV", sync, QueueThread(),
                              "fakepv-1:Reset-Cmd", "fakepv-2:Reset-Cmd")
         # Issue update value
         self.initial_value = 0
@@ -100,7 +101,7 @@ class SyncWriteUpdateWhenNoneTest(unittest.TestCase):
         self.mock_callback = mock_callback
 
         sync = SyncWrite(lock=True)
-        self.pv = ComputedPV("FakePV", sync, "fakepv-1", "fakepv-2")
+        self.pv = ComputedPV("FakePV", sync, QueueThread(), "fakepv-1", "fakepv-2")
         # Issue update value
         self.update_value = 100
         self.pv._update_value("fakepv-2", self.update_value)
@@ -158,7 +159,7 @@ class SyncWriteUpdateValueChangedTest(unittest.TestCase):
         self.mock_callback = mock_callback
 
         sync = SyncWrite(lock=True)
-        self.pv = ComputedPV("FakePV", sync, "fakepv-1", "fakepv-2")
+        self.pv = ComputedPV("FakePV", sync, QueueThread(), "fakepv-1", "fakepv-2")
         # Issue update value
         self.initial_value = 99
         self.update_value = 100
@@ -219,7 +220,7 @@ class SyncWriteUpdateValueNotChangedTest(unittest.TestCase):
         self.mock_callback = mock_callback
 
         sync = SyncWrite(lock=True)
-        self.pv = ComputedPV("FakePV", sync, "fakepv-1", "fakepv-2")
+        self.pv = ComputedPV("FakePV", sync, QueueThread(), "fakepv-1", "fakepv-2")
         # Issue update value
         self.initial_value = 99
         self.update_value = 100

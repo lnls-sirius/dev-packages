@@ -475,7 +475,7 @@ class BSMPMasterSlaveSim(_BSMPResponse):
         """Respond BSMP variable."""
         if ID_variable not in self._variables.keys():
             return _ack.invalid_id, None
-        return _ack.ok, self._pscontroller[ID_variable]
+        return _ack.ok, self._pscontroler[ID_variable]
 
     def cmd_0x13(self, ID_receiver, ID_group):
         """Respond SBMP variable group."""
