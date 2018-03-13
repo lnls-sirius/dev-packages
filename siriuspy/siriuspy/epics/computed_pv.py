@@ -184,4 +184,4 @@ class ComputedPV:
 
     def _issue_callback(self, **kwargs):
         for index, callback in self._callbacks.items():
-            callback(*kwargs)
+            callback(**kwargs)
