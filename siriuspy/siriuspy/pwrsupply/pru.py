@@ -305,7 +305,7 @@ class SerialComm(_BSMPQuery):
                 self._states[ID_device][variable] = value
             return 0
         else:
-            err_str = 'BSMP cmd {} not implemented in process_thread!'
+            # err_str = 'BSMP cmd {} not implemented in process_thread!'
             # print(err_str)
             return None
 
