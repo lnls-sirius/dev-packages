@@ -2,7 +2,6 @@
 
 
 import struct as _struct
-import random as _random
 
 from siriuspy.bsmp import __version__ as __bsmp_version__
 from siriuspy.bsmp import BSMP as _BSMP

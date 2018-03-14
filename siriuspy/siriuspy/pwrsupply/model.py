@@ -43,6 +43,7 @@ class PowerSupply(_PSCommInterface):
         self._lock = _Lock()
         self._lock.acquire()
         self._field_values = {}  # dict with last read field values
+        self._initialized = False
         self._lock.release()
         self._psdata = _PSData(psname=psname)
         self._controller = controller
@@ -98,7 +99,7 @@ class PowerSupply(_PSCommInterface):
         self._lock.acquire()
         self._field_values = {}  # dict with last read field values
         self._lock.release()
-        # send CONNECTED/DISCONNECTED signal
+        # send connected/disconnected signal
         func(pvname=self._psdata.psname + ':' + PowerSupply.CONNECTED,
              value=self._controller.connected)
 
@@ -128,6 +129,8 @@ class PowerSupply(_PSCommInterface):
                 continue
             sp[field] = dict()
             self._set_field_setpoint(sp[field], field)
+        if self._controller.connected:
+            self._initialized = False
         return sp
 
     def _set_field_setpoint(self, keyvalue, field):
@@ -242,17 +245,13 @@ class PowerSupply(_PSCommInterface):
             time_start = _time.time()
             if self._updating:
 
-                # check whether ControllerIOC is connected to ControllerPS
-                if self._controller.connected != connected:
-                    connected = self._controller.connected
-                    self._run_callbacks(PowerSupply.CONNECTED, connected)
-                    continue
-
                 # loop over power supply fields, invoking callback if its value
                 # has changed.
                 for field in self._base_db:
                     if field in PowerSupply._db_const_fields:
                         continue
+
+                    # read fielf current value
                     value = self.read(field)
 
                     # check whether current value is a new value
@@ -276,6 +275,14 @@ class PowerSupply(_PSCommInterface):
 
                     # run callback function since field has a new value
                     self._run_callbacks(field, value)
+
+                # check whether ControllerIOC is connected to ControllerPS
+                if self._controller.connected != connected:
+                    connected = self._controller.connected
+                    self._run_callbacks(PowerSupply.CONNECTED, connected)
+                    if connected and not self._initialized:
+                        self._setpoints = self._build_setpoints()
+
 
             # sleep if necessary until frequency interval is reached.
             time_end = _time.time()
