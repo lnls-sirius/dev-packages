@@ -186,15 +186,13 @@ class TestUtil(unittest.TestCase):
 
     def test_check_pv_online(self):
         """Test check_pv_online."""
-        with mock.patch.object(epics.PV,
-                               "wait_for_connection",
-                               return_value=True) as mock_conn:
+        with mock.patch('siriuspy.util._epics.PV') as mock_conn:
+            mock_conn.return_value.wait_for_connection.return_value = True
             status = util.check_pv_online("FakePV")
         self.assertEqual(status, True)
         mock_conn.assert_called()
-        with mock.patch.object(epics.PV,
-                               "wait_for_connection",
-                               return_value=False) as mock_conn:
+        with mock.patch('siriuspy.util._epics.PV') as mock_conn:
+            mock_conn.return_value.wait_for_connection.return_value = False
             status = util.check_pv_online("FakePV")
         self.assertEqual(status, False)
         mock_conn.assert_called()

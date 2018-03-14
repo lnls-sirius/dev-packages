@@ -31,7 +31,7 @@ class TestBSMPMasterSlaveSim(unittest.TestCase):
         variables = [0, 1, 2, 25, 26, 27, 28, 29, 30]
         for v in variables:
             resp, val = self.resp.cmd_0x11(ID_receiver=1, ID_variable=v)
-            e_resp, e_val = (_ack.ok, self.resp._pscontroler[v])
+            e_resp, e_val = (_ack.ok, self.resp._pscontroller[v])
             self.assertEqual(resp, e_resp)
             if v == 27:
                 self.assertAlmostEqual(val, e_val, places=1)
