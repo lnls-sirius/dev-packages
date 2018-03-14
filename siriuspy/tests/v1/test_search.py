@@ -216,11 +216,11 @@ class TestPSSearch(unittest.TestCase):
         self.assertEqual(bbbnames, sorted_bbbnames)
         # with filters
         bbbnames = PSSearch.get_bbbnames({'dis': 'CO'})
-        self.assertEqual(len(bbbnames), 214)
+        self.assertEqual(len(bbbnames), 279)
         for name in bbbnames:
             self.assertIn('CO', name)
         bbbnames = PSSearch.get_bbbnames({'sub': 'Glob'})
-        self.assertEqual(len(bbbnames), 14)
+        self.assertEqual(len(bbbnames), 31)
         # exceptions
         self.assertRaises(TypeError, PSSearch.get_psnames, filters=23)
         self.assertRaises(TypeError, PSSearch.get_psnames, filters=23.4)
@@ -295,7 +295,7 @@ class TestPSSearch(unittest.TestCase):
         self.assertRaises(
             KeyError, PSSearch.conv_pstype_2_splims, pstype='dummy')
 
-    def test_conv_psname_2_excdata(self):
+    def _test_conv_psname_2_excdata(self):
         """Test conv_psname_2_excdata."""
         calls = []
         for ps, pstype in TestPSSearch.sample.items():

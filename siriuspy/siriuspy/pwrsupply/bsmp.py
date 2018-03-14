@@ -454,7 +454,7 @@ class BSMPMasterSlaveSim(_BSMPResponse):
                                variables=get_variables_FBP(),
                                functions=get_functions(),
                                ID_device=ID_device)
-        self._pscontroler = pscontroller
+        self._pscontroller = pscontroller
 
     def create_group(self, ID_receiver, ID_group, IDs_variable):
         """Create group of BSMP variables."""
@@ -484,13 +484,13 @@ class BSMPMasterSlaveSim(_BSMPResponse):
         load = {}
         for ID_variable in IDs_variable:
             # check if variable value copying is needed!
-            load[ID_variable] = self._pscontroler[ID_variable]
+            load[ID_variable] = self._pscontroller[ID_variable]
         return _ack.ok, load
 
     def cmd_0x51(self, ID_receiver, **kwargs):
         """Respond to execute BSMP function."""
         # ID_function = kwargs['ID_function']
-        return self._pscontroler.exec_function(**kwargs)
+        return self._pscontroller.exec_function(**kwargs)
 
 
 class BSMPMasterSlave(_BSMPResponse, StreamChecksum):

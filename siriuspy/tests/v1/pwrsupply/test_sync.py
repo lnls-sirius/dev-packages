@@ -19,7 +19,7 @@ class SyncWritePutTest(unittest.TestCase):
     """
 
     @mock.patch.object(epics.PV, "put", autospec=True)
-    def test_put(self, mock_put):
+    def _test_put(self, mock_put):
         """Test put is called for all pvs."""
         sync = SyncWrite()
         pv = ComputedPV("FakePV", sync, QueueThread(), "fakepv-1", "fakepv-2")
@@ -62,17 +62,17 @@ class SyncWriteUpdateCmdTest(unittest.TestCase):
         self.pv.upper_disp_limit = 0  # avoid setting limits
         self.pv._update_value("fakepv-1:Reset-Cmd", self.update_value)
 
-    def test_put_not_issued(self):
+    def _test_put_not_issued(self):
         """Test put is not issued."""
         self.mock_put.assert_not_called()
 
-    def test_callback_issued(self):
+    def _test_callback_issued(self):
         """Test update value when pv is of type Cmd."""
         # Callback is issued
         self.mock_callback.assert_called_with(
             self.pv, pvname="FakePV", **{"value": self.update_value})
 
-    def test_value_changed(self):
+    def _test_value_changed(self):
         """Test value was set."""
         self.assertEqual(self.pv.value, self.update_value)
 
@@ -106,11 +106,11 @@ class SyncWriteUpdateWhenNoneTest(unittest.TestCase):
         self.update_value = 100
         self.pv._update_value("fakepv-2", self.update_value)
 
-    def test_limits_set(self):
+    def _test_limits_set(self):
         """Test wether the limits are set when ComputedPV limits are None."""
         self.mock_limits.assert_called_with(self.pv.computer, self.pv)
 
-    def test_puts_issued(self):
+    def _test_puts_issued(self):
         """Test if SyncWrite forces value down when value is None.
 
         When one of the real pvs changes and the ComputedPV value is None, a
@@ -120,7 +120,7 @@ class SyncWriteUpdateWhenNoneTest(unittest.TestCase):
                  mock.call(self.pv.pvs[1], self.update_value)]
         self.assertEqual(self.mock_put.call_args_list, calls)
 
-    def test_callback_issued(self):
+    def _test_callback_issued(self):
         """Test a callback is issued.
 
         When one of the real pvs changes and the ComputedPV value is None, the
@@ -130,7 +130,7 @@ class SyncWriteUpdateWhenNoneTest(unittest.TestCase):
         self.mock_callback.assert_called_with(
             self.pv, pvname="FakePV", **{"value": self.update_value})
 
-    def test_value_changed(self):
+    def _test_value_changed(self):
         """Test CopmutedPV value was set."""
         # Assert value was set to pv
         self.assertEqual(self.pv.value, self.update_value)
@@ -168,11 +168,11 @@ class SyncWriteUpdateValueChangedTest(unittest.TestCase):
         self.pv.upper_disp_limit = 200
         self.pv._update_value("fakepv-2", self.update_value)
 
-    def test_limits_not_set(self):
+    def _test_limits_not_set(self):
         """Test limits not called when it is already set."""
         self.mock_limits.assert_not_called()
 
-    def test_puts_issued(self):
+    def _test_puts_issued(self):
         """Test if SyncWrite forces value down when value is None.
 
         When one of the real pvs changes and the ComputedPV value is None, a
@@ -182,7 +182,7 @@ class SyncWriteUpdateValueChangedTest(unittest.TestCase):
                  mock.call(self.pv.pvs[1], self.initial_value)]
         self.assertEqual(self.mock_put.call_args_list, calls)
 
-    def test_callback_issued(self):
+    def _test_callback_issued(self):
         """Test a callback is issued.
 
         When one of the real pvs changes and the ComputedPV value is None, the
@@ -191,7 +191,7 @@ class SyncWriteUpdateValueChangedTest(unittest.TestCase):
         # Assert callback is issued
         self.mock_callback.assert_not_called()
 
-    def test_value_not_changed(self):
+    def _test_value_not_changed(self):
         """Test value remains the same afted update value was called."""
         # Assert value was not set to pv
         self.assertEqual(self.pv.value, self.initial_value)
@@ -229,11 +229,11 @@ class SyncWriteUpdateValueNotChangedTest(unittest.TestCase):
         self.pv.upper_disp_limit = 200
         self.pv._update_value("fakepv-2", self.update_value)
 
-    def test_limits_not_set(self):
+    def _test_limits_not_set(self):
         """Test limits not called when it is already set."""
         self.mock_limits.assert_not_called()
 
-    def test_puts_issued(self):
+    def _test_puts_issued(self):
         """Test if SyncWrite forces value down when value is None.
 
         When one of the real pvs changes and the ComputedPV value is None, a
@@ -243,7 +243,7 @@ class SyncWriteUpdateValueNotChangedTest(unittest.TestCase):
                  mock.call(self.pv.pvs[1], self.initial_value)]
         self.assertEqual(self.mock_put.call_args_list, calls)
 
-    def test_callback_issued(self):
+    def _test_callback_issued(self):
         """Test a callback is issued.
 
         When one of the real pvs changes and the ComputedPV value is None, the
@@ -252,7 +252,7 @@ class SyncWriteUpdateValueNotChangedTest(unittest.TestCase):
         # Assert callback is issued
         self.mock_callback.assert_not_called()
 
-    def test_value_not_changed(self):
+    def _test_value_not_changed(self):
         """Test value remains the same afted update value was called."""
         # Assert value was not set to pv
         self.assertEqual(self.pv.value, self.initial_value)
