@@ -1,5 +1,7 @@
 # Development Packages for Sirius
 
+[![Build Status](https://travis-ci.org/lnls-sirius/dev-packages.svg?branch=master)](https://travis-ci.org/lnls-sirius/dev-packages)
+
 Useful development packages for Sirius control system.
 
 Packages:
