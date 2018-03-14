@@ -2,4 +2,4 @@ language: python
 python:
   - "3.6"
 script:
-  - python -m unittest discover siriuspy/tests/v1
+  - python -m unittest discover siriuspy/siriuspy/tests/v1
