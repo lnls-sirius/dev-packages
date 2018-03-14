@@ -216,11 +216,11 @@ class TestPSSearch(unittest.TestCase):
         self.assertEqual(bbbnames, sorted_bbbnames)
         # with filters
         bbbnames = PSSearch.get_bbbnames({'dis': 'CO'})
-        self.assertEqual(len(bbbnames), 279)
+        self.assertEqual(len(bbbnames), 214)
         for name in bbbnames:
             self.assertIn('CO', name)
         bbbnames = PSSearch.get_bbbnames({'sub': 'Glob'})
-        self.assertEqual(len(bbbnames), 31)
+        self.assertEqual(len(bbbnames), 14)
         # exceptions
         self.assertRaises(TypeError, PSSearch.get_psnames, filters=23)
         self.assertRaises(TypeError, PSSearch.get_psnames, filters=23.4)
