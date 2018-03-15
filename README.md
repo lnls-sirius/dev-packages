@@ -12,5 +12,5 @@ Packages:
 Integration tests:
 
 * To run integration test for <code>siriuspy</code> before pull-requests, issue the following commands: 
-  * cd siriuspy/tests/v1
+  * cd siriuspy/tests
   * python-sirius -m unittest discover
