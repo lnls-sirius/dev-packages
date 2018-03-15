@@ -5,5 +5,5 @@ script:
   - pip install -r requirements.txt
   - cd siriuspy
   - python setup.py install
-  - cd tests/v1
+  - cd tests
   - python -m unittest discover
