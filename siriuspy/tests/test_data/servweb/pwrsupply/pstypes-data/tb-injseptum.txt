@@ -1,0 +1,6 @@
+# List of power supplies of type tb-injseptum
+# ===========================================
+
+# number of power supplies: 1
+
+TB-04:PU-InjS

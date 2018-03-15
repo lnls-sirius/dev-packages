@@ -1,0 +1,9 @@
+# List of power supplies of type ts-corrector-ch
+# ==============================================
+
+# number of power supplies: 4
+
+TS-01:PS-CH
+TS-02:PS-CH
+TS-03:PS-CH
+TS-04:PS-CH

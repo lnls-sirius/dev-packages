@@ -1,0 +1,8 @@
+# label           ts-injseptum-thick
+# harmonics       0
+# main_harmonic   0 normal
+# units           Volt T*m T*m
+#
++0.00e+00	+0.0000000e+00 +0.00e+00
++1.00e+03	-1.0828532e+00 +0.00e+00
++2.00e+03 -3.0000000e+00 +0.00e+00

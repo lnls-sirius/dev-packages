@@ -1,0 +1,10 @@
+# List of power supplies of type si-quadrupole-q20-fam
+# ====================================================
+
+# number of power supplies: 5
+
+SI-Fam:PS-QFA
+SI-Fam:PS-Q1
+SI-Fam:PS-Q2
+SI-Fam:PS-Q3
+SI-Fam:PS-Q4

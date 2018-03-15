@@ -1,0 +1,13 @@
+# List of power supplies of type li-solenoid-fam
+# ==============================================
+
+# number of power supplies: 8
+
+LI-Fam:PS-Slnd14
+LI-Fam:PS-Slnd15
+LI-Fam:PS-Slnd16
+LI-Fam:PS-Slnd17
+LI-Fam:PS-Slnd18
+LI-Fam:PS-Slnd19
+LI-Fam:PS-Slnd20
+LI-Fam:PS-Slnd21

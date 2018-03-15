@@ -1,0 +1,30 @@
+# List of power supplies of type bo-corrector-cv
+# ==============================================
+
+# number of power supplies: 25
+
+BO-01U:PS-CV
+BO-03U:PS-CV
+BO-05U:PS-CV
+BO-07U:PS-CV
+BO-09U:PS-CV
+BO-11U:PS-CV
+BO-13U:PS-CV
+BO-15U:PS-CV
+BO-17U:PS-CV
+BO-19U:PS-CV
+BO-21U:PS-CV
+BO-23U:PS-CV
+BO-25U:PS-CV
+BO-27U:PS-CV
+BO-29U:PS-CV
+BO-31U:PS-CV
+BO-33U:PS-CV
+BO-35U:PS-CV
+BO-37U:PS-CV
+BO-39U:PS-CV
+BO-41U:PS-CV
+BO-43U:PS-CV
+BO-45U:PS-CV
+BO-47U:PS-CV
+BO-49U:PS-CV

@@ -1,0 +1,8 @@
+# label           li-solenoid-slnd
+# harmonics       1
+# main_harmonic   1 normal
+# units           Ampere T T
+#
+-125.0   -20.0000e-00  +0.0000e+00
++0.00     +0.0000e+00  +0.0000e+00
++125.0   +20.0000e-00  +0.0000e+00
