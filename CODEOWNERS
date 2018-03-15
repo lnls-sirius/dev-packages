@@ -1,2 +1,58 @@
-# Default owner of the repo
+# -------- LIST OF CONTRIBUTERS --------
+
+# @gu1lhermelp
+# @xresende
+# @anacso17
+# @fernandohds564
+# @liulin-lili
+
+# --- default owners of the repo
 * @gu1lhermelp @xresende
+
+
+# -------- BASIC MODULES --------
+
+# --- basic siriuspy modules
+siriuspy/siriuspy/* @gu1lhermelp @xresende @anacso17 @fernandohds564 @liulin-lili
+
+
+# -------- SUBPACKAGES --------
+
+# --- bsmp subpackage
+siriuspy/siriuspy/bsmp/ @gu1lhermelp @xresende @fernandohds564
+
+# --- csdevice subpackage
+siriuspy/siriuspy/csdevice/ @gu1lhermelp @xresende @fernandohds564
+
+# --- diagnostics subpackage
+siriuspy/siriuspy/diagnostics/ @fernandohds564 @xresende
+
+# --- epics subpackage
+siriuspy/siriuspy/epics/ @gu1lhermelp @xresende @fernandohds564
+
+# --- magnet subpackage
+siriuspy/siriuspy/magnet/ @gu1lhermelp @xresende @fernandohds564
+
+# --- namesys subpackage
+siriuspy/siriuspy/namesys/ @gu1lhermelp @xresende @fernandohds564 @anacso17
+
+# --- namesys subpackage
+siriuspy/siriuspy/namesys/ @gu1lhermelp @xresende @fernandohds564 @anacso17
+
+# --- ramp subpackage
+siriuspy/siriuspy/ramp/ @gu1lhermelp @xresende @fernandohds564 @liulin-lili
+
+# --- servccdb subpackage
+siriuspy/siriuspy/servccdb/ @xresende
+
+# --- servconf subpackage
+siriuspy/siriuspy/servconf/ @gu1lhermelp @xresende @liulin-lili
+
+# --- servname subpackage
+siriuspy/siriuspy/servname/ @xresende
+
+# --- servweb subpackage
+siriuspy/siriuspy/servweb/ @xresende @liulin-lili
+
+# --- timesys subpackage
+siriuspy/siriuspy/timesys/ @fernandohds564 @xresende
