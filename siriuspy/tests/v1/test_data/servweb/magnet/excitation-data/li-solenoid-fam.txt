@@ -1,7 +1,0 @@
-# label           li-solenoid-fam
-# harmonics       0
-# main_harmonic   0 normal
-# units           Ampere T*m T*m
-#
--1.00e+01	+3.50e-03 +0.00e+00
-+1.00e+01	-3.50e-03 +0.00e+00

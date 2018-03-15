@@ -1,6 +1,0 @@
-# List of power supplies of type tb-dipole-b-fam
-# ==============================================
-
-# number of power supplies: 1
-
-TB-Fam:PS-B

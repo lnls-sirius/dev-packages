@@ -1,6 +1,0 @@
-# List of power supplies of type si-injdpk
-# ========================================
-
-# number of power supplies: 1
-
-SI-01SA:PU-InjDpK

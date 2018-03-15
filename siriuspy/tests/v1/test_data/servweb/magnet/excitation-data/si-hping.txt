@@ -1,8 +1,0 @@
-# label           si-kicker-hping
-# harmonics       0
-# main_harmonic   0 normal
-# units           Volt T*m T*m
-#
-+0.00     +0.00000e+00  +0.00000e-00
-+7210.00  +6.10000e-02  +0.0000e+00
-+7920.00  +6.70000e-02  +0.0000e+00

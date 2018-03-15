@@ -1,6 +1,0 @@
-# List of power supplies of type si-hping
-# =======================================
-
-# number of power supplies: 1
-
-SI-01SA:PU-HPing

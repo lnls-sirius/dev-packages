@@ -1,7 +1,0 @@
-# label           bo-injkicker
-# harmonics       0
-# main_harmonic   0 normal
-# units           Volt T*m T*m
-#
-+0.00     +0.00000e-00  +0.0000e+00
-+1460.00  -1.00000e-02  +0.0000e+00

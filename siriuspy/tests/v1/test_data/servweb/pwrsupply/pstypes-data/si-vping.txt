@@ -1,6 +1,0 @@
-# List of power supplies of type si-vping
-# =======================================
-
-# number of power supplies: 1
-
-SI-19C4:PU-VPing

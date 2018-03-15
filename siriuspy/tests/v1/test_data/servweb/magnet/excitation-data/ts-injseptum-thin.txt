@@ -1,7 +1,0 @@
-# label           ts-ejeseptum-thin
-# harmonics       0
-# main_harmonic   0 normal
-# units           Volt T*m T*m
-#
--3.95e+02   -6.287535e-01   +0.00e+00
-+3.95e+02	  +6.287535e-01	  +0.00e+00
