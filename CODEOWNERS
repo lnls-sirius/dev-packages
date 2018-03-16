@@ -36,8 +36,8 @@ siriuspy/siriuspy/magnet/ @gu1lhermelp @xresende @fernandohds564
 # --- namesys subpackage
 siriuspy/siriuspy/namesys/ @gu1lhermelp @xresende @fernandohds564 @anacso17
 
-# --- namesys subpackage
-siriuspy/siriuspy/namesys/ @gu1lhermelp @xresende @fernandohds564 @anacso17
+# --- pwrsupply subpackage
+siriuspy/siriuspy/pwrsupply/ @gu1lhermelp @xresende @fernandohds564 @anacso17
 
 # --- ramp subpackage
 siriuspy/siriuspy/ramp/ @gu1lhermelp @xresende @fernandohds564 @liulin-lili
