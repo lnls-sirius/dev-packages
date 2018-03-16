@@ -44,6 +44,7 @@ class PowerSupply(_PSCommInterface):
         self._lock.acquire()
         self._field_values = {}  # dict with last read field values
         self._initialized = False
+        self._prev_connected = None
         self._lock.release()
         self._psdata = _PSData(psname=psname)
         self._controller = controller
@@ -123,14 +124,16 @@ class PowerSupply(_PSCommInterface):
     # --- private methods ---
 
     def _build_setpoints(self):
+        conn1 = self._controller.connected
         sp = dict()
         for field in self._get_fields():
             if not PowerSupply._is_setpoint.match(field):
                 continue
             sp[field] = dict()
             self._set_field_setpoint(sp[field], field)
-        if self._controller.connected:
-            self._initialized = False
+        conn2 = self._controller.connected
+        if conn1 and conn2:
+            self._initialized = True
         return sp
 
     def _set_field_setpoint(self, keyvalue, field):
@@ -239,55 +242,55 @@ class PowerSupply(_PSCommInterface):
 
     def _scan_fields(self):
         """Scan fields."""
-        connected = None  # keeps last connected state
         interval = 1.0/PowerSupply.SCAN_FREQUENCY
         while True:
             time_start = _time.time()
             if self._updating:
-
-                # loop over power supply fields, invoking callback if its value
-                # has changed.
-                for field in self._base_db:
-                    if field in PowerSupply._db_const_fields:
-                        continue
-
-                    # read fielf current value
-                    value = self.read(field)
-
-                    # check whether current value is a new value
-                    self._lock.acquire()
-                    if field in self._field_values:
-                        prev_value = self._field_values[field]
-                        if isinstance(value, _np.ndarray):
-                            if _np.all(value == prev_value):
-                                # skipp callback if not new
-                                self._lock.release()
-                                continue
-                        else:
-                            if value == prev_value:
-                                # skipp callback if not new
-                                self._lock.release()
-                                continue
-
-                    # register current value of field and releases lock
-                    self._field_values[field] = value
-                    self._lock.release()
-
-                    # run callback function since field has a new value
-                    self._run_callbacks(field, value)
-
-                # check whether ControllerIOC is connected to ControllerPS
-                if self._controller.connected != connected:
-                    connected = self._controller.connected
-                    self._run_callbacks(PowerSupply.CONNECTED, connected)
-                    if connected and not self._initialized:
-                        self._setpoints = self._build_setpoints()
-
+                self._update_fields()
 
             # sleep if necessary until frequency interval is reached.
             time_end = _time.time()
             sleep_time = max(0, interval - (time_end - time_start))
             _time.sleep(sleep_time)
+
+    def _update_fields(self):
+        # loop over power supply fields, invoking callback if its value
+        # has changed.
+        for field in self._base_db:
+            if field in PowerSupply._db_const_fields:
+                continue
+
+            # read fielf current value
+            value = self.read(field)
+
+            # check whether current value is a new value
+            self._lock.acquire()
+            if field in self._field_values:
+                prev_value = self._field_values[field]
+                if isinstance(value, _np.ndarray):
+                    if _np.all(value == prev_value):
+                        # skipp callback if not new
+                        self._lock.release()
+                        continue
+                else:
+                    if value == prev_value:
+                        # skipp callback if not new
+                        self._lock.release()
+                        continue
+
+            # register current value of field and releases lock
+            self._field_values[field] = value
+            self._lock.release()
+
+            # run callback function since field has a new value
+            self._run_callbacks(field, value)
+
+        # check whether ControllerIOC is connected to ControllerPS
+        if self._controller.connected != self._prev_connected:
+            self._prev_connected = self._controller.connected
+            self._run_callbacks(PowerSupply.CONNECTED, self._prev_connected)
+            if self._prev_connected and not self._initialized:
+                self._setpoints = self._build_setpoints()
 
     def _run_callbacks(self, field, value):
         for index, callback in self._callbacks.items():
