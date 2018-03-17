@@ -155,8 +155,12 @@ class TestUtil(unittest.TestCase):
         r, *_ = util.beam_rigidity(energy=1.001*e0)
         self.assertIsInstance(r, float)
         self.assertAlmostEqual(r, 7.624701218711276e-05, delta=tol)
-        self.assertRaises(ValueError, util.beam_rigidity, energy=0.0)
-        self.assertRaises(ValueError, util.beam_rigidity, energy=0.999*e0)
+        r, b, g = util.beam_rigidity(0.0)
+        self.assertEqual(r, 0.0)
+        # self.assertRaises(ValueError, util.beam_rigidity, energy=0.0)
+        r, b, g = util.beam_rigidity(0.999*e0)
+        self.assertEqual(r, 0.0)
+        # self.assertRaises(ValueError, util.beam_rigidity, energy=0.999*e0)
         # list arg
         r, *_ = util.beam_rigidity([0.5, 3.0])
         self.assertIsInstance(r, np.ndarray)
@@ -182,15 +186,13 @@ class TestUtil(unittest.TestCase):
 
     def test_check_pv_online(self):
         """Test check_pv_online."""
-        with mock.patch.object(epics.PV,
-                               "wait_for_connection",
-                               return_value=True) as mock_conn:
+        with mock.patch('siriuspy.util._epics.PV') as mock_conn:
+            mock_conn.return_value.wait_for_connection.return_value = True
             status = util.check_pv_online("FakePV")
         self.assertEqual(status, True)
         mock_conn.assert_called()
-        with mock.patch.object(epics.PV,
-                               "wait_for_connection",
-                               return_value=False) as mock_conn:
+        with mock.patch('siriuspy.util._epics.PV') as mock_conn:
+            mock_conn.return_value.wait_for_connection.return_value = False
             status = util.check_pv_online("FakePV")
         self.assertEqual(status, False)
         mock_conn.assert_called()

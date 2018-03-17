@@ -8,7 +8,7 @@ from siriuspy.csdevice.pwrsupply import default_wfmsize as _default_wfmsize
 from siriuspy.pwrsupply.bsmp import Const as _BSMPConst
 from siriuspy.pwrsupply.bsmp import get_variables_FBP as _get_variables_FBP
 from siriuspy.pwrsupply.bsmp import get_functions as _get_functions
-from siriuspy.pwrsupply.bsmp import PSState as _PSState
+from siriuspy.pwrsupply.controller import PSState as _PSState
 from siriuspy.bsmp import Const as _ack
 from siriuspy.bsmp import BSMPQuery as _BSMPQuery
 
@@ -16,6 +16,8 @@ from siriuspy.bsmp import BSMPQuery as _BSMPQuery
 try:
     import PRUserial485.PRUserial485 as _PRUserial485
 except:
+    # in case the PRUserial library is not installed and
+    # this module is used only for simulating PRUs.
     _PRUserial485 = None
 
 
@@ -56,7 +58,7 @@ class _PRUInterface:
         """Set waveforms for power supplies."""
         return self._curve(curve1, curve2, curve3, curve4)
 
-    # --- pure virtual method ---
+    # --- pure virtual methods ---
 
     def _get_sync_pulse_count(self):
         raise NotImplementedError
@@ -144,31 +146,42 @@ class PRU(_PRUInterface):
 
 
 class SerialComm(_BSMPQuery):
-    """Serial communiationMaster BSMP device for power supplies."""
+    """Serial communication Master BSMP device for power supplies."""
 
-    _SCAN_INTERVAL_SYNC_MODE_OFF = 0.1  # [s]
-    _SCAN_INTERVAL_SYNC_MODE_ON = 1.0  # [s]
+    _SCAN_FREQUENCY_SYNC_MODE_OFF = 10.0  # [Hz]
+    _SCAN_FREQUENCY_SYNC_MODE_ON = 1.0  # [Hz]
     _default_wfm = [0.0 for _ in range(_default_wfmsize)]
 
-    def __init__(self, PRU, slaves=None):
+    def __init__(self, simulate=True, slaves=None):
         """Init method."""
-        variables = _get_variables_FBP()
+        variables = _get_variables_FBP()  # TODO: generalize for other PS types
         self._states = {}
         self._queue = _Queue()
         self._waveforms = {}
+        self._simulate = simulate
+        self._connected = {}
 
         _BSMPQuery.__init__(self,
                             variables=variables,
                             functions=_get_functions(),
                             slaves=slaves)
-        self._PRU = PRU
+
+        # self._PRU = PRU
+        self._PRU = PRUSim() if self._simulate else PRU()
+
         # does not start variables scanning just yet.
         self._scanning = False
+
         # create, configure and start auxilliary threads.
         self._thread_queue = _Thread(target=self._process_queue, daemon=True)
         self._thread_scan = _Thread(target=self._process_scan, daemon=True)
         self._thread_queue.start()
         self._thread_scan.start()
+
+    @property
+    def PRU(self):
+        """Return PRU object."""
+        return self._PRU
 
     @property
     def sync_mode(self):
@@ -194,6 +207,10 @@ class SerialComm(_BSMPQuery):
     def scanning(self, value):
         """Set scanning state."""
         self._scanning = value
+
+    def get_connected(self, ID_device):
+        """Return connected state of ID_device."""
+        return self._connected[ID_device]
 
     def set_wfmdata(self, ID_device, wfmdata):
         """Set waveform of a device."""
@@ -252,42 +269,64 @@ class SerialComm(_BSMPQuery):
     def _process_queue(self):
         """Process queue."""
         while True:
+
+            # print(_time.time(), end='')
+            # for ID_device in self._connected:
+            #     print(self._connected[ID_device], end='')
+            # print('')
             item = self._queue.get()
             ID_device, ID_cmd, kwargs = item
             # print('process: ', ID_device, hex(ID_cmd), kwargs)
             cmd = 'cmd_' + str(hex(ID_cmd))
             method = getattr(self, cmd)
-            ack, load = method(ID_receiver=ID_device, **kwargs)
-            # print('cmd: ', cmd)
-            # print('ack: ', hex(ack))
-            # print('load: ', load)
+            try:
+                ack, load = method(ID_receiver=ID_device, **kwargs)
+                self._connected[ID_device] = True
+            except Exception:
+                self._connected[ID_device] = False
+                # print('Exception raised while executing {}'.format(cmd))
+                continue
+
             if ack != _ack.ok:
                 # needs implementation
-                raise NotImplementedError(
+                self._connected[ID_device] = False
+                print(
                     'Error returned in BSMP command: {}!'.format(hex(ack)))
             elif load is not None:
-                self._process_load(ID_device, ID_cmd, load)
+                ret = self._process_load(ID_device, ID_cmd, load)
+                if ret is None:
+                    self._connected[ID_device] = False
 
     def _process_load(self, ID_device, ID_cmd, load):
         if ID_cmd == 0x12:
             for variable, value in load.items():
+                # if variable == 27:
+                #     print(value)
                 self._states[ID_device][variable] = value
+            return 0
         else:
-            err_str = 'BSMP cmd {} not implemented in process_thread!'
-            raise NotImplementedError(err_str.format(hex(ID_cmd)))
+            # err_str = 'BSMP cmd {} not implemented in process_thread!'
+            # print(err_str)
+            return None
 
     def _process_scan(self):
         """Scan power supply variables, adding puts into queue."""
+        interval_sync_off = 1.0/SerialComm._SCAN_FREQUENCY_SYNC_MODE_OFF
+        interval_sync_on = 1.0/SerialComm._SCAN_FREQUENCY_SYNC_MODE_ON
         while True:
+            time_start = _time.time()
             if self._scanning:
+                # init disconnected controllers
+                for ID_device in self._connected:
+                    if not self._connected[ID_device]:
+                        self._init_controller(self.slaves[ID_device])
                 self._sync_counter = self._PRU.sync_pulse_count
                 self._insert_variables_group_read()
-            if self._PRU.sync_mode:
-                # self.event.wait(1)
-                _time.sleep(SerialComm._SCAN_INTERVAL_SYNC_MODE_ON)
-            else:
-                # self.event.wait(0.1)
-                _time.sleep(SerialComm._SCAN_INTERVAL_SYNC_MODE_OFF)
+            time_end = _time.time()
+            interval = interval_sync_on if self._PRU.sync_mode else \
+                interval_sync_off
+            sleep_time = max(0, interval - (time_end - time_start))
+            _time.sleep(sleep_time)
 
     def _insert_variables_group_read(self):
         kwargs = {'ID_group': _BSMPConst.group_id}

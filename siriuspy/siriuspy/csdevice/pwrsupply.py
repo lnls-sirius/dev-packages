@@ -107,6 +107,7 @@ def get_pu_current_unit():
 def get_common_propty_database():
     """Return database entries to all power-supply-like devices."""
     db = {
+        'Version-Cte':      {'type': 'str', 'value': 'UNDEF'},
         'CtrlMode-Mon':     {'type': 'enum', 'enums': ps_interface,
                              'value': _et.idx.Remote},
         'PwrState-Sel':     {'type': 'enum', 'enums': ps_pwrstate_sel,
