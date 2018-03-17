@@ -2,7 +2,7 @@
 
 import re as _re
 import sys as _sys
-import copy as _copy
+from copy import deepcopy as _dcopy
 import math as _math
 import numpy as _np
 import importlib as _importlib
@@ -14,112 +14,6 @@ if _importlib.find_loader('matplotlib') is not None:
     import matplotlib.cm as _cmap
 
 _timeout = 1.0
-AC_FREQUENCY = 60
-RF_DIVISION = 4
-RF_FREQUENCY = 299792458/518.396*864
-BASE_FREQUENCY = RF_FREQUENCY / RF_DIVISION
-RF_PERIOD = 1/RF_FREQUENCY
-BASE_DELAY = 1 / BASE_FREQUENCY
-RF_DELAY = BASE_DELAY / 20
-FINE_DELAY = 5e-12                  # five picoseconds
-
-
-class Events:
-    """Contain properties of the Events."""
-
-    HL2LL_MAP = {'Linac': 'Event01', 'InjBO': 'Event02',
-                 'InjSI': 'Event03', 'RmpBO': 'Event04',
-                 'MigSI': 'Event05', 'DigLI': 'Event06',
-                 'DigTB': 'Event07', 'DigBO': 'Event08',
-                 'DigTS': 'Event09', 'DigSI': 'Event0A',
-                 'Orbit': 'Event0B', 'Coupl': 'Event0C',
-                 'Tunes': 'Event0D', 'Study': 'Event0E'}
-    LL2HL_MAP = {val: key for key, val in HL2LL_MAP.items()}
-
-    LL_TMP = 'Event{0:02X}'
-    LL_RGX = _re.compile('Event([0-9A-E]{2})([a-z-\.]*)', _re.IGNORECASE)
-    HL_RGX = _re.compile('('+'|'.join(list(HL2LL_MAP.keys())) +
-                         ')([a-z-\.]*)', _re.IGNORECASE)
-    HL_PREF = 'AS-Glob:TI-EVG:'
-
-    LL_CODES = list(range(50)) + list(range(80, 120)) + list(range(160, 256))
-    LL_EVENTS = []
-    for i in LL_CODES:
-        LL_EVENTS.append(LL_TMP.format(i))
-
-    MODES = ('Disabled', 'Continuous', 'Injection', 'External')
-    DELAY_TYPES = ('Fixed', 'Incr')
-
-
-class Clocks:
-    """Contain properties of the Clocks."""
-
-    STATES = ('Dsbl', 'Enbl')
-
-    LL_TMP = 'Clock{0:d}'
-    HL_TMP = 'Clock{0:d}'
-    HL_PREF = 'AS-Glob:TI-EVG:'
-
-    HL2LL_MAP = dict()
-    for i in range(8):
-        HL2LL_MAP[HL_TMP.format(i)] = LL_TMP.format(i)
-    LL2HL_MAP = {val: key for key, val in HL2LL_MAP.items()}
-
-
-class Triggers:
-    """Contain properties of the triggers."""
-
-    STATES = ('Dsbl', 'Enbl')
-    POLARITIES = ('Normal', 'Inverse')
-    DELAY_TYPES = ('Fixed', 'Incr')
-
-    def __init__(self):
-        """Initialize the Instance."""
-        text = ''
-        if _web.server_online():
-            text = _web.high_level_triggers(timeout=_timeout)
-        # the execution of text will create the HL_TRIGGS variable.
-        exec(text)
-        self._hl_triggers = locals()['HL_TRIGGS']
-        self.check_triggers_consistency()
-
-    @property
-    def hl_triggers(self):
-        """Dictionary with high level trigger properties."""
-        return _copy.deepcopy(self._hl_triggers)
-
-    def check_triggers_consistency(self):
-        """Check consitency of Triggers definition.
-
-        Check if High Level definition of Triggers is consistent with
-        Low Level connections of the timing devices.
-        """
-        Connections.add_bbb_info()
-        Connections.add_crates_info()
-        from_evg = Connections.get_connections_from_evg()
-        twds_evg = Connections.get_connections_twds_evg()
-        for trig, val in self.hl_triggers.items():
-            chans = {_PVName(chan) for chan in val['channels']}
-            for chan in chans:
-                tmp = twds_evg.get(chan)
-                if tmp is None:
-                    raise Exception(
-                        'Device ' + chan +
-                        ' defined in the high level trigger ' +
-                        trig + ' not specified in timing connections data.')
-                if not tmp:
-                    raise Exception('Device ' + chan +
-                                    ' defined in the high level trigger ' +
-                                    trig + ' maybe were already used.')
-                up_dev = tmp.pop()
-                diff_devs = from_evg[up_dev] - chans
-                if diff_devs and not chan.dev.endswith('BPM'):
-                    raise Exception(
-                        'Devices: ' + ' '.join(diff_devs) +
-                        ' are connected to the same output of ' +
-                        up_dev + ' as ' + chan +
-                        ' but are not related to the sam trigger (' +
-                        trig + ').')
 
 
 class IOs:
@@ -200,6 +94,13 @@ class IOs:
             for conn2 in conns:
                 dic_[conn2] = conn1
 
+    @staticmethod
+    def get_channel_input(channel):
+        if not isinstance(channel, _PVName):
+            channel = _PVName(channel)
+        conn_up = IOs.O2I_MAP[channel.dev][channel.propty]
+        return _PVName(channel.device_name + ':' + conn_up)
+
 
 class _TimeDevData:
     """Class with mapping of timing devices and triggers receivers connections.
@@ -244,6 +145,8 @@ class _TimeDevData:
         if reg_match:
             type_chan, num_chan = reg_match[0]
             return dev, chan, type_chan, num_chan
+        else:
+            print(chan)
 
     def _parse_text_and_build_connection_mappings(self, text):
         from_evg = dict()
@@ -501,29 +404,41 @@ class _TimeDevData:
 
         return {dev for dev in self._all_devices if _pv_fun(dev, type_dev)}
 
-    @property
-    def conn_from_evg(self): return _copy.deepcopy(self._conn_from_evg)
+    def get_device_tree(self, channel):
+        twds_evg = self._conn_twds_evg
+        up_chan = _PVName(channel)
+        if up_chan in twds_evg.keys():
+            up_chan = list(twds_evg[up_chan])[0]
+        up_channels = [up_chan]
+        while up_chan.device_name not in self._top_chain_devs:
+            up_chan = IOs.get_channel_input(up_chan)
+            up_chan = list(twds_evg[up_chan])[0]
+            up_channels.append(up_chan)
+        return up_channels
 
     @property
-    def conn_twds_evg(self): return _copy.deepcopy(self._conn_twds_evg)
+    def conn_from_evg(self): return _dcopy(self._conn_from_evg)
 
     @property
-    def final_receivers(self): return _copy.deepcopy(self._final_receiver_devs)
+    def conn_twds_evg(self): return _dcopy(self._conn_twds_evg)
 
     @property
-    def top_chain_senders(self): return _copy.deepcopy(self._top_chain_devs)
+    def final_receivers(self): return _dcopy(self._final_receiver_devs)
 
     @property
-    def relations_from_evg(self): return _copy.deepcopy(self._dev_from_evg)
+    def top_chain_senders(self): return _dcopy(self._top_chain_devs)
 
     @property
-    def relations_twds_evg(self): return _copy.deepcopy(self._dev_twds_evg)
+    def relations_from_evg(self): return _dcopy(self._dev_from_evg)
 
     @property
-    def hierarchy_list(self): return _copy.deepcopy(self._hierarchy_map)
+    def relations_twds_evg(self): return _dcopy(self._dev_twds_evg)
 
     @property
-    def all_devices(self): return _copy.deepcopy(self._all_devices)
+    def hierarchy_list(self): return _dcopy(self._hierarchy_map)
+
+    @property
+    def all_devices(self): return _dcopy(self._all_devices)
 
 
 class Connections:
@@ -599,6 +514,12 @@ class Connections:
             return timedata.all_devices
         else:
             return timedata.get_devices_by_type(type_dev)
+
+    @classmethod
+    def get_device_tree(cls, channel):
+        """Return a dictionary with the beaglebone to power supply mapping."""
+        timedata = cls._get_timedata()
+        return timedata.get_device_tree(channel)
 
     @classmethod
     def add_bbb_info(cls, connections_dict=None):
