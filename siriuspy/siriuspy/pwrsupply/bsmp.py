@@ -603,7 +603,7 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
             i += 4
             # firmware_version
             version = ''.join([chr(v) for v in data[i:i+128]])
-            version, *_ = version.splot('\x00')
+            version, *_ = version.split('\x00')
             value[Const.firmware_version] = version
             i += 128
             # ps_soft_interlocks
@@ -615,7 +615,9 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
             value[Const.ps_hard_interlocks] = \
                 data[i] + (data[i+1] << 8) + \
                 (data[i+2] << 16) + (data[i+3] << 24)
-            value[Const.i_load] = _struct.unpack("<f", bytes(data[18:22]))[0]
+            i += 4
+            # i_load
+            value[Const.i_load] = _struct.unpack("<f", bytes(data[i:i+4]))[0]
             i += 4
         else:
             raise ValueError('Invalid group ID!')
