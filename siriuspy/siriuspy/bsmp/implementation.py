@@ -236,6 +236,12 @@ class Variable:
                 value += load[i] << (i*8)
         elif self.type == 'float':
             value = _struct.unpack('<f', bytes(load))[0]
+        elif self.type == 'arr_char':
+            value = load
+        elif self.type == 'arr_float':
+            value = []
+            for i in range(len(load/4)):
+                value.append(_struct.unpack('<f', bytes(load[i*4:i*4+4])))
         else:
             raise NotImplementedError("Type not defined.")
 
