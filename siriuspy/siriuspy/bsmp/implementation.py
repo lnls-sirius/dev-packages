@@ -439,6 +439,48 @@ class Transaction:
         return Package.parse_stream(stream)
 
 
+class Entities:
+    """BSMP entities."""
+
+    def __init__(self, variables, functions):
+        """Constructor."""
+        self.variables = [
+            Variable(0, False, 2, 'int'),
+            Variable(1, False, 4, 'float'),
+            Variable(2, False, 4, 'float'),
+            Variable(3, False, 0, 'arr_char'),
+            Variable(4, False, 2, 'int'),
+            Variable(5, False, 2, 'int'),
+            Variable(6, False, 2, 'int'),
+            Variable(7, False, 2, 'int'),
+            Variable(8, False, 2, 'int'),
+            Variable(9, False, 4, 'float'),
+            Variable(10, False, 4, 'float'),
+            Variable(11, False, 4, 'float'),
+            Variable(12, False, 4, 'float'),
+            Variable(13, False, 16, 'arr_float'),
+            Variable(14, False, 2, 'int'),
+            Variable(15, False, 2, 'int'),
+            Variable(16, False, 4, 'float'),
+            Variable(17, False, 4, 'float'),
+            Variable(18, False, 4, 'float'),
+            Variable(19, False, 4, 'float'),
+            Variable(20, False, 4, 'float'),
+            Variable(21, False, None, None),
+            Variable(22, False, None, None),
+            Variable(23, False, None, None),
+            Variable(24, False, None, None),
+            Variable(25, False, 2, 'int'),
+            Variable(26, False, 2, 'int'),
+            Variable(27, False, 4, 'float'),
+            Variable(28, False, 4, 'float'),
+            Variable(29, False, 4, 'float'),
+            Variable(30, False, 4, 'float'),
+        ]
+
+        self.functions = []
+
+
 class BSMP:
     """BSMP protocol implementation."""
 
@@ -483,14 +525,14 @@ class BSMP:
     def consult_variables_group(self, id_group):
         """Return id of the variables in the given group. Command 0x06."""
         # Build package
-        package = Package(self._slave_address, Message(0x06), [id_group])
+        package = Package(self._slave_address, Message(0x06, [id_group]))
         response = Transaction.send(self._serial, package)
         # Check for errors
         if not response.message.cmd == 0x07:
             return response.message.cmd, None
         # Check load
-        if response.message.size != len(response.message.load):
-            return BSMP.INVALID_LOAD_SIZE, None
+        # if response.message.size != len(response.message.load):
+        #     return BSMP.INVALID_LOAD_SIZE, None
 
         return response.message.load
 
