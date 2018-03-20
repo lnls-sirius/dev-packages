@@ -1,10 +1,10 @@
 """Booster ramp configuration definition."""
 import copy as _copy
-from siriuspy.csdevice.pwrsupply import default_wfmsize as \
-    _default_wfmsize
+from siriuspy.csdevice.pwrsupply import max_wfmsize as \
+    _max_wfmsize
 
 
-_ref_wfm_array = [0.0 for _ in range(_default_wfmsize)]
+_ref_wfm_array = [0.0 for _ in range(_max_wfmsize)]
 
 
 def get_dict():

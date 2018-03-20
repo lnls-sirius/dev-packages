@@ -4,7 +4,7 @@ import time as _time
 from queue import Queue as _Queue
 from threading import Thread as _Thread
 
-from siriuspy.csdevice.pwrsupply import default_wfmsize as _default_wfmsize
+from siriuspy.csdevice.pwrsupply import max_wfmsize as _max_wfmsize
 from siriuspy.pwrsupply.bsmp import Const as _BSMPConst
 from siriuspy.pwrsupply.bsmp import get_variables_FBP as _get_variables_FBP
 from siriuspy.pwrsupply.bsmp import get_functions as _get_functions
@@ -115,7 +115,9 @@ class PRU(_PRUInterface):
             raise ValueError('module PRUserial485 is not installed!')
         _PRUInterface.__init__(self)
         # signal use of PRU and shared memory.
-        _PRUserial485.PRUserial485_open(6, b"M")
+        baud_rate = 6
+        mode = b"M"  # slave(S)/master(M)
+        _PRUserial485.PRUserial485_open(baud_rate, mode)
 
     def _get_sync_pulse_count(self):
         return _PRUserial485.PRUserial485_read_pulse_count_sync()
@@ -150,7 +152,7 @@ class SerialComm(_BSMPQuery):
 
     _SCAN_FREQUENCY_SYNC_MODE_OFF = 10.0  # [Hz]
     _SCAN_FREQUENCY_SYNC_MODE_ON = 1.0  # [Hz]
-    _default_wfm = [0.0 for _ in range(_default_wfmsize)]
+    _default_wfm = [0.0 for _ in range(_max_wfmsize)]
 
     def __init__(self, simulate=True, slaves=None):
         """Init method."""
@@ -212,11 +214,16 @@ class SerialComm(_BSMPQuery):
         """Return connected state of ID_device."""
         return self._connected[ID_device]
 
+    def get_wfmdata(self, ID_device):
+        """Return wfmdata of a given ID_device."""
+        return self._waveforms[ID_device]
+
     def set_wfmdata(self, ID_device, wfmdata):
         """Set waveform of a device."""
         sorted_IDs = sorted(self._waveforms.keys())
         if ID_device not in sorted_IDs:
-            raise ValueError
+            print('ID_device {} not defined!'.format(ID_device))
+            return
         else:
             self._waveforms[ID_device] = wfmdata[:]
             if len(sorted_IDs) == 1:
@@ -255,6 +262,7 @@ class SerialComm(_BSMPQuery):
         # init pwrsupply slave
         self._init_controller(slave)
         # add entry in waveform dictionary
+        # TODO: should we load it from permanent memory?
         self._waveforms[slave.ID_device] = SerialComm._default_wfm
 
     def put(self, ID_device, ID_cmd, kwargs):

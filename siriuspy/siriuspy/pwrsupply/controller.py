@@ -61,6 +61,9 @@ class ControllerIOC(PSCommInterface):
 
     """
 
+    _WAIT_TURN_ON_OFF = 0.3  # [s]
+    _WAIT_RESET_INTLCKS = 0.1  # [s]
+
     # conversion dict from PS fields to DSP properties for read method.
     _read_field2func = {
         'Version-Cte': '_get_firmware_version',
@@ -93,7 +96,7 @@ class ControllerIOC(PSCommInterface):
         self._ID_device = ID_device
         self._ps_db = ps_database
         # self._opmode = _PSConst.OpMode.SlowRef
-        self._wfmdata = [v for v in self._ps_db['WfmData-SP']['value']]
+        # self._wfmdata = [v for v in self._ps_db['WfmData-SP']['value']]
 
         # ps_status = self._get_ps_status()
 
@@ -121,13 +124,13 @@ class ControllerIOC(PSCommInterface):
     def cmd_turn_on(self):
         """Turn power supply on."""
         r = self._bsmp_run_function(ID_function=_BSMPConst.turn_on)
-        _time.sleep(0.3)  # Eduardo-CON said it is necessary!
+        _time.sleep(ControllerIOC._WAIT_TURN_ON_OFF)
         return r
 
     def cmd_turn_off(self):
         """Turn power supply off."""
         ret = self._bsmp_run_function(ID_function=_BSMPConst.turn_off)
-        _time.sleep(0.3)  # Eduardo-CON said it is necessary!
+        _time.sleep(ControllerIOC._WAIT_TURN_ON_OFF)
         return ret
 
     def cmd_open_loop(self):
@@ -142,7 +145,7 @@ class ControllerIOC(PSCommInterface):
     def cmd_reset_interlocks(self):
         """Reset interlocks."""
         r = self._bsmp_run_function(_BSMPConst.reset_interlocks)
-        _time.sleep(0.1)  # Eduardo-CON said it is necessary!
+        _time.sleep(ControllerIOC._WAIT_RESET_INTLCKS)
         return r
 
     def cmd_set_slowref(self, setpoint):
@@ -181,7 +184,8 @@ class ControllerIOC(PSCommInterface):
         return self._serial_comm.get_connected(self._ID_device)
 
     def _get_wfmdata(self):
-        return self._wfmdata
+        wfmdata = self._serial_comm.get_wfmdata(self._ID_device)
+        return wfmdata[:]
 
     def _get_wfmindex(self):
         return self._serial_comm.sync_pulse_count
