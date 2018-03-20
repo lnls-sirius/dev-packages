@@ -226,7 +226,6 @@ class StreamChecksum:
         else:
             return(False)
 
-
 class BSMPStream():
     """Class to process BSMP streams."""
 

@@ -4,6 +4,7 @@ import time as _time
 import random as _random
 from siriuspy import util as _util
 from siriuspy.bsmp import Const as _ack
+from siriuspy.bsmp import BSMP
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.csdevice.pwrsupply import ps_opmode as _ps_opmode
 from siriuspy.pwrsupply.bsmp import Const as _BSMPConst
@@ -12,6 +13,85 @@ from siriuspy.pwrsupply.bsmp import get_variables_FBP as _get_variables_FBP
 
 
 __version__ = _util.get_last_commit_hash()
+
+
+class PSDevice:
+    """Map device to BSMP."""
+
+    def __init__(self):
+        self._variables = {}
+        self._groups = {}
+        self._curves = {}
+        self._functions = {}
+
+    def get_variable_id(self, variable):
+        return self._variables[variable]
+
+    def get_function_id(self, function):
+        return self._functions[function]
+
+
+class PSController:
+    """High level PS controller."""
+
+    def __init__(self, slave_address):
+        self._slave_address = slave_address
+        self._setpoints = {}
+        # self._variables = {}
+        self._ps = PSDevice()
+        self._bsmp = BSMP()
+
+    # API
+    @property
+    def setpoints(self):
+        """Controller variables."""
+        return self._setpoints
+
+    @property
+    def variables(self):
+        """Device variables."""
+        return self.read_all_variables()
+        # return self._variables
+
+    def read(self, field):
+        """Read a field from device."""
+        if field in self._variables:
+            return self._read_variable(field)
+        elif field in self._setpoints:
+            return self._setpoints[field]
+        else:
+            raise ValueError("Field {} not mapped.".format(field))
+
+    def write(self, field, value):
+        """Write to device field.
+
+        True - ok
+        False - something went wrong
+            Error
+            Disonnection
+        """
+        value = self._handle_write(field, value)
+        if value is None:
+            return False
+        if field in self._variables:
+            return True
+        elif field in self._setpoints:
+            return True
+        else:
+            raise ValueError("Field {} not mapped.".format(field))
+
+    def read_all_variables(self):
+        """Read all variable from group 0."""
+        return self._bsmp.read_variables_group(self._slave_address, 0)
+
+    # Private
+    def _read_variable(self, field):
+        id_variable = self._ps.get_variable_id(field)
+        return self._bsmp.read_variable(self._slave_address, id_variable)
+        # return self._variables[field]
+
+    # def _read_setpoint(self, field):
+    #     return self._setpoints[field]
 
 
 class PSCommInterface:
