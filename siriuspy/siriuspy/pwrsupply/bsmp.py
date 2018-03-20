@@ -602,7 +602,8 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
                 _struct.unpack("<f", bytes(data[i:i+4]))[0]
             i += 4
             # firmware_version
-            version = ''.join([chr(data[i+j]) for j in range(128)])
+            version = ''.join([chr(v) for v in data[i:i+128]])
+            version, *_ = version.splot('\x00')
             value[Const.firmware_version] = version
             i += 128
             # ps_soft_interlocks
