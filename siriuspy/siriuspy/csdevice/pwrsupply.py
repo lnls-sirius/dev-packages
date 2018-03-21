@@ -140,8 +140,6 @@ def get_common_propty_database():
                              'value': _et.idx.Off},
         'PwrState-Sts':     {'type': 'enum', 'enums': ps_pwrstate_sts,
                              'value': _et.idx.Off},
-        'IntlkSoft-Mon':    {'type': 'int',    'value': 0},
-        'IntlkHard-Mon':    {'type': 'int',    'value': 0},
         # 'IntlkSoftLabels-Cte':  {'type': 'string',
         #                          'count': len(ps_soft_interlock),
         #                          'value': ps_soft_interlock},
@@ -153,7 +151,7 @@ def get_common_propty_database():
     return db
 
 
-def get_common_ps_propty_database():
+def get_ps_FBP_propty_database():
     """Return database of commun to all pwrsupply PVs."""
     db = get_common_propty_database()
     db_ps = {
@@ -186,6 +184,8 @@ def get_common_ps_propty_database():
                            'prec': default_ps_current_precision},
         'Current-Mon': {'type': 'float',  'value': 0.0,
                         'prec': default_ps_current_precision},
+        'IntlkSoft-Mon':    {'type': 'int',    'value': 0},
+        'IntlkHard-Mon':    {'type': 'int',    'value': 0},
         'IntlkSoftLabels-Cte':  {'type': 'string',
                                  'count': len(ps_soft_interlock_FBP),
                                  'value': ps_soft_interlock_FBP},
@@ -217,7 +217,7 @@ def get_common_pu_propty_database():
 
 def get_ps_propty_database(pstype):
     """Return property database of a LNLS power supply type device."""
-    propty_db = get_common_ps_propty_database()
+    propty_db = get_ps_FBP_propty_database()
     signals_lims = ('Current-SP', 'Current-RB',
                     'CurrentRef-Mon', 'Current-Mon', )
     signals_unit = signals_lims + ('WfmData-SP', 'WfmData-RB')

@@ -31,7 +31,11 @@ class PSData:
         if self._ispulsed:
             self._propty_database = _get_pu_propty_database(self._pstype)
         else:
-            self._propty_database = _get_ps_propty_database(self._pstype)
+            if self._psmodel == 'FBP':
+                self._propty_database = _get_ps_propty_database(self._pstype)
+            else:
+                raise ValueError(
+                    'DB for psmodel {} not implemented!'.format(self._psmodel))
 
     @property
     def psname(self):
