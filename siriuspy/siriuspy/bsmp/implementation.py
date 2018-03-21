@@ -226,7 +226,10 @@ class Message:
             raise ValueError("Load must be smaller than 65535.")
 
         self._cmd = cmd
-        self._load = load
+        if load is None:
+            self._load = []
+        else:
+            self._load = load
 
     @classmethod
     def init_stream(cls, stream):
@@ -442,17 +445,19 @@ class Variable:
 
     def load_to_value(self, load):
         """Parse value from load."""
+        load = list(map(ord, load))
         if self.type == 'int':
             value = 0
             for i in range(self.size):
-                value += ord(load[i]) << (i*8)
+                value += load[i] << (i*8)
         elif self.type == 'float':
             value = _struct.unpack('<f', bytes(load))[0]
         elif self.type == 'string':
             value = ''
-            byte, _ = load.split(chr(0), 1)
-            for char in byte:
-                value += '{:c}'.format(ord(char))
+            for char in load:
+                if char == 0:
+                    break
+                value += '{:c}'.format(char)
         elif self.type == 'arr_float':
             value = []
             for i in range(int(self.size/4)):
@@ -580,9 +585,9 @@ class Entities:
             Variable(0, False, 2, 'int'),
             Variable(1, False, 4, 'float'),
             Variable(2, False, 4, 'float'),
-            Variable(3, False, 0, 'arr_char'),
-            Variable(4, False, 2, 'int'),
-            Variable(5, False, 2, 'int'),
+            Variable(3, False, 0, 'string'),
+            Variable(4, False, 4, 'int'),
+            Variable(5, False, 4, 'int'),
             Variable(6, False, 2, 'int'),
             Variable(7, False, 2, 'int'),
             Variable(8, False, 2, 'int'),
@@ -591,25 +596,30 @@ class Entities:
             Variable(11, False, 4, 'float'),
             Variable(12, False, 4, 'float'),
             Variable(13, False, 16, 'arr_float'),
-            Variable(14, False, 2, 'int'),
-            Variable(15, False, 2, 'int'),
+            Variable(14, False, 4, 'int'),
+            Variable(15, False, 4, 'int'),
             Variable(16, False, 4, 'float'),
             Variable(17, False, 4, 'float'),
             Variable(18, False, 4, 'float'),
             Variable(19, False, 4, 'float'),
             Variable(20, False, 4, 'float'),
-            Variable(21, False, None, None),
-            Variable(22, False, None, None),
-            Variable(23, False, None, None),
-            Variable(24, False, None, None),
-            Variable(25, False, 2, 'int'),
-            Variable(26, False, 2, 'int'),
+            Variable(21, False, 2, 'int'),
+            Variable(22, False, 2, 'int'),
+            Variable(23, False, 2, 'int'),
+            Variable(24, False, 2, 'int'),
+            Variable(25, False, 4, 'int'),
+            Variable(26, False, 4, 'int'),
             Variable(27, False, 4, 'float'),
             Variable(28, False, 4, 'float'),
             Variable(29, False, 4, 'float'),
             Variable(30, False, 4, 'float'),
         ]
 
+        self.groups = [
+            VariablesGroup(0, False, 31, self.variables),
+            VariablesGroup(1, False, 31, self.variables),
+            VariablesGroup(2, True, 0, []),
+        ]
         self.functions = []
 
 
@@ -621,14 +631,14 @@ class BSMP:
 
     def __init__(self, serial, slave_address, entities):
         """Constructor."""
-        self._channel = Channel(self._serial, self._slave_address)
+        self._channel = Channel(serial, slave_address)
         # self._variables = self.read_variables_list()
         self._entities = entities
         # Variables group cache
         self._group_cache = dict()
 
     @property
-    def entitites(self):
+    def entities(self):
         """BSMP entities."""
         return self._entities
 
@@ -668,8 +678,11 @@ class BSMP:
         m = Message(chr(0x06), [chr(group_id)])
         message = self.channel.request(m)
         # Check for errors
-        if message.cmd == 0x07:
-            return BSMP.OK, message.load
+        if ord(message.cmd) == 0x07:
+            return BSMP.OK, list(map(ord, message.load))
+        else:  # Error
+            if ord(message.cmd) > 0x0E:
+                return message.cmd, None
 
         return None, None
 
@@ -679,24 +692,23 @@ class BSMP:
         variable = self.entities.variables[var_id]
         m = Message(chr(0x10), [chr(var_id)])
         response = self.channel.request(m)  # Returns a message
-        if response.cmd == 0x11:  # Ok
+        if ord(response.cmd) == 0x11:  # Ok
             if len(response.load) == variable.size:
                 return BSMP.OK, variable.load_to_value(response.load)
         else:  # Error
-            if response.cmd > 0x0E:
+            if ord(response.cmd) > 0x0E:
                 return response.cmd, None
         return None, None
 
     def read_variables_group(self, group_id):
         """Read variable group. (0x12)."""
-        group = self.entities.group[group_id]
+        group = self.entities.groups[group_id]
         m = Message(chr(0x12), [chr(group_id)])
         response = self.channel.request(m)
-        if response.cmd == 0x13:
+        if ord(response.cmd) == 0x13:
             if len(response.load) == group.variables_size():
                 return BSMP.OK, group.load_to_value(response.load)
         else:
-            if response.cmd > 0xE0:
                 return response.cmd, None
         return None, None
 
