@@ -209,62 +209,6 @@ class BSMPResponse(BSMP):
         raise NotImplementedError
 
 
-class Variable:
-    """BSMP variable."""
-
-    def __init__(self, var_id, write, size, var_type):
-        """Set variable properties."""
-        self.id = var_id
-        self.write = write
-        if size == 0:
-            size = 128
-        self.size = size  # 1..128 bytes
-        self.type = var_type
-
-    @classmethod
-    def load_init(cls, id, load):
-        """Construct variable from load."""
-        write_access = (load & 0x80) >> 7
-        size = (load & 0x7F)
-        return cls(id, write_access, size)
-
-    def parse_value(self, load):
-        """Parse value from load."""
-        if self.type == 'int':
-            value = 0
-            for i in range(self.size):
-                value += load[i] << (i*8)
-        elif self.type == 'float':
-            value = _struct.unpack('<f', bytes(load))[0]
-        elif self.type == 'arr_char':
-            value = load
-        elif self.type == 'arr_float':
-            value = []
-            for i in range(len(load/4)):
-                value.append(_struct.unpack('<f', bytes(load[i*4:i*4+4])))
-        else:
-            raise NotImplementedError("Type not defined.")
-
-        return value
-
-
-class Function:
-    """BSMP function."""
-
-    def __init__(self, func_id, input_size, output_size):
-        """Set function properties."""
-        self.id = func_id
-        self.input_size = input_size  # 0..15
-        self.output_size = output_size  # 0..15
-
-    @classmethod
-    def load_init(cls, id, load):
-        """Construct variable from load."""
-        input_size = (load & 0xF0) >> 4
-        output_size = (load & 0x0F)
-        return cls(id, input_size, output_size)
-
-
 class Message:
     """BSMP Message.
 
@@ -285,14 +229,14 @@ class Message:
         self._load = load
 
     @classmethod
-    def parse_stream(cls, stream):
+    def init_stream(cls, stream):
         """Build a Message object from a byte stream."""
         if len(stream) < 3:
             raise ValueError("BSMP Message too short.")
-        cmd = cls.decode_cmd(stream[0])
-        load = cls.decode_load(stream[3:])
+        # cmd = cls.decode_cmd(stream[0])
+        # load = cls.decode_load(stream[3:])
 
-        return cls(cmd, load)
+        return cls(stream[0], stream[3:])
 
     # API
     @property
@@ -306,33 +250,37 @@ class Message:
         return self._load
 
     def to_stream(self):
-        """Convert Message to byte stream."""
+        """Get byte stream."""
         stream = []
-        stream.append(Message.encode_cmd(self.cmd))
+        # stream.append(Message.encode_cmd(self.cmd))
+        # stream.extend(self._get_load_size())
+        # if self._load:
+        #     stream.extend(Message.encode_load(self.load))
+        stream.append(self.cmd)
         stream.extend(self._get_load_size())
-        if self._load:
-            stream.extend(Message.encode_load(self.load))
+        if self.load:
+            stream.extend(self.load)
         return stream
 
-    @staticmethod
-    def encode_cmd(cmd):
-        """Encode command to bytes."""
-        return chr(cmd)
+    # @staticmethod
+    # def encode_cmd(cmd):
+    #     """Encode command to bytes."""
+    #     return chr(cmd)
 
-    @staticmethod
-    def decode_cmd(cmd):
-        """Decode command from bytes."""
-        return ord(cmd)
+    # @staticmethod
+    # def decode_cmd(cmd):
+    #     """Decode command from bytes."""
+    #     return ord(cmd)
 
-    @staticmethod
-    def encode_load(load):
-        """Encode load value/array to bytes."""
-        return [chr(l) for l in load]
+    # @staticmethod
+    # def encode_load(load):
+    #     """Encode load value/array to bytes."""
+    #     return [chr(l) for l in load]
 
-    @staticmethod
-    def decode_load(load):
-        """Decode load value/array to bytes."""
-        return [ord(l) for l in load]
+    # @staticmethod
+    # def decode_load(load):
+    #     """Decode load value/array to bytes."""
+    #     return [ord(l) for l in load]
 
     def _get_load_size(self):
         # Get load size in bytes
@@ -359,20 +307,17 @@ class Package:
         self._stream = None
 
     @classmethod
-    def parse_stream(cls, stream):
+    def init_stream(cls, stream):
         """Build a Package object from a byte stream."""
         if len(stream) < 5:
             raise ValueError("BSMP Package too short.")
-
-        checksum = stream[-1]
-        address = ord(stream[0])
-        message = Message.parse_stream(stream[1:-1])
-        c = cls(address, message)
         # Verify checksum
-        if c.checksum != ord(checksum):
+        if not Package.verify_checksum(stream):
             raise ValueError("Inconsistent message. Checksum does not check.")
-        # Return Package instance parsed from stream
-        return c
+        # Return new package
+        address = stream[0]
+        message = Message.init_stream(stream[1:-1])
+        return cls(address, message)
 
     # API
     @property
@@ -388,15 +333,21 @@ class Package:
     @property
     def checksum(self):
         """Package checksum."""
-        return Package.stream_checksum(self._get_stream())
+        stream = []
+        stream.append(self._address)
+        stream.extend(self._message.to_stream())
+        return Package.calc_checksum(stream)
 
     def to_stream(self):
         """Convert Package to byte stream."""
-        return self._get_stream() + [chr(self.checksum)]
+        stream = []
+        stream.append(self._address)
+        stream.extend(self._message.to_stream())
+        return stream + [chr(Package.calc_checksum(stream))]
 
     @staticmethod
-    def stream_checksum(stream):
-        """Return stream with checksum byte at end of message."""
+    def calc_checksum(stream):
+        """Return stream checksum."""
         counter = 0
         i = 0
         while (i < len(stream)):
@@ -421,28 +372,203 @@ class Package:
         else:
             return(False)
 
-    def _get_stream(self):
-        if self._stream is None:
-            stream = []
-            stream.append(chr(self._address))
-            stream.extend(self._message.to_stream())
-            self._stream = stream
 
-        return self._stream
+class Channel:
+    """Serial comm with address."""
+
+    def __init__(self, serial, address):
+        """Set channel."""
+        self.serial = serial
+        self.address = address
+        # self.error = False
+
+    def read(self):
+        """Read from serial."""
+        package = Package.init_stream(self.serial.UART_read())
+        # if package.message.cmd > 0xE0:
+        #     self.error = package.message.cmd
+        # else:
+        #     self.error = False
+        return package.message
+
+    def write(self, message, timeout=100):
+        """Write to serial."""
+        stream = Package(chr(self.address), message).to_stream()
+        return self.serial.UART_write(stream, timeout=timeout)
+
+    def request(self, message, timeout=100):
+        """Write and wait for response."""
+        self.write(message, timeout)
+        return self.read()
 
 
-class Transaction:
-    """BSMP transaction."""
+class Variable:
+    """BSMP variable."""
 
-    @staticmethod
-    def send(serial, package):
-        """Send package and wait for answer."""
-        # TODO: Check uart write return and exceptions
-        serial.UART_write(package.to_stream(), timeout=10)
-        # TODO treat uart read error
-        stream = serial.UART_read()
-        # TODO treat parse stream exceptions
-        return Package.parse_stream(stream)
+    def __init__(self, eid, waccess, size, var_type):
+        """Set variable properties."""
+        self.eid = eid
+        self.waccess = waccess
+        if size == 0:
+            size = 128
+        self.size = size  # 1..128 bytes
+        self.type = var_type
+
+    # @classmethod
+    # def load_init(cls, id, load):
+    #     """Construct variable from load."""
+    #     write_access = (load & 0x80) >> 7
+    #     size = (load & 0x7F)
+    #     return cls(id, write_access, size)
+
+    # def read(self, channel):
+    #     """Send command 0x10."""
+    #     m = Message(chr(0x10), [chr(self.eid)])
+    #     message = channel.request(m)
+    #     value = self.load_to_value(message.load)
+    #     return value
+
+    # def write(self, channel, value):
+    #     """Send command 0x20."""
+    #     if not self.waccess:
+    #         return
+    #     load = self.value_to_load(value)
+    #     m = Message(chr(0x20), load)
+    #     return channel.request(m)
+
+    # def bin_op(self, op, mask):
+    #     """Send binary operation command 0x24."""
+    #     raise NotImplementedError()
+
+    def load_to_value(self, load):
+        """Parse value from load."""
+        if self.type == 'int':
+            value = 0
+            for i in range(self.size):
+                value += ord(load[i]) << (i*8)
+        elif self.type == 'float':
+            value = _struct.unpack('<f', bytes(load))[0]
+        elif self.type == 'string':
+            value = ''
+            byte, _ = load.split(chr(0), 1)
+            for char in byte:
+                value += '{:c}'.format(ord(char))
+        elif self.type == 'arr_float':
+            value = []
+            for i in range(int(self.size/4)):
+                value.append(_struct.unpack('<f', bytes(load[i*4:i*4+4]))[0])
+        else:
+            raise NotImplementedError("Type not defined.")
+
+        return value
+
+    def value_to_load(self, value):
+        """Convert value to load."""
+        if isinstance(value, int):
+            return chr(value)
+        elif isinstance(value, float):
+            return _struct.pack('<f', value)
+        elif isinstance(value, str) and self.type == 'string':
+            return value.encode()
+        elif isinstance(value, list) and self.type == 'arr_float':
+            load = bytes()
+            for v in value:
+                load += _struct.pack('<f', v)
+            return load
+        else:
+            raise NotImplementedError("Type not defined.")
+
+
+class VariablesGroup:
+    """BSMP variables group entity."""
+
+    def __init__(self, eid, waccess, size, variables):
+        """Set group parameter."""
+        self.eid = eid
+        self.waccess = waccess
+        self.size = size
+        self.variables = variables
+
+    # def read(self, channel):
+    #     """Read variables id. Command 0x12."""
+    #     m = Message(chr(0x12), [chr[self.eid]])
+    #     message = channel.send(m)
+    #     ids = [self._load_to_value(message.load)]
+    #     return ids
+
+    # def write(self, value, n_vars):
+    #     """Write to variables group. Command 0x22."""
+    #     raise NotImplementedError()
+
+    # def bin_op(self, op, mask, n_vars):
+    #     """Binary operaion on group of variables."""
+    #     raise NotImplementedError()
+
+    def load_to_value(self, load):
+        """Parse value from load."""
+        value = list()
+        offset = 0
+        for variable in self.variables:
+            i, j = offset, offset + variable.size
+            value.append(variable.load_to_value(load[i:j]))
+            offset += variable.size
+        return value
+
+    def value_to_load(self, value):
+        """Parse load from value."""
+        pass
+
+    def variables_size(self):
+        """Return sum of variables size."""
+        size = 0
+        for variable in self.variables:
+            size += variable.size
+        return size
+
+
+class Curve:
+    """BSMP Curve entity."""
+
+    def __init__(self, eid, waccess, sblocks, nblocks, checksum):
+        """Set curve properties."""
+        self.eid = eid  # Entity ID
+        self.waccess = waccess
+        self.sblocks = sblocks  # Block size
+        self.nblocks = nblocks  # Number of blocks
+        self.checksum = checksum
+
+    # def read_block(self):
+    #     """Read a curve block. Command 0x40."""
+    #     pass
+
+    # def send_block(self, block_number, block_data):
+    #     """Write curve block. Commadn 0x41."""
+    #     pass
+
+    # def calc_checksum(self):
+    #     """Recalculate curve checksum. Command 0x42."""
+    #     pass
+
+
+class Function:
+    """BSMP function."""
+
+    def __init__(self, func_id, input_size, output_size):
+        """Set function properties."""
+        self.id = func_id
+        self.input_size = input_size  # 0..15
+        self.output_size = output_size  # 0..15
+
+    # @classmethod
+    # def load_init(cls, id, load):
+    #     """Construct variable from load."""
+    #     input_size = (load & 0xF0) >> 4
+    #     output_size = (load & 0x0F)
+    #     return cls(id, input_size, output_size)
+
+    # def execute(self):
+    #     """Execute function. Command 0x50."""
+    #     pass
 
 
 class Entities:
@@ -495,13 +621,21 @@ class BSMP:
 
     def __init__(self, serial, slave_address, entities):
         """Constructor."""
-        self._serial = serial
-        self._slave_address = slave_address
+        self._channel = Channel(self._serial, self._slave_address)
         # self._variables = self.read_variables_list()
         self._entities = entities
-
         # Variables group cache
         self._group_cache = dict()
+
+    @property
+    def entitites(self):
+        """BSMP entities."""
+        return self._entities
+
+    @property
+    def channel(self):
+        """Serial channel to an address."""
+        return self._channel
 
     # def read_variables_list(self):
     #     """Consult list of variables. Command 0x02."""
@@ -528,68 +662,43 @@ class BSMP:
     #     return functions
 
     # 0x0_
-    def consult_variables_group(self, id_group):
+    def consult_variables_group(self, group_id):
         """Return id of the variables in the given group. Command 0x06."""
-        # Build package
-        package = Package(self._slave_address, Message(0x06, [id_group]))
-        response = Transaction.send(self._serial, package)
+        # Send request package
+        m = Message(chr(0x06), [chr(group_id)])
+        message = self.channel.request(m)
         # Check for errors
-        if not response.message.cmd == 0x07:
-            return response.message.cmd, None
-        # Check load
-        # if response.message.size != len(response.message.load):
-        #     return BSMP.INVALID_LOAD_SIZE, None
+        if message.cmd == 0x07:
+            return BSMP.OK, message.load
 
-        return response.message.load
+        return None, None
 
     # 0x1_
-    def read_variable(self, id_variable):
+    def read_variable(self, var_id):
         """Read variable. (0x10)."""
-        # Build package
-        package = Package(self._slave_address, Message(0x10, [id_variable]))
-        response = Transaction.send(self._serial, package)
+        variable = self.entities.variables[var_id]
+        m = Message(chr(0x10), [chr(var_id)])
+        response = self.channel.request(m)  # Returns a message
+        if response.cmd == 0x11:  # Ok
+            if len(response.load) == variable.size:
+                return BSMP.OK, variable.load_to_value(response.load)
+        else:  # Error
+            if response.cmd > 0x0E:
+                return response.cmd, None
+        return None, None
 
-        # Check for errors
-        if not response.message.cmd == 0x11:
-            return response.message.cmd, None
-        # Check load
-        variable = self._entities.variables[id_variable]
-        if len(response.message.load) != variable.size:
-            return BSMP.INVALID_LOAD_SIZE, None
-        # Parse load
-        value = variable.parse_load(response.message.load)
-
-        return BSMP.OK, value
-
-    def read_variables_group(self, id_group):
+    def read_variables_group(self, group_id):
         """Read variable group. (0x12)."""
-        # Build package
-        package = Package(self._slave_address, Message(0x12, [id_group]))
-        response = Transaction.send(self._serial, package)
-        # Check for errors
-        if not response.message.cmd == 0x13:
-            return response.message.cmd, None
-        # Check Load
-        # if len(response.message.load) != :
-        #     return BSMP.INVALID_LOAD_SIZE, None
-        # Check group cache TODO: works?
-        if id_group not in self._group_cache:
-            self._group_cache[id_group] = \
-                self.consult_variables_group(id_group)
-        # Parse values
-        values = []
-        offset = 0
-        ids = self._group_cache[id_group]
-        for id in ids:
-            # Get variable
-            variable = self._entities.variables[id]
-            # Get load and update offset TODO: check KeyError
-            load = response.message.load[offset:offset + variable.size]
-            offset += variable.size
-            # Append value
-            values.append(variable.parse_value(load))
-
-        return BSMP.OK, values
+        group = self.entities.group[group_id]
+        m = Message(chr(0x12), [chr(group_id)])
+        response = self.channel.request(m)
+        if response.cmd == 0x13:
+            if len(response.load) == group.variables_size():
+                return BSMP.OK, group.load_to_value(response.load)
+        else:
+            if response.cmd > 0xE0:
+                return response.cmd, None
+        return None, None
 
     # 0x5_
     def execute_function(self, id_function, input):
