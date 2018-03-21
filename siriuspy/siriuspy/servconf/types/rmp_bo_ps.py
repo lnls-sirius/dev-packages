@@ -1,9 +1,10 @@
 """Booster ramp configuration definition."""
 import copy as _copy
-from siriuspy.csdevice.pwrsupply import max_wfmsize as \
-    _max_wfmsize
+from siriuspy.csdevice.pwrsupply import max_wfmsize as _max_wfmsize
 
 
+# TODO: this ref_wfm can be changed to a smaller size list after config type
+# comparison is generalized.
 _ref_wfm_array = [0.0 for _ in range(_max_wfmsize)]
 
 

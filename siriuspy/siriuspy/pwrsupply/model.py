@@ -199,7 +199,10 @@ class PowerSupply(_PSCommInterface):
         return self._controller.write('WfmLabel-SP', value)
 
     def _set_wfmdata(self, value):
-        value = [v for v in range(min(len(value, _max_wfmsize)))]
+        if isinstance(value, (int, float)):
+            value = [value, ]
+        elif len(value) > _max_wfmsize:
+            value = value[:_max_wfmsize]
         self._setpoints['WfmData-SP']['value'] = value
         return self._controller.write('WfmData-SP', value)
 

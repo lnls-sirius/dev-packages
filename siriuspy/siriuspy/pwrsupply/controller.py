@@ -4,6 +4,7 @@ import time as _time
 import random as _random
 from siriuspy import util as _util
 from siriuspy.bsmp import Const as _ack
+from siriuspy.csdevice.pwrsupply import max_wfmsize as _max_wfmsize
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.csdevice.pwrsupply import ps_opmode as _ps_opmode
 from siriuspy.pwrsupply.bsmp import Const as _BSMPConst
@@ -287,6 +288,10 @@ class ControllerIOC(PSCommInterface):
         return value
 
     def _set_wfmdata(self, value):
+        if isinstance(value, (int, float)):
+            value = [value, ]
+        elif len(value) > _max_wfmsize:
+            value = value[:_max_wfmsize]
         self._wfmdata = value[:]
         self._serial_comm.set_wfmdata(self._ID_device, self._wfmdata)
         return value
