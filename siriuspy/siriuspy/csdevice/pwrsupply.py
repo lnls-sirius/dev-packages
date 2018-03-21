@@ -29,26 +29,52 @@ ps_pwrstate_sts = ('Off', 'On')
 ps_opmode = ('SlowRef', 'SlowRefSync', 'FastRef', 'RmpWfm', 'MigWfm', 'Cycle')
 ps_cmdack = ('OK', 'Local', 'PCHost', 'Interlocked', 'UDC_locked',
              'DSP_TimeOut', 'DSP_Busy', 'Invalid',)
-ps_soft_interlock = ('Overtemperature on module', 'Reserved',
-                     'Reserved', 'Reserved',
-                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-                     )
-ps_hard_interlock = ('Overvoltage on load', 'Overvoltage on DC-Link',
-                     'Undervoltage on DC-Link', 'DC-Link input relay fail',
-                     'DC-Link input fuse fail', 'Fail on module drivers',
-                     'Reserved', 'Reserved',
-                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-                     'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+
+ps_soft_interlock_FBP = (
+    'Overtemperature on module', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+)
+ps_hard_interlock_FBP = (
+    'Overvoltage on load', 'Overvoltage on DC-Link',
+    'Undervoltage on DC-Link', 'DC-Link input relay fail',
+    'DC-Link input fuse fail', 'Fail on module drivers',
+    'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+)
+ps_soft_interlock_FBP_DCLink = (
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+)
+ps_hard_interlock_FBP_DCLink = (
+    'Falha na fonte 1', 'Falha na fonte 2',
+    'Falha na fonte 3', 'Sensor de fumaça',
+    'Interlock externo', 'Sobre-tensão na fonte 1'
+    'Sobre-tensão na fonte 2', 'Sobre-tensão na fonte 3',
+    'Sub-tensão na fonte 1', 'Sub-tensão na fonte 2',
+    'Sub-tensão na fonte 3', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+)
 
 # --- power supply constants definition class ---
 
@@ -116,12 +142,12 @@ def get_common_propty_database():
                              'value': _et.idx.Off},
         'IntlkSoft-Mon':    {'type': 'int',    'value': 0},
         'IntlkHard-Mon':    {'type': 'int',    'value': 0},
-        'IntlkSoftLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_soft_interlock),
-                                 'value': ps_soft_interlock},
-        'IntlkHardLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_hard_interlock),
-                                 'value': ps_hard_interlock},
+        # 'IntlkSoftLabels-Cte':  {'type': 'string',
+        #                          'count': len(ps_soft_interlock),
+        #                          'value': ps_soft_interlock},
+        # 'IntlkHardLabels-Cte':  {'type': 'string',
+        #                          'count': len(ps_hard_interlock),
+        #                          'value': ps_hard_interlock},
         'Reset-Cmd': {'type': 'int', 'value': 0},
     }
     return db
@@ -160,6 +186,12 @@ def get_common_ps_propty_database():
                            'prec': default_ps_current_precision},
         'Current-Mon': {'type': 'float',  'value': 0.0,
                         'prec': default_ps_current_precision},
+        'IntlkSoftLabels-Cte':  {'type': 'string',
+                                 'count': len(ps_soft_interlock_FBP),
+                                 'value': ps_soft_interlock_FBP},
+        'IntlkHardLabels-Cte':  {'type': 'string',
+                                 'count': len(ps_hard_interlock_FBP),
+                                 'value': ps_hard_interlock_FBP},
     }
     db.update(db_ps)
     return db

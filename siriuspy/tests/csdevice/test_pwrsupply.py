@@ -25,8 +25,10 @@ public_interface = (
     'ps_pwrstate_sts',
     'ps_opmode',
     'ps_cmdack',
-    'ps_soft_interlock',
-    'ps_hard_interlock',
+    'ps_soft_interlock_FBP',
+    'ps_hard_interlock_FBP',
+    'ps_soft_interlock_FBP_DCLink',
+    'ps_hard_interlock_FBP_DCLink',
 
     'Const',
 

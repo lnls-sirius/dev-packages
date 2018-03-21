@@ -14,8 +14,10 @@ from siriuspy.csdevice.pwrsupply import ps_states as _ps_states
 from siriuspy.csdevice.pwrsupply import ps_pwrstate_sel as _ps_pwrstate_sel
 from siriuspy.csdevice.pwrsupply import ps_opmode as _ps_opmode
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
-from siriuspy.csdevice.pwrsupply import ps_soft_interlock as _ps_soft_interlock
-from siriuspy.csdevice.pwrsupply import ps_hard_interlock as _ps_hard_interlock
+from siriuspy.csdevice.pwrsupply import ps_soft_interlock_FBP as \
+    _ps_soft_interlock_FBP
+from siriuspy.csdevice.pwrsupply import ps_hard_interlock_FBP as \
+    _ps_hard_interlock_FBP
 
 
 class Const:
@@ -271,7 +273,7 @@ class _InterlockSoft(_Interlock):
     """Power supply soft iterlocks."""
 
     def __init__(self):
-        self._labels = _ps_soft_interlock
+        self._labels = _ps_soft_interlock_FBP
         self._init()
 
 
@@ -279,7 +281,7 @@ class _InterlockHard(_Interlock):
     """Power supply hard iterlocks."""
 
     def __init__(self):
-        self._labels = _ps_hard_interlock
+        self._labels = _ps_hard_interlock_FBP
         self._init()
 
 
