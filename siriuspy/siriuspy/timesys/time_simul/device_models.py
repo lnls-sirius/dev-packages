@@ -19,6 +19,7 @@ class CallBack:
     def __init__(self, callbacks=None, prefix=None):
         """Initialize the instance."""
         self.prefix = prefix or ''
+        self.uuid = _uuid.uuid4()
         self._callbacks = dict(callbacks) if callbacks else dict()
 
     def _call_callbacks(self, propty, value, **kwargs):
@@ -46,7 +47,6 @@ class _BaseIOC(CallBack):
 
     def __init__(self, callbacks=None, prefix=None):
         super().__init__(callbacks, prefix=prefix)
-        self.uuid = _uuid.uuid4()
         self._pvname2attr = {value: key
                              for key, value in self._attr2pvname.items()}
         self._attr2expr = self._get_attr2expression()
@@ -250,12 +250,10 @@ class EVGIOC(_BaseIOC):
         if attr == 'injection_sp':
             if value:
                 if not self._injection_rb and self._continuous_rb:
-                    self.injection_sp = value
+                    super().__setattr__(attr, value)
                     _Thread(target=self._injection_fun).start()
-            else:
-                self.injection_sp = value
-        else:
-            super().__setattr__(attr, value)
+                    return
+        super().__setattr__(attr, value)
 
     def _bucket_list_setter(self, value):
         bucket = []
@@ -371,10 +369,10 @@ class _OTP_IOC(_BaseIOC):
         'width_rb': 'Width-RB',
         'delay_sp': 'Delay-SP',
         'delay_rb': 'Delay-RB',
-        'polarity_sp': 'Polrty-Sel',
-        'polarity_rb': 'Polrty-Sts',
-        'event_sp': 'Event-Sel',
-        'event_rb': 'Event-Sts',
+        'polarity_sp': 'Polarity-Sel',
+        'polarity_rb': 'Polarity-Sts',
+        'event_sp': 'Evt-SP',
+        'event_rb': 'Evt-RB',
         'pulses_sp': 'Pulses-SP',
         'pulses_rb': 'Pulses-RB',
         }
@@ -419,8 +417,8 @@ class _OTP_IOC(_BaseIOC):
 class _EVROUT_IOC(_BaseIOC):
 
     _attr2pvname = {
-        'interlock_sp':  'Intlk-SP',
-        'interlock_rb':  'Intlk-RB',
+        'interlock_sp':  'Intlk-Sel',
+        'interlock_rb':  'Intlk-Sts',
         'source_sp':     'Src-Sel',
         'source_rb':     'Src-Sts',
         'trigger_sp':    'SrcTrig-SP',
@@ -488,10 +486,10 @@ class _AFCOUT_IOC(_BaseIOC):
         'width_rb': 'Width-RB',
         'delay_sp': 'Delay-SP',
         'delay_rb': 'Delay-RB',
-        'polarity_sp': 'Polrty-Sel',
-        'polarity_rb': 'Polrty-Sts',
-        'event_sp': 'Event-Sel',
-        'event_rb': 'Event-Sts',
+        'polarity_sp': 'Polarity-Sel',
+        'polarity_rb': 'Polarity-Sts',
+        'event_sp': 'Evt-SP',
+        'event_rb': 'Evt-RB',
         'pulses_sp': 'Pulses-SP',
         'pulses_rb': 'Pulses-RB',
         }
@@ -555,8 +553,8 @@ class EVRIOC(_BaseIOC):
         return 'OTP{0:02d}'.format(x)
 
     _attr2pvname = {
-        'state_sp': 'State-Sel',
-        'state_rb': 'State-Sts',
+        'state_sp': 'DevEnbl-Sel',
+        'state_rb': 'DevEnbl-Sts',
         'loss_down_conn_mon': 'Los-Mon',
         'alive_mon': 'Alive-Mon',
         'network_mon': 'Network-Mon',

@@ -1,6 +1,5 @@
 """Module to simulate timing system."""
 
-import uuid as _uuid
 from siriuspy.namesys import SiriusPVName as _PVName
 from .device_models import EVGIOC, EVRIOC, EVEIOC, AFCIOC, CallBack
 from siriuspy.timesys.time_data import Connections as _Connections
@@ -37,7 +36,6 @@ class TimingSimulation(CallBack):
         """Initialize the instance."""
         self._get_constants()
         super().__init__(callbacks, prefix='')
-        self.uuid = _uuid.uuid4()
         evg = EVGIOC(rf_freq,
                      callbacks={self.uuid: self._on_pvs_change},
                      prefix=prefix + self.EVG_PREFIX)
@@ -81,14 +79,14 @@ class TimingSimulation(CallBack):
         """Get property by PV name."""
         reason = reason[len(self.prefix):]
         parts = _PVName(reason)
-        if parts.dev_type == 'EVG':
+        if parts.dev == 'EVG':
             return self.evg.get_propty(reason)
-        elif parts.dev_name+':' in self.evrs.keys():
-            return self.evrs[parts.dev_name+':'].get_propty(reason)
-        elif parts.dev_name+':' in self.eves.keys():
-            return self.eves[parts.dev_name+':'].get_propty(reason)
-        elif parts.dev_name+':' in self.afcs.keys():
-            return self.afcs[parts.dev_name+':'].get_propty(reason)
+        elif parts.device_name+':' in self.evrs.keys():
+            return self.evrs[parts.device_name+':'].get_propty(reason)
+        elif parts.device_name+':' in self.eves.keys():
+            return self.eves[parts.device_name+':'].get_propty(reason)
+        elif parts.device_name+':' in self.afcs.keys():
+            return self.afcs[parts.device_name+':'].get_propty(reason)
         else:
             return None
 
@@ -96,14 +94,14 @@ class TimingSimulation(CallBack):
         """Set property by PV Name."""
         reason = reason[len(self.prefix):]
         parts = _PVName(reason)
-        if parts.dev_type == 'EVG':
+        if parts.dev == 'EVG':
             return self.evg.set_propty(reason, value)
-        elif parts.dev_name+':' in self.evrs.keys():
-            return self.evrs[parts.dev_name+':'].set_propty(reason, value)
-        elif parts.dev_name+':' in self.eves.keys():
-            return self.eves[parts.dev_name+':'].set_propty(reason, value)
-        elif parts.dev_name+':' in self.afcs.keys():
-            return self.afcs[parts.dev_name+':'].set_propty(reason, value)
+        elif parts.device_name+':' in self.evrs.keys():
+            return self.evrs[parts.device_name+':'].set_propty(reason, value)
+        elif parts.device_name+':' in self.eves.keys():
+            return self.eves[parts.device_name+':'].set_propty(reason, value)
+        elif parts.device_name+':' in self.afcs.keys():
+            return self.afcs[parts.device_name+':'].set_propty(reason, value)
         else:
             return False
 

@@ -8,7 +8,8 @@ class TimingDevDb:
 
     @staticmethod
     def get_otp_database(otp_num=0, prefix=None):
-        prefix = prefix or 'OTP{0:02d}'.format(otp_num)
+        def_prefix = 'OTP{0:02d}'.format(otp_num)
+        prefix = prefix if prefix is not None else def_prefix
         db = dict()
 
         dic_ = {'type': 'enum', 'value': 0, 'enums': Triggers.STATES}
@@ -51,7 +52,8 @@ class TimingDevDb:
 
     @staticmethod
     def get_out_database(out_num=0, equip='EVR', prefix=None):
-        prefix = prefix or 'OUT{0:d}'.format(out_num)
+        def_prefix = 'OUT{0:d}'.format(out_num)
+        prefix = prefix if prefix is not None else def_prefix
         db = dict()
 
         dic_ = {'type': 'enum', 'value': 0, 'enums': Triggers.INTLK}
@@ -89,12 +91,13 @@ class TimingDevDb:
 
     @staticmethod
     def get_afc_out_database(out_num=0, out_tp='FMC', prefix=None):
-        prefix = prefix or (out_tp + '{0:d}'.format(out_num))
+        def_prefix = (out_tp + '{0:d}'.format(out_num))
         if out_tp == 'FMC':
             fmc = (out_num // 5) + 1
             ch = (out_num % 5) + 1
-            prefix = prefix or (out_tp + '{0:d}CH{1:d}'.format(fmc, ch))
+            def_prefix = (out_tp + '{0:d}CH{1:d}'.format(fmc, ch))
 
+        prefix = prefix if prefix is not None else def_prefix
         db = TimingDevDb.get_otp_database(prefix=prefix)
         dic_ = {'type': 'enum', 'value': 0, 'enums': Triggers.SRC_LL}
         db[prefix+'Src-Sts'] = dic_
@@ -104,7 +107,8 @@ class TimingDevDb:
 
     @staticmethod
     def get_evr_database(evr_num=1, prefix=None):
-        prefix = prefix or 'AS-Glob:TI-EVR-{1:d}:'.format(evr_num)
+        def_prefix = 'AS-Glob:TI-EVR-{0:d}:'.format(evr_num)
+        prefix = prefix if prefix is not None else def_prefix
         db = dict()
 
         dic_ = {'type': 'enum', 'value': 0, 'enums': ('Dsbl', 'Enbl')}
@@ -135,19 +139,20 @@ class TimingDevDb:
 
         for i in range(24):
             db2 = TimingDevDb.get_otp_database(otp_num=i)
-            for k, v in db2:
+            for k, v in db2.items():
                 db[prefix + k] = v
 
         for i in range(8):
             db2 = TimingDevDb.get_out_database(out_num=i, equip='EVR')
-            for k, v in db2:
+            for k, v in db2.items():
                 db[prefix + k] = v
 
         return db
 
     @staticmethod
     def get_eve_database(eve_num=1, prefix=None):
-        prefix = prefix or 'AS-Glob:TI-EVE-{1:d}:'.format(eve_num)
+        def_prefix = 'AS-Glob:TI-EVE-{0:d}:'.format(eve_num)
+        prefix = prefix if prefix is not None else def_prefix
         db = dict()
 
         dic_ = {'type': 'enum', 'value': 0, 'enums': ('Dsbl', 'Enbl')}
@@ -178,23 +183,24 @@ class TimingDevDb:
 
         for i in range(16):
             db2 = TimingDevDb.get_otp_database(otp_num=i)
-            for k, v in db2:
+            for k, v in db2.items():
                 db[prefix + k] = v
 
         for i in range(8):
             db2 = TimingDevDb.get_out_database(out_num=i, equip='EVE')
-            for k, v in db2:
+            for k, v in db2.items():
                 db[prefix + k] = v
 
         return db
 
     @staticmethod
     def get_afc_database(afc_sec=1, has_idx=False, idx=1, prefix=None):
-        prefix = prefix or 'AS-{0:02d}:TI-AFC:'.format(afc_sec)
+        def_prefix = 'AS-{0:02d}:TI-AFC:'.format(afc_sec)
         if has_idx:
-            prefix = 'AS-{0:02d}:TI-AFC-{1:d}:'.format(afc_sec, idx)
-        db = dict()
+            def_prefix = 'AS-{0:02d}:TI-AFC-{1:d}:'.format(afc_sec, idx)
 
+        prefix = prefix if prefix is not None else def_prefix
+        db = dict()
         dic_ = {'type': 'enum', 'value': 0, 'enums': ('Dsbl', 'Enbl')}
         db[prefix+'DevEnbl-Sts'] = dic_
         db[prefix+'DevEnbl-Sel'] = _dcopy(dic_)
@@ -223,19 +229,20 @@ class TimingDevDb:
 
         for i in range(8):
             db2 = TimingDevDb.get_afc_out_database(out_num=i, out_tp='CRT')
-            for k, v in db2:
+            for k, v in db2.items():
                 db[prefix + k] = v
 
         for i in range(10):
             db2 = TimingDevDb.get_afc_out_database(out_num=i, out_tp='FMC')
-            for k, v in db2:
+            for k, v in db2.items():
                 db[prefix + k] = v
 
         return db
 
     @staticmethod
     def get_fout_database(evr_num=1, prefix=None):
-        prefix = prefix or 'AS-Glob:TI-FOUT-{1:d}:'.format(evr_num)
+        def_prefix = 'AS-Glob:TI-FOUT-{1:d}:'.format(evr_num)
+        prefix = prefix if prefix is not None else def_prefix
         db = dict()
 
         dic_ = {'type': 'enum', 'value': 0, 'enums': ('Dsbl', 'Enbl')}
@@ -268,7 +275,8 @@ class TimingDevDb:
 
     @staticmethod
     def get_event_database(evt_num=0, prefix=None):
-        prefix = prefix or 'Evt{0:02d}'.format(evt_num)
+        def_prefix = 'Evt{0:02d}'.format(evt_num)
+        prefix = prefix if prefix is not None else def_prefix
 
         db = dict()
         dic_ = {'type': 'int', 'value': 0,
@@ -290,7 +298,8 @@ class TimingDevDb:
 
     @staticmethod
     def get_clock_database(clock_num=0, prefix=None):
-        prefix = prefix or 'Clock{0:d}'.format(clock_num)
+        def_prefix = 'Clock{0:d}'.format(clock_num)
+        prefix = prefix if prefix is not None else def_prefix
         db = dict()
 
         dic_ = {'type': 'int', 'value': 124948114,
@@ -305,7 +314,8 @@ class TimingDevDb:
 
     @staticmethod
     def get_evg_database(prefix=None):
-        prefix = prefix or 'AS-Glob:TI-EVG:'
+        def_prefix = 'AS-Glob:TI-EVG:'
+        prefix = prefix if prefix is not None else def_prefix
         db = dict()
 
         dic_ = {'type': 'enum', 'value': 0, 'enums': ('Dsbl', 'Enbl')}
@@ -317,8 +327,9 @@ class TimingDevDb:
         db[prefix + 'ContinuousEvt-Sts'] = dic_
 
         dic_ = {'type': 'int', 'count': 864, 'value': 864*[1],
-                'lolo': 0, 'low': 0, 'lolim': 0,
-                'hilim': 864, 'high': 864, 'hihi': 864}
+                # 'lolo': 0, 'low': 0, 'lolim': 0,
+                # 'hilim': 864, 'high': 864, 'hihi': 864
+                }
         db[prefix + 'BucketList-SP'] = _dcopy(dic_)
         db[prefix + 'BucketList-RB'] = dic_
         db[prefix + 'BucketListLen-Mon'] = {
