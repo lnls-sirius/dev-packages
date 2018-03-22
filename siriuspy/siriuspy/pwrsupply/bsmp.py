@@ -35,6 +35,10 @@ class Const:
     t_uint32 = 7
     t_char128 = 8
     t_float4 = 9
+    t_param = 10
+    t_float12 = 11
+    t_dspclass = 12
+    t_none = 13
 
     # --- common variables ---
     ps_status = 0
@@ -61,23 +65,36 @@ class Const:
     temp_switches = 30
 
     # --- functions ---
-    turn_on = 0
-    turn_off = 1
-    open_loop = 2
-    close_loop = 3
-    select_op_mode = 4
-    reset_interlocks = 6
-    set_serial_termination = 9  # not implemented yet
-    sync_pulse = 15  # not implemented yet
-    set_slowref = 16
-    set_slowref_fbp = 17  # not implemented yet
-    reset_counters = 18  # not implemented yet
-    cfg_siggen = 23  # not implemented yet
-    set_siggen = 24  # not implemented yet
-    enable_siggen = 25  # not implemented yet
-    disable_siggen = 26  # not implemented yet
-    set_slowref_readback = 27  # not implemented yet
-    set_slowref_fbp_readback = 28  # not implemented yet
+    turn_on = 0,
+    turn_off = 1,
+    open_loop = 2,  # not implemented yet
+    close_loop = 3,
+    select_op_mode = 4,
+    reset_interlocks = 6,
+    set_serial_termination = 9,  # not implemented yet
+    sync_pulse = 15,  # not implemented yet
+    set_slowref = 16,
+    set_slowref_fbp = 17,  # not implemented yet
+    reset_counters = 18,  # not implemented yet
+    cfg_siggen = 23,  # not implemented yet
+    set_siggen = 24,  # not implemented yet
+    enable_siggen = 25,  # not implemented yet
+    disable_siggen = 26,  # not implemented yet
+    set_slowref_readback = 27,  # not implemented yet
+    set_slowref_fbp_readback = 28,  # not implemented yet
+    set_param = 29,  # not implemented yet
+    get_param = 30,  # not implemented yet
+    save_param_eeprom = 31,  # not implemented yet
+    load_param_eeprom = 32,  # not implemented yet
+    save_param_bank = 33,  # not implemented yet
+    load_param_bank = 34,  # not implemented yet
+    set_dsp_coeffs = 35,  # not implemented yet
+    get_dsp_coeff = 36,  # not implemented yet
+    save_dsp_coeffs_eeprom = 37,  # not implemented yet
+    load_dsp_coeffs_eeprom = 38,  # not implemented yet
+    save_dsp_modules_eeprom = 39,  # not implemented yet
+    load_dsp_modules_eeprom = 40,  # not implemented yet
+    reset_udc = 41,  # not implemented yet
 
     # --- variables groups ---
     group_id = 3  # default variables group ID defined for power supplies
@@ -182,6 +199,43 @@ def get_functions():
         Const.set_slowref_fbp_readback:
             ('set_slowref_fbp_readback', Const.t_uint8,
              [Const.t_float, Const.t_float, Const.t_float, Const.t_float]),
+        Const.set_param:
+            ('set_param', Const.t_uint8,
+             [Const.t_param, Const.t_uint16, Const.t_float]),
+        Const.get_param:
+            ('get_param', Const.t_float, [Const.t_param, Const.t_uint16]),
+        Const.save_param_eeprom:
+            ('save_param_eeprom', Const.t_uint8,
+             [Const.t_param, Const.t_uint16]),
+        Const.load_param_eeprom:
+            ('load_param_eeprom', Const.t_uint8,
+             [Const.t_param, Const.t_uint16]),
+        Const.save_param_bank:
+            ('save_param_bank', Const.t_uint8, []),
+        Const.load_param_bank:
+            ('load_param_bank', Const.t_uint8, []),
+        Const.set_dsp_coeffs:
+            ('set_dsp_coeffs', Const.t_uint8,
+             [Const.t_dspclass, Const.t_uint16, Const.t_float12]),
+        Const.get_dsp_coeff:
+            ('get_dsp_coeff', Const.t_uint8,
+             [Const.t_dspclass, Const.t_uint16, Const.t_float]),
+        Const.get_dsp_coeff:
+            ('get_dsp_coeff', Const.t_uint8,
+             [Const.t_dspclass, Const.t_uint16, Const.t_float]),
+        Const.save_dsp_coeffs_eeprom:
+            ('save_dsp_coeffs_eeprom', Const.t_uint8,
+             [Const.t_dspclass, Const.t_uint16]),
+        Const.load_dsp_coeffs_eeprom:
+            ('load_dsp_coeffs_eeprom', Const.t_uint8,
+             [Const.t_dspclass, Const.t_uint16]),
+        Const.save_dsp_modules_eeprom:
+            ('save_dsp_modules_eeprom', Const.t_uint8, []),
+        Const.load_dsp_modules_eeprom:
+            ('load_dsp_modules_eeprom', Const.t_uint8, []),
+        Const.reset_udc:
+            ('reset_udc', Const.t_none, []),
+
     }
     return functions
 

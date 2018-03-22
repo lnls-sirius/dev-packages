@@ -358,23 +358,36 @@ class ControllerPSSim:
     # _I_LOAD_FLUCTUATION_RMS = 0.0000  # [A]
 
     funcs = {
-        _BSMPConst.set_slowref: '_func_set_slowref',
-        _BSMPConst.select_op_mode: '_func_select_op_mode',
         _BSMPConst.turn_on: '_func_turn_on',
         _BSMPConst.turn_off: '_func_turn_off',
-        _BSMPConst.reset_interlocks: '_func_reset_interlocks',
+        _BSMPConst.open_loop: '_FUNC_NOT_IMPLEMENTED',
         _BSMPConst.close_loop: '_func_close_loop',
-        # functions not implemented  yet:
-        _BSMPConst.set_serial_termination: '_func_not_implemented',
-        _BSMPConst.sync_pulse: '_func_not_implemented',
-        _BSMPConst.set_slowref_fbp: '_func_not_implemented',
-        _BSMPConst.reset_counters: '_func_not_implemented',
-        _BSMPConst.cfg_siggen: '_func_not_implemented',
-        _BSMPConst.set_siggen: '_func_not_implemented',
-        _BSMPConst.enable_siggen: '_func_not_implemented',
-        _BSMPConst.disable_siggen: '_func_not_implemented',
-        _BSMPConst.set_slowref_readback: '_func_not_implemented',
-        _BSMPConst.set_slowref_fbp_readback: '_func_not_implemented',
+        _BSMPConst.select_op_mode: '_func_select_op_mode',
+        _BSMPConst.reset_interlocks: '_func_reset_interlocks',
+        _BSMPConst.set_serial_termination: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.sync_pulse: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.set_slowref: '_func_set_slowref',
+        _BSMPConst.set_slowref_fbp: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.reset_counters: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.cfg_siggen: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.set_siggen: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.enable_siggen: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.disable_siggen: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.set_slowref_readback: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.set_slowref_fbp_readback: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.set_param: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.get_param: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.save_param_eeprom: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.load_param_eeprom: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.save_param_bank: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.load_param_bank: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.set_dsp_coeffs: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.get_dsp_coeff: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.save_dsp_coeffs_eeprom: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.load_dsp_coeffs_eeprom: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.save_dsp_modules_eeprom: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.load_dsp_modules_eeprom: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.reset_udc: '_FUNC_NOT_IMPLEMENTED',
     }
 
     def __init__(self):
@@ -457,6 +470,6 @@ class ControllerPSSim:
         status = _Status.set_openloop(status, 0)
         return _ack.ok, None
 
-    def _func_not_implemented(self, **kwargs):
+    def _FUNC_NOT_IMPLEMENTED(self, **kwargs):
         raise NotImplementedError(
             'Run of function not defined!'.format(hex(kwargs['ID_function'])))
