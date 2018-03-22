@@ -110,8 +110,8 @@ def get_variables_common():
             ('ps_setpoint', Const.t_float, False),
         Const.ps_reference:
             ('ps_reference', Const.t_float, False),
-        # Const.firmware_version:
-        #     ('firmware_version', Const.t_char128, False),
+        Const.firmware_version:
+            ('firmware_version', Const.t_char128, False),
         # Const.counter_set_slowref:
         #     ('counter_set_slowref', Const.t_uint32, False),
         # Const.counter_sync_pulse:
@@ -643,18 +643,36 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
         if ID_group == Const.group_id:
             data = [ord(element) for element in load]
             value = dict()
-            value[Const.ps_status] = data[0] + (data[1] << 8)
+            i = 0
+            # ps_status
+            value[Const.ps_status] = data[i] + (data[i+1] << 8)
+            i += 2
+            # ps_setpoint
             value[Const.ps_setpoint] = \
-                _struct.unpack("<f", bytes(data[2:6]))[0]
+                _struct.unpack("<f", bytes(data[i:i+4]))[0]
+            i += 4
+            # ps_reference
             value[Const.ps_reference] = \
-                _struct.unpack("<f", bytes(data[6:10]))[0]
+                _struct.unpack("<f", bytes(data[i:i+4]))[0]
+            i += 4
+            # firmware_version
+            version = ''.join([chr(v) for v in data[i:i+128]])
+            version, *_ = version.split('\x00')
+            value[Const.firmware_version] = version
+            i += 128
+            # ps_soft_interlocks
             value[Const.ps_soft_interlocks] = \
-                data[10] + (data[11] << 8) + \
-                (data[12] << 16) + (data[13] << 24)
+                data[i] + (data[i+1] << 8) + \
+                (data[i+2] << 16) + (data[i+3] << 24)
+            i += 4
+            # ps_hard_interlocks
             value[Const.ps_hard_interlocks] = \
-                data[14] + (data[15] << 8) + \
-                (data[16] << 16) + (data[17] << 24)
-            value[Const.i_load] = _struct.unpack("<f", bytes(data[18:22]))[0]
+                data[i] + (data[i+1] << 8) + \
+                (data[i+2] << 16) + (data[i+3] << 24)
+            i += 4
+            # i_load
+            value[Const.i_load] = _struct.unpack("<f", bytes(data[i:i+4]))[0]
+            i += 4
         else:
             raise ValueError('Invalid group ID!')
         return _ack.ok, value
