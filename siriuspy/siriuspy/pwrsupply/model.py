@@ -9,6 +9,7 @@ from epics import PV as _PV
 
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.envars import vaca_prefix as _VACA_PREFIX
+from siriuspy.csdevice.pwrsupply import max_wfmsize as _max_wfmsize
 from siriuspy.factory import NormalizerFactory as _NormalizerFactory
 from siriuspy.epics import connection_timeout as _connection_timeout
 from siriuspy.epics.computed_pv import QueueThread as _QueueThread
@@ -160,7 +161,8 @@ class PowerSupply(_PSCommInterface):
             keyvalue['value'] = db['WfmLabel-SP']['value']
         elif field == 'WfmData-SP':
             keyvalue['func'] = self._set_wfmdata
-            keyvalue['value'] = [v for v in db['WfmData-SP']['value']]
+            # keyvalue['value'] = [v for v in db['WfmData-SP']['value']]
+            keyvalue['value'] = self._controller.read('WfmData-RB')
         elif field == 'Abort-Cmd':
             keyvalue['func'] = self._abort
             keyvalue['value'] = db['Abort-Cmd']['value']
@@ -197,16 +199,11 @@ class PowerSupply(_PSCommInterface):
         return self._controller.write('WfmLabel-SP', value)
 
     def _set_wfmdata(self, value):
-        # make sure wfmdata has the correct length
-        n = len(self._setpoints['WfmData-SP']['value'])
         if isinstance(value, (int, float)):
-            self._setpoints['WfmData-SP']['value'][0] = value
-        elif len(value) == n:
-            self._setpoints['WfmData-SP']['value'] = value
-        else:
-            for i in range(min(len(value), n)):
-                self._setpoints['WfmData-SP']['value'][i] = value[i]
-        value = self._setpoints['WfmData-SP']['value']
+            value = [value, ]
+        elif len(value) > _max_wfmsize:
+            value = value[:_max_wfmsize]
+        self._setpoints['WfmData-SP']['value'] = value
         return self._controller.write('WfmData-SP', value)
 
     def _abort(self, value):
