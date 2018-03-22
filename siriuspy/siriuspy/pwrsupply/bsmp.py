@@ -550,7 +550,8 @@ class BSMPMasterSlaveSim(_BSMPResponse):
 class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
     """Class used to perform BSMP comm between a master and slave."""
 
-    _FAKE_FRMWARE_VERSION = ['\x00', '\x00']
+    ver_labels = ('udc_arm', 'udc_c28', 'hradc0_cpld', 'hradc1_cpld',
+                  'hradc2_cpld', 'hradc3_cpld', 'iib_arm', 'ihm_pic')
 
     def __init__(self, ID_device, PRU):
         """Init method."""
@@ -601,19 +602,11 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
     def cmd_0x11(self, ID_receiver, ID_variable):
         """Respond BSMP variable."""
         # query power supply
-        if ID_variable == Const.frmware_version:
-            # simulate response to firmware version
-            # (This variable currently is not implemented  - see bsmp.py !!!)
-            ID_master = 0
-            response = [chr(ID_master), '\x11', '\x00', '\x02'] + \
-                BSMPMasterSlave._FAKE_FRMWARE_VERSION
-            response = BSMPMasterSlave.includeChecksum(response)
-        else:
-            query = [chr(ID_receiver),
-                     '\x10', '\x00', '\x01', chr(ID_variable)]
-            query = BSMPMasterSlave.includeChecksum(query)
-            self._pru.UART_write(query, timeout=10)  # 10 or 100 for timeout?
-            response = self._pru.UART_read()
+        query = [chr(ID_receiver),
+                 '\x10', '\x00', '\x01', chr(ID_variable)]
+        query = BSMPMasterSlave.includeChecksum(query)
+        self._pru.UART_write(query, timeout=10)  # 10 or 100 for timeout?
+        response = self._pru.UART_read()
         # process response
         ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
         if ID_variable == Const.frmware_version:
@@ -656,10 +649,9 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
                 _struct.unpack("<f", bytes(data[i:i+4]))[0]
             i += 4
             # firmware_version
-            version = ''.join([chr(v) for v in data[i:i+128]])
-            version, *_ = version.split('\x00')
+            version, di = self._process_firmware_stream(data, i)
             value[Const.firmware_version] = version
-            i += 128
+            i += di
             # ps_soft_interlocks
             value[Const.ps_soft_interlocks] = \
                 data[i] + (data[i+1] << 8) + \
@@ -712,3 +704,26 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
             # return ID_cmd, load
             return _ack.ok, None
         return _ack.ok, None
+
+    def _process_firmware_stream(data, i):
+
+        def add_ver(version, data, i, di, label_idx, first_ok):
+            if data[i] != 0:
+                ver = ''.join([chr(v) for v in data[i:i+16]])
+                if first_ok:
+                    version += '-'
+                version += BSMPMasterSlave.ver_labels[label_idx] + ':' + ver
+                first_ok = True
+                di += 16
+                i += 16
+            return version, i, di, first_ok
+
+        # loop over ver_labels and adds piece of string, if corresponding data
+        # is valid.
+        version = ''
+        di = 0
+        first_ok = False
+        for label_idx in range(len(BSMPMasterSlave.ver_labels)):
+                version, i, di, first_ok = \
+                    add_ver(version, data, i, di, label_idx, first_ok)
+        return version, di
