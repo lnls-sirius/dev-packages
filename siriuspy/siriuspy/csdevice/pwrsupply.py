@@ -5,7 +5,7 @@ from collections import namedtuple as _namedtuple
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.search import MASearch as _MASearch
-default_wfmsize = 4000
+max_wfmsize = 4000
 default_wfmlabels = _et.enums('PSWfmLabelsTyp')
 # default_intlklabels = _et.enums('PSIntlkLabelsTyp')
 default_ps_current_precision = 4
@@ -146,12 +146,12 @@ def get_common_ps_propty_database():
         #                 'value': 0},
         # 'WfmLoad-Sts': {'type': 'enum', 'enums': default_wfmlabels,
         #                 'value': 0},
-        'WfmData-SP': {'type': 'float', 'count': default_wfmsize,
+        'WfmData-SP': {'type': 'float', 'count': max_wfmsize,
                        'prec': default_ps_current_precision,
-                       'value': [0.0 for datum in range(default_wfmsize)]},
-        'WfmData-RB': {'type': 'float', 'count': default_wfmsize,
+                       'value': [0.0 for datum in range(max_wfmsize)]},
+        'WfmData-RB': {'type': 'float', 'count': max_wfmsize,
                        'prec': default_ps_current_precision,
-                       'value': [0.0 for datum in range(default_wfmsize)]},
+                       'value': [0.0 for datum in range(max_wfmsize)]},
         # 'WfmSave-Cmd': {'type': 'int', 'value': 0},
         'Current-SP': {'type': 'float', 'value': 0.0,
                        'prec': default_ps_current_precision},
