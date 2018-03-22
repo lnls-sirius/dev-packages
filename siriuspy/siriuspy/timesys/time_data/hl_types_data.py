@@ -31,7 +31,7 @@ class Events:
         'Tunes': 'Evt13', 'Study': 'Evt14'}
     LL2HL_MAP = {val: key for key, val in HL2LL_MAP.items()}
 
-    LL_TMP = 'Evt{0:02X}'
+    LL_TMP = 'Evt{0:02d}'
     LL_RGX = _re.compile('Evt([0-9]{2})([a-z-\.]*)', _re.IGNORECASE)
     HL_RGX = _re.compile('('+'|'.join(list(HL2LL_MAP.keys())) +
                          ')([a-z-\.]*)', _re.IGNORECASE)

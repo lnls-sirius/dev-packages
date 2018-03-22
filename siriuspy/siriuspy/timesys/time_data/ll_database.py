@@ -1,14 +1,14 @@
 """Define properties of all timing devices and their connections."""
 
 from copy import deepcopy as _dcopy
-from .hl_types_data import Triggers
+from .hl_types_data import Triggers, Events, Clocks
 
 
 class TimingDevDb:
 
     @staticmethod
-    def get_otp_database(otp_num=0):
-        prefix = 'OTP{0:02d}'.format(otp_num)
+    def get_otp_database(otp_num=0, prefix=None):
+        prefix = prefix or 'OTP{0:02d}'.format(otp_num)
         db = dict()
 
         dic_ = {'type': 'enum', 'value': 0, 'enums': Triggers.STATES}
@@ -50,8 +50,8 @@ class TimingDevDb:
         return db
 
     @staticmethod
-    def get_out_database(out_num=0, equip='EVR'):
-        prefix = 'OUT{0:d}'.format(out_num)
+    def get_out_database(out_num=0, equip='EVR', prefix=None):
+        prefix = prefix or 'OUT{0:d}'.format(out_num)
         db = dict()
 
         dic_ = {'type': 'enum', 'value': 0, 'enums': Triggers.INTLK}
@@ -88,28 +88,23 @@ class TimingDevDb:
         return db
 
     @staticmethod
-    def get_afc_out_database(out_num=0, out_tp='FMC'):
-        prefix = out_tp + '{0:d}'.format(out_num)
+    def get_afc_out_database(out_num=0, out_tp='FMC', prefix=None):
+        prefix = prefix or (out_tp + '{0:d}'.format(out_num))
         if out_tp == 'FMC':
             fmc = (out_num // 5) + 1
             ch = (out_num % 5) + 1
-            prefix = out_tp + '{0:d}CH{1:d}'.format(fmc, ch)
+            prefix = prefix or (out_tp + '{0:d}CH{1:d}'.format(fmc, ch))
 
-        db = TimingDevDb.get_otp_database(otp_num=out_num)
-        db2 = dict()
-        for k, v in db.items():
-            k2 = prefix + k[5:]
-            db2[k2] = v
-
+        db = TimingDevDb.get_otp_database(prefix=prefix)
         dic_ = {'type': 'enum', 'value': 0, 'enums': Triggers.SRC_LL}
-        db2[prefix+'Src-Sts'] = dic_
-        db2[prefix+'Src-Sel'] = _dcopy(dic_)
+        db[prefix+'Src-Sts'] = dic_
+        db[prefix+'Src-Sel'] = _dcopy(dic_)
 
-        return db2
+        return db
 
     @staticmethod
-    def get_evr_database(evr_num=1):
-        prefix = 'AS-Glob:TI-EVR-{1:d}:'.format(evr_num)
+    def get_evr_database(evr_num=1, prefix=None):
+        prefix = prefix or 'AS-Glob:TI-EVR-{1:d}:'.format(evr_num)
         db = dict()
 
         dic_ = {'type': 'enum', 'value': 0, 'enums': ('Dsbl', 'Enbl')}
@@ -151,8 +146,8 @@ class TimingDevDb:
         return db
 
     @staticmethod
-    def get_eve_database(eve_num=1):
-        prefix = 'AS-Glob:TI-EVE-{1:d}:'.format(eve_num)
+    def get_eve_database(eve_num=1, prefix=None):
+        prefix = prefix or 'AS-Glob:TI-EVE-{1:d}:'.format(eve_num)
         db = dict()
 
         dic_ = {'type': 'enum', 'value': 0, 'enums': ('Dsbl', 'Enbl')}
@@ -194,8 +189,8 @@ class TimingDevDb:
         return db
 
     @staticmethod
-    def get_afc_database(afc_sec=1, has_idx=False, idx=1):
-        prefix = 'AS-{0:02d}:TI-AFC:'.format(afc_sec)
+    def get_afc_database(afc_sec=1, has_idx=False, idx=1, prefix=None):
+        prefix = prefix or 'AS-{0:02d}:TI-AFC:'.format(afc_sec)
         if has_idx:
             prefix = 'AS-{0:02d}:TI-AFC-{1:d}:'.format(afc_sec, idx)
         db = dict()
@@ -239,8 +234,8 @@ class TimingDevDb:
         return db
 
     @staticmethod
-    def get_fout_database(evr_num=1):
-        prefix = 'AS-Glob:TI-FOUT-{1:d}:'.format(evr_num)
+    def get_fout_database(evr_num=1, prefix=None):
+        prefix = prefix or 'AS-Glob:TI-FOUT-{1:d}:'.format(evr_num)
         db = dict()
 
         dic_ = {'type': 'enum', 'value': 0, 'enums': ('Dsbl', 'Enbl')}
@@ -269,4 +264,116 @@ class TimingDevDb:
                 'type': 'enum', 'value': 0,
                 'enums': ('Dsbl', 'Enbl')}
 
+        return db
+
+    @staticmethod
+    def get_event_database(evt_num=0, prefix=None):
+        prefix = prefix or 'Evt{0:02d}'.format(evt_num)
+
+        db = dict()
+        dic_ = {'type': 'int', 'value': 0,
+                'lolo': 0, 'low': 0, 'lolim': 0,
+                'hilim': 2**32-1, 'high': 2**32-1, 'hihi': 2**32-1}
+        db[prefix + 'Delay-SP'] = _dcopy(dic_)
+        db[prefix + 'Delay-RB'] = dic_
+        dic_ = {'type': 'enum', 'enums': Events.MODES, 'value': 1}
+        db[prefix + 'Mode-Sel'] = _dcopy(dic_)
+        db[prefix + 'Mode-Sts'] = dic_
+        dic_ = {'type': 'enum', 'enums': Events.DELAY_TYPES, 'value': 1}
+        db[prefix + 'DelayType-Sel'] = _dcopy(dic_)
+        db[prefix + 'DelayType-Sts'] = dic_
+        dic_ = {'type': 'string', 'value': ''}
+        db[prefix + 'Desc-SP'] = _dcopy(dic_)
+        db[prefix + 'Desc-RB'] = dic_
+        db[prefix + 'ExtTrig-Cmd'] = {'type': 'int', 'value': 0}
+        return db
+
+    @staticmethod
+    def get_clock_database(clock_num=0, prefix=None):
+        prefix = prefix or 'Clock{0:d}'.format(clock_num)
+        db = dict()
+
+        dic_ = {'type': 'int', 'value': 124948114,
+                'lolo': 2, 'low': 2, 'lolim': 2,
+                'hilim': 2**32, 'high': 2**32, 'hihi': 2**32}
+        db[prefix + 'MuxDiv-SP'] = _dcopy(dic_)
+        db[prefix + 'MuxDiv-RB'] = dic_
+        dic_ = {'type': 'enum', 'enums': Clocks.STATES, 'value': 0}
+        db[prefix + 'MuxEnbl-Sel'] = _dcopy(dic_)
+        db[prefix + 'MuxEnbl-Sts'] = dic_
+        return db
+
+    @staticmethod
+    def get_evg_database(prefix=None):
+        prefix = prefix or 'AS-Glob:TI-EVG:'
+        db = dict()
+
+        dic_ = {'type': 'enum', 'value': 0, 'enums': ('Dsbl', 'Enbl')}
+        db[prefix+'DevEnbl-Sts'] = dic_
+        db[prefix+'DevEnbl-Sel'] = _dcopy(dic_)
+
+        dic_ = {'type': 'enum', 'enums': ('Dsbl', 'Enbl'), 'value': 0}
+        db[prefix + 'ContinuousEvt-Sel'] = _dcopy(dic_)
+        db[prefix + 'ContinuousEvt-Sts'] = dic_
+
+        dic_ = {'type': 'int', 'count': 864, 'value': 864*[1],
+                'lolo': 0, 'low': 0, 'lolim': 0,
+                'hilim': 864, 'high': 864, 'hihi': 864}
+        db[prefix + 'BucketList-SP'] = _dcopy(dic_)
+        db[prefix + 'BucketList-RB'] = dic_
+        db[prefix + 'BucketListLen-Mon'] = {
+            'type': 'int', 'value': 864,
+            'lolo': 0, 'low': 0, 'lolim': 0,
+            'hilim': 864, 'high': 864, 'hihi': 864}
+
+        dic_ = {'type': 'enum', 'enums': ('Dsbl', 'Enbl'), 'value': 0}
+        db[prefix + 'InjectionEvt-Sel'] = _dcopy(dic_)
+        db[prefix + 'InjectionEvt-Sts'] = dic_
+
+        dic_ = {'type': 'int', 'value': 0,
+                'lolo': 0, 'low': 0, 'lolim': 0,
+                'hilim': 100, 'high': 100, 'hihi': 100}
+        db[prefix + 'RepeatBucketList-SP'] = _dcopy(dic_)
+        db[prefix + 'RepeatBucketList-RB'] = dic_
+
+        dic_ = {'type': 'int', 'value': 30,
+                'lolo': 1, 'low': 1, 'lolim': 1,
+                'hilim': 60, 'high': 60, 'hihi': 60}
+        db[prefix + 'ACDiv-SP'] = _dcopy(dic_)
+        db[prefix + 'ACDiv-RB'] = dic_
+
+        dic_ = {'type': 'int', 'value': 4,
+                'lolo': 1, 'low': 1, 'lolim': 1,
+                'hilim': 2**32, 'high': 2**32, 'hihi': 2**32}
+        db[prefix + 'RFDiv-SP'] = _dcopy(dic_)
+        db[prefix + 'RFDiv-RB'] = dic_
+
+        db[prefix+'Los-Mon'] = {
+            'type': 'int', 'value': 0, 'unit': '',
+            'lolo': 0, 'low': 0, 'lolim': 0,
+            'hilim': 255, 'high': 255, 'hihi': 255}
+
+        db[prefix+'Alive-Mon'] = {
+            'type': 'int', 'value': 0, 'unit': '',
+            'lolo': 0, 'low': 0, 'lolim': 0,
+            'hilim': 2**32-1, 'high': 2**32-1, 'hihi': 2**32-1}
+
+        db[prefix+'Network-Mon'] = {
+                'type': 'enum', 'value': 0,
+                'enums': ('Disconnected', 'Connected')}
+
+        db[prefix+'Link-Mon'] = {
+                'type': 'enum', 'value': 0,
+                'enums': ('Unlink', 'Link')}
+
+        db[prefix+'Intlk-Mon'] = {
+                'type': 'enum', 'value': 0,
+                'enums': ('Dsbl', 'Enbl')}
+
+        for clc in Clocks.LL2HL_MAP.keys():
+            p = prefix + clc
+            db.update(TimingDevDb.get_clock_database(prefix=p))
+        for ev in Events.LL_EVENTS:
+            p = prefix + ev
+            db.update(TimingDevDb.get_event_database(prefix=p))
         return db

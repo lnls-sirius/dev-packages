@@ -2,12 +2,12 @@
 
 import uuid as _uuid
 from siriuspy.namesys import SiriusPVName as _PVName
-from . import device_models as _device_models
+from .device_models import EVGIOC, EVRIOC, EVEIOC, AFCIOC, CallBack
 from siriuspy.timesys.time_data import Connections as _Connections
 from siriuspy.timesys.time_data import RF_DIVISION as RFDIV
 
 
-class TimingSimulation(_device_models.CallBack):
+class TimingSimulation(CallBack):
     """Class to simulate timing system."""
 
     EVG_PREFIX = None
@@ -21,16 +21,16 @@ class TimingSimulation(_device_models.CallBack):
         cls._get_constants()
         db = dict()
         pre = prefix + cls.EVG_PREFIX
-        db.update(_device_models.EVGIOC.get_database(prefix=pre))
+        db.update(EVGIOC.get_database(prefix=pre))
         for dev in cls.EVRs:
             pre = prefix + dev + ':'
-            db.update(_device_models.EVRIOC.get_database(prefix=pre))
+            db.update(EVRIOC.get_database(prefix=pre))
         for dev in cls.EVEs:
             pre = prefix + dev + ':'
-            db.update(_device_models.EVEIOC.get_database(prefix=pre))
+            db.update(EVEIOC.get_database(prefix=pre))
         for dev in cls.AFCs:
             pre = prefix + dev + ':'
-            db.update(_device_models.AFCIOC.get_database(prefix=pre))
+            db.update(AFCIOC.get_database(prefix=pre))
         return db
 
     def __init__(self, rf_freq, callbacks=None, prefix=''):
@@ -38,35 +38,36 @@ class TimingSimulation(_device_models.CallBack):
         self._get_constants()
         super().__init__(callbacks, prefix='')
         self.uuid = _uuid.uuid4()
-        self.evg = _device_models.EVGIOC(rf_freq,
-                                         callbacks={self.uuid: self._callback},
-                                         prefix=prefix + self.EVG_PREFIX)
+        evg = EVGIOC(rf_freq,
+                     callbacks={self.uuid: self._on_pvs_change},
+                     prefix=prefix + self.EVG_PREFIX)
         self.evrs = dict()
         for dev in self.EVRs:
             pref = prefix + dev + ':'
-            evr = _device_models.EVRIOC(rf_freq/RFDIV,
-                                        callbacks={self.uuid: self._callback},
-                                        prefix=pref)
-            self.evg.add_pending_devices_callback(evr.uuid, evr.receive_events)
+            evr = EVRIOC(rf_freq/RFDIV,
+                         callbacks={self.uuid: self._on_pvs_change},
+                         prefix=pref)
+            evg.add_pending_devices_callback(evr.uuid, evr.receive_events)
             self.evrs[pref] = evr
 
         self.eves = dict()
         for dev in self.EVEs:
             pref = prefix + dev + ':'
-            eve = _device_models.EVEIOC(rf_freq/RFDIV,
-                                        callbacks={self.uuid: self._callback},
-                                        prefix=pref)
-            self.evg.add_pending_devices_callback(eve.uuid, eve.receive_events)
+            eve = EVEIOC(rf_freq/RFDIV,
+                         callbacks={self.uuid: self._on_pvs_change},
+                         prefix=pref)
+            evg.add_pending_devices_callback(eve.uuid, eve.receive_events)
             self.eves[pref] = eve
 
         self.afcs = dict()
         for dev in self.AFCs:
             pref = prefix + dev + ':'
-            afc = _device_models.AFCIOC(rf_freq/RFDIV,
-                                        callbacks={self.uuid: self._callback},
-                                        prefix=pref)
-            self.evg.add_pending_devices_callback(afc.uuid, afc.receive_events)
+            afc = AFCIOC(rf_freq/RFDIV,
+                         callbacks={self.uuid: self._on_pvs_change},
+                         prefix=pref)
+            evg.add_pending_devices_callback(afc.uuid, afc.receive_events)
             self.afcs[pref] = afc
+        self.evg = evg
 
     def add_injection_callback(self, uuid, callback):
         """Add injection callback."""
@@ -106,7 +107,7 @@ class TimingSimulation(_device_models.CallBack):
         else:
             return False
 
-    def _callback(self, propty, value, **kwargs):
+    def _on_pvs_change(self, propty, value, **kwargs):
         self._call_callbacks(propty, value, **kwargs)
 
     @classmethod
