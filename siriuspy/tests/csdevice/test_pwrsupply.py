@@ -35,7 +35,7 @@ public_interface = (
     'get_ps_current_unit',
     'get_pu_current_unit',
     'get_common_propty_database',
-    'get_common_ps_propty_database',
+    'get_ps_FBP_propty_database',
     'get_common_pu_propty_database',
     'get_ps_propty_database',
     'get_pu_propty_database',
@@ -151,7 +151,7 @@ class TestPwrSupply(unittest.TestCase):
 
     def test_common_ps_propty_database(self):
         """Test common_ps_propty_database."""
-        db = pwrsupply.get_common_ps_propty_database()
+        db = pwrsupply.get_ps_FBP_propty_database()
         self.assertIsInstance(db, dict)
         for prop in db:
             self.assertIsInstance(db[prop], dict)

@@ -261,7 +261,7 @@ def get_ma_propty_database(maname):
     current_alarm = ('Current-SP', 'Current-RB',
                      'CurrentRef-Mon', 'Current-Mon', )
     current_pvs = current_alarm  # + ('WfmData-SP', 'WfmData-RB')
-    propty_db = get_common_ps_propty_database()
+    propty_db = get_ps_FBP_propty_database()
     unit = _MASearch.get_splims_unit(ispulsed=False)
     magfunc_dict = _MASearch.conv_maname_2_magfunc(maname)
     db = {}

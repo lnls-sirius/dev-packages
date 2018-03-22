@@ -67,6 +67,7 @@ class TestPSDataProperties(unittest.TestCase):
             self.properties['splims_unit']
         self.search_mock.conv_psname_2_excdata.return_value = \
             self.properties['excdata']
+        self.search_mock.conv_psname_2_psmodel.return_value = 'FBP'
 
         self.db_mock.return_value = self.db
 
@@ -153,6 +154,7 @@ class TestPSDataDb(unittest.TestCase):
 
         self.search_mock.get_psnames.return_value = [self.psname, self.puname]
         self.search_mock.conv_psname_2_pstype.return_value = self.pstype
+        self.search_mock.conv_psname_2_psmodel.return_value = 'FBP'
 
     def test_ps_db(self):
         """Test ps db is called when a ps is passed."""
