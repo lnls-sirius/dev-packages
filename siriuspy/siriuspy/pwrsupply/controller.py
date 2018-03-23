@@ -331,7 +331,7 @@ class PSState:
             elif type_t == _BSMPConst.t_float4:
                 value = [0.0, 0.0, 0.0, 0.0]
             elif type_t == _BSMPConst.t_char128:
-                value = 'Simulated-ControllerPS'
+                value = 'SimulatedControllerPS'
             else:
                 raise ValueError('Invalid BSMP variable type!')
             self._state[ID_variable] = value
