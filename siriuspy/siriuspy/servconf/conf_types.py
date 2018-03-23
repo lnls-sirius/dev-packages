@@ -60,7 +60,9 @@ def _init_config_types_dict():
 
 
 def _recursive_check(ref_value, value):
-    # should be allow float - int automatic castings ?
+    # TODO: should we allow float - int automatic castings ?
+    # TODO: this should prob. be generalized to accomodate length-varying
+    # lists/arrays (WfmData, for example)
     if type(ref_value) != type(value):
         return False
     if type(ref_value) == dict:

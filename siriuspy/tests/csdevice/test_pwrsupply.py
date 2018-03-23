@@ -12,7 +12,7 @@ _mock_flag = True
 
 
 public_interface = (
-    'default_wfmsize',
+    'max_wfmsize',
     'default_wfmlabels',
     'default_ps_current_precision',
     'default_pu_current_precision',

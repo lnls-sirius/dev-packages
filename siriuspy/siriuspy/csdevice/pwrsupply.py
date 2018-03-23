@@ -5,7 +5,7 @@ from collections import namedtuple as _namedtuple
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.search import MASearch as _MASearch
-default_wfmsize = 4000
+max_wfmsize = 4000
 default_wfmlabels = _et.enums('PSWfmLabelsTyp')
 # default_intlklabels = _et.enums('PSIntlkLabelsTyp')
 default_ps_current_precision = 4
@@ -29,9 +29,9 @@ ps_pwrstate_sts = ('Off', 'On')
 ps_opmode = ('SlowRef', 'SlowRefSync', 'FastRef', 'RmpWfm', 'MigWfm', 'Cycle')
 ps_cmdack = ('OK', 'Local', 'PCHost', 'Interlocked', 'UDC_locked',
              'DSP_TimeOut', 'DSP_Busy', 'Invalid',)
-
 ps_soft_interlock_FBP = (
-    'Overtemperature on module', 'Reserved', 'Reserved', 'Reserved',
+    'Sobre-temperatura no módulo', 'Reserved',
+    'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
@@ -41,10 +41,11 @@ ps_soft_interlock_FBP = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
 )
 ps_hard_interlock_FBP = (
-    'Overvoltage on load', 'Overvoltage on DC-Link',
-    'Undervoltage on DC-Link', 'DC-Link input relay fail',
-    'DC-Link input fuse fail', 'Fail on module drivers',
-    'Reserved', 'Reserved',
+    'Sobre-corrente na carga', 'Sobre-tensão na carga',
+    'Sobre-tensão no DC-Link', 'Sub-tensão no DC-Link',
+    'Falha no relé de entrada do DC-Link',
+    'Falha no fusível de entrada do DC-Link',
+    'Falha nos drivers do módulo', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
@@ -169,12 +170,12 @@ def get_ps_FBP_propty_database():
         #                 'value': 0},
         # 'WfmLoad-Sts': {'type': 'enum', 'enums': default_wfmlabels,
         #                 'value': 0},
-        'WfmData-SP': {'type': 'float', 'count': default_wfmsize,
+        'WfmData-SP': {'type': 'float', 'count': max_wfmsize,
                        'prec': default_ps_current_precision,
-                       'value': [0.0 for datum in range(default_wfmsize)]},
-        'WfmData-RB': {'type': 'float', 'count': default_wfmsize,
+                       'value': [0.0 for datum in range(max_wfmsize)]},
+        'WfmData-RB': {'type': 'float', 'count': max_wfmsize,
                        'prec': default_ps_current_precision,
-                       'value': [0.0 for datum in range(default_wfmsize)]},
+                       'value': [0.0 for datum in range(max_wfmsize)]},
         # 'WfmSave-Cmd': {'type': 'int', 'value': 0},
         'Current-SP': {'type': 'float', 'value': 0.0,
                        'prec': default_ps_current_precision},
