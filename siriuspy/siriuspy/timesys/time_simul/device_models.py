@@ -10,7 +10,6 @@ from siriuspy.timesys.time_data import AC_FREQUENCY as _PwrFreq
 from siriuspy.timesys.time_data import FINE_DELAY as _FINE_DELAY_STEP
 
 _OTP_SIM_TMP = 'OTP{0:02d}'
-_OUT_SIM_TMP = 'OUT{0:d}'
 
 
 class CallBack:
@@ -340,19 +339,17 @@ class EVGIOC(_BaseIOC):
     def _generate_events(self, tables):
         tables = tables if isinstance(tables, (list, tuple)) else (tables,)
         events = dict()
-        for i, ev in enumerate(self.events):
-            lab = Events.LL_EVENTS[i]
+        for lab, ev in self.events.items():
             if ev.mode_rb not in tables:
                 continue
             dic = ev.generate()
             if not dic:
                 continue
             events.update({lab: dic})
-        for i, cl in enumerate(self.clocks):
+        for lab, cl in self.clocks.items():
             dic = cl.generate()
             if not dic:
                 continue
-            lab = Clocks.LL_TMP.format(i)
             events.update({lab: dic})
         return events
 
@@ -618,22 +615,21 @@ class EVRIOC(_BaseIOC):
     def receive_events(self, bucket, events):
         """Receive the events from the EVG."""
         if not self._state_rb:
-            return
+            return {self.prefix: dict()}
         triggers = dict()
         inp_dic = dict(events)
-        for i, opt_ch in enumerate(self.internal_triggers):
+        for i, lab in enumerate(sorted(self.internal_triggers.keys())):
+            opt_ch = self.internal_triggers[lab]
             opt = opt_ch.receive_events(bucket, inp_dic)
-            if opt is None:
+            if not opt:
                 continue
-            lab = _OTP_SIM_TMP.format(i)
             inp_dic.update({lab: opt})
             if i < self._NR_OTP_CHANNELS:
                 triggers.update({lab: opt})
-        for tri_ch in self.main_outputs:
+        for lab, tri_ch in self.main_outputs.items():
             out = tri_ch.receive_events(bucket, inp_dic)
             if out is None:
                 continue
-            lab = _OUT_SIM_TMP.format(i)
             triggers.update({lab: out})
         return {self.prefix: triggers}
 
