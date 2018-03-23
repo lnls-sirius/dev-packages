@@ -727,4 +727,4 @@ class FBPEntities(Entities):
 
     def __init__(self):
         """Call super."""
-        super().__init__(self.variable, self.Curves, self.Functions)
+        super().__init__(self.Variables, self.Curves, self.Functions)

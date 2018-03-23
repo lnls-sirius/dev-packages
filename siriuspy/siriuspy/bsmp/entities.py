@@ -177,7 +177,7 @@ class Entities:
                 Variable(var_id, write_access, var_type, length))
 
         # Standard groups
-        r_var = [var for var in self.variablesvar if not var.waccess]
+        r_var = [var for var in self.variables if not var.waccess]
         w_var = [var for var in self.variables if var.waccess]
         self._groups = [
             VariablesGroup(0, False, self.variables),
