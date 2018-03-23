@@ -291,6 +291,8 @@ class SerialComm(_BSMPQuery):
                 ack, load = method(ID_receiver=ID_device, **kwargs)
                 self._connected[ID_device] = True
             except Exception:
+                # TODO: This try-catch code is very awkward for debugging!
+                # try to improve it!
                 self._connected[ID_device] = False
                 # print('Exception raised while executing {}'.format(cmd))
                 continue

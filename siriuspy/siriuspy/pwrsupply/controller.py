@@ -192,9 +192,9 @@ class ControllerIOC(PSCommInterface):
         return self._serial_comm.sync_pulse_count
 
     def _get_firmware_version(self):
-        # value = self._bsmp_get_variable(_BSMPConst.firmware_version)
-        # firmware_version = __version__ + ':' + '-'.join([c for c in value])
-        firmware_version = __version__ + ':' + '0x00:0x00'
+        value = self._bsmp_get_variable(_BSMPConst.firmware_version)
+        firmware_version = __version__ + ':' + value
+        # firmware_version = __version__ + ':' + '0x00:0x00'
         return firmware_version
 
     def _get_ps_status(self):
@@ -331,7 +331,7 @@ class PSState:
             elif type_t == _BSMPConst.t_float4:
                 value = [0.0, 0.0, 0.0, 0.0]
             elif type_t == _BSMPConst.t_char128:
-                value = [chr(0), ] * 128
+                value = 'Simulated-ControllerPS'
             else:
                 raise ValueError('Invalid BSMP variable type!')
             self._state[ID_variable] = value
