@@ -1,0 +1,67 @@
+"""Test BSMP type structures."""
+import unittest
+
+from siriuspy.bsmp import Types
+
+
+class TestBSMPTypes(unittest.TestCase):
+    """Test BSMP Types."""
+
+    def test_char_type(self):
+        """Test char type properties."""
+        t = Types.t_char
+
+        self.assertEqual(t.type, 'char')
+        self.assertEqual(t.size, 1)
+        self.assertEqual(t.fmt, '<c')
+        self.assertFalse(t.check(1))
+        self.assertFalse(t.check(1.5))
+        self.assertTrue(t.check('c'))
+
+    def test_uint8_type(self):
+        """Test uint8 type properties."""
+        t = Types.t_uint8
+
+        self.assertEqual(t.type, 'uint8')
+        self.assertEqual(t.size, 1)
+        self.assertEqual(t.fmt, '<B')
+        self.assertFalse(t.check(1.5))
+        self.assertFalse(t.check('c'))
+        self.assertTrue(t.check(1))
+
+    def test_uint16_type(self):
+        """Test uint16 type properties."""
+        t = Types.t_uint16
+
+        self.assertEqual(t.type, 'uint16')
+        self.assertEqual(t.size, 2)
+        self.assertEqual(t.fmt, '<H')
+        self.assertFalse(t.check(1.5))
+        self.assertFalse(t.check('c'))
+        self.assertTrue(t.check(1))
+
+    def test_uint32_type(self):
+        """Test uint32 type properties."""
+        t = Types.t_uint32
+
+        self.assertEqual(t.type, 'uint32')
+        self.assertEqual(t.size, 4)
+        self.assertEqual(t.fmt, '<I')
+        self.assertFalse(t.check(1.5))
+        self.assertFalse(t.check('c'))
+        self.assertTrue(t.check(1))
+
+    def test_float_type(self):
+        """Test float type properties."""
+        t = Types.t_float
+
+        self.assertEqual(t.type, 'float')
+        self.assertEqual(t.size, 4)
+        self.assertEqual(t.fmt, '<f')
+        self.assertTrue(t.check(1.5))
+        self.assertFalse(t.check('c'))
+        self.assertFalse(t.check(1))
+
+
+if __name__ == '__main__':
+    unittest.main()
