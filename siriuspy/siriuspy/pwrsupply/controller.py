@@ -58,8 +58,9 @@ class PSCommInterface:
 class ControllerIOC(PSCommInterface):
     """ControllerIOC class.
 
-    This class implements
-
+        This class implements methods and attributes to interact with power
+    supply controllers (ControllerPS) through the serial line (SeriaConn).
+    It can be used with any kind of power supply (any value of psmodel).
     """
 
     _WAIT_TURN_ON_OFF = 0.3  # [s]
@@ -313,6 +314,8 @@ class PSState:
     power supplies, as defined by its list of BSMP variables.
     """
 
+    # TODO: should this class be moved to bsmp.py module?
+
     def __init__(self, variables):
         """Init method."""
         self._state = {}
@@ -352,7 +355,12 @@ class PSState:
 
 
 class ControllerPSSim:
-    """Simulator of power supply controller."""
+    """Simulator of power supply controller.
+
+        This class implements simulation of power supply controllers. These
+    controllers respond to BSMP commands from the IOC controller
+    (ControllerIOC) sent through the serial line.
+    """
 
     _I_LOAD_FLUCTUATION_RMS = 0.01  # [A]
     # _I_LOAD_FLUCTUATION_RMS = 0.0000  # [A]

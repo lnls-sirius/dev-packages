@@ -29,27 +29,53 @@ ps_pwrstate_sts = ('Off', 'On')
 ps_opmode = ('SlowRef', 'SlowRefSync', 'FastRef', 'RmpWfm', 'MigWfm', 'Cycle')
 ps_cmdack = ('OK', 'Local', 'PCHost', 'Interlocked', 'UDC_locked',
              'DSP_TimeOut', 'DSP_Busy', 'Invalid',)
-ps_soft_interlock = ('Sobre-temperatura no módulo', 'Reserved',
-                     'Reserved', 'Reserved',
-                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-                     )
-ps_hard_interlock = ('Sobre-corrente na carga', 'Sobre-tensão na carga',
-                     'Sobre-tensão no DC-Link', 'Sub-tensão no DC-Link',
-                     'Falha no relé de entrada do DC-Link',
-                     'Falha no fusível de entrada do DC-Link',
-                     'Falha nos drivers do módulo', 'Reserved',
-                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-                     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-                     'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+ps_soft_interlock_FBP = (
+    'Sobre-temperatura no módulo', 'Reserved',
+    'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+)
+ps_hard_interlock_FBP = (
+    'Sobre-corrente na carga', 'Sobre-tensão na carga',
+    'Sobre-tensão no DC-Link', 'Sub-tensão no DC-Link',
+    'Falha no relé de entrada do DC-Link',
+    'Falha no fusível de entrada do DC-Link',
+    'Falha nos drivers do módulo', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+)
+ps_soft_interlock_FBP_DCLink = (
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+)
+ps_hard_interlock_FBP_DCLink = (
+    'Falha na fonte 1', 'Falha na fonte 2',
+    'Falha na fonte 3', 'Sensor de fumaça',
+    'Interlock externo', 'Sobre-tensão na fonte 1'
+    'Sobre-tensão na fonte 2', 'Sobre-tensão na fonte 3',
+    'Sub-tensão na fonte 1', 'Sub-tensão na fonte 2',
+    'Sub-tensão na fonte 3', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+)
 
 # --- power supply constants definition class ---
 
@@ -115,20 +141,18 @@ def get_common_propty_database():
                              'value': _et.idx.Off},
         'PwrState-Sts':     {'type': 'enum', 'enums': ps_pwrstate_sts,
                              'value': _et.idx.Off},
-        'IntlkSoft-Mon':    {'type': 'int',    'value': 0},
-        'IntlkHard-Mon':    {'type': 'int',    'value': 0},
-        'IntlkSoftLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_soft_interlock),
-                                 'value': ps_soft_interlock},
-        'IntlkHardLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_hard_interlock),
-                                 'value': ps_hard_interlock},
+        # 'IntlkSoftLabels-Cte':  {'type': 'string',
+        #                          'count': len(ps_soft_interlock),
+        #                          'value': ps_soft_interlock},
+        # 'IntlkHardLabels-Cte':  {'type': 'string',
+        #                          'count': len(ps_hard_interlock),
+        #                          'value': ps_hard_interlock},
         'Reset-Cmd': {'type': 'int', 'value': 0},
     }
     return db
 
 
-def get_common_ps_propty_database():
+def get_ps_FBP_propty_database():
     """Return database of commun to all pwrsupply PVs."""
     db = get_common_propty_database()
     db_ps = {
@@ -161,6 +185,14 @@ def get_common_ps_propty_database():
                            'prec': default_ps_current_precision},
         'Current-Mon': {'type': 'float',  'value': 0.0,
                         'prec': default_ps_current_precision},
+        'IntlkSoft-Mon':    {'type': 'int',    'value': 0},
+        'IntlkHard-Mon':    {'type': 'int',    'value': 0},
+        'IntlkSoftLabels-Cte':  {'type': 'string',
+                                 'count': len(ps_soft_interlock_FBP),
+                                 'value': ps_soft_interlock_FBP},
+        'IntlkHardLabels-Cte':  {'type': 'string',
+                                 'count': len(ps_hard_interlock_FBP),
+                                 'value': ps_hard_interlock_FBP},
     }
     db.update(db_ps)
     return db
@@ -186,7 +218,7 @@ def get_common_pu_propty_database():
 
 def get_ps_propty_database(pstype):
     """Return property database of a LNLS power supply type device."""
-    propty_db = get_common_ps_propty_database()
+    propty_db = get_ps_FBP_propty_database()
     signals_lims = ('Current-SP', 'Current-RB',
                     'CurrentRef-Mon', 'Current-Mon', )
     signals_unit = signals_lims + ('WfmData-SP', 'WfmData-RB')
@@ -230,7 +262,7 @@ def get_ma_propty_database(maname):
     current_alarm = ('Current-SP', 'Current-RB',
                      'CurrentRef-Mon', 'Current-Mon', )
     current_pvs = current_alarm  # + ('WfmData-SP', 'WfmData-RB')
-    propty_db = get_common_ps_propty_database()
+    propty_db = get_ps_FBP_propty_database()
     unit = _MASearch.get_splims_unit(ispulsed=False)
     magfunc_dict = _MASearch.conv_maname_2_magfunc(maname)
     db = {}
