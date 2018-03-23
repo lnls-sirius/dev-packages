@@ -1,11 +1,10 @@
 """Define Power Supply classes."""
 
 import re as _re
-from threading import Thread as _Thread
-from threading import Lock as _Lock
 import time as _time
 import numpy as _np
-
+from threading import Thread as _Thread
+from threading import Lock as _Lock
 from epics import PV as _PV
 
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
@@ -25,8 +24,9 @@ from siriuspy.pwrsupply import sync as _sync
 class PowerSupply(_PSCommInterface):
     """Abstract control-system power supply class.
 
-        Objects of this are used to interact with power supplies in the
-    control-system using the implemented PSCommInterface.
+        Objects of this class are used to interact with power supplies in the
+    control-system using the implemented PSCommInterface. This class should
+    work for any psmodel type.
     """
 
     CONNECTED = 'CONNECTED'
@@ -299,16 +299,7 @@ class PowerSupply(_PSCommInterface):
 class PSEpics(_PSCommInterface):
     """Power supply with Epics communication."""
 
-    # Should we merge this base class into MAEpics?
-
-    # valid_fields = ('Current-SP', 'Current-RB', 'CurrentRef-Mon',
-    #                 'Current-Mon', 'PwrState-Sel', 'PwrState-Sts',
-    #                 'OpMode-Sel', 'OpMode-Sts',
-    #                 'Energy-SP', 'Energy-RB', 'EnergyRef-Mon', 'Energy-Mon',
-    #                 'KL-SP', 'KL-RB', 'KLRef-Mon', 'KL-Mon',
-    #                 'SL-SP', 'SL-RB', 'SLRef-Mon', 'SL-Mon',
-    #                 'Kick-SP', 'Kick-RB', 'KickRef-Mon', 'Kick-Mon',
-    #                 'Reset-Cmd', 'Abort-Cmd')
+    # TODO: should we merge this base class into MAEpics?
 
     def __init__(self, psname, fields=None, use_vaca=True):
         """Create epics PVs and expose them through public controller API."""
