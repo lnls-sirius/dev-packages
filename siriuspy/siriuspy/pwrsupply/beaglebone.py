@@ -54,11 +54,11 @@ class BeagleBone():
         return self._power_supplies.values()
 
     def _get_bsmp_slave_IDs(self):
-        # This will have to be generalized!
-        if self._bbbname == 'BO-Glob:CO-BBB-T1':
+        # TODO: temp code. this should be deleted once PS bench tests are over.
+        if self._bbbname == 'BO-Glob:CO-BBB-1':
             # test-bench BBB # 1
             return (1, 2)
-        elif self._bbbname == 'BO-Glob:CO-BBB-T2':
+        elif self._bbbname == 'BO-Glob:CO-BBB-2':
             # test-bench BBB # 2
             return (5, 6)
         else:
