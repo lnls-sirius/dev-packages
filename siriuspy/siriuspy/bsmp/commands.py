@@ -130,14 +130,29 @@ class BSMP:
         """Create new group with given variable ids. Command 0x30."""
         m = Message.message(0x30, load=[chr(var_id) for var_id in var_ids])
         response = self.channel.request(m)
+        if response.cmd == 0xE0:
+            if len(response.load) == 0:
+                self.entities.add_group(var_ids)
+                return Response.ok, None
+        else:
+            if response.cmd > 0xE0 and response.cmd <= 0xE8:
+                return response.cmd, None
 
-        self.entities.add_group(var_ids)
-
-        return response.cmd, response.load
+        return None, None
 
     def remove_all_groups(self):
         """Remove all groups. Command 0x32."""
-        raise NotImplementedError()
+        m = Message.message(0x32)
+        response = self.channel.request(m)
+        if response.cmd == 0xE0:
+            if len(response.load) == 0:
+                self.entities.remove_all_groups()
+                return Response.ok, None
+        else:
+            if response.cmd > 0xE0 and response.cmd <= 0xE8:
+                return response.cmd, None
+
+        return None, None
 
     # 0x4_
     def read_curve_block(self, curve_id, block):

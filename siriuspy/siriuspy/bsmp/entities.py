@@ -213,3 +213,7 @@ class Entities:
         for var_id in var_ids:
             variables.append(self.variables[var_id])
         self.groups.append(VariablesGroup(len(self.groups), False, variables))
+
+    def remove_all_groups(self):
+        """Remove all groups bigger than id 2."""
+        self.groups = self.groups[:3]

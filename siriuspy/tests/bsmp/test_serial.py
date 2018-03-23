@@ -2,7 +2,7 @@
 import unittest
 from unittest.mock import Mock
 
-from siriuspy.bsmp import Message, Package, Channel
+from siriuspy.bsmp import Message, Package, Channel, SerialError
 from siriuspy.util import check_public_interface_namespace
 
 

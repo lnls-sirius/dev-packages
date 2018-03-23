@@ -255,7 +255,7 @@ class TestBSMP0x3(unittest.TestCase):
         self.bsmp = BSMP(self.serial, 1, self.entities)
 
     def test_create_group(self):
-        """Test create_group."""
+        """Test create group."""
         resp_p = Package.package(0, Message.message(0xE0))
         send_p = Package.package(1, Message.message(0x30, [chr(1), chr(3)]))
         self.serial.UART_read.return_value = resp_p.stream
@@ -264,12 +264,47 @@ class TestBSMP0x3(unittest.TestCase):
 
         self.serial.UART_write.assert_called_once_with(
             send_p.stream, timeout=100)
-        self.assertEqual(response, (0xE0, []))
+        self.assertEqual(response, (0xE0, None))
+
+    def test_create_group_error(self):
+        """Test create_group."""
+        resp_p = Package.package(0, Message.message(0xE8))
+        self.serial.UART_read.return_value = resp_p.stream
+        response = self.bsmp.create_group([1, 3])
+        self.assertEqual(response, (0xE8, None))
+
+    def test_create_group_fail(self):
+        """Test create_group."""
+        resp_p = Package.package(0, Message.message(0xFF))
+        self.serial.UART_read.return_value = resp_p.stream
+        response = self.bsmp.create_group([1, 3])
+        self.assertEqual(response, (None, None))
 
     def test_remove_all_groups(self):
         """Test remove_all_groups."""
-        with self.assertRaises(NotImplementedError):
-            self.bsmp.remove_all_groups()
+        resp_p = Package.package(0, Message.message(0xE0))
+        send_p = Package.package(1, Message.message(0x32))
+        self.serial.UART_read.return_value = resp_p.stream
+
+        response = self.bsmp.remove_all_groups()
+
+        self.serial.UART_write.assert_called_once_with(
+            send_p.stream, timeout=100)
+        self.assertEqual(response, (0xE0, None))
+
+    def test_remove_all_groups_error(self):
+        """Test remove_all_groups."""
+        resp_p = Package.package(0, Message.message(0xE8))
+        self.serial.UART_read.return_value = resp_p.stream
+        response = self.bsmp.remove_all_groups()
+        self.assertEqual(response, (0xE8, None))
+
+    def test_remove_all_groups_fail(self):
+        """Test remove_all_groups."""
+        resp_p = Package.package(0, Message.message(0x11))
+        self.serial.UART_read.return_value = resp_p.stream
+        response = self.bsmp.remove_all_groups()
+        self.assertEqual(response, (None, None))
 
 
 class TestBSMP0x4(unittest.TestCase):
