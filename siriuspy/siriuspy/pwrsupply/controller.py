@@ -193,9 +193,10 @@ class ControllerIOC(PSCommInterface):
         return self._serial_comm.sync_pulse_count
 
     def _get_firmware_version(self):
+        # get firmaware version from PS controller and prepend package
+        # version number (IOC version)
         value = self._bsmp_get_variable(_BSMPConst.firmware_version)
-        firmware_version = __version__ + ':' + value
-        # firmware_version = __version__ + ':' + '0x00:0x00'
+        firmware_version = __version__ + '-' + value
         return firmware_version
 
     def _get_ps_status(self):
