@@ -39,7 +39,10 @@ class _Driver(_pcaspy.Driver):
         app_ret = self.app.write(reason, value)
         if app_ret:
             self.setParam(reason, value)
-        self.updatePVs()
+            self.updatePVs()
+            _log.info('{0:40s}: OK'.format(reason))
+        else:
+            _log.info('{0:40s}: not OK'.format(reason))
         return app_ret
 
 
@@ -91,8 +94,10 @@ class App:
     def _update_driver(self, pvname, value,
                        alarm=None, severity=None, **kwargs):
         self.driver.setParam(pvname, value)
+        _log.info('{0:40s}: updated'.format(pvname))
         if alarm is not None and severity is not None:
             self.driver.setParamStatus(pvname, alarm=alarm, severity=severity)
+            _log.info('{0:40s}: alarm'.format(pvname))
         self.driver.updatePVs()
 
     def _isValid(self, reason, value):
