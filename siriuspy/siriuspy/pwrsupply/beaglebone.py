@@ -55,10 +55,10 @@ class BeagleBone():
 
     def _get_bsmp_slave_IDs(self):
         # TODO: temp code. this should be deleted once PS bench tests are over.
-        if self._bbbname == 'BO-Glob:CO-BBB-1':
+        if self._bbbname == 'BO-01:CO-BBB-1':
             # test-bench BBB # 1
             return (1, 2)
-        elif self._bbbname == 'BO-Glob:CO-BBB-2':
+        elif self._bbbname == 'BO-01:CO-BBB-2':
             # test-bench BBB # 2
             return (5, 6)
         else:
