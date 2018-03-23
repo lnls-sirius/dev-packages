@@ -21,6 +21,12 @@ class BeagleBone():
         self._simulate = simulate
         self._psnames = _PSSearch.conv_bbbname_2_psnames(bbbname)
 
+        # TODO: temp code. this should be deleted once PS bench tests are over.
+        if bbbname == 'BO-01:CO-BBB-1':
+            self._psnames = ['BO-01U:PS-CH', 'BO-01U:PS-CV']
+        elif bbbname == 'BO-01:CO-BBB-2':
+            self._psnames = ['BO-03U:PS-CH', 'BO-03U:PS-CV']
+
         # create PRU and serial_comm
         # self._pru = _PRUSim() if self._simulate else _PRU()
         self._serial_comm = _SerialComm(simulate=self._simulate)
@@ -48,11 +54,11 @@ class BeagleBone():
         return self._power_supplies.values()
 
     def _get_bsmp_slave_IDs(self):
-        # This will have to be generalized!
-        if self._bbbname == 'BO-Glob:CO-BBB-T1':
+        # TODO: temp code. this should be deleted once PS bench tests are over.
+        if self._bbbname == 'BO-01:CO-BBB-1':
             # test-bench BBB # 1
             return (1, 2)
-        elif self._bbbname == 'BO-Glob:CO-BBB-T2':
+        elif self._bbbname == 'BO-01:CO-BBB-2':
             # test-bench BBB # 2
             return (5, 6)
         else:
