@@ -20,6 +20,8 @@ class BeagleBone():
         self._bbbname = bbbname
         self._simulate = simulate
         self._psnames = _PSSearch.conv_bbbname_2_psnames(bbbname)
+
+        # TODO: temp code. this should be deleted once PS bench tests are over.
         if bbbname == 'BO-01:CO-BBB-1':
             self._psnames = ['BO-01U:PS-CH', 'BO-01U:PS-CV']
         elif bbbname == 'BO-01:CO-BBB-2':
