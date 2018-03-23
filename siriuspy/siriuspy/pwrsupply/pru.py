@@ -287,6 +287,10 @@ class SerialComm(_BSMPQuery):
             # print('process: ', ID_device, hex(ID_cmd), kwargs)
             cmd = 'cmd_' + str(hex(ID_cmd))
             method = getattr(self, cmd)
+
+            # ack, load = method(ID_receiver=ID_device, **kwargs)
+            # self._connected[ID_device] = True
+
             try:
                 ack, load = method(ID_receiver=ID_device, **kwargs)
                 self._connected[ID_device] = True

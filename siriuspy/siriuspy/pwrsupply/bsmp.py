@@ -67,36 +67,36 @@ class Const:
     temp_switches = 30
 
     # --- functions ---
-    turn_on = 0,
-    turn_off = 1,
-    open_loop = 2,  # not implemented yet
-    close_loop = 3,
-    select_op_mode = 4,
-    reset_interlocks = 6,
-    set_serial_termination = 9,  # not implemented yet
-    sync_pulse = 15,  # not implemented yet
-    set_slowref = 16,
-    set_slowref_fbp = 17,  # not implemented yet
-    reset_counters = 18,  # not implemented yet
-    cfg_siggen = 23,  # not implemented yet
-    set_siggen = 24,  # not implemented yet
-    enable_siggen = 25,  # not implemented yet
-    disable_siggen = 26,  # not implemented yet
-    set_slowref_readback = 27,  # not implemented yet
-    set_slowref_fbp_readback = 28,  # not implemented yet
-    set_param = 29,  # not implemented yet
-    get_param = 30,  # not implemented yet
-    save_param_eeprom = 31,  # not implemented yet
-    load_param_eeprom = 32,  # not implemented yet
-    save_param_bank = 33,  # not implemented yet
-    load_param_bank = 34,  # not implemented yet
-    set_dsp_coeffs = 35,  # not implemented yet
-    get_dsp_coeff = 36,  # not implemented yet
-    save_dsp_coeffs_eeprom = 37,  # not implemented yet
-    load_dsp_coeffs_eeprom = 38,  # not implemented yet
-    save_dsp_modules_eeprom = 39,  # not implemented yet
-    load_dsp_modules_eeprom = 40,  # not implemented yet
-    reset_udc = 41,  # not implemented yet
+    turn_on = 0
+    turn_off = 1
+    open_loop = 2  # not implemented yet
+    close_loop = 3
+    select_op_mode = 4
+    reset_interlocks = 6
+    set_serial_termination = 9  # not implemented yet
+    sync_pulse = 15  # not implemented yet
+    set_slowref = 16
+    set_slowref_fbp = 17  # not implemented yet
+    reset_counters = 18  # not implemented yet
+    cfg_siggen = 23  # not implemented yet
+    set_siggen = 24  # not implemented yet
+    enable_siggen = 25  # not implemented yet
+    disable_siggen = 26  # not implemented yet
+    set_slowref_readback = 27  # not implemented yet
+    set_slowref_fbp_readback = 28  # not implemented yet
+    set_param = 29  # not implemented yet
+    get_param = 30  # not implemented yet
+    save_param_eeprom = 31  # not implemented yet
+    load_param_eeprom = 32  # not implemented yet
+    save_param_bank = 33  # not implemented yet
+    load_param_bank = 34  # not implemented yet
+    set_dsp_coeffs = 35  # not implemented yet
+    get_dsp_coeff = 36  # not implemented yet
+    save_dsp_coeffs_eeprom = 37  # not implemented yet
+    load_dsp_coeffs_eeprom = 38  # not implemented yet
+    save_dsp_modules_eeprom = 39  # not implemented yet
+    load_dsp_modules_eeprom = 40  # not implemented yet
+    reset_udc = 41  # not implemented yet
 
     # --- variables groups ---
     group_id = 3  # default variables group ID defined for power supplies
@@ -651,7 +651,7 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
                 _struct.unpack("<f", bytes(data[i:i+4]))[0]
             i += 4
             # firmware_version
-            version, di = self._process_firmware_stream(data, i)
+            version, di = BSMPMasterSlave._process_firmware_stream(data, i)
             value[Const.firmware_version] = version
             i += di
             # ps_soft_interlocks
@@ -707,13 +707,15 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
             return _ack.ok, None
         return _ack.ok, None
 
+    @staticmethod
     def _process_firmware_stream(data, i):
 
         def add_ver(version, data, i, di, label_idx, first_ok):
             if data[i] != 0:
                 ver = ''.join([chr(v) for v in data[i:i+16]])
+                ver = ver.replace(' ', '_')
                 if first_ok:
-                    version += '-'
+                    version += ' '
                 version += BSMPMasterSlave.ver_labels[label_idx] + ':' + ver
                 first_ok = True
                 di += 16
