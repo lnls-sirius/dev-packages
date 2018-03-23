@@ -196,7 +196,7 @@ class ControllerIOC(PSCommInterface):
         # get firmaware version from PS controller and prepend package
         # version number (IOC version)
         value = self._bsmp_get_variable(_BSMPConst.firmware_version)
-        firmware_version = __version__ + '-' + value
+        firmware_version = 'ioc:' + __version__ + '-' + value
         return firmware_version
 
     def _get_ps_status(self):
