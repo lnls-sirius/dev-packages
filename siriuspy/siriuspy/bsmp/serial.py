@@ -1,5 +1,6 @@
 """BSMP serial communications classes."""
 import struct as _struct
+from .exceptions import SerialError
 
 
 class Message:
@@ -192,7 +193,10 @@ class Channel:
 
     def read(self):
         """Read from serial."""
-        package = Package(self.serial.UART_read())
+        resp = self.serial.UART_read()
+        if not resp:
+            raise SerialError("Serial read returned empty!")
+        package = Package(resp)
         return package.message
 
     def write(self, message, timeout=100):

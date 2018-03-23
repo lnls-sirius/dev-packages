@@ -12,7 +12,8 @@ from .serial import *
 from .types import *
 from .entities import *
 from .commands import *
+from .exceptions import *
 
 
 __version__ = '2.20.0'
-del serial, types, entities, commands, implementation
+del serial, types, entities, commands, implementation, exceptions
