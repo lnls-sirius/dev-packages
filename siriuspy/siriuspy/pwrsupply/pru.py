@@ -349,7 +349,7 @@ class SerialComm(_BSMPQuery):
         self.put(ID_device=slave.ID_device, ID_cmd=0x32, kwargs=kwargs)
 
         # create group of all variables in slave.
-        IDs_variable = tuple(self.variables.keys())
+        IDs_variable = sorted(tuple(self.variables.keys()))
         kwargs = {'ID_group': _BSMPConst.group_id,
                   'IDs_variable': IDs_variable}
         self.put(ID_device=slave.ID_device, ID_cmd=0x30, kwargs=kwargs)
