@@ -342,8 +342,11 @@ class Status:
     def pwrstate(status, label=False):
         """Return PS powerstate."""
         state = Status.state(status, label=False)
-        index = _PSConst.PwrState.Off if state == _PSConst.States.Off else \
-            _PSConst.PwrState.On
+        if state in (_PSConst.States.Off,
+                     _PSConst.States.Interlock):
+            index = _PSConst.PwrState.Off
+        else:
+            index = _PSConst.PwrState.On
         return _ps_pwrstate_sel[index] if label else index
 
     @staticmethod
