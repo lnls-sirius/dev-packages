@@ -105,14 +105,12 @@ class ControllerIOC(PSCommInterface):
         # reset interlocks
         self.cmd_reset_interlocks()
 
+        # --- initializations ---
+        # (it was decided that IOC will only read status from PS controller)
         # turn ps on and implicitly close control loop
-        # self.pwrstate = _PSConst.PwrState.On
-        # self._pwrstate = _Status.pwrstate(ps_status)
-
+        # self._set_pwrstate(_PSConst.PwrState.On)
         # set opmode do SlowRef
-        # self.opmode = _PSConst.OpMode.SlowRef
-        # self._opmode = _Status.opmode(ps_status)
-
+        # self._set_opmode(_PSConst.OpMode.SlowRef)
         # set reference current to zero
         # self.cmd_set_slowref(0.0)
 
