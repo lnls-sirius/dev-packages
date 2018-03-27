@@ -377,7 +377,7 @@ class ControllerPSSim:
         _BSMPConst.sync_pulse: '_FUNC_NOT_IMPLEMENTED',
         _BSMPConst.set_slowref: '_func_set_slowref',
         _BSMPConst.set_slowref_fbp: '_FUNC_NOT_IMPLEMENTED',
-        _BSMPConst.reset_counters: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.reset_counters: '_func_reset_counters',
         _BSMPConst.cfg_siggen: '_FUNC_NOT_IMPLEMENTED',
         _BSMPConst.set_siggen: '_FUNC_NOT_IMPLEMENTED',
         _BSMPConst.enable_siggen: '_FUNC_NOT_IMPLEMENTED',
@@ -434,23 +434,6 @@ class ControllerPSSim:
             self._i_load_fluctuation = \
                 _random.gauss(0.0, ControllerPSSim._I_LOAD_FLUCTUATION_RMS)
 
-    def _func_set_slowref(self, **kwargs):
-        self._state[_BSMPConst.ps_setpoint] = kwargs['setpoint']
-        self._state[_BSMPConst.ps_reference] = \
-            self._state[_BSMPConst.ps_setpoint]
-        status = self._state[_BSMPConst.ps_status]
-        if _Status.pwrstate(status) == _PSConst.PwrState.On:
-            # i_load <= ps_reference
-            self._state[_BSMPConst.i_load] = \
-                self._state[_BSMPConst.ps_reference] + self._i_load_fluctuation
-        return _ack.ok, None
-
-    def _func_select_op_mode(self, **kwargs):
-        status = self._state[_BSMPConst.ps_status]
-        status = _Status.set_state(status, kwargs['op_mode'])
-        self._state[_BSMPConst.ps_status] = status
-        return _ack.ok, None
-
     def _func_turn_on(self, **kwargs):
         status = self._state[_BSMPConst.ps_status]
         status = _Status.set_state(status, _PSConst.States.SlowRef)
@@ -469,11 +452,6 @@ class ControllerPSSim:
         self._state[_BSMPConst.i_load] = 0.0 + self._i_load_fluctuation
         return _ack.ok, None
 
-    def _func_reset_interlocks(self, **kwargs):
-        self._state[_BSMPConst.ps_soft_interlocks] = 0
-        self._state[_BSMPConst.ps_hard_interlocks] = 0
-        return _ack.ok, None
-
     def _func_open_loop(self, **kwargs):
         status = self._state[_BSMPConst.ps_status]
         status = _Status.set_openloop(status, 1)
@@ -482,6 +460,33 @@ class ControllerPSSim:
     def _func_close_loop(self, **kwargs):
         status = self._state[_BSMPConst.ps_status]
         status = _Status.set_openloop(status, 0)
+        return _ack.ok, None
+
+    def _func_select_op_mode(self, **kwargs):
+        status = self._state[_BSMPConst.ps_status]
+        status = _Status.set_state(status, kwargs['op_mode'])
+        self._state[_BSMPConst.ps_status] = status
+        return _ack.ok, None
+
+    def _func_reset_interlocks(self, **kwargs):
+        self._state[_BSMPConst.ps_soft_interlocks] = 0
+        self._state[_BSMPConst.ps_hard_interlocks] = 0
+        return _ack.ok, None
+
+    def _func_set_slowref(self, **kwargs):
+        self._state[_BSMPConst.ps_setpoint] = kwargs['setpoint']
+        self._state[_BSMPConst.ps_reference] = \
+            self._state[_BSMPConst.ps_setpoint]
+        status = self._state[_BSMPConst.ps_status]
+        if _Status.pwrstate(status) == _PSConst.PwrState.On:
+            # i_load <= ps_reference
+            self._state[_BSMPConst.i_load] = \
+                self._state[_BSMPConst.ps_reference] + self._i_load_fluctuation
+        return _ack.ok, None
+
+    def _func_reset_counters(self, **kwargs):
+        self._state[_BSMPConst.counter_set_slowref] = 0
+        self._state[_BSMPConst.counter_sync_pulse] = 0
         return _ack.ok, None
 
     def _FUNC_NOT_IMPLEMENTED(self, **kwargs):

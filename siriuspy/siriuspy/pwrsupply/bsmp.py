@@ -46,17 +46,17 @@ class Const:
     ps_status = 0
     ps_setpoint = 1  # corresponds to IOC Current-RB
     ps_reference = 2  # corresponds to IOC CurrentRef-Mon
-    firmware_version = 3  # not implemented yet
-    counter_set_slowref = 4  # not implemented yet
-    counter_sync_pulse = 5  # not implemented yet
-    siggen_enable = 6  # not implemented yet
-    siggen_type = 7  # not implemented yet
-    siggen_num_cycles = 8  # not implemented yet
-    siggen_n = 9  # not implemented yet
-    siggen_freq = 10  # not implemented yet
-    siggen_amplitude = 11  # not implemented yet
-    siggen_offset = 12  # not implemented yet
-    siggen_aux_param = 13  # not implemented yet
+    firmware_version = 3  # --- NOT IMPLEMENTED YET ---
+    counter_set_slowref = 4  # --- NOT IMPLEMENTED YET ---
+    counter_sync_pulse = 5  # --- NOT IMPLEMENTED YET ---
+    siggen_enable = 6  # --- NOT IMPLEMENTED YET ---
+    siggen_type = 7  # --- NOT IMPLEMENTED YET ---
+    siggen_num_cycles = 8  # --- NOT IMPLEMENTED YET ---
+    siggen_n = 9  # --- NOT IMPLEMENTED YET ---
+    siggen_freq = 10  # --- NOT IMPLEMENTED YET ---
+    siggen_amplitude = 11  # --- NOT IMPLEMENTED YET ---
+    siggen_offset = 12  # --- NOT IMPLEMENTED YET ---
+    siggen_aux_param = 13  # --- NOT IMPLEMENTED YET ---
 
     # --- FSB variables ---
     ps_soft_interlocks = 25  # BSMP doc says ID numbering should be continous!
@@ -73,30 +73,30 @@ class Const:
     close_loop = 3
     select_op_mode = 4
     reset_interlocks = 6
-    set_serial_termination = 9  # not implemented yet
-    sync_pulse = 15  # not implemented yet
+    set_serial_termination = 9  # --- NOT IMPLEMENTED YET ---
+    sync_pulse = 15  # --- NOT IMPLEMENTED YET ---
     set_slowref = 16
-    set_slowref_fbp = 17  # not implemented yet
+    set_slowref_fbp = 17  # --- NOT IMPLEMENTED YET ---
     reset_counters = 18
-    cfg_siggen = 23  # not implemented yet
-    set_siggen = 24  # not implemented yet
-    enable_siggen = 25  # not implemented yet
-    disable_siggen = 26  # not implemented yet
-    set_slowref_readback = 27  # not implemented yet
-    set_slowref_fbp_readback = 28  # not implemented yet
-    set_param = 29  # not implemented yet
-    get_param = 30  # not implemented yet
-    save_param_eeprom = 31  # not implemented yet
-    load_param_eeprom = 32  # not implemented yet
-    save_param_bank = 33  # not implemented yet
-    load_param_bank = 34  # not implemented yet
-    set_dsp_coeffs = 35  # not implemented yet
-    get_dsp_coeff = 36  # not implemented yet
-    save_dsp_coeffs_eeprom = 37  # not implemented yet
-    load_dsp_coeffs_eeprom = 38  # not implemented yet
-    save_dsp_modules_eeprom = 39  # not implemented yet
-    load_dsp_modules_eeprom = 40  # not implemented yet
-    reset_udc = 41  # not implemented yet
+    cfg_siggen = 23  # --- NOT IMPLEMENTED YET ---
+    set_siggen = 24  # --- NOT IMPLEMENTED YET ---
+    enable_siggen = 25  # --- NOT IMPLEMENTED YET ---
+    disable_siggen = 26  # --- NOT IMPLEMENTED YET ---
+    set_slowref_readback = 27  # --- NOT IMPLEMENTED YET ---
+    set_slowref_fbp_readback = 28  # --- NOT IMPLEMENTED YET ---
+    set_param = 29  # --- NOT IMPLEMENTED YET ---
+    get_param = 30  # --- NOT IMPLEMENTED YET ---
+    save_param_eeprom = 31  # --- NOT IMPLEMENTED YET ---
+    load_param_eeprom = 32  # --- NOT IMPLEMENTED YET ---
+    save_param_bank = 33  # --- NOT IMPLEMENTED YET ---
+    load_param_bank = 34  # --- NOT IMPLEMENTED YET ---
+    set_dsp_coeffs = 35  # --- NOT IMPLEMENTED YET ---
+    get_dsp_coeff = 36  # --- NOT IMPLEMENTED YET ---
+    save_dsp_coeffs_eeprom = 37  # --- NOT IMPLEMENTED YET ---
+    load_dsp_coeffs_eeprom = 38  # --- NOT IMPLEMENTED YET ---
+    save_dsp_modules_eeprom = 39  # --- NOT IMPLEMENTED YET ---
+    load_dsp_modules_eeprom = 40  # --- NOT IMPLEMENTED YET ---
+    reset_udc = 41  # --- NOT IMPLEMENTED YET ---
 
     # --- variables groups ---
     group_id = 3  # default variables group ID defined for power supplies
@@ -114,10 +114,10 @@ def get_variables_common():
             ('ps_reference', Const.t_float, False),
         Const.firmware_version:
             ('firmware_version', Const.t_char128, False),
-        # Const.counter_set_slowref:
-        #     ('counter_set_slowref', Const.t_uint32, False),
-        # Const.counter_sync_pulse:
-        #     ('counter_sync_pulse', Const.t_uint32, False),
+        Const.counter_set_slowref:
+            ('counter_set_slowref', Const.t_uint32, False),
+        Const.counter_sync_pulse:
+            ('counter_sync_pulse', Const.t_uint32, False),
         # Const.siggen_enable:
         #     ('siggen_enable', Const.t_uint16, False),
         # Const.siggen_type:
@@ -657,6 +657,14 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
             version, di = BSMPMasterSlave._process_firmware_stream(data, i)
             value[Const.firmware_version] = version
             i += di
+            # counter_set_slowref
+            datum = data[i] + (data[i+1] << 8) + \
+                (data[i+2] << 16) + (data[i+3] << 24)
+            value[Const.counter_set_slowref] = datum
+            # counter_sync_pulse
+            datum = data[i] + (data[i+1] << 8) + \
+                (data[i+2] << 16) + (data[i+3] << 24)
+            value[Const.counter_sync_pulse] = datum
             # ps_soft_interlocks
             datum = data[i] + (data[i+1] << 8) + \
                 (data[i+2] << 16) + (data[i+3] << 24)
