@@ -1,7 +1,7 @@
 """Module to simulate timing system."""
 
 from siriuspy.namesys import SiriusPVName as _PVName
-from .device_models import EVGIOC, EVRIOC, EVEIOC, AFCIOC, CallBack
+from .device_models import EVGIOC, EVRIOC, EVEIOC, AFCIOC, FOUTIOC, CallBack
 from siriuspy.timesys.time_data import Connections as _Connections
 from siriuspy.timesys.time_data import RF_DIVISION as RFDIV
 
@@ -13,6 +13,7 @@ class TimingSimulation(CallBack):
     EVRs = None
     EVEs = None
     AFCs = None
+    FOUTs = None
 
     @classmethod
     def get_database(cls, prefix=''):
@@ -30,6 +31,9 @@ class TimingSimulation(CallBack):
         for dev in cls.AFCs:
             pre = prefix + dev + ':'
             db.update(AFCIOC.get_database(prefix=pre))
+        for dev in cls.FOUTs:
+            pre = prefix + dev + ':'
+            db.update(FOUTIOC.get_database(prefix=pre))
         return db
 
     def __init__(self, rf_freq, callbacks=None, prefix=''):
@@ -65,6 +69,15 @@ class TimingSimulation(CallBack):
                          prefix=pref)
             evg.add_pending_devices_callback(afc.uuid, afc.receive_events)
             self.afcs[pref] = afc
+
+        self.fouts = dict()
+        for dev in self.FOUTs:
+            pref = prefix + dev + ':'
+            fout = FOUTIOC(rf_freq/RFDIV,
+                           callbacks={self.uuid: self._on_pvs_change},
+                           prefix=pref)
+            # evg.add_pending_devices_callback(fout.uuid, fout.receive_events)
+            self.fouts[pref] = fout
         self.evg = evg
 
     def add_injection_callback(self, uuid, callback):
@@ -87,6 +100,8 @@ class TimingSimulation(CallBack):
             return self.eves[parts.device_name+':'].get_propty(reason)
         elif parts.device_name+':' in self.afcs.keys():
             return self.afcs[parts.device_name+':'].get_propty(reason)
+        elif parts.device_name+':' in self.fouts.keys():
+            return self.fouts[parts.device_name+':'].get_propty(reason)
         else:
             return None
 
@@ -102,6 +117,8 @@ class TimingSimulation(CallBack):
             return self.eves[parts.device_name+':'].set_propty(reason, value)
         elif parts.device_name+':' in self.afcs.keys():
             return self.afcs[parts.device_name+':'].set_propty(reason, value)
+        elif parts.device_name+':' in self.fouts.keys():
+            return self.fouts[parts.device_name+':'].set_propty(reason, value)
         else:
             return False
 
@@ -116,3 +133,4 @@ class TimingSimulation(CallBack):
         cls.EVRs = _Connections.get_devices('EVR')
         cls.EVEs = _Connections.get_devices('EVE')
         cls.AFCs = _Connections.get_devices('AFC')
+        cls.FOUTs = _Connections.get_devices('FOUT')
