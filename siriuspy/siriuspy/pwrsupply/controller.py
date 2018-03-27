@@ -369,7 +369,7 @@ class ControllerPSSim:
     funcs = {
         _BSMPConst.turn_on: '_func_turn_on',
         _BSMPConst.turn_off: '_func_turn_off',
-        _BSMPConst.open_loop: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.open_loop: '_func_open_loop',
         _BSMPConst.close_loop: '_func_close_loop',
         _BSMPConst.select_op_mode: '_func_select_op_mode',
         _BSMPConst.reset_interlocks: '_func_reset_interlocks',
@@ -472,6 +472,11 @@ class ControllerPSSim:
     def _func_reset_interlocks(self, **kwargs):
         self._state[_BSMPConst.ps_soft_interlocks] = 0
         self._state[_BSMPConst.ps_hard_interlocks] = 0
+        return _ack.ok, None
+
+    def _func_open_loop(self, **kwargs):
+        status = self._state[_BSMPConst.ps_status]
+        status = _Status.set_openloop(status, 1)
         return _ack.ok, None
 
     def _func_close_loop(self, **kwargs):

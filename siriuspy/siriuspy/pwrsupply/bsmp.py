@@ -69,7 +69,7 @@ class Const:
     # --- functions ---
     turn_on = 0
     turn_off = 1
-    open_loop = 2  # not implemented yet
+    open_loop = 2
     close_loop = 3
     select_op_mode = 4
     reset_interlocks = 6
