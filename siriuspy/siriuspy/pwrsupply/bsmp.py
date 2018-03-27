@@ -46,9 +46,9 @@ class Const:
     ps_status = 0
     ps_setpoint = 1  # corresponds to IOC Current-RB
     ps_reference = 2  # corresponds to IOC CurrentRef-Mon
-    firmware_version = 3  # --- NOT IMPLEMENTED YET ---
-    counter_set_slowref = 4  # --- NOT IMPLEMENTED YET ---
-    counter_sync_pulse = 5  # --- NOT IMPLEMENTED YET ---
+    firmware_version = 3
+    counter_set_slowref = 4
+    counter_sync_pulse = 5
     siggen_enable = 6  # --- NOT IMPLEMENTED YET ---
     siggen_type = 7  # --- NOT IMPLEMENTED YET ---
     siggen_num_cycles = 8  # --- NOT IMPLEMENTED YET ---
