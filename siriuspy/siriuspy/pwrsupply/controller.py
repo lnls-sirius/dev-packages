@@ -18,6 +18,8 @@ __version__ = _util.get_last_commit_hash()
 class PSCommInterface:
     """Communication interface class for power supplies."""
 
+    # TODO: should this class have its own python module?
+
     # --- public interface ---
 
     def __init__(self):

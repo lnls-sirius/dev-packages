@@ -73,7 +73,7 @@ class Const:
     sync_pulse = 15  # not implemented yet
     set_slowref = 16
     set_slowref_fbp = 17  # not implemented yet
-    reset_counters = 18  # not implemented yet
+    reset_counters = 18
     cfg_siggen = 23  # not implemented yet
     set_siggen = 24  # not implemented yet
     enable_siggen = 25  # not implemented yet
@@ -547,7 +547,7 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
         return ID_cmd, version_str
 
     def cmd_0x11(self, ID_receiver, ID_variable):
-        """Respond BSMP variable."""
+        """Respond BSMP variable readout."""
         # query power supply
         if ID_variable == Const.frmware_version:
             # simulate response to firmware version
@@ -574,7 +574,7 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
         return ID_cmd, value
 
     def cmd_0x13(self, ID_receiver, ID_group):
-        """Respond SBMP variable group."""
+        """Respond SBMP variable group readout."""
         # query power supply
         query = [chr(ID_receiver), '\x12', '\x00', '\x01', chr(ID_group)]
         query = BSMPMasterSlave.includeChecksum(query)
@@ -621,6 +621,10 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
             # i_load
             value[Const.i_load] = _struct.unpack("<f", bytes(data[i:i+4]))[0]
             i += 4
+            # v_dclink
+            pass
+            # temp_switches
+            pass
         else:
             raise ValueError('Invalid group ID!')
         return _ack.ok, value
@@ -628,29 +632,29 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
     def cmd_0x51(self, ID_receiver, ID_function, **kwargs):
         """Respond to execute BSMP function."""
         # execute function in power supply
-        # print('cmd_0x51', kwargs)
         if ID_function in (Const.turn_on,
                            Const.turn_off,
                            Const.open_loop,
                            Const.close_loop,
-                           Const.reset_interlocks):
+                           Const.reset_interlocks,
+                           Const.reset_counters):
             load = []
         elif ID_function == Const.set_slowref:
             load = [chr(b) for b in _struct.pack("<f", kwargs['setpoint'])]
         elif ID_function == Const.select_op_mode:
-            load = [chr(b) for b in _struct.pack("<f", kwargs['op_mode'])]
+            # TODO: originally format "<f" was being used...
+            load = [chr(b) for b in _struct.pack("<i", kwargs['op_mode'])]
         else:
             raise NotImplementedError
-        n = 1 + len(load)
+        n = 1 + len(load)  # one additional byte for checksum.
         hb, lb = (n & 0xFF00) >> 8, n & 0xFF
         query = [chr(ID_receiver), '\x50', chr(hb), chr(lb),
                  chr(ID_function)] + load
         query = BSMPMasterSlave.includeChecksum(query)
         # print('cmd_0x51: ', n, query)
+        # TODO: check this timeout. eventually will be part of the BSMP PS spec
         self._pru.UART_write(query, timeout=100)
         response = self._pru.UART_read()
-        # print(response)
-        # process response
         ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
         if ID_cmd != 0x51:
             # currently ps slaves are returning 0x53 sometimes !!!
