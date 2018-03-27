@@ -711,27 +711,62 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
             return _ack.ok, None
         return _ack.ok, None
 
+    # --- private aux. methods ---
+
     @staticmethod
     def _process_firmware_stream(data, i):
 
-        def add_ver(version, data, i, di, label_idx, first_ok):
-            if data[i] != 0:
-                ver = ''.join([chr(v) for v in data[i:i+16]])
-                ver = ver.replace(' ', '_')
-                if first_ok:
-                    version += ' '
-                version += BSMPMasterSlave.ver_labels[label_idx] + ':' + ver
-                first_ok = True
-                di += 16
-                i += 16
-            return version, i, di, first_ok
-
-        # loop over ver_labels and adds piece of string, if corresponding data
-        # is valid.
         version = ''
-        di = 0
         first_ok = False
-        for label_idx in range(len(BSMPMasterSlave.ver_labels)):
-                version, i, di, first_ok = \
-                    add_ver(version, data, i, di, label_idx, first_ok)
-        return version, di
+
+        # udc_arm
+        version, i, first_ok = \
+            BSMPMasterSlave._process_firmware_stream_substring(
+                data, version, i, first_ok, 0)
+        # TODO: uncomment the rest of this method once Version-Cte has been
+        # modifed to an array of chars (epics strings PVs are limited to
+        # 40 chars in length!)
+
+        # # udc_c28
+        # version, i, first_ok = \
+        #     BSMPMasterSlave._process_firmware_stream_substring(
+        #         data, version, i, first_ok, 1)
+        # # hradc0_cpld
+        # version, i, first_ok = \
+        #     BSMPMasterSlave._process_firmware_stream_substring(
+        #         data, version, i, first_ok, 2)
+        # # hradc1_cpld
+        # version, i, first_ok = \
+        #     BSMPMasterSlave._process_firmware_stream_substring(
+        #         data, version, i, first_ok, 3)
+        # # hradc2_cpld
+        # version, i, first_ok = \
+        #     BSMPMasterSlave._process_firmware_stream_substring(
+        #         data, version, i, first_ok, 4)
+        # # hradc3_cpld
+        # version, i, first_ok = \
+        #     BSMPMasterSlave._process_firmware_stream_substring(
+        #         data, version, i, first_ok, 5)
+        # # iib_arm
+        # version, i, first_ok = \
+        #     BSMPMasterSlave._process_firmware_stream_substring(
+        #         data, version, i, first_ok, 6)
+        # # ihm_pic
+        # version, i, first_ok = \
+        #     BSMPMasterSlave._process_firmware_stream_substring(
+        #         data, version, i, first_ok, 7)
+
+        return version, 128
+
+    @staticmethod
+    def _process_firmware_stream_substring(data, version,
+                                           i, first_ok, label_idx):
+        if data[i] != 0:
+            ver = ''.join([chr(v) for v in data[i:i+16]])
+            ver = ver.replace(' ', '_')
+            if first_ok:
+                version += ' '
+            version += BSMPMasterSlave.ver_labels[label_idx] + ':' + ver
+            first_ok = True
+        i += 16
+        return version, i, first_ok
