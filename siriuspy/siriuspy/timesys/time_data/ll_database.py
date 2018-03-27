@@ -240,8 +240,8 @@ class TimingDevDb:
         return db
 
     @staticmethod
-    def get_fout_database(evr_num=1, prefix=None):
-        def_prefix = 'AS-Glob:TI-FOUT-{1:d}:'.format(evr_num)
+    def get_fout_database(fout_num=1, prefix=None):
+        def_prefix = 'AS-Glob:TI-FOUT-{0:d}:'.format(fout_num)
         prefix = prefix if prefix is not None else def_prefix
         db = dict()
 
