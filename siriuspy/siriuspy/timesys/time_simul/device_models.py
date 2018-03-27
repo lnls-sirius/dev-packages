@@ -698,3 +698,42 @@ class AFCIOC(EVRIOC):
     def get_database(prefix=''):
         """Get the database."""
         return TimingDevDb.get_afc_database(prefix=prefix)
+
+
+class FOUTIOC(_BaseIOC):
+    """Class to simulate the FOUT."""
+
+    _attr2pvname = {
+        'state_sp': 'DevEnbl-Sel',
+        'state_rb': 'DevEnbl-Sts',
+        'loss_down_conn_mon': 'Los-Mon',
+        'alive_mon': 'Alive-Mon',
+        'network_mon': 'Network-Mon',
+        'link_mon': 'Link-Mon',
+        }
+
+    @staticmethod
+    def get_database(prefix=''):
+        """Get the database."""
+        return TimingDevDb.get_fout_database(prefix=prefix)
+
+    def __init__(self, base_freq, callbacks=None, prefix=None):
+        """Initialize the instance."""
+        self.base_freq = base_freq
+        super().__init__(callbacks=callbacks, prefix=prefix)
+
+    def receive_events(self, bucket, events):
+        """Receive the events from the EVG."""
+        if not self._state_rb:
+            return {self.prefix: tuple()}
+        return {self.prefix: (bucket, events)}
+
+    def _get_attr2expression(self):
+        return {
+            'state_sp': lambda x: int(x),
+            'state_rb': lambda x: x,
+            'loss_down_conn_mon': lambda x: x,
+            'alive_mon': lambda x: x,
+            'network_mon': lambda x: x,
+            'link_mon': lambda x: x,
+            }
