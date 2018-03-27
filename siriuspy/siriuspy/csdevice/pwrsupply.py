@@ -2,9 +2,11 @@
 
 import copy as _copy
 from collections import namedtuple as _namedtuple
+
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.search import MASearch as _MASearch
+
 max_wfmsize = 4000
 default_wfmlabels = _et.enums('PSWfmLabelsTyp')
 # default_intlklabels = _et.enums('PSIntlkLabelsTyp')

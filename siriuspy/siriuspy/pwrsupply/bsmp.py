@@ -37,6 +37,10 @@ class Const:
     t_uint32 = 7
     t_char128 = 8
     t_float4 = 9
+    t_param = 10
+    t_float12 = 11
+    t_dspclass = 12
+    t_none = 13
 
     # --- common variables ---
     ps_status = 0
@@ -65,7 +69,7 @@ class Const:
     # --- functions ---
     turn_on = 0
     turn_off = 1
-    open_loop = 2
+    open_loop = 2  # not implemented yet
     close_loop = 3
     select_op_mode = 4
     reset_interlocks = 6
@@ -80,6 +84,19 @@ class Const:
     disable_siggen = 26  # not implemented yet
     set_slowref_readback = 27  # not implemented yet
     set_slowref_fbp_readback = 28  # not implemented yet
+    set_param = 29  # not implemented yet
+    get_param = 30  # not implemented yet
+    save_param_eeprom = 31  # not implemented yet
+    load_param_eeprom = 32  # not implemented yet
+    save_param_bank = 33  # not implemented yet
+    load_param_bank = 34  # not implemented yet
+    set_dsp_coeffs = 35  # not implemented yet
+    get_dsp_coeff = 36  # not implemented yet
+    save_dsp_coeffs_eeprom = 37  # not implemented yet
+    load_dsp_coeffs_eeprom = 38  # not implemented yet
+    save_dsp_modules_eeprom = 39  # not implemented yet
+    load_dsp_modules_eeprom = 40  # not implemented yet
+    reset_udc = 41  # not implemented yet
 
     # --- variables groups ---
     group_id = 3  # default variables group ID defined for power supplies
@@ -184,6 +201,43 @@ def get_functions():
         Const.set_slowref_fbp_readback:
             ('set_slowref_fbp_readback', Const.t_uint8,
              [Const.t_float, Const.t_float, Const.t_float, Const.t_float]),
+        Const.set_param:
+            ('set_param', Const.t_uint8,
+             [Const.t_param, Const.t_uint16, Const.t_float]),
+        Const.get_param:
+            ('get_param', Const.t_float, [Const.t_param, Const.t_uint16]),
+        Const.save_param_eeprom:
+            ('save_param_eeprom', Const.t_uint8,
+             [Const.t_param, Const.t_uint16]),
+        Const.load_param_eeprom:
+            ('load_param_eeprom', Const.t_uint8,
+             [Const.t_param, Const.t_uint16]),
+        Const.save_param_bank:
+            ('save_param_bank', Const.t_uint8, []),
+        Const.load_param_bank:
+            ('load_param_bank', Const.t_uint8, []),
+        Const.set_dsp_coeffs:
+            ('set_dsp_coeffs', Const.t_uint8,
+             [Const.t_dspclass, Const.t_uint16, Const.t_float12]),
+        Const.get_dsp_coeff:
+            ('get_dsp_coeff', Const.t_uint8,
+             [Const.t_dspclass, Const.t_uint16, Const.t_float]),
+        Const.get_dsp_coeff:
+            ('get_dsp_coeff', Const.t_uint8,
+             [Const.t_dspclass, Const.t_uint16, Const.t_float]),
+        Const.save_dsp_coeffs_eeprom:
+            ('save_dsp_coeffs_eeprom', Const.t_uint8,
+             [Const.t_dspclass, Const.t_uint16]),
+        Const.load_dsp_coeffs_eeprom:
+            ('load_dsp_coeffs_eeprom', Const.t_uint8,
+             [Const.t_dspclass, Const.t_uint16]),
+        Const.save_dsp_modules_eeprom:
+            ('save_dsp_modules_eeprom', Const.t_uint8, []),
+        Const.load_dsp_modules_eeprom:
+            ('load_dsp_modules_eeprom', Const.t_uint8, []),
+        Const.reset_udc:
+            ('reset_udc', Const.t_none, []),
+
     }
     return functions
 
@@ -501,7 +555,8 @@ class BSMPMasterSlaveSim(_BSMPResponse):
 class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
     """Class used to perform BSMP comm between a master and slave."""
 
-    _FAKE_FRMWARE_VERSION = ['\x00', '\x00']
+    ver_labels = ('udc_arm', 'udc_c28', 'hradc0_cpld', 'hradc1_cpld',
+                  'hradc2_cpld', 'hradc3_cpld', 'iib_arm', 'ihm_pic')
 
     def __init__(self, ID_device, PRU):
         """Init method."""
@@ -552,19 +607,11 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
     def cmd_0x11(self, ID_receiver, ID_variable):
         """Respond BSMP variable readout."""
         # query power supply
-        if ID_variable == Const.frmware_version:
-            # simulate response to firmware version
-            # (This variable currently is not implemented  - see bsmp.py !!!)
-            ID_master = 0
-            response = [chr(ID_master), '\x11', '\x00', '\x02'] + \
-                BSMPMasterSlave._FAKE_FRMWARE_VERSION
-            response = BSMPMasterSlave.includeChecksum(response)
-        else:
-            query = [chr(ID_receiver),
-                     '\x10', '\x00', '\x01', chr(ID_variable)]
-            query = BSMPMasterSlave.includeChecksum(query)
-            self._pru.UART_write(query, timeout=10)  # 10 or 100 for timeout?
-            response = self._pru.UART_read()
+        query = [chr(ID_receiver),
+                 '\x10', '\x00', '\x01', chr(ID_variable)]
+        query = BSMPMasterSlave.includeChecksum(query)
+        self._pru.UART_write(query, timeout=10)  # 10 or 100 for timeout?
+        response = self._pru.UART_read()
         # process response
         ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
         if ID_variable == Const.frmware_version:
@@ -607,10 +654,9 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
                 _struct.unpack("<f", bytes(data[i:i+4]))[0]
             i += 4
             # firmware_version
-            version = ''.join([chr(v) for v in data[i:i+128]])
-            version, *_ = version.split('\x00')
+            version, di = BSMPMasterSlave._process_firmware_stream(data, i)
             value[Const.firmware_version] = version
-            i += 128
+            i += di
             # ps_soft_interlocks
             datum = data[i] + (data[i+1] << 8) + \
                 (data[i+2] << 16) + (data[i+3] << 24)
@@ -668,3 +714,63 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
             # return ID_cmd, load
             return _ack.ok, None
         return _ack.ok, None
+
+    # --- private aux. methods ---
+
+    @staticmethod
+    def _process_firmware_stream(data, i):
+
+        version = ''
+        first_ok = False
+
+        # udc_arm
+        version, i, first_ok = \
+            BSMPMasterSlave._process_firmware_stream_substring(
+                data, version, i, first_ok, 0)
+        # TODO: uncomment the rest of this method once Version-Cte has been
+        # modifed to an array of chars (epics strings PVs are limited to
+        # 40 chars in length!)
+
+        # # udc_c28
+        # version, i, first_ok = \
+        #     BSMPMasterSlave._process_firmware_stream_substring(
+        #         data, version, i, first_ok, 1)
+        # # hradc0_cpld
+        # version, i, first_ok = \
+        #     BSMPMasterSlave._process_firmware_stream_substring(
+        #         data, version, i, first_ok, 2)
+        # # hradc1_cpld
+        # version, i, first_ok = \
+        #     BSMPMasterSlave._process_firmware_stream_substring(
+        #         data, version, i, first_ok, 3)
+        # # hradc2_cpld
+        # version, i, first_ok = \
+        #     BSMPMasterSlave._process_firmware_stream_substring(
+        #         data, version, i, first_ok, 4)
+        # # hradc3_cpld
+        # version, i, first_ok = \
+        #     BSMPMasterSlave._process_firmware_stream_substring(
+        #         data, version, i, first_ok, 5)
+        # # iib_arm
+        # version, i, first_ok = \
+        #     BSMPMasterSlave._process_firmware_stream_substring(
+        #         data, version, i, first_ok, 6)
+        # # ihm_pic
+        # version, i, first_ok = \
+        #     BSMPMasterSlave._process_firmware_stream_substring(
+        #         data, version, i, first_ok, 7)
+
+        return version, 128
+
+    @staticmethod
+    def _process_firmware_stream_substring(data, version,
+                                           i, first_ok, label_idx):
+        if data[i] != 0:
+            ver = ''.join([chr(v) for v in data[i:i+16]])
+            ver = ver.replace(' ', '_')
+            if first_ok:
+                version += ' '
+            version += BSMPMasterSlave.ver_labels[label_idx] + ':' + ver
+            first_ok = True
+        i += 16
+        return version, i, first_ok
