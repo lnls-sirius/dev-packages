@@ -48,6 +48,7 @@ class PowerSupply:
         """BSMP instance for this device."""
         return self._bsmp
 
+    @property
     def database(self):
         """Power supply database."""
         return self._database
@@ -138,6 +139,7 @@ class PowerSupply:
         """Turn power supply on."""
         sts, val = self.bsmp.execute_function(0)
         if sts == Response.ok:
+            self.bsmp.execute_function(3)  # Close control loop
             return True
         else:
             return False
