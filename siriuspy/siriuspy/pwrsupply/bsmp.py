@@ -342,8 +342,11 @@ class Status:
     def pwrstate(status, label=False):
         """Return PS powerstate."""
         state = Status.state(status, label=False)
-        index = _PSConst.PwrState.Off if state == _PSConst.States.Off else \
-            _PSConst.PwrState.On
+        if state in (_PSConst.States.Off,
+                     _PSConst.States.Interlock):
+            index = _PSConst.PwrState.Off
+        else:
+            index = _PSConst.PwrState.On
         return _ps_pwrstate_sel[index] if label else index
 
     @staticmethod
@@ -574,7 +577,7 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
         return ID_cmd, value
 
     def cmd_0x13(self, ID_receiver, ID_group):
-        """Respond SBMP variable group readout."""
+        """Respond SBMP variable group read command."""
         # query power supply
         query = [chr(ID_receiver), '\x12', '\x00', '\x01', chr(ID_group)]
         query = BSMPMasterSlave.includeChecksum(query)
@@ -609,17 +612,18 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
             value[Const.firmware_version] = version
             i += 128
             # ps_soft_interlocks
-            value[Const.ps_soft_interlocks] = \
-                data[i] + (data[i+1] << 8) + \
+            datum = data[i] + (data[i+1] << 8) + \
                 (data[i+2] << 16) + (data[i+3] << 24)
+            value[Const.ps_soft_interlocks] = datum
             i += 4
             # ps_hard_interlocks
-            value[Const.ps_hard_interlocks] = \
-                data[i] + (data[i+1] << 8) + \
+            datum = data[i] + (data[i+1] << 8) + \
                 (data[i+2] << 16) + (data[i+3] << 24)
+            value[Const.ps_hard_interlocks] = datum
             i += 4
             # i_load
-            value[Const.i_load] = _struct.unpack("<f", bytes(data[i:i+4]))[0]
+            datum = _struct.unpack("<f", bytes(data[i:i+4]))[0]
+            value[Const.i_load] = datum
             i += 4
             # v_dclink
             pass
