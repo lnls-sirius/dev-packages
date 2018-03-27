@@ -224,4 +224,4 @@ class Entities:
 
     def remove_all_groups(self):
         """Remove all groups bigger than id 2."""
-        self.groups = self.groups[:3]
+        self._groups = self.groups[:3]
