@@ -205,6 +205,12 @@ class TestBSMPChannel(unittest.TestCase):
         self.assertEqual(recv.cmd, response.cmd)
         self.assertEqual(recv.load, response.load)
 
+    def test_request_fail(self):
+        """Test exception is raised when serial fails."""
+        self.serial.UART_read.return_value = None
+        with self.assertRaises(SerialError):
+            self.channel.request(Message.message(0x10, load=[chr(10)]))
+
 
 if __name__ == '__main__':
     unittest.main()
