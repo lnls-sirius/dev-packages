@@ -1,7 +1,7 @@
 """Define the high level classes."""
 
 import logging as _log
-import copy.deepcopy as _dcopy
+from copy import deepcopy as _dcopy
 from siriuspy.timesys.time_data import Triggers
 from siriuspy.timesys.time_data import Clocks, Events
 from as_ti_control.ll_classes import get_ll_trigger_object
@@ -194,7 +194,8 @@ class HL_Event(_HL_Base):
         db[pre + 'Delay-SP'] = dic_
 
         dic_ = {'type': 'enum', 'enums': Events.MODES,
-                'value': self._my_state['Mode']}
+                'value': self._my_state['Mode'],
+                'states': ()}
         db[pre + 'Mode-Sts'] = _dcopy(dic_)
         dic_['fun_set_pv'] = lambda x: self.write('Mode', x)
         db[pre + 'Mode-Sel'] = dic_
@@ -214,7 +215,7 @@ class HL_Event(_HL_Base):
     def __init__(self, prefix, callback, ev_ll):
         """Initialize object."""
         super().__init__(prefix, callback)
-        self._interface_props = {'Delay', 'Mode', 'ExtTrig'}
+        self._interface_props = {'Delay', 'DelayType', 'Mode', 'ExtTrig'}
         self._my_state = {'Delay': 0, 'Mode': 1,
                           'DelayType': 1, 'ExtTrig': 0}
         self._ll_objs_names = [EVG_NAME + ':' + ev_ll]
@@ -245,7 +246,7 @@ class HL_Trigger(_HL_Base):
         return get_ll_trigger_object(**kwargs)
 
     @staticmethod
-    def _get_ll_obj_names(self, chans):
+    def _get_ll_obj_names(chans):
         return get_ll_trigger_obj_names(chans)
 
     def get_database(self):
@@ -276,7 +277,7 @@ class HL_Trigger(_HL_Base):
 
         dic_ = {'type': 'enum', 'enums': Triggers.POLARITIES}
         dic_.update(self._pvs_config['Polarity'])
-        db[pre + 'Polrty-Sts'] = _dcopy(dic_)
+        db[pre + 'Polarity-Sts'] = _dcopy(dic_)
         dic_['fun_set_pv'] = lambda x: self.write('Polarity', x)
         db[pre + 'Polarity-Sel'] = dic_
 
@@ -312,8 +313,8 @@ class HL_Trigger(_HL_Base):
             'type': 'enum',
             'enums': ('Conn OK', 'Dev Dsbl', 'Net Disconn', 'Intlk Actv',
                       'UpLink Disconn', 'DownLink Disconn'),
+            'states': (0, 2, 1, 1, 2, 2, ),
             }
-        dic_.update(self._pvs_config['DelayType'])
         db[pre + 'ConnStatus-Mon'] = _dcopy(dic_)
 
         return super().get_database(db)
@@ -359,11 +360,11 @@ class HL_Trigger(_HL_Base):
         dic_ = self._pvs_config['Src']
         # EVG_params_ENUMS
         if all(has_clock):
-            dic_['enums'] += tuple(sorted(Clocks.HL2LL_MAP.keys()))
+            dic_['enums'] += tuple(sorted(Clocks.HL2LL_MAP.keys()))+('Dsbl', )
         elif any(has_clock):
             _log.warning('Some triggers of ' + self.prefix +
                          ' are connected to unsimiliar low level devices.')
-        self._source_enums = ['Dsbl', ] + list(dic_['enums'])
+        self._source_enums = list(dic_['enums'])
         # Delay Typess
         dic_ = self._pvs_config['DelayType']
         dic_['enums'] = (Triggers.DELAY_TYPES[0], )

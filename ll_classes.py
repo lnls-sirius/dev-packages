@@ -70,7 +70,6 @@ class _Base:
         self._ll_state = dict()
         self._rf_freq = RFFREQ
         self._rf_div = RFDIV
-        _log.info(self.channel+': Starting.')
 
         PV_Class = _epics.PV
         self._rf_freq_pv = PV_Class(LL_PREFIX + 'SI-03SP:RF-SRFCav:Freq-SP',
@@ -113,7 +112,6 @@ class _Base:
         # Timer to force equality between high and low level:
         self._timer = _Timer(_INTERVAL, self._force_equal)
         self._timer.start()
-        _log.info(self.channel + ': Done.')
 
     def write(self, prop, value):
         """Set property values in low level IOCS.
@@ -175,7 +173,9 @@ class _Base:
 
     def _initialize_ll_state(self):
         for hl_prop, val in self._hl_state.items():
-            self.write(hl_prop, val)
+            fun = self._dict_functions_for_write[hl_prop]
+            fun(val)
+        self._start_timer()
 
     def _force_equal(self):
         for ll_prop, pv in self._pvs_sp.items():
@@ -413,7 +413,7 @@ class _EVROUT(_Base):
             'State': lambda x: {'State': x},
             'Evt': self._process_source,
             'Width': self._get_duration,
-            'Polrty': lambda x: {'Polrty': x},
+            'Polarity': lambda x: {'Polarity': x},
             'Pulses': lambda x: {'Pulses': x},
             'Delay': self._get_delay,
             'Intlk': lambda x: {'Intlk': x},
@@ -422,52 +422,56 @@ class _EVROUT(_Base):
             'RFDelay': self._get_delay,
             'FineDelay': self._get_delay,
             'DevEnbl': self._get_conn_status,
-            'FOUTDevEnbl': self._get_conn_status,
-            'EVGDevEnbl': self._get_conn_status,
             'Network': self._get_conn_status,
             'Link': self._get_conn_status,
             'Los': self._get_conn_status,
             'IntlkMon': self._get_conn_status,
+            'FOUTDevEnbl': self._get_conn_status,
+            'EVGDevEnbl': self._get_conn_status,
             }
         for prop in self._REMOVE_PROPS:
             map_.pop(prop)
         return map_
 
+    def _get_from_pvs_rb(self, ll_prop, def_val=0, as_string=False):
+        val = self._pvs_rb.get(ll_prop, def_val)
+        if val != def_val:
+            val = val.get(timeout=_conn_timeout, as_string=as_string)
+        return def_val if val is None else val
+
     def _get_conn_status(self, value):
-        pvs = self._pvs_rb
-        devsts = pvs['DevEnbl'].get(timeout=_conn_timeout) or 1
-        foutsts = pvs['FOUTDevEnbl'].get(timeout=_conn_timeout) or 1
-        evgsts = pvs['EVGDevEnbl'].get(timeout=_conn_timeout) or 1
+        devsts = self._get_from_pvs_rb('DevEnbl', def_val=0)
+        foutsts = self._get_from_pvs_rb('FOUTDevEnbl', def_val=0)
+        evgsts = self._get_from_pvs_rb('EVGDevEnbl', def_val=0)
         if not all((devsts, foutsts, evgsts)):
             return {'ConnStatus': {
                         'value': 1,
                         'alarm': Alarm.DISABLE_ALARM,
                         'severity': Severity.MAJOR_ALARM}
                     }  # Dev Dsbl
-        network = pvs['Network'].get(timeout=_conn_timeout) or 1
+        network = self._get_from_pvs_rb('Network', def_val=0)
         if not network:
             return {'ConnStatus': {
                         'value': 2,
                         'alarm': Alarm.COMM_ALARM,
                         'severity': Severity.MINOR_ALARM}
                     }  # Network Discon
-        intlk = pvs['IntlkMon'].get(timeout=_conn_timeout) or 1
+        intlk = self._get_from_pvs_rb('IntlkMon', def_val=1)
         if intlk:
             return {'ConnStatus': {
                         'value': 3,
                         'alarm': Alarm.STATE_ALARM,
                         'severity': Severity.MINOR_ALARM}
                     }  # Intlk Actve
-        link = pvs['Link'].get(timeout=_conn_timeout) or 1
-        if link:
+        link = self._get_from_pvs_rb('Link', def_val=0)
+        if not link:
             return {'ConnStatus': {
                         'value': 4,
                         'alarm': Alarm.LINK_ALARM,
                         'severity': Severity.MAJOR_ALARM}
                     }  # Up Link Discon
-        los = pvs.get('Los')
+        los = self._get_from_pvs_rb('Los', def_val=None)
         if los is not None:
-            los = los.get(timeout=_conn_timeout) or 0
             num = self._internal_trigger - self._NUM_OTP
             if (los >> num) % 2:
                 return {'ConnStatus': {
@@ -482,10 +486,9 @@ class _EVROUT(_Base):
                 }  # Connection OK
 
     def _get_delay(self, value):
-        pvs = self._pvs_rb
-        delay1 = pvs['Delay'].get(timeout=_conn_timeout) or 0
-        delay2 = pvs['RFDelay'].get(timeout=_conn_timeout) or 0
-        delay3 = pvs['FineDelay'].get(timeout=_conn_timeout) or 0
+        delay1 = self._get_from_pvs_rb('Delay', def_val=0)
+        delay2 = self._get_from_pvs_rb('RFDelay', def_val=0)
+        delay3 = self._get_from_pvs_rb('FineDelay', def_val=0)
         if delay2 == 31:
             delay = (delay1*self._base_del + delay3*FDEL) * 1e6
             return {'Delay': delay, 'DelayType': 1}
@@ -521,17 +524,17 @@ class _EVROUT(_Base):
 
     def _process_source(self, value):
         src_len = len(self._source_enums)
-        trig = self.pvs_rb['SrcTrig'].get(timeout=_conn_timeout) or 30
+        trig = self._get_from_pvs_rb('SrcTrig', def_val=30)
         if trig != self._internal_trigger:
             return {'Src': src_len}  # invalid
 
-        source = self.pvs_rb['Src'].get(timeout=_conn_timeout, as_string=True)
+        source = self._get_from_pvs_rb('Src', as_string=True, def_val=None)
         if not source:
             return {'Src': src_len}  # invalid
         elif source.startswith(('Dsbl', 'Clock')):
             return {'Src': self._source_enums.index(source)}
 
-        event = self.pvs_rb['Evt'].get(timeout=_conn_timeout) or 0
+        event = self._get_from_pvs_rb('Evt', def_val=0)
         event = Events.LL_TMP.format(event)
         if event not in Events.LL2HL_MAP:
             return {'Src': src_len}
@@ -549,11 +552,12 @@ class _EVROUT(_Base):
         else:
             self._ll_state['Src'] = Triggers.SRC_LL.index('Trigger')
             self._ll_state['Evt'] = int(Events.HL2LL_MAP[pname][-2:])
-        self._ll_state['SrcTrig'] = self._internal_trigger
+        if 'SrcTrig' in self._dict_convert_prop2pv.keys():
+            self._ll_state['SrcTrig'] = self._internal_trigger
 
     def _get_duration(self, width):
-        return {'Duration':
-                2*width*self._base_del*self._hl_state['Pulses']*1e3}
+        pulses = self._get_from_pvs_rb('Pulses', def_val=0)
+        return {'Duration': 2*width*self._base_del*pulses*1e3}
 
     def _set_duration(self, value):
         value *= 1e-3  # ms
@@ -589,7 +593,7 @@ class _EVROTP(_EVROUT):
 
     def _process_source(self, value):
         src_len = len(self._source_enums)
-        event = self.pvs_rb['Evt'].get(timeout=_conn_timeout) or 0
+        event = self._get_from_pvs_rb('Evt', def_val=0)
         event = Events.LL_TMP.format(event)
         if event not in Events.LL2HL_MAP:
             return {'Src': src_len}
@@ -602,7 +606,8 @@ class _EVROTP(_EVROUT):
     def _set_source(self, value):
         self._hl_state['Src'] = value
         pname = self._source_enums[value]
-        self._ll_state['Evt'] = int(Events.HL2LL_MAP[pname][-2:])
+        if not pname.startswith(('Clock', 'Dsbl')):
+            self._ll_state['Evt'] = int(Events.HL2LL_MAP[pname][-2:])
 
 
 class _EVEOUT(_EVROUT):
@@ -633,13 +638,13 @@ class _AFCCRT(_EVROUT):
 
     def _process_source(self, value):
         src_len = len(self._source_enums)
-        source = self.pvs_rb['Src'].get(timeout=_conn_timeout, as_string=True)
+        source = self._get_from_pvs_rb('Src', as_string=True, def_val=None)
         if not source:
             return {'Src': src_len}  # invalid
         elif source.startswith(('Dsbl', 'Clock')):
             return {'Src': self._source_enums.index(source)}
 
-        event = self.pvs_rb['Evt'].get(timeout=_conn_timeout) or 0
+        event = self._get_from_pvs_rb('Evt', def_val=0)
         event = Events.LL_TMP.format(event)
         if event not in Events.LL2HL_MAP:
             return {'Src': src_len}
@@ -648,15 +653,6 @@ class _AFCCRT(_EVROUT):
         else:
             ev_num = self._source_enums.index(Events.LL2HL_MAP[event])
             return {'Src': ev_num}
-
-    def _set_source(self, value):
-        self._hl_state['Src'] = value
-        pname = self._source_enums[value]
-        if pname.startswith(('Clock', 'Dsbl')):
-            self._ll_state['Src'] = Triggers.SRC_LL.index(pname)
-        else:
-            self._ll_state['Src'] = Triggers.SRC_LL.index('Trigger')
-            self._ll_state['Evt'] = int(Events.HL2LL_MAP[pname][-2:])
 
 
 class _AFCFMC(_AFCCRT):
