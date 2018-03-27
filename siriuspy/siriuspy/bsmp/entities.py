@@ -173,7 +173,7 @@ class Entities:
             write_access = variable['access']
             var_type = variable['type']
             length = variable['length']
-            self._variables.append(
+            self.variables.append(
                 Variable(var_id, write_access, var_type, length))
 
         # Standard groups
@@ -184,8 +184,16 @@ class Entities:
             VariablesGroup(1, False, r_var),
             VariablesGroup(2, True, w_var),
         ]
-        self._curves = []
-        self._functions = []
+        self._curves = list()
+        self._functions = list()
+        for function in functions:
+            func_id = function['id']
+            i_length = function['i_length']
+            i_type = function['i_type']
+            o_length = function['o_length']
+            o_type = function['o_type']
+            self.functions.append(
+                Function(func_id, i_length, i_type, o_length, o_type))
 
     @property
     def variables(self):
