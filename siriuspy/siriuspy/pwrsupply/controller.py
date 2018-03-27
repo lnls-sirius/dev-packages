@@ -7,6 +7,7 @@ from siriuspy.bsmp import Const as _ack
 from siriuspy.csdevice.pwrsupply import max_wfmsize as _max_wfmsize
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.csdevice.pwrsupply import ps_opmode as _ps_opmode
+from siriuspy.csdevice.pwrsupply import ps_cycle_type as _ps_cycle_type
 from siriuspy.pwrsupply.bsmp import Const as _BSMPConst
 from siriuspy.pwrsupply.bsmp import Status as _Status
 from siriuspy.pwrsupply.bsmp import get_variables_FBP as _get_variables_FBP
@@ -81,6 +82,7 @@ class ControllerIOC(PSCommInterface):
         'IntlkHard-Mon': '_get_ps_hard_interlocks',
         'WfmIndex-Mon': '_get_wfmindex',
         'WfmData-RB': '_get_wfmdata',
+        'CycleType-Sts': '_get_cycle_type',
     }
 
     _write_field2func = {
@@ -89,6 +91,7 @@ class ControllerIOC(PSCommInterface):
         'Current-SP': 'cmd_set_slowref',
         'WfmData-SP': '_set_wfmdata',
         'Reset-Cmd': '_reset',
+        'CycleType-Sel': '_set_cycle_type',
     }
 
     # --- API: general power supply 'variables' ---
@@ -160,6 +163,18 @@ class ControllerIOC(PSCommInterface):
                                 setpoint=setpoint)
         return setpoint
 
+    def cmd_cfg_siggen(self,
+                       type=None,
+                       num_cycles=None,
+                       freq=None,
+                       amplitude=None,
+                       offset=None,
+                       aux_param0=None,
+                       aux_param1=None,
+                       aux_param2=None,
+                       aux_param3=None):
+        """Configure SigGen parameters."""
+
     # --- API: public properties and methods ---
 
     def read(self, field):
@@ -207,6 +222,9 @@ class ControllerIOC(PSCommInterface):
 
     def _get_ps_reference(self):
         return self._bsmp_get_variable(_BSMPConst.ps_reference)
+
+    def _get_cycle_type(self):
+        return self._bsmp_get_variable(_BSMPConst.siggen_type)
 
     def _get_ps_soft_interlocks(self):
         return self._bsmp_get_variable(_BSMPConst.ps_soft_interlocks)
@@ -278,6 +296,23 @@ class ControllerIOC(PSCommInterface):
             return
         value = int(value)
         if not(0 <= value < len(_ps_opmode)):
+            return None
+        # set opmode state
+        # print('2. set_opmode', value)
+        if self._get_pwrstate() == _PSConst.PwrState.On:
+            ps_status = self._get_ps_status()
+            ps_status = _Status.set_opmode(ps_status, value)
+            op_mode = _Status.opmode(ps_status)
+            # print('3. set_opmode', op_mode)
+            self._cmd_select_op_mode(op_mode=op_mode)
+        return value
+
+    def _set_cycle_type(self, value):
+        """Set CycleType."""
+        if not self._ps_interface_in_remote():
+            return
+        value = int(value)
+        if not(0 <= value < len(_ps_cycle_type)):
             return None
         # set opmode state
         # print('2. set_opmode', value)

@@ -50,7 +50,7 @@ class Const:
     counter_set_slowref = 4
     counter_sync_pulse = 5
     siggen_enable = 6  # --- NOT IMPLEMENTED YET ---
-    siggen_type = 7  # --- NOT IMPLEMENTED YET ---
+    siggen_type = 7
     siggen_num_cycles = 8  # --- NOT IMPLEMENTED YET ---
     siggen_n = 9  # --- NOT IMPLEMENTED YET ---
     siggen_freq = 10  # --- NOT IMPLEMENTED YET ---
@@ -120,8 +120,8 @@ def get_variables_common():
             ('counter_sync_pulse', Const.t_uint32, False),
         # Const.siggen_enable:
         #     ('siggen_enable', Const.t_uint16, False),
-        # Const.siggen_type:
-        #     ('siggen_type', Const.t_uint16, False),
+        Const.siggen_type:
+            ('siggen_type', Const.t_uint16, False),
         # Const.siggen_num_cycles:
         #     ('siggen_num_cycles', Const.t_uint16, False),
         # Const.siggen_n:
@@ -642,48 +642,54 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
             data = [ord(element) for element in load]
             value = dict()
             i = 0
-            # ps_status
+            # ID:00 - ps_status
             value[Const.ps_status] = data[i] + (data[i+1] << 8)
             i += 2
-            # ps_setpoint
+            # ID:01 - ps_setpoint
             value[Const.ps_setpoint] = \
                 _struct.unpack("<f", bytes(data[i:i+4]))[0]
             i += 4
-            # ps_reference
+            # ID:02 - ps_reference
             value[Const.ps_reference] = \
                 _struct.unpack("<f", bytes(data[i:i+4]))[0]
             i += 4
-            # firmware_version
+            # ID:03 - firmware_version
             version, di = BSMPMasterSlave._process_firmware_stream(data, i)
             value[Const.firmware_version] = version
             i += di
-            # counter_set_slowref
+            # ID:04 - counter_set_slowref
             datum = data[i] + (data[i+1] << 8) + \
                 (data[i+2] << 16) + (data[i+3] << 24)
             value[Const.counter_set_slowref] = datum
             i += 4
-            # counter_sync_pulse
+            # ID:05 - counter_sync_pulse
             datum = data[i] + (data[i+1] << 8) + \
                 (data[i+2] << 16) + (data[i+3] << 24)
             value[Const.counter_sync_pulse] = datum
             i += 4
-            # ps_soft_interlocks
+            # ID:09 - siggen_type
+            datum = data[i] + (data[i+1] << 8)
+            value[Const.siggen_type] = datum
+            i += 2
+            # ID:25 - ps_soft_interlocks
             datum = data[i] + (data[i+1] << 8) + \
                 (data[i+2] << 16) + (data[i+3] << 24)
             value[Const.ps_soft_interlocks] = datum
             i += 4
-            # ps_hard_interlocks
+            # ID:26 - ps_hard_interlocks
             datum = data[i] + (data[i+1] << 8) + \
                 (data[i+2] << 16) + (data[i+3] << 24)
             value[Const.ps_hard_interlocks] = datum
             i += 4
-            # i_load
+            # ID:27 - i_load
             datum = _struct.unpack("<f", bytes(data[i:i+4]))[0]
             value[Const.i_load] = datum
             i += 4
-            # v_dclink
+            # ID:28 - v_load
             pass
-            # temp_switches
+            # ID:29 - v_dclink
+            pass
+            # ID:30 - temp_switches
             pass
         else:
             raise ValueError('Invalid group ID!')
