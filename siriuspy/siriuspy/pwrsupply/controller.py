@@ -2,9 +2,11 @@
 
 import time as _time
 import random as _random
+import re as _re
+
 from siriuspy import util as _util
-from siriuspy.bsmp import Const as _ack
-from siriuspy.bsmp import BSMP
+# from siriuspy.bsmp import Const as _ack
+# from siriuspy.bsmp import BSMP
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.csdevice.pwrsupply import ps_opmode as _ps_opmode
 from siriuspy.pwrsupply.bsmp import Const as _BSMPConst
@@ -15,83 +17,137 @@ from siriuspy.pwrsupply.bsmp import get_variables_FBP as _get_variables_FBP
 __version__ = _util.get_last_commit_hash()
 
 
-class PSDevice:
-    """Map device to BSMP."""
+class InvalidValue(Exception):
+    """Raised when an invalid value is passes as setpoint."""
 
-    def __init__(self):
-        self._variables = {}
-        self._groups = {}
-        self._curves = {}
-        self._functions = {}
-
-    def get_variable_id(self, variable):
-        return self._variables[variable]
-
-    def get_function_id(self, function):
-        return self._functions[function]
+    pass
 
 
 class PSController:
-    """High level PS controller."""
+    """High level PS controller.
 
-    def __init__(self, slave_address):
-        self._slave_address = slave_address
-        self._setpoints = {}
-        # self._variables = {}
-        self._ps = PSDevice()
-        self._bsmp = BSMP()
+    Responsible for keeping track of the setpoints.
+    Exposes read/write interface, that maps an epics field to an actual
+    variable in the device.
+    Also exposes setpoint properties:
+        PwrState-Sel
+        OpMode-Sel
+        Current-SP
+        ...
+
+    Maybe generalize to any device?
+    """
+
+    # Setpoints regexp pattern
+    _sp = _re.compile('^.*-(SP|Sel|Cmd)$')
+
+    def __init__(self, device):
+        """Create BSMP to control a device."""
+        self._device = device
+        self._setpoints = dict()
+        for field, db in device.database.items():
+            if PSController._sp.match(field):
+                self._setpoints[field] = db
 
     # API
+    @property
+    def device(self):
+        """Device variables."""
+        return self._device
+
+    # Setpoints
     @property
     def setpoints(self):
         """Controller variables."""
         return self._setpoints
 
     @property
-    def variables(self):
-        """Device variables."""
-        return self.read_all_variables()
-        # return self._variables
+    def pwrstate_sel(self):
+        """Power State Setpoint."""
+        return self.setpoints['PwrState-Sel']['value']
 
-    def read(self, field):
-        """Read a field from device."""
-        if field in self._variables:
-            return self._read_variable(field)
-        elif field in self._setpoints:
-            return self._setpoints[field]
+    @pwrstate_sel.setter
+    def pwrstate_sel(self, setpoint):
+        """Set PwrState setpoint."""
+        if setpoint == 0:
+            ret = self.device.turn_on()
+        elif setpoint == 1:
+            ret = self.device.turn_off()
         else:
-            raise ValueError("Field {} not mapped.".format(field))
+            raise InvalidValue("Power State Setpoint, {}".format(setpoint))
+
+        if ret:
+            self.setpoints['PwrState-Sel']['value'] = setpoint
+            return True
+
+        return False
+
+    @property
+    def opmode_sel(self):
+        """Opertaion mode setpoint."""
+        return self.setpoints['OpMode-Sel']['value']
+
+    @opmode_sel.setter
+    def opmode_sel(self, setpoint):
+        """Operation mode setter."""
+        # TODO: enumerate
+        if setpoint < 0 or \
+                setpoint > len(self.setpoints['OpMode-Sel']['enums']):
+            raise InvalidValue("OpMode {} out of range.".format(setpoint))
+
+        if self.device.select_op_mode(setpoint):
+            self.setpoints['OpMode-Sel']['value'] = setpoint
+            return True
+
+        return False
+
+    @property
+    def current_sp(self):
+        """Current setpoint."""
+        return self._setpoints['Current-SP']['value']
+
+    @current_sp.setter
+    def current_sp(self, setpoint):
+        setpoint = max(self.setpoints['Current-SP']['lolo'], setpoint)
+        setpoint = min(self.setpoints['Current-SP']['hihi'], setpoint)
+
+        if self.device.set_slowref(setpoint):
+            self.setpoints['Current-SP']['value'] = setpoint
+            return True
+        return False
+
+    @property
+    def reset_cmd(self):
+        """Return."""
+        return self.setpoints['Reset-Cmd']['value']
+
+    @reset_cmd.setter
+    def reset_cmd(self, value):
+        if value:
+            self.setpoints['Reset-Cmd']['value'] += 1
+            return True
+        return False
+
+    # Read and Write map a PV field to proper function
+    def read(self, field):
+        """Read a field from device.
+
+        Throws SerialError
+        """
+        if field in self._setpoints:
+            return getattr(self, field.replace('-', '_').lower())
+        else:
+            return getattr(self.device, field.replace('-', '_').lower())
 
     def write(self, field, value):
         """Write to device field.
 
-        True - ok
-        False - something went wrong
-            Error
-            Disonnection
+        Throws SerialError
         """
-        value = self._handle_write(field, value)
-        if value is None:
-            return False
-        if field in self._variables:
-            return True
-        elif field in self._setpoints:
-            return True
+        if field in self._setpoints:
+            return setattr(self, field.replace('-', '_').lower(), value)
         else:
-            raise ValueError("Field {} not mapped.".format(field))
-
-    def read_all_variables(self):
-        """Read all variable from group 0."""
-        return self._bsmp.read_variables_group(self._slave_address, 0)
-
-    # Private
-    def _read_variable(self, field):
-        id_variable = self._ps.get_variable_id(field)
-        return self._bsmp.read_variable(self._slave_address, id_variable)
-        # return self._variables[field]
-
-    # def _read_setpoint(self, field):
-    #     return self._setpoints[field]
+            return setattr(self.device, field.replace('-', '_').lower(), value)
 
 
 class PSCommInterface:
