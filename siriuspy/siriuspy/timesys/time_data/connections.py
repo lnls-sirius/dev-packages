@@ -26,7 +26,7 @@ class IOs:
     I2O_MAP = {
         'EVR': {
             'UPLINK': (
-                'OTP00', 'OTP00', 'OTP00', 'OTP03', 'OTP04', 'OTP05',
+                'OTP00', 'OTP01', 'OTP02', 'OTP03', 'OTP04', 'OTP05',
                 'OTP06', 'OTP07', 'OTP08', 'OTP09', 'OTP10', 'OTP11',
                 'OUT0', 'OUT1', 'OUT2', 'OUT3',
                 'OUT4', 'OUT5', 'OUT6', 'OUT7',
