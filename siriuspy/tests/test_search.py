@@ -97,6 +97,9 @@ class TestPSSearch(unittest.TestCase):
     sample_bbb = {
         'BO-Glob:CO-BBB-1': None,
         'BO-Glob:CO-BBB-2': None,
+        'BO-01:CO-BBB-1': None,
+        'BO-01:CO-BBB-2': None,
+        'SI-01:CO-BBB-1': None,
     }
 
     pstype2polarity = {
@@ -216,11 +219,11 @@ class TestPSSearch(unittest.TestCase):
         self.assertEqual(bbbnames, sorted_bbbnames)
         # with filters
         bbbnames = PSSearch.get_bbbnames({'dis': 'CO'})
-        self.assertEqual(len(bbbnames), 214)
+        self.assertEqual(len(bbbnames), 277)
         for name in bbbnames:
             self.assertIn('CO', name)
         bbbnames = PSSearch.get_bbbnames({'sub': 'Glob'})
-        self.assertEqual(len(bbbnames), 14)
+        self.assertEqual(len(bbbnames), 29)
         # exceptions
         self.assertRaises(TypeError, PSSearch.get_psnames, filters=23)
         self.assertRaises(TypeError, PSSearch.get_psnames, filters=23.4)
@@ -249,6 +252,13 @@ class TestPSSearch(unittest.TestCase):
         pstypes_d = sorted(list(d.keys()))
         pstypes = sorted(PSSearch.get_pstype_names())
         self.assertEqual(pstypes_d, pstypes)
+
+    def test_get_bbbname_dict(self):
+        """Test get_bbbname_dict."""
+        d = PSSearch.get_bbbname_dict()
+        self.assertIsInstance(d, dict)
+        for bbbname in TestPSSearch.sample_bbb:
+            self.assertTrue(bbbname in d)
 
     def test_get_polarities(self):
         """Test get_polarities."""
@@ -415,36 +425,44 @@ class TestMASearch(unittest.TestCase):
     }
 
     maname2magfuncs = {
-        "SI-Fam:MA-B1B2": {"SI-Fam:PS-B1B2-1": "dipole",
-                           "SI-Fam:PS-B1B2-2": "dipole"},
-        "SI-Fam:MA-QDA": {'SI-Fam:PS-QDA': 'quadrupole'},
-        "SI-14M2:MA-QDB1": {'SI-14M2:PS-QDB1': 'quadrupole',
+        'SI-Fam:MA-B1B2': {'SI-Fam:PS-B1B2-1': 'dipole',
+                           'SI-Fam:PS-B1B2-2': 'dipole'},
+        'SI-Fam:MA-QDA': {'SI-Fam:PS-QDA': 'quadrupole'},
+        'SI-14M2:MA-QDB1': {'SI-14M2:PS-QDB1': 'quadrupole',
                             'SI-Fam:PS-QDB1': 'quadrupole'},
-        "SI-09M2:MA-SDA0": {'SI-09M2:PS-CH': 'corrector-horizontal',
+        'SI-09M2:MA-SDA0': {'SI-09M2:PS-CH': 'corrector-horizontal',
                             'SI-09M2:PS-CV': 'corrector-vertical',
                             'SI-Fam:PS-SDA0': 'sextupole'},
-        "SI-07C4:MA-CH": {'SI-07C4:PS-CH': 'corrector-horizontal'},
-        "BO-15U:MA-CV": {'BO-15U:PS-CV': 'corrector-vertical'},
-        "TB-03:MA-QF3": {'TB-03:PS-QF3': 'quadrupole'},
-        "TS-01:MA-CV-2": {'TS-01:PS-CV-2': 'corrector-vertical'},
-        "BO-01D:PM-InjK": {'BO-01D:PU-InjK': 'corrector-horizontal'},
-        "TB-04:PM-InjS": {'TB-04:PU-InjS': 'corrector-horizontal'},
-        "SI-01SA:PM-InjNLK": {'SI-01SA:PU-InjNLK': 'corrector-horizontal'},
+        'SI-07C4:MA-CH': {'SI-07C4:PS-CH': 'corrector-horizontal'},
+        'BO-15U:MA-CV': {'BO-15U:PS-CV': 'corrector-vertical'},
+        'TB-03:MA-QF3': {'TB-03:PS-QF3': 'quadrupole'},
+        'TS-01:MA-CV-2': {'TS-01:PS-CV-2': 'corrector-vertical'},
+        'BO-01D:PM-InjK': {'BO-01D:PU-InjK': 'corrector-horizontal'},
+        'TB-04:PM-InjS': {'TB-04:PU-InjS': 'corrector-horizontal'},
+        'SI-01SA:PM-InjNLK': {'SI-01SA:PU-InjNLK': 'corrector-horizontal'},
     }
 
     maname2psnames = {
-        "SI-Fam:MA-B1B2": ("SI-Fam:PS-B1B2-1", "SI-Fam:PS-B1B2-2"),
-        "SI-Fam:MA-QDA": ('SI-Fam:PS-QDA',),
-        "SI-14M2:MA-QDB1": ('SI-Fam:PS-QDB1', 'SI-14M2:PS-QDB1'),
-        "SI-09M2:MA-SDA0": ('SI-Fam:PS-SDA0', 'SI-09M2:PS-CH',
+        'SI-Fam:MA-B1B2': ('SI-Fam:PS-B1B2-1', 'SI-Fam:PS-B1B2-2'),
+        'SI-Fam:MA-QDA': ('SI-Fam:PS-QDA',),
+        'SI-14M2:MA-QDB1': ('SI-Fam:PS-QDB1', 'SI-14M2:PS-QDB1'),
+        'SI-09M2:MA-SDA0': ('SI-Fam:PS-SDA0', 'SI-09M2:PS-CH',
                             'SI-09M2:PS-CV'),
-        "SI-07C4:MA-CH": ('SI-07C4:PS-CH',),
-        "BO-15U:MA-CV": ('BO-15U:PS-CV',),
-        "TB-03:MA-QF3": ('TB-03:PS-QF3',),
-        "TS-01:MA-CV-2": ('TS-01:PS-CV-2',),
-        "BO-01D:PM-InjK": ('BO-01D:PU-InjK',),
-        "TB-04:PM-InjS": ('TB-04:PU-InjS',),
-        "SI-01SA:PM-InjNLK": ('SI-01SA:PU-InjNLK',),
+        'SI-07C4:MA-CH': ('SI-07C4:PS-CH',),
+        'BO-15U:MA-CV': ('BO-15U:PS-CV',),
+        'TB-03:MA-QF3': ('TB-03:PS-QF3',),
+        'TS-01:MA-CV-2': ('TS-01:PS-CV-2',),
+        'BO-01D:PM-InjK': ('BO-01D:PU-InjK',),
+        'TB-04:PM-InjS': ('TB-04:PU-InjS',),
+        'SI-01SA:PM-InjNLK': ('SI-01SA:PU-InjNLK',),
+    }
+
+    psname2maname = {
+        'SI-Fam:PS-B1B2-1': 'SI-Fam:MA-B1B2',
+        'SI-Fam:PS-B1B2-2': 'SI-Fam:MA-B1B2',
+        'BO-Fam:PS-B-1': 'BO-Fam:MA-B',
+        'BO-Fam:PS-B-2': 'BO-Fam:MA-B',
+        'SI-01M1:PS-CH': 'SI-01M1:MA-SDA0',
     }
 
     def setUp(self):
@@ -550,6 +568,11 @@ class TestMASearch(unittest.TestCase):
         """Test conv_maname_2_psnames."""
         for ma, psnames in TestMASearch.maname2psnames.items():
             self.assertEqual(MASearch.conv_maname_2_psnames(ma), psnames)
+
+    def test_psname_2_maname(self):
+        """Test psname_2_maname."""
+        for psname, maname in TestMASearch.psname2maname.items():
+            self.assertEqual(MASearch.conv_psname_2_maname(psname), maname)
 
     def test_check_maname_ispulsed(self):
         """Test check_maname_ispulsed."""
