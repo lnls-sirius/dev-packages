@@ -1,4 +1,4 @@
-"""Subpackage BSMP
+"""Subpackage BSMP.
 
 Basic Small Message protocol
 
