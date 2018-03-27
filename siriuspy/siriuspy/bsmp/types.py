@@ -7,6 +7,7 @@ class Types:
 
     BSMPType = namedtuple('BSMPType', 'type, size, fmt, check')
 
+    t_none = BSMPType(None, 0, None, lambda x: x is None)
     t_char = BSMPType('char', 1, '<c', lambda x: isinstance(x, str))
     t_uint8 = BSMPType('uint8', 1, '<B', lambda x: isinstance(x, int))
     t_uint16 = BSMPType('uint16', 2, '<H', lambda x: isinstance(x, int))
