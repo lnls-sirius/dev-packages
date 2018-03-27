@@ -661,10 +661,12 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
             datum = data[i] + (data[i+1] << 8) + \
                 (data[i+2] << 16) + (data[i+3] << 24)
             value[Const.counter_set_slowref] = datum
+            i += 4
             # counter_sync_pulse
             datum = data[i] + (data[i+1] << 8) + \
                 (data[i+2] << 16) + (data[i+3] << 24)
             value[Const.counter_sync_pulse] = datum
+            i += 4
             # ps_soft_interlocks
             datum = data[i] + (data[i+1] << 8) + \
                 (data[i+2] << 16) + (data[i+3] << 24)
