@@ -1,6 +1,7 @@
 """Define Power Supply classes."""
 
 import re as _re
+import time as _time
 import random as _random
 
 from epics import PV as _PV
@@ -135,6 +136,7 @@ class PowerSupply:
     def turn_on(self):
         """Turn power supply on."""
         sts, val = self.bsmp.execute_function(0)
+        _time.sleep(0.3)
         if sts == Response.ok:
             self.bsmp.execute_function(3)  # Close control loop
             return True
@@ -144,6 +146,7 @@ class PowerSupply:
     def turn_off(self):
         """Turn power supply off."""
         sts, val = self.bsmp.execute_function(1)
+        _time.sleep(0.3)
         if sts == Response.ok:
             return True
         else:
@@ -160,6 +163,7 @@ class PowerSupply:
     def reset_interlocks(self):
         """Reset."""
         sts, val = self.bsmp.execute_function(6)
+        _time.sleep(0.1)
         if sts == Response.ok:
             return True
         else:
