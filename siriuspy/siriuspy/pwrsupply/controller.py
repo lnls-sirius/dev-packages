@@ -29,20 +29,52 @@ class PSController:
 
     # Setpoints regexp pattern
     _sp = _re.compile('^.*-(SP|Sel|Cmd)$')
+    # Setpoint to readback
+    _sp_to_rb_map = {
+        'PwrState-Sel': 'PwrState-Sts',
+        'OpMode-Sel': 'OpMode-Sts',
+        'Current-SP': 'Current-RB',
+        'Reset-Cmd': None,
+        'CycleType-Sel': None,
+        'Abort-Cmd': None,
+        'WfmData-SP': None,
+        }
 
     def __init__(self, device):
         """Create BSMP to control a device."""
+        self._connected = False
         self._device = device
         self._setpoints = dict()
         for field, db in device.database.items():
             if PSController._sp.match(field):
                 self._setpoints[field] = db
 
+        try:
+            vars = self.device.read_all_variables()
+        except Exception:
+            pass
+        else:
+            # Init Setpoints
+            for setpoint in self.setpoints:
+                readback = PSController._sp_to_rb_map[setpoint]
+                if readback:
+                    self.setpoints[setpoint]['value'] = vars[readback]
+            self._connected = True
+
     # API
     @property
     def device(self):
         """Device variables."""
         return self._device
+
+    @property
+    def connected(self):
+        """Return connection state."""
+        return self._connected
+
+    @connected.setter
+    def connected(self, value):
+        self._connected = value
 
     # Setpoints
     @property
@@ -66,6 +98,8 @@ class PSController:
             raise InvalidValue("Power State Setpoint, {}".format(setpoint))
 
         if ret:
+            self.setpoints['Current-SP']['value'] = 0.0
+            self.setpoints['OpMode-Sel']['value'] = 0
             self.setpoints['PwrState-Sel']['value'] = setpoint
             return True
 
