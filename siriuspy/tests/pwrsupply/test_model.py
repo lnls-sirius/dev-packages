@@ -274,13 +274,13 @@ class TestPowerSupply(unittest.TestCase):
         """Test select op mode."""
         self.serial.UART_read.return_value = \
             ['\x00', 'Q', '\x00', '\x01', 'à', 'Î']
-        self.assertTrue(self.ps.select_op_mode())
+        self.assertTrue(self.ps.select_op_mode(1))
 
     def test_select_op_mode_error(self):
         """Test select op mode when error occurs."""
         self.serial.UART_read.return_value = \
             ['\x00', 'S', '\x00', '\x00', '\xad']
-        self.assertFalse(self.ps.select_op_mode())
+        self.assertFalse(self.ps.select_op_mode(1))
 
     def test_reset_interlocks(self):
         """Test reset_interlocks."""

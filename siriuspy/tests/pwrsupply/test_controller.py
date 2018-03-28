@@ -25,6 +25,7 @@ class TestPSController(unittest.TestCase):
     def setUp(self):
         """Common setup for all tests."""
         self.device = Mock()
+        self.device.current_mon = 1.0
         self.device.database = bo_db
         self.controller = PSController(self.device)
 
@@ -101,6 +102,39 @@ class TestPSController(unittest.TestCase):
         self.assertEqual(self.controller.reset_cmd, 0)
         self.controller.reset_cmd = 10
         self.assertEqual(self.controller.reset_cmd, 1)
+
+    def test_read(self):
+        """Test read method."""
+        self.assertEqual(self.controller.read('Current-SP'),
+                         self.controller.setpoints['Current-SP']['value'])
+        self.assertEqual(self.controller.read('Current-Mon'), 1.0)
+
+    def test_write_readback(self):
+        """Test write method returns false a read only field is passed."""
+        self.assertFalse(self.controller.write('Current-RB', 10))
+
+    def test_write_setpoint(self):
+        """Test write method."""
+        self.assertTrue(self.controller.write('Current-SP', 5.1))
+        self.assertTrue(self.controller.current_sp, 5.1)
+
+    def test_read_all_variables(self):
+        """Test reading all variables."""
+        dev_db = {'Current-Mon': 0.0, 'PwrState-Sts': 1}
+        self.device.read_all_variables.return_value = \
+            {'Current-Mon': 0.0, 'PwrState-Sts': 1}
+
+        for field in bo_db:
+            if 'SP' in field or 'Sel' in field or 'Cmd' in field:
+                dev_db[field] = bo_db[field]['value']
+
+        d1 = self.controller.read_all_variables()
+        self.assertDictEqual(d1, dev_db)
+
+    def test_read_all_variables_error(self):
+        """Test reading all variables."""
+        self.device.read_all_variables.return_value = None
+        self.assertIsNone(self.controller.read_all_variables())
 
 
 if __name__ == '__main__':
