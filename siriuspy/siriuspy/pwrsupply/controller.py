@@ -127,13 +127,13 @@ class ControllerIOC(PSCommInterface):
     # --- API: power supply 'functions' ---
 
     def cmd_turn_on(self):
-        """Turn power supply on."""
+        """PS controller function: turn power supply on."""
         r = self._bsmp_run_function(ID_function=_BSMPConst.turn_on)
         _time.sleep(ControllerIOC._WAIT_TURN_ON_OFF)
         return r
 
     def cmd_turn_off(self):
-        """Turn power supply off."""
+        """PS controller function: turn power supply off."""
         ret = self._bsmp_run_function(ID_function=_BSMPConst.turn_off)
         _time.sleep(ControllerIOC._WAIT_TURN_ON_OFF)
         return ret
@@ -143,12 +143,17 @@ class ControllerIOC(PSCommInterface):
         return self._bsmp_run_function(ID_function=_BSMPConst.open_loop)
 
     def cmd_close_loop(self):
-        """Close DSP control loop."""
+        """PS controller command: close DSP control loop."""
         ret = self._bsmp_run_function(_BSMPConst.close_loop)
         return ret
 
+    def cmd_select_op_mode(self, op_mode):
+        """PS controller function: select operation mode."""
+        return self._bsmp_run_function(_BSMPConst.select_op_mode,
+                                       op_mode=op_mode)
+
     def cmd_reset_interlocks(self):
-        """Reset interlocks."""
+        """PS controller function: reset interlocks."""
         r = self._bsmp_run_function(_BSMPConst.reset_interlocks)
         _time.sleep(ControllerIOC._WAIT_RESET_INTLCKS)
         return r
@@ -290,7 +295,7 @@ class ControllerIOC(PSCommInterface):
         return value
 
     def _set_opmode(self, value):
-        """Set pwrstate state."""
+        """Set opmode state."""
         # print('1. set_opmode', value)
         if not self._ps_interface_in_remote():
             return
@@ -304,7 +309,7 @@ class ControllerIOC(PSCommInterface):
             ps_status = _Status.set_opmode(ps_status, value)
             op_mode = _Status.opmode(ps_status)
             # print('3. set_opmode', op_mode)
-            self._cmd_select_op_mode(op_mode=op_mode)
+            self.cmd_select_op_mode(op_mode=op_mode)
         return value
 
     def _set_cycle_type(self, value):
@@ -332,10 +337,6 @@ class ControllerIOC(PSCommInterface):
         self._wfmdata = value[:]
         self._serial_comm.set_wfmdata(self._ID_device, self._wfmdata)
         return value
-
-    def _cmd_select_op_mode(self, op_mode):
-        return self._bsmp_run_function(_BSMPConst.select_op_mode,
-                                       op_mode=op_mode)
 
     def _ps_interface_in_remote(self):
         ps_status = self._get_ps_status()
@@ -499,7 +500,7 @@ class ControllerPSSim:
 
     def _func_select_op_mode(self, **kwargs):
         status = self._state[_BSMPConst.ps_status]
-        status = _Status.set_state(status, kwargs['op_mode'])
+        status = _Status.set_opmode(status, kwargs['op_mode'])
         self._state[_BSMPConst.ps_status] = status
         return _ack.ok, None
 

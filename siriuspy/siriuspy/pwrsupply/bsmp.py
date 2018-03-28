@@ -97,7 +97,7 @@ class Const:
     save_dsp_modules_eeprom = 39  # --- NOT IMPLEMENTED YET ---
     load_dsp_modules_eeprom = 40  # --- NOT IMPLEMENTED YET ---
     reset_udc = 41  # --- NOT IMPLEMENTED YET ---
-    
+
     # --- variables groups ---
     group_id = 3  # default variables group ID defined for power supplies
 
@@ -368,7 +368,6 @@ class Status:
     }
 
     _ps2dsp_state = {
-        # current PS version implements only SlowRef!
         _PSConst.OpMode.SlowRef: _PSConst.States.SlowRef,
         _PSConst.OpMode.SlowRefSync: _PSConst.States.SlowRefSync,
         _PSConst.OpMode.FastRef: _PSConst.States.SlowRef,
