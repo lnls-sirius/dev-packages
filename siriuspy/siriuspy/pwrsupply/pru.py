@@ -71,7 +71,9 @@ class PRU(_PRUInterface):
             raise ValueError('module PRUserial485 is not installed!')
         _PRUInterface.__init__(self)
         # signal use of PRU and shared memory.
-        _PRUserial485.PRUserial485_open(6, b"M")
+        baud_rate = 6
+        mode = b"M"  # slave(S)/master(M)
+        _PRUserial485.PRUserial485_open(baud_rate, mode)
 
     def _get_sync_pulse_count(self):
         return _PRUserial485.PRUserial485_read_pulse_count_sync()

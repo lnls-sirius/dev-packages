@@ -8,6 +8,7 @@ from epics import PV as _PV
 
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.envars import vaca_prefix as _VACA_PREFIX
+from siriuspy.csdevice.pwrsupply import max_wfmsize as _max_wfmsize
 from siriuspy.factory import NormalizerFactory as _NormalizerFactory
 from siriuspy.epics import connection_timeout as _connection_timeout
 from siriuspy.epics.computed_pv import QueueThread as _QueueThread
@@ -273,16 +274,7 @@ class PowerSupplySim:
 class PSEpics(_PSCommInterface):
     """Power supply with Epics communication."""
 
-    # Should we merge this base class into MAEpics?
-
-    # valid_fields = ('Current-SP', 'Current-RB', 'CurrentRef-Mon',
-    #                 'Current-Mon', 'PwrState-Sel', 'PwrState-Sts',
-    #                 'OpMode-Sel', 'OpMode-Sts',
-    #                 'Energy-SP', 'Energy-RB', 'EnergyRef-Mon', 'Energy-Mon',
-    #                 'KL-SP', 'KL-RB', 'KLRef-Mon', 'KL-Mon',
-    #                 'SL-SP', 'SL-RB', 'SLRef-Mon', 'SL-Mon',
-    #                 'Kick-SP', 'Kick-RB', 'KickRef-Mon', 'Kick-Mon',
-    #                 'Reset-Cmd', 'Abort-Cmd')
+    # TODO: should we merge this base class into MAEpics?
 
     def __init__(self, psname, fields=None, use_vaca=True):
         """Create epics PVs and expose them through public controller API."""

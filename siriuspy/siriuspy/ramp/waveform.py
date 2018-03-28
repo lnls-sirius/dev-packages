@@ -1,7 +1,7 @@
 """Waveform Set Module."""
 
 import numpy as _np
-from siriuspy.csdevice.pwrsupply import default_wfmsize as _default_wfmsize
+from siriuspy.csdevice.pwrsupply import max_wfmsize as _max_wfmsize
 
 
 _np.seterr(all='ignore')
@@ -10,7 +10,7 @@ _np.seterr(all='ignore')
 class Waveform():
     """Waveform parameter class."""
 
-    wfmsize = _default_wfmsize
+    wfmsize = _max_wfmsize
 
     def __init__(self,
                  scale=None,
