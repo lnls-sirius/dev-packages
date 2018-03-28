@@ -113,8 +113,9 @@ class PSController:
     @reset_cmd.setter
     def reset_cmd(self, value):
         if value:
-            self.setpoints['Reset-Cmd']['value'] += 1
-            return True
+            if self.device.reset_interlocks():
+                self.setpoints['Reset-Cmd']['value'] += 1
+                return True
         return False
 
     # Read and Write map a PV field to proper function
@@ -142,8 +143,9 @@ class PSController:
     def read_all_variables(self):
         """Return dict with all variables values."""
         db = self.device.read_all_variables()
-        for setpoint in self.setpoints:
-            db[setpoint] = self.setpoints[setpoint]['value']
+        if db is not None:
+            for setpoint in self.setpoints:
+                db[setpoint] = self.setpoints[setpoint]['value']
         return db
 
 
