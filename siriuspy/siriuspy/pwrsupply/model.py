@@ -127,6 +127,7 @@ class PowerSupply:
             ret['OpMode-Sts'] = Status.opmode(val[0])
             ret['Current-RB'] = val[1]
             ret['CurrentRef-Mon'] = val[2]
+            ret['CycleType-Sts'] = val[7]
             ret['IntlkSoft-Mon'] = val[25]
             ret['IntlkHard-Mon'] = val[26]
             ret['Current-Mon'] = val[27]
@@ -235,6 +236,7 @@ class PowerSupplySim:
         ret['OpMode-Sts'] = self.opmode_sts
         ret['Current-RB'] = self.current_rb
         ret['CurrentRef-Mon'] = self.currentref_mon
+        # ret['CycleType-Sts'] = 0
         ret['IntlkSoft-Mon'] = self.intlksoft_mon
         ret['IntlkHard-Mon'] = self.intlkhard_mon
         ret['Current-Mon'] = self.current_mon
@@ -245,6 +247,8 @@ class PowerSupplySim:
         """Turn power supply on."""
         if not self.pwrstate_sts:
             self.database['PwrState-Sts']['value'] = 1
+            # Set SlowRef
+            self.database['OpMode-Sts']['value'] = 0
             # Zero current
             self.database['Current-RB']['value'] = 0
             self.database['CurrentRef-Mon']['value'] = 0
@@ -254,6 +258,10 @@ class PowerSupplySim:
     def turn_off(self):
         """Turn power supply off."""
         self.database['PwrState-Sts']['value'] = 0
+        self.database['OpMode-Sts']['value'] = 0
+        self.database['Current-RB']['value'] = 0
+        self.database['CurrentRef-Mon']['value'] = 0
+        self.database['Current-Mon']['value'] = 0
         return True
 
     def select_op_mode(self, value):
