@@ -69,7 +69,7 @@ class Const:
     # --- functions ---
     turn_on = 0
     turn_off = 1
-    open_loop = 2
+    open_loop = 2  # not implemented yet
     close_loop = 3
     select_op_mode = 4
     reset_interlocks = 6
@@ -97,7 +97,7 @@ class Const:
     save_dsp_modules_eeprom = 39  # --- NOT IMPLEMENTED YET ---
     load_dsp_modules_eeprom = 40  # --- NOT IMPLEMENTED YET ---
     reset_udc = 41  # --- NOT IMPLEMENTED YET ---
-
+    
     # --- variables groups ---
     group_id = 3  # default variables group ID defined for power supplies
 
