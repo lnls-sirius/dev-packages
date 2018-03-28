@@ -19,6 +19,7 @@ class TestPSController(unittest.TestCase):
         'reset_cmd',
         'read',
         'write',
+        'read_all_variables',
     )
 
     def setUp(self):

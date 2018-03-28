@@ -1,10 +1,7 @@
 """Define Power Supply classes."""
 
 import re as _re
-# from threading import Thread as _Thread
-# from threading import Lock as _Lock
-# import time as _time
-# import numpy as _np
+import random as _random
 
 from epics import PV as _PV
 
@@ -152,9 +149,9 @@ class PowerSupply:
         else:
             return False
 
-    def select_op_mode(self):
+    def select_op_mode(self, value):
         """Set operation mode."""
-        sts, val = self.bsmp.execute_function(4)
+        sts, val = self.bsmp.execute_function(4, value)
         if sts == Response.ok:
             return True
         else:
@@ -180,370 +177,93 @@ class PowerSupply:
 class PowerSupplySim:
     """Control power supply parameters."""
 
-    def __init__(self):
+    def __init__(self, database):
         """High level PS controller."""
-        self._variables = None
+        self._database = database
+
+    @property
+    def database(self):
+        """Power supply database."""
+        return self._database
 
     @property
     def pwrstate_sts(self):
         """Power State Readback."""
-        sts, val = self._bsmp.read_variable(0)
-        # Parse ps_status
-        if sts == Response.ok:
-            return Status.pwrstate(val)
-        else:
-            return None
+        return self.database['PwrState-Sts']['value']
 
     @property
     def opmode_sts(self):
         """Operation Mode Readback."""
-        sts, val = self._bsmp.read_variable(0)
-        if sts == Response.ok:
-            return Status.opmode(val)
-        else:
-            return None
+        return self.database['OpMode-Sts']['value']
 
     @property
     def current_rb(self):
         """Current Readback."""
-        return self._bsmp.read_variable(0)
+        return self.database['Current-RB']['value']
 
     @property
     def currentref_mon(self):
         """Current Referece."""
-        return self._bsmp.read_variable(1)
+        return self.database['CurrentRef-Mon']['value']
 
     @property
     def current_mon(self):
         """Actual current."""
-        return self._bsmp.read_variable(26)
+        fluct = _random.random()/100
+        return self.database['Current-Mon']['value'] + fluct
 
     @property
     def intlksoft_mon(self):
         """Soft Interlock readback."""
-        sts, val = self._bsmp.read_variable(24)
-        if sts == Response.ok:
-            return val
-        else:
-            return None
+        return self.database['IntlkSoft-Mon']['value']
 
     @property
     def intlkhard_mon(self):
         """Hard Interlock readback."""
-        sts, val = self._bsmp.read_variable(25)
-        if sts == Response.ok:
-            return val
-        else:
-            return None
+        return self.database['IntlkHard-Mon']['value']
+
+    # Groups
+    def read_all_variables(self):
+        """Read all variables."""
+        ret = dict()
+        ret['PwrState-Sts'] = self.pwrstate_sts
+        ret['OpMode-Sts'] = self.opmode_sts
+        ret['Current-RB'] = self.current_rb
+        ret['CurrentRef-Mon'] = self.currentref_mon
+        ret['IntlkSoft-Mon'] = self.intlksoft_mon
+        ret['IntlkHard-Mon'] = self.intlkhard_mon
+        ret['Current-Mon'] = self.current_mon
+        return ret
 
     # Functions
     def turn_on(self):
         """Turn power supply on."""
-        sts, val = self.bsmp.exec_function(-1)
-        if sts == Response.ok:
-            return True
-        else:
-            return False
+        if not self.pwrstate_sts:
+            self.database['PwrState-Sts']['value'] = 1
+            # Zero current
+            self.database['Current-RB']['value'] = 0
+            self.database['CurrentRef-Mon']['value'] = 0
+            self.database['Current-Mon']['value'] = 0
+        return True
 
     def turn_off(self):
         """Turn power supply off."""
-        sts, val = self.bsmp.exec_function(0)
-        if sts == Response.ok:
-            return True
-        else:
-            return False
+        self.database['PwrState-Sts']['value'] = 0
+        return True
 
-    def select_op_mode(self):
+    def select_op_mode(self, value):
         """Set operation mode."""
-        sts, val = self.bsmp.execute_function(3)
-        if sts == Response.ok:
-            return True
-        else:
-            return False
+        if self.pwrstate_sts:
+            self.database['OpMode-Sts']['value'] = value
+        return True
 
     def set_slowref(self, value):
         """Set current."""
-        sts, val = self.bsmp.exec_function(15, value)
-        if sts == Response.ok:
-            return True
-        else:
-            return False
-# class PowerSupply(_PSCommInterface):
-#     """Abstract control-system power supply class.
-#
-#         Objects of this are used to interact with power supplies in the
-#     control-system using the implemented PSCommInterface.
-#     """
-#
-#     CONNECTED = 'CONNECTED'
-#     SCAN_FREQUENCY = 10.0  # [Hz]
-#     _is_setpoint = _re.compile('.*-(SP|Sel|Cmd)$')
-#
-#     # power supply objet, not controller's, is responsible to provide state
-#     # of the following fields:
-#     _db_const_fields = ('IntlkSoftLabels-Cte',
-#                         'IntlkHardLabels-Cte')
-#
-#     def __init__(self, psname, controller):
-#         """Init method."""
-#         _PSCommInterface.__init__(self)
-#         self._lock = _Lock()
-#         self._lock.acquire()
-#         self._field_values = {}  # dict with last read field values
-#         self._initialized = False
-#         self._prev_connected = None
-#         self._lock.release()
-#         self._psdata = _PSData(psname=psname)
-#         self._controller = controller
-#         self._updating = True
-#         self._base_db = self._get_base_db()
-#         self._setpoints = self._build_setpoints()
-#         self._callbacks = {}
-#         self._thread_scan = _Thread(target=self._scan_fields)
-#         self._thread_scan.setDaemon(True)
-#         self._thread_scan.start()
-#
-#     @property
-#     def psdata(self):
-#         """Return PSData object."""
-#         return self._psdata
-#
-#     @property
-#     def updating(self):
-#         """Return updating state."""
-#         return self._updating
-#
-#     @updating.setter
-#     def updating(self, value):
-#         """Set updating state."""
-#         self._updating = value
-#
-#     # --- PSCommInterface implementation ---
-#
-#     def read(self, field):
-#         """Read field value."""
-#         # Check CtrlMode?
-#         if PowerSupply._is_setpoint.match(field):
-#             # why not use _base_db to store setpoints?
-#             return self._setpoints[field]['value']
-#         if field in PowerSupply._db_const_fields:
-#                 return self._base_db[field]['value']
-#         else:
-#             return self._controller.read(field)
-#
-#     def write(self, field, value):
-#         """Write value to field."""
-#         if field in self._setpoints:
-#             func = self._setpoints[field]['func']
-#             return func(value)
-#
-#     def _connected(self):
-#         return self._controller.connected
-#
-#     def add_callback(self, func, index=None):
-#         """Add callback function."""
-#         _PSCommInterface.add_callback(self, func=func, index=index)
-#         # send all data initially to registered callback function
-#         self._lock.acquire()
-#         self._field_values = {}  # dict with last read field values
-#         self._lock.release()
-#         # send connected/disconnected signal
-#         func(pvname=self._psdata.psname + ':' + PowerSupply.CONNECTED,
-#              value=self._controller.connected)
-#
-#     # --- public methods ---
-#
-#     def get_database(self, prefix=None):
-#         """Fill base DB with values and limits read from PVs.
-#
-#         Optionally add a prefix to dict keys.
-#         """
-#         db = self._fill_database()
-#         prefix = '' if prefix is None else prefix
-#         if prefix:
-#             prefixed_db = {}
-#             for field, value in db.items():
-#                 prefixed_db[prefix + ":" + field] = value
-#             return prefixed_db
-#         else:
-#             return db
-#
-#     # --- private methods ---
-#
-#     def _build_setpoints(self):
-#         conn1 = self._controller.connected
-#         sp = dict()
-#         for field in self._get_fields():
-#             if not PowerSupply._is_setpoint.match(field):
-#                 continue
-#             sp[field] = dict()
-#             self._set_field_setpoint(sp[field], field)
-#         conn2 = self._controller.connected
-#         if conn1 and conn2:
-#             self._initialized = True
-#         return sp
-#
-#     def _set_field_setpoint(self, keyvalue, field):
-#         # should we use database as setpoint state?!
-#         db = self._base_db
-#         if field == 'PwrState-Sel':
-#             keyvalue['func'] = self._set_pwrstate
-#             # keyvalue['value'] = db['PwrState-Sel']['value']
-#             keyvalue['value'] = self._controller.read('PwrState-Sts')
-#         elif field == 'OpMode-Sel':
-#             keyvalue['func'] = self._set_opmode
-#             # keyvalue['value'] = db['OpMode-Sel']['value']
-#             keyvalue['value'] = self._controller.read('OpMode-Sts')
-#         elif field == 'Current-SP':
-#             keyvalue['func'] = self._set_current
-#             # keyvalue['value'] = db['Current-SP']['value']
-#             keyvalue['value'] = self._controller.read('Current-RB')
-#         elif field == 'WfmLoad-Sel':
-#             keyvalue['func'] = self._set_wfmload
-#             # keyvalue['value'] = db['WfmLoad-Sel']['value']
-#             keyvalue['value'] = self._controller.read('Current-RB')
-#         elif field == 'WfmLabel-SP':
-#             keyvalue['func'] = self._set_wfmlabel
-#             keyvalue['value'] = db['WfmLabel-SP']['value']
-#         elif field == 'WfmData-SP':
-#             keyvalue['func'] = self._set_wfmdata
-#             keyvalue['value'] = [v for v in db['WfmData-SP']['value']]
-#         elif field == 'Abort-Cmd':
-#             keyvalue['func'] = self._abort
-#             keyvalue['value'] = db['Abort-Cmd']['value']
-#         elif field == 'Reset-Cmd':
-#             keyvalue['func'] = self._reset
-#             keyvalue['value'] = db['Reset-Cmd']['value']
-#
-#     def _set_pwrstate(self, value):
-#         self._setpoints['PwrState-Sel']['value'] = value
-#         if value >= 0 and value < len(self._base_db['PwrState-Sel']['enums']):
-#             ret = self._controller.write('PwrState-Sel', value)
-#             # zero PS current
-#             self._setpoints['Current-SP']['value'] = 0.0
-#             self._controller.write('Current-SP', 0.0)
-#             return ret
-#
-#     def _set_opmode(self, value):
-#         self._setpoints['OpMode-Sel']['value'] = value
-#         if value >= 0 and value < len(self._base_db['OpMode-Sel']['enums']):
-#             return self._controller.write('OpMode-Sel', value)
-#
-#     def _set_current(self, value):
-#         self._setpoints['Current-SP']['value'] = value
-#         return self._controller.write('Current-SP', value)
-#
-#     def _set_wfmload(self, value):
-#         self._wfmload_sel = value
-#         self._setpoints['WfmLoad-Sel']['value'] = value
-#         return self._controller.write('WfmLoad-Sel', value)
-#
-#     def _set_wfmlabel(self, value):
-#         self._wfmlabel_sp = value
-#         self._setpoints['WfmLabel-SP']['value'] = value
-#         return self._controller.write('WfmLabel-SP', value)
-#
-#     def _set_wfmdata(self, value):
-#         # make sure wfmdata has the correct length
-#         n = len(self._setpoints['WfmData-SP']['value'])
-#         if isinstance(value, (int, float)):
-#             self._setpoints['WfmData-SP']['value'][0] = value
-#         elif len(value) == n:
-#             self._setpoints['WfmData-SP']['value'] = value
-#         else:
-#             for i in range(min(len(value), n)):
-#                 self._setpoints['WfmData-SP']['value'][i] = value[i]
-#         value = self._setpoints['WfmData-SP']['value']
-#         return self._controller.write('WfmData-SP', value)
-#
-#     def _abort(self, value):
-#         # op_mode = self.read('OpMode-Sts')
-#         self._setpoints['Abort-Cmd']['value'] += 1
-#         self.write('OpMode-Sel', 0)  # Set to SlowRef
-#         self.write('Current-SP', 0.0)
-#         return self._setpoints['Abort-Cmd']['value']
-#
-#     def _reset(self, value):
-#         self._setpoints['Reset-Cmd']['value'] += 1
-#         self.write('Current-SP', 0.0)
-#         self.write('OpMode-Sel', 0)
-#         # Reset interlocks
-#         self._controller.write('Reset-Cmd', 1)
-#         return self._setpoints['Reset-Cmd']['value']
-#
-#     def _get_base_db(self):
-#         return self._psdata.propty_database
-#
-#     def _get_fields(self):
-#         return self._base_db.keys()
-#
-#     def _fill_database(self):
-#         db = dict()
-#         db.update(self._base_db)
-#         for field in db:
-#             value = self.read(field)
-#             if value is not None:
-#                 db[field]["value"] = value
-#
-#         return db
-#
-#     def _scan_fields(self):
-#         """Scan fields."""
-#         interval = 1.0/PowerSupply.SCAN_FREQUENCY
-#         while True:
-#             time_start = _time.time()
-#             if self._updating:
-#                 self._update_fields()
-#
-#             # sleep if necessary until frequency interval is reached.
-#             time_end = _time.time()
-#             sleep_time = max(0, interval - (time_end - time_start))
-#             _time.sleep(sleep_time)
-#
-#     def _update_fields(self):
-#         # loop over power supply fields, invoking callback if its value
-#         # has changed.
-#         for field in self._base_db:
-#             if field in PowerSupply._db_const_fields:
-#                 continue
-#
-#             # read fielf current value
-#             value = self.read(field)
-#
-#             # check whether current value is a new value
-#             self._lock.acquire()
-#             if field in self._field_values:
-#                 prev_value = self._field_values[field]
-#                 if isinstance(value, _np.ndarray):
-#                     if _np.all(value == prev_value):
-#                         # skipp callback if not new
-#                         self._lock.release()
-#                         continue
-#                 else:
-#                     if value == prev_value:
-#                         # skipp callback if not new
-#                         self._lock.release()
-#                         continue
-#
-#             # register current value of field and releases lock
-#             self._field_values[field] = value
-#             self._lock.release()
-#
-#             # run callback function since field has a new value
-#             self._run_callbacks(field, value)
-#
-#         # check whether ControllerIOC is connected to ControllerPS
-#         if self._controller.connected != self._prev_connected:
-#             self._prev_connected = self._controller.connected
-#             self._run_callbacks(PowerSupply.CONNECTED, self._prev_connected)
-#             if self._prev_connected and not self._initialized:
-#                 self._setpoints = self._build_setpoints()
-#
-#     def _run_callbacks(self, field, value):
-#         for index, callback in self._callbacks.items():
-#             callback(
-#                 pvname=self._psdata.psname + ':' + field,
-#                 value=value)
+        if self.pwrstate_sts:
+            self.database['Current-RB']['value'] = value
+            self.database['CurrentRef-Mon']['value'] = value
+            self.database['Current-Mon']['value'] = value
+        return True
 
 
 class PSEpics(_PSCommInterface):
