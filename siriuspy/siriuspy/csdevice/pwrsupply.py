@@ -28,8 +28,8 @@ ps_openloop = ('Closed', 'Open')
 ps_pwrstate_sel = ('Off', 'On')
 ps_pwrstate_sts = ('Off', 'On', 'Initializing')
 ps_states = ('Off', 'Interlock', 'Initializing',
-             'SlowRef', 'SlowRefSync', 'FastRef', 'RmpWfm', 'MigWfm', 'Cycle')
-ps_opmode = ('SlowRef', 'SlowRefSync', 'FastRef', 'RmpWfm', 'MigWfm', 'Cycle')
+             'SlowRef', 'SlowRefSync', 'Cycle', 'RmpWfm', 'MigWfm', 'FastRef')
+ps_opmode = ('SlowRef', 'SlowRefSync', 'Cycle', 'RmpWfm', 'MigWfm', 'FastRef')
 ps_cmdack = ('OK', 'Local', 'PCHost', 'Interlocked', 'UDC_locked',
              'DSP_TimeOut', 'DSP_Busy', 'Invalid',)
 ps_soft_interlock_FBP = (

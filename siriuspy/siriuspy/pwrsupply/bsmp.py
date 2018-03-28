@@ -368,12 +368,13 @@ class Status:
     }
 
     _ps2dsp_state = {
+        # TODO: controller firmware still defines only a subset of opmodes
         _PSConst.OpMode.SlowRef: _PSConst.States.SlowRef,
         _PSConst.OpMode.SlowRefSync: _PSConst.States.SlowRefSync,
-        _PSConst.OpMode.FastRef: _PSConst.States.SlowRef,
+        _PSConst.OpMode.Cycle: _PSConst.States.Cycle,
         _PSConst.OpMode.RmpWfm: _PSConst.States.SlowRef,
         _PSConst.OpMode.MigWfm: _PSConst.States.SlowRef,
-        _PSConst.OpMode.Cycle: _PSConst.States.Cycle,
+        _PSConst.OpMode.FastRef: _PSConst.States.SlowRef,
     }
 
     @staticmethod
