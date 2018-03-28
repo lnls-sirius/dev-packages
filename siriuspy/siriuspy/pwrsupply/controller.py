@@ -7,6 +7,7 @@ from siriuspy.bsmp import Const as _ack
 from siriuspy.csdevice.pwrsupply import max_wfmsize as _max_wfmsize
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.csdevice.pwrsupply import ps_opmode as _ps_opmode
+from siriuspy.csdevice.pwrsupply import ps_cycle_type as _ps_cycle_type
 from siriuspy.pwrsupply.bsmp import Const as _BSMPConst
 from siriuspy.pwrsupply.bsmp import Status as _Status
 from siriuspy.pwrsupply.bsmp import get_variables_FBP as _get_variables_FBP
@@ -17,6 +18,8 @@ __version__ = _util.get_last_commit_hash()
 
 class PSCommInterface:
     """Communication interface class for power supplies."""
+
+    # TODO: should this class have its own python module?
 
     # --- public interface ---
 
@@ -79,6 +82,7 @@ class ControllerIOC(PSCommInterface):
         'IntlkHard-Mon': '_get_ps_hard_interlocks',
         'WfmIndex-Mon': '_get_wfmindex',
         'WfmData-RB': '_get_wfmdata',
+        'CycleType-Sts': '_get_cycle_type',
     }
 
     _write_field2func = {
@@ -87,6 +91,7 @@ class ControllerIOC(PSCommInterface):
         'Current-SP': 'cmd_set_slowref',
         'WfmData-SP': '_set_wfmdata',
         'Reset-Cmd': '_reset',
+        'CycleType-Sel': '_set_cycle_type',
     }
 
     # --- API: general power supply 'variables' ---
@@ -105,14 +110,12 @@ class ControllerIOC(PSCommInterface):
         # reset interlocks
         self.cmd_reset_interlocks()
 
+        # --- initializations ---
+        # (it was decided that IOC will only read status from PS controller)
         # turn ps on and implicitly close control loop
-        # self.pwrstate = _PSConst.PwrState.On
-        # self._pwrstate = _Status.pwrstate(ps_status)
-
+        # self._set_pwrstate(_PSConst.PwrState.On)
         # set opmode do SlowRef
-        # self.opmode = _PSConst.OpMode.SlowRef
-        # self._opmode = _Status.opmode(ps_status)
-
+        # self._set_opmode(_PSConst.OpMode.SlowRef)
         # set reference current to zero
         # self.cmd_set_slowref(0.0)
 
@@ -160,6 +163,18 @@ class ControllerIOC(PSCommInterface):
                                 setpoint=setpoint)
         return setpoint
 
+    def cmd_cfg_siggen(self,
+                       type=None,
+                       num_cycles=None,
+                       freq=None,
+                       amplitude=None,
+                       offset=None,
+                       aux_param0=None,
+                       aux_param1=None,
+                       aux_param2=None,
+                       aux_param3=None):
+        """Configure SigGen parameters."""
+
     # --- API: public properties and methods ---
 
     def read(self, field):
@@ -193,9 +208,10 @@ class ControllerIOC(PSCommInterface):
         return self._serial_comm.sync_pulse_count
 
     def _get_firmware_version(self):
+        # get firmaware version from PS controller and prepend package
+        # version number (IOC version)
         value = self._bsmp_get_variable(_BSMPConst.firmware_version)
-        firmware_version = __version__ + ':' + value
-        # firmware_version = __version__ + ':' + '0x00:0x00'
+        firmware_version = 'ioc:' + __version__ + ' ' + value
         return firmware_version
 
     def _get_ps_status(self):
@@ -206,6 +222,9 @@ class ControllerIOC(PSCommInterface):
 
     def _get_ps_reference(self):
         return self._bsmp_get_variable(_BSMPConst.ps_reference)
+
+    def _get_cycle_type(self):
+        return self._bsmp_get_variable(_BSMPConst.siggen_type)
 
     def _get_ps_soft_interlocks(self):
         return self._bsmp_get_variable(_BSMPConst.ps_soft_interlocks)
@@ -277,6 +296,23 @@ class ControllerIOC(PSCommInterface):
             return
         value = int(value)
         if not(0 <= value < len(_ps_opmode)):
+            return None
+        # set opmode state
+        # print('2. set_opmode', value)
+        if self._get_pwrstate() == _PSConst.PwrState.On:
+            ps_status = self._get_ps_status()
+            ps_status = _Status.set_opmode(ps_status, value)
+            op_mode = _Status.opmode(ps_status)
+            # print('3. set_opmode', op_mode)
+            self._cmd_select_op_mode(op_mode=op_mode)
+        return value
+
+    def _set_cycle_type(self, value):
+        """Set CycleType."""
+        if not self._ps_interface_in_remote():
+            return
+        value = int(value)
+        if not(0 <= value < len(_ps_cycle_type)):
             return None
         # set opmode state
         # print('2. set_opmode', value)
@@ -366,23 +402,36 @@ class ControllerPSSim:
     # _I_LOAD_FLUCTUATION_RMS = 0.0000  # [A]
 
     funcs = {
-        _BSMPConst.set_slowref: '_func_set_slowref',
-        _BSMPConst.select_op_mode: '_func_select_op_mode',
         _BSMPConst.turn_on: '_func_turn_on',
         _BSMPConst.turn_off: '_func_turn_off',
-        _BSMPConst.reset_interlocks: '_func_reset_interlocks',
+        _BSMPConst.open_loop: '_func_open_loop',
         _BSMPConst.close_loop: '_func_close_loop',
-        # functions not implemented  yet:
-        _BSMPConst.set_serial_termination: '_func_not_implemented',
-        _BSMPConst.sync_pulse: '_func_not_implemented',
-        _BSMPConst.set_slowref_fbp: '_func_not_implemented',
-        _BSMPConst.reset_counters: '_func_not_implemented',
-        _BSMPConst.cfg_siggen: '_func_not_implemented',
-        _BSMPConst.set_siggen: '_func_not_implemented',
-        _BSMPConst.enable_siggen: '_func_not_implemented',
-        _BSMPConst.disable_siggen: '_func_not_implemented',
-        _BSMPConst.set_slowref_readback: '_func_not_implemented',
-        _BSMPConst.set_slowref_fbp_readback: '_func_not_implemented',
+        _BSMPConst.select_op_mode: '_func_select_op_mode',
+        _BSMPConst.reset_interlocks: '_func_reset_interlocks',
+        _BSMPConst.set_serial_termination: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.sync_pulse: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.set_slowref: '_func_set_slowref',
+        _BSMPConst.set_slowref_fbp: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.reset_counters: '_func_reset_counters',
+        _BSMPConst.cfg_siggen: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.set_siggen: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.enable_siggen: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.disable_siggen: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.set_slowref_readback: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.set_slowref_fbp_readback: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.set_param: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.get_param: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.save_param_eeprom: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.load_param_eeprom: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.save_param_bank: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.load_param_bank: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.set_dsp_coeffs: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.get_dsp_coeff: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.save_dsp_coeffs_eeprom: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.load_dsp_coeffs_eeprom: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.save_dsp_modules_eeprom: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.load_dsp_modules_eeprom: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.reset_udc: '_FUNC_NOT_IMPLEMENTED',
     }
 
     def __init__(self):
@@ -420,23 +469,6 @@ class ControllerPSSim:
             self._i_load_fluctuation = \
                 _random.gauss(0.0, ControllerPSSim._I_LOAD_FLUCTUATION_RMS)
 
-    def _func_set_slowref(self, **kwargs):
-        self._state[_BSMPConst.ps_setpoint] = kwargs['setpoint']
-        self._state[_BSMPConst.ps_reference] = \
-            self._state[_BSMPConst.ps_setpoint]
-        status = self._state[_BSMPConst.ps_status]
-        if _Status.pwrstate(status) == _PSConst.PwrState.On:
-            # i_load <= ps_reference
-            self._state[_BSMPConst.i_load] = \
-                self._state[_BSMPConst.ps_reference] + self._i_load_fluctuation
-        return _ack.ok, None
-
-    def _func_select_op_mode(self, **kwargs):
-        status = self._state[_BSMPConst.ps_status]
-        status = _Status.set_state(status, kwargs['op_mode'])
-        self._state[_BSMPConst.ps_status] = status
-        return _ack.ok, None
-
     def _func_turn_on(self, **kwargs):
         status = self._state[_BSMPConst.ps_status]
         status = _Status.set_state(status, _PSConst.States.SlowRef)
@@ -455,9 +487,9 @@ class ControllerPSSim:
         self._state[_BSMPConst.i_load] = 0.0 + self._i_load_fluctuation
         return _ack.ok, None
 
-    def _func_reset_interlocks(self, **kwargs):
-        self._state[_BSMPConst.ps_soft_interlocks] = 0
-        self._state[_BSMPConst.ps_hard_interlocks] = 0
+    def _func_open_loop(self, **kwargs):
+        status = self._state[_BSMPConst.ps_status]
+        status = _Status.set_openloop(status, 1)
         return _ack.ok, None
 
     def _func_close_loop(self, **kwargs):
@@ -465,6 +497,33 @@ class ControllerPSSim:
         status = _Status.set_openloop(status, 0)
         return _ack.ok, None
 
-    def _func_not_implemented(self, **kwargs):
+    def _func_select_op_mode(self, **kwargs):
+        status = self._state[_BSMPConst.ps_status]
+        status = _Status.set_state(status, kwargs['op_mode'])
+        self._state[_BSMPConst.ps_status] = status
+        return _ack.ok, None
+
+    def _func_reset_interlocks(self, **kwargs):
+        self._state[_BSMPConst.ps_soft_interlocks] = 0
+        self._state[_BSMPConst.ps_hard_interlocks] = 0
+        return _ack.ok, None
+
+    def _func_set_slowref(self, **kwargs):
+        self._state[_BSMPConst.ps_setpoint] = kwargs['setpoint']
+        self._state[_BSMPConst.ps_reference] = \
+            self._state[_BSMPConst.ps_setpoint]
+        status = self._state[_BSMPConst.ps_status]
+        if _Status.pwrstate(status) == _PSConst.PwrState.On:
+            # i_load <= ps_reference
+            self._state[_BSMPConst.i_load] = \
+                self._state[_BSMPConst.ps_reference] + self._i_load_fluctuation
+        return _ack.ok, None
+
+    def _func_reset_counters(self, **kwargs):
+        self._state[_BSMPConst.counter_set_slowref] = 0
+        self._state[_BSMPConst.counter_sync_pulse] = 0
+        return _ack.ok, None
+
+    def _FUNC_NOT_IMPLEMENTED(self, **kwargs):
         raise NotImplementedError(
             'Run of function not defined!'.format(hex(kwargs['ID_function'])))
