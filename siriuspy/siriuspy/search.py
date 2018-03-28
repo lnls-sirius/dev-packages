@@ -420,7 +420,12 @@ class MASearch:
 
     @staticmethod
     def conv_psname_2_maname(psname):
-        """Return maname for a given psname."""
+        """Return maname for a given psname.
+
+            The maname returned is the name of the magnet or magnet family
+        whose magnet instances has/have coil(s) excited by the given power
+        supply name. For SI and BO dipoles are exceptions.
+        """
         manames = MASearch.get_manames()
         for maname in manames:
             if psname in MASearch._maname_2_psnames_dict[maname]:
