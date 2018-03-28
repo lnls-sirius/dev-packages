@@ -324,6 +324,7 @@ class PSSearch:
 class MASearch:
     """MA and PM Magnet Search class."""
 
+    _psnames_list = None
     _manames_list = None
     _maname_2_splims_dict = None  # magnets-stpoint-limits file
     _maname_2_psnames_dict = None  # magnet-excitation-ps file
@@ -382,14 +383,14 @@ class MASearch:
 
     @staticmethod
     def conv_maname_2_trims(maname):
-        """Convert maname to trims."""
+        """Convert maname powersupply to its trims."""
         if MASearch._maname_2_trim_dict is None:
             MASearch._reload_maname_2_psnames_dict()
         return MASearch._maname_2_trim_dict.get(maname, None)
 
     @staticmethod
     def conv_maname_2_magfunc(maname):
-        """Return a dict mapping power supplies functions for given magnet."""
+        """Return a dict mapping ps to magnet functions for given magnet ps."""
         if MASearch._maname_2_psnames_dict is None:
             MASearch._reload_maname_2_psnames_dict()
         ps = MASearch._maname_2_psnames_dict[maname]
@@ -404,7 +405,7 @@ class MASearch:
 
     @staticmethod
     def conv_maname_2_splims(maname):
-        """Convert maname to splims."""
+        """Convert maname powersupply to a dict with its setpoint limits."""
         if maname is None:
             return None
         if MASearch._maname_2_splims_dict is None:
@@ -413,19 +414,36 @@ class MASearch:
 
     @staticmethod
     def conv_maname_2_psnames(maname):
-        """Return list of power supplies associated with a given magnet."""
+        """Return list of power supplies associated with a given magnet ps."""
         if MASearch._maname_2_psnames_dict is None:
             MASearch._reload_maname_2_psnames_dict()
         return MASearch._maname_2_psnames_dict[maname]
 
     @staticmethod
     def conv_psname_2_maname(psname):
-        """Return maname for a given psname."""
+        """Return maname for a given psname.
+
+            The returned maname is the name of the magnet or magnet family
+        whose magnet instances has/have coil(s) excited by the given power
+        supply name. For SI and BO dipoles are exceptions.
+        """
         manames = MASearch.get_manames()
         for maname in manames:
             if psname in MASearch._maname_2_psnames_dict[maname]:
                 return maname
         return None
+
+    @staticmethod
+    def conv_psname_2_maname_pwrsupply(psname):
+        """Return power supply maname for a given psname."""
+        if psname not in MASearch._psnames_list:
+            return None
+        if 'PS-B1B2' in psname:
+            return 'SI-Fam:MA-B1B2'
+        elif 'BO-Fam:PS-B' in psname:
+            return 'BO-Fam:MA-B'
+        else:
+            return psname.replace('PS', 'MA')
 
     @staticmethod
     def check_maname_ispulsed(maname):
@@ -502,6 +520,7 @@ class MASearch:
                         else:
                             MASearch._maname_2_trim_dict[maname] += \
                                 tuple(psnames)
+            MASearch._psnames_list = PSSearch.get_psnames()
         else:
             raise Exception(
                 'could not read magnet-excitation-ps from web server!')

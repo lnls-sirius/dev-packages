@@ -393,6 +393,7 @@ class TestMASearch(unittest.TestCase):
         'conv_maname_2_splims',
         'conv_maname_2_psnames',
         'conv_psname_2_maname',
+        'conv_psname_2_maname_pwrsupply',
         'get_maname_2_splims_dict',
         'check_maname_ispulsed'
     )
@@ -445,6 +446,17 @@ class TestMASearch(unittest.TestCase):
         "BO-01D:PM-InjK": ('BO-01D:PU-InjK',),
         "TB-04:PM-InjS": ('TB-04:PU-InjS',),
         "SI-01SA:PM-InjNLK": ('SI-01SA:PU-InjNLK',),
+    }
+
+    psname2maname = {
+        'SI-Fam:PS-B1B2-1': 'SI-Fam:MA-B1B2',
+        'SI-Fam:PS-B1B2-2': 'SI-Fam:MA-B1B2',
+        'BO-Fam:PS-B-1': 'BO-Fam:MA-B',
+        'BO-Fam:PS-B-1': 'BO-Fam:MA-B',
+        'SI-Fam:PS-QDA': 'SI-Fam:MA-QDA',
+        'SI-Fam:PS-SDA0': 'SI-Fam:MA-SDA0',
+        'SI-01M1:PS-QDA': 'SI-01M1:MA-QDA',
+        'SI-01M2:PS-CH': 'SI-01M2:MA-CH',
     }
 
     def setUp(self):
@@ -550,6 +562,13 @@ class TestMASearch(unittest.TestCase):
         """Test conv_maname_2_psnames."""
         for ma, psnames in TestMASearch.maname2psnames.items():
             self.assertEqual(MASearch.conv_maname_2_psnames(ma), psnames)
+
+    def test_conv_psname_2_maname_pwrsupply(self):
+        """Test conv_psname_2_maname_pwrsupply."""
+        self.assertIs(MASearch.conv_psname_2_maname_pwrsupply('INV'), None)
+        for psname, maname in TestMASearch.psname2maname.items():
+            self.assertEqual(MASearch.conv_psname_2_maname_pwrsupply(psname),
+                             maname)
 
     def test_check_maname_ispulsed(self):
         """Test check_maname_ispulsed."""
