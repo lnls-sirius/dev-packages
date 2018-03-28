@@ -46,17 +46,17 @@ class Const:
     ps_status = 0
     ps_setpoint = 1  # corresponds to IOC Current-RB
     ps_reference = 2  # corresponds to IOC CurrentRef-Mon
-    firmware_version = 3  # not implemented yet
-    counter_set_slowref = 4  # not implemented yet
-    counter_sync_pulse = 5  # not implemented yet
-    siggen_enable = 6  # not implemented yet
-    siggen_type = 7  # not implemented yet
-    siggen_num_cycles = 8  # not implemented yet
-    siggen_n = 9  # not implemented yet
-    siggen_freq = 10  # not implemented yet
-    siggen_amplitude = 11  # not implemented yet
-    siggen_offset = 12  # not implemented yet
-    siggen_aux_param = 13  # not implemented yet
+    firmware_version = 3
+    counter_set_slowref = 4
+    counter_sync_pulse = 5
+    siggen_enable = 6  # --- NOT IMPLEMENTED YET ---
+    siggen_type = 7
+    siggen_num_cycles = 8  # --- NOT IMPLEMENTED YET ---
+    siggen_n = 9  # --- NOT IMPLEMENTED YET ---
+    siggen_freq = 10  # --- NOT IMPLEMENTED YET ---
+    siggen_amplitude = 11  # --- NOT IMPLEMENTED YET ---
+    siggen_offset = 12  # --- NOT IMPLEMENTED YET ---
+    siggen_aux_param = 13  # --- NOT IMPLEMENTED YET ---
 
     # --- FSB variables ---
     ps_soft_interlocks = 25  # BSMP doc says ID numbering should be continous!
@@ -73,31 +73,31 @@ class Const:
     close_loop = 3
     select_op_mode = 4
     reset_interlocks = 6
-    set_serial_termination = 9  # not implemented yet
-    sync_pulse = 15  # not implemented yet
+    set_serial_termination = 9  # --- NOT IMPLEMENTED YET ---
+    sync_pulse = 15  # --- NOT IMPLEMENTED YET ---
     set_slowref = 16
-    set_slowref_fbp = 17  # not implemented yet
-    reset_counters = 18  # not implemented yet
-    cfg_siggen = 23  # not implemented yet
-    set_siggen = 24  # not implemented yet
-    enable_siggen = 25  # not implemented yet
-    disable_siggen = 26  # not implemented yet
-    set_slowref_readback = 27  # not implemented yet
-    set_slowref_fbp_readback = 28  # not implemented yet
-    set_param = 29  # not implemented yet
-    get_param = 30  # not implemented yet
-    save_param_eeprom = 31  # not implemented yet
-    load_param_eeprom = 32  # not implemented yet
-    save_param_bank = 33  # not implemented yet
-    load_param_bank = 34  # not implemented yet
-    set_dsp_coeffs = 35  # not implemented yet
-    get_dsp_coeff = 36  # not implemented yet
-    save_dsp_coeffs_eeprom = 37  # not implemented yet
-    load_dsp_coeffs_eeprom = 38  # not implemented yet
-    save_dsp_modules_eeprom = 39  # not implemented yet
-    load_dsp_modules_eeprom = 40  # not implemented yet
-    reset_udc = 41  # not implemented yet
-
+    set_slowref_fbp = 17  # --- NOT IMPLEMENTED YET ---
+    reset_counters = 18
+    cfg_siggen = 23  # --- NOT IMPLEMENTED YET ---
+    set_siggen = 24  # --- NOT IMPLEMENTED YET ---
+    enable_siggen = 25  # --- NOT IMPLEMENTED YET ---
+    disable_siggen = 26  # --- NOT IMPLEMENTED YET ---
+    set_slowref_readback = 27  # --- NOT IMPLEMENTED YET ---
+    set_slowref_fbp_readback = 28  # --- NOT IMPLEMENTED YET ---
+    set_param = 29  # --- NOT IMPLEMENTED YET ---
+    get_param = 30  # --- NOT IMPLEMENTED YET ---
+    save_param_eeprom = 31  # --- NOT IMPLEMENTED YET ---
+    load_param_eeprom = 32  # --- NOT IMPLEMENTED YET ---
+    save_param_bank = 33  # --- NOT IMPLEMENTED YET ---
+    load_param_bank = 34  # --- NOT IMPLEMENTED YET ---
+    set_dsp_coeffs = 35  # --- NOT IMPLEMENTED YET ---
+    get_dsp_coeff = 36  # --- NOT IMPLEMENTED YET ---
+    save_dsp_coeffs_eeprom = 37  # --- NOT IMPLEMENTED YET ---
+    load_dsp_coeffs_eeprom = 38  # --- NOT IMPLEMENTED YET ---
+    save_dsp_modules_eeprom = 39  # --- NOT IMPLEMENTED YET ---
+    load_dsp_modules_eeprom = 40  # --- NOT IMPLEMENTED YET ---
+    reset_udc = 41  # --- NOT IMPLEMENTED YET ---
+    
     # --- variables groups ---
     group_id = 3  # default variables group ID defined for power supplies
 
@@ -114,14 +114,14 @@ def get_variables_common():
             ('ps_reference', Const.t_float, False),
         Const.firmware_version:
             ('firmware_version', Const.t_char128, False),
-        # Const.counter_set_slowref:
-        #     ('counter_set_slowref', Const.t_uint32, False),
-        # Const.counter_sync_pulse:
-        #     ('counter_sync_pulse', Const.t_uint32, False),
+        Const.counter_set_slowref:
+            ('counter_set_slowref', Const.t_uint32, False),
+        Const.counter_sync_pulse:
+            ('counter_sync_pulse', Const.t_uint32, False),
         # Const.siggen_enable:
         #     ('siggen_enable', Const.t_uint16, False),
-        # Const.siggen_type:
-        #     ('siggen_type', Const.t_uint16, False),
+        Const.siggen_type:
+            ('siggen_type', Const.t_uint16, False),
         # Const.siggen_num_cycles:
         #     ('siggen_num_cycles', Const.t_uint16, False),
         # Const.siggen_n:
@@ -605,7 +605,7 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
         return ID_cmd, version_str
 
     def cmd_0x11(self, ID_receiver, ID_variable):
-        """Respond BSMP variable."""
+        """Respond BSMP variable readout."""
         # query power supply
         query = [chr(ID_receiver),
                  '\x10', '\x00', '\x01', chr(ID_variable)]
@@ -642,35 +642,55 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
             data = [ord(element) for element in load]
             value = dict()
             i = 0
-            # ps_status
+            # ID:00 - ps_status
             value[Const.ps_status] = data[i] + (data[i+1] << 8)
             i += 2
-            # ps_setpoint
+            # ID:01 - ps_setpoint
             value[Const.ps_setpoint] = \
                 _struct.unpack("<f", bytes(data[i:i+4]))[0]
             i += 4
-            # ps_reference
+            # ID:02 - ps_reference
             value[Const.ps_reference] = \
                 _struct.unpack("<f", bytes(data[i:i+4]))[0]
             i += 4
-            # firmware_version
+            # ID:03 - firmware_version
             version, di = BSMPMasterSlave._process_firmware_stream(data, i)
             value[Const.firmware_version] = version
             i += di
-            # ps_soft_interlocks
+            # ID:04 - counter_set_slowref
+            datum = data[i] + (data[i+1] << 8) + \
+                (data[i+2] << 16) + (data[i+3] << 24)
+            value[Const.counter_set_slowref] = datum
+            i += 4
+            # ID:05 - counter_sync_pulse
+            datum = data[i] + (data[i+1] << 8) + \
+                (data[i+2] << 16) + (data[i+3] << 24)
+            value[Const.counter_sync_pulse] = datum
+            i += 4
+            # ID:09 - siggen_type
+            datum = data[i] + (data[i+1] << 8)
+            value[Const.siggen_type] = datum
+            i += 2
+            # ID:25 - ps_soft_interlocks
             datum = data[i] + (data[i+1] << 8) + \
                 (data[i+2] << 16) + (data[i+3] << 24)
             value[Const.ps_soft_interlocks] = datum
             i += 4
-            # ps_hard_interlocks
+            # ID:26 - ps_hard_interlocks
             datum = data[i] + (data[i+1] << 8) + \
                 (data[i+2] << 16) + (data[i+3] << 24)
             value[Const.ps_hard_interlocks] = datum
             i += 4
-            # i_load
+            # ID:27 - i_load
             datum = _struct.unpack("<f", bytes(data[i:i+4]))[0]
             value[Const.i_load] = datum
             i += 4
+            # ID:28 - v_load
+            pass
+            # ID:29 - v_dclink
+            pass
+            # ID:30 - temp_switches
+            pass
         else:
             raise ValueError('Invalid group ID!')
         return _ack.ok, value
@@ -678,29 +698,29 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
     def cmd_0x51(self, ID_receiver, ID_function, **kwargs):
         """Respond to execute BSMP function."""
         # execute function in power supply
-        # print('cmd_0x51', kwargs)
         if ID_function in (Const.turn_on,
                            Const.turn_off,
                            Const.open_loop,
                            Const.close_loop,
-                           Const.reset_interlocks):
+                           Const.reset_interlocks,
+                           Const.reset_counters):
             load = []
         elif ID_function == Const.set_slowref:
             load = [chr(b) for b in _struct.pack("<f", kwargs['setpoint'])]
         elif ID_function == Const.select_op_mode:
-            load = [chr(b) for b in _struct.pack("<f", kwargs['op_mode'])]
+            # TODO: originally format "<f" was being used...
+            load = [chr(b) for b in _struct.pack("<i", kwargs['op_mode'])]
         else:
             raise NotImplementedError
-        n = 1 + len(load)
+        n = 1 + len(load)  # one additional byte for checksum.
         hb, lb = (n & 0xFF00) >> 8, n & 0xFF
         query = [chr(ID_receiver), '\x50', chr(hb), chr(lb),
                  chr(ID_function)] + load
         query = BSMPMasterSlave.includeChecksum(query)
         # print('cmd_0x51: ', n, query)
+        # TODO: check this timeout. eventually will be part of the BSMP PS spec
         self._pru.UART_write(query, timeout=100)
         response = self._pru.UART_read()
-        # print(response)
-        # process response
         ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
         if ID_cmd != 0x51:
             # currently ps slaves are returning 0x53 sometimes !!!

@@ -169,6 +169,9 @@ class PowerSupply(_PSCommInterface):
         elif field == 'Reset-Cmd':
             keyvalue['func'] = self._reset
             keyvalue['value'] = db['Reset-Cmd']['value']
+        elif field == 'CycleType-Sel':
+            keyvalue['func'] = self._set_cycle_type
+            keyvalue['value'] = self._controller.read('CycleType-Sts')
 
     def _set_pwrstate(self, value):
         self._setpoints['PwrState-Sel']['value'] = value
@@ -205,6 +208,12 @@ class PowerSupply(_PSCommInterface):
             value = value[:_max_wfmsize]
         self._setpoints['WfmData-SP']['value'] = value
         return self._controller.write('WfmData-SP', value)
+
+    def _set_cycle_type(self, value):
+        self._setpoints['CycleType-Sel']['value'] = value
+        if value >= 0 and value < len(self._base_db['CycleType-Sel']['enums']):
+            ret = self._controller.write('CycleType-Sel', value)
+            return ret
 
     def _abort(self, value):
         # op_mode = self.read('OpMode-Sts')

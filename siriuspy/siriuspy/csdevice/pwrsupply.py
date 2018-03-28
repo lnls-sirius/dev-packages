@@ -8,8 +8,8 @@ from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.search import MASearch as _MASearch
 
 max_wfmsize = 4000
-default_wfmlabels = _et.enums('PSWfmLabelsTyp')
-# default_intlklabels = _et.enums('PSIntlkLabelsTyp')
+default_wfmlabels = ('Waveform1', 'Waveform2', 'Waveform3',
+                     'Waveform4', 'Waveform5', 'Waveform6')
 default_ps_current_precision = 4
 default_pu_current_precision = 4
 
@@ -18,16 +18,17 @@ _default_pu_current_unit = None
 
 # --- power supply enums ---
 
-ps_models = ('FBP', 'FAP', 'FAP_4P_Master', 'FAP_4P_Slave',
-             'FAP_2P2S_Master', 'FAP_2P2S_Slave', 'FAC', 'FAC_2S_ACDC',
-             'FAC_2S_DCDC', 'FAC_2P4S_ACDC', 'FAC_2P4S_DCDC',)
+ps_models = ('Empty', 'FBP', 'FBP_DCLink', 'FAC_ACDC', 'FAC_DCDC',
+             'FAC_2S_ACDC', 'FAC_2S_DCDC', 'FAC_2P4S_ACDC', 'FAC_2P4S_DCDC',
+             'FAP', 'FAP_4P_Master', 'FAP_4P_Slave',
+             'FAP_2P2S_Master', 'FAP_2P2S_Slave')
 ps_dsblenbl = ('Dsbl', 'Enbl')
 ps_interface = ('Remote', 'Local', 'PCHost')
 ps_openloop = ('Closed', 'Open')
+ps_pwrstate_sel = ('Off', 'On')
+ps_pwrstate_sts = ('Off', 'On', 'Initializing')
 ps_states = ('Off', 'Interlock', 'Initializing',
              'SlowRef', 'SlowRefSync', 'FastRef', 'RmpWfm', 'MigWfm', 'Cycle')
-ps_pwrstate_sel = ('Off', 'On', 'Initializing')
-ps_pwrstate_sts = ('Off', 'On')
 ps_opmode = ('SlowRef', 'SlowRefSync', 'FastRef', 'RmpWfm', 'MigWfm', 'Cycle')
 ps_cmdack = ('OK', 'Local', 'PCHost', 'Interlocked', 'UDC_locked',
              'DSP_TimeOut', 'DSP_Busy', 'Invalid',)
@@ -78,9 +79,10 @@ ps_hard_interlock_FBP_DCLink = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
 )
+ps_cycle_type = ('Sine', 'DampedSine', 'Trapezoidal')
+
 
 # --- power supply constants definition class ---
-
 
 class Const:
     """Const class defining power supply constants."""
@@ -104,6 +106,8 @@ class Const:
             Const._add_const('OpMode', ps_opmode[i], i)
         for i in range(len(ps_cmdack)):
             Const._add_const('CmdAck', ps_cmdack[i], i)
+        for i in range(len(ps_cycle_type)):
+            Const._add_const('CycleType', ps_cycle_type[i], i)
 
     @staticmethod
     def _add_const(group, const, i):
@@ -113,10 +117,11 @@ class Const:
         setattr(obj, const, i)
 
 
-Const._init()
+Const._init()  # create class constants
 
 
 # --- power supply databases ---
+
 def get_ps_current_unit():
     """Return power supply current unit."""
     global _default_ps_current_unit
@@ -136,20 +141,18 @@ def get_pu_current_unit():
 def get_common_propty_database():
     """Return database entries to all power-supply-like devices."""
     db = {
-        'Version-Cte':      {'type': 'str', 'value': 'UNDEF'},
-        'CtrlMode-Mon':     {'type': 'enum', 'enums': ps_interface,
-                             'value': _et.idx.Remote},
-        'PwrState-Sel':     {'type': 'enum', 'enums': ps_pwrstate_sel,
-                             'value': _et.idx.Off},
-        'PwrState-Sts':     {'type': 'enum', 'enums': ps_pwrstate_sts,
-                             'value': _et.idx.Off},
-        # 'IntlkSoftLabels-Cte':  {'type': 'string',
-        #                          'count': len(ps_soft_interlock),
-        #                          'value': ps_soft_interlock},
-        # 'IntlkHardLabels-Cte':  {'type': 'string',
-        #                          'count': len(ps_hard_interlock),
-        #                          'value': ps_hard_interlock},
+        'Version-Cte': {'type': 'str', 'value': 'UNDEF'},
+        'CtrlMode-Mon': {'type': 'enum', 'enums': ps_interface,
+                         'value': _et.idx.Remote},
+        'PwrState-Sel': {'type': 'enum', 'enums': ps_pwrstate_sel,
+                         'value': _et.idx.Off},
+        'PwrState-Sts': {'type': 'enum', 'enums': ps_pwrstate_sts,
+                         'value': _et.idx.Off},
         'Reset-Cmd': {'type': 'int', 'value': 0},
+        'CycleType-Sel': {'type': 'enum', 'enums': ps_cycle_type,
+                          'value': Const.CycleType.Sine},
+        'CycleType-Sts': {'type': 'enum', 'enums': ps_cycle_type,
+                          'value': Const.CycleType.Sine},
     }
     return db
 
