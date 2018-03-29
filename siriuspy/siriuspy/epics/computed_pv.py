@@ -179,6 +179,8 @@ class ComputedPV:
             self._issue_callback(pvname=self.pvname, **kwargs)
 
     def _value_update_callback(self, pvname, value, **kwargs):
+        # if 'Current-Mon' not in pvname:
+        #     print(pvname, value)
         if self.connected:
             self._queue.add_callback(self._update_value, pvname, value)
 
