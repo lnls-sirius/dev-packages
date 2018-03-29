@@ -22,6 +22,7 @@ from siriuspy.pwrsupply import sync as _sync
 from ..bsmp import BSMP, Response
 from .bsmp import FBPEntities
 from .status import Status
+from siriuspy.bsmp import SerialError as _SerialError
 
 
 class PowerSupply:
@@ -187,6 +188,10 @@ class PowerSupplySim:
         """High level PS controller."""
         self._database = database
 
+        self.connected = True
+        if _random.random() > 0.5:
+            self.connected = False
+
     @property
     def database(self):
         """Power supply database."""
@@ -231,6 +236,8 @@ class PowerSupplySim:
     # Groups
     def read_all_variables(self):
         """Read all variables."""
+        if not self.connected:
+            raise _SerialError()
         ret = dict()
         ret['PwrState-Sts'] = self.pwrstate_sts
         ret['OpMode-Sts'] = self.opmode_sts
@@ -245,6 +252,8 @@ class PowerSupplySim:
     # Functions
     def turn_on(self):
         """Turn power supply on."""
+        if not self.connected:
+            raise _SerialError()
         if not self.pwrstate_sts:
             self.database['PwrState-Sts']['value'] = 1
             # Set SlowRef
@@ -257,6 +266,8 @@ class PowerSupplySim:
 
     def turn_off(self):
         """Turn power supply off."""
+        if not self.connected:
+            raise _SerialError()
         self.database['PwrState-Sts']['value'] = 0
         self.database['OpMode-Sts']['value'] = 0
         self.database['Current-RB']['value'] = 0
@@ -266,12 +277,16 @@ class PowerSupplySim:
 
     def select_op_mode(self, value):
         """Set operation mode."""
+        if not self.connected:
+            raise _SerialError()
         if self.pwrstate_sts:
             self.database['OpMode-Sts']['value'] = value
         return True
 
     def set_slowref(self, value):
         """Set current."""
+        if not self.connected:
+            raise _SerialError()
         if self.pwrstate_sts:
             self.database['Current-RB']['value'] = value
             self.database['CurrentRef-Mon']['value'] = value
