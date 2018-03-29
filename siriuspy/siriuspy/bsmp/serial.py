@@ -16,20 +16,6 @@ class Message:
         """Build a BSMP message."""
         self._stream = stream
         self._cmd = ord(stream[0])
-        # if load and not isinstance(load, list):
-        #     raise TypeError("Load must be a list.")
-        # if load and len(load) > 65535:
-        #     raise ValueError("Load must be smaller than 65535.")
-        #
-        # self._cmd = cmd
-        # if not load:
-        #     self._load = []
-        # else:
-        #     self._load = load
-        # if size is not None:
-        #     self._size = _struct.unpack('>H', bytes(map(ord, size)))[0]
-        #     if self._size != len(load):
-        #         raise ValueError("Invalid message!")
 
     def __eq__(self, other):
         """Compare messages."""
@@ -38,10 +24,6 @@ class Message:
     @classmethod
     def message(cls, cmd, load=None):
         """Build a Message object from a byte stream."""
-        # if len(stream) < 3:
-        #     raise ValueError("BSMP Message too short.")
-        # cmd = cls.decode_cmd(stream[0])
-        # load = cls.decode_load(stream[3:])
         if load and not isinstance(load, list):
             raise TypeError("Load must be a list.")
         if load and len(load) > 65535:
@@ -79,19 +61,6 @@ class Message:
     def load(self):
         """Message load."""
         return self._stream[3:]
-
-    # def to_stream(self):
-    #     """Get byte stream."""
-    #     stream = []
-    #     # stream.append(Message.encode_cmd(self.cmd))
-    #     # stream.extend(self._get_load_size())
-    #     # if self._load:
-    #     #     stream.extend(Message.encode_load(self.load))
-    #     stream.append(self.cmd)
-    #     stream.extend(self._get_load_size())
-    #     if self.load:
-    #         stream.extend(self.load)
-    #     return stream
 
 
 class Package:
@@ -147,13 +116,6 @@ class Package:
     def checksum(self):
         """Package checksum."""
         return self._checksum
-
-    # def to_stream(self):
-    #     """Convert Package to byte stream."""
-    #     stream = []
-    #     stream.append(self._address)
-    #     stream.extend(self._message.to_stream())
-    #     return stream + [chr(Package.calc_checksum(stream))]
 
     @staticmethod
     def calc_checksum(stream):
