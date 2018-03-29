@@ -26,6 +26,11 @@ class TestASAPCurrInfoChargeMain(unittest.TestCase):
         """Initialize Soft IOC."""
         self.mock_driver = mock.create_autospec(_PCASDriver)
         App.init_class()
+        printbanner_patcher = mock.patch(
+            "as_ap_currinfo.charge.pvs.print_banner_and_save_pv_list",
+            autospec=True)
+        self.addCleanup(printbanner_patcher.stop)
+        self.mock_printbanner = printbanner_patcher.start()
 
     def test_public_interface(self):
         """Test module's public interface."""
