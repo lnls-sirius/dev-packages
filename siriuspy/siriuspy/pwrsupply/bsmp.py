@@ -344,6 +344,124 @@ InterlockSoft = _InterlockSoft()
 InterlockHard = _InterlockHard()
 
 
+class PSControllerStatus:
+    """PS controller ps_status."""
+
+    _mask_state = 0b0000000000001111
+    _mask_oloop = 0b0000000000010000
+    _mask_intfc = 0b0000000001100000
+    _mask_activ = 0b0000000010000000
+    _mask_model = 0b0001111100000000
+    _mask_unlck = 0b0010000000000000
+    _mask_rsrvd = 0b1100000000000000
+    _mask_stats = 0b1111111111111111
+
+    def __init__(self, ps_status=0):
+        """Constructor."""
+        self._ps_status = ps_status
+
+    # --- public interface ---
+
+    @property
+    def ps_status(self):
+        """Return ps-controller ps_status."""
+        return self._ps_status
+
+    @ps_status.setter
+    def ps_status(self, value):
+        """Set ps-controller ps_status."""
+        self._ps_status = value & PSControllerStatus._mask_stats
+
+    @property
+    def state(self):
+        """Return ps-controller state."""
+        return (self._ps_status & PSControllerStatus._mask_state) >> 0
+
+    @state.setter
+    def state(self, value):
+        """Set ps-controller state."""
+        self._ps_status = self._ps_status & ~PSControllerStatus._mask_state
+        self._ps_status += (value & 0b1111) << 0
+
+    @property
+    def open_loop(self):
+        """Return ps-controller open_loop."""
+        return (self._ps_status & PSControllerStatus._mask_oloop) >> 4
+
+    @open_loop.setter
+    def open_loop(self, value):
+        """Set ps-controller open_loop."""
+        self._ps_status = self._ps_status & ~PSControllerStatus._mask_oloop
+        self._ps_status += (value & 0b1) << 4
+
+    @property
+    def interface(self):
+        """Return ps-controller interface."""
+        return (self._ps_status & PSControllerStatus._mask_intfc) >> 5
+
+    @interface.setter
+    def interface(self, value):
+        """Set ps-controller interface."""
+        self._ps_status = self._ps_status & ~PSControllerStatus._mask_intfc
+        self._ps_status += (value & 0b11) << 5
+
+    @property
+    def active(self):
+        """Return ps-controller active."""
+        return (self._ps_status & PSControllerStatus._mask_activ) >> 7
+
+    @active.setter
+    def active(self, value):
+        """Set ps-controller active."""
+        self._ps_status = self._ps_status & ~PSControllerStatus._mask_activ
+        self._ps_status += (value & 0b1) << 7
+
+    @property
+    def model(self):
+        """Return ps-controller model."""
+        return (self._ps_status & PSControllerStatus._mask_model) >> 8
+
+    @model.setter
+    def model(self, value):
+        """Set ps-controller interface."""
+        self._ps_status = self._ps_status & ~PSControllerStatus._mask_model
+        self._ps_status += (value & 0b11111) << 8
+
+    @property
+    def unlocked(self):
+        """Return ps-controller unlocked."""
+        return (self._ps_status & PSControllerStatus._mask_unlck) >> 13
+
+    @unlocked.setter
+    def unlocked(self, value):
+        """Set ps-controller unlocked."""
+        self._ps_status = self._ps_status & ~PSControllerStatus._mask_unlck
+        self._ps_status += (value & 0b1) << 13
+
+    @property
+    def reserved(self):
+        """Return ps-controller reserved."""
+        return (self._ps_status & PSControllerStatus._mask_rsrvd) >> 14
+
+    @reserved.setter
+    def reserved(self, value):
+        """Set ps-controller reserved."""
+        self._ps_status = self._ps_status & ~PSControllerStatus._mask_rsrvd
+        self._ps_status += (value & 0b11) << 14
+
+    # --- private methods ---
+
+    def _update(self):
+        self._state = self._ps_status & 0b0000000000001111 >> 0
+        self._open_loop = self._ps_status & 0b0000000000010000 >> 4
+        self._interface = self._ps_status & 0b0000000001100000 >> 5
+        self._active = self._ps_status & 0b0000000010000000 >> 7
+        self._model = self._ps_status & 0b0001111100000000 >> 8
+        self._unlocked = self._ps_status & 0b0010000000000000 >> 13
+        self._reserved = self._ps_status & 0b1100000000000000 >> 14
+        self._updated = True
+
+
 class Status:
     """Power supply status class."""
 
@@ -355,7 +473,7 @@ class Status:
     _mask_unlck = 0b0010000000000000
     _mask_rsrvd = 0b1100000000000000
 
-    _dsp2ps_state = {
+    _psc2ioc_state = {
         _PSConst.States.Off: _PSConst.OpMode.SlowRef,
         _PSConst.States.Interlock: _PSConst.OpMode.SlowRef,
         _PSConst.States.Initializing: _PSConst.OpMode.SlowRef,
@@ -367,7 +485,7 @@ class Status:
         _PSConst.States.FastRef: _PSConst.OpMode.FastRef,
     }
 
-    _ps2dsp_state = {
+    _ioc2psc_state = {
         # TODO: controller firmware still defines only a subset of opmodes
         _PSConst.OpMode.SlowRef: _PSConst.States.SlowRef,
         _PSConst.OpMode.SlowRefSync: _PSConst.States.SlowRefSync,
@@ -379,7 +497,7 @@ class Status:
 
     @staticmethod
     def state(status, label=False):
-        """Return DSP state of power supply."""
+        """Return ps-controller state."""
         index = (status & (0b1111 << 0)) >> 0
         return _ps_states[index] if label else index
 
@@ -416,17 +534,17 @@ class Status:
 
     @staticmethod
     def opmode(status, label=False):
-        """Return PS opmode."""
+        """Return ioc-controller opmode value given ps-controller ps_status."""
         state = Status.state(status, label=False)
-        index = Status._dsp2ps_state[state]
+        index = Status._psc2ioc_state[state]
         return _ps_opmode[index] if label else index
 
     @staticmethod
     def set_opmode(status, value):
-        """Set power supply opmode."""
+        """Return ps-controller ps_status given ioc-controller opmode value."""
         if not (0 <= value < len(_ps_opmode)):
             raise ValueError('Invalid opmode value!')
-        value = Status._ps2dsp_state[value]
+        value = Status._ioc2psc_state[value]
         status = Status.set_state(status, value)
         return status
 
@@ -709,13 +827,16 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
             load = [chr(b) for b in _struct.pack("<f", kwargs['setpoint'])]
         elif ID_function == Const.select_op_mode:
             # TODO: originally format "<f" was being used...
-            load = [chr(b) for b in _struct.pack("<i", kwargs['op_mode'])]
+            # load = [chr(b) for b in _struct.pack("<i", kwargs['op_mode'])]
+            load = [chr(kwargs['op_mode']), ]
         else:
             raise NotImplementedError
         n = 1 + len(load)  # one additional byte for checksum.
         hb, lb = (n & 0xFF00) >> 8, n & 0xFF
         query = [chr(ID_receiver), '\x50', chr(hb), chr(lb),
                  chr(ID_function)] + load
+        if ID_function == Const.select_op_mode:
+            print([hex(ord(c)) for c in query])
         query = BSMPMasterSlave.includeChecksum(query)
         # print('cmd_0x51: ', n, query)
         # TODO: check this timeout. eventually will be part of the BSMP PS spec
