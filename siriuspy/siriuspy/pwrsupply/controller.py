@@ -2,12 +2,13 @@
 import re as _re
 
 from siriuspy import util as _util
+from siriuspy.bsmp import SerialError as _SerialError
 
 __version__ = _util.get_last_commit_hash()
 
 
 class InvalidValue(Exception):
-    """Raised when an invalid value is passes as setpoint."""
+    """Raised when an invalid value is passed as setpoint."""
 
     pass
 
@@ -34,10 +35,10 @@ class PSController:
         'PwrState-Sel': 'PwrState-Sts',
         'OpMode-Sel': 'OpMode-Sts',
         'Current-SP': 'Current-RB',
-        'Reset-Cmd': None,
         'CycleType-Sel': None,
-        'Abort-Cmd': None,
         'WfmData-SP': None,
+        'Reset-Cmd': None,
+        'Abort-Cmd': None,
         }
 
     def __init__(self, device):
@@ -49,17 +50,7 @@ class PSController:
             if PSController._sp.match(field):
                 self._setpoints[field] = db
 
-        try:
-            vars = self.device.read_all_variables()
-        except Exception:
-            pass
-        else:
-            # Init Setpoints
-            for setpoint in self.setpoints:
-                readback = PSController._sp_to_rb_map[setpoint]
-                if readback:
-                    self.setpoints[setpoint]['value'] = vars[readback]
-            self._connected = True
+        self._init_setpoints()
 
     # API
     @property
@@ -116,6 +107,7 @@ class PSController:
         # TODO: enumerate
         if setpoint < 0 or \
                 setpoint > len(self.setpoints['OpMode-Sel']['enums']):
+            self.setpoints['OpMode-Sel']['value'] = setpoint
             raise InvalidValue("OpMode {} out of range.".format(setpoint))
 
         if self.device.select_op_mode(setpoint):
@@ -158,10 +150,14 @@ class PSController:
 
         Throws SerialError
         """
-        if field in self._setpoints:
-            return getattr(self, field.replace('-', '_').lower())
-        else:
-            return getattr(self.device, field.replace('-', '_').lower())
+        try:
+            if field in self._setpoints:
+                return getattr(self, field.replace('-', '_').lower())
+            else:
+                return getattr(self.device, field.replace('-', '_').lower())
+        except _SerialError:
+            self.connected = False
+            return None
 
     def write(self, field, value):
         """Write to device field.
@@ -169,18 +165,40 @@ class PSController:
         Throws SerialError, InvalidValue
         """
         if field in self._setpoints:
-            setattr(self, field.replace('-', '_').lower(), value)
-            return True
-        else:
-            return False
+            try:
+                setattr(self, field.replace('-', '_').lower(), value)
+                self.connected = True
+            except _SerialError:
+                self.connected = False
+                return False
+        return True
 
     def read_all_variables(self):
         """Return dict with all variables values."""
-        db = self.device.read_all_variables()
-        if db is not None:
+        try:
+            db = self.device.read_all_variables()
+        except _SerialError:
+            self.connected = False
+            return None
+        else:
+            self.connected = True
+            if db is not None:
+                for setpoint in self.setpoints:
+                    db[setpoint] = self.setpoints[setpoint]['value']
+            return db
+
+    def _init_setpoints(self):
+        try:
+            vars = self.device.read_all_variables()
+        except Exception:
+            pass
+        else:
+            # Init Setpoints
             for setpoint in self.setpoints:
-                db[setpoint] = self.setpoints[setpoint]['value']
-        return db
+                readback = PSController._sp_to_rb_map[setpoint]
+                if readback:
+                    self.setpoints[setpoint]['value'] = vars[readback]
+            self._connected = True
 
 
 class PSCommInterface:
