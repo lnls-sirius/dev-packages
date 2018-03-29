@@ -1,6 +1,8 @@
 """BSMP serial communications classes."""
 import struct as _struct
-from .exceptions import SerialError
+from .exceptions import SerialError as _SerialError
+
+# TODO: rename module to 'channel.py' ?
 
 
 class Message:
@@ -11,9 +13,13 @@ class Message:
     Load: 0..65535 bytes.
     """
 
+    # TODO: indicate somehow that stream is a char stream.
+    # TODO: word "payload" is used in BSMP doc 2.2
+
     # Constructors
     def __init__(self, stream):
         """Build a BSMP message."""
+        # TODO: size check (at least 3)
         self._stream = stream
         self._cmd = ord(stream[0])
 
@@ -70,6 +76,8 @@ class Package:
     Message: no limit
     Checksum: package checksum
     """
+
+    # TODO: think about the name "address"...
 
     # Constructors
     def __init__(self, stream):
@@ -148,6 +156,8 @@ class Package:
 class Channel:
     """Serial comm with address."""
 
+    # TODO: think about the name "address"...
+
     def __init__(self, serial, address):
         """Set channel."""
         self.serial = serial
@@ -157,16 +167,18 @@ class Channel:
         """Read from serial."""
         resp = self.serial.UART_read()
         if not resp:
-            raise SerialError("Serial read returned empty!")
+            raise _SerialError("Serial read returned empty!")
         package = Package(resp)
         return package.message
 
     def write(self, message, timeout=100):
         """Write to serial."""
+        # TODO: should we use a default timeout?
         stream = Package.package(self.address, message).stream
         return self.serial.UART_write(stream, timeout=timeout)
 
     def request(self, message, timeout=100):
         """Write and wait for response."""
+        # TODO: should we use a default timeout?
         self.write(message, timeout)
         return self.read()

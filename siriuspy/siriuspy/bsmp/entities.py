@@ -2,30 +2,39 @@
 import struct as _struct
 
 
-class Entity:
+class _Entity:
     """BSMP entity."""
 
     def _conv_value(self, fmt, value):
         if fmt == '<c':
             return value
         else:
+            # TODO: use return [chr(c) for c in _struct.pack(fmt, value)]
             return list(map(chr, _struct.pack(fmt, value)))
 
     def _check_type(self, type_, value):
         pass
 
     def _conv_value_to_load(self, var_type, size, value):
+
+        # TODO: simplify code
+
+        # check type
         if var_type.size < size:
+            # in th case length > 1 # TODO: count|length
             for v in value:
                 if not var_type.check(v):
                     raise TypeError("{}, {}".format(var_type.type, value))
         else:
             if not var_type.check(value):
                 raise TypeError("{}, {}".format(var_type.type, value))
+
+        # convert
         try:
             length = len(value)
         except TypeError:
             length = 1
+
         if length > 1:
             load = []
             for v in value:
@@ -37,14 +46,16 @@ class Entity:
             return self._conv_value(var_type.fmt, value)
 
     def _conv_load_to_value(self, var_type, size, load):
+        # TODO: use, load = [ord(c) for c in load]
         load = list(map(ord, load))
         if len(load) > var_type.size:  # Array
             if var_type.type == 'char':
+                # TODO: value, _ = (''.join([chr(b) for b in load])).split('\x00', 1) ?
                 value = ''
-                for char in load:
-                    if char == 0:
+                for byte in load:
+                    if byte == 0:
                         break
-                    value += '{:c}'.format(char)
+                    value += '{:c}'.format(byte)
                 return value
             else:
                 values = []
@@ -57,14 +68,16 @@ class Entity:
             return _struct.unpack(var_type.fmt, bytes(load))[0]
 
 
-class Variable(Entity):
+class Variable(_Entity):
     """BSMP variable."""
+
+    # TODO: change from 'length' to 'count'? (pcaspy)
 
     def __init__(self, eid, waccess, var_type, length=1):
         """Set variable properties."""
         if (var_type.size * length) > 128 or (var_type.size * length) < 1:
             raise ValueError("Variable size incorrect.")
-        super().__init__()
+        super().__init__()  # TODO: is it necessary?
         self.eid = eid
         self.waccess = waccess
         self.size = (var_type.size * length)  # 1..128 bytes
@@ -79,7 +92,7 @@ class Variable(Entity):
         return self._conv_value_to_load(self.type, self.size, value)
 
 
-class VariablesGroup(Entity):
+class VariablesGroup(_Entity):
     """BSMP variables group entity."""
 
     def __init__(self, eid, waccess, variables):
@@ -117,7 +130,7 @@ class VariablesGroup(Entity):
         return size
 
 
-class Curve(Entity):
+class Curve(_Entity):
     """BSMP Curve entity."""
 
     def __init__(self, eid, waccess, sblocks, nblocks, checksum):
@@ -130,8 +143,11 @@ class Curve(Entity):
         self.checksum = checksum
 
 
-class Function(Entity):
+class Function(_Entity):
     """BSMP function."""
+
+    # TODO: BSMP doc says func lenght < 15 but PS BSMP spec says otherwise!!!
+    # TODO: PS BSMP spec defines functions with args of different types !!!
 
     def __init__(self, eid, i_length, i_type, o_length, o_type):
         """Set function properties."""
@@ -164,11 +180,16 @@ class Function(Entity):
 class Entities:
     """BSMP entities."""
 
+    # TODO: use 'variables_def' instead of 'variables'?
+    # TODO: use 'curves_def' instead of 'curves'?
+    # TODO: use 'functions_def' instead of 'functions'?
+
     def __init__(self, variables, curves, functions):
         """Constructor."""
         # Get variables
         self._variables = list()
         for variable in variables:
+            # TODO: use 'eid', 'waccess', 'var_type' as keys
             var_id = variable['id']
             write_access = variable['access']
             var_type = variable['type']
@@ -184,9 +205,11 @@ class Entities:
             VariablesGroup(1, False, r_var),
             VariablesGroup(2, True, w_var),
         ]
+        # TODO: implement curves
         self._curves = list()
         self._functions = list()
         for function in functions:
+            # TODO: use 'eid' as key
             func_id = function['id']
             i_length = function['i_length']
             i_type = function['i_type']
@@ -223,5 +246,5 @@ class Entities:
         self.groups.append(VariablesGroup(len(self.groups), False, variables))
 
     def remove_all_groups(self):
-        """Remove all groups bigger than id 2."""
+        """Remove all groups bigger than eid 2."""
         self._groups = self.groups[:3]
