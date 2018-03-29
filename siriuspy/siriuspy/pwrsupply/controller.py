@@ -53,6 +53,42 @@ class PSController:
         self._init_setpoints()
 
     # API
+    def read(self, field):
+        """Read a field from device."""
+        try:
+            if field in self._setpoints:
+                return getattr(self, field.replace('-', '_').lower())
+            else:
+                return getattr(self.device, field.replace('-', '_').lower())
+        except _SerialError:
+            self.connected = False
+            return None
+
+    def write(self, field, value):
+        """Write to device field."""
+        if field in self._setpoints:
+            try:
+                setattr(self, field.replace('-', '_').lower(), value)
+                self.connected = True
+            except _SerialError:
+                self.connected = False
+                return False
+        return True
+
+    def read_all_variables(self):
+        """Return dict with all variables values."""
+        try:
+            db = self.device.read_all_variables()
+        except _SerialError:
+            self.connected = False
+            return None
+        else:
+            self.connected = True
+            if db is not None:
+                for setpoint in self.setpoints:
+                    db[setpoint] = self.setpoints[setpoint]['value']
+            return db
+
     @property
     def device(self):
         """Device variables."""
@@ -86,15 +122,14 @@ class PSController:
         elif setpoint == 0:
             ret = self.device.turn_off()
         else:
-            raise InvalidValue("Power State Setpoint, {}".format(setpoint))
+            self.setpoints['PwrState-Sel']['value'] = setpoint
+            return
+            # raise InvalidValue("Power State Setpoint, {}".format(setpoint))
 
         if ret:
             self.setpoints['Current-SP']['value'] = 0.0
             self.setpoints['OpMode-Sel']['value'] = 0
             self.setpoints['PwrState-Sel']['value'] = setpoint
-            return True
-
-        return False
 
     @property
     def opmode_sel(self):
@@ -108,13 +143,10 @@ class PSController:
         if setpoint < 0 or \
                 setpoint > len(self.setpoints['OpMode-Sel']['enums']):
             self.setpoints['OpMode-Sel']['value'] = setpoint
-            raise InvalidValue("OpMode {} out of range.".format(setpoint))
+            # raise InvalidValue("OpMode {} out of range.".format(setpoint))
 
         if self.device.select_op_mode(setpoint):
             self.setpoints['OpMode-Sel']['value'] = setpoint
-            return True
-
-        return False
 
     @property
     def current_sp(self):
@@ -128,8 +160,6 @@ class PSController:
 
         if self.device.set_slowref(setpoint):
             self.setpoints['Current-SP']['value'] = setpoint
-            return True
-        return False
 
     @property
     def reset_cmd(self):
@@ -141,51 +171,6 @@ class PSController:
         if value:
             if self.device.reset_interlocks():
                 self.setpoints['Reset-Cmd']['value'] += 1
-                return True
-        return False
-
-    # Read and Write map a PV field to proper function
-    def read(self, field):
-        """Read a field from device.
-
-        Throws SerialError
-        """
-        try:
-            if field in self._setpoints:
-                return getattr(self, field.replace('-', '_').lower())
-            else:
-                return getattr(self.device, field.replace('-', '_').lower())
-        except _SerialError:
-            self.connected = False
-            return None
-
-    def write(self, field, value):
-        """Write to device field.
-
-        Throws SerialError, InvalidValue
-        """
-        if field in self._setpoints:
-            try:
-                setattr(self, field.replace('-', '_').lower(), value)
-                self.connected = True
-            except _SerialError:
-                self.connected = False
-                return False
-        return True
-
-    def read_all_variables(self):
-        """Return dict with all variables values."""
-        try:
-            db = self.device.read_all_variables()
-        except _SerialError:
-            self.connected = False
-            return None
-        else:
-            self.connected = True
-            if db is not None:
-                for setpoint in self.setpoints:
-                    db[setpoint] = self.setpoints[setpoint]['value']
-            return db
 
     def _init_setpoints(self):
         try:

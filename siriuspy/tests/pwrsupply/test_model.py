@@ -241,6 +241,7 @@ class TestPowerSupply(unittest.TestCase):
              'OpMode-Sts': 0,
              'Current-RB': 6.7230000495910645,
              'CurrentRef-Mon': 6.7230000495910645,
+             'CycleType-Sts': 2,
              'IntlkSoft-Mon': 0,
              'IntlkHard-Mon': 0,
              'Current-Mon': 6.722831726074219}
