@@ -157,7 +157,7 @@ class PowerSupply:
 
     def select_op_mode(self, value):
         """Set operation mode."""
-        sts, val = self.bsmp.execute_function(4, value)
+        sts, val = self.bsmp.execute_function(4, value + 3)
         if sts == Response.ok:
             return True
         else:
