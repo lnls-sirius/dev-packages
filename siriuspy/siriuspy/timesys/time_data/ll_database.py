@@ -126,11 +126,11 @@ class TimingDevDb:
             'hilim': 2**32-1, 'high': 2**32-1, 'hihi': 2**32-1}
 
         db[prefix+'Network-Mon'] = {
-                'type': 'enum', 'value': 0,
+                'type': 'enum', 'value': 1,
                 'enums': ('Disconnected', 'Connected')}
 
         db[prefix+'Link-Mon'] = {
-                'type': 'enum', 'value': 0,
+                'type': 'enum', 'value': 1,
                 'enums': ('Unlink', 'Link')}
 
         db[prefix+'Intlk-Mon'] = {
@@ -170,11 +170,11 @@ class TimingDevDb:
             'hilim': 2**32-1, 'high': 2**32-1, 'hihi': 2**32-1}
 
         db[prefix+'Network-Mon'] = {
-                'type': 'enum', 'value': 0,
+                'type': 'enum', 'value': 1,
                 'enums': ('Disconnected', 'Connected')}
 
         db[prefix+'Link-Mon'] = {
-                'type': 'enum', 'value': 0,
+                'type': 'enum', 'value': 1,
                 'enums': ('Unlink', 'Link')}
 
         db[prefix+'Intlk-Mon'] = {
@@ -216,11 +216,11 @@ class TimingDevDb:
             'hilim': 2**32-1, 'high': 2**32-1, 'hihi': 2**32-1}
 
         db[prefix+'Network-Mon'] = {
-                'type': 'enum', 'value': 0,
+                'type': 'enum', 'value': 1,
                 'enums': ('Disconnected', 'Connected')}
 
         db[prefix+'Link-Mon'] = {
-                'type': 'enum', 'value': 0,
+                'type': 'enum', 'value': 1,
                 'enums': ('Unlink', 'Link')}
 
         db[prefix+'Intlk-Mon'] = {
@@ -260,11 +260,11 @@ class TimingDevDb:
             'hilim': 2**32-1, 'high': 2**32-1, 'hihi': 2**32-1}
 
         db[prefix+'Network-Mon'] = {
-                'type': 'enum', 'value': 0,
+                'type': 'enum', 'value': 1,
                 'enums': ('Disconnected', 'Connected')}
 
         db[prefix+'Link-Mon'] = {
-                'type': 'enum', 'value': 0,
+                'type': 'enum', 'value': 1,
                 'enums': ('Unlink', 'Link')}
 
         db[prefix+'Intlk-Mon'] = {
@@ -370,11 +370,11 @@ class TimingDevDb:
             'hilim': 2**32-1, 'high': 2**32-1, 'hihi': 2**32-1}
 
         db[prefix+'Network-Mon'] = {
-                'type': 'enum', 'value': 0,
+                'type': 'enum', 'value': 1,
                 'enums': ('Disconnected', 'Connected')}
 
         db[prefix+'Link-Mon'] = {
-                'type': 'enum', 'value': 0,
+                'type': 'enum', 'value': 1,
                 'enums': ('Unlink', 'Link')}
 
         db[prefix+'Intlk-Mon'] = {
