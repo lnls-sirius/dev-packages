@@ -45,10 +45,15 @@ class TestASAPPosAngMain(unittest.TestCase):
         cs_patcher = mock.patch("as_ap_posang.main._ConfigService",
                                 autospec=True)
         epics_patcher = mock.patch("as_ap_posang.main._epics", autospec=True)
+        printbanner_patcher = mock.patch(
+            "as_ap_posang.pvs.print_banner_and_save_pv_list",
+            autospec=True)
         self.addCleanup(cs_patcher.stop)
         self.addCleanup(epics_patcher.stop)
+        self.addCleanup(printbanner_patcher.stop)
         self.mock_cs = cs_patcher.start()
         self.mock_epics = epics_patcher.start()
+        self.mock_printbanner = printbanner_patcher.start()
 
     def test_public_interface(self):
         """Test module's public interface."""
