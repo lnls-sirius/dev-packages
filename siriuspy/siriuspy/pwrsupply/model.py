@@ -1,11 +1,10 @@
 """Define Power Supply classes."""
 
 import re as _re
-from threading import Thread as _Thread
-from threading import Lock as _Lock
 import time as _time
 import numpy as _np
-
+from threading import Thread as _Thread
+from threading import Lock as _Lock
 from epics import PV as _PV
 
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
@@ -25,8 +24,9 @@ from siriuspy.pwrsupply import sync as _sync
 class PowerSupply(_PSCommInterface):
     """Abstract control-system power supply class.
 
-        Objects of this are used to interact with power supplies in the
-    control-system using the implemented PSCommInterface.
+        Objects of this class are used to interact with power supplies in the
+    control-system using the implemented PSCommInterface. This class should
+    work for any psmodel type.
     """
 
     CONNECTED = 'CONNECTED'
@@ -169,6 +169,9 @@ class PowerSupply(_PSCommInterface):
         elif field == 'Reset-Cmd':
             keyvalue['func'] = self._reset
             keyvalue['value'] = db['Reset-Cmd']['value']
+        elif field == 'CycleType-Sel':
+            keyvalue['func'] = self._set_cycle_type
+            keyvalue['value'] = self._controller.read('CycleType-Sts')
 
     def _set_pwrstate(self, value):
         self._setpoints['PwrState-Sel']['value'] = value
@@ -205,6 +208,12 @@ class PowerSupply(_PSCommInterface):
             value = value[:_max_wfmsize]
         self._setpoints['WfmData-SP']['value'] = value
         return self._controller.write('WfmData-SP', value)
+
+    def _set_cycle_type(self, value):
+        self._setpoints['CycleType-Sel']['value'] = value
+        if value >= 0 and value < len(self._base_db['CycleType-Sel']['enums']):
+            ret = self._controller.write('CycleType-Sel', value)
+            return ret
 
     def _abort(self, value):
         # op_mode = self.read('OpMode-Sts')
@@ -299,16 +308,7 @@ class PowerSupply(_PSCommInterface):
 class PSEpics(_PSCommInterface):
     """Power supply with Epics communication."""
 
-    # Should we merge this base class into MAEpics?
-
-    # valid_fields = ('Current-SP', 'Current-RB', 'CurrentRef-Mon',
-    #                 'Current-Mon', 'PwrState-Sel', 'PwrState-Sts',
-    #                 'OpMode-Sel', 'OpMode-Sts',
-    #                 'Energy-SP', 'Energy-RB', 'EnergyRef-Mon', 'Energy-Mon',
-    #                 'KL-SP', 'KL-RB', 'KLRef-Mon', 'KL-Mon',
-    #                 'SL-SP', 'SL-RB', 'SLRef-Mon', 'SL-Mon',
-    #                 'Kick-SP', 'Kick-RB', 'KickRef-Mon', 'Kick-Mon',
-    #                 'Reset-Cmd', 'Abort-Cmd')
+    # TODO: should we merge this base class into MAEpics?
 
     def __init__(self, psname, fields=None, use_vaca=True):
         """Create epics PVs and expose them through public controller API."""

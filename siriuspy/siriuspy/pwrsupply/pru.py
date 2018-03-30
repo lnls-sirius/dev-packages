@@ -271,8 +271,11 @@ class SerialComm(_BSMPQuery):
         self._queue.put((ID_device, ID_cmd, kwargs))
 
     def get_variable(self, ID_device, ID_variable):
-        """Return a BSMP variable."""
-        return self._states[ID_device][ID_variable]
+        """Return a BSMP variable value."""
+        value = self._states[ID_device][ID_variable]
+        # if ID_variable == _BSMPConst.i_load:
+        #     print(value)
+        return value
 
     def _process_queue(self):
         """Process queue."""
@@ -287,10 +290,16 @@ class SerialComm(_BSMPQuery):
             # print('process: ', ID_device, hex(ID_cmd), kwargs)
             cmd = 'cmd_' + str(hex(ID_cmd))
             method = getattr(self, cmd)
+
+            # ack, load = method(ID_receiver=ID_device, **kwargs)
+            # self._connected[ID_device] = True
+
             try:
                 ack, load = method(ID_receiver=ID_device, **kwargs)
                 self._connected[ID_device] = True
             except Exception:
+                # TODO: This try-catch code is very awkward for debugging!
+                # try to improve it!
                 self._connected[ID_device] = False
                 # print('Exception raised while executing {}'.format(cmd))
                 continue
@@ -308,7 +317,7 @@ class SerialComm(_BSMPQuery):
     def _process_load(self, ID_device, ID_cmd, load):
         if ID_cmd == 0x12:
             for variable, value in load.items():
-                # if variable == 27:
+                # if variable == _BSMPConst.i_load:
                 #     print(value)
                 self._states[ID_device][variable] = value
             return 0
@@ -347,7 +356,7 @@ class SerialComm(_BSMPQuery):
         self.put(ID_device=slave.ID_device, ID_cmd=0x32, kwargs=kwargs)
 
         # create group of all variables in slave.
-        IDs_variable = tuple(self.variables.keys())
+        IDs_variable = sorted(tuple(self.variables.keys()))
         kwargs = {'ID_group': _BSMPConst.group_id,
                   'IDs_variable': IDs_variable}
         self.put(ID_device=slave.ID_device, ID_cmd=0x30, kwargs=kwargs)
