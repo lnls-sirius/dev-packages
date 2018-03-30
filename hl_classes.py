@@ -71,8 +71,24 @@ class _HL_Base:
                              '; Expected Value = ' +
                              str(self._my_state[prop_name]))
             return
-        self.callback(self.prefix+prop_name+self._SUFFIX_FOR_PROPS[prop_name],
-                      **value)
+        if prop_name == 'Status':
+            self._rb_values['Status'][channel] = value['value']
+            val = 0
+            for chan, v in self._rb_values['Status'].items():
+                val |= v
+            value['value'] = val
+        self.callback(self._get_pv_name(prop_name), **value)
+
+    def _get_pv_name(self, prop_name):
+        return self.prefix + prop_name + self._SUFFIX_FOR_PROPS[prop_name]
+
+    def _initialize_rb_values(self):
+        self._rb_values = dict()
+        db = self.get_database()
+        for k in self._interface_props:
+            self._rb_values[k] = dict()
+            for k2 in self._ll_objs_names:
+                self._rb_values[k][k2] = db[self._get_pv_name(k)]['value']
 
     def write(self, prop_name, value):
         """Function to be called by the IOC to set high level properties.
@@ -123,6 +139,7 @@ class HL_EVG(_HL_Base):
         self._interface_props = {'RepRate'}
         self._my_state = {'RepRate': 2.0}
         self._ll_objs_names = [EVG_NAME + ':', ]
+        self._initialize_rb_values()
 
 
 class HL_Clock(_HL_Base):
@@ -162,6 +179,7 @@ class HL_Clock(_HL_Base):
         self._interface_props = {'Freq', 'State'}
         self._my_state = {'Freq': 1.0, 'State': 0}
         self._ll_objs_names = [EVG_NAME + ':' + cl_ll]
+        self._initialize_rb_values()
 
 
 class HL_Event(_HL_Base):
@@ -219,6 +237,7 @@ class HL_Event(_HL_Base):
         self._my_state = {'Delay': 0, 'Mode': 1,
                           'DelayType': 1, 'ExtTrig': 0}
         self._ll_objs_names = [EVG_NAME + ':' + ev_ll]
+        self._initialize_rb_values()
 
     def set_ext_trig(self, value):
         """Set the external trigger command."""
@@ -238,7 +257,7 @@ class HL_Trigger(_HL_Base):
         'Intlk': '-Sts',
         'Delay': '-RB',
         'DelayType': '-Sts',
-        'ConnStatus': '-Mon',
+        'Status': '-Mon',
         }
 
     @staticmethod
@@ -309,13 +328,11 @@ class HL_Trigger(_HL_Base):
         dic_['fun_set_pv'] = lambda x: self.write('DelayType', x)
         db[pre + 'DelayType-Sel'] = dic_
 
-        dic_ = {
-            'type': 'enum',
-            'enums': ('Conn OK', 'Dev Dsbl', 'Net Disconn', 'Intlk Actv',
-                      'UpLink Disconn', 'DownLink Disconn'),
-            'states': (0, 2, 1, 1, 2, 2, ),
-            }
-        db[pre + 'ConnStatus-Mon'] = _dcopy(dic_)
+        dic_ = {'type': 'int', 'value': 255}
+        db[pre + 'Status-Mon'] = _dcopy(dic_)
+
+        # 'enums': ('Conn OK', 'Dev Dsbl', 'Net Disconn', 'Intlk Actv',
+        #           'UpLink Disconn', 'DownLink Disconn')
 
         return super().get_database(db)
 
@@ -330,12 +347,13 @@ class HL_Trigger(_HL_Base):
         """
         super().__init__(prefix, callback)
 
-        self._interface_props = hl_props | {'ConnStatus'}
+        self._interface_props = hl_props | {'Status'}
         self._pvs_config = pvs_config
         self._ll_objs_names = self._get_ll_obj_names(channels)
         self._my_state = {k: v['value'] for k, v in pvs_config.items()}
         self._set_non_homogeneous_params()
         self._connect_kwargs = {'source_enums': self._source_enums}
+        self._initialize_rb_values()
 
     def _has_delay_type(self, name):
         if name.dev in ('EVR', 'EVE') and name.propty.startswith('OUT'):
