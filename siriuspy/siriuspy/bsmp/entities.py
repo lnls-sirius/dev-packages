@@ -174,7 +174,7 @@ class Entities:
         self._variables = list()
         for variable in variables:
             var_id = variable['eid']
-            waccess = variable['access']
+            waccess = variable['waccess']
             var_type = variable['var_type']
             count = variable['count']
             self.variables.append(
