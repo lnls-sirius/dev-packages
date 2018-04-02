@@ -9,8 +9,7 @@ class _Entity:
         if fmt == '<c':
             return value
         else:
-            # TODO: use return [chr(c) for c in _struct.pack(fmt, value)]
-            return list(map(chr, _struct.pack(fmt, value)))
+            return [chr(c) for c in _struct.pack(fmt, value)]
 
     def _check_type(self, var_type, value):
         if not var_type.check(value):
@@ -38,32 +37,6 @@ class _Entity:
             self._check_type(var_types[0], values[0])
             return self._conv_value(var_types[0].fmt, values[0])
 
-        # check type
-        # if var_type.size < size:
-        #     # in th case length > 1 # TODO: count|length
-        #     for v in value:
-        #         if not var_type.check(v):
-        #             raise TypeError("{}, {}".format(var_type.type, value))
-        # else:
-        #     if not var_type.check(value):
-        #         raise TypeError("{}, {}".format(var_type.type, value))
-        #
-        # # convert
-        # try:
-        #     length = len(value)
-        # except TypeError:
-        #     length = 1
-        #
-        # if length > 1:
-        #     load = []
-        #     for v in value:
-        #         load += self._conv_value(var_type.fmt, v)
-        #     while len(load) < size:
-        #         load += chr(0)
-        #     return load
-        # else:
-        #     return self._conv_value(var_type.fmt, value)
-
     def _conv_load_to_value(self, var_types, size, load):
         load = [ord(c) for c in load]
         if len(var_types) > 1:
@@ -76,25 +49,6 @@ class _Entity:
             return values
         else:
             return _struct.unpack(var_types[0].fmt, bytes(load))[0]
-
-        # if len(load) > var_type.size:  # Array
-        #     if var_type.type == 'char':
-        #         # TODO: value, _ = (''.join([chr(b) for b in load])).split('\x00', 1) ?
-        #         value = ''
-        #         for byte in load:
-        #             if byte == 0:
-        #                 break
-        #             value += '{:c}'.format(byte)
-        #         return value
-        #     else:
-        #         values = []
-        #         t_size = var_type.size
-        #         for i in range(int(size/t_size)):
-        #             ld = load[i*t_size:i*t_size+t_size]
-        #             values.append(_struct.unpack(var_type.fmt, bytes(ld))[0])
-        #         return values
-        # else:
-        #     return _struct.unpack(var_type.fmt, bytes(load))[0]
 
 
 class Variable(_Entity):
