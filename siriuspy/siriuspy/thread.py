@@ -62,7 +62,7 @@ class RepeaterThread(_Thread):
         """Run method."""
         self.function(*self.args, **self.kwargs)
         while ((not self.stopped.wait(self.interval)) and
-               self.niters > self.cur_iter):
+               (not self.niters or self.niters > self.cur_iter)):
             self.cur_iter += 1
             self.function(*self.args, **self.kwargs)
 
