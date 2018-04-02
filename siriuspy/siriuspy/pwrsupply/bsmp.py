@@ -881,8 +881,8 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
         hb, lb = (n & 0xFF00) >> 8, n & 0xFF
         query = [chr(ID_receiver), '\x50', chr(hb), chr(lb),
                  chr(ID_function)] + load
-        if ID_function == Const.select_op_mode:
-            print([hex(ord(c)) for c in query])
+        # if ID_function == Const.select_op_mode:
+        #     print([hex(ord(c)) for c in query])
         query = BSMPMasterSlave.includeChecksum(query)
         # print('cmd_0x51: ', n, query)
         # TODO: check this timeout. eventually will be part of the BSMP PS spec
