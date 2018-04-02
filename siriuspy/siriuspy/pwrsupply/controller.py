@@ -82,7 +82,14 @@ class ControllerIOC(PSCommInterface):
         'IntlkHard-Mon': '_get_ps_hard_interlocks',
         'WfmIndex-Mon': '_get_wfmindex',
         'WfmData-RB': '_get_wfmdata',
+        'CycleEnbl-RB': '_get_cycle_enable',
         'CycleType-Sts': '_get_cycle_type',
+        'CycleNrCycles-RB': '_get_cycle_num_cycles',
+        'CycleIndex-Mon': '_get_cycle_n',
+        'CycleFreq-RB': '_get_cycle_freq',
+        'CycleAmpl-RB': '_get_cycle_amplitude',
+        'CycleOffset-RB': '_get_cycle_offset',
+        'CycleAuxParam-RB': '_get_cycle_aux_param',
     }
 
     _write_field2func = {
@@ -223,8 +230,29 @@ class ControllerIOC(PSCommInterface):
     def _get_ps_reference(self):
         return self._bsmp_get_variable(_BSMPConst.ps_reference)
 
+    def _get_cycle_enable(self):
+        return self._bsmp_get_variable(_BSMPConst.siggen_enable)
+
     def _get_cycle_type(self):
         return self._bsmp_get_variable(_BSMPConst.siggen_type)
+
+    def _get_cycle_num_cycles(self):
+        return self._bsmp_get_variable(_BSMPConst.siggen_num_cycles)
+
+    def _get_cycle_n(self):
+        return self._bsmp_get_variable(_BSMPConst.siggen_n)
+
+    def _get_cycle_freq(self):
+        return self._bsmp_get_variable(_BSMPConst.siggen_freq)
+
+    def _get_cycle_amplitude(self):
+        return self._bsmp_get_variable(_BSMPConst.siggen_amplitude)
+
+    def _get_cycle_offset(self):
+        return self._bsmp_get_variable(_BSMPConst.siggen_offset)
+
+    def _get_cycle_aux_param(self):
+        return self._bsmp_get_variable(_BSMPConst.siggen_aux_param)
 
     def _get_ps_soft_interlocks(self):
         return self._bsmp_get_variable(_BSMPConst.ps_soft_interlocks)
