@@ -45,7 +45,7 @@ class QueueThread(_Thread):
 
 
 class RepeaterThread(_Thread):
-    """Repeat execution of predefined function for a given number of time."""
+    """Repeat execution of predefined function for a given number of times."""
 
     def __init__(self, interval, function, args=tuple(), kwargs=dict(), niter=100):
         """Init method.
