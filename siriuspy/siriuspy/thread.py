@@ -48,7 +48,16 @@ class RepeaterThread(_Thread):
     """Repeat execution of predefined function for a given number of time."""
 
     def __init__(self, interval, function, args=tuple(), kwargs=dict(), niter=100):
-        """Init method."""
+        """Init method.
+
+        Inputs:
+        - interval: time to wait between sucessive calls to method.
+        - function: method to be executed.
+        - args: tuple of positional arguments of method
+        - kwargs: dictionary with keyword arguments of method.
+        - niter: number of times to execute method. If niter is zero or None
+            it will be executed indefinetly until stop is called.
+        """
         super().__init__(daemon=True)
         self.interval = interval
         self.function = function
