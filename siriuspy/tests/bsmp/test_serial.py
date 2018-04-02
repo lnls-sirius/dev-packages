@@ -31,6 +31,11 @@ class TestBSMPMessage(unittest.TestCase):
         # Convert message to stream
         self.assertEqual(m.stream, stream)
 
+    def test_small_message(self):
+        """Test message with stream impossibly small."""
+        with self.assertRaises(ValueError):
+            Message(['\x11', '\x00'])
+
     def test_message_with_no_load(self):
         """Test constructor with no load."""
         m = Message.message(cmd=0x00)
