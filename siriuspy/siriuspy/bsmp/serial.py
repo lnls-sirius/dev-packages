@@ -9,12 +9,11 @@ class Message:
     """BSMP Message.
 
     Command: command id; 1 byte;
-    Load Size: load size in bytes; 2 bytes (big endian);
+    Load Size: payload size in bytes; 2 bytes (big endian);
     Load: 0..65535 bytes.
     """
 
     # TODO: indicate somehow that stream is a char stream.
-    # TODO: word "payload" is used in BSMP doc 2.2
 
     # Constructors
     def __init__(self, stream):
@@ -29,23 +28,23 @@ class Message:
         return self._stream == other.stream
 
     @classmethod
-    def message(cls, cmd, load=None):
+    def message(cls, cmd, payload=None):
         """Build a Message object from a byte stream."""
-        if load and not isinstance(load, list):
+        if payload and not isinstance(payload, list):
             raise TypeError("Load must be a list.")
-        if load and len(load) > 65535:
+        if payload and len(payload) > 65535:
             raise ValueError("Load must be smaller than 65535.")
 
         stream = []
 
-        if not load:
-            load = []
+        if not payload:
+            payload = []
         # Append cmd
         stream.append(chr(cmd))
         # Append size
-        stream.extend(list(map(chr, (_struct.pack('>H', len(load))))))
-        # Append load
-        stream.extend(load)
+        stream.extend(list(map(chr, (_struct.pack('>H', len(payload))))))
+        # Append payload
+        stream.extend(payload)
         return cls(stream)
 
     # API
@@ -65,8 +64,8 @@ class Message:
         return _struct.unpack('>H', bytes(map(ord, self._stream[1:3])))[0]
 
     @property
-    def load(self):
-        """Message load."""
+    def payload(self):
+        """Message payload."""
         return self._stream[3:]
 
 

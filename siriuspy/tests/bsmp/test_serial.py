@@ -14,7 +14,7 @@ class TestBSMPMessage(unittest.TestCase):
         'stream',
         'cmd',
         'size',
-        'load',
+        'payload',
     )
 
     def test_api(self):
@@ -27,7 +27,7 @@ class TestBSMPMessage(unittest.TestCase):
         m = Message(stream)
         # Check properties
         self.assertEqual(m.cmd, 0x01)
-        self.assertEqual(m.load, [chr(2), chr(10), chr(0)])
+        self.assertEqual(m.payload, [chr(2), chr(10), chr(0)])
         # Convert message to stream
         self.assertEqual(m.stream, stream)
 
@@ -40,26 +40,26 @@ class TestBSMPMessage(unittest.TestCase):
         """Test constructor with no load."""
         m = Message.message(cmd=0x00)
         self.assertEqual(m.cmd, 0x00)
-        self.assertEqual(m.load, [])
+        self.assertEqual(m.payload, [])
 
     def test_message_with_load(self):
         """Test constructor with load."""
-        m = Message.message(cmd=0x10, load=[1, ])
+        m = Message.message(cmd=0x10, payload=[1, ])
         self.assertEqual(m.cmd, 0x10)
-        self.assertEqual(m.load, [1, ])
+        self.assertEqual(m.payload, [1, ])
 
     def test_message_with_extraneous_load(self):
         """Test constructor with loads that are not list."""
         loads = [1, 'string', (1, 2, 3), 63.7]
         for load in loads:
             with self.assertRaises(TypeError):
-                Message.message(cmd=0x10, load=load)
+                Message.message(cmd=0x10, payload=load)
 
     def test_message_with_big_load(self):
         """Test constructor with load bigger than 65535."""
         load = [0 for _ in range(65536)]
         with self.assertRaises(ValueError):
-            Message.message(cmd=0x10, load=load)
+            Message.message(cmd=0x10, payload=load)
 
     def test_conv_to_stream(self):
         """Test conversion from message to stream."""
@@ -68,7 +68,7 @@ class TestBSMPMessage(unittest.TestCase):
         blk_n = [chr(0x40), chr(0x00)]
         blk_load = [chr(0xdd) for _ in range(16384)]
         load = [curve_id] + blk_n + blk_load
-        m = Message.message(cmd=0x41, load=load)
+        m = Message.message(cmd=0x41, payload=load)
 
         expected_stream = [chr(0x41), chr(0x40), chr(0x03)] + load
 
@@ -126,7 +126,7 @@ class TestBSMPPackage(unittest.TestCase):
             p = Package(stream)
             self.assertEqual(p.address, d[0])
             self.assertEqual(p.message.cmd, d[1])
-            self.assertEqual(p.message.load, d[2])
+            self.assertEqual(p.message.payload, d[2])
 
     def test_parse_small_stream(self):
         """Test constructor that tries to parse strem smaller than 5."""
@@ -137,13 +137,13 @@ class TestBSMPPackage(unittest.TestCase):
     def test_checksum(self):
         """Test checksum value."""
         for d in self.data:
-            p = Package.package(d[0], Message.message(d[1], load=d[2]))
+            p = Package.package(d[0], Message.message(d[1], payload=d[2]))
             self.assertEqual(p.checksum, d[4])
 
     def test_conv_to_stream(self):
         """Test conversion of package to stream."""
         for d in self.data:
-            p = Package.package(d[0], Message.message(d[1], load=d[2]))
+            p = Package.package(d[0], Message.message(d[1], payload=d[2]))
             self.assertEqual(p.stream, d[3])
 
     def test_verify_checksum(self):
@@ -176,7 +176,7 @@ class TestBSMPChannel(unittest.TestCase):
 
     def test_read_calls_serial_method(self):
         """Test UART_read is called."""
-        response = Message.message(0x11, load=[chr(10)])
+        response = Message.message(0x11, payload=[chr(10)])
         self.serial.UART_read.return_value = \
             Package.package(0x01, response).stream
         self.channel.read()
@@ -184,16 +184,16 @@ class TestBSMPChannel(unittest.TestCase):
 
     def test_read(self):
         """Test read method."""
-        response = Message.message(0x11, load=[chr(10)])
+        response = Message.message(0x11, payload=[chr(10)])
         self.serial.UART_read.return_value = \
             Package.package(0x01, response).stream
         recv = self.channel.read()
         self.assertEqual(recv.cmd, response.cmd)
-        self.assertEqual(recv.load, response.load)
+        self.assertEqual(recv.payload, response.payload)
 
     def test_write_calls_serial_method(self):
         """Test write calls UART_write."""
-        message = Message.message(0x10, load=[chr(1)])
+        message = Message.message(0x10, payload=[chr(1)])
         expected_stream = \
             Package.package(self.channel.address, message).stream
         self.channel.write(message, 1000)
@@ -202,19 +202,19 @@ class TestBSMPChannel(unittest.TestCase):
 
     def test_request(self):
         """Test request."""
-        response = Message.message(0x11, load=[chr(10)])
+        response = Message.message(0x11, payload=[chr(10)])
         self.serial.UART_read.return_value = \
             Package.package(0x01, response).stream
         recv = self.channel.request(
-            Message.message(0x01, load=[chr(1)]), timeout=1)
+            Message.message(0x01, payload=[chr(1)]), timeout=1)
         self.assertEqual(recv.cmd, response.cmd)
-        self.assertEqual(recv.load, response.load)
+        self.assertEqual(recv.payload, response.payload)
 
     def test_request_fail(self):
         """Test exception is raised when serial fails."""
         self.serial.UART_read.return_value = None
         with self.assertRaises(SerialError):
-            self.channel.request(Message.message(0x10, load=[chr(10)]))
+            self.channel.request(Message.message(0x10, payload=[chr(10)]))
 
 
 if __name__ == '__main__':

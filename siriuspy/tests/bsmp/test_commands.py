@@ -67,7 +67,7 @@ class TestBSMP0x0(unittest.TestCase):
     def test_consult_group_variables(self):
         """Test consult_group_variables."""
         p = Package.package(
-            0, Message.message(0x07, load=[chr(0), chr(1), chr(2), chr(3)]))
+            0, Message.message(0x07, payload=[chr(0), chr(1), chr(2), chr(3)]))
         self.serial.UART_read.return_value = p.stream
         response = self.bsmp.consult_group_variables(1)
 
@@ -123,7 +123,7 @@ class TestBSMP0x1(unittest.TestCase):
     def test_read_int2_variable(self):
         """Test read_variable."""
         load = list(map(chr, struct.pack('<h', 1020)))
-        p = Package.package(0, Message.message(0x11, load=load))
+        p = Package.package(0, Message.message(0x11, payload=load))
         self.serial.UART_read.return_value = p.stream
         response = self.bsmp.read_variable(0)
         self.assertEqual(response, (0xE0, 1020))
@@ -131,7 +131,7 @@ class TestBSMP0x1(unittest.TestCase):
     def test_read_float_variable(self):
         """Test read_variable."""
         load = list(map(chr, struct.pack('<f', 50.52)))
-        p = Package.package(0, Message.message(0x11, load=load))
+        p = Package.package(0, Message.message(0x11, payload=load))
         self.serial.UART_read.return_value = p.stream
         response = self.bsmp.read_variable(1)
         self.assertEqual(response[0], 0xE0)
@@ -142,7 +142,7 @@ class TestBSMP0x1(unittest.TestCase):
         values = [1.1234567, 2.7654321]
         load = list(map(chr, struct.pack('<f', 1.1234567)))
         load.extend(list(map(chr, struct.pack('<f', 2.7654321))))
-        p = Package.package(0, Message.message(0x11, load=load))
+        p = Package.package(0, Message.message(0x11, payload=load))
         self.serial.UART_read.return_value = p.stream
         response = self.bsmp.read_variable(2)
         self.assertEqual(response[0], 0xE0)
@@ -155,7 +155,7 @@ class TestBSMP0x1(unittest.TestCase):
         while len(load) < 64:
             load.append(chr(0))
         expected_value = [c.encode() for c in load]
-        p = Package.package(0, Message.message(0x11, load=load))
+        p = Package.package(0, Message.message(0x11, payload=load))
         self.serial.UART_read.return_value = p.stream
         response = self.bsmp.read_variable(3)
         self.assertEqual(response, (0xE0, expected_value))
@@ -188,7 +188,7 @@ class TestBSMP0x1(unittest.TestCase):
         load.extend(ld_string)
         # for i in range(64 - len(values[3])):
         #     load.append(chr(0))
-        p = Package.package(0, Message.message(0x13, load=load))
+        p = Package.package(0, Message.message(0x13, payload=load))
         self.serial.UART_read.return_value = p.stream
         response = self.bsmp.read_group_variables(0)
         self.assertEqual(response[0], 0xE0)
@@ -352,9 +352,9 @@ class TestBSMP0x5(unittest.TestCase):
 
     def test_execute_function(self):
         """Test execute_function."""
-        resp_p = Package.package(0, Message.message(0x51, load=[chr(0)]))
+        resp_p = Package.package(0, Message.message(0x51, payload=[chr(0)]))
         send_load = [chr(0x00)] + list(map(chr, struct.pack('<f', 1.5)))
-        send_p = Package.package(1, Message.message(0x50, load=send_load))
+        send_p = Package.package(1, Message.message(0x50, payload=send_load))
         self.serial.UART_read.return_value = resp_p.stream
 
         response = self.bsmp.execute_function(0, 1.5)
