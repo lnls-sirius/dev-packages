@@ -204,10 +204,30 @@ class TestPowerSupply(unittest.TestCase):
         # Tested in test_read_all_variables
         pass
 
+    def test_create_group_return_true(self):
+        """Test create group return true."""
+        self.serial.UART_read.return_value = ['\x00', 'à', '\x00', '\x00', ' ']
+        self.assertTrue(self.ps.create_group(['CurrentRef-Mon']))
+
     def test_create_group(self):
-        """Test the creation of groups from fields."""
-        with self.assertRaises(NotImplementedError):
-            self.ps.create_group(['PwrState-Sts', 'OpMode-Sts', 'Current-RB'])
+        """Test correct stream is sent."""
+        # Create group with currents
+        self.ps.create_group(['CurrentRef-Mon', 'Current-Mon', 'Current-RB'])
+        send = ['\x01', '0', '\x00', '\x03', '\x01', '\x02', '\x1b', '®']
+        self.serial.UART_write.assert_called_with(send, timeout=100)
+
+    def test_create_group_field_with_same_id(self):
+        """Test creating group with fields that have same id."""
+        # Create group with 2 field that map to the same id
+        self.ps.create_group(['PwrState-Sts', 'OpMode-Sts'])
+        send = ['\x01', '0', '\x00', '\x01', '\x00', 'Î']
+        self.serial.UART_write.assert_called_with(send, timeout=100)
+
+    def test_create_group_error(self):
+        """Test create_group returns false when error occurs."""
+        self.serial.UART_read.return_value = \
+            ['\x00', 'è', '\x00', '\x00', '\x18']
+        self.assertFalse(self.ps.create_group(['CurrentRef-Mon']))
 
     def test_read_all_variables(self):
         """Test reading from group 0."""
