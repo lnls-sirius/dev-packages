@@ -142,26 +142,21 @@ class PowerSupply(_PSCommInterface):
         db = self._base_db
         if field == 'PwrState-Sel':
             keyvalue['func'] = self._set_pwrstate
-            # keyvalue['value'] = db['PwrState-Sel']['value']
             keyvalue['value'] = self._controller.read('PwrState-Sts')
         elif field == 'OpMode-Sel':
             keyvalue['func'] = self._set_opmode
-            # keyvalue['value'] = db['OpMode-Sel']['value']
             keyvalue['value'] = self._controller.read('OpMode-Sts')
         elif field == 'Current-SP':
             keyvalue['func'] = self._set_current
-            # keyvalue['value'] = db['Current-SP']['value']
             keyvalue['value'] = self._controller.read('Current-RB')
         elif field == 'WfmLoad-Sel':
             keyvalue['func'] = self._set_wfmload
-            # keyvalue['value'] = db['WfmLoad-Sel']['value']
             keyvalue['value'] = self._controller.read('Current-RB')
         elif field == 'WfmLabel-SP':
             keyvalue['func'] = self._set_wfmlabel
             keyvalue['value'] = db['WfmLabel-SP']['value']
         elif field == 'WfmData-SP':
             keyvalue['func'] = self._set_wfmdata
-            # keyvalue['value'] = [v for v in db['WfmData-SP']['value']]
             keyvalue['value'] = self._controller.read('WfmData-RB')
         elif field == 'Abort-Cmd':
             keyvalue['func'] = self._abort
@@ -169,9 +164,27 @@ class PowerSupply(_PSCommInterface):
         elif field == 'Reset-Cmd':
             keyvalue['func'] = self._reset
             keyvalue['value'] = db['Reset-Cmd']['value']
+        elif field == 'CycleEnbl-SP':
+            keyvalue['func'] = self._set_cycle_enable
+            keyvalue['value'] = self._controller.read('CycleEnbl-RB')
         elif field == 'CycleType-Sel':
             keyvalue['func'] = self._set_cycle_type
             keyvalue['value'] = self._controller.read('CycleType-Sts')
+        elif field == 'CycleNrCycles-SP':
+            keyvalue['func'] = self._set_cycle_num_cycles
+            keyvalue['value'] = self._controller.read('CycleNrCycles-RB')
+        elif field == 'CycleFreq-SP':
+            keyvalue['func'] = self._set_cycle_freq
+            keyvalue['value'] = self._controller.read('CycleFreq-RB')
+        elif field == 'CycleAmpl-SP':
+            keyvalue['func'] = self._set_cycle_amplitude
+            keyvalue['value'] = self._controller.read('CycleAmpl-RB')
+        elif field == 'CycleOffset-SP':
+            keyvalue['func'] = self._set_cycle_offset
+            keyvalue['value'] = self._controller.read('CycleOffset-RB')
+        elif field == 'CycleAuxParam-SP':
+            keyvalue['func'] = self._set_cycle_aux_param
+            keyvalue['value'] = self._controller.read('CycleAuxParam-RB')
 
     def _set_pwrstate(self, value):
         self._setpoints['PwrState-Sel']['value'] = value
@@ -209,10 +222,43 @@ class PowerSupply(_PSCommInterface):
         self._setpoints['WfmData-SP']['value'] = value
         return self._controller.write('WfmData-SP', value)
 
+    def _set_cycle_enable(self, value):
+        value = int(value)
+        self._setpoints['CycleEnbl-SP']['value'] = value
+        ret = self._controller.write('CycleEnbl-SP', value)
+        return ret
+
     def _set_cycle_type(self, value):
         self._setpoints['CycleType-Sel']['value'] = value
         if value >= 0 and value < len(self._base_db['CycleType-Sel']['enums']):
             ret = self._controller.write('CycleType-Sel', value)
+            return ret
+
+    def _set_cycle_num_cycles(self, value):
+        value = int(value)
+        self._setpoints['CycleNrCycles-SP']['value'] = value
+        ret = self._controller.write('CycleNrCycles-SP', value)
+        return ret
+
+    def _set_cycle_freq(self, value):
+        self._setpoints['CycleFreq-SP']['value'] = value
+        ret = self._controller.write('CycleFreq-SP', value)
+        return ret
+
+    def _set_cycle_amplitude(self, value):
+        self._setpoints['CycleAmpl-SP']['value'] = value
+        ret = self._controller.write('CycleAmpl-SP', value)
+        return ret
+
+    def _set_cycle_offset(self, value):
+        self._setpoints['CycleOffset-SP']['value'] = value
+        ret = self._controller.write('CycleOffset-SP', value)
+        return ret
+
+    def _set_cycle_aux_param(self, value):
+        if len(value) == 4:
+            self._setpoints['CycleAuxParam-SP']['value'] = value
+            ret = self._controller.write('CycleAuxParam-SP', value)
             return ret
 
     def _abort(self, value):

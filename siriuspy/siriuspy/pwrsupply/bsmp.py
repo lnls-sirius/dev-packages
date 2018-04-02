@@ -49,14 +49,14 @@ class Const:
     firmware_version = 3
     counter_set_slowref = 4
     counter_sync_pulse = 5
-    siggen_enable = 6  # --- NOT IMPLEMENTED YET ---
+    siggen_enable = 6
     siggen_type = 7
-    siggen_num_cycles = 8  # --- NOT IMPLEMENTED YET ---
-    siggen_n = 9  # --- NOT IMPLEMENTED YET ---
-    siggen_freq = 10  # --- NOT IMPLEMENTED YET ---
-    siggen_amplitude = 11  # --- NOT IMPLEMENTED YET ---
-    siggen_offset = 12  # --- NOT IMPLEMENTED YET ---
-    siggen_aux_param = 13  # --- NOT IMPLEMENTED YET ---
+    siggen_num_cycles = 8
+    siggen_n = 9
+    siggen_freq = 10
+    siggen_amplitude = 11
+    siggen_offset = 12
+    siggen_aux_param = 13
 
     # --- FSB variables ---
     ps_soft_interlocks = 25  # BSMP doc says ID numbering should be continous!
@@ -78,7 +78,7 @@ class Const:
     set_slowref = 16
     set_slowref_fbp = 17  # --- NOT IMPLEMENTED YET ---
     reset_counters = 18
-    cfg_siggen = 23  # --- NOT IMPLEMENTED YET ---
+    cfg_siggen = 23
     set_siggen = 24  # --- NOT IMPLEMENTED YET ---
     enable_siggen = 25  # --- NOT IMPLEMENTED YET ---
     disable_siggen = 26  # --- NOT IMPLEMENTED YET ---
@@ -97,7 +97,7 @@ class Const:
     save_dsp_modules_eeprom = 39  # --- NOT IMPLEMENTED YET ---
     load_dsp_modules_eeprom = 40  # --- NOT IMPLEMENTED YET ---
     reset_udc = 41  # --- NOT IMPLEMENTED YET ---
-    
+
     # --- variables groups ---
     group_id = 3  # default variables group ID defined for power supplies
 
@@ -118,22 +118,22 @@ def get_variables_common():
             ('counter_set_slowref', Const.t_uint32, False),
         Const.counter_sync_pulse:
             ('counter_sync_pulse', Const.t_uint32, False),
-        # Const.siggen_enable:
-        #     ('siggen_enable', Const.t_uint16, False),
+        Const.siggen_enable:
+            ('siggen_enable', Const.t_uint16, False),
         Const.siggen_type:
             ('siggen_type', Const.t_uint16, False),
-        # Const.siggen_num_cycles:
-        #     ('siggen_num_cycles', Const.t_uint16, False),
-        # Const.siggen_n:
-        #     ('siggen_n', Const.t_float, False),
-        # Const.siggen_freq:
-        #     ('siggen_freq', Const.t_float, False),
-        # Const.siggen_amplitude:
-        #     ('siggen_amplitude', Const.t_float, False),
-        # Const.siggen_offset:
-        #     ('siggen_offset', Const.t_float, False),
-        # Const.siggen_aux_param:
-        #     ('siggen_aux_param', Const.t_float4, False),
+        Const.siggen_num_cycles:
+            ('siggen_num_cycles', Const.t_uint16, False),
+        Const.siggen_n:
+            ('siggen_n', Const.t_float, False),
+        Const.siggen_freq:
+            ('siggen_freq', Const.t_float, False),
+        Const.siggen_amplitude:
+            ('siggen_amplitude', Const.t_float, False),
+        Const.siggen_offset:
+            ('siggen_offset', Const.t_float, False),
+        Const.siggen_aux_param:
+            ('siggen_aux_param', Const.t_float4, False),
     }
     return variables
 
@@ -242,14 +242,14 @@ def get_functions():
     return functions
 
 
-def get_value_from_load(variables, ID_variable, load):
-    """Build variable value from message load."""
-    var_name, var_typ, var_writable = variables[ID_variable]
-    if var_typ == Const.t_uint16:
-        value = load[0] + (load[1] << 8)
-    else:
-        raise NotImplementedError
-    return value
+# def get_value_from_load(variables, ID_variable, load):
+#     """Build variable value from message load."""
+#     var_name, var_typ, var_writable = variables[ID_variable]
+#     if var_typ == Const.t_uint16:
+#         value = load[0] + (load[1] << 8)
+#     else:
+#         raise NotImplementedError
+#     return value
 
 
 class StreamChecksum:
@@ -610,24 +610,21 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
         query = [chr(ID_receiver),
                  '\x10', '\x00', '\x01', chr(ID_variable)]
         query = BSMPMasterSlave.includeChecksum(query)
+        # TODO: move timeout value for a more visible location
         self._pru.UART_write(query, timeout=10)  # 10 or 100 for timeout?
         response = self._pru.UART_read()
         # process response
         ID_receiver, ID_cmd, load_size, load = self.parse_stream(response)
-        if ID_variable == Const.frmware_version:
-            if len(load) != 2:
-                return _ack.invalid_message, None
-            value = get_value_from_load(self._variables, ID_variable, load)
-        else:
-            raise NotImplementedError(
-                'This power supply cmd is not defined for this variable ID!')
-        return ID_cmd, value
+        # TODO: implement response to variable readout
+        raise NotImplementedError('cmd_0x11 not implemented!')
+        # return ID_cmd, value
 
     def cmd_0x13(self, ID_receiver, ID_group):
         """Respond SBMP variable group read command."""
         # query power supply
         query = [chr(ID_receiver), '\x12', '\x00', '\x01', chr(ID_group)]
         query = BSMPMasterSlave.includeChecksum(query)
+        # TODO: move timeout value for a more visible location
         self._pru.UART_write(query, timeout=10)
         response = self._pru.UART_read()
         # print('ID_receiver: ', ID_receiver)
@@ -667,10 +664,41 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
                 (data[i+2] << 16) + (data[i+3] << 24)
             value[Const.counter_sync_pulse] = datum
             i += 4
-            # ID:09 - siggen_type
+            # ID:06 - siggen_enable
+            datum = data[i] + (data[i+1] << 8)
+            value[Const.siggen_enable] = datum
+            i += 2
+            # ID:07 - siggen_type
             datum = data[i] + (data[i+1] << 8)
             value[Const.siggen_type] = datum
             i += 2
+            # ID:08 - siggen_num_cycle
+            datum = data[i] + (data[i+1] << 8)
+            value[Const.siggen_num_cycle] = datum
+            i += 2
+            # ID:09 - siggen_n
+            datum = _struct.unpack("<f", bytes(data[i:i+4]))[0]
+            value[Const.siggen_n] = datum
+            i += 4
+            # ID:10 - siggen_freq
+            datum = _struct.unpack("<f", bytes(data[i:i+4]))[0]
+            value[Const.siggen_freq] = datum
+            i += 4
+            # ID:11 - siggen_amplitue
+            datum = _struct.unpack("<f", bytes(data[i:i+4]))[0]
+            value[Const.siggen_amplitude] = datum
+            i += 4
+            # ID:12 - siggen_offset
+            datum = _struct.unpack("<f", bytes(data[i:i+4]))[0]
+            value[Const.siggen_offset] = datum
+            i += 4
+            # ID:13 - siggen_aux_param
+            param0 = _struct.unpack("<f", bytes(data[i+0:i+0+4]))[0]
+            param1 = _struct.unpack("<f", bytes(data[i+4:i+4+4]))[0]
+            param2 = _struct.unpack("<f", bytes(data[i+8:i+8+4]))[0]
+            param3 = _struct.unpack("<f", bytes(data[i+12:i+12+4]))[0]
+            value[Const.siggen_aux_param] = [param0, param1, param2, param3]
+            i += 4*4
             # ID:25 - ps_soft_interlocks
             datum = data[i] + (data[i+1] << 8) + \
                 (data[i+2] << 16) + (data[i+3] << 24)
@@ -686,11 +714,17 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
             value[Const.i_load] = datum
             i += 4
             # ID:28 - v_load
-            pass
+            datum = _struct.unpack("<f", bytes(data[i:i+4]))[0]
+            value[Const.v_load] = datum
+            i += 4
             # ID:29 - v_dclink
-            pass
+            datum = _struct.unpack("<f", bytes(data[i:i+4]))[0]
+            value[Const.v_dclink] = datum
+            i += 4
             # ID:30 - temp_switches
-            pass
+            datum = _struct.unpack("<f", bytes(data[i:i+4]))[0]
+            value[Const.temp_switches] = datum
+            i += 4
         else:
             raise ValueError('Invalid group ID!')
         return _ack.ok, value
@@ -708,8 +742,18 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
         elif ID_function == Const.set_slowref:
             load = [chr(b) for b in _struct.pack("<f", kwargs['setpoint'])]
         elif ID_function == Const.select_op_mode:
-            # TODO: originally format "<f" was being used...
-            load = [chr(b) for b in _struct.pack("<i", kwargs['op_mode'])]
+            load = [chr(b) for b in _struct.pack("<H", kwargs['op_mode'])]
+        elif ID_function == Const.cfg_siggen:
+            load = [chr(b) for b in _struct.pack("<H", kwargs['type'])]
+            load += [chr(b) for b in _struct.pack("<H", kwargs['num_cycles'])]
+            load += [chr(b) for b in _struct.pack("<f", kwargs['freq'])]
+            load += [chr(b) for b in _struct.pack("<f", kwargs['amplitude'])]
+            load += [chr(b) for b in _struct.pack("<f", kwargs['offset'])]
+            params = kwargs['aux_params']
+            load += [chr(b) for b in _struct.pack("<f", params[0])]
+            load += [chr(b) for b in _struct.pack("<f", params[1])]
+            load += [chr(b) for b in _struct.pack("<f", params[2])]
+            load += [chr(b) for b in _struct.pack("<f", params[3])]
         else:
             raise NotImplementedError
         n = 1 + len(load)  # one additional byte for checksum.
