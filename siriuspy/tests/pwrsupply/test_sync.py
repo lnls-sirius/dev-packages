@@ -8,7 +8,7 @@ import epics
 
 from siriuspy.pwrsupply.sync import SyncWrite
 from siriuspy.epics.computed_pv import ComputedPV
-from siriuspy.epics.computed_pv import QueueThread
+from siriuspy.thread import QueueThread
 
 
 class SyncWritePutTest(unittest.TestCase):

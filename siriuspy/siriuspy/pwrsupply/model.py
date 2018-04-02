@@ -12,7 +12,7 @@ from siriuspy.envars import vaca_prefix as _VACA_PREFIX
 from siriuspy.csdevice.pwrsupply import max_wfmsize as _max_wfmsize
 from siriuspy.factory import NormalizerFactory as _NormalizerFactory
 from siriuspy.epics import connection_timeout as _connection_timeout
-from siriuspy.epics.computed_pv import QueueThread as _QueueThread
+from siriuspy.thread import QueueThread as _QueueThread
 from siriuspy.epics.computed_pv import ComputedPV as _ComputedPV
 from siriuspy.pwrsupply.data import PSData as _PSData
 from siriuspy.pwrsupply.controller import PSCommInterface as _PSCommInterface
