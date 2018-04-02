@@ -54,8 +54,6 @@ class _Entity:
 class Variable(_Entity):
     """BSMP variable."""
 
-    # TODO: change from 'length' to 'count'? (pcaspy)
-
     def __init__(self, eid, waccess, var_type, count=1):
         """Set variable properties."""
         if (var_type.size * count) > 128 or (var_type.size * count) < 1:
