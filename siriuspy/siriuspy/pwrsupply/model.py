@@ -20,9 +20,9 @@ from siriuspy.magnet import util as _mutil
 from siriuspy.pwrsupply import sync as _sync
 # PowerSupply
 from ..bsmp import BSMP, Response
-from .bsmp import FBPEntities
+from ..bsmp import SerialError as _SerialError
+from .bsmp import FBPEntities, bsmp_2_epics, epics_2_bsmp
 from .status import Status
-from siriuspy.bsmp import SerialError as _SerialError
 
 
 class PowerSupply:
@@ -119,21 +119,44 @@ class PowerSupply:
             return None
 
     # Groups
-    def read_all_variables(self):
-        """Read all variables."""
-        sts, val = self.bsmp.read_group_variables(0)
+    def read_group(self, group_id):
+        """Read a group of variables and return a dict."""
+        # Read values
+        sts, val = self.bsmp.read_group_variables(group_id)
         if sts == Response.ok:
             ret = dict()
-            ret['PwrState-Sts'] = Status.pwrstate(val[0])
-            ret['OpMode-Sts'] = Status.opmode(val[0])
-            ret['Current-RB'] = val[1]
-            ret['CurrentRef-Mon'] = val[2]
-            ret['CycleType-Sts'] = val[7]
-            ret['IntlkSoft-Mon'] = val[25]
-            ret['IntlkHard-Mon'] = val[26]
-            ret['Current-Mon'] = val[27]
+            # Get variables
+            variables = self.bsmp.entities.groups[group_id].variables
+            for idx, var in enumerate(variables):
+                id = var.eid
+                if id == 0:  # One bsmp variable mapped to many epics variables
+                    ret['PwrState-Sts'] = Status.pwrstate(val[0])
+                    ret['OpMode-Sts'] = Status.opmode(val[0])
+                elif id == 3:  # Version-Cte
+                    ret['Version-Cte'], _ = \
+                        ''.join([c.decode() for c in val[3]]).split('\x00', 1)
+                else:
+                    try:  # TODO: happens because bsmp_2_epics is not complete
+                        field = bsmp_2_epics[id]
+                    except KeyError:
+                        continue
+                    ret[field] = val[idx]
             return ret
         return None
+
+    def create_group(self, fields):
+        """Create a group of variables."""
+        ids = set()
+        for field in fields:
+            ids.add(epics_2_bsmp[field])
+        sts, val = self.bsmp.create_group(ids)
+        if sts == Response.ok:
+            return True
+        return False
+
+    def read_all_variables(self):
+        """Read all variables."""
+        return self.read_group(0)
 
     # Functions
     def turn_on(self):
@@ -239,14 +262,8 @@ class PowerSupplySim:
         if not self.connected:
             raise _SerialError()
         ret = dict()
-        ret['PwrState-Sts'] = self.pwrstate_sts
-        ret['OpMode-Sts'] = self.opmode_sts
-        ret['Current-RB'] = self.current_rb
-        ret['CurrentRef-Mon'] = self.currentref_mon
-        # ret['CycleType-Sts'] = 0
-        ret['IntlkSoft-Mon'] = self.intlksoft_mon
-        ret['IntlkHard-Mon'] = self.intlkhard_mon
-        ret['Current-Mon'] = self.current_mon
+        for field, var_id in epics_2_bsmp.items():
+            ret[field] = self.database[field]['value']
         return ret
 
     # Functions
