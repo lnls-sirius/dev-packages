@@ -12,60 +12,89 @@ class _Entity:
             # TODO: use return [chr(c) for c in _struct.pack(fmt, value)]
             return list(map(chr, _struct.pack(fmt, value)))
 
-    def _check_type(self, type_, value):
-        pass
+    def _check_type(self, var_type, value):
+        if not var_type.check(value):
+            raise TypeError("{}, {}".format(var_type.type, value))
 
-    def _conv_value_to_load(self, var_type, size, value):
-
-        # TODO: simplify code
-
-        # check type
-        if var_type.size < size:
-            # in th case length > 1 # TODO: count|length
-            for v in value:
-                if not var_type.check(v):
-                    raise TypeError("{}, {}".format(var_type.type, value))
-        else:
-            if not var_type.check(value):
-                raise TypeError("{}, {}".format(var_type.type, value))
-
-        # convert
+    def _calc_types_size(self, var_types):
+        size = 0
         try:
-            length = len(value)
+            for var_type in var_types:
+                size += var_type.size
         except TypeError:
-            length = 1
+            return var_types.size
+        return size
 
-        if length > 1:
+    def _conv_value_to_load(self, var_types, size, values):
+        if len(var_types) > 1:
             load = []
-            for v in value:
-                load += self._conv_value(var_type.fmt, v)
+            for idx, value in enumerate(values):
+                self._check_type(var_types[idx], value)
+                load += self._conv_value(var_types[idx].fmt, value)
             while len(load) < size:
                 load += chr(0)
             return load
         else:
-            return self._conv_value(var_type.fmt, value)
+            self._check_type(var_types[0], values[0])
+            return self._conv_value(var_types[0].fmt, values[0])
 
-    def _conv_load_to_value(self, var_type, size, load):
-        # TODO: use, load = [ord(c) for c in load]
-        load = list(map(ord, load))
-        if len(load) > var_type.size:  # Array
-            if var_type.type == 'char':
-                # TODO: value, _ = (''.join([chr(b) for b in load])).split('\x00', 1) ?
-                value = ''
-                for byte in load:
-                    if byte == 0:
-                        break
-                    value += '{:c}'.format(byte)
-                return value
-            else:
-                values = []
-                t_size = var_type.size
-                for i in range(int(size/t_size)):
-                    ld = load[i*t_size:i*t_size+t_size]
-                    values.append(_struct.unpack(var_type.fmt, bytes(ld))[0])
-                return values
+        # check type
+        # if var_type.size < size:
+        #     # in th case length > 1 # TODO: count|length
+        #     for v in value:
+        #         if not var_type.check(v):
+        #             raise TypeError("{}, {}".format(var_type.type, value))
+        # else:
+        #     if not var_type.check(value):
+        #         raise TypeError("{}, {}".format(var_type.type, value))
+        #
+        # # convert
+        # try:
+        #     length = len(value)
+        # except TypeError:
+        #     length = 1
+        #
+        # if length > 1:
+        #     load = []
+        #     for v in value:
+        #         load += self._conv_value(var_type.fmt, v)
+        #     while len(load) < size:
+        #         load += chr(0)
+        #     return load
+        # else:
+        #     return self._conv_value(var_type.fmt, value)
+
+    def _conv_load_to_value(self, var_types, size, load):
+        load = [ord(c) for c in load]
+        if len(var_types) > 1:
+            values = []
+            offset = 0
+            for var_type in var_types:
+                ld = load[offset:offset+var_type.size]
+                values.append(_struct.unpack(var_type.fmt, bytes(ld))[0])
+                offset += var_type.size
+            return values
         else:
-            return _struct.unpack(var_type.fmt, bytes(load))[0]
+            return _struct.unpack(var_types[0].fmt, bytes(load))[0]
+
+        # if len(load) > var_type.size:  # Array
+        #     if var_type.type == 'char':
+        #         # TODO: value, _ = (''.join([chr(b) for b in load])).split('\x00', 1) ?
+        #         value = ''
+        #         for byte in load:
+        #             if byte == 0:
+        #                 break
+        #             value += '{:c}'.format(byte)
+        #         return value
+        #     else:
+        #         values = []
+        #         t_size = var_type.size
+        #         for i in range(int(size/t_size)):
+        #             ld = load[i*t_size:i*t_size+t_size]
+        #             values.append(_struct.unpack(var_type.fmt, bytes(ld))[0])
+        #         return values
+        # else:
+        #     return _struct.unpack(var_type.fmt, bytes(load))[0]
 
 
 class Variable(_Entity):
@@ -73,23 +102,27 @@ class Variable(_Entity):
 
     # TODO: change from 'length' to 'count'? (pcaspy)
 
-    def __init__(self, eid, waccess, var_type, length=1):
+    def __init__(self, eid, waccess, var_type, count=1):
         """Set variable properties."""
-        if (var_type.size * length) > 128 or (var_type.size * length) < 1:
+        if (var_type.size * count) > 128 or (var_type.size * count) < 1:
             raise ValueError("Variable size incorrect.")
         super().__init__()  # TODO: is it necessary?
         self.eid = eid
         self.waccess = waccess
-        self.size = (var_type.size * length)  # 1..128 bytes
+        self.size = (var_type.size * count)  # 1..128 bytes
         self.type = var_type
+
+        self._var_types = [var_type for _ in range(count)]
 
     def load_to_value(self, load):
         """Parse value from load."""
-        return self._conv_load_to_value(self.type, self.size, load)
+        return self._conv_load_to_value(self._var_types, self.size, load)
 
     def value_to_load(self, value):
         """Convert value to load."""
-        return self._conv_value_to_load(self.type, self.size, value)
+        if not isinstance(value, (list, tuple)):
+            value = [value, ]
+        return self._conv_value_to_load(self._var_types, self.size, value)
 
 
 class VariablesGroup(_Entity):
@@ -149,19 +182,19 @@ class Function(_Entity):
     # TODO: BSMP doc says func lenght < 15 but PS BSMP spec says otherwise!!!
     # TODO: PS BSMP spec defines functions with args of different types !!!
 
-    def __init__(self, eid, i_length, i_type, o_length, o_type):
+    def __init__(self, eid, i_type, o_type):
         """Set function properties."""
         super().__init__()
         self.eid = eid
-        i_size = i_type.size * i_length
-        o_size = o_type.size * o_length
-        if i_size < 0 or i_size > 15:
+        i_size = self._calc_types_size(i_type)
+        o_size =self._calc_types_size(o_type)
+        if i_size < 0 or i_size > 64:
             raise ValueError("Input size {} is out of range".format(i_size))
-        if o_size < 0 or o_size > 15:
+        if o_size < 0 or o_size > 32:
             raise ValueError("Output size {} is out of range".format(o_size))
-        self.i_size = i_size  # 0..15
+        self.i_size = i_size  # 0..64
         self.i_type = i_type
-        self.o_size = o_size  # 0..15
+        self.o_size = o_size  # 0..32
         self.o_type = o_type
 
     def load_to_value(self, load):  # Parse output_size
@@ -174,6 +207,8 @@ class Function(_Entity):
         """Convert value to load."""
         if value is None:
             return []
+        if not isinstance(value, (list, tuple)):
+            value = [value, ]
         return self._conv_value_to_load(self.i_type, self.i_size, value)
 
 
@@ -211,12 +246,9 @@ class Entities:
         for function in functions:
             # TODO: use 'eid' as key
             func_id = function['id']
-            i_length = function['i_length']
             i_type = function['i_type']
-            o_length = function['o_length']
             o_type = function['o_type']
-            self.functions.append(
-                Function(func_id, i_length, i_type, o_length, o_type))
+            self.functions.append(Function(func_id, i_type, o_type))
 
     @property
     def variables(self):
