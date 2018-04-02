@@ -245,6 +245,13 @@ class TestBSMPFunction(unittest.TestCase):
         func = Function(1, [Types.t_float, Types.t_float], [Types.t_uint8])
         self.assertEqual(func.value_to_load(value), expected_load)
 
+    def test_composite_value_to_load(self):
+        """Test value to load method when there are many types involved."""
+        values = [2032018, 15.41]
+        load = ['\x92', '\x01', '\x1f', '\x00', '\\', '\x8f', 'v', 'A']
+        func = Function(1, [Types.t_uint32, Types.t_float], [Types.t_uint8])
+        self.assertEqual(func.value_to_load(values), load)
+
     def test_null_load_to_value(self):
         """Test empty list is returned."""
         ret = \
@@ -286,6 +293,14 @@ class TestBSMPFunction(unittest.TestCase):
         expected_value = [1.0, 0.0]
         func = Function(1, [Types.t_uint8], [Types.t_float, Types.t_float])
         self.assertEqual(func.load_to_value(load), expected_value)
+
+    def test_composite_load_to_value(self):
+        """Test load to value when there are many types involved."""
+        values = [2032018, 15.409999847]
+        load = ['\x92', '\x01', '\x1f', '\x00', '\\', '\x8f', 'v', 'A']
+        func = Function(1, [Types.t_uint8], [Types.t_uint32, Types.t_float])
+        self.assertEqual(func.load_to_value(load)[0], values[0])
+        self.assertAlmostEqual(func.load_to_value(load)[1], values[1])
 
 
 class TestBSMPEntities(unittest.TestCase):
