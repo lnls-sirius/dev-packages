@@ -187,7 +187,7 @@ class Function(_Entity):
         super().__init__()
         self.eid = eid
         i_size = self._calc_types_size(i_type)
-        o_size =self._calc_types_size(o_type)
+        o_size = self._calc_types_size(o_type)
         if i_size < 0 or i_size > 64:
             raise ValueError("Input size {} is out of range".format(i_size))
         if o_size < 0 or o_size > 32:
