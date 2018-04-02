@@ -1,5 +1,42 @@
 """Module for definitions of BSMP entities of power supply devices."""
 from siriuspy.bsmp import Entities, Types
+bsmp_2_epics = {
+    0: None,
+    1: 'Current-RB',
+    2: 'CurrentRef-Mon',
+    3: 'Version-Cte',
+    7: 'CycleType-Sts',
+    25: 'IntlkSoft-Mon',
+    26: 'IntlkHard-Mon',
+    27: 'Current-Mon',
+}
+
+epics_2_bsmp = {
+    'PwrState-Sts': 0,
+    'OpMode-Sts': 0,
+    'Current-RB': 1,
+    'CurrentRef-Mon': 2,
+    'Version-Cte': 3,
+    'CycleType-Sts': 7,
+    'IntlkSoft-Mon': 25,
+    'IntlkHard-Mon': 26,
+    'Current-Mon': 27,
+}
+
+# class Mapping:
+#     """Maps Power Supply epics fields to BSMP entities and vice-versa."""
+#
+#
+#
+#     @staticmethod
+#     def get_field_id(field):
+#         """Return BSMP variable id."""
+#         return Mapping._epics_2_bsmp[field]
+#
+#     def get_id_fieldname(var_id):
+#         """Return epics field name."""
+#         return Mapping._bsmp_2_epics[var_id]
+#
 
 
 class FBPEntities(Entities):
@@ -40,40 +77,23 @@ class FBPEntities(Entities):
     ]
     Curves = []
     Functions = [
-        {'id': 0, 'i_length': 0, 'i_type': Types.t_none, 'o_length': 1,
-         'o_type': Types.t_uint8},
-        {'id': 1, 'i_length': 0, 'i_type': Types.t_none, 'o_length': 1,
-         'o_type': Types.t_uint8},
-        {'id': 2, 'i_length': 0, 'i_type': Types.t_none, 'o_length': 1,
-         'o_type': Types.t_uint8},
-        {'id': 3, 'i_length': 0, 'i_type': Types.t_none, 'o_length': 1,
-         'o_type': Types.t_uint8},
-        {'id': 4, 'i_length': 1, 'i_type': Types.t_uint16, 'o_length': 1,
-         'o_type': Types.t_uint8},
-        {'id': 5, 'i_length': 1, 'i_type': Types.t_uint16, 'o_length': 1,
-         'o_type': Types.t_uint8},
-        {'id': 6, 'i_length': 0, 'i_type': Types.t_none, 'o_length': 1,
-         'o_type': Types.t_uint8},
-        {'id': 7, 'i_length': 0, 'i_type': Types.t_none, 'o_length': 1,
-         'o_type': Types.t_uint8},
-        {'id': 8, 'i_length': 1, 'i_type': Types.t_uint16, 'o_length': 1,
-         'o_type': Types.t_uint8},
-        {'id': 9, 'i_length': 1, 'i_type': Types.t_uint16, 'o_length': 1,
-         'o_type': Types.t_uint8},
-        {'id': 10, 'i_length': 1, 'i_type': Types.t_uint16, 'o_length': 1,
-         'o_type': Types.t_uint8},
-        {'id': 11, 'i_length': 1, 'i_type': Types.t_uint16, 'o_length': 1,
-         'o_type': Types.t_uint8},
-        {'id': 12, 'i_length': 1, 'i_type': Types.t_uint32, 'o_length': 1,
-         'o_type': Types.t_uint8},
-        {'id': 13, 'i_length': 0, 'i_type': Types.t_none, 'o_length': 1,
-         'o_type': Types.t_uint8},
-        {'id': 14, 'i_length': 0, 'i_type': Types.t_none, 'o_length': 1,
-         'o_type': Types.t_uint8},
-        {'id': 15, 'i_length': 0, 'i_type': Types.t_none, 'o_length': 0,
-         'o_type': Types.t_none},
-        {'id': 16, 'i_length': 1, 'i_type': Types.t_float, 'o_length': 1,
-         'o_type': Types.t_uint8},
+        {'id': 0, 'i_type': [Types.t_none], 'o_type': [Types.t_uint8]},
+        {'id': 1, 'i_type': [Types.t_none], 'o_type': [Types.t_uint8]},
+        {'id': 2, 'i_type': [Types.t_none], 'o_type': [Types.t_uint8]},
+        {'id': 3, 'i_type': [Types.t_none], 'o_type': [Types.t_uint8]},
+        {'id': 4, 'i_type': [Types.t_uint16], 'o_type': [Types.t_uint8]},
+        {'id': 5, 'i_type': [Types.t_uint16], 'o_type': [Types.t_uint8]},
+        {'id': 6, 'i_type': [Types.t_none], 'o_type': [Types.t_uint8]},
+        {'id': 7, 'i_type': [Types.t_none], 'o_type': [Types.t_uint8]},
+        {'id': 8, 'i_type': [Types.t_uint16], 'o_type': [Types.t_uint8]},
+        {'id': 9, 'i_type': [Types.t_uint16], 'o_type': [Types.t_uint8]},
+        {'id': 10, 'i_type': [Types.t_uint16], 'o_type': [Types.t_uint8]},
+        {'id': 11, 'i_type': [Types.t_uint16], 'o_type': [Types.t_uint8]},
+        {'id': 12, 'i_type': [Types.t_uint32], 'o_type': [Types.t_uint8]},
+        {'id': 13, 'i_type': [Types.t_none], 'o_type': [Types.t_uint8]},
+        {'id': 14, 'i_type': [Types.t_none], 'o_type': [Types.t_uint8]},
+        {'id': 15, 'i_type': [Types.t_none], 'o_type': [Types.t_none]},
+        {'id': 16, 'i_type': [Types.t_float], 'o_type': [Types.t_uint8]},
         # {'id': 17, 'i_size':, 'i_type':, 'o_size':, 'o_type':},
         # {'id': 18, 'i_size':, 'i_type':, 'o_size':, 'o_type':},
         # {'id': 19, 'i_size':, 'i_type':, 'o_size':, 'o_type':},
