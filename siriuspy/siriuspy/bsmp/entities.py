@@ -131,9 +131,6 @@ class Curve(_Entity):
 class Function(_Entity):
     """BSMP function."""
 
-    # TODO: BSMP doc says func lenght < 15 but PS BSMP spec says otherwise!!!
-    # TODO: PS BSMP spec defines functions with args of different types !!!
-
     def __init__(self, eid, i_type, o_type):
         """Set function properties."""
         super().__init__()
@@ -176,13 +173,12 @@ class Entities:
         # Get variables
         self._variables = list()
         for variable in variables:
-            # TODO: use 'eid', 'waccess', 'var_type' as keys
-            var_id = variable['id']
-            write_access = variable['access']
-            var_type = variable['type']
-            length = variable['length']
+            var_id = variable['eid']
+            waccess = variable['access']
+            var_type = variable['var_type']
+            count = variable['count']
             self.variables.append(
-                Variable(var_id, write_access, var_type, length))
+                Variable(var_id, waccess, var_type, count))
 
         # Standard groups
         r_var = [var for var in self.variables if not var.waccess]
@@ -196,8 +192,7 @@ class Entities:
         self._curves = list()
         self._functions = list()
         for function in functions:
-            # TODO: use 'eid' as key
-            func_id = function['id']
+            func_id = function['eid']
             i_type = function['i_type']
             o_type = function['o_type']
             self.functions.append(Function(func_id, i_type, o_type))
