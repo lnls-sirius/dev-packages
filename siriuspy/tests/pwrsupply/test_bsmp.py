@@ -15,9 +15,6 @@ class TestBSMPMasterSlaveSim(unittest.TestCase):
 
     def setUp(self):
         """Common setup for all tests."""
-        status_patcher = mock.patch('siriuspy.pwrsupply.controller._Status')
-        self.addCleanup(status_patcher.stop)
-        self.status_mock = status_patcher.start()
         ps_c = ControllerPSSim()
         self.resp = BSMPMasterSlaveSim(ID_device=1, pscontroller=ps_c)
 
@@ -70,12 +67,11 @@ class TestBSMPMasterSlaveSim(unittest.TestCase):
     def test_cmd_0x51_select_op_mode(self):
         """Test cmd_0x51 select_op_mode cmd."""
         status, ret = self.resp.cmd_0x51(
-            ID_receiver=1, ID_function=Const.select_op_mode, op_mode=1)
+            ID_receiver=1, ID_function=Const.select_op_mode, op_mode=4)
         self.assertEqual(status, _ack.ok)
         self.assertEqual(ret, None)
-        # self.status_mock.set_state.assert_called_once()
         sts, ret = self.resp.cmd_0x11(1, Const.ps_status)
-        self.assertEqual(ret, self.status_mock.set_state.return_value)
+        self.assertEqual(ret, 4)
 
     def test_cmd_0x51_turn_on(self):
         """Test cmd_0x51 turn_on/turn_off cmd."""
@@ -84,9 +80,8 @@ class TestBSMPMasterSlaveSim(unittest.TestCase):
         self.assertEqual(status, _ack.ok)
         self.assertEqual(ret, None)
         # Assert state is on
-        # self.status_mock.set_state.assert_called_once()
         sts, ret = self.resp.cmd_0x11(1, Const.ps_status)
-        self.assertEqual(ret, self.status_mock.set_state.return_value)
+        self.assertEqual(ret, 3)
 
     def test_cmd_0x51_turn_off(self):
         """Test cmd_0x51 turn_on/turn_off cmd."""
@@ -95,9 +90,8 @@ class TestBSMPMasterSlaveSim(unittest.TestCase):
         self.assertEqual(status, _ack.ok)
         self.assertEqual(ret, None)
         # Assert state is off
-        # self.status_mock.set_state.assert_called_once()
         sts, ret = self.resp.cmd_0x11(1, Const.ps_status)
-        self.assertEqual(ret, self.status_mock.set_state.return_value)
+        self.assertEqual(ret, 0)
 
     def test_cmd_0x51_reset_interlocks(self):
         """Test cmd_0x51 reset interlocks cmd."""
