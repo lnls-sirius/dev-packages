@@ -128,6 +128,7 @@ class BSMP:
     # 0x3_
     def create_group(self, var_ids):
         """Create new group with given variable ids. Command 0x30."""
+        var_ids = sorted(var_ids)
         m = Message.message(0x30, load=[chr(var_id) for var_id in var_ids])
         response = self.channel.request(m)
         if response.cmd == 0xE0:
