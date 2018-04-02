@@ -5,7 +5,7 @@ from unittest.mock import Mock
 from siriuspy.util import check_public_interface_namespace
 from siriuspy.pwrsupply.controller import PSController, InvalidValue
 from db import bo_db
-from variables import values_dict
+from variables import dict_values
 
 
 class TestPSController(unittest.TestCase):
@@ -27,7 +27,7 @@ class TestPSController(unittest.TestCase):
     def setUp(self):
         """Common setup for all tests."""
         self.device = Mock()
-        self.device.read_all_variables.return_value = values_dict
+        self.device.read_all_variables.return_value = dict_values
         self.device.current_mon = 1.0
         self.device.database = bo_db
         self.controller = PSController(self.device)
@@ -50,7 +50,7 @@ class TestPSController(unittest.TestCase):
     def test_get_pwrstate_sel(self):
         """Test get pwrstate setpoint."""
         self.assertEqual(
-            self.controller.pwrstate_sel, values_dict['PwrState-Sts'])
+            self.controller.pwrstate_sel, dict_values['PwrState-Sts'])
 
     def test_set_pwrstate_sel(self):
         """Test get pwrstate setpoint."""
@@ -65,7 +65,7 @@ class TestPSController(unittest.TestCase):
     def test_get_opmode_sel(self):
         """Test getter of opmode_sel."""
         self.assertEqual(
-            self.controller.opmode_sel, values_dict['OpMode-Sts'])
+            self.controller.opmode_sel, dict_values['OpMode-Sts'])
 
     def test_set_opmode_sel(self):
         """Test setter of opmode_sel."""
@@ -84,7 +84,7 @@ class TestPSController(unittest.TestCase):
 
     def test_get_current_sp(self):
         """Test current sp getter."""
-        self.assertEqual(self.controller.current_sp, values_dict['Current-RB'])
+        self.assertEqual(self.controller.current_sp, dict_values['Current-RB'])
 
     def test_set_current_sp(self):
         """Test current sp setter."""

@@ -154,10 +154,11 @@ class TestBSMP0x1(unittest.TestCase):
         load = ['t', 'e', 's', 't', 'e']
         while len(load) < 64:
             load.append(chr(0))
+        expected_value = [c.encode() for c in load]
         p = Package.package(0, Message.message(0x11, load=load))
         self.serial.UART_read.return_value = p.stream
         response = self.bsmp.read_variable(3)
-        self.assertEqual(response, (0xE0, 'teste'))
+        self.assertEqual(response, (0xE0, expected_value))
 
     def test_read_variable_error(self):
         """Test read variable returns error code."""
@@ -175,14 +176,18 @@ class TestBSMP0x1(unittest.TestCase):
 
     def test_read_group_variables(self):
         """Test read_group_variables."""
-        values = [1020, 40.7654321, [1.7654321, 0.0123456], 'teste']
+        ld_string = ['t', 'e', 's', 't', 'e']
+        for i in range(64 - len(ld_string)):
+            ld_string.append(chr(0))
+        val_string = [c.encode() for c in ld_string]
+        values = [1020, 40.7654321, [1.7654321, 0.0123456], val_string]
         load = list(map(chr, struct.pack('<h', 1020)))
         load.extend(list(map(chr, struct.pack('<f', 40.7654321))))
         load.extend(list(map(chr, struct.pack('<f', 1.7654321))))
         load.extend(list(map(chr, struct.pack('<f', 0.0123456))))
-        load.extend(['t', 'e', 's', 't', 'e'])
-        for i in range(64 - len(values[3])):
-            load.append(chr(0))
+        load.extend(ld_string)
+        # for i in range(64 - len(values[3])):
+        #     load.append(chr(0))
         p = Package.package(0, Message.message(0x13, load=load))
         self.serial.UART_read.return_value = p.stream
         response = self.bsmp.read_group_variables(0)
@@ -341,7 +346,7 @@ class TestBSMP0x5(unittest.TestCase):
         self.serial = Mock()
         self.entities = Mock()
         self.entities.functions = [
-            Function(0, 1, Types.t_float, 1, Types.t_uint8),
+            Function(0, [Types.t_float], [Types.t_uint8]),
         ]
         self.bsmp = BSMP(self.serial, 1, self.entities)
 

@@ -5,6 +5,7 @@ from unittest.mock import Mock
 
 from siriuspy.pwrsupply.model import PowerSupply
 from siriuspy.util import check_public_interface_namespace
+from variables import bsmp_values, dict_values
 
 
 class TestPowerSupply(unittest.TestCase):
@@ -20,6 +21,8 @@ class TestPowerSupply(unittest.TestCase):
         'current_mon',
         'intlksoft_mon',
         'intlkhard_mon',
+        'read_group',
+        'create_group',
         'read_all_variables',
         'turn_on',
         'turn_off',
@@ -196,56 +199,20 @@ class TestPowerSupply(unittest.TestCase):
             ['\x00', '\x11', '\x00', '\x04', 'Þ', '\x04', '\x00', '\x00', '\t']
         self.assertEqual(self.ps.intlkhard_mon, 1246)
 
+    def test_read_group(self):
+        """Test read group creation."""
+        # Tested in test_read_all_variables
+        pass
+
+    def test_create_group(self):
+        """Test the creation of groups from fields."""
+        with self.assertRaises(NotImplementedError):
+            self.ps.create_group(['PwrState-Sts', 'OpMode-Sts', 'Current-RB'])
+
     def test_read_all_variables(self):
         """Test reading from group 0."""
-        self.serial.UART_read.return_value = \
-            ['\x00', '\x13', '\x00', 'ô', '\x83', '!', 'Ñ', '"', '×', '@', 'Ñ',
-             '"', '×', '@', 'V', '0', '.', '0', '7', ' ', '2', '0', '1', '8',
-             '-', '0', '3', '-', '2', '6', 'V', '0', '.', '0', '7', ' ', '2',
-             '0', '1', '8', '-', '0', '3', '-', '2', '6', '\x00', '\x00',
-             '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00',
-             '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00',
-             '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00',
-             '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00',
-             '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00',
-             '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00',
-             '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00',
-             '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00',
-             '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00',
-             '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00',
-             '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00',
-             '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x05', '\x00',
-             '\x00', '\x00', '©', '!', '\x00', '\x00', '\x00', '\x00', '\x02',
-             '\x00', '\x01', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00',
-             '\x00', '\x00', '\x00', '\x00', '\x00', '\x80', '?', '\x00',
-             '\x00', '\x00', '\x00', '\x00', '\x00', '\x80', '?', '\x00',
-             '\x00', '\x80', '?', '\x00', '\x00', '\x80', '?', '\x00', '\x00',
-             '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00',
-             '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00',
-             '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00',
-             '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00',
-             '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', '\x00',
-             '\x00', '\x00', '\x00', '\x00', '\x00', '\x00', 'p', '!', '×',
-             '@', '\x00', 'Ð', '\x9d', '?', '\x00', 'ð', '\xa0', '@', '\x00',
-             '\x00', 'T', 'B', 'c']
-
-        # Array
-        # [8579, 6.7230000495910645, 6.7230000495910645,
-        #  'V0.07 2018-03-26V0.07 2018-03-26', 5, 8617, 0, 2, 1, 0.0, 0.0, 1.0,
-        #  0.0, [1.0, 1.0, 1.0, 0.0], 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0,
-        #  0, 0, 0, 6.722831726074219, 1.23291015625, 5.029296875, 53.0]
-
-        self.assertEqual(
-            self.ps.read_all_variables(),
-            {'PwrState-Sts': 1,
-             'OpMode-Sts': 0,
-             'Current-RB': 6.7230000495910645,
-             'CurrentRef-Mon': 6.7230000495910645,
-             'CycleType-Sts': 2,
-             'IntlkSoft-Mon': 0,
-             'IntlkHard-Mon': 0,
-             'Current-Mon': 6.722831726074219}
-        )
+        self.serial.UART_read.return_value = bsmp_values
+        self.assertEqual(self.ps.read_all_variables(), dict_values)
 
     def test_turn_on(self):
         """Test turn on function."""
@@ -306,6 +273,12 @@ class TestPowerSupply(unittest.TestCase):
         self.serial.UART_read.return_value = \
             ['\x00', 'S', '\x00', '\x00', '\xad']
         self.assertFalse(self.ps.set_slowref(1.0))
+
+
+class TestPowerSupplySim(unittest.TestCase):
+    """Test simulated PowerSupplySim class."""
+
+    pass
 
 
 if __name__ == "__main__":
