@@ -9,7 +9,7 @@ from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.csdevice.pwrsupply import ps_opmode as _ps_opmode
 from siriuspy.csdevice.pwrsupply import ps_cycle_type as _ps_cycle_type
 from siriuspy.pwrsupply.bsmp import Const as _BSMPConst
-from siriuspy.pwrsupply.bsmp import Status as _Status
+from siriuspy.pwrsupply.bsmp import PSCStatus as _PSCStatus
 from siriuspy.pwrsupply.bsmp import get_variables_FBP as _get_variables_FBP
 
 
@@ -20,6 +20,9 @@ class PSCommInterface:
     """Communication interface class for power supplies."""
 
     # TODO: should this class have its own python module?
+    # TODO: this class is not specific to PS! its name should be updated to
+    # something line CommInterface or IOCConnInterface. In this case the class
+    # should be moved to siriuspy.util or another python module.
 
     # --- public interface ---
 
@@ -95,7 +98,7 @@ class ControllerIOC(PSCommInterface):
     _write_field2func = {
         'PwrState-Sel': '_set_pwrstate',
         'OpMode-Sel': '_set_opmode',
-        'Current-SP': 'cmd_set_slowref',
+        'Current-SP': '_set_slowref',
         'WfmData-SP': '_set_wfmdata',
         'Reset-Cmd': '_reset',
         'CycleType-Sel': '_set_cycle_type',
@@ -134,41 +137,44 @@ class ControllerIOC(PSCommInterface):
     # --- API: power supply 'functions' ---
 
     def cmd_turn_on(self):
-        """Turn power supply on."""
+        """PS controller function: turn power supply on."""
         r = self._bsmp_run_function(ID_function=_BSMPConst.turn_on)
         _time.sleep(ControllerIOC._WAIT_TURN_ON_OFF)
         return r
 
     def cmd_turn_off(self):
-        """Turn power supply off."""
-        ret = self._bsmp_run_function(ID_function=_BSMPConst.turn_off)
+        """PS controller function: turn power supply off."""
+        r = self._bsmp_run_function(ID_function=_BSMPConst.turn_off)
         _time.sleep(ControllerIOC._WAIT_TURN_ON_OFF)
-        return ret
+        return r
 
     def cmd_open_loop(self):
         """Open DSP control loop."""
-        return self._bsmp_run_function(ID_function=_BSMPConst.open_loop)
+        r = self._bsmp_run_function(ID_function=_BSMPConst.open_loop)
+        return r
 
     def cmd_close_loop(self):
-        """Close DSP control loop."""
-        ret = self._bsmp_run_function(_BSMPConst.close_loop)
-        return ret
+        """PS controller command: close DSP control loop."""
+        r = self._bsmp_run_function(_BSMPConst.close_loop)
+        return r
+
+    def cmd_select_op_mode(self, op_mode):
+        """Select pscontroller operation mode."""
+        r = self._bsmp_run_function(_BSMPConst.select_op_mode,
+                                    op_mode=op_mode)
+        return r
 
     def cmd_reset_interlocks(self):
-        """Reset interlocks."""
+        """PS controller function: reset interlocks."""
         r = self._bsmp_run_function(_BSMPConst.reset_interlocks)
         _time.sleep(ControllerIOC._WAIT_RESET_INTLCKS)
         return r
 
     def cmd_set_slowref(self, setpoint):
         """Set SlowRef reference value."""
-        if not self._ps_interface_in_remote():
-            return
-        setpoint = max(self._ps_db['Current-SP']['lolo'], setpoint)
-        setpoint = min(self._ps_db['Current-SP']['hihi'], setpoint)
-        self._bsmp_run_function(ID_function=_BSMPConst.set_slowref,
-                                setpoint=setpoint)
-        return setpoint
+        r = self._bsmp_run_function(ID_function=_BSMPConst.set_slowref,
+                                    setpoint=setpoint)
+        return r
 
     def cmd_cfg_siggen(self,
                        type=None,
@@ -181,6 +187,37 @@ class ControllerIOC(PSCommInterface):
                        aux_param2=None,
                        aux_param3=None):
         """Configure SigGen parameters."""
+        if type is None:
+            type = self._bsmp_get_variable(_BSMPConst.siggen_type)
+        if num_cycles is None:
+            num_cycles = self._bsmp_get_variable(_BSMPConst.siggen_num_cycles)
+        if freq is None:
+            freq = self._bsmp_get_variable(_BSMPConst.siggen_freq)
+        if amplitude is None:
+            amplitude = self._bsmp_get_variable(_BSMPConst.siggen_amplitude)
+        if offset is None:
+            offset = self._bsmp_get_variable(_BSMPConst.siggen_offset)
+        param = self._bsmp_get_variable(_BSMPConst.siggen_aux_param)
+        if aux_param0 is None:
+            aux_param0 = param[0]
+        if aux_param1 is None:
+            aux_param1 = param[1]
+        if aux_param2 is None:
+            aux_param2 = param[2]
+        if aux_param3 is None:
+            aux_param3 = param[3]
+        r = self._bsmp_run_function(
+            ID_function=_BSMPConst.cfg_siggen,
+            type=type,
+            num_cycles=num_cycles,
+            freq=freq,
+            amplitude=amplitude,
+            offset=offset,
+            aux_param0=aux_param0,
+            aux_param1=aux_param1,
+            aux_param2=aux_param2,
+            aux_param3=aux_param3)
+        return r
 
     # --- API: public properties and methods ---
 
@@ -286,18 +323,18 @@ class ControllerIOC(PSCommInterface):
                               kwargs=kwargs)
 
     def _get_ctrlmode(self):
-        ps_status = self._get_ps_status()
-        value = _Status.interface(ps_status)
+        psc_status = _PSCStatus(self._get_ps_status())
+        value = psc_status.interface
         return value
 
     def _get_pwrstate(self):
-        ps_status = self._get_ps_status()
-        value = _Status.pwrstate(ps_status)
+        psc_status = _PSCStatus(self._get_ps_status())
+        value = psc_status.ioc_pwrstate
         return value
 
     def _get_opmode(self):
-        ps_status = self._get_ps_status()
-        value = _Status.opmode(ps_status)
+        psc_status = _PSCStatus(self._get_ps_status())
+        value = psc_status.ioc_opmode
         return value
 
     def _reset(self, value):
@@ -318,7 +355,7 @@ class ControllerIOC(PSCommInterface):
         return value
 
     def _set_opmode(self, value):
-        """Set pwrstate state."""
+        """Set opmode state."""
         # print('1. set_opmode', value)
         if not self._ps_interface_in_remote():
             return
@@ -328,12 +365,19 @@ class ControllerIOC(PSCommInterface):
         # set opmode state
         # print('2. set_opmode', value)
         if self._get_pwrstate() == _PSConst.PwrState.On:
-            ps_status = self._get_ps_status()
-            ps_status = _Status.set_opmode(ps_status, value)
-            op_mode = _Status.opmode(ps_status)
+            psc_status = _PSCStatus(self._get_ps_status())
+            psc_status.ioc_opmode = value
+            op_mode = psc_status.state
             # print('3. set_opmode', op_mode)
-            self._cmd_select_op_mode(op_mode=op_mode)
+            self.cmd_select_op_mode(op_mode=op_mode)
         return value
+
+    def _set_slowref(self, value):
+        if not self._ps_interface_in_remote():
+            return
+        value = max(self._ps_db['Current-SP']['lolo'], value)
+        value = min(self._ps_db['Current-SP']['hihi'], value)
+        self.cmd_set_slowref(setpoint=value)
 
     def _set_cycle_type(self, value):
         """Set CycleType."""
@@ -342,14 +386,7 @@ class ControllerIOC(PSCommInterface):
         value = int(value)
         if not(0 <= value < len(_ps_cycle_type)):
             return None
-        # set opmode state
-        # print('2. set_opmode', value)
-        if self._get_pwrstate() == _PSConst.PwrState.On:
-            ps_status = self._get_ps_status()
-            ps_status = _Status.set_opmode(ps_status, value)
-            op_mode = _Status.opmode(ps_status)
-            # print('3. set_opmode', op_mode)
-            self._cmd_select_op_mode(op_mode=op_mode)
+        self.cmd_cfg_siggen(type=value)
         return value
 
     def _set_wfmdata(self, value):
@@ -361,13 +398,9 @@ class ControllerIOC(PSCommInterface):
         self._serial_comm.set_wfmdata(self._ID_device, self._wfmdata)
         return value
 
-    def _cmd_select_op_mode(self, op_mode):
-        return self._bsmp_run_function(_BSMPConst.select_op_mode,
-                                       op_mode=op_mode)
-
     def _ps_interface_in_remote(self):
-        ps_status = self._get_ps_status()
-        interface = _Status.interface(ps_status)
+        psc_status = _PSCStatus(self._get_ps_status())
+        interface = psc_status.interface
         return interface == _PSConst.Interface.Remote
 
 
@@ -499,8 +532,9 @@ class ControllerPSSim:
 
     def _func_turn_on(self, **kwargs):
         status = self._state[_BSMPConst.ps_status]
-        status = _Status.set_state(status, _PSConst.States.SlowRef)
-        self._state[_BSMPConst.ps_status] = status
+        psc_status = _PSCStatus(status)
+        psc_status.ioc_opmode = _PSConst.States.SlowRef
+        self._state[_BSMPConst.ps_status] = psc_status.ps_status
         self._state[_BSMPConst.i_load] = \
             self._state[_BSMPConst.ps_reference] + \
             self._i_load_fluctuation
@@ -508,8 +542,9 @@ class ControllerPSSim:
 
     def _func_turn_off(self, **kwargs):
         status = self._state[_BSMPConst.ps_status]
-        status = _Status.set_state(status, _PSConst.States.Off)
-        self._state[_BSMPConst.ps_status] = status
+        psc_status = _PSCStatus(status)
+        psc_status.ioc_pwrstate = _PSConst.States.Off
+        self._state[_BSMPConst.ps_status] = psc_status.ps_status
         self._state[_BSMPConst.ps_setpoint] = 0.0
         self._state[_BSMPConst.ps_reference] = 0.0
         self._state[_BSMPConst.i_load] = 0.0 + self._i_load_fluctuation
@@ -517,18 +552,23 @@ class ControllerPSSim:
 
     def _func_open_loop(self, **kwargs):
         status = self._state[_BSMPConst.ps_status]
-        status = _Status.set_openloop(status, 1)
+        psc_status = _PSCStatus(status)
+        psc_status.open_loop = 1
+        self._state[_BSMPConst.ps_status] = psc_status.ps_status
         return _ack.ok, None
 
     def _func_close_loop(self, **kwargs):
         status = self._state[_BSMPConst.ps_status]
-        status = _Status.set_openloop(status, 0)
+        psc_status = _PSCStatus(status)
+        psc_status.open_loop = 0
+        self._state[_BSMPConst.ps_status] = psc_status.ps_status
         return _ack.ok, None
 
     def _func_select_op_mode(self, **kwargs):
         status = self._state[_BSMPConst.ps_status]
-        status = _Status.set_state(status, kwargs['op_mode'])
-        self._state[_BSMPConst.ps_status] = status
+        psc_status = _PSCStatus(status)
+        psc_status.state = kwargs['op_mode']
+        self._state[_BSMPConst.ps_status] = psc_status.ps_status
         return _ack.ok, None
 
     def _func_reset_interlocks(self, **kwargs):
@@ -541,7 +581,8 @@ class ControllerPSSim:
         self._state[_BSMPConst.ps_reference] = \
             self._state[_BSMPConst.ps_setpoint]
         status = self._state[_BSMPConst.ps_status]
-        if _Status.pwrstate(status) == _PSConst.PwrState.On:
+        psc_status = _PSCStatus(status)
+        if psc_status.ioc_pwrstate == _PSConst.PwrState.On:
             # i_load <= ps_reference
             self._state[_BSMPConst.i_load] = \
                 self._state[_BSMPConst.ps_reference] + self._i_load_fluctuation

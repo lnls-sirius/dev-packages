@@ -321,7 +321,7 @@ class PowerSupply(_PSCommInterface):
                 prev_value = self._field_values[field]
                 if isinstance(value, _np.ndarray):
                     if _np.all(value == prev_value):
-                        # skipp callback if not new
+                        # skip callback if not new
                         self._lock.release()
                         continue
                 else:
@@ -521,7 +521,7 @@ class MAEpics(PSEpics):
         # Build either a real or computed PV
         if MAEpics._is_strength.match(field):
             # 1) STRENGTH magnet fields
-            # an intermediary computed_pv is created in order for the
+            # an intermediate computed_pv is created in order for the
             # strength to be calculated from currents.
             pvname = self._prefix + self._maname + ":" + field
             str_obj = self._get_normalizer(self._maname)
