@@ -19,7 +19,8 @@ class Message:
     # Constructors
     def __init__(self, stream):
         """Build a BSMP message."""
-        # TODO: size check (at least 3)
+        if len(stream) < 3:
+            raise ValueError("BSMP Message too short.")
         self._stream = stream
         self._cmd = ord(stream[0])
 
