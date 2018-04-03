@@ -85,7 +85,7 @@ class ControllerIOC(PSCommInterface):
         'IntlkHard-Mon': '_get_ps_hard_interlocks',
         'WfmIndex-Mon': '_get_wfmindex',
         'WfmData-RB': '_get_wfmdata',
-        'CycleEnbl-RB': '_get_cycle_enable',
+        'CycleEnbl-Mon': '_get_cycle_enable',
         'CycleType-Sts': '_get_cycle_type',
         'CycleNrCycles-RB': '_get_cycle_num_cycles',
         'CycleIndex-Mon': '_get_cycle_n',
@@ -101,7 +101,8 @@ class ControllerIOC(PSCommInterface):
         'Current-SP': '_set_slowref',
         'WfmData-SP': '_set_wfmdata',
         'Reset-Cmd': '_reset',
-        'CycleEnbl-SP': '_set_cycle_enable',
+        'CycleEnbl-Cmd': '_cycle_enable',
+        'CycleDsbl-Cmd': '_cycle_disable',
         'CycleType-Sel': '_set_cycle_type',
         'CycleNrCycles-SP': '_set_cycle_num_cycles',
         'CycleFreq-SP': '_set_cycle_freq',
@@ -395,16 +396,17 @@ class ControllerIOC(PSCommInterface):
         value = min(self._ps_db['Current-SP']['hihi'], value)
         self.cmd_set_slowref(setpoint=value)
 
-    def _set_cycle_enable(self, value):
+    def _cycle_enable(self, value):
         """Set CycleEnbl."""
         if not self._ps_interface_in_remote():
             return
-        value = int(value)
-        if value == 0:
-            self.cmd_disable_siggen()
-        else:
-            self.cmd_enable_siggen()
-        return value
+        self.cmd_enable_siggen()
+
+    def _cycle_disable(self, value):
+        """Set CycleDsbl."""
+        if not self._ps_interface_in_remote():
+            return
+        self.cmd_disable_siggen()
 
     def _set_cycle_type(self, value):
         """Set CycleType."""
@@ -452,7 +454,10 @@ class ControllerIOC(PSCommInterface):
         if len(value) != 4:
             return
         self.cmd_cfg_siggen(
-            param0=value[0], param1=value[1], param2=value[2], param3=value[3])
+            aux_param0=value[0],
+            aux_param1=value[1],
+            aux_param2=value[2],
+            aux_param3=value[3])
         return value
 
     def _set_wfmdata(self, value):

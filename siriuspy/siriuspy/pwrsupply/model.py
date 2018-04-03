@@ -164,9 +164,12 @@ class PowerSupply(_PSCommInterface):
         elif field == 'Reset-Cmd':
             keyvalue['func'] = self._reset
             keyvalue['value'] = db['Reset-Cmd']['value']
-        elif field == 'CycleEnbl-SP':
-            keyvalue['func'] = self._set_cycle_enable
-            keyvalue['value'] = self._controller.read('CycleEnbl-RB')
+        elif field == 'CycleEnbl-Cmd':
+            keyvalue['func'] = self._cycle_enable
+            keyvalue['value'] = db['CycleEnbl-Cmd']['value']
+        elif field == 'CycleDsbl-Cmd':
+            keyvalue['func'] = self._cycle_disable
+            keyvalue['value'] = db['CycleDsbl-Cmd']['value']
         elif field == 'CycleType-Sel':
             keyvalue['func'] = self._set_cycle_type
             keyvalue['value'] = self._controller.read('CycleType-Sts')
@@ -222,12 +225,6 @@ class PowerSupply(_PSCommInterface):
         self._setpoints['WfmData-SP']['value'] = value
         return self._controller.write('WfmData-SP', value)
 
-    def _set_cycle_enable(self, value):
-        value = int(value)
-        self._setpoints['CycleEnbl-SP']['value'] = value
-        ret = self._controller.write('CycleEnbl-SP', value)
-        return ret
-
     def _set_cycle_type(self, value):
         self._setpoints['CycleType-Sel']['value'] = value
         if value >= 0 and value < len(self._base_db['CycleType-Sel']['enums']):
@@ -271,10 +268,20 @@ class PowerSupply(_PSCommInterface):
     def _reset(self, value):
         self._setpoints['Reset-Cmd']['value'] += 1
         self.write('Current-SP', 0.0)
-        self.write('OpMode-Sel', 0)
+        self.write('OpMode-Sel', 0)  # TODO: use SlowRef constant
         # Reset interlocks
         self._controller.write('Reset-Cmd', 1)
         return self._setpoints['Reset-Cmd']['value']
+
+    def _cycle_enable(self, value):
+        self._setpoints['CycleEnbl-Cmd']['value'] += 1
+        self._controller.write('CycleEnbl-Cmd', value)
+        return self._setpoints['CycleEnbl-Cmd']['value']
+
+    def _cycle_disable(self, value):
+        self._setpoints['CycleDsbl-Cmd']['value'] += 1
+        self._controller.write('CycleDsbl-Cmd', value)
+        return self._setpoints['CycleDsbl-Cmd']['value']
 
     def _get_base_db(self):
         return self._psdata.propty_database

@@ -744,7 +744,9 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
                            Const.open_loop,
                            Const.close_loop,
                            Const.reset_interlocks,
-                           Const.reset_counters):
+                           Const.reset_counters,
+                           Const.enable_siggen,
+                           Const.disable_siggen):
             load = []
         elif ID_function == Const.set_slowref:
             load = [chr(b) for b in _struct.pack("<f", kwargs['setpoint'])]
