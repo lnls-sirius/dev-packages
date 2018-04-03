@@ -644,41 +644,44 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
             value = dict()
             i = 0
             # ID:00 - ps_status
-            value[Const.ps_status] = data[i] + (data[i+1] << 8)
+            datum = _struct.unpack("<H", bytes(data[i:i+2]))[0]
+            value[Const.ps_status] = datum
             i += 2
             # ID:01 - ps_setpoint
-            value[Const.ps_setpoint] = \
-                _struct.unpack("<f", bytes(data[i:i+4]))[0]
+            datum = _struct.unpack("<f", bytes(data[i:i+4]))[0]
+            value[Const.ps_setpoint] = datum
             i += 4
             # ID:02 - ps_reference
-            value[Const.ps_reference] = \
-                _struct.unpack("<f", bytes(data[i:i+4]))[0]
+            datum = _struct.unpack("<f", bytes(data[i:i+4]))[0]
+            value[Const.ps_reference] = datum
             i += 4
             # ID:03 - firmware_version
             version, di = BSMPMasterSlave._process_firmware_stream(data, i)
             value[Const.firmware_version] = version
             i += di
             # ID:04 - counter_set_slowref
-            datum = data[i] + (data[i+1] << 8) + \
-                (data[i+2] << 16) + (data[i+3] << 24)
+            datum = _struct.unpack("<I", bytes(data[i:i+4]))[0]
             value[Const.counter_set_slowref] = datum
             i += 4
             # ID:05 - counter_sync_pulse
-            datum = data[i] + (data[i+1] << 8) + \
-                (data[i+2] << 16) + (data[i+3] << 24)
+            datum = _struct.unpack("<I", bytes(data[i:i+4]))[0]
             value[Const.counter_sync_pulse] = datum
             i += 4
+            # print('05:', datum)
             # ID:06 - siggen_enable
-            datum = data[i] + (data[i+1] << 8)
+            datum = _struct.unpack("<H", bytes(data[i:i+2]))[0]
             value[Const.siggen_enable] = datum
+            # print('06:', datum)
             i += 2
             # ID:07 - siggen_type
-            datum = data[i] + (data[i+1] << 8)
+            datum = _struct.unpack("<H", bytes(data[i:i+2]))[0]
             value[Const.siggen_type] = datum
+            # print('07:', datum)
             i += 2
-            # ID:08 - siggen_num_cycle
-            datum = data[i] + (data[i+1] << 8)
-            value[Const.siggen_num_cycle] = datum
+            # ID:08 - siggen_num_cycles
+            datum = _struct.unpack("<H", bytes(data[i:i+2]))[0]
+            value[Const.siggen_num_cycles] = datum
+            # print('08:', datum)
             i += 2
             # ID:09 - siggen_n
             datum = _struct.unpack("<f", bytes(data[i:i+4]))[0]
@@ -753,11 +756,10 @@ class BSMPMasterSlave(_BSMPResponse, StreamChecksum):
             load += [chr(b) for b in _struct.pack("<f", kwargs['freq'])]
             load += [chr(b) for b in _struct.pack("<f", kwargs['amplitude'])]
             load += [chr(b) for b in _struct.pack("<f", kwargs['offset'])]
-            params = kwargs['aux_params']
-            load += [chr(b) for b in _struct.pack("<f", params[0])]
-            load += [chr(b) for b in _struct.pack("<f", params[1])]
-            load += [chr(b) for b in _struct.pack("<f", params[2])]
-            load += [chr(b) for b in _struct.pack("<f", params[3])]
+            load += [chr(b) for b in _struct.pack("<f", kwargs['aux_param0'])]
+            load += [chr(b) for b in _struct.pack("<f", kwargs['aux_param1'])]
+            load += [chr(b) for b in _struct.pack("<f", kwargs['aux_param2'])]
+            load += [chr(b) for b in _struct.pack("<f", kwargs['aux_param3'])]
         else:
             raise NotImplementedError
         n = 1 + len(load)  # one additional byte for checksum.

@@ -101,7 +101,13 @@ class ControllerIOC(PSCommInterface):
         'Current-SP': '_set_slowref',
         'WfmData-SP': '_set_wfmdata',
         'Reset-Cmd': '_reset',
+        'CycleEnbl-SP': '_set_cycle_enable',
         'CycleType-Sel': '_set_cycle_type',
+        'CycleNrCycles-SP': '_set_cycle_num_cycles',
+        'CycleFreq-SP': '_set_cycle_freq',
+        'CycleAmpl-SP': '_set_cycle_amplitude',
+        'CycleOffset-SP': '_set_cycle_offset',
+        'CycleAuxParam-SP': '_set_cycle_aux_param',
     }
 
     # --- API: general power supply 'variables' ---
@@ -217,6 +223,16 @@ class ControllerIOC(PSCommInterface):
             aux_param1=aux_param1,
             aux_param2=aux_param2,
             aux_param3=aux_param3)
+        return r
+
+    def cmd_enable_siggen(self):
+        """Enable SigGen."""
+        r = self._bsmp_run_function(ID_function=_BSMPConst.enable_siggen)
+        return r
+
+    def cmd_disable_siggen(self):
+        """Disable SigGen."""
+        r = self._bsmp_run_function(ID_function=_BSMPConst.disable_siggen)
         return r
 
     # --- API: public properties and methods ---
@@ -379,6 +395,17 @@ class ControllerIOC(PSCommInterface):
         value = min(self._ps_db['Current-SP']['hihi'], value)
         self.cmd_set_slowref(setpoint=value)
 
+    def _set_cycle_enable(self, value):
+        """Set CycleEnbl."""
+        if not self._ps_interface_in_remote():
+            return
+        value = int(value)
+        if value == 0:
+            self.cmd_disable_siggen()
+        else:
+            self.cmd_enable_siggen()
+        return value
+
     def _set_cycle_type(self, value):
         """Set CycleType."""
         if not self._ps_interface_in_remote():
@@ -387,6 +414,45 @@ class ControllerIOC(PSCommInterface):
         if not(0 <= value < len(_ps_cycle_type)):
             return None
         self.cmd_cfg_siggen(type=value)
+        return value
+
+    def _set_cycle_num_cycles(self, value):
+        """Set CycleNrCycles."""
+        if not self._ps_interface_in_remote():
+            return
+        value = int(value)
+        self.cmd_cfg_siggen(num_cycles=value)
+        return value
+
+    def _set_cycle_freq(self, value):
+        """Set CycleFreq."""
+        if not self._ps_interface_in_remote():
+            return
+        self.cmd_cfg_siggen(freq=value)
+        return value
+
+    def _set_cycle_amplitude(self, value):
+        """Set CycleAmpl."""
+        if not self._ps_interface_in_remote():
+            return
+        self.cmd_cfg_siggen(amplitude=value)
+        return value
+
+    def _set_cycle_offset(self, value):
+        """Set CycleOffset."""
+        if not self._ps_interface_in_remote():
+            return
+        self.cmd_cfg_siggen(offset=value)
+        return value
+
+    def _set_cycle_aux_param(self, value):
+        """Set CycleAuxParam."""
+        if not self._ps_interface_in_remote():
+            return
+        if len(value) != 4:
+            return
+        self.cmd_cfg_siggen(
+            param0=value[0], param1=value[1], param2=value[2], param3=value[3])
         return value
 
     def _set_wfmdata(self, value):
