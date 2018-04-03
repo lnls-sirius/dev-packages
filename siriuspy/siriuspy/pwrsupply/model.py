@@ -26,7 +26,7 @@ from .status import Status
 
 
 class PowerSupply:
-    """Control a power supply."""
+    """Control a power supply via serial communication."""
 
     def __init__(self, serial, address, database=None):
         """High level PS controller.
@@ -205,7 +205,7 @@ class PowerSupply:
 
 
 class PowerSupplySim:
-    """Control power supply parameters."""
+    """Simulate a power supply."""
 
     def __init__(self, database):
         """High level PS controller."""

@@ -3,13 +3,13 @@ import unittest
 from unittest.mock import Mock
 
 from siriuspy.util import check_public_interface_namespace
-from siriuspy.pwrsupply.controller import PSController, InvalidValue
+from siriuspy.pwrsupply.dispatcher import PSDispatcher
 from db import bo_db
 from variables import dict_values
 
 
-class TestPSController(unittest.TestCase):
-    """Test PSController behaviour."""
+class TestPSDispatcher(unittest.TestCase):
+    """Test PSDispatcher behaviour."""
 
     api = (
         'device',
@@ -30,12 +30,12 @@ class TestPSController(unittest.TestCase):
         self.device.read_all_variables.return_value = dict_values
         self.device.current_mon = 1.0
         self.device.database = bo_db
-        self.controller = PSController(self.device)
+        self.controller = PSDispatcher(self.device)
 
     def test_api(self):
         """Test API."""
         self.assertTrue(
-            check_public_interface_namespace(PSController, self.api))
+            check_public_interface_namespace(PSDispatcher, self.api))
 
     def test_device(self):
         """Test device property."""
