@@ -1,23 +1,19 @@
 """Define the low level classes which will connect to Timing Devices IOC."""
 
 import logging as _log
-from copy import deepcopy as _dcopy
-from threading import Event as _Event
-from threading import Thread as _Thread
-from pcaspy import Alarm, Severity
 import epics as _epics
+from siriuspy.thread import RepeaterThread as _Timer
+from siriuspy.thread import QueueThread as _QueueThread
 from siriuspy.epics import connection_timeout as _conn_timeout
-from siriuspy.epics.computed_pv import QueueThread as _QueueThread
 from siriuspy.envars import vaca_prefix as LL_PREFIX
 from siriuspy.namesys import SiriusPVName as _PVName
-from siriuspy.timesys.time_data import IOs
-from siriuspy.timesys.time_data import Events, Triggers, Connections
+from siriuspy.timesys.time_data import Events, Triggers, Connections, IOs
 from siriuspy.timesys.time_data import RF_FREQUENCY as RFFREQ
 from siriuspy.timesys.time_data import RF_DIVISION as RFDIV
 from siriuspy.timesys.time_data import AC_FREQUENCY as ACFREQ
 from siriuspy.timesys.time_data import FINE_DELAY as FDEL
 
-_INTERVAL = 0.1
+INTERVAL = 0.1
 _DELAY_UNIT_CONV = 1e-6
 Connections.add_bbb_info()
 Connections.add_crates_info()
@@ -29,61 +25,35 @@ FOUTs = Connections.get_devices('FOUT')
 TWDS_EVG = Connections.get_connections_twds_evg()
 
 
-class _Timer(_Thread):
-    def __init__(self, interval, function, args=tuple(), niter=100):
-        super().__init__(daemon=True)
-        self.interval = interval
-        self.function = function
-        self.args = args
-        self.niters = niter
-        self.cur_iter = 0
-        self.stopped = _Event()
-
-    def run(self):
-        self.function(*self.args)
-        while ((not self.stopped.wait(self.interval)) and
-               self.niters > self.cur_iter):
-            self.cur_iter += 1
-            self.function(*self.args)
-
-    def reset(self):
-        self.cur_iter = 0
-
-    def stop(self):
-        self.stopped.set()
-
-
 class _Base:
 
-    def __init__(self, callback, init_state):
+    def __init__(self, callback, init_hl_state):
         """Initialize the Low Level object.
 
         callback is the callable to be called each time a low level PV changes
         its value.
-        init_state is the initial value of the high level properties.
+        init_hl_state is the initial value of the high level properties.
         """
-        self._dict_functions_for_write = self._get_dict_for_write()
-        self._dict_functions_for_read = self._get_dict_for_read()
-        self._dict_convert_prop2pv = self._get_convertion_prop2pv()
+        self._dict_functions_for_write = self._define_dict_for_write()
+        self._dict_functions_for_read = self._define_dict_for_read()
+        self._dict_convert_prop2pv = self._define_convertion_prop2pv()
         self._dict_convert_pv2prop = {
                 val: key for key, val in self._dict_convert_prop2pv.items()}
         self.callback = callback
-        self._hl_state = init_state
-        self._ll_state = dict()
+        self._my_state_sp = dict()
         self._rf_freq = RFFREQ
         self._rf_div = RFDIV
 
-        PV_Class = _epics.PV
-        self._rf_freq_pv = PV_Class(LL_PREFIX + 'SI-03SP:RF-SRFCav:Freq-SP',
+        self._rf_freq_pv = _epics.PV(LL_PREFIX + 'SI-03SP:RF-SRFCav:Freq-SP',
+                                     connection_timeout=_conn_timeout)
+        self._rf_div_pv = _epics.PV(LL_PREFIX + EVG_NAME + ':RFDiv-SP',
                                     connection_timeout=_conn_timeout)
-        self._rf_div_pv = PV_Class(LL_PREFIX + EVG_NAME + ':RFDiv-SP',
-                                   connection_timeout=_conn_timeout)
-        self._set_base_freq()
-        self._rf_freq_pv.add_callback(self._set_base_freq)
-        self._rf_div_pv.add_callback(self._set_base_freq)
+        self._update_base_freq()
+        self._rf_freq_pv.add_callback(self._update_base_freq)
+        self._rf_div_pv.add_callback(self._update_base_freq)
 
         self._timer = None
-        self._initialize_ll_state()
+        self._initialize_my_state_sp(init_hl_state)
 
         self._pvs_sp = dict()
         self._pvs_rb = dict()
@@ -101,16 +71,16 @@ class _Base:
                 pv_name_sp = pv_name.replace('-Sts', '-Sel')
             elif pv_name.endswith('-Cmd'):
                 pv_name_sp = pv_name
-            elif pv_name.endswith('-Mon'):
+            elif pv_name.endswith(('-Mon', '-Cte')):
                 pv_name_rb = pv_name
             if pv_name_rb is not None:
-                self._pvs_rb[prop] = PV_Class(
+                self._pvs_rb[prop] = _epics.PV(
                     pv_name_rb,
                     callback=self._on_change_pvs_rb,
                     connection_callback=self._on_connection,
                     connection_timeout=_conn_timeout)
             if pv_name_sp is not None:
-                self._pvs_sp[prop] = PV_Class(
+                self._pvs_sp[prop] = _epics.PV(
                     pv_name_sp,
                     callback=self._on_change_pvs_sp,
                     connection_callback=self._on_connection,
@@ -118,7 +88,7 @@ class _Base:
                 self._pvs_sp[prop]._initialized = False
 
         # Timer to force equality between high and low level:
-        self._timer = _Timer(_INTERVAL, self._force_equal)
+        self._timer = _Timer(INTERVAL, self._force_equal)
         self._timer.start()
 
     def write(self, prop, value):
@@ -139,10 +109,10 @@ class _Base:
         if self._timer.isAlive():
             self._timer.reset()
         else:
-            self._timer = _Timer(_INTERVAL, self._force_equal, niter=10)
+            self._timer = _Timer(INTERVAL, self._force_equal, niter=10)
             self._timer.start()
 
-    def _set_base_freq(self, **kwargs):
+    def _update_base_freq(self, **kwargs):
         self._rf_freq = self._rf_freq_pv.get(
                                 timeout=_conn_timeout) or self._rf_freq
         self._rf_div = self._rf_div_pv.get(
@@ -151,7 +121,7 @@ class _Base:
         self._base_del = 1/self._base_freq
         self._rf_del = self._base_del / self._rf_div / 5
 
-    def _get_convertion_prop2pv(self):
+    def _define_convertion_prop2pv(self):
         """Define a dictionary for convertion of names.
 
         The dictionary converts low level properties names to low level PV
@@ -159,7 +129,7 @@ class _Base:
         """
         return dict()
 
-    def _get_dict_for_write(self):
+    def _define_dict_for_write(self):
         """Define a dictionary of functions to convert HL to LL.
 
         Each function converts the values of High level properties into values
@@ -169,7 +139,7 @@ class _Base:
         """
         return dict()
 
-    def _get_dict_for_read(self):
+    def _define_dict_for_read(self):
         """Define a dictionary of functions to convert LL to HL.
 
         Each function converts the readback values of Low Level properties into
@@ -179,8 +149,14 @@ class _Base:
         """
         return dict()
 
-    def _initialize_ll_state(self):
-        for hl_prop, val in self._hl_state.items():
+    def _get_from_pvs_rb(self, ll_prop, def_val=0):
+        val = self._pvs_rb.get(ll_prop)
+        if val is not None:
+            val = val.get(timeout=_conn_timeout)
+        return def_val if val is None else val
+
+    def _initialize_my_state_sp(self, init_hl_state):
+        for hl_prop, val in init_hl_state.items():
             fun = self._dict_functions_for_write[hl_prop]
             fun(val)
         self._start_timer()
@@ -194,7 +170,7 @@ class _Base:
             v = pv.get(timeout=_conn_timeout)
             if v is None:
                 continue
-            my_val = self._ll_state.get(ll_prop)
+            my_val = self._my_state_sp.get(ll_prop)
             if my_val is None:
                 raise Exception(self.prefix + ' ll_prop = ' +
                                 ll_prop + ' not in dict.')
@@ -202,9 +178,9 @@ class _Base:
                 continue
             # If pv is a command, it must be sent only once
             if pv.pvname.endswith('-Cmd'):
-                if self._ll_state[ll_prop]:
-                    self._put_on_pv(pv, self._ll_state[ll_prop])
-                    self._ll_state[ll_prop] = 0
+                if self._my_state_sp[ll_prop]:
+                    self._put_on_pv(pv, self._my_state_sp[ll_prop])
+                    self._my_state_sp[ll_prop] = 0
                 return
             self._put_on_pv(pv, my_val)
 
@@ -218,131 +194,124 @@ class _Base:
     def _on_change_pvs_rb(self, pvname, value, **kwargs):
         if value is None:
             return
-        self._queue.add_callback(
-                        self._on_change_pvs_rb_thread, pvname, value)
+        self._queue.add_callback(self._on_change_pvs_rb_thread, pvname, value)
 
     def _on_change_pvs_rb_thread(self, pvname, value, **kwargs):
-        fun = self._dict_functions_for_read[
-                                self._dict_convert_pv2prop[pvname]]
+        fun = self._dict_functions_for_read[self._dict_convert_pv2prop[pvname]]
         props = fun(value)
         for hl_prop, val in props.items():
-            if not isinstance(val, dict):
-                val = {'value': val}
             self.callback(self.channel, hl_prop, val)
 
     def _on_connection(self, pvname, conn, **kwargs):
         self._queue.add_callback(self._on_connection_thread, pvname, conn)
 
     def _on_connection_thread(self, pvname, conn):
-        dic = dict()
-        dic.update(self._pvs_sp)
-        dic.update(self._pvs_rb)
         connected = True
-        for pv in dic.values():
+        for prop, pv in self._pvs_sp.items():
+            connected &= (conn if pvname == pv.pvname else pv.connected)
+            if conn and pvname == pv.pvname:
+                self._pvs_sp[prop]._initialized = False
+                self._start_timer()
+
+        for pv in self._pvs_rb.values():
             connected &= (conn if pvname == pv.pvname else pv.connected)
             if not connected:
                 break
         self.connected = connected
         props = self._get_status('PVsConn', connected)
         for hl_prop, val in props.items():
-            if not isinstance(val, dict):
-                val = {'value': val}
             self.callback(self.channel, hl_prop, val)
 
-    def _set_simple(self, prop, value, ll_prop=None):
+    def _set_simple(self, prop, value):
         """Simple setting of Low Level IOC PVs.
 
         Function called by write when no convertion is needed between
         high and low level properties.
         """
-        ll_prop = ll_prop or prop
-        self._hl_state[prop] = value
-        self._ll_state[ll_prop] = value
+        self._my_state_sp[prop] = value
+
+    def _get_simple(self, prop, val=None, hl_prop=None):
+        hl_prop = prop if hl_prop is None else hl_prop
+        return {hl_prop: self._get_from_pvs_rb(prop) if val is None else val}
 
     def _get_status(self, prop, value):
-        alarm = Alarm.COMM_ALARM if value else Alarm.NO_ALARM
-        severity = Severity.INVALID_ALARM if value else Severity.NO_ALARM
-        dic_ = {'value': None, 'alarm': alarm, 'severity': severity}
-        dic_ret = dict()
-        for hl_prop in self._dict_functions_for_write.keys():
-            dic_ret[hl_prop] = _dcopy(dic_)
-        return dic_ret
+        return dict()
 
 
 class LL_EVG(_Base):
     """Define the Low Level EVG Class."""
 
-    def __init__(self, channel,  callback, init_state):
+    def __init__(self, channel,  callback, init_hl_state):
         """Initialize the instance."""
         self.prefix = LL_PREFIX + channel
         self.channel = channel
-        super().__init__(callback, init_state)
+        super().__init__(callback, init_hl_state)
 
-    def _get_convertion_prop2pv(self):
+    def _define_convertion_prop2pv(self):
         return {'ACDiv': self.prefix + 'ACDiv-RB'}
 
-    def _get_dict_for_write(self):
+    def _define_dict_for_write(self):
         return {'RepRate': self._set_frequency}
 
-    def _get_dict_for_read(self):
+    def _define_dict_for_read(self):
         return {'ACDiv': self._get_frequency}
 
     def _set_frequency(self, value):
         n = round(ACFREQ/value)
-        self._hl_state['RepRate'] = ACFREQ / n
-        self._ll_state['ACDiv'] = n
+        self._my_state_sp['ACDiv'] = n
 
-    def _get_frequency(self, value):
-        return {'RepRate': ACFREQ / value}
+    def _get_frequency(self, val=None):
+        fr = self._get_from_pvs_rb('ACDiv', def_val=1) if val is None else val
+        return {'RepRate': ACFREQ / fr}
 
 
 class LL_Clock(_Base):
     """Define the Low Level Clock Class."""
 
-    def __init__(self, channel,  callback, init_state):
+    def __init__(self, channel,  callback, init_hl_state):
         """Initialize the instance."""
         self.prefix = LL_PREFIX + channel
         self.channel = channel
-        super().__init__(callback, init_state)
+        super().__init__(callback, init_hl_state)
 
-    def _get_convertion_prop2pv(self):
+    def _define_convertion_prop2pv(self):
         return {
             'MuxDiv': self.prefix + 'MuxDiv-RB',
             'MuxEnbl': self.prefix + 'MuxEnbl-Sts',
             }
 
-    def _get_dict_for_write(self):
+    def _define_dict_for_write(self):
         return {
             'Freq': self._set_frequency,
-            'State': lambda x: self._set_simple('State', x, ll_prop='MuxEnbl'),
+            'State': lambda x: self._set_simple('MuxEnbl', x),
             }
 
-    def _get_dict_for_read(self):
+    def _define_dict_for_read(self):
         return {
             'MuxDiv': self._get_frequency,
-            'MuxEnbl': lambda x: {'State': x},
+            'MuxEnbl': lambda x: self._get_simple('MuxEnbl', x, 'State'),
             }
 
     def _set_frequency(self, value):
         value *= 1e3  # kHz
         n = round(self._base_freq/value)
-        self._hl_state['Freq'] = self._base_freq / n * 1e-3
-        self._ll_state['MuxDiv'] = n
+        self._my_state_sp['MuxDiv'] = n
 
-    def _get_frequency(self, value):
-        return {'Freq': self._base_freq / value * 1e-3}
+    def _get_frequency(self, val=None):
+        fr = self._get_from_pvs_rb('MuxDiv', def_val=1) if val is None else val
+        return {'Freq': self._base_freq / fr * 1e-3}
 
 
 class LL_Event(_Base):
     """Define the Low Level Event Class."""
 
-    def __init__(self, channel, callback, init_state):
+    def __init__(self, channel, callback, init_hl_state):
         """Initialize the instance."""
         self.prefix = LL_PREFIX + channel
         self.channel = channel
-        super().__init__(callback, init_state)
+        super().__init__(callback, init_hl_state)
 
-    def _get_convertion_prop2pv(self):
+    def _define_convertion_prop2pv(self):
         return {
             'Delay': self.prefix + 'Delay-RB',
             'Mode': self.prefix + 'Mode-Sts',
@@ -350,7 +319,7 @@ class LL_Event(_Base):
             'ExtTrig': self.prefix + 'ExtTrig-Cmd',
             }
 
-    def _get_dict_for_write(self):
+    def _define_dict_for_write(self):
         return {
             'Delay': self._set_delay,
             'Mode': lambda x: self._set_simple('Mode', x),
@@ -358,19 +327,18 @@ class LL_Event(_Base):
             'ExtTrig': lambda x: self._set_simple('ExtTrig', x),
             }
 
-    def _get_dict_for_read(self):
+    def _define_dict_for_read(self):
         return {
             'Delay': self._get_delay,
-            'Mode': lambda x: {'Mode': x},
-            'DelayType': lambda x: {'DelayType': x},
-            'ExtTrig': lambda x: {'ExtTrig': x},
+            'Mode': lambda x: self._get_simple('Mode',  x),
+            'DelayType': lambda x: self._get_simple('DelayType', x),
+            'ExtTrig': lambda x: self._get_simple('ExtTrig', x),
             }
 
     def _set_delay(self, value):
         value *= _DELAY_UNIT_CONV  # us
         n = int(value // self._base_del)
-        self._hl_state['Delay'] = n * self._base_del * 1e6
-        self._ll_state['Delay'] = n
+        self._my_state_sp['Delay'] = n
 
     def _get_delay(self, value):
         return {'Delay': value * self._base_del * 1e6}
@@ -381,8 +349,8 @@ class _EVROUT(_Base):
     _REMOVE_PROPS = {}
 
     def __init__(self, channel, conn_num, callback,
-                 init_state, source_enums):
-        self._internal_trigger = self._get_num_int(conn_num)
+                 init_hl_state, source_enums):
+        self._internal_trigger = self._define_num_int(conn_num)
         self.prefix = LL_PREFIX + _PVName(channel).device_name + ':'
         chan_tree = Connections.get_device_tree(channel)
         fout_name = [chan.device_name for chan in chan_tree
@@ -391,10 +359,10 @@ class _EVROUT(_Base):
         self._evg_prefix = LL_PREFIX + EVG_NAME + ':'
         self.channel = channel
         self._source_enums = source_enums
-        init_state['DevEnbl'] = 1
-        init_state['FOUTDevEnbl'] = 1
-        init_state['EVGDevEnbl'] = 1
-        super().__init__(callback, init_state)
+        init_hl_state['DevEnbl'] = 1
+        init_hl_state['FOUTDevEnbl'] = 1
+        init_hl_state['EVGDevEnbl'] = 1
+        super().__init__(callback, init_hl_state)
 
     def _INTLB_formatter(self):
         return 'OTP{0:02d}'.format(self._internal_trigger)
@@ -402,10 +370,10 @@ class _EVROUT(_Base):
     def _OUTLB_formatter(self):
         return 'OUT{0:d}'.format(self._internal_trigger - self._NUM_OTP)
 
-    def _get_num_int(self, num):
+    def _define_num_int(self, num):
         return self._NUM_OTP + num
 
-    def _get_convertion_prop2pv(self):
+    def _define_convertion_prop2pv(self):
         intlb = self._INTLB_formatter()
         outlb = self._OUTLB_formatter()
         map_ = {
@@ -433,7 +401,7 @@ class _EVROUT(_Base):
             map_.pop(prop)
         return map_
 
-    def _get_dict_for_write(self):
+    def _define_dict_for_write(self):
         map_ = {
             'DevEnbl': lambda x: self._set_simple('DevEnbl', x),
             'FOUTDevEnbl': lambda x: self._set_simple('FOUTDevEnbl', x),
@@ -449,15 +417,15 @@ class _EVROUT(_Base):
             }
         return map_
 
-    def _get_dict_for_read(self):
+    def _define_dict_for_read(self):
         map_ = {
-            'State': lambda x: {'State': x},
+            'State': lambda x: self._get_simple('State', x),
             'Evt': lambda x: self._process_source('Evt', x),
-            'Width': self._get_duration,
-            'Polarity': lambda x: {'Polarity': x},
-            'Pulses': lambda x: {'Pulses': x},
+            'Width': lambda x: self._get_duration_pulses('Width', x),
+            'Polarity': lambda x: self._get_simple('Polarity', x),
+            'Pulses': lambda x: self._get_duration_pulses('Pulses', x),
             'Delay': lambda x: self._get_delay('Delay', x),
-            'Intlk': lambda x: {'Intlk': x},
+            'Intlk': lambda x: self._get_simple('Intlk', x),
             'Src': lambda x: self._process_source('Src', x),
             'SrcTrig': lambda x: self._process_source('SrcTrig', x),
             'RFDelay': lambda x: self._get_delay('RFDelay', x),
@@ -474,13 +442,7 @@ class _EVROUT(_Base):
             map_.pop(prop)
         return map_
 
-    def _get_from_pvs_rb(self, ll_prop, def_val=0):
-        val = self._pvs_rb.get(ll_prop)
-        if val is not None:
-            val = val.get(timeout=_conn_timeout)
-        return def_val if val is None else val
-
-    def _get_status(self, prop, value):
+    def _get_status(self, prop, value=None):
         dic_ = dict()
         dic_['DevEnbl'] = self._get_from_pvs_rb('DevEnbl', def_val=0)
         dic_['FOUTDevEnbl'] = self._get_from_pvs_rb('FOUTDevEnbl', def_val=0)
@@ -490,193 +452,161 @@ class _EVROUT(_Base):
         dic_['Link'] = self._get_from_pvs_rb('Link', def_val=0)
         dic_['Los'] = self._get_from_pvs_rb('Los', def_val=None)
         dic_['PVsConn'] = self.connected
-        dic_[prop] = value
+        if value is not None:
+            dic_[prop] = value
 
         status = 0
-        alarm = Alarm.NO_ALARM
-        severity = Severity.NO_ALARM
-        if not dic_['PVsConn']:
-            status |= (1 << 0)
-            alarm = Alarm.COMM_ALARM
-            severity = Severity.MAJOR_ALARM
-        if not dic_['DevEnbl']:
-            status |= (1 << 1)
-            alarm = Alarm.DISABLE_ALARM
-            severity = Severity.MAJOR_ALARM
-        if not dic_['FOUTDevEnbl']:
-            status |= (1 << 2)
-            alarm = Alarm.DISABLE_ALARM
-            severity = Severity.MAJOR_ALARM
-        if not dic_['EVGDevEnbl']:
-            status |= (1 << 3)
-            alarm = Alarm.DISABLE_ALARM
-            severity = Severity.MAJOR_ALARM
-        if not dic_['Network']:
-            status |= (1 << 4)
-            alarm = Alarm.COMM_ALARM
-            severity = Severity.MINOR_ALARM
-        if dic_['IntlkMon']:
-            status |= (1 << 5)
-            alarm = Alarm.STATE_ALARM
-            severity = Severity.MINOR_ALARM
-        if not dic_['Link']:
-            status |= (1 << 6)
-            alarm = Alarm.LINK_ALARM
-            severity = Severity.MAJOR_ALARM
+        status |= ((not dic_['PVsConn']) << 0)
+        status |= ((not dic_['DevEnbl']) << 1)
+        status |= ((not dic_['FOUTDevEnbl']) << 2)
+        status |= ((not dic_['EVGDevEnbl']) << 3)
+        status |= ((not dic_['Network']) << 4)
+        status |= ((dic_['IntlkMon']) << 5)
+        status |= ((not dic_['Link']) << 6)
         if dic_['Los'] is not None:
             num = self._internal_trigger - self._NUM_OTP
             if num >= 0 and (dic_['Los'] >> num) % 2:
                 status |= (1 << 7)
-                alarm = Alarm.LINK_ALARM
-                severity = Severity.MAJOR_ALARM
-        return {'Status': {
-                    'value': status,
-                    'alarm': alarm,
-                    'severity': severity,
-                    }
-                }  # Connection OK
+        return {'Status': status}
 
-    def _get_delay(self, prop, value):
-        # delay1 = self._get_from_pvs_rb('Delay', def_val=0)
-        # delay2 = self._get_from_pvs_rb('RFDelay', def_val=0)
-        # delay3 = self._get_from_pvs_rb('FineDelay', def_val=0)
-        delay1 = self._ll_state['Delay']
-        delay2 = self._ll_state['RFDelay']
-        delay3 = self._ll_state['FineDelay']
-        if prop == 'Delay':
-            delay1 = value
-        elif prop == 'RFDelay':
-            delay2 = value
-        elif prop == 'FineDelay':
-            delay3 = value
+    def _get_delay(self, prop, value=None):
+        dic_ = dict()
+        dic_['Delay'] = self._get_from_pvs_rb('Delay', def_val=0)
+        dic_['RFDelay'] = self._get_from_pvs_rb('RFDelay', def_val=0)
+        dic_['FineDelay'] = self._get_from_pvs_rb('FineDelay', def_val=0)
+        if value is not None:
+            dic_[prop] = value
 
-        if delay2 == 31:
-            delay = (delay1*self._base_del + delay3*FDEL) * 1e6
+        delay = (dic_['Delay']*self._base_del + dic_['FineDelay']*FDEL) * 1e6
+        if dic_['RFDelay'] == 31:
             return {'Delay': delay, 'DelayType': 1}
         else:
-            delay = (delay1*self._base_del +
-                     delay2*self._rf_del +
-                     delay3*FDEL) * 1e6
+            delay += dic_['RFDelay']*self._rf_del * 1e6
             return {'Delay': delay, 'DelayType': 0}
 
     def _set_delay(self, value):
         value *= _DELAY_UNIT_CONV  # us
         delay1 = int(value // self._base_del)
-        self._ll_state['Delay'] = delay1
-        if not self._hl_state['DelayType']:
+        self._my_state_sp['Delay'] = delay1
+        del_type = self._my_state_sp.get('RFDelay', 0)  # Initialization issue
+        if del_type != 31:
             value -= delay1 * self._base_del
             delay2 = value // self._rf_del
             value -= delay2 * self._rf_del
             delay3 = round(value / FDEL)
-            delay = (delay1*self._base_del +
-                     delay2*self._rf_del +
-                     delay3*FDEL) * 1e6
-            self._hl_state['Delay'] = delay
-            self._ll_state['RFDelay'] = delay2
-            self._ll_state['FineDelay'] = delay3
-        else:
-            self._hl_state['Delay'] = delay1 * self._base_del * 1e6
-            self._ll_state['RFDelay'] = 31
-            self._ll_state['FineDelay'] = 0
+            self._my_state_sp['RFDelay'] = delay2
+            self._my_state_sp['FineDelay'] = delay3
 
     def _set_delay_type(self, value):
-        self._hl_state['DelayType'] = value
-        self._set_delay(self._hl_state['Delay'])
+        if value:
+            self._my_state_sp['RFDelay'] = 31
+            self._my_state_sp['FineDelay'] = 0
+        else:
+            self._my_state_sp['RFDelay'] = 0
 
-    def _process_source(self, prop, value):
+    def _process_source(self, prop, value=None):
+        dic_ = dict()
+        dic_['SrcTrig'] = self._get_from_pvs_rb('SrcTrig', def_val=30)
+        dic_['Src'] = self._get_from_pvs_rb('Src', def_val=None)
+        dic_['Evt'] = self._get_from_pvs_rb('Evt', def_val=0)
+        if value is not None:
+            dic_[prop] = value
+
+        ret = self._process_src_trig(dic_['SrcTrig'])
+        if ret is not None:
+            return ret
+        ret = self._process_src(dic_['Src'])
+        if ret is not None:
+            return ret
+        return self._process_evt(dic_['Evt'])
+
+    def _process_evt(self, evt):
         src_len = len(self._source_enums)
-        trig = self._get_from_pvs_rb('SrcTrig', def_val=30)
-        source = self._get_from_pvs_rb('Src', def_val=None)
-        event = self._get_from_pvs_rb('Evt', def_val=0)
-        if prop == 'SrcTrig':
-            trig = value
-        elif prop == 'Src':
-            source = value
-        elif prop == 'Evt':
-            event = value
+        event = Events.LL_TMP.format(evt)
+        if event not in Events.LL2HL_MAP:
+            return {'Src': src_len}
+        elif Events.LL2HL_MAP[event] not in self._source_enums:
+            return {'Src': src_len}
+        else:
+            ev_num = self._source_enums.index(Events.LL2HL_MAP[event])
+            return {'Src': ev_num}
 
-        if trig != self._internal_trigger:
+    def _process_src_trig(self, src_trig):
+        src_len = len(self._source_enums)
+        if src_trig != self._internal_trigger:
             return {'Src': src_len}  # invalid
 
-        source = Triggers.SRC_LL[source]
+    def _process_src(self, src):
+        src_len = len(self._source_enums)
+        source = Triggers.SRC_LL[src]
         if not source:
             return {'Src': src_len}  # invalid
         elif source.startswith(('Dsbl', 'Clock')):
             return {'Src': self._source_enums.index(source)}
 
-        event = Events.LL_TMP.format(event)
-        if event not in Events.LL2HL_MAP:
-            return {'Src': src_len}
-        elif Events.LL2HL_MAP[event] not in self._source_enums:
-            return {'Src': src_len}
-        else:
-            ev_num = self._source_enums.index(Events.LL2HL_MAP[event])
-            return {'Src': ev_num}
-
     def _set_source(self, value):
-        self._hl_state['Src'] = value
         pname = self._source_enums[value]
         if pname.startswith(('Clock', 'Dsbl')):
-            self._ll_state['Src'] = Triggers.SRC_LL.index(pname)
+            self._my_state_sp['Src'] = Triggers.SRC_LL.index(pname)
         else:
-            self._ll_state['Src'] = Triggers.SRC_LL.index('Trigger')
-            self._ll_state['Evt'] = int(Events.HL2LL_MAP[pname][-2:])
+            self._my_state_sp['Src'] = Triggers.SRC_LL.index('Trigger')
+            self._my_state_sp['Evt'] = int(Events.HL2LL_MAP[pname][-2:])
         if 'SrcTrig' in self._dict_convert_prop2pv.keys():
-            self._ll_state['SrcTrig'] = self._internal_trigger
+            self._my_state_sp['SrcTrig'] = self._internal_trigger
 
-    def _get_duration(self, width):
-        # pulses = self._get_from_pvs_rb('Pulses', def_val=0)
-        pulses = self._ll_state['Pulses']
-        return {'Duration': 2*width*self._base_del*pulses*1e3}
+    def _get_duration_pulses(self, prop, value=None):
+        dic_ = dict()
+        dic_['Pulses'] = self._get_from_pvs_rb('Pulses', def_val=0)
+        dic_['Width'] = self._get_from_pvs_rb('Width', def_val=0)
+        if value is not None:
+            dic_[prop] = value
+        return {
+            'Duration': 2*dic_['Width']*self._base_del*dic_['Pulses']*1e3,
+            'Pulses': dic_['Pulses'],
+            }
 
     def _set_duration(self, value):
         value *= 1e-3  # ms
-        pul = self._hl_state['Pulses']
-        n = round(value / self._base_del / pul / 2)
+        pul = self._my_state_sp.get('Pulses', 1)  # Initialization issue
+        n = int(round(value / self._base_del / pul / 2))
         n = n if n >= 1 else 1
-        self._hl_state['Duration'] = 2 * n * self._base_del * pul * 1e3
-        self._ll_state['Width'] = n
+        self._my_state_sp['Width'] = n
 
     def _set_pulses(self, value):
-        self._hl_state['Pulses'] = value
-        self._ll_state['Pulses'] = value
-        self._set_duration(self._hl_state['Duration'])
+        if value < 1:
+            return
+        old_pul = self._my_state_sp.get('Pulses', 1)  # Initialization issue
+        self._my_state_sp['Pulses'] = int(value)
+        old_wid = self._my_state_sp.get('Width', 1)  # Initialization issue
+        self._my_state_sp['Width'] = int(round(old_wid*old_pul/value))
 
 
 class _EVROTP(_EVROUT):
     _REMOVE_PROPS = {'RFDelay', 'FineDelay', 'Src', 'SrcTrig', 'Intlk'}
 
-    def _get_num_int(self, num):
+    def _define_num_int(self, num):
         return num
 
-    def _get_delay(self, prop, value):
-        return {'Delay': value * self._base_del * 1e6}
+    def _get_delay(self, prop, val=None):
+        d = self._get_from_pvs_rb('Delay', def_val=0) if val is None else val
+        return {'Delay': d * self._base_del * 1e6}
 
     def _set_delay(self, value):
         value *= _DELAY_UNIT_CONV
         delay1 = int(value // self._base_del)
-        self._hl_state['Delay'] = delay1 * self._base_del * 1e6
-        self._ll_state['Delay'] = delay1
+        self._my_state_sp['Delay'] = delay1
 
     def _set_delay_type(self, value):
-        self._hl_state['DelayType'] = 0
+        return
 
-    def _process_source(self, prop, value):
-        src_len = len(self._source_enums)
-        event = Events.LL_TMP.format(value)
-        if event not in Events.LL2HL_MAP:
-            return {'Src': src_len}
-        elif Events.LL2HL_MAP[event] not in self._source_enums:
-            return {'Src': src_len}
-        else:
-            ev_num = self._source_enums.index(Events.LL2HL_MAP[event])
-            return {'Src': ev_num}
+    def _process_source(self, prop, val=None):
+        event = self._get_from_pvs_rb('Evt', def_val=0) if val is None else val
+        return self._process_evt(event)
 
     def _set_source(self, value):
-        self._hl_state['Src'] = value
         pname = self._source_enums[value]
         if not pname.startswith(('Clock', 'Dsbl')):
-            self._ll_state['Evt'] = int(Events.HL2LL_MAP[pname][-2:])
+            self._my_state_sp['Evt'] = int(Events.HL2LL_MAP[pname][-2:])
 
 
 class _EVEOUT(_EVROUT):
@@ -694,43 +624,26 @@ class _AFCCRT(_EVROUT):
     def _OUTLB_formatter(self):
         return self._INTLB_formatter()
 
-    def _get_delay(self, prop, value):
-        return {'Delay': value * self._base_del * 1e6}
+    def _get_delay(self, prop, value=None):
+        return _EVROTP._get_delay(self, prop, value)
 
     def _set_delay(self, value):
-        value *= _DELAY_UNIT_CONV
-        delay1 = int(value // self._base_del)
-        self._hl_state['Delay'] = delay1 * self._base_del * 1e6
-        self._ll_state['Delay'] = delay1
+        _EVROTP._set_delay(self, value)
 
     def _set_delay_type(self, value):
-        self._hl_state['DelayType'] = 0
+        _EVROTP._set_delay_type(self, value)
 
-    def _process_source(self, prop, value):
-        src_len = len(self._source_enums)
-        # source = self._get_from_pvs_rb('Src', def_val=None)
-        # event = self._get_from_pvs_rb('Evt', def_val=0)
-        source = self._ll_state['Src']
-        event = self._ll_state['Evt']
-        if prop == 'Src':
-            source = value
-        elif prop == 'Evt':
-            event = value
+    def _process_source(self, prop, value=None):
+        dic_ = dict()
+        dic_['Src'] = self._get_from_pvs_rb('Src', def_val=None)
+        dic_['Evt'] = self._get_from_pvs_rb('Evt', def_val=0)
+        if value is not None:
+            dic_[prop] = value
 
-        source = Triggers.SRC_LL[source]
-        if not source:
-            return {'Src': src_len}  # invalid
-        elif source.startswith(('Dsbl', 'Clock')):
-            return {'Src': self._source_enums.index(source)}
-
-        event = Events.LL_TMP.format(event)
-        if event not in Events.LL2HL_MAP:
-            return {'Src': src_len}
-        elif Events.LL2HL_MAP[event] not in self._source_enums:
-            return {'Src': src_len}
-        else:
-            ev_num = self._source_enums.index(Events.LL2HL_MAP[event])
-            return {'Src': ev_num}
+        ret = self._process_src(dic_['Src'])
+        if ret is not None:
+            return ret
+        return self._process_evt(dic_['Evt'])
 
 
 class _AFCFMC(_AFCCRT):
@@ -741,7 +654,7 @@ class _AFCFMC(_AFCCRT):
         return 'FMC{0:d}CH{1:d}'.format(fmc, ch)
 
 
-def get_ll_trigger_object(channel, callback, init_state, source_enums):
+def get_ll_trigger_object(channel, callback, init_hl_state, source_enums):
     """Get Low Level trigger objects."""
     LL_TRIGGER_CLASSES = {
         ('EVR', 'OUT'): _EVROUT,
@@ -763,10 +676,11 @@ def get_ll_trigger_object(channel, callback, init_state, source_enums):
     if not cls_:
         raise Exception('Low Level Trigger Class not defined for device ' +
                         'type '+key[0]+' and connection type '+key[1]+'.')
-    return cls_(channel, int(conn_num), callback, init_state, source_enums)
+    return cls_(channel, int(conn_num), callback, init_hl_state, source_enums)
 
 
 def get_ll_trigger_obj_names(chans):
+    """Get Low Level trigger object names."""
     channels = set()
     for chan in chans:
         chan_tree = Connections.get_device_tree(chan)

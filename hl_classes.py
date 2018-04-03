@@ -1,10 +1,16 @@
 """Define the high level classes."""
 
+import functools
+import operator
 import logging as _log
 from copy import deepcopy as _dcopy
+from threading import Lock as _Lock
+from scipy.stats import mode
+from pcaspy import Alarm, Severity
+from siriuspy.thread import RepeaterThread as _Timer
 from siriuspy.timesys.time_data import Triggers
 from siriuspy.timesys.time_data import Clocks, Events
-from as_ti_control.ll_classes import get_ll_trigger_object
+from as_ti_control.ll_classes import get_ll_trigger_object, INTERVAL
 from as_ti_control.ll_classes import get_ll_trigger_obj_names
 from as_ti_control.ll_classes import LL_Event, LL_Clock, LL_EVG, EVG_NAME
 
@@ -27,68 +33,36 @@ class _HL_Base:
         """Get the database."""
         db2 = dict()
         for prop_name in self._interface_props:
-            name = self.prefix + prop_name + self._SUFFIX_FOR_PROPS[prop_name]
+            name = self._get_pv_name(prop_name)
             db2[name] = db[name]
             name = name.replace('-RB', '-SP').replace('-Sts', '-Sel')
             db2[name] = db[name]
         return db2      # dictionary must have key fun_set_pv
 
-    def __init__(self, prefix, callback):
+    def __init__(self, prefix, callback, connect_kwargs=dict()):
         """Appropriately initialize the instance.
 
         prefix = is the first part of the pv name of this object.
         callback = is the callable to be called when readbacks are updated.
-        channels = is a list of unique identifiers for all the low level
-          objects associated with this object:
-            Events: low level event code
-            Clocks: clock number
-            trigger: <DeviceName>:<Output>
         """
         _log.info(prefix + ' Starting.')
         self.callback = callback
         self.prefix = prefix
-        self._my_state = dict()
-        self._interface_props = set()
-        self._ll_objs_names = list()
-        self._ll_objs = dict()
-        self._connect_kwargs = dict()
+        self._connect_kwargs = connect_kwargs
+        self._funs_combine_rb_values = self._get_funs_combine_rb_values()
+        self._initialize_rb_values()
+        self._timer = _Timer(INTERVAL, self._deal_with_rb_news, niter=0)
+        self._timer.start()
 
     def connect(self):
+        self._ll_objs = dict()
         _log.info(self.prefix+' -> connecting to LL Devices')
         for chan in self._ll_objs_names:
             self._ll_objs[chan] = self._get_LL_OBJ(
                                 channel=chan,
                                 callback=self._on_change_pvs_rb,
-                                init_state=_dcopy(self._my_state),
+                                init_hl_state=_dcopy(self._my_state),
                                 **self._connect_kwargs)
-
-    def _on_change_pvs_rb(self, channel, prop_name, value):
-        if prop_name not in self._interface_props:
-            if self._my_state[prop_name] != value['value']:
-                _log.warning(self.prefix + prop_name +
-                             ' (not HL); ' + ' LL Device = ' + channel +
-                             '; New Value = ' + str(value['value']) +
-                             '; Expected Value = ' +
-                             str(self._my_state[prop_name]))
-            return
-        if prop_name == 'Status':
-            self._rb_values['Status'][channel] = value['value']
-            val = 0
-            for chan, v in self._rb_values['Status'].items():
-                val |= v
-            value['value'] = val
-        self.callback(self._get_pv_name(prop_name), **value)
-
-    def _get_pv_name(self, prop_name):
-        return self.prefix + prop_name + self._SUFFIX_FOR_PROPS[prop_name]
-
-    def _initialize_rb_values(self):
-        self._rb_values = dict()
-        db = self.get_database()
-        for k in self._interface_props:
-            self._rb_values[k] = dict()
-            for k2 in self._ll_objs_names:
-                self._rb_values[k][k2] = db[self._get_pv_name(k)]['value']
 
     def write(self, prop_name, value):
         """Function to be called by the IOC to set high level properties.
@@ -102,6 +76,62 @@ class _HL_Base:
         for dev, obj in self._ll_objs.items():
             obj.write(prop_name, value)
         return True
+
+    def _on_change_pvs_rb(self, channel, prop_name, value):
+        if prop_name not in self._interface_props:
+            if self._my_state[prop_name] != value:
+                _log.warning(self.prefix + prop_name +
+                             ' (not HL); ' + ' LL Device = ' + channel +
+                             '; New Value = ' + str(value) +
+                             '; Expected Value = ' +
+                             str(self._my_state[prop_name]))
+            return
+        with self._lock_rb_to_deal:
+            self._rb_values[prop_name][channel] = value
+            self._rb_news[prop_name] = True
+
+    def _deal_with_rb_news(self):
+        for k, v in self._rb_news.items():
+            if not v:
+                continue
+            fun = self._funs_combine_rb_values.get(k, self._combine_default)
+            with self._lock_rb_to_deal:
+                dic_ = self._rb_values[k]
+                value = fun(dic_)
+                self._rb_news[k] = False
+            self.callback(self._get_pv_name(k), **value)
+
+    def _get_funs_combine_rb_values(self):
+        """Define a dictionary of functions to combine low level values.
+
+        Any property not defined here will use the default method:
+            _combine_default.
+        """
+        return dict()
+
+    def _get_pv_name(self, prop_name):
+        return self.prefix + prop_name + self._SUFFIX_FOR_PROPS[prop_name]
+
+    def _initialize_rb_values(self):
+        self._lock_rb_to_deal = _Lock()
+        self._rb_values = dict()
+        self._rb_news = dict()
+        db = self.get_database()
+        for k in self._interface_props:
+            self._rb_news[k] = False
+            self._rb_values[k] = dict()
+            for k2 in self._ll_objs_names:
+                self._rb_values[k][k2] = db[self._get_pv_name(k)]['value']
+
+    def _combine_default(self, dic_):
+        res = mode(sorted(dic_.values()))
+        value = res.mode[0]
+        alarm = Alarm.NO_ALARM
+        severity = Severity.NO_ALARM
+        if res.count[0] < len(self._ll_objs_names):
+            alarm = Alarm.COMM_ALARM
+            severity = Severity.INVALID_ALARM
+        return {'value': value, 'alarm': alarm, 'severity': severity}
 
 
 class HL_EVG(_HL_Base):
@@ -135,11 +165,10 @@ class HL_EVG(_HL_Base):
 
     def __init__(self, callback):
         """Initialize the instance."""
-        super().__init__(EVG_NAME + ':', callback)
         self._interface_props = {'RepRate'}
         self._my_state = {'RepRate': 2.0}
         self._ll_objs_names = [EVG_NAME + ':', ]
-        self._initialize_rb_values()
+        super().__init__(EVG_NAME + ':', callback)
 
 
 class HL_Clock(_HL_Base):
@@ -174,12 +203,14 @@ class HL_Clock(_HL_Base):
         return super().get_database(db)
 
     def __init__(self, prefix, callback, cl_ll):
-        """Initialize the instance."""
-        super().__init__(prefix, callback)
+        """Initialize the instance.
+
+        cl_ll: clock number
+        """
         self._interface_props = {'Freq', 'State'}
         self._my_state = {'Freq': 1.0, 'State': 0}
         self._ll_objs_names = [EVG_NAME + ':' + cl_ll]
-        self._initialize_rb_values()
+        super().__init__(prefix, callback)
 
 
 class HL_Event(_HL_Base):
@@ -231,13 +262,15 @@ class HL_Event(_HL_Base):
         return super().get_database(db)
 
     def __init__(self, prefix, callback, ev_ll):
-        """Initialize object."""
-        super().__init__(prefix, callback)
+        """Initialize object.
+
+        ev_ll: low level event code
+        """
         self._interface_props = {'Delay', 'DelayType', 'Mode', 'ExtTrig'}
         self._my_state = {'Delay': 0, 'Mode': 1,
                           'DelayType': 1, 'ExtTrig': 0}
         self._ll_objs_names = [EVG_NAME + ':' + ev_ll]
-        self._initialize_rb_values()
+        super().__init__(prefix, callback)
 
     def set_ext_trig(self, value):
         """Set the external trigger command."""
@@ -301,7 +334,7 @@ class HL_Trigger(_HL_Base):
         db[pre + 'Polarity-Sel'] = dic_
 
         dic_ = {'type': 'int', 'unit': 'numer of pulses',
-                'lolo': 1, 'low': 1, 'lolim': 1,
+                # 'lolo': 1, 'low': 1, 'lolim': 1,
                 'hilim': 2001, 'high': 10000, 'hihi': 100000}
         dic_.update(self._pvs_config['Pulses'])
         db[pre + 'Pulses-RB'] = _dcopy(dic_)
@@ -331,29 +364,42 @@ class HL_Trigger(_HL_Base):
         dic_ = {'type': 'int', 'value': 255}
         db[pre + 'Status-Mon'] = _dcopy(dic_)
 
-        # 'enums': ('Conn OK', 'Dev Dsbl', 'Net Disconn', 'Intlk Actv',
-        #           'UpLink Disconn', 'DownLink Disconn')
-
+        db[pre + 'Status-Cte'] = {
+            'type': 'string', 'count': 8,
+            'value': (
+                'All PVs connected',
+                'Device Enabled',
+                'FOUT Enabled',
+                'EVG Enabled',
+                'Network Ok',
+                'Interlock Not Active',
+                'UPLink Ok',
+                'DownLink Ok',
+                )
+            }
         return super().get_database(db)
 
     def __init__(self, prefix, callback, channels, hl_props, pvs_config):
         """Appropriately initialize the instance.
 
+        channels = is a list of unique identifiers with the format:
+            <DeviceName>:<Output>
+        for all the low level objects associated with this object:
         hl_props = is a set with high level properties that will be available
           for changes in the High Level Interface. All the possible values are:
             {'State', 'Src', 'Duration', 'Polarity', 'Pulses', 'Intlk',
              'Delay', 'DelayType'}
         pvs_config = initial values for all the high level properties.
         """
-        super().__init__(prefix, callback)
-
         self._interface_props = hl_props | {'Status'}
         self._pvs_config = pvs_config
         self._ll_objs_names = self._get_ll_obj_names(channels)
         self._my_state = {k: v['value'] for k, v in pvs_config.items()}
         self._set_non_homogeneous_params()
-        self._connect_kwargs = {'source_enums': self._source_enums}
-        self._initialize_rb_values()
+        super().__init__(
+            prefix, callback,
+            connect_kwargs={'source_enums': self._source_enums}
+            )
 
     def _has_delay_type(self, name):
         if name.dev in ('EVR', 'EVE') and name.propty.startswith('OUT'):
@@ -391,4 +437,40 @@ class HL_Trigger(_HL_Base):
         elif any(has_delay_type):
             _log.warning('Some triggers of ' + self.prefix +
                          ' are connected to unsimiliar low level devices.')
+        else:
+            self._interface_props.discard('DelayType')
+            self._interface_props.discard('Intlk')
         return
+
+    def _combine_status(self, dic_):
+        def get_bit(val, bit):
+            return (val << bit) & 1
+
+        status = functools.reduce(operator.or_, dic_.values())
+        alarm = Alarm.NO_ALARM
+        severity = Severity.NO_ALARM
+        if get_bit(status, 0):
+            # 'PVsConn'
+            alarm = Alarm.COMM_ALARM
+            severity = Severity.INVALID_ALARM
+        elif get_bit(status, 1) | get_bit(status, 2) | get_bit(status, 3):
+            # 'DevEnbl', 'FOUTDevEnbl', 'EVGDevEnbl'
+            alarm = Alarm.DISABLE_ALARM
+            severity = Severity.INVALID_ALARM
+        elif get_bit(status, 6) | get_bit(status, 7):
+            # 'Link' 'Loss'
+            alarm = Alarm.LINK_ALARM
+            severity = Severity.INVALID_ALARM
+        elif get_bit(status, 4):
+            # 'Network'
+            alarm = Alarm.COMM_ALARM
+            severity = Severity.MINOR_ALARM
+        elif get_bit(status, 5):
+            # 'IntlkMon'
+            alarm = Alarm.STATE_ALARM
+            severity = Severity.MINOR_ALARM
+        return {'value': status, 'alarm': alarm, 'severity': severity}
+
+    def _get_funs_combine_rb_values(self):
+        """Define a dictionary of functions to combine low level values."""
+        return {'Status': self._combine_status}
