@@ -69,7 +69,7 @@ class Const:
     # --- functions ---
     turn_on = 0
     turn_off = 1
-    open_loop = 2  # not implemented yet
+    open_loop = 2
     close_loop = 3
     select_op_mode = 4
     reset_interlocks = 6
@@ -80,8 +80,8 @@ class Const:
     reset_counters = 18
     cfg_siggen = 23
     set_siggen = 24  # --- NOT IMPLEMENTED YET ---
-    enable_siggen = 25  # --- NOT IMPLEMENTED YET ---
-    disable_siggen = 26  # --- NOT IMPLEMENTED YET ---
+    enable_siggen = 25
+    disable_siggen = 26
     set_slowref_readback = 27  # --- NOT IMPLEMENTED YET ---
     set_slowref_fbp_readback = 28  # --- NOT IMPLEMENTED YET ---
     set_param = 29  # --- NOT IMPLEMENTED YET ---

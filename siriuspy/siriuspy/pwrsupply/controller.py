@@ -481,6 +481,9 @@ class PSState:
 
     def __init__(self, variables):
         """Init method."""
+        # TODO: ps-controller has initial values for its variables
+        # these values are stores in eeprom. this should be eventually
+        # simulated.
         self._state = {}
         for ID_variable, variable in variables.items():
             name, type_t, writable = variable
@@ -525,10 +528,11 @@ class ControllerPSSim:
     (ControllerIOC) sent through the serial line.
     """
 
-    _I_LOAD_FLUCTUATION_RMS = 0.01  # [A]
-    # _I_LOAD_FLUCTUATION_RMS = 0.0000  # [A]
+    # TODO: implement detailed simulation of SigGen
 
-    funcs = {
+    _I_LOAD_FLUCTUATION_RMS = 0.01  # [A]
+
+    _funcs = {
         _BSMPConst.turn_on: '_func_turn_on',
         _BSMPConst.turn_off: '_func_turn_off',
         _BSMPConst.open_loop: '_func_open_loop',
@@ -540,10 +544,10 @@ class ControllerPSSim:
         _BSMPConst.set_slowref: '_func_set_slowref',
         _BSMPConst.set_slowref_fbp: '_FUNC_NOT_IMPLEMENTED',
         _BSMPConst.reset_counters: '_func_reset_counters',
-        _BSMPConst.cfg_siggen: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.cfg_siggen: '_func_cfg_siggen',
         _BSMPConst.set_siggen: '_FUNC_NOT_IMPLEMENTED',
-        _BSMPConst.enable_siggen: '_FUNC_NOT_IMPLEMENTED',
-        _BSMPConst.disable_siggen: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.enable_siggen: '_func_enable_siggen',
+        _BSMPConst.disable_siggen: '_func_disable_siggen',
         _BSMPConst.set_slowref_readback: '_FUNC_NOT_IMPLEMENTED',
         _BSMPConst.set_slowref_fbp_readback: '_FUNC_NOT_IMPLEMENTED',
         _BSMPConst.set_param: '_FUNC_NOT_IMPLEMENTED',
@@ -582,10 +586,10 @@ class ControllerPSSim:
         return state[key]
 
     def exec_function(self, ID_function, **kwargs):
-        """Execute powr supply function."""
-        if ID_function in ControllerPSSim.funcs:
+        """Execute ps-controller function."""
+        if ID_function in ControllerPSSim._funcs:
             # if bsmp function is defined, get corresponding method and run it
-            func = getattr(self, ControllerPSSim.funcs[ID_function])
+            func = getattr(self, ControllerPSSim._funcs[ID_function])
             return func(**kwargs)
         else:
             raise ValueError(
@@ -657,6 +661,29 @@ class ControllerPSSim:
     def _func_reset_counters(self, **kwargs):
         self._state[_BSMPConst.counter_set_slowref] = 0
         self._state[_BSMPConst.counter_sync_pulse] = 0
+        return _ack.ok, None
+
+    def _func_cfg_siggen(self, **kwargs):
+        # does not configure siggen if it is enabled already, accord. to spec.
+        if self._state[_BSMPConst.siggen_enable] == 1:
+            return
+        self._state[_BSMPConst.siggen_type] = kwargs['type']
+        self._state[_BSMPConst.siggen_num_cycles] = kwargs['num_cycles']
+        self._state[_BSMPConst.siggen_freq] = kwargs['freq']
+        self._state[_BSMPConst.siggen_amplitude] = kwargs['amplitude']
+        self._state[_BSMPConst.siggen_offset] = kwargs['offset']
+        self._state[_BSMPConst.siggen_aux_param] = [
+            kwargs['aux_param0'], kwargs['aux_param1'],
+            kwargs['aux_param2'], kwargs['aux_param3'],
+        ]
+        return _ack.ok, None
+
+    def _func_enable_siggen(self, **kwargs):
+        self._state[_BSMPConst.siggen_enable] = 1
+        return _ack.ok, None
+
+    def _func_disable_siggen(self, **kwargs):
+        self._state[_BSMPConst.siggen_enable] = 0
         return _ack.ok, None
 
     def _FUNC_NOT_IMPLEMENTED(self, **kwargs):
