@@ -5,14 +5,23 @@ import operator
 import logging as _log
 from copy import deepcopy as _dcopy
 from threading import Lock as _Lock
-from scipy.stats import mode
-from pcaspy import Alarm, Severity
+from scipy.stats import mode as _mode
+from pcaspy import Alarm as _Alarm
+from pcaspy import Severity as _Severity
 from siriuspy.thread import RepeaterThread as _Timer
-from siriuspy.timesys.time_data import Triggers
-from siriuspy.timesys.time_data import Clocks, Events
-from as_ti_control.ll_classes import get_ll_trigger_object, INTERVAL
-from as_ti_control.ll_classes import get_ll_trigger_obj_names
-from as_ti_control.ll_classes import LL_Event, LL_Clock, LL_EVG, EVG_NAME
+from siriuspy.timesys.time_data import Triggers as _Triggers
+from siriuspy.timesys.time_data import Clocks as _Clocks
+from siriuspy.timesys.time_data import Events as _Events
+from as_ti_control.ll_classes import get_ll_trigger_object as \
+    _get_ll_trigger_object
+from as_ti_control.ll_classes import INTERVAL as _INTERVAL
+
+from as_ti_control.ll_classes import get_ll_trigger_obj_names as \
+    _get_ll_trigger_obj_names
+from as_ti_control.ll_classes import LL_Event as _LL_Event
+from as_ti_control.ll_classes import LL_Clock as _LL_Clock
+from as_ti_control.ll_classes import LL_EVG as _LL_EVG
+from as_ti_control.ll_classes import EVG_NAME as _EVG_NAME
 
 
 # HL == High Level
@@ -51,7 +60,7 @@ class _HL_Base:
         self._connect_kwargs = connect_kwargs
         self._funs_combine_rb_values = self._get_funs_combine_rb_values()
         self._initialize_rb_values()
-        self._timer = _Timer(INTERVAL, self._deal_with_rb_news, niter=0)
+        self._timer = _Timer(_INTERVAL, self._deal_with_rb_news, niter=0)
         self._timer.start()
 
     def connect(self):
@@ -124,13 +133,13 @@ class _HL_Base:
                 self._rb_values[k][k2] = db[self._get_pv_name(k)]['value']
 
     def _combine_default(self, dic_):
-        res = mode(sorted(dic_.values()))
+        res = _mode(sorted(dic_.values()))
         value = res.mode[0]
-        alarm = Alarm.NO_ALARM
-        severity = Severity.NO_ALARM
+        alarm = _Alarm.NO_ALARM
+        severity = _Severity.NO_ALARM
         if res.count[0] < len(self._ll_objs_names):
-            alarm = Alarm.COMM_ALARM
-            severity = Severity.INVALID_ALARM
+            alarm = _Alarm.COMM_ALARM
+            severity = _Severity.INVALID_ALARM
         return {'value': value, 'alarm': alarm, 'severity': severity}
 
 
@@ -148,7 +157,7 @@ class HL_EVG(_HL_Base):
 
     @staticmethod
     def _get_LL_OBJ(**kwargs):
-        return LL_EVG(**kwargs)
+        return _LL_EVG(**kwargs)
 
     def get_database(self):
         """Get the database."""
@@ -167,8 +176,8 @@ class HL_EVG(_HL_Base):
         """Initialize the instance."""
         self._interface_props = {'RepRate'}
         self._my_state = {'RepRate': 2.0}
-        self._ll_objs_names = [EVG_NAME + ':', ]
-        super().__init__(EVG_NAME + ':', callback)
+        self._ll_objs_names = [_EVG_NAME + ':', ]
+        super().__init__(_EVG_NAME + ':', callback)
 
 
 class HL_Clock(_HL_Base):
@@ -178,7 +187,7 @@ class HL_Clock(_HL_Base):
 
     @staticmethod
     def _get_LL_OBJ(**kwargs):
-        return LL_Clock(**kwargs)
+        return _LL_Clock(**kwargs)
 
     def get_database(self):
         """Get the database."""
@@ -194,11 +203,11 @@ class HL_Clock(_HL_Base):
         db[pre + 'Freq-SP'] = dic_
 
         db[pre + 'State-Sel'] = {
-            'type': 'enum', 'enums': Clocks.STATES,
+            'type': 'enum', 'enums': _Clocks.STATES,
             'value': self._my_state['State'],
             'fun_set_pv': lambda x: self.write('State', x)}
         db[pre + 'State-Sts'] = {
-            'type': 'enum', 'enums': Clocks.STATES,
+            'type': 'enum', 'enums': _Clocks.STATES,
             'value': self._my_state['State']}
         return super().get_database(db)
 
@@ -209,7 +218,7 @@ class HL_Clock(_HL_Base):
         """
         self._interface_props = {'Freq', 'State'}
         self._my_state = {'Freq': 1.0, 'State': 0}
-        self._ll_objs_names = [EVG_NAME + ':' + cl_ll]
+        self._ll_objs_names = [_EVG_NAME + ':' + cl_ll]
         super().__init__(prefix, callback)
 
 
@@ -227,7 +236,7 @@ class HL_Event(_HL_Base):
 
     @staticmethod
     def _get_LL_OBJ(**kwargs):
-        return LL_Event(**kwargs)
+        return _LL_Event(**kwargs)
 
     def get_database(self):
         """Create the database of the class."""
@@ -242,14 +251,14 @@ class HL_Event(_HL_Base):
         dic_['fun_set_pv'] = lambda x: self.write('Delay', x)
         db[pre + 'Delay-SP'] = dic_
 
-        dic_ = {'type': 'enum', 'enums': Events.MODES,
+        dic_ = {'type': 'enum', 'enums': _Events.MODES,
                 'value': self._my_state['Mode'],
                 'states': ()}
         db[pre + 'Mode-Sts'] = _dcopy(dic_)
         dic_['fun_set_pv'] = lambda x: self.write('Mode', x)
         db[pre + 'Mode-Sel'] = dic_
 
-        dic_ = {'type': 'enum', 'enums': Events.DELAY_TYPES,
+        dic_ = {'type': 'enum', 'enums': _Events.DELAY_TYPES,
                 'value': self._my_state['DelayType']}
         db[pre + 'DelayType-Sts'] = _dcopy(dic_)
         dic_['fun_set_pv'] = lambda x: self.write('DelayType', x)
@@ -269,7 +278,7 @@ class HL_Event(_HL_Base):
         self._interface_props = {'Delay', 'DelayType', 'Mode', 'ExtTrig'}
         self._my_state = {'Delay': 0, 'Mode': 1,
                           'DelayType': 1, 'ExtTrig': 0}
-        self._ll_objs_names = [EVG_NAME + ':' + ev_ll]
+        self._ll_objs_names = [_EVG_NAME + ':' + ev_ll]
         super().__init__(prefix, callback)
 
     def set_ext_trig(self, value):
@@ -295,18 +304,18 @@ class HL_Trigger(_HL_Base):
 
     @staticmethod
     def _get_LL_OBJ(**kwargs):
-        return get_ll_trigger_object(**kwargs)
+        return _get_ll_trigger_object(**kwargs)
 
     @staticmethod
     def _get_ll_obj_names(chans):
-        return get_ll_trigger_obj_names(chans)
+        return _get_ll_trigger_obj_names(chans)
 
     def get_database(self):
         """Get the database."""
         db = dict()
         pre = self.prefix
 
-        dic_ = {'type': 'enum', 'enums': Triggers.STATES}
+        dic_ = {'type': 'enum', 'enums': _Triggers.STATES}
         dic_.update(self._pvs_config['State'])
         db[pre + 'State-Sts'] = _dcopy(dic_)
         dic_['fun_set_pv'] = lambda x: self.write('State', x)
@@ -327,7 +336,7 @@ class HL_Trigger(_HL_Base):
         dic_['fun_set_pv'] = lambda x: self.write('Duration', x)
         db[pre + 'Duration-SP'] = dic_
 
-        dic_ = {'type': 'enum', 'enums': Triggers.POLARITIES}
+        dic_ = {'type': 'enum', 'enums': _Triggers.POLARITIES}
         dic_.update(self._pvs_config['Polarity'])
         db[pre + 'Polarity-Sts'] = _dcopy(dic_)
         dic_['fun_set_pv'] = lambda x: self.write('Polarity', x)
@@ -341,7 +350,7 @@ class HL_Trigger(_HL_Base):
         dic_['fun_set_pv'] = lambda x: self.write('Pulses', x)
         db[pre + 'Pulses-SP'] = dic_
 
-        dic_ = {'type': 'enum', 'enums': Triggers.INTLK}
+        dic_ = {'type': 'enum', 'enums': _Triggers.INTLK}
         dic_.update(self._pvs_config['Intlk'])
         db[pre + 'Intlk-Sts'] = _dcopy(dic_)
         dic_['fun_set_pv'] = lambda x: self.write('Intlk', x)
@@ -424,16 +433,16 @@ class HL_Trigger(_HL_Base):
         dic_ = self._pvs_config['Src']
         # EVG_params_ENUMS
         if all(has_clock):
-            dic_['enums'] += tuple(sorted(Clocks.HL2LL_MAP.keys()))+('Dsbl', )
+            dic_['enums'] += tuple(sorted(_Clocks.HL2LL_MAP.keys()))+('Dsbl', )
         elif any(has_clock):
             _log.warning('Some triggers of ' + self.prefix +
                          ' are connected to unsimiliar low level devices.')
         self._source_enums = list(dic_['enums'])
         # Delay Typess
         dic_ = self._pvs_config['DelayType']
-        dic_['enums'] = (Triggers.DELAY_TYPES[0], )
+        dic_['enums'] = (_Triggers.DELAY_TYPES[0], )
         if all(has_delay_type):
-            dic_['enums'] = Triggers.DELAY_TYPES
+            dic_['enums'] = _Triggers.DELAY_TYPES
         elif any(has_delay_type):
             _log.warning('Some triggers of ' + self.prefix +
                          ' are connected to unsimiliar low level devices.')
@@ -447,28 +456,28 @@ class HL_Trigger(_HL_Base):
             return (val << bit) & 1
 
         status = functools.reduce(operator.or_, dic_.values())
-        alarm = Alarm.NO_ALARM
-        severity = Severity.NO_ALARM
+        alarm = _Alarm.NO_ALARM
+        severity = _Severity.NO_ALARM
         if get_bit(status, 0):
             # 'PVsConn'
-            alarm = Alarm.COMM_ALARM
-            severity = Severity.INVALID_ALARM
+            alarm = _Alarm.COMM_ALARM
+            severity = _Severity.INVALID_ALARM
         elif get_bit(status, 1) | get_bit(status, 2) | get_bit(status, 3):
             # 'DevEnbl', 'FOUTDevEnbl', 'EVGDevEnbl'
-            alarm = Alarm.DISABLE_ALARM
-            severity = Severity.INVALID_ALARM
+            alarm = _Alarm.DISABLE_ALARM
+            severity = _Severity.INVALID_ALARM
         elif get_bit(status, 6) | get_bit(status, 7):
             # 'Link' 'Loss'
-            alarm = Alarm.LINK_ALARM
-            severity = Severity.INVALID_ALARM
+            alarm = _Alarm.LINK_ALARM
+            severity = _Severity.INVALID_ALARM
         elif get_bit(status, 4):
             # 'Network'
-            alarm = Alarm.COMM_ALARM
-            severity = Severity.MINOR_ALARM
+            alarm = _Alarm.COMM_ALARM
+            severity = _Severity.MINOR_ALARM
         elif get_bit(status, 5):
             # 'IntlkMon'
-            alarm = Alarm.STATE_ALARM
-            severity = Severity.MINOR_ALARM
+            alarm = _Alarm.STATE_ALARM
+            severity = _Severity.MINOR_ALARM
         return {'value': status, 'alarm': alarm, 'severity': severity}
 
     def _get_funs_combine_rb_values(self):

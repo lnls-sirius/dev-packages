@@ -7,22 +7,26 @@ from siriuspy.thread import QueueThread as _QueueThread
 from siriuspy.epics import connection_timeout as _conn_timeout
 from siriuspy.envars import vaca_prefix as LL_PREFIX
 from siriuspy.namesys import SiriusPVName as _PVName
-from siriuspy.timesys.time_data import Events, Triggers, Connections, IOs
-from siriuspy.timesys.time_data import RF_FREQUENCY as RFFREQ
-from siriuspy.timesys.time_data import RF_DIVISION as RFDIV
-from siriuspy.timesys.time_data import AC_FREQUENCY as ACFREQ
-from siriuspy.timesys.time_data import FINE_DELAY as FDEL
+
+from siriuspy.timesys.time_data import Events as _Events
+from siriuspy.timesys.time_data import Triggers as _Triggers
+from siriuspy.timesys.time_data import Connections as _Connections
+from siriuspy.timesys.time_data import IOs as _IOs
+from siriuspy.timesys.time_data import RF_FREQUENCY as _RFFREQ
+from siriuspy.timesys.time_data import RF_DIVISION as _RFDIV
+from siriuspy.timesys.time_data import AC_FREQUENCY as _ACFREQ
+from siriuspy.timesys.time_data import FINE_DELAY as _FDEL
 
 INTERVAL = 0.1
 _DELAY_UNIT_CONV = 1e-6
-Connections.add_bbb_info()
-Connections.add_crates_info()
-EVG_NAME = Connections.get_devices('EVG').pop()
-EVRs = Connections.get_devices('EVR')
-EVEs = Connections.get_devices('EVE')
-AFCs = Connections.get_devices('AFC')
-FOUTs = Connections.get_devices('FOUT')
-TWDS_EVG = Connections.get_connections_twds_evg()
+_Connections.add_bbb_info()
+_Connections.add_crates_info()
+EVG_NAME = _Connections.get_devices('EVG').pop()
+EVRs = _Connections.get_devices('EVR')
+EVEs = _Connections.get_devices('EVE')
+AFCs = _Connections.get_devices('AFC')
+FOUTs = _Connections.get_devices('FOUT')
+TWDS_EVG = _Connections.get_connections_twds_evg()
 
 
 class _Base:
@@ -41,8 +45,8 @@ class _Base:
                 val: key for key, val in self._dict_convert_prop2pv.items()}
         self.callback = callback
         self._my_state_sp = dict()
-        self._rf_freq = RFFREQ
-        self._rf_div = RFDIV
+        self._rf_freq = _RFFREQ
+        self._rf_div = _RFDIV
 
         self._rf_freq_pv = _epics.PV(LL_PREFIX + 'SI-03SP:RF-SRFCav:Freq-SP',
                                      connection_timeout=_conn_timeout)
@@ -257,12 +261,12 @@ class LL_EVG(_Base):
         return {'ACDiv': self._get_frequency}
 
     def _set_frequency(self, value):
-        n = round(ACFREQ/value)
+        n = round(_ACFREQ/value)
         self._my_state_sp['ACDiv'] = n
 
     def _get_frequency(self, val=None):
         fr = self._get_from_pvs_rb('ACDiv', def_val=1) if val is None else val
-        return {'RepRate': ACFREQ / fr}
+        return {'RepRate': _ACFREQ / fr}
 
 
 class LL_Clock(_Base):
@@ -352,7 +356,7 @@ class _EVROUT(_Base):
                  init_hl_state, source_enums):
         self._internal_trigger = self._define_num_int(conn_num)
         self.prefix = LL_PREFIX + _PVName(channel).device_name + ':'
-        chan_tree = Connections.get_device_tree(channel)
+        chan_tree = _Connections.get_device_tree(channel)
         fout_name = [chan.device_name for chan in chan_tree
                      if chan.device_name in FOUTs][0]
         self._fout_prefix = LL_PREFIX + fout_name + ':'
@@ -477,7 +481,7 @@ class _EVROUT(_Base):
         if value is not None:
             dic_[prop] = value
 
-        delay = (dic_['Delay']*self._base_del + dic_['FineDelay']*FDEL) * 1e6
+        delay = (dic_['Delay']*self._base_del + dic_['FineDelay']*_FDEL) * 1e6
         if dic_['RFDelay'] == 31:
             return {'Delay': delay, 'DelayType': 1}
         else:
@@ -493,7 +497,7 @@ class _EVROUT(_Base):
             value -= delay1 * self._base_del
             delay2 = value // self._rf_del
             value -= delay2 * self._rf_del
-            delay3 = round(value / FDEL)
+            delay3 = round(value / _FDEL)
             self._my_state_sp['RFDelay'] = delay2
             self._my_state_sp['FineDelay'] = delay3
 
@@ -522,13 +526,13 @@ class _EVROUT(_Base):
 
     def _process_evt(self, evt):
         src_len = len(self._source_enums)
-        event = Events.LL_TMP.format(evt)
-        if event not in Events.LL2HL_MAP:
+        event = _Events.LL_TMP.format(evt)
+        if event not in _Events.LL2HL_MAP:
             return {'Src': src_len}
-        elif Events.LL2HL_MAP[event] not in self._source_enums:
+        elif _Events.LL2HL_MAP[event] not in self._source_enums:
             return {'Src': src_len}
         else:
-            ev_num = self._source_enums.index(Events.LL2HL_MAP[event])
+            ev_num = self._source_enums.index(_Events.LL2HL_MAP[event])
             return {'Src': ev_num}
 
     def _process_src_trig(self, src_trig):
@@ -538,7 +542,7 @@ class _EVROUT(_Base):
 
     def _process_src(self, src):
         src_len = len(self._source_enums)
-        source = Triggers.SRC_LL[src]
+        source = _Triggers.SRC_LL[src]
         if not source:
             return {'Src': src_len}  # invalid
         elif source.startswith(('Dsbl', 'Clock')):
@@ -547,10 +551,10 @@ class _EVROUT(_Base):
     def _set_source(self, value):
         pname = self._source_enums[value]
         if pname.startswith(('Clock', 'Dsbl')):
-            self._my_state_sp['Src'] = Triggers.SRC_LL.index(pname)
+            self._my_state_sp['Src'] = _Triggers.SRC_LL.index(pname)
         else:
-            self._my_state_sp['Src'] = Triggers.SRC_LL.index('Trigger')
-            self._my_state_sp['Evt'] = int(Events.HL2LL_MAP[pname][-2:])
+            self._my_state_sp['Src'] = _Triggers.SRC_LL.index('Trigger')
+            self._my_state_sp['Evt'] = int(_Events.HL2LL_MAP[pname][-2:])
         if 'SrcTrig' in self._dict_convert_prop2pv.keys():
             self._my_state_sp['SrcTrig'] = self._internal_trigger
 
@@ -606,7 +610,7 @@ class _EVROTP(_EVROUT):
     def _set_source(self, value):
         pname = self._source_enums[value]
         if not pname.startswith(('Clock', 'Dsbl')):
-            self._my_state_sp['Evt'] = int(Events.HL2LL_MAP[pname][-2:])
+            self._my_state_sp['Evt'] = int(_Events.HL2LL_MAP[pname][-2:])
 
 
 class _EVEOUT(_EVROUT):
@@ -664,7 +668,7 @@ def get_ll_trigger_object(channel, callback, init_hl_state, source_enums):
         ('AFC', 'FMC'): _AFCFMC,
         }
     chan = _PVName(channel)
-    match = IOs.LL_RGX.findall(chan.propty)
+    match = _IOs.LL_RGX.findall(chan.propty)
     if match[0][0] == 'FMC':
         conn_ty = match[0][0]
         conn_num = int(match[0][1]-1) + 5*(int(match[1][1])-1)
@@ -683,7 +687,7 @@ def get_ll_trigger_obj_names(chans):
     """Get Low Level trigger object names."""
     channels = set()
     for chan in chans:
-        chan_tree = Connections.get_device_tree(chan)
+        chan_tree = _Connections.get_device_tree(chan)
         for up_chan in chan_tree:
             if up_chan.device_name in EVRs | EVEs | AFCs:
                 channels |= {up_chan}
