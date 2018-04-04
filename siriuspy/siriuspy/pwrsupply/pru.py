@@ -301,7 +301,7 @@ class SerialComm(_BSMPQuery):
                 # TODO: This try-catch code is very awkward for debugging!
                 # try to improve it!
                 self._connected[ID_device] = False
-                # print('Exception raised while executing {}'.format(cmd))
+                print('Exception raised while executing {}'.format(cmd))
                 continue
 
             if ack != _ack.ok:

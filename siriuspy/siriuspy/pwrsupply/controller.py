@@ -85,7 +85,14 @@ class ControllerIOC(PSCommInterface):
         'IntlkHard-Mon': '_get_ps_hard_interlocks',
         'WfmIndex-Mon': '_get_wfmindex',
         'WfmData-RB': '_get_wfmdata',
+        'CycleEnbl-Mon': '_get_cycle_enable',
         'CycleType-Sts': '_get_cycle_type',
+        'CycleNrCycles-RB': '_get_cycle_num_cycles',
+        'CycleIndex-Mon': '_get_cycle_n',
+        'CycleFreq-RB': '_get_cycle_freq',
+        'CycleAmpl-RB': '_get_cycle_amplitude',
+        'CycleOffset-RB': '_get_cycle_offset',
+        'CycleAuxParam-RB': '_get_cycle_aux_param',
     }
 
     _write_field2func = {
@@ -94,7 +101,14 @@ class ControllerIOC(PSCommInterface):
         'Current-SP': '_set_slowref',
         'WfmData-SP': '_set_wfmdata',
         'Reset-Cmd': '_reset',
+        'CycleEnbl-Cmd': '_cycle_enable',
+        'CycleDsbl-Cmd': '_cycle_disable',
         'CycleType-Sel': '_set_cycle_type',
+        'CycleNrCycles-SP': '_set_cycle_num_cycles',
+        'CycleFreq-SP': '_set_cycle_freq',
+        'CycleAmpl-SP': '_set_cycle_amplitude',
+        'CycleOffset-SP': '_set_cycle_offset',
+        'CycleAuxParam-SP': '_set_cycle_aux_param',
     }
 
     # --- API: general power supply 'variables' ---
@@ -212,6 +226,16 @@ class ControllerIOC(PSCommInterface):
             aux_param3=aux_param3)
         return r
 
+    def cmd_enable_siggen(self):
+        """Enable SigGen."""
+        r = self._bsmp_run_function(ID_function=_BSMPConst.enable_siggen)
+        return r
+
+    def cmd_disable_siggen(self):
+        """Disable SigGen."""
+        r = self._bsmp_run_function(ID_function=_BSMPConst.disable_siggen)
+        return r
+
     # --- API: public properties and methods ---
 
     def read(self, field):
@@ -260,8 +284,29 @@ class ControllerIOC(PSCommInterface):
     def _get_ps_reference(self):
         return self._bsmp_get_variable(_BSMPConst.ps_reference)
 
+    def _get_cycle_enable(self):
+        return self._bsmp_get_variable(_BSMPConst.siggen_enable)
+
     def _get_cycle_type(self):
         return self._bsmp_get_variable(_BSMPConst.siggen_type)
+
+    def _get_cycle_num_cycles(self):
+        return self._bsmp_get_variable(_BSMPConst.siggen_num_cycles)
+
+    def _get_cycle_n(self):
+        return self._bsmp_get_variable(_BSMPConst.siggen_n)
+
+    def _get_cycle_freq(self):
+        return self._bsmp_get_variable(_BSMPConst.siggen_freq)
+
+    def _get_cycle_amplitude(self):
+        return self._bsmp_get_variable(_BSMPConst.siggen_amplitude)
+
+    def _get_cycle_offset(self):
+        return self._bsmp_get_variable(_BSMPConst.siggen_offset)
+
+    def _get_cycle_aux_param(self):
+        return self._bsmp_get_variable(_BSMPConst.siggen_aux_param)
 
     def _get_ps_soft_interlocks(self):
         return self._bsmp_get_variable(_BSMPConst.ps_soft_interlocks)
@@ -351,6 +396,18 @@ class ControllerIOC(PSCommInterface):
         value = min(self._ps_db['Current-SP']['hihi'], value)
         self.cmd_set_slowref(setpoint=value)
 
+    def _cycle_enable(self, value):
+        """Set CycleEnbl."""
+        if not self._ps_interface_in_remote():
+            return
+        self.cmd_enable_siggen()
+
+    def _cycle_disable(self, value):
+        """Set CycleDsbl."""
+        if not self._ps_interface_in_remote():
+            return
+        self.cmd_disable_siggen()
+
     def _set_cycle_type(self, value):
         """Set CycleType."""
         if not self._ps_interface_in_remote():
@@ -359,6 +416,48 @@ class ControllerIOC(PSCommInterface):
         if not(0 <= value < len(_ps_cycle_type)):
             return None
         self.cmd_cfg_siggen(type=value)
+        return value
+
+    def _set_cycle_num_cycles(self, value):
+        """Set CycleNrCycles."""
+        if not self._ps_interface_in_remote():
+            return
+        value = int(value)
+        self.cmd_cfg_siggen(num_cycles=value)
+        return value
+
+    def _set_cycle_freq(self, value):
+        """Set CycleFreq."""
+        if not self._ps_interface_in_remote():
+            return
+        self.cmd_cfg_siggen(freq=value)
+        return value
+
+    def _set_cycle_amplitude(self, value):
+        """Set CycleAmpl."""
+        if not self._ps_interface_in_remote():
+            return
+        self.cmd_cfg_siggen(amplitude=value)
+        return value
+
+    def _set_cycle_offset(self, value):
+        """Set CycleOffset."""
+        if not self._ps_interface_in_remote():
+            return
+        self.cmd_cfg_siggen(offset=value)
+        return value
+
+    def _set_cycle_aux_param(self, value):
+        """Set CycleAuxParam."""
+        if not self._ps_interface_in_remote():
+            return
+        if len(value) != 4:
+            return
+        self.cmd_cfg_siggen(
+            aux_param0=value[0],
+            aux_param1=value[1],
+            aux_param2=value[2],
+            aux_param3=value[3])
         return value
 
     def _set_wfmdata(self, value):
@@ -387,6 +486,9 @@ class PSState:
 
     def __init__(self, variables):
         """Init method."""
+        # TODO: ps-controller has initial values for its variables
+        # these values are stores in eeprom. this should be eventually
+        # simulated.
         self._state = {}
         for ID_variable, variable in variables.items():
             name, type_t, writable = variable
@@ -431,10 +533,11 @@ class ControllerPSSim:
     (ControllerIOC) sent through the serial line.
     """
 
-    _I_LOAD_FLUCTUATION_RMS = 0.01  # [A]
-    # _I_LOAD_FLUCTUATION_RMS = 0.0000  # [A]
+    # TODO: implement detailed simulation of SigGen
 
-    funcs = {
+    _I_LOAD_FLUCTUATION_RMS = 0.01  # [A]
+
+    _funcs = {
         _BSMPConst.turn_on: '_func_turn_on',
         _BSMPConst.turn_off: '_func_turn_off',
         _BSMPConst.open_loop: '_func_open_loop',
@@ -446,10 +549,10 @@ class ControllerPSSim:
         _BSMPConst.set_slowref: '_func_set_slowref',
         _BSMPConst.set_slowref_fbp: '_FUNC_NOT_IMPLEMENTED',
         _BSMPConst.reset_counters: '_func_reset_counters',
-        _BSMPConst.cfg_siggen: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.cfg_siggen: '_func_cfg_siggen',
         _BSMPConst.set_siggen: '_FUNC_NOT_IMPLEMENTED',
-        _BSMPConst.enable_siggen: '_FUNC_NOT_IMPLEMENTED',
-        _BSMPConst.disable_siggen: '_FUNC_NOT_IMPLEMENTED',
+        _BSMPConst.enable_siggen: '_func_enable_siggen',
+        _BSMPConst.disable_siggen: '_func_disable_siggen',
         _BSMPConst.set_slowref_readback: '_FUNC_NOT_IMPLEMENTED',
         _BSMPConst.set_slowref_fbp_readback: '_FUNC_NOT_IMPLEMENTED',
         _BSMPConst.set_param: '_FUNC_NOT_IMPLEMENTED',
@@ -488,10 +591,10 @@ class ControllerPSSim:
         return state[key]
 
     def exec_function(self, ID_function, **kwargs):
-        """Execute powr supply function."""
-        if ID_function in ControllerPSSim.funcs:
+        """Execute ps-controller function."""
+        if ID_function in ControllerPSSim._funcs:
             # if bsmp function is defined, get corresponding method and run it
-            func = getattr(self, ControllerPSSim.funcs[ID_function])
+            func = getattr(self, ControllerPSSim._funcs[ID_function])
             return func(**kwargs)
         else:
             raise ValueError(
@@ -563,6 +666,29 @@ class ControllerPSSim:
     def _func_reset_counters(self, **kwargs):
         self._state[_BSMPConst.counter_set_slowref] = 0
         self._state[_BSMPConst.counter_sync_pulse] = 0
+        return _ack.ok, None
+
+    def _func_cfg_siggen(self, **kwargs):
+        # does not configure siggen if it is enabled already, accord. to spec.
+        if self._state[_BSMPConst.siggen_enable] == 1:
+            return
+        self._state[_BSMPConst.siggen_type] = kwargs['type']
+        self._state[_BSMPConst.siggen_num_cycles] = kwargs['num_cycles']
+        self._state[_BSMPConst.siggen_freq] = kwargs['freq']
+        self._state[_BSMPConst.siggen_amplitude] = kwargs['amplitude']
+        self._state[_BSMPConst.siggen_offset] = kwargs['offset']
+        self._state[_BSMPConst.siggen_aux_param] = [
+            kwargs['aux_param0'], kwargs['aux_param1'],
+            kwargs['aux_param2'], kwargs['aux_param3'],
+        ]
+        return _ack.ok, None
+
+    def _func_enable_siggen(self, **kwargs):
+        self._state[_BSMPConst.siggen_enable] = 1
+        return _ack.ok, None
+
+    def _func_disable_siggen(self, **kwargs):
+        self._state[_BSMPConst.siggen_enable] = 0
         return _ack.ok, None
 
     def _FUNC_NOT_IMPLEMENTED(self, **kwargs):
