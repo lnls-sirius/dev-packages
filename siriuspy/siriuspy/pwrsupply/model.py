@@ -212,7 +212,8 @@ class PowerSupply:
                    frequency, amplitude, offset, aux_params):
         """Set siggen congiguration parameters."""
         value = \
-            [t_siggen, num_cycles, frequency, amplitude, offset, aux_params]
+            [t_siggen, num_cycles, frequency, amplitude, offset]
+        value.extend(aux_params)
         self._execute_function(23, value)
 
     def set_siggen(self, frequency, amplitude, offset):
