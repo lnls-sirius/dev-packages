@@ -13,7 +13,6 @@ _mock_flag = True
 
 public_interface = (
     'max_wfmsize',
-    'default_wfmlabels',
     'default_ps_current_precision',
     'default_pu_current_precision',
     'ps_models',
@@ -71,7 +70,6 @@ class TestPwrSupply(unittest.TestCase):
         'ts-injseptum-thin',
         'ts-injseptum-thick',
     ]
-
     sample = {
         'SI-Fam:MA-B1B2': 'Energy-SP',
         'SI-Fam:MA-QDA': 'KL-SP',
@@ -150,7 +148,7 @@ class TestPwrSupply(unittest.TestCase):
         for prop in db:
             self.assertIsInstance(db[prop], dict)
 
-    def test_common_ps_propty_database(self):
+    def test_ps_FBP_propty_database(self):
         """Test common_ps_propty_database."""
         db = pwrsupply.get_ps_FBP_propty_database()
         self.assertIsInstance(db, dict)
@@ -159,8 +157,7 @@ class TestPwrSupply(unittest.TestCase):
         # test precision consistency
         proptys = TestPwrSupply.ps_alarm + ('WfmData-SP', 'WfmData-RB')
         for propty in proptys:
-            self.assertEqual(db[propty]['prec'],
-                             pwrsupply.default_ps_current_precision)
+            self.assertIn(propty, db)
 
     def test_ps_propty_database(self):
         """Test ps_propty_database."""
