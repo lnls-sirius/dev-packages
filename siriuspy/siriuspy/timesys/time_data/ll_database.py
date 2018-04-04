@@ -1,18 +1,22 @@
 """Define properties of all timing devices and their connections."""
 
 from copy import deepcopy as _dcopy
-from .hl_types_data import Triggers, Events, Clocks
+from .hl_types_data import Triggers as _Triggers
+from .hl_types_data import Events as _Events
+from .hl_types_data import Clocks as _Clocks
 
 
 class TimingDevDb:
+    """TimingDevDb class."""
 
     @staticmethod
     def get_otp_database(otp_num=0, prefix=None):
+        """Metod get_otp_database."""
         def_prefix = 'OTP{0:02d}'.format(otp_num)
         prefix = prefix if prefix is not None else def_prefix
         db = dict()
 
-        dic_ = {'type': 'enum', 'value': 0, 'enums': Triggers.STATES}
+        dic_ = {'type': 'enum', 'value': 0, 'enums': _Triggers.STATES}
         db[prefix+'State-Sts'] = dic_
         db[prefix+'State-Sel'] = _dcopy(dic_)
 
@@ -30,7 +34,7 @@ class TimingDevDb:
         db[prefix+'Width-SP'] = dic_
         db[prefix+'Width-RB'] = _dcopy(dic_)
 
-        dic_ = {'type': 'enum', 'value': 0, 'enums': Triggers.POLARITIES}
+        dic_ = {'type': 'enum', 'value': 0, 'enums': _Triggers.POLARITIES}
         db[prefix+'Polarity-Sts'] = dic_
         db[prefix+'Polarity-Sel'] = _dcopy(dic_)
 
@@ -52,15 +56,16 @@ class TimingDevDb:
 
     @staticmethod
     def get_out_database(out_num=0, equip='EVR', prefix=None):
+        """Method get_out_database."""
         def_prefix = 'OUT{0:d}'.format(out_num)
         prefix = prefix if prefix is not None else def_prefix
         db = dict()
 
-        dic_ = {'type': 'enum', 'value': 0, 'enums': Triggers.INTLK}
+        dic_ = {'type': 'enum', 'value': 0, 'enums': _Triggers.INTLK}
         db[prefix+'Intlk-Sts'] = dic_
         db[prefix+'Intlk-Sel'] = _dcopy(dic_)
 
-        dic_ = {'type': 'enum', 'value': 0, 'enums': Triggers.SRC_LL}
+        dic_ = {'type': 'enum', 'value': 0, 'enums': _Triggers.SRC_LL}
         db[prefix+'Src-Sts'] = dic_
         db[prefix+'Src-Sel'] = _dcopy(dic_)
 
@@ -91,6 +96,7 @@ class TimingDevDb:
 
     @staticmethod
     def get_afc_out_database(out_num=0, out_tp='FMC', prefix=None):
+        """Method get_afc_database."""
         def_prefix = (out_tp + '{0:d}'.format(out_num))
         if out_tp == 'FMC':
             fmc = (out_num // 5) + 1
@@ -99,7 +105,7 @@ class TimingDevDb:
 
         prefix = prefix if prefix is not None else def_prefix
         db = TimingDevDb.get_otp_database(prefix=prefix)
-        dic_ = {'type': 'enum', 'value': 0, 'enums': Triggers.SRC_LL}
+        dic_ = {'type': 'enum', 'value': 0, 'enums': _Triggers.SRC_LL}
         db[prefix+'Src-Sts'] = dic_
         db[prefix+'Src-Sel'] = _dcopy(dic_)
 
@@ -107,6 +113,7 @@ class TimingDevDb:
 
     @staticmethod
     def get_evr_database(evr_num=1, prefix=None):
+        """Method get_evr_database."""
         def_prefix = 'AS-Glob:TI-EVR-{0:d}:'.format(evr_num)
         prefix = prefix if prefix is not None else def_prefix
         db = dict()
@@ -151,6 +158,7 @@ class TimingDevDb:
 
     @staticmethod
     def get_eve_database(eve_num=1, prefix=None):
+        """Method get_eve_database."""
         def_prefix = 'AS-Glob:TI-EVE-{0:d}:'.format(eve_num)
         prefix = prefix if prefix is not None else def_prefix
         db = dict()
@@ -195,6 +203,7 @@ class TimingDevDb:
 
     @staticmethod
     def get_afc_database(afc_sec=1, has_idx=False, idx=1, prefix=None):
+        """Method get_adc_database."""
         def_prefix = 'AS-{0:02d}:TI-AFC:'.format(afc_sec)
         if has_idx:
             def_prefix = 'AS-{0:02d}:TI-AFC-{1:d}:'.format(afc_sec, idx)
@@ -241,6 +250,7 @@ class TimingDevDb:
 
     @staticmethod
     def get_fout_database(fout_num=1, prefix=None):
+        """Method get_fout_database."""
         def_prefix = 'AS-Glob:TI-FOUT-{0:d}:'.format(fout_num)
         prefix = prefix if prefix is not None else def_prefix
         db = dict()
@@ -275,6 +285,7 @@ class TimingDevDb:
 
     @staticmethod
     def get_event_database(evt_num=0, prefix=None):
+        """Method get_event_database."""
         def_prefix = 'Evt{0:02d}'.format(evt_num)
         prefix = prefix if prefix is not None else def_prefix
 
@@ -284,10 +295,10 @@ class TimingDevDb:
                 'hilim': 2**32-1, 'high': 2**32-1, 'hihi': 2**32-1}
         db[prefix + 'Delay-SP'] = _dcopy(dic_)
         db[prefix + 'Delay-RB'] = dic_
-        dic_ = {'type': 'enum', 'enums': Events.MODES, 'value': 1}
+        dic_ = {'type': 'enum', 'enums': _Events.MODES, 'value': 1}
         db[prefix + 'Mode-Sel'] = _dcopy(dic_)
         db[prefix + 'Mode-Sts'] = dic_
-        dic_ = {'type': 'enum', 'enums': Events.DELAY_TYPES, 'value': 1}
+        dic_ = {'type': 'enum', 'enums': _Events.DELAY_TYPES, 'value': 1}
         db[prefix + 'DelayType-Sel'] = _dcopy(dic_)
         db[prefix + 'DelayType-Sts'] = dic_
         dic_ = {'type': 'string', 'value': ''}
@@ -298,6 +309,7 @@ class TimingDevDb:
 
     @staticmethod
     def get_clock_database(clock_num=0, prefix=None):
+        """Method get_clock_database."""
         def_prefix = 'Clock{0:d}'.format(clock_num)
         prefix = prefix if prefix is not None else def_prefix
         db = dict()
@@ -307,13 +319,14 @@ class TimingDevDb:
                 'hilim': 2**32, 'high': 2**32, 'hihi': 2**32}
         db[prefix + 'MuxDiv-SP'] = _dcopy(dic_)
         db[prefix + 'MuxDiv-RB'] = dic_
-        dic_ = {'type': 'enum', 'enums': Clocks.STATES, 'value': 0}
+        dic_ = {'type': 'enum', 'enums': _Clocks.STATES, 'value': 0}
         db[prefix + 'MuxEnbl-Sel'] = _dcopy(dic_)
         db[prefix + 'MuxEnbl-Sts'] = dic_
         return db
 
     @staticmethod
     def get_evg_database(prefix=None):
+        """Method get_evg_database."""
         def_prefix = 'AS-Glob:TI-EVG:'
         prefix = prefix if prefix is not None else def_prefix
         db = dict()
@@ -381,10 +394,10 @@ class TimingDevDb:
                 'type': 'enum', 'value': 0,
                 'enums': ('Dsbl', 'Enbl')}
 
-        for clc in Clocks.LL2HL_MAP.keys():
+        for clc in _Clocks.LL2HL_MAP.keys():
             p = prefix + clc
             db.update(TimingDevDb.get_clock_database(prefix=p))
-        for ev in Events.LL_EVENTS:
+        for ev in _Events.LL_EVENTS:
             p = prefix + ev
             db.update(TimingDevDb.get_event_database(prefix=p))
         return db

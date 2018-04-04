@@ -1,12 +1,17 @@
 """Module to simulate timing system."""
 
 from siriuspy.namesys import SiriusPVName as _PVName
-from .device_models import EVGIOC, EVRIOC, EVEIOC, AFCIOC, FOUTIOC, CallBack
+from .device_models import CallBack as _CallBack
+from .device_models import EVGIOC as _EVGIOC
+from .device_models import EVRIOC as _EVRIOC
+from .device_models import EVEIOC as _EVEIOC
+from .device_models import AFCIOC as _AFCIOC
+from .device_models import FOUTIOC as _FOUTIOC
 from siriuspy.timesys.time_data import Connections as _Connections
-from siriuspy.timesys.time_data import RF_DIVISION as RFDIV
+from siriuspy.timesys.time_data import RF_DIVISION as _RFDIV
 
 
-class TimingSimulation(CallBack):
+class TimingSimulation(_CallBack):
     """Class to simulate timing system."""
 
     EVG_PREFIX = None
@@ -21,61 +26,61 @@ class TimingSimulation(CallBack):
         cls._get_constants()
         db = dict()
         pre = prefix + cls.EVG_PREFIX
-        db.update(EVGIOC.get_database(prefix=pre))
+        db.update(_EVGIOC.get_database(prefix=pre))
         for dev in cls.EVRs:
             pre = prefix + dev + ':'
-            db.update(EVRIOC.get_database(prefix=pre))
+            db.update(_EVRIOC.get_database(prefix=pre))
         for dev in cls.EVEs:
             pre = prefix + dev + ':'
-            db.update(EVEIOC.get_database(prefix=pre))
+            db.update(_EVEIOC.get_database(prefix=pre))
         for dev in cls.AFCs:
             pre = prefix + dev + ':'
-            db.update(AFCIOC.get_database(prefix=pre))
+            db.update(_AFCIOC.get_database(prefix=pre))
         for dev in cls.FOUTs:
             pre = prefix + dev + ':'
-            db.update(FOUTIOC.get_database(prefix=pre))
+            db.update(_FOUTIOC.get_database(prefix=pre))
         return db
 
     def __init__(self, rf_freq, callbacks=None, prefix=''):
         """Initialize the instance."""
         self._get_constants()
         super().__init__(callbacks, prefix='')
-        evg = EVGIOC(rf_freq,
-                     callbacks={self.uuid: self._on_pvs_change},
-                     prefix=prefix + self.EVG_PREFIX)
+        evg = _EVGIOC(rf_freq,
+                      callbacks={self.uuid: self._on_pvs_change},
+                      prefix=prefix + self.EVG_PREFIX)
         self.evrs = dict()
         for dev in self.EVRs:
             pref = prefix + dev + ':'
-            evr = EVRIOC(rf_freq/RFDIV,
-                         callbacks={self.uuid: self._on_pvs_change},
-                         prefix=pref)
+            evr = _EVRIOC(rf_freq/_RFDIV,
+                          callbacks={self.uuid: self._on_pvs_change},
+                          prefix=pref)
             evg.add_pending_devices_callback(evr.uuid, evr.receive_events)
             self.evrs[pref] = evr
 
         self.eves = dict()
         for dev in self.EVEs:
             pref = prefix + dev + ':'
-            eve = EVEIOC(rf_freq/RFDIV,
-                         callbacks={self.uuid: self._on_pvs_change},
-                         prefix=pref)
+            eve = _EVEIOC(rf_freq/_RFDIV,
+                          callbacks={self.uuid: self._on_pvs_change},
+                          prefix=pref)
             evg.add_pending_devices_callback(eve.uuid, eve.receive_events)
             self.eves[pref] = eve
 
         self.afcs = dict()
         for dev in self.AFCs:
             pref = prefix + dev + ':'
-            afc = AFCIOC(rf_freq/RFDIV,
-                         callbacks={self.uuid: self._on_pvs_change},
-                         prefix=pref)
+            afc = _AFCIOC(rf_freq/_RFDIV,
+                          callbacks={self.uuid: self._on_pvs_change},
+                          prefix=pref)
             evg.add_pending_devices_callback(afc.uuid, afc.receive_events)
             self.afcs[pref] = afc
 
         self.fouts = dict()
         for dev in self.FOUTs:
             pref = prefix + dev + ':'
-            fout = FOUTIOC(rf_freq/RFDIV,
-                           callbacks={self.uuid: self._on_pvs_change},
-                           prefix=pref)
+            fout = _FOUTIOC(rf_freq/_RFDIV,
+                            callbacks={self.uuid: self._on_pvs_change},
+                            prefix=pref)
             # evg.add_pending_devices_callback(fout.uuid, fout.receive_events)
             self.fouts[pref] = fout
         self.evg = evg

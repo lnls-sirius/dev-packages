@@ -93,9 +93,11 @@ class IOs:
         for conn1, conns in conns_.items():
             for conn2 in conns:
                 dic_[conn2] = conn1
+    del(dev, conns_, dic_, conn1, conns, conn2)  # cleanning class namespace.
 
     @staticmethod
     def get_channel_input(channel):
+        """Get channel input method."""
         if not isinstance(channel, _PVName):
             channel = _PVName(channel)
         conn_up = IOs.O2I_MAP[channel.dev][channel.propty]

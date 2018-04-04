@@ -4,18 +4,22 @@ import re as _re
 from copy import deepcopy as _dcopy
 from siriuspy import servweb as _web
 from siriuspy.namesys import SiriusPVName as _PVName
-from .connections import Connections
+from .connections import Connections as _Connections
 
 
 _timeout = 1.0
-AC_FREQUENCY = 60
+_light_speed = 299792458  # [m/s]  # TODO: should we create a consts module?
+_ring_circumference = 518.396  # [m]
+_harmonic_number = 864
+
+AC_FREQUENCY = 60  # [Hz]
 RF_DIVISION = 4
-RF_FREQUENCY = 299792458/518.396*864
+RF_FREQUENCY = _light_speed/_ring_circumference*_harmonic_number
 BASE_FREQUENCY = RF_FREQUENCY / RF_DIVISION
 RF_PERIOD = 1/RF_FREQUENCY
 BASE_DELAY = 1 / BASE_FREQUENCY
 RF_DELAY = BASE_DELAY / 20
-FINE_DELAY = 5e-12                  # five picoseconds
+FINE_DELAY = 5e-12  # [s] (five picoseconds)
 
 
 class Events:
@@ -41,6 +45,7 @@ class Events:
     LL_EVENTS = []
     for i in LL_CODES:
         LL_EVENTS.append(LL_TMP.format(i))
+    del(i)  # cleanup class namespace
 
     MODES = ('Disabled', 'Continuous', 'Injection', 'External')
     DELAY_TYPES = ('Fixed', 'Incr')
@@ -58,6 +63,8 @@ class Clocks:
     HL2LL_MAP = dict()
     for i in range(8):
         HL2LL_MAP[HL_TMP.format(i)] = LL_TMP.format(i)
+    del(i)  # cleanup class namespace
+
     LL2HL_MAP = {val: key for key, val in HL2LL_MAP.items()}
 
 
@@ -92,10 +99,10 @@ class Triggers:
         Check if High Level definition of Triggers is consistent with
         Low Level connections of the timing devices.
         """
-        Connections.add_bbb_info()
-        Connections.add_crates_info()
-        from_evg = Connections.get_connections_from_evg()
-        twds_evg = Connections.get_connections_twds_evg()
+        _Connections.add_bbb_info()
+        _Connections.add_crates_info()
+        from_evg = _Connections.get_connections_from_evg()
+        twds_evg = _Connections.get_connections_twds_evg()
         for trig, val in self.hl_triggers.items():
             chans = {_PVName(chan) for chan in val['channels']}
             for chan in chans:
