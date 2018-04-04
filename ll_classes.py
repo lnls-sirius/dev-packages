@@ -48,7 +48,7 @@ class _Base:
         self._rf_freq = _RFFREQ
         self._rf_div = _RFDIV
 
-        self._rf_freq_pv = _epics.PV(LL_PREFIX + 'SI-03SP:RF-SRFCav:Freq-SP',
+        self._rf_freq_pv = _epics.PV(LL_PREFIX + 'SI-Glob:RF-Gen:Freq-SP',
                                      connection_timeout=_conn_timeout)
         self._rf_div_pv = _epics.PV(LL_PREFIX + EVG_NAME + ':RFDiv-SP',
                                     connection_timeout=_conn_timeout)
