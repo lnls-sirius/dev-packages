@@ -76,47 +76,67 @@ class PowerSupply:
     @property
     def current_rb(self):
         """Current Readback."""
-        sts, val = self._bsmp.read_variable(1)
-        if sts == Response.ok:
-            return val
-        else:
-            return None
+        return self._read_variable(1)
 
     @property
     def currentref_mon(self):
         """Current Referece."""
-        sts, val = self._bsmp.read_variable(2)
-        if sts == Response.ok:
-            return val
-        else:
-            return None
+        return self._read_variable(2)
 
     @property
-    def current_mon(self):
-        """Actual current."""
-        sts, val = self._bsmp.read_variable(27)
-        if sts == Response.ok:
-            return val
-        else:
-            return None
+    def cycleenbl_mon(self):
+        """Cycle Enable Status."""
+        return self._read_variable(6)
+
+    @property
+    def cycletype_sts(self):
+        """Cycle Type."""
+        return self._read_variable(7)
+
+    @property
+    def cyclenrcycles_rb(self):
+        """Number of cycles to be generated."""
+        return self._read_variable(8)
+
+    @property
+    def cycleindex_mon(self):
+        """Siggen generation iteration index."""
+        return self._read_variable(9)
+
+    @property
+    def cyclefreq_rb(self):
+        """Frequency of generated signal."""
+        return self._read_variable(10)
+
+    @property
+    def cycleampl_rb(self):
+        """Amplitude of generated signal."""
+        return self._read_variable(11)
+
+    @property
+    def cycleoffset_rb(self):
+        """Signal generator offset."""
+        return self._read_variable(12)
+
+    @property
+    def cycleauxparam_rb(self):
+        """Auxiliary parameters."""
+        return self._read_variable(13)
 
     @property
     def intlksoft_mon(self):
         """Soft Interlock readback."""
-        sts, val = self._bsmp.read_variable(25)
-        if sts == Response.ok:
-            return val
-        else:
-            return None
+        return self._read_variable(25)
 
     @property
     def intlkhard_mon(self):
         """Hard Interlock readback."""
-        sts, val = self._bsmp.read_variable(26)
-        if sts == Response.ok:
-            return val
-        else:
-            return None
+        return self._read_variable(26)
+
+    @property
+    def current_mon(self):
+        """Actual current."""
+        return self._read_variable(27)
 
     # Groups
     def read_group(self, group_id):
@@ -161,43 +181,63 @@ class PowerSupply:
     # Functions
     def turn_on(self):
         """Turn power supply on."""
-        sts, val = self.bsmp.execute_function(0)
+        ret = self.bsmp.execute_function(0)
         _time.sleep(0.3)
-        if sts == Response.ok:
-            self.bsmp.execute_function(3)  # Close control loop
-            return True
-        else:
-            return False
+        if ret:
+            return self._execute_function(3)  # Close control loop
 
     def turn_off(self):
         """Turn power supply off."""
-        sts, val = self.bsmp.execute_function(1)
-        _time.sleep(0.3)
-        if sts == Response.ok:
-            return True
-        else:
-            return False
+        ret = self._execute_function(1)
+        if ret:
+            _time.sleep(0.3)
+        return ret
 
     def select_op_mode(self, value):
         """Set operation mode."""
-        sts, val = self.bsmp.execute_function(4, value + 3)
-        if sts == Response.ok:
-            return True
-        else:
-            return False
+        return self._execute_function(4, value + 3)
 
     def reset_interlocks(self):
         """Reset."""
-        sts, val = self.bsmp.execute_function(6)
-        _time.sleep(0.1)
-        if sts == Response.ok:
-            return True
-        else:
-            return False
+        ret = self._execute_function(6)
+        if ret:
+            _time.sleep(0.1)
+        return ret
 
     def set_slowref(self, value):
         """Set current."""
-        sts, val = self.bsmp.execute_function(16, value)
+        return self._execute_function(16, value)
+
+    def cfg_siggen(self, t_siggen, num_cycles,
+                   frequency, amplitude, offset, aux_params):
+        """Set siggen congiguration parameters."""
+        value = \
+            [t_siggen, num_cycles, frequency, amplitude, offset, aux_params]
+        self._execute_function(23, value)
+
+    def set_siggen(self, frequency, amplitude, offset):
+        """Set siggen parameters in coninuous operation."""
+        value = [frequency, amplitude, offset]
+        self._execute_function(24, value)
+
+    def enable_siggen(self):
+        """Enable siggen."""
+        self._execute_function(25)
+
+    def disable_siggen(self):
+        """Disable siggen."""
+        self._execute_function(26)
+
+    # Private
+    def _read_variable(self, var_id):
+        sts, val = self.bsmp.read_variable(var_id)
+        if sts == Response.ok:
+            return val
+        else:
+            return None
+
+    def _execute_function(self, func_id, value=None):
+        sts, val = self.bsmp.execute_function(func_id, value)
         if sts == Response.ok:
             return True
         else:
