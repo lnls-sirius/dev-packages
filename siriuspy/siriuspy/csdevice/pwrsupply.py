@@ -8,10 +8,10 @@ from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.search import MASearch as _MASearch
 
 max_wfmsize = 4000
-default_wfmlabels = ('Waveform1', 'Waveform2', 'Waveform3',
-                     'Waveform4', 'Waveform5', 'Waveform6')
 default_ps_current_precision = 4
 default_pu_current_precision = 4
+# default_wfmlabels = ('Waveform1', 'Waveform2', 'Waveform3',
+#                      'Waveform4', 'Waveform5', 'Waveform6')
 
 _default_ps_current_unit = None
 _default_pu_current_unit = None
@@ -28,8 +28,8 @@ ps_openloop = ('Closed', 'Open')
 ps_pwrstate_sel = ('Off', 'On')
 ps_pwrstate_sts = ('Off', 'On', 'Initializing')
 ps_states = ('Off', 'Interlock', 'Initializing',
-             'SlowRef', 'SlowRefSync', 'FastRef', 'RmpWfm', 'MigWfm', 'Cycle')
-ps_opmode = ('SlowRef', 'SlowRefSync', 'FastRef', 'RmpWfm', 'MigWfm', 'Cycle')
+             'SlowRef', 'SlowRefSync', 'Cycle', 'RmpWfm', 'MigWfm', 'FastRef')
+ps_opmode = ('SlowRef', 'SlowRefSync', 'Cycle', 'RmpWfm', 'MigWfm', 'FastRef')
 ps_cmdack = ('OK', 'Local', 'PCHost', 'Interlocked', 'UDC_locked',
              'DSP_TimeOut', 'DSP_Busy', 'Invalid',)
 ps_soft_interlock_FBP = (
@@ -83,6 +83,7 @@ ps_cycle_type = ('Sine', 'DampedSine', 'Trapezoidal')
 
 
 # --- power supply constants definition class ---
+
 
 class Const:
     """Const class defining power supply constants."""
@@ -149,10 +150,28 @@ def get_common_propty_database():
         'PwrState-Sts': {'type': 'enum', 'enums': ps_pwrstate_sts,
                          'value': _et.idx.Off},
         'Reset-Cmd': {'type': 'int', 'value': 0},
+        'CycleEnbl-Cmd': {'type': 'int', 'value': 0},
+        'CycleDsbl-Cmd': {'type': 'int', 'value': 0},
+        'CycleEnbl-Mon': {'type': 'int', 'value': 0},
         'CycleType-Sel': {'type': 'enum', 'enums': ps_cycle_type,
                           'value': Const.CycleType.Sine},
         'CycleType-Sts': {'type': 'enum', 'enums': ps_cycle_type,
                           'value': Const.CycleType.Sine},
+        'CycleNrCycles-SP': {'type': 'int', 'value': 0},
+        'CycleNrCycles-RB': {'type': 'int', 'value': 0},
+        'CycleIndex-Mon': {'type': 'int', 'value': 0},
+        'CycleFreq-SP': {'type': 'float', 'value': 0.0,
+                         'unit': 'Hz', 'prec': 4},
+        'CycleFreq-RB': {'type': 'float', 'value': 0.0,
+                         'unit': 'Hz', 'prec': 4},
+        'CycleAmpl-SP': {'type': 'float', 'value': 0.0},
+        'CycleAmpl-RB': {'type': 'float', 'value': 0.0},
+        'CycleOffset-SP': {'type': 'float', 'value': 0.0},
+        'CycleOffset-RB': {'type': 'float', 'value': 0.0},
+        'CycleAuxParam-SP': {'type': 'float', 'count': 4,
+                             'value': [0, 0, 0, 0]},
+        'CycleAuxParam-RB': {'type': 'float', 'count': 4,
+                             'value': [0, 0, 0, 0]},
     }
     return db
 
@@ -176,20 +195,14 @@ def get_ps_FBP_propty_database():
         # 'WfmLoad-Sts': {'type': 'enum', 'enums': default_wfmlabels,
         #                 'value': 0},
         'WfmData-SP': {'type': 'float', 'count': max_wfmsize,
-                       'prec': default_ps_current_precision,
                        'value': [0.0 for datum in range(max_wfmsize)]},
         'WfmData-RB': {'type': 'float', 'count': max_wfmsize,
-                       'prec': default_ps_current_precision,
                        'value': [0.0 for datum in range(max_wfmsize)]},
         # 'WfmSave-Cmd': {'type': 'int', 'value': 0},
-        'Current-SP': {'type': 'float', 'value': 0.0,
-                       'prec': default_ps_current_precision},
-        'Current-RB': {'type': 'float', 'value': 0.0,
-                       'prec': default_ps_current_precision},
-        'CurrentRef-Mon': {'type': 'float', 'value': 0.0,
-                           'prec': default_ps_current_precision},
-        'Current-Mon': {'type': 'float',  'value': 0.0,
-                        'prec': default_ps_current_precision},
+        'Current-SP': {'type': 'float', 'value': 0.0},
+        'Current-RB': {'type': 'float', 'value': 0.0},
+        'CurrentRef-Mon': {'type': 'float', 'value': 0.0},
+        'Current-Mon': {'type': 'float',  'value': 0.0},
         'IntlkSoft-Mon':    {'type': 'int',    'value': 0},
         'IntlkHard-Mon':    {'type': 'int',    'value': 0},
         'IntlkSoftLabels-Cte':  {'type': 'string',
@@ -223,10 +236,19 @@ def get_common_pu_propty_database():
 
 def get_ps_propty_database(pstype):
     """Return property database of a LNLS power supply type device."""
+    # TODO: this needs generalization to work with any psmodel!
     propty_db = get_ps_FBP_propty_database()
     signals_lims = ('Current-SP', 'Current-RB',
-                    'CurrentRef-Mon', 'Current-Mon', )
-    signals_unit = signals_lims + ('WfmData-SP', 'WfmData-RB')
+                    'CurrentRef-Mon', 'Current-Mon',
+                    'CycleAmpl-SP', 'CycleAmpl-RB',
+                    'CycleOffset-SP', 'CycleOffset-RB',
+                    )
+    # TODO: define limits to WfmData as well!
+    signals_unit = signals_lims + (
+        'WfmData-SP', 'WfmData-RB',
+    )
+    signals_prec = signals_unit
+
     for propty, db in propty_db.items():
         # set setpoint limits in database
         if propty in signals_lims:
@@ -239,6 +261,9 @@ def get_ps_propty_database(pstype):
         # define unit of current
         if propty in signals_unit:
             db['unit'] = get_ps_current_unit()
+        # define prec of current
+        if propty in signals_prec:
+            db['prec'] = default_ps_current_precision,
     return propty_db
 
 
