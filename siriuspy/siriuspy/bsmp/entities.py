@@ -227,3 +227,7 @@ class Entities:
     def remove_all_groups(self):
         """Remove all groups bigger than eid 2."""
         self._groups = self.groups[:3]
+
+    def list_variables(self, group_id):
+        """List variable ids."""
+        return [var.eid for var in self.groups[group_id].variables]
