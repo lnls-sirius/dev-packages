@@ -81,7 +81,9 @@ ps_hard_interlock_FBP_DCLink = (
 )
 ps_cycle_type = ('Sine', 'DampedSine', 'Trapezoidal')
 
+
 # --- power supply constants definition class ---
+
 
 class Const:
     """Const class defining power supply constants."""
