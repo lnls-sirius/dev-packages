@@ -115,7 +115,6 @@ class Triggers:
 
     def has_delay_type(self, ll_trigger):
         """Return True if ll_trigger has property delayType."""
-
         name = _PVName(ll_trigger)
         if name.dev in ('EVR', 'EVE') and name.propty.startswith('OUT'):
             return True
@@ -124,7 +123,6 @@ class Triggers:
 
     def has_clock(self, ll_trigger):
         """Return True if ll_trigger can listen to Clocks from EVG."""
-
         name = _PVName(ll_trigger)
         if name.dev in {'EVE', 'AFC'}:
             return True
