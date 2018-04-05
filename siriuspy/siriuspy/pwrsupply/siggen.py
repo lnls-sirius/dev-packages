@@ -11,7 +11,7 @@ class SigGenConfig:
 
     def __init__(self, data=None,
                  type=None,  # Sine, DampedSine, Trapezoidal
-                 nr_cycles=None,  # Sine, DampedSine, Trapezoidal
+                 num_cycles=None,  # Sine, DampedSine, Trapezoidal
                  freq=None,  # [Hz] Sine, DampedSine
                  amplitude=None,  # [A] Sine, DampedSine, Trapezoidal
                  offset=None,  # [A] Sine, DampedSine, Trapezoidal
@@ -19,23 +19,23 @@ class SigGenConfig:
                  rampup_time=None,  # [s] Trapezoidal
                  rampdown_time=None,  # [s] Trapezoidal
                  plateau_time=None,  # [s] Trapezoidal
-                 theta_begin=None,  # Sine, DampedSine
-                 theta_end=None,  # Sine, DampedSine
-                 decay_time=None):  # DampedSine
+                 theta_begin=None,  # [deg] Sine, DampedSine
+                 theta_end=None,  # [deg] Sine, DampedSine
+                 decay_time=None):  # [s] DampedSine
         """Init method."""
         # set default values
         self._set_default_config()
         # process input arguments
         if data is not None:
             self.type = str(data[0])
-            self.nr_cycles = int(data[1])
+            self.num_cycles = int(data[1])
             self.freq = float(data[2])
             self.amplitude = float(data[3])
             self.offset = float(data[4])
             self.aux_param = [float(d) for d in data[5:9]]
         self.type = str(type) if type is not None else self.type
-        self.nr_cycles = int(nr_cycles) if nr_cycles is not None \
-            else self.nr_cycles
+        self.num_cycles = int(num_cycles) if num_cycles is not None \
+            else self.num_cycles
         self.freq = float(freq) if freq is not None else self.freq
         self.amplitude = float(amplitude) if amplitude is not None \
             else self.amplitude
@@ -61,7 +61,7 @@ class SigGenConfig:
     @property
     def duration(self):
         """Duration of signal [s]."""
-        return self.nr_cycles / self.freq
+        return self.num_cycles / self.freq
 
     @property
     def rampup_time(self):
@@ -131,6 +131,7 @@ class SigGenConfig:
 
     def get_waveform(self, nr_points=100):
         """Return list with signal waveform."""
+        d2r = _np.pi/180.0
         t = _np.linspace(0.0, self.duration, nr_points)
         if self.type in ('Sine', 'DampedSine'):
             # TODO: confirm!
@@ -139,21 +140,24 @@ class SigGenConfig:
             else:
                 amp = self.amplitude * _np.exp(-t/self.decay_time)
             wfm = self.offset * _np.ones(t.shape)
-            phase = self.freq*t % (2*_np.pi)
-            sel_in = (phase >= self.theta_begin) and (phase <= self.theta_end)
+            phase = (2*_np.pi) * (self.freq*t % 1)
+            sel_in = \
+                (phase >= d2r * self.theta_begin) & \
+                (phase <= d2r * self.theta_end)
             wfm_delta = amp * _np.sin(phase)
+            # wfm = wfm_delta
             wfm[sel_in] += wfm_delta[sel_in]
         else:
             # TODO: implement get_waveform for 'Trapezoidal' type.
             wfm = _np.zeros(t.shape) + self.offset
-        return wfm
+        return wfm, sel_in, phase, wfm_delta
 
     # --- private methods ---
 
     def _set_default_config(self):
         self.type = 'Sine'
-        self.nr_cycles = 1
+        self.num_cycles = 1
         self.freq = 100.0  # [A]
         self.amplitude = 0.0
         self.offset = 0.0  # [A]
-        self.aux_param = [0.0, 0.0, 0.0, 0.0]
+        self.aux_param = [0.0, 360.0, 0.0, 0.0]
