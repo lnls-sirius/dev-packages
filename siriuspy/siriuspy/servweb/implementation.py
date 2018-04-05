@@ -92,7 +92,7 @@ def ps_psmodels_read(timeout=_timeout):
     return read_url(url, timeout=timeout)
 
 
-def ps_siggen_configuration(timeout=_timeout):
+def ps_siggen_configuration_read(timeout=_timeout):
     """Return power supplies signal default generation configuration."""
     url = _ps_folder + 'siggen-configuration.txt'
     return read_url(url, timeout=timeout)
