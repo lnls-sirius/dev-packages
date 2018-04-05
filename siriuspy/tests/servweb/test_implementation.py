@@ -57,7 +57,7 @@ class TestServWebReadUrl(unittest.TestCase):
 class TestServWeb(unittest.TestCase):
     """Test servweb."""
 
-    api = {
+    public_interface = {
         'read_url',
         'server_online',
         'magnets_excitation_data_read',
@@ -66,6 +66,7 @@ class TestServWeb(unittest.TestCase):
         'magnets_excitation_ps_read',
         'ps_pstypes_names_read',
         'ps_pstype_data_read',
+        'ps_siggen_configuration_read',
         'ps_pstype_setpoint_limits',
         'pu_pstype_setpoint_limits',
         'ps_psmodels_read',
@@ -77,10 +78,10 @@ class TestServWeb(unittest.TestCase):
         'high_level_triggers'
     }
 
-    def test_api(self, mock_read):
-        """Test api."""
+    def test_public_interface(self, mock_read):
+        """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-            implementation, TestServWeb.api)
+            implementation, TestServWeb.public_interface)
         self.assertTrue(valid)
 
     def test_server_online(self, mock_read):
@@ -168,6 +169,19 @@ class TestServWeb(unittest.TestCase):
         resp = implementation.ps_pstype_data_read(filename)
         self.assertEqual(resp, "FakeResponse")
         resp = implementation.ps_pstype_data_read(filename, timeout=2.0)
+        self.assertEqual(resp, "FakeResponse")
+        # Assert read_url was called correctly
+        mock_read.assert_has_calls([
+            mock.call(url, timeout=1.0),
+            mock.call(url, timeout=2.0)])
+
+    def test_ps_siggen_configuration_read(self, mock_read):
+        """Test ps_siggen_configuration_read."""
+        url = implementation._ps_folder + 'siggen-configuration.txt'
+        # Call with different parameters
+        resp = implementation.ps_siggen_configuration_read()
+        self.assertEqual(resp, "FakeResponse")
+        resp = implementation.ps_siggen_configuration_read(timeout=2.0)
         self.assertEqual(resp, "FakeResponse")
         # Assert read_url was called correctly
         mock_read.assert_has_calls([
