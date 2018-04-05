@@ -681,15 +681,3 @@ def get_ll_trigger_object(channel, callback, init_hl_state, source_enums):
         raise Exception('Low Level Trigger Class not defined for device ' +
                         'type '+key[0]+' and connection type '+key[1]+'.')
     return cls_(channel, int(conn_num), callback, init_hl_state, source_enums)
-
-
-def get_ll_trigger_obj_names(chans):
-    """Get Low Level trigger object names."""
-    channels = set()
-    for chan in chans:
-        chan_tree = _Connections.get_device_tree(chan)
-        for up_chan in chan_tree:
-            if up_chan.device_name in EVRs | EVEs | AFCs:
-                channels |= {up_chan}
-                break
-    return sorted(channels)

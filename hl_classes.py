@@ -16,8 +16,6 @@ from as_ti_control.ll_classes import get_ll_trigger_object as \
     _get_ll_trigger_object
 from as_ti_control.ll_classes import INTERVAL as _INTERVAL
 
-from as_ti_control.ll_classes import get_ll_trigger_obj_names as \
-    _get_ll_trigger_obj_names
 from as_ti_control.ll_classes import LL_Event as _LL_Event
 from as_ti_control.ll_classes import LL_Clock as _LL_Clock
 from as_ti_control.ll_classes import LL_EVG as _LL_EVG
@@ -302,20 +300,18 @@ class HL_Trigger(_HL_Base):
         'Status': '-Mon',
         }
 
+    _ALL_TRIGGS = _Triggers()
+
     @staticmethod
     def _get_LL_OBJ(**kwargs):
         return _get_ll_trigger_object(**kwargs)
-
-    @staticmethod
-    def _get_ll_obj_names(chans):
-        return _get_ll_trigger_obj_names(chans)
 
     def get_database(self):
         """Get the database."""
         db = dict()
         pre = self.prefix
 
-        dic_ = {'type': 'enum', 'enums': _Triggers.STATES}
+        dic_ = {'type': 'enum', 'enums': self._ALL_TRIGGS.STATES}
         dic_.update(self._pvs_config['State'])
         db[pre + 'State-Sts'] = _dcopy(dic_)
         dic_['fun_set_pv'] = lambda x: self.write('State', x)
@@ -336,7 +332,7 @@ class HL_Trigger(_HL_Base):
         dic_['fun_set_pv'] = lambda x: self.write('Duration', x)
         db[pre + 'Duration-SP'] = dic_
 
-        dic_ = {'type': 'enum', 'enums': _Triggers.POLARITIES}
+        dic_ = {'type': 'enum', 'enums': self._ALL_TRIGGS.POLARITIES}
         dic_.update(self._pvs_config['Polarity'])
         db[pre + 'Polarity-Sts'] = _dcopy(dic_)
         dic_['fun_set_pv'] = lambda x: self.write('Polarity', x)
@@ -350,7 +346,7 @@ class HL_Trigger(_HL_Base):
         dic_['fun_set_pv'] = lambda x: self.write('Pulses', x)
         db[pre + 'Pulses-SP'] = dic_
 
-        dic_ = {'type': 'enum', 'enums': _Triggers.INTLK}
+        dic_ = {'type': 'enum', 'enums': self._ALL_TRIGGS.INTLK}
         dic_.update(self._pvs_config['Intlk'])
         db[pre + 'Intlk-Sts'] = _dcopy(dic_)
         dic_['fun_set_pv'] = lambda x: self.write('Intlk', x)
@@ -373,6 +369,8 @@ class HL_Trigger(_HL_Base):
         dic_ = {'type': 'int', 'value': 255}
         db[pre + 'Status-Mon'] = _dcopy(dic_)
 
+        db = super().get_database(db)
+
         db[pre + 'Status-Cte'] = {
             'type': 'string', 'count': 8,
             'value': (
@@ -386,50 +384,27 @@ class HL_Trigger(_HL_Base):
                 'DownLink Ok',
                 )
             }
-        return super().get_database(db)
+        return db
 
-    def __init__(self, prefix, callback, channels, hl_props, pvs_config):
-        """Appropriately initialize the instance.
-
-        channels = is a list of unique identifiers with the format:
-            <DeviceName>:<Output>
-        for all the low level objects associated with this object:
-        hl_props = is a set with high level properties that will be available
-          for changes in the High Level Interface. All the possible values are:
-            {'State', 'Src', 'Duration', 'Polarity', 'Pulses', 'Intlk',
-             'Delay', 'DelayType'}
-        pvs_config = initial values for all the high level properties.
-        """
-        self._interface_props = hl_props | {'Status'}
-        self._pvs_config = pvs_config
-        self._ll_objs_names = self._get_ll_obj_names(channels)
-        self._my_state = {k: v['value'] for k, v in pvs_config.items()}
+    def __init__(self, hl_trigger, callback):
+        """Appropriately initialize the instance."""
+        data = self._ALL_TRIGGS.hl_triggers[hl_trigger]
+        self._interface_props = data['hl_props'] | {'Status'}
+        self._pvs_config = data['pvs_config']
+        self._ll_objs_names = self._ALL_TRIGGS.get_ll_trigger_names(hl_trigger)
+        self._my_state = {k: v['value'] for k, v in data['pvs_config'].items()}
         self._set_non_homogeneous_params()
         super().__init__(
-            prefix, callback,
+            hl_trigger, callback,
             connect_kwargs={'source_enums': self._source_enums}
             )
-
-    def _has_delay_type(self, name):
-        if name.dev in ('EVR', 'EVE') and name.propty.startswith('OUT'):
-            return True
-        else:
-            return False
-
-    def _has_clock(self, name):
-        if name.dev in {'EVE', 'AFC'}:
-            return True
-        elif name.dev == 'EVR':
-            return True if name.propty.startswith('OUT') else False
-        else:
-            raise Exception('Error: ' + name)
 
     def _set_non_homogeneous_params(self):
         has_clock = []
         has_delay_type = []
         for name in self._ll_objs_names:
-            has_clock.append(self._has_clock(name))
-            has_delay_type.append(self._has_delay_type(name))
+            has_clock.append(self._ALL_TRIGGS.has_clock(name))
+            has_delay_type.append(self._ALL_TRIGGS.has_delay_type(name))
         dic_ = self._pvs_config['Src']
         # EVG_params_ENUMS
         if all(has_clock):
@@ -440,9 +415,9 @@ class HL_Trigger(_HL_Base):
         self._source_enums = list(dic_['enums'])
         # Delay Typess
         dic_ = self._pvs_config['DelayType']
-        dic_['enums'] = (_Triggers.DELAY_TYPES[0], )
+        dic_['enums'] = (self._ALL_TRIGGS.DELAY_TYPES[0], )
         if all(has_delay_type):
-            dic_['enums'] = _Triggers.DELAY_TYPES
+            dic_['enums'] = self._ALL_TRIGGS.DELAY_TYPES
         elif any(has_delay_type):
             _log.warning('Some triggers of ' + self.prefix +
                          ' are connected to unsimiliar low level devices.')
