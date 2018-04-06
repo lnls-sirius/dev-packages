@@ -1,19 +1,17 @@
 #!/usr/bin/env python-sirius
 """Test public API of PowerSupply/Magnet class."""
 import unittest
-from unittest.mock import Mock
+from unittest import mock
 
 from siriuspy.pwrsupply.model import PowerSupply
 from siriuspy.util import check_public_interface_namespace
-from variables import bsmp_values, dict_values
 
 
-class TestPowerSupply(unittest.TestCase):
+class TestPowerSupplyAPI(unittest.TestCase):
     """Test PowerSupply class."""
 
     api = (
-        'bsmp',
-        'database',
+        'controller',
         'pwrstate_sts',
         'opmode_sts',
         'current_rb',
@@ -43,286 +41,299 @@ class TestPowerSupply(unittest.TestCase):
         'reset_interlocks',
     )
 
-    def setUp(self):
-        """Common setup for all tests."""
-        self.serial = Mock()
-        self.serial.UART_read.return_value = \
-            ['\x00', '\x13', '\x00', '\x02', '\x03', '\x00', 'è']
-        self.ps = PowerSupply(self.serial, 1)
-
     def test_api(self):
         """Test API."""
         self.assertTrue(
             check_public_interface_namespace(PowerSupply, self.api))
 
+
+class TestPowerSupply(unittest.TestCase):
+    """Test power supply.
+
+    Test methods read_variable, execute_function and method that read and parse
+    the BSMP `ps_state` variable.
+    """
+
+    def setUp(self):
+        """Common setup for all tests."""
+        self.controller = mock.Mock()
+        self.ps = PowerSupply(self.controller)
+
+    def test_read_variable(self):
+        """Test read variable method."""
+        self.controller.read_variable.return_value = (0xE0, 10.5)
+        self.assertEqual(self.ps._read_variable(1), 10.5)
+
+    def test_read_variable_error(self):
+        """Test read_variable return None on BSMP error code."""
+        self.controller.read_variable.return_value = (0xE8, None)
+        self.assertIsNone(self.ps._read_variable(1))
+
+    def test_execute_function(self):
+        """Test execute function returns true on success."""
+        self.controller.execute_function.return_value = (0xE0, None)
+        self.assertTrue(self.ps._execute_function(1))
+
+    def test_execute_function_error(self):
+        """Test execute function returns true on success."""
+        self.controller.execute_function.return_value = (0xE3, None)
+        self.assertFalse(self.ps._execute_function(1))
+
     def test_pwrstate_sts_off(self):
         """Test pwrstate sts."""
         # Off - Off
-        self.serial.UART_read.return_value = \
-            ['\x00', '\x11', '\x00', '\x02', '\x00', '\x00', 'í']
+        self.controller.read_variable.return_value = (0xE0, 0b0000000000000000)
+        self.assertEqual(self.ps.pwrstate_sts, 0)
+        self.controller.read_variable.return_value = (0xE0, 0b1111111111110000)
         self.assertEqual(self.ps.pwrstate_sts, 0)
 
     def test_pwrstate_sts_interlock(self):
         """Test pwrstate sts."""
         # Interlock - On
-        self.serial.UART_read.return_value = \
-            ['\x00', '\x11', '\x00', '\x02', '\x01', '\x00', 'ì']
+        self.controller.read_variable.return_value = (0xE0, 0b0000000000000001)
         self.assertEqual(self.ps.pwrstate_sts, 1)
 
     def test_pwrstate_sts_initializing(self):
         """Test pwrstate sts."""
         # Initializing - On
-        self.serial.UART_read.return_value = \
-            ['\x00', '\x11', '\x00', '\x02', '\x02', '\x00', 'ë']
+        self.controller.read_variable.return_value = (0xE0, 0b0000000000000010)
         self.assertEqual(self.ps.pwrstate_sts, 1)
 
     def test_pwrstate_sts_slowref(self):
         """Test pwrstate sts."""
         # SlowRef - On
-        self.serial.UART_read.return_value = \
-            ['\x00', '\x11', '\x00', '\x02', '\x03', '\x00', 'ê']
+        self.controller.read_variable.return_value = (0xE0, 0b0000000000000011)
         self.assertEqual(self.ps.pwrstate_sts, 1)
 
     def test_pwrstate_sts_slowrefsync(self):
         """Test pwrstate sts."""
         # SlowRefSync - On
-        self.serial.UART_read.return_value = \
-            ['\x00', '\x11', '\x00', '\x02', '\x04', '\x00', 'é']
+        self.controller.read_variable.return_value = (0xE0, 0b0000000000000100)
         self.assertEqual(self.ps.pwrstate_sts, 1)
 
     def test_pwrstate_sts_cycle(self):
         """Test pwrstate sts."""
         # Cycle - On
-        self.serial.UART_read.return_value = \
-            ['\x00', '\x11', '\x00', '\x02', '\x05', '\x00', 'è']
+        self.controller.read_variable.return_value = (0xE0, 0b0000000000000101)
         self.assertEqual(self.ps.pwrstate_sts, 1)
 
     def test_pwrstate_sts_rmpwfm(self):
         """Test pwrstate sts."""
         # RmpWfm - On
-        self.serial.UART_read.return_value = \
-            ['\x00', '\x11', '\x00', '\x02', '\x06', '\x00', 'ç']
+        self.controller.read_variable.return_value = (0xE0, 0b0000000000000110)
         self.assertEqual(self.ps.pwrstate_sts, 1)
 
     def test_pwrstate_sts_migwfm(self):
         """Test pwrstate sts."""
         # MigWfm - On
-        self.serial.UART_read.return_value = \
-            ['\x00', '\x11', '\x00', '\x02', '\x07', '\x00', 'æ']
+        self.controller.read_variable.return_value = (0xE0, 0b0000000000000111)
         self.assertEqual(self.ps.pwrstate_sts, 1)
 
     def test_pwrstate_sts_fastref(self):
         """Test pwrstate sts."""
         # FastRef - On
-        self.serial.UART_read.return_value = \
-            ['\x00', '\x11', '\x00', '\x02', '\x08', '\x00', 'å']
+        self.controller.read_variable.return_value = (0xE0, 0b0000000000001000)
         self.assertEqual(self.ps.pwrstate_sts, 1)
 
     def test_opmode_sts_off(self):
         """Test opmode_sts."""
         # Off - SlowRef
-        self.serial.UART_read.return_value = \
-            ['\x00', '\x11', '\x00', '\x02', '\x00', '\x00', 'í']
+        self.controller.read_variable.return_value = (0xE0, 0b0000000000000000)
         self.assertEqual(self.ps.opmode_sts, 0)
 
     def test_opmode_sts_interlock(self):
         """Test opmode sts."""
         # Interlock - SlowRef
-        self.serial.UART_read.return_value = \
-            ['\x00', '\x11', '\x00', '\x02', '\x01', '\x00', 'ì']
+        self.controller.read_variable.return_value = (0xE0, 0b0000000000000001)
         self.assertEqual(self.ps.opmode_sts, 0)
 
     def test_opmode_sts_initializing(self):
         """Test opmode sts."""
         # Initializing - SlowRef
-        self.serial.UART_read.return_value = \
-            ['\x00', '\x11', '\x00', '\x02', '\x02', '\x00', 'ë']
+        self.controller.read_variable.return_value = (0xE0, 0b0000000000000010)
         self.assertEqual(self.ps.opmode_sts, 0)
 
     def test_opmode_sts_slowref(self):
         """Test opmode sts."""
         # SlowRef
-        self.serial.UART_read.return_value = \
-            ['\x00', '\x11', '\x00', '\x02', '\x03', '\x00', 'ê']
+        self.controller.read_variable.return_value = (0xE0, 0b0000000000000011)
         self.assertEqual(self.ps.opmode_sts, 0)
 
     def test_opmode_sts_slowrefsync(self):
         """Test opmode sts."""
         # SlowRefSync
-        self.serial.UART_read.return_value = \
-            ['\x00', '\x11', '\x00', '\x02', '\x04', '\x00', 'é']
+        self.controller.read_variable.return_value = (0xE0, 0b0000000000000100)
         self.assertEqual(self.ps.opmode_sts, 1)
 
     def test_opmode_sts_cycle(self):
         """Test opmode sts."""
         # Cycle - On
-        self.serial.UART_read.return_value = \
-            ['\x00', '\x11', '\x00', '\x02', '\x05', '\x00', 'è']
+        self.controller.read_variable.return_value = (0xE0, 0b0000000000000101)
         self.assertEqual(self.ps.opmode_sts, 2)
 
     def test_opmode_sts_rmpwfm(self):
         """Test opmode sts."""
         # RmpWfm - On
-        self.serial.UART_read.return_value = \
-            ['\x00', '\x11', '\x00', '\x02', '\x06', '\x00', 'ç']
+        self.controller.read_variable.return_value = (0xE0, 0b0000000000000110)
         self.assertEqual(self.ps.opmode_sts, 3)
 
     def test_opmode_sts_migwfm(self):
         """Test opmode sts."""
         # MigWfm - On
-        self.serial.UART_read.return_value = \
-            ['\x00', '\x11', '\x00', '\x02', '\x07', '\x00', 'æ']
+        self.controller.read_variable.return_value = (0xE0, 0b0000000000000111)
         self.assertEqual(self.ps.opmode_sts, 4)
 
     def test_opmode_sts_fastref(self):
         """Test opmode sts."""
         # FastRef - On
-        self.serial.UART_read.return_value = \
-            ['\x00', '\x11', '\x00', '\x02', '\x08', '\x00', 'å']
+        self.controller.read_variable.return_value = (0xE0, 0b0000000000001000)
         self.assertEqual(self.ps.opmode_sts, 5)
-
-    def test_read_variable(self):
-        """Test curren rb."""
-        self.serial.UART_read.return_value = \
-            ['\x00', '\x11', '\x00', '\x04', '\x00', '\x00', '(', 'A', '\x82']
-        self.assertEqual(self.ps._read_variable(1), 10.5)
-
-    # def test_currentref_mon(self):
-    #     """Test currenref mon."""
-    #     self.serial.UART_read.return_value = \
-    #         ['\x00', '\x11', '\x00', '\x04', '\x00', '\x00', '(', 'A', '\x82']
-    #     self.assertEqual(self.ps.currentref_mon, 10.5)
-
-    # def test_current_mon(self):
-    #     """Test curren mon."""
-    #     self.serial.UART_read.return_value = \
-    #         ['\x00', '\x11', '\x00', '\x04', '\x00', '\x00', '(', 'A', '\x82']
-    #     self.assertEqual(self.ps.current_mon, 10.5)
-
-    # def test_intlksoft_mon(self):
-    #     """Test intlsoft_mon."""
-    #     self.serial.UART_read.return_value = \
-    #         ['\x00', '\x11', '\x00', '\x04', 'Þ', '\x04', '\x00', '\x00', '\t']
-    #     self.assertEqual(self.ps.intlksoft_mon, 1246)
-
-    # def test_intlkhard_mon(self):
-    #     """Test intlkhard_mon."""
-    #     self.serial.UART_read.return_value = \
-    #         ['\x00', '\x11', '\x00', '\x04', 'Þ', '\x04', '\x00', '\x00', '\t']
-    #     self.assertEqual(self.ps.intlkhard_mon, 1246)
 
     def test_read_group(self):
         """Test read group creation."""
-        # Tested in test_read_all_variables
-        pass
+        """Test reading from group -1."""
+        variables = [0, 3, 6, 7]
+        values = [0b0000000000000110,
+                  [b't', b'e', b's', b't', b'e', b'\x00', b'\x00', b'\x00'],
+                  0, 0]
+        self.controller.read_group_variables.return_value = (0xE0, values)
+        self.controller.entities.list_variables.return_value = variables
+        self.assertEqual(self.ps.read_group(3), {
+            'PwrState-Sts': 1,
+            'OpMode-Sts': 3,
+            'Version-Cte': 'teste',
+            'CycleEnbl-Mon': values[2],
+            'CycleType-Sts': values[3]})
 
     def test_create_group_return_true(self):
         """Test create group return true."""
-        self.serial.UART_read.return_value = ['\x00', 'à', '\x00', '\x00', ' ']
+        self.controller.create_group.return_value = (0xE0, None)
         self.assertTrue(self.ps.create_group(['CurrentRef-Mon']))
 
     def test_create_group(self):
         """Test correct stream is sent."""
         # Create group with currents
+        self.controller.create_group.return_value = (0xE0, None)
         self.ps.create_group(['CurrentRef-Mon', 'Current-Mon', 'Current-RB'])
-        send = ['\x01', '0', '\x00', '\x03', '\x01', '\x02', '\x1b', '®']
-        self.serial.UART_write.assert_called_with(send, timeout=100)
+        self.controller.create_group.assert_called_with({1, 2, 27})
 
     def test_create_group_field_with_same_id(self):
         """Test creating group with fields that have same id."""
         # Create group with 2 field that map to the same id
+        self.controller.create_group.return_value = (0xE0, None)
         self.ps.create_group(['PwrState-Sts', 'OpMode-Sts'])
-        send = ['\x01', '0', '\x00', '\x01', '\x00', 'Î']
-        self.serial.UART_write.assert_called_with(send, timeout=100)
+        self.controller.create_group.assert_called_with({0})
 
     def test_create_group_error(self):
         """Test create_group returns false when error occurs."""
-        self.serial.UART_read.return_value = \
-            ['\x00', 'è', '\x00', '\x00', '\x18']
+        self.controller.create_group.return_value = (0xE3, None)
         self.assertFalse(self.ps.create_group(['CurrentRef-Mon']))
 
-    def test_read_all_variables(self):
-        """Test reading from group 0."""
-        self.serial.UART_read.return_value = bsmp_values
-        self.assertEqual(self.ps.read_all_variables(), dict_values)
-
-    def test_execute_function(self):
-        """Test turn on function."""
-        self.serial.UART_read.return_value = \
-            ['\x00', 'Q', '\x00', '\x01', 'à', 'Î']
-        self.assertTrue(self.ps._execute_function(0))
-
-    def test_execute_function_error(self):
-        """Test turn on function when an error occurs."""
-        self.serial.UART_read.return_value = \
-            ['\x00', 'S', '\x00', '\x00', '\xad']
-        self.assertFalse(self.ps._execute_function(0))
-
-    # def test_turn_on(self):
-    #     """Test turn on function."""
-    #     self.serial.UART_read.return_value = \
-    #         ['\x00', 'Q', '\x00', '\x01', 'à', 'Î']
-    #     self.assertTrue(self.ps.turn_on())
-    #
-    # def test_turn_on_error(self):
-    #     """Test turn on function when an error occurs."""
-    #     self.serial.UART_read.return_value = \
-    #         ['\x00', 'S', '\x00', '\x00', '\xad']
-    #     self.assertFalse(self.ps.turn_on())
-    #
-    # def test_turn_off(self):
-    #     """Test turn off function."""
-    #     self.serial.UART_read.return_value = \
-    #         ['\x00', 'Q', '\x00', '\x01', 'à', 'Î']
-    #     self.assertTrue(self.ps.turn_off())
-    #
-    # def test_turn_off_error(self):
-    #     """Test turn off function when it return error."""
-    #     self.serial.UART_read.return_value = \
-    #         ['\x00', 'S', '\x00', '\x00', '\xad']
-    #     self.assertFalse(self.ps.turn_off())
-    #
-    # def test_select_op_mode(self):
-    #     """Test select op mode."""
-    #     self.serial.UART_read.return_value = \
-    #         ['\x00', 'Q', '\x00', '\x01', 'à', 'Î']
-    #     self.assertTrue(self.ps.select_op_mode(1))
-    #
-    # def test_select_op_mode_error(self):
-    #     """Test select op mode when error occurs."""
-    #     self.serial.UART_read.return_value = \
-    #         ['\x00', 'S', '\x00', '\x00', '\xad']
-    #     self.assertFalse(self.ps.select_op_mode(1))
-    #
-    # def test_reset_interlocks(self):
-    #     """Test reset_interlocks."""
-    #     self.serial.UART_read.return_value = \
-    #         ['\x00', 'Q', '\x00', '\x01', 'à', 'Î']
-    #     self.assertTrue(self.ps.reset_interlocks())
-    #
-    # def test_reset_interlocks_error(self):
-    #     """Test reset_interlocks when error occurs."""
-    #     self.serial.UART_read.return_value = \
-    #         ['\x00', 'S', '\x00', '\x00', '\xad']
-    #     self.assertFalse(self.ps.reset_interlocks())
-    #
-    # def test_set_slowref(self):
-    #     """Test set_slowref."""
-    #     self.serial.UART_read.return_value = \
-    #         ['\x00', 'Q', '\x00', '\x01', 'à', 'Î']
-    #     self.assertTrue(self.ps.set_slowref(1.0))
-    #
-    # def test_set_slowref_error(self):
-    #     """Test set_slowref when error occurs."""
-    #     self.serial.UART_read.return_value = \
-    #         ['\x00', 'S', '\x00', '\x00', '\xad']
-    #     self.assertFalse(self.ps.set_slowref(1.0))
+    def test_turn_on_delay(self):
+        """Test turn on is executed correctly."""
 
 
-class TestPowerSupplySim(unittest.TestCase):
-    """Test simulated PowerSupplySim class."""
+class TestPowerSupplyFunctions(unittest.TestCase):
+    """Test functions."""
 
-    pass
+    def setUp(self):
+        """Controller execute_function returns ok."""
+        self.controller = mock.Mock()
+        self.controller.execute_function.return_value = (0xE0, None)
+        # Mock alias
+        self.ef = self.controller.execute_function
+        self.ps = PowerSupply(self.controller)
+
+    def test_turn_on(self):
+        """Test turn on function is called."""
+        self.ps.turn_on()
+        self.controller.execute_function.assert_any_call(0, None)
+
+    def test_turn_on_closes_loop(self):
+        """Test turn on calls method to close ps control loop."""
+        self.ps.turn_on()
+        self.controller.execute_function.assert_called_with(3, None)
+
+    @mock.patch('siriuspy.pwrsupply.model._time')
+    def test_turn_on_sleep(self, time):
+        """Test turn on has delay after turn on function."""
+        self.ps.turn_on()
+        time.sleep.assert_called_with(0.3)
+
+    @mock.patch('siriuspy.pwrsupply.model._time')
+    def test_turn_on_error_no_sleep(self, time):
+        """Test turn on has delay after turn on function."""
+        self.controller.execute_function.return_value = (0xE3, None)
+        self.ps.turn_on()
+        time.sleep.assert_not_called()
+
+    def test_turn_off(self):
+        """Test turn off."""
+        self.ps.turn_off()
+        self.controller.execute_function.assert_called_with(1, None)
+
+    @mock.patch('siriuspy.pwrsupply.model._time')
+    def test_turn_off_sleep(self, time):
+        """Test turn on has delay after turn on function."""
+        self.ps.turn_off()
+        time.sleep.assert_called_with(0.3)
+
+    @mock.patch('siriuspy.pwrsupply.model._time')
+    def test_turn_off_on_error_no_sleep(self, time):
+        """Test turn on has delay after turn on function."""
+        self.controller.execute_function.return_value = (0xE3, None)
+        self.ps.turn_off()
+        time.sleep.assert_not_called()
+
+    def test_select_op_mode(self):
+        """Test select op mode called correctly."""
+        self.ps.select_op_mode(0)
+        self.controller.execute_function.assert_called_with(4, 3)
+
+    def test_reset_interlocks(self):
+        """Test reset interlock is called correctly."""
+        self.ps.reset_interlocks()
+        self.controller.execute_function.assert_called_with(6, None)
+
+    @mock.patch('siriuspy.pwrsupply.model._time')
+    def test_reset_interlock_sleep(self, time):
+        """Test turn on has delay after turn on function."""
+        self.ps.reset_interlocks()
+        time.sleep.assert_called_with(0.1)
+
+    @mock.patch('siriuspy.pwrsupply.model._time')
+    def test_reset_interlocks_on_error_no_sleep(self, time):
+        """Test turn on has delay after turn on function."""
+        self.controller.execute_function.return_value = (0xE3, None)
+        self.ps.reset_interlocks()
+        time.sleep.assert_not_called()
+
+    def test_set_slowref(self):
+        """Test set slowred is called correctly."""
+        self.ps.set_slowref(15.5)
+        self.controller.execute_function.assert_called_with(16, 15.5)
+
+    def test_cfg_siggen(self):
+        """Test cfg_siggen is called correctly."""
+        self.ps.cfg_siggen(0, 0, 1.0, 1.0, 1.0, [0.0, 0.0, 0.0, 0.0])
+        self.controller.execute_function.assert_called_with(
+            23, [0, 0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0])
+
+    def test_set_siggen(self):
+        """Test set_siggen is called correctly."""
+        self.ps.set_siggen(1.0, 1.0, 1.0)
+        self.controller.execute_function.assert_called_with(
+            24, [1.0, 1.0, 1.0])
+
+    def test_enable_siggen(self):
+        """Test enable_siggen is called correctly."""
+        self.ps.enable_siggen()
+        self.controller.execute_function.assert_called_with(25, None)
+
+    def test_disable_siggen(self):
+        """Test disable_siggen is called correctly."""
+        self.ps.disable_siggen()
+        self.controller.execute_function.assert_called_with(26, None)
 
 
 if __name__ == "__main__":
