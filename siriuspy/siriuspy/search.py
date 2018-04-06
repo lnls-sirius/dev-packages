@@ -5,6 +5,7 @@ from siriuspy import util as _util
 from siriuspy.namesys import Filter as _Filter
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy import servweb as _web
+from siriuspy.pwrsupply.siggen import SigGenConfig as _SigGenConfig
 from siriuspy.magnet.excdata import ExcitationData as _ExcitationData
 
 
@@ -22,6 +23,7 @@ class PSSearch:
     _pstype_2_excdat_dict = dict()
     _psname_2_psmodel_dict = None
     _psname_2_bbbname_dict = None
+    _psname_2_siggen_dict = None
     _bbbname_2_psnames_dict = None
 
     @staticmethod
@@ -152,6 +154,13 @@ class PSSearch:
         if PSSearch._psname_2_psmodel_dict is None:
             PSSearch._reload_psname_2_psmodel_dict()
         return PSSearch._psname_2_psmodel_dict[psname]
+
+    @staticmethod
+    def conv_psname_2_siggenconf(psname):
+        """Convert psname to corresponding SigGenConf object."""
+        if PSSearch._psname_2_siggen_dict is None:
+            PSSearch._reload_psname_2_siggen_dict()
+        return PSSearch._psname_2_siggen_dict[psname]
 
     @staticmethod
     def check_pstype_ispulsed(pstype):
@@ -294,6 +303,20 @@ class PSSearch:
                 PSSearch._psname_2_psmodel_dict[psname] = psmodel
         else:
             raise Exception('could not read psmodels from web server')
+
+    @staticmethod
+    def _reload_psname_2_siggen_dict():
+        """Load siggen config by psname to a dict."""
+        if _web.server_online():
+            text = _web.ps_siggen_configuration_read()
+            data, _ = _util.read_text_data(text)
+            PSSearch._psname_2_siggen_dict = dict()
+            for datum in data:
+                psname, *siggen_data = datum
+                siggen_config = _SigGenConfig(data=siggen_data)
+                PSSearch._psname_2_siggen_dict[psname] = siggen_config
+        else:
+            raise Exception('could not read siggen config from web server')
 
     @staticmethod
     def _reload_bbb_2_psname_dict():
