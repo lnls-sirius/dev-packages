@@ -11,6 +11,10 @@ _diag_folder = '/diagnostics/'
 _timesys_folder = '/timesys/'
 _respm_folder = '/respm/'
 
+# TODO: we should adopt a naming standard for functions.
+# maybe to use a name prefix that indicates what top folder contains the data
+# to be accessed?
+
 
 def read_url(url, timeout=_timeout):
     """Read URL from server."""
@@ -85,6 +89,12 @@ def pu_pstype_setpoint_limits(timeout=_timeout):
 def ps_psmodels_read(timeout=_timeout):
     """Return the psmodels file."""
     url = _ps_folder + 'psmodels.txt'
+    return read_url(url, timeout=timeout)
+
+
+def ps_siggen_configuration_read(timeout=_timeout):
+    """Return power supplies signal default generation configuration."""
+    url = _ps_folder + 'siggen-configuration.txt'
     return read_url(url, timeout=timeout)
 
 
