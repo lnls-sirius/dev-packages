@@ -1,50 +1,87 @@
 """Module for definitions of BSMP entities of power supply devices."""
-from siriuspy.bsmp import Entities, Types
-bsmp_2_epics = {
-    0: None,
-    1: 'Current-RB',
-    2: 'CurrentRef-Mon',
-    3: 'Version-Cte',
-    6: 'CycleEnbl-Mon',
-    7: 'CycleType-Sts',
-    8: 'CycleNrCycles-RB',
-    9: 'CycleIndex-Mon',
-    10: 'CycleFreq-RB',
-    11: 'CycleAmpl-RB',
-    12: 'CycleOffset-RB',
-    13: 'CycleAuxParam-RB',
-    25: 'IntlkSoft-Mon',
-    26: 'IntlkHard-Mon',
-    27: 'Current-Mon',
-}
+from siriuspy.bsmp import BSMP, Entities, Types
 
-epics_2_bsmp = {
-    'PwrState-Sts': 0,
-    'OpMode-Sts': 0,
-    'Current-RB': 1,
-    'CurrentRef-Mon': 2,
-    'Version-Cte': 3,
-    'CycleType-Sts': 7,
-    'IntlkSoft-Mon': 25,
-    'IntlkHard-Mon': 26,
-    'Current-Mon': 27,
-}
 
-# class Mapping:
-#     """Maps Power Supply epics fields to BSMP entities and vice-versa."""
-#
-#
-#
-#     @staticmethod
-#     def get_field_id(field):
-#         """Return BSMP variable id."""
-#         return Mapping._epics_2_bsmp[field]
-#
-#     def get_id_fieldname(var_id):
-#         """Return epics field name."""
-#         return Mapping._bsmp_2_epics[var_id]
-#
+class Const:
+    """Namespace for organizing power supply BSMP constants."""
 
+    # --- implemented protocol version ---
+    # version = __bsmp_version__
+
+    # --- types ---
+    t_status = 0
+    t_state = 1
+    t_remote = 2
+    t_model = 3
+    t_float = 4
+    t_uint8 = 5
+    t_uint16 = 6
+    t_uint32 = 7
+    t_char128 = 8
+    t_float4 = 9
+    t_param = 10
+    t_float12 = 11
+    t_dspclass = 12
+    t_none = 13
+
+    # --- common variables ---
+    PS_STATUS = 0
+    PS_SETPOINT = 1  # corresponds to IOC Current-RB
+    PS_REFERENCE = 2  # corresponds to IOC CurrentRef-Mon
+    FIRMWARE_VERSION = 3
+    COUNTER_SET_SLOWREF = 4
+    COUNTER_SYNC_PULSE = 5
+    SIGGEN_ENABLE = 6
+    SIGGEN_TYPE = 7
+    SIGGEN_NUM_CYCLES = 8
+    SIGGEN_N = 9
+    SIGGEN_FREQ = 10
+    SIGGEN_AMPLITUDE = 11
+    SIGGEN_OFFSET = 12
+    SIGGEN_AUX_PARAM = 13
+
+    # --- FSB variables ---
+    PS_SOFT_INTERLOCKS = 25  # BSMP doc says ID numbering should be continous!
+    PS_HARD_INTERLOCKS = 26
+    I_LOAD = 27  # corresponds to IOC Current-Mon
+    V_LOAD = 28
+    V_DCLINK = 29
+    TEMP_SWITCHES = 30
+
+    # --- functions ---
+    TURN_ON = 0
+    TURN_OFF = 1
+    OPEN_LOOP = 2
+    CLOSE_LOOP = 3
+    SELECT_OP_MODE = 4
+    RESET_INTERLOCKS = 6
+    SET_SERIAL_TERMINATION = 9  # --- NOT IMPLEMENTED YET ---
+    SYNC_PULSE = 15  # --- NOT IMPLEMENTED YET ---
+    SET_SLOWREF = 16
+    SET_SLOWREF_FBP = 17  # --- NOT IMPLEMENTED YET ---
+    RESET_COUNTERS = 18
+    CFG_SIGGEN = 23
+    SET_SIGGEN = 24  # --- NOT IMPLEMENTED YET ---
+    ENABLE_SIGGEN = 25
+    DISABLE_SIGGEN = 26
+    SET_SLOWREF_READBACK = 27  # --- NOT IMPLEMENTED YET ---
+    SET_SLOWREF_FBP_READBACK = 28  # --- NOT IMPLEMENTED YET ---
+    SET_PARAM = 29  # --- NOT IMPLEMENTED YET ---
+    GET_PARAM = 30  # --- NOT IMPLEMENTED YET ---
+    SAVE_PARAM_EEPROM = 31  # --- NOT IMPLEMENTED YET ---
+    LOAD_PARAM_EEPROM = 32  # --- NOT IMPLEMENTED YET ---
+    SAVE_PARAM_BANK = 33  # --- NOT IMPLEMENTED YET ---
+    LOAD_PARAM_BANK = 34  # --- NOT IMPLEMENTED YET ---
+    SET_DSP_COEFFS = 35  # --- NOT IMPLEMENTED YET ---
+    GET_DSP_COEFF = 36  # --- NOT IMPLEMENTED YET ---
+    SAVE_DSP_COEFFS_EEPROM = 37  # --- NOT IMPLEMENTED YET ---
+    LOAD_DSP_COEFFS_EEPROM = 38  # --- NOT IMPLEMENTED YET ---
+    SAVE_DSP_MODULES_EEPROM = 39  # --- NOT IMPLEMENTED YET ---
+    LOAD_DSP_MODULES_EEPROM = 40  # --- NOT IMPLEMENTED YET ---
+    RESET_UDC = 41  # --- NOT IMPLEMENTED YET ---
+
+    # --- variables groups ---
+group_id = 3 # default variables group ID defined for power supplies
 
 class FBPEntities(Entities):
     """PS FBP Entities."""
