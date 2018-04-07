@@ -340,8 +340,8 @@ class TimingDevDb:
         db[prefix + 'ContinuousEvt-Sts'] = dic_
 
         dic_ = {'type': 'int', 'count': 864, 'value': 864*[1],
-                # 'lolo': 0, 'low': 0, 'lolim': 0,
-                # 'hilim': 864, 'high': 864, 'hihi': 864
+                'lolo': 0, 'low': 0, 'lolim': 0,
+                'hilim': 864, 'high': 864, 'hihi': 864
                 }
         db[prefix + 'BucketList-SP'] = _dcopy(dic_)
         db[prefix + 'BucketList-RB'] = dic_
@@ -386,13 +386,16 @@ class TimingDevDb:
                 'type': 'enum', 'value': 1,
                 'enums': ('Disconnected', 'Connected')}
 
-        db[prefix+'Link-Mon'] = {
+        db[prefix+'RFStatus-Mon'] = {
                 'type': 'enum', 'value': 1,
-                'enums': ('Unlink', 'Link')}
+                'enums': ('Loss or Out of Range', 'Normal')}
 
-        db[prefix+'Intlk-Mon'] = {
-                'type': 'enum', 'value': 0,
-                'enums': ('Dsbl', 'Enbl')}
+        db[prefix+'StateMachine-Mon'] = {
+                'type': 'enum', 'value': 4,
+                'enums': (
+                    'Initializing', 'Stopped', 'Continuous', 'Injection',
+                    'Preparing Continuous', 'Preparing Injection'
+                    )}
 
         for clc in _Clocks.LL2HL_MAP.keys():
             p = prefix + clc
