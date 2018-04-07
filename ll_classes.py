@@ -8,8 +8,7 @@ from siriuspy.epics import connection_timeout as _conn_timeout
 from siriuspy.envars import vaca_prefix as LL_PREFIX
 from siriuspy.namesys import SiriusPVName as _PVName
 
-from siriuspy.timesys.time_data import Events as _Events
-from siriuspy.timesys.time_data import Triggers as _Triggers
+from siriuspy.csdevice import timesys as _cstime
 from siriuspy.timesys.time_data import Connections as _Connections
 from siriuspy.timesys.time_data import IOs as _IOs
 from siriuspy.timesys.time_data import RF_FREQUENCY as _RFFREQ
@@ -526,13 +525,13 @@ class _EVROUT(_Base):
 
     def _process_evt(self, evt):
         src_len = len(self._source_enums)
-        event = _Events.LL_TMP.format(evt)
-        if event not in _Events.LL2HL_MAP:
+        event = _cstime.events_ll_tmp.format(evt)
+        if event not in _cstime.events_ll2hl_map:
             return {'Src': src_len}
-        elif _Events.LL2HL_MAP[event] not in self._source_enums:
+        elif _cstime.events_ll2hl_map[event] not in self._source_enums:
             return {'Src': src_len}
         else:
-            ev_num = self._source_enums.index(_Events.LL2HL_MAP[event])
+            ev_num = self._source_enums.index(_cstime.events_ll2hl_map[event])
             return {'Src': ev_num}
 
     def _process_src_trig(self, src_trig):
@@ -542,7 +541,7 @@ class _EVROUT(_Base):
 
     def _process_src(self, src):
         src_len = len(self._source_enums)
-        source = _Triggers.SRC_LL[src]
+        source = _cstime.triggers_src_ll[src]
         if not source:
             return {'Src': src_len}  # invalid
         elif source.startswith(('Dsbl', 'Clock')):
@@ -551,10 +550,10 @@ class _EVROUT(_Base):
     def _set_source(self, value):
         pname = self._source_enums[value]
         if pname.startswith(('Clock', 'Dsbl')):
-            self._my_state_sp['Src'] = _Triggers.SRC_LL.index(pname)
+            self._my_state_sp['Src'] = _cstime.triggers_src_ll.index(pname)
         else:
-            self._my_state_sp['Src'] = _Triggers.SRC_LL.index('Trigger')
-            self._my_state_sp['Evt'] = int(_Events.HL2LL_MAP[pname][-2:])
+            self._my_state_sp['Src'] = _cstime.triggers_src_ll.index('Trigger')
+            self._my_state_sp['Evt'] = int(_cstime.events_hl2ll_map[pname][-2:])
         if 'SrcTrig' in self._dict_convert_prop2pv.keys():
             self._my_state_sp['SrcTrig'] = self._internal_trigger
 
@@ -610,7 +609,9 @@ class _EVROTP(_EVROUT):
     def _set_source(self, value):
         pname = self._source_enums[value]
         if not pname.startswith(('Clock', 'Dsbl')):
-            self._my_state_sp['Evt'] = int(_Events.HL2LL_MAP[pname][-2:])
+            self._my_state_sp['Evt'] = int(
+                            _cstime.events_hl2ll_map[pname][-2:]
+                            )
 
 
 class _EVEOUT(_EVROUT):

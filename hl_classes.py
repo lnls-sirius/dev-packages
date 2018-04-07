@@ -10,8 +10,7 @@ from pcaspy import Alarm as _Alarm
 from pcaspy import Severity as _Severity
 from siriuspy.thread import RepeaterThread as _Timer
 from siriuspy.timesys.time_data import Triggers as _Triggers
-from siriuspy.timesys.time_data import Clocks as _Clocks
-from siriuspy.timesys.time_data import Events as _Events
+from siriuspy.csdevice import timesys as _cstime
 from as_ti_control.ll_classes import get_ll_trigger_object as \
     _get_ll_trigger_object
 from as_ti_control.ll_classes import INTERVAL as _INTERVAL
@@ -201,11 +200,11 @@ class HL_Clock(_HL_Base):
         db[pre + 'Freq-SP'] = dic_
 
         db[pre + 'State-Sel'] = {
-            'type': 'enum', 'enums': _Clocks.STATES,
+            'type': 'enum', 'enums': _cstime.clocks_states,
             'value': self._my_state['State'],
             'fun_set_pv': lambda x: self.write('State', x)}
         db[pre + 'State-Sts'] = {
-            'type': 'enum', 'enums': _Clocks.STATES,
+            'type': 'enum', 'enums': _cstime.clocks_states,
             'value': self._my_state['State']}
         return super().get_database(db)
 
@@ -249,14 +248,14 @@ class HL_Event(_HL_Base):
         dic_['fun_set_pv'] = lambda x: self.write('Delay', x)
         db[pre + 'Delay-SP'] = dic_
 
-        dic_ = {'type': 'enum', 'enums': _Events.MODES,
+        dic_ = {'type': 'enum', 'enums': _cstime.events_modes,
                 'value': self._my_state['Mode'],
                 'states': ()}
         db[pre + 'Mode-Sts'] = _dcopy(dic_)
         dic_['fun_set_pv'] = lambda x: self.write('Mode', x)
         db[pre + 'Mode-Sel'] = dic_
 
-        dic_ = {'type': 'enum', 'enums': _Events.DELAY_TYPES,
+        dic_ = {'type': 'enum', 'enums': _cstime.events_delay_types,
                 'value': self._my_state['DelayType']}
         db[pre + 'DelayType-Sts'] = _dcopy(dic_)
         dic_['fun_set_pv'] = lambda x: self.write('DelayType', x)
@@ -408,7 +407,8 @@ class HL_Trigger(_HL_Base):
         dic_ = self._pvs_config['Src']
         # EVG_params_ENUMS
         if all(has_clock):
-            dic_['enums'] += tuple(sorted(_Clocks.HL2LL_MAP.keys()))+('Dsbl', )
+            dic_['enums'] += tuple(
+                    sorted(_cstime.clocks_hl2ll_map.keys())) + ('Dsbl', )
         elif any(has_clock):
             _log.warning('Some triggers of ' + self.prefix +
                          ' are connected to unsimiliar low level devices.')
