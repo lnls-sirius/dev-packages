@@ -9,6 +9,7 @@ from siriuspy import util
 from siriuspy import search
 from siriuspy.search import PSSearch
 from siriuspy.search import MASearch
+from siriuspy.pwrsupply.siggen import SigGenConfig
 from siriuspy.magnet.excdata import ExcitationData
 
 mock_flag = True
@@ -64,6 +65,7 @@ class TestPSSearch(unittest.TestCase):
         'conv_psname_2_excdata',
         'check_psname_ispulsed',
         'conv_psname_2_psmodel',
+        'conv_psname_2_siggenconf',
         'check_pstype_ispulsed',
         'conv_psname_2_bbbname',
         'conv_bbbname_2_psnames',
@@ -161,6 +163,8 @@ class TestPSSearch(unittest.TestCase):
                 read_test_ps_pstypes
             self.mock_web.ps_pstype_setpoint_limits.return_value = \
                 read_test_file('pwrsupply/pstypes-setpoint-limits.txt')
+            self.mock_web.ps_siggen_configuration_read.return_value = \
+                read_test_file('pwrsupply/siggen-configuration.txt')
             self.mock_web.pu_pstype_setpoint_limits.return_value = \
                 read_test_file('pwrsupply/putypes-setpoint-limits.txt')
             self.mock_web.ps_psmodels_read.return_value = \
@@ -332,6 +336,12 @@ class TestPSSearch(unittest.TestCase):
         for ps, pstype in TestPSSearch.sample.items():
             model = PSSearch.conv_psname_2_psmodel(psname=ps)
             self.assertIsInstance(model, str)
+
+    def test_conv_psname_2_siggenconf(self):
+        """Test conv_psname_2_siggenconf."""
+        for ps, pstype in TestPSSearch.sample.items():
+            siggenconf = PSSearch.conv_psname_2_siggenconf(psname=ps)
+            self.assertIsInstance(siggenconf, SigGenConfig)
 
     def test_check_pstype_ispulsed(self):
         """Test check_pstype_isplused."""
