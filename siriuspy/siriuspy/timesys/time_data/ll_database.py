@@ -30,7 +30,7 @@ class TimingDevDb:
         dic_ = {
             'type': 'int', 'value': 1, 'unit': '',
             'lolo': 1, 'low': 1, 'lolim': 1,
-            'hilim': 2**32, 'high': 2**32, 'hihi': 2**32}
+            'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
         db[prefix+'Width-SP'] = dic_
         db[prefix+'Width-RB'] = _dcopy(dic_)
 
@@ -41,14 +41,14 @@ class TimingDevDb:
         dic_ = {
             'type': 'int', 'value': 1, 'unit': '',
             'lolo': 0, 'low': 0, 'lolim': 0,
-            'hilim': 2**16-1, 'high': 2**16-1, 'hihi': 2**16-1}
+            'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
         db[prefix+'Pulses-SP'] = dic_
         db[prefix+'Pulses-RB'] = _dcopy(dic_)
 
         dic_ = {
             'type': 'int', 'value': 1, 'unit': '',
             'lolo': 0, 'low': 0, 'lolim': 0,
-            'hilim': 2**32-1, 'high': 2**32-1, 'hihi': 2**32-1}
+            'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
         db[prefix+'Delay-SP'] = dic_
         db[prefix+'Delay-RB'] = _dcopy(dic_)
 
@@ -130,7 +130,7 @@ class TimingDevDb:
         db[prefix+'Alive-Mon'] = {
             'type': 'int', 'value': 0, 'unit': '',
             'lolo': 0, 'low': 0, 'lolim': 0,
-            'hilim': 2**32-1, 'high': 2**32-1, 'hihi': 2**32-1}
+            'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
 
         db[prefix+'Network-Mon'] = {
                 'type': 'enum', 'value': 1,
@@ -175,7 +175,7 @@ class TimingDevDb:
         db[prefix+'Alive-Mon'] = {
             'type': 'int', 'value': 0, 'unit': '',
             'lolo': 0, 'low': 0, 'lolim': 0,
-            'hilim': 2**32-1, 'high': 2**32-1, 'hihi': 2**32-1}
+            'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
 
         db[prefix+'Network-Mon'] = {
                 'type': 'enum', 'value': 1,
@@ -222,7 +222,7 @@ class TimingDevDb:
         db[prefix+'Alive-Mon'] = {
             'type': 'int', 'value': 0, 'unit': '',
             'lolo': 0, 'low': 0, 'lolim': 0,
-            'hilim': 2**32-1, 'high': 2**32-1, 'hihi': 2**32-1}
+            'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
 
         db[prefix+'Network-Mon'] = {
                 'type': 'enum', 'value': 1,
@@ -267,7 +267,7 @@ class TimingDevDb:
         db[prefix+'Alive-Mon'] = {
             'type': 'int', 'value': 0, 'unit': '',
             'lolo': 0, 'low': 0, 'lolim': 0,
-            'hilim': 2**32-1, 'high': 2**32-1, 'hihi': 2**32-1}
+            'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
 
         db[prefix+'Network-Mon'] = {
                 'type': 'enum', 'value': 1,
@@ -292,7 +292,7 @@ class TimingDevDb:
         db = dict()
         dic_ = {'type': 'int', 'value': 0,
                 'lolo': 0, 'low': 0, 'lolim': 0,
-                'hilim': 2**32-1, 'high': 2**32-1, 'hihi': 2**32-1}
+                'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
         db[prefix + 'Delay-SP'] = _dcopy(dic_)
         db[prefix + 'Delay-RB'] = dic_
         dic_ = {'type': 'enum', 'enums': _Events.MODES, 'value': 1}
@@ -316,7 +316,7 @@ class TimingDevDb:
 
         dic_ = {'type': 'int', 'value': 124948114,
                 'lolo': 2, 'low': 2, 'lolim': 2,
-                'hilim': 2**32, 'high': 2**32, 'hihi': 2**32}
+                'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
         db[prefix + 'MuxDiv-SP'] = _dcopy(dic_)
         db[prefix + 'MuxDiv-RB'] = dic_
         dic_ = {'type': 'enum', 'enums': _Clocks.STATES, 'value': 0}
@@ -368,7 +368,7 @@ class TimingDevDb:
 
         dic_ = {'type': 'int', 'value': 4,
                 'lolo': 1, 'low': 1, 'lolim': 1,
-                'hilim': 2**32, 'high': 2**32, 'hihi': 2**32}
+                'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
         db[prefix + 'RFDiv-SP'] = _dcopy(dic_)
         db[prefix + 'RFDiv-RB'] = dic_
 
@@ -380,7 +380,7 @@ class TimingDevDb:
         db[prefix+'Alive-Mon'] = {
             'type': 'int', 'value': 0, 'unit': '',
             'lolo': 0, 'low': 0, 'lolim': 0,
-            'hilim': 2**32-1, 'high': 2**32-1, 'hihi': 2**32-1}
+            'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
 
         db[prefix+'Network-Mon'] = {
                 'type': 'enum', 'value': 1,
