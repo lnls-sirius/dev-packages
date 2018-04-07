@@ -41,7 +41,7 @@ class Events:
                          ')([a-z-\.]*)', _re.IGNORECASE)
     HL_PREF = 'AS-Glob:TI-EVG:'
 
-    LL_CODES = list(range(64))
+    LL_CODES = list(range(1, 64))
     LL_EVENTS = []
     for i in LL_CODES:
         LL_EVENTS.append(LL_TMP.format(i))
