@@ -170,6 +170,9 @@ class TestTriggers(unittest.TestCase):
         'SRC_LL',
         'hl_triggers',
         'check_triggers_consistency',
+        'get_ll_trigger_names',
+        'has_delay_type',
+        'has_clock',
     )
 
     def test_public_interface(self):
@@ -205,6 +208,21 @@ class TestTriggers(unittest.TestCase):
 
     def test_hl_triggers(self):
         """Test hl_triggers."""
+        # TODO: implement test!
+        pass
+
+    def test_get_ll_trigger_names(self):
+        """Test get_ll_trigger_names."""
+        # TODO: implement test!
+        pass
+
+    def test_has_delay_type(self):
+        """Test has_delay_type."""
+        # TODO: implement test!
+        pass
+
+    def test_has_clock(self):
+        """Test has_clock."""
         # TODO: implement test!
         pass
 

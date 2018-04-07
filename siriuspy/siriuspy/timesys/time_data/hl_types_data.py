@@ -71,6 +71,11 @@ class Clocks:
 class Triggers:
     """Contain properties of the triggers."""
 
+    _TWDS_EVG = None
+    _EVRs = None
+    _EVEs = None
+    _AFCs = None
+
     STATES = ('Dsbl', 'Enbl')
     INTLK = ('Dsbl', 'Enbl')
     POLARITIES = ('Normal', 'Inverse')
@@ -93,14 +98,46 @@ class Triggers:
         """Dictionary with high level trigger properties."""
         return _dcopy(self._hl_triggers)
 
+    def get_ll_trigger_names(self, hl_trigger=None, channels=None):
+        """Get Low Level trigger object names."""
+        self._get_constants()
+        ret = self._hl_triggers.get(hl_trigger)
+        chans = ret['channels'] if ret else (channels or list())
+
+        out_chans = set()
+        for chan in chans:
+            chan_tree = _Connections.get_device_tree(chan)
+            for up_chan in chan_tree:
+                if up_chan.device_name in self._EVRs | self._EVEs | self._AFCs:
+                    out_chans |= {up_chan}
+                    break
+        return sorted(out_chans)
+
+    def has_delay_type(self, ll_trigger):
+        """Return True if ll_trigger has property delayType."""
+        name = _PVName(ll_trigger)
+        if name.dev in ('EVR', 'EVE') and name.propty.startswith('OUT'):
+            return True
+        else:
+            return False
+
+    def has_clock(self, ll_trigger):
+        """Return True if ll_trigger can listen to Clocks from EVG."""
+        name = _PVName(ll_trigger)
+        if name.dev in {'EVE', 'AFC'}:
+            return True
+        elif name.dev == 'EVR':
+            return True if name.propty.startswith('OUT') else False
+        else:
+            raise Exception('Error: ' + name)
+
     def check_triggers_consistency(self):
         """Check consitency of Triggers definition.
 
         Check if High Level definition of Triggers is consistent with
         Low Level connections of the timing devices.
         """
-        _Connections.add_bbb_info()
-        _Connections.add_crates_info()
+        self._get_constants()
         from_evg = _Connections.get_connections_from_evg()
         twds_evg = _Connections.get_connections_twds_evg()
         for trig, val in self.hl_triggers.items():
@@ -125,3 +162,14 @@ class Triggers:
                         up_dev + ' as ' + chan +
                         ' but are not related to the sam trigger (' +
                         trig + ').')
+
+    @classmethod
+    def _get_constants(cls):
+        if cls._TWDS_EVG:
+            return
+        _Connections.add_bbb_info()
+        _Connections.add_crates_info()
+        cls._TWDS_EVG = _Connections.get_connections_twds_evg()
+        cls._EVRs = _Connections.get_devices('EVR')
+        cls._EVEs = _Connections.get_devices('EVE')
+        cls._AFCs = _Connections.get_devices('AFC')
