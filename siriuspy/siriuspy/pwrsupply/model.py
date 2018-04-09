@@ -25,145 +25,74 @@ from .status import Status
 from siriuspy.pwrsupply.bsmp import Const as _c
 
 
-bsmp_2_epics = {
-    _c.PS_STATUS: None,
-    _c.PS_SETPOINT: 'Current-RB',
-    _c.PS_REFERENCE: 'CurrentRef-Mon',
-    _c.FIRMWARE_VERSION: 'Version-Cte',
-    _c.SIGGEN_ENABLE: 'CycleEnbl-Mon',
-    _c.SIGGEN_TYPE: 'CycleType-Sts',
-    _c.SIGGEN_NUM_CYCLES: 'CycleNrCycles-RB',
-    _c.SIGGEN_N: 'CycleIndex-Mon',
-    _c.SIGGEN_FREQ: 'CycleFreq-RB',
-    _c.SIGGEN_AMPLITUDE: 'CycleAmpl-RB',
-    _c.SIGGEN_OFFSET: 'CycleOffset-RB',
-    _c.SIGGEN_AUX_PARAM: 'CycleAuxParam-RB',
-    _c.PS_SOFT_INTERLOCKS: 'IntlkSoft-Mon',
-    _c.PS_HARD_INTERLOCKS: 'IntlkHard-Mon',
-    _c.I_LOAD: 'Current-Mon',
-}
+class Device:
+    """Control a device using BSMP protocol."""
 
-epics_2_bsmp = {
-    'PwrState-Sts': _c.PS_STATUS,
-    'OpMode-Sts': _c.PS_STATUS,
-    'Current-RB': _c.PS_SETPOINT,
-    'CurrentRef-Mon': _c.PS_REFERENCE,
-    'Version-Cte': _c.FIRMWARE_VERSION,
-    'CycleEnbl-Mon': _c.SIGGEN_ENABLE,
-    'CycleType-Sts': _c.SIGGEN_TYPE,
-    'CycleNrCycles-RB': _c.SIGGEN_NUM_CYCLES,
-    'CycleIndex-Mon': _c.SIGGEN_N,
-    'CycleFreq-RB': _c.SIGGEN_FREQ,
-    'CycleAmpl-RB': _c.SIGGEN_AMPLITUDE,
-    'CycleOffset': _c.SIGGEN_OFFSET,
-    'CycleAuxParam-RB': _c.SIGGEN_AUX_PARAM,
-    'IntlkSoft-Mon': _c.PS_SOFT_INTERLOCKS,
-    'IntlkHard-Mon': _c.PS_HARD_INTERLOCKS,
-    'Current-Mon': _c.I_LOAD,
-}
+    # Setpoints regexp pattern
+    _sp = _re.compile('^.*-(SP|Sel|Cmd)$')
 
-
-class PowerSupply:
-    """Control a power supply using BSMP protocol."""
-
-    def __init__(self, controller):
-        """High level PS.
-
-        The controller object implements the BSMP interface.
-        All properties map an epics field to a BSMP property.
-        """
+    def __init__(self, controller, database):
+        """Control a device using BSMP protocol."""
+        self._connected = False
         self._controller = controller
+        self._database = database
+        self._setpoints = dict()
+        for field, db in self.database.items():
+            if self._sp.match(field):
+                self._setpoints[field] = db
 
-        # TODO: check errors, create group 3?
-        self.controller.remove_all_groups()
-        self.controller.execute_function(_c.CLOSE_LOOP)  # Close loop
+        self._init_setpoints()
 
+    # API
     @property
     def controller(self):
         """BSMP instance for this device."""
         return self._controller
 
-    # Variables
     @property
-    def pwrstate_sts(self):
-        """Power State Readback."""
-        val = self._read_variable(_c.PS_STATUS)
-        if val is not None:
-            val = Status.pwrstate(val)
-        return val
+    def database(self):
+        """Device database."""
+        return self._database
 
     @property
-    def opmode_sts(self):
-        """Operation Mode Readback."""
-        val = self._read_variable(_c.PS_STATUS)
-        if val is not None:
-            val = Status.opmode(val)
-        return val
+    def setpoints(self):
+        """Device setpoints."""
+        return self._setpoints
 
     @property
-    def current_rb(self):
-        """Current Readback."""
-        return self._read_variable(_c.PS_SETPOINT)
+    def connected(self):
+        """Return connection state."""
+        return self._connected
 
-    @property
-    def currentref_mon(self):
-        """Current Referece."""
-        return self._read_variable(_c.PS_REFERENCE)
+    @connected.setter
+    def connected(self, value):
+        self._connected = value
 
-    @property
-    def cycleenbl_mon(self):
-        """Cycle Enable Status."""
-        return self._read_variable(_c.SIGGEN_ENABLE)
+    def read(self, field):
+        """Read a field from device."""
+        if field in self._setpoints:
+            value = self.setpoints[field]['value']
+        else:
+            try:
+                value = self._read_variable(field)
+            except _SerialError:
+                self.connected = False
+                return None
+            self.connected = True
+        return value
 
-    @property
-    def cycletype_sts(self):
-        """Cycle Type."""
-        return self._read_variable(_c.SIGGEN_TYPE)
-
-    @property
-    def cyclenrcycles_rb(self):
-        """Number of cycles to be generated."""
-        return self._read_variable(_c.SIGGEN_NUM_CYCLES)
-
-    @property
-    def cycleindex_mon(self):
-        """Siggen generation iteration index."""
-        return self._read_variable(_c.SIGGEN_N)
-
-    @property
-    def cyclefreq_rb(self):
-        """Frequency of generated signal."""
-        return self._read_variable(_c.SIGGEN_FREQ)
-
-    @property
-    def cycleampl_rb(self):
-        """Amplitude of generated signal."""
-        return self._read_variable(_c.SIGGEN_AMPLITUDE)
-
-    @property
-    def cycleoffset_rb(self):
-        """Signal generator offset."""
-        return self._read_variable(_c.SIGGEN_OFFSET)
-
-    @property
-    def cycleauxparam_rb(self):
-        """Auxiliary parameters."""
-        return self._read_variable(_c.SIGGEN_AUX_PARAM)
-
-    @property
-    def intlksoft_mon(self):
-        """Soft Interlock readback."""
-        return self._read_variable(_c.PS_SOFT_INTERLOCKS)
-
-    @property
-    def intlkhard_mon(self):
-        """Hard Interlock readback."""
-        return self._read_variable(_c.PS_HARD_INTERLOCKS)
-
-    @property
-    def current_mon(self):
-        """Actual current."""
-        return self._read_variable(_c.I_LOAD)
+    def write(self, field, value):
+        """Write to device field."""
+        try:
+            if field in self._setpoints:
+                self._write_setpoint(field, value)  # SerialError
+            else:
+                pass  # SerialError
+            self.connected = True
+        except _SerialError:
+            self.connected = False
+            return False
+        return True
 
     # Groups
     def read_group(self, group_id):
@@ -174,17 +103,14 @@ class PowerSupply:
             ret = dict()
             variables = self.controller.entities.list_variables(group_id)
             for idx, var_id in enumerate(variables):
-                if var_id == 0:  # bsmp variable mapped to many epics variables
-                    ret['PwrState-Sts'] = Status.pwrstate(val[0])
-                    ret['OpMode-Sts'] = Status.opmode(val[0])
-                elif var_id == 3:  # Version-Cte
-                    ret['Version-Cte'], _ = ''.join(
-                        [c.decode()for c in val[idx]]).split('\x00', 1)
+                try:  # TODO: happens because bsmp_2_epics is not complete
+                    field = self.bsmp_2_epics[var_id]
+                except KeyError:
+                    continue
+                if isinstance(field, tuple):
+                    for f in field:
+                        ret[f] = val[idx]
                 else:
-                    try:  # TODO: happens because bsmp_2_epics is not complete
-                        field = bsmp_2_epics[var_id]
-                    except KeyError:
-                        continue
                     ret[field] = val[idx]
             return ret
         return None
@@ -193,7 +119,7 @@ class PowerSupply:
         """Create a group of variables."""
         ids = set()
         for field in fields:
-            ids.add(epics_2_bsmp[field])
+            ids.add(self.epics_2_bsmp[field])
         sts, _ = self.controller.create_group(ids)
         if sts == Response.ok:
             return True
@@ -203,60 +129,27 @@ class PowerSupply:
         """Read all variables."""
         return self.read_group(0)
 
-    # Functions
-    def turn_on(self):
-        """Turn power supply on."""
-        ret = self._execute_function(_c.TURN_ON)
-        if ret:
-            _time.sleep(0.3)
-        if ret:
-            return self._execute_function(3)  # Close control loop
+    def _init_setpoints(self):
+        try:
+            values = self.read_all_variables()
+        except Exception as e:
+            print('{}'.format(e))
+            pass
+        else:
+            # Init Setpoints
+            for setpoint in self.setpoints:
+                if '-Cmd' in setpoint:
+                    continue
+                readback = \
+                    setpoint.replace('-Sel', '-Sts').replace('-SP', '-RB')
+                try:
+                    self.setpoints[setpoint]['value'] = values[readback]
+                except KeyError:
+                    continue
+            self._connected = True
 
-    def turn_off(self):
-        """Turn power supply off."""
-        ret = self._execute_function(_c.TURN_OFF)
-        if ret:
-            _time.sleep(0.3)
-        return ret
-
-    def select_op_mode(self, value):
-        """Set operation mode."""
-        return self._execute_function(_c.SELECT_OP_MODE, value + 3)
-
-    def reset_interlocks(self):
-        """Reset."""
-        ret = self._execute_function(_c.RESET_INTERLOCKS)
-        if ret:
-            _time.sleep(0.1)
-        return ret
-
-    def set_slowref(self, value):
-        """Set current."""
-        return self._execute_function(_c.SET_SLOWREF, value)
-
-    def cfg_siggen(self, t_siggen, num_cycles,
-                   frequency, amplitude, offset, aux_params):
-        """Set siggen congiguration parameters."""
-        value = \
-            [t_siggen, num_cycles, frequency, amplitude, offset]
-        value.extend(aux_params)
-        self._execute_function(_c.CFG_SIGGEN, value)
-
-    def set_siggen(self, frequency, amplitude, offset):
-        """Set siggen parameters in coninuous operation."""
-        value = [frequency, amplitude, offset]
-        self._execute_function(_c.SET_SIGGEN, value)
-
-    def enable_siggen(self):
-        """Enable siggen."""
-        self._execute_function(_c.ENABLE_SIGGEN)
-
-    def disable_siggen(self):
-        """Disable siggen."""
-        self._execute_function(_c.DISABLE_SIGGEN)
-
-    # Private
-    def _read_variable(self, var_id):
+    def _read_variable(self, field):
+        var_id = self.epics_2_bsmp[field]
         sts, val = self.controller.read_variable(var_id)
         if sts == Response.ok:
             return val
@@ -270,112 +163,276 @@ class PowerSupply:
         else:
             return False
 
+    def _write_setpoint(self, field, value):
+        """Map a setpoint to a controller operation."""
+        raise NotImplementedError()
 
-class PowerSupplySim:
-    """Simulate a power supply."""
 
-    def __init__(self, database):
-        """High level PS controller."""
-        self._database = database
+class FBPPowerSupply(Device):
+    """Control a power supply using BSMP protocol."""
 
-        self.connected = True
-        if _random.random() > 0.5:
-            self.connected = False
+    bsmp_2_epics = {
+        _c.PS_STATUS: ('PwrState-Sts', 'OpMode-Sts'),
+        _c.PS_SETPOINT: 'Current-RB',
+        _c.PS_REFERENCE: 'CurrentRef-Mon',
+        _c.FIRMWARE_VERSION: 'Version-Cte',
+        _c.SIGGEN_ENABLE: 'CycleEnbl-Mon',
+        _c.SIGGEN_TYPE: 'CycleType-Sts',
+        _c.SIGGEN_NUM_CYCLES: 'CycleNrCycles-RB',
+        _c.SIGGEN_N: 'CycleIndex-Mon',
+        _c.SIGGEN_FREQ: 'CycleFreq-RB',
+        _c.SIGGEN_AMPLITUDE: 'CycleAmpl-RB',
+        _c.SIGGEN_OFFSET: 'CycleOffset-RB',
+        _c.SIGGEN_AUX_PARAM: 'CycleAuxParam-RB',
+        _c.PS_SOFT_INTERLOCKS: 'IntlkSoft-Mon',
+        _c.PS_HARD_INTERLOCKS: 'IntlkHard-Mon',
+        _c.I_LOAD: 'Current-Mon',
+    }
 
-    @property
-    def database(self):
-        """Power supply database."""
-        return self._database
+    epics_2_bsmp = {
+        'PwrState-Sts': _c.PS_STATUS,
+        'OpMode-Sts': _c.PS_STATUS,
+        'Current-RB': _c.PS_SETPOINT,
+        'CurrentRef-Mon': _c.PS_REFERENCE,
+        'Version-Cte': _c.FIRMWARE_VERSION,
+        'CycleEnbl-Mon': _c.SIGGEN_ENABLE,
+        'CycleType-Sts': _c.SIGGEN_TYPE,
+        'CycleNrCycles-RB': _c.SIGGEN_NUM_CYCLES,
+        'CycleIndex-Mon': _c.SIGGEN_N,
+        'CycleFreq-RB': _c.SIGGEN_FREQ,
+        'CycleAmpl-RB': _c.SIGGEN_AMPLITUDE,
+        'CycleOffset': _c.SIGGEN_OFFSET,
+        'CycleAuxParam-RB': _c.SIGGEN_AUX_PARAM,
+        'IntlkSoft-Mon': _c.PS_SOFT_INTERLOCKS,
+        'IntlkHard-Mon': _c.PS_HARD_INTERLOCKS,
+        'Current-Mon': _c.I_LOAD,
+    }
 
-    @property
-    def pwrstate_sts(self):
-        """Power State Readback."""
-        return self.database['PwrState-Sts']['value']
+    def __init__(self, controller, database):
+        """High level PS.
 
-    @property
-    def opmode_sts(self):
-        """Operation Mode Readback."""
-        return self.database['OpMode-Sts']['value']
-
-    @property
-    def current_rb(self):
-        """Current Readback."""
-        return self.database['Current-RB']['value']
-
-    @property
-    def currentref_mon(self):
-        """Current Referece."""
-        return self.database['CurrentRef-Mon']['value']
-
-    @property
-    def current_mon(self):
-        """Actual current."""
-        fluct = _random.random()/100
-        return self.database['Current-Mon']['value'] + fluct
-
-    @property
-    def intlksoft_mon(self):
-        """Soft Interlock readback."""
-        return self.database['IntlkSoft-Mon']['value']
-
-    @property
-    def intlkhard_mon(self):
-        """Hard Interlock readback."""
-        return self.database['IntlkHard-Mon']['value']
-
-    # Groups
-    def read_all_variables(self):
-        """Read all variables."""
-        if not self.connected:
-            raise _SerialError()
-        ret = dict()
-        for field, var_id in epics_2_bsmp.items():
-            ret[field] = self.database[field]['value']
-        return ret
+        The controller object implements the BSMP interface.
+        All properties map an epics field to a BSMP property.
+        """
+        super().__init__(controller, database)
+        # TODO: check errors, create group 3?
+        self.controller.remove_all_groups()
+        self.controller.execute_function(_c.CLOSE_LOOP)  # Close loop
 
     # Functions
-    def turn_on(self):
+    def _turn_on(self):
         """Turn power supply on."""
-        if not self.connected:
-            raise _SerialError()
-        if not self.pwrstate_sts:
-            self.database['PwrState-Sts']['value'] = 1
-            # Set SlowRef
-            self.database['OpMode-Sts']['value'] = 0
-            # Zero current
-            self.database['Current-RB']['value'] = 0
-            self.database['CurrentRef-Mon']['value'] = 0
-            self.database['Current-Mon']['value'] = 0
-        return True
+        ret = self._execute_function(_c.TURN_ON)
+        if ret:
+            _time.sleep(0.3)
+        if ret:
+            return self._execute_function(3)  # Close control loop
 
-    def turn_off(self):
+    def _turn_off(self):
         """Turn power supply off."""
-        if not self.connected:
-            raise _SerialError()
-        self.database['PwrState-Sts']['value'] = 0
-        self.database['OpMode-Sts']['value'] = 0
-        self.database['Current-RB']['value'] = 0
-        self.database['CurrentRef-Mon']['value'] = 0
-        self.database['Current-Mon']['value'] = 0
-        return True
+        ret = self._execute_function(_c.TURN_OFF)
+        if ret:
+            _time.sleep(0.3)
+        return ret
 
-    def select_op_mode(self, value):
+    def _select_op_mode(self, value):
         """Set operation mode."""
-        if not self.connected:
-            raise _SerialError()
-        if self.pwrstate_sts:
-            self.database['OpMode-Sts']['value'] = value
-        return True
+        return self._execute_function(_c.SELECT_OP_MODE, value + 3)
 
-    def set_slowref(self, value):
+    def _reset_interlocks(self):
+        """Reset."""
+        ret = self._execute_function(_c.RESET_INTERLOCKS)
+        if ret:
+            _time.sleep(0.1)
+        return ret
+
+    def _set_slowref(self, value):
         """Set current."""
-        if not self.connected:
-            raise _SerialError()
-        if self.pwrstate_sts:
-            self.database['Current-RB']['value'] = value
-            self.database['CurrentRef-Mon']['value'] = value
-            self.database['Current-Mon']['value'] = value
-        return True
+        return self._execute_function(_c.SET_SLOWREF, value)
+
+    def _cfg_siggen(self, t_siggen, num_cycles,
+                    frequency, amplitude, offset, aux_params):
+        """Set siggen congiguration parameters."""
+        value = \
+            [t_siggen, num_cycles, frequency, amplitude, offset]
+        value.extend(aux_params)
+        return self._execute_function(_c.CFG_SIGGEN, value)
+
+    def _set_siggen(self, frequency, amplitude, offset):
+        """Set siggen parameters in coninuous operation."""
+        value = [frequency, amplitude, offset]
+        return self._execute_function(_c.SET_SIGGEN, value)
+
+    def _enable_siggen(self):
+        """Enable siggen."""
+        return self._execute_function(_c.ENABLE_SIGGEN)
+
+    def _disable_siggen(self):
+        """Disable siggen."""
+        return self._execute_function(_c.DISABLE_SIGGEN)
+
+    # Methods called by write
+    def _set_pwrstate(self, setpoint):
+        """Set PwrState setpoint."""
+        if setpoint == 1:
+            ret = self._turn_on()
+        elif setpoint == 0:
+            ret = self._turn_off()
+        else:
+            self.setpoints['PwrState-Sel']['value'] = setpoint
+            return
+
+        if ret:
+            self.setpoints['Current-SP']['value'] = 0.0
+            self.setpoints['OpMode-Sel']['value'] = 0
+            self.setpoints['PwrState-Sel']['value'] = setpoint
+
+    def _set_opmode(self, setpoint):
+        """Operation mode setter."""
+        if setpoint < 0 or \
+                setpoint > len(self.setpoints['OpMode-Sel']['enums']):
+            self.setpoints['OpMode-Sel']['value'] = setpoint
+            # raise InvalidValue("OpMode {} out of range.".format(setpoint))
+
+        if self._select_op_mode(setpoint):
+            self.setpoints['OpMode-Sel']['value'] = setpoint
+
+    def _set_current(self, setpoint):
+        """Set current."""
+        setpoint = max(self.setpoints['Current-SP']['lolo'], setpoint)
+        setpoint = min(self.setpoints['Current-SP']['hihi'], setpoint)
+
+        if self._set_slowref(setpoint):
+            self.setpoints['Current-SP']['value'] = setpoint
+
+    def _reset(self, setpoint):
+        """Reset command."""
+        if setpoint:
+            if self._reset_interlocks():
+                self.setpoints['Reset-Cmd']['value'] += 1
+
+    def _enable_cycle(self, setpoint):
+        """Enable cycle command."""
+        if setpoint:
+            if self._enable_siggen():
+                self.setpoints['CycleEnbl-Cmd']['value'] += 1
+
+    def _disable_cycle(self, setpoint):
+        """Disable cycle command."""
+        if setpoint:
+            if self._disable_siggen():
+                self.setpoints['CycleDsbl-Cmd']['value'] += 1
+
+    def _set_cycle_type(self, setpoint):
+        """Set cycle type."""
+        self.setpoints['CycleType-Sel']['value'] = setpoint
+        # if setpoint < 0 or \
+        #         setpoint > len(self.setpoints['CycleType-Sel']['enums']):
+        #     return
+        return self._cfg_siggen(*self._cfg_siggen_args())
+
+    def _set_cycle_nr_cycles(self, setpoint):
+        """Set number of cycles."""
+        self.setpoints['CycleNrCycles-SP']['value'] = setpoint
+        return self._cfg_siggen(*self._cfg_siggen_args())
+
+    def _set_cycle_frequency(self, setpoint):
+        """Set cycle frequency."""
+        self.setpoints['CycleFreq-SP']['value'] = setpoint
+        return self._cfg_siggen(*self._cfg_siggen_args())
+
+    def _set_cycle_amplitude(self, setpoint):
+        """Set cycle amplitude."""
+        self.setpoints['CycleAmpl-SP']['value'] = setpoint
+        return self._cfg_siggen(*self._cfg_siggen_args())
+
+    def _set_cycle_offset(self, setpoint):
+        """Set cycle offset."""
+        self.setpoints['CycleOffset-SP']['value'] = setpoint
+        return self._cfg_siggen(*self._cfg_siggen_args())
+
+    def _set_cycle_aux_params(self, setpoint):
+        """Set cycle offset."""
+        self.setpoints['CycleAuxParam-SP']['value'] = setpoint
+        return self._cfg_siggen(*self._cfg_siggen_args())
+
+    def _cfg_siggen_args(self):
+        """Get cfg_siggen args and execute it."""
+        args = []
+        args.append(self.setpoints['CycleType-Sel']['value'])
+        args.append(self.setpoints['CycleNrCycles-SP']['value'])
+        args.append(self.setpoints['CycleFreq-SP']['value'])
+        args.append(self.setpoints['CycleAmpl-SP']['value'])
+        args.append(self.setpoints['CycleOffset-SP']['value'])
+        args.append(self.setpoints['CycleAuxParam-SP']['value'])
+        return args
+
+    # Virtual methods
+    def read_group(self, group_id):
+        """Parse some variables.
+
+        Check to see if PS_STATE or FIRMWARE_VERSION are in the group, as these
+        variables need further parsing.
+        """
+        var_ids = self.controller.entities.list_variables(group_id)
+        values = super().read_group(group_id)
+        if _c.PS_STATUS in var_ids:
+            values['PwrState-Sts'] = Status.pwrstate(values['PwrState-Sts'])
+            values['OpMode-Sts'] = Status.opmode(values['OpMode-Sts'])
+        if _c.FIRMWARE_VERSION in var_ids:
+            version = ''.join([c.decode() for c in values['Version-Cte']])
+            try:
+                values['Version-Cte'], _ = version.split('\x00', 1)
+            except ValueError:
+                values['Version-Cte'] = version
+        return values
+
+    def _read_variable(self, field):
+        """Parse some variables.
+
+        Check to see if PS_STATE or FIRMWARE_VERSION are in the group, as these
+        variables need further parsing.
+        """
+        val = super()._read_variable(field)
+
+        if val is None:
+            return None
+
+        if field == 'PwrState-Sts':
+            val = Status.pwrstate(val)
+        elif field == 'OpMode-Sts':
+            val = Status.opmode(val)
+        # TODO: parse FIRMWARE_VERSION
+
+        return val
+
+    def _write_setpoint(self, field, setpoint):
+        """Write operation."""
+        # Switch field
+        if field == 'PwrState-Sel':
+            return self._set_pwrstate(setpoint)
+        elif field == 'OpMode-Sel':
+            return self._set_opmode(setpoint)
+        elif field == 'Current-SP':
+            return self._set_current(setpoint)
+        elif field == 'Reset-Cmd':
+            return self._reset(setpoint)
+        elif field == 'CycleEnbl-Cmd':
+            return self._enable_cycle(setpoint)
+        elif field == 'CycleDsbl-Cmd':
+            return self._disable_cycle(setpoint)
+        elif field == 'CycleType-Sel':
+            return self._set_cycle_type(setpoint)
+        elif field == 'CycleNrCycles-SP':
+            return self._set_cycle_nr_cycles(setpoint)
+        elif field == 'CycleFreq-SP':
+            return self._set_cycle_frequency(setpoint)
+        elif field == 'CycleAmpl-SP':
+            return self._set_cycle_amplitude(setpoint)
+        elif field == 'CycleOffset-SP':
+            return self._set_cycle_offset(setpoint)
+        elif field == 'CycleAuxParam-SP':
+            return self._set_cycle_aux_params(setpoint)
 
 
 class PSEpics(_PSCommInterface):
