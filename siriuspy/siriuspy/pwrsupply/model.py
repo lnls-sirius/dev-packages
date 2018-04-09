@@ -217,6 +217,9 @@ class FBPPowerSupply(Device):
         super().__init__(controller, database)
         # TODO: check errors, create group 3?
         self.controller.remove_all_groups()
+        # Create group 3
+        self.controller.create_group(
+            [var_id for var_id in range(31) if var_id not in (3,)])
         self.controller.execute_function(_c.CLOSE_LOOP)  # Close loop
 
     # Functions
