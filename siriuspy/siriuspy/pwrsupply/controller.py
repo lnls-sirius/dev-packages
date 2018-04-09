@@ -1,9 +1,14 @@
 """Power supply controller classes."""
+import time as _t
+import random as _random
+from threading import Thread as _Thread
+
 from siriuspy import util as _util
 from siriuspy.bsmp import Response, BSMP
 from siriuspy.pwrsupply.bsmp import FBPEntities
 from siriuspy.pwrsupply.status import Status as _Status
 from siriuspy.pwrsupply.bsmp import Const as _c
+from .siggen import Trapezoidal
 
 __version__ = _util.get_last_commit_hash()
 
@@ -58,7 +63,7 @@ class FBPController(BSMP):
         super().__init__(serial, slave_address, FBPEntities())
 
 
-class ControllerSim:
+class _ControllerSim:
     """Virtual controller."""
 
     def __init__(self, entities):
@@ -83,7 +88,7 @@ class ControllerSim:
     def read_group_variables(self, group_id):
         """Read group of variables."""
         ids = [var.eid for var in self.entities.groups[group_id].variables]
-        return Response.ok, [self._variables[id] for id in ids]
+        return Response.ok, [self.read_variable(id)[1] for id in ids]
 
     def create_groups(self, var_ids):
         """Create new group."""
@@ -95,8 +100,14 @@ class ControllerSim:
         raise NotImplementedError()
 
 
-class FBPControllerSim(ControllerSim):
+class FBPControllerSim(_ControllerSim):
     """Simulate a PS controller."""
+
+    I_LOAD_FLUCTUATION_RMS = 0.01
+
+    SlowRefState = 0
+    SlowRefSyncState = 1
+    CycleState = 2
 
     def __init__(self):
         """Use FBPEntities."""
@@ -108,54 +119,249 @@ class FBPControllerSim(ControllerSim):
             0, 0.0, 0.0, firmware, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0,
             [0.0, 0.0, 0.0, 0.0], 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0,
             0, 0, 0, 0.0, 0.0, 0.0, 0.0]
+        self._states = [
+            FBPSlowRefState(), FBPSlowRefState(), FBPCycleState(),
+            FBPSlowRefState(), FBPSlowRefState(), FBPSlowRefState()]
+        self._state = self._states[self.SlowRefState]
+
+    def read_variable(self, var_id):
+        """Read variable."""
+        return Response.ok, self._state.read_variable(self._variables, var_id)
 
     def execute_function(self, func_id, input_val=None):
         """Execute a function."""
         # Switch FBP func ids
         if func_id == _c.TURN_ON:
-            status = self._variables[_c.PS_STATUS]
-            if _Status.pwrstate(status) == 0:
-                self._variables[_c.PS_STATUS] = _Status.set_pwrstate(status, 1)
-                self._variables[_c.PS_SETPOINT] = 0.0
-                self._variables[_c.PS_REFERENCE] = 0.0
-                self._variables[_c.I_LOAD] = 0.0
+            self._state.turn_on(self._variables)
         elif func_id == _c.TURN_OFF:
-            status = self._variables[_c.PS_STATUS]
-            if _Status.pwrstate(status) == 1:
-                self._variables[_c.PS_STATUS] = _Status.set_pwrstate(status, 0)
-                self._variables[_c.PS_SETPOINT] = 0.0
-                self._variables[_c.PS_REFERENCE] = 0.0
-                self._variables[_c.I_LOAD] = 0.0
-        elif func_id == _c.SELECT_OP_MODE:
-            status = self._variables[_c.PS_STATUS]
-            if _Status.pwrstate(status) == 1:
-                print(input_val)
-                self._variables[_c.PS_STATUS] = \
-                    _Status.set_opmode(status, input_val-3)
-        elif func_id == _c.RESET_INTERLOCKS:
-            self._variables[_c.PS_SOFT_INTERLOCKS] = 0
-            self._variables[_c.PS_HARD_INTERLOCKS] = 0
+            self._state.turn_off(self._variables)
+        elif func_id == _c.SELECT_OP_MODE:  # Change state
+            # Verify if ps is on
+            if self._is_on():
+                opmode = input_val - 3
+                self._state = self._states[opmode]
+                self._state.select_op_mode(self._variables)
+        elif func_id == _c.RESET_INTERLOCKS:  # Change state
+            self._state.reset_interlocks(self._variables)
+            self._state = self._states[self.SlowRefState]
         elif func_id == _c.SET_SLOWREF:
-            status = self._variables[_c.PS_STATUS]
-            if _Status.pwrstate(status) == 1:
-                self._variables[_c.PS_SETPOINT] = input_val
-                self._variables[_c.PS_REFERENCE] = input_val
-                self._variables[_c.I_LOAD] = input_val
+            if self._is_on():
+                self._state.set_slowref(self._variables, input_val)
         elif func_id == _c.CFG_SIGGEN:
-            self._variables[_c.SIGGEN_TYPE] = input_val[0]
-            self._variables[_c.SIGGEN_NUM_CYCLES] = input_val[1]
-            self._variables[_c.SIGGEN_FREQ] = input_val[2]
-            self._variables[_c.SIGGEN_AMPLITUDE] = input_val[3]
-            self._variables[_c.SIGGEN_OFFSET] = input_val[4]
-            self._variables[_c.SIGGEN_AUX_PARAM] = input_val[5]
+            self._state.cfg_siggen(self._variables, input_val)
         elif func_id == _c.SET_SIGGEN:
-            self._variables[_c.SIGGEN_FREQ] = input_val[0]
-            self._variables[_c.SIGGEN_AMPLITUDE] = input_val[1]
-            self._variables[_c.SIGGEN_OFFSET] = input_val[2]
+            self._state.set_siggen(self._variables, input_val)
         elif func_id == _c.ENABLE_SIGGEN:
-            # implement sim siggen
-            self._variables[_c.SIGGEN_ENABLE] = 1
+            self._state.enable_siggen(self._variables)
         elif func_id == _c.DISABLE_SIGGEN:
-            self._variables[_c.SIGGEN_ENABLE] = 0
+            self._state.disable_siggen(self._variables)
 
         return Response.ok, None
+
+    def _is_on(self):
+        status = self._variables[_c.PS_STATUS]
+        return _Status.pwrstate(status)
+
+
+class _FBPState:
+    """Represent FBP operation modes."""
+
+    def read_variable(self, variables, var_id):
+        """Read variable."""
+        if var_id == _c.I_LOAD:
+            return variables[var_id] + \
+                _random.gauss(0.0, FBPControllerSim.I_LOAD_FLUCTUATION_RMS)
+        return variables[var_id]
+
+    def turn_on(self, variables):
+        """Turn ps on."""
+        status = variables[_c.PS_STATUS]
+        if _Status.pwrstate(status) == 0:
+            # Set opmode to slowref
+            variables[_c.PS_STATUS] = _Status.set_pwrstate(status, 1)
+            # Set currents to 0
+            variables[_c.PS_SETPOINT] = 0.0
+            variables[_c.PS_REFERENCE] = 0.0
+            variables[_c.I_LOAD] = 0.0
+
+    def turn_off(self, variables):
+        """Turn ps off."""
+        status = variables[_c.PS_STATUS]
+        if _Status.pwrstate(status) == 1:
+            # Set opmode to slowref
+            variables[_c.PS_STATUS] = _Status.set_pwrstate(status, 0)
+            # Set currents to 0
+            variables[_c.PS_SETPOINT] = 0.0
+            variables[_c.PS_REFERENCE] = 0.0
+            variables[_c.I_LOAD] = 0.0
+
+    def select_op_mode(self, variables):
+        """Set operation mode."""
+        raise NotImplementedError()
+
+    def reset_interlocks(self, variables):
+        """Reset ps."""
+        status = variables[_c.PS_STATUS]
+        # Set SlowRef
+        variables[_c.PS_STATUS] = _Status.set_opmode(status, 0)
+        # Set Current to 0
+        variables[_c.PS_SETPOINT] = 0.0
+        variables[_c.PS_REFERENCE] = 0.0
+        variables[_c.I_LOAD] = 0.0
+        # Reset interlocks
+        variables[_c.PS_SOFT_INTERLOCKS] = 0
+        variables[_c.PS_HARD_INTERLOCKS] = 0
+
+    def set_slowref(self, variables, input_val):
+        """Set current."""
+        raise NotImplementedError()
+
+    def cfg_siggen(self, variables, input_val):
+        """Config siggen."""
+        raise NotImplementedError()
+
+    def set_siggen(self, variables, input_val):
+        """Set siggen parameters in continuos mode."""
+        raise NotImplementedError()
+
+    def enable_siggen(self, variables):
+        """Enable siggen."""
+        pass
+
+    def disable_siggen(self, variables):
+        """Disable siggen."""
+        pass
+
+
+class FBPSlowRefState(_FBPState):
+    """FBP SlowRef state."""
+
+    def select_op_mode(self, variables):
+        """Set operation mode."""
+        status = variables[_c.PS_STATUS]
+        variables[_c.PS_STATUS] = _Status.set_opmode(status, 3)
+        self.set_slowref(variables, variables[_c.PS_SETPOINT])
+
+    def set_slowref(self, variables, input_val):
+        """Set current."""
+        variables[_c.PS_SETPOINT] = input_val
+        variables[_c.PS_REFERENCE] = input_val
+        variables[_c.I_LOAD] = input_val
+
+    def cfg_siggen(self, variables, input_val):
+        """Set siggen configuration parameters."""
+        variables[_c.SIGGEN_TYPE] = input_val[0]
+        variables[_c.SIGGEN_NUM_CYCLES] = input_val[1]
+        variables[_c.SIGGEN_FREQ] = input_val[2]
+        variables[_c.SIGGEN_AMPLITUDE] = input_val[3]
+        variables[_c.SIGGEN_OFFSET] = input_val[4]
+        variables[_c.SIGGEN_AUX_PARAM] = input_val[5:]
+
+    def set_siggen(self, variables, input_val):
+        """Set siggen configuration parameters while in continuos mode."""
+        variables[_c.SIGGEN_FREQ] = input_val[0]
+        variables[_c.SIGGEN_AMPLITUDE] = input_val[1]
+        variables[_c.SIGGEN_OFFSET] = input_val[2]
+
+
+class FBPCycleState(_FBPState):
+    """FBP Cycle state."""
+
+    def __init__(self):
+        """Set cycle parameters."""
+        self._siggen_canceled = False
+
+    def read_variable(self, variables, var_id):
+        """Return variable."""
+        enbl = variables[_c.SIGGEN_ENABLE]
+        if enbl and var_id in (_c.PS_REFERENCE, _c.I_LOAD):
+            value = self._signal.get_value()
+            variables[_c.PS_REFERENCE] = value
+            variables[_c.I_LOAD] = value
+        return super().read_variable(variables, var_id)
+
+    def select_op_mode(self, variables):
+        """Set operation mode."""
+        status = variables[_c.PS_STATUS]
+        variables[_c.PS_STATUS] = _Status.set_opmode(status, 2)
+        variables[_c.PS_REFERENCE] = 0.0
+        variables[_c.I_LOAD] = 0.0
+        self._set_signal(variables)
+
+    def reset_interlocks(self, variables):
+        """Reset interlocks."""
+        super().reset_interlocks(variables)
+        self.disable_siggen(variables)
+
+    def set_slowref(self, variables, input_val):
+        """Set current."""
+        variables[_c.PS_SETPOINT] = input_val
+
+    def cfg_siggen(self, variables, input_val):
+        """Set siggen configuration parameters."""
+        if not variables[_c.SIGGEN_ENABLE]:
+            variables[_c.SIGGEN_TYPE] = input_val[0]
+            variables[_c.SIGGEN_NUM_CYCLES] = input_val[1]
+            variables[_c.SIGGEN_FREQ] = input_val[2]
+            variables[_c.SIGGEN_AMPLITUDE] = input_val[3]
+            variables[_c.SIGGEN_OFFSET] = input_val[4]
+            variables[_c.SIGGEN_AUX_PARAM] = input_val[5:]
+
+    def set_siggen(self, variables, input_val):
+        """Set siggen configuration parameters while in continuos mode."""
+        if not variables[_c.SIGGEN_ENABLE] or \
+                (variables[_c.SIGGEN_ENABLE] and
+                 variables[_c.SIGGEN_NUM_CYCLES] == 0):
+            variables[_c.SIGGEN_FREQ] = input_val[0]
+            variables[_c.SIGGEN_AMPLITUDE] = input_val[1]
+            variables[_c.SIGGEN_OFFSET] = input_val[2]
+
+    def enable_siggen(self, variables):
+        """Enable siggen."""
+        variables[_c.SIGGEN_ENABLE] = 1
+        self._set_signal(variables)
+        if self._signal.duration() > 0:
+            self._siggen_canceled = False
+            thread = _Thread(
+                target=self._finish_siggen,
+                args=(variables, self._signal.duration()),
+                daemon=True)
+            thread.start()
+
+    def disable_siggen(self, variables):
+        """Disable siggen."""
+        if variables[_c.SIGGEN_ENABLE] == 1:
+            variables[_c.SIGGEN_ENABLE] = 0
+            self._siggen_canceled = True
+            self._signal.enable = False
+
+    def _set_signal(self, variables):
+        n = variables[_c.SIGGEN_NUM_CYCLES]
+        # f = variables[_c.SIGGEN_FREQ]
+        a = variables[_c.SIGGEN_AMPLITUDE]
+        o = variables[_c.SIGGEN_OFFSET]
+        aux = variables[_c.SIGGEN_AUX_PARAM]
+        # Switch Type
+        # t = variables[_c.SIGGEN_TYPE]:
+        # if t == 0:
+        # elif t == 1:
+        # elif t == 2:
+        #     self._signal = Trapezoidal(n, a, o, aux)
+        # else:
+        #     raise ValueError()
+        self._signal = Trapezoidal(n, a, o, aux)
+
+    def _finish_siggen(self, variables, time):
+        time_up = False
+        elapsed = 0
+        while not time_up:
+            _t.sleep(0.5)
+            elapsed += 0.5
+            if elapsed >= time:
+                time_up = True
+            if self._siggen_canceled:
+                return
+        val = self._signal.get_value()
+        variables[_c.PS_REFERENCE] = val
+        variables[_c.I_LOAD] = val
+        variables[_c.SIGGEN_ENABLE] = 0
