@@ -90,7 +90,7 @@ class _ControllerSim:
         ids = [var.eid for var in self.entities.groups[group_id].variables]
         return Response.ok, [self.read_variable(id)[1] for id in ids]
 
-    def create_groups(self, var_ids):
+    def create_group(self, var_ids):
         """Create new group."""
         self.entities.add_group(var_ids)
         return Response.ok, None
@@ -112,16 +112,19 @@ class FBPControllerSim(_ControllerSim):
     def __init__(self):
         """Use FBPEntities."""
         super().__init__(FBPEntities())
-        firmware = [b'S', b'i', b'm']
+        # Set variables initial value
+        firmware = [b'S', b'i', b'm', b'u', b'l', b'a', b't', b'i', b'o', b'n']
         while len(firmware) < 128:
             firmware.append('\x00'.encode())
         self._variables = [
             0, 0.0, 0.0, firmware, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0,
             [0.0, 0.0, 0.0, 0.0], 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0,
             0, 0, 0, 0.0, 0.0, 0.0, 0.0]
+        # Operation mode states
         self._states = [
             FBPSlowRefState(), FBPSlowRefState(), FBPCycleState(),
             FBPSlowRefState(), FBPSlowRefState(), FBPSlowRefState()]
+        # Current state
         self._state = self._states[self.SlowRefState]
 
     def read_variable(self, var_id):
@@ -226,11 +229,11 @@ class _FBPState:
 
     def enable_siggen(self, variables):
         """Enable siggen."""
-        pass
+        variables[_c.SIGGEN_ENABLE] = 1
 
     def disable_siggen(self, variables):
         """Disable siggen."""
-        pass
+        variables[_c.SIGGEN_ENABLE] = 0
 
 
 class FBPSlowRefState(_FBPState):
@@ -283,6 +286,7 @@ class FBPCycleState(_FBPState):
     def select_op_mode(self, variables):
         """Set operation mode."""
         status = variables[_c.PS_STATUS]
+        variables[_c.SIGGEN_ENABLE] = 0
         variables[_c.PS_STATUS] = _Status.set_opmode(status, 2)
         variables[_c.PS_REFERENCE] = 0.0
         variables[_c.I_LOAD] = 0.0
