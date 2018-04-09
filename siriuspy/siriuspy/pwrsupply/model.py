@@ -405,7 +405,12 @@ class FBPPowerSupply(Device):
             val = Status.pwrstate(val)
         elif field == 'OpMode-Sts':
             val = Status.opmode(val)
-        # TODO: parse FIRMWARE_VERSION
+        elif field == 'Version-Cte':
+            version = ''.join([c.decode() for c in val])
+            try:
+                val, _ = version.split('\x00', 1)
+            except ValueError:
+                val = version
 
         return val
 
