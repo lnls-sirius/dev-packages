@@ -22,52 +22,6 @@ RF_DELAY = BASE_DELAY / 20
 FINE_DELAY = 5e-12  # [s] (five picoseconds)
 
 
-class Events:
-    """Contain properties of the Events."""
-
-    HL2LL_MAP = {
-        'Linac': 'Evt01', 'InjBO': 'Evt02',
-        'InjSI': 'Evt03', 'RmpBO': 'Evt04',
-        'MigSI': 'Evt05', 'DigLI': 'Evt06',
-        'DigTB': 'Evt07', 'DigBO': 'Evt08',
-        'DigTS': 'Evt09', 'DigSI': 'Evt10',
-        'Orbit': 'Evt11', 'Coupl': 'Evt12',
-        'Tunes': 'Evt13', 'Study': 'Evt14'}
-    LL2HL_MAP = {val: key for key, val in HL2LL_MAP.items()}
-
-    LL_TMP = 'Evt{0:02d}'
-    LL_RGX = _re.compile('Evt([0-9]{2})([a-z-\.]*)', _re.IGNORECASE)
-    HL_RGX = _re.compile('('+'|'.join(list(HL2LL_MAP.keys())) +
-                         ')([a-z-\.]*)', _re.IGNORECASE)
-    HL_PREF = 'AS-Glob:TI-EVG:'
-
-    LL_CODES = list(range(64))
-    LL_EVENTS = []
-    for i in LL_CODES:
-        LL_EVENTS.append(LL_TMP.format(i))
-    del(i)  # cleanup class namespace
-
-    MODES = ('Disabled', 'Continuous', 'Injection', 'External')
-    DELAY_TYPES = ('Fixed', 'Incr')
-
-
-class Clocks:
-    """Contain properties of the Clocks."""
-
-    STATES = ('Dsbl', 'Enbl')
-
-    LL_TMP = 'Clock{0:d}'
-    HL_TMP = 'Clock{0:d}'
-    HL_PREF = 'AS-Glob:TI-EVG:'
-
-    HL2LL_MAP = dict()
-    for i in range(8):
-        HL2LL_MAP[HL_TMP.format(i)] = LL_TMP.format(i)
-    del(i)  # cleanup class namespace
-
-    LL2HL_MAP = {val: key for key, val in HL2LL_MAP.items()}
-
-
 class Triggers:
     """Contain properties of the triggers."""
 
@@ -75,13 +29,6 @@ class Triggers:
     _EVRs = None
     _EVEs = None
     _AFCs = None
-
-    STATES = ('Dsbl', 'Enbl')
-    INTLK = ('Dsbl', 'Enbl')
-    POLARITIES = ('Normal', 'Inverse')
-    DELAY_TYPES = ('Fixed', 'Incr')
-    SRC_LL = ('Dsbl',  'Trigger', 'Clock0', 'Clock1', 'Clock2',
-              'Clock3', 'Clock4', 'Clock5', 'Clock6', 'Clock7')
 
     def __init__(self):
         """Initialize the Instance."""

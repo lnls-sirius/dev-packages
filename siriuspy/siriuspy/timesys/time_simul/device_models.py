@@ -4,9 +4,7 @@ import time as _time
 from copy import deepcopy as _dcopy
 import uuid as _uuid
 from threading import Thread as _Thread
-from siriuspy.timesys.time_data import Events as _Events
-from siriuspy.timesys.time_data import Clocks as _Clocks
-from siriuspy.timesys.time_data import TimingDevDb as _TimingDevDb
+from siriuspy.csdevice import timesys as _cstime
 from siriuspy.timesys.time_data import AC_FREQUENCY as _PwrFreq
 from siriuspy.timesys.time_data import FINE_DELAY as _FINE_DELAY_STEP
 
@@ -112,7 +110,7 @@ class _ClockIOC(_BaseIOC):
 
     @staticmethod
     def get_database(prefix=''):
-        return _TimingDevDb.get_clock_database(prefix=prefix)
+        return _cstime.get_clock_database(prefix=prefix)
 
     def __init__(self, base_freq, callbacks=None, prefix=None):
         self.base_freq = base_freq
@@ -147,7 +145,7 @@ class _EventIOC(_BaseIOC):
 
     @staticmethod
     def get_database(prefix=''):
-        return _TimingDevDb.get_event_database(prefix=prefix)
+        return _cstime.get_event_database(prefix=prefix)
 
     def __init__(self, base_freq, callbacks=None, prefix=None):
         self.base_freq = base_freq
@@ -200,7 +198,7 @@ class EVGIOC(_BaseIOC):
     @staticmethod
     def get_database(prefix=''):
         """Get the database."""
-        return _TimingDevDb.get_evg_database(prefix=prefix)
+        return _cstime.get_evg_database(prefix=prefix)
 
     def __init__(self, base_freq, callbacks=None, prefix=None):
         """Initialize instance."""
@@ -210,13 +208,13 @@ class EVGIOC(_BaseIOC):
         super().__init__(callbacks=callbacks, prefix=prefix)
 
         self.events = dict()
-        for ev in _Events.LL_EVENTS:
+        for ev in _cstime.events_ll_names:
             self.events[ev] = _EventIOC(
                 self.base_freq/self._rf_division_rb,
                 callbacks={self.uuid: self._call_callbacks},
                 prefix=ev)
         self.clocks = dict()
-        for clc in sorted(_Clocks.LL2HL_MAP.keys()):
+        for clc in sorted(_cstime.clocks_ll2hl_map.keys()):
             self.clocks[clc] = _ClockIOC(
                 self.base_freq/self._rf_division_rb,
                 callbacks={self.uuid: self._call_callbacks},
@@ -289,10 +287,10 @@ class EVGIOC(_BaseIOC):
         """Get propty."""
         reason2 = reason[len(self.prefix):]
         if reason2.startswith(tuple(self.clocks.keys())):
-            leng = len(_Clocks.LL_TMP.format(0))
+            leng = len(_cstime.clocks_ll_tmp.format(0))
             return self.clocks[reason2[: leng]].get_propty(reason2)
         elif reason2.startswith(tuple(self.events.keys())):
-            leng = len(_Events.LL_TMP.format(0))
+            leng = len(_cstime.events_ll_tmp.format(0))
             return self.events[reason2[: leng]].get_propty(reason2)
         else:
             return super().get_propty(reason)
@@ -301,10 +299,10 @@ class EVGIOC(_BaseIOC):
         """Set propty."""
         reason2 = reason[len(self.prefix):]
         if reason2.startswith(tuple(self.clocks.keys())):
-            leng = len(_Clocks.LL_TMP.format(0))
+            leng = len(_cstime.clocks_ll_tmp.format(0))
             return self.clocks[reason2[: leng]].set_propty(reason2, value)
         elif reason2.startswith(tuple(self.events.keys())):
-            leng = len(_Events.LL_TMP.format(0))
+            leng = len(_cstime.events_ll_tmp.format(0))
             return self.events[reason2[: leng]].set_propty(reason2, value)
         else:
             return super().set_propty(reason, value)
@@ -379,7 +377,7 @@ class _OTP_IOC(_BaseIOC):
     @staticmethod
     def get_database(prefix=''):
         """Get the database."""
-        return _TimingDevDb.get_otp_database(prefix=prefix)
+        return _cstime.get_otp_database(prefix=prefix)
 
     def __init__(self, base_freq, callbacks=None, prefix=None):
         self.base_freq = base_freq
@@ -388,7 +386,7 @@ class _OTP_IOC(_BaseIOC):
     def receive_events(self, bucket, events):
         if self._state_rb == 0:
             return
-        ev = events.get(_Events.LL_TMP.format(self._event_rb), None)
+        ev = events.get(_cstime.events_ll_tmp.format(self._event_rb), None)
         if ev is None:
             return
         delay = ev['delay'] + self._delay_rb/self.base_freq
@@ -431,7 +429,7 @@ class _EVROUT_IOC(_BaseIOC):
     @staticmethod
     def get_database(prefix=''):
         """Get the database."""
-        return _TimingDevDb.get_out_database(prefix=prefix, equip='EVR')
+        return _cstime.get_out_database(prefix=prefix, equip='EVR')
 
     def __init__(self, base_freq, callbacks=None, prefix=None):
         self.base_freq = base_freq
@@ -442,7 +440,7 @@ class _EVROUT_IOC(_BaseIOC):
         if self._source_rb == 1:
             lab = _OTP_SIM_TMP.format(self._trigger_rb)
         if 1 < self._source_rb <= 9:
-            lab = _Clocks.LL_TMP.format(self._source_rb - 2)
+            lab = _cstime.clocks_ll_tmp.format(self._source_rb - 2)
 
         dic = _dcopy(opts.get(lab, None))
         if dic is not None:
@@ -471,7 +469,7 @@ class _EVEOUT_IOC(_EVROUT_IOC):
     @staticmethod
     def get_database(prefix=''):
         """Get the database."""
-        return _TimingDevDb.get_out_database(prefix=prefix, equip='EVE')
+        return _cstime.get_out_database(prefix=prefix, equip='EVE')
 
 
 class _AFCOUT_IOC(_BaseIOC):
@@ -496,7 +494,7 @@ class _AFCOUT_IOC(_BaseIOC):
     @staticmethod
     def get_database(prefix=''):
         """Get the database."""
-        return _TimingDevDb.get_afc_out_database(prefix=prefix)
+        return _cstime.get_afc_out_database(prefix=prefix)
 
     def __init__(self, base_freq, callbacks=None, prefix=None):
         self.base_freq = base_freq
@@ -505,9 +503,9 @@ class _AFCOUT_IOC(_BaseIOC):
     def receive_events(self, bucket, opts):
         lab = None
         if self._source_rb == 1:
-            lab = _Events.LL_TMP.format(self._event_rb)
+            lab = _cstime.events_ll_tmp.format(self._event_rb)
         if 1 < self._source_rb <= 9:
-            lab = _Clocks.LL_TMP.format(self._source_rb - 2)
+            lab = _cstime.clocks_ll_tmp.format(self._source_rb - 2)
 
         dic = _dcopy(opts.get(lab, None))
         if dic is not None:
@@ -564,7 +562,7 @@ class EVRIOC(_BaseIOC):
     @staticmethod
     def get_database(prefix=''):
         """Get the database."""
-        return _TimingDevDb.get_evr_database(prefix=prefix)
+        return _cstime.get_evr_database(prefix=prefix)
 
     def __init__(self, base_freq, callbacks=None, prefix=None):
         """Initialize the instance."""
@@ -665,7 +663,7 @@ class EVEIOC(EVRIOC):
     @staticmethod
     def get_database(prefix=''):
         """Get the database."""
-        return _TimingDevDb.get_eve_database(prefix=prefix)
+        return _cstime.get_eve_database(prefix=prefix)
 
     def _get_attr2expression(self):
         dic_ = super()._get_attr2expression()
@@ -699,7 +697,7 @@ class AFCIOC(EVRIOC):
     @staticmethod
     def get_database(prefix=''):
         """Get the database."""
-        return _TimingDevDb.get_afc_database(prefix=prefix)
+        return _cstime.get_afc_database(prefix=prefix)
 
 
 class FOUTIOC(_BaseIOC):
@@ -717,7 +715,7 @@ class FOUTIOC(_BaseIOC):
     @staticmethod
     def get_database(prefix=''):
         """Get the database."""
-        return _TimingDevDb.get_fout_database(prefix=prefix)
+        return _cstime.get_fout_database(prefix=prefix)
 
     def __init__(self, base_freq, callbacks=None, prefix=None):
         """Initialize the instance."""
