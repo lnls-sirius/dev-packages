@@ -554,7 +554,8 @@ class _EVROUT(_Base):
             self._my_state_sp['Src'] = _cstime.triggers_src_ll.index(pname)
         else:
             self._my_state_sp['Src'] = _cstime.triggers_src_ll.index('Trigger')
-            self._my_state_sp['Evt'] = int(_cstime.events_hl2ll_map[pname][-2:])
+            evt = int(_cstime.events_hl2ll_map[pname][-2:])
+            self._my_state_sp['Evt'] = evt
         if 'SrcTrig' in self._dict_convert_prop2pv.keys():
             self._my_state_sp['SrcTrig'] = self._internal_trigger
 

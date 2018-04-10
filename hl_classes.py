@@ -12,14 +12,12 @@ from pcaspy import Severity as _Severity
 from siriuspy.thread import RepeaterThread as _Timer
 from siriuspy.search import HLTimeSearch as _HLSearch
 from siriuspy.csdevice import timesys as _cstime
-from as_ti_control.ll_classes import get_ll_trigger_object as \
-    _get_ll_trigger_object
-from as_ti_control.ll_classes import INTERVAL as _INTERVAL
-
-from as_ti_control.ll_classes import LL_Event as _LL_Event
-from as_ti_control.ll_classes import LL_Clock as _LL_Clock
-from as_ti_control.ll_classes import LL_EVG as _LL_EVG
-from as_ti_control.ll_classes import EVG_NAME as _EVG_NAME
+from .ll_classes import get_ll_trigger_object as _get_ll_trigger_object
+from .ll_classes import INTERVAL as _INTERVAL
+from .ll_classes import LL_Event as _LL_Event
+from .ll_classes import LL_Clock as _LL_Clock
+from .ll_classes import LL_EVG as _LL_EVG
+from .ll_classes import EVG_NAME as _EVG_NAME
 
 
 # HL == High Level
