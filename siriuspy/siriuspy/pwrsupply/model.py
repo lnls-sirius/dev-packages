@@ -112,6 +112,8 @@ class Device:
                         ret[f] = val[idx]
                 else:
                     ret[field] = val[idx]
+            for setpoint, db in self.setpoints.items():
+                ret[setpoint] = db['value']
             return ret
         return None
 
@@ -228,7 +230,6 @@ class FBPPowerSupply(Device):
         ret = self._execute_function(_c.TURN_ON)
         if ret:
             _time.sleep(0.3)
-        if ret:
             return self._execute_function(3)  # Close control loop
 
     def _turn_off(self):
