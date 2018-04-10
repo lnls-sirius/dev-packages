@@ -48,6 +48,24 @@ triggers_src_ll = (
     )
 
 
+class Constants:
+    """Constants important for timing system."""
+
+    # TODO: should we create a consts module?
+    _light_speed = 299792458  # [m/s]
+    _ring_circumference = 518.396  # [m]
+    _harmonic_number = 864
+
+    AC_FREQUENCY = 60  # [Hz]
+    RF_DIVISION = 4
+    RF_FREQUENCY = _light_speed/_ring_circumference*_harmonic_number
+    BASE_FREQUENCY = RF_FREQUENCY / RF_DIVISION
+    RF_PERIOD = 1/RF_FREQUENCY
+    BASE_DELAY = 1 / BASE_FREQUENCY
+    RF_DELAY = BASE_DELAY / 20
+    FINE_DELAY = 5e-12  # [s] (five picoseconds)
+
+
 def get_otp_database(otp_num=0, prefix=None):
     """Metod get_otp_database."""
     def_prefix = 'OTP{0:02d}'.format(otp_num)
