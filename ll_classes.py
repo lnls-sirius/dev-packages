@@ -1,5 +1,6 @@
 """Define the low level classes which will connect to Timing Devices IOC."""
 
+from functools import partial as _partial
 import logging as _log
 import epics as _epics
 from siriuspy.thread import RepeaterThread as _Timer
@@ -286,13 +287,13 @@ class LL_Clock(_Base):
     def _define_dict_for_write(self):
         return {
             'Freq': self._set_frequency,
-            'State': lambda x: self._set_simple('MuxEnbl', x),
+            'State': _partial(self._set_simple, 'MuxEnbl'),
             }
 
     def _define_dict_for_read(self):
         return {
             'MuxDiv': self._get_frequency,
-            'MuxEnbl': lambda x: self._get_simple('MuxEnbl', x, 'State'),
+            'MuxEnbl': _partial(self._get_simple, 'MuxEnbl', hl_prop='State'),
             }
 
     def _set_frequency(self, value):
@@ -325,17 +326,17 @@ class LL_Event(_Base):
     def _define_dict_for_write(self):
         return {
             'Delay': self._set_delay,
-            'Mode': lambda x: self._set_simple('Mode', x),
-            'DelayType': lambda x: self._set_simple('DelayType', x),
-            'ExtTrig': lambda x: self._set_simple('ExtTrig', x),
+            'Mode': _partial(self._set_simple, 'Mode'),
+            'DelayType': _partial(self._set_simple, 'DelayType'),
+            'ExtTrig': _partial(self._set_simple, 'ExtTrig'),
             }
 
     def _define_dict_for_read(self):
         return {
             'Delay': self._get_delay,
-            'Mode': lambda x: self._get_simple('Mode',  x),
-            'DelayType': lambda x: self._get_simple('DelayType', x),
-            'ExtTrig': lambda x: self._get_simple('ExtTrig', x),
+            'Mode': _partial(self._get_simple, 'Mode'),
+            'DelayType': _partial(self._get_simple, 'DelayType'),
+            'ExtTrig': _partial(self._get_simple, 'ExtTrig'),
             }
 
     def _set_delay(self, value):
@@ -406,15 +407,15 @@ class _EVROUT(_Base):
 
     def _define_dict_for_write(self):
         map_ = {
-            'DevEnbl': lambda x: self._set_simple('DevEnbl', x),
-            'FOUTDevEnbl': lambda x: self._set_simple('FOUTDevEnbl', x),
-            'EVGDevEnbl': lambda x: self._set_simple('EVGDevEnbl', x),
-            'State': lambda x: self._set_simple('State', x),
+            'DevEnbl': _partial(self._set_simple, 'DevEnbl'),
+            'FOUTDevEnbl': _partial(self._set_simple, 'FOUTDevEnbl'),
+            'EVGDevEnbl': _partial(self._set_simple, 'EVGDevEnbl'),
+            'State': _partial(self._set_simple, 'State'),
             'Src': self._set_source,
             'Duration': self._set_duration,
-            'Polarity': lambda x: self._set_simple('Polarity', x),
+            'Polarity': _partial(self._set_simple, 'Polarity'),
             'Pulses': self._set_pulses,
-            'Intlk': lambda x: self._set_simple('Intlk', x),
+            'Intlk': _partial(self._set_simple, 'Intlk'),
             'Delay': self._set_delay,
             'DelayType': self._set_delay_type,
             }
@@ -422,24 +423,24 @@ class _EVROUT(_Base):
 
     def _define_dict_for_read(self):
         map_ = {
-            'State': lambda x: self._get_simple('State', x),
-            'Evt': lambda x: self._process_source('Evt', x),
-            'Width': lambda x: self._get_duration_pulses('Width', x),
-            'Polarity': lambda x: self._get_simple('Polarity', x),
-            'Pulses': lambda x: self._get_duration_pulses('Pulses', x),
-            'Delay': lambda x: self._get_delay('Delay', x),
-            'Intlk': lambda x: self._get_simple('Intlk', x),
-            'Src': lambda x: self._process_source('Src', x),
-            'SrcTrig': lambda x: self._process_source('SrcTrig', x),
-            'RFDelay': lambda x: self._get_delay('RFDelay', x),
-            'FineDelay': lambda x: self._get_delay('FineDelay', x),
-            'DevEnbl': lambda x: self._get_status('DevEnbl', x),
-            'Network': lambda x: self._get_status('Network', x),
-            'Link': lambda x: self._get_status('Link', x),
-            'Los': lambda x: self._get_status('Los', x),
-            'IntlkMon': lambda x: self._get_status('IntlkMon', x),
-            'FOUTDevEnbl': lambda x: self._get_status('FOUTDevEnbl', x),
-            'EVGDevEnbl': lambda x: self._get_status('EVGDevEnbl', x),
+            'State': _partial(self._get_simple, 'State'),
+            'Evt': _partial(self._process_source, 'Evt'),
+            'Width': _partial(self._get_duration_pulses, 'Width'),
+            'Polarity': _partial(self._get_simple, 'Polarity'),
+            'Pulses': _partial(self._get_duration_pulses, 'Pulses'),
+            'Delay': _partial(self._get_delay, 'Delay'),
+            'Intlk': _partial(self._get_simple, 'Intlk'),
+            'Src': _partial(self._process_source, 'Src'),
+            'SrcTrig': _partial(self._process_source, 'SrcTrig'),
+            'RFDelay': _partial(self._get_delay, 'RFDelay'),
+            'FineDelay': _partial(self._get_delay, 'FineDelay'),
+            'DevEnbl': _partial(self._get_status, 'DevEnbl'),
+            'Network': _partial(self._get_status, 'Network'),
+            'Link': _partial(self._get_status, 'Link'),
+            'Los': _partial(self._get_status, 'Los'),
+            'IntlkMon': _partial(self._get_status, 'IntlkMon'),
+            'FOUTDevEnbl': _partial(self._get_status, 'FOUTDevEnbl'),
+            'EVGDevEnbl': _partial(self._get_status, 'EVGDevEnbl'),
             }
         for prop in self._REMOVE_PROPS:
             map_.pop(prop)
