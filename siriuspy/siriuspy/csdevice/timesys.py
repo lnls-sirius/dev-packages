@@ -453,10 +453,12 @@ def get_evg_database(prefix=None, only_evg=False):
                 'Preparing Continuous', 'Preparing Injection'
                 )}
 
+    if only_evg:
+        return db
+
     for clc in clocks_ll2hl_map.keys():
-        p = prefix + clc
-        db.update(get_clock_database(prefix=p))
+        db.update(get_clock_database(prefix=prefix+clc))
     for ev in events_ll_names:
-        p = prefix + ev
-        db.update(get_event_database(prefix=p))
+        db.update(get_event_database(prefix=prefix+ev))
+    return db
     return db
