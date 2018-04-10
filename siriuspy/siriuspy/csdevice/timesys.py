@@ -1,7 +1,7 @@
 """Define properties of all timing devices and their connections."""
 
 from copy import deepcopy as _dcopy
-
+from siriuspy.search import HLTimeSearch as _HLTimeSearch
 
 events_hl2ll_map = {
     'Linac': 'Evt01', 'InjBO': 'Evt02',
@@ -461,4 +461,146 @@ def get_evg_database(prefix=None, only_evg=False):
     for ev in events_ll_names:
         db.update(get_event_database(prefix=prefix+ev))
     return db
+
+
+def get_hl_clock_database(prefix='Clock0'):
+    """Return database of a high level Clock."""
+    db = dict()
+
+    dic_ = {
+        'type': 'float', 'value': 1.0,
+        'unit': 'kHz', 'prec': 6,
+        'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+        'hilim': 125000000, 'high': 125000000, 'hihi': 125000000}
+    db[prefix + 'Freq-RB'] = _dcopy(dic_)
+    db[prefix + 'Freq-SP'] = dic_
+
+    dic_ = {'type': 'enum', 'enums': clocks_states, 'value': 0}
+    db[prefix + 'State-Sel'] = _dcopy(dic_)
+    db[prefix + 'State-Sts'] = dic_
     return db
+
+
+def get_hl_event_database(prefix='Linac'):
+    """Return database of a high level event."""
+    db = dict()
+
+    dic_ = {'type': 'float', 'unit': 'us', 'prec': 4, 'value': 0,
+            'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+            'hilim': 500000, 'high': 1000000, 'hihi': 10000000}
+    db[prefix + 'Delay-RB'] = _dcopy(dic_)
+    db[prefix + 'Delay-SP'] = dic_
+
+    dic_ = {'type': 'enum', 'enums': events_modes,
+            'value': 1,
+            'states': ()}
+    db[prefix + 'Mode-Sts'] = _dcopy(dic_)
+    db[prefix + 'Mode-Sel'] = dic_
+
+    dic_ = {'type': 'enum', 'enums': events_delay_types, 'value': 1}
+    db[prefix + 'DelayType-Sts'] = _dcopy(dic_)
+    db[prefix + 'DelayType-Sel'] = dic_
+
+    db[prefix + 'ExtTrig-Cmd'] = {
+        'type': 'int', 'value': 0,
+        'unit': 'When in External Mode generates Event.'}
+    return db
+
+
+def get_hl_evg_database(prefix=None, only_evg=False):
+    """Return database of the high level PVs associated with the EVG."""
+    def_prefix = 'AS-Glob:TI-EVG:'
+    pre = def_prefix if prefix is None else prefix
+    db = dict()
+
+    dic_ = {'type': 'float', 'value': 2.0,
+            'unit': 'Hz', 'prec': 6,
+            'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+            'hilim': 60, 'high': 60, 'hihi': 60}
+    db[pre + 'RepRate-RB'] = _dcopy(dic_)
+    db[pre + 'RepRate-SP'] = dic_
+
+    if only_evg:
+        return db
+
+    for ev in events_hl2ll_map.keys():
+        db.update(get_hl_event_database(prefix=prefix+ev))
+    for clc in clocks_hl2ll_map.keys():
+        db.update(get_hl_clock_database(prefix=prefix+clc))
+    return db
+
+
+def get_hl_trigger_database(hl_trigger, prefix=''):
+    """Return database of the specified hl_trigger."""
+    db = dict()
+    trig_db = _HLTimeSearch.get_hl_trigger_database(hl_trigger)
+
+    dic_ = {'type': 'enum', 'enums': triggers_states}
+    dic_.update(trig_db['State'])
+    db['State-Sts'] = _dcopy(dic_)
+    db['State-Sel'] = dic_
+
+    dic_ = {'type': 'enum'}
+    dic_.update(trig_db['Src'])
+    dic_['enums'] = _HLTimeSearch.get_hl_trigger_sources(hl_trigger)
+    dic_['value'] += 1 if _HLTimeSearch.has_clock(hl_trigger) else 0
+    db['Src-Sts'] = _dcopy(dic_)
+    db['Src-Sts']['enums'] += ('Invalid', )  # for completeness
+    db['Src-Sel'] = dic_
+
+    dic_ = {'type': 'float', 'unit': 'ms', 'prec': 6,
+            'lolo': 0.000008, 'low': 0.000008, 'lolim': 0.000008,
+            'hilim': 500, 'high': 1000, 'hihi': 10000}
+    dic_.update(trig_db['Duration'])
+    db['Duration-RB'] = _dcopy(dic_)
+    db['Duration-SP'] = dic_
+
+    dic_ = {'type': 'enum', 'enums': triggers_polarities}
+    dic_.update(trig_db['Polarity'])
+    db['Polarity-Sts'] = _dcopy(dic_)
+    db['Polarity-Sel'] = dic_
+
+    dic_ = {'type': 'int', 'unit': 'numer of pulses',
+            # 'lolo': 1, 'low': 1, 'lolim': 1,
+            'hilim': 2001, 'high': 10000, 'hihi': 100000}
+    dic_.update(trig_db['Pulses'])
+    db['Pulses-RB'] = _dcopy(dic_)
+    db['Pulses-SP'] = dic_
+
+    dic_ = {'type': 'enum', 'enums': triggers_intlk}
+    dic_.update(trig_db['Intlk'])
+    db['Intlk-Sts'] = _dcopy(dic_)
+    db['Intlk-Sel'] = dic_
+
+    dic_ = {'type': 'float', 'unit': 'us', 'prec': 6,
+            'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+            'hilim': 500000, 'high': 1000000, 'hihi': 10000000}
+    dic_.update(trig_db['Delay'])
+    db['Delay-RB'] = _dcopy(dic_)
+    db['Delay-SP'] = dic_
+
+    dic_ = {'type': 'enum'}
+    dic_.update(trig_db['DelayType'])
+    db['DelayType-Sts'] = _dcopy(dic_)
+    db['DelayType-Sel'] = dic_
+
+    dic_ = {'type': 'int', 'value': 255}
+    db['Status-Mon'] = _dcopy(dic_)
+
+    db['Status-Cte'] = {
+        'type': 'string', 'count': 8,
+        'value': (
+            'All PVs connected',
+            'Device Enabled',
+            'FOUT Enabled',
+            'EVG Enabled',
+            'Network Ok',
+            'Interlock Not Active',
+            'UPLink Ok',
+            'DownLink Ok',
+            )
+        }
+
+    pre = prefix + hl_trigger
+    interface = tuple(_HLTimeSearch.get_hl_trigger_interface(hl_trigger))
+    return {pre + pv: dt for pv, dt in db.items() if pv.startswith(interface)}
