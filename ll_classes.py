@@ -9,23 +9,23 @@ from siriuspy.envars import vaca_prefix as LL_PREFIX
 from siriuspy.namesys import SiriusPVName as _PVName
 
 from siriuspy.csdevice import timesys as _cstime
-from siriuspy.timesys.time_data import Connections as _Connections
-from siriuspy.timesys.time_data import IOs as _IOs
-from siriuspy.timesys.time_data import RF_FREQUENCY as _RFFREQ
-from siriuspy.timesys.time_data import RF_DIVISION as _RFDIV
-from siriuspy.timesys.time_data import AC_FREQUENCY as _ACFREQ
-from siriuspy.timesys.time_data import FINE_DELAY as _FDEL
+from siriuspy.search import LLTimeSearch as _LLTimeSearch
+
+_RFFREQ = _cstime.Constants.RF_FREQUENCY
+_RFDIV = _cstime.Constants.RF_DIVISION
+_ACFREQ = _cstime.Constants.AC_FREQUENCY
+_FDEL = _cstime.Constants.FINE_DELAY
 
 INTERVAL = 0.1
 _DELAY_UNIT_CONV = 1e-6
-_Connections.add_bbb_info()
-_Connections.add_crates_info()
-EVG_NAME = _Connections.get_devices('EVG').pop()
-EVRs = _Connections.get_devices('EVR')
-EVEs = _Connections.get_devices('EVE')
-AFCs = _Connections.get_devices('AFC')
-FOUTs = _Connections.get_devices('FOUT')
-TWDS_EVG = _Connections.get_connections_twds_evg()
+_LLTimeSearch.add_bbb_info()
+_LLTimeSearch.add_crates_info()
+EVG_NAME = _LLTimeSearch.get_devices_by_type('EVG').pop()
+EVRs = _LLTimeSearch.get_devices_by_type('EVR')
+EVEs = _LLTimeSearch.get_devices_by_type('EVE')
+AFCs = _LLTimeSearch.get_devices_by_type('AFC')
+FOUTs = _LLTimeSearch.get_devices_by_type('FOUT')
+TWDS_EVG = _LLTimeSearch.get_connections_twds_evg()
 
 
 class _Base:
@@ -355,7 +355,7 @@ class _EVROUT(_Base):
                  init_hl_state, source_enums):
         self._internal_trigger = self._define_num_int(conn_num)
         self.prefix = LL_PREFIX + _PVName(channel).device_name + ':'
-        chan_tree = _Connections.get_device_tree(channel)
+        chan_tree = _LLTimeSearch.get_device_tree(channel)
         fout_name = [chan.device_name for chan in chan_tree
                      if chan.device_name in FOUTs][0]
         self._fout_prefix = LL_PREFIX + fout_name + ':'
@@ -669,7 +669,7 @@ def get_ll_trigger_object(channel, callback, init_hl_state, source_enums):
         ('AFC', 'FMC'): _AFCFMC,
         }
     chan = _PVName(channel)
-    match = _IOs.LL_RGX.findall(chan.propty)
+    match = _LLTimeSearch.ll_rgx.findall(chan.propty)
     if match[0][0] == 'FMC':
         conn_ty = match[0][0]
         conn_num = int(match[0][1]-1) + 5*(int(match[1][1])-1)

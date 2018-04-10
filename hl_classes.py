@@ -1,6 +1,7 @@
 """Define the high level classes."""
 
-import functools
+from functools import partial as _partial
+from functools import reduce as _reduce
 import operator
 import logging as _log
 from copy import deepcopy as _dcopy
@@ -9,7 +10,7 @@ from scipy.stats import mode as _mode
 from pcaspy import Alarm as _Alarm
 from pcaspy import Severity as _Severity
 from siriuspy.thread import RepeaterThread as _Timer
-from siriuspy.timesys.time_data import Triggers as _Triggers
+from siriuspy.search import HLTimeSearch as _HLSearch
 from siriuspy.csdevice import timesys as _cstime
 from as_ti_control.ll_classes import get_ll_trigger_object as \
     _get_ll_trigger_object
@@ -38,11 +39,14 @@ class _HL_Base:
     def get_database(self, db):
         """Get the database."""
         db2 = dict()
-        for prop_name in self._interface_props:
-            name = self._get_pv_name(prop_name)
-            db2[name] = db[name]
-            name = name.replace('-RB', '-SP').replace('-Sts', '-Sel')
-            db2[name] = db[name]
+        for pv, dt in db.items():
+            prop = self._get_prop_name(pv)
+            if prop not in self._interface_props:
+                continue
+            db2[pv] = _dcopy(dt)
+            if pv.endswith(('-SP', '-Sel', '-Cmd')):
+                db2[pv]['fun_set_pv'] = _partial(self.write, prop)
+                print(pv, prop)
         return db2      # dictionary must have key fun_set_pv
 
     def __init__(self, prefix, callback, connect_kwargs=dict()):
@@ -76,6 +80,7 @@ class _HL_Base:
         It not only sets the new high level property value but also forwards it
         to the low level classes.
         """
+        print(prop_name)
         if value == self._my_state[prop_name]:
             return True
         self._my_state[prop_name] = value
@@ -118,6 +123,9 @@ class _HL_Base:
     def _get_pv_name(self, prop_name):
         return self.prefix + prop_name + self._SUFFIX_FOR_PROPS[prop_name]
 
+    def _get_prop_name(self, pvname):
+        return pvname[len(self.prefix):].split('-')[0]
+
     def _initialize_rb_values(self):
         self._lock_rb_to_deal = _Lock()
         self._rb_values = dict()
@@ -158,15 +166,7 @@ class HL_EVG(_HL_Base):
 
     def get_database(self):
         """Get the database."""
-        db = dict()
-        pre = self.prefix
-        dic_ = {'type': 'float', 'value': self._my_state['RepRate'],
-                'unit': 'Hz', 'prec': 6,
-                'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
-                'hilim': 60, 'high': 60, 'hihi': 60}
-        db[pre + 'RepRate-RB'] = _dcopy(dic_)
-        dic_['fun_set_pv'] = lambda x: self.write('RepRate', x)
-        db[pre + 'RepRate-SP'] = dic_
+        db = _cstime.get_hl_evg_database(self.prefix, only_evg=True)
         return super().get_database(db)
 
     def __init__(self, callback):
@@ -186,26 +186,9 @@ class HL_Clock(_HL_Base):
     def _get_LL_OBJ(**kwargs):
         return _LL_Clock(**kwargs)
 
-    def get_database(self):
+    def get_database(self, prefix=None):
         """Get the database."""
-        db = dict()
-        pre = self.prefix
-        dic_ = {
-            'type': 'float', 'value': self._my_state['Freq'],
-            'unit': 'kHz', 'prec': 6,
-            'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
-            'hilim': 125000000, 'high': 125000000, 'hihi': 125000000}
-        db[pre + 'Freq-RB'] = _dcopy(dic_)
-        dic_['fun_set_pv'] = lambda x: self.write('Freq', x)
-        db[pre + 'Freq-SP'] = dic_
-
-        db[pre + 'State-Sel'] = {
-            'type': 'enum', 'enums': _cstime.clocks_states,
-            'value': self._my_state['State'],
-            'fun_set_pv': lambda x: self.write('State', x)}
-        db[pre + 'State-Sts'] = {
-            'type': 'enum', 'enums': _cstime.clocks_states,
-            'value': self._my_state['State']}
+        db = _cstime.get_hl_clock_database(self.prefix)
         return super().get_database(db)
 
     def __init__(self, prefix, callback, cl_ll):
@@ -237,35 +220,10 @@ class HL_Event(_HL_Base):
 
     def get_database(self):
         """Create the database of the class."""
-        db = dict()
-        pre = self.prefix
-
-        dic_ = {'type': 'float', 'unit': 'us', 'prec': 4,
-                'value': self._my_state['Delay'],
-                'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
-                'hilim': 500000, 'high': 1000000, 'hihi': 10000000}
-        db[pre + 'Delay-RB'] = _dcopy(dic_)
-        dic_['fun_set_pv'] = lambda x: self.write('Delay', x)
-        db[pre + 'Delay-SP'] = dic_
-
-        dic_ = {'type': 'enum', 'enums': _cstime.events_modes,
-                'value': self._my_state['Mode'],
-                'states': ()}
-        db[pre + 'Mode-Sts'] = _dcopy(dic_)
-        dic_['fun_set_pv'] = lambda x: self.write('Mode', x)
-        db[pre + 'Mode-Sel'] = dic_
-
-        dic_ = {'type': 'enum', 'enums': _cstime.events_delay_types,
-                'value': self._my_state['DelayType']}
-        db[pre + 'DelayType-Sts'] = _dcopy(dic_)
-        dic_['fun_set_pv'] = lambda x: self.write('DelayType', x)
-        db[pre + 'DelayType-Sel'] = dic_
-
-        db[pre + 'ExtTrig-Cmd'] = {
-            'type': 'int', 'value': self._my_state['ExtTrig'],
-            'unit': 'When in External Mode generates Event.',
-            'fun_set_pv': self.set_ext_trig}
-        return super().get_database(db)
+        db = _cstime.get_hl_event_database(self.prefix)
+        db = super().get_database(db)
+        db[self._get_pv_name('ExtTrig')]['fun_set_pv'] = self.set_ext_trig
+        return db
 
     def __init__(self, prefix, callback, ev_ll):
         """Initialize object.
@@ -299,138 +257,34 @@ class HL_Trigger(_HL_Base):
         'Status': '-Mon',
         }
 
-    _ALL_TRIGGS = _Triggers()
-
     @staticmethod
     def _get_LL_OBJ(**kwargs):
         return _get_ll_trigger_object(**kwargs)
 
     def get_database(self):
         """Get the database."""
-        db = dict()
-        pre = self.prefix
-
-        dic_ = {'type': 'enum', 'enums': self._ALL_TRIGGS.STATES}
-        dic_.update(self._pvs_config['State'])
-        db[pre + 'State-Sts'] = _dcopy(dic_)
-        dic_['fun_set_pv'] = lambda x: self.write('State', x)
-        db[pre + 'State-Sel'] = dic_
-
-        dic_ = {'type': 'enum'}
-        dic_.update(self._pvs_config['Src'])
-        db[pre + 'Src-Sts'] = _dcopy(dic_)
-        db[pre + 'Src-Sts']['enums'] += ('Invalid', )  # for completeness
-        dic_['fun_set_pv'] = lambda x: self.write('Src', x)
-        db[pre + 'Src-Sel'] = dic_
-
-        dic_ = {'type': 'float', 'unit': 'ms', 'prec': 6,
-                'lolo': 0.000008, 'low': 0.000008, 'lolim': 0.000008,
-                'hilim': 500, 'high': 1000, 'hihi': 10000}
-        dic_.update(self._pvs_config['Duration'])
-        db[pre + 'Duration-RB'] = _dcopy(dic_)
-        dic_['fun_set_pv'] = lambda x: self.write('Duration', x)
-        db[pre + 'Duration-SP'] = dic_
-
-        dic_ = {'type': 'enum', 'enums': self._ALL_TRIGGS.POLARITIES}
-        dic_.update(self._pvs_config['Polarity'])
-        db[pre + 'Polarity-Sts'] = _dcopy(dic_)
-        dic_['fun_set_pv'] = lambda x: self.write('Polarity', x)
-        db[pre + 'Polarity-Sel'] = dic_
-
-        dic_ = {'type': 'int', 'unit': 'numer of pulses',
-                # 'lolo': 1, 'low': 1, 'lolim': 1,
-                'hilim': 2001, 'high': 10000, 'hihi': 100000}
-        dic_.update(self._pvs_config['Pulses'])
-        db[pre + 'Pulses-RB'] = _dcopy(dic_)
-        dic_['fun_set_pv'] = lambda x: self.write('Pulses', x)
-        db[pre + 'Pulses-SP'] = dic_
-
-        dic_ = {'type': 'enum', 'enums': self._ALL_TRIGGS.INTLK}
-        dic_.update(self._pvs_config['Intlk'])
-        db[pre + 'Intlk-Sts'] = _dcopy(dic_)
-        dic_['fun_set_pv'] = lambda x: self.write('Intlk', x)
-        db[pre + 'Intlk-Sel'] = dic_
-
-        dic_ = {'type': 'float', 'unit': 'us', 'prec': 6,
-                'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
-                'hilim': 500000, 'high': 1000000, 'hihi': 10000000}
-        dic_.update(self._pvs_config['Delay'])
-        db[pre + 'Delay-RB'] = _dcopy(dic_)
-        dic_['fun_set_pv'] = lambda x: self.write('Delay', x)
-        db[pre + 'Delay-SP'] = dic_
-
-        dic_ = {'type': 'enum'}
-        dic_.update(self._pvs_config['DelayType'])
-        db[pre + 'DelayType-Sts'] = _dcopy(dic_)
-        dic_['fun_set_pv'] = lambda x: self.write('DelayType', x)
-        db[pre + 'DelayType-Sel'] = dic_
-
-        dic_ = {'type': 'int', 'value': 255}
-        db[pre + 'Status-Mon'] = _dcopy(dic_)
-
-        db = super().get_database(db)
-
-        db[pre + 'Status-Cte'] = {
-            'type': 'string', 'count': 8,
-            'value': (
-                'All PVs connected',
-                'Device Enabled',
-                'FOUT Enabled',
-                'EVG Enabled',
-                'Network Ok',
-                'Interlock Not Active',
-                'UPLink Ok',
-                'DownLink Ok',
-                )
-            }
-        return db
+        db = _cstime.get_hl_trigger_database(hl_trigger=self.prefix)
+        return super().get_database(db)
 
     def __init__(self, hl_trigger, callback):
         """Appropriately initialize the instance."""
-        data = self._ALL_TRIGGS.hl_triggers[hl_trigger]
-        self._interface_props = data['hl_props'] | {'Status'}
-        self._pvs_config = data['pvs_config']
-        self._ll_objs_names = self._ALL_TRIGGS.get_ll_trigger_names(hl_trigger)
-        self._my_state = {k: v['value'] for k, v in data['pvs_config'].items()}
-        self._set_non_homogeneous_params()
+        self._interface_props = _HLSearch.get_hl_trigger_interface(hl_trigger)
+        self._ll_objs_names = _HLSearch.get_ll_trigger_names(hl_trigger)
+        self._my_state = dict()
+        for prop in self._interface_props - {'Status'}:
+            val = _HLSearch.get_hl_trigger_prop_value(hl_trigger, prop)
+            self._my_state[prop] = val
+        self._source_enums = _HLSearch.get_hl_trigger_sources(hl_trigger)
         super().__init__(
             hl_trigger, callback,
             connect_kwargs={'source_enums': self._source_enums}
             )
 
-    def _set_non_homogeneous_params(self):
-        has_clock = []
-        has_delay_type = []
-        for name in self._ll_objs_names:
-            has_clock.append(self._ALL_TRIGGS.has_clock(name))
-            has_delay_type.append(self._ALL_TRIGGS.has_delay_type(name))
-        dic_ = self._pvs_config['Src']
-        # EVG_params_ENUMS
-        if all(has_clock):
-            dic_['enums'] += tuple(
-                    sorted(_cstime.clocks_hl2ll_map.keys())) + ('Dsbl', )
-        elif any(has_clock):
-            _log.warning('Some triggers of ' + self.prefix +
-                         ' are connected to unsimiliar low level devices.')
-        self._source_enums = list(dic_['enums'])
-        # Delay Typess
-        dic_ = self._pvs_config['DelayType']
-        dic_['enums'] = (self._ALL_TRIGGS.DELAY_TYPES[0], )
-        if all(has_delay_type):
-            dic_['enums'] = self._ALL_TRIGGS.DELAY_TYPES
-        elif any(has_delay_type):
-            _log.warning('Some triggers of ' + self.prefix +
-                         ' are connected to unsimiliar low level devices.')
-        else:
-            self._interface_props.discard('DelayType')
-            self._interface_props.discard('Intlk')
-        return
-
     def _combine_status(self, dic_):
         def get_bit(val, bit):
             return (val << bit) & 1
 
-        status = functools.reduce(operator.or_, dic_.values())
+        status = _reduce(operator.or_, dic_.values())
         alarm = _Alarm.NO_ALARM
         severity = _Severity.NO_ALARM
         if get_bit(status, 0):
