@@ -118,6 +118,7 @@ class FBPEntities(Entities):
         {'eid': 28, 'waccess': False, 'count': 1, 'var_type': Types.t_float},
         {'eid': 29, 'waccess': False, 'count': 1, 'var_type': Types.t_float},
         {'eid': 30, 'waccess': False, 'count': 1, 'var_type': Types.t_float},
+        {'eid': 31, 'waccess': False, 'count': 1, 'var_type': Types.t_float},
     )
     Curves = tuple()
     Functions = (

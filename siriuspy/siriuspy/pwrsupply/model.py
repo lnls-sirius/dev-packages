@@ -36,11 +36,11 @@ class Device:
         self._connected = False
         self._controller = controller
         self._database = database
+        # initialize setpoints
         self._setpoints = dict()
         for field, db in self.database.items():
             if self._sp.match(field):
                 self._setpoints[field] = db
-
         self._init_setpoints()
 
     # API
@@ -220,8 +220,9 @@ class FBPPowerSupply(Device):
         # TODO: check errors, create group 3?
         self.controller.remove_all_groups()
         # Create group 3
-        self.controller.create_group(
-            [var_id for var_id in range(31) if var_id not in (3,)])
+        variables = self.controller.entities.list_variables(group_id=0)
+        variables.remove(_c.FIRMWARE_VERSION)
+        self.controller.create_group(variables=variables)
         self.controller.execute_function(_c.CLOSE_LOOP)  # Close loop
 
     # Functions
