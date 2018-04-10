@@ -44,7 +44,6 @@ class _HL_Base:
             db2[pv] = _dcopy(dt)
             if pv.endswith(('-SP', '-Sel', '-Cmd')):
                 db2[pv]['fun_set_pv'] = _partial(self.write, prop)
-                print(pv, prop)
         return db2      # dictionary must have key fun_set_pv
 
     def __init__(self, prefix, callback, connect_kwargs=dict()):
@@ -78,7 +77,6 @@ class _HL_Base:
         It not only sets the new high level property value but also forwards it
         to the low level classes.
         """
-        print(prop_name)
         if value == self._my_state[prop_name]:
             return True
         self._my_state[prop_name] = value
