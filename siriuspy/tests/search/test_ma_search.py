@@ -8,6 +8,7 @@ from unittest import mock
 import os
 from siriuspy import util
 from siriuspy.search import ma_search
+from siriuspy.search import ps_search
 from siriuspy.search import MASearch
 
 mock_flag = True
@@ -141,9 +142,15 @@ class TestMASearch(unittest.TestCase):
         """Common setup for all tests."""
         if mock_flag:
             # Create Mocks
-            web_patcher = mock.patch.object(ma_search, '_web', autospec=True)
+            web_patcher = mock.patch.object(
+                                        ma_search, '_web', autospec=True)
             self.addCleanup(web_patcher.stop)
             self.mock_web = web_patcher.start()
+            ps_web_patcher = mock.patch.object(
+                                        ps_search, '_web', autospec=True)
+            self.addCleanup(ps_web_patcher.stop)
+            self.ps_mock_web = ps_web_patcher.start()
+
             # MASearch funcs
             self.mock_web.server_online.return_value = True
             self.mock_web.magnets_excitation_ps_read.return_value = \
@@ -153,13 +160,13 @@ class TestMASearch(unittest.TestCase):
             self.mock_web.pulsed_magnets_setpoint_limits.return_value = \
                 read_test_file('magnet/pulsed-magnet-setpoint-limits.txt')
             # PSSearch funcs
-            self.mock_web.ps_pstypes_names_read.return_value = \
+            self.ps_mock_web.ps_pstypes_names_read.return_value = \
                 read_test_file('pwrsupply/pstypes-names.txt')
-            self.mock_web.ps_pstype_data_read.side_effect = \
+            self.ps_mock_web.ps_pstype_data_read.side_effect = \
                 read_test_ps_pstypes
-            self.mock_web.ps_pstype_setpoint_limits.return_value = \
+            self.ps_mock_web.ps_pstype_setpoint_limits.return_value = \
                 read_test_file('pwrsupply/pstypes-setpoint-limits.txt')
-            self.mock_web.pu_pstype_setpoint_limits.return_value = \
+            self.ps_mock_web.pu_pstype_setpoint_limits.return_value = \
                 read_test_file('pwrsupply/putypes-setpoint-limits.txt')
 
     def test_public_interface(self):
