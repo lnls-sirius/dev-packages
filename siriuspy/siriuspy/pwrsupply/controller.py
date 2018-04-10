@@ -119,7 +119,7 @@ class FBPControllerSim(_ControllerSim):
         self._variables = [
             0, 0.0, 0.0, firmware, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0,
             [0.0, 0.0, 0.0, 0.0], 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0,
-            0, 0, 0, 0.0, 0.0, 0.0, 0.0]
+            0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0]
         # Operation mode states
         self._states = [
             FBPSlowRefState(), FBPSlowRefState(), FBPCycleState(),
@@ -174,7 +174,8 @@ class _FBPState:
         if var_id == _c.I_LOAD:
             return variables[var_id] + \
                 _random.gauss(0.0, FBPControllerSim.I_LOAD_FLUCTUATION_RMS)
-        return variables[var_id]
+        value = variables[var_id]
+        return value
 
     def turn_on(self, variables):
         """Turn ps on."""

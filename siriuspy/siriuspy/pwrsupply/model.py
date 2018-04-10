@@ -220,9 +220,9 @@ class FBPPowerSupply(Device):
         # TODO: check errors, create group 3?
         self.controller.remove_all_groups()
         # Create group 3
-        variables = self.controller.entities.list_variables(group_id=0)
-        variables.remove(_c.FIRMWARE_VERSION)
-        self.controller.create_group(variables=variables)
+        var_ids = self.controller.entities.list_variables(group_id=0)
+        var_ids.remove(_c.FIRMWARE_VERSION)
+        self.controller.create_group(var_ids=var_ids)
         self.controller.execute_function(_c.CLOSE_LOOP)  # Close loop
 
     # Functions
