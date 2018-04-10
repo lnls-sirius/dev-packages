@@ -5,8 +5,9 @@ from copy import deepcopy as _dcopy
 import uuid as _uuid
 from threading import Thread as _Thread
 from siriuspy.csdevice import timesys as _cstime
-from siriuspy.timesys.time_data import AC_FREQUENCY as _PwrFreq
-from siriuspy.timesys.time_data import FINE_DELAY as _FINE_DELAY_STEP
+
+_PwrFreq = _cstime.Constants.AC_FREQUENCY
+_FINE_DELAY_STEP = _cstime.Constants.FINE_DELAY
 
 _OTP_SIM_TMP = 'OTP{0:02d}'
 

@@ -7,8 +7,10 @@ from .device_models import EVRIOC as _EVRIOC
 from .device_models import EVEIOC as _EVEIOC
 from .device_models import AFCIOC as _AFCIOC
 from .device_models import FOUTIOC as _FOUTIOC
-from siriuspy.timesys.time_data import Connections as _Connections
-from siriuspy.timesys.time_data import RF_DIVISION as _RFDIV
+from siriuspy.search import LLTimeSearch as _LLTimeSearch
+from siriuspy.csdevice.timesys import Constants as _Const
+
+_RFDIV = _Const.RF_DIVISION
 
 
 class TimingSimulation(_CallBack):
@@ -134,8 +136,8 @@ class TimingSimulation(_CallBack):
     def _get_constants(cls):
         if cls.EVG_PREFIX:
             return
-        cls.EVG_PREFIX = _Connections.get_devices('EVG').pop() + ':'
-        cls.EVRs = _Connections.get_devices('EVR')
-        cls.EVEs = _Connections.get_devices('EVE')
-        cls.AFCs = _Connections.get_devices('AFC')
-        cls.FOUTs = _Connections.get_devices('FOUT')
+        cls.EVG_PREFIX = _LLTimeSearch.get_devices_by_type('EVG').pop() + ':'
+        cls.EVRs = _LLTimeSearch.get_devices_by_type('EVR')
+        cls.EVEs = _LLTimeSearch.get_devices_by_type('EVE')
+        cls.AFCs = _LLTimeSearch.get_devices_by_type('AFC')
+        cls.FOUTs = _LLTimeSearch.get_devices_by_type('FOUT')
