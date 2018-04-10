@@ -22,6 +22,10 @@ public_interface = (
     'get_event_database',
     'get_clock_database',
     'get_evg_database',
+    'get_hl_clock_database',
+    'get_hl_event_database',
+    'get_hl_evg_database',
+    'get_hl_trigger_database',
     'events_hl2ll_map',
     'events_ll2hl_map',
     'events_ll_tmp',
@@ -41,6 +45,7 @@ public_interface = (
     'triggers_polarities',
     'triggers_delay_types',
     'triggers_src_ll',
+    'Constants',
 )
 
 
@@ -101,6 +106,26 @@ class TestModule(unittest.TestCase):
 
     def test_get_evg_database(self):
         """Test get_evg_database."""
+        # TODO: implement test!
+        pass
+
+    def test_get_hl_clock_database(self):
+        """Test get_hl_clock_database."""
+        # TODO: implement test!
+        pass
+
+    def test_get_hl_event_database(self):
+        """Test get_hl_event_database."""
+        # TODO: implement test!
+        pass
+
+    def test_get_hl_evg_database(self):
+        """Test get_hl_evg_database."""
+        # TODO: implement test!
+        pass
+
+    def test_get_hl_trigger_database(self):
+        """Test get_hl_trigger_database."""
         # TODO: implement test!
         pass
 
@@ -198,6 +223,27 @@ class TestModule(unittest.TestCase):
         """Test SRC_LL."""
         # TODO: implement test!
         pass
+
+
+class TestConstants(unittest.TestCase):
+    """Test Constants class."""
+
+    public_interface = (
+        'AC_FREQUENCY',
+        'RF_DIVISION',
+        'RF_FREQUENCY',
+        'BASE_FREQUENCY',
+        'RF_PERIOD',
+        'BASE_DELAY',
+        'RF_DELAY',
+        'FINE_DELAY',
+    )
+
+    def test_public_interface(self):
+        """Test module's public interface."""
+        valid = util.check_public_interface_namespace(
+                        timesys.Constants, TestConstants.public_interface)
+        self.assertTrue(valid)
 
 
 if __name__ == "__main__":
