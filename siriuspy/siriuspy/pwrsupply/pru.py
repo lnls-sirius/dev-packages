@@ -101,3 +101,42 @@ class PRU(_PRUInterface):
 
     def _curve(self, curve1, curve2, curve3, curve4):
         _PRUserial485.PRUserial485_curve(curve1, curve2, curve3, curve4)
+
+
+class PRUSim(_PRUInterface):
+    """Functions for simulated programmable real-time unit."""
+
+    def __init__(self):
+        """Init method."""
+        _PRUInterface.__init__(self)
+        self._sync_status = _PRUInterface._SYNC_OFF
+        self._sync_mode = None
+        self._sync_pulse_count = 0
+
+    def _get_sync_status(self):
+        return self._sync_status
+
+    def _sync_start(self, sync_mode, delay):
+        self._sync_mode = sync_mode
+        self._sync_status = _PRUInterface._SYNC_ON
+
+    def _sync_stop(self):
+        self._sync_status = _PRUInterface._SYNC_OFF
+
+    def _get_sync_pulse_count(self):
+        return self._sync_pulse_count
+
+    def _UART_write(self, stream, timeout):
+        raise NotImplementedError(('This method should not be called '
+                                  'for objects of this subclass'))
+
+    def _UART_read(self):
+        raise NotImplementedError(('This method should not be called '
+                                  'for objects of this subclass'))
+
+    def _curve(self, curve1, curve2, curve3, curbe4):
+        pass
+
+    def process_sync_signal(self):
+        """Process synchronization signal."""
+        self._sync_pulse_count += 1
