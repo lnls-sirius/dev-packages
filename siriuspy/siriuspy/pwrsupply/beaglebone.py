@@ -57,8 +57,6 @@ class BeagleBone:
         """BBB write."""
         if field == 'OpMode-Sel' and value == 2:  # Cycle
             # set all devices?
-            if self._serial:
-                pass
             # sync start
             pass
 
