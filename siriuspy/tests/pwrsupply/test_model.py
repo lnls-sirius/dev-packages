@@ -37,11 +37,13 @@ class TestPowerSupplyAPI(unittest.TestCase):
         # 'read_group',
         # 'create_group',
         # 'read_all_variables',
+        'read_ps_variables',
+        'read_status',
         'bsmp_2_epics',
         'epics_2_bsmp',
     )
 
-    def _test_api(self):
+    def test_api(self):
         """Test API."""
         self.assertTrue(
             check_public_interface_namespace(FBPPowerSupply, self.api))
