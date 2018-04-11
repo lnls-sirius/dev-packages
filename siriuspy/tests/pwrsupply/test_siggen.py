@@ -10,7 +10,9 @@ import siriuspy.pwrsupply.siggen as siggen
 
 
 public_interface = (
-    'SigGenConfig',
+    'Signal',
+    'SignalTrapezoidal',
+    'SignalFactory',
 )
 
 
@@ -27,21 +29,22 @@ class TestSigGenConfig(unittest.TestCase):
     """Test SigGenconfig class."""
 
     public_interface = (
-        'TYPES',
         'duration',
+        'value',
+        'cycle_time',
         'rampup_time',
         'rampdown_time',
         'plateau_time',
         'theta_begin',
         'theta_end',
         'decay_time',
-        'get_waveform',
+        # 'get_waveform',
     )
 
     def test_public_interface(self):
         """Test class's public interface."""
         valid = util.check_public_interface_namespace(
-            siggen.SigGenConfig, TestSigGenConfig.public_interface)
+            siggen.Signal, TestSigGenConfig.public_interface)
         self.assertTrue(valid)
 
     def test_duration(self):
