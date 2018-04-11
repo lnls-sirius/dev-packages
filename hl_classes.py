@@ -56,19 +56,24 @@ class _HL_Base:
         self.callback = callback
         self.prefix = prefix
         self._connect_kwargs = connect_kwargs
-        self._funs_combine_rb_values = self._get_funs_combine_rb_values()
+        self._funs_combine_values = self._define_funs_combine_values()
         self._initialize_rb_values()
-        self._timer = _Timer(_INTERVAL, self._deal_with_rb_news, niter=0)
-        self._timer.start()
+        self._initialize_sp_values()
+        self._timer_rb = _Timer(_INTERVAL, self._deal_with_rb_news, niter=0)
+        self._timer_rb.start()
+        self._timer_sp = _Timer(_INTERVAL, self._deal_with_sp_news, niter=0)
 
-    def connect(self):
+    def connect(self, get_ll_state=True):
         self._ll_objs = dict()
+        self.stop_forcing() if get_ll_state else self.start_forcing()
+
         _log.info(self.prefix+' -> connecting to LL Devices')
         for chan in self._ll_objs_names:
             self._ll_objs[chan] = self._get_LL_OBJ(
                                 channel=chan,
-                                callback=self._on_change_pvs_rb,
+                                callback=self._on_change_pvs,
                                 init_hl_state=_dcopy(self._my_state),
+                                get_ll_state=get_ll_state,
                                 **self._connect_kwargs)
 
     def write(self, prop_name, value):
@@ -84,7 +89,27 @@ class _HL_Base:
             obj.write(prop_name, value)
         return True
 
-    def _on_change_pvs_rb(self, channel, prop_name, value):
+    def start_forcing(self):
+        self._timer_sp.stop()
+        for k, v in self._my_state.items():
+            for dev, obj in self._ll_objs.items():
+                obj.write(k, v)
+                obj.start_forcing()
+
+    def stop_forcing(self):
+        self._start_timer_sp()
+        for dev, obj in self._ll_objs.items():
+            obj.stop_forcing()
+
+    def _start_timer_sp(self):
+        if self._timer_sp.isAlive():
+            self._timer_sp.reset()
+        else:
+            self._timer_sp = _Timer(
+                                _INTERVAL, self._deal_with_sp_news, niter=0)
+            self._timer_sp.start()
+
+    def _on_change_pvs(self, channel, prop_name, value, is_sp=False):
         if prop_name not in self._interface_props:
             if self._my_state[prop_name] != value:
                 _log.warning(self.prefix + prop_name +
@@ -93,22 +118,42 @@ class _HL_Base:
                              '; Expected Value = ' +
                              str(self._my_state[prop_name]))
             return
-        with self._lock_rb_to_deal:
-            self._rb_values[prop_name][channel] = value
-            self._rb_news[prop_name] = True
+        if not is_sp:
+            with self._lock_rb_to_deal:
+                self._rb_values[prop_name][channel] = value
+                self._rb_news[prop_name] = True
+        else:
+            if prop_name not in self._sp_values.keys():
+                return
+            with self._lock_sp_to_deal:
+                self._sp_values[prop_name][channel] = value
+                self._sp_news[prop_name] = True
+
+    def _deal_with_sp_news(self):
+        for k, v in self._sp_news.items():
+            if not v:
+                continue
+            fun = self._funs_combine_values.get(k, self._combine_default)
+            with self._lock_sp_to_deal:
+                dic_ = self._sp_values[k]
+                value = fun(dic_)
+                self._sp_news[k] = False
+            if value['value'] is not None:
+                self._my_state[k] = value['value']
+            self.callback(self._get_pv_name(k, is_sp=True), **value)
 
     def _deal_with_rb_news(self):
         for k, v in self._rb_news.items():
             if not v:
                 continue
-            fun = self._funs_combine_rb_values.get(k, self._combine_default)
+            fun = self._funs_combine_values.get(k, self._combine_default)
             with self._lock_rb_to_deal:
                 dic_ = self._rb_values[k]
                 value = fun(dic_)
                 self._rb_news[k] = False
             self.callback(self._get_pv_name(k), **value)
 
-    def _get_funs_combine_rb_values(self):
+    def _define_funs_combine_values(self):
         """Define a dictionary of functions to combine low level values.
 
         Any property not defined here will use the default method:
@@ -116,8 +161,11 @@ class _HL_Base:
         """
         return dict()
 
-    def _get_pv_name(self, prop_name):
-        return self.prefix + prop_name + self._SUFFIX_FOR_PROPS[prop_name]
+    def _get_pv_name(self, prop_name, is_sp=False):
+        pvname = self.prefix + prop_name + self._SUFFIX_FOR_PROPS[prop_name]
+        if is_sp:
+            pvname = pvname.replace('-RB', '-SP').replace('-Sts', '-Sel')
+        return pvname
 
     def _get_prop_name(self, pvname):
         return pvname[len(self.prefix):].split('-')[0]
@@ -132,6 +180,14 @@ class _HL_Base:
             self._rb_values[k] = dict()
             for k2 in self._ll_objs_names:
                 self._rb_values[k][k2] = db[self._get_pv_name(k)]['value']
+
+    def _initialize_sp_values(self):
+        self._lock_sp_to_deal = _Lock()
+        self._sp_values = dict()
+        self._sp_news = dict()
+        for k in self._my_state.keys():
+            self._sp_news[k] = False
+            self._sp_values[k] = dict()
 
     def _combine_default(self, dic_):
         res = _mode(sorted(dic_.values()))
@@ -305,6 +361,6 @@ class HL_Trigger(_HL_Base):
             severity = _Severity.MINOR_ALARM
         return {'value': status, 'alarm': alarm, 'severity': severity}
 
-    def _get_funs_combine_rb_values(self):
+    def _define_funs_combine_values(self):
         """Define a dictionary of functions to combine low level values."""
         return {'Status': self._combine_status}
