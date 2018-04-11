@@ -187,8 +187,7 @@ class FBP_BSMPSim(_BSMPSim):
         elif func_id == _c.F_SELECT_OP_MODE:  # Change state
             # Verify if ps is on
             if self._is_on():
-                opmode = input_val - 3
-                self._state = self._states[opmode]
+                self._state = self._states[input_val]
                 self._state.select_op_mode(self._variables)
         elif func_id == _c.F_RESET_INTERLOCKS:  # Change state
             self._state.reset_interlocks(self._variables)
