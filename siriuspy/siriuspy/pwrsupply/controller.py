@@ -9,7 +9,7 @@ from siriuspy.bsmp import Response, BSMP
 from siriuspy.pwrsupply.bsmp import FBPEntities
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 from siriuspy.pwrsupply.bsmp import Const as _c
-from .siggen import Trapezoidal
+from .siggen import SignalFactory as _SignalFactory
 
 __version__ = _util.get_last_commit_hash()
 
@@ -337,7 +337,7 @@ class FBPCycleState(_FBPState):
         """Return variable."""
         enbl = variables[_c.V_SIGGEN_ENABLE]
         if enbl and var_id in (_c.V_PS_REFERENCE, _c.V_I_LOAD):
-            value = self._signal.get_value()
+            value = self._signal.value
             variables[_c.V_PS_REFERENCE] = value
             variables[_c.V_I_LOAD] = value
         return super().read_variable(variables, var_id)
@@ -385,11 +385,11 @@ class FBPCycleState(_FBPState):
         """Enable siggen."""
         variables[_c.V_SIGGEN_ENABLE] = 1
         self._set_signal(variables)
-        if self._signal.duration() > 0:
+        if self._signal.duration > 0:
             self._siggen_canceled = False
             thread = _Thread(
                 target=self._finish_siggen,
-                args=(variables, self._signal.duration()),
+                args=(variables, self._signal.duration),
                 daemon=True)
             thread.start()
 
@@ -414,7 +414,11 @@ class FBPCycleState(_FBPState):
         #     self._signal = Trapezoidal(n, a, o, aux)
         # else:
         #     raise ValueError()
-        self._signal = Trapezoidal(n, a, o, aux)
+        self._signal = _SignalFactory.factory(type='Trapezoidal',
+                                              num_cycles=n,
+                                              amplitude=a,
+                                              offset=o,
+                                              aux_param=aux)
 
     def _finish_siggen(self, variables, time):
         time_up = False
@@ -426,7 +430,7 @@ class FBPCycleState(_FBPState):
                 time_up = True
             if self._siggen_canceled:
                 return
-        val = self._signal.get_value()
+        val = self._signal.value
         variables[_c.V_PS_REFERENCE] = val
         variables[_c.V_I_LOAD] = val
         variables[_c.V_SIGGEN_ENABLE] = 0

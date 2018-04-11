@@ -1,119 +1,48 @@
 """Power Supply Signal Generator."""
 
 import time as _t
-import numpy as _np
+# import numpy as _np
 
 
-class Trapezoidal:
-    """Trapezoidal signal."""
+class Signal:
+    """Signal from SigGen."""
 
-    def __init__(self, n, a, o, aux):
-        """Signal parameters."""
-        self.n = n
-        self.a = a
-        self.o = o
-        # times
-        self.up = aux[0]
-        self.plateau = aux[1]
-        self.down = aux[2]
-        self._check()
-        self.cycle_time = self.up + self.plateau + self.down
-        self.enable = True
-        self.init = _t.time()
-        self.last_delta = self.init
-
-    def duration(self):
-        """Return total duration. Zero is infinite time."""
-        return self.cycle_time * self.n
-
-    def get_value(self):
-        """Return current signal value."""
-        if self.enable:
-            self.last_delta = _t.time() - self.init
-        return self._get_value(self.last_delta)
-
-    def _get_value(self, delta):
-        if self.duration() > 0 and delta > self.duration():
-            self.enable = False
-            return self.o
-        else:
-            cycle_pos = delta % self.cycle_time
-            target = self.o + self.a
-            if cycle_pos < self.up:
-                return self.o + (cycle_pos/self.up)*(target - self.o)
-            elif cycle_pos < (self.up + self.plateau):
-                return target
-            else:
-                down_time = cycle_pos - (self.up + self.plateau)
-                return target - (down_time / self.down)*(target - self.o)
-
-    def _check(self):
-        if self.up == 0:
-            self.up = 0.1
-        if self.plateau == 0:
-            self.plateau = 0.1
-        if self.down == 0:
-            self.down = 0.1
-
-
-class SigGenConfig:
-    """Signal Generator config class."""
-
-    TYPES = ('Sine', 'DampedSine', 'Trapezoidal')
-
-    def __init__(self, data=None,
-                 type=None,  # Sine, DampedSine, Trapezoidal
-                 num_cycles=None,  # Sine, DampedSine, Trapezoidal
-                 freq=None,  # [Hz] Sine, DampedSine
-                 amplitude=None,  # [A] Sine, DampedSine, Trapezoidal
-                 offset=None,  # [A] Sine, DampedSine, Trapezoidal
-                 aux_param=None,  # Sine, DampedSine, Trapezoidal
-                 rampup_time=None,  # [s] Trapezoidal
-                 rampdown_time=None,  # [s] Trapezoidal
-                 plateau_time=None,  # [s] Trapezoidal
-                 theta_begin=None,  # [deg] Sine, DampedSine
-                 theta_end=None,  # [deg] Sine, DampedSine
-                 decay_time=None):  # [s] DampedSine
+    def __init__(self,
+                 type,
+                 num_cycles,  # Sine, DampedSine, Trapezoidal
+                 freq,  # [Hz] Sine, DampedSine
+                 amplitude,  # [A] Sine, DampedSine, Trapezoidal
+                 offset,  # [A] Sine, DampedSine, Trapezoidal
+                 aux_param,  # Sine, DampedSine, Trapezoidal)
+                 **kwargs
+                 ):
         """Init method."""
-        # set default values
-        self._set_default_config()
-        # process input arguments
-        if data is not None:
-            self.type = str(data[0])
-            self.num_cycles = int(data[1])
-            self.freq = float(data[2])
-            self.amplitude = float(data[3])
-            self.offset = float(data[4])
-            self.aux_param = [float(d) for d in data[5:9]]
-        self.type = str(type) if type is not None else self.type
-        self.num_cycles = int(num_cycles) if num_cycles is not None \
-            else self.num_cycles
-        self.freq = float(freq) if freq is not None else self.freq
-        self.amplitude = float(amplitude) if amplitude is not None \
-            else self.amplitude
-        self.offset = float(offset) if offset is not None \
-            else self.offset
-        if aux_param is not None:
-            self.aux_param = [float(d) for d in aux_param[0:4]]
-        self.aux_param[0] = float(rampup_time) if rampup_time is not None \
-            else self.aux_param[0]
-        self.aux_param[1] = float(rampdown_time) if rampdown_time is not None \
-            else self.aux_param[1]
-        self.aux_param[2] = float(plateau_time) if plateau_time is not None \
-            else self.aux_param[2]
-        self.aux_param[0] = float(theta_begin) if theta_begin is not None \
-            else self.aux_param[0]
-        self.aux_param[1] = float(theta_end) if theta_end is not None \
-            else self.aux_param[1]
-        self.aux_param[2] = float(decay_time) if decay_time is not None \
-            else self.aux_param[2]
-
-    # --- public methods ---
+        self.type = type
+        self.num_cycles = num_cycles
+        self.freq = freq
+        self.amplitude = amplitude
+        self.offset = offset
+        self.aux_param = aux_param
+        self.enable = True
+        self.init_tstamp = _t.time()
+        self.last_delta = self.init_tstamp
 
     @property
     def duration(self):
-        """Duration of signal [s]."""
-        return self.num_cycles / self.freq
+        """Return total duration. Zero is infinite time."""
+        return self._get_duration()
+
+    @property
+    def value(self):
+        """Return current signal value."""
+        if self.enable:
+            self.last_delta = _t.time() - self.init_tstamp
+        return self._get_value(self.last_delta)
+
+    @property
+    def cycle_time(self):
+        """Return period of signal."""
+        return self._get_cycle_time()
 
     @property
     def rampup_time(self):
@@ -181,35 +110,133 @@ class SigGenConfig:
         self.aux_param[2] = value
         return value
 
-    def get_waveform(self, nr_points=100):
-        """Return list with signal waveform."""
-        d2r = _np.pi/180.0
-        t = _np.linspace(0.0, self.duration, nr_points)
-        if self.type in ('Sine', 'DampedSine'):
-            # TODO: confirm!
-            if self.type == 'Sine':
-                amp = self.amplitude * _np.ones(t.shape)
-            else:
-                amp = self.amplitude * _np.exp(-t/self.decay_time)
-            wfm = self.offset * _np.ones(t.shape)
-            phase = (2*_np.pi) * (self.freq*t % 1)
-            sel_in = \
-                (phase >= d2r * self.theta_begin) & \
-                (phase <= d2r * self.theta_end)
-            wfm_delta = amp * _np.sin(phase)
-            # wfm = wfm_delta
-            wfm[sel_in] += wfm_delta[sel_in]
+    # def get_waveform(self, nr_points=100):
+    #     """Return list with signal waveform."""
+    #     d2r = _np.pi/180.0
+    #     t = _np.linspace(0.0, self.duration, nr_points)
+    #     if self.type in ('Sine', 'DampedSine'):
+    #         # TODO: confirm!
+    #         if self.type == 'Sine':
+    #             amp = self.amplitude * _np.ones(t.shape)
+    #         else:
+    #             amp = self.amplitude * _np.exp(-t/self.decay_time)
+    #         wfm = self.offset * _np.ones(t.shape)
+    #         phase = (2*_np.pi) * (self.freq*t % 1)
+    #         sel_in = \
+    #             (phase >= d2r * self.theta_begin) & \
+    #             (phase <= d2r * self.theta_end)
+    #         wfm_delta = amp * _np.sin(phase)
+    #         # wfm = wfm_delta
+    #         wfm[sel_in] += wfm_delta[sel_in]
+    #     else:
+    #         # TODO: implement get_waveform for 'Trapezoidal' type.
+    #         wfm = _np.zeros(t.shape) + self.offset
+    #     return wfm, sel_in, phase, wfm_delta
+
+    # --- virtual methods ---
+
+    def _get_duration(self):
+        raise NotImplementedError
+
+    def _get_cycle_time(self):
+        raise NotImplementedError
+
+    def _get_value(self, delta):
+        raise NotImplementedError
+
+
+class SignalTrapezoidal(Signal):
+    """Trapezoidal signal."""
+
+    def __init__(self, **kwargs):
+        """Signal parameters."""
+        super().__init__(**kwargs)
+
+    def _get_duration(self):
+        return self.cycle_time * self.num_cycles
+
+    def _get_cycle_time(self):
+        return self.rampup_time + self.plateau_time + self.rampdown_time
+
+    def _get_value(self, delta):
+        if self.duration > 0 and delta > self.duration:
+            # self.enable = False
+            return self.offset
         else:
-            # TODO: implement get_waveform for 'Trapezoidal' type.
-            wfm = _np.zeros(t.shape) + self.offset
-        return wfm, sel_in, phase, wfm_delta
+            cycle_pos = delta % self.cycle_time
+            target = self.offset + self.amplitude
+            if cycle_pos < self.rampup_time:
+                return self.offset + \
+                    (cycle_pos/self.rampup_time)*(target - self.offset)
+            elif cycle_pos < (self.rampup_time + self.plateau_time):
+                return target
+            else:
+                down_time = cycle_pos - (self.rampup_time + self.plateau_time)
+                return target - \
+                    (down_time / self.rampdown_time)*(target - self.offset)
 
-    # --- private methods ---
+    def _check(self):
+        if self.rampup_time == 0:
+            self.rampup_time = 0.1
+        if self.plateau_time == 0:
+            self.plateau_time = 0.1
+        if self.rampdown_time == 0:
+            self.rampdown_time = 0.1
 
-    def _set_default_config(self):
-        self.type = 'Sine'
-        self.num_cycles = 1
-        self.freq = 100.0  # [A]
-        self.amplitude = 0.0
-        self.offset = 0.0  # [A]
-        self.aux_param = [0.0, 360.0, 0.0, 0.0]
+
+class SignalFactory:
+    """Signal Generator Factory."""
+
+    TYPES = {'Sine': 0, 'DampedSine': 1, 'Trapezoidal': 2}
+
+    @staticmethod
+    def factory(data=None, **kwargs):
+        """Init method."""
+        # type
+        # num_cycles=None,  # Sine, DampedSine, Trapezoidal
+        # freq=None,  # [Hz] Sine, DampedSine
+        # amplitude=None,  # [A] Sine, DampedSine, Trapezoidal
+        # offset=None,  # [A] Sine, DampedSine, Trapezoidal
+        # aux_param=None,  # Sine, DampedSine, Trapezoidal
+        # rampup_time=None,  # [s] Trapezoidal
+        # rampdown_time=None,  # [s] Trapezoidal
+        # plateau_time=None,  # [s] Trapezoidal
+        # theta_begin=None,  # [deg] Sine, DampedSine
+        # theta_end=None,  # [deg] Sine, DampedSine
+        # decay_time=None):  # [s] DampedSine
+        kw = dict()
+        kw['num_cycles'] = 1
+        kw['freq'] = 100.0  # [A]
+        kw['amplitude'] = 0.0
+        kw['offset'] = 0.0  # [A]
+        kw['aux_param'] = [0.0, 360.0, 0.0, 0.0]
+        kw.update(kwargs)
+        if isinstance(kw['type'], str):
+            kw['type'] = SignalFactory.TYPES[kw['type']]
+
+        # set default values
+        if data is not None:
+            kw['type'] = data[0]
+            kw['num_cycles'] = int(data[1])
+            kw['freq'] = float(data[2])
+            kw['amplitude'] = float(data[3])
+            kw['offset'] = float(data[4])
+            kw['aux_param'] = [float(d) for d in data[5:9]]
+
+        if 'rampup_time' in kw:
+            kw['aux_param'][0] = float(kw['rampup_time'])
+        if 'rampdown_time' in kw:
+            kw['aux_param'][1] = float(kw['rampdown_time'])
+        if 'plateau_time' in kw:
+            kw['aux_param'][2] = float(kw['plateau_time'])
+        if 'theta_begin' in kw:
+            kw['aux_param'][0] = float(kw['theta_begin'])
+        if 'theta_end' in kw:
+            kw['aux_param'][1] = float(kw['theta_end'])
+        if 'decay_time' in kw:
+            kw['aux_param'][2] = float(kw['decay_time'])
+
+        if type == SignalFactory.TYPES['Trapezoidal']:
+            return SignalTrapezoidal(**kw)
+        else:
+            return SignalTrapezoidal(**kw)

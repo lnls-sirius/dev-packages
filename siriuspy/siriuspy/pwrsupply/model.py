@@ -459,7 +459,6 @@ class FBPPowerSupply(Device):
         if val is None:
             return None
 
-<<<<<<< HEAD
         if field == 'PwrState-Sts':
             psc_status = _PSCStatus(ps_status=val)
             val = psc_status.ioc_pwrstate
@@ -481,42 +480,6 @@ class FBPPowerSupply(Device):
             func_name = FBPPowerSupply._epics_2_wfuncs[field]
             func = getattr(self, func_name)
             return func(setpoint=setpoint)
-=======
-            # check whether current value is a new value
-            self._lock.acquire()
-            if field in self._field_values:
-                prev_value = self._field_values[field]
-                if isinstance(value, _np.ndarray):
-                    if _np.all(value == prev_value):
-                        # skip callback if not new
-                        self._lock.release()
-                        continue
-                else:
-                    if value == prev_value:
-                        # skipp callback if not new
-                        self._lock.release()
-                        continue
-
-            # register current value of field and releases lock
-            self._field_values[field] = value
-            self._lock.release()
-
-            # run callback function since field has a new value
-            self._run_callbacks(field, value)
-
-        # check whether ControllerIOC is connected to ControllerPS
-        if self._controller.connected != self._prev_connected:
-            self._prev_connected = self._controller.connected
-            self._run_callbacks(PowerSupply.CONNECTED, self._prev_connected)
-            if self._prev_connected and not self._initialized:
-                self._setpoints = self._build_setpoints()
-
-    def _run_callbacks(self, field, value):
-        for index, callback in self._callbacks.items():
-            callback(
-                pvname=self._psdata.psname + ':' + field,
-                value=value)
->>>>>>> master
 
 
 class PSEpics(_PSCommInterface):

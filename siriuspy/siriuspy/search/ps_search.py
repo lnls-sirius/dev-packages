@@ -5,7 +5,7 @@ from siriuspy import util as _util
 from siriuspy.namesys import Filter as _Filter
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy import servweb as _web
-from siriuspy.pwrsupply.siggen import SigGenConfig as _SigGenConfig
+from siriuspy.pwrsupply.siggen import SignalFactory as _SignalFactory
 from siriuspy.magnet.excdata import ExcitationData as _ExcitationData
 
 
@@ -313,8 +313,8 @@ class PSSearch:
             PSSearch._psname_2_siggen_dict = dict()
             for datum in data:
                 psname, *siggen_data = datum
-                siggen_config = _SigGenConfig(data=siggen_data)
-                PSSearch._psname_2_siggen_dict[psname] = siggen_config
+                signal = _SignalFactory.factory(data=siggen_data)
+                PSSearch._psname_2_siggen_dict[psname] = signal
         else:
             raise Exception('could not read siggen config from web server')
 
