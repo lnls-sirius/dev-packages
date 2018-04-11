@@ -1,5 +1,6 @@
 """BSMP protocol implementation."""
-from .serial import Channel, Message
+from .serial import Channel as _Channel
+from .serial import Message as _Message
 
 
 class Response:
@@ -21,7 +22,7 @@ class BSMP:
 
     def __init__(self, serial, slave_address, entities):
         """Constructor."""
-        self._channel = Channel(serial, slave_address)
+        self._channel = _Channel(serial, slave_address)
         # self._variables = self.read_variables_list()
         self._entities = entities
         # Variables group cache
@@ -53,7 +54,7 @@ class BSMP:
     def consult_group_variables(self, group_id):
         """Return id of the variables in the given group. Command 0x06."""
         # Send requestG package
-        m = Message.message(0x06, payload=[chr(group_id)])
+        m = _Message.message(0x06, payload=[chr(group_id)])
         response = self.channel.request(m)
         # Check for errors
         if response.cmd == 0x07:
@@ -80,7 +81,7 @@ class BSMP:
     def read_variable(self, var_id):
         """Read variable. (0x10)."""
         variable = self.entities.variables[var_id]
-        m = Message.message(0x10, payload=[chr(var_id)])
+        m = _Message.message(0x10, payload=[chr(var_id)])
         response = self.channel.request(m)  # Returns a message
         if response.cmd == 0x11:  # Ok
             if len(response.payload) == variable.size:
@@ -93,7 +94,7 @@ class BSMP:
     def read_group_variables(self, group_id):
         """Read variable group. (0x12)."""
         group = self.entities.groups[group_id]
-        m = Message.message(0x12, payload=[chr(group_id)])
+        m = _Message.message(0x12, payload=[chr(group_id)])
         response = self.channel.request(m)
         if response.cmd == 0x13:
             if len(response.payload) == group.variables_size():
@@ -129,7 +130,7 @@ class BSMP:
     def create_group(self, var_ids):
         """Create new group with given variable ids. Command 0x30."""
         var_ids = sorted(var_ids)
-        m = Message.message(0x30, payload=[chr(var_id) for var_id in var_ids])
+        m = _Message.message(0x30, payload=[chr(var_id) for var_id in var_ids])
         response = self.channel.request(m)
         if response.cmd == 0xE0:
             if len(response.payload) == 0:
@@ -143,7 +144,7 @@ class BSMP:
 
     def remove_all_groups(self):
         """Remove all groups. Command 0x32."""
-        m = Message.message(0x32)
+        m = _Message.message(0x32)
         response = self.channel.request(m)
         if response.cmd == 0xE0:
             if len(response.payload) == 0:
@@ -174,7 +175,7 @@ class BSMP:
         function = self.entities.functions[func_id]
         # Load = function id + input data
         load = [chr(func_id)] + function.value_to_load(input_val)
-        m = Message.message(0x50, payload=load)
+        m = _Message.message(0x50, payload=load)
         response = self.channel.request(m)
         if response.cmd == 0x51:
             if len(response.payload) == function.o_size:

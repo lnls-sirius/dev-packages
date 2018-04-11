@@ -228,6 +228,21 @@ class FBPPowerSupply(Device):
         'Current-Mon': _c.I_LOAD,
     }
 
+    _epics_2_wfuncs = {
+        'PwrState-Sel': '_set_pwrstate',
+        'OpMode-Sel': '_set_opmode',
+        'Current-SP': '_set_current',
+        'Reset-Cmd': '_reset',
+        'CycleEnbl-Cmd': '_enable_cycle',
+        'CycleDsbl-Cmd': '_disable_cycle',
+        'CycleType-Sel': '_set_cycle_type',
+        'CycleNrCycles-SP': '_cycle_nr_cycles',
+        'CycleFreq-SP': '_set_cycle_frequency',
+        'CycleAmpl-SP': '_set_cycle_amplitude',
+        'CycleOffset-SP': '_set_cycle_offset',
+        'CycleAuxParam-SP': '_cycle_aux_params',
+    }
+
     def __init__(self, controller, database):
         """High level PS.
 
@@ -454,35 +469,10 @@ class FBPPowerSupply(Device):
 
     def _write_setpoint(self, field, setpoint):
         """Write operation."""
-        # Switch field
-        if field == 'PwrState-Sel':
-            return self._set_pwrstate(setpoint)
-        if field == 'OpMode-Sel':
-            return self._set_opmode(setpoint)
-        if field == 'Current-SP':
-            return self._set_current(setpoint)
-        if field == 'Reset-Cmd':
-            return self._reset(setpoint)
-        if field == 'CycleEnbl-Cmd':
-            return self._enable_cycle(setpoint)
-        if field == 'CycleDsbl-Cmd':
-            return self._disable_cycle(setpoint)
-        if field == 'CycleType-Sel':
-            return self._set_cycle_type(setpoint)
-        if field == 'CycleNrCycles-SP':
-            return self._set_cycle_nr_cycles(setpoint)
-        if field == 'CycleFreq-SP':
-            return self._set_cycle_frequency(setpoint)
-        if field == 'CycleAmpl-SP':
-            return self._set_cycle_amplitude(setpoint)
-        if field == 'CycleOffset-SP':
-            return self._set_cycle_offset(setpoint)
-        if field == 'CycleAuxParam-SP':
-            return self._set_cycle_aux_params(setpoint)
-        elif field == 'WfmData-SP':  # *
-            self.setpoints['WfmData-SP']['value'] = setpoint
-            self.database['WfmData-RB']['value'] = setpoint
-            return True
+        if field in FBPPowerSupply._epics_2_wfuncs:
+            func_name = FBPPowerSupply._epics_2_wfuncs[field]
+            func = getattr(self, func_name)
+            return func(setpoint=setpoint)
 
 
 class PSEpics(_PSCommInterface):
