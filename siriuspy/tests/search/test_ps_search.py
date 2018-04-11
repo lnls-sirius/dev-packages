@@ -9,7 +9,7 @@ import os
 from siriuspy import util
 from siriuspy.search import ps_search
 from siriuspy.search import PSSearch
-from siriuspy.pwrsupply.siggen import SigGenConfig
+from siriuspy.pwrsupply.siggen import Signal
 from siriuspy.magnet.excdata import ExcitationData
 
 mock_flag = True
@@ -346,7 +346,7 @@ class TestPSSearch(unittest.TestCase):
         """Test conv_psname_2_siggenconf."""
         for ps, pstype in TestPSSearch.sample.items():
             siggenconf = PSSearch.conv_psname_2_siggenconf(psname=ps)
-            self.assertIsInstance(siggenconf, SigGenConfig)
+            self.assertIsInstance(siggenconf, type(Signal))
 
     def test_check_pstype_ispulsed(self):
         """Test check_pstype_isplused."""
