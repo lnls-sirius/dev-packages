@@ -2,13 +2,13 @@
 
 import re as _re
 import time as _time
-import random as _random
+# import random as _random
 
 from epics import PV as _PV
 
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.envars import vaca_prefix as _VACA_PREFIX
-from siriuspy.csdevice.pwrsupply import max_wfmsize as _max_wfmsize
+# from siriuspy.csdevice.pwrsupply import max_wfmsize as _max_wfmsize
 from siriuspy.factory import NormalizerFactory as _NormalizerFactory
 from siriuspy.epics import connection_timeout as _connection_timeout
 from siriuspy.epics.computed_pv import QueueThread as _QueueThread
@@ -21,7 +21,7 @@ from siriuspy.pwrsupply import sync as _sync
 # PowerSupply
 from ..bsmp import Response
 from ..bsmp import SerialError as _SerialError
-from .status import Status
+from .status import PSCStatus as _PSCStatus
 from siriuspy.pwrsupply.bsmp import Const as _c
 
 
@@ -225,7 +225,8 @@ class FBPPowerSupply(Device):
         self.controller.create_group(var_ids=var_ids)
         self.controller.execute_function(_c.CLOSE_LOOP)  # Close loop
 
-    # Functions
+    # --- Functions ---
+
     def _turn_on(self):
         """Turn power supply on."""
         ret = self._execute_function(_c.TURN_ON)
@@ -276,7 +277,8 @@ class FBPPowerSupply(Device):
         """Disable siggen."""
         return self._execute_function(_c.DISABLE_SIGGEN)
 
-    # Methods called by write
+    # --- Methods called by write ---
+
     def _set_pwrstate(self, setpoint):
         """Set PwrState setpoint."""
         if setpoint == 1:
@@ -372,7 +374,8 @@ class FBPPowerSupply(Device):
         args.append(self.setpoints['CycleAuxParam-SP']['value'])
         return args
 
-    # Virtual methods
+    # --- Virtual methods ---
+
     def read_group(self, group_id):
         """Parse some variables.
 
@@ -382,8 +385,10 @@ class FBPPowerSupply(Device):
         var_ids = self.controller.entities.list_variables(group_id)
         values = super().read_group(group_id)
         if _c.PS_STATUS in var_ids:
-            values['PwrState-Sts'] = Status.pwrstate(values['PwrState-Sts'])
-            values['OpMode-Sts'] = Status.opmode(values['OpMode-Sts'])
+            # TODO: values['PwrState-Sts'] == values['OpMode-Sts'] ?
+            psc_status = _PSCStatus(ps_status=values['PwrState-Sts'])
+            values['PwrState-Sts'] = psc_status.ioc_pwrstate
+            values['OpMode-Sts'] = psc_status.ioc_opmode
         if _c.FIRMWARE_VERSION in var_ids:
             version = ''.join([c.decode() for c in values['Version-Cte']])
             try:
@@ -404,9 +409,11 @@ class FBPPowerSupply(Device):
             return None
 
         if field == 'PwrState-Sts':
-            val = Status.pwrstate(val)
+            psc_status = _PSCStatus(ps_status=val)
+            val = psc_status.ioc_pwrstate
         elif field == 'OpMode-Sts':
-            val = Status.opmode(val)
+            psc_status = _PSCStatus(ps_status=val)
+            val = psc_status.ioc_opmode
         elif field == 'Version-Cte':
             version = ''.join([c.decode() for c in val])
             try:
@@ -421,27 +428,27 @@ class FBPPowerSupply(Device):
         # Switch field
         if field == 'PwrState-Sel':
             return self._set_pwrstate(setpoint)
-        elif field == 'OpMode-Sel':
+        if field == 'OpMode-Sel':
             return self._set_opmode(setpoint)
-        elif field == 'Current-SP':
+        if field == 'Current-SP':
             return self._set_current(setpoint)
-        elif field == 'Reset-Cmd':
+        if field == 'Reset-Cmd':
             return self._reset(setpoint)
-        elif field == 'CycleEnbl-Cmd':
+        if field == 'CycleEnbl-Cmd':
             return self._enable_cycle(setpoint)
-        elif field == 'CycleDsbl-Cmd':
+        if field == 'CycleDsbl-Cmd':
             return self._disable_cycle(setpoint)
-        elif field == 'CycleType-Sel':
+        if field == 'CycleType-Sel':
             return self._set_cycle_type(setpoint)
-        elif field == 'CycleNrCycles-SP':
+        if field == 'CycleNrCycles-SP':
             return self._set_cycle_nr_cycles(setpoint)
-        elif field == 'CycleFreq-SP':
+        if field == 'CycleFreq-SP':
             return self._set_cycle_frequency(setpoint)
-        elif field == 'CycleAmpl-SP':
+        if field == 'CycleAmpl-SP':
             return self._set_cycle_amplitude(setpoint)
-        elif field == 'CycleOffset-SP':
+        if field == 'CycleOffset-SP':
             return self._set_cycle_offset(setpoint)
-        elif field == 'CycleAuxParam-SP':
+        if field == 'CycleAuxParam-SP':
             return self._set_cycle_aux_params(setpoint)
 
 

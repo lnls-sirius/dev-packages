@@ -1,6 +1,6 @@
 """Module implementing PRU elements."""
 try:
-    import PRUserial485.PRUserial485 as _PRUserial485
+    import PRUserial485 as _PRUserial485
 except:
     # in case the PRUserial library is not installed and
     # this module is used only for simulating PRUs.

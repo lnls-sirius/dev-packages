@@ -4,9 +4,10 @@ import random as _random
 from threading import Thread as _Thread
 
 from siriuspy import util as _util
+from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.bsmp import Response, BSMP
 from siriuspy.pwrsupply.bsmp import FBPEntities
-from siriuspy.pwrsupply.status import Status as _Status
+from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 from siriuspy.pwrsupply.bsmp import Const as _c
 from .siggen import Trapezoidal
 
@@ -162,8 +163,9 @@ class FBPControllerSim(_ControllerSim):
         return Response.ok, None
 
     def _is_on(self):
-        status = self._variables[_c.PS_STATUS]
-        return _Status.pwrstate(status)
+        ps_status = self._variables[_c.PS_STATUS]
+        psc_status = _PSCStatus(ps_status=ps_status)
+        return psc_status.ioc_pwrstate
 
 
 class _FBPState:
@@ -179,10 +181,13 @@ class _FBPState:
 
     def turn_on(self, variables):
         """Turn ps on."""
-        status = variables[_c.PS_STATUS]
-        if _Status.pwrstate(status) == 0:
-            # Set opmode to slowref
-            variables[_c.PS_STATUS] = _Status.set_pwrstate(status, 1)
+        ps_status = variables[_c.PS_STATUS]
+        psc_status = _PSCStatus(ps_status=ps_status)
+        if psc_status.ioc_pwrstate == _PSConst.PwrState.Off:
+            # Set PSController status
+            psc_status.ioc_pwrstate = _PSConst.PwrState.On
+            psc_status.ioc_opmode = _PSConst.OpMode.SlowRef
+            variables[_c.PS_STATUS] = psc_status.ps_status
             # Set currents to 0
             variables[_c.PS_SETPOINT] = 0.0
             variables[_c.PS_REFERENCE] = 0.0
@@ -190,10 +195,12 @@ class _FBPState:
 
     def turn_off(self, variables):
         """Turn ps off."""
-        status = variables[_c.PS_STATUS]
-        if _Status.pwrstate(status) == 1:
-            # Set opmode to slowref
-            variables[_c.PS_STATUS] = _Status.set_pwrstate(status, 0)
+        ps_status = variables[_c.PS_STATUS]
+        psc_status = _PSCStatus(ps_status=ps_status)
+        if psc_status.ioc_pwrstate == _PSConst.PwrState.On:
+            # Set PSController status
+            psc_status.ioc_pwrstate = _PSConst.PwrState.Off
+            variables[_c.PS_STATUS] = psc_status.ps_status
             # Set currents to 0
             variables[_c.PS_SETPOINT] = 0.0
             variables[_c.PS_REFERENCE] = 0.0
@@ -205,9 +212,11 @@ class _FBPState:
 
     def reset_interlocks(self, variables):
         """Reset ps."""
-        status = variables[_c.PS_STATUS]
-        # Set SlowRef
-        variables[_c.PS_STATUS] = _Status.set_opmode(status, 0)
+        ps_status = variables[_c.PS_STATUS]
+        psc_status = _PSCStatus(ps_status=ps_status)
+        # Set PSController status
+        psc_status.ioc_opmode = _PSConst.OpMode.SlowRef
+        variables[_c.PS_STATUS] = psc_status.ps_status
         # Set Current to 0
         variables[_c.PS_SETPOINT] = 0.0
         variables[_c.PS_REFERENCE] = 0.0
@@ -242,8 +251,10 @@ class FBPSlowRefState(_FBPState):
 
     def select_op_mode(self, variables):
         """Set operation mode."""
-        status = variables[_c.PS_STATUS]
-        variables[_c.PS_STATUS] = _Status.set_opmode(status, 3)
+        ps_status = variables[_c.PS_STATUS]
+        psc_status = _PSCStatus(ps_status=ps_status)
+        psc_status.ioc_opmode = _PSConst.OpMode.SlowRef
+        variables[_c.PS_STATUS] = psc_status.ps_status
         self.set_slowref(variables, variables[_c.PS_SETPOINT])
 
     def set_slowref(self, variables, input_val):
@@ -286,9 +297,11 @@ class FBPCycleState(_FBPState):
 
     def select_op_mode(self, variables):
         """Set operation mode."""
-        status = variables[_c.PS_STATUS]
+        ps_status = variables[_c.PS_STATUS]
+        psc_status = _PSCStatus(ps_status=ps_status)
+        psc_status.ioc_opmode = _PSConst.OpMode.Cycle
+        variables[_c.PS_STATUS] = psc_status.ps_status
         variables[_c.SIGGEN_ENABLE] = 0
-        variables[_c.PS_STATUS] = _Status.set_opmode(status, 2)
         variables[_c.PS_REFERENCE] = 0.0
         variables[_c.I_LOAD] = 0.0
         self._set_signal(variables)
