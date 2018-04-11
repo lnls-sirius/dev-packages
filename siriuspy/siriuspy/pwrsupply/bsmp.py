@@ -43,7 +43,7 @@ class Const:
     V_SIGGEN_AUX_PARAM = 13
 
     # --- FSB variables ---
-    V_PS_SOFT_INTERLOCKS = 25  # BSMP doc says ID numbering should be continous!
+    V_PS_SOFT_INTERLOCKS = 25  # BSMP doc says ID numb. should be continous!
     V_PS_HARD_INTERLOCKS = 26
     V_I_LOAD = 27  # corresponds to IOC Current-Mon
     V_V_LOAD = 28
