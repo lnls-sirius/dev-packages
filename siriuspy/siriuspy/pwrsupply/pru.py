@@ -10,6 +10,9 @@ except:
 class _PRUInterface:
     """Interface class for programmable real-time units."""
 
+    _SYNC_OFF = 0
+    _SYNC_ON = 1
+
     def __init__(self):
         """Init method."""
         self._sync_mode = False
