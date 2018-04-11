@@ -5,11 +5,12 @@ from threading import Thread as _Thread
 
 from siriuspy import util as _util
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
-from siriuspy.bsmp import Response, BSMP
-from siriuspy.pwrsupply.bsmp import FBPEntities
+from siriuspy.bsmp import Response as _Response
+from siriuspy.bsmp import BSMP as _BSMP
+from siriuspy.pwrsupply.bsmp import FBPEntities as _FBPEntities
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 from siriuspy.pwrsupply.bsmp import Const as _c
-from .siggen import Trapezoidal
+from .siggen import Trapezoidal as _Trapezoidal
 
 __version__ = _util.get_last_commit_hash()
 
@@ -56,12 +57,12 @@ class PSCommInterface:
         raise NotImplementedError
 
 
-class FBPController(BSMP):
+class FBPController(_BSMP):
     """FBP power supply."""
 
     def __init__(self, serial, slave_address):
         """Use FBPEntities."""
-        super().__init__(serial, slave_address, FBPEntities())
+        super().__init__(serial, slave_address, _FBPEntities())
 
 
 class _ControllerSim:
@@ -79,22 +80,22 @@ class _ControllerSim:
 
     def read_variable(self, var_id):
         """Read a variable."""
-        return Response.ok, self._variables[var_id]
+        return _Response.ok, self._variables[var_id]
 
     def remove_all_groups(self):
         """Remove all groups."""
         self.entities.remove_all_groups()
-        return Response.ok, None
+        return _Response.ok, None
 
     def read_group_variables(self, group_id):
         """Read group of variables."""
         ids = [var.eid for var in self.entities.groups[group_id].variables]
-        return Response.ok, [self.read_variable(id)[1] for id in ids]
+        return _Response.ok, [self.read_variable(id)[1] for id in ids]
 
     def create_group(self, var_ids):
         """Create new group."""
         self.entities.add_group(var_ids)
-        return Response.ok, None
+        return _Response.ok, None
 
     def execute_function(self, func_id, input_val=None):
         """Execute a function."""
@@ -112,7 +113,7 @@ class FBPControllerSim(_ControllerSim):
 
     def __init__(self):
         """Use FBPEntities."""
-        super().__init__(FBPEntities())
+        super().__init__(_FBPEntities())
         # Set variables initial value
         firmware = [b'S', b'i', b'm', b'u', b'l', b'a', b't', b'i', b'o', b'n']
         while len(firmware) < 128:
@@ -130,7 +131,7 @@ class FBPControllerSim(_ControllerSim):
 
     def read_variable(self, var_id):
         """Read variable."""
-        return Response.ok, self._state.read_variable(self._variables, var_id)
+        return _Response.ok, self._state.read_variable(self._variables, var_id)
 
     def execute_function(self, func_id, input_val=None):
         """Execute a function."""
@@ -160,7 +161,7 @@ class FBPControllerSim(_ControllerSim):
         elif func_id == _c.DISABLE_SIGGEN:
             self._state.disable_siggen(self._variables)
 
-        return Response.ok, None
+        return _Response.ok, None
 
     def _is_on(self):
         ps_status = self._variables[_c.PS_STATUS]
@@ -367,7 +368,7 @@ class FBPCycleState(_FBPState):
         #     self._signal = Trapezoidal(n, a, o, aux)
         # else:
         #     raise ValueError()
-        self._signal = Trapezoidal(n, a, o, aux)
+        self._signal = _Trapezoidal(n, a, o, aux)
 
     def _finish_siggen(self, variables, time):
         time_up = False
