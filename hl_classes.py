@@ -82,8 +82,6 @@ class _HL_Base:
         It not only sets the new high level property value but also forwards it
         to the low level classes.
         """
-        if value == self._my_state[prop_name]:
-            return True
         self._my_state[prop_name] = value
         for dev, obj in self._ll_objs.items():
             obj.write(prop_name, value)
