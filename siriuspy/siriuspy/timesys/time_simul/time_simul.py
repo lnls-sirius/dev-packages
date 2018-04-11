@@ -8,7 +8,7 @@ from .device_models import EVEIOC as _EVEIOC
 from .device_models import AFCIOC as _AFCIOC
 from .device_models import FOUTIOC as _FOUTIOC
 from siriuspy.search import LLTimeSearch as _LLTimeSearch
-from siriuspy.csdevice.timesys import Constants as _Const
+from siriuspy.csdevice.timesys import Const as _Const
 
 _RFDIV = _Const.RF_DIVISION
 

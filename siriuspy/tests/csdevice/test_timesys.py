@@ -45,7 +45,7 @@ public_interface = (
     'triggers_polarities',
     'triggers_delay_types',
     'triggers_src_ll',
-    'Constants',
+    'Const',
 )
 
 
@@ -225,8 +225,8 @@ class TestModule(unittest.TestCase):
         pass
 
 
-class TestConstants(unittest.TestCase):
-    """Test Constants class."""
+class TestConst(unittest.TestCase):
+    """Test Const class."""
 
     public_interface = (
         'AC_FREQUENCY',
@@ -242,7 +242,7 @@ class TestConstants(unittest.TestCase):
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-                        timesys.Constants, TestConstants.public_interface)
+                        timesys.Const, TestConst.public_interface)
         self.assertTrue(valid)
 
 

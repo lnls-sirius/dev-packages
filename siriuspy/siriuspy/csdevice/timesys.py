@@ -48,8 +48,8 @@ triggers_src_ll = (
     )
 
 
-class Constants:
-    """Constants important for timing system."""
+class Const:
+    """Constants important for the timing system."""
 
     # TODO: should we create a consts module?
     _light_speed = 299792458  # [m/s]
@@ -579,7 +579,7 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     db['Delay-RB'] = _dcopy(dic_)
     db['Delay-SP'] = dic_
 
-    dic_ = {'type': 'enum'}
+    dic_ = {'type': 'enum', 'enums': triggers_delay_types}
     dic_.update(trig_db['DelayType'])
     db['DelayType-Sts'] = _dcopy(dic_)
     db['DelayType-Sel'] = dic_
