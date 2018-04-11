@@ -3,7 +3,7 @@ try:
     import PRUserial485 as _PRUserial485
 except:
     # in case the PRUserial library is not installed and
-    # this module is used only for simulating PRUs.
+    # this module is used only for simulated PRUs.
     _PRUserial485 = None
 
 
