@@ -346,7 +346,7 @@ class TestPSSearch(unittest.TestCase):
         """Test conv_psname_2_siggenconf."""
         for ps, pstype in TestPSSearch.sample.items():
             siggenconf = PSSearch.conv_psname_2_siggenconf(psname=ps)
-            self.assertIsInstance(siggenconf, type(Signal))
+            self.assertIsInstance(siggenconf, Signal)
 
     def test_check_pstype_ispulsed(self):
         """Test check_pstype_isplused."""
