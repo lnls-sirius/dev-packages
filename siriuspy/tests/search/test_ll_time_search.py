@@ -1,19 +1,18 @@
 #!/usr/bin/env python-sirius
 
-"""Unittest module for connections.py."""
+"""Unittest module for ll_time_search.py."""
 
 import unittest
 import re
 # from unittest import mock
 
 from siriuspy import util
-from siriuspy.timesys.time_data import connections
+from siriuspy.search import ll_time_search
 
 mock_flag = True
 
 public_interface = (
-    'IOs',
-    'Connections',
+    'LLTimeSearch',
 )
 
 
@@ -23,50 +22,24 @@ class TestModule(unittest.TestCase):
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-                connections,
+                ll_time_search,
                 public_interface)
         self.assertTrue(valid)
 
 
-class TestIOs(unittest.TestCase):
-    """Test IOs class."""
+class TestLLTimeSearch(unittest.TestCase):
+    """Test LLTimeSearch class."""
 
     public_interface = (
-        'LL_RGX',
-        'I2O_MAP',
-        'O2I_MAP',
+        'll_rgx',
+        'i2o_map',
+        'o2i_map',
         'get_channel_input',
-    )
-
-    def test_public_interface(self):
-        """Test class public interface."""
-        valid = util.check_public_interface_namespace(
-            connections.IOs, TestIOs.public_interface)
-        self.assertTrue(valid)
-
-    def test_LL_RGX(self):
-        """Test LL_RGX."""
-        typ = type(re.compile('dummy_input'))
-        self.assertIsInstance(connections.IOs.LL_RGX, typ)
-
-    def test_I2O_MAP(self):
-        """Test I2O_MAP."""
-        self.assertIsInstance(connections.IOs.I2O_MAP, dict)
-
-    def test_O2I_MAP(self):
-        """Test O2I_MAP."""
-        self.assertIsInstance(connections.IOs.O2I_MAP, dict)
-
-    def test_get_channel_input(self):
-        """Test get_channel_input."""
-        # TODO: implement test!
-        pass
-
-
-class TestConnections(unittest.TestCase):
-    """Test Connections class."""
-
-    public_interface = (
+        'plot_network',
+        'add_crates_info',
+        'add_bbb_info',
+        'get_devices_by_type',
+        'get_device_tree',
         'reset',
         'server_online',
         'get_connections_from_evg',
@@ -76,18 +49,56 @@ class TestConnections(unittest.TestCase):
         'get_relations_from_evg',
         'get_relations_twds_evg',
         'get_hierarchy_list',
-        'get_devices',
-        'get_device_tree',
-        'add_bbb_info',
-        'add_crates_info',
-        'plot_network',
     )
 
     def test_public_interface(self):
         """Test class public interface."""
         valid = util.check_public_interface_namespace(
-            connections.Connections, TestConnections.public_interface)
+            ll_time_search.LLTimeSearch, TestLLTimeSearch.public_interface)
         self.assertTrue(valid)
+
+    def test_ll_rgx(self):
+        """Test LL_RGX."""
+        typ = type(re.compile('dummy_input'))
+        self.assertIsInstance(ll_time_search.LLTimeSearch.ll_rgx, typ)
+
+    def test_i2o_map(self):
+        """Test I2O_MAP."""
+        self.assertIsInstance(ll_time_search.LLTimeSearch.i2o_map, dict)
+
+    def test_o2i_map(self):
+        """Test O2I_MAP."""
+        self.assertIsInstance(ll_time_search.LLTimeSearch.o2i_map, dict)
+
+    def test_get_channel_input(self):
+        """Test get_channel_input."""
+        # TODO: implement test!
+        pass
+
+    def test_plot_network(self):
+        """Test plot_network."""
+        # TODO: implement test!
+        pass
+
+    def test_add_crates_info(self):
+        """Test add_crates_info."""
+        # TODO: implement test!
+        pass
+
+    def test_add_bbb_info(self):
+        """Test add_bbb_info."""
+        # TODO: implement test!
+        pass
+
+    def test_get_devices_by_type(self):
+        """Test get_devices."""
+        # TODO: implement test!
+        pass
+
+    def test_get_device_tree(self):
+        """Test get_device_tree."""
+        # TODO: implement test!
+        pass
 
     def test_reset(self):
         """Test reset."""
@@ -131,31 +142,6 @@ class TestConnections(unittest.TestCase):
 
     def test_get_hierarchy_list(self):
         """Test get_hierarchy_list."""
-        # TODO: implement test!
-        pass
-
-    def test_get_devices(self):
-        """Test get_devices."""
-        # TODO: implement test!
-        pass
-
-    def test_get_device_tree(self):
-        """Test get_device_tree."""
-        # TODO: implement test!
-        pass
-
-    def test_add_bbb_info(self):
-        """Test add_bbb_info."""
-        # TODO: implement test!
-        pass
-
-    def test_add_crates_info(self):
-        """Test add_crates_info."""
-        # TODO: implement test!
-        pass
-
-    def test_plot_network(self):
-        """Test plot_network."""
         # TODO: implement test!
         pass
 
