@@ -48,8 +48,8 @@ triggers_src_ll = (
     )
 
 
-class Constants:
-    """Constants important for timing system."""
+class Const:
+    """Constants important for the timing system."""
 
     # TODO: should we create a consts module?
     _light_speed = 299792458  # [m/s]

@@ -6,8 +6,8 @@ import uuid as _uuid
 from threading import Thread as _Thread
 from siriuspy.csdevice import timesys as _cstime
 
-_PwrFreq = _cstime.Constants.AC_FREQUENCY
-_FINE_DELAY_STEP = _cstime.Constants.FINE_DELAY
+_PwrFreq = _cstime.Const.AC_FREQUENCY
+_FINE_DELAY_STEP = _cstime.Const.FINE_DELAY
 
 _OTP_SIM_TMP = 'OTP{0:02d}'
 
