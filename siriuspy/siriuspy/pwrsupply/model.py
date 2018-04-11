@@ -31,9 +31,12 @@ class Device:
     # Setpoints regexp pattern
     _sp = _re.compile('^.*-(SP|Sel|Cmd)$')
 
-    def __init__(self, controller, database):
+    def __init__(self, controller, slave_id, database):
         """Control a device using BSMP protocol."""
         self._connected = False
+
+        controller.add_slave(slave_id)
+        self._slave_id = slave_id
         self._controller = controller
         self._database = database
         # initialize setpoints
@@ -44,10 +47,14 @@ class Device:
         self._init_setpoints()
 
     # API
-    @property
     def controller(self):
-        """BSMP instance for this device."""
+        """Controller."""
         return self._controller
+
+    @property
+    def device(self):
+        """BSMP instance for this device."""
+        return self._controller[self._slave_id]
 
     @property
     def database(self):
@@ -94,14 +101,19 @@ class Device:
             return False
         return True
 
+    def read_all_variables(self):
+        """Read all variables."""
+        return self._read_group(0)
+
     # Groups
-    def read_group(self, group_id):
+    def _read_group(self, group_id):
         """Read a group of variables and return a dict."""
         # Read values
-        sts, val = self.controller.read_group_variables(group_id)
+        sts, val = self.device.read_group_variables(
+            self._slave_address, group_id)
         if sts == Response.ok:
             ret = dict()
-            variables = self.controller.entities.list_variables(group_id)
+            variables = self.device.entities.list_variables(group_id)
             for idx, var_id in enumerate(variables):
                 try:  # TODO: happens because bsmp_2_epics is not complete
                     field = self.bsmp_2_epics[var_id]
@@ -112,24 +124,30 @@ class Device:
                         ret[f] = val[idx]
                 else:
                     ret[field] = val[idx]
-            for setpoint, db in self.setpoints.items():
-                ret[setpoint] = db['value']
             return ret
         return None
 
-    def create_group(self, fields):
+    def _create_group(self, fields):
         """Create a group of variables."""
         ids = set()
         for field in fields:
             ids.add(self.epics_2_bsmp[field])
-        sts, _ = self.controller.create_group(ids)
+        sts, _ = self.device.create_group(ids)
         if sts == Response.ok:
             return True
         return False
 
-    def read_all_variables(self):
-        """Read all variables."""
-        return self.read_group(0)
+    # IOC
+    def read_setpoints(self):
+        """Read sepoints."""
+        ret = dict()
+        for setpoint, db in self.setpoints.items():
+            ret[setpoint] = db['value']
+        return ret
+
+    def read_status(self):
+        """Read parameters."""
+        return {}
 
     def _init_setpoints(self):
         try:
@@ -152,14 +170,14 @@ class Device:
 
     def _read_variable(self, field):
         var_id = self.epics_2_bsmp[field]
-        sts, val = self.controller.read_variable(var_id)
+        sts, val = self.device.read_variable(var_id)
         if sts == Response.ok:
             return val
         else:
             return None
 
     def _execute_function(self, func_id, value=None):
-        sts, val = self.controller.execute_function(func_id, value)
+        sts, val = self.device.execute_function(func_id, value)
         if sts == Response.ok:
             return True
         else:
@@ -217,16 +235,27 @@ class FBPPowerSupply(Device):
         All properties map an epics field to a BSMP property.
         """
         super().__init__(controller, database)
+        self._pru = self.controller.pru
         # TODO: check errors, create group 3?
-        self.controller.remove_all_groups()
+        self.device.remove_all_groups()
         # Create group 3
-        var_ids = self.controller.entities.list_variables(group_id=0)
+        var_ids = self.device.entities.list_variables(group_id=0)
         var_ids.remove(_c.FIRMWARE_VERSION)
-        self.controller.create_group(var_ids=var_ids)
-        self.controller.execute_function(_c.CLOSE_LOOP)  # Close loop
+        self.device.create_group(var_ids=var_ids)
+        self.device.execute_function(_c.CLOSE_LOOP)  # Close loop
 
-    # --- Functions ---
+    def read_ps_variables(self):
+        """Read called to update DB."""
+        return self._read_group(3)
 
+    def read_status(self):
+        """Read fields that are not setpoinrs nor bsmp variables."""
+        ret = dict()
+        ret['WfmData-RB'] = self.database['WfmData-RB']['value']
+        ret['WfmIndex-Mon'] = self.controller.pru.sync_pulse_count
+        return ret
+
+    # BSMP specific
     def _turn_on(self):
         """Turn power supply on."""
         ret = self._execute_function(_c.TURN_ON)
@@ -382,7 +411,7 @@ class FBPPowerSupply(Device):
         Check to see if PS_STATE or FIRMWARE_VERSION are in the group, as these
         variables need further parsing.
         """
-        var_ids = self.controller.entities.list_variables(group_id)
+        var_ids = self.device.entities.list_variables(group_id)
         values = super().read_group(group_id)
         if _c.PS_STATUS in var_ids:
             # TODO: values['PwrState-Sts'] == values['OpMode-Sts'] ?
@@ -450,6 +479,10 @@ class FBPPowerSupply(Device):
             return self._set_cycle_offset(setpoint)
         if field == 'CycleAuxParam-SP':
             return self._set_cycle_aux_params(setpoint)
+        elif field == 'WfmData-SP':  # *
+            self.setpoints['WfmData-SP']['value'] = setpoint
+            self.database['WfmData-RB']['value'] = setpoint
+            return True
 
 
 class PSEpics(_PSCommInterface):
