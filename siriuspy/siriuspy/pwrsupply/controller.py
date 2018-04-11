@@ -18,6 +18,9 @@ class PSCommInterface:
     """Communication interface class for power supplies."""
 
     # TODO: should this class have its own python module?
+    # TODO: this class is not specific to PS! its name should be updated to
+    # something line CommInterface or IOCConnInterface. In this case the class
+    # should be moved to siriuspy.util or another python module.
 
     # --- public interface ---
 

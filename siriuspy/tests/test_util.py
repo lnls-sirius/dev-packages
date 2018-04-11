@@ -4,7 +4,6 @@
 
 from io import StringIO
 import numpy as np
-import epics
 import unittest
 from unittest import mock
 import siriuspy.util as util

@@ -11,7 +11,7 @@ from siriuspy.envars import vaca_prefix as _VACA_PREFIX
 # from siriuspy.csdevice.pwrsupply import max_wfmsize as _max_wfmsize
 from siriuspy.factory import NormalizerFactory as _NormalizerFactory
 from siriuspy.epics import connection_timeout as _connection_timeout
-from siriuspy.epics.computed_pv import QueueThread as _QueueThread
+from siriuspy.thread import QueueThread as _QueueThread
 from siriuspy.epics.computed_pv import ComputedPV as _ComputedPV
 from siriuspy.pwrsupply.data import PSData as _PSData
 from siriuspy.pwrsupply.controller import PSCommInterface as _PSCommInterface
@@ -459,6 +459,7 @@ class FBPPowerSupply(Device):
         if val is None:
             return None
 
+<<<<<<< HEAD
         if field == 'PwrState-Sts':
             psc_status = _PSCStatus(ps_status=val)
             val = psc_status.ioc_pwrstate
@@ -480,6 +481,42 @@ class FBPPowerSupply(Device):
             func_name = FBPPowerSupply._epics_2_wfuncs[field]
             func = getattr(self, func_name)
             return func(setpoint=setpoint)
+=======
+            # check whether current value is a new value
+            self._lock.acquire()
+            if field in self._field_values:
+                prev_value = self._field_values[field]
+                if isinstance(value, _np.ndarray):
+                    if _np.all(value == prev_value):
+                        # skip callback if not new
+                        self._lock.release()
+                        continue
+                else:
+                    if value == prev_value:
+                        # skipp callback if not new
+                        self._lock.release()
+                        continue
+
+            # register current value of field and releases lock
+            self._field_values[field] = value
+            self._lock.release()
+
+            # run callback function since field has a new value
+            self._run_callbacks(field, value)
+
+        # check whether ControllerIOC is connected to ControllerPS
+        if self._controller.connected != self._prev_connected:
+            self._prev_connected = self._controller.connected
+            self._run_callbacks(PowerSupply.CONNECTED, self._prev_connected)
+            if self._prev_connected and not self._initialized:
+                self._setpoints = self._build_setpoints()
+
+    def _run_callbacks(self, field, value):
+        for index, callback in self._callbacks.items():
+            callback(
+                pvname=self._psdata.psname + ':' + field,
+                value=value)
+>>>>>>> master
 
 
 class PSEpics(_PSCommInterface):
@@ -652,7 +689,7 @@ class MAEpics(PSEpics):
         # Build either a real or computed PV
         if MAEpics._is_strength.match(field):
             # 1) STRENGTH magnet fields
-            # an intermediary computed_pv is created in order for the
+            # an intermediate computed_pv is created in order for the
             # strength to be calculated from currents.
             pvname = self._prefix + self._maname + ":" + field
             str_obj = self._get_normalizer(self._maname)

@@ -143,3 +143,32 @@ class PRUSim(_PRUInterface):
     def process_sync_signal(self):
         """Process synchronization signal."""
         self._sync_pulse_count += 1
+
+    # def set_wfmdata(self, ID_device, wfmdata):
+    #     """Set waveform of a device."""
+    #     sorted_IDs = sorted(self._waveforms.keys())
+    #     if ID_device not in sorted_IDs:
+    #         print('ID_device {} not defined!'.format(ID_device))
+    #         return
+    #     else:
+    #         self._waveforms[ID_device] = wfmdata[:]
+    #         if len(sorted_IDs) == 1:
+    #             self._PRU.curve(self._waveforms[sorted_IDs[0]],
+    #                             SerialComm._default_wfm,
+    #                             SerialComm._default_wfm,
+    #                             SerialComm._default_wfm)
+    #         elif len(sorted_IDs) == 2:
+    #             self._PRU.curve(self._waveforms[sorted_IDs[0]],
+    #                             self._waveforms[sorted_IDs[1]],
+    #                             SerialComm._default_wfm,
+    #                             SerialComm._default_wfm)
+    #         elif len(sorted_IDs) == 3:
+    #             self._PRU.curve(self._waveforms[sorted_IDs[0]],
+    #                             self._waveforms[sorted_IDs[1]],
+    #                             self._waveforms[sorted_IDs[2]],
+    #                             SerialComm._default_wfm)
+    #         elif len(sorted_IDs) > 3:
+    #             self._PRU.curve(self._waveforms[sorted_IDs[0]],
+    #                             self._waveforms[sorted_IDs[1]],
+    #                             self._waveforms[sorted_IDs[2]],
+    #                             self._waveforms[sorted_IDs[3]])

@@ -1,49 +1,6 @@
 """Definition of ComputedPV class that simulates a PV composed of epics PVs."""
-from threading import Thread as _Thread
-from queue import Queue as _Queue
 from epics import get_pv as _get_pv
 from siriuspy.epics import connection_timeout as _connection_timeout
-
-
-class QueueThread(_Thread):
-    """Callback queue class.
-
-        Queues threads of this class are used to process callbacks of power
-    supplies (magnets) properties.
-    """
-
-    def __init__(self):
-        """Init method."""
-        super().__init__(daemon=True)
-        # self._queue = []
-        self._queue = _Queue()
-        self._running = False
-
-    @property
-    def running(self):
-        """Return whether thread is running."""
-        return self._running
-
-    def add_callback(self, func, pvname, value):
-        """Add callback."""
-        self._queue.put((func, [pvname, value]))
-
-    def run(self):
-        """Run method."""
-        self._running = True
-        while self.running:
-            func_item = self._queue.get()
-            # print(queue_size)
-            n = self._queue.qsize()
-            if n and n % 500 == 0:
-                print("Warning: ComputedPV Queue size is {}!".format(n))
-            function, args = func_item
-            # print(args[0])
-            function(*args)  # run the show!
-
-    def stop(self):
-        """Stop queue thread."""
-        self._running = False
 
 
 class ComputedPV:
@@ -179,6 +136,8 @@ class ComputedPV:
             self._issue_callback(pvname=self.pvname, **kwargs)
 
     def _value_update_callback(self, pvname, value, **kwargs):
+        # if 'Current-Mon' not in pvname:
+        #     print(pvname, value)
         if self.connected:
             self._queue.add_callback(self._update_value, pvname, value)
 
