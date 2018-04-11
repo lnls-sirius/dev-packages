@@ -12,10 +12,10 @@ from siriuspy.namesys import SiriusPVName as _PVName
 from siriuspy.csdevice import timesys as _cstime
 from siriuspy.search import LLTimeSearch as _LLTimeSearch
 
-_RFFREQ = _cstime.Constants.RF_FREQUENCY
-_RFDIV = _cstime.Constants.RF_DIVISION
-_ACFREQ = _cstime.Constants.AC_FREQUENCY
-_FDEL = _cstime.Constants.FINE_DELAY
+_RFFREQ = _cstime.Consts.RF_FREQUENCY
+_RFDIV = _cstime.Consts.RF_DIVISION
+_ACFREQ = _cstime.Consts.AC_FREQUENCY
+_FDEL = _cstime.Consts.FINE_DELAY
 
 INTERVAL = 0.1
 _DELAY_UNIT_CONV = 1e-6
