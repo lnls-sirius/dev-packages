@@ -211,7 +211,7 @@ class SignalFactory:
         kw['offset'] = 0.0  # [A]
         kw['aux_param'] = [0.0, 360.0, 0.0, 0.0]
         kw.update(kwargs)
-        if isinstance(kw['type'], str):
+        if 'type' in kw and isinstance(kw['type'], str):
             kw['type'] = SignalFactory.TYPES[kw['type']]
 
         # set default values
