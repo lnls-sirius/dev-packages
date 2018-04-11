@@ -236,11 +236,12 @@ class FBPPowerSupply(Device):
         'CycleEnbl-Cmd': '_enable_cycle',
         'CycleDsbl-Cmd': '_disable_cycle',
         'CycleType-Sel': '_set_cycle_type',
-        'CycleNrCycles-SP': '_cycle_nr_cycles',
+        'CycleNrCycles-SP': '_set_cycle_nr_cycles',
         'CycleFreq-SP': '_set_cycle_frequency',
         'CycleAmpl-SP': '_set_cycle_amplitude',
         'CycleOffset-SP': '_set_cycle_offset',
-        'CycleAuxParam-SP': '_cycle_aux_params',
+        'CycleAuxParam-SP': '_set_cycle_aux_params',
+        'WfmData-SP': '_set_wfmdata_sp',
     }
 
     def __init__(self, controller, slave_id, database):
@@ -287,7 +288,7 @@ class FBPPowerSupply(Device):
 
     def _select_op_mode(self, value):
         """Set operation mode."""
-        return self._execute_function(_c.SELECT_OP_MODE, value + 3)
+        return self._execute_function(_c.SELECT_OP_MODE, value)
 
     def _reset_interlocks(self):
         """Reset."""
@@ -418,16 +419,22 @@ class FBPPowerSupply(Device):
         args.append(self.setpoints['CycleAuxParam-SP']['value'])
         return args
 
+    def _set_wfmdata_sp(self, setpoint):
+        """Set wfmdata."""
+        self.setpoints['WfmData-SP']['value'] = setpoint
+        self.database['WfmData-RB']['value'] = setpoint
+        return True
+
     # --- Virtual methods ---
 
-    def read_group(self, group_id):
+    def _read_group(self, group_id):
         """Parse some variables.
 
         Check to see if PS_STATE or FIRMWARE_VERSION are in the group, as these
         variables need further parsing.
         """
         var_ids = self.device.entities.list_variables(group_id)
-        values = super().read_group(group_id)
+        values = super()._read_group(group_id)
         if _c.PS_STATUS in var_ids:
             # TODO: values['PwrState-Sts'] == values['OpMode-Sts'] ?
             psc_status = _PSCStatus(ps_status=values['PwrState-Sts'])
