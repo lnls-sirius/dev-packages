@@ -10,10 +10,15 @@ from siriuspy import servweb as _web
 from siriuspy import diagnostics as _diag
 from .ps_search import PSSearch as _PSSearch
 from siriuspy.namesys import SiriusPVName as _PVName
-if _importlib.find_loader('matplotlib') is not None:
-    import matplotlib.pyplot as _plt
-    import matplotlib.gridspec as _gridspec
-    import matplotlib.cm as _cmap
+
+# TODO: temporarily moved import matplolib
+# this is necessary until it be imported correctly in the BBB
+# the problem has to do with Qt...
+
+# if _importlib.find_loader('matplotlib') is not None:
+#     import matplotlib.pyplot as _plt
+#     import matplotlib.gridspec as _gridspec
+#     import matplotlib.cm as _cmap
 
 _timeout = 1.0
 
@@ -120,6 +125,11 @@ class LLTimeSearch:
     @classmethod
     def plot_network(cls):
         """Plot the map of connections between all devices."""
+        # TODO: temporarily moved import matplolib
+        if _importlib.find_loader('matplotlib') is not None:
+            import matplotlib.pyplot as _plt
+            import matplotlib.gridspec as _gridspec
+
         cls._get_timedata()
         if 'matplotlib' not in _sys.modules:
             print('Cannot draw network:matplotlib is not installed')
@@ -471,6 +481,10 @@ class LLTimeSearch:
 
     @classmethod
     def _build_colors(cls):
+        # TODO: temporarily moved import matplolib
+        if _importlib.find_loader('matplotlib') is not None:
+            import matplotlib.cm as _cmap
+
         if 'matplotlib' not in _sys.modules:
             print('Cannot draw network: matplotlib is not installed')
             return
@@ -491,6 +505,10 @@ class LLTimeSearch:
 
     @classmethod
     def _build_arrow_colors(cls):
+        # TODO: temporarily moved import matplolib
+        if _importlib.find_loader('matplotlib') is not None:
+            import matplotlib.cm as _cmap
+
         if 'matplotlib' not in _sys.modules:
             print('Cannot draw network:matplotlib is not installed')
             return
