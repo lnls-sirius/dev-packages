@@ -20,7 +20,7 @@ class TestBSMPTypes(unittest.TestCase):
 
     def test_uint8_type(self):
         """Test uint8 type properties."""
-        t = Types.t_uint8
+        t = Types.T_UINT8
 
         self.assertEqual(t.type, 'uint8')
         self.assertEqual(t.size, 1)
@@ -31,7 +31,7 @@ class TestBSMPTypes(unittest.TestCase):
 
     def test_uint16_type(self):
         """Test uint16 type properties."""
-        t = Types.t_uint16
+        t = Types.T_UINT16
 
         self.assertEqual(t.type, 'uint16')
         self.assertEqual(t.size, 2)
@@ -42,7 +42,7 @@ class TestBSMPTypes(unittest.TestCase):
 
     def test_uint32_type(self):
         """Test uint32 type properties."""
-        t = Types.t_uint32
+        t = Types.T_UINT32
 
         self.assertEqual(t.type, 'uint32')
         self.assertEqual(t.size, 4)
@@ -53,7 +53,7 @@ class TestBSMPTypes(unittest.TestCase):
 
     def test_float_type(self):
         """Test float type properties."""
-        t = Types.t_float
+        t = Types.T_FLOAT
 
         self.assertEqual(t.type, 'float')
         self.assertEqual(t.size, 4)

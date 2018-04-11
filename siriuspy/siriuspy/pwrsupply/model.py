@@ -192,40 +192,40 @@ class FBPPowerSupply(Device):
     """Control a power supply using BSMP protocol."""
 
     bsmp_2_epics = {
-        _c.PS_STATUS: ('PwrState-Sts', 'OpMode-Sts'),
-        _c.PS_SETPOINT: 'Current-RB',
-        _c.PS_REFERENCE: 'CurrentRef-Mon',
-        _c.FIRMWARE_VERSION: 'Version-Cte',
-        _c.SIGGEN_ENABLE: 'CycleEnbl-Mon',
-        _c.SIGGEN_TYPE: 'CycleType-Sts',
-        _c.SIGGEN_NUM_CYCLES: 'CycleNrCycles-RB',
-        _c.SIGGEN_N: 'CycleIndex-Mon',
-        _c.SIGGEN_FREQ: 'CycleFreq-RB',
-        _c.SIGGEN_AMPLITUDE: 'CycleAmpl-RB',
-        _c.SIGGEN_OFFSET: 'CycleOffset-RB',
-        _c.SIGGEN_AUX_PARAM: 'CycleAuxParam-RB',
-        _c.PS_SOFT_INTERLOCKS: 'IntlkSoft-Mon',
-        _c.PS_HARD_INTERLOCKS: 'IntlkHard-Mon',
-        _c.I_LOAD: 'Current-Mon',
+        _c.V_PS_STATUS: ('PwrState-Sts', 'OpMode-Sts'),
+        _c.V_PS_SETPOINT: 'Current-RB',
+        _c.V_PS_REFERENCE: 'CurrentRef-Mon',
+        _c.V_FIRMWARE_VERSION: 'Version-Cte',
+        _c.V_SIGGEN_ENABLE: 'CycleEnbl-Mon',
+        _c.V_SIGGEN_TYPE: 'CycleType-Sts',
+        _c.V_SIGGEN_NUM_CYCLES: 'CycleNrCycles-RB',
+        _c.V_SIGGEN_N: 'CycleIndex-Mon',
+        _c.V_SIGGEN_FREQ: 'CycleFreq-RB',
+        _c.V_SIGGEN_AMPLITUDE: 'CycleAmpl-RB',
+        _c.V_SIGGEN_OFFSET: 'CycleOffset-RB',
+        _c.V_SIGGEN_AUX_PARAM: 'CycleAuxParam-RB',
+        _c.V_PS_SOFT_INTERLOCKS: 'IntlkSoft-Mon',
+        _c.V_PS_HARD_INTERLOCKS: 'IntlkHard-Mon',
+        _c.V_I_LOAD: 'Current-Mon',
     }
 
     epics_2_bsmp = {
-        'PwrState-Sts': _c.PS_STATUS,
-        'OpMode-Sts': _c.PS_STATUS,
-        'Current-RB': _c.PS_SETPOINT,
-        'CurrentRef-Mon': _c.PS_REFERENCE,
-        'Version-Cte': _c.FIRMWARE_VERSION,
-        'CycleEnbl-Mon': _c.SIGGEN_ENABLE,
-        'CycleType-Sts': _c.SIGGEN_TYPE,
-        'CycleNrCycles-RB': _c.SIGGEN_NUM_CYCLES,
-        'CycleIndex-Mon': _c.SIGGEN_N,
-        'CycleFreq-RB': _c.SIGGEN_FREQ,
-        'CycleAmpl-RB': _c.SIGGEN_AMPLITUDE,
-        'CycleOffset': _c.SIGGEN_OFFSET,
-        'CycleAuxParam-RB': _c.SIGGEN_AUX_PARAM,
-        'IntlkSoft-Mon': _c.PS_SOFT_INTERLOCKS,
-        'IntlkHard-Mon': _c.PS_HARD_INTERLOCKS,
-        'Current-Mon': _c.I_LOAD,
+        'PwrState-Sts': _c.V_PS_STATUS,
+        'OpMode-Sts': _c.V_PS_STATUS,
+        'Current-RB': _c.V_PS_SETPOINT,
+        'CurrentRef-Mon': _c.V_PS_REFERENCE,
+        'Version-Cte': _c.V_FIRMWARE_VERSION,
+        'CycleEnbl-Mon': _c.V_SIGGEN_ENABLE,
+        'CycleType-Sts': _c.V_SIGGEN_TYPE,
+        'CycleNrCycles-RB': _c.V_SIGGEN_NUM_CYCLES,
+        'CycleIndex-Mon': _c.V_SIGGEN_N,
+        'CycleFreq-RB': _c.V_SIGGEN_FREQ,
+        'CycleAmpl-RB': _c.V_SIGGEN_AMPLITUDE,
+        'CycleOffset': _c.V_SIGGEN_OFFSET,
+        'CycleAuxParam-RB': _c.V_SIGGEN_AUX_PARAM,
+        'IntlkSoft-Mon': _c.V_PS_SOFT_INTERLOCKS,
+        'IntlkHard-Mon': _c.V_PS_HARD_INTERLOCKS,
+        'Current-Mon': _c.V_I_LOAD,
     }
 
     _epics_2_wfuncs = {
@@ -255,9 +255,9 @@ class FBPPowerSupply(Device):
         self.device.remove_all_groups()
         # Create group 3
         var_ids = self.device.entities.list_variables(group_id=0)
-        var_ids.remove(_c.FIRMWARE_VERSION)
+        var_ids.remove(_c.V_FIRMWARE_VERSION)
         self.device.create_group(var_ids=var_ids)
-        self.device.execute_function(_c.CLOSE_LOOP)  # Close loop
+        self.device.execute_function(_c.F_CLOSE_LOOP)  # Close loop
 
     def read_ps_variables(self):
         """Read called to update DB."""
@@ -273,32 +273,32 @@ class FBPPowerSupply(Device):
     # BSMP specific
     def _turn_on(self):
         """Turn power supply on."""
-        ret = self._execute_function(_c.TURN_ON)
+        ret = self._execute_function(_c.F_TURN_ON)
         if ret:
             _time.sleep(0.3)
             return self._execute_function(3)  # Close control loop
 
     def _turn_off(self):
         """Turn power supply off."""
-        ret = self._execute_function(_c.TURN_OFF)
+        ret = self._execute_function(_c.F_TURN_OFF)
         if ret:
             _time.sleep(0.3)
         return ret
 
     def _select_op_mode(self, value):
         """Set operation mode."""
-        return self._execute_function(_c.SELECT_OP_MODE, value + 3)
+        return self._execute_function(_c.F_SELECT_OP_MODE, value + 3)
 
     def _reset_interlocks(self):
         """Reset."""
-        ret = self._execute_function(_c.RESET_INTERLOCKS)
+        ret = self._execute_function(_c.F_RESET_INTERLOCKS)
         if ret:
             _time.sleep(0.1)
         return ret
 
     def _set_slowref(self, value):
         """Set current."""
-        return self._execute_function(_c.SET_SLOWREF, value)
+        return self._execute_function(_c.F_SET_SLOWREF, value)
 
     def _cfg_siggen(self, t_siggen, num_cycles,
                     frequency, amplitude, offset, aux_params):
@@ -306,7 +306,7 @@ class FBPPowerSupply(Device):
         value = \
             [t_siggen, num_cycles, frequency, amplitude, offset]
         value.extend(aux_params)
-        return self._execute_function(_c.CFG_SIGGEN, value)
+        return self._execute_function(_c.F_CFG_SIGGEN, value)
 
     def _set_siggen(self, frequency, amplitude, offset):
         """Set siggen parameters in coninuous operation."""
@@ -315,11 +315,11 @@ class FBPPowerSupply(Device):
 
     def _enable_siggen(self):
         """Enable siggen."""
-        return self._execute_function(_c.ENABLE_SIGGEN)
+        return self._execute_function(_c.F_ENABLE_SIGGEN)
 
     def _disable_siggen(self):
         """Disable siggen."""
-        return self._execute_function(_c.DISABLE_SIGGEN)
+        return self._execute_function(_c.F_DISABLE_SIGGEN)
 
     # --- Methods called by write ---
 
@@ -423,17 +423,17 @@ class FBPPowerSupply(Device):
     def read_group(self, group_id):
         """Parse some variables.
 
-        Check to see if PS_STATE or FIRMWARE_VERSION are in the group, as these
+        Check to see if PS_STATE or V_FIRMWARE_VERSION are in the group, as these
         variables need further parsing.
         """
         var_ids = self.device.entities.list_variables(group_id)
         values = super().read_group(group_id)
-        if _c.PS_STATUS in var_ids:
+        if _c.V_PS_STATUS in var_ids:
             # TODO: values['PwrState-Sts'] == values['OpMode-Sts'] ?
             psc_status = _PSCStatus(ps_status=values['PwrState-Sts'])
             values['PwrState-Sts'] = psc_status.ioc_pwrstate
             values['OpMode-Sts'] = psc_status.ioc_opmode
-        if _c.FIRMWARE_VERSION in var_ids:
+        if _c.V_FIRMWARE_VERSION in var_ids:
             version = ''.join([c.decode() for c in values['Version-Cte']])
             try:
                 values['Version-Cte'], _ = version.split('\x00', 1)
@@ -444,7 +444,7 @@ class FBPPowerSupply(Device):
     def _read_variable(self, field):
         """Parse some variables.
 
-        Check to see if PS_STATE or FIRMWARE_VERSION are in the group, as these
+        Check to see if PS_STATE or V_FIRMWARE_VERSION are in the group, as these
         variables need further parsing.
         """
         val = super()._read_variable(field)

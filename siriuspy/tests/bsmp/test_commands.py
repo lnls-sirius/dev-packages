@@ -111,9 +111,9 @@ class TestBSMP0x1(unittest.TestCase):
         self.serial = Mock()
         self.entities = Mock()
         self.entities.variables = [
-            Variable(0, False, Types.t_uint16, 1),
-            Variable(1, False, Types.t_float, 1),
-            Variable(2, False, Types.t_float, 2),
+            Variable(0, False, Types.T_UINT16, 1),
+            Variable(1, False, Types.T_FLOAT, 1),
+            Variable(2, False, Types.T_FLOAT, 2),
             Variable(3, False, Types.t_char, 64)]
         self.entities.groups = [
             VariablesGroup(0, False, self.entities.variables),
@@ -346,7 +346,7 @@ class TestBSMP0x5(unittest.TestCase):
         self.serial = Mock()
         self.entities = Mock()
         self.entities.functions = [
-            Function(0, [Types.t_float], [Types.t_uint8]),
+            Function(0, [Types.T_FLOAT], [Types.T_UINT8]),
         ]
         self.bsmp = BSMP(self.serial, 1, self.entities)
 
