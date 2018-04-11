@@ -56,26 +56,69 @@ class PSCommInterface:
         raise NotImplementedError
 
 
-class FBPController(BSMP):
-    """FBP power supply."""
+class IOController:
+    """Power supply controller."""
 
-    def __init__(self, serial, slave_address):
+    def __init__(self, pru, ps_model):
         """Use FBPEntities."""
-        super().__init__(serial, slave_address, FBPEntities())
+        self._ps_model = ps_model
+
+        if ps_model == 'FBP':
+            self._bsmp_entities = FBPEntities()
+        else:
+            raise ValueError("Unknown model")
+
+        self._pru = pru
+        self._bsmp_conn = dict()
+
+    def __getitem__(self, index):
+        """Getitem."""
+        return self.bsmp_conn[index]
+
+    @property
+    def pru(self):
+        """PRU."""
+        return self._pru
+
+    @property
+    def bsmp_conn(self):
+        """Slaves."""
+        return self._bsmp_conn
+
+    def add_slave(self, slave_id):
+        """Add a BSMP slave to make serial communication."""
+        self.bsmp_conn[slave_id] = \
+            BSMP(self._pru, slave_id, self._bsmp_entities)
 
 
-class _ControllerSim:
+class IOControllerSim(IOController):
+    """Power supply controller for simulated bsmp."""
+
+    def add_slave(self, slave_id):
+        """Add a BSMP slave to make serial communication."""
+        if self._ps_model == 'FBP':
+            self.bsmp_conn[slave_id] = FBP_BSMPSim()
+        else:
+            raise ValueError("Unknown model")
+        # (self._pru, slave_id, self._bsmp_entities)
+
+
+class _BSMPSim:
     """Virtual controller."""
 
-    def __init__(self, entities):
+    def __init__(self, bsmp_entities):
         """Entities."""
         self._variables = []
-        self._entities = entities
+        self._bsmp_entities = bsmp_entities
+
+    def __getitem__(self, index):
+        """Getitem."""
+        return self.bsmp_conn[index]
 
     @property
     def entities(self):
         """PS entities."""
-        return self._entities
+        return self._bsmp_entities
 
     def read_variable(self, var_id):
         """Read a variable."""
@@ -101,7 +144,7 @@ class _ControllerSim:
         raise NotImplementedError()
 
 
-class FBPControllerSim(_ControllerSim):
+class FBP_BSMPSim(_BSMPSim):
     """Simulate a PS controller."""
 
     I_LOAD_FLUCTUATION_RMS = 0.01
@@ -175,7 +218,7 @@ class _FBPState:
         """Read variable."""
         if var_id == _c.I_LOAD:
             return variables[var_id] + \
-                _random.gauss(0.0, FBPControllerSim.I_LOAD_FLUCTUATION_RMS)
+                _random.gauss(0.0, FBP_BSMPSim.I_LOAD_FLUCTUATION_RMS)
         value = variables[var_id]
         return value
 
