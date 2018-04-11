@@ -36,7 +36,7 @@ def get_manames(bbbname):
     manames = set()
     psnames = PSSearch.conv_bbbname_2_psnames(bbbname)
     for psname in psnames:
-        maname = MASearch.conv_psname_2_maname(psname)
+        maname = MASearch.conv_psname_2_maname_pwrsupply(psname)
         manames.add(maname)
     return list(manames)
 
