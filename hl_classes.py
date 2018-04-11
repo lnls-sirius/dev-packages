@@ -243,14 +243,16 @@ class HL_Clock(_HL_Base):
         db = _cstime.get_hl_clock_database(self.prefix)
         return super().get_database(db)
 
-    def __init__(self, prefix, callback, cl_ll):
+    def __init__(self, cl_hl, callback):
         """Initialize the instance.
 
         cl_ll: clock number
         """
         self._interface_props = {'Freq', 'State'}
         self._my_state = {'Freq': 1.0, 'State': 0}
+        cl_ll = _cstime.clocks_hl2ll_map[cl_hl]
         self._ll_objs_names = [_EVG_NAME + ':' + cl_ll]
+        prefix = _EVG_NAME + ':' + cl_hl
         super().__init__(prefix, callback)
 
 
@@ -277,7 +279,7 @@ class HL_Event(_HL_Base):
         db[self._get_pv_name('ExtTrig')]['fun_set_pv'] = self.set_ext_trig
         return db
 
-    def __init__(self, prefix, callback, ev_ll):
+    def __init__(self, ev_hl, callback):
         """Initialize object.
 
         ev_ll: low level event code
@@ -285,7 +287,9 @@ class HL_Event(_HL_Base):
         self._interface_props = {'Delay', 'DelayType', 'Mode', 'ExtTrig'}
         self._my_state = {'Delay': 0, 'Mode': 1,
                           'DelayType': 1, 'ExtTrig': 0}
+        ev_ll = _cstime.events_hl2ll_map[ev_hl]
         self._ll_objs_names = [_EVG_NAME + ':' + ev_ll]
+        prefix = _EVG_NAME + ':' + ev_hl
         super().__init__(prefix, callback)
 
     def set_ext_trig(self, value):
