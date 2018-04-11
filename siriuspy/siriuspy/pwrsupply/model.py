@@ -47,6 +47,7 @@ class Device:
         self._init_setpoints()
 
     # API
+    @property
     def controller(self):
         """Controller."""
         return self._controller
@@ -109,8 +110,7 @@ class Device:
     def _read_group(self, group_id):
         """Read a group of variables and return a dict."""
         # Read values
-        sts, val = self.device.read_group_variables(
-            self._slave_address, group_id)
+        sts, val = self.device.read_group_variables(group_id)
         if sts == Response.ok:
             ret = dict()
             variables = self.device.entities.list_variables(group_id)
@@ -243,13 +243,13 @@ class FBPPowerSupply(Device):
         'CycleAuxParam-SP': '_cycle_aux_params',
     }
 
-    def __init__(self, controller, database):
+    def __init__(self, controller, slave_id, database):
         """High level PS.
 
         The controller object implements the BSMP interface.
         All properties map an epics field to a BSMP property.
         """
-        super().__init__(controller, database)
+        super().__init__(controller, slave_id, database)
         self._pru = self.controller.pru
         # TODO: check errors, create group 3?
         self.device.remove_all_groups()
