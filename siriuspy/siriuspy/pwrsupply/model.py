@@ -293,7 +293,9 @@ class FBPPowerSupply(Device):
 
     def _select_op_mode(self, value):
         """Set operation mode."""
-        return self._execute_function(_c.F_SELECT_OP_MODE, value)
+        psc_status = _PSCStatus()
+        psc_status.ioc_opmode = value
+        return self._execute_function(_c.F_SELECT_OP_MODE, psc_status.state)
 
     def _reset_interlocks(self):
         """Reset."""
