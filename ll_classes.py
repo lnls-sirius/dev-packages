@@ -57,10 +57,9 @@ class _Base:
         self._rf_div_pv.add_callback(self._update_base_freq)
 
         self._timer = None
-        self._initialize_my_state_sp(init_hl_state)
-
         self._pvs_sp = dict()
         self._pvs_rb = dict()
+        self._initialize_my_state_sp(init_hl_state, get_ll_state)
         self.connected = False
         self._queue = _QueueThread()
         self._queue.start()
@@ -181,10 +180,12 @@ class _Base:
             val = val.get(timeout=_conn_timeout)
         return def_val if val is None else val
 
-    def _initialize_my_state_sp(self, init_hl_state):
+    def _initialize_my_state_sp(self, init_hl_state, get_ll_state):
+        self._initializing = not get_ll_state
         for hl_prop, val in init_hl_state.items():
             dic_ = self._dict_functions_for_write[hl_prop](val)
             self._my_state_sp.update(dic_)
+        self._initializing = False
 
     def _force_equal(self):
         for ll_prop, pv in self._pvs_sp.items():
@@ -221,7 +222,7 @@ class _Base:
         if pvn == pvname or value is None:
             return  # make sure no -Cmd passes here
         prop = self._dict_convert_pv2prop[pvn]
-        self._my_state_sp[prop] = value
+        # self._my_state_sp[prop] = value
         fun = self._dict_functions_for_read[prop]
         props = fun(True, value)
         for hl_prop, val in props.items():
@@ -532,7 +533,11 @@ class _EVROUT(_Base):
         value *= _DELAY_UNIT_CONV  # us
         delay1 = int(value // self._base_del)
         dic_ = {'Delay': delay1}
-        del_type = self._my_state_sp.get('RFDelay', 0)  # Initialization issue
+        # Initialization issue
+        if self._initializing:
+            del_type = self._my_state_sp.get('RFDelay', 0)
+        else:
+            del_type = self._get_from_pvs(True, 'RFDelay')
         if del_type != 31:
             value -= delay1 * self._base_del
             delay2 = value // self._rf_del
@@ -614,16 +619,25 @@ class _EVROUT(_Base):
 
     def _set_duration(self, value):
         value *= 1e-3  # ms
-        pul = self._my_state_sp.get('Pulses', 1)  # Initialization issue
+        # Initialization issue
+        if self._initializing:
+            pul = self._my_state_sp.get('Pulses', 1)
+        else:
+            pul = self._get_from_pvs(True, 'Pulses', def_val=1)
         n = int(round(value / self._base_del / pul / 2))
         n = n if n >= 1 else 1
         return {'Width': n}
 
     def _set_pulses(self, value):
         if value < 1:
-            return
-        old_pul = self._my_state_sp.get('Pulses', 1)  # Initialization issue
-        old_wid = self._my_state_sp.get('Width', 1)  # Initialization issue
+            return dict()
+        # Initialization issue
+        if self._initializing:
+            old_pul = self._my_state_sp.get('Pulses', 1)
+            old_wid = self._my_state_sp.get('Width', 1)
+        else:
+            old_pul = self._get_from_pvs(True, 'Pulses', def_val=1)
+            old_wid = self._get_from_pvs(True, 'Width', def_val=1)
         return {
             'Pulses': int(value),
             'Width': int(round(old_wid*old_pul/value))
@@ -688,7 +702,7 @@ class _AFCCRT(_EVROUT):
 
     def _process_source(self, prop, is_sp, value=None):
         dic_ = dict()
-        dic_['Src'] = self._get_from_pvs(is_sp, 'Src', def_val=None)
+        dic_['Src'] = self._get_from_pvs(is_sp, 'Src')
         dic_['Evt'] = self._get_from_pvs(is_sp, 'Evt')
         if value is not None:
             dic_[prop] = value
