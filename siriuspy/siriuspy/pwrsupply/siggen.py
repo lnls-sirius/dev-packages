@@ -232,6 +232,12 @@ class SignalFactory:
 
     TYPES = {'Sine': 0, 'DampedSine': 1, 'Trapezoidal': 2}
 
+    DEFAULT_PARAMETERS = {
+        'Sine': [0, 1, 100.0, 0.0, 0.0, 0.0, 360.0, 0.0, 0.0],
+        'DampedSine': [1, 1, 100.0, 0.0, 0.0, 0.0, 360.0, 1.0, 0.0],
+        'Trapezoidal': [2, 1, 0.0, 0.0, 0.0, 0.01, 0.01, 0.01, 0.0],
+    }
+
     @staticmethod
     def factory(data=None, **kwargs):
         """Factory method.
@@ -254,33 +260,29 @@ class SignalFactory:
         theta_end -- Final phase [deg] (Sine|DampedSine)
         decay_time -- Decay time [s] (DampedSine)
         """
+        # set signal type
+        if 'type' in kwargs:
+            typ = kwargs['type']
+            if isinstance(typ, str):
+                typ = SignalFactory.TYPES[typ]
+        elif data is not None:
+            typ = data[0]
+        else:
+            typ = SignalFactory.TYPES['Sine']
+
+        # set ps controller initial values
         kw = dict()
         kw.update(kwargs)
-        if 'type' in kw and isinstance(kw['type'], str):
-            kw['type'] = SignalFactory.TYPES[kw['type']]
-        if kw['type'] == SignalFactory.TYPES['Trapezoidal']:
-            kw['num_cycles'] = 1
-            kw['freq'] = 0.0  # [A]
-            kw['amplitude'] = 0.0
-            kw['offset'] = 0.0  # [A]
-            kw['aux_param'] = [0.01, 0.01, 0.01, 0.0]
-        elif kw['type'] == SignalFactory.TYPES['Sine']:
-            kw['num_cycles'] = 1
-            kw['freq'] = 100.0  # [A]
-            kw['amplitude'] = 0.0
-            kw['offset'] = 0.0  # [A]
-            kw['aux_param'] = [0.0, 360.0, 0.0, 0.0]
-        elif kw['type'] == SignalFactory.TYPES['DampedSine']:
-            kw['num_cycles'] = 1
-            kw['freq'] = 100.0  # [A]
-            kw['amplitude'] = 0.0
-            kw['offset'] = 0.0  # [A]
-            kw['aux_param'] = [0.0, 360.0, 0.0, 0.0]
-            return SignalDampedSine(**kw)
-        else:
-            raise NotImplementedError('Signal type not implemented!')
+        kw['type'] = typ
+        p = SignalFactory.DEFAULT_PARAMETERS[typ]
+        kw['num_cycles'] = p[1]
+        kw['freq'] = p[2]  # [A]
+        kw['amplitude'] = p[3]
+        kw['offset'] = p[4]  # [A]
+        kw['aux_param'] = p[5:9]
 
-        # set default values
+        # process data argument
+        kw = dict()
         if data is not None:
             kw['type'] = data[0]
             kw['num_cycles'] = int(data[1])
@@ -289,6 +291,8 @@ class SignalFactory:
             kw['offset'] = float(data[4])
             kw['aux_param'] = [float(d) for d in data[5:9]]
 
+        # process type argument
+        kw.update(kwargs)
         if 'rampup_time' in kw:
             kw['aux_param'][0] = float(kw['rampup_time'])
         if 'rampdown_time' in kw:

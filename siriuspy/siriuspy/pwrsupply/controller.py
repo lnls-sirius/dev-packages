@@ -118,18 +118,15 @@ class FBP_BSMPSim(_BSMPSim):
     def __init__(self):
         """Use FBPEntities."""
         super().__init__(FBPEntities())
+
         # Set variables initial value
-        firmware = [b'S', b'i', b'm', b'u', b'l', b'a', b't', b'i', b'o', b'n']
-        while len(firmware) < 128:
-            firmware.append('\x00'.encode())
-        self._variables = [
-            0, 0.0, 0.0, firmware, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0,
-            [0.0, 0.0, 0.0, 0.0], 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0,
-            0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self._variables = self._get_init_variables()
+
         # Operation mode states
         self._states = [
             FBPSlowRefState(), FBPSlowRefState(), FBPCycleState(),
             FBPSlowRefState(), FBPSlowRefState(), FBPSlowRefState()]
+
         # Current state
         self._state = self._states[self.SlowRefState]
 
@@ -165,6 +162,26 @@ class FBP_BSMPSim(_BSMPSim):
             self._state.disable_siggen(self._variables)
 
         return Response.ok, None
+
+    def _get_init_variables(self):
+        firmware = [b'S', b'i', b'm', b'u', b'l', b'a', b't', b'i', b'o', b'n']
+        while len(firmware) < 128:
+            firmware.append('\x00'.encode())
+        variables = [
+            0, 0.0, 0.0, firmware, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0,
+            [0.0, 0.0, 0.0, 0.0], 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0,
+            0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        default_siggen_type = _SignalFactory.TYPES['Sine']
+        default_siggen_parms = \
+            _SignalFactory.DEFAULT_PARAMETERS[default_siggen_type]
+        variables[_c.V_SIGGEN_TYPE] = default_siggen_parms[0]
+        variables[_c.V_SIGGEN_NUM_CYCLES] = default_siggen_parms[1]
+        variables[_c.V_SIGGEN_FREQ] = default_siggen_parms[2]
+        variables[_c.V_SIGGEN_AMPLITUDE] = default_siggen_parms[3]
+        variables[_c.V_SIGGEN_OFFSET] = default_siggen_parms[4]
+        variables[_c.V_SIGGEN_AUX_PARAM] = default_siggen_parms[5]
+        return variables
+
 
     def _is_on(self):
         ps_status = self._variables[_c.V_PS_STATUS]
