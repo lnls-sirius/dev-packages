@@ -108,20 +108,13 @@ class App:
         self.driver.updatePVs()
 
     def _isValid(self, reason, value):
-        if reason.endswith(('-Sts', '-RB', '-Mon')):
-            return False
-        enums = (self._database[reason].get('enums') or
-                 self._database[reason].get('Enums'))
+        enums = self._database[reason].get('enums')
         if enums is not None:
             if isinstance(value, int):
                 len_ = len(enums)
                 if value >= len_:
                     _log.warning('value {0:d} too large '.format(value) +
                                  'for PV {0:s} of type enum'.format(reason))
-                    return False
-            elif isinstance(value, str):
-                if value not in enums:
-                    _log.warning('Value {0:s} not permited'.format(value))
                     return False
         return True
 
