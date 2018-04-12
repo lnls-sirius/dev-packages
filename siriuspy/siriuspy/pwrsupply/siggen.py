@@ -1,6 +1,7 @@
 """Power Supply Signal Generator."""
 
 import time as _t
+import math as _math
 # import numpy as _np
 
 
@@ -24,8 +25,8 @@ class Signal:
         self.offset = offset
         self.aux_param = aux_param
         self.enable = True
-        self.init_tstamp = _t.time()
-        self.last_delta = self.init_tstamp
+        self.time_init = _t.time()
+        self.time_delta = self.time_init
 
     @property
     def duration(self):
@@ -36,8 +37,8 @@ class Signal:
     def value(self):
         """Return current signal value."""
         if self.enable:
-            self.last_delta = _t.time() - self.init_tstamp
-        return self._get_value(self.last_delta)
+            self.time_delta = _t.time() - self.time_init
+        return self._get_value(self.time_delta)
 
     @property
     def cycle_time(self):
@@ -141,7 +142,7 @@ class Signal:
     def _get_cycle_time(self):
         raise NotImplementedError
 
-    def _get_value(self, delta):
+    def _get_value(self, time_delta):
         raise NotImplementedError
 
 
@@ -149,7 +150,7 @@ class SignalTrapezoidal(Signal):
     """Trapezoidal signal."""
 
     def __init__(self, **kwargs):
-        """Signal parameters."""
+        """Init method."""
         super().__init__(**kwargs)
 
     def _get_duration(self):
@@ -158,12 +159,12 @@ class SignalTrapezoidal(Signal):
     def _get_cycle_time(self):
         return self.rampup_time + self.plateau_time + self.rampdown_time
 
-    def _get_value(self, delta):
-        if self.duration > 0 and delta > self.duration:
+    def _get_value(self, time_delta):
+        if self.duration > 0 and time_delta > self.duration:
             # self.enable = False
             return self.offset
         else:
-            cycle_pos = delta % self.cycle_time
+            cycle_pos = time_delta % self.cycle_time
             target = self.offset + self.amplitude
             if cycle_pos < self.rampup_time:
                 return self.offset + \
@@ -182,6 +183,48 @@ class SignalTrapezoidal(Signal):
             self.plateau_time = 0.1
         if self.rampdown_time == 0:
             self.rampdown_time = 0.1
+
+
+class SignalSine(Signal):
+    """Sine signal."""
+
+    def __init__(self, **kwargs):
+        """Init method."""
+        super().__init__(**kwargs)
+
+    def _get_duration(self):
+        return self.num_cycles / self.freq
+
+    def _get_cycle_time(self):
+        return 1.0 / self.freq
+
+    def _get_value(self, time_delta):
+        if self.duration > 0 and time_delta > self.duration:
+            # self.enable = False
+            return self.offset
+        else:
+            value = self.offset + self._get_sin_signal(time_delta)
+            return value
+
+    def _get_sin_signal(self, time_delta):
+        # TODO: use theta_beg and theta_end!
+        value = self.amplitude * \
+            _math.sin(2 * _math.pi * self.freq * time_delta)
+        return value
+
+
+class SignalDampedSine(SignalSine):
+    """DampedSine signal."""
+
+    def __init__(self, **kwargs):
+        """Init method."""
+        super().__init__(**kwargs)
+
+    def _get_sin_signal(self, time_delta):
+        sinsig = super()._get_sin_signal(time_delta)
+        expsig = _math.exp(-time_delta/self.decay_time)
+        value = self.offset + sinsig * expsig
+        return value
 
 
 class SignalFactory:
@@ -204,15 +247,30 @@ class SignalFactory:
         # theta_begin=None,  # [deg] Sine, DampedSine
         # theta_end=None,  # [deg] Sine, DampedSine
         # decay_time=None):  # [s] DampedSine
+        #
         kw = dict()
-        kw['num_cycles'] = 1
-        kw['freq'] = 100.0  # [A]
-        kw['amplitude'] = 0.0
-        kw['offset'] = 0.0  # [A]
-        kw['aux_param'] = [0.0, 360.0, 0.0, 0.0]
         kw.update(kwargs)
         if 'type' in kw and isinstance(kw['type'], str):
             kw['type'] = SignalFactory.TYPES[kw['type']]
+
+        if kw['type'] == SignalFactory.TYPES['Trapezoidal']:
+            return SignalTrapezoidal(**kw)
+        elif kw['type'] == SignalFactory.TYPES['Sine']:
+            kw['num_cycles'] = 1
+            kw['freq'] = 100.0  # [A]
+            kw['amplitude'] = 0.0
+            kw['offset'] = 0.0  # [A]
+            kw['aux_param'] = [0.0, 360.0, 0.0, 0.0]
+        elif kw['type'] == SignalFactory.TYPES['DampedSine']:
+            kw['num_cycles'] = 1
+            kw['freq'] = 100.0  # [A]
+            kw['amplitude'] = 0.0
+            kw['offset'] = 0.0  # [A]
+            kw['aux_param'] = [0.0, 360.0, 0.0, 0.0]
+            return SignalDampedSine(**kw)
+        else:
+            raise NotImplementedError('Signal type not implemented!')
+
 
         # set default values
         if data is not None:
@@ -238,5 +296,9 @@ class SignalFactory:
 
         if type == SignalFactory.TYPES['Trapezoidal']:
             return SignalTrapezoidal(**kw)
+        elif type == SignalFactory.TYPES['Sine']:
+            return SignalSine(**kw)
+        elif type == SignalFactory.TYPES['DampedSine']:
+            return SignalDampedSine(**kw)
         else:
-            return SignalTrapezoidal(**kw)
+            raise NotImplementedError('Signal type not implemented!')
