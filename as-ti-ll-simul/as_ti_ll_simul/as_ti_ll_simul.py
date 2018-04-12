@@ -8,11 +8,11 @@ import logging as _log
 import signal as _signal
 import pcaspy as _pcaspy
 import pcaspy.tools as _pcaspy_tools
-from siriuspy.util import get_last_commit_hash as _get_version
+from siriuspy import util as _util
 from siriuspy.envars import vaca_prefix as PREFIX
 from siriuspy.timesys.time_simul import TimingSimulation
 
-__version__ = _get_version()
+__version__ = _util.get_last_commit_hash()
 INTERVAL = 0.1
 RFFREQ = 500000000
 stop_event = False
@@ -142,12 +142,14 @@ def run(debug=False):
     _signal.signal(_signal.SIGTERM, _stop_now)
 
     # Creates App object
-    _log.info('Generating database file.')
-    fname = 'AS-TI-LL-SIMUL'
+    ioc_name = 'AS-TI-LL-SIMUL'
     db = App.get_database()
     db.update({fname+'Version-Cte': {'type': 'string', 'value': __version__}})
+    _log.info('Generating database file.')
+    _util.save_ioc_pv_list(ioc_name.lower(), PREFIX, db)
+    _log.info('File generated with {0:d} pvs.'.format(len(db)))
+
     _attribute_acces_security_group(db)
-    _print_pvs_in_file(db, fname=fname+'pvs.txt')
 
     # create a new simple pcaspy server and driver to respond client's requests
     _log.info('Creating Server.')
