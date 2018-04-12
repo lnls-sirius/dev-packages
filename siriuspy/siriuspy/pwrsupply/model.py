@@ -23,6 +23,7 @@ from ..bsmp import Response
 from ..bsmp import SerialError as _SerialError
 from .status import PSCStatus as _PSCStatus
 from siriuspy.pwrsupply.bsmp import Const as _c
+from siriuspy.pwrsupply.bsmp import ps_group_id as _ps_group_id
 
 
 class Device:
@@ -262,7 +263,7 @@ class FBPPowerSupply(Device):
 
     def read_ps_variables(self):
         """Read called to update DB."""
-        return self._read_group(3)
+        return self._read_group(_ps_group_id)
 
     def read_status(self):
         """Read fields that are not setpoinrs nor bsmp variables."""
@@ -277,7 +278,7 @@ class FBPPowerSupply(Device):
         ret = self._execute_function(_c.F_TURN_ON)
         if ret:
             _time.sleep(0.3)
-            return self._execute_function(3)  # Close control loop
+            return self._execute_function(_ps_group_id)  # Close control loop
 
     def _turn_off(self):
         """Turn power supply off."""

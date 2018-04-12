@@ -127,6 +127,7 @@ class _BSMPSim:
 
     def read_variable(self, var_id):
         """Read a variable."""
+        print(var_id)
         return Response.ok, self._variables[var_id]
 
     def remove_all_groups(self):
@@ -137,7 +138,9 @@ class _BSMPSim:
     def read_group_variables(self, group_id):
         """Read group of variables."""
         ids = [var.eid for var in self.entities.groups[group_id].variables]
-        return Response.ok, [self.read_variable(id)[1] for id in ids]
+        # print('here')
+        values = [self.read_variable(id)[1] for id in ids]
+        return Response.ok, values
 
     def create_group(self, var_ids):
         """Create new group."""

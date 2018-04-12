@@ -85,7 +85,7 @@ class Const:
     # --- variables groups ---
 
 
-group_id = 3  # default variables group ID defined for power supplies
+ps_group_id = 3  # default variables group ID defined for power supplies
 
 
 class FBPEntities(_Entities):
