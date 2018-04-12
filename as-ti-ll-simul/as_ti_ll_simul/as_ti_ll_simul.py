@@ -129,13 +129,7 @@ class App:
 def run(debug=False):
     """Start the IOC."""
 
-    level = _log.DEBUG if debug else _log.INFO
-    fmt = ('%(levelname)7s | %(asctime)s | ' +
-           '%(module)15s.%(funcName)20s[%(lineno)4d] ::: %(message)s')
-    _log.basicConfig(format=fmt, datefmt='%F %T', level=level,
-                     stream=_sys.stdout)
-    #  filename=LOG_FILENAME, filemode='w')
-    _log.info('Starting...')
+    _util.configure_log_file(debug=debug)
 
     # define abort function
     _signal.signal(_signal.SIGINT, _stop_now)
