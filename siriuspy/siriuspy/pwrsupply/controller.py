@@ -358,24 +358,18 @@ class FBPCycleState(_FBPState):
             self._signal.enable = False
 
     def _set_signal(self, variables):
+        t = variables[_c.V_SIGGEN_TYPE]
         n = variables[_c.V_SIGGEN_NUM_CYCLES]
-        # f = variables[_c.V_SIGGEN_FREQ]
+        f = variables[_c.V_SIGGEN_FREQ]
         a = variables[_c.V_SIGGEN_AMPLITUDE]
         o = variables[_c.V_SIGGEN_OFFSET]
-        aux = variables[_c.V_SIGGEN_AUX_PARAM]
-        # Switch Type
-        # t = variables[_c.V_SIGGEN_TYPE]:
-        # if t == 0:
-        # elif t == 1:
-        # elif t == 2:
-        #     self._signal = Trapezoidal(n, a, o, aux)
-        # else:
-        #     raise ValueError()
-        self._signal = _SignalFactory.factory(type='Trapezoidal',
+        p = variables[_c.V_SIGGEN_AUX_PARAM]
+        self._signal = _SignalFactory.factory(type=t,
                                               num_cycles=n,
+                                              freq=f,
                                               amplitude=a,
                                               offset=o,
-                                              aux_param=aux)
+                                              aux_param=p)
 
     def _finish_siggen(self, variables, time):
         time_up = False

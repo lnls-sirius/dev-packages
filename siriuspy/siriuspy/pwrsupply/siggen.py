@@ -234,27 +234,36 @@ class SignalFactory:
 
     @staticmethod
     def factory(data=None, **kwargs):
-        """Init method."""
-        # type
-        # num_cycles=None,  # Sine, DampedSine, Trapezoidal
-        # freq=None,  # [Hz] Sine, DampedSine
-        # amplitude=None,  # [A] Sine, DampedSine, Trapezoidal
-        # offset=None,  # [A] Sine, DampedSine, Trapezoidal
-        # aux_param=None,  # Sine, DampedSine, Trapezoidal
-        # rampup_time=None,  # [s] Trapezoidal
-        # rampdown_time=None,  # [s] Trapezoidal
-        # plateau_time=None,  # [s] Trapezoidal
-        # theta_begin=None,  # [deg] Sine, DampedSine
-        # theta_end=None,  # [deg] Sine, DampedSine
-        # decay_time=None):  # [s] DampedSine
-        #
+        """Factory method.
+
+            This methods returns a Signal object corresponding to the
+        selected type.
+
+        Valid arguments:
+
+        type -- Signal type , int or str, (Sine|DampedSine|Trapezoidal)
+        num_cycles -- Number of cycles, int, (Sine, DampedSine, Trapezoidal)
+        freq -- Frequency [Hz], float, (Sine|DampedSine)
+        amplitude -- Amplitude [A], float, (Sine|DampedSine|Trapezoidal)
+        offset -- Offset [A], float, (Sine|DampedSine|Trapezoidal)
+        aux_param -- Aux. Parameters, float4, (Sine|DampedSine|Trapezoidal)
+        rampup_time -- Rampup time [s], float, (Trapezoidal)
+        rampdown_time -- Rampdown time [s], float, (Trapezoidal)
+        plateau_time -- Plateau time [s], float, (Trapezoidal)
+        theta_begin -- Initial phase [deg] (Sine|DampedSine)
+        theta_end -- Final phase [deg] (Sine|DampedSine)
+        decay_time -- Decay time [s] (DampedSine)
+        """
         kw = dict()
         kw.update(kwargs)
         if 'type' in kw and isinstance(kw['type'], str):
             kw['type'] = SignalFactory.TYPES[kw['type']]
-
         if kw['type'] == SignalFactory.TYPES['Trapezoidal']:
-            return SignalTrapezoidal(**kw)
+            kw['num_cycles'] = 1
+            kw['freq'] = 0.0  # [A]
+            kw['amplitude'] = 0.0
+            kw['offset'] = 0.0  # [A]
+            kw['aux_param'] = [0.01, 0.01, 0.01, 0.0]
         elif kw['type'] == SignalFactory.TYPES['Sine']:
             kw['num_cycles'] = 1
             kw['freq'] = 100.0  # [A]
@@ -270,7 +279,6 @@ class SignalFactory:
             return SignalDampedSine(**kw)
         else:
             raise NotImplementedError('Signal type not implemented!')
-
 
         # set default values
         if data is not None:
@@ -300,5 +308,3 @@ class SignalFactory:
             return SignalSine(**kw)
         elif type == SignalFactory.TYPES['DampedSine']:
             return SignalDampedSine(**kw)
-        else:
-            raise NotImplementedError('Signal type not implemented!')
