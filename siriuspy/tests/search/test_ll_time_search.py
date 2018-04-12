@@ -35,7 +35,6 @@ class TestLLTimeSearch(unittest.TestCase):
         'i2o_map',
         'o2i_map',
         'get_channel_input',
-        'plot_network',
         'add_crates_info',
         'add_bbb_info',
         'get_devices_by_type',
@@ -72,11 +71,6 @@ class TestLLTimeSearch(unittest.TestCase):
 
     def test_get_channel_input(self):
         """Test get_channel_input."""
-        # TODO: implement test!
-        pass
-
-    def test_plot_network(self):
-        """Test plot_network."""
         # TODO: implement test!
         pass
 

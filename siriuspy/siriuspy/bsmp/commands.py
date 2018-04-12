@@ -1,0 +1,186 @@
+"""BSMP protocol implementation."""
+from .serial import Channel as _Channel
+from .serial import Message as _Message
+
+
+class Response:
+    """BSMP constants."""
+
+    ok = 0xE0
+    invalid_message = 0xE1
+    operation_not_supported = 0xE2
+    invalid_id = 0xE3
+    invalid_value = 0xE4
+    invalid_data_length = 0xE5
+    read_only = 0xE6
+    insufficient_memory = 0xE7
+    busy_resource = 0xE8
+
+
+class BSMP:
+    """BSMP protocol implementation for Master Node."""
+
+    def __init__(self, serial, slave_address, entities):
+        """Constructor."""
+        self._channel = _Channel(serial, slave_address)
+        # self._variables = self.read_variables_list()
+        self._entities = entities
+        # Variables group cache
+        self._group_cache = dict()
+
+    @property
+    def entities(self):
+        """BSMP entities."""
+        return self._entities
+
+    @property
+    def channel(self):
+        """Serial channel to an address."""
+        return self._channel
+
+    # 0x0_
+    def consult_protocol_version(self):
+        """Consult protocol version. Command 0x00."""
+        raise NotImplementedError()
+
+    def consult_variables_list(self):
+        """Consult list of variables. Command 0x02."""
+        raise NotImplementedError()
+
+    def consult_groups_list(self):
+        """Consult groups list. Command 0x04."""
+        raise NotImplementedError()
+
+    def consult_group_variables(self, group_id):
+        """Return id of the variables in the given group. Command 0x06."""
+        # Send requestG package
+        m = _Message.message(0x06, payload=[chr(group_id)])
+        response = self.channel.request(m)
+        # Check for errors
+        if response.cmd == 0x07:
+            return Response.ok, list(map(ord, response.payload))
+        else:  # Error
+            if response.cmd > 0xE0 and response.cmd <= 0xE8:
+                return response.cmd, None
+
+        return None, None
+
+    def consult_curves_list(self):
+        """Consult curves_list. Command 0x08."""
+        raise NotImplementedError()
+
+    def consult_curve_checksum(self, curve_id):
+        """Consult curve checksum given curve id. Command 0x0A."""
+        raise NotImplementedError()
+
+    def consult_functions_list(self):
+        """Consult functions list. Command 0x0C."""
+        raise NotImplementedError()
+
+    # 0x1_
+    def read_variable(self, var_id):
+        """Read variable. (0x10)."""
+        variable = self.entities.variables[var_id]
+        m = _Message.message(0x10, payload=[chr(var_id)])
+        response = self.channel.request(m)  # Returns a message
+        if response.cmd == 0x11:  # Ok
+            if len(response.payload) == variable.size:
+                return Response.ok, variable.load_to_value(response.payload)
+        else:  # Error
+            if response.cmd > 0xE0 and response.cmd <= 0xE8:
+                return response.cmd, None
+        return None, None
+
+    def read_group_variables(self, group_id):
+        """Read variable group. (0x12)."""
+        group = self.entities.groups[group_id]
+        m = _Message.message(0x12, payload=[chr(group_id)])
+        response = self.channel.request(m)
+        if response.cmd == 0x13:
+            if len(response.payload) == group.variables_size():
+                return Response.ok, group.load_to_value(response.payload)
+        else:
+            if response.cmd > 0xE0 and response.cmd <= 0xE8:
+                return response.cmd, None
+
+        return None, None
+
+    # 0x2
+    def write_variable(self, var_id, value):
+        """Write to variable. Command 0x20."""
+        raise NotImplementedError()
+
+    def write_group_variables(self, group_id, value):
+        """Write to the variables of a group. Command 0x22."""
+        raise NotImplementedError()
+
+    def binop_variable(self, var_id, op, mask):
+        """Perform a binary operation to variable. Command 0x24."""
+        raise NotImplementedError()
+
+    def binop_group_variables(self, group_id, op, mask):
+        """Perform a binary oeration to the vars of a group. Command 0x26."""
+        raise NotImplementedError()
+
+    def write_read_variable(self, w_var_id, r_var_id, value):
+        """Write value to a var and read another var value. Command 0x28."""
+        raise NotImplementedError()
+
+    # 0x3_
+    def create_group(self, var_ids):
+        """Create new group with given variable ids. Command 0x30."""
+        var_ids = sorted(var_ids)
+        m = _Message.message(0x30, payload=[chr(var_id) for var_id in var_ids])
+        response = self.channel.request(m)
+        if response.cmd == 0xE0:
+            if len(response.payload) == 0:
+                self.entities.add_group(var_ids)
+                return Response.ok, None
+        else:
+            if response.cmd > 0xE0 and response.cmd <= 0xE8:
+                return response.cmd, None
+
+        return None, None
+
+    def remove_all_groups(self):
+        """Remove all groups. Command 0x32."""
+        m = _Message.message(0x32)
+        response = self.channel.request(m)
+        if response.cmd == 0xE0:
+            if len(response.payload) == 0:
+                self.entities.remove_all_groups()
+                return Response.ok, None
+        else:
+            if response.cmd > 0xE0 and response.cmd <= 0xE8:
+                return response.cmd, None
+
+        return None, None
+
+    # 0x4_
+    def read_curve_block(self, curve_id, block):
+        """Read curve block. Command 0x40."""
+        raise NotImplementedError()
+
+    def write_curve_block(self, curve_id, block, value):
+        """Write to curve block. Command 0x41."""
+        raise NotImplementedError()
+
+    def calc_curve_checksum(self, curve_id):
+        """Recalculate curve checksum. Command 0x42."""
+        raise NotImplementedError()
+
+    # 0x5_
+    def execute_function(self, func_id, input_val=None):
+        """Execute a function. Command 0x50."""
+        function = self.entities.functions[func_id]
+        # Load = function id + input data
+        load = [chr(func_id)] + function.value_to_load(input_val)
+        m = _Message.message(0x50, payload=load)
+        response = self.channel.request(m)
+        if response.cmd == 0x51:
+            if len(response.payload) == function.o_size:
+                return Response.ok, function.load_to_value(response.payload)
+        elif response.cmd == 0x53:
+            if len(response.payload) == 1:
+                return response.payload, None
+        return None, None

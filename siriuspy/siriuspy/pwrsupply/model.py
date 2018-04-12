@@ -2,370 +2,546 @@
 
 import re as _re
 import time as _time
-import numpy as _np
-from threading import Thread as _Thread
-from threading import Lock as _Lock
+# import random as _random
+
 from epics import PV as _PV
 
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.envars import vaca_prefix as _VACA_PREFIX
-from siriuspy.csdevice.pwrsupply import max_wfmsize as _max_wfmsize
+# from siriuspy.csdevice.pwrsupply import max_wfmsize as _max_wfmsize
 from siriuspy.factory import NormalizerFactory as _NormalizerFactory
 from siriuspy.epics import connection_timeout as _connection_timeout
 from siriuspy.thread import QueueThread as _QueueThread
 from siriuspy.epics.computed_pv import ComputedPV as _ComputedPV
 from siriuspy.pwrsupply.data import PSData as _PSData
-from siriuspy.pwrsupply.controller import PSCommInterface as _PSCommInterface
 from siriuspy.magnet.data import MAData as _MAData
 from siriuspy.magnet import util as _mutil
 from siriuspy.pwrsupply import sync as _sync
+# PowerSupply
+from ..bsmp import Response
+from ..bsmp import SerialError as _SerialError
+from .status import PSCStatus as _PSCStatus
+from siriuspy.pwrsupply.bsmp import Const as _c
+from siriuspy.pwrsupply.bsmp import ps_group_id as _ps_group_id
 
 
-class PowerSupply(_PSCommInterface):
-    """Abstract control-system power supply class.
+class Device:
+    """Control a device using BSMP protocol."""
 
-        Objects of this class are used to interact with power supplies in the
-    control-system using the implemented PSCommInterface. This class should
-    work for any psmodel type.
-    """
+    # Setpoints regexp pattern
+    _sp = _re.compile('^.*-(SP|Sel|Cmd)$')
 
-    CONNECTED = 'CONNECTED'
-    SCAN_FREQUENCY = 10.0  # [Hz]
-    _is_setpoint = _re.compile('.*-(SP|Sel|Cmd)$')
-
-    # power supply objet, not controller's, is responsible to provide state
-    # of the following fields:
-    _db_const_fields = ('IntlkSoftLabels-Cte',
-                        'IntlkHardLabels-Cte')
-
-    def __init__(self, psname, controller):
-        """Init method."""
-        _PSCommInterface.__init__(self)
-        self._lock = _Lock()
-        self._lock.acquire()
-        self._field_values = {}  # dict with last read field values
-        self._initialized = False
-        self._prev_connected = None
-        self._lock.release()
-        self._psdata = _PSData(psname=psname)
+    def __init__(self, controller, slave_id, database):
+        """Control a device using BSMP protocol."""
+        self._connected = False
+        self._slave_id = slave_id
         self._controller = controller
-        self._updating = True
-        self._base_db = self._get_base_db()
-        self._setpoints = self._build_setpoints()
-        self._callbacks = {}
-        self._thread_scan = _Thread(target=self._scan_fields)
-        self._thread_scan.setDaemon(True)
-        self._thread_scan.start()
+        self._database = database
+
+        # add current device as slave to used controller
+        self._controller.add_slave(slave_id)
+
+        # initialize setpoints
+        self._setpoints = dict()
+        for field, db in self.database.items():
+            if self._sp.match(field):
+                self._setpoints[field] = db
+        self._init_setpoints()
+
+    # API
+    @property
+    def controller(self):
+        """Controller."""
+        return self._controller
 
     @property
-    def psdata(self):
-        """Return PSData object."""
-        return self._psdata
+    def device(self):
+        """BSMP instance for this device."""
+        return self._controller[self._slave_id]
 
     @property
-    def updating(self):
-        """Return updating state."""
-        return self._updating
+    def database(self):
+        """Device database."""
+        return self._database
 
-    @updating.setter
-    def updating(self, value):
-        """Set updating state."""
-        self._updating = value
+    @property
+    def setpoints(self):
+        """Device setpoints."""
+        return self._setpoints
 
-    # --- PSCommInterface implementation ---
+    @property
+    def connected(self):
+        """Return connection state."""
+        return self._connected
+
+    @connected.setter
+    def connected(self, value):
+        self._connected = value
 
     def read(self, field):
-        """Read field value."""
-        # Check CtrlMode?
-        if PowerSupply._is_setpoint.match(field):
-            # why not use _base_db to store setpoints?
-            return self._setpoints[field]['value']
-        if field in PowerSupply._db_const_fields:
-                return self._base_db[field]['value']
+        """Read a field from device."""
+        if field in self._setpoints:
+            value = self.setpoints[field]['value']
         else:
-            return self._controller.read(field)
+            try:
+                value = self._read_variable(field)
+            except _SerialError:
+                self.connected = False
+                return None
+            self.connected = True
+        return value
 
     def write(self, field, value):
-        """Write value to field."""
-        if field in self._setpoints:
-            func = self._setpoints[field]['func']
-            return func(value)
+        """Write to device field."""
+        try:
+            if field in self._setpoints:
+                self._write_setpoint(field, value)  # SerialError
+            else:
+                pass  # SerialError
+            self.connected = True
+        except _SerialError:
+            self.connected = False
+            return False
+        return True
 
-    def _connected(self):
-        return self._controller.connected
+    def read_all_variables(self):
+        """Read all variables."""
+        return self._read_group(0)
+
+    # Groups
+    def _read_group(self, group_id):
+        """Read a group of variables and return a dict."""
+        # Read values
+        sts, val = self.device.read_group_variables(group_id)
+        if sts == Response.ok:
+            ret = dict()
+            variables = self.device.entities.list_variables(group_id)
+            for idx, var_id in enumerate(variables):
+                try:  # TODO: happens because bsmp_2_epics is not complete
+                    field = self.bsmp_2_epics[var_id]
+                except KeyError:
+                    continue
+                if isinstance(field, tuple):
+                    for f in field:
+                        ret[f] = val[idx]
+                else:
+                    ret[field] = val[idx]
+            return ret
+        return None
+
+    def _create_group(self, fields):
+        """Create a group of variables."""
+        ids = set()
+        for field in fields:
+            ids.add(self.epics_2_bsmp[field])
+        sts, _ = self.device.create_group(ids)
+        if sts == Response.ok:
+            return True
+        return False
+
+    # IOC
+    def read_setpoints(self):
+        """Read sepoints."""
+        ret = dict()
+        for setpoint, db in self.setpoints.items():
+            ret[setpoint] = db['value']
+        return ret
+
+    def read_status(self):
+        """Read parameters."""
+        return {}
+
+    def _init_setpoints(self):
+        try:
+            values = self.read_all_variables()
+        except Exception as e:
+            print('{}'.format(e))
+            pass
+        else:
+            # Init Setpoints
+            for setpoint in self.setpoints:
+                if '-Cmd' in setpoint:
+                    continue
+                readback = \
+                    setpoint.replace('-Sel', '-Sts').replace('-SP', '-RB')
+                try:
+                    self.setpoints[setpoint]['value'] = values[readback]
+                except KeyError:
+                    continue
+            self._connected = True
+
+    def _read_variable(self, field):
+        var_id = self.epics_2_bsmp[field]
+        sts, val = self.device.read_variable(var_id)
+        if sts == Response.ok:
+            return val
+        else:
+            return None
+
+    def _execute_function(self, func_id, value=None):
+        sts, val = self.device.execute_function(func_id, value)
+        if sts == Response.ok:
+            return True
+        else:
+            return False
+
+    def _write_setpoint(self, field, value):
+        """Map a setpoint to a controller operation."""
+        raise NotImplementedError()
+
+
+class FBPPowerSupply(Device):
+    """Control a power supply using BSMP protocol."""
+
+    bsmp_2_epics = {
+        _c.V_PS_STATUS: ('PwrState-Sts', 'OpMode-Sts'),
+        _c.V_PS_SETPOINT: 'Current-RB',
+        _c.V_PS_REFERENCE: 'CurrentRef-Mon',
+        _c.V_FIRMWARE_VERSION: 'Version-Cte',
+        _c.V_SIGGEN_ENABLE: 'CycleEnbl-Mon',
+        _c.V_SIGGEN_TYPE: 'CycleType-Sts',
+        _c.V_SIGGEN_NUM_CYCLES: 'CycleNrCycles-RB',
+        _c.V_SIGGEN_N: 'CycleIndex-Mon',
+        _c.V_SIGGEN_FREQ: 'CycleFreq-RB',
+        _c.V_SIGGEN_AMPLITUDE: 'CycleAmpl-RB',
+        _c.V_SIGGEN_OFFSET: 'CycleOffset-RB',
+        _c.V_SIGGEN_AUX_PARAM: 'CycleAuxParam-RB',
+        _c.V_PS_SOFT_INTERLOCKS: 'IntlkSoft-Mon',
+        _c.V_PS_HARD_INTERLOCKS: 'IntlkHard-Mon',
+        _c.V_I_LOAD: 'Current-Mon',
+    }
+
+    epics_2_bsmp = {
+        'PwrState-Sts': _c.V_PS_STATUS,
+        'OpMode-Sts': _c.V_PS_STATUS,
+        'Current-RB': _c.V_PS_SETPOINT,
+        'CurrentRef-Mon': _c.V_PS_REFERENCE,
+        'Version-Cte': _c.V_FIRMWARE_VERSION,
+        'CycleEnbl-Mon': _c.V_SIGGEN_ENABLE,
+        'CycleType-Sts': _c.V_SIGGEN_TYPE,
+        'CycleNrCycles-RB': _c.V_SIGGEN_NUM_CYCLES,
+        'CycleIndex-Mon': _c.V_SIGGEN_N,
+        'CycleFreq-RB': _c.V_SIGGEN_FREQ,
+        'CycleAmpl-RB': _c.V_SIGGEN_AMPLITUDE,
+        'CycleOffset': _c.V_SIGGEN_OFFSET,
+        'CycleAuxParam-RB': _c.V_SIGGEN_AUX_PARAM,
+        'IntlkSoft-Mon': _c.V_PS_SOFT_INTERLOCKS,
+        'IntlkHard-Mon': _c.V_PS_HARD_INTERLOCKS,
+        'Current-Mon': _c.V_I_LOAD,
+    }
+
+    _epics_2_wfuncs = {
+        'PwrState-Sel': '_set_pwrstate',
+        'OpMode-Sel': '_set_opmode',
+        'Current-SP': '_set_current',
+        'Reset-Cmd': '_reset',
+        'CycleEnbl-Cmd': '_enable_cycle',
+        'CycleDsbl-Cmd': '_disable_cycle',
+        'CycleType-Sel': '_set_cycle_type',
+        'CycleNrCycles-SP': '_set_cycle_nr_cycles',
+        'CycleFreq-SP': '_set_cycle_frequency',
+        'CycleAmpl-SP': '_set_cycle_amplitude',
+        'CycleOffset-SP': '_set_cycle_offset',
+        'CycleAuxParam-SP': '_set_cycle_aux_params',
+        'WfmData-SP': '_set_wfmdata_sp',
+    }
+
+    def __init__(self, controller, slave_id, database):
+        """High level PS.
+
+        The controller object implements the BSMP interface.
+        All properties map an epics field to a BSMP property.
+        """
+        super().__init__(controller, slave_id, database)
+        self._pru = self.controller.pru
+
+        # initialize groups
+        self.device.remove_all_groups()  # TODO: check errors, create group 3?
+        var_ids = self.device.entities.list_variables(group_id=0)
+        var_ids.remove(_c.V_FIRMWARE_VERSION)
+        self.device.create_group(var_ids=var_ids)
+
+        # close DSP loop
+        # TODO: this breaks the concept that the IOC should init w/o setting PS
+        self.device.execute_function(_c.F_CLOSE_LOOP)
+
+    def read_ps_variables(self):
+        """Read called to update DB."""
+        return self._read_group(_ps_group_id)
+
+    def read_status(self):
+        """Read fields that are not setpoinrs nor bsmp variables."""
+        ret = dict()
+        ret['WfmData-RB'] = self.database['WfmData-RB']['value']
+        ret['WfmIndex-Mon'] = self.controller.pru.sync_pulse_count
+        return ret
+
+    # BSMP specific
+    def _turn_on(self):
+        """Turn power supply on."""
+        ret = self._execute_function(_c.F_TURN_ON)
+        if ret:
+            _time.sleep(0.3)
+            return self._execute_function(_ps_group_id)  # Close control loop
+
+    def _turn_off(self):
+        """Turn power supply off."""
+        ret = self._execute_function(_c.F_TURN_OFF)
+        if ret:
+            _time.sleep(0.3)
+        return ret
+
+    def _select_op_mode(self, value):
+        """Set operation mode."""
+        psc_status = _PSCStatus()
+        psc_status.ioc_opmode = value
+        return self._execute_function(_c.F_SELECT_OP_MODE, psc_status.state)
+
+    def _reset_interlocks(self):
+        """Reset."""
+        ret = self._execute_function(_c.F_RESET_INTERLOCKS)
+        if ret:
+            _time.sleep(0.1)
+        return ret
+
+    def _set_slowref(self, value):
+        """Set current."""
+        return self._execute_function(_c.F_SET_SLOWREF, value)
+
+    def _cfg_siggen(self, t_siggen, num_cycles,
+                    frequency, amplitude, offset, aux_params):
+        """Set siggen congiguration parameters."""
+        value = \
+            [t_siggen, num_cycles, frequency, amplitude, offset]
+        value.extend(aux_params)
+        return self._execute_function(_c.F_CFG_SIGGEN, value)
+
+    def _set_siggen(self, frequency, amplitude, offset):
+        """Set siggen parameters in coninuous operation."""
+        value = [frequency, amplitude, offset]
+        return self._execute_function(_c.SET_SIGGEN, value)
+
+    def _enable_siggen(self):
+        """Enable siggen."""
+        return self._execute_function(_c.F_ENABLE_SIGGEN)
+
+    def _disable_siggen(self):
+        """Disable siggen."""
+        return self._execute_function(_c.F_DISABLE_SIGGEN)
+
+    # --- Methods called by write ---
+
+    def _set_pwrstate(self, setpoint):
+        """Set PwrState setpoint."""
+        if setpoint == 1:
+            ret = self._turn_on()
+        elif setpoint == 0:
+            ret = self._turn_off()
+        else:
+            self.setpoints['PwrState-Sel']['value'] = setpoint
+            return
+
+        if ret:
+            self.setpoints['Current-SP']['value'] = 0.0
+            self.setpoints['OpMode-Sel']['value'] = 0
+            self.setpoints['PwrState-Sel']['value'] = setpoint
+
+    def _set_opmode(self, setpoint):
+        """Operation mode setter."""
+        if setpoint < 0 or \
+                setpoint > len(self.setpoints['OpMode-Sel']['enums']):
+            self.setpoints['OpMode-Sel']['value'] = setpoint
+            # raise InvalidValue("OpMode {} out of range.".format(setpoint))
+
+        if self._select_op_mode(setpoint):
+            self.setpoints['OpMode-Sel']['value'] = setpoint
+
+    def _set_current(self, setpoint):
+        """Set current."""
+        setpoint = max(self.setpoints['Current-SP']['lolo'], setpoint)
+        setpoint = min(self.setpoints['Current-SP']['hihi'], setpoint)
+
+        if self._set_slowref(setpoint):
+            self.setpoints['Current-SP']['value'] = setpoint
+
+    def _reset(self, setpoint):
+        """Reset command."""
+        if setpoint:
+            if self._reset_interlocks():
+                self.setpoints['Reset-Cmd']['value'] += 1
+
+    def _enable_cycle(self, setpoint):
+        """Enable cycle command."""
+        if setpoint:
+            if self._enable_siggen():
+                self.setpoints['CycleEnbl-Cmd']['value'] += 1
+
+    def _disable_cycle(self, setpoint):
+        """Disable cycle command."""
+        if setpoint:
+            if self._disable_siggen():
+                self.setpoints['CycleDsbl-Cmd']['value'] += 1
+
+    def _set_cycle_type(self, setpoint):
+        """Set cycle type."""
+        self.setpoints['CycleType-Sel']['value'] = setpoint
+        # if setpoint < 0 or \
+        #         setpoint > len(self.setpoints['CycleType-Sel']['enums']):
+        #     return
+        return self._cfg_siggen(*self._cfg_siggen_args())
+
+    def _set_cycle_nr_cycles(self, setpoint):
+        """Set number of cycles."""
+        self.setpoints['CycleNrCycles-SP']['value'] = setpoint
+        return self._cfg_siggen(*self._cfg_siggen_args())
+
+    def _set_cycle_frequency(self, setpoint):
+        """Set cycle frequency."""
+        self.setpoints['CycleFreq-SP']['value'] = setpoint
+        return self._cfg_siggen(*self._cfg_siggen_args())
+
+    def _set_cycle_amplitude(self, setpoint):
+        """Set cycle amplitude."""
+        self.setpoints['CycleAmpl-SP']['value'] = setpoint
+        return self._cfg_siggen(*self._cfg_siggen_args())
+
+    def _set_cycle_offset(self, setpoint):
+        """Set cycle offset."""
+        self.setpoints['CycleOffset-SP']['value'] = setpoint
+        return self._cfg_siggen(*self._cfg_siggen_args())
+
+    def _set_cycle_aux_params(self, setpoint):
+        """Set cycle offset."""
+        self.setpoints['CycleAuxParam-SP']['value'] = setpoint
+        return self._cfg_siggen(*self._cfg_siggen_args())
+
+    def _cfg_siggen_args(self):
+        """Get cfg_siggen args and execute it."""
+        args = []
+        args.append(self.setpoints['CycleType-Sel']['value'])
+        args.append(self.setpoints['CycleNrCycles-SP']['value'])
+        args.append(self.setpoints['CycleFreq-SP']['value'])
+        args.append(self.setpoints['CycleAmpl-SP']['value'])
+        args.append(self.setpoints['CycleOffset-SP']['value'])
+        args.append(self.setpoints['CycleAuxParam-SP']['value'])
+        return args
+
+    def _set_wfmdata_sp(self, setpoint):
+        """Set wfmdata."""
+        self.setpoints['WfmData-SP']['value'] = setpoint
+        self.database['WfmData-RB']['value'] = setpoint
+        return True
+
+    # --- Virtual methods ---
+
+    def _read_group(self, group_id):
+        """Parse some variables.
+
+            Check to see if PS_STATE or V_FIRMWARE_VERSION are in the group, as
+        these variables need further parsing.
+        """
+        var_ids = self.device.entities.list_variables(group_id)
+        values = super()._read_group(group_id)
+        if _c.V_PS_STATUS in var_ids:
+            # TODO: values['PwrState-Sts'] == values['OpMode-Sts'] ?
+            psc_status = _PSCStatus(ps_status=values['PwrState-Sts'])
+            values['PwrState-Sts'] = psc_status.ioc_pwrstate
+            values['OpMode-Sts'] = psc_status.ioc_opmode
+        if _c.V_FIRMWARE_VERSION in var_ids:
+            version = ''.join([c.decode() for c in values['Version-Cte']])
+            try:
+                values['Version-Cte'], _ = version.split('\x00', 1)
+            except ValueError:
+                values['Version-Cte'] = version
+        return values
+
+    def _read_variable(self, field):
+        """Parse some variables.
+
+            Check to see if PS_STATE or V_FIRMWARE_VERSION are in the group, as
+        these variables need further parsing.
+        """
+        val = super()._read_variable(field)
+
+        if val is None:
+            return None
+
+        if field == 'PwrState-Sts':
+            psc_status = _PSCStatus(ps_status=val)
+            val = psc_status.ioc_pwrstate
+        elif field == 'OpMode-Sts':
+            psc_status = _PSCStatus(ps_status=val)
+            val = psc_status.ioc_opmode
+        elif field == 'Version-Cte':
+            version = ''.join([c.decode() for c in val])
+            try:
+                val, _ = version.split('\x00', 1)
+            except ValueError:
+                val = version
+
+        return val
+
+    def _write_setpoint(self, field, setpoint):
+        """Write operation."""
+        if field in FBPPowerSupply._epics_2_wfuncs:
+            func_name = FBPPowerSupply._epics_2_wfuncs[field]
+            func = getattr(self, func_name)
+            return func(setpoint=setpoint)
+
+
+class PSCommInterface:
+    """Communication interface class for power supplies."""
+
+    # TODO: should this class have its own python module?
+    # TODO: this class is not specific to PS! its name should be updated to
+    # something line CommInterface or IOCConnInterface. In this case the class
+    # should be moved to siriuspy.util or another python module.
+
+    # --- public interface ---
+
+    def __init__(self):
+        """Init method."""
+        self._callbacks = {}
+
+    @property
+    def connected(self):
+        """Return connection status."""
+        return self._connected()
+
+    def read(self, field):
+        """Return field value."""
+        raise NotImplementedError
+
+    def write(self, field, value):
+        """Write value to a field.
+
+        Return write value if command suceeds or None if it fails.
+        """
+        raise NotImplementedError
 
     def add_callback(self, func, index=None):
         """Add callback function."""
-        _PSCommInterface.add_callback(self, func=func, index=index)
-        # send all data initially to registered callback function
-        self._lock.acquire()
-        self._field_values = {}  # dict with last read field values
-        self._lock.release()
-        # send connected/disconnected signal
-        func(pvname=self._psdata.psname + ':' + PowerSupply.CONNECTED,
-             value=self._controller.connected)
+        if not callable(func):
+            raise ValueError("Tried to set non callable as a callback")
+        if index is None:
+            index = 0 if len(self._callbacks) == 0 \
+                else max(self._callbacks.keys()) + 1
+        self._callbacks[index] = func
 
-    # --- public methods ---
+    # --- virtual private methods ---
 
-    def get_database(self, prefix=None):
-        """Fill base DB with values and limits read from PVs.
-
-        Optionally add a prefix to dict keys.
-        """
-        db = self._fill_database()
-        prefix = '' if prefix is None else prefix
-        if prefix:
-            prefixed_db = {}
-            for field, value in db.items():
-                prefixed_db[prefix + ":" + field] = value
-            return prefixed_db
-        else:
-            return db
-
-    # --- private methods ---
-
-    def _build_setpoints(self):
-        conn1 = self._controller.connected
-        sp = dict()
-        for field in self._get_fields():
-            if not PowerSupply._is_setpoint.match(field):
-                continue
-            sp[field] = dict()
-            self._set_field_setpoint(sp[field], field)
-        conn2 = self._controller.connected
-        if conn1 and conn2:
-            self._initialized = True
-        return sp
-
-    def _set_field_setpoint(self, keyvalue, field):
-        # should we use database as setpoint state?!
-        db = self._base_db
-        if field == 'PwrState-Sel':
-            keyvalue['func'] = self._set_pwrstate
-            keyvalue['value'] = self._controller.read('PwrState-Sts')
-        elif field == 'OpMode-Sel':
-            keyvalue['func'] = self._set_opmode
-            keyvalue['value'] = self._controller.read('OpMode-Sts')
-        elif field == 'Current-SP':
-            keyvalue['func'] = self._set_current
-            keyvalue['value'] = self._controller.read('Current-RB')
-        elif field == 'WfmLoad-Sel':
-            keyvalue['func'] = self._set_wfmload
-            keyvalue['value'] = self._controller.read('Current-RB')
-        elif field == 'WfmLabel-SP':
-            keyvalue['func'] = self._set_wfmlabel
-            keyvalue['value'] = db['WfmLabel-SP']['value']
-        elif field == 'WfmData-SP':
-            keyvalue['func'] = self._set_wfmdata
-            keyvalue['value'] = self._controller.read('WfmData-RB')
-        elif field == 'Abort-Cmd':
-            keyvalue['func'] = self._abort
-            keyvalue['value'] = db['Abort-Cmd']['value']
-        elif field == 'Reset-Cmd':
-            keyvalue['func'] = self._reset
-            keyvalue['value'] = db['Reset-Cmd']['value']
-        elif field == 'CycleEnbl-Cmd':
-            keyvalue['func'] = self._cycle_enable
-            keyvalue['value'] = db['CycleEnbl-Cmd']['value']
-        elif field == 'CycleDsbl-Cmd':
-            keyvalue['func'] = self._cycle_disable
-            keyvalue['value'] = db['CycleDsbl-Cmd']['value']
-        elif field == 'CycleType-Sel':
-            keyvalue['func'] = self._set_cycle_type
-            keyvalue['value'] = self._controller.read('CycleType-Sts')
-        elif field == 'CycleNrCycles-SP':
-            keyvalue['func'] = self._set_cycle_num_cycles
-            keyvalue['value'] = self._controller.read('CycleNrCycles-RB')
-        elif field == 'CycleFreq-SP':
-            keyvalue['func'] = self._set_cycle_freq
-            keyvalue['value'] = self._controller.read('CycleFreq-RB')
-        elif field == 'CycleAmpl-SP':
-            keyvalue['func'] = self._set_cycle_amplitude
-            keyvalue['value'] = self._controller.read('CycleAmpl-RB')
-        elif field == 'CycleOffset-SP':
-            keyvalue['func'] = self._set_cycle_offset
-            keyvalue['value'] = self._controller.read('CycleOffset-RB')
-        elif field == 'CycleAuxParam-SP':
-            keyvalue['func'] = self._set_cycle_aux_param
-            keyvalue['value'] = self._controller.read('CycleAuxParam-RB')
-
-    def _set_pwrstate(self, value):
-        self._setpoints['PwrState-Sel']['value'] = value
-        if value >= 0 and value < len(self._base_db['PwrState-Sel']['enums']):
-            ret = self._controller.write('PwrState-Sel', value)
-            # zero PS current
-            self._setpoints['Current-SP']['value'] = 0.0
-            self._controller.write('Current-SP', 0.0)
-            return ret
-
-    def _set_opmode(self, value):
-        self._setpoints['OpMode-Sel']['value'] = value
-        if value >= 0 and value < len(self._base_db['OpMode-Sel']['enums']):
-            return self._controller.write('OpMode-Sel', value)
-
-    def _set_current(self, value):
-        self._setpoints['Current-SP']['value'] = value
-        return self._controller.write('Current-SP', value)
-
-    def _set_wfmload(self, value):
-        self._wfmload_sel = value
-        self._setpoints['WfmLoad-Sel']['value'] = value
-        return self._controller.write('WfmLoad-Sel', value)
-
-    def _set_wfmlabel(self, value):
-        self._wfmlabel_sp = value
-        self._setpoints['WfmLabel-SP']['value'] = value
-        return self._controller.write('WfmLabel-SP', value)
-
-    def _set_wfmdata(self, value):
-        if isinstance(value, (int, float)):
-            value = [value, ]
-        elif len(value) > _max_wfmsize:
-            value = value[:_max_wfmsize]
-        self._setpoints['WfmData-SP']['value'] = value
-        return self._controller.write('WfmData-SP', value)
-
-    def _set_cycle_type(self, value):
-        self._setpoints['CycleType-Sel']['value'] = value
-        if value >= 0 and value < len(self._base_db['CycleType-Sel']['enums']):
-            ret = self._controller.write('CycleType-Sel', value)
-            return ret
-
-    def _set_cycle_num_cycles(self, value):
-        value = int(value)
-        self._setpoints['CycleNrCycles-SP']['value'] = value
-        ret = self._controller.write('CycleNrCycles-SP', value)
-        return ret
-
-    def _set_cycle_freq(self, value):
-        self._setpoints['CycleFreq-SP']['value'] = value
-        ret = self._controller.write('CycleFreq-SP', value)
-        return ret
-
-    def _set_cycle_amplitude(self, value):
-        self._setpoints['CycleAmpl-SP']['value'] = value
-        ret = self._controller.write('CycleAmpl-SP', value)
-        return ret
-
-    def _set_cycle_offset(self, value):
-        self._setpoints['CycleOffset-SP']['value'] = value
-        ret = self._controller.write('CycleOffset-SP', value)
-        return ret
-
-    def _set_cycle_aux_param(self, value):
-        if len(value) == 4:
-            self._setpoints['CycleAuxParam-SP']['value'] = value
-            ret = self._controller.write('CycleAuxParam-SP', value)
-            return ret
-
-    def _abort(self, value):
-        # op_mode = self.read('OpMode-Sts')
-        self._setpoints['Abort-Cmd']['value'] += 1
-        self.write('OpMode-Sel', 0)  # Set to SlowRef
-        self.write('Current-SP', 0.0)
-        return self._setpoints['Abort-Cmd']['value']
-
-    def _reset(self, value):
-        self._setpoints['Reset-Cmd']['value'] += 1
-        self.write('Current-SP', 0.0)
-        self.write('OpMode-Sel', 0)  # TODO: use SlowRef constant
-        # Reset interlocks
-        self._controller.write('Reset-Cmd', 1)
-        return self._setpoints['Reset-Cmd']['value']
-
-    def _cycle_enable(self, value):
-        self._setpoints['CycleEnbl-Cmd']['value'] += 1
-        self._controller.write('CycleEnbl-Cmd', value)
-        return self._setpoints['CycleEnbl-Cmd']['value']
-
-    def _cycle_disable(self, value):
-        self._setpoints['CycleDsbl-Cmd']['value'] += 1
-        self._controller.write('CycleDsbl-Cmd', value)
-        return self._setpoints['CycleDsbl-Cmd']['value']
-
-    def _get_base_db(self):
-        return self._psdata.propty_database
-
-    def _get_fields(self):
-        return self._base_db.keys()
-
-    def _fill_database(self):
-        db = dict()
-        db.update(self._base_db)
-        for field in db:
-            value = self.read(field)
-            if value is not None:
-                db[field]["value"] = value
-
-        return db
-
-    def _scan_fields(self):
-        """Scan fields."""
-        interval = 1.0/PowerSupply.SCAN_FREQUENCY
-        while True:
-            time_start = _time.time()
-            if self._updating:
-                self._update_fields()
-
-            # sleep if necessary until frequency interval is reached.
-            time_end = _time.time()
-            sleep_time = max(0, interval - (time_end - time_start))
-            _time.sleep(sleep_time)
-
-    def _update_fields(self):
-        # loop over power supply fields, invoking callback if its value
-        # has changed.
-        for field in self._base_db:
-            if field in PowerSupply._db_const_fields:
-                continue
-
-            # read fielf current value
-            value = self.read(field)
-
-            # check whether current value is a new value
-            self._lock.acquire()
-            if field in self._field_values:
-                prev_value = self._field_values[field]
-                if isinstance(value, _np.ndarray):
-                    if _np.all(value == prev_value):
-                        # skip callback if not new
-                        self._lock.release()
-                        continue
-                else:
-                    if value == prev_value:
-                        # skipp callback if not new
-                        self._lock.release()
-                        continue
-
-            # register current value of field and releases lock
-            self._field_values[field] = value
-            self._lock.release()
-
-            # run callback function since field has a new value
-            self._run_callbacks(field, value)
-
-        # check whether ControllerIOC is connected to ControllerPS
-        if self._controller.connected != self._prev_connected:
-            self._prev_connected = self._controller.connected
-            self._run_callbacks(PowerSupply.CONNECTED, self._prev_connected)
-            if self._prev_connected and not self._initialized:
-                self._setpoints = self._build_setpoints()
-
-    def _run_callbacks(self, field, value):
-        for index, callback in self._callbacks.items():
-            callback(
-                pvname=self._psdata.psname + ':' + field,
-                value=value)
+    def _connected(self):
+        raise NotImplementedError
 
 
-class PSEpics(_PSCommInterface):
+class PSEpics(PSCommInterface):
     """Power supply with Epics communication."""
 
     # TODO: should we merge this base class into MAEpics?
 
     def __init__(self, psname, fields=None, use_vaca=True):
         """Create epics PVs and expose them through public controller API."""
-        _PSCommInterface.__init__(self)
+        PSCommInterface.__init__(self)
         # Attributes use build a full PV address
         self._psname = psname
         # self._sort_fields()

@@ -1,4 +1,4 @@
-"""Subpackage BSMP
+"""Subpackage BSMP.
 
 Basic Small Message protocol
 
@@ -7,7 +7,12 @@ http://git.cnpem.br/bruno.martins/libbsmp/raw/master/doc/protocol_v2.20_pt_BR.pd
 
 """
 
-from .implementation import __version__
-from .implementation import *
+from .serial import *
+from .types import *
+from .entities import *
+from .commands import *
+from .exceptions import *
 
-del implementation
+
+__version__ = '2.20.0'
+del serial, types, entities, commands, exceptions
