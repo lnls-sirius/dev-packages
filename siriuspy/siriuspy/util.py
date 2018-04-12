@@ -100,38 +100,26 @@ def read_text_data(text):
     return data, parameters
 
 
-def print_ioc_banner(ioc_name, db, description, version, prefix, file=None):
+def print_ioc_banner(ioc_name, db, description, version, prefix):
     """IOC banner."""
-    file = _sys.stdout if file is None else file
     ld = '==================================='
     nw = (len(ld)-len(ioc_name))//2
     line = ' '*nw + ioc_name + ' '*nw
-    print(ld, file=file)
-    print(line, file=file)
-    print(ld, file=file)
-    print(description, file=file)
-    print('LNLS, Sirius Project.', file=file)
-    print('Version   : ' + version, file=file)
-    print('Timestamp : ' + get_timestamp(), file=file)
-    print('Prefix    : ' + prefix, file=file)
-    print()
+    _log.info(ld)
+    _log.info(line)
+    _log.info(ld)
+    _log.info(description)
+    _log.info('LNLS, Sirius Project.')
+    _log.info('Version   : ' + version)
+    _log.info('Timestamp : ' + get_timestamp())
+    _log.info('Prefix    : ' + prefix)
+    _log.info('')
     pvs = sorted(tuple(db.keys()))
-    max_len = 0
-    for pv in pvs:
-        if len(pv) > max_len:
-            max_len = len(pv)
-    i = 1
-    new_line = False
-    for pv in pvs:
-        print(('{0:04d} {1:<'+str(max_len+2)+'}  ').format(i, pv),
-              end='', file=file)
-        new_line = True
-        i += 1
-        if not (i-1) % 1:
-            print('', file=file)
-            new_line = False
-    if new_line:
-        print('', file=file)
+    for i, pv in enumerate(pvs, 1):
+        _log.info('{0:04d} {1:<}'.format(i, pv))
+    _log.info('')
+
+
 def configure_log_file(stream=None, filename=None, debug=False):
     """Configure logging messages for the IOCs."""
     if stream is not None:
