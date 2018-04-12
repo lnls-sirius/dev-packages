@@ -3,10 +3,20 @@
 import time as _t
 import math as _math
 
-from siriuspy.csdevice.pwrsupply import default_siggen_params as \
-    _default_siggen_params
+# from siriuspy.csdevice.pwrsupply import default_siggen_params as \
+#     _default_siggen_params
 
-
+DEFAULT_SIGGEN_CONFIG = [
+    0,      # type  [0:Sine]
+    1,      # num_cycles
+    100.0,  # freq [Hz]
+    0.0,    # amplitude [A]
+    0.0,    # offset [A]
+    0.0,    # aux_param[0] (Sine: theta_beg)
+    0.0,    # aux_param[1] (Sine: theta_end)
+    0.0,    # aux_param[2] (Sine: not used)
+    0.0     # aux_param[3] (Sine: not used)
+    ]
 
 class Signal:
     """Signal from SigGen."""
@@ -237,8 +247,8 @@ class SignalFactory:
 
     TYPES_IND = {0: 'Sine', 1: 'DampedSine', 2: 'Trapezoidal'}
 
-    DEFAULT_PARAMETERS = {
-        'Sine': _default_siggen_params,  # get it from csdevice subpacake
+    DEFAULT_CONFIGS = {
+        'Sine': DEFAULT_SIGGEN_CONFIG,
         'DampedSine': [1, 1, 100.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
         'Trapezoidal': [2, 1, 0.0, 0.0, 0.0, 0.01, 0.01, 0.01, 0.0],
     }
@@ -279,7 +289,7 @@ class SignalFactory:
         kw = dict()
         kw.update(kwargs)
         kw['type'] = typ
-        p = SignalFactory.DEFAULT_PARAMETERS[SignalFactory.TYPES_IND[typ]]
+        p = SignalFactory.DEFAULT_CONFIGS[SignalFactory.TYPES_IND[typ]]
         # print(p)
         kw['num_cycles'] = p[1]
         kw['freq'] = p[2]  # [A]

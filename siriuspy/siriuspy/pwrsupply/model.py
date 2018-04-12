@@ -8,7 +8,6 @@ from epics import PV as _PV
 
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.envars import vaca_prefix as _VACA_PREFIX
-# from siriuspy.csdevice.pwrsupply import max_wfmsize as _max_wfmsize
 from siriuspy.factory import NormalizerFactory as _NormalizerFactory
 from siriuspy.epics import connection_timeout as _connection_timeout
 from siriuspy.thread import QueueThread as _QueueThread

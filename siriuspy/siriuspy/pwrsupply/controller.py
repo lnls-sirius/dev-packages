@@ -174,7 +174,7 @@ class FBP_BSMPSim(_BSMPSim):
             [0.0, 0.0, 0.0, 0.0], 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0,
             0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0]
         default_siggen_parms = \
-            _SignalFactory.DEFAULT_PARAMETERS['Sine']
+            _SignalFactory.DEFAULT_CONFIGS['Sine']
         variables[_c.V_SIGGEN_TYPE] = default_siggen_parms[0]
         variables[_c.V_SIGGEN_NUM_CYCLES] = default_siggen_parms[1]
         variables[_c.V_SIGGEN_FREQ] = default_siggen_parms[2]
