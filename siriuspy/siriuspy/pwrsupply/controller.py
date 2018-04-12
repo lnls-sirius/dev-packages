@@ -171,9 +171,8 @@ class FBP_BSMPSim(_BSMPSim):
             0, 0.0, 0.0, firmware, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0,
             [0.0, 0.0, 0.0, 0.0], 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0,
             0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        default_siggen_type = _SignalFactory.TYPES['Sine']
         default_siggen_parms = \
-            _SignalFactory.DEFAULT_PARAMETERS[default_siggen_type]
+            _SignalFactory.DEFAULT_PARAMETERS['Sine']
         variables[_c.V_SIGGEN_TYPE] = default_siggen_parms[0]
         variables[_c.V_SIGGEN_NUM_CYCLES] = default_siggen_parms[1]
         variables[_c.V_SIGGEN_FREQ] = default_siggen_parms[2]

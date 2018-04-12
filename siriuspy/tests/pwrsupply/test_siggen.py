@@ -11,6 +11,8 @@ import siriuspy.pwrsupply.siggen as siggen
 
 public_interface = (
     'Signal',
+    'SignalSine',
+    'SignalDampedSine',
     'SignalTrapezoidal',
     'SignalFactory',
 )
