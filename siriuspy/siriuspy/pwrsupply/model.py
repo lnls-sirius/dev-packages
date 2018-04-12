@@ -309,10 +309,10 @@ class FBPPowerSupply(Device):
         return self._execute_function(_c.F_SET_SLOWREF, value)
 
     def _cfg_siggen(self, t_siggen, num_cycles,
-                    frequency, amplitude, offset, aux_params):
+                    freq, amplitude, offset, aux_params):
         """Set siggen congiguration parameters."""
         value = \
-            [t_siggen, num_cycles, frequency, amplitude, offset]
+            [t_siggen, num_cycles, freq, amplitude, offset]
         value.extend(aux_params)
         return self._execute_function(_c.F_CFG_SIGGEN, value)
 
@@ -412,7 +412,12 @@ class FBPPowerSupply(Device):
 
     def _set_cycle_aux_params(self, setpoint):
         """Set cycle offset."""
-        self.setpoints['CycleAuxParam-SP']['value'] = setpoint
+        # trim setpoint list
+        cur_sp = self.setpoints['CycleAuxParam-SP']['value']
+        new_sp = setpoint[:len(cur_sp)]
+        new_sp += cur_sp[len(new_sp):]
+        # update setpoint
+        self.setpoints['CycleAuxParam-SP']['value'] = new_sp
         return self._cfg_siggen(*self._cfg_siggen_args())
 
     def _cfg_siggen_args(self):
