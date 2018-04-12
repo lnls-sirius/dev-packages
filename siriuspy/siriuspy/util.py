@@ -5,6 +5,7 @@ and siriuspy subpackages and modules.
 """
 
 import os as _os
+import logging as _log
 import inspect as _inspect
 import subprocess as _sp
 import time as _time
@@ -131,6 +132,19 @@ def print_ioc_banner(ioc_name, db, description, version, prefix, file=None):
             new_line = False
     if new_line:
         print('', file=file)
+def configure_log_file(stream=None, filename=None, debug=False):
+    """Configure logging messages for the IOCs."""
+    if stream is not None:
+        dic_ = {'stream': stream}
+    elif filename is None:
+        dic_ = {'filename': filename, 'filemode': 'w'}
+    else:
+        dic_ = {'stream': _sys.stdout}
+
+    level = _log.DEBUG if debug else _log.INFO
+    fmt = ('%(levelname)7s | %(asctime)s | ' +
+           '%(module)15s.%(funcName)-20s[%(lineno)4d] ::: %(message)s')
+    _log.basicConfig(format=fmt, datefmt='%F %T', level=level, **dic_)
 
 
 def save_ioc_pv_list(ioc_name, prefix, db, filename=None):
