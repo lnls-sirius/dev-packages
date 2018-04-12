@@ -180,9 +180,8 @@ class FBP_BSMPSim(_BSMPSim):
         variables[_c.V_SIGGEN_FREQ] = default_siggen_parms[2]
         variables[_c.V_SIGGEN_AMPLITUDE] = default_siggen_parms[3]
         variables[_c.V_SIGGEN_OFFSET] = default_siggen_parms[4]
-        variables[_c.V_SIGGEN_AUX_PARAM] = default_siggen_parms[5]
+        variables[_c.V_SIGGEN_AUX_PARAM] = default_siggen_parms[5:9]
         return variables
-
 
     def _is_on(self):
         ps_status = self._variables[_c.V_PS_STATUS]

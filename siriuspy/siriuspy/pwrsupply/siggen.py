@@ -235,8 +235,8 @@ class SignalFactory:
     TYPES_IND = {0: 'Sine', 1: 'DampedSine', 2: 'Trapezoidal'}
 
     DEFAULT_PARAMETERS = {
-        'Sine': [0, 1, 100.0, 0.0, 0.0, 0.0, 360.0, 0.0, 0.0],
-        'DampedSine': [1, 1, 100.0, 0.0, 0.0, 0.0, 360.0, 1.0, 0.0],
+        'Sine': [0, 1, 100.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        'DampedSine': [1, 1, 100.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
         'Trapezoidal': [2, 1, 0.0, 0.0, 0.0, 0.01, 0.01, 0.01, 0.0],
     }
 

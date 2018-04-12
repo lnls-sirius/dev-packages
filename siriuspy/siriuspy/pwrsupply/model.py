@@ -414,10 +414,10 @@ class FBPPowerSupply(Device):
         """Set cycle offset."""
         # trim setpoint list
         cur_sp = self.setpoints['CycleAuxParam-SP']['value']
-        new_sp = setpoint[:len(cur_sp)]
-        new_sp += cur_sp[len(new_sp):]
+        setpoint = setpoint[:len(cur_sp)]
+        setpoint += cur_sp[len(setpoint):]
         # update setpoint
-        self.setpoints['CycleAuxParam-SP']['value'] = new_sp
+        self.setpoints['CycleAuxParam-SP']['value'] = setpoint
         return self._cfg_siggen(*self._cfg_siggen_args())
 
     def _cfg_siggen_args(self):
