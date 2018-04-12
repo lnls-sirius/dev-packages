@@ -1,5 +1,6 @@
 """IOC Module."""
 
+import os as _os
 import uuid as _uuid
 import sys as _sys
 import time as _time
@@ -28,6 +29,12 @@ def _print_pvs_in_file(db, fname):
         for key in sorted(db.keys()):
             f.write(PREFIX+'{0:40s}\n'.format(key))
     _log.info(fname+' file generated with {0:d} pvs.'.format(len(db)))
+
+
+def _attribute_acces_security_group(db):
+    for k, v in db.items():
+        if k.endswith(('-RB', '-Sts', '-Cte', '-Mon')):
+            v.update({'asg': 'rbpv'})
 
 
 class _Driver(_pcaspy.Driver):
@@ -139,11 +146,14 @@ def run(debug=False):
     fname = 'AS-TI-LL-SIMUL'
     db = App.get_database()
     db.update({fname+'Version-Cte': {'type': 'string', 'value': __version__}})
+    _attribute_acces_security_group(db)
     _print_pvs_in_file(db, fname=fname+'pvs.txt')
 
     # create a new simple pcaspy server and driver to respond client's requests
     _log.info('Creating Server.')
     server = _pcaspy.SimpleServer()
+    path_ = _os.path.abspath(_os.path.dirname(__file__))
+    server.initAccessSecurityFile(path_ + '/access_rules.as')
     _log.info('Setting Server Database.')
     server.createPV(PREFIX, db)
     _log.info('Creating Driver.')
