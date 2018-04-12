@@ -6,6 +6,7 @@ from io import StringIO
 import numpy as np
 import unittest
 from unittest import mock
+import logging
 import siriuspy.util as util
 
 
@@ -15,6 +16,7 @@ public_interface = (
     'get_timestamp',
     'read_text_data',
     'print_ioc_banner',
+    'configure_log_file',
     'save_ioc_pv_list',
     'get_electron_rest_energy',
     'beam_rigidity',
@@ -123,6 +125,23 @@ class TestUtil(unittest.TestCase):
                               '1.0.0', 'PREFIX', file=file)
         text = file.getvalue()
         self.assertEqual(len(text.splitlines()), 24)
+    def test_configure_log_file(self):
+        """Test configure_log_file."""
+        fi = StringIO()
+        logging.root.handlers = []
+        util.configure_log_file(stream=fi)
+        logging.info('test')
+        logging.debug('test')
+        text = fi.getvalue()
+        self.assertEqual(len(text.splitlines()), 1)
+
+        fi = StringIO()
+        logging.root.handlers = []
+        util.configure_log_file(stream=fi, debug=True)
+        logging.info('test')
+        logging.debug('test')
+        text = fi.getvalue()
+        self.assertEqual(len(text.splitlines()), 2)
 
     def test_save_ioc_pv_list(self):
         """Test save_ioc_pv_list."""
