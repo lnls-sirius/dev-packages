@@ -2,7 +2,10 @@
 
 import time as _t
 import math as _math
-# import numpy as _np
+
+from siriuspy.csdevice.pwrsupply import default_siggen_params as \
+    _default_siggen_params
+
 
 
 class Signal:
@@ -235,7 +238,7 @@ class SignalFactory:
     TYPES_IND = {0: 'Sine', 1: 'DampedSine', 2: 'Trapezoidal'}
 
     DEFAULT_PARAMETERS = {
-        'Sine': [0, 1, 100.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        'Sine': _default_siggen_params,  # get it from csdevice subpacake
         'DampedSine': [1, 1, 100.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
         'Trapezoidal': [2, 1, 0.0, 0.0, 0.0, 0.01, 0.01, 0.01, 0.0],
     }
@@ -255,12 +258,12 @@ class SignalFactory:
         amplitude -- Amplitude [A], float, (Sine|DampedSine|Trapezoidal)
         offset -- Offset [A], float, (Sine|DampedSine|Trapezoidal)
         aux_param -- Aux. Parameters, float4, (Sine|DampedSine|Trapezoidal)
-        rampup_time -- Rampup time [s], float, (Trapezoidal)
-        rampdown_time -- Rampdown time [s], float, (Trapezoidal)
-        plateau_time -- Plateau time [s], float, (Trapezoidal)
-        theta_begin -- Initial phase [deg] (Sine|DampedSine)
-        theta_end -- Final phase [deg] (Sine|DampedSine)
-        decay_time -- Decay time [s] (DampedSine)
+        rampup_time -- Rampup time [s], float, (Trapezoidal) - aux_param[0]
+        rampdown_time -- Rampdown time [s], float, (Trapezoidal) - aux_param[1]
+        plateau_time -- Plateau time [s], float, (Trapezoidal) - aux_param[2]
+        theta_begin -- Initial phase [deg] (Sine|DampedSine) - aux_param[0]
+        theta_end -- Final phase [deg] (Sine|DampedSine) - aux_param[1]
+        decay_time -- Decay time [s] (DampedSine) - aux_param[2]
         """
         # set signal type
         if 'type' in kwargs:
