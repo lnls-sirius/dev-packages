@@ -147,6 +147,10 @@ def run(debug=False):
         _log.error('Another ' + ioc_name + ' is already running!')
         return
 
+    _util.print_ioc_banner(
+            ioc_name, db, 'Low Level Simulation Timing IOC modules.',
+            __version__, PREFIX)
+
     _log.info('Generating database file.')
     _util.save_ioc_pv_list(ioc_name.lower(), PREFIX, db)
     _log.info('File generated with {0:d} pvs.'.format(len(db)))
