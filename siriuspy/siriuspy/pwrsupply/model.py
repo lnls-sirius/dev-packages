@@ -14,7 +14,6 @@ from siriuspy.epics import connection_timeout as _connection_timeout
 from siriuspy.thread import QueueThread as _QueueThread
 from siriuspy.epics.computed_pv import ComputedPV as _ComputedPV
 from siriuspy.pwrsupply.data import PSData as _PSData
-from siriuspy.pwrsupply.controller import PSCommInterface as _PSCommInterface
 from siriuspy.magnet.data import MAData as _MAData
 from siriuspy.magnet import util as _mutil
 from siriuspy.pwrsupply import sync as _sync
@@ -35,11 +34,13 @@ class Device:
     def __init__(self, controller, slave_id, database):
         """Control a device using BSMP protocol."""
         self._connected = False
-
-        controller.add_slave(slave_id)
         self._slave_id = slave_id
         self._controller = controller
         self._database = database
+
+        # add current device as slave to used controller
+        self._controller.add_slave(slave_id)
+
         # initialize setpoints
         self._setpoints = dict()
         for field, db in self.database.items():
@@ -253,13 +254,16 @@ class FBPPowerSupply(Device):
         """
         super().__init__(controller, slave_id, database)
         self._pru = self.controller.pru
-        # TODO: check errors, create group 3?
-        self.device.remove_all_groups()
-        # Create group 3
+
+        # initialize groups
+        self.device.remove_all_groups()  # TODO: check errors, create group 3?
         var_ids = self.device.entities.list_variables(group_id=0)
         var_ids.remove(_c.V_FIRMWARE_VERSION)
         self.device.create_group(var_ids=var_ids)
-        self.device.execute_function(_c.F_CLOSE_LOOP)  # Close loop
+
+        # close DSP loop
+        # TODO: this breaks the concept that the IOC should init w/o setting PS
+        self.device.execute_function(_c.F_CLOSE_LOOP)
 
     def read_ps_variables(self):
         """Read called to update DB."""
@@ -431,8 +435,8 @@ class FBPPowerSupply(Device):
     def _read_group(self, group_id):
         """Parse some variables.
 
-        Check to see if PS_STATE or V_FIRMWARE_VERSION are in the group, as these
-        variables need further parsing.
+            Check to see if PS_STATE or V_FIRMWARE_VERSION are in the group, as
+        these variables need further parsing.
         """
         var_ids = self.device.entities.list_variables(group_id)
         values = super()._read_group(group_id)
@@ -452,8 +456,8 @@ class FBPPowerSupply(Device):
     def _read_variable(self, field):
         """Parse some variables.
 
-        Check to see if PS_STATE or V_FIRMWARE_VERSION are in the group, as these
-        variables need further parsing.
+            Check to see if PS_STATE or V_FIRMWARE_VERSION are in the group, as
+        these variables need further parsing.
         """
         val = super()._read_variable(field)
 
@@ -483,14 +487,59 @@ class FBPPowerSupply(Device):
             return func(setpoint=setpoint)
 
 
-class PSEpics(_PSCommInterface):
+class PSCommInterface:
+    """Communication interface class for power supplies."""
+
+    # TODO: should this class have its own python module?
+    # TODO: this class is not specific to PS! its name should be updated to
+    # something line CommInterface or IOCConnInterface. In this case the class
+    # should be moved to siriuspy.util or another python module.
+
+    # --- public interface ---
+
+    def __init__(self):
+        """Init method."""
+        self._callbacks = {}
+
+    @property
+    def connected(self):
+        """Return connection status."""
+        return self._connected()
+
+    def read(self, field):
+        """Return field value."""
+        raise NotImplementedError
+
+    def write(self, field, value):
+        """Write value to a field.
+
+        Return write value if command suceeds or None if it fails.
+        """
+        raise NotImplementedError
+
+    def add_callback(self, func, index=None):
+        """Add callback function."""
+        if not callable(func):
+            raise ValueError("Tried to set non callable as a callback")
+        if index is None:
+            index = 0 if len(self._callbacks) == 0 \
+                else max(self._callbacks.keys()) + 1
+        self._callbacks[index] = func
+
+    # --- virtual private methods ---
+
+    def _connected(self):
+        raise NotImplementedError
+
+
+class PSEpics(PSCommInterface):
     """Power supply with Epics communication."""
 
     # TODO: should we merge this base class into MAEpics?
 
     def __init__(self, psname, fields=None, use_vaca=True):
         """Create epics PVs and expose them through public controller API."""
-        _PSCommInterface.__init__(self)
+        PSCommInterface.__init__(self)
         # Attributes use build a full PV address
         self._psname = psname
         # self._sort_fields()

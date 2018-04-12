@@ -14,51 +14,6 @@ from .siggen import SignalFactory as _SignalFactory
 __version__ = _util.get_last_commit_hash()
 
 
-class PSCommInterface:
-    """Communication interface class for power supplies."""
-
-    # TODO: should this class have its own python module?
-    # TODO: this class is not specific to PS! its name should be updated to
-    # something line CommInterface or IOCConnInterface. In this case the class
-    # should be moved to siriuspy.util or another python module.
-
-    # --- public interface ---
-
-    def __init__(self):
-        """Init method."""
-        self._callbacks = {}
-
-    @property
-    def connected(self):
-        """Return connection status."""
-        return self._connected()
-
-    def read(self, field):
-        """Return field value."""
-        raise NotImplementedError
-
-    def write(self, field, value):
-        """Write value to a field.
-
-        Return write value if command suceeds or None if it fails.
-        """
-        raise NotImplementedError
-
-    def add_callback(self, func, index=None):
-        """Add callback function."""
-        if not callable(func):
-            raise ValueError("Tried to set non callable as a callback")
-        if index is None:
-            index = 0 if len(self._callbacks) == 0 \
-                else max(self._callbacks.keys()) + 1
-        self._callbacks[index] = func
-
-    # --- virtual private methods ---
-
-    def _connected(self):
-        raise NotImplementedError
-
-
 class IOController:
     """Power supply controller."""
 
@@ -71,7 +26,7 @@ class IOController:
         if psmodel == 'FBP':
             self._bsmp_entities = FBPEntities()
         else:
-            raise ValueError("Unknown model")
+            raise ValueError("Unknown psmodel!")
 
         self._pru = pru
         self._bsmp_conn = dict()
@@ -104,8 +59,7 @@ class IOControllerSim(IOController):
         if self._psmodel == 'FBP':
             self.bsmp_conn[slave_id] = FBP_BSMPSim()
         else:
-            raise ValueError("Unknown model")
-        # (self._pru, slave_id, self._bsmp_entities)
+            raise ValueError("Unknown psmodel!")
 
 
 class _BSMPSim:

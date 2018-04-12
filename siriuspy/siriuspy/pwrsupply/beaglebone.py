@@ -1,5 +1,5 @@
 """Beagle Bone implementation module."""
-import re as _re
+# import re as _re
 
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.pwrsupply.data import PSData as _PSData
@@ -91,49 +91,3 @@ class BeagleBone:
     def __contains__(self, psname):
         """Test is psname is in psname list."""
         return psname in self._psnames
-
-
-# class BeagleBone():
-#     """Responsible for handling BBB objects."""
-#
-#     def __init__(self, bbbname, simulate=True):
-#         """Retrieve power supplies."""
-#         self._bbbname = bbbname
-#         self._simulate = simulate
-#         self._psnames = _PSSearch.conv_bbbname_2_psnames(bbbname)
-#
-#         # TODO: temp code. this should be deleted once PS bench tests are over.
-#         if bbbname == 'BO-01:CO-BBB-1':
-#             self._psnames = ['BO-01U:PS-CH', 'BO-01U:PS-CV']
-#         elif bbbname == 'BO-01:CO-BBB-2':
-#             self._psnames = ['BO-03U:PS-CH', 'BO-03U:PS-CV']
-#
-#         # create PRU and serial_comm
-#         # self._pru = _PRUSim() if self._simulate else _PRU()
-#         self._serial_comm = _SerialComm(simulate=self._simulate)
-#         # create power supplies dictionary
-#         self._power_supplies = self._create_power_supplies()
-#
-#
-#     @property
-#     def scanning(self):
-#         """Return ps variable scanning state."""
-#         return self._serial_comm.scanning
-#
-#     @scanning.setter
-#     def scanning(self, value):
-#         """Set ps variable scanning state."""
-#         self._serial_comm.scanning = value
-#
-#     @property
-#     def power_supplies(self):
-#         """Return list of power supplies."""
-#         return self._power_supplies.values()
-#
-#     def __getitem__(self, psname):
-#         """Return corresponding power supply object."""
-#         return self._power_supplies[psname]
-#
-#     def __contains__(self, psname):
-#         """Test is psname is in psname list."""
-#         return psname in self._psnames

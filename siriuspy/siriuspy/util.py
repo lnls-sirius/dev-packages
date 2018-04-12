@@ -278,7 +278,11 @@ def update_integer_bit(integer, number_of_bits, value, bit):
 def check_public_interface_namespace(namespace, valid_interface,
                                      checkdoc_flag=True,
                                      print_flag=True):
-    """Function to be used in unittests to test module's public interface."""
+    """Function to be used in unittests to test module's public interface.
+
+    This function checks only static public interface symbols. It does not
+    check those symbols that are created within class methods.
+    """
     for name in namespace.__dict__:
         if checkdoc_flag:
             doc = getattr(name, '__doc__')
