@@ -62,7 +62,9 @@ class BeagleBone:
         """BBB write."""
         if field == 'OpMode-Sel' and value == 2:  # Cycle
             # sync start
-            self.pru.sync_mode = True
+            sync_mode = self.pru.SYNC_MODES['Cycle']
+            addr = self._power_supplies[self.psnames[0]]._slave_id
+            self.pru.sync_start(sync_mode, addr)
             # set all devices to cycle?
 
         return self._power_supplies[device_name].write(field, value)
