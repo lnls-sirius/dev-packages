@@ -17,9 +17,9 @@ def get_dict():
 #
 # Horizontal Matrix:
 #
-#  | DeltaPosX @ TB-04:PM-InjS |    | h11  h12 |   | Kick TB-03:MA-CH   |
+#  | DeltaPosX @ TB-04:PM-InjSept |    | h11  h12 |   | Kick TB-03:MA-CH   |
 #  |                           | =  |          | * |                    |
-#  | DeltaAngX @ TB-04:PM-InjS |    | h21  h22 |   | Kick TB-04:PM-InjS |
+#  | DeltaAngX @ TB-04:PM-InjSept |    | h21  h22 |   | Kick TB-04:PM-InjSept |
 #
 # Data structure:
 #         h11   h12
@@ -27,9 +27,9 @@ def get_dict():
 #
 # Vertical Matrix:
 #
-#  | DeltaPosY @ TB-04:PM-InjS |    | v11  v12 |   | Kick TB-04:MA-CV-1 |
+#  | DeltaPosY @ TB-04:PM-InjSept |    | v11  v12 |   | Kick TB-04:MA-CV-1 |
 #  |                           | =  |          | * |                    |
-#  | DeltaAngY @ TB-04:PM-InjS |    | v21  v22 |   | Kick TB-04:MA-CV-2 |
+#  | DeltaAngY @ TB-04:PM-InjSept |    | v21  v22 |   | Kick TB-04:MA-CV-2 |
 #
 # Data structure:
 #         v11   v12

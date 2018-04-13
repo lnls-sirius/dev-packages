@@ -44,7 +44,7 @@ class TestMagnetFactory(unittest.TestCase):
     @mock.patch('siriuspy.factory._norm.MagnetNormalizer', autospec=True)
     def test_pulsed_magnet_creation(self, mock_ma, mock_data):
         """Test Factory.factory magnet creation."""
-        maname = 'SI-01SA:PM-InjDpK'
+        maname = 'SI-01SA:PM-InjDpKckr'
         mock_data.return_value.magfunc.return_value = 'corrector-vertical'
         magnet = NormalizerFactory.factory(maname=maname)
         self.assertIsInstance(magnet, MagnetNormalizer)

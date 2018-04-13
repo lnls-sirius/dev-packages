@@ -3,4 +3,4 @@
 
 # number of power supplies: 1
 
-BO-01D:PU-InjK
+BO-01D:PU-InjKckr
