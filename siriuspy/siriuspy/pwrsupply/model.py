@@ -453,7 +453,7 @@ class FBPPowerSupply(Device):
             psc_status = _PSCStatus(ps_status=values['PwrState-Sts'])
             values['PwrState-Sts'] = psc_status.ioc_pwrstate
             values['OpMode-Sts'] = psc_status.ioc_opmode
-            values['OpMode-Sts'] = psc_status.interface
+            values['CtrlMode-Mon'] = psc_status.interface
         if _c.V_FIRMWARE_VERSION in var_ids:
             version = ''.join([c.decode() for c in values['Version-Cte']])
             try:
