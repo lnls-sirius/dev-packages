@@ -200,7 +200,7 @@ class FBPPowerSupply(Device):
     """Control a power supply using BSMP protocol."""
 
     bsmp_2_epics = {
-        _c.V_PS_STATUS: ('PwrState-Sts', 'OpMode-Sts'),
+        _c.V_PS_STATUS: ('PwrState-Sts', 'OpMode-Sts', 'CtrlMode-Mon'),
         _c.V_PS_SETPOINT: 'Current-RB',
         _c.V_PS_REFERENCE: 'CurrentRef-Mon',
         _c.V_FIRMWARE_VERSION: 'Version-Cte',
@@ -453,6 +453,7 @@ class FBPPowerSupply(Device):
             psc_status = _PSCStatus(ps_status=values['PwrState-Sts'])
             values['PwrState-Sts'] = psc_status.ioc_pwrstate
             values['OpMode-Sts'] = psc_status.ioc_opmode
+            values['OpMode-Sts'] = psc_status.interface
         if _c.V_FIRMWARE_VERSION in var_ids:
             version = ''.join([c.decode() for c in values['Version-Cte']])
             try:
@@ -478,6 +479,9 @@ class FBPPowerSupply(Device):
         elif field == 'OpMode-Sts':
             psc_status = _PSCStatus(ps_status=val)
             val = psc_status.ioc_opmode
+        elif field == 'CtrlMode-Mon':
+            psc_status = _PSCStatus(ps_status=val)
+            val = psc_status.interface
         elif field == 'Version-Cte':
             version = ''.join([c.decode() for c in val])
             try:
