@@ -47,6 +47,10 @@ class _PRUInterface:
         """Set waveforms for power supplies."""
         return self._curve(curve1, curve2, curve3, curve4)
 
+    def sync_stop(self):
+        """Stop sync mode."""
+        return self._sync_stop()
+
     # --- pure virtual methods ---
 
     def _get_sync_pulse_count(self):
@@ -62,6 +66,9 @@ class _PRUInterface:
         raise NotImplementedError
 
     def _curve(self, curve1, curve2, curve3, curve4):
+        raise NotImplementedError
+
+    def _sync_stop(self):
         raise NotImplementedError
 
 
@@ -105,6 +112,9 @@ class PRU(_PRUInterface):
     def _curve(self, curve1, curve2, curve3, curve4):
         _PRUserial485.PRUserial485_curve(curve1, curve2, curve3, curve4)
 
+    def _sync_stop(self):
+        _PRUserial485.PRUserial485_sync_stop()
+
 
 class PRUSim(_PRUInterface):
     """Functions for simulated programmable real-time unit."""
@@ -123,9 +133,6 @@ class PRUSim(_PRUInterface):
         self._sync_mode = sync_mode
         self._sync_status = _PRUInterface._SYNC_ON
 
-    def _sync_stop(self):
-        self._sync_status = _PRUInterface._SYNC_OFF
-
     def _get_sync_pulse_count(self):
         return self._sync_pulse_count
 
@@ -139,6 +146,9 @@ class PRUSim(_PRUInterface):
 
     def _curve(self, curve1, curve2, curve3, curbe4):
         pass
+
+    def _sync_stop(self):
+        self._sync_status = _PRUInterface._SYNC_OFF
 
     def process_sync_signal(self):
         """Process synchronization signal."""
