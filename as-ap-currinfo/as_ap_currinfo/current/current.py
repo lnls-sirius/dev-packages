@@ -50,6 +50,8 @@ def run(acc):
     _signal.signal(_signal.SIGINT, _stop_now)
     _signal.signal(_signal.SIGTERM, _stop_now)
 
+    _util.configure_log_file()
+
     # define IOC and init pvs database
     _pvs.select_ioc(acc)
     _main.App.init_class()
