@@ -50,6 +50,8 @@ def run():
     _signal.signal(_signal.SIGINT, _stop_now)
     _signal.signal(_signal.SIGTERM, _stop_now)
 
+    _util.configure_log_file()
+
     # Init pvs database
     _main.App.init_class()
 
