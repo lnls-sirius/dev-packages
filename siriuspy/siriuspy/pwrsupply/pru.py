@@ -1,7 +1,11 @@
 """Module implementing PRU elements."""
+import time as _time
+import threading as _threading
+
+
 try:
     import PRUserial485 as _PRUserial485
-except:
+except ImportError:
     # in case the PRUserial library is not installed and
     # this module is used only for simulated PRUs.
     _PRUserial485 = None
@@ -15,13 +19,19 @@ class PRUInterface:
 
     _SYNC_DELAY = 20  # us
 
-    SYNC_MODES = {
-        'MigInt': 0x51,  # Single curve sequence & Intercalated read messages
-        'MigEnd': 0x5E,  # Single curve sequence & Read msgs at End of curve
-        'RmpInt': 0xC1,  # Contin. curve sequence & Intercalated read messages
-        'RmpEnd': 0xCE,  # Contin. curve sequence & Read msgs at End of curve
-        'Cycle':  0x5C,  # Single Sequence - Single CYCLING COMMAND
-    }
+    SYNC_MIGINT = 0x51  # Single curve sequence & Read msgs at End of curve
+    SYNC_MIGEND = 0x5E  # Single curve sequence & Read msgs at End of curve
+    SYNC_RMPINT = 0xC1  # Contin. curve sequence & Intercalated read messages
+    SYNC_RMPEND = 0xCE  # Contin. curve sequence & Read msgs at End of curve
+    SYNC_CYCLE = 0x5C  # Single Sequence - Single CYCLING COMMAND
+
+    SYNC_MODES = (
+        SYNC_MIGINT,
+        SYNC_MIGEND,
+        SYNC_RMPINT,
+        SYNC_RMPEND,
+        SYNC_CYCLE
+    )
 
     def __init__(self):
         """Init method."""
@@ -145,8 +155,16 @@ class PRUSim(PRUInterface):
     def _get_sync_status(self):
         return self._sync_status
 
-    def _sync_start(self, sync_mode, delay):
+    def _sync_start(self, sync_mode, delay, sync_address):
         self._sync_status = PRUInterface._SYNC_ON
+        if self.sync_mode == PRUSim.SYNC_CYCLE:
+            _threading.Thread(target=self._stop_sync, daemon=True).start()
+        else:
+            self._sync_stop()
+
+    def _stop_sync(self):
+        _time.sleep(2)
+        self._sync_stop()
 
     def _sync_stop(self):
         self._sync_status = PRUInterface._SYNC_OFF
