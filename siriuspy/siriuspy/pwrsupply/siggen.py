@@ -232,6 +232,7 @@ class SignalTrapezoidal(Signal):
                     (down_time / self.rampdown_time)*(target - self.offset)
 
     def _check(self):
+        # TODO: avoid this workaround!
         if self.rampup_time == 0:
             self.rampup_time = 0.1
         if self.plateau_time == 0:
