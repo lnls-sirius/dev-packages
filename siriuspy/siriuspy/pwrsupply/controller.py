@@ -325,7 +325,8 @@ class FBPCycleState(_FBPState):
         variables[_c.V_SIGGEN_ENABLE] = 0
         variables[_c.V_PS_REFERENCE] = 0.0
         variables[_c.V_I_LOAD] = 0.0
-        self._set_signal(variables)
+        # self._set_signal(variables)
+        self.enable_siggen(variables)
 
     def reset_interlocks(self, variables):
         """Reset interlocks."""
