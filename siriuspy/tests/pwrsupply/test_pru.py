@@ -3,7 +3,7 @@
 import unittest
 from unittest import mock
 
-from siriuspy.pwrsupply.pru import _PRUInterface, PRU
+from siriuspy.pwrsupply.pru import PRUInterface, PRU
 from siriuspy.util import check_public_interface_namespace
 
 
@@ -21,7 +21,7 @@ class TestPRUInterface(unittest.TestCase):
     def test_api(self):
         """Test API."""
         self.assertTrue(check_public_interface_namespace(
-            _PRUInterface, TestPRUInterface.api))
+            PRUInterface, TestPRUInterface.api))
 
 
 class TestPRU(unittest.TestCase):
