@@ -31,11 +31,12 @@ class Device:
     # Setpoints regexp pattern
     _sp = _re.compile('^.*-(SP|Sel|Cmd)$')
 
-    def __init__(self, controller, slave_id, database):
+    def __init__(self, controller, slave_id, name, database):
         """Control a device using BSMP protocol."""
         self._connected = False
         self._slave_id = slave_id
         self._controller = controller
+        self._name = name
         self._database = database
 
         # add current device as slave to used controller
@@ -53,6 +54,11 @@ class Device:
     def controller(self):
         """Controller."""
         return self._controller
+
+    @property
+    def name(self):
+        """Device name."""
+        return self._name
 
     @property
     def device(self):
@@ -246,13 +252,13 @@ class FBPPowerSupply(Device):
         'WfmData-SP': '_set_wfmdata_sp',
     }
 
-    def __init__(self, controller, slave_id, database):
+    def __init__(self, controller, slave_id, name, database):
         """High level PS.
 
         The controller object implements the BSMP interface.
         All properties map an epics field to a BSMP property.
         """
-        super().__init__(controller, slave_id, database)
+        super().__init__(controller, slave_id, name, database)
         self._pru = self.controller.pru
 
         # initialize groups
