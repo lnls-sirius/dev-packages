@@ -13,6 +13,8 @@ class PRUInterface:
     _SYNC_OFF = 0
     _SYNC_ON = 1
 
+    _SYNC_DELAY = 20  # us
+
     SYNC_MODES = {
         'MigInt': 0x51,  # Single curve sequence & Intercalated read messages
         'MigEnd': 0x5E,  # Single curve sequence & Read msgs at End of curve
@@ -37,7 +39,7 @@ class PRUInterface:
         """Return sync status."""
         return self._get_sync_status()
 
-    def sync_start(self, sync_mode, delay, sync_address):
+    def sync_start(self, sync_mode, sync_address, delay=_SYNC_DELAY):
         """Start sync mode in PRU."""
         if sync_mode in PRUInterface.SYNC_MODES:
             self._sync_mode = sync_mode
