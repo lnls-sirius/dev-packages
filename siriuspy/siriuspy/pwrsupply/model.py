@@ -2,17 +2,16 @@
 
 import re as _re
 import time as _time
-# import random as _random
 
 from epics import PV as _PV
 
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.envars import vaca_prefix as _VACA_PREFIX
-# from siriuspy.csdevice.pwrsupply import max_wfmsize as _max_wfmsize
 from siriuspy.factory import NormalizerFactory as _NormalizerFactory
 from siriuspy.epics import connection_timeout as _connection_timeout
 from siriuspy.thread import QueueThread as _QueueThread
 from siriuspy.epics.computed_pv import ComputedPV as _ComputedPV
+from siriuspy.csdevice.pwrsupply import Const as _devc
 from siriuspy.pwrsupply.data import PSData as _PSData
 from siriuspy.magnet.data import MAData as _MAData
 from siriuspy.magnet import util as _mutil
@@ -21,12 +20,13 @@ from siriuspy.pwrsupply import sync as _sync
 from ..bsmp import Response
 from ..bsmp import SerialError as _SerialError
 from .status import PSCStatus as _PSCStatus
+from siriuspy.pwrsupply.pru import PRUInterface as _PRUInterface
 from siriuspy.pwrsupply.bsmp import Const as _c
 from siriuspy.pwrsupply.bsmp import ps_group_id as _ps_group_id
 
 
-class Device:
-    """Control a device using BSMP protocol."""
+class _Device:
+    """Base class to control a device using BSMP."""
 
     # Setpoints regexp pattern
     _sp = _re.compile('^.*-(SP|Sel|Cmd)$')
@@ -62,7 +62,7 @@ class Device:
 
     @property
     def device(self):
-        """BSMP instance for this device."""
+        """BSMP communication instance for this device."""
         return self._controller[self._slave_id]
 
     @property
@@ -196,7 +196,7 @@ class Device:
         raise NotImplementedError()
 
 
-class FBPPowerSupply(Device):
+class FBPPowerSupply(_Device):
     """Control a power supply using BSMP protocol."""
 
     bsmp_2_epics = {
@@ -241,6 +241,7 @@ class FBPPowerSupply(Device):
         'OpMode-Sel': '_set_opmode',
         'Current-SP': '_set_current',
         'Reset-Cmd': '_reset',
+        'Abort-Cmd': '_abort',
         'CycleEnbl-Cmd': '_enable_cycle',
         'CycleDsbl-Cmd': '_disable_cycle',
         'CycleType-Sel': '_set_cycle_type',
@@ -252,8 +253,8 @@ class FBPPowerSupply(Device):
         'WfmData-SP': '_set_wfmdata_sp',
     }
 
-    def __init__(self, controller, slave_id, name, database):
-        """High level PS.
+    def __init__(self, controller, slave_id, database):
+        """High level power supply class.
 
         The controller object implements the BSMP interface.
         All properties map an epics field to a BSMP property.
@@ -262,13 +263,15 @@ class FBPPowerSupply(Device):
         self._pru = self.controller.pru
 
         # initialize groups
-        self.device.remove_all_groups()  # TODO: check errors, create group 3?
+        # TODO: check errors, create group 3?
+        self.device.remove_all_groups()
         var_ids = self.device.entities.list_variables(group_id=0)
         var_ids.remove(_c.V_FIRMWARE_VERSION)
         self.device.create_group(var_ids=var_ids)
 
         # close DSP loop
-        # TODO: this breaks the concept that the IOC should init w/o setting PS
+        # TODO: does this not break the concept that the IOC should initialize
+        # withpout setting the power supply controller?
         self.device.execute_function(_c.F_CLOSE_LOOP)
 
     def read_ps_variables(self):
@@ -315,10 +318,10 @@ class FBPPowerSupply(Device):
         return self._execute_function(_c.F_SET_SLOWREF, value)
 
     def _cfg_siggen(self, t_siggen, num_cycles,
-                    frequency, amplitude, offset, aux_params):
+                    freq, amplitude, offset, aux_params):
         """Set siggen congiguration parameters."""
         value = \
-            [t_siggen, num_cycles, frequency, amplitude, offset]
+            [t_siggen, num_cycles, freq, amplitude, offset]
         value.extend(aux_params)
         return self._execute_function(_c.F_CFG_SIGGEN, value)
 
@@ -356,11 +359,21 @@ class FBPPowerSupply(Device):
         """Operation mode setter."""
         if setpoint < 0 or \
                 setpoint > len(self.setpoints['OpMode-Sel']['enums']):
-            self.setpoints['OpMode-Sel']['value'] = setpoint
-            # raise InvalidValue("OpMode {} out of range.".format(setpoint))
+            ret = self._select_op_mode(setpoint)
+            if ret:
+                self.setpoints['OpMode-Sel']['value'] = setpoint
+                if setpoint == _devc.OpMode.SlowRef:
+                    # disable siggen
+                    self._disable_siggen()
+                    # turn PRU sync off - This is done in the BBB class
+                    pass
+                elif setpoint == _devc.OpMode.Cycle:
+                    # implement actions for Cycle
+                    pass
+                else:
+                    # TODO: implement actions for other modes
+                    pass
 
-        if self._select_op_mode(setpoint):
-            self.setpoints['OpMode-Sel']['value'] = setpoint
 
     def _set_current(self, setpoint):
         """Set current."""
@@ -373,8 +386,13 @@ class FBPPowerSupply(Device):
     def _reset(self, setpoint):
         """Reset command."""
         if setpoint:
-            if self._reset_interlocks():
-                self.setpoints['Reset-Cmd']['value'] += 1
+            self.setpoints['Reset-Cmd']['value'] += 1
+            self._reset_interlocks()
+
+    def _abort(self, setpoint):
+        if setpoint:
+            self.setpoints['Reset-Cmd']['value'] += 1
+            self._set_opmode(_devc.OpMode.SlowRef)
 
     def _enable_cycle(self, setpoint):
         """Enable cycle command."""
@@ -382,7 +400,7 @@ class FBPPowerSupply(Device):
             if self._enable_siggen():
                 self.setpoints['CycleEnbl-Cmd']['value'] += 1
 
-    def _disable_cycle(self, setpoint):
+    def _disable_cycle(self, setpoint=None):
         """Disable cycle command."""
         if setpoint:
             if self._disable_siggen():
@@ -418,6 +436,11 @@ class FBPPowerSupply(Device):
 
     def _set_cycle_aux_params(self, setpoint):
         """Set cycle offset."""
+        # trim setpoint list
+        cur_sp = self.setpoints['CycleAuxParam-SP']['value']
+        setpoint = setpoint[:len(cur_sp)]
+        setpoint += cur_sp[len(setpoint):]
+        # update setpoint
         self.setpoints['CycleAuxParam-SP']['value'] = setpoint
         return self._cfg_siggen(*self._cfg_siggen_args())
 
@@ -493,6 +516,7 @@ class FBPPowerSupply(Device):
 
     def _write_setpoint(self, field, setpoint):
         """Write operation."""
+        if ''
         if field in FBPPowerSupply._epics_2_wfuncs:
             func_name = FBPPowerSupply._epics_2_wfuncs[field]
             func = getattr(self, func_name)

@@ -6,15 +6,19 @@ from collections import namedtuple as _namedtuple
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.search import MASearch as _MASearch
+from siriuspy.pwrsupply.siggen import DEFAULT_SIGGEN_CONFIG as _DEF_SIGG_CONF
 
-max_wfmsize = 4000
+MAX_WFMSIZE = 4000
+DEFAULT_SIGGEN_CONFIG = _DEF_SIGG_CONF
+
 default_ps_current_precision = 4
 default_pu_current_precision = 4
+_default_ps_current_unit = None
+_default_pu_current_unit = None
+
 # default_wfmlabels = ('Waveform1', 'Waveform2', 'Waveform3',
 #                      'Waveform4', 'Waveform5', 'Waveform6')
 
-_default_ps_current_unit = None
-_default_pu_current_unit = None
 
 # --- power supply enums ---
 
@@ -194,10 +198,10 @@ def get_ps_FBP_propty_database():
         #                 'value': 0},
         # 'WfmLoad-Sts': {'type': 'enum', 'enums': default_wfmlabels,
         #                 'value': 0},
-        'WfmData-SP': {'type': 'float', 'count': max_wfmsize,
-                       'value': [0.0 for datum in range(max_wfmsize)]},
-        'WfmData-RB': {'type': 'float', 'count': max_wfmsize,
-                       'value': [0.0 for datum in range(max_wfmsize)]},
+        'WfmData-SP': {'type': 'float', 'count': MAX_WFMSIZE,
+                       'value': [0.0 for datum in range(MAX_WFMSIZE)]},
+        'WfmData-RB': {'type': 'float', 'count': MAX_WFMSIZE,
+                       'value': [0.0 for datum in range(MAX_WFMSIZE)]},
         # 'WfmSave-Cmd': {'type': 'int', 'value': 0},
         'Current-SP': {'type': 'float', 'value': 0.0},
         'Current-RB': {'type': 'float', 'value': 0.0},

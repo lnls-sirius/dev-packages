@@ -174,15 +174,14 @@ class FBP_BSMPSim(_BSMPSim):
             [0.0, 0.0, 0.0, 0.0], 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0,
             0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0]
         default_siggen_parms = \
-            _SignalFactory.DEFAULT_PARAMETERS['Sine']
+            _SignalFactory.DEFAULT_CONFIGS['Sine']
         variables[_c.V_SIGGEN_TYPE] = default_siggen_parms[0]
         variables[_c.V_SIGGEN_NUM_CYCLES] = default_siggen_parms[1]
         variables[_c.V_SIGGEN_FREQ] = default_siggen_parms[2]
         variables[_c.V_SIGGEN_AMPLITUDE] = default_siggen_parms[3]
         variables[_c.V_SIGGEN_OFFSET] = default_siggen_parms[4]
-        variables[_c.V_SIGGEN_AUX_PARAM] = default_siggen_parms[5]
+        variables[_c.V_SIGGEN_AUX_PARAM] = default_siggen_parms[5:9]
         return variables
-
 
     def _is_on(self):
         ps_status = self._variables[_c.V_PS_STATUS]

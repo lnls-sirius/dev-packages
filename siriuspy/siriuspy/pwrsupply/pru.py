@@ -7,15 +7,23 @@ except:
     _PRUserial485 = None
 
 
-class _PRUInterface:
+class PRUInterface:
     """Interface class for programmable real-time units."""
 
     _SYNC_OFF = 0
     _SYNC_ON = 1
 
+    SYNC_MODES = {
+        'MigInt': 0x51,  # Single curve sequence & Intercalated read messages
+        'MigEnd': 0x5E,  # Single curve sequence & Read msgs at End of curve
+        'RmpInt': 0xC1,  # Contin. curve sequence & Intercalated read messages
+        'RmpEnd': 0xCE,  # Contin. curve sequence & Read msgs at End of curve
+        'Cycle':  0x5C,  # Single Sequence - Single CYCLING COMMAND
+    }
+
     def __init__(self):
         """Init method."""
-        self._sync_mode = False
+        self._sync_mode = None
 
     # --- interface ---
 
@@ -24,11 +32,22 @@ class _PRUInterface:
         """Return sync mode."""
         return self._sync_mode
 
-    @sync_mode.setter
-    def sync_mode(self, value):
-        """Set sync mode."""
-        self._set_sync_mode(value)
-        self._sync_mode = value
+    @property
+    def sync_status(self):
+        """Return sync status."""
+        return self._get_sync_status()
+
+    def sync_start(self, sync_mode, delay, sync_address):
+        """Start sync mode in PRU."""
+        if sync_mode in PRUInterface.SYNC_MODES:
+            self._sync_mode = sync_mode
+            self._sync_start(sync_mode, delay, sync_address)
+        else:
+            print('Invalid sync_mode for PRU!')
+
+    def sync_stop(self):
+        """Stop sync mode."""
+        return self._sync_stop()
 
     @property
     def sync_pulse_count(self):
@@ -49,10 +68,16 @@ class _PRUInterface:
 
     # --- pure virtual methods ---
 
-    def _get_sync_pulse_count(self):
+    def _get_sync_status(self):
         raise NotImplementedError
 
-    def _set_sync_mode(self, value):
+    def _sync_start(sync_mode, delay, sync_address):
+        raise NotImplementedError
+
+    def _sync_stop(self):
+        raise NotImplementedError
+
+    def _get_sync_pulse_count(self):
         raise NotImplementedError
 
     def _UART_write(self, stream, timeout):
@@ -65,31 +90,31 @@ class _PRUInterface:
         raise NotImplementedError
 
 
-class PRU(_PRUInterface):
+class PRU(PRUInterface):
     """Functions for the programmable real-time unit."""
 
     def __init__(self):
         """Init method."""
         if _PRUserial485 is None:
             raise ValueError('module PRUserial485 is not installed!')
-        _PRUInterface.__init__(self)
+        PRUInterface.__init__(self)
         # signal use of PRU and shared memory.
         baud_rate = 6
         mode = b"M"  # slave(S)/master(M)
         _PRUserial485.PRUserial485_open(baud_rate, mode)
 
+    def _get_sync_status(self):
+        return _PRUserial485.PRUserial485_sync_status()
+
+    def _sync_start(self, sync_mode, delay, sync_address):
+        return _PRUserial485.PRUserial485_sync_start(
+            sync_mode, delay, sync_address)
+
+    def _sync_stop(self):
+        return _PRUserial485.PRUserial485_sync_stop()
+
     def _get_sync_pulse_count(self):
         return _PRUserial485.PRUserial485_read_pulse_count_sync()
-
-    def _get_sync_mode(self):
-        return self._sync_mode
-
-    def _set_sync_mode(self, value):
-        ID_device = 1  # could it be any number?
-        if value:
-            _PRUserial485.PRUserial485_sync_start(ID_device, 100)
-        else:
-            _PRUserial485.PRUserial485_sync_stop()
 
     def _UART_write(self, stream, timeout):
         # this method send streams through UART to the RS-485 line.
@@ -103,28 +128,26 @@ class PRU(_PRUInterface):
         return stream
 
     def _curve(self, curve1, curve2, curve3, curve4):
-        _PRUserial485.PRUserial485_curve(curve1, curve2, curve3, curve4)
+        return _PRUserial485.PRUserial485_curve(curve1, curve2, curve3, curve4)
 
 
-class PRUSim(_PRUInterface):
+class PRUSim(PRUInterface):
     """Functions for simulated programmable real-time unit."""
 
     def __init__(self):
         """Init method."""
-        _PRUInterface.__init__(self)
-        self._sync_status = _PRUInterface._SYNC_OFF
-        self._sync_mode = None
+        PRUInterface.__init__(self)
+        self._sync_status = PRUInterface._SYNC_OFF
         self._sync_pulse_count = 0
 
     def _get_sync_status(self):
         return self._sync_status
 
     def _sync_start(self, sync_mode, delay):
-        self._sync_mode = sync_mode
-        self._sync_status = _PRUInterface._SYNC_ON
+        self._sync_status = PRUInterface._SYNC_ON
 
     def _sync_stop(self):
-        self._sync_status = _PRUInterface._SYNC_OFF
+        self._sync_status = PRUInterface._SYNC_OFF
 
     def _get_sync_pulse_count(self):
         return self._sync_pulse_count

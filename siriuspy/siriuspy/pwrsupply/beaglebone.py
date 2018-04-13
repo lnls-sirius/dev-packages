@@ -1,5 +1,4 @@
 """Beagle Bone implementation module."""
-# import re as _re
 
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.pwrsupply.data import PSData as _PSData
@@ -8,18 +7,6 @@ from siriuspy.pwrsupply.pru import PRUSim as _PRUSim
 from siriuspy.pwrsupply.controller import IOController as _IOController
 from siriuspy.pwrsupply.controller import IOControllerSim as _IOControllerSim
 from siriuspy.pwrsupply.model import FBPPowerSupply as _FBPPowerSupply
-
-
-# import time as _time
-# from siriuspy.search import PSSearch as _PSSearch
-# from siriuspy.csdevice.pwrsupply import get_ps_propty_database as \
-#     _get_ps_propty_database
-# from siriuspy.pwrsupply.pru import SerialComm as _SerialComm
-# from siriuspy.pwrsupply.bsmp import BSMPMasterSlave as _BSMPMasterSlave
-# from siriuspy.pwrsupply.bsmp import BSMPMasterSlaveSim as _BSMPMasterSlaveSim
-# from siriuspy.pwrsupply.controller import ControllerIOC as _ControllerIOC
-# from siriuspy.pwrsupply.controller import ControllerPSSim as _ControllerPSSim
-# from siriuspy.pwrsupply.model import PowerSupply as _PowerSupply
 
 
 class BeagleBone:
