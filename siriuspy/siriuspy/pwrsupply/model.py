@@ -253,7 +253,7 @@ class FBPPowerSupply(_Device):
         'WfmData-SP': '_set_wfmdata_sp',
     }
 
-    def __init__(self, controller, slave_id, database):
+    def __init__(self, controller, slave_id, name, database):
         """High level power supply class.
 
         The controller object implements the BSMP interface.
@@ -357,8 +357,8 @@ class FBPPowerSupply(_Device):
 
     def _set_opmode(self, setpoint):
         """Operation mode setter."""
-        if setpoint < 0 or \
-                setpoint > len(self.setpoints['OpMode-Sel']['enums']):
+        if setpoint >= 0 or \
+                setpoint <= len(self.setpoints['OpMode-Sel']['enums']):
             ret = self._select_op_mode(setpoint)
             if ret:
                 self.setpoints['OpMode-Sel']['value'] = setpoint
@@ -516,7 +516,6 @@ class FBPPowerSupply(_Device):
 
     def _write_setpoint(self, field, setpoint):
         """Write operation."""
-        if ''
         if field in FBPPowerSupply._epics_2_wfuncs:
             func_name = FBPPowerSupply._epics_2_wfuncs[field]
             func = getattr(self, func_name)
