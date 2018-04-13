@@ -20,6 +20,7 @@ from siriuspy.pwrsupply import sync as _sync
 from ..bsmp import Response
 from ..bsmp import SerialError as _SerialError
 from .status import PSCStatus as _PSCStatus
+from siriuspy.pwrsupply.pru import PRUInterface as _PRUInterface
 from siriuspy.pwrsupply.bsmp import Const as _c
 from siriuspy.pwrsupply.bsmp import ps_group_id as _ps_group_id
 
@@ -356,13 +357,12 @@ class FBPPowerSupply(_Device):
             if ret:
                 self.setpoints['OpMode-Sel']['value'] = setpoint
                 if setpoint == _devc.OpMode.SlowRef:
-                    # turn PRU sync off
-                    self.controlador.pru.sync_stop()
                     # disable siggen
-                    self._disable_cycle()
+                    self._disable_siggen()
+                    # turn PRU sync off - This is done in the BBB class
                     pass
                 elif setpoint == _devc.OpMode.Cycle:
-                    # TODO: implement actions for Cycle
+                    # implement actions for Cycle
                     pass
                 else:
                     # TODO: implement actions for other modes
