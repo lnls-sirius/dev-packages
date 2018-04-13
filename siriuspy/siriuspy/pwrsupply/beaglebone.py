@@ -71,14 +71,14 @@ class BeagleBone:
         """PRU object."""
         return self._pru
 
-    def set(self, device, field, value):
+    def write(self, device_name, field, value):
         """BBB write."""
         if field == 'OpMode-Sel' and value == 2:  # Cycle
             # sync start
             self.pru.sync_mode = True
             # set all devices to cycle?
 
-        return self._power_supplies[device].write(field, value)
+        return self._power_supplies[device_name].write(field, value)
 
     def _get_bsmp_slave_IDs(self):
         # TODO: temp code. this should be deleted once PS bench tests are over.
