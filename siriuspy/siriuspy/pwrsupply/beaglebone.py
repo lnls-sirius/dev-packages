@@ -48,17 +48,35 @@ class BeagleBone:
 
         self._power_supplies = self._create_power_supplies()
 
+    def __getitem__(self, psname):
+        """Return corresponding power supply object."""
+        return self._power_supplies[psname]
+
+    def __contains__(self, psname):
+        """Test is psname is in psname list."""
+        return psname in self._psnames
+
     @property
     def psnames(self):
         """Return list of power supply names."""
         return self._psnames.copy()
 
+    @property
+    def power_supplies(self):
+        """Return power supplies."""
+        return self._power_supplies
+
+    @property
+    def pru(self):
+        """PRU object."""
+        return self._pru
+
     def set(self, device, field, value):
         """BBB write."""
         if field == 'OpMode-Sel' and value == 2:  # Cycle
-            # set all devices?
             # sync start
-            pass
+            self.pru.sync_mode = True
+            # set all devices to cycle?
 
         return self._power_supplies[device].write(field, value)
 
@@ -81,13 +99,5 @@ class BeagleBone:
             # Define device controller
             if self._psmodel == 'FBP':
                 power_supplies[psname] = _FBPPowerSupply(
-                    self._controller, slave_ids[i], self._database)
+                    self._controller, slave_ids[i], psname, self._database)
         return power_supplies
-
-    def __getitem__(self, psname):
-        """Return corresponding power supply object."""
-        return self._power_supplies[psname]
-
-    def __contains__(self, psname):
-        """Test is psname is in psname list."""
-        return psname in self._psnames
