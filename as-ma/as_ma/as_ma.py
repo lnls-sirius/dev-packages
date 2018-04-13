@@ -47,6 +47,8 @@ def run(manames):
     _signal.signal(_signal.SIGINT, _stop_now)
     _signal.signal(_signal.SIGTERM, _stop_now)
 
+    _util.configure_log_file()
+
     # define IOC and initializes it
     _pvs.select_ioc(manames)
     _main.App.init_class(manames)
