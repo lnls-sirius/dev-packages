@@ -72,7 +72,7 @@ class TestPowerSupply(unittest.TestCase):
             [id for id in range(len(mock_read))]
         # self.controller.read_all_variables.return_value = (0xE0, mock_read)
         # self.controller.read_group_variables.return_value = (0xE0, mock_read)
-        self.ps = FBPPowerSupply(self.controller, 1, db)
+        self.ps = FBPPowerSupply(self.controller, 1, 'name', db)
 
     def test_read_variable(self):
         """Test read variable method."""
@@ -216,6 +216,7 @@ class TestPowerSupply(unittest.TestCase):
         self.assertEqual(self.ps._read_group(3), {
             'PwrState-Sts': 1,
             'OpMode-Sts': 3,
+            'CtrlMode-Mon': 0,
             'Version-Cte': 'teste',
             'CycleEnbl-Mon': values[2],
             'CycleType-Sts': values[3]})
@@ -262,7 +263,7 @@ class TestPowerSupplyFunctions(unittest.TestCase):
         self.device.read_group_variables.return_value = (0xE0, mock_read)
         self.device.entities.list_variables.return_value = \
             [id for id in range(len(mock_read))]
-        self.ps = FBPPowerSupply(self.controller, 1, db)
+        self.ps = FBPPowerSupply(self.controller, 'name', 1, db)
 
     def test_set_pwrstate_setpoint(self):
         """Test get pwrstate setpoint."""
