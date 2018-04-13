@@ -19,7 +19,7 @@ def get_dict():
 #
 #  | DeltaPosX @ TS-04:DI-Scrn-3 |    | h11  h12 |   | Kick TS-04:MA-CH    |
 #  |                             | =  |          | * |                     |
-#  | DeltaAngX @ TS-04:DI-Scrn-3 |    | h21  h22 |   | Kick TS-04:PM-InjSF |
+#  | DeltaAngX @ TS-04:DI-Scrn-3 |    | h21  h22 |   | Kick TS-04:PM-InjSeptF |
 #
 # Data structure:
 #         h11   h12

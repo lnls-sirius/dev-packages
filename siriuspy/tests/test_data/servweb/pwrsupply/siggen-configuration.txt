@@ -1067,15 +1067,15 @@ LI-01:PS-Spect          Sine          1           nan                   nan     
 
 # PSNAME                TYPE          NR_CYCLES   FREQ[Hz]              AMPLITUDE[A]    OFFSET[A]     PARAM0:ThetaBeg[deg]   PARAM1:ThetaEnd[deg]     PARAM2:DecayTime[s]     PARAM3:<NOT_USED>
 
-SI-19C4:PU-VPing        Sine          1           nan                   nan             nan           nan                    nan                      nan                     nan
-BO-01D:PU-InjK          Sine          1           nan                   nan             nan           nan                    nan                      nan                     nan
-BO-48D:PU-EjeK          Sine          1           nan                   nan             nan           nan                    nan                      nan                     nan
-SI-01SA:PU-HPing        Sine          1           nan                   nan             nan           nan                    nan                      nan                     nan
-SI-01SA:PU-InjDpK       Sine          1           nan                   nan             nan           nan                    nan                      nan                     nan
-SI-01SA:PU-InjNLK       Sine          1           nan                   nan             nan           nan                    nan                      nan                     nan
-TB-04:PU-InjS           Sine          1           nan                   nan             nan           nan                    nan                      nan                     nan
-TS-01:PU-EjeSF          Sine          1           nan                   nan             nan           nan                    nan                      nan                     nan
-TS-01:PU-EjeSG          Sine          1           nan                   nan             nan           nan                    nan                      nan                     nan
-TS-04:PU-InjSF          Sine          1           nan                   nan             nan           nan                    nan                      nan                     nan
-TS-04:PU-InjSG-1        Sine          1           nan                   nan             nan           nan                    nan                      nan                     nan
-TS-04:PU-InjSG-2        Sine          1           nan                   nan             nan           nan                    nan                      nan                     nan
+SI-19C4:PU-PingV        Sine          1           nan                   nan             nan           nan                    nan                      nan                     nan
+BO-01D:PU-InjKckr          Sine          1           nan                   nan             nan           nan                    nan                      nan                     nan
+BO-48D:PU-EjeKckr          Sine          1           nan                   nan             nan           nan                    nan                      nan                     nan
+SI-01SA:PU-PingH        Sine          1           nan                   nan             nan           nan                    nan                      nan                     nan
+SI-01SA:PU-InjDpKckr       Sine          1           nan                   nan             nan           nan                    nan                      nan                     nan
+SI-01SA:PU-InjNLKckr       Sine          1           nan                   nan             nan           nan                    nan                      nan                     nan
+TB-04:PU-InjSept           Sine          1           nan                   nan             nan           nan                    nan                      nan                     nan
+TS-01:PU-EjeSeptF          Sine          1           nan                   nan             nan           nan                    nan                      nan                     nan
+TS-01:PU-EjeSeptG          Sine          1           nan                   nan             nan           nan                    nan                      nan                     nan
+TS-04:PU-InjSeptF          Sine          1           nan                   nan             nan           nan                    nan                      nan                     nan
+TS-04:PU-InjSeptG-1        Sine          1           nan                   nan             nan           nan                    nan                      nan                     nan
+TS-04:PU-InjSeptG-2        Sine          1           nan                   nan             nan           nan                    nan                      nan                     nan

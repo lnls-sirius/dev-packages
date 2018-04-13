@@ -3,4 +3,4 @@
 
 # number of power supplies: 1
 
-BO-48D:PU-EjeK
+BO-48D:PU-EjeKckr

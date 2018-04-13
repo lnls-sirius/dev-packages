@@ -81,9 +81,9 @@ class TestMASearch(unittest.TestCase):
         "BO-15U:MA-CV": None,
         "TB-03:MA-QF3": None,
         "TS-01:MA-CV-2": None,
-        "BO-01D:PM-InjK": None,
-        "TB-04:PM-InjS": None,
-        "SI-01SA:PM-InjNLK": None,
+        "BO-01D:PM-InjKckr": None,
+        "TB-04:PM-InjSept": None,
+        "SI-01SA:PM-InjNLKckr": None,
     }
 
     maname2magfuncs = {
@@ -99,9 +99,9 @@ class TestMASearch(unittest.TestCase):
         'BO-15U:MA-CV': {'BO-15U:PS-CV': 'corrector-vertical'},
         'TB-03:MA-QF3': {'TB-03:PS-QF3': 'quadrupole'},
         'TS-01:MA-CV-2': {'TS-01:PS-CV-2': 'corrector-vertical'},
-        'BO-01D:PM-InjK': {'BO-01D:PU-InjK': 'corrector-horizontal'},
-        'TB-04:PM-InjS': {'TB-04:PU-InjS': 'corrector-horizontal'},
-        'SI-01SA:PM-InjNLK': {'SI-01SA:PU-InjNLK': 'corrector-horizontal'},
+        'BO-01D:PM-InjKckr': {'BO-01D:PU-InjKckr': 'corrector-horizontal'},
+        'TB-04:PM-InjSept': {'TB-04:PU-InjSept': 'corrector-horizontal'},
+        'SI-01SA:PM-InjNLKckr': {'SI-01SA:PU-InjNLKckr': 'corrector-horizontal'},
     }
 
     maname2psnames = {
@@ -114,9 +114,9 @@ class TestMASearch(unittest.TestCase):
         'BO-15U:MA-CV': ('BO-15U:PS-CV',),
         'TB-03:MA-QF3': ('TB-03:PS-QF3',),
         'TS-01:MA-CV-2': ('TS-01:PS-CV-2',),
-        'BO-01D:PM-InjK': ('BO-01D:PU-InjK',),
-        'TB-04:PM-InjS': ('TB-04:PU-InjS',),
-        'SI-01SA:PM-InjNLK': ('SI-01SA:PU-InjNLK',),
+        'BO-01D:PM-InjKckr': ('BO-01D:PU-InjKckr',),
+        'TB-04:PM-InjSept': ('TB-04:PU-InjSept',),
+        'SI-01SA:PM-InjNLKckr': ('SI-01SA:PU-InjNLKckr',),
     }
 
     psname2maname = {

@@ -3,5 +3,5 @@
 
 # number of power supplies: 2
 
-TS-04:PU-InjSG-1
-TS-04:PU-InjSG-2
+TS-04:PU-InjSeptG-1
+TS-04:PU-InjSeptG-2
