@@ -1,4 +1,5 @@
 """Beagle Bone implementation module."""
+from copy import deepcopy as _deepcopy
 
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.pwrsupply.data import PSData as _PSData
@@ -62,9 +63,13 @@ class BeagleBone:
         """BBB write."""
         if field == 'OpMode-Sel' and value == 2:  # Cycle
             # sync start
-            sync_mode = self.pru.SYNC_MODES['Cycle']
+            ret = True
+            for ps in self._power_supplies.values():
+                ret &= ps.write(field, value)
+            sync_mode = self.pru.SYNC_CYCLE
             addr = self._power_supplies[self.psnames[0]]._slave_id
             self.pru.sync_start(sync_mode, addr)
+            return ret
             # set all devices to cycle?
 
         return self._power_supplies[device_name].write(field, value)
@@ -87,6 +92,7 @@ class BeagleBone:
         for i, psname in enumerate(self._psnames):
             # Define device controller
             if self._psmodel == 'FBP':
+                db = _deepcopy(self._database)
                 power_supplies[psname] = _FBPPowerSupply(
-                    self._controller, slave_ids[i], psname, self._database)
+                    self._controller, slave_ids[i], psname, db)
         return power_supplies
