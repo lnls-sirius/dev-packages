@@ -2,7 +2,6 @@
 
 import os as _os
 import uuid as _uuid
-import sys as _sys
 import time as _time
 import logging as _log
 import signal as _signal
@@ -31,10 +30,12 @@ def _print_pvs_in_file(db, fname):
     _log.info(fname+' file generated with {0:d} pvs.'.format(len(db)))
 
 
-def _attribute_acces_security_group(db):
+def _attribute_access_security_group(server, db):
     for k, v in db.items():
         if k.endswith(('-RB', '-Sts', '-Cte', '-Mon')):
             v.update({'asg': 'rbpv'})
+    path_ = _os.path.abspath(_os.path.dirname(__file__))
+    server.initAccessSecurityFile(path_ + '/access_rules.as')
 
 
 class _Driver(_pcaspy.Driver):
@@ -121,7 +122,6 @@ class App:
 
 def run(debug=False):
     """Start the IOC."""
-
     _util.configure_log_file(debug=debug)
 
     # define abort function
@@ -148,14 +148,11 @@ def run(debug=False):
     _util.save_ioc_pv_list(ioc_name.lower(), PREFIX, db)
     _log.info('File generated with {0:d} pvs.'.format(len(db)))
 
-    _attribute_acces_security_group(db)
-
     # create a new simple pcaspy server and driver to respond client's requests
     _log.info('Creating Server.')
     server = _pcaspy.SimpleServer()
-    path_ = _os.path.abspath(_os.path.dirname(__file__))
-    server.initAccessSecurityFile(path_ + '/access_rules.as')
     _log.info('Setting Server Database.')
+    _attribute_access_security_group(server, db)
     server.createPV(PREFIX, db)
     _log.info('Creating Driver.')
     pcas_driver = _Driver()

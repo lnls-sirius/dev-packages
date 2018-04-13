@@ -1,6 +1,7 @@
 #!/usr/bin/env python-sirius
 """IOC Module."""
-import sys as _sys
+
+import os as _os
 import logging as _log
 import pcaspy as _pcaspy
 import pcaspy.tools as _pcaspy_tools
@@ -8,7 +9,6 @@ import signal as _signal
 from si_ap_orbit import main as _main
 from siriuspy import util as _util
 from siriuspy.envars import vaca_prefix as _vaca_prefix
-import siriuspy.util as _util
 
 __version__ = _util.get_last_commit_hash()
 INTERVAL = 0.1
@@ -28,6 +28,14 @@ def _print_pvs_in_file(db):
                            prefix=('SI-Glob:AP-Orbit:', _vaca_prefix),
                            db=db)
     _log.info('si-ap-orbit.txt file generated with {0:d} pvs.'.format(len(db)))
+
+
+def _attribute_access_security_group(server, db):
+    for k, v in db.items():
+        if k.endswith(('-RB', '-Sts', '-Cte', '-Mon')):
+            v.update({'asg': 'rbpv'})
+    path_ = _os.path.abspath(_os.path.dirname(__file__))
+    server.initAccessSecurityFile(path_ + '/access_rules.as')
 
 
 class _PCASDriver(_pcaspy.Driver):
@@ -59,7 +67,7 @@ def run(add_noise=False, debug=False):
     _signal.signal(_signal.SIGTERM, _stop_now)
 
     _util.configure_log_file(debug=debug)
-    
+
     # Creates App object
     _log.info('Creating App.')
     app = _main.App()
@@ -73,6 +81,7 @@ def run(add_noise=False, debug=False):
     _log.info('Creating Server.')
     server = _pcaspy.SimpleServer()
     _log.info('Setting Server Database.')
+    _attribute_access_security_group(server, db)
     server.createPV(PREFIX, db)
     _log.info('Creating Driver.')
     pcas_driver = _PCASDriver(app)
