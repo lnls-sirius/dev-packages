@@ -2,11 +2,22 @@
 import time as _time
 import threading as _threading
 
+from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 
+# load PRUserial485 if available and checks version
+__version__ = '1.1.1'  # Version of the compatible PRUserial485 library
 try:
     import PRUserial485 as _PRUserial485
+    if _PRUserial485.__version__ != __version__:
+        # loaded library has an incompatible version!
+        err_msg = 'Invalid PRUserial485 library version! {} != {}'.format(
+            _PRUserial485.__version__, __version__)
+        raise ValueError(err_msg)
+    if not _PRUserial485.libraries_loaded:
+        # could not import libray, which is interpreted as not installed.
+        _PRUserial485 = None
 except ImportError:
-    # in case the PRUserial library is not installed and
+    # in case PRUserial485 library is not installed and
     # this module is used only for simulated PRUs.
     _PRUserial485 = None
 
@@ -16,20 +27,18 @@ class PRUInterface:
 
     _SYNC_OFF = 0
     _SYNC_ON = 1
+    _SYNC_DELAY = 20  # [us] TODO: better understand this parameter!
 
-    _SYNC_DELAY = 20  # us
+    VERSION = __version__  # Version of the compatible PRUserial485 library
 
     SYNC_MIGINT = 0x51  # Single curve sequence & Read msgs at End of curve
     SYNC_MIGEND = 0x5E  # Single curve sequence & Read msgs at End of curve
     SYNC_RMPINT = 0xC1  # Contin. curve sequence & Intercalated read messages
     SYNC_RMPEND = 0xCE  # Contin. curve sequence & Read msgs at End of curve
-    SYNC_CYCLE = 0x5C  # Single Sequence - Single CYCLING COMMAND
-
+    SYNC_CYCLE = 0x5C   # Single Sequence - Single CYCLING COMMAND
     SYNC_MODES = (
-        SYNC_MIGINT,
-        SYNC_MIGEND,
-        SYNC_RMPINT,
-        SYNC_RMPEND,
+        SYNC_MIGINT, SYNC_MIGEND,
+        SYNC_RMPINT, SYNC_RMPEND,
         SYNC_CYCLE
     )
 
@@ -37,7 +46,7 @@ class PRUInterface:
         """Init method."""
         self._sync_mode = None
 
-    # --- interface ---
+    # --- public interface ---
 
     @property
     def sync_mode(self):
@@ -53,9 +62,11 @@ class PRUInterface:
         """Start sync mode in PRU."""
         if sync_mode in PRUInterface.SYNC_MODES:
             self._sync_mode = sync_mode
-            self._sync_start(sync_mode, delay, sync_address)
+            return self._sync_start(sync_mode, sync_address, delay)
         else:
+            # TODO: should this be changed to an exception?
             print('Invalid sync_mode for PRU!')
+            return None
 
     def sync_stop(self):
         """Stop sync mode."""
@@ -78,12 +89,24 @@ class PRUInterface:
         """Set waveforms for power supplies."""
         return self._curve(curve1, curve2, curve3, curve4)
 
+    def set_curve_block(self, block):
+        """Set the block of curves."""
+        self._set_curve_block(block)
+
+    def read_curve_block(self):
+        """Read selected block of curves."""
+        self._read_curve_block()
+
+    def close(self):
+        """Close PRU session."""
+        return self._close()
+
     # --- pure virtual methods ---
 
     def _get_sync_status(self):
         raise NotImplementedError
 
-    def _sync_start(sync_mode, delay, sync_address):
+    def _sync_start(sync_mode, sync_address, delay):
         raise NotImplementedError
 
     def _sync_stop(self):
@@ -98,7 +121,16 @@ class PRUInterface:
     def _UART_read(self, stream):
         raise NotImplementedError
 
-    def _curve(self, curve1, curve2, curve3, curve4):
+    def _curve(self, curve1, curve2, curve3, curve4, block):
+        raise NotImplementedError
+
+    def _set_curve_block(self, block):
+        raise NotImplementedError
+
+    def _read_curve_block(self):
+        raise NotImplementedError
+
+    def _close(self):
         raise NotImplementedError
 
 
@@ -112,15 +144,15 @@ class PRU(PRUInterface):
         PRUInterface.__init__(self)
         # signal use of PRU and shared memory.
         baud_rate = 6
-        mode = b"M"  # slave(S)/master(M)
+        mode = b"M"  # "S": slave | "M": master
         _PRUserial485.PRUserial485_open(baud_rate, mode)
 
     def _get_sync_status(self):
         return _PRUserial485.PRUserial485_sync_status()
 
-    def _sync_start(self, sync_mode, delay, sync_address):
+    def _sync_start(self, sync_mode, sync_address, delay):
         return _PRUserial485.PRUserial485_sync_start(
-            sync_mode, delay, sync_address)
+            sync_mode, delay, sync_address)  # delay-sync_addres order is ok.
 
     def _sync_stop(self):
         return _PRUserial485.PRUserial485_sync_stop()
@@ -139,8 +171,18 @@ class PRU(PRUInterface):
         # print('read: ', stream)
         return stream
 
-    def _curve(self, curve1, curve2, curve3, curve4):
-        return _PRUserial485.PRUserial485_curve(curve1, curve2, curve3, curve4)
+    def _curve(self, curve1, curve2, curve3, curve4, block):
+        return _PRUserial485.PRUserial485_curve(
+            curve1, curve2, curve3, curve4, block)
+
+    def _set_curve_block(self, block):
+        return _PRUserial485.PRUserial485_set_curve_block(block)
+
+    def _read_curve_block(self):
+        return _PRUserial485.PRUserial485_read_curve_block()
+
+    def _close(self):
+        return _PRUserial485.PRUserial485_close()
 
 
 class PRUSim(PRUInterface):
@@ -151,20 +193,19 @@ class PRUSim(PRUInterface):
         PRUInterface.__init__(self)
         self._sync_status = PRUInterface._SYNC_OFF
         self._sync_pulse_count = 0
+        self._trigger_thread = _threading.Thread(
+            target=self._listen_timing_trigger, daemon=True)
+        self._curves = self._create_curves()
+        self._block = 0  # TODO: check if this is the default PRU value
 
     def _get_sync_status(self):
         return self._sync_status
 
     def _sync_start(self, sync_mode, delay, sync_address):
         self._sync_status = PRUInterface._SYNC_ON
-        if self.sync_mode == PRUSim.SYNC_CYCLE:
-            _threading.Thread(target=self._stop_sync, daemon=True).start()
-        else:
-            self._sync_stop()
-
-    def _stop_sync(self):
-        _time.sleep(2)
-        self._sync_stop()
+        if not self._trigger_thread.isAlive:
+            self._trigger_thread.start()
+        return None
 
     def _sync_stop(self):
         self._sync_status = PRUInterface._SYNC_OFF
@@ -180,12 +221,64 @@ class PRUSim(PRUInterface):
         raise NotImplementedError(('This method should not be called '
                                   'for objects of this subclass'))
 
-    def _curve(self, curve1, curve2, curve3, curbe4):
+    def _curve(self, curve1, curve2, curve3, curve4, block):
+        self._curves[block][0] = curve1.copy()
+        self._curves[block][1] = curve2.copy()
+        self._curves[block][2] = curve3.copy()
+        self._curves[block][3] = curve4.copy()
+
+    def _set_curve_block(self, block):
+        # TODO: have to simulate change when previous curve is processed!
+        self._block = block
+
+    def _read_curve_block(self):
+        return self._block
+
+    def _close(self):
         pass
 
-    def process_sync_signal(self):
-        """Process synchronization signal."""
-        self._sync_pulse_count += 1
+    # --- simulation auxilliary methods ---
+
+    def _listen_timing_trigger(self):
+        # this tries to simulate trigger signal from the timing system
+        while self._sync_status == PRUInterface._SYNC_ON:
+            if self.sync_mode == PRUSim.SYNC_CYCLE:
+                self._sync_pulse_count += 1
+                self._sync_status == PRUInterface._SYNC_OFF
+            elif self.sync_mode in (PRUSim.SYNC_MIGINT, PRUSim.SYNC_MIGEND):
+                self._sync_pulse_count += 1
+            elif self.sync_mode in (PRUSim.SYNC_RMPINT, PRUSim.SYNC_RMPEND):
+                self._sync_pulse_count += 1
+            _time.sleep(0.001)  # TODO: solve this arbitrary value.
+
+    def _create_curves(self):
+        curves = [
+            # block 0
+            [list(_DEFAULT_WFMDATA),  # 1st power suply
+             list(_DEFAULT_WFMDATA),  # 2nd power suply
+             list(_DEFAULT_WFMDATA),  # 3rd power suply
+             list(_DEFAULT_WFMDATA),  # 4th power suply
+             ],
+            # block 1
+            [list(_DEFAULT_WFMDATA),  # 1st power suply
+             list(_DEFAULT_WFMDATA),  # 2nd power suply
+             list(_DEFAULT_WFMDATA),  # 3rd power suply
+             list(_DEFAULT_WFMDATA),  # 4th power suply
+             ],
+            # block 2
+            [list(_DEFAULT_WFMDATA),  # 1st power suply
+             list(_DEFAULT_WFMDATA),  # 2nd power suply
+             list(_DEFAULT_WFMDATA),  # 3rd power suply
+             list(_DEFAULT_WFMDATA),  # 4th power suply
+             ],
+            # block 3
+            [list(_DEFAULT_WFMDATA),  # 1st power suply
+             list(_DEFAULT_WFMDATA),  # 2nd power suply
+             list(_DEFAULT_WFMDATA),  # 3rd power suply
+             list(_DEFAULT_WFMDATA),  # 4th power suply
+             ],
+        ]
+        return curves
 
     # def set_wfmdata(self, ID_device, wfmdata):
     #     """Set waveform of a device."""

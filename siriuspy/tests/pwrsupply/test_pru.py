@@ -6,7 +6,7 @@ from unittest import mock
 
 from siriuspy import util
 from siriuspy.pwrsupply import pru
-from siriuspy.pwrsupply.pru import PRUInterface, PRU
+from siriuspy.pwrsupply.pru import PRUInterface
 from siriuspy.util import check_public_interface_namespace
 
 
@@ -32,6 +32,7 @@ class TestPRUInterface(unittest.TestCase):
     """Test PRUInterface API."""
 
     public_interface = (
+        'VERSION',
         'SYNC_MIGINT',
         'SYNC_MIGEND',
         'SYNC_RMPINT',
@@ -46,12 +47,19 @@ class TestPRUInterface(unittest.TestCase):
         'UART_write',
         'UART_read',
         'curve',
+        'set_curve_block',
+        'read_curve_block',
+        'close',
     )
 
     def test_public_interface(self):
         """Test class public interface."""
         self.assertTrue(check_public_interface_namespace(
             PRUInterface, TestPRUInterface.public_interface))
+
+    def test_VERSION(self):
+        """Test VERSION."""
+        self.assertIsInstance(PRUInterface.VERSION, str)
 
     def test_SYNC_MIGINT(self):
         """Test SYNC_MIGINT."""
@@ -115,7 +123,22 @@ class TestPRUInterface(unittest.TestCase):
         pass
 
     def test_curve(self):
-        """Test curve        ."""
+        """Test curve."""
+        # TODO: implement test!
+        pass
+
+    def test_set_curve_block(self):
+        """Test set_curve_block."""
+        # TODO: implement test!
+        pass
+
+    def test_read_curve_block(self):
+        """Test read_curve_block."""
+        # TODO: implement test!
+        pass
+
+    def test_close(self):
+        """Test close."""
         # TODO: implement test!
         pass
 

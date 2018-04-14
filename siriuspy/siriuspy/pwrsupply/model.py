@@ -374,7 +374,6 @@ class FBPPowerSupply(_Device):
                     # TODO: implement actions for other modes
                     pass
 
-
     def _set_current(self, setpoint):
         """Set current."""
         setpoint = max(self.setpoints['Current-SP']['lolo'], setpoint)

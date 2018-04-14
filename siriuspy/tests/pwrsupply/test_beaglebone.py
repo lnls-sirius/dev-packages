@@ -3,7 +3,7 @@
 import unittest
 
 from siriuspy import util
-from siriuspy.pwrsupply import pru
+# from siriuspy.pwrsupply import pru
 import siriuspy.pwrsupply.beaglebone as bbb
 from siriuspy.util import check_public_interface_namespace
 
@@ -31,7 +31,6 @@ class TestBeagleBone(unittest.TestCase):
         'psnames',
         'power_supplies',
         'controller',
-        'pru',
         'write',
     )
 
