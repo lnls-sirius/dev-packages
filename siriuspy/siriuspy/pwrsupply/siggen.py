@@ -2,11 +2,9 @@
 
 import time as _t
 import math as _math
+import numpy as _np
 
-# from siriuspy.csdevice.pwrsupply import default_siggen_params as \
-#     _default_siggen_params
-
-DEFAULT_SIGGEN_CONFIG = [
+DEFAULT_SIGGEN_CONFIG = (
     0,      # type  [0:Sine]
     1,      # num_cycles
     100.0,  # freq [Hz]
@@ -16,7 +14,8 @@ DEFAULT_SIGGEN_CONFIG = [
     0.0,    # aux_param[1] (Sine: theta_end)
     0.0,    # aux_param[2] (Sine: not used)
     0.0     # aux_param[3] (Sine: not used)
-    ]
+)
+
 
 class Signal:
     """Signal from SigGen."""
@@ -124,28 +123,29 @@ class Signal:
         self.aux_param[2] = value
         return value
 
-    # def get_waveform(self, nr_points=100):
-    #     """Return list with signal waveform."""
-    #     d2r = _np.pi/180.0
-    #     t = _np.linspace(0.0, self.duration, nr_points)
-    #     if self.type in ('Sine', 'DampedSine'):
-    #         # TODO: confirm!
-    #         if self.type == 'Sine':
-    #             amp = self.amplitude * _np.ones(t.shape)
-    #         else:
-    #             amp = self.amplitude * _np.exp(-t/self.decay_time)
-    #         wfm = self.offset * _np.ones(t.shape)
-    #         phase = (2*_np.pi) * (self.freq*t % 1)
-    #         sel_in = \
-    #             (phase >= d2r * self.theta_begin) & \
-    #             (phase <= d2r * self.theta_end)
-    #         wfm_delta = amp * _np.sin(phase)
-    #         # wfm = wfm_delta
-    #         wfm[sel_in] += wfm_delta[sel_in]
-    #     else:
-    #         # TODO: implement get_waveform for 'Trapezoidal' type.
-    #         wfm = _np.zeros(t.shape) + self.offset
-    #     return wfm, sel_in, phase, wfm_delta
+    def get_waveform(self, nr_points=100):
+        """Return list with signal waveform."""
+        raise NotImplementedError
+        d2r = _np.pi/180.0
+        t = _np.linspace(0.0, self.duration, nr_points)
+        if self.type in ('Sine', 'DampedSine'):
+            # TODO: confirm!
+            if self.type == 'Sine':
+                amp = self.amplitude * _np.ones(t.shape)
+            else:
+                amp = self.amplitude * _np.exp(-t/self.decay_time)
+            wfm = self.offset * _np.ones(t.shape)
+            phase = (2*_np.pi) * (self.freq*t % 1)
+            sel_in = \
+                (phase >= d2r * self.theta_begin) & \
+                (phase <= d2r * self.theta_end)
+            wfm_delta = amp * _np.sin(phase)
+            # wfm = wfm_delta
+            wfm[sel_in] += wfm_delta[sel_in]
+        else:
+            # TODO: implement get_waveform for 'Trapezoidal' type.
+            wfm = _np.zeros(t.shape) + self.offset
+        return wfm, sel_in, phase, wfm_delta
 
     # --- virtual methods ---
 
