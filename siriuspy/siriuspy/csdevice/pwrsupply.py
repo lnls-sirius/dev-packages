@@ -10,6 +10,7 @@ from siriuspy.pwrsupply.siggen import DEFAULT_SIGGEN_CONFIG as _DEF_SIGG_CONF
 
 MAX_WFMSIZE = 4000
 DEFAULT_SIGGEN_CONFIG = _DEF_SIGG_CONF
+DEFAULT_WFMDATA = (0.0, ) * MAX_WFMSIZE
 
 default_ps_current_precision = 4
 default_pu_current_precision = 4
@@ -199,9 +200,9 @@ def get_ps_FBP_propty_database():
         # 'WfmLoad-Sts': {'type': 'enum', 'enums': default_wfmlabels,
         #                 'value': 0},
         'WfmData-SP': {'type': 'float', 'count': MAX_WFMSIZE,
-                       'value': [0.0 for datum in range(MAX_WFMSIZE)]},
+                       'value': list(DEFAULT_WFMDATA)},
         'WfmData-RB': {'type': 'float', 'count': MAX_WFMSIZE,
-                       'value': [0.0 for datum in range(MAX_WFMSIZE)]},
+                       'value': list(DEFAULT_WFMDATA)},
         # 'WfmSave-Cmd': {'type': 'int', 'value': 0},
         'Current-SP': {'type': 'float', 'value': 0.0},
         'Current-RB': {'type': 'float', 'value': 0.0},
