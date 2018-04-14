@@ -15,7 +15,11 @@ __version__ = _util.get_last_commit_hash()
 
 
 class IOController:
-    """Power supply controller."""
+    """Power supply controller component.
+
+    This component is responsible for BSMP communications with power supply
+    controllers through a serial line.
+    """
 
     BSMP_CONST = _c
 
@@ -31,28 +35,28 @@ class IOController:
         self._pru = pru
         self._bsmp_conn = dict()
 
-    def __getitem__(self, index):
-        """Getitem."""
-        return self.bsmp_conn[index]
+    def __getitem__(self, slave_id):
+        """Return corresponding BSMP slave device communication object."""
+        return self.bsmp_conn[slave_id]
 
     @property
     def pru(self):
-        """PRU."""
+        """Return the PRU object."""
         return self._pru
 
     @property
     def bsmp_conn(self):
-        """Slaves."""
+        """Return BSMP slave device communication objects."""
         return self._bsmp_conn
 
     def add_slave(self, slave_id):
-        """Add a BSMP slave to make serial communication."""
+        """Add a BSMP slave device communication object."""
         self.bsmp_conn[slave_id] = \
             BSMP(self._pru, slave_id, self._bsmp_entities)
 
 
 class IOControllerSim(IOController):
-    """Power supply controller for simulated bsmp."""
+    """Simulated Power supply controller component."""
 
     def add_slave(self, slave_id):
         """Add a BSMP slave to make serial communication."""
