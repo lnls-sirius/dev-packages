@@ -4,6 +4,7 @@ import unittest
 from unittest import mock
 
 from siriuspy.bsmp import SerialError
+from siriuspy.pwrsupply import model
 from siriuspy.pwrsupply.model import FBPPowerSupply
 from siriuspy.csdevice.pwrsupply import get_ps_propty_database
 from siriuspy.util import check_public_interface_namespace
@@ -22,6 +23,23 @@ def mock_splims(pstype, label):
         return 0.0
     else:
         return 165.0
+
+
+public_interface = (
+    'FBPPowerSupply',
+    'PSCommInterface',
+    'PSEpics',
+    'MAEpics',
+)
+
+
+class TestModule(unittest.TestCase):
+    """Test Module."""
+
+    def test_public_interface(self):
+        """Test module's public interface."""
+        valid = check_public_interface_namespace(model, public_interface)
+        self.assertTrue(valid)
 
 
 class TestPowerSupplyAPI(unittest.TestCase):

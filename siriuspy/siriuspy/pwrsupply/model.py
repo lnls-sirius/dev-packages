@@ -17,10 +17,11 @@ from siriuspy.magnet.data import MAData as _MAData
 from siriuspy.magnet import util as _mutil
 from siriuspy.pwrsupply import sync as _sync
 # PowerSupply
-from ..bsmp import Response
+from ..bsmp import VariablesGroup as _VarGroup
+from ..bsmp import Response as _Response
 from ..bsmp import SerialError as _SerialError
 from .status import PSCStatus as _PSCStatus
-from siriuspy.pwrsupply.pru import PRUInterface as _PRUInterface
+# from siriuspy.pwrsupply.pru import PRUInterface as _PRUInterface
 from siriuspy.pwrsupply.bsmp import Const as _c
 from siriuspy.pwrsupply.bsmp import ps_group_id as _ps_group_id
 
@@ -28,7 +29,8 @@ from siriuspy.pwrsupply.bsmp import ps_group_id as _ps_group_id
 class _Device:
     """Base class to control a device using BSMP."""
 
-    # Setpoints regexp pattern
+    # Constants and Setpoint regexp patterns
+    _ct = _re.compile('^.*-Cte$')
     _sp = _re.compile('^.*-(SP|Sel|Cmd)$')
 
     def __init__(self, controller, slave_id, name, database):
@@ -39,17 +41,22 @@ class _Device:
         self._name = name
         self._database = database
 
-        # add current device as slave to used controller
+        # add current device as slave to the IOC controller
         self._controller.add_slave(slave_id)
 
-        # initialize setpoints
+        # define and init constant and setpoint fields
         self._setpoints = dict()
+        self._constants = dict()
         for field, db in self.database.items():
             if self._sp.match(field):
                 self._setpoints[field] = db
+            elif self._ct.match(field):
+                self._constants[field] = db
         self._init_setpoints()
+        self._init_constants()
 
-    # API
+    # --- public interface
+
     @property
     def controller(self):
         """Controller."""
@@ -71,6 +78,11 @@ class _Device:
         return self._database
 
     @property
+    def constants(self):
+        """Device constants."""
+        return self._constants
+
+    @property
     def setpoints(self):
         """Device setpoints."""
         return self._setpoints
@@ -78,6 +90,19 @@ class _Device:
     @property
     def connected(self):
         """Return connection state."""
+        # TODO: this property value can be out of sync!
+        # maybe it should return the current state of connection rather than
+        # its current stored state.
+        #
+        # maybe something like:
+        #
+        # try:
+        #     self._variable_values = self.read_all_variables()
+        #     return True
+        # except Exception as e:
+        #     print('{}'.format(e))
+        #     return False
+        #
         return self._connected
 
     @connected.setter
@@ -112,14 +137,33 @@ class _Device:
 
     def read_all_variables(self):
         """Read all variables."""
-        return self._read_group(0)
+        return self._read_group(group_id=_VarGroup.ALL)
 
-    # Groups
+    def read_constants(self):
+        """Read constants."""
+        ret = dict()
+        for constant, db in self.constants.items():
+            ret[constant] = db['value']  # TODO: shallow copy. is it ok?
+        return ret
+
+    def read_setpoints(self):
+        """Read sepoints."""
+        ret = dict()
+        for setpoint, db in self.setpoints.items():
+            ret[setpoint] = db['value']  # TODO: shallow copy. is it ok?
+        return ret
+
+    def read_status(self):
+        """Read parameters."""
+        return {}
+
+    # --- private methods ---
+
     def _read_group(self, group_id):
-        """Read a group of variables and return a dict."""
+        """Read a group of ps variables and return it in a dict."""
         # Read values
         sts, val = self.device.read_group_variables(group_id)
-        if sts == Response.ok:
+        if sts == _Response.ok:
             ret = dict()
             variables = self.device.entities.list_variables(group_id)
             for idx, var_id in enumerate(variables):
@@ -141,21 +185,25 @@ class _Device:
         for field in fields:
             ids.add(self.epics_2_bsmp[field])
         sts, _ = self.device.create_group(ids)
-        if sts == Response.ok:
+        if sts == _Response.ok:
             return True
         return False
 
-    # IOC
-    def read_setpoints(self):
-        """Read sepoints."""
-        ret = dict()
-        for setpoint, db in self.setpoints.items():
-            ret[setpoint] = db['value']
-        return ret
-
-    def read_status(self):
-        """Read parameters."""
-        return {}
+    def _init_constants(self):
+        try:
+            values = self.read_all_variables()
+        except Exception as e:
+            print('{}'.format(e))
+            pass
+            # TODO: should we include: self._connected = False ?
+        else:
+            # Init costants
+            for constant in self.constants:
+                try:
+                    self.constants[constant]['value'] = values[constant]
+                except KeyError:
+                    continue
+            self._connected = True
 
     def _init_setpoints(self):
         try:
@@ -163,6 +211,7 @@ class _Device:
         except Exception as e:
             print('{}'.format(e))
             pass
+            # TODO: should we include: self._connected = False ?
         else:
             # Init Setpoints
             for setpoint in self.setpoints:
@@ -179,14 +228,14 @@ class _Device:
     def _read_variable(self, field):
         var_id = self.epics_2_bsmp[field]
         sts, val = self.device.read_variable(var_id)
-        if sts == Response.ok:
+        if sts == _Response.ok:
             return val
         else:
             return None
 
     def _execute_function(self, func_id, value=None):
         sts, val = self.device.execute_function(func_id, value)
-        if sts == Response.ok:
+        if sts == _Response.ok:
             return True
         else:
             return False
@@ -285,7 +334,8 @@ class FBPPowerSupply(_Device):
         ret['WfmIndex-Mon'] = self.controller.pru.sync_pulse_count
         return ret
 
-    # BSMP specific
+    # --- BSMP functions ---
+
     def _turn_on(self):
         """Turn power supply on."""
         ret = self._execute_function(_c.F_TURN_ON)
