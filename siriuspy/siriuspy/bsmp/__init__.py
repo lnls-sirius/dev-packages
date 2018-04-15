@@ -4,6 +4,7 @@ Basic Small Message protocol
 
 Documentation:
 http://git.cnpem.br/bruno.martins/libbsmp/raw/master/doc/protocol_v2.20_pt_BR.pdf
+http://git.cnpem.br/bruno.martins/libbsmp/raw/master/doc/protocol_v2.20_en_US.pdf
 
 """
 
