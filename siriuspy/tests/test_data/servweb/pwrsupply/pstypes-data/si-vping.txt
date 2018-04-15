@@ -3,4 +3,4 @@
 
 # number of power supplies: 1
 
-SI-19C4:PU-VPing
+SI-19C4:PU-PingV

@@ -3,4 +3,4 @@
 
 # number of power supplies: 1
 
-SI-01SA:PU-HPing
+SI-01SA:PU-PingH

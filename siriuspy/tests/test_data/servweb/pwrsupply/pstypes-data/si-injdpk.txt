@@ -3,4 +3,4 @@
 
 # number of power supplies: 1
 
-SI-01SA:PU-InjDpK
+SI-01SA:PU-InjDpKckr
