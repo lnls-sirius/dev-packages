@@ -1,8 +1,7 @@
 #!/usr/bin/env python-sirius
 """Test PRU module."""
 import unittest
-from unittest import mock
-
+# from unittest import mock
 
 from siriuspy import util
 from siriuspy.pwrsupply import pru
