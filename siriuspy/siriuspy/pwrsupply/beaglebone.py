@@ -90,6 +90,7 @@ class BeagleBone:
         for ps in self._power_supplies.values():
             success &= ps.write(field, value)
         if not success:
+            print('could not set ps controllers to new opmode value')
             return False
 
         # configure PRU sync mode according to the opmode selected
@@ -105,10 +106,12 @@ class BeagleBone:
         return success
 
     def _set_pru_sync_slowref(self, device_name, field, value):
+        print('set_pru_sync_slowref!')
         ret = self.controller.pru.sync_stop()
         return ret
 
     def _set_pru_sync_cycle(self, device_name, field, value):
+        print('set_pru_sync_cycle!')
         sync_mode = self.controller.pru.SYNC_CYCLE
         ret = self._set_pru_sync_start(sync_mode)
         return ret
