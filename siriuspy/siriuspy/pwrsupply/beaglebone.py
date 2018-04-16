@@ -66,7 +66,7 @@ class BeagleBone:
         # intercept writes that affect all controlled power supplies
         if field == 'OpMode-Sel':
             if value == _cPS.OpMode.Cycle:
-                return self._set_optmode_cycle(device_name, field, value)
+                return self._set_opmode_cycle(device_name, field, value)
 
         # write to a specific power supply
         return self._power_supplies[device_name].write(field, value)
