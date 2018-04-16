@@ -65,9 +65,12 @@ class BeagleBone:
         """BBB write."""
         # intercept writes that affect all controlled power supplies
         if field == 'OpMode-Sel':
-            return self._set_opmode(device_name, field, value)
+            success = self._set_opmode(device_name, field, value)
+            if not success:
+                print('!!! could not set {} to {}'.format(field, value))
+            return success
         else:
-            # write to a specific power supply
+            # write addresses a specific power supply
             return self._power_supplies[device_name].write(field, value)
 
     def __getitem__(self, index):
@@ -85,33 +88,48 @@ class BeagleBone:
 
     def _set_opmode(self, device_name, field, value):
 
-        # try to set all power supply to Cycle mode
+        # first set sync mode to OFF so that BSMP comm can happen
+        # TODO: In order to avoid messing with PRU sync mode the IOC should
+        # check whether required OpMode is not already selected!
+        success = self._set_pru_sync_slowref(device_name, field, value)
+
+        if success and value == _cPS.OpMode.SlowRef:
+            # set opmode slowref in all ps controllers.
+            success &= self._set_bsmp_opmode(field, value)
+        if success and value == _cPS.OpMode.Cycle:
+            # set opmode slowref in all ps controllers.
+            success &= self._set_bsmp_opmode(field, value)
+            # set PRU sync mode to Cycle
+            success &= self._set_pru_sync_cycle(device_name, field, value)
+        elif success and value == _cPS.OpMode.RmpWfm:
+            # set opmode slowref in all ps controllers.
+            success &= self._set_bsmp_opmode(field, value)
+            # set PRU sync mode to RmpWfm
+            success = self._set_pru_sync_rmpwfm(device_name, field, value)
+        elif success and value == _cPS.OpMode.MigWfm:
+            # set opmode slowref in all ps controllers.
+            success &= self._set_bsmp_opmode(field, value)
+            # set PRU sync mode to MigWfm
+            success = self._set_pru_sync_migwfm(device_name, field, value)
+        return success
+
+    def _set_bsmp_opmode(self, field, value):
         success = True
         for ps in self._power_supplies.values():
             success &= ps.write(field, value)
-        if not success:
-            return False
-
-        # configure PRU sync mode according to the opmode selected
-        if value == _cPS.OpMode.SlowRef:
-            return self._set_pru_sync_slowref(device_name, field, value)
-        if value == _cPS.OpMode.Cycle:
-            return self._set_pru_sync_cycle(device_name, field, value)
-        elif value == _cPS.OpMode.RmpWfm:
-            return self._set_pru_sync_rmpwfm(device_name, field, value)
-        elif value == _cPS.OpMode.MifWfm:
-            return self._set_pru_sync_migwfm(device_name, field, value)
-
         return success
 
     def _set_pru_sync_slowref(self, device_name, field, value):
+        # print('set_pru_sync_slowref!')
         ret = self.controller.pru.sync_stop()
         return ret
 
     def _set_pru_sync_cycle(self, device_name, field, value):
+        # print('set_pru_sync_cycle!')
         sync_mode = self.controller.pru.SYNC_CYCLE
         ret = self._set_pru_sync_start(sync_mode)
         return ret
+        return True
 
     def _set_pru_sync_rmpwfm(self, device_name, field, value):
         sync_mode = self.controller.pru.SYNC_RMPEND
@@ -119,7 +137,6 @@ class BeagleBone:
         return ret
 
     def _set_pru_sync_migwfm(self, device_name, field, value):
-        # turn on PRU sync mode
         sync_mode = self.controller.pru.SYNC_MIGEND
         ret = self._set_pru_sync_start(sync_mode)
         return ret

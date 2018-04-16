@@ -79,11 +79,13 @@ class PRUInterface:
 
     def UART_write(self, stream, timeout):
         """Write stream to serial port."""
-        return self._UART_write(stream, timeout=timeout)
+        ret = self._UART_write(stream, timeout=timeout)
+        return ret
 
     def UART_read(self):
         """Return read from UART."""
-        return self._UART_read()
+        value = self._UART_read()
+        return value
 
     def curve(self, curve1, curve2, curve3, curve4):
         """Set waveforms for power supplies."""
@@ -148,41 +150,49 @@ class PRU(PRUInterface):
         _PRUserial485.PRUserial485_open(baud_rate, mode)
 
     def _get_sync_status(self):
-        return _PRUserial485.PRUserial485_sync_status()
+        value = _PRUserial485.PRUserial485_sync_status()
+        return value
 
     def _sync_start(self, sync_mode, sync_address, delay):
-        return _PRUserial485.PRUserial485_sync_start(
+        _PRUserial485.PRUserial485_sync_start(
             sync_mode, delay, sync_address)  # delay-sync_addres order is ok.
+        return True
 
     def _sync_stop(self):
-        return _PRUserial485.PRUserial485_sync_stop()
+        _PRUserial485.PRUserial485_sync_stop()  # None returned
+        return True
 
     def _get_sync_pulse_count(self):
-        return _PRUserial485.PRUserial485_read_pulse_count_sync()
+        value = _PRUserial485.PRUserial485_read_pulse_count_sync()
+        return value
 
     def _UART_write(self, stream, timeout):
         # this method send streams through UART to the RS-485 line.
         # print('write: ', stream)
-        return _PRUserial485.PRUserial485_write(stream, timeout)
+        _PRUserial485.PRUserial485_write(stream, timeout)  # None returned
+        return True
 
     def _UART_read(self):
         # this method send streams through UART to the RS-485 line.
-        stream = _PRUserial485.PRUserial485_read()
-        # print('read: ', stream)
-        return stream
+        value = _PRUserial485.PRUserial485_read()
+        # print('read: ', value)
+        return value
 
     def _curve(self, curve1, curve2, curve3, curve4, block):
-        return _PRUserial485.PRUserial485_curve(
-            curve1, curve2, curve3, curve4, block)
+        _PRUserial485.PRUserial485_curve(curve1, curve2, curve3, curve4, block)
+        return True
 
     def _set_curve_block(self, block):
-        return _PRUserial485.PRUserial485_set_curve_block(block)
+        _PRUserial485.PRUserial485_set_curve_block(block)  # None returned
+        return True
 
     def _read_curve_block(self):
-        return _PRUserial485.PRUserial485_read_curve_block()
+        value = _PRUserial485.PRUserial485_read_curve_block()
+        return value
 
     def _close(self):
-        return _PRUserial485.PRUserial485_close()
+        _PRUserial485.PRUserial485_close()
+        return True
 
 
 class PRUSim(PRUInterface):
