@@ -65,11 +65,10 @@ class BeagleBone:
         """BBB write."""
         # intercept writes that affect all controlled power supplies
         if field == 'OpMode-Sel':
-            if value == _cPS.OpMode.Cycle:
-                return self._set_opmode_cycle(device_name, field, value)
-
-        # write to a specific power supply
-        return self._power_supplies[device_name].write(field, value)
+            return self._set_opmode(device_name, field, value)
+        else:
+            # write to a specific power supply
+            return self._power_supplies[device_name].write(field, value)
 
     def __getitem__(self, index):
         """Return corresponding power supply object."""
@@ -84,7 +83,7 @@ class BeagleBone:
 
     # --- private methods ---
 
-    def _set_opmode_cycle(self, device_name, field, value):
+    def _set_opmode(self, device_name, field, value):
 
         # try to set all power supply to Cycle mode
         success = True
@@ -93,12 +92,43 @@ class BeagleBone:
         if not success:
             return False
 
-        # turn on PRU sync mode
+        # configure PRU sync mode according to the opmode selected
+        if value == _cPS.OpMode.SlowRef:
+            return self._set_pru_sync_slowref(device_name, field, value)
+        if value == _cPS.OpMode.Cycle:
+            return self._set_pru_sync_cycle(device_name, field, value)
+        elif value == _cPS.OpMode.RmpWfm:
+            return self._set_pru_sync_rmpwfm(device_name, field, value)
+        elif value == _cPS.OpMode.MifWfm:
+            return self._set_pru_sync_migwfm(device_name, field, value)
+
+        return success
+
+    def _set_pru_sync_slowref(self, device_name, field, value):
+        ret = self.controller.pru.sync_stop()
+        return ret
+
+    def _set_pru_sync_cycle(self, device_name, field, value):
         sync_mode = self.controller.pru.SYNC_CYCLE
+        ret = self._set_pru_sync_start(sync_mode)
+        return ret
+
+    def _set_pru_sync_rmpwfm(self, device_name, field, value):
+        sync_mode = self.controller.pru.SYNC_RMPEND
+        ret = self._set_pru_sync_start(sync_mode)
+        return ret
+
+    def _set_pru_sync_migwfm(self, device_name, field, value):
+        # turn on PRU sync mode
+        sync_mode = self.controller.pru.SYNC_MIGEND
+        ret = self._set_pru_sync_start(sync_mode)
+        return ret
+
+    def _set_pru_sync_start(self, sync_mode):
         slave_id = self._power_supplies[self.psnames[0]]._slave_id
-        self.controller.pru.sync_start(
+        ret = self.controller.pru.sync_start(
             sync_mode=sync_mode, sync_address=slave_id)
-        return True
+        return ret
 
     def _get_bsmp_slave_IDs(self):
         # TODO: temp code. this should be deleted once PS bench tests are over.
