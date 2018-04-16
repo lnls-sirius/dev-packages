@@ -6,6 +6,7 @@ from io import StringIO
 import numpy as np
 import unittest
 from unittest import mock
+import logging
 import siriuspy.util as util
 
 
@@ -15,6 +16,7 @@ public_interface = (
     'get_timestamp',
     'read_text_data',
     'print_ioc_banner',
+    'configure_log_file',
     'save_ioc_pv_list',
     'get_electron_rest_energy',
     'beam_rigidity',
@@ -109,20 +111,39 @@ class TestUtil(unittest.TestCase):
         db = {}
         db.update({'PV01': None, 'PV02': None, 'PV03': None, 'PV04': None, })
         db.update({'PV05': None, 'PV06': None, 'PV07': None, 'PV08': None, })
-        file = StringIO()
+        fi = StringIO()
+        logging.root.handlers = []
+        util.configure_log_file(stream=fi)
         util.print_ioc_banner('test-ioc', db,
                               'Test-ioc for util module unittest',
-                              '1.0.0', 'PREFIX', file=file)
-        text = file.getvalue()
-        self.assertEqual(len(text.splitlines()), 16)
+                              '1.0.0', 'PREFIX')
+        text = fi.getvalue()
+        self.assertEqual(len(text.splitlines()), 18)
         db.update({'PV09': None, 'PV10': None, 'PV11': None, 'PV12': None, })
         db.update({'PV13': None, 'PV14': None, 'PV15': None, 'PV16': None, })
-        file = StringIO()
         util.print_ioc_banner('test-ioc', db,
                               'Test-ioc for util module unittest',
-                              '1.0.0', 'PREFIX', file=file)
-        text = file.getvalue()
-        self.assertEqual(len(text.splitlines()), 24)
+                              '1.0.0', 'PREFIX')
+        text = fi.getvalue()
+        self.assertEqual(len(text.splitlines()), 26+18)
+
+    def test_configure_log_file(self):
+        """Test configure_log_file."""
+        fi = StringIO()
+        logging.root.handlers = []
+        util.configure_log_file(stream=fi)
+        logging.info('test')
+        logging.debug('test')
+        text = fi.getvalue()
+        self.assertEqual(len(text.splitlines()), 1)
+
+        fi = StringIO()
+        logging.root.handlers = []
+        util.configure_log_file(stream=fi, debug=True)
+        logging.info('test')
+        logging.debug('test')
+        text = fi.getvalue()
+        self.assertEqual(len(text.splitlines()), 2)
 
     def test_save_ioc_pv_list(self):
         """Test save_ioc_pv_list."""
