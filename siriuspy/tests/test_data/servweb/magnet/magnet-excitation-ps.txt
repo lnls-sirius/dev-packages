@@ -1162,35 +1162,35 @@ TS-04:MA-CV-2                TS-04:PS-CV-2
 # --- PULSED MAGNETS ---
 
 # --- ts-injseptum-thick ---
-TS-04:PM-InjSG-1             TS-04:PU-InjSG-1
-TS-04:PM-InjSG-2             TS-04:PU-InjSG-2
+TS-04:PM-InjSeptG-1             TS-04:PU-InjSeptG-1
+TS-04:PM-InjSeptG-2             TS-04:PU-InjSeptG-2
 
 # --- ts-injseptum-thin ---
-TS-04:PM-InjSF               TS-04:PU-InjSF
+TS-04:PM-InjSeptF               TS-04:PU-InjSeptF
 
 # --- ts-ejeseptum-thick ---
-TS-01:PM-EjeSG               TS-01:PU-EjeSG
+TS-01:PM-EjeSeptG               TS-01:PU-EjeSeptG
 
 # --- ts-ejeseptum-thin ---
-TS-01:PM-EjeSF               TS-01:PU-EjeSF
+TS-01:PM-EjeSeptF               TS-01:PU-EjeSeptF
 
 # --- bo-injkicker ---
-BO-01D:PM-InjK               BO-01D:PU-InjK
+BO-01D:PM-InjKckr               BO-01D:PU-InjKckr
 
 # --- bo-ejekicker ---
-BO-48D:PM-EjeK               BO-48D:PU-EjeK
+BO-48D:PM-EjeKckr               BO-48D:PU-EjeKckr
 
 # --- tb-injseptum ---
-TB-04:PM-InjS                TB-04:PU-InjS
+TB-04:PM-InjSept                TB-04:PU-InjSept
 
 # --- si-injdpk ---
-SI-01SA:PM-InjDpK            SI-01SA:PU-InjDpK
+SI-01SA:PM-InjDpKckr            SI-01SA:PU-InjDpKckr
 
 # --- si-injnlk ---
-SI-01SA:PM-InjNLK            SI-01SA:PU-InjNLK
+SI-01SA:PM-InjNLKckr            SI-01SA:PU-InjNLKckr
 
 # --- si-hping ---
-SI-01SA:PM-HPing             SI-01SA:PU-HPing
+SI-01SA:PM-PingH             SI-01SA:PU-PingH
 
 # --- si-vping ---
-SI-19C4:PM-VPing             SI-19C4:PU-VPing
+SI-19C4:PM-PingV             SI-19C4:PU-PingV

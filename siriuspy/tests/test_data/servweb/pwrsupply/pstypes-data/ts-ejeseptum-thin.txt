@@ -3,4 +3,4 @@
 
 # number of power supplies: 1
 
-TS-01:PU-EjeSF
+TS-01:PU-EjeSeptF

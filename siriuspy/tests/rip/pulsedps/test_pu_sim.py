@@ -27,7 +27,7 @@ class TestPUPowerSupplySimOff(unittest.TestCase):
     def setUp(self):
         """Create a power supply."""
         mock_psdata(self)
-        self._ps = PulsedPowerSupplySim(psname='SI-01SA:PU-InjDpK')
+        self._ps = PulsedPowerSupplySim(psname='SI-01SA:PU-InjDpKckr')
 
     def test_init(self):
         """Test initial values."""
@@ -93,7 +93,7 @@ class TestPUPowerSupplySimOn(unittest.TestCase):
         """Create a power supply."""
         # Mock PSData
         mock_psdata(self)
-        self._ps = PulsedPowerSupplySim(psname='SI-01SA:PU-InjDpK')
+        self._ps = PulsedPowerSupplySim(psname='SI-01SA:PU-InjDpKckr')
         self._ps.pwrstate_sel = 1
 
     def test_init(self):
@@ -160,7 +160,7 @@ class TestPUPowerSupplySimReset(unittest.TestCase):
         """Set PS properties and then issue a reset."""
         # Mock PSData
         mock_psdata(self)
-        self._ps = PulsedPowerSupplySim(psname='SI-01SA:PU-InjDpK')
+        self._ps = PulsedPowerSupplySim(psname='SI-01SA:PU-InjDpKckr')
 
         self._ps.pwrstate_sel = 1
         self._ps.voltage_sp = 10.5
@@ -207,7 +207,7 @@ class TestPUPowerSupplySimLocalMode(unittest.TestCase):
     def setUp(self):
         """Create and set ps to local mode."""
         mock_psdata(self)
-        self._ps = PulsedPowerSupplySim(psname='SI-01SA:PU-InjDpK')
+        self._ps = PulsedPowerSupplySim(psname='SI-01SA:PU-InjDpKckr')
 
         self._ps.pwrstate_sel = 1
         self._ps.voltage_sp = 10.5
@@ -252,7 +252,7 @@ class TestPUPowerSupplySimLimits(unittest.TestCase):
     def setUp(self):
         """Create ps."""
         mock_psdata(self)
-        self._ps = PulsedPowerSupplySim(psname='SI-01SA:PU-InjDpK')
+        self._ps = PulsedPowerSupplySim(psname='SI-01SA:PU-InjDpKckr')
 
         self._ps.pwrstate_sel = 1
 
