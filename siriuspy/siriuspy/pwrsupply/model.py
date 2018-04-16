@@ -52,8 +52,10 @@ class _Device:
                 self._setpoints[field] = db
             elif self._ct.match(field):
                 self._constants[field] = db
-        self._init_setpoints()
-        self._init_constants()
+        self._initiated = False
+        self._init()
+        # self._init_setpoints()
+        # self._init_constants()
 
     # --- public interface
 
@@ -107,6 +109,8 @@ class _Device:
 
     @connected.setter
     def connected(self, value):
+        if value and not self._init:
+            self._init()
         self._connected = value
 
     def read(self, field):
@@ -192,10 +196,9 @@ class _Device:
     def _init_constants(self):
         try:
             values = self.read_all_variables()
-        except Exception as e:
+        except _SerialError as e:
             print('{}'.format(e))
-            pass
-            # TODO: should we include: self._connected = False ?
+            return False
         else:
             # Init costants
             for constant in self.constants:
@@ -203,15 +206,14 @@ class _Device:
                     self.constants[constant]['value'] = values[constant]
                 except KeyError:
                     continue
-            self._connected = True
+            return True
 
     def _init_setpoints(self):
         try:
             values = self.read_all_variables()
-        except Exception as e:
+        except _SerialError as e:
             print('{}'.format(e))
-            pass
-            # TODO: should we include: self._connected = False ?
+            return False
         else:
             # Init Setpoints
             for setpoint in self.setpoints:
@@ -223,7 +225,7 @@ class _Device:
                     self.setpoints[setpoint]['value'] = values[readback]
                 except KeyError:
                     continue
-            self._connected = True
+            return True
 
     def _read_variable(self, field):
         var_id = self.epics_2_bsmp[field]
@@ -243,6 +245,14 @@ class _Device:
     def _write_setpoint(self, field, value):
         """Map a setpoint to a controller operation."""
         raise NotImplementedError()
+
+    def _init(self):
+        conn = True
+        conn &= self._init_setpoints()
+        conn &= self._init_constants()
+        if conn:
+            self._initiated = False
+            self.connected = True
 
 
 class FBPPowerSupply(_Device):
@@ -518,20 +528,21 @@ class FBPPowerSupply(_Device):
             Check to see if PS_STATE or V_FIRMWARE_VERSION are in the group, as
         these variables need further parsing.
         """
-        var_ids = self.device.entities.list_variables(group_id)
         values = super()._read_group(group_id)
-        if _c.V_PS_STATUS in var_ids:
-            # TODO: values['PwrState-Sts'] == values['OpMode-Sts'] ?
-            psc_status = _PSCStatus(ps_status=values['PwrState-Sts'])
-            values['PwrState-Sts'] = psc_status.ioc_pwrstate
-            values['OpMode-Sts'] = psc_status.ioc_opmode
-            values['CtrlMode-Mon'] = psc_status.interface
-        if _c.V_FIRMWARE_VERSION in var_ids:
-            version = ''.join([c.decode() for c in values['Version-Cte']])
-            try:
-                values['Version-Cte'], _ = version.split('\x00', 1)
-            except ValueError:
-                values['Version-Cte'] = version
+        if values is not None:
+            var_ids = self.device.entities.list_variables(group_id)
+            if _c.V_PS_STATUS in var_ids:
+                # TODO: values['PwrState-Sts'] == values['OpMode-Sts'] ?
+                psc_status = _PSCStatus(ps_status=values['PwrState-Sts'])
+                values['PwrState-Sts'] = psc_status.ioc_pwrstate
+                values['OpMode-Sts'] = psc_status.ioc_opmode
+                values['CtrlMode-Mon'] = psc_status.interface
+            if _c.V_FIRMWARE_VERSION in var_ids:
+                version = ''.join([c.decode() for c in values['Version-Cte']])
+                try:
+                    values['Version-Cte'], _ = version.split('\x00', 1)
+                except ValueError:
+                    values['Version-Cte'] = version
         return values
 
     def _read_variable(self, field):
