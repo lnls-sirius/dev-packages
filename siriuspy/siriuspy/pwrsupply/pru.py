@@ -79,11 +79,13 @@ class PRUInterface:
 
     def UART_write(self, stream, timeout):
         """Write stream to serial port."""
-        return self._UART_write(stream, timeout=timeout)
+        ret = self._UART_write(stream, timeout=timeout)
+        return ret
 
     def UART_read(self):
         """Return read from UART."""
-        return self._UART_read()
+        value = self._UART_read()
+        return value
 
     def curve(self, curve1, curve2, curve3, curve4):
         """Set waveforms for power supplies."""
