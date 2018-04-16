@@ -166,7 +166,12 @@ class _Device:
     def _read_group(self, group_id):
         """Read a group of ps variables and return it in a dict."""
         # Read values
-        sts, val = self.device.read_group_variables(group_id)
+        try:
+            sts, val = self.device.read_group_variables(group_id)
+        except _SerialError:
+            self.connected = False
+            return None
+        self.connected = True
         if sts == _Response.ok:
             ret = dict()
             variables = self.device.entities.list_variables(group_id)
@@ -194,12 +199,8 @@ class _Device:
         return False
 
     def _init_constants(self):
-        try:
-            values = self.read_all_variables()
-        except _SerialError as e:
-            print('{}'.format(e))
-            return False
-        else:
+        values = self.read_all_variables()
+        if values is not None:
             # Init costants
             for constant in self.constants:
                 try:
@@ -207,14 +208,11 @@ class _Device:
                 except KeyError:
                     continue
             return True
+        return False
 
     def _init_setpoints(self):
-        try:
-            values = self.read_all_variables()
-        except _SerialError as e:
-            print('{}'.format(e))
-            return False
-        else:
+        values = self.read_all_variables()
+        if values is not None:
             # Init Setpoints
             for setpoint in self.setpoints:
                 if '-Cmd' in setpoint:
@@ -226,6 +224,7 @@ class _Device:
                 except KeyError:
                     continue
             return True
+        return False
 
     def _read_variable(self, field):
         var_id = self.epics_2_bsmp[field]
@@ -323,10 +322,10 @@ class FBPPowerSupply(_Device):
 
         # initialize groups
         # TODO: check errors, create group 3?
-        self.device.remove_all_groups()
-        var_ids = self.device.entities.list_variables(group_id=0)
-        var_ids.remove(_c.V_FIRMWARE_VERSION)
-        self.device.create_group(var_ids=var_ids)
+        # self.device.remove_all_groups()
+        # var_ids = self.device.entities.list_variables(group_id=0)
+        # var_ids.remove(_c.V_FIRMWARE_VERSION)
+        # self.device.create_group(var_ids=var_ids)
 
         self._group_created = False
         self._create_group_3()
@@ -338,9 +337,11 @@ class FBPPowerSupply(_Device):
 
     def read_ps_variables(self):
         """Read called to update DB."""
-        if not self._group_created:
-            self._create_group_3()
-        return self._read_group(_ps_group_id)
+        self._create_group_3()
+        if self._group_created:
+            return self._read_group(_ps_group_id)
+        return None
+
 
     def read_status(self):
         """Read fields that are not setpoinrs nor bsmp variables."""
@@ -350,17 +351,33 @@ class FBPPowerSupply(_Device):
         return ret
 
     def _create_group_3(self):
-        if not self._group_created:
+        if self._group_created:
             return
+
         try:
-            self.device.remove_all_groups()
-            var_ids = self.device.entities.list_variables(group_id=0)
-            var_ids.remove(_c.V_FIRMWARE_VERSION)
-            self.device.create_group(var_ids=var_ids)
-        except _SerialError:
+            sts, val = self.device.remove_all_groups()
+        except _SerialError as e:
             self._group_created = False
+            return False
         else:
-            self._group_created = True
+            if not sts == _Response.ok:
+                self._group_created = False
+                return False
+
+        var_ids = self.device.entities.list_variables(group_id=0)
+        var_ids.remove(_c.V_FIRMWARE_VERSION)
+        try:
+            self.device.create_group(var_ids=var_ids)
+        except _SerialError as e:
+            self._group_created = False
+            return False
+        else:
+            if not sts == _Response.ok:
+                self._group_created = False
+                return False
+
+        self._group_created = True
+        return True
 
     # --- BSMP functions ---
 
