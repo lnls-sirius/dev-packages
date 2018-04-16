@@ -69,6 +69,8 @@ class IOControllerSim(IOController):
 class _BSMPSim:
     """Virtual controller."""
 
+    # TODO: I think this class should be moved to siriuspy.bsmp subpackage
+
     def __init__(self, bsmp_entities):
         """Entities."""
         self._variables = []
