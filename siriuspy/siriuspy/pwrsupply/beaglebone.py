@@ -94,7 +94,7 @@ class BeagleBone:
             return False
 
         # turn on PRU sync mode
-        sync_mode = self.pru.SYNC_CYCLE
+        sync_mode = self.controller.pru.SYNC_CYCLE
         slave_id = self._power_supplies[self.psnames[0]]._slave_id
         self.controller.pru.sync_start(
             sync_mode=sync_mode, sync_address=slave_id)
