@@ -1,5 +1,6 @@
 """SI-AP-CurrInfo-Charge Soft IOC."""
 
+import os as _os
 import sys as _sys
 import signal as _signal
 import pcaspy as _pcaspy
@@ -19,6 +20,14 @@ def _stop_now(signum, frame):
     _sys.stdout.flush()
     _sys.stderr.flush()
     stop_event = True
+
+
+def _attribute_access_security_group(server, db):
+    for k, v in db.items():
+        if k.endswith(('-RB', '-Sts', '-Cte', '-Mon')):
+            v.update({'asg': 'rbpv'})
+    path_ = _os.path.abspath(_os.path.dirname(__file__))
+    server.initAccessSecurityFile(path_ + '/access_rules.as')
 
 
 class _PCASDriver(_pcaspy.Driver):
@@ -50,12 +59,16 @@ def run():
     _signal.signal(_signal.SIGINT, _stop_now)
     _signal.signal(_signal.SIGTERM, _stop_now)
 
+    _util.configure_log_file()
+
     # Init pvs database
     _main.App.init_class()
 
     # create a new simple pcaspy server and driver to respond client's requests
     server = _pcaspy.SimpleServer()
-    server.createPV(_pvs.get_pvs_prefix(), _main.App.pvs_database)
+    db = _main.App.pvs_database
+    _attribute_access_security_group(server, db)
+    server.createPV(_pvs.get_pvs_prefix(), db)
     pcas_driver = _PCASDriver()
 
     # initiate a new thread responsible for listening for client connections

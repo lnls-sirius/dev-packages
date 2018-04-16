@@ -1,17 +1,17 @@
 """IOC Module."""
 
+import os as _os
 import uuid as _uuid
-import sys as _sys
 import time as _time
 import logging as _log
 import signal as _signal
 import pcaspy as _pcaspy
 import pcaspy.tools as _pcaspy_tools
-from siriuspy.util import get_last_commit_hash as _get_version
+from siriuspy import util as _util
 from siriuspy.envars import vaca_prefix as PREFIX
 from siriuspy.timesys.time_simul import TimingSimulation
 
-__version__ = _get_version()
+__version__ = _util.get_last_commit_hash()
 INTERVAL = 0.1
 RFFREQ = 500000000
 stop_event = False
@@ -28,6 +28,14 @@ def _print_pvs_in_file(db, fname):
         for key in sorted(db.keys()):
             f.write(PREFIX+'{0:40s}\n'.format(key))
     _log.info(fname+' file generated with {0:d} pvs.'.format(len(db)))
+
+
+def _attribute_access_security_group(server, db):
+    for k, v in db.items():
+        if k.endswith(('-RB', '-Sts', '-Cte', '-Mon')):
+            v.update({'asg': 'rbpv'})
+    path_ = _os.path.abspath(_os.path.dirname(__file__))
+    server.initAccessSecurityFile(path_ + '/access_rules.as')
 
 
 class _Driver(_pcaspy.Driver):
@@ -101,10 +109,7 @@ class App:
         self.driver.updatePVs()
 
     def _isValid(self, reason, value):
-        if reason.endswith(('-Sts', '-RB', '-Mon')):
-            return False
-        enums = (self._database[reason].get('enums') or
-                 self._database[reason].get('Enums'))
+        enums = self._database[reason].get('enums')
         if enums is not None:
             if isinstance(value, int):
                 len_ = len(enums)
@@ -112,39 +117,42 @@ class App:
                     _log.warning('value {0:d} too large '.format(value) +
                                  'for PV {0:s} of type enum'.format(reason))
                     return False
-            elif isinstance(value, str):
-                if value not in enums:
-                    _log.warning('Value {0:s} not permited'.format(value))
-                    return False
         return True
 
 
 def run(debug=False):
     """Start the IOC."""
-
-    level = _log.DEBUG if debug else _log.INFO
-    fmt = ('%(levelname)7s | %(asctime)s | ' +
-           '%(module)15s.%(funcName)20s[%(lineno)4d] ::: %(message)s')
-    _log.basicConfig(format=fmt, datefmt='%F %T', level=level,
-                     stream=_sys.stdout)
-    #  filename=LOG_FILENAME, filemode='w')
-    _log.info('Starting...')
+    _util.configure_log_file(debug=debug)
 
     # define abort function
     _signal.signal(_signal.SIGINT, _stop_now)
     _signal.signal(_signal.SIGTERM, _stop_now)
 
     # Creates App object
-    _log.info('Generating database file.')
-    fname = 'AS-TI-LL-SIMUL'
+    ioc_name = 'AS-TI-LL-SIMUL'
     db = App.get_database()
-    db.update({fname+'Version-Cte': {'type': 'string', 'value': __version__}})
-    _print_pvs_in_file(db, fname=fname+'pvs.txt')
+    db[ioc_name+':Version-Cte'] = {'type': 'string', 'value': __version__}
+
+    # check if IOC is already running
+    running = _util.check_pv_online(
+        pvname=PREFIX + list(db.keys())[0], use_prefix=False, timeout=0.5)
+    if running:
+        _log.error('Another ' + ioc_name + ' is already running!')
+        return
+
+    _util.print_ioc_banner(
+            ioc_name, db, 'Low Level Simulation Timing IOC modules.',
+            __version__, PREFIX)
+
+    _log.info('Generating database file.')
+    _util.save_ioc_pv_list(ioc_name.lower(), PREFIX, db)
+    _log.info('File generated with {0:d} pvs.'.format(len(db)))
 
     # create a new simple pcaspy server and driver to respond client's requests
     _log.info('Creating Server.')
     server = _pcaspy.SimpleServer()
     _log.info('Setting Server Database.')
+    _attribute_access_security_group(server, db)
     server.createPV(PREFIX, db)
     _log.info('Creating Driver.')
     pcas_driver = _Driver()
@@ -154,6 +162,7 @@ def run(debug=False):
 
     # initiate a new thread responsible for listening for client connections
     server_thread = _pcaspy_tools.ServerThread(server)
+    server_thread.daemon = True
     _log.info('Starting Server Thread.')
     server_thread.start()
 
