@@ -68,13 +68,13 @@ class App:
         self._correctors = ['', '', '', '']
         if self._TL == 'TS':
             self._correctors[0] = 'TS-04:MA-CH'
-            self._correctors[1] = 'TS-04:PM-InjSF'
+            self._correctors[1] = 'TS-04:PM-InjSeptF'
             self._correctors[2] = 'TS-04:MA-CV-1'
             self._correctors[3] = 'TS-04:MA-CV-2'
 
         elif self._TL == 'TB':
             self._correctors[0] = 'TB-03:MA-CH'
-            self._correctors[1] = 'TB-04:PM-InjS'
+            self._correctors[1] = 'TB-04:PM-InjSept'
             self._correctors[2] = 'TB-04:MA-CV-1'
             self._correctors[3] = 'TB-04:MA-CV-2'
 
