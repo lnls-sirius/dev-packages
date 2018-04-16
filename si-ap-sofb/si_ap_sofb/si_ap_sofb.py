@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """IOC Module."""
+
+import os as _os
 import sys as _sys
 import logging as _log
 import pcaspy as _pcaspy
@@ -16,6 +18,14 @@ def _stop_now(signum, frame):
     _log.info('SIGNAL received')
     global stop_event
     stop_event = True
+
+
+def _attribute_access_security_group(server, db):
+    for k, v in db.items():
+        if k.endswith(('-RB', '-Sts', '-Cte', '-Mon')):
+            v.update({'asg': 'rbpv'})
+    path_ = _os.path.abspath(_os.path.dirname(__file__))
+    server.initAccessSecurityFile(path_ + '/access_rules.as')
 
 
 class _PCASDriver(_pcaspy.Driver):
@@ -65,6 +75,7 @@ def run(debug=False):
     _log.info('Creating Server.')
     server = _pcaspy.SimpleServer()
     _log.info('Setting Server Database.')
+    _attribute_access_security_group(server, db)
     server.createPV(PREFIX, db)
     _log.info('Creating Driver.')
     pcas_driver = _PCASDriver(app)
