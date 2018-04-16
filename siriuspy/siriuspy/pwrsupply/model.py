@@ -328,13 +328,18 @@ class FBPPowerSupply(_Device):
         var_ids.remove(_c.V_FIRMWARE_VERSION)
         self.device.create_group(var_ids=var_ids)
 
+        self._group_created = False
+        self._create_group_3()
+
         # close DSP loop
         # TODO: does this not break the concept that the IOC should initialize
         # withpout setting the power supply controller?
-        self.device.execute_function(_c.F_CLOSE_LOOP)
+        # self.device.execute_function(_c.F_CLOSE_LOOP)
 
     def read_ps_variables(self):
         """Read called to update DB."""
+        if not self._group_created:
+            self._create_group_3()
         return self._read_group(_ps_group_id)
 
     def read_status(self):
@@ -344,6 +349,19 @@ class FBPPowerSupply(_Device):
         ret['WfmIndex-Mon'] = self.controller.pru.sync_pulse_count
         return ret
 
+    def _create_group_3(self):
+        if not self._group_created:
+            return
+        try:
+            self.device.remove_all_groups()
+            var_ids = self.device.entities.list_variables(group_id=0)
+            var_ids.remove(_c.V_FIRMWARE_VERSION)
+            self.device.create_group(var_ids=var_ids)
+        except _SerialError:
+            self._group_created = False
+        else:
+            self._group_created = True
+
     # --- BSMP functions ---
 
     def _turn_on(self):
@@ -351,7 +369,7 @@ class FBPPowerSupply(_Device):
         ret = self._execute_function(_c.F_TURN_ON)
         if ret:
             _time.sleep(0.3)
-            return self._execute_function(_ps_group_id)  # Close control loop
+            return self._execute_function(_c.F_CLOSE_LOOP)
 
     def _turn_off(self):
         """Turn power supply off."""
