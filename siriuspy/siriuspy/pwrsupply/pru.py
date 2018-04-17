@@ -215,10 +215,11 @@ class PRUSim(PRUInterface):
         self._sync_status = PRUInterface._SYNC_ON
         if not self._trigger_thread.isAlive:
             self._trigger_thread.start()
-        return None
+        return True
 
     def _sync_stop(self):
         self._sync_status = PRUInterface._SYNC_OFF
+        return True
 
     def _get_sync_pulse_count(self):
         return self._sync_pulse_count
@@ -236,16 +237,18 @@ class PRUSim(PRUInterface):
         self._curves[block][1] = curve2.copy()
         self._curves[block][2] = curve3.copy()
         self._curves[block][3] = curve4.copy()
+        return True
 
     def _set_curve_block(self, block):
         # TODO: have to simulate change when previous curve is processed!
         self._block = block
+        return True
 
     def _read_curve_block(self):
         return self._block
 
     def _close(self):
-        pass
+        return True
 
     # --- simulation auxilliary methods ---
 
