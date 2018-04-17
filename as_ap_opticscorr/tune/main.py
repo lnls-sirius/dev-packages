@@ -386,7 +386,10 @@ class App:
         if (self._status & 0x1) == 0:  # Check connection
             # updates reference
             for fam in self._QFAMS:
-                self._qfam_refkl[fam] = self._qfam_kl_rb_pvs[fam].get()
+                value = self._qfam_kl_rb_pvs[fam].get()
+                if value is None:
+                    return
+                self._qfam_refkl[fam] = value
                 self.driver.setParam('RefKL' + fam + '-Mon',
                                      self._qfam_refkl[fam])
 
