@@ -218,7 +218,7 @@ class PRUSim(PRUInterface):
 
     def _sync_start(self, sync_mode, delay, sync_address):
         self._sync_status = PRUInterface._SYNC_ON
-        if not self._trigger_thread.isAlive:
+        if not self._trigger_thread.is_alive():
             self._trigger_thread.start()
         return True
 
