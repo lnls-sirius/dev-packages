@@ -81,7 +81,7 @@ class BeagleBone:
             return self._power_supplies[index]
 
     def __contains__(self, psname):
-        """Test is psname is in psname list."""
+        """Test if psname is in psname list."""
         return psname in self._psnames
 
     # --- private methods ---
