@@ -17,6 +17,8 @@ default_pu_current_precision = 4
 _default_ps_current_unit = None
 _default_pu_current_unit = None
 
+# TODO: cleanup this module !!!!
+
 # default_wfmlabels = ('Waveform1', 'Waveform2', 'Waveform3',
 #                      'Waveform4', 'Waveform5', 'Waveform6')
 
@@ -200,14 +202,20 @@ def get_ps_FBP_propty_database():
         # 'WfmLoad-Sts': {'type': 'enum', 'enums': default_wfmlabels,
         #                 'value': 0},
         'WfmData-SP': {'type': 'float', 'count': MAX_WFMSIZE,
-                       'value': list(DEFAULT_WFMDATA)},
+                       'value': list(DEFAULT_WFMDATA),
+                       'prec': default_ps_current_precision},
         'WfmData-RB': {'type': 'float', 'count': MAX_WFMSIZE,
-                       'value': list(DEFAULT_WFMDATA)},
+                       'value': list(DEFAULT_WFMDATA),
+                       'prec': default_ps_current_precision},
         # 'WfmSave-Cmd': {'type': 'int', 'value': 0},
-        'Current-SP': {'type': 'float', 'value': 0.0},
-        'Current-RB': {'type': 'float', 'value': 0.0},
-        'CurrentRef-Mon': {'type': 'float', 'value': 0.0},
-        'Current-Mon': {'type': 'float',  'value': 0.0},
+        'Current-SP': {'type': 'float', 'value': 0.0,
+                       'prec': default_ps_current_precision},
+        'Current-RB': {'type': 'float', 'value': 0.0,
+                       'prec': default_ps_current_precision},
+        'CurrentRef-Mon': {'type': 'float', 'value': 0.0,
+                           'prec': default_ps_current_precision},
+        'Current-Mon': {'type': 'float',  'value': 0.0,
+                        'prec': default_ps_current_precision},
         'IntlkSoft-Mon':    {'type': 'int',    'value': 0},
         'IntlkHard-Mon':    {'type': 'int',    'value': 0},
         'IntlkSoftLabels-Cte':  {'type': 'string',
