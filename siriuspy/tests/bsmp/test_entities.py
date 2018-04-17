@@ -114,7 +114,14 @@ class TestBSMPVariable(unittest.TestCase):
 class TestBSMPVariablesGroup(unittest.TestCase):
     """Test VariablesGroup class."""
 
-    api = ('load_to_value', 'value_to_load', 'variables_size')
+    api = (
+        'ALL',
+        'READ_ONLY',
+        'WRITEABLE',
+        'load_to_value',
+        'value_to_load',
+        'variables_size'
+    )
 
     def setUp(self):
         """Common setup for all test."""
