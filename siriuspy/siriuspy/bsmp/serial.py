@@ -1,6 +1,7 @@
 """BSMP serial communications classes."""
 import struct as _struct
 from .exceptions import SerialError as _SerialError
+from threading import Lock as _Lock
 
 # TODO: rename module to 'channel.py' ?
 
@@ -157,6 +158,7 @@ class Channel:
     """Serial comm with address."""
 
     # TODO: think about the name "address"...
+    lock = _Lock()
 
     def __init__(self, serial, address):
         """Set channel."""
@@ -180,5 +182,8 @@ class Channel:
     def request(self, message, timeout=100):
         """Write and wait for response."""
         # TODO: should we use a default timeout?
+        Channel.lock.acquire(blocking=True)
         self.write(message, timeout)
-        return self.read()
+        ret = self.read()
+        Channel.lock.release()
+        return ret

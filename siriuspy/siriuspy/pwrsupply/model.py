@@ -241,8 +241,8 @@ class _Device:
             return True
         else:
             _log.warning(
-                '[!!] - error exec bsmp func_id:{}, value:{}'.format(
-                    func_id, value))
+                '[!!] - error exec bsmp func_id:{}, value:{}, sts:{}'.format(
+                    func_id, value, sts))
             return False
 
     def _write_setpoint(self, field, value):
