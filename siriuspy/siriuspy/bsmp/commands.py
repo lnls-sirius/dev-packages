@@ -184,3 +184,47 @@ class BSMP:
             if len(response.payload) == 1:
                 return response.payload, None
         return None, None
+
+
+class BSMPSim:
+    """BSMP protocol implementation for simulated Master Node."""
+
+    def __init__(self, entities):
+        """Entities."""
+        self._variables = []
+        self._entities = entities
+
+    def __getitem__(self, index):
+        """Getitem."""
+        return self.bsmp_conn[index]
+
+    @property
+    def entities(self):
+        """PS entities."""
+        return self._entities
+
+    def read_variable(self, var_id):
+        """Read a variable."""
+        # print(var_id)
+        return Response.ok, self._variables[var_id]
+
+    def remove_all_groups(self):
+        """Remove all groups."""
+        self.entities.remove_all_groups()
+        return Response.ok, None
+
+    def read_group_variables(self, group_id):
+        """Read group of variables."""
+        ids = [var.eid for var in self.entities.groups[group_id].variables]
+        # print('here')
+        values = [self.read_variable(id)[1] for id in ids]
+        return Response.ok, values
+
+    def create_group(self, var_ids):
+        """Create new group."""
+        self.entities.add_group(var_ids)
+        return Response.ok, None
+
+    def execute_function(self, func_id, input_val=None):
+        """Execute a function."""
+        raise NotImplementedError()

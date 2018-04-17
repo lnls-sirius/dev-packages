@@ -5,8 +5,10 @@ from threading import Thread as _Thread
 
 from siriuspy import util as _util
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
-from siriuspy.bsmp import Response, BSMP
-from siriuspy.pwrsupply.bsmp import FBPEntities
+from siriuspy.bsmp import Response as _Response
+from siriuspy.bsmp import BSMP as _BSMP
+from siriuspy.bsmp import BSMPSim as _BSMPSim
+from siriuspy.pwrsupply.bsmp import FBPEntities as _FBPEntities
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 from siriuspy.pwrsupply.bsmp import Const as _c
 from .siggen import SignalFactory as _SignalFactory
@@ -17,8 +19,8 @@ __version__ = _util.get_last_commit_hash()
 class IOController:
     """Power supply controller component.
 
-    This component is responsible for BSMP communications with power supply
-    controllers through a serial line.
+    This component manages BSMP serial-port communications with power supply
+    controllers and access to beaglebone's PRU functionalities.
     """
 
     BSMP_CONST = _c
@@ -28,7 +30,7 @@ class IOController:
         self._psmodel = psmodel
 
         if psmodel == 'FBP':
-            self._bsmp_entities = FBPEntities()
+            self._bsmp_entities = _FBPEntities()
         else:
             raise ValueError("Unknown psmodel!")
 
@@ -52,7 +54,7 @@ class IOController:
     def add_slave(self, slave_id):
         """Add a BSMP slave device communication object."""
         self.bsmp_conn[slave_id] = \
-            BSMP(self._pru, slave_id, self._bsmp_entities)
+            _BSMP(self._pru, slave_id, self._bsmp_entities)
 
 
 class IOControllerSim(IOController):
@@ -66,52 +68,6 @@ class IOControllerSim(IOController):
             raise ValueError("Unknown psmodel!")
 
 
-class _BSMPSim:
-    """Virtual controller."""
-
-    # TODO: I think this class should be moved to siriuspy.bsmp subpackage
-
-    def __init__(self, bsmp_entities):
-        """Entities."""
-        self._variables = []
-        self._bsmp_entities = bsmp_entities
-
-    def __getitem__(self, index):
-        """Getitem."""
-        return self.bsmp_conn[index]
-
-    @property
-    def entities(self):
-        """PS entities."""
-        return self._bsmp_entities
-
-    def read_variable(self, var_id):
-        """Read a variable."""
-        print(var_id)
-        return Response.ok, self._variables[var_id]
-
-    def remove_all_groups(self):
-        """Remove all groups."""
-        self.entities.remove_all_groups()
-        return Response.ok, None
-
-    def read_group_variables(self, group_id):
-        """Read group of variables."""
-        ids = [var.eid for var in self.entities.groups[group_id].variables]
-        # print('here')
-        values = [self.read_variable(id)[1] for id in ids]
-        return Response.ok, values
-
-    def create_group(self, var_ids):
-        """Create new group."""
-        self.entities.add_group(var_ids)
-        return Response.ok, None
-
-    def execute_function(self, func_id, input_val=None):
-        """Execute a function."""
-        raise NotImplementedError()
-
-
 class FBP_BSMPSim(_BSMPSim):
     """Simulate a PS controller."""
 
@@ -123,7 +79,7 @@ class FBP_BSMPSim(_BSMPSim):
 
     def __init__(self):
         """Use FBPEntities."""
-        super().__init__(FBPEntities())
+        super().__init__(_FBPEntities())
 
         # Set variables initial value
         self._variables = self._get_init_variables()
@@ -138,7 +94,7 @@ class FBP_BSMPSim(_BSMPSim):
 
     def read_variable(self, var_id):
         """Read variable."""
-        return Response.ok, self._state.read_variable(self._variables, var_id)
+        return _Response.ok, self._state.read_variable(self._variables, var_id)
 
     def execute_function(self, func_id, input_val=None):
         """Execute a function."""
@@ -169,7 +125,7 @@ class FBP_BSMPSim(_BSMPSim):
         elif func_id == _c.F_DISABLE_SIGGEN:
             self._state.disable_siggen(self._variables)
 
-        return Response.ok, None
+        return _Response.ok, None
 
     def _get_init_variables(self):
         firmware = [b'S', b'i', b'm', b'u', b'l', b'a', b't', b'i', b'o', b'n']
