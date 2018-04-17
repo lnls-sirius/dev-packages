@@ -100,7 +100,7 @@ class _HL_Base:
             obj.stop_forcing()
 
     def _start_timer_sp(self):
-        if self._timer_sp.isAlive():
+        if self._timer_sp.is_alive():
             self._timer_sp.reset()
         else:
             self._timer_sp = _Timer(

@@ -128,7 +128,7 @@ class _Base:
     def _start_timer(self):
         if self._timer is None:
             return
-        if self._timer.isAlive():
+        if self._timer.is_alive():
             self._timer.reset()
         else:
             self._timer = _Timer(INTERVAL, self._force_equal, niter=10)
