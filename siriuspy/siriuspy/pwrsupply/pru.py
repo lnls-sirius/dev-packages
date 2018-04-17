@@ -145,14 +145,10 @@ class PRU(PRUInterface):
             raise ValueError('module PRUserial485 is not installed!')
         PRUInterface.__init__(self)
 
-        # start PRU library
+        # start PRU library and set PRU to sync off
         baud_rate = 6
         mode = b"M"  # "S": slave | "M": master
         _PRUserial485.PRUserial485_open(baud_rate, mode)
-
-        # stop sync mode
-        # TODO: think about whether we want force sync off at init
-        _PRUserial485.PRUserial485_sync_stop()  # None returned
 
     def _get_sync_status(self):
         value = _PRUserial485.PRUserial485_sync_status()
@@ -218,7 +214,7 @@ class PRUSim(PRUInterface):
 
     def _sync_start(self, sync_mode, delay, sync_address):
         self._sync_status = PRUInterface._SYNC_ON
-        if not self._trigger_thread.isAlive:
+        if not self._trigger_thread.is_alive():
             self._trigger_thread.start()
         return True
 

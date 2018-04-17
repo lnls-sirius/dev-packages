@@ -1,5 +1,6 @@
 """Beagle Bone implementation module."""
 from copy import deepcopy as _deepcopy
+import logging as _log
 
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.csdevice.pwrsupply import Const as _cPS
@@ -67,7 +68,8 @@ class BeagleBone:
         if field == 'OpMode-Sel':
             success = self._set_opmode(device_name, field, value)
             if not success:
-                print('!!! could not set {} to {}'.format(field, value))
+                _log.warning(
+                    '[!!] - could not set {} to {}'.format(field, value))
             return success
         else:
             # write addresses a specific power supply
@@ -92,6 +94,8 @@ class BeagleBone:
         # TODO: In order to avoid messing with PRU sync mode the IOC should
         # check whether required OpMode is not already selected!
         success = self._set_pru_sync_slowref(device_name, field, value)
+        if not success:
+            _log.warning('[!!] - could not set PRU sync mode to off!')
 
         if success and value == _cPS.OpMode.SlowRef:
             # set opmode slowref in all ps controllers.
