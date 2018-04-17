@@ -174,7 +174,7 @@ class App:
         if not self.correction_mode:
             self._call_callback('Log-Mon', 'Err: Offline, cannot apply kicks.')
             return False
-        if self._thread and self._thread.isAlive():
+        if self._thread and self._thread.is_alive():
             self._call_callback('Log-Mon',
                                 'Err: AutoCorr or MeasRSPMtx is On.')
             return False
@@ -189,7 +189,7 @@ class App:
 
     def calc_correction(self, value):
         """Calculate correction."""
-        if self._thread and self._thread.isAlive():
+        if self._thread and self._thread.is_alive():
             self._call_callback('Log-Mon',
                                 'Err: AutoCorr or MeasRSPMtx is On.')
             return False
@@ -268,7 +268,7 @@ class App:
             self._call_callback('Log-Mon',
                                 'Err: Measurement already in process.')
             return False
-        if self._thread and self._thread.isAlive():
+        if self._thread and self._thread.is_alive():
             self._call_callback('Log-Mon',
                                 'Err: Cannot Measure, AutoCorr is On.')
             return False
@@ -313,7 +313,7 @@ class App:
                 self._call_callback('Log-Mon', 'Err: AutoCorr is Already On.')
                 return False
             self.auto_corr = value
-            if self._thread and self._thread.isAlive():
+            if self._thread and self._thread.is_alive():
                 self._call_callback('Log-Mon',
                                     'Err: Cannot Correct, Measuring RSPMtx.')
                 return False
