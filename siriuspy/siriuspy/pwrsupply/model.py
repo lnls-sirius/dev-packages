@@ -2,28 +2,26 @@
 
 import re as _re
 import time as _time
-
 from epics import PV as _PV
 
-from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.envars import vaca_prefix as _VACA_PREFIX
 from siriuspy.factory import NormalizerFactory as _NormalizerFactory
-from siriuspy.epics import connection_timeout as _connection_timeout
 from siriuspy.thread import QueueThread as _QueueThread
+from siriuspy.namesys import SiriusPVName as _SiriusPVName
+from siriuspy.epics import connection_timeout as _connection_timeout
 from siriuspy.epics.computed_pv import ComputedPV as _ComputedPV
 from siriuspy.csdevice.pwrsupply import Const as _devc
 from siriuspy.pwrsupply.data import PSData as _PSData
+from siriuspy.pwrsupply import sync as _sync
+from siriuspy.pwrsupply.bsmp import Const as _c
+from siriuspy.pwrsupply.bsmp import ps_group_id as _ps_group_id
 from siriuspy.magnet.data import MAData as _MAData
 from siriuspy.magnet import util as _mutil
-from siriuspy.pwrsupply import sync as _sync
 # PowerSupply
 from ..bsmp import VariablesGroup as _VarGroup
 from ..bsmp import Response as _Response
 from ..bsmp import SerialError as _SerialError
 from .status import PSCStatus as _PSCStatus
-# from siriuspy.pwrsupply.pru import PRUInterface as _PRUInterface
-from siriuspy.pwrsupply.bsmp import Const as _c
-from siriuspy.pwrsupply.bsmp import ps_group_id as _ps_group_id
 
 
 class _Device:
@@ -33,12 +31,12 @@ class _Device:
     _ct = _re.compile('^.*-Cte$')
     _sp = _re.compile('^.*-(SP|Sel|Cmd)$')
 
-    def __init__(self, controller, slave_id, name, database):
+    def __init__(self, controller, slave_id, psname, database):
         """Control a device using BSMP protocol."""
         self._connected = False
         self._slave_id = slave_id
         self._controller = controller
-        self._name = name
+        self._psname = psname
         self._database = database
 
         # add current device as slave to the IOC controller
@@ -65,12 +63,12 @@ class _Device:
         return self._controller
 
     @property
-    def name(self):
+    def psname(self):
         """Device name."""
-        return self._name
+        return self._psname
 
     @property
-    def device(self):
+    def bsmp_device(self):
         """BSMP communication instance for this device."""
         return self._controller[self._slave_id]
 
@@ -167,14 +165,14 @@ class _Device:
         """Read a group of ps variables and return it in a dict."""
         # Read values
         try:
-            sts, val = self.device.read_group_variables(group_id)
+            sts, val = self.bsmp_device.read_group_variables(group_id)
         except _SerialError:
             self.connected = False
             return None
         self.connected = True
         if sts == _Response.ok:
             ret = dict()
-            variables = self.device.entities.list_variables(group_id)
+            variables = self.bsmp_device.entities.list_variables(group_id)
             for idx, var_id in enumerate(variables):
                 try:  # TODO: happens because bsmp_2_epics is not complete
                     field = self.bsmp_2_epics[var_id]
@@ -193,7 +191,7 @@ class _Device:
         ids = set()
         for field in fields:
             ids.add(self.epics_2_bsmp[field])
-        sts, _ = self.device.create_group(ids)
+        sts, _ = self.bsmp_device.create_group(ids)
         if sts == _Response.ok:
             return True
         return False
@@ -228,14 +226,14 @@ class _Device:
 
     def _read_variable(self, field):
         var_id = self.epics_2_bsmp[field]
-        sts, val = self.device.read_variable(var_id)
+        sts, val = self.bsmp_device.read_variable(var_id)
         if sts == _Response.ok:
             return val
         else:
             return None
 
     def _execute_function(self, func_id, value=None):
-        sts, val = self.device.execute_function(func_id, value)
+        sts, val = self.bsmp_device.execute_function(func_id, value)
         if sts == _Response.ok:
             return True
         else:
@@ -311,51 +309,51 @@ class FBPPowerSupply(_Device):
         'WfmData-SP': '_set_wfmdata_sp',
     }
 
-    def __init__(self, controller, slave_id, name, database):
+    def __init__(self, controller, slave_id, psname, database):
         """High level power supply class.
 
         The controller object implements the BSMP interface.
         All properties map an epics field to a BSMP property.
         """
-        super().__init__(controller, slave_id, name, database)
+        super().__init__(controller, slave_id, psname, database)
         self._pru = self.controller.pru
 
         # initialize groups
         # TODO: check errors, create group 3?
-        # self.device.remove_all_groups()
-        # var_ids = self.device.entities.list_variables(group_id=0)
+        # self.bsmp_device.remove_all_groups()
+        # var_ids = self.bsmp_device.entities.list_variables(group_id=0)
         # var_ids.remove(_c.V_FIRMWARE_VERSION)
-        # self.device.create_group(var_ids=var_ids)
+        # self.bsmp_device.create_group(var_ids=var_ids)
 
         self._group_created = False
-        self._create_group_3()
+        self._create_default_group()
 
         # close DSP loop
         # TODO: does this not break the concept that the IOC should initialize
-        # withpout setting the power supply controller?
-        # self.device.execute_function(_c.F_CLOSE_LOOP)
+        # without setting the power supply controller?
+        # self.bsmp_device.execute_function(_c.F_CLOSE_LOOP)
 
     def read_ps_variables(self):
         """Read called to update DB."""
-        self._create_group_3()
+        self._create_default_group()
         if self._group_created:
             return self._read_group(_ps_group_id)
         return None
 
-
     def read_status(self):
-        """Read fields that are not setpoinrs nor bsmp variables."""
+        """Read fields that are neither setpoints nor bsmp variables."""
         ret = dict()
+        # TODO: wfmdata is in the PRU!
         ret['WfmData-RB'] = self.database['WfmData-RB']['value']
         ret['WfmIndex-Mon'] = self.controller.pru.sync_pulse_count
         return ret
 
-    def _create_group_3(self):
+    def _create_default_group(self):
         if self._group_created:
             return
 
         try:
-            sts, val = self.device.remove_all_groups()
+            sts, val = self.bsmp_device.remove_all_groups()
         except _SerialError as e:
             self._group_created = False
             return False
@@ -364,10 +362,10 @@ class FBPPowerSupply(_Device):
                 self._group_created = False
                 return False
 
-        var_ids = self.device.entities.list_variables(group_id=0)
+        var_ids = self.bsmp_device.entities.list_variables(group_id=0)
         var_ids.remove(_c.V_FIRMWARE_VERSION)
         try:
-            self.device.create_group(var_ids=var_ids)
+            self.bsmp_device.create_group(var_ids=var_ids)
         except _SerialError as e:
             self._group_created = False
             return False
@@ -565,7 +563,7 @@ class FBPPowerSupply(_Device):
         """
         values = super()._read_group(group_id)
         if values is not None:
-            var_ids = self.device.entities.list_variables(group_id)
+            var_ids = self.bsmp_device.entities.list_variables(group_id)
             if _c.V_PS_STATUS in var_ids:
                 # TODO: values['PwrState-Sts'] == values['OpMode-Sts'] ?
                 psc_status = _PSCStatus(ps_status=values['PwrState-Sts'])
