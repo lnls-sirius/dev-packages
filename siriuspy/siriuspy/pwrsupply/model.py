@@ -3,6 +3,7 @@
 import re as _re
 import time as _time
 from epics import PV as _PV
+import logging as _log
 
 from siriuspy.envars import vaca_prefix as _VACA_PREFIX
 from siriuspy.factory import NormalizerFactory as _NormalizerFactory
@@ -133,6 +134,8 @@ class _Device:
                 pass  # SerialError
             self.connected = True
         except _SerialError:
+            _log.warning(
+                '[!!] - Serial Error: field={}, value={}'.format(field, value))
             self.connected = False
             return False
         return True
@@ -237,6 +240,9 @@ class _Device:
         if sts == _Response.ok:
             return True
         else:
+            _log.warning(
+                '[!!] - error exec bsmp func_id:{}, value:{}'.format(
+                    func_id, value))
             return False
 
     def _write_setpoint(self, field, value):
