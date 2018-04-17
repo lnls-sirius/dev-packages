@@ -2,6 +2,7 @@
 import struct as _struct
 
 
+
 class _Entity:
     """BSMP entity."""
 
@@ -79,6 +80,10 @@ class Variable(_Entity):
 
 class VariablesGroup(_Entity):
     """BSMP variables group entity."""
+
+    ALL = 0
+    READ_ONLY = 1
+    WRITEABLE = 2
 
     def __init__(self, eid, waccess, variables):
         """Set group parameter."""

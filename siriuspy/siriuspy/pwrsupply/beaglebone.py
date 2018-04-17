@@ -1,7 +1,8 @@
 """Beagle Bone implementation module."""
-# import re as _re
+from copy import deepcopy as _deepcopy
 
 from siriuspy.search import PSSearch as _PSSearch
+from siriuspy.csdevice.pwrsupply import Const as _cPS
 from siriuspy.pwrsupply.data import PSData as _PSData
 from siriuspy.pwrsupply.pru import PRU as _PRU
 from siriuspy.pwrsupply.pru import PRUSim as _PRUSim
@@ -10,26 +11,21 @@ from siriuspy.pwrsupply.controller import IOControllerSim as _IOControllerSim
 from siriuspy.pwrsupply.model import FBPPowerSupply as _FBPPowerSupply
 
 
-# import time as _time
-# from siriuspy.search import PSSearch as _PSSearch
-# from siriuspy.csdevice.pwrsupply import get_ps_propty_database as \
-#     _get_ps_propty_database
-# from siriuspy.pwrsupply.pru import SerialComm as _SerialComm
-# from siriuspy.pwrsupply.bsmp import BSMPMasterSlave as _BSMPMasterSlave
-# from siriuspy.pwrsupply.bsmp import BSMPMasterSlaveSim as _BSMPMasterSlaveSim
-# from siriuspy.pwrsupply.controller import ControllerIOC as _ControllerIOC
-# from siriuspy.pwrsupply.controller import ControllerPSSim as _ControllerPSSim
-# from siriuspy.pwrsupply.model import PowerSupply as _PowerSupply
-
-
 class BeagleBone:
-    """Responsible for handling BBB objects."""
+    """BeagleBone class.
+
+    This class implements methods to read and write process variables of power
+    supplies controlled by a specific beaglebone system.
+    """
+
+    # --- public interface ---
 
     def __init__(self, bbbname, simulate=True):
         """Retrieve power supply."""
         self._bbbname = bbbname
         self._simulate = simulate
 
+        # retrieve names of associated power supplies
         if self._bbbname == 'BO-01:CO-BBB-1':
             self._psnames = ['BO-01U:PS-CH', 'BO-01U:PS-CV']
         elif self._bbbname == 'BO-01:CO-BBB-2':
@@ -37,30 +33,119 @@ class BeagleBone:
         else:
             self._psnames = _PSSearch.conv_bbbname_2_psnames(bbbname)
 
+        # retrieve power supply model and corresponding database
         self._psmodel = _PSSearch.conv_psname_2_psmodel(self._psnames[0])
         self._database = _PSData(self._psnames[0]).propty_database
-        if not self._simulate:
-            self._pru = _PRU()
-            self._controller = _IOController(self._pru, self._psmodel)
-        else:
-            self._pru = _PRUSim()
-            self._controller = _IOControllerSim(self._pru, self._psmodel)
 
+        # creates corresponding PRU and controller
+        if not self._simulate:
+            self._controller = _IOController(_PRU(), self._psmodel)
+        else:
+            self._controller = _IOControllerSim(_PRUSim(), self._psmodel)
+
+        # create abstract power supply objects
         self._power_supplies = self._create_power_supplies()
 
     @property
     def psnames(self):
-        """Return list of power supply names."""
+        """Return list of associated power supply names."""
         return self._psnames.copy()
 
-    def set(self, device, field, value):
-        """BBB write."""
-        if field == 'OpMode-Sel' and value == 2:  # Cycle
-            # set all devices?
-            # sync start
-            pass
+    @property
+    def power_supplies(self):
+        """Return power supplies."""
+        return self._power_supplies
 
-        return self._power_supplies[device].write(field, value)
+    @property
+    def controller(self):
+        """Return beaglebone controller."""
+        return self._controller
+
+    def write(self, device_name, field, value):
+        """BBB write."""
+        # intercept writes that affect all controlled power supplies
+        if field == 'OpMode-Sel':
+            success = self._set_opmode(device_name, field, value)
+            if not success:
+                print('!!! could not set {} to {}'.format(field, value))
+            return success
+        else:
+            # write addresses a specific power supply
+            return self._power_supplies[device_name].write(field, value)
+
+    def __getitem__(self, index):
+        """Return corresponding power supply object."""
+        if isinstance(index, int):
+            return self._power_supplies[self.psnames.index(index)]
+        else:
+            return self._power_supplies[index]
+
+    def __contains__(self, psname):
+        """Test if psname is in psname list."""
+        return psname in self._psnames
+
+    # --- private methods ---
+
+    def _set_opmode(self, device_name, field, value):
+
+        # first set sync mode to OFF so that BSMP comm can happen
+        # TODO: In order to avoid messing with PRU sync mode the IOC should
+        # check whether required OpMode is not already selected!
+        success = self._set_pru_sync_slowref(device_name, field, value)
+
+        if success and value == _cPS.OpMode.SlowRef:
+            # set opmode slowref in all ps controllers.
+            success &= self._set_bsmp_opmode(field, value)
+        if success and value == _cPS.OpMode.Cycle:
+            # set opmode slowref in all ps controllers.
+            success &= self._set_bsmp_opmode(field, value)
+            # set PRU sync mode to Cycle
+            success &= self._set_pru_sync_cycle(device_name, field, value)
+        elif success and value == _cPS.OpMode.RmpWfm:
+            # set opmode slowref in all ps controllers.
+            success &= self._set_bsmp_opmode(field, value)
+            # set PRU sync mode to RmpWfm
+            success = self._set_pru_sync_rmpwfm(device_name, field, value)
+        elif success and value == _cPS.OpMode.MigWfm:
+            # set opmode slowref in all ps controllers.
+            success &= self._set_bsmp_opmode(field, value)
+            # set PRU sync mode to MigWfm
+            success = self._set_pru_sync_migwfm(device_name, field, value)
+        return success
+
+    def _set_bsmp_opmode(self, field, value):
+        success = True
+        for ps in self._power_supplies.values():
+            success &= ps.write(field, value)
+        return success
+
+    def _set_pru_sync_slowref(self, device_name, field, value):
+        # print('set_pru_sync_slowref!')
+        ret = self.controller.pru.sync_stop()
+        return ret
+
+    def _set_pru_sync_cycle(self, device_name, field, value):
+        # print('set_pru_sync_cycle!')
+        sync_mode = self.controller.pru.SYNC_CYCLE
+        ret = self._set_pru_sync_start(sync_mode)
+        return ret
+        return True
+
+    def _set_pru_sync_rmpwfm(self, device_name, field, value):
+        sync_mode = self.controller.pru.SYNC_RMPEND
+        ret = self._set_pru_sync_start(sync_mode)
+        return ret
+
+    def _set_pru_sync_migwfm(self, device_name, field, value):
+        sync_mode = self.controller.pru.SYNC_MIGEND
+        ret = self._set_pru_sync_start(sync_mode)
+        return ret
+
+    def _set_pru_sync_start(self, sync_mode):
+        slave_id = self._power_supplies[self.psnames[0]]._slave_id
+        ret = self.controller.pru.sync_start(
+            sync_mode=sync_mode, sync_address=slave_id)
+        return ret
 
     def _get_bsmp_slave_IDs(self):
         # TODO: temp code. this should be deleted once PS bench tests are over.
@@ -80,14 +165,7 @@ class BeagleBone:
         for i, psname in enumerate(self._psnames):
             # Define device controller
             if self._psmodel == 'FBP':
+                db = _deepcopy(self._database)
                 power_supplies[psname] = _FBPPowerSupply(
-                    self._controller, slave_ids[i], self._database)
+                    self._controller, slave_ids[i], psname, db)
         return power_supplies
-
-    def __getitem__(self, psname):
-        """Return corresponding power supply object."""
-        return self._power_supplies[psname]
-
-    def __contains__(self, psname):
-        """Test is psname is in psname list."""
-        return psname in self._psnames

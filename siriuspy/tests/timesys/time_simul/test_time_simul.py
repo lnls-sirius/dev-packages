@@ -43,6 +43,12 @@ class TestTimingSimulation(unittest.TestCase):
         'set_propty',
     )
 
+    def test_public_interface(self):
+        """Test class public interface."""
+        valid = util.check_public_interface_namespace(
+            time_simul.TimingSimulation, TestTimingSimulation.public_interface)
+        self.assertTrue(valid)
+
     def test_EVG_PREFIX(self):
         """Test EVG_PREFIX."""
         # TODO: implement test!
@@ -67,12 +73,6 @@ class TestTimingSimulation(unittest.TestCase):
         """Test FOUTs."""
         # TODO: implement test!
         pass
-
-    def test_public_interface(self):
-        """Test class public interface."""
-        valid = util.check_public_interface_namespace(
-            time_simul.TimingSimulation, TestTimingSimulation.public_interface)
-        self.assertTrue(valid)
 
     def test_get_database(self):
         """Test get_database."""

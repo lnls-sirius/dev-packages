@@ -5,8 +5,10 @@ from threading import Thread as _Thread
 
 from siriuspy import util as _util
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
-from siriuspy.bsmp import Response, BSMP
-from siriuspy.pwrsupply.bsmp import FBPEntities
+from siriuspy.bsmp import Response as _Response
+from siriuspy.bsmp import BSMP as _BSMP
+from siriuspy.bsmp import BSMPSim as _BSMPSim
+from siriuspy.pwrsupply.bsmp import FBPEntities as _FBPEntities
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 from siriuspy.pwrsupply.bsmp import Const as _c
 from .siggen import SignalFactory as _SignalFactory
@@ -15,7 +17,11 @@ __version__ = _util.get_last_commit_hash()
 
 
 class IOController:
-    """Power supply controller."""
+    """Power supply controller component.
+
+    This component manages BSMP serial-port communications with power supply
+    controllers and access to beaglebone's PRU functionalities.
+    """
 
     BSMP_CONST = _c
 
@@ -24,35 +30,35 @@ class IOController:
         self._psmodel = psmodel
 
         if psmodel == 'FBP':
-            self._bsmp_entities = FBPEntities()
+            self._bsmp_entities = _FBPEntities()
         else:
             raise ValueError("Unknown psmodel!")
 
         self._pru = pru
         self._bsmp_conn = dict()
 
-    def __getitem__(self, index):
-        """Getitem."""
-        return self.bsmp_conn[index]
+    def __getitem__(self, slave_id):
+        """Return corresponding BSMP slave device communication object."""
+        return self.bsmp_conn[slave_id]
 
     @property
     def pru(self):
-        """PRU."""
+        """Return the PRU object."""
         return self._pru
 
     @property
     def bsmp_conn(self):
-        """Slaves."""
+        """Return BSMP slave device communication objects."""
         return self._bsmp_conn
 
     def add_slave(self, slave_id):
-        """Add a BSMP slave to make serial communication."""
+        """Add a BSMP slave device communication object."""
         self.bsmp_conn[slave_id] = \
-            BSMP(self._pru, slave_id, self._bsmp_entities)
+            _BSMP(self._pru, slave_id, self._bsmp_entities)
 
 
 class IOControllerSim(IOController):
-    """Power supply controller for simulated bsmp."""
+    """Simulated Power supply controller component."""
 
     def add_slave(self, slave_id):
         """Add a BSMP slave to make serial communication."""
@@ -60,50 +66,6 @@ class IOControllerSim(IOController):
             self.bsmp_conn[slave_id] = FBP_BSMPSim()
         else:
             raise ValueError("Unknown psmodel!")
-
-
-class _BSMPSim:
-    """Virtual controller."""
-
-    def __init__(self, bsmp_entities):
-        """Entities."""
-        self._variables = []
-        self._bsmp_entities = bsmp_entities
-
-    def __getitem__(self, index):
-        """Getitem."""
-        return self.bsmp_conn[index]
-
-    @property
-    def entities(self):
-        """PS entities."""
-        return self._bsmp_entities
-
-    def read_variable(self, var_id):
-        """Read a variable."""
-        print(var_id)
-        return Response.ok, self._variables[var_id]
-
-    def remove_all_groups(self):
-        """Remove all groups."""
-        self.entities.remove_all_groups()
-        return Response.ok, None
-
-    def read_group_variables(self, group_id):
-        """Read group of variables."""
-        ids = [var.eid for var in self.entities.groups[group_id].variables]
-        # print('here')
-        values = [self.read_variable(id)[1] for id in ids]
-        return Response.ok, values
-
-    def create_group(self, var_ids):
-        """Create new group."""
-        self.entities.add_group(var_ids)
-        return Response.ok, None
-
-    def execute_function(self, func_id, input_val=None):
-        """Execute a function."""
-        raise NotImplementedError()
 
 
 class FBP_BSMPSim(_BSMPSim):
@@ -117,7 +79,7 @@ class FBP_BSMPSim(_BSMPSim):
 
     def __init__(self):
         """Use FBPEntities."""
-        super().__init__(FBPEntities())
+        super().__init__(_FBPEntities())
 
         # Set variables initial value
         self._variables = self._get_init_variables()
@@ -132,7 +94,7 @@ class FBP_BSMPSim(_BSMPSim):
 
     def read_variable(self, var_id):
         """Read variable."""
-        return Response.ok, self._state.read_variable(self._variables, var_id)
+        return _Response.ok, self._state.read_variable(self._variables, var_id)
 
     def execute_function(self, func_id, input_val=None):
         """Execute a function."""
@@ -163,7 +125,7 @@ class FBP_BSMPSim(_BSMPSim):
         elif func_id == _c.F_DISABLE_SIGGEN:
             self._state.disable_siggen(self._variables)
 
-        return Response.ok, None
+        return _Response.ok, None
 
     def _get_init_variables(self):
         firmware = [b'S', b'i', b'm', b'u', b'l', b'a', b't', b'i', b'o', b'n']
@@ -174,15 +136,14 @@ class FBP_BSMPSim(_BSMPSim):
             [0.0, 0.0, 0.0, 0.0], 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0,
             0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0]
         default_siggen_parms = \
-            _SignalFactory.DEFAULT_PARAMETERS['Sine']
+            _SignalFactory.DEFAULT_CONFIGS['Sine']
         variables[_c.V_SIGGEN_TYPE] = default_siggen_parms[0]
         variables[_c.V_SIGGEN_NUM_CYCLES] = default_siggen_parms[1]
         variables[_c.V_SIGGEN_FREQ] = default_siggen_parms[2]
         variables[_c.V_SIGGEN_AMPLITUDE] = default_siggen_parms[3]
         variables[_c.V_SIGGEN_OFFSET] = default_siggen_parms[4]
-        variables[_c.V_SIGGEN_AUX_PARAM] = default_siggen_parms[5]
+        variables[_c.V_SIGGEN_AUX_PARAM] = default_siggen_parms[5:9]
         return variables
-
 
     def _is_on(self):
         ps_status = self._variables[_c.V_PS_STATUS]
@@ -326,7 +287,8 @@ class FBPCycleState(_FBPState):
         variables[_c.V_SIGGEN_ENABLE] = 0
         variables[_c.V_PS_REFERENCE] = 0.0
         variables[_c.V_I_LOAD] = 0.0
-        self._set_signal(variables)
+        # self._set_signal(variables)
+        self.enable_siggen(variables)
 
     def reset_interlocks(self, variables):
         """Reset interlocks."""

@@ -10,6 +10,7 @@ import siriuspy.pwrsupply.siggen as siggen
 
 
 public_interface = (
+    'DEFAULT_SIGGEN_CONFIG',
     'Signal',
     'SignalSine',
     'SignalDampedSine',
@@ -26,6 +27,12 @@ class TestModule(unittest.TestCase):
         valid = util.check_public_interface_namespace(siggen, public_interface)
         self.assertTrue(valid)
 
+    def test_DEFAULT_SIGGEN_CONFIG(self):
+        """Test DEFAULT_SIGGEN_CONFIG."""
+        defconfig = siggen.DEFAULT_SIGGEN_CONFIG
+        self.assertIsInstance(defconfig, tuple)
+        self.assertTrue(len(defconfig), 9)
+
 
 class TestSigGenConfig(unittest.TestCase):
     """Test SigGenconfig class."""
@@ -35,12 +42,12 @@ class TestSigGenConfig(unittest.TestCase):
         'value',
         'cycle_time',
         'rampup_time',
-        'rampdown_time',
-        'plateau_time',
         'theta_begin',
+        'rampdown_time',
         'theta_end',
+        'plateau_time',
         'decay_time',
-        # 'get_waveform',
+        'get_waveform',
     )
 
     def test_public_interface(self):

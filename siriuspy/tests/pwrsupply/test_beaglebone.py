@@ -1,18 +1,15 @@
 #!/usr/bin/env python-sirius
-"""Test PRU module."""
+"""Test beaglebone module."""
 import unittest
-# from unittest import mock
 
 from siriuspy import util
-from siriuspy.pwrsupply import pru
-from siriuspy.pwrsupply.pru import PRUInterface
+# from siriuspy.pwrsupply import pru
+import siriuspy.pwrsupply.beaglebone as bbb
 from siriuspy.util import check_public_interface_namespace
 
 
 public_interface = (
-    'PRUInterface',
-    'PRU',
-    'PRUSim',
+    'BeagleBone',
 )
 
 
@@ -22,72 +19,28 @@ class TestModule(unittest.TestCase):
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-                pru,
+                bbb,
                 public_interface)
         self.assertTrue(valid)
 
 
-class TestPRUInterface(unittest.TestCase):
+class TestBeagleBone(unittest.TestCase):
     """Test PRUInterface API."""
 
     public_interface = (
-        'VERSION',
-        'SYNC_MIGINT',
-        'SYNC_MIGEND',
-        'SYNC_RMPINT',
-        'SYNC_RMPEND',
-        'SYNC_CYCLE',
-        'SYNC_MODES',
-        'sync_mode',
-        'sync_status',
-        'sync_start',
-        'sync_stop',
-        'sync_pulse_count',
-        'UART_write',
-        'UART_read',
-        'curve',
-        'set_curve_block',
-        'read_curve_block',
-        'close',
+        'psnames',
+        'power_supplies',
+        'controller',
+        'write',
     )
 
     def test_public_interface(self):
         """Test class public interface."""
         self.assertTrue(check_public_interface_namespace(
-            PRUInterface, TestPRUInterface.public_interface))
+            bbb.BeagleBone, TestBeagleBone.public_interface))
 
-    def test_VERSION(self):
-        """Test VERSION."""
-        self.assertIsInstance(PRUInterface.VERSION, str)
-
-    def test_SYNC_MIGINT(self):
-        """Test SYNC_MIGINT."""
-        self.assertIsInstance(PRUInterface.SYNC_MIGINT, int)
-
-    def test_SYNC_MIGEND(self):
-        """Test SYNC_MIGEND."""
-        self.assertIsInstance(PRUInterface.SYNC_MIGEND, int)
-
-    def test_SYNC_RMPINT(self):
-        """Test SYNC_RMPINT."""
-        self.assertIsInstance(PRUInterface.SYNC_RMPINT, int)
-
-    def test_SYNC_RMPEND(self):
-        """Test SYNC_RMPEND."""
-        self.assertIsInstance(PRUInterface.SYNC_RMPEND, int)
-
-    def test_SYNC_CYCLE(self):
-        """Test SYNC_CYCLE."""
-        self.assertIsInstance(PRUInterface.SYNC_CYCLE, int)
-
-    def test_SYNC_MODES(self):
-        """Test SYNC_MODES."""
-        self.assertIsInstance(PRUInterface.SYNC_MODES, tuple)
-        for mode in PRUInterface.SYNC_MODES:
-            self.assertIsInstance(mode, int)
-
-    def test_sync_mode(self):
-        """Test sync_mode."""
+    def test_psnames(self):
+        """Test psnames."""
         # TODO: implement test!
         pass
 
@@ -122,22 +75,7 @@ class TestPRUInterface(unittest.TestCase):
         pass
 
     def test_curve(self):
-        """Test curve."""
-        # TODO: implement test!
-        pass
-
-    def test_set_curve_block(self):
-        """Test set_curve_block."""
-        # TODO: implement test!
-        pass
-
-    def test_read_curve_block(self):
-        """Test read_curve_block."""
-        # TODO: implement test!
-        pass
-
-    def test_close(self):
-        """Test close."""
+        """Test curve        ."""
         # TODO: implement test!
         pass
 
