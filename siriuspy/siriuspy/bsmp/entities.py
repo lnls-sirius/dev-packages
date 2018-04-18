@@ -2,7 +2,6 @@
 import struct as _struct
 
 
-
 class _Entity:
     """BSMP entity."""
 

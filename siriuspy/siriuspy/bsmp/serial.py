@@ -2,6 +2,7 @@
 import struct as _struct
 from .exceptions import SerialError as _SerialError
 from threading import Lock as _Lock
+import time as _time
 
 # TODO: rename module to 'channel.py' ?
 
@@ -183,7 +184,10 @@ class Channel:
         """Write and wait for response."""
         # TODO: should we use a default timeout?
         Channel.lock.acquire(blocking=True)
+        # t = _time.time()
         self.write(message, timeout)
         ret = self.read()
+        # dt = _time.time() - t
+        # print('time: {} ms'.format(1000*dt))
         Channel.lock.release()
         return ret
