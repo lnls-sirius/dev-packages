@@ -354,15 +354,17 @@ class App:
                 method=1, grouping='svd',
                 delta_opticsparam=[delta_chromx, delta_chromy])
 
-        self.driver.setParam('Log-Mon', 'Calculated SL values.')
-
         for fam in self._SFAMS:
             fam_index = self._SFAMS.index(fam)
             current_sl = self._sfam_sl_rb_pvs[fam].get()
+            if current_sl is None:
+                return
             self._lastcalc_sl[fam_index] = (current_sl +
                                             lastcalc_deltasl[fam_index])
             self.driver.setParam('SL' + fam + '-Mon',
                                  self._lastcalc_sl[fam_index])
+
+        self.driver.setParam('Log-Mon', 'Calculated SL values.')
         self.driver.updatePVs()
 
     def _apply_corr(self):
