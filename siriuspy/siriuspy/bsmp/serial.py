@@ -159,7 +159,7 @@ class Channel:
     """Serial comm with address."""
 
     # TODO: think about the name "address"...
-    lock = _Lock()
+    _lock = _Lock()
 
     def __init__(self, serial, address):
         """Set channel."""
@@ -183,11 +183,8 @@ class Channel:
     def request(self, message, timeout=100):
         """Write and wait for response."""
         # TODO: should we use a default timeout?
-        Channel.lock.acquire(blocking=True)
-        # t = _time.time()
+        Channel._lock.acquire(blocking=True)
         self.write(message, timeout)
         ret = self.read()
-        # dt = _time.time() - t
-        # print('time: {} ms'.format(1000*dt))
-        Channel.lock.release()
+        Channel._lock.release()
         return ret
