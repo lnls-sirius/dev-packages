@@ -178,12 +178,15 @@ class BSMP:
         m = _Message.message(0x50, payload=load)
         response = self.channel.request(m)
         if response.cmd == 0x51:
+            # result of the execution
             if len(response.payload) == function.o_size:
                 return Response.ok, function.load_to_value(response.payload)
         elif response.cmd == 0x53:
+            # function error
             if len(response.payload) == 1:
+                # TODO: the tuple order of return seems to be inverted!
                 return response.payload, None
-        return None, None
+        return None, None  # reached in case of serial comm error?
 
 
 class BSMPSim:
