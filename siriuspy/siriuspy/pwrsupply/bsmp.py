@@ -42,6 +42,19 @@ class Const:
     V_SIGGEN_OFFSET = 12
     V_SIGGEN_AUX_PARAM = 13
 
+    # --- undefined variables
+    V_UNDEF14 = 14
+    V_UNDEF15 = 15
+    V_UNDEF16 = 16
+    V_UNDEF17 = 17
+    V_UNDEF18 = 18
+    V_UNDEF19 = 19
+    V_UNDEF20 = 20
+    V_UNDEF21 = 21
+    V_UNDEF22 = 22
+    V_UNDEF23 = 23
+    V_UNDEF24 = 24
+
     # --- FSB variables ---
     V_PS_SOFT_INTERLOCKS = 25  # BSMP doc says ID numb. should be continous!
     V_PS_HARD_INTERLOCKS = 26
@@ -92,6 +105,7 @@ class FBPEntities(_Entities):
     """PS FBP Entities."""
 
     Variables = (
+        # --- common variables
         {'eid': 0, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
         {'eid': 1, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 2, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
@@ -106,6 +120,7 @@ class FBPEntities(_Entities):
         {'eid': 11, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 12, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 13, 'waccess': False, 'count': 4, 'var_type': _Types.T_FLOAT},
+        # --- undefined variables
         {'eid': 14, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 15, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 16, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
@@ -117,14 +132,17 @@ class FBPEntities(_Entities):
         {'eid': 22, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
         {'eid': 23, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
         {'eid': 24, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
+        # --- FBP-specific variables
         {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 27, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 28, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 29, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 30, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        # TODO: add this variable
-        # {'eid': 31, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        # TODO: ps spec lists variable 31 but real pw does not have it
+        # {'eid': 31, 'waccess': False, 'count': 1,
+        #  'var_type': _Types.T_FLOAT},
+
     )
     Curves = tuple()
     Functions = (

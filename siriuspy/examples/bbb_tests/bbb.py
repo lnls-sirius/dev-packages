@@ -63,12 +63,12 @@ class BSMPOpQueue(_deque):
                 super().append(operation)
                 self._last_operation = operation
             else:
-                super().append(operation)
-                self._last_operation = operation
-                # n = self.count(operation)
-                # if n == 0:
-                #     super().append(operation)
-                #     self._last_operation = operation
+                # super().append(operation)
+                # self._last_operation = operation
+                n = self.count(operation)
+                if n == 0:
+                    super().append(operation)
+                    self._last_operation = operation
         BSMPOpQueue._lock.release()
 
     def clear(self):
@@ -149,6 +149,17 @@ class BBBController:
         _c.V_SIGGEN_AMPLITUDE,
         _c.V_SIGGEN_OFFSET,
         _c.V_SIGGEN_AUX_PARAM,
+        _c.V_UNDEF14,
+        _c.V_UNDEF15,
+        _c.V_UNDEF16,
+        _c.V_UNDEF17,
+        _c.V_UNDEF18,
+        _c.V_UNDEF19,
+        _c.V_UNDEF20,
+        _c.V_UNDEF21,
+        _c.V_UNDEF22,
+        _c.V_UNDEF23,
+        _c.V_UNDEF24,
         _c.V_PS_SOFT_INTERLOCKS,
         _c.V_PS_HARD_INTERLOCKS,
         _c.V_I_LOAD,
@@ -236,12 +247,12 @@ class BBBController:
         self._last_device_scanned = len(self._device_ids)  # next is the first
         self._update_exec_time = None  # registers last update exec time
         self._thread_scan = _Thread(target=self._loop_scan, daemon=True)
-        self._scanning = False
+        self._scanning = True
         self._thread_scan.start()
 
         # process thread
         self._thread_process = _Thread(target=self._loop_process, daemon=True)
-        self._processing = False
+        self._processing = True
         self._thread_process.start()
 
     @property
@@ -264,7 +275,7 @@ class BBBController:
         """Set scan state."""
         self._processing = value
 
-    def read(self, device_id, variable_id=None):
+    def read_variable(self, device_id, variable_id=None):
         """Return current mirror of variable values of the BSMP device."""
         dev_values = self._variables_values[device_id]
         if variable_id is None:
@@ -323,16 +334,20 @@ class BBBController:
         # set selected sync mode
         self._pru.sync_start(
             sync_mode=sync_mode,
-            sync_address=self._device_ids[0], delay=100)  # step 3
+            sync_address=self._device_ids[0], delay=100)
 
         # accept back new operation requests
         self._queue.ignore_clear()
 
-    def info_exec_time(self):
+    def get_queue_len(self):
+        """Return current length of queue."""
+        return len(self._queue)
+
+    def meas_exec_time(self):
         """Return last update execution time [s]."""
         return self._update_exec_time
 
-    def info_sample_exec_time(self, device_ids, group_id, nrpoints=20):
+    def meas_sample_exec_time(self, device_ids, group_id, nrpoints=20):
         """Measure execution times and return stats and sample."""
         sample = []
         self.pru_sync_stop()
@@ -348,7 +363,7 @@ class BBBController:
         # loop and collect sample
         while len(sample) < nrpoints:
             self._bsmp_update_variables(device_ids, group_id)
-            value = self.info_exec_time()
+            value = self.meas_exec_time()
             sample.append(value)
             print('{:03d}: {:.4f} ms'.format(len(sample), 1000*value))
             _time.sleep(self._time_interval)
@@ -365,6 +380,8 @@ class BBBController:
     # --- private methods ---
 
     def _initialize_bsmp(self, bsmp_entities):
+
+        # TODO: deal with BSMP comm errors at init!!
 
         # create BSMP devices
         self._bsmp = self._create_bsmp(bsmp_entities)
@@ -391,8 +408,10 @@ class BBBController:
             {id: dev_variables[:] for id in self._device_ids}
         # TODO: should we initialize this reading the ps controllers?
 
-        # # read all variable from BSMP devices
-        # self._bsmp_update_variables(device_ids=self._device_ids, group_id=0)
+        # read all variable from BSMP devices
+        # TODO: for some reason cannot use group_id = 0 !!!
+        # it seems
+        self._bsmp_update_variables(device_ids=self._device_ids, group_id=0)
 
     def _initialize_groups(self):
 
@@ -442,9 +461,9 @@ class BBBController:
                 # therefore operations must be queued in order
                 self._queue.append(operation)
             else:
-                # for sync on, not function execution is accepted and
-                # we can append only unique operations since order is
-                # processing is not that relevant.
+                # for sync on, no function execution is accepted and
+                # we can therefore append only unique operations since
+                # processing order is not relevant.
                 self._queue.append(operation, unique=True)
         else:
             # does not append if last operation is the same as last one
@@ -457,8 +476,8 @@ class BBBController:
         self._queue.process()
         # print info
         n = len(self._queue)
-        if n > 0:
-            print('queue size: {}'.format(len(self._queue)))
+        if n > 50:
+            print('BBB queue size: {} !!!'.format(len(self._queue)))
 
     def _select_device_group_ids(self):
         """Return variable group id and device ids for the loop scan."""
