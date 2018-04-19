@@ -156,15 +156,18 @@ class Package:
 
 
 class Channel:
-    """Serial comm with address."""
+    """Serial communication channel.
 
-    # TODO: think about the name "address"...
+    The channel is defined by a sender serial controller and recipient
+    address.
+    """
+
     _lock = _Lock()
 
     def __init__(self, serial, address):
         """Set channel."""
-        self.serial = serial
-        self.address = address
+        self.serial = serial  # serial controller of the device
+        self.address = address  # address of recipient device.
 
     def read(self):
         """Read from serial."""
