@@ -177,6 +177,7 @@ class BSMP:
         load = [chr(func_id)] + function.value_to_load(input_val)
         m = _Message.message(0x50, payload=load)
         response = self.channel.request(m)
+        # TODO: slave can also return and error message (0xE3 or 0xE5)
         if response.cmd == 0x51:
             # result of the execution
             if len(response.payload) == function.o_size:
