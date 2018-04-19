@@ -10,6 +10,7 @@ at the other end of the serial line.
 import time as _time
 import math as _math
 from collections import deque as _deque
+from collections import namedtuple as _namedtuple
 from threading import Thread as _Thread
 from threading import Lock as _Lock
 from copy import deepcopy as _dcopy
@@ -18,6 +19,7 @@ from copy import deepcopy as _dcopy
 from siriuspy.bsmp import BSMP
 from siriuspy.bsmp import Response
 from siriuspy.pwrsupply.bsmp import FBPEntities
+from siriuspy.pwrsupply.pru import PRUInterface as _PRUInterface
 from siriuspy.pwrsupply.pru import PRU
 from siriuspy.pwrsupply.bsmp import Const as _c
 
@@ -118,9 +120,6 @@ class BBBController:
     # TODO: test class in sync on mode and trigger from timing
     # TODO: implement BSMP function executions
 
-    _FREQ_RAMP = 2.0  # [Hz]
-    _FREQ_SCAN = 10.0  # [Hz]
-
     # TODO: Improve update frequency in WfmRamp/MigRamp
     #
     # Gabriel from ELP proposed the idea of a privilegded slave that
@@ -130,6 +129,30 @@ class BBBController:
     # thus providing higher refresh rates.
 
     # TODO: check if these measured times are not artifact of python!
+
+    # frequency constants
+    # _FREQ_RAMP = 2.0  # [Hz]
+    # _FREQ_SCAN = 10.0  # [Hz]
+    FREQ = _namedtuple('FREQ', '')
+    FREQ.RAMP = 2.0  # [Hz]
+    FREQ.SCAN = 10.0  # [Hz]
+
+    # define PRU constants
+    # SYNC_OFF = _PRUInterface._SYNC_OFF
+    # SYNC_ON = _PRUInterface._SYNC_ON
+    # SYNC_MIGINT = _PRUInterface.SYNC_MIGINT
+    # SYNC_MIGEND = _PRUInterface.SYNC_MIGEND
+    # SYNC_RMPINT = _PRUInterface.SYNC_RMPINT
+    # SYNC_RMPEND = _PRUInterface.SYNC_RMPEND
+    # SYNC_CYCLE = _PRUInterface.SYNC_CYCLE
+    SYNC = _namedtuple('SYNC', '')
+    SYNC.OFF = _PRUInterface._SYNC_OFF
+    SYNC.ON = _PRUInterface._SYNC_ON
+    SYNC.MIGINT = _PRUInterface.SYNC_MIGINT
+    SYNC.MIGEND = _PRUInterface.SYNC_MIGEND
+    SYNC.RMPINT = _PRUInterface.SYNC_RMPINT
+    SYNC.RMPEND = _PRUInterface.SYNC_RMPEND
+    SYNC.CYCLE = _PRUInterface.SYNC_CYCLE
 
     _groups = dict()
 
@@ -275,6 +298,13 @@ class BBBController:
         """Set scan state."""
         self._processing = value
 
+    @property
+    def queue_length(self):
+        """Number of operations currently in the queue."""
+        return len(self._queue)
+
+    # ---- main methods ----
+
     def read_variable(self, device_id, variable_id=None):
         """Return current mirror of variable values of the BSMP device."""
         dev_values = self._variables_values[device_id]
@@ -286,7 +316,7 @@ class BBBController:
 
     def exec_function(self, device_id, function_id, args):
         """Append a BSMP function execution to operations queue."""
-        if self._pru.sync_status == self._pru._SYNC_OFF:
+        if self._pru.sync_status == self.SYNC.OFF:
             # in PRU sync off mode, append BSM function exec operation to queue
             args = (device_id, function_id) + (args)
             operation = (self._bsmp_exec_function, args)
@@ -294,6 +324,8 @@ class BBBController:
         else:
             # does nothing if PRU sync is on, regardless of sync mode.
             return False
+
+    # ---- PRU and BSMP methods ----
 
     def pru_get_sync_status(self):
         """Return PRU sync status."""
@@ -308,7 +340,7 @@ class BBBController:
     def pru_sync_start(self, sync_mode):
         """Start PRU sync mode."""
         # try to abandon previous sync mode gracefully
-        if self._pru.sync_status != self._pru._SYNC_OFF:
+        if self._pru.sync_status != self.SYNC.OFF:
             # --- already with sync mode on.
             if sync_mode != self._pru.sync_mode:
                 # --- different sync mode
@@ -339,9 +371,39 @@ class BBBController:
         # accept back new operation requests
         self._queue.ignore_clear()
 
-    def get_queue_len(self):
-        """Return current length of queue."""
-        return len(self._queue)
+    def bsmp_scan(self):
+        """Run scan one."""
+        # select devices and variable group, defining the read group
+        # opertation to be performed
+        device_ids, group_id = self._select_device_group_ids()
+        operation = (self._bsmp_update_variables,
+                     (device_ids, group_id, ))
+        if len(self._queue) == 0 or \
+           operation != self._queue.last_operation:
+            if self._pru.sync_status == self.SYNC.OFF:
+                # with sync off, function executions are allowed and
+                # therefore operations must be queued in order
+                self._queue.append(operation)
+            else:
+                # for sync on, no function execution is accepted and
+                # we can therefore append only unique operations since
+                # processing order is not relevant.
+                self._queue.append(operation, unique=True)
+        else:
+            # does not append if last operation is the same as last one
+            # operation appended to queue
+            pass
+
+    def bsmp_process(self):
+        """Run process once."""
+        # process first operation in queue, if any
+        self._queue.process()
+        # print info
+        n = len(self._queue)
+        if n > 50:
+            print('BBB queue size: {} !!!'.format(len(self._queue)))
+
+    # ---- methods to access and measure communication times ----
 
     def meas_exec_time(self):
         """Return last update execution time [s]."""
@@ -436,55 +498,23 @@ class BBBController:
     def _loop_scan(self):
         while True:
             if self._scanning:
-                self.once_scan()
+                self.bsmp_scan()
             # wait for time_interval
             _time.sleep(self._time_interval)
 
     def _loop_process(self):
         while True:
             if self._processing:
-                self.once_process()
+                self.bsmp_process()
             # sleep a little
             _time.sleep(self._sleep_delay)
 
-    def once_scan(self):
-        """Run scan one."""
-        # select devices and variable group, defining the read group
-        # opertation to be performed
-        device_ids, group_id = self._select_device_group_ids()
-        operation = (self._bsmp_update_variables,
-                     (device_ids, group_id, ))
-        if len(self._queue) == 0 or \
-           operation != self._queue.last_operation:
-            if self._pru.sync_status == self._pru._SYNC_OFF:
-                # with sync off, function executions are allowed and
-                # therefore operations must be queued in order
-                self._queue.append(operation)
-            else:
-                # for sync on, no function execution is accepted and
-                # we can therefore append only unique operations since
-                # processing order is not relevant.
-                self._queue.append(operation, unique=True)
-        else:
-            # does not append if last operation is the same as last one
-            # operation appended to queue
-            pass
-
-    def once_process(self):
-        """Run process once."""
-        # process first operation in queue, if any
-        self._queue.process()
-        # print info
-        n = len(self._queue)
-        if n > 50:
-            print('BBB queue size: {} !!!'.format(len(self._queue)))
-
     def _select_device_group_ids(self):
         """Return variable group id and device ids for the loop scan."""
-        if self._pru.sync_status == self._pru._SYNC_OFF:
+        if self._pru.sync_status == self.SYNC.OFF:
             return self._device_ids, 3
         else:
-            if self._pru.sync_mode == self._pru.SYNC_CYCLE:
+            if self._pru.sync_mode == self.SYNC.CYCLE:
                 # return all devices
                 return self._device_ids, 3
             else:
@@ -500,11 +530,11 @@ class BBBController:
         return dev_id
 
     def _get_time_interval(self):
-        if self._pru.sync_status == self._pru._SYNC_OFF or \
-           self._pru.sync_mode == self._pru.SYNC_CYCLE:
-            return 1.0/self._FREQ_SCAN  # [s]
+        if self._pru.sync_status == self.SYNC.OFF or \
+           self._pru.sync_mode == self.SYNC.CYCLE:
+            return 1.0/self.FREQ.SCAN  # [s]
         else:
-            return 1.0/self._FREQ_RAMP  # [s]
+            return 1.0/self.FREQ.RAMP  # [s]
 
     # --- methods that generate BSMP UART communications ---
 
