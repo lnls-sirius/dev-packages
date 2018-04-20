@@ -1,6 +1,7 @@
 """Beagle Bone implementation module."""
 from copy import deepcopy as _deepcopy
 import logging as _log
+import re as _re
 
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.csdevice.pwrsupply import Const as _cPS
@@ -75,6 +76,9 @@ class IOCDevice:
         'WfmData-SP': '_set_wfmdata_sp',
     }
 
+    _ct = _re.compile('^.*-Cte$')
+    _sp = _re.compile('^.*-(SP|Sel|Cmd)$')
+
     def __init__(self, bsmp_device, psname, database):
         """Init."""
         self._bsmp_device = bsmp_device
@@ -101,6 +105,10 @@ class IOCDevice:
     def database(self):
         """Device database."""
         return self._database
+
+    @property
+    def connected(self):
+        return self._bsmp_device.connected
 
     def read(self, field):
         """Read a field."""
@@ -330,6 +338,10 @@ class BeagleBone:
             self._set_opmode(value)
         else:
             self.power_supplies[device_name].write(field, value)
+
+    def is_connected(self, device_name):
+        """"Return connection status."""
+        return self.power_supplies[device_name].connected
 
     def __getitem__(self, index):
         """Return corresponding power supply object."""
