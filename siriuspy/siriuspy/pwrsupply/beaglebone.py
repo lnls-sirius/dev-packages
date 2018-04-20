@@ -11,7 +11,7 @@ from siriuspy.pwrsupply.pru import PRUSim as _PRUSim
 from siriuspy.pwrsupply.controller import IOController as _IOController
 from siriuspy.pwrsupply.controller import IOControllerSim as _IOControllerSim
 from siriuspy.pwrsupply.model import FBPPowerSupply as _FBPPowerSupply
-from siriuspy.pwrsupply.bbb import BBBController as _BBBController
+from siriuspy.pwrsupply.bbbcontroller import BBBController as _BBBController
 from siriuspy.pwrsupply.bsmp import FBPEntities as _FBPEntities
 from siriuspy.pwrsupply.bsmp import Const as _c
 from .status import PSCStatus as _PSCStatus
