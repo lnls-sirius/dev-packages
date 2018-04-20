@@ -5,10 +5,15 @@ import threading as _threading
 from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 
 # load PRUserial485 if available and checks version
-__version__ = '1.1.1'  # Version of the compatible PRUserial485 library
+
+# version of PRUserial485 library compatible with current implementation of
+# PRU classes.
+__version__ = '1.2.0'
+
 try:
     import PRUserial485 as _PRUserial485
-    if _PRUserial485.__version__ != __version__:
+    ver, *_ = _PRUserial485.__version__.split(':')
+    if ver != __version__:
         # loaded library has an incompatible version!
         err_msg = 'Invalid PRUserial485 library version! {} != {}'.format(
             _PRUserial485.__version__, __version__)
