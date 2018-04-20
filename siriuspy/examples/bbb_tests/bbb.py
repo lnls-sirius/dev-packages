@@ -25,7 +25,7 @@ from siriuspy.pwrsupply.bsmp import Const as _c
 
 
 BBB1_device_ids = (1, 2)
-BBB2_device_ids = (3, 4)
+BBB2_device_ids = (5, 6)
 
 
 class BSMPOpQueue(_deque):
@@ -314,11 +314,14 @@ class BBBController:
             values = dev_values[variable_id]
         return _dcopy(values)  # return a deep copy
 
-    def exec_function(self, device_id, function_id, args):
+    def exec_function(self, device_id, function_id, args=None):
         """Append a BSMP function execution to operations queue."""
         if self._pru.sync_status == self.SYNC.OFF:
             # in PRU sync off mode, append BSM function exec operation to queue
-            args = (device_id, function_id) + (args)
+            if not args:
+                args = (device_id, function_id)
+            else:
+                args = (device_id, function_id, args)
             operation = (self._bsmp_exec_function, args)
             self._queue.append(operation)
         else:
@@ -571,7 +574,7 @@ class BBBController:
                 # TODO: update 'connect' state for that device
                 pass
 
-    def _bsmp_exec_function(self, device_id, function_id, args):
+    def _bsmp_exec_function(self, device_id, function_id, args=None):
         ack, values = self._bsmp[device_id].execute_function(function_id, args)
         if ack == Response.ok:
             return values
@@ -585,6 +588,88 @@ def create_BBBController():
     bbb = BBBController(bsmp_entities=FBPEntities(),
                         device_ids=BBB1_device_ids)
     return bbb
+
+
+def init_bbb():
+
+    bbb = create_BBBController()
+
+    # turn power supply on
+    bbb.exec_function(1, 0, args=())
+    _time.sleep(0.3)
+    # print('turn on')
+
+    # close loop
+    bbb.exec_function(1, 3, args=())
+    _time.sleep(0.3)
+    # print('close loop')
+
+    # set slowref
+    bbb.exec_function(1, 4, args=(3,))
+
+    # setpoint
+    bbb.exec_function(1, 16, args=(2.5))
+    # print('setpoint')
+
+    return bbb
+
+
+def init_siggen(bbb):
+
+    # configure siggen
+    args = (
+        0,
+        10,
+        0.5,
+        2.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+    )
+    bbb.exec_function(1, 23, args)
+
+    # disable siggen
+    bbb.exec_function(1, 26)
+
+    # set ps to cycle mode
+    bbb.exec_function(1, 4, args=(5,))
+
+
+
+
+# def run_cycle(bbb, print_flag=True):
+#
+#     t = _Thread(target=_run_cycle, args=(bbb, print_flag))
+#     t.start()
+
+
+def run_cycle(bbb, print_flag=True):
+
+    # set sync on
+    bbb.pru_sync_start(0x5c)
+
+    if bbb.pru_get_sync_status() == 0:
+        print('problem!')
+        return
+
+    rcvd_trig = False
+    t0 = None
+    while True:
+        if bbb.pru_get_sync_status() == 0 and not rcvd_trig:
+            rcvd_trig = True
+            t0 = _time.time()
+            print('sync trigger!')
+            # bbb.exec_function(1, 25)
+
+        siggen_enable = bbb.read_variable(1, 6)
+        iLoad = bbb.read_variable(1, 27)
+        if print_flag:
+            print('enable: {}, iload: {:.4f}'.format(siggen_enable, iLoad))
+        _time.sleep(0.1)
+        if t0 and _time.time()-t0 > 22:
+            break
 
 
 def main():
