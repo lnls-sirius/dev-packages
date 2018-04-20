@@ -559,10 +559,10 @@ class BBBController:
             try:
                 ack[id], data[id] = \
                     self._bsmp[id].read_group_variables(group_id=group_id)
-                self._connections[id] = True
+                # self._connections[id] = True
             except _SerialError:
                 ack[id], data[id] = (None, None)
-                self._connections[id] = False
+                # self._connections[id] = False
         self._update_exec_time = _time.time() - t0
 
         # print('ack: ', ack)
@@ -588,6 +588,7 @@ class BBBController:
                 pass
 
     def _bsmp_exec_function(self, device_id, function_id, args=None):
+        print(function_id, args)
         ack, values = self._bsmp[device_id].execute_function(function_id, args)
         if ack == Response.ok:
             return values

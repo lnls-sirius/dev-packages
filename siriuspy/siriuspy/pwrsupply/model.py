@@ -61,9 +61,12 @@ class _Device:
         """Return wether device is connected."""
         return self.controller.connections[slave_id]
 
-    def _execute_function(self, function_id, value):
+    def _execute_function(self, function_id, value=None):
         """Execute function."""
-        self.controller.exec_function(self._slave_id, function_id, (value, ))
+        if value is None:
+            self.controller.exec_function(self._slave_id, function_id)
+        else:
+            self.controller.exec_function(self._slave_id, function_id, value)
 
 
     # @property

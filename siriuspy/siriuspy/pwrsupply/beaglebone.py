@@ -21,6 +21,10 @@ from siriuspy.csdevice.pwrsupply import Const as _devc
 class IOCDevice:
     """Setpoints and field translation."""
 
+    # Constants and Setpoint regexp patterns
+    _ct = _re.compile('^.*-Cte$')
+    _sp = _re.compile('^.*-(SP|Sel|Cmd)$')
+
     bsmp_2_epics = {
         _c.V_PS_STATUS: ('PwrState-Sts', 'OpMode-Sts', 'CtrlMode-Mon'),
         _c.V_PS_SETPOINT: 'Current-RB',
@@ -52,7 +56,7 @@ class IOCDevice:
         'CycleIndex-Mon': _c.V_SIGGEN_N,
         'CycleFreq-RB': _c.V_SIGGEN_FREQ,
         'CycleAmpl-RB': _c.V_SIGGEN_AMPLITUDE,
-        'CycleOffset': _c.V_SIGGEN_OFFSET,
+        'CycleOffset-SP': _c.V_SIGGEN_OFFSET,
         'CycleAuxParam-RB': _c.V_SIGGEN_AUX_PARAM,
         'IntlkSoft-Mon': _c.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon': _c.V_PS_HARD_INTERLOCKS,
@@ -92,8 +96,8 @@ class IOCDevice:
                 self._setpoints[field] = db
             elif self._ct.match(field):
                 self._constants[field] = db
-        self._initiated = False
-        self._init()
+        #self._initiated = False
+        #self._init()
 
     # API
     @property
@@ -110,10 +114,14 @@ class IOCDevice:
     def connected(self):
         return self._bsmp_device.connected
 
+    @property
+    def setpoints(self):
+        return self._setpoints
+
     def read(self, field):
         """Read a field."""
         variable_id = self.epics_2_bsmp[field]
-        value = self.bsmp_device.read(variable_id)
+        value = self._bsmp_device.read(variable_id)
 
         if value is None:
             return None
@@ -142,10 +150,10 @@ class IOCDevice:
         for field in self.epics_2_bsmp:
             key = self.psname + ':' + field
             values[key] = self.read(field)
-        for field, db in self._setpoints:
+        for field, db in self._setpoints.items():
             key = self.psname + ':' + field
             values[key] = db['value']
-        values[self.psname+':WfmData-RB'] = db['WfmData-Rb']['value']
+        values[self.psname+':WfmData-RB'] = self.database['WfmData-RB']['value']
 
         return values
 
@@ -158,27 +166,26 @@ class IOCDevice:
     def _set_pwrstate(self, setpoint):
         """Set PwrState setpoint."""
         if setpoint == 1:
-            ret = self.bsmp_device.turn_on()
+            self._bsmp_device.turn_on()
         elif setpoint == 0:
-            ret = self.bsmp_device.turn_off()
+            self._bsmp_device.turn_off()
         else:
             self.setpoints['PwrState-Sel']['value'] = setpoint
             return
 
-        if ret:
-            self.setpoints['Current-SP']['value'] = 0.0
-            self.setpoints['OpMode-Sel']['value'] = 0
-            self.setpoints['PwrState-Sel']['value'] = setpoint
+        self.setpoints['Current-SP']['value'] = 0.0
+        self.setpoints['OpMode-Sel']['value'] = 0
+        self.setpoints['PwrState-Sel']['value'] = setpoint
 
     def _set_opmode(self, setpoint):
         """Operation mode setter."""
         if setpoint >= 0 or \
                 setpoint <= len(self.setpoints['OpMode-Sel']['enums']):
-            self.bsmp_device.select_op_mode(setpoint)
+            self._bsmp_device.select_op_mode(setpoint)
             self.setpoints['OpMode-Sel']['value'] = setpoint
             if setpoint == _devc.OpMode.SlowRef:
                 # disable siggen
-                self.bsmp_device.disable_siggen()
+                self._bsmp_device.disable_siggen()
                 # turn PRU sync off - This is done in the BBB class
                 pass
             elif setpoint == _devc.OpMode.Cycle:
@@ -193,31 +200,31 @@ class IOCDevice:
         setpoint = max(self.setpoints['Current-SP']['lolo'], setpoint)
         setpoint = min(self.setpoints['Current-SP']['hihi'], setpoint)
 
-        self.bsmp_device.set_slowref(setpoint)
+        self._bsmp_device.set_slowref(setpoint)
         self.setpoints['Current-SP']['value'] = setpoint
 
     def _reset(self, setpoint):
         """Reset command."""
         if setpoint:
             self.setpoints['Reset-Cmd']['value'] += 1
-            self.bsmp_device.reset_interlocks()
+            self._bsmp_device.reset_interlocks()
 
     def _abort(self, setpoint):
         if setpoint:
             self.setpoints['Reset-Cmd']['value'] += 1
-            self.bsmp_device.set_opmode(_devc.OpMode.SlowRef)
+            self._bsmp_device.set_opmode(_devc.OpMode.SlowRef)
 
     def _enable_cycle(self, setpoint):
         """Enable cycle command."""
         if setpoint:
             self.setpoints['CycleEnbl-Cmd']['value'] += 1
-            self.bsmp_device.enable_siggen()
+            self._bsmp_device.enable_siggen()
 
     def _disable_cycle(self, setpoint):
         """Disable cycle command."""
         if setpoint:
             self.setpoints['CycleDsbl-Cmd']['value'] += 1
-            self.bsmp_device.disable_siggen()
+            self._bsmp_device.disable_siggen()
 
     def _set_cycle_type(self, setpoint):
         """Set cycle type."""
@@ -225,27 +232,27 @@ class IOCDevice:
         # if setpoint < 0 or \
         #         setpoint > len(self.setpoints['CycleType-Sel']['enums']):
         #     return
-        self.bsmp_device.cfg_siggen(*self._cfg_siggen_args())
+        self._bsmp_device.cfg_siggen(*self._cfg_siggen_args())
 
     def _set_cycle_nr_cycles(self, setpoint):
         """Set number of cycles."""
         self.setpoints['CycleNrCycles-SP']['value'] = setpoint
-        self.bsmp_device.cfg_siggen(*self._cfg_siggen_args())
+        self._bsmp_device.cfg_siggen(*self._cfg_siggen_args())
 
     def _set_cycle_frequency(self, setpoint):
         """Set cycle frequency."""
         self.setpoints['CycleFreq-SP']['value'] = setpoint
-        self.bsmp_device.cfg_siggen(*self._cfg_siggen_args())
+        self._bsmp_device.cfg_siggen(*self._cfg_siggen_args())
 
     def _set_cycle_amplitude(self, setpoint):
         """Set cycle amplitude."""
         self.setpoints['CycleAmpl-SP']['value'] = setpoint
-        self.bsmp_device.cfg_siggen(*self._cfg_siggen_args())
+        self._bsmp_device.cfg_siggen(*self._cfg_siggen_args())
 
     def _set_cycle_offset(self, setpoint):
         """Set cycle offset."""
         self.setpoints['CycleOffset-SP']['value'] = setpoint
-        return self.bsmp_device.cfg_siggen(*self._cfg_siggen_args())
+        return self._bsmp_device.cfg_siggen(*self._cfg_siggen_args())
 
     def _set_cycle_aux_params(self, setpoint):
         """Set cycle offset."""
@@ -255,7 +262,7 @@ class IOCDevice:
         setpoint += cur_sp[len(setpoint):]
         # update setpoint
         self.setpoints['CycleAuxParam-SP']['value'] = setpoint
-        return self.bsmp_device.cfg_siggen(*self._cfg_siggen_args())
+        return self._bsmp_device.cfg_siggen(*self._cfg_siggen_args())
 
     def _cfg_siggen_args(self):
         """Get cfg_siggen args and execute it."""
@@ -330,7 +337,7 @@ class BeagleBone:
 
     def read(self, device_name):
         """Read all device fields."""
-        self.power_supplies[device_name].read_all()
+        return self.power_supplies[device_name].read_all()
 
     def write(self, device_name, field, value):
         """BBB write."""
@@ -356,9 +363,9 @@ class BeagleBone:
 
     # --- private methods ---
 
-    def _set_op_mode(self, op_mode):
+    def _set_opmode(self, op_mode):
         self.controller.pru_sync_stop()
-        for ps in self.power_supplies:
+        for ps in self.power_supplies.values():
             ps.write('PwrState-Sel', op_mode)
         if op_mode == 2:
             sync_mode = self.controller.SYNC.CYCLE
