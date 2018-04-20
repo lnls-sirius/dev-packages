@@ -18,6 +18,7 @@ from copy import deepcopy as _dcopy
 
 from siriuspy.bsmp import BSMP
 from siriuspy.bsmp import Response
+from siriuspy.bsmp import SerialError as _SerialError
 from siriuspy.pwrsupply.bsmp import FBPEntities
 from siriuspy.pwrsupply.pru import PRUInterface as _PRUInterface
 from siriuspy.pwrsupply.pru import PRU
@@ -266,6 +267,10 @@ class BBBController:
         # operation queue
         self._queue = BSMPOpQueue()
 
+        self._connections = list()
+        for id in device_ids:
+            self._connections.append(False)
+
         # scan thread
         self._last_device_scanned = len(self._device_ids)  # next is the first
         self._update_exec_time = None  # registers last update exec time
@@ -303,6 +308,9 @@ class BBBController:
         """Number of operations currently in the queue."""
         return len(self._queue)
 
+    @property
+    def connections(self):
+        return self._connections
     # ---- main methods ----
 
     def read_variable(self, device_id, variable_id=None):
@@ -548,8 +556,13 @@ class BBBController:
         # --- send requests to serial line
         t0 = _time.time()
         for id in device_ids:
-            ack[id], data[id] = \
-                self._bsmp[id].read_group_variables(group_id=group_id)
+            try:
+                ack[id], data[id] = \
+                    self._bsmp[id].read_group_variables(group_id=group_id)
+                self._connections[id] = True
+            except _SerialError:
+                ack[id], data[id] = (None, None)
+                self._connections[id] = False
         self._update_exec_time = _time.time() - t0
 
         # print('ack: ', ack)
