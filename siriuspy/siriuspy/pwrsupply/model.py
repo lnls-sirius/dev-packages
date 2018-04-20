@@ -57,6 +57,10 @@ class _Device:
         """Not used."""
         pass
 
+    def connected(self):
+        """Return wether device is connected."""
+        return self.controller.connections[slave_id]
+
     def _execute_function(self, function_id, value):
         """Execute function."""
         self.controller.exec_function(self._slave_id, function_id, (value, ))
