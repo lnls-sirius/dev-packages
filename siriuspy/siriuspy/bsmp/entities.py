@@ -57,7 +57,10 @@ class Variable(_Entity):
     def __init__(self, eid, waccess, var_type, count=1):
         """Set variable properties."""
         if (var_type.size * count) > 128 or (var_type.size * count) < 1:
-            raise ValueError("Variable size incorrect.")
+            errstr = ('Variable size incorrect: eid:{}, '
+                      'vtype_size:{}, count:{}').format(eid, var_type.size,
+                                                        count)
+            raise ValueError(errstr)
         super().__init__()  # TODO: is it necessary?
         self.eid = eid
         self.waccess = waccess
