@@ -588,6 +588,9 @@ class BBBController:
         # initialize variables_values, a mirror state of BSMP devices
         self._initialize_variable_values(bsmp_entities)
 
+        # TODO: get V_FIRMWARE_VERSION from devices and compare it with
+        # pwrsupply.bsmp.__version__
+
     def _initialize_devices(self):
 
         # TODO: should something be done here?

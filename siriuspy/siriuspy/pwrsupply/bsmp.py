@@ -12,7 +12,9 @@ from siriuspy.bsmp import Entities as _Entities
 from siriuspy.bsmp import Types as _Types
 
 
-__version__ = ''
+# version of the BSMP implementation of power supplies that is compatible
+# with the current implemenation of this module.
+__version__ = 'V0.10 2018-04-20V0.10 2018-04-20'
 
 
 # Mirror power supply variables
