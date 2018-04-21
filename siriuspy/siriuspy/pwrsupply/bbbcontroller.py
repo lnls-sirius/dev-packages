@@ -6,7 +6,6 @@ at the other end of the serial line.
 """
 
 import time as _time
-import math as _math
 from collections import deque as _deque
 from collections import namedtuple as _namedtuple
 from threading import Thread as _Thread
@@ -22,14 +21,49 @@ from siriuspy.pwrsupply.bsmp import Const as _c
 from siriuspy.pwrsupply.bsmp import MAP_MIRROR_2_ORIG as _mirror_map
 
 
+# TODO: Notes on current behaviour of PRU and Power Supplies:
+#
+# 01. Currently curve block changes are implemented upon the arrival of the
+#     timing trigger that corresponds to the last waveform point.
+#     This better preserves magnetic history of the magnet while being
+#     able to change the waveform on the fly.
+#
+# 02. PRU 'sync_stop' aborts the sync mode right away. Maybe it should be
+#     renamed to 'sync_abort' and a new command named 'sync_stop' should be
+#     provided that implements abort only at the end of the ramp, thus
+#     preserving the magnetic history of the magnets sourced my the power
+#     supplies. Without this abort at the end of the ramp, the high level
+#     has to be responsible for first turning the 2Hz timing trigger off
+#     before switching the power supply off the ramp mode.
+#     This is prone to operation errors!
+#
+# 03. The time taken by the BSMP command 0x12 (read group of variables) with
+#     group_id used during RmpWfm mode needs to be measured and 'sync_start'
+#     delay chosen appropriatelly.
+#
+# 04. In order to avoid having many concurrent processes|threads accessing
+#     the UART through the PRU library by mistake it is desirable to have a
+#     semaphore the PRU memory to guarantee that only one process access it.
+#     Think about how this could be implemented in a safe but simple way...
+
+# TODO: discuss with patricia:
+#
+# 01. What does the 'delay' param in 'PRUserial485.UART_write' mean exactly?
+# 02. Request a 'sync_abort' function in the PRUserial485 library.
+# 03. Request a semaphore for using the PRU library.
+
+
 class BSMPOpQueue(_deque):
     """BSMPOpQueue.
 
-    This class takes manages operations which invoque BSMP communications using
+    This class manages operations which invoque BSMP communications using
     an append-right, pop-left queue. It also processes the next operation in a
     way as to circumvent the blocking character of UART writes when PRU sync
     mode is on.
     """
+
+    # TODO: maybe methods 'ignore_set' and 'ignore_clear' are not needed!
+    # BBBController's scan setter could be set to False instead.
 
     _lock = _Lock()
 
@@ -102,49 +136,29 @@ class BSMPOpQueue(_deque):
             return False
 
 
-class BBBController:
-    """BeagleBone controller.
+class BSMPVarGroups:
+    """Beaglebone Variagle groups.
 
-    This class implements all basic PRU configuration and BSMP communications
-    of the BeagleBone computer connected through a serial line to power supply
-    controllers.
+    Namespace to group usefull BSMP variable groups used by BBBController.
     """
 
-    # TODO: make class robust to BSMP errors!!!
-    # TODO: test class in sync on mode and trigger from timing
-    # TODO: implement BSMP function executions
+    # group ids
+    ALL = 0
+    READONLY = 1
+    WRITEABLE = 2
+    ALLRELEVANT = 3
+    SYNCOFF = 4
+    MIRROR = 5
 
-    # TODO: Improve update frequency in WfmRamp/MigRamp
-    #
-    # Gabriel from ELP proposed the idea of a privilegded slave that
-    # could define BSMP variables that corresponded to other slaves variables
-    # By defining a BSMP variable group with selected variables from all
-    # devices we could update all device states with a single BSMP request
-    # thus providing higher refresh rates.
+    SLOWREF = SYNCOFF
+    MIGWFM = SYNCOFF
+    CYCLE = SYNCOFF
+    RMPWFM = MIRROR
 
-    # TODO: check if these measured times are not artifact of python!
+    groups = dict()
 
-    # frequency constants
-    FREQ = _namedtuple('FREQ', '')
-    FREQ.RAMP = 2.0  # [Hz]
-    FREQ.SCAN = 10.0  # [Hz]
-
-    # PRU constants
-    SYNC = _namedtuple('SYNC', '')
-    SYNC.OFF = _PRUInterface._SYNC_OFF
-    SYNC.ON = _PRUInterface._SYNC_ON
-    SYNC.MIGINT = _PRUInterface.SYNC_MIGINT
-    SYNC.MIGEND = _PRUInterface.SYNC_MIGEND
-    SYNC.RMPINT = _PRUInterface.SYNC_RMPINT
-    SYNC.RMPEND = _PRUInterface.SYNC_RMPEND
-    SYNC.CYCLE = _PRUInterface.SYNC_CYCLE
-
-    _groups = dict()
-
-    # predefined variable groups
-
-    # reserved group with ids of all device variable
-    _groups[0] = (
+    # reserved variable groups (not to be used)
+    groups[ALL] = (
         # --- common variables
         _c.V_PS_STATUS,
         _c.V_PS_SETPOINT,
@@ -214,12 +228,11 @@ class BBBController:
         _c.V_I_LOAD_2,
         _c.V_I_LOAD_3,
         _c.V_I_LOAD_4,)
-    # reserved group with ids of all read-only device variables
-    _groups[1] = _groups[0]
-    # reserved group with ids of all writebale device variables
-    _groups[2] = tuple()
-    # new group with all relevante device variables
-    _groups[3] = (
+    groups[READONLY] = groups[ALL]
+    groups[WRITEABLE] = tuple()
+
+    # new variable groups usefull for BBBController.
+    groups[ALLRELEVANT] = (
         # --- common variables
         _c.V_PS_STATUS,
         _c.V_PS_SETPOINT,
@@ -243,7 +256,7 @@ class BBBController:
         _c.V_V_DCLINK,
         _c.V_TEMP_SWITCHES,
         _c.V_DUTY_CYCLE,)
-    _groups[4] = (
+    groups[SYNCOFF] = (
         # =======================================================
         # cmd exec_funcion read_group:
         #   17.2 ± 0.3 ms @ BBB1, 4 ps as measured from Python
@@ -270,7 +283,7 @@ class BBBController:
         _c.V_V_LOAD,
         _c.V_V_DCLINK,
         _c.V_TEMP_SWITCHES,)
-    _groups[5] = (
+    groups[MIRROR] = (
         # --- mirror variables ---
         _c.V_PS_STATUS_1,
         _c.V_PS_STATUS_2,
@@ -297,21 +310,92 @@ class BBBController:
         _c.V_I_LOAD_3,
         _c.V_I_LOAD_4,)
 
-    _group_allrelevant = 3
-    _group_mirror = 5
-    _group_slowref = 4
-    _group_cycle = 4
-    _group_rmpwfm = 5
-    _group_migwfm = 4
 
-    _sleep_delay = 0.010  # [s]
+class BBBController:
+    """BeagleBone controller.
+
+    This class implements all basic PRU configuration and BSMP communications
+    of the BeagleBone computer connected through a serial line to power supply
+    controllers.
+    """
+
+    # TODO: make class robust to BSMP errors!!!
+    # TODO: test class in sync on mode and trigger from timing
+    # TODO: implement BSMP function executions
+
+    # TODO: Improve update frequency in WfmRamp/MigRamp (done - testing)
+    #
+    # Gabriel from ELP proposed the idea of a privilegded slave that
+    # could define BSMP variables that corresponded to other slaves variables
+    # By defining a BSMP variable group with selected variables from all
+    # devices we could update all device states with a single BSMP request
+    # thus providing higher refresh rates.
+
+    # frequency constants
+    FREQ = _namedtuple('FREQ', '')
+    FREQ.RAMP = 2.0  # [Hz]
+    FREQ.SCAN = 10.0  # [Hz]
+
+    # PRU constants
+    SYNC = _namedtuple('SYNC', '')
+    SYNC.OFF = _PRUInterface._SYNC_OFF
+    SYNC.ON = _PRUInterface._SYNC_ON
+    SYNC.MIGINT = _PRUInterface.SYNC_MIGINT
+    SYNC.MIGEND = _PRUInterface.SYNC_MIGEND
+    SYNC.RMPINT = _PRUInterface.SYNC_RMPINT
+    SYNC.RMPEND = _PRUInterface.SYNC_RMPEND
+    SYNC.CYCLE = _PRUInterface.SYNC_CYCLE
+
+    # tuple with implemented modes
+    SYNC.MODES = (SYNC.OFF, SYNC.MIGEND, SYNC.RMPEND, SYNC.CYCLE)
+
+    # BSMP variable constants
+    BSMP = _c
+
+    # BSMP variable group constants
+    VGROUPS = BSMPVarGroups
+
+    # shortcuts, local variables and constants
+
+    # TODO: check with ELP group how short these delays can be
+    _delay_turn_on_off = 0.3  # [s]
+    _delay_loop_open_close = 0.3  # [s]
+
+    _delay_sleep = 0.010  # [s]
+    _groups = BSMPVarGroups.groups
+
+    # TODO: solution works only within the name process space
+    _instance_running = False  # to check if another instance exists
+
+    # default delays for sync modes
+
+    # This this is delay PRU observes right after finishing writting to UART
+    # the BSMP broadcast command 0x0F 'sync_pulse' before processing the UART
+    # buffer again. This delay has to be longer than the duration of the
+    # controller's response to 'sync_pulse'.
+    _delay_func_sync_pulse = 100  # [us]
+    _pru_delays = dict()
+    _pru_delays[SYNC.MIGINT] = None  # This mode is not implemented
+    _pru_delays[SYNC.MIGEND] = _delay_func_sync_pulse
+    _pru_delays[SYNC.RMPINT] = None  # This mode is not implemented
+    _pru_delays[SYNC.RMPEND] = _delay_func_sync_pulse
+    _pru_delays[SYNC.CYCLE] = _delay_func_sync_pulse
 
     # --- public interface ---
 
-    def __init__(self, bsmp_entities, device_ids):
+    def __init__(self, bsmp_entities, device_ids,
+                 processing=True, scanning=True):
         """Init."""
+        # check if another instance exists
+        if BBBController._instance_running is True:
+            errmsg = ('Another instance of BBBController is already in same'
+                      ' process space.')
+            raise ValueError(errmsg)
+        else:
+            BBBController._instance_running = True
+
+        # sort list of device ids
         self._device_ids = sorted(device_ids)
-        # self._device_ids = sorted(device_ids + device_ids)  # test with 4 PS
 
         # create PRU with sync mode off.
         self._pru = _PRU()
@@ -320,19 +404,22 @@ class BBBController:
         # initialize BSMP
         self._initialize_bsmp(bsmp_entities)
 
+        # initialize BSMP devices
+        self._initialize_devices()
+
         # operation queue
         self._queue = BSMPOpQueue()
 
         # scan thread
         self._last_device_scanned = len(self._device_ids)  # next is the first
-        self._update_exec_time = None  # registers last update exec time
+        self._last_operation = None  # registers last operation
         self._thread_scan = _Thread(target=self._loop_scan, daemon=True)
-        self._scanning = True
+        self._scanning = scanning
         self._thread_scan.start()
 
         # process thread
         self._thread_process = _Thread(target=self._loop_process, daemon=True)
-        self._processing = True
+        self._processing = processing
         self._thread_process.start()
 
     @property
@@ -365,6 +452,11 @@ class BBBController:
         """Number of operations currently in the queue."""
         return len(self._queue)
 
+    @property
+    def last_operation(self):
+        """Return last operation information."""
+        return self._last_operation
+
     # ---- main methods ----
 
     def read_variable(self, device_id, variable_id=None):
@@ -390,7 +482,9 @@ class BBBController:
             # does nothing if PRU sync is on, regardless of sync mode.
             return False
 
-    # ---- PRU and BSMP methods ----
+    # ---- PRU and BSMP properties, setters and methods ----
+
+    # TODO: improve name of PRU methods and implement additional ones
 
     def pru_get_sync_status(self):
         """Return PRU sync status."""
@@ -404,6 +498,11 @@ class BBBController:
 
     def pru_sync_start(self, sync_mode):
         """Start PRU sync mode."""
+        # test if sync_mode is valid
+        if sync_mode not in BBBController.SYNC.MODES:
+            raise NotImplementedError('Invalid sync mode {}'.format(
+                hex(sync_mode)))
+
         # try to abandon previous sync mode gracefully
         if self._pru.sync_status != self.SYNC.OFF:
             # --- already with sync mode on.
@@ -422,8 +521,10 @@ class BBBController:
 
         # wait for all queued operations to be processed
         self._queue.ignore_set()  # ignore eventual new operation requests
+        self.scan = False
+
         while len(self._queue) > 0:
-            _time.sleep(5*self._sleep_delay)  # sleep a little
+            _time.sleep(5*self._delay_sleep)  # sleep a little
 
         # update time interval according to new sync mode selected
         self._time_interval = self._get_time_interval()
@@ -431,9 +532,11 @@ class BBBController:
         # set selected sync mode
         self._pru.sync_start(
             sync_mode=sync_mode,
-            sync_address=self._device_ids[0], delay=100)
+            sync_address=self._device_ids[0],
+            delay=BBBController._pru_delays[sync_mode])
 
         # accept back new operation requests
+        self.scan = True
         self._queue.ignore_clear()
 
     def bsmp_scan(self):
@@ -463,46 +566,12 @@ class BBBController:
         """Run process once."""
         # process first operation in queue, if any
         self._queue.process()
+
         # print info
+        # TODO: clean this temporary printout.
         n = len(self._queue)
         if n > 50:
             print('BBB queue size: {} !!!'.format(len(self._queue)))
-
-    # ---- methods to access and measure communication times ----
-
-    def meas_exec_time(self):
-        """Return last update execution time [s]."""
-        return self._update_exec_time
-
-    def meas_sample_exec_time(self, device_ids, group_id, nrpoints=20):
-        """Measure execution times and return stats and sample."""
-        sample = []
-        self.pru_sync_stop()
-
-        # turn scanning off
-        self._scanning = False
-
-        # wait until queue empties
-        while len(self._queue) > 0:
-            _time.sleep(5*self._sleep_delay)  # sleep a little
-        _time.sleep(self._time_interval)
-
-        # loop and collect sample
-        while len(sample) < nrpoints:
-            self._bsmp_update_variables(device_ids, group_id)
-            value = self.meas_exec_time()
-            sample.append(value)
-            print('{:03d}: {:.4f} ms'.format(len(sample), 1000*value))
-            _time.sleep(self._time_interval)
-
-        # turn scanning back on
-        self._scanning = True
-
-        # calc stats and return
-        n = len(sample)
-        avg = sum(sample)/n
-        dev = _math.sqrt(sum([(v - avg)**2 for v in sample])/(n-1.0))
-        return avg, dev, sample
 
     # --- private methods ---
 
@@ -519,6 +588,12 @@ class BBBController:
         # initialize variables_values, a mirror state of BSMP devices
         self._initialize_variable_values(bsmp_entities)
 
+    def _initialize_devices(self):
+
+        # TODO: should something be done here?
+        for id in self.device_ids:
+            pass
+
     def _create_bsmp(self, bsmp_entities):
         bsmp = dict()
         for id in self._device_ids:
@@ -529,7 +604,8 @@ class BBBController:
     def _initialize_variable_values(self, bsmp_entities):
 
         # create _variables_values
-        max_id = max([max(ids) for ids in BBBController._groups[3:]])
+        gids = sorted(self._groups.keys())
+        max_id = max([max(self._groups[gid]) for gid in gids[3:]])
         dev_variables = [None, ] * (1 + max_id)
         self._variables_values = \
             {id: dev_variables[:] for id in self._device_ids}
@@ -537,7 +613,7 @@ class BBBController:
 
         # read all variable from BSMP devices
         self._bsmp_update_variables(device_ids=self._device_ids,
-                                    group_id=BBBController._group_allrelevant)
+                                    group_id=self.VGROUPS.ALLRELEVANT)
 
     def _initialize_groups(self):
 
@@ -570,20 +646,21 @@ class BBBController:
         while True:
             if self._processing:
                 self.bsmp_process()
+
             # sleep a little
-            _time.sleep(self._sleep_delay)
+            _time.sleep(self._delay_sleep)
 
     def _select_device_group_ids(self):
         """Return variable group id and device ids for the loop scan."""
         if self._pru.sync_status == self.SYNC.OFF:
-            return self._device_ids, BBBController._group_slowref
+            return self._device_ids, self.VGROUPS.SLOWREF
         elif self._pru.sync_mode == self.SYNC.MIGEND:
-            return self._device_ids, BBBController._group_migwfm
+            return self._device_ids, self.VGROUPS.MIGWFM
         elif self._pru.sync_mode == self.SYNC.RMPEND:
             dev_ids = self._select_next_device_id()
-            return dev_ids, BBBController._group_rmpwfm
+            return dev_ids, self.VGROUPS.RMPWFM
         elif self._pru.sync_mode == self.SYNC.CYCLE:
-            return self._device_ids, BBBController._group_cycle
+            return self._device_ids, self.VGROUPS.CYCLE
         else:
             raise NotImplementedError('Sync mode not implemented!')
 
@@ -619,7 +696,9 @@ class BBBController:
         for id in device_ids:
             ack[id], data[id] = \
                 self._bsmp[id].read_group_variables(group_id=group_id)
-        self._update_exec_time = _time.time() - t0
+        dtime = _time.time() - t0
+        self._last_operation = ('V', dtime,
+                                device_ids, group_id)
 
         # --- update variables, if ack is ok
         var_ids = self._groups[group_id]
@@ -630,7 +709,7 @@ class BBBController:
                 for i in range(len(values)):
                     var_id = var_ids[i]
                     # process mirror variables, if the case
-                    if group_id == BBBController._group_mirror:
+                    if group_id == self.VGROUPS.MIRROR:
                         mir_dev_id, mir_var_id = _mirror_map[var_id]
                         self._variables_values[mir_dev_id][mir_var_id] = \
                             values[i]
@@ -641,8 +720,31 @@ class BBBController:
                 pass
 
     def _bsmp_exec_function(self, device_id, function_id, args=None):
+        # --- send func exec request to serial line
+        t0 = _time.time()
+        # BSMP device's 'execute_function' needs to lock code execution
+        # so as to avoid more than one thread reading each other's responses.
+        # class BSMP method 'request' should always do that
         ack, values = self._bsmp[device_id].execute_function(function_id, args)
+        dtime = _time.time() - t0
+        self._last_operation = ('F', dtime,
+                                device_id, function_id)
+
         if ack == _Response.ok:
+            #
+            # power supplies need time after specific commands before it is
+            # able to receive any other command from master.
+            #
+            # this is the place to give it since if other BSMP messages are
+            # sent to the power supply in the meantime it will put the
+            # ps controller in a wrong state.
+            #
+            if function_id in (self.BSMP.F_TURN_ON, self.BSMP.F_TURN_OFF):
+                _time.sleep(self._delay_turn_on_off)
+            elif function_id in (self.BSMP.F_OPEN_LOOP,
+                                 self.BSMP.F_CLOSE_LOOP):
+                _time.sleep(self._delay_loop_open_close)
+
             return values
         else:
             # TODO: update 'connect' state for that device

@@ -185,7 +185,7 @@ class Const:
 
 
 class FBPEntities(_Entities):
-    """PS FBP Entities."""
+    """FBP-type power supply entities."""
 
     Variables = (
         # --- common variables
@@ -234,10 +234,10 @@ class FBPEntities(_Entities):
         {'eid': 39, 'waccess': False, 'count': 1, 'var_type': _Types.T_NONE},
         # --- mirror variables
         # ------ PS_STATUS
-        {'eid': 40, 'waccess': False, 'count': 1, 'var_type': _Types.T_UNIT16},
-        {'eid': 41, 'waccess': False, 'count': 1, 'var_type': _Types.T_UNIT16},
-        {'eid': 42, 'waccess': False, 'count': 1, 'var_type': _Types.T_UNIT16},
-        {'eid': 43, 'waccess': False, 'count': 1, 'var_type': _Types.T_UNIT16},
+        {'eid': 40, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
+        {'eid': 41, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
+        {'eid': 42, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
+        {'eid': 43, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
         # ------ PS_SETPOINT
         {'eid': 44, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 45, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},

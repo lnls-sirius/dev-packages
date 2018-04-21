@@ -30,6 +30,8 @@ except ImportError:
 class PRUInterface:
     """Interface class for programmable real-time units."""
 
+    # TODO: replace 'write' and 'read' methods by 'request' and 'read' methods
+
     _SYNC_OFF = 0
     _SYNC_ON = 1
     _SYNC_DELAY = 20  # [us] TODO: better understand this parameter!
@@ -63,7 +65,7 @@ class PRUInterface:
         """Return sync status."""
         return self._get_sync_status()
 
-    def sync_start(self, sync_mode, sync_address, delay=_SYNC_DELAY):
+    def sync_start(self, sync_mode, sync_address, delay):
         """Start sync mode in PRU."""
         if sync_mode in PRUInterface.SYNC_MODES:
             self._sync_mode = sync_mode

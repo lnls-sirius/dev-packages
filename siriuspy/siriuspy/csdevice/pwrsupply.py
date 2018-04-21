@@ -23,6 +23,11 @@ _default_pu_current_unit = None
 #                      'Waveform4', 'Waveform5', 'Waveform6')
 
 
+# TODO: Add properties to power EPICS supply devices:
+#
+# SyncMode-Mon: 'Off', 'Cycle', 'RmpWfm', 'MigWfm'
+# DSPLoop-Mon: 'Off', 'On'
+
 # --- power supply enums ---
 
 ps_models = ('Empty', 'FBP', 'FBP_DCLink', 'FAC_ACDC', 'FAC_DCDC',

@@ -162,6 +162,8 @@ class Channel:
     address.
     """
 
+    # TODO: should we remove use of default timeout values. It is dangerous!
+
     _lock = _Lock()
 
     def __init__(self, serial, address):
@@ -179,13 +181,17 @@ class Channel:
 
     def write(self, message, timeout=100):
         """Write to serial."""
-        # TODO: should we use a default timeout?
         stream = Package.package(self.address, message).stream
         return self.serial.UART_write(stream, timeout=timeout)
 
     def request(self, message, timeout=100):
         """Write and wait for response."""
-        # TODO: should we use a default timeout?
+        # This lock is important in order to avoid threads in the same process
+        # space to read each other's responses. Still it does not prevent
+        # different instances of channel objects running in separate processes
+        # to read ech other's responses. For the BBBController case, for
+        # example, a global lock should be implemented as to allow only one
+        # instance of the class object to exist.
         Channel._lock.acquire(blocking=True)
         self.write(message, timeout)
         ret = self.read()

@@ -32,24 +32,34 @@ siggen_config = (
 )
 
 
-def create_bbb_controller(device_ids=BBB1_device_ids):
+def create_bbb_controller(running=True, device_ids=BBB1_device_ids):
     """Return a BBB controller."""
     bbbc = BBBController(bsmp_entities=FBPEntities(),
-                         device_ids=BBB1_device_ids)
+                         device_ids=BBB1_device_ids,
+                         processing=running,
+                         scanning=running)
     return bbbc
 
 
 def init_power_supplies(bbbc, current_sp=2.5):
     """Init power supplies linked to the bbb controller."""
-    for id in bbbc.device_ids:
+    # set bbb to sync off
+    bbbc.pru_sync_stop()
 
+    # turn power supplies on
+    for id in bbbc.device_ids:
         # turn power supply on
         bbbc.exec_function(id, Const.F_TURN_ON)
-        time.sleep(0.3)
+    time.sleep(0.3)
 
-        # close loop
+    # close loop
+    for id in bbbc.device_ids:
+        # turn power supply on
         bbbc.exec_function(id, Const.F_CLOSE_LOOP)
-        time.sleep(0.3)
+    time.sleep(0.3)
+
+    # other initializations
+    for id in bbbc.device_ids:
 
         # disable siggen
         bbbc.exec_function(id, Const.F_DISABLE_SIGGEN)
@@ -83,17 +93,17 @@ def calc_siggen_duration():
 
 def run_cycle(bbbc):
     """Set cycle_mode in bbb controller."""
-    # set sync on in cycle mode
-    bbbc.pru_sync_start(0x5c)
-
-    # check if PRU went into cycle mode.
-    time.sleep(0.2)
-    if bbbc.pru_get_sync_status() == 0:
-        print('PRU is not in sync mode!')
-        return
-
     # get signal duration
     duration = calc_siggen_duration()
+
+    # set sync on in cycle mode
+    bbbc.pru_sync_start(bbbc.SYNC.CYCLE)
+    print('waiting to enter cycle mode...')
+    while bbbc.pru_get_sync_status() != bbbc.SYNC.ON:
+        pass
+
+    # print message
+    print('wainting for timing trigger...')
 
     # loop until siggen is active
     not_finished, trigg_not_rcvd = [bbbc.pru_get_sync_status()] * 2
@@ -104,10 +114,10 @@ def run_cycle(bbbc):
             print('timing signal arrived!')
 
         # read iload and siggen
-        iload, siggen_enable = [], []
+        iload, siggen_enable = {}, {}
         for id in bbbc.device_ids:
-            siggen_enable.append(bbbc.read_variable(id, Const.V_SIGGEN_ENABLE))
-            iload.append(bbbc.read_variable(id, Const.V_I_LOAD))
+            siggen_enable[id] = bbbc.read_variable(id, Const.V_SIGGEN_ENABLE)
+            iload[id] = bbbc.read_variable(id, Const.V_I_LOAD)
 
         # print info
         if not trigg_not_rcvd:
@@ -124,8 +134,11 @@ def run_cycle(bbbc):
             print()
 
         # test if finished
-        if time.time() - t0 > duration:
+        if not trigg_not_rcvd and time.time() - t0 > duration + 2:
             not_finished = 0
+
+        # sleep a little
+        time.sleep(0.1)
 
 
 def test_cycle():
