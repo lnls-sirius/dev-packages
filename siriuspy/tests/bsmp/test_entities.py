@@ -54,7 +54,7 @@ class TestBSMPVariable(unittest.TestCase):
                          '\x00', '\x00', '\x00', '\x00', '\x00', '\x00',
                          '\x00', '\x00', '\x00', '\x00', '\x00', '\x00']
 
-        var = Variable(1, False, Types.t_char, 128)
+        var = Variable(1, False, Types.T_CHAR, 128)
         self.assertEqual(var.value_to_load(value), expected_load)
 
     def test_arr_float_value_to_load(self):
@@ -99,7 +99,7 @@ class TestBSMPVariable(unittest.TestCase):
                 '\x00', '\x00', '\x00', '\x00', '\x00']
         expected_value = [v.encode() for v in load]
 
-        var = Variable(1, False, Types.t_char, 128)
+        var = Variable(1, False, Types.T_CHAR, 128)
         self.assertEqual(var.load_to_value(load), expected_value)
 
     def test_arr_float_load_to_value(self):
@@ -131,7 +131,7 @@ class TestBSMPVariablesGroup(unittest.TestCase):
             Variable(2, False, Types.T_UINT32, 1),
             Variable(3, False, Types.T_FLOAT, 1),
             Variable(4, False, Types.T_FLOAT, 4),
-            Variable(5, False, Types.t_char, 8),
+            Variable(5, False, Types.T_CHAR, 8),
         ]
 
         self.group = VariablesGroup(3, False, variables)
@@ -218,7 +218,7 @@ class TestBSMPFunction(unittest.TestCase):
         with self.assertRaises(TypeError):
             Function(1, [Types.T_UINT16], [Types.T_UINT16]).value_to_load(1.5)
         with self.assertRaises(TypeError):
-            Function(1, [Types.t_char], [Types.T_UINT16]).value_to_load(15)
+            Function(1, [Types.T_CHAR], [Types.T_UINT16]).value_to_load(15)
 
     def test_int_value_to_load(self):
         """Test value to load method."""
@@ -240,7 +240,7 @@ class TestBSMPFunction(unittest.TestCase):
         expected_load = ['V', '0', '.', '0', '7', ' ', '2', '0', '1', '8', '-',
                          '0', '3', '\x00', '\x00']
 
-        func = Function(1, [Types.t_char for _ in range(15)], [Types.T_UINT8])
+        func = Function(1, [Types.T_CHAR for _ in range(15)], [Types.T_UINT8])
         self.assertEqual(func.value_to_load(value), expected_load)
 
     def test_arr_float_value_to_load(self):
@@ -291,7 +291,7 @@ class TestBSMPFunction(unittest.TestCase):
 
         expected_value = [b'V', b'0', b'.', b'0', b'7', b' ', b'2', b'0', b'1',
                           b'8', b'\x00', b'\x00', b'\x00', b'\x00', b'\x00']
-        func = Function(1, [Types.T_UINT8], [Types.t_char for _ in range(15)])
+        func = Function(1, [Types.T_UINT8], [Types.T_CHAR for _ in range(15)])
         self.assertEqual(func.load_to_value(load), expected_value)
 
     def test_arr_float_load_to_value(self):

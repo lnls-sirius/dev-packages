@@ -192,7 +192,7 @@ class FBPEntities(_Entities):
         {'eid': 0, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
         {'eid': 1, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 2, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 3, 'waccess': False, 'count': 128, 'var_type': _Types.t_char},
+        {'eid': 3, 'waccess': False, 'count': 128, 'var_type': _Types.T_CHAR},
         {'eid': 4, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 5, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 6, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},

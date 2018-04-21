@@ -114,7 +114,7 @@ class TestBSMP0x1(unittest.TestCase):
             Variable(0, False, Types.T_UINT16, 1),
             Variable(1, False, Types.T_FLOAT, 1),
             Variable(2, False, Types.T_FLOAT, 2),
-            Variable(3, False, Types.t_char, 64)]
+            Variable(3, False, Types.T_CHAR, 64)]
         self.entities.groups = [
             VariablesGroup(0, False, self.entities.variables),
         ]

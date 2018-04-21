@@ -9,7 +9,7 @@ class TestBSMPTypes(unittest.TestCase):
 
     def test_char_type(self):
         """Test char type properties."""
-        t = Types.t_char
+        t = Types.T_CHAR
 
         self.assertEqual(t.type, 'char')
         self.assertEqual(t.size, 1)
