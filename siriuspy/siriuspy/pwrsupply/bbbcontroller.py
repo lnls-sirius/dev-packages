@@ -14,10 +14,10 @@ from threading import Lock as _Lock
 from copy import deepcopy as _dcopy
 
 
-from siriuspy.bsmp import BSMP
-from siriuspy.bsmp import Response
+from siriuspy.bsmp import BSMP as _BSMP
+from siriuspy.bsmp import Response as _Response
 from siriuspy.pwrsupply.pru import PRUInterface as _PRUInterface
-from siriuspy.pwrsupply.pru import PRU
+from siriuspy.pwrsupply.pru import PRU as _PRU
 from siriuspy.pwrsupply.bsmp import Const as _c
 from siriuspy.pwrsupply.bsmp import MAP_MIRROR_2_ORIG as _mirror_map
 
@@ -314,7 +314,7 @@ class BBBController:
         # self._device_ids = sorted(device_ids + device_ids)  # test with 4 PS
 
         # create PRU with sync mode off.
-        self._pru = PRU()
+        self._pru = _PRU()
         self._time_interval = self._get_time_interval()
 
         # initialize BSMP
@@ -523,7 +523,7 @@ class BBBController:
         bsmp = dict()
         for id in self._device_ids:
             # TODO: catch BSMP comm errors
-            bsmp[id] = BSMP(self._pru, id, bsmp_entities)
+            bsmp[id] = _BSMP(self._pru, id, bsmp_entities)
         return bsmp
 
     def _initialize_variable_values(self, bsmp_entities):
@@ -624,7 +624,7 @@ class BBBController:
         # --- update variables, if ack is ok
         var_ids = self._groups[group_id]
         for id in device_ids:
-            if ack[id] == Response.ok:
+            if ack[id] == _Response.ok:
                 values = data[id]
                 # print('values: ', values)
                 for i in range(len(values)):
@@ -642,7 +642,7 @@ class BBBController:
 
     def _bsmp_exec_function(self, device_id, function_id, args=None):
         ack, values = self._bsmp[device_id].execute_function(function_id, args)
-        if ack == Response.ok:
+        if ack == _Response.ok:
             return values
         else:
             # TODO: update 'connect' state for that device
