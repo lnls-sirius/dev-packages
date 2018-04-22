@@ -382,6 +382,9 @@ class BBBController:
     _pru_delays[SYNC.RMPEND] = _delay_func_sync_pulse
     _pru_delays[SYNC.CYCLE] = _delay_func_sync_pulse
 
+    # lock attribute to be used when accessing _variables_values
+    _lock = _Lock()
+
     # --- public interface ---
 
     def __init__(self, bsmp_entities, device_ids,
@@ -459,12 +462,19 @@ class BBBController:
 
     def read_variable(self, device_id, variable_id=None):
         """Return current mirror of variable values of the BSMP device."""
+        # get value
         dev_values = self._variables_values[device_id]
         if variable_id is None:
             values = dev_values
         else:
             values = dev_values[variable_id]
-        return _dcopy(values)  # return a deep copy
+
+        # lock and make copy of value
+        BBBController._lock.acquire()
+        values = _dcopy(values)
+        BBBController._lock.release()
+        
+        return values
 
     def exec_function(self, device_id, function_id, args=None):
         """Append a BSMP function execution to operations queue."""
@@ -476,6 +486,7 @@ class BBBController:
                 args = (device_id, function_id, args)
             operation = (self._bsmp_exec_function, args)
             self._queue.append(operation)
+            return True
         else:
             # does nothing if PRU sync is on, regardless of sync mode.
             return False
@@ -730,6 +741,11 @@ class BBBController:
         self._last_operation = ('V', dtime,
                                 device_ids, group_id)
 
+        # --- make copy of state for updating
+        BBBController._lock.acquire()
+        variables_values = _dcopy(self._variables_value)
+        BBBController._lock.release()
+
         # --- update variables, if ack is ok
         nr_devs = len(self.device_ids)
         var_ids = self._groups[group_id]
@@ -748,14 +764,16 @@ class BBBController:
                         mir_dev_idx, mir_var_id = _mirror_map[var_id]
                         if mir_dev_idx <= nr_devs:
                             mir_dev_id = self.device_ids[mir_dev_idx-1]
-                            self._variables_values[mir_dev_id][mir_var_id] = \
-                                values[i]
+                            variables_values[mir_dev_id][mir_var_id] = values[i]
                     else:
                         # process original variable
-                        self._variables_values[id][var_id] = values[i]
+                        variables_values[id][var_id] = values[i]
             else:
                 # TODO: update 'connect' state for that device
                 pass
+
+        # --- use updated copy
+        self._variables_values = variables_values  # atomic operation
 
     def _bsmp_exec_function(self, device_id, function_id, args=None):
         # --- send func exec request to serial line
