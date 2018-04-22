@@ -32,10 +32,12 @@ siggen_config = (
 )
 
 
-def create_bbb_controller(running=True, device_ids=BBB1_device_ids):
+def create_bbb_controller(simulate=False, running=True,
+                          device_ids=BBB1_device_ids):
     """Return a BBB controller."""
     bbbc = BBBController(bsmp_entities=FBPEntities(),
                          device_ids=BBB1_device_ids,
+                         simulate=simulate,
                          processing=running,
                          scanning=running)
     return bbbc

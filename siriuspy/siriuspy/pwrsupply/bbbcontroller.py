@@ -384,22 +384,19 @@ class BBBController:
     # --- public interface ---
 
     def __init__(self, bsmp_entities, device_ids,
-                 processing=True, scanning=True):
+                 simulate=False, processing=True, scanning=True):
         """Init."""
-        # check if another instance exists
-        if BBBController._instance_running is True:
-            errmsg = ('Another instance of BBBController is already in same'
-                      ' process space.')
-            raise ValueError(errmsg)
-        else:
-            BBBController._instance_running = True
+        # check if another instance is running
+        self._check_instance()
+
+        # store simulation mode
+        self._simulate = simulate
 
         # sort list of device ids
         self._device_ids = sorted(device_ids)
 
-        # create PRU with sync mode off.
-        self._pru = _PRU()
-        self._time_interval = self._get_time_interval()
+        # create PRU (sync mode off).
+        self._initialize_pru()
 
         # initialize BSMP
         self._initialize_bsmp(bsmp_entities)
@@ -575,6 +572,23 @@ class BBBController:
 
     # --- private methods ---
 
+    def _check_instance(self):
+        # check if another instance is running
+        if BBBController._instance_running is True:
+            errmsg = ('Another instance of BBBController is already in same'
+                      ' process space.')
+            raise ValueError(errmsg)
+        else:
+            BBBController._instance_running = True
+
+    def _initialize_pru(self):
+
+        if self._simulate:
+            raise NotImplementedError
+        else:
+            self._pru = _PRU()
+        self._time_interval = self._get_time_interval()
+
     def _initialize_bsmp(self, bsmp_entities):
 
         # TODO: deal with BSMP comm errors at init!!
@@ -601,7 +615,10 @@ class BBBController:
         bsmp = dict()
         for id in self._device_ids:
             # TODO: catch BSMP comm errors
-            bsmp[id] = _BSMP(self._pru, id, bsmp_entities)
+            if self._simulate:
+                raise NotImplementedError
+            else:
+                bsmp[id] = _BSMP(self._pru, id, bsmp_entities)
         return bsmp
 
     def _initialize_variable_values(self, bsmp_entities):
@@ -704,20 +721,28 @@ class BBBController:
                                 device_ids, group_id)
 
         # --- update variables, if ack is ok
+        nr_devs = len(self.device_ids)
         var_ids = self._groups[group_id]
         for id in device_ids:
             if ack[id] == _Response.ok:
                 values = data[id]
-                # print('values: ', values)
                 for i in range(len(values)):
                     var_id = var_ids[i]
                     # process mirror variables, if the case
                     if group_id == self.VGROUPS.MIRROR:
-                        mir_dev_id, mir_var_id = _mirror_map[var_id]
-                        self._variables_values[mir_dev_id][mir_var_id] = \
-                            values[i]
-                    # process original variable
-                    self._variables_values[id][var_id] = values[i]
+                        # This code assumes that first entry in each mirror
+                        # variable block corresponds to the device with
+                        # lowest dev_id, the second entry to the second lowest
+                        # dev_id, and so on.
+                        # TODO: check with ELP if this is the case (email).
+                        mir_dev_idx, mir_var_id = _mirror_map[var_id]
+                        if mir_dev_idx <= nr_devs:
+                            mir_dev_id = self.device_ids[mir_dev_idx-1]
+                            self._variables_values[mir_dev_id][mir_var_id] = \
+                                values[i]
+                    else:
+                        # process original variable
+                        self._variables_values[id][var_id] = values[i]
             else:
                 # TODO: update 'connect' state for that device
                 pass
