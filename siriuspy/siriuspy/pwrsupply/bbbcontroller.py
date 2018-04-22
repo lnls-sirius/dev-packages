@@ -473,7 +473,7 @@ class BBBController:
         BBBController._lock.acquire()
         values = _dcopy(values)
         BBBController._lock.release()
-        
+
         return values
 
     def exec_function(self, device_id, function_id, args=None):
@@ -605,14 +605,14 @@ class BBBController:
 
         # TODO: deal with BSMP comm errors at init!!
 
-        # prune not used mirror variables in mirror group
+        # prune from mirror group variables not used
         # TODO: check this code!
         nr_devs = len(self.device_ids)
-        var_ids = list(self.VGROUPS[self.VGROUPS.MIRROR])
+        var_ids = list(self.VGROUPS.groups[self.VGROUPS.MIRROR])
         for var_id in var_ids:
             if var_id > nr_devs:
                 var_ids.remove(var_id)
-        self.VGROUPS[self.VGROUPS.MIRROR] = tuple(var_ids)
+        self.VGROUPS.groups[self.VGROUPS.MIRROR] = tuple(var_ids)
 
         # create BSMP devices
         self._bsmp = self._create_bsmp(bsmp_entities)
@@ -743,7 +743,7 @@ class BBBController:
 
         # --- make copy of state for updating
         BBBController._lock.acquire()
-        variables_values = _dcopy(self._variables_value)
+        copy_var_vals = _dcopy(self._variables_values)
         BBBController._lock.release()
 
         # --- update variables, if ack is ok
@@ -764,16 +764,16 @@ class BBBController:
                         mir_dev_idx, mir_var_id = _mirror_map[var_id]
                         if mir_dev_idx <= nr_devs:
                             mir_dev_id = self.device_ids[mir_dev_idx-1]
-                            variables_values[mir_dev_id][mir_var_id] = values[i]
+                            copy_var_vals[mir_dev_id][mir_var_id] = values[i]
                     else:
                         # process original variable
-                        variables_values[id][var_id] = values[i]
+                        copy_var_vals[id][var_id] = values[i]
             else:
                 # TODO: update 'connect' state for that device
                 pass
 
         # --- use updated copy
-        self._variables_values = variables_values  # atomic operation
+        self._variables_values = copy_var_vals  # atomic operation
 
     def _bsmp_exec_function(self, device_id, function_id, args=None):
         # --- send func exec request to serial line
