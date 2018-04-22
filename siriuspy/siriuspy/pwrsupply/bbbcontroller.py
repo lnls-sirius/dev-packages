@@ -365,6 +365,7 @@ class BBBController:
     _groups = BSMPVarGroups.groups
 
     # TODO: solution works only within the name process space
+    # look at linux flock facility
     _instance_running = False  # to check if another instance exists
 
     # default delays for sync modes
@@ -592,6 +593,15 @@ class BBBController:
     def _initialize_bsmp(self, bsmp_entities):
 
         # TODO: deal with BSMP comm errors at init!!
+
+        # prune not used mirror variables in mirror group
+        # TODO: check this code!
+        nr_devs = len(self.device_ids)
+        var_ids = list(self.VGROUPS[self.VGROUPS.MIRROR])
+        for var_id in var_ids:
+            if var_id > nr_devs:
+                var_ids.remove(var_id)
+        self.VGROUPS[self.VGROUPS.MIRROR] = tuple(var_ids)
 
         # create BSMP devices
         self._bsmp = self._create_bsmp(bsmp_entities)
