@@ -22,6 +22,9 @@ from siriuspy.pwrsupply.bsmp import __version__ as _ps_bsmp_version
 from siriuspy.pwrsupply.bsmp import Const as _c
 from siriuspy.pwrsupply.bsmp import MAP_MIRROR_2_ORIG as _mirror_map
 
+# imports for tests
+from siriuspy.pwrsupply.bsmp import FBPEntities as _FBPEntities
+
 
 # TODO: Notes on current behaviour of PRU and Power Supplies:
 #
@@ -57,6 +60,7 @@ from siriuspy.pwrsupply.bsmp import MAP_MIRROR_2_ORIG as _mirror_map
 
 def parse_firmware_version(version):
     """Process firmware version from BSMP device."""
+    # TODO: find an appropriate module/class for this function.
     version = version[:version.index(b'\x00')]
     version = ''.join([chr(ord(v)) for v in version])
     return version
@@ -486,7 +490,7 @@ class BBBController:
     @property
     def connected(self):
         """Connection state."""
-        return all((self.get_connected[id] for id in self.device_ids))
+        return all((self.get_connected(id) for id in self.device_ids))
 
     def get_connected(self, device_id):
         """Return connection state of a device."""
@@ -592,6 +596,7 @@ class BBBController:
         """Start PRU sync mode."""
         # test if sync_mode is valid
         if sync_mode not in BBBController.SYNC.MODES:
+            self.disconnect()
             raise NotImplementedError('Invalid sync mode {}'.format(
                 hex(sync_mode)))
 
@@ -682,9 +687,16 @@ class BBBController:
         else:
             BBBController._instance_running = True
 
-    def _initialize_pru(self):
+    def _init_disconnect(self):
+        # disconnect method to be used before any operation is on the queue.
+        self.scanning = False
+        self.processing = False
+        self.running = False
+        BBBController._instance_running = False
 
+    def _initialize_pru(self):
         if self._simulate:
+            self._init_disconnect()
             raise NotImplementedError
         else:
             self._pru = _PRU()
@@ -735,6 +747,7 @@ class BBBController:
         bsmp = dict()
         for id in self._device_ids:
             if self._simulate:
+                self._init_disconnect()
                 raise NotImplementedError
             else:
                 bsmp[id] = _BSMP(self._pru, id, bsmp_entities)
@@ -745,9 +758,11 @@ class BBBController:
         # check if groups have consecutive ids
         groups_ids = sorted(self._groups.keys())
         if len(groups_ids) < 3:
+            self._init_disconnect()
             raise ValueError('Invalid variable group definition!')
         for i in range(len(groups_ids)):
             if i not in groups_ids:
+                self._init_disconnect()
                 raise ValueError('Invalid variable group definition!')
 
         # loop over bsmp devices
@@ -780,6 +795,7 @@ class BBBController:
             version = self._variables_values[id][self.BSMP.V_FIRMWARE_VERSION]
             version = parse_firmware_version(version)
             if 'Simulation' not in version and version != _ps_bsmp_version:
+                self._init_disconnect()
                 errmsg = ('Incompatible BSMP implementaion version! '
                           '{} <> {}'.format(version, _ps_bsmp_version))
                 raise ValueError(errmsg)
@@ -813,6 +829,7 @@ class BBBController:
         elif self._pru.sync_mode == self.SYNC.CYCLE:
             return self._device_ids, self.VGROUPS.CYCLE
         else:
+            self.disconnect()
             raise NotImplementedError('Sync mode not implemented!')
 
     def _select_next_device_id(self):
@@ -924,3 +941,167 @@ class BBBController:
             elif function_id in (self.BSMP.F_OPEN_LOOP,
                                  self.BSMP.F_CLOSE_LOOP):
                 _time.sleep(self._delay_loop_open_close)
+            return data
+        else:
+            return None
+
+
+class Tests:
+    """Tests class. (temporary)."""
+
+    BBB1_device_ids = (1, 2)
+    BBB2_device_ids = (5, 6)
+
+    siggen_config = (
+        # --- siggen sine parameters ---
+        0,       # type
+        10,      # num_cycles
+        0.5,     # freq
+        2.0,     # amplitude
+        0.0,     # offset
+        0.0,     # aux_param[0]
+        0.0,     # aux_param[1]
+        0.0,     # aux_param[2]
+        0.0,     # aux_param[3]
+    )
+
+    @staticmethod
+    def create_bsmp(device_id):
+        """Create a BSMP object for a device."""
+        pru = _PRU()
+        bsmp = _BSMP(pru, device_id, _FBPEntities())
+        return bsmp
+
+    @staticmethod
+    def create_bbb_controller(simulate=False, running=True,
+                              device_ids=BBB1_device_ids):
+        """Return a BBB controller."""
+        bbbc = BBBController(bsmp_entities=_FBPEntities(),
+                             device_ids=Tests.BBB1_device_ids,
+                             simulate=simulate,
+                             processing=running,
+                             scanning=running)
+        return bbbc
+
+    @staticmethod
+    def init_power_supplies(bbbc, current_sp=2.5):
+        """Init power supplies linked to the bbb controller."""
+        # set bbb to sync off
+        bbbc.pru_sync_stop()
+
+        ids = bbbc.device_ids
+        # try to reset interlocks
+        bbbc.exec_function(ids, _c.F_RESET_INTERLOCKS)
+        for id in bbbc.device_ids:
+            # turn power supply on
+            if bbbc.read_variable(id, _c.V_PS_HARD_INTERLOCKS):
+                print('could not reset hard interlock!')
+                return
+            if bbbc.read_variable(id, _c.V_PS_SOFT_INTERLOCKS):
+                print('could not reset soft interlock!')
+                return
+
+        # turn power supplies on
+        bbbc.exec_function(ids, _c.F_TURN_ON)
+        # time.sleep(0.3)  # implemented within BBBController now
+
+        # close loop
+        bbbc.exec_function(ids, _c.F_CLOSE_LOOP)
+        # time.sleep(0.3) # implemented within BBBController now
+
+        # disable siggen
+        bbbc.exec_function(ids, _c.F_DISABLE_SIGGEN)
+
+        # set slowref
+        bbbc.exec_function(ids, _c.F_SELECT_OP_MODE, args=(3,))
+
+        # current setpoint
+        bbbc.exec_function(ids, _c.F_SET_SLOWREF, args=(current_sp))
+
+    @staticmethod
+    def set_cycle_mode_in_power_supplies(bbbc):
+        """Config siggen and set power supplies to cycle mode."""
+        ids = bbbc.device_ids
+
+        # configure siggen parameters
+        bbbc.exec_function(ids, _c.F_CFG_SIGGEN, Tests.siggen_config)
+
+        # disable siggen
+        bbbc.exec_function(ids, _c.F_DISABLE_SIGGEN)
+
+        # set ps to cycle mode
+        bbbc.exec_function(ids, _c.F_SELECT_OP_MODE, args=(5,))
+
+    @staticmethod
+    def calc_siggen_duration():
+        """Calc duration for Sine or DampedSine siggens."""
+        num_cycles = Tests.siggen_config[1]
+        freq = Tests.siggen_config[2]
+        return num_cycles/freq
+
+    @staticmethod
+    def run_cycle(bbbc):
+        """Set cycle_mode in bbb controller."""
+        # get signal duration
+        duration = Tests.calc_siggen_duration()
+
+        # set sync on in cycle mode
+        bbbc.pru_sync_start(bbbc.SYNC.CYCLE)
+        print('waiting to enter cycle mode...')
+        while bbbc.pru_get_sync_status() != bbbc.SYNC.ON:
+            pass
+
+        # print message
+        print('wainting for timing trigger...')
+
+        # loop until siggen is active
+        not_finished, trigg_not_rcvd = [bbbc.pru_get_sync_status()] * 2
+        while not_finished:
+            if bbbc.pru_get_sync_status() == 0 and trigg_not_rcvd:
+                trigg_not_rcvd = 0
+                t0 = _time.time()
+                print('timing signal arrived!')
+
+            # read iload and siggen
+            iload, siggen_enable = {}, {}
+            for id in bbbc.device_ids:
+                siggen_enable[id] = bbbc.read_variable(id, _c.V_SIGGEN_ENABLE)
+                iload[id] = bbbc.read_variable(id, _c.V_I_LOAD)
+
+            # print info
+            if not trigg_not_rcvd:
+                # print
+                print('dtime:{:06.2f}'.format(_time.time()-t0), end='')
+                print('    -    ', end='')
+                print('iload:', end='')
+                for id in bbbc.device_ids:
+                    print('{:+08.4f} '.format(iload[id]), end='')
+                print('    -    ', end='')
+                print('sigge:', end='')
+                for id in bbbc.device_ids:
+                    print('{} '.format(siggen_enable[id]), end='')
+                print()
+
+            # test if finished
+            if not trigg_not_rcvd and _time.time() - t0 > duration + 2:
+                not_finished = 0
+
+            # sleep a little
+            _time.sleep(0.1)
+
+    @staticmethod
+    def test_cycle():
+        """Example of testing cycle mode."""
+        # Example of testing cycle mode for powr supplies in BBB1
+
+        # create BBB1 controller
+        bbbc = Tests.create_bbb_controller()
+
+        # initialized power supplies
+        Tests.init_power_supplies(bbbc)
+
+        # configure power supplies siggen and set them to run it
+        Tests.set_cycle_mode_in_power_supplies(bbbc)
+
+        # run cycle
+        Tests.run_cycle(bbbc)
