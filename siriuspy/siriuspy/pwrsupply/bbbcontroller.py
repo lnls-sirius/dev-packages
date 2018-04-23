@@ -22,9 +22,11 @@ from siriuspy.pwrsupply.pru import PRU as _PRU
 from siriuspy.pwrsupply.bsmp import __version__ as _ps_bsmp_version
 from siriuspy.pwrsupply.bsmp import Const as _c
 from siriuspy.pwrsupply.bsmp import MAP_MIRROR_2_ORIG as _mirror_map
+from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 
 # imports for tests
 from siriuspy.pwrsupply.bsmp import FBPEntities as _FBPEntities
+from siriuspy.csdevice.pwrsupply import Const as _PSConst
 
 
 # NOTE on current behaviour of PRU and Power Supplies:
@@ -64,8 +66,11 @@ from siriuspy.pwrsupply.bsmp import FBPEntities as _FBPEntities
 # 02. Request a 'sync_abort' function in the PRUserial485 library.
 # 03. Request a semaphore for using the PRU library.
 # 04. Requested new function that reads curved at PRU memory.
+#     patricia will work on this.
 # 05. What happens if user changes curve block while index = 0 and not time
 #     signal has arrived?
+#     patricia will change the PRU library as to implement new curves right
+#     away if index=0
 
 
 def parse_firmware_version(version):
@@ -434,6 +439,12 @@ class BBBController:
         # sorted list of device ids
         self._device_ids = sorted(device_ids)
 
+        # conversion of ps status to high level properties
+        # TODO: temporary?
+        self._psc_state = {}
+        for id in self.device_ids:
+            self._psc_state[id] = _PSCStatus()
+
         # create PRU (sync mode off).
         self._initialize_pru()
 
@@ -590,6 +601,10 @@ class BBBController:
 
         # instance not running
         BBBController._instance_running = False
+
+    def state(self, device_id):
+        """Return PSCState object of a device."""
+        return self._psc_state[device_id]
 
     # ---- main methods: access to PRU proerties ---
 
@@ -964,6 +979,11 @@ class BBBController:
             else:
                 self._connected[id] = False
 
+        # update psc_state
+        for id in self.device_ids:
+            self._psc_state[id].ps_status = \
+                copy_var_vals[id][self.BSMP.V_PS_STATUS]
+
         # --- use updated copy
         self._variables_values = copy_var_vals  # atomic operation
 
@@ -1084,6 +1104,18 @@ class Tests:
         bbbc.exec_function(ids, _c.F_SET_SLOWREF, args=(current_sp))
 
     @staticmethod
+    def create_bbbc(simulate=False, running=True,
+                    device_ids=BBB1_device_ids):
+        """Create BBBC."""
+        # creat bbbc
+        bbbc = Tests.create_bbb_controller(simulate, running, device_ids)
+
+        # init power supplies
+        Tests.init_power_supplies(bbbc)
+
+        return bbbc
+
+    @staticmethod
     def set_cycle_mode_in_power_supplies(bbbc):
         """Config siggen and set power supplies to cycle mode."""
         ids = bbbc.device_ids
@@ -1095,7 +1127,23 @@ class Tests:
         bbbc.exec_function(ids, _c.F_DISABLE_SIGGEN)
 
         # set ps to cycle mode
-        bbbc.exec_function(ids, _c.F_SELECT_OP_MODE, args=(5,))
+        bbbc.exec_function(ids, _c.F_SELECT_OP_MODE,
+                           args=(_PSConst.States.Cycle,))
+
+    @staticmethod
+    def set_rmpwfm_mode_in_power_supplies(bbbc):
+        """Config rmpwfm and set power supplies to rmpwfm mode."""
+        ids = bbbc.device_ids
+
+        # configure siggen parameters
+        bbbc.exec_function(ids, _c.F_CFG_SIGGEN, Tests.siggen_config)
+
+        # disable siggen
+        bbbc.exec_function(ids, _c.F_DISABLE_SIGGEN)
+
+        # set ps to cycle mode
+        bbbc.exec_function(ids, _c.F_SELECT_OP_MODE,
+                           args=(_PSConst.States.Cycle,))
 
     @staticmethod
     def calc_siggen_duration():
@@ -1153,6 +1201,21 @@ class Tests:
 
             # sleep a little
             _time.sleep(0.1)
+
+    @staticmethod
+    def run_rmpwfm():
+        """Example of testing rmp mode."""
+        # Example of testing cycle mode for powr supplies in BBB1
+
+        # create BBB1 controller
+        bbbc = Tests.create_bbbc()
+
+        # configure power supplies rmpwfm and set them to run it
+        bbbc.exec_function(bbbc.device_ids, _c.F_SELECT_OP_MODE,
+                           args=(_PSConst.States.RmpWfm,))
+
+        # set PRU sync mode
+        bbbc.pru_sync_start(bbbc.SYNC.RMPEND)
 
     @staticmethod
     def test_cycle():
