@@ -16,6 +16,7 @@ from copy import deepcopy as _dcopy
 from siriuspy.bsmp import BSMP as _BSMP
 from siriuspy.bsmp import Response as _Response
 from siriuspy.bsmp.exceptions import SerialError as _SerialError
+from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 from siriuspy.pwrsupply.pru import PRUInterface as _PRUInterface
 from siriuspy.pwrsupply.pru import PRU as _PRU
 from siriuspy.pwrsupply.bsmp import __version__ as _ps_bsmp_version
@@ -26,12 +27,12 @@ from siriuspy.pwrsupply.bsmp import MAP_MIRROR_2_ORIG as _mirror_map
 from siriuspy.pwrsupply.bsmp import FBPEntities as _FBPEntities
 
 
-# TODO: Notes on current behaviour of PRU and Power Supplies:
+# NOTE on current behaviour of PRU and Power Supplies:
 #
 # 01. Currently curve block changes are implemented upon the arrival of the
-#     timing trigger that corresponds to the last waveform point.
+#     timing trigger that corresponds to the last curve point.
 #     This better preserves magnetic history of the magnet while being
-#     able to change the waveform on the fly.
+#     able to change the curve on the fly.
 #
 # 02. PRU 'sync_stop' aborts the sync mode right away. Maybe it should be
 #     renamed to 'sync_abort' and a new command named 'sync_stop' should be
@@ -50,12 +51,21 @@ from siriuspy.pwrsupply.bsmp import FBPEntities as _FBPEntities
 #     the UART through the PRU library by mistake it is desirable to have a
 #     semaphore the PRU memory to guarantee that only one process access it.
 #     Think about how this could be implemented in a safe but simple way...
+#
+# 05. Change of curves on the fly. In order to allow this blocks 0 and 1 of
+#     curves will be used in a ciclic way. This should be transparent for
+#     users of the BBBController. At this points only one high level curve
+#     for each power supply is implemented. Also we have not implemented yet
+#     the possibility of changing the curve length.
 
 # TODO: discuss with patricia:
 #
 # 01. What does the 'delay' param in 'PRUserial485.UART_write' mean exactly?
 # 02. Request a 'sync_abort' function in the PRUserial485 library.
 # 03. Request a semaphore for using the PRU library.
+# 04. Requested new function that reads curved at PRU memory.
+# 05. What happens if user changes curve block while index = 0 and not time
+#     signal has arrived?
 
 
 def parse_firmware_version(version):
@@ -341,6 +351,7 @@ class BBBController:
 
     # TODO: test class in sync on mode and trigger from timing
     # TODO: Improve update frequency in WfmRamp/MigRamp (done - testing)
+    # TODO: allow variable-size curves
     #
     # Gabriel from ELP proposed the idea of a privilegded slave that
     # could define BSMP variables that corresponded to other slaves variables
@@ -548,7 +559,7 @@ class BBBController:
             True is operation was queued or False, if operation was rejected
             because of the PRU sync state.
         """
-        if self._pru.sync_status == self.SYNC.OFF:
+        if self.pru_sync_status == self.SYNC.OFF:
             # in PRU sync off mode, append BSM function exec operation to queue
             if isinstance(device_ids, int):
                 device_ids = (device_ids, )
@@ -582,15 +593,15 @@ class BBBController:
 
     # ---- main methods: access to PRU proerties ---
 
-    def pru_get_sync_status(self):
-        """Return PRU sync status."""
-        return self._pru.sync_status
+    @property
+    def pru_sync_mode(self):
+        """PRU sync mode."""
+        return self._pru.sync_mode
 
-    def pru_sync_stop(self):
-        """Stop PRU sync mode."""
-        # TODO: should we do more than what is implemented?
-        self._pru.sync_stop()
-        self._time_interval = self._get_time_interval()
+    @property
+    def pru_sync_status(self):
+        """PRU sync status."""
+        return self._pru.sync_status
 
     def pru_sync_start(self, sync_mode):
         """Start PRU sync mode."""
@@ -601,7 +612,7 @@ class BBBController:
                 hex(sync_mode)))
 
         # try to abandon previous sync mode gracefully
-        if self._pru.sync_status != self.SYNC.OFF:
+        if self.pru_sync_status != self.SYNC.OFF:
             # --- already with sync mode on.
             if sync_mode != self._pru.sync_mode:
                 # --- different sync mode
@@ -632,6 +643,51 @@ class BBBController:
         self.scanning = True
         self._queue.ignore_clear()
 
+    def pru_sync_stop(self):
+        """Stop PRU sync mode."""
+        # TODO: should we do more than what is implemented?
+        self._pru.sync_stop()
+        self._time_interval = self._get_time_interval()
+
+    @property
+    def pru_sync_pulse_count(self):
+        """PRU sync pulse count."""
+        return self._pru.sync_pulse_count
+
+    # def pru_set_curve_block(self, block):
+    #     """Set the block of curves."""
+    #     self._pru.set_curve_block(block)
+    #
+    # def pru_read_curve_block(self):
+    #     """Return curves block index in use."""
+    #     return self._pru.read_curve_block()
+
+    def pru_write_curve(self, device_id, curve):
+        """Write curve of a device to the correposding PRU memory."""
+        # get index of curve for the given device id
+        idx = self.device_ids.index(device_id)
+
+        # for now do not accept changing curve lengths
+        if len(curve) != len(self._curves[idx]):
+            self.disconnect()
+            raise NotImplementedError('Changeable curve size not implemented')
+
+        # select in which block the new curve will be stored
+        block_curr = self._pru.read_curve_block()
+        block_next = 1 if block_curr == 0 else 0
+
+        # write curve to PRU memory
+        self._curves[idx] = list(curve)
+        self._pru.curve(self._curves[0],
+                        self._curves[1],
+                        self._curves[2],
+                        self._curves[3],
+                        block_next)
+        # TODO: do we need a sleep here?
+
+        # select block to be used at next start of ramp
+        self._pru.set_curve_block(block_next)
+
     # --- access to atomic methods of scan and process loops
 
     def bsmp_scan(self):
@@ -643,7 +699,7 @@ class BBBController:
                      (device_ids, group_id, ))
         if len(self._queue) == 0 or \
            operation != self._queue.last_operation:
-            if self._pru.sync_status == self.SYNC.OFF:
+            if self.pru_sync_status == self.SYNC.OFF:
                 # with sync off, function executions are allowed and
                 # therefore operations must be queued in order
                 self._queue.append(operation)
@@ -695,12 +751,21 @@ class BBBController:
         BBBController._instance_running = False
 
     def _initialize_pru(self):
+
+        # create PRU object
         if self._simulate:
             self._init_disconnect()
             raise NotImplementedError
         else:
             self._pru = _PRU()
+
+        # update time interval attribute
         self._time_interval = self._get_time_interval()
+
+        # initialize PRU curves
+        # TODO: read curves from PRU memory.
+        # CON is working in a PRU library that allows this.
+        self._curves = [list(_DEFAULT_WFMDATA), ] * 4
 
     def _initialize_bsmp(self, bsmp_entities):
 
@@ -819,7 +884,7 @@ class BBBController:
 
     def _select_device_group_ids(self):
         """Return variable group id and device ids for the loop scan."""
-        if self._pru.sync_status == self.SYNC.OFF:
+        if self.pru_sync_status == self.SYNC.OFF:
             return self._device_ids, self.VGROUPS.SLOWREF
         elif self._pru.sync_mode == self.SYNC.MIGEND:
             return self._device_ids, self.VGROUPS.MIGWFM
@@ -847,8 +912,8 @@ class BBBController:
         return (self._devices_ids[0], )
 
     def _get_time_interval(self):
-        if self._pru.sync_status == self.SYNC.OFF or \
-           self._pru.sync_mode == self.SYNC.CYCLE:
+        if self.pru_sync_status == self.SYNC.OFF or \
+           self.pru_sync_mode == self.SYNC.CYCLE:
             return 1.0/self.FREQ.SCAN  # [s]
         else:
             return 1.0/self.FREQ.RAMP  # [s]
@@ -1048,16 +1113,16 @@ class Tests:
         # set sync on in cycle mode
         bbbc.pru_sync_start(bbbc.SYNC.CYCLE)
         print('waiting to enter cycle mode...')
-        while bbbc.pru_get_sync_status() != bbbc.SYNC.ON:
+        while bbbc.pru_sync_status != bbbc.SYNC.ON:
             pass
 
         # print message
         print('wainting for timing trigger...')
 
         # loop until siggen is active
-        not_finished, trigg_not_rcvd = [bbbc.pru_get_sync_status()] * 2
+        not_finished, trigg_not_rcvd = [bbbc.pru_sync_status] * 2
         while not_finished:
-            if bbbc.pru_get_sync_status() == 0 and trigg_not_rcvd:
+            if bbbc.pru_sync_status == 0 and trigg_not_rcvd:
                 trigg_not_rcvd = 0
                 t0 = _time.time()
                 print('timing signal arrived!')
