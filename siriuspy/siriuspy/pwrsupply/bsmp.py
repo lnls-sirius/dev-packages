@@ -58,7 +58,7 @@ class Const:
 
     # --- types ---
     T_STATUS = 0
-    T_STATUS = 1
+    T_STATUS = 1  # TODO: duplicate constant!
     T_REMOTE = 2
     T_MODEL = 3
     T_FLOAT = 4
