@@ -9,8 +9,10 @@ at the other end of the serial line.
 
 import time
 
+from siriuspy.bsmp import BSMP
 from siriuspy.pwrsupply.bsmp import FBPEntities
 from siriuspy.pwrsupply.bsmp import Const
+from siriuspy.pwrsupply.pru import PRU
 from siriuspy.pwrsupply.bbbcontroller import BBBController
 
 
@@ -32,6 +34,13 @@ siggen_config = (
 )
 
 
+def create_bsmp(device_id):
+    """Create a BSMP object for a device."""
+    pru = PRU()
+    bsmp = BSMP(pru, device_id, FBPEntities())
+    return bsmp
+
+
 def create_bbb_controller(simulate=False, running=True,
                           device_ids=BBB1_device_ids):
     """Return a BBB controller."""
@@ -48,29 +57,34 @@ def init_power_supplies(bbbc, current_sp=2.5):
     # set bbb to sync off
     bbbc.pru_sync_stop()
 
-    # turn power supplies on
+    ids = bbbc.device_ids
+    # try to reset interlocks
+    bbbc.exec_function(ids, Const.F_RESET_INTERLOCKS)
     for id in bbbc.device_ids:
         # turn power supply on
-        bbbc.exec_function(id, Const.F_TURN_ON)
-    time.sleep(0.3)
+        if bbbc.read_variable(id, Const.V_PS_HARD_INTERLOCKS):
+            print('could not reset hard interlock!')
+            return
+        if bbbc.read_variable(id, Const.V_PS_SOFT_INTERLOCKS):
+            print('could not reset soft interlock!')
+            return
+
+    # turn power supplies on
+    bbbc.exec_function(ids, Const.F_TURN_ON)
+    # time.sleep(0.3)  # implemented within BBBController now
 
     # close loop
-    for id in bbbc.device_ids:
-        # turn power supply on
-        bbbc.exec_function(id, Const.F_CLOSE_LOOP)
-    time.sleep(0.3)
+    bbbc.exec_function(ids, Const.F_CLOSE_LOOP)
+    # time.sleep(0.3) # implemented within BBBController now
 
-    # other initializations
-    for id in bbbc.device_ids:
+    # disable siggen
+    bbbc.exec_function(ids, Const.F_DISABLE_SIGGEN)
 
-        # disable siggen
-        bbbc.exec_function(id, Const.F_DISABLE_SIGGEN)
+    # set slowref
+    bbbc.exec_function(ids, Const.F_SELECT_OP_MODE, args=(3,))
 
-        # set slowref
-        bbbc.exec_function(id, Const.F_SELECT_OP_MODE, args=(3,))
-
-        # current setpoint
-        bbbc.exec_function(id, Const.F_SET_SLOWREF, args=(current_sp))
+    # current setpoint
+    bbbc.exec_function(ids, Const.F_SET_SLOWREF, args=(current_sp))
 
 
 def set_cycle_mode_in_power_supplies(bbbc):

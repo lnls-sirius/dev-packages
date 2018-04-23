@@ -9,9 +9,9 @@ class Types:
 
     # TODO: wait for Gabriel response on this issue:
     # This seems to be a fuzzy point on the BSMP spec.
-    # We should inform teh CON group.
+    # We should inform the CON group.
     # T_NONE = _BSMPType(None, 0, None, lambda x: x is None)
-    T_NONE = _BSMPType(None, 1, None, lambda x: x is None)
+    T_NONE = _BSMPType('uint8', 1, '<B', lambda x: isinstance(x, int))
 
     T_CHAR = _BSMPType('char', 1, '<c', lambda x: isinstance(x, str))
     T_UINT8 = _BSMPType('uint8', 1, '<B', lambda x: isinstance(x, int))

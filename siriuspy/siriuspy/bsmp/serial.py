@@ -2,7 +2,6 @@
 import struct as _struct
 from .exceptions import SerialError as _SerialError
 from threading import Lock as _Lock
-import time as _time
 
 # TODO: rename module to 'channel.py' ?
 
