@@ -41,14 +41,17 @@ class BSMP:
     # 0x0_
     def consult_protocol_version(self):
         """Consult protocol version. Command 0x00."""
+        # TODO: needs implementation!
         raise NotImplementedError()
 
     def consult_variables_list(self):
         """Consult list of variables. Command 0x02."""
+        # TODO: needs implementation!
         raise NotImplementedError()
 
     def consult_groups_list(self):
         """Consult groups list. Command 0x04."""
+        # TODO: needs implementation!
         raise NotImplementedError()
 
     def consult_group_variables(self, group_id):
