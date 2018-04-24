@@ -54,10 +54,10 @@ def get_pvs_database():
                                     'enums': ['Avg', '13C4', '14C4']}
         pvs_database['DCCT-Sts'] = {'type': 'enum', 'value': 0,
                                     'enums': ['Avg', '13C4', '14C4']}
-        pvs_database['DCCTFltCheck-Sel'] = {'type': 'enum', 'value': 0,
-                                            'enums': ['On', 'Off']}
-        pvs_database['DCCTFltCheck-Sts'] = {'type': 'enum', 'value': 0,
-                                            'enums': ['On', 'Off']}
+        pvs_database['DCCTFltCheck-Sel'] = {'type': 'enum', 'value': 1,
+                                            'enums': ['Off', 'On']}
+        pvs_database['DCCTFltCheck-Sts'] = {'type': 'enum', 'value': 1,
+                                            'enums': ['Off', 'On']}
     return pvs_database
 
 
