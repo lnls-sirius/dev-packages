@@ -8,7 +8,7 @@ from siriuspy.csdevice.pwrsupply import Const as PSConst
 # from siriuspy.pwrsupply.pru import PRU
 from siriuspy.pwrsupply.bsmp import BSMPConst
 from siriuspy.pwrsupply.bsmp import FBPEntities
-from siriuspy.pwrsupply.bbbcontroller import BBBController
+from siriuspy.pwrsupply.prucontroller import PRUController
 
 TPREFIX = 'TEST-'
 
@@ -66,7 +66,7 @@ def reset_interlocks(bbbc):
 def create_bbbc(self):
     """Method."""
     # create BBB controller
-    bbbc = BBBController(bsmp_entities=FBPEntities(),
+    bbbc = PRUController(bsmp_entities=FBPEntities(),
                          device_ids=BBB1_device_ids,
                          simulate=False,
                          processing=True,
@@ -86,11 +86,11 @@ def init_slowref(bbbc):
 
     # turn power supplies on
     bbbc.exec_function(ids, BSMPConst.F_TURN_ON)
-    # time.sleep(0.3)  # implemented within BBBController now
+    # time.sleep(0.3)  # implemented within PRUController now
 
     # close loop
     bbbc.exec_function(ids, BSMPConst.F_CLOSE_LOOP)
-    # time.sleep(0.3) # implemented within BBBController now
+    # time.sleep(0.3) # implemented within PRUController now
 
     # disable siggen
     bbbc.exec_function(ids, BSMPConst.F_DISABLE_SIGGEN)
@@ -184,7 +184,7 @@ def measure_duration_bsmp_sync_pulse(bbbc):
 # def create_bbb_controller(simulate=False, running=True,
 #                           device_ids=BBB1_device_ids):
 #     """Return a BBB controller."""
-#     bbbc = BBBController(bsmp_entities=FBPEntities(),
+#     bbbc = PRUController(bsmp_entities=FBPEntities(),
 #                          device_ids=BBB1_device_ids,
 #                          simulate=simulate,
 #                          processing=running,

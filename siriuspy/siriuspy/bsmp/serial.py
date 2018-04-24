@@ -188,7 +188,7 @@ class Channel:
         # This lock is important in order to avoid threads in the same process
         # space to read each other's responses. Still it does not prevent
         # different instances of channel objects running in separate processes
-        # to read ech other's responses. For the BBBController case, for
+        # to read ech other's responses. For the PRUController case, for
         # example, a global lock should be implemented as to allow only one
         # instance of the class object to exist.
         Channel._lock.acquire(blocking=True)

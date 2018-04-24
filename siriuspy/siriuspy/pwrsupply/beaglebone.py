@@ -11,7 +11,7 @@ from siriuspy.pwrsupply.pru import PRUSim as _PRUSim
 from siriuspy.pwrsupply.controller import IOController as _IOController
 from siriuspy.pwrsupply.controller import IOControllerSim as _IOControllerSim
 from siriuspy.pwrsupply.model import FBPPowerSupply as _FBPPowerSupply
-from siriuspy.pwrsupply.bbbcontroller import BBBController as _BBBController
+from siriuspy.pwrsupply.bbbcontroller import PRUController as _PRUController
 from siriuspy.pwrsupply.bsmp import FBPEntities as _FBPEntities
 from siriuspy.pwrsupply.bsmp import Const as _c
 from .status import PSCStatus as _PSCStatus
@@ -312,7 +312,7 @@ class BeagleBone:
         # if not self._simulate:
         #     # self._controller = _IOController(_PRU(), self._psmodel)
         #     slave_ids = self._get_bsmp_slave_IDs()
-        #     self._controller = _BBBController(FBPEntities(), slave_ids)
+        #     self._controller = _PRUController(FBPEntities(), slave_ids)
         # else:
         #     # self._controller = _IOControllerSim(_PRUSim(), self._psmodel)
         #     pass
@@ -450,7 +450,7 @@ class BeagleBone:
     def _create_power_supplies(self):
         # Return dict of power supply objects
         slave_ids = self._get_bsmp_slave_IDs()
-        self._controller = _BBBController(_FBPEntities(), slave_ids)
+        self._controller = _PRUController(_FBPEntities(), slave_ids)
         power_supplies = dict()
         for i, psname in enumerate(self._psnames):
             # Define device controller
