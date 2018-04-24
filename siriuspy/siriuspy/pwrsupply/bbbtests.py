@@ -10,7 +10,7 @@ from siriuspy.pwrsupply.bsmp import BSMPConst
 from siriuspy.pwrsupply.bsmp import FBPEntities
 from siriuspy.pwrsupply.prucontroller import PRUController
 
-TPREFIX = 'TEST-'
+TPREFIX = ''
 
 BBB1_device_ids = (1, 2)
 BBB2_device_ids = (5, 6)
@@ -50,78 +50,78 @@ def calc_siggen_duration():
     return num_cycles/freq
 
 
-def reset_interlocks(bbbc):
+def reset_interlocks(pruc):
     """Reset interlocks."""
     # try to reset and then check interlocks
-    ids = bbbc.device_ids
-    bbbc.exec_function(ids, BSMPConst.F_RESET_INTERLOCKS)
+    ids = pruc.device_ids
+    pruc.exec_function(ids, BSMPConst.F_RESET_INTERLOCKS)
     intlck = 0
     for id in ids:
-        intlck |= bbbc.read_variable(ids[0], BSMPConst.V_PS_HARD_INTERLOCK)
-        intlck |= bbbc.read_variable(ids[0], BSMPConst.V_PS_SOFT_INTERLOCK)
+        intlck |= pruc.read_variable(ids[0], BSMPConst.V_PS_HARD_INTERLOCK)
+        intlck |= pruc.read_variable(ids[0], BSMPConst.V_PS_SOFT_INTERLOCK)
     if intlck:
         raise ValueError('could not reset interlocks!')
 
 
-def create_bbbc(self):
+def create_pruc(self):
     """Method."""
     # create BBB controller
-    bbbc = PRUController(bsmp_entities=FBPEntities(),
+    pruc = PRUController(bsmp_entities=FBPEntities(),
                          device_ids=BBB1_device_ids,
                          simulate=False,
                          processing=True,
                          scanning=True)
-    return bbbc
+    return pruc
 
 
-def init_slowref(bbbc):
+def init_slowref(pruc):
     """Method."""
-    ids = bbbc.device_ids
+    ids = pruc.device_ids
 
     # set bbb to sync off
-    bbbc.pru_sync_stop()
+    pruc.pru_sync_stop()
 
     # try to reset and then check interlocks
-    reset_interlocks(bbbc)
+    reset_interlocks(pruc)
 
     # turn power supplies on
-    bbbc.exec_function(ids, BSMPConst.F_TURN_ON)
+    pruc.exec_function(ids, BSMPConst.F_TURN_ON)
     # time.sleep(0.3)  # implemented within PRUController now
 
     # close loop
-    bbbc.exec_function(ids, BSMPConst.F_CLOSE_LOOP)
+    pruc.exec_function(ids, BSMPConst.F_CLOSE_LOOP)
     # time.sleep(0.3) # implemented within PRUController now
 
     # disable siggen
-    bbbc.exec_function(ids, BSMPConst.F_DISABLE_SIGGEN)
+    pruc.exec_function(ids, BSMPConst.F_DISABLE_SIGGEN)
 
     # set slowref
-    bbbc.exec_function(ids, BSMPConst.F_SELECT_OP_MODE, args=(3,))
+    pruc.exec_function(ids, BSMPConst.F_SELECT_OP_MODE, args=(3,))
 
     # current setpoint
     current_sp = 2.5
-    bbbc.exec_function(ids, BSMPConst.F_SET_SLOWREF, args=(current_sp))
+    pruc.exec_function(ids, BSMPConst.F_SET_SLOWREF, args=(current_sp))
 
 
-def config_cycle_mode(bbbc):
+def config_cycle_mode(pruc):
     """Config siggen and set power supplies to cycle mode."""
-    ids = bbbc.device_ids
+    ids = pruc.device_ids
 
     # set bbb to sync off
-    bbbc.pru_sync_stop()
+    pruc.pru_sync_stop()
 
     # disable siggen
-    bbbc.exec_function(ids, BSMPConst.F_DISABLE_SIGGEN)
+    pruc.exec_function(ids, BSMPConst.F_DISABLE_SIGGEN)
 
     # configure siggen parameters (needs disabled siggen!)
-    bbbc.exec_function(ids, BSMPConst.F_CFG_SIGGEN, siggen_config)
+    pruc.exec_function(ids, BSMPConst.F_CFG_SIGGEN, siggen_config)
 
     # set ps to cycle mode
-    bbbc.exec_function(ids, BSMPConst.F_SELECT_OP_MODE,
+    pruc.exec_function(ids, BSMPConst.F_SELECT_OP_MODE,
                        args=(PSConst.States.Cycle,))
 
 
-def measure_duration_bsmp_sync_pulse(bbbc):
+def measure_duration_bsmp_sync_pulse(pruc):
     """Measure BSMP command sync_pulse.
 
     This function prepares PRU and devices so that timing trigger can
@@ -131,22 +131,22 @@ def measure_duration_bsmp_sync_pulse(bbbc):
     # get signal duration
     duration = calc_siggen_duration()
 
-    # create bbbc in deafault config
-    init_slowref(bbbc)
+    # create pruc in deafault config
+    init_slowref(pruc)
 
     # enters cycle mode
-    bbbc.pru_sync_start(sync_mode=bbbc.SYNC.RMPEND)
+    pruc.pru_sync_start(sync_mode=pruc.SYNC.RMPEND)
 
     # loops until timing trigger is received
     print('waiting for trigger from EVR...', end='')
-    while bbbc.pru_sync_status == bbbc.SYNC.ON:
+    while pruc.pru_sync_status == pruc.SYNC.ON:
         t0 = time.time()
         time.sleep(0.1)
     print('arrived.')
 
     # makes sure power supply is in enable_siggen
     print('waiting for siggen to be enabled...', end='')
-    while bbbc.read_variable(id, BSMPConst.V_SIGGEN_ENABLE) == 0:
+    while pruc.read_variable(id, BSMPConst.V_SIGGEN_ENABLE) == 0:
         time.sleep(0.1)
     print('enabled.')
 
@@ -154,20 +154,20 @@ def measure_duration_bsmp_sync_pulse(bbbc):
     while time.time() - t0 < duration + 2.0:
         # read iload and siggen
         iload, siggen_enable = {}, {}
-        for id in bbbc.device_ids:
+        for id in pruc.device_ids:
             siggen_enable[id] = \
-                bbbc.read_variable(id, BSMPConst.V_SIGGEN_ENABLE)
-            iload[id] = bbbc.read_variable(id, BSMPConst.V_I_LOAD)
+                pruc.read_variable(id, BSMPConst.V_SIGGEN_ENABLE)
+            iload[id] = pruc.read_variable(id, BSMPConst.V_I_LOAD)
 
         # print
         print('dtime:{:06.2f}'.format(time.time()-t0), end='')
         print('  -  ', end='')
         print('iload:', end='')
-        for id in bbbc.device_ids:
+        for id in pruc.device_ids:
             print('{:+08.4f} '.format(iload[id]), end='')
         print('  -  ', end='')
         print('sigge:', end='')
-        for id in bbbc.device_ids:
+        for id in pruc.device_ids:
             print('{} '.format(siggen_enable[id]), end='')
         print()
 
@@ -184,59 +184,59 @@ def measure_duration_bsmp_sync_pulse(bbbc):
 # def create_bbb_controller(simulate=False, running=True,
 #                           device_ids=BBB1_device_ids):
 #     """Return a BBB controller."""
-#     bbbc = PRUController(bsmp_entities=FBPEntities(),
+#     pruc = PRUController(bsmp_entities=FBPEntities(),
 #                          device_ids=BBB1_device_ids,
 #                          simulate=simulate,
 #                          processing=running,
 #                          scanning=running)
-#     return bbbc
+#     return pruc
 #
 #
 # @staticmethod
-# def set_rmpwfm_mode_in_power_supplies(bbbc):
+# def set_rmpwfm_mode_in_power_supplies(pruc):
 #     """Config rmpwfm and set power supplies to rmpwfm mode."""
-#     ids = bbbc.device_ids
+#     ids = pruc.device_ids
 #
 #     # configure siggen parameters
-#     bbbc.exec_function(ids, BSMPConst.F_CFG_SIGGEN, siggen_config)
+#     pruc.exec_function(ids, BSMPConst.F_CFG_SIGGEN, siggen_config)
 #
 #     # disable siggen
-#     bbbc.exec_function(ids, BSMPConst.F_DISABLE_SIGGEN)
+#     pruc.exec_function(ids, BSMPConst.F_DISABLE_SIGGEN)
 #
 #     # set ps to cycle mode
-#     bbbc.exec_function(ids, BSMPConst.F_SELECT_OP_MODE,
+#     pruc.exec_function(ids, BSMPConst.F_SELECT_OP_MODE,
 #                        args=(PSConst.States.Cycle,))
 #
 #
 # @staticmethod
-# def run_cycle(bbbc):
+# def run_cycle(pruc):
 #     """Set cycle_mode in bbb controller."""
 #     # get signal duration
 #     duration = calc_siggen_duration()
 #
 #     # set sync on in cycle mode
-#     bbbc.pru_sync_start(bbbc.SYNC.CYCLE)
+#     pruc.pru_sync_start(pruc.SYNC.CYCLE)
 #     print('waiting to enter cycle mode...')
-#     while bbbc.pru_sync_status != bbbc.SYNC.ON:
+#     while pruc.pru_sync_status != pruc.SYNC.ON:
 #         pass
 #
 #     # print message
 #     print('wainting for timing trigger...')
 #
 #     # loop until siggen is active
-#     not_finished, trigg_not_rcvd = [bbbc.pru_sync_status] * 2
+#     not_finished, trigg_not_rcvd = [pruc.pru_sync_status] * 2
 #     while not_finished:
-#         if bbbc.pru_sync_status == 0 and trigg_not_rcvd:
+#         if pruc.pru_sync_status == 0 and trigg_not_rcvd:
 #             trigg_not_rcvd = 0
 #             t0 = time.time()
 #             print('timing signal arrived!')
 #
 #         # read iload and siggen
 #         iload, siggen_enable = {}, {}
-#         for id in bbbc.device_ids:
+#         for id in pruc.device_ids:
 #             siggen_enable[id] = \
-#                 bbbc.read_variable(id, BSMPConst.V_SIGGEN_ENABLE)
-#             iload[id] = bbbc.read_variable(id, BSMPConst.V_I_LOAD)
+#                 pruc.read_variable(id, BSMPConst.V_SIGGEN_ENABLE)
+#             iload[id] = pruc.read_variable(id, BSMPConst.V_I_LOAD)
 #
 #         # print info
 #         if not trigg_not_rcvd:
@@ -244,11 +244,11 @@ def measure_duration_bsmp_sync_pulse(bbbc):
 #             print('dtime:{:06.2f}'.format(time.time()-t0), end='')
 #             print('    -    ', end='')
 #             print('iload:', end='')
-#             for id in bbbc.device_ids:
+#             for id in pruc.device_ids:
 #                 print('{:+08.4f} '.format(iload[id]), end='')
 #             print('    -    ', end='')
 #             print('sigge:', end='')
-#             for id in bbbc.device_ids:
+#             for id in pruc.device_ids:
 #                 print('{} '.format(siggen_enable[id]), end='')
 #             print()
 #
@@ -266,14 +266,14 @@ def measure_duration_bsmp_sync_pulse(bbbc):
 #     # Example of testing cycle mode for powr supplies in BBB1
 #
 #     # create BBB1 controller
-#     bbbc = create_bbbc()
+#     pruc = create_pruc()
 #
 #     # configure power supplies rmpwfm and set them to run it
-#     bbbc.exec_function(bbbc.device_ids, BSMPConst.F_SELECT_OP_MODE,
+#     pruc.exec_function(pruc.device_ids, BSMPConst.F_SELECT_OP_MODE,
 #                        args=(PSConst.States.RmpWfm,))
 #
 #     # set PRU sync mode
-#     bbbc.pru_sync_start(bbbc.SYNC.RMPEND)
+#     pruc.pru_sync_start(pruc.SYNC.RMPEND)
 #
 #
 # @staticmethod
@@ -282,13 +282,13 @@ def measure_duration_bsmp_sync_pulse(bbbc):
 #     # Example of testing cycle mode for powr supplies in BBB1
 #
 #     # create BBB1 controller
-#     bbbc = create_bbb_controller()
+#     pruc = create_bbb_controller()
 #
 #     # initialized power supplies
-#     init_power_supplies(bbbc)
+#     init_power_supplies(pruc)
 #
 #     # configure power supplies siggen and set them to run it
-#     set_cycle_mode_in_power_supplies(bbbc)
+#     set_cycle_mode_in_power_supplies(pruc)
 #
 #     # run cycle
-#     run_cycle(bbbc)
+#     run_cycle(pruc)

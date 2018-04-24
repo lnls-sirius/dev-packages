@@ -23,6 +23,8 @@ from siriuspy.pwrsupply.bsmp import __version__ as _ps_bsmp_version
 from siriuspy.pwrsupply.bsmp import Const as _c
 from siriuspy.pwrsupply.bsmp import MAP_MIRROR_2_ORIG as _mirror_map
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
+from siriuspy.pwrsupply.controller import FBP_BSMPSim as _FBP_BSMPSim
+
 
 # NOTE on current behaviour of PRU and Power Supplies:
 #
@@ -771,8 +773,7 @@ class PRUController:
 
         # create PRU object
         if self._simulate:
-            self._init_disconnect()
-            raise NotImplementedError
+            self._pru = _FBP_BSMPSim()
         else:
             self._pru = _PRU()
 
