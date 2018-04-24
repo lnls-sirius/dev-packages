@@ -6,12 +6,12 @@ at the other end of the serial line.
 """
 
 import time as _time
+import random as _random
 from collections import deque as _deque
 from collections import namedtuple as _namedtuple
 from threading import Thread as _Thread
 from threading import Lock as _Lock
 from copy import deepcopy as _dcopy
-
 
 from siriuspy.bsmp import BSMP as _BSMP
 from siriuspy.bsmp import Response as _Response
@@ -23,11 +23,6 @@ from siriuspy.pwrsupply.bsmp import __version__ as _ps_bsmp_version
 from siriuspy.pwrsupply.bsmp import Const as _c
 from siriuspy.pwrsupply.bsmp import MAP_MIRROR_2_ORIG as _mirror_map
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
-
-# imports for tests
-from siriuspy.pwrsupply.bsmp import FBPEntities as _FBPEntities
-from siriuspy.csdevice.pwrsupply import Const as _PSConst
-
 
 # NOTE on current behaviour of PRU and Power Supplies:
 #
@@ -59,6 +54,9 @@ from siriuspy.csdevice.pwrsupply import Const as _PSConst
 #     users of the BBBController. At this points only one high level curve
 #     for each power supply is implemented. Also we have not implemented yet
 #     the possibility of changing the curve length.
+#
+# 06. Discretization of the current-mon can mascarade measurements of update
+#     rates. For testing we should add a small random fluctuation.
 
 # TODO: discuss with patricia:
 #
@@ -357,6 +355,7 @@ class BBBController:
     # TODO: test class in sync on mode and trigger from timing
     # TODO: Improve update frequency in WfmRamp/MigRamp (done - testing)
     # TODO: allow variable-size curves
+    # TODO: delete random fluctuation added to measurements
     #
     # Gabriel from ELP proposed the idea of a privilegded slave that
     # could define BSMP variables that corresponded to other slaves variables
@@ -976,6 +975,10 @@ class BBBController:
                     else:
                         # process original variable
                         copy_var_vals[id][var_id] = values[i]
+                # add random fluctuation (tests)
+                # TODO: turn this off
+                copy_var_vals[id][self.BSMP.V_I_LOAD] += \
+                    0.0001*2*(_random.rand()-0.5)
             else:
                 self._connected[id] = False
 
@@ -1029,207 +1032,3 @@ class BBBController:
             return data
         else:
             return None
-
-
-class Tests:
-    """Tests class. (temporary)."""
-
-    BBB1_device_ids = (1, 2)
-    BBB2_device_ids = (5, 6)
-
-    siggen_config = (
-        # --- siggen sine parameters ---
-        0,       # type
-        10,      # num_cycles
-        0.5,     # freq
-        2.0,     # amplitude
-        0.0,     # offset
-        0.0,     # aux_param[0]
-        0.0,     # aux_param[1]
-        0.0,     # aux_param[2]
-        0.0,     # aux_param[3]
-    )
-
-    @staticmethod
-    def create_bsmp(device_id):
-        """Create a BSMP object for a device."""
-        pru = _PRU()
-        bsmp = _BSMP(pru, device_id, _FBPEntities())
-        return bsmp
-
-    @staticmethod
-    def create_bbb_controller(simulate=False, running=True,
-                              device_ids=BBB1_device_ids):
-        """Return a BBB controller."""
-        bbbc = BBBController(bsmp_entities=_FBPEntities(),
-                             device_ids=Tests.BBB1_device_ids,
-                             simulate=simulate,
-                             processing=running,
-                             scanning=running)
-        return bbbc
-
-    @staticmethod
-    def init_power_supplies(bbbc, current_sp=2.5):
-        """Init power supplies linked to the bbb controller."""
-        # set bbb to sync off
-        bbbc.pru_sync_stop()
-
-        ids = bbbc.device_ids
-        # try to reset interlocks
-        bbbc.exec_function(ids, _c.F_RESET_INTERLOCKS)
-        for id in bbbc.device_ids:
-            # turn power supply on
-            if bbbc.read_variable(id, _c.V_PS_HARD_INTERLOCKS):
-                print('could not reset hard interlock!')
-                return
-            if bbbc.read_variable(id, _c.V_PS_SOFT_INTERLOCKS):
-                print('could not reset soft interlock!')
-                return
-
-        # turn power supplies on
-        bbbc.exec_function(ids, _c.F_TURN_ON)
-        # time.sleep(0.3)  # implemented within BBBController now
-
-        # close loop
-        bbbc.exec_function(ids, _c.F_CLOSE_LOOP)
-        # time.sleep(0.3) # implemented within BBBController now
-
-        # disable siggen
-        bbbc.exec_function(ids, _c.F_DISABLE_SIGGEN)
-
-        # set slowref
-        bbbc.exec_function(ids, _c.F_SELECT_OP_MODE, args=(3,))
-
-        # current setpoint
-        bbbc.exec_function(ids, _c.F_SET_SLOWREF, args=(current_sp))
-
-    @staticmethod
-    def create_bbbc(simulate=False, running=True,
-                    device_ids=BBB1_device_ids):
-        """Create BBBC."""
-        # creat bbbc
-        bbbc = Tests.create_bbb_controller(simulate, running, device_ids)
-
-        # init power supplies
-        Tests.init_power_supplies(bbbc)
-
-        return bbbc
-
-    @staticmethod
-    def set_cycle_mode_in_power_supplies(bbbc):
-        """Config siggen and set power supplies to cycle mode."""
-        ids = bbbc.device_ids
-
-        # configure siggen parameters
-        bbbc.exec_function(ids, _c.F_CFG_SIGGEN, Tests.siggen_config)
-
-        # disable siggen
-        bbbc.exec_function(ids, _c.F_DISABLE_SIGGEN)
-
-        # set ps to cycle mode
-        bbbc.exec_function(ids, _c.F_SELECT_OP_MODE,
-                           args=(_PSConst.States.Cycle,))
-
-    @staticmethod
-    def set_rmpwfm_mode_in_power_supplies(bbbc):
-        """Config rmpwfm and set power supplies to rmpwfm mode."""
-        ids = bbbc.device_ids
-
-        # configure siggen parameters
-        bbbc.exec_function(ids, _c.F_CFG_SIGGEN, Tests.siggen_config)
-
-        # disable siggen
-        bbbc.exec_function(ids, _c.F_DISABLE_SIGGEN)
-
-        # set ps to cycle mode
-        bbbc.exec_function(ids, _c.F_SELECT_OP_MODE,
-                           args=(_PSConst.States.Cycle,))
-
-    @staticmethod
-    def calc_siggen_duration():
-        """Calc duration for Sine or DampedSine siggens."""
-        num_cycles = Tests.siggen_config[1]
-        freq = Tests.siggen_config[2]
-        return num_cycles/freq
-
-    @staticmethod
-    def run_cycle(bbbc):
-        """Set cycle_mode in bbb controller."""
-        # get signal duration
-        duration = Tests.calc_siggen_duration()
-
-        # set sync on in cycle mode
-        bbbc.pru_sync_start(bbbc.SYNC.CYCLE)
-        print('waiting to enter cycle mode...')
-        while bbbc.pru_sync_status != bbbc.SYNC.ON:
-            pass
-
-        # print message
-        print('wainting for timing trigger...')
-
-        # loop until siggen is active
-        not_finished, trigg_not_rcvd = [bbbc.pru_sync_status] * 2
-        while not_finished:
-            if bbbc.pru_sync_status == 0 and trigg_not_rcvd:
-                trigg_not_rcvd = 0
-                t0 = _time.time()
-                print('timing signal arrived!')
-
-            # read iload and siggen
-            iload, siggen_enable = {}, {}
-            for id in bbbc.device_ids:
-                siggen_enable[id] = bbbc.read_variable(id, _c.V_SIGGEN_ENABLE)
-                iload[id] = bbbc.read_variable(id, _c.V_I_LOAD)
-
-            # print info
-            if not trigg_not_rcvd:
-                # print
-                print('dtime:{:06.2f}'.format(_time.time()-t0), end='')
-                print('    -    ', end='')
-                print('iload:', end='')
-                for id in bbbc.device_ids:
-                    print('{:+08.4f} '.format(iload[id]), end='')
-                print('    -    ', end='')
-                print('sigge:', end='')
-                for id in bbbc.device_ids:
-                    print('{} '.format(siggen_enable[id]), end='')
-                print()
-
-            # test if finished
-            if not trigg_not_rcvd and _time.time() - t0 > duration + 2:
-                not_finished = 0
-
-            # sleep a little
-            _time.sleep(0.1)
-
-    @staticmethod
-    def run_rmpwfm():
-        """Example of testing rmp mode."""
-        # Example of testing cycle mode for powr supplies in BBB1
-
-        # create BBB1 controller
-        bbbc = Tests.create_bbbc()
-
-        # configure power supplies rmpwfm and set them to run it
-        bbbc.exec_function(bbbc.device_ids, _c.F_SELECT_OP_MODE,
-                           args=(_PSConst.States.RmpWfm,))
-
-        # set PRU sync mode
-        bbbc.pru_sync_start(bbbc.SYNC.RMPEND)
-
-    @staticmethod
-    def test_cycle():
-        """Example of testing cycle mode."""
-        # Example of testing cycle mode for powr supplies in BBB1
-
-        # create BBB1 controller
-        bbbc = Tests.create_bbb_controller()
-
-        # initialized power supplies
-        Tests.init_power_supplies(bbbc)
-
-        # configure power supplies siggen and set them to run it
-        Tests.set_cycle_mode_in_power_supplies(bbbc)
-
-        # run cycle
-        Tests.run_cycle(bbbc)
