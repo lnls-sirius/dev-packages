@@ -398,9 +398,12 @@ class _EVROUT(_Base):
         self._internal_trigger = self._define_num_int(conn_num)
         self.prefix = LL_PREFIX + _PVName(channel).device_name + ':'
         chan_tree = _LLTimeSearch.get_device_tree(channel)
-        fout_name = [chan.device_name for chan in chan_tree
-                     if chan.device_name in FOUTs][0]
-        self._fout_prefix = LL_PREFIX + fout_name + ':'
+        for chan in chan_tree:
+            if chan.device_name in FOUTs:
+                self._fout_prefix = LL_PREFIX + chan.device_name + ':'
+                self._fout_out = int(chan.propty[3:])
+            elif chan.device_name == EVG_NAME:
+                self._evg_out = int(chan.propty[3:])
         self._evg_prefix = LL_PREFIX + EVG_NAME + ':'
         self.channel = channel
         self._source_enums = source_enums
@@ -438,6 +441,8 @@ class _EVROUT(_Base):
             'Network': self.prefix + 'Network-Mon',
             'Link': self.prefix + 'Link-Mon',
             'Los': self.prefix + 'Los-Mon',
+            'FOUTLos': self._fout_prefix + 'Los-Mon',
+            'EVGLos': self._evg_prefix + 'Los-Mon',
             'IntlkMon': self.prefix + 'Intlk-Mon',
             'FOUTDevEnbl': self._fout_prefix + 'DevEnbl-Sts',
             'EVGDevEnbl': self._evg_prefix + 'DevEnbl-Sts',
@@ -479,6 +484,8 @@ class _EVROUT(_Base):
             'Network': _partial(self._get_status, 'Network'),
             'Link': _partial(self._get_status, 'Link'),
             'Los': _partial(self._get_status, 'Los'),
+            'FOUTLos': _partial(self._get_status, 'FOUTLos'),
+            'EVGLos': _partial(self._get_status, 'EVGLos'),
             'IntlkMon': _partial(self._get_status, 'IntlkMon'),
             'FOUTDevEnbl': _partial(self._get_status, 'FOUTDevEnbl'),
             'EVGDevEnbl': _partial(self._get_status, 'EVGDevEnbl'),
@@ -496,6 +503,8 @@ class _EVROUT(_Base):
         dic_['IntlkMon'] = self._get_from_pvs(is_sp, 'IntlkMon', def_val=1)
         dic_['Link'] = self._get_from_pvs(is_sp, 'Link')
         dic_['Los'] = self._get_from_pvs(is_sp, 'Los', def_val=None)
+        dic_['FOUTLos'] = self._get_from_pvs(is_sp, 'FOUTLos', def_val=None)
+        dic_['EVGLos'] = self._get_from_pvs(is_sp, 'EVGLos', def_val=None)
         dic_['PVsConn'] = self.connected
         if value is not None:
             dic_[prop] = value
@@ -512,6 +521,14 @@ class _EVROUT(_Base):
             num = self._internal_trigger - self._NUM_OTP
             if num >= 0 and (dic_['Los'] >> num) % 2:
                 status |= (1 << 7)
+        if dic_['FOUTLos'] is not None:
+            num = self._fout_out
+            if num >= 0 and (dic_['FOUTLos'] >> num) % 2:
+                status |= (1 << 8)
+        if dic_['EVGLos'] is not None:
+            num = self._evg_out
+            if num >= 0 and (dic_['EVGLos'] >> num) % 2:
+                status |= (1 << 9)
         return {'Status': status}
 
     def _get_delay(self, prop, is_sp, value=None):

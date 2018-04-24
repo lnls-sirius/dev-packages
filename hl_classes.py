@@ -349,7 +349,8 @@ class HL_Trigger(_HL_Base):
             # 'DevEnbl', 'FOUTDevEnbl', 'EVGDevEnbl'
             alarm = _Alarm.DISABLE_ALARM
             severity = _Severity.INVALID_ALARM
-        elif get_bit(status, 6) | get_bit(status, 7):
+        elif (get_bit(status, 6) | get_bit(status, 7) |
+              get_bit(status, 8) | get_bit(status, 9)):
             # 'Link' 'Loss'
             alarm = _Alarm.LINK_ALARM
             severity = _Severity.INVALID_ALARM
