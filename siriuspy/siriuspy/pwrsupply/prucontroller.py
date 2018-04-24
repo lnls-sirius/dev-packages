@@ -447,7 +447,7 @@ class PRUController:
             self._psc_state[id] = _PSCStatus()
 
         # create PRU (sync mode off).
-        self._initialize_pru()
+        self._initialize_pru(bsmp_entities)
 
         # initialize BSMP (contains BSMP comm)
         self._initialize_bsmp(bsmp_entities)
@@ -769,10 +769,11 @@ class PRUController:
         self.running = False
         PRUController._instance_running = False
 
-    def _initialize_pru(self):
+    def _initialize_pru(self, bsmp_entities):
 
         # create PRU object
         if self._simulate:
+            # TODO: generalize this code checking type(bsmp_entities)
             self._pru = _FBP_BSMPSim()
         else:
             self._pru = _PRU()
