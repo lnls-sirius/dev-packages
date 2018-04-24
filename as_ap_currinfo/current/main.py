@@ -97,7 +97,7 @@ class App:
         """Write value to reason and let callback update PV database."""
         status = False
         if reason == 'DCCT-Sel':
-            if self._dcctfltcheck_mode == 1:  # DCCTFltCheck Off
+            if self._dcctfltcheck_mode == 0:  # DCCTFltCheck Off
                 self._update_dcct_mode(value)
                 self.driver.setParam('DCCT-Sts', self._dcct_mode)
                 self.driver.updatePVs()
@@ -150,7 +150,7 @@ class App:
 
     def _update_dcctfltcheck_mode(self, value):
         if self._dcctfltcheck_mode != value:
-            if value == 0:
+            if value == 1:  # DCCTFltCheck On
                 self._update_dcct_mode_from_reliablemeas()
             self._dcctfltcheck_mode = value
 
@@ -249,5 +249,5 @@ class App:
         elif '14C4' in pvname:
             self._reliablemeas_14C4_value = value
 
-        if self._dcctfltcheck_mode == 0:  # DCCTFltCheck On
+        if self._dcctfltcheck_mode == 1:  # DCCTFltCheck On
             self._update_dcct_mode_from_reliablemeas()
