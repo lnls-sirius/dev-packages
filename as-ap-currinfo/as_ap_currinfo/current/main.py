@@ -56,17 +56,17 @@ class App:
             self._storedebeam_14C4_pv = _epics.PV(
                 _pvs.get_pvs_vaca_prefix()+'SI-14C4:DI-DCCT:StoredEBeam-Mon',
                 callback=self._callback_get_storedebeam)
-            self._hwflt_13C4_pv = _epics.PV(
-                _pvs.get_pvs_vaca_prefix()+'SI-13C4:DI-DCCT:HwFlt-Mon',
-                callback=self._callback_get_hwflt)
-            self._hwflt_14C4_pv = _epics.PV(
-                _pvs.get_pvs_vaca_prefix()+'SI-14C4:DI-DCCT:HwFlt-Mon',
-                callback=self._callback_get_hwflt)
+            self._reliablemeas_13C4_pv = _epics.PV(
+                _pvs.get_pvs_vaca_prefix()+'SI-13C4:DI-DCCT:ReliableMeas-Mon',
+                callback=self._callback_get_reliablemeas)
+            self._reliablemeas_14C4_pv = _epics.PV(
+                _pvs.get_pvs_vaca_prefix()+'SI-14C4:DI-DCCT:ReliableMeas-Mon',
+                callback=self._callback_get_reliablemeas)
 
             self._dcct_mode = 0
             self._dcctfltcheck_mode = 0
-            self._hwflt_13C4_value = 0
-            self._hwflt_14C4_value = 0
+            self._reliablemeas_13C4_value = 0
+            self._reliablemeas_14C4_value = 0
             if not self._storedebeam_13C4_pv.connected:
                 self._getebeam13C4cbindex = self._current_13C4_pv.add_callback(
                                         self._callback_get_ebeam_fromcurrent)
@@ -109,7 +109,7 @@ class App:
             status = True
         return status
 
-    # BO-AP-CurrInfo Modules
+    # BO-AP-CurrInfo Methods
 
     def _callback_get_current_bo(self, value, **kws):
         self.driver.setParam('Current-Mon', value)
@@ -126,19 +126,22 @@ class App:
             self.driver.setParam('StoredEBeam-Mon', 0)
         self.driver.updatePVs()
 
-    # SI-AP-CurrInfo Modules
+    # SI-AP-CurrInfo Methods
 
     def _update_dcct_mode(self, value):
         if self._dcct_mode != value:
             self._dcct_mode = value
 
-    def _update_dcct_mode_fromhwflt(self):
+    def _update_dcct_mode_from_reliablemeas(self):
         mode = self._dcct_mode
-        if self._hwflt_13C4_value == 0 and self._hwflt_14C4_value == 0:
+        if (self._reliablemeas_13C4_value == 0
+                and self._reliablemeas_14C4_value == 0):
             mode = 0
-        elif self._hwflt_13C4_value == 0 and self._hwflt_14C4_value != 0:
+        elif (self._reliablemeas_13C4_value == 0
+                and self._reliablemeas_14C4_value != 0):
             mode = 1
-        elif self._hwflt_13C4_value != 0 and self._hwflt_14C4_value == 0:
+        elif (self._reliablemeas_13C4_value != 0
+                and self._reliablemeas_14C4_value == 0):
             mode = 2
         if mode != self._dcct_mode:
             self._dcct_mode = mode
@@ -148,7 +151,7 @@ class App:
     def _update_dcctfltcheck_mode(self, value):
         if self._dcctfltcheck_mode != value:
             if value == 0:
-                self._update_dcct_mode_fromhwflt()
+                self._update_dcct_mode_from_reliablemeas()
             self._dcctfltcheck_mode = value
 
     def _connection_callback_current_DCCT13C4(self, pvname, conn, **kws):
@@ -240,11 +243,11 @@ class App:
             self.driver.setParam('StoredEBeam-Mon', 0)
         self.driver.updatePVs()
 
-    def _callback_get_hwflt(self, pvname, value, **kws):
+    def _callback_get_reliablemeas(self, pvname, value, **kws):
         if '13C4' in pvname:
-            self._hwflt_13C4_value = value
+            self._reliablemeas_13C4_value = value
         elif '14C4' in pvname:
-            self._hwflt_14C4_value = value
+            self._reliablemeas_14C4_value = value
 
         if self._dcctfltcheck_mode == 0:  # DCCTFltCheck On
-            self._update_dcct_mode_fromhwflt()
+            self._update_dcct_mode_from_reliablemeas()
