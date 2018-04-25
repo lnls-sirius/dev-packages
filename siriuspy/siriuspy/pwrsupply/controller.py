@@ -16,58 +16,6 @@ from .siggen import SignalFactory as _SignalFactory
 __version__ = _util.get_last_commit_hash()
 
 
-class IOController:
-    """Power supply controller component.
-
-    This component manages BSMP serial-port communications with power supply
-    controllers and access to beaglebone's PRU functionalities.
-    """
-
-    BSMP_CONST = _c
-
-    def __init__(self, pru, psmodel):
-        """Use FBPEntities."""
-        self._psmodel = psmodel
-
-        if psmodel == 'FBP':
-            self._bsmp_entities = _FBPEntities()
-        else:
-            raise ValueError("Unknown psmodel!")
-
-        self._pru = pru
-        self._bsmp_conn = dict()
-
-    def __getitem__(self, slave_id):
-        """Return corresponding BSMP slave device communication object."""
-        return self.bsmp_conn[slave_id]
-
-    @property
-    def pru(self):
-        """Return the PRU object."""
-        return self._pru
-
-    @property
-    def bsmp_conn(self):
-        """Return BSMP slave device communication objects."""
-        return self._bsmp_conn
-
-    def add_slave(self, slave_id):
-        """Add a BSMP slave device communication object."""
-        self.bsmp_conn[slave_id] = \
-            _BSMP(self._pru, slave_id, self._bsmp_entities)
-
-
-class IOControllerSim(IOController):
-    """Simulated Power supply controller component."""
-
-    def add_slave(self, slave_id):
-        """Add a BSMP slave to make serial communication."""
-        if self._psmodel == 'FBP':
-            self.bsmp_conn[slave_id] = FBP_BSMPSim()
-        else:
-            raise ValueError("Unknown psmodel!")
-
-
 class FBP_BSMPSim(_BSMPSim):
     """Simulate a PS controller."""
 

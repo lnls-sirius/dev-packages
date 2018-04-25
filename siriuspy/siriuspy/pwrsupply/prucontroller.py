@@ -665,6 +665,7 @@ class PRUController:
             pass
 
         # wait for all queued operations to be processed
+        self.bsmp_scan()
         self._scanning_false_wait_empty_queue()
 
         # execute a BSMP read group so that mirror is updated.
@@ -983,7 +984,6 @@ class PRUController:
         # TODO: profile method in order to reduce its 20% CPU usage in BBB1
 
         ack, data = dict(), dict()
-
         # --- send requests to serial line
         t0 = _time.time()
         for id in device_ids:
