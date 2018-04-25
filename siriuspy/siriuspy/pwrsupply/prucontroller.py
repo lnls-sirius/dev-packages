@@ -19,11 +19,19 @@ from siriuspy.bsmp.exceptions import SerialError as _SerialError
 from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 from siriuspy.pwrsupply.pru import PRUInterface as _PRUInterface
 from siriuspy.pwrsupply.pru import PRU as _PRU
+from siriuspy.pwrsupply.pru import PRUSim as _PRUSim
 from siriuspy.pwrsupply.bsmp import __version__ as _ps_bsmp_version
 from siriuspy.pwrsupply.bsmp import Const as _c
 from siriuspy.pwrsupply.bsmp import MAP_MIRROR_2_ORIG as _mirror_map
+<<<<<<< Updated upstream:siriuspy/siriuspy/pwrsupply/prucontroller.py
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 from siriuspy.pwrsupply.controller import FBP_BSMPSim as _FBP_BSMPSim
+=======
+from siriuspy.pwrsupply.controller import FBP_BSMPSim as _FBP_BSMPSim
+
+# imports for tests
+from siriuspy.pwrsupply.bsmp import FBPEntities as _FBPEntities
+>>>>>>> Stashed changes:siriuspy/siriuspy/pwrsupply/bbbcontroller.py
 
 
 # NOTE on current behaviour of PRU and Power Supplies:
@@ -663,6 +671,7 @@ class PRUController:
             pass
 
         # wait for all queued operations to be processed
+        self.bsmp_scan()
         self._scanning_false_wait_empty_queue()
 
         # execute a BSMP read group so that mirror is updated.
@@ -793,8 +802,13 @@ class PRUController:
 
         # create PRU object
         if self._simulate:
+<<<<<<< Updated upstream:siriuspy/siriuspy/pwrsupply/prucontroller.py
             # TODO: generalize this code checking type(bsmp_entities)
             self._pru = _FBP_BSMPSim()
+=======
+            self._init_disconnect()
+            self._pru = _PRUSim()
+>>>>>>> Stashed changes:siriuspy/siriuspy/pwrsupply/bbbcontroller.py
         else:
             self._pru = _PRU()
 
@@ -852,7 +866,7 @@ class PRUController:
         for id in self._device_ids:
             if self._simulate:
                 self._init_disconnect()
-                raise NotImplementedError
+                bsmp[id] = _FBP_BSMPSim()
             else:
                 bsmp[id] = _BSMP(self._pru, id, bsmp_entities)
         return bsmp
@@ -981,7 +995,6 @@ class PRUController:
         # TODO: profile method in order to reduce its 20% CPU usage in BBB1
 
         ack, data = dict(), dict()
-
         # --- send requests to serial line
         t0 = _time.time()
         for id in device_ids:
@@ -1047,6 +1060,7 @@ class PRUController:
         # class BSMP method 'request' should always do that
 
         ack, data = dict(), dict()
+
 
         # --- send requests to serial line
         t0 = _time.time()
