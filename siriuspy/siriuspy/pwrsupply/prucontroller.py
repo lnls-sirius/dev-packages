@@ -60,6 +60,16 @@ from siriuspy.pwrsupply.controller import FBP_BSMPSim as _FBP_BSMPSim
 #
 # 06. Discretization of the current-mon can mascarade measurements of update
 #     rates. For testing we should add a small random fluctuation.
+#
+# 07. In Cycle mode, the high level OpMode-Sts (maybe OpMode-Sel too?) is
+#     expected to return to SlowRef automatically without changing CurrentRef.
+#     In the current firmware version when the controller executes a
+#     SELECT_OP_MODE with SlowRef as argument it automatically sets CurrentRef
+#     (V_PS_REFERENCE) to the Current-RB (V_PS_SETPOINT). This is a problem
+#     after cycling since we want the IOC to move back to SlowRef automatically
+#     So the IOC has to set Current-SP to the same value as SigGen's offset
+#     before moving the power supply to Cycle mode.
+
 
 # TODO: discuss with patricia:
 #
@@ -72,6 +82,12 @@ from siriuspy.pwrsupply.controller import FBP_BSMPSim as _FBP_BSMPSim
 #     signal has arrived?
 #     patricia will change the PRU library as to implement new curves right
 #     away if index=0
+
+# TODO: discuss with gabriel
+#
+# 01. Current PS controller firmware version V0.10 2018-04-20 does not accept
+#     command F_SET_SLOWREF while not in SlowRef. Gabriel thinks it is usefull
+#     to allow it and will implement in the next firmware version.
 
 
 def parse_firmware_version(version):
@@ -483,6 +499,11 @@ class PRUController:
         return self._device_ids[:]
 
     @property
+    def scan_interval(self):
+        """Scan interval."""
+        return self._scan_interval
+
+    @property
     def scanning(self):
         """Return scanning state."""
         return self._scanning
@@ -702,7 +723,7 @@ class PRUController:
                                     PRUController.VGROUPS.SYNCOFF)
 
         # update time interval according to new sync mode selected
-        self._time_interval = self._get_time_interval()
+        self._scan_interval = self._get_time_interval()
 
         # set selected sync mode
         self._pru.sync_start(
@@ -718,7 +739,7 @@ class PRUController:
         """Stop PRU sync mode."""
         # TODO: should we do more than what is implemented?
         self._pru.sync_stop()
-        self._time_interval = self._get_time_interval()
+        self._scan_interval = self._get_time_interval()
 
     @property
     def pru_sync_pulse_count(self):
@@ -829,7 +850,7 @@ class PRUController:
             self._pru = _PRU()
 
         # update time interval attribute
-        self._time_interval = self._get_time_interval()
+        self._scan_interval = self._get_time_interval()
 
         # initialize PRU curves
         # TODO: read curves from PRU memory.
@@ -941,7 +962,7 @@ class PRUController:
             if self.scanning:
                 self.bsmp_scan()
             # wait for time_interval
-            _time.sleep(self._time_interval)
+            _time.sleep(self._scan_interval)
 
     def _loop_process(self):
         while self._running:
