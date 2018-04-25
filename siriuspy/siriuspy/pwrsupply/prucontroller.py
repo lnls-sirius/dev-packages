@@ -19,6 +19,7 @@ from siriuspy.bsmp.exceptions import SerialError as _SerialError
 from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 from siriuspy.pwrsupply.pru import PRUInterface as _PRUInterface
 from siriuspy.pwrsupply.pru import PRU as _PRU
+from siriuspy.pwrsupply.pru import PRUSim as _PRUSim
 from siriuspy.pwrsupply.bsmp import __version__ as _ps_bsmp_version
 from siriuspy.pwrsupply.bsmp import Const as _c
 from siriuspy.pwrsupply.bsmp import MAP_MIRROR_2_ORIG as _mirror_map
@@ -358,6 +359,7 @@ class PRUController:
     # TODO: Improve update frequency in WfmRamp/MigRamp (done - testing)
     # TODO: allow variable-size curves
     # TODO: delete random fluctuation added to measurements
+    # TODO: it might be possible and usefull to use simulated BSMP but real PRU
     #
     # Gabriel from ELP proposed the idea of a privilegded slave that
     # could define BSMP variables that corresponded to other slaves variables
@@ -539,7 +541,7 @@ class PRUController:
         # instance not running
         PRUController._instance_running = False
 
-    def state(self, device_id):
+    def get_state(self, device_id):
         """Return updated PSCState for a device."""
         PRUController._lock.acquire()
         state = _dcopy(self._psc_state[device_id])
@@ -794,7 +796,7 @@ class PRUController:
         # create PRU object
         if self._simulate:
             # TODO: generalize this code checking type(bsmp_entities)
-            self._pru = _FBP_BSMPSim()
+            self._pru = _PRUSim()
         else:
             self._pru = _PRU()
 
@@ -851,8 +853,8 @@ class PRUController:
         bsmp = dict()
         for id in self._device_ids:
             if self._simulate:
-                self._init_disconnect()
-                raise NotImplementedError
+                # TODO: generalize using bsmp_entities
+                bsmp[id] = _FBP_BSMPSim()
             else:
                 bsmp[id] = _BSMP(self._pru, id, bsmp_entities)
         return bsmp
