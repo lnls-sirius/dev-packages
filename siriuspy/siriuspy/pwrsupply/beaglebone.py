@@ -149,7 +149,7 @@ class IOCController:
     def _read(self, device_id, field):
         """Read a field."""
         variable_id = self.epics_2_bsmp[field]
-        value = self._controller.read_variable(device_id, variable_id)
+        value = self._controller.read_variables(device_id, variable_id)
         value = self._parse_value(field, value)
         return value
 
@@ -184,12 +184,12 @@ class IOCController:
     def _execute_command(self, devices_info, command, setpoints=None):
         dev_ids = [dev_info.id for dev_info in devices_info]
         if setpoints is None:
-            self._controller.exec_function(dev_ids, command)
+            self._controller.exec_functions(dev_ids, command)
         elif not hasattr(setpoints, '__iter__'):
-            self._controller.exec_function(dev_ids, command, setpoints)
+            self._controller.exec_functions(dev_ids, command, setpoints)
         else:
             for idx, dev_id in enumerate(dev_ids):
-                self._controller.exec_function(dev_id, command, setpoints[idx])
+                self._controller.exec_functions(dev_id, command, setpoints[idx])
 
     def _set_setpoints(self, devices_info, fields, values):
         devices_info = self._tuplify(devices_info)
@@ -321,7 +321,7 @@ class IOCController:
             pru_status = self._controller.pru_sync_status
             if not cycle_enabled and pru_status == 0:
                 # Return to SlowRef operation mode
-                self._controller.exec_function(
+                self._controller.exec_functions(
                     dev_info.id, _c.F_SELECT_OP_MODE, 3)
                 break
             _time.sleep(0.25)
