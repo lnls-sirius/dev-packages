@@ -147,10 +147,10 @@ def save_ioc_pv_list(ioc_name, prefix, db, filename=None):
                 case no filename is given it will be built from the ioc_name.
 
     """
-    try:
+    if isinstance(prefix, (list, tuple)):
         prefix_vaca = prefix[1]
         prefix_sector = prefix[0]
-    except IndexError:
+    else:
         prefix_vaca = prefix
         prefix_sector = ''
 
