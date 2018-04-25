@@ -672,7 +672,8 @@ class PRUController:
         # This is supposedly needed in cases where the last operation
         # in the queue was a function execution.
         # TODO: test this! but is it really necessary?
-        self._bsmp_update_variables(self.device_ids, self.SYNC.SYNCOFF)
+        self._bsmp_update_variables(self.device_ids,
+                                    PRUController.VGROUPS.SYNCOFF)
 
         # update time interval according to new sync mode selected
         self._time_interval = self._get_time_interval()
