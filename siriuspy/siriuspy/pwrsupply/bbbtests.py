@@ -11,7 +11,7 @@ from siriuspy.pwrsupply.bsmp import Const as BSMPConst
 from siriuspy.pwrsupply.bsmp import FBPEntities
 from siriuspy.pwrsupply.prucontroller import PRUController
 
-TPREFIX = ''
+P = 'TEST-'
 
 BBB1_device_ids = (1, 2)
 BBB2_device_ids = (5, 6)
@@ -31,17 +31,16 @@ siggen_config = (
 
 
 def configure_timing_modules(cycle=True):
-    """Configure timing system."""
+    """Configure timing devices for Event1."""
     print('Configuring Timing Modules to ' + ('cycle' if cycle else 'ramp'))
-    epics.caput(TPREFIX + 'AS-Glob:TI-EVG:Evt01Mode-Sel', 'External')
-    epics.caput(TPREFIX + 'AS-Glob:TI-EVG:DevEnbl-Sel', 1)
-    epics.caput(TPREFIX + 'AS-Glob:TI-EVG:RFDiv-SP', 4)
-    epics.caput(TPREFIX + 'AS-Glob:TI-EVR-1:DevEnbl-Sel', 1)
-    epics.caput(TPREFIX + 'AS-Glob:TI-EVR-1:OTP00Width-SP', 7000)
-    epics.caput(TPREFIX + 'AS-Glob:TI-EVR-1:OTP00State-Sel', 1)
-    epics.caput(TPREFIX + 'AS-Glob:TI-EVR-1:OTP00Evt-SP', 1)
-    epics.caput(TPREFIX + 'AS-Glob:TI-EVR-1:OTP00Pulses-SP',
-                1 if cycle else 4000)
+    epics.caput(P+'AS-Glob:TI-EVG:Evt01Mode-Sel', 'External')
+    epics.caput(P+'AS-Glob:TI-EVG:DevEnbl-Sel', 1)
+    epics.caput(P+'AS-Glob:TI-EVG:RFDiv-SP', 4)
+    epics.caput(P+'AS-Glob:TI-EVR-1:DevEnbl-Sel', 1)
+    epics.caput(P+'AS-Glob:TI-EVR-1:OTP08Width-SP', 7000)
+    epics.caput(P+'AS-Glob:TI-EVR-1:OTP08State-Sel', 1)
+    epics.caput(P+'AS-Glob:TI-EVR-1:OTP08Evt-SP', 1)
+    epics.caput(P+'AS-Glob:TI-EVR-1:OTP08Pulses-SP', 1 if cycle else 4000)
 
 
 def calc_siggen_duration():
@@ -58,8 +57,8 @@ def reset_interlocks(pruc):
     pruc.exec_function(ids, BSMPConst.F_RESET_INTERLOCKS)
     intlck = 0
     for id in ids:
-        intlck |= pruc.read_variable(id, BSMPConst.V_PS_HARD_INTERLOCKS)
-        intlck |= pruc.read_variable(id, BSMPConst.V_PS_SOFT_INTERLOCKS)
+        intlck |= pruc.read_variables(id, BSMPConst.V_PS_HARD_INTERLOCKS)
+        intlck |= pruc.read_variables(id, BSMPConst.V_PS_SOFT_INTERLOCKS)
     if intlck:
         raise ValueError('could not reset interlocks!')
 
@@ -162,7 +161,7 @@ def run_cycle(pruc):
     # makes sure power supply is in enable_siggen
     print('waiting for siggen to be enabled...', end='')
     sys.stdout.flush()
-    while pruc.read_variable(id, BSMPConst.V_SIGGEN_ENABLE) == 0:
+    while pruc.read_variables(id, BSMPConst.V_SIGGEN_ENABLE) == 0:
         time.sleep(0.1)
     print('enabled.')
 
@@ -172,8 +171,8 @@ def run_cycle(pruc):
         iload, siggen_enable = {}, {}
         for id in pruc.device_ids:
             siggen_enable[id] = \
-                pruc.read_variable(id, BSMPConst.V_SIGGEN_ENABLE)
-            iload[id] = pruc.read_variable(id, BSMPConst.V_I_LOAD)
+                pruc.read_variables(id, BSMPConst.V_SIGGEN_ENABLE)
+            iload[id] = pruc.read_variables(id, BSMPConst.V_I_LOAD)
 
         # print
         print('dtime:{:06.2f}'.format(time.time()-t0), end='')
@@ -251,8 +250,8 @@ def run_cycle(pruc):
 #         iload, siggen_enable = {}, {}
 #         for id in pruc.device_ids:
 #             siggen_enable[id] = \
-#                 pruc.read_variable(id, BSMPConst.V_SIGGEN_ENABLE)
-#             iload[id] = pruc.read_variable(id, BSMPConst.V_I_LOAD)
+#                 pruc.read_variables(id, BSMPConst.V_SIGGEN_ENABLE)
+#             iload[id] = pruc.read_variables(id, BSMPConst.V_I_LOAD)
 #
 #         # print info
 #         if not trigg_not_rcvd:

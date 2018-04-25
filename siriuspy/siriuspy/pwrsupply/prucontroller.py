@@ -550,37 +550,63 @@ class PRUController:
 
     # --- public methods: bsmp variable read and func exec ---
 
-    def read_variable(self, device_id, variable_id=None):
+    def read_variables(self, device_ids, variable_id=None):
         """
         Return device variables.
 
         Parameters
         ----------
-        device_id : int
-            The BSMP device id.
+        device_ids : int, tuple or list
+            The BSMP device ids.
         variable_id : int or None, optional.
             The BSMP variable id selected. If not passed all device variables
             will be returned.
 
         Returns
         -------
-        BSMP device variable values, as a list if no id was provided.
+        Selected BSMP device variable values.
         """
-        # get values
-        dev_values = self._variables_values[device_id]
-        if variable_id is None:
-            values = dev_values
+        # process device_ids
+        if isinstance(device_ids, int):
+            dev_ids = (device_ids, )
         else:
-            values = dev_values[variable_id]
+            dev_ids = device_ids
+
+        # gather selected data
+        values = dict()
+        for id in dev_ids:
+            dev_values = self._variables_values[id]
+            if variable_id is None:
+                values[id] = dev_values
+            else:
+                values[id] = dev_values[variable_id]
+
+        # get rid of dict, if a single device_id was passed.
+        if isinstance(device_ids, int):
+            values = values[device_ids]
 
         # lock and make copy of value
+        # TODO: test if locking is really necessary.
         PRUController._lock.acquire()
         values = _dcopy(values)
         PRUController._lock.release()
 
+        # # get values
+        # dev_values = self._variables_values[device_id]
+        # if variable_id is None:
+        #     values = dev_values
+        # else:
+        #     values = dev_values[variable_id]
+        #
+        # # lock and make copy of value
+        # # TODO: test if locking is really necessary.
+        # PRUController._lock.acquire()
+        # values = _dcopy(values)
+        # PRUController._lock.release()
+
         return values
 
-    def exec_function(self, device_ids, function_id, args=None):
+    def exec_functions(self, device_ids, function_id, args=None):
         """
         Append BSMP function executions to opertations queue.
 
