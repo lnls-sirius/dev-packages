@@ -595,11 +595,11 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
             'FOUT Enabled',
             'EVG Enabled',
             'Network Ok',
-            'Interlock Not Active',
             'UPLink Ok',
             'DownLink Ok',
             'Fout DownLink Ok',
             'EVG DownLink Ok',
+            'External Interlock',
             )
         }
 
