@@ -601,7 +601,7 @@ class PRUController:
             # in PRU sync off mode, append BSM function exec operation to queue
             if isinstance(device_ids, int):
                 device_ids = (device_ids, )
-            if not args:
+            if args is None:
                 args = (device_ids, function_id)
             else:
                 args = (device_ids, function_id, args)
@@ -664,6 +664,12 @@ class PRUController:
 
         # wait for all queued operations to be processed
         self._scanning_false_wait_empty_queue()
+
+        # execute a BSMP read group so that mirror is updated.
+        # This is supposedly needed in cases where the last operation
+        # in the queue was a function execution.
+        # TODO: test this! but is it really necessary?
+        self._bsmp_update_variables(self.device_ids, self.SYNC.SYNCOFF)
 
         # update time interval according to new sync mode selected
         self._time_interval = self._get_time_interval()
