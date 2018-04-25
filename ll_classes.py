@@ -604,7 +604,10 @@ class _EVROUT(_Base):
 
     def _process_src(self, src, is_sp):
         src_len = len(self._source_enums) if not is_sp else 0
-        source = _cstime.triggers_src_ll[src]
+        try:
+            source = _cstime.triggers_src_ll[src]
+        except IndexError:
+            source = ''
         if not source:
             return {'Src': src_len}  # invalid
         elif source.startswith(('Dsbl', 'Clock')):
