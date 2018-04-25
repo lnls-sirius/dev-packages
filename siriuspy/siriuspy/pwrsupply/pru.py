@@ -222,6 +222,8 @@ class PRUSim(PRUInterface):
     def _sync_start(self, sync_mode, sync_address, delay):
         self._sync_status = PRUInterface._SYNC_ON
         if not self._trigger_thread.is_alive():
+            self._trigger_thread = _threading.Thread(
+                target=self._listen_timing_trigger, daemon=True)
             self._trigger_thread.start()
         return True
 
@@ -265,7 +267,7 @@ class PRUSim(PRUInterface):
         while self._sync_status == PRUInterface._SYNC_ON:
             if self.sync_mode == PRUSim.SYNC_CYCLE:
                 self._sync_pulse_count += 1
-                self._sync_status == PRUInterface._SYNC_OFF
+                self._sync_status = PRUInterface._SYNC_OFF
             elif self.sync_mode in (PRUSim.SYNC_MIGINT, PRUSim.SYNC_MIGEND):
                 self._sync_pulse_count += 1
             elif self.sync_mode in (PRUSim.SYNC_RMPINT, PRUSim.SYNC_RMPEND):
