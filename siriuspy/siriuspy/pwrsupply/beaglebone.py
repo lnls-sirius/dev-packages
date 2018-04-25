@@ -2,23 +2,24 @@
 from copy import deepcopy as _deepcopy
 import logging as _log
 import re as _re
+import threading as _threading
+import time as _time
+import numpy as _np
+from collections import namedtuple as _namedtuple
 
 from siriuspy.search import PSSearch as _PSSearch
-from siriuspy.csdevice.pwrsupply import Const as _cPS
 from siriuspy.pwrsupply.data import PSData as _PSData
-from siriuspy.pwrsupply.pru import PRU as _PRU
-from siriuspy.pwrsupply.pru import PRUSim as _PRUSim
-from siriuspy.pwrsupply.controller import IOController as _IOController
-from siriuspy.pwrsupply.controller import IOControllerSim as _IOControllerSim
-from siriuspy.pwrsupply.model import FBPPowerSupply as _FBPPowerSupply
-from siriuspy.pwrsupply.bbbcontroller import PRUController as _PRUController
+from siriuspy.pwrsupply.prucontroller import PRUController as _PRUController
 from siriuspy.pwrsupply.bsmp import FBPEntities as _FBPEntities
 from siriuspy.pwrsupply.bsmp import Const as _c
 from .status import PSCStatus as _PSCStatus
 from siriuspy.csdevice.pwrsupply import Const as _devc
 
 
-class IOCDevice:
+DeviceInfo = _namedtuple('DeviceInfo', 'name, id')
+
+
+class IOCController:
     """Setpoints and field translation."""
 
     # Constants and Setpoint regexp patterns
@@ -56,7 +57,7 @@ class IOCDevice:
         'CycleIndex-Mon': _c.V_SIGGEN_N,
         'CycleFreq-RB': _c.V_SIGGEN_FREQ,
         'CycleAmpl-RB': _c.V_SIGGEN_AMPLITUDE,
-        'CycleOffset-SP': _c.V_SIGGEN_OFFSET,
+        'CycleOffset-RB': _c.V_SIGGEN_OFFSET,
         'CycleAuxParam-RB': _c.V_SIGGEN_AUX_PARAM,
         'IntlkSoft-Mon': _c.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon': _c.V_PS_HARD_INTERLOCKS,
@@ -80,52 +81,271 @@ class IOCDevice:
         'WfmData-SP': '_set_wfmdata_sp',
     }
 
-    _ct = _re.compile('^.*-Cte$')
-    _sp = _re.compile('^.*-(SP|Sel|Cmd)$')
-
-    def __init__(self, bsmp_device, psname, database):
+    def __init__(self, controller, devices_info, database):
         """Init."""
-        self._bsmp_device = bsmp_device
-        self._psname = psname
+        self._controller = controller
+        self._devices_info = devices_info
         self._database = database
         # define and init constant and setpoint fields
         self._setpoints = dict()
         self._constants = dict()
+        self._locals = ('WfmData-RB', )
+        self._local_vars = dict()
+        for device_info in devices_info.values():
+            self._setpoints[device_info.name] = dict()
+            self._constants[device_info.name] = dict()
+            self._local_vars[device_info.name] = dict()
         for field, db in self.database.items():
-            if self._sp.match(field):
-                self._setpoints[field] = db
-            elif self._ct.match(field):
-                self._constants[field] = db
-        #self._initiated = False
-        #self._init()
+            for device_info in devices_info.values():
+                if self._sp.match(field):
+                    self._setpoints[device_info.name][field] = _deepcopy(db)
+                elif self._ct.match(field):
+                    self._constants[device_info.name][field] = _deepcopy(db)
+                elif field in self._locals:
+                    self._local_vars[device_info.name][field] = _deepcopy(db)
+        self._initiated = False
+        self._init()
+        self._watchers = list()
 
     # API
-    @property
-    def psname(self):
-        """Device name."""
-        return self._psname
-
     @property
     def database(self):
         """Device database."""
         return self._database
 
-    @property
-    def connected(self):
-        return self._bsmp_device.connected
+    def read(self, device_name, field):
+        """Read field from device."""
+        device_id = self._devices_info[device_name].id
+        return self._read(device_id, field)
 
-    @property
-    def setpoints(self):
-        return self._setpoints
+    def read_all(self, device_name):
+        """Read all fields."""
+        values = dict()
+        self._read_variables(device_name, values)
+        self._read_setpoints(device_name, values)
+        self._read_locals(device_name, values)
+        return values
 
-    def read(self, field):
+    def write(self, devices_names, field, value):
+        """Write to value one or many devices' field."""
+        devices_names = self._tuplify(devices_names)
+        if self._check_values(field, value):
+            func = getattr(self, IOCController._epics_2_wfuncs[field])
+            devices_info = [self._devices_info[dev_name]
+                            for dev_name in devices_names]
+            value = self._trim_value(field, value)
+            value = self._trim_array(devices_names, field, value)
+            func(devices_info, value)
+        else:
+            _log.warning(
+                'Value {} is out of range for {} field'.format(value, field))
+
+    def get_connected(self, device_name):
+        """Connected."""
+        device_id = self._devices_info[device_name].id
+        return self._controller.get_connected(device_id)
+
+    # Private
+    def _read(self, device_id, field):
         """Read a field."""
         variable_id = self.epics_2_bsmp[field]
-        value = self._bsmp_device.read(variable_id)
+        value = self._controller.read_variable(device_id, variable_id)
+        value = self._parse_value(field, value)
+        return value
 
-        if value is None:
-            return None
+    def _init(self):
+        if not self._initiated:
+            for dev_info in self._devices_info.values():
+                dev_name = dev_info.name
+                setpoints = list()
+                values = list()
+                for field in self.epics_2_bsmp:
+                    if '-Sts' in field or '-RB' in field:
+                        setpoints.append(self._get_setpoint_field(field))
+                        values.append(self.read(dev_name, field))
+                self._set_setpoints(dev_info, setpoints, values)
 
+    @staticmethod
+    def _get_setpoint_field(field):
+        return field.replace('-Sts', '-Sel').replace('-RB', '-SP')
+
+    def _check_values(self, field, setpoint):
+        if 'Sel' in field:
+            enums = self.database[field]['enums']
+            if setpoint not in tuple(range(len(enums))):
+                return False
+        elif 'SP' in field:
+            pass
+        elif 'Cmd' in field:
+            if setpoint < 1:
+                return False
+        return True
+
+    def _execute_command(self, devices_info, command, setpoints=None):
+        dev_ids = [dev_info.id for dev_info in devices_info]
+        if setpoints is None:
+            self._controller.exec_function(dev_ids, command)
+        elif not hasattr(setpoints, '__iter__'):
+            self._controller.exec_function(dev_ids, command, setpoints)
+        else:
+            for idx, dev_id in enumerate(dev_ids):
+                self._controller.exec_function(dev_id, command, setpoints[idx])
+
+    def _set_setpoints(self, devices_info, fields, values):
+        devices_info = self._tuplify(devices_info)
+        fields = self._tuplify(fields)
+        values = self._tuplify(values)
+        for i, field in enumerate(fields):
+            for dev_info in devices_info:
+                self._setpoints[dev_info.name][field]['value'] = values[i]
+
+    def _set_cmd_setpoints(self, devices_info, field):
+        for dev_info in devices_info:
+            self._setpoints[dev_info.name][field]['value'] += 1
+
+    # Methods that execute function
+    def _set_pwrstate(self, devices_info, setpoint):
+        """Set PS On/Off."""
+        # Execute function to devices
+        if setpoint == 1:
+            self._execute_command(devices_info, _c.F_TURN_ON)
+        elif setpoint == 0:
+            self._execute_command(devices_info, _c.F_TURN_OFF)
+
+        # Set setpoints
+        fields = ('Current-SP', 'OpMode-Sel', 'PwrState-Sel')
+        values = (0.0, 0, setpoint)
+        self._set_setpoints(devices_info, fields, values)
+
+    def _set_opmode(self, devices_info, setpoint):
+        """Operation mode setter."""
+        # Execute function to set PSs operation mode
+        self._execute_command(devices_info, _c.F_SELECT_OP_MODE, setpoint+3)
+        self._set_setpoints(devices_info, 'OpMode-Sel', setpoint)
+
+        # Further actions that depend on op mode
+        if setpoint == _devc.OpMode.SlowRef:
+            # disable sigge
+            self._execute_command(devices_info, _c.F_DISABLE_SIGGEN)
+        elif setpoint == _devc.OpMode.Cycle:
+            self._set_cycling_watchers(devices_info)
+        else:
+            # TODO: implement actions for other modes
+            pass
+
+    def _set_current(self, devices_info, setpoint):
+        """Set current."""
+        self._execute_command(devices_info, _c.F_SET_SLOWREF, setpoint)
+        self._set_setpoints(devices_info, 'Current-SP', setpoint)
+
+    def _reset(self, devices_info, setpoint):
+        """Reset command."""
+        self._execute_command(devices_info, _c.F_RESET_INTERLOCKS, setpoint)
+        self._set_cmd_setpoints(devices_info, 'Reset-Cmd')
+
+    def _abort(self, devices_info, setpoint):
+        _log.warning('Abort not implemented')
+
+    def _enable_cycle(self, devices_info, setpoint):
+        """Enable cycle command."""
+        self._execute_command(devices_info, _c.F_ENABLE_SIGGEN, setpoint)
+        self._set_cmd_setpoints(devices_info, 'CycleEnbl-Cmd')
+
+    def _disable_cycle(self, devices_info, setpoint):
+        """Disable cycle command."""
+        self._execute_command(devices_info, _c.F_DISABLE_SIGGEN, setpoint)
+        self._set_cmd_setpoints(devices_info, 'CycleDsbl-Cmd')
+
+    def _set_cycle_type(self, devices_info, setpoint):
+        """Set cycle type."""
+        self._set_setpoints(devices_info, 'CycleType-Sel', setpoint)
+        values = self._cfg_siggen_args(devices_info)
+        self._execute_command(devices_info, _c.F_CFG_SIGGEN, values)
+
+    def _set_cycle_nr_cycles(self, devices_info, setpoint):
+        """Set number of cycles."""
+        self._set_setpoints(devices_info, 'CycleNrCycles-SP', setpoint)
+        values = self._cfg_siggen_args(devices_info)
+        self._execute_command(devices_info, _c.F_CFG_SIGGEN, values)
+
+    def _set_cycle_frequency(self, devices_info, setpoint):
+        """Set cycle frequency."""
+        self._set_setpoints(devices_info, 'CycleFreq-SP', setpoint)
+        values = self._cfg_siggen_args(devices_info)
+        self._execute_command(devices_info, _c.F_CFG_SIGGEN, values)
+
+    def _set_cycle_amplitude(self, devices_info, setpoint):
+        """Set cycle amplitude."""
+        self._set_setpoints(devices_info, 'CycleAmpl-SP', setpoint)
+        values = self._cfg_siggen_args(devices_info)
+        self._execute_command(devices_info, _c.F_CFG_SIGGEN, values)
+
+    def _set_cycle_offset(self, devices_info, setpoint):
+        """Set cycle offset."""
+        self._set_setpoints(devices_info, 'CycleOffset-SP', setpoint)
+        values = self._cfg_siggen_args(devices_info)
+        self._execute_command(devices_info, _c.F_CFG_SIGGEN, values)
+
+    def _set_cycle_aux_params(self, devices_info, setpoint):
+        """Set cycle offset."""
+        self._set_setpoints(devices_info, 'CycleAuxParam-SP', setpoint)
+        values = self._cfg_siggen_args(devices_info)
+        self._execute_command(devices_info, _c.F_CFG_SIGGEN, values)
+
+    def _set_wfmdata_sp(self, devices_info, setpoint):
+        """Set wfmdata."""
+        self._set_setpoints(devices_info, 'WfmData-SP', [setpoint])
+        for dev_info in devices_info:
+            self._local_vars[dev_info.name]['WfmData-RB']['value'] = setpoint
+        return True
+
+    # Watchers
+    def _set_cycling_watchers(self, devices_info):
+        self._watchers.clear()
+        for dev_info in devices_info:
+            t = _threading.Thread(
+                target=self._watch_cycle, args=(dev_info, ), daemon=True)
+            self._watchers.append(t)
+        for watcher in self._watchers:
+            watcher.start()
+
+    def _watch_cycle(self, dev_info):
+        dev_name = dev_info.name
+        if self.read(dev_name, 'PwrState-Sts') == 0:
+            return
+        while self.read(dev_name, 'OpMode-Sts') != _devc.OpMode.Cycle and \
+                self._controller.pru_sync_status != 1:
+            _time.sleep(0.1)
+        while True:
+            cycle_enabled = self.read(dev_name, 'CycleEnbl-Mon')
+            pru_status = self._controller.pru_sync_status
+            if not cycle_enabled and pru_status == 0:
+                # Return to SlowRef operation mode
+                self._controller.exec_function(
+                    dev_info.id, _c.F_SELECT_OP_MODE, 3)
+                break
+            _time.sleep(0.25)
+
+    # Helpers
+    def _cfg_siggen_args(self, devices_info):
+        """Get cfg_siggen args and execute it."""
+        values = []
+        for dev_info in devices_info:
+            args = []
+            dev_name = dev_info.name
+            args.append(self._setpoints[dev_name]['CycleType-Sel']['value'])
+            args.append(self._setpoints[dev_name]['CycleNrCycles-SP']['value'])
+            args.append(self._setpoints[dev_name]['CycleFreq-SP']['value'])
+            args.append(self._setpoints[dev_name]['CycleAmpl-SP']['value'])
+            args.append(self._setpoints[dev_name]['CycleOffset-SP']['value'])
+            args.extend(self._setpoints[dev_name]['CycleAuxParam-SP']['value'])
+            values.append(args)
+        return values
+
+    def _get_dev_ids(self, devices_info):
+        return [dev_info.id for dev_info in devices_info]
+
+    def _parse_value(self, field, value):
         if field == 'PwrState-Sts':
             psc_status = _PSCStatus(ps_status=value)
             value = psc_status.ioc_pwrstate
@@ -141,145 +361,55 @@ class IOCDevice:
                 value, _ = version.split('\x00', 0)
             except ValueError:
                 value = version
-
         return value
 
-    def read_all(self):
-        """Read all fields."""
-        values = dict()
-        for field in self.epics_2_bsmp:
-            key = self.psname + ':' + field
-            values[key] = self.read(field)
-        for field, db in self._setpoints.items():
-            key = self.psname + ':' + field
-            values[key] = db['value']
-        values[self.psname+':WfmData-RB'] = self.database['WfmData-RB']['value']
-
-        return values
-
-    def write(self, field, value):
-        """Write to field."""
-        func = getattr(self, IOCDevice._epics_2_wfuncs[field])
-        func(value)
-
-    # Private
-    def _set_pwrstate(self, setpoint):
-        """Set PwrState setpoint."""
-        if setpoint == 1:
-            self._bsmp_device.turn_on()
-        elif setpoint == 0:
-            self._bsmp_device.turn_off()
+    def _trim_value(self, field, setpoint):
+        try:
+            low = self.database[field]['lolo']
+            high = self.database[field]['hihi']
+        except KeyError:
+            pass
         else:
-            self.setpoints['PwrState-Sel']['value'] = setpoint
-            return
+            setpoint = max(low, setpoint)
+            setpoint = min(high, setpoint)
+        return setpoint
 
-        self.setpoints['Current-SP']['value'] = 0.0
-        self.setpoints['OpMode-Sel']['value'] = 0
-        self.setpoints['PwrState-Sel']['value'] = setpoint
+    def _trim_array(self, device_names, field, setpoint):
+        return setpoint
+        try:  # TODO: fix
+            self.database[field]['count']
+        except KeyError:
+            pass
+        else:
+            sp = self._setpoints[device_names][field]['value']
+            setpoint = setpoint[:len(sp)]
+            setpoint += sp[len(setpoint):]
+        return setpoint
 
-    def _set_opmode(self, setpoint):
-        """Operation mode setter."""
-        if setpoint >= 0 or \
-                setpoint <= len(self.setpoints['OpMode-Sel']['enums']):
-            self._bsmp_device.select_op_mode(setpoint)
-            self.setpoints['OpMode-Sel']['value'] = setpoint
-            if setpoint == _devc.OpMode.SlowRef:
-                # disable siggen
-                self._bsmp_device.disable_siggen()
-                # turn PRU sync off - This is done in the BBB class
-                pass
-            elif setpoint == _devc.OpMode.Cycle:
-                # implement actions for Cycle
-                pass
-            else:
-                # TODO: implement actions for other modes
-                pass
+    def _read_variables(self, device_name, values):
+        device_id = self._devices_info[device_name].id
+        for field in self.epics_2_bsmp:
+            key = device_name + ':' + field
+            values[key] = self._read(device_id, field)
 
-    def _set_current(self, setpoint):
-        """Set current."""
-        setpoint = max(self.setpoints['Current-SP']['lolo'], setpoint)
-        setpoint = min(self.setpoints['Current-SP']['hihi'], setpoint)
+    def _read_setpoints(self, device_name, values):
+        for field, db in self._setpoints[device_name].items():
+            key = device_name + ':' + field
+            values[key] = db['value']
 
-        self._bsmp_device.set_slowref(setpoint)
-        self.setpoints['Current-SP']['value'] = setpoint
+    def _read_locals(self, device_name, values):
+        for field, db in self._local_vars[device_name].items():
+            key = device_name + ':' + field
+        values[key] = db['value']
 
-    def _reset(self, setpoint):
-        """Reset command."""
-        if setpoint:
-            self.setpoints['Reset-Cmd']['value'] += 1
-            self._bsmp_device.reset_interlocks()
-
-    def _abort(self, setpoint):
-        if setpoint:
-            self.setpoints['Reset-Cmd']['value'] += 1
-            self._bsmp_device.set_opmode(_devc.OpMode.SlowRef)
-
-    def _enable_cycle(self, setpoint):
-        """Enable cycle command."""
-        if setpoint:
-            self.setpoints['CycleEnbl-Cmd']['value'] += 1
-            self._bsmp_device.enable_siggen()
-
-    def _disable_cycle(self, setpoint):
-        """Disable cycle command."""
-        if setpoint:
-            self.setpoints['CycleDsbl-Cmd']['value'] += 1
-            self._bsmp_device.disable_siggen()
-
-    def _set_cycle_type(self, setpoint):
-        """Set cycle type."""
-        self.setpoints['CycleType-Sel']['value'] = setpoint
-        # if setpoint < 0 or \
-        #         setpoint > len(self.setpoints['CycleType-Sel']['enums']):
-        #     return
-        self._bsmp_device.cfg_siggen(*self._cfg_siggen_args())
-
-    def _set_cycle_nr_cycles(self, setpoint):
-        """Set number of cycles."""
-        self.setpoints['CycleNrCycles-SP']['value'] = setpoint
-        self._bsmp_device.cfg_siggen(*self._cfg_siggen_args())
-
-    def _set_cycle_frequency(self, setpoint):
-        """Set cycle frequency."""
-        self.setpoints['CycleFreq-SP']['value'] = setpoint
-        self._bsmp_device.cfg_siggen(*self._cfg_siggen_args())
-
-    def _set_cycle_amplitude(self, setpoint):
-        """Set cycle amplitude."""
-        self.setpoints['CycleAmpl-SP']['value'] = setpoint
-        self._bsmp_device.cfg_siggen(*self._cfg_siggen_args())
-
-    def _set_cycle_offset(self, setpoint):
-        """Set cycle offset."""
-        self.setpoints['CycleOffset-SP']['value'] = setpoint
-        return self._bsmp_device.cfg_siggen(*self._cfg_siggen_args())
-
-    def _set_cycle_aux_params(self, setpoint):
-        """Set cycle offset."""
-        # trim setpoint list
-        cur_sp = self.setpoints['CycleAuxParam-SP']['value']
-        setpoint = setpoint[:len(cur_sp)]
-        setpoint += cur_sp[len(setpoint):]
-        # update setpoint
-        self.setpoints['CycleAuxParam-SP']['value'] = setpoint
-        return self._bsmp_device.cfg_siggen(*self._cfg_siggen_args())
-
-    def _cfg_siggen_args(self):
-        """Get cfg_siggen args and execute it."""
-        args = []
-        args.append(self.setpoints['CycleType-Sel']['value'])
-        args.append(self.setpoints['CycleNrCycles-SP']['value'])
-        args.append(self.setpoints['CycleFreq-SP']['value'])
-        args.append(self.setpoints['CycleAmpl-SP']['value'])
-        args.append(self.setpoints['CycleOffset-SP']['value'])
-        args.append(self.setpoints['CycleAuxParam-SP']['value'])
-        return args
-
-    def _set_wfmdata_sp(self, setpoint):
-        """Set wfmdata."""
-        self.setpoints['WfmData-SP']['value'] = setpoint
-        self.database['WfmData-RB']['value'] = setpoint
-        return True
+    def _tuplify(self, value):
+        # Return tuple if value is not iterable
+        if not hasattr(value, '__iter__') or \
+                isinstance(value, str) or \
+                isinstance(value, _np.ndarray) or \
+                isinstance(value, DeviceInfo):
+            return value,
+        return value
 
 
 class BeagleBone:
@@ -289,12 +419,12 @@ class BeagleBone:
     supplies controlled by a specific beaglebone system.
     """
 
-    # --- public interface ---
-
     def __init__(self, bbbname, simulate=True):
         """Retrieve power supply."""
         self._bbbname = bbbname
         self._simulate = simulate
+
+        self._devices_info = dict()
 
         # retrieve names of associated power supplies
         if self._bbbname == 'BO-01:CO-BBB-1':
@@ -318,17 +448,14 @@ class BeagleBone:
         #     pass
 
         # create abstract power supply objects
-        self._power_supplies = self._create_power_supplies()
+        # self._power_supplies = self._create_power_supplies()
+        self._create_ioc_controller()
 
+    # --- public interface ---
     @property
     def psnames(self):
         """Return list of associated power supply names."""
         return self._psnames.copy()
-
-    @property
-    def power_supplies(self):
-        """Return power supplies."""
-        return self._power_supplies
 
     @property
     def controller(self):
@@ -337,39 +464,31 @@ class BeagleBone:
 
     def read(self, device_name):
         """Read all device fields."""
-        return self.power_supplies[device_name].read_all()
+        field_values = self._ioc_controller.read_all(device_name)
+        # field_values = self.power_supplies[device_name].read_all()
+        return field_values
 
     def write(self, device_name, field, value):
         """BBB write."""
         if field == 'OpMode-Sel':
             self._set_opmode(value)
+        elif field == 'CycleDsbl-Cmd':
+            self._ioc_controller.write(self.psnames, field, 1)
         else:
-            self.power_supplies[device_name].write(field, value)
+            # self.power_supplies[device_name].write(field, value)
+            self._ioc_controller.write(device_name, field, value)
 
-    def is_connected(self, device_name):
+    def get_connected(self, device_name):
         """"Return connection status."""
-        return self.power_supplies[device_name].connected
-
-    def __getitem__(self, index):
-        """Return corresponding power supply object."""
-        if isinstance(index, int):
-            return self._power_supplies[self.psnames.index(index)]
-        else:
-            return self._power_supplies[index]
-
-    def __contains__(self, psname):
-        """Test if psname is in psname list."""
-        return psname in self._psnames
+        return self._ioc_controller.get_connected(device_name)
 
     # --- private methods ---
-
     def _set_opmode(self, op_mode):
-        self.controller.pru_sync_stop()
-        for ps in self.power_supplies.values():
-            ps.write('PwrState-Sel', op_mode)
+        self._controller.pru_sync_stop()
+        self._ioc_controller.write(self.psnames, 'OpMode-Sel', op_mode)
         if op_mode == 2:
-            sync_mode = self.controller.SYNC.CYCLE
-            return self.controller.pru_sync_start(sync_mode)
+            sync_mode = self._controller.SYNC.CYCLE
+            return self._controller.pru_sync_start(sync_mode)
 
         # return self._state.set_op_mode(self)
 
@@ -410,29 +529,29 @@ class BeagleBone:
 
     # def _set_pru_sync_slowref(self, device_name, field, value):
     #     # print('set_pru_sync_slowref!')
-    #     ret = self.controller.pru.sync_stop()
+    #     ret = self._controller.pru.sync_stop()
     #     return ret
 
     # def _set_pru_sync_cycle(self, device_name, field, value):
     #     # print('set_pru_sync_cycle!')
-    #     sync_mode = self.controller.pru.SYNC_CYCLE
+    #     sync_mode = self._controller.pru.SYNC_CYCLE
     #     ret = self._set_pru_sync_start(sync_mode)
     #     return ret
     #     return True
 
     # def _set_pru_sync_rmpwfm(self, device_name, field, value):
-    #     sync_mode = self.controller.pru.SYNC_RMPEND
+    #     sync_mode = self._controller.pru.SYNC_RMPEND
     #     ret = self._set_pru_sync_start(sync_mode)
     #     return ret
 
     # def _set_pru_sync_migwfm(self, device_name, field, value):
-    #     sync_mode = self.controller.pru.SYNC_MIGEND
+    #     sync_mode = self._controller.pru.SYNC_MIGEND
     #     ret = self._set_pru_sync_start(sync_mode)
     #     return ret
 
     # def _set_pru_sync_start(self, sync_mode):
     #     slave_id = self._power_supplies[self.psnames[0]]._slave_id
-    #     ret = self.controller.pru.sync_start(
+    #     ret = self._controller.pru.sync_start(
     #         sync_mode=sync_mode, sync_address=slave_id)
     #     return ret
 
@@ -447,18 +566,17 @@ class BeagleBone:
         else:
             return tuple(range(1, 1+len(self._psnames)))
 
-    def _create_power_supplies(self):
+    def _create_ioc_controller(self):
         # Return dict of power supply objects
         slave_ids = self._get_bsmp_slave_IDs()
-        self._controller = _PRUController(_FBPEntities(), slave_ids)
-        power_supplies = dict()
+        self._controller = _PRUController(
+            _FBPEntities(), slave_ids, simulate=self._simulate)
         for i, psname in enumerate(self._psnames):
-            # Define device controller
-            if self._psmodel == 'FBP':
-                db = _deepcopy(self._database)
-                device = _FBPPowerSupply(self._controller, slave_ids[i])
-                power_supplies[psname] = IOCDevice(device, psname, db)
-        return power_supplies
+            self._devices_info[psname] = DeviceInfo(psname, slave_ids[i])
+        db = _deepcopy(self._database)
+        self._ioc_controller = IOCController(
+            self._controller, self._devices_info, db)
+        # return power_supplies
 
 
 # class BBBSlowRefState:
