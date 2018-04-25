@@ -625,7 +625,21 @@ class PRUController:
         return self._pru.sync_status
 
     def pru_sync_start(self, sync_mode):
-        """Start PRU sync mode."""
+        """Start PRU sync mode.
+
+        Before starting a sync_mode this method does a number of actions:
+
+        01. Checks if requested mode exists. If not, raises NotImplementedError
+        02. Moves sync state to off.
+        03. Stops scanning device variables
+        04. Waits untill all operations in queue are processed.
+        05. Start sync in requested mode
+        06. Turn scanning back on again.
+
+        obs: Since operation in queue are processed before changing starting
+        the new sync mode, this method can safely be invoked right away after
+        any other PRUController method, withou any inserted delay.
+        """
         # test if sync_mode is valid
         if sync_mode not in PRUController.SYNC.MODES:
             self.disconnect()
@@ -928,7 +942,7 @@ class PRUController:
 
         # now always return first device to read the selected variables of
         # all power supplies through mirror variables.
-        return (self._devices_ids[0], )
+        return (self._device_ids[0], )
 
     def _get_time_interval(self):
         if self.pru_sync_status == self.SYNC.OFF or \
@@ -940,6 +954,25 @@ class PRUController:
     # --- private methods: BSMP UART communications ---
 
     def _bsmp_update_variables(self, device_ids, group_id):
+        """Read a variable group of device(s).
+
+        This method is inserted in the operation queue my the scanning method.
+        values of power supply controller variables read with the BSMP command
+        are used to update a mirror state in BBBController of the power
+        supplies.
+
+        The method is invoked with two group_ids:
+
+        01. group_id = PRUController.VGROUPS.SYNCOFF
+            Used for 'SlowRef' and 'Cycle' power supply operation modes.
+
+        02. group_id = PRUController.VGROUPS.MIRROR
+            used for 'SlowRefSync', 'RmpWfm' and 'MigWfm' operation modes.
+            In this case mirror variables are read from a single device (power
+            supply) in order to update a subset of variables for all devices
+            at 2 Hz.
+        """
+        # TODO: profile method in order to reduce its 20% CPU usage in BBB1
 
         ack, data = dict(), dict()
 
@@ -966,24 +999,29 @@ class PRUController:
                 values = data[id]
                 for i in range(len(values)):
                     var_id = var_ids[i]
-                    # process mirror variables, if the case
                     if group_id == self.VGROUPS.MIRROR:
-                        # This code assumes that first entry in each mirror
+                        # --- update from read of group of mirror variables
+                        #
+                        # this code assumes that first entry in each mirror
                         # variable block corresponds to the device with
                         # lowest dev_id, the second entry to the second lowest
                         # dev_id, and so on.
-                        # TODO: check with ELP if this is the case (email).
+                        #
                         mir_dev_idx, mir_var_id = _mirror_map[var_id]
                         if mir_dev_idx <= nr_devs:
                             mir_dev_id = self.device_ids[mir_dev_idx-1]
                             copy_var_vals[mir_dev_id][mir_var_id] = values[i]
                     else:
-                        # process original variable
+                        # --- update from read of other variables groups
                         copy_var_vals[id][var_id] = values[i]
-                # add random fluctuation (tests)
-                # TODO: turn this off
+
+                # add random fluctuation to V_I_LOAD variables (tests)
+                # in order to avoid measuring wrong update rates due to
+                # power supply discretization of current readout.
+                # TODO: turn off added random fluctuations.
                 copy_var_vals[id][self.BSMP.V_I_LOAD] += \
-                    0.0001*2*(_random.rand()-0.5)
+                    0.0001*_random.uniform(-1.0, +1.0)
+
             else:
                 self._connected[id] = False
 
