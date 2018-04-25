@@ -23,15 +23,8 @@ from siriuspy.pwrsupply.pru import PRUSim as _PRUSim
 from siriuspy.pwrsupply.bsmp import __version__ as _ps_bsmp_version
 from siriuspy.pwrsupply.bsmp import Const as _c
 from siriuspy.pwrsupply.bsmp import MAP_MIRROR_2_ORIG as _mirror_map
-<<<<<<< Updated upstream:siriuspy/siriuspy/pwrsupply/prucontroller.py
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 from siriuspy.pwrsupply.controller import FBP_BSMPSim as _FBP_BSMPSim
-=======
-from siriuspy.pwrsupply.controller import FBP_BSMPSim as _FBP_BSMPSim
-
-# imports for tests
-from siriuspy.pwrsupply.bsmp import FBPEntities as _FBPEntities
->>>>>>> Stashed changes:siriuspy/siriuspy/pwrsupply/bbbcontroller.py
 
 
 # NOTE on current behaviour of PRU and Power Supplies:
@@ -802,13 +795,8 @@ class PRUController:
 
         # create PRU object
         if self._simulate:
-<<<<<<< Updated upstream:siriuspy/siriuspy/pwrsupply/prucontroller.py
-            # TODO: generalize this code checking type(bsmp_entities)
-            self._pru = _FBP_BSMPSim()
-=======
             self._init_disconnect()
             self._pru = _PRUSim()
->>>>>>> Stashed changes:siriuspy/siriuspy/pwrsupply/bbbcontroller.py
         else:
             self._pru = _PRU()
 
