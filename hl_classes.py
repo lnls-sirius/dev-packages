@@ -349,8 +349,8 @@ class HL_Trigger(_HL_Base):
             # 'DevEnbl', 'FOUTDevEnbl', 'EVGDevEnbl'
             alarm = _Alarm.DISABLE_ALARM
             severity = _Severity.INVALID_ALARM
-        elif (get_bit(status, 6) | get_bit(status, 7) |
-              get_bit(status, 8) | get_bit(status, 9)):
+        elif (get_bit(status, 5) | get_bit(status, 6) |
+              get_bit(status, 7) | get_bit(status, 8)):
             # 'Link' 'Loss'
             alarm = _Alarm.LINK_ALARM
             severity = _Severity.INVALID_ALARM
@@ -358,7 +358,7 @@ class HL_Trigger(_HL_Base):
             # 'Network'
             alarm = _Alarm.COMM_ALARM
             severity = _Severity.MINOR_ALARM
-        elif get_bit(status, 5):
+        elif get_bit(status, 9):
             # 'IntlkMon'
             alarm = _Alarm.STATE_ALARM
             severity = _Severity.MINOR_ALARM

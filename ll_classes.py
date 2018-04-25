@@ -1,5 +1,5 @@
 """Define the low level classes which will connect to Timing Devices IOC."""
-
+import time as _time
 from functools import partial as _partial
 import logging as _log
 import epics as _epics
@@ -210,6 +210,7 @@ class _Base:
 
     def _on_change_pvs_sp(self, pvname, value, **kwargs):
         if self._is_forcing:
+            _time.sleep(0.1)
             self._start_timer()
         else:
             if pvname.endswith('-Cmd'):
@@ -515,20 +516,20 @@ class _EVROUT(_Base):
         status |= ((not dic_['FOUTDevEnbl']) << 2)
         status |= ((not dic_['EVGDevEnbl']) << 3)
         status |= ((not dic_['Network']) << 4)
-        status |= ((dic_['IntlkMon']) << 5)
-        status |= ((not dic_['Link']) << 6)
+        status |= ((dic_['IntlkMon']) << 9)
+        status |= ((not dic_['Link']) << 5)
         if dic_['Los'] is not None:
             num = self._internal_trigger - self._NUM_OTP
             if num >= 0 and (dic_['Los'] >> num) % 2:
-                status |= (1 << 7)
+                status |= (1 << 6)
         if dic_['FOUTLos'] is not None:
             num = self._fout_out
             if num >= 0 and (dic_['FOUTLos'] >> num) % 2:
-                status |= (1 << 8)
+                status |= (1 << 7)
         if dic_['EVGLos'] is not None:
             num = self._evg_out
             if num >= 0 and (dic_['EVGLos'] >> num) % 2:
-                status |= (1 << 9)
+                status |= (1 << 8)
         return {'Status': status}
 
     def _get_delay(self, prop, is_sp, value=None):
