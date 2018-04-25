@@ -13,7 +13,7 @@ from siriuspy.pwrsupply.prucontroller import PRUController as _PRUController
 from siriuspy.pwrsupply.bsmp import FBPEntities as _FBPEntities
 from siriuspy.pwrsupply.bsmp import Const as _c
 from .status import PSCStatus as _PSCStatus
-from siriuspy.csdevice.pwrsupply import Const as _devc
+from siriuspy.csdevice.pwrsupply import Const as _PSConst
 
 
 DeviceInfo = _namedtuple('DeviceInfo', 'name, id')
@@ -224,10 +224,10 @@ class IOCController:
         self._set_setpoints(devices_info, 'OpMode-Sel', setpoint)
 
         # Further actions that depend on op mode
-        if setpoint == _devc.OpMode.SlowRef:
+        if setpoint == _PSConst.OpMode.SlowRef:
             # disable sigge
             self._execute_command(devices_info, _c.F_DISABLE_SIGGEN)
-        elif setpoint == _devc.OpMode.Cycle:
+        elif setpoint == _PSConst.OpMode.Cycle:
             self._set_cycling_watchers(devices_info)
         else:
             # TODO: implement actions for other modes
@@ -313,7 +313,7 @@ class IOCController:
         dev_name = dev_info.name
         if self.read(dev_name, 'PwrState-Sts') == 0:
             return
-        while self.read(dev_name, 'OpMode-Sts') != _devc.OpMode.Cycle and \
+        while self.read(dev_name, 'OpMode-Sts') != _PSConst.OpMode.Cycle and \
                 self._controller.pru_sync_status != 1:
             _time.sleep(0.1)
         while True:
@@ -484,9 +484,9 @@ class BeagleBone:
 
     # --- private methods ---
     def _set_opmode(self, op_mode):
-        self._controller.pru_sync_stop()
+        self._controller.pru_sync_stop()  # TODO: not necessary. test.
         self._ioc_controller.write(self.psnames, 'OpMode-Sel', op_mode)
-        if op_mode == 2:
+        if op_mode == _PSConst.OpMode.Cycle:
             sync_mode = self._controller.SYNC.CYCLE
             return self._controller.pru_sync_start(sync_mode)
 
