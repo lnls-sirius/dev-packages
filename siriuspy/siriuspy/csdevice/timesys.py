@@ -584,11 +584,11 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     db['DelayType-Sts'] = _dcopy(dic_)
     db['DelayType-Sel'] = dic_
 
-    dic_ = {'type': 'int', 'value': 255}
+    dic_ = {'type': 'int', 'value': 1024}
     db['Status-Mon'] = _dcopy(dic_)
 
     db['Status-Cte'] = {
-        'type': 'string', 'count': 8,
+        'type': 'string', 'count': 10,
         'value': (
             'All PVs connected',
             'Device Enabled',
@@ -598,6 +598,8 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
             'Interlock Not Active',
             'UPLink Ok',
             'DownLink Ok',
+            'Fout DownLink Ok',
+            'EVG DownLink Ok',
             )
         }
 
