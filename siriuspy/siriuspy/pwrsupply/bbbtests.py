@@ -172,6 +172,7 @@ def run_cycle(pruc):
     print('enabled.')
 
     # loops while cycling
+    t, c = [], []
     while time.time() - t0 < duration + 2.0:
         # read iload and siggen
         iload, siggen_enable = {}, {}
@@ -180,8 +181,12 @@ def run_cycle(pruc):
                 pruc.read_variables(id2, BSMPConst.V_SIGGEN_ENABLE)
             iload[id2] = pruc.read_variables(id2, BSMPConst.V_I_LOAD)
 
+        # acquire
+        t1 = time.time()
+        t.append(t1), c.append(iload[1])
+
         # print
-        print('dtime:{:06.2f}'.format(time.time()-t0), end='')
+        print('dtime:{:06.2f}'.format(t1-t0), end='')
         print('  -  ', end='')
         print('iload:', end='')
         for id2 in pruc.device_ids:
@@ -197,6 +202,8 @@ def run_cycle(pruc):
     # return to SlowRef mode
     pruc.exec_functions(id, BSMPConst.F_SELECT_OP_MODE,
                         args=(PSConst.States.SlowRef,))
+
+    return
 
 # @staticmethod
 # def basic_tests():
