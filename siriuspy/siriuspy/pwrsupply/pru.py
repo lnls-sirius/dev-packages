@@ -98,13 +98,21 @@ class PRUInterface:
         """Set waveforms for power supplies."""
         return self._curve(curve1, curve2, curve3, curve4, block)
 
-    def set_curve_block(self, block):
-        """Set the block of curves."""
-        self._set_curve_block(block)
+    def read_curve_pointer(self):
+        """Index of next curve point to be processed."""
+        return self._read_curve_pointer()
+
+    def set_curve_pointer(self, index):
+        """Set index of next curve point to be processed."""
+        self._set_curve_pointer(index)
 
     def read_curve_block(self):
         """Read selected block of curves."""
         self._read_curve_block()
+
+    def set_curve_block(self, block):
+        """Set the block of curves."""
+        self._set_curve_block(block)
 
     def close(self):
         """Close PRU session."""
@@ -190,13 +198,21 @@ class PRU(PRUInterface):
         _PRUserial485.PRUserial485_curve(curve1, curve2, curve3, curve4, block)
         return True
 
-    def _set_curve_block(self, block):
-        _PRUserial485.PRUserial485_set_curve_block(block)  # None returned
+    def _read_curve_pointer(self):
+        value = _PRUserial485.PRUserial485_read_curve_pointer()
+        return value
+
+    def _set_curve_pointer(self, index):
+        _PRUserial485.PRUserial485_set_curve_pointer(index)
         return True
 
     def _read_curve_block(self):
         value = _PRUserial485.PRUserial485_read_curve_block()
         return value
+
+    def _set_curve_block(self, block):
+        _PRUserial485.PRUserial485_set_curve_block(block)  # None returned
+        return True
 
     def _close(self):
         _PRUserial485.PRUserial485_close()
@@ -215,6 +231,7 @@ class PRUSim(PRUInterface):
             target=self._listen_timing_trigger, daemon=True)
         self._curves = self._create_curves()
         self._block = 0  # TODO: check if this is the default PRU value
+        self._index = 0
 
     def _get_sync_status(self):
         return self._sync_status
@@ -249,13 +266,20 @@ class PRUSim(PRUInterface):
         self._curves[block][3] = curve4.copy()
         return True
 
-    def _set_curve_block(self, block):
-        # TODO: have to simulate change when previous curve is processed!
-        self._block = block
+    def _read_curve_pointer(self):
+        return self._index
+
+    def _set_curve_pointer(self, index):
+        self._index = index
         return True
 
     def _read_curve_block(self):
         return self._block
+
+    def _set_curve_block(self, block):
+        # TODO: have to simulate change when previous curve is processed!
+        self._block = block
+        return True
 
     def _close(self):
         return True
