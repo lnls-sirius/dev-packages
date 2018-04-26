@@ -94,9 +94,9 @@ class PRUInterface:
         value = self._UART_read()
         return value
 
-    def curve(self, curve1, curve2, curve3, curve4):
+    def curve(self, curve1, curve2, curve3, curve4, block):
         """Set waveforms for power supplies."""
-        return self._curve(curve1, curve2, curve3, curve4)
+        return self._curve(curve1, curve2, curve3, curve4, block)
 
     def set_curve_block(self, block):
         """Set the block of curves."""
