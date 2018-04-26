@@ -203,7 +203,7 @@ def run_cycle(pruc):
     pruc.exec_functions(id, BSMPConst.F_SELECT_OP_MODE,
                         args=(PSConst.States.SlowRef,))
 
-    return
+    return t, c
 
 # @staticmethod
 # def basic_tests():
