@@ -16,19 +16,20 @@ P = 'T'
 BBB1_device_ids = (1, 2)
 BBB2_device_ids = (5, 6)
 
-siggen_config = (
+siggen_config = [
     # --- siggen sine parameters ---
     1,       # type
     10,      # num_cycles
     0.5,     # freq
     2.0,     # amplitude
     0.0,     # offset
-    3.0,     # aux_param[0]
+    -3.0,     # aux_param[0]
     0.0,     # aux_param[1]
     0.0,     # aux_param[2]
     0.0,     # aux_param[3]
-)
+]
 
+curve1 = [i*2.0/(4000.0-1.0) for i in range(4000)]
 
 def configure_timing_modules(cycle=True):
     """Configure timing devices for Event1."""
@@ -113,12 +114,12 @@ def config_cycle_mode(pruc):
     # disable siggen
     pruc.exec_functions(ids, BSMPConst.F_DISABLE_SIGGEN)
 
+    # configure siggen parameters (needs disabled siggen!)
+    pruc.exec_functions(ids, BSMPConst.F_CFG_SIGGEN, siggen_config)
+
     # set ps to cycle mode
     pruc.exec_functions(ids, BSMPConst.F_SELECT_OP_MODE,
                         args=(PSConst.States.Cycle,))
-
-    # configure siggen parameters (needs disabled siggen!)
-    pruc.exec_functions(ids, BSMPConst.F_CFG_SIGGEN, siggen_config)
 
 
 def measure_duration_bsmp_sync_pulse(pruc):
@@ -128,8 +129,16 @@ def measure_duration_bsmp_sync_pulse(pruc):
 
 def run_rmpwfm(pruc):
     """Run rmpwfm."""
-    pass
+    # create pruc in deafault config
+    init_slowref(pruc)
 
+    # write curve1 to PRu
+    pruc.pru_curve_write(1, curve1)
+
+    # enters cycle mode
+    pruc.pru_sync_start(sync_mode=pruc.SYNC.RMPEND)
+
+    print('power supply in rmpwfm mode, waiting for sync signal...')
 
 def run_cycle(pruc):
     """Run cycle mode.
@@ -172,7 +181,6 @@ def run_cycle(pruc):
     print('enabled.')
 
     # loops while cycling
-    t, c = [], []
     while time.time() - t0 < duration + 2.0:
         # read iload and siggen
         iload, siggen_enable = {}, {}
@@ -181,12 +189,8 @@ def run_cycle(pruc):
                 pruc.read_variables(id2, BSMPConst.V_SIGGEN_ENABLE)
             iload[id2] = pruc.read_variables(id2, BSMPConst.V_I_LOAD)
 
-        # acquire
-        t1 = time.time()
-        t.append(t1), c.append(iload[1])
-
         # print
-        print('dtime:{:06.2f}'.format(t1-t0), end='')
+        print('dtime:{:06.2f}'.format(time.time()-t0), end='')
         print('  -  ', end='')
         print('iload:', end='')
         for id2 in pruc.device_ids:
@@ -203,7 +207,6 @@ def run_cycle(pruc):
     pruc.exec_functions(id, BSMPConst.F_SELECT_OP_MODE,
                         args=(PSConst.States.SlowRef,))
 
-    return t, c
 
 # @staticmethod
 # def basic_tests():

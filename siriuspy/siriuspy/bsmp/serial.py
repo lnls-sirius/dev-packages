@@ -1,6 +1,9 @@
 """BSMP serial communications classes."""
 import struct as _struct
-from .exceptions import SerialError as _SerialError
+from .exceptions import SerialErrEmpty as _SerialErrEmpty
+from .exceptions import SerialErrCheckSum as _SerialErrCheckSum
+from .exceptions import SerialErrPckgLen as _SerialErrPckgLen
+from .exceptions import SerialErrMsgShort as _SerialErrMsgShort
 from threading import Lock as _Lock
 
 # TODO: rename module to 'channel.py' ?
@@ -20,7 +23,7 @@ class Message:
     def __init__(self, stream):
         """Build a BSMP message."""
         if len(stream) < 3:
-            raise ValueError("BSMP Message too short.")
+            raise _SerialErrMsgShort("BSMP Message too short.")
         self._stream = stream
         self._cmd = ord(stream[0])
 
@@ -32,8 +35,10 @@ class Message:
     def message(cls, cmd, payload=None):
         """Build a Message object from a byte stream."""
         if payload and not isinstance(payload, list):
+            # TODO: should be create serial exceptions here too?
             raise TypeError("Load must be a list.")
         if payload and len(payload) > 65535:
+            # TODO: should be create serial exceptions here too?
             raise ValueError("Load must be smaller than 65535.")
 
         stream = []
@@ -86,9 +91,10 @@ class Package:
         # if address < 0 or address > 31:
         #     raise ValueError("Address {} out of range.".format(address))
         if len(stream) < 5:
-            raise ValueError("BSMP Package too short.")
+            raise _SerialErrPckgLen("BSMP Package too short.")
         if not Package.verify_checksum(stream):
-            raise ValueError("Inconsistent message. Checksum does not check.")
+            raise _SerialErrCheckSum(
+                "Inconsistent message. Checksum does not check.")
         self._stream = stream
         self._address = ord(stream[0])  # 0 to 31
         self._message = Message(stream[1:-1])
@@ -174,7 +180,7 @@ class Channel:
         """Read from serial."""
         resp = self.serial.UART_read()
         if not resp:
-            raise _SerialError("Serial read returned empty!")
+            raise _SerialErrEmpty("Serial read returned empty!")
         package = Package(resp)
         return package.message
 

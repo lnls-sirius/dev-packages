@@ -727,6 +727,11 @@ class PRUController:
         # update time interval according to new sync mode selected
         self._scan_interval = self._get_time_interval()
 
+        # set curve pointer to first point
+        # TODO: is this really necessary of does the library does this already?
+        # TODO: ask patricia
+        self._pru.set_curve_pointer(0)
+
         # set selected sync mode
         self._pru.sync_start(
             sync_mode=sync_mode,
@@ -1036,9 +1041,14 @@ class PRUController:
         ack, data = dict(), dict()
         # --- send requests to serial line
         t0 = _time.time()
-        for id in device_ids:
-            ack[id], data[id] = \
-                self._bsmp[id].read_group_variables(group_id=group_id)
+        try:
+            for id in device_ids:
+                ack[id], data[id] = \
+                    self._bsmp[id].read_group_variables(group_id=group_id)
+        except _SerialError:
+            print('SerialError exception in {}'.format(
+                ('V', device_ids, group_id)))
+            return
         dtime = _time.time() - t0
         self._last_operation = ('V', dtime,
                                 device_ids, group_id)
@@ -1102,9 +1112,14 @@ class PRUController:
 
         # --- send requests to serial line
         t0 = _time.time()
-        for id in device_ids:
-            ack[id], data[id] = \
-                self._bsmp[id].execute_function(function_id, args)
+        try:
+            for id in device_ids:
+                ack[id], data[id] = \
+                    self._bsmp[id].execute_function(function_id, args)
+        except _SerialError:
+            print('SerialError exception in {}'.format(
+                ('F', device_ids, function_id)))
+            return
         dtime = _time.time() - t0
         self._last_operation = ('F', dtime,
                                 device_ids, function_id)
