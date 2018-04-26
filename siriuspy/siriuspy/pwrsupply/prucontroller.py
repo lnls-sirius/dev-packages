@@ -536,9 +536,9 @@ class PRUController:
     @property
     def connected(self):
         """Connection state."""
-        return all((self.get_connected(id) for id in self.device_ids))
+        return all((self.check_connected(id) for id in self.device_ids))
 
-    def get_connected(self, device_id):
+    def check_connected(self, device_id):
         """Return connection state of a device."""
         # TODO: may be not the current true connection state
         return self._connected[device_id]

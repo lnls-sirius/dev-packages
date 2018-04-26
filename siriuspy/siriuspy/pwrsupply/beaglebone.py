@@ -140,10 +140,10 @@ class IOCController:
             _log.warning(
                 'Value {} is out of range for {} field'.format(value, field))
 
-    def get_connected(self, device_name):
+    def check_connected(self, device_name):
         """Connected."""
         device_id = self._devices_info[device_name].id
-        return self._controller.get_connected(device_id)
+        return self._controller.check_connected(device_id)
 
     # Private
     def _read(self, device_id, field):
@@ -478,9 +478,9 @@ class BeagleBone:
             # self.power_supplies[device_name].write(field, value)
             self._ioc_controller.write(device_name, field, value)
 
-    def get_connected(self, device_name):
+    def check_connected(self, device_name):
         """"Return connection status."""
-        return self._ioc_controller.get_connected(device_name)
+        return self._ioc_controller.check_connected(device_name)
 
     # --- private methods ---
     def _set_opmode(self, op_mode):
