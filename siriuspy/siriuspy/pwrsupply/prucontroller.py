@@ -88,6 +88,8 @@ from siriuspy.pwrsupply.controller import FBP_BSMPSim as _FBP_BSMPSim
 # 01. Current PS controller firmware version V0.10 2018-04-20 does not accept
 #     command F_SET_SLOWREF while not in SlowRef. Gabriel thinks it is usefull
 #     to allow it and will implement in the next firmware version.
+#
+# 02. DampedSine not  working.
 
 
 def parse_firmware_version(version):
