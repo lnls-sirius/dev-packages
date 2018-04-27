@@ -8,7 +8,7 @@ BUFFAUTORSTTYP = ['PVsTrig', 'DCurrCheck', 'Off']
 
 
 class Const:
-    """Const class defining power supply constants."""
+    """Const class defining CurrInfo constants and Enum types."""
 
     @staticmethod
     def _init():
