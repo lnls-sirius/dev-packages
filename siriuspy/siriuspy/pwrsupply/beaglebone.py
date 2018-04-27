@@ -19,7 +19,7 @@ from siriuspy.csdevice.pwrsupply import Const as _PSConst
 DeviceInfo = _namedtuple('DeviceInfo', 'name, id')
 
 
-class IOCController:
+class E2SController:
     """Setpoints and field translation."""
 
     # Constants and Setpoint regexp patterns
@@ -130,7 +130,7 @@ class IOCController:
         """Write to value one or many devices' field."""
         devices_names = self._tuplify(devices_names)
         if self._check_values(field, value):
-            func = getattr(self, IOCController._epics_2_wfuncs[field])
+            func = getattr(self, E2SController._epics_2_wfuncs[field])
             devices_info = [self._devices_info[dev_name]
                             for dev_name in devices_names]
             value = self._trim_value(field, value)
@@ -301,7 +301,7 @@ class IOCController:
 
     def _set_cycle_aux_params(self, devices_info, setpoint):
         """Set cycle offset."""
-        self._set_setpoints(devices_info, 'CycleAuxParam-SP', setpoint)
+        self._set_setpoints(devices_info, 'CycleAuxParam-SP', [setpoint])
         values = self._cfg_siggen_args(devices_info)
         self._execute_command(devices_info, _c.F_CFG_SIGGEN, values)
 
@@ -589,7 +589,7 @@ class BeagleBone:
         for i, psname in enumerate(self._psnames):
             self._devices_info[psname] = DeviceInfo(psname, slave_ids[i])
         db = _deepcopy(self._database)
-        self._ioc_controller = IOCController(
+        self._ioc_controller = E2SController(
             self._controller, self._devices_info, db)
         # return power_supplies
 
