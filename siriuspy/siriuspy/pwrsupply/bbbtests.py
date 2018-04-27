@@ -4,9 +4,8 @@ import time
 import epics
 import sys
 
-# from siriuspy.bsmp import BSMP
-from siriuspy.csdevice.pwrsupply import Const as PSConst
-# from siriuspy.pwrsupply.pru import PRU
+from siriuspy.bsmp import *
+from siriuspy.pwrsupply.pru import PRU
 from siriuspy.pwrsupply.bsmp import Const as BSMPConst
 from siriuspy.pwrsupply.bsmp import FBPEntities
 from siriuspy.pwrsupply.prucontroller import PRUController
@@ -32,17 +31,42 @@ siggen_config = [
 curve1 = [i*2.0/(4000.0-1.0) for i in range(4000)]
 
 
+bsmp_cmds = {
+    'remove_group': 0x32,
+    'execute_function': 0x50,
+}
+
+def create_bsmp():
+
+    pru = PRU()
+    # msg = Message.message(bsmp_cmds['remove_group'])
+    msg = Message.message(bsmp_cmds['execute_function'])
+    pck = Package.package(1, msg)
+    pru.UART_write(pck.stream, 1000)
+    response = pru.UART_read()
+    print(response)
+
+
 def configure_timing_modules(cycle=True):
     """Configure timing devices for Event1."""
     print('Configuring Timing Modules to ' + ('cycle' if cycle else 'ramp'))
+    time.sleep(0.1)
     epics.caput(P+'AS-Glob:TI-EVG:Evt01Mode-Sel', 'External')
+    time.sleep(0.1)
     epics.caput(P+'AS-Glob:TI-EVG:DevEnbl-Sel', 1)
+    time.sleep(0.1)
     epics.caput(P+'AS-Glob:TI-EVG:RFDiv-SP', 4)
+    time.sleep(0.1)
     epics.caput(P+'AS-Glob:TI-EVR-1:DevEnbl-Sel', 1)
+    time.sleep(0.1)
     epics.caput(P+'AS-Glob:TI-EVR-1:OTP08Width-SP', 7000)
+    time.sleep(0.1)
     epics.caput(P+'AS-Glob:TI-EVR-1:OTP08State-Sel', 1)
+    time.sleep(0.1)
     epics.caput(P+'AS-Glob:TI-EVR-1:OTP08Evt-SP', 1)
+    time.sleep(0.1)
     epics.caput(P+'AS-Glob:TI-EVR-1:OTP08Pulses-SP', 1 if cycle else 4000)
+    time.sleep(0.1)
 
 
 def calc_siggen_duration():
@@ -98,11 +122,13 @@ def init_slowref(pruc):
     pruc.exec_functions(ids, BSMPConst.F_DISABLE_SIGGEN)
 
     # set slowref
-    pruc.exec_functions(ids, BSMPConst.F_SELECT_OP_MODE, args=(3,))
+    pruc.exec_functions(ids,
+                        BSMPConst.F_SELECT_OP_MODE,
+                        BSMPConst.E_STATE_SLOWREF)
 
     # current setpoint
     current_sp = 2.5
-    pruc.exec_functions(ids, BSMPConst.F_SET_SLOWREF, args=(current_sp))
+    pruc.exec_functions(ids, BSMPConst.F_SET_SLOWREF, current_sp)
 
 
 def config_cycle_mode(pruc):
@@ -116,16 +142,14 @@ def config_cycle_mode(pruc):
     pruc.exec_functions(ids, BSMPConst.F_DISABLE_SIGGEN)
 
     # configure siggen parameters (needs disabled siggen!)
-    pruc.exec_functions(ids, BSMPConst.F_CFG_SIGGEN, siggen_config)
+    pruc.exec_functions(ids,
+                        BSMPConst.F_CFG_SIGGEN,
+                        siggen_config)
 
     # set ps to cycle mode
-    pruc.exec_functions(ids, BSMPConst.F_SELECT_OP_MODE,
-                        args=(PSConst.States.Cycle,))
-
-
-def measure_duration_bsmp_sync_pulse(pruc):
-    """Measure BSMP command sync_pulse."""
-    pass
+    pruc.exec_functions(ids,
+                        BSMPConst.F_SELECT_OP_MODE,
+                        BSMPConst.E_STATE_CYCLE)
 
 
 def run_rmpwfm(pruc):
@@ -206,8 +230,9 @@ def run_cycle(pruc):
         time.sleep(0.1)
 
     # return to SlowRef mode
-    pruc.exec_functions(id, BSMPConst.F_SELECT_OP_MODE,
-                        args=(PSConst.States.SlowRef,))
+    pruc.exec_functions(id,
+                        BSMPConst.F_SELECT_OP_MODE,
+                        BSMPConst.E_STATE_SLOWREF)
 
 
 # @staticmethod
