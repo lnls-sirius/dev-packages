@@ -321,11 +321,12 @@ class IOCController:
             watcher.start()
 
     def _watch_cycle(self, dev_info):
+        _time.sleep(0.5)
         dev_name = dev_info.name
         if self.read(dev_name, 'PwrState-Sts') == 0:
             return
-        while self.read(dev_name, 'OpMode-Sts') != _PSConst.OpMode.Cycle and \
-                self._controller.pru_sync_status != 1:
+        while self.read(dev_name, 'OpMode-Sts') == _PSConst.OpMode.Cycle and \
+                self._controller.pru_sync_status == 1:
             _time.sleep(0.1)
         while True:
             cycle_enabled = self.read(dev_name, 'CycleEnbl-Mon')
