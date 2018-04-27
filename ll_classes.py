@@ -430,7 +430,7 @@ class _EVROUT(_Base):
             'Evt': self.prefix + intlb + 'Evt-RB',
             'Width': self.prefix + intlb + 'Width-RB',
             'Polarity': self.prefix + intlb + 'Polarity-Sts',
-            'Pulses': self.prefix + intlb + 'Pulses-RB',
+            'NrPulses': self.prefix + intlb + 'NrPulses-RB',
             'Delay': self.prefix + intlb + 'Delay-RB',
             'Intlk': self.prefix + outlb + 'Intlk-Sts',
             'Src': self.prefix + outlb + 'Src-Sts',
@@ -461,7 +461,7 @@ class _EVROUT(_Base):
             'Src': self._set_source,
             'Duration': self._set_duration,
             'Polarity': _partial(self._set_simple, 'Polarity'),
-            'Pulses': self._set_pulses,
+            'NrPulses': self._set_pulses,
             'Intlk': _partial(self._set_simple, 'Intlk'),
             'Delay': self._set_delay,
             'DelayType': self._set_delay_type,
@@ -474,7 +474,7 @@ class _EVROUT(_Base):
             'Evt': _partial(self._process_source, 'Evt'),
             'Width': _partial(self._get_duration_pulses, 'Width'),
             'Polarity': _partial(self._get_simple, 'Polarity'),
-            'Pulses': _partial(self._get_duration_pulses, 'Pulses'),
+            'NrPulses': _partial(self._get_duration_pulses, 'NrPulses'),
             'Delay': _partial(self._get_delay, 'Delay'),
             'Intlk': _partial(self._get_simple, 'Intlk'),
             'Src': _partial(self._process_source, 'Src'),
@@ -629,22 +629,22 @@ class _EVROUT(_Base):
 
     def _get_duration_pulses(self, prop, is_sp, value=None):
         dic_ = dict()
-        dic_['Pulses'] = self._get_from_pvs(is_sp, 'Pulses', def_val=1)
+        dic_['NrPulses'] = self._get_from_pvs(is_sp, 'NrPulses', def_val=1)
         dic_['Width'] = self._get_from_pvs(is_sp, 'Width', def_val=1)
         if value is not None:
             dic_[prop] = value
         return {
-            'Duration': 2*dic_['Width']*self._base_del*dic_['Pulses']*1e3,
-            'Pulses': dic_['Pulses'],
+            'Duration': 2*dic_['Width']*self._base_del*dic_['NrPulses']*1e3,
+            'NrPulses': dic_['NrPulses'],
             }
 
     def _set_duration(self, value):
         value *= 1e-3  # ms
         # Initialization issue
         if self._initializing:
-            pul = self._my_state_sp.get('Pulses', 1)
+            pul = self._my_state_sp.get('NrPulses', 1)
         else:
-            pul = self._get_from_pvs(True, 'Pulses', def_val=1)
+            pul = self._get_from_pvs(True, 'NrPulses', def_val=1)
         n = int(round(value / self._base_del / pul / 2))
         n = n if n >= 1 else 1
         return {'Width': n}
@@ -654,13 +654,13 @@ class _EVROUT(_Base):
             return dict()
         # Initialization issue
         if self._initializing:
-            old_pul = self._my_state_sp.get('Pulses', 1)
+            old_pul = self._my_state_sp.get('NrPulses', 1)
             old_wid = self._my_state_sp.get('Width', 1)
         else:
-            old_pul = self._get_from_pvs(True, 'Pulses', def_val=1)
+            old_pul = self._get_from_pvs(True, 'NrPulses', def_val=1)
             old_wid = self._get_from_pvs(True, 'Width', def_val=1)
         return {
-            'Pulses': int(value),
+            'NrPulses': int(value),
             'Width': int(round(old_wid*old_pul/value))
             }
 

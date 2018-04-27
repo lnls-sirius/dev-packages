@@ -304,7 +304,7 @@ class HL_Trigger(_HL_Base):
         'Src': '-Sts',
         'Duration': '-RB',
         'Polarity': '-Sts',
-        'Pulses': '-RB',
+        'NrPulses': '-RB',
         'Intlk': '-Sts',
         'Delay': '-RB',
         'DelayType': '-Sts',
