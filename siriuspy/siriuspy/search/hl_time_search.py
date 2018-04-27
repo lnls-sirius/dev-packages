@@ -69,7 +69,6 @@ class HLTimeSearch:
 
         if not cls.has_delay_type(hl_trigger):
             interface.discard('DelayType')
-            interface.discard('Intlk')
         return interface
 
     @classmethod

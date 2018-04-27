@@ -415,8 +415,6 @@ class _OTP_IOC(_BaseIOC):
 class _EVROUT_IOC(_BaseIOC):
 
     _attr2pvname = {
-        'interlock_sp':  'Intlk-Sel',
-        'interlock_rb':  'Intlk-Sts',
         'source_sp':     'Src-Sel',
         'source_rb':     'Src-Sts',
         'trigger_sp':    'SrcTrig-SP',
@@ -452,8 +450,6 @@ class _EVROUT_IOC(_BaseIOC):
 
     def _get_attr2expression(self):
         return {
-            'interlock_sp': lambda x: int(x),
-            'interlock_rb': lambda x: x,
             'source_sp': lambda x: int(x),
             'source_rb': lambda x: x,
             'trigger_sp': lambda x: int(x),

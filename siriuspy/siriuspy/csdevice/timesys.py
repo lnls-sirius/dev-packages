@@ -117,10 +117,6 @@ def get_out_database(out_num=0, equip='EVR', prefix=None):
     prefix = def_prefix if prefix is None else prefix
     db = dict()
 
-    dic_ = {'type': 'enum', 'value': 0, 'enums': triggers_intlk}
-    db[prefix+'Intlk-Sts'] = dic_
-    db[prefix+'Intlk-Sel'] = _dcopy(dic_)
-
     dic_ = {'type': 'enum', 'value': 0, 'enums': triggers_src_ll}
     db[prefix+'Src-Sts'] = dic_
     db[prefix+'Src-Sel'] = _dcopy(dic_)
@@ -566,11 +562,6 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dic_.update(trig_db['NrPulses'])
     db['NrPulses-RB'] = _dcopy(dic_)
     db['NrPulses-SP'] = dic_
-
-    dic_ = {'type': 'enum', 'enums': triggers_intlk}
-    dic_.update(trig_db['Intlk'])
-    db['Intlk-Sts'] = _dcopy(dic_)
-    db['Intlk-Sel'] = dic_
 
     dic_ = {'type': 'float', 'unit': 'us', 'prec': 6,
             'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
