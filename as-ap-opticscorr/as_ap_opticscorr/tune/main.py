@@ -40,7 +40,7 @@ class App:
         _pvs.print_banner_and_save_pv_list()
         self._PREFIX_VACA = _pvs.get_pvs_vaca_prefix()
         self._ACC = _pvs.get_pvs_section()
-        self._QFAMS = _pvs.get_corr_fams()
+        self._QFAMS = list(_pvs.get_corr_fams())
 
         self._driver = driver
 
