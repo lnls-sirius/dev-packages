@@ -41,11 +41,11 @@ class TestOpticsCorr(unittest.TestCase):
     def setUp(self):
         """Setup tests."""
         # Attributs fot simulating normal operation
-        self.magnetfams_ordering_ok = [
-            'QFA', 'QFB', 'QFP', 'QDA', 'QDB1', 'QDB2', 'QDP1', 'QDP2']
-        self.magnetfams_focusing_ok = ['QFA', 'QFB', 'QFP']
-        self.magnetfams_defocusing_ok = [
-            'QDA', 'QDB1', 'QDB2', 'QDP1', 'QDP2']
+        self.magnetfams_ordering_ok = (
+            'QFA', 'QFB', 'QFP', 'QDA', 'QDB1', 'QDB2', 'QDP1', 'QDP2')
+        self.magnetfams_focusing_ok = ('QFA', 'QFB', 'QFP')
+        self.magnetfams_defocusing_ok = (
+            'QDA', 'QDB1', 'QDB2', 'QDP1', 'QDP2')
         self.nominal_matrix_ok = [2.7280, 8.5894, 4.2995, 0.5377,
                                   1.0906, 2.0004, 0.5460, 1.0012,
                                   -1.3651, -3.5532, -1.7657, -2.3652,
@@ -55,9 +55,9 @@ class TestOpticsCorr(unittest.TestCase):
         self.nominal_opticsparam_ok = [0.0, 0.0]
 
         # Attributes to simulate type errors
-        self.magnetfams_ordering_error1 = [1, 2, 3, 4]
-        self.magnetfams_focusing_error1 = [1, 2]
-        self.magnetfams_defocusing_error1 = [3, 4]
+        self.magnetfams_ordering_error1 = (1, 2, 3, 4)
+        self.magnetfams_focusing_error1 = (1, 2)
+        self.magnetfams_defocusing_error1 = (3, 4)
         self.nominal_matrix_error1 = [
             '2.7280', '8.5894', '0.5460', '1.0012',
             '-1.3651', '-3.5532', '-2.3601', '-0.9839']
@@ -66,16 +66,16 @@ class TestOpticsCorr(unittest.TestCase):
         self.nominal_opticsparam_error1 = ['0.0', '0.0']
 
         # Attributes to simulate matrix invertion errors
-        self.magnetfams_ordering_error2 = ['QF', 'QD']
-        self.magnetfams_focusing_error2 = ['QF']
-        self.magnetfams_defocusing_error2 = ['QD']
+        self.magnetfams_ordering_error2 = ('QF', 'QD')
+        self.magnetfams_focusing_error2 = ('QF')
+        self.magnetfams_defocusing_error2 = ('QD')
         self.nominal_matrix_error2 = [0.0, 2, 0.1, 4]
         self.nominal_intstrengths_error2 = [0.3, -1.5]
 
         # Attributes to simulate value errors
-        self.magnetfams_ordering_error3 = []
-        self.magnetfams_focusing_error3 = []
-        self.magnetfams_defocusing_error3 = []
+        self.magnetfams_ordering_error3 = ()
+        self.magnetfams_focusing_error3 = ()
+        self.magnetfams_defocusing_error3 = ()
         self.nominal_matrix_error3 = [2.7280, 8.5894, 4.2995, 0.5377,
                                       1.0906, 2.0004, 0.5460, 1.0012,
                                       -1.3651, -3.5532, -1.7657, -2.3652,
@@ -83,8 +83,8 @@ class TestOpticsCorr(unittest.TestCase):
         self.nominal_opticsparam_error3 = [0.0, 0.0, 0.0]
 
         # Attributes to test correction with some families, not all
-        self.magnetfams_focusing_somefams = ['QFA', 'QFB']
-        self.magnetfams_defocusing_somefams = ['QDA', 'QDB2', 'QDB1']
+        self.magnetfams_focusing_somefams = ('QFA', 'QFB')
+        self.magnetfams_defocusing_somefams = ('QDA', 'QDB2', 'QDB1')
 
     def test_public_interface(self):
         """Test module's public interface."""
@@ -219,7 +219,7 @@ class TestOpticsCorr(unittest.TestCase):
                                      self.magnetfams_defocusing_ok)
 
         propty = self.opticscorr.magnetfams_ordering
-        self.assertIsInstance(propty, list)
+        self.assertIsInstance(propty, tuple)
         for item in propty:
             self.assertIsInstance(item, str)
         self.assertGreaterEqual(len(propty), 1)
@@ -234,7 +234,7 @@ class TestOpticsCorr(unittest.TestCase):
                                      self.magnetfams_defocusing_ok)
 
         propty = self.opticscorr.magnetfams_focusing
-        self.assertIsInstance(propty, list)
+        self.assertIsInstance(propty, tuple)
         for item in propty:
             self.assertIsInstance(item, str)
         self.assertGreaterEqual(len(propty), 1)
@@ -249,7 +249,7 @@ class TestOpticsCorr(unittest.TestCase):
                                      self.magnetfams_defocusing_ok)
 
         propty = self.opticscorr.magnetfams_defocusing
-        self.assertIsInstance(propty, list)
+        self.assertIsInstance(propty, tuple)
         for item in propty:
             self.assertIsInstance(item, str)
         self.assertGreaterEqual(len(propty), 1)

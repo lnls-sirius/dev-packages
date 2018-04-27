@@ -40,7 +40,7 @@ class App:
         _pvs.print_banner_and_save_pv_list()
         self._PREFIX_VACA = _pvs.get_pvs_vaca_prefix()
         self._ACC = _pvs.get_pvs_section()
-        self._QFAMS = list(_pvs.get_corr_fams())
+        self._QFAMS = _pvs.get_corr_fams()
 
         self._driver = driver
 
@@ -78,6 +78,8 @@ class App:
                 qfam_focusing.append(fam)
             else:
                 qfam_defocusing.append(fam)
+        qfam_focusing = tuple(qfam_focusing)
+        qfam_defocusing = tuple(qfam_defocusing)
 
         # Initialize correction parameters from local file and configdb
         config_name = _get_config_name(acc=self._ACC.lower(),
