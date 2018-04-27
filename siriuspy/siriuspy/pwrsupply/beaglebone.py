@@ -226,10 +226,12 @@ class IOCController:
         # Execute function to set PSs operation mode
         if setpoint == 2:
             for device_info in devices_info:
-                self._execute_command(
-                    device_info,
-                    _c.F_SET_SLOWREF,
-                    self.read(device_info.name, 'CycleOffset-RB'))
+                # self._execute_command(
+                #     device_info,
+                #     _c.F_SET_SLOWREF,
+                #     self.read(device_info.name, 'CycleOffset-RB'))
+                offset_val = self.read(device_info.name, 'CycleOffset-RB')
+                self._set_current([device_info], offset_val)
 
         self._execute_command(devices_info, _c.F_SELECT_OP_MODE, setpoint+3)
         self._set_setpoints(devices_info, 'OpMode-Sel', setpoint)
