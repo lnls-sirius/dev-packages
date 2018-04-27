@@ -84,7 +84,7 @@ class TestASAPPosAngPvs(unittest.TestCase):
         self.assertTrue('SetNewRefKick-Cmd' in pvs.get_pvs_database())
         self.assertTrue('ConfigMA-Cmd' in pvs.get_pvs_database())
         self.assertTrue('Status-Mon' in pvs.get_pvs_database())
-        self.assertTrue('Status-Cte' in pvs.get_pvs_database())
+        self.assertTrue('StatusLabels-Cte' in pvs.get_pvs_database())
 
         # Test IOC interface: pvs units
         self.assertEqual(
