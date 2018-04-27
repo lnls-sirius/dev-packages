@@ -32,8 +32,8 @@ class PRUInterface:
 
     # TODO: replace 'write' and 'read' methods by 'request' and 'read' methods
 
-    _SYNC_OFF = 0
-    _SYNC_ON = 1
+    _SYNC_OFF = False
+    _SYNC_ON = True
     _SYNC_DELAY = 20  # [us] TODO: better understand this parameter!
 
     VERSION = __version__  # Version of the compatible PRUserial485 library
