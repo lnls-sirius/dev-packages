@@ -335,7 +335,7 @@ class IOCController:
                 # Return to SlowRef operation mode
                 # self._controller.exec_functions(
                 #     dev_info.id, _c.F_SELECT_OP_MODE, 3)
-                self._set_opmode([dev_info], 3)
+                self._set_opmode([dev_info], 0)
                 break
             _time.sleep(0.25)
 
