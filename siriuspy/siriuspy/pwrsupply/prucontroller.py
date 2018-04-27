@@ -7,6 +7,7 @@ at the other end of the serial line.
 
 import time as _time
 import random as _random
+import traceback as _traceback
 from collections import deque as _deque
 from collections import namedtuple as _namedtuple
 from threading import Thread as _Thread
@@ -453,7 +454,7 @@ class PRUController:
                  simulate=False, processing=True, scanning=True):
         """Init."""
         # check if another instance is running
-        self._check_instance()
+        PRUController._check_instance()
 
         # store simulation mode
         self._simulate = simulate
@@ -725,19 +726,14 @@ class PRUController:
         self._bsmp_update_variables(self.device_ids,
                                     PRUController.VGROUPS.SYNCOFF)
 
-        # update time interval according to new sync mode selected
-        self._scan_interval = self._get_time_interval()
-
-        # set curve pointer to first point
-        # TODO: is this really necessary of does the library does this already?
-        # TODO: ask patricia
-        self._pru.set_curve_pointer(0)
-
         # set selected sync mode
         self._pru.sync_start(
             sync_mode=sync_mode,
             sync_address=self._device_ids[0],
             delay=PRUController._pru_delays[sync_mode])
+
+        # update time interval according to new sync mode selected
+        self._scan_interval = self._get_time_interval()
 
         # accept back new operation requests
         self.scanning = True
@@ -832,7 +828,8 @@ class PRUController:
         while len(self._queue) > 0:
             _time.sleep(5*self._delay_sleep)  # sleep a little
 
-    def _check_instance(self):
+    @staticmethod
+    def _check_instance():
         # check if another instance is running
         if PRUController._instance_running is True:
             errmsg = ('Another instance of PRUController is already in same'
@@ -932,11 +929,15 @@ class PRUController:
         for id in self._device_ids:
             # remove previous variables groups and fresh ones
             try:
+                print('remove group')
                 self._bsmp[id].remove_all_groups()
+                print('end remove group')
                 self._connected[id] = True
                 for group_id in groups_ids[3:]:
                     var_ids = self._groups[group_id]
+                    print('create group')
                     self._bsmp[id].create_group(var_ids)
+                    print('end create group')
             except _SerialError:
                 self._connected[id] = False
 
@@ -1016,6 +1017,21 @@ class PRUController:
         else:
             return 1.0/self.FREQ.RAMP  # [s]
 
+    def _serial_error(self, ids, e, operation):
+
+        # print error message to stdout
+        print()
+        print('--- Serial Error in PRUController._bsmp_update_variables')
+        print('------ last_operation: {}'.format(operation))
+        print('------ traceback:')
+        _traceback.print_exc()
+        print('---')
+        print()
+
+        # signal disconnected for device ids.
+        for id in ids:
+            self._connected[id] = False
+
     # --- private methods: BSMP UART communications ---
 
     def _bsmp_update_variables(self, device_ids, group_id):
@@ -1046,13 +1062,12 @@ class PRUController:
             for id in device_ids:
                 ack[id], data[id] = \
                     self._bsmp[id].read_group_variables(group_id=group_id)
-        except _SerialError:
-            print('SerialError exception in {}'.format(
-                ('V', device_ids, group_id)))
+        except _SerialError as e:
+            operation = ('V', device_ids, group_id)
+            self._serial_error(device_ids, e, operation)
             return
         dtime = _time.time() - t0
-        self._last_operation = ('V', dtime,
-                                device_ids, group_id)
+        self._last_operation = ('V', dtime, device_ids, group_id)
 
         # --- make copy of state for updating
         PRUController._lock.acquire()
