@@ -69,13 +69,13 @@ class TestASAPOpticsCorrTunePvs(unittest.TestCase):
     def test_get_corr_fams(self):
         """Test get_corr_fams."""
         pvs.select_ioc('SI')
-        self.assertIsInstance(pvs.get_corr_fams(), list)
+        self.assertIsInstance(pvs.get_corr_fams(), tuple)
         self.assertEqual(len(pvs.get_corr_fams()), 8)
         for fam in self.si_qfams:
             self.assertIn(fam, pvs.get_corr_fams())
 
         pvs.select_ioc('BO')
-        self.assertIsInstance(pvs.get_corr_fams(), list)
+        self.assertIsInstance(pvs.get_corr_fams(), tuple)
         self.assertEqual(len(pvs.get_corr_fams()), 2)
         for fam in self.bo_qfams:
             self.assertIn(fam, pvs.get_corr_fams())
@@ -105,7 +105,7 @@ class TestASAPOpticsCorrTunePvs(unittest.TestCase):
             self.assertTrue('CorrFactor-RB' in db)
             self.assertTrue('ConfigMA-Cmd' in db)
             self.assertTrue('Status-Mon' in db)
-            self.assertTrue('Status-Cte' in db)
+            self.assertTrue('StatusLabels-Cte' in db)
 
             for fam in qfams:
                 self.assertTrue('RefKL' + fam + '-Mon' in db)
