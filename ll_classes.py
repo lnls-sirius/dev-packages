@@ -432,7 +432,6 @@ class _EVROUT(_Base):
             'Polarity': self.prefix + intlb + 'Polarity-Sts',
             'NrPulses': self.prefix + intlb + 'NrPulses-RB',
             'Delay': self.prefix + intlb + 'Delay-RB',
-            'Intlk': self.prefix + outlb + 'Intlk-Sts',
             'Src': self.prefix + outlb + 'Src-Sts',
             'SrcTrig': self.prefix + outlb + 'SrcTrig-RB',
             'RFDelay': self.prefix + outlb + 'RFDelay-RB',
@@ -462,7 +461,6 @@ class _EVROUT(_Base):
             'Duration': self._set_duration,
             'Polarity': _partial(self._set_simple, 'Polarity'),
             'NrPulses': self._set_pulses,
-            'Intlk': _partial(self._set_simple, 'Intlk'),
             'Delay': self._set_delay,
             'DelayType': self._set_delay_type,
             }
@@ -476,7 +474,6 @@ class _EVROUT(_Base):
             'Polarity': _partial(self._get_simple, 'Polarity'),
             'NrPulses': _partial(self._get_duration_pulses, 'NrPulses'),
             'Delay': _partial(self._get_delay, 'Delay'),
-            'Intlk': _partial(self._get_simple, 'Intlk'),
             'Src': _partial(self._process_source, 'Src'),
             'SrcTrig': _partial(self._process_source, 'SrcTrig'),
             'RFDelay': _partial(self._get_delay, 'RFDelay'),
@@ -666,7 +663,7 @@ class _EVROUT(_Base):
 
 
 class _EVROTP(_EVROUT):
-    _REMOVE_PROPS = {'RFDelay', 'FineDelay', 'Src', 'SrcTrig', 'Intlk'}
+    _REMOVE_PROPS = {'RFDelay', 'FineDelay', 'Src', 'SrcTrig'}
 
     def _define_num_int(self, num):
         return num
@@ -704,7 +701,7 @@ class _EVEOUT(_EVROUT):
 
 class _AFCCRT(_EVROUT):
     _NUM_OTP = 0
-    _REMOVE_PROPS = {'RFDelay', 'FineDelay', 'SrcTrig', 'Intlk'}
+    _REMOVE_PROPS = {'RFDelay', 'FineDelay', 'SrcTrig'}
 
     def _INTLB_formatter(self):
         return 'CRT{0:d}'.format(self._internal_trigger)
