@@ -18,18 +18,19 @@ BBB2_device_ids = (5, 6)
 
 siggen_config = [
     # --- siggen sine parameters ---
-    1,       # type
+    0,       # type
     10,      # num_cycles
     0.5,     # freq
     2.0,     # amplitude
     0.0,     # offset
-    -3.0,     # aux_param[0]
+    0.0,     # aux_param[0]
     0.0,     # aux_param[1]
     0.0,     # aux_param[2]
     0.0,     # aux_param[3]
 ]
 
 curve1 = [i*2.0/(4000.0-1.0) for i in range(4000)]
+
 
 def configure_timing_modules(cycle=True):
     """Configure timing devices for Event1."""
@@ -139,6 +140,7 @@ def run_rmpwfm(pruc):
     pruc.pru_sync_start(sync_mode=pruc.SYNC.RMPEND)
 
     print('power supply in rmpwfm mode, waiting for sync signal...')
+
 
 def run_cycle(pruc):
     """Run cycle mode.

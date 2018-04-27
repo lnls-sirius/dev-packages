@@ -378,6 +378,7 @@ class PRUController:
     # TODO: allow variable-size curves
     # TODO: delete random fluctuation added to measurements
     # TODO: it might be possible and usefull to use simulated BSMP but real PRU
+    # TODO: remove printout of PRUserial485 when changing curves.
     #
     # Gabriel from ELP proposed the idea of a privilegded slave that
     # could define BSMP variables that corresponded to other slaves variables
