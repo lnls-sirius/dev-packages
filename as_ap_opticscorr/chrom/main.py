@@ -4,6 +4,7 @@ import time as _time
 import epics as _epics
 import siriuspy as _siriuspy
 from siriuspy.servconf.conf_service import ConfigService as _ConfigService
+from siriuspy.csdevice.opticscorr import Const as _Const
 from as_ap_opticscorr.opticscorr_utils import (
         OpticsCorr as _OpticsCorr,
         get_config_name as _get_config_name,
@@ -58,14 +59,14 @@ class App:
 
         self._sfam_sl_rb = len(self._SFAMS)*[0]
 
-        if self._ACC.lower() == 'si':
-            self._corr_method = 0
-            self._sync_corr = 0
+        if self._ACC == 'SI':
+            self._corr_method = _Const.CorrMeth.Proportional
+            self._sync_corr = _Const.SyncCorr.Off
             self._config_timing_cmd_count = 0
             self._timing_check_config = 6*[0]
         else:
-            self._corr_method = 1
-            self._sync_corr = 0
+            self._corr_method = _Const.CorrMeth.Additional
+            self._sync_corr = _Const.SyncCorr.Off
 
         # Get focusing and defocusing families
         sfam_focusing = []
@@ -345,7 +346,7 @@ class App:
         delta_chromx = self._chrom_sp[0]-self._chrom_rb[0]
         delta_chromy = self._chrom_sp[1]-self._chrom_rb[1]
 
-        if self._corr_method == 0:
+        if self._corr_method == _Const.CorrMeth.Proportional:
             lastcalc_deltasl = self._opticscorr.calculate_delta_intstrengths(
                 method=0, grouping='svd',
                 delta_opticsparam=[delta_chromx, delta_chromy])
@@ -368,7 +369,8 @@ class App:
         self.driver.updatePVs()
 
     def _apply_corr(self):
-        if ((self._status == _ALLCLR_SYNCOFF and self._sync_corr == 0) or
+        if ((self._status == _ALLCLR_SYNCOFF and
+                self._sync_corr == _Const.SyncCorr.Off) or
                 self._status == _ALLCLR_SYNCON):
             pvs = self._sfam_sl_sp_pvs
             for fam in pvs:
@@ -378,7 +380,7 @@ class App:
             self.driver.setParam('Log-Mon', 'Applied correction.')
             self.driver.updatePVs()
 
-            if self._sync_corr == 1:
+            if self._sync_corr == _Const.SyncCorr.On:
                 self._timing_evg_chromsexttrig_cmd.put(0)
                 self.driver.setParam('Log-Mon', 'Generated trigger.')
                 self.driver.updatePVs()
