@@ -301,7 +301,7 @@ class E2SController:
 
     def _set_cycle_aux_params(self, devices_info, setpoint):
         """Set cycle offset."""
-        self._set_setpoints(devices_info, 'CycleAuxParam-SP', setpoint)
+        self._set_setpoints(devices_info, 'CycleAuxParam-SP', [setpoint])
         values = self._cfg_siggen_args(devices_info)
         self._execute_command(devices_info, _c.F_CFG_SIGGEN, values)
 
