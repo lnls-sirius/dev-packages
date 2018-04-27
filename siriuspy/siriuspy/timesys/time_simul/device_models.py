@@ -371,8 +371,8 @@ class _OTP_IOC(_BaseIOC):
         'polarity_rb': 'Polarity-Sts',
         'event_sp': 'Evt-SP',
         'event_rb': 'Evt-RB',
-        'pulses_sp': 'Pulses-SP',
-        'pulses_rb': 'Pulses-RB',
+        'pulses_sp': 'NrPulses-SP',
+        'pulses_rb': 'NrPulses-RB',
         }
 
     @staticmethod
@@ -488,8 +488,8 @@ class _AFCOUT_IOC(_BaseIOC):
         'polarity_rb': 'Polarity-Sts',
         'event_sp': 'Evt-SP',
         'event_rb': 'Evt-RB',
-        'pulses_sp': 'Pulses-SP',
-        'pulses_rb': 'Pulses-RB',
+        'pulses_sp': 'NrPulses-SP',
+        'pulses_rb': 'NrPulses-RB',
         }
 
     @staticmethod

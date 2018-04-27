@@ -98,8 +98,8 @@ def get_otp_database(otp_num=0, prefix=None):
         'type': 'int', 'value': 1, 'unit': '',
         'lolo': 0, 'low': 0, 'lolim': 0,
         'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
-    db[prefix+'Pulses-SP'] = dic_
-    db[prefix+'Pulses-RB'] = _dcopy(dic_)
+    db[prefix+'NrPulses-SP'] = dic_
+    db[prefix+'NrPulses-RB'] = _dcopy(dic_)
 
     dic_ = {
         'type': 'int', 'value': 1, 'unit': '',
@@ -563,9 +563,9 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dic_ = {'type': 'int', 'unit': 'numer of pulses',
             # 'lolo': 1, 'low': 1, 'lolim': 1,
             'hilim': 2001, 'high': 10000, 'hihi': 100000}
-    dic_.update(trig_db['Pulses'])
-    db['Pulses-RB'] = _dcopy(dic_)
-    db['Pulses-SP'] = dic_
+    dic_.update(trig_db['NrPulses'])
+    db['NrPulses-RB'] = _dcopy(dic_)
+    db['NrPulses-SP'] = dic_
 
     dic_ = {'type': 'enum', 'enums': triggers_intlk}
     dic_.update(trig_db['Intlk'])
