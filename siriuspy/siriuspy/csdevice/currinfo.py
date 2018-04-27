@@ -2,9 +2,9 @@
 import collections as _collections
 
 
-OFFONTYP = ['Off', 'On']
-DCCTSELECTIONTYP = ['Avg', 'DCCT13C4', 'DCCT14C4']
-BUFFAUTORSTTYP = ['PVsTrig', 'DCurrCheck', 'Off']
+OFFONTYP = ('Off', 'On')
+DCCTSELECTIONTYP = ('Avg', 'DCCT13C4', 'DCCT14C4')
+BUFFAUTORSTTYP = ('PVsTrig', 'DCurrCheck', 'Off')
 
 
 class Const:

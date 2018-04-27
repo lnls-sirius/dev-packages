@@ -2,20 +2,22 @@
 import collections as _collections
 
 
-OFFONTYP = ['Off', 'On']
-PROPADDTYP = ['Proportional', 'Additional']
+OFFONTYP = ('Off', 'On')
+PROPADDTYP = ('Proportional', 'Additional')
 
 
 class Const:
     """Const class defining OpticsCorr constants and Enum types."""
 
-    BO_SFAMS_CHROMCORR = ['SF', 'SD']
-    SI_SFAMS_CHROMCORR = ['SFA1', 'SFA2', 'SDA1', 'SDA2', 'SDA3',
+    BO_SFAMS_CHROMCORR = ('SF', 'SD')
+    SI_SFAMS_CHROMCORR = ('SFA1', 'SFA2', 'SDA1', 'SDA2', 'SDA3',
                           'SFB1', 'SFB2', 'SDB1', 'SDB2', 'SDB3',
-                          'SFP1', 'SFP2', 'SDP1', 'SDP2', 'SDP3']
-    BO_QFAMS_TUNECORR = ['QF', 'QD']
-    SI_QFAMS_TUNECORR = ['QFA', 'QFB', 'QFP',
-                         'QDA', 'QDB1', 'QDB2', 'QDP1', 'QDP2']
+                          'SFP1', 'SFP2', 'SDP1', 'SDP2', 'SDP3')
+    BO_QFAMS_TUNECORR = ('QF', 'QD')
+    SI_QFAMS_TUNECORR = ('QFA', 'QFB', 'QFP',
+                         'QDA', 'QDB1', 'QDB2', 'QDP1', 'QDP2')
+    STATUSLABELS = ('MA Connection', 'MA PwrState', 'MA OpMode',
+                    'MA CtrlMode', 'Timing Config')
 
     @staticmethod
     def _init():
@@ -73,10 +75,9 @@ def get_chrom_database(acc):
 
         'ConfigMA-Cmd':     {'type': 'int', 'value': 0},
 
-        'Status-Mon':       {'type': 'int', 'value': 0x1f},
-        'Status-Cte':       {'type': 'string', 'count': 5, 'value':
-                             ('MA Connection', 'MA PwrState', 'MA OpMode',
-                              'MA CtrlMode', 'Timing Config')},
+        'Status-Mon':       {'type': 'int', 'value': 0b11111},
+        'StatusLabels-Cte': {'type': 'string', 'count': 5,
+                             'value': Const.STATUSLABELS},
     }
 
     for fam in sfams:
@@ -148,10 +149,9 @@ def get_tune_database(acc):
 
         'SetNewRefKL-Cmd': {'type': 'int', 'value': 0},
 
-        'Status-Mon':      {'type': 'int', 'value': 0x1f},
-        'Status-Cte':      {'type': 'string', 'count': 5, 'value':
-                            ('MA Connection', 'MA PwrState', 'MA OpMode',
-                             'MA CtrlMode', 'Timing Config')},
+        'Status-Mon':      {'type': 'int', 'value': 0b11111},
+        'StatusLabels-Cte': {'type': 'string', 'count': 5,
+                             'value': Const.STATUSLABELS},
     }
 
     for fam in qfams:

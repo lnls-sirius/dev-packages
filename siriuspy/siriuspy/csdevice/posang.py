@@ -9,6 +9,8 @@ class Const:
     TS_CORRH_POSANG = ('TS-04:MA-CH', 'TS-04:PM-InjSeptF')
     TS_CORRV_POSANG = ('TS-04:MA-CV-1', 'TS-04:MA-CV-2')
 
+    STATUSLABELS = ('MA Connection', 'MA PwrState', 'MA OpMode', 'MA CtrlMode')
+
 
 def get_posang_database():
     """Return Soft IOC database."""
@@ -52,11 +54,10 @@ def get_posang_database():
                               'unit': 'mrad'},
         'SetNewRefKick-Cmd': {'type': 'int', 'value': 0},
 
-        'ConfigMA-Cmd':   {'type': 'int', 'value': 0},
+        'ConfigMA-Cmd':      {'type': 'int', 'value': 0},
 
-        'Status-Mon':     {'type': 'int', 'value': 0xf},
-        'Status-Cte':     {'type': 'string', 'count': 4, 'value':
-                           ('MA Connection', 'MA PwrState',
-                            'MA OpMode', 'MA CtrlMode')},
+        'Status-Mon':        {'type': 'int', 'value': 0b1111},
+        'StatusLabels-Cte':  {'type': 'string', 'count': 4,
+                              'value': Const.STATUSLABELS},
     }
     return pvs_database
