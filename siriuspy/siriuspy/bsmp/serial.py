@@ -1,5 +1,6 @@
 """BSMP serial communications classes."""
 import struct as _struct
+from .exceptions import SerialError as _SerialError
 from .exceptions import SerialErrEmpty as _SerialErrEmpty
 from .exceptions import SerialErrCheckSum as _SerialErrCheckSum
 from .exceptions import SerialErrPckgLen as _SerialErrPckgLen
@@ -160,6 +161,9 @@ class Package:
             return(False)
 
 
+# import traceback as _traceback
+
+
 class Channel:
     """Serial communication channel.
 
@@ -198,7 +202,14 @@ class Channel:
         # example, a global lock should be implemented as to allow only one
         # instance of the class object to exist.
         Channel._lock.acquire(blocking=True)
-        self.write(message, timeout)
-        ret = self.read()
+        try:
+            self.write(message, timeout)
+            ret = self.read()
+        except _SerialError:
+            # print('---')
+            # _traceback.print_exc()
+            # print('---')
+            Channel._lock.release()
+            raise
         Channel._lock.release()
         return ret
