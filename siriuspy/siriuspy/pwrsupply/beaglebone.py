@@ -182,6 +182,7 @@ class IOCController:
         return True
 
     def _execute_command(self, devices_info, command, setpoints=None):
+        devices_info = self._tuplify(devices_info)
         dev_ids = [dev_info.id for dev_info in devices_info]
         if setpoints is None:
             self._controller.exec_functions(dev_ids, command)
@@ -189,7 +190,8 @@ class IOCController:
             self._controller.exec_functions(dev_ids, command, setpoints)
         else:
             for idx, dev_id in enumerate(dev_ids):
-                self._controller.exec_functions(dev_id, command, setpoints[idx])
+                self._controller.exec_functions(
+                    dev_id, command, setpoints[idx])
 
     def _set_setpoints(self, devices_info, fields, values):
         devices_info = self._tuplify(devices_info)
@@ -220,6 +222,13 @@ class IOCController:
     def _set_opmode(self, devices_info, setpoint):
         """Operation mode setter."""
         # Execute function to set PSs operation mode
+        if setpoint == 2:
+            for device_info in devices_info:
+                self._execute_command(
+                    device_info,
+                    _c.F_SET_SLOWREF,
+                    self.read(device_info.name, 'CycleOffset-RB'))
+
         self._execute_command(devices_info, _c.F_SELECT_OP_MODE, setpoint+3)
         self._set_setpoints(devices_info, 'OpMode-Sel', setpoint)
 
