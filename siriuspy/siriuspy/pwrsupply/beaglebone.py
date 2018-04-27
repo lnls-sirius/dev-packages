@@ -333,8 +333,9 @@ class IOCController:
             pru_status = self._controller.pru_sync_status
             if not cycle_enabled and pru_status == 0:
                 # Return to SlowRef operation mode
-                self._controller.exec_functions(
-                    dev_info.id, _c.F_SELECT_OP_MODE, 3)
+                # self._controller.exec_functions(
+                #     dev_info.id, _c.F_SELECT_OP_MODE, 3)
+                self._set_opmode([dev_info], 3)
                 break
             _time.sleep(0.25)
 
