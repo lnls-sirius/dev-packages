@@ -210,7 +210,7 @@ class _Base:
 
     def _on_change_pvs_sp(self, pvname, value, **kwargs):
         if self._is_forcing:
-            _time.sleep(0.1)
+            _time.sleep(0.1)  # TODO: not good, not good...
             self._start_timer()
         else:
             if pvname.endswith('-Cmd'):
