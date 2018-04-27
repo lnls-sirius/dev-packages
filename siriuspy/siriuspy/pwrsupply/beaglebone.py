@@ -211,6 +211,8 @@ class IOCController:
         # Execute function to devices
         if setpoint == 1:
             self._execute_command(devices_info, _c.F_TURN_ON)
+            _time.sleep(0.3)
+            self._execute_command(devices_info, _c.F_CLOSE_LOOP)
         elif setpoint == 0:
             self._execute_command(devices_info, _c.F_TURN_OFF)
 
@@ -249,7 +251,7 @@ class IOCController:
 
     def _reset(self, devices_info, setpoint):
         """Reset command."""
-        self._execute_command(devices_info, _c.F_RESET_INTERLOCKS, setpoint)
+        self._execute_command(devices_info, _c.F_RESET_INTERLOCKS)
         self._set_cmd_setpoints(devices_info, 'Reset-Cmd')
 
     def _abort(self, devices_info, setpoint):
