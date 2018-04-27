@@ -1,9 +1,11 @@
 """Main module of AS-AP-PosAng IOC."""
 
 import time as _time
+import numpy as _np
 import epics as _epics
 import siriuspy as _siriuspy
 from siriuspy.servconf.conf_service import ConfigService as _ConfigService
+from siriuspy.csdevice.posang import Const as _Const
 import as_ap_posang.pvs as _pvs
 
 # Coding guidelines:
@@ -67,16 +69,16 @@ class App:
         # first vertical corretor and second vertical corretor.
         self._correctors = ['', '', '', '']
         if self._TL == 'TS':
-            self._correctors[0] = 'TS-04:MA-CH'
-            self._correctors[1] = 'TS-04:PM-InjSeptF'
-            self._correctors[2] = 'TS-04:MA-CV-1'
-            self._correctors[3] = 'TS-04:MA-CV-2'
+            self._correctors[0] = _Const.TS_CORRH_POSANG[0]
+            self._correctors[1] = _Const.TS_CORRH_POSANG[1]
+            self._correctors[2] = _Const.TS_CORRV_POSANG[0]
+            self._correctors[3] = _Const.TS_CORRV_POSANG[1]
 
         elif self._TL == 'TB':
-            self._correctors[0] = 'TB-03:MA-CH'
-            self._correctors[1] = 'TB-04:PM-InjSept'
-            self._correctors[2] = 'TB-04:MA-CV-1'
-            self._correctors[3] = 'TB-04:MA-CV-2'
+            self._correctors[0] = _Const.TB_CORRH_POSANG[0]
+            self._correctors[1] = _Const.TB_CORRH_POSANG[1]
+            self._correctors[2] = _Const.TB_CORRV_POSANG[0]
+            self._correctors[3] = _Const.TB_CORRV_POSANG[1]
 
         # Connect to correctors
         self._corr_kick_sp_pvs = {}
@@ -291,11 +293,9 @@ class App:
             c1_refkick_rad = c1_refkick/1000
             c2_refkick_rad = c2_refkick/1000
 
-            det = respmat[0] * respmat[3] - respmat[1] * respmat[2]
-            delta_kick_c1 = (respmat[3] * delta_pos_meters-respmat[1] *
-                             delta_ang_rad) / det
-            delta_kick_c2 = (-respmat[2]*delta_pos_meters+respmat[0] *
-                             delta_ang_rad) / det
+            [[delta_kick_c1], [delta_kick_c2]] = _np.dot(
+                _np.linalg.inv(_np.reshape(respmat, (2, 2), order='C')),
+                _np.array([[delta_pos_meters], [delta_ang_rad]]))
 
             c1_kick_sp_pv.put(c1_refkick_rad + delta_kick_c1)
             c2_kick_sp_pv.put(c2_refkick_rad + delta_kick_c2)
