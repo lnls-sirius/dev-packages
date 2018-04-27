@@ -72,6 +72,25 @@ class Const:
     T_DSPCLASS = 12
     T_NONE = 13
 
+    # --- enums ---
+    E_STATE_OFF = 0
+    E_STATE_INTERLOCK = 1
+    E_STATE_INITIALIZING = 2
+    E_STATE_SLOWREF = 3
+    E_STATE_SLOWREFSYNC = 4
+    E_STATE_CYCLE = 5
+    E_STATE_RMPWFM = 6
+    E_STATE_MIGWFM = 7
+    E_STATE_FASTREF = 8
+
+    E_REMOTE_REMOTE = 0
+    E_REMOTE_LOCAL = 1
+    E_REMOTE_PCHOST = 2
+
+    E_SIGGENTYPE_SINE = 0
+    E_SIGGENTYPE_DAMPEDSINE = 1
+    E_SIGGENTYPE_TRAPEZOIDAL = 2
+
     # --- common variables ---
     V_PS_STATUS = 0
     V_PS_SETPOINT = 1  # corresponds to IOC Current-RB
