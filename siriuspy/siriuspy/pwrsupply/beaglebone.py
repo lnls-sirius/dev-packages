@@ -182,6 +182,7 @@ class IOCController:
         return True
 
     def _execute_command(self, devices_info, command, setpoints=None):
+        devices_info = self._tuplify(devices_info)
         dev_ids = [dev_info.id for dev_info in devices_info]
         if setpoints is None:
             self._controller.exec_functions(dev_ids, command)
@@ -189,7 +190,8 @@ class IOCController:
             self._controller.exec_functions(dev_ids, command, setpoints)
         else:
             for idx, dev_id in enumerate(dev_ids):
-                self._controller.exec_functions(dev_id, command, setpoints[idx])
+                self._controller.exec_functions(
+                    dev_id, command, setpoints[idx])
 
     def _set_setpoints(self, devices_info, fields, values):
         devices_info = self._tuplify(devices_info)
@@ -209,6 +211,8 @@ class IOCController:
         # Execute function to devices
         if setpoint == 1:
             self._execute_command(devices_info, _c.F_TURN_ON)
+            _time.sleep(0.3)
+            self._execute_command(devices_info, _c.F_CLOSE_LOOP)
         elif setpoint == 0:
             self._execute_command(devices_info, _c.F_TURN_OFF)
 
@@ -220,6 +224,13 @@ class IOCController:
     def _set_opmode(self, devices_info, setpoint):
         """Operation mode setter."""
         # Execute function to set PSs operation mode
+        if setpoint == 2:
+            for device_info in devices_info:
+                self._execute_command(
+                    device_info,
+                    _c.F_SET_SLOWREF,
+                    self.read(device_info.name, 'CycleOffset-RB'))
+
         self._execute_command(devices_info, _c.F_SELECT_OP_MODE, setpoint+3)
         self._set_setpoints(devices_info, 'OpMode-Sel', setpoint)
 
@@ -240,7 +251,7 @@ class IOCController:
 
     def _reset(self, devices_info, setpoint):
         """Reset command."""
-        self._execute_command(devices_info, _c.F_RESET_INTERLOCKS, setpoint)
+        self._execute_command(devices_info, _c.F_RESET_INTERLOCKS)
         self._set_cmd_setpoints(devices_info, 'Reset-Cmd')
 
     def _abort(self, devices_info, setpoint):
@@ -310,11 +321,12 @@ class IOCController:
             watcher.start()
 
     def _watch_cycle(self, dev_info):
+        _time.sleep(0.5)
         dev_name = dev_info.name
         if self.read(dev_name, 'PwrState-Sts') == 0:
             return
-        while self.read(dev_name, 'OpMode-Sts') != _PSConst.OpMode.Cycle and \
-                self._controller.pru_sync_status != 1:
+        while self.read(dev_name, 'OpMode-Sts') == _PSConst.OpMode.Cycle and \
+                self._controller.pru_sync_status == 1:
             _time.sleep(0.1)
         while True:
             cycle_enabled = self.read(dev_name, 'CycleEnbl-Mon')
