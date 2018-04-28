@@ -1,6 +1,5 @@
 """Module implementing PRU elements."""
 import time as _time
-import threading as _threading
 
 from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 
@@ -67,7 +66,8 @@ class PRUInterface:
         """Start sync mode in PRU."""
         if sync_mode in Const.SYNC_MODE.ALL:
             self._sync_mode = sync_mode
-            return self._sync_start(sync_mode, sync_address, delay)
+            self._sync_start(sync_mode, sync_address, delay)
+            return None
         else:
             # TODO: should this be changed to an exception?
             print('Invalid sync_mode for PRU!')
@@ -75,16 +75,22 @@ class PRUInterface:
 
     def sync_stop(self):
         """Stop sync mode."""
-        return self._sync_stop()
+        self._sync_stop()
+        return None
 
     def sync_abort(self):
         """Force stop sync mode."""
-        return self._sync_abort()
+        self._sync_abort()
+        return None
 
     @property
     def sync_pulse_count(self):
         """Return synchronism pulse count."""
         return self._get_sync_pulse_count()
+
+    def clear_pulse_count_sync(self):
+        """Clear pulse count sync."""
+        return self._clear_pulse_count_sync()
 
     def UART_write(self, stream, timeout):
         """Write stream to serial port."""
@@ -104,9 +110,10 @@ class PRUInterface:
         """Index of next curve point to be processed."""
         return self._read_curve_pointer()
 
-    def set_curve_pointer(self, index):
-        """Set index of next curve point to be processed."""
-        self._set_curve_pointer(index)
+    # def set_curve_pointer(self, index):
+    #     """Set index of next curve point to be processed."""
+    #     self._set_curve_pointer(index)
+    #     return None
 
     def read_curve_block(self):
         """Read selected block of curves."""
@@ -115,10 +122,12 @@ class PRUInterface:
     def set_curve_block(self, block):
         """Set the block of curves."""
         self._set_curve_block(block)
+        return None
 
     def close(self):
         """Close PRU session."""
-        return self._close()
+        self._close()
+        return None
 
     # --- pure virtual methods ---
 
@@ -146,6 +155,12 @@ class PRUInterface:
     def _curve(self, curve1, curve2, curve3, curve4, block):
         raise NotImplementedError
 
+    def _read_curve_pointer(self):
+        raise NotImplementedError
+
+    # def _set_curve_pointer(self, index):
+    #     raise NotImplementedError
+
     def _set_curve_block(self, block):
         raise NotImplementedError
 
@@ -168,7 +183,10 @@ class PRU(PRUInterface):
         # start PRU library and set PRU to sync off
         baud_rate = 6
         mode = b"M"  # "S": slave | "M": master
-        _PRUserial485.PRUserial485_open(baud_rate, mode)
+        ret = _PRUserial485.PRUserial485_open(baud_rate, mode)
+        if ret != Const.RETURN.OK:
+            raise ValueError(('Error {} returned in '
+                              'PRUserial485_open').format(ret))
 
     def _get_sync_status(self):
         value = _PRUserial485.PRUserial485_sync_status()
@@ -185,17 +203,21 @@ class PRU(PRUInterface):
 
     def _sync_abort(self):
         _PRUserial485.PRUserial485_sync_stop()  # None returned
-        return True
+        return None
 
     def _get_sync_pulse_count(self):
         value = _PRUserial485.PRUserial485_read_pulse_count_sync()
         return value
 
+    def _clear_pulse_count_sync(self):
+        value = _PRUserial485.PRUserial485_clear_pulse_count_sync()
+        return value
+
     def _UART_write(self, stream, timeout):
         # this method send streams through UART to the RS-485 line.
         # print('write: ', stream)
-        _PRUserial485.PRUserial485_write(stream, timeout)  # None returned
-        return True
+        ret = _PRUserial485.PRUserial485_write(stream, timeout)
+        return ret
 
     def _UART_read(self):
         # this method send streams through UART to the RS-485 line.
@@ -204,43 +226,56 @@ class PRU(PRUInterface):
         return value
 
     def _curve(self, curve1, curve2, curve3, curve4, block):
-        _PRUserial485.PRUserial485_curve(curve1, curve2, curve3, curve4, block)
-        return True
+        ret = _PRUserial485.PRUserial485_curve(curve1, curve2,
+                                               curve3, curve4, block)
+        return ret
 
     def _read_curve_pointer(self):
         value = _PRUserial485.PRUserial485_read_curve_pointer()
         return value
 
-    def _set_curve_pointer(self, index):
-        _PRUserial485.PRUserial485_set_curve_pointer(index)
-        return True
+    # def _set_curve_pointer(self, index):
+    #     _PRUserial485.PRUserial485_set_curve_pointer(index)
+    #     return None
 
     def _read_curve_block(self):
         value = _PRUserial485.PRUserial485_read_curve_block()
         return value
 
     def _set_curve_block(self, block):
-        _PRUserial485.PRUserial485_set_curve_block(block)  # None returned
-        return True
+        _PRUserial485.PRUserial485_set_curve_block(block)
+        return None
 
     def _close(self):
         _PRUserial485.PRUserial485_close()
-        return True
+        return None
 
 
 class PRUSim(PRUInterface):
     """Functions for simulated programmable real-time unit."""
 
-    # TODO: read PRU library and simulate correct behaviour here.
-    # for example, pulse_count is reset when sync_start...
+    # TODO: maybe create a thread to simulate timing triggers.
+
+    def emulate_trigger(self):
+        """Simulate trigger signal from the timing system."""
+        if self._sync_status == Const.SYNC_STATE.ON:
+            self._sync_pulse_count += 1
+            if self.sync_mode == Const.SYNC_MODE.CYCLE:
+                self._sync_status = Const.SYNC_STATE.OFF
+            elif self.sync_mode in (Const.SYNC_MODE.MIGINT,
+                                    Const.SYNC_MODE.MIGEND):
+                self._index = (self._index + 1) % len(self._curves[0])
+                if self._index == 0:
+                    self._sync_status = Const.SYNC_STATE.OFF
+            elif self.sync_mode in (Const.SYNC_MODE.RMPINT,
+                                    Const.SYNC_MODE.RMPEND):
+                self._index = (self._index + 1) % len(self._curves[0])
 
     def __init__(self):
         """Init method."""
         PRUInterface.__init__(self)
         self._sync_status = Const.SYNC_STATE.OFF
         self._sync_pulse_count = 0
-        self._trigger_thread = _threading.Thread(
-            target=self._listen_timing_trigger, daemon=True)
         self._curves = self._create_curves()
         self._block = 0  # TODO: check if this is the default PRU value
         self._index = 0
@@ -250,21 +285,27 @@ class PRUSim(PRUInterface):
 
     def _sync_start(self, sync_mode, sync_address, delay):
         self._sync_status = Const.SYNC_STATE.ON
-        if not self._trigger_thread.is_alive():
-            self._trigger_thread = _threading.Thread(
-                target=self._listen_timing_trigger, daemon=True)
-            self._trigger_thread.start()
-        return True
+        while self._sync_status == Const.SYNC_STATE.ON:
+            _time.sleep(0.050)
+        return None
 
     def _sync_stop(self):
-        return self._sync_abort()
+        self._sync_abort()
+        return None
 
     def _sync_abort(self):
         self._sync_status = Const.SYNC_STATE.OFF
-        return True
+        return None
 
     def _get_sync_pulse_count(self):
         return self._sync_pulse_count
+
+    def _clear_pulse_count_sync(self):
+        if self._sync_status == Const.SYNC_STATE.OFF:
+            self._sync_pulse_count = 0
+            return Const.RETURN.OK
+        else:
+            return Const.RETURN.ERR_CLEAR_PULSE
 
     def _UART_write(self, stream, timeout):
         raise NotImplementedError(('This method should not be called '
@@ -275,18 +316,21 @@ class PRUSim(PRUInterface):
                                   'for objects of this subclass'))
 
     def _curve(self, curve1, curve2, curve3, curve4, block):
-        self._curves[block][0] = curve1.copy()
-        self._curves[block][1] = curve2.copy()
-        self._curves[block][2] = curve3.copy()
-        self._curves[block][3] = curve4.copy()
-        return True
+        if len(curve1) == len(curve2) == len(curve3) == len(curve4):
+            self._curves[block][0] = curve1.copy()
+            self._curves[block][1] = curve2.copy()
+            self._curves[block][2] = curve3.copy()
+            self._curves[block][3] = curve4.copy()
+            return Const.RETURN.OK
+        else:
+            raise ValueError("Erro: Curvas nao tem o mesmo tamanho!")
 
     def _read_curve_pointer(self):
         return self._index
 
-    def _set_curve_pointer(self, index):
-        self._index = index
-        return True
+    # def _set_curve_pointer(self, index):
+    #     self._index = index
+    #     return None
 
     def _read_curve_block(self):
         return self._block
@@ -294,26 +338,12 @@ class PRUSim(PRUInterface):
     def _set_curve_block(self, block):
         # TODO: have to simulate change when previous curve is processed!
         self._block = block
-        return True
+        return None
 
     def _close(self):
-        return True
+        return None
 
     # --- simulation auxilliary methods ---
-
-    def _listen_timing_trigger(self):
-        # this tries to simulate trigger signal from the timing system
-        while self._sync_status == Const.SYNC_STATE.ON:
-            if self.sync_mode == Const.SYNC_MODE.CYCLE:
-                self._sync_pulse_count += 1
-                self._sync_status = Const.SYNC_STATE.OFF
-            elif self.sync_mode in (Const.SYNC_MODE.MIGINT,
-                                    Const.SYNC_MODE.MIGEND):
-                self._sync_pulse_count += 1
-            elif self.sync_mode in (Const.SYNC_MODE.RMPINT,
-                                    Const.SYNC_MODE.RMPEND):
-                self._sync_pulse_count += 1
-            _time.sleep(0.001)  # TODO: solve this arbitrary value.
 
     def _create_curves(self):
         curves = [
@@ -343,32 +373,3 @@ class PRUSim(PRUInterface):
              ],
         ]
         return curves
-
-    # def set_wfmdata(self, ID_device, wfmdata):
-    #     """Set waveform of a device."""
-    #     sorted_IDs = sorted(self._waveforms.keys())
-    #     if ID_device not in sorted_IDs:
-    #         print('ID_device {} not defined!'.format(ID_device))
-    #         return
-    #     else:
-    #         self._waveforms[ID_device] = wfmdata[:]
-    #         if len(sorted_IDs) == 1:
-    #             self._PRU.curve(self._waveforms[sorted_IDs[0]],
-    #                             SerialComm._default_wfm,
-    #                             SerialComm._default_wfm,
-    #                             SerialComm._default_wfm)
-    #         elif len(sorted_IDs) == 2:
-    #             self._PRU.curve(self._waveforms[sorted_IDs[0]],
-    #                             self._waveforms[sorted_IDs[1]],
-    #                             SerialComm._default_wfm,
-    #                             SerialComm._default_wfm)
-    #         elif len(sorted_IDs) == 3:
-    #             self._PRU.curve(self._waveforms[sorted_IDs[0]],
-    #                             self._waveforms[sorted_IDs[1]],
-    #                             self._waveforms[sorted_IDs[2]],
-    #                             SerialComm._default_wfm)
-    #         elif len(sorted_IDs) > 3:
-    #             self._PRU.curve(self._waveforms[sorted_IDs[0]],
-    #                             self._waveforms[sorted_IDs[1]],
-    #                             self._waveforms[sorted_IDs[2]],
-    #                             self._waveforms[sorted_IDs[3]])
