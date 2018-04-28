@@ -13,3 +13,6 @@ class Types:
     T_UINT16 = _BSMPType('uint16', 2, '<H', lambda x: isinstance(x, int))
     T_UINT32 = _BSMPType('uint32', 4, '<I', lambda x: isinstance(x, int))
     T_FLOAT = _BSMPType('float', 4, '<f', lambda x: isinstance(x, float))
+    T_PARAM = _BSMPType('uint16', 2, '<H', lambda x: isinstance(x, int))
+    T_STATE = _BSMPType('uint16', 2, '<H', lambda x: isinstance(x, int))
+    T_ENUM = _BSMPType('uint16', 2, '<H', lambda x: isinstance(x, int))

@@ -58,7 +58,7 @@ class Const:
 
     # --- types ---
     T_STATUS = 0
-    T_STATUS = 1  # TODO: duplicate constant!
+    T_STATE = 1
     T_REMOTE = 2
     T_MODEL = 3
     T_FLOAT = 4
@@ -71,6 +71,7 @@ class Const:
     T_FLOAT12 = 11
     T_DSPCLASS = 12
     T_NONE = 13
+    T_ENUM = 14
 
     # --- enums ---
     E_STATE_OFF = 0
@@ -173,12 +174,24 @@ class Const:
     F_OPEN_LOOP = 2
     F_CLOSE_LOOP = 3
     F_SELECT_OP_MODE = 4
+    F_SELECT_PS_MODEL = 5  # --- NOT IMPLEMENTED YET ---
     F_RESET_INTERLOCKS = 6
+    F_REMOTE_INTERFACE = 7  # --- NOT IMPLEMENTED YET ---
+    F_SET_SERIAL_ADDRESS = 8  # --- NOT IMPLEMENTED YET ---
     F_SET_SERIAL_TERMINATION = 9  # --- NOT IMPLEMENTED YET ---
+    F_UNLOCK_UDC = 10  # --- NOT IMPLEMENTED YET ---
+    F_LOCK_UDC = 11  # --- NOT IMPLEMENTED YET ---
+    F_CFG_BUF_SAMPLES = 12  # --- NOT IMPLEMENTED YET ---
+    F_ENABLE_BUF_SAMPLES = 13  # --- NOT IMPLEMENTED YET ---
+    F_DISABLE_BUF_SAMPLES = 14  # --- NOT IMPLEMENTED YET ---
     F_SYNC_PULSE = 15  # --- NOT IMPLEMENTED YET ---
     F_SET_SLOWREF = 16
     F_SET_SLOWREF_FBP = 17  # --- NOT IMPLEMENTED YET ---
     F_RESET_COUNTERS = 18
+    F_SCALE_WFMREF = 19  # --- NOT IMPLEMENTED YET ---
+    F_SELECT_WFMREF = 20  # --- NOT IMPLEMENTED YET ---
+    F_SAVE_WFMREF = 21  # --- NOT IMPLEMENTED YET ---
+    F_RESET_WFMREF = 22  # --- NOT IMPLEMENTED YET ---
     F_CFG_SIGGEN = 23
     F_SET_SIGGEN = 24  # --- NOT IMPLEMENTED YET ---
     F_ENABLE_SIGGEN = 25
@@ -236,7 +249,7 @@ class Const:
     P_HRADC_TRANSDUCER_GAIN = 33
     P_HRADC_TRANSDUCER_OFFSET = 34
     P_SIGGEN_TYPE = 35
-    P_SIGGEN_NR_CYCLES = 36
+    P_SIGGEN_NUM_CYCLES = 36
     P_SIGGEN_FREQ = 37
     P_SIGGEN_AMPLITUDE = 38
     P_SIGGEN_OFFSET = 39
@@ -247,6 +260,107 @@ class Const:
     P_WFMREF_OFFSET = 44
     P_ANALOG_MAX = 45
     P_ANALOG_MIN = 46
+
+
+class Parameters:
+    """power supply parameters."""
+
+    Parameters = (
+        {'eid': 0, 'count': 1, 'unit': '',
+         'init': False, 'config': False, 'Op': True},
+        {'eid': 1, 'count': 1, 'unit': '',
+         'init': True, 'config': False, 'Op': False},
+        {'eid': 2, 'count': 1, 'unit': '',
+         'init': True, 'config': False, 'Op': False},
+        {'eid': 3, 'count': 1, 'unit': '',
+         'init': False, 'config': False, 'Op': True},
+        {'eid': 4, 'count': 1, 'unit': 'bps',
+         'init': True, 'config': False, 'Op': True},
+        {'eid': 5, 'count': 4, 'unit': '',
+         'init': False, 'config': False, 'Op': True},
+        {'eid': 6, 'count': 1, 'unit': '',
+         'init': True, 'config': False, 'Op': False},
+        {'eid': 7, 'count': 1, 'unit': '',
+         'init': False, 'config': False, 'Op': True},
+        {'eid': 8, 'count': 4, 'unit': '',
+         'init': False, 'config': False, 'Op': True},
+        {'eid': 9, 'count': 4, 'unit': '',
+         'init': False, 'config': False, 'Op': True},
+        {'eid': 10, 'count': 1, 'unit': 'Hz',
+         'init': True, 'config': False, 'Op': False},
+        {'eid': 11, 'count': 4, 'unit': 'Hz',
+         'init': False, 'config': True, 'Op': False},
+        {'eid': 12, 'count': 1, 'unit': 'A/V',
+         'init': False, 'config': False, 'Op': True},
+        {'eid': 13, 'count': 1, 'unit': 'A/V',
+         'init': False, 'config': False, 'Op': True},
+        {'eid': 14, 'count': 1, 'unit': '',
+         'init': False, 'config': False, 'Op': True},
+        {'eid': 15, 'count': 1, 'unit': '',
+         'init': False, 'config': False, 'Op': True},
+        {'eid': 16, 'count': 1, 'unit': 'Ref/s',
+         'init': False, 'config': True, 'Op': False},
+        {'eid': 17, 'count': 1, 'unit': 'Ref/s',
+         'init': False, 'config': True, 'Op': False},
+        {'eid': 18, 'count': 1, 'unit': 'Ref/s',
+         'init': False, 'config': True, 'Op': False},
+        {'eid': 19, 'count': 1, 'unit': 'Ref/s',
+         'init': False, 'config': True, 'Op': False},
+        {'eid': 20, 'count': 1, 'unit': 'Hz',
+         'init': True, 'config': False, 'Op': False},
+        {'eid': 21, 'count': 1, 'unit': 'ns',
+         'init': False, 'config': True, 'Op': False},
+        {'eid': 22, 'count': 1, 'unit': '%',
+         'init': False, 'config': False, 'Op': True},
+        {'eid': 23, 'count': 1, 'unit': '%',
+         'init': False, 'config': False, 'Op': True},
+        {'eid': 24, 'count': 1, 'unit': '%',
+         'init': False, 'config': False, 'Op': True},
+        {'eid': 25, 'count': 1, 'unit': '%',
+         'init': False, 'config': False, 'Op': True},
+        {'eid': 26, 'count': 1, 'unit': '%',
+         'init': False, 'config': False, 'Op': True},
+        {'eid': 27, 'count': 1, 'unit': '',
+         'init': True, 'config': False, 'Op': False},
+        {'eid': 28, 'count': 1, 'unit': 'MHz',
+         'init': True, 'config': False, 'Op': False},
+        {'eid': 29, 'count': 1, 'unit': 'Hz',
+         'init': True, 'config': False, 'Op': False},
+        {'eid': 30, 'count': 4, 'unit': '',
+         'init': True, 'config': False, 'Op': False},
+        {'eid': 31, 'count': 4, 'unit': '',
+         'init': True, 'config': False, 'Op': False},
+        {'eid': 32, 'count': 4, 'unit': '',
+         'init': True, 'config': False, 'Op': False},
+        {'eid': 33, 'count': 4, 'unit': '',
+         'init': False, 'config': False, 'Op': True},
+        {'eid': 34, 'count': 4, 'unit': '',
+         'init': False, 'config': False, 'Op': True},
+        {'eid': 35, 'count': 1, 'unit': '',
+         'init': False, 'config': True, 'Op': False},
+        {'eid': 36, 'count': 1, 'unit': '',
+         'init': False, 'config': True, 'Op': False},
+        {'eid': 37, 'count': 1, 'unit': 'Hz',
+         'init': False, 'config': False, 'Op': True},
+        {'eid': 38, 'count': 1, 'unit': 'A/V/%',
+         'init': False, 'config': False, 'Op': True},
+        {'eid': 39, 'count': 1, 'unit': 'A/V/%',
+         'init': False, 'config': False, 'Op': True},
+        {'eid': 40, 'count': 4, 'unit': '',
+         'init': False, 'config': True, 'Op': False},
+        {'eid': 41, 'count': 1, 'unit': '',
+         'init': False, 'config': True, 'Op': False},
+        {'eid': 42, 'count': 1, 'unit': '',
+         'init': False, 'config': True, 'Op': False},
+        {'eid': 43, 'count': 1, 'unit': 'A/V/%',
+         'init': False, 'config': False, 'Op': True},
+        {'eid': 44, 'count': 1, 'unit': 'A/V/%',
+         'init': False, 'config': False, 'Op': True},
+        {'eid': 45, 'count': 64, 'unit': '',
+         'init': False, 'config': False, 'Op': True},
+        {'eid': 46, 'count': 64, 'unit': '',
+         'init': False, 'config': False, 'Op': True},
+    )
 
 
 class FBPEntities(_Entities):
@@ -333,45 +447,83 @@ class FBPEntities(_Entities):
     Curves = tuple()
 
     Functions = (
-        {'eid': 0, 'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': 1, 'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': 2, 'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': 3, 'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': 4, 'i_type': (_Types.T_UINT16, ), 'o_type': (_Types.T_UINT8,)},
-        {'eid': 5, 'i_type': (_Types.T_UINT16, ), 'o_type': (_Types.T_UINT8,)},
-        {'eid': 6, 'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': 7, 'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': 8, 'i_type': (_Types.T_UINT16, ), 'o_type': (_Types.T_UINT8,)},
-        {'eid': 9, 'i_type': (_Types.T_UINT16, ), 'o_type': (_Types.T_UINT8,)},
-        {'eid': 10, 'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
-        {'eid': 11, 'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
-        {'eid': 12, 'i_type': (_Types.T_UINT32,), 'o_type': (_Types.T_UINT8,)},
-        {'eid': 13, 'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': 14, 'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': 15, 'i_type': (), 'o_type': ()},
-        {'eid': 16, 'i_type': (_Types.T_FLOAT,), 'o_type': (_Types.T_UINT8,)},
-        {'eid': 17,
+        {'eid': Const.F_TURN_ON,
+         'i_type': (), 'o_type': (_Types.T_UINT8, )},
+        {'eid': Const.F_TURN_OFF,
+         'i_type': (), 'o_type': (_Types.T_UINT8, )},
+        {'eid': Const.F_OPEN_LOOP,
+         'i_type': (), 'o_type': (_Types.T_UINT8, )},
+        {'eid': Const.F_CLOSE_LOOP,
+         'i_type': (), 'o_type': (_Types.T_UINT8, )},
+        {'eid': Const.F_SELECT_OP_MODE,
+         'i_type': (_Types.T_ENUM, ), 'o_type': (_Types.T_UINT8,)},
+        {'eid': Const.F_SELECT_PS_MODEL,
+         'i_type': (_Types.T_UINT16, ), 'o_type': (_Types.T_UINT8,)},
+        {'eid': Const.F_RESET_INTERLOCKS,
+         'i_type': (), 'o_type': (_Types.T_UINT8, )},
+        {'eid': Const.F_REMOTE_INTERFACE,
+         'i_type': (), 'o_type': (_Types.T_UINT8, )},
+        {'eid': Const.F_SET_SERIAL_ADDRESS,
+         'i_type': (_Types.T_UINT16, ), 'o_type': (_Types.T_UINT8,)},
+        {'eid': Const.F_SET_SERIAL_TERMINATION,
+         'i_type': (_Types.T_UINT16, ), 'o_type': (_Types.T_UINT8,)},
+        {'eid': Const.F_UNLOCK_UDC,
+         'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
+        {'eid': Const.F_LOCK_UDC,
+         'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
+        {'eid': Const.F_CFG_BUF_SAMPLES,
+         'i_type': (_Types.T_UINT32,), 'o_type': (_Types.T_UINT8,)},
+        {'eid': Const.F_ENABLE_BUF_SAMPLES,
+         'i_type': (), 'o_type': (_Types.T_UINT8, )},
+        {'eid': Const.F_DISABLE_BUF_SAMPLES,
+         'i_type': (), 'o_type': (_Types.T_UINT8, )},
+        {'eid': Const.F_SYNC_PULSE,
+         'i_type': (), 'o_type': ()},
+        {'eid': Const.F_SET_SLOWREF,
+         'i_type': (_Types.T_FLOAT,), 'o_type': (_Types.T_UINT8,)},
+        {'eid': Const.F_SET_SLOWREF_FBP,
          'i_type': (_Types.T_FLOAT, _Types.T_FLOAT, _Types.T_FLOAT,
                     _Types.T_FLOAT),
          'o_type': (_Types.T_UINT8,)},
-        {'eid': 18, 'i_type': (), 'o_type': (_Types.T_UINT8,)},
-        {'eid': 19,
+        {'eid': Const.F_RESET_COUNTERS,
+         'i_type': (), 'o_type': (_Types.T_UINT8,)},
+        {'eid': Const.F_SCALE_WFMREF,
          'i_type': (_Types.T_FLOAT, _Types.T_FLOAT),
          'o_type': (_Types.T_UINT8,)},
-        {'eid': 20, 'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
-        {'eid': 21, 'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': 22, 'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': 23,
-         'i_type': (_Types.T_UINT16, _Types.T_UINT16,
+        {'eid': Const.F_SELECT_WFMREF,
+         'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
+        {'eid': Const.F_SAVE_WFMREF,
+         'i_type': (), 'o_type': (_Types.T_UINT8, )},
+        {'eid': Const.F_RESET_WFMREF,
+         'i_type': (), 'o_type': (_Types.T_UINT8, )},
+        {'eid': Const.F_CFG_SIGGEN,
+         'i_type': (_Types.T_ENUM, _Types.T_UINT16,
                     _Types.T_FLOAT, _Types.T_FLOAT, _Types.T_FLOAT,
                     _Types.T_FLOAT, _Types.T_FLOAT,
                     _Types.T_FLOAT, _Types.T_FLOAT),
          'o_type': (_Types.T_UINT8,)},
-        {'eid': 24,
+        {'eid': Const.F_SET_SIGGEN,
          'i_type': (_Types.T_FLOAT, _Types.T_FLOAT, _Types.T_FLOAT),
          'o_type': (_Types.T_UINT8,)},
-        {'eid': 25, 'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': 26, 'i_type': (), 'o_type': (_Types.T_UINT8, )},
+        {'eid': Const.F_ENABLE_SIGGEN,
+         'i_type': (), 'o_type': (_Types.T_UINT8, )},
+        {'eid': Const.F_DISABLE_SIGGEN,
+         'i_type': (), 'o_type': (_Types.T_UINT8, )},
+        {'eid': Const.F_SET_SLOWREF_READBACK,
+         'i_type': (_Types.T_FLOAT,), 'o_type': (_Types.T_FLOAT,)},
+        {'eid': Const.F_SET_SLOWREF_FBP_READBACK,
+         'i_type': (_Types.T_FLOAT, _Types.T_FLOAT,
+                    _Types.T_FLOAT, _Types.T_FLOAT,),
+         'o_type': (_Types.T_FLOAT, _Types.T_FLOAT,
+                    _Types.T_FLOAT, _Types.T_FLOAT,)},
+        {'eid': Const.F_SET_PARAM,
+         'i_type': (_Types.T_PARAM, _Types.T_UINT16, _Types.T_FLOAT,),
+         'o_type': (_Types.T_UINT8,)},
+        {'eid': Const.F_GET_PARAM,
+         'i_type': (_Types.T_PARAM, _Types.T_UINT16,),
+         'o_type': (_Types.T_FLOAT,)},
+
+
     )
 
     def __init__(self):
