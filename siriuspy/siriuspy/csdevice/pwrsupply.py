@@ -175,6 +175,7 @@ def get_common_propty_database():
         'CycleNrCycles-SP': {'type': 'int', 'value': 0},
         'CycleNrCycles-RB': {'type': 'int', 'value': 0},
         'CycleIndex-Mon': {'type': 'int', 'value': 0},
+        'CycleNr-Mon': {'type': 'int', 'value': 0},  # TODO: nr of cycle.
         'CycleFreq-SP': {'type': 'float', 'value': 0.0,
                          'unit': 'Hz', 'prec': 4},
         'CycleFreq-RB': {'type': 'float', 'value': 0.0,
