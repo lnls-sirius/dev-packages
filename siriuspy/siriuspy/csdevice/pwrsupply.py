@@ -93,6 +93,7 @@ ps_hard_interlock_FBP_DCLink = (
 )
 ps_cycle_type = ('Sine', 'DampedSine', 'Trapezoidal')
 
+ps_sync_mode = ('Off', 'Cycle', 'RmpWfm', 'MigWfm')
 
 # --- power supply constants definition class ---
 
@@ -121,6 +122,8 @@ class Const:
             Const._add_const('CmdAck', ps_cmdack[i], i)
         for i in range(len(ps_cycle_type)):
             Const._add_const('CycleType', ps_cycle_type[i], i)
+        for i in range(len(ps_cycle_type)):
+            Const._add_const('SyncMode', ps_sync_mode[i], i)
 
     @staticmethod
     def _add_const(group, const, i):
@@ -184,7 +187,9 @@ def get_common_propty_database():
                              'value': [0, 0, 0, 0]},
         'CycleAuxParam-RB': {'type': 'float', 'count': 4,
                              'value': [0, 0, 0, 0]},
-    }
+        'BBBSyncMode-Mon': {'type': 'enum', 'enums': ps_sync_mode,
+                            'value': Const.SyncMode.Off},
+                                }
     return db
 
 

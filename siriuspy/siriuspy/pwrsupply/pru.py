@@ -18,13 +18,26 @@ try:
         err_msg = 'Invalid PRUserial485 library version! {} != {}'.format(
             _PRUserial485.__version__, __version__)
         raise ValueError(err_msg)
-    if not _PRUserial485.libraries_loaded:
-        # could not import libray, which is interpreted as not installed.
-        _PRUserial485 = None
+    # if not _PRUserial485.libraries_loaded:
+    #     # could not import libray, which is interpreted as not installed.
+    #     _PRUserial485 = None
 except ImportError:
     # in case PRUserial485 library is not installed and
     # this module is used only for simulated PRUs.
     _PRUserial485 = None
+
+
+class Const:
+    """Namespace for constants."""
+
+    RETURN = _PRUserial485.ConstReturn
+    SYNC_MODE = _PRUserial485.ConstSyncMode
+
+    class SYNC_STATE:
+        """Namespace for sync state constants."""
+
+        OFF = False
+        ON = True
 
 
 class PRUInterface:
@@ -32,22 +45,7 @@ class PRUInterface:
 
     # TODO: replace 'write' and 'read' methods by 'request' and 'read' methods
 
-    _SYNC_OFF = False
-    _SYNC_ON = True
-    _SYNC_DELAY = 20  # [us] TODO: better understand this parameter!
-
     VERSION = __version__  # Version of the compatible PRUserial485 library
-
-    SYNC_MIGINT = 0x51  # Single curve sequence & Read msgs at End of curve
-    SYNC_MIGEND = 0x5E  # Single curve sequence & Read msgs at End of curve
-    SYNC_RMPINT = 0xC1  # Contin. curve sequence & Intercalated read messages
-    SYNC_RMPEND = 0xCE  # Contin. curve sequence & Read msgs at End of curve
-    SYNC_CYCLE = 0x5C   # Single Sequence - Single CYCLING COMMAND
-    SYNC_MODES = (
-        SYNC_MIGINT, SYNC_MIGEND,
-        SYNC_RMPINT, SYNC_RMPEND,
-        SYNC_CYCLE
-    )
 
     def __init__(self):
         """Init method."""
@@ -67,7 +65,7 @@ class PRUInterface:
 
     def sync_start(self, sync_mode, sync_address, delay):
         """Start sync mode in PRU."""
-        if sync_mode in PRUInterface.SYNC_MODES:
+        if sync_mode in Const.SYNC_MODE.ALL:
             self._sync_mode = sync_mode
             return self._sync_start(sync_mode, sync_address, delay)
         else:
@@ -78,6 +76,10 @@ class PRUInterface:
     def sync_stop(self):
         """Stop sync mode."""
         return self._sync_stop()
+
+    def sync_abort(self):
+        """Force stop sync mode."""
+        return self._sync_abort()
 
     @property
     def sync_pulse_count(self):
@@ -129,6 +131,9 @@ class PRUInterface:
     def _sync_stop(self):
         raise NotImplementedError
 
+    def _sync_abort(self):
+        raise NotImplementedError
+
     def _get_sync_pulse_count(self):
         raise NotImplementedError
 
@@ -175,6 +180,10 @@ class PRU(PRUInterface):
         return True
 
     def _sync_stop(self):
+        # TODO: ask CON to implement sync_stop
+        return self._sync_abort()
+
+    def _sync_abort(self):
         _PRUserial485.PRUserial485_sync_stop()  # None returned
         return True
 
@@ -222,10 +231,13 @@ class PRU(PRUInterface):
 class PRUSim(PRUInterface):
     """Functions for simulated programmable real-time unit."""
 
+    # TODO: read PRU library and simulate correct behaviour here.
+    # for example, pulse_count is reset when sync_start...
+
     def __init__(self):
         """Init method."""
         PRUInterface.__init__(self)
-        self._sync_status = PRUInterface._SYNC_OFF
+        self._sync_status = Const.SYNC_STATE.OFF
         self._sync_pulse_count = 0
         self._trigger_thread = _threading.Thread(
             target=self._listen_timing_trigger, daemon=True)
@@ -237,7 +249,7 @@ class PRUSim(PRUInterface):
         return self._sync_status
 
     def _sync_start(self, sync_mode, sync_address, delay):
-        self._sync_status = PRUInterface._SYNC_ON
+        self._sync_status = Const.SYNC_STATE.ON
         if not self._trigger_thread.is_alive():
             self._trigger_thread = _threading.Thread(
                 target=self._listen_timing_trigger, daemon=True)
@@ -245,7 +257,10 @@ class PRUSim(PRUInterface):
         return True
 
     def _sync_stop(self):
-        self._sync_status = PRUInterface._SYNC_OFF
+        return self._sync_abort()
+
+    def _sync_abort(self):
+        self._sync_status = Const.SYNC_STATE.OFF
         return True
 
     def _get_sync_pulse_count(self):
@@ -288,13 +303,15 @@ class PRUSim(PRUInterface):
 
     def _listen_timing_trigger(self):
         # this tries to simulate trigger signal from the timing system
-        while self._sync_status == PRUInterface._SYNC_ON:
-            if self.sync_mode == PRUSim.SYNC_CYCLE:
+        while self._sync_status == Const.SYNC_STATE.ON:
+            if self.sync_mode == Const.SYNC_MODE.CYCLE:
                 self._sync_pulse_count += 1
-                self._sync_status = PRUInterface._SYNC_OFF
-            elif self.sync_mode in (PRUSim.SYNC_MIGINT, PRUSim.SYNC_MIGEND):
+                self._sync_status = Const.SYNC_STATE.OFF
+            elif self.sync_mode in (Const.SYNC_MODE.MIGINT,
+                                    Const.SYNC_MODE.MIGEND):
                 self._sync_pulse_count += 1
-            elif self.sync_mode in (PRUSim.SYNC_RMPINT, PRUSim.SYNC_RMPEND):
+            elif self.sync_mode in (Const.SYNC_MODE.RMPINT,
+                                    Const.SYNC_MODE.RMPEND):
                 self._sync_pulse_count += 1
             _time.sleep(0.001)  # TODO: solve this arbitrary value.
 

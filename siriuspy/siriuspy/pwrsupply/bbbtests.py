@@ -161,7 +161,7 @@ def run_rmpwfm(pruc):
     pruc.pru_curve_write(1, curve1)
 
     # enters cycle mode
-    pruc.pru_sync_start(sync_mode=pruc.SYNC.RMPEND)
+    pruc.pru_sync_start(sync_mode=pruc.PRU.SYNC_MODE.RMPEND)
 
     print('power supply in rmpwfm mode, waiting for sync signal...')
 
@@ -189,12 +189,12 @@ def run_cycle(pruc):
     config_cycle_mode(pruc)
 
     # enters cycle mode
-    pruc.pru_sync_start(sync_mode=pruc.SYNC.CYCLE)
+    pruc.pru_sync_start(sync_mode=pruc.PRU.SYNC_MODE.CYCLE)
 
     # loops until timing trigger is received
     print('waiting for trigger from EVR...', end='')
     sys.stdout.flush()
-    while pruc.pru_sync_status == pruc.SYNC.ON:
+    while pruc.pru_sync_status == pruc.PRU.SYNC_STATE.ON:
         t0 = time.time()
         time.sleep(0.1)
     print('arrived.')

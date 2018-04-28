@@ -9,7 +9,7 @@ import time as _time
 import random as _random
 import traceback as _traceback
 from collections import deque as _deque
-from collections import namedtuple as _namedtuple
+# from collections import namedtuple as _namedtuple
 from threading import Thread as _Thread
 from threading import Lock as _Lock
 from copy import deepcopy as _dcopy
@@ -18,7 +18,8 @@ from siriuspy.bsmp import BSMP as _BSMP
 from siriuspy.bsmp import Response as _Response
 from siriuspy.bsmp.exceptions import SerialError as _SerialError
 from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
-from siriuspy.pwrsupply.pru import PRUInterface as _PRUInterface
+from siriuspy.pwrsupply.pru import Const as _PRUConst
+# from siriuspy.pwrsupply.pru import PRUInterface as _PRUInterface
 from siriuspy.pwrsupply.pru import PRU as _PRU
 from siriuspy.pwrsupply.pru import PRUSim as _PRUSim
 from siriuspy.pwrsupply.bsmp import __version__ as _ps_bsmp_version
@@ -101,7 +102,7 @@ def parse_firmware_version(version):
     return version
 
 
-class BSMPOpQueue(_deque):
+class _BSMPOpQueue(_deque):
     """BSMPOpQueue.
 
     This class manages operations which invoke BSMP communications using
@@ -141,7 +142,7 @@ class BSMPOpQueue(_deque):
 
     def append(self, operation, unique=False):
         """Append operation to queue."""
-        BSMPOpQueue._lock.acquire(blocking=True)
+        _BSMPOpQueue._lock.acquire(blocking=True)
         if not self._ignore:
             if not unique:
                 super().append(operation)
@@ -153,7 +154,7 @@ class BSMPOpQueue(_deque):
                 if n == 0:
                     super().append(operation)
                     self._last_operation = operation
-        BSMPOpQueue._lock.release()
+        _BSMPOpQueue._lock.release()
 
     def clear(self):
         """Clear deque."""
@@ -163,12 +164,12 @@ class BSMPOpQueue(_deque):
 
     def popleft(self):
         """Pop left operation from queue."""
-        BSMPOpQueue._lock.acquire(blocking=True)
+        _BSMPOpQueue._lock.acquire(blocking=True)
         if super().__len__() > 0:
             value = super().popleft()
         else:
             value = None
-        BSMPOpQueue._lock.release()
+        _BSMPOpQueue._lock.release()
         return value
 
     def process(self):
@@ -191,7 +192,7 @@ class BSMPOpQueue(_deque):
             return False
 
 
-class BSMPVarGroups:
+class _BSMPVarGroups:
     """Beaglebone Variagle groups.
 
     Namespace to group usefull BSMP variable groups used by PRUController.
@@ -367,10 +368,10 @@ class BSMPVarGroups:
 
 
 class PRUController:
-    """BeagleBone controller.
+    """Beaglebone controller.
 
     This class implements all basic PRU configuration and BSMP communications
-    of the BeagleBone computer connected through a serial line to power supply
+    of the Beaglebone computer connected through a serial line to power supply
     controllers.
     """
 
@@ -395,28 +396,29 @@ class PRUController:
     #
 
     # frequency constants
-    FREQ = _namedtuple('FREQ', '')
-    FREQ.RAMP = 2.0  # [Hz]
-    FREQ.SCAN = 10.0  # [Hz]
+    class FREQ:
+        RAMP = 2.0  # [Hz]
+        SCAN = 10.0  # [Hz]
 
     # PRU constants
-    SYNC = _namedtuple('SYNC', '')
-    SYNC.OFF = _PRUInterface._SYNC_OFF
-    SYNC.ON = _PRUInterface._SYNC_ON
-    SYNC.MIGINT = _PRUInterface.SYNC_MIGINT
-    SYNC.MIGEND = _PRUInterface.SYNC_MIGEND
-    SYNC.RMPINT = _PRUInterface.SYNC_RMPINT
-    SYNC.RMPEND = _PRUInterface.SYNC_RMPEND
-    SYNC.CYCLE = _PRUInterface.SYNC_CYCLE
-
-    # tuple with implemented modes
-    SYNC.MODES = (SYNC.OFF, SYNC.MIGEND, SYNC.RMPEND, SYNC.CYCLE)
+    PRU = _PRUConst
+    # SYNC = _namedtuple('SYNC', '')
+    # SYNC.OFF = _PRUConst.SYNC_STATE.OFF
+    # SYNC.ON = _PRUConst.SYNC_STATE.ON
+    # SYNC.MIGINT = _PRUInterface.SYNC_MIGINT
+    # SYNC.MIGEND = _PRUInterface.SYNC_MIGEND
+    # SYNC.RMPINT = _PRUInterface.SYNC_RMPINT
+    # SYNC.RMPEND = _PRUInterface.SYNC_RMPEND
+    # SYNC.CYCLE = _PRUInterface.SYNC_CYCLE
+    #
+    # # tuple with implemented modes
+    # SYNC.MODES = (SYNC.OFF, SYNC.MIGEND, SYNC.RMPEND, SYNC.CYCLE)
 
     # BSMP variable constants
     BSMP = _c
 
     # BSMP variable group constants
-    VGROUPS = BSMPVarGroups
+    VGROUPS = _BSMPVarGroups
 
     # shortcuts, local variables and constants
 
@@ -424,8 +426,9 @@ class PRUController:
     _delay_turn_on_off = 0.3  # [s]
     _delay_loop_open_close = 0.3  # [s]
 
+    # TODO: check if this short sleep dalay is causing high CPU usage!
     _delay_sleep = 0.010  # [s]
-    _groups = BSMPVarGroups.groups
+    _groups = _BSMPVarGroups.groups
 
     # TODO: solution works only within the name process space
     #       look at linux flock facility for a system-wide solution.
@@ -437,13 +440,16 @@ class PRUController:
     # the BSMP broadcast command 0x0F 'sync_pulse' before processing the UART
     # buffer again. This delay has to be longer than the duration of the
     # controller's response to 'sync_pulse'.
+
+    # TODO: confirm with CON if these delays are appropriate
     _delay_func_sync_pulse = 100  # [us]
+    _delay_func_set_slowref_fbp = 100  # [us]
     _pru_delays = dict()
-    _pru_delays[SYNC.MIGINT] = None  # This mode is not implemented
-    _pru_delays[SYNC.MIGEND] = _delay_func_sync_pulse
-    _pru_delays[SYNC.RMPINT] = None  # This mode is not implemented
-    _pru_delays[SYNC.RMPEND] = _delay_func_sync_pulse
-    _pru_delays[SYNC.CYCLE] = _delay_func_sync_pulse
+    _pru_delays[PRU.SYNC_MODE.MIGINT] = None  # This mode is not implemented
+    _pru_delays[PRU.SYNC_MODE.MIGEND] = _delay_func_set_slowref_fbp
+    _pru_delays[PRU.SYNC_MODE.RMPINT] = None  # This mode is not implemented
+    _pru_delays[PRU.SYNC_MODE.RMPEND] = _delay_func_set_slowref_fbp
+    _pru_delays[PRU.SYNC_MODE.CYCLE] = _delay_func_sync_pulse
 
     # lock used when accessing _variables_values
     _lock = _Lock()
@@ -451,7 +457,10 @@ class PRUController:
     # --- public interface ---
 
     def __init__(self, bsmp_entities, device_ids,
-                 simulate=False, processing=True, scanning=True):
+                 simulate=False,
+                 processing=True,
+                 scanning=True,
+                 reset=True):
         """Init."""
         # check if another instance is running
         PRUController._check_instance()
@@ -463,22 +472,29 @@ class PRUController:
         self._device_ids = sorted(device_ids)
 
         # conversion of ps status to high level properties
-        # TODO: temporary?
         self._psc_state = {}
         for id in self.device_ids:
             self._psc_state[id] = _PSCStatus()
 
         # create PRU (sync mode off).
-        self._initialize_pru(bsmp_entities)
+        self._initialize_pru()
 
         # initialize BSMP (contains BSMP comm)
         self._initialize_bsmp(bsmp_entities)
+
+        # reset power supply controllers
+        # TODO: this should be invoked in the case of IOC setting state of HW
+        if reset:
+            self._reset_ps_controllers()
+
+        # update state of PRUController from ps controller
+        self._update_mirror_state(bsmp_entities)
 
         # initialize BSMP devices (might contain BSMP comm)
         self._initialize_devices()
 
         # operation queue
-        self._queue = BSMPOpQueue()
+        self._queue = _BSMPOpQueue()
 
         # define scan thread
         self._last_device_scanned = len(self._device_ids)  # next is the first
@@ -544,7 +560,7 @@ class PRUController:
 
     def check_connected(self, device_id):
         """Return connection state of a device."""
-        # TODO: may be not the current true connection state
+        # TODO: may not be the true current connection state
         return self._connected[device_id]
 
     # --- public methods: bbb controller ---
@@ -552,7 +568,7 @@ class PRUController:
     def disconnect(self):
         """Disconnect to BSMP devices and stop threads."""
         # move PRU sync to off
-        self.pru_sync_stop()
+        self.pru_sync_abort()
 
         # wait for empty queue
         self._scanning_false_wait_empty_queue()
@@ -616,19 +632,6 @@ class PRUController:
         values = _dcopy(values)
         PRUController._lock.release()
 
-        # # get values
-        # dev_values = self._variables_values[device_id]
-        # if variable_id is None:
-        #     values = dev_values
-        # else:
-        #     values = dev_values[variable_id]
-        #
-        # # lock and make copy of value
-        # # TODO: test if locking is really necessary.
-        # PRUController._lock.acquire()
-        # values = _dcopy(values)
-        # PRUController._lock.release()
-
         return values
 
     def exec_functions(self, device_ids, function_id, args=None):
@@ -650,7 +653,7 @@ class PRUController:
             True is operation was queued or False, if operation was rejected
             because of the PRU sync state.
         """
-        if self.pru_sync_status == self.SYNC.OFF:
+        if self.pru_sync_status == self.PRU.SYNC_STATE.OFF:
             # in PRU sync off mode, append BSM function exec operation to queue
             if isinstance(device_ids, int):
                 device_ids = (device_ids, )
@@ -694,19 +697,19 @@ class PRUController:
         any other PRUController method, withou any inserted delay.
         """
         # test if sync_mode is valid
-        if sync_mode not in PRUController.SYNC.MODES:
+        if sync_mode not in self.PRU.SYNC_MODE.ALL:
             self.disconnect()
             raise NotImplementedError('Invalid sync mode {}'.format(
                 hex(sync_mode)))
 
         # try to abandon previous sync mode gracefully
-        if self.pru_sync_status != self.SYNC.OFF:
+        if self.pru_sync_status != self.PRU.SYNC_STATE.OFF:
             # --- already with sync mode on.
             if sync_mode != self._pru.sync_mode:
                 # --- different sync mode
                 # PRU sync is on but it needs sync_mode change
-                # first turn off PRY sync mode
-                self.pru_sync_stop()
+                # first turn off PRY sync mode abruptally
+                self.pru_sync_abort()
             else:
                 # --- already in selected sync mode
                 # TODO: to do nothing is what we want? what about WfmIndex?
@@ -733,7 +736,7 @@ class PRUController:
             delay=PRUController._pru_delays[sync_mode])
 
         # update time interval according to new sync mode selected
-        self._scan_interval = self._get_time_interval()
+        self._scan_interval = self._get_scan_interval()
 
         # accept back new operation requests
         self.scanning = True
@@ -742,8 +745,14 @@ class PRUController:
     def pru_sync_stop(self):
         """Stop PRU sync mode."""
         # TODO: should we do more than what is implemented?
-        self._pru.sync_stop()
-        self._scan_interval = self._get_time_interval()
+        self._pru.sync_stop() # TODO: implemented as a sync_abort!!!
+        self._scan_interval = self._get_scan_interval()
+
+    def pru_sync_abort(self):
+        """Force stop PRU sync mode."""
+        # TODO: should we do more than what is implemented?
+        self._pru.sync_abort()
+        self._scan_interval = self._get_scan_interval()
 
     @property
     def pru_sync_pulse_count(self):
@@ -793,7 +802,7 @@ class PRUController:
                      (device_ids, group_id, ))
         if len(self._queue) == 0 or \
            operation != self._queue.last_operation:
-            if self.pru_sync_status == self.SYNC.OFF:
+            if self.pru_sync_status == self.PRU.SYNC_STATE.OFF:
                 # with sync off, function executions are allowed and
                 # therefore operations must be queued in order
                 self._queue.append(operation)
@@ -845,36 +854,46 @@ class PRUController:
         self.running = False
         PRUController._instance_running = False
 
-    def _initialize_pru(self, bsmp_entities):
+    def _initialize_pru(self):
 
         # create PRU object
         if self._simulate:
-            # TODO: generalize this code checking type(bsmp_entities)
             self._pru = _PRUSim()
         else:
             self._pru = _PRU()
 
         # update time interval attribute
-        self._scan_interval = self._get_time_interval()
+        self._scan_interval = self._get_scan_interval()
 
         # initialize PRU curves
         # TODO: read curves from PRU memory.
         # CON is working in a PRU library that allows this.
-        self._curves = [list(_DEFAULT_WFMDATA), ] * 4
+        self._curves = [list(_DEFAULT_WFMDATA),  # 1st power supply
+                        list(_DEFAULT_WFMDATA),  # 2nd power supply
+                        list(_DEFAULT_WFMDATA),  # 3rd power supply
+                        list(_DEFAULT_WFMDATA),  # 4th power supply
+                       ]
 
     def _initialize_bsmp(self, bsmp_entities):
-
-        # create attribute with state of connections
-        self._connected = {id: False for id in self.device_ids}
 
         # prune variables from mirror group
         self._init_prune_mirror_group()
 
+        # create attribute with state of connections
+        self._connected = {id: False for id in self.device_ids}
+
         # create BSMP devices
         self._bsmp = self._init_create_conn(bsmp_entities)
 
+    def _reset_ps_controllers(self):
+
+        # turn PRU sync off
+        self.pru_sync_abort()
+
         # initialize variable groups (first BSMP comm.)
         self._bsmp_init_groups()
+
+    def _update_mirror_state(self, bsmp_entities):
 
         # initialize variables_values, a mirror state of BSMP devices
         self._bsmp_init_variable_values(bsmp_entities)
@@ -929,15 +948,11 @@ class PRUController:
         for id in self._device_ids:
             # remove previous variables groups and fresh ones
             try:
-                print('remove group')
                 self._bsmp[id].remove_all_groups()
-                print('end remove group')
                 self._connected[id] = True
                 for group_id in groups_ids[3:]:
                     var_ids = self._groups[group_id]
-                    print('create group')
                     self._bsmp[id].create_group(var_ids)
-                    print('end create group')
             except _SerialError:
                 self._connected[id] = False
 
@@ -968,8 +983,14 @@ class PRUController:
 
     def _loop_scan(self):
         while self._running:
+
+            # run scan method once
             if self.scanning:
                 self.bsmp_scan()
+
+            # update scan interval
+            self._scan_interval = self._get_scan_interval()
+
             # wait for time_interval
             _time.sleep(self._scan_interval)
 
@@ -983,14 +1004,14 @@ class PRUController:
 
     def _select_device_group_ids(self):
         """Return variable group id and device ids for the loop scan."""
-        if self.pru_sync_status == self.SYNC.OFF:
+        if self.pru_sync_status == self.PRU.SYNC_STATE.OFF:
             return self._device_ids, self.VGROUPS.SLOWREF
-        elif self._pru.sync_mode == self.SYNC.MIGEND:
+        elif self._pru.sync_mode == self.PRU.SYNC_MODE.MIGEND:
             return self._device_ids, self.VGROUPS.MIGWFM
-        elif self._pru.sync_mode == self.SYNC.RMPEND:
+        elif self._pru.sync_mode == self.PRU.SYNC_MODE.RMPEND:
             dev_ids = self._select_next_device_id()
             return dev_ids, self.VGROUPS.RMPWFM
-        elif self._pru.sync_mode == self.SYNC.CYCLE:
+        elif self._pru.sync_mode == self.PRU.SYNC_MODE.CYCLE:
             return self._device_ids, self.VGROUPS.CYCLE
         else:
             self.disconnect()
@@ -1010,9 +1031,9 @@ class PRUController:
         # all power supplies through mirror variables.
         return (self._device_ids[0], )
 
-    def _get_time_interval(self):
-        if self.pru_sync_status == self.SYNC.OFF or \
-           self.pru_sync_mode == self.SYNC.CYCLE:
+    def _get_scan_interval(self):
+        if self.pru_sync_status == self.PRU.SYNC_STATE.OFF or \
+           self.pru_sync_mode == self.PRU.SYNC_MODE.CYCLE:
             return 1.0/self.FREQ.SCAN  # [s]
         else:
             return 1.0/self.FREQ.RAMP  # [s]

@@ -502,7 +502,7 @@ class BeagleBone:
         self._controller.pru_sync_stop()  # TODO: not necessary. test.
         self._ioc_controller.write(self.psnames, 'OpMode-Sel', op_mode)
         if op_mode == _PSConst.OpMode.Cycle:
-            sync_mode = self._controller.SYNC.CYCLE
+            sync_mode = self._controller.PRU.SYNC_MODE.CYCLE
             return self._controller.pru_sync_start(sync_mode)
 
         # return self._state.set_op_mode(self)
