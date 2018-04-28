@@ -84,6 +84,7 @@ from siriuspy.pwrsupply.controller import FBP_BSMPSim as _FBP_BSMPSim
 #     signal has arrived?
 #     patricia will change the PRU library as to implement new curves right
 #     away if index=0
+# 06. set_curve_pointer: what is the idea of this function?
 
 # TODO: discuss with gabriel
 #
@@ -376,11 +377,11 @@ class PRUController:
     """
 
     # TODO: test class in sync on mode and trigger from timing
-    # TODO: Improve update frequency in WfmRamp/MigRamp (done - testing)
     # TODO: allow variable-size curves
     # TODO: delete random fluctuation added to measurements
     # TODO: it might be possible and usefull to use simulated BSMP but real PRU
-    # TODO: remove printout of PRUserial485 when changing curves.
+    # TODO: remove printout of PRUserial485 when changing curves. (PR in queue)
+    # TODO: need to be able to read siggen parms from ps controllers!
     #
     # Gabriel from ELP proposed the idea of a privilegded slave that
     # could define BSMP variables that corresponded to other slaves variables
@@ -397,6 +398,8 @@ class PRUController:
 
     # frequency constants
     class FREQ:
+        """Namespace for frequency values."""
+
         RAMP = 2.0  # [Hz]
         SCAN = 10.0  # [Hz]
 
@@ -492,6 +495,9 @@ class PRUController:
 
         # initialize BSMP devices (might contain BSMP comm)
         self._initialize_devices()
+
+        # read siggen from power supply
+        self._bsmp_read_siggen_parms()
 
         # operation queue
         self._queue = _BSMPOpQueue()
@@ -745,7 +751,7 @@ class PRUController:
     def pru_sync_stop(self):
         """Stop PRU sync mode."""
         # TODO: should we do more than what is implemented?
-        self._pru.sync_stop() # TODO: implemented as a sync_abort!!!
+        self._pru.sync_stop()  # TODO: implemented as a sync_abort!!!
         self._scan_interval = self._get_scan_interval()
 
     def pru_sync_abort(self):
@@ -872,7 +878,7 @@ class PRUController:
                         list(_DEFAULT_WFMDATA),  # 2nd power supply
                         list(_DEFAULT_WFMDATA),  # 3rd power supply
                         list(_DEFAULT_WFMDATA),  # 4th power supply
-                       ]
+                        ]
 
     def _initialize_bsmp(self, bsmp_entities):
 
@@ -1156,7 +1162,7 @@ class PRUController:
         except _SerialError:
             print('SerialError exception in {}'.format(
                 ('F', device_ids, function_id)))
-            return
+            return None
         dtime = _time.time() - t0
         self._last_operation = ('F', dtime,
                                 device_ids, function_id)
@@ -1185,3 +1191,43 @@ class PRUController:
             return data
         else:
             return None
+
+    def _bsmp_read_siggen_parms(self):
+
+        print('reading siggen parameters from first power supply')
+
+        params = (
+          ('type', self.BSMP.P_SIGGEN_TYPE,
+           self.BSMP.V_SIGGEN_TYPE, int, False),
+          ('num_cycles', self.BSMP.P_SIGGEN_NUM_CYCLES,
+           self.BSMP.V_SIGGEN_NUM_CYCLES, int, False),
+          ('freq', self.BSMP.P_SIGGEN_FREQ,
+           self.BSMP.V_SIGGEN_FREQ, float, False),
+          ('amplitude', self.BSMP.P_SIGGEN_AMPLITUDE,
+           self.BSMP.V_SIGGEN_AMPLITUDE, float, False,),
+          ('offset', self.BSMP.P_SIGGEN_OFFSET,
+           self.BSMP.V_SIGGEN_OFFSET, float, False),
+          ('aux_param0', self.BSMP.P_SIGGEN_AUX_PARAM,
+           self.BSMP.V_SIGGEN_AUX_PARAM, float, True, 0),
+          ('aux_param1', self.BSMP.P_SIGGEN_AUX_PARAM,
+           self.BSMP.V_SIGGEN_AUX_PARAM, float, True, 1),
+          ('aux_param2', self.BSMP.P_SIGGEN_AUX_PARAM,
+           self.BSMP.V_SIGGEN_AUX_PARAM, float, True, 2),
+          ('aux_param3', self.BSMP.P_SIGGEN_AUX_PARAM,
+           self.BSMP.V_SIGGEN_AUX_PARAM, float, True, 3),
+        )
+
+        dev_id = self.device_ids[0]
+        for param in params:
+            label, p_id, v_id, p_type, flag, *idx = param
+            idx = 0 if not flag else idx[0]
+            v = self._bsmp_exec_function((dev_id,), self.BSMP.F_GET_PARAM,
+                                         args=(p_id, idx))
+            if v[dev_id] is not None:
+                v = p_type(v[dev_id])  # convert to correct type
+                print('{}: {}'.format(label, v))
+                for id in self.device_ids:
+                    if not flag:
+                        self._variables_values[id][v_id] = v
+                    else:
+                        self._variables_values[id][v_id][idx] = v
