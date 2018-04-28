@@ -146,27 +146,22 @@ class Const:
     V_PS_STATUS_2 = 41
     V_PS_STATUS_3 = 42
     V_PS_STATUS_4 = 43
-
     V_PS_SETPOINT_1 = 44  # corresponds to IOC Current-RB
     V_PS_SETPOINT_2 = 45  # corresponds to IOC Current-RB
     V_PS_SETPOINT_3 = 46  # corresponds to IOC Current-RB
     V_PS_SETPOINT_4 = 47  # corresponds to IOC Current-RB
-
     V_PS_REFERENCE_1 = 48  # corresponds to IOC CurrentRef-Mon
     V_PS_REFERENCE_2 = 49  # corresponds to IOC CurrentRef-Mon
     V_PS_REFERENCE_3 = 50  # corresponds to IOC CurrentRef-Mon
     V_PS_REFERENCE_4 = 51  # corresponds to IOC CurrentRef-Mon
-
     V_PS_SOFT_INTERLOCKS_1 = 52  # BSMP doc says ID numb. should be continous!
     V_PS_SOFT_INTERLOCKS_2 = 53  # BSMP doc says ID numb. should be continous!
     V_PS_SOFT_INTERLOCKS_3 = 54  # BSMP doc says ID numb. should be continous!
     V_PS_SOFT_INTERLOCKS_4 = 55  # BSMP doc says ID numb. should be continous!
-
     V_PS_HARD_INTERLOCKS_1 = 56
     V_PS_HARD_INTERLOCKS_2 = 57
     V_PS_HARD_INTERLOCKS_3 = 58
     V_PS_HARD_INTERLOCKS_4 = 59
-
     V_I_LOAD_1 = 60  # corresponds to IOC Current-Mon
     V_I_LOAD_2 = 61  # corresponds to IOC Current-Mon
     V_I_LOAD_3 = 62  # corresponds to IOC Current-Mon
@@ -203,6 +198,55 @@ class Const:
     F_SAVE_DSP_MODULES_EEPROM = 39  # --- NOT IMPLEMENTED YET ---
     F_LOAD_DSP_MODULES_EEPROM = 40  # --- NOT IMPLEMENTED YET ---
     F_RESET_UDC = 41  # --- NOT IMPLEMENTED YET ---
+
+    # --- power supply parameters ---
+    P_PS_NAME = 0
+    P_PS_MODEL = 1
+    P_PS_NR_PSMODELS = 2
+    P_COMM_CMD_INTERFACE = 3
+    P_COMM_RS485_BAUDRATE = 4
+    P_COMM_RS485_ADDRESS = 5
+    P_COMM_RS485_TERMINATOR_RESISTOR = 6
+    P_COMM_UDC_NETWORK_ADDRESS = 7
+    P_COMM_ETHERNET_IP = 8
+    P_COMM_ETHERNET_SUBNET_MASK = 9
+    P_CTRL_FREQ_CONTROL_ISR = 10
+    P_CTRL_FREQ_TIME_SLICER = 11
+    P_CTRL_MAX_REF = 12
+    P_CTRL_MIN_REF = 13
+    P_CTRL_MAX_REF_OPEN_LOOP = 14
+    P_CTRL_MIN_REF_OPEN_LOOP = 15
+    P_CTRL_SLEW_RATE_SLOWREF = 16
+    P_CTRL_SLEW_RATE_SIGGEN_AMP = 17
+    P_CTRL_SLEW_RATE_SIGGEN_OFFSET = 18
+    P_CTRL_SLEW_RATE_WFMREF = 19
+    P_PWM_FREQ = 20
+    P_PWM_DEAD_TIME = 21
+    P_PWM_MAX_DUTY = 22
+    P_PWM_MIN_DUTY = 23
+    P_PWM_MAX_DUTY_OPEN_LOOP = 24
+    P_PWM_MIN_DUTY_OPEN_LOOP = 25
+    P_PWM_LIM_DUTY_SHARE = 26
+    P_HRADC_NR_BORARDS = 27
+    P_HRADC_SPI_CLK = 28
+    P_HRADC_FREQ_SAMPLING = 29
+    P_HRADC_ENABLE_HEATER = 30
+    P_HRADC_ENABLE_HAILS_MON = 31
+    P_HRADC_TRANSDUCER_OUTPUT = 32
+    P_HRADC_TRANSDUCER_GAIN = 33
+    P_HRADC_TRANSDUCER_OFFSET = 34
+    P_SIGGEN_TYPE = 35
+    P_SIGGEN_NR_CYCLES = 36
+    P_SIGGEN_FREQ = 37
+    P_SIGGEN_AMPLITUDE = 38
+    P_SIGGEN_OFFSET = 39
+    P_SIGGEN_AUX_PARAM = 40
+    P_WFMREF_ID = 41
+    P_WFMREF_SYNC_MODE = 42
+    P_WFMREF_GAIN = 43
+    P_WFMREF_OFFSET = 44
+    P_ANALOG_MAX = 45
+    P_ANALOG_MIN = 46
 
 
 class FBPEntities(_Entities):
