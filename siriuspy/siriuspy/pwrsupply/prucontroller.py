@@ -428,6 +428,9 @@ class PRUController:
     # TODO: check with ELP group how short these delays can be
     _delay_turn_on_off = 0.3  # [s]
     _delay_loop_open_close = 0.3  # [s]
+    _delay_remove_groups = 100  # [us]
+    _delay_create_group = 100  # [us]
+    _delay_read_group_variables = 100  # [us]
 
     # TODO: check if this short sleep dalay is causing high CPU usage!
     _delay_sleep = 0.010  # [s]
@@ -488,7 +491,7 @@ class PRUController:
         # reset power supply controllers
         # TODO: this should be invoked in the case of IOC setting state of HW
         if reset is True:
-            self._reset_ps_controllers()  # (contains BSMP comm)
+            self._reset_ps_controllers()  # (contains first BSMP comm)
 
         # update state of PRUController from ps controller
         self._update_mirror_state(bsmp_entities)
@@ -899,6 +902,12 @@ class PRUController:
         # initialize variable groups (first BSMP comm.)
         self._bsmp_init_groups()
 
+        # init curves in ps controller
+        # TODO: somehow this is necessary. if curves are not set in
+        # initialization, RMPEND does not work! sometimes the ps controllers
+        # are put in a non-responsive state!!!
+        self.pru_curve_write(self.device_ids[0], self._curves[0])
+
     def _update_mirror_state(self, bsmp_entities):
 
         # initialize variables_values, a mirror state of BSMP devices
@@ -954,11 +963,13 @@ class PRUController:
         for id in self._device_ids:
             # remove previous variables groups and fresh ones
             try:
-                self._bsmp[id].remove_all_groups()
+                self._bsmp[id].remove_all_groups(
+                    timeout=self._delay_remove_groups)
                 self._connected[id] = True
                 for group_id in groups_ids[3:]:
                     var_ids = self._groups[group_id]
-                    self._bsmp[id].create_group(var_ids)
+                    self._bsmp[id].create_group(
+                        var_ids, timeout=self._delay_create_group)
             except _SerialError:
                 print('_bsmp_init_groups: serial error!')
                 self._connected[id] = False
@@ -1089,16 +1100,26 @@ class PRUController:
         # --- send requests to serial line
         t0 = _time.time()
         try:
+            # if group_id == self.VGROUPS.RMPWFM:
+            #     print('reading mirror variable group for ids:{}...'.format(
+            #         device_ids))
             for id in device_ids:
-                ack[id], data[id] = \
-                    self._bsmp[id].read_group_variables(group_id=group_id)
+                ack[id], data[id] = self._bsmp[id].read_group_variables(
+                    group_id=group_id,
+                    timeout=self._delay_read_group_variables)
+            # if group_id == self.VGROUPS.RMPWFM:
+            #     print('finished reading.')
+            tstamp = _time.time()
+            dtime = tstamp - t0
+            operation = ('V', tstamp, dtime, device_ids, group_id, False)
+            self._last_operation = operation
         except (_SerialError, IndexError) as e:
-            operation = ('V', device_ids, group_id)
+            tstamp = _time.time()
+            dtime = tstamp - t0
+            operation = ('V', tstamp, dtime, device_ids, group_id, True)
+            self._last_operation = operation
             self._serial_error(device_ids, e, operation)
             return
-
-        dtime = _time.time() - t0
-        self._last_operation = ('V', dtime, device_ids, group_id)
 
         # --- make copy of state for updating
         PRUController._lock.acquire()
@@ -1188,9 +1209,13 @@ class PRUController:
             # ps controller in a wrong state.
             #
             if function_id in (self.BSMP.F_TURN_ON, self.BSMP.F_TURN_OFF):
+                # print('waiting {} s for TURN_ON or TURN_OFF'.format(
+                #     self._delay_turn_on_off))
                 _time.sleep(self._delay_turn_on_off)
             elif function_id in (self.BSMP.F_OPEN_LOOP,
                                  self.BSMP.F_CLOSE_LOOP):
+                # print('waiting {} s for CLOSE_LOOP or OPEN_LOOP'.format(
+                #     self._delay_loop_open_close))
                 _time.sleep(self._delay_loop_open_close)
             return data
         else:
