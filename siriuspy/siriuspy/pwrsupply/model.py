@@ -3,7 +3,6 @@
 import re as _re
 import time as _time
 from epics import PV as _PV
-import logging as _log
 
 from siriuspy.envars import vaca_prefix as _VACA_PREFIX
 from siriuspy.factory import NormalizerFactory as _NormalizerFactory
@@ -11,17 +10,12 @@ from siriuspy.thread import QueueThread as _QueueThread
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.epics import connection_timeout as _connection_timeout
 from siriuspy.epics.computed_pv import ComputedPV as _ComputedPV
-from siriuspy.csdevice.pwrsupply import Const as _devc
 from siriuspy.pwrsupply.data import PSData as _PSData
 from siriuspy.pwrsupply import sync as _sync
 from siriuspy.pwrsupply.bsmp import Const as _c
-from siriuspy.pwrsupply.bsmp import ps_group_id as _ps_group_id
 from siriuspy.magnet.data import MAData as _MAData
 from siriuspy.magnet import util as _mutil
 # PowerSupply
-from ..bsmp import VariablesGroup as _VarGroup
-from ..bsmp import Response as _Response
-from ..bsmp import SerialError as _SerialError
 from .status import PSCStatus as _PSCStatus
 
 
