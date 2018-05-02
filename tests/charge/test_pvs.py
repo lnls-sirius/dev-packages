@@ -19,6 +19,14 @@ valid_interface = (
 class TestASAPCurrInfoChargePvs(unittest.TestCase):
     """Test AS-AP-CurrInfo Charge Soft IOC."""
 
+    def setUp(self):
+        """Setup tests."""
+        csdevice_patcher = mock.patch(
+            "as_ap_currinfo.charge.pvs._get_database",
+            autospec=True)
+        self.addCleanup(csdevice_patcher.stop)
+        self.mock_csdevice = csdevice_patcher.start()
+
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(pvs, valid_interface,
@@ -36,21 +44,8 @@ class TestASAPCurrInfoChargePvs(unittest.TestCase):
 
     def test_get_pvs_database(self):
         """Test get_pvs_database."""
-        self.assertIsInstance(pvs.get_pvs_database(), dict)
-
-        # Test IOC interface: pv names
-        self.assertTrue('Version-Cte' in pvs.get_pvs_database())
-        self.assertTrue('Charge-Mon' in pvs.get_pvs_database())
-        self.assertTrue('ChargeCalcIntvl-SP' in pvs.get_pvs_database())
-        self.assertTrue('ChargeCalcIntvl-RB' in pvs.get_pvs_database())
-
-        # Test IOC interface: pvs units
-        self.assertEqual(
-            pvs.get_pvs_database()['Charge-Mon']['unit'], 'A.h')
-        self.assertEqual(
-            pvs.get_pvs_database()['ChargeCalcIntvl-SP']['unit'], 's')
-        self.assertEqual(
-            pvs.get_pvs_database()['ChargeCalcIntvl-RB']['unit'], 's')
+        pvs.get_pvs_database()
+        self.mock_csdevice.assert_called()
 
     @mock.patch("as_ap_currinfo.charge.pvs._util")
     def test_print_banner_and_save_pv_list(self, util):

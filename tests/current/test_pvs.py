@@ -21,6 +21,14 @@ valid_interface = (
 class TestASAPCurrInfoCurrentPvs(unittest.TestCase):
     """Test AS-AP-CurrInfo Current Soft IOC."""
 
+    def setUp(self):
+        """Setup tests."""
+        csdevice_patcher = mock.patch(
+            "as_ap_currinfo.current.pvs._get_database",
+            autospec=True)
+        self.addCleanup(csdevice_patcher.stop)
+        self.mock_csdevice = csdevice_patcher.start()
+
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(pvs, valid_interface,
@@ -59,30 +67,8 @@ class TestASAPCurrInfoCurrentPvs(unittest.TestCase):
 
     def test_get_pvs_database(self):
         """Test get_pvs_database."""
-
-        # Test IOC interface: pv names
-        pvs.select_ioc('Accelerator')
-        self.assertIsInstance(pvs.get_pvs_database(), dict)
-        self.assertTrue('Version-Cte' in pvs.get_pvs_database())
-        self.assertTrue('Current-Mon' in pvs.get_pvs_database())
-        self.assertTrue('StoredEBeam-Mon' in pvs.get_pvs_database())
-
-        pvs.select_ioc('SI')
-        self.assertIsInstance(pvs.get_pvs_database(), dict)
-        self.assertTrue('DCCT-Sel' in pvs.get_pvs_database())
-        self.assertTrue('DCCT-Sts' in pvs.get_pvs_database())
-        self.assertTrue('DCCTFltCheck-Sel' in pvs.get_pvs_database())
-        self.assertTrue('DCCTFltCheck-Sts' in pvs.get_pvs_database())
-
-        pvs.select_ioc('BO')
-        self.assertIsInstance(pvs.get_pvs_database(), dict)
-        self.assertFalse('DCCT-Sel' in pvs.get_pvs_database())
-        self.assertFalse('DCCT-Sts' in pvs.get_pvs_database())
-        self.assertFalse('DCCTFltCheck-Sel' in pvs.get_pvs_database())
-        self.assertFalse('DCCTFltCheck-Sts' in pvs.get_pvs_database())
-
-        # Test IOC interface: pvs units
-        self.assertEqual(pvs.get_pvs_database()['Current-Mon']['unit'], 'mA')
+        pvs.get_pvs_database()
+        self.mock_csdevice.assert_called()
 
     @mock.patch("as_ap_currinfo.current.pvs._util")
     def test_print_banner_and_save_pv_list(self, util):
