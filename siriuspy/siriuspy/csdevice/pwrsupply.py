@@ -188,8 +188,9 @@ def get_common_propty_database():
                              'value': [0, 0, 0, 0]},
         'CycleAuxParam-RB': {'type': 'float', 'count': 4,
                              'value': [0, 0, 0, 0]},
-        'BBBSyncMode-Mon': {'type': 'enum', 'enums': ps_sync_mode,
+        'PRUSyncMode-Mon': {'type': 'enum', 'enums': ps_sync_mode,
                             'value': Const.SyncMode.Off},
+        'PRUBlockIndex-Mon': {'type': 'int', 'value': 0},
                                 }
     return db
 
