@@ -165,8 +165,8 @@ def get_common_propty_database():
         'PwrState-Sts': {'type': 'enum', 'enums': ps_pwrstate_sts,
                          'value': _et.idx.Off},
         'Reset-Cmd': {'type': 'int', 'value': 0},
-        'CycleEnbl-Cmd': {'type': 'int', 'value': 0},
-        'CycleDsbl-Cmd': {'type': 'int', 'value': 0},
+        'CycleEnbl-Cmd': {'type': 'int', 'value': 0},  # TODO: remove
+        'CycleDsbl-Cmd': {'type': 'int', 'value': 0},  # TODO: remove
         'CycleEnbl-Mon': {'type': 'int', 'value': 0},
         'CycleType-Sel': {'type': 'enum', 'enums': ps_cycle_type,
                           'value': Const.CycleType.Sine},
