@@ -7,7 +7,7 @@ from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 
 # version of PRUserial485 library compatible with current implementation of
 # PRU classes.
-__version__ = '1.3.0'
+__version__ = '1.3.1'
 
 try:
     import PRUserial485 as _PRUserial485
