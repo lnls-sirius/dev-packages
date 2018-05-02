@@ -4,7 +4,8 @@
 
 import unittest
 from unittest import mock
-import siriuspy.util as util
+from siriuspy import util
+from siriuspy.csdevice.opticscorr import Const
 import as_ap_opticscorr.tune.pvs as pvs
 
 
@@ -24,9 +25,13 @@ class TestASAPOpticsCorrTunePvs(unittest.TestCase):
 
     def setUp(self):
         """Setup tests."""
-        self.si_qfams = ['QFA', 'QFB', 'QFP',
-                         'QDA', 'QDB1', 'QDB2', 'QDP1', 'QDP2']
-        self.bo_qfams = ['QF', 'QD']
+        self.si_qfams = Const.SI_QFAMS_TUNECORR
+        self.bo_qfams = Const.BO_QFAMS_TUNECORR
+        csdevice_patcher = mock.patch(
+            "as_ap_opticscorr.tune.pvs._get_database",
+            autospec=True)
+        self.addCleanup(csdevice_patcher.stop)
+        self.mock_csdevice = csdevice_patcher.start()
 
     def test_public_interface(self):
         """Test module's public interface."""
@@ -82,43 +87,8 @@ class TestASAPOpticsCorrTunePvs(unittest.TestCase):
 
     def test_get_pvs_database(self):
         """Test get_pvs_database."""
-        for accelerator in ['SI', 'BO']:
-            if accelerator == 'SI':
-                qfams = self.si_qfams
-            elif accelerator == 'BO':
-                qfams = self.bo_qfams
-            pvs.select_ioc(accelerator)
-            db = pvs.get_pvs_database()
-            self.assertIsInstance(db, dict)
-            self.assertTrue('Version-Cte' in db)
-            self.assertTrue('Log-Mon' in db)
-            self.assertTrue('DeltaTuneX-SP' in db)
-            self.assertTrue('DeltaTuneX-RB' in db)
-            self.assertTrue('DeltaTuneY-SP' in db)
-            self.assertTrue('DeltaTuneY-RB' in db)
-            self.assertTrue('ApplyCorr-Cmd' in db)
-            self.assertTrue('ConfigName-SP' in db)
-            self.assertTrue('ConfigName-RB' in db)
-            self.assertTrue('RespMat-Mon' in db)
-            self.assertTrue('NominalKL-Mon' in db)
-            self.assertTrue('CorrFactor-SP' in db)
-            self.assertTrue('CorrFactor-RB' in db)
-            self.assertTrue('ConfigMA-Cmd' in db)
-            self.assertTrue('Status-Mon' in db)
-            self.assertTrue('StatusLabels-Cte' in db)
-
-            for fam in qfams:
-                self.assertTrue('RefKL' + fam + '-Mon' in db)
-                self.assertEqual(db['RefKL' + fam + '-Mon']['unit'], '1/m')
-                self.assertTrue('DeltaKL' + fam + '-Mon' in db)
-                self.assertEqual(db['DeltaKL' + fam + '-Mon']['unit'],
-                                 '1/m')
-            if accelerator == 'SI':
-                self.assertTrue('CorrMeth-Sel' in db)
-                self.assertTrue('CorrMeth-Sts' in db)
-                self.assertTrue('SyncCorr-Sel' in db)
-                self.assertTrue('SyncCorr-Sts' in db)
-                self.assertTrue('ConfigTiming-Cmd' in db)
+        pvs.get_pvs_database()
+        self.mock_csdevice.assert_called()
 
     @mock.patch("as_ap_opticscorr.tune.pvs._util")
     def test_print_banner_and_save_pv_list(self, util):
