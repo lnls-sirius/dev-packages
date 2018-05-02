@@ -210,28 +210,28 @@ class BSMPSim:
         """PS entities."""
         return self._entities
 
-    def read_variable(self, var_id):
+    def read_variable(self, var_id, timeout=100):
         """Read a variable."""
         # print(var_id)
         return Response.ok, self._variables[var_id]
 
-    def remove_all_groups(self):
+    def remove_all_groups(self, timeout=100):
         """Remove all groups."""
         self.entities.remove_all_groups()
         return Response.ok, None
 
-    def read_group_variables(self, group_id):
+    def read_group_variables(self, group_id, timeout=100):
         """Read group of variables."""
         ids = [var.eid for var in self.entities.groups[group_id].variables]
         # print('here')
         values = [self.read_variable(id)[1] for id in ids]
         return Response.ok, values
 
-    def create_group(self, var_ids):
+    def create_group(self, var_ids, timeout=100):
         """Create new group."""
         self.entities.add_group(var_ids)
         return Response.ok, None
 
-    def execute_function(self, func_id, input_val=None):
+    def execute_function(self, func_id, input_val=None, timeout=100):
         """Execute a function."""
         raise NotImplementedError()
