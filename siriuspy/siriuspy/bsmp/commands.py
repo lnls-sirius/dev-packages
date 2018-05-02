@@ -54,11 +54,11 @@ class BSMP:
         # TODO: needs implementation!
         raise NotImplementedError()
 
-    def consult_group_variables(self, group_id):
+    def consult_group_variables(self, group_id, timeout):
         """Return id of the variables in the given group. Command 0x06."""
         # Send requestG package
         m = _Message.message(0x06, payload=[chr(group_id)])
-        response = self.channel.request(m)
+        response = self.channel.request(m, timeout)
         # Check for errors
         if response.cmd == 0x07:
             return Response.ok, list(map(ord, response.payload))
@@ -81,11 +81,11 @@ class BSMP:
         raise NotImplementedError()
 
     # 0x1_
-    def read_variable(self, var_id):
+    def read_variable(self, var_id, timeout=100):
         """Read variable. (0x10)."""
         variable = self.entities.variables[var_id]
         m = _Message.message(0x10, payload=[chr(var_id)])
-        response = self.channel.request(m)  # Returns a message
+        response = self.channel.request(m, timeout=timeout)  # Returns a msg
         if response.cmd == 0x11:  # Ok
             if len(response.payload) == variable.size:
                 return Response.ok, variable.load_to_value(response.payload)
@@ -94,11 +94,11 @@ class BSMP:
                 return response.cmd, None
         return None, None
 
-    def read_group_variables(self, group_id):
+    def read_group_variables(self, group_id, timeout):
         """Read variable group. (0x12)."""
         group = self.entities.groups[group_id]
         m = _Message.message(0x12, payload=[chr(group_id)])
-        response = self.channel.request(m)
+        response = self.channel.request(m, timeout)
         if response.cmd == 0x13:
             if len(response.payload) == group.variables_size():
                 return Response.ok, group.load_to_value(response.payload)
@@ -130,11 +130,11 @@ class BSMP:
         raise NotImplementedError()
 
     # 0x3_
-    def create_group(self, var_ids):
+    def create_group(self, var_ids, timeout):
         """Create new group with given variable ids. Command 0x30."""
         var_ids = sorted(var_ids)
         m = _Message.message(0x30, payload=[chr(var_id) for var_id in var_ids])
-        response = self.channel.request(m)
+        response = self.channel.request(m, timeout)
         if response.cmd == 0xE0:
             if len(response.payload) == 0:
                 self.entities.add_group(var_ids)
@@ -145,10 +145,10 @@ class BSMP:
 
         return None, None
 
-    def remove_all_groups(self):
+    def remove_all_groups(self, timeout):
         """Remove all groups. Command 0x32."""
         m = _Message.message(0x32)
-        response = self.channel.request(m)
+        response = self.channel.request(m, timeout)
         if response.cmd == 0xE0:
             if len(response.payload) == 0:
                 self.entities.remove_all_groups()
@@ -173,13 +173,13 @@ class BSMP:
         raise NotImplementedError()
 
     # 0x5_
-    def execute_function(self, func_id, input_val=None):
+    def execute_function(self, func_id, input_val=None, timeout=100):
         """Execute a function. Command 0x50."""
         function = self.entities.functions[func_id]
         # Load = function id + input data
         load = [chr(func_id)] + function.value_to_load(input_val)
         m = _Message.message(0x50, payload=load)
-        response = self.channel.request(m)
+        response = self.channel.request(m, timeout)
         # TODO: slave can also return and error message (0xE3 or 0xE5)
         if response.cmd == 0x51:
             # result of the execution

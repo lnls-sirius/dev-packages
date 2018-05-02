@@ -183,6 +183,8 @@ class Channel:
     def read(self):
         """Read from serial."""
         resp = self.serial.UART_read()
+        # print('read: ', resp)
+        # print()
         if not resp:
             raise _SerialErrEmpty("Serial read returned empty!")
         package = Package(resp)
@@ -191,7 +193,9 @@ class Channel:
     def write(self, message, timeout=100):
         """Write to serial."""
         stream = Package.package(self.address, message).stream
-        return self.serial.UART_write(stream, timeout=timeout)
+        # print('write query: ', [hex(ord(c)) for c in stream])
+        response = self.serial.UART_write(stream, timeout=timeout)
+        return response
 
     def request(self, message, timeout=100):
         """Write and wait for response."""
