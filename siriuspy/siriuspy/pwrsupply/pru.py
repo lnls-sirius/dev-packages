@@ -110,10 +110,10 @@ class PRUInterface:
         """Index of next curve point to be processed."""
         return self._read_curve_pointer()
 
-    # def set_curve_pointer(self, index):
-    #     """Set index of next curve point to be processed."""
-    #     self._set_curve_pointer(index)
-    #     return None
+    def set_curve_pointer(self, index):
+        """Set index of next curve point to be processed."""
+        self._set_curve_pointer(index)
+        return None
 
     def read_curve_block(self):
         """Read selected block of curves."""
@@ -234,9 +234,9 @@ class PRU(PRUInterface):
         value = _PRUserial485.PRUserial485_read_curve_pointer()
         return value
 
-    # def _set_curve_pointer(self, index):
-    #     _PRUserial485.PRUserial485_set_curve_pointer(index)
-    #     return None
+    def _set_curve_pointer(self, index):
+        _PRUserial485.PRUserial485_set_curve_pointer(index)
+        return None
 
     def _read_curve_block(self):
         value = _PRUserial485.PRUserial485_read_curve_block()
@@ -328,9 +328,9 @@ class PRUSim(PRUInterface):
     def _read_curve_pointer(self):
         return self._index
 
-    # def _set_curve_pointer(self, index):
-    #     self._index = index
-    #     return None
+    def _set_curve_pointer(self, index):
+        self._index = index
+        return None
 
     def _read_curve_block(self):
         return self._block
