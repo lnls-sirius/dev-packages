@@ -482,13 +482,13 @@ class PRUController:
         # create PRU (sync mode off).
         self._initialize_pru()
 
-        # initialize BSMP (contains BSMP comm)
+        # initialize BSMP
         self._initialize_bsmp(bsmp_entities)
 
         # reset power supply controllers
         # TODO: this should be invoked in the case of IOC setting state of HW
-        if reset:
-            self._reset_ps_controllers()
+        if reset is True:
+            self._reset_ps_controllers()  # (contains BSMP comm)
 
         # update state of PRUController from ps controller
         self._update_mirror_state(bsmp_entities)
@@ -960,6 +960,7 @@ class PRUController:
                     var_ids = self._groups[group_id]
                     self._bsmp[id].create_group(var_ids)
             except _SerialError:
+                print('_bsmp_init_groups: serial error!')
                 self._connected[id] = False
 
     def _bsmp_init_variable_values(self, bsmp_entities):
@@ -976,6 +977,8 @@ class PRUController:
                                     group_id=self.VGROUPS.ALLRELEVANT)
 
     def _init_check_version(self):
+        if not self.connected:
+            return
         for id in self.device_ids:
             version = self._variables_values[id][self.BSMP.V_FIRMWARE_VERSION]
             version = parse_firmware_version(version)
@@ -1047,13 +1050,13 @@ class PRUController:
     def _serial_error(self, ids, e, operation):
 
         # print error message to stdout
-        print()
-        print('--- Serial Error in PRUController._bsmp_update_variables')
-        print('------ last_operation: {}'.format(operation))
-        print('------ traceback:')
-        _traceback.print_exc()
-        print('---')
-        print()
+        # print()
+        # print('--- Serial Error in PRUController._bsmp_update_variables')
+        # print('------ last_operation: {}'.format(operation))
+        # print('------ traceback:')
+        # _traceback.print_exc()
+        # print('---')
+        # print()
 
         # signal disconnected for device ids.
         for id in ids:
@@ -1089,10 +1092,11 @@ class PRUController:
             for id in device_ids:
                 ack[id], data[id] = \
                     self._bsmp[id].read_group_variables(group_id=group_id)
-        except _SerialError as e:
+        except (_SerialError, IndexError) as e:
             operation = ('V', device_ids, group_id)
             self._serial_error(device_ids, e, operation)
             return
+
         dtime = _time.time() - t0
         self._last_operation = ('V', dtime, device_ids, group_id)
 
@@ -1159,7 +1163,7 @@ class PRUController:
             for id in device_ids:
                 ack[id], data[id] = \
                     self._bsmp[id].execute_function(function_id, args)
-        except _SerialError:
+        except (_SerialError, IndexError):
             print('SerialError exception in {}'.format(
                 ('F', device_ids, function_id)))
             return None
@@ -1193,6 +1197,9 @@ class PRUController:
             return None
 
     def _bsmp_read_siggen_parms(self):
+
+        if not self.connected:
+            return
 
         print('reading siggen parameters from first power supply')
 
