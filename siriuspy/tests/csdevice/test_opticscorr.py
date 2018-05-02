@@ -59,8 +59,7 @@ class TestOpticsCorrCSDevice(unittest.TestCase):
 
             for fam in sfams:
                 self.assertTrue('SL' + fam + '-Mon' in db)
-                self.assertEqual(db['SL' + fam + '-Mon']['unit'],
-                                 '1/m^2')
+                self.assertEqual(db['SL' + fam + '-Mon']['unit'], '1/m^2')
             if accelerator == 'SI':
                 self.assertTrue('CorrMeth-Sel' in db)
                 self.assertTrue('CorrMeth-Sts' in db)
@@ -99,8 +98,7 @@ class TestOpticsCorrCSDevice(unittest.TestCase):
                 self.assertTrue('RefKL' + fam + '-Mon' in db)
                 self.assertEqual(db['RefKL' + fam + '-Mon']['unit'], '1/m')
                 self.assertTrue('DeltaKL' + fam + '-Mon' in db)
-                self.assertEqual(db['DeltaKL' + fam + '-Mon']['unit'],
-                                 '1/m')
+                self.assertEqual(db['DeltaKL' + fam + '-Mon']['unit'], '1/m')
             if accelerator == 'SI':
                 self.assertTrue('CorrMeth-Sel' in db)
                 self.assertTrue('CorrMeth-Sts' in db)

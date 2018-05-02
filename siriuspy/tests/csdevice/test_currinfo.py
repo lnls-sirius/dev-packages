@@ -37,20 +37,20 @@ class TestCurrInfoCSDevice(unittest.TestCase):
         db = get_charge_database()
         self.assertIsInstance(db, dict)
 
-        # Test IOC interface: pv names
+        # PV names
         self.assertTrue('Version-Cte' in db)
         self.assertTrue('Charge-Mon' in db)
         self.assertTrue('ChargeCalcIntvl-SP' in db)
         self.assertTrue('ChargeCalcIntvl-RB' in db)
 
-        # Test IOC interface: pvs units
+        # PVs units
         self.assertEqual(db['Charge-Mon']['unit'], 'A.h')
         self.assertEqual(db['ChargeCalcIntvl-SP']['unit'], 's')
         self.assertEqual(db['ChargeCalcIntvl-RB']['unit'], 's')
 
     def test_get_current_database(self):
         """Test get_current_database."""
-        # Test IOC interface: pv names
+        # PV names
         db = get_current_database('Accelerator')
         self.assertIsInstance(db, dict)
         self.assertTrue('Version-Cte' in db)
@@ -71,7 +71,7 @@ class TestCurrInfoCSDevice(unittest.TestCase):
         self.assertFalse('DCCTFltCheck-Sel' in db)
         self.assertFalse('DCCTFltCheck-Sts' in db)
 
-        # Test IOC interface: pvs units
+        # PVs units
         self.assertEqual(db['Current-Mon']['unit'], 'mA')
 
     def test_get_lifetime_database(self):
@@ -79,7 +79,7 @@ class TestCurrInfoCSDevice(unittest.TestCase):
         db = get_lifetime_database()
         self.assertIsInstance(db, dict)
 
-        # Test IOC interface: pv names
+        # PV names
         self.assertTrue('Version-Cte' in db)
         self.assertTrue('Lifetime-Mon' in db)
         self.assertTrue('BuffSizeMax-SP' in db)
@@ -92,7 +92,7 @@ class TestCurrInfoCSDevice(unittest.TestCase):
         self.assertTrue('BuffAutoRst-Sts' in db)
         self.assertTrue('DCurrFactor-Cte' in db)
 
-        # Test IOC interface: pvs units
+        # PVs units
         self.assertEqual(db['Lifetime-Mon']['unit'], 's')
         self.assertEqual(db['SplIntvl-SP']['unit'], 's')
         self.assertEqual(db['SplIntvl-RB']['unit'], 's')

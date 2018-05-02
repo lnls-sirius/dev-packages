@@ -29,7 +29,7 @@ class TestOpticsCorrCSDevice(unittest.TestCase):
         db = get_posang_database()
         self.assertIsInstance(db, dict)
 
-        # Test IOC interface: pv names
+        # PV names
         self.assertTrue('Version-Cte' in db)
         self.assertTrue('Log-Mon' in db)
         self.assertTrue('DeltaPosX-SP' in db)
@@ -53,7 +53,7 @@ class TestOpticsCorrCSDevice(unittest.TestCase):
         self.assertTrue('Status-Mon' in db)
         self.assertTrue('StatusLabels-Cte' in db)
 
-        # Test IOC interface: pvs units
+        # PVs units
         self.assertEqual(db['DeltaPosX-SP']['unit'], 'mm')
         self.assertEqual(db['DeltaPosX-RB']['unit'], 'mm')
         self.assertEqual(db['DeltaAngX-SP']['unit'], 'mrad')
