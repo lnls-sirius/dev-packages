@@ -500,7 +500,7 @@ class PRUController:
         self._initialize_devices()
 
         # read siggen from power supply
-        self._bsmp_read_siggen_parms()
+        # self._bsmp_read_siggen_parms()
 
         # operation queue
         self._queue = _BSMPOpQueue()
@@ -737,6 +737,10 @@ class PRUController:
         # TODO: test this! but is it really necessary?
         self._bsmp_update_variables(self.device_ids,
                                     PRUController.VGROUPS.SYNCOFF)
+        self._scanning_false_wait_empty_queue()
+
+        # reset curev index
+        self._pru.set_curve_pointer(0)
 
         # set selected sync mode
         self._pru.sync_start(
