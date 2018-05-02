@@ -26,6 +26,8 @@ class E2SController:
     _ct = _re.compile('^.*-Cte$')
     _sp = _re.compile('^.*-(SP|Sel|Cmd)$')
 
+    INTERVAL_SCAN = 1.0/_PRUController.FREQ.SCAN
+
     bsmp_2_epics = {
         _c.V_PS_STATUS: ('PwrState-Sts', 'OpMode-Sts', 'CtrlMode-Mon'),
         _c.V_PS_SETPOINT: 'Current-RB',
@@ -148,9 +150,14 @@ class E2SController:
     # Private
     def _read(self, device_id, field):
         """Read a field."""
-        variable_id = self.epics_2_bsmp[field]
-        value = self._controller.read_variables(device_id, variable_id)
-        value = self._parse_value(field, value)
+        if field in self.epics_2_bsmp:
+            variable_id = self.epics_2_bsmp[field]
+            # TODO: this is not optimized! all variables of a given device id
+            # should be read at once!
+            value = self._controller.read_variables(device_id, variable_id)
+            value = self._parse_value(field, value)
+        elif field == 'WfmData-RB':
+            value = self._controller.pru_curve_read(device_id)
         return value
 
     def _init(self):
@@ -211,7 +218,7 @@ class E2SController:
         # Execute function to devices
         if setpoint == 1:
             self._execute_command(devices_info, _c.F_TURN_ON)
-            _time.sleep(0.3)
+            _time.sleep(0.3)  # TODO: this is already done in PRUController!
             self._execute_command(devices_info, _c.F_CLOSE_LOOP)
         elif setpoint == 0:
             self._execute_command(devices_info, _c.F_TURN_OFF)
@@ -224,7 +231,13 @@ class E2SController:
     def _set_opmode(self, devices_info, setpoint):
         """Operation mode setter."""
         # Execute function to set PSs operation mode
-        if setpoint == 2:
+        if setpoint == _PSConst.OpMode.Cycle:
+            # set SlowRef setpoint to last cycling value (offset) so that
+            # magnetic history is not spoiled when power supply returns
+            # automatically to SlowRef mode
+            # TODO: in the general case (start and end siggen phases not
+            # equal to zero) the offset parameter is not the last cycling
+            # value!
             for device_info in devices_info:
                 # self._execute_command(
                 #     device_info,
@@ -232,6 +245,10 @@ class E2SController:
                 #     self.read(device_info.name, 'CycleOffset-RB'))
                 offset_val = self.read(device_info.name, 'CycleOffset-RB')
                 self._set_current([device_info], offset_val)
+        elif setpoint in (_PSConst.OpMode.RmpWfm, _PSConst.OpMode.MigWfm):
+            for device_info in devices_info:
+                wfmdata = self.read(device_info.name, 'WfmData-RB')
+                self._set_current([device_info], wfmdata[-1])
 
         self._execute_command(devices_info, _c.F_SELECT_OP_MODE, setpoint+3)
         self._set_setpoints(devices_info, 'OpMode-Sel', setpoint)
@@ -329,7 +346,7 @@ class E2SController:
             return
         while self.read(dev_name, 'OpMode-Sts') == _PSConst.OpMode.Cycle and \
                 self._controller.pru_sync_status == 1:
-            _time.sleep(0.1)
+            _time.sleep(E2SController.INTERVAL_SCAN)
         while True:
             cycle_enabled = self.read(dev_name, 'CycleEnbl-Mon')
             pru_status = self._controller.pru_sync_status
@@ -339,7 +356,7 @@ class E2SController:
                 #     dev_info.id, _c.F_SELECT_OP_MODE, 3)
                 self._set_opmode([dev_info], 0)
                 break
-            _time.sleep(0.25)
+            _time.sleep(E2SController.INTERVAL_SCAN)
 
     # Helpers
     def _cfg_siggen_args(self, devices_info):
@@ -503,6 +520,9 @@ class BeagleBone:
         self._ioc_controller.write(self.psnames, 'OpMode-Sel', op_mode)
         if op_mode == _PSConst.OpMode.Cycle:
             sync_mode = self._controller.PRU.SYNC_MODE.CYCLE
+            return self._controller.pru_sync_start(sync_mode)
+        elif op_mode == _PSConst.OpMode.RmpWfm:
+            sync_mode = self._controller.PRU.SYNC_MODE.RMPEND
             return self._controller.pru_sync_start(sync_mode)
 
         # return self._state.set_op_mode(self)
