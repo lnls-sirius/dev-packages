@@ -132,7 +132,7 @@ class MASearch:
         elif 'BO-Fam:PS-B' in psname:
             return 'BO-Fam:MA-B'
         else:
-            return psname.replace('PS', 'MA')
+            return psname.replace('PS', 'MA').replace('PU', 'PM')
 
     @staticmethod
     def check_maname_ispulsed(maname):
