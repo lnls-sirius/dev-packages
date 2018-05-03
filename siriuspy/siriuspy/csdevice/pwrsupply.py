@@ -282,8 +282,8 @@ def get_common_pu_propty_database():
         'Reset-Cmd': {'type': 'int', 'value': 0},
         'Pulse-Sel': {'type': 'enum', 'enums': _et.enums('DsblEnblTyp'),
                       'value': _et.idx.Dsbl},
-        'Pulse-Sts': {'type': 'enum', 'enums': _et.enums('DsblEnblTyp'),
-                      'value': _et.idx.Dsbl},
+        # 'Pulse-Sts': {'type': 'enum', 'enums': _et.enums('DsblEnblTyp'),
+        #               'value': _et.idx.Dsbl},
         'Voltage-SP': {'type': 'float', 'value': 0.0,
                        'prec': default_pu_current_precision},
         'Voltage-RB': {'type': 'float', 'value': 0.0,
@@ -302,6 +302,12 @@ def get_common_pu_propty_database():
         'Intlk4Label-Cte': {'type': 'str', 'value': 'Intlk4'},
         'Intlk5Label-Cte': {'type': 'str', 'value': 'Intlk5'},
         'Intlk6Label-Cte': {'type': 'str', 'value': 'Intlk6'},
+        # 'OpMode-Sel': {'type': 'enum',
+        #                'enums': ['Comissioning', 'Accumulation'],
+        #                'value': 0},  # NLK , On-Axis
+        # 'OpMode-Sts': {'type': 'enum',
+        #                'enums': ['Comissioning', 'Accumulation'],
+        #                'value': 0},  # NLK , On-Axis
     }
     return db
 
