@@ -287,11 +287,10 @@ class MagnetNormalizer(_MagnetNormalizer):
     conversion from current to strength and vice-versa.
     """
 
-    def __init__(self, maname, dipole_name, magnet_conv_sign=-1.0, **kwargs):
+    def __init__(self, maname, dipole_name, **kwargs):
         """Call super and initializes a dipole."""
         super(MagnetNormalizer, self).__init__(maname, **kwargs)
         self._dipole = DipoleNormalizer(dipole_name, **kwargs)
-        # self._magnet_conv_sign = magnet_conv_sign
 
     # --- computer interface ---
 
