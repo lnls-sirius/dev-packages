@@ -36,7 +36,7 @@ class PulsedPS:
         """Set pulsed enabled/disabled."""
         if self._is_on():
             if value in (0, 1):
-                self._set('Pulsed-Sts', value)
+                self._set('Pulse-Sts', value)
         return True
 
     def reset(self):
@@ -50,7 +50,7 @@ class PulsedPS:
         """Return fields values."""
         values = {}
         for field in ('PwrState-Sts', 'Voltage-RB',
-                      'Voltage-Mon', 'Pulsed-Sts'):
+                      'Voltage-Mon', 'Pulse-Sts'):
             values[self.name + ':' + field] = self._get(field)
         return values
 

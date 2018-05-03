@@ -241,21 +241,68 @@ def get_ps_FBP_propty_database():
     return db
 
 
+# def get_common_pu_propty_database():
+#     """Return database of commun to all pulsed pwrsupply PVs."""
+#     db = get_common_propty_database()
+#     db_p = {'type': 'enum', 'enums': _et.enums('DsblEnblTyp'),
+#             'value': _et.idx.Dsbl}
+#     db_v = {'type': 'float', 'value': 0.0,
+#             'prec': default_pu_current_precision}
+#     db_pu = {
+#         'Pulsed-Sel': _copy.deepcopy(db_p),
+#         'Pulsed-Sts': _copy.deepcopy(db_p),
+#         'Voltage-SP': _copy.deepcopy(db_v),
+#         'Voltage-RB': _copy.deepcopy(db_v),
+#         'Voltage-Mon': _copy.deepcopy(db_v),
+#     }
+#     db.update(db_pu)
+#     return db
+
 def get_common_pu_propty_database():
     """Return database of commun to all pulsed pwrsupply PVs."""
-    db = get_common_propty_database()
-    db_p = {'type': 'enum', 'enums': _et.enums('DsblEnblTyp'),
-            'value': _et.idx.Dsbl}
-    db_v = {'type': 'float', 'value': 0.0,
-            'prec': default_pu_current_precision}
-    db_pu = {
-        'Pulsed-Sel': _copy.deepcopy(db_p),
-        'Pulsed-Sts': _copy.deepcopy(db_p),
-        'Voltage-SP': _copy.deepcopy(db_v),
-        'Voltage-RB': _copy.deepcopy(db_v),
-        'Voltage-Mon': _copy.deepcopy(db_v),
+    # S TB-04:PU-InjSept
+    # S TS-01:PU-EjeSeptF
+    # S TS-01:PU-EjeSeptG
+    # S TS-04:PU-InjSeptG-1
+    # S TS-04:PU-InjSeptG-2
+    # S TS-04:PU-InjSeptF
+    # K BO-01D:PU-InjKckr
+    # K BO-48D:PU-EjeKckr
+    # K SI-01SA:PU-InjNLKckr
+    # K SI-01SA:PU-InjDpKckr
+    # P SI-19C4:PU-PingV
+    db = {
+        'Version-Cte': {'type': 'str', 'value': 'UNDEF'},
+        'CtrlMode-Mon': {'type': 'enum', 'enums': ps_interface,
+                         'value': _et.idx.Remote},
+        'PwrState-Sel': {'type': 'enum', 'enums': ps_pwrstate_sel,
+                         'value': _et.idx.Off},
+        'PwrState-Sts': {'type': 'enum', 'enums': ps_pwrstate_sts,
+                         'value': _et.idx.Off},
+        'Reset-Cmd': {'type': 'int', 'value': 0},
+        'Pulse-Sel': {'type': 'enum', 'enums': _et.enums('DsblEnblTyp'),
+                      'value': _et.idx.Dsbl},
+        'Pulse-Sts': {'type': 'enum', 'enums': _et.enums('DsblEnblTyp'),
+                      'value': _et.idx.Dsbl},
+        'Voltage-SP': {'type': 'float', 'value': 0.0,
+                       'prec': default_pu_current_precision},
+        'Voltage-RB': {'type': 'float', 'value': 0.0,
+                       'prec': default_pu_current_precision},
+        'Voltage-Mon': {'type': 'float', 'value': 0.0,
+                        'prec': default_pu_current_precision},
+        'Intlk1-Mon': {'type': 'int', 'value': 0},
+        'Intlk2-Mon': {'type': 'int', 'value': 0},
+        'Intlk3-Mon': {'type': 'int', 'value': 0},
+        'Intlk4-Mon': {'type': 'int', 'value': 0},
+        'Intlk5-Mon': {'type': 'int', 'value': 0},
+        'Intlk6-Mon': {'type': 'int', 'value': 0},
+        'Intlk1Label-Cte': {'type': 'str', 'value': 'Intlk1'},
+        'Intlk2Label-Cte': {'type': 'str', 'value': 'Intlk2'},
+        'Intlk3Label-Cte': {'type': 'str', 'value': 'Intlk3'},
+        'Intlk4Label-Cte': {'type': 'str', 'value': 'Intlk4'},
+        'Intlk5Label-Cte': {'type': 'str', 'value': 'Intlk5'},
+        'Intlk6Label-Cte': {'type': 'str', 'value': 'Intlk6'},
     }
-    db.update(db_pu)
     return db
 
 
