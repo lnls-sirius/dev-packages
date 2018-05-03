@@ -7,7 +7,7 @@ import logging as _log
 import traceback as _traceback
 import pcaspy as _pcaspy
 import pcaspy.tools as _pcaspy_tools
-from copy import deepcopy as _deepcopy
+# from copy import deepcopy as _deepcopy
 
 from siriuspy import util as _util
 from siriuspy.envars import vaca_prefix as _VACA_PREFIX

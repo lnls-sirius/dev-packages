@@ -3,10 +3,10 @@
 import time as _time
 import numpy as _np
 import logging as _log
-from collections import deque as _deque
-from collections import namedtuple as _namedtuple
-from threading import Thread as _Thread
-from threading import Lock as _Lock
+# from collections import deque as _deque
+# from collections import namedtuple as _namedtuple
+# from threading import Thread as _Thread
+# from threading import Lock as _Lock
 
 from pcaspy import Alarm as _Alarm
 from pcaspy import Severity as _Severity
@@ -17,8 +17,8 @@ import siriuspy.util as _util
 
 __version__ = _util.get_last_commit_hash()
 
-FREQUENCY_SCAN = 10.0  # [Hz]
-FREQUENCY_RAMP = 2.0  # [Hz]
+# FREQUENCY_SCAN = 10.0  # [Hz]
+# FREQUENCY_RAMP = 2.0  # [Hz]
 
 
 class Dispatcher:
@@ -41,7 +41,7 @@ class Dispatcher:
             device.set_pwrstate(value)
         elif field == 'Voltage-SP':
             device.set_voltage(value)
-        elif field == 'Pulsed-Sel':
+        elif field == 'Pulse-Sel':
             device.set_pulsed(value)
         elif field == 'Reset-Cmd':
             device.reset()
