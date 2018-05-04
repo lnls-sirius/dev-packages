@@ -431,9 +431,11 @@ class PRUController:
     _delay_remove_groups = 100  # [us]
     _delay_create_group = 100  # [us]
     _delay_read_group_variables = 100  # [us]
-
     # TODO: check if this short sleep dalay is causing high CPU usage!
-    _delay_sleep = 0.010  # [s]
+    # increasing _delay_sleep from 10 ms to 90 ms decreases CPU usage from
+    # 20% to 19.2% at BBB1.
+    _delay_sleep = 0.020  # [s]
+
     _groups = _BSMPVarGroups.groups
 
     # TODO: solution works only within the name process space
@@ -771,6 +773,11 @@ class PRUController:
     def pru_sync_pulse_count(self):
         """PRU sync pulse count."""
         return self._pru.sync_pulse_count
+
+    @property
+    def pru_curve_block(self):
+        """PRU curves block index."""
+        return self._pru.read_curve_block()
 
     def pru_curve_read(self, device_id):
         """Read curve of a device from PRU memory."""
@@ -1125,10 +1132,22 @@ class PRUController:
             self._serial_error(device_ids, e, operation)
             return
 
+        # TODO: stopping method execution at this point, not processing
+        # returned data from controllers, reduce CPU usage from 20% to 11.5%
+        # at BBB1.
+        # for id in device_ids:
+        #     self._connected[id] = False
+        # return
+
+        # processing time up to this point: 9 ms @ BBB1
+        # print('time1: ', _time.time() - t0)
+
         # --- make copy of state for updating
         PRUController._lock.acquire()
         copy_var_vals = _dcopy(self._variables_values)
         PRUController._lock.release()
+        # processing time up to this point: 18.3 ms @ BBB1
+        # print('time2: ', _time.time() - t0)
 
         # --- update variables, if ack is ok
         nr_devs = len(self.device_ids)
@@ -1159,11 +1178,15 @@ class PRUController:
                 # in order to avoid measuring wrong update rates due to
                 # power supply discretization of current readout.
                 # TODO: turn off added random fluctuations.
+                # commenting out this fluctuation cpu usage is reduced from
+                # 20% to 19.5% at BBB1
                 copy_var_vals[id][self.BSMP.V_I_LOAD] += \
                     0.0001*_random.uniform(-1.0, +1.0)
 
             else:
                 self._connected[id] = False
+        # processing time up to this point: 19.4 ms @ BBB1
+        # print('time3: ', _time.time() - t0)
 
         # update psc_state
         for id in self.device_ids:
@@ -1172,6 +1195,8 @@ class PRUController:
 
         # --- use updated copy
         self._variables_values = copy_var_vals  # atomic operation
+        # processing time up to this point: 20.4 ms @ BBB1
+        # print('time4: ', _time.time() - t0)
 
     def _bsmp_exec_function(self, device_ids, function_id, args=None):
         # --- send func exec request to serial line
