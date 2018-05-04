@@ -187,7 +187,6 @@ def get_common_propty_database():
         'CycleAuxParam-RB': {'type': 'float', 'count': 4,
                              'value': DEFAULT_SIGGEN_CONFIG[5:9]},
         'CycleIndex-Mon': {'type': 'int', 'value': 0},
-        'CycleNr-Mon': {'type': 'int', 'value': 0},  # TODO: nr of cycle.
         'PRUSyncMode-Mon': {'type': 'enum', 'enums': ps_sync_mode,
                             'value': Const.SyncMode.Off},
         'PRUBlockIndex-Mon': {'type': 'int', 'value': 0},

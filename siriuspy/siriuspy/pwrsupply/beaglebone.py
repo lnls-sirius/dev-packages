@@ -126,6 +126,7 @@ class E2SController:
         self._read_variables(device_name, values)
         self._read_setpoints(device_name, values)
         self._read_locals(device_name, values)
+        self._read_pru(device_name, values)
         return values
 
     def write(self, devices_names, field, value):
@@ -433,6 +434,21 @@ class E2SController:
         for field, db in self._local_vars[device_name].items():
             key = device_name + ':' + field
         values[key] = db['value']
+
+    def _read_pru(self, device_name, values):
+        if not self._controller.pru_sync_status:
+            values[device_name + ':PRUSyncMode-Mon'] = 0
+        else:
+            mode = self._controller.pru_sync_mode
+            if mode == 92:
+                mode = 1
+            values[device_name + ':PRUSyncMode-Mon'] = mode
+        values[device_name + ':PRUBlockIndex-Mon'] = \
+            self._controller.pru_curve_block
+        values[device_name + ':PRUSyncPulseCount-Mon'] = \
+            self._controller.pru_sync_pulse_count
+        values[device_name + ':PRUCtrlQueueSize-Mon'] = \
+            self._controller.queue_length
 
     def _tuplify(self, value):
         # Return tuple if value is not iterable

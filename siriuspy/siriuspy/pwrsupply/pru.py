@@ -286,7 +286,8 @@ class PRUSim(PRUInterface):
     def _sync_start(self, sync_mode, sync_address, delay):
         self._sync_status = Const.SYNC_STATE.ON
         while self._sync_status == Const.SYNC_STATE.ON:
-            _time.sleep(0.050)
+            self.emulate_trigger()
+            _time.sleep(0.1)
         return None
 
     def _sync_stop(self):
