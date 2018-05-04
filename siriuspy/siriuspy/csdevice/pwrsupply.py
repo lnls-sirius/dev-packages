@@ -93,7 +93,7 @@ ps_hard_interlock_FBP_DCLink = (
 )
 ps_cycle_type = ('Sine', 'DampedSine', 'Trapezoidal')
 
-ps_sync_mode = ('Off', 'Cycle', 'RmpWfm', 'MigWfm')
+ps_sync_mode = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
 
 # --- power supply constants definition class ---
 
@@ -165,33 +165,36 @@ def get_common_propty_database():
         'PwrState-Sts': {'type': 'enum', 'enums': ps_pwrstate_sts,
                          'value': _et.idx.Off},
         'Reset-Cmd': {'type': 'int', 'value': 0},
-        'CycleEnbl-Cmd': {'type': 'int', 'value': 0},  # TODO: remove
-        'CycleDsbl-Cmd': {'type': 'int', 'value': 0},  # TODO: remove
+        # 'CycleEnbl-Cmd': {'type': 'int', 'value': 0},  # TODO: remove
+        # 'CycleDsbl-Cmd': {'type': 'int', 'value': 0},  # TODO: remove
         'CycleEnbl-Mon': {'type': 'int', 'value': 0},
         'CycleType-Sel': {'type': 'enum', 'enums': ps_cycle_type,
-                          'value': Const.CycleType.Sine},
+                          'value': DEFAULT_SIGGEN_CONFIG[0]},
         'CycleType-Sts': {'type': 'enum', 'enums': ps_cycle_type,
-                          'value': Const.CycleType.Sine},
-        'CycleNrCycles-SP': {'type': 'int', 'value': 0},
-        'CycleNrCycles-RB': {'type': 'int', 'value': 0},
+                          'value': DEFAULT_SIGGEN_CONFIG[0]},
+        'CycleNrCycles-SP': {'type': 'int', 'value': DEFAULT_SIGGEN_CONFIG[1]},
+        'CycleNrCycles-RB': {'type': 'int', 'value': DEFAULT_SIGGEN_CONFIG[1]},
+        'CycleFreq-SP': {'type': 'float', 'value': DEFAULT_SIGGEN_CONFIG[2],
+                         'unit': 'Hz', 'prec': 4},
+        'CycleFreq-RB': {'type': 'float', 'value': DEFAULT_SIGGEN_CONFIG[2],
+                         'unit': 'Hz', 'prec': 4},
+        'CycleAmpl-SP': {'type': 'float', 'value': DEFAULT_SIGGEN_CONFIG[3]},
+        'CycleAmpl-RB': {'type': 'float', 'value': DEFAULT_SIGGEN_CONFIG[3]},
+        'CycleOffset-SP': {'type': 'float', 'value': DEFAULT_SIGGEN_CONFIG[4]},
+        'CycleOffset-RB': {'type': 'float', 'value': DEFAULT_SIGGEN_CONFIG[4]},
+        'CycleAuxParam-SP': {'type': 'float', 'count': 4,
+                             'value': DEFAULT_SIGGEN_CONFIG[5:9]},
+        'CycleAuxParam-RB': {'type': 'float', 'count': 4,
+                             'value': DEFAULT_SIGGEN_CONFIG[5:9]},
         'CycleIndex-Mon': {'type': 'int', 'value': 0},
         'CycleNr-Mon': {'type': 'int', 'value': 0},  # TODO: nr of cycle.
-        'CycleFreq-SP': {'type': 'float', 'value': 0.0,
-                         'unit': 'Hz', 'prec': 4},
-        'CycleFreq-RB': {'type': 'float', 'value': 0.0,
-                         'unit': 'Hz', 'prec': 4},
-        'CycleAmpl-SP': {'type': 'float', 'value': 0.0},
-        'CycleAmpl-RB': {'type': 'float', 'value': 0.0},
-        'CycleOffset-SP': {'type': 'float', 'value': 0.0},
-        'CycleOffset-RB': {'type': 'float', 'value': 0.0},
-        'CycleAuxParam-SP': {'type': 'float', 'count': 4,
-                             'value': [0, 0, 0, 0]},
-        'CycleAuxParam-RB': {'type': 'float', 'count': 4,
-                             'value': [0, 0, 0, 0]},
         'PRUSyncMode-Mon': {'type': 'enum', 'enums': ps_sync_mode,
                             'value': Const.SyncMode.Off},
         'PRUBlockIndex-Mon': {'type': 'int', 'value': 0},
-                                }
+        'PRUSyncPulseCount-Mon': {'type': 'int', 'value': 0},
+        'PRUCtrlQueueSize-Mon': {'type': 'int', 'value': 0,
+                                 'high': 50, 'hihi': 50},
+    }
     return db
 
 
