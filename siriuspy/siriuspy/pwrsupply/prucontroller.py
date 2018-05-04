@@ -25,6 +25,7 @@ from siriuspy.pwrsupply.pru import PRUSim as _PRUSim
 from siriuspy.pwrsupply.bsmp import __version__ as _ps_bsmp_version
 from siriuspy.pwrsupply.bsmp import Const as _c
 from siriuspy.pwrsupply.bsmp import MAP_MIRROR_2_ORIG as _mirror_map
+from siriuspy.pwrsupply.bsmp import Parameters as _Parameters
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 from siriuspy.pwrsupply.controller import FBP_BSMPSim as _FBP_BSMPSim
 
@@ -497,10 +498,10 @@ class PRUController:
         # reset power supply controllers
         # TODO: this should be invoked in the case of IOC setting state of HW
         if reset is True:
-            self._reset_ps_controllers()  # (contains first BSMP comm)
+            self._bsmp_reset_ps_controllers()  # (contains first BSMP comm)
 
         # update state of PRUController from ps controller
-        self._update_mirror_state(bsmp_entities)
+        self._bsmp_init_update(bsmp_entities)
 
         # initialize BSMP devices (might contain BSMP comm)
         self._initialize_devices()
@@ -909,7 +910,7 @@ class PRUController:
         # create BSMP devices
         self._bsmp = self._init_create_conn(bsmp_entities)
 
-    def _reset_ps_controllers(self):
+    def _bsmp_reset_ps_controllers(self):
 
         # turn PRU sync off
         self.pru_sync_abort()
@@ -922,14 +923,6 @@ class PRUController:
         # initialization, RMPEND does not work! sometimes the ps controllers
         # are put in a non-responsive state!!!
         self.pru_curve_write(self.device_ids[0], self._curves[0])
-
-    def _update_mirror_state(self, bsmp_entities):
-
-        # initialize variables_values, a mirror state of BSMP devices
-        self._bsmp_init_variable_values(bsmp_entities)
-
-        # check if ps controller version is compatible with bsmp.py
-        self._init_check_version()
 
     def _initialize_devices(self):
 
@@ -961,46 +954,6 @@ class PRUController:
             else:
                 bsmp[id] = _BSMP(self._pru, id, bsmp_entities)
         return bsmp
-
-    def _bsmp_init_groups(self):
-
-        # check if groups have consecutive ids
-        groups_ids = sorted(self._groups.keys())
-        if len(groups_ids) < 3:
-            self._init_disconnect()
-            raise ValueError('Invalid variable group definition!')
-        for i in range(len(groups_ids)):
-            if i not in groups_ids:
-                self._init_disconnect()
-                raise ValueError('Invalid variable group definition!')
-
-        # loop over bsmp devices
-        for id in self._device_ids:
-            # remove previous variables groups and fresh ones
-            try:
-                self._bsmp[id].remove_all_groups(
-                    timeout=self._delay_remove_groups)
-                self._connected[id] = True
-                for group_id in groups_ids[3:]:
-                    var_ids = self._groups[group_id]
-                    self._bsmp[id].create_group(
-                        var_ids, timeout=self._delay_create_group)
-            except _SerialError:
-                print('_bsmp_init_groups: serial error!')
-                self._connected[id] = False
-
-    def _bsmp_init_variable_values(self, bsmp_entities):
-
-        # create _variables_values
-        gids = sorted(self._groups.keys())
-        max_id = max([max(self._groups[gid]) for gid in gids[3:]])
-        dev_variables = [None, ] * (1 + max_id)
-        self._variables_values = \
-            {id: dev_variables[:] for id in self._device_ids}
-
-        # read all variable from BSMP devices
-        self._bsmp_update_variables(device_ids=self._device_ids,
-                                    group_id=self.VGROUPS.ALLRELEVANT)
 
     def _init_check_version(self):
         if not self.connected:
@@ -1260,6 +1213,30 @@ class PRUController:
         else:
             return None
 
+    def _bsmp_read_parameters(self, device_ids, parameter_ids=None):
+
+        # reads parameters into pdata dictionary
+        pdata = {id: {pid: [] for pid in parameter_ids} for id in device_ids}
+        for id in device_ids:
+            for pid in parameter_ids:
+                indices = [0]
+                for idx in indices:
+                    data = self._bsmp_exec_function((id,),
+                                                    self.BSMP.F_GET_PARAM,
+                                                    args=(pid, idx))
+                    if data[id] is None:
+                        return None
+                    else:
+                        if len(indices) > 1:
+                            pdata[id][pid].append(data[id])
+                        else:
+                            pdata[id][pid] = data[id]
+
+        # update _parameters_values
+        for id in pdata:
+            for pid in pdata[id]:
+                self._parameters_values[id][pid] = pdata[id][pid]
+
     def _bsmp_read_siggen_parms(self):
 
         if not self.connected:
@@ -1302,3 +1279,63 @@ class PRUController:
                         self._variables_values[id][v_id] = v
                     else:
                         self._variables_values[id][v_id][idx] = v
+
+    def _bsmp_init_update(self, bsmp_entities):
+
+        # initialize variables_values, a mirror state of BSMP devices
+        self._bsmp_init_variable_values()
+
+        # check if ps controller version is compatible with bsmp.py
+        self._init_check_version()
+
+        # initialize parameters_values, a mirror state of BSMP devices
+        # self._bsmp_init_parameters_values()
+
+    def _bsmp_init_groups(self):
+
+        # check if groups have consecutive ids
+        groups_ids = sorted(self._groups.keys())
+        if len(groups_ids) < 3:
+            self._init_disconnect()
+            raise ValueError('Invalid variable group definition!')
+        for i in range(len(groups_ids)):
+            if i not in groups_ids:
+                self._init_disconnect()
+                raise ValueError('Invalid variable group definition!')
+
+        # loop over bsmp devices
+        for id in self._device_ids:
+            # remove previous variables groups and fresh ones
+            try:
+                self._bsmp[id].remove_all_groups(
+                    timeout=self._delay_remove_groups)
+                self._connected[id] = True
+                for group_id in groups_ids[3:]:
+                    var_ids = self._groups[group_id]
+                    self._bsmp[id].create_group(
+                        var_ids, timeout=self._delay_create_group)
+            except _SerialError:
+                print('_bsmp_init_groups: serial error!')
+                self._connected[id] = False
+
+    def _bsmp_init_variable_values(self):
+
+        # create _variables_values
+        gids = sorted(self._groups.keys())
+        max_id = max([max(self._groups[gid]) for gid in gids[3:]])
+        dev_variables = [None, ] * (1 + max_id)
+        self._variables_values = \
+            {id: dev_variables[:] for id in self._device_ids}
+
+        # read all variable from BSMP devices
+        self._bsmp_update_variables(device_ids=self._device_ids,
+                                    group_id=self.VGROUPS.ALLRELEVANT)
+
+    def _bsmp_init_parameters_values(self, bsmp_entities):
+
+        # create _parameters_values
+        self._parameters_values = {id: {} for id in self._device_ids}
+
+        # read from ps controllers
+        self._bsmp_update_parameters(device_ids=self._device_ids,
+                                     parameter_ids=_Parameters.get_eids())
