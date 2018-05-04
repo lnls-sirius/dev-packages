@@ -1145,8 +1145,12 @@ class PRUController:
         # --- make copy of state for updating
         PRUController._lock.acquire()
         copy_var_vals = _dcopy(self._variables_values)
+        # copy_var_vals = self._variables_values
         PRUController._lock.release()
         # processing time up to this point: 18.3 ms @ BBB1
+        # processing time up to this point (w/o locks): 17.1 ms @ BBB1
+        # processing time up to this point (w/o locks,dcopy): 9.0 ms @ BBB1
+        #                                                     11% CPU usage.
         # print('time2: ', _time.time() - t0)
 
         # --- update variables, if ack is ok
