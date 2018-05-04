@@ -955,10 +955,10 @@ class PRUController:
                 bsmp[id] = _FBP_BSMPSim()
             else:
                 if self._psmodel == 'FBP':
-                    bsmp_entities = _FBPEntities
+                    bsmp_entities = _FBPEntities()
                 else:
                     # TODO: generalize here!!!
-                    bsmp_entities = _FBPEntities
+                    bsmp_entities = _FBPEntities()
                 bsmp[id] = _BSMP(self._pru, id, bsmp_entities)
         return bsmp
 
