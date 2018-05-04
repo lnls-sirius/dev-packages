@@ -241,25 +241,8 @@ def get_ps_FBP_propty_database():
     return db
 
 
-# def get_common_pu_propty_database():
-#     """Return database of commun to all pulsed pwrsupply PVs."""
-#     db = get_common_propty_database()
-#     db_p = {'type': 'enum', 'enums': _et.enums('DsblEnblTyp'),
-#             'value': _et.idx.Dsbl}
-#     db_v = {'type': 'float', 'value': 0.0,
-#             'prec': default_pu_current_precision}
-#     db_pu = {
-#         'Pulsed-Sel': _copy.deepcopy(db_p),
-#         'Pulsed-Sts': _copy.deepcopy(db_p),
-#         'Voltage-SP': _copy.deepcopy(db_v),
-#         'Voltage-RB': _copy.deepcopy(db_v),
-#         'Voltage-Mon': _copy.deepcopy(db_v),
-#     }
-#     db.update(db_pu)
-#     return db
-
 def get_common_pu_propty_database():
-    """Return database of commun to all pulsed pwrsupply PVs."""
+    """Return database of common to all pulsed pwrsupply PVs."""
     # S TB-04:PU-InjSept
     # S TS-01:PU-EjeSeptF
     # S TS-01:PU-EjeSeptG
@@ -268,7 +251,6 @@ def get_common_pu_propty_database():
     # S TS-04:PU-InjSeptF
     # K BO-01D:PU-InjKckr
     # K BO-48D:PU-EjeKckr
-    # K SI-01SA:PU-InjNLKckr
     # K SI-01SA:PU-InjDpKckr
     # P SI-19C4:PU-PingV
     db = {
@@ -302,14 +284,24 @@ def get_common_pu_propty_database():
         'Intlk4Label-Cte': {'type': 'str', 'value': 'Intlk4'},
         'Intlk5Label-Cte': {'type': 'str', 'value': 'Intlk5'},
         'Intlk6Label-Cte': {'type': 'str', 'value': 'Intlk6'},
-        # 'OpMode-Sel': {'type': 'enum',
-        #                'enums': ['Comissioning', 'Accumulation'],
-        #                'value': 0},  # NLK , On-Axis
-        # 'OpMode-Sts': {'type': 'enum',
-        #                'enums': ['Comissioning', 'Accumulation'],
-        #                'value': 0},  # NLK , On-Axis
     }
     return db
+
+
+def get_common_pu_SI_InjKicker_propty_database():
+    """Return database of SI injection kicker."""
+    # K SI-01SA:PU-InjNLKckr
+    db = get_common_pu_propty_database()
+    # 'Comissioning': On-Axis magnet
+    # 'Accumulation': Non-linear kicker
+    db.update({
+        'OpMode-Sel': {'type': 'enum',
+                       'enums': ['Comissioning', 'Accumulation'],
+                       'value': 0},
+        'OpMode-Sts': {'type': 'enum',
+                       'enums': ['Comissioning', 'Accumulation'],
+                       'value': 0},
+    })
 
 
 def get_ps_propty_database(pstype):
@@ -433,6 +425,11 @@ def get_ma_propty_database(maname):
 
 def get_pm_propty_database(maname):
     """Return property database of a pulsed magnet type device."""
+    if 'InjNLKckr' in maname or 'InjDipKckr' in maname:
+        propty_db = get_common_pu_SI_InjKicker_propty_database()
+    else:
+        propty_db = get_common_pu_propty_database()
+
     propty_db = get_common_pu_propty_database()
     current_alarm = ('Voltage-SP', 'Voltage-RB', 'Voltage-Mon', )
     unit = _MASearch.get_splims_unit(ispulsed=True)
