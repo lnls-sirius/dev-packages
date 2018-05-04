@@ -7,7 +7,7 @@ at the other end of the serial line.
 
 import time as _time
 import random as _random
-import traceback as _traceback
+# import traceback as _traceback
 from collections import deque as _deque
 # from collections import namedtuple as _namedtuple
 from threading import Thread as _Thread
@@ -381,7 +381,11 @@ class PRUController:
     # TODO: delete random fluctuation added to measurements
     # TODO: it might be possible and usefull to use simulated BSMP but real PRU
     # TODO: remove printout of PRUserial485 when changing curves. (PR in queue)
-    # TODO: need to be able to read siggen parms from ps controllers!
+    # TODO: test not dcopying self._variables_values in _bsmp_update_variables.
+    #       we need lock whole up section in that function that does
+    #       updating of _variables_values, though. Also lock other class
+    #       properties and methods that access _variables_values or _psc_status
+
     #
     # Gabriel from ELP proposed the idea of a privilegded slave that
     # could define BSMP variables that corresponded to other slaves variables
@@ -1201,6 +1205,8 @@ class PRUController:
         self._variables_values = copy_var_vals  # atomic operation
         # processing time up to this point: 20.4 ms @ BBB1
         # print('time4: ', _time.time() - t0)
+
+        # PRUController._lock.release()
 
     def _bsmp_exec_function(self, device_ids, function_id, args=None):
         # --- send func exec request to serial line
