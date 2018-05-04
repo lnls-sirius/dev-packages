@@ -99,6 +99,7 @@ class BSMP:
         group = self.entities.groups[group_id]
         m = _Message.message(0x12, payload=[chr(group_id)])
         response = self.channel.request(m, timeout)
+        # read_group_variables takes typically 3 ms to run up to this at BBB1!
         if response.cmd == 0x13:
             if len(response.payload) == group.variables_size():
                 return Response.ok, group.load_to_value(response.payload)
