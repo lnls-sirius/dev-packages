@@ -81,7 +81,7 @@ def pruc_reset_interlocks(pruc):
 def pruc_create():
     """Method."""
     # create BBB controller
-    pruc = PRUController(bsmp_entities=FBPEntities(),
+    pruc = PRUController(psmodel='FBP',
                          device_ids=BBB1_device_ids,
                          simulate=False,
                          processing=True,

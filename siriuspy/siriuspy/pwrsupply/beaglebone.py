@@ -10,7 +10,7 @@ from collections import namedtuple as _namedtuple
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.pwrsupply.data import PSData as _PSData
 from siriuspy.pwrsupply.prucontroller import PRUController as _PRUController
-from siriuspy.pwrsupply.bsmp import FBPEntities as _FBPEntities
+# from siriuspy.pwrsupply.bsmp import FBPEntities as _FBPEntities
 from siriuspy.pwrsupply.bsmp import Const as _c
 from .status import PSCStatus as _PSCStatus
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
@@ -490,7 +490,7 @@ class BeagleBone:
         # if not self._simulate:
         #     # self._controller = _IOController(_PRU(), self._psmodel)
         #     slave_ids = self._get_bsmp_slave_IDs()
-        #     self._controller = _PRUController(FBPEntities(), slave_ids)
+        #     self._controller = _PRUController(self._psmodel, slave_ids)
         # else:
         #     # self._controller = _IOControllerSim(_PRUSim(), self._psmodel)
         #     pass
@@ -621,7 +621,7 @@ class BeagleBone:
         # Return dict of power supply objects
         slave_ids = self._get_bsmp_slave_IDs()
         self._controller = _PRUController(
-            _FBPEntities(), slave_ids, simulate=self._simulate)
+            self._psmodel, slave_ids, simulate=self._simulate)
         for i, psname in enumerate(self._psnames):
             self._devices_info[psname] = DeviceInfo(psname, slave_ids[i])
         db = _deepcopy(self._database)

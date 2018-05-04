@@ -26,6 +26,7 @@ from siriuspy.pwrsupply.bsmp import __version__ as _ps_bsmp_version
 from siriuspy.pwrsupply.bsmp import Const as _c
 from siriuspy.pwrsupply.bsmp import MAP_MIRROR_2_ORIG as _mirror_map
 from siriuspy.pwrsupply.bsmp import Parameters as _Parameters
+from siriuspy.pwrsupply.bsmp import FBPEntities as _FBPEntities
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 from siriuspy.pwrsupply.controller import FBP_BSMPSim as _FBP_BSMPSim
 
@@ -469,7 +470,7 @@ class PRUController:
 
     # --- public interface ---
 
-    def __init__(self, bsmp_entities, device_ids,
+    def __init__(self, psmodel, device_ids,
                  simulate=False,
                  processing=True,
                  scanning=True,
@@ -480,6 +481,9 @@ class PRUController:
 
         # store simulation mode
         self._simulate = simulate
+
+        # store psmodel
+        self._psmodel = psmodel
 
         # sorted list of device ids
         self._device_ids = sorted(device_ids)
@@ -493,7 +497,7 @@ class PRUController:
         self._initialize_pru()
 
         # initialize BSMP
-        self._initialize_bsmp(bsmp_entities)
+        self._initialize_bsmp()
 
         # reset power supply controllers
         # TODO: this should be invoked in the case of IOC setting state of HW
@@ -501,7 +505,7 @@ class PRUController:
             self._bsmp_reset_ps_controllers()  # (contains first BSMP comm)
 
         # update state of PRUController from ps controller
-        self._bsmp_init_update(bsmp_entities)
+        self._bsmp_init_update()
 
         # initialize BSMP devices (might contain BSMP comm)
         self._initialize_devices()
@@ -846,11 +850,9 @@ class PRUController:
         # process first operation in queue, if any
         self._queue.process()
 
-        # print info
-        # TODO: clean this temporary printout.
-        n = len(self._queue)
-        if n > 50:
-            print('BBB queue size: {} !!!'.format(len(self._queue)))
+        # n = len(self._queue)
+        # if n > 50:
+        #     print('BBB queue size: {} !!!'.format(len(self._queue)))
 
     # --- private methods: initializations ---
 
@@ -899,7 +901,7 @@ class PRUController:
                         list(_DEFAULT_WFMDATA),  # 4th power supply
                         ]
 
-    def _initialize_bsmp(self, bsmp_entities):
+    def _initialize_bsmp(self):
 
         # prune variables from mirror group
         self._init_prune_mirror_group()
@@ -908,7 +910,7 @@ class PRUController:
         self._connected = {id: False for id in self.device_ids}
 
         # create BSMP devices
-        self._bsmp = self._init_create_conn(bsmp_entities)
+        self._bsmp = self._init_create_bsmp_connectors()
 
     def _bsmp_reset_ps_controllers(self):
 
@@ -945,13 +947,18 @@ class PRUController:
         # prune from mirror group variables not used
         self._groups[self.VGROUPS.MIRROR] = tuple(var_ids)
 
-    def _init_create_conn(self, bsmp_entities):
+    def _init_create_bsmp_connectors(self):
         bsmp = dict()
         for id in self._device_ids:
             if self._simulate:
                 # TODO: generalize using bsmp_entities
                 bsmp[id] = _FBP_BSMPSim()
             else:
+                if self._psmodel == 'FBP':
+                    bsmp_entities = _FBPEntities
+                else:
+                    # TODO: generalize here!!!
+                    bsmp_entities = _FBPEntities
                 bsmp[id] = _BSMP(self._pru, id, bsmp_entities)
         return bsmp
 
@@ -1280,7 +1287,7 @@ class PRUController:
                     else:
                         self._variables_values[id][v_id][idx] = v
 
-    def _bsmp_init_update(self, bsmp_entities):
+    def _bsmp_init_update(self):
 
         # initialize variables_values, a mirror state of BSMP devices
         self._bsmp_init_variable_values()
