@@ -266,25 +266,25 @@ class Parameters:
     """power supply parameters."""
 
     _parameters = (
-        {'eid': 0, 'count': 1, 'type': float, 'unit': '',
+        {'eid': 0, 'count': 1, 'type': str, 'unit': '',
          'init': False, 'config': False, 'Op': True},
-        {'eid': 1, 'count': 1, 'type': float, 'unit': '',
+        {'eid': 1, 'count': 1, 'type': str, 'unit': '',
          'init': True, 'config': False, 'Op': False},
-        {'eid': 2, 'count': 1, 'type': float, 'unit': '',
+        {'eid': 2, 'count': 1, 'type': int, 'unit': '',
          'init': True, 'config': False, 'Op': False},
-        {'eid': 3, 'count': 1, 'type': float, 'unit': '',
+        {'eid': 3, 'count': 1, 'type': int, 'unit': '',
          'init': False, 'config': False, 'Op': True},
-        {'eid': 4, 'count': 1, 'type': float, 'unit': 'bps',
+        {'eid': 4, 'count': 1, 'type': int, 'unit': 'bps',
          'init': True, 'config': False, 'Op': True},
-        {'eid': 5, 'count': 4, 'type': float, 'unit': '',
+        {'eid': 5, 'count': 4, 'type': str, 'unit': '',
          'init': False, 'config': False, 'Op': True},
         {'eid': 6, 'count': 1, 'type': float, 'unit': '',
          'init': True, 'config': False, 'Op': False},
-        {'eid': 7, 'count': 1, 'type': float, 'unit': '',
+        {'eid': 7, 'count': 1, 'type': str, 'unit': '',
          'init': False, 'config': False, 'Op': True},
-        {'eid': 8, 'count': 4, 'type': float, 'unit': '',
+        {'eid': 8, 'count': 4, 'type': str, 'unit': '',
          'init': False, 'config': False, 'Op': True},
-        {'eid': 9, 'count': 4, 'type': float, 'unit': '',
+        {'eid': 9, 'count': 4, 'type': str, 'unit': '',
          'init': False, 'config': False, 'Op': True},
         {'eid': 10, 'count': 1, 'type': float, 'unit': 'Hz',
          'init': True, 'config': False, 'Op': False},
@@ -320,15 +320,15 @@ class Parameters:
          'init': False, 'config': False, 'Op': True},
         {'eid': 26, 'count': 1, 'type': float, 'unit': '%',
          'init': False, 'config': False, 'Op': True},
-        {'eid': 27, 'count': 1, 'type': float, 'unit': '',
+        {'eid': 27, 'count': 1, 'type': int, 'unit': '',
          'init': True, 'config': False, 'Op': False},
         {'eid': 28, 'count': 1, 'type': float, 'unit': 'MHz',
          'init': True, 'config': False, 'Op': False},
         {'eid': 29, 'count': 1, 'type': float, 'unit': 'Hz',
          'init': True, 'config': False, 'Op': False},
-        {'eid': 30, 'count': 4, 'type': float, 'unit': '',
+        {'eid': 30, 'count': 4, 'type': int, 'unit': '',
          'init': True, 'config': False, 'Op': False},
-        {'eid': 31, 'count': 4, 'type': float, 'unit': '',
+        {'eid': 31, 'count': 4, 'type': int, 'unit': '',
          'init': True, 'config': False, 'Op': False},
         {'eid': 32, 'count': 4, 'type': float, 'unit': '',
          'init': True, 'config': False, 'Op': False},
@@ -336,7 +336,7 @@ class Parameters:
          'init': False, 'config': False, 'Op': True},
         {'eid': 34, 'count': 4, 'type': float, 'unit': '',
          'init': False, 'config': False, 'Op': True},
-        {'eid': 35, 'count': 1, 'type': float, 'unit': '',
+        {'eid': 35, 'count': 1, 'type': int, 'unit': '',
          'init': False, 'config': True, 'Op': False},
         {'eid': 36, 'count': 1, 'type': float, 'unit': '',
          'init': False, 'config': True, 'Op': False},
@@ -348,9 +348,9 @@ class Parameters:
          'init': False, 'config': False, 'Op': True},
         {'eid': 40, 'count': 4, 'type': float, 'unit': '',
          'init': False, 'config': True, 'Op': False},
-        {'eid': 41, 'count': 1, 'type': float, 'unit': '',
+        {'eid': 41, 'count': 1, 'type': int, 'unit': '',
          'init': False, 'config': True, 'Op': False},
-        {'eid': 42, 'count': 1, 'type': float, 'unit': '',
+        {'eid': 42, 'count': 1, 'type': int, 'unit': '',
          'init': False, 'config': True, 'Op': False},
         {'eid': 43, 'count': 1, 'type': float, 'unit': 'A/V/%',
          'init': False, 'config': False, 'Op': True},
@@ -369,7 +369,10 @@ class Parameters:
         cast_value = type_cast(value)
         return cast_value
 
-
+    @staticmethod
+    def get_eids():
+        """Return parameters eids."""
+        return list(Parameters._parameters.keys())
 
 
 class FBPEntities(_Entities):
