@@ -30,10 +30,7 @@ _default_pu_current_unit = None
 
 # --- power supply enums ---
 
-ps_models = ('Empty', 'FBP', 'FBP_DCLink', 'FAC_ACDC', 'FAC_DCDC',
-             'FAC_2S_ACDC', 'FAC_2S_DCDC', 'FAC_2P4S_ACDC', 'FAC_2P4S_DCDC',
-             'FAP', 'FAP_4P_Master', 'FAP_4P_Slave',
-             'FAP_2P2S_Master', 'FAP_2P2S_Slave')
+ps_models = ('FBP', 'FAC', 'FAC-2P4S', 'FAC-2S', 'FAC-2P2S', 'Commercial')
 ps_dsblenbl = ('Dsbl', 'Enbl')
 ps_interface = ('Remote', 'Local', 'PCHost')
 ps_openloop = ('Closed', 'Open')
@@ -197,9 +194,9 @@ def get_common_propty_database():
     return db
 
 
-def get_ps_FBP_propty_database():
-    """Return database of commun to all pwrsupply PVs."""
-    db = get_common_propty_database()
+def get_ps_FBP_propty_database(pstype):
+    """Return database with FBP pwrsupply model PVs."""
+    propty_db = get_common_propty_database()
     db_ps = {
         'OpMode-Sel': {'type': 'enum', 'enums': ps_opmode,
                        'value': _et.idx.SlowRef},
@@ -239,8 +236,65 @@ def get_ps_FBP_propty_database():
                                  'count': len(ps_hard_interlock_FBP),
                                  'value': ps_hard_interlock_FBP},
     }
-    db.update(db_ps)
-    return db
+    propty_db.update(db_ps)
+
+    signals_lims = ('Current-SP', 'Current-RB',
+                    'CurrentRef-Mon', 'Current-Mon',
+                    'CycleAmpl-SP', 'CycleAmpl-RB',
+                    'CycleOffset-SP', 'CycleOffset-RB',
+                    )
+    # TODO: define limits to WfmData as well!
+    signals_unit = signals_lims + (
+        'WfmData-SP', 'WfmData-RB',
+    )
+    signals_prec = signals_unit
+
+    for propty, db in propty_db.items():
+        # set setpoint limits in database
+        if propty in signals_lims:
+            db['lolo'] = _PSSearch.get_splims(pstype, 'lolo')
+            db['low'] = _PSSearch.get_splims(pstype, 'low')
+            db['lolim'] = _PSSearch.get_splims(pstype, 'lolim')
+            db['hilim'] = _PSSearch.get_splims(pstype, 'hilim')
+            db['high'] = _PSSearch.get_splims(pstype, 'high')
+            db['hihi'] = _PSSearch.get_splims(pstype, 'hihi')
+        # define unit of current
+        if propty in signals_unit:
+            db['unit'] = get_ps_current_unit()
+        # define prec of current
+        if propty in signals_prec:
+            db['prec'] = default_ps_current_precision,
+    return propty_db
+
+
+def get_ps_FAC_propty_database(pstype):
+    """Return database with FAC pwrsupply model PVs."""
+    # TODO: implement!!!
+    return get_ps_FBP_propty_database(pstype)
+
+
+def get_ps_FAC_2P4S_propty_database(pstype):
+    """Return database with FAC-2P4S pwrsupply model PVs."""
+    # TODO: implement!!!
+    return get_ps_FBP_propty_database(pstype)
+
+
+def get_ps_FAC_2S_propty_database(pstype):
+    """Return database with FAC-2S pwrsupply model PVs."""
+    # TODO: implement!!!
+    return get_ps_FBP_propty_database(pstype)
+
+
+def get_ps_FAC_2P2S_propty_database(pstype):
+    """Return database with FAC-2P2S pwrsupply model PVs."""
+    # TODO: implement!!!
+    return get_ps_FBP_propty_database(pstype)
+
+
+def get_ps_Commercial_propty_database(pstype):
+    """Return database with Commercial pwrsupply model PVs."""
+    # TODO: implement!!!
+    return get_ps_FBP_propty_database(pstype)
 
 
 def get_common_pu_propty_database():
