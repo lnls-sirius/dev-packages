@@ -7,6 +7,7 @@ from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.search import MASearch as _MASearch
 from siriuspy.pwrsupply.siggen import DEFAULT_SIGGEN_CONFIG as _DEF_SIGG_CONF
+from siriuspy.csdevice.const import Const
 
 MAX_WFMSIZE = 4000
 DEFAULT_SIGGEN_CONFIG = _DEF_SIGG_CONF
@@ -18,19 +19,13 @@ _default_ps_current_unit = None
 _default_pu_current_unit = None
 
 # TODO: cleanup this module !!!!
-
-# default_wfmlabels = ('Waveform1', 'Waveform2', 'Waveform3',
-#                      'Waveform4', 'Waveform5', 'Waveform6')
-
-
 # TODO: Add properties to power EPICS supply devices:
-#
-# SyncMode-Mon: 'Off', 'Cycle', 'RmpWfm', 'MigWfm'
 # DSPLoop-Mon: 'Off', 'On'
 
 # --- power supply enums ---
 
-ps_models = ('FBP', 'FAC', 'FAC-2P4S', 'FAC-2S', 'FAC-2P2S', 'Commercial')
+ps_models = ('FBP', 'FAC', 'FAC_2S', 'FAC_2P4S', 'FAP', 'FAP_4P', 'FAP_2P2S',
+             'FBP_SOFB', 'Commercial', )
 ps_dsblenbl = ('Dsbl', 'Enbl')
 ps_interface = ('Remote', 'Local', 'PCHost')
 ps_openloop = ('Closed', 'Open')
@@ -89,49 +84,21 @@ ps_hard_interlock_FBP_DCLink = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
 )
 ps_cycle_type = ('Sine', 'DampedSine', 'Trapezoidal')
-
 ps_sync_mode = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
 
 # --- power supply constants definition class ---
 
 
-class Const:
-    """Const class defining power supply constants."""
-
-    @staticmethod
-    def _init():
-        """Create class constants."""
-        for i in range(len(ps_models)):
-            Const._add_const('Models', ps_models[i], i)
-        for i in range(len(ps_dsblenbl)):
-            Const._add_const('DsblEnbl', ps_dsblenbl[i], i)
-        for i in range(len(ps_interface)):
-            Const._add_const('Interface', ps_interface[i], i)
-        for i in range(len(ps_openloop)):
-            Const._add_const('Openloop', ps_openloop[i], i)
-        for i in range(len(ps_states)):
-            Const._add_const('States', ps_states[i], i)
-        for i in range(len(ps_pwrstate_sel)):
-            Const._add_const('PwrState', ps_pwrstate_sel[i], i)
-        for i in range(len(ps_opmode)):
-            Const._add_const('OpMode', ps_opmode[i], i)
-        for i in range(len(ps_cmdack)):
-            Const._add_const('CmdAck', ps_cmdack[i], i)
-        for i in range(len(ps_cycle_type)):
-            Const._add_const('CycleType', ps_cycle_type[i], i)
-        for i in range(len(ps_cycle_type)):
-            Const._add_const('SyncMode', ps_sync_mode[i], i)
-
-    @staticmethod
-    def _add_const(group, const, i):
-        if not hasattr(Const, group):
-            setattr(Const, group, _namedtuple(group, ''))
-        obj = getattr(Const, group)
-        setattr(obj, const, i)
-
-
-Const._init()  # create class constants
-
+Const.add_field('Models', ps_models)
+Const.add_field('DsblEnbl', ps_dsblenbl)
+Const.add_field('Interface', ps_interface)
+Const.add_field('Openloop', ps_openloop)
+Const.add_field('States', ps_states)
+Const.add_field('PwrState', ps_pwrstate_sel)
+Const.add_field('OpMode', ps_opmode)
+Const.add_field('CmdAck', ps_cmdack)
+Const.add_field('CycleType', ps_cycle_type)
+Const.add_field('SyncMode', ps_sync_mode)
 
 # --- power supply databases ---
 
@@ -273,20 +240,38 @@ def get_ps_FAC_propty_database(pstype):
     return get_ps_FBP_propty_database(pstype)
 
 
-def get_ps_FAC_2P4S_propty_database(pstype):
-    """Return database with FAC-2P4S pwrsupply model PVs."""
-    # TODO: implement!!!
-    return get_ps_FBP_propty_database(pstype)
-
-
 def get_ps_FAC_2S_propty_database(pstype):
-    """Return database with FAC-2S pwrsupply model PVs."""
+    """Return database with FAC_2S pwrsupply model PVs."""
     # TODO: implement!!!
     return get_ps_FBP_propty_database(pstype)
 
 
-def get_ps_FAC_2P2S_propty_database(pstype):
-    """Return database with FAC-2P2S pwrsupply model PVs."""
+def get_ps_FAC_2P4S_propty_database(pstype):
+    """Return database with FAC_2P4S pwrsupply model PVs."""
+    # TODO: implement!!!
+    return get_ps_FBP_propty_database(pstype)
+
+
+def get_ps_FAP_propty_database(pstype):
+    """Return database with FAP pwrsupply model PVs."""
+    # TODO: implement!!!
+    return get_ps_FBP_propty_database(pstype)
+
+
+def get_ps_FAP_4P_propty_database(pstype):
+    """Return database with FAP_4P pwrsupply model PVs."""
+    # TODO: implement!!!
+    return get_ps_FBP_propty_database(pstype)
+
+
+def get_ps_FAP_2P2S_propty_database(pstype):
+    """Return database with FAP_2P2S pwrsupply model PVs."""
+    # TODO: implement!!!
+    return get_ps_FBP_propty_database(pstype)
+
+
+def get_ps_FBP_FOFB_propty_database(pstype):
+    """Return database with FBP_FOFB pwrsupply model PVs."""
     # TODO: implement!!!
     return get_ps_FBP_propty_database(pstype)
 

@@ -5,12 +5,20 @@ from siriuspy.search import PSSearch as _PSSearch
 
 from siriuspy.csdevice.pwrsupply import get_ps_FBP_propty_database as \
     _get_ps_FBP_propty_database
-from siriuspy.csdevice.pwrsupply import get_ps_FAC_2P4S_propty_database as \
-    _get_ps_FAC_2P4S_propty_database
+from siriuspy.csdevice.pwrsupply import get_ps_FAC_propty_database as \
+    _get_ps_FAC_propty_database
 from siriuspy.csdevice.pwrsupply import get_ps_FAC_2S_propty_database as \
     _get_ps_FAC_2S_propty_database
-from siriuspy.csdevice.pwrsupply import get_ps_FAC_2P2S_propty_database as \
-    _get_ps_FAC_2P2S_propty_database
+from siriuspy.csdevice.pwrsupply import get_ps_FAC_2P4S_propty_database as \
+    _get_ps_FAC_2P4S_propty_database
+from siriuspy.csdevice.pwrsupply import get_ps_FAP_propty_database as \
+    _get_ps_FAP_propty_database
+from siriuspy.csdevice.pwrsupply import get_ps_FAP_4P_propty_database as \
+    _get_ps_FAP_4P_propty_database
+from siriuspy.csdevice.pwrsupply import get_ps_FAP_2P2S_propty_database as \
+    _get_ps_FAP_2P2S_propty_database
+from siriuspy.csdevice.pwrsupply import get_ps_FBP_FOFB_propty_database as \
+    _get_ps_FBP_FOFB_propty_database
 from siriuspy.csdevice.pwrsupply import get_ps_Commercial_propty_database as \
     _get_ps_Commercial_propty_database
 
@@ -41,19 +49,34 @@ class PSData:
         if self._ispulsed:
             self._propty_database = _get_pu_propty_database(self._pstype)
         else:
+            ps_models = ('FBP', 'FAC', 'FAC_2S', 'FAC_2P4S', 'FAP', 'FAP_4P', 'FAP_2P2S',
+                         'FBP_SOFB', 'Commercial', )
+
             # self._propty_database = _get_ps_propty_database(self._pstype)
             if self._psmodel == 'FBP':
                 self._propty_database = \
                     _get_ps_FBP_propty_database(self._pstype)
-            elif self._psmodel in ('FAC-2P4S'):
+            elif self._psmodel in ('FAC'):
                 self._propty_database = \
-                    _get_ps_FAC_2P4S_propty_database(self._pstype)
-            elif self._psmodel in ('FAC-2S'):
+                    _get_ps_FAC_propty_database(self._pstype)
+            elif self._psmodel in ('FAC_2S'):
                 self._propty_database = \
                     _get_ps_FAC_2S_propty_database(self._pstype)
-            elif self._psmodel in ('FAC-2P2S'):
+            elif self._psmodel in ('FAC_2P4S'):
                 self._propty_database = \
-                    _get_ps_FAC_2P2S_propty_database(self._pstype)
+                    _get_ps_FAC_2P4S_propty_database(self._pstype)
+            elif self._psmodel in ('FAP'):
+                self._propty_database = \
+                    _get_ps_FAP_propty_database(self._pstype)
+            elif self._psmodel in ('FAP_4P'):
+                self._propty_database = \
+                    _get_ps_FAP_4P_propty_database(self._pstype)
+            elif self._psmodel in ('FAP_2P'):
+                self._propty_database = \
+                    _get_ps_FAP_2P_propty_database(self._pstype)
+            elif self._psmodel in ('FBP_FOFB'):
+                self._propty_database = \
+                    _get_ps_FBP_FOFB_propty_database(self._pstype)
             elif self._psmodel in ('Commercial'):
                 self._propty_database = \
                     _get_ps_Commercial_propty_database(self._pstype)
