@@ -29,7 +29,8 @@ class E2SController:
     INTERVAL_SCAN = 1.0/_PRUController.FREQ.SCAN
 
     bsmp_2_epics = {
-        _c.V_PS_STATUS: ('PwrState-Sts', 'OpMode-Sts', 'CtrlMode-Mon'),
+        _c.V_PS_STATUS: ('PwrState-Sts', 'OpMode-Sts',
+                         'CtrlMode-Mon', 'OpenLoop-Mon'),
         _c.V_PS_SETPOINT: 'Current-RB',
         _c.V_PS_REFERENCE: 'CurrentRef-Mon',
         _c.V_FIRMWARE_VERSION: 'Version-Cte',
@@ -48,6 +49,7 @@ class E2SController:
 
     epics_2_bsmp = {
         'PwrState-Sts': _c.V_PS_STATUS,
+        'OpenLoop-Mon': _c.V_PS_STATUS,
         'OpMode-Sts': _c.V_PS_STATUS,
         'CtrlMode-Mon': _c.V_PS_STATUS,
         'Current-RB': _c.V_PS_SETPOINT,
@@ -91,20 +93,20 @@ class E2SController:
         # define and init constant and setpoint fields
         self._setpoints = dict()
         self._constants = dict()
-        self._locals = ('WfmData-RB', )
-        self._local_vars = dict()
+        # self._locals = ('WfmData-RB', )
+        # self._local_vars = dict()
         for device_info in devices_info.values():
             self._setpoints[device_info.name] = dict()
             self._constants[device_info.name] = dict()
-            self._local_vars[device_info.name] = dict()
+            # self._local_vars[device_info.name] = dict()
         for field, db in self.database.items():
             for device_info in devices_info.values():
                 if self._sp.match(field):
                     self._setpoints[device_info.name][field] = _deepcopy(db)
                 elif self._ct.match(field):
                     self._constants[device_info.name][field] = _deepcopy(db)
-                elif field in self._locals:
-                    self._local_vars[device_info.name][field] = _deepcopy(db)
+                # elif field in self._locals:
+                #     self._local_vars[device_info.name][field] = _deepcopy(db)
         self._initiated = False
         self._init()
         self._watchers = list()
@@ -125,14 +127,14 @@ class E2SController:
         values = dict()
         self._read_variables(device_name, values)
         self._read_setpoints(device_name, values)
-        self._read_locals(device_name, values)
+        # self._read_locals(device_name, values)
         self._read_pru(device_name, values)
         return values
 
     def write(self, devices_names, field, value):
         """Write to value one or many devices' field."""
         devices_names = self._tuplify(devices_names)
-        if self._check_values(field, value):
+        if self._check_write_values(field, value):
             func = getattr(self, E2SController._epics_2_wfuncs[field])
             devices_info = [self._devices_info[dev_name]
                             for dev_name in devices_names]
@@ -177,14 +179,19 @@ class E2SController:
     def _get_setpoint_field(field):
         return field.replace('-Sts', '-Sel').replace('-RB', '-SP')
 
-    def _check_values(self, field, setpoint):
-        if 'Sel' in field:
+    def _check_write_values(self, field, setpoint):
+        if not self._sp.match(field):
+            return False
+        elif '-Sel' in field:
             enums = self.database[field]['enums']
             if setpoint not in tuple(range(len(enums))):
                 return False
-        elif 'SP' in field:
+        elif '-SP' in field:
             pass
-        elif 'Cmd' in field:
+            # if 'WfmData-' == field:
+            #     if len(setpoint) != self._controller.pru_curve_length:
+            #         return False
+        elif '-Cmd' in field:
             if setpoint < 1:
                 return False
         return True
@@ -327,7 +334,8 @@ class E2SController:
         """Set wfmdata."""
         self._set_setpoints(devices_info, 'WfmData-SP', [setpoint])
         for dev_info in devices_info:
-            self._local_vars[dev_info.name]['WfmData-RB']['value'] = setpoint
+            # self._local_vars[dev_info.name]['WfmData-RB']['value'] = setpoint
+            self._controller.pru_curve_write(dev_info.id, setpoint)
         return True
 
     # Watchers
@@ -382,6 +390,9 @@ class E2SController:
         if field == 'PwrState-Sts':
             psc_status = _PSCStatus(ps_status=value)
             value = psc_status.ioc_pwrstate
+        elif field == 'OpenLoop-Mon':
+            psc_status = _PSCStatus(ps_status=value)
+            value = psc_status.open_loop
         elif field == 'OpMode-Sts':
             psc_status = _PSCStatus(ps_status=value)
             value = psc_status.ioc_opmode
@@ -397,6 +408,8 @@ class E2SController:
         return value
 
     def _trim_value(self, field, setpoint):
+        # TODO: generalize method so that it accept limit-checking for arrays,
+        # such as WfmData-SP, for example.
         try:
             low = self.database[field]['lolo']
             high = self.database[field]['hihi']
@@ -408,6 +421,7 @@ class E2SController:
         return setpoint
 
     def _trim_array(self, device_names, field, setpoint):
+        # TODO: rething method.
         return setpoint
         try:  # TODO: fix
             self.database[field]['count']
@@ -430,10 +444,10 @@ class E2SController:
             key = device_name + ':' + field
             values[key] = db['value']
 
-    def _read_locals(self, device_name, values):
-        for field, db in self._local_vars[device_name].items():
-            key = device_name + ':' + field
-        values[key] = db['value']
+    # def _read_locals(self, device_name, values):
+    #     for field, db in self._local_vars[device_name].items():
+    #         key = device_name + ':' + field
+    #     values[key] = db['value']
 
     def _read_pru(self, device_name, values):
         if not self._controller.pru_sync_status:
@@ -449,6 +463,9 @@ class E2SController:
             self._controller.pru_sync_pulse_count
         values[device_name + ':PRUCtrlQueueSize-Mon'] = \
             self._controller.queue_length
+        _, dev_id = self._devices_info[device_name]
+        values[device_name + ':WfmData-RB'] = \
+            self._controller.pru_curve_read(dev_id)
 
     def _tuplify(self, value):
         # Return tuple if value is not iterable
