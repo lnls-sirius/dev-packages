@@ -28,7 +28,7 @@ ps_models = ('FBP', 'FAC', 'FAC_2S', 'FAC_2P4S', 'FAP', 'FAP_4P', 'FAP_2P2S',
              'FBP_SOFB', 'Commercial', )
 ps_dsblenbl = ('Dsbl', 'Enbl')
 ps_interface = ('Remote', 'Local', 'PCHost')
-ps_openloop = ('Closed', 'Open')
+ps_openloop = ('Open', 'Closed')
 ps_pwrstate_sel = ('Off', 'On')
 ps_pwrstate_sts = ('Off', 'On', 'Initializing')
 ps_states = ('Off', 'Interlock', 'Initializing',
@@ -86,13 +86,14 @@ ps_hard_interlock_FBP_DCLink = (
 ps_cycle_type = ('Sine', 'DampedSine', 'Trapezoidal')
 ps_sync_mode = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
 
+
 # --- power supply constants definition class ---
 
 
 Const.add_field('Models', ps_models)
 Const.add_field('DsblEnbl', ps_dsblenbl)
 Const.add_field('Interface', ps_interface)
-Const.add_field('Openloop', ps_openloop)
+Const.add_field('OpenLoop', ps_openloop)
 Const.add_field('States', ps_states)
 Const.add_field('PwrState', ps_pwrstate_sel)
 Const.add_field('OpMode', ps_opmode)
@@ -101,6 +102,7 @@ Const.add_field('CycleType', ps_cycle_type)
 Const.add_field('SyncMode', ps_sync_mode)
 
 # --- power supply databases ---
+
 
 def get_ps_current_unit():
     """Return power supply current unit."""
@@ -129,8 +131,8 @@ def get_common_propty_database():
         'PwrState-Sts': {'type': 'enum', 'enums': ps_pwrstate_sts,
                          'value': _et.idx.Off},
         'Reset-Cmd': {'type': 'int', 'value': 0},
-        # 'CycleEnbl-Cmd': {'type': 'int', 'value': 0},  # TODO: remove
-        # 'CycleDsbl-Cmd': {'type': 'int', 'value': 0},  # TODO: remove
+        'OpenLoop-Mon': {'type': 'enum', 'enums': ps_openloop,
+                         'value': Const.OpenLoop.Open},
         'CycleEnbl-Mon': {'type': 'int', 'value': 0},
         'CycleType-Sel': {'type': 'enum', 'enums': ps_cycle_type,
                           'value': DEFAULT_SIGGEN_CONFIG[0]},
@@ -157,6 +159,14 @@ def get_common_propty_database():
         'PRUSyncPulseCount-Mon': {'type': 'int', 'value': 0},
         'PRUCtrlQueueSize-Mon': {'type': 'int', 'value': 0,
                                  'high': 50, 'hihi': 50},
+        # 'PRUWfmDataSize-SP': {'type': 'int', 'value': MAX_WFMSIZE,
+        #                       'lolo': 0, 'low': 0,
+        #                       'high': MAX_WFMSIZE+1,
+        #                       'hihi': MAX_WFMSIZE+1},
+        # 'PRUWfmDataSize-RB': {'type': 'int', 'value': MAX_WFMSIZE,
+        #                       'lolo': 0, 'low': 0,
+        #                       'high': MAX_WFMSIZE+1,
+        #                       'hihi': MAX_WFMSIZE+1},
     }
     return db
 
