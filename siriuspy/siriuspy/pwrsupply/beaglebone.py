@@ -83,6 +83,12 @@ class E2SController:
         'WfmData-SP': '_set_wfmdata_sp',
     }
 
+    _sync_mode = {
+        _PRUController.PRU.SYNC_MODE.CYCLE: 1,
+        _PRUController.PRU.SYNC_MODE.RMPEND: 2,
+        _PRUController.PRU.SYNC_MODE.MIGEND: 3
+    }
+
     def __init__(self, controller, devices_info, database):
         """Init."""
         self._controller = controller
@@ -439,9 +445,7 @@ class E2SController:
         if not self._controller.pru_sync_status:
             values[device_name + ':PRUSyncMode-Mon'] = 0
         else:
-            mode = self._controller.pru_sync_mode
-            if mode == 92:
-                mode = 1
+            mode = self._sync_mode[self._controller.pru_sync_mode]
             values[device_name + ':PRUSyncMode-Mon'] = mode
         values[device_name + ':PRUBlockIndex-Mon'] = \
             self._controller.pru_curve_block
