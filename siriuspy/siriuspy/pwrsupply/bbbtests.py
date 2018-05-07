@@ -17,7 +17,7 @@ P = 'T'
 BBB1_device_ids = (1, 2)
 BBB2_device_ids = (5, 6)
 
-simulate = True
+simulate = False
 
 siggen_config = [
     # --- siggen sine parameters ---

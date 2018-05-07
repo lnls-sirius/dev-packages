@@ -341,6 +341,7 @@ class E2SController:
         self._set_setpoints(devices_info, 'WfmData-SP', [setpoint])
         for dev_info in devices_info:
             # self._local_vars[dev_info.name]['WfmData-RB']['value'] = setpoint
+            # print('id: {}, len:{}, type:{}'.format(dev_info.id, len(setpoint), type(setpoint)))
             self._controller.pru_curve_write(dev_info.id, setpoint)
         return True
 

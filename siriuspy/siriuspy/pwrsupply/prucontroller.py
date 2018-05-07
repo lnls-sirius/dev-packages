@@ -790,8 +790,11 @@ class PRUController:
 
     def pru_curve_read(self, device_id):
         """Read curve of a device from PRU memory."""
+        # pass reference to curve, not a copy! this is necessary otherwise
+        # it is hard to achieve update rate of 10 Hz of the IOC.
         idx = self.device_ids.index(device_id)
-        curve = _dcopy(self._curves[idx])
+        # curve = _dcopy(self._curves[idx])
+        curve = self._curves[idx]
         return curve
 
     def pru_curve_write(self, device_id, curve):
