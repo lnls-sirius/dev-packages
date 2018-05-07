@@ -820,6 +820,12 @@ class PRUController:
         # select block to be used at next start of ramp
         self._pru.set_curve_block(block_next)
 
+    # @property
+    # def pru_curve_length(self):
+    #     """PRU curves length."""
+    #     n = len(self._curves[self.device_ids[0]])
+    #     return n
+
     # --- public methods: access to atomic methods of scan and process loops
 
     def bsmp_scan(self):

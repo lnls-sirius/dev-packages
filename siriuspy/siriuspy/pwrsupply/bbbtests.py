@@ -1,19 +1,23 @@
 """Tests with BeagleBone."""
 
 import time
-import epics
+# import epics
 import sys
 
 from siriuspy.bsmp import BSMP
 from siriuspy.pwrsupply.pru import PRU
+from siriuspy.pwrsupply.pru import PRUSim
 from siriuspy.pwrsupply.bsmp import Const as BSMPConst
 from siriuspy.pwrsupply.bsmp import FBPEntities
+from siriuspy.pwrsupply.controller import FBP_BSMPSim
 from siriuspy.pwrsupply.prucontroller import PRUController
 
 P = 'T'
 
 BBB1_device_ids = (1, 2)
 BBB2_device_ids = (5, 6)
+
+simulate = True
 
 siggen_config = [
     # --- siggen sine parameters ---
@@ -40,8 +44,12 @@ bsmp_cmds = {
 
 def bsmp_create(device_id):
     """Create BSMP object."""
-    pru = PRU()
-    bsmp = BSMP(pru, device_id, FBPEntities())
+    if simulate is True:
+        pru = PRUSim()
+        bsmp = FBP_BSMPSim(pru, device_id, FBPEntities())
+    else:
+        pru = PRU()
+        bsmp = BSMP(pru, device_id, FBPEntities())
     return bsmp
 
 
@@ -83,7 +91,7 @@ def pruc_create():
     # create BBB controller
     pruc = PRUController(psmodel='FBP',
                          device_ids=BBB1_device_ids,
-                         simulate=False,
+                         simulate=simulate,
                          processing=True,
                          scanning=True)
     return pruc
