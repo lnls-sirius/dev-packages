@@ -117,7 +117,7 @@ class PRUInterface:
 
     def read_curve_block(self):
         """Read selected block of curves."""
-        self._read_curve_block()
+        return self._read_curve_block()
 
     def set_curve_block(self, block):
         """Set the block of curves."""
@@ -285,6 +285,7 @@ class PRUSim(PRUInterface):
 
     def _sync_start(self, sync_mode, sync_address, delay):
         self._sync_status = Const.SYNC_STATE.ON
+        # TODO: implement while loop as thread (for RMP and MIG modes to work)
         while self._sync_status == Const.SYNC_STATE.ON:
             self.emulate_trigger()
             _time.sleep(0.1)
