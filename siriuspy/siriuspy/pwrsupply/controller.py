@@ -6,7 +6,7 @@ from threading import Thread as _Thread
 from siriuspy import util as _util
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.bsmp import Response as _Response
-from siriuspy.bsmp import BSMP as _BSMP
+# from siriuspy.bsmp import BSMP as _BSMP
 from siriuspy.bsmp import BSMPSim as _BSMPSim
 from siriuspy.pwrsupply.bsmp import FBPEntities as _FBPEntities
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
@@ -224,6 +224,7 @@ class FBPCycleState(_FBPState):
             value = self._signal.value
             variables[_c.V_PS_REFERENCE] = value
             variables[_c.V_I_LOAD] = value
+            variables[_c.V_SIGGEN_N] += 1
         return super().read_variable(variables, var_id)
 
     def select_op_mode(self, variables):
@@ -313,3 +314,4 @@ class FBPCycleState(_FBPState):
         variables[_c.V_PS_REFERENCE] = val
         variables[_c.V_I_LOAD] = val
         variables[_c.V_SIGGEN_ENABLE] = 0
+        variables[_c.V_SIGGEN_N] = 0
