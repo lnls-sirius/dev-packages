@@ -7,6 +7,7 @@ from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.search import MASearch as _MASearch
 from siriuspy.pwrsupply.siggen import DEFAULT_SIGGEN_CONFIG as _DEF_SIGG_CONF
+from siriuspy.csdevice.const import Const
 
 MAX_WFMSIZE = 4000
 DEFAULT_SIGGEN_CONFIG = _DEF_SIGG_CONF
@@ -18,25 +19,16 @@ _default_ps_current_unit = None
 _default_pu_current_unit = None
 
 # TODO: cleanup this module !!!!
-
-# default_wfmlabels = ('Waveform1', 'Waveform2', 'Waveform3',
-#                      'Waveform4', 'Waveform5', 'Waveform6')
-
-
 # TODO: Add properties to power EPICS supply devices:
-#
-# SyncMode-Mon: 'Off', 'Cycle', 'RmpWfm', 'MigWfm'
 # DSPLoop-Mon: 'Off', 'On'
 
 # --- power supply enums ---
 
-ps_models = ('Empty', 'FBP', 'FBP_DCLink', 'FAC_ACDC', 'FAC_DCDC',
-             'FAC_2S_ACDC', 'FAC_2S_DCDC', 'FAC_2P4S_ACDC', 'FAC_2P4S_DCDC',
-             'FAP', 'FAP_4P_Master', 'FAP_4P_Slave',
-             'FAP_2P2S_Master', 'FAP_2P2S_Slave')
+ps_models = ('FBP', 'FAC', 'FAC_2S', 'FAC_2P4S', 'FAP', 'FAP_4P', 'FAP_2P2S',
+             'FBP_SOFB', 'Commercial', )
 ps_dsblenbl = ('Dsbl', 'Enbl')
 ps_interface = ('Remote', 'Local', 'PCHost')
-ps_openloop = ('Closed', 'Open')
+ps_openloop = ('Open', 'Closed')
 ps_pwrstate_sel = ('Off', 'On')
 ps_pwrstate_sts = ('Off', 'On', 'Initializing')
 ps_states = ('Off', 'Interlock', 'Initializing',
@@ -92,51 +84,25 @@ ps_hard_interlock_FBP_DCLink = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
 )
 ps_cycle_type = ('Sine', 'DampedSine', 'Trapezoidal')
-
 ps_sync_mode = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
+
 
 # --- power supply constants definition class ---
 
 
-class Const:
-    """Const class defining power supply constants."""
-
-    @staticmethod
-    def _init():
-        """Create class constants."""
-        for i in range(len(ps_models)):
-            Const._add_const('Models', ps_models[i], i)
-        for i in range(len(ps_dsblenbl)):
-            Const._add_const('DsblEnbl', ps_dsblenbl[i], i)
-        for i in range(len(ps_interface)):
-            Const._add_const('Interface', ps_interface[i], i)
-        for i in range(len(ps_openloop)):
-            Const._add_const('Openloop', ps_openloop[i], i)
-        for i in range(len(ps_states)):
-            Const._add_const('States', ps_states[i], i)
-        for i in range(len(ps_pwrstate_sel)):
-            Const._add_const('PwrState', ps_pwrstate_sel[i], i)
-        for i in range(len(ps_opmode)):
-            Const._add_const('OpMode', ps_opmode[i], i)
-        for i in range(len(ps_cmdack)):
-            Const._add_const('CmdAck', ps_cmdack[i], i)
-        for i in range(len(ps_cycle_type)):
-            Const._add_const('CycleType', ps_cycle_type[i], i)
-        for i in range(len(ps_cycle_type)):
-            Const._add_const('SyncMode', ps_sync_mode[i], i)
-
-    @staticmethod
-    def _add_const(group, const, i):
-        if not hasattr(Const, group):
-            setattr(Const, group, _namedtuple(group, ''))
-        obj = getattr(Const, group)
-        setattr(obj, const, i)
-
-
-Const._init()  # create class constants
-
+Const.add_field('Models', ps_models)
+Const.add_field('DsblEnbl', ps_dsblenbl)
+Const.add_field('Interface', ps_interface)
+Const.add_field('OpenLoop', ps_openloop)
+Const.add_field('States', ps_states)
+Const.add_field('PwrState', ps_pwrstate_sel)
+Const.add_field('OpMode', ps_opmode)
+Const.add_field('CmdAck', ps_cmdack)
+Const.add_field('CycleType', ps_cycle_type)
+Const.add_field('SyncMode', ps_sync_mode)
 
 # --- power supply databases ---
+
 
 def get_ps_current_unit():
     """Return power supply current unit."""
@@ -165,8 +131,8 @@ def get_common_propty_database():
         'PwrState-Sts': {'type': 'enum', 'enums': ps_pwrstate_sts,
                          'value': _et.idx.Off},
         'Reset-Cmd': {'type': 'int', 'value': 0},
-        # 'CycleEnbl-Cmd': {'type': 'int', 'value': 0},  # TODO: remove
-        # 'CycleDsbl-Cmd': {'type': 'int', 'value': 0},  # TODO: remove
+        'OpenLoop-Mon': {'type': 'enum', 'enums': ps_openloop,
+                         'value': Const.OpenLoop.Open},
         'CycleEnbl-Mon': {'type': 'int', 'value': 0},
         'CycleType-Sel': {'type': 'enum', 'enums': ps_cycle_type,
                           'value': DEFAULT_SIGGEN_CONFIG[0]},
@@ -193,13 +159,21 @@ def get_common_propty_database():
         'PRUSyncPulseCount-Mon': {'type': 'int', 'value': 0},
         'PRUCtrlQueueSize-Mon': {'type': 'int', 'value': 0,
                                  'high': 50, 'hihi': 50},
+        # 'PRUWfmDataSize-SP': {'type': 'int', 'value': MAX_WFMSIZE,
+        #                       'lolo': 0, 'low': 0,
+        #                       'high': MAX_WFMSIZE+1,
+        #                       'hihi': MAX_WFMSIZE+1},
+        # 'PRUWfmDataSize-RB': {'type': 'int', 'value': MAX_WFMSIZE,
+        #                       'lolo': 0, 'low': 0,
+        #                       'high': MAX_WFMSIZE+1,
+        #                       'hihi': MAX_WFMSIZE+1},
     }
     return db
 
 
-def get_ps_FBP_propty_database():
-    """Return database of commun to all pwrsupply PVs."""
-    db = get_common_propty_database()
+def get_ps_FBP_propty_database(pstype):
+    """Return database with FBP pwrsupply model PVs."""
+    propty_db = get_common_propty_database()
     db_ps = {
         'OpMode-Sel': {'type': 'enum', 'enums': ps_opmode,
                        'value': _et.idx.SlowRef},
@@ -239,8 +213,83 @@ def get_ps_FBP_propty_database():
                                  'count': len(ps_hard_interlock_FBP),
                                  'value': ps_hard_interlock_FBP},
     }
-    db.update(db_ps)
-    return db
+    propty_db.update(db_ps)
+
+    signals_lims = ('Current-SP', 'Current-RB',
+                    'CurrentRef-Mon', 'Current-Mon',
+                    'CycleAmpl-SP', 'CycleAmpl-RB',
+                    'CycleOffset-SP', 'CycleOffset-RB',
+                    )
+    # TODO: define limits to WfmData as well!
+    signals_unit = signals_lims + (
+        'WfmData-SP', 'WfmData-RB',
+    )
+    signals_prec = signals_unit
+
+    for propty, db in propty_db.items():
+        # set setpoint limits in database
+        if propty in signals_lims:
+            db['lolo'] = _PSSearch.get_splims(pstype, 'lolo')
+            db['low'] = _PSSearch.get_splims(pstype, 'low')
+            db['lolim'] = _PSSearch.get_splims(pstype, 'lolim')
+            db['hilim'] = _PSSearch.get_splims(pstype, 'hilim')
+            db['high'] = _PSSearch.get_splims(pstype, 'high')
+            db['hihi'] = _PSSearch.get_splims(pstype, 'hihi')
+        # define unit of current
+        if propty in signals_unit:
+            db['unit'] = get_ps_current_unit()
+        # define prec of current
+        if propty in signals_prec:
+            db['prec'] = default_ps_current_precision,
+    return propty_db
+
+
+def get_ps_FAC_propty_database(pstype):
+    """Return database with FAC pwrsupply model PVs."""
+    # TODO: implement!!!
+    return get_ps_FBP_propty_database(pstype)
+
+
+def get_ps_FAC_2S_propty_database(pstype):
+    """Return database with FAC_2S pwrsupply model PVs."""
+    # TODO: implement!!!
+    return get_ps_FBP_propty_database(pstype)
+
+
+def get_ps_FAC_2P4S_propty_database(pstype):
+    """Return database with FAC_2P4S pwrsupply model PVs."""
+    # TODO: implement!!!
+    return get_ps_FBP_propty_database(pstype)
+
+
+def get_ps_FAP_propty_database(pstype):
+    """Return database with FAP pwrsupply model PVs."""
+    # TODO: implement!!!
+    return get_ps_FBP_propty_database(pstype)
+
+
+def get_ps_FAP_4P_propty_database(pstype):
+    """Return database with FAP_4P pwrsupply model PVs."""
+    # TODO: implement!!!
+    return get_ps_FBP_propty_database(pstype)
+
+
+def get_ps_FAP_2P2S_propty_database(pstype):
+    """Return database with FAP_2P2S pwrsupply model PVs."""
+    # TODO: implement!!!
+    return get_ps_FBP_propty_database(pstype)
+
+
+def get_ps_FBP_FOFB_propty_database(pstype):
+    """Return database with FBP_FOFB pwrsupply model PVs."""
+    # TODO: implement!!!
+    return get_ps_FBP_propty_database(pstype)
+
+
+def get_ps_Commercial_propty_database(pstype):
+    """Return database with Commercial pwrsupply model PVs."""
+    # TODO: implement!!!
+    return get_ps_FBP_propty_database(pstype)
 
 
 def get_common_pu_propty_database():

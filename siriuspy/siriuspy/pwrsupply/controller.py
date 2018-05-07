@@ -6,7 +6,7 @@ from threading import Thread as _Thread
 from siriuspy import util as _util
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.bsmp import Response as _Response
-from siriuspy.bsmp import BSMP as _BSMP
+# from siriuspy.bsmp import BSMP as _BSMP
 from siriuspy.bsmp import BSMPSim as _BSMPSim
 from siriuspy.pwrsupply.bsmp import FBPEntities as _FBPEntities
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
@@ -51,6 +51,10 @@ class FBP_BSMPSim(_BSMPSim):
             self._state.turn_on(self._variables)
         elif func_id == _c.F_TURN_OFF:
             self._state.turn_off(self._variables)
+        elif func_id == _c.F_OPEN_LOOP:
+            self._state.open_loop(self._variables)
+        elif func_id == _c.F_CLOSE_LOOP:
+            self._state.close_loop(self._variables)
         elif func_id == _c.F_SELECT_OP_MODE:  # Change state
             # Verify if ps is on
             if self._is_on():
@@ -80,7 +84,8 @@ class FBP_BSMPSim(_BSMPSim):
         while len(firmware) < 128:
             firmware.append('\x00'.encode())
         variables = [
-            0, 0.0, 0.0, firmware, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0,
+            0b10000,  # V_PS_STATUS
+            0.0, 0.0, firmware, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0,
             [0.0, 0.0, 0.0, 0.0], 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0,
             0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0]
         default_siggen_parms = \
@@ -137,6 +142,21 @@ class _FBPState:
             variables[_c.V_PS_REFERENCE] = 0.0
             variables[_c.V_I_LOAD] = 0.0
 
+    def open_loop(self, variables):
+        """Open control loop."""
+        ps_status = variables[_c.V_PS_STATUS]
+        psc_status = _PSCStatus(ps_status=ps_status)
+        psc_status.open_loop = 1
+        variables[_c.V_PS_STATUS] = psc_status.ps_status
+
+    def close_loop(self, variables):
+        """Close control loop."""
+        ps_status = variables[_c.V_PS_STATUS]
+        psc_status = _PSCStatus(ps_status=ps_status)
+        psc_status.open_loop = 0
+        variables[_c.V_PS_STATUS] = psc_status.ps_status
+        variables[_c.V_I_LOAD] = variables[_c.V_PS_REFERENCE]
+
     def select_op_mode(self, variables):
         """Set operation mode."""
         raise NotImplementedError()
@@ -176,6 +196,16 @@ class _FBPState:
         """Disable siggen."""
         variables[_c.V_SIGGEN_ENABLE] = 0
 
+    def _is_on(self, variables):
+        ps_status = variables[_c.V_PS_STATUS]
+        psc_status = _PSCStatus(ps_status=ps_status)
+        return psc_status.ioc_pwrstate
+
+    def _is_open_loop(self, variables):
+        ps_status = variables[_c.V_PS_STATUS]
+        psc_status = _PSCStatus(ps_status=ps_status)
+        return psc_status.open_loop
+
 
 class FBPSlowRefState(_FBPState):
     """FBP SlowRef state."""
@@ -191,8 +221,11 @@ class FBPSlowRefState(_FBPState):
     def set_slowref(self, variables, input_val):
         """Set current."""
         variables[_c.V_PS_SETPOINT] = input_val
-        variables[_c.V_PS_REFERENCE] = input_val
-        variables[_c.V_I_LOAD] = input_val
+        if self._is_on(variables):
+            variables[_c.V_PS_REFERENCE] = input_val
+            if self._is_open_loop(variables) == 0:
+                # control loop closed
+                variables[_c.V_I_LOAD] = input_val
 
     def cfg_siggen(self, variables, input_val):
         """Set siggen configuration parameters."""
@@ -224,6 +257,7 @@ class FBPCycleState(_FBPState):
             value = self._signal.value
             variables[_c.V_PS_REFERENCE] = value
             variables[_c.V_I_LOAD] = value
+            variables[_c.V_SIGGEN_N] += 1
         return super().read_variable(variables, var_id)
 
     def select_op_mode(self, variables):
@@ -313,3 +347,4 @@ class FBPCycleState(_FBPState):
         variables[_c.V_PS_REFERENCE] = val
         variables[_c.V_I_LOAD] = val
         variables[_c.V_SIGGEN_ENABLE] = 0
+        variables[_c.V_SIGGEN_N] = 0
