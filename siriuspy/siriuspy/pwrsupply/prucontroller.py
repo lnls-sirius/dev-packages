@@ -786,6 +786,28 @@ class PRUController:
         # select block to be used at next start of ramp
         self._pru.set_curve_block(block_next)
 
+    def pru_curve_write_slowref_sync(self, setpoints):
+        """Write curves for all devices."""
+        # TODO: test method!!!
+        # create 1-point curves
+        curves = ([setpoint, ] for setpoint in setpoints)
+        while len(curves) != 4:
+            curves.append([_DEFAULT_WFMDATA[0], ])
+
+        # select in which block the new curve will be stored
+        block_curr = self._pru.read_curve_block()
+        block_next = 1 if block_curr == 0 else 0
+
+        self._pru.curve(curves[0],
+                        curves[1],
+                        curves[2],
+                        curves[3],
+                        block_next)
+        # TODO: do we need a sleep here?
+
+        # select block to be used at next start of ramp
+        self._pru.set_curve_block(block_next)
+
     # @property
     # def pru_curve_length(self):
     #     """PRU curves length."""
