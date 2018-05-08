@@ -356,22 +356,18 @@ class E2SController:
                 target=self._watch_cycle, args=(dev_info, ), daemon=True)
             try:
                 if self._watchers[dev_info.id].is_alive():
-                    print("Waiting for thread {} to die".format(dev_info.id))
                     self._watchers[dev_info.id].join()
             except KeyError:
                 pass
             self._watchers[dev_info.id] = t
             self._watchers[dev_info.id].start()
-        #for watcher in self._watchers:
-        #    watcher.start()
 
     def _watch_cycle(self, dev_info):
-        print("Starting thread {}".format(dev_info.id))
         _time.sleep(0.5)
         dev_name = dev_info.name
         if self.read(dev_name, 'PwrState-Sts') == 0:
             return
-        
+
         state = 'wait_trigger'
 
         while True:
@@ -390,22 +386,7 @@ class E2SController:
                     break
             _time.sleep(E2SController.INTERVAL_SCAN)
 
-        print("Thread {} dying".format(dev_info.id))
         return
-
-        #while self.read(dev_name, 'OpMode-Sts') == _PSConst.OpMode.Cycle and \
-        #        self._controller.pru_sync_status == 1:
-        #    _time.sleep(E2SController.INTERVAL_SCAN)
-        #while True:
-        #    cycle_enabled = self.read(dev_name, 'CycleEnbl-Mon')
-        #    pru_status = self._controller.pru_sync_status
-        #    if not cycle_enabled and pru_status == 0:
-        #        # Return to SlowRef operation mode
-        #        # self._controller.exec_functions(
-        #        #     dev_info.id, _c.F_SELECT_OP_MODE, 3)
-        #        self._set_opmode([dev_info], 0)
-        #        break
-        #    _time.sleep(E2SController.INTERVAL_SCAN)
 
     # Helpers
     def _cfg_siggen_args(self, devices_info):
