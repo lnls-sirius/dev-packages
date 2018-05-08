@@ -115,8 +115,7 @@ class E2SController:
                 #     self._local_vars[device_info.name][field] = _deepcopy(db)
         self._initiated = False
         self._init()
-        #self._watchers = list()
-        self._watchers = dict()
+        self._watchers = list()
 
     # API
     @property
@@ -350,62 +349,32 @@ class E2SController:
 
     # Watchers
     def _set_cycling_watchers(self, devices_info):
-        # self._watchers.clear()
+        self._watchers.clear()
         for dev_info in devices_info:
             t = _threading.Thread(
                 target=self._watch_cycle, args=(dev_info, ), daemon=True)
-            try:
-                if self._watchers[dev_info.id].is_alive():
-                    print("Waiting for thread {} to die".format(dev_info.id))
-                    self._watchers[dev_info.id].join()
-            except KeyError:
-                pass
-            self._watchers[dev_info.id] = t
-            self._watchers[dev_info.id].start()
-        #for watcher in self._watchers:
-        #    watcher.start()
+            self._watchers.append(t)
+        for watcher in self._watchers:
+            watcher.start()
 
     def _watch_cycle(self, dev_info):
-        print("Starting thread {}".format(dev_info.id))
         _time.sleep(0.5)
         dev_name = dev_info.name
         if self.read(dev_name, 'PwrState-Sts') == 0:
             return
-        
-        state = 'wait_trigger'
-
-        while True:
-            if state == 'wait_trigger':
-                if self.read(dev_name, 'OpMode-Sts') != _PSConst.OpMode.Cycle:
-                    break
-                elif self._controller.pru_sync_status != 1:
-                    if not self.read(dev_name, 'CycleEnbl-Mon'):
-                        break
-                    state = 'wait_cycle'
-            elif state == 'wait_cycle':
-                if self.read(dev_name, 'OpMode-Sts') != _PSConst.OpMode.Cycle:
-                    break
-                elif not self.read(dev_name, 'CycleEnbl-Mon'):
-                    self._set_opmode([dev_info], 0)
-                    break
+        while self.read(dev_name, 'OpMode-Sts') == _PSConst.OpMode.Cycle and \
+                self._controller.pru_sync_status == 1:
             _time.sleep(E2SController.INTERVAL_SCAN)
-
-        print("Thread {} dying".format(dev_info.id))
-        return
-
-        #while self.read(dev_name, 'OpMode-Sts') == _PSConst.OpMode.Cycle and \
-        #        self._controller.pru_sync_status == 1:
-        #    _time.sleep(E2SController.INTERVAL_SCAN)
-        #while True:
-        #    cycle_enabled = self.read(dev_name, 'CycleEnbl-Mon')
-        #    pru_status = self._controller.pru_sync_status
-        #    if not cycle_enabled and pru_status == 0:
-        #        # Return to SlowRef operation mode
-        #        # self._controller.exec_functions(
-        #        #     dev_info.id, _c.F_SELECT_OP_MODE, 3)
-        #        self._set_opmode([dev_info], 0)
-        #        break
-        #    _time.sleep(E2SController.INTERVAL_SCAN)
+        while True:
+            cycle_enabled = self.read(dev_name, 'CycleEnbl-Mon')
+            pru_status = self._controller.pru_sync_status
+            if not cycle_enabled and pru_status == 0:
+                # Return to SlowRef operation mode
+                # self._controller.exec_functions(
+                #     dev_info.id, _c.F_SELECT_OP_MODE, 3)
+                self._set_opmode([dev_info], 0)
+                break
+            _time.sleep(E2SController.INTERVAL_SCAN)
 
     # Helpers
     def _cfg_siggen_args(self, devices_info):
@@ -595,6 +564,11 @@ class BeagleBone:
         elif op_mode == _PSConst.OpMode.RmpWfm:
             sync_mode = self._controller.PRU.SYNC_MODE.RMPEND
             return self._controller.pru_sync_start(sync_mode)
+        elif op_mode == _PSConst.OpMode.MigWfm:
+            sync_mode = self._controller.PRU.SYNC_MODE.MIGEND
+            return self._controller.pru_sync_start(sync_mode)
+        else:
+            print('mode {} not implemented yet!', format(op_mode))
 
         # return self._state.set_op_mode(self)
 

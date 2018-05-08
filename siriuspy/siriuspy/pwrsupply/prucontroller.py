@@ -33,7 +33,7 @@ from siriuspy.pwrsupply.controller import FBP_BSMPSim as _FBP_BSMPSim
 
 # NOTE on current behaviour of PRU and Power Supplies:
 #
-# 01. Currently curve block changes are implemented upon the arrival of the
+# 01. Currently curve block changes are implemented only upon the arrival of
 #     timing trigger that corresponds to the last curve point.
 #     This better preserves magnetic history of the magnet while being
 #     able to change the curve on the fly.
@@ -57,7 +57,7 @@ from siriuspy.pwrsupply.controller import FBP_BSMPSim as _FBP_BSMPSim
 #     Think about how this could be implemented in a safe but simple way...
 #
 # 05. Change of curves on the fly. In order to allow this blocks 0 and 1 of
-#     curves will be used in a ciclic way. This should be transparent for
+#     curves will be used in a cyclic way. This should be transparent for
 #     users of the PRUController. At this points only one high level curve
 #     for each power supply is implemented. Also we have not implemented yet
 #     the possibility of changing the curve length.
@@ -72,7 +72,8 @@ from siriuspy.pwrsupply.controller import FBP_BSMPSim as _FBP_BSMPSim
 #     (V_PS_REFERENCE) to the Current-RB (V_PS_SETPOINT). This is a problem
 #     after cycling since we want the IOC to move back to SlowRef automatically
 #     So the IOC has to set Current-SP to the same value as SigGen's offset
-#     before moving the power supply to Cycle mode.
+#     before moving the power supply to Cycle mode. This is being done with the
+#     current version of the IOC.
 
 
 # TODO: discuss with patricia:
@@ -80,21 +81,8 @@ from siriuspy.pwrsupply.controller import FBP_BSMPSim as _FBP_BSMPSim
 # 01. What does the 'delay' param in 'PRUserial485.UART_write' mean exactly?
 # 02. Request a 'sync_abort' function in the PRUserial485 library.
 # 03. Request a semaphore for using the PRU library.
-# 04. Requested new function that reads curved at PRU memory.
+# 04. Requested new function that reads curves at PRU memory.
 #     patricia will work on this.
-# 05. What happens if user changes curve block while index = 0 and not time
-#     signal has arrived?
-#     patricia will change the PRU library as to implement new curves right
-#     away if index=0
-# 06. set_curve_pointer: what is the idea of this function?
-
-# TODO: discuss with gabriel
-#
-# 01. Current PS controller firmware version V0.10 2018-04-20 does not accept
-#     command F_SET_SLOWREF while not in SlowRef. Gabriel thinks it is usefull
-#     to allow it and will implement in the next firmware version.
-#
-# 02. DampedSine not  working.
 
 
 def parse_firmware_version(version):
@@ -210,7 +198,7 @@ class _BSMPVarGroups:
     MIRROR = 5
 
     SLOWREF = SYNCOFF
-    MIGWFM = SYNCOFF
+    MIGWFM = MIRROR
     CYCLE = SYNCOFF
     RMPWFM = MIRROR
 
@@ -378,29 +366,19 @@ class PRUController:
     controllers.
     """
 
-    # TODO: test class in sync on mode and trigger from timing
     # TODO: allow variable-size curves
     # TODO: delete random fluctuation added to measurements
     # TODO: it might be possible and usefull to use simulated BSMP but real PRU
-    # TODO: remove printout of PRUserial485 when changing curves. (PR in queue)
     # TODO: test not dcopying self._variables_values in _bsmp_update_variables.
     #       we need lock whole up section in that function that does
     #       updating of _variables_values, though. Also lock other class
     #       properties and methods that access _variables_values or _psc_status
-
-    #
-    # Gabriel from ELP proposed the idea of a privilegded slave that
-    # could define BSMP variables that corresponded to other slaves variables
-    # By defining a BSMP variable group with selected variables from all
-    # devices we could update all device states with a single BSMP request
-    # thus providing higher refresh rates.
 
     # NOTES:
     # =====
     #
     # 01. All private methods starting with '_bsmp' string make a direct
     #     write to the serial line.
-    #
 
     # frequency constants
     class FREQ:
@@ -411,17 +389,6 @@ class PRUController:
 
     # PRU constants
     PRU = _PRUConst
-    # SYNC = _namedtuple('SYNC', '')
-    # SYNC.OFF = _PRUConst.SYNC_STATE.OFF
-    # SYNC.ON = _PRUConst.SYNC_STATE.ON
-    # SYNC.MIGINT = _PRUInterface.SYNC_MIGINT
-    # SYNC.MIGEND = _PRUInterface.SYNC_MIGEND
-    # SYNC.RMPINT = _PRUInterface.SYNC_RMPINT
-    # SYNC.RMPEND = _PRUInterface.SYNC_RMPEND
-    # SYNC.CYCLE = _PRUInterface.SYNC_CYCLE
-    #
-    # # tuple with implemented modes
-    # SYNC.MODES = (SYNC.OFF, SYNC.MIGEND, SYNC.RMPEND, SYNC.CYCLE)
 
     # BSMP variable constants
     BSMP = _c
@@ -437,7 +404,6 @@ class PRUController:
     _delay_remove_groups = 100  # [us]
     _delay_create_group = 100  # [us]
     _delay_read_group_variables = 100  # [us]
-    # TODO: check if this short sleep dalay is causing high CPU usage!
     # increasing _delay_sleep from 10 ms to 90 ms decreases CPU usage from
     # 20% to 19.2% at BBB1.
     _delay_sleep = 0.020  # [s]
@@ -509,9 +475,6 @@ class PRUController:
 
         # initialize BSMP devices (might contain BSMP comm)
         self._initialize_devices()
-
-        # read siggen from power supply
-        # self._bsmp_read_siggen_parms()
 
         # operation queue
         self._queue = _BSMPOpQueue()
@@ -750,7 +713,7 @@ class PRUController:
                                     PRUController.VGROUPS.SYNCOFF)
         self._scanning_false_wait_empty_queue()
 
-        # reset curev index
+        # reset curve index
         self._pru.set_curve_pointer(0)
 
         # set selected sync mode
@@ -943,8 +906,6 @@ class PRUController:
 
     def _init_prune_mirror_group(self):
 
-        # TODO: check with ELP if what this prunning is based is correct!
-
         # gather mirror variables that will be used
         nr_devs = len(self.device_ids)
         var_ids = []
@@ -979,7 +940,7 @@ class PRUController:
             version = parse_firmware_version(version)
             if 'Simulation' not in version and version != _ps_bsmp_version:
                 self._init_disconnect()
-                errmsg = ('Incompatible BSMP implementaion version! '
+                errmsg = ('Incompatible BSMP implementation version! '
                           '{} <> {}'.format(version, _ps_bsmp_version))
                 raise ValueError(errmsg)
 
@@ -1011,7 +972,8 @@ class PRUController:
         if self.pru_sync_status == self.PRU.SYNC_STATE.OFF:
             return self._device_ids, self.VGROUPS.SLOWREF
         elif self._pru.sync_mode == self.PRU.SYNC_MODE.MIGEND:
-            return self._device_ids, self.VGROUPS.MIGWFM
+            dev_ids = self._select_next_device_id()
+            return dev_ids, self.VGROUPS.MIGWFM
         elif self._pru.sync_mode == self.PRU.SYNC_MODE.RMPEND:
             dev_ids = self._select_next_device_id()
             return dev_ids, self.VGROUPS.RMPWFM
@@ -1158,7 +1120,7 @@ class PRUController:
                 # commenting out this fluctuation cpu usage is reduced from
                 # 20% to 19.5% at BBB1
                 copy_var_vals[id][self.BSMP.V_I_LOAD] += \
-                    0.0001*_random.uniform(-1.0, +1.0)
+                    0.00001*_random.uniform(-1.0, +1.0)
 
             else:
                 self._connected[id] = False
@@ -1230,7 +1192,7 @@ class PRUController:
             return None
 
     def _bsmp_read_parameters(self, device_ids, parameter_ids=None):
-
+        # TODO: this method is not being used yet.
         # reads parameters into pdata dictionary
         pdata = {id: {pid: [] for pid in parameter_ids} for id in device_ids}
         for id in device_ids:
@@ -1253,49 +1215,6 @@ class PRUController:
             for pid in pdata[id]:
                 self._parameters_values[id][pid] = pdata[id][pid]
 
-    def _bsmp_read_siggen_parms(self):
-
-        if not self.connected:
-            return
-
-        print('reading siggen parameters from first power supply')
-
-        params = (
-          ('type', self.BSMP.P_SIGGEN_TYPE,
-           self.BSMP.V_SIGGEN_TYPE, int, False),
-          ('num_cycles', self.BSMP.P_SIGGEN_NUM_CYCLES,
-           self.BSMP.V_SIGGEN_NUM_CYCLES, int, False),
-          ('freq', self.BSMP.P_SIGGEN_FREQ,
-           self.BSMP.V_SIGGEN_FREQ, float, False),
-          ('amplitude', self.BSMP.P_SIGGEN_AMPLITUDE,
-           self.BSMP.V_SIGGEN_AMPLITUDE, float, False,),
-          ('offset', self.BSMP.P_SIGGEN_OFFSET,
-           self.BSMP.V_SIGGEN_OFFSET, float, False),
-          ('aux_param0', self.BSMP.P_SIGGEN_AUX_PARAM,
-           self.BSMP.V_SIGGEN_AUX_PARAM, float, True, 0),
-          ('aux_param1', self.BSMP.P_SIGGEN_AUX_PARAM,
-           self.BSMP.V_SIGGEN_AUX_PARAM, float, True, 1),
-          ('aux_param2', self.BSMP.P_SIGGEN_AUX_PARAM,
-           self.BSMP.V_SIGGEN_AUX_PARAM, float, True, 2),
-          ('aux_param3', self.BSMP.P_SIGGEN_AUX_PARAM,
-           self.BSMP.V_SIGGEN_AUX_PARAM, float, True, 3),
-        )
-
-        dev_id = self.device_ids[0]
-        for param in params:
-            label, p_id, v_id, p_type, flag, *idx = param
-            idx = 0 if not flag else idx[0]
-            v = self._bsmp_exec_function((dev_id,), self.BSMP.F_GET_PARAM,
-                                         args=(p_id, idx))
-            if v[dev_id] is not None:
-                v = p_type(v[dev_id])  # convert to correct type
-                print('{}: {}'.format(label, v))
-                for id in self.device_ids:
-                    if not flag:
-                        self._variables_values[id][v_id] = v
-                    else:
-                        self._variables_values[id][v_id][idx] = v
-
     def _bsmp_init_update(self):
 
         # initialize variables_values, a mirror state of BSMP devices
@@ -1305,6 +1224,7 @@ class PRUController:
         self._init_check_version()
 
         # initialize parameters_values, a mirror state of BSMP devices
+        # TODO: finish implementation of _bsmp_init_parameters_values!
         # self._bsmp_init_parameters_values()
 
     def _bsmp_init_groups(self):
