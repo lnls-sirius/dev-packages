@@ -115,7 +115,8 @@ class E2SController:
                 #     self._local_vars[device_info.name][field] = _deepcopy(db)
         self._initiated = False
         self._init()
-        self._watchers = list()
+        #self._watchers = list()
+        self._watchers = dict()
 
     # API
     @property
@@ -264,6 +265,8 @@ class E2SController:
                 wfmdata = self.read(device_info.name, 'WfmData-RB')
                 self._set_current([device_info], wfmdata[-1])
 
+        # TODO: this expedient 'setpoint+3' seems to be too fragile
+        # against possible future modifications of ps firmware/spec.
         self._execute_command(devices_info, _c.F_SELECT_OP_MODE, setpoint+3)
         self._set_setpoints(devices_info, 'OpMode-Sel', setpoint)
 
@@ -347,20 +350,30 @@ class E2SController:
 
     # Watchers
     def _set_cycling_watchers(self, devices_info):
-        self._watchers.clear()
+        # self._watchers.clear()
         for dev_info in devices_info:
             t = _threading.Thread(
                 target=self._watch_cycle, args=(dev_info, ), daemon=True)
-            self._watchers.append(t)
-        for watcher in self._watchers:
-            watcher.start()
+            try:
+                if self._watchers[dev_info.id].is_alive():
+                    print("Waiting for thread {} to die".format(dev_info.id))
+                    self._watchers[dev_info.id].join()
+            except KeyError:
+                pass
+            self._watchers[dev_info.id] = t
+            self._watchers[dev_info.id].start()
+        #for watcher in self._watchers:
+        #    watcher.start()
 
     def _watch_cycle(self, dev_info):
+        print("Starting thread {}".format(dev_info.id))
         _time.sleep(0.5)
         dev_name = dev_info.name
         if self.read(dev_name, 'PwrState-Sts') == 0:
             return
+        
         state = 'wait_trigger'
+
         while True:
             if state == 'wait_trigger':
                 if self.read(dev_name, 'OpMode-Sts') != _PSConst.OpMode.Cycle:
@@ -376,21 +389,23 @@ class E2SController:
                     self._set_opmode([dev_info], 0)
                     break
             _time.sleep(E2SController.INTERVAL_SCAN)
+
+        print("Thread {} dying".format(dev_info.id))
         return
 
-        # while self.read(dev_name, 'OpMode-Sts') == _PSConst.OpMode.Cycle and \
-        #         self._controller.pru_sync_status == 1:
-        #     _time.sleep(E2SController.INTERVAL_SCAN)
-        # while True:
-        #     cycle_enabled = self.read(dev_name, 'CycleEnbl-Mon')
-        #     pru_status = self._controller.pru_sync_status
-        #     if not cycle_enabled and pru_status == 0:
-        #         # Return to SlowRef operation mode
-        #         # self._controller.exec_functions(
-        #         #     dev_info.id, _c.F_SELECT_OP_MODE, 3)
-        #         self._set_opmode([dev_info], 0)
-        #         break
-        #     _time.sleep(E2SController.INTERVAL_SCAN)
+        #while self.read(dev_name, 'OpMode-Sts') == _PSConst.OpMode.Cycle and \
+        #        self._controller.pru_sync_status == 1:
+        #    _time.sleep(E2SController.INTERVAL_SCAN)
+        #while True:
+        #    cycle_enabled = self.read(dev_name, 'CycleEnbl-Mon')
+        #    pru_status = self._controller.pru_sync_status
+        #    if not cycle_enabled and pru_status == 0:
+        #        # Return to SlowRef operation mode
+        #        # self._controller.exec_functions(
+        #        #     dev_info.id, _c.F_SELECT_OP_MODE, 3)
+        #        self._set_opmode([dev_info], 0)
+        #        break
+        #    _time.sleep(E2SController.INTERVAL_SCAN)
 
     # Helpers
     def _cfg_siggen_args(self, devices_info):
