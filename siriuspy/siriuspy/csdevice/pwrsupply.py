@@ -1,7 +1,6 @@
 """Power Supply Control System Devices."""
 
 import copy as _copy
-from collections import namedtuple as _namedtuple
 
 from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.search import PSSearch as _PSSearch
@@ -358,7 +357,7 @@ def get_common_pu_SI_InjKicker_propty_database():
 def get_ps_propty_database(pstype):
     """Return property database of a LNLS power supply type device."""
     # TODO: this needs generalization to work with any psmodel!
-    propty_db = get_ps_FBP_propty_database()
+    propty_db = get_ps_FBP_propty_database(pstype)
     signals_lims = ('Current-SP', 'Current-RB',
                     'CurrentRef-Mon', 'Current-Mon',
                     'CycleAmpl-SP', 'CycleAmpl-RB',
@@ -413,9 +412,12 @@ def get_ma_propty_database(maname):
     current_alarm = ('Current-SP', 'Current-RB',
                      'CurrentRef-Mon', 'Current-Mon', )
     current_pvs = current_alarm  # + ('WfmData-SP', 'WfmData-RB')
-    propty_db = get_ps_FBP_propty_database()
     unit = _MASearch.get_splims_unit(ispulsed=False)
     magfunc_dict = _MASearch.conv_maname_2_magfunc(maname)
+    psnames = _MASearch.conv_psmaname_2_psnames(maname)
+    pstype = _PSSearch.conv_psname_2_pstype(psnames[0])
+    # TODO: generalize
+    propty_db = get_ps_FBP_propty_database(pstype)
     db = {}
 
     for psname, magfunc in magfunc_dict.items():
