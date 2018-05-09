@@ -6,6 +6,7 @@ from siriuspy.namesys import Filter as _Filter
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy import servweb as _web
 from .ps_search import PSSearch as _PSSearch
+from siriuspy.magnet import util as _mutil
 
 
 class MASearch:
@@ -101,10 +102,24 @@ class MASearch:
 
     @staticmethod
     def conv_maname_2_psnames(maname):
-        """Return list of power supplies associated with a given magnet ps."""
+        """Return list of power supplies associated with a given magnet."""
         if MASearch._maname_2_psnames_dict is None:
             MASearch._reload_maname_2_psnames_dict()
         return MASearch._maname_2_psnames_dict[maname]
+
+    @staticmethod
+    def conv_psmaname_2_psnames(maname):
+        """Return list of power supplies associated with a given magnet ps."""
+        maname = _SiriusPVName(maname)
+        ma_class = _mutil.magnet_class(maname)
+        if 'dipole' == ma_class:
+            if 'SI' == maname.sec:
+                return ['SI-Fam:PS-B1B2-1', 'SI-Fam:PS-B1B2-2']
+            elif 'BO' == maname.sec:
+                return ['BO-Fam:PS-B-1', 'BO-Fam:PS-B-2']
+        elif 'pulsed' == ma_class:
+            return [maname.replace(':PM', ':PU')]
+        return [maname.replace(':MA', ':PS')]
 
     @staticmethod
     def conv_psname_2_maname(psname):

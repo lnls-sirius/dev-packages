@@ -10,6 +10,7 @@ from siriuspy.thread import QueueThread as _QueueThread
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.epics import connection_timeout as _connection_timeout
 from siriuspy.epics.computed_pv import ComputedPV as _ComputedPV
+from siriuspy.search import ma_search as _ma_search
 from siriuspy.pwrsupply.data import PSData as _PSData
 from siriuspy.pwrsupply import sync as _sync
 from siriuspy.pwrsupply.bsmp import Const as _c
@@ -590,7 +591,8 @@ class MAEpics(PSEpics):
             return _ComputedPV(pvname, str_obj,
                                self._computed_pvs_queue, *pvs)
         else:
-            if len(self._psnames()) > 1:  # SyncPV
+            psnames = _ma_search.conv_psmaname_2_psnames(self._maname)
+            if len(psnames) > 1:  # SyncPV
                 # 2) SYNCPV fields
                 # this is used basically for SI and BO dipoles
                 sync = self._get_sync_obj(field)
@@ -686,14 +688,14 @@ class MAEpics(PSEpics):
 
             return [self._pvs[field], dipole_pv]
 
-    def _psnames(self):
-        ma_class = _mutil.magnet_class(self._maname)
-        if 'dipole' == ma_class:
-            if 'SI' == self._maname.sec:
-                return ['SI-Fam:PS-B1B2-1', 'SI-Fam:PS-B1B2-2']
-            elif 'BO' == self._maname.sec:
-                return ['BO-Fam:PS-B-1', 'BO-Fam:PS-B-2']
-        elif 'pulsed' == ma_class:
-            return [self._maname.replace(':PM', ':PU')]
-
-        return [self._maname.replace(':MA', ':PS')]
+    # def _psnames(self):
+    #     ma_class = _mutil.magnet_class(self._maname)
+    #     if 'dipole' == ma_class:
+    #         if 'SI' == self._maname.sec:
+    #             return ['SI-Fam:PS-B1B2-1', 'SI-Fam:PS-B1B2-2']
+    #         elif 'BO' == self._maname.sec:
+    #             return ['BO-Fam:PS-B-1', 'BO-Fam:PS-B-2']
+    #     elif 'pulsed' == ma_class:
+    #         return [self._maname.replace(':PM', ':PU')]
+    #
+    #     return [self._maname.replace(':MA', ':PS')]
