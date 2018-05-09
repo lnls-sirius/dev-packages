@@ -18,6 +18,7 @@ BBB1_device_ids = (1, 2)
 BBB2_device_ids = (5, 6)
 
 simulate = False
+psmodel = 'FBP'
 
 siggen_config = [
     # --- siggen sine parameters ---
@@ -42,7 +43,14 @@ bsmp_cmds = {
 }
 
 
-def bsmp_create(device_id):
+def calc_siggen_duration():
+    """Calc duration for Sine or DampedSine siggens."""
+    num_cycles = siggen_config[1]
+    freq = siggen_config[2]
+    return num_cycles/freq
+
+
+def bsmp_create(device_id, simulate=simulate):
     """Create BSMP object."""
     if simulate is True:
         pru = PRUSim()
@@ -66,11 +74,16 @@ def bsmp_reset_interlock(bsmp):
     # print('value   : ', value)
 
 
-def calc_siggen_duration():
-    """Calc duration for Sine or DampedSine siggens."""
-    num_cycles = siggen_config[1]
-    freq = siggen_config[2]
-    return num_cycles/freq
+def pruc_create(device_ids=BBB1_device_ids,
+                simulate=simulate):
+    """Method."""
+    # create BBB controller
+    pruc = PRUController(psmodel=psmodel,
+                         device_ids=device_ids,
+                         simulate=simulate,
+                         processing=True,
+                         scanning=True)
+    return pruc
 
 
 def pruc_reset_interlocks(pruc):
@@ -86,18 +99,7 @@ def pruc_reset_interlocks(pruc):
         raise ValueError('could not reset interlocks!')
 
 
-def pruc_create():
-    """Method."""
-    # create BBB controller
-    pruc = PRUController(psmodel='FBP',
-                         device_ids=BBB1_device_ids,
-                         simulate=simulate,
-                         processing=True,
-                         scanning=True)
-    return pruc
-
-
-def pruc_init_slowref(pruc):
+def pruc_init_slowref(pruc, current_sp=2.5):
     """Method."""
     ids = pruc.device_ids
 
@@ -124,13 +126,7 @@ def pruc_init_slowref(pruc):
                         BSMPConst.E_STATE_SLOWREF)
 
     # current setpoint
-    current_sp = 2.5
     pruc.exec_functions(ids, BSMPConst.F_SET_SLOWREF, current_sp)
-
-    # # initialize curves
-    # for id in ids:
-    #     pruc.pru_curve_write(id, curve1)
-    #     pruc.pru_curve_write(id, curve1)  # twice so that make sure using same c
 
 
 def pruc_config_cycle_mode(pruc):
@@ -152,20 +148,6 @@ def pruc_config_cycle_mode(pruc):
     pruc.exec_functions(ids,
                         BSMPConst.F_SELECT_OP_MODE,
                         BSMPConst.E_STATE_CYCLE)
-
-
-def pruc_run_rmpwfm(pruc):
-    """Run rmpwfm."""
-    # create pruc in deafault config
-    pruc_init_slowref(pruc)
-
-    # write curve1 to PRu
-    pruc.pru_curve_write(1, curve1)
-
-    # enters cycle mode
-    pruc.pru_sync_start(sync_mode=pruc.PRU.SYNC_MODE.RMPEND)
-
-    print('power supply in rmpwfm mode, waiting for sync signal...')
 
 
 def pruc_run_cycle(pruc):
@@ -235,3 +217,17 @@ def pruc_run_cycle(pruc):
     pruc.exec_functions(id,
                         BSMPConst.F_SELECT_OP_MODE,
                         BSMPConst.E_STATE_SLOWREF)
+
+
+def pruc_run_rmpwfm(pruc):
+    """Run rmpwfm."""
+    # create pruc in deafault config
+    pruc_init_slowref(pruc)
+
+    # write curve1 to PRu
+    pruc.pru_curve_write(1, curve1)
+
+    # enters cycle mode
+    pruc.pru_sync_start(sync_mode=pruc.PRU.SYNC_MODE.RMPEND)
+
+    print('power supply in rmpwfm mode, waiting for sync signal...')
