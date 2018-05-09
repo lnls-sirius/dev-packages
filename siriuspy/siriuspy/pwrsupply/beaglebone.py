@@ -415,11 +415,15 @@ class _E2SController:
             # value!
             for device_info in devices_info:
                 offset_val = self.read(device_info.name, 'CycleOffset-RB')
-                self._set_current([device_info], offset_val)
+                self._execute_command(
+                    [device_info], _c.F_SET_SLOWREF, offset_val)
+                self._set_setpoints([device_info], 'Current-SP', offset_val)
         elif setpoint in (_PSConst.OpMode.RmpWfm, _PSConst.OpMode.MigWfm):
             for device_info in devices_info:
                 wfmdata = self.read(device_info.name, 'WfmData-RB')
-                self._set_current([device_info], wfmdata[-1])
+                self._execute_command(
+                    [device_info], _c.F_SET_SLOWREF, wfmdata[-1])
+                self._set_setpoints([device_info], 'Current-SP', wfmdata[-1])
         elif setpoint == _PSConst.OpMode.SlowRefSync:
             self._set_slowrefsync_setpoints()
 
@@ -618,21 +622,20 @@ class BeagleBone:
 
     def _set_opmode(self, op_mode):
         self._pru_controller.pru_sync_stop()  # TODO: not necessary. test.
+        self._restore_wfm()
         self._e2s_controller.write(self.psnames, 'OpMode-Sel', op_mode)
         if op_mode == _PSConst.OpMode.Cycle:
             sync_mode = self._pru_controller.PRU.SYNC_MODE.CYCLE
             return self._pru_controller.pru_sync_start(sync_mode)
         elif op_mode == _PSConst.OpMode.RmpWfm:
-            self._restore_wfm()
             sync_mode = self._pru_controller.PRU.SYNC_MODE.RMPEND
             return self._pru_controller.pru_sync_start(sync_mode)
         elif op_mode == _PSConst.OpMode.MigWfm:
-            self._restore_wfm()
             sync_mode = self._pru_controller.PRU.SYNC_MODE.MIGEND
             return self._pru_controller.pru_sync_start(sync_mode)
         elif op_mode == _PSConst.OpMode.SlowRefSync:
             self._wfm_dirty = True
-            sync_mode = self._pru_controller.PRU.SYNC_MODE.MIGEND
+            sync_mode = self._pru_controller.PRU.SYNC_MODE.RMPEND
             return self._pru_controller.pru_sync_start(sync_mode)
         # else:
         #     print('mode {} not implemented yet!', format(op_mode))
