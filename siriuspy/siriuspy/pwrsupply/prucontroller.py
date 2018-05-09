@@ -785,7 +785,7 @@ class PRUController:
         # TODO: test method!!!
         # create 1-point curves for all power supplies.
         curves = [[setpoint, ] for setpoint in setpoints]
-        curves += [PRUController._default_slowrefsync_sp, ] * (4-len(curves))
+        curves += [[PRUController._default_slowrefsync_sp, ]] * (4-len(curves))
 
         # select in which block the new curve will be stored
         block_curr = self._pru.read_curve_block()
