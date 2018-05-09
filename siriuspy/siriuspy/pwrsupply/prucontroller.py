@@ -398,6 +398,8 @@ class PRUController:
 
     # shortcuts, local variables and constants
 
+    _default_slowrefsync_sp = _DEFAULT_WFMDATA[0]
+
     # TODO: check with ELP group how short these delays can be
     _delay_turn_on_off = 0.3  # [s]
     _delay_loop_open_close = 0.3  # [s]
@@ -452,6 +454,8 @@ class PRUController:
         self._psmodel = psmodel
 
         # sorted list of device ids
+        if len(device_ids) > 4:
+            raise ValueError('Number of device ids exceeds maximum!')
         self._device_ids = sorted(device_ids)
 
         # conversion of ps status to high level properties
@@ -770,29 +774,18 @@ class PRUController:
             self.disconnect()
             raise NotImplementedError('Change of curve size not implemented')
 
-        # select in which block the new curve will be stored
-        block_curr = self._pru.read_curve_block()
-        block_next = 1 if block_curr == 0 else 0
-
         # write curve to PRU memory
         self._curves[idx] = list(curve)
-        self._pru.curve(self._curves[0],
-                        self._curves[1],
-                        self._curves[2],
-                        self._curves[3],
-                        block_next)
-        # TODO: do we need a sleep here?
 
-        # select block to be used at next start of ramp
-        self._pru.set_curve_block(block_next)
+        # set curves
+        self.pru_curve_restore_waveforms()
 
     def pru_curve_write_slowref_sync(self, setpoints):
         """Write curves for all devices."""
         # TODO: test method!!!
-        # create 1-point curves
-        curves = ([setpoint, ] for setpoint in setpoints)
-        while len(curves) != 4:
-            curves.append([_DEFAULT_WFMDATA[0], ])
+        # create 1-point curves for all power supplies.
+        curves = [[setpoint, ] for setpoint in setpoints]
+        curves += [PRUController._default_slowrefsync_sp, ] * (4-len(curves))
 
         # select in which block the new curve will be stored
         block_curr = self._pru.read_curve_block()
@@ -802,6 +795,22 @@ class PRUController:
                         curves[1],
                         curves[2],
                         curves[3],
+                        block_next)
+        # TODO: do we need a sleep here?
+
+        # select block to be used at next start of ramp
+        self._pru.set_curve_block(block_next)
+
+    def pru_curve_restore_waveforms(self):
+        """Restore RmpWfm and MigWfm waveforms."""
+        # select in which block the new curve will be stored
+        block_curr = self._pru.read_curve_block()
+        block_next = 1 if block_curr == 0 else 0
+
+        self._pru.curve(self._curves[0],
+                        self._curves[1],
+                        self._curves[2],
+                        self._curves[3],
                         block_next)
         # TODO: do we need a sleep here?
 
@@ -1280,6 +1289,7 @@ class PRUController:
 
         # create _variables_values
         gids = sorted(self._groups.keys())
+        # TODO: try max_id = max([max(self._groups[gid]) for gid in gids)
         max_id = max([max(self._groups[gid]) for gid in gids[3:]])
         dev_variables = [None, ] * (1 + max_id)
         self._variables_values = \
