@@ -4,6 +4,7 @@ import time as _time
 import epics as _epics
 import siriuspy as _siriuspy
 from siriuspy.servconf.conf_service import ConfigService as _ConfigService
+from siriuspy.csdevice.opticscorr import Const as _Const
 from as_ap_opticscorr.opticscorr_utils import (
         OpticsCorr as _OpticsCorr,
         get_config_name as _get_config_name,
@@ -61,13 +62,13 @@ class App:
         self._qfam_kl_rb = len(self._QFAMS)*[0]
 
         if self._ACC.lower() == 'si':
-            self._corr_method = 0
-            self._sync_corr = 0
+            self._corr_method = _Const.CorrMeth.Proportional
+            self._sync_corr = _Const.SyncCorr.Off
             self._config_timing_cmd_count = 0
             self._timing_check_config = 6*[0]
         else:
-            self._corr_method = 1
-            self._sync_corr = 0
+            self._corr_method = _Const.CorrMeth.Additional
+            self._sync_corr = _Const.SyncCorr.Off
 
         # Get focusing and defocusing families
         qfam_focusing = []
@@ -77,6 +78,8 @@ class App:
                 qfam_focusing.append(fam)
             else:
                 qfam_defocusing.append(fam)
+        qfam_focusing = tuple(qfam_focusing)
+        qfam_defocusing = tuple(qfam_defocusing)
 
         # Initialize correction parameters from local file and configdb
         config_name = _get_config_name(acc=self._ACC.lower(),
@@ -342,7 +345,7 @@ class App:
             return [done, []]
 
     def _calc_deltakl(self):
-        if self._corr_method == 0:
+        if self._corr_method == _Const.CorrMeth.Proportional:
             lastcalc_deltakl = self._opticscorr.calculate_delta_intstrengths(
                 method=0, grouping='2knobs',
                 delta_opticsparam=[self._delta_tunex, self._delta_tuney])
@@ -362,7 +365,8 @@ class App:
         self.driver.updatePVs()
 
     def _apply_corr(self):
-        if ((self._status == _ALLCLR_SYNCOFF and self._sync_corr == 0) or
+        if ((self._status == _ALLCLR_SYNCOFF and
+                self._sync_corr == _Const.SyncCorr.Off) or
                 self._status == _ALLCLR_SYNCON):
             for fam in self._qfam_kl_sp_pvs:
                 fam_index = self._QFAMS.index(fam)
@@ -372,7 +376,7 @@ class App:
             self.driver.setParam('Log-Mon', 'Applied correction.')
             self.driver.updatePVs()
 
-            if self._sync_corr == 1:
+            if self._sync_corr == _Const.SyncCorr.On:
                 self._timing_evg_tunesexttrig_cmd.put(0)
                 self.driver.setParam('Log-Mon', 'Generated trigger.')
                 self.driver.updatePVs()

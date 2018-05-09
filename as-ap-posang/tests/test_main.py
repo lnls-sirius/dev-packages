@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python-sirius
 
 """Module to test AS-AP-PosAng Soft IOC main module."""
 
