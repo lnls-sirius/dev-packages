@@ -49,9 +49,6 @@ class PSData:
         if self._ispulsed:
             self._propty_database = _get_pu_propty_database(self._pstype)
         else:
-            ps_models = ('FBP', 'FAC', 'FAC_2S', 'FAC_2P4S', 'FAP', 'FAP_4P', 'FAP_2P2S',
-                         'FBP_SOFB', 'Commercial', )
-
             # self._propty_database = _get_ps_propty_database(self._pstype)
             if self._psmodel == 'FBP':
                 self._propty_database = \
@@ -71,9 +68,9 @@ class PSData:
             elif self._psmodel in ('FAP_4P'):
                 self._propty_database = \
                     _get_ps_FAP_4P_propty_database(self._pstype)
-            elif self._psmodel in ('FAP_2P'):
+            elif self._psmodel in ('FAP_2P2S'):
                 self._propty_database = \
-                    _get_ps_FAP_2P_propty_database(self._pstype)
+                    _get_ps_FAP_2P2S_propty_database(self._pstype)
             elif self._psmodel in ('FBP_FOFB'):
                 self._propty_database = \
                     _get_ps_FBP_FOFB_propty_database(self._pstype)
