@@ -774,11 +774,11 @@ class PRUController:
             self.disconnect()
             raise NotImplementedError('Change of curve size not implemented')
 
-        # write curve to PRU memory
+        # store curve in PRUController attribute
         self._curves[idx] = list(curve)
 
-        # set curves
-        self.pru_curve_restore_waveforms()
+        # write curve to PRU memory
+        self.pru_curve_send()
 
     def pru_curve_write_slowref_sync(self, setpoints):
         """Write curves for all devices."""
@@ -801,8 +801,8 @@ class PRUController:
         # select block to be used at next start of ramp
         self._pru.set_curve_block(block_next)
 
-    def pru_curve_restore_waveforms(self):
-        """Restore RmpWfm and MigWfm waveforms."""
+    def pru_curve_send(self):
+        """Send PRUController curves to PRU."""
         # select in which block the new curve will be stored
         block_curr = self._pru.read_curve_block()
         block_next = 1 if block_curr == 0 else 0
