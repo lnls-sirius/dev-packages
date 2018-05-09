@@ -25,7 +25,7 @@ from siriuspy.csdevice.pwrsupply import Const as _PSConst
 #     could be updated in one go.
 
 
-DeviceInfo = _namedtuple('DeviceInfo', 'name, id')
+_DeviceInfo = _namedtuple('DeviceInfo', 'name, id')
 
 
 class _E2SController:
@@ -545,7 +545,7 @@ class _E2SController:
         if not hasattr(value, '__iter__') or \
                 isinstance(value, str) or \
                 isinstance(value, _np.ndarray) or \
-                isinstance(value, DeviceInfo):
+                isinstance(value, _DeviceInfo):
             return value,
         return value
 
@@ -659,7 +659,7 @@ class BeagleBone:
         self._pru_controller = _PRUController(
             self._psmodel, slave_ids, simulate=self._simulate)
         for i, psname in enumerate(self._psnames):
-            self._devices_info[psname] = DeviceInfo(psname, slave_ids[i])
+            self._devices_info[psname] = _DeviceInfo(psname, slave_ids[i])
         db = _deepcopy(self._database)
         self._e2s_controller = _E2SController(
             self._pru_controller, self._devices_info, db)
