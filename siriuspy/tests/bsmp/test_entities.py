@@ -1,9 +1,12 @@
-"""Test BSMP Entities."""
+#!/usr/bin/env python-sirius
+
+"""Test entities module."""
+
 import unittest
 import struct
 
 from siriuspy.bsmp import Types
-from siriuspy.bsmp import Variable, VariablesGroup, Curve, Function
+from siriuspy.bsmp import Variable, VariablesGroup, Function
 from siriuspy.util import check_public_interface_namespace
 
 

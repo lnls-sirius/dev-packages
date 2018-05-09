@@ -1,6 +1,8 @@
-"""Test BSMP type structures."""
-import unittest
+#!/usr/bin/env python-sirius
 
+"""Test type module."""
+
+import unittest
 from siriuspy.bsmp import Types
 
 

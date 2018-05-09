@@ -1,22 +1,29 @@
 #!/usr/bin/env python-sirius
 
-"""Test PSData class.
+"""Test data module."""
 
-Test PSData properties:
-    psname
-    pstype
-    polarity
-    magfunc
-    splims
-    splims_unit
-    splims_labels
-    propty_database
-    excdata
-"""
 import unittest
 from unittest import mock
+from siriuspy import util
+from siriuspy.pwrsupply import data
 
 from siriuspy.pwrsupply.data import PSData
+
+
+public_interface = (
+    'PSData',
+)
+
+
+class TestModule(unittest.TestCase):
+    """Test module interface."""
+
+    def test_public_interface(self):
+        """Test module's public interface."""
+        valid = util.check_public_interface_namespace(
+                data,
+                public_interface)
+        self.assertTrue(valid)
 
 
 class TestPSDataProperties(unittest.TestCase):
@@ -32,7 +39,8 @@ class TestPSDataProperties(unittest.TestCase):
         search_patcher = mock.patch(
             'siriuspy.pwrsupply.data._PSSearch', autospec=True)
         db_patcher = mock.patch(
-            'siriuspy.pwrsupply.data._get_ps_propty_database', autospec=True)
+            'siriuspy.pwrsupply.data._get_ps_FBP_propty_database',
+            autospec=True)
         self.addCleanup(search_patcher.stop)
         self.addCleanup(db_patcher.stop)
         self.search_mock = search_patcher.start()
@@ -138,7 +146,8 @@ class TestPSDataDb(unittest.TestCase):
         search_patcher = mock.patch(
             'siriuspy.pwrsupply.data._PSSearch', autospec=True)
         ps_db_patcher = mock.patch(
-            'siriuspy.pwrsupply.data._get_ps_propty_database', autospec=True)
+            'siriuspy.pwrsupply.data._get_ps_FBP_propty_database',
+            autospec=True)
         pu_db_patcher = mock.patch(
             'siriuspy.pwrsupply.data._get_pu_propty_database', autospec=True)
         self.addCleanup(search_patcher.stop)

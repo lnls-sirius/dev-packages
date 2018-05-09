@@ -3,7 +3,6 @@
 import unittest
 
 from siriuspy import util
-# from siriuspy.pwrsupply import pru
 import siriuspy.pwrsupply.beaglebone as bbb
 from siriuspy.util import check_public_interface_namespace
 
@@ -29,9 +28,11 @@ class TestBeagleBone(unittest.TestCase):
 
     public_interface = (
         'psnames',
-        'power_supplies',
-        'controller',
+        'pru_controller',
+        'e2s_controller',
+        'read',
         'write',
+        'check_connected',
     )
 
     def test_public_interface(self):
@@ -44,82 +45,31 @@ class TestBeagleBone(unittest.TestCase):
         # TODO: implement test!
         pass
 
-    def test_sync_status(self):
-        """Test sync_status."""
+    def test_pru_controller(self):
+        """Test pru_controller."""
         # TODO: implement test!
         pass
 
-    def test_sync_start(self):
-        """Test sync_start."""
+    def test_e2s_controller(self):
+        """Test e2s_controller."""
         # TODO: implement test!
         pass
 
-    def test_sync_stop(self):
-        """Test sync_stop."""
+    def test_read(self):
+        """Test read."""
         # TODO: implement test!
         pass
 
-    def test_sync_pulse_count(self):
-        """Test sync_pulse_count."""
+    def test_write(self):
+        """Test write."""
         # TODO: implement test!
         pass
 
-    def test_UART_write(self):
-        """Test UART_write."""
+    def test_check_connected(self):
+        """Test check_connected."""
         # TODO: implement test!
         pass
 
-    def test_UART_read(self):
-        """Test UART_read."""
-        # TODO: implement test!
-        pass
-
-    def test_curve(self):
-        """Test curve        ."""
-        # TODO: implement test!
-        pass
-
-
-# class TestPRU(unittest.TestCase):
-#     """Test PRU."""
-#
-#     def setUp(self):
-#         """Common setup."""
-#         serial_patcher = mock.patch('siriuspy.pwrsupply.pru._PRUserial485')
-#         self.addCleanup(serial_patcher.stop)
-#         self.serial_mock = serial_patcher.start()
-#         self.pru = PRU()
-#
-#         self.serial_mock.PRUserial485_read.return_value = ['\x00', '\x01']
-#
-#     def test_init(self):
-#         """Test initial param values."""
-#         self.serial_mock.PRUserial485_open.assert_called_with(6, b"M")
-#
-#     def test_sync_mode(self):
-#         """Test setting sync mode."""
-#         self.pru.sync_mode = True
-#         self.serial_mock.PRUserial485_sync_start.assert_called_with(1, 100)
-#         self.pru.sync_mode = False
-#         self.serial_mock.PRUserial485_sync_stop.assert_called_once()
-#
-#     def test_uart_write(self):
-#         """Test UART write."""
-#         self.pru.UART_write(['\x00'], 1.0)
-#         self.serial_mock.PRUserial485_write.assert_called_with(['\x00'], 1.0)
-#
-#     def test_uart_read(self):
-#         """Test UART write."""
-#         stream = self.pru.UART_read()
-#         self.serial_mock.PRUserial485_read.assert_called_once()
-#         self.assertEqual(stream, ['\x00', '\x01'])
-#
-#     def test_curve(self):
-#         """Test curve."""
-#         self.pru.curve('curve1', 'curve2', 'curve3', 'curve4')
-#         self.serial_mock.PRUserial485_curve.assert_called_with(
-#             'curve1', 'curve2', 'curve3', 'curve4')
-#
 
 if __name__ == "__main__":
     unittest.main()

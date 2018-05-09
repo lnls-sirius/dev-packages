@@ -164,12 +164,12 @@ class TestMagnet(unittest.TestCase):
             currents1 = list(splims.values())
             strengths = magnet.conv_current_2_strength(
                 currents1,
-                currents_dipole=10.0,
-                currents_family=10.0)
+                strengths_dipole=3.0,
+                strengths_family=1.0)
             currents2 = magnet.conv_strength_2_current(
                 strengths,
-                currents_dipole=10.0,
-                currents_family=10.0)
+                strengths_dipole=3.0,
+                strengths_family=1.0)
             for i in range(len(currents1)):
                 self.assertAlmostEqual(currents1[i], currents2[i])
 
