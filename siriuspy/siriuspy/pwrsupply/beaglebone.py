@@ -19,7 +19,7 @@ from siriuspy.csdevice.pwrsupply import Const as _PSConst
 DeviceInfo = _namedtuple('DeviceInfo', 'name, id')
 
 
-class E2SController:
+class _E2SController:
     """Setpoints and field translation."""
 
     # Constants and Setpoint regexp patterns
@@ -93,7 +93,7 @@ class E2SController:
 
     def __init__(self, controller, devices_info, database):
         """Init."""
-        self._controller = controller
+        self._pru_controller = controller
         self._devices_info = devices_info
         self._database = database
         # define and init constant and setpoint fields
@@ -117,7 +117,8 @@ class E2SController:
         self._init()
         self._watchers = dict()
 
-    # API
+    # --- public interface ---
+
     @property
     def database(self):
         """Device database."""
@@ -133,7 +134,6 @@ class E2SController:
         values = dict()
         self._read_variables(device_name, values)
         self._read_setpoints(device_name, values)
-        # self._read_locals(device_name, values)
         self._read_pru(device_name, values)
         return values
 
@@ -141,7 +141,7 @@ class E2SController:
         """Write to value one or many devices' field."""
         devices_names = self._tuplify(devices_names)
         if self._check_write_values(field, value):
-            func = getattr(self, E2SController._epics_2_wfuncs[field])
+            func = getattr(self, _E2SController._epics_2_wfuncs[field])
             devices_info = [self._devices_info[dev_name]
                             for dev_name in devices_names]
             value = self._trim_value(field, value)
@@ -154,19 +154,20 @@ class E2SController:
     def check_connected(self, device_name):
         """Connected."""
         device_id = self._devices_info[device_name].id
-        return self._controller.check_connected(device_id)
+        return self._pru_controller.check_connected(device_id)
 
-    # Private
+    # --- private methods ---
+
     def _read(self, device_id, field):
         """Read a field."""
         if field in self.epics_2_bsmp:
             variable_id = self.epics_2_bsmp[field]
             # TODO: this is not optimized! all variables of a given device id
             # should be read at once!
-            value = self._controller.read_variables(device_id, variable_id)
+            value = self._pru_controller.read_variables(device_id, variable_id)
             value = self._parse_value(field, value)
         elif field == 'WfmData-RB':
-            value = self._controller.pru_curve_read(device_id)
+            value = self._pru_controller.pru_curve_read(device_id)
         return value
 
     def _init(self):
@@ -195,7 +196,7 @@ class E2SController:
         elif '-SP' in field:
             pass
             # if 'WfmData-' == field:
-            #     if len(setpoint) != self._controller.pru_curve_length:
+            #     if len(setpoint) != self._pru_controller.pru_curve_length:
             #         return False
         elif '-Cmd' in field:
             if setpoint < 1:
@@ -206,12 +207,12 @@ class E2SController:
         devices_info = self._tuplify(devices_info)
         dev_ids = [dev_info.id for dev_info in devices_info]
         if setpoints is None:
-            self._controller.exec_functions(dev_ids, command)
+            self._pru_controller.exec_functions(dev_ids, command)
         elif not hasattr(setpoints, '__iter__'):
-            self._controller.exec_functions(dev_ids, command, setpoints)
+            self._pru_controller.exec_functions(dev_ids, command, setpoints)
         else:
             for idx, dev_id in enumerate(dev_ids):
-                self._controller.exec_functions(
+                self._pru_controller.exec_functions(
                     dev_id, command, setpoints[idx])
 
     def _set_setpoints(self, devices_info, fields, values):
@@ -227,6 +228,7 @@ class E2SController:
             self._setpoints[dev_info.name][field]['value'] += 1
 
     # Methods that execute function
+
     def _set_pwrstate(self, devices_info, setpoint):
         """Set PS On/Off."""
         # Execute function to devices
@@ -342,12 +344,11 @@ class E2SController:
         """Set wfmdata."""
         self._set_setpoints(devices_info, 'WfmData-SP', [setpoint])
         for dev_info in devices_info:
-            # self._local_vars[dev_info.name]['WfmData-RB']['value'] = setpoint
-            # print('id: {}, len:{}, type:{}'.format(dev_info.id, len(setpoint), type(setpoint)))
-            self._controller.pru_curve_write(dev_info.id, setpoint)
+            self._pru_controller.pru_curve_write(dev_info.id, setpoint)
         return True
 
     # Watchers
+
     def _set_cycling_watchers(self, devices_info):
         self._watchers.clear()
         for dev_info in devices_info:
@@ -373,7 +374,7 @@ class E2SController:
             if state == 'wait_trigger':
                 if self.read(dev_name, 'OpMode-Sts') != _PSConst.OpMode.Cycle:
                     break
-                elif self._controller.pru_sync_status != 1:
+                elif self._pru_controller.pru_sync_status != 1:
                     if not self.read(dev_name, 'CycleEnbl-Mon'):
                         break
                     state = 'wait_cycle'
@@ -383,11 +384,12 @@ class E2SController:
                 elif not self.read(dev_name, 'CycleEnbl-Mon'):
                     self._set_opmode([dev_info], 0)
                     break
-            _time.sleep(E2SController.INTERVAL_SCAN)
+            _time.sleep(_E2SController.INTERVAL_SCAN)
 
         return
 
     # Helpers
+
     def _cfg_siggen_args(self, devices_info):
         """Get cfg_siggen args and execute it."""
         values = []
@@ -464,26 +466,21 @@ class E2SController:
             key = device_name + ':' + field
             values[key] = db['value']
 
-    # def _read_locals(self, device_name, values):
-    #     for field, db in self._local_vars[device_name].items():
-    #         key = device_name + ':' + field
-    #     values[key] = db['value']
-
     def _read_pru(self, device_name, values):
-        if not self._controller.pru_sync_status:
+        if not self._pru_controller.pru_sync_status:
             values[device_name + ':PRUSyncMode-Mon'] = 0
         else:
-            mode = self._sync_mode[self._controller.pru_sync_mode]
+            mode = self._sync_mode[self._pru_controller.pru_sync_mode]
             values[device_name + ':PRUSyncMode-Mon'] = mode
         values[device_name + ':PRUBlockIndex-Mon'] = \
-            self._controller.pru_curve_block
+            self._pru_controller.pru_curve_block
         values[device_name + ':PRUSyncPulseCount-Mon'] = \
-            self._controller.pru_sync_pulse_count
+            self._pru_controller.pru_sync_pulse_count
         values[device_name + ':PRUCtrlQueueSize-Mon'] = \
-            self._controller.queue_length
+            self._pru_controller.queue_length
         _, dev_id = self._devices_info[device_name]
         values[device_name + ':WfmData-RB'] = \
-            self._controller.pru_curve_read(dev_id)
+            self._pru_controller.pru_curve_read(dev_id)
 
     def _tuplify(self, value):
         # Return tuple if value is not iterable
@@ -506,10 +503,10 @@ class BeagleBone:
         """Retrieve power supply."""
         self._bbbname = bbbname
         self._simulate = simulate
-
         self._devices_info = dict()
 
         # retrieve names of associated power supplies
+        # TODO: temporary 'if' for tests.
         if self._bbbname == 'BO-01:CO-BBB-1':
             self._psnames = ['BO-01U:PS-CH', 'BO-01U:PS-CV']
         elif self._bbbname == 'BO-01:CO-BBB-2':
@@ -521,33 +518,30 @@ class BeagleBone:
         self._psmodel = _PSSearch.conv_psname_2_psmodel(self._psnames[0])
         self._database = _PSData(self._psnames[0]).propty_database
 
-        # creates corresponding PRU and controller
-        # if not self._simulate:
-        #     # self._controller = _IOController(_PRU(), self._psmodel)
-        #     slave_ids = self._get_bsmp_slave_IDs()
-        #     self._controller = _PRUController(self._psmodel, slave_ids)
-        # else:
-        #     # self._controller = _IOControllerSim(_PRUSim(), self._psmodel)
-        #     pass
-
         # create abstract power supply objects
         # self._power_supplies = self._create_power_supplies()
-        self._create_ioc_controller()
+        self._create_e2s_controller()
 
     # --- public interface ---
+
     @property
     def psnames(self):
         """Return list of associated power supply names."""
         return self._psnames.copy()
 
     @property
-    def controller(self):
-        """Return beaglebone controller."""
-        return self._controller
+    def pru_controller(self):
+        """Return PRU controller."""
+        return self._pru_controller
+
+    @property
+    def e2s_controller(self):
+        """Return E2S controller."""
+        return self._e2s_controller
 
     def read(self, device_name):
         """Read all device fields."""
-        field_values = self._ioc_controller.read_all(device_name)
+        field_values = self._e2s_controller.read_all(device_name)
         # field_values = self.power_supplies[device_name].read_all()
         return field_values
 
@@ -556,95 +550,33 @@ class BeagleBone:
         if field == 'OpMode-Sel':
             self._set_opmode(value)
         elif field == 'CycleDsbl-Cmd':
-            self._ioc_controller.write(self.psnames, field, 1)
+            self._e2s_controller.write(self.psnames, field, 1)
         else:
             # self.power_supplies[device_name].write(field, value)
-            self._ioc_controller.write(device_name, field, value)
+            self._e2s_controller.write(device_name, field, value)
 
     def check_connected(self, device_name):
         """"Return connection status."""
-        return self._ioc_controller.check_connected(device_name)
+        return self._e2s_controller.check_connected(device_name)
 
     # --- private methods ---
+
     def _set_opmode(self, op_mode):
-        self._controller.pru_sync_stop()  # TODO: not necessary. test.
-        self._ioc_controller.write(self.psnames, 'OpMode-Sel', op_mode)
+        self._pru_controller.pru_sync_stop()  # TODO: not necessary. test.
+        self._e2s_controller.write(self.psnames, 'OpMode-Sel', op_mode)
         if op_mode == _PSConst.OpMode.Cycle:
-            sync_mode = self._controller.PRU.SYNC_MODE.CYCLE
-            return self._controller.pru_sync_start(sync_mode)
+            sync_mode = self._pru_controller.PRU.SYNC_MODE.CYCLE
+            return self._pru_controller.pru_sync_start(sync_mode)
         elif op_mode == _PSConst.OpMode.RmpWfm:
-            sync_mode = self._controller.PRU.SYNC_MODE.RMPEND
-            return self._controller.pru_sync_start(sync_mode)
+            sync_mode = self._pru_controller.PRU.SYNC_MODE.RMPEND
+            return self._pru_controller.pru_sync_start(sync_mode)
         elif op_mode == _PSConst.OpMode.MigWfm:
-            sync_mode = self._controller.PRU.SYNC_MODE.MIGEND
-            return self._controller.pru_sync_start(sync_mode)
+            sync_mode = self._pru_controller.PRU.SYNC_MODE.MIGEND
+            return self._pru_controller.pru_sync_start(sync_mode)
         else:
             print('mode {} not implemented yet!', format(op_mode))
 
         # return self._state.set_op_mode(self)
-
-    # def _set_opmode(self, device_name, field, value):
-    #
-    #     # first set sync mode to OFF so that BSMP comm can happen
-    #     # TODO: In order to avoid messing with PRU sync mode the IOC should
-    #     # check whether required OpMode is not already selected!
-    #     success = self._set_pru_sync_slowref(device_name, field, value)
-    #     if not success:
-    #         _log.warning('[!!] - could not set PRU sync mode to off!')
-    #
-    #     if success and value == _cPS.OpMode.SlowRef:
-    #         # set opmode slowref in all ps controllers.
-    #         success &= self._set_bsmp_opmode(field, value)
-    #     if success and value == _cPS.OpMode.Cycle:
-    #         # set opmode slowref in all ps controllers.
-    #         success &= self._set_bsmp_opmode(field, value)
-    #         # set PRU sync mode to Cycle
-    #         success &= self._set_pru_sync_cycle(device_name, field, value)
-    #     elif success and value == _cPS.OpMode.RmpWfm:
-    #         # set opmode slowref in all ps controllers.
-    #         success &= self._set_bsmp_opmode(field, value)
-    #         # set PRU sync mode to RmpWfm
-    #         success = self._set_pru_sync_rmpwfm(device_name, field, value)
-    #     elif success and value == _cPS.OpMode.MigWfm:
-    #         # set opmode slowref in all ps controllers.
-    #         success &= self._set_bsmp_opmode(field, value)
-    #         # set PRU sync mode to MigWfm
-    #         success = self._set_pru_sync_migwfm(device_name, field, value)
-    #     return success
-
-    # def _set_bsmp_opmode(self, field, value):
-    #     success = True
-    #     for ps in self._power_supplies.values():
-    #         success &= ps.write(field, value)
-    #     return success
-
-    # def _set_pru_sync_slowref(self, device_name, field, value):
-    #     # print('set_pru_sync_slowref!')
-    #     ret = self._controller.pru.sync_stop()
-    #     return ret
-
-    # def _set_pru_sync_cycle(self, device_name, field, value):
-    #     # print('set_pru_sync_cycle!')
-    #     sync_mode = self._controller.pru.SYNC_CYCLE
-    #     ret = self._set_pru_sync_start(sync_mode)
-    #     return ret
-    #     return True
-
-    # def _set_pru_sync_rmpwfm(self, device_name, field, value):
-    #     sync_mode = self._controller.pru.SYNC_RMPEND
-    #     ret = self._set_pru_sync_start(sync_mode)
-    #     return ret
-
-    # def _set_pru_sync_migwfm(self, device_name, field, value):
-    #     sync_mode = self._controller.pru.SYNC_MIGEND
-    #     ret = self._set_pru_sync_start(sync_mode)
-    #     return ret
-
-    # def _set_pru_sync_start(self, sync_mode):
-    #     slave_id = self._power_supplies[self.psnames[0]]._slave_id
-    #     ret = self._controller.pru.sync_start(
-    #         sync_mode=sync_mode, sync_address=slave_id)
-    #     return ret
 
     def _get_bsmp_slave_IDs(self):
         # TODO: temp code. this should be deleted once PS bench tests are over.
@@ -657,37 +589,13 @@ class BeagleBone:
         else:
             return tuple(range(1, 1+len(self._psnames)))
 
-    def _create_ioc_controller(self):
+    def _create_e2s_controller(self):
         # Return dict of power supply objects
         slave_ids = self._get_bsmp_slave_IDs()
-        self._controller = _PRUController(
+        self._pru_controller = _PRUController(
             self._psmodel, slave_ids, simulate=self._simulate)
         for i, psname in enumerate(self._psnames):
             self._devices_info[psname] = DeviceInfo(psname, slave_ids[i])
         db = _deepcopy(self._database)
-        self._ioc_controller = E2SController(
-            self._controller, self._devices_info, db)
-        # return power_supplies
-
-
-# class BBBSlowRefState:
-#
-#     @staticmethod
-#     def set_op_mode(bbb):
-#     """Set pru to aproppriate sync mode and set op mode for all devices."""
-#         bbb.controller.pru_sync_stop()
-#         for ps in bbb.power_supplies:
-#             ps.write('PwrState-Sel', 0)
-#         return True
-
-
-# class BBBCycleState:
-#
-#     @staticmethod
-#     def set_op_mode(bbb):
-#         """Set pru to cycle sync mode and set op mode to for all devices."""
-#         bbb.controller.pru_sync_stop()
-#         for ps in bbb.power_supplies:
-#             ps.write('PwrState-Sel', 2)
-#         sync_mode = bbb.controller.SYNC.CYCLE
-#         return bbb.controller.pru_sync_start(sync_mode)
+        self._e2s_controller = _E2SController(
+            self._pru_controller, self._devices_info, db)
