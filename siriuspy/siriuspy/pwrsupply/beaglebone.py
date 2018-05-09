@@ -126,8 +126,11 @@ class _E2SController:
 
     def read(self, device_name, field):
         """Read field from device."""
-        device_id = self._devices_info[device_name].id
-        return self._read(device_id, field)
+        if field in self._epics_2_wfuncs:
+            return self._setpoints[device_name][field]['value']
+        else:
+            device_id = self._devices_info[device_name].id
+            return self._read(device_id, field)
 
     def read_all(self, device_name):
         """Read all fields."""
@@ -246,44 +249,20 @@ class _E2SController:
 
     def _set_opmode(self, devices_info, setpoint):
         """Operation mode setter."""
-        # Execute function to set PSs operation mode
-        if setpoint == _PSConst.OpMode.Cycle:
-            # set SlowRef setpoint to last cycling value (offset) so that
-            # magnetic history is not spoiled when power supply returns
-            # automatically to SlowRef mode
-            # TODO: in the general case (start and end siggen phases not
-            # equal to zero) the offset parameter is not the last cycling
-            # value!
-            for device_info in devices_info:
-                # self._execute_command(
-                #     device_info,
-                #     _c.F_SET_SLOWREF,
-                #     self.read(device_info.name, 'CycleOffset-RB'))
-                offset_val = self.read(device_info.name, 'CycleOffset-RB')
-                self._set_current([device_info], offset_val)
-        elif setpoint in (_PSConst.OpMode.RmpWfm, _PSConst.OpMode.MigWfm):
-            for device_info in devices_info:
-                wfmdata = self.read(device_info.name, 'WfmData-RB')
-                self._set_current([device_info], wfmdata[-1])
-
         # TODO: this expedient 'setpoint+3' seems to be too fragile
         # against possible future modifications of ps firmware/spec.
+        self._pre_opmode(devices_info, setpoint)
         self._execute_command(devices_info, _c.F_SELECT_OP_MODE, setpoint+3)
         self._set_setpoints(devices_info, 'OpMode-Sel', setpoint)
-
-        # Further actions that depend on op mode
-        if setpoint == _PSConst.OpMode.SlowRef:
-            # disable sigge
-            self._execute_command(devices_info, _c.F_DISABLE_SIGGEN)
-        elif setpoint == _PSConst.OpMode.Cycle:
-            self._set_cycling_watchers(devices_info)
-        else:
-            # TODO: implement actions for other modes
-            pass
+        self._pos_opmode(devices_info, setpoint)
 
     def _set_current(self, devices_info, setpoint):
         """Set current."""
-        self._execute_command(devices_info, _c.F_SET_SLOWREF, setpoint)
+        op_mode = self._get_opmode(devices_info[0])
+        if op_mode == _PSConst.OpMode.SlowRefSync:
+            self._set_slowrefsync_setpoints(self, devices_info, setpoint)
+        else:
+            self._execute_command(devices_info, _c.F_SET_SLOWREF, setpoint)
         self._set_setpoints(devices_info, 'Current-SP', setpoint)
 
     def _reset(self, devices_info, setpoint):
@@ -349,11 +328,18 @@ class _E2SController:
 
     # Watchers
 
-    def _set_cycling_watchers(self, devices_info):
+    def _watcher(self, op_mode):
+        # Return watcher target method
+        if op_mode == _PSConst.OpMode.Cycle:
+            return self._watch_cycle
+        elif op_mode == _PSConst.OpMode.MigWfm:
+            return self._watch_mig
+
+    def _set_watchers(self, op_mode, devices_info):
         self._watchers.clear()
         for dev_info in devices_info:
             t = _threading.Thread(
-                target=self._watch_cycle, args=(dev_info, ), daemon=True)
+                target=self._watcher(op_mode), args=(dev_info, ), daemon=True)
             try:
                 if self._watchers[dev_info.id].is_alive():
                     self._watchers[dev_info.id].join()
@@ -388,7 +374,54 @@ class _E2SController:
 
         return
 
+    def _watch_mig(self, dev_info):
+        _time.sleep(0.5)
+        dev_name = dev_info.name
+        if self.read(dev_name, 'PwrState-Sts') == 0:
+            return
+
+        while True:
+            if self.read(dev_name, 'OpMode-Sts') != _PSConst.OpMode.MigWfm:
+                break
+            elif self._pru_controller.pru_sync_status != 1:
+                self._set_opmode([dev_info], 0)
+                break
+        return
+
     # Helpers
+
+    def _get_opmode(self, device_info):
+        return self.read(device_info.name, 'OpMode-Sts')
+
+    def _pre_opmode(self, devices_info, setpoint):
+        # Execute function to set PSs operation mode
+        if setpoint == _PSConst.OpMode.Cycle:
+            # set SlowRef setpoint to last cycling value (offset) so that
+            # magnetic history is not spoiled when power supply returns
+            # automatically to SlowRef mode
+            # TODO: in the general case (start and end siggen phases not
+            # equal to zero) the offset parameter is not the last cycling
+            # value!
+            for device_info in devices_info:
+                offset_val = self.read(device_info.name, 'CycleOffset-RB')
+                self._set_current([device_info], offset_val)
+        elif setpoint in (_PSConst.OpMode.RmpWfm, _PSConst.OpMode.MigWfm):
+            for device_info in devices_info:
+                wfmdata = self.read(device_info.name, 'WfmData-RB')
+                self._set_current([device_info], wfmdata[-1])
+        elif setpoint == _PSConst.OpMode.SlowRefSync:
+            self._set_slowrefsync_setpoints()
+
+    def _pos_opmode(self, devices_info, setpoint):
+        # Further actions that depend on op mode
+        if setpoint == _PSConst.OpMode.SlowRef:
+            # disable siggen
+            self._execute_command(devices_info, _c.F_DISABLE_SIGGEN)
+        elif setpoint in (_PSConst.OpMode.Cycle, _PSConst.OpMode.MigWfm):
+            self._set_watchers(setpoint, devices_info)
+        else:
+            # TODO: implement actions for other modes
+            pass
 
     def _cfg_siggen_args(self, devices_info):
         """Get cfg_siggen args and execute it."""
@@ -482,6 +515,16 @@ class _E2SController:
         values[device_name + ':WfmData-RB'] = \
             self._pru_controller.pru_curve_read(dev_id)
 
+    def _set_slowrefsync_setpoints(self, devices_info=(), setpoint=None):
+        setpoints = []
+        for dev_info in self._devices_info.values():
+            if dev_info in devices_info:
+                setpoints.append(setpoint)
+            else:
+                cur_sp = self.read(dev_info.name, 'Current-SP')
+                setpoints.append(cur_sp)
+        self._pru_controller.pru_curve_write_slowref_sync(setpoints)
+
     def _tuplify(self, value):
         # Return tuple if value is not iterable
         if not hasattr(value, '__iter__') or \
@@ -521,6 +564,7 @@ class BeagleBone:
         # create abstract power supply objects
         # self._power_supplies = self._create_power_supplies()
         self._create_e2s_controller()
+        self._wfm_dirty = False
 
     # --- public interface ---
 
@@ -568,13 +612,19 @@ class BeagleBone:
             sync_mode = self._pru_controller.PRU.SYNC_MODE.CYCLE
             return self._pru_controller.pru_sync_start(sync_mode)
         elif op_mode == _PSConst.OpMode.RmpWfm:
+            self._restore_wfm()
             sync_mode = self._pru_controller.PRU.SYNC_MODE.RMPEND
             return self._pru_controller.pru_sync_start(sync_mode)
         elif op_mode == _PSConst.OpMode.MigWfm:
+            self._restore_wfm()
             sync_mode = self._pru_controller.PRU.SYNC_MODE.MIGEND
             return self._pru_controller.pru_sync_start(sync_mode)
-        else:
-            print('mode {} not implemented yet!', format(op_mode))
+        elif op_mode == _PSConst.OpMode.SlowRefSync:
+            self._wfm_dirty = True
+            sync_mode = self._pru_controller.PRU.SYNC_MODE.MIGEND
+            return self._pru_controller.pru_sync_start(sync_mode)
+        # else:
+        #     print('mode {} not implemented yet!', format(op_mode))
 
         # return self._state.set_op_mode(self)
 
@@ -599,3 +649,8 @@ class BeagleBone:
         db = _deepcopy(self._database)
         self._e2s_controller = _E2SController(
             self._pru_controller, self._devices_info, db)
+
+    def _restore_wfm(self):
+        if self._wfm_dirty:
+            self._pru_controller.pru_curve_restore_waveforms()
+            self._wfm_dirty = False
