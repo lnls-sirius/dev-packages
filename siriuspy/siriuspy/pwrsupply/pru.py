@@ -24,6 +24,8 @@ except ImportError:
     # in case PRUserial485 library is not installed and
     # this module is used only for simulated PRUs.
     _PRUserial485 = None
+finally:
+    del(ver)
 
 
 class Const:
