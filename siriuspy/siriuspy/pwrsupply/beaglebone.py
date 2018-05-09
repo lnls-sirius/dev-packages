@@ -269,7 +269,7 @@ class _E2SController:
         """Set current."""
         op_mode = self._get_opmode(devices_info[0])
         if op_mode == _PSConst.OpMode.SlowRefSync:
-            self._set_slowrefsync_setpoints(self, devices_info, setpoint)
+            self._set_slowrefsync_setpoints(devices_info, setpoint)
         else:
             self._execute_command(devices_info, _c.F_SET_SLOWREF, setpoint)
         self._set_setpoints(devices_info, 'Current-SP', setpoint)
@@ -393,8 +393,10 @@ class _E2SController:
             if self.read(dev_name, 'OpMode-Sts') != _PSConst.OpMode.MigWfm:
                 break
             elif self._pru_controller.pru_sync_status != 1:
-                self._set_opmode([dev_info], 0)
+                if self._pru_controller.pru_sync_pulse_count > 0:
+                    self._set_opmode([dev_info], 0)
                 break
+            _time.sleep(_E2SController.INTERVAL_SCAN)
         return
 
     # Helpers
@@ -661,5 +663,5 @@ class BeagleBone:
 
     def _restore_wfm(self):
         if self._wfm_dirty:
-            self._pru_controller.pru_curve_restore_waveforms()
+            self._pru_controller.pru_curve_send()
             self._wfm_dirty = False
