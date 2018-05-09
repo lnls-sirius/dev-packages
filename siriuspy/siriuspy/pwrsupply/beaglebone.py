@@ -16,6 +16,15 @@ from .status import PSCStatus as _PSCStatus
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 
 
+# TODO: improve code
+#
+# 01. try to optimize it. At this point it is taking up 80% of BBB1 CPU time.
+#     from which ~20% comes from PRController. I think we could keep some kind
+#     of device state mirror in E2SController such that it does not have to
+#     invoke PRUController read at every device field update. This mirror state
+#     could be updated in one go.
+
+
 DeviceInfo = _namedtuple('DeviceInfo', 'name, id')
 
 
