@@ -36,7 +36,8 @@ class Watcher(_threading.Thread):
     WAIT_OPMODE = 0
     WAIT_TRIGGER = 1
     WAIT_CYCLE = 2
-    WAIT_SYNC = 3
+    WAIT_MIG = 3
+    WAIT_RMP = 4
 
     WAIT = 1.0/_PRUController.FREQ.SCAN
 
@@ -68,13 +69,13 @@ class Watcher(_threading.Thread):
             if self.exit:
                 break
             elif self.state == Watcher.WAIT_OPMODE:
-                if self._achieved_op_mode():
+                if self._achieved_op_mode() and self._sync_started():
                     self.state = Watcher.WAIT_TRIGGER
             elif self.state == Watcher.WAIT_TRIGGER:
                 if self._changed_op_mode():
                     break
                 elif self._sync_stopped():
-                    if self._cycle_started():
+                    if self._cycle_started() or self._sync_pulsed():
                         self.state = Watcher.WAIT_CYCLE
                     else:
                         break
@@ -82,17 +83,17 @@ class Watcher(_threading.Thread):
                 if self._changed_op_mode():
                     break
                 elif self._cycle_stopped():
-                    self._set_current()
+                    # self._set_current()
                     self._set_slow_ref()
                     break
-        _time.sleep(Watcher.WAIT)
+            _time.sleep(Watcher.WAIT)
 
     def _watch_mig(self):
         while True:
             if self.exit:
                 break
             elif self.state == Watcher.WAIT_OPMODE:
-                if self._achieved_op_mode():
+                if self._achieved_op_mode() and self._sync_started():
                     self.state = Watcher.WAIT_MIG
             elif self.state == Watcher.WAIT_MIG:
                 if self._changed_op_mode():
@@ -102,29 +103,30 @@ class Watcher(_threading.Thread):
                         self._set_current()
                         self._set_slow_ref()
                     break
-        _time.sleep(Watcher.WAIT)
+            _time.sleep(Watcher.WAIT)
 
     def _watch_rmp(self):
         while True:
             if self.exit:
                 break
             elif self.state == Watcher.WAIT_OPMODE:
-                if self._achieved_op_mode():
-                    self.state = Watcher.WAIT_SYNC
-            elif self.state == Watcher.WAIT_SYNC:
+                if self._achieved_op_mode() and self._sync_started():
+                    self.state = Watcher.WAIT_RMP
+            elif self.state == Watcher.WAIT_RMP:
                 if self._changed_op_mode():
                     break
                 elif self._sync_stopped():
                     if self._sync_pulsed():
                         self._set_current()
                     break
-        _time.sleep(Watcher.WAIT)
+            _time.sleep(Watcher.WAIT)
 
     def _current_op_mode(self):
         return self.controller.read(self.dev_info.name, 'OpMode-Sts')
 
     def _achieved_op_mode(self):
         return self.op_mode == self._current_op_mode()
+
 
     def _changed_op_mode(self):
         return self.op_mode != self._current_op_mode()
@@ -136,6 +138,9 @@ class Watcher(_threading.Thread):
     def _cycle_stopped(self):
         return self.controller.read(
             self.dev_info.name, 'CycleEnbl-Mon') == 0
+
+    def _sync_started(self):
+        return self.controller.pru_controller.pru_sync_status == 1
 
     def _sync_stopped(self):
         return self.controller.pru_controller.pru_sync_status == 0
@@ -490,25 +495,19 @@ class _E2SController:
 
     def _pre_opmode(self, devices_info, setpoint):
         # Execute function to set PSs operation mode
-        # if setpoint == _PSConst.OpMode.Cycle:
-        #     # set SlowRef setpoint to last cycling value (offset) so that
-        #     # magnetic history is not spoiled when power supply returns
-        #     # automatically to SlowRef mode
-        #     # TODO: in the general case (start and end siggen phases not
-        #     # equal to zero) the offset parameter is not the last cycling
-        #     # value!
-        #     for device_info in devices_info:
-        #         offset_val = self.read(device_info.name, 'CycleOffset-RB')
-        #         self._execute_command(
-        #             [device_info], _c.F_SET_SLOWREF, offset_val)
-        #         self._set_setpoints([device_info], 'Current-SP', offset_val)
-        # elif setpoint in (_PSConst.OpMode.RmpWfm, _PSConst.OpMode.MigWfm):
-        #     for device_info in devices_info:
-        #         wfmdata = self.read(device_info.name, 'WfmData-RB')
-        #         self._execute_command(
-        #             [device_info], _c.F_SET_SLOWREF, wfmdata[-1])
-        #         self._set_setpoints([device_info], 'Current-SP', wfmdata[-1])
-        if setpoint == _PSConst.OpMode.SlowRefSync:
+        if setpoint == _PSConst.OpMode.Cycle:
+            # set SlowRef setpoint to last cycling value (offset) so that
+            # magnetic history is not spoiled when power supply returns
+            # automatically to SlowRef mode
+            # TODO: in the general case (start and end siggen phases not
+            # equal to zero) the offset parameter is not the last cycling
+            # value!
+            for device_info in devices_info:
+                offset_val = self.read(device_info.name, 'CycleOffset-RB')
+                self._execute_command(
+                    [device_info], _c.F_SET_SLOWREF, offset_val)
+                self._set_setpoints([device_info], 'Current-SP', offset_val)
+        elif setpoint == _PSConst.OpMode.SlowRefSync:
             self._set_slowrefsync_setpoints()
 
     def _pos_opmode(self, devices_info, setpoint):
@@ -682,6 +681,11 @@ class BeagleBone:
     def e2s_controller(self):
         """Return E2S controller."""
         return self._e2s_controller
+
+    @property
+    def devices_database(self):
+        """Database."""
+        return self._database
 
     def read(self, device_name):
         """Read all device fields."""
