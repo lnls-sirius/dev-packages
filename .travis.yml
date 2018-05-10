@@ -4,7 +4,7 @@ python:
   - "3.6"
 script:
   - pip install -r requirements.txt
-  - sudo ln -s /usr/local/bin/python /usr/local/bin/python-sirius
+  - sudo ln -s /usr/bin/python /usr/bin/python-sirius
 # install PRUserial485
   - git clone https://github.com/lnls-sirius/pru-serial485.git
   - cd pru-serial485/src
