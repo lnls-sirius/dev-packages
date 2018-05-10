@@ -1,13 +1,14 @@
+sudo: required
 language: python
 python:
   - "3.6"
 script:
   - pip install -r requirements.txt
-  - ln -s /usr/local/bin/python3.6 /usr/local/bin/python-sirius
+  - sudo ln -s /usr/local/bin/python /usr/local/bin/python-sirius
 # install PRUserial485
   - git clone https://github.com/lnls-sirius/pru-serial485.git
   - cd pru-serial485/src
-  - ./library_build.sh develop
+  - sudo ./library_build.sh develop
   - cd ../../
 # install siriuspy
   - cd siriuspy
