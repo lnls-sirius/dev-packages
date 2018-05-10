@@ -394,6 +394,10 @@ class _E2SController:
                 break
             elif self._pru_controller.pru_sync_status != 1:
                 if self._pru_controller.pru_sync_pulse_count > 0:
+                    wfmdata = self.read(dev_info.name, 'WfmData-RB')
+                    self._execute_command(
+                       [dev_info], _c.F_SET_SLOWREF, wfmdata[-1])
+                    self._set_setpoints([dev_info], 'Current-SP', wfmdata[-1])
                     self._set_opmode([dev_info], 0)
                 break
             _time.sleep(_E2SController.INTERVAL_SCAN)
@@ -419,11 +423,12 @@ class _E2SController:
                     [device_info], _c.F_SET_SLOWREF, offset_val)
                 self._set_setpoints([device_info], 'Current-SP', offset_val)
         elif setpoint in (_PSConst.OpMode.RmpWfm, _PSConst.OpMode.MigWfm):
-            for device_info in devices_info:
-                wfmdata = self.read(device_info.name, 'WfmData-RB')
-                self._execute_command(
-                    [device_info], _c.F_SET_SLOWREF, wfmdata[-1])
-                self._set_setpoints([device_info], 'Current-SP', wfmdata[-1])
+            pass
+            # for device_info in devices_info:
+            #    wfmdata = self.read(device_info.name, 'WfmData-RB')
+            #    self._execute_command(
+            #        [device_info], _c.F_SET_SLOWREF, wfmdata[-1])
+            #    self._set_setpoints([device_info], 'Current-SP', wfmdata[-1])
         elif setpoint == _PSConst.OpMode.SlowRefSync:
             self._set_slowrefsync_setpoints()
 
