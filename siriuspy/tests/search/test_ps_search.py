@@ -102,11 +102,11 @@ class TestPSSearch(unittest.TestCase):
     }
 
     sample_bbb = {
-        'BO-Glob:CO-BBB-1': None,
-        'BO-Glob:CO-BBB-2': None,
-        'BO-01:CO-BBB-1': None,
-        'BO-01:CO-BBB-2': None,
-        'SI-01:CO-BBB-1': None,
+        'BO-Glob:CO-PSCtrl-1': None,
+        'BO-Glob:CO-PSCtrl-2': None,
+        'BO-01:CO-PSCtrl-1': None,
+        'BO-01:CO-PSCtrl-2': None,
+        'SI-01:CO-PSCtrl-1': None,
     }
 
     pstype2polarity = {
@@ -228,7 +228,7 @@ class TestPSSearch(unittest.TestCase):
         self.assertEqual(bbbnames, sorted_bbbnames)
         # with filters
         bbbnames = PSSearch.get_bbbnames({'dis': 'CO'})
-        self.assertEqual(len(bbbnames), 277)
+        self.assertEqual(len(bbbnames), 289)
         for name in bbbnames:
             self.assertIn('CO', name)
         bbbnames = PSSearch.get_bbbnames({'sub': 'Glob'})
@@ -363,7 +363,7 @@ class TestPSSearch(unittest.TestCase):
         """Test conv_bbbname_2_psnames."""
         self.assertRaises(TypeError, PSSearch.conv_bbbname_2_psnames)
         self.assertRaises(KeyError, PSSearch.conv_bbbname_2_psnames, '')
-        psnames = PSSearch.conv_bbbname_2_psnames(bbbname='SI-Glob:CO-BBB-1')
+        psnames = PSSearch.conv_bbbname_2_psnames(bbbname='SI-Glob:CO-PSCtrl-1')
         self.assertIsInstance(psnames, list)
         self.assertGreater(len(psnames), 0)
         self.assertIsInstance(psnames[0], str)

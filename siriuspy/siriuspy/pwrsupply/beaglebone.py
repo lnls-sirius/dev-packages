@@ -570,9 +570,9 @@ class BeagleBone:
 
         # retrieve names of associated power supplies
         # TODO: temporary 'if' for tests.
-        if self._bbbname == 'BO-01:CO-BBB-1':
+        if self._bbbname == 'BO-01:CO-PSCtrl-1':
             self._psnames = ['BO-01U:PS-CH', 'BO-01U:PS-CV']
-        elif self._bbbname == 'BO-01:CO-BBB-2':
+        elif self._bbbname == 'BO-01:CO-PSCtrl-2':
             self._psnames = ['BO-03U:PS-CH', 'BO-03U:PS-CV']
         else:
             self._psnames = _PSSearch.conv_bbbname_2_psnames(bbbname)
@@ -649,10 +649,10 @@ class BeagleBone:
 
     def _get_bsmp_slave_IDs(self):
         # TODO: temp code. this should be deleted once PS bench tests are over.
-        if self._bbbname == 'BO-01:CO-BBB-1':
+        if self._bbbname == 'BO-01:CO-PSCtrl-1':
             # test-bench BBB # 1
             return (1, 2)
-        elif self._bbbname == 'BO-01:CO-BBB-2':
+        elif self._bbbname == 'BO-01:CO-PSCtrl-2':
             # test-bench BBB # 2
             return (5, 6)
         else:
