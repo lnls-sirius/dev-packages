@@ -20,12 +20,11 @@ try:
     # if not _PRUserial485.libraries_loaded:
     #     # could not import libray, which is interpreted as not installed.
     #     _PRUserial485 = None
+    del(ver)
 except ImportError:
     # in case PRUserial485 library is not installed and
     # this module is used only for simulated PRUs.
     _PRUserial485 = None
-finally:
-    del(ver)
 
 
 class Const:
