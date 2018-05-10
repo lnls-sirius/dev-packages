@@ -3,11 +3,17 @@ python:
   - "3.6"
 script:
   - pip install -r requirements.txt
+# install PRUserial485
+  - git clone https://github.com/lnls-sirius/pru-serial485.git
+  - cd pru-serial485/src
+  - ./library_build.sh develop
+  - cd ../../
+# install siriuspy
   - cd siriuspy
   - python setup.py install
   - cd tests
   - python -m unittest discover
-  
+
 # safelist
 branches:
   only:
