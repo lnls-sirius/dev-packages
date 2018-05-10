@@ -10,7 +10,7 @@ from siriuspy.thread import QueueThread as _QueueThread
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.epics import connection_timeout as _connection_timeout
 from siriuspy.epics.computed_pv import ComputedPV as _ComputedPV
-from siriuspy.search import ma_search as _ma_search
+from siriuspy.search.ma_search import MASearch as _MASearch
 from siriuspy.pwrsupply.data import PSData as _PSData
 from siriuspy.pwrsupply import sync as _sync
 from siriuspy.pwrsupply.bsmp import Const as _c
@@ -591,7 +591,7 @@ class MAEpics(PSEpics):
             return _ComputedPV(pvname, str_obj,
                                self._computed_pvs_queue, *pvs)
         else:
-            psnames = _ma_search.conv_psmaname_2_psnames(self._maname)
+            psnames = _MASearch.conv_psmaname_2_psnames(self._maname)
             if len(psnames) > 1:  # SyncPV
                 # 2) SYNCPV fields
                 # this is used basically for SI and BO dipoles
