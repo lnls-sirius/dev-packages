@@ -1,3 +1,4 @@
+#!/usr/bin/env python-sirius
 
 """Unittest module for search package."""
 

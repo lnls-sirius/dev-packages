@@ -1,7 +1,10 @@
-"""Test BSMP serial communication classes."""
+#!/usr/bin/env python-sirius
+
+"""Test serial module."""
+
 import unittest
 from unittest.mock import Mock
-
+from siriuspy.bsmp import SerialErrMsgShort, SerialErrPckgLen
 from siriuspy.bsmp import Message, Package, Channel, SerialError
 from siriuspy.util import check_public_interface_namespace
 
@@ -33,7 +36,7 @@ class TestBSMPMessage(unittest.TestCase):
 
     def test_small_message(self):
         """Test message with stream impossibly small."""
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SerialErrMsgShort):
             Message(['\x11', '\x00'])
 
     def test_message_with_no_load(self):
@@ -131,7 +134,7 @@ class TestBSMPPackage(unittest.TestCase):
     def test_parse_small_stream(self):
         """Test constructor that tries to parse strem smaller than 5."""
         stream = ['\x02', '\x00', '\x00', chr(254)]
-        with self.assertRaises(ValueError):
+        with self.assertRaises(SerialErrPckgLen):
             Package(stream)
 
     def test_checksum(self):

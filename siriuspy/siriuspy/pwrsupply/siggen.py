@@ -10,10 +10,14 @@ DEFAULT_SIGGEN_CONFIG = (
     100.0,  # freq [Hz]
     0.0,    # amplitude [A]
     0.0,    # offset [A]
-    0.0,    # aux_param[0] (Sine: theta_beg)
-    0.0,    # aux_param[1] (Sine: theta_end)
-    0.0,    # aux_param[2] (Sine: not used)
-    0.0     # aux_param[3] (Sine: not used)
+    0.0,    # aux_param[0]
+            #   (Sine|DampedSine: theta_beg, Trapezoidal: ramp up[s])
+    0.0,    # aux_param[1]
+            #   (Sine|DampedSine: theta_end, Trapezoidal: ramp down[s])
+    0.0,    # aux_param[2]
+            #   (DampedSine: decay time [s])
+    0.0     # aux_param[3]
+            #   (reserved)
 )
 
 

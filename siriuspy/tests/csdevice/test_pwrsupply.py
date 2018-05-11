@@ -21,24 +21,32 @@ public_interface = (
     'ps_dsblenbl',
     'ps_interface',
     'ps_openloop',
-    'ps_states',
-    'ps_opmode',
-    'ps_cycle_type',
     'ps_pwrstate_sel',
     'ps_pwrstate_sts',
+    'ps_states',
+    'ps_opmode',
     'ps_cmdack',
     'ps_soft_interlock_FBP',
     'ps_hard_interlock_FBP',
     'ps_soft_interlock_FBP_DCLink',
     'ps_hard_interlock_FBP_DCLink',
-
+    'ps_cycle_type',
+    'ps_sync_mode',
     'Const',
-
     'get_ps_current_unit',
     'get_pu_current_unit',
     'get_common_propty_database',
     'get_ps_FBP_propty_database',
+    'get_ps_FAC_propty_database',
+    'get_ps_FAC_2S_propty_database',
+    'get_ps_FAC_2P4S_propty_database',
+    'get_ps_FAP_propty_database',
+    'get_ps_FAP_4P_propty_database',
+    'get_ps_FAP_2P2S_propty_database',
+    'get_ps_FBP_FOFB_propty_database',
+    'get_ps_Commercial_propty_database',
     'get_common_pu_propty_database',
+    'get_common_pu_SI_InjKicker_propty_database',
     'get_ps_propty_database',
     'get_pu_propty_database',
     'get_ma_propty_database',
@@ -167,7 +175,7 @@ class TestPwrSupply(unittest.TestCase):
 
     def test_ps_FBP_propty_database(self):
         """Test common_ps_propty_database."""
-        db = pwrsupply.get_ps_FBP_propty_database()
+        db = pwrsupply.get_ps_FBP_propty_database('si-quadrupole-q14-fam')
         self.assertIsInstance(db, dict)
         for prop in db:
             self.assertIsInstance(db[prop], dict)

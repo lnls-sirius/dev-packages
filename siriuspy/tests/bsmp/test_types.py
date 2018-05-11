@@ -1,6 +1,8 @@
-"""Test BSMP type structures."""
-import unittest
+#!/usr/bin/env python-sirius
 
+"""Test type module."""
+
+import unittest
 from siriuspy.bsmp import Types
 
 
@@ -9,7 +11,7 @@ class TestBSMPTypes(unittest.TestCase):
 
     def test_char_type(self):
         """Test char type properties."""
-        t = Types.t_char
+        t = Types.T_CHAR
 
         self.assertEqual(t.type, 'char')
         self.assertEqual(t.size, 1)

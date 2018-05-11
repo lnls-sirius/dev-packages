@@ -8,6 +8,10 @@ from siriuspy.csdevice.pwrsupply import ps_opmode as _ps_opmode
 class PSCStatus:
     """Power Supply Controller Status."""
 
+    OPMODE = _PSConst.OpMode
+    PWRSTATE = _PSConst.PwrState
+    STATES = _PSConst.States
+
     _mask_state = 0b0000000000001111
     _mask_oloop = 0b0000000000010000
     _mask_intfc = 0b0000000001100000
