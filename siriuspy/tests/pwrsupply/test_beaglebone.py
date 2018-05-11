@@ -28,6 +28,7 @@ class TestBeagleBone(unittest.TestCase):
 
     public_interface = (
         'psnames',
+        'devices_database',
         'pru_controller',
         'e2s_controller',
         'read',
