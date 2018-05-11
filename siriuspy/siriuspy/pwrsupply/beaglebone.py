@@ -28,7 +28,7 @@ from siriuspy.csdevice.pwrsupply import Const as _PSConst
 _DeviceInfo = _namedtuple('DeviceInfo', 'name, id')
 
 
-class Watcher(_threading.Thread):
+class _Watcher(_threading.Thread):
     """Watcher PS on given operation mode."""
 
     INSTANCE_COUNT = 0
@@ -47,18 +47,18 @@ class Watcher(_threading.Thread):
         self.controller = controller
         self.dev_info = dev_info
         self.op_mode = op_mode
-        self.state = Watcher.WAIT_OPMODE
+        self.state = _Watcher.WAIT_OPMODE
         self.exit = False
 
     def run(self):
-        Watcher.INSTANCE_COUNT += 1
+        _Watcher.INSTANCE_COUNT += 1
         if self.op_mode == _PSConst.OpMode.Cycle:
             self._watch_cycle()
         elif self.op_mode == _PSConst.OpMode.MigWfm:
             self._watch_mig()
         elif self.op_mode == _PSConst.OpMode.RmpWfm:
             self._watch_rmp()
-        Watcher.INSTANCE_COUNT -= 1
+        _Watcher.INSTANCE_COUNT -= 1
 
     def stop(self):
         """Stop thread."""
@@ -68,34 +68,34 @@ class Watcher(_threading.Thread):
         while True:
             if self.exit:
                 break
-            elif self.state == Watcher.WAIT_OPMODE:
+            elif self.state == _Watcher.WAIT_OPMODE:
                 if self._achieved_op_mode() and self._sync_started():
-                    self.state = Watcher.WAIT_TRIGGER
-            elif self.state == Watcher.WAIT_TRIGGER:
+                    self.state = _Watcher.WAIT_TRIGGER
+            elif self.state == _Watcher.WAIT_TRIGGER:
                 if self._changed_op_mode():
                     break
                 elif self._sync_stopped():
                     if self._cycle_started() or self._sync_pulsed():
-                        self.state = Watcher.WAIT_CYCLE
+                        self.state = _Watcher.WAIT_CYCLE
                     else:
                         break
-            elif self.state == Watcher.WAIT_CYCLE:
+            elif self.state == _Watcher.WAIT_CYCLE:
                 if self._changed_op_mode():
                     break
                 elif self._cycle_stopped():
                     # self._set_current()
                     self._set_slow_ref()
                     break
-            _time.sleep(Watcher.WAIT)
+            _time.sleep(_Watcher.WAIT)
 
     def _watch_mig(self):
         while True:
             if self.exit:
                 break
-            elif self.state == Watcher.WAIT_OPMODE:
+            elif self.state == _Watcher.WAIT_OPMODE:
                 if self._achieved_op_mode() and self._sync_started():
-                    self.state = Watcher.WAIT_MIG
-            elif self.state == Watcher.WAIT_MIG:
+                    self.state = _Watcher.WAIT_MIG
+            elif self.state == _Watcher.WAIT_MIG:
                 if self._changed_op_mode():
                     break
                 elif self._sync_stopped():
@@ -103,23 +103,23 @@ class Watcher(_threading.Thread):
                         self._set_current()
                         self._set_slow_ref()
                     break
-            _time.sleep(Watcher.WAIT)
+            _time.sleep(_Watcher.WAIT)
 
     def _watch_rmp(self):
         while True:
             if self.exit:
                 break
-            elif self.state == Watcher.WAIT_OPMODE:
+            elif self.state == _Watcher.WAIT_OPMODE:
                 if self._achieved_op_mode() and self._sync_started():
-                    self.state = Watcher.WAIT_RMP
-            elif self.state == Watcher.WAIT_RMP:
+                    self.state = _Watcher.WAIT_RMP
+            elif self.state == _Watcher.WAIT_RMP:
                 if self._changed_op_mode():
                     break
                 elif self._sync_stopped():
                     if self._sync_pulsed():
                         self._set_current()
                     break
-            _time.sleep(Watcher.WAIT)
+            _time.sleep(_Watcher.WAIT)
 
     def _current_op_mode(self):
         return self.controller.read(self.dev_info.name, 'OpMode-Sts')
@@ -478,7 +478,7 @@ class _E2SController:
     def _set_watchers(self, op_mode, devices_info):
         self._watchers.clear()
         for dev_info in devices_info:
-            t = Watcher(self, dev_info, op_mode)
+            t = _Watcher(self, dev_info, op_mode)
             try:
                 if self._watchers[dev_info.id].is_alive():
                     self._watchers[dev_info.id].stop()
