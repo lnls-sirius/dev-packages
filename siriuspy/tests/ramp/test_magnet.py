@@ -2,7 +2,25 @@
 """Magnet class test module."""
 
 import unittest
+from siriuspy import util
+from siriuspy.ramp import magnet
 import siriuspy.search as _search
+
+
+public_interface = (
+    'Magnet',
+)
+
+
+class TestModule(unittest.TestCase):
+    """Test module interface."""
+
+    def test_public_interface(self):
+        """Test module's public interface."""
+        valid = util.check_public_interface_namespace(
+                magnet,
+                public_interface)
+        self.assertTrue(valid)
 
 
 class TestMagnet(unittest.TestCase):
@@ -136,12 +154,12 @@ class TestMagnet(unittest.TestCase):
         self.modules = TestMagnet.Modules()
         self.modules.magnet = _mod
 
-    def _test_constructor(self):
+    def test_constructor(self):
         """Test create magnets.
 
         - Create a magnet for each maname in MASearchs.get_manames().
         """
-        for maname in TestMagnet.ps_manames:
+        for maname in TestMagnet.manames:
             magnet = self.modules.magnet.Magnet(maname=maname)
             splims = TestMagnet.conv_maname_2_splims(maname)
             self.assertEqual(magnet.maname, maname)

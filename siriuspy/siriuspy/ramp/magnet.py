@@ -1,5 +1,4 @@
-"""Ramp Convertion Classes."""
-
+"""Ramp module with conversion classes."""
 
 import siriuspy.util as _util
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
@@ -11,7 +10,7 @@ from siriuspy.factory import NormalizerFactory as _NormalizerFactory
 _magfuncs = _mutil.get_magfunc_2_multipole_dict()
 
 
-class Magnet(object):
+class Magnet:
     """Base class for handling magnets."""
 
     def __init__(self, maname):
