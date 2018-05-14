@@ -113,9 +113,7 @@ class _Watcher(_threading.Thread):
                 if self._achieved_op_mode() and self._sync_started():
                     self.state = _Watcher.WAIT_RMP
             elif self.state == _Watcher.WAIT_RMP:
-                if self._changed_op_mode():
-                    break
-                elif self._sync_stopped():
+                if self._sync_stopped() or self._changed_op_mode():
                     if self._sync_pulsed():
                         self._set_current()
                     break
@@ -156,6 +154,7 @@ class _Watcher(_threading.Thread):
             val = self.controller.read(dev_name, 'CycleOffset-RB')
         else:
             val = self.controller.read(dev_name, 'WfmData-RB')[-1]
+        print('Writing {} to {}'.format(val, dev_name))
         self.controller.write(dev_name, cur_sp, val)
 
     def _set_slow_ref(self):
@@ -521,7 +520,7 @@ class _E2SController:
         # Further actions that depend on op mode
         if setpoint == _PSConst.OpMode.SlowRef:
             # disable siggen
-            self._stop_watchers(devices_info)
+            # self._stop_watchers(devices_info)
             self._execute_command(devices_info, _c.F_DISABLE_SIGGEN)
         elif setpoint in (_PSConst.OpMode.Cycle, _PSConst.OpMode.MigWfm,
                           _PSConst.OpMode.RmpWfm):
