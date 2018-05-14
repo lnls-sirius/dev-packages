@@ -17,6 +17,7 @@ from copy import deepcopy as _dcopy
 from siriuspy.bsmp import BSMP as _BSMP
 from siriuspy.bsmp import Response as _Response
 from siriuspy.bsmp.exceptions import SerialError as _SerialError
+from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
 from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 from siriuspy.pwrsupply.pru import Const as _PRUConst
 # from siriuspy.pwrsupply.pru import PRUInterface as _PRUInterface
@@ -768,6 +769,8 @@ class PRUController:
         n, n0 = len(curve), len(self._curves[idx])
         if n == 0:
             raise ValueError('Invalid empty curve!')
+        elif n > _MAX_WFMSIZE:
+            raise ValueError('Curve length exceeds maximum value!')
         elif n > n0:
             for i in self.device_ids:
                 # padd wfmdata with current last value
