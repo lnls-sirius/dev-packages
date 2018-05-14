@@ -9,6 +9,9 @@ from siriuspy.ramp.optics import _nominal_intkl
 from siriuspy.magnet import util as _mutil
 
 
+_bo_injection_energy = 0.150  # [GeV]
+_bo_ejection_energy = 3.0  # [GeV]
+
 _nominal_strengths = {
     'SI-Fam:MA-QFA': +0.7146305692912001,
     'SI-Fam:MA-QDA': -0.2270152048045000,
@@ -34,7 +37,7 @@ _nominal_strengths = {
     'SI-Fam:MA-SDA3': -20.9911199999999987,
     'SI-Fam:MA-SDB3': -26.0718599999999974,
     'SI-Fam:MA-SDP3': -26.1236099999999993,
-    'SI-Fam:MA-SFA0': +07.8854400000000000,
+    'SI-Fam:MA-SFA0': +7.8854400000000000,
     'SI-Fam:MA-SFB0': +11.0610149999999994,
     'SI-Fam:MA-SFP0': +11.0610149999999994,
     'SI-Fam:MA-SFA1': +28.7742599999999982,
@@ -298,11 +301,6 @@ class MagnetWaveform(_Magnet):
         self._waveform.rampdown_change(start=i5, stop=i6,
                                        start_value=c5, stop_value=c6)
 
-    def clear_bumps(self):
-        """Clear waveform bumps."""
-        self._waveform.clear_bumps()
-        self._set_deprecated(True)  # clear_bumps DOES NOT set deprecated.
-
     # --- private methods ---
 
     def _add_dep_magwfm(self, magwfm):
@@ -324,18 +322,18 @@ class MagnetWaveform(_Magnet):
     def _calc_strengths(self, waveform):
         kwargs = {'currents': waveform}
         if self._dipole is not None:
-            kwargs['currents_dipole'] = self._dipole.waveform
+            kwargs['strengths_dipole'] = self._dipole.strengths
         if self._family is not None:
-            kwargs['currents_family'] = self._family.waveform
+            kwargs['strengths_family'] = self._family.strengths
         strengths = self.conv_current_2_strength(**kwargs)
         return strengths
 
     def _calc_currents(self, strength):
         kwargs = {'strengths': strength}
         if self._dipole is not None:
-            kwargs['currents_dipole'] = self._dipole.currents
+            kwargs['strengths_dipole'] = self._dipole.strengths
         if self._family is not None:
-            kwargs['currents_family'] = self._family.currents
+            kwargs['strengths_family'] = self._family.strengths
         currents = self.conv_strength_2_current(**kwargs)
         return currents
 
@@ -346,13 +344,11 @@ class MagnetWaveform(_Magnet):
 
     def _init_waveform(self):
         if self.maname == 'BO-Fam:MA-B':
-            eje_energy = 3.0  # [GeV]
-            eje_current = self.conv_strength_2_current(eje_energy)
+            eje_current = self.conv_strength_2_current(_bo_ejection_energy)
             self._waveform = \
                 _Waveform(scale=eje_current)
         elif self.maname == 'SI-Fam:MA-B1B2':
-            eje_energy = 3.0  # [GeV]
-            eje_current = self.conv_strength_2_current(eje_energy)
+            eje_current = self.conv_strength_2_current(_bo_ejection_energy)
             self._waveform = _Waveform()
             self._waveform.waveform = eje_current
         elif self.maname in _nominal_strengths:
@@ -368,14 +364,6 @@ class MagnetWaveform(_Magnet):
             self._waveform.rampdown_start_value = v07[5]
             self._waveform.rampdown_stop_value = v07[6]
             self._waveform.stop_value = currents[-1]
-            # in general, if excitation curves are not exactly linear, a
-            # parameterized current waveform becomes, when converted to
-            # strength, a waveform that cannot be parameterized using the
-            # same polynomials. Therefore waveform_bumps have to accomodate
-            # the difference between the closest parameterized current
-            # waveform and the waveform that coresponds to the general
-            # strength ramp.
-            self._waveform.waveform = currents  # force wfm_bumps calculation.
         else:
             self._waveform = _Waveform(scale=0.0)
         self._set_deprecated(True)
@@ -391,6 +379,338 @@ class MagnetWaveform(_Magnet):
                 else:
                     obj._set_deprecated()
 
+
+# class MagnetWaveform(_Magnet):
+#     """MagnetWaveform Class."""
+#
+#     def __init__(self,
+#                  maname,
+#                  dipole=None,
+#                  family=None):
+#         """Class init."""
+#         self._dependents = set()
+#         _Magnet.__init__(self, maname=maname)
+#         self._dipole = dipole
+#         if self._dipole is not None:
+#             self._dipole._add_dep_magwfm(self)
+#         self._family = family
+#         if self._family is not None:
+#             self._family._add_dep_magwfm(self)
+#         self._init_waveform()
+#
+#     # --- properties ---
+#
+#     @property
+#     def deprecated(self):
+#         """Deprecated state."""
+#         return self._deprecated or self._waveform.deprecated
+#
+#     @property
+#     def waveform(self):
+#         """Return current waveform."""
+#         return self._waveform
+#
+#     @property
+#     def currents(self):
+#         """Return waveform currents values."""
+#         return self._waveform.waveform
+#
+#     @currents.setter
+#     def currents(self, currents):
+#         """Waveform currents."""
+#         self._waveform.waveform = currents  # This will set deprecated state.
+#
+#     @property
+#     def strengths(self):
+#         """Return strength waveform."""
+#         if self.deprecated:
+#             self._update_strength()
+#         return self._strengths
+#
+#     @strengths.setter
+#     def strengths(self, strengths):
+#         """Waveform strengths."""
+#         currents = self._calc_currents(strengths)
+#         self._waveform.waveform = currents  # This will set deprecated state.
+#
+#     @property
+#     def boundary_indices(self):
+#         """Return list of regions boundaries."""
+#         return self._waveform.boundary_indices
+#
+#     @property
+#     def rampup_start_index(self):
+#         """Return index of the second region boundary."""
+#         return self._waveform.rampup_start_index
+#
+#     @property
+#     def rampup_stop_index(self):
+#         """Return index of the third region boundary."""
+#         return self._waveform.rampup_stop_index
+#
+#     @property
+#     def plateau_start_index(self):
+#         """Return index of the fourth region boundary."""
+#         return self._waveform.plateau_start_index
+#
+#     @property
+#     def plateau_stop_index(self):
+#         """Return index of the fifth region boundary."""
+#         return self._waveform.plateau_stop_index
+#
+#     @property
+#     def rampdown_start_index(self):
+#         """Return index of the sixth region boundary."""
+#         return self._waveform.rampdown_start_index
+#
+#     @property
+#     def rampdown_stop_index(self):
+#         """Return index of the seventh region boundary."""
+#         return self._waveform.rampdown_stop_index
+#
+#     @property
+#     def start_value(self):
+#         """Return waveform value at the left-end and first region boundary."""
+#         if self.deprecated:
+#             self._update_strength()
+#         return self._strengths[0]
+#
+#     @property
+#     def rampup_start_value(self):
+#         """Return waveform value at the second region boundary."""
+#         if self.deprecated:
+#             self._update_strength()
+#         return self._strengths[self._waveform.rampup_start_index]
+#
+#     @property
+#     def rampup_stop_value(self):
+#         """Return waveform value at the 3rd region boundary."""
+#         if self.deprecated:
+#             self._update_strength()
+#         return self._strengths[self._waveform.rampup_stop_index]
+#
+#     @property
+#     def plateau_value(self):
+#         """Return waveform value at the 4th and 5th region boundaries."""
+#         if self.deprecated:
+#             self._update_strength()
+#         return self._strengths[self._waveform.plateau_start_index]
+#
+#     @property
+#     def rampdown_start_value(self):
+#         """Return waveform value at the 6h region boundary."""
+#         if self.deprecated:
+#             self._update_strength()
+#         return self._strengths[self._waveform.rampdown_start_index]
+#
+#     @property
+#     def rampdown_stop_value(self):
+#         """Return waveform value at the 7th region boundary."""
+#         if self.deprecated:
+#             self._update_strength()
+#         return self._strengths[self._waveform.rampdown_stop_index]
+#
+#     @property
+#     def stop_value(self):
+#         """Return waveform value at the 8th and right-end region boundaries."""
+#         if self.deprecated:
+#             self._update_strength()
+#         return self._strengths[-1]
+#
+#     @rampup_start_index.setter
+#     def rampup_start_index(self, idx):
+#         """Set index of the second region boundary."""
+#         self._waveform.rampup_start_index = idx
+#         self._set_deprecated(True)
+#
+#     @rampup_stop_index.setter
+#     def rampup_stop_index(self, idx):
+#         """Set index of the third region boundary."""
+#         self._waveform.rampup_stop_index = idx
+#         self._set_deprecated(True)
+#
+#     @plateau_start_index.setter
+#     def plateau_start_index(self, idx):
+#         """Set index of the fourth region boundary."""
+#         self._waveform.plateau_start_index = idx
+#         self._set_deprecated(True)
+#
+#     @plateau_stop_index.setter
+#     def plateau_stop_index(self, idx):
+#         """Set index of the fifth region boundary."""
+#         self._waveform.plateau_stop_index = idx
+#         self._set_deprecated(True)
+#
+#     @rampdown_start_index.setter
+#     def rampdown_start_index(self, idx):
+#         """Set index of the sixth region boundary."""
+#         self._waveform.rampdown_start_index = idx
+#         self._set_deprecated(True)
+#
+#     @rampdown_stop_index.setter
+#     def rampdown_stop_index(self, idx):
+#         """Set index of the 7th region boundary."""
+#         self._waveform.rampdown_stop_index = idx
+#         self._set_deprecated(True)
+#
+#     @start_value.setter
+#     def start_value(self, value):
+#         """Set waveform value at the left-end and 1st boundary."""
+#         current = self._calc_currents(value)
+#         # The next statement will set deprecated state.
+#         self._waveform.start_value = current
+#
+#     @rampup_start_value.setter
+#     def rampup_start_value(self, value):
+#         """Set waveform value at the 2nd region boundary."""
+#         current = self._calc_currents(value)
+#         # The next statement will set deprecated state.
+#         self._waveform.rampup_start_value = current
+#
+#     @rampup_stop_value.setter
+#     def rampup_stop_value(self, value):
+#         """Set waveform value at the 3rd region boundary."""
+#         current = self._calc_currents(value)
+#         # The next statement will set deprecated state.
+#         self._waveform.rampup_stop_value = current
+#
+#     @plateau_value.setter
+#     def plateau_value(self, value):
+#         """Set waveform value at the 4th and 5th region boundaries."""
+#         current = self._calc_currents(value)
+#         # The next statement will set deprecated state.
+#         self._waveform.plateau_value = current
+#
+#     @rampdown_start_value.setter
+#     def rampdown_start_value(self, value):
+#         """Set waveform value at the 6th region boundary."""
+#         current = self._calc_currents(value)
+#         # The next statement will set deprecated state.
+#         self._waveform.rampdown_start_value = current
+#
+#     @rampdown_stop_value.setter
+#     def rampdown_stop_value(self, value):
+#         """Set waveform value at the 7th region boundary."""
+#         current = self._calc_currents(value)
+#         # The next statement will set deprecated state.
+#         self._waveform.rampdown_stop_value = current
+#
+#     @stop_value.setter
+#     def stop_value(self, value):
+#         """Set waveform value at the 8th and right-end region boundaries."""
+#         current = self._calc_currents(value)
+#         # The next statement will set deprecated state.
+#         self._waveform.stop_value = current
+#
+#     # --- public methods ---
+#
+#     def rampup_change(self,
+#                       start=None, stop=None,
+#                       start_value=None, stop_value=None):
+#         """Change waveform ramp up."""
+#         i1 = start
+#         i2 = stop
+#         v1 = start_value
+#         v2 = stop_value
+#         c1, c2 = self._calc_currents([v1, v2])
+#         self._waveform.rampup_change(start=i1, stop=i2,
+#                                      start_value=c1, stop_value=c2)
+#
+#     def rampdown_change(self,
+#                         start=None, stop=None,
+#                         start_value=None, stop_value=None):
+#         """Change waveform ramp down."""
+#         i5 = start
+#         i6 = stop
+#         v5 = start_value
+#         v6 = stop_value
+#         c5, c6 = self._calc_currents([v5, v6])
+#         self._waveform.rampdown_change(start=i5, stop=i6,
+#                                        start_value=c5, stop_value=c6)
+#
+#     def clear_bumps(self):
+#         """Clear waveform bumps."""
+#         self._waveform.clear_bumps()
+#         self._set_deprecated(True)  # clear_bumps DOES NOT set deprecated.
+#
+#     # --- private methods ---
+#
+#     def _add_dep_magwfm(self, magwfm):
+#         """Add dependent magnet waveform."""
+#         if isinstance(magwfm, MagnetWaveform):
+#             # add weakref of magwfm object.
+#             # this way the GC can delete it.
+#             self._dependents.add(_weakref.ref(magwfm))
+#         else:
+#             raise TypeError('Invalid argument type!')
+#
+#     def _remove_dep_magwfm(self, magwfm):
+#         """Remove dependent magnet waveform."""
+#         try:
+#             self.remove(_weakref.ref(magwfm))
+#         except KeyError:
+#             pass
+#
+#     def _calc_strengths(self, waveform):
+#         kwargs = {'currents': waveform}
+#         if self._dipole is not None:
+#             kwargs['strengths_dipole'] = self._dipole.strengths
+#         if self._family is not None:
+#             kwargs['strengths_family'] = self._family.strengths
+#         strengths = self.conv_current_2_strength(**kwargs)
+#         return strengths
+#
+#     def _calc_currents(self, strength):
+#         kwargs = {'strengths': strength}
+#         if self._dipole is not None:
+#             kwargs['strengths_dipole'] = self._dipole.strengths
+#         if self._family is not None:
+#             kwargs['strengths_family'] = self._family.strengths
+#         currents = self.conv_strength_2_current(**kwargs)
+#         return currents
+#
+#     def _update_strength(self):
+#         currents = self.currents  # This updates waveform.
+#         self._strengths = self._calc_strengths(currents)
+#         self._set_deprecated(False)
+#
+#     def _init_waveform(self):
+#         if self.maname == 'BO-Fam:MA-B':
+#             eje_current = self.conv_strength_2_current(_bo_ejection_energy)
+#             self._waveform = \
+#                 _Waveform(scale=eje_current)
+#         elif self.maname == 'SI-Fam:MA-B1B2':
+#             eje_current = self.conv_strength_2_current(_bo_ejection_energy)
+#             self._waveform = _Waveform()
+#             self._waveform.waveform = eje_current
+#         elif self.maname in _nominal_strengths:
+#             strengths = _nominal_strengths[self.maname] * \
+#                 _np.ones(_Waveform.wfmsize)
+#             currents = self._calc_currents(strengths)
+#             self._waveform = _Waveform()
+#             v07 = currents[self._waveform.boundary_indices]
+#             self._waveform.start_value = currents[0]
+#             self._waveform.rampup_start_value = v07[1]
+#             self._waveform.rampup_stop_value = v07[2]
+#             self._waveform.plateau_value = v07[3]
+#             self._waveform.rampdown_start_value = v07[5]
+#             self._waveform.rampdown_stop_value = v07[6]
+#             self._waveform.stop_value = currents[-1]
+#         else:
+#             self._waveform = _Waveform(scale=0.0)
+#         self._set_deprecated(True)
+#
+#     def _set_deprecated(self, state):
+#         self._deprecated = state
+#         if state is True:
+#             for dependent in self._dependents:
+#                 obj = dependent()
+#                 # only sets deprecated state of object if its weakref is valid.
+#                 if obj is None:
+#                     self._dependents.remove(obj)
+#                 else:
+#                     obj._set_deprecated()
+#
 
 class WfmSet:
     """Class WfmSet."""

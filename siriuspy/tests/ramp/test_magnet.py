@@ -154,11 +154,34 @@ class TestMagnet(unittest.TestCase):
         self.modules = TestMagnet.Modules()
         self.modules.magnet = _mod
 
-    def test_constructor(self):
+    public_interface = (
+        'maname',
+        'section',
+        'dipole_name',
+        'family_name',
+        'magfunc',
+        'strength_label',
+        'strength_units',
+        'current_min',
+        'current_max',
+        'splims',
+        'conv_current_2_strength',
+        'conv_strength_2_current'
+    )
+
+    def test_public_interface(self):
+        """Test module's public interface."""
+        valid = util.check_public_interface_namespace(
+                magnet.Magnet,
+                TestMagnet.public_interface)
+        self.assertTrue(valid)
+
+    def _test_constructor(self):
         """Test create magnets.
 
         - Create a magnet for each maname in MASearchs.get_manames().
         """
+        # TODO: use mocking!!!
         for maname in TestMagnet.manames:
             magnet = self.modules.magnet.Magnet(maname=maname)
             splims = TestMagnet.conv_maname_2_splims(maname)
@@ -171,8 +194,9 @@ class TestMagnet(unittest.TestCase):
                                                'TB-Fam:MA-B',
                                                'TS-Fam:MA-B'))
 
-    def test_conversions(self):
+    def _test_conversions(self):
         """Test conversion current 2 strength."""
+        # TODO: use mocking!!!
         for maname in TestMagnet.manames:
             if 'PM-' in maname:
                 print('test_conversions: skipping {} ...'.format(maname))
