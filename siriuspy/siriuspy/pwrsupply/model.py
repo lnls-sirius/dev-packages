@@ -33,7 +33,6 @@ class _Device:
         self._slave_id = slave_id
         self._controller = controller
 
-
         # self._init_setpoints()
         # self._init_constants()
 
@@ -54,7 +53,7 @@ class _Device:
 
     def connected(self):
         """Return wether device is connected."""
-        return self.controller.connections[slave_id]
+        return self.controller.connections[self._slave_id]
 
     def _execute_function(self, function_id, value=None):
         """Execute function."""
@@ -62,7 +61,6 @@ class _Device:
             self.controller.exec_function(self._slave_id, function_id)
         else:
             self.controller.exec_function(self._slave_id, function_id, value)
-
 
     # @property
     # def bsmp_device(self):
@@ -252,19 +250,17 @@ class _Device:
 class FBPPowerSupply(_Device):
     """Control a power supply using BSMP protocol."""
 
-
-
     # Device API
     def turn_on(self):
         """Turn power supply on."""
         self._execute_function(_c.F_TURN_ON)
-        _time.sleep(0.3)
+        _time.sleep(0.3)  # TODO: really necessary? PRUController does that.
         self._execute_function(_c.F_CLOSE_LOOP)
 
     def turn_off(self):
         """Turn power supply off."""
         self._execute_function(_c.F_TURN_OFF)
-        _time.sleep(0.3)
+        _time.sleep(0.3)  # TODO: really necessary? PRUController does that.
 
     def select_op_mode(self, value):
         """Set operation mode."""
@@ -275,7 +271,7 @@ class FBPPowerSupply(_Device):
     def reset_interlocks(self):
         """Reset."""
         self._execute_function(_c.F_RESET_INTERLOCKS)
-        _time.sleep(0.1)
+        _time.sleep(0.1)  # TODO: should PRUController do that?
 
     def set_slowref(self, value):
         """Set current."""
@@ -303,8 +299,6 @@ class FBPPowerSupply(_Device):
         self._execute_function(_c.F_DISABLE_SIGGEN)
 
     # --- Methods called by write ---
-
-
 
     # --- Virtual methods ---
 
@@ -597,7 +591,7 @@ class MAEpics(PSEpics):
                 # this is used basically for SI and BO dipoles
                 sync = self._get_sync_obj(field)
                 pvs = [self._prefix + device_name + ":" + field
-                       for device_name in self._psnames()]
+                       for device_name in psnames]
                 pvname = self._psname + ":" + field
                 return _ComputedPV(pvname, sync,
                                    self._computed_pvs_queue, *pvs)
