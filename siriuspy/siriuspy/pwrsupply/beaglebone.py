@@ -71,6 +71,8 @@ class _Watcher(_threading.Thread):
             elif self.state == _Watcher.WAIT_OPMODE:
                 if self._achieved_op_mode() and self._sync_started():
                     self.state = _Watcher.WAIT_TRIGGER
+                elif self._sync_pulsed():
+                    self.state = _Watcher.WAIT_CYCLE
             elif self.state == _Watcher.WAIT_TRIGGER:
                 if self._changed_op_mode():
                     break
@@ -124,7 +126,6 @@ class _Watcher(_threading.Thread):
 
     def _achieved_op_mode(self):
         return self.op_mode == self._current_op_mode()
-
 
     def _changed_op_mode(self):
         return self.op_mode != self._current_op_mode()
@@ -494,6 +495,7 @@ class _E2SController:
                     self._watchers[dev_info.id].join()
             except KeyError:
                 continue
+
     # Helpers
 
     def _get_opmode(self, device_info):
