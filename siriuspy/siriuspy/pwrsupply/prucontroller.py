@@ -17,6 +17,7 @@ from copy import deepcopy as _dcopy
 from siriuspy.bsmp import BSMP as _BSMP
 from siriuspy.bsmp import Response as _Response
 from siriuspy.bsmp.exceptions import SerialError as _SerialError
+from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
 from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 from siriuspy.pwrsupply.pru import Const as _PRUConst
 # from siriuspy.pwrsupply.pru import PRUInterface as _PRUInterface
@@ -31,7 +32,7 @@ from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 from siriuspy.pwrsupply.controller import FBP_BSMPSim as _FBP_BSMPSim
 
 
-# NOTE on current behaviour of PRU and Power Supplies:
+# NOTE: On current behaviour of PRU and Power Supplies:
 #
 # 01. Currently curve block changes are implemented only upon the arrival of
 #     timing trigger that corresponds to the last curve point.
@@ -47,25 +48,21 @@ from siriuspy.pwrsupply.controller import FBP_BSMPSim as _FBP_BSMPSim
 #     before switching the power supply off the ramp mode.
 #     This is prone to operation errors!
 #
-# 03. The time taken by the BSMP command 0x12 (read group of variables) with
-#     group_id used during RmpWfm mode needs to be measured and 'sync_start'
-#     delay chosen appropriatelly.
-#
-# 04. In order to avoid having many concurrent processes|threads accessing
+# 03. In order to avoid having many concurrent processes|threads accessing
 #     the UART through the PRU library by mistake it is desirable to have a
 #     semaphore the PRU memory to guarantee that only one process access it.
 #     Think about how this could be implemented in a safe but simple way...
 #
-# 05. Change of curves on the fly. In order to allow this blocks 0 and 1 of
+# 04. Change of curves on the fly. In order to allow this blocks 0 and 1 of
 #     curves will be used in a cyclic way. This should be transparent for
 #     users of the PRUController. At this points only one high level curve
 #     for each power supply is implemented. Also we have not implemented yet
 #     the possibility of changing the curve length.
 #
-# 06. Discretization of the current-mon can mascarade measurements of update
+# 05. Discretization of the current-mon can mascarade measurements of update
 #     rates. For testing we should add a small random fluctuation.
 #
-# 07. In Cycle mode, the high level OpMode-Sts (maybe OpMode-Sel too?) is
+# 06. In Cycle mode, the high level OpMode-Sts (maybe OpMode-Sel too?) is
 #     expected to return to SlowRef automatically without changing CurrentRef.
 #     In the current firmware version when the controller executes a
 #     SELECT_OP_MODE with SlowRef as argument it automatically sets CurrentRef
@@ -80,8 +77,7 @@ from siriuspy.pwrsupply.controller import FBP_BSMPSim as _FBP_BSMPSim
 #
 # 01. What does the 'delay' param in 'PRUserial485.UART_write' mean exactly?
 # 02. Request a 'sync_abort' function in the PRUserial485 library.
-# 03. Request a semaphore for using the PRU library.
-# 04. Requested new function that reads curves at PRU memory.
+# 03. Requested new function that reads curves at PRU memory.
 #     patricia will work on this.
 
 
@@ -769,10 +765,25 @@ class PRUController:
         # get index of curve for the given device id
         idx = self.device_ids.index(device_id)
 
-        # for now do not accept changing curve lengths
-        if len(curve) != len(self._curves[idx]):
-            self.disconnect()
-            raise NotImplementedError('Change of curve size not implemented')
+        # if the case, trim or padd existing curves
+        n, n0 = len(curve), len(self._curves[idx])
+        if n == 0:
+            raise ValueError('Invalid empty curve!')
+        elif n > _MAX_WFMSIZE:
+            raise ValueError('Curve length exceeds maximum value!')
+        elif n > n0:
+            for i in self.device_ids:
+                # padd wfmdata with current last value
+                self._curves[i] += [self._curves[i][-1], ] * (n - n0)
+        elif n < n0:
+            for i in self.device_ids:
+                # trim wfmdata
+                self._curves[i] += self._curves[i][:n]
+
+        # # for now do not accept changing curve lengths
+        # if len(curve) != len(self._curves[idx]):
+        #     self.disconnect()
+        #     raise NotImplementedError('Change of curve size not implemented')
 
         # store curve in PRUController attribute
         self._curves[idx] = list(curve)
