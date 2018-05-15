@@ -3,28 +3,18 @@ import time as _time
 
 from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 
+__version__ = '1.3.1'  # current compatible version.
 # load PRUserial485 if available and checks version
 
-# version of PRUserial485 library compatible with current implementation of
-# PRU classes.
-__version__ = '1.3.1'
+import PRUserial485 as _PRUserial485
 
-try:
-    import PRUserial485 as _PRUserial485
-    ver, *_ = _PRUserial485.__version__.split(':')
-    if ver != __version__:
-        # loaded library has an incompatible version!
-        err_msg = 'Invalid PRUserial485 library version! {} != {}'.format(
-            _PRUserial485.__version__, __version__)
-        raise ValueError(err_msg)
-    # if not _PRUserial485.libraries_loaded:
-    #     # could not import libray, which is interpreted as not installed.
-    #     _PRUserial485 = None
-    del(ver)
-except ImportError:
-    # in case PRUserial485 library is not installed and
-    # this module is used only for simulated PRUs.
-    _PRUserial485 = None
+ver, *_ = _PRUserial485.__version__.split(':')
+if ver != __version__:
+    # loaded library has an incompatible version!
+    err_msg = 'Invalid PRUserial485 library version! {} != {}'.format(
+        _PRUserial485.__version__, __version__)
+    raise ValueError(err_msg)
+del(ver)
 
 
 class Const:
