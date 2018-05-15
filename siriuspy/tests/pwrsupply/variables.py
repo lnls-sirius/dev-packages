@@ -5,7 +5,9 @@ Used by test in controller and model modulesself.
 # TODO: change string format return from serial
 values = [
     8579, 6.7230000495910645, 6.7230000495910645,
-    'V0.07 2018-03-26V0.07 2018-03-26', 5, 8617, 0, 2, 1, 0.0, 0.0, 1.0, 0.0,
+    [b'V', b'0', b'.', b'0', b'7', b' ', b'2', b'0', b'1', b'8', b'-', b'0', b'3',
+     b'-', b'2', b'6', b'V', b'0', b'.', b'0', b'7', b' ', b'2', b'0', b'1', b'8', b'-', b'0',
+     b'3', b'-', b'2', b'6'], 5, 8617, 0, 2, 1, 0.0, 0.0, 1.0, 0.0,
     [1.0, 1.0, 1.0, 0.0], 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0, 0, 0,
     6.722831726074219, 1.23291015625, 5.029296875, 53.0]
 
@@ -41,10 +43,19 @@ bsmp_values = [
 dict_values = {
     'PwrState-Sts': 1,
     'OpMode-Sts': 0,
+    'OpenLoop-Mon': 0,
+    'CtrlMode-Mon': 0,
     'Current-RB': 6.7230000495910645,
     'CurrentRef-Mon': 6.7230000495910645,
     'Version-Cte': 'V0.07 2018-03-26V0.07 2018-03-26',
+    'CycleEnbl-Mon': 0,
     'CycleType-Sts': 2,
+    'CycleNrCycles-RB': 1,
+    'CycleIndex-Mon': 0.0,
+    'CycleFreq-RB': 0.0,
+    'CycleAmpl-RB': 1.0,
+    'CycleOffset-RB': 0.0,
+    'CycleAuxParam-RB': [1.0, 1.0, 1.0, 0.0],
     'IntlkSoft-Mon': 0,
     'IntlkHard-Mon': 0,
     'Current-Mon': 6.722831726074219}

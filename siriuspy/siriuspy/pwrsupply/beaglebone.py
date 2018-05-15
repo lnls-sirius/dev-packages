@@ -81,6 +81,8 @@ class _Watcher(_threading.Thread):
             elif self.state == _Watcher.WAIT_OPMODE:
                 if self._achieved_op_mode() and self._sync_started():
                     self.state = _Watcher.WAIT_TRIGGER
+                elif self._sync_pulsed():
+                    self.state = _Watcher.WAIT_CYCLE
             elif self.state == _Watcher.WAIT_TRIGGER:
                 if self._changed_op_mode():
                     break
@@ -123,9 +125,7 @@ class _Watcher(_threading.Thread):
                 if self._achieved_op_mode() and self._sync_started():
                     self.state = _Watcher.WAIT_RMP
             elif self.state == _Watcher.WAIT_RMP:
-                if self._changed_op_mode():
-                    break
-                elif self._sync_stopped():
+                if self._sync_stopped() or self._changed_op_mode():
                     if self._sync_pulsed():
                         self._set_current()
                     break
@@ -136,7 +136,6 @@ class _Watcher(_threading.Thread):
 
     def _achieved_op_mode(self):
         return self.op_mode == self._current_op_mode()
-
 
     def _changed_op_mode(self):
         return self.op_mode != self._current_op_mode()
@@ -166,6 +165,7 @@ class _Watcher(_threading.Thread):
             val = self.controller.read(dev_name, 'CycleOffset-RB')
         else:
             val = self.controller.read(dev_name, 'WfmData-RB')[-1]
+        print('Writing {} to {}'.format(val, dev_name))
         self.controller.write(dev_name, cur_sp, val)
 
     def _set_slow_ref(self):
@@ -267,6 +267,7 @@ class _E2SController:
                 # elif field in self._locals:
                 #     self._local_vars[device_info.name][field] = _deepcopy(db)
         self._initiated = False
+        self._operation_mode = 0
         self._init()
         self._watchers = dict()
 
@@ -409,7 +410,12 @@ class _E2SController:
         # TODO: this expedient 'setpoint+3' seems to be too fragile
         # against possible future modifications of ps firmware/spec.
         self._pre_opmode(devices_info, setpoint)
-        self._execute_command(devices_info, _c.F_SELECT_OP_MODE, setpoint+3)
+        # If SlowRefSync, MigWfm or RmpWfm set to SlowRef
+        op_mode = setpoint
+        if setpoint in (0, 1, 3, 4):
+            self._operation_mode = setpoint
+            op_mode = 0
+        self._execute_command(devices_info, _c.F_SELECT_OP_MODE, op_mode+3)
         self._set_setpoints(devices_info, 'OpMode-Sel', setpoint)
         self._pos_opmode(devices_info, setpoint)
 
@@ -430,15 +436,15 @@ class _E2SController:
     def _abort(self, devices_info, setpoint):
         _log.warning('Abort not implemented')
 
-    def _enable_cycle(self, devices_info, setpoint):
-        """Enable cycle command."""
-        self._execute_command(devices_info, _c.F_ENABLE_SIGGEN, setpoint)
-        self._set_cmd_setpoints(devices_info, 'CycleEnbl-Cmd')
+    # def _enable_cycle(self, devices_info, setpoint):
+    #     """Enable cycle command."""
+    #     self._execute_command(devices_info, _c.F_ENABLE_SIGGEN, setpoint)
+    #     self._set_cmd_setpoints(devices_info, 'CycleEnbl-Cmd')
 
-    def _disable_cycle(self, devices_info, setpoint):
-        """Disable cycle command."""
-        self._execute_command(devices_info, _c.F_DISABLE_SIGGEN, setpoint)
-        self._set_cmd_setpoints(devices_info, 'CycleDsbl-Cmd')
+    # def _disable_cycle(self, devices_info, setpoint):
+    #     """Disable cycle command."""
+    #     self._execute_command(devices_info, _c.F_DISABLE_SIGGEN, setpoint)
+    #     self._set_cmd_setpoints(devices_info, 'CycleDsbl-Cmd')
 
     def _set_cycle_type(self, devices_info, setpoint):
         """Set cycle type."""
@@ -481,22 +487,24 @@ class _E2SController:
         self._set_setpoints(devices_info, 'WfmData-SP', [setpoint])
         for dev_info in devices_info:
             self._pru_controller.pru_curve_write(dev_info.id, setpoint)
-        return True
 
     # Watchers
 
     def _set_watchers(self, op_mode, devices_info):
-        self._watchers.clear()
+        self._stop_watchers(devices_info)
         for dev_info in devices_info:
             t = _Watcher(self, dev_info, op_mode)
+            self._watchers[dev_info.id] = t
+            self._watchers[dev_info.id].start()
+
+    def _stop_watchers(self, devices_info):
+        for dev_info in devices_info:
             try:
                 if self._watchers[dev_info.id].is_alive():
                     self._watchers[dev_info.id].stop()
                     self._watchers[dev_info.id].join()
             except KeyError:
-                pass
-            self._watchers[dev_info.id] = t
-            self._watchers[dev_info.id].start()
+                continue
 
     # Helpers
 
@@ -524,6 +532,7 @@ class _E2SController:
         # Further actions that depend on op mode
         if setpoint == _PSConst.OpMode.SlowRef:
             # disable siggen
+            # self._stop_watchers(devices_info)
             self._execute_command(devices_info, _c.F_DISABLE_SIGGEN)
         elif setpoint in (_PSConst.OpMode.Cycle, _PSConst.OpMode.MigWfm,
                           _PSConst.OpMode.RmpWfm):
@@ -560,6 +569,8 @@ class _E2SController:
         elif field == 'OpMode-Sts':
             psc_status = _PSCStatus(ps_status=value)
             value = psc_status.ioc_opmode
+            if value == 0:
+                value = self._operation_mode
         elif field == 'CtrlMode-Mon':
             psc_status = _PSCStatus(ps_status=value)
             value = psc_status.interface
