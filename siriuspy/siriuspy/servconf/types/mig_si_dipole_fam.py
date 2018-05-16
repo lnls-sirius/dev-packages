@@ -1,6 +1,8 @@
 """Booster ramp configuration definition."""
 import copy as _copy
-from siriuspy.servconf.types.rmp_bo_ps import _ref_wfm_array
+
+
+# TODO: delete this configuration!
 
 
 def get_dict():
@@ -14,7 +16,8 @@ def get_dict():
 
     return _dict
 
+_value = {}
 
-_value = {
-    'SI-Fam:MA-B1B2:WfmData-SP"': _ref_wfm_array,
-}
+# _value = {
+#     'SI-Fam:MA-B1B2:WfmData-SP"': _ref_wfm_array,
+# }
