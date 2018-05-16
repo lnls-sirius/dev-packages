@@ -1,14 +1,61 @@
-"""Waveform Set Module."""
+"""Waveform classes."""
 
 import numpy as _np
 from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
+from siriuspy.ramp.magnet import Magnet as _Magnet
 
 
 _np.seterr(all='ignore')
 
+_bo_injection_energy = 0.150  # [GeV]
+_bo_ejection_energy = 3.0  # [GeV]
 
-class WaveformDipole:
-    """Dipole Waveforms."""
+# nominal strength values
+_nominal_strengths = {
+    'SI-Fam:MA-B1B2': _bo_ejection_energy,  # [Energy: GeV]
+    'SI-Fam:MA-QFA': +0.7146305692912001,  # [KL: 1/m]
+    'SI-Fam:MA-QDA': -0.2270152048045000,  # [KL: 1/m]
+    'SI-Fam:MA-QFB': +1.2344424683922000,  # [KL: 1/m]
+    'SI-Fam:MA-QDB2': -0.4782973132726601,  # [KL: 1/m]
+    'SI-Fam:MA-QDB1': -0.2808906119138000,  # [KL: 1/m]
+    'SI-Fam:MA-QFP': +1.2344424683922000,  # [KL: 1/m]
+    'SI-Fam:MA-QDP2': -0.4782973132726601,  # [KL: 1/m]
+    'SI-Fam:MA-QDP1': -0.2808906119138000,  # [KL: 1/m]
+    'SI-Fam:MA-Q1': +0.5631612043340000,  # [KL: 1/m]
+    'SI-Fam:MA-Q2': +0.8684629376249999,  # [KL: 1/m]
+    'SI-Fam:MA-Q3': +0.6471254242426001,  # [KL: 1/m]
+    'SI-Fam:MA-Q4': +0.7867827142062001,  # [KL: 1/m]
+    'SI-Fam:MA-SDA0': -12.1250549999999979,  # [SL: 1/m^2]
+    'SI-Fam:MA-SDB0': -09.7413299999999996,  # [SL: 1/m^2]
+    'SI-Fam:MA-SDP0': -09.7413299999999996,  # [SL: 1/m^2]
+    'SI-Fam:MA-SDA1': -24.4479749999999996,  # [SL: 1/m^2]
+    'SI-Fam:MA-SDB1': -21.2453849999999989,  # [SL: 1/m^2]
+    'SI-Fam:MA-SDP1': -21.3459000000000003,  # [SL: 1/m^2]
+    'SI-Fam:MA-SDA2': -13.3280999999999992,  # [SL: 1/m^2]
+    'SI-Fam:MA-SDB2': -18.3342150000000004,  # [SL: 1/m^2]
+    'SI-Fam:MA-SDP2': -18.3421500000000002,  # [SL: 1/m^2]
+    'SI-Fam:MA-SDA3': -20.9911199999999987,  # [SL: 1/m^2]
+    'SI-Fam:MA-SDB3': -26.0718599999999974,  # [SL: 1/m^2]
+    'SI-Fam:MA-SDP3': -26.1236099999999993,  # [SL: 1/m^2]
+    'SI-Fam:MA-SFA0': +7.8854400000000000,  # [SL: 1/m^2]
+    'SI-Fam:MA-SFB0': +11.0610149999999994,  # [SL: 1/m^2]
+    'SI-Fam:MA-SFP0': +11.0610149999999994,  # [SL: 1/m^2]
+    'SI-Fam:MA-SFA1': +28.7742599999999982,  # [SL: 1/m^2]
+    'SI-Fam:MA-SFB1': +34.1821950000000001,  # [SL: 1/m^2]
+    'SI-Fam:MA-SFP1': +34.3873949999999979,  # [SL: 1/m^2]
+    'SI-Fam:MA-SFA2': +22.6153800000000018,  # [SL: 1/m^2]
+    'SI-Fam:MA-SFB2': +29.6730900000000020,  # [SL: 1/m^2]
+    'SI-Fam:MA-SFP2': +29.7755099999999970,  # [SL: 1/m^2]
+    'BO-Fam:MA-B': _bo_injection_energy,  #[Energy: GeV]
+    'BO-Fam:MA-QD': +0.0011197961538728,  #[KL: 1/m]
+    'BO-Fam:MA-QF': +0.3770999232791374,  #[KL: 1/m]
+    'BO-Fam:MA-SD': +0.5258382119529604,  #[KL: 1/m]
+    'BO-Fam:MA-SF': +1.1898514030258744,  #[KL: 1/m]
+}
+
+
+class WaveformParam:
+    """Dipole parameterized Waveforms."""
 
     # wfmsize = _MAX_WFMSIZE
 
@@ -24,7 +71,7 @@ class WaveformDipole:
         self._set_params(scale,
                          vL=start_value, vR=stop_value,
                          i07=boundary_indices, v07=boundary_values)
-        self._update_wfm()
+        self.update()
 
     # --- public properties ---
 
@@ -97,7 +144,7 @@ class WaveformDipole:
     def waveform(self):
         """Waveform."""
         if self._deprecated:
-            self._update_wfm()
+            self.update()
         return self._waveform
 
     @property
@@ -293,12 +340,17 @@ class WaveformDipole:
         self._i[7], self._deprecated = i7, True
         self.plateau_stop_index = i4
 
+    def update(self):
+        self._set_coeffs()
+        self._waveform = self._eval_index()
+        self._deprecated = False
+
     # --- list methods ---
 
     def __getitem__(self, index):
         """Return waveform at index."""
         if self._deprecated:
-            self._update_wfm()
+            self.update()
         if isinstance(index, slice):
             wp = self._waveform[index]
             return _np.array([wp[i] for i in range(len(wp))])
@@ -310,14 +362,14 @@ class WaveformDipole:
     def __iter__(self):
         """Return iterator for waveform."""
         if self._deprecated:
-            self._update_wfm()
+            self.update()
         for i in range(len(self._waveform)):
             yield(self._waveform[i])
 
     def __reversed__(self):
         """Return reverse iterator for waveform."""
         if self._deprecated:
-            self._update_wfm()
+            self.update()
         for i in range(len(self._waveform)-1, -1, -1):
             yield(self._waveform[i])
 
@@ -334,11 +386,6 @@ class WaveformDipole:
         return self.waveform == value
 
     # --- private methods ---
-
-    def _update_wfm(self):
-        self._set_coeffs()
-        self._waveform = self._eval_index()
-        self._deprecated = False
 
     @staticmethod
     def _calccoeffs(d, dv, DL, DR):
@@ -399,25 +446,25 @@ class WaveformDipole:
         # region 1
         d = self._i[1] - self._i[0]
         dv = self._v[1] - self._v[0]
-        self._coeffs[1] = WaveformDipole._calccoeffs(d, dv, self._D0, self._D2)
+        self._coeffs[1] = WaveformParam._calccoeffs(d, dv, self._D0, self._D2)
         # region 2
         self._coeffs[2] = _np.array([self._D2, 0.0, 0.0])
         # region 3
         d = self._i[3] - self._i[2]
         dv = self._v[3] - self._v[2]
-        self._coeffs[3] = WaveformDipole._calccoeffs(d, dv, self._D2, self._D4)
+        self._coeffs[3] = WaveformParam._calccoeffs(d, dv, self._D2, self._D4)
         # region 4
         self._coeffs[4] = _np.array([self._D4, 0.0, 0.0])
         # region 5
         d = self._i[5] - self._i[4]
         dv = self._v[5] - self._v[4]
-        self._coeffs[5] = WaveformDipole._calccoeffs(d, dv, self._D4, self._D6)
+        self._coeffs[5] = WaveformParam._calccoeffs(d, dv, self._D4, self._D6)
         # region 6
         self._coeffs[6] = [self._D6, 0.0, 0.0]
         # region 7
         d = self._i[7] - self._i[6]
         dv = self._v[7] - self._v[6]
-        self._coeffs[7] = WaveformDipole._calccoeffs(d, dv, self._D6, self._D8)
+        self._coeffs[7] = WaveformParam._calccoeffs(d, dv, self._D6, self._D8)
         # region 8
         self._coeffs[8] = [self._D8, 0.0, 0.0]
 
@@ -458,7 +505,7 @@ class WaveformDipole:
         i3 = _np.arange(i2+1, self._i[4])
         D4 = (self._v[4] - self._v[3]) / (self._i[4] - i3)
         d = i3 - i2
-        a, b, c = WaveformDipole._calccoeffs(d, dv, D2, D4)
+        a, b, c = WaveformParam._calccoeffs(d, dv, D2, D4)
         # now, we find there the first derivative of waveform within region R3
         # is for each value of i3.
         phi = b**2 - 3*c*a
@@ -481,7 +528,7 @@ class WaveformDipole:
         i0 = _np.arange(1, i1)
         D0 = (self._v[0] - self._vL) / (i0 - 0)
         d = i1 - i0
-        a, b, c = WaveformDipole._calccoeffs(d, dv, D0, D2)
+        a, b, c = WaveformParam._calccoeffs(d, dv, D0, D2)
         phi = b**2 - 3*c*a
         i0_r1 = i0 + (-b + _np.sqrt(phi))/3.0/c
         i0_r2 = i0 + (-b - _np.sqrt(phi))/3.0/c
@@ -501,7 +548,7 @@ class WaveformDipole:
         i7 = _np.arange(i6+1, iR)
         D8 = (self._vR - self._v[7]) / (iR - i7)
         d = i7 - i6
-        a, b, c = WaveformDipole._calccoeffs(d, dv, D6, D8)
+        a, b, c = WaveformParam._calccoeffs(d, dv, D6, D8)
         phi = b**2 - 3*c*a
         i7_r1 = i6 + (-b + _np.sqrt(phi))/3.0/c
         i7_r2 = i6 + (-b - _np.sqrt(phi))/3.0/c
@@ -525,7 +572,7 @@ class WaveformDipole:
         i4 = _np.arange(self._i[3]+1, self._i[5])
         D4 = (self._v[4] - self._v[3]) / (i4 - self._i[3])
         d = i5 - i4
-        a, b, c = WaveformDipole._calccoeffs(d, dv, D4, D6)
+        a, b, c = WaveformParam._calccoeffs(d, dv, D4, D6)
         phi = b**2 - 3*c*a
         i4_r1 = i4 + (-b + _np.sqrt(phi))/3.0/c
         i4_r2 = i4 + (-b - _np.sqrt(phi))/3.0/c
@@ -537,6 +584,100 @@ class WaveformDipole:
             return self._i[4] + i4_delta
         else:
             return None
+
+
+class _WaveformMagnet(_Magnet):
+    """Base class of magnet waveforms."""
+
+    def __init__(self, maname):
+        _Magnet.__init__(self, maname=maname)
+
+    @property
+    def currents(self):
+        return self._get_currents()
+
+    @property
+    def strengths(self):
+        return self._get_strengths()
+
+    @strengths.setter
+    def strengths(self, value):
+        self._set_strengths(value)
+
+
+class WaveformDipole(_WaveformMagnet, WaveformParam):
+
+    def __init__(self, maname='BO-Fam:MA-B', size=_MAX_WFMSIZE):
+        _WaveformMagnet.__init__(self, maname)
+        eje_current = self.conv_strength_2_current(_bo_ejection_energy)
+        WaveformParam.__init__(self, scale=eje_current, size=size)
+
+    def _get_currents(self):
+        return self.waveform
+
+    def _get_strengths(self):
+        return self.conv_current_2_strength(self.currents)
+
+
+class Waveform(_WaveformMagnet):
+
+    def __init__(self, maname, dipole=None, family=None):
+        if maname != 'SI-Fam:MA-B1B2' and dipole is None:
+            raise ValueError(
+                '{} waveform needs an associated dipole!'.format(maname))
+        _WaveformMagnet.__init__(self, maname)
+        self._dipole = dipole
+        self._family = family
+        if self.maname in _nominal_strengths:
+            strengths = _nominal_strengths[self.maname]
+            self._currents = self._conv_strengths_2_currents(strengths)
+            self._strengths = self._conv_currents_2_strengths(self._currents)
+        else:
+            raise NotImplementedError
+
+    def update(self):
+        if self._dipole is not None:
+            self._dipole.update()
+        if self._family is not None:
+            self._family.update()
+        self._currents = self._conv_strengths_2_currents(self._strengths)
+
+    def _get_currents(self):
+        self.update()
+        return self._currents
+
+    def _get_strengths(self):
+        self.update()
+        return self._strengths
+
+    def _set_strengths(self, value):
+        if isinstance(value, (int, float)):
+            self._strengths = [value, ] * len(self._strengths)
+        elif len(value) != len(self._strengths):
+            raise ValueError('Incorrect length of passed strengths!')
+        else:
+            self._strengths = value.copy()
+
+    def _conv_currents_2_strengths(self, currents):
+        kwargs = {'currents': currents}
+        if self._dipole is not None:
+            kwargs['strengths_dipole'] = self._dipole.strengths
+        if self._family is not None:
+            kwargs['strengths_family'] = self._family.strengths
+        return self.conv_current_2_strength(**kwargs)
+
+    def _conv_strengths_2_currents(self, strengths):
+        kwargs = {'strengths': strengths}
+        if self._dipole is not None:
+            kwargs['strengths_dipole'] = self._dipole.strengths
+        if self._family is not None:
+            kwargs['strengths_family'] = self._family.strengths
+        return self.conv_strength_2_current(**kwargs)
+
+
+
+
+
 
 
 # class _Waveform():
