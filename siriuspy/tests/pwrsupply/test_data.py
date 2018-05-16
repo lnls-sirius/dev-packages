@@ -39,7 +39,7 @@ class TestPSDataProperties(unittest.TestCase):
         search_patcher = mock.patch(
             'siriuspy.pwrsupply.data._PSSearch', autospec=True)
         db_patcher = mock.patch(
-            'siriuspy.pwrsupply.data._get_ps_FBP_propty_database',
+            'siriuspy.pwrsupply.data._get_ps_propty_database',
             autospec=True)
         self.addCleanup(search_patcher.stop)
         self.addCleanup(db_patcher.stop)
@@ -49,6 +49,7 @@ class TestPSDataProperties(unittest.TestCase):
         self.properties = {
             'psname': 'Fake-SI-Fam:PS-B1B2-1',
             'pstype': 'FakePSType',
+            'psmodel': 'FakeModel',
             'polarity': 'FakePSPolarity',
             'magfunc': 'FakePSMagFunc',
             'splims': {'lolo': 0, 'hihi': 1000},
@@ -65,6 +66,8 @@ class TestPSDataProperties(unittest.TestCase):
         self.search_mock.check_psname_ispulsed.return_value = False
         self.search_mock.conv_psname_2_pstype.return_value = \
             self.properties['pstype']
+        self.search_mock.conv_psname_2_psmodel.return_value = \
+            self.properties['psmodel']
         self.search_mock.conv_pstype_2_polarity.return_value = \
             self.properties['polarity']
         self.search_mock.conv_pstype_2_magfunc.return_value = \
@@ -75,7 +78,7 @@ class TestPSDataProperties(unittest.TestCase):
             self.properties['splims_unit']
         self.search_mock.conv_psname_2_excdata.return_value = \
             self.properties['excdata']
-        self.search_mock.conv_psname_2_psmodel.return_value = 'FBP'
+        # self.search_mock.conv_psname_2_psmodel.return_value = 'FBP'
 
         self.db_mock.return_value = self.db
 
@@ -97,7 +100,8 @@ class TestPSDataProperties(unittest.TestCase):
         self.search_mock.conv_psname_2_excdata.assert_called_with(
             self.properties['psname'])
 
-        self.db_mock.assert_called_with(self.properties['pstype'])
+        self.db_mock.assert_called_with(
+            self.properties['psmodel'], self.properties['pstype'])
 
     def test_psname(self):
         """Test wether psname property is set correctly."""
@@ -146,7 +150,7 @@ class TestPSDataDb(unittest.TestCase):
         search_patcher = mock.patch(
             'siriuspy.pwrsupply.data._PSSearch', autospec=True)
         ps_db_patcher = mock.patch(
-            'siriuspy.pwrsupply.data._get_ps_FBP_propty_database',
+            'siriuspy.pwrsupply.data._get_ps_propty_database',
             autospec=True)
         pu_db_patcher = mock.patch(
             'siriuspy.pwrsupply.data._get_pu_propty_database', autospec=True)
@@ -160,17 +164,18 @@ class TestPSDataDb(unittest.TestCase):
         self.psname = "Fake-SI-Fam:PS-QDA"
         self.puname = "Fake-SI-Fam:PU-QDA"
         self.pstype = "FakeType"
+        self.psmodel = "FakeModel"
 
         self.search_mock.get_psnames.return_value = [self.psname, self.puname]
         self.search_mock.conv_psname_2_pstype.return_value = self.pstype
-        self.search_mock.conv_psname_2_psmodel.return_value = 'FBP'
+        self.search_mock.conv_psname_2_psmodel.return_value = self.psmodel
 
     def test_ps_db(self):
         """Test ps db is called when a ps is passed."""
         self.search_mock.check_psname_ispulsed.return_value = False
         PSData(self.psname)
         self.pu_db_mock.assert_not_called()
-        self.ps_db_mock.assert_called_once_with(pstype=self.pstype)
+        self.ps_db_mock.assert_called_once_with(self.psmodel, self.pstype)
 
     def test_pu_db(self):
         """Test pu db is called when a pu is passed."""

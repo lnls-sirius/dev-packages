@@ -55,7 +55,7 @@ class TestE2SController(unittest.TestCase):
                 return 165.0
         search.get_splims.side_effect = mock_splims
         unit.return_value = 'A'
-        return get_ps_propty_database('bo-quadrupole-qd-fam')
+        return get_ps_propty_database('FAC', 'bo-quadrupole-qd-fam')
 
     def _append_dev_name(self, dev_name):
         new_dict = {}

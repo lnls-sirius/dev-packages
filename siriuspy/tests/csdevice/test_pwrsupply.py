@@ -30,21 +30,23 @@ public_interface = (
     'ps_hard_interlock_FBP',
     'ps_soft_interlock_FBP_DCLink',
     'ps_hard_interlock_FBP_DCLink',
+    'ps_soft_interlock_FAC',
+    'ps_hard_interlock_FAC',
     'ps_cycle_type',
     'ps_sync_mode',
     'Const',
     'get_ps_current_unit',
     'get_pu_current_unit',
     'get_common_propty_database',
-    'get_ps_FBP_propty_database',
-    'get_ps_FAC_propty_database',
-    'get_ps_FAC_2S_propty_database',
-    'get_ps_FAC_2P4S_propty_database',
-    'get_ps_FAP_propty_database',
-    'get_ps_FAP_4P_propty_database',
-    'get_ps_FAP_2P2S_propty_database',
-    'get_ps_FBP_FOFB_propty_database',
-    'get_ps_Commercial_propty_database',
+    # 'get_ps_FBP_propty_database',
+    # 'get_ps_FAC_propty_database',
+    # 'get_ps_FAC_2S_propty_database',
+    # 'get_ps_FAC_2P4S_propty_database',
+    # 'get_ps_FAP_propty_database',
+    # 'get_ps_FAP_4P_propty_database',
+    # 'get_ps_FAP_2P2S_propty_database',
+    # 'get_ps_FBP_FOFB_propty_database',
+    # 'get_ps_Commercial_propty_database',
     'get_common_pu_propty_database',
     'get_common_pu_SI_InjKicker_propty_database',
     'get_ps_propty_database',
@@ -175,7 +177,7 @@ class TestPwrSupply(unittest.TestCase):
 
     def test_ps_FBP_propty_database(self):
         """Test common_ps_propty_database."""
-        db = pwrsupply.get_ps_FBP_propty_database('si-quadrupole-q14-fam')
+        db = pwrsupply.get_ps_propty_database('FBP', 'si-quadrupole-q14-fam')
         self.assertIsInstance(db, dict)
         for prop in db:
             self.assertIsInstance(db[prop], dict)
@@ -189,7 +191,7 @@ class TestPwrSupply(unittest.TestCase):
         current_pvs = TestPwrSupply.ps_alarm + \
             ('WfmData-SP', 'WfmData-RB')
         for pstype in TestPwrSupply.pstypes:
-            db = pwrsupply.get_ps_propty_database(pstype)
+            db = pwrsupply.get_ps_propty_database('FBP', pstype)
             unit = db['Current-SP']['unit']
             for propty, dbi in db.items():
                 # set setpoint limits in database
