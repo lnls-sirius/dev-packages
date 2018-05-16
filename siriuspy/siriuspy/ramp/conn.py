@@ -1,8 +1,11 @@
 """Module with connector classes.
 
-This module implements waveform communications with magnet soft IOcs and
-ConfigDB service.
+This module implements connector classes responsible for communications with
+magnet soft IOcs, ConfigDB service and orbit, tune and chromacity correction
+IOCs.
 """
+
+# TODO: implement this module
 
 
 from siriuspy.factory import MagnetFactory as _MagnetFactory
@@ -10,7 +13,15 @@ from siriuspy import envars as _envars
 from siriuspy.servconf.conf_service import ConfigService
 
 
-class ConnMagnet:
+class _Conn:
+
+    @property
+    def connected(self):
+        """Connection state."""
+        return self._get_connected()
+
+
+class ConnMagnet(_Conn):
     """Magnet Connector Class."""
 
     def __init__(self,
@@ -52,25 +63,25 @@ class ConnMagnet:
                                             )
 
 
-class ConnOrbit:
+class ConnOrbit(_Conn):
     """Connector class to interact with SOFT IOCs."""
 
     pass
 
 
-class ConnTune:
+class ConnTune(_Conn):
     """Connector class to interact with TuneCorr IOCs."""
 
     pass
 
 
-class ConnChrom:
+class ConnChrom(_Conn):
     """Connector class to interact with ChromCorr IOCs."""
 
     pass
 
 
-class ConnConfigDB:
+class ConnConfigDB(_Conn):
     """Config DB connector class."""
 
     def __init__(self, url=_envars.server_url_configdb):

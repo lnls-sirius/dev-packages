@@ -4,16 +4,19 @@ import importlib as _importlib
 import siriuspy.servconf.types as _types
 import copy as _copy
 
-_config_types = (
-    # si-tunes
-    {'config_type_name': 'si-tunes',
-     'value': {'tunex': 0.0, 'tuney': 0.0, },
-     },
-    # bo-tunes
-    {'config_type_name': 'bo-tunes',
-     'value': {'tunex': 0.0, 'tuney': 0.0, },
-     },
-)
+# NOTE: values for key string labels ending with char '*' have not their
+#       sizes compared with a reference if their lists or tuples!
+
+# _config_types = (
+#     # si-tunes
+#     {'config_type_name': 'si-tunes',
+#      'value': {'tunex': 0.0, 'tuney': 0.0, },
+#      },
+#     # bo-tunes
+#     {'config_type_name': 'bo-tunes',
+#      'value': {'tunex': 0.0, 'tuney': 0.0, },
+#      },
+# )
 
 _config_types_dict = None
 
@@ -41,12 +44,12 @@ def check_value(config_type, value):
     return _recursive_check(ref_value, value)
 
 
-def _init_config_types_dict_orig():
-    global _config_types_dict
-    _config_types_dict = {}
-    for ct in _config_types:
-        config_type_name = ct['config_type_name']
-        _config_types_dict[config_type_name] = ct['value']
+# def _init_config_types_dict_orig():
+#     global _config_types_dict
+#     _config_types_dict = {}
+#     for ct in _config_types:
+#         config_type_name = ct['config_type_name']
+#         _config_types_dict[config_type_name] = ct['value']
 
 
 def _init_config_types_dict():
@@ -59,7 +62,7 @@ def _init_config_types_dict():
         _config_types_dict[config_type_name] = ct['value']
 
 
-def _recursive_check(ref_value, value):
+def _recursive_check(ref_value, value, same_length=True):
     # TODO: should we allow float - int automatic castings ?
     # TODO: this should prob. be generalized to accomodate length-varying
     # lists/arrays (WfmData, for example)
@@ -72,14 +75,17 @@ def _recursive_check(ref_value, value):
             if k not in ref_value:
                 return False
             v_ref = ref_value[k]
-            checked = _recursive_check(v_ref, v)
+            if isinstance(k, str) and k.endswith('*'):
+                checked = _recursive_check(v_ref, v, same_length=False)
+            else:
+                checked = _recursive_check(v_ref, v, same_length)
             if not checked:
                 return False
     elif type(ref_value) in (list, tuple, ):
         if len(ref_value) != len(value):
             return False
         for i in range(len(value)):
-            checked = _recursive_check(value[i], ref_value[i])
+            checked = _recursive_check(value[i], ref_value[i], same_length)
             if not checked:
                 return False
     return True
