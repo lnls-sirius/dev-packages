@@ -59,7 +59,6 @@ class _Watcher(_threading.Thread):
         elif self.op_mode == _PSConst.OpMode.RmpWfm:
             self._watch_rmp()
         _Watcher.INSTANCE_COUNT -= 1
-        print(_Watcher.INSTANCE_COUNT)
 
     def stop(self):
         """Stop thread."""
@@ -95,25 +94,19 @@ class _Watcher(_threading.Thread):
     def _watch_mig(self):
         while True:
             if self.exit:
-                print('{} exiting'.format(self.dev_info.name))
                 break
             elif self.state == _Watcher.WAIT_OPMODE:
                 if self._achieved_op_mode() and self._sync_started():
-                    print('{} changing to wait_mig state'.format(self.dev_info.name))
                     self.state = _Watcher.WAIT_MIG
             elif self.state == _Watcher.WAIT_MIG:
                 if self._changed_op_mode():
-                    print('{} exiting due to op mode change'.format(self.dev_info.name))
                     break
                 elif self._sync_stopped():
                     if self._sync_pulsed():
-                        print('{} sync pulsed'.format(self.dev_info.name))
                         self._set_current()
                         self._set_slow_ref()
-                    print('{} exiting due to sync stopped'.format(self.dev_info.name))
                     break
             _time.sleep(_Watcher.WAIT)
-        print('{} exiting in state {}'.format(self.dev_info.name, self.state))
 
     def _watch_rmp(self):
         while True:
