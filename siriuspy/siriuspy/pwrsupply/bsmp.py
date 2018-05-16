@@ -7,9 +7,10 @@ Documentation:
 https://wiki-sirius.lnls.br/mediawiki/index.php/Machine:Power_Supplies
 """
 
-# from siriuspy.bsmp import BSMP as _BSMP
+from siriuspy.bsmp import BSMP as _BSMP
 from siriuspy.bsmp import Entities as _Entities
 from siriuspy.bsmp import Types as _Types
+from siriuspy.pwrsupply.pru import PRU as _PRU
 
 
 # version of the BSMP implementation of power supplies that is compatible
@@ -262,6 +263,85 @@ class Const:
     P_ANALOG_MIN = 46
 
 
+_BSMP_Functions = (
+    {'eid': Const.F_TURN_ON,
+     'i_type': (), 'o_type': (_Types.T_UINT8, )},
+    {'eid': Const.F_TURN_OFF,
+     'i_type': (), 'o_type': (_Types.T_UINT8, )},
+    {'eid': Const.F_OPEN_LOOP,
+     'i_type': (), 'o_type': (_Types.T_UINT8, )},
+    {'eid': Const.F_CLOSE_LOOP,
+     'i_type': (), 'o_type': (_Types.T_UINT8, )},
+    {'eid': Const.F_SELECT_OP_MODE,
+     'i_type': (_Types.T_ENUM, ), 'o_type': (_Types.T_UINT8,)},
+    {'eid': Const.F_SELECT_PS_MODEL,
+     'i_type': (_Types.T_UINT16, ), 'o_type': (_Types.T_UINT8,)},
+    {'eid': Const.F_RESET_INTERLOCKS,
+     'i_type': (), 'o_type': (_Types.T_UINT8, )},
+    {'eid': Const.F_REMOTE_INTERFACE,
+     'i_type': (), 'o_type': (_Types.T_UINT8, )},
+    {'eid': Const.F_SET_SERIAL_ADDRESS,
+     'i_type': (_Types.T_UINT16, ), 'o_type': (_Types.T_UINT8,)},
+    {'eid': Const.F_SET_SERIAL_TERMINATION,
+     'i_type': (_Types.T_UINT16, ), 'o_type': (_Types.T_UINT8,)},
+    {'eid': Const.F_UNLOCK_UDC,
+     'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
+    {'eid': Const.F_LOCK_UDC,
+     'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
+    {'eid': Const.F_CFG_BUF_SAMPLES,
+     'i_type': (_Types.T_UINT32,), 'o_type': (_Types.T_UINT8,)},
+    {'eid': Const.F_ENABLE_BUF_SAMPLES,
+     'i_type': (), 'o_type': (_Types.T_UINT8, )},
+    {'eid': Const.F_DISABLE_BUF_SAMPLES,
+     'i_type': (), 'o_type': (_Types.T_UINT8, )},
+    {'eid': Const.F_SYNC_PULSE,
+     'i_type': (), 'o_type': ()},
+    {'eid': Const.F_SET_SLOWREF,
+     'i_type': (_Types.T_FLOAT,), 'o_type': (_Types.T_UINT8,)},
+    {'eid': Const.F_SET_SLOWREF_FBP,
+     'i_type': (_Types.T_FLOAT, _Types.T_FLOAT, _Types.T_FLOAT,
+                _Types.T_FLOAT),
+     'o_type': (_Types.T_UINT8,)},
+    {'eid': Const.F_RESET_COUNTERS,
+     'i_type': (), 'o_type': (_Types.T_UINT8,)},
+    {'eid': Const.F_SCALE_WFMREF,
+     'i_type': (_Types.T_FLOAT, _Types.T_FLOAT),
+     'o_type': (_Types.T_UINT8,)},
+    {'eid': Const.F_SELECT_WFMREF,
+     'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
+    {'eid': Const.F_SAVE_WFMREF,
+     'i_type': (), 'o_type': (_Types.T_UINT8, )},
+    {'eid': Const.F_RESET_WFMREF,
+     'i_type': (), 'o_type': (_Types.T_UINT8, )},
+    {'eid': Const.F_CFG_SIGGEN,
+     'i_type': (_Types.T_ENUM, _Types.T_UINT16,
+                _Types.T_FLOAT, _Types.T_FLOAT, _Types.T_FLOAT,
+                _Types.T_FLOAT, _Types.T_FLOAT,
+                _Types.T_FLOAT, _Types.T_FLOAT),
+     'o_type': (_Types.T_UINT8,)},
+    {'eid': Const.F_SET_SIGGEN,
+     'i_type': (_Types.T_FLOAT, _Types.T_FLOAT, _Types.T_FLOAT),
+     'o_type': (_Types.T_UINT8,)},
+    {'eid': Const.F_ENABLE_SIGGEN,
+     'i_type': (), 'o_type': (_Types.T_UINT8, )},
+    {'eid': Const.F_DISABLE_SIGGEN,
+     'i_type': (), 'o_type': (_Types.T_UINT8, )},
+    {'eid': Const.F_SET_SLOWREF_READBACK,
+     'i_type': (_Types.T_FLOAT,), 'o_type': (_Types.T_FLOAT,)},
+    {'eid': Const.F_SET_SLOWREF_FBP_READBACK,
+     'i_type': (_Types.T_FLOAT, _Types.T_FLOAT,
+                _Types.T_FLOAT, _Types.T_FLOAT,),
+     'o_type': (_Types.T_FLOAT, _Types.T_FLOAT,
+                _Types.T_FLOAT, _Types.T_FLOAT,)},
+    {'eid': Const.F_SET_PARAM,
+     'i_type': (_Types.T_PARAM, _Types.T_UINT16, _Types.T_FLOAT,),
+     'o_type': (_Types.T_UINT8,)},
+    {'eid': Const.F_GET_PARAM,
+     'i_type': (_Types.T_PARAM, _Types.T_UINT16,),
+     'o_type': (_Types.T_FLOAT,)},
+)
+
+
 class Parameters:
     """power supply parameters."""
 
@@ -458,86 +538,76 @@ class FBPEntities(_Entities):
 
     Curves = tuple()
 
-    Functions = (
-        {'eid': Const.F_TURN_ON,
-         'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': Const.F_TURN_OFF,
-         'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': Const.F_OPEN_LOOP,
-         'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': Const.F_CLOSE_LOOP,
-         'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': Const.F_SELECT_OP_MODE,
-         'i_type': (_Types.T_ENUM, ), 'o_type': (_Types.T_UINT8,)},
-        {'eid': Const.F_SELECT_PS_MODEL,
-         'i_type': (_Types.T_UINT16, ), 'o_type': (_Types.T_UINT8,)},
-        {'eid': Const.F_RESET_INTERLOCKS,
-         'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': Const.F_REMOTE_INTERFACE,
-         'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': Const.F_SET_SERIAL_ADDRESS,
-         'i_type': (_Types.T_UINT16, ), 'o_type': (_Types.T_UINT8,)},
-        {'eid': Const.F_SET_SERIAL_TERMINATION,
-         'i_type': (_Types.T_UINT16, ), 'o_type': (_Types.T_UINT8,)},
-        {'eid': Const.F_UNLOCK_UDC,
-         'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
-        {'eid': Const.F_LOCK_UDC,
-         'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
-        {'eid': Const.F_CFG_BUF_SAMPLES,
-         'i_type': (_Types.T_UINT32,), 'o_type': (_Types.T_UINT8,)},
-        {'eid': Const.F_ENABLE_BUF_SAMPLES,
-         'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': Const.F_DISABLE_BUF_SAMPLES,
-         'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': Const.F_SYNC_PULSE,
-         'i_type': (), 'o_type': ()},
-        {'eid': Const.F_SET_SLOWREF,
-         'i_type': (_Types.T_FLOAT,), 'o_type': (_Types.T_UINT8,)},
-        {'eid': Const.F_SET_SLOWREF_FBP,
-         'i_type': (_Types.T_FLOAT, _Types.T_FLOAT, _Types.T_FLOAT,
-                    _Types.T_FLOAT),
-         'o_type': (_Types.T_UINT8,)},
-        {'eid': Const.F_RESET_COUNTERS,
-         'i_type': (), 'o_type': (_Types.T_UINT8,)},
-        {'eid': Const.F_SCALE_WFMREF,
-         'i_type': (_Types.T_FLOAT, _Types.T_FLOAT),
-         'o_type': (_Types.T_UINT8,)},
-        {'eid': Const.F_SELECT_WFMREF,
-         'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
-        {'eid': Const.F_SAVE_WFMREF,
-         'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': Const.F_RESET_WFMREF,
-         'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': Const.F_CFG_SIGGEN,
-         'i_type': (_Types.T_ENUM, _Types.T_UINT16,
-                    _Types.T_FLOAT, _Types.T_FLOAT, _Types.T_FLOAT,
-                    _Types.T_FLOAT, _Types.T_FLOAT,
-                    _Types.T_FLOAT, _Types.T_FLOAT),
-         'o_type': (_Types.T_UINT8,)},
-        {'eid': Const.F_SET_SIGGEN,
-         'i_type': (_Types.T_FLOAT, _Types.T_FLOAT, _Types.T_FLOAT),
-         'o_type': (_Types.T_UINT8,)},
-        {'eid': Const.F_ENABLE_SIGGEN,
-         'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': Const.F_DISABLE_SIGGEN,
-         'i_type': (), 'o_type': (_Types.T_UINT8, )},
-        {'eid': Const.F_SET_SLOWREF_READBACK,
-         'i_type': (_Types.T_FLOAT,), 'o_type': (_Types.T_FLOAT,)},
-        {'eid': Const.F_SET_SLOWREF_FBP_READBACK,
-         'i_type': (_Types.T_FLOAT, _Types.T_FLOAT,
-                    _Types.T_FLOAT, _Types.T_FLOAT,),
-         'o_type': (_Types.T_FLOAT, _Types.T_FLOAT,
-                    _Types.T_FLOAT, _Types.T_FLOAT,)},
-        {'eid': Const.F_SET_PARAM,
-         'i_type': (_Types.T_PARAM, _Types.T_UINT16, _Types.T_FLOAT,),
-         'o_type': (_Types.T_UINT8,)},
-        {'eid': Const.F_GET_PARAM,
-         'i_type': (_Types.T_PARAM, _Types.T_UINT16,),
-         'o_type': (_Types.T_FLOAT,)},
-
-
-    )
+    Functions = _BSMP_Functions
 
     def __init__(self):
         """Call super."""
         super().__init__(self.Variables, self.Curves, self.Functions)
+
+
+class FACEntities(_Entities):
+    """FAC-type power supply entities."""
+
+    Variables = (
+        # --- common variables
+        {'eid': 0, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
+        {'eid': 1, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 2, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 3, 'waccess': False, 'count': 128, 'var_type': _Types.T_CHAR},
+        {'eid': 4, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 5, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 6, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
+        {'eid': 7, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
+        {'eid': 8, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
+        {'eid': 9, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 10, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 11, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 12, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 13, 'waccess': False, 'count': 4, 'var_type': _Types.T_FLOAT},
+        # --- undefined variables
+        {'eid': 14, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 15, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 16, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 17, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 18, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 19, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 20, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 21, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 22, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 23, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 24, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        # --- FBP-specific variables
+        {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 27, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 28, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 29, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 30, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 31, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 32, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 33, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+    )
+
+    Curves = tuple()
+
+    Functions = _BSMP_Functions
+
+    def __init__(self):
+        """Call super."""
+        super().__init__(self.Variables, self.Curves, self.Functions)
+
+
+class FBP(_BSMP):
+    """BSMP with FBPEntities."""
+
+    def __init__(self, slave_address):
+        """Init BSMP."""
+        super().__init__(_PRU(), slave_address, FBPEntities())
+
+
+class FAC(_BSMP):
+    """BSMP with FACEntities."""
+
+    def __init__(self, slave_address):
+        """Init BSMP."""
+        super().__init__(_PRU(), slave_address, FACEntities())
