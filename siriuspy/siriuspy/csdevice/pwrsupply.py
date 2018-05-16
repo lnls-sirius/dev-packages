@@ -82,6 +82,8 @@ ps_hard_interlock_FBP_DCLink = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
 )
+ps_soft_interlock_FAC = ('Reserved', ) * 32
+ps_hard_interlock_FAC = ('Reserved', ) * 32
 ps_cycle_type = ('Sine', 'DampedSine', 'Trapezoidal')
 ps_sync_mode = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
 
@@ -125,13 +127,30 @@ def get_common_propty_database():
         'Version-Cte': {'type': 'str', 'value': 'UNDEF'},
         'CtrlMode-Mon': {'type': 'enum', 'enums': ps_interface,
                          'value': _et.idx.Remote},
+        # Common Variables
         'PwrState-Sel': {'type': 'enum', 'enums': ps_pwrstate_sel,
                          'value': _et.idx.Off},
         'PwrState-Sts': {'type': 'enum', 'enums': ps_pwrstate_sts,
                          'value': _et.idx.Off},
+        'OpMode-Sel': {'type': 'enum', 'enums': ps_opmode,
+                       'value': _et.idx.SlowRef},
+        'OpMode-Sts': {'type': 'enum', 'enums': ps_opmode,
+                       'value': _et.idx.SlowRef},
+        'Current-SP': {'type': 'float', 'value': 0.0,
+                       'prec': default_ps_current_precision},
+        'Current-RB': {'type': 'float', 'value': 0.0,
+                       'prec': default_ps_current_precision},
+        'CurrentRef-Mon': {'type': 'float', 'value': 0.0,
+                           'prec': default_ps_current_precision},
+        'Current-Mon': {'type': 'float',  'value': 0.0,
+                        'prec': default_ps_current_precision},
+        # Interlocks
+        'IntlkSoft-Mon':    {'type': 'int',    'value': 0},
+        'IntlkHard-Mon':    {'type': 'int',    'value': 0},
+        # Commands
         'Reset-Cmd': {'type': 'int', 'value': 0},
-        'OpenLoop-Mon': {'type': 'enum', 'enums': ps_openloop,
-                         'value': Const.OpenLoop.Open},
+        'Abort-Cmd': {'type': 'int', 'value': 0},
+        # Cycle
         'CycleEnbl-Mon': {'type': 'int', 'value': 0},
         'CycleType-Sel': {'type': 'enum', 'enums': ps_cycle_type,
                           'value': DEFAULT_SIGGEN_CONFIG[0]},
@@ -152,143 +171,27 @@ def get_common_propty_database():
         'CycleAuxParam-RB': {'type': 'float', 'count': 4,
                              'value': DEFAULT_SIGGEN_CONFIG[5:9]},
         'CycleIndex-Mon': {'type': 'int', 'value': 0},
-        'PRUSyncMode-Mon': {'type': 'enum', 'enums': ps_sync_mode,
-                            'value': Const.SyncMode.Off},
-        'PRUBlockIndex-Mon': {'type': 'int', 'value': 0},
-        'PRUSyncPulseCount-Mon': {'type': 'int', 'value': 0},
-        'PRUCtrlQueueSize-Mon': {'type': 'int', 'value': 0,
-                                 'high': 50, 'hihi': 50},
-        # 'PRUWfmDataSize-SP': {'type': 'int', 'value': MAX_WFMSIZE,
-        #                       'lolo': 0, 'low': 0,
-        #                       'high': MAX_WFMSIZE+1,
-        #                       'hihi': MAX_WFMSIZE+1},
-        # 'PRUWfmDataSize-RB': {'type': 'int', 'value': MAX_WFMSIZE,
-        #                       'lolo': 0, 'low': 0,
-        #                       'high': MAX_WFMSIZE+1,
-        #                       'hihi': MAX_WFMSIZE+1},
-    }
-    return db
-
-
-def get_ps_FBP_propty_database(pstype):
-    """Return database with FBP pwrsupply model PVs."""
-    propty_db = get_common_propty_database()
-    db_ps = {
-        'OpMode-Sel': {'type': 'enum', 'enums': ps_opmode,
-                       'value': _et.idx.SlowRef},
-        'OpMode-Sts': {'type': 'enum', 'enums': ps_opmode,
-                       'value': _et.idx.SlowRef},
-        'Abort-Cmd': {'type': 'int', 'value': 0},
+        # Wfm
         'WfmIndex-Mon': {'type': 'int', 'value': 0},
-        # 'WfmLabels-Mon': {'type': 'string', 'count': len(default_wfmlabels),
-        #                   'value': default_wfmlabels},
-        # 'WfmLabel-SP': {'type': 'string', 'value': default_wfmlabels[0]},
-        # 'WfmLabel-RB': {'type': 'string', 'value': default_wfmlabels[0]},
-        # 'WfmLoad-Sel': {'type': 'enum', 'enums': default_wfmlabels,
-        #                 'value': 0},
-        # 'WfmLoad-Sts': {'type': 'enum', 'enums': default_wfmlabels,
-        #                 'value': 0},
         'WfmData-SP': {'type': 'float', 'count': MAX_WFMSIZE,
                        'value': list(DEFAULT_WFMDATA),
                        'prec': default_ps_current_precision},
         'WfmData-RB': {'type': 'float', 'count': MAX_WFMSIZE,
                        'value': list(DEFAULT_WFMDATA),
                        'prec': default_ps_current_precision},
-        # 'WfmSave-Cmd': {'type': 'int', 'value': 0},
-        'Current-SP': {'type': 'float', 'value': 0.0,
-                       'prec': default_ps_current_precision},
-        'Current-RB': {'type': 'float', 'value': 0.0,
-                       'prec': default_ps_current_precision},
-        'CurrentRef-Mon': {'type': 'float', 'value': 0.0,
-                           'prec': default_ps_current_precision},
-        'Current-Mon': {'type': 'float',  'value': 0.0,
-                        'prec': default_ps_current_precision},
-        'IntlkSoft-Mon':    {'type': 'int',    'value': 0},
-        'IntlkHard-Mon':    {'type': 'int',    'value': 0},
-        'IntlkSoftLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_soft_interlock_FBP),
-                                 'value': ps_soft_interlock_FBP},
-        'IntlkHardLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_hard_interlock_FBP),
-                                 'value': ps_hard_interlock_FBP},
+        # Hw
+        'OpenLoop-Mon': {'type': 'enum', 'enums': ps_openloop,
+                         'value': Const.OpenLoop.Open},
+        # PRU
+        'PRUSyncMode-Mon': {'type': 'enum', 'enums': ps_sync_mode,
+                            'value': Const.SyncMode.Off},
+        'PRUBlockIndex-Mon': {'type': 'int', 'value': 0},
+        'PRUSyncPulseCount-Mon': {'type': 'int', 'value': 0},
+        'PRUCtrlQueueSize-Mon': {'type': 'int', 'value': 0,
+                                 'high': 50, 'hihi': 50},
+
     }
-    propty_db.update(db_ps)
-
-    signals_lims = ('Current-SP', 'Current-RB',
-                    'CurrentRef-Mon', 'Current-Mon',
-                    'CycleAmpl-SP', 'CycleAmpl-RB',
-                    'CycleOffset-SP', 'CycleOffset-RB',
-                    )
-    # TODO: define limits to WfmData as well!
-    signals_unit = signals_lims + (
-        'WfmData-SP', 'WfmData-RB',
-    )
-    signals_prec = signals_unit
-
-    for propty, db in propty_db.items():
-        # set setpoint limits in database
-        if propty in signals_lims:
-            db['lolo'] = _PSSearch.get_splims(pstype, 'lolo')
-            db['low'] = _PSSearch.get_splims(pstype, 'low')
-            db['lolim'] = _PSSearch.get_splims(pstype, 'lolim')
-            db['hilim'] = _PSSearch.get_splims(pstype, 'hilim')
-            db['high'] = _PSSearch.get_splims(pstype, 'high')
-            db['hihi'] = _PSSearch.get_splims(pstype, 'hihi')
-        # define unit of current
-        if propty in signals_unit:
-            db['unit'] = get_ps_current_unit()
-        # define prec of current
-        if propty in signals_prec:
-            db['prec'] = default_ps_current_precision,
-    return propty_db
-
-
-def get_ps_FAC_propty_database(pstype):
-    """Return database with FAC pwrsupply model PVs."""
-    # TODO: implement!!!
-    return get_ps_FBP_propty_database(pstype)
-
-
-def get_ps_FAC_2S_propty_database(pstype):
-    """Return database with FAC_2S pwrsupply model PVs."""
-    # TODO: implement!!!
-    return get_ps_FBP_propty_database(pstype)
-
-
-def get_ps_FAC_2P4S_propty_database(pstype):
-    """Return database with FAC_2P4S pwrsupply model PVs."""
-    # TODO: implement!!!
-    return get_ps_FBP_propty_database(pstype)
-
-
-def get_ps_FAP_propty_database(pstype):
-    """Return database with FAP pwrsupply model PVs."""
-    # TODO: implement!!!
-    return get_ps_FBP_propty_database(pstype)
-
-
-def get_ps_FAP_4P_propty_database(pstype):
-    """Return database with FAP_4P pwrsupply model PVs."""
-    # TODO: implement!!!
-    return get_ps_FBP_propty_database(pstype)
-
-
-def get_ps_FAP_2P2S_propty_database(pstype):
-    """Return database with FAP_2P2S pwrsupply model PVs."""
-    # TODO: implement!!!
-    return get_ps_FBP_propty_database(pstype)
-
-
-def get_ps_FBP_FOFB_propty_database(pstype):
-    """Return database with FBP_FOFB pwrsupply model PVs."""
-    # TODO: implement!!!
-    return get_ps_FBP_propty_database(pstype)
-
-
-def get_ps_Commercial_propty_database(pstype):
-    """Return database with Commercial pwrsupply model PVs."""
-    # TODO: implement!!!
-    return get_ps_FBP_propty_database(pstype)
+    return db
 
 
 def get_common_pu_propty_database():
@@ -354,36 +257,10 @@ def get_common_pu_SI_InjKicker_propty_database():
     })
 
 
-def get_ps_propty_database(pstype):
+def get_ps_propty_database(psmodel, pstype):
     """Return property database of a LNLS power supply type device."""
-    # TODO: this needs generalization to work with any psmodel!
-    propty_db = get_ps_FBP_propty_database(pstype)
-    signals_lims = ('Current-SP', 'Current-RB',
-                    'CurrentRef-Mon', 'Current-Mon',
-                    'CycleAmpl-SP', 'CycleAmpl-RB',
-                    'CycleOffset-SP', 'CycleOffset-RB',
-                    )
-    # TODO: define limits to WfmData as well!
-    signals_unit = signals_lims + (
-        'WfmData-SP', 'WfmData-RB',
-    )
-    signals_prec = signals_unit
-
-    for propty, db in propty_db.items():
-        # set setpoint limits in database
-        if propty in signals_lims:
-            db['lolo'] = _PSSearch.get_splims(pstype, 'lolo')
-            db['low'] = _PSSearch.get_splims(pstype, 'low')
-            db['lolim'] = _PSSearch.get_splims(pstype, 'lolim')
-            db['hilim'] = _PSSearch.get_splims(pstype, 'hilim')
-            db['high'] = _PSSearch.get_splims(pstype, 'high')
-            db['hihi'] = _PSSearch.get_splims(pstype, 'hihi')
-        # define unit of current
-        if propty in signals_unit:
-            db['unit'] = get_ps_current_unit()
-        # define prec of current
-        if propty in signals_prec:
-            db['prec'] = default_ps_current_precision,
+    propty_db = _get_model_db(psmodel)
+    _set_limits(pstype, propty_db)
     return propty_db
 
 
@@ -417,7 +294,7 @@ def get_ma_propty_database(maname):
     psnames = _MASearch.conv_psmaname_2_psnames(maname)
     pstype = _PSSearch.conv_psname_2_pstype(psnames[0])
     # TODO: generalize
-    propty_db = get_ps_FBP_propty_database(pstype)
+    propty_db = get_ps_propty_database('FBP', pstype)
     db = {}
 
     for psname, magfunc in magfunc_dict.items():
@@ -525,3 +402,133 @@ def get_pm_propty_database(maname):
         else:
             raise ValueError('Invalid pulsed magnet power supply type!')
     return db
+
+
+# Hidden
+def _get_ps_FBP_propty_database():
+    """Return database with FBP pwrsupply model PVs."""
+    propty_db = get_common_propty_database()
+    db_ps = {
+        'IntlkSoftLabels-Cte':  {'type': 'string',
+                                 'count': len(ps_soft_interlock_FBP),
+                                 'value': ps_soft_interlock_FBP},
+        'IntlkHardLabels-Cte':  {'type': 'string',
+                                 'count': len(ps_hard_interlock_FBP),
+                                 'value': ps_hard_interlock_FBP},
+    }
+    propty_db.update(db_ps)
+    return propty_db
+
+
+def _get_ps_FAC_propty_database():
+    """Return database with FAC pwrsupply model PVs."""
+    # TODO: implement!!!
+    propty_db = get_common_propty_database()
+    db_ps = {
+        'Current2-Mon': {'type': 'float',  'value': 0.0,
+                         'prec': default_ps_current_precision},
+        'IntlkSoftLabels-Cte':  {'type': 'string',
+                                 'count': len(ps_soft_interlock_FAC),
+                                 'value': ps_soft_interlock_FAC},
+        'IntlkHardLabels-Cte':  {'type': 'string',
+                                 'count': len(ps_hard_interlock_FAC),
+                                 'value': ps_hard_interlock_FAC},
+    }
+    propty_db.update(db_ps)
+    return propty_db
+
+
+def _get_ps_FAC_2S_propty_database():
+    """Return database with FAC_2S pwrsupply model PVs."""
+    # TODO: implement!!!
+    return _get_ps_FBP_propty_database()
+
+
+def _get_ps_FAC_2P4S_propty_database():
+    """Return database with FAC_2P4S pwrsupply model PVs."""
+    # TODO: implement!!!
+    return _get_ps_FBP_propty_database()
+
+
+def _get_ps_FAP_propty_database():
+    """Return database with FAP pwrsupply model PVs."""
+    # TODO: implement!!!
+    return _get_ps_FBP_propty_database()
+
+
+def _get_ps_FAP_4P_propty_database():
+    """Return database with FAP_4P pwrsupply model PVs."""
+    # TODO: implement!!!
+    return _get_ps_FBP_propty_database()
+
+
+def _get_ps_FAP_2P2S_propty_database():
+    """Return database with FAP_2P2S pwrsupply model PVs."""
+    # TODO: implement!!!
+    return _get_ps_FBP_propty_database()
+
+
+def _get_ps_FBP_FOFB_propty_database():
+    """Return database with FBP_FOFB pwrsupply model PVs."""
+    # TODO: implement!!!
+    return _get_ps_FBP_propty_database()
+
+
+def _get_ps_Commercial_propty_database():
+    """Return database with Commercial pwrsupply model PVs."""
+    # TODO: implement!!!
+    return _get_ps_FBP_propty_database()
+
+
+def _set_limits(pstype, database):
+    signals_lims = ('Current-SP', 'Current-RB',
+                    'CurrentRef-Mon', 'Current-Mon', 'Current2-Mon'
+                    'CycleAmpl-SP', 'CycleAmpl-RB',
+                    'CycleOffset-SP', 'CycleOffset-RB',
+                    )
+    # TODO: define limits to WfmData as well!
+    signals_unit = signals_lims + (
+        'WfmData-SP', 'WfmData-RB',
+    )
+    signals_prec = signals_unit
+
+    for propty, db in database.items():
+        # set setpoint limits in database
+        if propty in signals_lims:
+            db['lolo'] = _PSSearch.get_splims(pstype, 'lolo')
+            db['low'] = _PSSearch.get_splims(pstype, 'low')
+            db['lolim'] = _PSSearch.get_splims(pstype, 'lolim')
+            db['hilim'] = _PSSearch.get_splims(pstype, 'hilim')
+            db['high'] = _PSSearch.get_splims(pstype, 'high')
+            db['hihi'] = _PSSearch.get_splims(pstype, 'hihi')
+        # define unit of current
+        if propty in signals_unit:
+            db['unit'] = get_ps_current_unit()
+        # define prec of current
+        if propty in signals_prec:
+            db['prec'] = default_ps_current_precision,
+
+
+def _get_model_db(psmodel):
+    if psmodel == 'FBP':
+        database = _get_ps_FBP_propty_database()
+    elif psmodel in ('FAC'):
+        database = _get_ps_FAC_propty_database()
+    elif psmodel in ('FAC_2S'):
+        database = _get_ps_FAC_2S_propty_database()
+    elif psmodel in ('FAC_2P4S'):
+        database = _get_ps_FAC_2P4S_propty_database()
+    elif psmodel in ('FAP'):
+        database = _get_ps_FAP_propty_database()
+    elif psmodel in ('FAP_4P'):
+        database = _get_ps_FAP_4P_propty_database()
+    elif psmodel in ('FAP_2P2S'):
+        database = _get_ps_FAP_2P2S_propty_database()
+    elif psmodel in ('FBP_FOFB'):
+        database = _get_ps_FBP_FOFB_propty_database()
+    elif psmodel in ('Commercial'):
+        database = _get_ps_Commercial_propty_database()
+    else:
+        raise ValueError(
+            'DB for psmodel {} not implemented!'.format(psmodel))
+    return database
