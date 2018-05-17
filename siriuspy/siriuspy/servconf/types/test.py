@@ -2,6 +2,7 @@
 
 import copy as _copy
 
+# TODO: delete this configuration!
 
 def get_dict():
     """Return configuration type dictionar."""

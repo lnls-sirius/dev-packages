@@ -3,6 +3,9 @@
 import copy as _copy
 
 
+# TODO: delete this configuration!
+
+
 def get_dict():
     """Return configuration type dictionar."""
     module_name = __name__.split('.')[-1]

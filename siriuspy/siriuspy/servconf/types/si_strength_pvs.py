@@ -2,6 +2,7 @@
 import re
 from siriuspy.search import MASearch
 
+# TODO: delete this configuration!
 
 def get_dict():
     """Return SI PVs as dict."""
