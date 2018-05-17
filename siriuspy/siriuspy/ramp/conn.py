@@ -10,7 +10,7 @@ IOCs.
 
 from siriuspy.factory import MagnetFactory as _MagnetFactory
 from siriuspy import envars as _envars
-from siriuspy.servconf.conf_service import ConfigService
+from siriuspy.servconf.conf_service import ConfigService as _ConfigService
 
 
 class _Conn:
@@ -19,6 +19,77 @@ class _Conn:
     def connected(self):
         """Connection state."""
         return self._get_connected()
+
+
+
+class _ConnConfigService(_Conn):
+
+    def __init__(self, config_type, url=_envars.server_url_configdb):
+        if config_type not in ('bo_ramp', 'bo_normalized'):
+            raise ValueError('Invalid configuration type!')
+        self._config_type = config_type
+        self._servconf = _ConfigService()
+
+    def _get_connected(self):
+        return self._servconf.connected
+
+
+class ConnBORamp(_ConnConfigService):
+
+    def __init__(self, url=_envars.server_url_configdb):
+        _ConnConfigService.__init__(self, 'bo_ramp', url=url)
+
+
+
+
+
+class __ConnConfigService(_ConfigService):
+    """ConfigService connector class."""
+
+    def __init__(self, url=_envars.server_url_configdb):
+        """Init method."""
+        _ConfigService.__init__(self, url=url)
+
+    def insert_config(self, wfmset, name):
+        """Insert ramp configuration ConfigDB."""
+        # Build config settings
+        config_type = "rmp_" + wfmset.section.lower() + "_ps"
+        value = self._get_config_value(wfmset)
+        # Insert in DB
+        response = self._conn.insert_config(
+            config_type=config_type, name=name, value=value)
+
+        if "result" in response:
+            return 1
+        else:
+            return 0
+
+    def get_config(self, wfmset, name):
+        """Get ramp configuration from configDB and set appropriate objects."""
+        config_type = "rmp_" + wfmset.section.lower() + "_ps"
+        response = self._conn.get_config(config_type=config_type, name=name)
+
+        if "result" in response:
+            config = response["result"]
+            if type(config["value"]) is not dict:
+                raise TypeError("Value is not a dict")
+        else:
+            return 0
+
+        for pv, wvfrm in config["value"].items():
+            ma = ":".join(pv.split(":")[:-1])
+            if type(wvfrm) is not list:
+                raise TypeError("Waveform is not a list")
+            wfmset.set_wfm_current(ma, wvfrm)
+
+        return 1
+
+    def _get_config_value(self, wfmset):
+        value = {}
+        for magnet in wfmset.magnets:
+            value[magnet + ":WfmData-SP"] = wfmset.get_wfm_current(magnet)
+        return value
+
 
 
 class ConnMagnet(_Conn):
@@ -79,51 +150,3 @@ class ConnChrom(_Conn):
     """Connector class to interact with ChromCorr IOCs."""
 
     pass
-
-
-class ConnConfigDB(_Conn):
-    """Config DB connector class."""
-
-    def __init__(self, url=_envars.server_url_configdb):
-        """Init method."""
-        self._conn = ConfigService(url)
-
-    def insert_config(self, wfmset, name):
-        """Insert ramp configuration ConfigDB."""
-        # Build config settings
-        config_type = "rmp_" + wfmset.section.lower() + "_ps"
-        value = self._get_config_value(wfmset)
-        # Insert in DB
-        response = self._conn.insert_config(
-            config_type=config_type, name=name, value=value)
-
-        if "result" in response:
-            return 1
-        else:
-            return 0
-
-    def get_config(self, wfmset, name):
-        """Get ramp configuration from configDB and set appropriate objects."""
-        config_type = "rmp_" + wfmset.section.lower() + "_ps"
-        response = self._conn.get_config(config_type=config_type, name=name)
-
-        if "result" in response:
-            config = response["result"]
-            if type(config["value"]) is not dict:
-                raise TypeError("Value is not a dict")
-        else:
-            return 0
-
-        for pv, wvfrm in config["value"].items():
-            ma = ":".join(pv.split(":")[:-1])
-            if type(wvfrm) is not list:
-                raise TypeError("Waveform is not a list")
-            wfmset.set_wfm_current(ma, wvfrm)
-
-        return 1
-
-    def _get_config_value(self, wfmset):
-        value = {}
-        for magnet in wfmset.magnets:
-            value[magnet + ":WfmData-SP"] = wfmset.get_wfm_current(magnet)
-        return value
