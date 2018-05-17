@@ -31,6 +31,7 @@ class TestConfigService(unittest.TestCase):
         "delete_config",
         "query_db_size",
         "query_db_size_discarded",
+        "connected",
         "conv_timestamp",
     }
 
@@ -372,6 +373,11 @@ class TestConfigService(unittest.TestCase):
             json.JSONDecodeError("FakeError", "FakeDoc", 0)
         resp = self.cs.query_db_size()
         self.assertEqual(resp, self.decode_error_reponse)
+
+    def test_connected(self):
+        """Test connected."""
+        # TODO: implement it!
+        self.assertIn(self.cs.connected, (True, False))
 
 
 class TestConfigServiceConTimestamp(unittest.TestCase):
