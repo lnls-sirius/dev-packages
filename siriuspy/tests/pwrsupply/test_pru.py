@@ -56,7 +56,7 @@ class TestConst(unittest.TestCase):
 
     def test_SYNC_MODE(self):
         """Test SYNC_MODE."""
-        modes = ('MIGINT', 'MIGEND', 'RMPINT', 'RMPEND', 'CYCLE')
+        modes = ('MIGINT', 'MIGEND', 'RMPINT', 'RMPEND', 'BRDCST')
         self.assertIn('ALL', dir(Const.SYNC_MODE))
         self.assertIsInstance(Const.SYNC_MODE.ALL, tuple)
         for mode in modes:
