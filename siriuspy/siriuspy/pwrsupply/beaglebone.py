@@ -71,8 +71,9 @@ class _Watcher(_threading.Thread):
             elif self.state == _Watcher.WAIT_OPMODE:
                 if self._achieved_op_mode() and self._sync_started():
                     self.state = _Watcher.WAIT_TRIGGER
-                elif self._sync_pulsed():
-                    self.state = _Watcher.WAIT_CYCLE
+                elif self._sync_stopped():
+                    if self._cycle_started():
+                        self.state = _Watcher.WAIT_CYCLE
             elif self.state == _Watcher.WAIT_TRIGGER:
                 if self._changed_op_mode():
                     break
@@ -155,7 +156,6 @@ class _Watcher(_threading.Thread):
             val = self.controller.read(dev_name, 'CycleOffset-RB')
         else:
             val = self.controller.read(dev_name, 'WfmData-RB')[-1]
-        print('Writing {} to {}'.format(val, dev_name))
         self.controller.write(dev_name, cur_sp, val)
 
     def _set_slow_ref(self):
@@ -402,7 +402,7 @@ class _E2SController:
         self._pre_opmode(devices_info, setpoint)
         # If SlowRefSync, MigWfm or RmpWfm set to SlowRef
         op_mode = setpoint
-        if setpoint in (0, 1, 3, 4):
+        if setpoint in (0, 3, 4):
             self._operation_mode = setpoint
             op_mode = 0
         self._execute_command(devices_info, _c.F_SELECT_OP_MODE, op_mode+3)
@@ -411,12 +411,14 @@ class _E2SController:
 
     def _set_current(self, devices_info, setpoint):
         """Set current."""
-        op_mode = self._get_opmode(devices_info[0])
-        if op_mode == _PSConst.OpMode.SlowRefSync:
-            self._set_slowrefsync_setpoints(devices_info, setpoint)
-        else:
-            self._execute_command(devices_info, _c.F_SET_SLOWREF, setpoint)
-        self._set_setpoints(devices_info, 'Current-SP', setpoint)
+        for dev_info in devices_info:
+            op_mode = self._get_opmode(dev_info)
+            if op_mode == _PSConst.OpMode.SlowRefSync:
+                self._pru_controller.pru_sync_stop()
+            self._execute_command([dev_info], _c.F_SET_SLOWREF, setpoint)
+            self._set_setpoints([dev_info], 'Current-SP', setpoint)
+            if op_mode == _PSConst.OpMode.SlowRefSync:
+                self._pru_controller.pru_sync_start(0x5C)
 
     def _reset(self, devices_info, setpoint):
         """Reset command."""
@@ -515,8 +517,8 @@ class _E2SController:
                 self._execute_command(
                     [device_info], _c.F_SET_SLOWREF, offset_val)
                 self._set_setpoints([device_info], 'Current-SP', offset_val)
-        elif setpoint == _PSConst.OpMode.SlowRefSync:
-            self._set_slowrefsync_setpoints()
+        # elif setpoint == _PSConst.OpMode.SlowRefSync:
+        #     self._set_slowrefsync_setpoints()
 
     def _pos_opmode(self, devices_info, setpoint):
         # Further actions that depend on op mode
@@ -722,7 +724,7 @@ class BeagleBone:
 
     def _set_opmode(self, op_mode):
         self._pru_controller.pru_sync_stop()  # TODO: not necessary. test.
-        self._restore_wfm()
+        # self._restore_wfm()
         self._e2s_controller.write(self.psnames, 'OpMode-Sel', op_mode)
         if op_mode == _PSConst.OpMode.Cycle:
             sync_mode = self._pru_controller.PRU.SYNC_MODE.CYCLE
@@ -733,10 +735,10 @@ class BeagleBone:
         elif op_mode == _PSConst.OpMode.MigWfm:
             sync_mode = self._pru_controller.PRU.SYNC_MODE.MIGEND
             return self._pru_controller.pru_sync_start(sync_mode)
-        elif op_mode == _PSConst.OpMode.SlowRefSync:
-            self._wfm_dirty = True
-            sync_mode = self._pru_controller.PRU.SYNC_MODE.RMPEND
-            return self._pru_controller.pru_sync_start(sync_mode)
+        # elif op_mode == _PSConst.OpMode.SlowRefSync:
+        #     self._wfm_dirty = True
+        #     sync_mode = self._pru_controller.PRU.SYNC_MODE.CYCLE
+        #     return self._pru_controller.pru_sync_start(sync_mode)
         # else:
         #     print('mode {} not implemented yet!', format(op_mode))
 
