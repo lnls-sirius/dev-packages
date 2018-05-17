@@ -3,7 +3,7 @@ import time as _time
 
 from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 
-__version__ = '1.3.1'  # current compatible version.
+__version__ = '1.3.3'  # current compatible version.
 # load PRUserial485 if available and checks version
 
 import PRUserial485 as _PRUserial485
