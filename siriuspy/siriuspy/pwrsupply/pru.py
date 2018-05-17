@@ -251,7 +251,7 @@ class PRUSim(PRUInterface):
         """Simulate trigger signal from the timing system."""
         if self._sync_status == Const.SYNC_STATE.ON:
             self._sync_pulse_count += 1
-            if self.sync_mode == Const.SYNC_MODE.CYCLE:
+            if self.sync_mode == Const.SYNC_MODE.BRDCST:
                 self._sync_status = Const.SYNC_STATE.OFF
             elif self.sync_mode in (Const.SYNC_MODE.MIGINT,
                                     Const.SYNC_MODE.MIGEND):

@@ -427,7 +427,7 @@ class PRUController:
     _pru_delays[PRU.SYNC_MODE.MIGEND] = _delay_func_set_slowref_fbp
     _pru_delays[PRU.SYNC_MODE.RMPINT] = None  # This mode is not implemented
     _pru_delays[PRU.SYNC_MODE.RMPEND] = _delay_func_set_slowref_fbp
-    _pru_delays[PRU.SYNC_MODE.CYCLE] = _delay_func_sync_pulse
+    _pru_delays[PRU.SYNC_MODE.BRDCST] = _delay_func_sync_pulse
 
     # lock used when accessing _variables_values
     _lock = _Lock()
@@ -1019,7 +1019,7 @@ class PRUController:
         elif self._pru.sync_mode == self.PRU.SYNC_MODE.RMPEND:
             dev_ids = self._select_next_device_id()
             return dev_ids, self.VGROUPS.RMPWFM
-        elif self._pru.sync_mode == self.PRU.SYNC_MODE.CYCLE:
+        elif self._pru.sync_mode == self.PRU.SYNC_MODE.BRDCST:
             return self._device_ids, self.VGROUPS.CYCLE
         else:
             self.disconnect()
@@ -1041,7 +1041,7 @@ class PRUController:
 
     def _get_scan_interval(self):
         if self.pru_sync_status == self.PRU.SYNC_STATE.OFF or \
-           self.pru_sync_mode == self.PRU.SYNC_MODE.CYCLE:
+           self.pru_sync_mode == self.PRU.SYNC_MODE.BRDCST:
             return 1.0/self.FREQ.SCAN  # [s]
         else:
             return 1.0/self.FREQ.RAMP  # [s]
