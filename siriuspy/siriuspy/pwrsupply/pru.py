@@ -246,10 +246,11 @@ class PRU(PRUInterface):
 class PRUSim(PRUInterface):
     """Functions for simulated programmable real-time unit."""
 
-    # TODO: maybe create a thread to simulate timing triggers.
+    # TODO: improve simulation
 
     def emulate_trigger(self):
         """Simulate trigger signal from the timing system."""
+        t0 = _time.time()
         while self._sync_status == Const.SYNC_STATE.ON:
             self._sync_pulse_count += 1
             if self.sync_mode == Const.SYNC_MODE.CYCLE:
@@ -262,6 +263,8 @@ class PRUSim(PRUInterface):
             elif self.sync_mode in (Const.SYNC_MODE.RMPINT,
                                     Const.SYNC_MODE.RMPEND):
                 self._index = (self._index + 1) % len(self._curves[0])
+                if (_time.time() - t0) > 5:
+                    break
 
     def __init__(self):
         """Init method."""
@@ -271,11 +274,15 @@ class PRUSim(PRUInterface):
         self._curves = self._create_curves()
         self._block = 0  # TODO: check if this is the default PRU value
         self._index = 0
+        self.t = _threading.Thread(target=self.emulate_trigger, daemon=True)
 
     def _get_sync_status(self):
         return self._sync_status
 
     def _sync_start(self, sync_mode, sync_address, delay):
+        if self.t.is_alive():
+            self._sync_status = Const.SYNC_STATE.OFF
+            self.t.join()
         self._sync_status = Const.SYNC_STATE.ON
         # TODO: implement while loop as thread (for RMP and MIG modes to work)
         # while self._sync_status == Const.SYNC_STATE.ON:
