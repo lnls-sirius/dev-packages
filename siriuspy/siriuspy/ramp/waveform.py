@@ -46,11 +46,11 @@ _nominal_strengths = {
     'SI-Fam:MA-SFA2': +22.6153800000000018,  # [SL: 1/m^2]
     'SI-Fam:MA-SFB2': +29.6730900000000020,  # [SL: 1/m^2]
     'SI-Fam:MA-SFP2': +29.7755099999999970,  # [SL: 1/m^2]
-    'BO-Fam:MA-B': _bo_injection_energy,  #[Energy: GeV]
-    'BO-Fam:MA-QD': +0.0011197961538728,  #[KL: 1/m]
-    'BO-Fam:MA-QF': +0.3770999232791374,  #[KL: 1/m]
-    'BO-Fam:MA-SD': +0.5258382119529604,  #[KL: 1/m]
-    'BO-Fam:MA-SF': +1.1898514030258744,  #[KL: 1/m]
+    'BO-Fam:MA-B': _bo_injection_energy,  # [Energy: GeV]
+    'BO-Fam:MA-QD': +0.0011197961538728,  # [KL: 1/m]
+    'BO-Fam:MA-QF': +0.3770999232791374,  # [KL: 1/m]
+    'BO-Fam:MA-SD': +0.5258382119529604,  # [KL: 1/m]
+    'BO-Fam:MA-SF': +1.1898514030258744,  # [KL: 1/m]
 }
 
 
@@ -341,6 +341,7 @@ class WaveformParam:
         self.plateau_stop_index = i4
 
     def update(self):
+        """Update object."""
         self._set_coeffs()
         self._waveform = self._eval_index()
         self._deprecated = False
@@ -606,8 +607,10 @@ class _WaveformMagnet(_Magnet):
 
 
 class WaveformDipole(_WaveformMagnet, WaveformParam):
+    """Waveform for Dipole."""
 
     def __init__(self, maname='BO-Fam:MA-B', size=_MAX_WFMSIZE):
+        """Constructor."""
         _WaveformMagnet.__init__(self, maname)
         eje_current = self.conv_strength_2_current(_bo_ejection_energy)
         WaveformParam.__init__(self, scale=eje_current, size=size)
@@ -620,8 +623,10 @@ class WaveformDipole(_WaveformMagnet, WaveformParam):
 
 
 class Waveform(_WaveformMagnet):
+    """Waveform class for general magnets."""
 
     def __init__(self, maname, dipole=None, family=None):
+        """Constructor."""
         if maname != 'SI-Fam:MA-B1B2' and dipole is None:
             raise ValueError(
                 '{} waveform needs an associated dipole!'.format(maname))
@@ -636,6 +641,7 @@ class Waveform(_WaveformMagnet):
             raise NotImplementedError
 
     def update(self):
+        """Update object."""
         if self._dipole is not None:
             self._dipole.update()
         if self._family is not None:
