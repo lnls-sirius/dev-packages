@@ -203,6 +203,12 @@ class ConfigService:
         """Return estimated size of discarded configurations data."""
         pass
 
+    @property
+    def connected(self):
+        """Connection state."""
+        r = self.query_db_size()
+        return r['code'] == 200
+
     @staticmethod
     def conv_timestamp(datestring):
         """Convert timestamp format from text to double."""
