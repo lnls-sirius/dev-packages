@@ -1,5 +1,6 @@
 """Module implementing PRU elements."""
 import time as _time
+import threading as _threading
 
 from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 
@@ -249,7 +250,7 @@ class PRUSim(PRUInterface):
 
     def emulate_trigger(self):
         """Simulate trigger signal from the timing system."""
-        if self._sync_status == Const.SYNC_STATE.ON:
+        while self._sync_status == Const.SYNC_STATE.ON:
             self._sync_pulse_count += 1
             if self.sync_mode == Const.SYNC_MODE.CYCLE:
                 self._sync_status = Const.SYNC_STATE.OFF
@@ -277,9 +278,10 @@ class PRUSim(PRUInterface):
     def _sync_start(self, sync_mode, sync_address, delay):
         self._sync_status = Const.SYNC_STATE.ON
         # TODO: implement while loop as thread (for RMP and MIG modes to work)
-        while self._sync_status == Const.SYNC_STATE.ON:
-            self.emulate_trigger()
-            _time.sleep(0.1)
+        # while self._sync_status == Const.SYNC_STATE.ON:
+        self.t = _threading.Thread(target=self.emulate_trigger, daemon=True)
+        self.t.start()
+        # _time.sleep(0.1)
         return None
 
     def _sync_stop(self):
