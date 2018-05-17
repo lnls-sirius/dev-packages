@@ -30,11 +30,11 @@ _normalized_configurations = [
     'normalized_config_name_1',
     'normalized_config_name_2',]
 _rf_parameters = {
-    'delay': 0.0,}  # TODO: int or float?
+    'delay': 0.0,}  # [us]
 
 
 _template_dict = {
-    'power_supplies_delay': 0.0,  # TODO: int or float?
+    'power_supplies_delay': 0.0,  # [us]
     'bo_dipole_ramp_parameters': _bo_dipole_ramp_parameters,
     'normalized_configurations*': _normalized_configurations,
     'rf_parameters': _rf_parameters,
