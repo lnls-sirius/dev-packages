@@ -25,7 +25,7 @@ class TestE2SController(unittest.TestCase):
         self.pru_controller.read_variables.side_effect = read_variables
         self.pru_controller.pru_curve_read.return_value = \
             self.database['WfmData-RB']['value']
-        self.pru_controller.pru_sync_mode = 92
+        self.pru_controller.pru_sync_mode = 0x5B
         self.pru_controller.pru_curve_block = 1
         self.pru_controller.pru_sync_pulse_count = 10
         self.pru_controller.queue_length = 0
@@ -178,8 +178,8 @@ class TestE2SController(unittest.TestCase):
         self.controller.write(dev, field, value)
 
         # Call set_slowrefsync and disable_siggen
-        self.pru_controller.pru_curve_write_slowref_sync.assert_called()
-        self.pru_controller.exec_functions.assert_called_with([1], 4, 3)
+        # self.pru_controller.pru_curve_write_slowref_sync.assert_called()
+        self.pru_controller.exec_functions.assert_called_with([1], 4, 4)
 
         # Assert opmode setpoint is set
         self.assertEqual(self.controller.read(dev, field), 1)

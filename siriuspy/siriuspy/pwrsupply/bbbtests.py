@@ -173,7 +173,7 @@ def pruc_run_cycle(pruc):
     pruc_config_cycle_mode(pruc)
 
     # enters cycle mode
-    pruc.pru_sync_start(sync_mode=pruc.PRU.SYNC_MODE.CYCLE)
+    pruc.pru_sync_start(sync_mode=pruc.PRU.SYNC_MODE.BRDCST)
 
     # loops until timing trigger is received
     print('waiting for trigger from EVR...', end='')
