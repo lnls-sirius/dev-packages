@@ -117,7 +117,7 @@ class PRUSyncMode:
     """Return sync mode."""
 
     _sync_mode = {
-        _SYNC_MODE.CYCLE: 1,
+        _SYNC_MODE.BRDCST: 1,
         _SYNC_MODE.RMPEND: 2,
         _SYNC_MODE.MIGEND: 3}
 
