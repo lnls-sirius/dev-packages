@@ -7,6 +7,7 @@ import time as _time
 # BSMP and PS constants
 from siriuspy.pwrsupply.bsmp import Const as _c
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
+from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 
 
 class CommandFactory:
@@ -20,7 +21,7 @@ class CommandFactory:
         elif epics_field == 'OpMode-Sel':
             return PSOpMode(Command(pru_controller, _c.F_SELECT_OP_MODE))
         elif epics_field == 'Current-SP':
-            return Command(pru_controller, _c.F_SET_SLOWREF)
+            return Current(pru_controller)
         elif epics_field == 'Reset-Cmd':
             return Command(pru_controller, _c.F_RESET_INTERLOCKS)
         elif epics_field == 'Abort-Cmd':
@@ -114,3 +115,26 @@ class PSOpMode:
 
         if value == _PSConst.OpMode.SlowRef:
             self.disable_siggen.execute(device_ids)
+
+
+class Current:
+    """Command to set current."""
+
+    def __init__(self, pru_controller):
+        """Create command to set current."""
+        self.set_current = Command(pru_controller, _c.F_SET_SLOWREF)
+
+    def execute(self, device_ids, value=None):
+        """Execute command."""
+        op_modes = \
+            [_PSCStatus(self.pru_controller.read(device_id, 0)).ioc_opmode
+             for device_id in device_ids]
+        slowsync = False
+        if _PSConst.OpMode.SlowRefSync in op_modes:
+            slowsync = True
+            self.pru_controller.pru_sync_stop()
+
+        self.set_current.execute(device_ids, value)
+
+        if slowsync:
+            self.pru_controller.pru_sync_start(0x5B)
