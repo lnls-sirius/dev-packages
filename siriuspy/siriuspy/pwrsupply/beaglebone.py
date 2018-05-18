@@ -418,7 +418,8 @@ class _E2SController:
             self._execute_command([dev_info], _c.F_SET_SLOWREF, setpoint)
             self._set_setpoints([dev_info], 'Current-SP', setpoint)
             if op_mode == _PSConst.OpMode.SlowRefSync:
-                self._pru_controller.pru_sync_start(0x5C)
+                sync_mode = self._pru_controller.PRU.SYNC_MODE.BRDCST
+                self._pru_controller.pru_sync_start(sync_mode)
 
     def _reset(self, devices_info, setpoint):
         """Reset command."""
