@@ -55,6 +55,12 @@ class E2SController:
 
     def read(self, device_name, field):
         """Read field from device."""
+        if field == 'OpMode-Sel':
+            op_mode = self._fields[field][device_name].read()
+            if op_mode == 0:
+                return self._operation_mode
+            else:
+                return op_mode
         return self._fields[field][device_name].read()
 
     def read_all(self, device_name):
@@ -75,6 +81,8 @@ class E2SController:
 
         if field == 'OpMode-Sel':
             self._pre_opmode(devices_names, value)
+            if value in (0, 3, 4):
+                self._operation_mode = value
             self._write(ids, field, value)
             self._pos_opmode(devices_names, value)
             return
