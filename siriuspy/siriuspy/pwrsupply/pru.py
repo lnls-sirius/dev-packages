@@ -4,7 +4,7 @@ import threading as _threading
 
 from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 
-__version__ = '1.3.1'  # current compatible version.
+__version__ = '1.3.3'  # current compatible version.
 # load PRUserial485 if available and checks version
 
 import PRUserial485 as _PRUserial485
@@ -253,7 +253,7 @@ class PRUSim(PRUInterface):
         t0 = _time.time()
         while self._sync_status == Const.SYNC_STATE.ON:
             self._sync_pulse_count += 1
-            if self.sync_mode == Const.SYNC_MODE.CYCLE:
+            if self.sync_mode == Const.SYNC_MODE.BRDCST:
                 self._sync_status = Const.SYNC_STATE.OFF
             elif self.sync_mode in (Const.SYNC_MODE.MIGINT,
                                     Const.SYNC_MODE.MIGEND):

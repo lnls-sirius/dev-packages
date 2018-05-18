@@ -229,7 +229,7 @@ class _E2SController:
     }
 
     _sync_mode = {
-        _PRUController.PRU.SYNC_MODE.CYCLE: 1,
+        _PRUController.PRU.SYNC_MODE.BRDCST: 1,
         _PRUController.PRU.SYNC_MODE.RMPEND: 2,
         _PRUController.PRU.SYNC_MODE.MIGEND: 3
     }
@@ -727,7 +727,7 @@ class BeagleBone:
         # self._restore_wfm()
         self._e2s_controller.write(self.psnames, 'OpMode-Sel', op_mode)
         if op_mode == _PSConst.OpMode.Cycle:
-            sync_mode = self._pru_controller.PRU.SYNC_MODE.CYCLE
+            sync_mode = self._pru_controller.PRU.SYNC_MODE.BRDCST
             return self._pru_controller.pru_sync_start(sync_mode)
         elif op_mode == _PSConst.OpMode.RmpWfm:
             sync_mode = self._pru_controller.PRU.SYNC_MODE.RMPEND
