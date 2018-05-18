@@ -16,7 +16,7 @@ from siriuspy.pwrsupply.pru import PRU as _PRU
 # version of the BSMP implementation of power supplies that is compatible
 # with the current implemenation of this module.
 __version__ = 'V0.11b2018-05-08V0.11b2018-05-08'
-
+__version__ = 'V0.11 2018-04-26V0.11 2018-04-25'
 
 # Mirror power supply variables
 # =============================

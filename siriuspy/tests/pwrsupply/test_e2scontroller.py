@@ -25,7 +25,7 @@ class TestE2SController(unittest.TestCase):
         self.pru_controller.read_variables.side_effect = read_variables
         self.pru_controller.pru_curve_read.return_value = \
             self.database['WfmData-RB']['value']
-        self.pru_controller.pru_sync_mode = 92
+        self.pru_controller.pru_sync_mode = 0x5B
         self.pru_controller.pru_curve_block = 1
         self.pru_controller.pru_sync_pulse_count = 10
         self.pru_controller.queue_length = 0

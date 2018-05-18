@@ -96,10 +96,10 @@ class BeagleBone:
 
     def _set_opmode(self, op_mode):
         self._pru_controller.pru_sync_stop()  # TODO: not necessary. test.
-        self._restore_wfm()
+        # self._restore_wfm()
         self._e2s_controller.write(self.psnames, 'OpMode-Sel', op_mode)
         if op_mode == _PSConst.OpMode.Cycle:
-            sync_mode = self._pru_controller.PRU.SYNC_MODE.CYCLE
+            sync_mode = self._pru_controller.PRU.SYNC_MODE.BRDCST
             return self._pru_controller.pru_sync_start(sync_mode)
         elif op_mode == _PSConst.OpMode.RmpWfm:
             sync_mode = self._pru_controller.PRU.SYNC_MODE.RMPEND
@@ -107,10 +107,10 @@ class BeagleBone:
         elif op_mode == _PSConst.OpMode.MigWfm:
             sync_mode = self._pru_controller.PRU.SYNC_MODE.MIGEND
             return self._pru_controller.pru_sync_start(sync_mode)
-        elif op_mode == _PSConst.OpMode.SlowRefSync:
-            self._wfm_dirty = True
-            sync_mode = self._pru_controller.PRU.SYNC_MODE.RMPEND
-            return self._pru_controller.pru_sync_start(sync_mode)
+        # elif op_mode == _PSConst.OpMode.SlowRefSync:
+        #     self._wfm_dirty = True
+        #     sync_mode = self._pru_controller.PRU.SYNC_MODE.CYCLE
+        #     return self._pru_controller.pru_sync_start(sync_mode)
         # else:
         #     print('mode {} not implemented yet!', format(op_mode))
 
