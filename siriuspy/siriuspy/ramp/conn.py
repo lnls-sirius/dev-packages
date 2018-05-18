@@ -5,148 +5,143 @@ magnet soft IOcs, ConfigDB service and orbit, tune and chromacity correction
 IOCs.
 """
 
-# TODO: implement this module
-
-
-from siriuspy.factory import MagnetFactory as _MagnetFactory
+from http import HTTPStatus as _HTTPStatus
 from siriuspy import envars as _envars
 from siriuspy.servconf.conf_service import ConfigService as _ConfigService
+from siriuspy.servconf.conf_types import check_value as _check_value
 
 
-class _Conn:
-
-    @property
-    def connected(self):
-        """Connection state."""
-        return self._get_connected()
-
-
-
-class _ConnConfigService(_Conn):
+class _ConnConfigService(_ConfigService):
+    """Syntactic sugar ramp class for ConfigService."""
 
     def __init__(self, config_type, url=_envars.server_url_configdb):
+        """Contructor."""
         if config_type not in ('bo_ramp', 'bo_normalized'):
             raise ValueError('Invalid configuration type!')
         self._config_type = config_type
-        self._servconf = _ConfigService()
-
-    def _get_connected(self):
-        return self._servconf.connected
-
-
-class ConnBORamp(_ConnConfigService):
-
-    def __init__(self, url=_envars.server_url_configdb):
-        _ConnConfigService.__init__(self, 'bo_ramp', url=url)
-
-
-
-
-
-class __ConnConfigService(_ConfigService):
-    """ConfigService connector class."""
-
-    def __init__(self, url=_envars.server_url_configdb):
-        """Init method."""
         _ConfigService.__init__(self, url=url)
 
-    def insert_config(self, wfmset, name):
-        """Insert ramp configuration ConfigDB."""
-        # Build config settings
-        config_type = "rmp_" + wfmset.section.lower() + "_ps"
-        value = self._get_config_value(wfmset)
-        # Insert in DB
-        response = self._conn.insert_config(
-            config_type=config_type, name=name, value=value)
+    def get_config(self, name):
+        """Get configuration by its name."""
+        return _ConfigService.get_config(self, self._config_type, name)
 
-        if "result" in response:
-            return 1
+    def insert_config(self, name, value):
+        """Insert a new configuration."""
+        return _ConfigService.insert_config(self,
+                                            self._config_type, name, value)
+
+    def find_configs(self,
+                     name=None,
+                     begin=None,
+                     end=None,
+                     discarded=False):
+        """Return configurations."""
+        return _ConfigService.find_configs(self,
+                                           config_type=self._config_type,
+                                           name=name, begin=begin, end=end,
+                                           discarded=discarded)
+
+    def find_nr_configs(self,
+                        name=None,
+                        begin=None,
+                        end=None,
+                        discarded=False):
+        """Return nr of configurations."""
+        return _ConfigService.find_nr_configs(self,
+                                              config_type=self._config_type,
+                                              name=name, begin=begin, end=end,
+                                              discarded=discarded)
+
+    def check_value(self, value):
+        """Return True or False depending whether value matches config type."""
+        return _check_value(self._config_type, value)
+
+    def get_config_type_template(self):
+        """Return template dictionary of config type."""
+        return _ConfigService.get_config_type_template(self, self._config_type)
+
+    def response_check(self, r):
+        """Check response."""
+        if r['code'] != _HTTPStatus.OK:
+            print('{}: {}!'.format(self.name, r['message']))
+            return False
         else:
-            return 0
+            return True
 
-    def get_config(self, wfmset, name):
-        """Get ramp configuration from configDB and set appropriate objects."""
-        config_type = "rmp_" + wfmset.section.lower() + "_ps"
-        response = self._conn.get_config(config_type=config_type, name=name)
+class ConnConfig_BORamp(_ConnConfigService):
+    """ConifgurationService for BO ramp configs."""
 
-        if "result" in response:
-            config = response["result"]
-            if type(config["value"]) is not dict:
-                raise TypeError("Value is not a dict")
-        else:
-            return 0
-
-        for pv, wvfrm in config["value"].items():
-            ma = ":".join(pv.split(":")[:-1])
-            if type(wvfrm) is not list:
-                raise TypeError("Waveform is not a list")
-            wfmset.set_wfm_current(ma, wvfrm)
-
-        return 1
-
-    def _get_config_value(self, wfmset):
-        value = {}
-        for magnet in wfmset.magnets:
-            value[magnet + ":WfmData-SP"] = wfmset.get_wfm_current(magnet)
-        return value
+    def __init__(self, url=_envars.server_url_configdb):
+        """Constructor."""
+        _ConnConfigService.__init__(self, config_type='bo_ramp', url=url)
 
 
+class ConnConfig_BONormalized(_ConnConfigService):
+    """ConifgurationService for BO normalized configs."""
 
-class ConnMagnet(_Conn):
-    """Magnet Connector Class."""
+    # _template_value = \
+    #     _ConnConfigService.get_config_type_template('bo_normalized')
 
-    def __init__(self,
-                 use_vaca=False,
-                 vaca_prefix=None):
-        """Init method."""
-        self._use_vaca = use_vaca
-        self._vaca_prefix = vaca_prefix
-        self._magnets = {}
-
-    def wfm_send(self, maname, wfm_current):
-        """Send current waveform to magnet power supply."""
-        if maname not in self._magnets:
-            self._create_magnet_conn(maname)
-        magnet = self._magnets[maname]
-        if not magnet.connected:
-            raise Exception(
-                    'Not connected to power supply of {}!'.format(maname))
-        else:
-            magnet.wfmdata_sp = wfm_current
-
-    def wfm_recv(self, maname):
-        """Receive current waveform to magnet power supply."""
-        if maname not in self._magnets:
-            self._create_magnet_conn(maname)
-        magnet = self._magnets[maname]
-        if not magnet.connected:
-            raise Exception(
-                'Not connected to power supply of {}!'.format(maname))
-        else:
-            wfm_current = magnet.wfmdata_rb
-            return wfm_current
-
-    def _create_magnet_conn(self, maname):
-        self._pses[maname] = _MagnetFactory(maname=maname,
-                                            use_vaca=self._use_vaca,
-                                            vaca_prefix=self._vaca_prefix,
-                                            lock=False,
-                                            )
+    def __init__(self, url=_envars.server_url_configdb):
+        """Constructor."""
+        _ConnConfigService.__init__(self, config_type='bo_normalized', url=url)
 
 
-class ConnOrbit(_Conn):
-    """Connector class to interact with SOFT IOCs."""
-
-    pass
-
-
-class ConnTune(_Conn):
-    """Connector class to interact with TuneCorr IOCs."""
-
-    pass
-
-
-class ConnChrom(_Conn):
-    """Connector class to interact with ChromCorr IOCs."""
-
-    pass
+# class ConnMagnet(_Conn):
+#     """Magnet Connector Class."""
+#
+#     def __init__(self,
+#                  use_vaca=False,
+#                  vaca_prefix=None):
+#         """Init method."""
+#         self._use_vaca = use_vaca
+#         self._vaca_prefix = vaca_prefix
+#         self._magnets = {}
+#
+#     def wfm_send(self, maname, wfm_current):
+#         """Send current waveform to magnet power supply."""
+#         if maname not in self._magnets:
+#             self._create_magnet_conn(maname)
+#         magnet = self._magnets[maname]
+#         if not magnet.connected:
+#             raise Exception(
+#                     'Not connected to power supply of {}!'.format(maname))
+#         else:
+#             magnet.wfmdata_sp = wfm_current
+#
+#     def wfm_recv(self, maname):
+#         """Receive current waveform to magnet power supply."""
+#         if maname not in self._magnets:
+#             self._create_magnet_conn(maname)
+#         magnet = self._magnets[maname]
+#         if not magnet.connected:
+#             raise Exception(
+#                 'Not connected to power supply of {}!'.format(maname))
+#         else:
+#             wfm_current = magnet.wfmdata_rb
+#             return wfm_current
+#
+#     def _create_magnet_conn(self, maname):
+#         self._pses[maname] = _MagnetFactory(maname=maname,
+#                                             use_vaca=self._use_vaca,
+#                                             vaca_prefix=self._vaca_prefix,
+#                                             lock=False,
+#                                             )
+#
+#
+# class ConnOrbit(_Conn):
+#     """Connector class to interact with SOFT IOCs."""
+#
+#     pass
+#
+#
+# class ConnTune(_Conn):
+#     """Connector class to interact with TuneCorr IOCs."""
+#
+#     pass
+#
+#
+# class ConnChrom(_Conn):
+#     """Connector class to interact with ChromCorr IOCs."""
+#
+#     pass

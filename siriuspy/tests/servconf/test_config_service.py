@@ -31,6 +31,7 @@ class TestConfigService(unittest.TestCase):
         "delete_config",
         "query_db_size",
         "query_db_size_discarded",
+        "get_config_type_template",
         "connected",
         "conv_timestamp",
     }
