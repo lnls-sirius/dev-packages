@@ -7,17 +7,6 @@ import copy as _copy
 # NOTE: values for key string labels ending with char '*' have not their
 #       sizes compared with a reference if their lists or tuples!
 
-# _config_types = (
-#     # si-tunes
-#     {'config_type_name': 'si-tunes',
-#      'value': {'tunex': 0.0, 'tuney': 0.0, },
-#      },
-#     # bo-tunes
-#     {'config_type_name': 'bo-tunes',
-#      'value': {'tunex': 0.0, 'tuney': 0.0, },
-#      },
-# )
-
 _config_types_dict = None
 
 
@@ -28,7 +17,7 @@ def get_config_types():
     return tuple(_config_types_dict.keys())
 
 
-def get_config_type_value(ctype):
+def get_config_type_template(ctype):
     """Return value of a configuration type."""
     if _config_types_dict is None:
         _init_config_types_dict()
@@ -44,14 +33,6 @@ def check_value(config_type, value):
     return _recursive_check(ref_value, value)
 
 
-# def _init_config_types_dict_orig():
-#     global _config_types_dict
-#     _config_types_dict = {}
-#     for ct in _config_types:
-#         config_type_name = ct['config_type_name']
-#         _config_types_dict[config_type_name] = ct['value']
-
-
 def _init_config_types_dict():
     global _config_types_dict
     _config_types_dict = {}
@@ -63,9 +44,6 @@ def _init_config_types_dict():
 
 
 def _recursive_check(ref_value, value, same_length=True):
-    # TODO: should we allow float - int automatic castings ?
-    # TODO: this should prob. be generalized to accomodate length-varying
-    # lists/arrays (WfmData, for example)
     if type(ref_value) != type(value):
         return False
     if type(ref_value) == dict:
