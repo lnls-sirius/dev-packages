@@ -38,19 +38,27 @@ class TestWaveformParam(unittest.TestCase):
         'start_value',
         'rampup_start_index',
         'rampup_start_value',
+        'rampup_start_time',
         'rampup_stop_index',
         'rampup_stop_value',
+        'rampup_stop_time',
         'plateau_start_index',
+        'plateau_start_time',
         'plateau_stop_index',
+        'plateau_stop_time',
         'plateau_value',
         'rampdown_start_index',
         'rampdown_start_value',
+        'rampdown_start_time',
         'rampdown_stop_index',
         'rampdown_stop_value',
+        'rampdown_stop_time',
         'stop_value',
         'waveform',
         'boundary_indices',
-        'size',
+        'boundary_times',
+        'wfm_nrpoints',
+        'duration',
         'deprecated',
         'rampup_change',
         'rampdown_change',
@@ -153,10 +161,10 @@ class TestWaveformParam(unittest.TestCase):
         self.assertIsInstance(ind, list)
         self.assertEqual(len(ind), 8)
 
-    def test_size(self):
+    def test_wfm_nrpoints(self):
         """Test size."""
         w = WaveformParam()
-        self.assertIsInstance(w.size, int)
+        self.assertIsInstance(w.wfm_nrpoints, int)
 
     def test_deprecated(self):
         """Test deprecated."""
