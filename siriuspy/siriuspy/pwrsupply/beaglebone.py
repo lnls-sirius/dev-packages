@@ -136,7 +136,7 @@ class BeagleBone:
             self._devices_info[psname] = _DeviceInfo(psname, slave_ids[i])
         db = _deepcopy(self._database)
         self._e2s_controller = _E2SController(
-            self._pru_controller, self._devices_info, db)
+            self._pru_controller, self._devices_info, 'FBP', db)
 
     def _restore_wfm(self):
         if self._wfm_dirty:
