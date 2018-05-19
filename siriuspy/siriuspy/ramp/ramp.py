@@ -7,15 +7,26 @@ from siriuspy.ramp.conn import ConnConfig_BONormalized as _CCBONormalized
 
 class BONormalized:
 
+    _ccnorm = _CCBONormalized()
+
     def __init__(self, name=None):
         self._name = name
-        self._ccnorm = _CCBONormalized()
         self._normalized = dict()
 
     @property
     def name(self):
         """Configuration name of BO normalized."""
         return self._name
+
+    @property
+    def normalized(self):
+        """Normalized magnet strengths."""
+        return self._normalized
+
+    @normalized.setter
+    def normalized(slef, value):
+        """Set normalized magnet strengths."""
+        self._normalized = value
 
     def load_from_configdb(self):
         """Load configuration from config server."""
@@ -26,6 +37,13 @@ class BONormalized:
         self._normalized = r['result'].copy()
         return True
 
+    def check_in_configdb(self):
+        """Return True if config name exists in serv config."""
+        r = self._ccnorm.find_configs()
+        if not self._ccnorm.response_check(r):
+            return None
+        return len(r['result']) > 0
+
     def save_to_configdb(self):
         """Save configuration to config server."""
         # check if config name is not None
@@ -33,25 +51,25 @@ class BONormalized:
             print('Undefined configuration name!')
             return False
         # check if data format is ok
-        if not self.check_value(self._normalized):
+        if not self._ccnorm.check_value(self._normalized):
             print('Incorrect value format!')
             return False
         # check if config name already exists
-        r = self.find_configs()
-        if not self.response_check(r):
+        r = self.is_in_configdb()
+        if r is None:
             return False
-        if len(r['result']) > 0:
+        if r is True:
             # already exists
-            r = self.get_config(self.name)
+            r = self._ccnorm.get_config(self.name)
             if not self.response_check(r):
                 return False
-            r = self.update_config(r['result'])
-            if not self.response_check(r):
+            r = self._ccnorm.update_config(r['result'])
+            if not self._ccnorm.response_check(r):
                 return False
         else:
             # new configuration
-            r = self.insert_config(self.name, self._normalized)
-            if not self.response_check(r):
+            r = self._ccnorm.insert_config(self.name, self._normalized)
+            if not self._ccnorm.response_check(r):
                 return False
         return True
 
@@ -59,19 +77,30 @@ class BONormalized:
         """Check current configuration."""
         return self._ccnorm.check_value(self._normalized)
 
+    def get_config_type_template(self):
+        """Return a tmeplate dictionary of normalized config."""
+        return self._ccnorm.get_config_type_template()
+
+    def __getitem__(self, index):
+        """Return normalized strength of a given magnet."""
+        return self._normalized[index]
+
+    def __setitem__(self, index, value):
+        """Set normalized strength of a given magnet."""
+        self._normalized[index] = Value
+
+
 
 class BORamp:
     """Booster ramp class."""
+
+    _ccramp = _CCBORamp()
 
     def __init__(self, name=None):
         """Constructor."""
         self._name = name
         self._config = dict()
-        self._normalized_table = []
-
-        # create connectors to configuration service
-        self._ccramp = _CCBORamp()
-        self._ccnorm = _CCBONormalized()
+        self._ramp = []
 
     @property
     def name(self):
