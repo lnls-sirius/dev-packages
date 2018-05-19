@@ -18,6 +18,7 @@ formatter = _logging.Formatter(
     '%(asctime)s %(levelname)8s %(name)s | %(message)s')
 ch.setFormatter(formatter)
 
+# TODO: check global collateral effects of fidling with logger!
 logger = _logging.getLogger(__name__)
 logger.addHandler(ch)
 logger.setLevel(_logging.WARNING)  # This toggles all the logging in your app
@@ -25,6 +26,14 @@ logger.setLevel(_logging.WARNING)  # This toggles all the logging in your app
 
 class ConfigService:
     """Perform CRUD operation on configuration database."""
+
+    # TODO: improve API
+    # I think requested data can be thought of composed of 3 distinct parts:
+    # a) configuration itself, b) metadata (timestamp, type, name) and
+    # c) communication status ('code' and 'message' fields, for example)
+    # the return data should be divided into three different dictionaries
+    # accordingly. The use of the class API will be simplified in this scheme
+    # in my opinion. (ximenes)
 
     CONFIGS_ENDPOINT = '/configs'
 
