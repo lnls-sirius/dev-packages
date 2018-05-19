@@ -1,17 +1,23 @@
 """Module with BO ramp class."""
 
 from http import HTTPStatus as _HTTPStatus
+
+from siriuspy.ramp import util as _util
+from siriuspy.ramp import exceptions as _exceptions
 from siriuspy.ramp.conn import ConnConfig_BORamp as _CCBORamp
 from siriuspy.ramp.conn import ConnConfig_BONormalized as _CCBONormalized
 
 
 class BONormalized:
+    """Booster normalized configuration class."""
 
-    _ccnorm = _CCBONormalized()
+    _conn = _CCBONormalized()
 
     def __init__(self, name=None):
+        """Constructor."""
         self._name = name
-        self._normalized = dict()
+        self._metadata = dict()
+        self._configuration = dict()
 
     @property
     def name(self):
@@ -19,76 +25,70 @@ class BONormalized:
         return self._name
 
     @property
-    def normalized(self):
-        """Normalized magnet strengths."""
-        return self._normalized
+    def servconf_connector(self):
+        """Config server connector."""
+        return self._conn
 
-    @normalized.setter
-    def normalized(slef, value):
-        """Set normalized magnet strengths."""
-        self._normalized = value
+    @property
+    def configuration(self):
+        """Normalized magnet strengths configuration."""
+        return dict(self._configuration)
 
-    def load_from_configdb(self):
+    @configuration.setter
+    def configuration(self, value):
+        """Set normalized magnet strengths configuration."""
+        self._configuration = value
+
+    def servconf_load_from(self):
         """Load configuration from config server."""
-        r = self._ccnorm.get_config(self, self.name)
-        if r['code'] != _HTTPStatus.OK:
-            print('{}: {}!'.format(self.name, r['message']))
-            return False
-        self._normalized = r['result'].copy()
-        return True
+        r = self._conn.config_get(self.name)
+        self._conn.response_check(r)
+        self._metadata = dict(r['result'])
+        self._configuration = dict(self._metadata['value'])
+        del self._metadata['value']
 
-    def check_in_configdb(self):
+    def servconf_check_exists(self):
         """Return True if config name exists in serv config."""
-        r = self._ccnorm.find_configs()
-        if not self._ccnorm.response_check(r):
-            return None
+        r = self._conn.config_find(name=self.name)
+        self._conn.response_check(r)
         return len(r['result']) > 0
 
-    def save_to_configdb(self):
+    def servconf_save_to(self):
         """Save configuration to config server."""
         # check if config name is not None
         if self.name is None:
-            print('Undefined configuration name!')
-            return False
+            raise _exceptions.RampConfigNameNotDefined()
         # check if data format is ok
-        if not self._ccnorm.check_value(self._normalized):
-            print('Incorrect value format!')
-            return False
+        if not self._conn.check_value(self._configuration):
+            raise _exceptions.RampConfigFormatError()
         # check if config name already exists
-        r = self.is_in_configdb()
-        if r is None:
-            return False
+        r = self.servconf_check_exists()
         if r is True:
             # already exists
-            r = self._ccnorm.get_config(self.name)
-            if not self.response_check(r):
-                return False
-            r = self._ccnorm.update_config(r['result'])
-            if not self._ccnorm.response_check(r):
-                return False
+            r = self._conn.config_get(self.name)
+            self._conn.response_check(r)
+            r = self._conn.config_update(r['result'])
+            self.response_check(r)
         else:
             # new configuration
-            r = self._ccnorm.insert_config(self.name, self._normalized)
-            if not self._ccnorm.response_check(r):
-                return False
-        return True
+            r = self._conn.config_insert(self.name, self._configuration)
+            self._conn.response_check(r)
 
     def check_value(self):
         """Check current configuration."""
-        return self._ccnorm.check_value(self._normalized)
+        return self._conn.check_value(self._configuration)
 
     def get_config_type_template(self):
         """Return a tmeplate dictionary of normalized config."""
-        return self._ccnorm.get_config_type_template()
+        return self._conn.get_config_type_template()
 
     def __getitem__(self, index):
         """Return normalized strength of a given magnet."""
-        return self._normalized[index]
+        return self._configuration[index]
 
     def __setitem__(self, index, value):
         """Set normalized strength of a given magnet."""
-        self._normalized[index] = Value
-
+        self._configuration[index] = value
 
 
 class BORamp:
@@ -120,7 +120,7 @@ class BORamp:
     @property
     def connected(self):
         """Connection state."""
-        return self._ccramp.connected and self._ccnorm.connected
+        return self._ccramp.connected and self._conn.connected
 
     def _load_ramp_and_check(self):
         if self.name is not None and self.connected:
@@ -135,7 +135,7 @@ class BORamp:
         data = self._config['value']
         status = True
         for time, name in data['normalized_configurations*']:
-            r = self._ccnorm.get_config(name)
+            r = self._conn.get_config(name)
             # check if norm config exists
             if not self.response_check(r):
                 return False

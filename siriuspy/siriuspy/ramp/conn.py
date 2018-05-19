@@ -7,6 +7,8 @@ IOCs.
 
 from http import HTTPStatus as _HTTPStatus
 from siriuspy import envars as _envars
+from siriuspy.ramp.exceptions import RampCouldNotConnect as _RampCouldNotConn
+from siriuspy.ramp.exceptions import RampConfigNotFound as _RampConfigNotFound
 from siriuspy.servconf.conf_service import ConfigService as _ConfigService
 from siriuspy.servconf.conf_types import check_value as _check_value
 
@@ -19,38 +21,39 @@ class _ConnConfigService(_ConfigService):
         if config_type not in ('bo_ramp', 'bo_normalized'):
             raise ValueError('Invalid configuration type!')
         self._config_type = config_type
-        _ConfigService.__init__(self, url=url)
+        self._conn = _ConfigService(url=url)
 
-    def get_config(self, name):
+    def config_get(self, name):
         """Get configuration by its name."""
-        return _ConfigService.get_config(self, self._config_type, name)
+        return self._conn.get_config(self._config_type, name)
 
-    def insert_config(self, name, value):
+    def config_insert(self, name, value):
         """Insert a new configuration."""
-        return _ConfigService.insert_config(self,
-                                            self._config_type, name, value)
+        return self._conn.insert_config(self._config_type, name, value)
 
-    def find_configs(self,
-                     name=None,
-                     begin=None,
-                     end=None,
-                     discarded=False):
+    def config_find(self,
+                    name=None,
+                    begin=None,
+                    end=None,
+                    discarded=False):
         """Return configurations."""
-        return _ConfigService.find_configs(self,
-                                           config_type=self._config_type,
-                                           name=name, begin=begin, end=end,
-                                           discarded=discarded)
+        return self._conn.find_configs(config_type=self._config_type,
+                                       name=name, begin=begin, end=end,
+                                       discarded=discarded)
 
-    def find_nr_configs(self,
-                        name=None,
-                        begin=None,
-                        end=None,
-                        discarded=False):
+    def config_find_nr(self,
+                       name=None,
+                       begin=None,
+                       end=None,
+                       discarded=False):
         """Return nr of configurations."""
-        return _ConfigService.find_nr_configs(self,
-                                              config_type=self._config_type,
-                                              name=name, begin=begin, end=end,
-                                              discarded=discarded)
+        return self._conn.find_nr_configs(config_type=self._config_type,
+                                          name=name, begin=begin, end=end,
+                                          discarded=discarded)
+
+    def config_update(self, obj_dict):
+        """Update existing configuration."""
+        return self._conn.update_config(obj_dict)
 
     def check_value(self, value):
         """Return True or False depending whether value matches config type."""
@@ -58,15 +61,16 @@ class _ConnConfigService(_ConfigService):
 
     def get_config_type_template(self):
         """Return template dictionary of config type."""
-        return _ConfigService.get_config_type_template(self, self._config_type)
+        return self._conn.get_config_type_template(self._config_type)
 
     def response_check(self, r):
         """Check response."""
-        if r['code'] != _HTTPStatus.OK:
-            print('{}: {}!'.format(self.name, r['message']))
-            return False
-        else:
-            return True
+        if r['code'] == _HTTPStatus.NOT_FOUND:
+            raise _RampConfigNotFound(r['message'])
+        elif r['code'] != _HTTPStatus.OK:
+            print(r)
+            raise _RampCouldNotConn(r['message'])
+
 
 class ConnConfig_BORamp(_ConnConfigService):
     """ConifgurationService for BO ramp configs."""
