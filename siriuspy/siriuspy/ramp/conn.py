@@ -13,7 +13,7 @@ from siriuspy.servconf.conf_service import ConfigService as _ConfigService
 from siriuspy.servconf.conf_types import check_value as _check_value
 
 
-class _ConnConfigService(_ConfigService):
+class _ConnConfigService:
     """Syntactic sugar ramp class for ConfigService."""
 
     def __init__(self, config_type, url=_envars.server_url_configdb):
@@ -21,15 +21,17 @@ class _ConnConfigService(_ConfigService):
         if config_type not in ('bo_ramp', 'bo_normalized'):
             raise ValueError('Invalid configuration type!')
         self._config_type = config_type
-        self._conn = _ConfigService(url=url)
+        self._srvconf = _ConfigService(url=url)
 
     def config_get(self, name):
         """Get configuration by its name."""
-        return self._conn.get_config(self._config_type, name)
+        r = self._srvconf.get_config(self._config_type, name)
+        return _ConnConfigService._process_return(r)
 
     def config_insert(self, name, value):
         """Insert a new configuration."""
-        return self._conn.insert_config(self._config_type, name, value)
+        r = self._srvconf.insert_config(self._config_type, name, value)
+        return _ConnConfigService._process_return(r)
 
     def config_find(self,
                     name=None,
@@ -37,9 +39,10 @@ class _ConnConfigService(_ConfigService):
                     end=None,
                     discarded=False):
         """Return configurations."""
-        return self._conn.find_configs(config_type=self._config_type,
+        r = self._srvconf.find_configs(config_type=self._config_type,
                                        name=name, begin=begin, end=end,
                                        discarded=discarded)
+        return _ConnConfigService._process_return(r)
 
     def config_find_nr(self,
                        name=None,
@@ -47,13 +50,22 @@ class _ConnConfigService(_ConfigService):
                        end=None,
                        discarded=False):
         """Return nr of configurations."""
-        return self._conn.find_nr_configs(config_type=self._config_type,
+        r = self._srvconf.find_nr_configs(config_type=self._config_type,
                                           name=name, begin=begin, end=end,
                                           discarded=discarded)
+        return _ConnConfigService._process_return(r)
 
-    def config_update(self, obj_dict):
+    def config_update(self, metadata, configuration):
         """Update existing configuration."""
-        return self._conn.update_config(obj_dict)
+        config = dict(metadata)
+        config.update({'value': configuration})
+        r = self._srvconf.update_config(config)
+        return _ConnConfigService._process_return(r)
+
+    def config_delete(self, metadata):
+        """Mark a configuration as discarded."""
+        r = self._srvconf.delete_config(metadata)
+        return _ConnConfigService._process_return(r)
 
     def check_value(self, value):
         """Return True or False depending whether value matches config type."""
@@ -61,15 +73,28 @@ class _ConnConfigService(_ConfigService):
 
     def get_config_type_template(self):
         """Return template dictionary of config type."""
-        return self._conn.get_config_type_template(self._config_type)
+        return self._srvconf.get_config_type_template(self._config_type)
 
-    def response_check(self, r):
+    @staticmethod
+    def _response_check(r):
         """Check response."""
         if r['code'] == _HTTPStatus.NOT_FOUND:
             raise _RampConfigNotFound(r['message'])
         elif r['code'] != _HTTPStatus.OK:
-            print(r)
             raise _RampCouldNotConn(r['message'])
+
+    @staticmethod
+    def _process_return(r):
+        _ConnConfigService._response_check(r)
+        # print(r)
+        if 'result' in r:
+            metadata = r['result']
+            configuration = None
+            if isinstance(metadata, dict):
+                metadata = dict(metadata)  # copy
+                configuration = dict(metadata['value'])
+                del metadata['value']
+            return configuration, metadata
 
 
 class ConnConfig_BORamp(_ConnConfigService):
@@ -82,9 +107,6 @@ class ConnConfig_BORamp(_ConnConfigService):
 
 class ConnConfig_BONormalized(_ConnConfigService):
     """ConifgurationService for BO normalized configs."""
-
-    # _template_value = \
-    #     _ConnConfigService.get_config_type_template('bo_normalized')
 
     def __init__(self, url=_envars.server_url_configdb):
         """Constructor."""

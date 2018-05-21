@@ -35,3 +35,9 @@ class RampConfigNotFound(RampConfigError):
     """Configuration not found in server."""
 
     pass
+
+
+class RampMetadataInvalid(RampError):
+    """Invalid metadata."""
+
+    pass

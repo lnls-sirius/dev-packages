@@ -157,7 +157,7 @@ class WaveformParam:
     @property
     def duration(self):
         """Ramp duration."""
-        return self._wfm_duration
+        return self._duration
 
     @property
     def deprecated(self):
