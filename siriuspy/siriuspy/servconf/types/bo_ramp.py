@@ -28,19 +28,21 @@ _interval = _ramp_duration / (_wfm_nrpoints - 1.0)
 
 
 _dipole_ramp_parameters = {
-    # ramp duration
+    # ramp duration [s]
     'duration': _ramp_duration,  # [s]
-    # start indices of regions
+    # start indices of dipole ramp regions
     'time': [_interval * i for i in _i07],
     # current values [A]
     'current': [_eje_current * v for v in _v07],
 }
 _normalized_configurations = [
-    (0.000, 'configname1'),
-    (0.100, 'configname2'),
-    (0.400, 'configname3'),
+    # time[s]              normalized configuration name
+    (0.000000000000000000, 'ramp-start'),
+    (0.012743185796449112, 'rampup-start'),
+    (0.303875968992248060, 'rampup-stop'),
 ]
 _rf_parameters = {
+    # global RF delay
     'delay': 0.0,  # [us]
 }
 
