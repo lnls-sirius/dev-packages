@@ -157,7 +157,7 @@ class ConfigSrv:
 
     def configsrv_update(self):
         """Update configuration in ConfigServer."""
-        if self.name is None:
+        if not isinstance(self.name, str):
             raise _exceptions.SrvConfigNameNotDefined()
         # check of metadat is present
         if not self._metadata:
