@@ -122,12 +122,13 @@ class Current:
 
     def __init__(self, pru_controller):
         """Create command to set current."""
+        self.pru_controller = pru_controller
         self.set_current = Command(pru_controller, _c.F_SET_SLOWREF)
 
     def execute(self, device_ids, value=None):
         """Execute command."""
         op_modes = \
-            [_PSCStatus(self.pru_controller.read(device_id, 0)).ioc_opmode
+            [_PSCStatus(self.pru_controller.read_variables(device_id, 0)).ioc_opmode
              for device_id in device_ids]
         slowsync = False
         if _PSConst.OpMode.SlowRefSync in op_modes:
