@@ -244,10 +244,8 @@ class Setpoint:
 
     _setpoint_regexp = _re.compile('^.*-(SP|Sel|Cmd)$')
 
-    def __init__(self, device_name, device_id, epics_field, epics_database):
+    def __init__(self, epics_field, epics_database):
         """Init."""
-        self.device_name = device_name
-        self.device_id = device_id
         self.field = epics_field
         self.value = epics_database['value']
         self.database = epics_database
@@ -293,7 +291,7 @@ class Setpoint:
         elif self.type in ('int', 'float'):
             if self.low is None and self.high is None:
                 return True
-            if value is not None and (value > self.low or value < self.high):
+            if value is not None and (value > self.low and value < self.high):
                 return True
         elif self.type == 'enum':
             if value in tuple(range(len(self.enums))):
