@@ -1,43 +1,46 @@
-"""Module with ramp exceptions."""
+"""Module with ConfigServer exceptions."""
 
 
-class RampError(Exception):
-    """Gerenarl exception in Ramp."""
-
-    pass
+# TODO: this is a general class and could be moved to servconf
 
 
-class RampCouldNotConnect(RampError):
-    """Could not connect with server."""
+class SrvError(Exception):
+    """General exception in ConfigSrv."""
 
     pass
 
 
-class RampConfigError(RampError):
+class SrvCouldNotConnect(SrvError):
+    """Could not connect with ConfigServer."""
+
+    pass
+
+
+class SrvConfigError(SrvError):
     """General exception for config manipulations."""
 
     pass
 
 
-class RampConfigNameNotDefined(RampConfigError):
+class SrvConfigNameNotDefined(SrvConfigError):
     """Configuration name not defined."""
 
     pass
 
 
-class RampConfigFormatError(RampConfigError):
+class SrvConfigFormatError(SrvConfigError):
     """Configuration value with inconsistent format."""
 
     pass
 
 
-class RampConfigNotFound(RampConfigError):
+class SrvConfigNotFound(SrvConfigError):
     """Configuration not found in server."""
 
     pass
 
 
-class RampMetadataInvalid(RampError):
+class SrvMetadataInvalid(SrvError):
     """Invalid metadata."""
 
     pass

@@ -1,141 +1,20 @@
 """Module with BO ramp class."""
 
-# from http import HTTPStatus as _HTTPStatus
+from copy import deepcopy as _dcopy
 
-# from siriuspy.ramp import util as _util
-from siriuspy.ramp import exceptions as _exceptions
 from siriuspy.ramp.conn import ConnConfig_BORamp as _CCBORamp
 from siriuspy.ramp.conn import ConnConfig_BONormalized as _CCBONormalized
+from siriuspy.ramp.srvconfig import ConfigSrv as _ConfigSrv
 
 
-class _BOConfigs:
-    """Abstract Booster configuration class."""
-
-    def __init__(self, name=None):
-        """Constructor."""
-        self._name = name
-        self._metadata = None
-        self._configuration = None
-        self._synchronized = False
-
-    @property
-    def name(self):
-        """Configuration name of BO normalized."""
-        return self._name
-
-    @name.setter
-    def name(self, value):
-        self._name = value
-        self._synchronized = False
-
-    @property
-    def metadata(self):
-        """Configuration metadata."""
-        return dict(self._metadata)
-
-    @property
-    def configuration(self):
-        """Normalized magnet strengths configuration."""
-        return self._configuration.copy()
-
-    @configuration.setter
-    def configuration(self, value):
-        """Set normalized magnet strengths configuration."""
-        self._set_configuration(value)
-        self._synchronized = False
-
-    @property
-    def servconf_synchronized(self):
-        """Synchronization state between object and configuration in server."""
-        return self._synchronized
-
-    @property
-    def servconf_connector(self):
-        """Config server connector."""
-        return self._conn
-
-    def servconf_check(self):
-        """Return True if config name exists in serv config."""
-        _, metadata = self._conn.config_find(name=self.name)
-        return len(metadata) > 0
-
-    def servconf_load(self):
-        """Load configuration from config server."""
-        configuration, metadata = self._conn.config_get(self.name)
-        self._configuration = configuration
-        self._metadata = metadata
-        self._synchronized = True
-
-    def servconf_update(self):
-        """Update configuration in config server."""
-        if self.name is None:
-            raise _exceptions.RampConfigNameNotDefined()
-        # check of metadat is present
-        if not self._metadata:
-            raise _exceptions.RampMetadataInvalid()
-        # check if data format is ok
-        if not self._conn.check_value(self._configuration):
-            raise _exceptions.RampConfigFormatError()
-        # update config server with metadata and valid configuration
-        self._metadata['name'] = self.name
-        self._conn.config_update(self._metadata, self._configuration)
-        # update metadata
-        configuration, metadata = self._conn.config_get(name=self.name)
-        self._configuration = configuration
-        self._metadata = metadata
-        self._synchronized = True
-
-    def servconf_save(self):
-        """Save configuration to config server."""
-        # check if config name is not None
-        if self.name is None:
-            raise _exceptions.RampConfigNameNotDefined()
-        # check if data format is ok
-        if not self._conn.check_value(self._configuration):
-            raise _exceptions.RampConfigFormatError()
-        # check if config name already exists
-        r = self.servconf_check()
-        if r is True:
-            # already exists
-            self.servconf_update()
-        else:
-            # new configuration
-            self._conn.config_insert(self.name, self._configuration)
-        self._synchronized = True
-
-    def get_config_type_template(self):
-        """Return a tmeplate dictionary of normalized config."""
-        return self._conn.get_config_type_template()
-
-    def check_value(self):
-        """Check current configuration."""
-        return self._conn.check_value(self._configuration)
-
-    def __len__(self):
-        """Length of configuration."""
-        if self._configuration is None:
-            return 0
-        else:
-            return len(self._configuration)
-
-    def __getitem__(self, index):
-        """Return normalized strength of a given magnet."""
-        return self._get_item(index)
-
-    def __setitem__(self, index, value):
-        """Set normalized strength of a given magnet."""
-        self._set_item(index, value)
-        self._synchronized = False
-
-
-class BONormalized(_BOConfigs):
-    """Booster normalized configuration class."""
+class BoosterNormalized(_ConfigSrv):
+    """Booster normalized configuration."""
 
     _conn = _CCBONormalized()
 
     def __init__(self, name=None):
         """Constructor."""
-        _BOConfigs.__init__(self, name=name)
+        _ConfigSrv.__init__(self, name=name)
 
     def _get_item(self, index):
         return self._configuration[index]
@@ -147,30 +26,181 @@ class BONormalized(_BOConfigs):
         self._configuration = value
 
 
-class BORamp(_BOConfigs):
+class BoosterRamp(_ConfigSrv):
     """Booster ramp class."""
 
+    # ConfigSrv connector object
     _conn = _CCBORamp()
 
     def __init__(self, name=None):
         """Constructor."""
-        _BOConfigs.__init__(self, name=name)
+        _ConfigSrv.__init__(self, name=name)
+        self._update_normalized_configs()
 
-    def _get_item(self, index):
-        if isinstance(index, int):
-            return self._configuration[index]
-        else:
-            t, n = zip(*self._configuration)
-            index = n.index(index)
-            return self._configuration[index]
+    # --- BOConfig API ---
 
-    def _set_item(self, index, value):
-        if isinstance(index, int):
-            self._configuration[index] = value
-        else:
-            t, n = zip(*self._configuration)
-            index = n.index(index)
-            self._configuration[index] = value
+    @property
+    def configsrv_synchronized(self):
+        """Synchronization state between object and configuration in server."""
+        if not self._synchronized:
+            return False
+        for config in self.normalized_configs.values():
+            if not config.configsrv_synchronized:
+                return False
+        return True
+
+    def configsrv_load(self):
+        """Load configuration from config server."""
+        # load booster ramp configuration
+        _ConfigSrv.configsrv_load(self)
+        self._synchronized = False  # in case cannot load norm config
+        # update normalized configs
+        self._update_normalized_configs()
+        # load normalized configurations one by one
+        for config in self._normalized_configs.values():
+            config.configsrv_load()
+        self._synchronized = True  # all went well
+
+    def configsrv_load_normalized_configs(self):
+        """Load normalized configurations from config server."""
+        # load normalized configurations one by one
+        for config in self._normalized_configs.values():
+            config.configsrv_load()
+
+    def configsrv_update(self):
+        """Update configuration in config server."""
+        # update ramp config
+        _ConfigSrv.configsrv_update(self)
+        self._synchronized = False  # in case cannot load norm config
+        # update or save normalized configs
+        for config in self.normalized_configs.values():
+            if config.configsrv_synchronized:
+                # already exists, just update
+                config.configsrv_update()
+            else:
+                if config.configsrv_check():
+                    # already exists, just update
+                    config.configsrv_update()
+                else:
+                    # create new normalized configuration
+                    config.configsrv_save()
+        self._synchronized = True  # all went well
+
+    def configsrv_save(self):
+        """Save configuration to config server."""
+        # save booster ramp
+        _ConfigSrv.configsrv_save(self)
+        self._synchronized = False  # in case cannot load norm config
+        # save each normalized configuration
+        for config in self._normalized_configs.values():
+            config.configsrv_save()
+        self._synchronized = True  # all went well
+
+    @property
+    def delay_pwrsupply(self):
+        """Power supplies general delay [us]."""
+        return _dcopy(self._configuration['pwrsupply_delay'])
+
+    @delay_pwrsupply.setter
+    def delay_pwrsupply(self, value):
+        """Set power supplies general delay [us]."""
+        self._configuration['pwrsupply_delay'] = value
+        self._synchronized = False
+
+    @property
+    def delay_rf(self):
+        """RF delay."""
+        return self._configuration['rf_parameters']['delay']
+
+    @delay_rf.setter
+    def delay_rf(self, value):
+        """Set RF delay."""
+        self._configuration['rf_parameters']['delay'] = value
+        self._synchronized = False
+
+    @property
+    def ramp_dipole_duration(self):
+        """Dipole ramp duration."""
+        return self._configuration['ramp_dipole']['duration']
+
+    @ramp_dipole_duration.setter
+    def ramp_dipole_duration(self, value):
+        """Set dipole ramp duration."""
+        self._configuration['ramp_dipole']['duration'] = value
+        self._synchronized = False
+
+    @property
+    def ramp_dipole_time(self):
+        """Dipole ramp time."""
+        return _dcopy(self._configuration['ramp_dipole']['time'])
+
+    @ramp_dipole_time.setter
+    def ramp_dipole_time(self, value):
+        """Set dipole ramp time."""
+        self._configuration['ramp_dipole']['time'] = _dcopy(value)
+        self._synchronized = False
+
+    @property
+    def ramp_dipole_energy(self):
+        """Dipole ramp energy."""
+        return _dcopy(self._configuration['ramp_dipole']['energy'])
+
+    @ramp_dipole_energy.setter
+    def ramp_dipole_energy(self, value):
+        """Set dipole ramp energy."""
+        self._configuration['ramp_dipole']['energy'] = _dcopy(value)
+        self._synchronized = False
+
+    @property
+    def normalized_configs(self):
+        """Normalized config list."""
+        return _dcopy(self._configuration['normalized_configs*'])
+
+    @normalized_configs.setter
+    def normalized_configs(self, value):
+        """Set normalized config list."""
+        self._configuration['normalized_configs*'] = _dcopy(value)
+        self._update_normalized_configs()
+
+    def get_normalized_configs_time(self):
+        """Return time instants corresponding to normalized configs."""
+        time, _ = zip(*self._configuration['normalized_configs*'])
+        return time
+
+    def get_normalized_configs_name(self):
+        """Return names corresponding to normalized configs."""
+        _, name = zip(*self._configuration['normalized_configs*'])
+        return name
+
+    def check_value(self):
+        """Check current configuration."""
+        # firs check ramp config
+        if not _ConfigSrv.check_value(self):
+            return False
+        # then check each normalized config
+        for config in self._normalized_configs.values():
+            if not config.check_value():
+                return False
+        return True
+
+    def __len__(self):
+        """Number of normalized configurations."""
+        return len(self._normalized_configs)
+
+    def _get_item(self, name):
+        return self._normalized_configs[name]
+
+    def _set_item(self, name, value):
+        self._normalized_configs[name] = value
 
     def _set_configuration(self, value):
-        self._configuration = value
+        self._configuration = _dcopy(value)
+        self._update_normalized_configs()
+
+    def _update_normalized_configs(self):
+        self._synchronized = False
+        self._normalized_configs = dict()
+        if self._configuration is None:
+            return
+        for t, name in self._configuration['normalized_configs*']:
+            self._normalized_configs[name] = BoosterNormalized(name)
