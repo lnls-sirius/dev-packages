@@ -33,8 +33,8 @@ class TestE2SController(unittest.TestCase):
         self.hw_values = values
         self.hw_dict_values = dict_values
         self.hw_dict_values.update({
-            'Reset-Cmd': 0,
-            'Abort-Cmd': 0,
+            # 'Reset-Cmd': 0,
+            # 'Abort-Cmd': 0,
             'WfmData-RB': self.database['WfmData-RB']['value'],
             'PRUSyncMode-Mon': 1,
             'PRUBlockIndex-Mon': 1,
@@ -63,29 +63,41 @@ class TestE2SController(unittest.TestCase):
             new_dict[dev_name + ':' + key] = val
         return new_dict
 
-    # def test_epics_2_bsmp_dict(self):
-    #     """Test epics_2_bsmp constant dict values."""
-    #     self.assertEqual(len(self.controller.epics_2_bsmp), 18)
-    #     self.assertEqual(self.controller.epics_2_bsmp['PwrState-Sts'], 0)
-    #     self.assertEqual(self.controller.epics_2_bsmp['OpenLoop-Mon'], 0)
-    #     self.assertEqual(self.controller.epics_2_bsmp['OpMode-Sts'], 0)
-    #     self.assertEqual(self.controller.epics_2_bsmp['CtrlMode-Mon'], 0)
-    #     self.assertEqual(self.controller.epics_2_bsmp['Current-RB'], 1)
-    #     self.assertEqual(self.controller.epics_2_bsmp['CurrentRef-Mon'], 2)
-    #     self.assertEqual(self.controller.epics_2_bsmp['Version-Cte'], 3)
-    #     self.assertEqual(self.controller.epics_2_bsmp['CycleEnbl-Mon'], 6)
-    #     self.assertEqual(self.controller.epics_2_bsmp['CycleType-Sts'], 7)
-    #     self.assertEqual(self.controller.epics_2_bsmp['CycleNrCycles-RB'], 8)
-    #     self.assertEqual(self.controller.epics_2_bsmp['CycleIndex-Mon'], 9)
-    #     self.assertEqual(self.controller.epics_2_bsmp['CycleFreq-RB'], 10)
-    #     self.assertEqual(self.controller.epics_2_bsmp['CycleAmpl-RB'], 11)
-    #     self.assertEqual(self.controller.epics_2_bsmp['CycleOffset-RB'], 12)
-    #     self.assertEqual(self.controller.epics_2_bsmp['CycleAuxParam-RB'], 13)
-    #     self.assertEqual(self.controller.epics_2_bsmp['IntlkSoft-Mon'], 25)
-    #     self.assertEqual(self.controller.epics_2_bsmp['IntlkHard-Mon'], 26)
-    #     self.assertEqual(self.controller.epics_2_bsmp['Current-Mon'], 27)
+    def test_database(self):
+        """Test database object."""
+        self.assertEqual(self.controller.database, self.database)
 
-    def test_setpoint_initialization(self):
+    def test_pru_controller(self):
+        """Test pru_controller property."""
+        self.assertEqual(self.controller.pru_controller, self.pru_controller)
+
+    def test_read(self):
+        """Test read method."""
+        val = self.controller.read('BO-01U:PS-CH', 'PwrState-Sts')
+        self.assertEqual(val, 1)
+
+        val = self.controller.read('BO-01U:PS-CH', 'OpMode-Sts')
+        self.assertEqual(val, 0)
+
+        val = self.controller.read('BO-01U:PS-CH', 'CycleType-Sts')
+        self.assertEqual(val, 2)
+
+        val = self.controller.read('BO-01U:PS-CH', 'CycleNrCycles-RB')
+        self.assertEqual(val, 1)
+
+        val = self.controller.read('BO-01U:PS-CH', 'CycleFreq-RB')
+        self.assertEqual(val, 0.0)
+
+        val = self.controller.read('BO-01U:PS-CH', 'CycleAmpl-RB')
+        self.assertEqual(val, 1.0)
+
+        val = self.controller.read('BO-01U:PS-CH', 'CycleAuxParam-RB')
+        self.assertEqual(val, [1.0, 1.0, 1.0, 0.0])
+
+        val = self.controller.read('BO-01U:PS-CH', 'WfmData-RB')
+        self.assertEqual(val, [0.0 for _ in range(4000)])
+
+    def _test_setpoint_initialization(self):
         """Test object setpoints is correctly initialized."""
         setpoints = ('PwrState-Sel', 'OpMode-Sel', 'Current-SP',
                      'CycleType-Sel', 'CycleNrCycles-SP', 'CycleFreq-SP',
@@ -115,15 +127,6 @@ class TestE2SController(unittest.TestCase):
                 self.assertIn(key, values)
                 self.assertEqual(val, values[key])
 
-    def test_read(self):
-        """Test read method."""
-        val = self.controller.read('BO-01U:PS-CH', 'PwrState-Sel')
-        self.assertEqual(val, 1)
-        val = self.controller.read('BO-01U:PS-CH', 'PwrState-Sts')
-        self.assertEqual(val, 1)
-        val = self.controller.read('BO-01U:PS-CH', 'WfmData-RB')
-        self.assertEqual(val, [0.0 for _ in range(4000)])
-
     def test_write_pwrstate_off(self):
         """Test setting pwrstate."""
         dev = 'BO-01U:PS-CH'
@@ -131,9 +134,6 @@ class TestE2SController(unittest.TestCase):
         value = 0
         self.controller.write(dev, field, value)
         self.pru_controller.exec_functions.assert_called_with((1,), 1)
-        self.assertEqual(self.controller.read(dev, field), value)
-        self.assertEqual(self.controller.read(dev, 'Current-SP'), 0.0)
-        self.assertEqual(self.controller.read(dev, 'OpMode-Sel'), 0)
 
     def test_write_pwrstate_on(self):
         """Test setting pwrstate."""
@@ -146,9 +146,6 @@ class TestE2SController(unittest.TestCase):
         # time.sleep.assert_called_with(0.3)
         self.assertEqual(
             self.pru_controller.exec_functions.call_args_list, calls)
-        self.assertEqual(self.controller.read(dev, field), value)
-        self.assertEqual(self.controller.read(dev, 'Current-SP'), 0.0)
-        self.assertEqual(self.controller.read(dev, 'OpMode-Sel'), 0)
 
     def test_write_opmode_slowref(self):
         """Test setting opmode to SlowRef."""
@@ -163,10 +160,6 @@ class TestE2SController(unittest.TestCase):
         calls = self.pru_controller.exec_functions.call_args_list
         self.assertEqual(calls, expected_calls)
 
-        # Assert opmode setpoint is set
-        self.assertEqual(self.controller.read(dev, field), 0)
-        # How to _stop_watchers was called?
-
     def test_write_opmode_slowrefsync(self):
         """Test setting opmode to SlowRef."""
         dev = 'BO-01U:PS-CH'
@@ -179,102 +172,50 @@ class TestE2SController(unittest.TestCase):
         # self.pru_controller.pru_curve_write_slowref_sync.assert_called()
         self.pru_controller.exec_functions.assert_called_with((1,), 4, 4)
 
-        # Assert opmode setpoint is set
-        self.assertEqual(self.controller.read(dev, field), 1)
-
-    @mock.patch('siriuspy.pwrsupply.e2scontroller._Watcher', autospec=True)
-    def test_write_opmode_cycle(self, watcher):
+    def test_write_opmode_cycle(self):
         """Test setting opmode to SlowRef."""
         dev = 'BO-01U:PS-CH'
         field = 'OpMode-Sel'
         value = 2
         # Set opmode to slowref
         self.controller.write(dev, field, value)
+        self.pru_controller.exec_functions.assert_called_with((1,), 4, 5)
 
-        # Call set_slowrefsync and disable_siggen
-        expected_calls = [mock.call((1,), 16, 0.0), mock.call((1,), 4, 5)]
-        calls = self.pru_controller.exec_functions.call_args_list
-        self.assertEqual(calls, expected_calls)
-
-        # Assert opmode setpoint is set
-        self.assertEqual(self.controller.read(dev, field), 2)
-
-        # Watcher thread is started
-        watcher.assert_called_with(
-            self.controller, dev, value)
-        watcher.return_value.start.assert_called()
-
-    @mock.patch('siriuspy.pwrsupply.e2scontroller._Watcher', autospec=True)
-    def test_write_opmode_rmpwfm(self, watcher):
+    def test_write_opmode_rmpwfm(self):
         """Test setting opmode to SlowRef."""
         dev = 'BO-01U:PS-CH'
         field = 'OpMode-Sel'
         value = 3
         # Set opmode to slowref
         self.controller.write(dev, field, value)
-
-        # Call set_slowrefsync and disable_siggen
         self.pru_controller.exec_functions.assert_called_with((1,), 4, 3)
 
-        # Assert opmode setpoint is set
-        self.assertEqual(self.controller.read(dev, field), 3)
-
-        # Watcher thread is started
-        watcher.assert_called_with(
-            self.controller, dev, value)
-        watcher.return_value.start.assert_called()
-
-    @mock.patch('siriuspy.pwrsupply.e2scontroller._Watcher', autospec=True)
-    def test_write_opmode_migwfm(self, watcher):
+    def test_write_opmode_migwfm(self):
         """Test setting opmode to SlowRef."""
         dev = 'BO-01U:PS-CH'
         field = 'OpMode-Sel'
         value = 4
         # Set opmode to slowref
         self.controller.write(dev, field, value)
-
-        # Call set_slowrefsync and disable_siggen
         self.pru_controller.exec_functions.assert_called_with((1,), 4, 3)
-
-        # Assert opmode setpoint is set
-        self.assertEqual(self.controller.read(dev, field), 4)
-
-        # Watcher thread is started
-        watcher.assert_called_with(
-            self.controller, dev, value)
-        watcher.return_value.start.assert_called()
-
-    def test_write_opmode_strange(self):
-        """Test strange value."""
-        dev = 'BO-01U:PS-CH'
-        field = 'OpMode-Sel'
-        value = 10
-        # Set opmode to strange value
-        self.controller.write(dev, field, value)
-
-        # exec_functions not called
-        self.pru_controller.exec_functions.assert_not_called()
-        self.assertNotEqual(self.controller.read(dev, field), value)
 
     def test_write_reset(self):
         """Test reset command."""
         dev = ('BO-01U:PS-CH', 'BO-01U:PS-CV')
         field = 'Reset-Cmd'
-        value = 10
+        value = None
         # Send resert command
-        self.controller.write(dev, field, value)
+        self.controller.write_to_many(dev, field, value)
 
         # Assert exec_functions was assert_called
         self.pru_controller.exec_functions.assert_called_with((1, 2), 6)
-        self.assertEqual(self.controller.read(dev[0], field), 1)
-        self.assertEqual(self.controller.read(dev[1], field), 1)
 
     def _test_write_abort(self):
         """Test reset command."""
         with self.assertRaises(NotImplementedError):
             self.controller.write('BO-01U:PS-CH', 'Abort-Cmd', 1)
 
-    def test_write_set_cycle_type(self):
+    def _test_write_set_cycle_type(self):
         """Test set cycle type."""
         dev = 'BO-01U:PS-CH'
         field = 'CycleType-Sel'
@@ -284,9 +225,8 @@ class TestE2SController(unittest.TestCase):
         # Assert
         self.pru_controller.exec_functions.assert_called_with(
             (1,), 23, [1, 1, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0])
-        self.assertEqual(self.controller.read(dev, field), 1)
 
-    def test_write_set_cycle_nr_cycle(self):
+    def _test_write_set_cycle_nr_cycle(self):
         """Test set number of cycles."""
         dev = 'BO-01U:PS-CH'
         field = 'CycleNrCycles-SP'
@@ -298,7 +238,7 @@ class TestE2SController(unittest.TestCase):
             (1,), 23, [2, 100, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0])
         self.assertEqual(self.controller.read(dev, field), 100)
 
-    def test_write_set_cycle_frequency(self):
+    def _test_write_set_cycle_frequency(self):
         """Test set cycle frequency."""
         dev = 'BO-01U:PS-CH'
         field = 'CycleFreq-SP'
@@ -310,7 +250,7 @@ class TestE2SController(unittest.TestCase):
             (1,), 23, [2, 1, 0.3, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0])
         self.assertEqual(self.controller.read(dev, field), 0.3)
 
-    def test_write_set_cycle_amplitude(self):
+    def _test_write_set_cycle_amplitude(self):
         """Test set cycle amplitude."""
         dev = 'BO-01U:PS-CH'
         field = 'CycleAmpl-SP'
@@ -322,7 +262,7 @@ class TestE2SController(unittest.TestCase):
             (1,), 23, [2, 1, 0.0, 5.0, 0.0, 1.0, 1.0, 1.0, 0.0])
         self.assertEqual(self.controller.read(dev, field), 5.0)
 
-    def test_write_set_cycle_offset(self):
+    def _test_write_set_cycle_offset(self):
         """Test set cycle offset."""
         dev = 'BO-01U:PS-CH'
         field = 'CycleOffset-SP'
@@ -334,7 +274,7 @@ class TestE2SController(unittest.TestCase):
             (1,), 23, [2, 1, 0.0, 1.0, 0.5, 1.0, 1.0, 1.0, 0.0])
         self.assertEqual(self.controller.read(dev, field), 0.5)
 
-    def test_write_set_aux_params(self):
+    def _test_write_set_aux_params(self):
         """Test set cycle aux params."""
         dev = 'BO-01U:PS-CH'
         field = 'CycleAuxParam-SP'
