@@ -13,7 +13,15 @@ DeviceInfo = _namedtuple('DeviceInfo', 'name, id')
 
 
 class E2SController:
-    """Setpoints and field translation."""
+    """Control devices of a given model.
+
+    Read and Write capabilities that have epics fields as input and
+    communicates with BSMP devices underneath it.
+
+    Uses `CommandFactory` and `VariableFactory` to build the commands and
+    variables objects that act as bridges between epics fields and bsmp entity
+    ids.
+    """
 
     INTERVAL_SCAN = 1.0/_PRUController.FREQ.SCAN
     _function = _re.compile('^.*-(SP|Sel|Cmd)$')
