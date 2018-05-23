@@ -9,8 +9,6 @@ from siriuspy.ramp.srvconfig import ConfigSrv as _ConfigSrv
 from siriuspy.ramp.waveform import WaveformDipole as _WaveformDipole
 from siriuspy.ramp.waveform import Waveform as _Waveform
 
-# from siriuspy.ramp import exceptions as _exceptions
-
 
 class BoosterNormalized(_ConfigSrv):
     """Booster normalized configuration."""
@@ -329,15 +327,16 @@ class BoosterRamp(_ConfigSrv):
         self._normalized_configs = norm_configs
 
     def _update_waveforms(self):
-        self._waveforms = dict()
         names = tuple(self._normalized_configs.keys())
         if not names:
             return
         else:
             psnames = tuple(self._normalized_configs[names[0]].keys())
+        self._waveforms = dict()
         # BO-Fam:MA-B
-        self._waveforms['BO-Fam:MA-B'] = _WaveformDipole()
+        dipole = _WaveformDipole()
+        self._waveforms['BO-Fam:MA-B'] = dipole
+        # other power supplies
         for psname in psnames:
             if psname != 'BO-Fam:MA-B':
-                self._waveforms[psname] = \
-                    _Waveform(dipole=self._waveforms['BO-Fam:MA-B'])
+                self._waveforms[psname] = _Waveform(dipole=dipole)
