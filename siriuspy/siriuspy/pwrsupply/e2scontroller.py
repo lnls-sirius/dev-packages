@@ -1,11 +1,11 @@
 """E2SController."""
 import numpy as _np
+import re as _re
 from collections import namedtuple as _namedtuple
 
 from siriuspy.pwrsupply.prucontroller import PRUController as _PRUController
 from siriuspy.pwrsupply.commands import CommandFactory as _CommandFactory
 from siriuspy.pwrsupply.fields import VariableFactory as _VariableFactory
-from siriuspy.pwrsupply.fields import Setpoint as _Setpoint
 from siriuspy.pwrsupply.fields import Constant as _Constant
 
 
@@ -16,6 +16,7 @@ class E2SController:
     """Setpoints and field translation."""
 
     INTERVAL_SCAN = 1.0/_PRUController.FREQ.SCAN
+    _function = _re.compile('^.*-(SP|Sel|Cmd)$')
 
     def __init__(self, controller, devices_info, model, database):
         """Init."""
@@ -82,7 +83,7 @@ class E2SController:
 
     def _create_fields(self):
         for field, db in self.database.items():
-            if _Setpoint.match(field):
+            if self._function.match(field):
                 cmd = _CommandFactory.get(
                     self._model, field, self._pru_controller)
                 self._writers[field] = cmd

@@ -34,6 +34,8 @@ class CommandFactory:
             return Command(pru_controller, _c.F_CFG_SIGGEN)
         elif epics_field == 'WfmData-SP':
             return PRUCurveCommand(pru_controller)
+        else:
+            return NullCommand()
 
 
 class Command:
