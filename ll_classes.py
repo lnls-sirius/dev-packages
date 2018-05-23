@@ -437,6 +437,7 @@ class _EVROUT(_Base):
             'SrcTrig': self.prefix + outlb + 'SrcTrig-RB',
             'RFDelay': self.prefix + outlb + 'RFDelay-RB',
             'FineDelay': self.prefix + outlb + 'FineDelay-RB',
+            'DelayType': self.prefix + outlb + 'DelayType-Sts',
             # connection status PVs
             'DevEnbl': self.prefix + 'DevEnbl-Sts',
             'Network': self.prefix + 'Network-Mon',
@@ -464,7 +465,7 @@ class _EVROUT(_Base):
             'Polarity': _partial(self._set_simple, 'Polarity'),
             'NrPulses': self._set_pulses,
             'Delay': self._set_delay,
-            'DelayType': self._set_delay_type,
+            'DelayType': _partial(self._set_simple, 'DelayType'),
             }
         return map_
 
@@ -481,6 +482,7 @@ class _EVROUT(_Base):
             'SrcTrig': _partial(self._process_source, 'SrcTrig'),
             'RFDelay': _partial(self._get_delay, 'RFDelay'),
             'FineDelay': _partial(self._get_delay, 'FineDelay'),
+            'DelayType': _partial(self._get_simple, 'DelayType'),
             'DevEnbl': _partial(self._get_status, 'DevEnbl'),
             'Network': _partial(self._get_status, 'Network'),
             'Link': _partial(self._get_status, 'Link'),
@@ -541,35 +543,20 @@ class _EVROUT(_Base):
             dic_[prop] = value
 
         delay = (dic_['Delay']*self._base_del + dic_['FineDelay']*_FDEL) * 1e6
-        if dic_['RFDelay'] == 31:
-            return {'Delay': delay, 'DelayType': 1}
-        else:
-            delay += dic_['RFDelay']*self._rf_del * 1e6
-            return {'Delay': delay, 'DelayType': 0}
+        delay += dic_['RFDelay']*self._rf_del * 1e6
+        return {'Delay': delay}
 
     def _set_delay(self, value):
         value *= _DELAY_UNIT_CONV  # us
         delay1 = int(value // self._base_del)
         dic_ = {'Delay': delay1}
-        # Initialization issue
-        if self._initializing:
-            del_type = self._my_state_sp.get('RFDelay', 0)
-        else:
-            del_type = self._get_from_pvs(True, 'RFDelay')
-        if del_type != 31:
-            value -= delay1 * self._base_del
-            delay2 = value // self._rf_del
-            value -= delay2 * self._rf_del
-            delay3 = round(value / _FDEL)
-            dic_['RFDelay'] = delay2
-            dic_['FineDelay'] = delay3
+        value -= delay1 * self._base_del
+        delay2 = value // self._rf_del
+        value -= delay2 * self._rf_del
+        delay3 = round(value / _FDEL)
+        dic_['RFDelay'] = delay2
+        dic_['FineDelay'] = delay3
         return dic_
-
-    def _set_delay_type(self, value):
-        if value:
-            return {'RFDelay': 31, 'FineDelay': 0}
-        else:
-            return {'RFDelay': 0}
 
     def _process_source(self, prop, is_sp, value=None):
         dic_ = dict()
@@ -666,7 +653,7 @@ class _EVROUT(_Base):
 
 
 class _EVROTP(_EVROUT):
-    _REMOVE_PROPS = {'RFDelay', 'FineDelay', 'Src', 'SrcTrig'}
+    _REMOVE_PROPS = {'RFDelay', 'FineDelay', 'Src', 'SrcTrig', 'DelayType'}
 
     def _define_num_int(self, num):
         return num
@@ -680,9 +667,6 @@ class _EVROTP(_EVROUT):
         value *= _DELAY_UNIT_CONV
         delay1 = int(value // self._base_del)
         return {'Delay': delay1}
-
-    def _set_delay_type(self, value):
-        return dict()
 
     def _process_source(self, prop, is_sp, val=None):
         if val is None:
@@ -704,7 +688,7 @@ class _EVEOUT(_EVROUT):
 
 class _AFCCRT(_EVROUT):
     _NUM_OTP = 0
-    _REMOVE_PROPS = {'RFDelay', 'FineDelay', 'SrcTrig', 'Intlk'}
+    _REMOVE_PROPS = {'RFDelay', 'FineDelay', 'SrcTrig', 'Intlk', 'DelayType'}
 
     def _INTLB_formatter(self):
         return 'CRT{0:d}'.format(self._internal_trigger)
@@ -717,9 +701,6 @@ class _AFCCRT(_EVROUT):
 
     def _set_delay(self, value):
         return _EVROTP._set_delay(self, value)
-
-    def _set_delay_type(self, value):
-        return _EVROTP._set_delay_type(self, value)
 
     def _process_source(self, prop, is_sp, value=None):
         dic_ = dict()
