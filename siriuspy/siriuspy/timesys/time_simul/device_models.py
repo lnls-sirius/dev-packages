@@ -423,6 +423,8 @@ class _EVROUT_IOC(_BaseIOC):
         'source_rb':     'Src-Sts',
         'trigger_sp':    'SrcTrig-SP',
         'trigger_rb':    'SrcTrig-RB',
+        'delay_type_sp': 'DelayType-Sel',
+        'delay_type_rb': 'DelayType-Sts',
         'rf_delay_sp':   'RFDelay-SP',
         'rf_delay_rb':   'RFDelay-RB',
         'fine_delay_sp': 'FineDelay-SP',
@@ -456,6 +458,8 @@ class _EVROUT_IOC(_BaseIOC):
         return {
             'source_sp': lambda x: int(x),
             'source_rb': lambda x: x,
+            'delay_type_sp': lambda x: int(x),
+            'delay_type_rb': lambda x: x,
             'trigger_sp': lambda x: int(x),
             'trigger_rb': lambda x: x,
             'rf_delay_sp': lambda x: int(x),

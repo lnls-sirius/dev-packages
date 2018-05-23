@@ -125,6 +125,10 @@ def get_out_database(out_num=0, equip='EVR', prefix=None):
     db[prefix+'Src-Sts'] = dic_
     db[prefix+'Src-Sel'] = _dcopy(dic_)
 
+    dic_ = {'type': 'enum', 'value': 0, 'enums': triggers_delay_types}
+    db[prefix+'DelayType-Sts'] = dic_
+    db[prefix+'DelayType-Sel'] = _dcopy(dic_)
+
     max_trig = 23 if equip == 'EVR' else 15
     num_trig = out_num + 12 if equip == 'EVR' else out_num
     dic_ = {
@@ -137,7 +141,7 @@ def get_out_database(out_num=0, equip='EVR', prefix=None):
     dic_ = {
         'type': 'int', 'value': 0, 'unit': '',
         'lolo': 0, 'low': 0, 'lolim': 0,
-        'hilim': 31, 'high': 31, 'hihi': 31}
+        'hilim': 30, 'high': 30, 'hihi': 30}
     db[prefix+'RFDelay-SP'] = dic_
     db[prefix+'RFDelay-RB'] = _dcopy(dic_)
 
