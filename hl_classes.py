@@ -308,7 +308,7 @@ class HL_Trigger(_HL_Base):
         'Delay': '-RB',
         'DelayType': '-Sts',
         'Status': '-Mon',
-        'Intlk': '-Sts',
+        'ByPassIntlk': '-Sts',
         }
 
     @staticmethod
