@@ -69,6 +69,8 @@ class HLTimeSearch:
 
         if not cls.has_delay_type(hl_trigger):
             interface.discard('DelayType')
+        if not cls.has_bypass_interlock(hl_trigger):
+            interface.discard('Intlk')
         return interface
 
     @classmethod
@@ -94,6 +96,24 @@ class HLTimeSearch:
         def get_ll(ll_trigger):
             name = _PVName(ll_trigger)
             return name.dev in ('EVR', 'EVE') and name.propty.startswith('OUT')
+
+        cls._init()
+        ll_chans = cls.get_ll_trigger_names(hl_trigger)
+        has_ = [get_ll(name) for name in ll_chans]
+        if not any(has_):
+            return False
+        elif not all(has_):
+            raise Exception(
+                'Some triggers of ' + hl_trigger +
+                ' are connected to unsimiliar low level devices.')
+        return True
+
+    @classmethod
+    def has_bypass_interlock(cls, hl_trigger):
+        """Return True if hl_trigger has property delayType."""
+        def get_ll(ll_trigger):
+            name = _PVName(ll_trigger)
+            return name.dev in ('EVR', 'EVE')
 
         cls._init()
         ll_chans = cls.get_ll_trigger_names(hl_trigger)

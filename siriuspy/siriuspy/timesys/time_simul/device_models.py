@@ -373,6 +373,8 @@ class _OTP_IOC(_BaseIOC):
         'event_rb': 'Evt-RB',
         'pulses_sp': 'NrPulses-SP',
         'pulses_rb': 'NrPulses-RB',
+        'interlock_sp':  'Intlk-Sel',
+        'interlock_rb':  'Intlk-Sts',
         }
 
     @staticmethod
@@ -409,6 +411,8 @@ class _OTP_IOC(_BaseIOC):
             'event_rb': lambda x: x,
             'pulses_sp': lambda x: int(x),
             'pulses_rb': lambda x: x,
+            'interlock_sp': lambda x: int(x),
+            'interlock_rb': lambda x: x,
             }
 
 

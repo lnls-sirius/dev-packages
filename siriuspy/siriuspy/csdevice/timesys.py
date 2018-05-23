@@ -108,6 +108,10 @@ def get_otp_database(otp_num=0, prefix=None):
     db[prefix+'Delay-SP'] = dic_
     db[prefix+'Delay-RB'] = _dcopy(dic_)
 
+    dic_ = {'type': 'enum', 'value': 0, 'enums': triggers_intlk}
+    db[prefix+'Intlk-Sts'] = dic_
+    db[prefix+'Intlk-Sel'] = _dcopy(dic_)
+
     return db
 
 
@@ -157,6 +161,8 @@ def get_afc_out_database(out_num=0, out_tp='FMC', prefix=None):
 
     prefix = def_prefix if prefix is None else prefix
     db = get_otp_database(prefix=prefix)
+    db.pop(prefix + 'Intlk-Sel')
+    db.pop(prefix + 'Intlk-Sts')
     dic_ = {'type': 'enum', 'value': 0, 'enums': triggers_src_ll}
     db[prefix+'Src-Sts'] = dic_
     db[prefix+'Src-Sel'] = _dcopy(dic_)
