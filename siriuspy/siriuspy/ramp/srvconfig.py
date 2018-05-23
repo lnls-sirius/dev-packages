@@ -4,6 +4,7 @@ from copy import deepcopy as _dcopy
 from http import HTTPStatus as _HTTPStatus
 
 from siriuspy import envars as _envars
+from siriuspy import util as _util
 from siriuspy.ramp import exceptions as _exceptions
 from siriuspy.servconf.conf_service import ConfigService as _ConfigService
 from siriuspy.servconf.conf_types import check_value as _check_value
@@ -77,10 +78,15 @@ class ConnConfigService:
     @staticmethod
     def _response_check(r):
         """Check response."""
+        if r['code'] == _HTTPStatus.OK:
+            return
+        st = 'Error code {}: {}'.format(r['code'], r['message'])
         if r['code'] == _HTTPStatus.NOT_FOUND:
-            raise _exceptions.SrvConfigNotFound(r['message'])
-        elif r['code'] != _HTTPStatus.OK:
-            raise _exceptions.SrvCouldNotConn(r['message'])
+            raise _exceptions.SrvConfigNotFound(st)
+        elif r['code'] == _HTTPStatus.CONFLICT:
+            raise _exceptions.SrvConfigConflict(st)
+        else:
+            raise _exceptions.SrvCouldNotConnect(st)
 
     @staticmethod
     def _process_return(r):
@@ -101,9 +107,12 @@ class ConfigSrv:
 
     def __init__(self, name=None):
         """Constructor."""
-        self._name = name
+        if name is None:
+            self._name = '_ConfigSrv_' + _util.get_timestamp()
+        else:
+            self._name = name
         self._metadata = None
-        self._configuration = None
+        self._configuration = dict()
         self._synchronized = False
 
     @property
@@ -158,7 +167,7 @@ class ConfigSrv:
     def configsrv_update(self):
         """Update configuration in ConfigServer."""
         if not isinstance(self.name, str):
-            raise _exceptions.SrvConfigNameNotDefined()
+            raise _exceptions.SrvConfigInvalidName()
         # check of metadat is present
         if not self._metadata:
             raise _exceptions.SrvMetadataInvalid()
@@ -166,7 +175,8 @@ class ConfigSrv:
         if not self._conn.check_value(self._configuration):
             raise _exceptions.SrvConfigFormatError()
         # update config server with metadata and valid configuration
-        self._metadata['name'] = self.name
+        if self.name != self._metadata['name']:
+            raise _exceptions.SrvConfigConflict()
         self._conn.config_update(self._metadata, self._configuration)
         # update metadata
         configuration, metadata = self._conn.config_get(name=self.name)
@@ -177,8 +187,8 @@ class ConfigSrv:
     def configsrv_save(self):
         """Save configuration to ConfigServer."""
         # check if config name is not None
-        if self.name is None:
-            raise _exceptions.SrvConfigNameNotDefined()
+        if not isinstance(self.name, str):
+            raise _exceptions.SrvConfigInvalidName()
         # check if data format is ok
         if not self._conn.check_value(self._configuration):
             raise _exceptions.SrvConfigFormatError()
@@ -186,18 +196,23 @@ class ConfigSrv:
         r = self.configsrv_check()
         if r is True:
             # already exists
+            if not self._metadata:
+                raise _exceptions.SrvMetadataInvalid()
+            if self.name != self._metadata['name']:
+                configuration, metadata = self._conn.config_get(self.name)
+                self._metadata = metadata
             self.configsrv_update()
         else:
             # new configuration
             configuration, metadata = \
                 self._conn.config_insert(self.name, self._configuration)
-        self._configuration = configuration
-        self._metadata = metadata
+            self._configuration = configuration
+            self._metadata = metadata
         self._synchronized = True
 
     def configsrv_delete(self):
         """Delete configuration from server."""
-        # TODO: should this method be easilly available?
+        # TODO: should this method be easily available?
         if self.configsrv_check():
             _, metadata = self._conn.config_get(name=self.name)
             self._conn.config_delete(metadata)
@@ -205,7 +220,8 @@ class ConfigSrv:
 
     def configsrv_find(self):
         """Get list of configurations."""
-        return self._conn.config_find()
+        _, metadata = self._conn.config_find()
+        return metadata
 
     def get_config_type_template(self):
         """Return a template dictionary of the configuration."""

@@ -519,7 +519,7 @@ class WaveformParam:
         # we accept a solution only if both roots of null first derivatives
         # equation fall outside region.
         i3_solutions = i3[cond]
-        if i3_solutions.wfm_nrpoints:
+        if i3_solutions.size:
             i3_delta = min(i3_solutions - self._i[3], key=abs)
             return self._i[3] + i3_delta
         else:
@@ -538,7 +538,7 @@ class WaveformParam:
         cond = ((i0_r1 <= i0) | (i0_r1 >= i1) | _np.isnan(i0_r1)) & \
                ((i0_r2 <= i0) | (i0_r2 >= i1) | _np.isnan(i0_r2))
         i0_solutions = i0[cond]
-        if i0_solutions.wfm_nrpoints:
+        if i0_solutions.size:
             i0_delta = min(i0_solutions - self._i[0], key=abs)
             return self._i[0] + i0_delta
         else:
@@ -563,7 +563,7 @@ class WaveformParam:
         #            'i6:{}, i7:{}').format(cond[i], di, i7_r1[i], i7_r2[i],
         #                                   i6, i7[i]))
         i7_solutions = i7[cond]
-        if i7_solutions.wfm_nrpoints:
+        if i7_solutions.size:
             i7_delta = min(i7_solutions - self._i[7], key=abs)
             return self._i[7] + i7_delta
         else:
@@ -582,7 +582,7 @@ class WaveformParam:
         cond = ((i4_r1 <= i4) | (i4_r1 >= i5) | _np.isnan(i4_r1)) & \
                ((i4_r2 <= i4) | (i4_r2 >= i5) | _np.isnan(i4_r2))
         i4_solutions = i4[cond]
-        if i4_solutions.wfm_nrpoints:
+        if i4_solutions.size:
             i4_delta = min(i4_solutions - self._i[4], key=abs)
             return self._i[4] + i4_delta
         else:
@@ -611,12 +611,12 @@ class _WaveformMagnet(_Magnet):
 class WaveformDipole(_WaveformMagnet, WaveformParam):
     """Waveform for Dipole."""
 
-    def __init__(self, maname='BO-Fam:MA-B', wfm_nrpoints=_MAX_WFMSIZE):
+    def __init__(self, maname='BO-Fam:MA-B', **kwargs):
         """Constructor."""
         _WaveformMagnet.__init__(self, maname)
         eje_current = self.conv_strength_2_current(_util.BO_EJECTION_ENERGY)
-        WaveformParam.__init__(self, scale=eje_current,
-                               wfm_nrpoints=wfm_nrpoints)
+        kwargs['scale'] = eje_current
+        WaveformParam.__init__(self, **kwargs)
 
     def _get_currents(self):
         return self.waveform
