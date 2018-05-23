@@ -22,7 +22,7 @@ class SrvConfigError(SrvError):
     pass
 
 
-class SrvConfigNameNotDefined(SrvConfigError):
+class SrvConfigInvalidName(SrvConfigError):
     """Configuration name not defined."""
 
     pass
@@ -36,6 +36,12 @@ class SrvConfigFormatError(SrvConfigError):
 
 class SrvConfigNotFound(SrvConfigError):
     """Configuration not found in server."""
+
+    pass
+
+
+class SrvConfigConflict(SrvConfigError):
+    """Configuration conflict."""
 
     pass
 
