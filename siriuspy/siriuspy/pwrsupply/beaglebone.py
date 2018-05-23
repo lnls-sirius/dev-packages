@@ -27,6 +27,12 @@ class BeagleBone:
 
     This class implements methods to read and write process variables of power
     supplies controlled by a specific beaglebone system.
+
+    All power supplies under a BBB must share the same PS model and database.
+
+    Manages the devices setpoints.
+    Uses E2SController to read variable and execute function from a BSMP device
+    given the PV field name.
     """
 
     def __init__(self, bbbname, simulate=True):
@@ -204,7 +210,7 @@ class BeagleBone:
             self._devices_info[psname] = _DeviceInfo(psname, slave_ids[i])
         db = _deepcopy(self._database)
         self._e2s_controller = _E2SController(
-            self._pru_controller, self._devices_info, 'FBP', db)
+            self._pru_controller, self._devices_info, self._psmodel, db)
 
     def _cfg_siggen_args(self, device_name):
         """Get cfg_siggen args and execute it."""
