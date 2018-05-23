@@ -15,6 +15,7 @@ class VariableFactory:
     @staticmethod
     def get(ps_model, device_id, epics_field, pru_controller):
         """Factory."""
+        # Common variables
         if epics_field == 'PwrState-Sts':
             return PwrState(
                 Variable(pru_controller, device_id, _c.V_PS_STATUS))
@@ -30,8 +31,9 @@ class VariableFactory:
             return Variable(pru_controller, device_id, _c.V_PS_SETPOINT)
         elif epics_field == 'CurrentRef-Mon':
             return Variable(pru_controller, device_id, _c.V_PS_REFERENCE)
-        elif epics_field == 'Current-Mon':
-            return Variable(pru_controller, device_id, _c.V_I_LOAD)
+        elif epics_field == 'Version-Cte':
+            return Version(
+                Variable(pru_controller, device_id, _c.V_FIRMWARE_VERSION))
         elif epics_field == 'CycleEnbl-Mon':
             return Variable(pru_controller, device_id, _c.V_SIGGEN_ENABLE)
         elif epics_field == 'CycleType-Sts':
@@ -48,14 +50,31 @@ class VariableFactory:
             return Variable(pru_controller, device_id, _c.V_SIGGEN_OFFSET)
         elif epics_field == 'CycleAuxParam-RB':
             return Variable(pru_controller, device_id, _c.V_SIGGEN_AUX_PARAM)
-        elif epics_field == 'IntlkSoft-Mon':
-            return Variable(pru_controller, device_id, _c.V_PS_SOFT_INTERLOCKS)
-        elif epics_field == 'IntlkHard-Mon':
-            return Variable(pru_controller, device_id, _c.V_PS_HARD_INTERLOCKS)
-        elif epics_field == 'Version-Cte':
-            return Version(
-                Variable(pru_controller, device_id, _c.V_FIRMWARE_VERSION))
-        elif epics_field == 'WfmData-RB':
+        # Specific variables
+        if ps_model == 'FBP':
+            if epics_field == 'IntlkSoft-Mon':
+                return Variable(
+                    pru_controller, device_id, _c.V_PS_SOFT_INTERLOCKS)
+            elif epics_field == 'IntlkHard-Mon':
+                return Variable(
+                    pru_controller, device_id, _c.V_PS_HARD_INTERLOCKS)
+            elif epics_field == 'Current-Mon':
+                return Variable(pru_controller, device_id, _c.V_I_LOAD)
+        elif ps_model == 'FAC':
+            if epics_field == 'IntlkSoft-Mon':
+                return Variable(
+                    pru_controller, device_id, _c.V_PS_SOFT_INTERLOCKS)
+            elif epics_field == 'IntlkHard-Mon':
+                return Variable(
+                    pru_controller, device_id, _c.V_PS_HARD_INTERLOCKS)
+            elif epics_field == 'Current-Mon':
+                return Variable(pru_controller, device_id, _c.V_I_LOAD)
+            elif epics_field == 'Current2-Mon':
+                # TODO constant for other FAC and other PS models
+                return Variable(pru_controller, device_id, 28)
+
+        # PRU related variables
+        if epics_field == 'WfmData-RB':
             return PRUCurve(pru_controller, device_id)
         elif epics_field == 'WfmIndex-Mon':
                 return Constant(0)
@@ -67,10 +86,8 @@ class VariableFactory:
             return PRUProperty(pru_controller, 'pru_sync_pulse_count')
         elif epics_field == 'PRUCtrlQueueSize-Mon':
             return PRUProperty(pru_controller, 'queue_length')
-        elif epics_field == 'Current2-Mon':
-            return Constant(0)
-        else:
-            raise ValueError('{} not defined'.format(epics_field))
+
+        raise ValueError('{} not defined'.format(epics_field))
 
 
 class Variable:
