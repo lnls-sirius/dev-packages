@@ -7,6 +7,9 @@ import copy as _copy
 # NOTE: values for key string labels ending with char '*' have not their
 #       sizes compared with a reference if their lists or tuples!
 
+# NOTE: cannot use tuple values in configuration dictionaries since conversion
+#       through json looses track of tuple|list type.
+
 _config_types_dict = None
 
 
@@ -30,7 +33,7 @@ def check_value(config_type, value):
     if _config_types_dict is None:
         _init_config_types_dict()
     ref_value = _config_types_dict[config_type]
-    return _recursive_check(ref_value, value)
+    return recursive_check(ref_value, value)
 
 
 def _init_config_types_dict():
@@ -43,27 +46,31 @@ def _init_config_types_dict():
         _config_types_dict[config_type_name] = ct['value']
 
 
-def _recursive_check(ref_value, value, same_length=True):
+def recursive_check(ref_value, value, checklength=True):
     if type(ref_value) != type(value):
+        # print('h1')
         return False
     if type(ref_value) == dict:
-        if len(ref_value) != len(value):
-            return False
         for k, v in value.items():
-            if k not in ref_value:
+            if k not in ref_value and checklength:
+                # print('h3')
                 return False
-            v_ref = ref_value[k]
-            if isinstance(k, str) and k.endswith('*'):
-                checked = _recursive_check(v_ref, v, same_length=False)
-            else:
-                checked = _recursive_check(v_ref, v, same_length)
-            if not checked:
-                return False
+            if k in ref_value:
+                v_ref = ref_value[k]
+                if isinstance(k, str) and k.endswith('*'):
+                    checked = recursive_check(v_ref, v, checklength=False)
+                else:
+                    checked = recursive_check(v_ref, v, checklength)
+                if not checked:
+                    # print('h4')
+                    return False
     elif type(ref_value) in (list, tuple, ):
-        if len(ref_value) != len(value):
+        if checklength and len(ref_value) != len(value):
+            # print('h5')
             return False
-        for i in range(len(value)):
-            checked = _recursive_check(value[i], ref_value[i], same_length)
+        for i in range(min(len(value), len(ref_value))):
+            checked = recursive_check(value[i], ref_value[i], checklength)
             if not checked:
+                # print('h6')
                 return False
     return True

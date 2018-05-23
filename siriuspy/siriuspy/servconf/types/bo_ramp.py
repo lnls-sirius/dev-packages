@@ -40,9 +40,9 @@ _ramp_dipole = {
 }
 _normalized_configs = [
     # time[s]              normalized configuration name
-    (0.000000000000000000, 'ramp-start'),
-    (0.012743185796449112, 'rampup-start'),
-    (0.303875968992248060, 'rampup-stop'),
+    [0.000000000000000000, 'ramp-start'],
+    [0.012743185796449112, 'rampup-start'],
+    [0.303875968992248060, 'rampup-stop'],
 ]
 _rf_parameters = {
     # global RF delay
