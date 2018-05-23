@@ -1,4 +1,7 @@
-"""Test BSMP Commands."""
+#!/usr/bin/env python-sirius
+
+"""Test commands module."""
+
 import unittest
 from unittest.mock import Mock
 import struct
@@ -69,22 +72,23 @@ class TestBSMP0x0(unittest.TestCase):
         p = Package.package(
             0, Message.message(0x07, payload=[chr(0), chr(1), chr(2), chr(3)]))
         self.serial.UART_read.return_value = p.stream
-        response = self.bsmp.consult_group_variables(1)
-
+        response = self.bsmp.consult_group_variables(1, timeout=100)
         self.assertEqual(response, (0xE0, [0, 1, 2, 3]))
 
     def test_consult_group_variables_error(self):
         """Test consult_group_variables return error code."""
         p = Package.package(0, Message.message(0xE3))
         self.serial.UART_read.return_value = p.stream
-        response = self.bsmp.consult_group_variables(1)
+        with self.assertRaises(TypeError):
+            self.bsmp.consult_group_variables(1)
+        response = self.bsmp.consult_group_variables(1, timeout=100)
         self.assertEqual(response, (0xE3, None))
 
     def test_consult_group_variables_fail(self):
         """Test consult_group_variables return None when cmd is unexpected."""
         p = Package.package(0, Message.message(0xE9))
         self.serial.UART_read.return_value = p.stream
-        response = self.bsmp.consult_group_variables(1)
+        response = self.bsmp.consult_group_variables(1, timeout=100)
         self.assertEqual(response, (None, None))
 
     def test_consult_curves_list(self):
@@ -114,7 +118,7 @@ class TestBSMP0x1(unittest.TestCase):
             Variable(0, False, Types.T_UINT16, 1),
             Variable(1, False, Types.T_FLOAT, 1),
             Variable(2, False, Types.T_FLOAT, 2),
-            Variable(3, False, Types.t_char, 64)]
+            Variable(3, False, Types.T_CHAR, 64)]
         self.entities.groups = [
             VariablesGroup(0, False, self.entities.variables),
         ]
@@ -190,7 +194,7 @@ class TestBSMP0x1(unittest.TestCase):
         #     load.append(chr(0))
         p = Package.package(0, Message.message(0x13, payload=load))
         self.serial.UART_read.return_value = p.stream
-        response = self.bsmp.read_group_variables(0)
+        response = self.bsmp.read_group_variables(0, timeout=100)
         self.assertEqual(response[0], 0xE0)
         self.assertEqual(response[1][0], values[0])
         self.assertAlmostEqual(response[1][1], values[1], places=5)
@@ -202,14 +206,16 @@ class TestBSMP0x1(unittest.TestCase):
         """Test read variable returns error code."""
         p = Package.package(0, Message.message(0xE3))
         self.serial.UART_read.return_value = p.stream
-        response = self.bsmp.read_group_variables(0)
+        response = self.bsmp.read_group_variables(0, timeout=100)
         self.assertEqual(response, (0xE3, None))
 
     def test_read_group_variable_fail(self):
         """Test read variable returns error code."""
         p = Package.package(0, Message.message(0xFF))
         self.serial.UART_read.return_value = p.stream
-        response = self.bsmp.read_group_variables(0)
+        with self.assertRaises(TypeError):
+            self.bsmp.consult_group_variables(1)
+        response = self.bsmp.read_group_variables(0, timeout=100)
         self.assertEqual(response, (None, None))
 
 
@@ -265,7 +271,7 @@ class TestBSMP0x3(unittest.TestCase):
         send_p = Package.package(1, Message.message(0x30, [chr(1), chr(3)]))
         self.serial.UART_read.return_value = resp_p.stream
 
-        response = self.bsmp.create_group([1, 3])
+        response = self.bsmp.create_group([1, 3], timeout=100)
 
         self.serial.UART_write.assert_called_once_with(
             send_p.stream, timeout=100)
@@ -275,14 +281,16 @@ class TestBSMP0x3(unittest.TestCase):
         """Test create_group."""
         resp_p = Package.package(0, Message.message(0xE8))
         self.serial.UART_read.return_value = resp_p.stream
-        response = self.bsmp.create_group([1, 3])
+        with self.assertRaises(TypeError):
+            self.bsmp.consult_group_variables(1)
+        response = self.bsmp.create_group([1, 3], timeout=100)
         self.assertEqual(response, (0xE8, None))
 
     def test_create_group_fail(self):
         """Test create_group."""
         resp_p = Package.package(0, Message.message(0xFF))
         self.serial.UART_read.return_value = resp_p.stream
-        response = self.bsmp.create_group([1, 3])
+        response = self.bsmp.create_group([1, 3], timeout=100)
         self.assertEqual(response, (None, None))
 
     def test_remove_all_groups(self):
@@ -291,7 +299,7 @@ class TestBSMP0x3(unittest.TestCase):
         send_p = Package.package(1, Message.message(0x32))
         self.serial.UART_read.return_value = resp_p.stream
 
-        response = self.bsmp.remove_all_groups()
+        response = self.bsmp.remove_all_groups(timeout=100)
 
         self.serial.UART_write.assert_called_once_with(
             send_p.stream, timeout=100)
@@ -301,14 +309,16 @@ class TestBSMP0x3(unittest.TestCase):
         """Test remove_all_groups."""
         resp_p = Package.package(0, Message.message(0xE8))
         self.serial.UART_read.return_value = resp_p.stream
-        response = self.bsmp.remove_all_groups()
+        with self.assertRaises(TypeError):
+            self.bsmp.remove_all_groups()
+        response = self.bsmp.remove_all_groups(timeout=100)
         self.assertEqual(response, (0xE8, None))
 
     def test_remove_all_groups_fail(self):
         """Test remove_all_groups."""
         resp_p = Package.package(0, Message.message(0x11))
         self.serial.UART_read.return_value = resp_p.stream
-        response = self.bsmp.remove_all_groups()
+        response = self.bsmp.remove_all_groups(timeout=100)
         self.assertEqual(response, (None, None))
 
 
