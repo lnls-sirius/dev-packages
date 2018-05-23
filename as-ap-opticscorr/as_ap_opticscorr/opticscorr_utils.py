@@ -37,8 +37,8 @@ class OpticsCorr:
 
     def _set_magnetfams_ordering(self, value):
         """Set magnetfams_ordering_svd property."""
-        if not isinstance(value, list):
-            raise TypeError("Value must be a list.")
+        if not isinstance(value, tuple):
+            raise TypeError("Value must be a tuple.")
         for item in value:
             if not isinstance(item, str):
                 raise TypeError("List elements must be strings.")
@@ -127,8 +127,8 @@ class OpticsCorr:
 
     @magnetfams_focusing.setter
     def magnetfams_focusing(self, value):
-        if not isinstance(value, list):
-            raise TypeError("Value must be a list.")
+        if not isinstance(value, tuple):
+            raise TypeError("Value must be a tuple.")
         for item in value:
             if not isinstance(item, str):
                 raise TypeError("List elements must be strings.")
@@ -139,8 +139,8 @@ class OpticsCorr:
             raise ValueError("Focusing magnet families must be part of the "
                              "'magnetfams_ordering' property!")
 
-        self._magnetfams_focusing = sorted(
-            value, key=lambda x: self.magnetfams_ordering.index(x))
+        self._magnetfams_focusing = tuple(sorted(
+            value, key=lambda x: self.magnetfams_ordering.index(x)))
 
         if self._initialized:
             self._calculate_matrices()
@@ -155,8 +155,8 @@ class OpticsCorr:
 
     @magnetfams_defocusing.setter
     def magnetfams_defocusing(self, value):
-        if not isinstance(value, list):
-            raise TypeError("Value must be a list.")
+        if not isinstance(value, tuple):
+            raise TypeError("Value must be a tuple.")
         for item in value:
             if not isinstance(item, str):
                 raise TypeError("List elements must be strings.")
@@ -167,8 +167,8 @@ class OpticsCorr:
             raise ValueError("Defocusing magnet families must be part of the "
                              "'magnetfams_ordering_svd' property!")
 
-        self._magnetfams_defocusing = sorted(
-            value, key=lambda x: self.magnetfams_ordering.index(x))
+        self._magnetfams_defocusing = tuple(sorted(
+            value, key=lambda x: self.magnetfams_ordering.index(x)))
 
         if self._initialized:
             self._calculate_matrices()

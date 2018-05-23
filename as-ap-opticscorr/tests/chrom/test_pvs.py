@@ -1,10 +1,11 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python-sirius
 
 """Module to test AS-AP-ChromCorr Soft IOC pvs module."""
 
 import unittest
 from unittest import mock
-import siriuspy.util as util
+from siriuspy import util
+from siriuspy.csdevice.opticscorr import Const
 import as_ap_opticscorr.chrom.pvs as pvs
 
 
@@ -24,10 +25,13 @@ class TestASAPOpticsCorrChromPvs(unittest.TestCase):
 
     def setUp(self):
         """Setup tests."""
-        self.si_sfams = ['SFA1', 'SFA2', 'SDA1', 'SDA2', 'SDA3',
-                         'SFB1', 'SFB2', 'SDB1', 'SDB2', 'SDB3',
-                         'SFP1', 'SFP2', 'SDP1', 'SDP2', 'SDP3']
-        self.bo_sfams = ['SF', 'SD']
+        self.si_sfams = Const.SI_SFAMS_CHROMCORR
+        self.bo_sfams = Const.BO_SFAMS_CHROMCORR
+        csdevice_patcher = mock.patch(
+            "as_ap_opticscorr.chrom.pvs._get_database",
+            autospec=True)
+        self.addCleanup(csdevice_patcher.stop)
+        self.mock_csdevice = csdevice_patcher.start()
 
     def test_public_interface(self):
         """Test module's public interface."""
@@ -70,53 +74,21 @@ class TestASAPOpticsCorrChromPvs(unittest.TestCase):
     def test_get_corr_fams(self):
         """Test get_corr_fams."""
         pvs.select_ioc('SI')
-        self.assertIsInstance(pvs.get_corr_fams(), list)
+        self.assertIsInstance(pvs.get_corr_fams(), tuple)
         self.assertEqual(len(pvs.get_corr_fams()), 15)
         for fam in self.si_sfams:
             self.assertIn(fam, pvs.get_corr_fams())
 
         pvs.select_ioc('BO')
-        self.assertIsInstance(pvs.get_corr_fams(), list)
+        self.assertIsInstance(pvs.get_corr_fams(), tuple)
         self.assertEqual(len(pvs.get_corr_fams()), 2)
         for fam in self.bo_sfams:
             self.assertIn(fam, pvs.get_corr_fams())
 
     def test_get_pvs_database(self):
         """Test get_pvs_database."""
-        for accelerator in ['SI', 'BO']:
-            if accelerator == 'SI':
-                sfams = self.si_sfams
-            elif accelerator == 'BO':
-                sfams = self.bo_sfams
-            pvs.select_ioc(accelerator)
-            db = pvs.get_pvs_database()
-            self.assertIsInstance(db, dict)
-            self.assertTrue('Version-Cte' in db)
-            self.assertTrue('Log-Mon' in db)
-            self.assertTrue('ChromX-SP' in db)
-            self.assertTrue('ChromX-RB' in db)
-            self.assertTrue('ChromY-SP' in db)
-            self.assertTrue('ChromY-RB' in db)
-            self.assertTrue('ApplyCorr-Cmd' in db)
-            self.assertTrue('ConfigName-SP' in db)
-            self.assertTrue('ConfigName-RB' in db)
-            self.assertTrue('RespMat-Mon' in db)
-            self.assertTrue('NominalChrom-Mon' in db)
-            self.assertTrue('NominalSL-Mon' in db)
-            self.assertTrue('ConfigMA-Cmd' in db)
-            self.assertTrue('Status-Mon' in db)
-            self.assertTrue('Status-Cte' in db)
-
-            for fam in sfams:
-                self.assertTrue('SL' + fam + '-Mon' in db)
-                self.assertEqual(db['SL' + fam + '-Mon']['unit'],
-                                 '1/m^2')
-            if accelerator == 'SI':
-                self.assertTrue('CorrMeth-Sel' in db)
-                self.assertTrue('CorrMeth-Sts' in db)
-                self.assertTrue('SyncCorr-Sel' in db)
-                self.assertTrue('SyncCorr-Sts' in db)
-                self.assertTrue('ConfigTiming-Cmd' in db)
+        pvs.get_pvs_database()
+        self.mock_csdevice.assert_called()
 
     @mock.patch("as_ap_opticscorr.chrom.pvs._util")
     def test_print_banner_and_save_pv_list(self, util):

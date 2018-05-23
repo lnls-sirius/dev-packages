@@ -4,6 +4,7 @@ import time as _time
 import numpy as _numpy
 import epics as _epics
 import siriuspy.epics as _siriuspy_epics
+from siriuspy.csdevice.currinfo import Const as _Const
 import as_ap_currinfo.lifetime.pvs as _pvs
 
 # Coding guidelines:
@@ -44,7 +45,7 @@ class App:
 
         self._lifetime = 0
         self._rstbuff_cmd_count = 0
-        self._buffautorst_mode = 1
+        self._buffautorst_mode = _Const.BuffAutoRst.DCurrCheck
         if self._injstate_pv.connected:
             self._is_injecting = self._injstate_pv.value
             self._changeinjstate_timestamp = self._injstate_pv.timestamp
@@ -143,7 +144,7 @@ class App:
 
         acquireflag = self._current_buffer.acquire()
         if acquireflag:
-            if self._buffautorst_mode != 2:
+            if self._buffautorst_mode != _Const.BuffAutoRst.Off:
                 self._buffautorst_check()
 
             # Check min number of points in buffer to calculate lifetime
@@ -168,7 +169,7 @@ class App:
         times the dcct fluctuation/resolution.
         """
         [timestamp, value] = self._current_buffer.serie
-        if self._buffautorst_mode == 0:
+        if self._buffautorst_mode == _Const.BuffAutoRst.PVsTrig:
             if (self._storedebeam_pv.connected and
                     self._storedebeam_pv.value == 0):
                 self._current_buffer.clearserie()
@@ -178,7 +179,7 @@ class App:
                   (len(value) >= 2 and
                    (abs(value[-1] - value[-2]) > 0.1))):
                 self._current_buffer.clearserie()
-        elif self._buffautorst_mode == 1:
+        elif self._buffautorst_mode == _Const.BuffAutoRst.DCurrCheck:
             if (len(value) >= 2 and
                     abs(value[-1] - value[-2]) > 100*self._dcurrfactor):
                 self._current_buffer.clearserie()

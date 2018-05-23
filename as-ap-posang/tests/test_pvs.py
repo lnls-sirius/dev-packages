@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python-sirius
 
 """Module to test AS-AP-PosAng Soft IOC pvs module."""
 
@@ -20,6 +20,14 @@ valid_interface = (
 
 class TestASAPPosAngPvs(unittest.TestCase):
     """Test AS-AP-PosAng Soft IOC."""
+
+    def setUp(self):
+        """Setup tests."""
+        csdevice_patcher = mock.patch(
+            "as_ap_posang.pvs._get_database",
+            autospec=True)
+        self.addCleanup(csdevice_patcher.stop)
+        self.mock_csdevice = csdevice_patcher.start()
 
     def test_public_interface(self):
         """Test module's public interface."""
@@ -59,58 +67,8 @@ class TestASAPPosAngPvs(unittest.TestCase):
 
     def test_get_pvs_database(self):
         """Test get_pvs_database."""
-        pvs.select_ioc('TransportLine')
-        self.assertIsInstance(pvs.get_pvs_database(), dict)
-
-        # Test IOC interface: pv names
-        self.assertTrue('Version-Cte' in pvs.get_pvs_database())
-        self.assertTrue('Log-Mon' in pvs.get_pvs_database())
-        self.assertTrue('DeltaPosX-SP' in pvs.get_pvs_database())
-        self.assertTrue('DeltaPosX-RB' in pvs.get_pvs_database())
-        self.assertTrue('DeltaAngX-SP' in pvs.get_pvs_database())
-        self.assertTrue('DeltaAngX-RB' in pvs.get_pvs_database())
-        self.assertTrue('DeltaPosY-SP' in pvs.get_pvs_database())
-        self.assertTrue('DeltaPosY-RB' in pvs.get_pvs_database())
-        self.assertTrue('DeltaAngY-SP' in pvs.get_pvs_database())
-        self.assertTrue('DeltaAngY-RB' in pvs.get_pvs_database())
-        self.assertTrue('ConfigName-SP' in pvs.get_pvs_database())
-        self.assertTrue('ConfigName-RB' in pvs.get_pvs_database())
-        self.assertTrue('RespMatX-Mon' in pvs.get_pvs_database())
-        self.assertTrue('RespMatY-Mon' in pvs.get_pvs_database())
-        self.assertTrue('RefKickCH1-Mon' in pvs.get_pvs_database())
-        self.assertTrue('RefKickCH2-Mon' in pvs.get_pvs_database())
-        self.assertTrue('RefKickCV1-Mon' in pvs.get_pvs_database())
-        self.assertTrue('RefKickCV2-Mon' in pvs.get_pvs_database())
-        self.assertTrue('SetNewRefKick-Cmd' in pvs.get_pvs_database())
-        self.assertTrue('ConfigMA-Cmd' in pvs.get_pvs_database())
-        self.assertTrue('Status-Mon' in pvs.get_pvs_database())
-        self.assertTrue('Status-Cte' in pvs.get_pvs_database())
-
-        # Test IOC interface: pvs units
-        self.assertEqual(
-            pvs.get_pvs_database()['DeltaPosX-SP']['unit'], 'mm')
-        self.assertEqual(
-            pvs.get_pvs_database()['DeltaPosX-RB']['unit'], 'mm')
-        self.assertEqual(
-            pvs.get_pvs_database()['DeltaAngX-SP']['unit'], 'mrad')
-        self.assertEqual(
-            pvs.get_pvs_database()['DeltaAngX-RB']['unit'], 'mrad')
-        self.assertEqual(
-            pvs.get_pvs_database()['DeltaPosY-SP']['unit'], 'mm')
-        self.assertEqual(
-            pvs.get_pvs_database()['DeltaPosY-RB']['unit'], 'mm')
-        self.assertEqual(
-            pvs.get_pvs_database()['DeltaAngY-SP']['unit'], 'mrad')
-        self.assertEqual(
-            pvs.get_pvs_database()['DeltaAngY-RB']['unit'], 'mrad')
-        self.assertEqual(
-            pvs.get_pvs_database()['RefKickCH1-Mon']['unit'], 'mrad')
-        self.assertEqual(
-            pvs.get_pvs_database()['RefKickCH2-Mon']['unit'], 'mrad')
-        self.assertEqual(
-            pvs.get_pvs_database()['RefKickCV1-Mon']['unit'], 'mrad')
-        self.assertEqual(
-            pvs.get_pvs_database()['RefKickCV2-Mon']['unit'], 'mrad')
+        pvs.get_pvs_database()
+        self.mock_csdevice.assert_called()
 
     @mock.patch("as_ap_posang.pvs._util")
     def test_print_banner_and_save_pv_list(self, util):

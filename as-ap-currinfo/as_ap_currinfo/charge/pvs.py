@@ -2,6 +2,7 @@
 
 from siriuspy.envars import vaca_prefix as _vaca_prefix
 from siriuspy import util as _util
+from siriuspy.csdevice.currinfo import get_charge_database as _get_database
 
 
 _COMMIT_HASH = _util.get_last_commit_hash()
@@ -12,34 +13,23 @@ _PREFIX = _PREFIX_VACA + _DEVICE
 
 def get_pvs_vaca_prefix():
     """Return Soft IOC vaca prefix."""
-    global _PREFIX_VACA
     return _PREFIX_VACA
 
 
 def get_pvs_prefix():
     """Return Soft IOC prefix."""
-    global _PREFIX
     return _PREFIX
 
 
 def get_pvs_database():
     """Return Soft IOC database."""
-    global _COMMIT_HASH
-    pvs_database = {
-        'Version-Cte':        {'type': 'string', 'value': _COMMIT_HASH},
-        'Charge-Mon':         {'type': 'float', 'value': 0.0, 'prec': 10,
-                               'unit': 'A.h'},
-        'ChargeCalcIntvl-SP': {'type': 'float', 'value': 100.0, 'prec': 1,
-                               'unit': 's'},
-        'ChargeCalcIntvl-RB': {'type': 'float', 'value': 100.0, 'prec': 1,
-                               'unit': 's'},
-    }
+    pvs_database = _get_database()
+    pvs_database['Version-Cte']['value'] = _COMMIT_HASH
     return pvs_database
 
 
 def print_banner_and_save_pv_list():
     """Print Soft IOC banner."""
-    global _COMMIT_HASH, _PREFIX_VACA, _DEVICE, _PREFIX
     _util.print_ioc_banner(
         ioc_name='si-ap-currinfo-charge',
         db=get_pvs_database(),
