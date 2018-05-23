@@ -39,7 +39,7 @@ del(i)  # cleanup class namespace
 clocks_ll2hl_map = {val: key for key, val in clocks_hl2ll_map.items()}
 
 triggers_states = ('Dsbl', 'Enbl')
-triggers_intlk = ('Dsbl', 'Enbl')
+triggers_intlk = ('Active', 'ByPass')
 triggers_polarities = ('Normal', 'Inverse')
 triggers_delay_types = ('Fixed', 'Incr')
 triggers_src_ll = (
@@ -109,8 +109,8 @@ def get_otp_database(otp_num=0, prefix=None):
     db[prefix+'Delay-RB'] = _dcopy(dic_)
 
     dic_ = {'type': 'enum', 'value': 0, 'enums': triggers_intlk}
-    db[prefix+'Intlk-Sts'] = dic_
-    db[prefix+'Intlk-Sel'] = _dcopy(dic_)
+    db[prefix+'ByPassIntlk-Sts'] = dic_
+    db[prefix+'ByPassIntlk-Sel'] = _dcopy(dic_)
 
     return db
 
@@ -161,8 +161,8 @@ def get_afc_out_database(out_num=0, out_tp='FMC', prefix=None):
 
     prefix = def_prefix if prefix is None else prefix
     db = get_otp_database(prefix=prefix)
-    db.pop(prefix + 'Intlk-Sel')
-    db.pop(prefix + 'Intlk-Sts')
+    db.pop(prefix + 'ByPassIntlk-Sel')
+    db.pop(prefix + 'ByPassIntlk-Sts')
     dic_ = {'type': 'enum', 'value': 0, 'enums': triggers_src_ll}
     db[prefix+'Src-Sts'] = dic_
     db[prefix+'Src-Sel'] = _dcopy(dic_)
@@ -568,6 +568,11 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dic_.update(trig_db['NrPulses'])
     db['NrPulses-RB'] = _dcopy(dic_)
     db['NrPulses-SP'] = dic_
+
+    dic_ = {'type': 'enum', 'enums': triggers_intlk}
+    dic_.update(trig_db['ByPassIntlk'])
+    db['ByPassIntlk-Sts'] = _dcopy(dic_)
+    db['ByPassIntlk-Sel'] = dic_
 
     dic_ = {'type': 'float', 'unit': 'us', 'prec': 6,
             'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,

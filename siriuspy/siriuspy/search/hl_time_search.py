@@ -70,7 +70,7 @@ class HLTimeSearch:
         if not cls.has_delay_type(hl_trigger):
             interface.discard('DelayType')
         if not cls.has_bypass_interlock(hl_trigger):
-            interface.discard('Intlk')
+            interface.discard('ByPassIntlk')
         return interface
 
     @classmethod

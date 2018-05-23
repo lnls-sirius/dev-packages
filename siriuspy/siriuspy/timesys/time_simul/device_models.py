@@ -373,8 +373,8 @@ class _OTP_IOC(_BaseIOC):
         'event_rb': 'Evt-RB',
         'pulses_sp': 'NrPulses-SP',
         'pulses_rb': 'NrPulses-RB',
-        'interlock_sp':  'Intlk-Sel',
-        'interlock_rb':  'Intlk-Sts',
+        'interlock_sp':  'ByPassIntlk-Sel',
+        'interlock_rb':  'ByPassIntlk-Sts',
         }
 
     @staticmethod
