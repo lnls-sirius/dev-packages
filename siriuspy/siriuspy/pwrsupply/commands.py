@@ -1,6 +1,7 @@
 """Define commands use to maps an epics field to a BSMP entity id.
 
-These classes implement a Command interface, that is, they an execute method.
+These classes implement a Command interface, that is, they have
+an `execute` method.
 """
 import time as _time
 
@@ -129,9 +130,9 @@ class Current:
 
     def execute(self, device_ids, value=None):
         """Execute command."""
-        op_modes = \
-            [_PSCStatus(self.pru_controller.read_variables(device_id, 0)).ioc_opmode
-             for device_id in device_ids]
+        op_modes = [_PSCStatus(self.pru_controller.read_variables(
+            device_id, 0)).ioc_opmode
+            for device_id in device_ids]
         slowsync = False
         if _PSConst.OpMode.SlowRefSync in op_modes:
             slowsync = True
