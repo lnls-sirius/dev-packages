@@ -24,7 +24,7 @@ _template_dict = {
     # --- quadrupoles ---
     'BO-Fam:MA-QF': 0.0,  # [KL: 1/m]
     'BO-Fam:MA-QD': 0.0,  # [KL: 1/m]
-    'BO-02D:PS-QS': 0.0,  # [KL: 1/m] (skew quadrupole)
+    'BO-02D:MA-QS': 0.0,  # [KL: 1/m] (skew quadrupole)
     # --- sextupoles ---
     'BO-Fam:MA-SF': 0.0,  # [SL: 1/m^2]
     'BO-Fam:MA-SD': 0.0,  # [SL: 1/m^2]
