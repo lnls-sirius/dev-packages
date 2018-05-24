@@ -62,7 +62,6 @@ class BeagleBone:
         self._create_e2s_controller()
         self._create_setpoints()
         self._init_setpoints()
-        self._wfm_dirty = False
 
     # --- public interface ---
 
