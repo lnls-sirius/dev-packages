@@ -42,7 +42,7 @@ class TestE2SController(unittest.TestCase):
             'PRUCtrlQueueSize-Mon': 0})
 
         self.controller = E2SController(
-            self.pru_controller, self.devices_info, 'FBP', self.database)
+            self.pru_controller, self.devices_info, 'FAC', self.database)
 
     @mock.patch('siriuspy.csdevice.pwrsupply.get_ps_current_unit')
     @mock.patch('siriuspy.csdevice.pwrsupply._PSSearch')

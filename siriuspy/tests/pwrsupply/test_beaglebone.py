@@ -615,8 +615,7 @@ class TestBeagleBone(unittest.TestCase):
         """Test read."""
         dev_name = 'BO-01U:PS-CH'
         field = 'OpMode-Sts'
-        self.bbb._operation_mode = 10
-        self.assertEqual(self.bbb.read(dev_name)[dev_name + ':' + field], 10)
+        self.assertEqual(self.bbb.read(dev_name)[dev_name + ':' + field], 0)
 
     def test_read_sp(self):
         """Test read setpoint."""
@@ -630,7 +629,6 @@ class TestBeagleBone(unittest.TestCase):
         field = 'OpMode-Sel'
         value = 0
         self.bbb.write('BO-01U:PS-CH', field, value)
-        self.assertEqual(self.bbb._operation_mode, value)
         self.e2s_mock.write_to_many.assert_called_with(
             dev_name, field, value)
 
@@ -693,7 +691,7 @@ class TestBeagleBone(unittest.TestCase):
         self.bbb.write('BO-01U:PS-CH', field, value)
         # Write to e2scontroller
         self.e2s_mock.write_to_many.assert_called_with(
-            dev_name, field, 0)
+            dev_name, field, 3)
         # Start thread
         self._assert_thread(watcher, dev_name, 3)
         # Start pru cycle mode
@@ -712,7 +710,7 @@ class TestBeagleBone(unittest.TestCase):
         self.bbb.write('BO-01U:PS-CH', field, value)
         # Write to e2scontroller
         self.e2s_mock.write_to_many.assert_called_with(
-            dev_name, field, 0)
+            dev_name, field, 4)
         # Start thread
         self._assert_thread(watcher, dev_name, 4)
         # Start pru cycle mode
