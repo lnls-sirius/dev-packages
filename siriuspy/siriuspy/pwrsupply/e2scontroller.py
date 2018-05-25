@@ -38,6 +38,7 @@ class E2SController:
         self._fields = dict()
         self._writers = dict()
         # Fill fields and writes
+        self._operation_mode = 0
         self._create_fields()
         # Init setpoint values
         # self._init()
@@ -56,6 +57,12 @@ class E2SController:
 
     def read(self, device_name, field):
         """Read field from device."""
+        if field == 'OpMode-Sts':
+            op_mode = self._fields[field][device_name].read()
+            if op_mode == 0:
+                return self._operation_mode
+            else:
+                return op_mode
         return self._fields[field][device_name].read()
 
     def read_all(self, device_name):
@@ -69,12 +76,16 @@ class E2SController:
     def write(self, device_name, field, value):
         """Write value to device."""
         dev_info = self._devices_info[device_name]
+        if field == 'OpMode-Sel' and value in (0, 3, 4):
+            self._operation_mode = value
         self._write(dev_info.id, field, value)
 
     def write_to_many(self, devices_names, field, value):
         """Write to value one or many devices' field."""
         devices_names = self._tuplify(devices_names)
         ids = tuple([dev_info.id for dev_info in self._devices_info.values()])
+        if field == 'OpMode-Sel' and value in (0, 3, 4):
+            self._operation_mode = value
         self._write(ids, field, value)
 
     def check_connected(self, device_name):

@@ -8,10 +8,8 @@ from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.pwrsupply.data import PSData as _PSData
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.pwrsupply.prucontroller import PRUController as _PRUController
-from siriuspy.pwrsupply.e2scontroller \
-    import E2SController as _E2SController
-from siriuspy.pwrsupply.e2scontroller \
-    import DeviceInfo as _DeviceInfo
+from siriuspy.pwrsupply.e2scontroller import E2SController as _E2SController
+from siriuspy.pwrsupply.e2scontroller import DeviceInfo as _DeviceInfo
 
 # TODO: improve code
 #
@@ -58,7 +56,7 @@ class BeagleBone:
         # self._power_supplies = self._create_power_supplies()
         self._watchers = dict()
         self._initiated = False
-        self._operation_mode = 0
+        # self._operation_mode = 0
         self._create_e2s_controller()
         self._create_setpoints()
         self._init_setpoints()
@@ -85,20 +83,23 @@ class BeagleBone:
         """Database."""
         return self._database
 
-    def read(self, device_name):
+    def read(self, device_name, field=None):
         """Read all device fields."""
-        field_values = self._e2s_controller.read_all(device_name)
-        # Change op_mode sts
-        op_mode = field_values[device_name + ':' + 'OpMode-Sts']
-        if op_mode == 0:
-            field_values[device_name + ':' + 'OpMode-Sts'] = \
-                self._operation_mode
-        # field_values = self.power_supplies[device_name].read_all()
-        setpoints = self._setpoints[device_name]
-        for field in setpoints.fields():
-            field_values[device_name + ':' + field] = setpoints.get(field)
+        if field is None:
+            field_values = self._e2s_controller.read_all(device_name)
+            # Change op_mode sts
+            # op_mode = field_values[device_name + ':' + 'OpMode-Sts']
+            # if op_mode == 0:
+            #     field_values[device_name + ':' + 'OpMode-Sts'] = \
+            #         self._operation_mode
+            # field_values = self.power_supplies[device_name].read_all()
+            setpoints = self._setpoints[device_name]
+            for field in setpoints.fields():
+                field_values[device_name + ':' + field] = setpoints.get(field)
 
-        return field_values
+            return field_values
+        else:
+            return self._e2s_controller.read(device_name, field)
 
     def write(self, device_name, field, value):
         """BBB write."""
@@ -173,11 +174,12 @@ class BeagleBone:
         psnames = [psname for psname in self.psnames
                    if self._setpoints[psname].set('OpMode-Sel', op_mode)]
         self._pre_opmode(psnames, op_mode)
-        if op_mode in (0, 3, 4):
-            self._operation_mode = op_mode
-            self.e2s_controller.write_to_many(psnames, 'OpMode-Sel', 0)
-        else:
-            self.e2s_controller.write_to_many(psnames, 'OpMode-Sel', op_mode)
+        # if op_mode in (0, 3, 4):
+        #     self._operation_mode = op_mode
+        #     self.e2s_controller.write_to_many(psnames, 'OpMode-Sel', 0)
+        # else:
+        #     self.e2s_controller.write_to_many(psnames, 'OpMode-Sel', op_mode)
+        self.e2s_controller.write_to_many(psnames, 'OpMode-Sel', op_mode)
         self._pos_opmode(psnames, op_mode)
         if op_mode == _PSConst.OpMode.Cycle:
             sync_mode = self._pru_controller.PRU.SYNC_MODE.BRDCST
@@ -412,9 +414,7 @@ class _Watcher(_threading.Thread):
                 if self._achieved_op_mode() and self._sync_started():
                     self.state = _Watcher.WAIT_MIG
             elif self.state == _Watcher.WAIT_MIG:
-                if self._changed_op_mode():
-                    break
-                elif self._sync_stopped():
+                if self._sync_stopped() or self._changed_op_mode():
                     if self._sync_pulsed():
                         self._set_current()
                         self._set_slow_ref()
@@ -457,8 +457,7 @@ class _Watcher(_threading.Thread):
         return self.controller.pru_controller.pru_sync_status == 0
 
     def _sync_pulsed(self):
-        return \
-            self.controller.pru_controller.pru_sync_pulse_count > 0
+        return self.controller.pru_controller.pru_sync_pulse_count > 0
 
     def _set_current(self):
         cur_sp = 'Current-SP'
@@ -467,7 +466,6 @@ class _Watcher(_threading.Thread):
             val = self.controller.read(dev_name, 'CycleOffset-RB')
         else:
             val = self.controller.read(dev_name, 'WfmData-RB')[-1]
-        # print('Writing {} to {}'.format(val, dev_name))
         self.setpoints.set(cur_sp, val)
         self.controller.write(dev_name, cur_sp, val)
 
