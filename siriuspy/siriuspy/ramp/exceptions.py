@@ -1,52 +1,21 @@
-"""Module with ConfigServer exceptions."""
+"""Module with Ramp exceptions."""
+
+from siriuspy.servconf.exceptions import SrvConfigError as _SrvConfigError
 
 
-# TODO: this is a general class and could be moved to servconf
-
-
-class SrvError(Exception):
-    """General exception in ConfigSrv."""
-
-    pass
-
-
-class SrvCouldNotConnect(SrvError):
-    """Could not connect with ConfigServer."""
+class RampError(_SrvConfigError):
+    """General Ramp Error."""
 
     pass
 
 
-class SrvConfigError(SrvError):
-    """General exception for config manipulations."""
+class RampInvalidDipoleWfmParms(RampError):
+    """Invalid Dipole waveform parameters."""
 
     pass
 
 
-class SrvConfigInvalidName(SrvConfigError):
-    """Configuration name not defined."""
-
-    pass
-
-
-class SrvConfigFormatError(SrvConfigError):
-    """Configuration value with inconsistent format."""
-
-    pass
-
-
-class SrvConfigNotFound(SrvConfigError):
-    """Configuration not found in server."""
-
-    pass
-
-
-class SrvConfigConflict(SrvConfigError):
-    """Configuration conflict."""
-
-    pass
-
-
-class SrvMetadataInvalid(SrvError):
-    """Invalid metadata."""
+class RampInvalidNormConfig(RampError):
+    """Invalid normalized configuration."""
 
     pass

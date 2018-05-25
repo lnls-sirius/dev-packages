@@ -31,27 +31,30 @@ _interval = _ramp_duration / (_wfm_nrpoints - 1.0)
 
 
 _ramp_dipole = {
-    # ramp duration [s]
-    'duration': _ramp_duration,  # [s]
-    # start indices of dipole ramp regions
+    # dipole delay [us]
+    'delay': 0.0,
+    # ramp duration [ms]
+    'duration': _ramp_duration,
+    # start instants of dipole ramp regions [ms]
     'time': [_interval * i for i in _i07],
     # current values [A]
     'energy': [_eje_energy * v for v in _v07],
+    # number of points
+    'wfm_nrpoints': _MAX_WFMSIZE,
 }
 _normalized_configs = [
-    # time[s]              normalized configuration name
-    [0.000000000000000000, 'ramp-start'],
-    [0.012743185796449112, 'rampup-start'],
-    [0.303875968992248060, 'rampup-stop'],
+    # time [ms]            normalized configuration name
+    [0.0000000000000000, 'ramp-start'],
+    [12.743185796449112, 'rampup-start'],
+    [303.87596899224806, 'rampup-stop'],
 ]
 _rf_parameters = {
-    # global RF delay
-    'delay_rf': 0.0,  # [us]
+    # global RF delay [us]
+    'delay': 0.0,
 }
 
 
 _template_dict = {
-    'delay_pwrsupply': 0.0,  # [us]
     'ramp_dipole': _ramp_dipole,
     'normalized_configs*': _normalized_configs,
     'rf_parameters': _rf_parameters,

@@ -51,6 +51,8 @@ def recursive_check(ref_value, value, checklength=True):
         # print('h1')
         return False
     if type(ref_value) == dict:
+        if checklength and len(value) != len(ref_value):
+            return False
         for k, v in value.items():
             if k not in ref_value and checklength:
                 # print('h3')

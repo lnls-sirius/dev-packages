@@ -6,7 +6,7 @@ IOCs.
 """
 
 from siriuspy import envars as _envars
-from siriuspy.ramp.srvconfig import ConnConfigService as _ConnConfigService
+from siriuspy.servconf.srvconfig import ConnConfigService as _ConnConfigService
 
 
 class ConnConfig_BORamp(_ConnConfigService):

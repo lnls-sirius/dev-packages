@@ -3,9 +3,14 @@
 import numpy as _np
 from copy import deepcopy as _dcopy
 
+from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
+from siriuspy.servconf.srvconfig import ConfigSrv as _ConfigSrv
+from siriuspy.ramp.exceptions import RampInvalidDipoleWfmParms as \
+    _RampInvalidDipoleWfmParms
+from siriuspy.ramp.exceptions import RampInvalidNormConfig as \
+    _RampInvalidNormConfig
 from siriuspy.ramp.conn import ConnConfig_BORamp as _CCBORamp
 from siriuspy.ramp.conn import ConnConfig_BONormalized as _CCBONormalized
-from siriuspy.ramp.srvconfig import ConfigSrv as _ConfigSrv
 from siriuspy.ramp.waveform import WaveformDipole as _WaveformDipole
 from siriuspy.ramp.waveform import Waveform as _Waveform
 
@@ -14,16 +19,26 @@ class BoosterNormalized(_ConfigSrv):
     """Booster normalized configuration."""
 
     _conn = _CCBONormalized()
+    _manames = None
 
     def __init__(self, name=None):
         """Constructor."""
         _ConfigSrv.__init__(self, name=name)
+        # init class _psnames
+        if BoosterNormalized._manames is None:
+            BoosterNormalized._manames = \
+                list(self.get_config_type_template().keys())
+
+    @property
+    def maname(self):
+        """List of power supply names."""
+        return BoosterNormalized._manames.copy()
 
     def _get_item(self, index):
-        return self._configuration[index]
+        return float(self._configuration[index])
 
     def _set_item(self, index, value):
-        self._configuration[index] = value
+        self._configuration[index] = float(value)
 
     def _set_configuration(self, value):
         self._configuration = value
@@ -56,7 +71,7 @@ class BoosterRamp(_ConfigSrv):
         _ConfigSrv.__init__(self, name=name)
         self._normalized_configs = dict()
         self._waveforms = dict()
-        # self._update_normalized_configs()
+        self._wfms_changed = True  # so that waveforms need calculation again
 
     # --- ConfigSrv API ---
 
@@ -81,12 +96,14 @@ class BoosterRamp(_ConfigSrv):
         for config in self._normalized_configs.values():
             config.configsrv_load()
         self._synchronized = True  # all went well
+        self._wfms_changed = True
 
     def configsrv_load_normalized_configs(self):
         """Load normalized configurations from config server."""
         # load normalized configurations one by one
         for config in self._normalized_configs.values():
             config.configsrv_load()
+        self._wfms_changed = True
 
     def configsrv_update(self):
         """Update configuration in config server."""
@@ -102,6 +119,7 @@ class BoosterRamp(_ConfigSrv):
                 # save a new normalized configuration
                 config.configsrv_save()
         self._synchronized = True  # all went well
+        self._wfms_changed = True
 
     def configsrv_save(self):
         """Save configuration to config server."""
@@ -114,25 +132,26 @@ class BoosterRamp(_ConfigSrv):
         self._synchronized = True  # all went well
 
     @property
-    def delay_pwrsupply(self):
-        """Power supplies general delay [us]."""
-        return self._configuration['delay_pwrsupply']
-
-    @delay_pwrsupply.setter
-    def delay_pwrsupply(self, value):
-        """Set power supplies general delay [us]."""
-        self._configuration['delay_pwrsupply'] = value
-        self._synchronized = False
-
-    @property
     def delay_rf(self):
         """RF delay."""
-        return self._configuration['rf_parameters']['delay_rf']
+        return self._configuration['rf_parameters']['delay']
 
     @delay_rf.setter
     def delay_rf(self, value):
         """Set RF delay."""
-        self._configuration['rf_parameters']['delay_rf'] = value
+        self._configuration['rf_parameters']['delay'] = value
+        self._synchronized = False
+
+    @property
+    def ramp_dipole_delay(self):
+        """Dipole ramp delay."""
+        return self._configuration['ramp_dipole']['delay']
+
+    @ramp_dipole_delay.setter
+    def ramp_dipole_delay(self, value):
+        """Set power supplies general delay [us]."""
+        value = float(value)
+        self._configuration['ramp_dipole']['delay'] = value
         self._synchronized = False
 
     @property
@@ -143,24 +162,61 @@ class BoosterRamp(_ConfigSrv):
     @ramp_dipole_duration.setter
     def ramp_dipole_duration(self, value):
         """Set dipole ramp duration."""
-        self._configuration['ramp_dipole']['duration'] = value
+        self._configuration['ramp_dipole']['duration'] = float(value)
         self._synchronized = False
+        self._wfms_changed = True
 
     @property
     def ramp_dipole_time(self):
-        """Dipole ramp time."""
-        return _dcopy(self._configuration['ramp_dipole']['time'])
+        """Dipole ramp times."""
+        return list(self._configuration['ramp_dipole']['time'])
+
+    @ramp_dipole_time.setter
+    def ramp_dipole_time(self, value):
+        """Set dipole ramp times."""
+        if len(value) != 8:
+            raise ValueError('Invalid number of elements int dipole ramp time')
+        for v in value:
+            if v > self.ramp_dipole_duration:
+                raise ValueError(('All dipole ramp times should be '
+                                  'smaller than ramp duration.'))
+        self._configuration['ramp_dipole']['time'] = list(value)
+        self._synchronized = False
+        self._wfms_changed = True
 
     @property
     def ramp_dipole_energy(self):
         """Dipole ramp energy."""
-        return _dcopy(self._configuration['ramp_dipole']['energy'])
+        return list(self._configuration['ramp_dipole']['energy'])
 
-    def set_ramp_dipole(self, time, energy):
-        """Set dipole ramp."""
-        self._configuration['ramp_dipole']['time'] = _dcopy(time)
-        self._configuration['ramp_dipole']['energy'] = _dcopy(energy)
+    @ramp_dipole_energy.setter
+    def ramp_dipole_energy(self, value):
+        """Set dipole ramp energies."""
+        if len(value) != 8:
+            raise ValueError(('Invalid number of elements in '
+                              'dipole ramp energy'))
+        for v in value:
+            if v > self.ramp_dipole_duration:
+                raise ValueError(('All dipole ramp times should be '
+                                  'smaller than ramp duration.'))
+        self._configuration['ramp_dipole']['energy'] = list(value)
         self._synchronized = False
+        self._wfms_changed = True
+
+    @property
+    def ramp_dipole_wfm_nrpoints(self):
+        """Dipole ramp waveform number of points."""
+        return self._configuration['ramp_dipole']['wfm_nrpoints']
+
+    @ramp_dipole_wfm_nrpoints.setter
+    def ramp_dipole_wfm_nrpoints(self, value):
+        """Set dipole ramp waveform number of points."""
+        value = int(value)
+        if value > _MAX_WFMSIZE:
+            raise ValueError('Invalid number of points for waveforms.')
+        self._configuration['ramp_dipole']['wfm_nrpoints'] = value
+        self._synchronized = False
+        self._wfms_changed = True
 
     # @ramp_dipole_time.setter
     # def ramp_dipole_time(self, value):
@@ -220,6 +276,7 @@ class BoosterRamp(_ConfigSrv):
         times.pop(index)
         nconfigs = [[times[i], names[i]] for i in range(len(times))]
         self.normalized_configs = nconfigs
+        self._wfms_changed = True
 
     def normalized_configs_insert(self, time, name=None, nconfig=None):
         """Insert a normalized configuration."""
@@ -267,6 +324,12 @@ class BoosterRamp(_ConfigSrv):
 
     # --- API for waveforms ---
 
+    def get_waveform_currents(self, psname):
+        """Return waveform for a given power supply."""
+        self._update_waveforms()
+        waveform = self._waveforms[psname]
+        return waveform.currents.copy()
+
     # --- private methods ---
 
     def __len__(self):
@@ -279,11 +342,11 @@ class BoosterRamp(_ConfigSrv):
             st = 'name: {}'.format(self.name)
             return st
         labels = (
-            'delay_pwrsupply [us]',
             'delay_rf [us]',
-            'ramp_dipole_duration [s]',
-            'ramp_dipole_time_energy [s] [GeV]',
-            'normalized_configs [s] [name]',
+            'ramp_dipole_delay [us]',
+            'ramp_dipole_duration [ms]',
+            'ramp_dipole_time_energy [ms] [GeV]',
+            'normalized_configs [ms] [name]',
         )
         st = ''
         maxlen = max(tuple(len(l) for l in labels) + (len('name'),))
@@ -291,8 +354,8 @@ class BoosterRamp(_ConfigSrv):
         strfmt2 = strfmt1.replace('{}', '{:.6f} {:+.6f}')
         strfmt3 = strfmt1.replace('{}', '{:.6f} {}')
         st += strfmt1.format('name', self.name)
-        st += strfmt1.format(labels[0], self.delay_pwrsupply)
-        st += strfmt1.format(labels[1], self.delay_rf)
+        st += strfmt1.format(labels[0], self.delay_rf)
+        st += strfmt1.format(labels[1], self.ramp_dipole_delay)
         st += strfmt1.format(labels[2], self.ramp_dipole_duration)
         st += strfmt1.format(labels[3], '')
         time = self.ramp_dipole_time
@@ -311,6 +374,7 @@ class BoosterRamp(_ConfigSrv):
 
     def _set_item(self, name, value):
         self._normalized_configs[name] = value
+        self._wfms_changed = True
 
     def _set_configuration(self, value):
         self._configuration = _dcopy(value)
@@ -323,20 +387,53 @@ class BoosterRamp(_ConfigSrv):
                 norm_configs[name] = self._normalized_configs[name]
             else:
                 self._synchronized = False
+                self._wfms_changed = True
                 norm_configs[name] = BoosterNormalized(name)
         self._normalized_configs = norm_configs
 
-    def _update_waveforms(self):
-        names = tuple(self._normalized_configs.keys())
-        if not names:
-            return
-        else:
-            psnames = tuple(self._normalized_configs[names[0]].keys())
-        self._waveforms = dict()
-        # BO-Fam:MA-B
-        dipole = _WaveformDipole()
+    def _update_waveform(self, maname):
+        if 'BO-Fam:MA-B' not in self._waveforms:
+            self._update_waveform_dipole()
+        if maname != 'BO-Fam:MA-B':
+            self._update_waveform_not_dipole(maname)
+
+    def _update_waveform_not_dipole(self, maname):
+        self._update_normalized_configs()
+        times = self.normalized_configs_time
+        names = self.normalized_configs_name
+        times, names = \
+            [list(x) for x in zip(*sorted(zip(times, names),
+             key=lambda pair: pair[0]))]  # sort by time
+        # build strength
+        stren = []
+        for i in range(len(times)):
+            nconfig = self._normalized_configs[names[i]]
+            if maname not in nconfig:
+                raise _RampInvalidNormConfig
+            stren.append(nconfig[maname])
+        # get dipole
+        if 'BO-Fam:MA-B' not in self._waveforms:
+            self._update_waveform_dipole()
+
+
+
+        energy = self._configuration['ramp_dipole']['energy']
+
+    def _update_waveform_dipole(self):
+        time = self._configuration['ramp_dipole']['time']
+        energy = self._configuration['ramp_dipole']['energy']
+        duration = self._configuration['ramp_dipole']['duration']
+        wfm_nrpoints = self._configuration['ramp_dipole']['wfm_nrpoints']
+        interval = duration / (wfm_nrpoints - 1.0)
+        indices = [round(t/interval) for t in time]
+        dipole = _WaveformDipole(
+            scale=1.0,
+            start_value=energy[0],
+            stop_value=energy[0],
+            boundary_indices=indices,
+            boundary_values=energy,
+            wfm_nrpoints=wfm_nrpoints,
+            duration=duration)
+        if not dipole.check():
+            raise _RampInvalidDipoleWfmParms()
         self._waveforms['BO-Fam:MA-B'] = dipole
-        # other power supplies
-        for psname in psnames:
-            if psname != 'BO-Fam:MA-B':
-                self._waveforms[psname] = _Waveform(dipole=dipole)

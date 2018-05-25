@@ -1,20 +1,17 @@
-"""Server configurations."""
+"""Configurations connection classes."""
 
 from copy import deepcopy as _dcopy
 from http import HTTPStatus as _HTTPStatus
 
 from siriuspy import envars as _envars
 from siriuspy import util as _util
-from siriuspy.ramp import exceptions as _exceptions
+from siriuspy.servconf import exceptions as _exceptions
 from siriuspy.servconf.conf_service import ConfigService as _ConfigService
 from siriuspy.servconf.conf_types import check_value as _check_value
 
 
-# TODO: this is a general class and could be moved to configsrv
-
-
 class ConnConfigService:
-    """Syntactic sugar ramp class for ConfigService."""
+    """Syntactic sugar class for ConfigService."""
 
     def __init__(self, config_type, url=_envars.server_url_configdb):
         """Contructor."""

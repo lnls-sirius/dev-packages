@@ -348,6 +348,17 @@ class WaveformParam:
         self._waveform = self._eval_index()
         self._deprecated = False
 
+    def check(self):
+        """Check consistency of parameters."""
+        try:
+            self._set_coeffs()
+            self._eval_index()
+            self.rampup_change()
+            self.rampdown_change()
+            return True
+        except ValueError:
+            return False
+
     # --- list methods ---
 
     def __getitem__(self, index):
@@ -619,10 +630,11 @@ class WaveformDipole(_WaveformMagnet, WaveformParam):
         WaveformParam.__init__(self, **kwargs)
 
     def _get_currents(self):
-        return self.waveform
+        currents = self.conv_strength_2_current(self.waveform)
+        return currents
 
     def _get_strengths(self):
-        return self.conv_current_2_strength(self.currents)
+        return self.waveform
 
 
 class Waveform(_WaveformMagnet):
@@ -637,11 +649,12 @@ class Waveform(_WaveformMagnet):
         self._dipole = dipole
         self._family = family
         if self.maname in _util.NOMINAL_STRENGTHS:
-            strengths = _util.NOMINAL_STRENGTHS[self.maname]
-            self._currents = self._conv_strengths_2_currents(strengths)
-            self._strengths = self._conv_currents_2_strengths(self._currents)
+            nom_strengths = _util.NOMINAL_STRENGTHS[self.maname]
         else:
-            raise NotImplementedError
+            nom_strengths = 0.0
+        strengths = [nom_strengths, ] * self._dipole.wfm_nrpoints
+        self._currents = self._conv_strengths_2_currents(strengths)
+        self._strengths = self._conv_currents_2_strengths(self._currents)
 
     def update(self):
         """Update object."""

@@ -1,6 +1,6 @@
 """Ramp utility module."""
 
-DEFAULT_RAMP_DURATION = 0.490  # [s]
+DEFAULT_RAMP_DURATION = 490.0  # [ms]
 
 BO_INJECTION_ENERGY = 0.150  # [GeV]
 BO_EJECTION_ENERGY = 3.0  # [GeV]
