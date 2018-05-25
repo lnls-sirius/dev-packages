@@ -304,8 +304,8 @@ class PRUSim(PRUInterface):
         self.sync_block = True
         if self.t.is_alive():
             return
-            self._sync_status = Const.SYNC_STATE.OFF
-            self.t.join()
+            # self._sync_status = Const.SYNC_STATE.OFF
+            # self.t.join()
         self._sync_status = Const.SYNC_STATE.ON
         # while self._sync_status == Const.SYNC_STATE.ON:
         self.t = _threading.Thread(target=self.emulate_trigger, daemon=True)
