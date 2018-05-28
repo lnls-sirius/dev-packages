@@ -250,9 +250,7 @@ class TestConfigService(unittest.TestCase):
         self.cs.delete_config(self.fake_config)
         # Assert request is created
         self.req_mock.assert_called_once_with(
-            url=self.fake_url, method="PUT",
-            headers=self.header,
-            data=json.dumps({"discarded": True}).encode())
+            url=self.fake_url, method="DELETE")
 
     def test_delete_url_request(self):
         """Test update_config makes the request."""

@@ -63,6 +63,7 @@ class TestWaveformParam(unittest.TestCase):
         'rampup_change',
         'rampdown_change',
         'update',
+        'check',
     )
 
     def test_public_interface(self):
