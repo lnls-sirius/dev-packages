@@ -184,6 +184,13 @@ class WaveformParam:
                               'region boundary points.'))
         self._deprecated = True
 
+    @rampup_start_time.setter
+    def rampup_start_time(self, value):
+        """Set time of rampup start."""
+        dt = self.duration / (self.wfm_nrpoints - 1.0)
+        idx = round(value / dt)
+        self.rampup_start_index = idx
+
     @rampup_start_value.setter
     def rampup_start_value(self, value):
         """Set waveform value at the 2nd region boundary."""
@@ -200,6 +207,13 @@ class WaveformParam:
             raise ValueError(('Index is inconsistent with labeled '
                               'region boundary points.'))
         self._deprecated = True
+
+    @rampup_stop_time.setter
+    def rampup_stop_time(self, value):
+        """Set time of rampup stop."""
+        dt = self.duration / (self.wfm_nrpoints - 1.0)
+        idx = round(value / dt)
+        self.rampup_stop_index = idx
 
     @rampup_stop_value.setter
     def rampup_stop_value(self, value):
@@ -249,6 +263,13 @@ class WaveformParam:
                               'region boundary points.'))
         self._deprecated = True
 
+    @rampdown_start_time.setter
+    def rampdown_start_time(self, value):
+        """Set time of rampdown start."""
+        dt = self.duration / (self.wfm_nrpoints - 1.0)
+        idx = round(value / dt)
+        self.rampdown_start_index = idx
+
     @rampdown_start_value.setter
     def rampdown_start_value(self, value):
         """Set waveform value at the 6th region boundary."""
@@ -265,6 +286,13 @@ class WaveformParam:
             raise ValueError(('Index is inconsistent with labeled '
                               'region boundary points.'))
         self._deprecated = True
+
+    @rampdown_stop_time.setter
+    def rampdown_stop_time(self, value):
+        """Set time of rampdown stop."""
+        dt = self.duration / (self.wfm_nrpoints - 1.0)
+        idx = round(value / dt)
+        self.rampdown_stop_index = idx
 
     @rampdown_stop_value.setter
     def rampdown_stop_value(self, value):
@@ -607,6 +635,10 @@ class _WaveformMagnet(_Magnet):
         _Magnet.__init__(self, maname=maname)
 
     @property
+    def times(self):
+        return self._get_times()
+
+    @property
     def currents(self):
         return self._get_currents()
 
@@ -636,11 +668,15 @@ class WaveformDipole(_WaveformMagnet, WaveformParam):
     def _get_strengths(self):
         return self.waveform
 
+    def _get_times(self):
+        dt = self.duration / (self.wfm_nrpoints - 1.0)
+        return [dt*i for i in range(self.wfm_nrpoints)]
+
 
 class Waveform(_WaveformMagnet):
     """Waveform class for general magnets."""
 
-    def __init__(self, maname, dipole=None, family=None):
+    def __init__(self, maname, dipole=None, family=None, strengths=None):
         """Constructor."""
         if maname != 'SI-Fam:MA-B1B2' and dipole is None:
             raise ValueError(
@@ -648,11 +684,12 @@ class Waveform(_WaveformMagnet):
         _WaveformMagnet.__init__(self, maname)
         self._dipole = dipole
         self._family = family
-        if self.maname in _util.NOMINAL_STRENGTHS:
-            nom_strengths = _util.NOMINAL_STRENGTHS[self.maname]
-        else:
-            nom_strengths = 0.0
-        strengths = [nom_strengths, ] * self._dipole.wfm_nrpoints
+        if strengths is None:
+            if self.maname in _util.NOMINAL_STRENGTHS:
+                nom_strengths = _util.NOMINAL_STRENGTHS[self.maname]
+            else:
+                nom_strengths = 0.0
+            strengths = [nom_strengths, ] * self._dipole.wfm_nrpoints
         self._currents = self._conv_strengths_2_currents(strengths)
         self._strengths = self._conv_currents_2_strengths(self._currents)
 

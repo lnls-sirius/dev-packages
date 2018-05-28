@@ -5,6 +5,11 @@ from copy import deepcopy as _dcopy
 
 from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
 from siriuspy.servconf.srvconfig import ConfigSrv as _ConfigSrv
+from siriuspy.magnet.util import magnet_class as _magnet_class
+from siriuspy.magnet.util import get_section_dipole_name as \
+    _get_section_dipole_name
+from siriuspy.magnet.util import get_magnet_family_name as \
+    _get_magnet_family_name
 from siriuspy.ramp.exceptions import RampInvalidDipoleWfmParms as \
     _RampInvalidDipoleWfmParms
 from siriuspy.ramp.exceptions import RampInvalidNormConfig as \
@@ -218,6 +223,158 @@ class BoosterRamp(_ConfigSrv):
         self._synchronized = False
         self._wfms_changed = True
 
+    @property
+    def ramp_start_value(self):
+        """Return."""
+        self._update_waveform('BO-Fam:MA-B')
+        return self._waveforms['BO-Fam:MA-B'].start_value
+
+    @ramp_start_value.setter
+    def ramp_start_value(self, value):
+        """Return."""
+        self._update_waveform('BO-Fam:MA-B')
+        w = self._waveforms['BO-Fam:MA-B']
+        w.start_value = value
+        self._configuration['ramp_dipole']['energy'][0] = value
+        self._configuration['ramp_dipole']['energy'][-1] = value
+        self._wfms_changed = True
+
+    @property
+    def rampup_start_value(self):
+        """Return."""
+        self._update_waveform('BO-Fam:MA-B')
+        return self._waveforms['BO-Fam:MA-B'].rampup_start_value
+
+    @rampup_start_value.setter
+    def rampup_start_value(self, value):
+        """Return."""
+        self._update_waveform('BO-Fam:MA-B')
+        w = self._waveforms['BO-Fam:MA-B']
+        w.rampup_start_value = value
+        self._configuration['ramp_dipole']['energy'][1] = value
+        self._wfms_changed = True
+
+    @property
+    def rampup_start_time(self):
+        """Return."""
+        self._update_waveform('BO-Fam:MA-B')
+        return self._waveforms['BO-Fam:MA-B'].rampup_start_time
+
+    @rampup_start_time.setter
+    def rampup_start_time(self, value):
+        """Return."""
+        self._update_waveform('BO-Fam:MA-B')
+        w = self._waveforms['BO-Fam:MA-B']
+        w.rampup_start_time = value
+        self._configuration['ramp_dipole']['time'][1] = value
+        self._wfms_changed = True
+
+    @property
+    def rampup_stop_value(self):
+        """Return."""
+        self._update_waveform('BO-Fam:MA-B')
+        return self._waveforms['BO-Fam:MA-B'].rampup_stop_value
+
+    @rampup_stop_value.setter
+    def rampup_stop_value(self, value):
+        """Return."""
+        self._update_waveform('BO-Fam:MA-B')
+        w = self._waveforms['BO-Fam:MA-B']
+        w.rampup_stop_value = value
+        self._configuration['ramp_dipole']['energy'][2] = value
+        self._wfms_changed = True
+
+    @property
+    def rampup_stop_time(self):
+        """Return."""
+        self._update_waveform('BO-Fam:MA-B')
+        return self._waveforms['BO-Fam:MA-B'].rampup_stop_time
+
+    @rampup_stop_time.setter
+    def rampup_stop_time(self, value):
+        """Return."""
+        self._update_waveform('BO-Fam:MA-B')
+        w = self._waveforms['BO-Fam:MA-B']
+        w.rampup_stop_time = value
+        self._configuration['ramp_dipole']['time'][2] = value
+        self._wfms_changed = True
+
+    @property
+    def ramp_plateau_value(self):
+        """Return."""
+        self._update_waveform('BO-Fam:MA-B')
+        return self._waveforms['BO-Fam:MA-B'].plateau_value
+
+    @ramp_plateau_value.setter
+    def ramp_plateau_value(self, value):
+        """Return."""
+        self._update_waveform('BO-Fam:MA-B')
+        w = self._waveforms['BO-Fam:MA-B']
+        w.plateau_value = value
+        self._configuration['ramp_dipole']['energy'][3] = value
+        self._configuration['ramp_dipole']['energy'][4] = value
+        self._wfms_changed = True
+
+    @property
+    def rampdown_start_value(self):
+        """Return."""
+        self._update_waveform('BO-Fam:MA-B')
+        return self._waveforms['BO-Fam:MA-B'].rampdown_start_value
+
+    @rampdown_start_value.setter
+    def rampdown_start_value(self, value):
+        """Return."""
+        self._update_waveform('BO-Fam:MA-B')
+        w = self._waveforms['BO-Fam:MA-B']
+        w.rampdown_start_value = value
+        self._configuration['ramp_dipole']['energy'][5] = value
+        self._wfms_changed = True
+
+    @property
+    def rampdown_start_time(self):
+        """Return."""
+        self._update_waveform('BO-Fam:MA-B')
+        return self._waveforms['BO-Fam:MA-B'].rampdown_start_time
+
+    @rampdown_start_time.setter
+    def rampdown_start_time(self, value):
+        """Return."""
+        self._update_waveform('BO-Fam:MA-B')
+        w = self._waveforms['BO-Fam:MA-B']
+        w.rampdown_start_time = value
+        self._configuration['ramp_dipole']['time'][5] = value
+        self._wfms_changed = True
+
+    @property
+    def rampdown_stop_value(self):
+        """Return."""
+        self._update_waveform('BO-Fam:MA-B')
+        return self._waveforms['BO-Fam:MA-B'].rampdown_stop_value
+
+    @rampdown_stop_value.setter
+    def rampdown_stop_value(self, value):
+        """Return."""
+        self._update_waveform('BO-Fam:MA-B')
+        w = self._waveforms['BO-Fam:MA-B']
+        w.rampdown_stop_value = value
+        self._configuration['ramp_dipole']['energy'][6] = value
+        self._wfms_changed = True
+
+    @property
+    def rampdown_stop_time(self):
+        """Return."""
+        self._update_waveform('BO-Fam:MA-B')
+        return self._waveforms['BO-Fam:MA-B'].rampdown_stop_time
+
+    @rampdown_stop_time.setter
+    def rampdown_stop_time(self, value):
+        """Return."""
+        self._update_waveform('BO-Fam:MA-B')
+        w = self._waveforms['BO-Fam:MA-B']
+        w.rampdown_stop_time = value
+        self._configuration['ramp_dipole']['time'][6] = value
+        self._wfms_changed = True
+
     # @ramp_dipole_time.setter
     # def ramp_dipole_time(self, value):
     #     """Set dipole ramp time."""
@@ -310,12 +467,19 @@ class BoosterRamp(_ConfigSrv):
                 if k == 'BO-Fam:MA-B':
                     # TODO: when k == 'BO-Fam:MA-B' we have to use waveform
                     # linear numpy interpolation with left=right=None
-                    ovalues = [self._normalized_configs[n][k] for n in onames]
-                    nconfig[k] = _np.interp(time, otimes, ovalues)
+                    pass
                 else:
                     # linear numpy interpolation with left=right=None
                     ovalues = [self._normalized_configs[n][k] for n in onames]
                     nconfig[k] = _np.interp(time, otimes, ovalues)
+
+        # set config energy appropriately
+        indices = self._conv_times_2_indices([time])
+        strengths = self.get_waveform_strengths('BO-Fam:MA-B')
+        strength = _np.interp(indices[0],
+                              list(range(self.ramp_dipole_wfm_nrpoints)),
+                              strengths)
+        nconfig['BO-Fam:MA-B'] = strength
 
         # normalized configuration was given
         self._normalized_configs[name].configuration = nconfig
@@ -324,11 +488,35 @@ class BoosterRamp(_ConfigSrv):
 
     # --- API for waveforms ---
 
-    def get_waveform_currents(self, psname):
+    # @property
+    # def dipole_waveform(self):
+    #     """Dipole waveform."""
+    #     self._update_waveform('BO-Fam:MA-B')
+    #     self._wfms_changed = True
+    #     return self._waveforms['BO-Fam:MA-B']
+
+    def get_waveform(self, maname):
         """Return waveform for a given power supply."""
-        self._update_waveforms()
-        waveform = self._waveforms[psname]
+        self._update_waveform(maname)
+        waveform = self._waveforms[maname]
+        return _dcopy(waveform)
+
+    def set_waveform(self, maname, waveform):
+        """Set waveform for a given power supply."""
+        # self._update_waveform(maname)
+        self._waveforms[maname] = _dcopy(waveform)
+
+    def get_waveform_currents(self, maname):
+        """Return waveform current for a given power supply."""
+        self._update_waveform(maname)
+        waveform = self._waveforms[maname]
         return waveform.currents.copy()
+
+    def get_waveform_strengths(self, maname):
+        """Return waveform strength for a given power supply."""
+        self._update_waveform(maname)
+        waveform = self._waveforms[maname]
+        return waveform.strengths.copy()
 
     # --- private methods ---
 
@@ -370,7 +558,7 @@ class BoosterRamp(_ConfigSrv):
         return st
 
     def _get_item(self, name):
-        return self._normalized_configs[name]
+        return _dcopy(self._normalized_configs[name])
 
     def _set_item(self, name, value):
         self._normalized_configs[name] = value
@@ -392,40 +580,59 @@ class BoosterRamp(_ConfigSrv):
         self._normalized_configs = norm_configs
 
     def _update_waveform(self, maname):
-        if 'BO-Fam:MA-B' not in self._waveforms:
-            self._update_waveform_dipole()
-        if maname != 'BO-Fam:MA-B':
-            self._update_waveform_not_dipole(maname)
 
-    def _update_waveform_not_dipole(self, maname):
+        # update dipole if necessary
+        if self._wfms_changed or 'BO-Fam:M-B' not in self._waveforms:
+            self._update_waveform_dipole()
+        self._wfms_changed = False
+
+        # update family if necessary
+        family = _get_magnet_family_name(maname)
+        if family is not None and family not in self._waveforms:
+            self._update_waveform(family)
+
+        # update magnet waveform if it is not a dipole
+        dipole = _get_section_dipole_name(maname)
+        if dipole is not None and maname not in self._waveforms:
+            self._update_waveform_not_dipole(maname, dipole, family)
+
+    def _update_waveform_not_dipole(self, maname, dipole, family=None):
         self._update_normalized_configs()
         times = self.normalized_configs_time
         names = self.normalized_configs_name
         times, names = \
             [list(x) for x in zip(*sorted(zip(times, names),
              key=lambda pair: pair[0]))]  # sort by time
+
         # build strength
         stren = []
         for i in range(len(times)):
             nconfig = self._normalized_configs[names[i]]
-            if maname not in nconfig:
+            if maname not in nconfig.configuration:
                 raise _RampInvalidNormConfig
             stren.append(nconfig[maname])
-        # get dipole
-        if 'BO-Fam:MA-B' not in self._waveforms:
-            self._update_waveform_dipole()
 
+        # interpolate strengths
+        wfm_nrpoints = self._configuration['ramp_dipole']['wfm_nrpoints']
+        indices = self._conv_times_2_indices(times)
+        wfm_indices = [i for i in range(wfm_nrpoints)]
+        strengths = _np.interp(wfm_indices, indices, stren)
 
-
-        energy = self._configuration['ramp_dipole']['energy']
+        # create waveform object with given strengths
+        dipole = self._waveforms[dipole]
+        if family is not None:
+            family = self._waveforms[family]
+        self._waveforms[maname] = _Waveform(maname=maname,
+                                            dipole=dipole,
+                                            family=family,
+                                            strengths=strengths)
 
     def _update_waveform_dipole(self):
         time = self._configuration['ramp_dipole']['time']
         energy = self._configuration['ramp_dipole']['energy']
         duration = self._configuration['ramp_dipole']['duration']
         wfm_nrpoints = self._configuration['ramp_dipole']['wfm_nrpoints']
-        interval = duration / (wfm_nrpoints - 1.0)
-        indices = [round(t/interval) for t in time]
+        indices = self._conv_times_2_indices(time)
         dipole = _WaveformDipole(
             scale=1.0,
             start_value=energy[0],
@@ -437,3 +644,10 @@ class BoosterRamp(_ConfigSrv):
         if not dipole.check():
             raise _RampInvalidDipoleWfmParms()
         self._waveforms['BO-Fam:MA-B'] = dipole
+
+    def _conv_times_2_indices(self, times):
+        duration = self._configuration['ramp_dipole']['duration']
+        wfm_nrpoints = self._configuration['ramp_dipole']['wfm_nrpoints']
+        interval = duration / (wfm_nrpoints - 1.0)
+        indices = [round(t/interval) for t in times]
+        return indices
