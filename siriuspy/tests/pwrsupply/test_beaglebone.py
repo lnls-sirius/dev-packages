@@ -10,6 +10,7 @@ from siriuspy.util import check_public_interface_namespace
 import siriuspy.pwrsupply.beaglebone as bbb
 from siriuspy.csdevice.pwrsupply import get_ps_propty_database
 from tests.pwrsupply.variables import dict_values
+from tests.pwrsupply.db import bo_db
 
 
 def read_variables(device_id, field):
@@ -579,6 +580,16 @@ class TestBeagleBone(unittest.TestCase):
         e2s_patch = mock.patch('siriuspy.pwrsupply.beaglebone._E2SController')
         self.addCleanup(e2s_patch.stop)
         self.e2s_mock = e2s_patch.start()
+        # PSSearch
+        pss_patch = mock.patch('siriuspy.pwrsupply.beaglebone._PSSearch')
+        self.addCleanup(pss_patch.stop)
+        self.pss_mock = pss_patch.start()
+        self.pss_mock.conv_psname_2_psmodel.return_value = 'FAC'
+        # PSData
+        psd_patch = mock.patch('siriuspy.pwrsupply.beaglebone._PSData')
+        self.addCleanup(psd_patch.stop)
+        self.psd_mock = psd_patch.start()
+        self.psd_mock.return_value.propty_database = bo_db
 
         self.e2s_mock = self.e2s_mock.return_value
         self.e2s_mock.read.side_effect = read_variables
