@@ -263,6 +263,7 @@ class TestPRUSim(unittest.TestCase):
 
     public_interface = (
         'emulate_trigger',
+        'add_callback'
     )
 
     def test_public_interface(self):

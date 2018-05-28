@@ -25,23 +25,26 @@ class FBP_BSMPSim(_BSMPSim):
     SlowRefSyncState = 1
     CycleState = 2
 
-    def __init__(self):
+    def __init__(self, pru):
         """Use FBPEntities."""
         super().__init__(_FBPEntities())
+        self._pru = pru
+        self._pru.add_callback(self._trigger)
 
         # Set variables initial value
         self._variables = self._get_init_variables()
 
         # Operation mode states
         self._states = [
-            FBPSlowRefState(), FBPSlowRefState(), FBPCycleState(),
-            FBPSlowRefState(), FBPSlowRefState(), FBPSlowRefState()]
+            FBPSlowRefState(), FBPSlowRefSyncState(), FBPCycleState(pru)]
 
         # Current state
         self._state = self._states[self.SlowRefState]
 
     def read_variable(self, var_id):
         """Read variable."""
+        while self._pru.sync_block:
+            _t.sleep(1e-1)
         return _Response.ok, self._state.read_variable(self._variables, var_id)
 
     def execute_function(self, func_id, input_val=None):
@@ -102,6 +105,13 @@ class FBP_BSMPSim(_BSMPSim):
         ps_status = self._variables[_c.V_PS_STATUS]
         psc_status = _PSCStatus(ps_status=ps_status)
         return psc_status.ioc_pwrstate
+
+    def _trigger(self, value=None):
+        if self._is_on():
+            if value is not None:
+                self._state.trigger(self._variables, value)
+            else:
+                self._state.trigger(self._variables)
 
 
 class _FBPState:
@@ -242,13 +252,51 @@ class FBPSlowRefState(_FBPState):
         variables[_c.V_SIGGEN_AMPLITUDE] = input_val[1]
         variables[_c.V_SIGGEN_OFFSET] = input_val[2]
 
+    def trigger(self, variables, value):
+        """Slow Ref does nothing when trigger is received."""
+        if self._is_on(variables):
+            variables[_c.V_PS_REFERENCE] = value
+            if self._is_open_loop(variables) == 0:
+                # control loop closed
+                variables[_c.V_I_LOAD] = value
+
+
+class FBPSlowRefSyncState(_FBPState):
+
+    def __init__(self):
+        """Init."""
+        self._last_setpoint = None
+
+    def select_op_mode(self, variables):
+        """Set operation mode."""
+        ps_status = variables[_c.V_PS_STATUS]
+        psc_status = _PSCStatus(ps_status=ps_status)
+        psc_status.ioc_opmode = _PSConst.OpMode.SlowRefSync
+        variables[_c.V_PS_STATUS] = psc_status.ps_status
+
+    def set_slowref(self, variables, input_val):
+        """Set current."""
+        self._last_setpoint = input_val
+
+    def trigger(self, variables):
+        """Apply last setpoint received."""
+        if self._last_setpoint is None:
+            self._last_setpoint = variables[_c.V_PS_SETPOINT]
+        variables[_c.V_PS_SETPOINT] = self._last_setpoint
+        if self._is_on(variables):
+            variables[_c.V_PS_REFERENCE] = self._last_setpoint
+            if self._is_open_loop(variables) == 0:
+                # control loop closed
+                variables[_c.V_I_LOAD] = self._last_setpoint
+
 
 class FBPCycleState(_FBPState):
     """FBP Cycle state."""
 
-    def __init__(self):
+    def __init__(self, pru):
         """Set cycle parameters."""
         self._siggen_canceled = False
+        self._pru = pru
 
     def read_variable(self, variables, var_id):
         """Return variable."""
@@ -270,7 +318,7 @@ class FBPCycleState(_FBPState):
         variables[_c.V_PS_REFERENCE] = 0.0
         variables[_c.V_I_LOAD] = 0.0
         # self._set_signal(variables)
-        self.enable_siggen(variables)
+        # self.enable_siggen(variables)
 
     def reset_interlocks(self, variables):
         """Reset interlocks."""
@@ -302,15 +350,13 @@ class FBPCycleState(_FBPState):
 
     def enable_siggen(self, variables):
         """Enable siggen."""
-        variables[_c.V_SIGGEN_ENABLE] = 1
-        self._set_signal(variables)
-        if self._signal.duration > 0:
-            self._siggen_canceled = False
-            thread = _Thread(
-                target=self._finish_siggen,
-                args=(variables, self._signal.duration),
-                daemon=True)
-            thread.start()
+        # variables[_c.V_SIGGEN_ENABLE] = 1
+        self._siggen_canceled = False
+        thread = _Thread(
+            target=self._finish_siggen,
+            args=(variables, ),
+            daemon=True)
+        thread.start()
 
     def disable_siggen(self, variables):
         """Disable siggen."""
@@ -333,7 +379,12 @@ class FBPCycleState(_FBPState):
                                               offset=o,
                                               aux_param=p)
 
-    def _finish_siggen(self, variables, time):
+    def _finish_siggen(self, variables):
+        self._set_signal(variables)
+        if self._signal.duration <= 0:
+            return
+        time = self._signal.duration
+        variables[_c.V_SIGGEN_ENABLE] = 1
         time_up = False
         elapsed = 0
         while not time_up:
@@ -348,3 +399,7 @@ class FBPCycleState(_FBPState):
         variables[_c.V_I_LOAD] = val
         variables[_c.V_SIGGEN_ENABLE] = 0
         variables[_c.V_SIGGEN_N] = 0
+
+    def trigger(self, variables):
+        """Trigger received."""
+        self.enable_siggen(variables)

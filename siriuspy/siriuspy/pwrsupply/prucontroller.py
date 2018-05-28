@@ -970,7 +970,7 @@ class PRUController:
         for id in self._device_ids:
             if self._simulate:
                 # TODO: generalize using bsmp_entities
-                bsmp[id] = _FBP_BSMPSim()
+                bsmp[id] = _FBP_BSMPSim(self._pru)
             else:
                 if self._psmodel == 'FBP':
                     bsmp_entities = _FBPEntities()
