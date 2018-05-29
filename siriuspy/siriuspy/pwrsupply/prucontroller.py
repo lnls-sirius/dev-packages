@@ -204,10 +204,14 @@ class _BSMPVarGroups:
     CYCLE = SYNCOFF
     RMPWFM = MIRROR
 
+
+class _BSMPVarGroupsFBP(_BSMPVarGroups):
+    """Beaglebone Variagle groups for FBP."""
+
     groups = dict()
 
     # reserved variable groups (not to be used)
-    groups[ALL] = (
+    groups[_BSMPVarGroups.ALL] = (
         # --- common variables
         _c.V_PS_STATUS,
         _c.V_PS_SETPOINT,
@@ -277,11 +281,11 @@ class _BSMPVarGroups:
         _c.V_I_LOAD_2,
         _c.V_I_LOAD_3,
         _c.V_I_LOAD_4,)
-    groups[READONLY] = groups[ALL]
-    groups[WRITEABLE] = tuple()
+    groups[_BSMPVarGroups.READONLY] = groups[_BSMPVarGroups.ALL]
+    groups[_BSMPVarGroups.WRITEABLE] = tuple()
 
     # new variable groups usefull for PRUController.
-    groups[ALLRELEVANT] = (
+    groups[_BSMPVarGroups.ALLRELEVANT] = (
         # --- common variables
         _c.V_PS_STATUS,
         _c.V_PS_SETPOINT,
@@ -305,7 +309,7 @@ class _BSMPVarGroups:
         _c.V_V_DCLINK,
         _c.V_TEMP_SWITCHES,
         _c.V_DUTY_CYCLE,)
-    groups[SYNCOFF] = (
+    groups[_BSMPVarGroups.SYNCOFF] = (
         # =======================================================
         # cmd exec_funcion read_group:
         #   17.2 ± 0.3 ms @ BBB1, 4 ps as measured from Python
@@ -332,7 +336,7 @@ class _BSMPVarGroups:
         _c.V_V_LOAD,
         _c.V_V_DCLINK,
         _c.V_TEMP_SWITCHES,)
-    groups[MIRROR] = (
+    groups[_BSMPVarGroups.MIRROR] = (
         # --- mirror variables ---
         _c.V_PS_STATUS_1,
         _c.V_PS_STATUS_2,
@@ -396,7 +400,7 @@ class PRUController:
     BSMP = _c
 
     # BSMP variable group constants
-    VGROUPS = _BSMPVarGroups
+    # VGROUPS = _BSMPVarGroups
 
     # shortcuts, local variables and constants
 
@@ -412,7 +416,7 @@ class PRUController:
     # 20% to 19.2% at BBB1.
     _delay_sleep = 0.020  # [s]
 
-    _groups = _BSMPVarGroups.groups
+    # _groups = _BSMPVarGroups.groups
 
     # TODO: solution works only within the name process space
     #       look at linux flock facility for a system-wide solution.
@@ -446,6 +450,13 @@ class PRUController:
                  scanning=True,
                  reset=True):
         """Init."""
+        # define VGROUPS
+        if psmodel == 'FBP':
+            self.VGROUPS = _BSMPVarGroupsFBP
+        else:
+            raise NotImplementedError()
+        self._groups = self.VGROUPS.groups
+
         # check if another instance is running
         PRUController._check_instance()
 
