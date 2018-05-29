@@ -64,12 +64,12 @@ class Magnet:
     @property
     def current_min(self):
         """Mininum current for magnet power supply."""
-        return self._madata._splims['DRVL']
+        return self._madata.splims['DRVL']
 
     @property
     def current_max(self):
         """Maximum current for magnet power supply."""
-        return self._madata._splims['DRVH']
+        return self._madata.splims['DRVH']
 
     @property
     def splims(self):

@@ -261,7 +261,8 @@ class PRUSim(PRUInterface):
             elif self.sync_mode in (Const.SYNC_MODE.MIGINT,
                                     Const.SYNC_MODE.MIGEND):
                 # self._index = (self._index + 1) % len(self._curves[0])
-                self._index = (self._index + 1) % 4000
+                self._index = (self._index + 1) % \
+                    len(self._curves[self._block][0])
                 _time.sleep(1e-4)
                 if self._index == 0:
                     self._sync_status = Const.SYNC_STATE.OFF
@@ -270,12 +271,13 @@ class PRUSim(PRUInterface):
                         cb(self._curves[self._block][i][-1])
             elif self.sync_mode in (Const.SYNC_MODE.RMPINT,
                                     Const.SYNC_MODE.RMPEND):
-                self._index = (self._index + 1) % 4000
+                self._index = (self._index + 1) % \
+                    len(self._curves[self._block][0])
                 if self._index == 0:
                     for i, cb in enumerate(self._callbacks):
                         cb(self._curves[self._block][i][-1])
                     self.sync_block = False
-                    _time.sleep(1)
+                    _time.sleep(5e-1)
                     self.sync_block = True
                 _time.sleep(1e-4)
                 if self._sync_pulse_count == 12000:

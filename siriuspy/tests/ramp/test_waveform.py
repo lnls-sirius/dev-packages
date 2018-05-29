@@ -73,7 +73,7 @@ class TestWaveformParam(unittest.TestCase):
                 TestWaveformParam.public_interface)
         self.assertTrue(valid)
 
-    def test_start_value(self):
+    def _test_start_value(self):
         """Test start_value."""
         # TODO: implement it!
         pass
@@ -109,42 +109,42 @@ class TestWaveformParam(unittest.TestCase):
         self.assertIsInstance(v2, float)
         self.assertTrue(v2 > v1)
 
-    def _test_plateau_start_index(self):
+    def test_plateau_start_index(self):
         """Test plateau_start_index."""
         # TODO: implement it!
         pass
 
-    def _test_plateau_stop_index(self):
+    def test_plateau_stop_index(self):
         """Test plateau_stop_index."""
         # TODO: implement it!
         pass
 
-    def _test_plateau_value(self):
+    def test_plateau_value(self):
         """Test plateau_value."""
         # TODO: implement it!
         pass
 
-    def _test_rampdown_start_index(self):
+    def test_rampdown_start_index(self):
         """Test rampdown_start_index."""
         # TODO: implement it!
         pass
 
-    def _test_rampdown_start_value(self):
+    def test_rampdown_start_value(self):
         """Test rampdown_start_value."""
         # TODO: implement it!
         pass
 
-    def _test_rampdown_stop_index(self):
+    def test_rampdown_stop_index(self):
         """Test rampdown_stop_index."""
         # TODO: implement it!
         pass
 
-    def _test_rampdown_stop_value(self):
+    def test_rampdown_stop_value(self):
         """Test rampdown_stop_value."""
         # TODO: implement it!
         pass
 
-    def _test_stop_value(self):
+    def test_stop_value(self):
         """Test stop_value."""
         # TODO: implement it!
         pass
@@ -174,12 +174,12 @@ class TestWaveformParam(unittest.TestCase):
         w.rampup_start_index = 2
         self.assertTrue(w.deprecated)
 
-    def _test_rampup_change(self):
+    def test_rampup_change(self):
         """Test rampup_change."""
         # TODO: implement it!
         pass
 
-    def _test_rampdown_change(self):
+    def test_rampdown_change(self):
         """Test rampdown_change."""
         # TODO: implement it!
         pass
@@ -197,7 +197,7 @@ class TestWaveformDipole(unittest.TestCase):
                 TestWaveformDipole.public_interface)
         self.assertTrue(valid)
 
-    def test_constructor(self):
+    def _test_constructor(self):
         """Test class constructor."""
         # default arguments
         w = WaveformDipole()
@@ -224,7 +224,7 @@ class TestWaveform(unittest.TestCase):
                 TestWaveform.public_interface)
         self.assertTrue(valid)
 
-    def test_update(self):
+    def _test_update(self):
         """Test update."""
         bo_b = WaveformDipole()
         qd = Waveform(maname='BO-Fam:MA-QD', dipole=bo_b)
