@@ -4,7 +4,7 @@ These classes implement a common interface that exposes the `read` method.
 """
 import re as _re
 
-from siriuspy.pwrsupply.bsmp import Const as _c
+from siriuspy.pwrsupply.bsmp import ConstFBP as _c
 from PRUserial485 import ConstSyncMode as _SYNC_MODE
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 

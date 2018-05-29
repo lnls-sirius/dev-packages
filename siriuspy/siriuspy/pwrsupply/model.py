@@ -13,7 +13,7 @@ from siriuspy.epics.computed_pv import ComputedPV as _ComputedPV
 from siriuspy.search.ma_search import MASearch as _MASearch
 from siriuspy.pwrsupply.data import PSData as _PSData
 from siriuspy.pwrsupply import sync as _sync
-from siriuspy.pwrsupply.bsmp import Const as _c
+from siriuspy.pwrsupply.bsmp import ConstFBP as _c
 from siriuspy.magnet.data import MAData as _MAData
 from siriuspy.magnet import util as _mutil
 # PowerSupply
