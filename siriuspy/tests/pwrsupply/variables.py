@@ -58,4 +58,5 @@ dict_values = {
     'CycleAuxParam-RB': [1.0, 1.0, 1.0, 0.0],
     'IntlkSoft-Mon': 0,
     'IntlkHard-Mon': 0,
-    'Current-Mon': 6.722831726074219}
+    'Current-Mon': 6.722831726074219,
+    'WfmData-RB': list(range(4000))}

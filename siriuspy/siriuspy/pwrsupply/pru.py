@@ -207,14 +207,12 @@ class PRU(PRUInterface):
 
     def _UART_write(self, stream, timeout):
         # this method send streams through UART to the RS-485 line.
-        # print('write: ', stream)
         ret = _PRUserial485.PRUserial485_write(stream, timeout)
         return ret
 
     def _UART_read(self):
         # this method send streams through UART to the RS-485 line.
         value = _PRUserial485.PRUserial485_read()
-        # print('read: ', value)
         return value
 
     def _curve(self, curve1, curve2, curve3, curve4, block):
@@ -250,25 +248,47 @@ class PRUSim(PRUInterface):
 
     def emulate_trigger(self):
         """Simulate trigger signal from the timing system."""
-        t0 = _time.time()
+        # t0 = _time.time()
+        self.sync_block = True
         while self._sync_status == Const.SYNC_STATE.ON:
             self._sync_pulse_count += 1
             if self.sync_mode == Const.SYNC_MODE.BRDCST:
+                _time.sleep(3)
                 self._sync_status = Const.SYNC_STATE.OFF
+                self.sync_block = False
+                for cb in self._callbacks:
+                    cb()
             elif self.sync_mode in (Const.SYNC_MODE.MIGINT,
                                     Const.SYNC_MODE.MIGEND):
-                self._index = (self._index + 1) % len(self._curves[0])
+                # self._index = (self._index + 1) % len(self._curves[0])
+                self._index = (self._index + 1) % \
+                    len(self._curves[self._block][0])
+                _time.sleep(1e-4)
                 if self._index == 0:
                     self._sync_status = Const.SYNC_STATE.OFF
+                    self.sync_block = False
+                    for i, cb in enumerate(self._callbacks):
+                        cb(self._curves[self._block][i][-1])
             elif self.sync_mode in (Const.SYNC_MODE.RMPINT,
                                     Const.SYNC_MODE.RMPEND):
-                self._index = (self._index + 1) % len(self._curves[0])
-                if (_time.time() - t0) > 5:
+                self._index = (self._index + 1) % \
+                    len(self._curves[self._block][0])
+                if self._index == 0:
+                    for i, cb in enumerate(self._callbacks):
+                        cb(self._curves[self._block][i][-1])
+                    self.sync_block = False
+                    _time.sleep(5e-1)
+                    self.sync_block = True
+                _time.sleep(1e-4)
+                if self._sync_pulse_count == 12000:
                     break
+                # if (_time.time() - t0) > 5:
+                #     break
 
     def __init__(self):
         """Init method."""
         PRUInterface.__init__(self)
+        self._callbacks = list()
         self._sync_status = Const.SYNC_STATE.OFF
         self._sync_pulse_count = 0
         self._curves = self._create_curves()
@@ -276,15 +296,19 @@ class PRUSim(PRUInterface):
         self._index = 0
         self.t = _threading.Thread(target=self.emulate_trigger, daemon=True)
 
+        self.sync_block = False
+
     def _get_sync_status(self):
         return self._sync_status
 
     def _sync_start(self, sync_mode, sync_address, delay):
+        self._sync_pulse_count = 0
+        self.sync_block = True
         if self.t.is_alive():
-            self._sync_status = Const.SYNC_STATE.OFF
-            self.t.join()
+            return
+            # self._sync_status = Const.SYNC_STATE.OFF
+            # self.t.join()
         self._sync_status = Const.SYNC_STATE.ON
-        # TODO: implement while loop as thread (for RMP and MIG modes to work)
         # while self._sync_status == Const.SYNC_STATE.ON:
         self.t = _threading.Thread(target=self.emulate_trigger, daemon=True)
         self.t.start()
@@ -297,6 +321,7 @@ class PRUSim(PRUInterface):
 
     def _sync_abort(self):
         self._sync_status = Const.SYNC_STATE.OFF
+        self.sync_block = False
         return None
 
     def _get_sync_pulse_count(self):
@@ -375,3 +400,6 @@ class PRUSim(PRUInterface):
              ],
         ]
         return curves
+
+    def add_callback(self, func):
+        self._callbacks.append(func)
