@@ -2,6 +2,7 @@
 
 import re as _re
 from copy import deepcopy as _dcopy
+from openpyxl import load_workbook
 from siriuspy import servweb as _web
 from siriuspy import diagnostics as _diag
 from .ps_search import PSSearch as _PSSearch
@@ -354,3 +355,25 @@ class LLTimeSearch:
             else:
                 break
         cls._hierarchy_map = hierarchy
+
+
+# read excel file.
+def read_file(filename):
+    wb = load_workbook(filename, data_only=True)
+    ws = wb['Cabos e Fibras']
+    equips = list()
+    for row in ws.iter_rows(row_offset=1):
+        sis = row[0].value
+        if not sis.lower().startswith(('timing', 'controle')):
+            continue
+        dev1 = row[8].value
+        dev2 = row[9].value
+        por1 = row[10].value
+        por2 = row[11].value
+        if dev2.endswith('PsCtrl') and por2.endswith(r'?'):
+            if dev2.endswith('PsCtrl'):
+                por2 = 'TIin'
+            else:
+                continue
+        equips.append((dev1+':'+por1, dev2+':'+por2))
+    return equips
