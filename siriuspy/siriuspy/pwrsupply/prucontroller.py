@@ -71,7 +71,13 @@ from siriuspy.pwrsupply.controller import FBP_BSMPSim as _FBP_BSMPSim
 #     So the IOC has to set Current-SP to the same value as SigGen's offset
 #     before moving the power supply to Cycle mode. This is being done with the
 #     current version of the IOC.
-
+#
+# 08. While in RmpWfm, MigWfm or SlowRefSync, the PS_I_LOAD variable read from
+#     power supplies after setting the last curve point may not be the
+#     final value given by PS_REFERENCE. This is due to the fact that the
+#     power supply control loop takes some time to converge and the PRU may
+#     block serial comm. before it. This is evident in SlowRefSync mode, where
+#     reference values may change considerably between two setpoints.
 
 # TODO: discuss with patricia:
 #

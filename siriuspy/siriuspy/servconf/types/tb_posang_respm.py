@@ -1,16 +1,22 @@
-"""Configuration Type Definition."""
+"""TB posang correction configurations.
 
-import copy as _copy
+Values in _template_dict are arbitrary. They are used just to compare with
+corresponding values when a new configuration is tried to be inserted in the
+servconf database.
+"""
+from copy import deepcopy as _dcopy
 
 
 def get_dict():
-    """Return configuration type dictionary."""
+    """Return a dict with ramp settings."""
     module_name = __name__.split('.')[-1]
     _dict = {
         'config_type_name': module_name,
-        'value': _copy.deepcopy(_value)
+        'value': _dcopy(_template_dict)
     }
+
     return _dict
+
 
 # Position-Angle Correction Response Matrices for the Booster Injection
 # (TB correctors)
@@ -35,8 +41,9 @@ def get_dict():
 #         v11   v12
 #         v21   v22
 
-
-_value = {'respm-x': [[0.0, 0.0],
-                      [0.0, 0.0]],
-          'respm-y': [[0.0, 0.0],
-                      [0.0, 0.0]]}
+_template_dict = {
+    'respm-x': [[0.0, 0.0],
+                [0.0, 0.0]],
+    'respm-y': [[0.0, 0.0],
+                [0.0, 0.0]],
+}

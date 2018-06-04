@@ -1,16 +1,17 @@
-"""Waveform Set Module."""
+"""Waveform classes."""
 
 import numpy as _np
+
 from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
+from siriuspy.ramp import util as _util
+from siriuspy.ramp.magnet import Magnet as _Magnet
 
 
 _np.seterr(all='ignore')
 
 
-class Waveform():
-    """Waveform parameter class."""
-
-    wfmsize = _MAX_WFMSIZE
+class WaveformParam:
+    """Dipole parameterized Waveforms."""
 
     def __init__(self,
                  scale=None,
@@ -18,95 +19,17 @@ class Waveform():
                  stop_value=None,
                  boundary_indices=None,
                  boundary_values=None,
-                 waveform=None):
+                 wfm_nrpoints=_MAX_WFMSIZE,
+                 duration=_util.DEFAULT_RAMP_DURATION):
         """Init method."""
+        self._wfm_nrpoints = wfm_nrpoints
+        self._duration = duration
         self._set_params(scale,
                          vL=start_value, vR=stop_value,
                          i07=boundary_indices, v07=boundary_values)
-        self._update_wfm_parms()
-        self._update_wfm_bumps(waveform)
+        self.update()
 
-    # --- properties ---
-
-    @property
-    def deprecated(self):
-        """Deprecated state."""
-        return self._deprecated
-
-    @property
-    def waveform(self):
-        """Return waveform."""
-        if self._deprecated:
-            self._update_wfm_parms()
-        return self._wfm_parms + self._wfm_bumps
-
-    @property
-    def waveform_parms(self):
-        """Return parameterized waveform component."""
-        if self._deprecated:
-            self._update_wfm_parms()
-        return self._wfm_parms
-
-    @property
-    def waveform_bumps(self):
-        """Return bumps waveform component."""
-        if self._deprecated:
-            self._update_wfm_parms()
-        return self._wfm_bumps
-
-    @waveform.setter
-    def waveform(self, waveform):
-        if type(waveform) in (int, float, _np.float64):
-            self._vL = waveform
-            self._vR = waveform
-            self._v = [waveform for _ in self._v]
-            self._deprecated = True
-        elif len(waveform) == Waveform.wfmsize:
-            self._update_wfm_bumps(waveform)
-        else:
-            raise ValueError('Invalid waveform length!')
-
-    @waveform_bumps.setter
-    def waveform_bumps(self, waveform_bumps):
-        if len(waveform_bumps) == Waveform.wfmsize:
-            self._wfm_bumps = _np.array(waveform_bumps)
-        else:
-            raise ValueError('Invalid bumps waveform length!')
-
-    @property
-    def boundary_indices(self):
-        """Return list of regions boundaries."""
-        return [i for i in self._i]
-
-    @property
-    def rampup_start_index(self):
-        """Return index of the second region boundary."""
-        return self._i[1]
-
-    @property
-    def rampup_stop_index(self):
-        """Return index of the third region boundary."""
-        return self._i[2]
-
-    @property
-    def plateau_start_index(self):
-        """Return index of the fourth region boundary."""
-        return self._i[3]
-
-    @property
-    def plateau_stop_index(self):
-        """Return index of the fifth region boundary."""
-        return self._i[4]
-
-    @property
-    def rampdown_start_index(self):
-        """Return index of the sixth region boundary."""
-        return self._i[5]
-
-    @property
-    def rampdown_stop_index(self):
-        """Return index of the seventh region boundary."""
-        return self._i[6]
+    # --- public properties ---
 
     @property
     def start_value(self):
@@ -114,9 +37,25 @@ class Waveform():
         return self._vL
 
     @property
+    def rampup_start_index(self):
+        """Return index of the second region boundary."""
+        return self._i[1]
+
+    @property
     def rampup_start_value(self):
         """Return waveform value at the second region boundary."""
         return self._v[1]
+
+    @property
+    def rampup_start_time(self):
+        """Instant in time when rampup starts."""
+        return self.rampup_start_index * \
+            self.duration / (self.wfm_nrpoints - 1.0)
+
+    @property
+    def rampup_stop_index(self):
+        """Return index of the third region boundary."""
+        return self._i[2]
 
     @property
     def rampup_stop_value(self):
@@ -124,9 +63,42 @@ class Waveform():
         return self._v[2]
 
     @property
+    def rampup_stop_time(self):
+        """Instant in time when rampup stops."""
+        return self.rampup_stop_index * \
+            self.duration / (self.wfm_nrpoints - 1.0)
+
+    @property
+    def plateau_start_index(self):
+        """Return index of the fourth region boundary."""
+        return self._i[3]
+
+    @property
+    def plateau_start_time(self):
+        """Instant in time when plateau starts."""
+        return self.plateau_start_index * \
+            self.duration / (self.wfm_nrpoints - 1.0)
+
+    @property
+    def plateau_stop_index(self):
+        """Return index of the fifth region boundary."""
+        return self._i[4]
+
+    @property
+    def plateau_stop_time(self):
+        """Instant in time when plateau stops."""
+        return self.plateau_stop_index * \
+            self.duration / (self.wfm_nrpoints - 1.0)
+
+    @property
     def plateau_value(self):
         """Return waveform value at the 4th and 5th region boundaries."""
         return self._v[3]
+
+    @property
+    def rampdown_start_index(self):
+        """Return index of the sixth region boundary."""
+        return self._i[5]
 
     @property
     def rampdown_start_value(self):
@@ -134,14 +106,72 @@ class Waveform():
         return self._v[5]
 
     @property
+    def rampdown_start_time(self):
+        """Instant in time when rampdown starts."""
+        return self.rampdown_start_index * \
+            self.duration / (self.wfm_nrpoints - 1.0)
+
+    @property
+    def rampdown_stop_index(self):
+        """Return index of the seventh region boundary."""
+        return self._i[6]
+
+    @property
     def rampdown_stop_value(self):
         """Return waveform value at the 7th region boundary."""
         return self._v[6]
 
     @property
+    def rampdown_stop_time(self):
+        """Instant in time when rampdown stops."""
+        return self.rampdown_stop_index * \
+            self.duration / (self.wfm_nrpoints - 1.0)
+
+    @property
     def stop_value(self):
         """Return waveform value at the 8th and right-end region boundaries."""
         return self._vR
+
+    @property
+    def waveform(self):
+        """Waveform."""
+        if self._deprecated:
+            self.update()
+        return self._waveform
+
+    @property
+    def boundary_indices(self):
+        """Return list of regions boundary indices."""
+        return [i for i in self._i]
+
+    @property
+    def boundary_times(self):
+        """Return list of regions boundary instants."""
+        return [i * self.duration / (self.wfm_nrpoints - 1.0) for i in self._i]
+
+    @property
+    def wfm_nrpoints(self):
+        """Waveform nrpoints."""
+        return self._wfm_nrpoints
+
+    @property
+    def duration(self):
+        """Ramp duration."""
+        return self._duration
+
+    @property
+    def deprecated(self):
+        """Deprecated state."""
+        return self._deprecated
+
+    # --- public setters ---
+
+    @start_value.setter
+    def start_value(self, value):
+        """Set waveform value at the left-end and 1st boundary."""
+        self._vL = value
+        self._v[0] = value
+        self._deprecated = True
 
     @rampup_start_index.setter
     def rampup_start_index(self, idx):
@@ -154,6 +184,19 @@ class Waveform():
                               'region boundary points.'))
         self._deprecated = True
 
+    @rampup_start_time.setter
+    def rampup_start_time(self, value):
+        """Set time of rampup start."""
+        dt = self.duration / (self.wfm_nrpoints - 1.0)
+        idx = round(value / dt)
+        self.rampup_start_index = idx
+
+    @rampup_start_value.setter
+    def rampup_start_value(self, value):
+        """Set waveform value at the 2nd region boundary."""
+        self._v[1] = value
+        self._deprecated = True
+
     @rampup_stop_index.setter
     def rampup_stop_index(self, idx):
         """Set index of the third region boundary."""
@@ -163,6 +206,19 @@ class Waveform():
         else:
             raise ValueError(('Index is inconsistent with labeled '
                               'region boundary points.'))
+        self._deprecated = True
+
+    @rampup_stop_time.setter
+    def rampup_stop_time(self, value):
+        """Set time of rampup stop."""
+        dt = self.duration / (self.wfm_nrpoints - 1.0)
+        idx = round(value / dt)
+        self.rampup_stop_index = idx
+
+    @rampup_stop_value.setter
+    def rampup_stop_value(self, value):
+        """Set waveform value at the 3rd region boundary."""
+        self._v[2] = value
         self._deprecated = True
 
     @plateau_start_index.setter
@@ -187,47 +243,6 @@ class Waveform():
                               'region boundary points.'))
         self._deprecated = True
 
-    @rampdown_start_index.setter
-    def rampdown_start_index(self, idx):
-        """Set index of the sixth region boundary."""
-        i = 5
-        if self._i[i-1] <= idx < Waveform.wfmsize:
-            self._i[i] = idx
-        else:
-            raise ValueError(('Index is inconsistent with labeled '
-                              'region boundary points.'))
-        self._deprecated = True
-
-    @rampdown_stop_index.setter
-    def rampdown_stop_index(self, idx):
-        """Set index of the 7th region boundary."""
-        i = 6
-        if self._i[i-1] <= idx < Waveform.wfmsize:
-            self._i[i] = idx
-        else:
-            raise ValueError(('Index is inconsistent with labeled '
-                              'region boundary points.'))
-        self._deprecated = True
-
-    @start_value.setter
-    def start_value(self, value):
-        """Set waveform value at the left-end and 1st boundary."""
-        self._vL = value
-        self._v[0] = value
-        self._deprecated = True
-
-    @rampup_start_value.setter
-    def rampup_start_value(self, value):
-        """Set waveform value at the 2nd region boundary."""
-        self._v[1] = value
-        self._deprecated = True
-
-    @rampup_stop_value.setter
-    def rampup_stop_value(self, value):
-        """Set waveform value at the 3rd region boundary."""
-        self._v[2] = value
-        self._deprecated = True
-
     @plateau_value.setter
     def plateau_value(self, value):
         """Set waveform value at the 4th and 5th region boundaries."""
@@ -237,11 +252,47 @@ class Waveform():
         self._v[4] = value
         self._deprecated = True
 
+    @rampdown_start_index.setter
+    def rampdown_start_index(self, idx):
+        """Set index of the sixth region boundary."""
+        i = 5
+        if self._i[i-1] <= idx < self.wfm_nrpoints:
+            self._i[i] = idx
+        else:
+            raise ValueError(('Index is inconsistent with labeled '
+                              'region boundary points.'))
+        self._deprecated = True
+
+    @rampdown_start_time.setter
+    def rampdown_start_time(self, value):
+        """Set time of rampdown start."""
+        dt = self.duration / (self.wfm_nrpoints - 1.0)
+        idx = round(value / dt)
+        self.rampdown_start_index = idx
+
     @rampdown_start_value.setter
     def rampdown_start_value(self, value):
         """Set waveform value at the 6th region boundary."""
         self._v[5] = value
         self._deprecated = True
+
+    @rampdown_stop_index.setter
+    def rampdown_stop_index(self, idx):
+        """Set index of the 7th region boundary."""
+        i = 6
+        if self._i[i-1] <= idx < self.wfm_nrpoints:
+            self._i[i] = idx
+        else:
+            raise ValueError(('Index is inconsistent with labeled '
+                              'region boundary points.'))
+        self._deprecated = True
+
+    @rampdown_stop_time.setter
+    def rampdown_stop_time(self, value):
+        """Set time of rampdown stop."""
+        dt = self.duration / (self.wfm_nrpoints - 1.0)
+        idx = round(value / dt)
+        self.rampdown_stop_index = idx
 
     @rampdown_stop_value.setter
     def rampdown_stop_value(self, value):
@@ -301,7 +352,7 @@ class Waveform():
         v5 = self.rampdown_start_value if v5 is None else v5
         v6 = self.rampdown_stop_value if v6 is None else v6
         if i5 < self.plateau_stop_index or i6 <= i5 or \
-           i6 >= Waveform.wfmsize or v5 <= v6 or \
+           i6 >= self.wfm_nrpoints or v5 <= v6 or \
            v5 >= self.plateau_value or v6 <= self.stop_value:
             raise ValueError('Invalid ramp down parameters !')
         i7 = self._find_i7(i5, i6, v5, v6)
@@ -319,54 +370,54 @@ class Waveform():
         self._i[7], self._deprecated = i7, True
         self.plateau_stop_index = i4
 
-    def clear_bumps(self):
-        """Clear waveform bumps."""
-        self._wfm_bumps *= 0.0
+    def update(self):
+        """Update object."""
+        self._set_coeffs()
+        self._waveform = self._eval_index()
+        self._deprecated = False
+
+    def check(self):
+        """Check consistency of parameters."""
+        try:
+            self._set_coeffs()
+            self._eval_index()
+            self.rampup_change()
+            self.rampdown_change()
+            return True
+        except ValueError:
+            return False
 
     # --- list methods ---
 
     def __getitem__(self, index):
         """Return waveform at index."""
         if self._deprecated:
-            self._update_wfm_parms()
+            self.update()
         if isinstance(index, slice):
-            wp = self._wfm_parms[index]
-            wb = self._wfm_bumps[index]
-            return _np.array([wp[i] + wb[i] for i in range(len(wp))])
+            wp = self._waveform[index]
+            return _np.array([wp[i] for i in range(len(wp))])
         elif isinstance(index, int):
-            return self._wfm_parms[index] + self._wfm_bumps[index]
-        else:
-            raise IndexError
-
-    def __setitem__(self, index, value):
-        """Set waveform at index."""
-        if self._deprecated:
-            self._update_wfm_parms()
-        if isinstance(index, slice):
-            wp = self._wfm_parms[index]
-            self._wfm_bumps[index] = [value[i] - wp[i] for i in range(len(wp))]
-        elif isinstance(index, int):
-            self._wfm_bumps[index] = value - self._wfm_parms[index]
+            return self._waveform[index]
         else:
             raise IndexError
 
     def __iter__(self):
         """Return iterator for waveform."""
         if self._deprecated:
-            self._update_wfm_parms()
-        for i in range(len(self._wfm_parms)):
-            yield(self._wfm_parms[i] + self._wfm_bumps[i])
+            self.update()
+        for i in range(len(self._waveform)):
+            yield(self._waveform[i])
 
     def __reversed__(self):
         """Return reverse iterator for waveform."""
         if self._deprecated:
-            self._update_wfm_parms()
-        for i in range(len(self._wfm_parms)-1, -1, -1):
-            yield(self._wfm_parms[i] + self._wfm_bumps[i])
+            self.update()
+        for i in range(len(self._waveform)-1, -1, -1):
+            yield(self._waveform[i])
 
     def __len__(self):
         """Return length of waveform."""
-        return Waveform.wfmsize
+        return self.wfm_nrpoints
 
     def __contains__(self, value):
         """Check whether value is in waveform."""
@@ -377,11 +428,6 @@ class Waveform():
         return self.waveform == value
 
     # --- private methods ---
-
-    def _update_wfm_parms(self):
-        self._set_coeffs()
-        self._wfm_parms = self._eval_index()
-        self._deprecated = False
 
     @staticmethod
     def _calccoeffs(d, dv, DL, DR):
@@ -410,11 +456,11 @@ class Waveform():
                                      0.01])
         try:
             if len(i07) != 8:
-                raise ValueError('Lenght of boundary indices list is not 6 !')
+                raise ValueError('Size of i07 is not 8!')
             if i07[0] < 0:
                 raise ValueError('i0 < 0 !')
-            if i07[-1] > Waveform.wfmsize:
-                raise ValueError('i7 >= {} !'.format(Waveform.wfmsize))
+            if i07[-1] > self.wfm_nrpoints:
+                raise ValueError('i7 >= {} !'.format(self.wfm_nrpoints))
             for i in range(0, len(i07)-1):
                 if i07[i+1] < i07[i]:
                     raise ValueError('Boundary indices list is not sorted!')
@@ -435,31 +481,32 @@ class Waveform():
         self._D2 = (self._v[2] - self._v[1]) / (self._i[2] - self._i[1])
         self._D4 = (self._v[4] - self._v[3]) / (self._i[4] - self._i[3])
         self._D6 = (self._v[6] - self._v[5]) / (self._i[6] - self._i[5])
-        self._D8 = (self._vR - self._v[7]) / (Waveform.wfmsize - self._i[7])
+        self._D8 = (self._vR - self._v[7]) / \
+            (self.wfm_nrpoints - self._i[7])
         # region 0
         self._coeffs[0] = _np.array([self._D0, 0.0, 0.0])
         # region 1
         d = self._i[1] - self._i[0]
         dv = self._v[1] - self._v[0]
-        self._coeffs[1] = Waveform._calccoeffs(d, dv, self._D0, self._D2)
+        self._coeffs[1] = WaveformParam._calccoeffs(d, dv, self._D0, self._D2)
         # region 2
         self._coeffs[2] = _np.array([self._D2, 0.0, 0.0])
         # region 3
         d = self._i[3] - self._i[2]
         dv = self._v[3] - self._v[2]
-        self._coeffs[3] = Waveform._calccoeffs(d, dv, self._D2, self._D4)
+        self._coeffs[3] = WaveformParam._calccoeffs(d, dv, self._D2, self._D4)
         # region 4
         self._coeffs[4] = _np.array([self._D4, 0.0, 0.0])
         # region 5
         d = self._i[5] - self._i[4]
         dv = self._v[5] - self._v[4]
-        self._coeffs[5] = Waveform._calccoeffs(d, dv, self._D4, self._D6)
+        self._coeffs[5] = WaveformParam._calccoeffs(d, dv, self._D4, self._D6)
         # region 6
         self._coeffs[6] = [self._D6, 0.0, 0.0]
         # region 7
         d = self._i[7] - self._i[6]
         dv = self._v[7] - self._v[6]
-        self._coeffs[7] = Waveform._calccoeffs(d, dv, self._D6, self._D8)
+        self._coeffs[7] = WaveformParam._calccoeffs(d, dv, self._D6, self._D8)
         # region 8
         self._coeffs[8] = [self._D8, 0.0, 0.0]
 
@@ -487,7 +534,7 @@ class Waveform():
         # region 8
         coeffs = self._coeffs[8]
         iref, vref = self._i[7], self._v[7]
-        i = _np.array(tuple(range(self._i[7], Waveform.wfmsize)))
+        i = _np.array(tuple(range(self._i[7], self.wfm_nrpoints)))
         dv = calcdv(i, iref, coeffs)
         wfm.extend(vref + dv)
         return _np.array(wfm)
@@ -500,7 +547,7 @@ class Waveform():
         i3 = _np.arange(i2+1, self._i[4])
         D4 = (self._v[4] - self._v[3]) / (self._i[4] - i3)
         d = i3 - i2
-        a, b, c = Waveform._calccoeffs(d, dv, D2, D4)
+        a, b, c = WaveformParam._calccoeffs(d, dv, D2, D4)
         # now, we find there the first derivative of waveform within region R3
         # is for each value of i3.
         phi = b**2 - 3*c*a
@@ -523,7 +570,7 @@ class Waveform():
         i0 = _np.arange(1, i1)
         D0 = (self._v[0] - self._vL) / (i0 - 0)
         d = i1 - i0
-        a, b, c = Waveform._calccoeffs(d, dv, D0, D2)
+        a, b, c = WaveformParam._calccoeffs(d, dv, D0, D2)
         phi = b**2 - 3*c*a
         i0_r1 = i0 + (-b + _np.sqrt(phi))/3.0/c
         i0_r2 = i0 + (-b - _np.sqrt(phi))/3.0/c
@@ -539,11 +586,11 @@ class Waveform():
     def _find_i7(self, i5, i6, v5, v6):
         D6 = (v6 - v5) / (i6 - i5)
         dv = self._v[7] - v6
-        iR = Waveform.wfmsize
+        iR = self.wfm_nrpoints
         i7 = _np.arange(i6+1, iR)
         D8 = (self._vR - self._v[7]) / (iR - i7)
         d = i7 - i6
-        a, b, c = Waveform._calccoeffs(d, dv, D6, D8)
+        a, b, c = WaveformParam._calccoeffs(d, dv, D6, D8)
         phi = b**2 - 3*c*a
         i7_r1 = i6 + (-b + _np.sqrt(phi))/3.0/c
         i7_r2 = i6 + (-b - _np.sqrt(phi))/3.0/c
@@ -567,7 +614,7 @@ class Waveform():
         i4 = _np.arange(self._i[3]+1, self._i[5])
         D4 = (self._v[4] - self._v[3]) / (i4 - self._i[3])
         d = i5 - i4
-        a, b, c = Waveform._calccoeffs(d, dv, D4, D6)
+        a, b, c = WaveformParam._calccoeffs(d, dv, D4, D6)
         phi = b**2 - 3*c*a
         i4_r1 = i4 + (-b + _np.sqrt(phi))/3.0/c
         i4_r2 = i4 + (-b - _np.sqrt(phi))/3.0/c
@@ -580,10 +627,108 @@ class Waveform():
         else:
             return None
 
-    def _update_wfm_bumps(self, waveform):
-        if waveform is None:
-            self._wfm_bumps = _np.zeros((Waveform.wfmsize, ))
+
+class _WaveformMagnet(_Magnet):
+    """Base class of magnet waveforms."""
+
+    def __init__(self, maname):
+        _Magnet.__init__(self, maname=maname)
+
+    @property
+    def times(self):
+        return self._get_times()
+
+    @property
+    def currents(self):
+        return self._get_currents()
+
+    @property
+    def strengths(self):
+        return self._get_strengths()
+
+    @strengths.setter
+    def strengths(self, value):
+        self._set_strengths(value)
+
+
+class WaveformDipole(_WaveformMagnet, WaveformParam):
+    """Waveform for Dipole."""
+
+    def __init__(self, maname='BO-Fam:MA-B', **kwargs):
+        """Constructor."""
+        _WaveformMagnet.__init__(self, maname)
+        eje_current = self.conv_strength_2_current(_util.BO_EJECTION_ENERGY)
+        kwargs['scale'] = eje_current
+        WaveformParam.__init__(self, **kwargs)
+
+    def _get_currents(self):
+        currents = self.conv_strength_2_current(self.waveform)
+        return currents
+
+    def _get_strengths(self):
+        return self.waveform
+
+    def _get_times(self):
+        dt = self.duration / (self.wfm_nrpoints - 1.0)
+        return [dt*i for i in range(self.wfm_nrpoints)]
+
+
+class Waveform(_WaveformMagnet):
+    """Waveform class for general magnets."""
+
+    def __init__(self, maname, dipole=None, family=None, strengths=None):
+        """Constructor."""
+        if maname != 'SI-Fam:MA-B1B2' and dipole is None:
+            raise ValueError(
+                '{} waveform needs an associated dipole!'.format(maname))
+        _WaveformMagnet.__init__(self, maname)
+        self._dipole = dipole
+        self._family = family
+        if strengths is None:
+            if self.maname in _util.NOMINAL_STRENGTHS:
+                nom_strengths = _util.NOMINAL_STRENGTHS[self.maname]
+            else:
+                nom_strengths = 0.0
+            strengths = [nom_strengths, ] * self._dipole.wfm_nrpoints
+        self._currents = self._conv_strengths_2_currents(strengths)
+        self._strengths = self._conv_currents_2_strengths(self._currents)
+
+    def update(self):
+        """Update object."""
+        if self._dipole is not None:
+            self._dipole.update()
+        if self._family is not None:
+            self._family.update()
+        self._currents = self._conv_strengths_2_currents(self._strengths)
+
+    def _get_currents(self):
+        self.update()
+        return self._currents
+
+    def _get_strengths(self):
+        self.update()
+        return self._strengths
+
+    def _set_strengths(self, value):
+        if isinstance(value, (int, float)):
+            self._strengths = [value, ] * len(self._strengths)
+        elif len(value) != len(self._strengths):
+            raise ValueError('Incorrect length of passed strengths!')
         else:
-            if self._deprecated:
-                self._update_wfm_parms()
-            self._wfm_bumps = _np.array(waveform) - self._wfm_parms
+            self._strengths = value.copy()
+
+    def _conv_currents_2_strengths(self, currents):
+        kwargs = {'currents': currents}
+        if self._dipole is not None:
+            kwargs['strengths_dipole'] = self._dipole.strengths
+        if self._family is not None:
+            kwargs['strengths_family'] = self._family.strengths
+        return self.conv_current_2_strength(**kwargs)
+
+    def _conv_strengths_2_currents(self, strengths):
+        kwargs = {'strengths': strengths}
+        if self._dipole is not None:
+            kwargs['strengths_dipole'] = self._dipole.strengths
+        if self._family is not None:
+            kwargs['strengths_family'] = self._family.strengths
+        return self.conv_strength_2_current(**kwargs)

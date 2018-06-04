@@ -1,4 +1,10 @@
+#!/usr/bin/env python-sirius
+
 """Test E2SController class."""
+
+# TODO: E2SController now is an auxilliary class!
+# this unittest module does not conform to standard we have been using.
+
 import unittest
 from unittest import mock
 
@@ -210,7 +216,7 @@ class TestE2SController(unittest.TestCase):
         # Assert exec_functions was assert_called
         self.pru_controller.exec_functions.assert_called_with((1, 2), 6)
 
-    def _test_write_abort(self):
+    def __test_write_abort(self):
         """Test reset command."""
         with self.assertRaises(NotImplementedError):
             self.controller.write('BO-01U:PS-CH', 'Abort-Cmd', 1)

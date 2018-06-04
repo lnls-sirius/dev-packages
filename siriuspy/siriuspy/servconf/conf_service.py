@@ -7,6 +7,7 @@ import dateutil.parser
 from urllib.request import Request as _Request
 from urllib.request import urlopen as _urlopen
 from urllib.error import URLError as _URLError
+from http import HTTPStatus as _HTTPStatus
 
 import siriuspy.envars as _envars
 import siriuspy.servconf.conf_types as _config_types
@@ -17,6 +18,7 @@ formatter = _logging.Formatter(
     '%(asctime)s %(levelname)8s %(name)s | %(message)s')
 ch.setFormatter(formatter)
 
+# TODO: check global collateral effects of fidling with logger!
 logger = _logging.getLogger(__name__)
 logger.addHandler(ch)
 logger.setLevel(_logging.WARNING)  # This toggles all the logging in your app
@@ -24,6 +26,14 @@ logger.setLevel(_logging.WARNING)  # This toggles all the logging in your app
 
 class ConfigService:
     """Perform CRUD operation on configuration database."""
+
+    # TODO: improve API
+    # I think requested data can be thought of composed of 3 distinct parts:
+    # a) configuration itself, b) metadata (timestamp, type, name) and
+    # c) communication status ('code' and 'message' fields, for example)
+    # the return data should be divided into three different dictionaries
+    # accordingly. The use of the class API will be simplified in this scheme
+    # in my opinion. (ximenes)
 
     CONFIGS_ENDPOINT = '/configs'
 
@@ -68,7 +78,7 @@ class ConfigService:
         update_dict = {
             "name": obj_dict["name"],
             "value": obj_dict["value"],
-            "discarded": obj_dict["discarded"]
+            "discarded": obj_dict["discarded"]  # TODO: should it be allowed?
         }
         # Build URL a make PUT request
         url_params = "/{}".format(id)
@@ -188,9 +198,7 @@ class ConfigService:
         """Mark a configuration as discarded."""
         url_params = "/{}".format(obj_dict["_id"])
         url = self._url + self.CONFIGS_ENDPOINT + url_params
-        request = _Request(url=url, method="PUT",
-                           headers={"Content-Type": "application/json"},
-                           data=_json.dumps({"discarded": True}).encode())
+        request = _Request(url=url, method="DELETE")
         return self._make_request(request)
 
     def query_db_size(self):
@@ -202,6 +210,16 @@ class ConfigService:
     def query_db_size_discarded(self):
         """Return estimated size of discarded configurations data."""
         pass
+
+    def get_config_type_template(self, config_type):
+        """Return config type template dict."""
+        return _config_types.get_config_type_template(config_type)
+
+    @property
+    def connected(self):
+        """Connection state."""
+        r = self.query_db_size()
+        return r['code'] == _HTTPStatus.OK
 
     @staticmethod
     def conv_timestamp(datestring):

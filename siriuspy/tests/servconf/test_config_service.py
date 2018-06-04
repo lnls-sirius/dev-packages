@@ -31,6 +31,8 @@ class TestConfigService(unittest.TestCase):
         "delete_config",
         "query_db_size",
         "query_db_size_discarded",
+        "get_config_type_template",
+        "connected",
         "conv_timestamp",
     }
 
@@ -248,9 +250,7 @@ class TestConfigService(unittest.TestCase):
         self.cs.delete_config(self.fake_config)
         # Assert request is created
         self.req_mock.assert_called_once_with(
-            url=self.fake_url, method="PUT",
-            headers=self.header,
-            data=json.dumps({"discarded": True}).encode())
+            url=self.fake_url, method="DELETE")
 
     def test_delete_url_request(self):
         """Test update_config makes the request."""
@@ -372,6 +372,11 @@ class TestConfigService(unittest.TestCase):
             json.JSONDecodeError("FakeError", "FakeDoc", 0)
         resp = self.cs.query_db_size()
         self.assertEqual(resp, self.decode_error_reponse)
+
+    def test_connected(self):
+        """Test connected."""
+        # TODO: implement it!
+        self.assertIn(self.cs.connected, (True, False))
 
 
 class TestConfigServiceConTimestamp(unittest.TestCase):

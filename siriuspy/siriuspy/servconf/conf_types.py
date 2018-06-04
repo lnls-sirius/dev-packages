@@ -4,16 +4,11 @@ import importlib as _importlib
 import siriuspy.servconf.types as _types
 import copy as _copy
 
-_config_types = (
-    # si-tunes
-    {'config_type_name': 'si-tunes',
-     'value': {'tunex': 0.0, 'tuney': 0.0, },
-     },
-    # bo-tunes
-    {'config_type_name': 'bo-tunes',
-     'value': {'tunex': 0.0, 'tuney': 0.0, },
-     },
-)
+# NOTE: values for key string labels ending with char '*' have not their
+#       sizes compared with a reference if their lists or tuples!
+
+# NOTE: cannot use tuple values in configuration dictionaries since conversion
+#       through json looses track of tuple|list type.
 
 _config_types_dict = None
 
@@ -25,7 +20,7 @@ def get_config_types():
     return tuple(_config_types_dict.keys())
 
 
-def get_config_type_value(ctype):
+def get_config_type_template(ctype):
     """Return value of a configuration type."""
     if _config_types_dict is None:
         _init_config_types_dict()
@@ -38,15 +33,7 @@ def check_value(config_type, value):
     if _config_types_dict is None:
         _init_config_types_dict()
     ref_value = _config_types_dict[config_type]
-    return _recursive_check(ref_value, value)
-
-
-def _init_config_types_dict_orig():
-    global _config_types_dict
-    _config_types_dict = {}
-    for ct in _config_types:
-        config_type_name = ct['config_type_name']
-        _config_types_dict[config_type_name] = ct['value']
+    return recursive_check(ref_value, value)
 
 
 def _init_config_types_dict():
@@ -59,27 +46,33 @@ def _init_config_types_dict():
         _config_types_dict[config_type_name] = ct['value']
 
 
-def _recursive_check(ref_value, value):
-    # TODO: should we allow float - int automatic castings ?
-    # TODO: this should prob. be generalized to accomodate length-varying
-    # lists/arrays (WfmData, for example)
+def recursive_check(ref_value, value, checklength=True):
     if type(ref_value) != type(value):
+        # print('h1')
         return False
     if type(ref_value) == dict:
-        if len(ref_value) != len(value):
+        if checklength and len(value) != len(ref_value):
             return False
         for k, v in value.items():
-            if k not in ref_value:
+            if k not in ref_value and checklength:
+                # print('h3')
                 return False
-            v_ref = ref_value[k]
-            checked = _recursive_check(v_ref, v)
-            if not checked:
-                return False
+            if k in ref_value:
+                v_ref = ref_value[k]
+                if isinstance(k, str) and k.endswith('*'):
+                    checked = recursive_check(v_ref, v, checklength=False)
+                else:
+                    checked = recursive_check(v_ref, v, checklength)
+                if not checked:
+                    # print('h4')
+                    return False
     elif type(ref_value) in (list, tuple, ):
-        if len(ref_value) != len(value):
+        if checklength and len(ref_value) != len(value):
+            # print('h5')
             return False
-        for i in range(len(value)):
-            checked = _recursive_check(value[i], ref_value[i])
+        for i in range(min(len(value), len(ref_value))):
+            checked = recursive_check(value[i], ref_value[i], checklength)
             if not checked:
+                # print('h6')
                 return False
     return True
