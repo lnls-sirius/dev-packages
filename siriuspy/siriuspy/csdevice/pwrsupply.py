@@ -82,8 +82,24 @@ ps_hard_interlock_FBP_DCLink = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
 )
-ps_soft_interlock_FAC = ('Reserved', ) * 32
-ps_hard_interlock_FAC = ('Reserved', ) * 32
+ps_soft_interlock_FAC = (
+    'Sobre-temperatura nos indutores',  'Sobre-temperatura nos indutores',
+    'Falha no DCCT 1', 'Falha no DCCT 2',
+    'Alta diferença entre DCCTs',
+    'Falha na leitura da corrente na carga do DCCT 1',
+    'Falha na leitura da corrente na carga do DCCT 2',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved'
+)
+ps_hard_interlock_FAC = (
+    'Sobre-corrente na carga', 'Sobre-corrente na carga',
+    'Sobre-tensão no DC-Link', 'Sub-tensão no DC-Link',
+    'Falha nos drivers do módulo', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved',
+)
 ps_cycle_type = ('Sine', 'DampedSine', 'Trapezoidal')
 ps_sync_mode = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
 
