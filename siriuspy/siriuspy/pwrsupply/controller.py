@@ -418,6 +418,8 @@ class FAC_BSMPSim(_BSMPSim):
     I_LOAD_FLUCTUATION_RMS = 0.01
 
     SlowRefState = 0
+    SlowRefSyncState = 1
+    CycleState = 2
 
     def __init__(self, pru):
         """Use FACEntities."""
@@ -430,7 +432,7 @@ class FAC_BSMPSim(_BSMPSim):
 
         # Operation mode states
         self._states = [
-            FACSlowRefState()]
+            FACSlowRefState(), FACSlowRefSyncState(), FACCycleState(pru)]
 
         # Current state
         self._state = self._states[self.SlowRefState]
@@ -667,3 +669,152 @@ class FACSlowRefState(_FACState):
                 # control loop closed
                 variables[_cFAC.V_I_LOAD1] = value
                 variables[_cFAC.V_I_LOAD2] = value
+
+
+class FACSlowRefSyncState(_FACState):
+
+    def __init__(self):
+        """Init."""
+        self._last_setpoint = None
+
+    def select_op_mode(self, variables):
+        """Set operation mode."""
+        ps_status = variables[_cFAC.V_PS_STATUS]
+        psc_status = _PSCStatus(ps_status=ps_status)
+        psc_status.ioc_opmode = _PSConst.OpMode.SlowRefSync
+        variables[_cFAC.V_PS_STATUS] = psc_status.ps_status
+
+    def set_slowref(self, variables, input_val):
+        """Set current."""
+        self._last_setpoint = input_val
+
+    def trigger(self, variables):
+        """Apply last setpoint received."""
+        if self._last_setpoint is None:
+            self._last_setpoint = variables[_cFAC.V_PS_SETPOINT]
+        variables[_cFAC.V_PS_SETPOINT] = self._last_setpoint
+        if self._is_on(variables):
+            variables[_cFAC.V_PS_REFERENCE] = self._last_setpoint
+            if self._is_open_loop(variables) == 0:
+                # control loop closed
+                variables[_cFAC.V_I_LOAD1] = self._last_setpoint
+                variables[_cFAC.V_I_LOAD2] = self._last_setpoint
+
+
+class FACCycleState(_FACState):
+    """FBP Cycle state."""
+
+    def __init__(self, pru):
+        """Set cycle parameters."""
+        self._siggen_canceled = False
+        self._pru = pru
+
+    def read_variable(self, variables, var_id):
+        """Return variable."""
+        enbl = variables[_cFAC.V_SIGGEN_ENABLE]
+        if enbl and var_id in (_cFAC.V_PS_REFERENCE, _cFAC.V_I_LOAD1,
+                               _cFAC.V_I_LOAD2):
+            value = self._signal.value
+            variables[_cFAC.V_PS_REFERENCE] = value
+            variables[_cFAC.V_I_LOAD1] = value
+            variables[_cFAC.V_I_LOAD2] = value
+            variables[_cFAC.V_SIGGEN_N] += 1
+        return super().read_variable(variables, var_id)
+
+    def select_op_mode(self, variables):
+        """Set operation mode."""
+        ps_status = variables[_cFAC.V_PS_STATUS]
+        psc_status = _PSCStatus(ps_status=ps_status)
+        psc_status.ioc_opmode = _PSConst.OpMode.Cycle
+        variables[_cFAC.V_PS_STATUS] = psc_status.ps_status
+        variables[_cFAC.V_SIGGEN_ENABLE] = 0
+        variables[_cFAC.V_PS_REFERENCE] = 0.0
+        variables[_cFAC.V_I_LOAD1] = 0.0
+        variables[_cFAC.V_I_LOAD2] = 0.0
+        # self._set_signal(variables)
+        # self.enable_siggen(variables)
+
+    def reset_interlocks(self, variables):
+        """Reset interlocks."""
+        super().reset_interlocks(variables)
+        self.disable_siggen(variables)
+
+    def set_slowref(self, variables, input_val):
+        """Set current."""
+        variables[_cFAC.V_PS_SETPOINT] = input_val
+
+    def cfg_siggen(self, variables, input_val):
+        """Set siggen configuration parameters."""
+        if not variables[_cFAC.V_SIGGEN_ENABLE]:
+            variables[_cFAC.V_SIGGEN_TYPE] = input_val[0]
+            variables[_cFAC.V_SIGGEN_NUM_CYCLES] = input_val[1]
+            variables[_cFAC.V_SIGGEN_FREQ] = input_val[2]
+            variables[_cFAC.V_SIGGEN_AMPLITUDE] = input_val[3]
+            variables[_cFAC.V_SIGGEN_OFFSET] = input_val[4]
+            variables[_cFAC.V_SIGGEN_AUX_PARAM] = input_val[5:]
+
+    def set_siggen(self, variables, input_val):
+        """Set siggen configuration parameters while in continuos mode."""
+        if not variables[_cFAC.V_SIGGEN_ENABLE] or \
+                (variables[_cFAC.V_SIGGEN_ENABLE] and
+                 variables[_cFAC.V_SIGGEN_NUM_CYCLES] == 0):
+            variables[_cFAC.V_SIGGEN_FREQ] = input_val[0]
+            variables[_cFAC.V_SIGGEN_AMPLITUDE] = input_val[1]
+            variables[_cFAC.V_SIGGEN_OFFSET] = input_val[2]
+
+    def enable_siggen(self, variables):
+        """Enable siggen."""
+        # variables[_cFAC.V_SIGGEN_ENABLE] = 1
+        self._siggen_canceled = False
+        thread = _Thread(
+            target=self._finish_siggen,
+            args=(variables, ),
+            daemon=True)
+        thread.start()
+
+    def disable_siggen(self, variables):
+        """Disable siggen."""
+        if variables[_cFAC.V_SIGGEN_ENABLE] == 1:
+            variables[_cFAC.V_SIGGEN_ENABLE] = 0
+            self._siggen_canceled = True
+            self._signal.enable = False
+
+    def _set_signal(self, variables):
+        t = variables[_cFAC.V_SIGGEN_TYPE]
+        n = variables[_cFAC.V_SIGGEN_NUM_CYCLES]
+        f = variables[_cFAC.V_SIGGEN_FREQ]
+        a = variables[_cFAC.V_SIGGEN_AMPLITUDE]
+        o = variables[_cFAC.V_SIGGEN_OFFSET]
+        p = variables[_cFAC.V_SIGGEN_AUX_PARAM]
+        self._signal = _SignalFactory.factory(type=t,
+                                              num_cycles=n,
+                                              freq=f,
+                                              amplitude=a,
+                                              offset=o,
+                                              aux_param=p)
+
+    def _finish_siggen(self, variables):
+        self._set_signal(variables)
+        if self._signal.duration <= 0:
+            return
+        time = self._signal.duration
+        variables[_cFAC.V_SIGGEN_ENABLE] = 1
+        time_up = False
+        elapsed = 0
+        while not time_up:
+            _t.sleep(0.5)
+            elapsed += 0.5
+            if elapsed >= time:
+                time_up = True
+            if self._siggen_canceled:
+                return
+        val = self._signal.value
+        variables[_cFAC.V_PS_REFERENCE] = val
+        variables[_cFAC.V_I_LOAD1] = val
+        variables[_cFAC.V_I_LOAD2] = val
+        variables[_cFAC.V_SIGGEN_ENABLE] = 0
+        variables[_cFAC.V_SIGGEN_N] = 0
+
+    def trigger(self, variables):
+        """Trigger received."""
+        self.enable_siggen(variables)

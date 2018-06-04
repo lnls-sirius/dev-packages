@@ -835,7 +835,7 @@ class PRUController:
         # in the queue was a function execution.
         # TODO: test this! but is it really necessary?
         self._bsmp_update_variables(self.device_ids,
-                                    PRUController.VGROUPS.SYNCOFF)
+                                    self.VGROUPS.SYNCOFF)
         self._scanning_false_wait_empty_queue()
 
         # reset curve index
@@ -1208,10 +1208,10 @@ class PRUController:
 
         The method is invoked with two group_ids:
 
-        01. group_id = PRUController.VGROUPS.SYNCOFF
+        01. group_id = self.VGROUPS.SYNCOFF
             Used for 'SlowRef' and 'Cycle' power supply operation modes.
 
-        02. group_id = PRUController.VGROUPS.MIRROR
+        02. group_id = self.VGROUPS.MIRROR
             used for 'SlowRefSync', 'RmpWfm' and 'MigWfm' operation modes.
             In this case mirror variables are read from a single device (power
             supply) in order to update a subset of variables for all devices
@@ -1340,7 +1340,7 @@ class PRUController:
                     self._bsmp[id].execute_function(function_id, args)
         except (_SerialError, IndexError):
             print('SerialError exception in {}'.format(
-                ('F', device_ids, function_id)))
+                ('F', device_ids, function_id, args)))
             return None
         dtime = _time.time() - t0
         self._last_operation = ('F', dtime,
