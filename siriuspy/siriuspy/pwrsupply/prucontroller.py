@@ -31,8 +31,12 @@ from siriuspy.pwrsupply.bsmp import Parameters as _Parameters
 from siriuspy.pwrsupply.bsmp import FBPEntities as _FBPEntities
 from siriuspy.pwrsupply.bsmp import FACEntities as _FACEntities
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
-from siriuspy.pwrsupply.controller import FBP_BSMPSim as _FBP_BSMPSim
-from siriuspy.pwrsupply.controller import FAC_BSMPSim as _FAC_BSMPSim
+
+# from siriuspy.pwrsupply.controller import FBP_BSMPSim as _FBP_BSMPSim
+# from siriuspy.pwrsupply.controller import FAC_BSMPSim as _FAC_BSMPSim
+
+from siriuspy.pwrsupply.controller import BSMPSimFBP as _FBP_BSMPSim
+from siriuspy.pwrsupply.controller import BSMPSimFAC as _FAC_BSMPSim
 
 
 # NOTE: On current behaviour of PRU and Power Supplies:
