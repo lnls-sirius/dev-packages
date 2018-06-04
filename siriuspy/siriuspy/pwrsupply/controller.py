@@ -10,9 +10,11 @@ from siriuspy.bsmp import Response as _Response
 from siriuspy.bsmp import BSMPSim as _BSMPSim
 from siriuspy.pwrsupply.bsmp import FBPEntities as _FBPEntities
 from siriuspy.pwrsupply.bsmp import FACEntities as _FACEntities
+from siriuspy.pwrsupply.bsmp import FAC_ACDCEntities as _FAC_ACDCEntities
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 from siriuspy.pwrsupply.bsmp import ConstFBP as _cFBP
 from siriuspy.pwrsupply.bsmp import ConstFAC as _cFAC
+from siriuspy.pwrsupply.bsmp import ConstFAC_ACDC as _cFAC_ACDC
 from .siggen import SignalFactory as _SignalFactory
 
 __version__ = _util.get_last_commit_hash()
@@ -48,6 +50,19 @@ class _FBP:
 
     def _get_iloads_ids(self):
         return (_cFBP.V_I_LOAD, )
+
+
+class _FAC_ACDC:
+    """SlowRef FAC_ACDC state."""
+
+    def _get_i_load_fluctuation_rms(self):
+        return _I_LOAD_FLUCTUATION_RMS
+
+    def _get_constants(self):
+        return _cFAC_ACDC
+
+    def _get_iloads_ids(self):
+        return ()
 
 
 # --- State classes ---
@@ -399,6 +414,12 @@ class CycleStateFBP(_CycleState, _FBP):
     pass
 
 
+class SlowRefStateFAC_ACDC(_SlowRefState, _FAC_ACDC):
+    """SlowRef FAC_ACDC state."""
+
+    pass
+
+
 # --- BSMPSim classes ---
 
 class _GBSMPSim(_BSMPSim):
@@ -543,6 +564,40 @@ class BSMPSimFBP(_GBSMPSim, _FBP):
         variables[_cFBP.V_SIGGEN_OFFSET] = default_siggen_parms[4]
         variables[_cFBP.V_SIGGEN_AUX_PARAM] = default_siggen_parms[5:9]
         return variables
+
+
+class BSMPSimFAC_ACDC(_GBSMPSim, _FAC_ACDC):
+
+    def _get_entities(self):
+        return _FAC_ACDCEntities()
+
+    def _get_states(self):
+        return [SlowRefStateFAC(), SlowRefSyncStateFAC(),
+                CycleStateFAC(self._pru)]
+
+    def _get_init_variables(self):
+        firmware = [b'S', b'i', b'm', b'u', b'l', b'a', b't', b'i', b'o', b'n']
+        while len(firmware) < 128:
+            firmware.append('\x00'.encode())
+        variables = [
+            0b10000,  # V_PS_STATUS
+            0.0, 0.0,  # ps_setpoint, ps_reference
+            firmware,
+            0, 0,  # counters
+            0, 0, 0, 0.0, 0.0, 0.0, 0.0, [0.0, 0.0, 0.0, 0.0],  # siggen [6-13]
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # undef [14-24]
+            0, 0,  # interlocks [25-26]
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # [27-32]
+        default_siggen_parms = \
+            _SignalFactory.DEFAULT_CONFIGS['Sine']
+        variables[_cFAC.V_SIGGEN_TYPE] = default_siggen_parms[0]
+        variables[_cFAC.V_SIGGEN_NUM_CYCLES] = default_siggen_parms[1]
+        variables[_cFAC.V_SIGGEN_FREQ] = default_siggen_parms[2]
+        variables[_cFAC.V_SIGGEN_AMPLITUDE] = default_siggen_parms[3]
+        variables[_cFAC.V_SIGGEN_OFFSET] = default_siggen_parms[4]
+        variables[_cFAC.V_SIGGEN_AUX_PARAM] = default_siggen_parms[5:9]
+        return variables
+
 
 
 

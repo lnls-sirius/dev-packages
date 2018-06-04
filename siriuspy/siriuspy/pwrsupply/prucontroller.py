@@ -17,26 +17,30 @@ from copy import deepcopy as _dcopy
 from siriuspy.bsmp import BSMP as _BSMP
 from siriuspy.bsmp import Response as _Response
 from siriuspy.bsmp.exceptions import SerialError as _SerialError
+
 from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
 from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
+
 from siriuspy.pwrsupply.pru import Const as _PRUConst
-# from siriuspy.pwrsupply.pru import PRUInterface as _PRUInterface
 from siriuspy.pwrsupply.pru import PRU as _PRU
 from siriuspy.pwrsupply.pru import PRUSim as _PRUSim
+
 from siriuspy.pwrsupply.bsmp import __version__ as _ps_bsmp_version
+from siriuspy.pwrsupply.bsmp import MAP_MIRROR_2_ORIG as _mirror_map
 from siriuspy.pwrsupply.bsmp import ConstFBP as _ConstFBP
 from siriuspy.pwrsupply.bsmp import ConstFAC as _ConstFAC
-from siriuspy.pwrsupply.bsmp import MAP_MIRROR_2_ORIG as _mirror_map
+from siriuspy.pwrsupply.bsmp import ConstFAC_ACDC as _ConstFAC_ACDC
 from siriuspy.pwrsupply.bsmp import Parameters as _Parameters
 from siriuspy.pwrsupply.bsmp import FBPEntities as _FBPEntities
 from siriuspy.pwrsupply.bsmp import FACEntities as _FACEntities
-from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
+from siriuspy.pwrsupply.bsmp import FAC_ACDCEntities as _FAC_ACDCEntities
 
-# from siriuspy.pwrsupply.controller import FBP_BSMPSim as _FBP_BSMPSim
-# from siriuspy.pwrsupply.controller import FAC_BSMPSim as _FAC_BSMPSim
+from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 
 from siriuspy.pwrsupply.controller import BSMPSimFBP as _FBP_BSMPSim
 from siriuspy.pwrsupply.controller import BSMPSimFAC as _FAC_BSMPSim
+from siriuspy.pwrsupply.controller import BSMPSimFAC_ACDC as _FAC_ACDC_BSMPSim
+
 
 
 # NOTE: On current behaviour of PRU and Power Supplies:
@@ -379,35 +383,35 @@ class _BSMPVarGroupsFAC(_BSMPVarGroups):
     # reserved variable groups (not to be used)
     groups[_BSMPVarGroups.ALL] = (
         # --- common variables
-        _ConstFBP.V_PS_STATUS,
-        _ConstFBP.V_PS_SETPOINT,
-        _ConstFBP.V_PS_REFERENCE,
-        _ConstFBP.V_FIRMWARE_VERSION,
-        _ConstFBP.V_COUNTER_SET_SLOWREF,
-        _ConstFBP.V_COUNTER_SYNC_PULSE,
-        _ConstFBP.V_SIGGEN_ENABLE,
-        _ConstFBP.V_SIGGEN_TYPE,
-        _ConstFBP.V_SIGGEN_NUM_CYCLES,
-        _ConstFBP.V_SIGGEN_N,
-        _ConstFBP.V_SIGGEN_FREQ,
-        _ConstFBP.V_SIGGEN_AMPLITUDE,
-        _ConstFBP.V_SIGGEN_OFFSET,
-        _ConstFBP.V_SIGGEN_AUX_PARAM,
+        _ConstFAC.V_PS_STATUS,
+        _ConstFAC.V_PS_SETPOINT,
+        _ConstFAC.V_PS_REFERENCE,
+        _ConstFAC.V_FIRMWARE_VERSION,
+        _ConstFAC.V_COUNTER_SET_SLOWREF,
+        _ConstFAC.V_COUNTER_SYNC_PULSE,
+        _ConstFAC.V_SIGGEN_ENABLE,
+        _ConstFAC.V_SIGGEN_TYPE,
+        _ConstFAC.V_SIGGEN_NUM_CYCLES,
+        _ConstFAC.V_SIGGEN_N,
+        _ConstFAC.V_SIGGEN_FREQ,
+        _ConstFAC.V_SIGGEN_AMPLITUDE,
+        _ConstFAC.V_SIGGEN_OFFSET,
+        _ConstFAC.V_SIGGEN_AUX_PARAM,
         # --- undefined variables
-        _ConstFBP.V_UNDEF14,
-        _ConstFBP.V_UNDEF15,
-        _ConstFBP.V_UNDEF16,
-        _ConstFBP.V_UNDEF17,
-        _ConstFBP.V_UNDEF18,
-        _ConstFBP.V_UNDEF19,
-        _ConstFBP.V_UNDEF20,
-        _ConstFBP.V_UNDEF21,
-        _ConstFBP.V_UNDEF22,
-        _ConstFBP.V_UNDEF23,
-        _ConstFBP.V_UNDEF24,
+        _ConstFAC.V_UNDEF14,
+        _ConstFAC.V_UNDEF15,
+        _ConstFAC.V_UNDEF16,
+        _ConstFAC.V_UNDEF17,
+        _ConstFAC.V_UNDEF18,
+        _ConstFAC.V_UNDEF19,
+        _ConstFAC.V_UNDEF20,
+        _ConstFAC.V_UNDEF21,
+        _ConstFAC.V_UNDEF22,
+        _ConstFAC.V_UNDEF23,
+        _ConstFAC.V_UNDEF24,
         # --- FAC variables ---
-        _ConstFBP.V_PS_SOFT_INTERLOCKS,
-        _ConstFBP.V_PS_HARD_INTERLOCKS,
+        _ConstFAC.V_PS_SOFT_INTERLOCKS,
+        _ConstFAC.V_PS_HARD_INTERLOCKS,
         _ConstFAC.V_I_LOAD1,
         _ConstFAC.V_I_LOAD2,
         _ConstFAC.V_V_LOAD,
@@ -470,6 +474,105 @@ class _BSMPVarGroupsFAC(_BSMPVarGroups):
         _ConstFAC.V_TEMP_INDUCTORS,
         _ConstFAC.V_TEMP_IGBTS,
         _ConstFAC.V_DUTY_CYCLE,)
+    groups[_BSMPVarGroups.MIRROR] = groups[_BSMPVarGroups.SYNCOFF]
+
+
+class _BSMPVarGroupsFAC_ACDC(_BSMPVarGroups):
+    """Beaglebone Variagle groups for FAC_ACDC."""
+
+    groups = dict()
+
+    # reserved variable groups (not to be used)
+    groups[_BSMPVarGroups.ALL] = (
+        # --- common variables
+        _ConstFAC_ACDC.V_PS_STATUS,
+        _ConstFAC_ACDC.V_PS_SETPOINT,
+        _ConstFAC_ACDC.V_PS_REFERENCE,
+        _ConstFAC_ACDC.V_FIRMWARE_VERSION,
+        _ConstFAC_ACDC.V_COUNTER_SET_SLOWREF,
+        _ConstFAC_ACDC.V_COUNTER_SYNC_PULSE,
+        _ConstFAC_ACDC.V_SIGGEN_ENABLE,
+        _ConstFAC_ACDC.V_SIGGEN_TYPE,
+        _ConstFAC_ACDC.V_SIGGEN_NUM_CYCLES,
+        _ConstFAC_ACDC.V_SIGGEN_N,
+        _ConstFAC_ACDC.V_SIGGEN_FREQ,
+        _ConstFAC_ACDC.V_SIGGEN_AMPLITUDE,
+        _ConstFAC_ACDC.V_SIGGEN_OFFSET,
+        _ConstFAC_ACDC.V_SIGGEN_AUX_PARAM,
+        # --- undefined variables
+        _ConstFAC_ACDC.V_UNDEF14,
+        _ConstFAC_ACDC.V_UNDEF15,
+        _ConstFAC_ACDC.V_UNDEF16,
+        _ConstFAC_ACDC.V_UNDEF17,
+        _ConstFAC_ACDC.V_UNDEF18,
+        _ConstFAC_ACDC.V_UNDEF19,
+        _ConstFAC_ACDC.V_UNDEF20,
+        _ConstFAC_ACDC.V_UNDEF21,
+        _ConstFAC_ACDC.V_UNDEF22,
+        _ConstFAC_ACDC.V_UNDEF23,
+        _ConstFAC_ACDC.V_UNDEF24,
+        # --- FAC_ACDC variables ---
+        _ConstFAC_ACDC.V_PS_SOFT_INTERLOCKS,
+        _ConstFAC_ACDC.V_PS_HARD_INTERLOCKS,
+        _ConstFAC_ACDC.V_CAPACITOR_BANK,
+        _ConstFAC_ACDC.V_OUT_RECTIFIER,
+        _ConstFAC_ACDC.I_OUT_RECTIFIER,
+        _ConstFAC_ACDC.TEMP_HEATSINK,
+        _ConstFAC_ACDC.TEMP_INDUCTORS,
+        _ConstFAC_ACDC.DUTY_CYCLE,)
+    groups[_BSMPVarGroups.READONLY] = groups[_BSMPVarGroups.ALL]
+    groups[_BSMPVarGroups.WRITEABLE] = tuple()
+
+    # new variable groups usefull for PRUController.
+    groups[_BSMPVarGroups.ALLRELEVANT] = (
+        # --- common variables
+        _ConstFAC_ACDC.V_PS_STATUS,
+        _ConstFAC_ACDC.V_PS_SETPOINT,
+        _ConstFAC_ACDC.V_PS_REFERENCE,
+        _ConstFAC_ACDC.V_FIRMWARE_VERSION,
+        _ConstFAC_ACDC.V_COUNTER_SET_SLOWREF,
+        _ConstFAC_ACDC.V_COUNTER_SYNC_PULSE,
+        _ConstFAC_ACDC.V_SIGGEN_ENABLE,
+        _ConstFAC_ACDC.V_SIGGEN_TYPE,
+        _ConstFAC_ACDC.V_SIGGEN_NUM_CYCLES,
+        _ConstFAC_ACDC.V_SIGGEN_N,
+        _ConstFAC_ACDC.V_SIGGEN_FREQ,
+        _ConstFAC_ACDC.V_SIGGEN_AMPLITUDE,
+        _ConstFAC_ACDC.V_SIGGEN_OFFSET,
+        _ConstFAC_ACDC.V_SIGGEN_AUX_PARAM,
+        # --- FAC_ACDC variables ---
+        _ConstFAC_ACDC.V_PS_SOFT_INTERLOCKS,
+        _ConstFAC_ACDC.V_PS_HARD_INTERLOCKS,
+        _ConstFAC_ACDC.V_CAPACITOR_BANK,
+        _ConstFAC_ACDC.V_OUT_RECTIFIER,
+        _ConstFAC_ACDC.I_OUT_RECTIFIER,
+        _ConstFAC_ACDC.TEMP_HEATSINK,
+        _ConstFAC_ACDC.TEMP_INDUCTORS,
+        _ConstFAC_ACDC.DUTY_CYCLE,)
+    groups[_BSMPVarGroups.SYNCOFF] = (
+        # --- common variables
+        _ConstFAC_ACDC.V_PS_STATUS,
+        _ConstFAC_ACDC.V_PS_SETPOINT,
+        _ConstFAC_ACDC.V_PS_REFERENCE,
+        _ConstFAC_ACDC.V_COUNTER_SET_SLOWREF,
+        _ConstFAC_ACDC.V_COUNTER_SYNC_PULSE,
+        _ConstFAC_ACDC.V_SIGGEN_ENABLE,
+        _ConstFAC_ACDC.V_SIGGEN_TYPE,
+        _ConstFAC_ACDC.V_SIGGEN_NUM_CYCLES,
+        _ConstFAC_ACDC.V_SIGGEN_N,
+        _ConstFAC_ACDC.V_SIGGEN_FREQ,
+        _ConstFAC_ACDC.V_SIGGEN_AMPLITUDE,
+        _ConstFAC_ACDC.V_SIGGEN_OFFSET,
+        _ConstFAC_ACDC.V_SIGGEN_AUX_PARAM,
+        # --- FAC_ACDC variables ---
+        _ConstFAC_ACDC.V_PS_SOFT_INTERLOCKS,
+        _ConstFAC_ACDC.V_PS_HARD_INTERLOCKS,
+        _ConstFAC_ACDC.V_CAPACITOR_BANK,
+        _ConstFAC_ACDC.V_OUT_RECTIFIER,
+        _ConstFAC_ACDC.I_OUT_RECTIFIER,
+        _ConstFAC_ACDC.TEMP_HEATSINK,
+        _ConstFAC_ACDC.TEMP_INDUCTORS,
+        _ConstFAC_ACDC.DUTY_CYCLE,)
     groups[_BSMPVarGroups.MIRROR] = groups[_BSMPVarGroups.SYNCOFF]
 
 
@@ -565,6 +668,9 @@ class PRUController:
         elif psmodel == 'FAC':
             self.VGROUPS = _BSMPVarGroupsFAC
             self.BSMP = _ConstFAC
+        elif psmodel == 'FAC_ACDC':
+            self.VGROUPS = _BSMPVarGroupsFAC_ACDC
+            self.BSMP = _ConstFAC_ACDC
         else:
             raise NotImplementedError(psmodel)
         self._groups = self.VGROUPS.groups
@@ -1100,6 +1206,8 @@ class PRUController:
                     bsmp[id] = _FBP_BSMPSim(self._pru)
                 elif self._psmodel == 'FAC':
                     bsmp[id] = _FAC_BSMPSim(self._pru)
+                elif self._psmodel == 'FAC_ACDC':
+                    bsmp[id] = _FAC_ACDC_BSMPSim(self._pru)
                 else:
                     raise NotImplementedError()
             else:
@@ -1107,6 +1215,8 @@ class PRUController:
                     bsmp_entities = _FBPEntities()
                 elif self._psmodel == 'FAC':
                     bsmp_entities = _FACEntities()
+                elif self._psmodel == 'FAC_ACDC':
+                    bsmp_entities = _FAC_ACDCEntities()
                 else:
                     raise NotImplementedError()
                 bsmp[id] = _BSMP(self._pru, id, bsmp_entities)
