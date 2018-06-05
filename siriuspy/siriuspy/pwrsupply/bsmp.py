@@ -271,6 +271,7 @@ class ConstFBP(ConstBSMP):
 
 
 class ConstFBP_DCLINK(ConstBSMP):
+    """Namespace for organizing power supply FBP_DCLink BSMP constants."""
 
     # --- undefined variables
     V_UNDEF14 = 14
@@ -541,7 +542,7 @@ _BSMP_Functions = (
 )
 
 
-class FBPEntities(_Entities):
+class EntitiesFBP(_Entities):
     """FBP-type power supply entities."""
 
     Variables = (
@@ -631,7 +632,7 @@ class FBPEntities(_Entities):
         super().__init__(self.Variables, self.Curves, self.Functions)
 
 
-class FBP_DCLINKEntities(_Entities):
+class EntitiesFBP_DCLINK(_Entities):
     """FBP DCLink-type power supplies entities."""
 
     Variables = (
@@ -679,7 +680,7 @@ class FBP_DCLINKEntities(_Entities):
         super().__init__(self.Variables, self.Curves, self.Functions)
 
 
-class FACEntities(_Entities):
+class EntitiesFAC(_Entities):
     """FAC-type power supply entities."""
 
     Variables = (
@@ -731,7 +732,7 @@ class FACEntities(_Entities):
         super().__init__(self.Variables, self.Curves, self.Functions)
 
 
-class FAC_ACDCEntities(_Entities):
+class EntitiesFAC_ACDC(_Entities):
     """FAC_ACDC-type power supply entities."""
 
     Variables = (
@@ -783,24 +784,24 @@ class FAC_ACDCEntities(_Entities):
 
 
 class FBP(_BSMP):
-    """BSMP with FBPEntities."""
+    """BSMP with EntitiesFBP."""
 
     def __init__(self, slave_address):
         """Init BSMP."""
-        super().__init__(_PRU(), slave_address, FBPEntities())
+        super().__init__(_PRU(), slave_address, EntitiesFBP())
 
 
 class FAC(_BSMP):
-    """BSMP with FACEntities."""
+    """BSMP with EntitiesFAC."""
 
     def __init__(self, slave_address):
         """Init BSMP."""
-        super().__init__(_PRU(), slave_address, FACEntities())
+        super().__init__(_PRU(), slave_address, EntitiesFAC())
 
 
 class FAC_ACDC(_BSMP):
-    """BSMP with FAC_ACDCEntities."""
+    """BSMP with EntitiesFAC_ACDC."""
 
     def __init__(self, slave_address):
         """Init BSMP."""
-        super().__init__(_PRU(), slave_address, FAC_ACDCEntities())
+        super().__init__(_PRU(), slave_address, EntitiesFAC_ACDC())

@@ -31,9 +31,9 @@ from siriuspy.pwrsupply.bsmp import ConstFBP as _ConstFBP
 from siriuspy.pwrsupply.bsmp import ConstFAC as _ConstFAC
 from siriuspy.pwrsupply.bsmp import ConstFAC_ACDC as _ConstFAC_ACDC
 from siriuspy.pwrsupply.bsmp import Parameters as _Parameters
-from siriuspy.pwrsupply.bsmp import FBPEntities as _FBPEntities
-from siriuspy.pwrsupply.bsmp import FACEntities as _FACEntities
-from siriuspy.pwrsupply.bsmp import FAC_ACDCEntities as _FAC_ACDCEntities
+from siriuspy.pwrsupply.bsmp import EntitiesFBP as _EntitiesFBP
+from siriuspy.pwrsupply.bsmp import EntitiesFAC as _EntitiesFAC
+from siriuspy.pwrsupply.bsmp import EntitiesFAC_ACDC as _EntitiesFAC_ACDC
 
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 
@@ -1212,11 +1212,11 @@ class PRUController:
                     raise NotImplementedError()
             else:
                 if self._psmodel == 'FBP':
-                    bsmp_entities = _FBPEntities()
+                    bsmp_entities = _EntitiesFBP()
                 elif self._psmodel == 'FAC':
-                    bsmp_entities = _FACEntities()
+                    bsmp_entities = _EntitiesFAC()
                 elif self._psmodel == 'FAC_ACDC':
-                    bsmp_entities = _FAC_ACDCEntities()
+                    bsmp_entities = _EntitiesFAC_ACDC()
                 else:
                     raise NotImplementedError()
                 bsmp[id] = _BSMP(self._pru, id, bsmp_entities)

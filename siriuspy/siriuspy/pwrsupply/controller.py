@@ -8,10 +8,10 @@ from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.bsmp import Response as _Response
 # from siriuspy.bsmp import BSMP as _BSMP
 from siriuspy.bsmp import BSMPSim as _BSMPSim
-from siriuspy.pwrsupply.bsmp import FBPEntities as _FBPEntities
-from siriuspy.pwrsupply.bsmp import FBP_DCLINKEntities as _FBP_DCLINKEntities
-from siriuspy.pwrsupply.bsmp import FACEntities as _FACEntities
-from siriuspy.pwrsupply.bsmp import FAC_ACDCEntities as _FAC_ACDCEntities
+from siriuspy.pwrsupply.bsmp import EntitiesFBP as _EntitiesFBP
+from siriuspy.pwrsupply.bsmp import EntitiesFBP_DCLINK as _EntitiesFBP_DCLINK
+from siriuspy.pwrsupply.bsmp import EntitiesFAC as _EntitiesFAC
+from siriuspy.pwrsupply.bsmp import EntitiesFAC_ACDC as _EntitiesFAC_ACDC
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 from siriuspy.pwrsupply.bsmp import ConstFBP as _cFBP
 from siriuspy.pwrsupply.bsmp import ConstFBP_DCLINK as _cFBP_DCLINK
@@ -526,7 +526,7 @@ class _GBSMPSim(_BSMPSim):
 class BSMPSimFBP(_GBSMPSim, _FBP):
 
     def _get_entities(self):
-        return _FBPEntities()
+        return _EntitiesFBP()
 
     def _get_states(self):
         return [SlowRefStateFBP(), SlowRefSyncStateFBP(),
@@ -556,7 +556,7 @@ class BSMPSimFBP(_GBSMPSim, _FBP):
 class BSMPSimFBP_DCLINK(_GBSMPSim, _FBP_DCLINK):
 
     def _get_entities(self):
-        return _FBP_DCLINKEntities()
+        return _EntitiesFBP_DCLINK()
 
     def _get_states(self):
         return [SlowRefStateFBP_DCLINK]
@@ -566,7 +566,7 @@ class BSMPSimFBP_DCLINK(_GBSMPSim, _FBP_DCLINK):
         firmware = [b'S', b'i', b'm', b'u', b'l', b'a', b't', b'i', b'o', b'n']
         while len(firmware) < 128:
             firmware.append('\x00'.encode())
-        for idx, variable in enumerate(_FBP_DCLINKEntities.Variables):
+        for idx, variable in enumerate(_EntitiesFBP_DCLINK.Variables):
             if idx == 3:
                 variables[idx] = firmware
             if 'uint' in variable.type:
@@ -579,7 +579,7 @@ class BSMPSimFBP_DCLINK(_GBSMPSim, _FBP_DCLINK):
 class BSMPSimFAC(_GBSMPSim, _FAC):
 
     def _get_entities(self):
-        return _FACEntities()
+        return _EntitiesFAC()
 
     def _get_states(self):
         return [SlowRefStateFAC(), SlowRefSyncStateFAC(),
@@ -613,7 +613,7 @@ class BSMPSimFAC(_GBSMPSim, _FAC):
 class BSMPSimFAC_ACDC(_GBSMPSim, _FAC_ACDC):
 
     def _get_entities(self):
-        return _FAC_ACDCEntities()
+        return _EntitiesFAC_ACDC()
 
     def _get_states(self):
         return [SlowRefStateFAC(), SlowRefSyncStateFAC(),
@@ -655,8 +655,8 @@ class BSMPSimFAC_ACDC(_GBSMPSim, _FAC_ACDC):
 #     CycleState = 2
 #
 #     def __init__(self, pru):
-#         """Use FBPEntities."""
-#         super().__init__(_FBPEntities())
+#         """Use EntitiesFBP."""
+#         super().__init__(_EntitiesFBP())
 #         self._pru = pru
 #         self._pru.add_callback(self._trigger)
 #
@@ -1047,8 +1047,8 @@ class BSMPSimFAC_ACDC(_GBSMPSim, _FAC_ACDC):
 #     CycleState = 2
 #
 #     def __init__(self, pru):
-#         """Use FACEntities."""
-#         super().__init__(_FACEntities())
+#         """Use EntitiesFAC."""
+#         super().__init__(_EntitiesFAC())
 #         self._pru = pru
 #         self._pru.add_callback(self._trigger)
 #

@@ -8,7 +8,7 @@ from siriuspy.bsmp import BSMP
 from siriuspy.pwrsupply.pru import PRU
 from siriuspy.pwrsupply.pru import PRUSim
 from siriuspy.pwrsupply.bsmp import Const as BSMPConst
-from siriuspy.pwrsupply.bsmp import FBPEntities
+from siriuspy.pwrsupply.bsmp import EntitiesFBP
 from siriuspy.pwrsupply.controller import FBP_BSMPSim
 from siriuspy.pwrsupply.prucontroller import PRUController
 
@@ -54,10 +54,10 @@ def bsmp_create(device_id, simulate=simulate):
     """Create BSMP object."""
     if simulate is True:
         pru = PRUSim()
-        bsmp = FBP_BSMPSim(pru, device_id, FBPEntities())
+        bsmp = FBP_BSMPSim(pru, device_id, EntitiesFBP())
     else:
         pru = PRU()
-        bsmp = BSMP(pru, device_id, FBPEntities())
+        bsmp = BSMP(pru, device_id, EntitiesFBP())
     return bsmp
 
 
