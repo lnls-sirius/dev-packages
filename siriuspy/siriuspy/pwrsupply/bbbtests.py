@@ -18,7 +18,7 @@ BBB1_device_ids = (1, 2)
 BBB2_device_ids = (5, 6)
 
 simulate = False
-psmodel = 'FBP'
+udcmodel = 'FBP'
 
 siggen_config = [
     # --- siggen sine parameters ---
@@ -78,7 +78,7 @@ def pruc_create(device_ids=BBB1_device_ids,
                 simulate=simulate):
     """Method."""
     # create BBB controller
-    pruc = PRUController(psmodel=psmodel,
+    pruc = PRUController(udcmodel=udcmodel,
                          device_ids=device_ids,
                          simulate=simulate,
                          processing=True,

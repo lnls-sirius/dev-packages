@@ -14,7 +14,7 @@ from threading import Thread as _Thread
 from threading import Lock as _Lock
 from copy import deepcopy as _dcopy
 
-from siriuspy.bsmp import BSMP as _BSMP
+# from siriuspy.bsmp import BSMP as _BSMP
 from siriuspy.bsmp import Response as _Response
 from siriuspy.bsmp.exceptions import SerialError as _SerialError
 
@@ -31,16 +31,16 @@ from siriuspy.pwrsupply.bsmp import ConstFBP as _ConstFBP
 from siriuspy.pwrsupply.bsmp import ConstFAC as _ConstFAC
 from siriuspy.pwrsupply.bsmp import ConstFAC_ACDC as _ConstFAC_ACDC
 from siriuspy.pwrsupply.bsmp import Parameters as _Parameters
-from siriuspy.pwrsupply.bsmp import EntitiesFBP as _EntitiesFBP
-from siriuspy.pwrsupply.bsmp import EntitiesFAC as _EntitiesFAC
-from siriuspy.pwrsupply.bsmp import EntitiesFAC_ACDC as _EntitiesFAC_ACDC
+# from siriuspy.pwrsupply.bsmp import EntitiesFBP as _EntitiesFBP
+# from siriuspy.pwrsupply.bsmp import EntitiesFAC as _EntitiesFAC
+# from siriuspy.pwrsupply.bsmp import EntitiesFAC_ACDC as _EntitiesFAC_ACDC
 
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 
-from siriuspy.pwrsupply.controller import BSMPSimFBP as _FBP_BSMPSim
-from siriuspy.pwrsupply.controller import BSMPSimFAC as _FAC_BSMPSim
-from siriuspy.pwrsupply.controller import BSMPSimFAC_ACDC as _FAC_ACDC_BSMPSim
-
+from siriuspy.pwrsupply.controller import UDC as _UDC
+# from siriuspy.pwrsupply.controller import BSMPSim_FBP as _BSMPSim_FBP
+# from siriuspy.pwrsupply.controller import BSMPSim_FAC as _BSMPSim_FAC
+# from siriuspy.pwrsupply.controller import BSMPSim_FAC_ACDC as _BSMPSim_FAC_ACDC
 
 
 # NOTE: On current behaviour of PRU and Power Supplies:
@@ -655,34 +655,25 @@ class PRUController:
 
     # --- public interface ---
 
-    def __init__(self, psmodel, device_ids,
+    def __init__(self,
+                 udcmodel,
+                 device_ids,
                  simulate=False,
                  processing=True,
                  scanning=True,
                  reset=True):
         """Init."""
-        # define constant namespaces
-        if psmodel == 'FBP':
-            self.VGROUPS = _BSMPVarGroupsFBP
-            self.BSMP = _ConstFBP
-        elif psmodel == 'FAC':
-            self.VGROUPS = _BSMPVarGroupsFAC
-            self.BSMP = _ConstFAC
-        elif psmodel == 'FAC_ACDC':
-            self.VGROUPS = _BSMPVarGroupsFAC_ACDC
-            self.BSMP = _ConstFAC_ACDC
-        else:
-            raise NotImplementedError(psmodel)
-        self._groups = self.VGROUPS.groups
-
         # check if another instance is running
         PRUController._check_instance()
 
+        # store udcmodel
+        self._udcmodel = udcmodel
+
+        # define constant namespaces
+        self._initialize_const_namespace()
+
         # store simulation mode
         self._simulate = simulate
-
-        # store psmodel
-        self._psmodel = psmodel
 
         # sorted list of device ids
         if len(device_ids) > 4:
@@ -698,7 +689,7 @@ class PRUController:
         self._initialize_pru()
 
         # initialize BSMP
-        self._initialize_bsmp()
+        self._initialize_udc()
 
         # reset power supply controllers
         # TODO: this should be invoked in the case of IOC setting state of HW
@@ -1131,6 +1122,22 @@ class PRUController:
         self.running = False
         PRUController._instance_running = False
 
+    def _initialize_const_namespace(self):
+        # define constant namespaces
+        if self._udcmodel == 'FBP':
+            self.VGROUPS = _BSMPVarGroupsFBP
+            self.BSMP = _ConstFBP
+        elif self._udcmodel == 'FAC':
+            self.VGROUPS = _BSMPVarGroupsFAC
+            self.BSMP = _ConstFAC
+        elif self._udcmodel == 'FAC_ACDC':
+            self.VGROUPS = _BSMPVarGroupsFAC_ACDC
+            self.BSMP = _ConstFAC_ACDC
+        else:
+            raise NotImplementedError(self._udcmodel)
+
+        self._groups = self.VGROUPS.groups
+
     def _initialize_pru(self):
 
         # create PRU object
@@ -1151,7 +1158,7 @@ class PRUController:
                         list(_DEFAULT_WFMDATA),  # 4th power supply
                         ]
 
-    def _initialize_bsmp(self):
+    def _initialize_udc(self):
 
         # prune variables from mirror group
         self._init_prune_mirror_group()
@@ -1159,8 +1166,9 @@ class PRUController:
         # create attribute with state of connections
         self._connected = {id: False for id in self.device_ids}
 
-        # create BSMP devices
-        self._bsmp = self._init_create_bsmp_connectors()
+        # create UDC
+        udc = _UDC(self._pru, self._udcmodel, self._device_ids, self._simulate)
+        self._udc = udc
 
     def _bsmp_reset_ps_controllers(self):
 
@@ -1184,7 +1192,7 @@ class PRUController:
 
     def _init_prune_mirror_group(self):
 
-        if self._psmodel != 'FBP':
+        if self._udcmodel != 'FBP':
             return
         # gather mirror variables that will be used
         nr_devs = len(self.device_ids)
@@ -1197,30 +1205,34 @@ class PRUController:
         # prune from mirror group variables not used
         self._groups[self.VGROUPS.MIRROR] = tuple(var_ids)
 
-    def _init_create_bsmp_connectors(self):
-        bsmp = dict()
-        for id in self._device_ids:
-            if self._simulate:
-                # TODO: generalize using bsmp_entities
-                if self._psmodel == 'FBP':
-                    bsmp[id] = _FBP_BSMPSim(self._pru)
-                elif self._psmodel == 'FAC':
-                    bsmp[id] = _FAC_BSMPSim(self._pru)
-                elif self._psmodel == 'FAC_ACDC':
-                    bsmp[id] = _FAC_ACDC_BSMPSim(self._pru)
-                else:
-                    raise NotImplementedError()
-            else:
-                if self._psmodel == 'FBP':
-                    bsmp_entities = _EntitiesFBP()
-                elif self._psmodel == 'FAC':
-                    bsmp_entities = _EntitiesFAC()
-                elif self._psmodel == 'FAC_ACDC':
-                    bsmp_entities = _EntitiesFAC_ACDC()
-                else:
-                    raise NotImplementedError()
-                bsmp[id] = _BSMP(self._pru, id, bsmp_entities)
-        return bsmp
+    # def _init_create_bsmp_connectors(self):
+    #     udc = _UDC(self._pru, self._device_ids, self._udcmodel, self._simulate)
+    #     return udc
+
+    # def _init_create_bsmp_connectors(self):
+    #     bsmp = dict()
+    #     for id in self._device_ids:
+    #         if self._simulate:
+    #             # TODO: generalize using bsmp_entities
+    #             if self._udcmodel == 'FBP':
+    #                 bsmp[id] = _BSMPSim_FBP(self._pru)
+    #             elif self._udcmodel == 'FAC':
+    #                 bsmp[id] = _BSMPSim_FAC(self._pru)
+    #             elif self._udcmodel == 'FAC_ACDC':
+    #                 bsmp[id] = _BSMPSim_FAC_ACDC(self._pru)
+    #             else:
+    #                 raise NotImplementedError()
+    #         else:
+    #             if self._udcmodel == 'FBP':
+    #                 bsmp_entities = _EntitiesFBP()
+    #             elif self._udcmodel == 'FAC':
+    #                 bsmp_entities = _EntitiesFAC()
+    #             elif self._udcmodel == 'FAC_ACDC':
+    #                 bsmp_entities = _EntitiesFAC_ACDC()
+    #             else:
+    #                 raise NotImplementedError()
+    #             bsmp[id] = _BSMP(self._pru, id, bsmp_entities)
+    #     return bsmp
 
     def _init_check_version(self):
         if not self.connected:
@@ -1341,7 +1353,7 @@ class PRUController:
             #     print('reading mirror variable group for ids:{}...'.format(
             #         device_ids))
             for id in device_ids:
-                ack[id], data[id] = self._bsmp[id].read_group_variables(
+                ack[id], data[id] = self._udc[id].read_group_variables(
                     group_id=group_id,
                     timeout=self._delay_read_group_variables)
             # if group_id == self.VGROUPS.RMPWFM:
@@ -1410,10 +1422,10 @@ class PRUController:
                 # TODO: turn off added random fluctuations.
                 # commenting out this fluctuation cpu usage is reduced from
                 # 20% to 19.5% at BBB1
-                if self._psmodel == 'FBP':
+                if self._udcmodel == 'FBP':
                     copy_var_vals[id][self.BSMP.V_I_LOAD] += \
                         0.00001*_random.uniform(-1.0, +1.0)
-                elif self._psmodel == 'FAC':
+                elif self._udcmodel == 'FAC':
                     copy_var_vals[id][self.BSMP.V_I_LOAD1] += \
                         0.00001*_random.uniform(-1.0, +1.0)
                     copy_var_vals[id][self.BSMP.V_I_LOAD2] += \
@@ -1451,7 +1463,7 @@ class PRUController:
         try:
             for id in device_ids:
                 ack[id], data[id] = \
-                    self._bsmp[id].execute_function(function_id, args)
+                    self._udc[id].execute_function(function_id, args)
         except (_SerialError, IndexError):
             print('SerialError exception in {}'.format(
                 ('F', device_ids, function_id, args)))
@@ -1542,12 +1554,12 @@ class PRUController:
         for id in self._device_ids:
             # remove previous variables groups and fresh ones
             try:
-                self._bsmp[id].remove_all_groups(
+                self._udc[id].remove_all_groups(
                     timeout=self._delay_remove_groups)
                 self._connected[id] = True
                 for group_id in groups_ids[3:]:
                     var_ids = self._groups[group_id]
-                    self._bsmp[id].create_group(
+                    self._udc[id].create_group(
                         var_ids, timeout=self._delay_create_group)
             except _SerialError:
                 print('_bsmp_init_groups: serial error!')
