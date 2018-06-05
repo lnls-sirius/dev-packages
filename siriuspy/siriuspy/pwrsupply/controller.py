@@ -9,10 +9,12 @@ from siriuspy.bsmp import Response as _Response
 # from siriuspy.bsmp import BSMP as _BSMP
 from siriuspy.bsmp import BSMPSim as _BSMPSim
 from siriuspy.pwrsupply.bsmp import FBPEntities as _FBPEntities
+from siriuspy.pwrsupply.bsmp import FBP_DCLINKEntities as _FBP_DCLINKEntities
 from siriuspy.pwrsupply.bsmp import FACEntities as _FACEntities
 from siriuspy.pwrsupply.bsmp import FAC_ACDCEntities as _FAC_ACDCEntities
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 from siriuspy.pwrsupply.bsmp import ConstFBP as _cFBP
+from siriuspy.pwrsupply.bsmp import ConstFBP_DCLINK as _cFBP_DCLINK
 from siriuspy.pwrsupply.bsmp import ConstFAC as _cFAC
 from siriuspy.pwrsupply.bsmp import ConstFAC_ACDC as _cFAC_ACDC
 from .siggen import SignalFactory as _SignalFactory
@@ -65,7 +67,20 @@ class _FAC_ACDC:
         return ()
 
 
+class _FBP_DCLINK:
+    """SlowRef FAC_ACDC state."""
+
+    def _get_i_load_fluctuation_rms(self):
+        return _I_LOAD_FLUCTUATION_RMS
+
+    def _get_constants(self):
+        return _cFBP_DCLINK
+
+    def _get_iloads_ids(self):
+        return ()
+
 # --- State classes ---
+
 
 class _State:
     """Represent operation modes."""
@@ -414,6 +429,12 @@ class CycleStateFBP(_CycleState, _FBP):
     pass
 
 
+class SlowRefStateFBP_DCLINK(_SlowRefState, _FAC_ACDC):
+    """SlowRef FAC_ACDC state."""
+
+    pass
+
+
 class SlowRefStateFAC_ACDC(_SlowRefState, _FAC_ACDC):
     """SlowRef FAC_ACDC state."""
 
@@ -502,6 +523,59 @@ class _GBSMPSim(_BSMPSim):
                 self._state.trigger(self._variables)
 
 
+class BSMPSimFBP(_GBSMPSim, _FBP):
+
+    def _get_entities(self):
+        return _FBPEntities()
+
+    def _get_states(self):
+        return [SlowRefStateFBP(), SlowRefSyncStateFBP(),
+                CycleStateFBP(self._pru)]
+
+    def _get_init_variables(self):
+
+        firmware = [b'S', b'i', b'm', b'u', b'l', b'a', b't', b'i', b'o', b'n']
+        while len(firmware) < 128:
+            firmware.append('\x00'.encode())
+        variables = [
+            0b10000,  # V_PS_STATUS
+            0.0, 0.0, firmware, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0,
+            [0.0, 0.0, 0.0, 0.0], 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0,
+            0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        default_siggen_parms = \
+            _SignalFactory.DEFAULT_CONFIGS['Sine']
+        variables[_cFBP.V_SIGGEN_TYPE] = default_siggen_parms[0]
+        variables[_cFBP.V_SIGGEN_NUM_CYCLES] = default_siggen_parms[1]
+        variables[_cFBP.V_SIGGEN_FREQ] = default_siggen_parms[2]
+        variables[_cFBP.V_SIGGEN_AMPLITUDE] = default_siggen_parms[3]
+        variables[_cFBP.V_SIGGEN_OFFSET] = default_siggen_parms[4]
+        variables[_cFBP.V_SIGGEN_AUX_PARAM] = default_siggen_parms[5:9]
+        return variables
+
+
+class BSMPSimFBP_DCLINK(_GBSMPSim, _FBP_DCLINK):
+
+    def _get_entities(self):
+        return _FBP_DCLINKEntities()
+
+    def _get_states(self):
+        return [SlowRefStateFBP_DCLINK]
+
+    def _get_init_variables(self):
+        variables = []
+        firmware = [b'S', b'i', b'm', b'u', b'l', b'a', b't', b'i', b'o', b'n']
+        while len(firmware) < 128:
+            firmware.append('\x00'.encode())
+        for idx, variable in enumerate(_FBP_DCLINKEntities.Variables):
+            if idx == 3:
+                variables[idx] = firmware
+            if 'uint' in variable.type:
+                variables[idx] = 0
+            elif variable.type == 'float':
+                variables[idx] = 0
+        return variables
+
+
 class BSMPSimFAC(_GBSMPSim, _FAC):
 
     def _get_entities(self):
@@ -536,36 +610,6 @@ class BSMPSimFAC(_GBSMPSim, _FAC):
         return variables
 
 
-class BSMPSimFBP(_GBSMPSim, _FBP):
-
-    def _get_entities(self):
-        return _FBPEntities()
-
-    def _get_states(self):
-        return [SlowRefStateFBP(), SlowRefSyncStateFBP(),
-                CycleStateFBP(self._pru)]
-
-    def _get_init_variables(self):
-
-        firmware = [b'S', b'i', b'm', b'u', b'l', b'a', b't', b'i', b'o', b'n']
-        while len(firmware) < 128:
-            firmware.append('\x00'.encode())
-        variables = [
-            0b10000,  # V_PS_STATUS
-            0.0, 0.0, firmware, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0,
-            [0.0, 0.0, 0.0, 0.0], 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0,
-            0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        default_siggen_parms = \
-            _SignalFactory.DEFAULT_CONFIGS['Sine']
-        variables[_cFBP.V_SIGGEN_TYPE] = default_siggen_parms[0]
-        variables[_cFBP.V_SIGGEN_NUM_CYCLES] = default_siggen_parms[1]
-        variables[_cFBP.V_SIGGEN_FREQ] = default_siggen_parms[2]
-        variables[_cFBP.V_SIGGEN_AMPLITUDE] = default_siggen_parms[3]
-        variables[_cFBP.V_SIGGEN_OFFSET] = default_siggen_parms[4]
-        variables[_cFBP.V_SIGGEN_AUX_PARAM] = default_siggen_parms[5:9]
-        return variables
-
-
 class BSMPSimFAC_ACDC(_GBSMPSim, _FAC_ACDC):
 
     def _get_entities(self):
@@ -597,9 +641,6 @@ class BSMPSimFAC_ACDC(_GBSMPSim, _FAC_ACDC):
         variables[_cFAC.V_SIGGEN_OFFSET] = default_siggen_parms[4]
         variables[_cFAC.V_SIGGEN_AUX_PARAM] = default_siggen_parms[5:9]
         return variables
-
-
-
 
 
 # # --- FBP BSMP controller simulation ---
