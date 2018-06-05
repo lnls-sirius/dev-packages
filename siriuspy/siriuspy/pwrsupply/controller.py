@@ -681,12 +681,12 @@ class UDC:
 
     def _create_bsmp_connectors(self):
         bsmp = dict()
-        entities, bsmpsim_class = udcmodels[self._udcmodel]
+        entities_class, bsmpsim_class = udcmodels[self._udcmodel]
         for id in self._device_ids:
             if self._simulate:
                 bsmp[id] = bsmpsim_class(self._pru)
             else:
-                bsmp[id] = _BSMP(self._pru, id, entities)
+                bsmp[id] = _BSMP(self._pru, id, entities_class())
         return bsmp
 
     def __getitem__(self, index):
