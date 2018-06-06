@@ -14,22 +14,26 @@ from threading import Thread as _Thread
 from threading import Lock as _Lock
 from copy import deepcopy as _dcopy
 
-from siriuspy.bsmp import BSMP as _BSMP
+# from siriuspy.bsmp import BSMP as _BSMP
 from siriuspy.bsmp import Response as _Response
 from siriuspy.bsmp.exceptions import SerialError as _SerialError
+
 from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
 from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
+
 from siriuspy.pwrsupply.pru import Const as _PRUConst
-# from siriuspy.pwrsupply.pru import PRUInterface as _PRUInterface
 from siriuspy.pwrsupply.pru import PRU as _PRU
 from siriuspy.pwrsupply.pru import PRUSim as _PRUSim
+
 from siriuspy.pwrsupply.bsmp import __version__ as _ps_bsmp_version
-from siriuspy.pwrsupply.bsmp import Const as _c
-from siriuspy.pwrsupply.bsmp import MAP_MIRROR_2_ORIG as _mirror_map
+from siriuspy.pwrsupply.bsmp import MAP_MIRROR_2_ORIG_FBP as _mirror_map_fbp
+from siriuspy.pwrsupply.bsmp import ConstFBP as _ConstFBP
+from siriuspy.pwrsupply.bsmp import ConstFAC as _ConstFAC
+from siriuspy.pwrsupply.bsmp import ConstFAC_ACDC as _ConstFAC_ACDC
 from siriuspy.pwrsupply.bsmp import Parameters as _Parameters
-from siriuspy.pwrsupply.bsmp import FBPEntities as _FBPEntities
+
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
-from siriuspy.pwrsupply.controller import FBP_BSMPSim as _FBP_BSMPSim
+from siriuspy.pwrsupply.controller import UDC as _UDC
 
 
 # NOTE: On current behaviour of PRU and Power Supplies:
@@ -204,160 +208,365 @@ class _BSMPVarGroups:
     CYCLE = SYNCOFF
     RMPWFM = MIRROR
 
+
+class _BSMPVarGroupsFBP(_BSMPVarGroups):
+    """Beaglebone Variagle groups for FBP."""
+
     groups = dict()
 
     # reserved variable groups (not to be used)
-    groups[ALL] = (
+    groups[_BSMPVarGroups.ALL] = (
         # --- common variables
-        _c.V_PS_STATUS,
-        _c.V_PS_SETPOINT,
-        _c.V_PS_REFERENCE,
-        _c.V_FIRMWARE_VERSION,
-        _c.V_COUNTER_SET_SLOWREF,
-        _c.V_COUNTER_SYNC_PULSE,
-        _c.V_SIGGEN_ENABLE,
-        _c.V_SIGGEN_TYPE,
-        _c.V_SIGGEN_NUM_CYCLES,
-        _c.V_SIGGEN_N,
-        _c.V_SIGGEN_FREQ,
-        _c.V_SIGGEN_AMPLITUDE,
-        _c.V_SIGGEN_OFFSET,
-        _c.V_SIGGEN_AUX_PARAM,
+        _ConstFBP.V_PS_STATUS,
+        _ConstFBP.V_PS_SETPOINT,
+        _ConstFBP.V_PS_REFERENCE,
+        _ConstFBP.V_FIRMWARE_VERSION,
+        _ConstFBP.V_COUNTER_SET_SLOWREF,
+        _ConstFBP.V_COUNTER_SYNC_PULSE,
+        _ConstFBP.V_SIGGEN_ENABLE,
+        _ConstFBP.V_SIGGEN_TYPE,
+        _ConstFBP.V_SIGGEN_NUM_CYCLES,
+        _ConstFBP.V_SIGGEN_N,
+        _ConstFBP.V_SIGGEN_FREQ,
+        _ConstFBP.V_SIGGEN_AMPLITUDE,
+        _ConstFBP.V_SIGGEN_OFFSET,
+        _ConstFBP.V_SIGGEN_AUX_PARAM,
         # --- undefined variables
-        _c.V_UNDEF14,
-        _c.V_UNDEF15,
-        _c.V_UNDEF16,
-        _c.V_UNDEF17,
-        _c.V_UNDEF18,
-        _c.V_UNDEF19,
-        _c.V_UNDEF20,
-        _c.V_UNDEF21,
-        _c.V_UNDEF22,
-        _c.V_UNDEF23,
-        _c.V_UNDEF24,
-        # --- FSB variables ---
-        _c.V_PS_SOFT_INTERLOCKS,
-        _c.V_PS_HARD_INTERLOCKS,
-        _c.V_I_LOAD,
-        _c.V_V_LOAD,
-        _c.V_V_DCLINK,
-        _c.V_TEMP_SWITCHES,
-        _c.V_DUTY_CYCLE,
+        _ConstFBP.V_UNDEF14,
+        _ConstFBP.V_UNDEF15,
+        _ConstFBP.V_UNDEF16,
+        _ConstFBP.V_UNDEF17,
+        _ConstFBP.V_UNDEF18,
+        _ConstFBP.V_UNDEF19,
+        _ConstFBP.V_UNDEF20,
+        _ConstFBP.V_UNDEF21,
+        _ConstFBP.V_UNDEF22,
+        _ConstFBP.V_UNDEF23,
+        _ConstFBP.V_UNDEF24,
+        # --- FBP variables ---
+        _ConstFBP.V_PS_SOFT_INTERLOCKS,
+        _ConstFBP.V_PS_HARD_INTERLOCKS,
+        _ConstFBP.V_I_LOAD,
+        _ConstFBP.V_V_LOAD,
+        _ConstFBP.V_V_DCLINK,
+        _ConstFBP.V_TEMP_SWITCHES,
+        _ConstFBP.V_DUTY_CYCLE,
         # --- undefined variables
-        _c.V_UNDEF32,
-        _c.V_UNDEF33,
-        _c.V_UNDEF34,
-        _c.V_UNDEF35,
-        _c.V_UNDEF36,
-        _c.V_UNDEF37,
-        _c.V_UNDEF38,
-        _c.V_UNDEF39,
+        _ConstFBP.V_UNDEF32,
+        _ConstFBP.V_UNDEF33,
+        _ConstFBP.V_UNDEF34,
+        _ConstFBP.V_UNDEF35,
+        _ConstFBP.V_UNDEF36,
+        _ConstFBP.V_UNDEF37,
+        _ConstFBP.V_UNDEF38,
+        _ConstFBP.V_UNDEF39,
         # --- mirror variables ---
-        _c.V_PS_STATUS_1,
-        _c.V_PS_STATUS_2,
-        _c.V_PS_STATUS_3,
-        _c.V_PS_STATUS_4,
-        _c.V_PS_SETPOINT_1,
-        _c.V_PS_SETPOINT_2,
-        _c.V_PS_SETPOINT_3,
-        _c.V_PS_SETPOINT_4,
-        _c.V_PS_REFERENCE_1,
-        _c.V_PS_REFERENCE_2,
-        _c.V_PS_REFERENCE_3,
-        _c.V_PS_REFERENCE_4,
-        _c.V_PS_SOFT_INTERLOCKS_1,
-        _c.V_PS_SOFT_INTERLOCKS_2,
-        _c.V_PS_SOFT_INTERLOCKS_3,
-        _c.V_PS_SOFT_INTERLOCKS_4,
-        _c.V_PS_HARD_INTERLOCKS_1,
-        _c.V_PS_HARD_INTERLOCKS_2,
-        _c.V_PS_HARD_INTERLOCKS_3,
-        _c.V_PS_HARD_INTERLOCKS_4,
-        _c.V_I_LOAD_1,
-        _c.V_I_LOAD_2,
-        _c.V_I_LOAD_3,
-        _c.V_I_LOAD_4,)
-    groups[READONLY] = groups[ALL]
-    groups[WRITEABLE] = tuple()
+        _ConstFBP.V_PS_STATUS_1,
+        _ConstFBP.V_PS_STATUS_2,
+        _ConstFBP.V_PS_STATUS_3,
+        _ConstFBP.V_PS_STATUS_4,
+        _ConstFBP.V_PS_SETPOINT_1,
+        _ConstFBP.V_PS_SETPOINT_2,
+        _ConstFBP.V_PS_SETPOINT_3,
+        _ConstFBP.V_PS_SETPOINT_4,
+        _ConstFBP.V_PS_REFERENCE_1,
+        _ConstFBP.V_PS_REFERENCE_2,
+        _ConstFBP.V_PS_REFERENCE_3,
+        _ConstFBP.V_PS_REFERENCE_4,
+        _ConstFBP.V_PS_SOFT_INTERLOCKS_1,
+        _ConstFBP.V_PS_SOFT_INTERLOCKS_2,
+        _ConstFBP.V_PS_SOFT_INTERLOCKS_3,
+        _ConstFBP.V_PS_SOFT_INTERLOCKS_4,
+        _ConstFBP.V_PS_HARD_INTERLOCKS_1,
+        _ConstFBP.V_PS_HARD_INTERLOCKS_2,
+        _ConstFBP.V_PS_HARD_INTERLOCKS_3,
+        _ConstFBP.V_PS_HARD_INTERLOCKS_4,
+        _ConstFBP.V_I_LOAD_1,
+        _ConstFBP.V_I_LOAD_2,
+        _ConstFBP.V_I_LOAD_3,
+        _ConstFBP.V_I_LOAD_4,)
+    groups[_BSMPVarGroups.READONLY] = groups[_BSMPVarGroups.ALL]
+    groups[_BSMPVarGroups.WRITEABLE] = tuple()
 
     # new variable groups usefull for PRUController.
-    groups[ALLRELEVANT] = (
+    groups[_BSMPVarGroups.ALLRELEVANT] = (
         # --- common variables
-        _c.V_PS_STATUS,
-        _c.V_PS_SETPOINT,
-        _c.V_PS_REFERENCE,
-        _c.V_FIRMWARE_VERSION,
-        _c.V_COUNTER_SET_SLOWREF,
-        _c.V_COUNTER_SYNC_PULSE,
-        _c.V_SIGGEN_ENABLE,
-        _c.V_SIGGEN_TYPE,
-        _c.V_SIGGEN_NUM_CYCLES,
-        _c.V_SIGGEN_N,
-        _c.V_SIGGEN_FREQ,
-        _c.V_SIGGEN_AMPLITUDE,
-        _c.V_SIGGEN_OFFSET,
-        _c.V_SIGGEN_AUX_PARAM,
+        _ConstFBP.V_PS_STATUS,
+        _ConstFBP.V_PS_SETPOINT,
+        _ConstFBP.V_PS_REFERENCE,
+        _ConstFBP.V_FIRMWARE_VERSION,
+        _ConstFBP.V_COUNTER_SET_SLOWREF,
+        _ConstFBP.V_COUNTER_SYNC_PULSE,
+        _ConstFBP.V_SIGGEN_ENABLE,
+        _ConstFBP.V_SIGGEN_TYPE,
+        _ConstFBP.V_SIGGEN_NUM_CYCLES,
+        _ConstFBP.V_SIGGEN_N,
+        _ConstFBP.V_SIGGEN_FREQ,
+        _ConstFBP.V_SIGGEN_AMPLITUDE,
+        _ConstFBP.V_SIGGEN_OFFSET,
+        _ConstFBP.V_SIGGEN_AUX_PARAM,
         # --- FSB variables ---
-        _c.V_PS_SOFT_INTERLOCKS,
-        _c.V_PS_HARD_INTERLOCKS,
-        _c.V_I_LOAD,
-        _c.V_V_LOAD,
-        _c.V_V_DCLINK,
-        _c.V_TEMP_SWITCHES,
-        _c.V_DUTY_CYCLE,)
-    groups[SYNCOFF] = (
+        _ConstFBP.V_PS_SOFT_INTERLOCKS,
+        _ConstFBP.V_PS_HARD_INTERLOCKS,
+        _ConstFBP.V_I_LOAD,
+        _ConstFBP.V_V_LOAD,
+        _ConstFBP.V_V_DCLINK,
+        _ConstFBP.V_TEMP_SWITCHES,
+        _ConstFBP.V_DUTY_CYCLE,)
+    groups[_BSMPVarGroups.SYNCOFF] = (
         # =======================================================
         # cmd exec_funcion read_group:
         #   17.2 ± 0.3 ms @ BBB1, 4 ps as measured from Python
         #   180us @ BBB1, 1 ps as measured in the oscilloscope
         # =======================================================
         # --- common variables
-        _c.V_PS_STATUS,
-        _c.V_PS_SETPOINT,
-        _c.V_PS_REFERENCE,
-        _c.V_COUNTER_SET_SLOWREF,
-        _c.V_COUNTER_SYNC_PULSE,
-        _c.V_SIGGEN_ENABLE,
-        _c.V_SIGGEN_TYPE,
-        _c.V_SIGGEN_NUM_CYCLES,
-        _c.V_SIGGEN_N,
-        _c.V_SIGGEN_FREQ,
-        _c.V_SIGGEN_AMPLITUDE,
-        _c.V_SIGGEN_OFFSET,
-        _c.V_SIGGEN_AUX_PARAM,
+        _ConstFBP.V_PS_STATUS,
+        _ConstFBP.V_PS_SETPOINT,
+        _ConstFBP.V_PS_REFERENCE,
+        _ConstFBP.V_COUNTER_SET_SLOWREF,
+        _ConstFBP.V_COUNTER_SYNC_PULSE,
+        _ConstFBP.V_SIGGEN_ENABLE,
+        _ConstFBP.V_SIGGEN_TYPE,
+        _ConstFBP.V_SIGGEN_NUM_CYCLES,
+        _ConstFBP.V_SIGGEN_N,
+        _ConstFBP.V_SIGGEN_FREQ,
+        _ConstFBP.V_SIGGEN_AMPLITUDE,
+        _ConstFBP.V_SIGGEN_OFFSET,
+        _ConstFBP.V_SIGGEN_AUX_PARAM,
         # --- FSB variables ---
-        _c.V_PS_SOFT_INTERLOCKS,
-        _c.V_PS_HARD_INTERLOCKS,
-        _c.V_I_LOAD,
-        _c.V_V_LOAD,
-        _c.V_V_DCLINK,
-        _c.V_TEMP_SWITCHES,)
-    groups[MIRROR] = (
+        _ConstFBP.V_PS_SOFT_INTERLOCKS,
+        _ConstFBP.V_PS_HARD_INTERLOCKS,
+        _ConstFBP.V_I_LOAD,
+        _ConstFBP.V_V_LOAD,
+        _ConstFBP.V_V_DCLINK,
+        _ConstFBP.V_TEMP_SWITCHES,)
+    groups[_BSMPVarGroups.MIRROR] = (
         # --- mirror variables ---
-        _c.V_PS_STATUS_1,
-        _c.V_PS_STATUS_2,
-        _c.V_PS_STATUS_3,
-        _c.V_PS_STATUS_4,
-        _c.V_PS_SETPOINT_1,
-        _c.V_PS_SETPOINT_2,
-        _c.V_PS_SETPOINT_3,
-        _c.V_PS_SETPOINT_4,
-        _c.V_PS_REFERENCE_1,
-        _c.V_PS_REFERENCE_2,
-        _c.V_PS_REFERENCE_3,
-        _c.V_PS_REFERENCE_4,
-        _c.V_PS_SOFT_INTERLOCKS_1,
-        _c.V_PS_SOFT_INTERLOCKS_2,
-        _c.V_PS_SOFT_INTERLOCKS_3,
-        _c.V_PS_SOFT_INTERLOCKS_4,
-        _c.V_PS_HARD_INTERLOCKS_1,
-        _c.V_PS_HARD_INTERLOCKS_2,
-        _c.V_PS_HARD_INTERLOCKS_3,
-        _c.V_PS_HARD_INTERLOCKS_4,
-        _c.V_I_LOAD_1,
-        _c.V_I_LOAD_2,
-        _c.V_I_LOAD_3,
-        _c.V_I_LOAD_4,)
+        _ConstFBP.V_PS_STATUS_1,
+        _ConstFBP.V_PS_STATUS_2,
+        _ConstFBP.V_PS_STATUS_3,
+        _ConstFBP.V_PS_STATUS_4,
+        _ConstFBP.V_PS_SETPOINT_1,
+        _ConstFBP.V_PS_SETPOINT_2,
+        _ConstFBP.V_PS_SETPOINT_3,
+        _ConstFBP.V_PS_SETPOINT_4,
+        _ConstFBP.V_PS_REFERENCE_1,
+        _ConstFBP.V_PS_REFERENCE_2,
+        _ConstFBP.V_PS_REFERENCE_3,
+        _ConstFBP.V_PS_REFERENCE_4,
+        _ConstFBP.V_PS_SOFT_INTERLOCKS_1,
+        _ConstFBP.V_PS_SOFT_INTERLOCKS_2,
+        _ConstFBP.V_PS_SOFT_INTERLOCKS_3,
+        _ConstFBP.V_PS_SOFT_INTERLOCKS_4,
+        _ConstFBP.V_PS_HARD_INTERLOCKS_1,
+        _ConstFBP.V_PS_HARD_INTERLOCKS_2,
+        _ConstFBP.V_PS_HARD_INTERLOCKS_3,
+        _ConstFBP.V_PS_HARD_INTERLOCKS_4,
+        _ConstFBP.V_I_LOAD_1,
+        _ConstFBP.V_I_LOAD_2,
+        _ConstFBP.V_I_LOAD_3,
+        _ConstFBP.V_I_LOAD_4,)
+
+
+class _BSMPVarGroupsFAC(_BSMPVarGroups):
+    """Beaglebone Variagle groups for FAC."""
+
+    groups = dict()
+
+    # reserved variable groups (not to be used)
+    groups[_BSMPVarGroups.ALL] = (
+        # --- common variables
+        _ConstFAC.V_PS_STATUS,
+        _ConstFAC.V_PS_SETPOINT,
+        _ConstFAC.V_PS_REFERENCE,
+        _ConstFAC.V_FIRMWARE_VERSION,
+        _ConstFAC.V_COUNTER_SET_SLOWREF,
+        _ConstFAC.V_COUNTER_SYNC_PULSE,
+        _ConstFAC.V_SIGGEN_ENABLE,
+        _ConstFAC.V_SIGGEN_TYPE,
+        _ConstFAC.V_SIGGEN_NUM_CYCLES,
+        _ConstFAC.V_SIGGEN_N,
+        _ConstFAC.V_SIGGEN_FREQ,
+        _ConstFAC.V_SIGGEN_AMPLITUDE,
+        _ConstFAC.V_SIGGEN_OFFSET,
+        _ConstFAC.V_SIGGEN_AUX_PARAM,
+        # --- undefined variables
+        _ConstFAC.V_UNDEF14,
+        _ConstFAC.V_UNDEF15,
+        _ConstFAC.V_UNDEF16,
+        _ConstFAC.V_UNDEF17,
+        _ConstFAC.V_UNDEF18,
+        _ConstFAC.V_UNDEF19,
+        _ConstFAC.V_UNDEF20,
+        _ConstFAC.V_UNDEF21,
+        _ConstFAC.V_UNDEF22,
+        _ConstFAC.V_UNDEF23,
+        _ConstFAC.V_UNDEF24,
+        # --- FAC variables ---
+        _ConstFAC.V_PS_SOFT_INTERLOCKS,
+        _ConstFAC.V_PS_HARD_INTERLOCKS,
+        _ConstFAC.V_I_LOAD1,
+        _ConstFAC.V_I_LOAD2,
+        _ConstFAC.V_V_LOAD,
+        _ConstFAC.V_V_CAPACITOR_BANK,
+        _ConstFAC.V_TEMP_INDUCTORS,
+        _ConstFAC.V_TEMP_IGBTS,
+        _ConstFAC.V_DUTY_CYCLE,)
+    groups[_BSMPVarGroups.READONLY] = groups[_BSMPVarGroups.ALL]
+    groups[_BSMPVarGroups.WRITEABLE] = tuple()
+
+    # new variable groups usefull for PRUController.
+    groups[_BSMPVarGroups.ALLRELEVANT] = (
+        # --- common variables
+        _ConstFAC.V_PS_STATUS,
+        _ConstFAC.V_PS_SETPOINT,
+        _ConstFAC.V_PS_REFERENCE,
+        _ConstFAC.V_FIRMWARE_VERSION,
+        _ConstFAC.V_COUNTER_SET_SLOWREF,
+        _ConstFAC.V_COUNTER_SYNC_PULSE,
+        _ConstFAC.V_SIGGEN_ENABLE,
+        _ConstFAC.V_SIGGEN_TYPE,
+        _ConstFAC.V_SIGGEN_NUM_CYCLES,
+        _ConstFAC.V_SIGGEN_N,
+        _ConstFAC.V_SIGGEN_FREQ,
+        _ConstFAC.V_SIGGEN_AMPLITUDE,
+        _ConstFAC.V_SIGGEN_OFFSET,
+        _ConstFAC.V_SIGGEN_AUX_PARAM,
+        # --- FAC variables ---
+        _ConstFBP.V_PS_SOFT_INTERLOCKS,
+        _ConstFBP.V_PS_HARD_INTERLOCKS,
+        _ConstFAC.V_I_LOAD1,
+        _ConstFAC.V_I_LOAD2,
+        _ConstFAC.V_V_LOAD,
+        _ConstFAC.V_V_CAPACITOR_BANK,
+        _ConstFAC.V_TEMP_INDUCTORS,
+        _ConstFAC.V_TEMP_IGBTS,
+        _ConstFAC.V_DUTY_CYCLE,)
+    groups[_BSMPVarGroups.SYNCOFF] = (
+        # --- common variables
+        _ConstFAC.V_PS_STATUS,
+        _ConstFAC.V_PS_SETPOINT,
+        _ConstFAC.V_PS_REFERENCE,
+        _ConstFAC.V_COUNTER_SET_SLOWREF,
+        _ConstFAC.V_COUNTER_SYNC_PULSE,
+        _ConstFAC.V_SIGGEN_ENABLE,
+        _ConstFAC.V_SIGGEN_TYPE,
+        _ConstFAC.V_SIGGEN_NUM_CYCLES,
+        _ConstFAC.V_SIGGEN_N,
+        _ConstFAC.V_SIGGEN_FREQ,
+        _ConstFAC.V_SIGGEN_AMPLITUDE,
+        _ConstFAC.V_SIGGEN_OFFSET,
+        _ConstFAC.V_SIGGEN_AUX_PARAM,
+        # --- FAC variables ---
+        _ConstFBP.V_PS_SOFT_INTERLOCKS,
+        _ConstFBP.V_PS_HARD_INTERLOCKS,
+        _ConstFAC.V_I_LOAD1,
+        _ConstFAC.V_I_LOAD2,
+        _ConstFAC.V_V_LOAD,
+        _ConstFAC.V_V_CAPACITOR_BANK,
+        _ConstFAC.V_TEMP_INDUCTORS,
+        _ConstFAC.V_TEMP_IGBTS,
+        _ConstFAC.V_DUTY_CYCLE,)
+    groups[_BSMPVarGroups.MIRROR] = groups[_BSMPVarGroups.SYNCOFF]
+
+
+class _BSMPVarGroupsFAC_ACDC(_BSMPVarGroups):
+    """Beaglebone Variagle groups for FAC_ACDC."""
+
+    groups = dict()
+
+    # reserved variable groups (not to be used)
+    groups[_BSMPVarGroups.ALL] = (
+        # --- common variables
+        _ConstFAC_ACDC.V_PS_STATUS,
+        _ConstFAC_ACDC.V_PS_SETPOINT,
+        _ConstFAC_ACDC.V_PS_REFERENCE,
+        _ConstFAC_ACDC.V_FIRMWARE_VERSION,
+        _ConstFAC_ACDC.V_COUNTER_SET_SLOWREF,
+        _ConstFAC_ACDC.V_COUNTER_SYNC_PULSE,
+        _ConstFAC_ACDC.V_SIGGEN_ENABLE,
+        _ConstFAC_ACDC.V_SIGGEN_TYPE,
+        _ConstFAC_ACDC.V_SIGGEN_NUM_CYCLES,
+        _ConstFAC_ACDC.V_SIGGEN_N,
+        _ConstFAC_ACDC.V_SIGGEN_FREQ,
+        _ConstFAC_ACDC.V_SIGGEN_AMPLITUDE,
+        _ConstFAC_ACDC.V_SIGGEN_OFFSET,
+        _ConstFAC_ACDC.V_SIGGEN_AUX_PARAM,
+        # --- undefined variables
+        _ConstFAC_ACDC.V_UNDEF14,
+        _ConstFAC_ACDC.V_UNDEF15,
+        _ConstFAC_ACDC.V_UNDEF16,
+        _ConstFAC_ACDC.V_UNDEF17,
+        _ConstFAC_ACDC.V_UNDEF18,
+        _ConstFAC_ACDC.V_UNDEF19,
+        _ConstFAC_ACDC.V_UNDEF20,
+        _ConstFAC_ACDC.V_UNDEF21,
+        _ConstFAC_ACDC.V_UNDEF22,
+        _ConstFAC_ACDC.V_UNDEF23,
+        _ConstFAC_ACDC.V_UNDEF24,
+        # --- FAC_ACDC variables ---
+        _ConstFAC_ACDC.V_PS_SOFT_INTERLOCKS,
+        _ConstFAC_ACDC.V_PS_HARD_INTERLOCKS,
+        _ConstFAC_ACDC.V_CAPACITOR_BANK,
+        _ConstFAC_ACDC.V_OUT_RECTIFIER,
+        _ConstFAC_ACDC.I_OUT_RECTIFIER,
+        _ConstFAC_ACDC.TEMP_HEATSINK,
+        _ConstFAC_ACDC.TEMP_INDUCTORS,
+        _ConstFAC_ACDC.DUTY_CYCLE,)
+    groups[_BSMPVarGroups.READONLY] = groups[_BSMPVarGroups.ALL]
+    groups[_BSMPVarGroups.WRITEABLE] = tuple()
+
+    # new variable groups usefull for PRUController.
+    groups[_BSMPVarGroups.ALLRELEVANT] = (
+        # --- common variables
+        _ConstFAC_ACDC.V_PS_STATUS,
+        _ConstFAC_ACDC.V_PS_SETPOINT,
+        _ConstFAC_ACDC.V_PS_REFERENCE,
+        _ConstFAC_ACDC.V_FIRMWARE_VERSION,
+        _ConstFAC_ACDC.V_COUNTER_SET_SLOWREF,
+        _ConstFAC_ACDC.V_COUNTER_SYNC_PULSE,
+        _ConstFAC_ACDC.V_SIGGEN_ENABLE,
+        _ConstFAC_ACDC.V_SIGGEN_TYPE,
+        _ConstFAC_ACDC.V_SIGGEN_NUM_CYCLES,
+        _ConstFAC_ACDC.V_SIGGEN_N,
+        _ConstFAC_ACDC.V_SIGGEN_FREQ,
+        _ConstFAC_ACDC.V_SIGGEN_AMPLITUDE,
+        _ConstFAC_ACDC.V_SIGGEN_OFFSET,
+        _ConstFAC_ACDC.V_SIGGEN_AUX_PARAM,
+        # --- FAC_ACDC variables ---
+        _ConstFAC_ACDC.V_PS_SOFT_INTERLOCKS,
+        _ConstFAC_ACDC.V_PS_HARD_INTERLOCKS,
+        _ConstFAC_ACDC.V_CAPACITOR_BANK,
+        _ConstFAC_ACDC.V_OUT_RECTIFIER,
+        _ConstFAC_ACDC.I_OUT_RECTIFIER,
+        _ConstFAC_ACDC.TEMP_HEATSINK,
+        _ConstFAC_ACDC.TEMP_INDUCTORS,
+        _ConstFAC_ACDC.DUTY_CYCLE,)
+    groups[_BSMPVarGroups.SYNCOFF] = (
+        # --- common variables
+        _ConstFAC_ACDC.V_PS_STATUS,
+        _ConstFAC_ACDC.V_PS_SETPOINT,
+        _ConstFAC_ACDC.V_PS_REFERENCE,
+        _ConstFAC_ACDC.V_COUNTER_SET_SLOWREF,
+        _ConstFAC_ACDC.V_COUNTER_SYNC_PULSE,
+        _ConstFAC_ACDC.V_SIGGEN_ENABLE,
+        _ConstFAC_ACDC.V_SIGGEN_TYPE,
+        _ConstFAC_ACDC.V_SIGGEN_NUM_CYCLES,
+        _ConstFAC_ACDC.V_SIGGEN_N,
+        _ConstFAC_ACDC.V_SIGGEN_FREQ,
+        _ConstFAC_ACDC.V_SIGGEN_AMPLITUDE,
+        _ConstFAC_ACDC.V_SIGGEN_OFFSET,
+        _ConstFAC_ACDC.V_SIGGEN_AUX_PARAM,
+        # --- FAC_ACDC variables ---
+        _ConstFAC_ACDC.V_PS_SOFT_INTERLOCKS,
+        _ConstFAC_ACDC.V_PS_HARD_INTERLOCKS,
+        _ConstFAC_ACDC.V_CAPACITOR_BANK,
+        _ConstFAC_ACDC.V_OUT_RECTIFIER,
+        _ConstFAC_ACDC.I_OUT_RECTIFIER,
+        _ConstFAC_ACDC.TEMP_HEATSINK,
+        _ConstFAC_ACDC.TEMP_INDUCTORS,
+        _ConstFAC_ACDC.DUTY_CYCLE,)
+    groups[_BSMPVarGroups.MIRROR] = groups[_BSMPVarGroups.SYNCOFF]
 
 
 class PRUController:
@@ -368,9 +577,8 @@ class PRUController:
     controllers.
     """
 
-    # TODO: allow variable-size curves
     # TODO: delete random fluctuation added to measurements
-    # TODO: it might be possible and usefull to use simulated BSMP but real PRU
+    # TODO: it might be possible and useful to use simulated BSMP but real PRU
     # TODO: test not dcopying self._variables_values in _bsmp_update_variables.
     #       we need lock whole up section in that function that does
     #       updating of _variables_values, though. Also lock other class
@@ -393,10 +601,10 @@ class PRUController:
     PRU = _PRUConst
 
     # BSMP variable constants
-    BSMP = _c
+    # BSMP = _ConstFBP
 
     # BSMP variable group constants
-    VGROUPS = _BSMPVarGroups
+    # VGROUPS = _BSMPVarGroups
 
     # shortcuts, local variables and constants
 
@@ -412,7 +620,7 @@ class PRUController:
     # 20% to 19.2% at BBB1.
     _delay_sleep = 0.020  # [s]
 
-    _groups = _BSMPVarGroups.groups
+    # _groups = _BSMPVarGroups.groups
 
     # TODO: solution works only within the name process space
     #       look at linux flock facility for a system-wide solution.
@@ -440,7 +648,9 @@ class PRUController:
 
     # --- public interface ---
 
-    def __init__(self, psmodel, device_ids,
+    def __init__(self,
+                 udcmodel,
+                 device_ids,
                  simulate=False,
                  processing=True,
                  scanning=True,
@@ -449,11 +659,14 @@ class PRUController:
         # check if another instance is running
         PRUController._check_instance()
 
+        # store udcmodel
+        self._udcmodel = udcmodel
+
+        # define constant namespaces
+        self._initialize_const_namespace()
+
         # store simulation mode
         self._simulate = simulate
-
-        # store psmodel
-        self._psmodel = psmodel
 
         # sorted list of device ids
         if len(device_ids) > 4:
@@ -469,7 +682,7 @@ class PRUController:
         self._initialize_pru()
 
         # initialize BSMP
-        self._initialize_bsmp()
+        self._initialize_udc()
 
         # reset power supply controllers
         # TODO: this should be invoked in the case of IOC setting state of HW
@@ -716,7 +929,7 @@ class PRUController:
         # in the queue was a function execution.
         # TODO: test this! but is it really necessary?
         self._bsmp_update_variables(self.device_ids,
-                                    PRUController.VGROUPS.SYNCOFF)
+                                    self.VGROUPS.SYNCOFF)
         self._scanning_false_wait_empty_queue()
 
         # reset curve index
@@ -797,26 +1010,27 @@ class PRUController:
         # write curve to PRU memory
         self.pru_curve_send()
 
-    def pru_curve_write_slowref_sync(self, setpoints):
-        """Write curves for all devices."""
-        # TODO: test method!!!
-        # create 1-point curves for all power supplies.
-        curves = [[setpoint, ] for setpoint in setpoints]
-        curves += [[PRUController._default_slowrefsync_sp, ]] * (4-len(curves))
-
-        # select in which block the new curve will be stored
-        block_curr = self._pru.read_curve_block()
-        block_next = 1 if block_curr == 0 else 0
-
-        self._pru.curve(curves[0],
-                        curves[1],
-                        curves[2],
-                        curves[3],
-                        block_next)
-        # TODO: do we need a sleep here?
-
-        # select block to be used at next start of ramp
-        self._pru.set_curve_block(block_next)
+    # def pru_curve_write_slowref_sync(self, setpoints):
+    #     """Write curves for all devices."""
+    #     # TODO: test method!!!
+    #     # create 1-point curves for all power supplies.
+    #     curves = [[setpoint, ] for setpoint in setpoints]
+    #     curves += [[PRUController._default_slowrefsync_sp, ]] \
+    #        * (4-len(curves))
+    #
+    #     # select in which block the new curve will be stored
+    #     block_curr = self._pru.read_curve_block()
+    #     block_next = 1 if block_curr == 0 else 0
+    #
+    #     self._pru.curve(curves[0],
+    #                     curves[1],
+    #                     curves[2],
+    #                     curves[3],
+    #                     block_next)
+    #     # TODO: do we need a sleep here?
+    #
+    #     # select block to be used at next start of ramp
+    #     self._pru.set_curve_block(block_next)
 
     def pru_curve_send(self):
         """Send PRUController curves to PRU."""
@@ -901,6 +1115,22 @@ class PRUController:
         self.running = False
         PRUController._instance_running = False
 
+    def _initialize_const_namespace(self):
+        # define constant namespaces
+        if self._udcmodel == 'FBP':
+            self.VGROUPS = _BSMPVarGroupsFBP
+            self.BSMP = _ConstFBP
+        elif self._udcmodel == 'FAC':
+            self.VGROUPS = _BSMPVarGroupsFAC
+            self.BSMP = _ConstFAC
+        elif self._udcmodel == 'FAC_ACDC':
+            self.VGROUPS = _BSMPVarGroupsFAC_ACDC
+            self.BSMP = _ConstFAC_ACDC
+        else:
+            raise NotImplementedError(self._udcmodel)
+
+        self._groups = self.VGROUPS.groups
+
     def _initialize_pru(self):
 
         # create PRU object
@@ -921,7 +1151,7 @@ class PRUController:
                         list(_DEFAULT_WFMDATA),  # 4th power supply
                         ]
 
-    def _initialize_bsmp(self):
+    def _initialize_udc(self):
 
         # prune variables from mirror group
         self._init_prune_mirror_group()
@@ -929,8 +1159,9 @@ class PRUController:
         # create attribute with state of connections
         self._connected = {id: False for id in self.device_ids}
 
-        # create BSMP devices
-        self._bsmp = self._init_create_bsmp_connectors()
+        # create UDC
+        udc = _UDC(self._pru, self._udcmodel, self._device_ids, self._simulate)
+        self._udc = udc
 
     def _bsmp_reset_ps_controllers(self):
 
@@ -954,36 +1185,53 @@ class PRUController:
 
     def _init_prune_mirror_group(self):
 
+        if self._udcmodel != 'FBP':
+            return
         # gather mirror variables that will be used
         nr_devs = len(self.device_ids)
         var_ids = []
         for var_id in list(self._groups[self.VGROUPS.MIRROR]):
-            dev_idx, _ = _mirror_map[var_id]
+            dev_idx, _ = _mirror_map_fbp[var_id]
             if dev_idx <= nr_devs:
                 var_ids.append(var_id)
 
         # prune from mirror group variables not used
         self._groups[self.VGROUPS.MIRROR] = tuple(var_ids)
 
-    def _init_create_bsmp_connectors(self):
-        bsmp = dict()
-        for id in self._device_ids:
-            if self._simulate:
-                # TODO: generalize using bsmp_entities
-                bsmp[id] = _FBP_BSMPSim(self._pru)
-            else:
-                if self._psmodel == 'FBP':
-                    bsmp_entities = _FBPEntities()
-                else:
-                    # TODO: generalize here!!!
-                    bsmp_entities = _FBPEntities()
-                bsmp[id] = _BSMP(self._pru, id, bsmp_entities)
-        return bsmp
+    # def _init_create_bsmp_connectors(self):
+    #     udc = _UDC(self._pru, self._device_ids, self._udcmodel, self._simulate)
+    #     return udc
+
+    # def _init_create_bsmp_connectors(self):
+    #     bsmp = dict()
+    #     for id in self._device_ids:
+    #         if self._simulate:
+    #             # TODO: generalize using bsmp_entities
+    #             if self._udcmodel == 'FBP':
+    #                 bsmp[id] = _BSMPSim_FBP(self._pru)
+    #             elif self._udcmodel == 'FAC':
+    #                 bsmp[id] = _BSMPSim_FAC(self._pru)
+    #             elif self._udcmodel == 'FAC_ACDC':
+    #                 bsmp[id] = _BSMPSim_FAC_ACDC(self._pru)
+    #             else:
+    #                 raise NotImplementedError()
+    #         else:
+    #             if self._udcmodel == 'FBP':
+    #                 bsmp_entities = _EntitiesFBP()
+    #             elif self._udcmodel == 'FAC':
+    #                 bsmp_entities = _EntitiesFAC()
+    #             elif self._udcmodel == 'FAC_ACDC':
+    #                 bsmp_entities = _EntitiesFAC_ACDC()
+    #             else:
+    #                 raise NotImplementedError()
+    #             bsmp[id] = _BSMP(self._pru, id, bsmp_entities)
+    #     return bsmp
 
     def _init_check_version(self):
         if not self.connected:
             return
         for id in self.device_ids:
+            # V_FIRMWARE_VERSION should be defined for all BSMP devices
             version = self._variables_values[id][self.BSMP.V_FIRMWARE_VERSION]
             version = parse_firmware_version(version)
             if 'Simulation' not in version and version != _ps_bsmp_version:
@@ -1079,10 +1327,10 @@ class PRUController:
 
         The method is invoked with two group_ids:
 
-        01. group_id = PRUController.VGROUPS.SYNCOFF
+        01. group_id = self.VGROUPS.SYNCOFF
             Used for 'SlowRef' and 'Cycle' power supply operation modes.
 
-        02. group_id = PRUController.VGROUPS.MIRROR
+        02. group_id = self.VGROUPS.MIRROR
             used for 'SlowRefSync', 'RmpWfm' and 'MigWfm' operation modes.
             In this case mirror variables are read from a single device (power
             supply) in order to update a subset of variables for all devices
@@ -1098,7 +1346,7 @@ class PRUController:
             #     print('reading mirror variable group for ids:{}...'.format(
             #         device_ids))
             for id in device_ids:
-                ack[id], data[id] = self._bsmp[id].read_group_variables(
+                ack[id], data[id] = self._udc[id].read_group_variables(
                     group_id=group_id,
                     timeout=self._delay_read_group_variables)
             # if group_id == self.VGROUPS.RMPWFM:
@@ -1153,7 +1401,7 @@ class PRUController:
                         # lowest dev_id, the second entry to the second lowest
                         # dev_id, and so on.
                         #
-                        mir_dev_idx, mir_var_id = _mirror_map[var_id]
+                        mir_dev_idx, mir_var_id = _mirror_map_fbp[var_id]
                         if mir_dev_idx <= nr_devs:
                             mir_dev_id = self.device_ids[mir_dev_idx-1]
                             copy_var_vals[mir_dev_id][mir_var_id] = values[i]
@@ -1167,8 +1415,14 @@ class PRUController:
                 # TODO: turn off added random fluctuations.
                 # commenting out this fluctuation cpu usage is reduced from
                 # 20% to 19.5% at BBB1
-                copy_var_vals[id][self.BSMP.V_I_LOAD] += \
-                    0.00001*_random.uniform(-1.0, +1.0)
+                if self._udcmodel == 'FBP':
+                    copy_var_vals[id][self.BSMP.V_I_LOAD] += \
+                        0.00001*_random.uniform(-1.0, +1.0)
+                elif self._udcmodel == 'FAC':
+                    copy_var_vals[id][self.BSMP.V_I_LOAD1] += \
+                        0.00001*_random.uniform(-1.0, +1.0)
+                    copy_var_vals[id][self.BSMP.V_I_LOAD2] += \
+                        0.00001*_random.uniform(-1.0, +1.0)
 
             else:
                 self._connected[id] = False
@@ -1176,6 +1430,7 @@ class PRUController:
         # print('time3: ', _time.time() - t0)
 
         # update psc_state
+        # NOTE: V_PS_STATUS shpuld be defined for all BSMP devices.
         for id in self.device_ids:
             self._psc_state[id].ps_status = \
                 copy_var_vals[id][self.BSMP.V_PS_STATUS]
@@ -1201,10 +1456,10 @@ class PRUController:
         try:
             for id in device_ids:
                 ack[id], data[id] = \
-                    self._bsmp[id].execute_function(function_id, args)
+                    self._udc[id].execute_function(function_id, args)
         except (_SerialError, IndexError):
             print('SerialError exception in {}'.format(
-                ('F', device_ids, function_id)))
+                ('F', device_ids, function_id, args)))
             return None
         dtime = _time.time() - t0
         self._last_operation = ('F', dtime,
@@ -1226,6 +1481,7 @@ class PRUController:
             # sent to the power supply in the meantime it will put the
             # ps controller in a wrong state.
             #
+            # NOTE: These BSMP functions should be defined for all BSMP devs.
             if function_id in (self.BSMP.F_TURN_ON, self.BSMP.F_TURN_OFF):
                 # print('waiting {} s for TURN_ON or TURN_OFF'.format(
                 #     self._delay_turn_on_off))
@@ -1291,12 +1547,12 @@ class PRUController:
         for id in self._device_ids:
             # remove previous variables groups and fresh ones
             try:
-                self._bsmp[id].remove_all_groups(
+                self._udc[id].remove_all_groups(
                     timeout=self._delay_remove_groups)
                 self._connected[id] = True
                 for group_id in groups_ids[3:]:
                     var_ids = self._groups[group_id]
-                    self._bsmp[id].create_group(
+                    self._udc[id].create_group(
                         var_ids, timeout=self._delay_create_group)
             except _SerialError:
                 print('_bsmp_init_groups: serial error!')

@@ -6,7 +6,7 @@ an `execute` method.
 import time as _time
 
 # BSMP and PS constants
-from siriuspy.pwrsupply.bsmp import Const as _c
+from siriuspy.pwrsupply.bsmp import ConstFBP as _c
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 

@@ -8,7 +8,7 @@ from siriuspy.bsmp import BSMP
 from siriuspy.pwrsupply.pru import PRU
 from siriuspy.pwrsupply.pru import PRUSim
 from siriuspy.pwrsupply.bsmp import Const as BSMPConst
-from siriuspy.pwrsupply.bsmp import FBPEntities
+from siriuspy.pwrsupply.bsmp import EntitiesFBP
 from siriuspy.pwrsupply.controller import FBP_BSMPSim
 from siriuspy.pwrsupply.prucontroller import PRUController
 
@@ -18,7 +18,7 @@ BBB1_device_ids = (1, 2)
 BBB2_device_ids = (5, 6)
 
 simulate = False
-psmodel = 'FBP'
+udcmodel = 'FBP'
 
 siggen_config = [
     # --- siggen sine parameters ---
@@ -54,10 +54,10 @@ def bsmp_create(device_id, simulate=simulate):
     """Create BSMP object."""
     if simulate is True:
         pru = PRUSim()
-        bsmp = FBP_BSMPSim(pru, device_id, FBPEntities())
+        bsmp = FBP_BSMPSim(pru, device_id, EntitiesFBP())
     else:
         pru = PRU()
-        bsmp = BSMP(pru, device_id, FBPEntities())
+        bsmp = BSMP(pru, device_id, EntitiesFBP())
     return bsmp
 
 
@@ -78,7 +78,7 @@ def pruc_create(device_ids=BBB1_device_ids,
                 simulate=simulate):
     """Method."""
     # create BBB controller
-    pruc = PRUController(psmodel=psmodel,
+    pruc = PRUController(udcmodel=udcmodel,
                          device_ids=device_ids,
                          simulate=simulate,
                          processing=True,
