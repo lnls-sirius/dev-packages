@@ -18,38 +18,6 @@ from siriuspy.pwrsupply.pru import PRU as _PRU
 # __version__ = 'V0.11b2018-05-08V0.11b2018-05-08'
 __version__ = 'V0.11 2018-04-26V0.11 2018-04-25'
 
-# Mirror power supply variables (FBP)
-# ===================================
-#
-# The current version of Beaglebone's PRU library is able to send only one
-# BSMP command to the serial line at the end of each ramp cycle. Within BSMP
-# there is no way a read command to multiple power supplies can be sent.
-# At each ramp cycle a single power supply attached to the Beaglebone can be
-# selected for its state to be read. With a ramp running at 2 Hz, the update
-# of each power supply in a create with 4 powet supplies would be slowed to
-# 0.5 Hz = 2 Hz / 4 power supploes.
-#
-# In order to keep a refresh rate of 2 Hz, a modification of the specification
-# for the BSMP power supply was done. Each power supply will register a
-# selected set of BSMP variables corresponding to variables of the other
-# power supplies. This is simple to implement in the firmware of the
-# ARM controller.
-#
-# Power supply variables with IDs in the range [40,63] serve this purpose.
-# The dictionary MAP_MIRROR_2_ORIG maps the so-called mirror variable ids
-# onto the original variable IDs.
-
-MAP_MIRROR_2_ORIG = {
-    # This dictionary maps variable ids of mirror variables to the
-    # corresponding original power supply crate index and variable ids,
-    # organized as a tuple (device_idx, variable_id).
-    40: (1, 0),  41: (2, 0),  42: (3, 0),  43: (4, 0),   # V_PS_STATUS
-    44: (1, 1),  45: (2, 1),  46: (3, 1),  47: (4, 1),   # V_PS_SETPOINT
-    48: (1, 2),  49: (2, 2),  50: (3, 2),  51: (4, 2),   # V_PS_REFERENCE
-    52: (1, 25), 53: (2, 25), 54: (3, 25), 55: (4, 25),  # V_PS_SOFT_INTERLOCK
-    56: (1, 26), 57: (2, 26), 58: (3, 26), 59: (4, 26),  # V_PS_HARD_INTERLOCK
-    60: (1, 27), 61: (2, 27), 62: (3, 27), 63: (4, 27)}  # V_PS_HARD_INTERLOCK
-
 
 class ConstBSMP:
     """Namespace for organizing power supply BSMP constants."""
@@ -348,6 +316,57 @@ class ConstFAC_ACDC(ConstBSMP):
     TEMP_HEATSINK = 30
     TEMP_INDUCTORS = 31
     DUTY_CYCLE = 32
+
+
+# Mirror power supply variables (FBP)
+# ===================================
+#
+# The current version of Beaglebone's PRU library is able to send only one
+# BSMP command to the serial line at the end of each ramp cycle. Within BSMP
+# there is no way a read command to multiple power supplies can be sent.
+# At each ramp cycle a single power supply attached to the Beaglebone can be
+# selected for its state to be read. With a ramp running at 2 Hz, the update
+# of each power supply in a create with 4 powet supplies would be slowed to
+# 0.5 Hz = 2 Hz / 4 power supploes.
+#
+# In order to keep a refresh rate of 2 Hz, a modification of the specification
+# for the BSMP power supply was done. Each power supply will register a
+# selected set of BSMP variables corresponding to variables of the other
+# power supplies. This is simple to implement in the firmware of the
+# ARM controller.
+#
+# Power supply variables with IDs in the range [40,63] serve this purpose.
+# The dictionary MAP_MIRROR_2_ORIG maps the so-called mirror variable ids
+# onto the original variable IDs.
+
+MAP_MIRROR_2_ORIG_FBP = {
+    # This dictionary maps variable ids of mirror variables to the
+    # corresponding original power supply crate index and variable ids,
+    # organized as a tuple (device_idx, variable_id).
+    ConstFBP.V_PS_STATUS_1: (1, 0),
+    ConstFBP.V_PS_STATUS_2: (2, 0),
+    ConstFBP.V_PS_STATUS_3: (3, 0),
+    ConstFBP.V_PS_STATUS_4: (4, 0),
+    ConstFBP.V_PS_SETPOINT_1: (1, 1),
+    ConstFBP.V_PS_SETPOINT_2: (2, 1),
+    ConstFBP.V_PS_SETPOINT_3: (3, 1),
+    ConstFBP.V_PS_SETPOINT_4: (4, 1),
+    ConstFBP.V_PS_REFERENCE_1: (1, 2),
+    ConstFBP.V_PS_REFERENCE_2: (2, 2),
+    ConstFBP.V_PS_REFERENCE_3: (3, 2),
+    ConstFBP.V_PS_REFERENCE_4: (4, 2),
+    ConstFBP.V_PS_SOFT_INTERLOCKS_1: (1, 25),
+    ConstFBP.V_PS_SOFT_INTERLOCKS_2: (2, 25),
+    ConstFBP.V_PS_SOFT_INTERLOCKS_3: (3, 25),
+    ConstFBP.V_PS_SOFT_INTERLOCKS_4: (4, 25),
+    ConstFBP.V_PS_HARD_INTERLOCKS_1: (1, 26),
+    ConstFBP.V_PS_HARD_INTERLOCKS_2: (2, 26),
+    ConstFBP.V_PS_HARD_INTERLOCKS_3: (3, 26),
+    ConstFBP.V_PS_HARD_INTERLOCKS_4: (4, 26),
+    ConstFBP.V_I_LOAD_1: (1, 27),
+    ConstFBP.V_I_LOAD_2: (2, 27),
+    ConstFBP.V_I_LOAD_3: (3, 27),
+    ConstFBP.V_I_LOAD_4: (4, 27)}
 
 
 class Parameters:

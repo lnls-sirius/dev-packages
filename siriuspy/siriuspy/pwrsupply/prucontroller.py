@@ -26,21 +26,14 @@ from siriuspy.pwrsupply.pru import PRU as _PRU
 from siriuspy.pwrsupply.pru import PRUSim as _PRUSim
 
 from siriuspy.pwrsupply.bsmp import __version__ as _ps_bsmp_version
-from siriuspy.pwrsupply.bsmp import MAP_MIRROR_2_ORIG as _mirror_map
+from siriuspy.pwrsupply.bsmp import MAP_MIRROR_2_ORIG_FBP as _mirror_map_fbp
 from siriuspy.pwrsupply.bsmp import ConstFBP as _ConstFBP
 from siriuspy.pwrsupply.bsmp import ConstFAC as _ConstFAC
 from siriuspy.pwrsupply.bsmp import ConstFAC_ACDC as _ConstFAC_ACDC
 from siriuspy.pwrsupply.bsmp import Parameters as _Parameters
-# from siriuspy.pwrsupply.bsmp import EntitiesFBP as _EntitiesFBP
-# from siriuspy.pwrsupply.bsmp import EntitiesFAC as _EntitiesFAC
-# from siriuspy.pwrsupply.bsmp import EntitiesFAC_ACDC as _EntitiesFAC_ACDC
 
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
-
 from siriuspy.pwrsupply.controller import UDC as _UDC
-# from siriuspy.pwrsupply.controller import BSMPSim_FBP as _BSMPSim_FBP
-# from siriuspy.pwrsupply.controller import BSMPSim_FAC as _BSMPSim_FAC
-# from siriuspy.pwrsupply.controller import BSMPSim_FAC_ACDC as _BSMPSim_FAC_ACDC
 
 
 # NOTE: On current behaviour of PRU and Power Supplies:
@@ -250,7 +243,7 @@ class _BSMPVarGroupsFBP(_BSMPVarGroups):
         _ConstFBP.V_UNDEF22,
         _ConstFBP.V_UNDEF23,
         _ConstFBP.V_UNDEF24,
-        # --- FSB variables ---
+        # --- FBP variables ---
         _ConstFBP.V_PS_SOFT_INTERLOCKS,
         _ConstFBP.V_PS_HARD_INTERLOCKS,
         _ConstFBP.V_I_LOAD,
@@ -1198,7 +1191,7 @@ class PRUController:
         nr_devs = len(self.device_ids)
         var_ids = []
         for var_id in list(self._groups[self.VGROUPS.MIRROR]):
-            dev_idx, _ = _mirror_map[var_id]
+            dev_idx, _ = _mirror_map_fbp[var_id]
             if dev_idx <= nr_devs:
                 var_ids.append(var_id)
 
@@ -1408,7 +1401,7 @@ class PRUController:
                         # lowest dev_id, the second entry to the second lowest
                         # dev_id, and so on.
                         #
-                        mir_dev_idx, mir_var_id = _mirror_map[var_id]
+                        mir_dev_idx, mir_var_id = _mirror_map_fbp[var_id]
                         if mir_dev_idx <= nr_devs:
                             mir_dev_id = self.device_ids[mir_dev_idx-1]
                             copy_var_vals[mir_dev_id][mir_var_id] = values[i]
