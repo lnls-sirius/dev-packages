@@ -864,12 +864,11 @@ class PRUController:
         Before starting a sync_mode this method does a number of actions:
 
         01. Checks if requested mode exists. If not, raises NotImplementedError
-        02. Checks if number of devs < 4
-        03. Moves sync state to off.
-        04. Stops scanning device variables
-        05. Waits untill all operations in queue are processed.
-        06. Start sync in requested mode
-        07. Turn scanning back on again.
+        02. Moves sync state to off.
+        03. Stops scanning device variables
+        04. Waits untill all operations in queue are processed.
+        05. Start sync in requested mode
+        06. Turn scanning back on again.
 
         obs: Since operation in queue are processed before changing starting
         the new sync mode, this method can safely be invoked right away after
@@ -880,10 +879,6 @@ class PRUController:
             self.disconnect()
             raise NotImplementedError('Invalid sync mode {}'.format(
                 hex(sync_mode)))
-
-        # check if number of devices is at most 4
-        if len(self._device_ids) > 4:
-            raise ValueError('Invalid sync_start for number of devs > 4!')
 
         # try to abandon previous sync mode gracefully
         if self.pru_sync_status != self.PRU.SYNC_STATE.OFF:
@@ -991,30 +986,16 @@ class PRUController:
         # write curve to PRU memory
         self.pru_curve_send()
 
-    # def pru_curve_write_slowref_sync(self, setpoints):
-    #     """Write curves for all devices."""
-    #     # TODO: test method!!!
-    #     # create 1-point curves for all power supplies.
-    #     curves = [[setpoint, ] for setpoint in setpoints]
-    #     curves += [[PRUController._default_slowrefsync_sp, ]] \
-    #        * (4-len(curves))
-    #
-    #     # select in which block the new curve will be stored
-    #     block_curr = self._pru.read_curve_block()
-    #     block_next = 1 if block_curr == 0 else 0
-    #
-    #     self._pru.curve(curves[0],
-    #                     curves[1],
-    #                     curves[2],
-    #                     curves[3],
-    #                     block_next)
-    #     # TODO: do we need a sleep here?
-    #
-    #     # select block to be used at next start of ramp
-    #     self._pru.set_curve_block(block_next)
-
     def pru_curve_send(self):
         """Send PRUController curves to PRU."""
+        # NOTE: we the current PRU lib version we can deal with only
+        # 4 curves for each controller, corresponding to 4 power supply
+        # waveforms. If the number of bsmp devices is bigger than 4 and
+        # this method is invoked, exception is raised!
+        if len(self._device_ids) > 4:
+            raise ValueError(
+                'Invalid method invocation when number of devs > 4')
+
         # select in which block the new curve will be stored
         block_curr = self._pru.read_curve_block()
         block_next = 1 if block_curr == 0 else 0
