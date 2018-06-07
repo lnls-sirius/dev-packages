@@ -10,6 +10,7 @@ from siriuspy.pwrsupply.pru import PRUSim
 from siriuspy.pwrsupply.bsmp import Const as BSMPConst
 from siriuspy.pwrsupply.bsmp import EntitiesFBP
 from siriuspy.pwrsupply.controller import FBP_BSMPSim
+from siriuspy.pwrsupply.prucontroller import PRUCQueue
 from siriuspy.pwrsupply.prucontroller import PRUController
 
 P = 'T'
@@ -82,7 +83,9 @@ def pruc_create(device_ids=BBB1_device_ids,
         pru = PRUSim()
     else:
         pru = PRU()
+    prucqueue = PRUCQueue()
     pruc = PRUController(pru=pru,
+                         prucqueue=prucqueue,
                          udcmodel=udcmodel,
                          device_ids=device_ids,
                          processing=True,

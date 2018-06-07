@@ -93,7 +93,7 @@ def parse_firmware_version(version):
     return version
 
 
-class _BSMPOpQueue(_deque):
+class PRUCQueue(_deque):
     """BSMPOpQueue.
 
     This class manages operations which invoke BSMP communications using
@@ -133,7 +133,7 @@ class _BSMPOpQueue(_deque):
 
     def append(self, operation, unique=False):
         """Append operation to queue."""
-        _BSMPOpQueue._lock.acquire(blocking=True)
+        PRUCQueue._lock.acquire(blocking=True)
         if not self._ignore:
             if not unique:
                 super().append(operation)
@@ -145,7 +145,7 @@ class _BSMPOpQueue(_deque):
                 if n == 0:
                     super().append(operation)
                     self._last_operation = operation
-        _BSMPOpQueue._lock.release()
+        PRUCQueue._lock.release()
 
     def clear(self):
         """Clear deque."""
@@ -155,12 +155,12 @@ class _BSMPOpQueue(_deque):
 
     def popleft(self):
         """Pop left operation from queue."""
-        _BSMPOpQueue._lock.acquire(blocking=True)
+        PRUCQueue._lock.acquire(blocking=True)
         if super().__len__() > 0:
             value = super().popleft()
         else:
             value = None
-        _BSMPOpQueue._lock.release()
+        PRUCQueue._lock.release()
         return value
 
     def process(self):
@@ -635,6 +635,7 @@ class PRUController:
 
     def __init__(self,
                  pru,
+                 prucqueue,
                  udcmodel,
                  device_ids,
                  processing=True,
@@ -678,7 +679,8 @@ class PRUController:
         self._initialize_devices()
 
         # operation queue
-        self._queue = _BSMPOpQueue()
+        # self._queue = PRUCQueue()
+        self._queue = prucqueue
 
         # define scan thread
         self._last_device_scanned = len(self._device_ids)  # next is the first
