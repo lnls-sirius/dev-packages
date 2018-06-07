@@ -11,6 +11,8 @@ import siriuspy.pwrsupply.beaglebone as bbb
 from siriuspy.csdevice.pwrsupply import get_ps_propty_database
 from tests.pwrsupply.variables import dict_values
 from tests.pwrsupply.db import bo_db
+from siriuspy.pwrsupply.prucontroller import _PRUCParms
+from siriuspy.pwrsupply.prucontroller import PRUCParms_FBP
 
 
 def read_variables(device_id, field):
@@ -42,6 +44,8 @@ class TestCycleWatcher(unittest.TestCase):
         """Test common setup."""
         self.setpoints = mock.Mock()
         self.controller = mock.Mock()
+        self.controller.pru_controller.params.FREQ_SCAN = \
+            PRUCParms_FBP.FREQ_SCAN
         self.dev_name = 'FakeName'
         self.op_mode = _PSConst.OpMode.Cycle
         self.watcher = bbb._Watcher(
@@ -169,6 +173,8 @@ class TestRmpWatcher(unittest.TestCase):
         """Test common setup."""
         self.setpoints = mock.Mock()
         self.controller = mock.Mock()
+        self.controller.pru_controller.params.FREQ_SCAN = \
+            PRUCParms_FBP.FREQ_SCAN
         self.dev_name = 'FakeName'
         self.op_mode = _PSConst.OpMode.RmpWfm
         self.watcher = bbb._Watcher(
@@ -256,6 +262,8 @@ class TestMigWatcher(unittest.TestCase):
         """Test common setup."""
         self.setpoints = mock.Mock()
         self.controller = mock.Mock()
+        self.controller.pru_controller.params.FREQ_SCAN = \
+            PRUCParms_FBP.FREQ_SCAN
         self.dev_name = 'FakeName'
         self.op_mode = _PSConst.OpMode.MigWfm
         self.watcher = bbb._Watcher(
@@ -576,6 +584,7 @@ class TestBeagleBone(unittest.TestCase):
         pru_patch = mock.patch('siriuspy.pwrsupply.beaglebone._PRUController')
         self.addCleanup(pru_patch.stop)
         self.pru_mock = pru_patch.start()
+        # self.pru_mock._params.
         # Mock E2SController
         e2s_patch = mock.patch('siriuspy.pwrsupply.beaglebone._E2SController')
         self.addCleanup(e2s_patch.stop)
@@ -688,7 +697,7 @@ class TestBeagleBone(unittest.TestCase):
         self._assert_thread(watcher, dev_name, 2)
         # Start pru cycle mode
         self.pru_mock.pru_sync_start.assert_called_with(
-            self.pru_mock.PRU.SYNC_MODE.BRDCST)
+            _PRUCParms.PRU.SYNC_MODE.BRDCST)
 
     @mock.patch('siriuspy.pwrsupply.beaglebone._Watcher')
     def test_write_opmode_rmpwfm(self, watcher):
@@ -707,7 +716,7 @@ class TestBeagleBone(unittest.TestCase):
         self._assert_thread(watcher, dev_name, 3)
         # Start pru cycle mode
         self.pru_mock.pru_sync_start.assert_called_with(
-            self.pru_mock.PRU.SYNC_MODE.RMPEND)
+            _PRUCParms.PRU.SYNC_MODE.RMPEND)
 
     @mock.patch('siriuspy.pwrsupply.beaglebone._Watcher')
     def test_write_opmode_migwfm(self, watcher):
@@ -726,7 +735,7 @@ class TestBeagleBone(unittest.TestCase):
         self._assert_thread(watcher, dev_name, 4)
         # Start pru cycle mode
         self.pru_mock.pru_sync_start.assert_called_with(
-            self.pru_mock.PRU.SYNC_MODE.MIGEND)
+            _PRUCParms.PRU.SYNC_MODE.MIGEND)
 
 
 if __name__ == "__main__":
