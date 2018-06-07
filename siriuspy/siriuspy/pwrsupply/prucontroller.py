@@ -652,8 +652,6 @@ class PRUController:
         self._initialize_const_namespace()
 
         # sorted list of device ids
-        if len(device_ids) > 4:
-            raise ValueError('Number of device ids exceeds maximum!')
         self._device_ids = sorted(device_ids)
 
         # conversion of ps status to high level properties
@@ -872,11 +870,12 @@ class PRUController:
         Before starting a sync_mode this method does a number of actions:
 
         01. Checks if requested mode exists. If not, raises NotImplementedError
-        02. Moves sync state to off.
-        03. Stops scanning device variables
-        04. Waits untill all operations in queue are processed.
-        05. Start sync in requested mode
-        06. Turn scanning back on again.
+        02. Checks if number of devs < 4
+        03. Moves sync state to off.
+        04. Stops scanning device variables
+        05. Waits untill all operations in queue are processed.
+        06. Start sync in requested mode
+        07. Turn scanning back on again.
 
         obs: Since operation in queue are processed before changing starting
         the new sync mode, this method can safely be invoked right away after
@@ -887,6 +886,10 @@ class PRUController:
             self.disconnect()
             raise NotImplementedError('Invalid sync mode {}'.format(
                 hex(sync_mode)))
+
+        # check if number of devices is at most 4
+        if len(self._device_ids) > 4:
+            raise ValueError('Invalid sync_start for number of devs > 4!')
 
         # try to abandon previous sync mode gracefully
         if self.pru_sync_status != self.PRU.SYNC_STATE.OFF:
