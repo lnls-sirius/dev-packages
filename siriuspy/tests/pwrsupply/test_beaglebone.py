@@ -697,7 +697,7 @@ class TestBeagleBone(unittest.TestCase):
         self._assert_thread(watcher, dev_name, 2)
         # Start pru cycle mode
         self.pru_mock.pru_sync_start.assert_called_with(
-            _PRUCParms.PRU.SYNC_MODE.BRDCST)
+            self.pru_mock.params.PRU.SYNC_MODE.BRDCST)
 
     @mock.patch('siriuspy.pwrsupply.beaglebone._Watcher')
     def test_write_opmode_rmpwfm(self, watcher):
@@ -716,7 +716,7 @@ class TestBeagleBone(unittest.TestCase):
         self._assert_thread(watcher, dev_name, 3)
         # Start pru cycle mode
         self.pru_mock.pru_sync_start.assert_called_with(
-            _PRUCParms.PRU.SYNC_MODE.RMPEND)
+            self.pru_mock.params.PRU.SYNC_MODE.RMPEND)
 
     @mock.patch('siriuspy.pwrsupply.beaglebone._Watcher')
     def test_write_opmode_migwfm(self, watcher):
@@ -735,7 +735,7 @@ class TestBeagleBone(unittest.TestCase):
         self._assert_thread(watcher, dev_name, 4)
         # Start pru cycle mode
         self.pru_mock.pru_sync_start.assert_called_with(
-            _PRUCParms.PRU.SYNC_MODE.MIGEND)
+            self.pru_mock.params.PRU.SYNC_MODE.MIGEND)
 
 
 if __name__ == "__main__":
