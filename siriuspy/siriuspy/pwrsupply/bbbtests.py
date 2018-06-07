@@ -7,7 +7,7 @@ import sys
 from siriuspy.bsmp import BSMP
 from siriuspy.pwrsupply.pru import PRU
 from siriuspy.pwrsupply.pru import PRUSim
-from siriuspy.pwrsupply.bsmp import Const as BSMPConst
+from siriuspy.pwrsupply.bsmp import ConstBSMP
 from siriuspy.pwrsupply.bsmp import EntitiesFBP
 from siriuspy.pwrsupply.controller import FBP_BSMPSim
 from siriuspy.pwrsupply.prucontroller import PRUCQueue
@@ -70,7 +70,7 @@ def bsmp_read_variable(bsmp, variable_id):
 
 def bsmp_reset_interlock(bsmp):
     """Reset interlocks."""
-    resp, value = bsmp.execute_function(BSMPConst.F_RESET_INTERLOCKS)
+    resp, value = bsmp.execute_function(ConstBSMP.F_RESET_INTERLOCKS)
     # print('response: ', resp)
     # print('value   : ', value)
 
@@ -97,11 +97,11 @@ def pruc_reset_interlocks(pruc):
     """Reset interlocks."""
     # try to reset and then check interlocks
     ids = pruc.device_ids
-    pruc.exec_functions(ids, BSMPConst.F_RESET_INTERLOCKS)
+    pruc.exec_functions(ids, pruc.BSMP.F_RESET_INTERLOCKS)
     intlck = 0
     for id in ids:
-        intlck |= pruc.read_variables(id, BSMPConst.V_PS_HARD_INTERLOCKS)
-        intlck |= pruc.read_variables(id, BSMPConst.V_PS_SOFT_INTERLOCKS)
+        intlck |= pruc.read_variables(id, pruc.BSMP.V_PS_HARD_INTERLOCKS)
+        intlck |= pruc.read_variables(id, pruc.BSMP.V_PS_SOFT_INTERLOCKS)
     if intlck:
         raise ValueError('could not reset interlocks!')
 
@@ -117,23 +117,23 @@ def pruc_init_slowref(pruc, current_sp=2.5):
     pruc_reset_interlocks(pruc)
 
     # turn power supplies on
-    pruc.exec_functions(ids, BSMPConst.F_TURN_ON)
+    pruc.exec_functions(ids, pruc.BSMP.F_TURN_ON)
     # time.sleep(0.3)  # implemented within PRUController now
 
     # close loop
-    pruc.exec_functions(ids, BSMPConst.F_CLOSE_LOOP)
+    pruc.exec_functions(ids, pruc.BSMP.F_CLOSE_LOOP)
     # time.sleep(0.3) # implemented within PRUController now
 
     # disable siggen
-    pruc.exec_functions(ids, BSMPConst.F_DISABLE_SIGGEN)
+    pruc.exec_functions(ids, pruc.BSMP.F_DISABLE_SIGGEN)
 
     # set slowref
     pruc.exec_functions(ids,
-                        BSMPConst.F_SELECT_OP_MODE,
-                        BSMPConst.E_STATE_SLOWREF)
+                        pruc.BSMP.F_SELECT_OP_MODE,
+                        pruc.BSMP.E_STATE_SLOWREF)
 
     # current setpoint
-    pruc.exec_functions(ids, BSMPConst.F_SET_SLOWREF, current_sp)
+    pruc.exec_functions(ids, pruc.BSMP.F_SET_SLOWREF, current_sp)
 
 
 def pruc_config_cycle_mode(pruc):
@@ -144,17 +144,17 @@ def pruc_config_cycle_mode(pruc):
     pruc.pru_sync_stop()
 
     # disable siggen
-    pruc.exec_functions(ids, BSMPConst.F_DISABLE_SIGGEN)
+    pruc.exec_functions(ids, pruc.BSMP.F_DISABLE_SIGGEN)
 
     # configure siggen parameters (needs disabled siggen!)
     pruc.exec_functions(ids,
-                        BSMPConst.F_CFG_SIGGEN,
+                        pruc.BSMP.F_CFG_SIGGEN,
                         siggen_config)
 
     # set ps to cycle mode
     pruc.exec_functions(ids,
-                        BSMPConst.F_SELECT_OP_MODE,
-                        BSMPConst.E_STATE_CYCLE)
+                        pruc.BSMP.F_SELECT_OP_MODE,
+                        pruc.BSMP.E_STATE_CYCLE)
 
 
 def pruc_run_cycle(pruc):
@@ -193,7 +193,7 @@ def pruc_run_cycle(pruc):
     # makes sure power supply is in enable_siggen
     print('waiting for siggen to be enabled...', end='')
     sys.stdout.flush()
-    while pruc.read_variables(id, BSMPConst.V_SIGGEN_ENABLE) == 0:
+    while pruc.read_variables(id, pruc.BSMP.V_SIGGEN_ENABLE) == 0:
         time.sleep(0.1)
     print('enabled.')
 
@@ -203,8 +203,8 @@ def pruc_run_cycle(pruc):
         iload, siggen_enable = {}, {}
         for id2 in pruc.device_ids:
             siggen_enable[id2] = \
-                pruc.read_variables(id2, BSMPConst.V_SIGGEN_ENABLE)
-            iload[id2] = pruc.read_variables(id2, BSMPConst.V_I_LOAD)
+                pruc.read_variables(id2, pruc.BSMP.V_SIGGEN_ENABLE)
+            iload[id2] = pruc.read_variables(id2, pruc.BSMP.V_I_LOAD)
 
         # print
         print('dtime:{:06.2f}'.format(time.time()-t0), end='')
@@ -222,8 +222,8 @@ def pruc_run_cycle(pruc):
 
     # return to SlowRef mode
     pruc.exec_functions(id,
-                        BSMPConst.F_SELECT_OP_MODE,
-                        BSMPConst.E_STATE_SLOWREF)
+                        pruc.BSMP.F_SELECT_OP_MODE,
+                        pruc.BSMP.E_STATE_SLOWREF)
 
 
 def pruc_run_rmpwfm(pruc):

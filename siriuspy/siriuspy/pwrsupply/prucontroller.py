@@ -594,12 +594,6 @@ class PRUController:
     # PRU constants
     PRU = _PRUConst
 
-    # BSMP variable constants
-    # BSMP = _ConstFBP
-
-    # BSMP variable group constants
-    # VGROUPS = _BSMPVarGroups
-
     # shortcuts, local variables and constants
 
     _default_slowrefsync_sp = _DEFAULT_WFMDATA[0]
