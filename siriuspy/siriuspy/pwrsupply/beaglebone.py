@@ -195,13 +195,13 @@ class BeagleBone:
         self.e2s_controller.write_to_many(psnames, 'OpMode-Sel', op_mode)
         self._pos_opmode(psnames, op_mode)
         if op_mode == _PSConst.OpMode.Cycle:
-            sync_mode = self._pru_controller.PRU.SYNC_MODE.BRDCST
+            sync_mode = self._pru_controller.params.PRU.SYNC_MODE.BRDCST
             return self._pru_controller.pru_sync_start(sync_mode)
         elif op_mode == _PSConst.OpMode.RmpWfm:
-            sync_mode = self._pru_controller.PRU.SYNC_MODE.RMPEND
+            sync_mode = self._pru_controller.params.PRU.SYNC_MODE.RMPEND
             return self._pru_controller.pru_sync_start(sync_mode)
         elif op_mode == _PSConst.OpMode.MigWfm:
-            sync_mode = self._pru_controller.PRU.SYNC_MODE.MIGEND
+            sync_mode = self._pru_controller.params.PRU.SYNC_MODE.MIGEND
             return self._pru_controller.pru_sync_start(sync_mode)
 
     def _get_bsmp_slave_IDs(self):
@@ -372,8 +372,6 @@ class _Watcher(_threading.Thread):
     WAIT_MIG = 3
     WAIT_RMP = 4
 
-    WAIT = 1.0/_PRUController.FREQ.SCAN
-
     def __init__(self, setpoints, controller, dev_name, op_mode):
         """Init thread."""
         super().__init__(daemon=True)
@@ -381,6 +379,7 @@ class _Watcher(_threading.Thread):
         self.controller = controller
         self.dev_name = dev_name
         self.op_mode = op_mode
+        self.wait = 1.0/controller.pru_controller.params.FREQ_SCAN
         self.state = _Watcher.WAIT_OPMODE
         self.exit = False
 
@@ -422,7 +421,7 @@ class _Watcher(_threading.Thread):
                     # self._set_current()
                     self._set_slow_ref()
                     break
-            _time.sleep(_Watcher.WAIT)
+            _time.sleep(self.wait)
 
     def _watch_mig(self):
         while True:
@@ -437,7 +436,7 @@ class _Watcher(_threading.Thread):
                         self._set_current()
                         self._set_slow_ref()
                     break
-            _time.sleep(_Watcher.WAIT)
+            _time.sleep(self.wait)
 
     def _watch_rmp(self):
         while True:
@@ -451,7 +450,7 @@ class _Watcher(_threading.Thread):
                     if self._sync_pulsed():
                         self._set_current()
                     break
-            _time.sleep(_Watcher.WAIT)
+            _time.sleep(self.wait)
 
     def _current_op_mode(self):
         return self.controller.read(self.dev_name, 'OpMode-Sts')
