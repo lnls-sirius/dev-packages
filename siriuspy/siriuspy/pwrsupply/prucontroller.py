@@ -7,14 +7,11 @@ at the other end of the serial line.
 
 import time as _time
 import random as _random
-# import traceback as _traceback
 from collections import deque as _deque
-# from collections import namedtuple as _namedtuple
 from threading import Thread as _Thread
 from threading import Lock as _Lock
 from copy import deepcopy as _dcopy
 
-# from siriuspy.bsmp import BSMP as _BSMP
 from siriuspy.bsmp import Response as _Response
 from siriuspy.bsmp.exceptions import SerialError as _SerialError
 
@@ -22,9 +19,6 @@ from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
 from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 
 from siriuspy.pwrsupply.pru import Const as _PRUConst
-from siriuspy.pwrsupply.pru import PRU as _PRU
-from siriuspy.pwrsupply.pru import PRUSim as _PRUSim
-
 from siriuspy.pwrsupply.bsmp import __version__ as _ps_bsmp_version
 from siriuspy.pwrsupply.bsmp import MAP_MIRROR_2_ORIG_FBP as _mirror_map_fbp
 from siriuspy.pwrsupply.bsmp import ConstFBP as _ConstFBP
@@ -620,12 +614,6 @@ class PRUController:
     # 20% to 19.2% at BBB1.
     _delay_sleep = 0.020  # [s]
 
-    # _groups = _BSMPVarGroups.groups
-
-    # TODO: solution works only within the name process space
-    #       look at linux flock facility for a system-wide solution.
-    _instance_running = False  # to check if another instance exists
-
     # default delays for sync modes
 
     # This this is delay PRU observes right after finishing writting to UART
@@ -643,30 +631,24 @@ class PRUController:
     _pru_delays[PRU.SYNC_MODE.RMPEND] = _delay_func_set_slowref_fbp
     _pru_delays[PRU.SYNC_MODE.BRDCST] = _delay_func_sync_pulse
 
-    # lock used when accessing _variables_values
-    _lock = _Lock()
-
     # --- public interface ---
 
     def __init__(self,
+                 pru,
                  udcmodel,
                  device_ids,
-                 simulate=False,
                  processing=True,
                  scanning=True,
                  reset=True):
         """Init."""
-        # check if another instance is running
-        PRUController._check_instance()
+        # create lock
+        self._lock = _Lock()
 
         # store udcmodel
         self._udcmodel = udcmodel
 
         # define constant namespaces
         self._initialize_const_namespace()
-
-        # store simulation mode
-        self._simulate = simulate
 
         # sorted list of device ids
         if len(device_ids) > 4:
@@ -679,7 +661,7 @@ class PRUController:
             self._psc_state[id] = _PSCStatus()
 
         # create PRU (sync mode off).
-        self._initialize_pru()
+        self._initialize_pru(pru)
 
         # initialize BSMP
         self._initialize_udc()
@@ -782,13 +764,13 @@ class PRUController:
         self._running = False
 
         # instance not running
-        PRUController._instance_running = False
+        # PRUController._instance_running = False
 
     def get_state(self, device_id):
         """Return updated PSCState for a device."""
-        PRUController._lock.acquire()
+        self._lock.acquire()
         state = _dcopy(self._psc_state[device_id])
-        PRUController._lock.release()
+        self._lock.release()
         return state
 
     # --- public methods: bsmp variable read and func exec ---
@@ -830,9 +812,9 @@ class PRUController:
 
         # lock and make copy of value
         # TODO: test if locking is really necessary.
-        PRUController._lock.acquire()
+        self._lock.acquire()
         values = _dcopy(values)
-        PRUController._lock.release()
+        self._lock.release()
 
         return values
 
@@ -1098,22 +1080,22 @@ class PRUController:
         while len(self._queue) > 0:
             _time.sleep(5*self._delay_sleep)  # sleep a little
 
-    @staticmethod
-    def _check_instance():
-        # check if another instance is running
-        if PRUController._instance_running is True:
-            errmsg = ('Another instance of PRUController is already in same'
-                      ' process space.')
-            raise ValueError(errmsg)
-        else:
-            PRUController._instance_running = True
+    # @staticmethod
+    # def _check_instance():
+    #     # check if another instance is running
+    #     if PRUController._instance_running is True:
+    #         errmsg = ('Another instance of PRUController is already in same'
+    #                   ' process space.')
+    #         raise ValueError(errmsg)
+    #     else:
+    #         PRUController._instance_running = True
 
     def _init_disconnect(self):
         # disconnect method to be used before any operation is on the queue.
         self.scanning = False
         self.processing = False
         self.running = False
-        PRUController._instance_running = False
+        # PRUController._instance_running = False
 
     def _initialize_const_namespace(self):
         # define constant namespaces
@@ -1131,13 +1113,10 @@ class PRUController:
 
         self._groups = self.VGROUPS.groups
 
-    def _initialize_pru(self):
+    def _initialize_pru(self, pru):
 
         # create PRU object
-        if self._simulate:
-            self._pru = _PRUSim()
-        else:
-            self._pru = _PRU()
+        self._pru = pru
 
         # update time interval attribute
         self._scan_interval = self._get_scan_interval()
@@ -1160,7 +1139,7 @@ class PRUController:
         self._connected = {id: False for id in self.device_ids}
 
         # create UDC
-        udc = _UDC(self._pru, self._udcmodel, self._device_ids, self._simulate)
+        udc = _UDC(self._pru, self._udcmodel, self._device_ids)
         self._udc = udc
 
     def _bsmp_reset_ps_controllers(self):
@@ -1197,35 +1176,6 @@ class PRUController:
 
         # prune from mirror group variables not used
         self._groups[self.VGROUPS.MIRROR] = tuple(var_ids)
-
-    # def _init_create_bsmp_connectors(self):
-    #     udc = _UDC(self._pru, self._device_ids, self._udcmodel, self._simulate)
-    #     return udc
-
-    # def _init_create_bsmp_connectors(self):
-    #     bsmp = dict()
-    #     for id in self._device_ids:
-    #         if self._simulate:
-    #             # TODO: generalize using bsmp_entities
-    #             if self._udcmodel == 'FBP':
-    #                 bsmp[id] = _BSMPSim_FBP(self._pru)
-    #             elif self._udcmodel == 'FAC':
-    #                 bsmp[id] = _BSMPSim_FAC(self._pru)
-    #             elif self._udcmodel == 'FAC_ACDC':
-    #                 bsmp[id] = _BSMPSim_FAC_ACDC(self._pru)
-    #             else:
-    #                 raise NotImplementedError()
-    #         else:
-    #             if self._udcmodel == 'FBP':
-    #                 bsmp_entities = _EntitiesFBP()
-    #             elif self._udcmodel == 'FAC':
-    #                 bsmp_entities = _EntitiesFAC()
-    #             elif self._udcmodel == 'FAC_ACDC':
-    #                 bsmp_entities = _EntitiesFAC_ACDC()
-    #             else:
-    #                 raise NotImplementedError()
-    #             bsmp[id] = _BSMP(self._pru, id, bsmp_entities)
-    #     return bsmp
 
     def _init_check_version(self):
         if not self.connected:
@@ -1374,10 +1324,10 @@ class PRUController:
         # print('time1: ', _time.time() - t0)
 
         # --- make copy of state for updating
-        PRUController._lock.acquire()
+        self._lock.acquire()
         copy_var_vals = _dcopy(self._variables_values)
         # copy_var_vals = self._variables_values
-        PRUController._lock.release()
+        self._lock.release()
         # processing time up to this point: 18.3 ms @ BBB1
         # processing time up to this point (w/o locks): 17.1 ms @ BBB1
         # processing time up to this point (w/o locks,dcopy): 9.0 ms @ BBB1
@@ -1440,7 +1390,7 @@ class PRUController:
         # processing time up to this point: 20.4 ms @ BBB1
         # print('time4: ', _time.time() - t0)
 
-        # PRUController._lock.release()
+        # self._lock.release()
 
     def _bsmp_exec_function(self, device_ids, function_id, args=None):
         # --- send func exec request to serial line

@@ -5,8 +5,10 @@ import threading as _threading
 from copy import deepcopy as _deepcopy
 
 from siriuspy.search import PSSearch as _PSSearch
-from siriuspy.pwrsupply.data import PSData as _PSData
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
+from siriuspy.pwrsupply.data import PSData as _PSData
+from siriuspy.pwrsupply.pru import PRU as _PRU
+from siriuspy.pwrsupply.pru import PRUSim as _PRUSim
 from siriuspy.pwrsupply.prucontroller import PRUController as _PRUController
 from siriuspy.pwrsupply.e2scontroller import E2SController as _E2SController
 from siriuspy.pwrsupply.e2scontroller import DeviceInfo as _DeviceInfo
@@ -215,8 +217,11 @@ class BeagleBone:
     def _create_e2s_controller(self):
         # Return dict of power supply objects
         slave_ids = self._get_bsmp_slave_IDs()
-        self._pru_controller = _PRUController(
-            self._psmodel, slave_ids, simulate=self._simulate)
+        if self._simulate:
+            pru = _PRUSim()
+        else:
+            pru = _PRU()
+        self._pru_controller = _PRUController(pru, self._psmodel, slave_ids)
         for i, psname in enumerate(self._psnames):
             self._devices_info[psname] = _DeviceInfo(psname, slave_ids[i])
         db = _deepcopy(self._database)
