@@ -3,9 +3,8 @@
 Basic Small Message protocol
 
 Documentation:
-http://git.cnpem.br/bruno.martins/libbsmp/raw/master/doc/protocol_v2.20_pt_BR.pdf
-http://git.cnpem.br/bruno.martins/libbsmp/raw/master/doc/protocol_v2.20_en_US.pdf
-
+https://github.com/lnls-sirius/libbsmp/blob/master/doc/protocol_v2-30_pt_BR.pdf
+https://github.com/lnls-sirius/libbsmp/blob/master/doc/protocol_v2-30_en_US.pdf
 """
 
 from .serial import *
@@ -15,5 +14,5 @@ from .commands import *
 from .exceptions import *
 
 
-__version__ = '2.20.0'
+__version__ = '2.30.0'
 del serial, types, entities, commands, exceptions
