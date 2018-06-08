@@ -506,6 +506,13 @@ class BoosterRamp(_ConfigSrv):
         # self._update_waveform(maname)
         self._waveforms[maname] = _dcopy(waveform)
 
+    def get_waveform_times(self):
+        """Return ramp energy at a given time."""
+        maname = 'BO-Fam:MA-B'
+        self._update_waveform(maname)
+        times = self._waveforms[maname].times
+        return times
+
     def get_waveform_currents(self, maname):
         """Return waveform current for a given power supply."""
         self._update_waveform(maname)
@@ -517,6 +524,13 @@ class BoosterRamp(_ConfigSrv):
         self._update_waveform(maname)
         waveform = self._waveforms[maname]
         return waveform.strengths.copy()
+
+    def get_waveform_energy(self, time):
+        """Return ramp energy at a given time."""
+        times = self.get_waveform_times()
+        energies = self._waveforms['BO-Fam:MA-B'].strengths
+        energy = _np.interp(time, times, energies)
+        return energy
 
     # --- private methods ---
 
