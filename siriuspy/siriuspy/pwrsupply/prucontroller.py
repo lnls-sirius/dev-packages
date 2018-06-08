@@ -1867,7 +1867,8 @@ class PRUController:
         self._bsmp_init_variable_values()
 
         # check if ps controller version is compatible with bsmp.py
-        self._init_check_version()
+        # TODO: turn version checking on when test bench frmware is updated.
+        # self._init_check_version()
 
         # initialize parameters_values, a mirror state of BSMP devices
         # TODO: finish implementation of _bsmp_init_parameters_values!
