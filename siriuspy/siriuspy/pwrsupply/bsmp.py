@@ -67,43 +67,43 @@ class ConstBSMP:
     F_OPEN_LOOP = 2
     F_CLOSE_LOOP = 3
     F_SELECT_OP_MODE = 4
-    F_SELECT_PS_MODEL = 5  # --- NOT IMPLEMENTED YET ---
+    F_SELECT_PS_MODEL = 5
     F_RESET_INTERLOCKS = 6
-    F_REMOTE_INTERFACE = 7  # --- NOT IMPLEMENTED YET ---
-    F_SET_SERIAL_ADDRESS = 8  # --- NOT IMPLEMENTED YET ---
-    F_SET_SERIAL_TERMINATION = 9  # --- NOT IMPLEMENTED YET ---
-    F_UNLOCK_UDC = 10  # --- NOT IMPLEMENTED YET ---
-    F_LOCK_UDC = 11  # --- NOT IMPLEMENTED YET ---
-    F_CFG_BUF_SAMPLES = 12  # --- NOT IMPLEMENTED YET ---
-    F_ENABLE_BUF_SAMPLES = 13  # --- NOT IMPLEMENTED YET ---
-    F_DISABLE_BUF_SAMPLES = 14  # --- NOT IMPLEMENTED YET ---
-    F_SYNC_PULSE = 15  # --- NOT IMPLEMENTED YET ---
+    F_REMOTE_INTERFACE = 7
+    F_SET_SERIAL_ADDRESS = 8
+    F_SET_SERIAL_TERMINATION = 9
+    F_UNLOCK_UDC = 10
+    F_LOCK_UDC = 11
+    F_CFG_BUF_SAMPLES = 12
+    F_ENABLE_BUF_SAMPLES = 13
+    F_DISABLE_BUF_SAMPLES = 14
+    F_SYNC_PULSE = 15
     F_SET_SLOWREF = 16
-    F_SET_SLOWREF_FBP = 17  # --- NOT IMPLEMENTED YET ---
+    F_SET_SLOWREF_FBP = 17
     F_RESET_COUNTERS = 18
-    F_SCALE_WFMREF = 19  # --- NOT IMPLEMENTED YET ---
-    F_SELECT_WFMREF = 20  # --- NOT IMPLEMENTED YET ---
-    F_SAVE_WFMREF = 21  # --- NOT IMPLEMENTED YET ---
-    F_RESET_WFMREF = 22  # --- NOT IMPLEMENTED YET ---
+    F_SCALE_WFMREF = 19
+    F_SELECT_WFMREF = 20
+    F_SAVE_WFMREF = 21
+    F_RESET_WFMREF = 22
     F_CFG_SIGGEN = 23
-    F_SET_SIGGEN = 24  # --- NOT IMPLEMENTED YET ---
+    F_SET_SIGGEN = 24
     F_ENABLE_SIGGEN = 25
     F_DISABLE_SIGGEN = 26
-    F_SET_SLOWREF_READBACK = 27  # --- NOT IMPLEMENTED YET ---
-    F_SET_SLOWREF_FBP_READBACK = 28  # --- NOT IMPLEMENTED YET ---
-    F_SET_PARAM = 29  # --- NOT IMPLEMENTED YET ---
-    F_GET_PARAM = 30  # --- NOT IMPLEMENTED YET ---
-    F_SAVE_PARAM_EEPROM = 31  # --- NOT IMPLEMENTED YET ---
-    F_LOAD_PARAM_EEPROM = 32  # --- NOT IMPLEMENTED YET ---
-    F_SAVE_PARAM_BANK = 33  # --- NOT IMPLEMENTED YET ---
-    F_LOAD_PARAM_BANK = 34  # --- NOT IMPLEMENTED YET ---
-    F_SET_DSP_COEFFS = 35  # --- NOT IMPLEMENTED YET ---
-    F_GET_DSP_COEFF = 36  # --- NOT IMPLEMENTED YET ---
-    F_SAVE_DSP_COEFFS_EEPROM = 37  # --- NOT IMPLEMENTED YET ---
-    F_LOAD_DSP_COEFFS_EEPROM = 38  # --- NOT IMPLEMENTED YET ---
-    F_SAVE_DSP_MODULES_EEPROM = 39  # --- NOT IMPLEMENTED YET ---
-    F_LOAD_DSP_MODULES_EEPROM = 40  # --- NOT IMPLEMENTED YET ---
-    F_RESET_UDC = 41  # --- NOT IMPLEMENTED YET ---
+    F_SET_SLOWREF_READBACK = 27
+    F_SET_SLOWREF_FBP_READBACK = 28
+    F_SET_PARAM = 29
+    F_GET_PARAM = 30
+    F_SAVE_PARAM_EEPROM = 31
+    F_LOAD_PARAM_EEPROM = 32
+    F_SAVE_PARAM_BANK = 33
+    F_LOAD_PARAM_BANK = 34
+    F_SET_DSP_COEFFS = 35
+    F_GET_DSP_COEFF = 36
+    F_SAVE_DSP_COEFFS_EEPROM = 37
+    F_LOAD_DSP_COEFFS_EEPROM = 38
+    F_SAVE_DSP_MODULES_EEPROM = 39
+    F_LOAD_DSP_MODULES_EEPROM = 40
+    F_RESET_UDC = 41
 
     # --- common variables ---
     V_PS_STATUS = 0
@@ -254,13 +254,15 @@ class ConstFBP_DCLINK(ConstBSMP):
     V_UNDEF23 = 23
     V_UNDEF24 = 24
 
-    # --- FSB variables ---
-    V_PS_SOFT_INTERLOCKS = 25  # BSMP doc says ID numb. should be continous!
+    # --- FBP_DCLINK variables ---
+    V_PS_SOFT_INTERLOCKS = 25
     V_PS_HARD_INTERLOCKS = 26
-    V_DIGITAL_INPUTS = 27  # corresponds to IOC Current-Mon
-    V_OUT_1 = 28
-    V_OUT_1 = 29
-    V_OUT_1 = 30
+    V_DIGITAL_INPUTS = 27
+    V_V_OUT = 28
+    V_V_OUT_1 = 29
+    V_V_OUT_2 = 30
+    V_V_OUT_3 = 31
+    V_DIG_POT_TAP = 32
 
 
 class ConstFAC(ConstBSMP):
@@ -367,6 +369,10 @@ MAP_MIRROR_2_ORIG_FBP = {
     ConstFBP.V_I_LOAD_2: (2, 27),
     ConstFBP.V_I_LOAD_3: (3, 27),
     ConstFBP.V_I_LOAD_4: (4, 27)}
+
+
+# TODO: delete functions and parameters which do not make sense for Entities
+#       which are specialized.
 
 
 class Parameters:
@@ -688,6 +694,8 @@ class EntitiesFBP_DCLINK(_Entities):
         {'eid': 28, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 29, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 30, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 31, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 32, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
     )
 
     Curves = tuple()
@@ -808,6 +816,14 @@ class FBP(_BSMP):
     def __init__(self, slave_address):
         """Init BSMP."""
         super().__init__(_PRU(), slave_address, EntitiesFBP())
+
+
+class FBP_DCLINK(_BSMP):
+    """BSMP with EntitiesFBP_DCLINK."""
+
+    def __init__(self, slave_address):
+        """Init BSMP."""
+        super().__init__(_PRU(), slave_address, EntitiesFBP_DCLINK())
 
 
 class FAC(_BSMP):
