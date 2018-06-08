@@ -655,11 +655,20 @@ class BSMPSim_FAC_ACDC(_BaseBSMPSim, _Spec_FAC_ACDC):
 
 # --- Classes for UDCs ---
 
+
 udcmodels = {
-    'FBP': (_EntitiesFBP, BSMPSim_FBP),
-    'FBP_DCLINK': (_EntitiesFBP_DCLINK, BSMPSim_FBP_DCLINK),
-    'FAC': (_EntitiesFAC, BSMPSim_FAC),
-    'FAC_ACDC': (_EntitiesFAC_ACDC, BSMPSim_FAC_ACDC),
+    'FBP': {'ConstBSMP': _cFBP,
+            'Entities': _EntitiesFBP(),
+            'BSMPSim': BSMPSim_FBP, },
+    'FBP_DCLINK': {'ConstBSMP': _cFBP_DCLINK,
+                   'Entities': _EntitiesFBP_DCLINK(),
+                   'BSMPSim': BSMPSim_FBP_DCLINK, },
+    'FAC': {'ConstBSMP': _cFAC,
+            'Entities': _EntitiesFAC(),
+            'BSMPSim': BSMPSim_FAC, },
+    'FAC_ACDC': {'ConstBSMP': _cFAC_ACDC,
+                 'Entities': _EntitiesFAC_ACDC(),
+                 'BSMPSim': BSMPSim_FAC_ACDC, },
 }
 
 
@@ -680,12 +689,13 @@ class UDC:
 
     def _create_bsmp_connectors(self):
         bsmp = dict()
-        entities_class, bsmpsim_class = udcmodels[self._udcmodel]
+        d = udcmodels[self._udcmodel]
+        entities, bsmpsim_class = d['Entities'], d['BSMPSim']
         for id in self._device_ids:
             if self._pru.simulated:
                 bsmp[id] = bsmpsim_class(self._pru)
             else:
-                bsmp[id] = _BSMP(self._pru, id, entities_class())
+                bsmp[id] = _BSMP(self._pru, id, entities)
         return bsmp
 
     def __getitem__(self, index):
