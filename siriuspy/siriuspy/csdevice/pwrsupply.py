@@ -59,7 +59,7 @@ ps_hard_interlock_FBP = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
 )
-ps_soft_interlock_FBP_DCLink = (
+ps_soft_interlock_FBP_DCLINK = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
@@ -69,36 +69,67 @@ ps_soft_interlock_FBP_DCLink = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
 )
-ps_hard_interlock_FBP_DCLink = (
+ps_hard_interlock_FBP_DCLINK = (
     'Falha na fonte 1', 'Falha na fonte 2',
-    'Falha na fonte 3', 'Sensor de fumaça',
-    'Interlock externo', 'Sobre-tensão na fonte 1'
-    'Sobre-tensão na fonte 2', 'Sobre-tensão na fonte 3',
+    'Falha na fonte 3', 'Sobre-tensão da saída do bastidor DC-Link',
+    'Sobre-tensão da fonte 1', 'Sobre-tensão na fonte 2',
+    'Sobre-tensão na fonte 3', 'Sub-tensão da saída do bastidor DC-Link',
     'Sub-tensão na fonte 1', 'Sub-tensão na fonte 2',
-    'Sub-tensão na fonte 3', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Sub-tensão na fonte 3', 'Sensor de fumaça',
+    'Interlock externo', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
 )
-ps_soft_interlock_FAC = (
+ps_soft_interlock_FAC_DCDC = (
     'Sobre-temperatura nos indutores',  'Sobre-temperatura nos indutores',
     'Falha no DCCT 1', 'Falha no DCCT 2',
     'Alta diferença entre DCCTs',
     'Falha na leitura da corrente na carga do DCCT 1',
-    'Falha na leitura da corrente na carga do DCCT 2',
+    'Falha na leitura da corrente na carga do DCCT 2', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved'
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
 )
-ps_hard_interlock_FAC = (
+ps_hard_interlock_FAC_DCDC = (
     'Sobre-corrente na carga', 'Sobre-corrente na carga',
     'Sobre-tensão no DC-Link', 'Sub-tensão no DC-Link',
-    'Falha nos drivers do módulo', 'Reserved',
+    'Falha nos drivers do módulo', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+)
+ps_soft_interlock_FAC_ACDC = (
+    'Sobre-temperatura no dissipador', 'Sobre-temperatura nos indutores',
     'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+)
+ps_hard_interlock_FAC_ACDC = (
+    'Sobre-tensão no banco de capacitores',
+    'Sobre-tensão na saída do retificador',
+    'Sub-tensão na saída do retificador',
+    'Sobre-corrente na saída do retificador',
+    'Falha no driver do IGBT', 'Falha no contator de entrada AC trifásica',
+    'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
 )
 ps_cycle_type = ('Sine', 'DampedSine', 'Trapezoidal')
 ps_sync_mode = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
@@ -444,11 +475,11 @@ def _get_ps_FAC_propty_database():
         'Current2-Mon': {'type': 'float',  'value': 0.0,
                          'prec': default_ps_current_precision},
         'IntlkSoftLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_soft_interlock_FAC),
-                                 'value': ps_soft_interlock_FAC},
+                                 'count': len(ps_soft_interlock_FAC_DCDC),
+                                 'value': ps_soft_interlock_FAC_DCDC},
         'IntlkHardLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_hard_interlock_FAC),
-                                 'value': ps_hard_interlock_FAC},
+                                 'count': len(ps_hard_interlock_FAC_DCDC),
+                                 'value': ps_hard_interlock_FAC_DCDC},
     }
     propty_db.update(db_ps)
     return propty_db
