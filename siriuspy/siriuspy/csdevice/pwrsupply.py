@@ -44,8 +44,7 @@ ps_soft_interlock_FBP = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-)
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',)
 ps_hard_interlock_FBP = (
     'Sobre-corrente na carga', 'Sobre-tensão na carga',
     'Sobre-tensão no DC-Link', 'Sub-tensão no DC-Link',
@@ -57,8 +56,7 @@ ps_hard_interlock_FBP = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-)
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',)
 ps_soft_interlock_FBP_DCLINK = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
@@ -67,8 +65,7 @@ ps_soft_interlock_FBP_DCLINK = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-)
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',)
 ps_hard_interlock_FBP_DCLINK = (
     'Falha na fonte 1', 'Falha na fonte 2',
     'Falha na fonte 3', 'Sobre-tensão da saída do bastidor DC-Link',
@@ -80,8 +77,7 @@ ps_hard_interlock_FBP_DCLINK = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-)
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',)
 ps_soft_interlock_FAC_DCDC = (
     'Sobre-temperatura nos indutores',  'Sobre-temperatura nos indutores',
     'Falha no DCCT 1', 'Falha no DCCT 2',
@@ -93,8 +89,7 @@ ps_soft_interlock_FAC_DCDC = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-)
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',)
 ps_hard_interlock_FAC_DCDC = (
     'Sobre-corrente na carga', 'Sobre-corrente na carga',
     'Sobre-tensão no DC-Link', 'Sub-tensão no DC-Link',
@@ -104,8 +99,7 @@ ps_hard_interlock_FAC_DCDC = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-)
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',)
 ps_soft_interlock_FAC_ACDC = (
     'Sobre-temperatura no dissipador', 'Sobre-temperatura nos indutores',
     'Reserved', 'Reserved',
@@ -115,8 +109,7 @@ ps_soft_interlock_FAC_ACDC = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-)
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',)
 ps_hard_interlock_FAC_ACDC = (
     'Sobre-tensão no banco de capacitores',
     'Sobre-tensão na saída do retificador',
@@ -129,8 +122,7 @@ ps_hard_interlock_FAC_ACDC = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-)
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',)
 ps_cycle_type = ('Sine', 'DampedSine', 'Trapezoidal')
 ps_sync_mode = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
 
