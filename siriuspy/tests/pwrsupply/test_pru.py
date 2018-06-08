@@ -75,6 +75,7 @@ class TestPRUInterface(unittest.TestCase):
 
     public_interface = (
         'VERSION',
+        'simulated',
         'sync_mode',
         'sync_status',
         'sync_start',
@@ -100,6 +101,11 @@ class TestPRUInterface(unittest.TestCase):
     def test_VERSION(self):
         """Test VERSION."""
         self.assertIsInstance(PRUInterface.VERSION, str)
+
+    def test_simulated(self):
+        """Test simulated."""
+        # TODO: implement test!
+        pass
 
     def test_sync_mode(self):
         """Test sync_mode."""

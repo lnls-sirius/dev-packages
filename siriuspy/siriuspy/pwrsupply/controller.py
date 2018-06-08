@@ -666,11 +666,10 @@ udcmodels = {
 class UDC:
     """UDC."""
 
-    def __init__(self, pru, udcmodel, device_ids, simulate=False):
+    def __init__(self, pru, udcmodel, device_ids):
         """Init."""
         self._pru = pru
         self._device_ids = device_ids
-        self._simulate = simulate
         self._udcmodel = self._get_udcmodel(udcmodel)
         self._bsmp = self._create_bsmp_connectors()
 
@@ -683,7 +682,7 @@ class UDC:
         bsmp = dict()
         entities_class, bsmpsim_class = udcmodels[self._udcmodel]
         for id in self._device_ids:
-            if self._simulate:
+            if self._pru.simulated:
                 bsmp[id] = bsmpsim_class(self._pru)
             else:
                 bsmp[id] = _BSMP(self._pru, id, entities_class())

@@ -3,7 +3,7 @@ import numpy as _np
 import re as _re
 from collections import namedtuple as _namedtuple
 
-from siriuspy.pwrsupply.prucontroller import PRUController as _PRUController
+from siriuspy.pwrsupply.prucontroller import PRUCParms_FBP as _PRUCParms_FBP
 from siriuspy.pwrsupply.commands import CommandFactory as _CommandFactory
 from siriuspy.pwrsupply.fields import VariableFactory as _VariableFactory
 from siriuspy.pwrsupply.fields import Constant as _Constant
@@ -23,7 +23,8 @@ class E2SController:
     ids.
     """
 
-    INTERVAL_SCAN = 1.0/_PRUController.FREQ.SCAN
+    # TODO: generalized this INTERVAL_SCAN
+    INTERVAL_SCAN = 1.0/_PRUCParms_FBP.FREQ_SCAN
     _function = _re.compile('^.*-(SP|Sel|Cmd)$')
 
     def __init__(self, controller, devices_info, model, database):

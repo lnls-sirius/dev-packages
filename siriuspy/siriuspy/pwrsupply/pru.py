@@ -45,6 +45,11 @@ class PRUInterface:
     # --- public interface ---
 
     @property
+    def simulated(self):
+        """Simulate flag."""
+        return self._get_simulated()
+
+    @property
     def sync_mode(self):
         """Return sync mode."""
         return self._sync_mode
@@ -180,6 +185,9 @@ class PRU(PRUInterface):
             raise ValueError(('Error {} returned in '
                               'PRUserial485_open').format(ret))
 
+    def _get_simulated(self):
+        return False
+
     def _get_sync_status(self):
         value = _PRUserial485.PRUserial485_sync_status()
         return value
@@ -246,6 +254,22 @@ class PRUSim(PRUInterface):
 
     # TODO: improve simulation
 
+    def __init__(self):
+        """Init method."""
+        PRUInterface.__init__(self)
+        self._callbacks = list()
+        self._sync_status = Const.SYNC_STATE.OFF
+        self._sync_pulse_count = 0
+        self._curves = self._create_curves()
+        self._block = 0  # TODO: check if this is the default PRU value
+        self._index = 0
+        self.t = _threading.Thread(target=self.emulate_trigger, daemon=True)
+
+        self.sync_block = False
+
+    def _get_simulated(self):
+        return True
+
     def emulate_trigger(self):
         """Simulate trigger signal from the timing system."""
         # t0 = _time.time()
@@ -284,19 +308,6 @@ class PRUSim(PRUInterface):
                     break
                 # if (_time.time() - t0) > 5:
                 #     break
-
-    def __init__(self):
-        """Init method."""
-        PRUInterface.__init__(self)
-        self._callbacks = list()
-        self._sync_status = Const.SYNC_STATE.OFF
-        self._sync_pulse_count = 0
-        self._curves = self._create_curves()
-        self._block = 0  # TODO: check if this is the default PRU value
-        self._index = 0
-        self.t = _threading.Thread(target=self.emulate_trigger, daemon=True)
-
-        self.sync_block = False
 
     def _get_sync_status(self):
         return self._sync_status
@@ -402,4 +413,5 @@ class PRUSim(PRUInterface):
         return curves
 
     def add_callback(self, func):
+        """Add callback."""
         self._callbacks.append(func)
