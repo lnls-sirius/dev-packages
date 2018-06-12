@@ -374,7 +374,10 @@ class PRUCParms_FBP_DCLINK(_PRUCParms):
 
 
 class PRUCParms_FAC(_PRUCParms):
-    """FAC-specific PRUC parameters."""
+    """FAC-specific PRUC parameters.
+
+    Represent FAC, FAC_2S, FAC_2P4S psmodels.
+    """
 
     FREQ_RAMP = 2.0  # [Hz]
     FREQ_SCAN = 10.0  # [Hz]

@@ -58,6 +58,8 @@ class BeagleBone:
             self._psnames = ['BO-01U:PS-CH', 'BO-01U:PS-CV']
         elif self._bbbname == 'BO-01:CO-PSCtrl-2':
             self._psnames = ['BO-03U:PS-CH', 'BO-03U:PS-CV']
+        elif self._bbbname == 'AS-Glob:CO-PSCtrl-2':
+            self._psnames = ['AS-Glob:PS-DCLinkFBP-2']
         else:
             # self._psnames = _PSSearch.conv_bbbname_2_psnames(bbbname)
             bsmps = _PSSearch.conv_bbbname_2_bsmps(bbbname)

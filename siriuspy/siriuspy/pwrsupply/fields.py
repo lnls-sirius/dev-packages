@@ -4,7 +4,7 @@ These classes implement a common interface that exposes the `read` method.
 """
 import re as _re
 
-from siriuspy.pwrsupply.bsmp import ConstFBP as _c
+from siriuspy.pwrsupply import bsmp as _bsmp
 from PRUserial485 import ConstSyncMode as _SYNC_MODE
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 
@@ -16,6 +16,7 @@ class VariableFactory:
     def get(ps_model, device_id, epics_field, pru_controller):
         """Factory."""
         # Common variables
+        _c = _bsmp.ConstBSMP
         if epics_field == 'PwrState-Sts':
             return PwrState(
                 Variable(pru_controller, device_id, _c.V_PS_STATUS))
@@ -52,6 +53,7 @@ class VariableFactory:
             return Variable(pru_controller, device_id, _c.V_SIGGEN_AUX_PARAM)
         # Specific variables
         if ps_model == 'FBP':
+            _c = _bsmp.ConstFBP
             if epics_field == 'IntlkSoft-Mon':
                 return Variable(
                     pru_controller, device_id, _c.V_PS_SOFT_INTERLOCKS)
@@ -61,6 +63,7 @@ class VariableFactory:
             elif epics_field == 'Current-Mon':
                 return Variable(pru_controller, device_id, _c.V_I_LOAD)
         elif ps_model == 'FAC':
+            _c = _bsmp.ConstFAC
             if epics_field == 'IntlkSoft-Mon':
                 return Variable(
                     pru_controller, device_id, _c.V_PS_SOFT_INTERLOCKS)
@@ -72,6 +75,20 @@ class VariableFactory:
             elif epics_field == 'Current2-Mon':
                 # TODO constant for other FAC and other PS models
                 return Variable(pru_controller, device_id, 28)
+        elif ps_model == 'FBP_DCLINK':
+            _c = _bsmp.ConstFBP_DCLINK
+            if epics_field == 'ModulesStatus-Mon':
+                return Variable(pru_controller, device_id, _c.V_DIGITAL_INPUTS)
+            elif epics_field == 'Voltage-Mon':
+                return Variable(pru_controller, device_id, _c.V_V_OUT)
+            elif epics_field == 'Voltage1-Mon':
+                return Variable(pru_controller, device_id, _c.V_V_OUT_1)
+            elif epics_field == 'Voltage2-Mon':
+                return Variable(pru_controller, device_id, _c.V_V_OUT_2)
+            elif epics_field == 'Voltage3-Mon':
+                return Variable(pru_controller, device_id, _c.V_V_OUT_3)
+            elif epics_field == 'DigPotTap-RB':
+                return Variable(pru_controller, device_id, _c.V_DIG_POT_TAP)
 
         # PRU related variables
         if epics_field == 'WfmData-RB':
