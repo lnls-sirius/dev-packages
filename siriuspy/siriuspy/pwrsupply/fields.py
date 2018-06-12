@@ -77,6 +77,8 @@ class VariableFactory:
                 return Variable(pru_controller, device_id, 28)
         elif ps_model == 'FBP_DCLINK':
             _c = _bsmp.ConstFBP_DCLINK
+            if epics_field == 'VoltageGain-RB':
+                return Variable(pru_controller, device_id, _c.V_PS_SETPOINT)
             if epics_field == 'ModulesStatus-Mon':
                 return Variable(pru_controller, device_id, _c.V_DIGITAL_INPUTS)
             elif epics_field == 'Voltage-Mon':
