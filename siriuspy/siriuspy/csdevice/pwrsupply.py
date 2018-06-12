@@ -147,7 +147,7 @@ def get_ps_current_unit():
     """Return power supply current unit."""
     global _default_ps_current_unit
     if _default_ps_current_unit is None:
-        _default_ps_current_unit = _PSSearch.get_splims_unit(ispulsed=False)
+        _default_ps_current_unit = _PSSearch.get_splims_unit('FBP')
     return _default_ps_current_unit
 
 
@@ -155,7 +155,7 @@ def get_pu_current_unit():
     """Return pulsed power supply 'current' unit."""
     global _default_pu_current_unit
     if _default_pu_current_unit is None:
-        _default_pu_current_unit = _PSSearch.get_splims_unit(ispulsed=True)
+        _default_pu_current_unit = _PSSearch.get_splims_unit('')
     return _default_pu_current_unit
 
 
