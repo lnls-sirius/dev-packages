@@ -549,6 +549,8 @@ class PRUController:
 
     # shortcuts, local variables and constants
 
+    _dcdc_udcmodel = ('FBP', 'FAC', 'FAC_2P4S', 'FAP', 'FAP_4P', 'FAP_2P2S')
+
     _default_slowrefsync_sp = _DEFAULT_WFMDATA[0]
 
     # TODO: check with ELP group how short these delays can be
@@ -1043,6 +1045,8 @@ class PRUController:
             self._params = PRUCParms_FBP_DCLINK
         elif self._udcmodel == 'FAC':
             self._params = PRUCParms_FAC
+        elif self._udcmodel == 'FAC_2P4S':
+            self._params = PRUCParms_FAC
         elif self._udcmodel == 'FAC_ACDC':
             self._params = PRUCParms_FAC_ACDC
         else:
@@ -1105,7 +1109,8 @@ class PRUController:
         # TODO: somehow this is necessary. if curves are not set in
         # initialization, RMPEND does not work! sometimes the ps controllers
         # are put in a non-responsive state!!!
-        self.pru_curve_write(self.device_ids[0], self._curves[0])
+        if self._udcmodel in PRUController._dcdc_udcmodel:
+            self.pru_curve_write(self.device_ids[0], self._curves[0])
 
     def _initialize_devices(self):
 
@@ -1115,8 +1120,12 @@ class PRUController:
 
     def _init_prune_mirror_group(self):
 
+        # if self._udcmodel not in PRUController._dcdc_udcmodel:
+        #     return
+
         if self._udcmodel != 'FBP':
             return
+
         # gather mirror variables that will be used
         nr_devs = len(self.device_ids)
         var_ids = []
