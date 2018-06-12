@@ -27,9 +27,8 @@ class PSData:
         self._magfunc = _PSSearch.conv_pstype_2_magfunc(self._pstype)
         if self._magfunc != 'none':
             self._polarity = _PSSearch.conv_pstype_2_polarity(self._pstype)
-            print(self._magfunc)
             self._splims = _PSSearch.conv_pstype_2_splims(self._pstype)
-            self._splims_unit = _PSSearch.get_splims_unit(self._ispulsed)
+            self._splims_unit = _PSSearch.get_splims_unit(self._psmodel)
             self._excdata = _PSSearch.conv_psname_2_excdata(self._psname)
         # if self._ispulsed:
         #     self._propty_database = _get_pu_propty_database(self._pstype)

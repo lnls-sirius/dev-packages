@@ -18,7 +18,7 @@ class MAData:
         """Init method."""
         self._maname = _SiriusPVName(maname)
         self._splims = _MASearch.conv_maname_2_splims(self._maname)
-        self._ispulsed = _MASearch.check_maname_ispulsed(self._maname)
+        # self._ispulsed = _MASearch.check_maname_ispulsed(self._maname)
         self._splims_unit = _MASearch.get_splims_unit(ispulsed=self._ispulsed)
         psnames = _MASearch.conv_maname_2_psnames(self._maname)
         if self._ispulsed:

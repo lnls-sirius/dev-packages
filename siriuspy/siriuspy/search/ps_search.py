@@ -236,16 +236,14 @@ class PSSearch:
         return _copy.deepcopy(PSSearch._pstype_2_splims_dict)
 
     @staticmethod
-    def get_splims_unit(ispulsed):
+    def get_splims_unit(psmodel):
         """Return SP limits unit."""
         if PSSearch._pstype_2_splims_dict is None:
             PSSearch._reload_pstype_2_splims_dict()
-        if ispulsed is True:
-            return PSSearch._splims_pu_unit
-        elif ispulsed is False:
+        if psmodel in ('FBP', 'FAC', 'FAP', 'FAC_2S', 'FAC_2P4S'):
             return PSSearch._splims_ps_unit
         else:
-            raise ValueError
+            raise ValueError(psmodel)
 
     @staticmethod
     def get_splims_labels():
