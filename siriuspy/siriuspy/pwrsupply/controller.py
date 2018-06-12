@@ -567,20 +567,23 @@ class BSMPSim_FBP_DCLINK(_BaseBSMPSim, _Spec_FBP_DCLINK):
         return _EntitiesFBP_DCLINK()
 
     def _get_states(self):
-        return [_OpModeSimState_FBP_DCLINK]
+        return [_OpModeSimState_FBP_DCLINK()]
 
     def _get_init_variables(self):
         variables = []
         firmware = [b'S', b'i', b'm', b'u', b'l', b'a', b't', b'i', b'o', b'n']
         while len(firmware) < 128:
             firmware.append('\x00'.encode())
-        for idx, variable in enumerate(_EntitiesFBP_DCLINK.Variables):
-            if idx == 3:
-                variables[idx] = firmware
-            if 'uint' in variable.type:
-                variables[idx] = 0
-            elif variable.type == 'float':
-                variables[idx] = 0
+        variables = [
+            0b10000,  # V_PS_STATUS
+            0.0, 0.0,  # ps_setpoint, ps_reference
+            firmware,
+            0, 0,  # counters
+            0, 0, 0, 0.0, 0.0, 0.0, 0.0, [0.0, 0.0, 0.0, 0.0],  # siggen [6-13]
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # undef [14-24]
+            0, 0,  # interlocks [25-26]
+            0,
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # [28-32]
         return variables
 
 
@@ -626,8 +629,7 @@ class BSMPSim_FAC_ACDC(_BaseBSMPSim, _Spec_FAC_ACDC):
         return _EntitiesFAC_ACDC()
 
     def _get_states(self):
-        return [_OpModeSimSlowRefState_FAC(), _OpModeSimSlowRefSyncState_FAC(),
-                _OpModeSimCycleState_FAC(self._pru)]
+        return [_OpModeSimState_FAC_ACDC()]
 
     def _get_init_variables(self):
         firmware = [b'S', b'i', b'm', b'u', b'l', b'a', b't', b'i', b'o', b'n']
@@ -642,14 +644,6 @@ class BSMPSim_FAC_ACDC(_BaseBSMPSim, _Spec_FAC_ACDC):
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # undef [14-24]
             0, 0,  # interlocks [25-26]
             0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # [27-32]
-        default_siggen_parms = \
-            _SignalFactory.DEFAULT_CONFIGS['Sine']
-        variables[_cFAC.V_SIGGEN_TYPE] = default_siggen_parms[0]
-        variables[_cFAC.V_SIGGEN_NUM_CYCLES] = default_siggen_parms[1]
-        variables[_cFAC.V_SIGGEN_FREQ] = default_siggen_parms[2]
-        variables[_cFAC.V_SIGGEN_AMPLITUDE] = default_siggen_parms[3]
-        variables[_cFAC.V_SIGGEN_OFFSET] = default_siggen_parms[4]
-        variables[_cFAC.V_SIGGEN_AUX_PARAM] = default_siggen_parms[5:9]
         return variables
 
 

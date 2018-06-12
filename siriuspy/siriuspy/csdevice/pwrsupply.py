@@ -129,7 +129,6 @@ ps_sync_mode = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
 
 # --- power supply constants definition class ---
 
-
 Const.add_field('Models', ps_models)
 Const.add_field('DsblEnbl', ps_dsblenbl)
 Const.add_field('Interface', ps_interface)
@@ -160,8 +159,8 @@ def get_pu_current_unit():
     return _default_pu_current_unit
 
 
-def get_common_propty_database():
-    """Return database entries to all power-supply-like devices."""
+def get_basic_propty_database():
+    """Return database entries to all BSMP-like devices."""
     db = {
         'Version-Cte': {'type': 'str', 'value': 'UNDEF'},
         'CtrlMode-Mon': {'type': 'enum', 'enums': ps_interface,
@@ -175,6 +174,22 @@ def get_common_propty_database():
                        'value': _et.idx.SlowRef},
         'OpMode-Sts': {'type': 'enum', 'enums': ps_opmode,
                        'value': _et.idx.SlowRef},
+        # PRU
+        'PRUSyncMode-Mon': {'type': 'enum', 'enums': ps_sync_mode,
+                            'value': Const.SyncMode.Off},
+        'PRUBlockIndex-Mon': {'type': 'int', 'value': 0},
+        'PRUSyncPulseCount-Mon': {'type': 'int', 'value': 0},
+        'PRUCtrlQueueSize-Mon': {'type': 'int', 'value': 0,
+                                 'high': 50, 'hihi': 50},
+
+    }
+    return db
+
+
+def get_common_propty_database():
+    """Return database entries to all power-supply-like devices."""
+    db = get_basic_propty_database()
+    db.update({
         'Current-SP': {'type': 'float', 'value': 0.0,
                        'prec': default_ps_current_precision},
         'Current-RB': {'type': 'float', 'value': 0.0,
@@ -221,15 +236,7 @@ def get_common_propty_database():
         # Hw
         'OpenLoop-Mon': {'type': 'enum', 'enums': ps_openloop,
                          'value': Const.OpenLoop.Open},
-        # PRU
-        'PRUSyncMode-Mon': {'type': 'enum', 'enums': ps_sync_mode,
-                            'value': Const.SyncMode.Off},
-        'PRUBlockIndex-Mon': {'type': 'int', 'value': 0},
-        'PRUSyncPulseCount-Mon': {'type': 'int', 'value': 0},
-        'PRUCtrlQueueSize-Mon': {'type': 'int', 'value': 0,
-                                 'high': 50, 'hihi': 50},
-
-    }
+    })
     return db
 
 
@@ -459,6 +466,21 @@ def _get_ps_FBP_propty_database():
     return propty_db
 
 
+def _get_ps_FBP_DCLINK_propty_database():
+    """Return database with FBP_DCLINK pwrsupply model PVs."""
+    propty_db = get_basic_propty_database()
+    db_ps = {
+        'IntlkSoftLabels-Cte':  {'type': 'string',
+                                 'count': len(ps_soft_interlock_FBP),
+                                 'value': ps_soft_interlock_FBP},
+        'IntlkHardLabels-Cte':  {'type': 'string',
+                                 'count': len(ps_hard_interlock_FBP),
+                                 'value': ps_hard_interlock_FBP},
+    }
+    propty_db.update(db_ps)
+    return propty_db
+
+
 def _get_ps_FAC_propty_database():
     """Return database with FAC pwrsupply model PVs."""
     # TODO: implement!!!
@@ -475,6 +497,26 @@ def _get_ps_FAC_propty_database():
     }
     propty_db.update(db_ps)
     return propty_db
+
+
+def _get_ps_FAC_ACDC_propty_database():
+    """Return database with FAC_ACDC pwrsupply model PVs."""
+    # TODO: implement!!!
+    db = {
+        'Version-Cte': {'type': 'str', 'value': 'UNDEF'},
+        'CtrlMode-Mon': {'type': 'enum', 'enums': ps_interface,
+                         'value': _et.idx.Remote},
+        # Common Variables
+        'PwrState-Sel': {'type': 'enum', 'enums': ps_pwrstate_sel,
+                         'value': _et.idx.Off},
+        'PwrState-Sts': {'type': 'enum', 'enums': ps_pwrstate_sts,
+                         'value': _et.idx.Off},
+        'OpMode-Sel': {'type': 'enum', 'enums': ps_opmode,
+                       'value': _et.idx.SlowRef},
+        'OpMode-Sts': {'type': 'enum', 'enums': ps_opmode,
+                       'value': _et.idx.SlowRef},
+    }
+    return db
 
 
 def _get_ps_FAC_2S_propty_database():
@@ -551,6 +593,8 @@ def _set_limits(pstype, database):
 def _get_model_db(psmodel):
     if psmodel == 'FBP':
         database = _get_ps_FBP_propty_database()
+    elif psmodel in ('FBP_DCLINK'):
+        database = _get_ps_FBP_DCLINK_propty_database()
     elif psmodel in ('FAC'):
         database = _get_ps_FAC_propty_database()
     elif psmodel in ('FAC_2S'):
@@ -567,6 +611,8 @@ def _get_model_db(psmodel):
         database = _get_ps_FBP_FOFB_propty_database()
     elif psmodel in ('Commercial'):
         database = _get_ps_Commercial_propty_database()
+    elif psmodel in ('FAC_ACDC'):
+        database = _get_ps_FAC_ACDC_propty_database()
     else:
         raise ValueError(
             'DB for psmodel {} not implemented!'.format(psmodel))

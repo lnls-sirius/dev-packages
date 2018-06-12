@@ -22,9 +22,12 @@ class PSSearch:
     _pstype_2_splims_dict = None
     _pstype_2_excdat_dict = dict()
     _psname_2_psmodel_dict = None
-    _psname_2_bbbname_dict = None
     _psname_2_siggen_dict = None
-    _bbbname_2_psnames_dict = None
+    # _psname_2_bbbname_dict = None
+    # _bbbname_2_psnames_dict = None
+
+    _bbbname_2_bsmps_dict = None
+    _bsmps_2_bbbname_dict = dict()
 
     @staticmethod
     def get_psnames(filters=None):
@@ -74,15 +77,25 @@ class PSSearch:
             PSSearch._reload_pstype_dict()
         return _copy.deepcopy(PSSearch._pstype_dict)
 
+    # @staticmethod
+    # def get_bbbname_dict():
+    #     """Return bbbname dictionary.
+    #
+    #     With key,value pairs of bbbname and corresponding power supplies.
+    #     """
+    #     if PSSearch._bbbname_2_psnames_dict is None:
+    #         PSSearch._reload_bbb_2_psname_dict()
+    #     return _copy.deepcopy(PSSearch._bbbname_2_psnames_dict)
+
     @staticmethod
     def get_bbbname_dict():
         """Return bbbname dictionary.
 
         With key,value pairs of bbbname and corresponding power supplies.
         """
-        if PSSearch._bbbname_2_psnames_dict is None:
-            PSSearch._reload_bbb_2_psname_dict()
-        return _copy.deepcopy(PSSearch._bbbname_2_psnames_dict)
+        if PSSearch._bbbname_2_bsmps_dict is None:
+            PSSearch._reload_bbb_2_bsmps_dict()
+        return _copy.deepcopy(PSSearch._bbbname_2_bsmps_dict)
 
     @staticmethod
     def get_polarities():
@@ -137,16 +150,16 @@ class PSSearch:
 
         return PSSearch._pstype_2_excdat_dict[pstype]
 
-    @staticmethod
-    def check_psname_ispulsed(psname):
-        """Return True if psname is a pulsed power supply, False otherwise."""
-        spvname = _SiriusPVName(psname)
-        if spvname.dis == 'PU':
-            return True
-        elif spvname.dis == 'PS':
-            return False
-        else:
-            raise KeyError('Invalid psname "' + psname + '"!')
+    # @staticmethod
+    # def check_psname_ispulsed(psname):
+    #     """Return True if psname is a pulsed power supply, False otherwise."""
+    #     spvname = _SiriusPVName(psname)
+    #     if spvname.dis == 'PU':
+    #         return True
+    #     elif spvname.dis == 'PS':
+    #         return False
+    #     else:
+    #         raise KeyError('Invalid psname "' + psname + '"!')
 
     @staticmethod
     def conv_psname_2_psmodel(psname):
@@ -173,19 +186,40 @@ class PSSearch:
                 return True
         return False
 
+    # @staticmethod
+    # def conv_psname_2_bbbname(psname):
+    #     """Given psname return the bbb name."""
+    #     if PSSearch._psname_2_bbbname_dict is None:
+    #         PSSearch._reload_bbb_2_psname_dict()
+    #     return PSSearch._psname_2_bbbname_dict[psname]
+
     @staticmethod
     def conv_psname_2_bbbname(psname):
         """Given psname return the bbb name."""
-        if PSSearch._psname_2_bbbname_dict is None:
-            PSSearch._reload_bbb_2_psname_dict()
-        return PSSearch._psname_2_bbbname_dict[psname]
+        if PSSearch._bsmps_2_bbbname_dict is None:
+            PSSearch._reload_bbb_2_bsmps_dict()
+        return PSSearch._bsmps_2_bbbname_dict[psname]
+
+    # @staticmethod
+    # def conv_bbbname_2_psnames(bbbname):
+    #     """Given bbb name return the psnames."""
+    #     if PSSearch._bbbname_2_psnames_dict is None:
+    #         PSSearch._reload_bbb_2_psname_dict()
+    #     return PSSearch._bbbname_2_psnames_dict[bbbname]
 
     @staticmethod
     def conv_bbbname_2_psnames(bbbname):
         """Given bbb name return the psnames."""
-        if PSSearch._bbbname_2_psnames_dict is None:
-            PSSearch._reload_bbb_2_psname_dict()
-        return PSSearch._bbbname_2_psnames_dict[bbbname]
+        if PSSearch._bbbname_2_bsmps_dict is None:
+            PSSearch._reload_bbb_2_bsmps_dict()
+        return PSSearch._bbbname_2_bsmps_dict[bbbname]
+
+    @staticmethod
+    def conv_bbbname_2_bsmps(bbbname):
+        """Given bbb name return bsmps."""
+        if PSSearch._bbbname_2_bsmps_dict is None:
+            PSSearch._reload_bbb_2_bsmps_dict()
+        return PSSearch._bbbname_2_bsmps_dict[bbbname]
 
     @staticmethod
     def get_pstype_2_psnames_dict():
@@ -317,6 +351,22 @@ class PSSearch:
                 PSSearch._psname_2_siggen_dict[psname] = signal
         else:
             raise Exception('could not read siggen config from web server')
+
+    @staticmethod
+    def _reload_bbb_2_bsmps_dict():
+        """Test."""
+        data, _ = \
+            _util.read_text_data(_web.beaglebone_bsmp_mapping())
+        PSSearch._bbbname_2_bsmps_dict = dict()
+        PSSearch._bsmps_2_bbbname_dict = dict()
+        for line in data:
+            bbbname, *bsmps = line
+            PSSearch._bbbname_2_bsmps_dict[bbbname] = list()
+            for i in range(len(bsmps)//2):
+                bsmp_name, bsmp_id = bsmps[2*i+0], int(bsmps[2*i+1])
+                bsmp = (bsmp_name, bsmp_id)
+                PSSearch._bbbname_2_bsmps_dict[bbbname].append(bsmp)
+                PSSearch._bsmps_2_bbbname_dict[bsmp_name] = bbbname
 
     @staticmethod
     def _reload_bbb_2_psname_dict():

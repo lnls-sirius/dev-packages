@@ -5,8 +5,8 @@ import copy as _copy
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.csdevice.pwrsupply import get_ps_propty_database as \
     _get_ps_propty_database
-from siriuspy.csdevice.pwrsupply import get_pu_propty_database as \
-    _get_pu_propty_database
+# from siriuspy.csdevice.pwrsupply import get_pu_propty_database as \
+#     _get_pu_propty_database
 
 
 class PSData:
@@ -20,20 +20,24 @@ class PSData:
         if psname not in _PSSearch.get_psnames():
             raise ValueError(psname + ' is not a valid power supply name.')
         self._psname = psname
-        self._pstype = _PSSearch.conv_psname_2_pstype(self._psname)
         self._psmodel = _PSSearch.conv_psname_2_psmodel(self._psname)
-        self._ispulsed = _PSSearch.check_psname_ispulsed(self._psname)
-        self._polarity = _PSSearch.conv_pstype_2_polarity(self._pstype)
-        self._magfunc = _PSSearch.conv_pstype_2_magfunc(self._pstype)
-        self._splims = _PSSearch.conv_pstype_2_splims(self._pstype)
-        self._splims_unit = _PSSearch.get_splims_unit(self._ispulsed)
-        self._excdata = _PSSearch.conv_psname_2_excdata(self._psname)
+        self._pstype = _PSSearch.conv_psname_2_pstype(self._psname)
         self._bbbname = _PSSearch.conv_psname_2_bbbname(self._psname)
-        if self._ispulsed:
-            self._propty_database = _get_pu_propty_database(self._pstype)
-        else:
-            self._propty_database = \
-                _get_ps_propty_database(self._psmodel, self._pstype)
+        # self._ispulsed = _PSSearch.check_psname_ispulsed(self._psname)
+        self._magfunc = _PSSearch.conv_pstype_2_magfunc(self._pstype)
+        if self._magfunc != 'none':
+            self._polarity = _PSSearch.conv_pstype_2_polarity(self._pstype)
+            print(self._magfunc)
+            self._splims = _PSSearch.conv_pstype_2_splims(self._pstype)
+            self._splims_unit = _PSSearch.get_splims_unit(self._ispulsed)
+            self._excdata = _PSSearch.conv_psname_2_excdata(self._psname)
+        # if self._ispulsed:
+        #     self._propty_database = _get_pu_propty_database(self._pstype)
+        # else:
+        #     self._propty_database = \
+        #         _get_ps_propty_database(self._psmodel, self._pstype)
+        self._propty_database = \
+            _get_ps_propty_database(self._psmodel, self._pstype)
 
     @property
     def psname(self):

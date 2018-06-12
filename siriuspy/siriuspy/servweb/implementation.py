@@ -6,6 +6,7 @@ _timeout = 1.0  # [seconds]
 _excdat_folder = '/magnet/excitation-data/'
 _magnet_folder = '/magnet/'
 _ps_folder = '/pwrsupply/'
+_bbb_folder = '/beaglebone/'
 _pstypes_data_folder = '/pwrsupply/pstypes-data/'
 _diag_folder = '/diagnostics/'
 _timesys_folder = '/timesys/'
@@ -107,6 +108,12 @@ def pu_psmodels_read(timeout=_timeout):
 def beaglebone_power_supplies_mapping(timeout=_timeout):
     """Return the beaglebone Black connections list."""
     url = _ps_folder + 'beaglebone-mapping.txt'
+    return read_url(url, timeout=timeout)
+
+
+def beaglebone_bsmp_mapping(timeout=_timeout):
+    """Return the beaglebone Black BSMP device mapping list."""
+    url = _bbb_folder + 'beaglebone-bsmp.txt'
     return read_url(url, timeout=timeout)
 
 
