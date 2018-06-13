@@ -78,7 +78,7 @@ ps_hard_interlock_FBP_DCLINK = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-ps_soft_interlock_FAC_DCDC = (
+ps_soft_interlock_FAC = (
     'Sobre-temperatura nos indutores',  'Sobre-temperatura nos indutores',
     'Falha no DCCT 1', 'Falha no DCCT 2',
     'Alta diferença entre DCCTs',
@@ -90,7 +90,7 @@ ps_soft_interlock_FAC_DCDC = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-ps_hard_interlock_FAC_DCDC = (
+ps_hard_interlock_FAC = (
     'Sobre-corrente na carga', 'Sobre-corrente na carga',
     'Sobre-tensão no DC-Link', 'Sub-tensão no DC-Link',
     'Falha nos drivers do módulo', 'Reserved', 'Reserved', 'Reserved',
@@ -335,12 +335,12 @@ def get_ma_propty_database(maname):
     current_alarm = ('Current-SP', 'Current-RB',
                      'CurrentRef-Mon', 'Current-Mon', )
     current_pvs = current_alarm  # + ('WfmData-SP', 'WfmData-RB')
-    unit = _MASearch.get_splims_unit(ispulsed=False)
-    magfunc_dict = _MASearch.conv_maname_2_magfunc(maname)
     psnames = _MASearch.conv_psmaname_2_psnames(maname)
+    psmodel = _PSSearch.conv_psname_2_psmodel(psnames[0])
+    unit = _MASearch.get_splims_unit(psmodel=psmodel)
+    magfunc_dict = _MASearch.conv_maname_2_magfunc(maname)
     pstype = _PSSearch.conv_psname_2_pstype(psnames[0])
-    # TODO: generalize
-    propty_db = get_ps_propty_database('FBP', pstype)
+    propty_db = get_ps_propty_database(psmodel, pstype)
     db = {}
 
     for psname, magfunc in magfunc_dict.items():
@@ -406,9 +406,10 @@ def get_pm_propty_database(maname):
     else:
         propty_db = get_common_pu_propty_database()
 
-    propty_db = get_common_pu_propty_database()
+    psnames = _MASearch.conv_psmaname_2_psnames(maname)
+    psmodel = _PSSearch.conv_psname_2_psmodel(psnames[0])
     current_alarm = ('Voltage-SP', 'Voltage-RB', 'Voltage-Mon', )
-    unit = _MASearch.get_splims_unit(ispulsed=True)
+    unit = _MASearch.get_splims_unit(psmodel=psmodel)
     magfunc_dict = _MASearch.conv_maname_2_magfunc(maname)
     db = {}
     for psname, magfunc in magfunc_dict.items():
@@ -502,11 +503,11 @@ def _get_ps_FAC_propty_database():
         'Current2-Mon': {'type': 'float',  'value': 0.0,
                          'prec': default_ps_current_precision},
         'IntlkSoftLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_soft_interlock_FAC_DCDC),
-                                 'value': ps_soft_interlock_FAC_DCDC},
+                                 'count': len(ps_soft_interlock_FAC),
+                                 'value': ps_soft_interlock_FAC},
         'IntlkHardLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_hard_interlock_FAC_DCDC),
-                                 'value': ps_hard_interlock_FAC_DCDC},
+                                 'count': len(ps_hard_interlock_FAC),
+                                 'value': ps_hard_interlock_FAC},
     }
     propty_db.update(db_ps)
     return propty_db

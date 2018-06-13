@@ -18,16 +18,18 @@ class MAData:
         """Init method."""
         self._maname = _SiriusPVName(maname)
         self._splims = _MASearch.conv_maname_2_splims(self._maname)
-        # self._ispulsed = _MASearch.check_maname_ispulsed(self._maname)
-        self._splims_unit = _MASearch.get_splims_unit(ispulsed=self._ispulsed)
         psnames = _MASearch.conv_maname_2_psnames(self._maname)
-        if self._ispulsed:
-            self._propty_databases = _get_pm_propty_database(self._maname)
-        else:
-            self._propty_databases = _get_ma_propty_database(self._maname)
         self._psdata = {}
         for psname in psnames:
             self._psdata[psname] = _PSData(psname=psname)
+        psmodel = self._psdata[psnames[0]].psmodel
+        self._splims_unit = \
+            _MASearch.get_splims_unit(psmodel=psmodel)
+        # TODO: cleanup code
+        if 'PU-' in maname:
+            self._propty_databases = _get_pm_propty_database(self._maname)
+        else:
+            self._propty_databases = _get_ma_propty_database(self._maname)
 
     @property
     def maname(self):
