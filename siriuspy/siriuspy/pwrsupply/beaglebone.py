@@ -64,6 +64,7 @@ class BeagleBone:
             # self._psnames = _PSSearch.conv_bbbname_2_psnames(bbbname)
             bsmps = _PSSearch.conv_bbbname_2_bsmps(bbbname)
             self._psnames = [bsmp[0] for bsmp in bsmps]
+            self._device_ids = (bsmp[1] for bsmp in bsmps)
 
         # retrieve power supply model and corresponding database
         self._psmodel = _PSSearch.conv_psname_2_psmodel(self._psnames[0])
@@ -216,8 +217,10 @@ class BeagleBone:
         elif self._bbbname == 'BO-01:CO-PSCtrl-2':
             # test-bench BBB # 2
             return (5, 6)
+        elif self._bbbname == 'AS-Glob:CO-PSCtrl-2':
+            return (20, )
         else:
-            return tuple(range(1, 1+len(self._psnames)))
+            return self._device_ids
 
     def _create_e2s_controller(self):
         # Return dict of power supply objects

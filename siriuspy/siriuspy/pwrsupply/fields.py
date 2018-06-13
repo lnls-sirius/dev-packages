@@ -12,12 +12,75 @@ from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 class VariableFactory:
     """Create a variable object."""
 
+    _vars_common = {
+        'CycleEnbl-Mon':  _bsmp.ConstBSMP.V_SIGGEN_ENABLE,
+        'CycleType-Sts':  _bsmp.ConstBSMP.V_SIGGEN_TYPE,
+        'CycleNrCycles-RB':  _bsmp.ConstBSMP.V_SIGGEN_NUM_CYCLES,
+        'CycleIndex-Mon':  _bsmp.ConstBSMP.V_SIGGEN_N,
+        'CycleFreq-RB':  _bsmp.ConstBSMP.V_SIGGEN_FREQ,
+        'CycleAmpl-RB':  _bsmp.ConstBSMP.V_SIGGEN_AMPLITUDE,
+        'CycleOffset-RB':  _bsmp.ConstBSMP.V_SIGGEN_OFFSET,
+        'CycleAuxParam-RB':  _bsmp.ConstBSMP.V_SIGGEN_AUX_PARAM,
+    }
+
+    _vars_FBP = {
+        'IntlkSoft-Mon':  _bsmp.ConstFBP.V_PS_SOFT_INTERLOCKS,
+        'IntlkHard-Mon':  _bsmp.ConstFBP.V_PS_HARD_INTERLOCKS,
+        'Current-RB':  _bsmp.ConstFBP.V_PS_SETPOINT,
+        'CurrentRef-Mon':  _bsmp.ConstFBP.V_PS_REFERENCE,
+        'Current-Mon':  _bsmp.ConstFBP.V_I_LOAD,
+    }
+
+    _vars_FBP_DCLINK = {
+        'IntlkSoft-Mon': _bsmp.ConstFBP_DCLINK.V_PS_SOFT_INTERLOCKS,
+        'IntlkHard-Mon': _bsmp.ConstFBP_DCLINK.V_PS_HARD_INTERLOCKS,
+        'VoltageGain-RB': _bsmp.ConstFBP_DCLINK.V_PS_SETPOINT,
+        'VoltageGainRef-Mon': _bsmp.ConstFBP_DCLINK.V_PS_REFERENCE,
+        'ModulesStatus-Mon': _bsmp.ConstFBP_DCLINK.V_DIGITAL_INPUTS,
+        'Voltage-Mon': _bsmp.ConstFBP_DCLINK.V_V_OUT,
+        'Voltage1-Mon': _bsmp.ConstFBP_DCLINK.V_V_OUT_1,
+        'Voltage2-Mon': _bsmp.ConstFBP_DCLINK.V_V_OUT_2,
+        'Voltage3-Mon': _bsmp.ConstFBP_DCLINK.V_V_OUT_3,
+        'VoltageDig-Mon': _bsmp.ConstFBP_DCLINK.V_DIG_POT_TAP,
+    }
+
+    _vars_FAC = {
+        'IntlkSoft-Mon': _bsmp.ConstFAC.V_PS_SOFT_INTERLOCKS,
+        'IntlkHard-Mon': _bsmp.ConstFAC.V_PS_HARD_INTERLOCKS,
+        'Current-RB': _bsmp.ConstFAC.V_PS_SETPOINT,
+        'CurrentRef-Mon': _bsmp.ConstFAC.V_PS_REFERENCE,
+        'Current-Mon': _bsmp.ConstFAC.V_I_LOAD1,
+        'Current2-Mon': _bsmp.ConstFAC.V_I_LOAD2,
+    }
+
     @staticmethod
-    def get(ps_model, device_id, epics_field, pru_controller):
+    def get(psmodel, device_id, epics_field, pru_controller):
         """Factory."""
-        # Common variables
+        # ---  common variables
+        v = VariableFactory._get_common(device_id, epics_field, pru_controller)
+        if v is not None:
+            return v
+        if psmodel == 'FBP':
+            v = VariableFactory._get_FBP(device_id, epics_field,
+                                         pru_controller)
+        elif psmodel == 'FBP_DCLINK':
+            v = VariableFactory._get_FBP_DCLINK(device_id, epics_field,
+                                                pru_controller)
+        elif psmodel in ('FAC'):
+            v = VariableFactory._get_FAC(device_id, epics_field,
+                                         pru_controller)
+        if v is not None:
+            return v
+        else:
+            raise ValueError('{} not defined'.format(epics_field))
+
+    @staticmethod
+    def _get_common(device_id, epics_field, pru_controller):
         _c = _bsmp.ConstBSMP
-        if epics_field == 'PwrState-Sts':
+        if epics_field in VariableFactory._vars_common:
+            var_id = VariableFactory._vars_common[epics_field]
+            return Variable(pru_controller, device_id, var_id)
+        elif epics_field == 'PwrState-Sts':
             return PwrState(
                 Variable(pru_controller, device_id, _c.V_PS_STATUS))
         elif epics_field == 'OpMode-Sts':
@@ -28,72 +91,11 @@ class VariableFactory:
         elif epics_field == 'CtrlLoop-RB':
             return OpenLoop(
                 Variable(pru_controller, device_id, _c.V_PS_STATUS))
-        elif epics_field == 'Current-RB':
-            return Variable(pru_controller, device_id, _c.V_PS_SETPOINT)
-        elif epics_field == 'CurrentRef-Mon':
-            return Variable(pru_controller, device_id, _c.V_PS_REFERENCE)
         elif epics_field == 'Version-Cte':
             return Version(
                 Variable(pru_controller, device_id, _c.V_FIRMWARE_VERSION))
-        elif epics_field == 'CycleEnbl-Mon':
-            return Variable(pru_controller, device_id, _c.V_SIGGEN_ENABLE)
-        elif epics_field == 'CycleType-Sts':
-            return Variable(pru_controller, device_id, _c.V_SIGGEN_TYPE)
-        elif epics_field == 'CycleNrCycles-RB':
-            return Variable(pru_controller, device_id, _c.V_SIGGEN_NUM_CYCLES)
-        elif epics_field == 'CycleIndex-Mon':
-            return Variable(pru_controller, device_id, _c.V_SIGGEN_N)
-        elif epics_field == 'CycleFreq-RB':
-            return Variable(pru_controller, device_id, _c.V_SIGGEN_FREQ)
-        elif epics_field == 'CycleAmpl-RB':
-            return Variable(pru_controller, device_id, _c.V_SIGGEN_AMPLITUDE)
-        elif epics_field == 'CycleOffset-RB':
-            return Variable(pru_controller, device_id, _c.V_SIGGEN_OFFSET)
-        elif epics_field == 'CycleAuxParam-RB':
-            return Variable(pru_controller, device_id, _c.V_SIGGEN_AUX_PARAM)
-        # Specific variables
-        if ps_model == 'FBP':
-            _c = _bsmp.ConstFBP
-            if epics_field == 'IntlkSoft-Mon':
-                return Variable(
-                    pru_controller, device_id, _c.V_PS_SOFT_INTERLOCKS)
-            elif epics_field == 'IntlkHard-Mon':
-                return Variable(
-                    pru_controller, device_id, _c.V_PS_HARD_INTERLOCKS)
-            elif epics_field == 'Current-Mon':
-                return Variable(pru_controller, device_id, _c.V_I_LOAD)
-        elif ps_model == 'FAC':
-            _c = _bsmp.ConstFAC
-            if epics_field == 'IntlkSoft-Mon':
-                return Variable(
-                    pru_controller, device_id, _c.V_PS_SOFT_INTERLOCKS)
-            elif epics_field == 'IntlkHard-Mon':
-                return Variable(
-                    pru_controller, device_id, _c.V_PS_HARD_INTERLOCKS)
-            elif epics_field == 'Current-Mon':
-                return Variable(pru_controller, device_id, _c.V_I_LOAD)
-            elif epics_field == 'Current2-Mon':
-                # TODO constant for other FAC and other PS models
-                return Variable(pru_controller, device_id, 28)
-        elif ps_model == 'FBP_DCLINK':
-            _c = _bsmp.ConstFBP_DCLINK
-            if epics_field == 'VoltageGain-RB':
-                return Variable(pru_controller, device_id, _c.V_PS_SETPOINT)
-            if epics_field == 'ModulesStatus-Mon':
-                return Variable(pru_controller, device_id, _c.V_DIGITAL_INPUTS)
-            elif epics_field == 'Voltage-Mon':
-                return Variable(pru_controller, device_id, _c.V_V_OUT)
-            elif epics_field == 'Voltage1-Mon':
-                return Variable(pru_controller, device_id, _c.V_V_OUT_1)
-            elif epics_field == 'Voltage2-Mon':
-                return Variable(pru_controller, device_id, _c.V_V_OUT_2)
-            elif epics_field == 'Voltage3-Mon':
-                return Variable(pru_controller, device_id, _c.V_V_OUT_3)
-            elif epics_field == 'DigPotTap-RB':
-                return Variable(pru_controller, device_id, _c.V_DIG_POT_TAP)
-
         # PRU related variables
-        if epics_field == 'WfmData-RB':
+        elif epics_field == 'WfmData-RB':
             return PRUCurve(pru_controller, device_id)
         elif epics_field == 'WfmIndex-Mon':
                 return Constant(0)
@@ -105,8 +107,28 @@ class VariableFactory:
             return PRUProperty(pru_controller, 'pru_sync_pulse_count')
         elif epics_field == 'PRUCtrlQueueSize-Mon':
             return PRUProperty(pru_controller, 'queue_length')
+        return None
 
-        raise ValueError('{} not defined'.format(epics_field))
+    @staticmethod
+    def _get_FBP(device_id, epics_field, pru_controller):
+        if epics_field in VariableFactory._vars_FBP:
+            var_id = VariableFactory._vars_FBP[epics_field]
+            return Variable(pru_controller, device_id, var_id)
+        return None
+
+    @staticmethod
+    def _get_FBP_DCLINK(device_id, epics_field, pru_controller):
+        if epics_field in VariableFactory._vars_FBP_DCLINK:
+            var_id = VariableFactory._vars_FBP_DCLINK[epics_field]
+            return Variable(pru_controller, device_id, var_id)
+        return None
+
+    @staticmethod
+    def _get_FAC(device_id, epics_field, pru_controller):
+        if epics_field in VariableFactory._vars_FAC:
+            var_id = VariableFactory._vars_FAC[epics_field]
+            return Variable(pru_controller, device_id, var_id)
+        return None
 
 
 class Variable:

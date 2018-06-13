@@ -486,10 +486,8 @@ def _get_ps_FBP_DCLINK_propty_database():
         'Voltage1-Mon': {'type': 'float', 'value': 0.0, 'prec': 4},
         'Voltage2-Mon': {'type': 'float', 'value': 0.0, 'prec': 4},
         'Voltage3-Mon': {'type': 'float', 'value': 0.0, 'prec': 4},
-        'DigPotTap-RB': {'type': 'float', 'value': 0,
-                         'lolim': 0, 'hilim': 255, 'prec': 4},
-        'DigPotTap-SP': {'type': 'float', 'value': 0.0,
-                         'lolim': 0, 'hilim': 255, 'prec': 4},
+        'VoltageDig-Mon': {'type': 'int', 'value': 0,
+                           'lolim': 0, 'hilim': 255},
     }
     propty_db.update(db_ps)
     return propty_db
