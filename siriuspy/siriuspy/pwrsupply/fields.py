@@ -34,9 +34,9 @@ class VariableFactory:
     _vars_FBP_DCLINK = {
         'IntlkSoft-Mon': _bsmp.ConstFBP_DCLINK.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon': _bsmp.ConstFBP_DCLINK.V_PS_HARD_INTERLOCKS,
-        'VoltageGain-RB': _bsmp.ConstFBP_DCLINK.V_PS_SETPOINT,
-        'VoltageGainRef-Mon': _bsmp.ConstFBP_DCLINK.V_PS_REFERENCE,
         'ModulesStatus-Mon': _bsmp.ConstFBP_DCLINK.V_DIGITAL_INPUTS,
+        'Voltage-RB': _bsmp.ConstFBP_DCLINK.V_PS_SETPOINT,
+        'VoltageRef-Mon': _bsmp.ConstFBP_DCLINK.V_PS_REFERENCE,
         'Voltage-Mon': _bsmp.ConstFBP_DCLINK.V_V_OUT,
         'Voltage1-Mon': _bsmp.ConstFBP_DCLINK.V_V_OUT_1,
         'Voltage2-Mon': _bsmp.ConstFBP_DCLINK.V_V_OUT_2,
@@ -90,8 +90,8 @@ class VariableFactory:
         elif epics_field == 'CtrlMode-Mon':
             return CtrlMode(
                 Variable(pru_controller, device_id, _c.V_PS_STATUS))
-        elif epics_field == 'CtrlLoop-RB':
-            return OpenLoop(
+        elif epics_field == 'CtrlLoop-Sts':
+            return CtrlLoop(
                 Variable(pru_controller, device_id, _c.V_PS_STATUS))
         elif epics_field == 'Version-Cte':
             return Version(
@@ -245,7 +245,7 @@ class CtrlMode:
         return self.psc_status.interface
 
 
-class OpenLoop:
+class CtrlLoop:
     """Variable decorator."""
 
     def __init__(self, variable):

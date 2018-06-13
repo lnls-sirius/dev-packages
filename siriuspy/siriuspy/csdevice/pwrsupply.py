@@ -27,7 +27,7 @@ ps_models = ('FBP', 'FAC', 'FAC_2S', 'FAC_2P4S', 'FAP', 'FAP_4P', 'FAP_2P2S',
              'FBP_SOFB', 'Commercial', )
 ps_dsblenbl = ('Dsbl', 'Enbl')
 ps_interface = ('Remote', 'Local', 'PCHost')
-ps_openloop = ('Open', 'Closed')
+ps_openloop = ('Close', 'Open')
 ps_pwrstate_sel = ('Off', 'On')
 ps_pwrstate_sts = ('Off', 'On', 'Initializing')
 ps_states = ('Off', 'Interlock', 'Initializing',
@@ -170,6 +170,10 @@ def get_basic_propty_database():
                          'value': _et.idx.Off},
         'PwrState-Sts': {'type': 'enum', 'enums': ps_pwrstate_sts,
                          'value': _et.idx.Off},
+        'CtrlLoop-Sel': {'type': 'enum', 'enums': ps_openloop,
+                         'value': Const.OpenLoop.Open},
+        'CtrlLoop-Sts': {'type': 'enum', 'enums': ps_openloop,
+                         'value': Const.OpenLoop.Open},
         'OpMode-Sel': {'type': 'enum', 'enums': ps_opmode,
                        'value': _et.idx.SlowRef},
         'OpMode-Sts': {'type': 'enum', 'enums': ps_opmode,
@@ -233,9 +237,6 @@ def get_common_propty_database():
         'WfmData-RB': {'type': 'float', 'count': MAX_WFMSIZE,
                        'value': list(DEFAULT_WFMDATA),
                        'prec': default_ps_current_precision},
-        # Hw
-        'CtrlLoop-RB': {'type': 'enum', 'enums': ps_openloop,
-                         'value': Const.OpenLoop.Open},
     })
     return db
 
@@ -471,10 +472,18 @@ def _get_ps_FBP_DCLINK_propty_database():
     """Return database with FBP_DCLINK pwrsupply model PVs."""
     propty_db = get_basic_propty_database()
     db_ps = {
-        'VoltageGain-SP': {'type': 'float', 'value': 0.0,
+        'Voltage-SP': {'type': 'float', 'value': 0.0,
+                       'lolim': 0.0, 'hilim': 100.0, 'prec': 4},
+        'Voltage-RB': {'type': 'float', 'value': 0.0,
+                       'lolim': 0.0, 'hilim': 100.0, 'prec': 4},
+        'VoltageRef-Mon': {'type': 'float', 'value': 0.0,
                            'lolim': 0.0, 'hilim': 100.0, 'prec': 4},
-        'VoltageGain-RB': {'type': 'float', 'value': 0.0,
-                           'lolim': 0.0, 'hilim': 100.0, 'prec': 4},
+        'Voltage-Mon': {'type': 'float', 'value': 0.0, 'prec': 4},
+        'Voltage1-Mon': {'type': 'float', 'value': 0.0, 'prec': 4},
+        'Voltage2-Mon': {'type': 'float', 'value': 0.0, 'prec': 4},
+        'Voltage3-Mon': {'type': 'float', 'value': 0.0, 'prec': 4},
+        'VoltageDig-Mon': {'type': 'int', 'value': 0,
+                           'lolim': 0, 'hilim': 255},
         'IntlkSoftLabels-Cte':  {'type': 'string',
                                  'count': len(ps_soft_interlock_FBP_DCLINK),
                                  'value': ps_soft_interlock_FBP_DCLINK},
@@ -482,12 +491,6 @@ def _get_ps_FBP_DCLINK_propty_database():
                                  'count': len(ps_hard_interlock_FBP_DCLINK),
                                  'value': ps_hard_interlock_FBP_DCLINK},
         'ModulesStatus-Mon': {'type': 'int', 'value': 0},
-        'Voltage-Mon': {'type': 'float', 'value': 0.0, 'prec': 4},
-        'Voltage1-Mon': {'type': 'float', 'value': 0.0, 'prec': 4},
-        'Voltage2-Mon': {'type': 'float', 'value': 0.0, 'prec': 4},
-        'Voltage3-Mon': {'type': 'float', 'value': 0.0, 'prec': 4},
-        'VoltageDig-Mon': {'type': 'int', 'value': 0,
-                           'lolim': 0, 'hilim': 255},
     }
     propty_db.update(db_ps)
     return propty_db
