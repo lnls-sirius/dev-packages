@@ -247,7 +247,7 @@ class WaveformParam:
     def plateau_value(self, value):
         """Set waveform value at the 4th and 5th region boundaries."""
         if value < self.rampup_stop_value or value < self.rampdown_start_value:
-            raise ValueError('Invalid plateau parameter !')
+            raise ValueError('Invalid plateau parameter.')
         self._v[3] = value
         self._v[4] = value
         self._deprecated = True
@@ -323,14 +323,14 @@ class WaveformParam:
         v2 = self.rampup_stop_value if v2 is None else v2
         if i1 < self._i[0] or i2 <= i1 or i2 >= self.plateau_stop_index or \
            v1 >= v2 or v1 <= self.start_value or v2 >= self.plateau_value:
-            raise ValueError('Invalid ramp up parameters !')
+            raise ValueError('Invalid ramp up parameters.')
         i3 = self._find_i3(i1, i2, v1, v2)
         if i3 is None:
             raise ValueError('Could not find solution '
-                             'for plateau_start_index !')
+                             'for plateau_start_index.')
         i0 = self._find_i0(i1, i2, v1, v2)
         if i0 is None:
-            raise ValueError('Could not find solution for i0 !')
+            raise ValueError('Could not find solution for i0.')
         # change internal data - deprecated is automatically set to True.
         self.rampup_start_index = i1
         self.rampup_stop_index = i2
@@ -354,14 +354,14 @@ class WaveformParam:
         if i5 < self.plateau_stop_index or i6 <= i5 or \
            i6 >= self.wfm_nrpoints or v5 <= v6 or \
            v5 >= self.plateau_value or v6 <= self.stop_value:
-            raise ValueError('Invalid ramp down parameters !')
+            raise ValueError('Invalid ramp down parameters.')
         i7 = self._find_i7(i5, i6, v5, v6)
         if i7 is None:
-            raise ValueError('Could not find solution for i7 !')
+            raise ValueError('Could not find solution for i7.')
         i4 = self._find_i4(i5, i6, v5, v6)
         if i4 is None:
             raise ValueError('Could not find solution '
-                             'for plateau_stop_index !')
+                             'for plateau_stop_index.')
         # change internal data - deprecated is automatically set to True.
         self.rampdown_start_index = i5
         self.rampdown_stop_index = i6
@@ -458,9 +458,9 @@ class WaveformParam:
             if len(i07) != 8:
                 raise ValueError('Size of i07 is not 8!')
             if i07[0] < 0:
-                raise ValueError('i0 < 0 !')
+                raise ValueError('i0 < 0')
             if i07[-1] > self.wfm_nrpoints:
-                raise ValueError('i7 >= {} !'.format(self.wfm_nrpoints))
+                raise ValueError('i7 >= {}.'.format(self.wfm_nrpoints))
             for i in range(0, len(i07)-1):
                 if i07[i+1] < i07[i]:
                     raise ValueError('Boundary indices list is not sorted!')
@@ -470,7 +470,7 @@ class WaveformParam:
         try:
             v07[0]
             if len(v07) != 8:
-                raise ValueError('Lenght of boundary values list is not 8 !')
+                raise ValueError('Lenght of boundary values list is not 8.')
             self._v = v07.copy()
         except TypeError:
             raise TypeError('Invalid type boundary values list!')

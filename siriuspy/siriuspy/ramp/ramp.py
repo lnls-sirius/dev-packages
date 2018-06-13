@@ -487,7 +487,7 @@ class BoosterRamp(_ConfigSrv):
 
     def normalized_configs_insert(self, time, name=None, nconfig=None):
         """Insert a normalized configuration."""
-        if not isinstance(name, str):
+        if not isinstance(name, str) or len(name) == 0:
             # get name from BoosterNormalized constructor
             bn = BoosterNormalized()
             name = bn.name
@@ -497,8 +497,12 @@ class BoosterRamp(_ConfigSrv):
         times = otimes.copy()
         names = onames.copy()
         if time in times:
-            index = times.index(time)
-            names[index] = name
+            if nconfig is not None:
+                index = times.index(time)
+                names[index] = name
+            else:
+                raise _RampInvalidNormConfig(
+                    'Invalid interpolation at existing time value.')
         else:
             times.append(time)
             names.append(name)
