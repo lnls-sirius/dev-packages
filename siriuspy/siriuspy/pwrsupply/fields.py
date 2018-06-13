@@ -25,7 +25,7 @@ class VariableFactory:
         elif epics_field == 'CtrlMode-Mon':
             return CtrlMode(
                 Variable(pru_controller, device_id, _c.V_PS_STATUS))
-        elif epics_field == 'OpenLoop-Mon':
+        elif epics_field == 'CtrlLoop-RB':
             return OpenLoop(
                 Variable(pru_controller, device_id, _c.V_PS_STATUS))
         elif epics_field == 'Current-RB':

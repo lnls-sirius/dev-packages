@@ -43,7 +43,7 @@ bsmp_values = [
 dict_values = {
     'PwrState-Sts': 1,
     'OpMode-Sts': 0,
-    'OpenLoop-Mon': 0,
+    'CtrlLoop-RB': 0,
     'CtrlMode-Mon': 0,
     'Current-RB': 6.7230000495910645,
     'CurrentRef-Mon': 6.7230000495910645,
