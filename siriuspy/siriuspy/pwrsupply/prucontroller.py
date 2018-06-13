@@ -383,7 +383,7 @@ class PRUCParms_FAC(_PRUCParms):
     FREQ_SCAN = 10.0  # [Hz]
 
     # UDC model
-    udcmodel = 'FAC'
+    udcmodel = 'FAC_DCDC'
     ConstBSMP = _udcmodels[udcmodel]['ConstBSMP']
     Entities = _udcmodels[udcmodel]['Entities']
 

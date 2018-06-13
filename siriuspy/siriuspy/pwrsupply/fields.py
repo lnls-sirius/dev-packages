@@ -45,12 +45,12 @@ class VariableFactory:
     }
 
     _vars_FAC = {
-        'IntlkSoft-Mon': _bsmp.ConstFAC.V_PS_SOFT_INTERLOCKS,
-        'IntlkHard-Mon': _bsmp.ConstFAC.V_PS_HARD_INTERLOCKS,
-        'Current-RB': _bsmp.ConstFAC.V_PS_SETPOINT,
-        'CurrentRef-Mon': _bsmp.ConstFAC.V_PS_REFERENCE,
-        'Current-Mon': _bsmp.ConstFAC.V_I_LOAD1,
-        'Current2-Mon': _bsmp.ConstFAC.V_I_LOAD2,
+        'IntlkSoft-Mon': _bsmp.ConstFAC_DCDC.V_PS_SOFT_INTERLOCKS,
+        'IntlkHard-Mon': _bsmp.ConstFAC_DCDC.V_PS_HARD_INTERLOCKS,
+        'Current-RB': _bsmp.ConstFAC_DCDC.V_PS_SETPOINT,
+        'CurrentRef-Mon': _bsmp.ConstFAC_DCDC.V_PS_REFERENCE,
+        'Current-Mon': _bsmp.ConstFAC_DCDC.V_I_LOAD1,
+        'Current2-Mon': _bsmp.ConstFAC_DCDC.V_I_LOAD2,
     }
 
     @staticmethod
@@ -66,7 +66,7 @@ class VariableFactory:
         elif psmodel == 'FBP_DCLINK':
             v = VariableFactory._get_FBP_DCLINK(device_id, epics_field,
                                                 pru_controller)
-        elif psmodel in ('FAC'):
+        elif psmodel in ('FAC_DCDC'):
             v = VariableFactory._get_FAC(device_id, epics_field,
                                          pru_controller)
         else:

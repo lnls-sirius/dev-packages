@@ -23,8 +23,17 @@ _default_pu_current_unit = None
 
 # --- power supply enums ---
 
-ps_models = ('FBP', 'FAC', 'FAC_2S', 'FAC_2P4S', 'FAP', 'FAP_4P', 'FAP_2P2S',
-             'FBP_SOFB', 'Commercial', )
+ps_models = ('Empty',
+             'FBP', 'FBP_DCLINK',
+             'FAC_ACDC', 'FAC_DCDC',
+             'FAC_2S_ACDC', 'FAC_2S_DCDC',
+             'FAC_2P4S_ACDC', 'FAC_2P4S_DCDC',
+             'FAP',
+             'FAP_4P_MASTER', 'FAP_4P_SLAVE',
+             'FAP_2P2S_MASTER', 'FAP_2P2S_SLAVE',
+             'FBP_SOFB',
+             'Commercial',
+             'FP')
 ps_dsblenbl = ('Dsbl', 'Enbl')
 ps_interface = ('Remote', 'Local', 'PCHost')
 ps_openloop = ('Close', 'Open')

@@ -13,12 +13,12 @@ from siriuspy.bsmp import BSMPSim as _BSMPSim
 
 from siriuspy.pwrsupply.bsmp import EntitiesFBP as _EntitiesFBP
 from siriuspy.pwrsupply.bsmp import EntitiesFBP_DCLINK as _EntitiesFBP_DCLINK
-from siriuspy.pwrsupply.bsmp import EntitiesFAC as _EntitiesFAC
+from siriuspy.pwrsupply.bsmp import EntitiesFAC_DCDC as _EntitiesFAC_DCDC
 from siriuspy.pwrsupply.bsmp import EntitiesFAC_ACDC as _EntitiesFAC_ACDC
 
 from siriuspy.pwrsupply.bsmp import ConstFBP as _cFBP
 from siriuspy.pwrsupply.bsmp import ConstFBP_DCLINK as _cFBP_DCLINK
-from siriuspy.pwrsupply.bsmp import ConstFAC as _cFAC
+from siriuspy.pwrsupply.bsmp import ConstFAC_DCDC as _cFAC_DCDC
 from siriuspy.pwrsupply.bsmp import ConstFAC_ACDC as _cFAC_ACDC
 
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
@@ -44,19 +44,6 @@ class _Spec:
         raise NotImplementedError()
 
 
-class _Spec_FAC(_Spec):
-    """Spec FAC."""
-
-    def _get_constants(self):
-        return _cFAC
-
-    def _get_iloads_ids(self):
-        return (_cFAC.V_I_LOAD1, _cFAC.V_I_LOAD2)
-
-    def _get_i_load_fluctuation_rms(self):
-        return _Spec._I_LOAD_FLUCTUATION_RMS
-
-
 class _Spec_FBP(_Spec):
     """Spec FBP."""
 
@@ -70,18 +57,31 @@ class _Spec_FBP(_Spec):
         return _Spec._I_LOAD_FLUCTUATION_RMS
 
 
-class _Spec_FAC_ACDC(_Spec):
-    """Spec FAC_ACDC."""
-
-    def _get_constants(self):
-        return _cFAC_ACDC
-
-
 class _Spec_FBP_DCLINK(_Spec):
     """Spec FAC_ACDC."""
 
     def _get_constants(self):
         return _cFBP_DCLINK
+
+
+class _Spec_FAC_DCDC(_Spec):
+    """Spec FAC_DCDC."""
+
+    def _get_constants(self):
+        return _cFAC_DCDC
+
+    def _get_iloads_ids(self):
+        return (_cFAC_DCDC.V_I_LOAD1, _cFAC_DCDC.V_I_LOAD2)
+
+    def _get_i_load_fluctuation_rms(self):
+        return _Spec._I_LOAD_FLUCTUATION_RMS
+
+
+class _Spec_FAC_ACDC(_Spec):
+    """Spec FAC_ACDC."""
+
+    def _get_constants(self):
+        return _cFAC_ACDC
 
 
 # --- simulated OpMode state classes ---
@@ -398,23 +398,6 @@ class _OpModeSimCycleState(_OpModeSimState):
 
 # --- Specialized PS states ---
 
-class _OpModeSimSlowRefState_FAC(_OpModeSimSlowRefState, _Spec_FAC):
-    """SlowRef FAC state."""
-
-    pass
-
-
-class _OpModeSimSlowRefSyncState_FAC(_OpModeSimSlowRefSyncState, _Spec_FAC):
-    """SlowRefSync FAC state."""
-
-    pass
-
-
-class _OpModeSimCycleState_FAC(_OpModeSimCycleState, _Spec_FAC):
-    """Cycle FAC state."""
-
-    pass
-
 
 class _OpModeSimSlowRefState_FBP(_OpModeSimSlowRefState, _Spec_FBP):
     """SlowRef FBP state."""
@@ -434,8 +417,27 @@ class _OpModeSimCycleState_FBP(_OpModeSimCycleState, _Spec_FBP):
     pass
 
 
-class _OpModeSimState_FBP_DCLINK(_OpModeSimSlowRefState, _Spec_FAC_ACDC):
-    """SlowRef FAC_ACDC state."""
+class _OpModeSimState_FBP_DCLINK(_OpModeSimSlowRefState, _Spec_FBP_DCLINK):
+    """SlowRef FBP_DCLINK state."""
+
+    pass
+
+
+class _OpModeSimSlowRefState_FAC_DCDC(_OpModeSimSlowRefState, _Spec_FAC_DCDC):
+    """SlowRef FAC_DCDC state."""
+
+    pass
+
+
+class _OpModeSimSlowRefSyncState_FAC_DCDC(_OpModeSimSlowRefSyncState,
+                                          _Spec_FAC_DCDC):
+    """SlowRefSync FAC_DCDC state."""
+
+    pass
+
+
+class _OpModeSimCycleState_FAC_DCDC(_OpModeSimCycleState, _Spec_FAC_DCDC):
+    """Cycle FAC_DCDC state."""
 
     pass
 
@@ -587,15 +589,16 @@ class BSMPSim_FBP_DCLINK(_BaseBSMPSim, _Spec_FBP_DCLINK):
         return variables
 
 
-class BSMPSim_FAC(_BaseBSMPSim, _Spec_FAC):
-    """Simulated FAC UDC."""
+class BSMPSim_FAC_DCDC(_BaseBSMPSim, _Spec_FAC_DCDC):
+    """Simulated FAC_DCDC UDC."""
 
     def _get_entities(self):
-        return _EntitiesFAC()
+        return _EntitiesFAC_DCDC()
 
     def _get_states(self):
-        return [_OpModeSimSlowRefState_FAC(), _OpModeSimSlowRefSyncState_FAC(),
-                _OpModeSimCycleState_FAC(self._pru)]
+        return [_OpModeSimSlowRefState_FAC_DCDC(),
+                _OpModeSimSlowRefSyncState_FAC_DCDC(),
+                _OpModeSimCycleState_FAC_DCDC(self._pru)]
 
     def _get_init_variables(self):
         firmware = [b'S', b'i', b'm', b'u', b'l', b'a', b't', b'i', b'o', b'n']
@@ -613,12 +616,12 @@ class BSMPSim_FAC(_BaseBSMPSim, _Spec_FAC):
             0.0, 0.0, 0.0, 0.0, 0.0]  # [29-33]
         default_siggen_parms = \
             _SignalFactory.DEFAULT_CONFIGS['Sine']
-        variables[_cFAC.V_SIGGEN_TYPE] = default_siggen_parms[0]
-        variables[_cFAC.V_SIGGEN_NUM_CYCLES] = default_siggen_parms[1]
-        variables[_cFAC.V_SIGGEN_FREQ] = default_siggen_parms[2]
-        variables[_cFAC.V_SIGGEN_AMPLITUDE] = default_siggen_parms[3]
-        variables[_cFAC.V_SIGGEN_OFFSET] = default_siggen_parms[4]
-        variables[_cFAC.V_SIGGEN_AUX_PARAM] = default_siggen_parms[5:9]
+        variables[_cFAC_DCDC.V_SIGGEN_TYPE] = default_siggen_parms[0]
+        variables[_cFAC_DCDC.V_SIGGEN_NUM_CYCLES] = default_siggen_parms[1]
+        variables[_cFAC_DCDC.V_SIGGEN_FREQ] = default_siggen_parms[2]
+        variables[_cFAC_DCDC.V_SIGGEN_AMPLITUDE] = default_siggen_parms[3]
+        variables[_cFAC_DCDC.V_SIGGEN_OFFSET] = default_siggen_parms[4]
+        variables[_cFAC_DCDC.V_SIGGEN_AUX_PARAM] = default_siggen_parms[5:9]
         return variables
 
 
@@ -657,15 +660,15 @@ udcmodels = {
     'FBP_DCLINK': {'ConstBSMP': _cFBP_DCLINK,
                    'Entities': _EntitiesFBP_DCLINK(),
                    'BSMPSim': BSMPSim_FBP_DCLINK, },
-    'FAC': {'ConstBSMP': _cFAC,
-            'Entities': _EntitiesFAC(),
-            'BSMPSim': BSMPSim_FAC, },
-    'FAC_2P4S': {'ConstBSMP': _cFAC,
-                 'Entities': _EntitiesFAC(),
-                 'BSMPSim': BSMPSim_FAC, },
+    'FAC_DCDC': {'ConstBSMP': _cFAC_DCDC,
+                 'Entities': _EntitiesFAC_DCDC(),
+                 'BSMPSim': BSMPSim_FAC_DCDC, },
     'FAC_ACDC': {'ConstBSMP': _cFAC_ACDC,
                  'Entities': _EntitiesFAC_ACDC(),
                  'BSMPSim': BSMPSim_FAC_ACDC, },
+    'FAC_2P4S_DCDC': {'ConstBSMP': _cFAC_DCDC,
+                      'Entities': _EntitiesFAC_DCDC(),
+                      'BSMPSim': BSMPSim_FAC_DCDC, },
 }
 
 

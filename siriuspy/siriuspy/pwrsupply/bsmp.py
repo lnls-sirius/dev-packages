@@ -265,7 +265,7 @@ class ConstFBP_DCLINK(ConstBSMP):
     V_DIG_POT_TAP = 32
 
 
-class ConstFAC(ConstBSMP):
+class ConstFAC_DCDC(ConstBSMP):
     """Namespace for organizing power supply FAC BSMP constants."""
 
     # --- undefined variables
@@ -707,7 +707,7 @@ class EntitiesFBP_DCLINK(_Entities):
         super().__init__(self.Variables, self.Curves, self.Functions)
 
 
-class EntitiesFAC(_Entities):
+class EntitiesFAC_DCDC(_Entities):
     """FAC-type power supply entities."""
 
     Variables = (
@@ -826,12 +826,12 @@ class FBP_DCLINK(_BSMP):
         super().__init__(_PRU(), slave_address, EntitiesFBP_DCLINK())
 
 
-class FAC(_BSMP):
-    """BSMP with EntitiesFAC."""
+class FAC_DCDC(_BSMP):
+    """BSMP with EntitiesFAC_DCDC."""
 
     def __init__(self, slave_address):
         """Init BSMP."""
-        super().__init__(_PRU(), slave_address, EntitiesFAC())
+        super().__init__(_PRU(), slave_address, EntitiesFAC_DCDC())
 
 
 class FAC_ACDC(_BSMP):
