@@ -234,7 +234,7 @@ def get_common_propty_database():
                        'value': list(DEFAULT_WFMDATA),
                        'prec': default_ps_current_precision},
         # Hw
-        'OpenLoop-Mon': {'type': 'enum', 'enums': ps_openloop,
+        'CtrlLoop-RB': {'type': 'enum', 'enums': ps_openloop,
                          'value': Const.OpenLoop.Open},
     })
     return db
