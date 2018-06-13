@@ -132,7 +132,10 @@ class BeagleBone:
                 self.e2s_controller.write(device_name, field, value)
         elif field == 'PwrState-Sel':
             if setpoints.set(field, value):
-                setpoints.set('Current-SP', 0.0)
+                if 'Current-SP' in self._database:
+                    setpoints.set('Current-SP', 0.0)
+                if 'VoltageGain-SP' in self._database:
+                    setpoints.set('VoltageGain-SP', 0.0)
                 self.e2s_controller.write(device_name, field, value)
         elif '-Cmd' in field:
             if setpoints.set(field, value):

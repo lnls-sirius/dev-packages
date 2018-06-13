@@ -69,6 +69,8 @@ class VariableFactory:
         elif psmodel in ('FAC'):
             v = VariableFactory._get_FAC(device_id, epics_field,
                                          pru_controller)
+        else:
+            raise NotImplementedError('Fields not implemented for ' + psmodel)
         if v is not None:
             return v
         else:

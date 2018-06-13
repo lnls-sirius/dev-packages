@@ -556,9 +556,11 @@ class PRUController:
 
     _default_slowrefsync_sp = _DEFAULT_WFMDATA[0]
 
-    # TODO: check with ELP group how short these delays can be
-    _delay_turn_on_off = 0.3  # [s]
-    _delay_loop_open_close = 0.3  # [s]
+    # NOTE: these delays been moved to high level commands.py
+    # # TODO: check with ELP group how short these delays can be
+    # _delay_turn_on_off = 0.3  # [s]
+    # _delay_loop_open_close = 0.3  # [s]
+
     _delay_remove_groups = 100  # [us]
     _delay_create_group = 100  # [us]
     _delay_read_group_variables = 100  # [us]
@@ -1396,16 +1398,18 @@ class PRUController:
             # ps controller in a wrong state.
             #
             # NOTE: These BSMP functions should be defined for all BSMP devs.
-            if function_id in (self._params.ConstBSMP.F_TURN_ON,
-                               self._params.ConstBSMP.F_TURN_OFF):
-                # print('waiting {} s for TURN_ON or TURN_OFF'.format(
-                #     self._delay_turn_on_off))
-                _time.sleep(self._delay_turn_on_off)
-            elif function_id in (self._params.ConstBSMP.F_OPEN_LOOP,
-                                 self._params.ConstBSMP.F_CLOSE_LOOP):
-                # print('waiting {} s for CLOSE_LOOP or OPEN_LOOP'.format(
-                #     self._delay_loop_open_close))
-                _time.sleep(self._delay_loop_open_close)
+            #
+            # NOTE: these delays been moved to high level commands.py
+            # if function_id in (self._params.ConstBSMP.F_TURN_ON,
+            #                    self._params.ConstBSMP.F_TURN_OFF):
+            #     # print('waiting {} s for TURN_ON or TURN_OFF'.format(
+            #     #     self._delay_turn_on_off))
+            #     _time.sleep(self._delay_turn_on_off)
+            # elif function_id in (self._params.ConstBSMP.F_OPEN_LOOP,
+            #                      self._params.ConstBSMP.F_CLOSE_LOOP):
+            #     # print('waiting {} s for CLOSE_LOOP or OPEN_LOOP'.format(
+            #     #     self._delay_loop_open_close))
+            #     _time.sleep(self._delay_loop_open_close)
             return data
         else:
             return None
