@@ -46,7 +46,7 @@ class BeagleBone:
     given the PV field name.
     """
 
-    def __init__(self, bbbname, simulate=True):
+    def __init__(self, bbbname, simulate=False):
         """Retrieve power supply."""
         self._bbbname = bbbname
         self._simulate = simulate
