@@ -360,23 +360,61 @@ class LLTimeSearch:
         cls._hierarchy_map = hierarchy
 
 
+conversion_linac_names = {
+    'LA-RF:H1LLRF': 'LA-RaRF01:RF-LLRFProc',
+    'LA-RF:H1SOAM-1': 'LA-RaRF02:RF-SSAmp-1',
+    'LA-RF:H1SOAM-2': 'LA-RaRF02:RF-SSAmp-2',
+    'LA-RF:H1SOAM-3': 'LA-RaRF02:RF-SSAmp-3',
+    'LA-BI:H1FO-1': 'LA-RaDiag02:TI-TrigFout',
+    'LA-MD:H1PPS-1': 'LA-RaMD01:MD-PPS',  # ?
+    'LA-MD:H1PPS-2': 'LA-RaMD02:MD-PPS',  # ?
+}
+
+
 # read excel file.
 def read_file(filename):
+    trans = str.maketrans('', '', ' _-')
+    bbb_inp_key = list(LLTimeSearch.i2o_map['PSCtrl'].keys())[0]
+
+    def check_dev_por(dev, por):
+        por = por.upper().translate(trans)
+        r_ = conversion_linac_names.get(dev)
+        if r_ is not None:
+            dev = r_
+        if dev.endswith('PSCtrl') and por.endswith(r'?'):
+            por = bbb_inp_key
+        return dev + ':' + por
+
     wb = load_workbook(filename, data_only=True)
     ws = wb['Cabos e Fibras']
-    equips = list()
-    for row in ws.iter_rows(row_offset=1):
-        sis = row[0].value
-        if not sis.lower().startswith(('timing', 'controle')):
+    connections = dict()
+    rows = list(ws.iter_rows())
+    row0 = rows[0]
+    eq1 = eq2 = p1 = p2 = 0
+    for i, cel in enumerate(row0):
+        if cel.value is None:
             continue
-        dev1 = row[8].value
-        dev2 = row[9].value
-        por1 = row[10].value
-        por2 = row[11].value
-        if dev2.endswith('PsCtrl') and por2.endswith(r'?'):
-            if dev2.endswith('PsCtrl'):
-                por2 = 'TIin'
-            else:
-                continue
-        equips.append((dev1+':'+por1, dev2+':'+por2))
-    return equips
+        val = cel.value.lower().replace(' ', '')
+        if val.endswith('equipamento1'):
+            eq1 = i
+        elif val.endswith('equipamento2'):
+            eq2 = i
+        elif val.endswith('porta1'):
+            p1 = i
+        elif val.endswith('porta2'):
+            p2 = i
+    for i, row in enumerate(rows[1:]):
+        sis = row[0].value
+        if sis is None or not sis.lower().startswith(('timing', 'controle')):
+            continue
+        name1 = check_dev_por(row[eq1].value, row[p1].value)
+        name2 = check_dev_por(row[eq2].value, row[p2].value)
+        try:
+            name1 = _PVName(name1)
+            name2 = _PVName(name2)
+        except IndexError:
+            print('discard {0:04d}:   {1:40s} {2:40s}'.format(i, name1, name2))
+            continue
+        connections[name1] = name2
+        connections[name2] = name1
+    return connections
