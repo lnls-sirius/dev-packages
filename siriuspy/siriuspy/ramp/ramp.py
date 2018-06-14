@@ -613,6 +613,8 @@ class BoosterRamp(_ConfigSrv):
             'ramp_dipole_delay [us]',
             'ramp_dipole_duration [ms]',
             'ramp_dipole_time_energy [ms] [GeV]',
+            'injection_time [ms]',
+            'ejection_time [ms]',
             'normalized_configs [ms] [name]',
         )
         st = ''
@@ -629,7 +631,9 @@ class BoosterRamp(_ConfigSrv):
         energy = self.ramp_dipole_energy
         for i in range(len(time)):
             st += strfmt2.format('', time[i], energy[i])
-        st += strfmt1.format(labels[4], '')
+        st += strfmt1.format(labels[4], self.injection_time)
+        st += strfmt1.format(labels[5], self.ejection_time)
+        st += strfmt1.format(labels[6], '')
         time = self.normalized_configs_time
         name = self.normalized_configs_name
         for i in range(len(time)):

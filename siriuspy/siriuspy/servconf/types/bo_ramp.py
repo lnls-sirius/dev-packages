@@ -41,6 +41,9 @@ _ramp_dipole = {
     'energy': [_eje_energy * v for v in _v07],
     # number of points
     'wfm_nrpoints': _MAX_WFMSIZE,
+    # injection time [ms]
+    'injection_time': 19.604901225306328,
+    'ejection_time': 294.07351837959493,
 }
 _normalized_configs = [
     # time [ms]            normalized configuration name
