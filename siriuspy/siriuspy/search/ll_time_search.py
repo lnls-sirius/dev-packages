@@ -21,8 +21,8 @@ class LLTimeSearch:
     i2o_map = {
         'EVR': {
             'UPLINK': (
-                'OTP00', 'OTP01', 'OTP02', 'OTP03', 'OTP04', 'OTP05',
-                'OTP06', 'OTP07', 'OTP08', 'OTP09', 'OTP10', 'OTP11',
+                'OTP0', 'OTP1', 'OTP2', 'OTP3', 'OTP4', 'OTP5',
+                'OTP6', 'OTP7', 'OTP8', 'OTP9', 'OTP10', 'OTP11',
                 'OUT0', 'OUT1', 'OUT2', 'OUT3',
                 'OUT4', 'OUT5', 'OUT6', 'OUT7',
                 ),
@@ -34,7 +34,7 @@ class LLTimeSearch:
                 'RFOUT',
                 ),
             },
-        'AFC': {
+        'AMCFPGAEVR': {
             'SFP': (
                 'FMC1CH1', 'FMC1CH2', 'FMC1CH3', 'FMC1CH4', 'FMC1CH5',
                 'FMC2CH1', 'FMC2CH2', 'FMC2CH3', 'FMC2CH4', 'FMC2CH5',
@@ -42,44 +42,47 @@ class LLTimeSearch:
                 'CRT5', 'CRT6', 'CRT7',
                 ),
             },
-        'STDMOE': {
-            'OE1': ('OUT1',),
-            'OE2': ('OUT2',),
-            'OE3': ('OUT3',),
-            'OE4': ('OUT4',),
+        'OEMultiSFP': {
+            'OE1': ('OUT1', ),
+            'OE2': ('OUT2', ),
+            'OE3': ('OUT3', ),
+            'OE4': ('OUT4', ),
             },
-        'STDSOE': {
-            'IN1': ('OUT1',),
-            'IN2': ('OUT2',),
-            'IN3': ('OUT3',),
-            'IN4': ('OUT4',),
+        'OEMultiPOF': {
+            'IN1': ('OUT1', ),
+            'IN2': ('OUT2', ),
+            'IN3': ('OUT3', ),
+            'IN4': ('OUT4', ),
             },
-        'SOE': {
-            'IN': ('OUT',),
+        'OESglPOF': {
+            'IN': ('OUT', ),
             },
-        'MOE': {
+        'OESglSFP': {
             'INRX': ('OUT', 'INTX'),
             },
-        'FOUT': {
+        'Fout': {
             'UPLINK': (
                 'OUT0', 'OUT1', 'OUT2', 'OUT3',
                 'OUT4', 'OUT5', 'OUT6', 'OUT7',
                 ),
             },
-        'BBB': {
-            'IN': ('RSIO',),
+        'PSCtrl': {
+            'TIIN': ('RS485',),
             },
         'Crate': {
-            'CRT0': ('CRT0',),
-            'CRT1': ('CRT1',),
-            'CRT2': ('CRT2',),
-            'CRT3': ('CRT3',),
-            'CRT4': ('CRT4',),
-            'CRT5': ('CRT5',),
-            'CRT6': ('CRT6',),
-            'CRT7': ('CRT7',),
+            'CRT0': ('CRT0', ),
+            'CRT1': ('CRT1', ),
+            'CRT2': ('CRT2', ),
+            'CRT3': ('CRT3', ),
+            'CRT4': ('CRT4', ),
+            'CRT5': ('CRT5', ),
+            'CRT6': ('CRT6', ),
+            'CRT7': ('CRT7', ),
             },
         }
+    i2o_map['FibPatch'] = {
+        'P{0:03d}'.format(i): ('P{0:03d}'.format(i), ) for i in range(100)}
+    i2o_map['FibPatch']['P052B'] = ('P052B', )
 
     o2i_map = dict()
     for dev, conns_ in i2o_map.items():
@@ -134,7 +137,7 @@ class LLTimeSearch:
         cls._get_timedata()
         if connections_dict is None:
             connections_dict = _PSSearch.get_bbbname_dict()
-        conn = 'RSIO'
+        conn = list(LLTimeSearch.i2o_map['PSCtrl'].values())[0][0]
         used = set()
         twds_evg = _dcopy(cls._conn_twds_evg)
         for chan in twds_evg.keys():
