@@ -540,6 +540,17 @@ class BoosterRamp(_ConfigSrv):
 
         return name
 
+    def normalized_configs_change_time(self, index, new_time):
+        """Change the time of an existing config either by index or name."""
+        names = self.normalized_configs_name
+        if isinstance(index, str):
+            index = names.index(index)
+        times = self.normalized_configs_time
+        times[index] = new_time
+        nconfigs = [[times[i], names[i]] for i in range(len(times))]
+        self._set_normalized_configs(nconfigs)
+        self._wfms_changed = True
+
     # --- API for waveforms ---
 
     # @property
