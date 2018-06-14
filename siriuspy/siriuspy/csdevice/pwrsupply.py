@@ -24,12 +24,12 @@ _default_pu_current_unit = None
 # --- power supply enums ---
 
 ps_models = ('Empty',
-             'FBP', 'FBP_DCLINK',
+             'FBP', 'FBP_DCLink',
              'FAC_ACDC', 'FAC_DCDC',
              'FAC_2S_ACDC', 'FAC_2S_DCDC',
              'FAC_2P4S_ACDC', 'FAC_2P4S_DCDC',
              'FAP',
-             'FAP_4P_MASTER', 'FAP_4P_SLAVE',
+             'FAP_4P_Master', 'FAP_4P_Slave',
              'FAP_2P2S_MASTER', 'FAP_2P2S_SLAVE',
              'FBP_SOFB',
              'Commercial',
@@ -66,7 +66,7 @@ ps_hard_interlock_FBP = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-ps_soft_interlock_FBP_DCLINK = (
+ps_soft_interlock_FBP_DCLink = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
@@ -75,7 +75,7 @@ ps_soft_interlock_FBP_DCLINK = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-ps_hard_interlock_FBP_DCLINK = (
+ps_hard_interlock_FBP_DCLink = (
     'Falha na fonte 1', 'Falha na fonte 2',
     'Falha na fonte 3', 'Sobre-tensão da saída do bastidor DC-Link',
     'Sobre-tensão da fonte 1', 'Sobre-tensão na fonte 2',
@@ -477,8 +477,8 @@ def _get_ps_FBP_propty_database():
     return propty_db
 
 
-def _get_ps_FBP_DCLINK_propty_database():
-    """Return database with FBP_DCLINK pwrsupply model PVs."""
+def _get_ps_FBP_DCLink_propty_database():
+    """Return database with FBP_DCLink pwrsupply model PVs."""
     propty_db = get_basic_propty_database()
     db_ps = {
         'Voltage-SP': {'type': 'float', 'value': 0.0,
@@ -494,11 +494,11 @@ def _get_ps_FBP_DCLINK_propty_database():
         'VoltageDig-Mon': {'type': 'int', 'value': 0,
                            'lolim': 0, 'hilim': 255},
         'IntlkSoftLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_soft_interlock_FBP_DCLINK),
-                                 'value': ps_soft_interlock_FBP_DCLINK},
+                                 'count': len(ps_soft_interlock_FBP_DCLink),
+                                 'value': ps_soft_interlock_FBP_DCLink},
         'IntlkHardLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_hard_interlock_FBP_DCLINK),
-                                 'value': ps_hard_interlock_FBP_DCLINK},
+                                 'count': len(ps_hard_interlock_FBP_DCLink),
+                                 'value': ps_hard_interlock_FBP_DCLink},
         'ModulesStatus-Mon': {'type': 'int', 'value': 0},
     }
     propty_db.update(db_ps)
@@ -623,8 +623,8 @@ def _set_limits(pstype, database):
 def _get_model_db(psmodel):
     if psmodel == 'FBP':
         database = _get_ps_FBP_propty_database()
-    elif psmodel in ('FBP_DCLINK'):
-        database = _get_ps_FBP_DCLINK_propty_database()
+    elif psmodel in ('FBP_DCLink'):
+        database = _get_ps_FBP_DCLink_propty_database()
     elif psmodel in ('FAC'):
         database = _get_ps_FAC_propty_database()
     elif psmodel in ('FAC_2S'):

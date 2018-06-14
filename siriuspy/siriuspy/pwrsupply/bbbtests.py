@@ -36,15 +36,6 @@ siggen_config = [
 curve1 = [i*2.0/(4000.0-1.0) for i in range(4000)]
 
 
-bsmp_cmds = {
-    'read_variable': 0x10,
-    'remove_group': 0x32,
-    'execute_function': 0x50,
-}
-
-
-
-
 def calc_siggen_duration():
     """Calc duration for Sine or DampedSine siggens."""
     num_cycles = siggen_config[1]
@@ -116,8 +107,27 @@ def bbb2_pruc_create(simulate=False):
 def bbb3_pruc_create(simulate=False):
     """Method."""
     # create BBB controller
-    pruc = pruc_create('FBP_DCLINK', BBB3_device_ids, simulate=simulate)
+    pruc = pruc_create('FBP_DCLink', BBB3_device_ids, simulate=simulate)
     return pruc
+
+
+def bbb3_mix_pruc_create(simulate=False):
+    """Method."""
+    pru, prucqueue = bbb_pru_and_prucqueue(simulate=simulate)
+
+    pruc1 = PRUController(pru=pru,
+                          prucqueue=prucqueue,
+                          udcmodel='FBP_DCLink',
+                          device_ids=(20, ),
+                          processing=True,
+                          scanning=True)
+    pruc2 = PRUController(pru=pru,
+                          prucqueue=prucqueue,
+                          udcmodel='FBP',
+                          device_ids=BBB1_device_ids + BBB2_device_ids,
+                          processing=True,
+                          scanning=True)
+    return pruc1, pruc2
 
 
 def pruc_reset_interlocks(pruc):

@@ -24,8 +24,8 @@ class CommandFactory:
         """Return an object that implemets the Command interface."""
         if psmodel == 'FBP':
             return CommandFactory._get_FBP(epics_field, pru_controller)
-        elif psmodel == 'FBP_DCLINK':
-            return CommandFactory._get_FBP_DCLINK(epics_field, pru_controller)
+        elif psmodel == 'FBP_DCLink':
+            return CommandFactory._get_FBP_DCLink(epics_field, pru_controller)
         else:
             raise NotImplementedError('Fields not implemented for ' + psmodel)
 
@@ -54,10 +54,10 @@ class CommandFactory:
         else:
             return NullCommand()
 
-    def _get_FBP_DCLINK(epics_field, pru_controller):
-        _c = _bsmp.ConstFBP_DCLINK
+    def _get_FBP_DCLink(epics_field, pru_controller):
+        _c = _bsmp.ConstFBP_DCLink
         if epics_field == 'PwrState-Sel':
-            return PSPwrStateFBP_DCLINK(pru_controller)
+            return PSPwrStateFBP_DCLink(pru_controller)
         elif epics_field == 'CtrlLoop-Sel':
             return CtrlLoop(pru_controller)
         elif epics_field == 'OpMode-Sel':
@@ -167,8 +167,8 @@ class PSPwrStateFBP:
             _time.sleep(_delay_turn_on_off)
 
 
-class PSPwrStateFBP_DCLINK:
-    """Adapter to deal with FBP_DCLINK turn on/off commands."""
+class PSPwrStateFBP_DCLink:
+    """Adapter to deal with FBP_DCLink turn on/off commands."""
 
     def __init__(self, pru_controller):
         """Define commands."""

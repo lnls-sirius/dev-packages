@@ -12,12 +12,12 @@ from siriuspy.bsmp import BSMP as _BSMP
 from siriuspy.bsmp import BSMPSim as _BSMPSim
 
 from siriuspy.pwrsupply.bsmp import EntitiesFBP as _EntitiesFBP
-from siriuspy.pwrsupply.bsmp import EntitiesFBP_DCLINK as _EntitiesFBP_DCLINK
+from siriuspy.pwrsupply.bsmp import EntitiesFBP_DCLink as _EntitiesFBP_DCLink
 from siriuspy.pwrsupply.bsmp import EntitiesFAC_DCDC as _EntitiesFAC_DCDC
 from siriuspy.pwrsupply.bsmp import EntitiesFAC_ACDC as _EntitiesFAC_ACDC
 
 from siriuspy.pwrsupply.bsmp import ConstFBP as _cFBP
-from siriuspy.pwrsupply.bsmp import ConstFBP_DCLINK as _cFBP_DCLINK
+from siriuspy.pwrsupply.bsmp import ConstFBP_DCLink as _cFBP_DCLink
 from siriuspy.pwrsupply.bsmp import ConstFAC_DCDC as _cFAC_DCDC
 from siriuspy.pwrsupply.bsmp import ConstFAC_ACDC as _cFAC_ACDC
 
@@ -57,11 +57,11 @@ class _Spec_FBP(_Spec):
         return _Spec._I_LOAD_FLUCTUATION_RMS
 
 
-class _Spec_FBP_DCLINK(_Spec):
+class _Spec_FBP_DCLink(_Spec):
     """Spec FAC_ACDC."""
 
     def _get_constants(self):
-        return _cFBP_DCLINK
+        return _cFBP_DCLink
 
 
 class _Spec_FAC_DCDC(_Spec):
@@ -417,8 +417,8 @@ class _OpModeSimCycleState_FBP(_OpModeSimCycleState, _Spec_FBP):
     pass
 
 
-class _OpModeSimState_FBP_DCLINK(_OpModeSimSlowRefState, _Spec_FBP_DCLINK):
-    """SlowRef FBP_DCLINK state."""
+class _OpModeSimState_FBP_DCLink(_OpModeSimSlowRefState, _Spec_FBP_DCLink):
+    """SlowRef FBP_DCLink state."""
 
     pass
 
@@ -562,14 +562,14 @@ class BSMPSim_FBP(_BaseBSMPSim, _Spec_FBP):
         return variables
 
 
-class BSMPSim_FBP_DCLINK(_BaseBSMPSim, _Spec_FBP_DCLINK):
+class BSMPSim_FBP_DCLink(_BaseBSMPSim, _Spec_FBP_DCLink):
     """Simulated FBP_DCLink UDC."""
 
     def _get_entities(self):
-        return _EntitiesFBP_DCLINK()
+        return _EntitiesFBP_DCLink()
 
     def _get_states(self):
-        return [_OpModeSimState_FBP_DCLINK()]
+        return [_OpModeSimState_FBP_DCLink()]
 
     def _get_init_variables(self):
         variables = []
@@ -657,9 +657,9 @@ udcmodels = {
     'FBP': {'ConstBSMP': _cFBP,
             'Entities': _EntitiesFBP(),
             'BSMPSim': BSMPSim_FBP, },
-    'FBP_DCLINK': {'ConstBSMP': _cFBP_DCLINK,
-                   'Entities': _EntitiesFBP_DCLINK(),
-                   'BSMPSim': BSMPSim_FBP_DCLINK, },
+    'FBP_DCLink': {'ConstBSMP': _cFBP_DCLink,
+                   'Entities': _EntitiesFBP_DCLink(),
+                   'BSMPSim': BSMPSim_FBP_DCLink, },
     'FAC_DCDC': {'ConstBSMP': _cFAC_DCDC,
                  'Entities': _EntitiesFAC_DCDC(),
                  'BSMPSim': BSMPSim_FAC_DCDC, },

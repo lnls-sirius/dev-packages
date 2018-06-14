@@ -304,14 +304,14 @@ class PRUCParms_FBP(_PRUCParms):
         ConstBSMP.V_I_LOAD_4,)
 
 
-class PRUCParms_FBP_DCLINK(_PRUCParms):
-    """FBP_DCLINK-specific PRUC parameters."""
+class PRUCParms_FBP_DCLink(_PRUCParms):
+    """FBP_DCLink-specific PRUC parameters."""
 
     FREQ_RAMP = 2.0  # [Hz]
     FREQ_SCAN = 2.0  # [Hz]
 
     # UDC model
-    udcmodel = 'FBP_DCLINK'
+    udcmodel = 'FBP_DCLink'
     ConstBSMP = _udcmodels[udcmodel]['ConstBSMP']
     Entities = _udcmodels[udcmodel]['Entities']
 
@@ -337,7 +337,7 @@ class PRUCParms_FBP_DCLINK(_PRUCParms):
         # ConstBSMP.V_SIGGEN_AMPLITUDE,
         # ConstBSMP.V_SIGGEN_OFFSET,
         # ConstBSMP.V_SIGGEN_AUX_PARAM,
-        # --- FBP_DCLINK variables ---
+        # --- FBP_DCLink variables ---
         ConstBSMP.V_PS_SOFT_INTERLOCKS,
         ConstBSMP.V_PS_HARD_INTERLOCKS,
         ConstBSMP.V_DIGITAL_INPUTS,
@@ -361,7 +361,7 @@ class PRUCParms_FBP_DCLINK(_PRUCParms):
         # ConstBSMP.V_SIGGEN_AMPLITUDE,
         # ConstBSMP.V_SIGGEN_OFFSET,
         # ConstBSMP.V_SIGGEN_AUX_PARAM,
-        # --- FBP_DCLINK variables ---
+        # --- FBP_DCLink variables ---
         ConstBSMP.V_PS_SOFT_INTERLOCKS,
         ConstBSMP.V_PS_HARD_INTERLOCKS,
         ConstBSMP.V_DIGITAL_INPUTS,
@@ -1046,8 +1046,8 @@ class PRUController:
         # define constant namespaces
         if self._udcmodel == 'FBP':
             self._params = PRUCParms_FBP
-        elif self._udcmodel == 'FBP_DCLINK':
-            self._params = PRUCParms_FBP_DCLINK
+        elif self._udcmodel == 'FBP_DCLink':
+            self._params = PRUCParms_FBP_DCLink
         elif self._udcmodel == 'FAC':
             self._params = PRUCParms_FAC
         elif self._udcmodel == 'FAC_2P4S':
@@ -1162,7 +1162,7 @@ class PRUController:
         while self._running:
 
             # run scan method once
-            if self.scanning:
+            if self.scanning and self._scan_interval != 0:
                 self.bsmp_scan()
 
             # update scan interval
@@ -1212,9 +1212,15 @@ class PRUController:
     def _get_scan_interval(self):
         if self.pru_sync_status == self._params.PRU.SYNC_STATE.OFF or \
            self.pru_sync_mode == self._params.PRU.SYNC_MODE.BRDCST:
-            return 1.0/self._params.FREQ_SCAN  # [s]
+            if self._params.FREQ_SCAN == 0:
+                return 0
+            else:
+                return 1.0/self._params.FREQ_SCAN  # [s]
         else:
-            return 1.0/self._params.FREQ_RAMP  # [s]
+            if self._params.FREQ_RAMP == 0:
+                return 0
+            else:
+                return 1.0/self._params.FREQ_RAMP  # [s]
 
     def _serial_error(self, ids, e, operation):
 
@@ -1333,6 +1339,9 @@ class PRUController:
                 # 20% to 19.5% at BBB1
                 if self._udcmodel == 'FBP':
                     copy_var_vals[id][self._params.ConstBSMP.V_I_LOAD] += \
+                        0.00001*_random.uniform(-1.0, +1.0)
+                elif self._udcmodel == 'FBP_DCLink':
+                    copy_var_vals[id][self._params.ConstBSMP.V_V_OUT] += \
                         0.00001*_random.uniform(-1.0, +1.0)
                 elif self._udcmodel == 'FAC':
                     copy_var_vals[id][self._params.ConstBSMP.V_I_LOAD1] += \

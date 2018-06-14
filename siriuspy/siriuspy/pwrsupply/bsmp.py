@@ -238,7 +238,7 @@ class ConstFBP(ConstBSMP):
     V_I_LOAD_4 = 63  # corresponds to IOC Current-Mon
 
 
-class ConstFBP_DCLINK(ConstBSMP):
+class ConstFBP_DCLink(ConstBSMP):
     """Namespace for organizing power supply FBP_DCLink BSMP constants."""
 
     # --- undefined variables
@@ -254,7 +254,7 @@ class ConstFBP_DCLINK(ConstBSMP):
     V_UNDEF23 = 23
     V_UNDEF24 = 24
 
-    # --- FBP_DCLINK variables ---
+    # --- FBP_DCLink variables ---
     V_PS_SOFT_INTERLOCKS = 25
     V_PS_HARD_INTERLOCKS = 26
     V_DIGITAL_INPUTS = 27
@@ -657,7 +657,7 @@ class EntitiesFBP(_Entities):
         super().__init__(self.Variables, self.Curves, self.Functions)
 
 
-class EntitiesFBP_DCLINK(_Entities):
+class EntitiesFBP_DCLink(_Entities):
     """FBP DCLink-type power supplies entities."""
 
     Variables = (
@@ -818,12 +818,12 @@ class FBP(_BSMP):
         super().__init__(_PRU(), slave_address, EntitiesFBP())
 
 
-class FBP_DCLINK(_BSMP):
-    """BSMP with EntitiesFBP_DCLINK."""
+class FBP_DCLink(_BSMP):
+    """BSMP with EntitiesFBP_DCLink."""
 
     def __init__(self, slave_address):
         """Init BSMP."""
-        super().__init__(_PRU(), slave_address, EntitiesFBP_DCLINK())
+        super().__init__(_PRU(), slave_address, EntitiesFBP_DCLink())
 
 
 class FAC_DCDC(_BSMP):

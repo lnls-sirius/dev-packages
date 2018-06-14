@@ -31,17 +31,17 @@ class VariableFactory:
         'Current-Mon':  _bsmp.ConstFBP.V_I_LOAD,
     }
 
-    _vars_FBP_DCLINK = {
-        'IntlkSoft-Mon': _bsmp.ConstFBP_DCLINK.V_PS_SOFT_INTERLOCKS,
-        'IntlkHard-Mon': _bsmp.ConstFBP_DCLINK.V_PS_HARD_INTERLOCKS,
-        'ModulesStatus-Mon': _bsmp.ConstFBP_DCLINK.V_DIGITAL_INPUTS,
-        'Voltage-RB': _bsmp.ConstFBP_DCLINK.V_PS_SETPOINT,
-        'VoltageRef-Mon': _bsmp.ConstFBP_DCLINK.V_PS_REFERENCE,
-        'Voltage-Mon': _bsmp.ConstFBP_DCLINK.V_V_OUT,
-        'Voltage1-Mon': _bsmp.ConstFBP_DCLINK.V_V_OUT_1,
-        'Voltage2-Mon': _bsmp.ConstFBP_DCLINK.V_V_OUT_2,
-        'Voltage3-Mon': _bsmp.ConstFBP_DCLINK.V_V_OUT_3,
-        'VoltageDig-Mon': _bsmp.ConstFBP_DCLINK.V_DIG_POT_TAP,
+    _vars_FBP_DCLink = {
+        'IntlkSoft-Mon': _bsmp.ConstFBP_DCLink.V_PS_SOFT_INTERLOCKS,
+        'IntlkHard-Mon': _bsmp.ConstFBP_DCLink.V_PS_HARD_INTERLOCKS,
+        'ModulesStatus-Mon': _bsmp.ConstFBP_DCLink.V_DIGITAL_INPUTS,
+        'Voltage-RB': _bsmp.ConstFBP_DCLink.V_PS_SETPOINT,
+        'VoltageRef-Mon': _bsmp.ConstFBP_DCLink.V_PS_REFERENCE,
+        'Voltage-Mon': _bsmp.ConstFBP_DCLink.V_V_OUT,
+        'Voltage1-Mon': _bsmp.ConstFBP_DCLink.V_V_OUT_1,
+        'Voltage2-Mon': _bsmp.ConstFBP_DCLink.V_V_OUT_2,
+        'Voltage3-Mon': _bsmp.ConstFBP_DCLink.V_V_OUT_3,
+        'VoltageDig-Mon': _bsmp.ConstFBP_DCLink.V_DIG_POT_TAP,
     }
 
     _vars_FAC = {
@@ -63,8 +63,8 @@ class VariableFactory:
         if psmodel == 'FBP':
             v = VariableFactory._get_FBP(device_id, epics_field,
                                          pru_controller)
-        elif psmodel == 'FBP_DCLINK':
-            v = VariableFactory._get_FBP_DCLINK(device_id, epics_field,
+        elif psmodel == 'FBP_DCLink':
+            v = VariableFactory._get_FBP_DCLink(device_id, epics_field,
                                                 pru_controller)
         elif psmodel in ('FAC_DCDC'):
             v = VariableFactory._get_FAC(device_id, epics_field,
@@ -119,9 +119,9 @@ class VariableFactory:
         return None
 
     @staticmethod
-    def _get_FBP_DCLINK(device_id, epics_field, pru_controller):
-        if epics_field in VariableFactory._vars_FBP_DCLINK:
-            var_id = VariableFactory._vars_FBP_DCLINK[epics_field]
+    def _get_FBP_DCLink(device_id, epics_field, pru_controller):
+        if epics_field in VariableFactory._vars_FBP_DCLink:
+            var_id = VariableFactory._vars_FBP_DCLink[epics_field]
             return Variable(pru_controller, device_id, var_id)
         return None
 
