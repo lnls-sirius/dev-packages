@@ -144,7 +144,32 @@ class BoosterRamp(_ConfigSrv):
     @delay_rf.setter
     def delay_rf(self, value):
         """Set RF delay."""
+        # TODO: verify value
         self._configuration['rf_parameters']['delay'] = value
+        self._synchronized = False
+
+    @property
+    def injection_time(self):
+        """Injection time instant."""
+        return self._configuration['ramp_dipole']['injection_time']
+
+    @injection_time.setter
+    def injection_time(self, value):
+        """Set injection time instant."""
+        # TODO: verify value
+        self._configuration['ramp_dipole']['injection_time'] = value
+        self._synchronized = False
+
+    @property
+    def ejection_time(self):
+        """Ejection time instant."""
+        return self._configuration['ramp_dipole']['ejection_time']
+
+    @ejection_time.setter
+    def ejection_time(self, value):
+        """Set ejection time instant."""
+        # TODO: verify value
+        self._configuration['ramp_dipole']['ejection_time'] = value
         self._synchronized = False
 
     @property
