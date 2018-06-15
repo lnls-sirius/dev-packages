@@ -19,7 +19,7 @@ from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
 from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 
 from siriuspy.pwrsupply.pru import Const as _PRUConst
-from siriuspy.pwrsupply.bsmp import __version__ as _ps_bsmp_version
+from siriuspy.pwrsupply.bsmp import __version__ as _udc_firmware_version
 from siriuspy.pwrsupply.bsmp import MAP_MIRROR_2_ORIG_FBP as _mirror_map_fbp
 from siriuspy.pwrsupply.bsmp import Parameters as _Parameters
 
@@ -1150,10 +1150,11 @@ class PRUController:
             version = self._variables_values[id][
                 self._params.ConstBSMP.V_FIRMWARE_VERSION]
             version = parse_firmware_version(version)
-            if 'Simulation' not in version and version != _ps_bsmp_version:
+            if 'Simulation' not in version and \
+               version != _udc_firmware_version:
                 self._init_disconnect()
                 errmsg = ('Incompatible BSMP implementation version! '
-                          '{} <> {}'.format(version, _ps_bsmp_version))
+                          '{} <> {}'.format(version, _udc_firmware_version))
                 raise ValueError(errmsg)
 
     # --- private methods: scan and process ---
@@ -1454,7 +1455,7 @@ class PRUController:
 
         # check if ps controller version is compatible with bsmp.py
         # TODO: turn version checking on when test bench frmware is updated.
-        # self._init_check_version()
+        self._init_check_version()
 
         # initialize parameters_values, a mirror state of BSMP devices
         # TODO: finish implementation of _bsmp_init_parameters_values!
