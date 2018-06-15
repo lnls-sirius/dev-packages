@@ -1,6 +1,10 @@
-"""Configuration Type Definition."""
+"""SI chromaticity correction configuration.
 
-import copy as _copy
+Values in _template_dict are arbitrary. They are used just to compare with
+corresponding values when a new configuration is tried to be inserted in the
+servconf database.
+"""
+from copy import deepcopy as _dcopy
 
 
 def get_dict():
@@ -8,9 +12,10 @@ def get_dict():
     module_name = __name__.split('.')[-1]
     _dict = {
         'config_type_name': module_name,
-        'value': _copy.deepcopy(_value)
+        'value': _dcopy(_template_dict)
     }
     return _dict
+
 
 # Chromaticity Correction Parameters for Storage Ring
 #
@@ -32,7 +37,12 @@ def get_dict():
 # [sextupole_order  SFA1  SFA2  SDA1  SDA2  SDA3  SFB1  SFB2  SDB1  SDB2  SDB3  SFP1  SFP2  SDP1  SDP2  SDP3]
 
 
-_value = {'nominal chrom': [0.0, 0.0],
-          'matrix':        [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]],
-          'nominal SLs':   [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+_template_dict = {
+    'nominal chrom': [0.0, 0.0],
+    'matrix': [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+               [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]],
+    'nominal SLs': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+}

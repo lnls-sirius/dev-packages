@@ -5,11 +5,24 @@ import threading as _threading
 from copy import deepcopy as _deepcopy
 
 from siriuspy.search import PSSearch as _PSSearch
-from siriuspy.pwrsupply.data import PSData as _PSData
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
+from siriuspy.pwrsupply.data import PSData as _PSData
+from siriuspy.pwrsupply.pru import PRU as _PRU
+from siriuspy.pwrsupply.pru import PRUSim as _PRUSim
+from siriuspy.pwrsupply.prucontroller import PRUCQueue as _PRUCQueue
 from siriuspy.pwrsupply.prucontroller import PRUController as _PRUController
 from siriuspy.pwrsupply.e2scontroller import E2SController as _E2SController
 from siriuspy.pwrsupply.e2scontroller import DeviceInfo as _DeviceInfo
+
+# NOTE on current behaviour of BeagleBone:
+#
+# 01. While in RmpWfm, MigWfm or SlowRefSync, the PS_I_LOAD variable read from
+#     power supplies after setting the last curve point may not be the
+#     final value given by PS_REFERENCE. This is due to the fact that the
+#     power supply control loop takes some time to converge and the PRU may
+#     block serial comm. before it. This is evident in SlowRefSync mode, where
+#     reference values may change considerably between two setpoints.
+#     (see identical note in PRUController)
 
 # TODO: improve code
 #
@@ -182,13 +195,13 @@ class BeagleBone:
         self.e2s_controller.write_to_many(psnames, 'OpMode-Sel', op_mode)
         self._pos_opmode(psnames, op_mode)
         if op_mode == _PSConst.OpMode.Cycle:
-            sync_mode = self._pru_controller.PRU.SYNC_MODE.BRDCST
+            sync_mode = self._pru_controller.params.PRU.SYNC_MODE.BRDCST
             return self._pru_controller.pru_sync_start(sync_mode)
         elif op_mode == _PSConst.OpMode.RmpWfm:
-            sync_mode = self._pru_controller.PRU.SYNC_MODE.RMPEND
+            sync_mode = self._pru_controller.params.PRU.SYNC_MODE.RMPEND
             return self._pru_controller.pru_sync_start(sync_mode)
         elif op_mode == _PSConst.OpMode.MigWfm:
-            sync_mode = self._pru_controller.PRU.SYNC_MODE.MIGEND
+            sync_mode = self._pru_controller.params.PRU.SYNC_MODE.MIGEND
             return self._pru_controller.pru_sync_start(sync_mode)
 
     def _get_bsmp_slave_IDs(self):
@@ -205,8 +218,13 @@ class BeagleBone:
     def _create_e2s_controller(self):
         # Return dict of power supply objects
         slave_ids = self._get_bsmp_slave_IDs()
-        self._pru_controller = _PRUController(
-            self._psmodel, slave_ids, simulate=self._simulate)
+        if self._simulate:
+            pru = _PRUSim()
+        else:
+            pru = _PRU()
+        prucqueue = _PRUCQueue()
+        self._pru_controller = _PRUController(pru, prucqueue,
+                                              self._psmodel, slave_ids)
         for i, psname in enumerate(self._psnames):
             self._devices_info[psname] = _DeviceInfo(psname, slave_ids[i])
         db = _deepcopy(self._database)
@@ -354,8 +372,6 @@ class _Watcher(_threading.Thread):
     WAIT_MIG = 3
     WAIT_RMP = 4
 
-    WAIT = 1.0/_PRUController.FREQ.SCAN
-
     def __init__(self, setpoints, controller, dev_name, op_mode):
         """Init thread."""
         super().__init__(daemon=True)
@@ -363,6 +379,7 @@ class _Watcher(_threading.Thread):
         self.controller = controller
         self.dev_name = dev_name
         self.op_mode = op_mode
+        self.wait = 1.0/controller.pru_controller.params.FREQ_SCAN
         self.state = _Watcher.WAIT_OPMODE
         self.exit = False
 
@@ -404,7 +421,7 @@ class _Watcher(_threading.Thread):
                     # self._set_current()
                     self._set_slow_ref()
                     break
-            _time.sleep(_Watcher.WAIT)
+            _time.sleep(self.wait)
 
     def _watch_mig(self):
         while True:
@@ -419,7 +436,7 @@ class _Watcher(_threading.Thread):
                         self._set_current()
                         self._set_slow_ref()
                     break
-            _time.sleep(_Watcher.WAIT)
+            _time.sleep(self.wait)
 
     def _watch_rmp(self):
         while True:
@@ -433,7 +450,7 @@ class _Watcher(_threading.Thread):
                     if self._sync_pulsed():
                         self._set_current()
                     break
-            _time.sleep(_Watcher.WAIT)
+            _time.sleep(self.wait)
 
     def _current_op_mode(self):
         return self.controller.read(self.dev_name, 'OpMode-Sts')

@@ -15,43 +15,11 @@ from siriuspy.pwrsupply.pru import PRU as _PRU
 
 # version of the BSMP implementation of power supplies that is compatible
 # with the current implemenation of this module.
-__version__ = 'V0.11b2018-05-08V0.11b2018-05-08'
+# __version__ = 'V0.11b2018-05-08V0.11b2018-05-08'
 __version__ = 'V0.11 2018-04-26V0.11 2018-04-25'
 
-# Mirror power supply variables
-# =============================
-#
-# The current version of Beaglebone's PRU library is able to send only one
-# BSMP command to the serial line at the end of each ramp cycle. Within BSMP
-# there is no way a read command to multiple power supplies can be sent.
-# At each ramp cycle a single power supply attached to the Beaglebone can be
-# selected for its state to be read. With a ramp running at 2 Hz, the update
-# of each power supply in a create with 4 powet supplies would be slowed to
-# 0.5 Hz = 2 Hz / 4 power supploes.
-#
-# In order to keep a refresh rate of 2 Hz, a modification of the specification
-# for the BSMP power supply was done. Each power supply will register a
-# selected set of BSMP variables corresponding to variables of the other
-# power supplies. This is simple to implement in the firmware of the
-# ARM controller.
-#
-# Power supply variables with IDs in the range [40,63] serve this purpose.
-# The dictionary MAP_MIRROR_2_ORIG maps the so-called mirror variable ids
-# onto the original variable IDs.
 
-MAP_MIRROR_2_ORIG = {
-    # This dictionary maps variable ids of mirror variables to the
-    # corresponding original power supply crate index and variable ids,
-    # organized as a tuple (device_idx, variable_id).
-    40: (1, 0),  41: (2, 0),  42: (3, 0),  43: (4, 0),   # V_PS_STATUS
-    44: (1, 1),  45: (2, 1),  46: (3, 1),  47: (4, 1),   # V_PS_SETPOINT
-    48: (1, 2),  49: (2, 2),  50: (3, 2),  51: (4, 2),   # V_PS_REFERENCE
-    52: (1, 25), 53: (2, 25), 54: (3, 25), 55: (4, 25),  # V_PS_SOFT_INTERLOCK
-    56: (1, 26), 57: (2, 26), 58: (3, 26), 59: (4, 26),  # V_PS_HARD_INTERLOCK
-    60: (1, 27), 61: (2, 27), 62: (3, 27), 63: (4, 27)}  # V_PS_HARD_INTERLOCK
-
-
-class Const:
+class ConstBSMP:
     """Namespace for organizing power supply BSMP constants."""
 
     # --- implemented protocol version ---
@@ -93,6 +61,50 @@ class Const:
     E_SIGGENTYPE_DAMPEDSINE = 1
     E_SIGGENTYPE_TRAPEZOIDAL = 2
 
+    # --- functions ---
+    F_TURN_ON = 0
+    F_TURN_OFF = 1
+    F_OPEN_LOOP = 2
+    F_CLOSE_LOOP = 3
+    F_SELECT_OP_MODE = 4
+    F_SELECT_PS_MODEL = 5  # --- NOT IMPLEMENTED YET ---
+    F_RESET_INTERLOCKS = 6
+    F_REMOTE_INTERFACE = 7  # --- NOT IMPLEMENTED YET ---
+    F_SET_SERIAL_ADDRESS = 8  # --- NOT IMPLEMENTED YET ---
+    F_SET_SERIAL_TERMINATION = 9  # --- NOT IMPLEMENTED YET ---
+    F_UNLOCK_UDC = 10  # --- NOT IMPLEMENTED YET ---
+    F_LOCK_UDC = 11  # --- NOT IMPLEMENTED YET ---
+    F_CFG_BUF_SAMPLES = 12  # --- NOT IMPLEMENTED YET ---
+    F_ENABLE_BUF_SAMPLES = 13  # --- NOT IMPLEMENTED YET ---
+    F_DISABLE_BUF_SAMPLES = 14  # --- NOT IMPLEMENTED YET ---
+    F_SYNC_PULSE = 15  # --- NOT IMPLEMENTED YET ---
+    F_SET_SLOWREF = 16
+    F_SET_SLOWREF_FBP = 17  # --- NOT IMPLEMENTED YET ---
+    F_RESET_COUNTERS = 18
+    F_SCALE_WFMREF = 19  # --- NOT IMPLEMENTED YET ---
+    F_SELECT_WFMREF = 20  # --- NOT IMPLEMENTED YET ---
+    F_SAVE_WFMREF = 21  # --- NOT IMPLEMENTED YET ---
+    F_RESET_WFMREF = 22  # --- NOT IMPLEMENTED YET ---
+    F_CFG_SIGGEN = 23
+    F_SET_SIGGEN = 24  # --- NOT IMPLEMENTED YET ---
+    F_ENABLE_SIGGEN = 25
+    F_DISABLE_SIGGEN = 26
+    F_SET_SLOWREF_READBACK = 27  # --- NOT IMPLEMENTED YET ---
+    F_SET_SLOWREF_FBP_READBACK = 28  # --- NOT IMPLEMENTED YET ---
+    F_SET_PARAM = 29  # --- NOT IMPLEMENTED YET ---
+    F_GET_PARAM = 30  # --- NOT IMPLEMENTED YET ---
+    F_SAVE_PARAM_EEPROM = 31  # --- NOT IMPLEMENTED YET ---
+    F_LOAD_PARAM_EEPROM = 32  # --- NOT IMPLEMENTED YET ---
+    F_SAVE_PARAM_BANK = 33  # --- NOT IMPLEMENTED YET ---
+    F_LOAD_PARAM_BANK = 34  # --- NOT IMPLEMENTED YET ---
+    F_SET_DSP_COEFFS = 35  # --- NOT IMPLEMENTED YET ---
+    F_GET_DSP_COEFF = 36  # --- NOT IMPLEMENTED YET ---
+    F_SAVE_DSP_COEFFS_EEPROM = 37  # --- NOT IMPLEMENTED YET ---
+    F_LOAD_DSP_COEFFS_EEPROM = 38  # --- NOT IMPLEMENTED YET ---
+    F_SAVE_DSP_MODULES_EEPROM = 39  # --- NOT IMPLEMENTED YET ---
+    F_LOAD_DSP_MODULES_EEPROM = 40  # --- NOT IMPLEMENTED YET ---
+    F_RESET_UDC = 41  # --- NOT IMPLEMENTED YET ---
+
     # --- common variables ---
     V_PS_STATUS = 0
     V_PS_SETPOINT = 1  # corresponds to IOC Current-RB
@@ -108,6 +120,62 @@ class Const:
     V_SIGGEN_AMPLITUDE = 11
     V_SIGGEN_OFFSET = 12
     V_SIGGEN_AUX_PARAM = 13
+
+    # --- power supply parameters ---
+    P_PS_NAME = 0
+    P_PS_MODEL = 1
+    P_PS_NR_PSMODELS = 2
+    P_COMM_CMD_INTERFACE = 3
+    P_COMM_RS485_BAUDRATE = 4
+    P_COMM_RS485_ADDRESS = 5
+    P_COMM_RS485_TERMINATOR_RESISTOR = 6
+    P_COMM_UDC_NETWORK_ADDRESS = 7
+    P_COMM_ETHERNET_IP = 8
+    P_COMM_ETHERNET_SUBNET_MASK = 9
+    P_CTRL_FREQ_CONTROL_ISR = 10
+    P_CTRL_FREQ_TIME_SLICER = 11
+    P_CTRL_MAX_REF = 12
+    P_CTRL_MIN_REF = 13
+    P_CTRL_MAX_REF_OPEN_LOOP = 14
+    P_CTRL_MIN_REF_OPEN_LOOP = 15
+    P_CTRL_SLEW_RATE_SLOWREF = 16
+    P_CTRL_SLEW_RATE_SIGGEN_AMP = 17
+    P_CTRL_SLEW_RATE_SIGGEN_OFFSET = 18
+    P_CTRL_SLEW_RATE_WFMREF = 19
+    P_PWM_FREQ = 20
+    P_PWM_DEAD_TIME = 21
+    P_PWM_MAX_DUTY = 22
+    P_PWM_MIN_DUTY = 23
+    P_PWM_MAX_DUTY_OPEN_LOOP = 24
+    P_PWM_MIN_DUTY_OPEN_LOOP = 25
+    P_PWM_LIM_DUTY_SHARE = 26
+    P_HRADC_NR_BORARDS = 27
+    P_HRADC_SPI_CLK = 28
+    P_HRADC_FREQ_SAMPLING = 29
+    P_HRADC_ENABLE_HEATER = 30
+    P_HRADC_ENABLE_HAILS_MON = 31
+    P_HRADC_TRANSDUCER_OUTPUT = 32
+    P_HRADC_TRANSDUCER_GAIN = 33
+    P_HRADC_TRANSDUCER_OFFSET = 34
+    P_SIGGEN_TYPE = 35
+    P_SIGGEN_NUM_CYCLES = 36
+    P_SIGGEN_FREQ = 37
+    P_SIGGEN_AMPLITUDE = 38
+    P_SIGGEN_OFFSET = 39
+    P_SIGGEN_AUX_PARAM = 40
+    P_WFMREF_ID = 41
+    P_WFMREF_SYNC_MODE = 42
+    P_WFMREF_GAIN = 43
+    P_WFMREF_OFFSET = 44
+    P_ANALOG_MAX = 45
+    P_ANALOG_MIN = 46
+
+
+class ConstFBP(ConstBSMP):
+    """Namespace for organizing power supply FBP BSMP constants."""
+
+    # --- implemented protocol version ---
+    # version = __bsmp_version__
 
     # --- undefined variables
     V_UNDEF14 = 14
@@ -169,177 +237,136 @@ class Const:
     V_I_LOAD_3 = 62  # corresponds to IOC Current-Mon
     V_I_LOAD_4 = 63  # corresponds to IOC Current-Mon
 
-    # --- functions ---
-    F_TURN_ON = 0
-    F_TURN_OFF = 1
-    F_OPEN_LOOP = 2
-    F_CLOSE_LOOP = 3
-    F_SELECT_OP_MODE = 4
-    F_SELECT_PS_MODEL = 5  # --- NOT IMPLEMENTED YET ---
-    F_RESET_INTERLOCKS = 6
-    F_REMOTE_INTERFACE = 7  # --- NOT IMPLEMENTED YET ---
-    F_SET_SERIAL_ADDRESS = 8  # --- NOT IMPLEMENTED YET ---
-    F_SET_SERIAL_TERMINATION = 9  # --- NOT IMPLEMENTED YET ---
-    F_UNLOCK_UDC = 10  # --- NOT IMPLEMENTED YET ---
-    F_LOCK_UDC = 11  # --- NOT IMPLEMENTED YET ---
-    F_CFG_BUF_SAMPLES = 12  # --- NOT IMPLEMENTED YET ---
-    F_ENABLE_BUF_SAMPLES = 13  # --- NOT IMPLEMENTED YET ---
-    F_DISABLE_BUF_SAMPLES = 14  # --- NOT IMPLEMENTED YET ---
-    F_SYNC_PULSE = 15  # --- NOT IMPLEMENTED YET ---
-    F_SET_SLOWREF = 16
-    F_SET_SLOWREF_FBP = 17  # --- NOT IMPLEMENTED YET ---
-    F_RESET_COUNTERS = 18
-    F_SCALE_WFMREF = 19  # --- NOT IMPLEMENTED YET ---
-    F_SELECT_WFMREF = 20  # --- NOT IMPLEMENTED YET ---
-    F_SAVE_WFMREF = 21  # --- NOT IMPLEMENTED YET ---
-    F_RESET_WFMREF = 22  # --- NOT IMPLEMENTED YET ---
-    F_CFG_SIGGEN = 23
-    F_SET_SIGGEN = 24  # --- NOT IMPLEMENTED YET ---
-    F_ENABLE_SIGGEN = 25
-    F_DISABLE_SIGGEN = 26
-    F_SET_SLOWREF_READBACK = 27  # --- NOT IMPLEMENTED YET ---
-    F_SET_SLOWREF_FBP_READBACK = 28  # --- NOT IMPLEMENTED YET ---
-    F_SET_PARAM = 29  # --- NOT IMPLEMENTED YET ---
-    F_GET_PARAM = 30  # --- NOT IMPLEMENTED YET ---
-    F_SAVE_PARAM_EEPROM = 31  # --- NOT IMPLEMENTED YET ---
-    F_LOAD_PARAM_EEPROM = 32  # --- NOT IMPLEMENTED YET ---
-    F_SAVE_PARAM_BANK = 33  # --- NOT IMPLEMENTED YET ---
-    F_LOAD_PARAM_BANK = 34  # --- NOT IMPLEMENTED YET ---
-    F_SET_DSP_COEFFS = 35  # --- NOT IMPLEMENTED YET ---
-    F_GET_DSP_COEFF = 36  # --- NOT IMPLEMENTED YET ---
-    F_SAVE_DSP_COEFFS_EEPROM = 37  # --- NOT IMPLEMENTED YET ---
-    F_LOAD_DSP_COEFFS_EEPROM = 38  # --- NOT IMPLEMENTED YET ---
-    F_SAVE_DSP_MODULES_EEPROM = 39  # --- NOT IMPLEMENTED YET ---
-    F_LOAD_DSP_MODULES_EEPROM = 40  # --- NOT IMPLEMENTED YET ---
-    F_RESET_UDC = 41  # --- NOT IMPLEMENTED YET ---
 
-    # --- power supply parameters ---
-    P_PS_NAME = 0
-    P_PS_MODEL = 1
-    P_PS_NR_PSMODELS = 2
-    P_COMM_CMD_INTERFACE = 3
-    P_COMM_RS485_BAUDRATE = 4
-    P_COMM_RS485_ADDRESS = 5
-    P_COMM_RS485_TERMINATOR_RESISTOR = 6
-    P_COMM_UDC_NETWORK_ADDRESS = 7
-    P_COMM_ETHERNET_IP = 8
-    P_COMM_ETHERNET_SUBNET_MASK = 9
-    P_CTRL_FREQ_CONTROL_ISR = 10
-    P_CTRL_FREQ_TIME_SLICER = 11
-    P_CTRL_MAX_REF = 12
-    P_CTRL_MIN_REF = 13
-    P_CTRL_MAX_REF_OPEN_LOOP = 14
-    P_CTRL_MIN_REF_OPEN_LOOP = 15
-    P_CTRL_SLEW_RATE_SLOWREF = 16
-    P_CTRL_SLEW_RATE_SIGGEN_AMP = 17
-    P_CTRL_SLEW_RATE_SIGGEN_OFFSET = 18
-    P_CTRL_SLEW_RATE_WFMREF = 19
-    P_PWM_FREQ = 20
-    P_PWM_DEAD_TIME = 21
-    P_PWM_MAX_DUTY = 22
-    P_PWM_MIN_DUTY = 23
-    P_PWM_MAX_DUTY_OPEN_LOOP = 24
-    P_PWM_MIN_DUTY_OPEN_LOOP = 25
-    P_PWM_LIM_DUTY_SHARE = 26
-    P_HRADC_NR_BORARDS = 27
-    P_HRADC_SPI_CLK = 28
-    P_HRADC_FREQ_SAMPLING = 29
-    P_HRADC_ENABLE_HEATER = 30
-    P_HRADC_ENABLE_HAILS_MON = 31
-    P_HRADC_TRANSDUCER_OUTPUT = 32
-    P_HRADC_TRANSDUCER_GAIN = 33
-    P_HRADC_TRANSDUCER_OFFSET = 34
-    P_SIGGEN_TYPE = 35
-    P_SIGGEN_NUM_CYCLES = 36
-    P_SIGGEN_FREQ = 37
-    P_SIGGEN_AMPLITUDE = 38
-    P_SIGGEN_OFFSET = 39
-    P_SIGGEN_AUX_PARAM = 40
-    P_WFMREF_ID = 41
-    P_WFMREF_SYNC_MODE = 42
-    P_WFMREF_GAIN = 43
-    P_WFMREF_OFFSET = 44
-    P_ANALOG_MAX = 45
-    P_ANALOG_MIN = 46
+class ConstFBP_DCLINK(ConstBSMP):
+    """Namespace for organizing power supply FBP_DCLink BSMP constants."""
+
+    # --- undefined variables
+    V_UNDEF14 = 14
+    V_UNDEF15 = 15
+    V_UNDEF16 = 16
+    V_UNDEF17 = 17
+    V_UNDEF18 = 18
+    V_UNDEF19 = 19
+    V_UNDEF20 = 20
+    V_UNDEF21 = 21
+    V_UNDEF22 = 22
+    V_UNDEF23 = 23
+    V_UNDEF24 = 24
+
+    # --- FSB variables ---
+    V_PS_SOFT_INTERLOCKS = 25  # BSMP doc says ID numb. should be continous!
+    V_PS_HARD_INTERLOCKS = 26
+    V_DIGITAL_INPUTS = 27  # corresponds to IOC Current-Mon
+    V_OUT_1 = 28
+    V_OUT_1 = 29
+    V_OUT_1 = 30
 
 
-_BSMP_Functions = (
-    {'eid': Const.F_TURN_ON,
-     'i_type': (), 'o_type': (_Types.T_UINT8, )},
-    {'eid': Const.F_TURN_OFF,
-     'i_type': (), 'o_type': (_Types.T_UINT8, )},
-    {'eid': Const.F_OPEN_LOOP,
-     'i_type': (), 'o_type': (_Types.T_UINT8, )},
-    {'eid': Const.F_CLOSE_LOOP,
-     'i_type': (), 'o_type': (_Types.T_UINT8, )},
-    {'eid': Const.F_SELECT_OP_MODE,
-     'i_type': (_Types.T_ENUM, ), 'o_type': (_Types.T_UINT8,)},
-    {'eid': Const.F_SELECT_PS_MODEL,
-     'i_type': (_Types.T_UINT16, ), 'o_type': (_Types.T_UINT8,)},
-    {'eid': Const.F_RESET_INTERLOCKS,
-     'i_type': (), 'o_type': (_Types.T_UINT8, )},
-    {'eid': Const.F_REMOTE_INTERFACE,
-     'i_type': (), 'o_type': (_Types.T_UINT8, )},
-    {'eid': Const.F_SET_SERIAL_ADDRESS,
-     'i_type': (_Types.T_UINT16, ), 'o_type': (_Types.T_UINT8,)},
-    {'eid': Const.F_SET_SERIAL_TERMINATION,
-     'i_type': (_Types.T_UINT16, ), 'o_type': (_Types.T_UINT8,)},
-    {'eid': Const.F_UNLOCK_UDC,
-     'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
-    {'eid': Const.F_LOCK_UDC,
-     'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
-    {'eid': Const.F_CFG_BUF_SAMPLES,
-     'i_type': (_Types.T_UINT32,), 'o_type': (_Types.T_UINT8,)},
-    {'eid': Const.F_ENABLE_BUF_SAMPLES,
-     'i_type': (), 'o_type': (_Types.T_UINT8, )},
-    {'eid': Const.F_DISABLE_BUF_SAMPLES,
-     'i_type': (), 'o_type': (_Types.T_UINT8, )},
-    {'eid': Const.F_SYNC_PULSE,
-     'i_type': (), 'o_type': ()},
-    {'eid': Const.F_SET_SLOWREF,
-     'i_type': (_Types.T_FLOAT,), 'o_type': (_Types.T_UINT8,)},
-    {'eid': Const.F_SET_SLOWREF_FBP,
-     'i_type': (_Types.T_FLOAT, _Types.T_FLOAT, _Types.T_FLOAT,
-                _Types.T_FLOAT),
-     'o_type': (_Types.T_UINT8,)},
-    {'eid': Const.F_RESET_COUNTERS,
-     'i_type': (), 'o_type': (_Types.T_UINT8,)},
-    {'eid': Const.F_SCALE_WFMREF,
-     'i_type': (_Types.T_FLOAT, _Types.T_FLOAT),
-     'o_type': (_Types.T_UINT8,)},
-    {'eid': Const.F_SELECT_WFMREF,
-     'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
-    {'eid': Const.F_SAVE_WFMREF,
-     'i_type': (), 'o_type': (_Types.T_UINT8, )},
-    {'eid': Const.F_RESET_WFMREF,
-     'i_type': (), 'o_type': (_Types.T_UINT8, )},
-    {'eid': Const.F_CFG_SIGGEN,
-     'i_type': (_Types.T_ENUM, _Types.T_UINT16,
-                _Types.T_FLOAT, _Types.T_FLOAT, _Types.T_FLOAT,
-                _Types.T_FLOAT, _Types.T_FLOAT,
-                _Types.T_FLOAT, _Types.T_FLOAT),
-     'o_type': (_Types.T_UINT8,)},
-    {'eid': Const.F_SET_SIGGEN,
-     'i_type': (_Types.T_FLOAT, _Types.T_FLOAT, _Types.T_FLOAT),
-     'o_type': (_Types.T_UINT8,)},
-    {'eid': Const.F_ENABLE_SIGGEN,
-     'i_type': (), 'o_type': (_Types.T_UINT8, )},
-    {'eid': Const.F_DISABLE_SIGGEN,
-     'i_type': (), 'o_type': (_Types.T_UINT8, )},
-    {'eid': Const.F_SET_SLOWREF_READBACK,
-     'i_type': (_Types.T_FLOAT,), 'o_type': (_Types.T_FLOAT,)},
-    {'eid': Const.F_SET_SLOWREF_FBP_READBACK,
-     'i_type': (_Types.T_FLOAT, _Types.T_FLOAT,
-                _Types.T_FLOAT, _Types.T_FLOAT,),
-     'o_type': (_Types.T_FLOAT, _Types.T_FLOAT,
-                _Types.T_FLOAT, _Types.T_FLOAT,)},
-    {'eid': Const.F_SET_PARAM,
-     'i_type': (_Types.T_PARAM, _Types.T_UINT16, _Types.T_FLOAT,),
-     'o_type': (_Types.T_UINT8,)},
-    {'eid': Const.F_GET_PARAM,
-     'i_type': (_Types.T_PARAM, _Types.T_UINT16,),
-     'o_type': (_Types.T_FLOAT,)},
-)
+class ConstFAC(ConstBSMP):
+    """Namespace for organizing power supply FAC BSMP constants."""
+
+    # --- undefined variables
+    V_UNDEF14 = 14
+    V_UNDEF15 = 15
+    V_UNDEF16 = 16
+    V_UNDEF17 = 17
+    V_UNDEF18 = 18
+    V_UNDEF19 = 19
+    V_UNDEF20 = 20
+    V_UNDEF21 = 21
+    V_UNDEF22 = 22
+    V_UNDEF23 = 23
+    V_UNDEF24 = 24
+
+    # --- FSB variables ---
+    V_PS_SOFT_INTERLOCKS = 25
+    V_PS_HARD_INTERLOCKS = 26
+    V_I_LOAD1 = 27
+    V_I_LOAD2 = 28
+    V_V_LOAD = 29
+    V_V_CAPACITOR_BANK = 30
+    V_TEMP_INDUCTORS = 31
+    V_TEMP_IGBTS = 32
+    V_DUTY_CYCLE = 33
+
+
+class ConstFAC_ACDC(ConstBSMP):
+    """Namespace for organizing power supply FAC ACDC BSMP constants."""
+
+    # --- undefined variables
+    V_UNDEF14 = 14
+    V_UNDEF15 = 15
+    V_UNDEF16 = 16
+    V_UNDEF17 = 17
+    V_UNDEF18 = 18
+    V_UNDEF19 = 19
+    V_UNDEF20 = 20
+    V_UNDEF21 = 21
+    V_UNDEF22 = 22
+    V_UNDEF23 = 23
+    V_UNDEF24 = 24
+
+    # --- FAC_ACDC variables ---
+    V_PS_SOFT_INTERLOCKS = 25
+    V_PS_HARD_INTERLOCKS = 26
+    V_CAPACITOR_BANK = 27
+    V_OUT_RECTIFIER = 28
+    I_OUT_RECTIFIER = 29
+    TEMP_HEATSINK = 30
+    TEMP_INDUCTORS = 31
+    DUTY_CYCLE = 32
+
+
+# Mirror power supply variables (FBP)
+# ===================================
+#
+# The current version of Beaglebone's PRU library is able to send only one
+# BSMP command to the serial line at the end of each ramp cycle. Within BSMP
+# there is no way a read command to multiple power supplies can be sent.
+# At each ramp cycle a single power supply attached to the Beaglebone can be
+# selected for its state to be read. With a ramp running at 2 Hz, the update
+# of each power supply in a create with 4 powet supplies would be slowed to
+# 0.5 Hz = 2 Hz / 4 power supploes.
+#
+# In order to keep a refresh rate of 2 Hz, a modification of the specification
+# for the BSMP power supply was done. Each power supply will register a
+# selected set of BSMP variables corresponding to variables of the other
+# power supplies. This is simple to implement in the firmware of the
+# ARM controller.
+#
+# Power supply variables with IDs in the range [40,63] serve this purpose.
+# The dictionary MAP_MIRROR_2_ORIG maps the so-called mirror variable ids
+# onto the original variable IDs.
+
+MAP_MIRROR_2_ORIG_FBP = {
+    # This dictionary maps variable ids of mirror variables to the
+    # corresponding original power supply crate index and variable ids,
+    # organized as a tuple (device_idx, variable_id).
+    ConstFBP.V_PS_STATUS_1: (1, 0),
+    ConstFBP.V_PS_STATUS_2: (2, 0),
+    ConstFBP.V_PS_STATUS_3: (3, 0),
+    ConstFBP.V_PS_STATUS_4: (4, 0),
+    ConstFBP.V_PS_SETPOINT_1: (1, 1),
+    ConstFBP.V_PS_SETPOINT_2: (2, 1),
+    ConstFBP.V_PS_SETPOINT_3: (3, 1),
+    ConstFBP.V_PS_SETPOINT_4: (4, 1),
+    ConstFBP.V_PS_REFERENCE_1: (1, 2),
+    ConstFBP.V_PS_REFERENCE_2: (2, 2),
+    ConstFBP.V_PS_REFERENCE_3: (3, 2),
+    ConstFBP.V_PS_REFERENCE_4: (4, 2),
+    ConstFBP.V_PS_SOFT_INTERLOCKS_1: (1, 25),
+    ConstFBP.V_PS_SOFT_INTERLOCKS_2: (2, 25),
+    ConstFBP.V_PS_SOFT_INTERLOCKS_3: (3, 25),
+    ConstFBP.V_PS_SOFT_INTERLOCKS_4: (4, 25),
+    ConstFBP.V_PS_HARD_INTERLOCKS_1: (1, 26),
+    ConstFBP.V_PS_HARD_INTERLOCKS_2: (2, 26),
+    ConstFBP.V_PS_HARD_INTERLOCKS_3: (3, 26),
+    ConstFBP.V_PS_HARD_INTERLOCKS_4: (4, 26),
+    ConstFBP.V_I_LOAD_1: (1, 27),
+    ConstFBP.V_I_LOAD_2: (2, 27),
+    ConstFBP.V_I_LOAD_3: (3, 27),
+    ConstFBP.V_I_LOAD_4: (4, 27)}
 
 
 class Parameters:
@@ -455,7 +482,86 @@ class Parameters:
         return list(Parameters._parameters.keys())
 
 
-class FBPEntities(_Entities):
+_BSMP_Functions = (
+    {'eid': ConstBSMP.F_TURN_ON,
+     'i_type': (), 'o_type': (_Types.T_UINT8, )},
+    {'eid': ConstBSMP.F_TURN_OFF,
+     'i_type': (), 'o_type': (_Types.T_UINT8, )},
+    {'eid': ConstBSMP.F_OPEN_LOOP,
+     'i_type': (), 'o_type': (_Types.T_UINT8, )},
+    {'eid': ConstBSMP.F_CLOSE_LOOP,
+     'i_type': (), 'o_type': (_Types.T_UINT8, )},
+    {'eid': ConstBSMP.F_SELECT_OP_MODE,
+     'i_type': (_Types.T_ENUM, ), 'o_type': (_Types.T_UINT8,)},
+    {'eid': ConstBSMP.F_SELECT_PS_MODEL,
+     'i_type': (_Types.T_UINT16, ), 'o_type': (_Types.T_UINT8,)},
+    {'eid': ConstBSMP.F_RESET_INTERLOCKS,
+     'i_type': (), 'o_type': (_Types.T_UINT8, )},
+    {'eid': ConstBSMP.F_REMOTE_INTERFACE,
+     'i_type': (), 'o_type': (_Types.T_UINT8, )},
+    {'eid': ConstBSMP.F_SET_SERIAL_ADDRESS,
+     'i_type': (_Types.T_UINT16, ), 'o_type': (_Types.T_UINT8,)},
+    {'eid': ConstBSMP.F_SET_SERIAL_TERMINATION,
+     'i_type': (_Types.T_UINT16, ), 'o_type': (_Types.T_UINT8,)},
+    {'eid': ConstBSMP.F_UNLOCK_UDC,
+     'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
+    {'eid': ConstBSMP.F_LOCK_UDC,
+     'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
+    {'eid': ConstBSMP.F_CFG_BUF_SAMPLES,
+     'i_type': (_Types.T_UINT32,), 'o_type': (_Types.T_UINT8,)},
+    {'eid': ConstBSMP.F_ENABLE_BUF_SAMPLES,
+     'i_type': (), 'o_type': (_Types.T_UINT8, )},
+    {'eid': ConstBSMP.F_DISABLE_BUF_SAMPLES,
+     'i_type': (), 'o_type': (_Types.T_UINT8, )},
+    {'eid': ConstBSMP.F_SYNC_PULSE,
+     'i_type': (), 'o_type': ()},
+    {'eid': ConstBSMP.F_SET_SLOWREF,
+     'i_type': (_Types.T_FLOAT,), 'o_type': (_Types.T_UINT8,)},
+    {'eid': ConstBSMP.F_SET_SLOWREF_FBP,
+     'i_type': (_Types.T_FLOAT, _Types.T_FLOAT, _Types.T_FLOAT,
+                _Types.T_FLOAT),
+     'o_type': (_Types.T_UINT8,)},
+    {'eid': ConstBSMP.F_RESET_COUNTERS,
+     'i_type': (), 'o_type': (_Types.T_UINT8,)},
+    {'eid': ConstBSMP.F_SCALE_WFMREF,
+     'i_type': (_Types.T_FLOAT, _Types.T_FLOAT),
+     'o_type': (_Types.T_UINT8,)},
+    {'eid': ConstBSMP.F_SELECT_WFMREF,
+     'i_type': (_Types.T_UINT16,), 'o_type': (_Types.T_UINT8,)},
+    {'eid': ConstBSMP.F_SAVE_WFMREF,
+     'i_type': (), 'o_type': (_Types.T_UINT8, )},
+    {'eid': ConstBSMP.F_RESET_WFMREF,
+     'i_type': (), 'o_type': (_Types.T_UINT8, )},
+    {'eid': ConstBSMP.F_CFG_SIGGEN,
+     'i_type': (_Types.T_ENUM, _Types.T_UINT16,
+                _Types.T_FLOAT, _Types.T_FLOAT, _Types.T_FLOAT,
+                _Types.T_FLOAT, _Types.T_FLOAT,
+                _Types.T_FLOAT, _Types.T_FLOAT),
+     'o_type': (_Types.T_UINT8,)},
+    {'eid': ConstBSMP.F_SET_SIGGEN,
+     'i_type': (_Types.T_FLOAT, _Types.T_FLOAT, _Types.T_FLOAT),
+     'o_type': (_Types.T_UINT8,)},
+    {'eid': ConstBSMP.F_ENABLE_SIGGEN,
+     'i_type': (), 'o_type': (_Types.T_UINT8, )},
+    {'eid': ConstBSMP.F_DISABLE_SIGGEN,
+     'i_type': (), 'o_type': (_Types.T_UINT8, )},
+    {'eid': ConstBSMP.F_SET_SLOWREF_READBACK,
+     'i_type': (_Types.T_FLOAT,), 'o_type': (_Types.T_FLOAT,)},
+    {'eid': ConstBSMP.F_SET_SLOWREF_FBP_READBACK,
+     'i_type': (_Types.T_FLOAT, _Types.T_FLOAT,
+                _Types.T_FLOAT, _Types.T_FLOAT,),
+     'o_type': (_Types.T_FLOAT, _Types.T_FLOAT,
+                _Types.T_FLOAT, _Types.T_FLOAT,)},
+    {'eid': ConstBSMP.F_SET_PARAM,
+     'i_type': (_Types.T_PARAM, _Types.T_UINT16, _Types.T_FLOAT,),
+     'o_type': (_Types.T_UINT8,)},
+    {'eid': ConstBSMP.F_GET_PARAM,
+     'i_type': (_Types.T_PARAM, _Types.T_UINT16,),
+     'o_type': (_Types.T_FLOAT,)},
+)
+
+
+class EntitiesFBP(_Entities):
     """FBP-type power supply entities."""
 
     Variables = (
@@ -545,7 +651,55 @@ class FBPEntities(_Entities):
         super().__init__(self.Variables, self.Curves, self.Functions)
 
 
-class FACEntities(_Entities):
+class EntitiesFBP_DCLINK(_Entities):
+    """FBP DCLink-type power supplies entities."""
+
+    Variables = (
+        {'eid': 0, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
+        {'eid': 1, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 2, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 3, 'waccess': False, 'count': 128, 'var_type': _Types.T_CHAR},
+        {'eid': 4, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 5, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 6, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
+        {'eid': 7, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
+        {'eid': 8, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
+        {'eid': 9, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 10, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 11, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 12, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 13, 'waccess': False, 'count': 4, 'var_type': _Types.T_FLOAT},
+        # --- undefined variables
+        {'eid': 14, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 15, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 16, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 17, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 18, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 19, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 20, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 21, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 22, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 23, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 24, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        # --- FBP DCLINK-specific variables
+        {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 27, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 28, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 29, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 30, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+    )
+
+    Curves = tuple()
+
+    Functions = _BSMP_Functions
+
+    def __init__(self):
+        """Call super."""
+        super().__init__(self.Variables, self.Curves, self.Functions)
+
+
+class EntitiesFAC(_Entities):
     """FAC-type power supply entities."""
 
     Variables = (
@@ -576,7 +730,7 @@ class FACEntities(_Entities):
         {'eid': 22, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         {'eid': 23, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         {'eid': 24, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        # --- FBP-specific variables
+        # --- FAC-specific variables
         {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 27, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
@@ -597,17 +751,76 @@ class FACEntities(_Entities):
         super().__init__(self.Variables, self.Curves, self.Functions)
 
 
+class EntitiesFAC_ACDC(_Entities):
+    """FAC_ACDC-type power supply entities."""
+
+    Variables = (
+        # --- common variables
+        {'eid': 0, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
+        {'eid': 1, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 2, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 3, 'waccess': False, 'count': 128, 'var_type': _Types.T_CHAR},
+        {'eid': 4, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 5, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 6, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
+        {'eid': 7, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
+        {'eid': 8, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
+        {'eid': 9, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 10, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 11, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 12, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 13, 'waccess': False, 'count': 4, 'var_type': _Types.T_FLOAT},
+        # --- undefined variables
+        {'eid': 14, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 15, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 16, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 17, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 18, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 19, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 20, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 21, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 22, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 23, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 24, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        # --- FAC_ACDC-specific variables
+        {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 27, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 28, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 29, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 30, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 31, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 32, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+    )
+
+    Curves = tuple()
+
+    Functions = _BSMP_Functions
+
+    def __init__(self):
+        """Call super."""
+        super().__init__(self.Variables, self.Curves, self.Functions)
+
+
 class FBP(_BSMP):
-    """BSMP with FBPEntities."""
+    """BSMP with EntitiesFBP."""
 
     def __init__(self, slave_address):
         """Init BSMP."""
-        super().__init__(_PRU(), slave_address, FBPEntities())
+        super().__init__(_PRU(), slave_address, EntitiesFBP())
 
 
 class FAC(_BSMP):
-    """BSMP with FACEntities."""
+    """BSMP with EntitiesFAC."""
 
     def __init__(self, slave_address):
         """Init BSMP."""
-        super().__init__(_PRU(), slave_address, FACEntities())
+        super().__init__(_PRU(), slave_address, EntitiesFAC())
+
+
+class FAC_ACDC(_BSMP):
+    """BSMP with EntitiesFAC_ACDC."""
+
+    def __init__(self, slave_address):
+        """Init BSMP."""
+        super().__init__(_PRU(), slave_address, EntitiesFAC_ACDC())

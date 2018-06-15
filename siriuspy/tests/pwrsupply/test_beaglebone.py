@@ -11,6 +11,35 @@ import siriuspy.pwrsupply.beaglebone as bbb
 from siriuspy.csdevice.pwrsupply import get_ps_propty_database
 from tests.pwrsupply.variables import dict_values
 from tests.pwrsupply.db import bo_db
+from siriuspy.pwrsupply.prucontroller import _PRUCParms
+from siriuspy.pwrsupply.prucontroller import PRUCParms_FBP
+
+
+def wait(condition, timelimit=0.5):
+    """Wait condition or timelimit."""
+    d = 0
+    t = time.time()
+
+    while (not condition() and d < timelimit):
+        d = time.time() - t
+
+
+def wait_die(watcher, timelimit=0.5):
+    """Wait thread die."""
+    d = 0
+    t = time.time()
+
+    while (watcher.is_alive() and d < timelimit):
+        d = time.time() - t
+
+
+def wait_state(watcher, state, timelimit=0.5):
+    """Wait thread reach state."""
+    d = 0
+    t = time.time()
+
+    while (not (watcher.state == state) and d < timelimit):
+        d = time.time() - t
 
 
 def read_variables(device_id, field):
@@ -42,6 +71,8 @@ class TestCycleWatcher(unittest.TestCase):
         """Test common setup."""
         self.setpoints = mock.Mock()
         self.controller = mock.Mock()
+        self.controller.pru_controller.params.FREQ_SCAN = \
+            PRUCParms_FBP.FREQ_SCAN
         self.dev_name = 'FakeName'
         self.op_mode = _PSConst.OpMode.Cycle
         self.watcher = bbb._Watcher(
@@ -79,10 +110,8 @@ class TestCycleWatcher(unittest.TestCase):
         """Test cycle wait opmode state."""
         self.assertEqual(self.watcher.state, bbb._Watcher.WAIT_OPMODE)
         self.values['FakeName:OpMode-Sts'] = _PSConst.OpMode.Cycle
-        time.sleep(1e-1)
-        self.assertEqual(self.watcher.state, bbb._Watcher.WAIT_OPMODE)
         self.controller.pru_controller.pru_sync_status = 1
-        time.sleep(1e-1)
+        wait_state(self.watcher, bbb._Watcher.WAIT_TRIGGER)
         self.assertEqual(self.watcher.state, bbb._Watcher.WAIT_TRIGGER)
         self.assertTrue(self.watcher.is_alive())
 
@@ -91,7 +120,7 @@ class TestCycleWatcher(unittest.TestCase):
         self.values['FakeName:OpMode-Sts'] = 2
         self.values['FakeName:CycleEnbl-Mon'] = 1
         self.controller.pru_controller.pru_sync_pulse_count = 1
-        time.sleep(1e-1)
+        wait_state(self.watcher, bbb._Watcher.WAIT_CYCLE)
         self.assertEqual(self.watcher.state, bbb._Watcher.WAIT_CYCLE)
         self.assertTrue(self.watcher.is_alive())
 
@@ -100,10 +129,10 @@ class TestCycleWatcher(unittest.TestCase):
         # Wait trigger mode
         self.values['FakeName:OpMode-Sts'] = 2
         self.controller.pru_controller.pru_sync_status = 1
-        time.sleep(1e-1)
+        wait_state(self.watcher, bbb._Watcher.WAIT_TRIGGER)
         # Change op mode
         self.values['FakeName:OpMode-Sts'] = 0
-        time.sleep(1e-1)
+        wait_die(self.watcher)
         self.assertEqual(self.watcher.state, bbb._Watcher.WAIT_TRIGGER)
         self.assertFalse(self.watcher.is_alive())
 
@@ -112,10 +141,10 @@ class TestCycleWatcher(unittest.TestCase):
         # Wait trigger mode
         self.values['FakeName:OpMode-Sts'] = 2
         self.controller.pru_controller.pru_sync_status = 1
-        time.sleep(1e-1)
+        wait_state(self.watcher, bbb._Watcher.WAIT_TRIGGER)
         # Stop sync
         self.controller.pru_controller.pru_sync_status = 0
-        time.sleep(1e-1)
+        wait_die(self.watcher)
         self.assertEqual(self.watcher.state, bbb._Watcher.WAIT_TRIGGER)
         self.assertFalse(self.watcher.is_alive())
 
@@ -124,12 +153,12 @@ class TestCycleWatcher(unittest.TestCase):
         # Wait trigger mode
         self.values['FakeName:OpMode-Sts'] = 2
         self.controller.pru_controller.pru_sync_status = 1
-        time.sleep(1e-1)
+        # wait_state(self.watcher, bbb._Watcher.WAIT_TRIGGER)
         # Stop sync and start cycle
         self.controller.pru_controller.pru_sync_status = 0
         self.controller.pru_controller.pru_sync_pulse_count = 1
         self.values['FakeName:CycleEnbl-Mon'] = 1
-        time.sleep(1e-1)
+        wait_die(self.watcher)
         self.assertEqual(self.watcher.state, bbb._Watcher.WAIT_CYCLE)
         self.assertTrue(self.watcher.is_alive())
 
@@ -138,11 +167,10 @@ class TestCycleWatcher(unittest.TestCase):
         self.values['FakeName:OpMode-Sts'] = 2
         self.values['FakeName:CycleEnbl-Mon'] = 1
         self.controller.pru_controller.pru_sync_pulse_count = 1
-        time.sleep(1e-1)
+        wait_state(self.watcher, bbb._Watcher.WAIT_CYCLE)
         # Change op mode
         self.values['FakeName:OpMode-Sts'] = 0
-        time.sleep(1e-1)
-        self.assertEqual(self.watcher.state, bbb._Watcher.WAIT_CYCLE)
+        wait_die(self.watcher)
         self.assertFalse(self.watcher.is_alive())
 
     def test_cycle_wait_cycle_stopped(self, mock_time):
@@ -151,10 +179,10 @@ class TestCycleWatcher(unittest.TestCase):
         self.values['FakeName:OpMode-Sts'] = 2
         self.values['FakeName:CycleEnbl-Mon'] = 1
         self.controller.pru_controller.pru_sync_pulse_count = 1
-        time.sleep(1e-1)
+        wait_state(self.watcher, bbb._Watcher.WAIT_CYCLE)
         # End Cycle
         self.values['FakeName:CycleEnbl-Mon'] = 0
-        time.sleep(1e-1)
+        wait_die(self.watcher)
         self.assertEqual(self.watcher.state, bbb._Watcher.WAIT_CYCLE)
         self.setpoints.set.assert_called()
         self.controller.write.assert_called()
@@ -169,6 +197,8 @@ class TestRmpWatcher(unittest.TestCase):
         """Test common setup."""
         self.setpoints = mock.Mock()
         self.controller = mock.Mock()
+        self.controller.pru_controller.params.FREQ_SCAN = \
+            PRUCParms_FBP.FREQ_SCAN
         self.dev_name = 'FakeName'
         self.op_mode = _PSConst.OpMode.RmpWfm
         self.watcher = bbb._Watcher(
@@ -193,7 +223,7 @@ class TestRmpWatcher(unittest.TestCase):
     def test_ramp_stop(self, mock_time):
         """Test cycle mode."""
         self.assertFalse(self.watcher.exit)
-        time.sleep(1e-1)
+        time.sleep(1e-1)  # Wait at least one loop
         self.watcher.stop()
         self.assertTrue(self.watcher.exit)
         mock_time.sleep.assert_called()
@@ -202,10 +232,10 @@ class TestRmpWatcher(unittest.TestCase):
         """Test ramp opmode."""
         self.assertEqual(self.watcher.state, bbb._Watcher.WAIT_OPMODE)
         self.values['FakeName:OpMode-Sts'] = _PSConst.OpMode.RmpWfm
-        time.sleep(1e-1)
-        self.assertEqual(self.watcher.state, bbb._Watcher.WAIT_OPMODE)
+        # time.sleep(1e-1)
+        # self.assertEqual(self.watcher.state, bbb._Watcher.WAIT_OPMODE)
         self.controller.pru_controller.pru_sync_status = 1
-        time.sleep(1e-1)
+        wait_state(self.watcher, bbb._Watcher.WAIT_RMP)
         self.assertEqual(self.watcher.state, bbb._Watcher.WAIT_RMP)
         self.assertTrue(self.watcher.is_alive())
 
@@ -213,10 +243,10 @@ class TestRmpWatcher(unittest.TestCase):
         """Test wait_rampmode end when change op mode."""
         self.values['FakeName:OpMode-Sts'] = _PSConst.OpMode.RmpWfm
         self.controller.pru_controller.pru_sync_status = 1
-        time.sleep(1e-1)
+        wait_state(self.watcher, bbb._Watcher.WAIT_RMP)
         # Change op mode
         self.values['FakeName:OpMode-Sts'] = _PSConst.OpMode.SlowRef
-        time.sleep(1e-1)
+        wait(lambda: not self.watcher.is_alive())
         # Assert thread died
         self.assertFalse(self.watcher.is_alive())
 
@@ -224,10 +254,10 @@ class TestRmpWatcher(unittest.TestCase):
         """Test wait_rampmode end when change op mode."""
         self.values['FakeName:OpMode-Sts'] = _PSConst.OpMode.RmpWfm
         self.controller.pru_controller.pru_sync_status = 1
-        time.sleep(1e-1)
+        wait_state(self.watcher, bbb._Watcher.WAIT_RMP)
         # Change op mode
         self.controller.pru_controller.pru_sync_status = 0
-        time.sleep(1e-1)
+        wait_die(self.watcher)
         # Assert thread died
         self.assertFalse(self.watcher.is_alive())
 
@@ -236,11 +266,11 @@ class TestRmpWatcher(unittest.TestCase):
         self.values['FakeName:WfmData-RB'] = [i + 1 for i in range(4000)]
         self.values['FakeName:OpMode-Sts'] = _PSConst.OpMode.RmpWfm
         self.controller.pru_controller.pru_sync_status = 1
-        time.sleep(1e-1)
+        wait_state(self.watcher, bbb._Watcher.WAIT_RMP)
         # Sync was pulsed and Change op mode
         self.controller.pru_controller.pru_sync_pulse_count = 12000
         self.values['FakeName:OpMode-Sts'] = _PSConst.OpMode.SlowRef
-        time.sleep(1e-1)
+        wait_die(self.watcher)
         # Assert set current is called and thread leaves
         self.setpoints.set.assert_called_with('Current-SP', 4000)
         self.controller.write.assert_called_with(
@@ -256,6 +286,8 @@ class TestMigWatcher(unittest.TestCase):
         """Test common setup."""
         self.setpoints = mock.Mock()
         self.controller = mock.Mock()
+        self.controller.pru_controller.params.FREQ_SCAN = \
+            PRUCParms_FBP.FREQ_SCAN
         self.dev_name = 'FakeName'
         self.op_mode = _PSConst.OpMode.MigWfm
         self.watcher = bbb._Watcher(
@@ -289,10 +321,8 @@ class TestMigWatcher(unittest.TestCase):
         """Test mig starts loop in wait mode."""
         self.assertEqual(self.watcher.state, bbb._Watcher.WAIT_OPMODE)
         self.values['FakeName:OpMode-Sts'] = _PSConst.OpMode.MigWfm
-        time.sleep(1e-1)
-        self.assertEqual(self.watcher.state, bbb._Watcher.WAIT_OPMODE)
         self.controller.pru_controller.pru_sync_status = 1
-        time.sleep(1e-1)
+        wait_state(self.watcher, bbb._Watcher.WAIT_MIG)
         self.assertEqual(self.watcher.state, bbb._Watcher.WAIT_MIG)
         self.assertTrue(self.watcher.is_alive())
 
@@ -301,10 +331,10 @@ class TestMigWatcher(unittest.TestCase):
         # WAIT_MIG
         self.values['FakeName:OpMode-Sts'] = _PSConst.OpMode.MigWfm
         self.controller.pru_controller.pru_sync_status = 1
-        time.sleep(1e-1)
+        wait_state(self.watcher, bbb._Watcher.WAIT_MIG)
         # Change op mode
         self.values['FakeName:OpMode-Sts'] = _PSConst.OpMode.SlowRef
-        time.sleep(1e-1)
+        wait_die(self.watcher)
         # Assert watcher stopped
         self.assertFalse(self.watcher.is_alive())
 
@@ -313,11 +343,11 @@ class TestMigWatcher(unittest.TestCase):
         # WAIT_MIG
         self.values['FakeName:OpMode-Sts'] = _PSConst.OpMode.MigWfm
         self.controller.pru_controller.pru_sync_status = 1
-        time.sleep(1e-1)
+        wait_state(self.watcher, bbb._Watcher.WAIT_MIG)
         # Change op mode
         self.controller.pru_controller.pru_sync_pulse_count = 0
         self.controller.pru_controller.pru_sync_status = 0
-        time.sleep(1e-1)
+        wait_die(self.watcher)
         # Assert watcher stopped
         self.assertFalse(self.watcher.is_alive())
 
@@ -328,11 +358,11 @@ class TestMigWatcher(unittest.TestCase):
         # WAIT_MIG
         self.values['FakeName:OpMode-Sts'] = _PSConst.OpMode.MigWfm
         self.controller.pru_controller.pru_sync_status = 1
-        time.sleep(1e-1)
+        wait_state(self.watcher, bbb._Watcher.WAIT_MIG)
         # Change op mode
         self.controller.pru_controller.pru_sync_pulse_count = 4000
         self.controller.pru_controller.pru_sync_status = 0
-        time.sleep(1e-1)
+        wait_die(self.watcher)
         # Assert watcher stopped and set curretn and opmode calls were made
         expected_setpoint_calls = [
             mock.call('Current-SP', 4000),
@@ -576,6 +606,7 @@ class TestBeagleBone(unittest.TestCase):
         pru_patch = mock.patch('siriuspy.pwrsupply.beaglebone._PRUController')
         self.addCleanup(pru_patch.stop)
         self.pru_mock = pru_patch.start()
+        # self.pru_mock._params.
         # Mock E2SController
         e2s_patch = mock.patch('siriuspy.pwrsupply.beaglebone._E2SController')
         self.addCleanup(e2s_patch.stop)
@@ -688,7 +719,7 @@ class TestBeagleBone(unittest.TestCase):
         self._assert_thread(watcher, dev_name, 2)
         # Start pru cycle mode
         self.pru_mock.pru_sync_start.assert_called_with(
-            self.pru_mock.PRU.SYNC_MODE.BRDCST)
+            self.pru_mock.params.PRU.SYNC_MODE.BRDCST)
 
     @mock.patch('siriuspy.pwrsupply.beaglebone._Watcher')
     def test_write_opmode_rmpwfm(self, watcher):
@@ -707,7 +738,7 @@ class TestBeagleBone(unittest.TestCase):
         self._assert_thread(watcher, dev_name, 3)
         # Start pru cycle mode
         self.pru_mock.pru_sync_start.assert_called_with(
-            self.pru_mock.PRU.SYNC_MODE.RMPEND)
+            self.pru_mock.params.PRU.SYNC_MODE.RMPEND)
 
     @mock.patch('siriuspy.pwrsupply.beaglebone._Watcher')
     def test_write_opmode_migwfm(self, watcher):
@@ -726,7 +757,7 @@ class TestBeagleBone(unittest.TestCase):
         self._assert_thread(watcher, dev_name, 4)
         # Start pru cycle mode
         self.pru_mock.pru_sync_start.assert_called_with(
-            self.pru_mock.PRU.SYNC_MODE.MIGEND)
+            self.pru_mock.params.PRU.SYNC_MODE.MIGEND)
 
 
 if __name__ == "__main__":

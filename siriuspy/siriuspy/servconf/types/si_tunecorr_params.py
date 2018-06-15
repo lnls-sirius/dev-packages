@@ -1,6 +1,10 @@
-"""Configuration Type Definition."""
+"""SI tune correction configuration.
 
-import copy as _copy
+Values in _template_dict are arbitrary. They are used just to compare with
+corresponding values when a new configuration is tried to be inserted in the
+servconf database.
+"""
+from copy import deepcopy as _dcopy
 
 
 def get_dict():
@@ -8,9 +12,10 @@ def get_dict():
     module_name = __name__.split('.')[-1]
     _dict = {
         'config_type_name': module_name,
-        'value': _copy.deepcopy(_value)
+        'value': _dcopy(_template_dict)
     }
     return _dict
+
 
 #  Tune Correction Parameters for Storage Ring
 #
@@ -29,7 +34,8 @@ def get_dict():
 # Nominals KLs
 # [quadrupole_order   QFA  QFB  QFP  QDA  QDB1  QDB2  QDP1  QDP2]
 
-
-_value = {'matrix':        [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]],
-          'nominal KLs':   [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+_template_dict = {
+    'matrix': [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+               [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]],
+    'nominal KLs': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+}
