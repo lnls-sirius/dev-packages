@@ -829,6 +829,7 @@ class FBP(_PSBSMP):
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
+        self.ConstBSMP = ConstFBP
         _PSBSMP.__init__(self, slave_address, EntitiesFBP(), pru=pru)
 
 
@@ -837,6 +838,7 @@ class FBP_DCLink(_PSBSMP):
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
+        self.ConstBSMP = ConstFBP_DCLink
         _PSBSMP.__init__(self, slave_address, EntitiesFBP_DCLink(), pru=pru)
 
 
@@ -845,6 +847,7 @@ class FAC_DCDC(_PSBSMP):
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
+        self.ConstBSMP = ConstFAC_DCDC
         _PSBSMP.__init__(self, slave_address, EntitiesFAC_DCDC(), pru=pru)
 
 
@@ -853,4 +856,5 @@ class FAC_ACDC(_PSBSMP):
 
     def __init__(self, slave_address, pru=None):
         """Init BSMP."""
+        self.ConstBSMP = ConstFAC_ACDC
         _PSBSMP.__init__(self, slave_address, EntitiesFAC_ACDC(), pru=pru)
