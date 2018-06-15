@@ -810,33 +810,47 @@ class EntitiesFAC_ACDC(_Entities):
         super().__init__(self.Variables, self.Curves, self.Functions)
 
 
-class FBP(_BSMP):
+class _PSBSMP(_BSMP):
+    """Power supply BSMP."""
+
+    def __init__(self, slave_address, entities, pru=None):
+        """Init BSMP."""
+        if pru is None:
+            self.pru = _PRU()
+        else:
+            self.pru = pru
+        # turn sync mode off
+        # self.pru.sync_stop()
+        super().__init__(self.pru, slave_address, entities)
+
+
+class FBP(_PSBSMP):
     """BSMP with EntitiesFBP."""
 
-    def __init__(self, slave_address):
+    def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        super().__init__(_PRU(), slave_address, EntitiesFBP())
+        _PSBSMP.__init__(self, slave_address, EntitiesFBP(), pru=pru)
 
 
-class FBP_DCLink(_BSMP):
+class FBP_DCLink(_PSBSMP):
     """BSMP with EntitiesFBP_DCLink."""
 
-    def __init__(self, slave_address):
+    def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        super().__init__(_PRU(), slave_address, EntitiesFBP_DCLink())
+        _PSBSMP.__init__(self, slave_address, EntitiesFBP_DCLink(), pru=pru)
 
 
-class FAC_DCDC(_BSMP):
+class FAC_DCDC(_PSBSMP):
     """BSMP with EntitiesFAC_DCDC."""
 
-    def __init__(self, slave_address):
+    def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        super().__init__(_PRU(), slave_address, EntitiesFAC_DCDC())
+        _PSBSMP.__init__(self, slave_address, EntitiesFAC_DCDC(), pru=pru)
 
 
-class FAC_ACDC(_BSMP):
+class FAC_ACDC(_PSBSMP):
     """BSMP with EntitiesFAC_ACDC."""
 
-    def __init__(self, slave_address):
+    def __init__(self, slave_address, pru=None):
         """Init BSMP."""
-        super().__init__(_PRU(), slave_address, EntitiesFAC_ACDC())
+        _PSBSMP.__init__(self, slave_address, EntitiesFAC_ACDC(), pru=pru)

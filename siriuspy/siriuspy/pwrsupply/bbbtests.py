@@ -111,7 +111,7 @@ def bbb3_pruc_create(simulate=False):
     return pruc
 
 
-def bbb3_mix_pruc_create(simulate=False):
+def bbbs_mix_pruc_create(simulate=False):
     """Method."""
     pru, prucqueue = bbb_pru_and_prucqueue(simulate=simulate)
 
@@ -130,7 +130,7 @@ def bbb3_mix_pruc_create(simulate=False):
     return pruc1, pruc2
 
 
-def bbb3_mix_print_state(pruc1, pruc2):
+def bbbs_mix_print_state(pruc1, pruc2):
     """Print."""
     # dclink
     for id in pruc1.device_ids:
