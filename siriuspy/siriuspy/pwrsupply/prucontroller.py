@@ -1197,18 +1197,20 @@ class PRUController:
             raise NotImplementedError('Sync mode not implemented!')
 
     def _select_next_device_id(self):
-        # TODO: with the mirror var solution this selection is not necessary!
-        #       attribute self._last_device_scanned can be deleted.
-        #
-        # # calc index of next single device to be scanned
-        # nr_devs = len(self._device_ids)
-        # dev_idx = (self._last_device_scanned + 1) % nr_devs
-        # dev_id = self._device_ids[dev_idx]
-        # self._last_device_scanned = dev_idx
-
-        # now always return first device to read the selected variables of
-        # all power supplies through mirror variables.
-        return (self._device_ids[0], )
+        if self._udcmodel == 'FAC_2P4S_ACDC':
+            # this is a special case since there are too many BSMP devices to
+            # be read at each ramp cycle!
+            nr_devs = len(self._device_ids)
+            dev_idx = (self._last_device_scanned + 1) % nr_devs
+            dev_id = self._device_ids[dev_idx]
+            self._last_device_scanned = dev_id
+        else:
+            # with the mirror var solution this selection is not necessary!
+            # attribute self._last_device_scanned can be deleted.
+            # now always return first device to read the selected variables of
+            # all power supplies through mirror variables.
+            dev_id = self._device_ids[0]
+        return (dev_id, )
 
     def _get_scan_interval(self):
         if self.pru_sync_status == self._params.PRU.SYNC_STATE.OFF or \
@@ -1316,21 +1318,8 @@ class PRUController:
                 values = data[id]
                 for i in range(len(values)):
                     var_id = var_ids[i]
-                    if group_id == _PRUCParms.MIRROR:
-                        # --- update from read of group of mirror variables
-                        #
-                        # this code assumes that first entry in each mirror
-                        # variable block corresponds to the device with
-                        # lowest dev_id, the second entry to the second lowest
-                        # dev_id, and so on.
-                        #
-                        mir_dev_idx, mir_var_id = _mirror_map_fbp[var_id]
-                        if mir_dev_idx <= nr_devs:
-                            mir_dev_id = self.device_ids[mir_dev_idx-1]
-                            copy_var_vals[mir_dev_id][mir_var_id] = values[i]
-                    else:
-                        # --- update from read of other variables groups
-                        copy_var_vals[id][var_id] = values[i]
+                    self._update_copy_var_vals(id, copy_var_vals, nr_devs,
+                                               values[i], group_id, var_id)
 
                 # add random fluctuation to V_I_LOAD variables (tests)
                 # in order to avoid measuring wrong update rates due to
@@ -1356,7 +1345,6 @@ class PRUController:
         # print('time3: ', _time.time() - t0)
 
         # update psc_state
-        # NOTE: V_PS_STATUS shpuld be defined for all BSMP devices.
         for id in self.device_ids:
             self._psc_state[id].ps_status = \
                 copy_var_vals[id][self._params.ConstBSMP.V_PS_STATUS]
@@ -1367,6 +1355,25 @@ class PRUController:
         # print('time4: ', _time.time() - t0)
 
         # self._lock.release()
+
+    def _update_copy_var_vals(self, id, copy_var_vals, nr_devs,
+                              value, group_id, var_id):
+        if self._udcmodel == 'FBP' and group_id == _PRUCParms.MIRROR:
+            # TODO: generalize this !
+            # --- update from read of group of mirror variables
+            #
+            # this code assumes that first entry in each mirror
+            # variable block corresponds to the device with
+            # lowest dev_id, the second entry to the second lowest
+            # dev_id, and so on.
+            #
+            mir_dev_idx, mir_var_id = _mirror_map_fbp[var_id]
+            if mir_dev_idx <= nr_devs:
+                mir_dev_id = self.device_ids[mir_dev_idx-1]
+                copy_var_vals[mir_dev_id][mir_var_id] = value
+        else:
+            # --- update from read of other variables groups
+            copy_var_vals[id][var_id] = value
 
     def _bsmp_exec_function(self, device_ids, function_id, args=None):
         # --- send func exec request to serial line
