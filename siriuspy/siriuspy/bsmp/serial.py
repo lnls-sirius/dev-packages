@@ -94,6 +94,7 @@ class Package:
         if len(stream) < 5:
             raise _SerialErrPckgLen("BSMP Package too short.")
         if not Package.verify_checksum(stream):
+            # print('resp: ', [hex(ord(c)) for c in stream])
             raise _SerialErrCheckSum(
                 "Inconsistent message. Checksum does not check.")
         self._stream = stream

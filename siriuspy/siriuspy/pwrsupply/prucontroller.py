@@ -19,7 +19,7 @@ from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
 from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 
 from siriuspy.pwrsupply.pru import Const as _PRUConst
-from siriuspy.pwrsupply.bsmp import __version__ as _ps_bsmp_version
+from siriuspy.pwrsupply.bsmp import __version__ as _udc_firmware_version
 from siriuspy.pwrsupply.bsmp import MAP_MIRROR_2_ORIG_FBP as _mirror_map_fbp
 from siriuspy.pwrsupply.bsmp import Parameters as _Parameters
 
@@ -304,14 +304,14 @@ class PRUCParms_FBP(_PRUCParms):
         ConstBSMP.V_I_LOAD_4,)
 
 
-class PRUCParms_FBP_DCLINK(_PRUCParms):
-    """FBP_DCLINK-specific PRUC parameters."""
+class PRUCParms_FBP_DCLink(_PRUCParms):
+    """FBP_DCLink-specific PRUC parameters."""
 
     FREQ_RAMP = 2.0  # [Hz]
     FREQ_SCAN = 2.0  # [Hz]
 
     # UDC model
-    udcmodel = 'FBP_DCLINK'
+    udcmodel = 'FBP_DCLink'
     ConstBSMP = _udcmodels[udcmodel]['ConstBSMP']
     Entities = _udcmodels[udcmodel]['Entities']
 
@@ -337,7 +337,7 @@ class PRUCParms_FBP_DCLINK(_PRUCParms):
         # ConstBSMP.V_SIGGEN_AMPLITUDE,
         # ConstBSMP.V_SIGGEN_OFFSET,
         # ConstBSMP.V_SIGGEN_AUX_PARAM,
-        # --- FBP_DCLINK variables ---
+        # --- FBP_DCLink variables ---
         ConstBSMP.V_PS_SOFT_INTERLOCKS,
         ConstBSMP.V_PS_HARD_INTERLOCKS,
         ConstBSMP.V_DIGITAL_INPUTS,
@@ -361,7 +361,7 @@ class PRUCParms_FBP_DCLINK(_PRUCParms):
         # ConstBSMP.V_SIGGEN_AMPLITUDE,
         # ConstBSMP.V_SIGGEN_OFFSET,
         # ConstBSMP.V_SIGGEN_AUX_PARAM,
-        # --- FBP_DCLINK variables ---
+        # --- FBP_DCLink variables ---
         ConstBSMP.V_PS_SOFT_INTERLOCKS,
         ConstBSMP.V_PS_HARD_INTERLOCKS,
         ConstBSMP.V_DIGITAL_INPUTS,
@@ -383,7 +383,7 @@ class PRUCParms_FAC(_PRUCParms):
     FREQ_SCAN = 10.0  # [Hz]
 
     # UDC model
-    udcmodel = 'FAC'
+    udcmodel = 'FAC_DCDC'
     ConstBSMP = _udcmodels[udcmodel]['ConstBSMP']
     Entities = _udcmodels[udcmodel]['Entities']
 
@@ -556,9 +556,11 @@ class PRUController:
 
     _default_slowrefsync_sp = _DEFAULT_WFMDATA[0]
 
-    # TODO: check with ELP group how short these delays can be
-    _delay_turn_on_off = 0.3  # [s]
-    _delay_loop_open_close = 0.3  # [s]
+    # NOTE: these delays been moved to high level commands.py
+    # # TODO: check with ELP group how short these delays can be
+    # _delay_turn_on_off = 0.3  # [s]
+    # _delay_loop_open_close = 0.3  # [s]
+
     _delay_remove_groups = 100  # [us]
     _delay_create_group = 100  # [us]
     _delay_read_group_variables = 100  # [us]
@@ -1044,8 +1046,8 @@ class PRUController:
         # define constant namespaces
         if self._udcmodel == 'FBP':
             self._params = PRUCParms_FBP
-        elif self._udcmodel == 'FBP_DCLINK':
-            self._params = PRUCParms_FBP_DCLINK
+        elif self._udcmodel == 'FBP_DCLink':
+            self._params = PRUCParms_FBP_DCLink
         elif self._udcmodel == 'FAC':
             self._params = PRUCParms_FAC
         elif self._udcmodel == 'FAC_2P4S':
@@ -1148,10 +1150,11 @@ class PRUController:
             version = self._variables_values[id][
                 self._params.ConstBSMP.V_FIRMWARE_VERSION]
             version = parse_firmware_version(version)
-            if 'Simulation' not in version and version != _ps_bsmp_version:
+            if 'Simulation' not in version and \
+               version != _udc_firmware_version:
                 self._init_disconnect()
                 errmsg = ('Incompatible BSMP implementation version! '
-                          '{} <> {}'.format(version, _ps_bsmp_version))
+                          '{} <> {}'.format(version, _udc_firmware_version))
                 raise ValueError(errmsg)
 
     # --- private methods: scan and process ---
@@ -1160,7 +1163,7 @@ class PRUController:
         while self._running:
 
             # run scan method once
-            if self.scanning:
+            if self.scanning and self._scan_interval != 0:
                 self.bsmp_scan()
 
             # update scan interval
@@ -1210,9 +1213,15 @@ class PRUController:
     def _get_scan_interval(self):
         if self.pru_sync_status == self._params.PRU.SYNC_STATE.OFF or \
            self.pru_sync_mode == self._params.PRU.SYNC_MODE.BRDCST:
-            return 1.0/self._params.FREQ_SCAN  # [s]
+            if self._params.FREQ_SCAN == 0:
+                return 0
+            else:
+                return 1.0/self._params.FREQ_SCAN  # [s]
         else:
-            return 1.0/self._params.FREQ_RAMP  # [s]
+            if self._params.FREQ_RAMP == 0:
+                return 0
+            else:
+                return 1.0/self._params.FREQ_RAMP  # [s]
 
     def _serial_error(self, ids, e, operation):
 
@@ -1332,6 +1341,9 @@ class PRUController:
                 if self._udcmodel == 'FBP':
                     copy_var_vals[id][self._params.ConstBSMP.V_I_LOAD] += \
                         0.00001*_random.uniform(-1.0, +1.0)
+                elif self._udcmodel == 'FBP_DCLink':
+                    copy_var_vals[id][self._params.ConstBSMP.V_V_OUT] += \
+                        0.00001*_random.uniform(-1.0, +1.0)
                 elif self._udcmodel == 'FAC':
                     copy_var_vals[id][self._params.ConstBSMP.V_I_LOAD1] += \
                         0.00001*_random.uniform(-1.0, +1.0)
@@ -1396,16 +1408,18 @@ class PRUController:
             # ps controller in a wrong state.
             #
             # NOTE: These BSMP functions should be defined for all BSMP devs.
-            if function_id in (self._params.ConstBSMP.F_TURN_ON,
-                               self._params.ConstBSMP.F_TURN_OFF):
-                # print('waiting {} s for TURN_ON or TURN_OFF'.format(
-                #     self._delay_turn_on_off))
-                _time.sleep(self._delay_turn_on_off)
-            elif function_id in (self._params.ConstBSMP.F_OPEN_LOOP,
-                                 self._params.ConstBSMP.F_CLOSE_LOOP):
-                # print('waiting {} s for CLOSE_LOOP or OPEN_LOOP'.format(
-                #     self._delay_loop_open_close))
-                _time.sleep(self._delay_loop_open_close)
+            #
+            # NOTE: these delays been moved to high level commands.py
+            # if function_id in (self._params.ConstBSMP.F_TURN_ON,
+            #                    self._params.ConstBSMP.F_TURN_OFF):
+            #     # print('waiting {} s for TURN_ON or TURN_OFF'.format(
+            #     #     self._delay_turn_on_off))
+            #     _time.sleep(self._delay_turn_on_off)
+            # elif function_id in (self._params.ConstBSMP.F_OPEN_LOOP,
+            #                      self._params.ConstBSMP.F_CLOSE_LOOP):
+            #     # print('waiting {} s for CLOSE_LOOP or OPEN_LOOP'.format(
+            #     #     self._delay_loop_open_close))
+            #     _time.sleep(self._delay_loop_open_close)
             return data
         else:
             return None
@@ -1441,7 +1455,7 @@ class PRUController:
 
         # check if ps controller version is compatible with bsmp.py
         # TODO: turn version checking on when test bench frmware is updated.
-        # self._init_check_version()
+        self._init_check_version()
 
         # initialize parameters_values, a mirror state of BSMP devices
         # TODO: finish implementation of _bsmp_init_parameters_values!

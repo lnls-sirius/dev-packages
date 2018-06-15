@@ -23,11 +23,20 @@ _default_pu_current_unit = None
 
 # --- power supply enums ---
 
-ps_models = ('FBP', 'FAC', 'FAC_2S', 'FAC_2P4S', 'FAP', 'FAP_4P', 'FAP_2P2S',
-             'FBP_SOFB', 'Commercial', )
+ps_models = ('Empty',
+             'FBP', 'FBP_DCLink',
+             'FAC_ACDC', 'FAC_DCDC',
+             'FAC_2S_ACDC', 'FAC_2S_DCDC',
+             'FAC_2P4S_ACDC', 'FAC_2P4S_DCDC',
+             'FAP',
+             'FAP_4P_Master', 'FAP_4P_Slave',
+             'FAP_2P2S_MASTER', 'FAP_2P2S_SLAVE',
+             'FBP_SOFB',
+             'Commercial',
+             'FP')
 ps_dsblenbl = ('Dsbl', 'Enbl')
 ps_interface = ('Remote', 'Local', 'PCHost')
-ps_openloop = ('Open', 'Closed')
+ps_openloop = ('Close', 'Open')
 ps_pwrstate_sel = ('Off', 'On')
 ps_pwrstate_sts = ('Off', 'On', 'Initializing')
 ps_states = ('Off', 'Interlock', 'Initializing',
@@ -57,7 +66,7 @@ ps_hard_interlock_FBP = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-ps_soft_interlock_FBP_DCLINK = (
+ps_soft_interlock_FBP_DCLink = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
@@ -66,7 +75,7 @@ ps_soft_interlock_FBP_DCLINK = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-ps_hard_interlock_FBP_DCLINK = (
+ps_hard_interlock_FBP_DCLink = (
     'Falha na fonte 1', 'Falha na fonte 2',
     'Falha na fonte 3', 'Sobre-tensão da saída do bastidor DC-Link',
     'Sobre-tensão da fonte 1', 'Sobre-tensão na fonte 2',
@@ -78,7 +87,7 @@ ps_hard_interlock_FBP_DCLINK = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-ps_soft_interlock_FAC_DCDC = (
+ps_soft_interlock_FAC = (
     'Sobre-temperatura nos indutores',  'Sobre-temperatura nos indutores',
     'Falha no DCCT 1', 'Falha no DCCT 2',
     'Alta diferença entre DCCTs',
@@ -90,7 +99,7 @@ ps_soft_interlock_FAC_DCDC = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-ps_hard_interlock_FAC_DCDC = (
+ps_hard_interlock_FAC = (
     'Sobre-corrente na carga', 'Sobre-corrente na carga',
     'Sobre-tensão no DC-Link', 'Sub-tensão no DC-Link',
     'Falha nos drivers do módulo', 'Reserved', 'Reserved', 'Reserved',
@@ -170,6 +179,10 @@ def get_basic_propty_database():
                          'value': _et.idx.Off},
         'PwrState-Sts': {'type': 'enum', 'enums': ps_pwrstate_sts,
                          'value': _et.idx.Off},
+        'CtrlLoop-Sel': {'type': 'enum', 'enums': ps_openloop,
+                         'value': Const.OpenLoop.Open},
+        'CtrlLoop-Sts': {'type': 'enum', 'enums': ps_openloop,
+                         'value': Const.OpenLoop.Open},
         'OpMode-Sel': {'type': 'enum', 'enums': ps_opmode,
                        'value': _et.idx.SlowRef},
         'OpMode-Sts': {'type': 'enum', 'enums': ps_opmode,
@@ -233,9 +246,6 @@ def get_common_propty_database():
         'WfmData-RB': {'type': 'float', 'count': MAX_WFMSIZE,
                        'value': list(DEFAULT_WFMDATA),
                        'prec': default_ps_current_precision},
-        # Hw
-        'OpenLoop-Mon': {'type': 'enum', 'enums': ps_openloop,
-                         'value': Const.OpenLoop.Open},
     })
     return db
 
@@ -335,12 +345,12 @@ def get_ma_propty_database(maname):
     current_alarm = ('Current-SP', 'Current-RB',
                      'CurrentRef-Mon', 'Current-Mon', )
     current_pvs = current_alarm  # + ('WfmData-SP', 'WfmData-RB')
-    unit = _MASearch.get_splims_unit(ispulsed=False)
-    magfunc_dict = _MASearch.conv_maname_2_magfunc(maname)
     psnames = _MASearch.conv_psmaname_2_psnames(maname)
+    psmodel = _PSSearch.conv_psname_2_psmodel(psnames[0])
+    unit = _MASearch.get_splims_unit(psmodel=psmodel)
+    magfunc_dict = _MASearch.conv_maname_2_magfunc(maname)
     pstype = _PSSearch.conv_psname_2_pstype(psnames[0])
-    # TODO: generalize
-    propty_db = get_ps_propty_database('FBP', pstype)
+    propty_db = get_ps_propty_database(psmodel, pstype)
     db = {}
 
     for psname, magfunc in magfunc_dict.items():
@@ -406,9 +416,10 @@ def get_pm_propty_database(maname):
     else:
         propty_db = get_common_pu_propty_database()
 
-    propty_db = get_common_pu_propty_database()
+    psnames = _MASearch.conv_psmaname_2_psnames(maname)
+    psmodel = _PSSearch.conv_psname_2_psmodel(psnames[0])
     current_alarm = ('Voltage-SP', 'Voltage-RB', 'Voltage-Mon', )
-    unit = _MASearch.get_splims_unit(ispulsed=True)
+    unit = _MASearch.get_splims_unit(psmodel=psmodel)
     magfunc_dict = _MASearch.conv_maname_2_magfunc(maname)
     db = {}
     for psname, magfunc in magfunc_dict.items():
@@ -466,29 +477,29 @@ def _get_ps_FBP_propty_database():
     return propty_db
 
 
-def _get_ps_FBP_DCLINK_propty_database():
-    """Return database with FBP_DCLINK pwrsupply model PVs."""
+def _get_ps_FBP_DCLink_propty_database():
+    """Return database with FBP_DCLink pwrsupply model PVs."""
     propty_db = get_basic_propty_database()
     db_ps = {
+        'Voltage-SP': {'type': 'float', 'value': 0.0,
+                       'lolim': 0.0, 'hilim': 100.0, 'prec': 4},
+        'Voltage-RB': {'type': 'float', 'value': 0.0,
+                       'lolim': 0.0, 'hilim': 100.0, 'prec': 4},
+        'VoltageRef-Mon': {'type': 'float', 'value': 0.0,
+                           'lolim': 0.0, 'hilim': 100.0, 'prec': 4},
+        'Voltage-Mon': {'type': 'float', 'value': 0.0, 'prec': 4},
+        'Voltage1-Mon': {'type': 'float', 'value': 0.0, 'prec': 4},
+        'Voltage2-Mon': {'type': 'float', 'value': 0.0, 'prec': 4},
+        'Voltage3-Mon': {'type': 'float', 'value': 0.0, 'prec': 4},
+        'VoltageDig-Mon': {'type': 'int', 'value': 0,
+                           'lolim': 0, 'hilim': 255},
         'IntlkSoftLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_soft_interlock_FBP),
-                                 'value': ps_soft_interlock_FBP},
+                                 'count': len(ps_soft_interlock_FBP_DCLink),
+                                 'value': ps_soft_interlock_FBP_DCLink},
         'IntlkHardLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_hard_interlock_FBP),
-                                 'value': ps_hard_interlock_FBP},
+                                 'count': len(ps_hard_interlock_FBP_DCLink),
+                                 'value': ps_hard_interlock_FBP_DCLink},
         'ModulesStatus-Mon': {'type': 'int', 'value': 0},
-        'Voltage-Mon': {'type': 'float', 'value': 0.0,
-                        'prec': default_ps_current_precision},
-        'Voltage1-Mon': {'type': 'float', 'value': 0.0,
-                         'prec': default_ps_current_precision},
-        'Voltage2-Mon': {'type': 'float', 'value': 0.0,
-                         'prec': default_ps_current_precision},
-        'Voltage3-Mon': {'type': 'float', 'value': 0.0,
-                         'prec': default_ps_current_precision},
-        'DigPotTap-RB': {'type': 'float', 'value': 0.0, 'lolim': 0.0,
-                         'hilim': 100.0, 'prec': default_ps_current_precision},
-        'DigPotTap-SP': {'type': 'float', 'value': 0.0, 'lolim': 0.0,
-                         'hilim': 100.0, 'prec': default_ps_current_precision},
     }
     propty_db.update(db_ps)
     return propty_db
@@ -502,11 +513,11 @@ def _get_ps_FAC_propty_database():
         'Current2-Mon': {'type': 'float',  'value': 0.0,
                          'prec': default_ps_current_precision},
         'IntlkSoftLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_soft_interlock_FAC_DCDC),
-                                 'value': ps_soft_interlock_FAC_DCDC},
+                                 'count': len(ps_soft_interlock_FAC),
+                                 'value': ps_soft_interlock_FAC},
         'IntlkHardLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_hard_interlock_FAC_DCDC),
-                                 'value': ps_hard_interlock_FAC_DCDC},
+                                 'count': len(ps_hard_interlock_FAC),
+                                 'value': ps_hard_interlock_FAC},
     }
     propty_db.update(db_ps)
     return propty_db
@@ -612,8 +623,8 @@ def _set_limits(pstype, database):
 def _get_model_db(psmodel):
     if psmodel == 'FBP':
         database = _get_ps_FBP_propty_database()
-    elif psmodel in ('FBP_DCLINK'):
-        database = _get_ps_FBP_DCLINK_propty_database()
+    elif psmodel in ('FBP_DCLink'):
+        database = _get_ps_FBP_DCLink_propty_database()
     elif psmodel in ('FAC'):
         database = _get_ps_FAC_propty_database()
     elif psmodel in ('FAC_2S'):

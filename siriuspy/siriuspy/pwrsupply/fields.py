@@ -359,22 +359,6 @@ class CtrlLoop:
         self.psc_status.ps_status = value
         return self.psc_status.open_loop
 
-class OpenLoop:
-    """Variable decorator."""
-
-    def __init__(self, variable):
-        """Set variable."""
-        self.variable = variable
-        self.psc_status = _PSCStatus()
-
-    def read(self):
-        """Decorate read."""
-        value = self.variable.read()
-        if value is None:
-            return value
-        self.psc_status.ps_status = value
-        return self.psc_status.open_loop
-
 
 class Version:
     """Version variable."""
