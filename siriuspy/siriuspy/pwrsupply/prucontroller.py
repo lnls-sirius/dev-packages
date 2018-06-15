@@ -1197,18 +1197,20 @@ class PRUController:
             raise NotImplementedError('Sync mode not implemented!')
 
     def _select_next_device_id(self):
-        # TODO: with the mirror var solution this selection is not necessary!
-        #       attribute self._last_device_scanned can be deleted.
-        #
-        # # calc index of next single device to be scanned
-        # nr_devs = len(self._device_ids)
-        # dev_idx = (self._last_device_scanned + 1) % nr_devs
-        # dev_id = self._device_ids[dev_idx]
-        # self._last_device_scanned = dev_idx
-
-        # now always return first device to read the selected variables of
-        # all power supplies through mirror variables.
-        return (self._device_ids[0], )
+        if self._udcmodel == 'FAC_2P4S_ACDC':
+            # this is a special case since there are too many BSMP devices to
+            # be read at each ramp cycle!
+            nr_devs = len(self._device_ids)
+            dev_idx = (self._last_device_scanned + 1) % nr_devs
+            dev_id = self._device_ids[dev_idx]
+            self._last_device_scanned = dev_id
+        else:
+            # with the mirror var solution this selection is not necessary!
+            # attribute self._last_device_scanned can be deleted.
+            # now always return first device to read the selected variables of
+            # all power supplies through mirror variables.
+            dev_id = self._device_ids[0]
+        return (dev_id, )
 
     def _get_scan_interval(self):
         if self.pru_sync_status == self._params.PRU.SYNC_STATE.OFF or \
