@@ -194,6 +194,9 @@ def get_basic_propty_database():
         'PRUSyncPulseCount-Mon': {'type': 'int', 'value': 0},
         'PRUCtrlQueueSize-Mon': {'type': 'int', 'value': 0,
                                  'high': 50, 'hihi': 50},
+        # Interlocks
+        'IntlkSoft-Mon':    {'type': 'int',    'value': 0},
+        'IntlkHard-Mon':    {'type': 'int',    'value': 0},
 
     }
     return db
@@ -211,9 +214,6 @@ def get_common_propty_database():
                            'prec': default_ps_current_precision},
         'Current-Mon': {'type': 'float',  'value': 0.0,
                         'prec': default_ps_current_precision},
-        # Interlocks
-        'IntlkSoft-Mon':    {'type': 'int',    'value': 0},
-        'IntlkHard-Mon':    {'type': 'int',    'value': 0},
         # Commands
         'Reset-Cmd': {'type': 'int', 'value': 0},
         'Abort-Cmd': {'type': 'int', 'value': 0},
