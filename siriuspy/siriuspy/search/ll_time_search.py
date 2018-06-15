@@ -132,12 +132,15 @@ class LLTimeSearch:
         return (connections_dict.keys() - used)
 
     @classmethod
-    def add_bbb_info(cls, connections_dict=None):
+    def add_bbb_info(cls, connections_dict=dict()):
         """Add the information of bbb to PS to timing map."""
         cls._get_timedata()
-        if connections_dict is None:
-            connections_dict = _PSSearch.get_bbbname_dict()
-        conn = list(LLTimeSearch.i2o_map['PSCtrl'].values())[0][0]
+        if not connections_dict:
+            data = _PSSearch.get_bbbname_dict()
+            for bbb, bsmps in data.items():
+                connections_dict[bbb] = tuple([bsmp[0] for bsmp in bsmps])
+
+        conn = list(cls.i2o_map['PSCtrl'].values())[0][0]
         used = set()
         twds_evg = _dcopy(cls._conn_twds_evg)
         for chan in twds_evg.keys():
