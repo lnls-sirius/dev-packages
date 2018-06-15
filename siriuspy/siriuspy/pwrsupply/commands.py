@@ -19,7 +19,7 @@ class FunctionFactory:
     """Build command objects."""
 
     @staticmethod
-    def get(psmodel, device_ids, epics_field, pru_controller, setpoints=None):
+    def get(psmodel, epics_field, device_ids, pru_controller, setpoints=None):
         """Return an object that implemets the Command interface."""
         if psmodel == 'FBP':
             return FunctionFactory._get_FBP(
@@ -89,23 +89,6 @@ class FunctionFactory:
             return NullFunction()
         else:
             return NullFunction()
-
-    def _get_FBP_DCLink(epics_field, pru_controller):
-        _c = _bsmp.ConstFBP_DCLink
-        if epics_field == 'PwrState-Sel':
-            return PSPwrStateFBP_DCLink(pru_controller)
-        elif epics_field == 'CtrlLoop-Sel':
-            return CtrlLoop(pru_controller)
-        elif epics_field == 'OpMode-Sel':
-            return PSOpMode(Command(pru_controller, _c.F_SELECT_OP_MODE))
-        elif epics_field == 'Voltage-SP':
-            return Setpoint(pru_controller)
-        elif epics_field == 'Reset-Cmd':
-            return Command(pru_controller, _c.F_RESET_INTERLOCKS)
-        elif epics_field == 'Abort-Cmd':
-            return NullCommand()
-        else:
-            return NullCommand()
 
 
 class SimpleCommand:
@@ -184,23 +167,28 @@ class PRUCurve:
 class CtrlLoop:
     """Adapter to close or open control loops."""
 
-    def __init__(self, pru_controller):
+    def __init__(self, device_ids, pru_controller, setpoints=None):
         """Define commands."""
         self.pru_controller = pru_controller
-        self.open_loop = Command(pru_controller, _bsmp.ConstBSMP.F_OPEN_LOOP)
-        self.close_loop = Command(pru_controller, _bsmp.ConstBSMP.F_CLOSE_LOOP)
+        self.open_loop = Function(
+            device_ids, pru_controller, _bsmp.ConstBSMP.F_OPEN_LOOP)
+        self.close_loop = Function(
+            device_ids, pru_controller, _bsmp.ConstBSMP.F_CLOSE_LOOP)
+        self.setpoints = setpoints
 
     def execute(self, device_ids, value=None):
         """Execute Command."""
-        if value == 1:
-            self.open_loop.execute(device_ids)
-            _time.sleep(_delay_loop_open_close)
-        elif value == 0:
-            self.close_loop.execute(device_ids)
-            _time.sleep(_delay_loop_open_close)
+        if not self.setpoints or \
+                (self.setpoints and self.setpoints.apply(value)):
+            if value == 1:
+                self.open_loop.execute(device_ids)
+                _time.sleep(_delay_loop_open_close)
+            elif value == 0:
+                self.close_loop.execute(device_ids)
+                _time.sleep(_delay_loop_open_close)
 
 
-class PSPwrStateFBP:
+class PSPwrState:
     """Adapter to deal with FBP turn on/off commands."""
 
     def __init__(self, device_ids, pru_controller, setpoints=None):
@@ -213,6 +201,7 @@ class PSPwrStateFBP:
 
     def execute(self, value=None):
         """Execute Command."""
+        print('PSPwrState', value)
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
             if value == 1:
@@ -238,16 +227,16 @@ class PSPwrStateFBP_DCLink:
         self.open_loop = Function(
             device_ids, pru_controller, _bsmp.ConstBSMP.F_OPEN_LOOP)
 
-    def execute(self, device_ids, value=None):
+    def execute(self, value=None):
         """Execute Command."""
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
             if value == 1:
-                self.turn_on.execute(device_ids)
+                self.turn_on.execute()
                 _time.sleep(0.3)
-                self.open_loop.execute(device_ids)
+                self.open_loop.execute()
             elif value == 0:
-                self.turn_off.execute(device_ids)
+                self.turn_off.execute()
 
 
 class CtrlLoop:
