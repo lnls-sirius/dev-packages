@@ -60,6 +60,10 @@ class BeagleBone:
             self._psnames = ['BO-03U:PS-CH', 'BO-03U:PS-CV']
         elif self._bbbname == 'AS-Glob:CO-PSCtrl-2':
             self._psnames = ['AS-Glob:PS-DCLinkFBP-2']
+        elif self._bbbname == 'BBBS_TEST':
+            self._psnames = ['BO-01U:PS-CH', 'BO-01U:PS-CV',
+                             'BO-03U:PS-CH', 'BO-03U:PS-CV']
+
         else:
             # self._psnames = _PSSearch.conv_bbbname_2_psnames(bbbname)
             bsmps = _PSSearch.conv_bbbname_2_bsmps(bbbname)
@@ -222,6 +226,8 @@ class BeagleBone:
             return (5, 6)
         elif self._bbbname == 'AS-Glob:CO-PSCtrl-2':
             return (20, )
+        elif self._bbbname == 'BBBS_TEST':
+            return (1, 2, 5, 6)
         else:
             return self._device_ids
 
@@ -235,6 +241,10 @@ class BeagleBone:
         prucqueue = _PRUCQueue()
         self._pru_controller = _PRUController(pru, prucqueue,
                                               self._psmodel, slave_ids)
+        if self._bbbname == 'BBBS_TEST':
+            self._pru_controller2 = _PRUController(pru, prucqueue,
+                                                   'FBP_DCLink', (20,))
+
         for i, psname in enumerate(self._psnames):
             self._devices_info[psname] = _DeviceInfo(psname, slave_ids[i])
         db = _deepcopy(self._database)
