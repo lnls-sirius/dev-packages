@@ -24,8 +24,8 @@ from siriuspy.pwrsupply.bsmp import MAP_MIRROR_2_ORIG_FBP as _mirror_map_fbp
 from siriuspy.pwrsupply.bsmp import Parameters as _Parameters
 
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
-from siriuspy.pwrsupply.controller import UDC as _UDC
-from siriuspy.pwrsupply.controller import udcmodels as _udcmodels
+from siriuspy.pwrsupply.bsmp_sim import UDC as _UDC
+from siriuspy.pwrsupply.bsmp_sim import udcmodels as _udcmodels
 
 
 # NOTE: On current behaviour of PRUC and Power Supplies:
