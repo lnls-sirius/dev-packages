@@ -241,6 +241,7 @@ class BeagleBone:
         prucqueue = _PRUCQueue()
         self._pru_controller = _PRUController(pru, prucqueue,
                                               self._psmodel, slave_ids)
+        # TODO: delete this test code line
         if self._bbbname == 'BBBS_TEST':
             self._pru_controller2 = _PRUController(pru, prucqueue,
                                                    'FBP_DCLink', (20,))

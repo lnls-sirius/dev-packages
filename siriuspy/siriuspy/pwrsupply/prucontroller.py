@@ -28,7 +28,7 @@ from siriuspy.pwrsupply.controller import UDC as _UDC
 from siriuspy.pwrsupply.controller import udcmodels as _udcmodels
 
 
-# NOTE: On current behaviour of PRU and Power Supplies:
+# NOTE: On current behaviour of PRUC and Power Supplies:
 #
 # 01. Currently curve block changes are implemented only upon the arrival of
 #     timing trigger that corresponds to the last curve point.
@@ -958,8 +958,9 @@ class PRUController:
         # waveforms. If the number of bsmp devices is bigger than 4 and
         # this method is invoked, exception is raised!
         if len(self._device_ids) > 4:
-            raise ValueError(
-                'Invalid method invocation when number of devs > 4')
+            errmsg = 'Invalid method invocation when number of devs > 4'
+            print(errmsg)
+            # raise ValueError(errmsg)
 
         # select in which block the new curve will be stored
         block_curr = self._pru.read_curve_block()
