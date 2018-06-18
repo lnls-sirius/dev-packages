@@ -21,9 +21,9 @@ from copy import deepcopy as _deepcopy
 # from siriuspy.pwrsupply.beaglebone import _E2SController
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.pwrsupply.data import PSData as _PSData
-from siriuspy.pwrsupply.e2scontroller import \
+from siriuspy.pwrsupply.controller import \
     PSController as _PSController
-from siriuspy.pwrsupply.e2scontroller import \
+from siriuspy.pwrsupply.controller import \
     StandardPSController as _StdPSController
 from siriuspy.pwrsupply.pru import PRU as _PRU
 from siriuspy.pwrsupply.pru import PRUSim as _PRUSim

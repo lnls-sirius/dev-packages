@@ -188,7 +188,6 @@ class PSPwrState:
 
     def execute(self, value=None):
         """Execute Command."""
-        print('PSPwrState', value)
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
             if value == 1:
