@@ -35,7 +35,7 @@ from siriuspy.pwrsupply.fields import Setpoint as _Setpoint
 from siriuspy.pwrsupply.fields import Setpoints as _Setpoints
 from siriuspy.pwrsupply.fields import \
     VariableFactory as _VariableFactory
-from siriuspy.pwrsupply.commands import \
+from siriuspy.pwrsupply.functions import \
     FunctionFactory as _FunctionFactory
 
 

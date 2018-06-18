@@ -1,15 +1,12 @@
 """E2SController."""
-import numpy as _np
-import re as _re
 import time as _time
 import threading as _threading
 
-from collections import namedtuple as _namedtuple
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.pwrsupply.prucontroller import PRUCParms_FBP as _PRUCParms_FBP
 from siriuspy.pwrsupply.bsmp import ConstBSMP as _c
-from siriuspy.pwrsupply.commands import PSOpMode as _PSOpMode
-from siriuspy.pwrsupply.commands import Function as _Function
+from siriuspy.pwrsupply.functions import PSOpMode as _PSOpMode
+from siriuspy.pwrsupply.functions import Function as _Function
 
 
 class PSController:

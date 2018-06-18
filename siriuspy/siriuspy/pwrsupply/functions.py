@@ -1,4 +1,4 @@
-"""Define commands use to maps an epics field to a BSMP entity id.
+"""Define functions used to map an epics field to a BSMP entity id.
 
 These classes implement a Command interface, that is, they have
 an `execute` method.
@@ -91,19 +91,6 @@ class FunctionFactory:
             return NullFunction()
 
 
-class SimpleCommand:
-    """Used PRU controller to execute a function without args."""
-
-    def __init__(self, pru_controller, func_id):
-        """Define commands."""
-        self.pru_controller = pru_controller
-        self.func_id = func_id
-
-    def execute(self, device_ids, value=None):
-        """Execute Command."""
-        self.pru_controller.exec_functions(device_ids, self.func_id)
-
-
 class Function:
     """Used PRU controller to execute a function."""
 
@@ -168,7 +155,7 @@ class CtrlLoop:
     """Adapter to close or open control loops."""
 
     def __init__(self, device_ids, pru_controller, setpoints=None):
-        """Define commands."""
+        """Define function."""
         self.pru_controller = pru_controller
         self.open_loop = Function(
             device_ids, pru_controller, _bsmp.ConstBSMP.F_OPEN_LOOP)
@@ -189,10 +176,10 @@ class CtrlLoop:
 
 
 class PSPwrState:
-    """Adapter to deal with FBP turn on/off commands."""
+    """Adapter to deal with FBP turn on/off functions."""
 
     def __init__(self, device_ids, pru_controller, setpoints=None):
-        """Define commands."""
+        """Define function."""
         self._device_ids = device_ids
         self.turn_on = Function(device_ids, pru_controller, 0)
         self.close_loop = Function(device_ids, pru_controller, 3)
@@ -215,10 +202,10 @@ class PSPwrState:
 
 
 class PSPwrStateFBP_DCLink:
-    """Adapter to deal with FBP_DCLink turn on/off commands."""
+    """Adapter to deal with FBP_DCLink turn on/off functions."""
 
     def __init__(self, device_ids, pru_controller, setpoints=None):
-        """Define commands."""
+        """Define function."""
         self.setpoints = setpoints
         self.turn_on = Function(
             device_ids, pru_controller, _bsmp.ConstBSMP.F_TURN_ON)
@@ -243,7 +230,7 @@ class CtrlLoop:
     """Adapter to close or open control loops."""
 
     def __init__(self, device_ids, pru_controller, setpoints=None):
-        """Define commands."""
+        """Define function."""
         self.pru_controller = pru_controller
         self.setpoints = setpoints
         self.open_loop = Function(
@@ -264,7 +251,7 @@ class CtrlLoop:
 
 
 class PSOpMode:
-    """Decorate a command."""
+    """Decorate a function."""
 
     def __init__(self, device_ids, function, setpoints=None):
         """Command."""
