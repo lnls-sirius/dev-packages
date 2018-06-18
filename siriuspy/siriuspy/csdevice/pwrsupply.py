@@ -198,6 +198,8 @@ def get_basic_propty_database():
         'IntlkSoft-Mon':    {'type': 'int',    'value': 0},
         'IntlkHard-Mon':    {'type': 'int',    'value': 0},
 
+        'Reset-Cmd': {'type': 'int', 'value': 0},
+
     }
     return db
 
@@ -215,7 +217,6 @@ def get_common_propty_database():
         'Current-Mon': {'type': 'float',  'value': 0.0,
                         'prec': default_ps_current_precision},
         # Commands
-        'Reset-Cmd': {'type': 'int', 'value': 0},
         'Abort-Cmd': {'type': 'int', 'value': 0},
         # Cycle
         'CycleEnbl-Mon': {'type': 'int', 'value': 0},
