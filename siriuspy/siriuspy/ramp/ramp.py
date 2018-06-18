@@ -508,6 +508,7 @@ class BoosterRamp(_ConfigSrv):
         times.pop(index)
         nconfigs = [[times[i], names[i]] for i in range(len(times))]
         self._set_normalized_configs(nconfigs)
+        self._synchronized = False
         self._wfms_changed = True
 
     def normalized_configs_insert(self, time, name=None, nconfig=None):
@@ -574,6 +575,7 @@ class BoosterRamp(_ConfigSrv):
         times[index] = new_time
         nconfigs = [[times[i], names[i]] for i in range(len(times))]
         self._set_normalized_configs(nconfigs)
+        self._synchronized = False
         self._wfms_changed = True
 
     # --- API for waveforms ---
