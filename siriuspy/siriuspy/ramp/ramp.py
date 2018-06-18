@@ -77,6 +77,7 @@ class BoosterRamp(_ConfigSrv):
         self._normalized_configs = dict()
         self._waveforms = dict()
         self._wfms_changed = True  # so that waveforms need calculation again
+        self.configuration = self.get_config_type_template()
 
     # --- ConfigSrv API ---
 
