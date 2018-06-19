@@ -17,9 +17,8 @@ P = 'T'
 
 BBB1_device_ids = (1, 2)
 BBB2_device_ids = (5, 6)
+BBB3_device_ids = (20, )
 
-simulate = False
-udcmodel = 'FBP'
 
 siggen_config = [
     # --- siggen sine parameters ---
@@ -37,13 +36,6 @@ siggen_config = [
 curve1 = [i*2.0/(4000.0-1.0) for i in range(4000)]
 
 
-bsmp_cmds = {
-    'read_variable': 0x10,
-    'remove_group': 0x32,
-    'execute_function': 0x50,
-}
-
-
 def calc_siggen_duration():
     """Calc duration for Sine or DampedSine siggens."""
     num_cycles = siggen_config[1]
@@ -51,7 +43,7 @@ def calc_siggen_duration():
     return num_cycles/freq
 
 
-def bsmp_create(device_id, simulate=simulate):
+def bsmp_create(device_id, simulate=False):
     """Create BSMP object."""
     if simulate is True:
         pru = PRUSim()
@@ -75,15 +67,20 @@ def bsmp_reset_interlock(bsmp):
     # print('value   : ', value)
 
 
-def pruc_create(device_ids=BBB1_device_ids,
-                simulate=simulate):
-    """Method."""
-    # create BBB controller
+def bbb_pru_and_prucqueue(simulate=False):
+    """Return PRU and PRUCQUEUE."""
     if simulate:
         pru = PRUSim()
     else:
         pru = PRU()
     prucqueue = PRUCQueue()
+    return pru, prucqueue
+
+
+def pruc_create(udcmodel, device_ids, simulate=False):
+    """Method."""
+    # create BBB controller
+    pru, prucqueue = bbb_pru_and_prucqueue(simulate=simulate)
     pruc = PRUController(pru=pru,
                          prucqueue=prucqueue,
                          udcmodel=udcmodel,
@@ -91,6 +88,58 @@ def pruc_create(device_ids=BBB1_device_ids,
                          processing=True,
                          scanning=True)
     return pruc
+
+
+def bbb1_pruc_create(simulate=False):
+    """Method."""
+    # create BBB controller
+    pruc = pruc_create('FBP', BBB1_device_ids, simulate=simulate)
+    return pruc
+
+
+def bbb2_pruc_create(simulate=False):
+    """Method."""
+    # create BBB controller
+    pruc = pruc_create('FBP', BBB2_device_ids, simulate=simulate)
+    return pruc
+
+
+def bbb3_pruc_create(simulate=False):
+    """Method."""
+    # create BBB controller
+    pruc = pruc_create('FBP_DCLink', BBB3_device_ids, simulate=simulate)
+    return pruc
+
+
+def bbbs_mix_pruc_create(simulate=False):
+    """Method."""
+    pru, prucqueue = bbb_pru_and_prucqueue(simulate=simulate)
+
+    pruc1 = PRUController(pru=pru,
+                          prucqueue=prucqueue,
+                          udcmodel='FBP_DCLink',
+                          device_ids=(20, ),
+                          processing=True,
+                          scanning=True)
+    pruc2 = PRUController(pru=pru,
+                          prucqueue=prucqueue,
+                          udcmodel='FBP',
+                          device_ids=BBB1_device_ids + BBB2_device_ids,
+                          processing=True,
+                          scanning=True)
+    return pruc1, pruc2
+
+
+def bbbs_mix_print_state(pruc1, pruc2):
+    """Print."""
+    # dclink
+    for id in pruc1.device_ids:
+        v = pruc1.read_variable(id, pruc1.params.ConstBSMP.V_V_OUT)
+        print('dclink v_out dev_id={} [V]: {}'.format(id, v))
+    # power supplies
+    for id in pruc2.device_ids:
+        v = pruc2.read_variable(id, pruc2.params.ConstBSMP.V_I_LOAD)
+        print('pwrsupply i_load dev_id={} [A]: {}'.format(id, v))
 
 
 def pruc_reset_interlocks(pruc):

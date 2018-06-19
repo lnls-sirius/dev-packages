@@ -12,13 +12,13 @@ from siriuspy.bsmp import BSMP as _BSMP
 from siriuspy.bsmp import BSMPSim as _BSMPSim
 
 from siriuspy.pwrsupply.bsmp import EntitiesFBP as _EntitiesFBP
-from siriuspy.pwrsupply.bsmp import EntitiesFBP_DCLINK as _EntitiesFBP_DCLINK
-from siriuspy.pwrsupply.bsmp import EntitiesFAC as _EntitiesFAC
+from siriuspy.pwrsupply.bsmp import EntitiesFBP_DCLink as _EntitiesFBP_DCLink
+from siriuspy.pwrsupply.bsmp import EntitiesFAC_DCDC as _EntitiesFAC_DCDC
 from siriuspy.pwrsupply.bsmp import EntitiesFAC_ACDC as _EntitiesFAC_ACDC
 
 from siriuspy.pwrsupply.bsmp import ConstFBP as _cFBP
-from siriuspy.pwrsupply.bsmp import ConstFBP_DCLINK as _cFBP_DCLINK
-from siriuspy.pwrsupply.bsmp import ConstFAC as _cFAC
+from siriuspy.pwrsupply.bsmp import ConstFBP_DCLink as _cFBP_DCLink
+from siriuspy.pwrsupply.bsmp import ConstFAC_DCDC as _cFAC_DCDC
 from siriuspy.pwrsupply.bsmp import ConstFAC_ACDC as _cFAC_ACDC
 
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
@@ -37,24 +37,14 @@ class _Spec:
     def _get_constants(self):
         raise NotImplementedError()
 
-    def _get_iloads_ids(self):
+    def _get_monvar_ids(self):
         return ()
 
-    def _get_i_load_fluctuation_rms(self):
+    def _get_init_value(self):
+        return 0.0
+
+    def _get_monvar_fluctuation_rms(self, var_id):
         raise NotImplementedError()
-
-
-class _Spec_FAC(_Spec):
-    """Spec FAC."""
-
-    def _get_constants(self):
-        return _cFAC
-
-    def _get_iloads_ids(self):
-        return (_cFAC.V_I_LOAD1, _cFAC.V_I_LOAD2)
-
-    def _get_i_load_fluctuation_rms(self):
-        return _Spec._I_LOAD_FLUCTUATION_RMS
 
 
 class _Spec_FBP(_Spec):
@@ -63,10 +53,44 @@ class _Spec_FBP(_Spec):
     def _get_constants(self):
         return _cFBP
 
-    def _get_iloads_ids(self):
+    def _get_monvar_ids(self):
         return (_cFBP.V_I_LOAD, )
 
-    def _get_i_load_fluctuation_rms(self):
+    def _get_monvar_fluctuation_rms(self, var_id):
+        return _Spec._I_LOAD_FLUCTUATION_RMS
+
+
+class _Spec_FBP_DCLink(_Spec):
+    """Spec FAC_ACDC."""
+
+    _monvar_rms = {
+        _cFBP_DCLink.V_V_OUT: 0.001,
+        _cFBP_DCLink.V_V_OUT_1: 0.001,
+        _cFBP_DCLink.V_V_OUT_2: 0.001,
+        _cFBP_DCLink.V_V_OUT_3: 0.001,
+        _cFBP_DCLink.V_DIG_POT_TAP: 0,
+    }
+
+    def _get_constants(self):
+        return _cFBP_DCLink
+
+    def _get_monvar_ids(self):
+        return tuple(_Spec_FBP_DCLink._monvar_rms.keys())
+
+    def _get_monvar_fluctuation_rms(self, var_id):
+        return _Spec_FBP_DCLink._monvar_rms[var_id]
+
+
+class _Spec_FAC_DCDC(_Spec):
+    """Spec FAC_DCDC."""
+
+    def _get_constants(self):
+        return _cFAC_DCDC
+
+    def _get_monvar_ids(self):
+        return (_cFAC_DCDC.V_I_LOAD1, _cFAC_DCDC.V_I_LOAD2)
+
+    def _get_monvar_fluctuation_rms(self):
         return _Spec._I_LOAD_FLUCTUATION_RMS
 
 
@@ -77,13 +101,6 @@ class _Spec_FAC_ACDC(_Spec):
         return _cFAC_ACDC
 
 
-class _Spec_FBP_DCLINK(_Spec):
-    """Spec FAC_ACDC."""
-
-    def _get_constants(self):
-        return _cFBP_DCLINK
-
-
 # --- simulated OpMode state classes ---
 
 
@@ -92,14 +109,15 @@ class _OpModeSimState:
 
     def __init__(self):
         self._c = self._get_constants()
-        self._iloads = self._get_iloads_ids()
+        self._monvars = self._get_monvar_ids()
 
     def read_variable(self, variables, var_id):
         """Read variable."""
-        for iload_id in self._iloads:
-            if var_id == iload_id:
+        for monvar_id in self._monvars:
+            if var_id == monvar_id:
                 return variables[var_id] + \
-                    _random.gauss(0.0, self._get_i_load_fluctuation_rms())
+                    _random.gauss(
+                        0.0, self._get_monvar_fluctuation_rms(monvar_id))
         value = variables[var_id]
         return value
 
@@ -109,28 +127,30 @@ class _OpModeSimState:
         psc_status = _PSCStatus(ps_status=ps_status)
         if psc_status.ioc_pwrstate == _PSConst.PwrState.Off:
             # Set PSController status
+            value_init = self._get_init_value()
             psc_status.ioc_pwrstate = _PSConst.PwrState.On
             psc_status.ioc_opmode = _PSConst.OpMode.SlowRef
             variables[self._c.V_PS_STATUS] = psc_status.ps_status
             # Set currents to 0
-            variables[self._c.V_PS_SETPOINT] = 0.0
-            variables[self._c.V_PS_REFERENCE] = 0.0
-            for iload_id in self._iloads:
-                variables[iload_id] = 0.0
+            variables[self._c.V_PS_SETPOINT] = value_init
+            variables[self._c.V_PS_REFERENCE] = value_init
+            for monvar_id in self._monvars:
+                variables[monvar_id] = value_init
 
     def turn_off(self, variables):
         """Turn ps off."""
         ps_status = variables[self._c.V_PS_STATUS]
         psc_status = _PSCStatus(ps_status=ps_status)
         if psc_status.ioc_pwrstate == _PSConst.PwrState.On:
+            value_init = self._get_init_value()
             # Set PSController status
             psc_status.ioc_pwrstate = _PSConst.PwrState.Off
             variables[self._c.V_PS_STATUS] = psc_status.ps_status
             # Set currents to 0
-            variables[self._c.V_PS_SETPOINT] = 0.0
-            variables[self._c.V_PS_REFERENCE] = 0.0
-            for iload_id in self._iloads:
-                variables[iload_id] = 0.0
+            variables[self._c.V_PS_SETPOINT] = value_init
+            variables[self._c.V_PS_REFERENCE] = value_init
+            for monvar_id in self._monvars:
+                variables[monvar_id] = value_init
 
     def open_loop(self, variables):
         """Open control loop."""
@@ -145,8 +165,8 @@ class _OpModeSimState:
         psc_status = _PSCStatus(ps_status=ps_status)
         psc_status.open_loop = 0
         variables[self._c.V_PS_STATUS] = psc_status.ps_status
-        for iload_id in self._iloads:
-            variables[iload_id] = variables[self._c.V_PS_REFERENCE]
+        for monvar_id in self._monvars:
+            variables[monvar_id] = variables[self._c.V_PS_REFERENCE]
 
     def select_op_mode(self, variables):
         """Set operation mode."""
@@ -158,12 +178,13 @@ class _OpModeSimState:
         psc_status = _PSCStatus(ps_status=ps_status)
         # Set PSController status
         psc_status.ioc_opmode = _PSConst.OpMode.SlowRef
+        value_init = self._get_init_value()
         variables[self._c.V_PS_STATUS] = psc_status.ps_status
         # Set Current to 0
-        variables[self._c.V_PS_SETPOINT] = 0.0
-        variables[self._c.V_PS_REFERENCE] = 0.0
-        for iload_id in self._iloads:
-            variables[iload_id] = 0.0
+        variables[self._c.V_PS_SETPOINT] = value_init
+        variables[self._c.V_PS_REFERENCE] = value_init
+        for monvar_id in self._monvars:
+            variables[monvar_id] = value_init
         # Reset interlocks
         variables[self._c.V_PS_SOFT_INTERLOCKS] = 0
         variables[self._c.V_PS_HARD_INTERLOCKS] = 0
@@ -217,8 +238,8 @@ class _OpModeSimSlowRefState(_OpModeSimState):
             variables[self._c.V_PS_REFERENCE] = input_val
             if self._is_open_loop(variables) == 0:
                 # control loop closed
-                for iload_id in self._iloads:
-                    variables[iload_id] = input_val
+                for monvar_id in self._monvars:
+                    variables[monvar_id] = input_val
 
     def cfg_siggen(self, variables, input_val):
         """Set siggen configuration parameters."""
@@ -241,8 +262,8 @@ class _OpModeSimSlowRefState(_OpModeSimState):
             variables[self._c.V_PS_REFERENCE] = value
             if self._is_open_loop(variables) == 0:
                 # control loop closed
-                for iload_id in self._iloads:
-                    variables[iload_id] = value
+                for monvar_id in self._monvars:
+                    variables[monvar_id] = value
 
 
 class _OpModeSimSlowRefSyncState(_OpModeSimState):
@@ -272,8 +293,8 @@ class _OpModeSimSlowRefSyncState(_OpModeSimState):
             variables[self._c.V_PS_REFERENCE] = self._last_setpoint
             if self._is_open_loop(variables) == 0:
                 # control loop closed
-                for iload_id in self._iloads:
-                    variables[iload_id] = self._last_setpoint
+                for monvar_id in self._monvars:
+                    variables[monvar_id] = self._last_setpoint
 
 
 class _OpModeSimCycleState(_OpModeSimState):
@@ -289,11 +310,11 @@ class _OpModeSimCycleState(_OpModeSimState):
         """Return variable."""
         enbl = variables[self._c.V_SIGGEN_ENABLE]
         if enbl and \
-           (var_id in self._iloads or var_id == self._c.V_PS_REFERENCE):
+           (var_id in self._monvars or var_id == self._c.V_PS_REFERENCE):
             value = self._signal.value
             variables[self._c.V_PS_REFERENCE] = value
-            for iload_id in self._iloads:
-                variables[iload_id] = value
+            for monvar_id in self._monvars:
+                variables[monvar_id] = value
             variables[self._c.V_SIGGEN_N] += 1
         return super().read_variable(variables, var_id)
 
@@ -305,8 +326,8 @@ class _OpModeSimCycleState(_OpModeSimState):
         variables[self._c.V_PS_STATUS] = psc_status.ps_status
         variables[self._c.V_SIGGEN_ENABLE] = 0
         variables[self._c.V_PS_REFERENCE] = 0.0
-        for iload_id in self._iloads:
-            variables[iload_id] = 0.0
+        for monvar_id in self._monvars:
+            variables[monvar_id] = 0.0
         # self._set_signal(variables)
         # self.enable_siggen(variables)
 
@@ -386,8 +407,8 @@ class _OpModeSimCycleState(_OpModeSimState):
                 return
         val = self._signal.value
         variables[self._c.V_PS_REFERENCE] = val
-        for iload_id in self._iloads:
-            variables[iload_id] = val
+        for monvar_id in self._monvars:
+            variables[monvar_id] = val
         variables[self._c.V_SIGGEN_ENABLE] = 0
         variables[self._c.V_SIGGEN_N] = 0
 
@@ -397,23 +418,6 @@ class _OpModeSimCycleState(_OpModeSimState):
 
 
 # --- Specialized PS states ---
-
-class _OpModeSimSlowRefState_FAC(_OpModeSimSlowRefState, _Spec_FAC):
-    """SlowRef FAC state."""
-
-    pass
-
-
-class _OpModeSimSlowRefSyncState_FAC(_OpModeSimSlowRefSyncState, _Spec_FAC):
-    """SlowRefSync FAC state."""
-
-    pass
-
-
-class _OpModeSimCycleState_FAC(_OpModeSimCycleState, _Spec_FAC):
-    """Cycle FAC state."""
-
-    pass
 
 
 class _OpModeSimSlowRefState_FBP(_OpModeSimSlowRefState, _Spec_FBP):
@@ -434,8 +438,36 @@ class _OpModeSimCycleState_FBP(_OpModeSimCycleState, _Spec_FBP):
     pass
 
 
-class _OpModeSimState_FBP_DCLINK(_OpModeSimSlowRefState, _Spec_FAC_ACDC):
-    """SlowRef FAC_ACDC state."""
+class _OpModeSimState_FBP_DCLink(_OpModeSimSlowRefState, _Spec_FBP_DCLink):
+    """SlowRef FBP_DCLink state."""
+
+    def _get_init_value(self):
+        return 15.0  # [%]
+
+    def reset_interlocks(self, variables):
+        """Reset ps."""
+        _OpModeSimSlowRefState.reset_interlocks(self, variables)
+        if variables[self._c.V_PS_REFERENCE] < 50.0:
+            # sub-tension sources 1,2,3.
+            variables[self._c.V_PS_HARD_INTERLOCKS] += \
+                (1 << 8) + (1 << 9) + (1 << 10)
+
+
+class _OpModeSimSlowRefState_FAC_DCDC(_OpModeSimSlowRefState, _Spec_FAC_DCDC):
+    """SlowRef FAC_DCDC state."""
+
+    pass
+
+
+class _OpModeSimSlowRefSyncState_FAC_DCDC(_OpModeSimSlowRefSyncState,
+                                          _Spec_FAC_DCDC):
+    """SlowRefSync FAC_DCDC state."""
+
+    pass
+
+
+class _OpModeSimCycleState_FAC_DCDC(_OpModeSimCycleState, _Spec_FAC_DCDC):
+    """Cycle FAC_DCDC state."""
 
     pass
 
@@ -560,39 +592,43 @@ class BSMPSim_FBP(_BaseBSMPSim, _Spec_FBP):
         return variables
 
 
-class BSMPSim_FBP_DCLINK(_BaseBSMPSim, _Spec_FBP_DCLINK):
+class BSMPSim_FBP_DCLink(_BaseBSMPSim, _Spec_FBP_DCLink):
     """Simulated FBP_DCLink UDC."""
 
     def _get_entities(self):
-        return _EntitiesFBP_DCLINK()
+        return _EntitiesFBP_DCLink()
 
     def _get_states(self):
-        return [_OpModeSimState_FBP_DCLINK]
+        return [_OpModeSimState_FBP_DCLink()]
 
     def _get_init_variables(self):
         variables = []
         firmware = [b'S', b'i', b'm', b'u', b'l', b'a', b't', b'i', b'o', b'n']
         while len(firmware) < 128:
             firmware.append('\x00'.encode())
-        for idx, variable in enumerate(_EntitiesFBP_DCLINK.Variables):
-            if idx == 3:
-                variables[idx] = firmware
-            if 'uint' in variable.type:
-                variables[idx] = 0
-            elif variable.type == 'float':
-                variables[idx] = 0
+        variables = [
+            0b10000,  # V_PS_STATUS
+            0.0, 0.0,  # ps_setpoint, ps_reference
+            firmware,
+            0, 0,  # counters
+            0, 0, 0, 0.0, 0.0, 0.0, 0.0, [0.0, 0.0, 0.0, 0.0],  # siggen [6-13]
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # undef [14-24]
+            0, 0,  # interlocks [25-26]
+            0,
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # [28-32]
         return variables
 
 
-class BSMPSim_FAC(_BaseBSMPSim, _Spec_FAC):
-    """Simulated FAC UDC."""
+class BSMPSim_FAC_DCDC(_BaseBSMPSim, _Spec_FAC_DCDC):
+    """Simulated FAC_DCDC UDC."""
 
     def _get_entities(self):
-        return _EntitiesFAC()
+        return _EntitiesFAC_DCDC()
 
     def _get_states(self):
-        return [_OpModeSimSlowRefState_FAC(), _OpModeSimSlowRefSyncState_FAC(),
-                _OpModeSimCycleState_FAC(self._pru)]
+        return [_OpModeSimSlowRefState_FAC_DCDC(),
+                _OpModeSimSlowRefSyncState_FAC_DCDC(),
+                _OpModeSimCycleState_FAC_DCDC(self._pru)]
 
     def _get_init_variables(self):
         firmware = [b'S', b'i', b'm', b'u', b'l', b'a', b't', b'i', b'o', b'n']
@@ -610,12 +646,12 @@ class BSMPSim_FAC(_BaseBSMPSim, _Spec_FAC):
             0.0, 0.0, 0.0, 0.0, 0.0]  # [29-33]
         default_siggen_parms = \
             _SignalFactory.DEFAULT_CONFIGS['Sine']
-        variables[_cFAC.V_SIGGEN_TYPE] = default_siggen_parms[0]
-        variables[_cFAC.V_SIGGEN_NUM_CYCLES] = default_siggen_parms[1]
-        variables[_cFAC.V_SIGGEN_FREQ] = default_siggen_parms[2]
-        variables[_cFAC.V_SIGGEN_AMPLITUDE] = default_siggen_parms[3]
-        variables[_cFAC.V_SIGGEN_OFFSET] = default_siggen_parms[4]
-        variables[_cFAC.V_SIGGEN_AUX_PARAM] = default_siggen_parms[5:9]
+        variables[_cFAC_DCDC.V_SIGGEN_TYPE] = default_siggen_parms[0]
+        variables[_cFAC_DCDC.V_SIGGEN_NUM_CYCLES] = default_siggen_parms[1]
+        variables[_cFAC_DCDC.V_SIGGEN_FREQ] = default_siggen_parms[2]
+        variables[_cFAC_DCDC.V_SIGGEN_AMPLITUDE] = default_siggen_parms[3]
+        variables[_cFAC_DCDC.V_SIGGEN_OFFSET] = default_siggen_parms[4]
+        variables[_cFAC_DCDC.V_SIGGEN_AUX_PARAM] = default_siggen_parms[5:9]
         return variables
 
 
@@ -626,8 +662,7 @@ class BSMPSim_FAC_ACDC(_BaseBSMPSim, _Spec_FAC_ACDC):
         return _EntitiesFAC_ACDC()
 
     def _get_states(self):
-        return [_OpModeSimSlowRefState_FAC(), _OpModeSimSlowRefSyncState_FAC(),
-                _OpModeSimCycleState_FAC(self._pru)]
+        return [_OpModeSimState_FAC_ACDC()]
 
     def _get_init_variables(self):
         firmware = [b'S', b'i', b'm', b'u', b'l', b'a', b't', b'i', b'o', b'n']
@@ -642,24 +677,28 @@ class BSMPSim_FAC_ACDC(_BaseBSMPSim, _Spec_FAC_ACDC):
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # undef [14-24]
             0, 0,  # interlocks [25-26]
             0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # [27-32]
-        default_siggen_parms = \
-            _SignalFactory.DEFAULT_CONFIGS['Sine']
-        variables[_cFAC.V_SIGGEN_TYPE] = default_siggen_parms[0]
-        variables[_cFAC.V_SIGGEN_NUM_CYCLES] = default_siggen_parms[1]
-        variables[_cFAC.V_SIGGEN_FREQ] = default_siggen_parms[2]
-        variables[_cFAC.V_SIGGEN_AMPLITUDE] = default_siggen_parms[3]
-        variables[_cFAC.V_SIGGEN_OFFSET] = default_siggen_parms[4]
-        variables[_cFAC.V_SIGGEN_AUX_PARAM] = default_siggen_parms[5:9]
         return variables
 
 
 # --- Classes for UDCs ---
 
+
 udcmodels = {
-    'FBP': (_EntitiesFBP, BSMPSim_FBP),
-    'FBP_DCLINK': (_EntitiesFBP_DCLINK, BSMPSim_FBP_DCLINK),
-    'FAC': (_EntitiesFAC, BSMPSim_FAC),
-    'FAC_ACDC': (_EntitiesFAC_ACDC, BSMPSim_FAC_ACDC),
+    'FBP': {'ConstBSMP': _cFBP,
+            'Entities': _EntitiesFBP(),
+            'BSMPSim': BSMPSim_FBP, },
+    'FBP_DCLink': {'ConstBSMP': _cFBP_DCLink,
+                   'Entities': _EntitiesFBP_DCLink(),
+                   'BSMPSim': BSMPSim_FBP_DCLink, },
+    'FAC_DCDC': {'ConstBSMP': _cFAC_DCDC,
+                 'Entities': _EntitiesFAC_DCDC(),
+                 'BSMPSim': BSMPSim_FAC_DCDC, },
+    'FAC_ACDC': {'ConstBSMP': _cFAC_ACDC,
+                 'Entities': _EntitiesFAC_ACDC(),
+                 'BSMPSim': BSMPSim_FAC_ACDC, },
+    'FAC_2P4S_DCDC': {'ConstBSMP': _cFAC_DCDC,
+                      'Entities': _EntitiesFAC_DCDC(),
+                      'BSMPSim': BSMPSim_FAC_DCDC, },
 }
 
 
@@ -680,12 +719,13 @@ class UDC:
 
     def _create_bsmp_connectors(self):
         bsmp = dict()
-        entities_class, bsmpsim_class = udcmodels[self._udcmodel]
+        d = udcmodels[self._udcmodel]
+        entities, bsmpsim_class = d['Entities'], d['BSMPSim']
         for id in self._device_ids:
             if self._pru.simulated:
                 bsmp[id] = bsmpsim_class(self._pru)
             else:
-                bsmp[id] = _BSMP(self._pru, id, entities_class())
+                bsmp[id] = _BSMP(self._pru, id, entities)
         return bsmp
 
     def __getitem__(self, index):

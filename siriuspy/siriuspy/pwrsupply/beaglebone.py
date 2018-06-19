@@ -46,7 +46,7 @@ class BeagleBone:
     given the PV field name.
     """
 
-    def __init__(self, bbbname, simulate=True):
+    def __init__(self, bbbname, simulate=False):
         """Retrieve power supply."""
         self._bbbname = bbbname
         self._simulate = simulate
@@ -58,8 +58,17 @@ class BeagleBone:
             self._psnames = ['BO-01U:PS-CH', 'BO-01U:PS-CV']
         elif self._bbbname == 'BO-01:CO-PSCtrl-2':
             self._psnames = ['BO-03U:PS-CH', 'BO-03U:PS-CV']
+        elif self._bbbname == 'AS-Glob:CO-PSCtrl-2':
+            self._psnames = ['AS-Glob:PS-DCLinkFBP-2']
+        elif self._bbbname == 'BBBS_TEST':
+            self._psnames = ['BO-01U:PS-CH', 'BO-01U:PS-CV',
+                             'BO-03U:PS-CH', 'BO-03U:PS-CV']
+
         else:
-            self._psnames = _PSSearch.conv_bbbname_2_psnames(bbbname)
+            # self._psnames = _PSSearch.conv_bbbname_2_psnames(bbbname)
+            bsmps = _PSSearch.conv_bbbname_2_bsmps(bbbname)
+            self._psnames = [bsmp[0] for bsmp in bsmps]
+            self._device_ids = (bsmp[1] for bsmp in bsmps)
 
         # retrieve power supply model and corresponding database
         self._psmodel = _PSSearch.conv_psname_2_psmodel(self._psnames[0])
@@ -127,7 +136,10 @@ class BeagleBone:
                 self.e2s_controller.write(device_name, field, value)
         elif field == 'PwrState-Sel':
             if setpoints.set(field, value):
-                setpoints.set('Current-SP', 0.0)
+                if 'Current-SP' in self._database:
+                    setpoints.set('Current-SP', 0.0)
+                if 'VoltageGain-SP' in self._database:
+                    setpoints.set('VoltageGain-SP', 0.0)
                 self.e2s_controller.write(device_name, field, value)
         elif '-Cmd' in field:
             if setpoints.set(field, value):
@@ -212,8 +224,12 @@ class BeagleBone:
         elif self._bbbname == 'BO-01:CO-PSCtrl-2':
             # test-bench BBB # 2
             return (5, 6)
+        elif self._bbbname == 'AS-Glob:CO-PSCtrl-2':
+            return (20, )
+        elif self._bbbname == 'BBBS_TEST':
+            return (1, 2, 5, 6)
         else:
-            return tuple(range(1, 1+len(self._psnames)))
+            return self._device_ids
 
     def _create_e2s_controller(self):
         # Return dict of power supply objects
@@ -225,6 +241,11 @@ class BeagleBone:
         prucqueue = _PRUCQueue()
         self._pru_controller = _PRUController(pru, prucqueue,
                                               self._psmodel, slave_ids)
+        # TODO: delete this test code line
+        if self._bbbname == 'BBBS_TEST':
+            self._pru_controller2 = _PRUController(pru, prucqueue,
+                                                   'FBP_DCLink', (20,))
+
         for i, psname in enumerate(self._psnames):
             self._devices_info[psname] = _DeviceInfo(psname, slave_ids[i])
         db = _deepcopy(self._database)

@@ -1,27 +1,55 @@
 # Beagle Bone Black Mapping to Power Supplies
 # ===========================================
 #
-# TODO: Update deprecated BBB names!!! (2018-04-23)
+# TODO: Update deprecated BBB names!!! (2018-05-29)
+# TODO: Rename DCLinks
+# TODO: this is a temporary version based on
+#        https://cnpemcamp-my.sharepoint.com/:b:/g/personal/cleber_rodrigues_lnls_br/EYay5Qhtb0tOoBr-t-4TVhIBsPemqeQhG59vq8WgO2K-EQ?e=CgggsR
 #
-# Notes:
+# NOTE:
 # 01. The list of power supplies for each BBB should obey the order in which
 #     the power supplies will be installed in the crate, from left to right.
 #     This is necessary due to how power supply controllers store BSMP
 #     "mirror variables" in the memory.
-#     (questions may be directed to ximenes @ xresende@gmail.com)
+#     (questions may be directed to xresende@gmail.com)
+
+
+# Power supplies: BO-Fam:PS-B-1
+BO-Glob:CO-PSCtrl-9    BO-Glob:PS-DCLinkFAC2P4S-1
+
+# Power supplies: BO-Fam:PS-B-1
+BO-Glob:CO-PSCtrl-10   BO-Glob:PS-DCLinkFAC2P4S-2
+
+# Power supplies: TB quads, CH, CV and TS CH and CV
+AS-Glob:CO-PSCtrl-1    AS-Glob:PS-DCLinkFBP-1
+
+# Power supplies: SI quads, SI skwe quads, SI CH and CV, BO CH and CV
+AS-Glob:CO-PSCtrl-2    AS-Glob:PS-DCLinkFBP-2
 
 
 # --- Booster Family power supplies
 
-BO-Glob:CO-PSCtrl-1    BO-Fam:PS-B-1   BO-Fam:PS-B-2
-BO-Glob:CO-PSCtrl-2    BO-Fam:PS-QF    BO-Fam:PS-QD
-BO-Glob:CO-PSCtrl-3    BO-Fam:PS-SD    BO-Fam:PS-SF
+BO-Glob:CO-PSCtrl-1    BO-Fam:PS-B-1
+BO-Glob:CO-PSCtrl-2    BO-Fam:PS-B-2
+BO-Glob:CO-PSCtrl-3    BO-Fam:PS-QF
+
+BO-Glob:CO-PSCtrl-4    BO-Fam:PS-SD
+BO-Glob:CO-PSCtrl-5    BO-Fam:PS-SF
+BO-Glob:CO-PSCtrl-6    BO-Fam:PS-QD
+
+# <<< DCLinks >>>
+
+# Power supplies: BO-Fam:PS-SD BO-Fam:PS-SF BO-Fam:PS-QD
+BO-Glob:CO-PSCtrl-7    BO-Glob:PS-DCLinkFAC
+
+# Power supplies: BO-Fam:PS-QF
+BO-Glob:CO-PSCtrl-8    BO-Glob:PS-DCLinkFAC2S
+
 
 # --- Booster correctors
 
 BO-01:CO-PSCtrl-1      BO-01U:PS-CH    BO-01U:PS-CV    BO-02D:PS-QS
 BO-01:CO-PSCtrl-2      BO-03U:PS-CH    BO-03U:PS-CV    BO-05U:PS-CH    BO-05U:PS-CV
-
 BO-03:CO-PSCtrl        BO-07U:PS-CH    BO-07U:PS-CV    BO-09U:PS-CH    BO-09U:PS-CV
 BO-05:CO-PSCtrl        BO-11U:PS-CH    BO-11U:PS-CV    BO-13U:PS-CH    BO-13U:PS-CV
 BO-07:CO-PSCtrl        BO-15U:PS-CH    BO-15U:PS-CV    BO-17U:PS-CH    BO-17U:PS-CV
@@ -34,6 +62,31 @@ BO-16:CO-PSCtrl        BO-39U:PS-CH    BO-39U:PS-CV    BO-41U:PS-CH    BO-41U:PS
 BO-17:CO-PSCtrl        BO-43U:PS-CH    BO-43U:PS-CV    BO-45U:PS-CH    BO-45U:PS-CV
 BO-19:CO-PSCtrl        BO-47U:PS-CH    BO-47U:PS-CV    BO-49D:PS-CH    BO-49U:PS-CV
 
+# --- TB (Linac-Booster) Transport Line
+
+TB-Glob:CO-PSCtrl      TB-Fam:PS-B
+
+TB-Glob:CO-PSCtrl-1    TB-01:PS-QD1    TB-01:PS-QF1
+TB-Glob:CO-PSCtrl-2    TB-02:PS-QD2A   TB-02:PS-QF2A   TB-02:PS-QD2B   TB-02:PS-QF2B
+TB-Glob:CO-PSCtrl-3    TB-03:PS-QD3    TB-03:PS-QF3    TB-04:PS-QD4    TB-04:PS-QF4
+TB-Glob:CO-PSCtrl-4    TB-01:PS-CH-1   TB-01:PS-CV-1   TB-01:PS-CH-2   TB-01:PS-CV-2
+TB-Glob:CO-PSCtrl-5    TB-02:PS-CH-1   TB-02:PS-CV-1   TB-02:PS-CH-2   TB-02:PS-CV-2
+TB-Glob:CO-PSCtrl-6    TB-03:PS-CH     TB-04:PS-CV-1   TB-04:PS-CV-2
+
+TB-Glob:CO-PSCtrl-7    AS-Glob:PS-DCLink
+
+# --- TS (Booster-Storage) Transport Line
+
+TS-Glob:CO-PSCtrl      TS-Fam:PS-B
+
+TS-Glob:CO-PSCtrl-1    TS-01:PS-QF1A   TS-01:PS-QF1B    TS-02:PS-QD2    TS-02:PS-QF2
+TS-Glob:CO-PSCtrl-2    TS-03:PS-QF3    TS-04:PS-QD4A    TS-04:PS-QF4    TS-04:PS-QD4B
+
+TS-Glob:CO-PSCtrl-3    TS-01:PS-CV-1  TS-01:PS-CH    TS-01:PS-CV-2  TS-02:PS-CH
+TS-Glob:CO-PSCtrl-4    TS-02:PS-CV    TS-03:PS-CH    TS-03:PS-CV    TS-04:PS-CV-1
+TS-Glob:CO-PSCtrl-5    TS-04:PS-CH    TS-04:PS-CV-2
+
+
 # --- Sirius Dipoles
 
 SI-Glob:CO-PSCtrl-1    SI-Fam:PS-B1B2-1    SI-Fam:PS-B1B2-2
@@ -44,7 +97,7 @@ SI-Glob:CO-PSCtrl-2    SI-Fam:PS-QFA    SI-Fam:PS-QDA
 SI-Glob:CO-PSCtrl-3    SI-Fam:PS-QFB    SI-Fam:PS-QDB1    SI-Fam:PS-QDB2
 SI-Glob:CO-PSCtrl-4    SI-Fam:PS-QFP    SI-Fam:PS-QDP1    SI-Fam:PS-QDP2
 # SI-Glob:CO-PSCtrl-3  SI-Fam:PS-QB1    SI-Fam:PS-QB2
-SI-Glob:CO-PSCtrl-5    SI-Fam:PS-Q1    SI-Fam:PS-Q2    SI-Fam:PS-Q3    SI-Fam:PS-Q4
+SI-Glob:CO-PSCtrl-5    SI-Fam:PS-Q1     SI-Fam:PS-Q2      SI-Fam:PS-Q3    SI-Fam:PS-Q4
 
 # --- Sirius Sextupole Families
 
@@ -312,28 +365,6 @@ SI-18:CO-PSCtrl-12     SI-18C2:PS-FCH    SI-18C2:PS-FCV    SI-18C3:PS-FCH    SI-
 SI-19:CO-PSCtrl-12     SI-19C2:PS-FCH    SI-19C2:PS-FCV    SI-19C3:PS-FCH    SI-19C3:PS-FCV
 SI-20:CO-PSCtrl-12     SI-20C2:PS-FCH    SI-20C2:PS-FCV    SI-20C3:PS-FCH    SI-20C3:PS-FCV
 
-# --- TB (Linac-Booster) Transport Line
-
-TB-Glob:CO-PSCtrl    TB-Fam:PS-B
-
-TB-Glob:CO-PSCtrl-1    TB-01:PS-QD1    TB-01:PS-QF1    TB-02:PS-QD2A    TB-02:PS-QF2A
-TB-Glob:CO-PSCtrl-2    TB-02:PS-QD2B   TB-02:PS-QF2B   TB-03:PS-QD3    TB-03:PS-QF3
-TB-Glob:CO-PSCtrl-3    TB-04:PS-QD4    TB-04:PS-QF4
-
-TB-Glob:CO-PSCtrl-4    TB-01:PS-CH-1    TB-01:PS-CV-1    TB-01:PS-CH-2    TB-01:PS-CV-2
-TB-Glob:CO-PSCtrl-5    TB-02:PS-CH-1    TB-02:PS-CV-1    TB-02:PS-CH-2
-TB-Glob:CO-PSCtrl-6    TB-02:PS-CV-2    TB-03:PS-CH     TB-04:PS-CV-1    TB-04:PS-CV-2
-
-# --- TS (Booster-Storage) Transport Line
-
-TS-Glob:CO-PSCtrl    TS-Fam:PS-B
-
-TS-Glob:CO-PSCtrl-1    TS-01:PS-QF1A   TS-01:PS-QF1B    TS-02:PS-QD2    TS-02:PS-QF2
-TS-Glob:CO-PSCtrl-2    TS-03:PS-QF3    TS-04:PS-QD4A    TS-04:PS-QF4    TS-04:PS-QD4B
-
-TS-Glob:CO-PSCtrl-3    TS-01:PS-CV-1  TS-01:PS-CH    TS-01:PS-CV-2  TS-02:PS-CH
-TS-Glob:CO-PSCtrl-4    TS-02:PS-CV    TS-03:PS-CH    TS-03:PS-CV    TS-04:PS-CV-1
-TS-Glob:CO-PSCtrl-5    TS-04:PS-CH    TS-04:PS-CV-2
 
 # --- Pulsed Power Supplies (Fake BBB names) ---
 
