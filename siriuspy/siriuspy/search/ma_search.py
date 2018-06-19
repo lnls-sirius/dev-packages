@@ -47,7 +47,7 @@ class MASearch:
         """Get unit of SP limits."""
         if MASearch._maname_2_splims_dict is None:
             MASearch._reload_maname_2_splims_dict()
-        if psmodel in ('FBP', 'FAC', 'FAC_2P4S'):
+        if psmodel in ('FBP', 'FAC', 'FAC_2P4S_DCDC'):
             return MASearch._splims_ma_unit
         else:
             raise ValueError('units not def for ' + psmodel)
