@@ -628,9 +628,9 @@ def _get_model_db(psmodel):
         database = _get_ps_FBP_DCLink_propty_database()
     elif psmodel in ('FAC'):
         database = _get_ps_FAC_propty_database()
-    elif psmodel in ('FAC_2S'):
+    elif psmodel in ('FAC_2S_DCDC'):
         database = _get_ps_FAC_2S_propty_database()
-    elif psmodel in ('FAC_2P4S'):
+    elif psmodel in ('FAC_2P4S_DCDC'):
         database = _get_ps_FAC_2P4S_propty_database()
     elif psmodel in ('FAP'):
         database = _get_ps_FAP_propty_database()
