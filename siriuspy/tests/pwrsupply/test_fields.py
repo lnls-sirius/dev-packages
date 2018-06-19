@@ -39,20 +39,10 @@ class TestCmdSetpoint(unittest.TestCase):
         self.assertFalse(self.setpoint.apply(0))
         self.assertFalse(self.setpoint.apply(-1))
 
-    def test_check_returns_false(self):
-        """Test check setpoint with value 0 returns false."""
-        self.assertFalse(self.setpoint.check(0))
-        self.assertFalse(self.setpoint.check(-1))
-
     def test_apply_returns_true(self):
         """Test apply setpoint with value > 0 returns True."""
         self.assertTrue(self.setpoint.apply(1))
         self.assertTrue(self.setpoint.apply(10))
-
-    def test_check_returns_true(self):
-        """Test check setpoint with value > 0 returns True."""
-        self.assertTrue(self.setpoint.check(1))
-        self.assertTrue(self.setpoint.check(10))
 
     def test_apply_increment_value(self):
         """Test apply increments setpoint by 1."""
@@ -99,16 +89,6 @@ class TestPSetpoint(unittest.TestCase):
         self.assertFalse(self.setpoint.apply(-11.0))
         self.assertEqual(self.setpoint.value, 0.0)
 
-    def test_check_returns_false(self):
-        """Test check setpoint with value 0 returns false."""
-        self.assertFalse(self.setpoint.check(11.0))
-        self.assertFalse(self.setpoint.check(-11.0))
-
-    def test_check_returns_true(self):
-        """Test check setpoint with value > 0 returns True."""
-        self.assertTrue(self.setpoint.check(9.0))
-        self.assertTrue(self.setpoint.check(-9.0))
-
     def test_apply_returns_true(self):
         """Test apply setpoint with value > 0 returns True."""
         self.assertEqual(self.setpoint.value, 0.0)
@@ -150,17 +130,6 @@ class TestSelSetpoint(unittest.TestCase):
         self.assertEqual(self.setpoint.value, 0)
         self.assertFalse(self.setpoint.apply(-1))
         self.assertEqual(self.setpoint.value, 0)
-
-    def test_check_returns_false(self):
-        """Test check setpoint out of range."""
-        self.assertFalse(self.setpoint.check(4))
-        self.assertFalse(self.setpoint.check(-1))
-
-    def test_check_returns_true(self):
-        """Test check setpoint out of range."""
-        self.assertTrue(self.setpoint.check(0))
-        self.assertTrue(self.setpoint.check(1))
-        self.assertTrue(self.setpoint.check(2))
 
     def test_apply(self):
         """Test apply with value in range."""
