@@ -1,0 +1,169 @@
+"""Test fields module."""
+import unittest
+
+from siriuspy.pwrsupply.fields import Setpoint
+
+
+class TestSetpointMatch(unittest.TestCase):
+    """Test setpoint match."""
+
+    def test_match_sp(self):
+        """Test sp."""
+        self.assertTrue(Setpoint.match('Fake-SP'))
+
+    def test_match_sel(self):
+        """Test sel."""
+        self.assertTrue(Setpoint.match('Fake-Sel'))
+
+    def test_match_cmd(self):
+        """Test cmd."""
+        self.assertTrue(Setpoint.match('Fake-Cmd'))
+
+    def test_match_strange(self):
+        """Test strange fields."""
+        self.assertFalse(Setpoint.match('Fake-RB'))
+        self.assertFalse(Setpoint.match('Fake-Sts'))
+
+
+class TestCmdSetpoint(unittest.TestCase):
+    """Test setpoint class."""
+
+    def setUp(self):
+        """Common setup."""
+        self.field = 'Fake-Cmd'
+        self.db = {'type': 'int', 'value': 0}
+        self.setpoint = Setpoint(self.field, self.db)
+
+    def test_apply_returns_false(self):
+        """Test apply setpoint with value 0 returns false."""
+        self.assertFalse(self.setpoint.apply(0))
+        self.assertFalse(self.setpoint.apply(-1))
+
+    def test_check_returns_false(self):
+        """Test check setpoint with value 0 returns false."""
+        self.assertFalse(self.setpoint.check(0))
+        self.assertFalse(self.setpoint.check(-1))
+
+    def test_apply_returns_true(self):
+        """Test apply setpoint with value > 0 returns True."""
+        self.assertTrue(self.setpoint.apply(1))
+        self.assertTrue(self.setpoint.apply(10))
+
+    def test_check_returns_true(self):
+        """Test check setpoint with value > 0 returns True."""
+        self.assertTrue(self.setpoint.check(1))
+        self.assertTrue(self.setpoint.check(10))
+
+    def test_apply_increment_value(self):
+        """Test apply increments setpoint by 1."""
+        self.assertEqual(self.setpoint.value, 0)
+        self.setpoint.apply(1)
+        self.assertEqual(self.setpoint.value, 1)
+        self.setpoint.apply(1)
+        self.assertEqual(self.setpoint.value, 2)
+
+
+class TestPSetpoint(unittest.TestCase):
+    """Test setpoints sp."""
+
+    def setUp(self):
+        """Common setup."""
+        self.field = 'Fake-SP'
+        self.db = {'type': 'float',
+                   'value': 0.0,
+                   'lolo': -10.0,
+                   'hihi': 10.0}
+        self.setpoint = Setpoint(self.field, self.db)
+
+    def test_init(self):
+        """Test constructor."""
+        self.assertEqual(self.setpoint.value, 0.0)
+        self.assertEqual(self.setpoint.field, self.field)
+        self.assertEqual(self.setpoint.database, self.db)
+        self.assertFalse(self.setpoint.is_cmd)
+        self.assertEqual(self.setpoint.type, 'float')
+        self.assertIsNone(self.setpoint.count)
+        self.assertEqual(self.setpoint.enums, None)
+        self.assertEqual(self.setpoint.low, -10.0)
+        self.assertEqual(self.setpoint.high, 10.0)
+
+    def test_apply_above_limit(self):
+        """Test apply setpoint with value above limit returns false."""
+        self.assertEqual(self.setpoint.value, 0.0)
+        self.assertFalse(self.setpoint.apply(11.0))
+        self.assertEqual(self.setpoint.value, 0.0)
+
+    def test_apply_below_limit(self):
+        """Test apply setpoint with value below limit returns false."""
+        self.assertEqual(self.setpoint.value, 0.0)
+        self.assertFalse(self.setpoint.apply(-11.0))
+        self.assertEqual(self.setpoint.value, 0.0)
+
+    def test_check_returns_false(self):
+        """Test check setpoint with value 0 returns false."""
+        self.assertFalse(self.setpoint.check(11.0))
+        self.assertFalse(self.setpoint.check(-11.0))
+
+    def test_check_returns_true(self):
+        """Test check setpoint with value > 0 returns True."""
+        self.assertTrue(self.setpoint.check(9.0))
+        self.assertTrue(self.setpoint.check(-9.0))
+
+    def test_apply_returns_true(self):
+        """Test apply setpoint with value > 0 returns True."""
+        self.assertEqual(self.setpoint.value, 0.0)
+        self.assertTrue(self.setpoint.apply(9.0))
+        self.assertEqual(self.setpoint.value, 9.0)
+
+
+class TestSelSetpoint(unittest.TestCase):
+    """Test sel setpoints."""
+
+    def setUp(self):
+        """Common setup."""
+        self.field = 'Fake-Sel'
+        self.db = {'type': 'enum',
+                   'value': 0,
+                   'enums': ('StateA', 'StateB', 'StateC')}
+        self.setpoint = Setpoint(self.field, self.db)
+
+    def test_init(self):
+        """Test constructor."""
+        self.assertEqual(self.setpoint.value, 0)
+        self.assertEqual(self.setpoint.field, self.field)
+        self.assertEqual(self.setpoint.database, self.db)
+        self.assertFalse(self.setpoint.is_cmd)
+        self.assertEqual(self.setpoint.type, 'enum')
+        self.assertIsNone(self.setpoint.count)
+        self.assertEqual(self.setpoint.enums, ('StateA', 'StateB', 'StateC'))
+        self.assertEqual(self.setpoint.low, None)
+        self.assertEqual(self.setpoint.high, None)
+
+    def test_apply_above_limit(self):
+        """Test apply setpoint out of range."""
+        self.assertEqual(self.setpoint.value, 0)
+        self.assertFalse(self.setpoint.apply(4))
+        self.assertEqual(self.setpoint.value, 0)
+
+    def test_apply_below_limit(self):
+        """Test apply setpoint out of range."""
+        self.assertEqual(self.setpoint.value, 0)
+        self.assertFalse(self.setpoint.apply(-1))
+        self.assertEqual(self.setpoint.value, 0)
+
+    def test_check_returns_false(self):
+        """Test check setpoint out of range."""
+        self.assertFalse(self.setpoint.check(4))
+        self.assertFalse(self.setpoint.check(-1))
+
+    def test_check_returns_true(self):
+        """Test check setpoint out of range."""
+        self.assertTrue(self.setpoint.check(0))
+        self.assertTrue(self.setpoint.check(1))
+        self.assertTrue(self.setpoint.check(2))
+
+    def test_apply(self):
+        """Test apply with value in range."""
+        self.assertEqual(self.setpoint.value, 0)
+        self.setpoint.apply(1)
+        self.assertEqual(self.setpoint.value, 1)
