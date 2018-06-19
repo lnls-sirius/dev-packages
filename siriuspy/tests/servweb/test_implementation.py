@@ -72,6 +72,7 @@ class TestServWeb(unittest.TestCase):
         'ps_psmodels_read',
         'pu_psmodels_read',
         'beaglebone_power_supplies_mapping',
+        'beaglebone_bsmp_mapping',
         'crate_to_bpm_mapping',
         'bpms_data',
         'timing_devices_mapping',
@@ -213,6 +214,11 @@ class TestServWeb(unittest.TestCase):
         mock_read.assert_has_calls([
             mock.call(url, timeout=1.0),
             mock.call(url, timeout=2.0)])
+
+    def test_beaglebone_bsmp_mapping(self, mock_read):
+        """Test beaglebnoe_bsmp_mapping."""
+        # TODO: implement!
+        pass
 
     def test_beaglebone_power_supplies_mapping(self, mock_read):
         """Test beaglebone_power_supplies_mapping."""

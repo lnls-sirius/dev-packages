@@ -67,7 +67,7 @@ class TestMASearch(unittest.TestCase):
         'conv_psname_2_maname',
         'conv_psname_2_maname_pwrsupply',
         'get_maname_2_splims_dict',
-        'check_maname_ispulsed'
+        # 'check_maname_ispulsed'
     )
 
     maname2trims = {
@@ -102,7 +102,8 @@ class TestMASearch(unittest.TestCase):
         'TS-01:MA-CV-2': {'TS-01:PS-CV-2': 'corrector-vertical'},
         'BO-01D:PM-InjKckr': {'BO-01D:PU-InjKckr': 'corrector-horizontal'},
         'TB-04:PM-InjSept': {'TB-04:PU-InjSept': 'corrector-horizontal'},
-        'SI-01SA:PM-InjNLKckr': {'SI-01SA:PU-InjNLKckr': 'corrector-horizontal'},
+        'SI-01SA:PM-InjNLKckr':
+            {'SI-01SA:PU-InjNLKckr': 'corrector-horizontal'},
     }
 
     maname2psnames = {
@@ -203,8 +204,8 @@ class TestMASearch(unittest.TestCase):
 
     def test_get_splims_unit(self):
         """Test get_splims_unit."""
-        self.assertEqual(MASearch.get_splims_unit(True), ['V', 'Voltage'])
-        self.assertEqual(MASearch.get_splims_unit(False), ['A', 'Ampere'])
+        # self.assertEqual(MASearch.get_splims_unit(True), ['V', 'Voltage'])
+        self.assertEqual(MASearch.get_splims_unit('FBP'), ['A', 'Ampere'])
 
     def test_get_splims(self):
         """Test get_pwrsupply_manames and get_splims."""
@@ -260,16 +261,6 @@ class TestMASearch(unittest.TestCase):
         for psname, maname in TestMASearch.psname2maname_pwrsupply.items():
             self.assertEqual(MASearch.conv_psname_2_maname_pwrsupply(psname),
                              maname)
-
-    def test_check_maname_ispulsed(self):
-        """Test check_maname_ispulsed."""
-        for maname in TestMASearch.maname2trims:
-            if ":PM" in maname:
-                self.assertTrue(MASearch.check_maname_ispulsed(maname))
-            elif ":MA" in maname:
-                self.assertFalse(MASearch.check_maname_ispulsed(maname))
-        self.assertRaises(KeyError,
-                          MASearch.check_maname_ispulsed, maname='A-B:C-D:E')
 
     def test_get_maname_2_splims_dict(self):
         """Test get_maname_2_splims_dict."""

@@ -39,6 +39,7 @@ public_interface = (
     'Const',
     'get_ps_current_unit',
     'get_pu_current_unit',
+    'get_basic_propty_database',
     'get_common_propty_database',
     'get_common_pu_propty_database',
     'get_common_pu_SI_InjKicker_propty_database',
@@ -103,13 +104,11 @@ class TestPwrSupply(unittest.TestCase):
                   'high': 4.0, 'hihi': 5.0}
             return db[alarm]
 
-        def get_splims_unit(ispulsed):
-            if ispulsed is True:
-                return ['V', 'Voltage']
-            elif ispulsed is False:
+        def get_splims_unit(psmodel):
+            if psmodel in ('FBP', 'FAC', 'FAP', 'FAC_2S', 'FAC_2P4S'):
                 return ['A', 'Ampere']
             else:
-                raise ValueError
+                return ['V', 'Voltage']
 
         if _mock_flag:
             _PSSearch_patcher = mock.patch(
@@ -120,6 +119,7 @@ class TestPwrSupply(unittest.TestCase):
             self.m_PSSearch.get_pstype_names.return_value = \
                 TestPwrSupply.pstypes
             self.m_PSSearch.get_splims.side_effect = get_splims
+            self.m_PSSearch.conv_psname_2_psmodel.return_value = 'FBP'
             _MASearch_patcher = mock.patch(
                 'siriuspy.csdevice.pwrsupply._MASearch', autospec=True)
             self.addCleanup(_MASearch_patcher.stop)
@@ -160,6 +160,13 @@ class TestPwrSupply(unittest.TestCase):
         self.assertIsInstance(unit, (list, tuple))
         self.assertEqual(unit[0], 'V')
         self.assertEqual(unit[1], 'Voltage')
+
+    def test_basic_propty_database(self):
+        """Test common_propty_database."""
+        db = pwrsupply.get_basic_propty_database()
+        self.assertIsInstance(db, dict)
+        for prop in db:
+            self.assertIsInstance(db[prop], dict)
 
     def test_common_propty_database(self):
         """Test common_propty_database."""

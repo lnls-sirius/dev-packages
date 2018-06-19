@@ -51,8 +51,8 @@ class PSSearch:
             PSSearch._reload_bbb_2_bsmps_dict()
         # if PSSearch._psname_2_bbbname_dict is None:
         #     PSSearch._reload_bbb_2_psname_dict()
-        return sorted(_Filter.process_filters(PSSearch._bbbnames_list,
-                                              filters=filters))
+        bbname_list = tuple(PSSearch._bbbname_2_bsmps_dict.keys())
+        return sorted(_Filter.process_filters(bbname_list, filters=filters))
 
     @staticmethod
     def get_splims(pstype, label):

@@ -30,7 +30,6 @@ li-solenoid-fam              monopolar        solenoid
 li-solenoid                  monopolar        solenoid
 li-spect                     monopolar        dipole
 
-
 si-quadrupole-q14-trim       bipolar        quadrupole
 si-quadrupole-q20-trim       bipolar        quadrupole
 si-quadrupole-q30-trim       bipolar        quadrupole
@@ -60,3 +59,10 @@ li-corrector-ch-long         bipolar        corrector-horizontal
 li-corrector-cv-long         bipolar        corrector-vertical
 li-corrector-ch-short        bipolar        corrector-horizontal
 li-corrector-cv-short        bipolar        corrector-vertical
+
+
+# DCLinks
+# -------
+
+bo-dclink-fac                none            none
+as-dclink-fbp                none            none
