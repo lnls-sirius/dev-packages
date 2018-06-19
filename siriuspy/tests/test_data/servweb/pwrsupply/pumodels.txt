@@ -1,18 +1,18 @@
 # Pulsed Power Supply to Model Mapping
 # ====================================
 
-TB-04:PU-InjSept       FBP
+TB-04:PU-InjSept       FP
 
-BO-01D:PU-InjKckr      FBP
-BO-48D:PU-EjeKckr      FBP
+BO-01D:PU-InjKckr      FP
+BO-48D:PU-EjeKckr      FP
 
-TS-04:PU-InjSeptG-1    FBP
-TS-04:PU-InjSeptG-2    FBP
-TS-04:PU-InjSeptF      FBP
-TS-01:PU-EjeSeptG      FBP
-TS-01:PU-EjeSeptF      FBP
+TS-04:PU-InjSeptG-1    FP
+TS-04:PU-InjSeptG-2    FP
+TS-04:PU-InjSeptF      FP
+TS-01:PU-EjeSeptG      FP
+TS-01:PU-EjeSeptF      FP
 
-SI-01SA:PU-InjDpKckr   FBP
-SI-01SA:PU-InjNLKckr   FBP
-SI-01SA:PU-PingH    FBP
-SI-19C4:PU-PingV    FBP
+SI-01SA:PU-InjDpKckr   FP
+SI-01SA:PU-InjNLKckr   FP
+SI-01SA:PU-PingH       FP
+SI-19C4:PU-PingV       FP

@@ -26,13 +26,15 @@ class CommandFactory:
             return CommandFactory._get_FBP(epics_field, pru_controller)
         elif psmodel == 'FBP_DCLink':
             return CommandFactory._get_FBP_DCLink(epics_field, pru_controller)
+        elif psmodel == 'FAC':
+            return CommandFactory._get_FAC(epics_field, pru_controller)
         else:
             raise NotImplementedError('Fields not implemented for ' + psmodel)
 
     def _get_FBP(epics_field, pru_controller):
         _c = _bsmp.ConstFBP
         if epics_field == 'PwrState-Sel':
-            return PSPwrStateFBP(pru_controller)
+            return PSPwrState(pru_controller)
         elif epics_field == 'CtrlLoop-Sel':
             return CtrlLoop(pru_controller)
         elif epics_field == 'OpMode-Sel':
@@ -68,6 +70,31 @@ class CommandFactory:
             return Command(pru_controller, _c.F_RESET_INTERLOCKS)
         elif epics_field == 'Abort-Cmd':
             return NullCommand()
+        else:
+            return NullCommand()
+
+    def _get_FAC(epics_field, pru_controller):
+        _c = _bsmp.ConstFAC_DCDC
+        if epics_field == 'PwrState-Sel':
+            return PSPwrState(pru_controller)
+        elif epics_field == 'CtrlLoop-Sel':
+            return CtrlLoop(pru_controller)
+        elif epics_field == 'OpMode-Sel':
+            return PSOpMode(Command(pru_controller, _c.F_SELECT_OP_MODE))
+        elif epics_field == 'Current-SP':
+            return Setpoint(pru_controller)
+        elif epics_field == 'Reset-Cmd':
+            return Command(pru_controller, _c.F_RESET_INTERLOCKS)
+        elif epics_field == 'Abort-Cmd':
+            return NullCommand()
+        elif epics_field == 'CycleDsbl-Cmd':
+            return Command(pru_controller, _c.F_DISABLE_SIGGEN)
+        elif epics_field in ('CycleType-Sel', 'CycleNrCycles-SP',
+                             'CycleFreq-SP', 'CycleAmpl-SP',
+                             'CycleOffset-SP', 'CycleAuxParam-SP'):
+            return Command(pru_controller, _c.F_CFG_SIGGEN)
+        elif epics_field == 'WfmData-SP':
+            return PRUCurveCommand(pru_controller)
         else:
             return NullCommand()
 
@@ -146,8 +173,8 @@ class CtrlLoop:
             _time.sleep(_delay_loop_open_close)
 
 
-class PSPwrStateFBP:
-    """Adapter to deal with FBP turn on/off commands."""
+class PSPwrState:
+    """Adapter to deal with FBP and FAC turn on/off commands."""
 
     def __init__(self, pru_controller):
         """Define commands."""
@@ -180,10 +207,12 @@ class PSPwrStateFBP_DCLink:
         """Execute Command."""
         if value == 1:
             self.turn_on.execute(device_ids)
-            _time.sleep(0.3)
+            _time.sleep(_delay_turn_on_off)
             self.open_loop.execute(device_ids)
+            _time.sleep(_delay_loop_open_close)
         elif value == 0:
             self.turn_off.execute(device_ids)
+            _time.sleep(_delay_turn_on_off)
 
 
 class PSOpMode:

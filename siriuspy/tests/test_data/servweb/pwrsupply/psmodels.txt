@@ -1,119 +1,207 @@
-# Power Supply to Model Mapping
-# =============================
+# Power Supply to Power Supply Model Mapping
+# ==========================================
+#
+# TODO: Update deprecated BBB names!!! (2018-05-29)
+# TODO: this is a temporary version based on
+#        https://cnpemcamp-my.sharepoint.com/:b:/g/personal/cleber_rodrigues_lnls_br/EYay5Qhtb0tOoBr-t-4TVhIBsPemqeQhG59vq8WgO2K-EQ?e=CgggsR
 
-# --- Booster Family power supplies
 
-BO-Fam:PS-B-1       FBP
-BO-Fam:PS-B-2       FBP
-BO-Fam:PS-QF        FBP         
-BO-Fam:PS-QD        FBP
-BO-Fam:PS-SD        FBP
-BO-Fam:PS-SF        FBP
+# --- Booster dipole, quandrupole and sextupole power supplies (FAC) (Slide 1)
 
-# --- Booster correctors
+BO-Fam:PS-SD                  FAC_DCDC
+BO-Fam:PS-SF                  FAC_DCDC
+BO-Fam:PS-QD                  FAC_DCDC
+BO-Glob:PS-DCLinkFAC          FAC_ACDC
 
-BO-01U:PS-CH        FBP
-BO-01U:PS-CV        FBP
-BO-03U:PS-CH        FBP
-BO-03U:PS-CV        FBP
-BO-05U:PS-CH        FBP
-BO-05U:PS-CV        FBP
-BO-07U:PS-CH        FBP
-BO-07U:PS-CV        FBP
-BO-09U:PS-CH        FBP
-BO-09U:PS-CV        FBP
-BO-11U:PS-CH        FBP
-BO-11U:PS-CV        FBP
-BO-13U:PS-CH        FBP
-BO-13U:PS-CV        FBP
-BO-15U:PS-CH        FBP
-BO-15U:PS-CV        FBP
-BO-17U:PS-CH        FBP
-BO-17U:PS-CV        FBP
-BO-19U:PS-CH        FBP
-BO-19U:PS-CV        FBP
-BO-21U:PS-CH        FBP
-BO-21U:PS-CV        FBP
-BO-23U:PS-CH        FBP
-BO-23U:PS-CV        FBP
-BO-25U:PS-CH        FBP
-BO-25U:PS-CV        FBP
-BO-27U:PS-CH        FBP
-BO-27U:PS-CV        FBP
-BO-29U:PS-CH        FBP
-BO-29U:PS-CV        FBP
-BO-31U:PS-CH        FBP
-BO-31U:PS-CV        FBP
-BO-33U:PS-CH        FBP
-BO-33U:PS-CV        FBP
-BO-35U:PS-CH        FBP
-BO-35U:PS-CV        FBP
-BO-37U:PS-CH        FBP
-BO-37U:PS-CV        FBP
-BO-39U:PS-CH        FBP
-BO-39U:PS-CV        FBP
-BO-41U:PS-CH        FBP
-BO-41U:PS-CV        FBP
-BO-43U:PS-CH        FBP
-BO-43U:PS-CV        FBP
-BO-45U:PS-CH        FBP
-BO-45U:PS-CV        FBP
-BO-47U:PS-CH        FBP
-BO-47U:PS-CV        FBP
-BO-49D:PS-CH        FBP
-BO-49U:PS-CV        FBP
+BO-Fam:PS-QF                  FAC_2S_DCDC
+BO-Glob:PS-DCLinkFAC2S        FAC_2S_ACDC
 
-# -- Booster Quadrupole skew --
+BO-Fam:PS-B-1                 FAC_2P4S_DCDC
+BO-Glob:PS-DCLinkFAC2P4S-1    FAC_2P4S_ACDC
+BO-Glob:PS-DCLinkFAC2P4S-2    FAC_2P4S_ACDC
+BO-Glob:PS-DCLinkFAC2P4S-3    FAC_2P4S_ACDC
+BO-Glob:PS-DCLinkFAC2P4S-4    FAC_2P4S_ACDC
+BO-Glob:PS-DCLinkFAC2P4S-5    FAC_2P4S_ACDC
+BO-Glob:PS-DCLinkFAC2P4S-6    FAC_2P4S_ACDC
+BO-Glob:PS-DCLinkFAC2P4S-7    FAC_2P4S_ACDC
+BO-Glob:PS-DCLinkFAC2P4S-8    FAC_2P4S_ACDC
 
-BO-02D:PS-QS	    FBP
+BO-Fam:PS-B-2                 FAC_2P4S_DCDC
+BO-Glob:PS-DCLinkFAC2P4S-9    FAC_2P4S_ACDC
+BO-Glob:PS-DCLinkFAC2P4S-10   FAC_2P4S_ACDC
+BO-Glob:PS-DCLinkFAC2P4S-11   FAC_2P4S_ACDC
+BO-Glob:PS-DCLinkFAC2P4S-12   FAC_2P4S_ACDC
+BO-Glob:PS-DCLinkFAC2P4S-13   FAC_2P4S_ACDC
+BO-Glob:PS-DCLinkFAC2P4S-14   FAC_2P4S_ACDC
+BO-Glob:PS-DCLinkFAC2P4S-15   FAC_2P4S_ACDC
+BO-Glob:PS-DCLinkFAC2P4S-16   FAC_2P4S_ACDC
+
+
+# --- Transport line power supplies (FAP & FBP) (Slide 2)
+
+TB-Fam:PS-B                   Commercial
+
+TS-Fam:PS-B                   FAP_4P_Master
+TS-Fam:PS-B-Slave             FAP_4P_Slave
+
+TB-01:PS-QD1                  FBP
+TB-01:PS-QF1                  FBP
+TB-02:PS-QD2A                 FBP
+TB-02:PS-QF2A                 FBP
+TB-02:PS-QD2B                 FBP
+TB-02:PS-QF2B                 FBP
+TB-03:PS-QD3                  FBP
+TB-03:PS-QF3                  FBP
+TB-04:PS-QD4                  FBP
+TB-04:PS-QF4                  FBP
+
+TB-01:PS-CH-1                 FBP
+TB-01:PS-CV-1                 FBP
+TB-01:PS-CH-2                 FBP
+TB-01:PS-CV-2                 FBP
+TB-02:PS-CH-1                 FBP
+TB-02:PS-CV-1                 FBP
+TB-02:PS-CH-2                 FBP
+TB-02:PS-CV-2                 FBP
+TB-03:PS-CH                   FBP
+TB-04:PS-CV-1                 FBP
+TB-04:PS-CV-2                 FBP
+
+TS-01:PS-CH                   FBP
+TS-01:PS-CV-1                 FBP
+TS-01:PS-CV-2                 FBP
+TS-02:PS-CH                   FBP
+TS-02:PS-CV                   FBP
+TS-03:PS-CH                   FBP
+TS-03:PS-CV                   FBP
+TS-04:PS-CH                   FBP
+TS-04:PS-CV-1                 FBP
+TS-04:PS-CV-2                 FBP
+
+AS-Glob:PS-DCLinkFBP-1        FBP_DCLink
+
+TS-01:PS-QF1A                 FAP
+TS-01:PS-QF1B                 FAP
+TS-02:PS-QD2                  FAP
+TS-04:PS-QD4A                 FAP
+TS-04:PS-QD4B                 FAP
+
+TS-02:PS-QF2                  FAP
+TS-03:PS-QF3                  FAP
+TS-04:PS-QF4                  FAP
+
+
+# --- Booster and Storage Ring power supplies (FBP) (Slide 3)
+
+BO-01U:PS-CH                  FBP
+BO-01U:PS-CV                  FBP
+BO-03U:PS-CH                  FBP
+BO-03U:PS-CV                  FBP
+BO-05U:PS-CH                  FBP
+BO-05U:PS-CV                  FBP
+BO-07U:PS-CH                  FBP
+BO-07U:PS-CV                  FBP
+BO-09U:PS-CH                  FBP
+BO-09U:PS-CV                  FBP
+BO-11U:PS-CH                  FBP
+BO-11U:PS-CV                  FBP
+BO-13U:PS-CH                  FBP
+BO-13U:PS-CV                  FBP
+BO-15U:PS-CH                  FBP
+BO-15U:PS-CV                  FBP
+BO-17U:PS-CH                  FBP
+BO-17U:PS-CV                  FBP
+BO-19U:PS-CH                  FBP
+BO-19U:PS-CV                  FBP
+BO-21U:PS-CH                  FBP
+BO-21U:PS-CV                  FBP
+BO-23U:PS-CH                  FBP
+BO-23U:PS-CV                  FBP
+BO-25U:PS-CH                  FBP
+BO-25U:PS-CV                  FBP
+BO-27U:PS-CH                  FBP
+BO-27U:PS-CV                  FBP
+BO-29U:PS-CH                  FBP
+BO-29U:PS-CV                  FBP
+BO-31U:PS-CH                  FBP
+BO-31U:PS-CV                  FBP
+BO-33U:PS-CH                  FBP
+BO-33U:PS-CV                  FBP
+BO-35U:PS-CH                  FBP
+BO-35U:PS-CV                  FBP
+BO-37U:PS-CH                  FBP
+BO-37U:PS-CV                  FBP
+BO-39U:PS-CH                  FBP
+BO-39U:PS-CV                  FBP
+BO-41U:PS-CH                  FBP
+BO-41U:PS-CV                  FBP
+BO-43U:PS-CH                  FBP
+BO-43U:PS-CV                  FBP
+BO-45U:PS-CH                  FBP
+BO-45U:PS-CV                  FBP
+BO-47U:PS-CH                  FBP
+BO-47U:PS-CV                  FBP
+BO-49D:PS-CH                  FBP
+BO-49U:PS-CV                  FBP
+
+BO-02D:PS-QS	                FBP
+
+AS-Glob:PS-DCLinkFBP-2        FBP_DCLink
+
+
+
+
 
 # --- Sirius Dipoles
 
-SI-Fam:PS-B1B2-1    FBP
-SI-Fam:PS-B1B2-2    FBP
+SI-Fam:PS-B1B2-1    FAP_2P2S_MASTER
+SI-Fam:PS-B1B2-2    FAP_2P2S_MASTER
 
 # --- Sirius Quadrupole Families
 
-SI-Fam:PS-QFA       FBP
-SI-Fam:PS-QDA       FBP
-SI-Fam:PS-QB1       FBP
-SI-Fam:PS-QB2       FBP
-SI-Fam:PS-QFB       FBP
-SI-Fam:PS-QDB1      FBP
-SI-Fam:PS-QDB2      FBP
-SI-Fam:PS-QFP       FBP
-SI-Fam:PS-QDP1      FBP
-SI-Fam:PS-QDP2      FBP
-SI-Fam:PS-Q1        FBP
-SI-Fam:PS-Q2        FBP
-SI-Fam:PS-Q3        FBP
-SI-Fam:PS-Q4        FBP
+SI-Fam:PS-QFA       FAP
+SI-Fam:PS-QDA       FAP
+
+# TODO: will quadrupole power supply in SI bend magnets exist?!
+# SI-Fam:PS-QB1       FBP
+# SI-Fam:PS-QB2       FBP
+
+SI-Fam:PS-QFB       FAP
+SI-Fam:PS-QDB1      FAP
+SI-Fam:PS-QDB2      FAP
+SI-Fam:PS-QFP       FAP
+SI-Fam:PS-QDP1      FAP
+SI-Fam:PS-QDP2      FAP
+SI-Fam:PS-Q1        FAP
+SI-Fam:PS-Q2        FAP
+SI-Fam:PS-Q3        FAP
+SI-Fam:PS-Q4        FAP
 
 # --- Sirius Sextupole Families
 
-SI-Fam:PS-SDA0      FBP
-SI-Fam:PS-SDB0      FBP
-SI-Fam:PS-SDP0      FBP
-SI-Fam:PS-SFA0      FBP
-SI-Fam:PS-SFB0      FBP
-SI-Fam:PS-SFP0      FBP
-SI-Fam:PS-SDA1      FBP
-SI-Fam:PS-SDA2      FBP
-SI-Fam:PS-SDA3      FBP
-SI-Fam:PS-SDB1      FBP
-SI-Fam:PS-SDB2      FBP
-SI-Fam:PS-SDB3      FBP
-SI-Fam:PS-SDP1      FBP
-SI-Fam:PS-SDP2      FBP
-SI-Fam:PS-SDP3      FBP
-SI-Fam:PS-SFA1      FBP
-SI-Fam:PS-SFA2      FBP
-SI-Fam:PS-SFB1      FBP
-SI-Fam:PS-SFB2      FBP
-SI-Fam:PS-SFP1      FBP
-SI-Fam:PS-SFP2      FBP
+SI-Fam:PS-SDA0      FAP
+SI-Fam:PS-SDB0      FAP
+SI-Fam:PS-SDP0      FAP
+SI-Fam:PS-SFA0      FAP
+SI-Fam:PS-SFB0      FAP
+SI-Fam:PS-SFP0      FAP
+SI-Fam:PS-SDA1      FAP
+SI-Fam:PS-SDA2      FAP
+SI-Fam:PS-SDA3      FAP
+SI-Fam:PS-SDB1      FAP
+SI-Fam:PS-SDB2      FAP
+SI-Fam:PS-SDB3      FAP
+SI-Fam:PS-SDP1      FAP
+SI-Fam:PS-SDP2      FAP
+SI-Fam:PS-SDP3      FAP
+SI-Fam:PS-SFA1      FAP
+SI-Fam:PS-SFA2      FAP
+SI-Fam:PS-SFB1      FAP
+SI-Fam:PS-SFB2      FAP
+SI-Fam:PS-SFP1      FAP
+SI-Fam:PS-SFP2      FAP
 
-# --- Sirius Quadrupole Indivual power supplies
+# --- Sirius Quadrupole Individual power supplies
 
 SI-02M2:PS-QFB      FBP
 SI-02M2:PS-QDB1     FBP
@@ -779,215 +867,164 @@ SI-20M2:PS-QS       FBP
 
 # --- Sirius Fast Correctors
 
-SI-01M2:PS-FCH      FBP
-SI-01M2:PS-FCV      FBP
-SI-01M1:PS-FCH      FBP
-SI-01M1:PS-FCV      FBP
-SI-02M2:PS-FCH      FBP
-SI-02M2:PS-FCV      FBP
-SI-02M1:PS-FCH      FBP
-SI-02M1:PS-FCV      FBP
-SI-03M2:PS-FCH      FBP
-SI-03M2:PS-FCV      FBP
-SI-03M1:PS-FCH      FBP
-SI-03M1:PS-FCV      FBP
-SI-04M2:PS-FCH      FBP
-SI-04M2:PS-FCV      FBP
-SI-04M1:PS-FCH      FBP
-SI-04M1:PS-FCV      FBP
-SI-05M2:PS-FCH      FBP
-SI-05M2:PS-FCV      FBP
-SI-05M1:PS-FCH      FBP
-SI-05M1:PS-FCV      FBP
-SI-06M2:PS-FCH      FBP
-SI-06M2:PS-FCV      FBP
-SI-06M1:PS-FCH      FBP
-SI-06M1:PS-FCV      FBP
-SI-07M2:PS-FCH      FBP
-SI-07M2:PS-FCV      FBP
-SI-07M1:PS-FCH      FBP
-SI-07M1:PS-FCV      FBP
-SI-08M2:PS-FCH      FBP
-SI-08M2:PS-FCV      FBP
-SI-08M1:PS-FCH      FBP
-SI-08M1:PS-FCV      FBP
-SI-09M2:PS-FCH      FBP
-SI-09M2:PS-FCV      FBP
-SI-09M1:PS-FCH      FBP
-SI-09M1:PS-FCV      FBP
-SI-10M2:PS-FCH      FBP
-SI-10M2:PS-FCV      FBP
-SI-10M1:PS-FCH      FBP
-SI-10M1:PS-FCV      FBP
-SI-11M2:PS-FCH      FBP
-SI-11M2:PS-FCV      FBP
-SI-11M1:PS-FCH      FBP
-SI-11M1:PS-FCV      FBP
-SI-12M2:PS-FCH      FBP
-SI-12M2:PS-FCV      FBP
-SI-12M1:PS-FCH      FBP
-SI-12M1:PS-FCV      FBP
-SI-13M2:PS-FCH      FBP
-SI-13M2:PS-FCV      FBP
-SI-13M1:PS-FCH      FBP
-SI-13M1:PS-FCV      FBP
-SI-14M2:PS-FCH      FBP
-SI-14M2:PS-FCV      FBP
-SI-14M1:PS-FCH      FBP
-SI-14M1:PS-FCV      FBP
-SI-15M2:PS-FCH      FBP
-SI-15M2:PS-FCV      FBP
-SI-15M1:PS-FCH      FBP
-SI-15M1:PS-FCV      FBP
-SI-16M2:PS-FCH      FBP
-SI-16M2:PS-FCV      FBP
-SI-16M1:PS-FCH      FBP
-SI-16M1:PS-FCV      FBP
-SI-17M2:PS-FCH      FBP
-SI-17M2:PS-FCV      FBP
-SI-17M1:PS-FCH      FBP
-SI-17M1:PS-FCV      FBP
-SI-18M2:PS-FCH      FBP
-SI-18M2:PS-FCV      FBP
-SI-18M1:PS-FCH      FBP
-SI-18M1:PS-FCV      FBP
-SI-19M2:PS-FCH      FBP
-SI-19M2:PS-FCV      FBP
-SI-19M1:PS-FCH      FBP
-SI-19M1:PS-FCV      FBP
-SI-20M2:PS-FCH      FBP
-SI-20M2:PS-FCV      FBP
-SI-20M1:PS-FCH      FBP
-SI-20M1:PS-FCV      FBP
+SI-01M2:PS-FCH      FBP_FOFB
+SI-01M2:PS-FCV      FBP_FOFB
+SI-01M1:PS-FCH      FBP_FOFB
+SI-01M1:PS-FCV      FBP_FOFB
+SI-02M2:PS-FCH      FBP_FOFB
+SI-02M2:PS-FCV      FBP_FOFB
+SI-02M1:PS-FCH      FBP_FOFB
+SI-02M1:PS-FCV      FBP_FOFB
+SI-03M2:PS-FCH      FBP_FOFB
+SI-03M2:PS-FCV      FBP_FOFB
+SI-03M1:PS-FCH      FBP_FOFB
+SI-03M1:PS-FCV      FBP_FOFB
+SI-04M2:PS-FCH      FBP_FOFB
+SI-04M2:PS-FCV      FBP_FOFB
+SI-04M1:PS-FCH      FBP_FOFB
+SI-04M1:PS-FCV      FBP_FOFB
+SI-05M2:PS-FCH      FBP_FOFB
+SI-05M2:PS-FCV      FBP_FOFB
+SI-05M1:PS-FCH      FBP_FOFB
+SI-05M1:PS-FCV      FBP_FOFB
+SI-06M2:PS-FCH      FBP_FOFB
+SI-06M2:PS-FCV      FBP_FOFB
+SI-06M1:PS-FCH      FBP_FOFB
+SI-06M1:PS-FCV      FBP_FOFB
+SI-07M2:PS-FCH      FBP_FOFB
+SI-07M2:PS-FCV      FBP_FOFB
+SI-07M1:PS-FCH      FBP_FOFB
+SI-07M1:PS-FCV      FBP_FOFB
+SI-08M2:PS-FCH      FBP_FOFB
+SI-08M2:PS-FCV      FBP_FOFB
+SI-08M1:PS-FCH      FBP_FOFB
+SI-08M1:PS-FCV      FBP_FOFB
+SI-09M2:PS-FCH      FBP_FOFB
+SI-09M2:PS-FCV      FBP_FOFB
+SI-09M1:PS-FCH      FBP_FOFB
+SI-09M1:PS-FCV      FBP_FOFB
+SI-10M2:PS-FCH      FBP_FOFB
+SI-10M2:PS-FCV      FBP_FOFB
+SI-10M1:PS-FCH      FBP_FOFB
+SI-10M1:PS-FCV      FBP_FOFB
+SI-11M2:PS-FCH      FBP_FOFB
+SI-11M2:PS-FCV      FBP_FOFB
+SI-11M1:PS-FCH      FBP_FOFB
+SI-11M1:PS-FCV      FBP_FOFB
+SI-12M2:PS-FCH      FBP_FOFB
+SI-12M2:PS-FCV      FBP_FOFB
+SI-12M1:PS-FCH      FBP_FOFB
+SI-12M1:PS-FCV      FBP_FOFB
+SI-13M2:PS-FCH      FBP_FOFB
+SI-13M2:PS-FCV      FBP_FOFB
+SI-13M1:PS-FCH      FBP_FOFB
+SI-13M1:PS-FCV      FBP_FOFB
+SI-14M2:PS-FCH      FBP_FOFB
+SI-14M2:PS-FCV      FBP_FOFB
+SI-14M1:PS-FCH      FBP_FOFB
+SI-14M1:PS-FCV      FBP_FOFB
+SI-15M2:PS-FCH      FBP_FOFB
+SI-15M2:PS-FCV      FBP_FOFB
+SI-15M1:PS-FCH      FBP_FOFB
+SI-15M1:PS-FCV      FBP_FOFB
+SI-16M2:PS-FCH      FBP_FOFB
+SI-16M2:PS-FCV      FBP_FOFB
+SI-16M1:PS-FCH      FBP_FOFB
+SI-16M1:PS-FCV      FBP_FOFB
+SI-17M2:PS-FCH      FBP_FOFB
+SI-17M2:PS-FCV      FBP_FOFB
+SI-17M1:PS-FCH      FBP_FOFB
+SI-17M1:PS-FCV      FBP_FOFB
+SI-18M2:PS-FCH      FBP_FOFB
+SI-18M2:PS-FCV      FBP_FOFB
+SI-18M1:PS-FCH      FBP_FOFB
+SI-18M1:PS-FCV      FBP_FOFB
+SI-19M2:PS-FCH      FBP_FOFB
+SI-19M2:PS-FCV      FBP_FOFB
+SI-19M1:PS-FCH      FBP_FOFB
+SI-19M1:PS-FCV      FBP_FOFB
+SI-20M2:PS-FCH      FBP_FOFB
+SI-20M2:PS-FCV      FBP_FOFB
+SI-20M1:PS-FCH      FBP_FOFB
+SI-20M1:PS-FCV      FBP_FOFB
 
-SI-01C2:PS-FCH      FBP
-SI-01C2:PS-FCV      FBP
-SI-01C3:PS-FCH      FBP
-SI-01C3:PS-FCV      FBP
-SI-02C2:PS-FCH      FBP
-SI-02C2:PS-FCV      FBP
-SI-02C3:PS-FCH      FBP
-SI-02C3:PS-FCV      FBP
-SI-03C2:PS-FCH      FBP
-SI-03C2:PS-FCV      FBP
-SI-03C3:PS-FCH      FBP
-SI-03C3:PS-FCV      FBP
-SI-04C2:PS-FCH      FBP
-SI-04C2:PS-FCV      FBP
-SI-04C3:PS-FCH      FBP
-SI-04C3:PS-FCV      FBP
-SI-05C2:PS-FCH      FBP
-SI-05C2:PS-FCV      FBP
-SI-05C3:PS-FCH      FBP
-SI-05C3:PS-FCV      FBP
-SI-06C2:PS-FCH      FBP
-SI-06C2:PS-FCV      FBP
-SI-06C3:PS-FCH      FBP
-SI-06C3:PS-FCV      FBP
-SI-07C2:PS-FCH      FBP
-SI-07C2:PS-FCV      FBP
-SI-07C3:PS-FCH      FBP
-SI-07C3:PS-FCV      FBP
-SI-08C2:PS-FCH      FBP
-SI-08C2:PS-FCV      FBP
-SI-08C3:PS-FCH      FBP
-SI-08C3:PS-FCV      FBP
-SI-09C2:PS-FCH      FBP
-SI-09C2:PS-FCV      FBP
-SI-09C3:PS-FCH      FBP
-SI-09C3:PS-FCV      FBP
-SI-10C2:PS-FCH      FBP
-SI-10C2:PS-FCV      FBP
-SI-10C3:PS-FCH      FBP
-SI-10C3:PS-FCV      FBP
-SI-11C2:PS-FCH      FBP
-SI-11C2:PS-FCV      FBP
-SI-11C3:PS-FCH      FBP
-SI-11C3:PS-FCV      FBP
-SI-12C2:PS-FCH      FBP
-SI-12C2:PS-FCV      FBP
-SI-12C3:PS-FCH      FBP
-SI-12C3:PS-FCV      FBP
-SI-13C2:PS-FCH      FBP
-SI-13C2:PS-FCV      FBP
-SI-13C3:PS-FCH      FBP
-SI-13C3:PS-FCV      FBP
-SI-14C2:PS-FCH      FBP
-SI-14C2:PS-FCV      FBP
-SI-14C3:PS-FCH      FBP
-SI-14C3:PS-FCV      FBP
-SI-15C2:PS-FCH      FBP
-SI-15C2:PS-FCV      FBP
-SI-15C3:PS-FCH      FBP
-SI-15C3:PS-FCV      FBP
-SI-16C2:PS-FCH      FBP
-SI-16C2:PS-FCV      FBP
-SI-16C3:PS-FCH      FBP
-SI-16C3:PS-FCV      FBP
-SI-17C2:PS-FCH      FBP
-SI-17C2:PS-FCV      FBP
-SI-17C3:PS-FCH      FBP
-SI-17C3:PS-FCV      FBP
-SI-18C2:PS-FCH      FBP
-SI-18C2:PS-FCV      FBP
-SI-18C3:PS-FCH      FBP
-SI-18C3:PS-FCV      FBP
-SI-19C2:PS-FCH      FBP
-SI-19C2:PS-FCV      FBP
-SI-19C3:PS-FCH      FBP
-SI-19C3:PS-FCV      FBP
-SI-20C2:PS-FCH      FBP
-SI-20C2:PS-FCV      FBP
-SI-20C3:PS-FCH      FBP
-SI-20C3:PS-FCV      FBP
-
-# --- TB (Linac-Booster) Transport Line
-
-TB-Fam:PS-B         FBP
-
-TB-01:PS-QD1        FBP
-TB-01:PS-QF1        FBP
-TB-02:PS-QD2A       FBP
-TB-02:PS-QF2A       FBP
-TB-02:PS-QD2B       FBP
-TB-02:PS-QF2B       FBP
-TB-03:PS-QD3        FBP
-TB-03:PS-QF3        FBP
-TB-04:PS-QD4        FBP
-TB-04:PS-QF4        FBP
-
-TB-01:PS-CH-1       FBP
-TB-01:PS-CV-1       FBP
-TB-01:PS-CH-2       FBP
-TB-01:PS-CV-2       FBP
-TB-02:PS-CH-1       FBP
-TB-02:PS-CV-1       FBP
-TB-02:PS-CH-2       FBP
-TB-02:PS-CV-2       FBP
-TB-03:PS-CH         FBP
-TB-04:PS-CV-1       FBP
-TB-04:PS-CV-2       FBP
-
-# --- TS (Booster-Storage) Transport Line
-
-TS-Fam:PS-B         FBP
-
-TS-01:PS-QF1A       FBP
-TS-01:PS-QF1B       FBP
-TS-02:PS-QD2        FBP
-TS-02:PS-QF2        FBP
-TS-03:PS-QF3        FBP
-TS-04:PS-QD4A       FBP
-TS-04:PS-QF4        FBP
-TS-04:PS-QD4B       FBP
-
-TS-01:PS-CV-1       FBP
-TS-01:PS-CH         FBP
-TS-01:PS-CV-2       FBP
-TS-02:PS-CH         FBP
-TS-02:PS-CV         FBP
-TS-03:PS-CH         FBP
-TS-03:PS-CV         FBP
-TS-04:PS-CV-1       FBP
-TS-04:PS-CH         FBP
-TS-04:PS-CV-2       FBP
+SI-01C2:PS-FCH      FBP_FOFB
+SI-01C2:PS-FCV      FBP_FOFB
+SI-01C3:PS-FCH      FBP_FOFB
+SI-01C3:PS-FCV      FBP_FOFB
+SI-02C2:PS-FCH      FBP_FOFB
+SI-02C2:PS-FCV      FBP_FOFB
+SI-02C3:PS-FCH      FBP_FOFB
+SI-02C3:PS-FCV      FBP_FOFB
+SI-03C2:PS-FCH      FBP_FOFB
+SI-03C2:PS-FCV      FBP_FOFB
+SI-03C3:PS-FCH      FBP_FOFB
+SI-03C3:PS-FCV      FBP_FOFB
+SI-04C2:PS-FCH      FBP_FOFB
+SI-04C2:PS-FCV      FBP_FOFB
+SI-04C3:PS-FCH      FBP_FOFB
+SI-04C3:PS-FCV      FBP_FOFB
+SI-05C2:PS-FCH      FBP_FOFB
+SI-05C2:PS-FCV      FBP_FOFB
+SI-05C3:PS-FCH      FBP_FOFB
+SI-05C3:PS-FCV      FBP_FOFB
+SI-06C2:PS-FCH      FBP_FOFB
+SI-06C2:PS-FCV      FBP_FOFB
+SI-06C3:PS-FCH      FBP_FOFB
+SI-06C3:PS-FCV      FBP_FOFB
+SI-07C2:PS-FCH      FBP_FOFB
+SI-07C2:PS-FCV      FBP_FOFB
+SI-07C3:PS-FCH      FBP_FOFB
+SI-07C3:PS-FCV      FBP_FOFB
+SI-08C2:PS-FCH      FBP_FOFB
+SI-08C2:PS-FCV      FBP_FOFB
+SI-08C3:PS-FCH      FBP_FOFB
+SI-08C3:PS-FCV      FBP_FOFB
+SI-09C2:PS-FCH      FBP_FOFB
+SI-09C2:PS-FCV      FBP_FOFB
+SI-09C3:PS-FCH      FBP_FOFB
+SI-09C3:PS-FCV      FBP_FOFB
+SI-10C2:PS-FCH      FBP_FOFB
+SI-10C2:PS-FCV      FBP_FOFB
+SI-10C3:PS-FCH      FBP_FOFB
+SI-10C3:PS-FCV      FBP_FOFB
+SI-11C2:PS-FCH      FBP_FOFB
+SI-11C2:PS-FCV      FBP_FOFB
+SI-11C3:PS-FCH      FBP_FOFB
+SI-11C3:PS-FCV      FBP_FOFB
+SI-12C2:PS-FCH      FBP_FOFB
+SI-12C2:PS-FCV      FBP_FOFB
+SI-12C3:PS-FCH      FBP_FOFB
+SI-12C3:PS-FCV      FBP_FOFB
+SI-13C2:PS-FCH      FBP_FOFB
+SI-13C2:PS-FCV      FBP_FOFB
+SI-13C3:PS-FCH      FBP_FOFB
+SI-13C3:PS-FCV      FBP_FOFB
+SI-14C2:PS-FCH      FBP_FOFB
+SI-14C2:PS-FCV      FBP_FOFB
+SI-14C3:PS-FCH      FBP_FOFB
+SI-14C3:PS-FCV      FBP_FOFB
+SI-15C2:PS-FCH      FBP_FOFB
+SI-15C2:PS-FCV      FBP_FOFB
+SI-15C3:PS-FCH      FBP_FOFB
+SI-15C3:PS-FCV      FBP_FOFB
+SI-16C2:PS-FCH      FBP_FOFB
+SI-16C2:PS-FCV      FBP_FOFB
+SI-16C3:PS-FCH      FBP_FOFB
+SI-16C3:PS-FCV      FBP_FOFB
+SI-17C2:PS-FCH      FBP_FOFB
+SI-17C2:PS-FCV      FBP_FOFB
+SI-17C3:PS-FCH      FBP_FOFB
+SI-17C3:PS-FCV      FBP_FOFB
+SI-18C2:PS-FCH      FBP_FOFB
+SI-18C2:PS-FCV      FBP_FOFB
+SI-18C3:PS-FCH      FBP_FOFB
+SI-18C3:PS-FCV      FBP_FOFB
+SI-19C2:PS-FCH      FBP_FOFB
+SI-19C2:PS-FCV      FBP_FOFB
+SI-19C3:PS-FCH      FBP_FOFB
+SI-19C3:PS-FCV      FBP_FOFB
+SI-20C2:PS-FCH      FBP_FOFB
+SI-20C2:PS-FCV      FBP_FOFB
+SI-20C3:PS-FCH      FBP_FOFB
+SI-20C3:PS-FCV      FBP_FOFB
