@@ -638,7 +638,8 @@ class _WaveformMagnet(_Magnet):
 
     @property
     def times(self):
-        return self._get_times()
+        dt = self.duration / (self.wfm_nrpoints - 1.0)
+        return [dt*i for i in range(self.wfm_nrpoints)]
 
     @property
     def currents(self):
@@ -670,10 +671,6 @@ class WaveformDipole(_WaveformMagnet, WaveformParam):
     def _get_strengths(self):
         return self.waveform
 
-    def _get_times(self):
-        dt = self.duration / (self.wfm_nrpoints - 1.0)
-        return [dt*i for i in range(self.wfm_nrpoints)]
-
 
 class Waveform(_WaveformMagnet):
     """Waveform class for general magnets."""
@@ -694,6 +691,16 @@ class Waveform(_WaveformMagnet):
             strengths = [nom_strengths, ] * self._dipole.wfm_nrpoints
         self._currents = self._conv_strengths_2_currents(strengths)
         self._strengths = self._conv_currents_2_strengths(self._currents)
+
+    @property
+    def wfm_nrpoints(self):
+        """Waveform nrpoints."""
+        return self._dipole.wfm_nrpoints
+
+    @property
+    def duration(self):
+        """Ramp duration."""
+        return self._dipole.duration
 
     def update(self):
         """Update object."""
