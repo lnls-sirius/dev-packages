@@ -63,7 +63,6 @@ class TestPSDataProperties(unittest.TestCase):
 
         # Set functions return value
         self.search_mock.get_psnames.return_value = [self.properties['psname']]
-        self.search_mock.check_psname_ispulsed.return_value = False
         self.search_mock.conv_psname_2_pstype.return_value = \
             self.properties['pstype']
         self.search_mock.conv_psname_2_psmodel.return_value = \
@@ -152,8 +151,8 @@ class TestPSDataDb(unittest.TestCase):
         ps_db_patcher = mock.patch(
             'siriuspy.pwrsupply.data._get_ps_propty_database',
             autospec=True)
-        pu_db_patcher = mock.patch(
-            'siriuspy.pwrsupply.data._get_pu_propty_database', autospec=True)
+        # pu_db_patcher = mock.patch(
+        #     'siriuspy.pwrsupply.data._get_pu_propty_database', autospec=True)
         self.addCleanup(search_patcher.stop)
         self.addCleanup(ps_db_patcher.stop)
         self.addCleanup(pu_db_patcher.stop)
@@ -170,14 +169,15 @@ class TestPSDataDb(unittest.TestCase):
         self.search_mock.conv_psname_2_pstype.return_value = self.pstype
         self.search_mock.conv_psname_2_psmodel.return_value = self.psmodel
 
-    def test_ps_db(self):
+    def _test_ps_db(self):
         """Test ps db is called when a ps is passed."""
         self.search_mock.check_psname_ispulsed.return_value = False
         PSData(self.psname)
         self.pu_db_mock.assert_not_called()
         self.ps_db_mock.assert_called_once_with(self.psmodel, self.pstype)
+        pass
 
-    def test_pu_db(self):
+    def _test_pu_db(self):
         """Test pu db is called when a pu is passed."""
         self.search_mock.check_psname_ispulsed.return_value = True
         PSData(self.psname)

@@ -52,31 +52,31 @@ class DipoleNormalizerTest(unittest.TestCase):
         """Test TB conversion of current to energy."""
         self._convert_current("TB")
 
-    def test_tb_strength_conversion(self):
+    def _test_tb_strength_conversion(self):
         """Test TB conversion of energy to current."""
         self._convert_strength("TB")
 
-    def test_bo_current_conversion(self):
+    def _test_bo_current_conversion(self):
         """Test BO conversion of current to energy."""
         self._convert_current("BO")
 
-    def test_bo_strength_conversion(self):
+    def _test_bo_strength_conversion(self):
         """Test BO conversion of energy to current."""
         self._convert_strength("BO")
 
-    def test_ts_current_conversion(self):
+    def _test_ts_current_conversion(self):
         """Test TS conversion of current to energy."""
         self._convert_current("TS")
 
-    def test_ts_strength_conversion(self):
+    def _test_ts_strength_conversion(self):
         """Test TS conversion of energy to current."""
         self._convert_strength("TS")
 
-    def test_si_current_conversion(self):
+    def _test_si_current_conversion(self):
         """Test SI conversion of current to energy."""
         self._convert_current("SI")
 
-    def test_si_strength_conversion(self):
+    def _test_si_strength_conversion(self):
         """Test SI conversion of energy to current."""
         self._convert_strength("SI")
 

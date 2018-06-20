@@ -43,14 +43,15 @@ class MASearch:
                                        sorting=sorting)
 
     @staticmethod
-    def get_splims_unit(ispulsed):
+    def get_splims_unit(psmodel):
         """Get unit of SP limits."""
         if MASearch._maname_2_splims_dict is None:
             MASearch._reload_maname_2_splims_dict()
-        if ispulsed:
-            return MASearch._splims_pm_unit
-        else:
+        if psmodel in ('FBP', 'FAC', 'FAC_2P4S_DCDC'):
             return MASearch._splims_ma_unit
+        else:
+            raise ValueError('units not def for ' + psmodel)
+            return MASearch._splims_pm_unit
 
     @staticmethod
     def get_splims(maname, label):
@@ -149,16 +150,16 @@ class MASearch:
         else:
             return psname.replace('PS', 'MA').replace('PU', 'PM')
 
-    @staticmethod
-    def check_maname_ispulsed(maname):
-        """Return True if psname is a pulsed power supply, False otherwise."""
-        devname = _SiriusPVName(maname)
-        if devname.dis == 'PM':
-            return True
-        elif devname.dis == 'MA':
-            return False
-        else:
-            raise KeyError('Invalid maname "' + maname + '"!')
+    # @staticmethod
+    # def check_maname_ispulsed(maname):
+    #     """Return True if psname is a pulsed power supply, False otherwise."""
+    #     devname = _SiriusPVName(maname)
+    #     if devname.dis == 'PM':
+    #         return True
+    #     elif devname.dis == 'MA':
+    #         return False
+    #     else:
+    #         raise KeyError('Invalid maname "' + maname + '"!')
 
     @staticmethod
     def get_maname_2_splims_dict():
