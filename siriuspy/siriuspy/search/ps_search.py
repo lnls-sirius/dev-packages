@@ -242,8 +242,8 @@ class PSSearch:
         """Return SP limits unit."""
         if PSSearch._pstype_2_splims_dict is None:
             PSSearch._reload_pstype_2_splims_dict()
-        if psmodel in ('FBP', 'FAC', 'FAP', 'FAC_2S_DCDC', 'FAC_2P4S_DCDC',
-                       'FAC_2P4S_DCDC'):
+        if psmodel in ('FBP', 'FAC_DCDC', 'FAP_DCDC', 'FAC_2S_DCDC',
+                       'FAC_2P4S_DCDC', 'FAC_2P4S_DCDC'):
             return PSSearch._splims_ps_unit
         else:
             raise ValueError(psmodel)
