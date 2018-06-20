@@ -51,14 +51,16 @@ class PSController:
 
     def _init_setpoints(self):
         for key, reader in self._readers.items():
-            if '-Sts' in key or '-RB' in key:
-                print('setting setpoint')
-                sp_field = PSController._get_setpoint_field(key)
-                self._readers[sp_field].apply(self._readers[key].read())
+            if '-Sel' in key or '-SP' in key:
+                rb_field = PSController._get_readback_field(key)
+                try:
+                    self._readers[key].apply(self._readers[rb_field].read())
+                except KeyError:
+                    pass
 
     @staticmethod
-    def _get_setpoint_field(field):
-        return field.replace('-Sts', '-Sel').replace('-RB', '-SP')
+    def _get_readback_field(field):
+        return field.replace('-Sel', '-Sts').replace('-SP', '-RB')
 
 
 class StandardPSController(PSController):
