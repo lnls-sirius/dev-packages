@@ -27,7 +27,7 @@ class PSController:
             split = name.split(':')
             self._fields.add(split[-1])
             # self._devices.add(':'.join(split[:2]))
-
+        self._init_setpoints()
         # self._operation_mode = 0
 
     def read(self, device_name, field):
@@ -49,9 +49,21 @@ class PSController:
         """Check if device is connected."""
         return self._connections[device_name].connected()
 
+    def _init_setpoints(self):
+        for key, reader in self._readers.items():
+            if '-Sts' in key or '-RB' in key:
+                print('setting setpoint')
+                sp_field = PSController._get_setpoint_field(key)
+                self._readers[sp_field].apply(self._readers[key].read())
+
+    @staticmethod
+    def _get_setpoint_field(field):
+        return field.replace('-Sts', '-Sel').replace('-RB', '-SP')
+
 
 class StandardPSController(PSController):
     """Standard behaviour for a PSController."""
+
     INTERVAL_SCAN = 1.0/_PRUCParms_FBP.FREQ_SCAN
 
     def __init__(self, readers, writers, connections, devices, pru_controller):
