@@ -27,6 +27,7 @@ class WaveformParam:
         self._set_params(scale,
                          vL=start_value, vR=stop_value,
                          i07=boundary_indices, v07=boundary_values)
+        self._deprecated = True
         self.update()
 
     # --- public properties ---
@@ -372,9 +373,10 @@ class WaveformParam:
 
     def update(self):
         """Update object."""
-        self._set_coeffs()
-        self._waveform = self._eval_index()
-        self._deprecated = False
+        if self._deprecated:
+            self._set_coeffs()
+            self._waveform = self._eval_index()
+            self._deprecated = False
 
     def check(self):
         """Check consistency of parameters."""
@@ -732,3 +734,40 @@ class Waveform(_WaveformMagnet):
         if self._family is not None:
             kwargs['strengths_family'] = self._family.strengths
         return self.conv_strength_2_current(**kwargs)
+
+    # --- list methods (strengths) ---
+
+    def __getitem__(self, index):
+        """Return waveform at index."""
+        self.update()
+        if isinstance(index, slice):
+            wp = self._strengths[index]
+            return _np.array([wp[i] for i in range(len(wp))])
+        elif isinstance(index, int):
+            return self._strengths[index]
+        else:
+            raise IndexError
+
+    def __iter__(self):
+        """Return iterator for waveform."""
+        self.update()
+        for i in range(len(self._strengths)):
+            yield(self._strengths[i])
+
+    def __reversed__(self):
+        """Return reverse iterator for waveform."""
+        self.update()
+        for i in range(len(self._strengths)-1, -1, -1):
+            yield(self._strengths[i])
+
+    def __len__(self):
+        """Return length of waveform."""
+        return len(self._strengths)
+
+    def __contains__(self, value):
+        """Check whether value is in waveform."""
+        return value in self._strengths
+
+    def __eq__(self, value):
+        """Compare waveforms."""
+        return self._strengths == value
