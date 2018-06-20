@@ -10,6 +10,20 @@ REQUIREMENTS
 ============
 
 
+TESTS
+=====
+
+To run the unittest suite:
+ 
+   cd siriuspy
+   ./setup.py test
+
+To run a specific unittest subpacke:
+
+   cd siriuspy
+   ./setup.py test -s tests.search
+
+
 INSTALLATION
 ============
 
@@ -26,12 +40,3 @@ default Python directory, run
     <python> setup.py develop
 
 Details and further options can be found in setuptools documentation.
-
-To install the excitation curve files, inside the excitation_curves directory,
-run
-
-    make install
-
-or
-
-    make develop
