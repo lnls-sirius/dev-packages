@@ -76,7 +76,6 @@ class BoosterRamp(_ConfigSrv):
         _ConfigSrv.__init__(self, name=name)
         self._normalized_configs = dict()
         self._waveforms = dict()
-        self._wfms_changed = True  # so that waveforms need calculation again
         self.configuration = self.get_config_type_template()
 
     # --- ConfigSrv API ---
@@ -102,14 +101,14 @@ class BoosterRamp(_ConfigSrv):
         for config in self._normalized_configs.values():
             config.configsrv_load()
         self._synchronized = True  # all went well
-        self._wfms_changed = True
+        self._invalidate_waveforms(True)
 
     def configsrv_load_normalized_configs(self):
         """Load normalized configurations from config server."""
         # load normalized configurations one by one
         for config in self._normalized_configs.values():
             config.configsrv_load()
-        self._wfms_changed = True
+        self._invalidate_waveforms()
 
     def configsrv_update(self):
         """Update configuration in config server."""
@@ -125,7 +124,7 @@ class BoosterRamp(_ConfigSrv):
                 # save a new normalized configuration
                 config.configsrv_save()
         self._synchronized = True  # all went well
-        self._wfms_changed = True
+        self._invalidate_waveforms(True)  # TODO: check if it is necessary
 
     def configsrv_save(self):
         """Save configuration to config server."""
@@ -195,7 +194,7 @@ class BoosterRamp(_ConfigSrv):
         """Set dipole ramp duration."""
         self._configuration['ramp_dipole']['duration'] = float(value)
         self._synchronized = False
-        self._wfms_changed = True
+        self._invalidate_waveforms(True)
 
     @property
     def ramp_dipole_time(self):
@@ -216,7 +215,7 @@ class BoosterRamp(_ConfigSrv):
         # TODO: verify monotonic ascending times
         self._configuration['ramp_dipole']['time'] = list(value)
         self._synchronized = False
-        self._wfms_changed = True
+        self._invalidate_waveforms(True)
 
     @property
     def ramp_dipole_energy(self):
@@ -237,7 +236,7 @@ class BoosterRamp(_ConfigSrv):
         # TODO: verify values
         self._configuration['ramp_dipole']['energy'] = list(value)
         self._synchronized = False
-        self._wfms_changed = True
+        self._invalidate_waveforms(True)
 
     @property
     def ramp_dipole_wfm_nrpoints(self):
@@ -253,7 +252,7 @@ class BoosterRamp(_ConfigSrv):
                                              'waveforms.')
         self._configuration['ramp_dipole']['wfm_nrpoints'] = value
         self._synchronized = False
-        self._wfms_changed = True
+        self._invalidate_waveforms(True)
 
     @property
     def ramp_start_value(self):
@@ -274,7 +273,7 @@ class BoosterRamp(_ConfigSrv):
         self._configuration['ramp_dipole']['energy'][-1] = value
         # TODO: verify values
         self._synchronized = False
-        self._wfms_changed = True
+        self._invalidate_waveforms(True)
 
     @property
     def rampup_start_value(self):
@@ -294,7 +293,7 @@ class BoosterRamp(_ConfigSrv):
         self._configuration['ramp_dipole']['energy'][1] = value
         # TODO: verify values
         self._synchronized = False
-        self._wfms_changed = True
+        self._invalidate_waveforms(True)
 
     @property
     def rampup_start_time(self):
@@ -305,16 +304,23 @@ class BoosterRamp(_ConfigSrv):
     @rampup_start_time.setter
     def rampup_start_time(self, value):
         """Return."""
-        self._update_waveform('BO-Fam:MA-B')
-        w = self._waveforms['BO-Fam:MA-B']
+        w = _WaveformDipole('BO-Fam:MA-B')
+        w.rampup_start_time = value
         try:
-            w.rampup_start_time = value
+            w.update()
         except ValueError as e:
             raise _RampInvalidDipoleWfmParms(e)
+        self._waveforms['BO-Fam:MA-B'] = w
+        self._update_waveform('BO-Fam:MA-B')
+        # w = self._waveforms['BO-Fam:MA-B']
+        # try:
+        #     w.rampup_start_time = value
+        # except ValueError as e:
+        #     raise _RampInvalidDipoleWfmParms(e)
         self._configuration['ramp_dipole']['time'][1] = value
         # TODO: > [0] and < [2]
         self._synchronized = False
-        self._wfms_changed = True
+        self._invalidate_waveforms(True)
 
     @property
     def rampup_stop_value(self):
@@ -334,7 +340,7 @@ class BoosterRamp(_ConfigSrv):
         self._configuration['ramp_dipole']['energy'][2] = value
         # TODO: verify values
         self._synchronized = False
-        self._wfms_changed = True
+        self._invalidate_waveforms(True)
 
     @property
     def rampup_stop_time(self):
@@ -354,7 +360,7 @@ class BoosterRamp(_ConfigSrv):
         self._configuration['ramp_dipole']['time'][2] = value
         # TODO: > [1] and < [3]
         self._synchronized = False
-        self._wfms_changed = True
+        self._invalidate_waveforms(True)
 
     @property
     def ramp_plateau_value(self):
@@ -375,7 +381,7 @@ class BoosterRamp(_ConfigSrv):
         self._configuration['ramp_dipole']['energy'][4] = value
         # TODO: verify values
         self._synchronized = False
-        self._wfms_changed = True
+        self._invalidate_waveforms(True)
 
     @property
     def rampdown_start_value(self):
@@ -395,7 +401,7 @@ class BoosterRamp(_ConfigSrv):
         self._configuration['ramp_dipole']['energy'][5] = value
         # TODO: verify values
         self._synchronized = False
-        self._wfms_changed = True
+        self._invalidate_waveforms(True)
 
     @property
     def rampdown_start_time(self):
@@ -415,7 +421,7 @@ class BoosterRamp(_ConfigSrv):
         self._configuration['ramp_dipole']['time'][5] = value
         # TODO: > [4] and < [6]
         self._synchronized = False
-        self._wfms_changed = True
+        self._invalidate_waveforms(True)
 
     @property
     def rampdown_stop_value(self):
@@ -435,7 +441,7 @@ class BoosterRamp(_ConfigSrv):
         self._configuration['ramp_dipole']['energy'][6] = value
         # TODO: verify values
         self._synchronized = False
-        self._wfms_changed = True
+        self._invalidate_waveforms(True)
 
     @property
     def rampdown_stop_time(self):
@@ -455,7 +461,7 @@ class BoosterRamp(_ConfigSrv):
         self._configuration['ramp_dipole']['time'][6] = value
         # TODO: > [5] and < [7]
         self._synchronized = False
-        self._wfms_changed = True
+        self._invalidate_waveforms(True)
 
     # @ramp_dipole_time.setter
     # def ramp_dipole_time(self, value):
@@ -510,7 +516,7 @@ class BoosterRamp(_ConfigSrv):
         nconfigs = [[times[i], names[i]] for i in range(len(times))]
         self._set_normalized_configs(nconfigs)
         self._synchronized = False
-        self._wfms_changed = True
+        self._invalidate_waveforms()
 
     def normalized_configs_insert(self, time, name=None, nconfig=None):
         """Insert a normalized configuration."""
@@ -538,7 +544,7 @@ class BoosterRamp(_ConfigSrv):
              key=lambda pair: pair[0]))]  # sort by time
         nconfigs = [[times[i], names[i]] for i in range(len(times))]
         self._set_normalized_configs(nconfigs)
-        self._update_normalized_configs()
+        self._update_normalized_configs()  # TODO: invoked twice?
 
         # interpolate nconfig, if necessary
         if nconfig is None:
@@ -575,18 +581,10 @@ class BoosterRamp(_ConfigSrv):
         times = self.normalized_configs_time
         times[index] = new_time
         nconfigs = [[times[i], names[i]] for i in range(len(times))]
-        self._set_normalized_configs(nconfigs)
+        self._set_normalized_configs(nconfigs)  # waveform invalidation within
         self._synchronized = False
-        self._wfms_changed = True
 
     # --- API for waveforms ---
-
-    # @property
-    # def dipole_waveform(self):
-    #     """Dipole waveform."""
-    #     self._update_waveform('BO-Fam:MA-B')
-    #     self._wfms_changed = True
-    #     return self._waveforms['BO-Fam:MA-B']
 
     def waveform_get(self, maname):
         """Return waveform for a given power supply."""
@@ -677,7 +675,7 @@ class BoosterRamp(_ConfigSrv):
 
     def _set_item(self, name, value):
         self._normalized_configs[name] = value
-        self._wfms_changed = True
+        self._invalidate_waveforms()
 
     def _set_configuration(self, value):
         self._configuration = _dcopy(value)
@@ -695,16 +693,15 @@ class BoosterRamp(_ConfigSrv):
                 norm_configs[name] = self._normalized_configs[name]
             else:
                 self._synchronized = False
-                self._wfms_changed = True
+                self._invalidate_waveforms()
                 norm_configs[name] = BoosterNormalized(name)
         self._normalized_configs = norm_configs
 
     def _update_waveform(self, maname):
 
         # update dipole if necessary
-        if self._wfms_changed or 'BO-Fam:M-B' not in self._waveforms:
+        if 'BO-Fam:M-B' not in self._waveforms:
             self._update_waveform_dipole()
-        self._wfms_changed = False
 
         # update family if necessary
         family = _get_magnet_family_name(maname)
@@ -771,3 +768,9 @@ class BoosterRamp(_ConfigSrv):
         interval = duration / (wfm_nrpoints - 1.0)
         indices = [round(t/interval) for t in times]
         return indices
+
+    def _invalidate_waveforms(self, include_dipole=False):
+        manames = tuple(self._waveforms.keys())
+        for maname in manames:
+            if maname != 'BO-Fam:MA-B' or include_dipole:
+                del(self._waveforms[maname])
