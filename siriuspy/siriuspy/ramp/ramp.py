@@ -556,7 +556,7 @@ class BoosterRamp(_ConfigSrv):
 
         # set config energy appropriately
         indices = self._conv_times_2_indices([time])
-        strengths = self.get_waveform_strengths('BO-Fam:MA-B')
+        strengths = self.waveform_get_strengths('BO-Fam:MA-B')
         strength = _np.interp(indices[0],
                               list(range(self.ramp_dipole_wfm_nrpoints)),
                               strengths)
@@ -588,42 +588,46 @@ class BoosterRamp(_ConfigSrv):
     #     self._wfms_changed = True
     #     return self._waveforms['BO-Fam:MA-B']
 
-    def get_waveform(self, maname):
+    def waveform_get(self, maname):
         """Return waveform for a given power supply."""
         self._update_waveform(maname)
         waveform = self._waveforms[maname]
         return _dcopy(waveform)
 
-    def set_waveform(self, maname, waveform):
+    def waveform_set(self, maname, waveform):
         """Set waveform for a given power supply."""
         # self._update_waveform(maname)
         self._waveforms[maname] = _dcopy(waveform)
 
-    def get_waveform_times(self):
+    def waveform_get_times(self):
         """Return ramp energy at a given time."""
         maname = 'BO-Fam:MA-B'
         self._update_waveform(maname)
         times = self._waveforms[maname].times
         return times
 
-    def get_waveform_currents(self, maname):
+    def waveform_get_currents(self, maname):
         """Return waveform current for a given power supply."""
         self._update_waveform(maname)
         waveform = self._waveforms[maname]
         return waveform.currents.copy()
 
-    def get_waveform_strengths(self, maname):
+    def waveform_get_strengths(self, maname):
         """Return waveform strength for a given power supply."""
         self._update_waveform(maname)
         waveform = self._waveforms[maname]
         return waveform.strengths.copy()
 
-    def get_waveform_energy(self, time):
+    def waveform_interp_strengths(self, maname, time):
+        """Return ramp strength at a given time."""
+        times = self.waveform_get_times()
+        strengths = self._waveforms[maname].strengths
+        strength = _np.interp(time, times, strengths)
+        return strength
+
+    def waveform_interp_energy(self, time):
         """Return ramp energy at a given time."""
-        times = self.get_waveform_times()
-        energies = self._waveforms['BO-Fam:MA-B'].strengths
-        energy = _np.interp(time, times, energies)
-        return energy
+        return self.waveform_interp_strengths('BO-Fam:MA-B', time)
 
     # --- private methods ---
 
