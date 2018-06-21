@@ -3,7 +3,8 @@
 import numpy as _np
 from copy import deepcopy as _dcopy
 
-from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
+from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE, \
+                                        MIN_WFMSIZE as _MIN_WFMSIZE
 from siriuspy.servconf.srvconfig import ConfigSrv as _ConfigSrv
 # from siriuspy.magnet.util import magnet_class as _magnet_class
 from siriuspy.magnet.util import get_section_dipole_name as \
@@ -24,20 +25,16 @@ class BoosterNormalized(_ConfigSrv):
     """Booster normalized configuration."""
 
     _conn = _CCBONormalized()
-    _manames = None
 
     def __init__(self, name=None):
         """Constructor."""
         _ConfigSrv.__init__(self, name=name)
-        # init class _psnames
-        if BoosterNormalized._manames is None:
-            BoosterNormalized._manames = \
-                list(self.get_config_type_template().keys())
+        self.configuration = self.get_config_type_template()
 
     @property
     def maname(self):
         """List of power supply names."""
-        return BoosterNormalized._manames.copy()
+        return list(self._configuration.keys())
 
     def _get_item(self, index):
         return float(self._configuration[index])
@@ -145,6 +142,8 @@ class BoosterRamp(_ConfigSrv):
     def delay_rf(self, value):
         """Set RF delay."""
         # TODO: verify value
+        if value == self._configuration['rf_parameters']['delay']:
+            return
         self._configuration['rf_parameters']['delay'] = value
         self._synchronized = False
 
@@ -157,6 +156,8 @@ class BoosterRamp(_ConfigSrv):
     def injection_time(self, value):
         """Set injection time instant."""
         # TODO: verify value
+        if value == self._configuration['ramp_dipole']['injection_time']:
+            return
         self._configuration['ramp_dipole']['injection_time'] = value
         self._synchronized = False
 
@@ -169,6 +170,8 @@ class BoosterRamp(_ConfigSrv):
     def ejection_time(self, value):
         """Set ejection time instant."""
         # TODO: verify value
+        if value == self._configuration['ramp_dipole']['ejection_time']:
+            return
         self._configuration['ramp_dipole']['ejection_time'] = value
         self._synchronized = False
 
@@ -180,6 +183,8 @@ class BoosterRamp(_ConfigSrv):
     @ramp_dipole_delay.setter
     def ramp_dipole_delay(self, value):
         """Set power supplies general delay [us]."""
+        if value == self._configuration['ramp_dipole']['delay']:
+            return
         value = float(value)
         self._configuration['ramp_dipole']['delay'] = value
         self._synchronized = False
@@ -192,6 +197,8 @@ class BoosterRamp(_ConfigSrv):
     @ramp_dipole_duration.setter
     def ramp_dipole_duration(self, value):
         """Set dipole ramp duration."""
+        if value == self._configuration['ramp_dipole']['duration']:
+            return
         self._configuration['ramp_dipole']['duration'] = float(value)
         self._synchronized = False
         self._invalidate_waveforms(True)
@@ -204,6 +211,8 @@ class BoosterRamp(_ConfigSrv):
     @ramp_dipole_time.setter
     def ramp_dipole_time(self, value):
         """Set dipole ramp times."""
+        if value == self._configuration['ramp_dipole']['time']:
+            return
         if len(value) != 8:
             raise _RampInvalidDipoleWfmParms(
                 'Invalid number of elements int dipole ramp time')
@@ -225,6 +234,8 @@ class BoosterRamp(_ConfigSrv):
     @ramp_dipole_energy.setter
     def ramp_dipole_energy(self, value):
         """Set dipole ramp energies."""
+        if value == self._configuration['ramp_dipole']['energy']:
+            return
         if len(value) != 8:
             raise _RampInvalidDipoleWfmParms('Invalid number of elements in '
                                              'dipole ramp energy')
@@ -246,8 +257,10 @@ class BoosterRamp(_ConfigSrv):
     @ramp_dipole_wfm_nrpoints.setter
     def ramp_dipole_wfm_nrpoints(self, value):
         """Set dipole ramp waveform number of points."""
+        if value == self._configuration['ramp_dipole']['wfm_nrpoints']:
+            return
         value = int(value)
-        if value > _MAX_WFMSIZE:
+        if not _MIN_WFMSIZE <= value <= _MAX_WFMSIZE:
             raise _RampInvalidDipoleWfmParms('Invalid number of points for '
                                              'waveforms.')
         self._configuration['ramp_dipole']['wfm_nrpoints'] = value
@@ -264,6 +277,8 @@ class BoosterRamp(_ConfigSrv):
     @ramp_start_value.setter
     def ramp_start_value(self, value):
         """Return."""
+        if value == self._configuration['ramp_dipole']['energy'][0]:
+            return
         self._update_waveform('BO-Fam:MA-B')
         w = self._waveforms['BO-Fam:MA-B']
         try:
@@ -286,6 +301,8 @@ class BoosterRamp(_ConfigSrv):
     @rampup_start_value.setter
     def rampup_start_value(self, value):
         """Return."""
+        if value == self._configuration['ramp_dipole']['energy'][1]:
+            return
         self._update_waveform('BO-Fam:MA-B')
         w = self._waveforms['BO-Fam:MA-B']
         try:
@@ -307,19 +324,14 @@ class BoosterRamp(_ConfigSrv):
     @rampup_start_time.setter
     def rampup_start_time(self, value):
         """Return."""
-        w = _WaveformDipole('BO-Fam:MA-B')
-        w.rampup_start_time = value
+        if value == self._configuration['ramp_dipole']['time'][1]:
+            return
+        self._update_waveform('BO-Fam:MA-B')
+        w = self._waveforms['BO-Fam:MA-B']
         try:
-            w.update()
+            w.rampup_start_time = value
         except ValueError as e:
             raise _RampInvalidDipoleWfmParms(e)
-        self._waveforms['BO-Fam:MA-B'] = w
-        self._update_waveform('BO-Fam:MA-B')
-        # w = self._waveforms['BO-Fam:MA-B']
-        # try:
-        #     w.rampup_start_time = value
-        # except ValueError as e:
-        #     raise _RampInvalidDipoleWfmParms(e)
         self._configuration['ramp_dipole']['time'][1] = value
         # TODO: > [0] and < [2]
         self._synchronized = False
@@ -335,6 +347,8 @@ class BoosterRamp(_ConfigSrv):
     @rampup_stop_value.setter
     def rampup_stop_value(self, value):
         """Return."""
+        if value == self._configuration['ramp_dipole']['energy'][2]:
+            return
         self._update_waveform('BO-Fam:MA-B')
         w = self._waveforms['BO-Fam:MA-B']
         try:
@@ -356,6 +370,8 @@ class BoosterRamp(_ConfigSrv):
     @rampup_stop_time.setter
     def rampup_stop_time(self, value):
         """Return."""
+        if value == self._configuration['ramp_dipole']['time'][2]:
+            return
         self._update_waveform('BO-Fam:MA-B')
         w = self._waveforms['BO-Fam:MA-B']
         try:
@@ -377,6 +393,8 @@ class BoosterRamp(_ConfigSrv):
     @ramp_plateau_value.setter
     def ramp_plateau_value(self, value):
         """Return."""
+        if value == self._configuration['ramp_dipole']['energy'][3]:
+            return
         self._update_waveform('BO-Fam:MA-B')
         w = self._waveforms['BO-Fam:MA-B']
         try:
@@ -399,6 +417,8 @@ class BoosterRamp(_ConfigSrv):
     @rampdown_start_value.setter
     def rampdown_start_value(self, value):
         """Return."""
+        if value == self._configuration['ramp_dipole']['energy'][5]:
+            return
         self._update_waveform('BO-Fam:MA-B')
         w = self._waveforms['BO-Fam:MA-B']
         try:
@@ -420,6 +440,8 @@ class BoosterRamp(_ConfigSrv):
     @rampdown_start_time.setter
     def rampdown_start_time(self, value):
         """Return."""
+        if value == self._configuration['ramp_dipole']['time'][5]:
+            return
         self._update_waveform('BO-Fam:MA-B')
         w = self._waveforms['BO-Fam:MA-B']
         try:
@@ -441,6 +463,8 @@ class BoosterRamp(_ConfigSrv):
     @rampdown_stop_value.setter
     def rampdown_stop_value(self, value):
         """Return."""
+        if value == self._configuration['ramp_dipole']['energy'][6]:
+            return
         self._update_waveform('BO-Fam:MA-B')
         w = self._waveforms['BO-Fam:MA-B']
         try:
@@ -462,6 +486,8 @@ class BoosterRamp(_ConfigSrv):
     @rampdown_stop_time.setter
     def rampdown_stop_time(self, value):
         """Return."""
+        if value == self._configuration['ramp_dipole']['time'][6]:
+            return
         self._update_waveform('BO-Fam:MA-B')
         w = self._waveforms['BO-Fam:MA-B']
         try:
@@ -472,18 +498,6 @@ class BoosterRamp(_ConfigSrv):
         # TODO: > [5] and < [7]
         self._synchronized = False
         self._invalidate_waveforms(True)
-
-    # @ramp_dipole_time.setter
-    # def ramp_dipole_time(self, value):
-    #     """Set dipole ramp time."""
-    #     self._configuration['ramp_dipole']['time'] = _dcopy(value)
-    #     self._synchronized = False
-    #
-    # @ramp_dipole_energy.setter
-    # def ramp_dipole_energy(self, value):
-    #     """Set dipole ramp energy."""
-    #     self._configuration['ramp_dipole']['energy'] = _dcopy(value)
-    #     self._synchronized = False
 
     def check_value(self):
         """Check current configuration."""

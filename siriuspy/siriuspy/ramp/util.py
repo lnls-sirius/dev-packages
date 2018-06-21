@@ -44,8 +44,8 @@ NOMINAL_STRENGTHS = {
     'BO-Fam:MA-B': BO_INJECTION_ENERGY,  # [Energy: GeV]
     'BO-Fam:MA-QD': +0.0011197961538728,  # [KL: 1/m]
     'BO-Fam:MA-QF': +0.3770999232791374,  # [KL: 1/m]
-    'BO-Fam:MA-SD': +0.5258382119529604,  # [KL: 1/m]
-    'BO-Fam:MA-SF': +1.1898514030258744,  # [KL: 1/m]
+    'BO-Fam:MA-SD': +0.5258382119529604,  # [SL: 1/m^2]
+    'BO-Fam:MA-SF': +1.1898514030258744,  # [SL: 1/m^2]
 }
 
 
