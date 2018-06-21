@@ -8,6 +8,7 @@ from siriuspy.search import MASearch as _MASearch
 from siriuspy.pwrsupply.siggen import DEFAULT_SIGGEN_CONFIG as _DEF_SIGG_CONF
 from siriuspy.csdevice.const import Const
 
+MIN_WFMSIZE = 2001
 MAX_WFMSIZE = 4000
 DEFAULT_SIGGEN_CONFIG = _DEF_SIGG_CONF
 DEFAULT_WFMDATA = (0.0, ) * MAX_WFMSIZE
