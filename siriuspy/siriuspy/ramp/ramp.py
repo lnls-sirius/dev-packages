@@ -257,8 +257,9 @@ class BoosterRamp(_ConfigSrv):
     @property
     def ramp_start_value(self):
         """Return."""
-        self._update_waveform('BO-Fam:MA-B')
-        return self._waveforms['BO-Fam:MA-B'].start_value
+        # self._update_waveform('BO-Fam:MA-B')
+        # return self._waveforms['BO-Fam:MA-B'].start_value
+        return self._configuration['ramp_dipole']['energy'][0]
 
     @ramp_start_value.setter
     def ramp_start_value(self, value):
@@ -278,8 +279,9 @@ class BoosterRamp(_ConfigSrv):
     @property
     def rampup_start_value(self):
         """Return."""
-        self._update_waveform('BO-Fam:MA-B')
-        return self._waveforms['BO-Fam:MA-B'].rampup_start_value
+        # self._update_waveform('BO-Fam:MA-B')
+        # return self._waveforms['BO-Fam:MA-B'].rampup_start_value
+        return self._configuration['ramp_dipole']['energy'][1]
 
     @rampup_start_value.setter
     def rampup_start_value(self, value):
@@ -298,8 +300,9 @@ class BoosterRamp(_ConfigSrv):
     @property
     def rampup_start_time(self):
         """Return."""
-        self._update_waveform('BO-Fam:MA-B')
-        return self._waveforms['BO-Fam:MA-B'].rampup_start_time
+        return self._configuration['ramp_dipole']['time'][1]
+        # self._update_waveform('BO-Fam:MA-B')
+        # return self._waveforms['BO-Fam:MA-B'].rampup_start_time
 
     @rampup_start_time.setter
     def rampup_start_time(self, value):
@@ -325,8 +328,9 @@ class BoosterRamp(_ConfigSrv):
     @property
     def rampup_stop_value(self):
         """Return."""
-        self._update_waveform('BO-Fam:MA-B')
-        return self._waveforms['BO-Fam:MA-B'].rampup_stop_value
+        # self._update_waveform('BO-Fam:MA-B')
+        # return self._waveforms['BO-Fam:MA-B'].rampup_stop_value
+        return self._configuration['ramp_dipole']['energy'][2]
 
     @rampup_stop_value.setter
     def rampup_stop_value(self, value):
@@ -345,8 +349,9 @@ class BoosterRamp(_ConfigSrv):
     @property
     def rampup_stop_time(self):
         """Return."""
-        self._update_waveform('BO-Fam:MA-B')
-        return self._waveforms['BO-Fam:MA-B'].rampup_stop_time
+        # self._update_waveform('BO-Fam:MA-B')
+        # return self._waveforms['BO-Fam:MA-B'].rampup_stop_time
+        return self._configuration['ramp_dipole']['time'][2]
 
     @rampup_stop_time.setter
     def rampup_stop_time(self, value):
@@ -365,8 +370,9 @@ class BoosterRamp(_ConfigSrv):
     @property
     def ramp_plateau_value(self):
         """Return."""
-        self._update_waveform('BO-Fam:MA-B')
-        return self._waveforms['BO-Fam:MA-B'].plateau_value
+        # self._update_waveform('BO-Fam:MA-B')
+        # return self._waveforms['BO-Fam:MA-B'].plateau_value
+        return self._configuration['ramp_dipole']['energy'][3]
 
     @ramp_plateau_value.setter
     def ramp_plateau_value(self, value):
@@ -386,8 +392,9 @@ class BoosterRamp(_ConfigSrv):
     @property
     def rampdown_start_value(self):
         """Return."""
-        self._update_waveform('BO-Fam:MA-B')
-        return self._waveforms['BO-Fam:MA-B'].rampdown_start_value
+        # self._update_waveform('BO-Fam:MA-B')
+        # return self._waveforms['BO-Fam:MA-B'].rampdown_start_value
+        return self._configuration['ramp_dipole']['energy'][5]
 
     @rampdown_start_value.setter
     def rampdown_start_value(self, value):
@@ -406,8 +413,9 @@ class BoosterRamp(_ConfigSrv):
     @property
     def rampdown_start_time(self):
         """Return."""
-        self._update_waveform('BO-Fam:MA-B')
-        return self._waveforms['BO-Fam:MA-B'].rampdown_start_time
+        # self._update_waveform('BO-Fam:MA-B')
+        # return self._waveforms['BO-Fam:MA-B'].rampdown_start_time
+        return self._configuration['ramp_dipole']['time'][5]
 
     @rampdown_start_time.setter
     def rampdown_start_time(self, value):
@@ -426,8 +434,9 @@ class BoosterRamp(_ConfigSrv):
     @property
     def rampdown_stop_value(self):
         """Return."""
-        self._update_waveform('BO-Fam:MA-B')
-        return self._waveforms['BO-Fam:MA-B'].rampdown_stop_value
+        # self._update_waveform('BO-Fam:MA-B')
+        # return self._waveforms['BO-Fam:MA-B'].rampdown_stop_value
+        return self._configuration['ramp_dipole']['energy'][6]
 
     @rampdown_stop_value.setter
     def rampdown_stop_value(self, value):
@@ -446,8 +455,9 @@ class BoosterRamp(_ConfigSrv):
     @property
     def rampdown_stop_time(self):
         """Return."""
-        self._update_waveform('BO-Fam:MA-B')
-        return self._waveforms['BO-Fam:MA-B'].rampdown_stop_time
+        # self._update_waveform('BO-Fam:MA-B')
+        # return self._waveforms['BO-Fam:MA-B'].rampdown_stop_time
+        return self._configuration['ramp_dipole']['time'][6]
 
     @rampdown_stop_time.setter
     def rampdown_stop_time(self, value):
