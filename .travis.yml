@@ -12,7 +12,7 @@ script:
   - cd ../../
 # install siriuspy
   - cd siriuspy
-  - ./setup.py test
+  - python setup.py test
 
 # safelist
 branches:
