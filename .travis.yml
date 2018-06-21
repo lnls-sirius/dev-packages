@@ -12,11 +12,10 @@ script:
   - cd ../../
 # install siriuspy
   - cd siriuspy
-  - python setup.py install
-  - cd tests
-  - python -m unittest discover
+  - ./setup.py test
 
 # safelist
 branches:
   only:
   - master
+  - PR-beaglebone-refactor
