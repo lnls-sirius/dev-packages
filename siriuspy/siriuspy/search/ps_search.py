@@ -152,17 +152,6 @@ class PSSearch:
 
         return PSSearch._pstype_2_excdat_dict[pstype]
 
-    # @staticmethod
-    # def check_psname_ispulsed(psname):
-    #     """Return True if psname is a pulsed power supply, False otherwise."""
-    #     spvname = _SiriusPVName(psname)
-    #     if spvname.dis == 'PU':
-    #         return True
-    #     elif spvname.dis == 'PS':
-    #         return False
-    #     else:
-    #         raise KeyError('Invalid psname "' + psname + '"!')
-
     @staticmethod
     def conv_psname_2_psmodel(psname):
         """Convert psname to psmodel."""
