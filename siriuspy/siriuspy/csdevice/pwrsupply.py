@@ -138,6 +138,7 @@ ps_sync_mode = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
 
 # --- power supply constants definition class ---
 
+
 Const.add_field('Models', ps_models)
 Const.add_field('DsblEnbl', ps_dsblenbl)
 Const.add_field('Interface', ps_interface)
@@ -148,6 +149,7 @@ Const.add_field('OpMode', ps_opmode)
 Const.add_field('CmdAck', ps_cmdack)
 Const.add_field('CycleType', ps_cycle_type)
 Const.add_field('SyncMode', ps_sync_mode)
+
 
 # --- power supply databases ---
 
@@ -168,7 +170,7 @@ def get_pu_current_unit():
     return _default_pu_current_unit
 
 
-def get_basic_propty_database():
+def get_common_propty_database():
     """Return database entries to all BSMP-like devices."""
     db = {
         'Version-Cte': {'type': 'str', 'value': 'UNDEF'},
@@ -204,9 +206,9 @@ def get_basic_propty_database():
     return db
 
 
-def get_common_propty_database():
+def get_basic_propty_database():
     """Return database entries to all power-supply-like devices."""
-    db = get_basic_propty_database()
+    db = get_common_propty_database()
     db.update({
         'Current-SP': {'type': 'float', 'value': 0.0,
                        'prec': default_ps_current_precision},
@@ -465,7 +467,7 @@ def get_pm_propty_database(maname):
 # Hidden
 def _get_ps_FBP_propty_database():
     """Return database with FBP pwrsupply model PVs."""
-    propty_db = get_common_propty_database()
+    propty_db = get_basic_propty_database()
     db_ps = {
         'IntlkSoftLabels-Cte':  {'type': 'string',
                                  'count': len(ps_soft_interlock_FBP),
@@ -480,7 +482,7 @@ def _get_ps_FBP_propty_database():
 
 def _get_ps_FBP_DCLink_propty_database():
     """Return database with FBP_DCLink pwrsupply model PVs."""
-    propty_db = get_basic_propty_database()
+    propty_db = get_common_propty_database()
     db_ps = {
         'Voltage-SP': {'type': 'float', 'value': 0.0,
                        'lolim': 0.0, 'hilim': 100.0, 'prec': 4},
@@ -509,7 +511,7 @@ def _get_ps_FBP_DCLink_propty_database():
 def _get_ps_FAC_propty_database():
     """Return database with FAC pwrsupply model PVs."""
     # TODO: implement!!!
-    propty_db = get_common_propty_database()
+    propty_db = get_basic_propty_database()
     db_ps = {
         'Current2-Mon': {'type': 'float',  'value': 0.0,
                          'prec': default_ps_current_precision},

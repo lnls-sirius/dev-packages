@@ -1,7 +1,6 @@
 #!/usr/bin/env python-sirius
 
 """Unittest module for search.py."""
-
 import unittest
 from unittest import mock
 
