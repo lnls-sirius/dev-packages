@@ -10,6 +10,170 @@ from siriuspy.ramp.magnet import Magnet as _Magnet
 _np.seterr(all='ignore')
 
 
+class NewWaveformParam:
+    """Dipole parameterized Waveforms."""
+
+    def __init__(self,
+                 start_value,
+                 rampup,
+                 plateau_value,
+                 rampdown):
+        # rampup_start_time,
+        # rampup_start_value,
+        # rampup_stop_time,
+        # rampup_stop_value,
+        # rampdown_start_time,
+        # rampdown_start_value,
+        # rampdown_stop_time,
+        # rampdown_stop_value):
+        """Init method."""
+        self._start_value = start_value
+        self._rampup_start_time = rampup[0]
+        self._rampup_start_value = rampup[1]
+        self._rampup_stop_time = rampup[2]
+        self._rampup_stop_value = rampup[3]
+        self._plateau_value = plateau_value
+        self._rampdown_start_time = rampdown[0]
+        self._rampdown_start_value = rampdown[1]
+        self._rampdown_stop_time = rampdown[2]
+        self._rampdown_stop_value = rampdown[3]
+        if not self._valid_parameters_times() or \
+           not self._valid_parameters_values():
+            raise ValueError()
+        self._calc_region1_parms()
+        self._calc_region2_parms()
+        self._calc_region3_parms()
+        self._calc_region4_parms()
+
+    def value_at(self, t):
+        """Return waveform value at a time instant."""
+        if 0.0 <= t < self._rampup_start_time:
+            return self._func_region1(t)
+        elif self._rampup_start_time <= t < self._rampup_stop_time:
+            return self._func_region2(t)
+        elif self._rampup_stop_time <= t < self._rampdown_start_time:
+            return self._plateau_value
+        elif self._rampdown_start_time <= t < self._rampdown_stop_time:
+            return self._func_region3(t)
+        elif self._rampdown_stop_time <= t <= 1.0:
+            return self._func_region4(t)
+        else:
+            raise ValueError()
+
+    def _valid_parameters_times(self):
+        if 0 >= self._rampup_start_time:
+            return False
+        if self._rampup_start_time >= self._rampup_stop_time:
+            return False
+        if self._rampup_stop_time > self._rampdown_start_time:
+            return False
+        elif self._rampdown_start_time >= self._rampdown_stop_time:
+            return False
+        elif self._rampdown_stop_time >= self._rampdown_start_time:
+            return False
+        elif self._rampdown_stop_time > 1.0:
+            return False
+        return True
+
+    def _valid_parameters_values(self):
+        if self._start_value < 0.0:
+            return False
+        elif self._start_value > self._rampup_start_value:
+            return False
+        elif self._rampup_start_value >= self._rampup_stop_value:
+            return False
+        elif self._rampup_stop_value > self._plateau_value:
+            return False
+        elif self._plateau_value < self._rampdown_start_value:
+            return False
+        elif self._rampdown_start_value <= self._rampdown_stop_value:
+            return False
+        elif self._rampdown_stop_value < self._start_value:
+            return False
+        return True
+
+    def _func_region1(self, t):
+        """Region1 function."""
+        v0 = self._start_value
+        v = v0 + self._c2_1*t**2 + self._c3_1*t**3
+        return v
+
+    def _func_region2(self, t):
+        """Region2 function."""
+        t1, v1 = self._rampup_start_time, self._rampup_start_value
+        v = v1 + self._c1_2*(t - t1)
+        return v
+
+    def _func_region3(self, t):
+        """Region3 function."""
+        t3, v3 = self._rampdown_start_time, self._rampdown_start_value
+        v = v3 + self._c1_3*(t - t3)
+        return v
+
+    def _func_region4(self, t):
+        """Region4 function."""
+        v0 = self._start_value
+        v = v0 + self._c2_4*(1.0-t)**2 + self._c3_4*(1.0-t)**3
+        return v
+
+    def _calc_Du(self):
+        t1, v1 = self._rampup_start_time, self._rampup_start_value
+        t2, v2 = self._rampup_stop_time, self._rampup_stop_value
+        Du = (v2 - v1) / (t2 - t1)
+        return Du
+
+    def _calc_Dd(self):
+        t3, v3 = self._rampdown_start_time, self._rampdown_start_value
+        t4, v4 = self._rampdown_stop_time, self._rampdown_stop_value
+        Dd = (v4 - v3) / (t4 - t3)
+        return Dd
+
+    def _calc_region1_parms(self):
+        v0 = self._start_value
+        t1, v1 = self._rampup_start_time, self._rampup_start_value
+        Du = self._calc_Du()
+        # calc poly coeffs
+        v = (v1 - v0, Du)
+        m = ((t1**2, t1**3),
+             (2.0*t1, 3*t1**2))
+        detm = m[0][0]*m[1][1] - m[0][1]*m[1][0]
+        self._c2_1 = (m[1][1] * v[0] - m[0][1] * v[1]) / detm
+        self._c3_1 = (-m[1][0] * v[0] + m[0][0] * v[1]) / detm
+        # check monotonicity
+        self._tex_1 = -2.0*self._c2_1/self._c3_1/3.0
+        self._vex_1 = self.func_region1(self._tex_1)
+        self._check_1 = not 0.0 < self._tex_1 < t1
+
+    def _calc_region2_parms(self):
+        # calc poly coeffs
+        self._c1_2 = self._calc_Du()
+        # check crescent function
+        self._check_2 = self._c1_2 > 0.0
+
+    def _calc_region3_parms(self):
+        # calc poly coeffs
+        self._c1_3 = self._calc_Dd()
+        # check crescent function
+        self._check_3 = self._c1_3 < 0.0
+
+    def _calc_region4_parms(self):
+        t4, v4 = self._rampdown_stop_time, self._rampdown_stop_value
+        v0 = self._start_value
+        Dd = self._calc_Dd()
+        # calc poly coeffs
+        v = (v4 - v0, Dd)
+        d = 1.0 - t4
+        m = ((d**2, d**3),
+             (-2.0*d, -3*d**2))
+        detm = m[0][0]*m[1][1] - m[0][1]*m[1][0]
+        self._c2_4 = (m[1][1] * v[0] - m[0][1] * v[1]) / detm
+        self._c3_4 = (-m[1][0] * v[0] + m[0][0] * v[1]) / detm
+        # check monotonicity
+        self._tex_4 = 1 + 2.0*self._c2_4/self._c3_4/3.0
+        self._vex_4 = self.func_region4(self._tex_4)
+        self._check4 = not t4 < self._tex_4 < 1.0
+
+
 class WaveformParam:
     """Dipole parameterized Waveforms."""
 
