@@ -10,127 +10,253 @@ from siriuspy.ramp.magnet import Magnet as _Magnet
 _np.seterr(all='ignore')
 
 
-class NewWaveformParam:
+class WaveformParam:
     """Dipole parameterized Waveforms."""
 
     def __init__(self,
-                 start_value,
-                 rampup,
-                 plateau_value,
-                 rampdown):
-        # rampup_start_time,
-        # rampup_start_value,
-        # rampup_stop_time,
-        # rampup_stop_value,
-        # rampdown_start_time,
-        # rampdown_start_value,
-        # rampdown_stop_time,
-        # rampdown_stop_value):
+                 duration=None,
+                 start_energy=None,
+                 rampup=None,
+                 plateau_energy=None,
+                 rampdown=None):
         """Init method."""
-        self._start_value = start_value
+        if duration is None:
+            duration = _util.DEFAULT_RAMP_DURATION
+        if start_energy is None:
+            start_energy = _util.DEFAULT_RAMP_START_ENERGY
+        if rampup is None:
+            rampup = (_util.DEFAULT_RAMP_RAMPUP_START_TIME,
+                      _util.DEFAULT_RAMP_RAMPUP_START_ENERGY,
+                      _util.DEFAULT_RAMP_RAMPUP_STOP_TIME,
+                      _util.DEFAULT_RAMP_RAMPUP_STOP_ENERGY,)
+        if plateau_energy is None:
+            plateau_energy = _util.DEFAULT_RAMP_PLATEAU_ENERGY
+        if rampdown is None:
+            rampdown = (_util.DEFAULT_RAMP_RAMPDOWN_START_TIME,
+                        _util.DEFAULT_RAMP_RAMPDOWN_START_ENERGY,
+                        _util.DEFAULT_RAMP_RAMPDOWN_STOP_TIME,
+                        _util.DEFAULT_RAMP_RAMPDOWN_STOP_ENERGY,)
+        self._duration = duration
+        self._start_energy = start_energy
         self._rampup_start_time = rampup[0]
-        self._rampup_start_value = rampup[1]
+        self._rampup_start_energy = rampup[1]
         self._rampup_stop_time = rampup[2]
-        self._rampup_stop_value = rampup[3]
-        self._plateau_value = plateau_value
+        self._rampup_stop_energy = rampup[3]
+        self._plateau_energy = plateau_energy
         self._rampdown_start_time = rampdown[0]
-        self._rampdown_start_value = rampdown[1]
+        self._rampdown_start_energy = rampdown[1]
         self._rampdown_stop_time = rampdown[2]
-        self._rampdown_stop_value = rampdown[3]
-        if not self._valid_parameters_times() or \
-           not self._valid_parameters_values():
-            raise ValueError()
-        self._calc_region1_parms()
-        self._calc_region2_parms()
-        self._calc_region3_parms()
-        self._calc_region4_parms()
+        self._rampdown_stop_energy = rampdown[3]
+        self._changed = True
 
-    def value_at(self, t):
+    def eval_at(self, t):
         """Return waveform value at a time instant."""
+        self.update()
+        if self._invalid:
+            raise ValueError('Invalid parameters')
         if 0.0 <= t < self._rampup_start_time:
             return self._func_region1(t)
         elif self._rampup_start_time <= t < self._rampup_stop_time:
             return self._func_region2(t)
         elif self._rampup_stop_time <= t < self._rampdown_start_time:
-            return self._plateau_value
+            return self._func_region5(t)
         elif self._rampdown_start_time <= t < self._rampdown_stop_time:
             return self._func_region3(t)
-        elif self._rampdown_stop_time <= t <= 1.0:
+        elif self._rampdown_stop_time <= t <= self._duration:
             return self._func_region4(t)
         else:
             raise ValueError()
 
-    def _valid_parameters_times(self):
-        if 0 >= self._rampup_start_time:
-            return False
-        if self._rampup_start_time >= self._rampup_stop_time:
-            return False
-        if self._rampup_stop_time > self._rampdown_start_time:
-            return False
-        elif self._rampdown_start_time >= self._rampdown_stop_time:
-            return False
-        elif self._rampdown_stop_time >= self._rampdown_start_time:
-            return False
-        elif self._rampdown_stop_time > 1.0:
-            return False
-        return True
+    def update(self):
+        """Update calculation."""
+        if self._changed:
+            self._clear_errors()
+            if not self._errors:
+                self._check_valid_parameters_times()
+            if not self._errors:
+                self._check_valid_parameters_values()
+            if self._errors:
+                self._invalid = True
+            else:
+                self._invalid = False
+            if not self._errors:
+                self._calc_region1_parms()
+                self._calc_region2_parms()
+                self._calc_region3_parms()
+                self._calc_region4_parms()
+                self._calc_region5_parms()
+            self._changed = False
 
-    def _valid_parameters_values(self):
-        if self._start_value < 0.0:
-            return False
-        elif self._start_value > self._rampup_start_value:
-            return False
-        elif self._rampup_start_value >= self._rampup_stop_value:
-            return False
-        elif self._rampup_stop_value > self._plateau_value:
-            return False
-        elif self._plateau_value < self._rampdown_start_value:
-            return False
-        elif self._rampdown_start_value <= self._rampdown_stop_value:
-            return False
-        elif self._rampdown_stop_value < self._start_value:
-            return False
-        return True
+    @property
+    def errors(self):
+        """Return errors."""
+        self.update()
+        return self._errors
+
+    @property
+    def start_energy(self):
+        """Return waveform value at the left-end and first region boundary."""
+        return self._start_energy
+
+    @property
+    def rampup_start_energy(self):
+        """Return waveform value at the second region boundary."""
+        return self._rampup_start_energy
+
+    @property
+    def rampup_start_time(self):
+        """Instant in time when rampup starts."""
+        return self._rampup_start_time
+
+    @property
+    def rampup_stop_energy(self):
+        """Return waveform value at the 3rd region boundary."""
+        return self._rampup_stop_energy
+
+    @property
+    def rampup_stop_time(self):
+        """Instant in time when rampup stops."""
+        return self._rampup_stop_time
+
+    @property
+    def plateau_start_time(self):
+        """Instant in time when plateau starts."""
+        self.update()
+        if self._invalid:
+            raise ValueError('Invalid parameters')
+        return self._t_pb
+
+    @property
+    def plateau_energy(self):
+        """Return waveform value at the 4th and 5th region boundaries."""
+        return self._plateau_energy
+
+    @property
+    def plateau_stop_time(self):
+        """Instant in time when plateau stops."""
+        self.update()
+        if self._invalid:
+            raise ValueError('Invalid parameters')
+        return self._t_pe
+
+    @property
+    def rampdown_start_energy(self):
+        """Return waveform value at the 6h region boundary."""
+        return self._rampdown_start_energy
+
+    @property
+    def rampdown_start_time(self):
+        """Instant in time when rampdown starts."""
+        return self._rampdown_start_time
+
+    @property
+    def rampdown_stop_energy(self):
+        """Return waveform value at the 7th region boundary."""
+        return self._rampdown_stop_energy
+
+    @property
+    def rampdown_stop_time(self):
+        """Instant in time when rampdown stops."""
+        return self._rampdown_stop_time
+
+    @property
+    def duration(self):
+        """Ramp duration."""
+        return self._duration
+
+    def _clear_errors(self):
+        self._errors = set()
+        self._invalid = False
+
+    def _check_valid_parameters_times(self):
+        if 0 >= self._rampup_start_time:
+            self._errors.add('0 >= rampup_start_time')
+        elif self._rampup_start_time >= self._rampup_stop_time:
+            self._errors.add('rampup_start_time >= rampup_stop_time')
+        elif self._rampup_stop_time > self._rampdown_start_time:
+            self._errors.add('rampup_stop_time > rampdown_start_time')
+        elif self._rampdown_start_time >= self._rampdown_stop_time:
+            self._errors.add('rampdown_start_time >= rampdown_stop_time')
+        elif self._rampdown_stop_time > self._duration:
+            self._errors.add('rampdown_stop_time > duration')
+
+    def _check_valid_parameters_values(self):
+        if self._start_energy < 0.0:
+            self._errors.add('start_energy < 0.0')
+        elif self._start_energy > self._rampup_start_energy:
+            self._errors.add('start_energy > rampup_start_energy')
+        elif self._rampup_start_energy >= self._rampup_stop_energy:
+            self._errors.add('rampup_start_energy > rampup_start_energy')
+        elif self._rampup_stop_energy > self._plateau_energy:
+            self._errors.add('rampup_stop_energy > plateau_energy')
+        elif self._plateau_energy < self._rampdown_start_energy:
+            self._errors.add('plateau_energy < rampdown_start_energy')
+        elif self._rampdown_start_energy <= self._rampdown_stop_energy:
+            self._errors.add('rampdown_start_energy <= rampdown_stop_energy')
+        elif self._rampdown_stop_energy < self._start_energy:
+            self._errors.add('rampdown_stop_energy < start_energy')
 
     def _func_region1(self, t):
         """Region1 function."""
-        v0 = self._start_value
-        v = v0 + self._c2_1*t**2 + self._c3_1*t**3
+        v0 = self._start_energy
+        d = t - 0.0
+        v = v0 + self._c2_1*d**2 + self._c3_1*d**3
         return v
 
     def _func_region2(self, t):
         """Region2 function."""
-        t1, v1 = self._rampup_start_time, self._rampup_start_value
-        v = v1 + self._c1_2*(t - t1)
+        t1, v1 = self._rampup_start_time, self._rampup_start_energy
+        d = t - t1
+        v = v1 + self._c1_2*d
         return v
 
     def _func_region3(self, t):
         """Region3 function."""
-        t3, v3 = self._rampdown_start_time, self._rampdown_start_value
-        v = v3 + self._c1_3*(t - t3)
+        t3, v3 = self._rampdown_start_time, self._rampdown_start_energy
+        d = t - t3
+        v = v3 + self._c1_3*d
         return v
 
     def _func_region4(self, t):
         """Region4 function."""
-        v0 = self._start_value
-        v = v0 + self._c2_4*(1.0-t)**2 + self._c3_4*(1.0-t)**3
+        v0 = self._start_energy
+        d = self._duration - t
+        v = v0 + self._c2_4*d**2 + self._c3_4*d**3
+        return v
+
+    def _func_region5(self, t):
+        """Region5 function."""
+        t2, v2 = self._rampup_stop_time, self._rampup_stop_energy
+        t3, v3 = self._rampdown_start_time, self._rampdown_start_energy
+        Du, Dd = self._t_pb_D, self._t_pe_D
+        n = self._n
+        if t < self._t_pb:
+            ts = self._t_pb - t2
+            d = t - t2
+            v = v2 + Du * (ts**n*d - d**(n+1)/(n+1.0)) / ts**n
+        elif self._t_pb <= t <= self._t_pe:
+            v = self._plateau_energy
+        else:
+            ts = t3 - self._t_pe
+            d = t3 - t
+            v = v3 + Dd * (-ts**n*d + d**(n+1)/(n+1.0)) / ts**n
         return v
 
     def _calc_Du(self):
-        t1, v1 = self._rampup_start_time, self._rampup_start_value
-        t2, v2 = self._rampup_stop_time, self._rampup_stop_value
+        t1, v1 = self._rampup_start_time, self._rampup_start_energy
+        t2, v2 = self._rampup_stop_time, self._rampup_stop_energy
         Du = (v2 - v1) / (t2 - t1)
         return Du
 
     def _calc_Dd(self):
-        t3, v3 = self._rampdown_start_time, self._rampdown_start_value
-        t4, v4 = self._rampdown_stop_time, self._rampdown_stop_value
+        t3, v3 = self._rampdown_start_time, self._rampdown_start_energy
+        t4, v4 = self._rampdown_stop_time, self._rampdown_stop_energy
         Dd = (v4 - v3) / (t4 - t3)
         return Dd
 
     def _calc_region1_parms(self):
-        v0 = self._start_value
-        t1, v1 = self._rampup_start_time, self._rampup_start_value
+        v0 = self._start_energy
+        t1, v1 = self._rampup_start_time, self._rampup_start_energy
         Du = self._calc_Du()
         # calc poly coeffs
         v = (v1 - v0, Du)
@@ -141,40 +267,75 @@ class NewWaveformParam:
         self._c3_1 = (-m[1][0] * v[0] + m[0][0] * v[1]) / detm
         # check monotonicity
         self._tex_1 = -2.0*self._c2_1/self._c3_1/3.0
-        self._vex_1 = self.func_region1(self._tex_1)
-        self._check_1 = not 0.0 < self._tex_1 < t1
+        self._vex_1 = self._func_region1(self._tex_1)
+        if 0.0 < self._tex_1 < t1:
+            self._errors.add('there is a maximum in region 1')
 
     def _calc_region2_parms(self):
         # calc poly coeffs
         self._c1_2 = self._calc_Du()
         # check crescent function
-        self._check_2 = self._c1_2 > 0.0
+        if self._c1_2 < 0.0:
+            self._errors.add('rampup is incorrect')
 
     def _calc_region3_parms(self):
         # calc poly coeffs
         self._c1_3 = self._calc_Dd()
         # check crescent function
-        self._check_3 = self._c1_3 < 0.0
+        if self._c1_3 > 0.0:
+            self._errors.add('rampdown is incorrect')
 
     def _calc_region4_parms(self):
-        t4, v4 = self._rampdown_stop_time, self._rampdown_stop_value
-        v0 = self._start_value
+        t4, v4 = self._rampdown_stop_time, self._rampdown_stop_energy
+        v0 = self._start_energy
         Dd = self._calc_Dd()
         # calc poly coeffs
         v = (v4 - v0, Dd)
-        d = 1.0 - t4
+        d = self._duration - t4
         m = ((d**2, d**3),
              (-2.0*d, -3*d**2))
         detm = m[0][0]*m[1][1] - m[0][1]*m[1][0]
         self._c2_4 = (m[1][1] * v[0] - m[0][1] * v[1]) / detm
         self._c3_4 = (-m[1][0] * v[0] + m[0][0] * v[1]) / detm
         # check monotonicity
-        self._tex_4 = 1 + 2.0*self._c2_4/self._c3_4/3.0
-        self._vex_4 = self.func_region4(self._tex_4)
-        self._check4 = not t4 < self._tex_4 < 1.0
+        self._tex_4 = self._duration + 2.0*self._c2_4/self._c3_4/3.0
+        self._vex_4 = self._func_region4(self._tex_4)
+        if t4 < self._tex_4 < self._duration:
+            self._errors.add('there is a maximum in region 4')
+
+    def _calc_region5_parms(self):
+        # calculate where constant derivatives need extension to that
+        # rampup and rampdown reach plateau value
+        t2, v2 = self._rampup_stop_time, self._rampup_stop_energy
+        t3, v3 = self._rampdown_start_time, self._rampdown_start_energy
+        vm = self._plateau_energy
+        Du = self._calc_Du()
+        Dd = self._calc_Dd()
+        t_pb = t2 + (vm - v2) / Du
+        t_pe = t3 + (vm - v3) / Dd
+        # print(t_pb, t_pe)
+        if t_pb > t_pe:
+            self._errors.add('non-monotonic plateau transition')
+            self._t_pb = t2
+            self._t_pe = t3
+            return
+        self._n = 2
+        while True:
+            A = vm - v2
+            ts = (self._n+1.0)/self._n * A / Du
+            self._t_pb = t2 + ts
+            self._t_pb_D = Du
+            A = vm - v3
+            ts = (self._n+1.0)/self._n * A / Dd
+            self._t_pe = t3 + ts
+            self._t_pe_D = Dd
+            if self._t_pb <= self._t_pe:
+                # solution found
+                break
+            self._n += 1
 
 
-class WaveformParam:
+class OldWaveformParam:
     """Dipole parameterized Waveforms."""
 
     def __init__(self,
@@ -326,7 +487,7 @@ class WaveformParam:
 
     @property
     def deprecated(self):
-        """Deprecated state."""
+        """Deprecate state."""
         return self._deprecated
 
     # --- public setters ---
@@ -797,8 +958,11 @@ class WaveformParam:
 class _WaveformMagnet(_Magnet):
     """Base class of magnet waveforms."""
 
-    def __init__(self, maname):
+    def __init__(self, maname,
+                 wfm_nrpoints=_MAX_WFMSIZE,
+                 **kwargs):
         _Magnet.__init__(self, maname=maname)
+        self._wfm_nrpoints = wfm_nrpoints
 
     @property
     def times(self):
@@ -817,16 +981,27 @@ class _WaveformMagnet(_Magnet):
     def strengths(self, value):
         self._set_strengths(value)
 
+    @property
+    def wfm_nrpoints(self):
+        return self._wfm_nrpoints
+
 
 class WaveformDipole(_WaveformMagnet, WaveformParam):
     """Waveform for Dipole."""
 
     def __init__(self, maname='BO-Fam:MA-B', **kwargs):
         """Constructor."""
-        _WaveformMagnet.__init__(self, maname)
-        eje_current = self.conv_strength_2_current(_util.BO_EJECTION_ENERGY)
-        kwargs['scale'] = eje_current
+        _WaveformMagnet.__init__(self, maname, **kwargs)
+        # eje_current = self.conv_strength_2_current(_util.BO_EJECTION_ENERGY)
+        # kwargs['scale'] = eje_current
         WaveformParam.__init__(self, **kwargs)
+
+    @property
+    def waveform(self):
+        """Magnet waveform."""
+        times = self.times
+        wfm = [self.eval_at(t) for t in times]
+        return wfm
 
     def _get_currents(self):
         currents = self.conv_strength_2_current(self.waveform)
