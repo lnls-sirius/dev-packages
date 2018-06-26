@@ -13,59 +13,55 @@ _np.seterr(all='ignore')
 class WaveformParam:
     """Dipole parameterized Waveforms."""
 
-    def __init__(self,
-                 duration=None,
-                 start_energy=None,
-                 rampup=None,
-                 plateau_energy=None,
-                 rampdown=None):
+    def __init__(
+            self,
+            duration=_util.DEFAULT_RAMP_DURATION,
+            start_energy=_util.DEFAULT_RAMP_START_ENERGY,
+            rampup_start_time=_util.DEFAULT_RAMP_RAMPUP_START_TIME,
+            rampup_start_energy=_util.DEFAULT_RAMP_RAMPUP_START_ENERGY,
+            rampup_stop_time=_util.DEFAULT_RAMP_RAMPUP_STOP_TIME,
+            rampup_stop_energy=_util.DEFAULT_RAMP_RAMPUP_STOP_ENERGY,
+            plateau_energy=_util.DEFAULT_RAMP_PLATEAU_ENERGY,
+            rampdown_start_time=_util.DEFAULT_RAMP_RAMPDOWN_START_TIME,
+            rampdown_start_energy=_util.DEFAULT_RAMP_RAMPDOWN_START_ENERGY,
+            rampdown_stop_time=_util.DEFAULT_RAMP_RAMPDOWN_STOP_TIME,
+            rampdown_stop_energy=_util.DEFAULT_RAMP_RAMPDOWN_STOP_ENERGY):
         """Init method."""
-        if duration is None:
-            duration = _util.DEFAULT_RAMP_DURATION
-        if start_energy is None:
-            start_energy = _util.DEFAULT_RAMP_START_ENERGY
-        if rampup is None:
-            rampup = (_util.DEFAULT_RAMP_RAMPUP_START_TIME,
-                      _util.DEFAULT_RAMP_RAMPUP_START_ENERGY,
-                      _util.DEFAULT_RAMP_RAMPUP_STOP_TIME,
-                      _util.DEFAULT_RAMP_RAMPUP_STOP_ENERGY,)
-        if plateau_energy is None:
-            plateau_energy = _util.DEFAULT_RAMP_PLATEAU_ENERGY
-        if rampdown is None:
-            rampdown = (_util.DEFAULT_RAMP_RAMPDOWN_START_TIME,
-                        _util.DEFAULT_RAMP_RAMPDOWN_START_ENERGY,
-                        _util.DEFAULT_RAMP_RAMPDOWN_STOP_TIME,
-                        _util.DEFAULT_RAMP_RAMPDOWN_STOP_ENERGY,)
         self._duration = duration
         self._start_energy = start_energy
-        self._rampup_start_time = rampup[0]
-        self._rampup_start_energy = rampup[1]
-        self._rampup_stop_time = rampup[2]
-        self._rampup_stop_energy = rampup[3]
+        self._rampup_start_time = rampup_start_time
+        self._rampup_start_energy = rampup_start_energy
+        self._rampup_stop_time = rampup_stop_time
+        self._rampup_stop_energy = rampup_stop_energy
         self._plateau_energy = plateau_energy
-        self._rampdown_start_time = rampdown[0]
-        self._rampdown_start_energy = rampdown[1]
-        self._rampdown_stop_time = rampdown[2]
-        self._rampdown_stop_energy = rampdown[3]
+        self._rampdown_start_time = rampdown_start_time
+        self._rampdown_start_energy = rampdown_start_energy
+        self._rampdown_stop_time = rampdown_stop_time
+        self._rampdown_stop_energy = rampdown_stop_energy
         self._changed = True
 
     def eval_at(self, t):
         """Return waveform value at a time instant."""
+        def _get_at(t):
+            if 0.0 <= t < self._rampup_start_time:
+                return self._func_region1(t)
+            elif self._rampup_start_time <= t < self._rampup_stop_time:
+                return self._func_region2(t)
+            elif self._rampup_stop_time <= t < self._rampdown_start_time:
+                return self._func_region5(t)
+            elif self._rampdown_start_time <= t < self._rampdown_stop_time:
+                return self._func_region3(t)
+            elif self._rampdown_stop_time <= t <= self._duration:
+                return self._func_region4(t)
+            else:
+                raise ValueError()
         self.update()
         if self._invalid:
             raise ValueError('Invalid parameters')
-        if 0.0 <= t < self._rampup_start_time:
-            return self._func_region1(t)
-        elif self._rampup_start_time <= t < self._rampup_stop_time:
-            return self._func_region2(t)
-        elif self._rampup_stop_time <= t < self._rampdown_start_time:
-            return self._func_region5(t)
-        elif self._rampdown_start_time <= t < self._rampdown_stop_time:
-            return self._func_region3(t)
-        elif self._rampdown_stop_time <= t <= self._duration:
-            return self._func_region4(t)
+        if isinstance(t, (list, tuple, _np.ndarray)):
+            return [_get_at(t1) for t1 in t]
         else:
-            raise ValueError()
+            return _get_at(t)
 
     def update(self):
         """Update calculation."""
@@ -74,7 +70,7 @@ class WaveformParam:
             if not self._errors:
                 self._check_valid_parameters_times()
             if not self._errors:
-                self._check_valid_parameters_values()
+                self._check_valid_parameters_energies()
             if self._errors:
                 self._invalid = True
             else:
@@ -87,11 +83,22 @@ class WaveformParam:
                 self._calc_region5_parms()
             self._changed = False
 
+    @ property
+    def changed(self):
+        """State of change."""
+        return self._changed
+
     @property
     def errors(self):
         """Return errors."""
         self.update()
         return self._errors
+
+    @property
+    def invalid(self):
+        """Invalid state."""
+        self.update()
+        return self._invalid
 
     @property
     def start_energy(self):
@@ -164,6 +171,68 @@ class WaveformParam:
         """Ramp duration."""
         return self._duration
 
+    @start_energy.setter
+    def start_energy(self, value):
+        """Set start energy."""
+        self._start_energy = float(value)
+        self._changed = True
+
+    @rampup_start_time.setter
+    def rampup_start_time(self, value):
+        """Set time of rampup start."""
+        self._rampup_start_time = float(value)
+        self._changed = True
+
+    @rampup_start_energy.setter
+    def rampup_start_energy(self, value):
+        """Set energy of rampup start."""
+        self._rampup_start_energy = float(value)
+        self._changed = True
+
+    @rampup_stop_time.setter
+    def rampup_stop_time(self, value):
+        """Set time of rampup stop."""
+        self._rampup_stop_time = float(value)
+        self._changed = True
+
+    @rampup_stop_energy.setter
+    def rampup_stop_energy(self, value):
+        """Set energy of rampup stop."""
+        self._rampup_stop_energy = float(value)
+        self._changed = True
+
+    @plateau_energy.setter
+    def plateau_energy(self, value):
+        """Set energy of plateau."""
+        self._plateau_energy = float(value)
+        self._changed = True
+
+    @rampdown_start_time.setter
+    def rampdown_start_time(self, value):
+        """Set time of rampdown start."""
+        self._rampdown_start_time = float(value)
+        self._changed = True
+
+    @rampdown_start_energy.setter
+    def rampdown_start_energy(self, value):
+        """Set energy of rampdown start."""
+        self._rampdown_start_energy = float(value)
+        self._changed = True
+
+    @rampdown_stop_time.setter
+    def rampdown_stop_time(self, value):
+        """Set time of rampdown stop."""
+        self._rampdown_stop_time = float(value)
+        self._changed = True
+
+    @rampdown_stop_energy.setter
+    def rampdown_stop_energy(self, value):
+        """Set energy of rampdown stop."""
+        self._rampdown_stop_energy = float(value)
+        self._changed = True
+
+    # --- private methods ---
+
     def _clear_errors(self):
         self._errors = set()
         self._invalid = False
@@ -180,7 +249,7 @@ class WaveformParam:
         elif self._rampdown_stop_time > self._duration:
             self._errors.add('rampdown_stop_time > duration')
 
-    def _check_valid_parameters_values(self):
+    def _check_valid_parameters_energies(self):
         if self._start_energy < 0.0:
             self._errors.add('start_energy < 0.0')
         elif self._start_energy > self._rampup_start_energy:
@@ -985,6 +1054,35 @@ class _WaveformMagnet(_Magnet):
     def wfm_nrpoints(self):
         return self._wfm_nrpoints
 
+    def __getitem__(self, index):
+        """Return waveform at index."""
+        wfm = self.waveform
+        return wfm[index]
+
+    def __iter__(self):
+        """Return iterator for waveform."""
+        wfm = self.waveform
+        for i in range(len(wfm)):
+            yield(wfm[i])
+
+    def __reversed__(self):
+        """Return reverse iterator for waveform."""
+        wfm = self.waveform
+        for i in range(len(wfm)-1, -1, -1):
+            yield(wfm[i])
+
+    def __len__(self):
+        """Return length of waveform."""
+        return self.wfm_nrpoints
+
+    def __contains__(self, value):
+        """Check whether value is in waveform."""
+        return value in self.waveform
+
+    def __eq__(self, value):
+        """Compare waveforms."""
+        return self.waveform == value
+
 
 class WaveformDipole(_WaveformMagnet, WaveformParam):
     """Waveform for Dipole."""
@@ -995,13 +1093,20 @@ class WaveformDipole(_WaveformMagnet, WaveformParam):
         # eje_current = self.conv_strength_2_current(_util.BO_EJECTION_ENERGY)
         # kwargs['scale'] = eje_current
         WaveformParam.__init__(self, **kwargs)
+        self._waveform = None
+
+    def update(self):
+        """Upate."""
+        WaveformParam.update(self)
+        self._waveform = None
 
     @property
     def waveform(self):
         """Magnet waveform."""
-        times = self.times
-        wfm = [self.eval_at(t) for t in times]
-        return wfm
+        if self._changed or self._waveform is None:
+            t = self.times
+            self._waveform = self.eval_at(t)
+        return self._waveform
 
     def _get_currents(self):
         currents = self.conv_strength_2_current(self.waveform)

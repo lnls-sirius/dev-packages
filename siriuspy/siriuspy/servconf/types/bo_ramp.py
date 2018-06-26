@@ -8,8 +8,6 @@ from copy import deepcopy as _dcopy
 from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
 from siriuspy.ramp import util as _util
 
-pdate_waveform_dipole.util import DEFAULT_RAMP_DURATION as _DEFAULT_RAMP_DURATION
-
 
 def get_dict():
     """Return a dict with ramp settings."""
@@ -23,18 +21,20 @@ def get_dict():
 
 
 # _eje_current = 981.7835215242153  # [A] - BO dipole current @ 3 GeV
-_eje_energy = 3.0  # [GeV]
-_i07 = (1, 104, 2480, 2576, 2640, 2736, 3840, 3999)
-_v07 = (0.01, 0.026250000000000006, 1.0339285714285713,
-        1.05, 1.05, 1.0, 0.07, 0.01)
-_ramp_duration = _util.DEFAULT_RAMP_DURATION  # [s]
-_wfm_nrpoints = _MAX_WFMSIZE
-_interval = _ramp_duration / (_wfm_nrpoints - 1.0)
+# _eje_energy = 3.0  # [GeV]
+# _i07 = (1, 104, 2480, 2576, 2640, 2736, 3840, 3999)
+# _v07 = (0.01, 0.026250000000000006, 1.0339285714285713,
+#         1.05, 1.05, 1.0, 0.07, 0.01)
+# _ramp_duration = _util.DEFAULT_RAMP_DURATION  # [s]
+# _wfm_nrpoints = _MAX_WFMSIZE
+# _interval = _ramp_duration / (_wfm_nrpoints - 1.0)
 
 
 _ramp_dipole = {
     # dipole delay [us]
     'delay': 0.0,
+    # number of points in power supply waveforms
+    'wfm_nrpoints': _MAX_WFMSIZE,
     # ramp time parameters [ms]
     'duration': _util.DEFAULT_RAMP_DURATION,
     'rampup_start_time': _util.DEFAULT_RAMP_RAMPUP_START_TIME,
@@ -52,8 +52,8 @@ _ramp_dipole = {
 
 _normalized_configs = [
     # time [ms]            normalized configuration name
-    [12.743185796449112, 'rampup-start'],
-    [303.87596899224806, 'rampup-stop'],
+    [_util.DEFAULT_RAMP_RAMPUP_START_TIME, 'rampup-start'],
+    [_util.DEFAULT_RAMP_RAMPUP_STOP_TIME, 'rampup-stop'],
 ]
 
 _rf_parameters = {
@@ -63,10 +63,9 @@ _rf_parameters = {
 
 
 _template_dict = {
-    'wfm_nrpoints': _MAX_WFMSIZE,
-    'injection_time': 19.604901225306328,  # [ms]
-    'ejection_time': 294.07351837959493,  # [ms]
-    'ramp_dipole': _ramp_dipole,
-    'normalized_configs*': _normalized_configs,
+    'injection_time': _util.DEFAULT_RAMP_INJECTION_TIME,  # [ms]
+    'ejection_time': _util.DEFAULT_RAMP_EJECTION_TIME,  # [ms]
     'rf_parameters': _rf_parameters,
+    'normalized_configs*': _normalized_configs,
+    'ramp_dipole': _ramp_dipole,
 }
