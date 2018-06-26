@@ -149,13 +149,18 @@ class BBBFactory:
                 connections[dev_name] = Connection(dev_id, pru_controller)
 
             # Build controllers dict
-            print(model)
+            # print(model)
             if model in ('FBP'):
                 controller = _StdPSController(
                     fields, writers, connections, devices_ids, pru_controller)
             elif model in ('FBP_DCLink'):
                 controller = _PSController(
                     fields, writers, connections)
+            elif model in ('FAC_DCDC'):
+                controller = _PSController(
+                    fields, writers, connections)
+            else:
+                raise NotImplementedError()
             for dev_name, dev_id in devices:
                 controllers[dev_name] = controller
 
