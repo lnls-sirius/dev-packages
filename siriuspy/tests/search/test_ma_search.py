@@ -1,57 +1,28 @@
-#!/usr/bin/env python-sirius
-
-"""Unittest module for ps_search.py."""
+"""Unittest module for ma_search.py."""
 
 import unittest
-from unittest import mock
 
-import os
 from siriuspy import util
 from siriuspy.search import ma_search
-from siriuspy.search import ps_search
 from siriuspy.search import MASearch
-
-mock_flag = True
-
-public_interface = (
-    'MASearch',
-)
-
-_path = os.path.abspath(os.path.dirname(__file__))
-
-
-def read_test_file(path):
-    """Read a file."""
-    prefix = _path + '/../test_data/servweb/'
-    with open(prefix + path, "r") as fd:
-        return fd.read()
-
-
-def read_test_ps_pstypes(path):
-    """Read a file."""
-    prefix = _path + '/../test_data/servweb/pwrsupply/pstypes-data/'
-    with open(prefix + path, "r") as fd:
-        return fd.read()
-
-
-def read_test_ma_excdata(path):
-    """Read a file."""
-    prefix = _path + '/../test_data/servweb/magnet/excitation-data/'
-    with open(prefix + path, "r") as fd:
-        return fd.read()
+from ..mock_servweb import MockServConf
 
 
 class TestModule(unittest.TestCase):
     """Test Search module."""
 
+    public_interface = (
+        'MASearch',
+    )
+
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-                                ma_search, public_interface)
+                                ma_search, TestModule.public_interface)
         self.assertTrue(valid)
 
 
-class TestMASearch(unittest.TestCase):
+class TestMASearch(MockServConf):
     """Test MASearch."""
 
     public_interface = (
@@ -139,37 +110,6 @@ class TestMASearch(unittest.TestCase):
         'SI-01M1:PS-QDA': 'SI-01M1:MA-QDA',
         'SI-01M2:PS-CH': 'SI-01M2:MA-CH',
     }
-
-    def setUp(self):
-        """Common setup for all tests."""
-        if mock_flag:
-            # Create Mocks
-            web_patcher = mock.patch.object(
-                                        ma_search, '_web', autospec=True)
-            self.addCleanup(web_patcher.stop)
-            self.mock_web = web_patcher.start()
-            ps_web_patcher = mock.patch.object(
-                                        ps_search, '_web', autospec=True)
-            self.addCleanup(ps_web_patcher.stop)
-            self.ps_mock_web = ps_web_patcher.start()
-
-            # MASearch funcs
-            self.mock_web.server_online.return_value = True
-            self.mock_web.magnets_excitation_ps_read.return_value = \
-                read_test_file('magnet/magnet-excitation-ps.txt')
-            self.mock_web.magnets_setpoint_limits.return_value = \
-                read_test_file('magnet/magnet-setpoint-limits.txt')
-            self.mock_web.pulsed_magnets_setpoint_limits.return_value = \
-                read_test_file('magnet/pulsed-magnet-setpoint-limits.txt')
-            # PSSearch funcs
-            self.ps_mock_web.ps_pstypes_names_read.return_value = \
-                read_test_file('pwrsupply/pstypes-names.txt')
-            self.ps_mock_web.ps_pstype_data_read.side_effect = \
-                read_test_ps_pstypes
-            self.ps_mock_web.ps_pstype_setpoint_limits.return_value = \
-                read_test_file('pwrsupply/pstypes-setpoint-limits.txt')
-            self.ps_mock_web.pu_pstype_setpoint_limits.return_value = \
-                read_test_file('pwrsupply/putypes-setpoint-limits.txt')
 
     def test_public_interface(self):
         """Test class public interface."""
@@ -276,7 +216,3 @@ class TestMASearch(unittest.TestCase):
             self.assertTrue(splims['LOLO'] <= splims['LOW'])
             self.assertTrue(splims['LOW'] < splims['HIGH'])
             self.assertTrue(splims['HIGH'] <= splims['HIHI'])
-
-
-if __name__ == "__main__":
-    unittest.main()

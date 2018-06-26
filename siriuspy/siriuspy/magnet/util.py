@@ -54,6 +54,7 @@ def get_multipole_name(harmonic, suffix=None):
 
 def get_multipole_si_units(harmonic, power=None, product=None):
     """Return multipole units, given harmonic number."""
+    product = '.' if product is None else product
     if harmonic == 0:
         return 'T{0:s}m'.format(product)
     elif harmonic == 1:
@@ -62,7 +63,6 @@ def get_multipole_si_units(harmonic, power=None, product=None):
         return 'T/m'
     else:
         power = '^' if power is None else power
-        product = '.' if product is None else product
         return 'T/m{0:s}{1:d}'.format(power, harmonic-1)
 
 
