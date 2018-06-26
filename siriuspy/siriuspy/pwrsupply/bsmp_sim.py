@@ -90,7 +90,7 @@ class _Spec_FAC_DCDC(_Spec):
     def _get_monvar_ids(self):
         return (_cFAC_DCDC.V_I_LOAD1, _cFAC_DCDC.V_I_LOAD2)
 
-    def _get_monvar_fluctuation_rms(self):
+    def _get_monvar_fluctuation_rms(self, var_id):
         return _Spec._I_LOAD_FLUCTUATION_RMS
 
 

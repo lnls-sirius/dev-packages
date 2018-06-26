@@ -27,6 +27,9 @@ class FunctionFactory:
         elif psmodel == 'FBP_DCLink':
             return FunctionFactory._get_FBP_DCLink(
                 device_ids, epics_field, pru_controller, setpoints)
+        elif psmodel == 'FAC_DCDC':
+            return FunctionFactory._get_FAC_DCDC(
+                device_ids, epics_field, pru_controller, setpoints)
         else:
             raise NotImplementedError('Fields not implemented for ' + psmodel)
 
@@ -87,6 +90,43 @@ class FunctionFactory:
                 device_ids, pru_controller, _c.F_RESET_INTERLOCKS, setpoints)
         elif epics_field == 'Abort-Cmd':
             return NullFunction()
+        else:
+            return NullFunction()
+
+    @staticmethod
+    def _get_FAC_DCDC(device_ids, epics_field, pru_controller, setpoints):
+        _c = _bsmp.ConstFAC_DCDC
+        if epics_field == 'PwrState-Sel':
+            return PSPwrState(device_ids, pru_controller, setpoints)
+        elif epics_field == 'OpMode-Sel':
+            return PSOpMode(
+                device_ids,
+                Function(device_ids, pru_controller, _c.F_SELECT_OP_MODE),
+                setpoints)
+        elif epics_field == 'Current-SP':
+            return Current(device_ids, pru_controller, setpoints)
+        elif epics_field == 'Reset-Cmd':
+            return Function(
+                device_ids, pru_controller, _c.F_RESET_INTERLOCKS, setpoints)
+        elif epics_field == 'Abort-Cmd':
+            return NullFunction()
+        elif epics_field == 'CycleDsbl-Cmd':
+            return Function(
+                device_ids, pru_controller, _c.F_DISABLE_SIGGEN, setpoints)
+        elif epics_field == 'CycleType-Sel':
+            return CfgSiggen(device_ids, pru_controller, 0, setpoints)
+        elif epics_field == 'CycleNrCycles-SP':
+            return CfgSiggen(device_ids, pru_controller, 1, setpoints)
+        elif epics_field == 'CycleFreq-SP':
+            return CfgSiggen(device_ids, pru_controller, 2, setpoints)
+        elif epics_field == 'CycleAmpl-SP':
+            return CfgSiggen(device_ids, pru_controller, 3, setpoints)
+        elif epics_field == 'CycleOffset-SP':
+            return CfgSiggen(device_ids, pru_controller, 4, setpoints)
+        elif epics_field == 'CycleAuxParam-SP':
+            return CfgSiggen(device_ids, pru_controller, 5, setpoints)
+        elif epics_field == 'WfmData-SP':
+            return PRUCurve(device_ids, pru_controller, setpoints)
         else:
             return NullFunction()
 

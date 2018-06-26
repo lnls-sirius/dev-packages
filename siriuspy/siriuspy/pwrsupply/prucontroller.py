@@ -1049,7 +1049,7 @@ class PRUController:
             self._params = PRUCParms_FBP
         elif self._udcmodel == 'FBP_DCLink':
             self._params = PRUCParms_FBP_DCLink
-        elif self._udcmodel == 'FAC':
+        elif self._udcmodel == 'FAC_DCDC':
             self._params = PRUCParms_FAC
         elif self._udcmodel == 'FAC_2P4S':
             self._params = PRUCParms_FAC
