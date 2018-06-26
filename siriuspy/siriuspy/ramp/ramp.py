@@ -113,7 +113,7 @@ class BoosterRamp(_ConfigSrv):
         self._synchronized = False  # in case cannot load norm config
         # update or save normalized configs
         for config in self._nconfigs.values():
-            if config.configsrv_synchronized and config.configsrv_check():
+            if config.configsrv_synchronized and config.configsrv_exist():
                 # already exists, just update
                 config.configsrv_update()
             else:
@@ -137,7 +137,7 @@ class BoosterRamp(_ConfigSrv):
     @property
     def injection_time(self):
         """Injection time instant."""
-        return self._configuration['ramp_dipole']['injection_time']
+        return self._configuration['injection_time']
 
     @injection_time.setter
     def injection_time(self, value):
@@ -151,7 +151,7 @@ class BoosterRamp(_ConfigSrv):
     @property
     def ejection_time(self):
         """Ejection time instant."""
-        return self._configuration['ramp_dipole']['ejection_time']
+        return self._configuration['ejection_time']
 
     @ejection_time.setter
     def ejection_time(self, value):
@@ -186,13 +186,13 @@ class BoosterRamp(_ConfigSrv):
         return _dcopy(self._configuration['normalized_configs*'])
 
     @property
-    def normalized_configs_time(self):
+    def normalized_configs_times(self):
         """Return time instants corresponding to normalized configs."""
         time, _ = zip(*self._configuration['normalized_configs*'])
         return list(time)
 
     @property
-    def normalized_configs_name(self):
+    def normalized_configs_names(self):
         """Return names corresponding to normalized configs."""
         _, name = zip(*self._configuration['normalized_configs*'])
         return list(name)
@@ -434,7 +434,7 @@ class BoosterRamp(_ConfigSrv):
     @property
     def rampup_stop_energy(self):
         """Return."""
-        return self._configuration['ramp_dipole']['rampup_stop_time'][2]
+        return self._configuration['ramp_dipole']['rampup_stop_energy']
 
     @rampup_stop_energy.setter
     def rampup_stop_energy(self, value):
@@ -476,25 +476,35 @@ class BoosterRamp(_ConfigSrv):
             self._invalidate_waveforms(True)
 
     @property
-    def ramp_plateau_energy(self):
+    def plateau_start_time(self):
         """Return."""
-        # self._update_waveform('BO-Fam:MA-B')
-        # return self._waveforms['BO-Fam:MA-B'].plateau_value
-        return self._configuration['ramp_dipole']['energy'][3]
+        w = self.waveform_get('BO-Fam:MA-B')
+        return w.plateau_start_time
 
-    @ramp_plateau_energy.setter
-    def ramp_plateau_energy(self, value):
+    @property
+    def plateau_stop_time(self):
+        """Return."""
+        w = self.waveform_get('BO-Fam:MA-B')
+        return w.plateau_stop_time
+
+    @property
+    def plateau_energy(self):
+        """Return."""
+        return self._configuration['ramp_dipole']['plateau_energy']
+
+    @plateau_energy.setter
+    def plateau_energy(self, value):
         """Return."""
         value = float(value)
         rdip = self._configuration['ramp_dipole']
-        if value != rdip['ramp_plateau_energy']:
+        if value != rdip['plateau_energy']:
             self._update_waveform('BO-Fam:MA-B')
             w = self._waveforms['BO-Fam:MA-B']
             w.plateau_value = value
             if w.invalid:
                 raise _RampInvalidDipoleWfmParms(
-                    'Invalid ramp_plateau_energy')
-            rdip['ramp_plateau_energy'] = value
+                    'Invalid plateau_energy')
+            rdip['plateau_energy'] = value
             # TODO: verify values
             self._synchronized = False
             self._invalidate_waveforms(True)
@@ -664,22 +674,34 @@ class BoosterRamp(_ConfigSrv):
         st = ''
         maxlen = max(tuple(len(l) for l in labels) + (len('name'),))
         strfmt1 = '{:<' + str(maxlen) + 's}: {}\n'
-        strfmt2 = strfmt1.replace('{}', '{:.6f} {:+.6f}')
-        strfmt3 = strfmt1.replace('{}', '{:.6f} {}')
+        strfmt2 = strfmt1.replace('{}', '{:07.3f} {:+08.3f} {:<s}')
+        strfmt3 = strfmt1.replace('{}', '{:07.3f} {}')
+        strfmt4 = strfmt1.replace('{}', '{:07.3f}')
         st += strfmt1.format('name', self.name)
         st += strfmt1.format(labels[0], self.delay_rf)
         st += strfmt1.format(labels[1], self.ramp_dipole_delay)
         st += strfmt1.format(labels[2], self.ramp_dipole_duration)
+        st += strfmt4.format(labels[4], self.injection_time)
+        st += strfmt4.format(labels[5], self.ejection_time)
         st += strfmt1.format(labels[3], '')
-        time = self.ramp_dipole_time
-        energy = self.ramp_dipole_energy
-        for i in range(len(time)):
-            st += strfmt2.format('', time[i], energy[i])
-        st += strfmt1.format(labels[4], self.injection_time)
-        st += strfmt1.format(labels[5], self.ejection_time)
+        st += strfmt2.format('', 0.0, self.start_energy, '(start)')
+        st += strfmt2.format('', self.rampup_start_time,
+                             self.rampup_start_energy, '(rampup_start)')
+        st += strfmt2.format('', self.rampup_stop_time,
+                             self.rampup_stop_energy, '(rampup_stop)')
+        st += strfmt2.format('', self.plateau_start_time,
+                             self.plateau_energy, '(plateau_start)')
+        st += strfmt2.format('', self.plateau_stop_time,
+                             self.plateau_energy,  '(plateau_stop)')
+        st += strfmt2.format('', self.rampdown_start_time,
+                             self.rampdown_start_energy,  '(rampdown_start)')
+        st += strfmt2.format('', self.rampdown_stop_time,
+                             self.rampdown_stop_energy, '(rampdown_stop)')
+        st += strfmt2.format('', self.ramp_dipole_duration,
+                             self.start_energy, '(stop)')
         st += strfmt1.format(labels[6], '')
-        time = self.normalized_configs_time
-        name = self.normalized_configs_name
+        time = self.normalized_configs_times
+        name = self.normalized_configs_names
         for i in range(len(time)):
             st += strfmt3.format('', time[i], name[i])
         return st

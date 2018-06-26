@@ -25,7 +25,8 @@ class WaveformParam:
             rampdown_start_time=_util.DEFAULT_RAMP_RAMPDOWN_START_TIME,
             rampdown_start_energy=_util.DEFAULT_RAMP_RAMPDOWN_START_ENERGY,
             rampdown_stop_time=_util.DEFAULT_RAMP_RAMPDOWN_STOP_TIME,
-            rampdown_stop_energy=_util.DEFAULT_RAMP_RAMPDOWN_STOP_ENERGY):
+            rampdown_stop_energy=_util.DEFAULT_RAMP_RAMPDOWN_STOP_ENERGY,
+            **kwargs):
         """Init method."""
         self._duration = duration
         self._start_energy = start_energy
@@ -1090,8 +1091,6 @@ class WaveformDipole(_WaveformMagnet, WaveformParam):
     def __init__(self, maname='BO-Fam:MA-B', **kwargs):
         """Constructor."""
         _WaveformMagnet.__init__(self, maname, **kwargs)
-        # eje_current = self.conv_strength_2_current(_util.BO_EJECTION_ENERGY)
-        # kwargs['scale'] = eje_current
         WaveformParam.__init__(self, **kwargs)
         self._waveform = None
 
