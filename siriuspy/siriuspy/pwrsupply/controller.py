@@ -51,14 +51,16 @@ class PSController:
 
     def _init_setpoints(self):
         for key, reader in self._readers.items():
-            if '-Sts' in key or '-RB' in key:
-                print('setting setpoint')
-                sp_field = PSController._get_setpoint_field(key)
-                self._readers[sp_field].apply(self._readers[key].read())
+            if '-Sel' in key or '-SP' in key:
+                rb_field = PSController._get_readback_field(key)
+                try:
+                    self._readers[key].apply(self._readers[rb_field].read())
+                except KeyError:
+                    pass
 
     @staticmethod
-    def _get_setpoint_field(field):
-        return field.replace('-Sts', '-Sel').replace('-RB', '-SP')
+    def _get_readback_field(field):
+        return field.replace('-Sel', '-Sts').replace('-SP', '-RB')
 
 
 class StandardPSController(PSController):
@@ -195,27 +197,3 @@ class StandardPSController(PSController):
         args.append(self._readers[device_name + ':CycleOffset-SP'].read())
         args.extend(self._readers[device_name + ':CycleAuxParam-SP'].read())
         return args
-
-
-# # --- private methods ---
-# def _create_setpoints(self):
-#     """Create setpoints."""
-#     self._setpoints = dict()
-#     for device_info in self._devices_info.values():
-#         self._setpoints[device_info.name] = \
-#             _DeviceSetpoints(self._database)
-#
-# def _init_setpoints(self):
-#     if not self._initiated:
-#         for dev_info in self._devices_info.values():
-#             dev_name = dev_info.name
-#             setpoints = self._setpoints[dev_name]
-#             for field in self._database:
-#                 if '-Sts' in field or '-RB' in field:
-#                     sp_field = self._get_setpoint_field(field)
-#                     value = self.e2s_controller.read(dev_name, field)
-#                     if value is not None:
-#                         setpoints.set(sp_field, value)
-# @staticmethod
-# def _get_setpoint_field(field):
-#     return field.replace('-Sts', '-Sel').replace('-RB', '-SP')

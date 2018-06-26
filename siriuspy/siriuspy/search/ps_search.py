@@ -152,17 +152,6 @@ class PSSearch:
 
         return PSSearch._pstype_2_excdat_dict[pstype]
 
-    # @staticmethod
-    # def check_psname_ispulsed(psname):
-    #     """Return True if psname is a pulsed power supply, False otherwise."""
-    #     spvname = _SiriusPVName(psname)
-    #     if spvname.dis == 'PU':
-    #         return True
-    #     elif spvname.dis == 'PS':
-    #         return False
-    #     else:
-    #         raise KeyError('Invalid psname "' + psname + '"!')
-
     @staticmethod
     def conv_psname_2_psmodel(psname):
         """Convert psname to psmodel."""
@@ -177,37 +166,12 @@ class PSSearch:
             PSSearch._reload_psname_2_siggen_dict()
         return PSSearch._psname_2_siggen_dict[psname]
 
-    # @staticmethod
-    # def check_pstype_ispulsed(pstype):
-    #     """Return True if pstype is of a pulsed pwrsupply type, False o.w."""
-    #     if PSSearch._pstype_2_psnames_dict is None:
-    #         PSSearch._reload_pstype_2_psnames_dict()
-    #     psnames = PSSearch._pstype_2_psnames_dict[pstype]
-    #     for psname in psnames:
-    #         if ':PU' in psname:
-    #             return True
-    #     return False
-
-    # @staticmethod
-    # def conv_psname_2_bbbname(psname):
-    #     """Given psname return the bbb name."""
-    #     if PSSearch._psname_2_bbbname_dict is None:
-    #         PSSearch._reload_bbb_2_psname_dict()
-    #     return PSSearch._psname_2_bbbname_dict[psname]
-
     @staticmethod
     def conv_psname_2_bbbname(psname):
         """Given psname return the bbb name."""
         if PSSearch._bsmps_2_bbbname_dict is None:
             PSSearch._reload_bbb_2_bsmps_dict()
         return PSSearch._bsmps_2_bbbname_dict[psname]
-
-    # @staticmethod
-    # def conv_bbbname_2_psnames(bbbname):
-    #     """Given bbb name return the psnames."""
-    #     if PSSearch._bbbname_2_psnames_dict is None:
-    #         PSSearch._reload_bbb_2_psname_dict()
-    #     return PSSearch._bbbname_2_psnames_dict[bbbname]
 
     @staticmethod
     def conv_bbbname_2_psnames(bbbname):
@@ -368,28 +332,3 @@ class PSSearch:
                 bsmp = (bsmp_name, bsmp_id)
                 PSSearch._bbbname_2_bsmps_dict[bbbname].append(bsmp)
                 PSSearch._bsmps_2_bbbname_dict[bsmp_name] = bbbname
-
-    # @staticmethod
-    # def _reload_bbb_2_psname_dict():
-    #     """Load psnames mapped to BBB names and vice versa."""
-    #     PSSearch._psname_2_bbbname_dict = dict()
-    #     PSSearch._bbbname_2_psnames_dict = dict()
-    #     data, _ = \
-    #         _util.read_text_data(_web.beaglebone_power_supplies_mapping())
-    #
-    #     PSSearch._bbbnames_list = []
-    #     for d in data:
-    #         bbbname = d[0]
-    #         psnames = d[1:]
-    #         PSSearch._bbbnames_list.append(bbbname)
-    #         # bbb -> ps
-    #         if bbbname in PSSearch._bbbname_2_psnames_dict:
-    #             PSSearch._bbbname_2_psnames_dict[bbbname] += psnames
-    #         else:
-    #             PSSearch._bbbname_2_psnames_dict[bbbname] = psnames
-    #         # ps -> bbb
-    #         for psname in psnames:
-    #             if psname in PSSearch._psname_2_bbbname_dict:
-    #                 raise ValueError("Repeated power supply {}".format(psname))
-    #             PSSearch._psname_2_bbbname_dict[psname] = bbbname
-    #         PSSearch._bbbnames_list = sorted(set(PSSearch._bbbnames_list))

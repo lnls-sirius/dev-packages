@@ -1,8 +1,8 @@
 """EXcitation Data."""
 
 import numpy as _np
-from siriuspy.servweb import magnets_excitation_data_read \
-    as _magnets_excitation_data_read
+
+from siriuspy import servweb as _web
 from siriuspy.magnet import util as _util
 
 
@@ -230,5 +230,5 @@ class ExcitationData:
     def _read_webs(self, label):
 
         self._fname = label
-        text = _magnets_excitation_data_read(label)
+        text = _web.magnets_excitation_data_read(label)
         self._read_text(text)
