@@ -143,9 +143,9 @@ class BoosterRamp(_ConfigSrv):
     def injection_time(self, value):
         """Set injection time instant."""
         # TODO: verify value
-        if value == self._configuration['ramp_dipole']['injection_time']:
+        if value == self._configuration['injection_time']:
             return
-        self._configuration['ramp_dipole']['injection_time'] = value
+        self._configuration['injection_time'] = value
         self._synchronized = False
 
     @property
@@ -157,9 +157,9 @@ class BoosterRamp(_ConfigSrv):
     def ejection_time(self, value):
         """Set ejection time instant."""
         # TODO: verify value
-        if value == self._configuration['ramp_dipole']['ejection_time']:
+        if value == self._configuration['ejection_time']:
             return
-        self._configuration['ramp_dipole']['ejection_time'] = value
+        self._configuration['ejection_time'] = value
         self._synchronized = False
 
     # ---- rf_parameters ----
@@ -199,10 +199,10 @@ class BoosterRamp(_ConfigSrv):
 
     def normalized_configs_delete(self, index):
         """Delete a normalized config either by its index or its name."""
-        names = self.normalized_configs_name
+        names = self.normalized_configs_names
         if isinstance(index, str):
             index = names.index(index)
-        times = self.normalized_configs_time
+        times = self.normalized_configs_times
         names.pop(index)
         times.pop(index)
         nconfigs = [[times[i], names[i]] for i in range(len(times))]
@@ -218,8 +218,8 @@ class BoosterRamp(_ConfigSrv):
             name = bn.name
 
         # add new entry to list with normalized configs metadata
-        otimes = self.normalized_configs_time
-        onames = self.normalized_configs_name
+        otimes = self.normalized_configs_times
+        onames = self.normalized_configs_names
         times = otimes.copy()
         names = onames.copy()
         if time in times:
@@ -264,10 +264,10 @@ class BoosterRamp(_ConfigSrv):
 
     def normalized_configs_change_time(self, index, new_time):
         """Change the time of an existing config either by index or name."""
-        names = self.normalized_configs_name
+        names = self.normalized_configs_names
         if isinstance(index, str):
             index = names.index(index)
-        times = self.normalized_configs_time
+        times = self.normalized_configs_times
         times[index] = new_time
         nconfigs = [[times[i], names[i]] for i in range(len(times))]
         self._set_normalized_configs(nconfigs)  # waveform invalidation within
@@ -364,6 +364,28 @@ class BoosterRamp(_ConfigSrv):
             rdip['wfm_nrpoints'] = value
             self._synchronized = False
             self._invalidate_waveforms(True)
+
+    @property
+    def ramp_dipole_times(self):
+        """Return dipole times."""
+        v = (self.rampup_start_time,
+             self.rampup_stop_time,
+             self.plateau_start_time,
+             self.plateau_stop_time,
+             self.rampdown_start_time,
+             self.rampdown_stop_time,)
+        return v
+
+    @property
+    def ramp_dipole_energies(self):
+        """Return dipole times."""
+        v = (self.rampup_start_energy,
+             self.rampup_stop_energy,
+             self.plateau_energy,
+             self.plateau_energy,
+             self.rampdown_start_energy,
+             self.rampdown_stop_energy,)
+        return v
 
     @property
     def start_energy(self):
@@ -752,8 +774,8 @@ class BoosterRamp(_ConfigSrv):
     def _update_waveform_not_dipole(self, maname, dipole, family=None):
         # sort normalized configs
         self._update_normalized_configs_objects()
-        nconf_times = self.normalized_configs_time
-        nconf_names = self.normalized_configs_name
+        nconf_times = self.normalized_configs_times
+        nconf_names = self.normalized_configs_names
         nconf_times, nconf_names = \
             [list(x) for x in zip(*sorted(zip(nconf_times, nconf_names),
              key=lambda pair: pair[0]))]  # sort by time
