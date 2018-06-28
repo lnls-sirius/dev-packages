@@ -12,9 +12,7 @@ script:
   - cd ../../
 # install siriuspy
   - cd siriuspy
-  - python setup.py install
-  - cd tests
-  - python -m unittest discover
+  - python setup.py test
 
 # safelist
 branches:

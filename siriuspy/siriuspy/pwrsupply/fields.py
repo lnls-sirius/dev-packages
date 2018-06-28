@@ -297,3 +297,89 @@ class Constant:
     def match(field):
         """Check if field is a constant."""
         return Constant._constant_regexp.match(field)
+
+
+class Setpoint:
+    """Setpoint."""
+
+    _setpoint_regexp = _re.compile('^.*-(SP|Sel|Cmd)$')
+
+    def __init__(self, epics_field, epics_database):
+        """Init."""
+        self.field = epics_field
+        self.value = epics_database['value']
+        self.database = epics_database
+        if '-Cmd' in epics_field:
+            self.is_cmd = True
+        else:
+            self.is_cmd = False
+        self.type = epics_database['type']
+        if 'count' in epics_database:
+            self.count = epics_database['count']
+        else:
+            self.count = None
+        if self.type == 'enum' and 'enums' in epics_database:
+            self.enums = epics_database['enums']
+        else:
+            self.enums = None
+        self.value = epics_database['value']
+        if self.type in ('int', 'float'):
+            if 'hihi' in epics_database:
+                self.high = epics_database['hihi']
+            else:
+                self.high = None
+            if 'lolo' in epics_database:
+                self.low = epics_database['lolo']
+            else:
+                self.low = None
+        else:
+            self.low = None
+            self.high = None
+
+    def apply(self, value):
+        """Apply setpoint value."""
+        if self._check(value):
+            if self.is_cmd:
+                self.value += 1
+            else:
+                self.value = value
+            return True
+        return False
+
+    def read(self):
+        """Read setpoint value."""
+        return self.value
+
+    def _check(self, value):
+        """Check value."""
+        if self.is_cmd:
+            if value > 0:
+                return True
+        elif self.type in ('int', 'float'):
+            if self.low is None and self.high is None:
+                return True
+            if value is not None and (value > self.low and value < self.high):
+                return True
+        elif self.type == 'enum':
+            if value in tuple(range(len(self.enums))):
+                return True
+        return False
+
+    @staticmethod
+    def match(field):
+        """Check if field is a setpoint."""
+        return Setpoint._setpoint_regexp.match(field)
+
+
+class Setpoints:
+    """Setpoints."""
+
+    def __init__(self, setpoints):
+        self._setpoints = setpoints
+
+    def apply(self, value):
+        for setpoint in self._setpoints:
+            if not setpoint.apply(value):
+                return False
+
+        return True
