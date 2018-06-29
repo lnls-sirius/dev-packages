@@ -5,9 +5,10 @@ magnet soft IOcs, ConfigDB service and orbit, tune and chromacity correction
 IOCs.
 """
 
-import time as _time
-import epics as _epics
 from siriuspy import envars as _envars
+from siriuspy.epics.properties import \
+    EpicsProperty as _EpicsProperty, \
+    EpicsPropertiesList as _EpicsPropertiesList
 from siriuspy.servconf.srvconfig import ConnConfigService as _ConnConfigService
 
 
@@ -27,58 +28,7 @@ class ConnConfig_BONormalized(_ConnConfigService):
         _ConnConfigService.__init__(self, config_type='bo_normalized', url=url)
 
 
-class ConnEpics:
-    """Conector to handle Booster Epics communication."""
-
-    def __init__(self, prefix, pvnames_sp, conv_sp_rb=None):
-        """Initialize object."""
-        self._prefix = prefix
-        if conv_sp_rb is None:
-            conv_sp_rb = (('-SP', '-RB'), ('-Sel', '-Sts'))
-        self._pvs_sp = dict()
-        self._pvs_rb = dict()
-        self._sp2rb = dict()
-        for pvname_sp in pvnames_sp:
-            pvname_sp = prefix + pvname_sp
-            pvname_rb = pvname_sp
-            for sp, rb in conv_sp_rb:
-                pvname_rb = pvname_rb.replace(sp, rb)
-            self._sp2rb[pvname_sp] = pvname_rb
-            self._pvs_sp[pvname_sp] = _epics.PV(pvname_sp)
-            self._pvs_rb[pvname_rb] = _epics.PV(pvname_rb)
-
-    def connected(self):
-        """Return if all pvs are connected."""
-        for pv in self._pvs_sp.values():
-            if not pv.connected:
-                return False
-        return True
-
-    def set_pvs(self, pvnames_sp, setpoints, timeout):
-        """Set pv (SP|Sel) to value and check correspondent (RB|Sts)."""
-        if not self.connected:
-            return False
-        if not isinstance(pvnames_sp, (list, tuple)):
-            pvnames_sp = (pvnames_sp,)
-            setpoints = (setpoints,)
-
-        for i in range(len(pvnames_sp)):
-            self._pvs_sp[self._prefix + pvnames_sp[i]].value = setpoints[i]
-
-        t0 = _time.time()
-        while True:
-            finished = True
-            for i in range(len(pvnames_sp)):
-                pvname_rb = self._sp2rb[self._prefix + pvnames_sp[i]]
-                if self._pvs_rb[pvname_rb].value != setpoints[i]:
-                    finished = False
-                    break
-            if finished or _time.time()-t0 > timeout:
-                break
-        return finished
-
-
-class ConnMagnet(ConnEpics):
+class ConnMagnet(_EpicsPropertiesList):
     """Magnet Connector Class."""
 
     def __init__(self, ramp_config):
@@ -87,48 +37,77 @@ class ConnMagnet(ConnEpics):
         pass
 
 
-class ConnTiming(ConnEpics):
+class ConnTiming(_EpicsPropertiesList):
     """Timing Connector Class."""
 
     class Const:
         """PV names."""
 
-        EVG_ContinuousEvt_Sel = 'AS-Glob:TI-EVG:ContinuousEvt-Sel'
-        EVG_DevEnbl_Sel = 'AS-Glob:TI-EVG:DevEnbl-Sel'
-        EVG_ACDiv_SP = 'AS-Glob:TI-EVG:ACDiv-SP'
-        EVG_ACEnbl_Sel = 'AS-Glob:TI-EVG:ACEnbl-Sel'
-        EVG_RFDiv_SP = 'AS-Glob:TI-EVG:RFDiv-SP'
-        EVG_Evt01Mode_Sel = 'AS-Glob:TI-EVG:Evt01Mode-Sel'
-        EVR1_DevEnbl_Sel = 'AS-Glob:TI-EVR-1:DevEnbl-Sel'
-        EVR1_OTP08State_Sel = 'AS-Glob:TI-EVR-1:OTP08State-Sel'
-        EVR1_OTP08Width_SP = 'AS-Glob:TI-EVR-1:OTP08Width-SP'
-        EVR1_OTP08Evt_SP = 'AS-Glob:TI-EVR-1:OTP08Evt-SP'
-        EVR1_OTP08Polarity_Sel = 'AS-Glob:TI-EVR-1:OTP08Polarity-Sel'
-        EVR1_OTP08Pulses_SP = 'AS-Glob:TI-EVR-1:OTP08Pulses-SP'
+        EVG_ContinuousEvt = 'AS-Glob:TI-EVG:ContinuousEvt'
+        EVG_DevEnbl = 'AS-Glob:TI-EVG:DevEnbl'
+        EVG_ACEnbl = 'AS-Glob:TI-EVG:ACEnbl'
+        EVG_Evt01Mode = 'AS-Glob:TI-EVG:Evt01Mode'
+        EVR1_DevEnbl = 'AS-Glob:TI-EVR-1:DevEnbl'
+        EVR1_OTP08State = 'AS-Glob:TI-EVR-1:OTP08State'
+        EVR1_OTP08Polarity = 'AS-Glob:TI-EVR-1:OTP08Polarity'
 
-        DEFAULT_SP_VALUES = {
-            EVG_ContinuousEvt_Sel: 0,
-            EVG_DevEnbl_Sel: 1,
-            EVG_ACDiv_SP: 30,
-            EVG_ACEnbl_Sel: 1,
-            EVG_RFDiv_SP: 4,
-            EVG_Evt01Mode_Sel: 'External',
-            EVR1_DevEnbl_Sel: 1,
-            EVR1_OTP08State_Sel: 1,
-            EVR1_OTP08Width_SP: 7000,
-            EVR1_OTP08Evt_SP: 1,
-            EVR1_OTP08Polarity_Sel: 0,
-            EVR1_OTP08Pulses_SP: 1}
+        EVG_ACDiv = 'AS-Glob:TI-EVG:ACDiv'
+        EVG_RFDiv = 'AS-Glob:TI-EVG:RFDiv'
+        EVR1_OTP08Width = 'AS-Glob:TI-EVR-1:OTP08Width'
+        EVR1_OTP08Evt = 'AS-Glob:TI-EVR-1:OTP08Evt'
+        EVR1_OTP08Pulses = 'AS-Glob:TI-EVR-1:OTP08Pulses'
 
-    def __init__(self, ramp_config, prefix='',):
-        """Initialize object."""
-        pvnames_sp = tuple(ConnTiming.Const.DEFAULT_SP_VALUES.keys())
-        super().__init__(prefix, pvnames_sp)
+    def __init__(self, ramp_config, prefix=''):
+        """Init."""
+        self._define_properties(prefix)
         self._ramp_config = ramp_config
 
-    def configure_timing_modules_init(self):
-        """Initialize timing."""
-        pass
+    def select_ramp(self, timeout):
+        """Select ramp timing mode."""
+        # reset and check
+        status = self.reset_check(timeout)
+        if not status:
+            return status
+        # set ramp
+        c = ConnTiming.Const
+        wfm_nrpoints = self._ramp_config.ramp_dipole_wfm_nrpoints
+        setpoints = {
+            c.EVG_Evt01Mode:  'Continuous',
+            c.EVG_ContinuousEvt:  1,
+            c.EVR1_OTP08Pulses:  wfm_nrpoints, }
+        return self.set_setpoints_check(self, setpoints, timeout)
+
+    def select_cycle(self, timeout):
+        """Select cycle timing mode."""
+        # reset and check
+        status = self.reset_check(timeout)
+        if not status:
+            return status
+        # set cycle
+        c = ConnTiming.Const
+        setpoints = {
+            c.EVR1_OTP08Pulses:  1,
+            c.EVG_Evt01Mode:  'External', }
+        return self.set_setpoints_check(self, setpoints, timeout)
+
+    def _define_properties(self, prefix):
+        c = ConnTiming.Const
+        p = prefix
+        properties = (
+            _EpicsProperty(c.EVG_ContinuousEvt, '-Sel', '-Sts', p, 0),
+            _EpicsProperty(c.EVG_DevEnbl, '-Sel', '-Sts', p, 1),
+            _EpicsProperty(c.EVG_ACEnbl, '-Sel', '-Sts', p, 1),
+            _EpicsProperty(c.EVG_Evt01Mode, '-Sel', '-Sts', p, 'External'),
+            _EpicsProperty(c.EVR1_DevEnbl, '-Sel', '-Sts', p, 1),
+            _EpicsProperty(c.EVR1_OTP08State, '-Sel', '-Sts', p, 1),
+            _EpicsProperty(c.EVR1_OTP08Polarity, '-Sel', '-Sts', p, 0),
+            _EpicsProperty(c.EVG_ACDiv, '-SP', '-RB', p, 30),
+            _EpicsProperty(c.EVG_RFDiv, '-SP', '-RB', p, 4),
+            _EpicsProperty(c.EVR1_OTP08Width, '-SP', '-RB', p, 7000),
+            _EpicsProperty(c.EVR1_OTP08Evt, '-SP', '-RB', p, 1),
+            _EpicsProperty(c.EVR1_OTP08Pulses, '-SP', '-RB', p, 1),)
+        super().__init__(properties)
+
 
 # class ConnMagnet(_Conn):
 #     """Magnet Connector Class."""
