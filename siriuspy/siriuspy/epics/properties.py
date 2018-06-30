@@ -87,7 +87,7 @@ class EpicsProperty:
                 return False
             _time.sleep(min(0.1, timeout))
 
-    def reset(self):
+    def reset_default(self):
         """Reset to default value."""
         if self._default is not None:
             self.setpoint = self._default
@@ -101,6 +101,7 @@ class EpicsPropertiesList:
         self._properties = dict()
         for property in properties:
             self._properties[property.name] = property
+        self._default = {p.name: p.default for p in self._properties.values()}
 
     @property
     def connected(self):
@@ -111,9 +112,31 @@ class EpicsPropertiesList:
         return True
 
     @property
+    def disconnected_properties(self):
+        """Return list of disconnected properties."""
+        props = []
+        for name, property in self._properties.items():
+            if not property.connected:
+                props.append(name)
+        return sorted(props)
+
+    @property
     def properties(self):
         """Properties."""
         return sorted(self._properties.keys())
+
+    @property
+    def default(self):
+        """Return default values dict."""
+        return self._default
+
+    @property
+    def readbacks(self):
+        """Return dict with all readbacks."""
+        readbacks = dict()
+        for name, property in self._properties.items():
+            readbacks[name] = property.readback
+        return readbacks
 
     def get_readback(self, name):
         """Return readback value of a property."""
@@ -129,7 +152,7 @@ class EpicsPropertiesList:
         """Set setpoints of properties."""
         # setpoints
         for name, value in setpoints.items():
-            property = self.__properties[name]
+            property = self._properties[name]
             property.setpoint = value
         # check
         t0 = _time.time()
@@ -145,19 +168,10 @@ class EpicsPropertiesList:
             _time.sleep(min(0.1, timeout))
         return finished
 
-    def reset(self):
+    def reset_default(self):
         """Reset properties to default values."""
         for property in self._properties.values():
-            property.reset()
-
-    def reset_check(self, timeout):
-        """Reset properties to default values and check."""
-        # build setpoints
-        setpoints = dict()
-        for name, property in self._properties.items():
-            setpoints[name] = property.default
-        # reset and check
-        return self.set_setpoints_check(setpoints, timeout)
+            property.reset_default()
 
     def __getitem__(self, key):
         """Property item."""

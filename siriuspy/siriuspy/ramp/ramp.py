@@ -31,7 +31,7 @@ class BoosterNormalized(_ConfigSrv):
         self.configuration = self.get_config_type_template()
 
     @property
-    def maname(self):
+    def manames(self):
         """List of power supply names."""
         return list(self._configuration.keys())
 
