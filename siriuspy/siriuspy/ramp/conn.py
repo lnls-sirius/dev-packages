@@ -11,7 +11,7 @@ from siriuspy.epics.properties import EpicsProperty as _EpicsProperty
 from siriuspy.epics.properties import EpicsPropertiesList as _EpicsPropsList
 from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
-from siriuspy.servconf.ConfigService import ConfigService as _ConfigService
+from siriuspy.servconf.conf_service import ConfigService as _ConfigService
 from siriuspy.servconf.srvconfig import ConnConfigService as _ConnConfigService
 
 
@@ -215,7 +215,8 @@ class ConnMagnets(_EpicsPropsList):
 
     def _get_manames(self):
         # TODO: alter
-        tpl = _ConfigService.get_config_type_template('bo_normalized')
+        cs = _ConfigService()
+        tpl = cs.get_config_type_template('bo_normalized')
         self._manames = sorted(tpl.keys())
 
     def _define_properties(self, prefix):
