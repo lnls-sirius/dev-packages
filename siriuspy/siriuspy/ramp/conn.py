@@ -214,7 +214,6 @@ class ConnMagnets(_EpicsPropsList):
     # --- private methods ---
 
     def _get_manames(self):
-        # TODO: alter
         cs = _ConfigService()
         tpl = cs.get_config_type_template('bo_normalized')
         self._manames = sorted(tpl.keys())
