@@ -14,16 +14,21 @@ class EpicsProperty:
     """Pair of Epics PVs."""
 
     def __init__(self, name, suffix_sp, suffix_rb,  prefix=_prefix,
-                 default_value=None):
+                 default_value=None, connection_callback=None, callback=None):
         """Init."""
         self._name = name
         self._suffix_sp = suffix_sp
         self._suffix_rb = suffix_rb
         self._prefix = prefix
         self._default = default_value
+        self._connection_callback = connection_callback
+        self._callback = callback
         pvname = self._prefix + self._name
-        self._pv_sp = _epics.PV(pvname + self._suffix_sp)
-        self._pv_rb = _epics.PV(pvname + self._suffix_rb)
+        # Set callbacks
+        callbacks = {'connection_callback': self._pv_connection_callback,
+                     'callback': self._pv_callback}
+        self._pv_sp = _epics.PV(pvname + self._suffix_sp, **callbacks)
+        self._pv_rb = _epics.PV(pvname + self._suffix_rb, **callbacks)
 
     @property
     def name(self):
@@ -97,6 +102,22 @@ class EpicsProperty:
         """Reset to default value."""
         if self._default is not None:
             self.setpoint = self._default
+
+    def set_callback(self, callback):
+        """Set callback."""
+        self._callback = callback
+
+    def set_connection_callback(self, connection_callback):
+        """Set connection callback."""
+        self._connection_callback = connection_callback
+
+    def _pv_connection_callback(self, **kwargs):
+        if self._connection_callback is not None:
+            self._connection_callback(self, **kwargs)
+
+    def _pv_callback(self, **kwargs):
+        if self._callback is not None:
+            self._callback(self, **kwargs)
 
 
 class EpicsPropertiesList:
