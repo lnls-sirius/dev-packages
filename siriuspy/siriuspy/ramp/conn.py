@@ -4,12 +4,18 @@ This module implements connector classes responsible for communications with
 magnet soft IOcs, ConfigDB service and orbit IOCs.
 """
 
+import time as _time
+
 from siriuspy import envars as _envars
 from siriuspy.epics.properties import EpicsProperty as _EpicsProperty
 from siriuspy.epics.properties import EpicsPropertiesList as _EpicsPropsList
 from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
+from siriuspy.servconf.ConfigService import ConfigService as _ConfigService
 from siriuspy.servconf.srvconfig import ConnConfigService as _ConnConfigService
+
+
+_prefix = _envars.vaca_prefix
 
 
 class ConnConfig_BORamp(_ConnConfigService):
@@ -48,21 +54,58 @@ class ConnTiming(_EpicsPropsList):
         EVR1_OTP08Evt = 'AS-Glob:TI-EVR-1:OTP08Evt'
         EVR1_OTP08Pulses = 'AS-Glob:TI-EVR-1:OTP08Pulses'
 
-    def __init__(self, ramp_config, prefix=''):
+        # Evt01Modes
+        MODE_DISABLE = 0
+        MODE_CONTINUOUS = 1
+        MODE_INJECTION = 2
+        MODE_EXTERNAL = 3
+
+        # State Enbl|Dsbl
+        STATE_DISBL = 0
+        STATE_ENBL = 1
+
+        # Polarity
+        STATE_NORMAL = 0
+        STATE_INVERSE = 1
+
+    def __init__(self, ramp_config=None, prefix=_prefix):
         """Init."""
         self._ramp_config = ramp_config
         self._define_properties(prefix)
 
     # --- timing mode selection commands ---
 
+    def wait_EVRs(self):
+        """Return only after EVRs are done generating their pulse trains."""
+        # NOTE: there is no timing PV that be monitored for this.
+        # current implementation just waits for maximum ramp duration...
+        _time.sleep(0.5)
+
+    def cmd_init(self, timeout):
+        """Initialize timing properties."""
+        setpoints = self.default
+        return self.set_setpoints_check(self, setpoints, timeout)
+
+    def cmd_select_stop(self, timeout):
+        """Stop pulsing timing."""
+        c = ConnTiming.Const
+        setpoints = self.default
+        setpoints.update(
+            {c.EVG_Evt01Mode: c.MODE_DISABLE,
+             c.EVG_ContinuousEvt: c.STATE_DISBL, }
+        )
+        return self.set_setpoints_check(self, setpoints, timeout)
+
     def cmd_select_ramp(self, timeout):
         """Select ramp timing mode."""
+        if self._ramp_config is None:
+            return False
         c = ConnTiming.Const
         setpoints = self.default
         wfm_nrpoints = self._ramp_config.ramp_dipole_wfm_nrpoints
         setpoints.update(
-            {c.EVG_Evt01Mode: 'Continuous',
-             c.EVG_ContinuousEvt: 1,
+            {c.EVG_Evt01Mode: c.MODE_CONTINUOUS,
+             c.EVG_ContinuousEvt: c.STATE_ENBL,
              c.EVR1_OTP08Pulses: wfm_nrpoints, }
         )
         return self.set_setpoints_check(self, setpoints, timeout)
@@ -72,8 +115,8 @@ class ConnTiming(_EpicsPropsList):
         c = ConnTiming.Const
         setpoints = self.default
         setpoints.update(
-            {c.EVR1_OTP08Pulses: 1,
-             c.EVG_Evt01Mode: 0, }
+            {c.EVG_Evt01Mode: c.MODE_EXTERNAL,
+             c.EVR1_OTP08Pulses: 1, }
         )
         return self.set_setpoints_check(self, setpoints, timeout)
 
@@ -83,13 +126,16 @@ class ConnTiming(_EpicsPropsList):
         c = ConnTiming.Const
         p = prefix
         properties = (
-            _EpicsProperty(c.EVG_ContinuousEvt, '-Sel', '-Sts', p, 0),
-            _EpicsProperty(c.EVG_DevEnbl, '-Sel', '-Sts', p, 1),
-            _EpicsProperty(c.EVG_ACEnbl, '-Sel', '-Sts', p, 1),
-            _EpicsProperty(c.EVG_Evt01Mode, '-Sel', '-Sts', p, 0),
-            _EpicsProperty(c.EVR1_DevEnbl, '-Sel', '-Sts', p, 1),
-            _EpicsProperty(c.EVR1_OTP08State, '-Sel', '-Sts', p, 1),
-            _EpicsProperty(c.EVR1_OTP08Polarity, '-Sel', '-Sts', p, 0),
+            _EpicsProperty(c.EVG_ContinuousEvt, '-Sel', '-Sts', p,
+                           c.STATE_DISBL),
+            _EpicsProperty(c.EVG_DevEnbl, '-Sel', '-Sts', p, c.STATE_ENBL),
+            _EpicsProperty(c.EVG_ACEnbl, '-Sel', '-Sts', p, c.STATE_ENBL),
+            _EpicsProperty(c.EVG_Evt01Mode, '-Sel', '-Sts', p,
+                           c.MODE_EXTERNAL),
+            _EpicsProperty(c.EVR1_DevEnbl, '-Sel', '-Sts', p, c.STATE_ENBL),
+            _EpicsProperty(c.EVR1_OTP08State, '-Sel', '-Sts', p, c.STATE_ENBL),
+            _EpicsProperty(c.EVR1_OTP08Polarity, '-Sel', '-Sts',
+                           p, c.STATE_NORMAL),
             _EpicsProperty(c.EVG_ACDiv, '-SP', '-RB', p, 30),
             _EpicsProperty(c.EVG_RFDiv, '-SP', '-RB', p, 4),
             _EpicsProperty(c.EVR1_OTP08Width, '-SP', '-RB', p, 7000),
@@ -101,7 +147,7 @@ class ConnTiming(_EpicsPropsList):
 class ConnMagnets(_EpicsPropsList):
     """Magnets connector class."""
 
-    def __init__(self, ramp_config, prefix=''):
+    def __init__(self, ramp_config=None, prefix=_prefix):
         """Init."""
         self._ramp_config = ramp_config
         self._get_manames()
@@ -136,6 +182,8 @@ class ConnMagnets(_EpicsPropsList):
 
     def cmd_wfmdata(self, timeout):
         """Set wfmdata of all powersupplies."""
+        if self._ramp_config is None:
+            return False
         setpoints = dict()
         for maname in self.manames:
             # get value (wfmdata)
@@ -166,9 +214,9 @@ class ConnMagnets(_EpicsPropsList):
     # --- private methods ---
 
     def _get_manames(self):
-        names = self._ramp_config.normalized_configs_names
-        nconfig = self._ramp_config[names[0]]
-        self._manames = nconfig.manames
+        # TODO: alter
+        tpl = _ConfigService.get_config_type_template('bo_normalized')
+        self._manames = sorted(tpl.keys())
 
     def _define_properties(self, prefix):
         p = prefix

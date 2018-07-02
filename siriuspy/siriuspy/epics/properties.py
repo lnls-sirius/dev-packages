@@ -4,10 +4,16 @@ import time as _time
 import epics as _epics
 
 
+from siriuspy import envars as _envars
+
+
+_prefix = _envars.vaca_prefix
+
+
 class EpicsProperty:
     """Pair of Epics PVs."""
 
-    def __init__(self, name, suffix_sp, suffix_rb,  prefix='',
+    def __init__(self, name, suffix_sp, suffix_rb,  prefix=_prefix,
                  default_value=None):
         """Init."""
         self._name = name
