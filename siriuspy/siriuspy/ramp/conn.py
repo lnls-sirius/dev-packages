@@ -1,8 +1,7 @@
 """Module with connector classes.
 
 This module implements connector classes responsible for communications with
-magnet soft IOcs, ConfigDB service and orbit, tune and chromacity correction
-IOCs.
+magnet soft IOcs, ConfigDB service and orbit IOCs.
 """
 
 from siriuspy import envars as _envars
@@ -14,7 +13,7 @@ from siriuspy.servconf.srvconfig import ConnConfigService as _ConnConfigService
 
 
 class ConnConfig_BORamp(_ConnConfigService):
-    """ConifgurationService for BO ramp configs."""
+    """ConfigurationService connector class for BO ramp configs."""
 
     def __init__(self, url=_envars.server_url_configdb):
         """Constructor."""
@@ -22,7 +21,7 @@ class ConnConfig_BORamp(_ConnConfigService):
 
 
 class ConnConfig_BONormalized(_ConnConfigService):
-    """ConifgurationService for BO normalized configs."""
+    """ConfigurationService connector for BO normalized configs."""
 
     def __init__(self, url=_envars.server_url_configdb):
         """Constructor."""
@@ -30,7 +29,7 @@ class ConnConfig_BONormalized(_ConnConfigService):
 
 
 class ConnTiming(_EpicsPropsList):
-    """Timing Connector Class."""
+    """Timing connector class."""
 
     class Const:
         """Properties names."""
@@ -99,8 +98,8 @@ class ConnTiming(_EpicsPropsList):
         super().__init__(properties)
 
 
-class ConnMagnet(_EpicsPropsList):
-    """Magnet Connector Class."""
+class ConnMagnets(_EpicsPropsList):
+    """Magnets connector class."""
 
     def __init__(self, ramp_config, prefix=''):
         """Init."""
@@ -134,6 +133,17 @@ class ConnMagnet(_EpicsPropsList):
     def cmd_opmode_rmpwfm(self, timeout):
         """Select RmpWfm opmode for all power supplies."""
         return self._command('OpMode', _PSConst.OpMode.RmpWfm, timeout)
+
+    def cmd_wfmdata(self, timeout):
+        """Set wfmdata of all powersupplies."""
+        setpoints = dict()
+        for maname in self.manames:
+            # get value (wfmdata)
+            wf = self._ramp_config.waveform_get(maname)
+            value = wf.currents
+            name = maname + ':' + 'WfmData'
+            setpoints[name] = value
+        return self.set_setpoints_check(setpoints, timeout)
 
     # --- power supplies checks ---
 
@@ -176,8 +186,8 @@ class ConnMagnet(_EpicsPropsList):
         """Exec command for all power supplies."""
         setpoints = dict()
         for maname in self.manames:
-            prop = maname + ':' + prop
-            setpoints[prop] = value
+            name = maname + ':' + prop
+            setpoints[name] = value
         return self.set_setpoints_check(setpoints, timeout)
 
     def _check(self, prop, value):
