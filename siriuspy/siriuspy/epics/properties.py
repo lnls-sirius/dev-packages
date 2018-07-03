@@ -177,10 +177,13 @@ class EpicsPropertiesList:
         property = self._properties[name]
         return property.setpoint
 
-    def set_setpoints_check(self, setpoints, timeout):
+    def set_setpoints_check(self, setpoints, timeout, order=None):
         """Set setpoints of properties."""
+        if order is None:
+            order = list(setpoints.keys())
         # setpoints
-        for name, value in setpoints.items():
+        for name in order:
+            value = setpoints[name]
             property = self._properties[name]
             property.setpoint = value
         # check
