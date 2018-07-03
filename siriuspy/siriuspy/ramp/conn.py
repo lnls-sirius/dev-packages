@@ -120,6 +120,26 @@ class ConnTiming(_EpicsPropsList):
         )
         return self.set_setpoints_check(self, setpoints, timeout)
 
+    # --- timing mode checks ---
+
+    def check_ramp(self):
+        """Check if in ramp state."""
+        c = ConnTiming.Const
+        wfm_nrpoints = self._ramp_config.ramp_dipole_wfm_nrpoints
+        readbacks = dict()
+        readbacks[c.EVG_Evt01Mode] = c.MODE_CONTINUOUS
+        readbacks[c.EVG_ContinuousEvt] = c.STATE_ENBL
+        readbacks[c.EVR1_OTP08Pulses] = wfm_nrpoints
+        return self._check(readbacks)
+
+    def check_cycle(self):
+        """Check if in cycle state."""
+        c = ConnTiming.Const
+        readbacks = dict()
+        readbacks[c.EVG_Evt01Mode] = c.MODE_EXTERNAL
+        readbacks[c.EVR1_OTP08Pulses] = 1
+        return self._check(readbacks)
+
     # --- private methods ---
 
     def _define_properties(self, prefix):
@@ -142,6 +162,17 @@ class ConnTiming(_EpicsPropsList):
             _EpicsProperty(c.EVR1_OTP08Evt, '-SP', '-RB', p, 1),
             _EpicsProperty(c.EVR1_OTP08Pulses, '-SP', '-RB', p, _MAX_WFMSIZE),)
         super().__init__(properties)
+
+    def _check(self, readbacks):
+        rb = dict()
+        for name in self.properties:
+            property = self[name]
+            rb[name] = property.default
+        rb.update(readbacks)
+        for name, value in rb.items():
+            if not self.get_readback(name) == value:
+                return False
+        return True
 
 
 class ConnMagnets(_EpicsPropsList):
