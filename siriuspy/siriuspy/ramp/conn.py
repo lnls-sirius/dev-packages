@@ -189,10 +189,7 @@ class ConnTiming(_EpicsPropsList):
         super().__init__(properties)
 
     def _check(self, readbacks):
-        rb = dict()
-        for name in self.properties:
-            property = self[name]
-            rb[name] = property.default
+        rb = self.default
         rb.update(readbacks)
         for name, value in rb.items():
             if not self.get_readback(name) == value:
