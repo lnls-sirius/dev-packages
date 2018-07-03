@@ -111,8 +111,8 @@ class ConnTiming(_EpicsPropsList):
             {c.EVR1_OTP08Polarity: setpoints[c.EVR1_OTP08Polarity]}, timeout)
         aux11 = self.set_setpoints_check(
             {c.EVR1_OTP08Pulses: setpoints[c.EVR1_OTP08Pulses]}, timeout)
-        return all(aux0, aux1, aux2, aux3, aux4, aux5,
-                   aux6, aux7, aux8, aux9, aux10, aux11)
+        return all([aux0, aux1, aux2, aux3, aux4, aux5,
+                    aux6, aux7, aux8, aux9, aux10, aux11])
 
     def cmd_select_stop(self, timeout=0.5):
         """Stop pulsing timing."""
@@ -127,7 +127,7 @@ class ConnTiming(_EpicsPropsList):
             {c.EVG_Evt01Mode: c.MODE_DISABLE}, timeout)
         aux1 = self.set_setpoints_check(
             {c.EVG_ContinuousEvt: c.STATE_DISBL}, timeout)
-        return all(aux0, aux1)
+        return all([aux0, aux1])
 
     def cmd_select_ramp(self, timeout=0.5):
         """Select ramp timing mode."""
@@ -148,7 +148,7 @@ class ConnTiming(_EpicsPropsList):
             {c.EVG_ContinuousEvt: c.STATE_ENBL}, timeout)
         aux2 = self.set_setpoints_check(
             {c.EVR1_OTP08Pulses: wfm_nrpoints}, timeout)
-        return all(aux0, aux1, aux2)
+        return all([aux0, aux1, aux2])
 
     def cmd_select_cycle(self, timeout=0.5):
         """Select cycle timing mode."""
@@ -162,7 +162,7 @@ class ConnTiming(_EpicsPropsList):
         aux0 = self.set_setpoints_check(
             {c.EVG_Evt01Mode: c.MODE_EXTERNAL}, timeout)
         aux1 = self.set_setpoints_check({c.EVR1_OTP08Pulses: 1}, timeout)
-        return all(aux0, aux1)
+        return all([aux0, aux1])
 
     # --- timing mode checks ---
 
