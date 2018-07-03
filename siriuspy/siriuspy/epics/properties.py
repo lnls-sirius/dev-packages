@@ -113,11 +113,13 @@ class EpicsProperty:
 
     def _pv_connection_callback(self, **kwargs):
         if self._connection_callback is not None:
-            self._connection_callback(self, **kwargs)
+            kwargs['property'] = self
+            self._connection_callback(**kwargs)
 
     def _pv_callback(self, **kwargs):
         if self._callback is not None:
-            self._callback(self, **kwargs)
+            kwargs['property'] = self
+            self._callback(**kwargs)
 
 
 class EpicsPropertiesList:
@@ -199,6 +201,16 @@ class EpicsPropertiesList:
         """Reset properties to default values."""
         for property in self._properties.values():
             property.reset_default()
+
+    def set_callback(self, callback):
+        """Set callback."""
+        for property in self._properties.values():
+            property.set_callback(callback)
+
+    def set_connection_callback(self, connection_callback):
+        """Set connection callback."""
+        for property in self._properties.values():
+            property.set_connection_callback(connection_callback)
 
     def __getitem__(self, key):
         """Property item."""
