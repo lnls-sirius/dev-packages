@@ -82,44 +82,87 @@ class ConnTiming(_EpicsPropsList):
         # current implementation just waits for maximum ramp duration...
         _time.sleep(0.5)
 
-    def cmd_init(self, timeout):
+    def cmd_init(self, timeout=0.5):
         """Initialize timing properties."""
         setpoints = self.default
-        return self.set_setpoints_check(self, setpoints, timeout)
+        # return self.set_setpoints_check(setpoints, timeout)
+        c = ConnTiming.Const
+        aux0 = self.set_setpoints_check(
+            {c.EVG_ContinuousEvt: setpoints[c.EVG_ContinuousEvt]}, timeout)
+        aux1 = self.set_setpoints_check(
+            {c.EVG_DevEnbl: setpoints[c.EVG_DevEnbl]}, timeout)
+        aux2 = self.set_setpoints_check(
+            {c.EVG_ACDiv: setpoints[c.EVG_ACDiv]}, timeout)
+        aux3 = self.set_setpoints_check(
+            {c.EVG_ACEnbl: setpoints[c.EVG_ACEnbl]}, timeout)
+        aux4 = self.set_setpoints_check(
+            {c.EVG_RFDiv: setpoints[c.EVG_RFDiv]}, timeout)
+        aux5 = self.set_setpoints_check(
+            {c.EVG_Evt01Mode: setpoints[c.EVG_Evt01Mode]}, timeout)
+        aux6 = self.set_setpoints_check(
+            {c.EVR1_DevEnbl: setpoints[c.EVR1_DevEnbl]}, timeout)
+        aux7 = self.set_setpoints_check(
+            {c.EVR1_OTP08State: setpoints[c.EVR1_OTP08State]}, timeout)
+        aux8 = self.set_setpoints_check(
+            {c.EVR1_OTP08Width: setpoints[c.EVR1_OTP08Width]}, timeout)
+        aux9 = self.set_setpoints_check(
+            {c.EVR1_OTP08Evt: setpoints[c.EVR1_OTP08Evt]}, timeout)
+        aux10 = self.set_setpoints_check(
+            {c.EVR1_OTP08Polarity: setpoints[c.EVR1_OTP08Polarity]}, timeout)
+        aux11 = self.set_setpoints_check(
+            {c.EVR1_OTP08Pulses: setpoints[c.EVR1_OTP08Pulses]}, timeout)
+        return all(aux0, aux1, aux2, aux3, aux4, aux5,
+                   aux6, aux7, aux8, aux9, aux10, aux11)
 
-    def cmd_select_stop(self, timeout):
+    def cmd_select_stop(self, timeout=0.5):
         """Stop pulsing timing."""
         c = ConnTiming.Const
-        setpoints = self.default
-        setpoints.update(
-            {c.EVG_Evt01Mode: c.MODE_DISABLE,
-             c.EVG_ContinuousEvt: c.STATE_DISBL, }
-        )
-        return self.set_setpoints_check(self, setpoints, timeout)
+        # setpoints = self.default
+        # setpoints.update(
+        #     {c.EVG_Evt01Mode: c.MODE_DISABLE,
+        #      c.EVG_ContinuousEvt: c.STATE_DISBL, }
+        # )
+        # return self.set_setpoints_check(setpoints, timeout)
+        aux0 = self.set_setpoints_check(
+            {c.EVG_Evt01Mode: c.MODE_DISABLE}, timeout)
+        aux1 = self.set_setpoints_check(
+            {c.EVG_ContinuousEvt: c.STATE_DISBL}, timeout)
+        return all(aux0, aux1)
 
-    def cmd_select_ramp(self, timeout):
+    def cmd_select_ramp(self, timeout=0.5):
         """Select ramp timing mode."""
         if self._ramp_config is None:
             return False
         c = ConnTiming.Const
-        setpoints = self.default
         wfm_nrpoints = self._ramp_config.ramp_dipole_wfm_nrpoints
-        setpoints.update(
-            {c.EVG_Evt01Mode: c.MODE_CONTINUOUS,
-             c.EVG_ContinuousEvt: c.STATE_ENBL,
-             c.EVR1_OTP08Pulses: wfm_nrpoints, }
-        )
-        return self.set_setpoints_check(self, setpoints, timeout)
+        # setpoints = self.default
+        # setpoints.update(
+        #     {c.EVG_Evt01Mode: c.MODE_CONTINUOUS,
+        #      c.EVG_ContinuousEvt: c.STATE_ENBL,
+        #      c.EVR1_OTP08Pulses: wfm_nrpoints, }
+        # )
+        # return self.set_setpoints_check(setpoints, timeout)
+        aux0 = self.set_setpoints_check(
+            {c.EVG_Evt01Mode: c.MODE_CONTINUOUS}, timeout)
+        aux1 = self.set_setpoints_check(
+            {c.EVG_ContinuousEvt: c.STATE_ENBL}, timeout)
+        aux2 = self.set_setpoints_check(
+            {c.EVR1_OTP08Pulses: wfm_nrpoints}, timeout)
+        return all(aux0, aux1, aux2)
 
-    def cmd_select_cycle(self, timeout):
+    def cmd_select_cycle(self, timeout=0.5):
         """Select cycle timing mode."""
         c = ConnTiming.Const
-        setpoints = self.default
-        setpoints.update(
-            {c.EVG_Evt01Mode: c.MODE_EXTERNAL,
-             c.EVR1_OTP08Pulses: 1, }
-        )
-        return self.set_setpoints_check(self, setpoints, timeout)
+        # setpoints = self.default
+        # setpoints.update(
+        #     {c.EVG_Evt01Mode: c.MODE_EXTERNAL,
+        #      c.EVR1_OTP08Pulses: 1, }
+        # )
+        # return self.set_setpoints_check(setpoints, timeout)
+        aux0 = self.set_setpoints_check(
+            {c.EVG_Evt01Mode: c.MODE_EXTERNAL}, timeout)
+        aux1 = self.set_setpoints_check({c.EVR1_OTP08Pulses: 1}, timeout)
+        return all(aux0, aux1)
 
     # --- timing mode checks ---
 
