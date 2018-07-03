@@ -83,7 +83,8 @@ class EpicsProperty:
     @setpoint.setter
     def setpoint(self, value):
         """Set setpoint value."""
-        self._pv_sp.value = value
+        if value is not None:
+            self._pv_sp.value = value
 
     def set_setpoint_check(self, value, timeout):
         """Set setpoint value and check readback."""
@@ -177,12 +178,16 @@ class EpicsPropertiesList:
         property = self._properties[name]
         return property.setpoint
 
-    def set_setpoints_check(self, setpoints, timeout):
+    def set_setpoints_check(self, setpoints, timeout, order=None):
         """Set setpoints of properties."""
+        if order is None:
+            order = list(setpoints.keys())
         # setpoints
-        for name, value in setpoints.items():
-            property = self._properties[name]
-            property.setpoint = value
+        for name in order:
+            value = setpoints[name]
+            if value is not None:
+                property = self._properties[name]
+                property.setpoint = value
         # check
         t0 = _time.time()
         while True:
