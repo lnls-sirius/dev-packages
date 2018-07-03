@@ -85,7 +85,7 @@ class ConnTiming(_EpicsPropsList):
     def cmd_init(self, timeout):
         """Initialize timing properties."""
         setpoints = self.default
-        return self.set_setpoints_check(self, setpoints, timeout)
+        return self.set_setpoints_check(setpoints, timeout)
 
     def cmd_select_stop(self, timeout):
         """Stop pulsing timing."""
@@ -95,7 +95,7 @@ class ConnTiming(_EpicsPropsList):
             {c.EVG_Evt01Mode: c.MODE_DISABLE,
              c.EVG_ContinuousEvt: c.STATE_DISBL, }
         )
-        return self.set_setpoints_check(self, setpoints, timeout)
+        return self.set_setpoints_check(setpoints, timeout)
 
     def cmd_select_ramp(self, timeout):
         """Select ramp timing mode."""
@@ -109,7 +109,7 @@ class ConnTiming(_EpicsPropsList):
              c.EVG_ContinuousEvt: c.STATE_ENBL,
              c.EVR1_OTP08Pulses: wfm_nrpoints, }
         )
-        return self.set_setpoints_check(self, setpoints, timeout)
+        return self.set_setpoints_check(setpoints, timeout)
 
     def cmd_select_cycle(self, timeout):
         """Select cycle timing mode."""
@@ -119,7 +119,7 @@ class ConnTiming(_EpicsPropsList):
             {c.EVG_Evt01Mode: c.MODE_EXTERNAL,
              c.EVR1_OTP08Pulses: 1, }
         )
-        return self.set_setpoints_check(self, setpoints, timeout)
+        return self.set_setpoints_check(setpoints, timeout)
 
     # --- timing mode checks ---
 
