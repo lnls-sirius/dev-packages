@@ -68,10 +68,11 @@ class ConnTiming(_EpicsPropsList):
         STATE_NORMAL = 0
         STATE_INVERSE = 1
 
-    def __init__(self, ramp_config=None, prefix=_prefix):
+    def __init__(self, ramp_config=None, prefix=_prefix,
+                 connection_callback=None, callback=None):
         """Init."""
         self._ramp_config = ramp_config
-        self._define_properties(prefix)
+        self._define_properties(prefix, connection_callback, callback)
 
     # --- timing mode selection commands ---
 
@@ -122,36 +123,61 @@ class ConnTiming(_EpicsPropsList):
 
     # --- private methods ---
 
-    def _define_properties(self, prefix):
+    def _define_properties(self, prefix, connection_callback, callback):
         c = ConnTiming.Const
         p = prefix
         properties = (
             _EpicsProperty(c.EVG_ContinuousEvt, '-Sel', '-Sts', p,
-                           c.STATE_DISBL),
-            _EpicsProperty(c.EVG_DevEnbl, '-Sel', '-Sts', p, c.STATE_ENBL),
-            _EpicsProperty(c.EVG_ACEnbl, '-Sel', '-Sts', p, c.STATE_ENBL),
+                           c.STATE_DISBL,
+                           connection_callback=connection_callback,
+                           callback=callback),
+            _EpicsProperty(c.EVG_DevEnbl, '-Sel', '-Sts', p, c.STATE_ENBL,
+                           connection_callback=connection_callback,
+                           callback=callback),
+            _EpicsProperty(c.EVG_ACEnbl, '-Sel', '-Sts', p, c.STATE_ENBL,
+                           connection_callback=connection_callback,
+                           callback=callback),
             _EpicsProperty(c.EVG_Evt01Mode, '-Sel', '-Sts', p,
-                           c.MODE_EXTERNAL),
-            _EpicsProperty(c.EVR1_DevEnbl, '-Sel', '-Sts', p, c.STATE_ENBL),
-            _EpicsProperty(c.EVR1_OTP08State, '-Sel', '-Sts', p, c.STATE_ENBL),
+                           c.MODE_EXTERNAL,
+                           connection_callback=connection_callback,
+                           callback=callback),
+            _EpicsProperty(c.EVR1_DevEnbl, '-Sel', '-Sts', p, c.STATE_ENBL,
+                           connection_callback=connection_callback,
+                           callback=callback),
+            _EpicsProperty(c.EVR1_OTP08State, '-Sel', '-Sts', p, c.STATE_ENBL,
+                           connection_callback=connection_callback,
+                           callback=callback),
             _EpicsProperty(c.EVR1_OTP08Polarity, '-Sel', '-Sts',
-                           p, c.STATE_NORMAL),
-            _EpicsProperty(c.EVG_ACDiv, '-SP', '-RB', p, 30),
-            _EpicsProperty(c.EVG_RFDiv, '-SP', '-RB', p, 4),
-            _EpicsProperty(c.EVR1_OTP08Width, '-SP', '-RB', p, 7000),
-            _EpicsProperty(c.EVR1_OTP08Evt, '-SP', '-RB', p, 1),
-            _EpicsProperty(c.EVR1_OTP08Pulses, '-SP', '-RB', p, _MAX_WFMSIZE),)
+                           p, c.STATE_NORMAL,
+                           connection_callback=connection_callback,
+                           callback=callback),
+            _EpicsProperty(c.EVG_ACDiv, '-SP', '-RB', p, 30,
+                           connection_callback=connection_callback,
+                           callback=callback),
+            _EpicsProperty(c.EVG_RFDiv, '-SP', '-RB', p, 4,
+                           connection_callback=connection_callback,
+                           callback=callback),
+            _EpicsProperty(c.EVR1_OTP08Width, '-SP', '-RB', p, 7000,
+                           connection_callback=connection_callback,
+                           callback=callback),
+            _EpicsProperty(c.EVR1_OTP08Evt, '-SP', '-RB', p, 1,
+                           connection_callback=connection_callback,
+                           callback=callback),
+            _EpicsProperty(c.EVR1_OTP08Pulses, '-SP', '-RB', p, _MAX_WFMSIZE,
+                           connection_callback=connection_callback,
+                           callback=callback),)
         super().__init__(properties)
 
 
 class ConnMagnets(_EpicsPropsList):
     """Magnets connector class."""
 
-    def __init__(self, ramp_config=None, prefix=_prefix):
+    def __init__(self, ramp_config=None, prefix=_prefix,
+                 connection_callback=None, callback=None):
         """Init."""
         self._ramp_config = ramp_config
         self._get_manames()
-        self._define_properties(prefix)
+        self._define_properties(prefix, connection_callback, callback)
 
     @property
     def manames(self):
@@ -218,16 +244,22 @@ class ConnMagnets(_EpicsPropsList):
         tpl = cs.get_config_type_template('bo_normalized')
         self._manames = sorted(tpl.keys())
 
-    def _define_properties(self, prefix):
+    def _define_properties(self, prefix, connection_callback, callback):
         p = prefix
         props = []
         for maname in self._manames:
             props.append(
-                _EpicsProperty(maname + ':PwrState', '-Sel', '-Sts', p))
+                _EpicsProperty(maname + ':PwrState', '-Sel', '-Sts', p,
+                               connection_callback=connection_callback,
+                               callback=callback))
             props.append(
-                _EpicsProperty(maname + ':OpMode', '-Sel', '-Sts', p))
+                _EpicsProperty(maname + ':OpMode', '-Sel', '-Sts', p,
+                               connection_callback=connection_callback,
+                               callback=callback))
             props.append(
-                _EpicsProperty(maname + ':WfmData', '-SP', '-RB', p))
+                _EpicsProperty(maname + ':WfmData', '-SP', '-RB', p,
+                               connection_callback=connection_callback,
+                               callback=callback))
         super().__init__(props)
 
     def _command(self, prop, value, timeout):

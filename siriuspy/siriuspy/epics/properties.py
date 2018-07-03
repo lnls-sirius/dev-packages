@@ -202,6 +202,16 @@ class EpicsPropertiesList:
         for property in self._properties.values():
             property.reset_default()
 
+    def set_callback(self, callback):
+        """Set callback."""
+        for property in self._properties.values():
+            property.set_callback(callback)
+
+    def set_connection_callback(self, connection_callback):
+        """Set connection callback."""
+        for property in self._properties.values():
+            property.set_connection_callback(connection_callback)
+
     def __getitem__(self, key):
         """Property item."""
         if isinstance(key, int):
