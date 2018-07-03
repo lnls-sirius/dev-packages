@@ -113,11 +113,13 @@ class EpicsProperty:
 
     def _pv_connection_callback(self, **kwargs):
         if self._connection_callback is not None:
-            self._connection_callback(self, **kwargs)
+            kwargs['property'] = self
+            self._connection_callback(**kwargs)
 
     def _pv_callback(self, **kwargs):
         if self._callback is not None:
-            self._callback(self, **kwargs)
+            kwargs['property'] = self
+            self._callback(**kwargs)
 
 
 class EpicsPropertiesList:
