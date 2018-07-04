@@ -77,10 +77,10 @@ class VariableFactory:
         elif psmodel == 'FBP_DCLink':
             v = VariableFactory._get_FBP_DCLink(device_id, epics_field,
                                                 pru_controller)
-        elif psmodel in ('FAC_DCDC', 'FAC_2P4S_DCDC'):
+        elif psmodel in ('FAC_DCDC', 'FAC_2S_DCDC', 'FAC_2P4S_DCDC'):
             v = VariableFactory._get_FAC(device_id, epics_field,
                                          pru_controller)
-        elif psmodel in ('FAC_ACDC', 'FAC_2P4S_ACDC'):
+        elif psmodel in ('FAC_ACDC', 'FAC_2S_ACDC', 'FAC_2P4S_ACDC'):
             v = VariableFactory._get_FAC_ACDC(device_id, epics_field,
                                               pru_controller)
         else:

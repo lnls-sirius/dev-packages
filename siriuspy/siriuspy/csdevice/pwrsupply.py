@@ -558,6 +558,12 @@ def _get_ps_FAC_2S_propty_database():
     return _get_ps_FBP_propty_database()
 
 
+def _get_ps_FAC_2S_ACDC_propty_database():
+    """Return database with FAC_2S pwrsupply model PVs."""
+    # TODO: implement!!!
+    return _get_ps_FAC_ACDC_propty_database()
+
+
 def _get_ps_FAC_2P4S_propty_database():
     """Return database with FAC_2P4S pwrsupply model PVs."""
     # TODO: implement!!!
@@ -634,14 +640,22 @@ def _get_model_db(psmodel):
         database = _get_ps_FBP_propty_database()
     elif psmodel in ('FBP_DCLink'):
         database = _get_ps_FBP_DCLink_propty_database()
+
     elif psmodel in ('FAC_DCDC'):
         database = _get_ps_FAC_propty_database()
+    elif psmodel in ('FAC_ACDC'):
+        database = _get_ps_FAC_ACDC_propty_database()
+
     elif psmodel in ('FAC_2S_DCDC'):
         database = _get_ps_FAC_2S_propty_database()
+    elif psmodel in ('FAC_2S_ACDC'):
+        database = _get_ps_FAC_2S_ACDC_propty_database()
+
     elif psmodel in ('FAC_2P4S_DCDC'):
         database = _get_ps_FAC_2P4S_propty_database()
     elif psmodel in ('FAC_2P4S_ACDC'):
         database = _get_ps_FAC_2P4S_ACDC_propty_database()
+
     elif psmodel in ('FAP_DCDC'):
         database = _get_ps_FAP_propty_database()
     elif psmodel in ('FAP_4P_DCDC'):
@@ -652,8 +666,6 @@ def _get_model_db(psmodel):
         database = _get_ps_FBP_FOFB_propty_database()
     elif psmodel in ('Commercial'):
         database = _get_ps_Commercial_propty_database()
-    elif psmodel in ('FAC_ACDC'):
-        database = _get_ps_FAC_ACDC_propty_database()
     else:
         raise ValueError(
             'DB for psmodel {} not implemented!'.format(psmodel))
