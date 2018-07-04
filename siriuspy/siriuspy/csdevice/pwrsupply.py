@@ -564,6 +564,12 @@ def _get_ps_FAC_2P4S_propty_database():
     return _get_ps_FBP_propty_database()
 
 
+def _get_ps_FAC_2P4S_ACDC_propty_database():
+    """Return database with FAC_2P4S pwrsupply model PVs."""
+    # TODO: implement!!!
+    return _get_ps_FAC_ACDC_propty_database()
+
+
 def _get_ps_FAP_propty_database():
     """Return database with FAP pwrsupply model PVs."""
     # TODO: implement!!!
@@ -634,6 +640,8 @@ def _get_model_db(psmodel):
         database = _get_ps_FAC_2S_propty_database()
     elif psmodel in ('FAC_2P4S_DCDC'):
         database = _get_ps_FAC_2P4S_propty_database()
+    elif psmodel in ('FAC_2P4S_ACDC'):
+        database = _get_ps_FAC_2P4S_ACDC_propty_database()
     elif psmodel in ('FAP_DCDC'):
         database = _get_ps_FAP_propty_database()
     elif psmodel in ('FAP_4P_DCDC'):
