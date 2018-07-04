@@ -142,7 +142,7 @@ class MASearch:
         """Return power supply maname for a given psname."""
         if MASearch._psnames_list is None:
             MASearch._reload_maname_2_psnames_dict()
-        if psname not in MASearch._psnames_list:
+        if psname not in MASearch._psnames_list or 'DCLink' in psname:
             return None
         if 'PS-B1B2' in psname:
             return 'SI-Fam:MA-B1B2'

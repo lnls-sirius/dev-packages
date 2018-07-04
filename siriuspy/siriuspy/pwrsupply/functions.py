@@ -27,7 +27,7 @@ class FunctionFactory:
         elif psmodel == 'FBP_DCLink':
             return FunctionFactory._get_FBP_DCLink(
                 device_ids, epics_field, pru_controller, setpoints)
-        elif psmodel == 'FAC_DCDC':
+        elif psmodel in ('FAC_DCDC', 'FAC_2S_DCDC', 'FAC_2P4S_DCDC'):
             return FunctionFactory._get_FAC_DCDC(
                 device_ids, epics_field, pru_controller, setpoints)
         else:
@@ -188,7 +188,8 @@ class PRUCurve:
         """Execute command."""
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
-            self.pru_controller.pru_curve_write(self._device_ids, value)
+            for dev_id in self._device_ids:
+                self.pru_controller.pru_curve_write(dev_id, value)
 
 
 class CtrlLoop:
@@ -371,6 +372,11 @@ class CfgSiggen:
 
     def execute(self, value=None):
         """Execute command."""
-        if not self._setpoints or \
-                (self._setpoints and self._setpoints.apply(value[self._idx])):
-            self._cfg.execute(value)
+        if self._idx == 5:
+            if not self._setpoints or \
+                    (self._setpoints and self._setpoints.apply(value[self._idx:])):
+                self._cfg.execute(value)
+        else:
+            if not self._setpoints or \
+                    (self._setpoints and self._setpoints.apply(value[self._idx])):
+                self._cfg.execute(value)
