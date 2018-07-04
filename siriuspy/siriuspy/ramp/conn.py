@@ -16,6 +16,9 @@ from siriuspy.servconf.srvconfig import ConnConfigService as _ConnConfigService
 
 
 _prefix = _envars.vaca_prefix
+_PWRSTATE_ON_DELAY = 1.4
+_PWRSTATE_OFF_DELAY = 0.8
+_TIMEOUT_DFLT = 0.5
 
 
 class ConnConfig_BORamp(_ConnConfigService):
@@ -84,7 +87,7 @@ class ConnTiming(_EpicsPropsList):
         # current implementation just waits for maximum ramp duration...
         _time.sleep(0.5)
 
-    def cmd_init(self, timeout=0.5):
+    def cmd_init(self, timeout=_TIMEOUT_DFLT):
         """Initialize timing properties."""
         c = ConnTiming.Const
         setpoints = self.default
@@ -94,7 +97,7 @@ class ConnTiming(_EpicsPropsList):
                  c.EVR1_OTP08Polarity, c.EVR1_OTP08Pulses]
         return self.set_setpoints_check(setpoints, timeout, order)
 
-    def cmd_select_stop(self, timeout=0.5):
+    def cmd_select_stop(self, timeout=_TIMEOUT_DFLT):
         """Stop pulsing timing."""
         c = ConnTiming.Const
         setpoints = {c.EVG_Evt01Mode: c.MODE_DISABLE,
@@ -102,7 +105,7 @@ class ConnTiming(_EpicsPropsList):
         order = [c.EVG_Evt01Mode, c.EVG_ContinuousEvt]
         return self.set_setpoints_check(setpoints, timeout, order)
 
-    def cmd_select_ramp(self, timeout=0.5):
+    def cmd_select_ramp(self, timeout=_TIMEOUT_DFLT):
         """Select ramp timing mode."""
         if self._ramp_config is None:
             return False
@@ -120,7 +123,7 @@ class ConnTiming(_EpicsPropsList):
                  c.EVR1_OTP08Pulses, c.EVG_Evt01Mode, c.EVG_ContinuousEvt]
         return self.set_setpoints_check(setpoints, timeout, order)
 
-    def cmd_select_cycle(self, timeout=0.5):
+    def cmd_select_cycle(self, timeout=_TIMEOUT_DFLT):
         """Select cycle timing mode."""
         c = ConnTiming.Const
         setpoints = self.default
@@ -132,7 +135,7 @@ class ConnTiming(_EpicsPropsList):
                  c.EVR1_OTP08Pulses, c.EVG_Evt01Mode]
         return self.set_setpoints_check(setpoints, timeout, order)
 
-    def cmd_pulse(self, timeout=0.5):
+    def cmd_pulse(self, timeout=_TIMEOUT_DFLT):
         """Pulse timing."""
         c = ConnTiming.Const
         setpoints = {c.EVG_Evt01ExtTrig: 1}
@@ -236,27 +239,27 @@ class ConnMagnets(_EpicsPropsList):
 
     # --- power supplies commands ---
 
-    def cmd_pwrstate_on(self, timeout):
+    def cmd_pwrstate_on(self, timeout=_PWRSTATE_ON_DELAY):
         """Turn all power supplies on."""
         return self._command('PwrState', _PSConst.PwrState.On, timeout)
 
-    def cmd_pwrstate_off(self, timeout):
+    def cmd_pwrstate_off(self, timeout=_PWRSTATE_OFF_DELAY):
         """Turn all power supplies off."""
         return self._command('PwrState', _PSConst.PwrState.Off, timeout)
 
-    def cmd_opmode_slowref(self, timeout):
+    def cmd_opmode_slowref(self, timeout=_TIMEOUT_DFLT):
         """Select SlowRef opmode for all power supplies."""
         return self._command('OpMode', _PSConst.OpMode.SlowRef, timeout)
 
-    def cmd_opmode_cycle(self, timeout):
+    def cmd_opmode_cycle(self, timeout=_TIMEOUT_DFLT):
         """Select Cycle opmode for all power supplies."""
         return self._command('OpMode', _PSConst.OpMode.Cycle, timeout)
 
-    def cmd_opmode_rmpwfm(self, timeout):
+    def cmd_opmode_rmpwfm(self, timeout=_TIMEOUT_DFLT):
         """Select RmpWfm opmode for all power supplies."""
         return self._command('OpMode', _PSConst.OpMode.RmpWfm, timeout)
 
-    def cmd_wfmdata(self, timeout):
+    def cmd_wfmdata(self, timeout=_TIMEOUT_DFLT):
         """Set wfmdata of all powersupplies."""
         if self._ramp_config is None:
             return False
