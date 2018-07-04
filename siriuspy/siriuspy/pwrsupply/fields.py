@@ -53,6 +53,17 @@ class VariableFactory:
         'Current2-Mon': _bsmp.ConstFAC_DCDC.V_I_LOAD2,
     }
 
+    _vars_FAC_ACDC = {
+        'IntlkSoft-Mon': _bsmp.ConstFAC_ACDC.V_PS_SOFT_INTERLOCKS,
+        'IntlkHard-Mon': _bsmp.ConstFAC_ACDC.V_PS_HARD_INTERLOCKS,
+        'CapacitorBankVoltage-Mon': _bsmp.ConstFAC_ACDC.V_CAPACITOR_BANK,
+        'RectifierVoltage-Mon': _bsmp.ConstFAC_ACDC.V_OUT_RECTIFIER,
+        'RectifierCurrent-Mon': _bsmp.ConstFAC_ACDC.I_OUT_RECTIFIER,
+        'HeatSinkTemperature-Mon': _bsmp.ConstFAC_ACDC.TEMP_HEATSINK,
+        'InductorsTemperature-Mon': _bsmp.ConstFAC_ACDC.TEMP_INDUCTORS,
+        'PWMDutyCycle-Mon': _bsmp.ConstFAC_ACDC.DUTY_CYCLE,
+    }
+
     @staticmethod
     def get(psmodel, device_id, epics_field, pru_controller):
         """Factory."""
@@ -66,9 +77,12 @@ class VariableFactory:
         elif psmodel == 'FBP_DCLink':
             v = VariableFactory._get_FBP_DCLink(device_id, epics_field,
                                                 pru_controller)
-        elif psmodel in ('FAC_DCDC'):
+        elif psmodel in ('FAC_DCDC', 'FAC_2P4S_DCDC'):
             v = VariableFactory._get_FAC(device_id, epics_field,
                                          pru_controller)
+        elif psmodel in ('FAC_ACDC', 'FAC_2P4S_ACDC'):
+            v = VariableFactory._get_FAC_ACDC(device_id, epics_field,
+                                              pru_controller)
         else:
             raise NotImplementedError('Fields not implemented for ' + psmodel)
         if v is not None:
@@ -129,6 +143,13 @@ class VariableFactory:
     def _get_FAC(device_id, epics_field, pru_controller):
         if epics_field in VariableFactory._vars_FAC:
             var_id = VariableFactory._vars_FAC[epics_field]
+            return Variable(pru_controller, device_id, var_id)
+        return None
+
+    @staticmethod
+    def _get_FAC_ACDC(device_id, epics_field, pru_controller):
+        if epics_field in VariableFactory._vars_FAC_ACDC:
+            var_id = VariableFactory._vars_FAC_ACDC[epics_field]
             return Variable(pru_controller, device_id, var_id)
         return None
 
