@@ -178,9 +178,9 @@ class ConnTiming(_EpicsPropsList):
                            c.MODE_EXTERNAL,
                            connection_callback=connection_callback,
                            callback=callback),
-            # _EpicsProperty(c.EVG_Evt01ExtTrig, '-Cmd', '-Cmd', p, None,
-            #                connection_callback=connection_callback,
-            #                callback=callback),
+             _EpicsProperty(c.EVG_Evt01ExtTrig, '-Cmd', '-Cmd', p, None,
+                            connection_callback=connection_callback,
+                            callback=callback),
             _EpicsProperty(c.EVR1_DevEnbl, '-Sel', '-Sts', p, c.STATE_ENBL,
                            connection_callback=connection_callback,
                            callback=callback),
@@ -212,6 +212,8 @@ class ConnTiming(_EpicsPropsList):
         rb = self.default
         rb.update(readbacks)
         for name, value in rb.items():
+            if value is None:
+                continue
             if not self.get_readback(name) == value:
                 return False
         return True

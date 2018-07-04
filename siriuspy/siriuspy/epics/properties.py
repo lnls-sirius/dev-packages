@@ -195,9 +195,7 @@ class EpicsPropertiesList:
             for pvname, value in setpoints.items():
                 property = self._properties[pvname]
                 if value is None:
-                    print(property)
                     continue
-                    print('continuing...')
                 if not property.readback == value:
                     finished = False
                     break
