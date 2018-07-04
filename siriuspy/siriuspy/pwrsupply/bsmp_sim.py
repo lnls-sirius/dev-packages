@@ -699,6 +699,9 @@ udcmodels = {
     'FAC_2P4S_DCDC': {'ConstBSMP': _cFAC_DCDC,
                       'Entities': _EntitiesFAC_DCDC(),
                       'BSMPSim': BSMPSim_FAC_DCDC, },
+    'FAC_2P4S_ACDC': {'ConstBSMP': _cFAC_ACDC,
+                      'Entities': _EntitiesFAC_ACDC(),
+                      'BSMPSim': BSMPSim_FAC_ACDC, },
 }
 
 
