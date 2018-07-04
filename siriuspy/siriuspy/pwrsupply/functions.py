@@ -188,7 +188,8 @@ class PRUCurve:
         """Execute command."""
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
-            self.pru_controller.pru_curve_write(self._device_ids, value)
+            for dev_id in self._device_ids:
+                self.pru_controller.pru_curve_write(dev_id, value)
 
 
 class CtrlLoop:
