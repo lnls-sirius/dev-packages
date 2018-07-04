@@ -4,6 +4,7 @@ import time as _time
 import epics as _epics
 
 
+import numpy as _np
 from siriuspy import envars as _envars
 
 
@@ -13,7 +14,7 @@ _prefix = _envars.vaca_prefix
 class EpicsProperty:
     """Pair of Epics PVs."""
 
-    def __init__(self, name, suffix_sp, suffix_rb,  prefix=_prefix,
+    def __init__(self, name, suffix_sp, suffix_rb, prefix=_prefix,
                  default_value=None, connection_callback=None, callback=None):
         """Init."""
         self._name = name
@@ -196,9 +197,14 @@ class EpicsPropertiesList:
                 property = self._properties[pvname]
                 if value is None:
                     continue
-                if not property.readback == value:
-                    finished = False
-                    break
+                if isinstance(value, _np.ndarray):
+                    if not all(property.readback == value):
+                        finished = False
+                        break
+                else:
+                    if not property.readback == value:
+                        finished = False
+                        break
             if finished or _time.time()-t0 > timeout:
                 break
             _time.sleep(min(0.1, timeout))

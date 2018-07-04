@@ -293,6 +293,11 @@ class ConnMagnets(_EpicsPropsList):
         cs = _ConfigService()
         tpl = cs.get_config_type_template('bo_normalized')
         self._manames = sorted(tpl.keys())
+        # aux = list()
+        # for key in tpl.keys():
+        #     if 'SF' in key or 'SD' in key:
+        #         aux.append(key)
+        # self._manames = sorted(aux)
 
     def _define_properties(self, prefix, connection_callback, callback):
         p = prefix
