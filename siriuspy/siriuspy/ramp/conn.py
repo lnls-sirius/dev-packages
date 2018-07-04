@@ -133,6 +133,7 @@ class ConnTiming(_EpicsPropsList):
         return self.set_setpoints_check(setpoints, timeout, order)
 
     def cmd_pulse(self, timeout=0.5):
+        """Pulse timing."""
         c = ConnTiming.Const
         setpoints = {c.EVG_Evt01ExtTrig: 1}
         return self.set_setpoints_check(setpoints, timeout)
@@ -177,9 +178,9 @@ class ConnTiming(_EpicsPropsList):
                            c.MODE_EXTERNAL,
                            connection_callback=connection_callback,
                            callback=callback),
-	    _EpicsProperty(c.EVG_Evt01ExtTrig, '-Cmd', '-Cmd', p, None,
-                           connection_callback=connection_callback,
-                           callback=callback),
+            # _EpicsProperty(c.EVG_Evt01ExtTrig, '-Cmd', '-Cmd', p, None,
+            #                connection_callback=connection_callback,
+            #                callback=callback),
             _EpicsProperty(c.EVR1_DevEnbl, '-Sel', '-Sts', p, c.STATE_ENBL,
                            connection_callback=connection_callback,
                            callback=callback),
