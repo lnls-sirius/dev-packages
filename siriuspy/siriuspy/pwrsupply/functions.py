@@ -27,7 +27,7 @@ class FunctionFactory:
         elif psmodel == 'FBP_DCLink':
             return FunctionFactory._get_FBP_DCLink(
                 device_ids, epics_field, pru_controller, setpoints)
-        elif psmodel == 'FAC_DCDC':
+        elif psmodel in ('FAC_DCDC', 'FAC_2P4S_DCDC'):
             return FunctionFactory._get_FAC_DCDC(
                 device_ids, epics_field, pru_controller, setpoints)
         else:
