@@ -150,15 +150,11 @@ class BBBFactory:
 
             # Build controllers dict
             # print(model)
-            if model in ('FBP'):
+            if model in ('FBP', 'FAC_DCDC', 'FAC_2P4S_DCDC'):
                 controller = _StdPSController(
                     fields, writers, connections, devices_ids, pru_controller)
-            elif model in ('FBP_DCLink'):
-                controller = _PSController(
-                    fields, writers, connections)
-            elif model in ('FAC_DCDC'):
-                controller = _PSController(
-                    fields, writers, connections)
+            elif model in ('FBP_DCLink', 'FAC_ACDC', 'FAC_2P4S_ACDC'):
+                controller = _PSController(fields, writers, connections)
             else:
                 raise NotImplementedError()
             for dev_name, dev_id in devices:
