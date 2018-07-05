@@ -2,9 +2,12 @@
 
 import numpy as _np
 
+from siriuspy import util as _util
 from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
-from siriuspy.ramp import util as _util
+from siriuspy.ramp import util as _rutil
 from siriuspy.ramp.magnet import Magnet as _Magnet
+from siriuspy.ramp.exceptions import RampInvalidDipoleWfmParms as \
+    _RampInvalidDipoleWfmParms
 
 
 class WaveformParam:
@@ -12,17 +15,17 @@ class WaveformParam:
 
     def __init__(
             self,
-            duration=_util.DEFAULT_RAMP_DURATION,
-            start_energy=_util.DEFAULT_RAMP_START_ENERGY,
-            rampup_start_time=_util.DEFAULT_RAMP_RAMPUP_START_TIME,
-            rampup_start_energy=_util.DEFAULT_RAMP_RAMPUP_START_ENERGY,
-            rampup_stop_time=_util.DEFAULT_RAMP_RAMPUP_STOP_TIME,
-            rampup_stop_energy=_util.DEFAULT_RAMP_RAMPUP_STOP_ENERGY,
-            plateau_energy=_util.DEFAULT_RAMP_PLATEAU_ENERGY,
-            rampdown_start_time=_util.DEFAULT_RAMP_RAMPDOWN_START_TIME,
-            rampdown_start_energy=_util.DEFAULT_RAMP_RAMPDOWN_START_ENERGY,
-            rampdown_stop_time=_util.DEFAULT_RAMP_RAMPDOWN_STOP_TIME,
-            rampdown_stop_energy=_util.DEFAULT_RAMP_RAMPDOWN_STOP_ENERGY,
+            duration=_rutil.DEFAULT_RAMP_DURATION,
+            start_energy=_rutil.DEFAULT_RAMP_START_ENERGY,
+            rampup_start_time=_rutil.DEFAULT_RAMP_RAMPUP_START_TIME,
+            rampup_start_energy=_rutil.DEFAULT_RAMP_RAMPUP_START_ENERGY,
+            rampup_stop_time=_rutil.DEFAULT_RAMP_RAMPUP_STOP_TIME,
+            rampup_stop_energy=_rutil.DEFAULT_RAMP_RAMPUP_STOP_ENERGY,
+            plateau_energy=_rutil.DEFAULT_RAMP_PLATEAU_ENERGY,
+            rampdown_start_time=_rutil.DEFAULT_RAMP_RAMPDOWN_START_TIME,
+            rampdown_start_energy=_rutil.DEFAULT_RAMP_RAMPDOWN_START_ENERGY,
+            rampdown_stop_time=_rutil.DEFAULT_RAMP_RAMPDOWN_STOP_TIME,
+            rampdown_stop_energy=_rutil.DEFAULT_RAMP_RAMPDOWN_STOP_ENERGY,
             **kwargs):
         """Init method."""
         self._duration = duration
@@ -467,24 +470,32 @@ class _WaveformMagnet(_Magnet):
 class WaveformDipole(_WaveformMagnet, WaveformParam):
     """Waveform for Dipole."""
 
+    _E0 = _util.get_electron_rest_energy()
+
     def __init__(self, maname='BO-Fam:MA-B', **kwargs):
         """Constructor."""
         _WaveformMagnet.__init__(self, maname, **kwargs)
         WaveformParam.__init__(self, **kwargs)
-        self._waveform = None
+        self._update_waveform()
 
     def update(self):
-        """Upate."""
+        """Update."""
         WaveformParam.update(self)
         self._waveform = None
 
     @property
     def waveform(self):
         """Magnet waveform."""
+        self._update_waveform()
+        return self._waveform
+
+    def _update_waveform(self):
         if self._changed or self._waveform is None:
             t = self.times
             self._waveform = self.eval_at(t)
-        return self._waveform
+            if _np.any(_np.array(self._waveform) < WaveformDipole._E0):
+                raise _RampInvalidDipoleWfmParms(
+                    'Dipole energy less than electron rest energy.')
 
     def _get_currents(self):
         currents = self.conv_strength_2_current(self.waveform)
@@ -506,8 +517,8 @@ class Waveform(_WaveformMagnet):
         self._dipole = dipole
         self._family = family
         if strengths is None:
-            if self.maname in _util.NOMINAL_STRENGTHS:
-                nom_strengths = _util.NOMINAL_STRENGTHS[self.maname]
+            if self.maname in _rutil.NOMINAL_STRENGTHS:
+                nom_strengths = _rutil.NOMINAL_STRENGTHS[self.maname]
             else:
                 nom_strengths = 0.0
             strengths = [nom_strengths, ] * self._dipole.wfm_nrpoints

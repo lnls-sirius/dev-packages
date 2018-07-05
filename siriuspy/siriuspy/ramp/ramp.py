@@ -3,7 +3,6 @@
 import numpy as _np
 from copy import deepcopy as _dcopy
 
-from siriuspy import util as _util
 from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
 from siriuspy.servconf.srvconfig import ConfigSrv as _ConfigSrv
 # from siriuspy.magnet.util import magnet_class as _magnet_class
@@ -64,8 +63,6 @@ class BoosterNormalized(_ConfigSrv):
 
 class BoosterRamp(_ConfigSrv):
     """Booster ramp class."""
-
-    _E0 = _util.get_electron_rest_energy()
 
     # ConfigSrv connector object
     _conn = _CCBORamp()
@@ -802,9 +799,6 @@ class BoosterRamp(_ConfigSrv):
         nconf_indices = self._conv_times_2_indices(nconf_times)
         wfm_indices = [i for i in range(wfm_nrpoints)]
         wfm_strengths = _np.interp(wfm_indices, nconf_indices, nconf_strength)
-        if _np.any(wfm_strengths < BoosterRamp._E0):
-            raise _RampInvalidDipoleWfmParms(
-                'Dipole energy less than electron rest energy.')
 
         # create waveform object with given strengths
         dipole = self._waveforms[dipole]
