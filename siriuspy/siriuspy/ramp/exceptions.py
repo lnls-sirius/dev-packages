@@ -18,4 +18,4 @@ class RampInvalidDipoleWfmParms(RampError):
 class RampInvalidNormConfig(RampError):
     """Invalid normalized configuration."""
 
-    pass
+    pass    

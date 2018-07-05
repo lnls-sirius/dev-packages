@@ -632,6 +632,12 @@ class BoosterRamp(_ConfigSrv):
 
     # --- API for waveforms ---
 
+    @property
+    def waveform_anomalies(self):
+        """Waveform anomalies."""
+        dip_wfm = self._waveforms['BO-Fam:MA-B']
+        return dip_wfm.anomalies
+
     def waveform_get(self, maname):
         """Return waveform for a given power supply."""
         self._update_waveform(maname)
