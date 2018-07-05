@@ -254,7 +254,9 @@ def update_integer_bit(integer, number_of_bits, value, bit):
         Value to put on the bit.
     bit: (0 <= bit < number_of_bits)
         The number of the bit.
+
     """
+    # NOTE: not being used. maybe can be deleted.
     if not isinstance(integer, int):
         raise TypeError
 
@@ -281,7 +283,7 @@ def update_integer_bit(integer, number_of_bits, value, bit):
 def check_public_interface_namespace(namespace, valid_interface,
                                      checkdoc_flag=True,
                                      print_flag=True):
-    """Function to be used in unittests to test module's public interface.
+    """Check function used in unittests to test module's public interface.
 
     This function checks only static public interface symbols. It does not
     check those symbols that are created within class methods.
