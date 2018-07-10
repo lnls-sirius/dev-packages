@@ -15,8 +15,6 @@ class ConnConfigService:
 
     def __init__(self, config_type, url=_envars.server_url_configdb):
         """Contructor."""
-        if config_type not in ('bo_ramp', 'bo_normalized'):
-            raise ValueError('Invalid configuration type!')
         self._config_type = config_type
         self._srvconf = _ConfigService(url=url)
 
