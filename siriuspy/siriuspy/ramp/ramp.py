@@ -635,6 +635,7 @@ class BoosterRamp(_ConfigSrv):
     @property
     def waveform_anomalies(self):
         """Waveform anomalies."""
+        self._update_waveform('BO-Fam:MA-B')
         dip_wfm = self._waveforms['BO-Fam:MA-B']
         return dip_wfm.anomalies
 
