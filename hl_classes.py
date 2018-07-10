@@ -346,7 +346,7 @@ class HL_Trigger(_HL_Base):
             alarm = _Alarm.COMM_ALARM
             severity = _Severity.INVALID_ALARM
         elif get_bit(status, 1) | get_bit(status, 2) | get_bit(status, 3):
-            # 'DevEnbl', 'FOUTDevEnbl', 'EVGDevEnbl'
+            # 'DevEnbl', 'FoutDevEnbl', 'EVGDevEnbl'
             alarm = _Alarm.DISABLE_ALARM
             severity = _Severity.INVALID_ALARM
         elif (get_bit(status, 5) | get_bit(status, 6) |

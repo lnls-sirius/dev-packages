@@ -24,8 +24,8 @@ _LLTimeSearch.add_crates_info()
 EVG_NAME = _LLTimeSearch.get_devices_by_type('EVG').pop()
 EVRs = _LLTimeSearch.get_devices_by_type('EVR')
 EVEs = _LLTimeSearch.get_devices_by_type('EVE')
-AFCs = _LLTimeSearch.get_devices_by_type('AFC')
-FOUTs = _LLTimeSearch.get_devices_by_type('FOUT')
+AMCFPGAEVRs = _LLTimeSearch.get_devices_by_type('AMCFPGAEVR')
+Fouts = _LLTimeSearch.get_devices_by_type('Fout')
 TWDS_EVG = _LLTimeSearch.get_connections_twds_evg()
 
 
@@ -400,7 +400,7 @@ class _EVROUT(_Base):
         self.prefix = LL_PREFIX + _PVName(channel).device_name + ':'
         chan_tree = _LLTimeSearch.get_device_tree(channel)
         for chan in chan_tree:
-            if chan.device_name in FOUTs:
+            if chan.device_name in Fouts:
                 self._fout_prefix = LL_PREFIX + chan.device_name + ':'
                 self._fout_out = int(chan.propty[3:])
             elif chan.device_name == EVG_NAME:
@@ -409,7 +409,7 @@ class _EVROUT(_Base):
         self.channel = channel
         self._source_enums = source_enums
         init_hl_state['DevEnbl'] = 1
-        init_hl_state['FOUTDevEnbl'] = 1
+        init_hl_state['FoutDevEnbl'] = 1
         init_hl_state['EVGDevEnbl'] = 1
         super().__init__(callback, init_hl_state, get_ll_state)
 
@@ -443,10 +443,10 @@ class _EVROUT(_Base):
             'Network': self.prefix + 'Network-Mon',
             'Link': self.prefix + 'Link-Mon',
             'Los': self.prefix + 'Los-Mon',
-            'FOUTLos': self._fout_prefix + 'Los-Mon',
+            'FoutLos': self._fout_prefix + 'Los-Mon',
             'EVGLos': self._evg_prefix + 'Los-Mon',
             'IntlkMon': self.prefix + 'Intlk-Mon',
-            'FOUTDevEnbl': self._fout_prefix + 'DevEnbl-Sts',
+            'FoutDevEnbl': self._fout_prefix + 'DevEnbl-Sts',
             'EVGDevEnbl': self._evg_prefix + 'DevEnbl-Sts',
             }
         for prop in self._REMOVE_PROPS:
@@ -456,7 +456,7 @@ class _EVROUT(_Base):
     def _define_dict_for_write(self):
         map_ = {
             'DevEnbl': _partial(self._set_simple, 'DevEnbl'),
-            'FOUTDevEnbl': _partial(self._set_simple, 'FOUTDevEnbl'),
+            'FoutDevEnbl': _partial(self._set_simple, 'FoutDevEnbl'),
             'EVGDevEnbl': _partial(self._set_simple, 'EVGDevEnbl'),
             'State': _partial(self._set_simple, 'State'),
             'ByPassIntlk': _partial(self._set_simple, 'ByPassIntlk'),
@@ -487,10 +487,10 @@ class _EVROUT(_Base):
             'Network': _partial(self._get_status, 'Network'),
             'Link': _partial(self._get_status, 'Link'),
             'Los': _partial(self._get_status, 'Los'),
-            'FOUTLos': _partial(self._get_status, 'FOUTLos'),
+            'FoutLos': _partial(self._get_status, 'FoutLos'),
             'EVGLos': _partial(self._get_status, 'EVGLos'),
             'IntlkMon': _partial(self._get_status, 'IntlkMon'),
-            'FOUTDevEnbl': _partial(self._get_status, 'FOUTDevEnbl'),
+            'FoutDevEnbl': _partial(self._get_status, 'FoutDevEnbl'),
             'EVGDevEnbl': _partial(self._get_status, 'EVGDevEnbl'),
             }
         for prop in self._REMOVE_PROPS:
@@ -500,13 +500,13 @@ class _EVROUT(_Base):
     def _get_status(self, prop, is_sp, value=None):
         dic_ = dict()
         dic_['DevEnbl'] = self._get_from_pvs(is_sp, 'DevEnbl')
-        dic_['FOUTDevEnbl'] = self._get_from_pvs(is_sp, 'FOUTDevEnbl')
+        dic_['FoutDevEnbl'] = self._get_from_pvs(is_sp, 'FoutDevEnbl')
         dic_['EVGDevEnbl'] = self._get_from_pvs(is_sp, 'EVGDevEnbl')
         dic_['Network'] = self._get_from_pvs(is_sp, 'Network')
         dic_['IntlkMon'] = self._get_from_pvs(is_sp, 'IntlkMon', def_val=1)
         dic_['Link'] = self._get_from_pvs(is_sp, 'Link')
         dic_['Los'] = self._get_from_pvs(is_sp, 'Los', def_val=None)
-        dic_['FOUTLos'] = self._get_from_pvs(is_sp, 'FOUTLos', def_val=None)
+        dic_['FoutLos'] = self._get_from_pvs(is_sp, 'FoutLos', def_val=None)
         dic_['EVGLos'] = self._get_from_pvs(is_sp, 'EVGLos', def_val=None)
         dic_['PVsConn'] = self.connected
         if value is not None:
@@ -515,7 +515,7 @@ class _EVROUT(_Base):
         status = 0
         status |= ((not dic_['PVsConn']) << 0)
         status |= ((not dic_['DevEnbl']) << 1)
-        status |= ((not dic_['FOUTDevEnbl']) << 2)
+        status |= ((not dic_['FoutDevEnbl']) << 2)
         status |= ((not dic_['EVGDevEnbl']) << 3)
         status |= ((not dic_['Network']) << 4)
         status |= ((dic_['IntlkMon']) << 9)
@@ -524,9 +524,9 @@ class _EVROUT(_Base):
             num = self._internal_trigger - self._NUM_OTP
             if num >= 0 and (dic_['Los'] >> num) % 2:
                 status |= (1 << 6)
-        if dic_['FOUTLos'] is not None:
+        if dic_['FoutLos'] is not None:
             num = self._fout_out
-            if num >= 0 and (dic_['FOUTLos'] >> num) % 2:
+            if num >= 0 and (dic_['FoutLos'] >> num) % 2:
                 status |= (1 << 7)
         if dic_['EVGLos'] is not None:
             num = self._evg_out
@@ -686,7 +686,7 @@ class _EVEOUT(_EVROUT):
     _REMOVE_PROPS = {'Los', }
 
 
-class _AFCCRT(_EVROUT):
+class _AMCFPGAEVRCRT(_EVROUT):
     _NUM_OTP = 0
     _REMOVE_PROPS = {
             'RFDelay', 'FineDelay', 'SrcTrig', 'ByPassIntlk', 'DelayType'}
@@ -716,7 +716,7 @@ class _AFCCRT(_EVROUT):
         return self._process_evt(dic_['Evt'], is_sp)
 
 
-class _AFCFMC(_AFCCRT):
+class _AMCFPGAEVRFMC(_AMCFPGAEVRCRT):
 
     def _INTLB_formatter(self):
         fmc = (self._internal_trigger // 5) + 1
@@ -732,8 +732,8 @@ def get_ll_trigger_object(
         ('EVR', 'OUT'): _EVROUT,
         ('EVR', 'OTP'): _EVROTP,
         ('EVE', 'OUT'): _EVEOUT,
-        ('AFC', 'CRT'): _AFCCRT,
-        ('AFC', 'FMC'): _AFCFMC,
+        ('AMCFPGAEVR', 'CRT'): _AMCFPGAEVRCRT,
+        ('AMCFPGAEVR', 'FMC'): _AMCFPGAEVRFMC,
         }
     chan = _PVName(channel)
     match = _LLTimeSearch.ll_rgx.findall(chan.propty)
