@@ -340,7 +340,7 @@ class WaveformParam:
         self._tex_1 = -2.0*self._c2_1/self._c3_1/3.0
         self._vex_1 = self._func_region1(self._tex_1)
         if 0.0 < self._tex_1 < t1:
-            self._anomalies.add('There is a maximum in region before rampup')
+            self._anomalies.add('There is a minimum in region before rampup')
 
     def _calc_region2_parms(self):
         # calc poly coeffs
@@ -372,7 +372,7 @@ class WaveformParam:
         self._tex_4 = self._duration + 2.0*self._c2_4/self._c3_4/3.0
         self._vex_4 = self._func_region4(self._tex_4)
         if t4 < self._tex_4 < self._duration:
-            self._anomalies.add('There is a maximum in region after rampdown')
+            self._anomalies.add('There is a minimum in region after rampdown')
 
     def _calc_region5_parms(self):
         # calculate where constant derivatives need extension to that
