@@ -266,9 +266,9 @@ def get_eve_database(eve_num=1, prefix=None):
 
 def get_afc_database(afc_sec=1, has_idx=False, idx=1, prefix=None):
     """Method get_adc_database."""
-    def_prefix = 'AS-{0:02d}:TI-AFC:'.format(afc_sec)
+    def_prefix = 'AS-{0:02d}:TI-AMCFPGAEVR:'.format(afc_sec)
     if has_idx:
-        def_prefix = 'AS-{0:02d}:TI-AFC-{1:d}:'.format(afc_sec, idx)
+        def_prefix = 'AS-{0:02d}:TI-AMCFPGAEVR-{1:d}:'.format(afc_sec, idx)
 
     prefix = def_prefix if prefix is None else prefix
     db = dict()
@@ -313,7 +313,7 @@ def get_afc_database(afc_sec=1, has_idx=False, idx=1, prefix=None):
 
 def get_fout_database(fout_num=1, prefix=None):
     """Method get_fout_database."""
-    def_prefix = 'AS-Glob:TI-FOUT-{0:d}:'.format(fout_num)
+    def_prefix = 'AS-Glob:TI-Fout-{0:d}:'.format(fout_num)
     prefix = def_prefix if prefix is None else prefix
     db = dict()
 
@@ -598,7 +598,7 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
         'value': (
             'All PVs connected',
             'Device Enabled',
-            'FOUT Enabled',
+            'Fout Enabled',
             'EVG Enabled',
             'Network Ok',
             'UPLink Ok',

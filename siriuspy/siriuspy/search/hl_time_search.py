@@ -15,7 +15,7 @@ class HLTimeSearch:
     _FROM_EVG = None
     _EVRs = None
     _EVEs = None
-    _AFCs = None
+    _AMCFPGAEVRs = None
     _hl_triggers = None
 
     @classmethod
@@ -85,7 +85,7 @@ class HLTimeSearch:
         for chan in chans:
             chan_tree = _LLTimeSearch.get_device_tree(chan)
             for up_chan in chan_tree:
-                if up_chan.device_name in cls._EVRs | cls._EVEs | cls._AFCs:
+                if up_chan.device_name in cls._EVRs | cls._EVEs | cls._AMCFPGAEVRs:
                     out_chans |= {up_chan}
                     break
         return sorted(out_chans)
@@ -131,7 +131,7 @@ class HLTimeSearch:
         """Return True if hl_trigger can listen to Clocks from EVG."""
         def get_ll(ll_trigger):
             name = _PVName(ll_trigger)
-            if name.dev in {'EVE', 'AFC'}:
+            if name.dev in {'EVE', 'AMCFPGAEVR'}:
                 return True
             elif name.dev == 'EVR':
                 return name.propty.startswith('OUT')
@@ -191,7 +191,7 @@ class HLTimeSearch:
         cls._FROM_EVG = _LLTimeSearch.get_connections_from_evg()
         cls._EVRs = _LLTimeSearch.get_devices_by_type('EVR')
         cls._EVEs = _LLTimeSearch.get_devices_by_type('EVE')
-        cls._AFCs = _LLTimeSearch.get_devices_by_type('AFC')
+        cls._AMCFPGAEVRs = _LLTimeSearch.get_devices_by_type('AMCFPGAEVR')
 
     @classmethod
     def _init(cls):

@@ -477,7 +477,7 @@ class _EVEOUT_IOC(_EVROUT_IOC):
         return _cstime.get_out_database(prefix=prefix, equip='EVE')
 
 
-class _AFCOUT_IOC(_BaseIOC):
+class _AMCFPGAEVROUT_IOC(_BaseIOC):
 
     _attr2pvname = {
         'source_sp': 'Src-Sel',
@@ -680,14 +680,14 @@ class EVEIOC(EVRIOC):
         return dic_
 
 
-class AFCIOC(EVRIOC):
-    """Class to simulate the AFC."""
+class AMCFPGAEVRIOC(EVRIOC):
+    """Class to simulate the AMCFPGAEVR."""
 
     _NR_INTERNAL_OTP_CHANNELS = 10
     _NR_OTP_CHANNELS = 10
     _NR_OUT_CHANNELS = 8
-    _ClassOutIOC = _AFCOUT_IOC
-    _ClassIntTrigIOC = _AFCOUT_IOC
+    _ClassOutIOC = _AMCFPGAEVROUT_IOC
+    _ClassIntTrigIOC = _AMCFPGAEVROUT_IOC
 
     @staticmethod
     def _OUTTMP(x):
@@ -705,8 +705,8 @@ class AFCIOC(EVRIOC):
         return _cstime.get_afc_database(prefix=prefix)
 
 
-class FOUTIOC(_BaseIOC):
-    """Class to simulate the FOUT."""
+class FoutIOC(_BaseIOC):
+    """Class to simulate the Fout."""
 
     _attr2pvname = {
         'state_sp': 'DevEnbl-Sel',
