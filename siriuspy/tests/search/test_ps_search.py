@@ -1,58 +1,30 @@
-#!/usr/bin/env python-sirius
-
-"""Unittest module for search.py."""
+"""Unittest module for ps_search.py."""
 
 import unittest
-from unittest import mock
 
-import os
 from siriuspy import util
 from siriuspy.search import ps_search
 from siriuspy.search import PSSearch
 from siriuspy.pwrsupply.siggen import Signal
 from siriuspy.magnet.excdata import ExcitationData
-
-mock_flag = True
-
-public_interface = (
-    'PSSearch',
-)
-
-_path = os.path.abspath(os.path.dirname(__file__))
-
-
-def read_test_file(path):
-    """Read a file."""
-    prefix = _path + '/../test_data/servweb/'
-    with open(prefix + path, "r") as fd:
-        return fd.read()
-
-
-def read_test_ps_pstypes(path):
-    """Read a file."""
-    prefix = _path + '/../test_data/servweb/pwrsupply/pstypes-data/'
-    with open(prefix + path, "r") as fd:
-        return fd.read()
-
-
-def read_test_ma_excdata(path):
-    """Read a file."""
-    prefix = _path + '/../test_data/servweb/magnet/excitation-data/'
-    with open(prefix + path, "r") as fd:
-        return fd.read()
+from ..mock_servweb import MockServConf
 
 
 class TestModule(unittest.TestCase):
     """Test Search module."""
 
+    public_interface = (
+        'PSSearch',
+    )
+
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-                                ps_search, public_interface)
+                                ps_search, TestModule.public_interface)
         self.assertTrue(valid)
 
 
-class TestPSSearch(unittest.TestCase):
+class TestPSSearch(MockServConf):
     """Test PSSearch."""
 
     public_interface = (
@@ -68,12 +40,11 @@ class TestPSSearch(unittest.TestCase):
         'conv_pstype_2_magfunc',
         'conv_pstype_2_splims',
         'conv_psname_2_excdata',
-        'check_psname_ispulsed',
         'conv_psname_2_psmodel',
         'conv_psname_2_siggenconf',
-        'check_pstype_ispulsed',
         'conv_psname_2_bbbname',
         'conv_bbbname_2_psnames',
+        'conv_bbbname_2_bsmps',
         'get_pstype_2_psnames_dict',
         'get_pstype_2_splims_dict',
         'get_splims_unit',
@@ -106,7 +77,7 @@ class TestPSSearch(unittest.TestCase):
         'BO-Glob:CO-PSCtrl-2': None,
         'BO-01:CO-PSCtrl-1': None,
         'BO-01:CO-PSCtrl-2': None,
-        'SI-01:CO-PSCtrl-1': None,
+        # 'SI-01:CO-PSCtrl-1': None,
     }
 
     pstype2polarity = {
@@ -148,37 +119,6 @@ class TestPSSearch(unittest.TestCase):
         'ts-injseptum-thin': 'corrector-horizontal',
         'ts-injseptum-thick': 'corrector-horizontal',
     }
-
-    def setUp(self):
-        """Common setup for all tests."""
-        if mock_flag:
-            # Create Mocks
-            web_patcher = mock.patch.object(ps_search, '_web', autospec=True)
-            excdata_patcher = mock.patch.object(
-                        ps_search, '_ExcitationData', autospec=True)
-            self.addCleanup(web_patcher.stop)
-            self.addCleanup(excdata_patcher.stop)
-            self.mock_web = web_patcher.start()
-            self.mock_excdata = excdata_patcher.start()
-            # Set mocked functions behaviour
-            self.mock_web.server_online.return_value = True
-            self.mock_web.ps_pstypes_names_read.return_value = \
-                read_test_file('pwrsupply/pstypes-names.txt')
-            self.mock_web.ps_pstype_data_read.side_effect = \
-                read_test_ps_pstypes
-            self.mock_web.ps_pstype_setpoint_limits.return_value = \
-                read_test_file('pwrsupply/pstypes-setpoint-limits.txt')
-            self.mock_web.ps_siggen_configuration_read.return_value = \
-                read_test_file('pwrsupply/siggen-configuration.txt')
-            self.mock_web.pu_pstype_setpoint_limits.return_value = \
-                read_test_file('pwrsupply/putypes-setpoint-limits.txt')
-            self.mock_web.ps_psmodels_read.return_value = \
-                read_test_file('pwrsupply/psmodels.txt')
-            self.mock_web.pu_psmodels_read.return_value = \
-                read_test_file('pwrsupply/pumodels.txt')
-            self.mock_web.beaglebone_power_supplies_mapping.return_value = \
-                read_test_file(
-                    'pwrsupply/beaglebone-mapping.txt')
 
     def test_public_interface(self):
         """Test class public interface."""
@@ -226,13 +166,13 @@ class TestPSSearch(unittest.TestCase):
         # check sorted
         sorted_bbbnames = sorted(bbbnames)
         self.assertEqual(bbbnames, sorted_bbbnames)
-        # with filters
-        bbbnames = PSSearch.get_bbbnames({'dis': 'CO'})
-        self.assertEqual(len(bbbnames), 289)
-        for name in bbbnames:
-            self.assertIn('CO', name)
-        bbbnames = PSSearch.get_bbbnames({'sub': 'Glob'})
-        self.assertEqual(len(bbbnames), 29)
+        # # with filters
+        # bbbnames = PSSearch.get_bbbnames({'dis': 'CO'})
+        # self.assertEqual(len(bbbnames), 289)
+        # for name in bbbnames:
+        #     self.assertIn('CO', name)
+        # bbbnames = PSSearch.get_bbbnames({'sub': 'Glob'})
+        # self.assertEqual(len(bbbnames), 29)
         # exceptions
         self.assertRaises(TypeError, PSSearch.get_psnames, filters=23)
         self.assertRaises(TypeError, PSSearch.get_psnames, filters=23.4)
@@ -314,27 +254,11 @@ class TestPSSearch(unittest.TestCase):
         self.assertRaises(
             KeyError, PSSearch.conv_pstype_2_splims, pstype='dummy')
 
-    def _test_conv_psname_2_excdata(self):
+    def test_conv_psname_2_excdata(self):
         """Test conv_psname_2_excdata."""
-        calls = []
-        for ps, pstype in TestPSSearch.sample.items():
-            if pstype in PSSearch._pstype_2_excdat_dict:
-                calls.append(mock.call(filename_web=pstype + '.txt'))
-            excdata = PSSearch.conv_psname_2_excdata(ps)
-            self.assertIsInstance(excdata, ExcitationData)
-        if mock_flag:
-            self.mock_excdata.assert_called()
-            self.mock_excdata.assert_has_calls(calls)
-
-    def test_check_psname_ispulsed(self):
-        """Test check_psname_ispulsed."""
-        for psname in TestPSSearch.sample:
-            if ":PU" in psname:
-                self.assertTrue(PSSearch.check_psname_ispulsed(psname))
-            elif ":PS" in psname:
-                self.assertFalse(PSSearch.check_psname_ispulsed(psname))
-        self.assertRaises(KeyError,
-                          PSSearch.check_psname_ispulsed, psname='A-B:C-D:E')
+        self.assertRaises(KeyError, PSSearch.conv_psname_2_excdata, '')
+        excdata = PSSearch.conv_psname_2_excdata('SI-Fam:PS-B1B2-1')
+        self.assertIsInstance(excdata, ExcitationData)
 
     def test_conv_psname_2_psmodel(self):
         """Test conv_psname_2_psmodel."""
@@ -348,25 +272,17 @@ class TestPSSearch(unittest.TestCase):
             siggenconf = PSSearch.conv_psname_2_siggenconf(psname=ps)
             self.assertIsInstance(siggenconf, Signal)
 
-    def test_check_pstype_ispulsed(self):
-        """Test check_pstype_isplused."""
-        pstypes = PSSearch.get_pstype_names()
-        for pstype in pstypes:
-            if ":PU" in pstype:
-                self.assertTrue(PSSearch.check_pstype_ispulsed(pstype))
-            elif ":PS" in pstype:
-                self.assertFalse(PSSearch.check_pstype_ispulsed(pstype))
-        self.assertRaises(KeyError,
-                          PSSearch.check_pstype_ispulsed, pstype='dummy')
-
     def test_conv_bbbname_2_psnames(self):
         """Test conv_bbbname_2_psnames."""
         self.assertRaises(TypeError, PSSearch.conv_bbbname_2_psnames)
         self.assertRaises(KeyError, PSSearch.conv_bbbname_2_psnames, '')
-        psnames = PSSearch.conv_bbbname_2_psnames(bbbname='SI-Glob:CO-PSCtrl-1')
-        self.assertIsInstance(psnames, list)
-        self.assertGreater(len(psnames), 0)
-        self.assertIsInstance(psnames[0], str)
+        bsmps = PSSearch.conv_bbbname_2_psnames(
+            bbbname='BO-Glob:CO-PSCtrl-1')
+        self.assertIsInstance(bsmps, list)
+        self.assertGreater(len(bsmps), 0)
+        self.assertIsInstance(bsmps[0], tuple)
+        self.assertIsInstance(bsmps[0][0], str)
+        self.assertIsInstance(bsmps[0][1], int)
 
     def test_get_pstype_2_psnames_dict(self):
         """Test get_pstype_2_psnames_dict."""
@@ -394,16 +310,13 @@ class TestPSSearch(unittest.TestCase):
 
     def test_get_splims_unit(self):
         """Test get_splims_unit."""
-        self.assertEqual(PSSearch.get_splims_unit(True), ['V', 'Voltage'])
-        self.assertEqual(PSSearch.get_splims_unit(False), ['A', 'Ampere'])
-        self.assertRaises(ValueError, PSSearch.get_splims_unit, ispulsed='')
+        self.assertRaises(TypeError, PSSearch.get_splims_unit)
+        self.assertRaises(ValueError, PSSearch.get_splims_unit, '')
+        self.assertRaises(TypeError, PSSearch.get_splims_unit)
+        self.assertEqual(PSSearch.get_splims_unit('FBP'), ['A', 'Ampere'])
 
     def test_get_splims_labels(self):
         """Test get_splims_labels."""
         self.assertEqual(PSSearch.get_splims_labels(),
                          ['DRVL', 'LOLO', 'LOW', 'LOPR',
                           'HOPR', 'HIGH', 'HIHI', 'DRVH'])
-
-
-if __name__ == "__main__":
-    unittest.main()

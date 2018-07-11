@@ -20,5 +20,6 @@ setup(
     ],
     packages=find_packages(),
     package_data={'siriuspy': ['VERSION']},
+    test_suite='tests',
     zip_safe=False
 )
