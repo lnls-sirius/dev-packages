@@ -203,31 +203,30 @@ class MASearch:
     @staticmethod
     def _reload_maname_2_psnames_dict():
         """Build a dict of tuples with power supplies of each magnet."""
-        if _web.server_online():
-            text = _web.magnets_excitation_ps_read()
-            data, param_dict = _util.read_text_data(text)
-            MASearch._maname_2_psnames_dict = {}
-            MASearch._maname_2_trim_dict = {}
-            MASearch._manames_list = []
-            for datum in data:
-                magnet, *psnames = datum
-                MASearch._manames_list.append(_SiriusPVName(magnet))
-                MASearch._maname_2_psnames_dict[magnet] = tuple(psnames)
-                if 'Fam' not in magnet:
-                    famname = _SiriusPVName(magnet)
-                    famname = famname.replace(
-                        famname.sub, 'Fam').replace('MA-', 'PS-')
-                    if '-Fam:PS-Q' in famname and famname in psnames:
-                        psnames.remove(famname)
-                        maname = famname.replace('PS-', 'MA-')
-                        if maname not in MASearch._maname_2_trim_dict:
-                            MASearch._maname_2_trim_dict[maname] = \
-                                tuple(psnames)
-                        else:
-                            MASearch._maname_2_trim_dict[maname] += \
-                                tuple(psnames)
-            MASearch._manames_list = sorted(MASearch._manames_list)
-            MASearch._psnames_list = _PSSearch.get_psnames()
-        else:
+        if not _web.server_online():
             raise Exception(
                 'could not read magnet-excitation-ps from web server!')
+        text = _web.magnets_excitation_ps_read()
+        data, param_dict = _util.read_text_data(text)
+        MASearch._maname_2_psnames_dict = {}
+        MASearch._maname_2_trim_dict = {}
+        MASearch._manames_list = []
+        for datum in data:
+            magnet, *psnames = datum
+            MASearch._manames_list.append(_SiriusPVName(magnet))
+            MASearch._maname_2_psnames_dict[magnet] = tuple(psnames)
+            if 'Fam' not in magnet:
+                famname = _SiriusPVName(magnet)
+                famname = famname.replace(
+                    famname.sub, 'Fam').replace('MA-', 'PS-')
+                if '-Fam:PS-Q' in famname and famname in psnames:
+                    psnames.remove(famname)
+                    maname = famname.replace('PS-', 'MA-')
+                    if maname not in MASearch._maname_2_trim_dict:
+                        MASearch._maname_2_trim_dict[maname] = \
+                            tuple(psnames)
+                    else:
+                        MASearch._maname_2_trim_dict[maname] += \
+                            tuple(psnames)
+        MASearch._manames_list = sorted(MASearch._manames_list)
+        MASearch._psnames_list = _PSSearch.get_psnames()
