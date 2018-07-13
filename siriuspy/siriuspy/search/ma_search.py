@@ -138,7 +138,7 @@ class MASearch:
     #     return None
 
     @staticmethod
-    def conv_psname_2_maname_pwrsupply(psname):
+    def conv_psname_2_psmaname(psname):
         """Return power supply maname for a given psname."""
         if MASearch._psnames_list is None:
             MASearch._reload_maname_2_psnames_dict()
