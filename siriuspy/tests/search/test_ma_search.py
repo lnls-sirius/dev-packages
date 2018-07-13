@@ -35,8 +35,8 @@ class TestMASearch(MockServConf):
         'conv_maname_2_splims',
         'conv_maname_2_psnames',
         'conv_psmaname_2_psnames',
-        'conv_psname_2_maname',
         'conv_psname_2_maname_pwrsupply',
+        # 'conv_psname_2_maname',
         'get_maname_2_splims_dict',
         # 'check_maname_ispulsed'
     )
@@ -190,10 +190,10 @@ class TestMASearch(MockServConf):
         for ma, psnames in TestMASearch.maname2psnames.items():
             self.assertEqual(MASearch.conv_maname_2_psnames(ma), psnames)
 
-    def test_psname_2_maname(self):
-        """Test psname_2_maname."""
-        for psname, maname in TestMASearch.psname2maname.items():
-            self.assertEqual(MASearch.conv_psname_2_maname(psname), maname)
+    # def test_psname_2_maname(self):
+    #     """Test psname_2_maname."""
+    #     for psname, maname in TestMASearch.psname2maname.items():
+    #         self.assertEqual(MASearch.conv_psname_2_maname(psname), maname)
 
     def test_conv_psname_2_maname_pwrsupply(self):
         """Test conv_psname_2_maname_pwrsupply."""
