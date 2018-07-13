@@ -241,6 +241,18 @@ def get_strength_units(magfunc, section=None):
         raise ValueError('magfunc "{}" not defined!'.format(magfunc))
 
 
+def get_intmpole_units(n):
+    """Return units of integrated multipole of order n."""
+    if n == 0:
+        return 'T.m'
+    elif n == 1:
+        return 'T'
+    elif n == 2:
+        return 'T/m'
+    else:
+        return 'T/m^{}'.format(n-1)
+
+
 def update_integer_bit(integer, number_of_bits, value, bit):
     """Update a specific integer bit.
 
