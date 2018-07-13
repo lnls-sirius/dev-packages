@@ -100,7 +100,7 @@ class TestMASearch(MockServConf):
         'SI-01M1:PS-CH': 'SI-01M1:MA-SDA0',
     }
 
-    psname2maname_pwrsupply = {
+    psname2psmaname = {
         'SI-Fam:PS-B1B2-1': 'SI-Fam:MA-B1B2',
         'SI-Fam:PS-B1B2-2': 'SI-Fam:MA-B1B2',
         'BO-Fam:PS-B-1': 'BO-Fam:MA-B',
@@ -198,7 +198,7 @@ class TestMASearch(MockServConf):
     def test_conv_psname_2_psmaname(self):
         """Test conv_psname_2_psmaname."""
         self.assertIs(MASearch.conv_psname_2_psmaname('INV'), None)
-        for psname, maname in TestMASearch.psname2maname_pwrsupply.items():
+        for psname, maname in TestMASearch.psname2psmaname.items():
             self.assertEqual(MASearch.conv_psname_2_psmaname(psname),
                              maname)
 
