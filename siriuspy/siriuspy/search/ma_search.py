@@ -213,10 +213,11 @@ class MASearch:
         MASearch._manames_list = []
         for datum in data:
             magnet, *psnames = datum
-            MASearch._manames_list.append(_SiriusPVName(magnet))
+            magnet = _SiriusPVName(magnet)
+            MASearch._manames_list.append(magnet)
             MASearch._maname_2_psnames_dict[magnet] = tuple(psnames)
-            if 'Fam' not in magnet:
-                famname = _SiriusPVName(magnet)
+            if 'Fam' != magnet.sub:
+                famname = magnet
                 famname = famname.replace(
                     famname.sub, 'Fam').replace('MA-', 'PS-')
                 if '-Fam:PS-Q' in famname and famname in psnames:
