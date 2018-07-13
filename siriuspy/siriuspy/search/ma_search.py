@@ -211,7 +211,7 @@ class MASearch:
             MASearch._manames_list = []
             for datum in data:
                 magnet, *psnames = datum
-                MASearch._manames_list.append(magnet)
+                MASearch._manames_list.append(_SiriusPVName(magnet))
                 MASearch._maname_2_psnames_dict[magnet] = tuple(psnames)
                 if 'Fam' not in magnet:
                     famname = _SiriusPVName(magnet)
@@ -226,6 +226,7 @@ class MASearch:
                         else:
                             MASearch._maname_2_trim_dict[maname] += \
                                 tuple(psnames)
+            MASearch._manames_list = sorted(MASearch._manames_list)
             MASearch._psnames_list = _PSSearch.get_psnames()
         else:
             raise Exception(
