@@ -1,5 +1,5 @@
 """CSDEVICE - control-system device subpackage.
 
-This subpackage contains modules with information adn data on devices
+This subpackage contains modules with information and data on devices
 control system properties.
 """
