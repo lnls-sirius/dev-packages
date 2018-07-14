@@ -1,5 +1,6 @@
 """Load and process BBB to PS data from static table in remote server."""
 
+from siriuspy.namesys import Filter as _Filter
 import siriuspy.servweb as _web
 from siriuspy.namesys import SiriusPVName as _PVName
 import copy as _copy
@@ -97,10 +98,11 @@ def get_mapping():
     return bpmsdata.map
 
 
-def get_names():
+def get_names(filters=None, sorting=None):
     """Return a dictionary with the."""
     bpmsdata = _get_bpmsdata()
-    return bpmsdata.names
+    return _Filter.process_filters(
+                            bpmsdata.names, filters=filters, sorting=sorting)
 
 
 def get_positions():
