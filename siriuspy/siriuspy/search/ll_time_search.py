@@ -3,9 +3,9 @@
 import re as _re
 from copy import deepcopy as _dcopy
 from siriuspy import servweb as _web
-from siriuspy import diagnostics as _diag
 from siriuspy.namesys import Filter as _Filter
 from .ps_search import PSSearch as _PSSearch
+from .bpms_search import BPMSearch as _BPMSearch
 from siriuspy.namesys import SiriusPVName as _PVName
 
 _timeout = 1.0
@@ -110,7 +110,7 @@ class LLTimeSearch:
         """Add the information of Crate to BPMs to timing map."""
         cls._get_timedata()
         if connections_dict is None:
-            connections_dict = _diag.cratesdata.get_mapping()
+            connections_dict = _BPMSearch.get_crates_mapping()
         used = set()
         twds_evg = _dcopy(cls._conn_twds_evg)
         for chan in twds_evg.keys():
