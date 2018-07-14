@@ -1,12 +1,10 @@
 """Load and process BBB to PS data from static table in remote server."""
 
-from siriuspy.namesys import Filter as _Filter
+from copy import deepcopy as _dcopy
+from siriuspy.namesys import Filter as _Filter, SiriusPVName as _PVName
 import siriuspy.servweb as _web
-from siriuspy.namesys import SiriusPVName as _PVName
-import copy as _copy
 
 _timeout = 1.0
-_bpmsdata = None
 
 
 class _BPMsData:
@@ -14,16 +12,57 @@ class _BPMsData:
 
     Data are read from the Sirius web server.
     """
+    _mapping = None
+    _inv_mapping = None
 
-    def __init__(self, timeout=_timeout):
-        self._mapping = None
-        self._inv_mapping = None
-        text = ''
-        if _web.server_online():
-            text = _web.bpms_data(timeout=_timeout)
-        self._mapping = self._get_mapping(text)
-        self._build_crates_to_bpm_mapping()
-        self._build_data()
+    # BPMsDATA API
+    # ==========
+    @classmethod
+    def reset(cls):
+        """Reload data from files."""
+        cls._mapping = None
+        cls._get_data()
+
+    @classmethod
+    def server_online(cls):
+        """Return True/False if Sirius web server is online."""
+        return _web.server_online()
+
+    @classmethod
+    def get_mapping(cls):
+        """Return a dictionary with the BPMs."""
+        cls._get_data()
+        return _dcopy(cls._mapping)
+
+    @classmethod
+    def get_names(cls, filters=None, sorting=None):
+        """Return a dictionary with the."""
+        cls._get_data()
+        return _Filter.process_filters(
+                                cls._names, filters=filters, sorting=sorting)
+
+    @classmethod
+    def get_positions(cls):
+        """Return a dictionary with the beaglebone to power supply mapping."""
+        cls._get_data()
+        return _dcopy(cls._pos)
+
+    @classmethod
+    def get_crates_mapping(cls):
+        """Return a dictionary with the power supply to beaglebone mapping."""
+        cls._get_data()
+        return _dcopy(cls._crates_mapping)
+
+    @classmethod
+    def _get_data(cls):
+        if cls._mapping is not None:
+            return
+        if not _web.server_online():
+            raise Exception('could not read data from web server!')
+        text = _web.bpms_data(timeout=_timeout)
+        cls._mapping = cls._get_mapping(text)
+        cls._build_crates_to_bpm_mapping()
+        cls._build_data()
 
     @staticmethod
     def _get_mapping(text):
@@ -42,76 +81,19 @@ class _BPMsData:
                 mapping[key] = {'position': float(pos), 'crate': crate}
         return mapping
 
-    def _build_crates_to_bpm_mapping(self):
+    @classmethod
+    def _build_crates_to_bpm_mapping(cls):
         crates_mapping = dict()
-        for k, v in self._mapping.items():
+        for k, v in cls._mapping.items():
             k2 = v['crate']
             if k2 in crates_mapping.keys():
                 crates_mapping[k2] += tuple(k)
             else:
                 crates_mapping[k2] = tuple(k)
-        self._crates_mapping = crates_mapping
+        cls._crates_mapping = crates_mapping
 
-    def _build_data(self):
-        data = {k: v for k, v in self.map.items() if k.section == 'SI'}
-        self._names = sorted(data.keys())
-        self._pos = [data[k]['position'] for k in self._names]
-
-    @property
-    def map(self): return _copy.deepcopy(self._mapping)
-
-    @property
-    def names(self): return _copy.deepcopy(self._names)
-
-    @property
-    def positions(self): return _copy.deepcopy(self._pos)
-
-    @property
-    def crates_map(self): return _copy.deepcopy(self._crates_mapping)
-
-
-def _get_bpmsdata():
-    # encapsulating _bpmsdata within a function avoid creating a global object
-    # (which is time consuming) at module load time.
-    global _bpmsdata
-    if _bpmsdata is None:
-        _bpmsdata = _BPMsData()
-    return _bpmsdata
-
-
-# BPMsDATA API
-# ==========
-def reset():
-    """Reload data from files."""
-    global _bpmsdata
-    _bpmsdata = _BPMsData()
-
-
-def server_online():
-    """Return True/False if Sirius web server is online."""
-    return _web.server_online()
-
-
-def get_mapping():
-    """Return a dictionary with the BPMs."""
-    bpmsdata = _get_bpmsdata()
-    return bpmsdata.map
-
-
-def get_names(filters=None, sorting=None):
-    """Return a dictionary with the."""
-    bpmsdata = _get_bpmsdata()
-    return _Filter.process_filters(
-                            bpmsdata.names, filters=filters, sorting=sorting)
-
-
-def get_positions():
-    """Return a dictionary with the beaglebone to power supply mapping."""
-    bpmsdata = _get_bpmsdata()
-    return bpmsdata.positions
-
-
-def get_crates_mapping():
-    """Return a dictionary with the power supply to beaglebone mapping."""
-    bpmsdata = _get_bpmsdata()
-    return bpmsdata.crates_map
+    @classmethod
+    def _build_data(cls):
+        data = {k: v for k, v in cls.map.items() if k.section == 'SI'}
+        cls._names = sorted(data.keys())
+        cls._pos = [data[k]['position'] for k in cls._names]
