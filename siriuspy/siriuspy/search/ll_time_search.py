@@ -4,6 +4,7 @@ import re as _re
 from copy import deepcopy as _dcopy
 from siriuspy import servweb as _web
 from siriuspy import diagnostics as _diag
+from siriuspy.namesys import Filter as _Filter
 from .ps_search import PSSearch as _PSSearch
 from siriuspy.namesys import SiriusPVName as _PVName
 
@@ -152,19 +153,15 @@ class LLTimeSearch:
         return (connections_dict.keys() - used)
 
     @classmethod
-    def get_devices_by_type(cls, type_dev=None):
+    def get_device_names(cls, filters=None, sorting=None):
         """
         Return a set with all devices of type type_dev.
 
         if type_dev is None, return all devices.
         """
-        def _pv_fun(x, y):
-            return _PVName(x).dev == y
-
         cls._get_timedata()
-        if not type_dev:
-            return _dcopy(cls._all_devices)
-        return {dev for dev in cls._all_devices if _pv_fun(dev, type_dev)}
+        return _Filter.process_filters(
+                            cls._all_devices, filters=filters, sorting=sorting)
 
     @classmethod
     def get_device_tree(cls, channel):

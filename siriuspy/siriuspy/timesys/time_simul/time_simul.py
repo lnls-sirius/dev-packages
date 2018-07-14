@@ -136,8 +136,8 @@ class TimingSimulation(_CallBack):
     def _get_constants(cls):
         if cls.EVG_PREFIX:
             return
-        cls.EVG_PREFIX = _LLTimeSearch.get_devices_by_type('EVG').pop() + ':'
-        cls.EVRs = _LLTimeSearch.get_devices_by_type('EVR')
-        cls.EVEs = _LLTimeSearch.get_devices_by_type('EVE')
-        cls.AFCs = _LLTimeSearch.get_devices_by_type('AFC')
-        cls.FOUTs = _LLTimeSearch.get_devices_by_type('FOUT')
+        cls.EVG_PREFIX = _LLTimeSearch.get_device_names({'dev': 'EVG'})[0]+':'
+        cls.EVRs = _LLTimeSearch.get_device_names({'dev': 'EVR'})
+        cls.EVEs = _LLTimeSearch.get_device_names({'dev': 'EVE'})
+        cls.AFCs = _LLTimeSearch.get_device_names({'dev': 'AFC'})
+        cls.FOUTs = _LLTimeSearch.get_device_names({'dev': 'FOUT'})
