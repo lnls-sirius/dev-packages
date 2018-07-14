@@ -7,7 +7,7 @@ import siriuspy.servweb as _web
 _timeout = 1.0
 
 
-class _BPMsData:
+class BPMSearch:
     """Class with mapping BPMS.
 
     Data are read from the Sirius web server.
