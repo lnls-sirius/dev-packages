@@ -28,7 +28,7 @@ FFTAvgSubtract = _get_namedtuple(
 FFTWritableProps = ['INDX', 'MXIX', 'WIND', 'CDIR', 'ASUB', 'SPAN']
 
 
-def get_bpm_pvs(prefix):
+def get_bpm_database(prefix):
     """Get the PV database of a single BPM."""
     data_db = {'type': 'float', 'value': 0.0, 'low': -1e12, 'high': 1e12}
     db = {
@@ -88,11 +88,11 @@ def get_bpm_pvs(prefix):
         for prop in data_names[acq_tp]:
             nm = acq_tp + '_' + prop
             db[nm + 'ArrayData-Mon'] = _dcopy(data_db)
-            db.update(get_statistic_pvs(nm))
-            db.update(get_fft_pvs(nm))
+            db.update(get_statistic_database(nm))
+            db.update(get_fft_database(nm))
 
     for acq_md in ['ACQ', 'ACQ_PM']:
-        db.update(get_config_pvs(acq_md))
+        db.update(get_config_database(acq_md))
 
     for k, v in db.items():
         if 'low' in v:
@@ -105,7 +105,7 @@ def get_bpm_pvs(prefix):
     return {prefix + k: v for k, v in db.items()}
 
 
-def get_config_pvs(prefix):
+def get_config_database(prefix):
     """Get the configuration PVs database."""
     db = {
         'Channel-Sel': {
@@ -174,7 +174,7 @@ def get_config_pvs(prefix):
     return {prefix + k: v for k, v in db.items()}
 
 
-def get_fft_pvs(prefix):
+def get_fft_database(prefix):
     """Get the PV database of the FFT plugin."""
     data_db = {
         'type': 'float', 'value': _np.array(100000*[0.0]), 'count': 100000}
@@ -199,7 +199,7 @@ def get_fft_pvs(prefix):
     return db
 
 
-def get_statistic_pvs(prefix):
+def get_statistic_database(prefix):
     """Get the PV database of the STAT plugin."""
     acq_data_stat_db = {
         'type': 'float', 'value': 0.0, 'low': -1e12, 'high': 1e12}
