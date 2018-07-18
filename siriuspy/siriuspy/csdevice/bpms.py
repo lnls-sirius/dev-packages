@@ -1,3 +1,4 @@
+"""Define the PV database of a single BPM and its enum types."""
 from copy import deepcopy as _dcopy
 import numpy as _np
 from siriuspy.csdevice.const import get_namedtuple as _get_namedtuple
@@ -28,6 +29,7 @@ FFTWritableProps = ['INDX', 'MXIX', 'WIND', 'CDIR', 'ASUB', 'SPAN']
 
 
 def get_bpm_pvs(prefix):
+    """Get the PV database of a single BPM."""
     data_db = {'type': 'float', 'value': 0.0, 'low': -1e12, 'high': 1e12}
     db = {
         'ACQBPMMode-Sel': {
@@ -104,6 +106,7 @@ def get_bpm_pvs(prefix):
 
 
 def get_config_pvs(prefix):
+    """Get the configuration PVs database."""
     db = {
         'Channel-Sel': {
             'type': 'enum', 'enums': AcqTyp._fields, 'value': 0},
@@ -172,6 +175,7 @@ def get_config_pvs(prefix):
 
 
 def get_fft_pvs(prefix):
+    """Get the PV database of the FFT plugin."""
     data_db = {
         'type': 'float', 'value': _np.array(100000*[0.0]), 'count': 100000}
     acq_int_db = {'type': 'int', 'value': 1, 'low': 0, 'high': 100000}
@@ -196,6 +200,7 @@ def get_fft_pvs(prefix):
 
 
 def get_statistic_pvs(prefix):
+    """Get the PV database of the STAT plugin."""
     acq_data_stat_db = {
         'type': 'float', 'value': 0.0, 'low': -1e12, 'high': 1e12}
     db = dict()
