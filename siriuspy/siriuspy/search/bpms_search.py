@@ -12,6 +12,7 @@ class BPMSearch:
 
     Data are read from the Sirius web server.
     """
+
     _mapping = None
     _inv_mapping = None
 

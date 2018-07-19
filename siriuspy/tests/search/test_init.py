@@ -10,6 +10,7 @@ from siriuspy import search
 public_interface = (
     'PSSearch',
     'MASearch',
+    'BPMSearch',
     'HLTimeSearch',
     'LLTimeSearch',
 )
