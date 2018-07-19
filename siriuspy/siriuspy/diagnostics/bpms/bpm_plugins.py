@@ -1,12 +1,14 @@
 import numpy as _np
-import copy as _copy
 from threading import Event as _Event
 from threading import Thread as _Thread
 from epics import PV as _PV
 from siriuspy.epics.fake_pv import PVFake as _PVFake
 from siriuspy.epics.fake_pv import add_to_database as _add_to_database
-from .pvs import pvs_definitions as pvDB
-from .pvs import fft_writable_props
+from siriuspy.csdevice.bpms import get_bpm_database as _get_bpm_db
+from siriuspy.csdevice.bpms import FFTWritableProps
+
+
+pvDB = _get_bpm_db()
 
 
 def get_prop_and_suffix(name):
@@ -91,7 +93,7 @@ class BPM:
         exec(_callbacks.format(prop, suf, pv))
         # Create all properties
         exec(_rb_prop.format(prop, suf, pv))
-        if suf in ('sp', 'cmd', 'sel') or pv in fft_writable_props:
+        if suf in ('sp', 'cmd', 'sel') or pv in FFTWritableProps:
             exec(_sp_prop.format(prop, suf, pv))
         else:
             exec(_rb_prop.format(prop, suf, pv))
