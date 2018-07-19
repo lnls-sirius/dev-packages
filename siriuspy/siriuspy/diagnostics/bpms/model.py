@@ -1,16 +1,9 @@
 from collections import OrderedDict as _OrderedDict
-import numpy as _np
-import copy as _copy
 from epics import PV as _PV
-from .pvs import pvs_definitions as pvDB
-from .pvs import op_modes as _op_modes
-from .pvs import acq_types as _acq_types
-from .pvs import acq_trig_types as _acq_trig_types
-from .pvs import acq_trig_exter as _acq_trig_exter
-from .pvs import slopes as _slopes
-from .pvs import processed_data as _processed_data
+import siriuspy.csdevice.bpms as _csbpm
 from .bpm_plugins import BPMEpics, BPMFake, get_prop_and_suffix
 
+pvDB = _csbpm.get_bpm_database()
 _sp_prop = """
 @property
 def {0}_{1}(self):
@@ -63,7 +56,7 @@ class BPMSet(_OrderedDict):
 
     def set_operation_mode(self, mode='Continuous'):
         ok = True
-        mode = _op_modes.index(mode)
+        mode = _csbpm.OpModes._fields.index(mode)
         for name, bpm in self.items():
             bpm.opmode_sel = mode
             ok &= bpm.opmode_sel == mode
@@ -88,11 +81,11 @@ class BPMSet(_OrderedDict):
                                       ):
         ok = True
         if isinstance(AcqRate, str):
-            AcqRate = _acq_types.index(AcqRate)
+            AcqRate = _csbpm.AcqTyp._fields.index(AcqRate)
         if isinstance(TriggerType, str):
-            TriggerType = _acq_trig_types.index(TriggerType)
+            TriggerType = _csbpm.AcqTrigTyp._fields.index(TriggerType)
         if isinstance(ExternalTrigger, str):
-            ExternalTrigger = _acq_trig_exter.index(ExternalTrigger)
+            ExternalTrigger = _csbpm.AcqTrigExter._fields.index(ExternalTrigger)
         rearm_trig = 0 if RearmTrigger else 1
         for name, bpm in self.items():
             bpm.acqrate_sel = AcqRate
@@ -160,18 +153,18 @@ class BPMSet(_OrderedDict):
 
     def set_configuration_acquisition_auto_trigger(self,
                                                    Type='TbT',
-                                                   Channel='PosS',
+                                                   Channel='Sum',
                                                    Threshold=1,
                                                    Slope='Positive',
                                                    Hysteresis=1
                                                    ):
         ok = True
         if isinstance(Type, str):
-            Type = _acq_types.index(Type)
+            Type = _csbpm.AcqTyp._fields.index(Type)
         if isinstance(Channel, str):
-            Channel = _processed_data.index(Channel)
+            Channel = _csbpm.AcqDataTyp._fields.index(Channel)
         if isinstance(Slope, str):
-            Slope = _slopes.index(Slope)
+            Slope = _csbpm.Polarity._fields.index(Slope)
         for name, bpm in self.items():
             bpm.acqtrigauto_sel = Type
             ok &= bpm.acqtrigauto_sel == Type

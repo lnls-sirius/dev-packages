@@ -37,7 +37,7 @@ class TestLLTimeSearch(unittest.TestCase):
         'get_channel_input',
         'add_crates_info',
         'add_bbb_info',
-        'get_devices_by_type',
+        'get_device_names',
         'get_device_tree',
         'reset',
         'server_online',
@@ -84,7 +84,7 @@ class TestLLTimeSearch(unittest.TestCase):
         # TODO: implement test!
         pass
 
-    def test_get_devices_by_type(self):
+    def test_get_device_names(self):
         """Test get_devices."""
         # TODO: implement test!
         pass

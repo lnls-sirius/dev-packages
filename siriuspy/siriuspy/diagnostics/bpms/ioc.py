@@ -8,16 +8,16 @@ import pcaspy as _pcaspy
 import pcaspy.tools as _pcaspy_tools
 from siriuspy.util import get_last_commit_hash as _get_version
 from siriuspy.envars import vaca_prefix as PREFIX
-from siriuspy.diagnostics.bpms.pvs import pvs_definitions as pvDB
-from siriuspy.diagnostics.bpms.pvs import fft_writable_props as fft_wr
+from siriuspy.csdevice.bpms import get_bpm_database as _get_bpm_db
+from siriuspy.csdevice.bpms import FFTWritableProps as fft_wr
 from siriuspy.diagnostics.bpms.bpm_plugins import BPMFake as BPM
-
 
 __version__ = _get_version()
 INTERVAL = 0.1
 _TIMEOUT = 0.05
 stop_event = False
 BPMS_LIST = []
+pvDB = _get_bpm_db()
 
 
 def _stop_now(signum, frame):
