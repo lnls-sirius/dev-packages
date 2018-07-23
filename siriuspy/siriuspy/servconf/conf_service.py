@@ -55,6 +55,11 @@ class ConfigService:
         _logging.getLogger(__name__).\
             info("HTTP request will be made to {}".format(self._url))
 
+    @property
+    def url(self):
+        """Server URL."""
+        return self._url
+
     @staticmethod
     def get_config_types():
         """Get all configuration types."""
@@ -64,6 +69,18 @@ class ConfigService:
         """Get lists by name and config."""
         url_params = "/{}/{}".format(config_type, name)
         url = self._url + self.CONFIGS_ENDPOINT + url_params
+        request = _Request(url=url, method="GET")
+        return self._make_request(request)
+
+    def get_types(self):
+        """Get lists by name and config."""
+        url = self._url + '/config_types'
+        request = _Request(url=url, method="GET")
+        return self._make_request(request)
+
+    def get_names_by_type(self, config_type):
+        """Get lists by name and config."""
+        url = self._url + '/config_types/' + config_type
         request = _Request(url=url, method="GET")
         return self._make_request(request)
 

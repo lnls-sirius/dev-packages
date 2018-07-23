@@ -659,7 +659,7 @@ def _get_model_db(psmodel):
 
     elif psmodel in ('FAP_DCDC'):
         database = _get_ps_FAP_propty_database()
-    elif psmodel in ('FAP_4P_DCDC'):
+    elif psmodel in ('FAP_4P_Master'):
         database = _get_ps_FAP_4P_propty_database()
     elif psmodel in ('FAP_2P2S_DCDC'):
         database = _get_ps_FAP_2P2S_propty_database()

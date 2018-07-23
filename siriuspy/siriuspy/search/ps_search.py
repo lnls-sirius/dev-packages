@@ -207,7 +207,8 @@ class PSSearch:
         if PSSearch._pstype_2_splims_dict is None:
             PSSearch._reload_pstype_2_splims_dict()
         if psmodel in ('FBP', 'FAC_DCDC', 'FAP_DCDC', 'FAC_2S_DCDC',
-                       'FAC_2P4S_DCDC', 'FAC_2P4S_DCDC'):
+                       'FAC_2P4S_DCDC', 'FAC_2P4S_DCDC', 'Commercial',
+                       'FAP_4P_Master'):
             return PSSearch._splims_ps_unit
         else:
             raise ValueError(psmodel)

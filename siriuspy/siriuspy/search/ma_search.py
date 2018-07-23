@@ -48,7 +48,8 @@ class MASearch:
         if MASearch._maname_2_splims_dict is None:
             MASearch._reload_maname_2_splims_dict()
         if psmodel in ('FBP', 'FAC_DCDC', 'FAP_DCDC', 'FAC_2S_DCDC',
-                       'FAC_2P4S_DCDC', 'FAC_2P4S_DCDC'):
+                       'FAC_2P4S_DCDC', 'FAC_2P4S_DCDC', 'Commercial',
+                       'FAP_4P_Master'):
             return MASearch._splims_ma_unit
         else:
             raise ValueError('units not def for ' + psmodel)
