@@ -25,9 +25,9 @@ class DipoleNormalizerTest(unittest.TestCase):
         "TS": {"name": "TS-Fam:MA-B",
                "current": 680.1,
                "strength": 3.0001213317838813},
-        "SI": {"name": "SI-Fam:MA-B1B2",
-               "current": 394.1,
-               "strength": 3.0000383740663543}
+        # "SI": {"name": "SI-Fam:MA-B1B2",
+        #        "current": 394.1,
+        #        "strength": 3.0000383740663543}
     }
 
     def setUp(self):
@@ -52,23 +52,23 @@ class DipoleNormalizerTest(unittest.TestCase):
         """Test TB conversion of current to energy."""
         self._convert_current("TB")
 
-    def _test_tb_strength_conversion(self):
+    def test_tb_strength_conversion(self):
         """Test TB conversion of energy to current."""
         self._convert_strength("TB")
 
-    def _test_bo_current_conversion(self):
+    def test_bo_current_conversion(self):
         """Test BO conversion of current to energy."""
         self._convert_current("BO")
 
-    def _test_bo_strength_conversion(self):
+    def test_bo_strength_conversion(self):
         """Test BO conversion of energy to current."""
         self._convert_strength("BO")
 
-    def _test_ts_current_conversion(self):
+    def test_ts_current_conversion(self):
         """Test TS conversion of current to energy."""
         self._convert_current("TS")
 
-    def _test_ts_strength_conversion(self):
+    def test_ts_strength_conversion(self):
         """Test TS conversion of energy to current."""
         self._convert_strength("TS")
 
