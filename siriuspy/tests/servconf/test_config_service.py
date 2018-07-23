@@ -20,8 +20,11 @@ class TestConfigService(unittest.TestCase):
 
     api = {
         "CONFIGS_ENDPOINT",
+        "url",
         "get_config_types",
         "get_config",
+        "get_types",
+        "get_names_by_type",
         "update_config",
         "insert_config",
         "find_configs",
