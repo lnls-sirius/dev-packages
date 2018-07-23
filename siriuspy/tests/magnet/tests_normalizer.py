@@ -10,9 +10,10 @@ Requirements:
 import unittest
 
 from siriuspy.magnet.normalizer import DipoleNormalizer
+from ..mock_servweb import MockServConf
 
 
-class DipoleNormalizerTest(unittest.TestCase):
+class DipoleNormalizerTest(MockServConf):
     """Test conversion of current/energy in dipoles."""
 
     settings = {
@@ -32,6 +33,7 @@ class DipoleNormalizerTest(unittest.TestCase):
 
     def setUp(self):
         """Create strength object."""
+        super().setUp()
         self.str_obj = {}
         for dipole, config in self.settings.items():
             self.str_obj[dipole] = DipoleNormalizer(config["name"])
