@@ -116,6 +116,15 @@ def beaglebone_bsmp_mapping(timeout=_timeout):
     url = _bbb_folder + 'beaglebone-bsmp.txt'
     return read_url(url, timeout=timeout)
 
+def bbb_udc_mapping(timeout=_timeout):
+    """Read beaglebone-udc mapping."""
+    url = _bbb_folder + 'beaglebone-udc.txt'
+    return read_url(url, timeout=timeout)
+
+def udc_ps_mapping(timeout=_timeout):
+    """Read beaglebone-udc mapping."""
+    url = _bbb_folder + 'udc-bsmp.txt'
+    return read_url(url, timeout=timeout)
 
 def bbb_udc_mapping(timeout=_timeout):
     """Read beaglebone-udc mapping."""
