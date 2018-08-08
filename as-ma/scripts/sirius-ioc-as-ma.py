@@ -68,7 +68,8 @@ def main():
             manames = set()
             for arg in args:
                 manames |= set(get_manames(bbbname=arg))
-            ioc_module.run(manames=list(manames))
+            if manames:
+                ioc_module.run(manames=list(manames))
 
 
 if __name__ == "__main__":
