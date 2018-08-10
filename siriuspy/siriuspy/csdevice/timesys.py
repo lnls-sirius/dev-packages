@@ -9,8 +9,9 @@ events_hl2ll_map = {
     'MigSI': 'Evt05', 'DigLI': 'Evt06',
     'DigTB': 'Evt07', 'DigBO': 'Evt08',
     'DigTS': 'Evt09', 'DigSI': 'Evt10',
-    'Orbit': 'Evt11', 'Coupl': 'Evt12',
-    'Tunes': 'Evt13', 'Study': 'Evt14'}
+    'OrbSI': 'Evt11', 'CplSI': 'Evt12',
+    'TunSI': 'Evt13', 'Study': 'Evt14',
+    'OrbBO': 'Evt15'}
 events_ll2hl_map = {val: key for key, val in events_hl2ll_map.items()}
 
 events_ll_tmp = 'Evt{0:02d}'
