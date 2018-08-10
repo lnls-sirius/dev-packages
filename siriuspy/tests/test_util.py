@@ -23,7 +23,7 @@ public_interface = (
     'check_pv_online',
     'get_strength_label',
     'get_strength_units',
-    'update_integer_bit',
+    'update_bit',
     'check_public_interface_namespace',
 )
 
@@ -256,21 +256,22 @@ class TestUtil(unittest.TestCase):
             "mrad", util.get_strength_units("corrector-vertical", "LI"))
         self.assertRaises(ValueError, util.get_strength_units, magfunc='')
 
-    def test_update_integer_bit(self):
-        """Test update_integer_bit."""
+    def test_update_bit(self):
+        """Test update_bit."""
         with self.assertRaises(TypeError):
-            util.update_integer_bit(integer=0.1, number_of_bits=1,
-                                    value=0, bit=0)
+            util.update_bit(v=0.1, bit_pos=0, bit_val=0)
+        with self.assertRaises(TypeError):
+            util.update_bit(v=0x2, bit_pos=1.0, bit_val=2)
         with self.assertRaises(ValueError):
-            util.update_integer_bit(integer=0x2, number_of_bits=2,
-                                    value=2, bit=1)
+            util.update_bit(v=-5, bit_pos=1, bit_val=0)
         with self.assertRaises(ValueError):
-            util.update_integer_bit(integer=0x2, number_of_bits=1,
-                                    value=0, bit=1)
-        self.assertEqual(0xff, util.update_integer_bit(
-            integer=0xdf, number_of_bits=8, value=1, bit=5))
-        self.assertEqual(0x00, util.update_integer_bit(
-            integer=0x10, number_of_bits=6, value=0, bit=4))
+            util.update_bit(v=5, bit_pos=-1, bit_val=0)
+        self.assertEqual(0xff, util.update_bit(v=0xdf, bit_pos=5, bit_val=1))
+        self.assertEqual(0x00, util.update_bit(v=0x10, bit_pos=4, bit_val=0))
+        self.assertEqual(0x00, util.update_bit(v=0x10, bit_pos=4, bit_val=[]))
+        self.assertEqual(0x00, util.update_bit(v=0x10, bit_pos=4, bit_val=45))
+        with self.assertRaises(ValueError):
+        with self.assertRaises(ValueError):
 
     def test_check_public_interface_namespace(self):
         """Test check_public_interface_namespace."""
