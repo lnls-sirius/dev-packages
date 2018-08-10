@@ -1,6 +1,7 @@
 """Define properties of all timing devices and their connections."""
 
 from copy import deepcopy as _dcopy
+from .const import get_namedtuple as _get_namedtuple
 from siriuspy.search import HLTimeSearch as _HLTimeSearch
 
 events_hl2ll_map = {
@@ -21,12 +22,14 @@ events_ll_codes = list(range(1, 64))
 events_ll_names = []
 for i in events_ll_codes:
     events_ll_names.append(events_ll_tmp.format(i))
-del(i)  # cleanup class namespace
+events_ll = _get_namedtuple('EventsLL', events_ll_names)
+del(i, events_ll_codes, events_ll_names)  # cleanup class namespace
 
-events_modes = ('Disabled', 'Continuous', 'Injection', 'External')
-events_delay_types = ('Fixed', 'Incr')
-
-clocks_states = ('Dsbl', 'Enbl')
+events_modes = _get_namedtuple(
+                'EvtModes',
+                ('Disabled', 'Continuous', 'Injection', 'External'))
+events_delay_types = _get_namedtuple('EvtDlyTyp', ('Fixed', 'Incr'))
+clocks_states = _get_namedtuple('ClockState', ('Dsbl', 'Enbl'))
 
 clocks_ll_tmp = 'Clock{0:d}'
 clocks_hl_tmp = 'Clock{0:d}'
@@ -39,14 +42,14 @@ del(i)  # cleanup class namespace
 
 clocks_ll2hl_map = {val: key for key, val in clocks_hl2ll_map.items()}
 
-triggers_states = ('Dsbl', 'Enbl')
-triggers_intlk = ('Dsbl', 'Enbl')
-triggers_polarities = ('Normal', 'Inverse')
-triggers_delay_types = ('Fixed', 'Incr')
-triggers_src_ll = (
-    'Dsbl',  'Trigger', 'Clock0', 'Clock1', 'Clock2',
-    'Clock3', 'Clock4', 'Clock5', 'Clock6', 'Clock7'
-    )
+triggers_states = _get_namedtuple('TrigStates', ('Dsbl', 'Enbl'))
+triggers_intlk = _get_namedtuple('TrigIntlk', ('Dsbl', 'Enbl'))
+triggers_polarities = _get_namedtuple('TrigPol', ('Normal', 'Inverse'))
+triggers_delay_types = _get_namedtuple('TrigDlyTyp', ('Fixed', 'Incr'))
+triggers_src_ll = _get_namedtuple(
+                        'TrigSrcLL',
+                        ('Dsbl',  'Trigger', 'Clock0', 'Clock1', 'Clock2',
+                         'Clock3', 'Clock4', 'Clock5', 'Clock6', 'Clock7'))
 
 
 class Const:
