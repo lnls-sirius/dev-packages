@@ -370,12 +370,10 @@ class App:
         self._corr_check_connection[corr_index] = (1 if conn else 0)
 
         # Change the first bit of correction status
-        if any(q == 0 for q in self._corr_check_connection):
-            self._status = _siriuspy.util.update_integer_bit(
-                integer=self._status, number_of_bits=4, value=1, bit=0)
-        else:
-            self._status = _siriuspy.util.update_integer_bit(
-                integer=self._status, number_of_bits=4, value=0, bit=0)
+        self._status = _siriuspy.util.update_bit(
+            v=self._status,
+            bit_pos=0,
+            bit_val=any(q == 0 for q in self._corr_check_connection))
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
@@ -389,12 +387,10 @@ class App:
         self._corr_check_pwrstate_sts[corr_index] = value
 
         # Change the second bit of correction status
-        if any(q == 0 for q in self._corr_check_pwrstate_sts):
-            self._status = _siriuspy.util.update_integer_bit(
-                integer=self._status, number_of_bits=4, value=1, bit=1)
-        else:
-            self._status = _siriuspy.util.update_integer_bit(
-                integer=self._status, number_of_bits=4, value=0, bit=1)
+        self._status = _siriuspy.util.update_bit(
+            v=self._status,
+            bit_pos=1,
+            bit_val=any(q == 0 for q in self._corr_check_pwrstate_sts))
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
@@ -408,12 +404,10 @@ class App:
         self._corr_check_opmode_sts[corr_index] = value
 
         # Change the third bit of correction status
-        if any(s != 0 for s in self._corr_check_opmode_sts):
-            self._status = _siriuspy.util.update_integer_bit(
-                integer=self._status, number_of_bits=4, value=1, bit=2)
-        else:
-            self._status = _siriuspy.util.update_integer_bit(
-                integer=self._status, number_of_bits=4, value=0, bit=2)
+        self._status = _siriuspy.util.update_bit(
+            v=self._status,
+            bit_pos=2,
+            bit_val=any(s != 0 for s in self._corr_check_opmode_sts))
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
@@ -428,12 +422,10 @@ class App:
         self._corr_check_ctrlmode_mon[corr_index] = value
 
         # Change the fourth bit of correction status
-        if any(q == 1 for q in self._corr_check_ctrlmode_mon):
-            self._status = _siriuspy.util.update_integer_bit(
-                integer=self._status, number_of_bits=4, value=1, bit=3)
-        else:
-            self._status = _siriuspy.util.update_integer_bit(
-                integer=self._status, number_of_bits=4, value=0, bit=3)
+        self._status = _siriuspy.util.update_bit(
+            v=self._status,
+            bit_pos=3,
+            bit_val=any(q == 1 for q in self._corr_check_ctrlmode_mon))
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
