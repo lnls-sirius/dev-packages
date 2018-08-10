@@ -273,7 +273,7 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(0x10, util.update_bit(v=0x10, bit_pos=4, bit_val=45))
 
     def test_get_bit(self):
-        """Test update_bit."""
+        """Test get_bit."""
         with self.assertRaises(TypeError):
             util.get_bit(v=0.1, bit_pos=0)
         with self.assertRaises(TypeError):
