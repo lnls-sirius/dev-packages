@@ -262,10 +262,24 @@ def update_bit(v, bit_pos, bit_val):
     return v | (1 << bit_pos) if bit_val else v & ~(1 << bit_pos)
 
 
+def get_bit(v, bit_pos):
+    """Update a specific integer bit.
 
+    Parameters
+    ----------
+    v: non-negative int
+        Integer whose bit will be get.
+    bit_pos: int
+        The position of the bit to get.
 
+    """
+    if not isinstance(v, int) or not isinstance(bit_pos, int):
+        raise TypeError("v and bit_pos must be integers")
 
+    if v < 0 or bit_pos < 0:
+        raise ValueError("v and bit_pos must be non-negative.")
 
+    return (v >> bit_pos) & 1
 
 
 def check_public_interface_namespace(namespace, valid_interface,

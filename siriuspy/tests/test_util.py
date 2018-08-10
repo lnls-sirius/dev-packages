@@ -24,6 +24,7 @@ public_interface = (
     'get_strength_label',
     'get_strength_units',
     'update_bit',
+    'get_bit',
     'check_public_interface_namespace',
 )
 
@@ -270,8 +271,19 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(0x00, util.update_bit(v=0x10, bit_pos=4, bit_val=0))
         self.assertEqual(0x00, util.update_bit(v=0x10, bit_pos=4, bit_val=[]))
         self.assertEqual(0x00, util.update_bit(v=0x10, bit_pos=4, bit_val=45))
+
+    def test_get_bit(self):
+        """Test update_bit."""
+        with self.assertRaises(TypeError):
+            util.get_bit(v=0.1, bit_pos=0)
+        with self.assertRaises(TypeError):
+            util.get_bit(v=0x2, bit_pos=1.0)
         with self.assertRaises(ValueError):
+            util.get_bit(v=-5, bit_pos=1)
         with self.assertRaises(ValueError):
+            util.get_bit(v=5, bit_pos=-1)
+        self.assertEqual(0, util.get_bit(v=0xdf, bit_pos=5))
+        self.assertEqual(1, util.get_bit(v=0x10, bit_pos=4))
 
     def test_check_public_interface_namespace(self):
         """Test check_public_interface_namespace."""
