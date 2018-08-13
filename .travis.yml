@@ -7,7 +7,7 @@ script:
 # install PRUserial485
   - git clone https://github.com/lnls-sirius/pru-serial485.git
   - cd pru-serial485/src
-  - sed -i s/python-sirius/python/g library/setup.py
+  - sed -i s/python-sirius/python/g library_build.sh
   - ./library_build.sh develop
   - cd ../../
 # install siriuspy
