@@ -16,11 +16,6 @@ NUM_TIMEOUT = 1000
 SECTION = 'SI'
 PREFIX = _vaca_prefix + SECTION + '-Glob:AP-SOFB:'
 
-NR_BPMS = 160
-NR_CH = 120
-NR_CV = 160
-NR_CORRS = NR_CH + NR_CV + 1
-MTX_SZ = (2*NR_BPMS) * NR_CORRS
 DANG = 2E-1  # to be used in matrix calculation
 DFREQ = 200  # to be used in matrix calculation
 

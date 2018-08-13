@@ -4,6 +4,7 @@ import time as _time
 import os as _os
 import numpy as _np
 import epics as _epics
+import siriuspy.csdevice.orbitcorr as _csorb
 from siriuspy.envars import vaca_prefix as LL_PREF
 from si_ap_sofb.definitions import SECTION, NR_BPMS
 
@@ -19,56 +20,16 @@ class Orbit:
 
     def get_database(self):
         """Get the database of the class."""
-        db = dict()
-        pre = self.prefix
-        db[pre + 'OrbitRefX-SP'] = {
-            'type': 'float', 'count': NR_BPMS, 'value': NR_BPMS*[0],
-            'fun_set_pv': lambda x: self._set_ref_orbit('x', x)}
-        db[pre + 'OrbitRefX-RB'] = {
-            'type': 'float', 'count': NR_BPMS, 'value': NR_BPMS*[0]}
-        db[pre + 'OrbitRefY-SP'] = {
-            'type': 'float', 'count': NR_BPMS, 'value': NR_BPMS*[0],
-            'fun_set_pv': lambda x: self._set_ref_orbit('y', x)}
-        db[pre + 'OrbitRefY-RB'] = {
-            'type': 'float', 'count': NR_BPMS, 'value': NR_BPMS*[0]}
-        db[pre + 'GoldenOrbitX-SP'] = {
-            'type': 'float', 'count': NR_BPMS, 'value': NR_BPMS*[0],
-            'fun_set_pv': lambda x: self._set_golden_orbit('x', x)}
-        db[pre + 'GoldenOrbitX-RB'] = {
-            'type': 'float', 'count': NR_BPMS, 'value': NR_BPMS*[0]}
-        db[pre + 'GoldenOrbitY-SP'] = {
-            'type': 'float', 'count': NR_BPMS, 'value': NR_BPMS*[0],
-            'fun_set_pv': lambda x: self._set_golden_orbit('y', x)}
-        db[pre + 'GoldenOrbitY-RB'] = {
-            'type': 'float', 'count': NR_BPMS, 'value': NR_BPMS*[0]}
-        db[pre + 'setRefwithGolden-Cmd'] = {
-            'type': 'int', 'value': 0,
-            'unit': 'Set the reference orbit with the Golden Orbit',
-            'fun_set_pv': self._set_ref_with_golden}
-        db[pre + 'CorrOrbitX-Mon'] = {
-            'type': 'float', 'count': NR_BPMS, 'value': NR_BPMS*[0]}
-        db[pre + 'CorrOrbitY-Mon'] = {
-            'type': 'float', 'count': NR_BPMS, 'value': NR_BPMS*[0]}
-        db[pre + 'OnlineOrbitX-Mon'] = {
-            'type': 'float', 'count': NR_BPMS, 'value': NR_BPMS*[0]}
-        db[pre + 'OnlineOrbitY-Mon'] = {
-            'type': 'float', 'count': NR_BPMS, 'value': NR_BPMS*[0]}
-        db[pre + 'OfflineOrbitX-SP'] = {
-            'type': 'float', 'count': NR_BPMS, 'value': NR_BPMS*[0],
-            'fun_set_pv': lambda x: self._set_offline_orbit('x', x)}
-        db[pre + 'OfflineOrbitX-RB'] = {
-            'type': 'float', 'count': NR_BPMS, 'value': NR_BPMS*[0]}
-        db[pre + 'OfflineOrbitY-SP'] = {
-            'type': 'float', 'count': NR_BPMS, 'value': NR_BPMS*[0],
-            'fun_set_pv': lambda x: self._set_offline_orbit('y', x)}
-        db[pre + 'OfflineOrbitY-RB'] = {
-            'type': 'float', 'count': NR_BPMS, 'value': NR_BPMS*[0]}
-        db[pre + 'OrbitPointsNum-SP'] = {
-            'type': 'int', 'value': 1, 'unit': 'number of points for median',
-            'fun_set_pv': self._set_orbit_points_num,
-            'lolim': 1, 'hilim': 200}
-        db[pre + 'OrbitPointsNum-RB'] = {
-            'type': 'int', 'value': 1, 'unit': 'number of points for median'}
+        db = _csorb.get_orbit_database(self.acc)
+        prop = 'fun_set_pv'
+        db['OrbitRefX-SP'][prop] = lambda x: self.set_ref_orbit('x', x)
+        db['OrbitRefY-SP'][prop] = lambda x: self.set_ref_orbit('y', x)
+        db['GoldenOrbitX-SP'][prop] = lambda x: self.set_golden_orbit('x', x)
+        db['GoldenOrbitY-SP'][prop] = lambda x: self.set_golden_orbit('y', x)
+        db['setRefwithGolden-Cmd'][prop] = self.set_ref_with_golden
+        db['OfflineOrbitX-SP'][prop] = lambda x: self.set_offline_orbit('x', x)
+        db['OfflineOrbitY-SP'][prop] = lambda x: self.set_offline_orbit('y', x)
+        db['OrbitPointsNum-SP'][prop] = self.set_orbit_points_num,
         return db
 
     def __init__(self, prefix, callback):
@@ -130,7 +91,7 @@ class Orbit:
     def _call_callback(self, pv, value):
         self.callback(self.prefix + pv, value)
 
-    def _set_offline_orbit(self, plane, value):
+    def set_offline_orbit(self, plane, value):
         self._call_callback('Log-Mon', 'Setting New Offline Orbit.')
         if len(value) != NR_BPMS:
             self._call_callback('Log-Mon', 'Err: Wrong Size.')
@@ -184,7 +145,7 @@ class Orbit:
             return True
         return update
 
-    def _set_orbit_points_num(self, num):
+    def set_orbit_points_num(self, num):
         self._call_callback('Log-Mon',
                             'Setting new number of points for median.')
         self.orbit_points_num = num
@@ -192,7 +153,7 @@ class Orbit:
         self._call_callback('OrbitPointsNum-RB', num)
         return True
 
-    def _set_ref_orbit(self, plane, orb):
+    def set_ref_orbit(self, plane, orb):
         self._call_callback('Log-Mon', 'Setting New Reference Orbit.')
         if len(orb) != NR_BPMS:
             self._call_callback('Log-Mon', 'Err: Wrong Size.')
@@ -203,7 +164,7 @@ class Orbit:
         self._call_callback('OrbitRef'+plane.upper()+'-RB', orb)
         return True
 
-    def _set_golden_orbit(self, plane, orb):
+    def set_golden_orbit(self, plane, orb):
         self._call_callback('Log-Mon', 'Setting New Golden Orbit.')
         if len(orb) != NR_BPMS:
             self._call_callback('Log-Mon', 'Err: Wrong Size.')
@@ -213,9 +174,9 @@ class Orbit:
         self._call_callback('GoldenOrbit'+plane.upper()+'-RB', orb)
         return True
 
-    def _set_ref_with_golden(self, value):
+    def set_ref_with_golden(self, value):
         self._call_callback('Log-Mon', 'Golden Orbit --> Reference Orbit.')
         for pl, orb in self.golden_orbit.items():
             self._call_callback('OrbitRef'+pl.upper()+'-SP', orb.copy())
-            self._set_ref_orbit(pl, orb.copy())
+            self.set_ref_orbit(pl, orb.copy())
         return True
