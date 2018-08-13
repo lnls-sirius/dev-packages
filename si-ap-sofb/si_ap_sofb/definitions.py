@@ -26,12 +26,3 @@ def print_pvs_in_file(db):
                            prefix=(SECTION + '-Glob:AP-SOFB:', _vaca_prefix),
                            db=db)
     _log.info('si-ap-sofb.txt file generated with {0:d} pvs.'.format(len(db)))
-
-
-def timed_out(wait_dict):
-    """Timed out."""
-    for i in range(NUM_TIMEOUT):
-        if all(wait_dict.values()):
-            return False
-        _time.sleep(TINY_INTERVAL)
-    return True

@@ -6,11 +6,15 @@ import siriuspy.csdevice.orbitcorr as _csorb
 from si_ap_sofb.definitions import NR_BPMS, NR_CH, NR_CV, NR_CORRS, MTX_SZ
 
 
-class Matrix:
+class BaseMatrix:
+    pass
+
+
+class EpicsMatrix(BaseMatrix):
     """Class of the Response Matrix."""
 
     RF_ENBL_ENUMS = ('No', 'Yes')
-    RSP_MTX_FILENAME = 'data/response_matrix'
+    RSP_MTX_FILENAME = 'data/respmat'
     EXT = '.sirspmtx'
 
     def get_database(self):
@@ -46,57 +50,57 @@ class Matrix:
             }
         self.num_sing_values = NR_CORRS
         self.sing_values = _np.zeros(NR_CORRS, dtype=float)
-        self.response_matrix = _np.zeros([2*NR_BPMS, NR_CORRS])
-        self.inv_response_matrix = _np.zeros([2*NR_BPMS, NR_CORRS]).T
+        self.respmat = _np.zeros([2*NR_BPMS, NR_CORRS])
+        self.inv_respmat = _np.zeros([2*NR_BPMS, NR_CORRS]).T
 
     def connect(self):
         """Load the response matrix from file."""
-        self._load_response_matrix()
+        self._load_respmat()
 
-    def set_resp_matrix(self, mat):
+    def set_respmat(self, mat):
         """Set the response matrix in memory and save it in file."""
         self._call_callback('Log-Mon', 'Setting New RSP Matrix.')
         if len(mat) != MTX_SZ:
             self._call_callback('Log-Mon', 'Err: Wrong Size.')
             return False
         mat = _np.reshape(mat, [2*NR_BPMS, NR_CORRS])
-        old_ = self.response_matrix.copy()
-        self.response_matrix = mat
+        old_ = self.respmat.copy()
+        self.respmat = mat
         if not self._calc_matrices():
-            self.response_matrix = old_
+            self.respmat = old_
             return False
-        self._save_resp_matrix(mat)
-        self._call_callback('RSPMatrix-RB',
-                            list(self.response_matrix.flatten()))
+        self._save_respmat(mat)
+        self._call_callback('RespMat-RB',
+                            list(self.respmat.flatten()))
         return True
 
     def calc_kicks(self, orbit):
         """Calculate the kick from the orbit distortion given."""
-        kicks = _np.dot(-self.inv_response_matrix, orbit)
-        self._call_callback('CHCalcdKicks-Mon', list(kicks[:NR_CH]))
-        self._call_callback('CVCalcdKicks-Mon', list(kicks[NR_CH:NR_CH+NR_CV]))
-        self._call_callback('RFCalcdKicks-Mon', kicks[-1])
+        kicks = _np.dot(-self.inv_respmat, orbit)
+        self._call_callback('DeltaKicksCH-Mon', list(kicks[:NR_CH]))
+        self._call_callback('DeltaKicksCV-Mon', list(kicks[NR_CH:NR_CH+NR_CV]))
+        self._call_callback('DeltaKicksRF-Mon', kicks[-1])
         return kicks
 
     def _call_callback(self, pv, value):
         self.callback(self.prefix + pv, value)
 
-    def _set_enbl_list(self, key, val):
+    def set_enbl_list(self, key, val):
         self._call_callback('Log-Mon',
                             'Setting {0:s} Enable List'.format(key.upper()))
-        copy_ = self.select_items[key]
+        bkup = self.select_items[key]
         new_ = _np.array(val, dtype=bool)
         if key == 'rf':
             new_ = True if val else False
-        elif len(new_) >= len(copy_):
-            new_ = new_[:len(copy_)]
+        elif len(new_) >= len(bkup):
+            new_ = new_[:len(bkup)]
         else:
-            new2_ = copy_.copy()
+            new2_ = bkup.copy()
             new2_[:len(new_)] = new_
             new_ = new2_
         self.select_items[key] = new_
         if not self._calc_matrices():
-            self.select_items[key] = copy_
+            self.select_items[key] = bkup
             return False
         self._call_callback(self.selection_pv_names[key], val)
         return True
@@ -114,7 +118,7 @@ class Matrix:
                                 'Err: No Corrector selected in EnblList')
             return False
         sel_mat = selecbpm[:, None] * seleccor[None, :]
-        mat = self.response_matrix[sel_mat]
+        mat = self.respmat[sel_mat]
         mat = _np.reshape(mat, [sum(selecbpm), sum(seleccor)])
         try:
             U, s, V = _np.linalg.svd(mat, full_matrices=False)
@@ -128,40 +132,40 @@ class Matrix:
         isNan = _np.any(_np.isnan(inv_mat))
         isInf = _np.any(_np.isinf(inv_mat))
         if isNan or isInf:
-            self._call_callback('Log-Mon',
-                                'Pseudo inverse contains nan or inf.')
+            self._call_callback(
+                            'Log-Mon', 'Pseudo inverse contains nan or inf.')
             return False
 
         self.sing_values[:] = 0
         self.sing_values[:len(s)] = s
         self._call_callback('SingValues-Mon', list(self.sing_values))
-        self.inv_response_matrix = _np.zeros([2*NR_BPMS, NR_CORRS]).T
-        self.inv_response_matrix[sel_mat.T] = inv_mat.flatten()
-        self._call_callback('InvRSPMatrix-Mon',
-                            list(self.inv_response_matrix.flatten()))
+        self.inv_respmat = _np.zeros([2*NR_BPMS, NR_CORRS]).T
+        self.inv_respmat[sel_mat.T] = inv_mat.flatten()
+        self._call_callback('InvRespMat-Mon',
+                            list(self.inv_respmat.flatten()))
         return True
 
-    def _set_num_sing_values(self, num):
-        copy_ = self.num_sing_values
+    def set_num_sing_values(self, num):
+        bkup = self.num_sing_values
         self.num_sing_values = num
         if not self._calc_matrices():
-            self.num_sing_values = copy_
+            self.num_sing_values = bkup
             return False
         self._call_callback('NumSingValues-RB', num)
         return True
 
-    def _load_response_matrix(self):
+    def _load_respmat(self):
         filename = self.RSP_MTX_FILENAME+self.EXT
         if _os.path.isfile(filename):
-            copy_ = self.response_matrix.copy()
-            self.response_matrix = _np.loadtxt(filename)
+            bkup = self.respmat.copy()
+            self.respmat = _np.loadtxt(filename)
             if not self._calc_matrices():
-                self.response_matrix = copy_
+                self.respmat = bkup
                 return
             self._call_callback('Log-Mon', 'Loading RSP Matrix from file.')
-            self._call_callback('RSPMatrix-RB',
-                                list(self.response_matrix.flatten()))
+            self._call_callback('RespMat-RB',
+                                list(self.respmat.flatten()))
 
-    def _save_resp_matrix(self, mat):
+    def _save_respmat(self, mat):
         self._call_callback('Log-Mon', 'Saving RSP Matrix to file')
         _np.savetxt(self.RSP_MTX_FILENAME+self.EXT, mat)

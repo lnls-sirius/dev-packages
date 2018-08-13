@@ -11,7 +11,11 @@ from si_ap_sofb.definitions import SECTION, NR_BPMS
 LL_PREF += SECTION + '-Glob:AP-Orbit:'
 
 
-class Orbit:
+class BaseOrbit:
+    pass
+
+
+class EpicsOrbit(BaseOrbit):
     """Class to deal with orbit acquisition."""
 
     REF_ORBIT_FILENAME = 'data/reference_orbit'
