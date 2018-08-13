@@ -21,11 +21,11 @@ INTERVAL = 0.1
 _DELAY_UNIT_CONV = 1e-6
 _LLTimeSearch.add_bbb_info()
 _LLTimeSearch.add_crates_info()
-EVG_NAME = _LLTimeSearch.get_devices_by_type('EVG').pop()
-EVRs = _LLTimeSearch.get_devices_by_type('EVR')
-EVEs = _LLTimeSearch.get_devices_by_type('EVE')
-AFCs = _LLTimeSearch.get_devices_by_type('AFC')
-FOUTs = _LLTimeSearch.get_devices_by_type('FOUT')
+EVG_NAME = _LLTimeSearch.get_device_names({'dev': 'EVG'})[0]
+EVRs = _LLTimeSearch.get_device_names({'dev': 'EVR'})
+EVEs = _LLTimeSearch.get_device_names({'dev': 'EVE'})
+AFCs = _LLTimeSearch.get_device_names({'dev': 'AFC'})
+FOUTs = _LLTimeSearch.get_device_names({'dev': 'FOUT'})
 TWDS_EVG = _LLTimeSearch.get_connections_twds_evg()
 
 
