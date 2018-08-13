@@ -1049,12 +1049,34 @@ class PRUController:
             self._params = PRUCParms_FBP
         elif self._udcmodel == 'FBP_DCLink':
             self._params = PRUCParms_FBP_DCLink
+        elif self._udcmodel == 'FBP_FOFB':
+            self._params = PRUCParms_FBP
+
         elif self._udcmodel == 'FAC_DCDC':
-            self._params = PRUCParms_FAC
-        elif self._udcmodel == 'FAC_2P4S':
             self._params = PRUCParms_FAC
         elif self._udcmodel == 'FAC_ACDC':
             self._params = PRUCParms_FAC_ACDC
+        elif self._udcmodel == 'FAC_2S_DCDC':
+            self._params = PRUCParms_FAC
+        elif self._udcmodel == 'FAC_2S_ACDC':
+            self._params = PRUCParms_FAC_ACDC
+        elif self._udcmodel == 'FAC_2P4S_DCDC':
+            self._params = PRUCParms_FAC
+        elif self._udcmodel == 'FAC_2P4S_ACDC':
+            self._params = PRUCParms_FAC_ACDC
+
+        elif self._udcmodel == 'FAP':
+            self._params = PRUCParms_FBP
+        elif self._udcmodel == 'FAP_2P2S_MASTER':
+            self._params = PRUCParms_FBP
+        elif self._udcmodel == 'FAP_4P_Master':
+            self._params = PRUCParms_FBP
+        elif self._udcmodel == 'FAP_4P_Slave':
+            self._params = PRUCParms_FBP
+
+        elif self._udcmodel == 'Commercial':
+            self._params = PRUCParms_FAC
+
         else:
             raise NotImplementedError(self._udcmodel)
 

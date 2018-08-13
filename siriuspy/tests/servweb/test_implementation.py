@@ -73,10 +73,13 @@ class TestServWeb(unittest.TestCase):
         'pu_psmodels_read',
         'beaglebone_power_supplies_mapping',
         'beaglebone_bsmp_mapping',
+        'bbb_udc_mapping',
+        'udc_ps_mapping',
         'crate_to_bpm_mapping',
         'bpms_data',
         'timing_devices_mapping',
         'high_level_triggers'
+        ''
     }
 
     def test_public_interface(self, mock_read):

@@ -3,7 +3,7 @@ from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.pwrsupply.prucontroller import PRUCParms_FBP as _PRUCParms_FBP
 from siriuspy.pwrsupply.bsmp import ConstBSMP as _c
 from siriuspy.pwrsupply.functions import PSOpMode as _PSOpMode
-from siriuspy.pwrsupply.functions import Function as _Function
+from siriuspy.pwrsupply.functions import BSMPFunction as _Function
 from siriuspy.pwrsupply.watcher import Watcher as _Watcher
 
 
@@ -15,11 +15,12 @@ class PSController:
     variable.
     """
 
-    def __init__(self, readers, writers, connections):
+    def __init__(self, readers, functions, connections, pru_controller):
         """Create class properties."""
         self._readers = readers
-        self._writers = writers
+        self._functions = functions
         self._connections = connections
+        self._pru_controller = pru_controller
 
         self._fields = set()
         # self._devices = set()
@@ -29,6 +30,16 @@ class PSController:
             # self._devices.add(':'.join(split[:2]))
         self._init_setpoints()
         # self._operation_mode = 0
+
+    @property
+    def pru_controller(self):
+        """PRU controller."""
+        return self._pru_controller
+
+    @property
+    def fields(self):
+        """Field of ps controller."""
+        return self._fields
 
     def read(self, device_name, field):
         """Read pv value."""
@@ -43,7 +54,7 @@ class PSController:
 
     def write(self, device_name, field, value):
         """Write value to pv."""
-        self._writers[device_name + ':' + field].execute(value)
+        self._functions[device_name + ':' + field].execute(value)
 
     def check_connected(self, device_name):
         """Check if device is connected."""
@@ -68,17 +79,12 @@ class StandardPSController(PSController):
 
     INTERVAL_SCAN = 1.0/_PRUCParms_FBP.FREQ_SCAN
 
-    def __init__(self, readers, writers, connections, devices, pru_controller):
+    def __init__(self,
+                 readers, functions, connections, pru_controller, devices):
         """Call super."""
-        super().__init__(readers, writers, connections)
+        super().__init__(readers, functions, connections, pru_controller)
         self._devices = devices
-        self._pru_controller = pru_controller
         self._watchers = dict()
-
-    @property
-    def pru_controller(self):
-        """PRU Controller."""
-        return self._pru_controller
 
     def read(self, device_name, field):
         """Read pv value."""
@@ -94,53 +100,53 @@ class StandardPSController(PSController):
         """Override write method."""
         name = device_name + ':' + field
         if field == 'OpMode-Sel':
-            writer = self._writers[device_name + ':' + field]
+            writer = self._functions[device_name + ':' + field]
             # if value in (0, 3, 4):
             #     self._operation_mode = value
             self._set_opmode(writer, value)
         elif field == 'CycleType-Sel':
             values = self._cfg_siggen_args(device_name)
             values[0] = value
-            self._writers[device_name + ':' + field].execute(values)
+            self._functions[device_name + ':' + field].execute(values)
         elif field == 'CycleNrCycles-SP':
             values = self._cfg_siggen_args(device_name)
             values[1] = value
-            self._writers[device_name + ':' + field].execute(values)
+            self._functions[device_name + ':' + field].execute(values)
         elif field == 'CycleFreq-SP':
             values = self._cfg_siggen_args(device_name)
             values[2] = value
-            self._writers[device_name + ':' + field].execute(values)
+            self._functions[device_name + ':' + field].execute(values)
         elif field == 'CycleAmpl-SP':
             values = self._cfg_siggen_args(device_name)
             values[3] = value
-            self._writers[device_name + ':' + field].execute(values)
+            self._functions[device_name + ':' + field].execute(values)
         elif field == 'CycleOffset-SP':
             values = self._cfg_siggen_args(device_name)
             values[4] = value
-            self._writers[device_name + ':' + field].execute(values)
+            self._functions[device_name + ':' + field].execute(values)
         elif field == 'CycleAuxParam-SP':
             values = self._cfg_siggen_args(device_name)
             values[5:] = value
-            self._writers[device_name + ':' + field].execute(values)
+            self._functions[device_name + ':' + field].execute(values)
         elif field == 'PwrState-Sel':
             self._readers[device_name + ':Current-SP'].apply(0.0)
-            self._writers[name].execute(value)
+            self._functions[name].execute(value)
         else:
-            self._writers[name].execute(value)
+            self._functions[name].execute(value)
 
     # Private
     def _set_watchers(self, op_mode):
         self._stop_watchers()
         for dev_name in self._devices:
             dev_ids = [self._devices[dev_name]]
-            writers = dict()
-            writers['Current-SP'] = self._writers[dev_name + ':Current-SP']
-            writers['OpMode-Sel'] = _PSOpMode(
+            functions = dict()
+            functions['Current-SP'] = self._functions[dev_name + ':Current-SP']
+            functions['OpMode-Sel'] = _PSOpMode(
                 dev_ids,
                 _Function(dev_ids, self._pru_controller, _c.F_SELECT_OP_MODE),
                 self._readers[dev_name + ':OpMode-Sel'])
 
-            t = _Watcher(writers, self, dev_name, op_mode)
+            t = _Watcher(functions, self, dev_name, op_mode)
             self._watchers[dev_name] = t
             self._watchers[dev_name].start()
 

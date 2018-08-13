@@ -690,15 +690,45 @@ udcmodels = {
     'FBP_DCLink': {'ConstBSMP': _cFBP_DCLink,
                    'Entities': _EntitiesFBP_DCLink(),
                    'BSMPSim': BSMPSim_FBP_DCLink, },
+    'FBP_FOFB': {'ConstBSMP': _cFBP,
+                 'Entities': _EntitiesFBP(),
+                 'BSMPSim': BSMPSim_FBP, },
+
     'FAC_DCDC': {'ConstBSMP': _cFAC_DCDC,
                  'Entities': _EntitiesFAC_DCDC(),
                  'BSMPSim': BSMPSim_FAC_DCDC, },
     'FAC_ACDC': {'ConstBSMP': _cFAC_ACDC,
                  'Entities': _EntitiesFAC_ACDC(),
                  'BSMPSim': BSMPSim_FAC_ACDC, },
+    'FAC_2S_DCDC': {'ConstBSMP': _cFAC_DCDC,
+                    'Entities': _EntitiesFAC_DCDC(),
+                    'BSMPSim': BSMPSim_FAC_DCDC, },
+    'FAC_2S_ACDC': {'ConstBSMP': _cFAC_ACDC,
+                    'Entities': _EntitiesFAC_ACDC(),
+                    'BSMPSim': BSMPSim_FAC_ACDC, },
     'FAC_2P4S_DCDC': {'ConstBSMP': _cFAC_DCDC,
                       'Entities': _EntitiesFAC_DCDC(),
                       'BSMPSim': BSMPSim_FAC_DCDC, },
+    'FAC_2P4S_ACDC': {'ConstBSMP': _cFAC_ACDC,
+                      'Entities': _EntitiesFAC_ACDC(),
+                      'BSMPSim': BSMPSim_FAC_ACDC, },
+
+    'FAP': {'ConstBSMP': _cFBP,
+            'Entities': _EntitiesFBP(),
+            'BSMPSim': BSMPSim_FBP, },
+    'FAP_2P2S_MASTER': {'ConstBSMP': _cFBP,
+                        'Entities': _EntitiesFBP(),
+                        'BSMPSim': BSMPSim_FBP, },
+    'FAP_4P_Master': {'ConstBSMP': _cFBP,
+                      'Entities': _EntitiesFBP(),
+                      'BSMPSim': BSMPSim_FBP, },
+    'FAP_4P_Slave': {'ConstBSMP': _cFBP,
+                     'Entities': _EntitiesFBP(),
+                     'BSMPSim': BSMPSim_FBP, },
+
+    'Commercial': {'ConstBSMP': _cFAC_DCDC,
+                   'Entities': _EntitiesFAC_DCDC(),
+                   'BSMPSim': BSMPSim_FAC_DCDC, },
 }
 
 
@@ -714,7 +744,7 @@ class UDC:
 
     def _get_udcmodel(self, udcmodel):
         if udcmodel not in udcmodels:
-            raise NotImplementedError()
+            raise ValueError('{}'.format(udcmodel))
         return udcmodel
 
     def _create_bsmp_connectors(self):
