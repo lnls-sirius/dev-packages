@@ -4,7 +4,6 @@ These classes implement a common interface that exposes the `read` method.
 """
 import re as _re
 
-from siriuspy.pwrsupply import bsmp as _bsmp
 from PRUserial485 import ConstSyncMode as _SYNC_MODE
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 
@@ -251,9 +250,11 @@ class Setpoints:
     """Setpoints."""
 
     def __init__(self, setpoints):
+        """Constructor."""
         self._setpoints = setpoints
 
     def apply(self, value):
+        """Apply setpoint."""
         for setpoint in self._setpoints:
             if not setpoint.apply(value):
                 return False
