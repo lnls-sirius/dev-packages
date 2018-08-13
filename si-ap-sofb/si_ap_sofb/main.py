@@ -15,86 +15,24 @@ class App:
 
     def get_database(self):
         """Get the database of the class."""
-        db = dict()
-        pre = self.prefix
+        db = _csorb.get_sofb_database(self.acc)
+        prop = 'fun_set_pv'
+        db['AutoCorr-Sel'][prop] = self.set_auto_corr
+        db['AutoCorrFreq-SP'][prop] = self.set_auto_corr_frequency
+        db['StartMeasRespMat-Cmd'][prop] = self.set_respmat_meas_state
+        db['CorrMode-Sel'][prop] = self.set_correction_mode
+        db['CalcCorr-Cmd'][prop] = self.calc_correction
+        db['CorrFactorCH-SP'][prop] = lambda x: self.set_corr_factor('ch', x)
+        db['CorrFactorCV-SP'][prop] = lambda x: self.set_corr_factor('cv', x)
+        db['CorrFactorRF-SP'][prop] = lambda x: self.set_corr_factor('rf', x)
+        db['MaxKickCH-SP'][prop] = lambda x: self.set_max_kick('ch', x)
+        db['MaxKickCV-SP'][prop] = lambda x: self.set_max_kick('cv', x)
+        db['MaxKickRF-SP'][prop] = lambda x: self.set_max_kick('rf', x)
+        db['ApplyCorr-Cmd'][prop] = self.apply_corr
+        db = {self.prefix + k: v for k, v in db.items()}
         db.update(self.correctors.get_database())
         db.update(self.matrix.get_database())
         db.update(self.orbit.get_database())
-        db[pre + 'Log-Mon'] = {'type': 'string', 'value': ''}
-        db[pre + 'AutoCorrState-Sel'] = {
-            'type': 'enum', 'enums': ('Off', 'On'), 'value': 0,
-            'fun_set_pv': self._toggle_auto_corr}
-        db[pre + 'AutoCorrState-Sts'] = {
-            'type': 'enum', 'enums': ('Off', 'On'), 'value': 0}
-        db[pre + 'AutoCorrFreq-SP'] = {
-            'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 3,
-            'lolim': 1e-3, 'hilim': 20,
-            'fun_set_pv': self._set_auto_corr_frequency}
-        db[pre + 'AutoCorrFreq-RB'] = {
-            'type': 'float', 'value': 1, 'prec': 2, 'unit': 'Hz'}
-        db[pre + 'StartMeasRSPMtx-Cmd'] = {
-            'type': 'int', 'value': 0,
-            'fun_set_pv': self._start_measure_response_matrix}
-        db[pre + 'AbortMeasRSPMtx-Cmd'] = {
-            'type': 'int', 'value': 0,
-            'fun_set_pv': self._abort_measure_response_matrix}
-        db[pre + 'ResetMeasRSPMtx-Cmd'] = {
-            'type': 'int', 'value': 0,
-            'fun_set_pv': self._reset_measure_response_matrix}
-        db[pre + 'MeasRSPMtxState-Sts'] = {
-            'type': 'enum', 'value': 0,
-            'enums': ('Idle', 'Measuring', 'Completed', 'Aborted')}
-        db[pre + 'CorrectionMode-Sel'] = {
-            'type': 'enum', 'enums': ('OffLine', 'Online'), 'value': 1,
-            'unit': 'Defines is correction is offline or online',
-            'fun_set_pv': self._toggle_correction_mode}
-        db[pre + 'CorrectionMode-Sts'] = {
-            'type': 'enum', 'enums': ('OffLine', 'Online'), 'value': 1,
-            'unit': 'Defines is correction is offline or online'}
-        db[pre + 'CalcCorr-Cmd'] = {
-            'type': 'int', 'value': 0, 'unit': 'Calculate kicks',
-            'fun_set_pv': self.calc_correction}
-        db[pre + 'CHStrength-SP'] = {
-            'type': 'float', 'value': 0, 'unit': '%', 'prec': 2,
-            'lolim': -1000, 'hilim': 1000,
-            'fun_set_pv': lambda x: self._set_strength('ch', x)}
-        db[pre + 'CHStrength-RB'] = {
-            'type': 'float', 'value': 0, 'prec': 2, 'unit': '%'}
-        db[pre + 'CVStrength-SP'] = {
-            'type': 'float', 'value': 0, 'unit': '%', 'prec': 2,
-            'lolim': -1000, 'hilim': 1000,
-            'fun_set_pv': lambda x: self._set_strength('cv', x)}
-        db[pre + 'CVStrength-RB'] = {
-            'type': 'float', 'value': 0, 'prec': 2, 'unit': '%'}
-        db[pre + 'RFStrength-SP'] = {
-            'type': 'float', 'value': 0, 'unit': '%', 'prec': 2,
-            'lolim': -1000, 'hilim': 1000,
-            'fun_set_pv': lambda x: self._set_strength('rf', x)}
-        db[pre + 'RFStrength-RB'] = {
-            'type': 'float', 'value': 0, 'prec': 2, 'unit': '%'}
-        db[pre + 'CHMaxKick-SP'] = {
-            'type': 'float', 'value': 300, 'unit': 'urad', 'prec': 3,
-            'lolim': 0, 'hilim': 1000,
-            'fun_set_pv': lambda x: self._set_max_kick('ch', x)}
-        db[pre + 'CHMaxKick-RB'] = {
-            'type': 'float', 'value': 300, 'prec': 2, 'unit': 'urad'}
-        db[pre + 'CVMaxKick-SP'] = {
-            'type': 'float', 'value': 300, 'unit': 'urad', 'prec': 3,
-            'lolim': 0, 'hilim': 1000,
-            'fun_set_pv': lambda x: self._set_max_kick('cv', x)}
-        db[pre + 'CVMaxKick-RB'] = {
-            'type': 'float', 'value': 300, 'prec': 2, 'unit': 'urad'}
-        db[pre + 'RFMaxKick-SP'] = {
-            'type': 'float', 'value': 3000, 'unit': 'Hz', 'prec': 3,
-            'lolim': 0, 'hilim': 10000,
-            'fun_set_pv': lambda x: self._set_max_kick('rf', x)}
-        db[pre + 'RFMaxKick-RB'] = {
-            'type': 'float', 'value': 3000, 'prec': 2, 'unit': 'Hz'}
-        db[pre + 'ApplyKicks-Cmd'] = {
-            'type': 'enum', 'enums': ('CH', 'CV', 'RF', 'All'), 'value': 0,
-            'unit': 'Apply last calculated kicks.',
-            'fun_set_pv': self.apply_kicks}
-
         return db
 
     def __init__(self, driver=None):

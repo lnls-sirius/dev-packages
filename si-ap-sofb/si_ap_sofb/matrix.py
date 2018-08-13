@@ -2,6 +2,7 @@
 
 import os as _os
 import numpy as _np
+import siriuspy.csdevice.orbitcorr as _csorb
 from si_ap_sofb.definitions import NR_BPMS, NR_CH, NR_CV, NR_CORRS, MTX_SZ
 
 
@@ -14,71 +15,15 @@ class Matrix:
 
     def get_database(self):
         """Get the database of the class."""
-        db = dict()
-        pre = self.prefix
-        db[pre + 'RSPMatrix-SP'] = {
-            'type': 'float', 'count': MTX_SZ, 'value': MTX_SZ*[0],
-            'unit': '(BH, BV)(nm) x (CH, CV, RF)(urad, Hz)',
-            'fun_set_pv': self.set_resp_matrix}
-        db[pre + 'RSPMatrix-RB'] = {
-            'type': 'float', 'count': MTX_SZ, 'value': MTX_SZ*[0],
-            'unit': '(BH, BV)(nm) x (CH, CV, RF)(urad, Hz)'}
-        db[pre + 'SingValues-Mon'] = {
-            'type': 'float', 'count': NR_CORRS, 'value': NR_CORRS*[0],
-            'unit': 'Singular values of the matrix in use'}
-        db[pre + 'InvRSPMatrix-Mon'] = {
-            'type': 'float', 'count': MTX_SZ, 'value': MTX_SZ*[0],
-            'unit': '(CH, CV, RF)(urad, Hz) x (BH, BV)(nm)'}
-        db[pre + 'CHEnblList-SP'] = {
-            'type': 'int', 'count': NR_CH, 'value': NR_CH*[1],
-            'unit': 'CHs used in correction',
-            'fun_set_pv': lambda x: self._set_enbl_list('ch', x)}
-        db[pre + 'CHEnblList-RB'] = {
-            'type': 'int', 'count': NR_CH, 'value': NR_CH*[1],
-            'unit': 'CHs used in correction'}
-        db[pre + 'CVEnblList-SP'] = {
-            'type': 'int', 'count': NR_CV, 'value': NR_CV*[1],
-            'unit': 'CVs used in correction',
-            'fun_set_pv': lambda x: self._set_enbl_list('cv', x)}
-        db[pre + 'CVEnblList-RB'] = {
-            'type': 'int', 'count': NR_CV, 'value': NR_CV*[1],
-            'unit': 'CVs used in correction'}
-        db[pre + 'BPMXEnblList-SP'] = {
-            'type': 'int', 'count': NR_BPMS, 'value': NR_BPMS*[1],
-            'unit': 'BPMX used in correction',
-            'fun_set_pv': lambda x: self._set_enbl_list('bpmx', x)}
-        db[pre + 'BPMXEnblList-RB'] = {
-            'type': 'int', 'count': NR_BPMS, 'value': NR_BPMS*[1],
-            'unit': 'BPMX used in correction'}
-        db[pre + 'BPMYEnblList-SP'] = {
-            'type': 'int', 'count': NR_BPMS, 'value': NR_BPMS*[1],
-            'unit': 'BPMY used in correction',
-            'fun_set_pv': lambda x: self._set_enbl_list('bpmy', x)}
-        db[pre + 'BPMYEnblList-RB'] = {
-            'type': 'int', 'count': NR_BPMS, 'value': NR_BPMS*[1],
-            'unit': 'BPMY used in correction'}
-        db[pre + 'RFEnbl-Sel'] = {
-            'type': 'enum', 'enums': self.RF_ENBL_ENUMS, 'value': 0,
-            'unit': 'If RF is used in correction',
-            'fun_set_pv': lambda x: self._set_enbl_list('rf', x)}
-        db[pre + 'RFEnbl-Sts'] = {
-            'type': 'enum', 'enums': self.RF_ENBL_ENUMS, 'value': 0,
-            'unit': 'If RF is used in correction'}
-        db[pre + 'NumSingValues-SP'] = {
-            'type': 'int', 'value': NR_CORRS, 'lolim': 1, 'hilim': NR_CORRS,
-            'unit': 'Maximum number of SV to use',
-            'fun_set_pv': self._set_num_sing_values}
-        db[pre + 'NumSingValues-RB'] = {
-            'type': 'int', 'value': NR_CORRS, 'lolim': 1, 'hilim': NR_CORRS,
-            'unit': 'Maximum number of SV to use'}
-        db[pre + 'CHCalcdKicks-Mon'] = {
-            'type': 'float', 'count': NR_CH, 'value': NR_CH*[0],
-            'unit': 'Last CH kicks calculated.'}
-        db[pre + 'CVCalcdKicks-Mon'] = {
-            'type': 'float', 'count': NR_CV, 'value': NR_CV*[0],
-            'unit': 'Last CV kicks calculated.'}
-        db[pre + 'RFCalcdKicks-Mon'] = {
-            'type': 'float', 'value': 1, 'unit': 'Last RF kick calculated.'}
+        db = _csorb.get_respmat_database(self.acc)
+        prop = 'fun_set_pv'
+        db['RespMat-SP'][prop] = self.set_respmat
+        db['CHEnblList-SP'][prop] = lambda x: self.set_enbl_list('ch', x)
+        db['CVEnblList-SP'][prop] = lambda x: self.set_enbl_list('cv', x)
+        db['BPMXEnblList-SP'][prop] = lambda x: self.set_enbl_list('bpmx', x)
+        db['BPMYEnblList-SP'][prop] = lambda x: self.set_enbl_list('bpmy', x)
+        db['RFEnbl-Sel'][prop] = lambda x: self.set_enbl_list('rf', x)
+        db['NumSingValues-SP'][prop] = self.set_num_sing_values
         return db
 
     def __init__(self, prefix, callback):

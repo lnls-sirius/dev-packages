@@ -4,6 +4,7 @@ import time as _time
 import numpy as _np
 import epics as _epics
 from siriuspy.search import PSSearch as _PSSearch
+import siriuspy.csdevice.orbitcorr as _csorb
 from siriuspy.envars import vaca_prefix as LL_PREF
 from si_ap_sofb.definitions import SECTION, WAIT_FOR_SIMULATOR, timed_out
 
@@ -18,13 +19,10 @@ class Correctors:
 
     def get_database(self):
         """Get the database of the class."""
-        db = dict()
-        pre = self.prefix
-        db[pre + 'SyncKicks-Sel'] = {
-            'type': 'enum', 'enums': ('Off', 'On'), 'value': 1,
-            'fun_set_pv': self._set_corr_pvs_mode}
-        db[pre + 'SyncKicks-Sts'] = {
-            'type': 'enum', 'enums': ('Off', 'On'), 'value': 1}
+        db = _csorb.get_corrs_database(self.acc)
+        db['SyncKicks-Sel']['fun_set_pv'] = self.set_chcvs_mode
+        db['ConfigTiming-Cmd']['fun_set_pv'] = self.configure_timing
+        db = {self.prefix + k: v for k, v in db.items()}
         return db
 
     def __init__(self, prefix, callback):
