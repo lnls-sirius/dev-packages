@@ -132,6 +132,56 @@ def get_corrs_database(acc, prefix=''):
     return db
 
 
+def get_orbit_database(acc, prefix=''):
+    const = get_consts(acc)
+    nbpm = const.NR_BPMS
+    db = {
+        'OrbitRefX-SP': {
+            'type': 'float', 'count': nbpm, 'value': nbpm*[0]},
+        'OrbitRefX-RB': {
+            'type': 'float', 'count': nbpm, 'value': nbpm*[0]},
+        'OrbitRefY-SP': {
+            'type': 'float', 'count': nbpm, 'value': nbpm*[0]},
+        'OrbitRefY-RB': {
+            'type': 'float', 'count': nbpm, 'value': nbpm*[0]},
+        'GoldenOrbitX-SP': {
+            'type': 'float', 'count': nbpm, 'value': nbpm*[0]},
+        'GoldenOrbitX-RB': {
+            'type': 'float', 'count': nbpm, 'value': nbpm*[0]},
+        'GoldenOrbitY-SP': {
+            'type': 'float', 'count': nbpm, 'value': nbpm*[0]},
+        'GoldenOrbitY-RB': {
+            'type': 'float', 'count': nbpm, 'value': nbpm*[0]},
+        'setRefwithGolden-Cmd': {
+            'type': 'char', 'value': 0,
+            'unit': 'Set the reference orbit with the Golden Orbit'},
+        'CorrOrbitX-Mon': {
+            'type': 'float', 'count': nbpm, 'value': nbpm*[0]},
+        'CorrOrbitY-Mon': {
+            'type': 'float', 'count': nbpm, 'value': nbpm*[0]},
+        'OnlineOrbitX-Mon': {
+            'type': 'float', 'count': nbpm, 'value': nbpm*[0]},
+        'OnlineOrbitY-Mon': {
+            'type': 'float', 'count': nbpm, 'value': nbpm*[0]},
+        'OfflineOrbitX-SP': {
+            'type': 'float', 'count': nbpm, 'value': nbpm*[0]},
+        'OfflineOrbitX-RB': {
+            'type': 'float', 'count': nbpm, 'value': nbpm*[0]},
+        'OfflineOrbitY-SP': {
+            'type': 'float', 'count': nbpm, 'value': nbpm*[0]},
+        'OfflineOrbitY-RB': {
+            'type': 'float', 'count': nbpm, 'value': nbpm*[0]},
+        'OrbitPointsNum-SP': {
+            'type': 'char', 'value': 1, 'unit': 'number of points for median',
+            'lolim': 1, 'hilim': 200},
+        'OrbitPointsNum-RB': {
+            'type': 'char', 'value': 1, 'unit': 'number of points for median'},
+    }
+    if prefix:
+        return {prefix + k: v for k, v in db.items()}
+    return db
+
+
 def get_respmat_database(acc, prefix=''):
     """Return OpticsCorr-Chrom Soft IOC database."""
     const = get_consts(acc)
