@@ -3,19 +3,201 @@
 import time as _time
 import numpy as _np
 import epics as _epics
-from siriuspy.search import PSSearch as _PSSearch
+from siriuspy.search.hl_time_search import HLTimeSearch as _HLTimeSearch
 import siriuspy.csdevice.orbitcorr as _csorb
+from siriuspy.csdevice.pwrsupply import Const as _PwrSplyConst
+from siriuspy.csdevice.timesys import events_modes as _EVT_MODES
 from siriuspy.envars import vaca_prefix as LL_PREF
-from si_ap_sofb.definitions import SECTION, WAIT_FOR_SIMULATOR, timed_out
+from .definitions import WAIT_FOR_SIMULATOR, TINY_INTERVAL, NUM_TIMEOUT
 
 _TIMEOUT = 0.05
 
 
-class Correctors:
-    """Class to deal with correctors."""
+def _equalKick(val1, val2):
+    max_ = max(abs(val1), abs(val2))
+    return (not max_ or abs(val1-val2)/max_ <= 1e-12)
 
-    SLOW_REF = 0
-    SLOW_REF_SYNC = 1
+
+class Corrector:
+
+    def __init__(self, corr_name):
+        self._opmode_ok = False
+        self._ready = False
+        self._applied = False
+        self._name = corr_name
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def ready(self):
+        return self._ready
+
+    @property
+    def applied(self):
+        return self._applied
+
+    @property
+    def value(self):
+        self._sp.value
+
+    @value.setter
+    def value(self, val):
+        self._sp.value = val
+
+    def _corrIsReady(self, pvname, value, **kwargs):
+        self._ready = _equalKick(self._sp.value, value)
+
+    def _kickApplied(self, pvname, value, **kwargs):
+        self._applied = _equalKick(self._sp.value, value)
+
+
+class RFCtrl(Corrector):
+
+    def __init__(self):
+        super().__init__(_csorb.RF_GEN_NAME)
+        self._sp = _epics.PV(
+                            LL_PREF + self._name + ':Freq-SP',
+                            connection_timeout=_TIMEOUT)
+        self._rb = _epics.PV(
+                            LL_PREF + self._name + ':Freq-RB',
+                            callback=self._corrIsReady,
+                            connection_timeout=_TIMEOUT)
+
+    @property
+    def is_connected(self):
+        conn = self._sp.connected
+        conn &= self._rb.connected
+        return conn
+
+    def _corrIsReady(self, pvname, value, **kwargs):
+        super()._corrIsReady(pvname, value, **kwargs)
+        self._kickApplied(self, pvname, value, **kwargs)
+
+
+class CHCV(Corrector):
+
+    def __init__(self, corr_name):
+        super().__init__(corr_name)
+        opt = {'connection_timeout': _TIMEOUT}
+        self._opmode = None
+        self._sp = _epics.PV(LL_PREF + self._name + ':Current-SP', **opt)
+        self._rb = _epics.PV(
+                            LL_PREF + self._name + ':Current-RB',
+                            callback=self._corrIsReady, **opt)
+        self._ref = _epics.PV(
+                            LL_PREF + self._name + ':CurrentRef-Mon',
+                            callback=self._kickApplied, **opt)
+        self._opmode_sel = _epics.PV(
+                            LL_PREF + self._name + ':OpMode-Sel', **opt)
+        self._opmode_sts = _epics.PV(
+                            LL_PREF + self._name + ':OpMode-Sts',
+                            callback=self._corrIsOnMode, **opt)
+
+    @property
+    def is_connected(self):
+        conn = self._sp.connected
+        conn &= self._rb.connected
+        conn &= self._ref.connected
+        conn &= self._opmode_sel.connected
+        conn &= self._opmode_sts.connected
+        return conn
+
+    @property
+    def opmode_ok(self):
+        return self._opmode_ok
+
+    @property
+    def opmode(self):
+        return self._opmode_sel.value
+
+    @opmode.setter
+    def opmode(self, val):
+        self._opmode = val
+        self._opmode_sel.value = val
+
+    def _corrIsOnMode(self, pvname, value, **kwargs):
+        self._opmode_ok = (self._opmode == value)
+
+
+class TimingConfig:
+
+    def __init__(self, acc):
+        if acc == 'SI':
+            evt = 'OrbSI'
+            trig = 'SI-Glob:TI-Corrs'
+        elif acc == 'BO':
+            evt = 'OrbBO'
+            trig = 'BO-Glob:TI-Corrs'
+        pref_name = LL_PREF + _csorb.EVG_NAME + ':' + evt
+        opt = {'connection_timeout': _TIMEOUT}
+        self._evt_sender = _epics.PV(pref_name + 'ExtTrig-Cmd', **opt)
+        self._evt_mode_sp = _epics.PV(pref_name + 'Mode-Sel', **opt)
+        self._evt_mode_rb = _epics.PV(pref_name + 'Mode-Sts', **opt)
+        self._trig_ok_vals = {
+            'Src': _HLTimeSearch.get_hl_trigger_sources(trig).index(evt),
+            'Delay': 0.0, 'DelayType': 0, 'NrPulses': 1,
+            'Duration': 0.1, 'State': 1, 'ByPassIntlk': 0, 'Polarity': 1,
+            }
+        pref_name = LL_PREF + trig + ':'
+        self._trig_pvs_rb = {
+            'Src': _epics.PV(pref_name + 'Src-Sts', **opt),
+            'Delay': _epics.PV(pref_name + 'Delay-RB', **opt),
+            'DelayType': _epics.PV(pref_name + 'DelayType-Sts', **opt),
+            'NrPulses': _epics.PV(pref_name + 'NrPulses-RB', **opt),
+            'Duration': _epics.PV(pref_name + 'Duration-RB', **opt),
+            'State': _epics.PV(pref_name + 'State-Sts', **opt),
+            'ByPassIntlk': _epics.PV(pref_name + 'ByPassIntlk-Sts', **opt),
+            'Polarity': _epics.PV(pref_name + 'Polarity-Sts', **opt),
+            }
+        self._trig_pvs_sp = {
+            'Src': _epics.PV(pref_name + 'Src-Sel', **opt),
+            'Delay': _epics.PV(pref_name + 'Delay-SP', **opt),
+            'DelayType': _epics.PV(pref_name + 'DelayType-Sel', **opt),
+            'NrPulses': _epics.PV(pref_name + 'NrPulses-SP', **opt),
+            'Duration': _epics.PV(pref_name + 'Duration-SP', **opt),
+            'State': _epics.PV(pref_name + 'State-Sel', **opt),
+            'ByPassIntlk': _epics.PV(pref_name + 'ByPassIntlk-Sel', **opt),
+            'Polarity': _epics.PV(pref_name + 'Polarity-Sel', **opt),
+            }
+
+    def send_evt(self):
+        self._evt_sender.value = 1
+
+    @property
+    def is_connected(self):
+        conn = True
+        conn &= self._evt_sender.connected
+        conn &= self._evt_mode_sp.connected
+        conn &= self._evt_mode_rb.connected
+        for k, pv in self._trig_pvs_rb.items():
+            conn &= pv.connected
+        for k, pv in self._trig_pvs_sp.items():
+            conn &= pv.connected
+        return conn
+
+    @property
+    def is_ok(self):
+        ok = self.is_connected
+        ok &= self._evt_mode_rb.value == _EVT_MODES.External
+        for k, pv in self._trig_pvs_rb.items():
+            ok &= self._trig_ok_vals[k] == pv.value
+
+    def configure(self):
+        if not self.is_connected:
+            return
+        self._evt_mode_sp.value = _EVT_MODES.External
+        for k, pv in self._trig_pvs_sp.items():
+            pv.value = self._trig_ok_vals[k]
+
+
+class BaseCorrectors:
+    pass
+
+
+class EpicsCorrectors(BaseCorrectors):
+    """Class to deal with correctors."""
 
     def get_database(self):
         """Get the database of the class."""
@@ -25,159 +207,105 @@ class Correctors:
         db = {self.prefix + k: v for k, v in db.items()}
         return db
 
-    def __init__(self, prefix, callback):
+    def __init__(self, acc, prefix, callback):
         """Initialize the instance."""
         self.callback = callback
         self.prefix = prefix
-        self.sync_kicks = True
-        self.corr_pvs_opmode_sel = list()
-        self.corr_pvs_opmode_sts = list()
-        self.corr_pvs_opmode_ready = dict()
-        self.corr_pvs_sp = list()
-        self.corr_pvs_rb = list()
-        self.corr_pvs_ref = list()
-        self.corr_pvs_ready = dict()
-        self.corr_pvs_applied = dict()
+        self.acc = acc
+        self._status = 0xF
+        self._synced_kicks = True
+        Consts = _csorb.get_consts(acc)
+        self._names = Consts.CH_NAMES + Consts.CV_NAMES
+        self._chcvs = {CHCV(dev) for dev in self._names}
+        self._rf_ctrl = RFCtrl()
+        self._timing = TimingConfig(acc)
 
-    def connect(self):
-        """Connect to external PVs."""
-        ch_names = _PSSearch.get_psnames({'section': SECTION,
-                                          'discipline': 'PS',
-                                          'device': 'CH'})
-        cv_names = _PSSearch.get_psnames({'section': SECTION,
-                                          'discipline': 'PS',
-                                          'device': 'CV'})
-        self.corr_names = ch_names + cv_names
-
-        for dev in self.corr_names:
-            self.corr_pvs_opmode_sel.append(
-                _epics.PV(LL_PREF + dev + ':OpMode-Sel',
-                          connection_timeout=_TIMEOUT))
-            self.corr_pvs_opmode_sts.append(
-                _epics.PV(LL_PREF + dev + ':OpMode-Sts',
-                          connection_timeout=_TIMEOUT,
-                          callback=self._corrIsOnMode))
-            self.corr_pvs_opmode_ready[LL_PREF + dev + ':OpMode-Sts'] = False
-            self.corr_pvs_sp.append(
-                _epics.PV(LL_PREF + dev + ':Current-SP',
-                          connection_timeout=_TIMEOUT))
-            self.corr_pvs_rb.append(
-                _epics.PV(LL_PREF + dev + ':Current-RB',
-                          connection_timeout=_TIMEOUT,
-                          callback=self._corrIsReady))
-            self.corr_pvs_ref.append(
-                _epics.PV(LL_PREF + dev + ':CurrentRef-Mon',
-                          connection_timeout=_TIMEOUT,
-                          callback=self._kickApplied))
-            self.corr_pvs_ready[LL_PREF + dev + ':Current-RB'] = False
-            self.corr_pvs_applied[LL_PREF + dev + ':CurrentRef-Mon'] = False
-        self.rf_pv_sp = _epics.PV(LL_PREF + SECTION +
-                                  '-03SP:RF-SRFCav:Freq-SP')
-        self.rf_pv_rb = _epics.PV(LL_PREF + SECTION +
-                                  '-03SP:RF-SRFCav:Freq-RB')
-        self.event_pv_mode_sel = _epics.PV(SECTION +
-                                           '-Glob:TI-EVG:OrbitMode-Sel')
-        self.event_pv_sp = _epics.PV(SECTION +
-                                     '-Glob:TI-EVG:OrbitExtTrig-Cmd')
-
-    def apply_kicks(self, values):
+    def apply_corr(self, values):
         """Apply kicks."""
         # apply the RF kick
-        if self.rf_pv_sp.connected:
-            if not self._equalKick(values[-1], self.rf_pv_sp.value):
-                self.rf_pv_sp.value = values[-1]
+        if self._rf_ctrl.is_connected:
+            if not self._equalKick(values[-1], self._rf_ctrl.value):
+                self._rf_ctrl.value = values[-1]
         else:
             self._call_callback(
                 'Log-Mon',
-                'PV ' + self.rf_pv_sp.pvname + ' Not Connected.'
+                'PV ' + self.rf_sp.pvname + ' Not Connected.'
                 )
         # Send correctors setpoint
-        for i, pv in enumerate(self.corr_pvs_sp):
-            pvname_rb = pv.pvname.replace('-SP', '-RB')
-            pvname_ref = pv.pvname.replace('-SP', 'Ref-Mon')
-            self.corr_pvs_ready[pvname_rb] = True
-            self.corr_pvs_applied[pvname_ref] = True
-            if not pv.connected:
+        for i, corr in enumerate(self._chcvs):
+            if not corr.is_connected:
                 self._call_callback('Log-Mon',
-                                    'Err: PV ' + pv.pvname + ' Not Connected.')
+                                    'Err: PV ' + corr.name + ' Not Connected.')
                 continue
-            if self._equalKick(values[i], pv.value):
+            if self._equalKick(values[i], corr.value):
                 continue
-            self.corr_pvs_ready[pvname_rb] = False
-            self.corr_pvs_applied[pvname_ref] = False
-            pv.value = values[i]
+            corr.value = values[i]
         # Wait for readbacks to be updated
-        if timed_out(self.corr_pvs_ready):
+        if self._timed_out(mode='ready'):
             self._call_callback('Log-Mon',
                                 'Err: Timeout waiting Correctors RB')
             return
         # Send trigger signal for implementation
-        if self.sync_kicks:
-            if self.event_pv_sp.connected:
-                self.event_pv_sp.value = 1
+        if self._synced_kicks:
+            if self._timing.is_connected:
+                self._timing.send_evt()
             else:
                 self._call_callback('Log-Mon',
-                                    'Kicks not sent, Timing PV Disconnected.')
+                                    'Kicks not sent, Timing Disconnected.')
                 return
         # Wait for references to be updated
-        if timed_out(self.corr_pvs_ready):
+        if self._timed_out(mode='applied'):
             self._call_callback('Log-Mon',
                                 'Err: Timeout waiting Correctors Ref')
             return
-        # wait for simulator to compute  and update the orbit.
+        # wait for simulator to compute and update the orbit.
         _time.sleep(WAIT_FOR_SIMULATOR)
 
-    def get_correctors_strength(self):
+    def get_strength(self):
         """Get the correctors strengths."""
-        corr_values = _np.zeros(len(self.corr_names)+1)
-        for i, pv in enumerate(self.corr_pvs_ref):
-            corr_values[i] = pv.value
-        corr_values[-1] = self.rf_pv_rb.value
+        corr_values = _np.zeros(len(self._names)+1, dtype=float)
+        for i, corr in enumerate(self._chcvs):
+            corr_values[i] = corr.value
+        corr_values[-1] = self._rf_ctrl.value
         return corr_values
 
     def _call_callback(self, pv, value):
         self.callback(self.prefix + pv, value)
 
-    def _set_corr_pvs_mode(self, value):
-        self.sync_kicks = True if value else False
-        val = self.SLOW_REF_SYNC if self.sync_kicks else self.SLOW_REF
-        for pv in self.corr_pvs_opmode_sel:
-            if pv.connected:
-                pv.value = val
+    def set_chcvs_mode(self, value):
+        self._synced_kicks = value
+        if self._synced_kicks == _csorb.SyncKicks.On:
+            val = _PwrSplyConst.SlowRefSync
+        elif self._synced_kicks == _csorb.SyncKicks.Off:
+            val = _PwrSplyConst.SlowRef
+
+        for corr in self._chcvs:
+            if corr.is_connected:
+                corr.opmode = val
         self._call_callback(
             'Log-Mon',
-            'Setting Correctors PVs to {0:s} Mode'.format('Sync' if value
-                                                          else 'Async')
+            'Correctors set to {0:s} Mode'.format('Sync' if value else 'Async')
             )
         self._call_callback('SyncKicks-Sts', value)
         return True
 
-    @staticmethod
-    def _equalKick(val1, val2):
-        max_ = max(abs(val1), abs(val2))
-        if not max_:
-            return True
-        if abs(val1-val2)/max_ <= 1e-12:
-            return True
-        return False
+    def configure_timing(self):
+        self._timing.configure()
 
-    def _corrIsReady(self, pvname, value, **kwargs):
-        ind = self.corr_names.index(pvname.strip(LL_PREF).strip(':Current-RB'))
-        self.corr_pvs_ready[pvname] = self._equalKick(
-                                            self.corr_pvs_sp[ind].value,
-                                            value)
+    def _update_status(self):
+        status = 0b0000
 
-    def _kickApplied(self, pvname, value, **kwargs):
-        name = pvname.strip(LL_PREF).strip(': CurrentRef-Mon')
-        ind = self.corr_names.index(name)
-        self.corr_pvs_applied[pvname] = self._equalKick(
-                                            self.corr_pvs_sp[ind].value,
-                                            value)
 
-    def _corrIsOnMode(self, pvname, value, **kwargs):
-        val = self.SLOW_REF_SYNC if self.sync_kicks else self.SLOW_REF
-        self.corr_pvs_opmode_ready[pvname] = (value == val)
-        if all(self.corr_pvs_opmode_ready.values()):
-            self._call_callback('SyncKicks-Sts', val == self.SLOW_REF_SYNC)
-        else:
-            self._call_callback('SyncKicks-Sts', val != self.SLOW_REF_SYNC)
+    def _timed_out(self, mode='ready'):
+        """Timed out."""
+        for _ in range(NUM_TIMEOUT):
+            ok = True
+            for corr in self.chcvs:
+                if mode == 'ready':
+                    ok &= corr.is_ready
+                elif mode == 'applied':
+                    ok &= corr.is_applied
+            if ok:
+                return False
+            _time.sleep(TINY_INTERVAL)
+        return True

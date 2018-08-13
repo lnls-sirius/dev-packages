@@ -4,13 +4,21 @@ import time as _time
 import numpy as _np
 from threading import Thread
 import logging as _log
-from si_ap_sofb.matrix import Matrix
-from si_ap_sofb.orbit import Orbit
-from si_ap_sofb.correctors import Correctors
+from pcaspy import Driver as _PCasDriver
+import siriuspy.csdevice.orbitcorr as _csorb
+from si_ap_sofb.matrix import (
+                            BaseMatrix as _BaseMatrix,
+                            EpicsMatrix as _EpicsMatrix)
+from si_ap_sofb.orbit import (
+                            BaseOrbit as _BaseOrbit,
+                            EpicsOrbit as _EpicsOrbit)
+from si_ap_sofb.correctors import (
+                            BaseCorrectors as _BaseCorrectors,
+                            EpicsCorrectors as _EpicsCorrectors)
 from si_ap_sofb.definitions import NR_BPMS, NR_CH, NR_CORRS, DANG, DFREQ
 
 
-class App:
+class SOFB:
     """Main Class of the IOC."""
 
     def get_database(self):
@@ -35,24 +43,61 @@ class App:
         db.update(self.orbit.get_database())
         return db
 
-    def __init__(self, driver=None):
+    def __init__(self, driver=None, orbit=None, matrix=None, correctors=None):
         """Initialize Object."""
         _log.info('Starting App...')
-        self._driver = driver
-        self.prefix = ''
-        self.orbit = Orbit(prefix=self.prefix, callback=self._update_driver)
-        self.correctors = Correctors(prefix=self.prefix,
-                                     callback=self._update_driver)
-        self.matrix = Matrix(prefix=self.prefix, callback=self._update_driver)
-        self.auto_corr = 0
-        self.measuring_resp_matrix = False
-        self.auto_corr_freq = 1
-        self.correction_mode = 1
-        self.strengths = {'ch': 0.0, 'cv': 0.0, 'rf': 0.0}
+        self._driver = None
+        self._orbit = self._correctors = self._matrix = None
+        self._auto_corr = _csorb.AutoCorr.Off
+        self._measuring_respmat = False
+        self._auto_corr_freq = 1
+        self._correction_mode = 1
+        self._corr_factor = {'ch': 0.0, 'cv': 0.0, 'rf': 0.0}
         self._max_kick = {'ch': 300, 'cv': 300, 'rf': 3000}
-        self.dtheta = None
+        self._dtheta = None
+        self._ref_corr_kicks = None
         self._thread = None
         self._database = self.get_database()
+
+        self.driver = driver
+        self.prefix = ''
+        self.orbit = orbit
+        self.correctors = correctors
+        self.matrix = matrix
+        if self.orbit is not None:
+            self.orbit = _EpicsOrbit(
+                            prefix=self.prefix, callback=self._update_driver)
+        self.correctors = _EpicsCorrectors(
+                            prefix=self.prefix, callback=self._update_driver)
+        self.matrix = _EpicsMatrix(
+                            prefix=self.prefix, callback=self._update_driver)
+
+    @property
+    def orbit(self):
+        return self._orbit
+
+    @orbit.setter
+    def orbit(self, orb):
+        if isinstance(orb, _BaseOrbit):
+            self._orbit = orb
+
+    @property
+    def correctors(self):
+        return self._correctors
+
+    @correctors.setter
+    def correctors(self, corrs):
+        if isinstance(corrs, _BaseCorrectors):
+            self._correctors = corrs
+
+    @property
+    def matrix(self):
+        return self._matrix
+
+    @matrix.setter
+    def matrix(self, mat):
+        if isinstance(mat, _BaseMatrix):
+            self._matrix = mat
 
     @property
     def driver(self):
@@ -61,8 +106,8 @@ class App:
 
     @driver.setter
     def driver(self, driver):
-        _log.debug("Setting App's driver.")
-        self._driver = driver
+        if isinstance(driver, _PCasDriver):
+            self._driver = driver
 
     def write(self, reason, value):
         """Write value in database."""
@@ -96,31 +141,20 @@ class App:
         if dt > 0:
             _time.sleep(dt)
 
-    def connect(self):
-        """Trigger connection of other internal classes to external PVs."""
-        _log.info('Connecting to Orbit PVs:')
-        self._call_callback('Log-Mon', 'Connecting to Low Level PVs')
-        self.orbit.connect()
-        _log.info('All Orbit connection opened.')
-        self.matrix.connect()
-        _log.info('Connecting to Correctors PVs:')
-        self.correctors.connect()
-        _log.info('All Correctors connection opened.')
-
-    def apply_kicks(self, code):
+    def apply_corr(self, code):
         """Apply calculated kicks on the correctors."""
-        if not self.correction_mode:
+        if not self._correction_mode:
             self._call_callback('Log-Mon', 'Err: Offline, cannot apply kicks.')
             return False
         if self._thread and self._thread.is_alive():
             self._call_callback('Log-Mon',
-                                'Err: AutoCorr or MeasRSPMtx is On.')
+                                'Err: AutoCorr or MeasRespMat is On.')
             return False
-        if self.dtheta is None:
+        if self._dtheta is None:
             self._call_callback('Log-Mon',
                                 'Err: Cannot Apply Kick. Calc Corr first.')
             return False
-        Thread(target=self._apply_kicks,
+        Thread(target=self._apply_corr,
                kwargs={'code': code},
                daemon=True).start()
         return True
@@ -129,30 +163,81 @@ class App:
         """Calculate correction."""
         if self._thread and self._thread.is_alive():
             self._call_callback('Log-Mon',
-                                'Err: AutoCorr or MeasRSPMtx is On.')
+                                'Err: AutoCorr or MeasRespMat is On.')
             return False
         Thread(target=self._calc_correction, daemon=True).start()
         return True
 
-    def _apply_kicks(self, code):
-        kicks = self.dtheta.copy()
-        str_ = 'Applying '
-        if code == 0:
-            str_ += 'CH '
+    def set_respmat_meas_state(self, value):
+        if value == _csorb.MeasRespMatCmd.Start:
+            self._start_meas_respmat()
+        elif value == _csorb.MeasRespMatCmd.Stop:
+            self._stop_meas_respmat()
+        elif value == _csorb.MeasRespMatCmd.Reset:
+            self._reset_meas_respmat()
+
+    def set_auto_corr(self, value):
+        if value == _csorb.AutoCorr.On:
+            if self._auto_corr == _csorb.AutoCorr.On:
+                self._call_callback('Log-Mon', 'Err: AutoCorr is Already On.')
+                return False
+            self._auto_corr = value
+            if self._thread and self._thread.is_alive():
+                self._call_callback('Log-Mon',
+                                    'Err: Cannot Correct, Measuring RespMat.')
+                return False
+            self._call_callback('Log-Mon', 'Turning Auto Correction On.')
+            self._thread = Thread(target=self._do_auto_corr,
+                                  daemon=True)
+            self._thread.start()
+        elif value == _csorb.AutoCorr.Off:
+            self._call_callback('Log-Mon', 'Turning Auto Correction Off.')
+            self._auto_corr = value
+        return True
+
+    def set_correction_mode(self, value):
+        self._correction_mode = value
+        self.orbit.correction_mode = value
+        self._call_callback(
+            'Log-Mon',
+            'Changing to {0:s} mode.'.format(_csorb.CorrMode._fields[value])
+            )
+        self._call_callback('CorrMode-Sts', value)
+        self.orbit.get_orbit()
+        return True
+
+    def set_auto_corr_frequency(self, value):
+        self._auto_corr_freq = value
+        self._call_callback('AutoCorrFreq-RB', value)
+        return True
+
+    def set_max_kick(self, plane, value):
+        self._max_kick[plane] = float(value)
+        self._call_callback('MaxKick'+plane.upper()+'-RB', float(value))
+
+    def set_corr_factor(self, plane, value):
+        self._corr_factor[plane] = value/100
+        self._call_callback(
+            'Log-Mon',
+            '{0:s} CorrFactor set to {1:6.2f}'.format(plane.upper(), value))
+        self._call_callback('CorrFactor'+plane.upper()+'-RB', value)
+        return True
+
+    def _apply_corr(self, code):
+        kicks = self._dtheta.copy()
+        if code == _csorb.ApplyCorr.CH:
             kicks[NR_CH:] = 0
-        elif code == 1:
-            str_ += 'CV '
+        elif code == _csorb.ApplyCorr.CV:
             kicks[:NR_CH] = 0
             kicks[-1] = 0
-        elif code == 2:
-            str_ += 'RF '
+        elif code == _csorb.ApplyCorr.RF:
             kicks[:-1] = 0
-        elif code == 3:
-            str_ += 'All '
-        self._call_callback('Log-Mon', str_ + 'kicks.')
+        self._call_callback(
+            'Log-Mon',
+            'Applying {0:s} kicks.'.format(_csorb.ApplyCorr._fields[code]))
         kicks = self._process_kicks(kicks)
         if any(kicks):
-            self.correctors.apply_kicks(self.corr_kicks + kicks)
+            self.correctors.apply_kicks(self._ref_corr_kicks + kicks)
 
     def _call_callback(self, pv, value):
         self._update_driver(self.prefix + pv, value)
@@ -167,12 +252,10 @@ class App:
         if reason.endswith(('-Sts', '-RB', '-Mon')):
             _log.debug('App: PV {0:s} is read only.'.format(reason))
             return False
-        enums = (self._database[reason].get('enums') or
-                 self._database[reason].get('Enums'))
+        enums = self._database[reason].get('enums')
         if enums is not None:
             if isinstance(value, int):
-                len_ = len(enums)
-                if value >= len_:
+                if value >= len(enums):
                     _log.warning('App: value {0:d} too large '.format(value) +
                                  'for PV {0:s} of type enum'.format(reason))
                     return False
@@ -182,27 +265,27 @@ class App:
                     return False
         return True
 
-    def _abort_measure_response_matrix(self, value):
-        if not self.measuring_resp_matrix:
+    def _stop_meas_respmat(self):
+        if not self._measuring_respmat:
             self._call_callback('Log-Mon', 'Err :No Measurement ocurring.')
             return False
         self._call_callback('Log-Mon', 'Aborting measurement.')
-        self.measuring_resp_matrix = False
+        self._measuring_respmat = False
         self._thread.join()
         self._call_callback('Log-Mon', 'Measurement aborted.')
         return True
 
-    def _reset_measure_response_matrix(self, value):
-        if self.measuring_resp_matrix:
+    def _reset_meas_respmat(self):
+        if self._measuring_respmat:
             self._call_callback('Log-Mon',
                                 'Cannot Reset, Measurement in process.')
             return False
         self._call_callback('Log-Mon', 'Reseting measurement status.')
-        self._call_callback('MeasRSPMtxState-Sts', 0)
+        self._call_callback('MeasRespMat-Mon', _csorb.MeasRespMatMon.Idle)
         return True
 
-    def _start_measure_response_matrix(self, value):
-        if self.measuring_resp_matrix:
+    def _start_meas_respmat(self):
+        if self._measuring_respmat:
             self._call_callback('Log-Mon',
                                 'Err: Measurement already in process.')
             return False
@@ -210,20 +293,20 @@ class App:
             self._call_callback('Log-Mon',
                                 'Err: Cannot Measure, AutoCorr is On.')
             return False
-        self.measuring_resp_matrix = True
+        self._measuring_respmat = True
         self._call_callback('Log-Mon', 'Starting RSP Matrix measurement.')
-        self._thread = Thread(target=self._measure_response_matrix,
-                              daemon=True)
+        self._thread = Thread(target=self._do_meas_respmat, daemon=True)
         self._thread.start()
         return True
 
-    def _measure_response_matrix(self):
-        self._call_callback('MeasRSPMtxState-Sts', 1)
+    def _do_meas_respmat(self):
+        self._call_callback('MeasRespMat-Mon', _csorb.MeasRespMatMon.Measuring)
         mat = _np.zeros([2*NR_BPMS, NR_CORRS])
-        orig_kicks = self.correctors.get_correctors_strength()
+        orig_kicks = self.correctors.get_strength()
         for i in range(NR_CORRS):
-            if not self.measuring_resp_matrix:
-                self._call_callback('MeasRSPMtxState-Sts', 3)
+            if not self._measuring_respmat:
+                self._call_callback(
+                            'MeasRespMat-Mon', _csorb.MeasRespMatMon.Aborted)
                 self.correctors.apply_kicks(orig_kicks)
                 return
             self._call_callback(
@@ -241,47 +324,28 @@ class App:
             mat[:, i] = (orbp-orbn)/delta
         self.correctors.apply_kicks(orig_kicks)
         self._call_callback('Log-Mon', 'Measurement Completed.')
-        self.matrix.set_resp_matrix(list(mat.flatten()))
-        self._call_callback('MeasRSPMtxState-Sts', 2)
-        self.measuring_resp_matrix = False
+        self.set_respmat(list(mat.flatten()))
+        self._call_callback('MeasRespMat-Mon', _csorb.MeasRespMatMon.Completed)
+        self._measuring_respmat = False
 
-    def _toggle_auto_corr(self, value):
-        if value:
-            if self.auto_corr:
-                self._call_callback('Log-Mon', 'Err: AutoCorr is Already On.')
-                return False
-            self.auto_corr = value
-            if self._thread and self._thread.is_alive():
-                self._call_callback('Log-Mon',
-                                    'Err: Cannot Correct, Measuring RSPMtx.')
-                return False
-            self._call_callback('Log-Mon', 'Turning Auto Correction On.')
-            self._thread = Thread(target=self._automatic_correction,
-                                  daemon=True)
-            self._thread.start()
-        else:
-            self._call_callback('Log-Mon', 'Turning Auto Correction Off.')
-            self.auto_corr = value
-        return True
-
-    def _automatic_correction(self):
-        if not self.correction_mode:
+    def _do_auto_corr(self):
+        if not self._correction_mode:
             self._call_callback('Log-Mon',
                                 'Err: Cannot Auto Correct in Offline Mode')
-            self._call_callback('AutoCorrState-Sel', 0)
-            self._call_callback('AutoCorrState-Sts', 0)
+            self._call_callback('AutoCorr-Sel', 0)
+            self._call_callback('AutoCorr-Sts', 0)
             return
-        self._call_callback('AutoCorrState-Sts', 1)
-        while self.auto_corr:
+        self._call_callback('AutoCorr-Sts', 1)
+        while self._auto_corr == _csorb.AutoCorr.On:
             t0 = _time.time()
             orb = self.orbit.get_orbit()
             kicks = self.matrix.calc_kicks(orb)
             kicks = self._process_kicks(kicks)
-            kicks += self.correctors.get_correctors_strength()
+            kicks += self.correctors.get_strength()
             self.correctors.apply_kicks(kicks)
             tf = _time.time()
             dt = (tf-t0)
-            interval = 1/self.auto_corr_freq
+            interval = 1/self._auto_corr_freq
             if dt > interval:
                 _log.debug('App: check took {0:f}ms.'.format(dt*1000))
                 self._call_callback(
@@ -292,72 +356,44 @@ class App:
             if dt > 0:
                 _time.sleep(dt)
         self._call_callback('Log-Mon', 'Auto Correction is Off.')
-        self._call_callback('AutoCorrState-Sts', 0)
-
-    def _toggle_correction_mode(self, value):
-        self.correction_mode = value
-        self.orbit.correction_mode = value
-        self._call_callback(
-            'Log-Mon',
-            'Changing to {0:s} mode.'.format('Online' if value else 'Offline')
-            )
-        self._call_callback('CorrectionMode-Sts', value)
-        self.orbit.get_orbit()
-        return True
-
-    def _set_auto_corr_frequency(self, value):
-        self.auto_corr_freq = value
-        self._call_callback('AutoCorrFreq-RB', value)
-        return True
+        self._call_callback('AutoCorr-Sts', 0)
 
     def _calc_correction(self):
         self._call_callback('Log-Mon', 'Getting the orbit.')
         orb = self.orbit.get_orbit()
         self._call_callback('Log-Mon', 'Calculating the kicks.')
-        self.corr_kicks = self.correctors.get_correctors_strength()
-        self.dtheta = self.matrix.calc_kicks(orb)
-
-    def _set_max_kick(self, plane, value):
-        self._max_kick[plane] = float(value)
-        self._call_callback(plane.upper()+'MaxKick-RB', float(value))
-
-    def _set_strength(self, plane, value):
-        self.strengths[plane] = value/100
-        self._call_callback(
-            'Log-Mon',
-            'Setting {0:s} Strength to {1:6.2f}'.format(plane.upper(), value))
-        self._call_callback(plane.upper() + 'Strength-RB', value)
-        return True
+        self._ref_corr_kicks = self.correctors.get_strength()
+        self._dtheta = self.matrix.calc_kicks(orb)
 
     def _process_kicks(self, kicks):
-        kicks[:NR_CH] *= self.strengths['ch']
-        kicks[NR_CH:-1] *= self.strengths['cv']
-        kicks[-1] *= self.strengths['rf']
+        kicks[:NR_CH] *= self._corr_factor['ch']
+        kicks[NR_CH:-1] *= self._corr_factor['cv']
+        kicks[-1] *= self._corr_factor['rf']
 
         max_kick_ch = max(abs(kicks[:NR_CH]))
         if max_kick_ch > self._max_kick['ch']:
             factor = self._max_kick['ch']/max_kick_ch
             kicks[:NR_CH] *= factor
-            percent = self.strengths['ch'] * factor * 100
+            percent = self._corr_factor['ch'] * factor * 100
             self._call_callback(
                 'Log-Mon',
-                'Warn: CH kick > CHMaxKick. Using {0:5.2f}%'.format(percent)
+                'Warn: CH kick > MaxKickCH. Using {0:5.2f}%'.format(percent)
                 )
         max_kick_cv = max(abs(kicks[NR_CH:-1]))
         if max_kick_cv > self._max_kick['cv']:
             factor = self._max_kick['cv']/max_kick_cv
             kicks[NR_CH:-1] *= factor
-            percent = self.strengths['cv'] * factor * 100
+            percent = self._corr_factor['cv'] * factor * 100
             self._call_callback(
                 'Log-Mon',
-                'Warn: CV kick > CVMaxKick. Using {0:5.2f}%'.format(percent)
+                'Warn: CV kick > MaxKickCV. Using {0:5.2f}%'.format(percent)
                 )
         if abs(kicks[-1]) > self._max_kick['rf']:
             factor = self._max_kick['rf'] / abs(kicks[-1])
             kicks[-1] *= factor
-            percent = self.strengths['rf'] * factor * 100
+            percent = self._corr_factor['rf'] * factor * 100
             self._call_callback(
                 'Log-Mon',
-                'Warn: RF kick > RFMaxKick. Using {0:5.2f}%'.format(percent)
+                'Warn: RF kick > MaxKickRF. Using {0:5.2f}%'.format(percent)
                 )
         return kicks

@@ -5,7 +5,7 @@ from numpy import zeros as _zeros
 from numpy.random import uniform as _rand
 import epics as _epics
 from siriuspy.namesys import SiriusPVName as _PVName
-from siriuspy.diagnostics import bpmsdata as _bpmsdata
+from siriuspy.search.bpms_search import BPMSearch as _BPMSearch
 from siriuspy.envars import vaca_prefix as PREFIX
 
 NOISE_LEVEL = 80  # nanometer
@@ -37,9 +37,9 @@ class App:
     def __init__(self, driver=None):
         """Initialize the instance."""
         _log.info('Starting App...')
-        self.bpm_names = [_PVName(PREFIX + n) for n in _bpmsdata.get_names()]
+        self.bpm_names = [_PVName(PREFIX + n) for n in _BPMSearch.get_names()]
         self.bpm_nicknames = self._get_bpms_nickname()
-        self.bpm_pos = _bpmsdata.get_positions()
+        self.bpm_pos = _BPMSearch.get_positions()
         self.nr_bpms = len(self.bpm_names)
         self.orbx = _zeros(self.nr_bpms, dtype=float)
         self.orby = _zeros(self.nr_bpms, dtype=float)
