@@ -44,6 +44,18 @@ class BPMSearch:
 
     @classmethod
     def get_positions(cls):
+    def get_nicknames(cls, names=None, filters=None, sorting=None):
+        """Return a list with BPM nicknames."""
+        cls._get_data()
+        if not names:
+            names = cls.get_names(filters=filters, sorting=sorting)
+        nicknames = len(names)*['']
+        for i, bpm in enumerate(names):
+            nicknames[i] = bpm.sub + ('-' + bpm.idx if bpm.idx else '')
+        return nicknames
+
+    @classmethod
+    def get_positions(cls, names=None, filters=None, sorting=None):
         """Return a dictionary with the beaglebone to power supply mapping."""
         cls._get_data()
         return _dcopy(cls._pos)
