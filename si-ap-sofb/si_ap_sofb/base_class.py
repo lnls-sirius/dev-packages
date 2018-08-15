@@ -12,6 +12,14 @@ class BaseClass(_Callback):
         self._status = 0b0
 
     @property
+    def prefix(self):
+        return self._prefix
+
+    @property
+    def acc(self):
+        return self._acc
+
+    @property
     def status(self):
         self._update_status()
         return self._status
