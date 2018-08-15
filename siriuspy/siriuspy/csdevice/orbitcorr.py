@@ -117,7 +117,16 @@ def get_sofb_database(acc, prefix=''):
 
 def get_corrs_database(acc, prefix=''):
     """Return OpticsCorr-Chrom Soft IOC database."""
+    const = get_consts(acc)
     db = {
+        'KicksCH-Mon': {
+            'type': 'float', 'count': const.NR_CH, 'value': const.NR_CH*[0],
+            'unit': 'urad'},
+        'KicksCV-Mon': {
+            'type': 'float', 'count': const.NR_CV, 'value': const.NR_CV*[0],
+            'unit': 'urad'},
+        'KicksRF-Mon': {
+            'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 3},
         'SyncKicks-Sel': {
             'type': 'enum', 'enums': SyncKicks._fields, 'value': 1},
         'SyncKicks-Sts': {
