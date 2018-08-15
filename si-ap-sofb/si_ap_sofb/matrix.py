@@ -12,10 +12,9 @@ class BaseMatrix(_BaseClass):
 
 class EpicsMatrix(BaseMatrix):
     """Class of the Response Matrix."""
-    path = _os.path.dirname(__file__)
-    RSP_MTX_FILENAME = _os.path.join(path, 'data', 'respmat')
-    del path
-    EXT = '.sirspmtx'
+    path_ = _os.path.abspath(_os.path.dirname(__file__))
+    RESPMAT_FILENAME = _os.path.join(path_, 'data', 'respmat.sirespmat')
+    del path_
 
     def get_database(self):
         """Get the database of the class."""
@@ -148,7 +147,7 @@ class EpicsMatrix(BaseMatrix):
         return True
 
     def _load_respmat(self):
-        filename = self.RSP_MTX_FILENAME+self.EXT
+        filename = self.RESPMAT_FILENAME
         if _os.path.isfile(filename):
             bkup = self.respmat.copy()
             self.respmat = _np.loadtxt(filename)
@@ -160,4 +159,4 @@ class EpicsMatrix(BaseMatrix):
 
     def _save_respmat(self, mat):
         self._update_log('Saving RespMat to file')
-        _np.savetxt(self.RSP_MTX_FILENAME+self.EXT, mat)
+        _np.savetxt(self.RESPMAT_FILENAME, mat)
