@@ -27,6 +27,7 @@ class EpicsMatrix(BaseMatrix):
         db['BPMYEnblList-SP'][prop] = lambda x: self.set_enbl_list('bpmy', x)
         db['RFEnbl-Sel'][prop] = lambda x: self.set_enbl_list('rf', x)
         db['NumSingValues-SP'][prop] = self.set_num_sing_values
+        db = super().get_database(db)
         return db
 
     def __init__(self, acc, prefix='', callback=None):

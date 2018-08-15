@@ -35,7 +35,7 @@ class SOFB(_BaseClass):
         db['MaxKickCV-SP'][prop] = lambda x: self.set_max_kick('cv', x)
         db['MaxKickRF-SP'][prop] = lambda x: self.set_max_kick('rf', x)
         db['ApplyCorr-Cmd'][prop] = self.apply_corr
-        db = {self.prefix + k: v for k, v in db.items()}
+        db = super().get_database(db)
         db.update(self.correctors.get_database())
         db.update(self.matrix.get_database())
         db.update(self.orbit.get_database())

@@ -34,6 +34,7 @@ class EpicsOrbit(BaseOrbit):
         db['OrbitPointsNum-SP'][prop] = self.set_smooth_npts
         db['OrbitAcqRate-SP'][prop] = self.set_orbit_acq_rate
         db['CorrMode-Sel'][prop] = self.set_correction_mode
+        db = super().get_database(db)
         return db
 
     def __init__(self, acc, prefix='', callback=None):
