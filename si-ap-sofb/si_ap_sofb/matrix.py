@@ -2,6 +2,7 @@
 
 import os as _os
 import numpy as _np
+from functools import partial as _part
 import siriuspy.csdevice.orbitcorr as _csorb
 from .base_class import BaseClass as _BaseClass
 
@@ -21,11 +22,11 @@ class EpicsMatrix(BaseMatrix):
         db = _csorb.get_respmat_database(self.acc)
         prop = 'fun_set_pv'
         db['RespMat-SP'][prop] = self.set_respmat
-        db['CHEnblList-SP'][prop] = lambda x: self.set_enbl_list('ch', x)
-        db['CVEnblList-SP'][prop] = lambda x: self.set_enbl_list('cv', x)
-        db['BPMXEnblList-SP'][prop] = lambda x: self.set_enbl_list('bpmx', x)
-        db['BPMYEnblList-SP'][prop] = lambda x: self.set_enbl_list('bpmy', x)
-        db['RFEnbl-Sel'][prop] = lambda x: self.set_enbl_list('rf', x)
+        db['CHEnblList-SP'][prop] = _part(self.set_enbl_list, 'ch')
+        db['CVEnblList-SP'][prop] = _part(self.set_enbl_list, 'cv')
+        db['BPMXEnblList-SP'][prop] = _part(self.set_enbl_list, 'bpmx')
+        db['BPMYEnblList-SP'][prop] = _part(self.set_enbl_list, 'bpmy')
+        db['RFEnbl-Sel'][prop] = _part(self.set_enbl_list, 'rf')
         db['NumSingValues-SP'][prop] = self.set_num_sing_values
         db = super().get_database(db)
         return db

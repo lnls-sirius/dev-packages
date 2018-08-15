@@ -4,6 +4,7 @@ import time as _time
 import os as _os
 import numpy as _np
 import epics as _epics
+from functools import partial as _part
 import siriuspy.util as _util
 import siriuspy.csdevice.orbitcorr as _csorb
 from siriuspy.thread import RepeaterThread as _Repeat
@@ -27,10 +28,10 @@ class EpicsOrbit(BaseOrbit):
         """Get the database of the class."""
         db = _csorb.get_orbit_database(self.acc)
         prop = 'fun_set_pv'
-        db['OrbitRefX-SP'][prop] = lambda x: self.set_ref_orbit('x', x)
-        db['OrbitRefY-SP'][prop] = lambda x: self.set_ref_orbit('y', x)
-        db['OrbitOfflineX-SP'][prop] = lambda x: self.set_offline_orbit('x', x)
-        db['OrbitOfflineY-SP'][prop] = lambda x: self.set_offline_orbit('y', x)
+        db['OrbitRefX-SP'][prop] = _part(self.set_ref_orbit, 'x')
+        db['OrbitRefY-SP'][prop] = _part(self.set_ref_orbit, 'y')
+        db['OrbitOfflineX-SP'][prop] = _part(self.set_offline_orbit, 'x')
+        db['OrbitOfflineY-SP'][prop] = _part(self.set_offline_orbit, 'y')
         db['OrbitPointsNum-SP'][prop] = self.set_smooth_npts
         db['OrbitAcqRate-SP'][prop] = self.set_orbit_acq_rate
         db['CorrMode-Sel'][prop] = self.set_correction_mode
