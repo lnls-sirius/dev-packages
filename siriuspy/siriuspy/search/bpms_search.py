@@ -43,7 +43,6 @@ class BPMSearch:
                                 cls._names, filters=filters, sorting=sorting)
 
     @classmethod
-    def get_positions(cls):
     def get_nicknames(cls, names=None, filters=None, sorting=None):
         """Return a list with BPM nicknames."""
         cls._get_data()
@@ -56,9 +55,11 @@ class BPMSearch:
 
     @classmethod
     def get_positions(cls, names=None, filters=None, sorting=None):
-        """Return a dictionary with the beaglebone to power supply mapping."""
+        """Return a list with the positions along the ring."""
         cls._get_data()
-        return _dcopy(cls._pos)
+        if not names:
+            names = cls.get_names(filters=filters, sorting=sorting)
+        return [cls._mapping[k]['position'] for k in names]
 
     @classmethod
     def get_crates_mapping(cls):
