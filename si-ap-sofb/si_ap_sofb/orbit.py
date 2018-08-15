@@ -122,9 +122,6 @@ class EpicsOrbit(BaseOrbit):
         self._acq_rate = value
         self._orbit_thread.interval = 1/value
 
-    def _update_log(self, value):
-        self.run_callbacks(self.prefix + 'Log-Mon', value)
-
     def _load_ref_orbits(self):
         if _os.path.isfile(self.REF_ORBIT_FILENAME):
             self.ref_orbits['x'], self.ref_orbits['y'] = _np.loadtxt(

@@ -255,8 +255,6 @@ class EpicsCorrectors(BaseCorrectors):
         corr_values[-1] = self._rf_ctrl.value
         return corr_values
 
-    def _update_log(self, value):
-        self.run_callbacks(self.prefix + 'Log-Mon', value)
 
     def set_chcvs_mode(self, value):
         self._synced_kicks = value
