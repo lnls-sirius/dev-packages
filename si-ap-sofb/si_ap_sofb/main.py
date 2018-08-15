@@ -14,8 +14,6 @@ from .correctors import (BaseCorrectors as _BaseCorrectors,
 from .base_class import BaseClass as _BaseClass
 
 INTERVAL = 0.1
-DANG = 2E-1  # to be used in matrix calculation
-DFREQ = 200  # to be used in matrix calculation
 
 
 class SOFB(_BaseClass):
@@ -35,6 +33,9 @@ class SOFB(_BaseClass):
         db['MaxKickCH-SP'][prop] = _part(self.set_max_kick, 'ch')
         db['MaxKickCV-SP'][prop] = _part(self.set_max_kick, 'cv')
         db['MaxKickRF-SP'][prop] = _part(self.set_max_kick, 'rf')
+        db['MeasRespMatKickCH-SP'][prop] = _part(self.set_respmat_kick, 'ch')
+        db['MeasRespMatKickCV-SP'][prop] = _part(self.set_respmat_kick, 'cv')
+        db['MeasRespMatKickRF-SP'][prop] = _part(self.set_respmat_kick, 'rf')
         db['ApplyCorr-Cmd'][prop] = self.apply_corr
         db = super().get_database(db)
         db.update(self.correctors.get_database())
@@ -54,6 +55,7 @@ class SOFB(_BaseClass):
         self._auto_corr_freq = 1
         self._corr_factor = {'ch': 0.0, 'cv': 0.0, 'rf': 0.0}
         self._max_kick = {'ch': 300, 'cv': 300, 'rf': 3000}
+        self._meas_respmat_kick = {'ch': 0.2, 'cv': 0.2, 'rf': 200}
         self._dtheta = None
         self._ref_corr_kicks = None
         self._thread = None
@@ -201,6 +203,10 @@ class SOFB(_BaseClass):
         self._update_driver('CorrFactor'+plane.upper()+'-RB', value)
         return True
 
+    def set_respmat_kick(self, plane, value):
+        self._meas_respmat_kick[plane] = value
+        self.run_callbacks('MeasRespMatKick'+plane.upper()+'-RB', value)
+
     def _update_status(self):
         self._status = bool(
             self._correctors.status | self._matrix.status | self._orbit.status)
@@ -291,7 +297,12 @@ class SOFB(_BaseClass):
                 return
             self._update_log(
                     'Varying Corrector {0:d} of {1:d}'.format(i, nr_corrs))
-            delta = DANG if i < nr_corrs-1 else DFREQ
+            if i < self._const.NR_CH:
+                delta = self._meas_respmat_kick['ch']
+            elif i < nr_corrs - 1:
+                delta = self._meas_respmat_kick['cv']
+            else:
+                delta = self._meas_respmat_kick['rf']
             kicks = orig_kicks.copy()
             kicks[i] += delta/2
             self.correctors.apply_kicks(kicks)
