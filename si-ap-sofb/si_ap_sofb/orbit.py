@@ -32,6 +32,7 @@ class EpicsOrbit(BaseOrbit):
         db['OrbitOfflineX-SP'][prop] = lambda x: self.set_offline_orbit('x', x)
         db['OrbitOfflineY-SP'][prop] = lambda x: self.set_offline_orbit('y', x)
         db['OrbitPointsNum-SP'][prop] = self.set_smooth_npts
+        db['OrbitAcqRate-SP'][prop] = self.set_orbit_acq_rate
         db['CorrMode-Sel'][prop] = self.set_correction_mode
         return db
 
@@ -48,6 +49,7 @@ class EpicsOrbit(BaseOrbit):
                 'x': _np.zeros(self._const.NR_BPMS),
                 'y': _np.zeros(self._const.NR_BPMS)}
         self._smooth_npts = 1
+        self._acq_rate = 10
         self.correction_mode = _csorb.CorrMode.Online
         dic = {'connection_timeout': TIMEOUT}
         self.pvs_pos = {
@@ -55,7 +57,8 @@ class EpicsOrbit(BaseOrbit):
                 'x': _epics.PV(LL_PREF+name+':PosX-Mon', **dic),
                 'y': _epics.PV(LL_PREF+name+':PosY-Mon', **dic)}
             for name in self._const.BPM_NAMES}
-        self._orbit_thread = _Repeat(0.1, self._update_orbits, niter=0)
+        self._orbit_thread = _Repeat(
+                        1/self._acq_rate, self._update_orbits, niter=0)
         self._orbit_thread.start()
 
     def get_orbit(self, reset=False):
@@ -71,7 +74,7 @@ class EpicsOrbit(BaseOrbit):
                     orbx = self.smooth_orb['x']
                     orby = self.smooth_orb['y']
                     break
-                _time.sleep(0.1)  # assuming 10Hz of update rate of orbit
+                _time.sleep(1/self._acq_rate)
             else:
                 self._update_log('ERR: get orbit function timeout.')
                 orbx = self.ref_orbit['x']
@@ -114,6 +117,10 @@ class EpicsOrbit(BaseOrbit):
         self._reset_orbs()
         self.run_callbacks('OrbitRef'+plane.upper()+'-RB', orb)
         return True
+
+    def set_orbit_acq_rate(self, value):
+        self._acq_rate = value
+        self._orbit_thread.interval = 1/value
 
     def _update_log(self, value):
         self.run_callbacks(self.prefix + 'Log-Mon', value)
