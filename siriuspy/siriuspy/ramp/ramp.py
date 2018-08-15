@@ -361,7 +361,7 @@ class BoosterRamp(_ConfigSrv):
         if value != rdip['start_energy']:
             self._update_waveform_dipole()
             w = self._waveforms[self.MANAME_DIPOLE]
-            w.start_value = value
+            w.start_energy = value
             if w.invalid:  # triggers update in w
                 raise _RampInvalidDipoleWfmParms(
                     'Invalid start_energy')

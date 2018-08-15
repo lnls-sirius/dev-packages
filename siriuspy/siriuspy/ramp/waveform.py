@@ -55,7 +55,7 @@ class WaveformParam:
             elif self._rampdown_stop_time <= t <= self._duration:
                 return self._func_region4(t)
             else:
-                raise ValueError()
+                raise ValueError(str(t))
         self.update()
         if self._invalid:
             raise ValueError('Invalid parameters')
@@ -418,8 +418,7 @@ class _WaveformMagnet(_Magnet):
 
     @property
     def times(self):
-        dt = self.duration / (self.wfm_nrpoints - 1.0)
-        return [dt*i for i in range(self.wfm_nrpoints)]
+        return _np.linspace(0, self.duration, self.wfm_nrpoints)
 
     @property
     def currents(self):
