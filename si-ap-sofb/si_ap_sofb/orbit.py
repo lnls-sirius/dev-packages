@@ -19,7 +19,9 @@ class BaseOrbit(_BaseClass):
 
 class EpicsOrbit(BaseOrbit):
     """Class to deal with orbit acquisition."""
-    REF_ORBIT_FILENAME = 'data/reference_orbit.siorb'
+    path_ = _os.path.abspath(_os.path.dirname(__file__))
+    REF_ORBIT_FILENAME = _os.path.join(path_, 'data', 'reference_orbit.siorb')
+    del path_
 
     def get_database(self):
         """Get the database of the class."""
