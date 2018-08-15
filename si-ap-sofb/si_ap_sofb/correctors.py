@@ -5,6 +5,7 @@ import numpy as _np
 import epics as _epics
 import siriuspy.util as _util
 import siriuspy.csdevice.orbitcorr as _csorb
+from siriuspy.thread import RepeaterThread as _Repeat
 from siriuspy.search.hl_time_search import HLTimeSearch as _HLTimeSearch
 from siriuspy.csdevice.pwrsupply import Const as _PwrSplyConst
 from siriuspy.csdevice.timesys import events_modes as _EVT_MODES
@@ -213,6 +214,9 @@ class EpicsCorrectors(BaseCorrectors):
         self._chcvs = {CHCV(dev) for dev in self._names}
         self._rf_ctrl = RFCtrl()
         self._timing = TimingConfig(acc)
+        self._corrs_thread = _Repeat(
+                1/self._acq_rate, self._update_corrs_strength, niter=0)
+        self._corrs_thread.start()
 
     def apply_corr(self, values):
         """Apply kicks."""
@@ -252,12 +256,18 @@ class EpicsCorrectors(BaseCorrectors):
 
     def get_strength(self):
         """Get the correctors strengths."""
-        corr_values = _np.zeros(len(self._names)+1, dtype=float)
+        corr_values = _np.zeros(self._const.NR_CORRS, dtype=float)
         for i, corr in enumerate(self._chcvs):
-            corr_values[i] = corr.value
+            if corr.connected:
+                corr_values[i] = corr.value
         corr_values[-1] = self._rf_ctrl.value
         return corr_values
 
+    def _update_corrs_strength(self):
+        corr_vals = self.get_strength()
+        self.run_callbacks('KicksCH-Mon', corr_vals[:self._const.NR_CH])
+        self.run_callbacks('KicksCV-Mon', corr_vals[self._const.NR_CH:-1])
+        self.run_callbacks('KicksRF-Mon', corr_vals[-1])
 
     def set_chcvs_mode(self, value):
         self._synced_kicks = value
