@@ -26,6 +26,12 @@ class BaseClass(_Callback):
 
     def get_database(self):
         return dict()
+    def run_callbacks(self, pvname, *args, **kwargs):
+        super().run_callbacks(self._prefix + pvname, *args, **kwargs)
+
+
+    def _update_log(self, value):
+        self.run_callbacks('Log-Mon', value)
 
     def _update_status(self):
         pass

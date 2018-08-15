@@ -227,8 +227,6 @@ class SOFB(_BaseClass):
         self._driver.setParam(pvname, value)
         self._driver.updatePVs()
 
-    def _update_log(self, value):
-        self._update_driver(self.prefix + 'Log-Mon', value)
 
     def _isValid(self, reason, value):
         if reason.endswith(('-Sts', '-RB', '-Mon')):
