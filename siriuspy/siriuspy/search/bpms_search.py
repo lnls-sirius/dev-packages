@@ -37,7 +37,7 @@ class BPMSearch:
 
     @classmethod
     def get_names(cls, filters=None, sorting=None):
-        """Return a dictionary with the."""
+        """Return a list with the bpm names for the given filter."""
         cls._get_data()
         return _Filter.process_filters(
                                 cls._names, filters=filters, sorting=sorting)
