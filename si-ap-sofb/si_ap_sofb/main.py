@@ -2,9 +2,9 @@
 
 import time as _time
 import numpy as _np
-from threading import Thread
 import logging as _log
 from functools import partial as _part
+from threading import Thread as _Thread
 from pcaspy import Driver as _PCasDriver
 import siriuspy.csdevice.orbitcorr as _csorb
 from .matrix import BaseMatrix as _BaseMatrix, EpicsMatrix as _EpicsMatrix
@@ -146,9 +146,9 @@ class SOFB(_BaseClass):
         if self._dtheta is None:
             self._update_log('ERR: Cannot Apply Kick. Calc Corr first.')
             return False
-        Thread(target=self._apply_corr,
-               kwargs={'code': code},
-               daemon=True).start()
+        _Thread(
+            target=self._apply_corr, kwargs={'code': code},
+            daemon=True).start()
         return True
 
     def calc_correction(self, value):
@@ -156,7 +156,7 @@ class SOFB(_BaseClass):
         if self._thread and self._thread.is_alive():
             self._update_log('ERR: AutoCorr or MeasRespMat is On.')
             return False
-        Thread(target=self._calc_correction, daemon=True).start()
+        _Thread(target=self._calc_correction, daemon=True).start()
         return True
 
     def set_respmat_meas_state(self, value):
@@ -172,13 +172,13 @@ class SOFB(_BaseClass):
             if self._auto_corr == _csorb.AutoCorr.On:
                 self._update_log('ERR: AutoCorr is Already On.')
                 return False
-            self._auto_corr = value
             if self._thread and self._thread.is_alive():
                 self._update_log('ERR: Cannot Correct, Measuring RespMat.')
                 return False
             self._update_log('Turning Auto Correction On.')
-            self._thread = Thread(target=self._do_auto_corr,
-                                  daemon=True)
+            self._auto_corr = value
+            self._thread = _Thread(target=self._do_auto_corr,
+                                   daemon=True)
             self._thread.start()
         elif value == _csorb.AutoCorr.Off:
             self._update_log('Turning Auto Correction Off.')
@@ -271,9 +271,9 @@ class SOFB(_BaseClass):
         if self._thread and self._thread.is_alive():
             self._update_log('ERR: Cannot Measure, AutoCorr is On.')
             return False
+        self._update_log('Starting RespMat measurement.')
         self._measuring_respmat = True
-        self._update_log('Starting RSP Matrix measurement.')
-        self._thread = Thread(target=self._do_meas_respmat, daemon=True)
+        self._thread = _Thread(target=self._do_meas_respmat, daemon=True)
         self._thread.start()
         return True
 
