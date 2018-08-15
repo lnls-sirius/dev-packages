@@ -24,11 +24,11 @@ class BaseClass(_Callback):
         self._update_status()
         return self._status
 
-    def get_database(self):
-        return dict()
     def run_callbacks(self, pvname, *args, **kwargs):
         super().run_callbacks(self._prefix + pvname, *args, **kwargs)
 
+    def get_database(self, db):
+        return {self.prefix + k: v for k, v in db.items()}
 
     def _update_log(self, value):
         self.run_callbacks('Log-Mon', value)
