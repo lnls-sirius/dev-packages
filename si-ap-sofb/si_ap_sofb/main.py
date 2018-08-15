@@ -4,6 +4,7 @@ import time as _time
 import numpy as _np
 from threading import Thread
 import logging as _log
+from functools import partial as _part
 from pcaspy import Driver as _PCasDriver
 import siriuspy.csdevice.orbitcorr as _csorb
 from .matrix import BaseMatrix as _BaseMatrix, EpicsMatrix as _EpicsMatrix
@@ -28,12 +29,12 @@ class SOFB(_BaseClass):
         db['AutoCorrFreq-SP'][prop] = self.set_auto_corr_frequency
         db['StartMeasRespMat-Cmd'][prop] = self.set_respmat_meas_state
         db['CalcCorr-Cmd'][prop] = self.calc_correction
-        db['CorrFactorCH-SP'][prop] = lambda x: self.set_corr_factor('ch', x)
-        db['CorrFactorCV-SP'][prop] = lambda x: self.set_corr_factor('cv', x)
-        db['CorrFactorRF-SP'][prop] = lambda x: self.set_corr_factor('rf', x)
-        db['MaxKickCH-SP'][prop] = lambda x: self.set_max_kick('ch', x)
-        db['MaxKickCV-SP'][prop] = lambda x: self.set_max_kick('cv', x)
-        db['MaxKickRF-SP'][prop] = lambda x: self.set_max_kick('rf', x)
+        db['CorrFactorCH-SP'][prop] = _part(self.set_corr_factor, 'ch')
+        db['CorrFactorCV-SP'][prop] = _part(self.set_corr_factor, 'cv')
+        db['CorrFactorRF-SP'][prop] = _part(self.set_corr_factor, 'rf')
+        db['MaxKickCH-SP'][prop] = _part(self.set_max_kick, 'ch')
+        db['MaxKickCV-SP'][prop] = _part(self.set_max_kick, 'cv')
+        db['MaxKickRF-SP'][prop] = _part(self.set_max_kick, 'rf')
         db['ApplyCorr-Cmd'][prop] = self.apply_corr
         db = super().get_database(db)
         db.update(self.correctors.get_database())
