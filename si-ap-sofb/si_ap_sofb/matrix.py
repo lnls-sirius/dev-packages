@@ -3,18 +3,18 @@
 import os as _os
 import numpy as _np
 import siriuspy.csdevice.orbitcorr as _csorb
-from si_ap_sofb.definitions import NR_BPMS, NR_CH, NR_CV, NR_CORRS, MTX_SZ
+from .base_class import BaseClass as _BaseClass
 
 
-class BaseMatrix:
+class BaseMatrix(_BaseClass):
     pass
 
 
 class EpicsMatrix(BaseMatrix):
     """Class of the Response Matrix."""
-
-    RF_ENBL_ENUMS = ('No', 'Yes')
-    RSP_MTX_FILENAME = 'data/respmat'
+    path = _os.path.dirname(__file__)
+    RSP_MTX_FILENAME = _os.path.join(path, 'data', 'respmat')
+    del path
     EXT = '.sirspmtx'
 
     def get_database(self):
@@ -30,15 +30,15 @@ class EpicsMatrix(BaseMatrix):
         db['NumSingValues-SP'][prop] = self.set_num_sing_values
         return db
 
-    def __init__(self, prefix, callback):
+    def __init__(self, acc, prefix='', callback=None):
         """Initialize the instance."""
-        self.callback = callback
-        self.prefix = prefix
+        super().__init__(acc, prefix=prefix, callback=callback)
+        const = self._const
         self.select_items = {
-            'bpmx': _np.ones(NR_BPMS, dtype=bool),
-            'bpmy': _np.ones(NR_BPMS, dtype=bool),
-            'ch': _np.ones(NR_CH, dtype=bool),
-            'cv': _np.ones(NR_CV, dtype=bool),
+            'bpmx': _np.ones(const.NR_BPMS, dtype=bool),
+            'bpmy': _np.ones(const.NR_BPMS, dtype=bool),
+            'ch': _np.ones(const.NR_CH, dtype=bool),
+            'cv': _np.ones(const.NR_CV, dtype=bool),
             'rf': _np.zeros(1, dtype=bool),
             }
         self.selection_pv_names = {
@@ -48,46 +48,40 @@ class EpicsMatrix(BaseMatrix):
               'bpmy': 'BPMYEnblList-RB',
               'rf': 'RFEnbl-Sts',
             }
-        self.num_sing_values = NR_CORRS
-        self.sing_values = _np.zeros(NR_CORRS, dtype=float)
-        self.respmat = _np.zeros([2*NR_BPMS, NR_CORRS])
-        self.inv_respmat = _np.zeros([2*NR_BPMS, NR_CORRS]).T
-
-    def connect(self):
-        """Load the response matrix from file."""
+        self.num_sing_values = const.NR_CORRS
+        self.sing_values = _np.zeros(const.NR_CORRS, dtype=float)
+        self.respmat = _np.zeros([2*const.NR_BPMS, const.NR_CORRS])
+        self.inv_respmat = _np.zeros([2*const.NR_BPMS, const.NR_CORRS]).T
         self._load_respmat()
 
     def set_respmat(self, mat):
         """Set the response matrix in memory and save it in file."""
-        self._call_callback('Log-Mon', 'Setting New RSP Matrix.')
-        if len(mat) != MTX_SZ:
-            self._call_callback('Log-Mon', 'Err: Wrong Size.')
+        self.run_callbacks('Log-Mon', 'Setting New RespMat.')
+        if len(mat) != self._consts.MTX_SZ:
+            self._update_log('ERR: Wrong RespMat Size.')
             return False
-        mat = _np.reshape(mat, [2*NR_BPMS, NR_CORRS])
+        mat = _np.reshape(mat, [2*self._consts.NR_BPMS, self._consts.NR_CORRS])
         old_ = self.respmat.copy()
         self.respmat = mat
         if not self._calc_matrices():
             self.respmat = old_
             return False
         self._save_respmat(mat)
-        self._call_callback('RespMat-RB',
-                            list(self.respmat.flatten()))
+        self.run_callbacks('RespMat-RB', list(self.respmat.flatten()))
         return True
 
     def calc_kicks(self, orbit):
         """Calculate the kick from the orbit distortion given."""
         kicks = _np.dot(-self.inv_respmat, orbit)
-        self._call_callback('DeltaKicksCH-Mon', list(kicks[:NR_CH]))
-        self._call_callback('DeltaKicksCV-Mon', list(kicks[NR_CH:NR_CH+NR_CV]))
-        self._call_callback('DeltaKicksRF-Mon', kicks[-1])
+        self.run_callbacks(
+                        'DeltaKicksCH-Mon', list(kicks[:self._consts.NR_CH]))
+        self.run_callbacks(
+                        'DeltaKicksCV-Mon', list(kicks[self._consts.NR_CH:-1]))
+        self.run_callbacks('DeltaKicksRF-Mon', kicks[-1])
         return kicks
 
-    def _call_callback(self, pv, value):
-        self.callback(self.prefix + pv, value)
-
     def set_enbl_list(self, key, val):
-        self._call_callback('Log-Mon',
-                            'Setting {0:s} Enable List'.format(key.upper()))
+        self._update_log('Setting {0:s} Enable List'.format(key.upper()))
         bkup = self.select_items[key]
         new_ = _np.array(val, dtype=bool)
         if key == 'rf':
@@ -102,20 +96,19 @@ class EpicsMatrix(BaseMatrix):
         if not self._calc_matrices():
             self.select_items[key] = bkup
             return False
-        self._call_callback(self.selection_pv_names[key], val)
+        self.run_callbacks(self.selection_pv_names[key], val)
         return True
 
     def _calc_matrices(self):
-        self._call_callback('Log-Mon', 'Calculating Inverse Matrix.')
+        self._update_log('Calculating Inverse Matrix.')
         sel_ = self.select_items
         selecbpm = _np.hstack([sel_['bpmx'], sel_['bpmy']])
         seleccor = _np.hstack([sel_['ch'], sel_['cv'], sel_['rf']])
         if not any(selecbpm):
-            self._call_callback('Log-Mon', 'Err: No BPM selected in EnblList')
+            self._update_log('ERR: No BPM selected in EnblList')
             return False
         if not any(seleccor):
-            self._call_callback('Log-Mon',
-                                'Err: No Corrector selected in EnblList')
+            self._update_log('ERR: No Corrector selected in EnblList')
             return False
         sel_mat = selecbpm[:, None] * seleccor[None, :]
         mat = self.respmat[sel_mat]
@@ -123,7 +116,7 @@ class EpicsMatrix(BaseMatrix):
         try:
             U, s, V = _np.linalg.svd(mat, full_matrices=False)
         except _np.linalg.LinAlgError():
-            self._call_callback('Log-Mon', 'Err: Could not calculate SVD')
+            self._update_log('ERR: Could not calculate SVD')
             return False
         inv_s = 1/s
         inv_s[self.num_sing_values:] = 0
@@ -132,17 +125,17 @@ class EpicsMatrix(BaseMatrix):
         isNan = _np.any(_np.isnan(inv_mat))
         isInf = _np.any(_np.isinf(inv_mat))
         if isNan or isInf:
-            self._call_callback(
-                            'Log-Mon', 'Pseudo inverse contains nan or inf.')
+            self._update_log('ERR: Inverse contains nan or inf.')
             return False
 
         self.sing_values[:] = 0
         self.sing_values[:len(s)] = s
-        self._call_callback('SingValues-Mon', list(self.sing_values))
-        self.inv_respmat = _np.zeros([2*NR_BPMS, NR_CORRS]).T
+        self.run_callbacks('SingValues-Mon', list(self.sing_values))
+        self.inv_respmat = _np.zeros(
+                        [2*self._consts.NR_BPMS, self._consts.NR_CORRS]).T
         self.inv_respmat[sel_mat.T] = inv_mat.flatten()
-        self._call_callback('InvRespMat-Mon',
-                            list(self.inv_respmat.flatten()))
+        self.run_callbacks(
+                'InvRespMat-Mon', list(self.inv_respmat.flatten()))
         return True
 
     def set_num_sing_values(self, num):
@@ -151,7 +144,7 @@ class EpicsMatrix(BaseMatrix):
         if not self._calc_matrices():
             self.num_sing_values = bkup
             return False
-        self._call_callback('NumSingValues-RB', num)
+        self.run_callbacks('NumSingValues-RB', num)
         return True
 
     def _load_respmat(self):
@@ -162,10 +155,9 @@ class EpicsMatrix(BaseMatrix):
             if not self._calc_matrices():
                 self.respmat = bkup
                 return
-            self._call_callback('Log-Mon', 'Loading RSP Matrix from file.')
-            self._call_callback('RespMat-RB',
-                                list(self.respmat.flatten()))
+            self._update_log('Loading RespMat from file.')
+            self.run_callbacks('RespMat-RB', list(self.respmat.flatten()))
 
     def _save_respmat(self, mat):
-        self._call_callback('Log-Mon', 'Saving RSP Matrix to file')
+        self._update_log('Saving RespMat to file')
         _np.savetxt(self.RSP_MTX_FILENAME+self.EXT, mat)

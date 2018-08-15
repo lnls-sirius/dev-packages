@@ -3,19 +3,15 @@
 import time as _time
 import numpy as _np
 import epics as _epics
-from siriuspy.search.hl_time_search import HLTimeSearch as _HLTimeSearch
+import siriuspy.util as _util
 import siriuspy.csdevice.orbitcorr as _csorb
+from siriuspy.search.hl_time_search import HLTimeSearch as _HLTimeSearch
 from siriuspy.csdevice.pwrsupply import Const as _PwrSplyConst
 from siriuspy.csdevice.timesys import events_modes as _EVT_MODES
 from siriuspy.envars import vaca_prefix as LL_PREF
-from .definitions import WAIT_FOR_SIMULATOR, TINY_INTERVAL, NUM_TIMEOUT
+from .base_class import BaseClass as _BaseClass
 
-_TIMEOUT = 0.05
-
-
-def _equalKick(val1, val2):
-    max_ = max(abs(val1), abs(val2))
-    return (not max_ or abs(val1-val2)/max_ <= 1e-12)
+TIMEOUT = 0.05
 
 
 class Corrector:
@@ -46,11 +42,14 @@ class Corrector:
     def value(self, val):
         self._sp.value = val
 
-    def _corrIsReady(self, pvname, value, **kwargs):
-        self._ready = _equalKick(self._sp.value, value)
+    def equalKick(self, value):
+        return _np.isclose(self._sp.value, value, rtol=1e-12, atol=1e-12)
+
+    def _isReady(self, pvname, value, **kwargs):
+        self._ready = self.equalKick(value)
 
     def _kickApplied(self, pvname, value, **kwargs):
-        self._applied = _equalKick(self._sp.value, value)
+        self._applied = self.equalKick(value)
 
 
 class RFCtrl(Corrector):
@@ -62,8 +61,8 @@ class RFCtrl(Corrector):
                             connection_timeout=_TIMEOUT)
         self._rb = _epics.PV(
                             LL_PREF + self._name + ':Freq-RB',
-                            callback=self._corrIsReady,
-                            connection_timeout=_TIMEOUT)
+                            callback=self._isReady,
+                            connection_timeout=TIMEOUT)
 
     @property
     def is_connected(self):
@@ -71,8 +70,8 @@ class RFCtrl(Corrector):
         conn &= self._rb.connected
         return conn
 
-    def _corrIsReady(self, pvname, value, **kwargs):
-        super()._corrIsReady(pvname, value, **kwargs)
+    def _isReady(self, pvname, value, **kwargs):
+        super()._isReady(pvname, value, **kwargs)
         self._kickApplied(self, pvname, value, **kwargs)
 
 
@@ -80,20 +79,17 @@ class CHCV(Corrector):
 
     def __init__(self, corr_name):
         super().__init__(corr_name)
-        opt = {'connection_timeout': _TIMEOUT}
+        opt = {'connection_timeout': TIMEOUT}
         self._opmode = None
         self._sp = _epics.PV(LL_PREF + self._name + ':Current-SP', **opt)
         self._rb = _epics.PV(
                             LL_PREF + self._name + ':Current-RB',
-                            callback=self._corrIsReady, **opt)
+                            callback=self._isReady, **opt)
         self._ref = _epics.PV(
                             LL_PREF + self._name + ':CurrentRef-Mon',
                             callback=self._kickApplied, **opt)
-        self._opmode_sel = _epics.PV(
-                            LL_PREF + self._name + ':OpMode-Sel', **opt)
-        self._opmode_sts = _epics.PV(
-                            LL_PREF + self._name + ':OpMode-Sts',
-                            callback=self._corrIsOnMode, **opt)
+        self._opmode_sel = _epics.PV(LL_PREF+self._name+':OpMode-Sel', **opt)
+        self._opmode_sts = _epics.PV(LL_PREF+self._name+':OpMode-Sts', **opt)
 
     @property
     def is_connected(self):
@@ -106,19 +102,16 @@ class CHCV(Corrector):
 
     @property
     def opmode_ok(self):
-        return self._opmode_ok
+        return (self._opmode == self._opmode_sts.value)
 
     @property
     def opmode(self):
-        return self._opmode_sel.value
+        return self._opmode_sts.value
 
     @opmode.setter
     def opmode(self, val):
         self._opmode = val
         self._opmode_sel.value = val
-
-    def _corrIsOnMode(self, pvname, value, **kwargs):
-        self._opmode_ok = (self._opmode == value)
 
 
 class TimingConfig:
@@ -131,7 +124,7 @@ class TimingConfig:
             evt = 'OrbBO'
             trig = 'BO-Glob:TI-Corrs'
         pref_name = LL_PREF + _csorb.EVG_NAME + ':' + evt
-        opt = {'connection_timeout': _TIMEOUT}
+        opt = {'connection_timeout': TIMEOUT}
         self._evt_sender = _epics.PV(pref_name + 'ExtTrig-Cmd', **opt)
         self._evt_mode_sp = _epics.PV(pref_name + 'Mode-Sel', **opt)
         self._evt_mode_rb = _epics.PV(pref_name + 'Mode-Sts', **opt)
@@ -192,12 +185,14 @@ class TimingConfig:
             pv.value = self._trig_ok_vals[k]
 
 
-class BaseCorrectors:
+class BaseCorrectors(_BaseClass):
     pass
 
 
 class EpicsCorrectors(BaseCorrectors):
     """Class to deal with correctors."""
+    TINY_INTERVAL = 0.01
+    NUM_TIMEOUT = 1000
 
     def get_database(self):
         """Get the database of the class."""
@@ -207,15 +202,11 @@ class EpicsCorrectors(BaseCorrectors):
         db = {self.prefix + k: v for k, v in db.items()}
         return db
 
-    def __init__(self, acc, prefix, callback):
+    def __init__(self, acc, prefix='', callback=None):
         """Initialize the instance."""
-        self.callback = callback
-        self.prefix = prefix
-        self.acc = acc
-        self._status = 0xF
+        super().__init__(acc, prefix=prefix, callback=callback)
         self._synced_kicks = True
-        Consts = _csorb.get_consts(acc)
-        self._names = Consts.CH_NAMES + Consts.CV_NAMES
+        self._names = self._const.CH_NAMES + self._const.CV_NAMES
         self._chcvs = {CHCV(dev) for dev in self._names}
         self._rf_ctrl = RFCtrl()
         self._timing = TimingConfig(acc)
@@ -223,43 +214,38 @@ class EpicsCorrectors(BaseCorrectors):
     def apply_corr(self, values):
         """Apply kicks."""
         # apply the RF kick
-        if self._rf_ctrl.is_connected:
-            if not self._equalKick(values[-1], self._rf_ctrl.value):
-                self._rf_ctrl.value = values[-1]
-        else:
-            self._call_callback(
-                'Log-Mon',
-                'PV ' + self.rf_sp.pvname + ' Not Connected.'
-                )
+        if not self._rf_ctrl.equalKick(values[-1]):
+            if not self._rf_ctrl.is_connected:
+                self._update_log('ERR: '+self.rf_sp.pvname+' not connected.')
+                return
+            self._rf_ctrl.value = values[-1]
         # Send correctors setpoint
         for i, corr in enumerate(self._chcvs):
+            if corr.equalKick(values[i]):
+                continue
             if not corr.is_connected:
-                self._call_callback('Log-Mon',
-                                    'Err: PV ' + corr.name + ' Not Connected.')
-                continue
-            if self._equalKick(values[i], corr.value):
-                continue
+                self._update_log('ERR: ' + corr.name + ' not connected.')
+                return
+            elif not corr.opmode_ok:
+                self._update_log('ERR: ' + corr.name + 'mode not configured.')
+                return
             corr.value = values[i]
         # Wait for readbacks to be updated
         if self._timed_out(mode='ready'):
-            self._call_callback('Log-Mon',
-                                'Err: Timeout waiting Correctors RB')
+            self._update_log('ERR: timeout waiting correctors RB')
             return
         # Send trigger signal for implementation
         if self._synced_kicks:
-            if self._timing.is_connected:
-                self._timing.send_evt()
-            else:
-                self._call_callback('Log-Mon',
-                                    'Kicks not sent, Timing Disconnected.')
+            if not self._timing.is_connected:
+                self._update_log('ERR: timing disconnected.')
                 return
+            elif not self._timing.is_ok:
+                self._update_log('ERR: timing not configured.')
+                return
+            self._timing.send_evt()
         # Wait for references to be updated
         if self._timed_out(mode='applied'):
-            self._call_callback('Log-Mon',
-                                'Err: Timeout waiting Correctors Ref')
-            return
-        # wait for simulator to compute and update the orbit.
-        _time.sleep(WAIT_FOR_SIMULATOR)
+            self._update_log('ERR: timeout waiting correctors Ref')
 
     def get_strength(self):
         """Get the correctors strengths."""
@@ -269,8 +255,8 @@ class EpicsCorrectors(BaseCorrectors):
         corr_values[-1] = self._rf_ctrl.value
         return corr_values
 
-    def _call_callback(self, pv, value):
-        self.callback(self.prefix + pv, value)
+    def _update_log(self, value):
+        self.run_callbacks(self.prefix + 'Log-Mon', value)
 
     def set_chcvs_mode(self, value):
         self._synced_kicks = value
@@ -282,30 +268,42 @@ class EpicsCorrectors(BaseCorrectors):
         for corr in self._chcvs:
             if corr.is_connected:
                 corr.opmode = val
-        self._call_callback(
-            'Log-Mon',
+        self._update_log(
             'Correctors set to {0:s} Mode'.format('Sync' if value else 'Async')
             )
-        self._call_callback('SyncKicks-Sts', value)
+        self.run_callbacks('SyncKicks-Sts', value)
         return True
 
     def configure_timing(self):
         self._timing.configure()
 
     def _update_status(self):
-        status = 0b0000
-
+        status = 0b11111
+        status = _util.update_bit(
+                    status, bit_pos=0, bit_val=not self._timing.is_connected)
+        status = _util.update_bit(
+                    status, bit_pos=1, bit_val=not self._timing.is_ok)
+        status = _util.update_bit(
+                    status, bit_pos=2, bit_val=not self._rf_ctrl.is_connected)
+        status = _util.update_bit(
+                    status, bit_pos=3,
+                    bit_val=not all(corr.is_connected for corr in self._chcvs))
+        status = _util.update_bit(
+                    status, bit_pos=4,
+                    bit_val=not all(corr.opmode_ok for corr in self._chcvs))
+        self._status = status
+        self.run_callbacks('CorrStatus-Mon', status)
 
     def _timed_out(self, mode='ready'):
         """Timed out."""
-        for _ in range(NUM_TIMEOUT):
+        for _ in range(self.NUM_TIMEOUT):
             ok = True
-            for corr in self.chcvs:
+            for corr in self._chcvs:
                 if mode == 'ready':
                     ok &= corr.is_ready
                 elif mode == 'applied':
                     ok &= corr.is_applied
             if ok:
                 return False
-            _time.sleep(TINY_INTERVAL)
+            _time.sleep(self.TINY_INTERVAL)
         return True
