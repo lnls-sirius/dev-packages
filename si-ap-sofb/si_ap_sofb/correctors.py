@@ -70,10 +70,9 @@ class RFCtrl(Corrector):
         super().__init__(_csorb.RF_GEN_NAME)
         self._sp = _epics.PV(
                             LL_PREF + self._name + ':Freq-SP',
-                            connection_timeout=_TIMEOUT)
+                            connection_timeout=TIMEOUT)
         self._rb = _epics.PV(
                             LL_PREF + self._name + ':Freq-RB',
-                            callback=self._isReady,
                             connection_timeout=TIMEOUT)
 
     def _kickApplied(self):
