@@ -149,6 +149,12 @@ def get_orbit_database(acc, prefix=''):
     for k in pvs:
         db[k] = _dcopy(prop)
     db.update({
+        'OrbitAcqRate-SP': {
+            'type': 'float', 'unit': 'Hz', 'value': 10,
+            'hilim': 20, 'lolim': 0.5},
+        'OrbitAcqRate-RB': {
+            'type': 'float', 'unit': 'Hz', 'value': 10,
+            'hilim': 20, 'lolim': 0.5},
         'CorrMode-Sel': {
             'type': 'enum', 'enums': CorrMode._fields, 'value': 1,
             'unit': 'Defines is correction is offline or online'},
