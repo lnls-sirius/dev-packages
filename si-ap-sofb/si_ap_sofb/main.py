@@ -7,7 +7,7 @@ from functools import partial as _part
 from threading import Thread as _Thread
 from pcaspy import Driver as _PCasDriver
 import siriuspy.csdevice.orbitcorr as _csorb
-from siriuspy.thread import QueueThread as _Queue, RepeaterThread as _Repeat
+from siriuspy.thread import QueueThread as _Queue
 from .matrix import BaseMatrix as _BaseMatrix, EpicsMatrix as _EpicsMatrix
 from .orbit import BaseOrbit as _BaseOrbit, EpicsOrbit as _EpicsOrbit
 from .correctors import (BaseCorrectors as _BaseCorrectors,
