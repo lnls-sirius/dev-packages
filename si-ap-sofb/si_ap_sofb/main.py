@@ -7,6 +7,7 @@ from functools import partial as _part
 from threading import Thread as _Thread
 from pcaspy import Driver as _PCasDriver
 import siriuspy.csdevice.orbitcorr as _csorb
+from siriuspy.thread import QueueThread as _Queue, RepeaterThread as _Repeat
 from .matrix import BaseMatrix as _BaseMatrix, EpicsMatrix as _EpicsMatrix
 from .orbit import BaseOrbit as _BaseOrbit, EpicsOrbit as _EpicsOrbit
 from .correctors import (BaseCorrectors as _BaseCorrectors,
@@ -60,17 +61,22 @@ class SOFB(_BaseClass):
         self._ref_corr_kicks = None
         self._thread = None
         self._database = self.get_database()
+        self._queue = _Queue()
+        self._queue.start()
 
         self.orbit = orbit
         self.correctors = correctors
         self.matrix = matrix
-        if self.orbit is not None:
-            self.orbit = _EpicsOrbit(
-                    acc=acc, prefix=self.prefix, callback=self._update_driver)
-        self.correctors = _EpicsCorrectors(
-                    acc=acc, prefix=self.prefix, callback=self._update_driver)
-        self.matrix = _EpicsMatrix(
-                    acc=acc, prefix=self.prefix, callback=self._update_driver)
+        if self._orbit is None:
+            self.orbit = _EpicsOrbit(acc=acc, prefix=self.prefix)
+        if self._correctors is None:
+            self.correctors = _EpicsCorrectors(acc=acc, prefix=self.prefix)
+        if self._matrix is None:
+            self.matrix = _EpicsMatrix(acc=acc, prefix=self.prefix)
+        self.add_callback(self._schedule_update)
+        self._orbit.add_callback(self._schedule_update)
+        self._correctors.add_callback(self._schedule_update)
+        self._matrix.add_callback(self._schedule_update)
 
     @property
     def orbit(self):
@@ -189,18 +195,18 @@ class SOFB(_BaseClass):
 
     def set_auto_corr_frequency(self, value):
         self._auto_corr_freq = value
-        self._update_driver('AutoCorrFreq-RB', value)
+        self.run_callbacks('AutoCorrFreq-RB', value)
         return True
 
     def set_max_kick(self, plane, value):
         self._max_kick[plane] = float(value)
-        self._update_driver('MaxKick'+plane.upper()+'-RB', float(value))
+        self.run_callbacks('MaxKick'+plane.upper()+'-RB', float(value))
 
     def set_corr_factor(self, plane, value):
         self._corr_factor[plane] = value/100
         self._update_log(
             '{0:s} CorrFactor set to {1:6.2f}'.format(plane.upper(), value))
-        self._update_driver('CorrFactor'+plane.upper()+'-RB', value)
+        self.run_callbacks('CorrFactor'+plane.upper()+'-RB', value)
         return True
 
     def set_respmat_kick(self, plane, value):
@@ -210,7 +216,7 @@ class SOFB(_BaseClass):
     def _update_status(self):
         self._status = bool(
             self._correctors.status | self._matrix.status | self._orbit.status)
-        self._update_driver('Status-Mon', self._status)
+        self.run_callbacks('Status-Mon', self._status)
 
     def _apply_corr(self, code):
         nr_ch = self._const.NR_CH
@@ -228,12 +234,12 @@ class SOFB(_BaseClass):
         if any(kicks):
             self.correctors.apply_kicks(self._ref_corr_kicks + kicks)
 
-    def _update_driver(self, pvname, value, **kwargs):
-        _log.debug('PV {0:s} updated in driver '.format(pvname) +
-                   'database with value {0:s}'.format(str(value)))
-        self._driver.setParam(pvname, value)
-        self._driver.updatePVs()
+    def _schedule_update(self, pvname, value, **kwargs):
+        self._queue.add_callback(self._update_driver, pvname, value, **kwargs)
 
+    def _update_driver(self, pvname, value, **kwargs):
+        self._driver.setParam(pvname, value)
+        self._driver.updatePV(pvname)
 
     def _isValid(self, reason, value):
         if reason.endswith(('-Sts', '-RB', '-Mon')):
@@ -254,7 +260,7 @@ class SOFB(_BaseClass):
 
     def _stop_meas_respmat(self):
         if not self._measuring_respmat:
-            self._update_log('Err :No Measurement ocurring.')
+            self._update_log('ERR: No Measurement ocurring.')
             return False
         self._update_log('Aborting measurement.')
         self._measuring_respmat = False
@@ -267,7 +273,7 @@ class SOFB(_BaseClass):
             self._update_log('Cannot Reset, Measurement in process.')
             return False
         self._update_log('Reseting measurement status.')
-        self._update_driver('MeasRespMat-Mon', _csorb.MeasRespMatMon.Idle)
+        self.run_callbacks('MeasRespMat-Mon', _csorb.MeasRespMatMon.Idle)
         return True
 
     def _start_meas_respmat(self):
@@ -286,12 +292,12 @@ class SOFB(_BaseClass):
     def _do_meas_respmat(self):
         nr_corrs = self._const.NR_CORRS
         nr_bpms = self._const.NR_BPMS
-        self._update_driver('MeasRespMat-Mon', _csorb.MeasRespMatMon.Measuring)
+        self.run_callbacks('MeasRespMat-Mon', _csorb.MeasRespMatMon.Measuring)
         mat = _np.zeros([2*nr_bpms, nr_corrs])
         orig_kicks = self.correctors.get_strength()
         for i in range(nr_corrs):
             if not self._measuring_respmat:
-                self._update_driver(
+                self.run_callbacks(
                             'MeasRespMat-Mon', _csorb.MeasRespMatMon.Aborted)
                 self.correctors.apply_kicks(orig_kicks)
                 return
@@ -314,16 +320,16 @@ class SOFB(_BaseClass):
         self.correctors.apply_kicks(orig_kicks)
         self._update_log('Measurement Completed.')
         self.set_respmat(list(mat.flatten()))
-        self._update_driver('MeasRespMat-Mon', _csorb.MeasRespMatMon.Completed)
+        self.run_callbacks('MeasRespMat-Mon', _csorb.MeasRespMatMon.Completed)
         self._measuring_respmat = False
 
     def _do_auto_corr(self):
         if not self.orbit.correction_mode:
             self._update_log('ERR: Cannot Auto Correct in Offline Mode')
-            self._update_driver('AutoCorr-Sel', 0)
-            self._update_driver('AutoCorr-Sts', 0)
+            self.run_callbacks('AutoCorr-Sel', 0)
+            self.run_callbacks('AutoCorr-Sts', 0)
             return
-        self._update_driver('AutoCorr-Sts', 1)
+        self.run_callbacks('AutoCorr-Sts', 1)
         while self._auto_corr == _csorb.AutoCorr.On:
             t0 = _time.time()
             orb = self.orbit.get_orbit()
@@ -342,7 +348,7 @@ class SOFB(_BaseClass):
             if dt > 0:
                 _time.sleep(dt)
         self._update_log('Auto Correction is Off.')
-        self._update_driver('AutoCorr-Sts', 0)
+        self.run_callbacks('AutoCorr-Sts', 0)
 
     def _calc_correction(self):
         self._update_log('Getting the orbit.')
