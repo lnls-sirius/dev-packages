@@ -2,16 +2,16 @@
 """IOC Module."""
 
 import os as _os
-import sys as _sys
 import logging as _log
 import pcaspy as _pcaspy
 import pcaspy.tools as _pcaspy_tools
 import signal as _signal
-from si_ap_sofb import main as _main
-from si_ap_sofb.definitions import print_pvs_in_file
-from si_ap_sofb.definitions import __version__, PREFIX, INTERVAL
+import siriuspy.util as _util
+from siriuspy.envars import vaca_prefix as _vaca_prefix
+from .main import SOFB as _SOFB
 
 stop_event = False
+__version__ = _util.get_last_commit_hash()
 
 
 def _stop_now(signum, frame):
@@ -49,14 +49,9 @@ class _PCASDriver(_pcaspy.Driver):
         return True
 
 
-def run(debug=False):
+def run(acc='SI', debug=False):
     """Start the IOC."""
-    level = _log.DEBUG if debug else _log.INFO
-    fmt = ('%(levelname)7s | %(asctime)s | ' +
-           '%(module)15s.%(funcName)20s[%(lineno)4d] ::: %(message)s')
-    _log.basicConfig(format=fmt, datefmt='%F %T', level=level,
-                     stream=_sys.stdout)
-    #  filename=LOG_FILENAME, filemode='w')
+    _util.configure_log_file(debug=debug)
     _log.info('Starting...')
 
     # define abort function
@@ -64,12 +59,15 @@ def run(debug=False):
     _signal.signal(_signal.SIGTERM, _stop_now)
 
     # Creates App object
-    _log.info('Creating App.')
-    app = _main.App()
+    _log.debug('Creating SOFB Object.')
+    app = _SOFB(acc=acc)
     _log.info('Generating database file.')
     db = app.get_database()
     db.update({'Version-Cte': {'type': 'string', 'value': __version__}})
-    print_pvs_in_file(db)
+    PREFIX = acc.upper() + '-Glob:AP-SOFB:'
+    _util.save_ioc_pv_list(
+                        ioc_name=acc.lower() + '-ap-sofb',
+                        prefix=(PREFIX, _vaca_prefix), db=db)
 
     # create a new simple pcaspy server and driver to respond client's requests
     _log.info('Creating Server.')
@@ -90,9 +88,8 @@ def run(debug=False):
     server_thread.start()
 
     # main loop
-    # while not stop_event.is_set():
     while not stop_event:
-        pcas_driver.app.process(INTERVAL)
+        pcas_driver.app.update_status()
 
     _log.info('Stoping Server Thread...')
     # sends stop signal to server thread
