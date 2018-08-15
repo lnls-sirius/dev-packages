@@ -27,16 +27,23 @@ class Corrector:
         return self._name
 
     @property
+    def connected(self):
+        self._isConnected()
+        return self._connected
+
+    @property
     def ready(self):
+        self._isReady()
         return self._ready
 
     @property
     def applied(self):
+        self._kickApplied()
         return self._applied
 
     @property
     def value(self):
-        self._sp.value
+        self._rb.value
 
     @value.setter
     def value(self, val):
@@ -45,11 +52,15 @@ class Corrector:
     def equalKick(self, value):
         return _np.isclose(self._sp.value, value, rtol=1e-12, atol=1e-12)
 
-    def _isReady(self, pvname, value, **kwargs):
-        self._ready = self.equalKick(value)
+    def _isConnected(self):
+        self._connected = self._sp.connected
+        self._connected &= self._rb.connected
 
-    def _kickApplied(self, pvname, value, **kwargs):
-        self._applied = self.equalKick(value)
+    def _isReady(self):
+        self._ready = self.equalKick(self._rb.value)
+
+    def _kickApplied(self):
+        self._applied = self.equalKick(self._ref.value)
 
 
 class RFCtrl(Corrector):
@@ -64,15 +75,9 @@ class RFCtrl(Corrector):
                             callback=self._isReady,
                             connection_timeout=TIMEOUT)
 
-    @property
-    def is_connected(self):
-        conn = self._sp.connected
-        conn &= self._rb.connected
-        return conn
-
-    def _isReady(self, pvname, value, **kwargs):
-        super()._isReady(pvname, value, **kwargs)
-        self._kickApplied(self, pvname, value, **kwargs)
+    def _kickApplied(self):
+        self._isReady()
+        self._applied = self._ready
 
 
 class CHCV(Corrector):
@@ -92,15 +97,6 @@ class CHCV(Corrector):
         self._opmode_sts = _epics.PV(LL_PREF+self._name+':OpMode-Sts', **opt)
 
     @property
-    def is_connected(self):
-        conn = self._sp.connected
-        conn &= self._rb.connected
-        conn &= self._ref.connected
-        conn &= self._opmode_sel.connected
-        conn &= self._opmode_sts.connected
-        return conn
-
-    @property
     def opmode_ok(self):
         return (self._opmode == self._opmode_sts.value)
 
@@ -112,6 +108,13 @@ class CHCV(Corrector):
     def opmode(self, val):
         self._opmode = val
         self._opmode_sel.value = val
+
+    def _isConnected(self):
+        self._connected = self._sp.connected
+        self._connected &= self._rb.connected
+        self._connected &= self._ref.connected
+        self._connected &= self._opmode_sel.connected
+        self._connected &= self._opmode_sts.connected
 
 
 class TimingConfig:
@@ -159,7 +162,7 @@ class TimingConfig:
         self._evt_sender.value = 1
 
     @property
-    def is_connected(self):
+    def connected(self):
         conn = True
         conn &= self._evt_sender.connected
         conn &= self._evt_mode_sp.connected
@@ -172,13 +175,13 @@ class TimingConfig:
 
     @property
     def is_ok(self):
-        ok = self.is_connected
+        ok = self.connected
         ok &= self._evt_mode_rb.value == _EVT_MODES.External
         for k, pv in self._trig_pvs_rb.items():
             ok &= self._trig_ok_vals[k] == pv.value
 
     def configure(self):
-        if not self.is_connected:
+        if not self.connected:
             return
         self._evt_mode_sp.value = _EVT_MODES.External
         for k, pv in self._trig_pvs_sp.items():
@@ -199,7 +202,7 @@ class EpicsCorrectors(BaseCorrectors):
         db = _csorb.get_corrs_database(self.acc)
         db['SyncKicks-Sel']['fun_set_pv'] = self.set_chcvs_mode
         db['ConfigTiming-Cmd']['fun_set_pv'] = self.configure_timing
-        db = {self.prefix + k: v for k, v in db.items()}
+        db = super().get_database(db)
         return db
 
     def __init__(self, acc, prefix='', callback=None):
@@ -215,7 +218,7 @@ class EpicsCorrectors(BaseCorrectors):
         """Apply kicks."""
         # apply the RF kick
         if not self._rf_ctrl.equalKick(values[-1]):
-            if not self._rf_ctrl.is_connected:
+            if not self._rf_ctrl.connected:
                 self._update_log('ERR: '+self.rf_sp.pvname+' not connected.')
                 return
             self._rf_ctrl.value = values[-1]
@@ -223,7 +226,7 @@ class EpicsCorrectors(BaseCorrectors):
         for i, corr in enumerate(self._chcvs):
             if corr.equalKick(values[i]):
                 continue
-            if not corr.is_connected:
+            if not corr.connected:
                 self._update_log('ERR: ' + corr.name + ' not connected.')
                 return
             elif not corr.opmode_ok:
@@ -236,7 +239,7 @@ class EpicsCorrectors(BaseCorrectors):
             return
         # Send trigger signal for implementation
         if self._synced_kicks:
-            if not self._timing.is_connected:
+            if not self._timing.connected:
                 self._update_log('ERR: timing disconnected.')
                 return
             elif not self._timing.is_ok:
@@ -264,7 +267,7 @@ class EpicsCorrectors(BaseCorrectors):
             val = _PwrSplyConst.SlowRef
 
         for corr in self._chcvs:
-            if corr.is_connected:
+            if corr.connected:
                 corr.opmode = val
         self._update_log(
             'Correctors set to {0:s} Mode'.format('Sync' if value else 'Async')
@@ -278,14 +281,14 @@ class EpicsCorrectors(BaseCorrectors):
     def _update_status(self):
         status = 0b11111
         status = _util.update_bit(
-                    status, bit_pos=0, bit_val=not self._timing.is_connected)
+                    status, bit_pos=0, bit_val=not self._timing.connected)
         status = _util.update_bit(
                     status, bit_pos=1, bit_val=not self._timing.is_ok)
         status = _util.update_bit(
-                    status, bit_pos=2, bit_val=not self._rf_ctrl.is_connected)
+                    status, bit_pos=2, bit_val=not self._rf_ctrl.connected)
         status = _util.update_bit(
                     status, bit_pos=3,
-                    bit_val=not all(corr.is_connected for corr in self._chcvs))
+                    bit_val=not all(corr.connected for corr in self._chcvs))
         status = _util.update_bit(
                     status, bit_pos=4,
                     bit_val=not all(corr.opmode_ok for corr in self._chcvs))
