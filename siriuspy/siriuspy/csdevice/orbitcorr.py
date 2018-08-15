@@ -73,6 +73,18 @@ def get_sofb_database(acc, prefix=''):
             'type': 'enum', 'value': 0, 'enums': MeasRespMatCmd._fields},
         'MeasRespMat-Mon': {
             'type': 'enum', 'value': 0, 'enums': MeasRespMatMon._fields},
+        'MeasRespMatKickCH-SP': {
+            'type': 'float', 'value': 0.2, 'unit': 'urad', 'prec': 3},
+        'MeasRespMatKickCH-RB': {
+            'type': 'float', 'value': 0.2, 'unit': 'urad', 'prec': 3},
+        'MeasRespMatKickCV-SP': {
+            'type': 'float', 'value': 0.2, 'unit': 'urad', 'prec': 3},
+        'MeasRespMatKickCV-RB': {
+            'type': 'float', 'value': 0.2, 'unit': 'urad', 'prec': 3},
+        'MeasRespMatKickRF-SP': {
+            'type': 'float', 'value': 200, 'unit': 'Hz', 'prec': 3},
+        'MeasRespMatKickRF-RB': {
+            'type': 'float', 'value': 200, 'unit': 'Hz', 'prec': 3},
         'CalcCorr-Cmd': {
             'type': 'char', 'value': 0, 'unit': 'Calculate kicks'},
         'CorrFactorCH-SP': {
