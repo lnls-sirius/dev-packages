@@ -134,6 +134,12 @@ def get_corrs_database(acc, prefix=''):
     """Return OpticsCorr-Chrom Soft IOC database."""
     const = get_consts(acc)
     db = {
+        'KickAcqRate-SP': {
+            'type': 'float', 'unit': 'Hz', 'value': 10,
+            'hilim': 20, 'lolim': 0.5},
+        'KickAcqRate-RB': {
+            'type': 'float', 'unit': 'Hz', 'value': 10,
+            'hilim': 20, 'lolim': 0.5},
         'KicksCH-Mon': {
             'type': 'float', 'count': const.NR_CH, 'value': const.NR_CH*[0],
             'unit': 'urad'},
