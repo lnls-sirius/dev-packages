@@ -217,8 +217,10 @@ class EpicsCorrectors(BaseCorrectors):
     def get_database(self):
         """Get the database of the class."""
         db = _csorb.get_corrs_database(self.acc)
-        db['SyncKicks-Sel']['fun_set_pv'] = self.set_chcvs_mode
-        db['ConfigTiming-Cmd']['fun_set_pv'] = self.configure_timing
+        prop = 'fun_set_pv'
+        db['SyncKicks-Sel'][prop] = self.set_chcvs_mode
+        db['ConfigTiming-Cmd'][prop] = self.configure_timing
+        db['KickAcqRate-SP'][prop] = self.set_kick_acq_rate
         db = super().get_database(db)
         return db
 
@@ -226,6 +228,7 @@ class EpicsCorrectors(BaseCorrectors):
         """Initialize the instance."""
         super().__init__(acc, prefix=prefix, callback=callback)
         self._synced_kicks = True
+        self._acq_rate = 10
         self._names = self._const.CH_NAMES + self._const.CV_NAMES
         self._chcvs = {CHCV(dev) for dev in self._names}
         self._rf_ctrl = RFCtrl()
@@ -278,6 +281,10 @@ class EpicsCorrectors(BaseCorrectors):
                 corr_values[i] = corr.value
         corr_values[-1] = self._rf_ctrl.value
         return corr_values
+
+    def set_kick_acq_rate(self, value):
+        self._acq_rate = value
+        self._corrs_thread.interval = 1/value
 
     def _update_corrs_strength(self):
         corr_vals = self.get_strength()
