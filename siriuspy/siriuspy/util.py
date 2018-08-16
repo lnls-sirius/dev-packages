@@ -124,7 +124,7 @@ def configure_log_file(stream=None, filename=None, debug=False):
     """Configure logging messages for the IOCs."""
     if stream is not None:
         dic_ = {'stream': stream}
-    elif filename is None:
+    elif filename is not None:
         dic_ = {'filename': filename, 'filemode': 'w'}
     else:
         dic_ = {'stream': _sys.stdout}
