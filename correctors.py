@@ -305,7 +305,7 @@ class EpicsCorrectors(BaseCorrectors):
         self._timing.configure()
 
     def _update_status(self):
-        status = 0b11111
+        status = 0b1111111
         status = _util.update_bit(
                     status, bit_pos=0, bit_val=not self._timing.connected)
         status = _util.update_bit(
@@ -313,11 +313,16 @@ class EpicsCorrectors(BaseCorrectors):
         status = _util.update_bit(
                     status, bit_pos=2, bit_val=not self._rf_ctrl.connected)
         status = _util.update_bit(
-                    status, bit_pos=3,
-                    bit_val=not all(corr.connected for corr in self._chcvs))
+                    status, bit_pos=3, bit_val=not self._rf_ctrl.state)
         status = _util.update_bit(
                     status, bit_pos=4,
+                    bit_val=not all(corr.connected for corr in self._chcvs))
+        status = _util.update_bit(
+                    status, bit_pos=5,
                     bit_val=not all(corr.opmode_ok for corr in self._chcvs))
+        status = _util.update_bit(
+                    status, bit_pos=6,
+                    bit_val=not all(corr.state for corr in self._chcvs))
         self._status = status
         self.run_callbacks('CorrStatus-Mon', status)
 
