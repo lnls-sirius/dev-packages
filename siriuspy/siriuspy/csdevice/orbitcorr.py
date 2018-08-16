@@ -40,11 +40,13 @@ MeasRespMatCmd = _get_namedtuple('MeasRespMatCmd', ('Start', 'Stop', 'Reset'))
 MeasRespMatMon = _get_namedtuple(
             'MeasRespMatMon', ('Idle', 'Measuring', 'Completed', 'Aborted'))
 StatusLabels = _get_namedtuple(
-    'StatusLabels', ('Corrs', 'Matrix', 'Orbit'),
-    (('Timing Connected', 'Timing Configured', 'RF Connected',
-      'Correctors Connected', 'Correctors Mode Configured'),
+    'StatusLabels', ('Corrs', 'Matrix', 'Orbit', 'Global'),
+    (('Timing Connected', 'Timing Configured',
+      'RF Connected', 'RF PwrState On',
+      'CHCV Connected', 'CHCV Mode Configured', 'CHCV PwrState On'),
      ('', ),
      ('BPMs X Connected', 'BPMs Y Connected'),
+     ('Ok', 'Not Ok'),
      ))
 
 
@@ -120,7 +122,8 @@ def get_sofb_database(acc, prefix=''):
         'ApplyCorr-Cmd': {
             'type': 'enum', 'enums': ApplyCorr._fields, 'value': 0,
             'unit': 'Apply last calculated kicks.'},
-        'Status-Mon': {'type': 'char', 'value': 1}
+        'Status-Mon': {
+                'type': 'enum', 'value': 1, 'enums': StatusLabels.Global}
     }
     if prefix:
         return {prefix + k: v for k, v in db.items()}
@@ -144,7 +147,7 @@ def get_corrs_database(acc, prefix=''):
         'SyncKicks-Sts': {
             'type': 'enum', 'enums': SyncKicks._fields, 'value': 1},
         'ConfigTiming-Cmd': {'type': 'char', 'value': 0},
-        'CorrStatus-Mon': {'type': 'char', 'value': 0b1111},
+        'CorrStatus-Mon': {'type': 'char', 'value': 0b1111111},
         'CorrStatusLabels-Cte': {
             'type': 'string', 'count': len(StatusLabels.Corrs),
             'value': StatusLabels.Corrs}
