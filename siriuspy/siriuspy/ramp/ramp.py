@@ -744,7 +744,7 @@ class BoosterRamp(_ConfigSrv):
     def _update_waveform(self, maname):
 
         # update dipole if necessary
-        if 'BO-Fam:M-B' not in self._waveforms:
+        if self.MANAME_DIPOLE not in self._waveforms:
             self._update_waveform_dipole()
 
         # update family if necessary
