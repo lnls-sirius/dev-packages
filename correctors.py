@@ -21,6 +21,7 @@ class Corrector:
         self._opmode_ok = False
         self._ready = False
         self._applied = False
+        self._state = False
         self._name = corr_name
 
     @property
@@ -31,6 +32,11 @@ class Corrector:
     def connected(self):
         self._isConnected()
         return self._connected
+
+    @property
+    def state(self):
+        self._isTurnedOn()
+        return self._state
 
     @property
     def ready(self):
@@ -56,6 +62,11 @@ class Corrector:
     def _isConnected(self):
         self._connected = self._sp.connected
         self._connected &= self._rb.connected
+        self._connected &= self._pwrstt_sel.connected
+        self._connected &= self._pwrstt_sts.connected
+
+    def _isTurnedOn(self):
+        self._state = self._pwrstt_sts.value == _PwrSplyConst.PwrSate.On
 
     def _isReady(self):
         self._ready = self.equalKick(self._rb.value)
@@ -68,16 +79,18 @@ class RFCtrl(Corrector):
 
     def __init__(self):
         super().__init__(_csorb.RF_GEN_NAME)
-        self._sp = _epics.PV(
-                            LL_PREF + self._name + ':Freq-SP',
-                            connection_timeout=TIMEOUT)
-        self._rb = _epics.PV(
-                            LL_PREF + self._name + ':Freq-RB',
-                            connection_timeout=TIMEOUT)
+        opt = {'connection_timeout': TIMEOUT}
+        self._sp = _epics.PV(LL_PREF+self._name+':Freq-SP', **opt)
+        self._rb = _epics.PV(LL_PREF+self._name+':Freq-RB', **opt)
+        self._pwrstt_sel = _epics.PV(LL_PREF+self._name+':PwrSate-Sel', **opt)
+        self._pwrstt_sts = _epics.PV(LL_PREF+self._name+':PwrSate-Sts', **opt)
 
     def _kickApplied(self):
         self._isReady()
         self._applied = self._ready
+
+    def _isTurnedOn(self):
+        self._state = self._pwrstt_sts.value == 1  # TODO: database of RF GEN
 
 
 class CHCV(Corrector):
@@ -95,6 +108,8 @@ class CHCV(Corrector):
                             callback=self._kickApplied, **opt)
         self._opmode_sel = _epics.PV(LL_PREF+self._name+':OpMode-Sel', **opt)
         self._opmode_sts = _epics.PV(LL_PREF+self._name+':OpMode-Sts', **opt)
+        self._pwrstt_sel = _epics.PV(LL_PREF+self._name+':PwrSate-Sel', **opt)
+        self._pwrstt_sts = _epics.PV(LL_PREF+self._name+':PwrSate-Sts', **opt)
 
     @property
     def opmode_ok(self):
@@ -115,6 +130,8 @@ class CHCV(Corrector):
         self._connected &= self._ref.connected
         self._connected &= self._opmode_sel.connected
         self._connected &= self._opmode_sts.connected
+        self._connected &= self._pwrstt_sel.connected
+        self._connected &= self._pwrstt_sts.connected
 
 
 class TimingConfig:
