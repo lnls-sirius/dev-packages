@@ -60,7 +60,6 @@ class SOFB(_BaseClass):
         self._dtheta = None
         self._ref_corr_kicks = None
         self._thread = None
-        self._database = self.get_database()
         self._queue = _Queue()
         self._queue.start()
 
@@ -77,6 +76,7 @@ class SOFB(_BaseClass):
         self._orbit.add_callback(self._schedule_update)
         self._correctors.add_callback(self._schedule_update)
         self._matrix.add_callback(self._schedule_update)
+        self._database = self.get_database()
 
     @property
     def orbit(self):
