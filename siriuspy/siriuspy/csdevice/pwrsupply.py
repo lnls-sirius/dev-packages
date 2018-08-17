@@ -8,6 +8,7 @@ from siriuspy.search import MASearch as _MASearch
 from siriuspy.pwrsupply.siggen import DEFAULT_SIGGEN_CONFIG as _DEF_SIGG_CONF
 from siriuspy.csdevice.const import Const
 
+# MIN_WFMSIZE = 2001
 MAX_WFMSIZE = 4000
 DEFAULT_SIGGEN_CONFIG = _DEF_SIGG_CONF
 DEFAULT_WFMDATA = (0.0, ) * MAX_WFMSIZE
@@ -558,10 +559,22 @@ def _get_ps_FAC_2S_propty_database():
     return _get_ps_FBP_propty_database()
 
 
+def _get_ps_FAC_2S_ACDC_propty_database():
+    """Return database with FAC_2S pwrsupply model PVs."""
+    # TODO: implement!!!
+    return _get_ps_FAC_ACDC_propty_database()
+
+
 def _get_ps_FAC_2P4S_propty_database():
     """Return database with FAC_2P4S pwrsupply model PVs."""
     # TODO: implement!!!
     return _get_ps_FBP_propty_database()
+
+
+def _get_ps_FAC_2P4S_ACDC_propty_database():
+    """Return database with FAC_2P4S pwrsupply model PVs."""
+    # TODO: implement!!!
+    return _get_ps_FAC_ACDC_propty_database()
 
 
 def _get_ps_FAP_propty_database():
@@ -577,6 +590,18 @@ def _get_ps_FAP_4P_propty_database():
 
 
 def _get_ps_FAP_2P2S_propty_database():
+    """Return database with FAP_2P2S pwrsupply model PVs."""
+    # TODO: implement!!!
+    return _get_ps_FBP_propty_database()
+
+
+def _get_ps_FAP_4P_Master_propty_database():
+    """Return database with FAP_2P2S pwrsupply model PVs."""
+    # TODO: implement!!!
+    return _get_ps_FBP_propty_database()
+
+
+def _get_ps_FAP_4P_Slave_propty_database():
     """Return database with FAP_2P2S pwrsupply model PVs."""
     # TODO: implement!!!
     return _get_ps_FBP_propty_database()
@@ -628,24 +653,35 @@ def _get_model_db(psmodel):
         database = _get_ps_FBP_propty_database()
     elif psmodel in ('FBP_DCLink'):
         database = _get_ps_FBP_DCLink_propty_database()
-    elif psmodel in ('FAC_DCDC'):
-        database = _get_ps_FAC_propty_database()
-    elif psmodel in ('FAC_2S_DCDC'):
-        database = _get_ps_FAC_2S_propty_database()
-    elif psmodel in ('FAC_2P4S_DCDC'):
-        database = _get_ps_FAC_2P4S_propty_database()
-    elif psmodel in ('FAP_DCDC'):
-        database = _get_ps_FAP_propty_database()
-    elif psmodel in ('FAP_4P_DCDC'):
-        database = _get_ps_FAP_4P_propty_database()
-    elif psmodel in ('FAP_2P2S_DCDC'):
-        database = _get_ps_FAP_2P2S_propty_database()
     elif psmodel in ('FBP_FOFB'):
         database = _get_ps_FBP_FOFB_propty_database()
-    elif psmodel in ('Commercial'):
-        database = _get_ps_Commercial_propty_database()
+
+    elif psmodel in ('FAC_DCDC'):
+        database = _get_ps_FAC_propty_database()
     elif psmodel in ('FAC_ACDC'):
         database = _get_ps_FAC_ACDC_propty_database()
+
+    elif psmodel in ('FAC_2S_DCDC'):
+        database = _get_ps_FAC_2S_propty_database()
+    elif psmodel in ('FAC_2S_ACDC'):
+        database = _get_ps_FAC_2S_ACDC_propty_database()
+
+    elif psmodel in ('FAC_2P4S_DCDC'):
+        database = _get_ps_FAC_2P4S_propty_database()
+    elif psmodel in ('FAC_2P4S_ACDC'):
+        database = _get_ps_FAC_2P4S_ACDC_propty_database()
+
+    elif psmodel in ('FAP'):
+        database = _get_ps_FAP_propty_database()
+    elif psmodel in ('FAP_2P2S_MASTER'):
+        database = _get_ps_FAP_2P2S_propty_database()
+    elif psmodel in ('FAP_4P_Master'):
+        database = _get_ps_FAP_4P_Master_propty_database()
+    elif psmodel in ('FAP_4P_Slave'):
+        database = _get_ps_FAP_4P_Slave_propty_database()
+
+    elif psmodel in ('Commercial'):
+        database = _get_ps_Commercial_propty_database()
     else:
         raise ValueError(
             'DB for psmodel {} not implemented!'.format(psmodel))

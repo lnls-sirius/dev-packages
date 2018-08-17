@@ -124,7 +124,7 @@ def configure_log_file(stream=None, filename=None, debug=False):
     """Configure logging messages for the IOCs."""
     if stream is not None:
         dic_ = {'stream': stream}
-    elif filename is None:
+    elif filename is not None:
         dic_ = {'filename': filename, 'filemode': 'w'}
     else:
         dic_ = {'stream': _sys.stdout}
@@ -257,41 +257,46 @@ def get_strength_units(magfunc, section=None):
         raise ValueError('magfunc "{}" not defined!'.format(magfunc))
 
 
-def update_integer_bit(integer, number_of_bits, value, bit):
+def update_bit(v, bit_pos, bit_val):
     """Update a specific integer bit.
 
     Parameters
     ----------
-    integer: int
+    v: non-negative int
         Integer whose bit will be updated.
-    number_of_bits: (>=1)
-        Number of bits of the integer whose bit will be updated.
-    value: 0 | 1
+    bit_pos: non-negative int
+        The position of the bit to update.
+    bit_val: Any python object that evaluates to True or False
         Value to put on the bit.
-    bit: (0 <= bit < number_of_bits)
-        The number of the bit.
+
     """
-    if not isinstance(integer, int):
-        raise TypeError
+    if not isinstance(v, int) or not isinstance(bit_pos, int):
+        raise TypeError("v and bit_pos must be integers.")
 
-    if value > 1 or value < 0:
-        raise ValueError
+    if v < 0 or bit_pos < 0:
+        raise ValueError("v and bit_pos must be non-negative.")
 
-    if bit >= number_of_bits:
-        raise ValueError
+    return v | (1 << bit_pos) if bit_val else v & ~(1 << bit_pos)
 
-    allset = 1
-    for i in range(number_of_bits-1):
-        allset = 2*allset + 1
 
-    if value == 1:
-        mask = 1 << bit
-        integer = integer | mask
-    elif value == 0:
-        mask = (1 << bit) ^ allset
-        integer = integer & mask
+def get_bit(v, bit_pos):
+    """Update a specific integer bit.
 
-    return integer
+    Parameters
+    ----------
+    v: non-negative int
+        Integer whose bit will be get.
+    bit_pos: int
+        The position of the bit to get.
+
+    """
+    if not isinstance(v, int) or not isinstance(bit_pos, int):
+        raise TypeError("v and bit_pos must be integers")
+
+    if v < 0 or bit_pos < 0:
+        raise ValueError("v and bit_pos must be non-negative.")
+
+    return (v >> bit_pos) & 1
 
 
 def check_public_interface_namespace(namespace, valid_interface,

@@ -35,8 +35,8 @@ class TestMASearch(MockServConf):
         'conv_maname_2_splims',
         'conv_maname_2_psnames',
         'conv_psmaname_2_psnames',
-        'conv_psname_2_maname',
-        'conv_psname_2_maname_pwrsupply',
+        # 'conv_psname_2_maname',
+        'conv_psname_2_psmaname',
         'get_maname_2_splims_dict',
         # 'check_maname_ispulsed'
     )
@@ -100,7 +100,7 @@ class TestMASearch(MockServConf):
         'SI-01M1:PS-CH': 'SI-01M1:MA-SDA0',
     }
 
-    psname2maname_pwrsupply = {
+    psname2psmaname = {
         'SI-Fam:PS-B1B2-1': 'SI-Fam:MA-B1B2',
         'SI-Fam:PS-B1B2-2': 'SI-Fam:MA-B1B2',
         'BO-Fam:PS-B-1': 'BO-Fam:MA-B',
@@ -190,16 +190,16 @@ class TestMASearch(MockServConf):
         for ma, psnames in TestMASearch.maname2psnames.items():
             self.assertEqual(MASearch.conv_maname_2_psnames(ma), psnames)
 
-    def test_psname_2_maname(self):
-        """Test psname_2_maname."""
-        for psname, maname in TestMASearch.psname2maname.items():
-            self.assertEqual(MASearch.conv_psname_2_maname(psname), maname)
+    # def test_psname_2_maname(self):
+    #     """Test psname_2_maname."""
+    #     for psname, maname in TestMASearch.psname2maname.items():
+    #         self.assertEqual(MASearch.conv_psname_2_maname(psname), maname)
 
-    def test_conv_psname_2_maname_pwrsupply(self):
-        """Test conv_psname_2_maname_pwrsupply."""
-        self.assertIs(MASearch.conv_psname_2_maname_pwrsupply('INV'), None)
-        for psname, maname in TestMASearch.psname2maname_pwrsupply.items():
-            self.assertEqual(MASearch.conv_psname_2_maname_pwrsupply(psname),
+    def test_conv_psname_2_psmaname(self):
+        """Test conv_psname_2_psmaname."""
+        self.assertIs(MASearch.conv_psname_2_psmaname('INV'), None)
+        for psname, maname in TestMASearch.psname2psmaname.items():
+            self.assertEqual(MASearch.conv_psname_2_psmaname(psname),
                              maname)
 
     def test_get_maname_2_splims_dict(self):

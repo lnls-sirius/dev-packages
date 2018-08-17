@@ -189,9 +189,10 @@ class HLTimeSearch:
         _LLTimeSearch.add_crates_info()
         cls._TWDS_EVG = _LLTimeSearch.get_connections_twds_evg()
         cls._FROM_EVG = _LLTimeSearch.get_connections_from_evg()
-        cls._EVRs = _LLTimeSearch.get_devices_by_type('EVR')
-        cls._EVEs = _LLTimeSearch.get_devices_by_type('EVE')
-        cls._AMCFPGAEVRs = _LLTimeSearch.get_devices_by_type('AMCFPGAEVR')
+        cls._EVRs = _LLTimeSearch.get_device_names({'dev': 'EVR'})
+        cls._EVEs = _LLTimeSearch.get_device_names({'dev': 'EVE'})
+        cls._AMCFPGAEVRs = _LLTimeSearch.get_device_names(
+                                                        {'dev': 'AMCFPGAEVR'})
 
     @classmethod
     def _init(cls):

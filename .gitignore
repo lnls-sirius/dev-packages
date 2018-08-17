@@ -36,6 +36,7 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 # Unit test / coverage reports
+.pytest_cache/
 htmlcov/
 .tox/
 .coverage
@@ -61,3 +62,5 @@ doc/doxygen/documentation.html
 
 # PyBuilder
 target/
+.vscode
+

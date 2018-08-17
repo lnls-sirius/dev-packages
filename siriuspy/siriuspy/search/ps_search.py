@@ -29,6 +29,9 @@ class PSSearch:
     _bbbname_2_bsmps_dict = None
     _bsmps_2_bbbname_dict = None
 
+    _bbbname_2_udc_dict = None
+    _udc_2_bsmp_dict = None
+
     @staticmethod
     def get_psnames(filters=None):
         """Return a sorted and filtered list of all power supply names."""
@@ -206,8 +209,11 @@ class PSSearch:
         """Return SP limits unit."""
         if PSSearch._pstype_2_splims_dict is None:
             PSSearch._reload_pstype_2_splims_dict()
-        if psmodel in ('FBP', 'FAC_DCDC', 'FAP_DCDC', 'FAC_2S_DCDC',
-                       'FAC_2P4S_DCDC', 'FAC_2P4S_DCDC'):
+        if psmodel in ('FBP', 'FBP_DCLink', 'FBP_FOFB',
+                       'FAC_ACDC', 'FAC_DCDC', 'FAC_2S_DCDC', 'FAC_2S_ACDC',
+                       'FAC_2P4S_DCDC', 'FAC_2P4S_ACDC', 'FAP',
+                       'FAP_2P2S_MASTER', 'FAP_4P_Master', 'FAP_4P_Slave',
+                       'Commercial'):
             return PSSearch._splims_ps_unit
         else:
             raise ValueError(psmodel)
@@ -320,8 +326,7 @@ class PSSearch:
     @staticmethod
     def _reload_bbb_2_bsmps_dict():
         """Test."""
-        data, _ = \
-            _util.read_text_data(_web.beaglebone_bsmp_mapping())
+        data, _ = _util.read_text_data(_web.beaglebone_bsmp_mapping())
         PSSearch._bbbname_2_bsmps_dict = dict()
         PSSearch._bsmps_2_bbbname_dict = dict()
         for line in data:
@@ -332,3 +337,34 @@ class PSSearch:
                 bsmp = (bsmp_name, bsmp_id)
                 PSSearch._bbbname_2_bsmps_dict[bbbname].append(bsmp)
                 PSSearch._bsmps_2_bbbname_dict[bsmp_name] = bbbname
+
+    @staticmethod
+    def _reload_bbb_2_udc_dict():
+        data, _ = _util.read_text_data(_web.bbb_udc_mapping())
+        PSSearch._bbbname_2_udc_dict = dict()
+        for line in data:
+            bbbname, *udcs = line
+            PSSearch._bbbname_2_udc_dict[bbbname] = udcs
+        
+    @staticmethod
+    def _reload_udc_2_bsmp_dict():
+        data, _ = _util.read_text_data(_web.udc_ps_mapping())
+        PSSearch._udc_2_bsmp_dict = dict()
+        for line in data:
+            udc, *bsmps = line
+            PSSearch._udc_2_bsmp_dict[udc] = list()
+            for i in range(len(bsmps)//2):
+                bsmp = bsmps[2*i+0], int(bsmps[2*i+1])
+                PSSearch._udc_2_bsmp_dict[udc].append(bsmp)
+
+    @staticmethod
+    def conv_bbb_2_udc(bbbname):
+        if PSSearch._bbbname_2_udc_dict is None:
+            PSSearch._reload_bbb_2_udc_dict()
+        return PSSearch._bbbname_2_udc_dict[bbbname]
+
+    @staticmethod
+    def conv_udc_2_bsmps(udc):
+        if PSSearch._udc_2_bsmp_dict is None:
+            PSSearch._reload_udc_2_bsmp_dict()
+        return PSSearch._udc_2_bsmp_dict[udc]

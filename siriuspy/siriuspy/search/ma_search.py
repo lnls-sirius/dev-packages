@@ -5,7 +5,7 @@ from siriuspy import util as _util
 from siriuspy.namesys import Filter as _Filter
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy import servweb as _web
-from .ps_search import PSSearch as _PSSearch
+from siriuspy.search.ps_search import PSSearch as _PSSearch
 from siriuspy.magnet import util as _mutil
 
 
@@ -47,8 +47,11 @@ class MASearch:
         """Get unit of SP limits."""
         if MASearch._maname_2_splims_dict is None:
             MASearch._reload_maname_2_splims_dict()
-        if psmodel in ('FBP', 'FAC_DCDC', 'FAP_DCDC', 'FAC_2S_DCDC',
-                       'FAC_2P4S_DCDC', 'FAC_2P4S_DCDC'):
+        if psmodel in ('FBP', 'FBP_DCLink', 'FBP_FOFB',
+                       'FAC_ACDC', 'FAC_DCDC', 'FAC_2S_DCDC', 'FAC_2S_ACDC',
+                       'FAC_2P4S_DCDC', 'FAC_2P4S_ACDC', 'FAP',
+                       'FAP_2P2S_MASTER', 'FAP_4P_Master', 'FAP_4P_Slave',
+                       'Commercial'):
             return MASearch._splims_ma_unit
         else:
             raise ValueError('units not def for ' + psmodel)
@@ -123,26 +126,27 @@ class MASearch:
             return [maname.replace(':PM', ':PU')]
         return [maname.replace(':MA', ':PS')]
 
-    @staticmethod
-    def conv_psname_2_maname(psname):
-        """Return maname for a given psname.
+    # @staticmethod
+    # def conv_psname_2_maname(psname):
+    #     """Return maname for a given psname.
+    #
+    #         The maname returned is the name of the magnet or magnet family
+    #     whose magnet instances has/have coil(s) excited by the given power
+    #     supply name. For SI and BO dipoles are exceptions.
+    #     """
+    #     manames = MASearch.get_manames()
+    #     for maname in manames:
+    #         if psname in MASearch._maname_2_psnames_dict[maname]:
+    #             return maname
+    #     return None
 
-            The maname returned is the name of the magnet or magnet family
-        whose magnet instances has/have coil(s) excited by the given power
-        supply name. For SI and BO dipoles are exceptions.
-        """
-        manames = MASearch.get_manames()
-        for maname in manames:
-            if psname in MASearch._maname_2_psnames_dict[maname]:
-                return maname
-        return None
-
     @staticmethod
-    def conv_psname_2_maname_pwrsupply(psname):
+    def conv_psname_2_psmaname(psname):
         """Return power supply maname for a given psname."""
         if MASearch._psnames_list is None:
             MASearch._reload_maname_2_psnames_dict()
-        if psname not in MASearch._psnames_list:
+        if psname not in MASearch._psnames_list or 'DCLink' in psname or \
+                'Slave' in psname:
             return None
         if 'PS-B1B2' in psname:
             return 'SI-Fam:MA-B1B2'
@@ -203,30 +207,31 @@ class MASearch:
     @staticmethod
     def _reload_maname_2_psnames_dict():
         """Build a dict of tuples with power supplies of each magnet."""
-        if _web.server_online():
-            text = _web.magnets_excitation_ps_read()
-            data, param_dict = _util.read_text_data(text)
-            MASearch._maname_2_psnames_dict = {}
-            MASearch._maname_2_trim_dict = {}
-            MASearch._manames_list = []
-            for datum in data:
-                magnet, *psnames = datum
-                MASearch._manames_list.append(magnet)
-                MASearch._maname_2_psnames_dict[magnet] = tuple(psnames)
-                if 'Fam' not in magnet:
-                    famname = _SiriusPVName(magnet)
-                    famname = famname.replace(
-                        famname.sub, 'Fam').replace('MA-', 'PS-')
-                    if '-Fam:PS-Q' in famname and famname in psnames:
-                        psnames.remove(famname)
-                        maname = famname.replace('PS-', 'MA-')
-                        if maname not in MASearch._maname_2_trim_dict:
-                            MASearch._maname_2_trim_dict[maname] = \
-                                tuple(psnames)
-                        else:
-                            MASearch._maname_2_trim_dict[maname] += \
-                                tuple(psnames)
-            MASearch._psnames_list = _PSSearch.get_psnames()
-        else:
+        if not _web.server_online():
             raise Exception(
                 'could not read magnet-excitation-ps from web server!')
+        text = _web.magnets_excitation_ps_read()
+        data, param_dict = _util.read_text_data(text)
+        MASearch._maname_2_psnames_dict = {}
+        MASearch._maname_2_trim_dict = {}
+        MASearch._manames_list = []
+        for datum in data:
+            magnet, *psnames = datum
+            magnet = _SiriusPVName(magnet)
+            MASearch._manames_list.append(magnet)
+            MASearch._maname_2_psnames_dict[magnet] = tuple(psnames)
+            if 'Fam' != magnet.sub:
+                famname = magnet
+                famname = famname.replace(
+                    famname.sub, 'Fam').replace('MA-', 'PS-')
+                if '-Fam:PS-Q' in famname and famname in psnames:
+                    psnames.remove(famname)
+                    maname = famname.replace('PS-', 'MA-')
+                    if maname not in MASearch._maname_2_trim_dict:
+                        MASearch._maname_2_trim_dict[maname] = \
+                            tuple(psnames)
+                    else:
+                        MASearch._maname_2_trim_dict[maname] += \
+                            tuple(psnames)
+        MASearch._manames_list = sorted(MASearch._manames_list)
+        MASearch._psnames_list = _PSSearch.get_psnames()
