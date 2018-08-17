@@ -128,9 +128,10 @@ class SOFB(_BaseClass):
         if ret_val:
             _log.debug('Write complete.')
         else:
+            value = self._driver.getParam(reason)
             _log.warning('Unsuccessful write of PV ' +
                          '{0:s}; value = {1:s}.'.format(reason, str(value)))
-        return ret_val
+        self._schedule_update(reason, value)
 
     def process(self):
         """Run continuously in the main thread."""
