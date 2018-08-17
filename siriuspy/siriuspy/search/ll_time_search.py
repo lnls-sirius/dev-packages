@@ -68,7 +68,7 @@ class LLTimeSearch:
                 ),
             },
         'PSCtrl': {
-            'TIIN': ('RS485',),
+            'TIMIN': ('RS485',),
             },
         'Crate': {
             'CRT0': ('CRT0', ),
