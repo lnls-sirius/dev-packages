@@ -74,3 +74,5 @@ coverage.xml
 */doc/doxygen/html/
 */doc/doxygen/documentation.html
 
+.vscode
+
