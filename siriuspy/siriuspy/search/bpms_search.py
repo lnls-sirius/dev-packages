@@ -108,6 +108,6 @@ class BPMSearch:
 
     @classmethod
     def _build_data(cls):
-        data = {k: v for k, v in cls.map.items() if k.section == 'SI'}
+        data = {k: v for k, v in cls._mapping.items() if k.sec == 'SI'}
         cls._names = sorted(data.keys())
         cls._pos = [data[k]['position'] for k in cls._names]
