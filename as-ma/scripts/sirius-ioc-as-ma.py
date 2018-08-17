@@ -36,7 +36,7 @@ def get_manames(bbbname):
     manames = set()
     psnames = PSSearch.conv_bbbname_2_psnames(bbbname)
     for psname in psnames:
-        maname = MASearch.conv_psname_2_maname_pwrsupply(psname[0])
+        maname = MASearch.conv_psname_2_psmaname(psname[0])
         if maname is None:
             continue
         manames.add(maname)
@@ -68,7 +68,8 @@ def main():
             manames = set()
             for arg in args:
                 manames |= set(get_manames(bbbname=arg))
-            ioc_module.run(manames=list(manames))
+            if manames:
+                ioc_module.run(manames=list(manames))
 
 
 if __name__ == "__main__":
