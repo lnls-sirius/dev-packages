@@ -142,7 +142,7 @@ class SOFB(_BaseClass):
         if dt > 0:
             _time.sleep(dt)
         else:
-            _log.debug('App: check took {0:f}ms.'.format(dt*1000))
+            _log.debug('App: check took {0:f}ms.'.format((tf-t0)*1000))
 
     def apply_corr(self, code):
         """Apply calculated kicks on the correctors."""
