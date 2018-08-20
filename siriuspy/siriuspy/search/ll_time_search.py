@@ -2,12 +2,13 @@
 
 import re as _re
 from copy import deepcopy as _dcopy
-from openpyxl import load_workbook
+
 from siriuspy import servweb as _web
 from siriuspy.namesys import Filter as _Filter
-from .ps_search import PSSearch as _PSSearch
-from .bpms_search import BPMSearch as _BPMSearch
 from siriuspy.namesys import SiriusPVName as _PVName
+
+from .bpms_search import BPMSearch as _BPMSearch
+from .ps_search import PSSearch as _PSSearch
 
 _timeout = 1.0
 
