@@ -67,16 +67,8 @@ class WaveformParam:
     def update(self):
         """Update calculation."""
         if self._changed:
-            self._clear_anomalies()
-            if not self._anomalies:
-                self._check_valid_parameters_times()
-            if not self._anomalies:
-                self._check_valid_parameters_energies()
-            if self._anomalies:
-                self._invalid = True
-            else:
-                self._invalid = False
-            if not self._anomalies:
+            self._update_invalid_state()
+            if not self._invalid:
                 self._calc_region1_parms()
                 self._calc_region2_parms()
                 self._calc_region3_parms()
@@ -98,7 +90,7 @@ class WaveformParam:
     @property
     def invalid(self):
         """Invalid state."""
-        self.update()
+        self._update_invalid_state()
         return self._invalid
 
     @property
@@ -266,6 +258,16 @@ class WaveformParam:
                 'Rampdown start energy <= Rampdown stop energy')
         elif self._rampdown_stop_energy < self._start_energy:
             self._anomalies.add('Rampdown stop energy < Start energy')
+
+    def _update_invalid_state(self):
+        if self._changed:
+            self._clear_anomalies()
+            self._check_valid_parameters_times()
+            self._check_valid_parameters_energies()
+            if self._anomalies:
+                self._invalid = True
+            else:
+                self._invalid = False
 
     def _func_region1(self, t):
         """Region1 function."""

@@ -123,7 +123,6 @@ class BoosterRamp(_ConfigSrv):
                 # save a new normalized configuration
                 config.configsrv_save()
         self._synchronized = True  # all went well
-        self._invalidate_waveforms(True)  # TODO: check if it is necessary
 
     def configsrv_save(self):
         """Save configuration to config server."""
@@ -242,7 +241,6 @@ class BoosterRamp(_ConfigSrv):
 
         # triggers updates for new normalized configs table
         self._set_normalized_configs(nconfigs)
-        self._update_normalized_configs_objects()  # TODO: invoked twice?
 
         # interpolate nconfig, if necessary
         if nconfig is None:
@@ -318,6 +316,8 @@ class BoosterRamp(_ConfigSrv):
         rdip = self._configuration['ramp_dipole']
         if value != rdip['wfm_nrpoints']:
             if not 1 <= value <= _MAX_WFMSIZE:
+                self._synchronized = False
+                self._invalidate_waveforms(True)
                 raise _RampInvalidDipoleWfmParms(
                     'Invalid number of points for waveforms.')
             rdip['wfm_nrpoints'] = value
@@ -372,7 +372,6 @@ class BoosterRamp(_ConfigSrv):
                 raise _RampInvalidDipoleWfmParms(str(e))
             else:
                 rdip['start_energy'] = value
-                # TODO: verify values
             finally:
                 self._synchronized = False
                 self._invalidate_waveforms(True)
@@ -403,7 +402,6 @@ class BoosterRamp(_ConfigSrv):
                 raise _RampInvalidDipoleWfmParms(str(e))
             else:
                 rdip['rampup_start_energy'] = value
-                # TODO: verify values
             finally:
                 self._synchronized = False
                 self._invalidate_waveforms(True)
@@ -434,7 +432,6 @@ class BoosterRamp(_ConfigSrv):
                 raise _RampInvalidDipoleWfmParms(str(e))
             else:
                 rdip['rampup_start_time'] = value
-                # TODO: > [0] and < [2]
             finally:
                 self._synchronized = False
                 self._invalidate_waveforms(True)
@@ -465,7 +462,6 @@ class BoosterRamp(_ConfigSrv):
                 raise _RampInvalidDipoleWfmParms(str(e))
             else:
                 rdip['rampup_stop_energy'] = value
-                # TODO: verify values
             finally:
                 self._synchronized = False
                 self._invalidate_waveforms(True)
@@ -496,7 +492,6 @@ class BoosterRamp(_ConfigSrv):
                 raise _RampInvalidDipoleWfmParms(str(e))
             else:
                 rdip['rampup_stop_time'] = value
-                # TODO: > [1] and < [3]
             finally:
                 self._synchronized = False
                 self._invalidate_waveforms(True)
@@ -539,7 +534,6 @@ class BoosterRamp(_ConfigSrv):
                 raise _RampInvalidDipoleWfmParms(str(e))
             else:
                 rdip['plateau_energy'] = value
-                # TODO: verify values
             finally:
                 self._synchronized = False
                 self._invalidate_waveforms(True)
@@ -570,7 +564,6 @@ class BoosterRamp(_ConfigSrv):
                 raise _RampInvalidDipoleWfmParms(str(e))
             else:
                 rdip['rampdown_start_energy'] = value
-                # TODO: verify values
             finally:
                 self._synchronized = False
                 self._invalidate_waveforms(True)
@@ -683,8 +676,6 @@ class BoosterRamp(_ConfigSrv):
         """Waveform anomalies."""
         self._update_waveform(self.MANAME_DIPOLE)
         w = self._waveforms[self.MANAME_DIPOLE]
-        if self._auto_update:
-            w.strengths  # triggers waveform interpolation
         return w.anomalies
 
     def waveform_get(self, maname):
