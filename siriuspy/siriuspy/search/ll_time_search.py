@@ -21,6 +21,12 @@ class LLTimeSearch:
     # defines the relations between input and output of the timing devices
     # that are possible taking into consideration only the devices architecture
     i2o_map = {
+        'EVG': {
+            'UPLINK': (
+                'OUT0', 'OUT1', 'OUT2', 'OUT3',
+                'OUT4', 'OUT5', 'OUT6', 'OUT7',
+                ),
+            },
         'EVR': {
             'UPLINK': (
                 'OTP0', 'OTP1', 'OTP2', 'OTP3', 'OTP4', 'OTP5',
