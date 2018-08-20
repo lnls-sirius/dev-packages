@@ -7,8 +7,8 @@ from siriuspy import servweb as _web
 from siriuspy.namesys import Filter as _Filter
 from siriuspy.namesys import SiriusPVName as _PVName
 
-from .bpms_search import BPMSearch as _BPMSearch
-from .ps_search import PSSearch as _PSSearch
+from siriuspy.search.bpms_search import BPMSearch as _BPMSearch
+from siriuspy.search.ps_search import PSSearch as _PSSearch
 
 _timeout = 1.0
 
