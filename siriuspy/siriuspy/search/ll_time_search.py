@@ -43,20 +43,20 @@ class LLTimeSearch:
                 ),
             },
         'AMCFPGAEVR': {
-            'SFP': (
+            'SFP8': (
                 'FMC1CH1', 'FMC1CH2', 'FMC1CH3', 'FMC1CH4', 'FMC1CH5',
                 'FMC2CH1', 'FMC2CH2', 'FMC2CH3', 'FMC2CH4', 'FMC2CH5',
                 'CRT0', 'CRT1', 'CRT2', 'CRT3', 'CRT4',
                 'CRT5', 'CRT6', 'CRT7',
                 ),
             },
-        'OEMultiSFP': {
+        'OEMultSFP': {
             'OE1': ('OUT1', ),
             'OE2': ('OUT2', ),
             'OE3': ('OUT3', ),
             'OE4': ('OUT4', ),
             },
-        'OEMultiPOF': {
+        'OEMultPOF': {
             'IN1': ('OUT1', ),
             'IN2': ('OUT2', ),
             'IN3': ('OUT3', ),
