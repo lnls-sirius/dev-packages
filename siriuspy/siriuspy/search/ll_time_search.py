@@ -213,31 +213,31 @@ class LLTimeSearch:
     def get_top_chain_senders(cls):
         """Return a dictionary with the beaglebone to power supply mapping."""
         cls._get_timedata()
-        return _dcopy(cls._top_chain_senders)
+        return _dcopy(cls._top_chain_devs)
 
     @classmethod
     def get_final_receivers(cls):
         """Return a dictionary with the beaglebone to power supply mapping."""
         cls._get_timedata()
-        return _dcopy(cls._final_receivers)
+        return _dcopy(cls._final_receiver_devs)
 
     @classmethod
     def get_relations_from_evg(cls):
         """Return a dictionary with the beaglebone to power supply mapping."""
         cls._get_timedata()
-        return _dcopy(cls._relations_from_evg)
+        return _dcopy(cls._devs_from_evg)
 
     @classmethod
     def get_relations_twds_evg(cls):
         """Return a dictionary with the beaglebone to power supply mapping."""
         cls._get_timedata()
-        return _dcopy(cls._relations_twds_evg)
+        return _dcopy(cls._devs_twds_evg)
 
     @classmethod
     def get_hierarchy_list(cls):
         """Return a dictionary with the beaglebone to power supply mapping."""
         cls._get_timedata()
-        return _dcopy(cls._hierarchy_list)
+        return _dcopy(cls._hierarchy_map)
 
     # ############ Auxiliar methods ###########
     @classmethod
@@ -318,14 +318,11 @@ class LLTimeSearch:
     def _update_related_maps(cls):
         cls._build_devices_relations()
         cls._top_chain_devs = (
-            cls._dev_from_evg.keys() - cls._dev_twds_evg.keys()
-            )
+            cls._devs_from_evg.keys() - cls._devs_twds_evg.keys())
         cls._final_receiver_devs = (
-            cls._dev_twds_evg.keys() - cls._dev_from_evg.keys()
-            )
+            cls._devs_twds_evg.keys() - cls._devs_from_evg.keys())
         cls._all_devices = (
-            cls._dev_from_evg.keys() | cls._dev_twds_evg.keys()
-            )
+            cls._devs_from_evg.keys() | cls._devs_twds_evg.keys())
         cls._build_hierarchy_map()
 
     @classmethod
@@ -343,8 +340,8 @@ class LLTimeSearch:
                 devs |= inv_map.get(v, set())
                 inv_map[v] = devs
 
-        cls._dev_from_evg = simple_map
-        cls._dev_twds_evg = inv_map
+        cls._devs_from_evg = simple_map
+        cls._devs_twds_evg = inv_map
 
     @classmethod
     def _build_hierarchy_map(cls):
@@ -352,7 +349,7 @@ class LLTimeSearch:
         while True:
             vals = set()
             for k in hierarchy[-1]:
-                vals |= cls._dev_from_evg.get(k, set())
+                vals |= cls._devs_from_evg.get(k, set())
             if vals:
                 hierarchy.append(vals)
             else:
