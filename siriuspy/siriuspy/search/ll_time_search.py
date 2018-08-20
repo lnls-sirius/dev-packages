@@ -115,8 +115,17 @@ class LLTimeSearch:
         """Get channel input method."""
         if not isinstance(channel, _PVName):
             channel = _PVName(channel)
-        conn_up = cls.o2i_map[channel.dev][channel.propty]
-        return _PVName(channel.device_name + ':' + conn_up)
+        o2i = cls.o2i_map.get(channel.dev)
+        if o2i is None:
+            return []
+        conn = o2i.get(channel.propty)
+        if conn is None:
+            conn = cls.i2o_map[channel.dev].get(channel.propty)
+        if conn is None:
+            return []
+        elif isinstance(conn, str):
+            conn = [conn, ]
+        return [_PVName(channel.device_name + ':' + co) for co in conn]
 
     @classmethod
     def add_crates_info(cls, connections_dict=None):
@@ -189,7 +198,7 @@ class LLTimeSearch:
             up_chan = list(twds_evg[up_chan])[0]
         up_channels = [up_chan]
         while up_chan.device_name not in cls._top_chain_devs:
-            up_chan = cls.get_channel_input(up_chan)
+            up_chan = cls.get_channel_input(up_chan)[0]
             up_chan = list(twds_evg[up_chan])[0]
             up_channels.append(up_chan)
         return up_channels
