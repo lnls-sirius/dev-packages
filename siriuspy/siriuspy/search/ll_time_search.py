@@ -145,12 +145,12 @@ class LLTimeSearch:
             used.add(chan.device_name)
             for bpm in bpms:
                 for conn in conns:
-                cls._add_entry_to_map(
+                    cls._add_entry_to_map(
                         which_map='from', conn=conn,
-                    ele1=chan.device_name, ele2=bpm)
-                cls._add_entry_to_map(
+                        ele1=chan.device_name, ele2=bpm)
+                    cls._add_entry_to_map(
                         which_map='twds', conn=conn,
-                    ele1=bpm, ele2=chan.device_name)
+                        ele1=bpm, ele2=chan.device_name)
         cls._update_related_maps()
         return (connections_dict.keys() - used)
 
@@ -501,3 +501,7 @@ def _sort_connection_table(chans):
                 del chans[i]
                 break
     return chans_sort
+
+
+if __name__ == '__main__':
+    m = LLTimeSearch.add_crates_info()
