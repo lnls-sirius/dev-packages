@@ -14,7 +14,7 @@ class BPMSearch:
     """
 
     _mapping = None
-    _inv_mapping = None
+    _timing_mapping = None
 
     # BPMsDATA API
     # ==========
@@ -43,16 +43,17 @@ class BPMSearch:
                                 cls._names, filters=filters, sorting=sorting)
 
     @classmethod
-    def get_positions(cls):
+    def get_positions(cls, filters=None, sorting=None):
         """Return a dictionary with the beaglebone to power supply mapping."""
         cls._get_data()
-        return _dcopy(cls._pos)
+        names = cls.get_names(filters=filters, sorting=sorting)
+        return [cls._mapping[name]['position'] for name in names]
 
     @classmethod
-    def get_crates_mapping(cls):
+    def get_timing_mapping(cls):
         """Return a dictionary with the power supply to beaglebone mapping."""
         cls._get_data()
-        return _dcopy(cls._crates_mapping)
+        return _dcopy(cls._timing_mapping)
 
     @classmethod
     def _get_data(cls):
@@ -61,34 +62,38 @@ class BPMSearch:
         if not _web.server_online():
             raise Exception('could not read data from web server!')
         text = _web.bpms_data(timeout=_timeout)
-        cls._mapping = cls._get_mapping(text)
-        cls._build_crates_to_bpm_mapping()
-        cls._build_data()
+        cls._build_mapping(text)
+        cls._build_timing_to_bpm_mapping()
 
-    @staticmethod
-    def _get_mapping(text):
+    @classmethod
+    def _build_mapping(cls, text):
         mapping = dict()
         lines = text.splitlines()
         for line in lines:
             line = line.strip()
             if not line or line[0] == '#':
                 continue  # empty line
-            key, pos, crate, *_ = line.split()
+            key, pos, timing, *_ = line.split()
             key = _PVName(key)
-            crate = _PVName(crate)
+            timing = _PVName(timing)
             if key in mapping.keys():
                 raise Exception('BPM {0:s} double entry.'.format(key))
             else:
-                mapping[key] = {'position': float(pos), 'crate': crate}
-        return mapping
+                mapping[key] = {'position': float(pos), 'timing': timing}
+        cls._mapping = mapping
+        cls._names = sorted(cls._mapping.keys())
 
     @classmethod
-    def _build_crates_to_bpm_mapping(cls):
-        crates_mapping = dict()
+    def _build_timing_to_bpm_mapping(cls):
+        timing_mapping = dict()
         for k, v in cls._mapping.items():
-            k2 = v['crate']
-            if k2 in crates_mapping.keys():
-                crates_mapping[k2] += tuple(k)
+            k2 = v['timing']
+            if k2 in timing_mapping.keys():
+                timing_mapping[k2] += tuple(k)
+            else:
+                timing_mapping[k2] = tuple(k)
+        cls._timing_mapping = timing_mapping
+
             else:
                 crates_mapping[k2] = tuple(k)
         cls._crates_mapping = crates_mapping
