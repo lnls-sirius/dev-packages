@@ -361,14 +361,21 @@ class BoosterRamp(_ConfigSrv):
             w = self._waveforms[self.MANAME_DIPOLE]
             w.start_energy = value
             if w.invalid:  # triggers update in w
+                self._synchronized = False
+                self._invalidate_waveforms(True)
                 raise _RampInvalidDipoleWfmParms(
                     'Invalid start_energy')
-            if self._auto_update:
-                w.strengths  # triggers waveform interpolation
-            rdip['start_energy'] = value
-            # TODO: verify values
-            self._synchronized = False
-            self._invalidate_waveforms(True)
+            try:
+                if self._auto_update:
+                    w.strengths  # triggers waveform interpolation
+            except _RampInvalidDipoleWfmParms as e:
+                raise _RampInvalidDipoleWfmParms(str(e))
+            else:
+                rdip['start_energy'] = value
+                # TODO: verify values
+            finally:
+                self._synchronized = False
+                self._invalidate_waveforms(True)
 
     @property
     def rampup_start_energy(self):
@@ -385,14 +392,21 @@ class BoosterRamp(_ConfigSrv):
             w = self._waveforms[self.MANAME_DIPOLE]
             w.rampup_start_energy = value
             if w.invalid:
+                self._synchronized = False
+                self._invalidate_waveforms(True)
                 raise _RampInvalidDipoleWfmParms(
                     'Invalid rampup_start_energy')
-            if self._auto_update:
-                w.strengths  # triggers waveform interpolation
-            rdip['rampup_start_energy'] = value
-            # TODO: verify values
-            self._synchronized = False
-            self._invalidate_waveforms(True)
+            try:
+                if self._auto_update:
+                    w.strengths  # triggers waveform interpolation
+            except _RampInvalidDipoleWfmParms as e:
+                raise _RampInvalidDipoleWfmParms(str(e))
+            else:
+                rdip['rampup_start_energy'] = value
+                # TODO: verify values
+            finally:
+                self._synchronized = False
+                self._invalidate_waveforms(True)
 
     @property
     def rampup_start_time(self):
@@ -409,14 +423,21 @@ class BoosterRamp(_ConfigSrv):
             w = self._waveforms[self.MANAME_DIPOLE]
             w.rampup_start_time = value
             if w.invalid:
+                self._synchronized = False
+                self._invalidate_waveforms(True)
                 raise _RampInvalidDipoleWfmParms(
                     'Invalid rampup_start_time')
-            if self._auto_update:
-                w.strengths  # triggers waveform interpolation
-            rdip['rampup_start_time'] = value
-            # TODO: > [0] and < [2]
-            self._synchronized = False
-            self._invalidate_waveforms(True)
+            try:
+                if self._auto_update:
+                    w.strengths  # triggers waveform interpolation
+            except _RampInvalidDipoleWfmParms as e:
+                raise _RampInvalidDipoleWfmParms(str(e))
+            else:
+                rdip['rampup_start_time'] = value
+                # TODO: > [0] and < [2]
+            finally:
+                self._synchronized = False
+                self._invalidate_waveforms(True)
 
     @property
     def rampup_stop_energy(self):
@@ -433,14 +454,21 @@ class BoosterRamp(_ConfigSrv):
             w = self._waveforms[self.MANAME_DIPOLE]
             w.rampup_stop_energy = value
             if w.invalid:
+                self._synchronized = False
+                self._invalidate_waveforms(True)
                 raise _RampInvalidDipoleWfmParms(
                     'Invalid rampup_stop_energy')
-            if self._auto_update:
-                w.strengths  # triggers waveform interpolation
-            rdip['rampup_stop_energy'] = value
-            # TODO: verify values
-            self._synchronized = False
-            self._invalidate_waveforms(True)
+            try:
+                if self._auto_update:
+                    w.strengths  # triggers waveform interpolation
+            except _RampInvalidDipoleWfmParms as e:
+                raise _RampInvalidDipoleWfmParms(str(e))
+            else:
+                rdip['rampup_stop_energy'] = value
+                # TODO: verify values
+            finally:
+                self._synchronized = False
+                self._invalidate_waveforms(True)
 
     @property
     def rampup_stop_time(self):
@@ -457,14 +485,21 @@ class BoosterRamp(_ConfigSrv):
             w = self._waveforms[self.MANAME_DIPOLE]
             w.rampup_stop_time = value
             if w.invalid:
+                self._synchronized = False
+                self._invalidate_waveforms(True)
                 raise _RampInvalidDipoleWfmParms(
                     'Invalid rampup_stop_time')
-            if self._auto_update:
-                w.strengths  # triggers waveform interpolation
-            rdip['rampup_stop_time'] = value
-            # TODO: > [1] and < [3]
-            self._synchronized = False
-            self._invalidate_waveforms(True)
+            try:
+                if self._auto_update:
+                    w.strengths  # triggers waveform interpolation
+            except _RampInvalidDipoleWfmParms as e:
+                raise _RampInvalidDipoleWfmParms(str(e))
+            else:
+                rdip['rampup_stop_time'] = value
+                # TODO: > [1] and < [3]
+            finally:
+                self._synchronized = False
+                self._invalidate_waveforms(True)
 
     @property
     def plateau_start_time(self):
@@ -493,14 +528,21 @@ class BoosterRamp(_ConfigSrv):
             w = self._waveforms[self.MANAME_DIPOLE]
             w.plateau_value = value
             if w.invalid:
+                self._synchronized = False
+                self._invalidate_waveforms(True)
                 raise _RampInvalidDipoleWfmParms(
                     'Invalid plateau_energy')
-            if self._auto_update:
-                w.strengths  # triggers waveform interpolation
-            rdip['plateau_energy'] = value
-            # TODO: verify values
-            self._synchronized = False
-            self._invalidate_waveforms(True)
+            try:
+                if self._auto_update:
+                    w.strengths  # triggers waveform interpolation
+            except _RampInvalidDipoleWfmParms as e:
+                raise _RampInvalidDipoleWfmParms(str(e))
+            else:
+                rdip['plateau_energy'] = value
+                # TODO: verify values
+            finally:
+                self._synchronized = False
+                self._invalidate_waveforms(True)
 
     @property
     def rampdown_start_energy(self):
@@ -517,14 +559,21 @@ class BoosterRamp(_ConfigSrv):
             w = self._waveforms[self.MANAME_DIPOLE]
             w.rampdown_start_energy = value
             if w.invalid:
+                self._synchronized = False
+                self._invalidate_waveforms(True)
                 raise _RampInvalidDipoleWfmParms(
                     'Invalid rampdown_start_energy')
-            if self._auto_update:
-                w.strengths  # triggers waveform interpolation
-            rdip['rampdown_start_energy'] = value
-            # TODO: verify values
-            self._synchronized = False
-            self._invalidate_waveforms(True)
+            try:
+                if self._auto_update:
+                    w.strengths  # triggers waveform interpolation
+            except _RampInvalidDipoleWfmParms as e:
+                raise _RampInvalidDipoleWfmParms(str(e))
+            else:
+                rdip['rampdown_start_energy'] = value
+                # TODO: verify values
+            finally:
+                self._synchronized = False
+                self._invalidate_waveforms(True)
 
     @property
     def rampdown_start_time(self):
@@ -541,13 +590,20 @@ class BoosterRamp(_ConfigSrv):
             w = self._waveforms[self.MANAME_DIPOLE]
             w.rampdown_start_time = value
             if w.invalid:
+                self._synchronized = False
+                self._invalidate_waveforms(True)
                 raise _RampInvalidDipoleWfmParms(
                     'Invalid rampdown_start_time')
-            if self._auto_update:
-                w.strengths  # triggers waveform interpolation
-            rdip['rampdown_start_time'] = value
-            self._synchronized = False
-            self._invalidate_waveforms(True)
+            try:
+                if self._auto_update:
+                    w.strengths  # triggers waveform interpolation
+            except _RampInvalidDipoleWfmParms as e:
+                raise _RampInvalidDipoleWfmParms(str(e))
+            else:
+                rdip['rampdown_start_time'] = value
+            finally:
+                self._synchronized = False
+                self._invalidate_waveforms(True)
 
     @property
     def rampdown_stop_energy(self):
@@ -564,13 +620,20 @@ class BoosterRamp(_ConfigSrv):
             w = self._waveforms[self.MANAME_DIPOLE]
             w.rampdown_stop_energy = value
             if w.invalid:
+                self._synchronized = False
+                self._invalidate_waveforms(True)
                 raise _RampInvalidDipoleWfmParms(
                     'Invalid rampdown_stop_energy')
-            if self._auto_update:
-                w.strengths  # triggers waveform interpolation
-            rdip['rampdown_stop_energy'] = value
-            self._synchronized = False
-            self._invalidate_waveforms(True)
+            try:
+                if self._auto_update:
+                    w.strengths  # triggers waveform interpolation
+            except _RampInvalidDipoleWfmParms as e:
+                raise _RampInvalidDipoleWfmParms(str(e))
+            else:
+                rdip['rampdown_stop_energy'] = value
+            finally:
+                self._synchronized = False
+                self._invalidate_waveforms(True)
 
     @property
     def rampdown_stop_time(self):
@@ -587,13 +650,20 @@ class BoosterRamp(_ConfigSrv):
             w = self._waveforms[self.MANAME_DIPOLE]
             w.rampdown_stop_time = value
             if w.invalid:
+                self._synchronized = False
+                self._invalidate_waveforms(True)
                 raise _RampInvalidDipoleWfmParms(
                     'Invalid rampdown_stop_time')
-            if self._auto_update:
-                w.strengths  # triggers waveform interpolation
-            rdip['rampdown_stop_time'] = value
-            self._synchronized = False
-            self._invalidate_waveforms(True)
+            try:
+                if self._auto_update:
+                    w.strengths  # triggers waveform interpolation
+            except _RampInvalidDipoleWfmParms as e:
+                raise _RampInvalidDipoleWfmParms(str(e))
+            else:
+                rdip['rampdown_stop_time'] = value
+            finally:
+                self._synchronized = False
+                self._invalidate_waveforms(True)
 
     def check_value(self):
         """Check current configuration."""

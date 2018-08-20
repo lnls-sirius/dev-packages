@@ -256,7 +256,7 @@ class WaveformParam:
         elif self._start_energy > self._rampup_start_energy:
             self._anomalies.add('Start energy > Rampup start energy')
         elif self._rampup_start_energy >= self._rampup_stop_energy:
-            self._anomalies.add('Rampup start energy > Rampup start energy')
+            self._anomalies.add('Rampup start energy > Rampup stop energy')
         elif self._rampup_stop_energy > self._plateau_energy:
             self._anomalies.add('Rampup stop energy > Plateau energy')
         elif self._plateau_energy < self._rampdown_start_energy:
@@ -347,7 +347,7 @@ class WaveformParam:
         self._c1_2 = self._calc_Du()
         # check crescent function
         if self._c1_2 < 0.0:
-            self._anomalies.add('Rampup is decresing')
+            self._anomalies.add('Rampup is decreasing')
 
     def _calc_region3_parms(self):
         # calc poly coeffs
