@@ -131,8 +131,11 @@ class LLTimeSearch:
     def add_crates_info(cls, connections_dict=None):
         """Add the information of Crate to BPMs to timing map."""
         cls._get_timedata()
+        conns = tuple(cls.i2o_map['AMCFPGAEVR'].values())[0]
+        conns = [v for v in conns if not v.startswith('FMC')]
         if connections_dict is None:
-            connections_dict = _BPMSearch.get_crates_mapping()
+            connections_dict = _BPMSearch.get_timing_mapping()
+
         used = set()
         twds_evg = _dcopy(cls._conn_twds_evg)
         for chan in twds_evg.keys():
@@ -141,11 +144,12 @@ class LLTimeSearch:
                 continue
             used.add(chan.device_name)
             for bpm in bpms:
+                for conn in conns:
                 cls._add_entry_to_map(
-                    which_map='from', conn=chan.propty,
+                        which_map='from', conn=conn,
                     ele1=chan.device_name, ele2=bpm)
                 cls._add_entry_to_map(
-                    which_map='twds', conn=chan.propty,
+                        which_map='twds', conn=conn,
                     ele1=bpm, ele2=chan.device_name)
         cls._update_related_maps()
         return (connections_dict.keys() - used)
