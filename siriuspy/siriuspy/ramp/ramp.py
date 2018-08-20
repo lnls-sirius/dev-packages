@@ -304,8 +304,6 @@ class BoosterRamp(_ConfigSrv):
             self._configuration['ramp_dipole']['duration'] = value
             self._synchronized = False
             self._invalidate_waveforms(True)
-            if self._auto_update:
-                self._update_waveform_dipole()
 
     @property
     def ramp_dipole_wfm_nrpoints(self):
@@ -613,7 +611,7 @@ class BoosterRamp(_ConfigSrv):
     @property
     def waveform_anomalies(self):
         """Waveform anomalies."""
-        self._update_waveform_dipole()
+        self._update_waveform(self.MANAME_DIPOLE)
         w = self._waveforms[self.MANAME_DIPOLE]
         if self._auto_update:
             w.strengths  # triggers waveform interpolation
@@ -632,7 +630,7 @@ class BoosterRamp(_ConfigSrv):
 
     def waveform_get_times(self):
         """Return ramp energy at a given time."""
-        self._update_waveform_dipole()
+        self._update_waveform(self.MANAME_DIPOLE)
         times = self._waveforms[self.MANAME_DIPOLE].times
         return times
 

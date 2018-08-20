@@ -407,13 +407,17 @@ class WaveformParam:
             self._n += 1
 
 
-class _WaveformMagnet(_Magnet):
+class _WaveformMagnet:
     """Base class of magnet waveforms."""
+
+    _magnets = dict()  # dict with magnets objects to improve efficiency
 
     def __init__(self, maname,
                  wfm_nrpoints=_MAX_WFMSIZE,
                  **kwargs):
-        _Magnet.__init__(self, maname=maname)
+        if maname not in _WaveformMagnet._magnets:
+            _WaveformMagnet._magnets[maname] = _Magnet(maname)
+        self._maname = maname
         self._wfm_nrpoints = wfm_nrpoints
 
     @property
@@ -465,6 +469,14 @@ class _WaveformMagnet(_Magnet):
         """Compare waveforms."""
         return self.waveform == value
 
+    def conv_current_2_strength(self, currents, **kwargs):
+        return _WaveformMagnet._magnets[self._maname].conv_current_2_strength(
+            currents, **kwargs)
+
+    def conv_strength_2_current(self, strengths, **kwargs):
+        return _WaveformMagnet._magnets[self._maname].conv_strength_2_current(
+            strengths, **kwargs)
+
 
 class WaveformDipole(_WaveformMagnet, WaveformParam):
     """Waveform for Dipole."""
@@ -475,12 +487,14 @@ class WaveformDipole(_WaveformMagnet, WaveformParam):
         """Constructor."""
         _WaveformMagnet.__init__(self, maname, **kwargs)
         WaveformParam.__init__(self, **kwargs)
+        self._waveform = None
         self._update_waveform()
 
     def update(self):
         """Update."""
+        if self.changed:
+            self._waveform = None
         WaveformParam.update(self)
-        self._waveform = None
 
     @property
     def waveform(self):
