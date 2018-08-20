@@ -63,8 +63,8 @@ class TestStandardController(unittest.TestCase):
         #     'PRUCtrlQueueSize-Mon': 0})
 
         self.controller = StandardPSController(
-            self.readers, self.writers, self.connections, self.devices,
-            self.pru_controller)
+            self.readers, self.writers, self.connections,
+            self.pru_controller, self.devices)
         self.controller._watchers['BO-01U:PS-CH'] = mock.Mock()
 
     # @mock.patch('siriuspy.csdevice.pwrsupply.get_ps_current_unit')

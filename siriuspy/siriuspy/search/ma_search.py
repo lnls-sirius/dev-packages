@@ -5,7 +5,7 @@ from siriuspy import util as _util
 from siriuspy.namesys import Filter as _Filter
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy import servweb as _web
-from .ps_search import PSSearch as _PSSearch
+from siriuspy.search.ps_search import PSSearch as _PSSearch
 from siriuspy.magnet import util as _mutil
 
 
@@ -47,9 +47,11 @@ class MASearch:
         """Get unit of SP limits."""
         if MASearch._maname_2_splims_dict is None:
             MASearch._reload_maname_2_splims_dict()
-        if psmodel in ('FBP', 'FAC_DCDC', 'FAP_DCDC', 'FAC_2S_DCDC',
-                       'FAC_2P4S_DCDC', 'FAC_2P4S_DCDC', 'Commercial',
-                       'FAP_4P_Master'):
+        if psmodel in ('FBP', 'FBP_DCLink', 'FBP_FOFB',
+                       'FAC_ACDC', 'FAC_DCDC', 'FAC_2S_DCDC', 'FAC_2S_ACDC',
+                       'FAC_2P4S_DCDC', 'FAC_2P4S_ACDC', 'FAP',
+                       'FAP_2P2S_MASTER', 'FAP_4P_Master', 'FAP_4P_Slave',
+                       'Commercial'):
             return MASearch._splims_ma_unit
         else:
             raise ValueError('units not def for ' + psmodel)
@@ -143,7 +145,8 @@ class MASearch:
         """Return power supply maname for a given psname."""
         if MASearch._psnames_list is None:
             MASearch._reload_maname_2_psnames_dict()
-        if psname not in MASearch._psnames_list or 'DCLink' in psname:
+        if psname not in MASearch._psnames_list or 'DCLink' in psname or \
+                'Slave' in psname:
             return None
         if 'PS-B1B2' in psname:
             return 'SI-Fam:MA-B1B2'

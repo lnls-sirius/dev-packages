@@ -45,6 +45,8 @@ class TestPSSearch(MockServConf):
         'conv_psname_2_bbbname',
         'conv_bbbname_2_psnames',
         'conv_bbbname_2_bsmps',
+        'conv_bbb_2_udc',
+        'conv_udc_2_bsmps',
         'get_pstype_2_psnames_dict',
         'get_pstype_2_splims_dict',
         'get_splims_unit',

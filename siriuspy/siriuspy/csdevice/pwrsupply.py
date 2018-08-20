@@ -595,6 +595,18 @@ def _get_ps_FAP_2P2S_propty_database():
     return _get_ps_FBP_propty_database()
 
 
+def _get_ps_FAP_4P_Master_propty_database():
+    """Return database with FAP_2P2S pwrsupply model PVs."""
+    # TODO: implement!!!
+    return _get_ps_FBP_propty_database()
+
+
+def _get_ps_FAP_4P_Slave_propty_database():
+    """Return database with FAP_2P2S pwrsupply model PVs."""
+    # TODO: implement!!!
+    return _get_ps_FBP_propty_database()
+
+
 def _get_ps_FBP_FOFB_propty_database():
     """Return database with FBP_FOFB pwrsupply model PVs."""
     # TODO: implement!!!
@@ -641,6 +653,8 @@ def _get_model_db(psmodel):
         database = _get_ps_FBP_propty_database()
     elif psmodel in ('FBP_DCLink'):
         database = _get_ps_FBP_DCLink_propty_database()
+    elif psmodel in ('FBP_FOFB'):
+        database = _get_ps_FBP_FOFB_propty_database()
 
     elif psmodel in ('FAC_DCDC'):
         database = _get_ps_FAC_propty_database()
@@ -657,14 +671,15 @@ def _get_model_db(psmodel):
     elif psmodel in ('FAC_2P4S_ACDC'):
         database = _get_ps_FAC_2P4S_ACDC_propty_database()
 
-    elif psmodel in ('FAP_DCDC'):
+    elif psmodel in ('FAP'):
         database = _get_ps_FAP_propty_database()
-    elif psmodel in ('FAP_4P_Master'):
-        database = _get_ps_FAP_4P_propty_database()
-    elif psmodel in ('FAP_2P2S_DCDC'):
+    elif psmodel in ('FAP_2P2S_MASTER'):
         database = _get_ps_FAP_2P2S_propty_database()
-    elif psmodel in ('FBP_FOFB'):
-        database = _get_ps_FBP_FOFB_propty_database()
+    elif psmodel in ('FAP_4P_Master'):
+        database = _get_ps_FAP_4P_Master_propty_database()
+    elif psmodel in ('FAP_4P_Slave'):
+        database = _get_ps_FAP_4P_Slave_propty_database()
+
     elif psmodel in ('Commercial'):
         database = _get_ps_Commercial_propty_database()
     else:
