@@ -375,37 +375,46 @@ class LLTimeSearch:
         cls._hierarchy_map = hierarchy
 
 
-conversion_linac_names = {
-    'LA-RF:H1LLRF': 'LA-RaRF01:RF-LLRFProc',
-    'LA-RF:H1SOAM-1': 'LA-RaRF02:RF-SSAmp-1',
-    'LA-RF:H1SOAM-2': 'LA-RaRF02:RF-SSAmp-2',
-    'LA-RF:H1SOAM-3': 'LA-RaRF02:RF-SSAmp-3',
-    'LA-BI:H1FO-1': 'LA-RaDiag02:TI-TrigFout',
-    'LA-MD:H1PPS-1': 'LA-RaMD01:MD-PPS',  # ?
-    'LA-MD:H1PPS-2': 'LA-RaMD02:MD-PPS',  # ?
-}
+# ###### read excel file. #######
+_disclaimer = """
+# This file was generated automatically from the data of the
+# excel file Cabos_e_Fibras_Sirius.xlsx by the function
+# siriuspy.search.ll_time_search.read_excel_file_with_connections.
+#
+# If the mentioned file change, please, run the script
+# again and copy the generated file to replace this one.
 
 
-# read excel file.
-def read_file(filename):
-    trans = str.maketrans('', '', ' _-')
-    bbb_inp_key = list(LLTimeSearch.i2o_map['PSCtrl'].keys())[0]
+"""
 
-    def check_dev_por(dev, por):
-        por = por.upper().translate(trans)
-        r_ = conversion_linac_names.get(dev)
-        if r_ is not None:
-            dev = r_
-        if dev.endswith('PSCtrl') and por.endswith(r'?'):
-            por = bbb_inp_key
-        return dev + ':' + por
 
-    wb = load_workbook(filename, data_only=True)
+def read_excel_file_with_connections():
+    from openpyxl import load_workbook
+    wb = load_workbook('Cabos_e_Fibras_Sirius.xlsx', data_only=True)
     ws = wb['Cabos e Fibras']
-    connections = dict()
+
+    print(_disclaimer)
+    chans = _load_file_and_get_channels(ws)
+    chans_sort = _sort_connection_table(chans)
+    _print_tables(chans, chans_sort)
+
+
+def _print_tables(chans, chans_sort):
+    print(5*'\n')
+    print('# {}'.format(len(chans_sort)))
+    for k1, k2 in chans_sort:
+        print('{0:35s} {1:35s}'.format(k1, k2))
+
+    print(5*'\n')
+    print('# {}'.format(len(chans)))
+    for k1, k2 in chans:
+        print('# {0:35s} {1:35s}'.format(k1, k2))
+
+
+def _load_file_and_get_channels(ws):
+    chans = list()
     rows = list(ws.iter_rows())
     row0 = rows[0]
-    eq1 = eq2 = p1 = p2 = 0
     for i, cel in enumerate(row0):
         if cel.value is None:
             continue
@@ -422,14 +431,69 @@ def read_file(filename):
         sis = row[0].value
         if sis is None or not sis.lower().startswith(('timing', 'controle')):
             continue
-        name1 = check_dev_por(row[eq1].value, row[p1].value)
-        name2 = check_dev_por(row[eq2].value, row[p2].value)
+        name1 = _check_device_and_port(row[eq1].value, row[p1].value)
+        name2 = _check_device_and_port(row[eq2].value, row[p2].value)
         try:
             name1 = _PVName(name1)
             name2 = _PVName(name2)
         except IndexError:
-            print('discard {0:04d}:   {1:40s} {2:40s}'.format(i, name1, name2))
+            print('# {0:04d}:   {1:40s} {2:40s}'.format(i, name1, name2))
             continue
-        connections[name1] = name2
-        connections[name2] = name1
-    return connections
+        chans.append((name1, name2))
+    return chans
+
+
+_conversion_linac_names = {
+    'LA-RF:H1LLRF': 'LI-RaRF01:RF-LLRFProc',
+    'LA-RF:H1SOAM-1': 'LI-RaRF02:RF-SSAmp-1',
+    'LA-RF:H1SOAM-2': 'LI-RaRF02:RF-SSAmp-2',
+    'LA-RF:H1SOAM-3': 'LI-RaRF02:RF-SSAmp-3',
+    'LA-BI:H1FO-1': 'LI-RaDiag02:TI-TrigFout',
+    'LA-MD:H1PPS-1': 'LI-RaMD01:MD-PPS',  # ?
+    'LA-MD:H1PPS-2': 'LI-RaMD02:MD-PPS',  # ?
+    '?': 'IA-00RaCtrl:CO-FibPatch',
+    '"Rack" Streak Camera:TI-EVE': 'IA-00RaCtrl:TI-EVE',
+    'BO_Dip_05_grupo01:CO-PSCtrl': 'BO-PAD05G01:CO-PSCtrl',
+    'BO_Dip_05_grupo02:CO-PSCtrl': 'BO-PAD05G02:CO-PSCtrl',
+    'IA-16RaBbB:TI-EVE': 'IA-16RaBbB:TI-EVR',
+    }
+_translate_port = str.maketrans('', '', ' _-')
+
+
+def _check_device_and_port(dev, por):
+    por = por.upper().translate(_translate_port)
+    r_ = _conversion_linac_names.get(dev)
+    if r_ is not None:
+        dev = r_
+    return dev + ':' + por
+
+
+def _sort_connection_table(chans):
+    dev = 'EVG'
+    for k1, k2 in chans:
+        if k1.dev == dev:
+            dev = k1
+            break
+        elif k2.dev == dev:
+            dev = k2
+            break
+    else:
+        raise KeyError('EVG not Found.')
+
+    entries = LLTimeSearch.get_channel_input(
+                                        _PVName(dev.device_name+':'+'UPLINK'))
+    chans_sort = []
+    for entry in entries:
+        for i, ks in enumerate(chans):
+            k1, k2 = ks
+            if k1 == entry:
+                entries.extend(LLTimeSearch.get_channel_input(k2))
+                chans_sort.append((k1, k2))
+                del chans[i]
+                break
+            if k2 == entry:
+                entries.extend(LLTimeSearch.get_channel_input(k1))
+                chans_sort.append((k2, k1))
+                del chans[i]
+                break
+    return chans_sort
