@@ -52,9 +52,10 @@ def split_name(pvname):
 
     # deals with channel
     dic_['channel_type'] = ''
-    if pvname.startswith('ca://'):
-        dic_['channel_type'] = 'ca'
-        pvname = pvname[5:]
+    names = pvname.split('://')
+    if len(names) == 2:
+        dic_['channel_type'] = names[0]
+        pvname = names[1]
 
     list_ = pvname.split(':')
     slist_ = list_[0].split('-')
@@ -77,11 +78,6 @@ def split_name(pvname):
         dic_['propty_name'] = sslist_[0]
         dic_['propty_suffix'] = sslist_[1] if len(sslist_) > 1 else ''
         dic_['field'] = slist_[1] if len(slist_) >= 2 else ''
-    else:
-        dic_['propty'] = ''
-        dic_['propty_name'] = ''
-        dic_['propty_suffix'] = ''
-        dic_['field'] = ''
 
     dic_['device_propty'] = (dic_['dev'] +
                              ('-' + dic_['idx'] if dic_['idx'] else '') +

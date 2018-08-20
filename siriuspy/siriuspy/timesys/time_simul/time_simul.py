@@ -5,8 +5,8 @@ from .device_models import CallBack as _CallBack
 from .device_models import EVGIOC as _EVGIOC
 from .device_models import EVRIOC as _EVRIOC
 from .device_models import EVEIOC as _EVEIOC
-from .device_models import AFCIOC as _AFCIOC
-from .device_models import FOUTIOC as _FOUTIOC
+from .device_models import AMCFPGAEVRIOC as _AMCFPGAEVRIOC
+from .device_models import FoutIOC as _FoutIOC
 from siriuspy.search import LLTimeSearch as _LLTimeSearch
 from siriuspy.csdevice.timesys import Const as _Const
 
@@ -19,8 +19,8 @@ class TimingSimulation(_CallBack):
     EVG_PREFIX = None
     EVRs = None
     EVEs = None
-    AFCs = None
-    FOUTs = None
+    AMCFPGAEVRs = None
+    Fouts = None
 
     @classmethod
     def get_database(cls, prefix=''):
@@ -35,12 +35,12 @@ class TimingSimulation(_CallBack):
         for dev in cls.EVEs:
             pre = prefix + dev + ':'
             db.update(_EVEIOC.get_database(prefix=pre))
-        for dev in cls.AFCs:
+        for dev in cls.AMCFPGAEVRs:
             pre = prefix + dev + ':'
-            db.update(_AFCIOC.get_database(prefix=pre))
-        for dev in cls.FOUTs:
+            db.update(_AMCFPGAEVRIOC.get_database(prefix=pre))
+        for dev in cls.Fouts:
             pre = prefix + dev + ':'
-            db.update(_FOUTIOC.get_database(prefix=pre))
+            db.update(_FoutIOC.get_database(prefix=pre))
         return db
 
     def __init__(self, rf_freq, callbacks=None, prefix=''):
@@ -69,18 +69,18 @@ class TimingSimulation(_CallBack):
             self.eves[pref] = eve
 
         self.afcs = dict()
-        for dev in self.AFCs:
+        for dev in self.AMCFPGAEVRs:
             pref = prefix + dev + ':'
-            afc = _AFCIOC(rf_freq/_RFDIV,
+            afc = _AMCFPGAEVRIOC(rf_freq/_RFDIV,
                           callbacks={self.uuid: self._on_pvs_change},
                           prefix=pref)
             evg.add_pending_devices_callback(afc.uuid, afc.receive_events)
             self.afcs[pref] = afc
 
         self.fouts = dict()
-        for dev in self.FOUTs:
+        for dev in self.Fouts:
             pref = prefix + dev + ':'
-            fout = _FOUTIOC(rf_freq/_RFDIV,
+            fout = _FoutIOC(rf_freq/_RFDIV,
                             callbacks={self.uuid: self._on_pvs_change},
                             prefix=pref)
             # evg.add_pending_devices_callback(fout.uuid, fout.receive_events)
@@ -139,5 +139,5 @@ class TimingSimulation(_CallBack):
         cls.EVG_PREFIX = _LLTimeSearch.get_device_names({'dev': 'EVG'})[0]+':'
         cls.EVRs = _LLTimeSearch.get_device_names({'dev': 'EVR'})
         cls.EVEs = _LLTimeSearch.get_device_names({'dev': 'EVE'})
-        cls.AFCs = _LLTimeSearch.get_device_names({'dev': 'AFC'})
+        cls.AMCFPGAEVRs = _LLTimeSearch.get_device_names({'dev': 'AMCFPGAEVR'})
         cls.FOUTs = _LLTimeSearch.get_device_names({'dev': 'FOUT'})
