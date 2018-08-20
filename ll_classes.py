@@ -1,5 +1,5 @@
 """Define the low level classes which will connect to Timing Devices IOC."""
-
+import time as _time
 from functools import partial as _partial
 import logging as _log
 import epics as _epics
@@ -24,8 +24,8 @@ _LLTimeSearch.add_crates_info()
 EVG_NAME = _LLTimeSearch.get_device_names({'dev': 'EVG'})[0]
 EVRs = _LLTimeSearch.get_device_names({'dev': 'EVR'})
 EVEs = _LLTimeSearch.get_device_names({'dev': 'EVE'})
-AFCs = _LLTimeSearch.get_device_names({'dev': 'AFC'})
-FOUTs = _LLTimeSearch.get_device_names({'dev': 'FOUT'})
+AFCs = _LLTimeSearch.get_device_names({'dev': 'AMCFPGAEVR'})
+FOUTs = _LLTimeSearch.get_device_names({'dev': 'Fout'})
 TWDS_EVG = _LLTimeSearch.get_connections_twds_evg()
 
 
@@ -210,6 +210,7 @@ class _Base:
 
     def _on_change_pvs_sp(self, pvname, value, **kwargs):
         if self._is_forcing:
+            _time.sleep(0.1)  # TODO: not good, not good...
             self._start_timer()
         else:
             if pvname.endswith('-Cmd'):
@@ -398,14 +399,17 @@ class _EVROUT(_Base):
         self._internal_trigger = self._define_num_int(conn_num)
         self.prefix = LL_PREFIX + _PVName(channel).device_name + ':'
         chan_tree = _LLTimeSearch.get_device_tree(channel)
-        fout_name = [chan.device_name for chan in chan_tree
-                     if chan.device_name in FOUTs][0]
-        self._fout_prefix = LL_PREFIX + fout_name + ':'
+        for chan in chan_tree:
+            if chan.device_name in Fouts:
+                self._fout_prefix = LL_PREFIX + chan.device_name + ':'
+                self._fout_out = int(chan.propty[3:])
+            elif chan.device_name == EVG_NAME:
+                self._evg_out = int(chan.propty[3:])
         self._evg_prefix = LL_PREFIX + EVG_NAME + ':'
         self.channel = channel
         self._source_enums = source_enums
         init_hl_state['DevEnbl'] = 1
-        init_hl_state['FOUTDevEnbl'] = 1
+        init_hl_state['FoutDevEnbl'] = 1
         init_hl_state['EVGDevEnbl'] = 1
         super().__init__(callback, init_hl_state, get_ll_state)
 
@@ -426,20 +430,23 @@ class _EVROUT(_Base):
             'Evt': self.prefix + intlb + 'Evt-RB',
             'Width': self.prefix + intlb + 'Width-RB',
             'Polarity': self.prefix + intlb + 'Polarity-Sts',
-            'Pulses': self.prefix + intlb + 'Pulses-RB',
+            'NrPulses': self.prefix + intlb + 'NrPulses-RB',
             'Delay': self.prefix + intlb + 'Delay-RB',
-            'Intlk': self.prefix + outlb + 'Intlk-Sts',
+            'ByPassIntlk': self.prefix + intlb + 'ByPassIntlk-Sts',
             'Src': self.prefix + outlb + 'Src-Sts',
             'SrcTrig': self.prefix + outlb + 'SrcTrig-RB',
             'RFDelay': self.prefix + outlb + 'RFDelay-RB',
             'FineDelay': self.prefix + outlb + 'FineDelay-RB',
+            'DelayType': self.prefix + outlb + 'DelayType-Sts',
             # connection status PVs
             'DevEnbl': self.prefix + 'DevEnbl-Sts',
             'Network': self.prefix + 'Network-Mon',
             'Link': self.prefix + 'Link-Mon',
             'Los': self.prefix + 'Los-Mon',
+            'FoutLos': self._fout_prefix + 'Los-Mon',
+            'EVGLos': self._evg_prefix + 'Los-Mon',
             'IntlkMon': self.prefix + 'Intlk-Mon',
-            'FOUTDevEnbl': self._fout_prefix + 'DevEnbl-Sts',
+            'FoutDevEnbl': self._fout_prefix + 'DevEnbl-Sts',
             'EVGDevEnbl': self._evg_prefix + 'DevEnbl-Sts',
             }
         for prop in self._REMOVE_PROPS:
@@ -449,16 +456,16 @@ class _EVROUT(_Base):
     def _define_dict_for_write(self):
         map_ = {
             'DevEnbl': _partial(self._set_simple, 'DevEnbl'),
-            'FOUTDevEnbl': _partial(self._set_simple, 'FOUTDevEnbl'),
+            'FoutDevEnbl': _partial(self._set_simple, 'FoutDevEnbl'),
             'EVGDevEnbl': _partial(self._set_simple, 'EVGDevEnbl'),
             'State': _partial(self._set_simple, 'State'),
+            'ByPassIntlk': _partial(self._set_simple, 'ByPassIntlk'),
             'Src': self._set_source,
             'Duration': self._set_duration,
             'Polarity': _partial(self._set_simple, 'Polarity'),
-            'Pulses': self._set_pulses,
-            'Intlk': _partial(self._set_simple, 'Intlk'),
+            'NrPulses': self._set_pulses,
             'Delay': self._set_delay,
-            'DelayType': self._set_delay_type,
+            'DelayType': _partial(self._set_simple, 'DelayType'),
             }
         return map_
 
@@ -468,19 +475,22 @@ class _EVROUT(_Base):
             'Evt': _partial(self._process_source, 'Evt'),
             'Width': _partial(self._get_duration_pulses, 'Width'),
             'Polarity': _partial(self._get_simple, 'Polarity'),
-            'Pulses': _partial(self._get_duration_pulses, 'Pulses'),
+            'NrPulses': _partial(self._get_duration_pulses, 'NrPulses'),
+            'ByPassIntlk': _partial(self._get_simple, 'ByPassIntlk'),
             'Delay': _partial(self._get_delay, 'Delay'),
-            'Intlk': _partial(self._get_simple, 'Intlk'),
             'Src': _partial(self._process_source, 'Src'),
             'SrcTrig': _partial(self._process_source, 'SrcTrig'),
             'RFDelay': _partial(self._get_delay, 'RFDelay'),
             'FineDelay': _partial(self._get_delay, 'FineDelay'),
+            'DelayType': _partial(self._get_simple, 'DelayType'),
             'DevEnbl': _partial(self._get_status, 'DevEnbl'),
             'Network': _partial(self._get_status, 'Network'),
             'Link': _partial(self._get_status, 'Link'),
             'Los': _partial(self._get_status, 'Los'),
+            'FoutLos': _partial(self._get_status, 'FoutLos'),
+            'EVGLos': _partial(self._get_status, 'EVGLos'),
             'IntlkMon': _partial(self._get_status, 'IntlkMon'),
-            'FOUTDevEnbl': _partial(self._get_status, 'FOUTDevEnbl'),
+            'FoutDevEnbl': _partial(self._get_status, 'FoutDevEnbl'),
             'EVGDevEnbl': _partial(self._get_status, 'EVGDevEnbl'),
             }
         for prop in self._REMOVE_PROPS:
@@ -490,12 +500,14 @@ class _EVROUT(_Base):
     def _get_status(self, prop, is_sp, value=None):
         dic_ = dict()
         dic_['DevEnbl'] = self._get_from_pvs(is_sp, 'DevEnbl')
-        dic_['FOUTDevEnbl'] = self._get_from_pvs(is_sp, 'FOUTDevEnbl')
+        dic_['FoutDevEnbl'] = self._get_from_pvs(is_sp, 'FoutDevEnbl')
         dic_['EVGDevEnbl'] = self._get_from_pvs(is_sp, 'EVGDevEnbl')
         dic_['Network'] = self._get_from_pvs(is_sp, 'Network')
         dic_['IntlkMon'] = self._get_from_pvs(is_sp, 'IntlkMon', def_val=1)
         dic_['Link'] = self._get_from_pvs(is_sp, 'Link')
         dic_['Los'] = self._get_from_pvs(is_sp, 'Los', def_val=None)
+        dic_['FoutLos'] = self._get_from_pvs(is_sp, 'FoutLos', def_val=None)
+        dic_['EVGLos'] = self._get_from_pvs(is_sp, 'EVGLos', def_val=None)
         dic_['PVsConn'] = self.connected
         if value is not None:
             dic_[prop] = value
@@ -503,15 +515,23 @@ class _EVROUT(_Base):
         status = 0
         status |= ((not dic_['PVsConn']) << 0)
         status |= ((not dic_['DevEnbl']) << 1)
-        status |= ((not dic_['FOUTDevEnbl']) << 2)
+        status |= ((not dic_['FoutDevEnbl']) << 2)
         status |= ((not dic_['EVGDevEnbl']) << 3)
         status |= ((not dic_['Network']) << 4)
-        status |= ((dic_['IntlkMon']) << 5)
-        status |= ((not dic_['Link']) << 6)
+        status |= ((dic_['IntlkMon']) << 9)
+        status |= ((not dic_['Link']) << 5)
         if dic_['Los'] is not None:
             num = self._internal_trigger - self._NUM_OTP
             if num >= 0 and (dic_['Los'] >> num) % 2:
+                status |= (1 << 6)
+        if dic_['FoutLos'] is not None:
+            num = self._fout_out
+            if num >= 0 and (dic_['FoutLos'] >> num) % 2:
                 status |= (1 << 7)
+        if dic_['EVGLos'] is not None:
+            num = self._evg_out
+            if num >= 0 and (dic_['EVGLos'] >> num) % 2:
+                status |= (1 << 8)
         return {'Status': status}
 
     def _get_delay(self, prop, is_sp, value=None):
@@ -523,35 +543,20 @@ class _EVROUT(_Base):
             dic_[prop] = value
 
         delay = (dic_['Delay']*self._base_del + dic_['FineDelay']*_FDEL) * 1e6
-        if dic_['RFDelay'] == 31:
-            return {'Delay': delay, 'DelayType': 1}
-        else:
-            delay += dic_['RFDelay']*self._rf_del * 1e6
-            return {'Delay': delay, 'DelayType': 0}
+        delay += dic_['RFDelay']*self._rf_del * 1e6
+        return {'Delay': delay}
 
     def _set_delay(self, value):
         value *= _DELAY_UNIT_CONV  # us
         delay1 = int(value // self._base_del)
         dic_ = {'Delay': delay1}
-        # Initialization issue
-        if self._initializing:
-            del_type = self._my_state_sp.get('RFDelay', 0)
-        else:
-            del_type = self._get_from_pvs(True, 'RFDelay')
-        if del_type != 31:
-            value -= delay1 * self._base_del
-            delay2 = value // self._rf_del
-            value -= delay2 * self._rf_del
-            delay3 = round(value / _FDEL)
-            dic_['RFDelay'] = delay2
-            dic_['FineDelay'] = delay3
+        value -= delay1 * self._base_del
+        delay2 = value // self._rf_del
+        value -= delay2 * self._rf_del
+        delay3 = round(value / _FDEL)
+        dic_['RFDelay'] = delay2
+        dic_['FineDelay'] = delay3
         return dic_
-
-    def _set_delay_type(self, value):
-        if value:
-            return {'RFDelay': 31, 'FineDelay': 0}
-        else:
-            return {'RFDelay': 0}
 
     def _process_source(self, prop, is_sp, value=None):
         dic_ = dict()
@@ -587,7 +592,10 @@ class _EVROUT(_Base):
 
     def _process_src(self, src, is_sp):
         src_len = len(self._source_enums) if not is_sp else 0
-        source = _cstime.triggers_src_ll[src]
+        try:
+            source = _cstime.triggers_src_ll[src]
+        except IndexError:
+            source = ''
         if not source:
             return {'Src': src_len}  # invalid
         elif source.startswith(('Dsbl', 'Clock')):
@@ -608,22 +616,22 @@ class _EVROUT(_Base):
 
     def _get_duration_pulses(self, prop, is_sp, value=None):
         dic_ = dict()
-        dic_['Pulses'] = self._get_from_pvs(is_sp, 'Pulses', def_val=1)
+        dic_['NrPulses'] = self._get_from_pvs(is_sp, 'NrPulses', def_val=1)
         dic_['Width'] = self._get_from_pvs(is_sp, 'Width', def_val=1)
         if value is not None:
             dic_[prop] = value
         return {
-            'Duration': 2*dic_['Width']*self._base_del*dic_['Pulses']*1e3,
-            'Pulses': dic_['Pulses'],
+            'Duration': 2*dic_['Width']*self._base_del*dic_['NrPulses']*1e3,
+            'NrPulses': dic_['NrPulses'],
             }
 
     def _set_duration(self, value):
         value *= 1e-3  # ms
         # Initialization issue
         if self._initializing:
-            pul = self._my_state_sp.get('Pulses', 1)
+            pul = self._my_state_sp.get('NrPulses', 1)
         else:
-            pul = self._get_from_pvs(True, 'Pulses', def_val=1)
+            pul = self._get_from_pvs(True, 'NrPulses', def_val=1)
         n = int(round(value / self._base_del / pul / 2))
         n = n if n >= 1 else 1
         return {'Width': n}
@@ -633,19 +641,19 @@ class _EVROUT(_Base):
             return dict()
         # Initialization issue
         if self._initializing:
-            old_pul = self._my_state_sp.get('Pulses', 1)
+            old_pul = self._my_state_sp.get('NrPulses', 1)
             old_wid = self._my_state_sp.get('Width', 1)
         else:
-            old_pul = self._get_from_pvs(True, 'Pulses', def_val=1)
+            old_pul = self._get_from_pvs(True, 'NrPulses', def_val=1)
             old_wid = self._get_from_pvs(True, 'Width', def_val=1)
         return {
-            'Pulses': int(value),
+            'NrPulses': int(value),
             'Width': int(round(old_wid*old_pul/value))
             }
 
 
 class _EVROTP(_EVROUT):
-    _REMOVE_PROPS = {'RFDelay', 'FineDelay', 'Src', 'SrcTrig', 'Intlk'}
+    _REMOVE_PROPS = {'RFDelay', 'FineDelay', 'Src', 'SrcTrig', 'DelayType'}
 
     def _define_num_int(self, num):
         return num
@@ -659,9 +667,6 @@ class _EVROTP(_EVROUT):
         value *= _DELAY_UNIT_CONV
         delay1 = int(value // self._base_del)
         return {'Delay': delay1}
-
-    def _set_delay_type(self, value):
-        return dict()
 
     def _process_source(self, prop, is_sp, val=None):
         if val is None:
@@ -681,9 +686,10 @@ class _EVEOUT(_EVROUT):
     _REMOVE_PROPS = {'Los', }
 
 
-class _AFCCRT(_EVROUT):
+class _AMCFPGAEVRCRT(_EVROUT):
     _NUM_OTP = 0
-    _REMOVE_PROPS = {'RFDelay', 'FineDelay', 'SrcTrig', 'Intlk'}
+    _REMOVE_PROPS = {
+            'RFDelay', 'FineDelay', 'SrcTrig', 'ByPassIntlk', 'DelayType'}
 
     def _INTLB_formatter(self):
         return 'CRT{0:d}'.format(self._internal_trigger)
@@ -696,9 +702,6 @@ class _AFCCRT(_EVROUT):
 
     def _set_delay(self, value):
         return _EVROTP._set_delay(self, value)
-
-    def _set_delay_type(self, value):
-        return _EVROTP._set_delay_type(self, value)
 
     def _process_source(self, prop, is_sp, value=None):
         dic_ = dict()
@@ -713,7 +716,7 @@ class _AFCCRT(_EVROUT):
         return self._process_evt(dic_['Evt'], is_sp)
 
 
-class _AFCFMC(_AFCCRT):
+class _AMCFPGAEVRFMC(_AMCFPGAEVRCRT):
 
     def _INTLB_formatter(self):
         fmc = (self._internal_trigger // 5) + 1
@@ -729,8 +732,8 @@ def get_ll_trigger_object(
         ('EVR', 'OUT'): _EVROUT,
         ('EVR', 'OTP'): _EVROTP,
         ('EVE', 'OUT'): _EVEOUT,
-        ('AFC', 'CRT'): _AFCCRT,
-        ('AFC', 'FMC'): _AFCFMC,
+        ('AMCFPGAEVR', 'CRT'): _AMCFPGAEVRCRT,
+        ('AMCFPGAEVR', 'FMC'): _AMCFPGAEVRFMC,
         }
     chan = _PVName(channel)
     match = _LLTimeSearch.ll_rgx.findall(chan.propty)
