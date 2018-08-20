@@ -89,9 +89,9 @@ class BPMSearch:
         for k, v in cls._mapping.items():
             k2 = v['timing']
             if k2 in timing_mapping.keys():
-                timing_mapping[k2] += tuple(k)
+                timing_mapping[k2] += (k, )
             else:
-                timing_mapping[k2] = tuple(k)
+                timing_mapping[k2] = (k, )
         cls._timing_mapping = timing_mapping
 
 
