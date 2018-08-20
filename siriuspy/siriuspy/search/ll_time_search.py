@@ -87,6 +87,8 @@ class LLTimeSearch:
             'CRT6': ('CRT6', ),
             'CRT7': ('CRT7', ),
             },
+        'OERFTx': {'OpticalACP': ('SIGNAL', )},
+        'OERFRx': {'SIGNAL': ('OpticalACP', )},
         }
     i2o_map['FibPatch'] = {
         'P{0:03d}'.format(i): ('P{0:03d}'.format(i), ) for i in range(100)}
