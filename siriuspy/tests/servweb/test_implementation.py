@@ -75,7 +75,7 @@ class TestServWeb(unittest.TestCase):
         'beaglebone_bsmp_mapping',
         'bbb_udc_mapping',
         'udc_ps_mapping',
-        'crate_to_bpm_mapping',
+        'crates_mapping',
         'bpms_data',
         'timing_devices_mapping',
         'high_level_triggers'
@@ -236,14 +236,15 @@ class TestServWeb(unittest.TestCase):
             mock.call(url, timeout=1.0),
             mock.call(url, timeout=2.0)])
 
-    def test_crate_to_bpm_mapping(self, mock_read):
+    def test_crates_mapping(self, mock_read):
         """Test crate_to_bpm_mapping."""
-        url = implementation._diag_folder + 'crates-connection.txt'
+        url = (
+            implementation._diag_folder + 'Mapeamento_placas_MicroTCA_vs_BPMs/')
         # Call with different parameters
-        resp = implementation.crate_to_bpm_mapping()
-        self.assertEqual(resp, "FakeResponse")
-        resp = implementation.crate_to_bpm_mapping(timeout=2.0)
-        self.assertEqual(resp, "FakeResponse")
+        resp = implementation.crates_mapping()
+        self.assertEqual(resp, "")
+        resp = implementation.crates_mapping(timeout=2.0)
+        self.assertEqual(resp, "")
         # Assert read_url was called correctly
         mock_read.assert_has_calls([
             mock.call(url, timeout=1.0),
