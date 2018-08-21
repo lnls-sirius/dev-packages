@@ -35,35 +35,24 @@ class TestWaveformParam(unittest.TestCase):
     """Test WaveformParam class."""
 
     public_interface = (
-        'start_value',
-        'rampup_start_index',
-        'rampup_start_value',
+        'start_energy',
+        'rampup_start_energy',
         'rampup_start_time',
-        'rampup_stop_index',
-        'rampup_stop_value',
+        'rampup_stop_energy',
         'rampup_stop_time',
-        'plateau_start_index',
         'plateau_start_time',
-        'plateau_stop_index',
+        'plateau_energy',
         'plateau_stop_time',
-        'plateau_value',
-        'rampdown_start_index',
-        'rampdown_start_value',
+        'rampdown_start_energy',
         'rampdown_start_time',
-        'rampdown_stop_index',
-        'rampdown_stop_value',
+        'rampdown_stop_energy',
         'rampdown_stop_time',
-        'stop_value',
-        'waveform',
-        'boundary_indices',
-        'boundary_times',
-        'wfm_nrpoints',
         'duration',
-        'deprecated',
-        'rampup_change',
-        'rampdown_change',
         'update',
-        'check',
+        'changed',
+        'anomalies',
+        'invalid',
+        'eval_at',
     )
 
     def test_public_interface(self):
@@ -73,114 +62,135 @@ class TestWaveformParam(unittest.TestCase):
                 TestWaveformParam.public_interface)
         self.assertTrue(valid)
 
-    def _test_start_value(self):
-        """Test start_value."""
-        # TODO: implement it!
-        pass
-
-    def test_rampup_start_index(self):
-        """Test rampup_start_index."""
+    def _test_start_energy(self):
+        """Test start_energy."""
         w = WaveformParam()
-        ind = w.boundary_indices
-        i = w.rampup_start_index
-        self.assertIn(i, ind)
-        self.assertTrue(i >= ind[0])
-
-    def test_rampup_start_value(self):
-        """Test rampup_start_value."""
-        w = WaveformParam()
-        v = w.rampup_start_value
-        self.assertIsInstance(v, float)
-
-    def test_rampup_stop_index(self):
-        """Test rampup_stop_index."""
-        w = WaveformParam()
-        ind = w.boundary_indices
-        i1 = w.rampup_start_index
-        i2 = w.rampup_start_index
-        self.assertIn(i2, ind)
-        self.assertTrue(i2 >= i1)
-
-    def test_rampup_stop_value(self):
-        """Test rampup_stop_value."""
-        w = WaveformParam()
-        v1 = w.rampup_start_value
-        v2 = w.rampup_stop_value
+        v1 = util.get_electron_rest_energy()
+        v2 = w.start_energy
         self.assertIsInstance(v2, float)
         self.assertTrue(v2 > v1)
 
-    def test_plateau_start_index(self):
-        """Test plateau_start_index."""
-        # TODO: implement it!
-        pass
-
-    def test_plateau_stop_index(self):
-        """Test plateau_stop_index."""
-        # TODO: implement it!
-        pass
-
-    def test_plateau_value(self):
-        """Test plateau_value."""
-        # TODO: implement it!
-        pass
-
-    def test_rampdown_start_index(self):
-        """Test rampdown_start_index."""
-        # TODO: implement it!
-        pass
-
-    def test_rampdown_start_value(self):
-        """Test rampdown_start_value."""
-        # TODO: implement it!
-        pass
-
-    def test_rampdown_stop_index(self):
-        """Test rampdown_stop_index."""
-        # TODO: implement it!
-        pass
-
-    def test_rampdown_stop_value(self):
-        """Test rampdown_stop_value."""
-        # TODO: implement it!
-        pass
-
-    def test_stop_value(self):
-        """Test stop_value."""
-        # TODO: implement it!
-        pass
-
-    def test_waveform(self):
-        """Test waveform."""
+    def test_rampup_start_energy(self):
+        """Test rampup_start_energy."""
         w = WaveformParam()
-        wfm = w.waveform
-        self.assertIsInstance(wfm, numpy.ndarray)
+        v1 = w.start_energy
+        v2 = w.rampup_start_energy
+        self.assertIsInstance(v2, float)
+        self.assertTrue(v2 > v1)
 
-    def test_boundary_indices(self):
-        """Test boundary_indices."""
+    def test_rampup_start_time(self):
+        """Test rampup_start_time."""
         w = WaveformParam()
-        ind = w.boundary_indices
-        self.assertIsInstance(ind, list)
-        self.assertEqual(len(ind), 8)
+        v1 = 0
+        v2 = w.rampup_start_time
+        self.assertIsInstance(v2, float)
+        self.assertTrue(v2 > v1)
 
-    def test_wfm_nrpoints(self):
-        """Test size."""
+    def test_rampup_stop_energy(self):
+        """Test rampup_stop_energy."""
         w = WaveformParam()
-        self.assertIsInstance(w.wfm_nrpoints, int)
+        v1 = w.rampup_start_energy
+        v2 = w.rampup_stop_energy
+        self.assertIsInstance(v2, float)
+        self.assertTrue(v2 > v1)
 
-    def test_deprecated(self):
-        """Test deprecated."""
+    def test_rampup_stop_time(self):
+        """Test rampup_stop_time."""
         w = WaveformParam()
-        self.assertFalse(w.deprecated)
-        w.rampup_start_index = 2
-        self.assertTrue(w.deprecated)
+        v1 = w.rampup_start_time
+        v2 = w.rampup_stop_time
+        self.assertIsInstance(v2, float)
+        self.assertTrue(v2 > v1)
 
-    def test_rampup_change(self):
-        """Test rampup_change."""
+    def test_plateau_energy(self):
+        """Test plateau_energy."""
+        w = WaveformParam()
+        v1 = w.rampup_stop_energy
+        v2 = w.plateau_energy
+        self.assertIsInstance(v2, float)
+        self.assertTrue(v2 > v1)
+
+    def test_plateau_start_time(self):
+        """Test plateau_start_time."""
+        w = WaveformParam()
+        v1 = w.rampup_stop_time
+        v2 = w.plateau_start_time
+        self.assertIsInstance(v2, float)
+        self.assertTrue(v2 > v1)
+
+    def test_plateau_stop_time(self):
+        """Test plateau_stop_time."""
+        w = WaveformParam()
+        v1 = w.plateau_start_time
+        v2 = w.plateau_stop_time
+        self.assertIsInstance(v2, float)
+        self.assertTrue(v2 > v1)
+
+    def test_rampdown_start_energy(self):
+        """Test rampdown_start_energy."""
+        w = WaveformParam()
+        v1 = w.plateau_energy
+        v2 = w.rampdown_start_energy
+        self.assertIsInstance(v2, float)
+        self.assertTrue(v2 < v1)
+
+    def test_rampdown_start_time(self):
+        """Test rampdown_start_time."""
+        w = WaveformParam()
+        v1 = w.plateau_stop_time
+        v2 = w.rampdown_start_time
+        self.assertIsInstance(v2, float)
+        self.assertTrue(v2 > v1)
+
+    def test_rampdown_stop_energy(self):
+        """Test rampdown_stop_energy."""
+        w = WaveformParam()
+        v1 = w.rampdown_start_energy
+        v2 = w.rampdown_stop_energy
+        self.assertIsInstance(v2, float)
+        self.assertTrue(v2 < v1)
+
+    def test_rampdown_stop_time(self):
+        """Test rampdown_stop_time."""
+        w = WaveformParam()
+        v1 = w.rampdown_start_time
+        v2 = w.rampdown_stop_time
+        self.assertIsInstance(v2, float)
+        self.assertTrue(v2 > v1)
+
+    def test_changed(self):
+        """Test changed."""
+        w = WaveformParam()
+        self.assertTrue(w.changed)
+        w.update()
+        self.assertFalse(w.changed)
+        w.start_energy = 0.05
+        self.assertTrue(w.changed)
+        w.update()
+        self.assertFalse(w.changed)
+
+    def test_duration(self):
+        """Test duration."""
         # TODO: implement it!
         pass
 
-    def test_rampdown_change(self):
-        """Test rampdown_change."""
+    def test_update(self):
+        """Test update."""
+        # TODO: implement it!
+        pass
+
+    def test_anomalies(self):
+        """Test rampdown_stop_time."""
+        # TODO: implement it!
+        pass
+
+    def test_invalid(self):
+        """Test rampdown_stop_time."""
+        # TODO: implement it!
+        pass
+
+    def test_eval_at(self):
+        """Test rampdown_stop_time."""
         # TODO: implement it!
         pass
 
@@ -188,7 +198,10 @@ class TestWaveformParam(unittest.TestCase):
 class TestWaveformDipole(unittest.TestCase):
     """Test WaveformDipole class."""
 
-    public_interface = ()
+    public_interface = (
+        'update',
+        'waveform',
+    )
 
     def test_public_interface(self):
         """Test module's public interface."""
@@ -197,23 +210,34 @@ class TestWaveformDipole(unittest.TestCase):
                 TestWaveformDipole.public_interface)
         self.assertTrue(valid)
 
-    def _test_constructor(self):
+    def test_constructor(self):
         """Test class constructor."""
         # default arguments
         w = WaveformDipole()
-        self.assertEqual(w.maname, 'BO-Fam:MA-B')
         c = w.currents
         self.assertIsInstance(c, numpy.ndarray)
         self.assertEqual(len(c), _MAX_WFMSIZE)
         s = w.strengths
-        self.assertIsInstance(s, numpy.ndarray)
+        self.assertIsInstance(s, list)
         self.assertEqual(len(s), _MAX_WFMSIZE)
+
+    def test_waveform(self):
+        """Test waveform."""
+        # TODO: implement it!
+        pass
+
+    def test_update(self):
+        """Test update."""
+        # TODO: implement it!
+        pass
 
 
 class TestWaveform(unittest.TestCase):
     """Test Waveform class."""
 
     public_interface = (
+        'wfm_nrpoints',
+        'duration',
         'update',
     )
 
@@ -224,12 +248,22 @@ class TestWaveform(unittest.TestCase):
                 TestWaveform.public_interface)
         self.assertTrue(valid)
 
-    def _test_update(self):
+    def test_wfm_nrpoints(self):
+        """Test wfm_nrpoints."""
+        # TODO: implement it!
+        pass
+
+    def test_duration(self):
+        """Test duration."""
+        # TODO: implement it!
+        pass
+
+    def test_update(self):
         """Test update."""
         bo_b = WaveformDipole()
         qd = Waveform(maname='BO-Fam:MA-QD', dipole=bo_b)
         c1 = qd.currents
-        bo_b.rampup_start_value *= 1.01
+        bo_b.rampup_start_energy *= 1.01
         c2 = qd.currents
         self.assertTrue((c1 != c2).any())
 

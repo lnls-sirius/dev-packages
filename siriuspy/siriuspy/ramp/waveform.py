@@ -76,7 +76,7 @@ class WaveformParam:
                 self._calc_region5_parms()
             self._changed = False
 
-    @ property
+    @property
     def changed(self):
         """State of change."""
         return self._changed
@@ -532,8 +532,8 @@ class Waveform(_WaveformMagnet):
         self._dipole = dipole
         self._family = family
         if strengths is None:
-            if self.maname in _rutil.NOMINAL_STRENGTHS:
-                nom_strengths = _rutil.NOMINAL_STRENGTHS[self.maname]
+            if maname in _rutil.NOMINAL_STRENGTHS:
+                nom_strengths = _rutil.NOMINAL_STRENGTHS[maname]
             else:
                 nom_strengths = 0.0
             strengths = [nom_strengths, ] * self._dipole.wfm_nrpoints
