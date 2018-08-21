@@ -168,7 +168,7 @@ def get_orbit_database(acc, prefix=''):
     nbpm = const.NR_BPMS
     pvs = [
         'OrbitRefX-SP',     'OrbitRefX-RB',
-        'OrbitRefY-SP',     'OrbitRefY-RB'
+        'OrbitRefY-SP',     'OrbitRefY-RB',
         'OrbitRawX-Mon',    'OrbitRawY-Mon',
         'OrbitSmoothX-Mon', 'OrbitSmoothY-Mon',
         'OrbitOfflineX-SP', 'OrbitOfflineX-RB',

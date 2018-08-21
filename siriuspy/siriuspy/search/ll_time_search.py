@@ -103,12 +103,12 @@ class LLTimeSearch:
                 dic_[conn2] = conn1
     del(dev, conns_, dic_, conn1, conns, conn2)  # cleanning class namespace.
 
-    _conn_from_evg = None
-    _conn_twds_evg = None
-    _top_chain_devs = None
-    _final_receiver_devs = None
-    _all_devices = None
-    _hierarchy_map = None
+    _conn_from_evg = dict()
+    _conn_twds_evg = dict()
+    _top_chain_devs = set()
+    _final_receiver_devs = set()
+    _all_devices = set()
+    _hierarchy_map = list()
 
     @classmethod
     def get_channel_input(cls, channel):
@@ -298,8 +298,8 @@ class LLTimeSearch:
                 continue  # empty line
             out, inn = line.split()[:2]
             out, inn = _PVName(out), _PVName(inn)
-            send, ochn, octyp, ocn = cls._get_dev_and_channel(out)
-            recv, ichn, ictyp, icn = cls._get_dev_and_channel(inn)
+            _, ochn, octyp, _ = cls._get_dev_and_channel(out)
+            _, ichn, ictyp, _ = cls._get_dev_and_channel(inn)
             if not ochn or not ichn:
                 print('No {0:s} channel defined in line {1:d}:\n\t {2:s}'
                       .format('output' if not ochn else 'input', n, line))

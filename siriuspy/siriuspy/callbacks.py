@@ -18,7 +18,7 @@ class Callback:
         else:
             self.add_callback(callback)
 
-    def add_callback(self, callback=None, index=None, **kw):
+    def add_callback(self, callback, index=None, **kw):
         """Add a callback to a PV.
 
         Optional keyword arguments set here will be preserved and passed
@@ -32,7 +32,7 @@ class Callback:
             raise ValueError("Tried to set non callable as a callback")
         if index is None:
             index = 0
-            if len(self._callbacks) > 0:
+            if self._callbacks:
                 index = 1 + max(self._callbacks.keys())
         self._callbacks[index] = (callback, kw)
         return index

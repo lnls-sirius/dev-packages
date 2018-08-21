@@ -613,7 +613,5 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
             'External Interlock',
             )
         }
-
-    pre = prefix + hl_trigger
-    interface = tuple(_HLTimeSearch.get_hl_trigger_interface(hl_trigger))
-    return {pre + pv: dt for pv, dt in db.items() if pv.startswith(interface)}
+    interf = tuple(_HLTimeSearch.get_hl_trigger_interface(hl_trigger))
+    return {prefix + pv: dt for pv, dt in db.items() if pv.startswith(interf)}

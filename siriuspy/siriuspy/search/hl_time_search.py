@@ -11,12 +11,12 @@ _timeout = 1.0
 class HLTimeSearch:
     """Contain properties of the triggers."""
 
-    _TWDS_EVG = None
-    _FROM_EVG = None
-    _EVRs = None
-    _EVEs = None
-    _AMCFPGAEVRs = None
-    _hl_triggers = None
+    _TWDS_EVG = dict()
+    _FROM_EVG = dict()
+    _EVRs = set()
+    _EVEs = set()
+    _AMCFPGAEVRs = set()
+    _hl_triggers = dict()
 
     @classmethod
     def get_hl_triggers(cls):
@@ -34,7 +34,8 @@ class HLTimeSearch:
     def get_hl_trigger_sources(cls, hl_trigger):
         """Return the possible sources of the high level trigger."""
         cls._init()
-        enums = cls._hl_triggers[hl_trigger]['database']['Src']['enums']
+        enums = cls._hl_triggers
+        enums = enums[hl_trigger]['database']['Src']['enums']
         if cls.has_clock(hl_trigger):
             clocks = ['Clock{0:d}'.format(i) for i in range(8)]
             enums = ('Dsbl', ) + enums + tuple(clocks)
@@ -85,7 +86,8 @@ class HLTimeSearch:
         for chan in chans:
             chan_tree = _LLTimeSearch.get_device_tree(chan)
             for up_chan in chan_tree:
-                if up_chan.device_name in cls._EVRs | cls._EVEs | cls._AMCFPGAEVRs:
+                if up_chan.device_name in (
+                            cls._EVRs | cls._EVEs | cls._AMCFPGAEVRs):
                     out_chans |= {up_chan}
                     break
         return sorted(out_chans)
@@ -189,10 +191,10 @@ class HLTimeSearch:
         _LLTimeSearch.add_crates_info()
         cls._TWDS_EVG = _LLTimeSearch.get_connections_twds_evg()
         cls._FROM_EVG = _LLTimeSearch.get_connections_from_evg()
-        cls._EVRs = _LLTimeSearch.get_device_names({'dev': 'EVR'})
-        cls._EVEs = _LLTimeSearch.get_device_names({'dev': 'EVE'})
-        cls._AMCFPGAEVRs = _LLTimeSearch.get_device_names(
-                                                        {'dev': 'AMCFPGAEVR'})
+        cls._EVRs = set(_LLTimeSearch.get_device_names({'dev': 'EVR'}))
+        cls._EVEs = set(_LLTimeSearch.get_device_names({'dev': 'EVE'}))
+        cls._AMCFPGAEVRs = set(
+                    _LLTimeSearch.get_device_names({'dev': 'AMCFPGAEVR'}))
 
     @classmethod
     def _init(cls):
