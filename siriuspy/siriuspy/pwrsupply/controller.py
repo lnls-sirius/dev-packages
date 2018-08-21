@@ -1,6 +1,6 @@
 """E2SController."""
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
-from siriuspy.pwrsupply.prucontroller import PRUCParms_FBP as _PRUCParms_FBP
+# from siriuspy.pwrsupply.model_factory import PRUCParms_FBP as _PRUCParms_FBP
 from siriuspy.pwrsupply.bsmp import ConstBSMP as _c
 from siriuspy.pwrsupply.functions import PSOpMode as _PSOpMode
 from siriuspy.pwrsupply.functions import BSMPFunction as _Function
@@ -77,7 +77,7 @@ class PSController:
 class StandardPSController(PSController):
     """Standard behaviour for a PSController."""
 
-    INTERVAL_SCAN = 1.0/_PRUCParms_FBP.FREQ_SCAN
+    # INTERVAL_SCAN = 1.0/_PRUCParms_FBP.FREQ_SCAN
 
     def __init__(self,
                  readers, functions, connections, pru_controller, devices):
@@ -85,6 +85,7 @@ class StandardPSController(PSController):
         super().__init__(readers, functions, connections, pru_controller)
         self._devices = devices
         self._watchers = dict()
+        # self._interval_scan = 1.0/pru_controller.scan_interval
 
     def read(self, device_name, field):
         """Read pv value."""
