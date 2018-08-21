@@ -2,7 +2,7 @@
 
 import time as _time
 import numpy as _np
-import epics as _epics
+from epics import PV as _PV
 import siriuspy.util as _util
 import siriuspy.csdevice.orbitcorr as _csorb
 from siriuspy.thread import RepeaterThread as _Repeat
@@ -23,6 +23,10 @@ class Corrector:
         self._applied = False
         self._state = False
         self._name = corr_name
+        self._sp = None
+        self._rb = None
+        self._pwrstt_sel = None
+        self._pwrstt_sts = None
 
     @property
     def name(self):
@@ -66,13 +70,14 @@ class Corrector:
         self._connected &= self._pwrstt_sts.connected
 
     def _isTurnedOn(self):
-        self._state = self._pwrstt_sts.value == _PwrSplyConst.PwrSate.On
+        self._state = self._pwrstt_sts.value == _PwrSplyConst.PwrState.On
 
     def _isReady(self):
         self._ready = self.equalKick(self._rb.value)
 
     def _kickApplied(self):
-        self._applied = self.equalKick(self._ref.value)
+        self._isReady()
+        self._applied = self._ready
 
 
 class RFCtrl(Corrector):
@@ -80,14 +85,10 @@ class RFCtrl(Corrector):
     def __init__(self):
         super().__init__(_csorb.RF_GEN_NAME)
         opt = {'connection_timeout': TIMEOUT}
-        self._sp = _epics.PV(LL_PREF+self._name+':Freq-SP', **opt)
-        self._rb = _epics.PV(LL_PREF+self._name+':Freq-RB', **opt)
-        self._pwrstt_sel = _epics.PV(LL_PREF+self._name+':PwrSate-Sel', **opt)
-        self._pwrstt_sts = _epics.PV(LL_PREF+self._name+':PwrSate-Sts', **opt)
-
-    def _kickApplied(self):
-        self._isReady()
-        self._applied = self._ready
+        self._sp = _PV(LL_PREF+self._name+':Freq-SP', **opt)
+        self._rb = _PV(LL_PREF+self._name+':Freq-RB', **opt)
+        self._pwrstt_sel = _PV(LL_PREF+self._name+':PwrState-Sel', **opt)
+        self._pwrstt_sts = _PV(LL_PREF+self._name+':PwrState-Sts', **opt)
 
     def _isTurnedOn(self):
         self._state = self._pwrstt_sts.value == 1  # TODO: database of RF GEN
@@ -99,17 +100,13 @@ class CHCV(Corrector):
         super().__init__(corr_name)
         opt = {'connection_timeout': TIMEOUT}
         self._opmode = None
-        self._sp = _epics.PV(LL_PREF + self._name + ':Current-SP', **opt)
-        self._rb = _epics.PV(
-                            LL_PREF + self._name + ':Current-RB',
-                            callback=self._isReady, **opt)
-        self._ref = _epics.PV(
-                            LL_PREF + self._name + ':CurrentRef-Mon',
-                            callback=self._kickApplied, **opt)
-        self._opmode_sel = _epics.PV(LL_PREF+self._name+':OpMode-Sel', **opt)
-        self._opmode_sts = _epics.PV(LL_PREF+self._name+':OpMode-Sts', **opt)
-        self._pwrstt_sel = _epics.PV(LL_PREF+self._name+':PwrSate-Sel', **opt)
-        self._pwrstt_sts = _epics.PV(LL_PREF+self._name+':PwrSate-Sts', **opt)
+        self._sp = _PV(LL_PREF + self._name + ':Current-SP', **opt)
+        self._rb = _PV(LL_PREF + self._name + ':Current-RB', **opt)
+        self._ref = _PV(LL_PREF + self._name + ':CurrentRef-Mon', **opt)
+        self._opmode_sel = _PV(LL_PREF+self._name+':OpMode-Sel', **opt)
+        self._opmode_sts = _PV(LL_PREF+self._name+':OpMode-Sts', **opt)
+        self._pwrstt_sel = _PV(LL_PREF+self._name+':PwrState-Sel', **opt)
+        self._pwrstt_sts = _PV(LL_PREF+self._name+':PwrState-Sts', **opt)
 
     @property
     def opmode_ok(self):
@@ -133,46 +130,49 @@ class CHCV(Corrector):
         self._connected &= self._pwrstt_sel.connected
         self._connected &= self._pwrstt_sts.connected
 
+    def _kickApplied(self):
+        self._applied = self.equalKick(self._ref.value)
+
 
 class TimingConfig:
 
     def __init__(self, acc):
         if acc == 'SI':
             evt = 'OrbSI'
-            trig = 'SI-Glob:TI-Corrs'
+            trig = 'SI-Glob:TI-Corrs:'
         elif acc == 'BO':
             evt = 'OrbBO'
-            trig = 'BO-Glob:TI-Corrs'
+            trig = 'BO-Glob:TI-Corrs:'
         pref_name = LL_PREF + _csorb.EVG_NAME + ':' + evt
         opt = {'connection_timeout': TIMEOUT}
-        self._evt_sender = _epics.PV(pref_name + 'ExtTrig-Cmd', **opt)
-        self._evt_mode_sp = _epics.PV(pref_name + 'Mode-Sel', **opt)
-        self._evt_mode_rb = _epics.PV(pref_name + 'Mode-Sts', **opt)
+        self._evt_sender = _PV(pref_name + 'ExtTrig-Cmd', **opt)
+        self._evt_mode_sp = _PV(pref_name + 'Mode-Sel', **opt)
+        self._evt_mode_rb = _PV(pref_name + 'Mode-Sts', **opt)
         self._trig_ok_vals = {
             'Src': _HLTimeSearch.get_hl_trigger_sources(trig).index(evt),
             'Delay': 0.0, 'DelayType': 0, 'NrPulses': 1,
             'Duration': 0.1, 'State': 1, 'ByPassIntlk': 0, 'Polarity': 1,
             }
-        pref_name = LL_PREF + trig + ':'
+        pref_name = LL_PREF + trig
         self._trig_pvs_rb = {
-            'Src': _epics.PV(pref_name + 'Src-Sts', **opt),
-            'Delay': _epics.PV(pref_name + 'Delay-RB', **opt),
-            'DelayType': _epics.PV(pref_name + 'DelayType-Sts', **opt),
-            'NrPulses': _epics.PV(pref_name + 'NrPulses-RB', **opt),
-            'Duration': _epics.PV(pref_name + 'Duration-RB', **opt),
-            'State': _epics.PV(pref_name + 'State-Sts', **opt),
-            'ByPassIntlk': _epics.PV(pref_name + 'ByPassIntlk-Sts', **opt),
-            'Polarity': _epics.PV(pref_name + 'Polarity-Sts', **opt),
+            'Src': _PV(pref_name + 'Src-Sts', **opt),
+            'Delay': _PV(pref_name + 'Delay-RB', **opt),
+            'DelayType': _PV(pref_name + 'DelayType-Sts', **opt),
+            'NrPulses': _PV(pref_name + 'NrPulses-RB', **opt),
+            'Duration': _PV(pref_name + 'Duration-RB', **opt),
+            'State': _PV(pref_name + 'State-Sts', **opt),
+            'ByPassIntlk': _PV(pref_name + 'ByPassIntlk-Sts', **opt),
+            'Polarity': _PV(pref_name + 'Polarity-Sts', **opt),
             }
         self._trig_pvs_sp = {
-            'Src': _epics.PV(pref_name + 'Src-Sel', **opt),
-            'Delay': _epics.PV(pref_name + 'Delay-SP', **opt),
-            'DelayType': _epics.PV(pref_name + 'DelayType-Sel', **opt),
-            'NrPulses': _epics.PV(pref_name + 'NrPulses-SP', **opt),
-            'Duration': _epics.PV(pref_name + 'Duration-SP', **opt),
-            'State': _epics.PV(pref_name + 'State-Sel', **opt),
-            'ByPassIntlk': _epics.PV(pref_name + 'ByPassIntlk-Sel', **opt),
-            'Polarity': _epics.PV(pref_name + 'Polarity-Sel', **opt),
+            'Src': _PV(pref_name + 'Src-Sel', **opt),
+            'Delay': _PV(pref_name + 'Delay-SP', **opt),
+            'DelayType': _PV(pref_name + 'DelayType-Sel', **opt),
+            'NrPulses': _PV(pref_name + 'NrPulses-SP', **opt),
+            'Duration': _PV(pref_name + 'Duration-SP', **opt),
+            'State': _PV(pref_name + 'State-Sel', **opt),
+            'ByPassIntlk': _PV(pref_name + 'ByPassIntlk-Sel', **opt),
+            'Polarity': _PV(pref_name + 'Polarity-Sel', **opt),
             }
 
     def send_evt(self):
@@ -242,7 +242,7 @@ class EpicsCorrectors(BaseCorrectors):
         # apply the RF kick
         if not self._rf_ctrl.equalKick(values[-1]):
             if not self._rf_ctrl.connected:
-                self._update_log('ERR: '+self.rf_sp.pvname+' not connected.')
+                self._update_log('ERR: '+self._rf_ctrl.name+' not connected.')
                 return
             self._rf_ctrl.value = values[-1]
         # Send correctors setpoint

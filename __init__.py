@@ -1,5 +1,3 @@
-from si_ap_sofb import (si_ap_sofb, correctors, main,
-                        matrix, orbit, definitions)
+from . import as_ap_sofb, correctors, main, matrix, orbit
 
-__all__ = ('si_ap_sofb', 'correctors', 'main',
-           'matrix', 'orbit', 'definitions')
+__all__ = ('as_ap_sofb', 'correctors', 'main', 'matrix', 'orbit')

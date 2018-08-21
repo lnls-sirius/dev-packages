@@ -10,7 +10,6 @@ class BaseClass(_Callback):
         self._const = _csorb.get_consts(acc)
         self._prefix = prefix
         self._status = 0b0
-        self.add_callback(callback)
 
     @property
     def prefix(self):

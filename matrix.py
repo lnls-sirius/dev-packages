@@ -58,10 +58,10 @@ class EpicsMatrix(BaseMatrix):
     def set_respmat(self, mat):
         """Set the response matrix in memory and save it in file."""
         self.run_callbacks('Log-Mon', 'Setting New RespMat.')
-        if len(mat) != self._consts.MTX_SZ:
+        if len(mat) != self._const.MTX_SZ:
             self._update_log('ERR: Wrong RespMat Size.')
             return False
-        mat = _np.reshape(mat, [2*self._consts.NR_BPMS, self._consts.NR_CORRS])
+        mat = _np.reshape(mat, [2*self._const.NR_BPMS, self._const.NR_CORRS])
         old_ = self.respmat.copy()
         self.respmat = mat
         if not self._calc_matrices():
@@ -75,9 +75,9 @@ class EpicsMatrix(BaseMatrix):
         """Calculate the kick from the orbit distortion given."""
         kicks = _np.dot(-self.inv_respmat, orbit)
         self.run_callbacks(
-                        'DeltaKicksCH-Mon', list(kicks[:self._consts.NR_CH]))
+                        'DeltaKicksCH-Mon', list(kicks[:self._const.NR_CH]))
         self.run_callbacks(
-                        'DeltaKicksCV-Mon', list(kicks[self._consts.NR_CH:-1]))
+                        'DeltaKicksCV-Mon', list(kicks[self._const.NR_CH:-1]))
         self.run_callbacks('DeltaKicksRF-Mon', kicks[-1])
         return kicks
 
@@ -98,6 +98,15 @@ class EpicsMatrix(BaseMatrix):
             self.select_items[key] = bkup
             return False
         self.run_callbacks(self.selection_pv_names[key], val)
+        return True
+
+    def set_num_sing_values(self, num):
+        bkup = self.num_sing_values
+        self.num_sing_values = num
+        if not self._calc_matrices():
+            self.num_sing_values = bkup
+            return False
+        self.run_callbacks('NumSingValues-RB', num)
         return True
 
     def _calc_matrices(self):
@@ -133,19 +142,10 @@ class EpicsMatrix(BaseMatrix):
         self.sing_values[:len(s)] = s
         self.run_callbacks('SingValues-Mon', list(self.sing_values))
         self.inv_respmat = _np.zeros(
-                        [2*self._consts.NR_BPMS, self._consts.NR_CORRS]).T
+                        [2*self._const.NR_BPMS, self._const.NR_CORRS]).T
         self.inv_respmat[sel_mat.T] = inv_mat.flatten()
         self.run_callbacks(
                 'InvRespMat-Mon', list(self.inv_respmat.flatten()))
-        return True
-
-    def set_num_sing_values(self, num):
-        bkup = self.num_sing_values
-        self.num_sing_values = num
-        if not self._calc_matrices():
-            self.num_sing_values = bkup
-            return False
-        self.run_callbacks('NumSingValues-RB', num)
         return True
 
     def _load_respmat(self):

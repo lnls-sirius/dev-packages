@@ -3,7 +3,7 @@
 import time as _time
 import os as _os
 import numpy as _np
-import epics as _epics
+from epics import PV as _PV
 from functools import partial as _part
 import siriuspy.util as _util
 import siriuspy.csdevice.orbitcorr as _csorb
@@ -32,7 +32,7 @@ class EpicsOrbit(BaseOrbit):
         db['OrbitRefY-SP'][prop] = _part(self.set_ref_orbit, 'y')
         db['OrbitOfflineX-SP'][prop] = _part(self.set_offline_orbit, 'x')
         db['OrbitOfflineY-SP'][prop] = _part(self.set_offline_orbit, 'y')
-        db['OrbitPointsNum-SP'][prop] = self.set_smooth_npts
+        db['OrbitSmoothNPnts-SP'][prop] = self.set_smooth_npts
         db['OrbitAcqRate-SP'][prop] = self.set_orbit_acq_rate
         db['CorrMode-Sel'][prop] = self.set_correction_mode
         db = super().get_database(db)
@@ -56,8 +56,8 @@ class EpicsOrbit(BaseOrbit):
         dic = {'connection_timeout': TIMEOUT}
         self.pvs_pos = {
             name: {
-                'x': _epics.PV(LL_PREF+name+':PosX-Mon', **dic),
-                'y': _epics.PV(LL_PREF+name+':PosY-Mon', **dic)}
+                'x': _PV(LL_PREF+name+':PosX-Mon', **dic),
+                'y': _PV(LL_PREF+name+':PosY-Mon', **dic)}
             for name in self._const.BPM_NAMES}
         self._orbit_thread = _Repeat(
                         1/self._acq_rate, self._update_orbits, niter=0)
@@ -79,17 +79,16 @@ class EpicsOrbit(BaseOrbit):
                 _time.sleep(1/self._acq_rate)
             else:
                 self._update_log('ERR: get orbit function timeout.')
-                orbx = self.ref_orbit['x']
-                orby = self.ref_orbit['y']
-        refx = self.ref_orbit['x']
-        refy = self.ref_orbit['y']
+                orbx = self.ref_orbits['x']
+                orby = self.ref_orbits['y']
+        refx = self.ref_orbits['x']
+        refy = self.ref_orbits['y']
         return _np.hstack([orbx-refx, orby-refy])
 
     def set_correction_mode(self, value):
         self.correction_mode = value
         self._update_log(
-            'Changing to {0:s} mode.'.format(_csorb.CorrMode._fields[value])
-            )
+            'Changing to {0:s} mode.'.format(_csorb.CorrMode._fields[value]))
         self.run_callbacks('CorrMode-Sts', value)
         return True
 

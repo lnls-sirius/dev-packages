@@ -14,7 +14,7 @@ from .correctors import (BaseCorrectors as _BaseCorrectors,
                          EpicsCorrectors as _EpicsCorrectors)
 from .base_class import BaseClass as _BaseClass
 
-INTERVAL = 0.1
+INTERVAL = 1
 
 
 class SOFB(_BaseClass):
@@ -26,7 +26,7 @@ class SOFB(_BaseClass):
         prop = 'fun_set_pv'
         db['AutoCorr-Sel'][prop] = self.set_auto_corr
         db['AutoCorrFreq-SP'][prop] = self.set_auto_corr_frequency
-        db['StartMeasRespMat-Cmd'][prop] = self.set_respmat_meas_state
+        db['MeasRespMat-Cmd'][prop] = self.set_respmat_meas_state
         db['CalcCorr-Cmd'][prop] = self.calc_correction
         db['CorrFactorCH-SP'][prop] = _part(self.set_corr_factor, 'ch')
         db['CorrFactorCV-SP'][prop] = _part(self.set_corr_factor, 'cv')
@@ -239,8 +239,9 @@ class SOFB(_BaseClass):
         self._queue.add_callback(self._update_driver, pvname, value, **kwargs)
 
     def _update_driver(self, pvname, value, **kwargs):
-        self._driver.setParam(pvname, value)
-        self._driver.updatePV(pvname)
+        if self._driver is not None:
+            self._driver.setParam(pvname, value)
+            self._driver.updatePV(pvname)
 
     def _isValid(self, reason, value):
         if reason.endswith(('-Sts', '-RB', '-Mon')):
@@ -320,7 +321,7 @@ class SOFB(_BaseClass):
             mat[:, i] = (orbp-orbn)/delta
         self.correctors.apply_kicks(orig_kicks)
         self._update_log('Measurement Completed.')
-        self.set_respmat(list(mat.flatten()))
+        self.matrix.set_respmat(list(mat.flatten()))
         self.run_callbacks('MeasRespMat-Mon', _csorb.MeasRespMatMon.Completed)
         self._measuring_respmat = False
 
