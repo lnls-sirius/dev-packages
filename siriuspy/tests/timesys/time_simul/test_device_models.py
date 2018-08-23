@@ -16,8 +16,8 @@ public_interface = (
     'EVGIOC',
     'EVRIOC',
     'EVEIOC',
-    'AFCIOC',
-    'FOUTIOC',
+    'AMCFPGAEVRIOC',
+    'FoutIOC',
 )
 
 
@@ -168,8 +168,8 @@ class TestEVEIOC(unittest.TestCase):
         pass
 
 
-class TestAFCIOC(unittest.TestCase):
-    """Test AFCIOC class."""
+class TestAMCFPGAEVRIOC(unittest.TestCase):
+    """Test AMCFPGAEVRIOC class."""
 
     public_interface = (
         'get_database',
@@ -178,7 +178,7 @@ class TestAFCIOC(unittest.TestCase):
     def test_public_interface(self):
         """Test class public interface."""
         valid = util.check_public_interface_namespace(
-            device_models.AFCIOC, TestAFCIOC.public_interface)
+            device_models.AMCFPGAEVRIOC, TestAMCFPGAEVRIOC.public_interface)
         self.assertTrue(valid)
 
     def test_get_database(self):
@@ -187,8 +187,8 @@ class TestAFCIOC(unittest.TestCase):
         pass
 
 
-class TestFOUTIOC(unittest.TestCase):
-    """Test FOUTIOC class."""
+class TestFoutIOC(unittest.TestCase):
+    """Test FoutIOC class."""
 
     public_interface = (
         'get_database',
@@ -198,7 +198,7 @@ class TestFOUTIOC(unittest.TestCase):
     def test_public_interface(self):
         """Test class public interface."""
         valid = util.check_public_interface_namespace(
-            device_models.FOUTIOC, TestFOUTIOC.public_interface)
+            device_models.FoutIOC, TestFoutIOC.public_interface)
         self.assertTrue(valid)
 
     def test_get_database(self):

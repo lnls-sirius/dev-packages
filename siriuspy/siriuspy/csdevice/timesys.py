@@ -1,6 +1,7 @@
 """Define properties of all timing devices and their connections."""
 
 from copy import deepcopy as _dcopy
+from .const import get_namedtuple as _get_namedtuple
 from siriuspy.search import HLTimeSearch as _HLTimeSearch
 
 events_hl2ll_map = {
@@ -9,8 +10,9 @@ events_hl2ll_map = {
     'MigSI': 'Evt05', 'DigLI': 'Evt06',
     'DigTB': 'Evt07', 'DigBO': 'Evt08',
     'DigTS': 'Evt09', 'DigSI': 'Evt10',
-    'Orbit': 'Evt11', 'Coupl': 'Evt12',
-    'Tunes': 'Evt13', 'Study': 'Evt14'}
+    'OrbSI': 'Evt11', 'CplSI': 'Evt12',
+    'TunSI': 'Evt13', 'Study': 'Evt14',
+    'OrbBO': 'Evt15'}
 events_ll2hl_map = {val: key for key, val in events_hl2ll_map.items()}
 
 events_ll_tmp = 'Evt{0:02d}'
@@ -20,12 +22,15 @@ events_ll_codes = list(range(1, 64))
 events_ll_names = []
 for i in events_ll_codes:
     events_ll_names.append(events_ll_tmp.format(i))
-del(i)  # cleanup class namespace
+events_ll = _get_namedtuple(
+                'EventsLL', events_ll_names, values=events_ll_codes)
+del(i, events_ll_codes, events_ll_names)  # cleanup class namespace
 
-events_modes = ('Disabled', 'Continuous', 'Injection', 'External')
-events_delay_types = ('Fixed', 'Incr')
-
-clocks_states = ('Dsbl', 'Enbl')
+events_modes = _get_namedtuple(
+                'EvtModes',
+                ('Disabled', 'Continuous', 'Injection', 'External'))
+events_delay_types = _get_namedtuple('EvtDlyTyp', ('Fixed', 'Incr'))
+clocks_states = _get_namedtuple('ClockState', ('Dsbl', 'Enbl'))
 
 clocks_ll_tmp = 'Clock{0:d}'
 clocks_hl_tmp = 'Clock{0:d}'
@@ -38,14 +43,14 @@ del(i)  # cleanup class namespace
 
 clocks_ll2hl_map = {val: key for key, val in clocks_hl2ll_map.items()}
 
-triggers_states = ('Dsbl', 'Enbl')
-triggers_intlk = ('Dsbl', 'Enbl')
-triggers_polarities = ('Normal', 'Inverse')
-triggers_delay_types = ('Fixed', 'Incr')
-triggers_src_ll = (
-    'Dsbl',  'Trigger', 'Clock0', 'Clock1', 'Clock2',
-    'Clock3', 'Clock4', 'Clock5', 'Clock6', 'Clock7'
-    )
+triggers_states = _get_namedtuple('TrigStates', ('Dsbl', 'Enbl'))
+triggers_intlk = _get_namedtuple('TrigIntlk', ('Dsbl', 'Enbl'))
+triggers_polarities = _get_namedtuple('TrigPol', ('Normal', 'Inverse'))
+triggers_delay_types = _get_namedtuple('TrigDlyTyp', ('Fixed', 'Incr'))
+triggers_src_ll = _get_namedtuple(
+                        'TrigSrcLL',
+                        ('Dsbl',  'Trigger', 'Clock0', 'Clock1', 'Clock2',
+                         'Clock3', 'Clock4', 'Clock5', 'Clock6', 'Clock7'))
 
 
 class Const:
@@ -72,7 +77,7 @@ def get_otp_database(otp_num=0, prefix=None):
     prefix = def_prefix if prefix is None else prefix
     db = dict()
 
-    dic_ = {'type': 'enum', 'value': 0, 'enums': triggers_states}
+    dic_ = {'type': 'enum', 'value': 0, 'enums': triggers_states._fields}
     db[prefix+'State-Sts'] = dic_
     db[prefix+'State-Sel'] = _dcopy(dic_)
 
@@ -90,7 +95,7 @@ def get_otp_database(otp_num=0, prefix=None):
     db[prefix+'Width-SP'] = dic_
     db[prefix+'Width-RB'] = _dcopy(dic_)
 
-    dic_ = {'type': 'enum', 'value': 0, 'enums': triggers_polarities}
+    dic_ = {'type': 'enum', 'value': 0, 'enums': triggers_polarities._fields}
     db[prefix+'Polarity-Sts'] = dic_
     db[prefix+'Polarity-Sel'] = _dcopy(dic_)
 
@@ -98,8 +103,8 @@ def get_otp_database(otp_num=0, prefix=None):
         'type': 'int', 'value': 1, 'unit': '',
         'lolo': 0, 'low': 0, 'lolim': 0,
         'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
-    db[prefix+'Pulses-SP'] = dic_
-    db[prefix+'Pulses-RB'] = _dcopy(dic_)
+    db[prefix+'NrPulses-SP'] = dic_
+    db[prefix+'NrPulses-RB'] = _dcopy(dic_)
 
     dic_ = {
         'type': 'int', 'value': 1, 'unit': '',
@@ -107,6 +112,10 @@ def get_otp_database(otp_num=0, prefix=None):
         'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
     db[prefix+'Delay-SP'] = dic_
     db[prefix+'Delay-RB'] = _dcopy(dic_)
+
+    dic_ = {'type': 'enum', 'value': 0, 'enums': triggers_intlk._fields}
+    db[prefix+'ByPassIntlk-Sts'] = dic_
+    db[prefix+'ByPassIntlk-Sel'] = _dcopy(dic_)
 
     return db
 
@@ -117,13 +126,13 @@ def get_out_database(out_num=0, equip='EVR', prefix=None):
     prefix = def_prefix if prefix is None else prefix
     db = dict()
 
-    dic_ = {'type': 'enum', 'value': 0, 'enums': triggers_intlk}
-    db[prefix+'Intlk-Sts'] = dic_
-    db[prefix+'Intlk-Sel'] = _dcopy(dic_)
-
-    dic_ = {'type': 'enum', 'value': 0, 'enums': triggers_src_ll}
+    dic_ = {'type': 'enum', 'value': 0, 'enums': triggers_src_ll._fields}
     db[prefix+'Src-Sts'] = dic_
     db[prefix+'Src-Sel'] = _dcopy(dic_)
+
+    dic_ = {'type': 'enum', 'value': 0, 'enums': triggers_delay_types._fields}
+    db[prefix+'DelayType-Sts'] = dic_
+    db[prefix+'DelayType-Sel'] = _dcopy(dic_)
 
     max_trig = 23 if equip == 'EVR' else 15
     num_trig = out_num + 12 if equip == 'EVR' else out_num
@@ -137,7 +146,7 @@ def get_out_database(out_num=0, equip='EVR', prefix=None):
     dic_ = {
         'type': 'int', 'value': 0, 'unit': '',
         'lolo': 0, 'low': 0, 'lolim': 0,
-        'hilim': 31, 'high': 31, 'hihi': 31}
+        'hilim': 30, 'high': 30, 'hihi': 30}
     db[prefix+'RFDelay-SP'] = dic_
     db[prefix+'RFDelay-RB'] = _dcopy(dic_)
 
@@ -161,7 +170,9 @@ def get_afc_out_database(out_num=0, out_tp='FMC', prefix=None):
 
     prefix = def_prefix if prefix is None else prefix
     db = get_otp_database(prefix=prefix)
-    dic_ = {'type': 'enum', 'value': 0, 'enums': triggers_src_ll}
+    db.pop(prefix + 'ByPassIntlk-Sel')
+    db.pop(prefix + 'ByPassIntlk-Sts')
+    dic_ = {'type': 'enum', 'value': 0, 'enums': triggers_src_ll._fields}
     db[prefix+'Src-Sts'] = dic_
     db[prefix+'Src-Sel'] = _dcopy(dic_)
 
@@ -260,9 +271,9 @@ def get_eve_database(eve_num=1, prefix=None):
 
 def get_afc_database(afc_sec=1, has_idx=False, idx=1, prefix=None):
     """Method get_adc_database."""
-    def_prefix = 'AS-{0:02d}:TI-AFC:'.format(afc_sec)
+    def_prefix = 'AS-{0:02d}:TI-AMCFPGAEVR:'.format(afc_sec)
     if has_idx:
-        def_prefix = 'AS-{0:02d}:TI-AFC-{1:d}:'.format(afc_sec, idx)
+        def_prefix = 'AS-{0:02d}:TI-AMCFPGAEVR-{1:d}:'.format(afc_sec, idx)
 
     prefix = def_prefix if prefix is None else prefix
     db = dict()
@@ -307,7 +318,7 @@ def get_afc_database(afc_sec=1, has_idx=False, idx=1, prefix=None):
 
 def get_fout_database(fout_num=1, prefix=None):
     """Method get_fout_database."""
-    def_prefix = 'AS-Glob:TI-FOUT-{0:d}:'.format(fout_num)
+    def_prefix = 'AS-Glob:TI-Fout-{0:d}:'.format(fout_num)
     prefix = def_prefix if prefix is None else prefix
     db = dict()
 
@@ -351,10 +362,10 @@ def get_event_database(evt_num=0, prefix=None):
             'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
     db[prefix + 'Delay-SP'] = _dcopy(dic_)
     db[prefix + 'Delay-RB'] = dic_
-    dic_ = {'type': 'enum', 'enums': events_modes, 'value': 1}
+    dic_ = {'type': 'enum', 'enums': events_modes._fields, 'value': 1}
     db[prefix + 'Mode-Sel'] = _dcopy(dic_)
     db[prefix + 'Mode-Sts'] = dic_
-    dic_ = {'type': 'enum', 'enums': events_delay_types, 'value': 1}
+    dic_ = {'type': 'enum', 'enums': events_delay_types._fields, 'value': 1}
     db[prefix + 'DelayType-Sel'] = _dcopy(dic_)
     db[prefix + 'DelayType-Sts'] = dic_
     dic_ = {'type': 'string', 'value': ''}
@@ -375,7 +386,7 @@ def get_clock_database(clock_num=0, prefix=None):
             'hilim': 2**31-1, 'high': 2**31-1, 'hihi': 2**31-1}
     db[prefix + 'MuxDiv-SP'] = _dcopy(dic_)
     db[prefix + 'MuxDiv-RB'] = dic_
-    dic_ = {'type': 'enum', 'enums': clocks_states, 'value': 0}
+    dic_ = {'type': 'enum', 'enums': clocks_states._fields, 'value': 0}
     db[prefix + 'MuxEnbl-Sel'] = _dcopy(dic_)
     db[prefix + 'MuxEnbl-Sts'] = dic_
     return db
@@ -458,7 +469,7 @@ def get_evg_database(prefix=None, only_evg=False):
 
     for clc in clocks_ll2hl_map.keys():
         db.update(get_clock_database(prefix=prefix+clc))
-    for ev in events_ll_names:
+    for ev in events_ll._fields:
         db.update(get_event_database(prefix=prefix+ev))
     return db
 
@@ -475,7 +486,7 @@ def get_hl_clock_database(prefix='Clock0'):
     db[prefix + 'Freq-RB'] = _dcopy(dic_)
     db[prefix + 'Freq-SP'] = dic_
 
-    dic_ = {'type': 'enum', 'enums': clocks_states, 'value': 0}
+    dic_ = {'type': 'enum', 'enums': clocks_states._fields, 'value': 0}
     db[prefix + 'State-Sel'] = _dcopy(dic_)
     db[prefix + 'State-Sts'] = dic_
     return db
@@ -491,13 +502,13 @@ def get_hl_event_database(prefix='Linac'):
     db[prefix + 'Delay-RB'] = _dcopy(dic_)
     db[prefix + 'Delay-SP'] = dic_
 
-    dic_ = {'type': 'enum', 'enums': events_modes,
+    dic_ = {'type': 'enum', 'enums': events_modes._fields,
             'value': 1,
             'states': ()}
     db[prefix + 'Mode-Sts'] = _dcopy(dic_)
     db[prefix + 'Mode-Sel'] = dic_
 
-    dic_ = {'type': 'enum', 'enums': events_delay_types, 'value': 1}
+    dic_ = {'type': 'enum', 'enums': events_delay_types._fields, 'value': 1}
     db[prefix + 'DelayType-Sts'] = _dcopy(dic_)
     db[prefix + 'DelayType-Sel'] = dic_
 
@@ -535,7 +546,7 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     db = dict()
     trig_db = _HLTimeSearch.get_hl_trigger_database(hl_trigger)
 
-    dic_ = {'type': 'enum', 'enums': triggers_states}
+    dic_ = {'type': 'enum', 'enums': triggers_states._fields}
     dic_.update(trig_db['State'])
     db['State-Sts'] = _dcopy(dic_)
     db['State-Sel'] = dic_
@@ -555,7 +566,7 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     db['Duration-RB'] = _dcopy(dic_)
     db['Duration-SP'] = dic_
 
-    dic_ = {'type': 'enum', 'enums': triggers_polarities}
+    dic_ = {'type': 'enum', 'enums': triggers_polarities._fields}
     dic_.update(trig_db['Polarity'])
     db['Polarity-Sts'] = _dcopy(dic_)
     db['Polarity-Sel'] = dic_
@@ -563,14 +574,14 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dic_ = {'type': 'int', 'unit': 'numer of pulses',
             # 'lolo': 1, 'low': 1, 'lolim': 1,
             'hilim': 2001, 'high': 10000, 'hihi': 100000}
-    dic_.update(trig_db['Pulses'])
-    db['Pulses-RB'] = _dcopy(dic_)
-    db['Pulses-SP'] = dic_
+    dic_.update(trig_db['NrPulses'])
+    db['NrPulses-RB'] = _dcopy(dic_)
+    db['NrPulses-SP'] = dic_
 
-    dic_ = {'type': 'enum', 'enums': triggers_intlk}
-    dic_.update(trig_db['Intlk'])
-    db['Intlk-Sts'] = _dcopy(dic_)
-    db['Intlk-Sel'] = dic_
+    dic_ = {'type': 'enum', 'enums': triggers_intlk._fields}
+    dic_.update(trig_db['ByPassIntlk'])
+    db['ByPassIntlk-Sts'] = _dcopy(dic_)
+    db['ByPassIntlk-Sel'] = dic_
 
     dic_ = {'type': 'float', 'unit': 'us', 'prec': 6,
             'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
@@ -579,28 +590,28 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     db['Delay-RB'] = _dcopy(dic_)
     db['Delay-SP'] = dic_
 
-    dic_ = {'type': 'enum', 'enums': triggers_delay_types}
+    dic_ = {'type': 'enum', 'enums': triggers_delay_types._fields}
     dic_.update(trig_db['DelayType'])
     db['DelayType-Sts'] = _dcopy(dic_)
     db['DelayType-Sel'] = dic_
 
-    dic_ = {'type': 'int', 'value': 255}
+    dic_ = {'type': 'int', 'value': 1024}
     db['Status-Mon'] = _dcopy(dic_)
 
     db['Status-Cte'] = {
-        'type': 'string', 'count': 8,
+        'type': 'string', 'count': 10,
         'value': (
             'All PVs connected',
             'Device Enabled',
-            'FOUT Enabled',
+            'Fout Enabled',
             'EVG Enabled',
             'Network Ok',
-            'Interlock Not Active',
             'UPLink Ok',
             'DownLink Ok',
+            'Fout DownLink Ok',
+            'EVG DownLink Ok',
+            'External Interlock',
             )
         }
-
-    pre = prefix + hl_trigger
-    interface = tuple(_HLTimeSearch.get_hl_trigger_interface(hl_trigger))
-    return {pre + pv: dt for pv, dt in db.items() if pv.startswith(interface)}
+    interf = tuple(_HLTimeSearch.get_hl_trigger_interface(hl_trigger))
+    return {prefix + pv: dt for pv, dt in db.items() if pv.startswith(interf)}

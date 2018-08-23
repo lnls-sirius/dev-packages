@@ -1,4 +1,5 @@
 """Impletentation of webserver data retrievement functions."""
+import re as _re
 import urllib.request as _urllib_request
 import siriuspy.envars as _envars
 
@@ -129,10 +130,18 @@ def udc_ps_mapping(timeout=_timeout):
     return read_url(url, timeout=timeout)
 
 
-def crate_to_bpm_mapping(timeout=_timeout):
-    """Return the crate to bpm mapping."""
-    url = _diag_folder + 'crates-connection.txt'
-    return read_url(url, timeout=timeout)
+def crates_mapping(timeout=_timeout):
+    """Return the crates mapping."""
+    url = _diag_folder + 'Mapeamento_placas_MicroTCA_vs_BPMs/'
+    text = read_url(url, timeout=timeout)
+    pat = _re.compile('>(names.crate[a-zA-Z_0-9]*.cfg)<')
+    files = pat.findall(text)
+    txt = ''
+    for fi in files:
+        for t in read_url(url + fi, timeout=timeout).splitlines():
+            txt += '{0:20s}'.format(fi[6:13]) + t + '\n'
+        txt += '\n\n'
+    return txt
 
 
 def bpms_data(timeout=_timeout):

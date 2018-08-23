@@ -371,8 +371,10 @@ class _OTP_IOC(_BaseIOC):
         'polarity_rb': 'Polarity-Sts',
         'event_sp': 'Evt-SP',
         'event_rb': 'Evt-RB',
-        'pulses_sp': 'Pulses-SP',
-        'pulses_rb': 'Pulses-RB',
+        'pulses_sp': 'NrPulses-SP',
+        'pulses_rb': 'NrPulses-RB',
+        'interlock_sp':  'ByPassIntlk-Sel',
+        'interlock_rb':  'ByPassIntlk-Sts',
         }
 
     @staticmethod
@@ -409,18 +411,20 @@ class _OTP_IOC(_BaseIOC):
             'event_rb': lambda x: x,
             'pulses_sp': lambda x: int(x),
             'pulses_rb': lambda x: x,
+            'interlock_sp': lambda x: int(x),
+            'interlock_rb': lambda x: x,
             }
 
 
 class _EVROUT_IOC(_BaseIOC):
 
     _attr2pvname = {
-        'interlock_sp':  'Intlk-Sel',
-        'interlock_rb':  'Intlk-Sts',
         'source_sp':     'Src-Sel',
         'source_rb':     'Src-Sts',
         'trigger_sp':    'SrcTrig-SP',
         'trigger_rb':    'SrcTrig-RB',
+        'delay_type_sp': 'DelayType-Sel',
+        'delay_type_rb': 'DelayType-Sts',
         'rf_delay_sp':   'RFDelay-SP',
         'rf_delay_rb':   'RFDelay-RB',
         'fine_delay_sp': 'FineDelay-SP',
@@ -452,10 +456,10 @@ class _EVROUT_IOC(_BaseIOC):
 
     def _get_attr2expression(self):
         return {
-            'interlock_sp': lambda x: int(x),
-            'interlock_rb': lambda x: x,
             'source_sp': lambda x: int(x),
             'source_rb': lambda x: x,
+            'delay_type_sp': lambda x: int(x),
+            'delay_type_rb': lambda x: x,
             'trigger_sp': lambda x: int(x),
             'trigger_rb': lambda x: x,
             'rf_delay_sp': lambda x: int(x),
@@ -473,7 +477,7 @@ class _EVEOUT_IOC(_EVROUT_IOC):
         return _cstime.get_out_database(prefix=prefix, equip='EVE')
 
 
-class _AFCOUT_IOC(_BaseIOC):
+class _AMCFPGAEVROUT_IOC(_BaseIOC):
 
     _attr2pvname = {
         'source_sp': 'Src-Sel',
@@ -488,8 +492,8 @@ class _AFCOUT_IOC(_BaseIOC):
         'polarity_rb': 'Polarity-Sts',
         'event_sp': 'Evt-SP',
         'event_rb': 'Evt-RB',
-        'pulses_sp': 'Pulses-SP',
-        'pulses_rb': 'Pulses-RB',
+        'pulses_sp': 'NrPulses-SP',
+        'pulses_rb': 'NrPulses-RB',
         }
 
     @staticmethod
@@ -676,14 +680,14 @@ class EVEIOC(EVRIOC):
         return dic_
 
 
-class AFCIOC(EVRIOC):
-    """Class to simulate the AFC."""
+class AMCFPGAEVRIOC(EVRIOC):
+    """Class to simulate the AMCFPGAEVR."""
 
     _NR_INTERNAL_OTP_CHANNELS = 10
     _NR_OTP_CHANNELS = 10
     _NR_OUT_CHANNELS = 8
-    _ClassOutIOC = _AFCOUT_IOC
-    _ClassIntTrigIOC = _AFCOUT_IOC
+    _ClassOutIOC = _AMCFPGAEVROUT_IOC
+    _ClassIntTrigIOC = _AMCFPGAEVROUT_IOC
 
     @staticmethod
     def _OUTTMP(x):
@@ -701,8 +705,8 @@ class AFCIOC(EVRIOC):
         return _cstime.get_afc_database(prefix=prefix)
 
 
-class FOUTIOC(_BaseIOC):
-    """Class to simulate the FOUT."""
+class FoutIOC(_BaseIOC):
+    """Class to simulate the Fout."""
 
     _attr2pvname = {
         'state_sp': 'DevEnbl-Sel',
