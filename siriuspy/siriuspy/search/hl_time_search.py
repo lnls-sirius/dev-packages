@@ -11,12 +11,12 @@ _timeout = 1.0
 class HLTimeSearch:
     """Contain properties of the triggers."""
 
-    _TWDS_EVG = None
-    _FROM_EVG = None
-    _EVRs = None
-    _EVEs = None
-    _AFCs = None
-    _hl_triggers = None
+    _TWDS_EVG = dict()
+    _FROM_EVG = dict()
+    _EVRs = set()
+    _EVEs = set()
+    _AMCFPGAEVRs = set()
+    _hl_triggers = dict()
 
     @classmethod
     def get_hl_triggers(cls):
@@ -34,7 +34,8 @@ class HLTimeSearch:
     def get_hl_trigger_sources(cls, hl_trigger):
         """Return the possible sources of the high level trigger."""
         cls._init()
-        enums = cls._hl_triggers[hl_trigger]['database']['Src']['enums']
+        enums = cls._hl_triggers
+        enums = enums[hl_trigger]['database']['Src']['enums']
         if cls.has_clock(hl_trigger):
             clocks = ['Clock{0:d}'.format(i) for i in range(8)]
             enums = ('Dsbl', ) + enums + tuple(clocks)
@@ -69,7 +70,8 @@ class HLTimeSearch:
 
         if not cls.has_delay_type(hl_trigger):
             interface.discard('DelayType')
-            interface.discard('Intlk')
+        if not cls.has_bypass_interlock(hl_trigger):
+            interface.discard('ByPassIntlk')
         return interface
 
     @classmethod
@@ -84,7 +86,8 @@ class HLTimeSearch:
         for chan in chans:
             chan_tree = _LLTimeSearch.get_device_tree(chan)
             for up_chan in chan_tree:
-                if up_chan.device_name in cls._EVRs | cls._EVEs | cls._AFCs:
+                if up_chan.device_name in (
+                            cls._EVRs | cls._EVEs | cls._AMCFPGAEVRs):
                     out_chans |= {up_chan}
                     break
         return sorted(out_chans)
@@ -108,11 +111,29 @@ class HLTimeSearch:
         return True
 
     @classmethod
+    def has_bypass_interlock(cls, hl_trigger):
+        """Return True if hl_trigger has property delayType."""
+        def get_ll(ll_trigger):
+            name = _PVName(ll_trigger)
+            return name.dev in ('EVR', 'EVE')
+
+        cls._init()
+        ll_chans = cls.get_ll_trigger_names(hl_trigger)
+        has_ = [get_ll(name) for name in ll_chans]
+        if not any(has_):
+            return False
+        elif not all(has_):
+            raise Exception(
+                'Some triggers of ' + hl_trigger +
+                ' are connected to unsimiliar low level devices.')
+        return True
+
+    @classmethod
     def has_clock(cls, hl_trigger):
         """Return True if hl_trigger can listen to Clocks from EVG."""
         def get_ll(ll_trigger):
             name = _PVName(ll_trigger)
-            if name.dev in {'EVE', 'AFC'}:
+            if name.dev in {'EVE', 'AMCFPGAEVR'}:
                 return True
             elif name.dev == 'EVR':
                 return name.propty.startswith('OUT')
@@ -170,9 +191,10 @@ class HLTimeSearch:
         _LLTimeSearch.add_crates_info()
         cls._TWDS_EVG = _LLTimeSearch.get_connections_twds_evg()
         cls._FROM_EVG = _LLTimeSearch.get_connections_from_evg()
-        cls._EVRs = _LLTimeSearch.get_device_names({'dev': 'EVR'})
-        cls._EVEs = _LLTimeSearch.get_device_names({'dev': 'EVE'})
-        cls._AFCs = _LLTimeSearch.get_device_names({'dev': 'AFC'})
+        cls._EVRs = set(_LLTimeSearch.get_device_names({'dev': 'EVR'}))
+        cls._EVEs = set(_LLTimeSearch.get_device_names({'dev': 'EVE'}))
+        cls._AMCFPGAEVRs = set(
+                    _LLTimeSearch.get_device_names({'dev': 'AMCFPGAEVR'}))
 
     @classmethod
     def _init(cls):

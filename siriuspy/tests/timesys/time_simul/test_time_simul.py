@@ -34,8 +34,8 @@ class TestTimingSimulation(unittest.TestCase):
         'EVG_PREFIX',
         'EVRs',
         'EVEs',
-        'AFCs',
-        'FOUTs',
+        'AMCFPGAEVRs',
+        'Fouts',
         'get_database',
         'add_injection_callback',
         'remove_injection_callback',
@@ -64,13 +64,13 @@ class TestTimingSimulation(unittest.TestCase):
         # TODO: implement test!
         pass
 
-    def test_AFCs(self):
-        """Test AFCs."""
+    def test_AMCFPGAEVRs(self):
+        """Test AMCFPGAEVRs."""
         # TODO: implement test!
         pass
 
-    def test_FOUTs(self):
-        """Test FOUTs."""
+    def test_Fouts(self):
+        """Test Fouts."""
         # TODO: implement test!
         pass
 

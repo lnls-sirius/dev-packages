@@ -13,6 +13,7 @@ mock_flag = True
 
 public_interface = (
     'LLTimeSearch',
+    'read_excel_file_with_connections',
 )
 
 
