@@ -277,7 +277,6 @@ class PRUController:
         self._pru_delays[self._params.PRU.SYNC_MODE.BRDCST] = \
             PRUController._delay_func_sync_pulse
 
-
         # sorted list of device ids
         self._device_ids = sorted(device_ids)
 
