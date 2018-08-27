@@ -5,7 +5,7 @@ from unittest import mock
 
 from siriuspy.pwrsupply.watcher import Watcher
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
-from siriuspy.pwrsupply.prucontroller import PRUCParms_FBP
+from siriuspy.pwrsupply.model_factory import PRUCParms_FBP
 
 
 def wait(condition, timelimit=0.5):
