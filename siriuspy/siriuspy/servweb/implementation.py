@@ -164,5 +164,5 @@ def high_level_triggers(timeout=_timeout):
 
 def bsmp_dclink_mapping(timeout=_timeout):
     """Read bsmp dclink mapping."""
-    url = _ps_folder + '/bsmp-dclink.txt'
+    url = _ps_folder + 'bsmp-dclink.txt'
     return read_url(url, timeout=timeout)
