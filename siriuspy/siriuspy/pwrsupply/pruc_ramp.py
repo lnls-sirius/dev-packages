@@ -34,8 +34,9 @@ class Ramp(_threading.Thread):
         for factor in factors:
             curves = dict()
             for dev_id in self._dev_ids:
-                curves[dev_id] = \
-                    [factor * value for value in self._original_curves[dev_id]]
+                w0 = self._original_curves[dev_id]
+                w0_min = min(w0)
+                curves[dev_id] = [w0_min + factor * (v - w0_min) for v in w0]
             self._curves.append(curves)
 
         self._size = len(self._curves[0][self._dev_ids[0]])
