@@ -9,7 +9,7 @@ from siriuspy.pwrsupply.pruc_ramp import Ramp as _Ramp
 
 
 class PSController:
-    """This class is used to communicate with PS controller.
+    """Class used to communicate with PS controller.
 
     PRUController
     Fields method property holds objects trant translate EPICS fields to a BSMP
@@ -66,7 +66,7 @@ class PSController:
             if '-Sel' in key or '-SP' in key:
                 rb_field = PSController._get_readback_field(key)
                 try:
-                    self._readers[key].apply(self._readers[rb_field].read())
+                    reader.apply(self._readers[rb_field].read())
                 except KeyError:
                     pass
 
