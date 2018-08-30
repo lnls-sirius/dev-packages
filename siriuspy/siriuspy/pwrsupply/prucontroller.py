@@ -20,7 +20,7 @@ from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 
 from siriuspy.pwrsupply.bsmp import __version__ as _udc_firmware_version
 from siriuspy.pwrsupply.bsmp import MAP_MIRROR_2_ORIG_FBP as _mirror_map_fbp
-from siriuspy.pwrsupply.bsmp import Parameters as _Parameters
+# from siriuspy.pwrsupply.bsmp import Parameters as _Parameters
 
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 from siriuspy.pwrsupply.model_factory import UDC as _UDC
@@ -592,8 +592,7 @@ class PRUController:
         curve = self._curves[idx]
         return curve
 
-    def pru_curve_write(self, device_id, curve):
-        """Write curve for a device to the correponding PRU memory."""
+    def pru_curve_set(self, device_id, curve):
         # get index of curve for the given device id
         idx = self.device_ids.index(device_id)
 
@@ -619,6 +618,10 @@ class PRUController:
 
         # store curve in PRUController attribute
         self._curves[idx] = list(curve)
+
+    def pru_curve_write(self, device_id, curve):
+        """Write curve for a device to the correponding PRU memory."""
+        self.pru_curve_set(device_id, curve)
 
         # write curve to PRU memory
         self.pru_curve_send()
@@ -846,7 +849,7 @@ class PRUController:
             version = self._variables_values[id][
                 self._params.ConstBSMP.V_FIRMWARE_VERSION]
             version = parse_firmware_version(version)
-            #if 'Simulation' not in version and \
+            # if 'Simulation' not in version and \
             #   version != _udc_firmware_version:
             #    self._init_disconnect()
             #    errmsg = ('Incompatible BSMP implementation version! '
