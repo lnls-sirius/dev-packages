@@ -54,13 +54,10 @@ class Ramp(_threading.Thread):
         next_idx = 1
         while True:
             if self._exit:
-                print('leaving thread')
                 break
             elif self._state == Ramp.WAIT_RAMP_MODE:
-                print('wait ramp mode')
                 count = self._controller.pru_controller.pru_sync_pulse_count
                 if self._achieved_op_mode() and count == 0:
-                    print('going to ramp begin')
                     self._state = Ramp.WAIT_RAMP_BEGIN
             elif self._state == Ramp.WAIT_RAMP_BEGIN:
                 count = self._controller.pru_controller.pru_sync_pulse_count
@@ -82,4 +79,5 @@ class Ramp(_threading.Thread):
         pruc = self._controller.pru_controller
         for dev_id in self._dev_ids:
             new_curve = self._curves[idx][dev_id]
-            pruc.pru_curve_write(dev_id, new_curve)
+            pruc.pru_curve_set(dev_id, new_curve)
+        pruc.pru_curve_send()
