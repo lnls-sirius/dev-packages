@@ -849,12 +849,12 @@ class PRUController:
             version = self._variables_values[id][
                 self._params.ConstBSMP.V_FIRMWARE_VERSION]
             version = parse_firmware_version(version)
-            # if 'Simulation' not in version and \
-            #   version != _udc_firmware_version:
-            #    self._init_disconnect()
-            #    errmsg = ('Incompatible BSMP implementation version! '
-            #              '{} <> {}'.format(version, _udc_firmware_version))
-            #    raise ValueError(errmsg)
+            if 'Simulation' not in version and \
+              version != _udc_firmware_version:
+               self._init_disconnect()
+               errmsg = ('Incompatible BSMP implementation version! '
+                         '{} <> {}'.format(version, _udc_firmware_version))
+               raise ValueError(errmsg)
 
     # --- private methods: scan and process ---
 

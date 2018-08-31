@@ -26,7 +26,7 @@ from siriuspy.pwrsupply.pru import PRU as _PRU
 #__version__ = 'V0.13 2018-06-07V0.13 2018-06-07'
 
 # firmware: FBP DCLink variable id 32 changed from float to uint8
-__version__ = 'V0.15 2018-07-11'
+__version__ = 'V0.15 2018-07-11V0.15 2018-07-11'
 
 class ConstBSMP:
     """Namespace for organizing power supply BSMP constants."""
