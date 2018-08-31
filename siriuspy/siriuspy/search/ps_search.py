@@ -32,6 +32,8 @@ class PSSearch:
     _bbbname_2_udc_dict = None
     _udc_2_bsmp_dict = None
 
+    _ps_2_dclink_dict = None
+
     @staticmethod
     def get_psnames(filters=None):
         """Return a sorted and filtered list of all power supply names."""
@@ -345,7 +347,7 @@ class PSSearch:
         for line in data:
             bbbname, *udcs = line
             PSSearch._bbbname_2_udc_dict[bbbname] = udcs
-        
+
     @staticmethod
     def _reload_udc_2_bsmp_dict():
         data, _ = _util.read_text_data(_web.udc_ps_mapping())
@@ -358,6 +360,17 @@ class PSSearch:
                 PSSearch._udc_2_bsmp_dict[udc].append(bsmp)
 
     @staticmethod
+    def _reload_ps_2_dclink_dict():
+        data, _ = _util.read_text_data(_web.bsmp_dclink_mapping())
+        PSSearch._ps_2_dclink_dict = dict()
+        for line in data:
+            dclinks = line[1:]
+            if dclinks[0] == 'None':
+                PSSearch._ps_2_dclink_dict[line[0]] = None
+            else:
+                PSSearch._ps_2_dclink_dict[line[0]] = dclinks
+
+    @staticmethod
     def conv_bbb_2_udc(bbbname):
         if PSSearch._bbbname_2_udc_dict is None:
             PSSearch._reload_bbb_2_udc_dict()
@@ -368,3 +381,9 @@ class PSSearch:
         if PSSearch._udc_2_bsmp_dict is None:
             PSSearch._reload_udc_2_bsmp_dict()
         return PSSearch._udc_2_bsmp_dict[udc]
+
+    @staticmethod
+    def conv_psname_2_dclink(psname):
+        if PSSearch._ps_2_dclink_dict is None:
+            PSSearch._reload_ps_2_dclink_dict()
+        return PSSearch._ps_2_dclink_dict[psname]

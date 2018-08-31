@@ -36,7 +36,8 @@ class TestConfigService(unittest.TestCase):
         "query_db_size_discarded",
         "get_config_type_template",
         "connected",
-        "conv_timestamp",
+        "conv_timestamp_txt_2_flt",
+        "conv_timestamp_flt_2_txt",
     }
 
     def setUp(self):

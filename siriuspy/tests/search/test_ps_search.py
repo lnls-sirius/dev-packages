@@ -51,6 +51,7 @@ class TestPSSearch(MockServConf):
         'get_pstype_2_splims_dict',
         'get_splims_unit',
         'get_splims_labels',
+        'conv_psname_2_dclink',
     )
 
     sample = {
