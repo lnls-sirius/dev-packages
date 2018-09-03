@@ -5,6 +5,7 @@ import os as _os
 import numpy as _np
 from epics import PV as _PV
 from functools import partial as _part
+from threading import Lock
 import siriuspy.util as _util
 import siriuspy.csdevice.orbitcorr as _csorb
 from siriuspy.thread import RepeaterThread as _Repeat
@@ -41,11 +42,12 @@ class EpicsOrbit(BaseOrbit):
     def __init__(self, acc, prefix='', callback=None):
         """Initialize the instance."""
         super().__init__(acc, prefix=prefix, callback=callback)
-        self.ref_orbits = {
+        self.ref_orbs = {
                 'x': _np.zeros(self._const.NR_BPMS),
                 'y': _np.zeros(self._const.NR_BPMS)}
-        self._load_ref_orbits()
+        self._load_ref_orbs()
         self.raw_orbs = {'x': [], 'y': []}
+        self._lock_raw_orbs = Lock()
         self.smooth_orb = {'x': None, 'y': None}
         self.offline_orbit = {
                 'x': _np.zeros(self._const.NR_BPMS),
@@ -71,18 +73,18 @@ class EpicsOrbit(BaseOrbit):
         else:
             if reset:
                 self._reset_orbs()
-            for i in range(3 * self._smooth_npts):
-                if self.smooth_orb['x'] and self.smooth_orb['y']:
+            for _ in range(3 * self._smooth_npts):
                     orbx = self.smooth_orb['x']
                     orby = self.smooth_orb['y']
+                if orbx is not None and orby is not None:
                     break
                 _time.sleep(1/self._acq_rate)
             else:
                 self._update_log('ERR: get orbit function timeout.')
-                orbx = self.ref_orbits['x']
-                orby = self.ref_orbits['y']
-        refx = self.ref_orbits['x']
-        refy = self.ref_orbits['y']
+                orbx = self.ref_orbs['x']
+                orby = self.ref_orbs['y']
+        refx = self.ref_orbs['x']
+        refy = self.ref_orbs['y']
         return _np.hstack([orbx-refx, orby-refy])
 
     def set_correction_mode(self, value):
@@ -105,7 +107,7 @@ class EpicsOrbit(BaseOrbit):
     def set_smooth_npts(self, num):
         self._update_log('Setting new number of points for median.')
         self._smooth_npts = num
-        self.run_callbacks('OrbitPointsNum-RB', num)
+        self.run_callbacks('OrbitSmoothNPnts-RB', num)
         return True
 
     def set_ref_orbit(self, plane, orb):
@@ -113,7 +115,7 @@ class EpicsOrbit(BaseOrbit):
         if len(orb) != self._const.NR_BPMS:
             self._update_log('ERR: Wrong Size.')
             return False
-        self.ref_orbits[plane] = _np.array(orb, dtype=float)
+        self.ref_orbs[plane] = _np.array(orb, dtype=float)
         self._save_ref_orbits()
         self._reset_orbs()
         self.run_callbacks('OrbitRef'+plane.upper()+'-RB', orb)
@@ -122,33 +124,39 @@ class EpicsOrbit(BaseOrbit):
     def set_orbit_acq_rate(self, value):
         self._acq_rate = value
         self._orbit_thread.interval = 1/value
+        return True
 
-    def _load_ref_orbits(self):
+    def _load_ref_orbs(self):
         if _os.path.isfile(self.REF_ORBIT_FILENAME):
-            self.ref_orbits['x'], self.ref_orbits['y'] = _np.loadtxt(
+            self.ref_orbs['x'], self.ref_orbs['y'] = _np.loadtxt(
                                         self.REF_ORBIT_FILENAME, unpack=True)
 
     def _save_ref_orbits(self):
-        orbs = _np.array([self.ref_orbits['x'], self.ref_orbits['y']]).T
+        orbs = _np.array([self.ref_orbs['x'], self.ref_orbs['y']]).T
         _np.savetxt(self.REF_ORBIT_FILENAME, orbs)
 
     def _reset_orbs(self):
+        with self._lock_raw_orbs:
+            self.raw_orbs = {'x': [], 'y': []}
         self.smooth_orb = {'x': None, 'y': None}
 
     def _update_orbits(self):
         orb = _np.zeros(self._const.NR_BPMS, dtype=float)
         orbs = {'x': orb, 'y': orb.copy()}
+        ref = self.ref_orbs
         for i, name in enumerate(self._const.BPM_NAMES):
             pvx = self.pvs_pos[name]['x']
             pvy = self.pvs_pos[name]['y']
-            orbs['x'][i] = pvx.value if pvx.connected else 0.0
-            orbs['y'][i] = pvy.value if pvy.connected else 0.0
+            orbs['x'][i] = pvx.value if pvx.connected else ref['x'][i]
+            orbs['y'][i] = pvy.value if pvy.connected else ref['y'][i]
 
         for plane in ('x', 'y'):
             self.run_callbacks('OrbitRaw'+plane.upper()+'-Mon', list(orb))
-            self.raw_orbs[plane].append(orbs[plane])
-            self.raw_orbs[plane] = self.raw_orbs[plane][-self._smooth_npts:]
-            orb = _np.mean(self.raw_orbs[plane], axis=0)
+            with self._lock_raw_orbs:
+                raws = self.raw_orbs
+                raws[plane].append(orbs[plane])
+                raws[plane] = raws[plane][-self._smooth_npts:]
+                orb = _np.mean(raws[plane], axis=0)
             self.smooth_orb[plane] = orb
             self.run_callbacks('OrbitSmooth'+plane.upper()+'-Mon', list(orb))
 

@@ -16,6 +16,7 @@ TIMEOUT = 0.05
 
 
 class Corrector:
+    TINY_KICK = 1e-3
 
     def __init__(self, corr_name):
         self._opmode_ok = False
@@ -42,6 +43,10 @@ class Corrector:
         self._isTurnedOn()
         return self._state
 
+    @state.setter
+    def state(self, value):
+        self._setonstate(value)
+
     @property
     def ready(self):
         self._isReady()
@@ -54,7 +59,7 @@ class Corrector:
 
     @property
     def value(self):
-        self._rb.value
+        return self._get_value()
 
     @value.setter
     def value(self, val):
@@ -62,6 +67,9 @@ class Corrector:
 
     def equalKick(self, value):
         return _np.isclose(self._sp.value, value, rtol=1e-12, atol=1e-12)
+
+    def _get_value(self):
+        return self._rb.value
 
     def _isConnected(self):
         self._connected = self._sp.connected
@@ -78,6 +86,10 @@ class Corrector:
     def _kickApplied(self):
         self._isReady()
         self._applied = self._ready
+
+    def _setonstate(self, boo):
+        val = _PwrSplyConst.PwrState.On if boo else _PwrSplyConst.PwrState.Off
+        self._pwrstt_sel.value = val
 
 
 class RFCtrl(Corrector):
@@ -151,7 +163,7 @@ class TimingConfig:
         self._trig_ok_vals = {
             'Src': _HLTimeSearch.get_hl_trigger_sources(trig).index(evt),
             'Delay': 0.0, 'DelayType': 0, 'NrPulses': 1,
-            'Duration': 0.1, 'State': 1, 'ByPassIntlk': 0, 'Polarity': 1,
+            'Duration': 0.1, 'State': 1, 'Polarity': 1,
             }
         pref_name = LL_PREF + trig
         self._trig_pvs_rb = {
@@ -161,7 +173,6 @@ class TimingConfig:
             'NrPulses': _PV(pref_name + 'NrPulses-RB', **opt),
             'Duration': _PV(pref_name + 'Duration-RB', **opt),
             'State': _PV(pref_name + 'State-Sts', **opt),
-            'ByPassIntlk': _PV(pref_name + 'ByPassIntlk-Sts', **opt),
             'Polarity': _PV(pref_name + 'Polarity-Sts', **opt),
             }
         self._trig_pvs_sp = {
@@ -171,7 +182,6 @@ class TimingConfig:
             'NrPulses': _PV(pref_name + 'NrPulses-SP', **opt),
             'Duration': _PV(pref_name + 'Duration-SP', **opt),
             'State': _PV(pref_name + 'State-Sel', **opt),
-            'ByPassIntlk': _PV(pref_name + 'ByPassIntlk-Sel', **opt),
             'Polarity': _PV(pref_name + 'Polarity-Sel', **opt),
             }
 
@@ -196,13 +206,15 @@ class TimingConfig:
         ok &= self._evt_mode_rb.value == _EVT_MODES.External
         for k, pv in self._trig_pvs_rb.items():
             ok &= self._trig_ok_vals[k] == pv.value
+        return ok
 
     def configure(self):
         if not self.connected:
-            return
+            return False
         self._evt_mode_sp.value = _EVT_MODES.External
         for k, pv in self._trig_pvs_sp.items():
             pv.value = self._trig_ok_vals[k]
+        return True
 
 
 class BaseCorrectors(_BaseClass):
@@ -211,7 +223,7 @@ class BaseCorrectors(_BaseClass):
 
 class EpicsCorrectors(BaseCorrectors):
     """Class to deal with correctors."""
-    TINY_INTERVAL = 0.01
+    TINY_INTERVAL = 0.005
     NUM_TIMEOUT = 1000
 
     def get_database(self):
@@ -285,6 +297,7 @@ class EpicsCorrectors(BaseCorrectors):
     def set_kick_acq_rate(self, value):
         self._acq_rate = value
         self._corrs_thread.interval = 1/value
+        return True
 
     def _update_corrs_strength(self):
         corr_vals = self.get_strength()
@@ -295,21 +308,27 @@ class EpicsCorrectors(BaseCorrectors):
     def set_chcvs_mode(self, value):
         self._synced_kicks = value
         if self._synced_kicks == _csorb.SyncKicks.On:
-            val = _PwrSplyConst.SlowRefSync
+            val = _PwrSplyConst.OpMode.SlowRefSync
         elif self._synced_kicks == _csorb.SyncKicks.Off:
-            val = _PwrSplyConst.SlowRef
+            val = _PwrSplyConst.OpMode.SlowRef
 
         for corr in self._chcvs:
             if corr.connected:
                 corr.opmode = val
+            else:
+                self._update_log('ERR: Failed to configure correctors')
+                return False
         self._update_log(
             'Correctors set to {0:s} Mode'.format('Sync' if value else 'Async')
             )
         self.run_callbacks('SyncKicks-Sts', value)
         return True
 
-    def configure_timing(self):
-        self._timing.configure()
+    def configure_timing(self, _):
+        if not self._timing.configure():
+            self._update_log('ERR: Failed to configure timing')
+            return False
+        return True
 
     def _update_status(self):
         status = 0b1111111

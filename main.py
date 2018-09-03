@@ -49,33 +49,32 @@ class SOFB(_BaseClass):
         """Initialize Object."""
         super().__init__(acc, prefix=prefix, callback=callback)
         _log.info('Starting SOFB...')
+        self.add_callback(self._schedule_update)
         self._driver = None
         self._orbit = self._correctors = self._matrix = None
         self._auto_corr = _csorb.AutoCorr.Off
         self._measuring_respmat = False
         self._auto_corr_freq = 1
-        self._corr_factor = {'ch': 0.0, 'cv': 0.0, 'rf': 0.0}
+        self._corr_factor = {'ch': 1.00, 'cv': 1.00, 'rf': 1.00}
         self._max_kick = {'ch': 300, 'cv': 300, 'rf': 3000}
         self._meas_respmat_kick = {'ch': 0.2, 'cv': 0.2, 'rf': 200}
         self._dtheta = None
         self._ref_corr_kicks = None
         self._thread = None
         self._queue = _Queue()
-        self._queue.start()
 
         self.orbit = orbit
         self.correctors = correctors
         self.matrix = matrix
         if self._orbit is None:
-            self.orbit = _EpicsOrbit(acc=acc, prefix=self.prefix)
+            self.orbit = _EpicsOrbit(
+                acc=acc, prefix=self.prefix, callback=self._schedule_update)
         if self._correctors is None:
-            self.correctors = _EpicsCorrectors(acc=acc, prefix=self.prefix)
+            self.correctors = _EpicsCorrectors(
+                acc=acc, prefix=self.prefix, callback=self._schedule_update)
         if self._matrix is None:
-            self.matrix = _EpicsMatrix(acc=acc, prefix=self.prefix)
-        self.add_callback(self._schedule_update)
-        self._orbit.add_callback(self._schedule_update)
-        self._correctors.add_callback(self._schedule_update)
-        self._matrix.add_callback(self._schedule_update)
+            self.matrix = _EpicsMatrix(
+                acc=acc, prefix=self.prefix, callback=self._schedule_update)
         self._database = self.get_database()
 
     @property
@@ -121,17 +120,19 @@ class SOFB(_BaseClass):
             return False
         fun_ = self._database[reason].get('fun_set_pv')
         if fun_ is None:
-            _log.warning('Write unsuccessful. PV ' +
-                         '{0:s} does not have a set function.'.format(reason))
+            _log.warning('PV %s does not have a set function.', reason)
             return False
         ret_val = fun_(value)
         if ret_val:
-            _log.debug('Write complete.')
+            _log.info('YES Write %s: %s', reason, str(value))
         else:
             value = self._driver.getParam(reason)
-            _log.warning('Unsuccessful write of PV ' +
-                         '{0:s}; value = {1:s}.'.format(reason, str(value)))
+            _log.warning('NO write %s: %s', reason, str(value))
         self._schedule_update(reason, value)
+        return True
+
+    def start(self):
+        self._queue.start()
 
     def process(self):
         """Run continuously in the main thread."""
@@ -160,7 +161,7 @@ class SOFB(_BaseClass):
             daemon=True).start()
         return True
 
-    def calc_correction(self, value):
+    def calc_correction(self, _):
         """Calculate correction."""
         if self._thread and self._thread.is_alive():
             self._update_log('ERR: AutoCorr or MeasRespMat is On.')
@@ -175,6 +176,7 @@ class SOFB(_BaseClass):
             self._stop_meas_respmat()
         elif value == _csorb.MeasRespMatCmd.Reset:
             self._reset_meas_respmat()
+        return True
 
     def set_auto_corr(self, value):
         if value == _csorb.AutoCorr.On:
@@ -202,6 +204,7 @@ class SOFB(_BaseClass):
     def set_max_kick(self, plane, value):
         self._max_kick[plane] = float(value)
         self.run_callbacks('MaxKick'+plane.upper()+'-RB', float(value))
+        return True
 
     def set_corr_factor(self, plane, value):
         self._corr_factor[plane] = value/100
@@ -213,6 +216,7 @@ class SOFB(_BaseClass):
     def set_respmat_kick(self, plane, value):
         self._meas_respmat_kick[plane] = value
         self.run_callbacks('MeasRespMatKick'+plane.upper()+'-RB', value)
+        return True
 
     def _update_status(self):
         self._status = bool(
@@ -221,19 +225,21 @@ class SOFB(_BaseClass):
 
     def _apply_corr(self, code):
         nr_ch = self._const.NR_CH
-        kicks = self._dtheta.copy()
+        dkicks = self._dtheta.copy()
         if code == _csorb.ApplyCorr.CH:
-            kicks[nr_ch:] = 0
+            dkicks[nr_ch:] = 0
         elif code == _csorb.ApplyCorr.CV:
-            kicks[:nr_ch] = 0
-            kicks[-1] = 0
+            dkicks[:nr_ch] = 0
+            dkicks[-1] = 0
         elif code == _csorb.ApplyCorr.RF:
-            kicks[:-1] = 0
+            dkicks[:-1] = 0
         self._update_log(
             'Applying {0:s} kicks.'.format(_csorb.ApplyCorr._fields[code]))
-        kicks = self._process_kicks(kicks)
+        kicks = self._process_kicks(self._ref_corr_kicks, dkicks)
         if any(kicks):
-            self.correctors.apply_kicks(self._ref_corr_kicks + kicks)
+            self.correctors.apply_kicks(kicks)
+        else:
+            self._update_log('WARN: No kicks applied. All Zero.')
 
     def _schedule_update(self, pvname, value, **kwargs):
         self._queue.add_callback(self._update_driver, pvname, value, **kwargs)
@@ -335,17 +341,16 @@ class SOFB(_BaseClass):
         while self._auto_corr == _csorb.AutoCorr.On:
             t0 = _time.time()
             orb = self.orbit.get_orbit()
-            kicks = self.matrix.calc_kicks(orb)
-            kicks = self._process_kicks(kicks)
-            kicks += self.correctors.get_strength()
-            self.correctors.apply_kicks(kicks)
-            tf = _time.time()
-            dt = (tf-t0)
+            dkicks = self.matrix.calc_kicks(orb)
+            kicks = self.correctors.get_strength()
+            kicks = self._process_kicks(kicks, dkicks)
+            self.correctors.apply_kicks(kicks)  # slowest part
+            dt = (_time.time()-t0)
             interval = 1/self._auto_corr_freq
             if dt > interval:
-                _log.debug('App: check took {0:f}ms.'.format(dt*1000))
+                _log.warning('App: AutoCorr took %f ms.', dt*1000)
                 self._update_log(
-                    'Warn: Auto Corr Loop took {0:6.2f}ms.'.format(dt*1000))
+                    'WARN: Auto Corr Loop took {0:6.2f}ms.'.format(dt*1000))
             dt = interval - dt
             if dt > 0:
                 _time.sleep(dt)
