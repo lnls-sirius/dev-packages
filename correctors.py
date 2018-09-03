@@ -63,10 +63,11 @@ class Corrector:
 
     @value.setter
     def value(self, val):
-        self._sp.value = val
+        self._sp.put(val, wait=False)
+        # self._sp.value = val
 
     def equalKick(self, value):
-        return _np.isclose(self._sp.value, value, rtol=1e-12, atol=1e-12)
+        return abs(self._sp.value - value) <= self.TINY_KICK
 
     def _get_value(self):
         return self._rb.value
@@ -158,6 +159,8 @@ class TimingConfig:
         pref_name = LL_PREF + _csorb.EVG_NAME + ':' + evt
         opt = {'connection_timeout': TIMEOUT}
         self._evt_sender = _PV(pref_name + 'ExtTrig-Cmd', **opt)
+        # self._evt_sender = _PV(
+        #     'guilherme-AS-Glob:PS-Timing:Trigger-Cmd', **opt)
         self._evt_mode_sp = _PV(pref_name + 'Mode-Sel', **opt)
         self._evt_mode_rb = _PV(pref_name + 'Mode-Sts', **opt)
         self._trig_ok_vals = {
@@ -250,31 +253,57 @@ class EpicsCorrectors(BaseCorrectors):
                 1/self._acq_rate, self._update_corrs_strength, niter=0)
         self._corrs_thread.start()
 
-    def apply_corr(self, values):
+    def apply_kicks(self, values):
         """Apply kicks."""
+        strn = '{0:20s}: {1:7.3f}'
         # apply the RF kick
-        if not self._rf_ctrl.equalKick(values[-1]):
-            if not self._rf_ctrl.connected:
-                self._update_log('ERR: '+self._rf_ctrl.name+' not connected.')
-                return
-            self._rf_ctrl.value = values[-1]
+        t0 = _time.time()
+        self.put_value_in_corr(self._rf_ctrl, values[-1], False)
+        t1 = _time.time()
+        # print(strn.format('send rf:', 1000*(t1-t0)))
+
         # Send correctors setpoint
         for i, corr in enumerate(self._chcvs):
-            if corr.equalKick(values[i]):
-                continue
-            if not corr.connected:
-                self._update_log('ERR: ' + corr.name + ' not connected.')
-                return
-            elif not corr.opmode_ok:
-                self._update_log('ERR: ' + corr.name + 'mode not configured.')
-                return
-            corr.value = values[i]
+            self.put_value_in_corr(corr, values[i])
+        t2 = _time.time()
+        # print(strn.format('send sp:', 1000*(t2-t1)))
+
         # Wait for readbacks to be updated
         if self._timed_out(mode='ready'):
             self._update_log('ERR: timeout waiting correctors RB')
             return
+        t3 = _time.time()
+        # print(strn.format('check ready:', 1000*(t3-t2)))
+
         # Send trigger signal for implementation
-        if self._synced_kicks:
+        _time.sleep(0.450)
+        self.send_evt()
+        t4 = _time.time()
+        # print(strn.format('send evt:', 1000*(t4-t3)))
+
+        # Wait for references to be updated
+        if self._timed_out(mode='applied'):
+            self._update_log('ERR: timeout waiting correctors Ref')
+        t5 = _time.time()
+        # print(strn.format('check applied:', 1000*(t5-t4)))
+        # print(strn.format('total:', 1000*(t5-t0)))
+        # print()
+
+    def put_value_in_corr(self, corr, value, flag=True):
+        if corr.equalKick(value):
+            return
+        if not corr.connected:
+            self._update_log('ERR: ' + corr.name + ' not connected.')
+        elif not corr.state:
+            self._update_log('ERR: ' + corr.name + ' is off.')
+        elif flag and not corr.opmode_ok:
+            self._update_log('ERR: ' + corr.name + ' mode not configured.')
+        else:
+            corr.value = value
+
+    def send_evt(self):
+        if not self._synced_kicks:
+            return
             if not self._timing.connected:
                 self._update_log('ERR: timing disconnected.')
                 return
@@ -282,9 +311,6 @@ class EpicsCorrectors(BaseCorrectors):
                 self._update_log('ERR: timing not configured.')
                 return
             self._timing.send_evt()
-        # Wait for references to be updated
-        if self._timed_out(mode='applied'):
-            self._update_log('ERR: timeout waiting correctors Ref')
 
     def get_strength(self):
         """Get the correctors strengths."""
@@ -376,14 +402,17 @@ class EpicsCorrectors(BaseCorrectors):
 
     def _timed_out(self, mode='ready'):
         """Timed out."""
+        corrs = list()
+        corrs.extend(self._chcvs)
+        corrs.append(self._rf_ctrl)
         for _ in range(self.NUM_TIMEOUT):
-            ok = True
-            for corr in self._chcvs:
-                if mode == 'ready':
-                    ok &= corr.is_ready
-                elif mode == 'applied':
-                    ok &= corr.is_applied
-            if ok:
+            okg = True
+            for i, corr in enumerate(corrs):
+                okl = corr.ready if mode == 'ready' else corr.applied
+                if okl:
+                    del corrs[i]
+                okg &= okl
+            if okg:
                 return False
             _time.sleep(self.TINY_INTERVAL)
         return True
