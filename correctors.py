@@ -232,6 +232,7 @@ class EpicsCorrectors(BaseCorrectors):
         prop = 'fun_set_pv'
         db['SyncKicks-Sel'][prop] = self.set_chcvs_mode
         db['ConfigTiming-Cmd'][prop] = self.configure_timing
+        db['ConfigCorrs-Cmd'][prop] = self.configure_correctors
         db['KickAcqRate-SP'][prop] = self.set_kick_acq_rate
         db = super().get_database(db)
         return db
@@ -328,6 +329,27 @@ class EpicsCorrectors(BaseCorrectors):
         if not self._timing.configure():
             self._update_log('ERR: Failed to configure timing')
             return False
+        return True
+
+    def configure_correctors(self, _):
+        if self._synced_kicks == _csorb.SyncKicks.On:
+            val = _PwrSplyConst.OpMode.SlowRefSync
+        elif self._synced_kicks == _csorb.SyncKicks.Off:
+            val = _PwrSplyConst.OpMode.SlowRef
+
+        if self._rf_ctrl.connected:
+            self._rf_ctrl.state = True
+        else:
+            self._update_log('ERR: Failed to configure correctors')
+            return False
+
+        for corr in self._chcvs:
+            if corr.connected:
+                corr.state = True
+                corr.opmode = val
+            else:
+                self._update_log('ERR: Failed to configure correctors')
+                return False
         return True
 
     def _update_status(self):
