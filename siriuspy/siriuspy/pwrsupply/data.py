@@ -22,7 +22,7 @@ class PSData:
         self._psname = psname
         self._psmodel = _PSSearch.conv_psname_2_psmodel(self._psname)
         self._pstype = _PSSearch.conv_psname_2_pstype(self._psname)
-        self._bbbname = _PSSearch.conv_psname_2_bbbname(self._psname)
+        # self._bbbname = _PSSearch.conv_psname_2_bbbname(self._psname)
         # self._ispulsed = _PSSearch.check_psname_ispulsed(self._psname)
         self._magfunc = _PSSearch.conv_pstype_2_magfunc(self._pstype)
         if self._magfunc != 'none':
