@@ -77,7 +77,9 @@ class ConnTiming(_EpicsPropsList):
                  connection_callback=None, callback=None):
         """Init."""
         self._ramp_config = ramp_config
-        self._define_properties(prefix, connection_callback, callback)
+        properties = self._define_properties(prefix, connection_callback,
+                                             callback)
+        super().__init__(properties)
 
     # --- timing mode selection commands ---
 
@@ -209,7 +211,7 @@ class ConnTiming(_EpicsPropsList):
             _EpicsProperty(c.EVR1_OTP08Pulses, '-SP', '-RB', p, _MAX_WFMSIZE,
                            connection_callback=connection_callback,
                            callback=callback),)
-        super().__init__(properties)
+        return properties
 
     def _check(self, readbacks):
         rb = self.default
@@ -230,7 +232,9 @@ class ConnMagnets(_EpicsPropsList):
         """Init."""
         self._ramp_config = ramp_config
         self._get_manames()
-        self._define_properties(prefix, connection_callback, callback)
+        properties = self._define_properties(prefix, connection_callback,
+                                             callback)
+        super().__init__(properties)
 
     @property
     def manames(self):
@@ -304,21 +308,21 @@ class ConnMagnets(_EpicsPropsList):
 
     def _define_properties(self, prefix, connection_callback, callback):
         p = prefix
-        props = []
+        properties = []
         for maname in self._manames:
-            props.append(
+            properties.append(
                 _EpicsProperty(maname + ':PwrState', '-Sel', '-Sts', p,
                                connection_callback=connection_callback,
                                callback=callback))
-            props.append(
+            properties.append(
                 _EpicsProperty(maname + ':OpMode', '-Sel', '-Sts', p,
                                connection_callback=connection_callback,
                                callback=callback))
-            props.append(
+            properties.append(
                 _EpicsProperty(maname + ':WfmData', '-SP', '-RB', p,
                                connection_callback=connection_callback,
                                callback=callback))
-        super().__init__(props)
+        return properties
 
     def _command(self, prop, value, timeout):
         """Exec command for all power supplies."""
