@@ -15,8 +15,6 @@ class ConnConfigService:
 
     def __init__(self, config_type, url=_envars.server_url_configdb):
         """Contructor."""
-        if config_type not in ('bo_ramp', 'bo_normalized'):
-            raise ValueError('Invalid configuration type!')
         self._config_type = config_type
         self._srvconf = _ConfigService(url=url)
 
@@ -88,7 +86,6 @@ class ConnConfigService:
     @staticmethod
     def _process_return(r):
         ConnConfigService._response_check(r)
-        # print(r)
         if 'result' in r:
             metadata = r['result']
             configuration = None
@@ -114,34 +111,34 @@ class ConfigSrv:
 
     @property
     def name(self):
-        """Configuration name."""
+        """Name of configuration."""
         return self._name
 
     @name.setter
     def name(self, value):
-        """Configuration name."""
+        """Set name of configuration."""
         self._name = value
         self._synchronized = False
 
     @property
     def metadata(self):
-        """Configuration metadata."""
+        """Metadata of configuration."""
         return dict(self._metadata)
 
     @property
     def configuration(self):
-        """Configuration data."""
+        """Get configuration."""
         return _dcopy(self._configuration)
 
     @configuration.setter
     def configuration(self, value):
-        """Configuration data."""
+        """Set configuration."""
         self._set_configuration(value)
         self._synchronized = False
 
     @property
     def configsrv_synchronized(self):
-        """Synchronization state of object and configuration in server."""
+        """Return sync state of object and configuration in server."""
         return self._synchronized
 
     @property
@@ -149,7 +146,7 @@ class ConfigSrv:
         """Connector to ConfigServer."""
         return self._conn
 
-    def configsrv_check(self):
+    def configsrv_exist(self):
         """Return True if configuration exists in ConfigServer."""
         _, metadata = self._conn.config_find(name=self.name)
         return len(metadata) > 0
@@ -190,12 +187,11 @@ class ConfigSrv:
         if not self._conn.check_value(self._configuration):
             raise _exceptions.SrvConfigFormatError()
         # check if config name already exists
-        r = self.configsrv_check()
+        r = self.configsrv_exist()
         if r is True:
             # already exists
-            if not self._metadata:
-                raise _exceptions.SrvMetadataInvalid()
-            if self.name != self._metadata['name']:
+            if not self._metadata or self.name != self._metadata['name']:
+                # update metadata
                 configuration, metadata = self._conn.config_get(self.name)
                 self._metadata = metadata
             self.configsrv_update()
@@ -210,7 +206,7 @@ class ConfigSrv:
     def configsrv_delete(self):
         """Delete configuration from server."""
         # TODO: should this method be easily available?
-        if self.configsrv_check():
+        if self.configsrv_exist():
             _, metadata = self._conn.config_get(name=self.name)
             self._conn.config_delete(metadata)
             self._synchronized = False
@@ -243,3 +239,13 @@ class ConfigSrv:
         """Set configuration item."""
         self._set_item(index, value)
         self._synchronized = False
+
+    @staticmethod
+    def conv_timestamp_txt_2_flt(timestamp):
+        """Convert timestamp format from text to float."""
+        return _ConfigService.conv_timestamp_txt_2_flt(timestamp)
+
+    @staticmethod
+    def conv_timestamp_flt_2_txt(timestamp):
+        """Convert timestamp format from float to text."""
+        return _ConfigService.conv_timestamp_flt_2_txt(timestamp)

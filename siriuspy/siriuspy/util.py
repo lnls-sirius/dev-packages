@@ -11,10 +11,11 @@ import subprocess as _sp
 import time as _time
 import math as _math
 import datetime as _datetime
-import siriuspy.envars as _envars
 import epics as _epics
 import numpy as _np
 import sys as _sys
+
+from siriuspy import envars as _envars
 
 
 def conv_splims_labels(label):
@@ -302,7 +303,7 @@ def get_bit(v, bit_pos):
 def check_public_interface_namespace(namespace, valid_interface,
                                      checkdoc_flag=True,
                                      print_flag=True):
-    """Function to be used in unittests to test module's public interface.
+    """Check function used in unittests to test module's public interface.
 
     This function checks only static public interface symbols. It does not
     check those symbols that are created within class methods.
