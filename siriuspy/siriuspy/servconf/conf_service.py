@@ -3,6 +3,7 @@
 # import copy as _copy
 import json as _json
 import logging as _logging
+import datetime as _datetime
 import dateutil.parser
 from urllib.request import Request as _Request
 from urllib.request import urlopen as _urlopen
@@ -45,6 +46,7 @@ class ConfigService:
         url : str | None
             Configuration service host address. For default 'None' value
             the URL defined in siripy.envars is used.
+
         """
         if url is None:
             self._url = _envars.server_url_configdb
@@ -130,6 +132,7 @@ class ConfigService:
             If True, return only discarded configurations, if False, return
             only configurations in use. If None, return all configurations
             matching the other criteria.
+
         """
         # build search dictionary
         find_dict = {}
@@ -167,6 +170,7 @@ class ConfigService:
                      For False the search returns the valid configurations.
                      For True, the discarded configurations.
                      For None, the valid and the discarded configurations.
+
         """
         # build search dictionary
         find_dict = {}
@@ -234,114 +238,30 @@ class ConfigService:
 
     @property
     def connected(self):
-        """Connection state."""
+        """Return connection state."""
         r = self.query_db_size()
         return r['code'] == _HTTPStatus.OK
 
     @staticmethod
-    def conv_timestamp(datestring):
-        """Convert timestamp format from text to double."""
-        return dateutil.parser.parse(datestring).timestamp()
+    def conv_timestamp_txt_2_flt(timestamp):
+        """Convert timestamp format from text to float."""
+        return dateutil.parser.parse(timestamp).timestamp()
+
+    @staticmethod
+    def conv_timestamp_flt_2_txt(timestamp):
+        """Convert timestamp format from float to text."""
+        return str(_datetime.datetime.fromtimestamp(timestamp))
 
     # --- private methods ---
 
     def _make_request(self, request):
         try:
             response = _json.loads(_urlopen(request).read().decode("utf-8"))
-        except _URLError as e:
+        except _URLError:
             return {"code": 111, "message": "Connection refused"}
-        except _json.JSONDecodeError as e:
+        except _json.JSONDecodeError:
             return {"code": -1, "message": "JSON decode error"}
         except Exception as e:
             _logging.getLogger(__name__).critical("{}".format(e))
         else:
             return response
-
-    # Pv Configuration
-    # def get_pv_configurations(self, data=None):
-    #     """Return all pv configurations."""
-    #     url = "http://{}/pvs".format(self._host)
-    #     if data is None:
-    #         request = Request(url=url, method="GET")
-    #     else:
-    #         request = Request(url=url, method="GET",
-    #                           headers={"Content-Type": "application/json"},
-    #                           data=_json.dumps(data).encode())
-    #     return self._make_request(request)
-    #
-    # def insert_pv_configuration(self, name, config_type, values=[]):
-    #     """Insert new PV convfiguration."""
-    #     url = "http://{}/pvs".format(self._host)
-    #     data = {"name": name, "config_type": config_type,
-    #             "values": values}
-    #     request = Request(url=url, method="POST",
-    #                       headers={"Content-Type": "application/json"},
-    #                       data=_json.dumps(data).encode())
-    #     return self._make_request(request)
-    #
-    # def get_pv_configuration_by_id(self, id):
-    #     """Return a pv configuration."""
-    #     url = "http://{}/pvs/{}".format(self._host, id)
-    #     request = Request(url=url, method="GET")
-    #     return self._make_request(request)
-    #
-    # def update_pv_configuration(self, id, name=None, config_type=None):
-    #     """Update a PV configuration.
-    #
-    #     The data can be passed as a dict in `data` or as parameters.
-    #     """
-    #     url = "http://{}/pvs/{}".format(self._host, id)
-    #     data = {}
-    #     if name is not None:
-    #         data["name"] = name
-    #     if config_type is not None:
-    #         data["config_type"] = config_type
-    #     request = Request(url=url, method="PUT",
-    #                       headers={"Content-Type": "application/json"},
-    #                       data=json.dumps(data).encode())
-    #     return self._make_request(request)
-    #
-    # def delete_pv_configuration(self, id):
-    #     """Delete pv configuration."""
-    #     url = "http://{}/pvs/{}".format(self._host, id)
-    #     request = Request(url=url, method="DELETE")
-    #     return self._make_request(request)
-    #
-    # def insert_pv_configuration_item(self, id, pv_name, value):
-    #     """Insert new pv into configuration."""
-    #     url = "http://{}/pvs/{}/values".format(self._host, id)
-    #     # Build data
-    #     data = {}
-    #     data["pv_name"] = pv_name
-    #     # data["pv_type"] = str(type(value))
-    #     data["value"] = value
-    #     # Build request
-    #     request = Request(url=url, method="POST",
-    #                       headers={"Content-Type": "application/json"},
-    #                       data=json.dumps(data).encode())
-    #     return self._make_request(request)
-    #
-    # def insert_pv_configuration_items(self, id, data):
-    #     """Insert more than one pv into configuration."""
-    #     url = "http://{}/pvs/{}/values".format(self._host, id)
-    #     request = Request(url=url, method="POST",
-    #                       headers={"Content-Type": "application/json"},
-    #                       data=json.dumps(data).encode())
-    #     return self._make_request(request)
-    #
-    # def update_pv_configuration_item(self, id, pv_name, value=None):
-    #     """Update a pv configuration item."""
-    #     url = "http://{}/pvs/{}/values/{}".format(self._host, id, pv_name)
-    #     data = {}
-    #     if value is not None:
-    #         data["value"] = value
-    #     request = Request(url=url, method="PUT",
-    #                       headers={"Content-Type": "application/json"},
-    #                       data=json.dumps(data).encode())
-    #     return self._make_request(request)
-    #
-    # def delete_pv_configuration_item(self, id, pv_name):
-    #     """Delete a pv configuration value document."""
-    #     url = "http://{}/pvs/{}/values/{}".format(self._host, id, pv_name)
-    #     request = Request(url=url, method="DELETE")
-    #     return self._make_request(request)
