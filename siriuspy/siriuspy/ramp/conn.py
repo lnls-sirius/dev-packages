@@ -112,7 +112,7 @@ class ConnTiming(_EpicsPropsList):
         if self._ramp_config is None:
             return False
         c = ConnTiming.Const
-        wfm_nrpoints = self._ramp_config.ramp_dipole_wfm_nrpoints
+        wfm_nrpoints = self._ramp_config.ps_ramp_wfm_nrpoints
         setpoints = self.default
         setpoints.update(
             {c.EVR1_OTP08Pulses: wfm_nrpoints,
@@ -148,7 +148,7 @@ class ConnTiming(_EpicsPropsList):
     def check_ramp(self):
         """Check if in ramp state."""
         c = ConnTiming.Const
-        wfm_nrpoints = self._ramp_config.ramp_dipole_wfm_nrpoints
+        wfm_nrpoints = self._ramp_config.ps_ramp_wfm_nrpoints
         readbacks = dict()
         readbacks[c.EVG_Evt01Mode] = c.MODE_CONTINUOUS
         readbacks[c.EVG_ContinuousEvt] = c.STATE_ENBL
@@ -270,7 +270,7 @@ class ConnMagnets(_EpicsPropsList):
         setpoints = dict()
         for maname in self.manames:
             # get value (wfmdata)
-            wf = self._ramp_config.waveform_get(maname)
+            wf = self._ramp_config.ps_waveform_get(maname)
             value = wf.currents
             name = maname + ':' + 'WfmData'
             setpoints[name] = value
