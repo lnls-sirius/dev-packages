@@ -301,15 +301,17 @@ class WaveformParam:
         """Region5 function."""
         t2, v2 = self._rampup_stop_time, self._rampup_stop_energy
         t3, v3 = self._rampdown_start_time, self._rampdown_start_energy
-        Du, Dd = self._t_pb_D, self._t_pe_D
-        n = self._n
         if t < self._t_pb:
+            Du, Dd = self._t_pb_D, self._t_pe_D
+            n = self._n
             ts = self._t_pb - t2
             d = t - t2
             v = v2 + Du * (ts**n*d - d**(n+1)/(n+1.0)) / ts**n
         elif self._t_pb <= t <= self._t_pe:
             v = self._plateau_energy
         else:
+            Du, Dd = self._t_pb_D, self._t_pe_D
+            n = self._n
             ts = t3 - self._t_pe
             d = t3 - t
             v = v3 + Dd * (-ts**n*d + d**(n+1)/(n+1.0)) / ts**n
