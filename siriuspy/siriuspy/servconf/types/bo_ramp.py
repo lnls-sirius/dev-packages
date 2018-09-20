@@ -20,52 +20,60 @@ def get_dict():
     return _dict
 
 
-# _eje_current = 981.7835215242153  # [A] - BO dipole current @ 3 GeV
-# _eje_energy = 3.0  # [GeV]
-# _i07 = (1, 104, 2480, 2576, 2640, 2736, 3840, 3999)
-# _v07 = (0.01, 0.026250000000000006, 1.0339285714285713,
-#         1.05, 1.05, 1.0, 0.07, 0.01)
-# _ramp_duration = _util.DEFAULT_RAMP_DURATION  # [s]
-# _wfm_nrpoints = _MAX_WFMSIZE
-# _interval = _ramp_duration / (_wfm_nrpoints - 1.0)
-
-
-_ramp_dipole = {
-    # dipole delay [us]
-    'delay': 0.0,
+_ps_ramp = {
+    # ramp total duration [ms]
+    'duration':             _util.DEFAULT_PS_RAMP_DURATION,
     # number of points in power supply waveforms
-    'wfm_nrpoints': _MAX_WFMSIZE,
+    'wfm_nrpoints':         _MAX_WFMSIZE,
     # ramp time parameters [ms]
-    'duration': _util.DEFAULT_RAMP_DURATION,
-    'rampup_start_time': _util.DEFAULT_RAMP_RAMPUP_START_TIME,
-    'rampup_stop_time': _util.DEFAULT_RAMP_RAMPUP_STOP_TIME,
-    'rampdown_start_time': _util.DEFAULT_RAMP_RAMPDOWN_START_TIME,
-    'rampdown_stop_time': _util.DEFAULT_RAMP_RAMPDOWN_STOP_TIME,
+    'rampup_start_time':    _util.DEFAULT_PS_RAMP_RAMPUP_START_TIME,
+    'rampup_stop_time':     _util.DEFAULT_PS_RAMP_RAMPUP_STOP_TIME,
+    'rampdown_start_time':  _util.DEFAULT_PS_RAMP_RAMPDOWN_START_TIME,
+    'rampdown_stop_time':   _util.DEFAULT_PS_RAMP_RAMPDOWN_STOP_TIME,
     # ramp energy parameters [GeV]
-    'start_energy': _util.DEFAULT_RAMP_START_ENERGY,
-    'rampup_start_energy': _util.DEFAULT_RAMP_RAMPUP_START_ENERGY,
-    'rampup_stop_energy': _util.DEFAULT_RAMP_RAMPUP_STOP_ENERGY,
-    'plateau_energy': _util.DEFAULT_RAMP_PLATEAU_ENERGY,
-    'rampdown_start_energy': _util.DEFAULT_RAMP_RAMPDOWN_START_ENERGY,
-    'rampdown_stop_energy': _util.DEFAULT_RAMP_RAMPDOWN_STOP_ENERGY,
+    'start_energy':         _util.DEFAULT_PS_RAMP_START_ENERGY,
+    'rampup_start_energy':  _util.DEFAULT_PS_RAMP_RAMPUP_START_ENERGY,
+    'rampup_stop_energy':   _util.DEFAULT_PS_RAMP_RAMPUP_STOP_ENERGY,
+    'plateau_energy':       _util.DEFAULT_PS_RAMP_PLATEAU_ENERGY,
+    'rampdown_start_energy': _util.DEFAULT_PS_RAMP_RAMPDOWN_START_ENERGY,
+    'rampdown_stop_energy': _util.DEFAULT_PS_RAMP_RAMPDOWN_STOP_ENERGY,
 }
 
-_normalized_configs = [
+_ps_normalized_configs = [
     # time [ms]            normalized configuration name
-    [_util.DEFAULT_RAMP_RAMPUP_START_TIME, 'rampup-start'],
-    [_util.DEFAULT_RAMP_RAMPUP_STOP_TIME, 'rampup-stop'],
+    [_util.DEFAULT_PS_RAMP_RAMPUP_START_TIME, 'rampup-start'],
+    [_util.DEFAULT_PS_RAMP_RAMPUP_STOP_TIME, 'rampup-stop'],
 ]
 
-_rf_parameters = {
-    # global RF delay [us]
-    'delay': 0.0,
+_rf_ramp = {
+    # ramp enable state
+    'enable_state':         _util.DEFAULT_RF_RAMP_ENBL_STATE,
+    # ramp increase duration [min]
+    'rampinc_duration': _util.DEFAULT_RF_RAMP_RAMPINC_DURATION,
+    # ramp intervals durations [ms]
+    'bottom_duration':      _util.DEFAULT_RF_RAMP_BOTTOM_DURATION,
+    'rampup_duration':      _util.DEFAULT_RF_RAMP_RAMPUP_DURATION,
+    'top_duration':         _util.DEFAULT_RF_RAMP_TOP_DURATION,
+    'rampdown_duration':    _util.DEFAULT_RF_RAMP_RAMPDOWN_DURATION,
+    # ramp voltage parameters [kV]
+    'bottom_voltage':       _util.DEFAULT_RF_RAMP_BOTTOM_VOLTAGE,
+    'top_voltage':          _util.DEFAULT_RF_RAMP_TOP_VOLTAGE,
+    # ramp phase parameters [°]
+    'bottom_phase':         _util.DEFAULT_RF_RAMP_BOTTOM_PHASE,
+    'top_phase':            _util.DEFAULT_RF_RAMP_TOP_PHASE,
+}
+
+_ti_params = {
+    'injection_time':       _util.DEFAULT_TI_PARAMS_INJECTION_TIME,  # [ms]
+    'ejection_time':        _util.DEFAULT_TI_PARAMS_EJECTION_TIME,  # [ms]
+    'rf_ramp_delay':        _util.DEFAULT_TI_PARAMS_RF_RAMP_DELAY,  # [us]
+    'ps_ramp_delay':        _util.DEFAULT_TI_PARAMS_PS_RAMP_DELAY,  # [us]
 }
 
 
 _template_dict = {
-    'injection_time': _util.DEFAULT_RAMP_INJECTION_TIME,  # [ms]
-    'ejection_time': _util.DEFAULT_RAMP_EJECTION_TIME,  # [ms]
-    'rf_parameters': _rf_parameters,
-    'normalized_configs*': _normalized_configs,
-    'ramp_dipole': _ramp_dipole,
+    'ps_ramp': _ps_ramp,
+    'ps_normalized_configs*': _ps_normalized_configs,
+    'rf_ramp': _rf_ramp,
+    'ti_params': _ti_params,
 }
