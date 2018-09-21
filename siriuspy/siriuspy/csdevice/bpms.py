@@ -8,17 +8,19 @@ Polarity = _get_namedtuple('Polarity', ('positive', 'negative'))
 EnblTyp = _get_namedtuple('EnblTyp', ('Disable', 'Enable'))
 ConnTyp = _get_namedtuple('ConnTyp', ('Disconnect', 'Connect'))
 AcqRepeat = _get_namedtuple('AcqRepeat', ('normal', 'repetitive'))
-AcqEvents = _get_namedtuple('AcqEvents', ('start', 'stop', 'abort', 'reset'))
+AcqEvents = _get_namedtuple('AcqEvents', ('start', 'stop', 'abort'))
 AcqDataTyp = _get_namedtuple(
                     'AcqDataTyp', ('A', 'B', 'C', 'D', 'X', 'Y', 'Sum', 'Q'))
 AcqTyp = _get_namedtuple(
-            'AcqTyp', ('adc', 'adcswp', 'tbt', 'sofb', 'tbtpha', 'fofbpha'))
+            'AcqTyp',
+            ('adc', 'adcswp', 'tbt', 'fofb', 'tbtpha', 'fofbpha', 'monit1'))
 AcqStates = _get_namedtuple(
-            'AcqStates', ('Idle', 'Waiting', 'Acquiring', 'Error', 'Aborted'))
+            'AcqStates',
+            ('Idle', 'Waiting', 'External Trig', 'Data Trig', 'Software Trig',
+             'Acquiring', 'Error', 'Aborted', 'Too Many Samples',
+             'Too Few Samples', 'No Memory'))
 AcqTrigTyp = _get_namedtuple(
                         'AcqTrigTyp', ('now', 'external', 'data', 'software'))
-AcqTrigExter = _get_namedtuple(
-                'AcqTrigExter', ('Trig1', 'Trig2', 'Trig3', 'Trig4', 'Trig5'))
 FFTWindowTyp = _get_namedtuple(
             'FFTWindowTyp', ('Square', 'Hanning', 'Parzen', 'Welch', 'QuadW'))
 FFTConvDirection = _get_namedtuple('FFTConvDirection', ('Forward', 'Backward'))
@@ -146,10 +148,6 @@ def get_config_database(prefix=''):
             'type': 'enum', 'enums': AcqRepeat._fields, 'value': 0},
         'TriggerRep-Sts': {
             'type': 'enum', 'enums': AcqRepeat._fields, 'value': 0},
-        'TriggerExternalChan-Sel': {
-            'type': 'enum', 'enums': AcqTrigExter._fields, 'value': 0},
-        'TriggerExternalChan-Sts': {
-            'type': 'enum', 'enums': AcqTrigExter._fields, 'value': 0},
         'TriggerDataChan-Sel': {
             'type': 'enum', 'enums': AcqTyp._fields, 'value': 0},
         'TriggerDataChan-Sts': {
