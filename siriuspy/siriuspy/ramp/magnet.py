@@ -5,6 +5,8 @@ from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.magnet.data import MAData as _MAData
 from siriuspy.magnet import util as _mutil
 from siriuspy.factory import NormalizerFactory as _NormalizerFactory
+from siriuspy.ramp.exceptions import RampInvalidDipoleWfmParms as \
+    _RampInvalidDipoleWfmParms
 
 
 _magfuncs = _mutil.get_magfunc_2_multipole_dict()
@@ -84,8 +86,12 @@ class Magnet:
 
     def conv_strength_2_current(self, strengths, **kwargs):
         """Return current value from strengths(s)."""
-        current = self._strength_obj.conv_strength_2_current(strengths,
-                                                             **kwargs)
+        try:
+            current = self._strength_obj.conv_strength_2_current(strengths,
+                                                                 **kwargs)
+        except ValueError:
+            raise _RampInvalidDipoleWfmParms(
+                'Could not convert current to energy')
         return current
 
     def __str__(self):

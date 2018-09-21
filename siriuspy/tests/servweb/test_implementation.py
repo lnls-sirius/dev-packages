@@ -78,8 +78,8 @@ class TestServWeb(unittest.TestCase):
         'crates_mapping',
         'bpms_data',
         'timing_devices_mapping',
-        'high_level_triggers'
-        ''
+        'high_level_triggers',
+        'bsmp_dclink_mapping'
     }
 
     def test_public_interface(self, mock_read):

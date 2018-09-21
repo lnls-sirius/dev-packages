@@ -8,8 +8,11 @@ from siriuspy import util as _util
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 
 from siriuspy.bsmp import Response as _Response
-from siriuspy.bsmp import BSMP as _BSMP
 from siriuspy.bsmp import BSMPSim as _BSMPSim
+
+from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
+from .siggen import SignalFactory as _SignalFactory
+# from siriuspy.pwrsupply.model_factory import ModelFactory as _ModelFactory
 
 from siriuspy.pwrsupply.bsmp import EntitiesFBP as _EntitiesFBP
 from siriuspy.pwrsupply.bsmp import EntitiesFBP_DCLink as _EntitiesFBP_DCLink
@@ -20,9 +23,6 @@ from siriuspy.pwrsupply.bsmp import ConstFBP as _cFBP
 from siriuspy.pwrsupply.bsmp import ConstFBP_DCLink as _cFBP_DCLink
 from siriuspy.pwrsupply.bsmp import ConstFAC_DCDC as _cFAC_DCDC
 from siriuspy.pwrsupply.bsmp import ConstFAC_ACDC as _cFAC_ACDC
-
-from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
-from .siggen import SignalFactory as _SignalFactory
 
 __version__ = _util.get_last_commit_hash()
 
@@ -683,81 +683,53 @@ class BSMPSim_FAC_ACDC(_BaseBSMPSim, _Spec_FAC_ACDC):
 # --- Classes for UDCs ---
 
 
-udcmodels = {
-    'FBP': {'ConstBSMP': _cFBP,
-            'Entities': _EntitiesFBP(),
-            'BSMPSim': BSMPSim_FBP, },
-    'FBP_DCLink': {'ConstBSMP': _cFBP_DCLink,
-                   'Entities': _EntitiesFBP_DCLink(),
-                   'BSMPSim': BSMPSim_FBP_DCLink, },
-    'FBP_FOFB': {'ConstBSMP': _cFBP,
-                 'Entities': _EntitiesFBP(),
-                 'BSMPSim': BSMPSim_FBP, },
+# udcmodels = {
+#     'FBP': {'ConstBSMP': _cFBP,
+#             'Entities': _EntitiesFBP(),
+#             'BSMPSim': BSMPSim_FBP, },
+#     'FBP_DCLink': {'ConstBSMP': _cFBP_DCLink,
+#                    'Entities': _EntitiesFBP_DCLink(),
+#                    'BSMPSim': BSMPSim_FBP_DCLink, },
+#     'FBP_FOFB': {'ConstBSMP': _cFBP,
+#                  'Entities': _EntitiesFBP(),
+#                  'BSMPSim': BSMPSim_FBP, },
 
-    'FAC_DCDC': {'ConstBSMP': _cFAC_DCDC,
-                 'Entities': _EntitiesFAC_DCDC(),
-                 'BSMPSim': BSMPSim_FAC_DCDC, },
-    'FAC_ACDC': {'ConstBSMP': _cFAC_ACDC,
-                 'Entities': _EntitiesFAC_ACDC(),
-                 'BSMPSim': BSMPSim_FAC_ACDC, },
-    'FAC_2S_DCDC': {'ConstBSMP': _cFAC_DCDC,
-                    'Entities': _EntitiesFAC_DCDC(),
-                    'BSMPSim': BSMPSim_FAC_DCDC, },
-    'FAC_2S_ACDC': {'ConstBSMP': _cFAC_ACDC,
-                    'Entities': _EntitiesFAC_ACDC(),
-                    'BSMPSim': BSMPSim_FAC_ACDC, },
-    'FAC_2P4S_DCDC': {'ConstBSMP': _cFAC_DCDC,
-                      'Entities': _EntitiesFAC_DCDC(),
-                      'BSMPSim': BSMPSim_FAC_DCDC, },
-    'FAC_2P4S_ACDC': {'ConstBSMP': _cFAC_ACDC,
-                      'Entities': _EntitiesFAC_ACDC(),
-                      'BSMPSim': BSMPSim_FAC_ACDC, },
+#     'FAC_DCDC': {'ConstBSMP': _cFAC_DCDC,
+#                  'Entities': _EntitiesFAC_DCDC(),
+#                  'BSMPSim': BSMPSim_FAC_DCDC, },
+#     'FAC_ACDC': {'ConstBSMP': _cFAC_ACDC,
+#                  'Entities': _EntitiesFAC_ACDC(),
+#                  'BSMPSim': BSMPSim_FAC_ACDC, },
+#     'FAC_2S_DCDC': {'ConstBSMP': _cFAC_DCDC,
+#                     'Entities': _EntitiesFAC_DCDC(),
+#                     'BSMPSim': BSMPSim_FAC_DCDC, },
+#     'FAC_2S_ACDC': {'ConstBSMP': _cFAC_ACDC,
+#                     'Entities': _EntitiesFAC_ACDC(),
+#                     'BSMPSim': BSMPSim_FAC_ACDC, },
+#     'FAC_2P4S_DCDC': {'ConstBSMP': _cFAC_DCDC,
+#                       'Entities': _EntitiesFAC_DCDC(),
+#                       'BSMPSim': BSMPSim_FAC_DCDC, },
+#     'FAC_2P4S_ACDC': {'ConstBSMP': _cFAC_ACDC,
+#                       'Entities': _EntitiesFAC_ACDC(),
+#                       'BSMPSim': BSMPSim_FAC_ACDC, },
 
-    'FAP': {'ConstBSMP': _cFBP,
-            'Entities': _EntitiesFBP(),
-            'BSMPSim': BSMPSim_FBP, },
-    'FAP_2P2S_MASTER': {'ConstBSMP': _cFBP,
-                        'Entities': _EntitiesFBP(),
-                        'BSMPSim': BSMPSim_FBP, },
-    'FAP_4P_Master': {'ConstBSMP': _cFBP,
-                      'Entities': _EntitiesFBP(),
-                      'BSMPSim': BSMPSim_FBP, },
-    'FAP_4P_Slave': {'ConstBSMP': _cFBP,
-                     'Entities': _EntitiesFBP(),
-                     'BSMPSim': BSMPSim_FBP, },
+#     'FAP': {'ConstBSMP': _cFBP,
+#             'Entities': _EntitiesFBP(),
+#             'BSMPSim': BSMPSim_FBP, },
+#     'FAP_2P2S_MASTER': {'ConstBSMP': _cFBP,
+#                         'Entities': _EntitiesFBP(),
+#                         'BSMPSim': BSMPSim_FBP, },
+#     'FAP_4P_Master': {'ConstBSMP': _cFBP,
+#                       'Entities': _EntitiesFBP(),
+#                       'BSMPSim': BSMPSim_FBP, },
+#     'FAP_4P_Slave': {'ConstBSMP': _cFBP,
+#                      'Entities': _EntitiesFBP(),
+#                      'BSMPSim': BSMPSim_FBP, },
 
-    'Commercial': {'ConstBSMP': _cFAC_DCDC,
-                   'Entities': _EntitiesFAC_DCDC(),
-                   'BSMPSim': BSMPSim_FAC_DCDC, },
-}
+#     'Commercial': {'ConstBSMP': _cFAC_DCDC,
+#                    'Entities': _EntitiesFAC_DCDC(),
+#                    'BSMPSim': BSMPSim_FAC_DCDC, },
+# }
 
 
-class UDC:
-    """UDC."""
 
-    def __init__(self, pru, udcmodel, device_ids):
-        """Init."""
-        self._pru = pru
-        self._device_ids = device_ids
-        self._udcmodel = self._get_udcmodel(udcmodel)
-        self._bsmp = self._create_bsmp_connectors()
-
-    def _get_udcmodel(self, udcmodel):
-        if udcmodel not in udcmodels:
-            raise ValueError('{}'.format(udcmodel))
-        return udcmodel
-
-    def _create_bsmp_connectors(self):
-        bsmp = dict()
-        d = udcmodels[self._udcmodel]
-        entities, bsmpsim_class = d['Entities'], d['BSMPSim']
-        for id in self._device_ids:
-            if self._pru.simulated:
-                bsmp[id] = bsmpsim_class(self._pru)
-            else:
-                bsmp[id] = _BSMP(self._pru, id, entities)
-        return bsmp
-
-    def __getitem__(self, index):
-        """Return BSMP."""
-        return self._bsmp[index]

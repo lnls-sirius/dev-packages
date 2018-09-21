@@ -30,7 +30,11 @@ class PSSearch:
     _bsmps_2_bbbname_dict = None
 
     _bbbname_2_udc_dict = None
+    _udc_2_bbbname_dict = None
     _udc_2_bsmp_dict = None
+    _bsmp_2_udc_dict = None
+
+    _ps_2_dclink_dict = None
 
     @staticmethod
     def get_psnames(filters=None):
@@ -172,9 +176,15 @@ class PSSearch:
     @staticmethod
     def conv_psname_2_bbbname(psname):
         """Given psname return the bbb name."""
-        if PSSearch._bsmps_2_bbbname_dict is None:
-            PSSearch._reload_bbb_2_bsmps_dict()
-        return PSSearch._bsmps_2_bbbname_dict[psname]
+        # if PSSearch._bsmps_2_bbbname_dict is None:
+        #     PSSearch._reload_bbb_2_bsmps_dict()
+        # return PSSearch._bsmps_2_bbbname_dict[psname]
+        if PSSearch._udc_2_bbbname_dict is None:
+            PSSearch._reload_bbb_2_udc_dict()
+        if PSSearch._bsmp_2_udc_dict is None:
+            PSSearch._reload_udc_2_bsmp_dict()
+        udc = PSSearch._bsmp_2_udc_dict[psname]
+        return PSSearch._udc_2_bbbname_dict[udc]
 
     @staticmethod
     def conv_bbbname_2_psnames(bbbname):
@@ -342,20 +352,36 @@ class PSSearch:
     def _reload_bbb_2_udc_dict():
         data, _ = _util.read_text_data(_web.bbb_udc_mapping())
         PSSearch._bbbname_2_udc_dict = dict()
+        PSSearch._udc_2_bbbname_dict = dict()
         for line in data:
             bbbname, *udcs = line
             PSSearch._bbbname_2_udc_dict[bbbname] = udcs
-        
+            for udc in udcs:
+                PSSearch._udc_2_bbbname_dict[udc] = bbbname
+
     @staticmethod
     def _reload_udc_2_bsmp_dict():
         data, _ = _util.read_text_data(_web.udc_ps_mapping())
         PSSearch._udc_2_bsmp_dict = dict()
+        PSSearch._bsmp_2_udc_dict = dict()
         for line in data:
             udc, *bsmps = line
             PSSearch._udc_2_bsmp_dict[udc] = list()
             for i in range(len(bsmps)//2):
                 bsmp = bsmps[2*i+0], int(bsmps[2*i+1])
                 PSSearch._udc_2_bsmp_dict[udc].append(bsmp)
+                PSSearch._bsmp_2_udc_dict[bsmp[0]] = udc
+
+    @staticmethod
+    def _reload_ps_2_dclink_dict():
+        data, _ = _util.read_text_data(_web.bsmp_dclink_mapping())
+        PSSearch._ps_2_dclink_dict = dict()
+        for line in data:
+            dclinks = line[1:]
+            if dclinks[0] == 'None':
+                PSSearch._ps_2_dclink_dict[line[0]] = None
+            else:
+                PSSearch._ps_2_dclink_dict[line[0]] = dclinks
 
     @staticmethod
     def conv_bbb_2_udc(bbbname):
@@ -368,3 +394,9 @@ class PSSearch:
         if PSSearch._udc_2_bsmp_dict is None:
             PSSearch._reload_udc_2_bsmp_dict()
         return PSSearch._udc_2_bsmp_dict[udc]
+
+    @staticmethod
+    def conv_psname_2_dclink(psname):
+        if PSSearch._ps_2_dclink_dict is None:
+            PSSearch._reload_ps_2_dclink_dict()
+        return PSSearch._ps_2_dclink_dict[psname]
