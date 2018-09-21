@@ -1,14 +1,15 @@
 """E2SController."""
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
-from siriuspy.pwrsupply.prucontroller import PRUCParms_FBP as _PRUCParms_FBP
+# from siriuspy.pwrsupply.model_factory import PRUCParms_FBP as _PRUCParms_FBP
 from siriuspy.pwrsupply.bsmp import ConstBSMP as _c
 from siriuspy.pwrsupply.functions import PSOpMode as _PSOpMode
 from siriuspy.pwrsupply.functions import BSMPFunction as _Function
 from siriuspy.pwrsupply.watcher import Watcher as _Watcher
+from siriuspy.pwrsupply.pruc_ramp import Ramp as _Ramp
 
 
 class PSController:
-    """This class is used to communicate with PS controller.
+    """Class used to communicate with PS controller.
 
     PRUController
     Fields method property holds objects trant translate EPICS fields to a BSMP
@@ -65,7 +66,7 @@ class PSController:
             if '-Sel' in key or '-SP' in key:
                 rb_field = PSController._get_readback_field(key)
                 try:
-                    self._readers[key].apply(self._readers[rb_field].read())
+                    reader.apply(self._readers[rb_field].read())
                 except KeyError:
                     pass
 
@@ -77,7 +78,7 @@ class PSController:
 class StandardPSController(PSController):
     """Standard behaviour for a PSController."""
 
-    INTERVAL_SCAN = 1.0/_PRUCParms_FBP.FREQ_SCAN
+    # INTERVAL_SCAN = 1.0/_PRUCParms_FBP.FREQ_SCAN
 
     def __init__(self,
                  readers, functions, connections, pru_controller, devices):
@@ -85,6 +86,8 @@ class StandardPSController(PSController):
         super().__init__(readers, functions, connections, pru_controller)
         self._devices = devices
         self._watchers = dict()
+        self._pruc_ramp = None
+        # self._interval_scan = 1.0/pru_controller.scan_interval
 
     def read(self, device_name, field):
         """Read pv value."""
@@ -177,6 +180,15 @@ class StandardPSController(PSController):
         if setpoint in (_PSConst.OpMode.Cycle, _PSConst.OpMode.MigWfm,
                         _PSConst.OpMode.RmpWfm):
             self._set_watchers(setpoint)
+        if setpoint in (_PSConst.OpMode.RmpWfm, ):
+            self._set_pruc_ramp()
+
+    def _set_pruc_ramp(self):
+        if self._pruc_ramp is not None and self._pruc_ramp.is_alive:
+            self._pruc_ramp.stop()
+            self._pruc_ramp.join()
+        self._pruc_ramp = _Ramp(self._devices, self)
+        self._pruc_ramp.start()
 
     def _set_opmode(self, writer, op_mode):
         self._pru_controller.pru_sync_stop()

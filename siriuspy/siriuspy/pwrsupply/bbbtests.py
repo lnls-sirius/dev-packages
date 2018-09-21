@@ -9,9 +9,10 @@ from siriuspy.pwrsupply.pru import PRU
 from siriuspy.pwrsupply.pru import PRUSim
 from siriuspy.pwrsupply.bsmp import ConstBSMP
 from siriuspy.pwrsupply.bsmp import EntitiesFBP
-from siriuspy.pwrsupply.controller import BSMPSim_FBP
+from siriuspy.pwrsupply.bsmp_sim import BSMPSim_FBP
 from siriuspy.pwrsupply.prucontroller import PRUCQueue
 from siriuspy.pwrsupply.prucontroller import PRUController
+from siriuspy.pwrsupply.model_factory import ModelFactory
 
 P = 'T'
 
@@ -83,7 +84,7 @@ def pruc_create(udcmodel, device_ids, simulate=False):
     pru, prucqueue = bbb_pru_and_prucqueue(simulate=simulate)
     pruc = PRUController(pru=pru,
                          prucqueue=prucqueue,
-                         udcmodel=udcmodel,
+                         udcmodel=ModelFactory.get(udcmodel),
                          device_ids=device_ids,
                          processing=True,
                          scanning=True)
@@ -117,13 +118,13 @@ def bbbs_mix_pruc_create(simulate=False):
 
     pruc1 = PRUController(pru=pru,
                           prucqueue=prucqueue,
-                          udcmodel='FBP_DCLink',
+                          udcmodel=ModelFactory.get('FBP_DCLink'),
                           device_ids=(20, ),
                           processing=True,
                           scanning=True)
     pruc2 = PRUController(pru=pru,
                           prucqueue=prucqueue,
-                          udcmodel='FBP',
+                          udcmodel=ModelFactory.get('FBP'),
                           device_ids=BBB1_device_ids + BBB2_device_ids,
                           processing=True,
                           scanning=True)
@@ -134,11 +135,11 @@ def bbbs_mix_print_state(pruc1, pruc2):
     """Print."""
     # dclink
     for id in pruc1.device_ids:
-        v = pruc1.read_variable(id, pruc1.params.ConstBSMP.V_V_OUT)
+        v = pruc1.read_variables(id, pruc1.params.ConstBSMP.V_V_OUT)
         print('dclink v_out dev_id={} [V]: {}'.format(id, v))
     # power supplies
     for id in pruc2.device_ids:
-        v = pruc2.read_variable(id, pruc2.params.ConstBSMP.V_I_LOAD)
+        v = pruc2.read_variables(id, pruc2.params.ConstBSMP.V_I_LOAD)
         print('pwrsupply i_load dev_id={} [A]: {}'.format(id, v))
 
 
