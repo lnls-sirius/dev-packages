@@ -31,10 +31,13 @@ def get_consts(acc):
 
 EVG_NAME = _TISearch.get_device_names({'dev': 'EVG'})[0]
 RF_GEN_NAME = 'AS-Glob:RF-Gen'  # TODO: use correct name for this device
+RF_NOM_FREQ = 499458000.0
 EnblRF = _get_namedtuple('EnblRF', ('Off', 'On'))
 AutoCorr = _get_namedtuple('AutoCorr', ('Off', 'On'))
 SyncKicks = _get_namedtuple('SyncKicks', ('Off', 'On'))
 CorrMode = _get_namedtuple('CorrMode', ('Offline', 'Online'))
+OrbitMode = _get_namedtuple('OrbitMode', ('Offline', 'Online', 'Triggered'))
+OrbitAcqChan = _get_namedtuple('OrbitAcqChan', ('kHz', 'FOFB', 'TbT'))
 ApplyCorr = _get_namedtuple('ApplyCorr', ('CH', 'CV', 'RF', 'All'))
 MeasRespMatCmd = _get_namedtuple('MeasRespMatCmd', ('Start', 'Stop', 'Reset'))
 MeasRespMatMon = _get_namedtuple(
@@ -61,7 +64,13 @@ def get_ioc_database(acc, prefix=''):
 def get_sofb_database(acc, prefix=''):
     """Return OpticsCorr-Chrom Soft IOC database."""
     db = {
-        'Log-Mon': {'type': 'string', 'value': ''},
+        'Log-Mon': {'type': 'char', 'value': '', 'count': 200},
+        'CorrMode-Sel': {
+            'type': 'enum', 'enums': CorrMode._fields, 'value': 1,
+            'unit': 'Defines if correction is offline or online'},
+        'CorrMode-Sts': {
+            'type': 'enum', 'enums': CorrMode._fields, 'value': 1,
+            'unit': 'Defines if correction is offline or online'},
         'AutoCorr-Sel': {
             'type': 'enum', 'enums': AutoCorr._fields, 'value': 0},
         'AutoCorr-Sts': {
@@ -76,34 +85,46 @@ def get_sofb_database(acc, prefix=''):
         'MeasRespMat-Mon': {
             'type': 'enum', 'value': 0, 'enums': MeasRespMatMon._fields},
         'MeasRespMatKickCH-SP': {
-            'type': 'float', 'value': 0.2, 'unit': 'urad', 'prec': 3},
+            'type': 'float', 'value': 0.2, 'unit': 'urad', 'prec': 3,
+            'lolim': 0.002, 'hilim': 50},
         'MeasRespMatKickCH-RB': {
-            'type': 'float', 'value': 0.2, 'unit': 'urad', 'prec': 3},
+            'type': 'float', 'value': 0.2, 'unit': 'urad', 'prec': 3,
+            'lolim': 0.002, 'hilim': 50},
         'MeasRespMatKickCV-SP': {
-            'type': 'float', 'value': 0.2, 'unit': 'urad', 'prec': 3},
+            'type': 'float', 'value': 0.2, 'unit': 'urad', 'prec': 3,
+            'lolim': 0.002, 'hilim': 50},
         'MeasRespMatKickCV-RB': {
-            'type': 'float', 'value': 0.2, 'unit': 'urad', 'prec': 3},
+            'type': 'float', 'value': 0.2, 'unit': 'urad', 'prec': 3,
+            'lolim': 0.002, 'hilim': 50},
         'MeasRespMatKickRF-SP': {
-            'type': 'float', 'value': 200, 'unit': 'Hz', 'prec': 3},
+            'type': 'float', 'value': 50, 'unit': 'Hz', 'prec': 3,
+            'lolim': 1, 'hilim': 400},
         'MeasRespMatKickRF-RB': {
-            'type': 'float', 'value': 200, 'unit': 'Hz', 'prec': 3},
+            'type': 'float', 'value': 200, 'unit': 'Hz', 'prec': 3,
+            'lolim': 1, 'hilim': 400},
+        'MeasRespMatWait-SP': {
+            'type': 'float', 'value': 0.5, 'unit': 's', 'prec': 3,
+            'lolim': 0.05, 'hilim': 100},
+        'MeasRespMatWait-RB': {
+            'type': 'float', 'value': 0.5, 'unit': 's', 'prec': 3,
+            'lolim': 0.05, 'hilim': 100},
         'CalcCorr-Cmd': {
-            'type': 'char', 'value': 0, 'unit': 'Calculate kicks'},
+            'type': 'short', 'value': 0, 'unit': 'Calculate kicks'},
         'CorrFactorCH-SP': {
-            'type': 'float', 'value': 0, 'unit': '%', 'prec': 2,
+            'type': 'float', 'value': 100, 'unit': '%', 'prec': 2,
             'lolim': -1000, 'hilim': 1000},
         'CorrFactorCH-RB': {
-            'type': 'float', 'value': 0, 'prec': 2, 'unit': '%'},
+            'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
         'CorrFactorCV-SP': {
-            'type': 'float', 'value': 0, 'unit': '%', 'prec': 2,
+            'type': 'float', 'value': 100, 'unit': '%', 'prec': 2,
             'lolim': -1000, 'hilim': 1000},
         'CorrFactorCV-RB': {
-            'type': 'float', 'value': 0, 'prec': 2, 'unit': '%'},
+            'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
         'CorrFactorRF-SP': {
-            'type': 'float', 'value': 0, 'unit': '%', 'prec': 2,
+            'type': 'float', 'value': 100, 'unit': '%', 'prec': 2,
             'lolim': -1000, 'hilim': 1000},
         'CorrFactorRF-RB': {
-            'type': 'float', 'value': 0, 'prec': 2, 'unit': '%'},
+            'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
         'MaxKickCH-SP': {
             'type': 'float', 'value': 300, 'unit': 'urad', 'prec': 3,
             'lolim': 0, 'hilim': 1000},
@@ -118,7 +139,26 @@ def get_sofb_database(acc, prefix=''):
             'type': 'float', 'value': 3000, 'unit': 'Hz', 'prec': 3,
             'lolim': 0, 'hilim': 10000},
         'MaxKickRF-RB': {
-            'type': 'float', 'value': 3000, 'prec': 2, 'unit': 'Hz'},
+            'type': 'float', 'value': 3000, 'prec': 2, 'unit': 'Hz',
+            'lolim': 0, 'hilim': 10000},
+        'MaxDeltaKickCH-SP': {
+            'type': 'float', 'value': 50, 'unit': 'urad', 'prec': 3,
+            'lolim': 0, 'hilim': 1000},
+        'MaxDeltaKickCH-RB': {
+            'type': 'float', 'value': 50, 'prec': 2, 'unit': 'urad',
+            'lolim': 0, 'hilim': 1000},
+        'MaxDeltaKickCV-SP': {
+            'type': 'float', 'value': 50, 'unit': 'urad', 'prec': 3,
+            'lolim': 0, 'hilim': 1000},
+        'MaxDeltaKickCV-RB': {
+            'type': 'float', 'value': 50, 'prec': 2, 'unit': 'urad',
+            'lolim': 0, 'hilim': 1000},
+        'MaxDeltaKickRF-SP': {
+            'type': 'float', 'value': 500, 'unit': 'Hz', 'prec': 3,
+            'lolim': 0, 'hilim': 10000},
+        'MaxDeltaKickRF-RB': {
+            'type': 'float', 'value': 500, 'prec': 2, 'unit': 'Hz',
+            'lolim': 0, 'hilim': 10000},
         'ApplyCorr-Cmd': {
             'type': 'enum', 'enums': ApplyCorr._fields, 'value': 0,
             'unit': 'Apply last calculated kicks.'},
@@ -148,12 +188,17 @@ def get_corrs_database(acc, prefix=''):
             'unit': 'urad'},
         'KicksRF-Mon': {
             'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 3},
+        'NominalFreqRF-SP': {
+            'type': 'float', 'value': RF_NOM_FREQ, 'unit': 'Hz', 'prec': 3},
+        'NominalFreqRF-RB': {
+            'type': 'float', 'value': RF_NOM_FREQ, 'unit': 'Hz', 'prec': 3},
         'SyncKicks-Sel': {
-            'type': 'enum', 'enums': SyncKicks._fields, 'value': 1},
+            'type': 'enum', 'enums': SyncKicks._fields, 'value': SyncKicks.On},
         'SyncKicks-Sts': {
-            'type': 'enum', 'enums': SyncKicks._fields, 'value': 1},
-        'ConfigTiming-Cmd': {'type': 'char', 'value': 0},
-        'CorrStatus-Mon': {'type': 'char', 'value': 0b1111111},
+            'type': 'enum', 'enums': SyncKicks._fields, 'value': SyncKicks.On},
+        'ConfigTiming-Cmd': {'type': 'short', 'value': 0},
+        'ConfigCorrs-Cmd': {'type': 'short', 'value': 0},
+        'CorrStatus-Mon': {'type': 'short', 'value': 0b1111111},
         'CorrStatusLabels-Cte': {
             'type': 'string', 'count': len(StatusLabels.Corrs),
             'value': StatusLabels.Corrs}
@@ -179,24 +224,49 @@ def get_orbit_database(acc, prefix=''):
     for k in pvs:
         db[k] = _dcopy(prop)
     db.update({
+        'OrbitTrigX-Mon': {
+            'type': 'float', 'unit': 'nm', 'count': 2000*nbpm,
+            'value': 2000*nbpm*[0]},
+        'OrbitTrigY-Mon': {
+            'type': 'float', 'unit': 'nm', 'count': 2000*nbpm,
+            'value': 2000*nbpm*[0]},
+        'OrbitMode-Sel': {
+            'type': 'enum', 'unit': 'Change orbit acquisition mode.',
+            'value': OrbitMode.Online, 'enums': OrbitMode._fields},
+        'OrbitMode-Sts': {
+            'type': 'enum', 'unit': 'Change orbit acquisition mode.',
+            'value': OrbitMode.Online, 'enums': OrbitMode._fields},
+        'OrbitTrigAcqConfig-Cmd': {'type': 'short', 'value': 0},
+        'OrbitTrigAcqChan-Sel': {
+            'type': 'enum', 'unit': 'Change orbit acquisition Channel.',
+            'value': OrbitAcqChan.kHz, 'enums': OrbitAcqChan._fields},
+        'OrbitTrigAcqChan-Sts': {
+            'type': 'enum', 'unit': 'Change orbit acquisition Channel.',
+            'value': OrbitAcqChan.kHz, 'enums': OrbitAcqChan._fields},
+        'OrbitTrigNrSamples-SP': {
+            'type': 'short', 'unit': '', 'value': 200,
+            'hilim': 10000, 'lolim': 1},
+        'OrbitTrigNrSamples-RB': {
+            'type': 'short', 'unit': '', 'value': 200,
+            'hilim': 10000, 'lolim': 1},
+        'OrbitTrigDownSample-SP': {
+            'type': 'short', 'unit': '', 'value': 1,
+            'hilim': 10000, 'lolim': 1},
+        'OrbitTrigDownSample-RB': {
+            'type': 'short', 'unit': '', 'value': 1,
+            'hilim': 10000, 'lolim': 1},
         'OrbitAcqRate-SP': {
             'type': 'float', 'unit': 'Hz', 'value': 10,
             'hilim': 20, 'lolim': 0.5},
         'OrbitAcqRate-RB': {
             'type': 'float', 'unit': 'Hz', 'value': 10,
             'hilim': 20, 'lolim': 0.5},
-        'CorrMode-Sel': {
-            'type': 'enum', 'enums': CorrMode._fields, 'value': 1,
-            'unit': 'Defines is correction is offline or online'},
-        'CorrMode-Sts': {
-            'type': 'enum', 'enums': CorrMode._fields, 'value': 1,
-            'unit': 'Defines is correction is offline or online'},
         'OrbitSmoothNPnts-SP': {
-            'type': 'char', 'value': 1,
+            'type': 'short', 'value': 1,
             'unit': 'number of points for average',
             'lolim': 1, 'hilim': 200},
         'OrbitSmoothNPnts-RB': {
-            'type': 'char', 'value': 1,
+            'type': 'short', 'value': 1,
             'unit': 'number of points for average',
             'lolim': 1, 'hilim': 200},
         'PosS-Cte': {
@@ -205,7 +275,7 @@ def get_orbit_database(acc, prefix=''):
         'BPMNickName-Cte': {
             'type': 'string', 'unit': 'shotname for the bpms.',
             'count': nbpm, 'value': const.BPM_NICKNAMES},
-        'OrbitStatus-Mon': {'type': 'char', 'value': 0},
+        'OrbitStatus-Mon': {'type': 'short', 'value': 0},
         'OrbitStatusLabels-Cte': {
             'type': 'string', 'count': len(StatusLabels.Orbit),
             'value': StatusLabels.Orbit},
@@ -234,28 +304,28 @@ def get_respmat_database(acc, prefix=''):
             'type': 'float', 'count': const.MTX_SZ, 'value': const.MTX_SZ*[0],
             'unit': '(CH, CV, RF)(urad, Hz) x (BH, BV)(nm)'},
         'CHEnblList-SP': {
-            'type': 'char', 'count': const.NR_CH, 'value': const.NR_CH*[1],
+            'type': 'short', 'count': const.NR_CH, 'value': const.NR_CH*[1],
             'unit': 'CHs used in correction'},
         'CHEnblList-RB': {
-            'type': 'char', 'count': const.NR_CH, 'value': const.NR_CH*[1],
+            'type': 'short', 'count': const.NR_CH, 'value': const.NR_CH*[1],
             'unit': 'CHs used in correction'},
         'CVEnblList-SP': {
-            'type': 'char', 'count': const.NR_CV, 'value': const.NR_CV*[1],
+            'type': 'short', 'count': const.NR_CV, 'value': const.NR_CV*[1],
             'unit': 'CVs used in correction'},
         'CVEnblList-RB': {
-            'type': 'char', 'count': const.NR_CV, 'value': const.NR_CV*[1],
+            'type': 'short', 'count': const.NR_CV, 'value': const.NR_CV*[1],
             'unit': 'CVs used in correction'},
         'BPMXEnblList-SP': {
-            'type': 'char', 'count': const.NR_BPMS, 'value': const.NR_BPMS*[1],
+            'type': 'short', 'count': const.NR_BPMS, 'value': const.NR_BPMS*[1],
             'unit': 'BPMX used in correction'},
         'BPMXEnblList-RB': {
-            'type': 'char', 'count': const.NR_BPMS, 'value': const.NR_BPMS*[1],
+            'type': 'short', 'count': const.NR_BPMS, 'value': const.NR_BPMS*[1],
             'unit': 'BPMX used in correction'},
         'BPMYEnblList-SP': {
-            'type': 'char', 'count': const.NR_BPMS, 'value': const.NR_BPMS*[1],
+            'type': 'short', 'count': const.NR_BPMS, 'value': const.NR_BPMS*[1],
             'unit': 'BPMY used in correction'},
         'BPMYEnblList-RB': {
-            'type': 'char', 'count': const.NR_BPMS, 'value': const.NR_BPMS*[1],
+            'type': 'short', 'count': const.NR_BPMS, 'value': const.NR_BPMS*[1],
             'unit': 'BPMY used in correction'},
         'RFEnbl-Sel': {
             'type': 'enum', 'enums': EnblRF._fields, 'value': 0,
@@ -278,7 +348,7 @@ def get_respmat_database(acc, prefix=''):
             'type': 'float', 'count': const.NR_CV, 'value': const.NR_CV*[0],
             'unit': 'Last CV kicks calculated.'},
         'DeltaKicksRF-Mon': {
-            'type': 'float', 'value': 1, 'unit': 'Last RF kick calculated.'},
+            'type': 'float', 'value': 0, 'unit': 'Last RF kick calculated.'},
         }
     if prefix:
         return {prefix + k: v for k, v in db.items()}
