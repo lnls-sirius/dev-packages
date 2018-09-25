@@ -51,7 +51,7 @@ class _PCASDriver(_pcaspy.Driver):
 
 # def run(ioc_name):
 def run(manames):
-    """Main module function."""
+    """Implement main module function."""
     # define abort function
     _signal.signal(_signal.SIGINT, _stop_now)
     _signal.signal(_signal.SIGTERM, _stop_now)
