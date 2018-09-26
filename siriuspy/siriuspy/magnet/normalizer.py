@@ -48,7 +48,7 @@ class _MagnetNormalizer(_Computer):
         value_default = self._compute_new_value(computed_pv,
                                                 updated_pv_name, value)
         value_conv = value_default if self._coef_def2edb == 1.0 else \
-            self._conv_epicsdb_2_default(value_default)
+            self._conv_default_2_epicsdb(value_default)
         kwret["value"] = value_conv
         lims = self._compute_limits(computed_pv, updated_pv_name)
         if lims is not None:
@@ -69,7 +69,7 @@ class _MagnetNormalizer(_Computer):
                 lims['LOPR'], lims['LOW'], lims['LOLO'])
         lims_default = self.conv_current_2_strength(lims, **kwargs)
         lims = lims_default if self._coef_def2edb == 1.0 else \
-            self._conv_epicsdb_2_default(lims_default)
+            self._conv_default_2_epicsdb(lims_default)
         tlim = (lims[0], lims[-1])
         hihi, lolo = max(tlim), min(tlim)
         tlim = (lims[1], lims[-2])
@@ -212,11 +212,20 @@ class _MagnetNormalizer(_Computer):
     def _conv_default_2_epicsdb(self, values):
         return self._conv_values(values, self._coef_def2edb)
 
-    def _conv_default_epicsdb_2_default(self, values):
+    def _conv_epicsdb_2_default(self, values):
         return self._conv_values(values, 1.0/self._coef_def2edb)
 
     def _calc_conv_coef(self):
         db = self._madata.get_database(self._psname)
+        if 'Energy-SP' in db:
+            db = db['Energy-SP']
+        elif 'KL-SP' in db:
+            db = db['KL-SP']
+        elif 'SL-SP' in db:
+            db = db['SL-SP']
+        elif 'Kick-SP' in db:
+            db = db['Kick-SP']
+        print(db)
         if 'unit' in db:
             unit = db['unit'].lower()
             if unit == 'mrad':
