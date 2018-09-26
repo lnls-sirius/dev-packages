@@ -27,6 +27,7 @@ class _MagnetNormalizer(_Computer):
         self._magnet_conv_sign = magnet_conv_sign
         self._mfmult = _magfuncs[self._magfunc]
         self._psname = self._power_supplies()[0]
+        self._calc_conv_coef()
 
     # --- computer interface ---
 
@@ -34,7 +35,9 @@ class _MagnetNormalizer(_Computer):
         """Put strength value."""
         # convert strength to current
         kwargs = self._get_params(computed_pv)
-        current = self.conv_strength_2_current(value, **kwargs)
+        value_conv = value if self._coef_def2edb == 1.0 else \
+            self._conv_epicsdb_2_default(value)
+        current = self.conv_strength_2_current(value_conv, **kwargs)
         # first PV must be actual magnet current
         computed_pv.pvs[0].put(current)
 
@@ -42,9 +45,11 @@ class _MagnetNormalizer(_Computer):
         """Convert current to strength."""
         kwret = {}
         # convert current to strength
-        kwret["value"] = self._compute_new_value(computed_pv,
-                                                 updated_pv_name, value)
-
+        value_default = self._compute_new_value(computed_pv,
+                                                updated_pv_name, value)
+        value_conv = value_default if self._coef_def2edb == 1.0 else \
+            self._conv_epicsdb_2_default(value_default)
+        kwret["value"] = value_conv
         lims = self._compute_limits(computed_pv, updated_pv_name)
         if lims is not None:
             kwret["hihi"] = lims[0]
@@ -62,7 +67,9 @@ class _MagnetNormalizer(_Computer):
         lims = self._madata.splims
         lims = (lims['HIHI'], lims['HIGH'], lims['HOPR'],
                 lims['LOPR'], lims['LOW'], lims['LOLO'])
-        lims = self.conv_current_2_strength(lims, **kwargs)
+        lims_default = self.conv_current_2_strength(lims, **kwargs)
+        lims = lims_default if self._coef_def2edb == 1.0 else \
+            self._conv_epicsdb_2_default(lims_default)
         tlim = (lims[0], lims[-1])
         hihi, lolo = max(tlim), min(tlim)
         tlim = (lims[1], lims[-2])
@@ -187,6 +194,38 @@ class _MagnetNormalizer(_Computer):
     def _power_supplies(self):
         psname = self._maname.replace(":MA", ":PS").replace(':PM', ':PU')
         return [psname]
+
+    # --- conversion default [rad] to epicsdb [(m|u)rad] values ---
+
+    def _conv_values(self, values, coef):
+        if isinstance(values, (int, float)):
+            return coef * values
+        elif isinstance(values, tuple):
+            return (coef*v for v in values)
+        elif isinstance(values, list):
+            return [coef*v for v in values]
+        elif isinstance(values, _np.ndarray):
+            return coef*values
+        else:
+            return values
+
+    def _conv_default_2_epicsdb(self, values):
+        return self._conv_values(values, self._coef_def2edb)
+
+    def _conv_default_epicsdb_2_default(self, values):
+        return self._conv_values(values, 1.0/self._coef_def2edb)
+
+    def _calc_conv_coef(self):
+        db = self._madata.get_database(self._psname)
+        if 'unit' in db:
+            unit = db['unit'].lower()
+            if unit == 'mrad':
+                self._coef_def2edb = 1e3
+                return
+            elif unit == 'urad':
+                self._coef_def2edb = 1e6
+                return
+        self._coef_def2edb = 1.0
 
 
 class DipoleNormalizer(_MagnetNormalizer):
