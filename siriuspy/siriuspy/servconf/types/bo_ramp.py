@@ -46,8 +46,6 @@ _ps_normalized_configs = [
 ]
 
 _rf_ramp = {
-    # ramp enable state
-    'enable_state':         _util.DEFAULT_RF_RAMP_ENBL_STATE,
     # ramp increase duration [min]
     'rampinc_duration': _util.DEFAULT_RF_RAMP_RAMPINC_DURATION,
     # ramp intervals durations [ms]
