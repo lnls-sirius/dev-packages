@@ -84,29 +84,6 @@ class ConfigService:
         request = _Request(url=url, method="GET")
         return self._make_request(request)
 
-    def update_config(self, obj_dict):
-        """Update an existing configuration."""
-        if type(obj_dict) is not dict:
-            raise ValueError('"obj_dict" is not a dictionary')
-        id = obj_dict["_id"]
-        config_type = obj_dict['config_type']
-        # Check value format
-        if not _config_types.check_value(config_type, obj_dict['value']):
-            raise TypeError('Incompatible configuration value!')
-        # Get params allowed to be updated
-        update_dict = {
-            "name": obj_dict["name"],
-            "value": obj_dict["value"],
-            "discarded": obj_dict["discarded"]  # TODO: should it be allowed?
-        }
-        # Build URL a make PUT request
-        url_params = "/{}".format(id)
-        url = self._url + self.CONFIGS_ENDPOINT + url_params
-        request = _Request(url=url, method="PUT",
-                           headers={"Content-Type": "application/json"},
-                           data=_json.dumps(update_dict).encode())
-        return self._make_request(request)
-
     def insert_config(self, config_type, name, value):
         """Insert configuration into database."""
         if not _config_types.check_value(config_type, value):
