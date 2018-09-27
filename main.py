@@ -22,7 +22,7 @@ class SOFB(_BaseClass):
 
     def get_database(self):
         """Get the database of the class."""
-        db = _csorb.get_sofb_database(self.acc)
+        db = _csorb.get_sofb_database()
         prop = 'fun_set_pv'
         db['AutoCorr-Sel'][prop] = self.set_auto_corr
         db['AutoCorrFreq-SP'][prop] = self.set_auto_corr_frequency
@@ -34,9 +34,13 @@ class SOFB(_BaseClass):
         db['MaxKickCH-SP'][prop] = _part(self.set_max_kick, 'ch')
         db['MaxKickCV-SP'][prop] = _part(self.set_max_kick, 'cv')
         db['MaxKickRF-SP'][prop] = _part(self.set_max_kick, 'rf')
+        db['MaxDeltaKickCH-SP'][prop] = _part(self.set_max_delta_kick, 'ch')
+        db['MaxDeltaKickCV-SP'][prop] = _part(self.set_max_delta_kick, 'cv')
+        db['MaxDeltaKickRF-SP'][prop] = _part(self.set_max_delta_kick, 'rf')
         db['MeasRespMatKickCH-SP'][prop] = _part(self.set_respmat_kick, 'ch')
         db['MeasRespMatKickCV-SP'][prop] = _part(self.set_respmat_kick, 'cv')
         db['MeasRespMatKickRF-SP'][prop] = _part(self.set_respmat_kick, 'rf')
+        db['MeasRespMatWait-SP'][prop] = self.set_respmat_wait_time
         db['ApplyCorr-Cmd'][prop] = self.apply_corr
         db = super().get_database(db)
         db.update(self.correctors.get_database())
@@ -57,7 +61,9 @@ class SOFB(_BaseClass):
         self._auto_corr_freq = 1
         self._corr_factor = {'ch': 1.00, 'cv': 1.00, 'rf': 1.00}
         self._max_kick = {'ch': 300, 'cv': 300, 'rf': 3000}
+        self._max_delta_kick = {'ch': 50, 'cv': 50, 'rf': 500}
         self._meas_respmat_kick = {'ch': 0.2, 'cv': 0.2, 'rf': 200}
+        self._meas_respmat_wait = 0.5  # seconds
         self._dtheta = None
         self._ref_corr_kicks = None
         self._thread = None
@@ -124,6 +130,7 @@ class SOFB(_BaseClass):
             return False
         ret_val = fun_(value)
         if ret_val:
+            print('here')
             _log.info('YES Write %s: %s', reason, str(value))
         else:
             value = self._driver.getParam(reason)
@@ -147,8 +154,8 @@ class SOFB(_BaseClass):
 
     def apply_corr(self, code):
         """Apply calculated kicks on the correctors."""
-        if not self.orbit.correction_mode:
-            self._update_log('ERR: Offline, cannot apply kicks.')
+        if self.orbit.mode != _csorb.OrbitMode.Online:
+            self._update_log('ERR: Not Online, cannot apply kicks.')
             return False
         if self._thread and self._thread.is_alive():
             self._update_log('ERR: AutoCorr or MeasRespMat is On.')
@@ -206,6 +213,11 @@ class SOFB(_BaseClass):
         self.run_callbacks('MaxKick'+plane.upper()+'-RB', float(value))
         return True
 
+    def set_max_delta_kick(self, plane, value):
+        self._max_delta_kick[plane] = float(value)
+        self.run_callbacks('MaxDeltaKick'+plane.upper()+'-RB', float(value))
+        return True
+
     def set_corr_factor(self, plane, value):
         self._corr_factor[plane] = value/100
         self._update_log(
@@ -216,6 +228,11 @@ class SOFB(_BaseClass):
     def set_respmat_kick(self, plane, value):
         self._meas_respmat_kick[plane] = value
         self.run_callbacks('MeasRespMatKick'+plane.upper()+'-RB', value)
+        return True
+
+    def set_respmat_wait_time(self, value):
+        self._meas_respmat_wait = value
+        self.run_callbacks('MeasRespMatWait-RB', value)
         return True
 
     def _update_status(self):
@@ -236,6 +253,8 @@ class SOFB(_BaseClass):
         self._update_log(
             'Applying {0:s} kicks.'.format(_csorb.ApplyCorr._fields[code]))
         kicks = self._process_kicks(self._ref_corr_kicks, dkicks)
+        if kicks is None:
+            return
         if any(kicks):
             self.correctors.apply_kicks(kicks)
         else:
@@ -285,6 +304,9 @@ class SOFB(_BaseClass):
         return True
 
     def _start_meas_respmat(self):
+        if self.orbit.mode != _csorb.OrbitMode.Online:
+            self._update_log('ERR: Can only Meas Respmat in Online Mode')
+            return False
         if self._measuring_respmat:
             self._update_log('ERR: Measurement already in process.')
             return False
@@ -320,9 +342,11 @@ class SOFB(_BaseClass):
             kicks = orig_kicks.copy()
             kicks[i] += delta/2
             self.correctors.apply_kicks(kicks)
+            _time.sleep(self._meas_respmat_wait)
             orbp = self.orbit.get_orbit(True)
             kicks[i] += -delta
             self.correctors.apply_kicks(kicks)
+            _time.sleep(self._meas_respmat_wait)
             orbn = self.orbit.get_orbit(True)
             mat[:, i] = (orbp-orbn)/delta
         self.correctors.apply_kicks(orig_kicks)
@@ -332,20 +356,39 @@ class SOFB(_BaseClass):
         self._measuring_respmat = False
 
     def _do_auto_corr(self):
-        if not self.orbit.correction_mode:
-            self._update_log('ERR: Cannot Auto Correct in Offline Mode')
+        if self.orbit.mode != _csorb.OrbitMode.Online:
+            self._update_log('ERR: Can only Auto Correct in Online Mode')
             self.run_callbacks('AutoCorr-Sel', 0)
             self.run_callbacks('AutoCorr-Sts', 0)
             return
         self.run_callbacks('AutoCorr-Sts', 1)
-        while self._auto_corr == _csorb.AutoCorr.On:
+        strn = '{0:20s}: {1:7.3f}'
+        while (self._auto_corr == _csorb.AutoCorr.On and
+               self.orbit.mode == _csorb.OrbitMode.Online):
             t0 = _time.time()
             orb = self.orbit.get_orbit()
+            t1 = _time.time()
+            print(strn.format('get orbit:', 1000*(t1-t0)))
             dkicks = self.matrix.calc_kicks(orb)
+            t2 = _time.time()
+            print(strn.format('calc kicks:', 1000*(t2-t1)))
             kicks = self.correctors.get_strength()
+            t3 = _time.time()
+            print(strn.format('get strength:', 1000*(t3-t2)))
             kicks = self._process_kicks(kicks, dkicks)
+            if kicks is None:
+                self._auto_corr = _csorb.AutoCorr.Off
+                self._update_log('ERR: Exit Auto Correction')
+                self.run_callbacks('AutoCorr-Sel', 0)
+                continue
+            t4 = _time.time()
+            print(strn.format('process kicks:', 1000*(t4-t3)))
             self.correctors.apply_kicks(kicks)  # slowest part
+            t5 = _time.time()
+            print(strn.format('apply kicks:', 1000*(t5-t4)))
             dt = (_time.time()-t0)
+            print(strn.format('total:', 1000*dt))
+            print()
             interval = 1/self._auto_corr_freq
             if dt > interval:
                 _log.warning('App: AutoCorr took %f ms.', dt*1000)
@@ -364,30 +407,52 @@ class SOFB(_BaseClass):
         self._ref_corr_kicks = self.correctors.get_strength()
         self._dtheta = self.matrix.calc_kicks(orb)
 
-    def _process_kicks(self, kicks):
+    def _process_kicks(self, kicks, dkicks):
         nr_ch = self._const.NR_CH
-        kicks[:nr_ch] *= self._corr_factor['ch']
-        kicks[nr_ch:-1] *= self._corr_factor['cv']
-        kicks[-1] *= self._corr_factor['rf']
+        slcs = {
+            'ch': slice(None, nr_ch),
+            'cv': slice(nr_ch, -1),
+            'rf': slice(-1, None)}
+        for pln in ('ch', 'cv', 'rf'):
+            slc = slcs[pln]
+            dkicks[slc] *= self._corr_factor[pln]
 
-        max_kick_ch = max(abs(kicks[:nr_ch]))
-        if max_kick_ch > self._max_kick['ch']:
-            factor = self._max_kick['ch']/max_kick_ch
-            kicks[:nr_ch] *= factor
-            percent = self._corr_factor['ch'] * factor * 100
-            self._update_log(
-                'Warn: CH kick > MaxKickCH. Using {0:5.2f}%'.format(percent))
-        max_kick_cv = max(abs(kicks[nr_ch:-1]))
-        if max_kick_cv > self._max_kick['cv']:
-            factor = self._max_kick['cv']/max_kick_cv
-            kicks[nr_ch:-1] *= factor
-            percent = self._corr_factor['cv'] * factor * 100
-            self._update_log(
-                'Warn: CV kick > MaxKickCV. Using {0:5.2f}%'.format(percent))
-        if abs(kicks[-1]) > self._max_kick['rf']:
-            factor = self._max_kick['rf'] / abs(kicks[-1])
-            kicks[-1] *= factor
-            percent = self._corr_factor['rf'] * factor * 100
-            self._update_log(
-                'Warn: RF kick > MaxKickRF. Using {0:5.2f}%'.format(percent))
+            # Check if any delta kick is larger the maximum allowed
+            max_delta_kick = _np.max(_np.abs(dkicks[slc]))
+            factor1 = 1.0
+            if max_delta_kick > self._max_delta_kick[pln]:
+                factor1 = self._max_delta_kick[pln]/max_delta_kick
+                dkicks[slc] *= factor1
+                percent = self._corr_factor[pln] * factor1 * 100
+                self._update_log(
+                    'WARN: MaxDeltaKick{0:s} reached. Using {1:5.2f}%'.format(
+                        pln.upper(), percent))
+            # Check if any kick is larger than the maximum allowed:
+            ind, *_ = _np.where(_np.abs(kicks[slc]) > self._max_kick[pln])
+            if ind.size:
+                self._update_log(
+                    'ERR: Corrs above MaxKick{0:s}.'.format(pln.upper()))
+                return
+            # Check if any kick + delta kick is larger than the maximum allowed
+            max_kick = _np.max(_np.abs(kicks[slc] + dkicks[slc]))
+            factor2 = 1.0
+            if max_kick > self._max_kick[pln]:
+                Q = _np.ones((2, kicks[slc].size), dtype=float)
+                # perform the modulus inequality:
+                Q[0, :] = (-self._max_kick[pln] - kicks[slc]) / dkicks[slc]
+                Q[1, :] = (self._max_kick[pln] - kicks[slc]) / dkicks[slc]
+                # since we know that any initial kick is lesser than max_kick
+                # from the previous comparison, at this point each column of Q
+                # has a positive and a negative value. We must consider only
+                # the positive one and take the minimum value along the columns
+                # to be the multiplicative factor:
+                Q = _np.max(Q, axis=0)
+                factor2 = min(_np.min(Q), 1.0)
+                dkicks[slc] *= factor2
+                percent = self._corr_factor[pln] * factor1 * factor2 * 100
+                self._update_log(
+                    'WARN: MaxKick{0:s} reached. Using {1:5.2f}%'.format(
+                        pln.upper(), percent))
+
+            kicks[slc] += dkicks[slc]
         return kicks

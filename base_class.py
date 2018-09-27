@@ -1,4 +1,5 @@
 """Definition module."""
+import math as _math
 import siriuspy.csdevice.orbitcorr as _csorb
 from siriuspy.callbacks import Callback as _Callback
 
@@ -35,3 +36,42 @@ class BaseClass(_Callback):
 
     def _update_status(self):
         pass
+
+
+class BaseTimingConfig:
+
+    def __init__(self, acc):
+        self.acc = acc
+        self._config_ok_vals = {}
+        self._config_pvs_rb = {}
+        self._config_pvs_sp = {}
+
+    @property
+    def connected(self):
+        conn = True
+        for k, pv in self._config_pvs_rb.items():
+            conn &= pv.connected
+        for k, pv in self._config_pvs_sp.items():
+            conn &= pv.connected
+        return conn
+
+    @property
+    def is_ok(self):
+        ok = True
+        for k, val in self._config_ok_vals.items():
+            pv = self._config_pvs_rb[k]
+            pvval = pv.value
+            if isinstance(val, float):
+                ok &= _math.isclose(val, pvval, rel_tol=1e-2)
+            else:
+                ok &= val == pvval
+            if not ok:
+                break
+        return ok
+
+    def configure(self):
+        if not self.connected:
+            return False
+        for k, pv in self._config_pvs_sp.items():
+            pv.value = self._config_ok_vals[k]
+        return True
