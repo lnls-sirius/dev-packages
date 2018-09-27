@@ -25,7 +25,6 @@ class TestConfigService(unittest.TestCase):
         "get_config",
         "get_types",
         "get_names_by_type",
-        "update_config",
         "insert_config",
         "find_configs",
         "find_nr_configs",
@@ -187,64 +186,6 @@ class TestConfigService(unittest.TestCase):
         resp = self.cs.insert_config(
             self.insert_config["config_type"],
             self.insert_config["name"], self.fake_config["value"])
-        self.assertEqual(resp, self.decode_error_reponse)
-
-    # Update
-    def test_update_request_creation(self):
-        """Test update_config creates a valid request."""
-        # Call update
-        self.cs.update_config(self.fake_config)
-        # Assert request is created
-        self.req_mock.assert_called_once_with(
-            url=self.fake_url, method="PUT",
-            headers=self.header,
-            data=json.dumps(self.update_config).encode())
-
-    def test_update_url_request(self):
-        """Test update_config makes the request."""
-        # Call update
-        self.cs.update_config(self.fake_config)
-        # Assert request is made
-        self.url_mock.assert_called_once_with("FakeRequest")
-        self.url_mock.return_value.read.assert_called_once()
-
-    def test_update_response(self):
-        """Test update_config returns valid response."""
-        # Call update
-        resp = self.cs.update_config(self.fake_config)
-        # Assert response
-        self.assertEqual(resp, self.fake_resp)
-
-    def test_update_value_check(self):
-        """Test update_config checks value it is being passed."""
-        # Call update
-        self.cs.update_config(self.fake_config)
-        # Assert a value check is made
-        self.conf_mock.check_value.assert_called_once_with(
-            self.fake_config['config_type'], self.fake_config['value'])
-
-    def test_update_value_check_exception(self):
-        """Assert exception is raised when check value fails."""
-        self.conf_mock.check_value.return_value = False
-        with self.assertRaises(TypeError):
-            self.cs.update_config(self.fake_config)
-
-    def test_update_input_type_exception(self):
-        """Assert exception is raised when the input is not a dict."""
-        self.assertRaises(ValueError, self.cs.update_config, obj_dict=1)
-        self.assertRaises(ValueError, self.cs.update_config, obj_dict=[1, 2])
-        self.assertRaises(ValueError, self.cs.update_config, obj_dict="String")
-
-    def test_update_response_exceptions(self):
-        """Test update_config response exceptions."""
-        # Set exception and call get config
-        self.url_mock.return_value.read.side_effect = URLError("FakeError")
-        resp = self.cs.update_config(self.fake_config)
-        self.assertEqual(resp, self.url_error_reponse)
-        # Set JSON errpr and call get config
-        self.url_mock.return_value.read.side_effect = \
-            json.JSONDecodeError("FakeError", "FakeDoc", 0)
-        resp = self.cs.update_config(self.fake_config)
         self.assertEqual(resp, self.decode_error_reponse)
 
     # Delete
