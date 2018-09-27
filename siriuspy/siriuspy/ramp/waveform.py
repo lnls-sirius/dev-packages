@@ -15,17 +15,17 @@ class WaveformParam:
 
     def __init__(
             self,
-            duration=_rutil.DEFAULT_RAMP_DURATION,
-            start_energy=_rutil.DEFAULT_RAMP_START_ENERGY,
-            rampup_start_time=_rutil.DEFAULT_RAMP_RAMPUP_START_TIME,
-            rampup_start_energy=_rutil.DEFAULT_RAMP_RAMPUP_START_ENERGY,
-            rampup_stop_time=_rutil.DEFAULT_RAMP_RAMPUP_STOP_TIME,
-            rampup_stop_energy=_rutil.DEFAULT_RAMP_RAMPUP_STOP_ENERGY,
-            plateau_energy=_rutil.DEFAULT_RAMP_PLATEAU_ENERGY,
-            rampdown_start_time=_rutil.DEFAULT_RAMP_RAMPDOWN_START_TIME,
-            rampdown_start_energy=_rutil.DEFAULT_RAMP_RAMPDOWN_START_ENERGY,
-            rampdown_stop_time=_rutil.DEFAULT_RAMP_RAMPDOWN_STOP_TIME,
-            rampdown_stop_energy=_rutil.DEFAULT_RAMP_RAMPDOWN_STOP_ENERGY,
+            duration=_rutil.DEFAULT_PS_RAMP_DURATION,
+            start_energy=_rutil.DEFAULT_PS_RAMP_START_ENERGY,
+            rampup_start_time=_rutil.DEFAULT_PS_RAMP_RAMPUP_START_TIME,
+            rampup_start_energy=_rutil.DEFAULT_PS_RAMP_RAMPUP_START_ENERGY,
+            rampup_stop_time=_rutil.DEFAULT_PS_RAMP_RAMPUP_STOP_TIME,
+            rampup_stop_energy=_rutil.DEFAULT_PS_RAMP_RAMPUP_STOP_ENERGY,
+            plateau_energy=_rutil.DEFAULT_PS_RAMP_PLATEAU_ENERGY,
+            rampdown_start_time=_rutil.DEFAULT_PS_RAMP_RAMPDOWN_START_TIME,
+            rampdown_start_energy=_rutil.DEFAULT_PS_RAMP_RAMPDOWN_START_ENERGY,
+            rampdown_stop_time=_rutil.DEFAULT_PS_RAMP_RAMPDOWN_STOP_TIME,
+            rampdown_stop_energy=_rutil.DEFAULT_PS_RAMP_RAMPDOWN_STOP_ENERGY,
             **kwargs):
         """Init method."""
         self._duration = duration
@@ -301,15 +301,17 @@ class WaveformParam:
         """Region5 function."""
         t2, v2 = self._rampup_stop_time, self._rampup_stop_energy
         t3, v3 = self._rampdown_start_time, self._rampdown_start_energy
-        Du, Dd = self._t_pb_D, self._t_pe_D
-        n = self._n
         if t < self._t_pb:
+            Du, Dd = self._t_pb_D, self._t_pe_D
+            n = self._n
             ts = self._t_pb - t2
             d = t - t2
             v = v2 + Du * (ts**n*d - d**(n+1)/(n+1.0)) / ts**n
         elif self._t_pb <= t <= self._t_pe:
             v = self._plateau_energy
         else:
+            Du, Dd = self._t_pb_D, self._t_pe_D
+            n = self._n
             ts = t3 - self._t_pe
             d = t3 - t
             v = v3 + Dd * (-ts**n*d + d**(n+1)/(n+1.0)) / ts**n

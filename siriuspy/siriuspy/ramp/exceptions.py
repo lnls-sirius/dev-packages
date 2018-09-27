@@ -19,3 +19,9 @@ class RampInvalidNormConfig(RampError):
     """Invalid normalized configuration."""
 
     pass
+
+
+class RampInvalidRFParms(RampError):
+    """Invalid RF parameters."""
+
+    pass
