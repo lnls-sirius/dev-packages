@@ -30,6 +30,8 @@ class TestMASearch(MockServConf):
         'get_pwrsupply_manames',
         'get_splims_unit',
         'get_splims',
+        'get_mapositions',
+        'get_manicknames',
         'conv_maname_2_trims',
         'conv_maname_2_magfunc',
         'conv_maname_2_splims',

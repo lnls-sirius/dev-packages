@@ -60,6 +60,7 @@ class TestServWeb(unittest.TestCase):
     public_interface = {
         'read_url',
         'server_online',
+        'magnets_model_data',
         'magnets_excitation_data_read',
         'magnets_setpoint_limits',
         'pulsed_magnets_setpoint_limits',
@@ -96,6 +97,19 @@ class TestServWeb(unittest.TestCase):
         """Test server_online return True when no exception is issued."""
         mock_read.side_effect = Exception()
         self.assertFalse(implementation.server_online())
+
+    def test_bpms_data(self, mock_read):
+        """Test bpms_data."""
+        url = implementation._magnet_folder + 'magnets-model-data.txt'
+        # Call with different parameters
+        resp = implementation.bpms_data()
+        self.assertEqual(resp, "FakeResponse")
+        resp = implementation.bpms_data(timeout=2.0)
+        self.assertEqual(resp, "FakeResponse")
+        # Assert read_url was called correctly
+        mock_read.assert_has_calls([
+            mock.call(url, timeout=1.0),
+            mock.call(url, timeout=2.0)])
 
     def test_magnets_excitation_data_read(self, mock_read):
         """Test magnets_excitation_data_read."""
@@ -239,7 +253,7 @@ class TestServWeb(unittest.TestCase):
     def test_crates_mapping(self, mock_read):
         """Test crate_to_bpm_mapping."""
         url = (
-            implementation._diag_folder + 'Mapeamento_placas_MicroTCA_vs_BPMs/')
+            implementation._diag_folder + 'microTCA-vs-BPMs-mapping/')
         # Call with different parameters
         resp = implementation.crates_mapping()
         self.assertEqual(resp, "")
