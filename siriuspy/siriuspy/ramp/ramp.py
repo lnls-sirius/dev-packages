@@ -5,6 +5,8 @@ from copy import deepcopy as _dcopy
 
 from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
 from siriuspy.servconf.srvconfig import ConfigSrv as _ConfigSrv
+from siriuspy.servconf.util import \
+    generate_default_config_name as _generate_default_config_name
 from siriuspy.magnet.util import \
     get_section_dipole_name as _get_section_dipole_name, \
     get_magnet_family_name as _get_magnet_family_name
@@ -24,6 +26,7 @@ from siriuspy.ramp.waveform import \
 class BoosterNormalized(_ConfigSrv):
     """Booster normalized configuration."""
 
+    # ConfigSrv connector object
     _conn = _CCBONormalized()
 
     def __init__(self, name=None):
@@ -111,29 +114,15 @@ class BoosterRamp(_ConfigSrv):
             config.configsrv_load()
         self._invalidate_ps_waveforms()
 
-    def configsrv_update(self):
-        """Update configuration in config server."""
-        # update ramp config
-        _ConfigSrv.configsrv_update(self)
-        self._synchronized = False  # in case cannot load ps norm config
-        # update or save ps normalized configs
-        for config in self._ps_nconfigs.values():
-            if config.configsrv_synchronized and config.configsrv_exist():
-                # already exists, just update
-                config.configsrv_update()
-            else:
-                # save a new ps normalized configuration
-                config.configsrv_save()
-        self._synchronized = True  # all went well
-
-    def configsrv_save(self):
+    def configsrv_save(self, new_name=None):
         """Save configuration to config server."""
         # save booster ramp
-        _ConfigSrv.configsrv_save(self)
+        _ConfigSrv.configsrv_save(self, new_name)
         self._synchronized = False  # in case cannot load ps norm config
         # save each ps normalized configuration
         for config in self._ps_nconfigs.values():
-            config.configsrv_save()
+            if not config.configsrv_exist():
+                config.configsrv_save(config.name)
         self._synchronized = True  # all went well
 
     def check_value(self):
@@ -183,8 +172,7 @@ class BoosterRamp(_ConfigSrv):
         """Insert a ps normalized configuration."""
         # process ps normalized config name
         if not isinstance(name, str) or len(name) == 0:
-            bn = BoosterNormalized()
-            name = bn.name
+            name = _generate_default_config_name('bo_normalized')
 
         # add new entry to list with ps normalized configs metadata
         otimes = self.ps_normalized_configs_times
