@@ -1,0 +1,191 @@
+# BeagleBoneBlack Mapping to UDC
+
+
+# --- Booster dipoles, quadrupoles, sextupoles (FAC)
+
+BO-Glob:CO-PSCtrl-1     BO-Glob:PS-FACDCDC-1
+BO-Glob:CO-PSCtrl-2     BO-Glob:PS-FACDCDC-2
+BO-Glob:CO-PSCtrl-3     BO-Glob:PS-FACDCDC-3
+BO-Glob:CO-PSCtrl-4     BO-Glob:PS-FACACDC
+
+BO-Glob:CO-PSCtrl-5     BO-Glob:PS-FAC2SDCDC   BO-Glob:FAC-2SACDC
+
+BO-Glob:CO-PSCtrl-6     BO-Glob:PS-FAC2P4SDCDC-1  BO-Glob:FAC-2P4SACDC-1  BO-Glob:FAC-2P4SACDC-2  BO-Glob:FAC-2P4SACDC-3  BO-Glob:FAC-2P4SACDC-4
+BO-Glob:CO-PSCtrl-7     BO-Glob:PS-FAC2P4SDCDC-2  BO-Glob:FAC-2P4SACDC-5  BO-Glob:FAC-2P4SACDC-6  BO-Glob:FAC-2P4SACDC-7  BO-Glob:FAC-2P4SACDC-8
+
+
+# --- Transport lines power supplies (FAP & FBP)
+
+# TB Dipole
+TB-Glob:CO-PSCtrl-1     TB-Glob:PS-FAP
+# TB Quads
+TB-Glob:CO-PSCtrl-2     TB-Glob:PS-FBP-1   TB-Glob:PS-FBP-2   TB-Glob:PS-FBP-3
+# TB Correctors
+TB-Glob:CO-PSCtrl-3     TB-Glob:PS-FBP-4   TB-Glob:PS-FBP-5   TB-Glob:PS-FBP-6
+
+# TS Dipole
+TS-Glob:CO-PSCtrl-1     TS-Glob:PS-FAP4PMaster TS-Glob:PS-FAP4PSlave
+# TS Quads
+TS-Glob:CO-PSCtrl-2     TS-Glob:PS-FAP-1
+TS-Glob:CO-PSCtrl-3     TS-Glob:PS-FAP-2
+# TS Correctors
+TS-Glob:CO-PSCtrl-4     TS-Glob:PS-FBP-1   TS-Glob:PS-FBP-2   TS-Glob:PS-FBP-3
+
+# TB/TS DCLinks
+AS-Glob:CO-PSCtrl-1     AS-Glob:PS-FBPDCLink-1
+
+
+# --- Storage Ring and Booster power supplies (FBP)
+
+# BO Correctores/Quad Skew
+BO-01:CO-PSCtrl-1       BO-01:PS-FBP-1
+BO-01:CO-PSCtrl-2       BO-01:PS-FBP-2
+BO-03:CO-PSCtrl         BO-03:PS-FBP
+BO-05:CO-PSCtrl         BO-05:PS-FBP
+BO-07:CO-PSCtrl         BO-07:PS-FBP
+BO-08:CO-PSCtrl         BO-08:PS-FBP
+BO-09:CO-PSCtrl         BO-09:PS-FBP
+BO-11:CO-PSCtrl         BO-11:PS-FBP
+BO-13:CO-PSCtrl         BO-13:PS-FBP
+BO-14:CO-PSCtrl         BO-14:PS-FBP
+BO-16:CO-PSCtrl         BO-16:PS-FBP
+BO-17:CO-PSCtrl         BO-17:PS-FBP
+BO-19:CO-PSCtrl         BO-19:PS-FBP
+
+#SI/BO DCLink
+AS-Glob:CO-PSCtrl-2     AS-Glob:PS-FBPDCLink-2
+
+
+################################################################################
+################################################################################
+# --- Sirius Dipoles
+
+SI-Glob:CO-PSCtrl-1    SI-Glob:PS-FAP2P2SMaster-1   SI-Glob:PS-FAP2P2SMaster-2
+
+# --- Sirius Correctors
+
+SI-01:CO-PSCtrl-5      SI-01:PS-FBP-5
+SI-02:CO-PSCtrl-5      SI-02:PS-FBP-5
+SI-03:CO-PSCtrl-5      SI-03:PS-FBP-5
+SI-04:CO-PSCtrl-5      SI-04:PS-FBP-5
+SI-05:CO-PSCtrl-5      SI-05:PS-FBP-5
+SI-06:CO-PSCtrl-5      SI-06:PS-FBP-5
+SI-07:CO-PSCtrl-5      SI-07:PS-FBP-5
+SI-08:CO-PSCtrl-5      SI-08:PS-FBP-5
+SI-09:CO-PSCtrl-5      SI-09:PS-FBP-5
+SI-10:CO-PSCtrl-5      SI-10:PS-FBP-5
+SI-11:CO-PSCtrl-5      SI-11:PS-FBP-5
+SI-12:CO-PSCtrl-5      SI-12:PS-FBP-5
+SI-13:CO-PSCtrl-5      SI-13:PS-FBP-5
+SI-14:CO-PSCtrl-5      SI-14:PS-FBP-5
+SI-15:CO-PSCtrl-5      SI-15:PS-FBP-5
+SI-16:CO-PSCtrl-5      SI-16:PS-FBP-5
+SI-17:CO-PSCtrl-5      SI-17:PS-FBP-5
+SI-18:CO-PSCtrl-5      SI-18:PS-FBP-5
+SI-19:CO-PSCtrl-5      SI-19:PS-FBP-5
+SI-20:CO-PSCtrl-5      SI-20:PS-FBP-5
+
+SI-01:CO-PSCtrl-6      SI-01:PS-FBP-6
+SI-02:CO-PSCtrl-6      SI-02:PS-FBP-6
+SI-03:CO-PSCtrl-6      SI-03:PS-FBP-6
+SI-04:CO-PSCtrl-6      SI-04:PS-FBP-6
+SI-05:CO-PSCtrl-6      SI-05:PS-FBP-6
+SI-06:CO-PSCtrl-6      SI-06:PS-FBP-6
+SI-07:CO-PSCtrl-6      SI-07:PS-FBP-6
+SI-08:CO-PSCtrl-6      SI-08:PS-FBP-6
+SI-09:CO-PSCtrl-6      SI-09:PS-FBP-6
+SI-10:CO-PSCtrl-6      SI-10:PS-FBP-6
+SI-11:CO-PSCtrl-6      SI-11:PS-FBP-6
+SI-12:CO-PSCtrl-6      SI-12:PS-FBP-6
+SI-13:CO-PSCtrl-6      SI-13:PS-FBP-6
+SI-14:CO-PSCtrl-6      SI-14:PS-FBP-6
+SI-15:CO-PSCtrl-6      SI-15:PS-FBP-6
+SI-16:CO-PSCtrl-6      SI-16:PS-FBP-6
+SI-17:CO-PSCtrl-6      SI-17:PS-FBP-6
+SI-18:CO-PSCtrl-6      SI-18:PS-FBP-6
+SI-19:CO-PSCtrl-6      SI-19:PS-FBP-6
+SI-20:CO-PSCtrl-6      SI-20:PS-FBP-6
+
+SI-01:CO-PSCtrl-7      SI-01:PS-FBP-7
+SI-02:CO-PSCtrl-7      SI-02:PS-FBP-7
+SI-03:CO-PSCtrl-7      SI-03:PS-FBP-7
+SI-04:CO-PSCtrl-7      SI-04:PS-FBP-7
+SI-05:CO-PSCtrl-7      SI-05:PS-FBP-7
+SI-06:CO-PSCtrl-7      SI-06:PS-FBP-7
+SI-07:CO-PSCtrl-7      SI-07:PS-FBP-7
+SI-08:CO-PSCtrl-7      SI-08:PS-FBP-7
+SI-09:CO-PSCtrl-7      SI-09:PS-FBP-7
+SI-10:CO-PSCtrl-7      SI-10:PS-FBP-7
+SI-11:CO-PSCtrl-7      SI-11:PS-FBP-7
+SI-12:CO-PSCtrl-7      SI-12:PS-FBP-7
+SI-13:CO-PSCtrl-7      SI-13:PS-FBP-7
+SI-14:CO-PSCtrl-7      SI-14:PS-FBP-7
+SI-15:CO-PSCtrl-7      SI-15:PS-FBP-7
+SI-16:CO-PSCtrl-7      SI-16:PS-FBP-7
+SI-17:CO-PSCtrl-7      SI-17:PS-FBP-7
+SI-18:CO-PSCtrl-7      SI-18:PS-FBP-7
+SI-19:CO-PSCtrl-7      SI-19:PS-FBP-7
+SI-20:CO-PSCtrl-7      SI-20:PS-FBP-7
+
+SI-01:CO-PSCtrl-8      SI-01:PS-FBP-8
+SI-02:CO-PSCtrl-8      SI-02:PS-FBP-8
+SI-03:CO-PSCtrl-8      SI-03:PS-FBP-8
+SI-04:CO-PSCtrl-8      SI-04:PS-FBP-8
+SI-05:CO-PSCtrl-8      SI-05:PS-FBP-8
+SI-06:CO-PSCtrl-8      SI-06:PS-FBP-8
+SI-07:CO-PSCtrl-8      SI-07:PS-FBP-8
+SI-08:CO-PSCtrl-8      SI-08:PS-FBP-8
+SI-09:CO-PSCtrl-8      SI-09:PS-FBP-8
+SI-10:CO-PSCtrl-8      SI-10:PS-FBP-8
+SI-11:CO-PSCtrl-8      SI-11:PS-FBP-8
+SI-12:CO-PSCtrl-8      SI-12:PS-FBP-8
+SI-13:CO-PSCtrl-8      SI-13:PS-FBP-8
+SI-14:CO-PSCtrl-8      SI-14:PS-FBP-8
+SI-15:CO-PSCtrl-8      SI-15:PS-FBP-8
+SI-16:CO-PSCtrl-8      SI-16:PS-FBP-8
+SI-17:CO-PSCtrl-8      SI-17:PS-FBP-8
+SI-18:CO-PSCtrl-8      SI-18:PS-FBP-8
+SI-19:CO-PSCtrl-8      SI-19:PS-FBP-8
+SI-20:CO-PSCtrl-8      SI-20:PS-FBP-8
+
+SI-01:CO-PSCtrl-9      SI-01:PS-FBP-9
+SI-02:CO-PSCtrl-9      SI-02:PS-FBP-9
+SI-03:CO-PSCtrl-9      SI-03:PS-FBP-9
+SI-04:CO-PSCtrl-9      SI-04:PS-FBP-9
+SI-05:CO-PSCtrl-9      SI-05:PS-FBP-9
+SI-06:CO-PSCtrl-9      SI-06:PS-FBP-9
+SI-07:CO-PSCtrl-9      SI-07:PS-FBP-9
+SI-08:CO-PSCtrl-9      SI-08:PS-FBP-9
+SI-09:CO-PSCtrl-9      SI-09:PS-FBP-9
+SI-10:CO-PSCtrl-9      SI-10:PS-FBP-9
+SI-11:CO-PSCtrl-9      SI-11:PS-FBP-9
+SI-12:CO-PSCtrl-9      SI-12:PS-FBP-9
+SI-13:CO-PSCtrl-9      SI-13:PS-FBP-9
+SI-14:CO-PSCtrl-9      SI-14:PS-FBP-9
+SI-15:CO-PSCtrl-9      SI-15:PS-FBP-9
+SI-16:CO-PSCtrl-9      SI-16:PS-FBP-9
+SI-17:CO-PSCtrl-9      SI-17:PS-FBP-9
+SI-18:CO-PSCtrl-9      SI-18:PS-FBP-9
+SI-19:CO-PSCtrl-9      SI-19:PS-FBP-9
+SI-20:CO-PSCtrl-9      SI-20:PS-FBP-9
+
+SI-01:CO-PSCtrl-10     SI-01:PS-FBP-10
+SI-02:CO-PSCtrl-10     SI-02:PS-FBP-10
+SI-03:CO-PSCtrl-10     SI-03:PS-FBP-10
+SI-04:CO-PSCtrl-10     SI-04:PS-FBP-10
+SI-05:CO-PSCtrl-10     SI-05:PS-FBP-10
+SI-06:CO-PSCtrl-10     SI-06:PS-FBP-10
+SI-07:CO-PSCtrl-10     SI-07:PS-FBP-10
+SI-08:CO-PSCtrl-10     SI-08:PS-FBP-10
+SI-09:CO-PSCtrl-10     SI-09:PS-FBP-10
+SI-10:CO-PSCtrl-10     SI-10:PS-FBP-10
+SI-11:CO-PSCtrl-10     SI-11:PS-FBP-10
+SI-12:CO-PSCtrl-10     SI-12:PS-FBP-10
+SI-13:CO-PSCtrl-10     SI-13:PS-FBP-10
+SI-14:CO-PSCtrl-10     SI-14:PS-FBP-10
+SI-15:CO-PSCtrl-10     SI-15:PS-FBP-10
+SI-16:CO-PSCtrl-10     SI-16:PS-FBP-10
+SI-17:CO-PSCtrl-10     SI-17:PS-FBP-10
+SI-18:CO-PSCtrl-10     SI-18:PS-FBP-10
+SI-19:CO-PSCtrl-10     SI-19:PS-FBP-10
+SI-20:CO-PSCtrl-10     SI-20:PS-FBP-10

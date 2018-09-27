@@ -28,6 +28,7 @@ class Watcher(_threading.Thread):
         self.exit = False
 
     def run(self):
+        """Thread execution."""
         Watcher.INSTANCE_COUNT += 1
         if self.op_mode == _PSConst.OpMode.Cycle:
             self._watch_cycle()
