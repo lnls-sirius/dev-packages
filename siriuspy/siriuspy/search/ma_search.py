@@ -17,6 +17,7 @@ class MASearch:
     _maname_2_splims_dict = None  # magnets-stpoint-limits file
     _maname_2_psnames_dict = None  # magnet-excitation-ps file
     _maname_2_trim_dict = None
+    _maname_2_modeldata_dict = None
     _splims_labels = None
     _splims_unit = None
 
@@ -41,6 +42,28 @@ class MASearch:
         return _Filter.process_filters(ps_manames_list,
                                        filters=filters,
                                        sorting=sorting)
+
+    @staticmethod
+    def get_mapositions(names=None, filters=None, sorting=None):
+        """Return a sorted and filtered list of all magnet names.
+
+        This list also includes pulsed magnets (PM).
+        """
+        if MASearch._maname_2_modeldata_dict is None:
+            MASearch._reload_maname_2_model_data()
+        if not names:
+            names = MASearch.get_manames(filters=filters, sorting=sorting)
+        return [MASearch._maname_2_modeldata_dict[mag]['pos'] for mag in names]
+
+    @staticmethod
+    def get_manicknames(names=None, filters=None, sorting=None):
+        """Return a list with Magnet nicknames."""
+        if not names:
+            names = MASearch.get_manames(filters=filters, sorting=sorting)
+        nicknames = len(names)*['']
+        for i, mag in enumerate(names):
+            nicknames[i] = mag.sub + ('-' + mag.idx if mag.idx else '')
+        return nicknames
 
     @staticmethod
     def get_splims_unit(psmodel):
@@ -235,3 +258,17 @@ class MASearch:
                             tuple(psnames)
         MASearch._manames_list = sorted(MASearch._manames_list)
         MASearch._psnames_list = _PSSearch.get_psnames()
+
+    @staticmethod
+    def _reload_maname_2_model_data():
+        'Build a dictionary of model information for each magnet.'
+        if not _web.server_online():
+            raise Exception(
+                'could not read magnet-excitation-ps from web server!')
+        text = _web.magnets_model_data()
+        data, param_dict = _util.read_text_data(text)
+        MASearch._maname_2_modeldata_dict = {}
+        for datum in data:
+            mag, *data = datum
+            mag = _SiriusPVName(mag)
+            MASearch._maname_2_modeldata_dict[mag] = {'pos': float(data[0])}
