@@ -1,9 +1,28 @@
 """ConfigService util module."""
 
-from siriuspy.util import get_timestamp as _get_timestamp
+import time as _time
+import datetime as _datetime
+import re as _re
 
 
-def generate_default_config_name(config_type):
-    """Generate a default configuration name using config_type."""
-    name = _get_timestamp() + '_' + config_type
-    return name
+def get_timestamp(now=None):
+    """."""
+    if now is None:
+        now = _time.time()
+    return _datetime.datetime.fromtimestamp(now).strftime('%y%m%d-%H%M%S')
+
+
+def generate_config_name(name=None):
+    """Generate a configuration name using current imestamp."""
+    if name is None:
+        name = ''
+    name = name.strip()
+    tsf = _re.compile('^\d\d\d\d\d\d-\d\d\d\d\d\d')
+    if tsf.match(name):
+        new_name = get_timestamp() + name[13:]
+    else:
+        if name:
+            new_name = get_timestamp() + ' ' + name
+        else:
+            new_name = get_timestamp()
+    return new_name
