@@ -6,7 +6,7 @@ from copy import deepcopy as _dcopy
 from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
 from siriuspy.servconf.srvconfig import ConfigSrv as _ConfigSrv
 from siriuspy.servconf.util import \
-    generate_default_config_name as _generate_default_config_name
+    generate_config_name as _generate_config_name
 from siriuspy.magnet.util import \
     get_section_dipole_name as _get_section_dipole_name, \
     get_magnet_family_name as _get_magnet_family_name
@@ -121,8 +121,12 @@ class BoosterRamp(_ConfigSrv):
         self._synchronized = False  # in case cannot load ps norm config
         # save each ps normalized configuration
         for config in self._ps_nconfigs.values():
-            if not config.configsrv_exist():
-                config.configsrv_save(config.name)
+            if config.configsrv_exist():
+                if self._configsrv_check_ps_normalized_modified(config):
+                    new_name = _generate_config_name(config.name)
+                    config.configsrv_save(new_name)
+            else:
+                config.configsrv_save()
         self._synchronized = True  # all went well
 
     def check_value(self):
@@ -172,7 +176,7 @@ class BoosterRamp(_ConfigSrv):
         """Insert a ps normalized configuration."""
         # process ps normalized config name
         if not isinstance(name, str) or len(name) == 0:
-            name = _generate_default_config_name('bo_normalized')
+            name = _generate_config_name()
 
         # add new entry to list with ps normalized configs metadata
         otimes = self.ps_normalized_configs_times
@@ -1077,6 +1081,20 @@ class BoosterRamp(_ConfigSrv):
         if waveform.invalid:  # triggers waveform check invalid parameters
             raise _RampInvalidDipoleWfmParms(
                 'Invalid ps waveform {}.'.format(propty))
+
+    def _configsrv_check_ps_normalized_modified(self, nconfig):
+        # load original nconfig from server
+        oconfig = BoosterNormalized(name=nconfig.name)
+        oconfig.configsrv_load()
+
+        # compare values. If identical, return False
+        for ma in oconfig.manames:
+            if oconfig[ma] != nconfig[ma]:
+                modified = True
+                break
+        else:
+            modified = False
+        return modified
 
 
 class SiriusMig(BoosterRamp):

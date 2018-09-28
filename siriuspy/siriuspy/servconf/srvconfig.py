@@ -100,7 +100,7 @@ class ConfigSrv:
     def __init__(self, name=None):
         """Constructor."""
         if name is None:
-            self._name = _util.generate_default_config_name(self.config_type)
+            self._name = _util.generate_config_name()
         else:
             self._name = name
         self._metadata = None
@@ -163,24 +163,30 @@ class ConfigSrv:
 
     def configsrv_save(self, new_name=None):
         """Save configuration to ConfigServer."""
+        # if config is syncronyzed, it is not necessary to save an identical
+        # one in server
+        if self.configsrv_synchronized:
+            return
+
         # check if data format is ok
         if not self._conn.check_value(self._configuration):
             raise _exceptions.SrvConfigFormatError(
                 'Configuration value with inconsistent format.')
 
-        # check if config name already exists
+        # if new_name is given, apply
         if new_name is not None:
             self._name = new_name
-        r = self.configsrv_exist()
-        if r is True:
+
+        # check if config name already exists
+        if self.configsrv_exist():
             raise _exceptions.SrvConfigAlreadyExists(
                 'A configuration with the given name already exists in '
                 'server.')
-        else:
-            configuration, metadata = \
-                self._conn.config_insert(self._name, self._configuration)
-            self._configuration = configuration
-            self._metadata = metadata
+
+        configuration, metadata = \
+            self._conn.config_insert(self._name, self._configuration)
+        self._configuration = configuration
+        self._metadata = metadata
         self._synchronized = True
 
     def configsrv_delete(self):
