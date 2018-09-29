@@ -13,6 +13,7 @@ from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.servconf.conf_service import ConfigService as _ConfigService
 from siriuspy.servconf.srvconfig import ConnConfigService as _ConnConfigService
+from siriuspy.ramp import util as _rutil
 
 
 _prefix = _envars.vaca_prefix
@@ -112,7 +113,7 @@ class ConnTiming(_EpicsPropsList):
         if self._ramp_config is None:
             return False
         c = ConnTiming.Const
-        wfm_nrpoints = self._ramp_config.ramp_dipole_wfm_nrpoints
+        wfm_nrpoints = self._ramp_config.ps_ramp_wfm_nrpoints
         setpoints = self.default
         setpoints.update(
             {c.EVR1_OTP08Pulses: wfm_nrpoints,
@@ -148,7 +149,7 @@ class ConnTiming(_EpicsPropsList):
     def check_ramp(self):
         """Check if in ramp state."""
         c = ConnTiming.Const
-        wfm_nrpoints = self._ramp_config.ramp_dipole_wfm_nrpoints
+        wfm_nrpoints = self._ramp_config.ps_ramp_wfm_nrpoints
         readbacks = dict()
         readbacks[c.EVG_Evt01Mode] = c.MODE_CONTINUOUS
         readbacks[c.EVG_ContinuousEvt] = c.STATE_ENBL
@@ -270,7 +271,7 @@ class ConnMagnets(_EpicsPropsList):
         setpoints = dict()
         for maname in self.manames:
             # get value (wfmdata)
-            wf = self._ramp_config.waveform_get(maname)
+            wf = self._ramp_config.ps_waveform_get(maname)
             value = wf.currents
             name = maname + ':' + 'WfmData'
             setpoints[name] = value
@@ -336,6 +337,140 @@ class ConnMagnets(_EpicsPropsList):
         """Check a prop of all power supplies for a value."""
         for maname in self.manames:
             name = maname + ':' + prop
+            if not self.get_readback(name) == value:
+                return False
+        return True
+
+
+class ConnRF(_EpicsPropsList):
+    """RF connector class."""
+
+    class Const:
+        """Properties names."""
+
+        DevName = 'BO-05D:RF-LLRF'
+        Rmp_Enbl = DevName + ':RmpEnbl'
+        Rmp_Ts1 = DevName + ':RmpTs1'
+        Rmp_Ts2 = DevName + ':RmpTs2'
+        Rmp_Ts3 = DevName + ':RmpTs3'
+        Rmp_Ts4 = DevName + ':RmpTs4'
+        Rmp_IncTs = DevName + ':RmpIncTs'
+        Rmp_VoltBot = DevName + ':RmpVoltBot'
+        Rmp_VoltTop = DevName + ':RmpVoltTop'
+        Rmp_PhsBot = DevName + ':RmpPhsBot'
+        Rmp_PhsTop = DevName + ':RmpPhsTop'
+
+        # State Enbl|Dsbl
+        STATE_DISBL = 0
+        STATE_ENBL = 1
+
+    def __init__(self, ramp_config=None, prefix=_prefix,
+                 connection_callback=None, callback=None):
+        """Init."""
+        self._ramp_config = ramp_config
+        properties = self._define_properties(prefix, connection_callback,
+                                             callback)
+        super().__init__(properties)
+
+    # --- RF commands ---
+
+    def cmd_ramping_enable(self, timeout=_TIMEOUT_DFLT):
+        """Turn RF ramping enable."""
+        sp = {ConnRF.Const.Rmp_Enbl: ConnRF.Const.STATE_ENBL}
+        return self.set_setpoints_check(sp, timeout)
+
+    def cmd_ramping_disable(self, timeout=_TIMEOUT_DFLT):
+        """Turn RF ramping disable."""
+        sp = {ConnRF.Const.Rmp_Enbl: ConnRF.Const.STATE_DISBL}
+        return self.set_setpoints_check(sp, timeout)
+
+    def cmd_config_ramp(self, timeout=_TIMEOUT_DFLT):
+        """Configure RF to ramping."""
+        sp = dict()
+        sp[ConnRF.Const.Rmp_Ts1] = self._ramp_config.rf_ramp_bottom_duration
+        sp[ConnRF.Const.Rmp_Ts2] = self._ramp_config.rf_ramp_rampup_duration
+        sp[ConnRF.Const.Rmp_Ts3] = self._ramp_config.rf_ramp_top_duration
+        sp[ConnRF.Const.Rmp_Ts4] = self._ramp_config.rf_ramp_rampdown_duration
+        sp[ConnRF.Const.Rmp_IncTs] = self._ramp_config.rf_ramp_rampinc_duration
+        sp[ConnRF.Const.Rmp_VoltBot] = self._ramp_config.rf_ramp_bottom_voltage
+        sp[ConnRF.Const.Rmp_VoltTop] = self._ramp_config.rf_ramp_top_voltage
+        sp[ConnRF.Const.Rmp_PhsBot] = self._ramp_config.rf_ramp_bottom_phase
+        sp[ConnRF.Const.Rmp_PhsTop] = self._ramp_config.rf_ramp_top_phase
+        return self.set_setpoints_check(sp, timeout)
+
+    # --- RF checks ---
+
+    def check_ramping_enable(self):
+        """Check ramping enable."""
+        rb = {ConnRF.Const.Rmp_Enbl: ConnRF.Const.STATE_ENBL}
+        return self._check(rb)
+
+    def check_config_ramp(self):
+        """Check if configured to ramp."""
+        rb = dict()
+        rb[ConnRF.Const.Rmp_Ts1] = self._ramp_config.rf_ramp_bottom_duration
+        rb[ConnRF.Const.Rmp_Ts2] = self._ramp_config.rf_ramp_rampup_duration
+        rb[ConnRF.Const.Rmp_Ts3] = self._ramp_config.rf_ramp_top_duration
+        rb[ConnRF.Const.Rmp_Ts4] = self._ramp_config.rf_ramp_rampdown_duration
+        rb[ConnRF.Const.Rmp_IncTs] = self._ramp_config.rf_ramp_rampinc_duration
+        rb[ConnRF.Const.Rmp_VoltBot] = self._ramp_config.rf_ramp_bottom_voltage
+        rb[ConnRF.Const.Rmp_VoltTop] = self._ramp_config.rf_ramp_top_voltage
+        rb[ConnRF.Const.Rmp_PhsBot] = self._ramp_config.rf_ramp_bottom_phase
+        rb[ConnRF.Const.Rmp_PhsTop] = self._ramp_config.rf_ramp_top_phase
+        return self._check(rb)
+
+    # --- private methods ---
+
+    def _define_properties(self, prefix, connection_callback, callback):
+        c = ConnRF.Const
+        properties = (
+            _EpicsProperty(c.Rmp_Enbl, '-Sel', '-Sts', prefix,
+                           ConnRF.Const.STATE_ENBL,
+                           connection_callback=connection_callback,
+                           callback=callback),
+            _EpicsProperty(c.Rmp_Ts1, '-SP', '-RB', prefix,
+                           _rutil.DEFAULT_RF_RAMP_BOTTOM_DURATION,
+                           connection_callback=connection_callback,
+                           callback=callback),
+            _EpicsProperty(c.Rmp_Ts2, '-SP', '-RB', prefix,
+                           _rutil.DEFAULT_RF_RAMP_RAMPUP_DURATION,
+                           connection_callback=connection_callback,
+                           callback=callback),
+            _EpicsProperty(c.Rmp_Ts3, '-SP', '-RB', prefix,
+                           _rutil.DEFAULT_RF_RAMP_TOP_DURATION,
+                           connection_callback=connection_callback,
+                           callback=callback),
+            _EpicsProperty(c.Rmp_Ts4, '-SP', '-RB', prefix,
+                           _rutil.DEFAULT_RF_RAMP_RAMPDOWN_DURATION,
+                           connection_callback=connection_callback,
+                           callback=callback),
+            _EpicsProperty(c.Rmp_IncTs, '-SP', '-RB', prefix,
+                           _rutil.DEFAULT_RF_RAMP_RAMPINC_DURATION,
+                           connection_callback=connection_callback,
+                           callback=callback),
+            _EpicsProperty(c.Rmp_VoltBot, '-SP', '-RB', prefix,
+                           _rutil.DEFAULT_RF_RAMP_BOTTOM_VOLTAGE,
+                           connection_callback=connection_callback,
+                           callback=callback),
+            _EpicsProperty(c.Rmp_VoltTop, '-SP', '-RB', prefix,
+                           _rutil.DEFAULT_RF_RAMP_TOP_VOLTAGE,
+                           connection_callback=connection_callback,
+                           callback=callback),
+            _EpicsProperty(c.Rmp_PhsBot, '-SP', '-RB', prefix,
+                           _rutil.DEFAULT_RF_RAMP_BOTTOM_PHASE,
+                           connection_callback=connection_callback,
+                           callback=callback),
+            _EpicsProperty(c.Rmp_PhsTop, '-SP', '-RB', prefix,
+                           _rutil.DEFAULT_RF_RAMP_TOP_PHASE,
+                           connection_callback=connection_callback,
+                           callback=callback),
+            )
+        return properties
+
+    def _check(self, readbacks):
+        for name, value in readbacks.items():
+            if value is None:
+                continue
             if not self.get_readback(name) == value:
                 return False
         return True
