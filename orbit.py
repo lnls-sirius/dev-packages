@@ -33,6 +33,7 @@ class BPM(_BaseTimingConfig):
         self._spsum = _PV(LL_PREF + self._name + ':SPPosSum-Mon', **opt)
         self._arrayx = _PV(LL_PREF + self._name + ':GEN_XArrayData', **opt)
         self._arrayy = _PV(LL_PREF + self._name + ':GEN_YArrayData', **opt)
+        self._arrays = _PV(LL_PREF + self._name + ':GEN_SumArrayData', **opt)
         self._config_ok_vals = {
             'asyn.ENBL': _csbpm.EnblTyp.Enable,
             'ACQBPMMode': _csbpm.OpModes.MultiBunch,
@@ -106,6 +107,7 @@ class BPM(_BaseTimingConfig):
         conn &= self._spsum.connected
         conn &= self._arrayx.connected
         conn &= self._arrayy.connected
+        conn &= self._arrays.connected
         return conn
 
     @property
@@ -157,6 +159,10 @@ class BPM(_BaseTimingConfig):
     @property
     def mtposy(self):
         return ORB_CONV*self._arrayy.value if self._arrayy.connected else None
+
+    @property
+    def mtsum(self):
+        return self._arrays.value if self._arrays.connected else None
 
     @property
     def ctrl(self):
@@ -411,11 +417,11 @@ class EpicsOrbit(BaseOrbit):
         self._load_ref_orbs()
         self.raw_orbs = {'x': [], 'y': []}
         self.raw_sporbs = {'x': [], 'y': [], 's': []}
-        self.raw_mtorbs = {'x': [], 'y': []}
+        self.raw_mtorbs = {'x': [], 'y': [], 's': []}
         self._lock_raw_orbs = Lock()
         self.smooth_orb = {'x': None, 'y': None}
         self.smooth_sporb = {'x': None, 'y': None, 's': None}
-        self.smooth_mtorb = {'x': None, 'y': None}
+        self.smooth_mtorb = {'x': None, 'y': None, 's': None}
         self.offline_orbit = {
                 'x': _np.zeros(self._const.NR_BPMS),
                 'y': _np.zeros(self._const.NR_BPMS)}
@@ -426,11 +432,13 @@ class EpicsOrbit(BaseOrbit):
         self._acqtrignrshots = 1
         self._multiturnidx = 0
         self._acqtrigdownsample = 1
+        self._timevector = None
         self.bpms = [BPM(name) for name in self._const.BPM_NAMES]
         self.timing = TimingConfig(acc)
         self._orbit_thread = _Repeat(
                         1/self._acqrate, self._update_orbits, niter=0)
         self._orbit_thread.start()
+        self._update_time_vector()
 
     @property
     def mode(self):
@@ -531,19 +539,24 @@ class EpicsOrbit(BaseOrbit):
             self.run_callbacks('OrbitAcqRate-SP', acqrate)
             self.set_orbit_acq_rate(acqrate)
         self._mode = value
+        self.run_callbacks('OrbitMode-Sts', value)
         self._reset_orbs()
         if self._mode in trigmds:
             self.trig_acq_config_bpms()
         return True
 
     def set_orbit_multiturn_idx(self, value):
-        maxidx = self._acqtrignrsamples * self._acqtrignrshots
-        maxidx //= self._acqtrigdownsample
+        maxidx = self._acqtrignrsamples // self._acqtrigdownsample
+        maxidx *= self._acqtrignrshots
         if value > maxidx:
-            self._update_log('ERR: MultiTurnIdx is too large')
-            return False
+            value = maxidx
+            self._update_log(
+                'WARN: MultiTurnIdx is too large. Redefining...')
         self._multiturnidx = int(value)
         self.run_callbacks('OrbitMultiTurnIdx-RB', self._multiturnidx)
+        self.run_callbacks(
+            'OrbitMultiTurnIdxTime-Mon', self._timevector[self._multiturnidx])
+        return True
 
     def trig_acq_config_bpms(self, *args):
         trigmds = (_csorb.OrbitMode.MultiTurn, _csorb.OrbitMode.SinglePass)
@@ -559,6 +572,7 @@ class EpicsOrbit(BaseOrbit):
         for bpm in self.bpms:
             bpm.ctrl = value
         self.run_callbacks('OrbitTrigAcqCtrl-Sts', value)
+        return True
 
     def set_trig_acq_channel(self, value):
         try:
@@ -569,12 +583,14 @@ class EpicsOrbit(BaseOrbit):
         for bpm in self.bpms:
             bpm.acq_type = val
         self.run_callbacks('OrbitTrigAcqChan-Sts', value)
+        self._update_time_vector(channel=value)
         return True
 
     def set_trig_acq_trigger(self, value):
         for bpm in self.bpms:
             bpm.acq_trigger = value + 1  # See PVs Database definition
         self.run_callbacks('OrbitTrigAcqTrigger-Sts', value)
+        return True
 
     def set_trig_acq_datachan(self, value):
         try:
@@ -591,57 +607,113 @@ class EpicsOrbit(BaseOrbit):
         for bpm in self.bpms:
             bpm.acq_trig_datasel = value
         self.run_callbacks('OrbitTrigDataSel-Sts', value)
+        return True
 
     def set_trig_acq_datathres(self, value):
         for bpm in self.bpms:
             bpm.acq_trig_datathres = value
         self.run_callbacks('OrbitTrigDataSel-Sts', value)
+        return True
 
     def set_trig_acq_datahyst(self, value):
         for bpm in self.bpms:
             bpm.acq_trig_datahyst = value
         self.run_callbacks('OrbitTrigDataHyst-Sts', value)
+        return True
 
     def set_trig_acq_datapol(self, value):
         for bpm in self.bpms:
             bpm.acq_trig_datapol = value
         self.run_callbacks('OrbitTrigDataPol-Sts', value)
+        return True
 
     def set_trig_acq_extduration(self, value):
         self.timing.duration = value
+        self._update_time_vector(duration=value)
         self.run_callbacks('OrbitTrigExtDuration-RB')
+        return True
 
     def set_trig_acq_extdelay(self, value):
         self.timing.delay = value
+        self._update_time_vector(delay=value)
         self.run_callbacks('OrbitTrigExtDelay-RB')
+        return True
 
     def set_trig_acq_extsource(self, value):
         self.timing.evtsrc = value
         self.run_callbacks('OrbitTrigExtEvtSrc-Sts')
+        return True
 
     def set_trig_acq_nrsamples(self, value):
+        Nmax = _csorb.MAX_MT_ORBS // self._acqtrigdownsample
+        nval = value if value <= Nmax else Nmax
+        nval = self._find_new_nrsamples(nval, self._acqtrigdownsample)
+        if nval != value:
+            value = nval
+            self._update_log(
+                'WARN: Not possible to set NrSamples. Redefining..')
         for bpm in self.bpms:
             bpm.nrsamples = value
         self._reset_orbs()
         self._acqtrignrsamples = value
-        self.run_callbacks('OrbitTrigNrSamples-RB', value)
+        self.run_callbacks('OrbitTrigNrSamples-RB', self._acqtrignrsamples)
+        self._update_time_vector()
+        return True
 
     def set_trig_acq_nrshots(self, value):
+        pntspshot = self._acqtrignrsamples // self._acqtrigdownsample
+        nrpoints = pntspshot * value
+        if nrpoints > _csorb.MAX_MT_ORBS:
+            value = _csorb.MAX_MT_ORBS // pntspshot
+            self._update_log(
+                'WARN: Not possible to set NrShots. Redefining...')
+            return False
         for bpm in self.bpms:
-            bpm.nrsamples = value
+            bpm.nrshots = value
         self.timing.nrpulses = value
         self._reset_orbs()
         self._acqtrignrshots = value
         self.run_callbacks('OrbitTrigNrShots-RB', value)
+        self._update_time_vector()
+        return True
 
     def set_trig_acq_downsample(self, value):
-        nrspls = self._acqtrignrsamples * self._acqtrignrshots
-        if value > nrspls:
+        down = self._find_new_downsample(self._acqtrignrsamples, value)
+        nrpoints = (self._acqtrignrsamples // down) * self._acqtrignrshots
+        if nrpoints > _csorb.MAX_MT_ORBS:
+            down = self._find_new_downsample(
+                self._acqtrignrsamples, value, onlyup=True)
+        if down != value:
+            value = down
             self._update_log(
-                'ERR: DwnSpl must smaller than NRSamples x NRShots')
+                'WARN: DwnSpl Must divide NRSamples. Redefining...')
             return False
         self._acqtrigdownsample = value
         self.run_callbacks('OrbitTrigDownSample-RB', value)
+        self._update_time_vector()
+        return True
+
+    def _update_time_vector(self, delay=None, duration=None, channel=None):
+        dl = (delay or self.timing.delay or 0.0) * 1000
+        dur = duration or self.timing.duration or 0.0
+        channel = channel or self.bpms[0].acq_type or 0
+        # revolution period
+        T0 = (496.8 if self._acc == 'BO' else 518.396) / 299792458
+        if channel == _csorb.OrbitAcqChan.Monit1:
+            dt = 578 * T0
+        elif channel == _csorb.OrbitAcqChan.FOFB:
+            dt = 5 * T0
+        else:
+            dt = T0
+
+        nrptpst = self._acqtrignrsamples // self._acqtrigdownsample
+        nrst = self._acqtrignrshots
+        a = _np.arange(nrst)
+        b = _np.arange(nrptpst)
+        vect = dl + dur/nrst*a[:, None] + dt*(b[None, :] + 0.5)
+        self._timevector = vect.flatten()
+        self.run_callbacks('OrbitMultiTurnTime-Mon', self._timevector)
+        self.set_orbit_multiturn_idx(self._multiturnidx)
 
     def _load_ref_orbs(self):
         if _os.path.isfile(self.REF_ORBIT_FILENAME):
@@ -659,7 +731,7 @@ class EpicsOrbit(BaseOrbit):
             self.raw_sporbs = {'x': [], 'y': [], 's': []}
             self.smooth_sporb = {'x': None, 'y': None, 's': None}
             self.raw_mtorbs = {'x': [], 'y': []}
-            self.smooth_mtorb = {'x': None, 'y': None}
+            self.smooth_mtorb = {'x': None, 'y': None, 's': None}
 
     def _update_orbits(self):
         if self._mode == _csorb.OrbitMode.MultiTurn:
@@ -703,9 +775,7 @@ class EpicsOrbit(BaseOrbit):
 
     def _update_multiturn_orbits(self):
         orbs = {'x': [], 'y': []}
-        down = self._acqtrigdownsample
-        nrspls = self._acqtrignrsamples * self._acqtrignrshots
-        samp = down * (nrspls // down)
+        samp = self._acqtrignrsamples * self._acqtrignrshots
         nr_bpms = self._const.NR_BPMS
         for i, bpm in enumerate(self.bpms):
             posx = bpm.mtposx
@@ -714,17 +784,23 @@ class EpicsOrbit(BaseOrbit):
             posy = bpm.mtposy
             if posy is None or posy.size < samp:
                 posy = _np.full(samp, self.ref_orbs['y'][i])
+            psum = bpm.mtsum
+            if psum is None or psum.size < samp:
+                psum = _np.full(samp, 0)
             orbs['x'].append(posx[:samp])
             orbs['y'].append(posy[:samp])
+            orbs['s'].append(psum[:samp])
 
-        for plane in ('x', 'y'):
+        down = self._acqtrigdownsample
+        for plane in ('x', 'y', 's'):
             with self._lock_raw_orbs:
                 raws = self.raw_mtorbs
                 norb = _np.array(orbs[plane])
                 raws[plane].append(norb)
                 raws[plane] = raws[plane][-self._smooth_npts:]
                 orb = _np.mean(raws[plane], axis=0)
-                orb = _np.mean(orb.reshape(nr_bpms, -1, down), axis=2)
+                if down > 1:
+                    orb = _np.mean(orb.reshape(nr_bpms, -1, down), axis=2)
                 self.smooth_mtorb[plane] = orb.transpose()
             self.run_callbacks(
                 'OrbitsMultiTurn'+plane.upper()+'-Mon', orb.flatten())
@@ -750,3 +826,20 @@ class EpicsOrbit(BaseOrbit):
 
         self._status = status
         self.run_callbacks('OrbitStatus-Mon', status)
+
+    @staticmethod
+    def _find_new_downsample(N, d, onlyup=False):
+        if d > N:
+            return N
+        if not N % d:
+            return d
+        lim = min(N-d+1, d) if not onlyup else N-d+1
+        for i in range(1, lim):
+            if not N % (d+i):
+                return d+i
+            elif not onlyup and not N % (d-i):
+                return d-i
+
+    @staticmethod
+    def _find_new_nrsamples(N, d):
+        return d*(N//d) if N >= d else d
