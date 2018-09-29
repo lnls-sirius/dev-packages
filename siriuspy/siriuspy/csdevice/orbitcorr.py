@@ -43,6 +43,7 @@ EVG_NAME = _TISearch.get_device_names({'dev': 'EVG'})[0]
 TRIGGER_NAME = 'AS-Glob:TI-BPM-SIBO:'
 RF_GEN_NAME = 'AS-Glob:RF-Gen'  # TODO: use correct name for this device
 ORBIT_CONVERSION_UNIT = 1/1000  # from nm to um
+MAX_MT_ORBS = 10000
 RF_NOM_FREQ = 499458000.0
 EnblRF = _get_namedtuple('EnblRF', ('Off', 'On'))
 AutoCorr = _get_namedtuple('AutoCorr', ('Off', 'On'))
@@ -256,17 +257,26 @@ def get_orbit_database(acc, prefix=''):
         db[k] = _dcopy(prop)
     db.update({
         'OrbitsMultiTurnX-Mon': {
-            'type': 'float', 'unit': 'um', 'count': 10000*nbpm,
-            'value': 10000*nbpm*[0]},
+            'type': 'float', 'unit': 'um', 'count': MAX_MT_ORBS*nbpm,
+            'value': MAX_MT_ORBS*nbpm*[0]},
         'OrbitsMultiTurnY-Mon': {
-            'type': 'float', 'unit': 'um', 'count': 10000*nbpm,
-            'value': 10000*nbpm*[0]},
+            'type': 'float', 'unit': 'um', 'count': MAX_MT_ORBS*nbpm,
+            'value': MAX_MT_ORBS*nbpm*[0]},
+        'OrbitsMultiTurnSum-Mon': {
+            'type': 'float', 'unit': 'um', 'count': MAX_MT_ORBS*nbpm,
+            'value': MAX_MT_ORBS*nbpm*[0]},
+        'OrbitMultiTurnTime-Mon': {
+            'type': 'float', 'unit': 'ms', 'count': MAX_MT_ORBS,
+            'value': MAX_MT_ORBS*[0]},
         'OrbitMultiTurnIdx-SP': {
             'type': 'int', 'unit': '', 'value': 0,
-            'hilim': 10000, 'lolim': 0},
+            'hilim': MAX_MT_ORBS, 'lolim': 0},
         'OrbitMultiTurnIdx-RB': {
             'type': 'int', 'unit': '', 'value': 0,
-            'hilim': 10000, 'lolim': 0},
+            'hilim': MAX_MT_ORBS, 'lolim': 0},
+        'OrbitMultiTurnIdxTime-Mon': {
+            'type': 'float', 'unit': 'ms', 'value': 0.0,
+            'hilim': 500, 'lolim': 0},
         'OrbitMode-Sel': {
             'type': 'enum', 'unit': 'Change orbit acquisition mode.',
             'value': OrbitMode.Online, 'enums': OrbitMode._fields},
@@ -300,16 +310,16 @@ def get_orbit_database(acc, prefix=''):
             'hilim': 1000, 'lolim': 1},
         'OrbitTrigNrSamples-SP': {
             'type': 'short', 'unit': '', 'value': 200,
-            'hilim': 10000, 'lolim': 1},
+            'hilim': MAX_MT_ORBS, 'lolim': 1},
         'OrbitTrigNrSamples-RB': {
             'type': 'short', 'unit': '', 'value': 200,
-            'hilim': 10000, 'lolim': 1},
+            'hilim': MAX_MT_ORBS, 'lolim': 1},
         'OrbitTrigDownSample-SP': {
             'type': 'short', 'unit': '', 'value': 1,
-            'hilim': 10000, 'lolim': 1},
+            'hilim': MAX_MT_ORBS, 'lolim': 1},
         'OrbitTrigDownSample-RB': {
             'type': 'short', 'unit': '', 'value': 1,
-            'hilim': 10000, 'lolim': 1},
+            'hilim': MAX_MT_ORBS, 'lolim': 1},
         'OrbitTrigDataChan-Sel': {
             'type': 'enum', 'unit': 'Set Data-driven trigger Channel.',
             'value': OrbitAcqDataChan.Monit1,
