@@ -88,6 +88,9 @@ class ConfigService:
         """Insert configuration into database."""
         if not _config_types.check_value(config_type, value):
             raise TypeError('Incompatible configuration value!')
+        if not isinstance(name, str):
+            raise TypeError(
+                'Config name must be str, not {}!'.format(type(name)))
         url = self._url + self.CONFIGS_ENDPOINT
         data = {"config_type": config_type, "name": name, "value": value}
         request = _Request(url=url, method="POST",
