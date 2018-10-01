@@ -910,8 +910,8 @@ class BoosterRamp(_ConfigSrv):
             st = 'name: {}'.format(self.name)
             return st
         labels = (
-            'ti_params_rf_delay [us]',
-            'ti_params_ps_delay [us]',
+            'ti_params_rf_ramp_delay [us]',
+            'ti_params_ps_ramp_delay [us]',
             'ti_params_injection_time [ms]',
             'ti_params_ejection_time [ms]',
             'ps_ramp_duration [ms]',
@@ -925,8 +925,8 @@ class BoosterRamp(_ConfigSrv):
         strfmt3 = strfmt1.replace('{}', '{:07.3f} {}')
         strfmt4 = strfmt1.replace('{}', '{:07.3f}')
         st += strfmt1.format('name', self.name)
-        st += strfmt1.format(labels[0], self.ti_params_rf_delay)
-        st += strfmt1.format(labels[1], self.ti_params_ps_delay)
+        st += strfmt1.format(labels[0], self.ti_params_rf_ramp_delay)
+        st += strfmt1.format(labels[1], self.ti_params_ps_ramp_delay)
         st += strfmt4.format(labels[2], self.ti_params_injection_time)
         st += strfmt4.format(labels[3], self.ti_params_ejection_time)
         st += strfmt1.format(labels[4], self.ps_ramp_duration)
