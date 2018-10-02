@@ -116,17 +116,31 @@ class BoosterRamp(_ConfigSrv):
 
     def configsrv_save(self, new_name=None):
         """Save configuration to config server."""
-        # save booster ramp
-        _ConfigSrv.configsrv_save(self, new_name)
-        self._synchronized = False  # in case cannot load ps norm config
         # save each ps normalized configuration
-        for config in self._ps_nconfigs.values():
+        for name, config in self._ps_nconfigs.items():
             if config.configsrv_exist():
                 if self._configsrv_check_ps_normalized_modified(config):
-                    new_name = _generate_config_name(config.name)
-                    config.configsrv_save(new_name)
+                    # save changes in an existing normalized config
+                    old_nconfig_name = config.name
+                    new_nconfig_name = _generate_config_name(old_nconfig_name)
+                    config.configsrv_save(new_nconfig_name)
+
+                    # replace old config from normalized configs dict
+                    del(self._ps_nconfigs[old_nconfig_name])
+                    self._ps_nconfigs[new_nconfig_name] = config
+
+                    # replace old name in normalized configs list
+                    nconfigs = self.ps_normalized_configs
+                    for i in range(len(nconfigs)):
+                        if nconfigs[i][1] == old_nconfig_name:
+                            nconfigs[i][1] = new_nconfig_name
+                    self._configuration['ps_normalized_configs*'] = nconfigs
             else:
                 config.configsrv_save()
+
+        # save booster ramp
+        _ConfigSrv.configsrv_save(self, new_name)
+
         self._synchronized = True  # all went well
 
     def check_value(self):
@@ -209,13 +223,13 @@ class BoosterRamp(_ConfigSrv):
                     ovalues = [self._ps_nconfigs[n][k] for n in onames]
                     nconfig[k] = _np.interp(time, otimes, ovalues)
 
-        # set config energy appropriately
-        indices = self._conv_times_2_indices([time])
-        strengths = self.ps_waveform_get_strengths(self.MANAME_DIPOLE)
-        strength = _np.interp(indices[0],
-                              list(range(self.ps_ramp_wfm_nrpoints)),
-                              strengths)
-        nconfig[self.MANAME_DIPOLE] = strength
+            # set config energy appropriately
+            indices = self._conv_times_2_indices([time])
+            strengths = self.ps_waveform_get_strengths(self.MANAME_DIPOLE)
+            strength = _np.interp(indices[0],
+                                  list(range(self.ps_ramp_wfm_nrpoints)),
+                                  strengths)
+            nconfig[self.MANAME_DIPOLE] = strength
 
         # ps normalized configuration was given
         self._ps_nconfigs[name].configuration = nconfig
