@@ -25,10 +25,6 @@ def print_help():
     print('       --help')
     print('               print this help.')
     print()
-    print('       --real')
-    print('               creates real PRU and SerialComm objects, not '
-          'simulated ones.')
-    print()
 
 
 def get_manames(bbbname):
