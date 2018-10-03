@@ -130,7 +130,6 @@ class SOFB(_BaseClass):
             return False
         ret_val = fun_(value)
         if ret_val:
-            print('here')
             _log.info('YES Write %s: %s', reason, str(value))
         else:
             value = self._driver.getParam(reason)
@@ -262,9 +261,9 @@ class SOFB(_BaseClass):
             self._update_log('WARN: No kicks applied. All Zero.')
 
     def _schedule_update(self, pvname, value, **kwargs):
-        self._queue.add_callback(self._update_driver, pvname, value, **kwargs)
+    #     self._queue.add_callback(self._update_driver, pvname, value, **kwargs)
 
-    def _update_driver(self, pvname, value, **kwargs):
+    # def _update_driver(self, pvname, value, **kwargs):
         if self._driver is not None:
             self._driver.setParam(pvname, value)
             self._driver.updatePV(pvname)
