@@ -34,6 +34,8 @@ class BPM(_BaseTimingConfig):
         self._arrayx = _PV(LL_PREF + self._name + ':GEN_XArrayData', **opt)
         self._arrayy = _PV(LL_PREF + self._name + ':GEN_YArrayData', **opt)
         self._arrays = _PV(LL_PREF + self._name + ':GEN_SumArrayData', **opt)
+        self._offsetx = _PV(LL_PREF + self._name + ':PosXOffset-RB', **opt)
+        self._offsety = _PV(LL_PREF + self._name + ':PosYOffset-RB', **opt)
         self._config_ok_vals = {
             'asyn.ENBL': _csbpm.EnblTyp.Enable,
             'ACQBPMMode': _csbpm.OpModes.MultiBunch,
@@ -108,6 +110,8 @@ class BPM(_BaseTimingConfig):
         conn &= self._arrayx.connected
         conn &= self._arrayy.connected
         conn &= self._arrays.connected
+        conn &= self._offsetx.connected
+        conn &= self._offsety.connected
         return conn
 
     @property
@@ -134,35 +138,53 @@ class BPM(_BaseTimingConfig):
 
     @property
     def posx(self):
-        return ORB_CONV*self._posx.value if self._posx.connected else None
+        pv = self._posx
+        return ORB_CONV*pv.value if pv.connected else None
 
     @property
     def posy(self):
-        return ORB_CONV*self._posy.value if self._posy.connected else None
+        pv = self._posy
+        return ORB_CONV*pv.value if pv.connected else None
 
     @property
     def spposx(self):
-        return ORB_CONV*self._spposx.value if self._spposx.connected else None
+        pv = self._spposx
+        return ORB_CONV*pv.value if pv.connected else None
 
     @property
     def spposy(self):
-        return ORB_CONV*self._spposy.value if self._spposy.connected else None
+        pv = self._spposy
+        return ORB_CONV*pv.value if pv.connected else None
 
     @property
     def spsum(self):
-        return ORB_CONV*self._spsum.value if self._spsum.connected else None
+        pv = self._spsum
+        return pv.value if pv.connected else None
 
     @property
     def mtposx(self):
-        return ORB_CONV*self._arrayx.value if self._arrayx.connected else None
+        pv = self._arrayx
+        return ORB_CONV*pv.value if pv.connected else None
 
     @property
     def mtposy(self):
-        return ORB_CONV*self._arrayy.value if self._arrayy.connected else None
+        pv = self._arrayy
+        return ORB_CONV*pv.value if pv.connected else None
 
     @property
     def mtsum(self):
-        return self._arrays.value if self._arrays.connected else None
+        pv = self._arrays
+        return pv.value if pv.connected else None
+
+    @property
+    def offsetx(self):
+        pv = self._offsetx
+        return ORB_CONV*pv.value if pv.connected else None
+
+    @property
+    def offsety(self):
+        pv = self._offsety
+        return ORB_CONV*pv.value if pv.connected else None
 
     @property
     def ctrl(self):
@@ -826,6 +848,16 @@ class EpicsOrbit(BaseOrbit):
 
         self._status = status
         self.run_callbacks('OrbitStatus-Mon', status)
+        self._update_bpmoffsets()
+
+    def _update_bpmoffsets(self):
+        orbx = _np.zeros(self._const.NR_BPMS, dtype=float)
+        orby = orbx.copy()
+        for i, bpm in enumerate(self.bpms):
+            orbx[i] = bpm.offsetx or 0
+            orby[i] = bpm.offsety or 0
+        self.run_callbacks('BPMOffsetsX-Mon', orbx)
+        self.run_callbacks('BPMOffsetsY-Mon', orby)
 
     @staticmethod
     def _find_new_downsample(N, d, onlyup=False):
