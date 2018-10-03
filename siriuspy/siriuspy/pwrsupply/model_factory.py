@@ -335,7 +335,7 @@ class FACFactory(FBPFactory):
     @property
     def name(self):
         """Model name."""
-        return 'FAC'
+        return 'FAC_DCDC'
 
     @property
     def parameters(self):
