@@ -202,7 +202,7 @@ class ConfigService:
         request = _Request(url=url, method="DELETE")
         return self._make_request(request)
 
-    def retrive_config(self, obj_dict):
+    def retrieve_config(self, obj_dict):
         """Mark a discarded configuration as valid."""
         if type(obj_dict) is not dict:
             raise ValueError('"obj_dict" is not a dictionary')
