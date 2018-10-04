@@ -7,7 +7,6 @@ from functools import partial as _part
 from threading import Thread as _Thread
 from pcaspy import Driver as _PCasDriver
 import siriuspy.csdevice.orbitcorr as _csorb
-from siriuspy.thread import QueueThread as _Queue
 from .matrix import BaseMatrix as _BaseMatrix, EpicsMatrix as _EpicsMatrix
 from .orbit import BaseOrbit as _BaseOrbit, EpicsOrbit as _EpicsOrbit
 from .correctors import (BaseCorrectors as _BaseCorrectors,
@@ -53,7 +52,7 @@ class SOFB(_BaseClass):
         """Initialize Object."""
         super().__init__(acc, prefix=prefix, callback=callback)
         _log.info('Starting SOFB...')
-        self.add_callback(self._schedule_update)
+        self.add_callback(self._update_driver)
         self._driver = None
         self._orbit = self._correctors = self._matrix = None
         self._auto_corr = _csorb.AutoCorr.Off
@@ -67,20 +66,19 @@ class SOFB(_BaseClass):
         self._dtheta = None
         self._ref_corr_kicks = None
         self._thread = None
-        self._queue = _Queue()
 
         self.orbit = orbit
         self.correctors = correctors
         self.matrix = matrix
         if self._orbit is None:
             self.orbit = _EpicsOrbit(
-                acc=acc, prefix=self.prefix, callback=self._schedule_update)
+                acc=acc, prefix=self.prefix, callback=self._update_driver)
         if self._correctors is None:
             self.correctors = _EpicsCorrectors(
-                acc=acc, prefix=self.prefix, callback=self._schedule_update)
+                acc=acc, prefix=self.prefix, callback=self._update_driver)
         if self._matrix is None:
             self.matrix = _EpicsMatrix(
-                acc=acc, prefix=self.prefix, callback=self._schedule_update)
+                acc=acc, prefix=self.prefix, callback=self._update_driver)
         self._database = self.get_database()
 
     @property
@@ -134,11 +132,8 @@ class SOFB(_BaseClass):
         else:
             value = self._driver.getParam(reason)
             _log.warning('NO write %s: %s', reason, str(value))
-        self._schedule_update(reason, value)
+        self._update_driver(reason, value)
         return True
-
-    def start(self):
-        self._queue.start()
 
     def process(self):
         """Run continuously in the main thread."""
@@ -260,10 +255,7 @@ class SOFB(_BaseClass):
         else:
             self._update_log('WARN: No kicks applied. All Zero.')
 
-    def _schedule_update(self, pvname, value, **kwargs):
-    #     self._queue.add_callback(self._update_driver, pvname, value, **kwargs)
-
-    # def _update_driver(self, pvname, value, **kwargs):
+    def _update_driver(self, pvname, value, **kwargs):
         if self._driver is not None:
             self._driver.setParam(pvname, value)
             self._driver.updatePV(pvname)
