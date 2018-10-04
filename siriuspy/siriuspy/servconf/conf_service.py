@@ -196,10 +196,27 @@ class ConfigService:
         return self._make_request(request)
 
     def delete_config(self, obj_dict):
-        """Mark a configuration as discarded."""
+        """Mark a valid configuration as discarded."""
         url_params = "/{}".format(obj_dict["_id"])
         url = self._url + self.CONFIGS_ENDPOINT + url_params
         request = _Request(url=url, method="DELETE")
+        return self._make_request(request)
+
+    def retrive_config(self, obj_dict):
+        """Mark a discarded configuration as valid."""
+        if type(obj_dict) is not dict:
+            raise ValueError('"obj_dict" is not a dictionary')
+        _id = obj_dict["_id"]
+        # Get name and discarded state to retrive
+        update_dict = {
+            "name": obj_dict["name"][:-37],
+            "discarded": False}
+        # Build URL a make PUT request
+        url_params = "/{}".format(_id)
+        url = self._url + self.CONFIGS_ENDPOINT + url_params
+        request = _Request(url=url, method="PUT",
+                           headers={"Content-Type": "application/json"},
+                           data=_json.dumps(update_dict).encode())
         return self._make_request(request)
 
     def query_db_size(self):
