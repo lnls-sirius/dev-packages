@@ -514,13 +514,13 @@ class EpicsOrbit(BaseOrbit):
         idx = self._multiturnidx
         return orbs['X'][idx, :], orbs['Y'][idx, :]
 
-    def set_offline_orbit(self, plane, value):
+    def set_offline_orbit(self, plane, orb):
         self._update_log('Setting New Offline Orbit.')
-        if len(value) != self._const.NR_BPMS:
+        if len(orb) != self._const.NR_BPMS:
             self._update_log('ERR: Wrong Size.')
             return False
-        self.offline_orbit[plane] = _np.array(value)
-        self.run_callbacks('OrbitOffline'+plane+'-RB', _np.array(value))
+        self.offline_orbit[plane] = _np.array(orb)
+        self.run_callbacks('OrbitOffline'+plane+'-RB', orb)
         return True
 
     def set_smooth_npts(self, num):
@@ -533,11 +533,11 @@ class EpicsOrbit(BaseOrbit):
         self._update_log('Setting New Reference Orbit.')
         if len(orb) != self._const.NR_BPMS:
             self._update_log('ERR: Wrong Size.')
-            # return False
-        # self.ref_orbs[plane] = _np.array(orb, dtype=float)
-        # self._save_ref_orbits()
-        # self._reset_orbs()
-        self.run_callbacks('OrbitRef'+plane+'-RB', orb[1:10])
+            return False
+        self.ref_orbs[plane] = _np.array(orb, dtype=float)
+        self._save_ref_orbits()
+        self._reset_orbs()
+        self.run_callbacks('OrbitRef'+plane+'-RB', orb)
         return True
 
     def set_orbit_acq_rate(self, value):
