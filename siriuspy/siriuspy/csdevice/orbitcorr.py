@@ -277,7 +277,7 @@ def get_orbit_database(acc, prefix=''):
             'type': 'int', 'unit': '', 'value': 0,
             'hilim': MAX_MT_ORBS, 'lolim': 0},
         'OrbitMultiTurnIdxTime-Mon': {
-            'type': 'float', 'unit': 'ms', 'value': 0.0,
+            'type': 'float', 'unit': 'ms', 'value': 0.0, 'prec': 5,
             'hilim': 500, 'lolim': 0},
         'OrbitMode-Sel': {
             'type': 'enum', 'unit': 'Change orbit acquisition mode.',
