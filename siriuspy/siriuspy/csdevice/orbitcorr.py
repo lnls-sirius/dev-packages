@@ -310,16 +310,16 @@ def get_orbit_database(acc, prefix=''):
             'hilim': 1000, 'lolim': 1},
         'OrbitTrigNrSamples-SP': {
             'type': 'short', 'unit': '', 'value': 200,
-            'hilim': MAX_MT_ORBS, 'lolim': 1},
+            'hilim': 2**15-1, 'lolim': 1},
         'OrbitTrigNrSamples-RB': {
             'type': 'short', 'unit': '', 'value': 200,
-            'hilim': MAX_MT_ORBS, 'lolim': 1},
+            'hilim': 2**15-1, 'lolim': 1},
         'OrbitTrigDownSample-SP': {
             'type': 'short', 'unit': '', 'value': 1,
-            'hilim': MAX_MT_ORBS, 'lolim': 1},
+            'hilim': 2**15-1, 'lolim': 1},
         'OrbitTrigDownSample-RB': {
             'type': 'short', 'unit': '', 'value': 1,
-            'hilim': MAX_MT_ORBS, 'lolim': 1},
+            'hilim': 2**15-1, 'lolim': 1},
         'OrbitTrigDataChan-Sel': {
             'type': 'enum', 'unit': 'Set Data-driven trigger Channel.',
             'value': OrbitAcqDataChan.Monit1,
