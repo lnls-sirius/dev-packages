@@ -16,8 +16,8 @@ AcqChan = _get_namedtuple(
             ('ADC', 'ADCSwp', 'TbT', 'FOFB', 'TbTPha', 'FOFBPha', 'Monit1'))
 AcqStates = _get_namedtuple(
             'AcqStates',
-            ('Idle', 'Waiting', 'ExternalTrig', 'DataTrig', 'SoftwareTrig',
-             'Acquiring', 'Error', 'Aborted', 'TooManySamples',
+            ('Idle', 'Waiting', 'External Trig', 'Data Trig', 'Software Trig',
+             'Acquiring', 'Error', 'Aborted', 'Too Many Samples',
              'Too Few Samples', 'No Memory'))
 AcqTrigTyp = _get_namedtuple(
                         'AcqTrigTyp', ('Now', 'External', 'Data', 'Software'))
