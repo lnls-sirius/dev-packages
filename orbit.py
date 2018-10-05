@@ -425,6 +425,7 @@ class EpicsOrbit(BaseOrbit):
         db['OrbitOfflineX-SP'][prop] = _part(self.set_offline_orbit, 'X')
         db['OrbitOfflineY-SP'][prop] = _part(self.set_offline_orbit, 'Y')
         db['OrbitSmoothNPnts-SP'][prop] = self.set_smooth_npts
+        db['OrbitSmoothReset-Cmd'][prop] = self.set_smooth_reset
         db['OrbitAcqRate-SP'][prop] = self.set_orbit_acq_rate
         db = super().get_database(db)
         return db
@@ -528,6 +529,10 @@ class EpicsOrbit(BaseOrbit):
         self._smooth_npts = num
         self.run_callbacks('OrbitSmoothNPnts-RB', num)
         return True
+
+    def set_smooth_reset(self, _):
+        with self._lock_raw_orbs:
+            self._reset_orbs()
 
     def set_ref_orbit(self, plane, orb):
         self._update_log('Setting New Reference Orbit.')
