@@ -1,6 +1,6 @@
 """Define PVs, contants and properties of all OpticsCorr SoftIOCs."""
 from copy import deepcopy as _dcopy
-from siriuspy.csdevice.const import get_namedtuple as _get_namedtuple
+from siriuspy.util import get_namedtuple as _get_namedtuple
 import siriuspy.csdevice.bpms as _csbpm
 from siriuspy.search.ma_search import MASearch as _MASearch
 from siriuspy.search.ll_time_search import LLTimeSearch as _TISearch

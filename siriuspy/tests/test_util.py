@@ -26,6 +26,7 @@ public_interface = (
     'update_bit',
     'get_bit',
     'check_public_interface_namespace',
+    'get_namedtuple',
 )
 
 
@@ -302,6 +303,20 @@ class TestUtil(unittest.TestCase):
         valid = util.check_public_interface_namespace(
             namespace, public_interface, print_flag=False)
         self.assertFalse(valid)
+
+    def test_get_namedtuple(self):
+        fields = ('a', 'b', 'c')
+        values = (1, 4, 5)
+        a = util.get_namedtuple('A', fields, values)
+        self.assertTrue(a.__class__.__name__ == 'A')
+        self.assertTrue(a._fields == fields)
+        self.assertTrue(a.a == 1 and a.b == 4 and a.c == 5)
+        fields = ('a', 'b', 'c')
+        a = util.get_namedtuple('A', fields)
+        self.assertTrue(a.a == 0 and a.b == 1 and a.c == 2)
+        fields = ('a a', 'b b', 'c')
+        a = util.get_namedtuple('A', fields)
+        self.assertTrue(a._fields == ('a_a', 'b_b', 'c'))
 
 
 if __name__ == "__main__":

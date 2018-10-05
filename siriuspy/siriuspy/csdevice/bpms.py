@@ -1,7 +1,7 @@
 """Define the PV database of a single BPM and its enum types."""
 from copy import deepcopy as _dcopy
 import numpy as _np
-from siriuspy.csdevice.const import get_namedtuple as _get_namedtuple
+from siriuspy.util import get_namedtuple as _get_namedtuple
 
 OpModes = _get_namedtuple('OpModes', ('MultiBunch', 'SinglePass'))
 Polarity = _get_namedtuple('Polarity', ('Positive', 'Negative'))
