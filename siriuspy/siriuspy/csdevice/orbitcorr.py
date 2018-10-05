@@ -246,6 +246,7 @@ def get_orbit_database(acc, prefix=''):
         'OrbitRawSinglePassX-Mon', 'OrbitRawSinglePassY-Mon',
         'OrbitRawSinglePassSum-Mon',
         'OrbitMultiTurnX-Mon', 'OrbitMultiTurnY-Mon',
+        'OrbitMultiTurnSum-Mon',
         'OrbitSmoothSinglePassX-Mon', 'OrbitSmoothSinglePassY-Mon',
         'OrbitSmoothSinglePassSum-Mon',
         'OrbitOfflineX-SP', 'OrbitOfflineX-RB',
