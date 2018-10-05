@@ -120,8 +120,8 @@ class BPM(_BaseTimingConfig):
         pv = self._config_pvs_rb['ACQStatus']
         stts = _csbpm.AcqStates
         return ok and pv.value not in (
-            stts.Error, stts.NoMemory,
-            stts.TooFewSamples, stts.TooManySamples)
+            stts.Error, stts.No_Memory,
+            stts.Too_Few_Samples, stts.Too_Many_Samples)
 
     @property
     def state(self):
@@ -717,7 +717,7 @@ class EpicsOrbit(BaseOrbit):
         dl = (delay or self.timing.delay or 0.0) / 1000
         dur = duration or self.timing.duration or 0.0
         channel = channel or self.bpms[0].acq_type or 0
-        # revolution period
+        # revolution period in ms
         T0 = (496.8 if self._acc == 'BO' else 518.396) / 299792458 * 1000
         if channel == _csorb.OrbitAcqChan.Monit1:
             dt = 578 * T0
@@ -726,6 +726,7 @@ class EpicsOrbit(BaseOrbit):
         else:
             dt = T0
 
+        dt *= self._acqtrigdownsample
         nrptpst = self._acqtrignrsamples // self._acqtrigdownsample
         nrst = self._acqtrignrshots
         a = _np.arange(nrst)

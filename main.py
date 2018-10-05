@@ -257,6 +257,9 @@ class SOFB(_BaseClass):
 
     def _update_driver(self, pvname, value, **kwargs):
         if self._driver is not None:
+            # if isinstance(value, (_np.ndarray, list, tuple)):
+            #     sz = len(value)
+            #     self._driver.setParamInfo(pvname, {'count': sz})
             self._driver.setParam(pvname, value)
             self._driver.updatePV(pvname)
 
