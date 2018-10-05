@@ -250,6 +250,7 @@ def get_orbit_database(acc, prefix=''):
         'OrbitSmoothSinglePassSum-Mon',
         'OrbitOfflineX-SP', 'OrbitOfflineX-RB',
         'OrbitOfflineY-SP', 'OrbitOfflineY-RB',
+        'BPMOffsetsX-Mon', 'BPMOffsetsY-Mon',
         ]
     db = dict()
     prop = {'type': 'float', 'unit': 'um', 'count': nbpm, 'value': nbpm*[0]}
