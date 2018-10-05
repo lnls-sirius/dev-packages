@@ -398,6 +398,8 @@ def get_orbit_database(acc, prefix=''):
             'type': 'short', 'value': 1,
             'unit': 'number of points for average',
             'lolim': 1, 'hilim': 200},
+        'OrbitSmoothReset-Cmd': {
+            'type': 'short', 'value': 0, 'unit': 'Reset orbit buffer'},
         'BPMPosS-Cte': {
             'type': 'float', 'unit': 'm', 'count': nbpm,
             'value': const.BPM_POS},
