@@ -84,33 +84,13 @@ class ConfigService:
         request = _Request(url=url, method="GET")
         return self._make_request(request)
 
-    def update_config(self, obj_dict):
-        """Update an existing configuration."""
-        if type(obj_dict) is not dict:
-            raise ValueError('"obj_dict" is not a dictionary')
-        id = obj_dict["_id"]
-        config_type = obj_dict['config_type']
-        # Check value format
-        if not _config_types.check_value(config_type, obj_dict['value']):
-            raise TypeError('Incompatible configuration value!')
-        # Get params allowed to be updated
-        update_dict = {
-            "name": obj_dict["name"],
-            "value": obj_dict["value"],
-            "discarded": obj_dict["discarded"]  # TODO: should it be allowed?
-        }
-        # Build URL a make PUT request
-        url_params = "/{}".format(id)
-        url = self._url + self.CONFIGS_ENDPOINT + url_params
-        request = _Request(url=url, method="PUT",
-                           headers={"Content-Type": "application/json"},
-                           data=_json.dumps(update_dict).encode())
-        return self._make_request(request)
-
     def insert_config(self, config_type, name, value):
         """Insert configuration into database."""
         if not _config_types.check_value(config_type, value):
             raise TypeError('Incompatible configuration value!')
+        if not isinstance(name, str):
+            raise TypeError(
+                'Config name must be str, not {}!'.format(type(name)))
         url = self._url + self.CONFIGS_ENDPOINT
         data = {"config_type": config_type, "name": name, "value": value}
         request = _Request(url=url, method="POST",
@@ -216,10 +196,27 @@ class ConfigService:
         return self._make_request(request)
 
     def delete_config(self, obj_dict):
-        """Mark a configuration as discarded."""
+        """Mark a valid configuration as discarded."""
         url_params = "/{}".format(obj_dict["_id"])
         url = self._url + self.CONFIGS_ENDPOINT + url_params
         request = _Request(url=url, method="DELETE")
+        return self._make_request(request)
+
+    def retrieve_config(self, obj_dict):
+        """Mark a discarded configuration as valid."""
+        if type(obj_dict) is not dict:
+            raise ValueError('"obj_dict" is not a dictionary')
+        _id = obj_dict["_id"]
+        # Get name and discarded state to retrive
+        update_dict = {
+            "name": obj_dict["name"][:-37],
+            "discarded": False}
+        # Build URL a make PUT request
+        url_params = "/{}".format(_id)
+        url = self._url + self.CONFIGS_ENDPOINT + url_params
+        request = _Request(url=url, method="PUT",
+                           headers={"Content-Type": "application/json"},
+                           data=_json.dumps(update_dict).encode())
         return self._make_request(request)
 
     def query_db_size(self):

@@ -19,12 +19,6 @@ class SrvConfigError(SrvError):
     pass
 
 
-class SrvConfigInvalidName(SrvConfigError):
-    """Configuration name not defined."""
-
-    pass
-
-
 class SrvConfigFormatError(SrvConfigError):
     """Configuration value with inconsistent format."""
 
@@ -45,5 +39,11 @@ class SrvConfigConflict(SrvConfigError):
 
 class SrvMetadataInvalid(SrvError):
     """Invalid metadata."""
+
+    pass
+
+
+class SrvConfigAlreadyExists(SrvConfigError):
+    """A configuration with the given name already exists in server."""
 
     pass

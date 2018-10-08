@@ -5,6 +5,8 @@ from copy import deepcopy as _dcopy
 
 from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
 from siriuspy.servconf.srvconfig import ConfigSrv as _ConfigSrv
+from siriuspy.servconf.util import \
+    generate_config_name as _generate_config_name
 from siriuspy.magnet.util import \
     get_section_dipole_name as _get_section_dipole_name, \
     get_magnet_family_name as _get_magnet_family_name
@@ -24,6 +26,7 @@ from siriuspy.ramp.waveform import \
 class BoosterNormalized(_ConfigSrv):
     """Booster normalized configuration."""
 
+    # ConfigSrv connector object
     _conn = _CCBONormalized()
 
     def __init__(self, name=None):
@@ -111,29 +114,33 @@ class BoosterRamp(_ConfigSrv):
             config.configsrv_load()
         self._invalidate_ps_waveforms()
 
-    def configsrv_update(self):
-        """Update configuration in config server."""
-        # update ramp config
-        _ConfigSrv.configsrv_update(self)
-        self._synchronized = False  # in case cannot load ps norm config
-        # update or save ps normalized configs
-        for config in self._ps_nconfigs.values():
-            if config.configsrv_synchronized and config.configsrv_exist():
-                # already exists, just update
-                config.configsrv_update()
-            else:
-                # save a new ps normalized configuration
-                config.configsrv_save()
-        self._synchronized = True  # all went well
-
-    def configsrv_save(self):
+    def configsrv_save(self, new_name=None):
         """Save configuration to config server."""
-        # save booster ramp
-        _ConfigSrv.configsrv_save(self)
-        self._synchronized = False  # in case cannot load ps norm config
         # save each ps normalized configuration
-        for config in self._ps_nconfigs.values():
-            config.configsrv_save()
+        for name, config in self._ps_nconfigs.items():
+            if config.configsrv_exist():
+                if self._configsrv_check_ps_normalized_modified(config):
+                    # save changes in an existing normalized config
+                    old_nconfig_name = config.name
+                    new_nconfig_name = _generate_config_name(old_nconfig_name)
+                    config.configsrv_save(new_nconfig_name)
+
+                    # replace old config from normalized configs dict
+                    del(self._ps_nconfigs[old_nconfig_name])
+                    self._ps_nconfigs[new_nconfig_name] = config
+
+                    # replace old name in normalized configs list
+                    nconfigs = self.ps_normalized_configs
+                    for i in range(len(nconfigs)):
+                        if nconfigs[i][1] == old_nconfig_name:
+                            nconfigs[i][1] = new_nconfig_name
+                    self._configuration['ps_normalized_configs*'] = nconfigs
+            else:
+                config.configsrv_save()
+
+        # save booster ramp
+        _ConfigSrv.configsrv_save(self, new_name)
+
         self._synchronized = True  # all went well
 
     def check_value(self):
@@ -183,8 +190,7 @@ class BoosterRamp(_ConfigSrv):
         """Insert a ps normalized configuration."""
         # process ps normalized config name
         if not isinstance(name, str) or len(name) == 0:
-            bn = BoosterNormalized()
-            name = bn.name
+            name = _generate_config_name()
 
         # add new entry to list with ps normalized configs metadata
         otimes = self.ps_normalized_configs_times
@@ -217,13 +223,13 @@ class BoosterRamp(_ConfigSrv):
                     ovalues = [self._ps_nconfigs[n][k] for n in onames]
                     nconfig[k] = _np.interp(time, otimes, ovalues)
 
-        # set config energy appropriately
-        indices = self._conv_times_2_indices([time])
-        strengths = self.ps_waveform_get_strengths(self.MANAME_DIPOLE)
-        strength = _np.interp(indices[0],
-                              list(range(self.ps_ramp_wfm_nrpoints)),
-                              strengths)
-        nconfig[self.MANAME_DIPOLE] = strength
+            # set config energy appropriately
+            indices = self._conv_times_2_indices([time])
+            strengths = self.ps_waveform_get_strengths(self.MANAME_DIPOLE)
+            strength = _np.interp(indices[0],
+                                  list(range(self.ps_ramp_wfm_nrpoints)),
+                                  strengths)
+            nconfig[self.MANAME_DIPOLE] = strength
 
         # ps normalized configuration was given
         self._ps_nconfigs[name].configuration = nconfig
@@ -918,8 +924,8 @@ class BoosterRamp(_ConfigSrv):
             st = 'name: {}'.format(self.name)
             return st
         labels = (
-            'ti_params_rf_delay [us]',
-            'ti_params_ps_delay [us]',
+            'ti_params_rf_ramp_delay [us]',
+            'ti_params_ps_ramp_delay [us]',
             'ti_params_injection_time [ms]',
             'ti_params_ejection_time [ms]',
             'ps_ramp_duration [ms]',
@@ -933,8 +939,8 @@ class BoosterRamp(_ConfigSrv):
         strfmt3 = strfmt1.replace('{}', '{:07.3f} {}')
         strfmt4 = strfmt1.replace('{}', '{:07.3f}')
         st += strfmt1.format('name', self.name)
-        st += strfmt1.format(labels[0], self.ti_params_rf_delay)
-        st += strfmt1.format(labels[1], self.ti_params_ps_delay)
+        st += strfmt1.format(labels[0], self.ti_params_rf_ramp_delay)
+        st += strfmt1.format(labels[1], self.ti_params_ps_ramp_delay)
         st += strfmt4.format(labels[2], self.ti_params_injection_time)
         st += strfmt4.format(labels[3], self.ti_params_ejection_time)
         st += strfmt1.format(labels[4], self.ps_ramp_duration)
@@ -1089,6 +1095,20 @@ class BoosterRamp(_ConfigSrv):
         if waveform.invalid:  # triggers waveform check invalid parameters
             raise _RampInvalidDipoleWfmParms(
                 'Invalid ps waveform {}.'.format(propty))
+
+    def _configsrv_check_ps_normalized_modified(self, nconfig):
+        # load original nconfig from server
+        oconfig = BoosterNormalized(name=nconfig.name)
+        oconfig.configsrv_load()
+
+        # compare values. If identical, return False
+        for ma in oconfig.manames:
+            if oconfig[ma] != nconfig[ma]:
+                modified = True
+                break
+        else:
+            modified = False
+        return modified
 
 
 class SiriusMig(BoosterRamp):
