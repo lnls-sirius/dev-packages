@@ -4,6 +4,9 @@ from threading import Thread as _Thread
 from threading import Event as _Event
 from queue import Queue as _Queue
 
+# NOTE: QueueThread was reported as generating unstable behaviour
+# when used intensively in the SOFB IOC.
+# TODO: investigate this issue!
 
 class QueueThread(_Thread):
     """Callback queue class.
