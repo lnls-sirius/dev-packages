@@ -4,7 +4,7 @@ from copy import deepcopy as _dcopy
 from http import HTTPStatus as _HTTPStatus
 
 from siriuspy import envars as _envars
-from siriuspy import util as _util
+from siriuspy.servconf import util as _util
 from siriuspy.servconf import exceptions as _exceptions
 from siriuspy.servconf.conf_service import ConfigService as _ConfigService
 from siriuspy.servconf.conf_types import check_value as _check_value
@@ -17,6 +17,11 @@ class ConnConfigService:
         """Contructor."""
         self._config_type = config_type
         self._srvconf = _ConfigService(url=url)
+
+    @property
+    def config_type(self):
+        """Type of configuration."""
+        return self._config_type
 
     def config_get(self, name):
         """Get configuration by its name."""
@@ -48,13 +53,6 @@ class ConnConfigService:
         r = self._srvconf.find_nr_configs(config_type=self._config_type,
                                           name=name, begin=begin, end=end,
                                           discarded=discarded)
-        return ConnConfigService._process_return(r)
-
-    def config_update(self, metadata, configuration):
-        """Update existing configuration."""
-        config = dict(metadata)
-        config.update({'value': configuration})
-        r = self._srvconf.update_config(config)
         return ConnConfigService._process_return(r)
 
     def config_delete(self, metadata):
@@ -102,12 +100,17 @@ class ConfigSrv:
     def __init__(self, name=None):
         """Constructor."""
         if name is None:
-            self._name = '_ConfigSrv_' + _util.get_timestamp()
+            self._name = _util.generate_config_name()
         else:
             self._name = name
         self._metadata = None
         self._configuration = dict()
         self._synchronized = False
+
+    @property
+    def config_type(self):
+        """Type of configuration."""
+        return self._conn.config_type
 
     @property
     def name(self):
@@ -158,49 +161,32 @@ class ConfigSrv:
         self._metadata = metadata
         self._synchronized = True
 
-    def configsrv_update(self):
-        """Update configuration in ConfigServer."""
-        if not isinstance(self.name, str):
-            raise _exceptions.SrvConfigInvalidName()
-        # check of metadat is present
-        if not self._metadata:
-            raise _exceptions.SrvMetadataInvalid()
+    def configsrv_save(self, new_name=None):
+        """Save configuration to ConfigServer."""
+        # if config is syncronyzed, it is not necessary to save an identical
+        # one in server
+        if self.configsrv_synchronized:
+            return
+
         # check if data format is ok
         if not self._conn.check_value(self._configuration):
-            raise _exceptions.SrvConfigFormatError()
-        # update config server with metadata and valid configuration
-        if self.name != self._metadata['name']:
-            raise _exceptions.SrvConfigConflict()
-        self._conn.config_update(self._metadata, self._configuration)
-        # update metadata
-        configuration, metadata = self._conn.config_get(name=self.name)
+            raise _exceptions.SrvConfigFormatError(
+                'Configuration value with inconsistent format.')
+
+        # if new_name is given, apply
+        if new_name is not None:
+            self._name = new_name
+
+        # check if config name already exists
+        if self.configsrv_exist():
+            raise _exceptions.SrvConfigAlreadyExists(
+                'A configuration with the given name already exists in '
+                'server.')
+
+        configuration, metadata = \
+            self._conn.config_insert(self._name, self._configuration)
         self._configuration = configuration
         self._metadata = metadata
-        self._synchronized = True
-
-    def configsrv_save(self):
-        """Save configuration to ConfigServer."""
-        # check if config name is not None
-        if not isinstance(self.name, str):
-            raise _exceptions.SrvConfigInvalidName()
-        # check if data format is ok
-        if not self._conn.check_value(self._configuration):
-            raise _exceptions.SrvConfigFormatError()
-        # check if config name already exists
-        r = self.configsrv_exist()
-        if r is True:
-            # already exists
-            if not self._metadata or self.name != self._metadata['name']:
-                # update metadata
-                configuration, metadata = self._conn.config_get(self.name)
-                self._metadata = metadata
-            self.configsrv_update()
-        else:
-            # new configuration
-            configuration, metadata = \
-                self._conn.config_insert(self.name, self._configuration)
-            self._configuration = configuration
-            self._metadata = metadata
         self._synchronized = True
 
     def configsrv_delete(self):
