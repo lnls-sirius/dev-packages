@@ -1,6 +1,6 @@
 """Configurations connection classes."""
 
-from copy import deepcopy as _dcopy
+from copy import deepcopy as _dcopy, copy as _copy
 from http import HTTPStatus as _HTTPStatus
 
 from siriuspy import envars as _envars
@@ -88,8 +88,8 @@ class ConnConfigService:
             metadata = r['result']
             configuration = None
             if isinstance(metadata, dict):
-                metadata = dict(metadata)  # copy
-                configuration = dict(metadata['value'])
+                metadata = _copy(metadata)
+                configuration = _copy(metadata['value'])
                 del metadata['value']
             return configuration, metadata
 

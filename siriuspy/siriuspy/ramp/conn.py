@@ -14,6 +14,8 @@ from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.servconf.conf_service import ConfigService as _ConfigService
 from siriuspy.servconf.srvconfig import ConnConfigService as _ConnConfigService
 from siriuspy.ramp import util as _rutil
+from siriuspy.csdevice.orbitcorr import get_consts as _get_SOFB_consts
+from siriuspy.search.ma_search import MASearch as _MASearch
 
 
 _prefix = _envars.vaca_prefix
@@ -295,17 +297,22 @@ class ConnMagnets(_EpicsPropsList):
         """Check opmodes of all power supplies ar RmpWfm."""
         return self._check('OpMode', _PSConst.OpMode.RmpWfm)
 
+    def check_intlksoft(self):
+        """Check if software interlocks are reset."""
+        return self._check('IntlkSoft', 0)
+
+    def check_intlkhard(self):
+        """Check if hardware interlocks are reset."""
+        return self._check('IntlkHard', 0)
+
+    def check_rmpready(self):
+        """Check if ramp increase was concluded."""
+        return self._check('RmpReady', 1)
+
     # --- private methods ---
 
     def _get_manames(self):
-        cs = _ConfigService()
-        tpl = cs.get_config_type_template('bo_normalized')
-        self._manames = sorted(tpl.keys())
-        # aux = list()
-        # for key in tpl.keys():
-        #     if 'SF' in key or 'SD' in key:
-        #         aux.append(key)
-        # self._manames = sorted(aux)
+        self._manames = _MASearch.get_manames({'sec': 'BO', 'dis': 'MA'})
 
     def _define_properties(self, prefix, connection_callback, callback):
         p = prefix
@@ -321,6 +328,18 @@ class ConnMagnets(_EpicsPropsList):
                                callback=callback))
             properties.append(
                 _EpicsProperty(maname + ':WfmData', '-SP', '-RB', p,
+                               connection_callback=connection_callback,
+                               callback=callback))
+            properties.append(
+                _EpicsProperty(maname + ':IntlkSoft', '-Mon', '-Mon', p,
+                               connection_callback=connection_callback,
+                               callback=callback))
+            properties.append(
+                _EpicsProperty(maname + ':IntlkHard', '-Mon', '-Mon', p,
+                               connection_callback=connection_callback,
+                               callback=callback))
+            properties.append(
+                _EpicsProperty(maname + ':RmpReady', '-Mon', '-Mon', p,
                                connection_callback=connection_callback,
                                callback=callback))
         return properties
@@ -359,6 +378,8 @@ class ConnRF(_EpicsPropsList):
         Rmp_VoltTop = DevName + ':RmpVoltTop'
         Rmp_PhsBot = DevName + ':RmpPhsBot'
         Rmp_PhsTop = DevName + ':RmpPhsTop'
+        Rmp_Intlk = DevName + ':Intlk'
+        Rmp_RmpReady = DevName + ':RmpReady'
 
         # State Enbl|Dsbl
         STATE_DISBL = 0
@@ -419,6 +440,14 @@ class ConnRF(_EpicsPropsList):
         rb[ConnRF.Const.Rmp_PhsTop] = self._ramp_config.rf_ramp_top_phase
         return self._check(rb)
 
+    def check_intlk(self):
+        """Check if hardware interlocks are reset."""
+        return self._check({ConnRF.Const.Rmp_Intlk: 0})
+
+    def check_rmpready(self):
+        """Check if ramp increase was concluded."""
+        return self._check({ConnRF.Const.Rmp_RmpReady: 1})
+
     # --- private methods ---
 
     def _define_properties(self, prefix, connection_callback, callback):
@@ -464,6 +493,12 @@ class ConnRF(_EpicsPropsList):
                            _rutil.DEFAULT_RF_RAMP_TOP_PHASE,
                            connection_callback=connection_callback,
                            callback=callback),
+            _EpicsProperty(c.Rmp_Intlk, '-Mon', '-Mon', prefix,
+                           connection_callback=connection_callback,
+                           callback=callback),
+            _EpicsProperty(c.Rmp_RmpReady, '-Mon', '-Mon', prefix,
+                           connection_callback=connection_callback,
+                           callback=callback)
             )
         return properties
 
@@ -474,3 +509,44 @@ class ConnRF(_EpicsPropsList):
             if not self.get_readback(name) == value:
                 return False
         return True
+
+
+class ConnSOFB(_EpicsPropsList):
+    """SOFB connector class."""
+
+    IOC_Prefix = 'BO-Glob:AP-SOFB'
+
+    def __init__(self, ramp_config=None, prefix=_prefix,
+                 connection_callback=None, callback=None):
+        """Init."""
+        self._ramp_config = ramp_config
+        properties = self._define_properties(prefix, connection_callback,
+                                             callback)
+        super().__init__(properties)
+
+    def get_kicks(self):
+        """Get CH and CV kicks calculated by SOFB."""
+        rb = self.readbacks
+        cv_kicks = rb[ConnSOFB.IOC_Prefix + ':KicksCV']
+        cv_names = _get_SOFB_consts.cv_names
+
+        ch_kicks = rb[ConnSOFB.IOC_Prefix + ':KicksCH']
+        ch_names = _get_SOFB_consts.ch_names
+
+        corrs2kicks_dict = dict()
+        for idx in range(len(cv_names)):
+            corrs2kicks_dict[cv_names[idx]] = cv_kicks[idx]
+        for idx in range(len(ch_names)):
+            corrs2kicks_dict[ch_names[idx]] = ch_kicks[idx]
+        return corrs2kicks_dict
+
+    def _define_properties(self, prefix, connection_callback, callback):
+        properties = (
+            _EpicsProperty(ConnSOFB.IOC_Prefix + ':KicksCH', '-Mon', '-Mon',
+                           prefix, connection_callback=connection_callback,
+                           callback=callback),
+            _EpicsProperty(ConnSOFB.IOC_Prefix + ':KicksCV', '-Mon', '-Mon',
+                           prefix, connection_callback=connection_callback,
+                           callback=callback),
+            )
+        return properties
