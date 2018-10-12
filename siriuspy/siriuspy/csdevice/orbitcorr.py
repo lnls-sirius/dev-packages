@@ -312,10 +312,10 @@ def get_orbit_database(acc, prefix=''):
             'hilim': 1000, 'lolim': 1},
         'OrbitTrigNrSamplesPre-SP': {
             'type': 'short', 'unit': '', 'value': 0,
-            'hilim': 2**15-1, 'lolim': 1},
+            'hilim': 2**15-1, 'lolim': 0},
         'OrbitTrigNrSamplesPre-RB': {
             'type': 'short', 'unit': '', 'value': 0,
-            'hilim': 2**15-1, 'lolim': 1},
+            'hilim': 2**15-1, 'lolim': 0},
         'OrbitTrigNrSamplesPost-SP': {
             'type': 'short', 'unit': '', 'value': 200,
             'hilim': 2**15-1, 'lolim': 1},
