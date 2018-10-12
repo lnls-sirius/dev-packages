@@ -430,9 +430,9 @@ class EpicsOrbit(BaseOrbit):
         db['OrbitTrigExtDelay-SP'][prop] = self.set_trig_acq_extdelay
         db['OrbitTrigExtEvtSrc-Sel'][prop] = self.set_trig_acq_extsource
         db['OrbitTrigNrSamplesPre-SP'][prop] = _part(
-            self.set_trig_acq_nrsamples, False)
+            self.set_trig_acq_nrsamples, ispost=False)
         db['OrbitTrigNrSamplesPost-SP'][prop] = _part(
-            self.set_trig_acq_nrsamples, True)
+            self.set_trig_acq_nrsamples, ispost=True)
         db['OrbitTrigNrShots-SP'][prop] = self.set_trig_acq_nrshots
         db['OrbitTrigDownSample-SP'][prop] = self.set_trig_acq_downsample
         db['OrbitRefX-SP'][prop] = _part(self.set_ref_orbit, 'X')
