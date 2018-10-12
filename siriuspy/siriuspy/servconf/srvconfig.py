@@ -23,6 +23,10 @@ class ConnConfigService:
         """Type of configuration."""
         return self._config_type
 
+    @property
+    def connected(self):
+        return self._srvconf.connected
+
     def config_get(self, name):
         """Get configuration by its name."""
         r = self._srvconf.get_config(self._config_type, name)
