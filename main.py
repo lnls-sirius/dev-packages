@@ -148,9 +148,8 @@ class SOFB(_BaseClass):
 
     def apply_corr(self, code):
         """Apply calculated kicks on the correctors."""
-        modes = (_csorb.OrbitMode.Online, _csorb.OrbitMode.SinglePass)
-        if self.orbit.mode not in modes:
-            self._update_log('ERR: Not Online, cannot apply kicks.')
+        if self.orbit.mode == _csorb.OrbitMode.Offline:
+            self._update_log('ERR: Offline, cannot apply kicks.')
             return False
         if self._thread and self._thread.is_alive():
             self._update_log('ERR: AutoCorr or MeasRespMat is On.')
@@ -353,10 +352,9 @@ class SOFB(_BaseClass):
         self._measuring_respmat = False
 
     def _do_auto_corr(self):
-        modes = (_csorb.OrbitMode.Online, _csorb.OrbitMode.SinglePass)
-        if self.orbit.mode not in modes:
+        if self.orbit.mode != _csorb.OrbitMode.Online:
             self._update_log(
-                'ERR: Can only Auto Correct in Online/SinglePass Mode')
+                'ERR: Can only Auto Correct in Online Mode')
             self.run_callbacks('AutoCorr-Sel', 0)
             self.run_callbacks('AutoCorr-Sts', 0)
             return
