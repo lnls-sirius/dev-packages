@@ -283,15 +283,27 @@ class BPM(_BaseTimingConfig):
             pv.put(val, wait=False)
 
     @property
-    def nrsamples(self):
+    def nrsamplespost(self):
         pv = self._config_pvs_rb['ACQNrSamplesPost']
         return pv.value if pv.connected else None
 
-    @nrsamples.setter
-    def nrsamples(self, val):
+    @nrsamplespost.setter
+    def nrsamplespost(self, val):
         pv = self._config_pvs_sp['ACQNrSamplesPost']
         if pv.connected:
             self._config_ok_vals['ACQNrSamplesPost'] = val
+            pv.put(val, wait=False)
+
+    @property
+    def nrsamplespre(self):
+        pv = self._config_pvs_rb['ACQNrSamplesPre']
+        return pv.value if pv.connected else None
+
+    @nrsamplespre.setter
+    def nrsamplespre(self, val):
+        pv = self._config_pvs_sp['ACQNrSamplesPre']
+        if pv.connected:
+            self._config_ok_vals['ACQNrSamplesPre'] = val
             pv.put(val, wait=False)
 
     @property
@@ -417,7 +429,10 @@ class EpicsOrbit(BaseOrbit):
         db['OrbitTrigExtDuration-SP'][prop] = self.set_trig_acq_extduration
         db['OrbitTrigExtDelay-SP'][prop] = self.set_trig_acq_extdelay
         db['OrbitTrigExtEvtSrc-Sel'][prop] = self.set_trig_acq_extsource
-        db['OrbitTrigNrSamples-SP'][prop] = self.set_trig_acq_nrsamples
+        db['OrbitTrigNrSamplesPre-SP'][prop] = _part(
+            self.set_trig_acq_nrsamples, False)
+        db['OrbitTrigNrSamplesPost-SP'][prop] = _part(
+            self.set_trig_acq_nrsamples, True)
         db['OrbitTrigNrShots-SP'][prop] = self.set_trig_acq_nrshots
         db['OrbitTrigDownSample-SP'][prop] = self.set_trig_acq_downsample
         db['OrbitRefX-SP'][prop] = _part(self.set_ref_orbit, 'X')
@@ -451,7 +466,8 @@ class EpicsOrbit(BaseOrbit):
         self._smooth_npts = 1
         self._acqrate = 10
         self._oldacqrate = self._acqrate
-        self._acqtrignrsamples = 200
+        self._acqtrignrsamplespre = 0
+        self._acqtrignrsamplespost = 200
         self._acqtrignrshots = 1
         self._multiturnidx = 0
         self._acqtrigdownsample = 1
@@ -466,6 +482,10 @@ class EpicsOrbit(BaseOrbit):
     @property
     def mode(self):
         return self._mode
+
+    @property
+    def acqtrignrsamples(self):
+        return self._acqtrignrsamplespre + self._acqtrignrsamplespost
 
     def get_orbit(self, reset=False):
         """Return the orbit distortion."""
@@ -574,7 +594,7 @@ class EpicsOrbit(BaseOrbit):
         return True
 
     def set_orbit_multiturn_idx(self, value):
-        maxidx = self._acqtrignrsamples // self._acqtrigdownsample
+        maxidx = self.acqtrignrsamples // self._acqtrigdownsample
         maxidx *= self._acqtrignrshots
         if value >= maxidx:
             value = maxidx-1
@@ -673,26 +693,32 @@ class EpicsOrbit(BaseOrbit):
         self.run_callbacks('OrbitTrigExtEvtSrc-Sts', value)
         return True
 
-    def set_trig_acq_nrsamples(self, value):
+    def set_trig_acq_nrsamples(self, value, ispost=True):
         Nmax = _csorb.MAX_MT_ORBS // self._acqtrignrshots
         Nmax *= self._acqtrigdownsample
+        suf = 'post' if ispost else 'pre'
+        osuf = 'pre' if ispost else 'post'
+        value += getattr(self, '_acqtrignrsamples'+osuf)
+
         nval = value if value <= Nmax else Nmax
         nval = self._find_new_nrsamples(nval, self._acqtrigdownsample)
         if nval != value:
             value = nval
             self._update_log(
                 'WARN: Not possible to set NrSamples. Redefining..')
+
+        value -= getattr(self, '_acqtrignrsamples'+osuf)
         with self._lock_raw_orbs:
             for bpm in self.bpms:
-                bpm.nrsamples = value
+                setattr(bpm, 'nrsamples'+suf, value)
             self._reset_orbs()
-            self._acqtrignrsamples = value
-        self.run_callbacks('OrbitTrigNrSamples-RB', self._acqtrignrsamples)
+            setattr(self, '_acqtrignrsamples'+suf, value)
+        self.run_callbacks('OrbitTrigNrSamples'+suf.title()+'-RB', value)
         self._update_time_vector()
         return True
 
     def set_trig_acq_nrshots(self, value):
-        pntspshot = self._acqtrignrsamples // self._acqtrigdownsample
+        pntspshot = self.acqtrignrsamples // self._acqtrigdownsample
         nrpoints = pntspshot * value
         if nrpoints > _csorb.MAX_MT_ORBS:
             value = _csorb.MAX_MT_ORBS // pntspshot
@@ -709,11 +735,11 @@ class EpicsOrbit(BaseOrbit):
         return True
 
     def set_trig_acq_downsample(self, value):
-        down = self._find_new_downsample(self._acqtrignrsamples, value)
-        nrpoints = (self._acqtrignrsamples // down) * self._acqtrignrshots
+        down = self._find_new_downsample(self.acqtrignrsamples, value)
+        nrpoints = (self.acqtrignrsamples // down) * self._acqtrignrshots
         if nrpoints > _csorb.MAX_MT_ORBS:
             down = self._find_new_downsample(
-                self._acqtrignrsamples, value, onlyup=True)
+                self.acqtrignrsamples, value, onlyup=True)
         if down != value:
             value = down
             self._update_log(
@@ -737,11 +763,12 @@ class EpicsOrbit(BaseOrbit):
             dt = T0
 
         dt *= self._acqtrigdownsample
-        nrptpst = self._acqtrignrsamples // self._acqtrigdownsample
+        nrptpst = self.acqtrignrsamples // self._acqtrigdownsample
+        offset = self._acqtrignrsamplespre / self._acqtrigdownsample
         nrst = self._acqtrignrshots
         a = _np.arange(nrst)
-        b = _np.arange(nrptpst)
-        vect = dl + dur/nrst*a[:, None] + dt*(b[None, :] + 0.5)
+        b = _np.arange(nrptpst, dtype=float) + (0.5 - offset)
+        vect = dl + dur/nrst*a[:, None] + dt*b[None, :]
         self._timevector = vect.flatten()
         self.run_callbacks('OrbitMultiTurnTime-Mon', self._timevector)
         self.set_orbit_multiturn_idx(self._multiturnidx)
@@ -809,7 +836,7 @@ class EpicsOrbit(BaseOrbit):
     def _update_multiturn_orbits(self):
         orbs = {'X': [], 'Y': [], 'Sum': []}
         with self._lock_raw_orbs:  # I need the lock here to assure consistency
-            samp = self._acqtrignrsamples * self._acqtrignrshots
+            samp = self.acqtrignrsamples * self._acqtrignrshots
             nr_bpms = self._const.NR_BPMS
             down = self._acqtrigdownsample
             idx = self._multiturnidx
