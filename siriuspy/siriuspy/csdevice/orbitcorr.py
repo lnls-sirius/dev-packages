@@ -43,7 +43,7 @@ EVG_NAME = _TISearch.get_device_names({'dev': 'EVG'})[0]
 TRIGGER_NAME = 'AS-Glob:TI-BPM-SIBO:'
 RF_GEN_NAME = 'AS-Glob:RF-Gen'  # TODO: use correct name for this device
 ORBIT_CONVERSION_UNIT = 1/1000  # from nm to um
-MAX_MT_ORBS = 500
+MAX_MT_ORBS = 4000
 RF_NOM_FREQ = 499458000.0
 EnblRF = _get_namedtuple('EnblRF', ('Off', 'On'))
 AutoCorr = _get_namedtuple('AutoCorr', ('Off', 'On'))
@@ -260,19 +260,19 @@ def get_orbit_database(acc, prefix=''):
     db.update({
         'OrbitsMultiTurnX-Mon': {
             'type': 'float', 'unit': 'um', 'count': MAX_MT_ORBS*nbpm,
-            'value': MAX_MT_ORBS*nbpm*[0]},
+            'value': 50*nbpm*[0]},
         'OrbitsMultiTurnY-Mon': {
             'type': 'float', 'unit': 'um', 'count': MAX_MT_ORBS*nbpm,
-            'value': MAX_MT_ORBS*nbpm*[0]},
+            'value': 50*nbpm*[0]},
         'OrbitsMultiTurnSum-Mon': {
             'type': 'float', 'unit': 'um', 'count': MAX_MT_ORBS*nbpm,
-            'value': MAX_MT_ORBS*nbpm*[0]},
+            'value': 50*nbpm*[0]},
         'OrbitMultiTurnTime-Mon': {
             'type': 'float', 'unit': 'ms', 'count': MAX_MT_ORBS,
-            'value': MAX_MT_ORBS*[0]},
+            'value': 50*[0]},
         'OrbitMultiTurnIdx-SP': {
             'type': 'int', 'unit': '', 'value': 0,
-            'hilim': MAX_MT_ORBS, 'lolim': 0},
+            'hilim': 50, 'lolim': 0},
         'OrbitMultiTurnIdx-RB': {
             'type': 'int', 'unit': '', 'value': 0,
             'hilim': MAX_MT_ORBS, 'lolim': 0},
