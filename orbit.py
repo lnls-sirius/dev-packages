@@ -761,7 +761,6 @@ class EpicsOrbit(BaseOrbit):
             dt = 5 * T0
         else:
             dt = T0
-
         dt *= self._acqtrigdownsample
         nrptpst = self.acqtrignrsamples // self._acqtrigdownsample
         offset = self._acqtrignrsamplespre / self._acqtrigdownsample
@@ -857,7 +856,6 @@ class EpicsOrbit(BaseOrbit):
 
             for pln, raw in self.raw_mtorbs.items():
                 norb = _np.array(orbs[pln], dtype=float)
-                norb += float(_np.random.rand(1)*1000)
                 raw.append(norb)
                 del raw[:-nr_pts]
                 orb = _np.mean(raw, axis=0)

@@ -53,8 +53,6 @@ class EpicsMatrix(BaseMatrix):
         self.sing_values = _np.zeros(const.NR_CORRS, dtype=float)
         self.respmat = _np.zeros([2*const.NR_BPMS, const.NR_CORRS])
         self.inv_respmat = self.respmat.copy().T
-        self.set_respmat(
-            1e5*_np.random.rand(2*const.NR_BPMS, const.NR_CORRS).flatten())
         self._load_respmat()
 
     def set_respmat(self, mat):
