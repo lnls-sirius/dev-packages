@@ -1,7 +1,12 @@
 "Definition of thread classes to used across the package."
+import time as _time
 from threading import Thread as _Thread
 from threading import Event as _Event
 from queue import Queue as _Queue
+
+# NOTE: QueueThread was reported as generating unstable behaviour
+# when used intensively in the SOFB IOC.
+# TODO: investigate this issue!
 
 class QueueThread(_Thread):
     """Callback queue class.
@@ -47,7 +52,8 @@ class QueueThread(_Thread):
 class RepeaterThread(_Thread):
     """Repeat execution of predefined function for a given number of times."""
 
-    def __init__(self, interval, function, args=tuple(), kwargs=dict(), niter=100):
+    def __init__(self, interval, function, args=tuple(),
+                 kwargs=dict(), niter=0):
         """Init method.
 
         Inputs:
@@ -70,10 +76,13 @@ class RepeaterThread(_Thread):
     def run(self):
         """Run method."""
         self.function(*self.args, **self.kwargs)
-        while ((not self.stopped.wait(self.interval)) and
+        dt = 0.0
+        while ((not self.stopped.wait(self.interval - dt)) and
                (not self.niters or self.niters > self.cur_iter)):
             self.cur_iter += 1
+            t0 = _time.time()
             self.function(*self.args, **self.kwargs)
+            dt = _time.time() - t0
 
     def reset(self):
         """Reset count."""

@@ -1,7 +1,7 @@
 """Define properties of all timing devices and their connections."""
 
 from copy import deepcopy as _dcopy
-from .const import get_namedtuple as _get_namedtuple
+from siriuspy.util import get_namedtuple as _get_namedtuple
 from siriuspy.search import HLTimeSearch as _HLTimeSearch
 
 events_hl2ll_map = {

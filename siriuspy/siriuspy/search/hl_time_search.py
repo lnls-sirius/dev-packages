@@ -1,5 +1,6 @@
 """Define properties of all timing devices and their connections."""
 
+import ast as _ast
 from copy import deepcopy as _dcopy
 from siriuspy import servweb as _web
 from siriuspy.namesys import SiriusPVName as _PVName
@@ -204,6 +205,4 @@ class HLTimeSearch:
         text = ''
         if _web.server_online():
             text = _web.high_level_triggers(timeout=_timeout)
-        # the execution of text will create the HL_TRIGGS variable.
-        exec(text)
-        cls._hl_triggers = locals()['HL_TRIGGS']
+        cls._hl_triggers = _ast.literal_eval(text)

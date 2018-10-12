@@ -1,24 +1,26 @@
 """Define the PV database of a single BPM and its enum types."""
 from copy import deepcopy as _dcopy
 import numpy as _np
-from siriuspy.csdevice.const import get_namedtuple as _get_namedtuple
+from siriuspy.util import get_namedtuple as _get_namedtuple
 
 OpModes = _get_namedtuple('OpModes', ('MultiBunch', 'SinglePass'))
-Polarity = _get_namedtuple('Polarity', ('positive', 'negative'))
+Polarity = _get_namedtuple('Polarity', ('Positive', 'Negative'))
 EnblTyp = _get_namedtuple('EnblTyp', ('Disable', 'Enable'))
 ConnTyp = _get_namedtuple('ConnTyp', ('Disconnect', 'Connect'))
-AcqRepeat = _get_namedtuple('AcqRepeat', ('normal', 'repetitive'))
-AcqEvents = _get_namedtuple('AcqEvents', ('start', 'stop', 'abort', 'reset'))
+AcqRepeat = _get_namedtuple('AcqRepeat', ('Normal', 'Repetitive'))
+AcqEvents = _get_namedtuple('AcqEvents', ('Start', 'Stop', 'Abort'))
 AcqDataTyp = _get_namedtuple(
                     'AcqDataTyp', ('A', 'B', 'C', 'D', 'X', 'Y', 'Sum', 'Q'))
-AcqTyp = _get_namedtuple(
-            'AcqTyp', ('adc', 'adcswp', 'tbt', 'sofb', 'tbtpha', 'fofbpha'))
+AcqChan = _get_namedtuple(
+            'AcqChan',
+            ('ADC', 'ADCSwp', 'TbT', 'FOFB', 'TbTPha', 'FOFBPha', 'Monit1'))
 AcqStates = _get_namedtuple(
-            'AcqStates', ('Idle', 'Waiting', 'Acquiring', 'Error', 'Aborted'))
+            'AcqStates',
+            ('Idle', 'Waiting', 'External Trig', 'Data Trig', 'Software Trig',
+             'Acquiring', 'Error', 'Aborted', 'Too Many Samples',
+             'Too Few Samples', 'No Memory'))
 AcqTrigTyp = _get_namedtuple(
-                        'AcqTrigTyp', ('now', 'external', 'data', 'software'))
-AcqTrigExter = _get_namedtuple(
-                'AcqTrigExter', ('Trig1', 'Trig2', 'Trig3', 'Trig4', 'Trig5'))
+                        'AcqTrigTyp', ('Now', 'External', 'Data', 'Software'))
 FFTWindowTyp = _get_namedtuple(
             'FFTWindowTyp', ('Square', 'Hanning', 'Parzen', 'Welch', 'QuadW'))
 FFTConvDirection = _get_namedtuple('FFTConvDirection', ('Forward', 'Backward'))
@@ -109,12 +111,12 @@ def get_config_database(prefix=''):
     """Get the configuration PVs database."""
     db = {
         'Channel-Sel': {
-            'type': 'enum', 'enums': AcqTyp._fields, 'value': 0},
+            'type': 'enum', 'enums': AcqChan._fields, 'value': 0},
         'Channel-Sts': {
-            'type': 'enum', 'enums': AcqTyp._fields, 'value': 0},
-        'Shots-SP': {
+            'type': 'enum', 'enums': AcqChan._fields, 'value': 0},
+        'NrShots-SP': {
             'type': 'int', 'value': 1, 'low': 0, 'high': 65536},
-        'Shots-RB': {
+        'NrShots-RB': {
             'type': 'int', 'value': 1, 'low': 0, 'high': 65536},
         'TriggerHwDly-SP': {
             'type': 'float', 'value': 0.0, 'low': 0.0, 'high': 1e9},
@@ -124,36 +126,34 @@ def get_config_database(prefix=''):
             'type': 'float', 'value': 1.0, 'low': 0.0, 'high': 1e9},
         'UpdateTime-RB': {
             'type': 'float', 'value': 1.0, 'low': 0.0, 'high': 1e9},
-        'SamplesPre-SP': {
+        'NrSamplesPre-SP': {
             'type': 'int', 'value': 1000, 'low': 0, 'high': 100000},
-        'SamplesPre-RB': {
+        'NrSamplesPre-RB': {
             'type': 'int', 'value': 1000, 'low': 0, 'high': 100000},
-        'SamplesPost-SP': {
+        'NrSamplesPost-SP': {
             'type': 'int', 'value': 1000, 'low': 0, 'high': 100000},
-        'SamplesPost-RB': {
+        'NrSamplesPost-RB': {
             'type': 'int', 'value': 1000, 'low': 0, 'high': 100000},
-        'TriggerEvent-Sel': {
-            'type': 'enum', 'enums': AcqEvents._fields, 'value': 0},
-        'TriggerEvent-Sts': {
-            'type': 'enum', 'enums': AcqEvents._fields, 'value': 0},
-        'Status-Sts': {
+        'Ctrl-Sel': {
+            'type': 'enum', 'enums': AcqEvents._fields,
+            'value': AcqEvents.Stop},
+        'Ctrl-Sts': {
+            'type': 'enum', 'enums': AcqEvents._fields,
+            'value': AcqEvents.Stop},
+        'Status-Mon': {
             'type': 'enum', 'enums': AcqStates._fields, 'value': 0},
-        'Trigger-Sel': {
+        'TriggerType-Sel': {
             'type': 'enum', 'enums': AcqTrigTyp._fields, 'value': 1},
-        'Trigger-Sts': {
+        'TriggerType-Sts': {
             'type': 'enum', 'enums': AcqTrigTyp._fields, 'value': 1},
         'TriggerRep-Sel': {
             'type': 'enum', 'enums': AcqRepeat._fields, 'value': 0},
         'TriggerRep-Sts': {
             'type': 'enum', 'enums': AcqRepeat._fields, 'value': 0},
-        'TriggerExternalChan-Sel': {
-            'type': 'enum', 'enums': AcqTrigExter._fields, 'value': 0},
-        'TriggerExternalChan-Sts': {
-            'type': 'enum', 'enums': AcqTrigExter._fields, 'value': 0},
         'TriggerDataChan-Sel': {
-            'type': 'enum', 'enums': AcqTyp._fields, 'value': 0},
+            'type': 'enum', 'enums': AcqChan._fields, 'value': 0},
         'TriggerDataChan-Sts': {
-            'type': 'enum', 'enums': AcqTyp._fields, 'value': 0},
+            'type': 'enum', 'enums': AcqChan._fields, 'value': 0},
         'TriggerDataSel-Sel': {
             'type': 'enum', 'enums': AcqDataTyp._fields, 'value': 0},
         'TriggerDataSel-Sts': {

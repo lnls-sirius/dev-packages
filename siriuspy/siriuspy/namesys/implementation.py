@@ -132,6 +132,8 @@ class SiriusPVName(str):
         """Subsection comparison."""
         my_ssec = self.sub
         th_ssec = other.sub
+        my_dev = self.dev
+        th_dev = other.dev
         if my_ssec == 'Glob':
             return False
         elif th_ssec == 'Glob':
@@ -143,6 +145,10 @@ class SiriusPVName(str):
         elif my_ssec == '01M1':
             return False
         elif th_ssec == '01M1':
+            return True
+        elif my_ssec == '01U' and my_dev in {'CV', 'BPM'}:
+            return False
+        elif th_ssec == '01U' and th_dev in {'CV', 'BPM'}:
             return True
         elif my_ssec[:2] != th_ssec[:2]:
             return my_ssec[:2] < th_ssec[:2]

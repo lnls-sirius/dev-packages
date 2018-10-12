@@ -6,7 +6,7 @@ from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.search import MASearch as _MASearch
 from siriuspy.pwrsupply.siggen import DEFAULT_SIGGEN_CONFIG as _DEF_SIGG_CONF
-from siriuspy.csdevice.const import Const
+from siriuspy.util import get_namedtuple as _get_namedtuple
 
 # MIN_WFMSIZE = 2001
 MAX_WFMSIZE = 4000
@@ -138,23 +138,21 @@ ps_sync_mode = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
 
 
 # --- power supply constants definition class ---
-
-
-Const.add_field('Models', ps_models)
-Const.add_field('DsblEnbl', ps_dsblenbl)
-Const.add_field('Interface', ps_interface)
-Const.add_field('OpenLoop', ps_openloop)
-Const.add_field('States', ps_states)
-Const.add_field('PwrState', ps_pwrstate_sel)
-Const.add_field('OpMode', ps_opmode)
-Const.add_field('CmdAck', ps_cmdack)
-Const.add_field('CycleType', ps_cycle_type)
-Const.add_field('SyncMode', ps_sync_mode)
+class Const:
+    """Const class defining power supply constants."""
+    Models = _get_namedtuple('Models', ps_models)
+    DsblEnbl = _get_namedtuple('DsblEnbl', ps_dsblenbl)
+    Interface = _get_namedtuple('Interface', ps_interface)
+    OpenLoop = _get_namedtuple('OpenLoop', ps_openloop)
+    States = _get_namedtuple('States', ps_states)
+    PwrState = _get_namedtuple('PwrState', ps_pwrstate_sel)
+    OpMode = _get_namedtuple('OpMode', ps_opmode)
+    CmdAck = _get_namedtuple('CmdAck', ps_cmdack)
+    CycleType = _get_namedtuple('CycleType', ps_cycle_type)
+    SyncMode = _get_namedtuple('SyncMode', ps_sync_mode)
 
 
 # --- power supply databases ---
-
-
 def get_ps_current_unit():
     """Return power supply current unit."""
     global _default_ps_current_unit

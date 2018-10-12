@@ -41,6 +41,12 @@ def server_online():
         return False
 
 
+def magnets_model_data(timeout=_timeout):
+    """Return the text of the retrieved magnet model data."""
+    url = _magnet_folder + 'magnets-model-data.txt'
+    return read_url(url, timeout=timeout)
+
+
 def magnets_excitation_data_read(filename, timeout=_timeout):
     """Return the text of the retrieved magnet excitation data."""
     return read_url(_excdat_folder + filename, timeout=timeout)
@@ -132,7 +138,7 @@ def udc_ps_mapping(timeout=_timeout):
 
 def crates_mapping(timeout=_timeout):
     """Return the crates mapping."""
-    url = _diag_folder + 'Mapeamento_placas_MicroTCA_vs_BPMs/'
+    url = _diag_folder + 'microTCA-vs-BPMs-mapping/'
     text = read_url(url, timeout=timeout)
     pat = _re.compile('>(names.crate[a-zA-Z_0-9]*.cfg)<')
     files = pat.findall(text)
