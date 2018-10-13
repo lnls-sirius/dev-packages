@@ -3,7 +3,6 @@
 import os as _os
 import numpy as _np
 from functools import partial as _part
-import siriuspy.csdevice.orbitcorr as _csorb
 from .base_class import BaseClass as _BaseClass
 
 
@@ -13,13 +12,10 @@ class BaseMatrix(_BaseClass):
 
 class EpicsMatrix(BaseMatrix):
     """Class of the Response Matrix."""
-    path_ = _os.path.abspath(_os.path.dirname(__file__))
-    RESPMAT_FILENAME = _os.path.join(path_, 'data', 'respmat.sirespmat')
-    del path_
 
     def get_database(self):
         """Get the database of the class."""
-        db = _csorb.get_respmat_database(self.acc)
+        db = self._csorb.get_respmat_database()
         prop = 'fun_set_pv'
         db['RespMat-SP'][prop] = self.set_respmat
         db['CHEnblList-SP'][prop] = _part(self.set_enbl_list, 'ch')
@@ -34,12 +30,15 @@ class EpicsMatrix(BaseMatrix):
     def __init__(self, acc, prefix='', callback=None):
         """Initialize the instance."""
         super().__init__(acc, prefix=prefix, callback=callback)
-        const = self._const
+        path_ = _os.path.abspath(_os.path.dirname(__file__))
+        ext = acc.lower() + 'respmat'
+        self.RESPMAT_FILENAME = _os.path.join(path_, 'data', 'respmat.'+ext)
+
         self.select_items = {
-            'bpmx': _np.ones(const.NR_BPMS, dtype=bool),
-            'bpmy': _np.ones(const.NR_BPMS, dtype=bool),
-            'ch': _np.ones(const.NR_CH, dtype=bool),
-            'cv': _np.ones(const.NR_CV, dtype=bool),
+            'bpmx': _np.ones(self._csorb.NR_BPMS, dtype=bool),
+            'bpmy': _np.ones(self._csorb.NR_BPMS, dtype=bool),
+            'ch': _np.ones(self._csorb.NR_CH, dtype=bool),
+            'cv': _np.ones(self._csorb.NR_CV, dtype=bool),
             'rf': _np.zeros(1, dtype=bool),
             }
         self.selection_pv_names = {
@@ -49,19 +48,19 @@ class EpicsMatrix(BaseMatrix):
               'bpmy': 'BPMYEnblList-RB',
               'rf': 'RFEnbl-Sts',
             }
-        self.num_sing_values = const.NR_CORRS
-        self.sing_values = _np.zeros(const.NR_CORRS, dtype=float)
-        self.respmat = _np.zeros([2*const.NR_BPMS, const.NR_CORRS])
+        self.num_sing_values = self._csorb.NR_SING_VALS
+        self.sing_values = _np.zeros(self._csorb.NR_CORRS, dtype=float)
+        self.respmat = _np.zeros([2*self._csorb.NR_BPMS, self._csorb.NR_CORRS])
         self.inv_respmat = self.respmat.copy().T
         self._load_respmat()
 
     def set_respmat(self, mat):
         """Set the response matrix in memory and save it in file."""
         self.run_callbacks('Log-Mon', 'Setting New RespMat.')
-        if len(mat) != self._const.MTX_SZ:
+        if len(mat) != self._csorb.MTX_SZ:
             self._update_log('ERR: Wrong RespMat Size.')
             return False
-        mat = _np.reshape(mat, [2*self._const.NR_BPMS, self._const.NR_CORRS])
+        mat = _np.reshape(mat, [2*self._csorb.NR_BPMS, self._csorb.NR_CORRS])
         old_ = self.respmat.copy()
         self.respmat = mat
         if not self._calc_matrices():
@@ -75,9 +74,9 @@ class EpicsMatrix(BaseMatrix):
         """Calculate the kick from the orbit distortion given."""
         kicks = _np.dot(-self.inv_respmat, orbit)
         self.run_callbacks(
-                        'DeltaKicksCH-Mon', list(kicks[:self._const.NR_CH]))
+                        'DeltaKicksCH-Mon', list(kicks[:self._csorb.NR_CH]))
         self.run_callbacks(
-                        'DeltaKicksCV-Mon', list(kicks[self._const.NR_CH:-1]))
+                        'DeltaKicksCV-Mon', list(kicks[self._csorb.NR_CH:-1]))
         self.run_callbacks('DeltaKicksRF-Mon', kicks[-1])
         return kicks
 
@@ -142,7 +141,7 @@ class EpicsMatrix(BaseMatrix):
         self.sing_values[:len(s)] = s
         self.run_callbacks('SingValues-Mon', list(self.sing_values))
         self.inv_respmat = _np.zeros(
-                        [2*self._const.NR_BPMS, self._const.NR_CORRS]).T
+                        [2*self._csorb.NR_BPMS, self._csorb.NR_CORRS]).T
         self.inv_respmat[sel_mat.T] = inv_mat.flatten()
         self.run_callbacks(
                 'InvRespMat-Mon', list(self.inv_respmat.flatten()))

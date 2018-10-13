@@ -6,7 +6,6 @@ import logging as _log
 from functools import partial as _part
 from threading import Thread as _Thread
 from pcaspy import Driver as _PCasDriver
-import siriuspy.csdevice.orbitcorr as _csorb
 from .matrix import BaseMatrix as _BaseMatrix, EpicsMatrix as _EpicsMatrix
 from .orbit import BaseOrbit as _BaseOrbit, EpicsOrbit as _EpicsOrbit
 from .correctors import (BaseCorrectors as _BaseCorrectors,
@@ -21,7 +20,7 @@ class SOFB(_BaseClass):
 
     def get_database(self):
         """Get the database of the class."""
-        db = _csorb.get_sofb_database()
+        db = self._csorb.get_sofb_database()
         prop = 'fun_set_pv'
         db['AutoCorr-Sel'][prop] = self.set_auto_corr
         db['AutoCorrFreq-SP'][prop] = self.set_auto_corr_frequency
@@ -55,7 +54,7 @@ class SOFB(_BaseClass):
         self.add_callback(self._update_driver)
         self._driver = None
         self._orbit = self._correctors = self._matrix = None
-        self._auto_corr = _csorb.AutoCorr.Off
+        self._auto_corr = self._csorb.AutoCorr.Off
         self._measuring_respmat = False
         self._auto_corr_freq = 1
         self._corr_factor = {'ch': 1.00, 'cv': 1.00, 'rf': 1.00}
@@ -148,7 +147,7 @@ class SOFB(_BaseClass):
 
     def apply_corr(self, code):
         """Apply calculated kicks on the correctors."""
-        if self.orbit.mode == _csorb.OrbitMode.Offline:
+        if self.orbit.mode == self._csorb.OrbitMode.Offline:
             self._update_log('ERR: Offline, cannot apply kicks.')
             return False
         if self._thread and self._thread.is_alive():
@@ -171,17 +170,17 @@ class SOFB(_BaseClass):
         return True
 
     def set_respmat_meas_state(self, value):
-        if value == _csorb.MeasRespMatCmd.Start:
+        if value == self._csorb.MeasRespMatCmd.Start:
             self._start_meas_respmat()
-        elif value == _csorb.MeasRespMatCmd.Stop:
+        elif value == self._csorb.MeasRespMatCmd.Stop:
             self._stop_meas_respmat()
-        elif value == _csorb.MeasRespMatCmd.Reset:
+        elif value == self._csorb.MeasRespMatCmd.Reset:
             self._reset_meas_respmat()
         return True
 
     def set_auto_corr(self, value):
-        if value == _csorb.AutoCorr.On:
-            if self._auto_corr == _csorb.AutoCorr.On:
+        if value == self._csorb.AutoCorr.On:
+            if self._auto_corr == self._csorb.AutoCorr.On:
                 self._update_log('ERR: AutoCorr is Already On.')
                 return False
             if self._thread and self._thread.is_alive():
@@ -192,7 +191,7 @@ class SOFB(_BaseClass):
             self._thread = _Thread(target=self._do_auto_corr,
                                    daemon=True)
             self._thread.start()
-        elif value == _csorb.AutoCorr.Off:
+        elif value == self._csorb.AutoCorr.Off:
             self._update_log('Turning Auto Correction Off.')
             self._auto_corr = value
         return True
@@ -235,17 +234,18 @@ class SOFB(_BaseClass):
         self.run_callbacks('Status-Mon', self._status)
 
     def _apply_corr(self, code):
-        nr_ch = self._const.NR_CH
+        nr_ch = self._csorb.NR_CH
         dkicks = self._dtheta.copy()
-        if code == _csorb.ApplyCorr.CH:
+        if code == self._csorb.ApplyCorr.CH:
             dkicks[nr_ch:] = 0
-        elif code == _csorb.ApplyCorr.CV:
+        elif code == self._csorb.ApplyCorr.CV:
             dkicks[:nr_ch] = 0
             dkicks[-1] = 0
-        elif code == _csorb.ApplyCorr.RF:
+        elif code == self._csorb.ApplyCorr.RF:
             dkicks[:-1] = 0
         self._update_log(
-            'Applying {0:s} kicks.'.format(_csorb.ApplyCorr._fields[code]))
+            'Applying {0:s} kicks.'.format(
+                self._csorb.ApplyCorr._fields[code]))
         kicks = self._process_kicks(self._ref_corr_kicks, dkicks)
         if kicks is None:
             return
@@ -294,11 +294,12 @@ class SOFB(_BaseClass):
             self._update_log('Cannot Reset, Measurement in process.')
             return False
         self._update_log('Reseting measurement status.')
-        self.run_callbacks('MeasRespMat-Mon', _csorb.MeasRespMatMon.Idle)
+        self.run_callbacks('MeasRespMat-Mon', self._csorb.MeasRespMatMon.Idle)
         return True
 
     def _start_meas_respmat(self):
-        modes = (_csorb.OrbitMode.Online, _csorb.OrbitMode.SinglePass)
+        modes = (
+            self._csorb.OrbitMode.Online, self._csorb.OrbitMode.SinglePass)
         if self.orbit.mode not in modes:
             self._update_log(
                 'ERR: Can only Meas Respmat in Online/SinglePass Mode')
@@ -316,20 +317,21 @@ class SOFB(_BaseClass):
         return True
 
     def _do_meas_respmat(self):
-        nr_corrs = self._const.NR_CORRS
-        nr_bpms = self._const.NR_BPMS
-        self.run_callbacks('MeasRespMat-Mon', _csorb.MeasRespMatMon.Measuring)
+        nr_corrs = self._csorb.NR_CORRS
+        nr_bpms = self._csorb.NR_BPMS
+        self.run_callbacks(
+            'MeasRespMat-Mon', self._csorb.MeasRespMatMon.Measuring)
         mat = _np.zeros([2*nr_bpms, nr_corrs])
         orig_kicks = self.correctors.get_strength()
         for i in range(nr_corrs):
             if not self._measuring_respmat:
                 self.run_callbacks(
-                            'MeasRespMat-Mon', _csorb.MeasRespMatMon.Aborted)
+                    'MeasRespMat-Mon', self._csorb.MeasRespMatMon.Aborted)
                 self.correctors.apply_kicks(orig_kicks)
                 return
             self._update_log(
                     'Varying Corrector {0:d} of {1:d}'.format(i, nr_corrs))
-            if i < self._const.NR_CH:
+            if i < self._csorb.NR_CH:
                 delta = self._meas_respmat_kick['ch']
             elif i < nr_corrs - 1:
                 delta = self._meas_respmat_kick['cv']
@@ -348,11 +350,12 @@ class SOFB(_BaseClass):
         self.correctors.apply_kicks(orig_kicks)
         self._update_log('Measurement Completed.')
         self.matrix.set_respmat(list(mat.flatten()))
-        self.run_callbacks('MeasRespMat-Mon', _csorb.MeasRespMatMon.Completed)
+        self.run_callbacks(
+            'MeasRespMat-Mon', self._csorb.MeasRespMatMon.Completed)
         self._measuring_respmat = False
 
     def _do_auto_corr(self):
-        if self.orbit.mode != _csorb.OrbitMode.Online:
+        if self.orbit.mode != self._csorb.OrbitMode.Online:
             self._update_log(
                 'ERR: Can only Auto Correct in Online Mode')
             self.run_callbacks('AutoCorr-Sel', 0)
@@ -360,8 +363,8 @@ class SOFB(_BaseClass):
             return
         self.run_callbacks('AutoCorr-Sts', 1)
         strn = '{0:20s}: {1:7.3f}'
-        while (self._auto_corr == _csorb.AutoCorr.On and
-               self.orbit.mode in modes):
+        while (self._auto_corr == self._csorb.AutoCorr.On and
+               self.orbit.mode == self._csorb.OrbitMode.Online):
             t0 = _time.time()
             orb = self.orbit.get_orbit()
             t1 = _time.time()
@@ -374,7 +377,7 @@ class SOFB(_BaseClass):
             print(strn.format('get strength:', 1000*(t3-t2)))
             kicks = self._process_kicks(kicks, dkicks)
             if kicks is None:
-                self._auto_corr = _csorb.AutoCorr.Off
+                self._auto_corr = self._csorb.AutoCorr.Off
                 self._update_log('ERR: Exit Auto Correction')
                 self.run_callbacks('AutoCorr-Sel', 0)
                 continue
@@ -405,7 +408,7 @@ class SOFB(_BaseClass):
         self._dtheta = self.matrix.calc_kicks(orb)
 
     def _process_kicks(self, kicks, dkicks):
-        nr_ch = self._const.NR_CH
+        nr_ch = self._csorb.NR_CH
         slcs = {
             'ch': slice(None, nr_ch),
             'cv': slice(nr_ch, -1),

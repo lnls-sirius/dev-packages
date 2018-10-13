@@ -5,7 +5,6 @@ import math as _math
 import numpy as _np
 from epics import PV as _PV
 import siriuspy.util as _util
-import siriuspy.csdevice.orbitcorr as _csorb
 from siriuspy.thread import RepeaterThread as _Repeat
 from siriuspy.search.hl_time_search import HLTimeSearch as _HLTimeSearch
 from siriuspy.csdevice.pwrsupply import Const as _PwrSplyConst
@@ -74,7 +73,8 @@ class Corrector(_BaseTimingConfig):
 class RFCtrl(Corrector):
 
     def __init__(self):
-        super().__init__(_csorb.RF_GEN_NAME)
+        super().__init__('SI')
+        self._name = self._csorb.RF_GEN_NAME
         opt = {'connection_timeout': TIMEOUT}
         self._sp = _PV(LL_PREF+self._name+':Freq-SP', **opt)
         self._rb = _PV(LL_PREF+self._name+':Freq-RB', **opt)
@@ -155,7 +155,7 @@ class TimingConfig(_BaseTimingConfig):
         elif acc == 'BO':
             evt = 'OrbBO'
             trig = 'BO-Glob:TI-Corrs:'
-        pref_name = LL_PREF + _csorb.EVG_NAME + ':' + evt
+        pref_name = LL_PREF + self._csorb.EVG_NAME + ':' + evt
         opt = {'connection_timeout': TIMEOUT}
         self._evt_sender = _PV(pref_name + 'ExtTrig-Cmd', **opt)
         # self._evt_sender = _PV(
@@ -209,7 +209,7 @@ class EpicsCorrectors(BaseCorrectors):
 
     def get_database(self):
         """Get the database of the class."""
-        db = _csorb.get_corrs_database(self.acc)
+        db = self._csorb.get_corrs_database()
         prop = 'fun_set_pv'
         db['SyncKicks-Sel'][prop] = self.set_chcvs_mode
         db['ConfigCorrs-Cmd'][prop] = self.configure_correctors
@@ -223,10 +223,10 @@ class EpicsCorrectors(BaseCorrectors):
         super().__init__(acc, prefix=prefix, callback=callback)
         self._synced_kicks = True
         self._acq_rate = 10
-        self._names = self._const.CH_NAMES + self._const.CV_NAMES
+        self._names = self._csorb.CH_NAMES + self._csorb.CV_NAMES
         self._chcvs = {CHCV(dev) for dev in self._names}
         self._rf_ctrl = RFCtrl()
-        self._rf_nom_freq = _csorb.RF_NOM_FREQ
+        self._rf_nom_freq = self._csorb.RF_NOM_FREQ
         self.timing = TimingConfig(acc)
         self._corrs_thread = _Repeat(
                 1/self._acq_rate, self._update_corrs_strength, niter=0)
@@ -292,7 +292,7 @@ class EpicsCorrectors(BaseCorrectors):
 
     def get_strength(self):
         """Get the correctors strengths."""
-        corr_values = _np.zeros(self._const.NR_CORRS, dtype=float)
+        corr_values = _np.zeros(self._csorb.NR_CORRS, dtype=float)
         for i, corr in enumerate(self._chcvs):
             if corr.connected:
                 corr_values[i] = corr.value
@@ -310,15 +310,15 @@ class EpicsCorrectors(BaseCorrectors):
 
     def _update_corrs_strength(self):
         corr_vals = self.get_strength()
-        self.run_callbacks('KicksCH-Mon', corr_vals[:self._const.NR_CH])
-        self.run_callbacks('KicksCV-Mon', corr_vals[self._const.NR_CH:-1])
+        self.run_callbacks('KicksCH-Mon', corr_vals[:self._csorb.NR_CH])
+        self.run_callbacks('KicksCV-Mon', corr_vals[self._csorb.NR_CH:-1])
         self.run_callbacks('KicksRF-Mon', corr_vals[-1])
 
     def set_chcvs_mode(self, value):
         self._synced_kicks = value
-        if self._synced_kicks == _csorb.SyncKicks.On:
+        if self._synced_kicks == self._csorb.SyncKicks.On:
             val = _PwrSplyConst.OpMode.SlowRefSync
-        elif self._synced_kicks == _csorb.SyncKicks.Off:
+        elif self._synced_kicks == self._csorb.SyncKicks.Off:
             val = _PwrSplyConst.OpMode.SlowRef
 
         for corr in self._chcvs:
@@ -338,9 +338,9 @@ class EpicsCorrectors(BaseCorrectors):
             self._update_log('ERR: Failed to configure timing')
             return False
 
-        if self._synced_kicks == _csorb.SyncKicks.On:
+        if self._synced_kicks == self._csorb.SyncKicks.On:
             val = _PwrSplyConst.OpMode.SlowRefSync
-        elif self._synced_kicks == _csorb.SyncKicks.Off:
+        elif self._synced_kicks == self._csorb.SyncKicks.Off:
             val = _PwrSplyConst.OpMode.SlowRef
 
         if self._rf_ctrl.connected:
