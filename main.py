@@ -22,24 +22,27 @@ class SOFB(_BaseClass):
         """Get the database of the class."""
         db = self._csorb.get_sofb_database()
         prop = 'fun_set_pv'
-        db['AutoCorr-Sel'][prop] = self.set_auto_corr
-        db['AutoCorrFreq-SP'][prop] = self.set_auto_corr_frequency
         db['MeasRespMat-Cmd'][prop] = self.set_respmat_meas_state
         db['CalcCorr-Cmd'][prop] = self.calc_correction
         db['CorrFactorCH-SP'][prop] = _part(self.set_corr_factor, 'ch')
         db['CorrFactorCV-SP'][prop] = _part(self.set_corr_factor, 'cv')
-        db['CorrFactorRF-SP'][prop] = _part(self.set_corr_factor, 'rf')
         db['MaxKickCH-SP'][prop] = _part(self.set_max_kick, 'ch')
         db['MaxKickCV-SP'][prop] = _part(self.set_max_kick, 'cv')
-        db['MaxKickRF-SP'][prop] = _part(self.set_max_kick, 'rf')
         db['MaxDeltaKickCH-SP'][prop] = _part(self.set_max_delta_kick, 'ch')
         db['MaxDeltaKickCV-SP'][prop] = _part(self.set_max_delta_kick, 'cv')
-        db['MaxDeltaKickRF-SP'][prop] = _part(self.set_max_delta_kick, 'rf')
         db['MeasRespMatKickCH-SP'][prop] = _part(self.set_respmat_kick, 'ch')
         db['MeasRespMatKickCV-SP'][prop] = _part(self.set_respmat_kick, 'cv')
-        db['MeasRespMatKickRF-SP'][prop] = _part(self.set_respmat_kick, 'rf')
         db['MeasRespMatWait-SP'][prop] = self.set_respmat_wait_time
         db['ApplyCorr-Cmd'][prop] = self.apply_corr
+        if self.isring:
+            db['AutoCorr-Sel'][prop] = self.set_auto_corr
+            db['AutoCorrFreq-SP'][prop] = self.set_auto_corr_frequency
+            db['CorrFactorRF-SP'][prop] = _part(self.set_corr_factor, 'rf')
+            db['MaxKickRF-SP'][prop] = _part(self.set_max_kick, 'rf')
+            db['MaxDeltaKickRF-SP'][prop] = _part(
+                self.set_max_delta_kick, 'rf')
+            db['MeasRespMatKickRF-SP'][prop] = _part(
+                self.set_respmat_kick, 'rf')
         db = super().get_database(db)
         db.update(self.correctors.get_database())
         db.update(self.matrix.get_database())
@@ -57,10 +60,15 @@ class SOFB(_BaseClass):
         self._auto_corr = self._csorb.AutoCorr.Off
         self._measuring_respmat = False
         self._auto_corr_freq = 1
-        self._corr_factor = {'ch': 1.00, 'cv': 1.00, 'rf': 1.00}
-        self._max_kick = {'ch': 300, 'cv': 300, 'rf': 3000}
-        self._max_delta_kick = {'ch': 50, 'cv': 50, 'rf': 500}
-        self._meas_respmat_kick = {'ch': 0.2, 'cv': 0.2, 'rf': 200}
+        self._corr_factor = {'ch': 1.00, 'cv': 1.00}
+        self._max_kick = {'ch': 300, 'cv': 300}
+        self._max_delta_kick = {'ch': 50, 'cv': 50}
+        self._meas_respmat_kick = {'ch': 0.2, 'cv': 0.2}
+        if self.isring:
+            self._corr_factor['rf'] = 1.00
+            self._max_kick['rf'] = 3000
+            self._max_delta_kick['rf'] = 500
+            self._meas_respmat_kick['rf'] = 200
         self._meas_respmat_wait = 0.5  # seconds
         self._dtheta = None
         self._ref_corr_kicks = None
@@ -240,8 +248,9 @@ class SOFB(_BaseClass):
             dkicks[nr_ch:] = 0
         elif code == self._csorb.ApplyCorr.CV:
             dkicks[:nr_ch] = 0
-            dkicks[-1] = 0
-        elif code == self._csorb.ApplyCorr.RF:
+            if self.isring:
+                dkicks[-1] = 0
+        elif self.isring and code == self._csorb.ApplyCorr.RF:
             dkicks[:-1] = 0
         self._update_log(
             'Applying {0:s} kicks.'.format(
@@ -256,9 +265,6 @@ class SOFB(_BaseClass):
 
     def _update_driver(self, pvname, value, **kwargs):
         if self._driver is not None:
-            # if isinstance(value, (_np.ndarray, list, tuple)):
-            #     sz = len(value)
-            #     self._driver.setParamInfo(pvname, {'count': sz})
             self._driver.setParam(pvname, value)
             self._driver.updatePV(pvname)
 
@@ -330,12 +336,12 @@ class SOFB(_BaseClass):
                 self.correctors.apply_kicks(orig_kicks)
                 return
             self._update_log(
-                    'Varying Corrector {0:d} of {1:d}'.format(i, nr_corrs))
+                    'Varying Corrector {0:d} of {1:d}'.format(i+1, nr_corrs))
             if i < self._csorb.NR_CH:
                 delta = self._meas_respmat_kick['ch']
-            elif i < nr_corrs - 1:
+            elif i < self._csorb.NR_CH + self._csorb.NR_CV:
                 delta = self._meas_respmat_kick['cv']
-            else:
+            elif i < self._csorb.NR_CORRS:
                 delta = self._meas_respmat_kick['rf']
             kicks = orig_kicks.copy()
             kicks[i] += delta/2
@@ -409,11 +415,13 @@ class SOFB(_BaseClass):
 
     def _process_kicks(self, kicks, dkicks):
         nr_ch = self._csorb.NR_CH
-        slcs = {
-            'ch': slice(None, nr_ch),
-            'cv': slice(nr_ch, -1),
-            'rf': slice(-1, None)}
-        for pln in ('ch', 'cv', 'rf'):
+        slcs = {'ch': slice(None, nr_ch), 'cv': slice(nr_ch, None)}
+        if self.isring:
+            slcs = {
+                'ch': slice(None, nr_ch),
+                'cv': slice(nr_ch, -1),
+                'rf': slice(-1, None)}
+        for pln in sorted(slcs.keys()):
             slc = slcs[pln]
             dkicks[slc] *= self._corr_factor[pln]
 

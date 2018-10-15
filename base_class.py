@@ -10,6 +10,7 @@ class BaseClass(_Callback):
         self._csorb = OrbitCorrDev(acc)
         self._prefix = prefix
         self._status = 0b0
+        self._isring = self._csorb.acc_idx in self._csorb.Rings
 
     @property
     def prefix(self):
@@ -18,6 +19,14 @@ class BaseClass(_Callback):
     @property
     def acc(self):
         return self._csorb.acc
+
+    @property
+    def acc_idx(self):
+        return self._csorb.acc_idx
+
+    @property
+    def isring(self):
+        return self._isring
 
     @property
     def status(self):

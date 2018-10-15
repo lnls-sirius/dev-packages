@@ -22,32 +22,30 @@ class EpicsMatrix(BaseMatrix):
         db['CVEnblList-SP'][prop] = _part(self.set_enbl_list, 'cv')
         db['BPMXEnblList-SP'][prop] = _part(self.set_enbl_list, 'bpmx')
         db['BPMYEnblList-SP'][prop] = _part(self.set_enbl_list, 'bpmy')
-        db['RFEnbl-Sel'][prop] = _part(self.set_enbl_list, 'rf')
         db['NumSingValues-SP'][prop] = self.set_num_sing_values
+        if self.isring:
+            db['RFEnbl-Sel'][prop] = _part(self.set_enbl_list, 'rf')
         db = super().get_database(db)
         return db
 
     def __init__(self, acc, prefix='', callback=None):
         """Initialize the instance."""
         super().__init__(acc, prefix=prefix, callback=callback)
-        path_ = _os.path.abspath(_os.path.dirname(__file__))
-        ext = acc.lower() + 'respmat'
-        self.RESPMAT_FILENAME = _os.path.join(path_, 'data', 'respmat.'+ext)
-
         self.select_items = {
             'bpmx': _np.ones(self._csorb.NR_BPMS, dtype=bool),
             'bpmy': _np.ones(self._csorb.NR_BPMS, dtype=bool),
             'ch': _np.ones(self._csorb.NR_CH, dtype=bool),
             'cv': _np.ones(self._csorb.NR_CV, dtype=bool),
-            'rf': _np.zeros(1, dtype=bool),
             }
         self.selection_pv_names = {
-              'ch': 'CHEnblList-RB',
-              'cv': 'CVEnblList-RB',
-              'bpmx': 'BPMXEnblList-RB',
-              'bpmy': 'BPMYEnblList-RB',
-              'rf': 'RFEnbl-Sts',
+            'ch': 'CHEnblList-RB',
+            'cv': 'CVEnblList-RB',
+            'bpmx': 'BPMXEnblList-RB',
+            'bpmy': 'BPMYEnblList-RB',
             }
+        if self.isring:
+            self.select_items['rf'] = _np.zeros(1, dtype=bool)
+            self.selection_pv_names['rf'] = 'RFEnbl-Sts'
         self.num_sing_values = self._csorb.NR_SING_VALS
         self.sing_values = _np.zeros(self._csorb.NR_CORRS, dtype=float)
         self.respmat = _np.zeros([2*self._csorb.NR_BPMS, self._csorb.NR_CORRS])
@@ -77,7 +75,8 @@ class EpicsMatrix(BaseMatrix):
                         'DeltaKicksCH-Mon', list(kicks[:self._csorb.NR_CH]))
         self.run_callbacks(
                         'DeltaKicksCV-Mon', list(kicks[self._csorb.NR_CH:-1]))
-        self.run_callbacks('DeltaKicksRF-Mon', kicks[-1])
+        if self.isring:
+            self.run_callbacks('DeltaKicksRF-Mon', kicks[-1])
         return kicks
 
     def set_enbl_list(self, key, val):
@@ -112,7 +111,9 @@ class EpicsMatrix(BaseMatrix):
         self._update_log('Calculating Inverse Matrix.')
         sel_ = self.select_items
         selecbpm = _np.hstack([sel_['bpmx'], sel_['bpmy']])
-        seleccor = _np.hstack([sel_['ch'], sel_['cv'], sel_['rf']])
+        seleccor = _np.hstack([sel_['ch'], sel_['cv']])
+        if self.isring:
+            seleccor = _np.hstack([sel_['ch'], sel_['cv'], sel_['rf']])
         if not any(selecbpm):
             self._update_log('ERR: No BPM selected in EnblList')
             return False
@@ -148,7 +149,7 @@ class EpicsMatrix(BaseMatrix):
         return True
 
     def _load_respmat(self):
-        filename = self.RESPMAT_FILENAME
+        filename = self._csorb.RESPMAT_FILENAME
         if _os.path.isfile(filename):
             bkup = self.respmat.copy()
             self.respmat = _np.loadtxt(filename)
@@ -160,4 +161,4 @@ class EpicsMatrix(BaseMatrix):
 
     def _save_respmat(self, mat):
         self._update_log('Saving RespMat to file')
-        _np.savetxt(self.RESPMAT_FILENAME, mat)
+        _np.savetxt(self._csorb.RESPMAT_FILENAME, mat)

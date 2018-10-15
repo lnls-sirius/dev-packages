@@ -1,7 +1,6 @@
 """Module to deal with orbit acquisition."""
-
-import time as _time
 import os as _os
+import time as _time
 from functools import partial as _part
 from threading import Lock
 import numpy as _np
@@ -412,12 +411,9 @@ class EpicsOrbit(BaseOrbit):
         db = self._csorb.get_orbit_database()
         prop = 'fun_set_pv'
         db['OrbitMode-Sel'][prop] = self.set_orbit_mode
-        db['OrbitMultiTurnIdx-SP'][prop] = self.set_orbit_multiturn_idx
         db['OrbitTrigAcqConfig-Cmd'][prop] = self.trig_acq_config_bpms
         db['OrbitTrigAcqCtrl-Sel'][prop] = self.set_trig_acq_control
-        db['OrbitTrigAcqChan-Sel'][prop] = self.set_trig_acq_channel
         db['OrbitTrigAcqTrigger-Sel'][prop] = self.set_trig_acq_trigger
-        db['OrbitTrigDataChan-Sel'][prop] = self.set_trig_acq_datachan
         db['OrbitTrigDataSel-Sel'][prop] = self.set_trig_acq_datasel
         db['OrbitTrigDataThres-SP'][prop] = self.set_trig_acq_datathres
         db['OrbitTrigDataHyst-SP'][prop] = self.set_trig_acq_datahyst
@@ -429,8 +425,6 @@ class EpicsOrbit(BaseOrbit):
             self.set_trig_acq_nrsamples, ispost=False)
         db['OrbitTrigNrSamplesPost-SP'][prop] = _part(
             self.set_trig_acq_nrsamples, ispost=True)
-        db['OrbitTrigNrShots-SP'][prop] = self.set_trig_acq_nrshots
-        db['OrbitTrigDownSample-SP'][prop] = self.set_trig_acq_downsample
         db['OrbitRefX-SP'][prop] = _part(self.set_ref_orbit, 'X')
         db['OrbitRefY-SP'][prop] = _part(self.set_ref_orbit, 'Y')
         db['OrbitOfflineX-SP'][prop] = _part(self.set_offline_orbit, 'X')
@@ -438,17 +432,21 @@ class EpicsOrbit(BaseOrbit):
         db['OrbitSmoothNPnts-SP'][prop] = self.set_smooth_npts
         db['OrbitSmoothReset-Cmd'][prop] = self.set_smooth_reset
         db['OrbitAcqRate-SP'][prop] = self.set_orbit_acq_rate
+        if self.isring:
+            db['OrbitMultiTurnIdx-SP'][prop] = self.set_orbit_multiturn_idx
+            db['OrbitTrigAcqChan-Sel'][prop] = self.set_trig_acq_channel
+            db['OrbitTrigDataChan-Sel'][prop] = self.set_trig_acq_datachan
+            db['OrbitTrigNrShots-SP'][prop] = self.set_trig_acq_nrshots
+            db['OrbitTrigDownSample-SP'][prop] = self.set_trig_acq_downsample
+
         db = super().get_database(db)
         return db
 
     def __init__(self, acc, prefix='', callback=None):
         """Initialize the instance."""
         super().__init__(acc, prefix=prefix, callback=callback)
-        path = _os.path.abspath(_os.path.dirname(__file__))
-        ext = acc.lower() + 'orb'
-        self.REFORBFNAME = _os.path.join(path, 'data', 'ref_orbit.'+ext)
 
-        self._mode = self._csorb.OrbitMode.Online
+        self._mode = self._csorb.OrbitMode.Offline
         self.ref_orbs = {
                 'X': _np.zeros(self._csorb.NR_BPMS),
                 'Y': _np.zeros(self._csorb.NR_BPMS)}
@@ -501,13 +499,13 @@ class EpicsOrbit(BaseOrbit):
                 self._reset_orbs()
             _time.sleep(self._smooth_npts/self._acqrate)
 
-        if self._mode == self._csorb.OrbitMode.MultiTurn:
+        if self.isring and self._mode == self._csorb.OrbitMode.MultiTurn:
             orbs = self.smooth_mtorb
             getorb = self._get_orbit_multiturn
         elif self._mode == self._csorb.OrbitMode.SinglePass:
             orbs = self.smooth_sporb
             getorb = self._get_orbit_singlepass
-        elif self._mode == self._csorb.OrbitMode.Online:
+        elif self.isring and self._mode == self._csorb.OrbitMode.Online:
             orbs = self.smooth_orb
             getorb = self._get_orbit_online
 
@@ -567,8 +565,9 @@ class EpicsOrbit(BaseOrbit):
         return True
 
     def set_orbit_acq_rate(self, value):
-        trigmds = (
-            self._csorb.OrbitMode.MultiTurn, self._csorb.OrbitMode.SinglePass)
+        trigmds = [self._csorb.OrbitMode.SinglePass, ]
+        if self.isring:
+            trigmds.append(self._csorb.OrbitMode.MultiTurn)
         if self._mode in trigmds and value > 2:
             self._update_log('ERR: In triggered mode cannot set rate > 2.')
             return False
@@ -578,8 +577,9 @@ class EpicsOrbit(BaseOrbit):
         return True
 
     def set_orbit_mode(self, value):
-        trigmds = (
-            self._csorb.OrbitMode.MultiTurn, self._csorb.OrbitMode.SinglePass)
+        trigmds = [self._csorb.OrbitMode.SinglePass, ]
+        if self.isring:
+            trigmds.append(self._csorb.OrbitMode.MultiTurn)
         bo1 = self._mode in trigmds
         bo2 = value not in trigmds
         self._mode = value
@@ -610,10 +610,11 @@ class EpicsOrbit(BaseOrbit):
         return True
 
     def trig_acq_config_bpms(self, *args):
-        trigmds = (
-            self._csorb.OrbitMode.MultiTurn, self._csorb.OrbitMode.SinglePass)
+        trigmds = [self._csorb.OrbitMode.SinglePass, ]
+        if self.isring:
+            trigmds.append(self._csorb.OrbitMode.MultiTurn)
         if self._mode not in trigmds:
-            self._update_log('ERR: Change to SinglePass/MultiTurn first.')
+            self._update_log('ERR: Change to a Triggered mode first.')
             return False
         for bpm in self.bpms:
             bpm.configure()
@@ -753,6 +754,8 @@ class EpicsOrbit(BaseOrbit):
         return True
 
     def _update_time_vector(self, delay=None, duration=None, channel=None):
+        if not self.isring:
+            return
         dl = (delay or self.timing.delay or 0.0) / 1000
         dur = duration or self.timing.duration or 0.0
         channel = channel or self.bpms[0].acq_type or 0
@@ -775,14 +778,14 @@ class EpicsOrbit(BaseOrbit):
         self.set_orbit_multiturn_idx(self._multiturnidx)
 
     def _load_ref_orbs(self):
-        if _os.path.isfile(self.REFORBFNAME):
+        if _os.path.isfile(self._csorb.REFORBFNAME):
             self.ref_orbs['X'], self.ref_orbs['Y'] = _np.loadtxt(
-                                        self.REFORBFNAME, unpack=True)
+                                        self._csorb.REFORBFNAME, unpack=True)
 
     def _save_ref_orbits(self):
         orbs = _np.array([self.ref_orbs['X'], self.ref_orbs['Y']]).T
         try:
-            _np.savetxt(self.REFORBFNAME, orbs)
+            _np.savetxt(self._csorb.REFORBFNAME, orbs)
         except FileNotFoundError:
             self._update_log('WARN: Could not save reference orbit in file.')
 
@@ -795,11 +798,11 @@ class EpicsOrbit(BaseOrbit):
         self.smooth_mtorb = {'X': None, 'Y': None, 'Sum': None}
 
     def _update_orbits(self):
-        if self._mode == self._csorb.OrbitMode.MultiTurn:
+        if self.isring and self._mode == self._csorb.OrbitMode.MultiTurn:
             self._update_multiturn_orbits()
         elif self._mode == self._csorb.OrbitMode.SinglePass:
             self._update_online_orbits(sp=True)
-        else:
+        elif self.isring:
             self._update_online_orbits(sp=False)
 
     def _update_online_orbits(self, sp=False):
