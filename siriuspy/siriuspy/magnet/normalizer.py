@@ -225,7 +225,6 @@ class _MagnetNormalizer(_Computer):
             db = db['SL-SP']
         elif 'Kick-SP' in db:
             db = db['Kick-SP']
-        print(db)
         if 'unit' in db:
             unit = db['unit'].lower()
             if unit == 'mrad':
