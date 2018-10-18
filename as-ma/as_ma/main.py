@@ -134,21 +134,9 @@ class App:
             *parts, reason = pvname.split(_pvs._PREFIX_SECTOR)
         else:
             reason = pvname
-        value_converted = self._conv_units(reason, value)
-        self._driver.setParam(reason, value_converted)
+        self._driver.setParam(reason, value)
         if 'hilim' in kwargs or 'lolim' in kwargs:
             # print("changing upper limit", pvname, kwargs)
             self._driver.setParamInfo(reason, kwargs)
             # self._driver.callbackPV(reason)
         self._driver.updatePVs()
-
-    def _conv_units(self, reason, value):
-        db = App.pvs_database[reason]
-        if 'Kick' in reason:
-            if 'unit' in db:
-                unit = db['unit'].lower()
-                if unit == 'urad':
-                    return 1e6 * value
-                elif unit == 'mrad':
-                    return 1e3 * value
-        return value
