@@ -385,7 +385,7 @@ def get_ma_propty_database(maname):
             unit = 'Gev'
         elif magfunc in ('corrector-vertical', 'corrector-horizontal'):
             strength_name = 'Kick'
-            unit = 'rad'
+            unit = 'urad'
 
         db[psname][strength_name + '-SP'] = \
             _copy.deepcopy(db[psname]['Current-SP'])
@@ -445,11 +445,11 @@ def get_pm_propty_database(maname):
         # set approriate MA limits and unit
         if magfunc in ('corrector-vertical', 'corrector-horizontal'):
             db[psname]['Kick-SP'] = _copy.deepcopy(db[psname]['Voltage-SP'])
-            db[psname]['Kick-SP']['unit'] = 'rad'
+            db[psname]['Kick-SP']['unit'] = 'mrad'
             db[psname]['Kick-RB'] = _copy.deepcopy(db[psname]['Voltage-RB'])
-            db[psname]['Kick-RB']['unit'] = 'rad'
+            db[psname]['Kick-RB']['unit'] = 'mrad'
             db[psname]['Kick-Mon'] = _copy.deepcopy(db[psname]['Voltage-Mon'])
-            db[psname]['Kick-Mon']['unit'] = 'rad'
+            db[psname]['Kick-Mon']['unit'] = 'mrad'
 
             for field in ["-SP", "-RB", "-Mon"]:
                 db[psname]['Kick' + field]['lolo'] = 0.0
