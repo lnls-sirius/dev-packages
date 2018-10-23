@@ -34,6 +34,8 @@ public_interface = (
     'ps_hard_interlock_FAC',
     'ps_soft_interlock_FAC_ACDC',
     'ps_hard_interlock_FAC_ACDC',
+    'ps_soft_interlock_FAP',
+    'ps_hard_interlock_FAP',
     'ps_cycle_type',
     'ps_sync_mode',
     'Const',

@@ -18,11 +18,14 @@ from siriuspy.pwrsupply.bsmp import EntitiesFBP as _EntitiesFBP
 from siriuspy.pwrsupply.bsmp import EntitiesFBP_DCLink as _EntitiesFBP_DCLink
 from siriuspy.pwrsupply.bsmp import EntitiesFAC_DCDC as _EntitiesFAC_DCDC
 from siriuspy.pwrsupply.bsmp import EntitiesFAC_ACDC as _EntitiesFAC_ACDC
+from siriuspy.pwrsupply.bsmp import EntitiesFAP as _EntitiesFAP
 
 from siriuspy.pwrsupply.bsmp import ConstFBP as _cFBP
 from siriuspy.pwrsupply.bsmp import ConstFBP_DCLink as _cFBP_DCLink
 from siriuspy.pwrsupply.bsmp import ConstFAC_DCDC as _cFAC_DCDC
 from siriuspy.pwrsupply.bsmp import ConstFAC_ACDC as _cFAC_ACDC
+from siriuspy.pwrsupply.bsmp import ConstFAP as _cFAP
+
 
 __version__ = _util.get_last_commit_hash()
 
@@ -99,6 +102,19 @@ class _Spec_FAC_ACDC(_Spec):
 
     def _get_constants(self):
         return _cFAC_ACDC
+
+
+class _Spec_FAP(_Spec):
+    """Spec FAP."""
+
+    def _get_constants(self):
+        return _cFAP
+
+    def _get_monvar_ids(self):
+        return (_cFAP.V_I_LOAD1, _cFAP.V_I_LOAD2)
+
+    def _get_monvar_fluctuation_rms(self, var_id):
+        return _Spec._I_LOAD_FLUCTUATION_RMS
 
 
 # --- simulated OpMode state classes ---
@@ -478,6 +494,12 @@ class _OpModeSimState_FAC_ACDC(_OpModeSimSlowRefState, _Spec_FAC_ACDC):
     pass
 
 
+class _OpModeSimState_FAP(_OpModeSimSlowRefState, _Spec_FAP):
+    """SlowRef FAP state."""
+
+    pass
+
+
 # --- Classes for simulated BPMs ---
 
 
@@ -680,6 +702,30 @@ class BSMPSim_FAC_ACDC(_BaseBSMPSim, _Spec_FAC_ACDC):
         return variables
 
 
+class BSMPSim_FAP(_BaseBSMPSim, _Spec_FAP):
+    """Simulated FAP UDC."""
+
+    def _get_entities(self):
+        return _EntitiesFAP()
+
+    def _get_states(self):
+        return [_OpModeSimState_FAP()]
+
+    def _get_init_variables(self):
+        firmware = [b'S', b'i', b'm', b'u', b'l', b'a', b't', b'i', b'o', b'n']
+        while len(firmware) < 128:
+            firmware.append('\x00'.encode())
+        variables = [
+            0b10000,  # V_PS_STATUS
+            0.0, 0.0,  # ps_setpoint, ps_reference
+            firmware,
+            0, 0,  # counters
+            0, 0, 0, 0.0, 0.0, 0.0, 0.0, [0.0, 0.0, 0.0, 0.0],  # siggen [6-13]
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # undef [14-24]
+            0, 0,  # interlocks [25-26]
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # [27-34]
+        return variables
+
 # --- Classes for UDCs ---
 
 
@@ -730,6 +776,3 @@ class BSMPSim_FAC_ACDC(_BaseBSMPSim, _Spec_FAC_ACDC):
 #                    'Entities': _EntitiesFAC_DCDC(),
 #                    'BSMPSim': BSMPSim_FAC_DCDC, },
 # }
-
-
-
