@@ -8,11 +8,13 @@ from siriuspy.pwrsupply.bsmp import EntitiesFBP as _EntitiesFBP
 from siriuspy.pwrsupply.bsmp import EntitiesFBP_DCLink as _EntitiesFBP_DCLink
 from siriuspy.pwrsupply.bsmp import EntitiesFAC_DCDC as _EntitiesFAC_DCDC
 from siriuspy.pwrsupply.bsmp import EntitiesFAC_ACDC as _EntitiesFAC_ACDC
+from siriuspy.pwrsupply.bsmp import EntitiesFAP as _EntitiesFAP
 
 from siriuspy.pwrsupply.bsmp import ConstFBP as _cFBP
 from siriuspy.pwrsupply.bsmp import ConstFBP_DCLink as _cFBP_DCLink
 from siriuspy.pwrsupply.bsmp import ConstFAC_DCDC as _cFAC_DCDC
 from siriuspy.pwrsupply.bsmp import ConstFAC_ACDC as _cFAC_ACDC
+from siriuspy.pwrsupply.bsmp import ConstFAP as _cFAP
 
 from siriuspy.bsmp import BSMP as _BSMP
 
@@ -21,14 +23,7 @@ from siriuspy.pwrsupply.bsmp_sim import \
     BSMPSim_FBP_DCLink as _BSMPSim_FBP_DCLink
 from siriuspy.pwrsupply.bsmp_sim import BSMPSim_FAC_DCDC as _BSMPSim_FAC_DCDC
 from siriuspy.pwrsupply.bsmp_sim import BSMPSim_FAC_ACDC as _BSMPSim_FAC_ACDC
-
-from siriuspy.csdevice.pwrsupply import _get_ps_FBP_propty_database, \
-    _get_ps_Commercial_propty_database, _get_ps_FBP_FOFB_propty_database, \
-    _get_ps_FAC_propty_database, _get_ps_FAC_ACDC_propty_database, \
-    _get_ps_FAC_2S_propty_database, _get_ps_FAC_2S_ACDC_propty_database, \
-    _get_ps_FAC_2P4S_propty_database, _get_ps_FAC_2P4S_ACDC_propty_database, \
-    _get_ps_FAP_propty_database, _get_ps_FAP_2P2S_propty_database, \
-    _get_ps_FAP_4P_Master_propty_database, _get_ps_FAP_4P_Slave_propty_database
+from siriuspy.pwrsupply.bsmp_sim import BSMPSim_FAP as _BSMPSim_FAP
 
 
 from siriuspy.pwrsupply.pru import Const as _PRUConst
@@ -230,11 +225,6 @@ class FBPFactory(ModelFactory):
         """Model simulation."""
         return _BSMPSim_FBP
 
-    # @property
-    # def database(self):
-    #     """Return model database."""
-    #     return _get_ps_FBP_propty_database()
-
     def function(self, device_ids, epics_field, pru_controller, setpoints):
         """Return function."""
         _c = _bsmp.ConstFBP
@@ -314,11 +304,6 @@ class FBPFOFBFactory(FBPFactory):
         """Model simulation."""
         return _BSMPSim_FBP
 
-    # @property
-    # def database(self):
-    #     """Return model database."""
-    #     return _get_ps_FBP_FOFB_propty_database()
-
 
 class FACFactory(FBPFactory):
     """FAC model factory."""
@@ -357,11 +342,6 @@ class FACFactory(FBPFactory):
         """Model simulation."""
         return _BSMPSim_FAC_DCDC
 
-    # @property
-    # def database(self):
-    #     """Return model database."""
-    #     return _get_ps_FAC_propty_database()
-
 
 class FAC2SDCDCFactory(FACFactory):
     """FAC 2S model factory."""
@@ -390,11 +370,6 @@ class FAC2SDCDCFactory(FACFactory):
     def simulation_class(self):
         """Model simulation."""
         return _BSMPSim_FAC_DCDC
-
-    # @property
-    # def database(self):
-    #     """Return model database."""
-    #     return _get_ps_FAC_2S_propty_database()
 
 
 class FAC2P4SDCDCFactory(FACFactory):
@@ -425,14 +400,18 @@ class FAC2P4SDCDCFactory(FACFactory):
         """Model simulation."""
         return _BSMPSim_FAC_DCDC
 
-    # @property
-    # def database(self):
-    #     """Return model database."""
-    #     return _get_ps_FAC_2P4S_propty_database()
-
 
 class FAPFactory(FBPFactory):
     """FAP model factory."""
+
+    _variables = {
+        'IntlkSoft-Mon': _bsmp.ConstFAP.V_PS_SOFT_INTERLOCKS,
+        'IntlkHard-Mon': _bsmp.ConstFAP.V_PS_HARD_INTERLOCKS,
+        'Current-RB': _bsmp.ConstFAP.V_PS_SETPOINT,
+        'CurrentRef-Mon': _bsmp.ConstFAP.V_PS_REFERENCE,
+        'Current-Mon': _bsmp.ConstFAP.V_I_LOAD1,
+        'Current2-Mon': _bsmp.ConstFAP.V_I_LOAD2,
+    }
 
     @property
     def name(self):
@@ -442,27 +421,22 @@ class FAPFactory(FBPFactory):
     @property
     def parameters(self):
         """PRU Controller parameters."""
-        return PRUCParms_FBP  # TODO: change to FAP
+        return PRUCParms_FAP
 
     @property
     def bsmp_constants(self):
         """Model BSMP constants."""
-        return _cFBP
+        return _cFAP
 
     @property
     def entities(self):
         """Model entities."""
-        return _EntitiesFBP()
+        return _EntitiesFAP()
 
     @property
     def simulation_class(self):
         """Model simulation."""
-        return _BSMPSim_FBP
-
-    # @property
-    # def database(self):
-    #     """Return model database."""
-    #     return _get_ps_FAP_propty_database()
+        return _BSMPSim_FAP
 
 
 class FAP2P2SMASTERFactory(FBPFactory):
@@ -493,11 +467,6 @@ class FAP2P2SMASTERFactory(FBPFactory):
         """Model simulation."""
         return _BSMPSim_FBP
 
-    # @property
-    # def database(self):
-    #     """Return model database."""
-    #     return _get_ps_FAP_2P2S_propty_database()
-
 
 class FAP4PMasterFactory(FBPFactory):
     """FAP model factory."""
@@ -526,11 +495,6 @@ class FAP4PMasterFactory(FBPFactory):
     def simulation_class(self):
         """Model simulation."""
         return _BSMPSim_FBP
-
-    # @property
-    # def database(self):
-    #     """Return model database."""
-    #     return _get_ps_FAP_4P_Master_propty_database()
 
 
 class FAP4PSlaveFactory(FBPFactory):
@@ -595,11 +559,6 @@ class CommercialFactory(FACFactory):
         """Model simulation."""
         return _BSMPSim_FAC_DCDC
 
-    # @property
-    # def database(self):
-    #     """Return model database."""
-    #     return _get_ps_Commercial_propty_database()
-
 
 # Auxiliaty power supplies (DCLinks)
 class FBPDCLinkFactory(ModelFactory):
@@ -642,11 +601,6 @@ class FBPDCLinkFactory(ModelFactory):
     def simulation_class(self):
         """Model simulation."""
         return _BSMPSim_FBP_DCLink
-
-    # @property
-    # def database(self):
-    #     """Return model database."""
-    #     return _get_ps_FBP_propty_database()
 
     def function(self, device_ids, epics_field, pru_controller, setpoints):
         """Return function."""
@@ -719,11 +673,6 @@ class FACACDCFactory(FBPDCLinkFactory):
         """Model simulation."""
         return _BSMPSim_FAC_ACDC
 
-    # @property
-    # def database(self):
-    #     """Return model database."""
-    #     return _get_ps_FBP_propty_database()
-
 
 class FAC2SACDCFactory(FACACDCFactory):
     """FAC 2S factory."""
@@ -753,11 +702,6 @@ class FAC2SACDCFactory(FACACDCFactory):
         """Model simulation."""
         return _BSMPSim_FAC_ACDC
 
-    # @property
-    # def database(self):
-    #     """Return model database."""
-    #     return _get_ps_FBP_propty_database()
-
 
 class FAC2P4SACDCFactory(FACACDCFactory):
     """FAC 2P4S factoy."""
@@ -786,11 +730,6 @@ class FAC2P4SACDCFactory(FACACDCFactory):
     def simulation_class(self):
         """Model simulation."""
         return _BSMPSim_FAC_ACDC
-
-    # @property
-    # def database(self):
-    #     """Return model database."""
-    #     return _get_ps_FBP_propty_database()
 
 
 # --- PRUC Parameter classes ---
@@ -1123,6 +1062,82 @@ class PRUCParms_FAC_ACDC(_PRUCParms):
         ConstBSMP.TEMP_HEATSINK,
         ConstBSMP.TEMP_INDUCTORS,
         ConstBSMP.DUTY_CYCLE,)
+    groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
+
+
+class PRUCParms_FAP(_PRUCParms):
+    """FAC-specific PRUC parameters.
+
+    Represent FAP
+    """
+
+    FREQ_RAMP = 2.0  # [Hz]
+    FREQ_SCAN = 10.0  # [Hz]
+
+    # UDC model
+    model = ModelFactory.get('FAP')
+    ConstBSMP = model.bsmp_constants
+    Entities = model.entities
+
+    groups = dict()
+    # reserved variable groups (not to be used)
+    groups[_PRUCParms.ALL] = tuple(sorted(Entities.list_variables(0)))
+    groups[_PRUCParms.READONLY] = tuple(sorted(Entities.list_variables(1)))
+    groups[_PRUCParms.WRITEABLE] = tuple(sorted(Entities.list_variables(2)))
+    # new variable groups usefull for PRUController.
+    groups[_PRUCParms.ALLRELEVANT] = (
+        # --- common variables
+        ConstBSMP.V_PS_STATUS,
+        ConstBSMP.V_PS_SETPOINT,
+        ConstBSMP.V_PS_REFERENCE,
+        ConstBSMP.V_FIRMWARE_VERSION,
+        ConstBSMP.V_COUNTER_SET_SLOWREF,
+        ConstBSMP.V_COUNTER_SYNC_PULSE,
+        ConstBSMP.V_SIGGEN_ENABLE,
+        ConstBSMP.V_SIGGEN_TYPE,
+        ConstBSMP.V_SIGGEN_NUM_CYCLES,
+        ConstBSMP.V_SIGGEN_N,
+        ConstBSMP.V_SIGGEN_FREQ,
+        ConstBSMP.V_SIGGEN_AMPLITUDE,
+        ConstBSMP.V_SIGGEN_OFFSET,
+        ConstBSMP.V_SIGGEN_AUX_PARAM,
+        # --- FAP variables ---
+        ConstBSMP.V_PS_SOFT_INTERLOCKS,
+        ConstBSMP.V_PS_HARD_INTERLOCKS,
+        ConstBSMP.V_I_LOAD1,
+        ConstBSMP.V_I_LOAD2,
+        ConstBSMP.V_V_DCLINK,
+        ConstBSMP.V_I_IGBT_1,
+        ConstBSMP.V_I_IGBT_2,
+        ConstBSMP.V_DUTY_CYCLE_1,
+        ConstBSMP.V_DUTY_CYCLE_1,
+        ConstBSMP.V_DUTY_DIFF,)
+    groups[_PRUCParms.SYNCOFF] = (
+        # --- common variables
+        ConstBSMP.V_PS_STATUS,
+        ConstBSMP.V_PS_SETPOINT,
+        ConstBSMP.V_PS_REFERENCE,
+        ConstBSMP.V_COUNTER_SET_SLOWREF,
+        ConstBSMP.V_COUNTER_SYNC_PULSE,
+        ConstBSMP.V_SIGGEN_ENABLE,
+        ConstBSMP.V_SIGGEN_TYPE,
+        ConstBSMP.V_SIGGEN_NUM_CYCLES,
+        ConstBSMP.V_SIGGEN_N,
+        ConstBSMP.V_SIGGEN_FREQ,
+        ConstBSMP.V_SIGGEN_AMPLITUDE,
+        ConstBSMP.V_SIGGEN_OFFSET,
+        ConstBSMP.V_SIGGEN_AUX_PARAM,
+        # --- FAP variables ---
+        ConstBSMP.V_PS_SOFT_INTERLOCKS,
+        ConstBSMP.V_PS_HARD_INTERLOCKS,
+        ConstBSMP.V_I_LOAD1,
+        ConstBSMP.V_I_LOAD2,
+        ConstBSMP.V_V_DCLINK,
+        ConstBSMP.V_I_IGBT_1,
+        ConstBSMP.V_I_IGBT_2,
+        ConstBSMP.V_DUTY_CYCLE_1,
+        ConstBSMP.V_DUTY_CYCLE_1,
+        ConstBSMP.V_DUTY_DIFF,)
     groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 

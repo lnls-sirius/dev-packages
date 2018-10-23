@@ -133,6 +133,29 @@ ps_hard_interlock_FAC_ACDC = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+ps_soft_interlock_FAP = (
+    'Falha no DCCT1', 'Falha no DCCT2',
+    'Alta diferença entre DCCTs', 'Falha de leitura corrente DCCT1',
+    'Falha de leitura corrente DCCT2', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+ps_hard_interlock_FAP = (
+    'Sobre-corrente na crga',
+    'Sobre-tensão na carga',
+    'Sobre-tensão no DCLink',
+    'Sub-tensão no DCLink',
+    'Sobre-corrente no IGBT1', 'Sobre-corrente no IGBT2',
+    'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',)
 ps_cycle_type = ('Sine', 'DampedSine', 'Trapezoidal')
 ps_sync_mode = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
 
@@ -140,6 +163,7 @@ ps_sync_mode = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
 # --- power supply constants definition class ---
 class Const:
     """Const class defining power supply constants."""
+
     Models = _get_namedtuple('Models', ps_models)
     DsblEnbl = _get_namedtuple('DsblEnbl', ps_dsblenbl)
     Interface = _get_namedtuple('Interface', ps_interface)
@@ -577,8 +601,19 @@ def _get_ps_FAC_2P4S_ACDC_propty_database():
 
 def _get_ps_FAP_propty_database():
     """Return database with FAP pwrsupply model PVs."""
-    # TODO: implement!!!
-    return _get_ps_FBP_propty_database()
+    propty_db = get_basic_propty_database()
+    db_ps = {
+        'Current2-Mon': {'type': 'float',  'value': 0.0,
+                         'prec': default_ps_current_precision},
+        'IntlkSoftLabels-Cte':  {'type': 'string',
+                                 'count': len(ps_soft_interlock_FAP),
+                                 'value': ps_soft_interlock_FAP},
+        'IntlkHardLabels-Cte':  {'type': 'string',
+                                 'count': len(ps_hard_interlock_FAP),
+                                 'value': ps_hard_interlock_FAP},
+    }
+    propty_db.update(db_ps)
+    return propty_db
 
 
 def _get_ps_FAP_4P_propty_database():
