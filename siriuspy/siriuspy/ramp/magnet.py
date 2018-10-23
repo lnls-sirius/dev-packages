@@ -25,8 +25,7 @@ class Magnet:
         self._mfmult = _magfuncs[self.magfunc]
         self._strength_obj = _NormalizerFactory.factory(maname)
         self._strength_label = _util.get_strength_label(self._magfunc)
-        self._strength_units = _util.get_strength_units(self._magfunc,
-                                                        self._maname.sec)
+        self._strength_units = _util.get_strength_units(self._magfunc)
 
     @property
     def maname(self):

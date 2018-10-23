@@ -45,13 +45,13 @@ def get_posang_database():
                               'count': 4},
 
         'RefKickCH1-Mon':    {'type': 'float', 'value': 0, 'prec': 6,
-                              'unit': 'mrad'},
+                              'unit': 'urad'},
         'RefKickCH2-Mon':    {'type': 'float', 'value': 0, 'prec': 6,
                               'unit': 'mrad'},
         'RefKickCV1-Mon':    {'type': 'float', 'value': 0, 'prec': 6,
-                              'unit': 'mrad'},
+                              'unit': 'urad'},
         'RefKickCV2-Mon':    {'type': 'float', 'value': 0, 'prec': 6,
-                              'unit': 'mrad'},
+                              'unit': 'urad'},
         'SetNewRefKick-Cmd': {'type': 'int', 'value': 0},
 
         'ConfigMA-Cmd':      {'type': 'int', 'value': 0},
