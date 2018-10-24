@@ -7,19 +7,30 @@
 
 # EXCITATION DATA
 # ===============
-+0.00     -0.00000000e-00  +0.0000e+00
-+382.00   -1.89934853e-01  +0.0000e+00
-+403.00   -2.00376298e-01  +0.0000e+00
++000.00    -0.000 0.000
++089.40    -0.031 0.000
++176.00    -0.063 0.000
++261.50    -0.094 0.000
++348.00    -0.125 0.000
++435.00    -0.157 0.000
++521.00    -0.188 0.000
++565.00    -0.205 0.000
+
 
 # COMMENTS
 # ========
-# 1. data:   https://wiki-sirius.lnls.br/mediawiki/index.php/Table:Septa_parameters
-#            https://wiki-sirius.lnls.br/mediawiki/index.php/Table:Septa_design_parameters
-#            private information from fabio arroyo (2018-05-03) (voltages)
-#            nominal deflection value: 379.61 mrad @ 382 Volts
-#            maximum deflection value: 400.48 mrad @ 403 Volts
+# 1. data:   a) measurements
+#               smb://centaurus/repositorio/LNLS/Projetos/Projetos_Ativos/Sirius/EPP/Projeto Septa/Inj_Boo
+#               (email from fabio arroyo to ximenes with excel file, 2018-10-10)
+#            b) deflections:
+#               nominal deflection value: 379.60911230877 mrad @ 150 MeV: 526.0078547628216 Volts
+#               maximum deflection value: 400 mrad @ 150 Mev: 565.0 Volts
+#            c) voltage tension column "Vat RMT" from excel spreadsheet was used.
+#            d) specs:
+#               https://wiki-sirius.lnls.br/mediawiki/index.php/Table:Septa_parameters
+#               https://wiki-sirius.lnls.br/mediawiki/index.php/Table:Septa_design_parameters
+#
 # 2. device name: TB-04:PM-InjSept
-# 3. TODO: update this excitation curve using measurement data (ximenes 2018-05-03)
 
 # POLARITY TABLE
 # ==============

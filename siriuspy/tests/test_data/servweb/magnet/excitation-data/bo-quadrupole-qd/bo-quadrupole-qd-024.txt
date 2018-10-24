@@ -1,0 +1,76 @@
+# HEADER
+# ======
+# label           bo-quadrupole-qd-024
+# harmonics       0 1 2 3 4 5 6 7 8 9 10 11
+# main_harmonic   1 normal
+# units           Ampere  T.m T.m  T T  T/m T/m  T/m^2 T/m^2  T/m^3 T/m^3  T/m^4 T/m^4  T/m^5 T/m^5  T/m^6 T/m^6  T/m^7 T/m^7  T/m^8 T/m^8  T/m^9 T/m^9  T/m^10 T/m^10
+
+# EXCITATION DATA
+# ===============
+-0000.0366  +7.4259e-06 +5.0832e-06  -3.0811e-03 +8.2807e-06  -2.3916e-03 -1.8489e-03  +6.4516e-04 -2.0495e-03  +1.6332e+00 +4.8470e-01  +2.1751e+02 -1.3266e+01  +2.6574e+03 +4.1799e+03  -1.0513e+05 +1.1116e+05  +5.1597e+06 +9.3524e+06  -5.0295e+08 +1.6088e+08  -1.7878e+10 +8.3762e+09  +2.0720e+12 +1.7015e+12
++0001.9627  +7.2416e-06 +5.4405e-06  -3.5285e-02 +1.6501e-05  -2.8898e-03 -6.1380e-04  -6.1938e-03 -5.4058e-02  +1.0052e+00 -7.7040e-01  +1.7716e+03 -7.9647e+01  -6.4111e+02 -6.0264e+03  +3.7886e+04 -2.5538e+05  +9.6439e+06 -6.0760e+06  -4.5130e+09 -1.1599e+09  -2.3007e+09 -7.5589e+10  +2.2493e+11 -3.6815e+12
++0003.9617  +7.0874e-06 +6.0687e-06  -6.7737e-02 +5.4690e-05  -3.6906e-03 +3.3921e-04  +7.2004e-03 -6.6032e-02  +7.4456e-01 -4.5310e+00  +3.4592e+03 -2.4317e+02  -7.0073e+03 -1.1459e+04  -2.0437e+05 -6.8602e+05  -8.3102e+06 -3.4352e+07  -8.3986e+09 -1.7505e+09  -4.5157e+10 -9.6308e+10  -4.0532e+12 -4.8980e+12
++0005.9605  +7.3302e-06 +7.7052e-06  -1.0046e-01 +1.4224e-04  -3.4490e-03 +4.7372e-03  -8.5134e-03 +4.4027e-02  +2.7952e-01 +3.7868e+00  +4.9240e+03 +3.0724e+02  +1.4885e+03 +1.5962e+04  +9.1198e+04 +1.0932e+06  -7.2404e+06 +5.3537e+07  -1.3046e+10 +2.4688e+09  +6.3207e+10 +1.2802e+11  -7.0706e+10 +8.5214e+12
++0007.9610  +7.1576e-06 +7.6013e-06  -1.3331e-01 +1.1997e-04  -3.3968e-03 +3.1125e-03  -3.3008e-02 -1.1096e-01  -3.9890e-01 -4.9066e+00  +6.6171e+03 -2.4896e+02  +3.0116e+03 -1.5886e+04  -1.6694e+05 -4.1244e+05  +1.0077e+07 -3.9073e+07  -1.6656e+10 -1.9720e+09  +1.4293e+10 -1.6084e+11  +9.0772e+11 -4.4355e+12
++0009.9601  +6.7852e-06 +9.3701e-06  -1.6621e-01 +1.9017e-04  -3.5912e-03 +6.5709e-03  -4.4822e-02 -1.0967e-02  -3.3654e-01 +2.3073e+00  +8.1977e+03 +2.0439e+02  -2.0837e+02 +5.1267e+03  +3.4657e+05 +4.5461e+05  +1.6340e+07 +2.2470e+07  -2.1942e+10 +1.0484e+09  -2.2349e+10 +6.9232e+10  +4.4042e+12 +8.3280e+11
++0019.9614  +6.1745e-06 +1.5166e-05  -3.3151e-01 +2.9028e-04  -4.6747e-03 +1.3038e-02  -6.4676e-02 -2.8781e-02  -6.5618e-01 +1.5845e+00  +1.6185e+04 +3.1916e+02  -6.8003e+03 +6.3041e+03  +6.0228e+05 +7.6635e+05  +1.7238e+07 +4.7530e+07  -4.5083e+10 +1.7089e+09  +3.6566e+09 +9.8016e+10  +4.5835e+12 +5.4211e+12
++0031.9677  +5.8213e-06 +2.1241e-05  -5.3014e-01 +4.1364e-04  -4.5504e-03 +2.0761e-02  -1.3916e-01 -1.0659e-01  +1.8070e-01 -1.1483e+00  +2.6325e+04 +7.3167e+01  -1.1280e+04 -1.3794e+04  +9.0557e+05 +5.9905e+05  +2.1667e+07 +3.8195e+07  -7.1624e+10 +1.4949e+09  -4.7748e+10 -2.2649e+10  +9.4301e+11 -2.3734e+12
+
+# COMMENTS
+# ========
+# 1. file generated automatically from rotating coil measurement data
+# 2. timestamp: 2018-07-16-15:23:18.941
+# 3. magnet_type_label: BQD
+# 4. magnet_serial_number: 024
+# 5. data_set: M1
+
+# POLARITY TABLE
+# ==============
+#
+# Magnet function         | IntStrength(1) | IntField(2) | ConvSign(3) | Current(4)
+# ------------------------|----------------|-------------|-------------|-----------
+# dipole                  | Angle > 0      | BYL  < 0    | -1.0        | I > 0
+# corrector-horizontal    | HKick > 0      | BYL  > 0    | +1.0        | I > 0
+# corrector-vertical      | VKick > 0      | BXL  < 0    | -1.0        | I > 0
+# quadrupole (focusing)   | KL    > 0      | D1NL < 0    | -1.0        | I > 0
+# quadrupole (defocusing) | KL    < 0      | D1NL > 0    | -1.0        | I > 0
+# quadrupole (skew)       | KL    > 0      | D1SL > 0    | +1.0        | I > 0
+# sextupole  (focusing)   | SL    > 0      | D2NL < 0    | -1.0        | I > 0
+# sextupole  (defocusing) | SL    < 0      | D2NL > 0    | -1.0        | I > 0
+#
+# Defs:
+# ----
+# BYL   := \int{dz By|_{x=y=0}}.
+# BXL   := \int{dz Bx|_{x=y=0}}.
+# D1NL  := \int{dz \frac{dBy}{dx}_{x=y=0}}
+# D2NL  := (1/2!) \int{dz \frac{d^2By}{dx^2}_{x=y=0}}
+# D1SL  := \int{dz \frac{dBx}{dx}_{x=y=0}}
+# Brho  := magnetic rigidity.
+# Angle := ConvSign * BYL / abs(Brho)
+# HKick := ConvSign * BYL / abs(Brho)
+# VKick := ConvSign * BXL / abs(Brho)
+# KL    := ConvSign * D1NL / abs(Brho)
+# SL    := ConvSign * D2NL / abs(Brho)
+#
+# Obs:
+# ---
+# (1) Parameter definition.
+#     IntStrength values correspond to integrated PolynomA and PolynomB parameters
+#     of usual beam tracking codes, with the exception that VKick has its sign
+#     reversed with respecto to its corresponding value in PolynomA.
+# (2) Sirius coordinate system and Lorentz force.
+# (3) Conversion sign for IntField <-> IntStrength
+# (4) Convention of magnet excitation polarity, so that when I > 0 the strength
+#     of the magnet has the expected conventional sign.
+
+# STATIC DATA FILE FORMAT
+# =======================
+#
+# These static data files should comply with the following formatting rules:
+# 1. If the first alphanumeric character of the line is not the pound sign
+#    then the lines is a comment.
+# 2. If the first alphanumeric character is "#" then if
+#    a) it is followed by "[<parameter>] <value>" a parameter names <parameter>
+#       is define with value <value>. if the string <value> has spaces in it
+#       it is split as a list of strings.
+#    b) otherwise the line is ignored as a comment line.

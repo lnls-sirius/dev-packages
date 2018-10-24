@@ -126,6 +126,13 @@ class BBBFactory:
 
         controllers = dict()  # 1 controller per UDC
         databases = dict()
+
+        # bypass SCAN and RAMP frequencies.
+        try:
+            freqs = _PSSearch.conv_bbbname_2_freqs(bbbname)
+        except KeyError:
+            freqs = None
+
         for udc in udc_list:
             if udc == 'UDC_TEST':
                 devices = (('BO-01U:PS-CH', 1),
@@ -140,7 +147,8 @@ class BBBFactory:
             model = _ModelFactory.get(psmodel)
             # Create pru controller for devices
             ids = [device[1] for device in devices]
-            pru_controller = _PRUController(pru, prucqueue, model, ids)
+            pru_controller = _PRUController(pru, prucqueue, model, ids,
+                                            freqs=freqs)
             # Get model database
             database = _PSData(devices[0][0]).propty_database
             # Build setpoints

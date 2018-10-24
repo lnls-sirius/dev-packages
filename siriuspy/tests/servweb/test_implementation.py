@@ -74,6 +74,7 @@ class TestServWeb(unittest.TestCase):
         'pu_psmodels_read',
         'beaglebone_power_supplies_mapping',
         'beaglebone_bsmp_mapping',
+        'beaglebone_freqs_mapping',
         'bbb_udc_mapping',
         'udc_ps_mapping',
         'crates_mapping',
@@ -98,18 +99,18 @@ class TestServWeb(unittest.TestCase):
         mock_read.side_effect = Exception()
         self.assertFalse(implementation.server_online())
 
-    def test_bpms_data(self, mock_read):
-        """Test bpms_data."""
-        url = implementation._magnet_folder + 'magnets-model-data.txt'
-        # Call with different parameters
-        resp = implementation.bpms_data()
-        self.assertEqual(resp, "FakeResponse")
-        resp = implementation.bpms_data(timeout=2.0)
-        self.assertEqual(resp, "FakeResponse")
-        # Assert read_url was called correctly
-        mock_read.assert_has_calls([
-            mock.call(url, timeout=1.0),
-            mock.call(url, timeout=2.0)])
+    # def test_bpms_data(self, mock_read):
+    #     """Test bpms_data."""
+    #     url = implementation._magnet_folder + 'magnets-model-data.txt'
+    #     # Call with different parameters
+    #     resp = implementation.bpms_data()
+    #     self.assertEqual(resp, "FakeResponse")
+    #     resp = implementation.bpms_data(timeout=2.0)
+    #     self.assertEqual(resp, "FakeResponse")
+    #     # Assert read_url was called correctly
+    #     mock_read.assert_has_calls([
+    #         mock.call(url, timeout=1.0),
+    #         mock.call(url, timeout=2.0)])
 
     def test_magnets_excitation_data_read(self, mock_read):
         """Test magnets_excitation_data_read."""
@@ -127,7 +128,7 @@ class TestServWeb(unittest.TestCase):
             mock.call(folder + filename, timeout=2.0)])
 
     def test_magnets_setpoint_limits(self, mock_read):
-        """"Test magnets_setpoint_limits."""
+        """Test magnets_setpoint_limits."""
         url = implementation._magnet_folder + 'magnet-setpoint-limits.txt'
         # Call with different parameters
         resp = implementation.magnets_setpoint_limits()
@@ -140,7 +141,7 @@ class TestServWeb(unittest.TestCase):
             mock.call(url, timeout=2.0)])
 
     def test_pulsed_magnets_setpoint_limits(self, mock_read):
-        """"Test pulsed_magnets_setpoint_limits."""
+        """Test pulsed_magnets_setpoint_limits."""
         url = \
             implementation._magnet_folder + 'pulsed-magnet-setpoint-limits.txt'
         # Call with different parameters
@@ -154,7 +155,7 @@ class TestServWeb(unittest.TestCase):
             mock.call(url, timeout=2.0)])
 
     def test_magnets_excitation_ps_read(self, mock_read):
-        """"Test magnets_excitation_ps_read."""
+        """Test magnets_excitation_ps_read."""
         url = implementation._magnet_folder + 'magnet-excitation-ps.txt'
         # Call with different parameters
         resp = implementation.magnets_excitation_ps_read()
@@ -167,7 +168,7 @@ class TestServWeb(unittest.TestCase):
             mock.call(url, timeout=2.0)])
 
     def test_ps_pstypes_names_read(self, mock_read):
-        """"Test ps_pstypes_names_read."""
+        """Test ps_pstypes_names_read."""
         url = implementation._ps_folder + 'pstypes-names.txt'
         # Call with different parameters
         resp = implementation.ps_pstypes_names_read()
@@ -180,7 +181,7 @@ class TestServWeb(unittest.TestCase):
             mock.call(url, timeout=2.0)])
 
     def test_ps_pstype_data_read(self, mock_read):
-        """"Test ps_pstype_data_read."""
+        """Test ps_pstype_data_read."""
         filename = "fakefilename"
         url = implementation._pstypes_data_folder + filename
         # Call with different parameters
@@ -233,7 +234,12 @@ class TestServWeb(unittest.TestCase):
             mock.call(url, timeout=2.0)])
 
     def test_beaglebone_bsmp_mapping(self, mock_read):
-        """Test beaglebnoe_bsmp_mapping."""
+        """Test beaglebon_bsmp_mapping."""
+        # TODO: implement!
+        pass
+
+    def test_beaglebone_freq_mapping(self, mock_read):
+        """Test beaglebone_freqs_mapping."""
         # TODO: implement!
         pass
 

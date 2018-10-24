@@ -19,10 +19,10 @@ class DipoleNormalizerTest(MockServConf):
     settings = {
         "TB": {"name": "TB-Fam:MA-B",
                "current": 476.0,
-               "strength": 0.14998905968836743},
+               "strength": 0.28171517156419867},
         "BO": {"name": "BO-Fam:MA-B",
                "current": 981.778,
-               "strength": 2.9999833123899702},
+               "strength": 2.9171485448187342},
         "TS": {"name": "TS-Fam:MA-B",
                "current": 680.1,
                "strength": 3.0001213317838813},
