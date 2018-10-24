@@ -1,0 +1,84 @@
+# HEADER
+# ======
+# label           tb-dipole-b-fam
+# harmonics       0  1  2  3  4  5  6
+# main_harmonic   0 normal
+# units           Ampere  T*m T*m  T T  T/m T/m  T/m^2 T/m^2  T/m^3 T/m^3  T/m^4 T/m^4  T/m^5 T/m^5  
+
+# EXCITATION DATA
+# ===============
++0000.00  +7.571878e-07 +0.000000e+00  +4.561677e-05 +0.000000e+00  +1.662043e-02 +0.000000e+00  +2.131477e-01 +0.000000e+00  +2.907484e+02 +0.000000e+00  +1.817515e+03 +0.000000e+00  +1.280103e+06 +0.000000e+00  
++0025.00  +8.658408e-06 +0.000000e+00  +7.888316e-05 +0.000000e+00  +5.323570e-03 +0.000000e+00  +1.331138e-01 +0.000000e+00  +1.122056e+02 +0.000000e+00  +9.847734e+02 +0.000000e+00  +4.651291e+05 +0.000000e+00  
++0051.00  +1.843242e-05 +0.000000e+00  +2.035581e-04 +0.000000e+00  +6.911614e-03 +0.000000e+00  +3.250001e-01 +0.000000e+00  +7.075016e+01 +0.000000e+00  +2.670914e+03 +0.000000e+00  +3.784918e+05 +0.000000e+00  
++0076.00  +2.770491e-05 +0.000000e+00  +3.232289e-04 +0.000000e+00  +6.775870e-03 +0.000000e+00  +1.408315e+00 +0.000000e+00  +3.775771e+01 +0.000000e+00  +5.737685e+03 +0.000000e+00  +1.838252e+05 +0.000000e+00  
++0101.00  +3.590822e-05 +0.000000e+00  +4.922972e-04 +0.000000e+00  +8.940594e-03 +0.000000e+00  +1.912542e+00 +0.000000e+00  +1.200221e+02 +0.000000e+00  +9.560796e+03 +0.000000e+00  +4.461416e+05 +0.000000e+00  
++0127.00  +4.395935e-05 +0.000000e+00  +5.744655e-04 +0.000000e+00  +3.350329e-02 +0.000000e+00  +9.524940e-01 +0.000000e+00  +2.223436e+02 +0.000000e+00  +1.928824e+03 +0.000000e+00  +6.200587e+05 +0.000000e+00  
++0152.00  +5.320226e-05 +0.000000e+00  +5.554451e-04 +0.000000e+00  +3.495010e-02 +0.000000e+00  +9.891313e-01 +0.000000e+00  +3.641292e+02 +0.000000e+00  +5.281349e+03 +0.000000e+00  +1.329389e+06 +0.000000e+00  
++0178.00  +6.444087e-05 +0.000000e+00  +5.640612e-04 +0.000000e+00  +1.698991e-02 +0.000000e+00  +1.332540e+00 +0.000000e+00  +2.014657e+02 +0.000000e+00  +9.103972e+03 +0.000000e+00  +6.010571e+05 +0.000000e+00  
++0203.00  +8.761169e-05 +0.000000e+00  +9.629669e-04 +0.000000e+00  +3.980875e-02 +0.000000e+00  +4.447055e+00 +0.000000e+00  +4.374199e+02 +0.000000e+00  +1.516434e+04 +0.000000e+00  +1.773887e+06 +0.000000e+00  
++0228.00  +1.097780e-04 +0.000000e+00  +9.266883e-04 +0.000000e+00  +2.075742e-03 +0.000000e+00  +3.910248e+00 +0.000000e+00  +9.967714e+01 +0.000000e+00  +1.949470e+04 +0.000000e+00  +7.096300e+05 +0.000000e+00  
++0241.00  +1.115944e-04 +0.000000e+00  +1.103803e-03 +0.000000e+00  +7.268405e-02 +0.000000e+00  +4.739141e+00 +0.000000e+00  +7.181482e+02 +0.000000e+00  +1.969487e+04 +0.000000e+00  +2.550552e+06 +0.000000e+00  
++0254.00  +1.209782e-04 +0.000000e+00  +9.215642e-04 +0.000000e+00  +2.790077e-02 +0.000000e+00  +3.731578e+00 +0.000000e+00  +4.005769e+02 +0.000000e+00  +1.800497e+04 +0.000000e+00  +1.661602e+06 +0.000000e+00  
++0266.00  +1.313299e-04 +0.000000e+00  +5.131574e-04 +0.000000e+00  +9.054277e-03 +0.000000e+00  +4.910401e+00 +0.000000e+00  +2.778443e+02 +0.000000e+00  +2.375066e+04 +0.000000e+00  +1.421696e+06 +0.000000e+00  
++0279.00  +1.466181e-04 +0.000000e+00  +8.297428e-04 +0.000000e+00  +1.670175e-02 +0.000000e+00  +3.048493e+00 +0.000000e+00  +3.548640e+02 +0.000000e+00  +1.230627e+04 +0.000000e+00  +1.968276e+06 +0.000000e+00  
++0304.00  +1.707450e-04 +0.000000e+00  +1.084297e-03 +0.000000e+00  +3.079593e-02 +0.000000e+00  +2.152744e+00 +0.000000e+00  +3.890183e+02 +0.000000e+00  +4.912851e+03 +0.000000e+00  +1.643588e+06 +0.000000e+00  
++0330.00  +2.050165e-04 +0.000000e+00  +9.593415e-04 +0.000000e+00  +2.241876e-02 +0.000000e+00  +5.648725e+00 +0.000000e+00  +3.424389e+02 +0.000000e+00  +2.517841e+04 +0.000000e+00  +1.915265e+06 +0.000000e+00  
+ 
+# COMMENTS
+# ========
+# 1. generated automatically with "sirius_bo_create_excitation_file.m"
+# 2. data taken from rotcoil measurements
+# 3. average excitation curves for magnets:
+#    TBD-01 TBD-02 TBD-03 
+#    
+ 
+# POLARITY TABLE
+# ==============
+# 
+# Magnet function         | IntStrength(1) | IntField(2) | ConvSign(3) | Current(4)
+# ------------------------|----------------|-------------|-------------|-----------
+# dipole                  | Angle > 0      | BYL  < 0    | -1.0        | I > 0
+# corrector-horizontal    | HKick > 0      | BYL  > 0    | +1.0        | I > 0
+# corrector-vertical      | VKick > 0      | BXL  < 0    | -1.0        | I > 0
+# quadrupole (focusing)   | KL    > 0      | D1NL < 0    | -1.0        | I > 0
+# quadrupole (defocusing) | KL    < 0      | D1NL > 0    | -1.0        | I > 0
+# quadrupole (skew)       | KL    > 0      | D1SL > 0    | +1.0        | I > 0
+# sextupole  (focusing)   | SL    > 0      | D2NL < 0    | -1.0        | I > 0
+# sextupole  (defocusing) | SL    < 0      | D2NL > 0    | -1.0        | I > 0
+# 
+# Defs:
+# ----
+# BYL   := \int{dz By|_{x=y=0}}.
+# BXL   := \int{dz Bx|_{x=y=0}}.
+# D1NL  := \int{dz \frac{dBy}{dx}_{x=y=0}}
+# D2NL  := (1/2!) \int{dz \frac{d^2By}{dx^2}_{x=y=0}}
+# D1SL  := \int{dz \frac{dBx}{dx}_{x=y=0}}
+# Brho  := magnetic rigidity.
+# Angle := ConvSign * BYL / abs(Brho)
+# HKick := ConvSign * BYL / abs(Brho)
+# VKick := ConvSign * BXL / abs(Brho)
+# KL    := ConvSign * D1NL / abs(Brho)
+# SL    := ConvSign * D2NL / abs(Brho)
+# 
+# Obs:
+# ---
+# (1) Parameter definition.
+#     IntStrength values correspond to integrated PolynomA and PolynomB parameters
+#     of usual beam tracking codes, with the exception that VKick has its sign
+#     reversed with respecto to its corresponding value in PolynomA.
+# (2) Sirius coordinate system and Lorentz force.
+# (3) Conversion sign for IntField <-> IntStrength
+# (4) Convention of magnet excitation polarity, so that when I > 0 the strength
+#     of the magnet has the expected conventional sign.
+ 
+# STATIC DATA FILE FORMAT
+# =======================
+# 
+# These static data files should comply with the following formatting rules:
+# 1. If the first alphanumeric character of the line is not the pound sign
+#    then the lines is a comment.
+# 2. If the first alphanumeric character is "#" then if
+#    a) it is followed by "[<parameter>] <value>" a parameter names <parameter>
+#       is define with value <value>. if the string <value> has spaces in it
+#       it is split as a list of strings.
+#    b) otherwise the line is ignored as a comment line.

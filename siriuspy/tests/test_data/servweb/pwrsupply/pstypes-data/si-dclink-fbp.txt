@@ -1,0 +1,4 @@
+# List of power supplies of type ibo-dclink-fac
+# =============================================
+
+SI-Glob:PS-DCLinkFBP

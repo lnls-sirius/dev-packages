@@ -41,6 +41,8 @@ class MockServConf(unittest.TestCase):
             MockServConf.read_test_file('pwrsupply/pumodels.txt')
         self.mock1.beaglebone_bsmp_mapping.return_value = \
             MockServConf.read_test_file('beaglebone/beaglebone-bsmp.txt')
+        self.mock1.beaglebone_freqs_mapping.return_value = \
+            MockServConf.read_test_file('beaglebone/beaglebone-freq.txt')
         self.mock1.bbb_udc_mapping.return_value = \
             MockServConf.read_test_file('beaglebone/beaglebone-udc.txt')
         self.mock1.udc_ps_mapping.return_value = \

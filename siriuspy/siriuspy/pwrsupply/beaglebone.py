@@ -86,13 +86,7 @@ class BeagleBone:
         if field is None:
             return self._mirror[device_name], updated
         else:
-            return self._mirror[device_name][field], updated
-
-    def read_old(self, device_name, field=None):
-        """Read from device."""
-        if field is None:
-            return self._controllers[device_name].read_all_fields(device_name)
-        return self._controllers[device_name].read(device_name, field)
+            return self._mirror[device_name][device_name+':'+field], updated
 
     def write(self, device_name, field, value):
         """Write to device."""
@@ -118,27 +112,12 @@ class BBBFactory:
     """Build BeagleBones."""
 
     @staticmethod
-    def get(bbbname=None, devices=None, simulate=False):
+    def get(bbbname=None, simulate=False):
         """Return BBB object."""
         # Create PRU and PRUCQueue
         pru = _PRUSim() if simulate else _PRU()
         prucqueue = _PRUCQueue()
         db = dict()
-
-        # if bbbname == 'BBB1_TEST1':
-        #     devices = (('BO-01U:PS-CH', 1),
-        #                ('BO-01U:PS-CV', 2),
-        #                ('BO-03U:PS-CH', 5),
-        #                ('BO-03U:PS-CV', 6))
-        # elif bbbname is not None:
-        #     devices = _PSSearch.conv_bbbname_2_bsmps(bbbname)
-        # elif devices is not None:
-        #     devices = devices
-        # else:
-        #     raise ValueError
-
-        # Build psmodels dict with bsmp devices
-        # psmodels = BBBFactory._build_psmodels_dict(devices)
 
         if bbbname == 'BBB1_TEST1':
             udc_list = ['UDC_TEST']
@@ -147,6 +126,13 @@ class BBBFactory:
 
         controllers = dict()  # 1 controller per UDC
         databases = dict()
+
+        # bypass SCAN and RAMP frequencies.
+        try:
+            freqs = _PSSearch.conv_bbbname_2_freqs(bbbname)
+        except KeyError:
+            freqs = None
+
         for udc in udc_list:
             if udc == 'UDC_TEST':
                 devices = (('BO-01U:PS-CH', 1),
@@ -161,7 +147,8 @@ class BBBFactory:
             model = _ModelFactory.get(psmodel)
             # Create pru controller for devices
             ids = [device[1] for device in devices]
-            pru_controller = _PRUController(pru, prucqueue, model, ids)
+            pru_controller = _PRUController(pru, prucqueue, model, ids,
+                                            freqs=freqs)
             # Get model database
             database = _PSData(devices[0][0]).propty_database
             # Build setpoints
@@ -191,7 +178,7 @@ class BBBFactory:
         Raise exception in case the given devices have more than on psmodel
         type.
         """
-        psmodels = {_PSData(psname[0]).psmodel for psname in devices}
+        psmodels = {_PSData(psname).psmodel for psname, bsmp_id in devices}
         if len(psmodels) > 1:
             raise ValueError('Too many psmodels')
         return psmodels.pop()

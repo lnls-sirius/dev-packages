@@ -1,0 +1,80 @@
+# HEADER
+# ======
+# label           bo-quadrupole-qf-023
+# harmonics       0 1 2 3 4 5 6 7 8 9 10 11
+# main_harmonic   1 normal
+# units           Ampere  T.m T.m  T T  T/m T/m  T/m^2 T/m^2  T/m^3 T/m^3  T/m^4 T/m^4  T/m^5 T/m^5  T/m^6 T/m^6  T/m^7 T/m^7  T/m^8 T/m^8  T/m^9 T/m^9  T/m^10 T/m^10
+
+# EXCITATION DATA
+# ===============
++0000.0072  -2.9022e-06 +1.1510e-05  -8.9642e-03 +8.0115e-05  +2.2789e-03 -3.9759e-03  +1.2164e-01 +2.6218e-01  -1.0959e+00 +1.9300e+01  +6.3622e+02 +5.3979e+02  +1.9558e+04 +7.4682e+04  +1.9534e+06 +1.7096e+06  -3.1049e+07 +2.4493e+08  -4.6536e+09 +2.5436e+09  +5.0049e+10 +1.0053e+12  +1.0698e+13 +1.6906e+13
++0002.0054  -4.6750e-06 +1.1802e-05  -8.2840e-02 +9.4766e-05  -4.6706e-04 -1.6344e-03  +2.5963e-02 +1.7400e-01  +1.1715e+01 +1.7941e+01  +1.4569e+03 +1.5888e+02  -3.4486e+04 +4.2905e+04  +3.2530e+06 +1.0716e+06  +1.8574e+08 +2.8324e+08  -2.2483e+10 +1.3776e+09  -4.8355e+11 +6.0997e+11  +5.8427e+13 -2.5599e+12
++0004.0040  -6.3328e-06 +1.2980e-05  -1.5685e-01 +1.4751e-04  -1.6014e-03 +1.5424e-03  +1.2851e-01 +5.3776e-02  -1.2522e-01 +6.4705e+00  +2.6062e+03 +9.5607e+01  -1.2990e+04 +2.7407e+04  -4.0138e+05 +1.1040e+05  +7.6031e+07 +4.9172e+07  -1.6757e+10 +2.5103e+09  -2.6130e+11 +2.2177e+11  -4.8051e+12 +2.4710e+11
++0006.0015  -7.7609e-06 +1.3693e-05  -2.3127e-01 +1.6621e-04  -2.1903e-03 +4.1904e-03  +1.2166e-01 -1.8379e-01  -2.9732e+00 +3.5516e+00  +3.8499e+03 +8.1272e+01  +8.8803e+03 +2.1918e+04  -1.3401e+05 -1.1017e+06  +3.5370e+07 +2.9193e+07  -2.7793e+10 +3.6293e+09  +6.5750e+10 -6.1908e+10  +9.3520e+11 -4.1093e+12
++0008.0002  -9.2099e-06 +1.5573e-05  -3.0580e-01 +2.4336e-04  -4.1958e-03 +7.8405e-03  +1.4579e-01 +7.0430e-03  +7.7532e-01 -1.1911e+00  +4.3713e+03 -2.6955e+01  -7.2331e+03 +6.5844e+02  -2.9632e+03 +1.4924e+06  +7.6029e+07 +6.0013e+07  -3.7285e+10 -3.4194e+08  -8.6968e+10 +1.1186e+11  +8.2899e+12 +3.5486e+12
++0009.9978  -1.0346e-05 +1.6768e-05  -3.8039e-01 +2.6637e-04  -5.3480e-03 +9.3642e-03  +1.7998e-01 -1.9670e-01  +5.4463e+00 -1.7107e+01  +5.5430e+03 -2.7973e+02  +3.7496e+02 -5.7848e+03  -1.4782e+06 +6.0752e+04  +7.2513e+07 -1.7665e+08  -4.8834e+10 -8.4838e+09  -1.7622e+11 -7.8934e+10  -9.7237e+12 -1.2977e+13
++0029.9941  -2.4592e-05 +3.8764e-05  -1.1318e+00 +8.6450e-04  -1.6296e-02 +4.0709e-02  +3.4730e-01 -2.5369e-01  +8.0986e-02 -1.0387e+01  +1.4524e+04 +9.3817e+01  -2.6091e+04 -2.6062e+04  +1.8696e+05 +1.6343e+06  +4.5173e+07 +9.6965e+06  -1.4606e+11 -1.4155e+09  +1.3130e+11 +5.6964e+10  -2.1302e+12 +1.8022e+13
++0049.9939  -3.8270e-05 +6.2110e-05  -1.8861e+00 +1.4945e-03  -2.4819e-02 +6.8793e-02  +5.7659e-01 -3.5510e-01  +2.1191e+00 -1.5790e+01  +2.3793e+04 +6.7863e+02  -9.9970e+03 +7.1905e+02  +4.8593e+05 +3.8154e+06  -9.3801e+06 +5.0468e+06  -2.4400e+11 -3.6416e+07  +2.5970e+11 +3.5225e+11  -1.1442e+13 +2.0845e+13
++0069.9960  -5.3921e-05 +8.3749e-05  -2.6389e+00 +2.0293e-03  -3.9118e-02 +9.4414e-02  +6.9225e-01 -4.6454e-01  +3.7073e+00 -2.5393e+01  +3.3214e+04 +4.2364e+02  -4.5296e+04 -1.5316e+04  +1.2429e+06 +5.3020e+06  +6.0279e+07 -5.2834e+07  -3.3519e+11 -8.3913e+09  +2.8709e+11 +3.7824e+11  +1.3640e+13 +1.1106e+13
++0089.9950  -7.6279e-05 +1.0345e-04  -3.3859e+00 +2.7080e-03  -6.2589e-02 +1.3131e-01  +9.0743e-01 -4.8279e-01  +2.2422e+00 -2.4354e+01  +4.2476e+04 +1.0368e+03  -5.3118e+04 +1.4244e+03  +9.1039e+05 +7.6989e+06  +1.1712e+08 -6.2237e+07  -4.2578e+11 -1.7766e+09  +2.4750e+11 +8.1356e+11  -1.2501e+13 +2.6148e+13
++0109.9967  -9.9806e-05 +1.1636e-04  -4.1223e+00 +3.2560e-03  -8.7561e-02 +1.7008e-01  +1.0798e+00 -8.3308e-01  -6.4981e+00 -5.1667e+01  +5.1807e+04 +6.8743e+02  -4.7835e+04 -6.0067e+03  +9.2774e+05 +6.6558e+06  +8.5594e+07 -2.1660e+08  -5.1335e+11 -1.3371e+10  +6.1329e+11 +8.6176e+11  -6.9096e+12 +6.2818e+12
++0129.9963  -1.1143e-04 +1.1888e-04  -4.8322e+00 +3.8596e-03  -1.0280e-01 +2.3446e-01  +1.2070e+00 -8.9559e-01  -5.8890e+00 -5.7287e+01  +6.0648e+04 +9.2286e+02  -6.5482e+04 -3.4380e+04  +5.2260e+05 +9.4818e+06  +1.4038e+08 -8.9677e+07  -6.0999e+11 -7.4435e+09  +5.6910e+11 +1.0771e+12  -1.2937e+13 +2.9678e+13
+
+# COMMENTS
+# ========
+# 1. file generated automatically from rotating coil measurement data
+# 2. timestamp: 2018-08-02-15:08:15.480
+# 3. magnet_type_label: BQF
+# 4. magnet_serial_number: 023
+# 5. data_set: M1
+
+# POLARITY TABLE
+# ==============
+#
+# Magnet function         | IntStrength(1) | IntField(2) | ConvSign(3) | Current(4)
+# ------------------------|----------------|-------------|-------------|-----------
+# dipole                  | Angle > 0      | BYL  < 0    | -1.0        | I > 0
+# corrector-horizontal    | HKick > 0      | BYL  > 0    | +1.0        | I > 0
+# corrector-vertical      | VKick > 0      | BXL  < 0    | -1.0        | I > 0
+# quadrupole (focusing)   | KL    > 0      | D1NL < 0    | -1.0        | I > 0
+# quadrupole (defocusing) | KL    < 0      | D1NL > 0    | -1.0        | I > 0
+# quadrupole (skew)       | KL    > 0      | D1SL > 0    | +1.0        | I > 0
+# sextupole  (focusing)   | SL    > 0      | D2NL < 0    | -1.0        | I > 0
+# sextupole  (defocusing) | SL    < 0      | D2NL > 0    | -1.0        | I > 0
+#
+# Defs:
+# ----
+# BYL   := \int{dz By|_{x=y=0}}.
+# BXL   := \int{dz Bx|_{x=y=0}}.
+# D1NL  := \int{dz \frac{dBy}{dx}_{x=y=0}}
+# D2NL  := (1/2!) \int{dz \frac{d^2By}{dx^2}_{x=y=0}}
+# D1SL  := \int{dz \frac{dBx}{dx}_{x=y=0}}
+# Brho  := magnetic rigidity.
+# Angle := ConvSign * BYL / abs(Brho)
+# HKick := ConvSign * BYL / abs(Brho)
+# VKick := ConvSign * BXL / abs(Brho)
+# KL    := ConvSign * D1NL / abs(Brho)
+# SL    := ConvSign * D2NL / abs(Brho)
+#
+# Obs:
+# ---
+# (1) Parameter definition.
+#     IntStrength values correspond to integrated PolynomA and PolynomB parameters
+#     of usual beam tracking codes, with the exception that VKick has its sign
+#     reversed with respecto to its corresponding value in PolynomA.
+# (2) Sirius coordinate system and Lorentz force.
+# (3) Conversion sign for IntField <-> IntStrength
+# (4) Convention of magnet excitation polarity, so that when I > 0 the strength
+#     of the magnet has the expected conventional sign.
+
+# STATIC DATA FILE FORMAT
+# =======================
+#
+# These static data files should comply with the following formatting rules:
+# 1. If the first alphanumeric character of the line is not the pound sign
+#    then the lines is a comment.
+# 2. If the first alphanumeric character is "#" then if
+#    a) it is followed by "[<parameter>] <value>" a parameter names <parameter>
+#       is define with value <value>. if the string <value> has spaces in it
+#       it is split as a list of strings.
+#    b) otherwise the line is ignored as a comment line.

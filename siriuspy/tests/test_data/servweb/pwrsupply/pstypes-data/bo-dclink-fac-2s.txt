@@ -1,0 +1,4 @@
+# List of power supplies of type bo-dclink-fac-2p4s
+# =============================================
+
+BO-Glob:PS-DCLinkFAC2S
