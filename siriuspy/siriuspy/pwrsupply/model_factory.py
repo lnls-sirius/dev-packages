@@ -437,7 +437,7 @@ class FAC2P4SDCDCFactory(FACFactory):
     @property
     def parameters(self):
         """PRU Controller parameters."""
-        return PRUCParms_FAC_2P4S  # TODO: Change to PRUCParms_2P4S_DCDC
+        return PRUCParms_FAC_2P4S
 
     @property
     def bsmp_constants(self):
