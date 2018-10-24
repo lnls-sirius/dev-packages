@@ -148,13 +148,7 @@ class App:
         """Write value to reason and let callback update PV database."""
         status = False
         if reason == 'DeltaPosX-SP':
-            updated = self._update_delta(
-                value, self._orbx_deltaang,
-                self._respmat_x,
-                self._corr_kick_sp_pvs[self._correctors[0]],
-                self._corr_kick_sp_pvs[self._correctors[1]],
-                self._corr_refkick[self._correctors[0]],
-                self._corr_refkick[self._correctors[1]])
+            updated = self._update_delta(value, self._orbx_deltaang, 'x')
             if updated:
                 self._orbx_deltapos = value
                 self.driver.setParam('DeltaPosX-RB', value)
@@ -162,13 +156,7 @@ class App:
                 status = True
 
         elif reason == 'DeltaAngX-SP':
-            updated = self._update_delta(
-                self._orbx_deltapos, value,
-                self._respmat_x,
-                self._corr_kick_sp_pvs[self._correctors[0]],
-                self._corr_kick_sp_pvs[self._correctors[1]],
-                self._corr_refkick[self._correctors[0]],
-                self._corr_refkick[self._correctors[1]])
+            updated = self._update_delta(self._orbx_deltapos, value, 'x')
             if updated:
                 self._orbx_deltaang = value
                 self.driver.setParam('DeltaAngX-RB', value)
@@ -176,13 +164,7 @@ class App:
                 status = True
 
         elif reason == 'DeltaPosY-SP':
-            updated = self._update_delta(
-                value, self._orby_deltaang,
-                self._respmat_y,
-                self._corr_kick_sp_pvs[self._correctors[2]],
-                self._corr_kick_sp_pvs[self._correctors[3]],
-                self._corr_refkick[self._correctors[2]],
-                self._corr_refkick[self._correctors[3]])
+            updated = self._update_delta(value, self._orby_deltaang, 'y')
             if updated:
                 self._orby_deltapos = value
                 self.driver.setParam('DeltaPosY-RB', value)
@@ -190,13 +172,7 @@ class App:
                 status = True
 
         elif reason == 'DeltaAngY-SP':
-            updated = self._update_delta(
-                self._orby_deltapos, value,
-                self._respmat_y,
-                self._corr_kick_sp_pvs[self._correctors[2]],
-                self._corr_kick_sp_pvs[self._correctors[3]],
-                self._corr_refkick[self._correctors[2]],
-                self._corr_refkick[self._correctors[3]])
+            updated = self._update_delta(self._orby_deltapos, value, 'y')
             if updated:
                 self._orby_deltaang = value
                 self.driver.setParam('DeltaAngY-RB', value)
@@ -229,19 +205,9 @@ class App:
                 self._respmat_y = corrparams[1]
                 self.driver.setParam('RespMatY-Mon', corrparams[1])
                 updated = self._update_delta(
-                    self._orbx_deltapos, self._orbx_deltaang,
-                    self._respmat_x,
-                    self._corr_kick_sp_pvs[self._correctors[0]],
-                    self._corr_kick_sp_pvs[self._correctors[1]],
-                    self._corr_refkick[self._correctors[0]],
-                    self._corr_refkick[self._correctors[1]])
+                    self._orbx_deltapos, self._orbx_deltaang, 'x')
                 updated = self._update_delta(
-                    self._orby_deltapos, self._orby_deltaang,
-                    self._respmat_y,
-                    self._corr_kick_sp_pvs[self._correctors[2]],
-                    self._corr_kick_sp_pvs[self._correctors[3]],
-                    self._corr_refkick[self._correctors[2]],
-                    self._corr_refkick[self._correctors[3]])
+                    self._orby_deltapos, self._orby_deltaang, 'y')
                 self.driver.setParam('Log-Mon', 'Updated correction matrices.')
                 self.driver.updatePVs()
                 status = True
@@ -285,20 +251,42 @@ class App:
         f.write(config_name)
         f.close()
 
-    def _update_delta(self, delta_pos, delta_ang, respmat, c1_kick_sp_pv,
-                      c2_kick_sp_pv, c1_refkick, c2_refkick):
-        if self._status == _ALLCLR:
-            delta_pos_meters = delta_pos/1000
-            delta_ang_rad = delta_ang/1000
-            c1_refkick_rad = c1_refkick/1000
-            c2_refkick_rad = c2_refkick/1000
+    def _update_delta(self, delta_pos, delta_ang, orbit):
+        if orbit == 'x':
+            respmat = self._respmat_x
+            c1_kick_sp_pv = self._corr_kick_sp_pvs[self._correctors[0]]
+            c2_kick_sp_pv = self._corr_kick_sp_pvs[self._correctors[1]]
+            c1_refkick = self._corr_refkick[self._correctors[0]]
+            c2_refkick = self._corr_refkick[self._correctors[1]]
+            c1_unit_factor = 1e-6  # urad to rad
+            c2_unit_factor = 1e-3  # mrad to rad
+        else:
+            respmat = self._respmat_y
+            c1_kick_sp_pv = self._corr_kick_sp_pvs[self._correctors[2]]
+            c2_kick_sp_pv = self._corr_kick_sp_pvs[self._correctors[3]]
+            c1_refkick = self._corr_refkick[self._correctors[2]]
+            c2_refkick = self._corr_refkick[self._correctors[3]]
+            c1_unit_factor = 1e-6  # urad to rad
+            c2_unit_factor = 1e-6  # urad to rad
 
-            [[delta_kick_c1], [delta_kick_c2]] = _np.dot(
+        if self._status == _ALLCLR:
+            # Convert to respm units (SI):
+            #  - deltas position and angle from mrad and mm to rad and meters
+            #  - refkicks from urad or mrad to rad
+            delta_pos_meters = delta_pos*1e-3
+            delta_ang_rad = delta_ang*1e-3
+            c1_refkick_rad = c1_refkick*c1_unit_factor
+            c2_refkick_rad = c2_refkick*c2_unit_factor
+
+            [[c1_deltakick_rad], [c2_deltakick_rad]] = _np.dot(
                 _np.linalg.inv(_np.reshape(respmat, (2, 2), order='C')),
                 _np.array([[delta_pos_meters], [delta_ang_rad]]))
 
-            c1_kick_sp_pv.put(c1_refkick_rad + delta_kick_c1)
-            c2_kick_sp_pv.put(c2_refkick_rad + delta_kick_c2)
+            # Convert kicks from rad to correctors units
+            c1_kick_sp_pv.put(
+                (c1_refkick_rad + c1_deltakick_rad)/c1_unit_factor)
+            c2_kick_sp_pv.put(
+                (c2_refkick_rad + c2_deltakick_rad)/c2_unit_factor)
 
             self.driver.setParam('Log-Mon', 'Applied new delta.')
             self.driver.updatePVs()
@@ -317,10 +305,10 @@ class App:
                 corr_index = self._correctors.index(corr)
                 value = self._corr_kick_rb_pvs[
                         self._correctors[corr_index]].get()
-                # Convert correctors kick from rad to mrad
-                self._corr_refkick[self._correctors[corr_index]] = value*1000
+                # Get correctors kick in urad (MA) or mrad (PM).
+                self._corr_refkick[self._correctors[corr_index]] = value
                 self.driver.setParam('RefKick' + corr_id[corr_index] + '-Mon',
-                                     value*1000)
+                                     value)
 
             # the deltas from new kick references are zero
             self._orbx_deltapos = 0
@@ -350,8 +338,8 @@ class App:
         corr = ps.split(':')[0]+':'+ps.split(':')[1]
         corr_index = self._correctors.index(corr)
 
-        # Get reference. Convert correctors kick from rad to mrad.
-        self._corr_refkick[self._correctors[corr_index]] = value*1000
+        # Get reference. Correctors kick in urad (MA) or mrad (PM).
+        self._corr_refkick[self._correctors[corr_index]] = value
         corr_id = ['CH1', 'CH2', 'CV1', 'CV2']
         self.driver.setParam('RefKick' + corr_id[corr_index] + '-Mon',
                              self._corr_refkick[self._correctors[corr_index]])

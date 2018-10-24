@@ -5,7 +5,7 @@ get_ma_devices
 get_pvs_database
     Function that builds the IOC database
 """
-from siriuspy.pwrsupply.model import MAEpics as _Magnet
+from siriuspy.pwrsupply.model import MAEpics as _MAEpics
 from siriuspy.envars import vaca_prefix as _vaca_prefix
 from siriuspy import util as _util
 
@@ -191,7 +191,7 @@ def get_ma_devices(manames):
     #             device = magnet
     #         # Get dipole object
     #         _MA_DEVICES[device] = \
-    #             _Magnet(magnet, lock=False)
+    #             _MAEpics(magnet, lock=False)
     if _MA_DEVICES is None:
         _MA_DEVICES = {}
         for magnet in manames:
@@ -200,6 +200,6 @@ def get_ma_devices(manames):
             else:
                 device = magnet
             # Get dipole object
-            _MA_DEVICES[device] = _Magnet(magnet, lock=False)
+            _MA_DEVICES[device] = _MAEpics(magnet, lock=False)
 
     return _MA_DEVICES
