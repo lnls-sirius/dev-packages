@@ -768,7 +768,7 @@ class FAC2P4SACDCFactory(FACACDCFactory):
     @property
     def parameters(self):
         """PRU Controller parameters."""
-        return PRUCParms_FAC_2P4S_ACDC  # TODO: change to FAC_2P4S_ACDC
+        return PRUCParms_FAC_2P4S_ACDC
 
     @property
     def bsmp_constants(self):
