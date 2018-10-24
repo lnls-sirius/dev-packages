@@ -332,6 +332,83 @@ class ConstFAC_ACDC(ConstBSMP):
     DUTY_CYCLE = 32
 
 
+class ConstFAC_2P4S_DCDC(ConstBSMP):
+    """Namespace for organizing power supply FAC BSMP constants."""
+
+    # --- undefined variables
+    V_UNDEF14 = 14
+    V_UNDEF15 = 15
+    V_UNDEF16 = 16
+    V_UNDEF17 = 17
+    V_UNDEF18 = 18
+    V_UNDEF19 = 19
+    V_UNDEF20 = 20
+    V_UNDEF21 = 21
+    V_UNDEF22 = 22
+    V_UNDEF23 = 23
+    V_UNDEF24 = 24
+
+    # --- FAC_2P4S variables ---
+    V_PS_SOFT_INTERLOCKS = 25
+    V_PS_HARD_INTERLOCKS = 26
+    V_I_LOAD1 = 27
+    V_I_LOAD2 = 28
+    V_V_LOAD = 29
+    V_V_CAPACITOR_BANK1 = 30
+    V_V_CAPACITOR_BANK2 = 31
+    V_V_CAPACITOR_BANK3 = 32
+    V_V_CAPACITOR_BANK4 = 33
+    V_V_CAPACITOR_BANK5 = 34
+    V_V_CAPACITOR_BANK6 = 35
+    V_V_CAPACITOR_BANK7 = 36
+    V_V_CAPACITOR_BANK8 = 37
+    V_V_OUT1 = 38
+    V_V_OUT2 = 39
+    V_V_OUT3 = 40
+    V_V_OUT4 = 41
+    V_V_OUT5 = 42
+    V_V_OUT6 = 43
+    V_V_OUT7 = 44
+    V_V_OUT8 = 45
+    V_DUTY_CYCLE1 = 46
+    V_DUTY_CYCLE2 = 47
+    V_DUTY_CYCLE3 = 48
+    V_DUTY_CYCLE4 = 49
+    V_DUTY_CYCLE5 = 50
+    V_DUTY_CYCLE6 = 51
+    V_DUTY_CYCLE7 = 52
+    V_DUTY_CYCLE8 = 53
+    V_I_ARM1 = 54
+    V_I_ARM2 = 55
+
+
+class ConstFAC_2P4S_ACDC(ConstBSMP):
+    """Namespace for organizing power supply FAC ACDC BSMP constants."""
+
+    # --- undefined variables
+    V_UNDEF14 = 14
+    V_UNDEF15 = 15
+    V_UNDEF16 = 16
+    V_UNDEF17 = 17
+    V_UNDEF18 = 18
+    V_UNDEF19 = 19
+    V_UNDEF20 = 20
+    V_UNDEF21 = 21
+    V_UNDEF22 = 22
+    V_UNDEF23 = 23
+    V_UNDEF24 = 24
+
+    # --- FAC_2P4S_ACDC variables ---
+    V_PS_SOFT_INTERLOCKS = 25
+    V_PS_HARD_INTERLOCKS = 26
+    V_CAPACITOR_BANK = 27
+    V_OUT_RECTIFIER = 28
+    I_OUT_RECTIFIER = 29
+    TEMP_HEATSINK = 30
+    TEMP_INDUCTORS = 31
+    DUTY_CYCLE = 32
+
+
 class ConstFAP(ConstBSMP):
     """Namespace for organizing power supply FAP BSMP constants."""
 
