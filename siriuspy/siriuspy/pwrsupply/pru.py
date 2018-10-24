@@ -2,6 +2,8 @@
 import time as _time
 import threading as _threading
 
+import epics as _epics
+
 from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 
 __version__ = '1.3.3'  # current compatible version.
@@ -253,6 +255,7 @@ class PRUSim(PRUInterface):
     """Functions for simulated programmable real-time unit."""
 
     # TODO: improve simulation
+    TIMING_PV = 'guilherme-AS-Glob:PS-Timing:Trigger-Cmd'
 
     def __init__(self):
         """Init method."""
@@ -263,31 +266,35 @@ class PRUSim(PRUInterface):
         self._curves = self._create_curves()
         self._block = 0  # TODO: check if this is the default PRU value
         self._index = 0
-        self.t = _threading.Thread(target=self.emulate_trigger, daemon=True)
+        self._t = None
+        self._timing = _epics.PV(PRUSim.TIMING_PV)
+        self._timing.add_callback(self.timing_trigger_callback)
 
         self.sync_block = False
 
     def _get_simulated(self):
         return True
 
-    def emulate_trigger(self):
-        """Simulate trigger signal from the timing system."""
-        # t0 = _time.time()
-        self.sync_block = True
-        while self._sync_status == Const.SYNC_STATE.ON:
+    def issue_callbacks(self):
+        """Execute all callbacks."""
+        for cb in self._callbacks:
+            cb()
+
+    def timing_trigger_callback(self, pvname, value, **kwargs):
+        """Callback to issue a timing to simulated PS."""
+        print("Trigger")
+        if self._sync_status == Const.SYNC_STATE.ON:
             self._sync_pulse_count += 1
             if self.sync_mode == Const.SYNC_MODE.BRDCST:
-                _time.sleep(3)
                 self._sync_status = Const.SYNC_STATE.OFF
                 self.sync_block = False
-                for cb in self._callbacks:
-                    cb()
+                self._t = _threading.Thread(
+                    target=self.issue_callbacks, daemon=True)
+                self._t.start()
             elif self.sync_mode in (Const.SYNC_MODE.MIGINT,
                                     Const.SYNC_MODE.MIGEND):
-                # self._index = (self._index + 1) % len(self._curves[0])
                 self._index = (self._index + 1) % \
                     len(self._curves[self._block][0])
-                _time.sleep(1e-4)
                 if self._index == 0:
                     self._sync_status = Const.SYNC_STATE.OFF
                     self.sync_block = False
@@ -295,19 +302,11 @@ class PRUSim(PRUInterface):
                         cb(self._curves[self._block][i][-1])
             elif self.sync_mode in (Const.SYNC_MODE.RMPINT,
                                     Const.SYNC_MODE.RMPEND):
-                self._index = (self._index + 1) % \
-                    len(self._curves[self._block][0])
-                if self._index == 0:
-                    for i, cb in enumerate(self._callbacks):
-                        cb(self._curves[self._block][i][-1])
-                    self.sync_block = False
-                    _time.sleep(5e-1)
-                    self.sync_block = True
-                _time.sleep(1e-4)
-                if self._sync_pulse_count == 12000:
-                    break
-                # if (_time.time() - t0) > 5:
-                #     break
+                    self._index = (self._index + 1) % \
+                        len(self._curves[self._block][0])
+                    if self._index == 0:
+                        for i, cb in enumerate(self._callbacks):
+                            cb(self._curves[self._block][i][-1])
 
     def _get_sync_status(self):
         return self._sync_status
@@ -315,15 +314,7 @@ class PRUSim(PRUInterface):
     def _sync_start(self, sync_mode, sync_address, delay):
         self._sync_pulse_count = 0
         self.sync_block = True
-        if self.t.is_alive():
-            return
-            # self._sync_status = Const.SYNC_STATE.OFF
-            # self.t.join()
         self._sync_status = Const.SYNC_STATE.ON
-        # while self._sync_status == Const.SYNC_STATE.ON:
-        self.t = _threading.Thread(target=self.emulate_trigger, daemon=True)
-        self.t.start()
-        # _time.sleep(0.1)
         return None
 
     def _sync_stop(self):
