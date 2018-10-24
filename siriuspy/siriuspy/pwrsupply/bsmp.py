@@ -1167,6 +1167,24 @@ class FAC_ACDC(_PSBSMP):
         _PSBSMP.__init__(self, slave_address, EntitiesFAC_ACDC(), pru=pru)
 
 
+class FAC_2P4S_DCDC(_PSBSMP):
+    """BSMP with EntitiesFAC_DCDC."""
+
+    def __init__(self, slave_address, pru=None):
+        """Init BSMP."""
+        self.ConstBSMP = ConstFAC_2P4S_DCDC
+        _PSBSMP.__init__(self, slave_address, EntitiesFAC_2P4S_DCDC(), pru=pru)
+
+
+class FAC_2P4S_ACDC(_PSBSMP):
+    """BSMP with EntitiesFAC_ACDC."""
+
+    def __init__(self, slave_address, pru=None):
+        """Init BSMP."""
+        self.ConstBSMP = ConstFAC_2P4S_ACDC
+        _PSBSMP.__init__(self, slave_address, EntitiesFAC_2P4S_ACDC(), pru=pru)
+
+
 class FAP(_PSBSMP):
     """BSMP with EntitiesFAP."""
 
