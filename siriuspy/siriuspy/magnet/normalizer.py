@@ -207,7 +207,7 @@ class _MagnetNormalizer(_Computer):
         elif isinstance(values, _np.ndarray):
             return coef*values
         else:
-            return values
+            raise ValueError()
 
     def _conv_default_2_epicsdb(self, values):
         return self._conv_values(values, self._coef_def2edb)
