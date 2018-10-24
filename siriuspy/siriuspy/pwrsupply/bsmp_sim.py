@@ -18,12 +18,18 @@ from siriuspy.pwrsupply.bsmp import EntitiesFBP as _EntitiesFBP
 from siriuspy.pwrsupply.bsmp import EntitiesFBP_DCLink as _EntitiesFBP_DCLink
 from siriuspy.pwrsupply.bsmp import EntitiesFAC_DCDC as _EntitiesFAC_DCDC
 from siriuspy.pwrsupply.bsmp import EntitiesFAC_ACDC as _EntitiesFAC_ACDC
+from siriuspy.pwrsupply.bsmp import \
+    EntitiesFAC_2P4S_DCDC as _EntitiesFAC_2P4S_DCDC
+from siriuspy.pwrsupply.bsmp import \
+    EntitiesFAC_2P4S_ACDC as _EntitiesFAC_2P4S_ACDC
 from siriuspy.pwrsupply.bsmp import EntitiesFAP as _EntitiesFAP
 
 from siriuspy.pwrsupply.bsmp import ConstFBP as _cFBP
 from siriuspy.pwrsupply.bsmp import ConstFBP_DCLink as _cFBP_DCLink
 from siriuspy.pwrsupply.bsmp import ConstFAC_DCDC as _cFAC_DCDC
 from siriuspy.pwrsupply.bsmp import ConstFAC_ACDC as _cFAC_ACDC
+from siriuspy.pwrsupply.bsmp import ConstFAC_2P4S_DCDC as _cFAC_2P4S_DCDC
+from siriuspy.pwrsupply.bsmp import ConstFAC_2P4S_ACDC as _cFAC_2P4S_ACDC
 from siriuspy.pwrsupply.bsmp import ConstFAP as _cFAP
 
 
@@ -102,6 +108,26 @@ class _Spec_FAC_ACDC(_Spec):
 
     def _get_constants(self):
         return _cFAC_ACDC
+
+
+class _Spec_FAC_2P4S_DCDC(_Spec):
+    """Spec FAC_2P4S_DCDC."""
+
+    def _get_constants(self):
+        return _cFAC_2P4S_DCDC
+
+    def _get_monvar_ids(self):
+        return (_cFAC_2P4S_DCDC.V_I_LOAD1, _cFAC_2P4S_DCDC.V_I_LOAD2)
+
+    def _get_monvar_fluctuation_rms(self, var_id):
+        return _Spec._I_LOAD_FLUCTUATION_RMS
+
+
+class _Spec_FAC_2P4S_ACDC(_Spec):
+    """Spec FAC_ACDC."""
+
+    def _get_constants(self):
+        return _cFAC_2P4S_ACDC
 
 
 class _Spec_FAP(_Spec):
@@ -682,6 +708,70 @@ class BSMPSim_FAC_ACDC(_BaseBSMPSim, _Spec_FAC_ACDC):
 
     def _get_entities(self):
         return _EntitiesFAC_ACDC()
+
+    def _get_states(self):
+        return [_OpModeSimState_FAC_ACDC()]
+
+    def _get_init_variables(self):
+        firmware = [b'S', b'i', b'm', b'u', b'l', b'a', b't', b'i', b'o', b'n']
+        while len(firmware) < 128:
+            firmware.append('\x00'.encode())
+        variables = [
+            0b10000,  # V_PS_STATUS
+            0.0, 0.0,  # ps_setpoint, ps_reference
+            firmware,
+            0, 0,  # counters
+            0, 0, 0, 0.0, 0.0, 0.0, 0.0, [0.0, 0.0, 0.0, 0.0],  # siggen [6-13]
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # undef [14-24]
+            0, 0,  # interlocks [25-26]
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # [27-32]
+        return variables
+
+
+class BSMPSim_FAC_2P4S_DCDC(_BaseBSMPSim, _Spec_FAC_2P4S_DCDC):
+    """Simulated FAC_2P4S_DCDC UDC."""
+
+    def _get_entities(self):
+        return _EntitiesFAC_2P4S_DCDC()
+
+    def _get_states(self):
+        return [_OpModeSimSlowRefState_FAC_DCDC(),
+                _OpModeSimSlowRefSyncState_FAC_DCDC(),
+                _OpModeSimCycleState_FAC_DCDC(self._pru)]
+
+    def _get_init_variables(self):
+        firmware = [b'S', b'i', b'm', b'u', b'l', b'a', b't', b'i', b'o', b'n']
+        while len(firmware) < 128:
+            firmware.append('\x00'.encode())
+        variables = [
+            0b10000,  # V_PS_STATUS
+            0.0, 0.0,  # ps_setpoint, ps_reference
+            firmware,
+            0, 0,  # counters
+            0, 0, 0, 0.0, 0.0, 0.0, 0.0, [0.0, 0.0, 0.0, 0.0],  # siggen [6-13]
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # undef [14-24]
+            0, 0,  # interlocks [25-26]
+            0.0, 0.0,  # iload1, iload2, v_load [27-29]
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # capbank [30-37]
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # v_out[38-45]
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # durycycle [46-53]
+            0.0, 0.0]  # [54-55]
+        default_siggen_parms = \
+            _SignalFactory.DEFAULT_CONFIGS['Sine']
+        variables[_cFAC_DCDC.V_SIGGEN_TYPE] = default_siggen_parms[0]
+        variables[_cFAC_DCDC.V_SIGGEN_NUM_CYCLES] = default_siggen_parms[1]
+        variables[_cFAC_DCDC.V_SIGGEN_FREQ] = default_siggen_parms[2]
+        variables[_cFAC_DCDC.V_SIGGEN_AMPLITUDE] = default_siggen_parms[3]
+        variables[_cFAC_DCDC.V_SIGGEN_OFFSET] = default_siggen_parms[4]
+        variables[_cFAC_DCDC.V_SIGGEN_AUX_PARAM] = default_siggen_parms[5:9]
+        return variables
+
+
+class BSMPSim_FAC_2P4S_ACDC(_BaseBSMPSim, _Spec_FAC_2P4S_ACDC):
+    """Simulated FAC_2P4S_ACDC UDC."""
+
+    def _get_entities(self):
+        return _EntitiesFAC_2P4S_ACDC()
 
     def _get_states(self):
         return [_OpModeSimState_FAC_ACDC()]
