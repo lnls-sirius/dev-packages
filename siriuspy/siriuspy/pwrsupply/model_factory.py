@@ -1065,6 +1065,193 @@ class PRUCParms_FAC_ACDC(_PRUCParms):
     groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 
+class PRUCParms_FAC_2P4S(_PRUCParms):
+    """FAC-specific PRUC parameters.
+
+    Represent FAC_2P4S psmodels.
+    """
+
+    FREQ_RAMP = 2.0  # [Hz]
+    FREQ_SCAN = 10.0  # [Hz]
+
+    # UDC model
+    model = ModelFactory.get('FAC_2P4S_DCDC')
+    ConstBSMP = model.bsmp_constants
+    Entities = model.entities
+
+    groups = dict()
+    # reserved variable groups (not to be used)
+    groups[_PRUCParms.ALL] = tuple(sorted(Entities.list_variables(0)))
+    groups[_PRUCParms.READONLY] = tuple(sorted(Entities.list_variables(1)))
+    groups[_PRUCParms.WRITEABLE] = tuple(sorted(Entities.list_variables(2)))
+    # new variable groups usefull for PRUController.
+    groups[_PRUCParms.ALLRELEVANT] = (
+        # --- common variables
+        ConstBSMP.V_PS_STATUS,
+        ConstBSMP.V_PS_SETPOINT,
+        ConstBSMP.V_PS_REFERENCE,
+        ConstBSMP.V_FIRMWARE_VERSION,
+        ConstBSMP.V_COUNTER_SET_SLOWREF,
+        ConstBSMP.V_COUNTER_SYNC_PULSE,
+        ConstBSMP.V_SIGGEN_ENABLE,
+        ConstBSMP.V_SIGGEN_TYPE,
+        ConstBSMP.V_SIGGEN_NUM_CYCLES,
+        ConstBSMP.V_SIGGEN_N,
+        ConstBSMP.V_SIGGEN_FREQ,
+        ConstBSMP.V_SIGGEN_AMPLITUDE,
+        ConstBSMP.V_SIGGEN_OFFSET,
+        ConstBSMP.V_SIGGEN_AUX_PARAM,
+        # --- FAC variables ---
+        ConstBSMP.V_PS_SOFT_INTERLOCKS,
+        ConstBSMP.V_PS_HARD_INTERLOCKS,
+        ConstBSMP.V_I_LOAD1,
+        ConstBSMP.V_I_LOAD2,
+        ConstBSMP.V_V_LOAD,
+        ConstBSMP.V_V_CAPACITOR_BANK1,
+        ConstBSMP.V_V_CAPACITOR_BANK2,
+        ConstBSMP.V_V_CAPACITOR_BANK3,
+        ConstBSMP.V_V_CAPACITOR_BANK4,
+        ConstBSMP.V_V_CAPACITOR_BANK5,
+        ConstBSMP.V_V_CAPACITOR_BANK6,
+        ConstBSMP.V_V_CAPACITOR_BANK7,
+        ConstBSMP.V_V_CAPACITOR_BANK8,
+        ConstBSMP.V_V_OUT1,
+        ConstBSMP.V_V_OUT2,
+        ConstBSMP.V_V_OUT3,
+        ConstBSMP.V_V_OUT4,
+        ConstBSMP.V_V_OUT5,
+        ConstBSMP.V_V_OUT6,
+        ConstBSMP.V_V_OUT7,
+        ConstBSMP.V_V_OUT8,
+        ConstBSMP.V_DUTY_CYCLE1,
+        ConstBSMP.V_DUTY_CYCLE2,
+        ConstBSMP.V_DUTY_CYCLE3,
+        ConstBSMP.V_DUTY_CYCLE4,
+        ConstBSMP.V_DUTY_CYCLE5,
+        ConstBSMP.V_DUTY_CYCLE6,
+        ConstBSMP.V_DUTY_CYCLE7,
+        ConstBSMP.V_DUTY_CYCLE8,
+        ConstBSMP.V_I_ARM1,
+        ConstBSMP.V_I_ARM2)
+    groups[_PRUCParms.SYNCOFF] = (
+        # --- common variables
+        ConstBSMP.V_PS_STATUS,
+        ConstBSMP.V_PS_SETPOINT,
+        ConstBSMP.V_PS_REFERENCE,
+        ConstBSMP.V_COUNTER_SET_SLOWREF,
+        ConstBSMP.V_COUNTER_SYNC_PULSE,
+        ConstBSMP.V_SIGGEN_ENABLE,
+        ConstBSMP.V_SIGGEN_TYPE,
+        ConstBSMP.V_SIGGEN_NUM_CYCLES,
+        ConstBSMP.V_SIGGEN_N,
+        ConstBSMP.V_SIGGEN_FREQ,
+        ConstBSMP.V_SIGGEN_AMPLITUDE,
+        ConstBSMP.V_SIGGEN_OFFSET,
+        ConstBSMP.V_SIGGEN_AUX_PARAM,
+        # --- FAC variables ---
+        ConstBSMP.V_PS_SOFT_INTERLOCKS,
+        ConstBSMP.V_PS_HARD_INTERLOCKS,
+        ConstBSMP.V_I_LOAD1,
+        ConstBSMP.V_I_LOAD2,
+        ConstBSMP.V_V_LOAD,
+        ConstBSMP.V_V_CAPACITOR_BANK1,
+        ConstBSMP.V_V_CAPACITOR_BANK2,
+        ConstBSMP.V_V_CAPACITOR_BANK3,
+        ConstBSMP.V_V_CAPACITOR_BANK4,
+        ConstBSMP.V_V_CAPACITOR_BANK5,
+        ConstBSMP.V_V_CAPACITOR_BANK6,
+        ConstBSMP.V_V_CAPACITOR_BANK7,
+        ConstBSMP.V_V_CAPACITOR_BANK8,
+        ConstBSMP.V_V_OUT1,
+        ConstBSMP.V_V_OUT2,
+        ConstBSMP.V_V_OUT3,
+        ConstBSMP.V_V_OUT4,
+        ConstBSMP.V_V_OUT5,
+        ConstBSMP.V_V_OUT6,
+        ConstBSMP.V_V_OUT7,
+        ConstBSMP.V_V_OUT8,
+        ConstBSMP.V_DUTY_CYCLE1,
+        ConstBSMP.V_DUTY_CYCLE2,
+        ConstBSMP.V_DUTY_CYCLE3,
+        ConstBSMP.V_DUTY_CYCLE4,
+        ConstBSMP.V_DUTY_CYCLE5,
+        ConstBSMP.V_DUTY_CYCLE6,
+        ConstBSMP.V_DUTY_CYCLE7,
+        ConstBSMP.V_DUTY_CYCLE8,
+        ConstBSMP.V_I_ARM1,
+        ConstBSMP.V_I_ARM2)
+    groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
+
+
+class PRUCParms_FAC_2P4S_ACDC(_PRUCParms):
+    """FAC_ACDC-specific PRUC parameters."""
+
+    FREQ_RAMP = 2.0  # [Hz]
+    FREQ_SCAN = 2.0  # [Hz]
+
+    # UDC model
+    model = ModelFactory.get('FAC_ACDC')
+    ConstBSMP = model.bsmp_constants
+    Entities = model.entities
+
+    groups = dict()
+    # reserved variable groups (not to be used)
+    groups[_PRUCParms.ALL] = tuple(sorted(Entities.list_variables(0)))
+    groups[_PRUCParms.READONLY] = tuple(sorted(Entities.list_variables(1)))
+    groups[_PRUCParms.WRITEABLE] = tuple(sorted(Entities.list_variables(2)))
+    # new variable groups usefull for PRUController.
+    groups[_PRUCParms.ALLRELEVANT] = (
+        # --- common variables
+        ConstBSMP.V_PS_STATUS,
+        ConstBSMP.V_PS_SETPOINT,
+        ConstBSMP.V_PS_REFERENCE,
+        ConstBSMP.V_FIRMWARE_VERSION,
+        ConstBSMP.V_COUNTER_SET_SLOWREF,
+        ConstBSMP.V_COUNTER_SYNC_PULSE,
+        # ConstBSMP.V_SIGGEN_ENABLE,
+        # ConstBSMP.V_SIGGEN_TYPE,
+        # ConstBSMP.V_SIGGEN_NUM_CYCLES,
+        # ConstBSMP.V_SIGGEN_N,
+        # ConstBSMP.V_SIGGEN_FREQ,
+        # ConstBSMP.V_SIGGEN_AMPLITUDE,
+        # ConstBSMP.V_SIGGEN_OFFSET,
+        # ConstBSMP.V_SIGGEN_AUX_PARAM,
+        # --- FAC_ACDC variables ---
+        ConstBSMP.V_PS_SOFT_INTERLOCKS,
+        ConstBSMP.V_PS_HARD_INTERLOCKS,
+        ConstBSMP.V_CAPACITOR_BANK,
+        ConstBSMP.V_OUT_RECTIFIER,
+        ConstBSMP.I_OUT_RECTIFIER,
+        ConstBSMP.TEMP_HEATSINK,
+        ConstBSMP.TEMP_INDUCTORS,
+        ConstBSMP.DUTY_CYCLE,)
+    groups[_PRUCParms.SYNCOFF] = (
+        # --- common variables
+        ConstBSMP.V_PS_STATUS,
+        ConstBSMP.V_PS_SETPOINT,
+        ConstBSMP.V_PS_REFERENCE,
+        ConstBSMP.V_COUNTER_SET_SLOWREF,
+        ConstBSMP.V_COUNTER_SYNC_PULSE,
+        # ConstBSMP.V_SIGGEN_ENABLE,
+        # ConstBSMP.V_SIGGEN_TYPE,
+        # ConstBSMP.V_SIGGEN_NUM_CYCLES,
+        # ConstBSMP.V_SIGGEN_N,
+        # ConstBSMP.V_SIGGEN_FREQ,
+        # ConstBSMP.V_SIGGEN_AMPLITUDE,
+        # ConstBSMP.V_SIGGEN_OFFSET,
+        # ConstBSMP.V_SIGGEN_AUX_PARAM,
+        # --- FAC_ACDC variables ---
+        ConstBSMP.V_PS_SOFT_INTERLOCKS,
+        ConstBSMP.V_PS_HARD_INTERLOCKS,
+        ConstBSMP.V_CAPACITOR_BANK,
+        ConstBSMP.V_OUT_RECTIFIER,
+        ConstBSMP.I_OUT_RECTIFIER,
+        ConstBSMP.TEMP_HEATSINK,
+        ConstBSMP.TEMP_INDUCTORS,
+        ConstBSMP.DUTY_CYCLE,)
+    groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
+
+
 class PRUCParms_FAP(_PRUCParms):
     """FAC-specific PRUC parameters.
 
