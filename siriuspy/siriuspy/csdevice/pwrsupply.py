@@ -101,7 +101,7 @@ ps_soft_interlock_FAC = (
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',)
 ps_hard_interlock_FAC = (
-    'Sobre-corrente na carga', 'Sobre-corrente na carga',
+    'Sobre-corrente na carga', 'Sobre-tensão na carga',
     'Sobre-tensão no DC-Link', 'Sub-tensão no DC-Link',
     'Falha nos drivers do módulo', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
@@ -125,7 +125,69 @@ ps_hard_interlock_FAC_ACDC = (
     'Sobre-tensão na saída do retificador',
     'Sub-tensão na saída do retificador',
     'Sobre-corrente na saída do retificador',
-    'Falha no driver do IGBT', 'Falha no contator de entrada AC trifásica',
+    'Falha no contator de entrada AC trifásica', 'Falha no driver do IGBT',
+    'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+ps_soft_interlock_FAC_2P4S = (
+    'Sobre-temperatura nos indutores',  'Sobre-temperatura nos IGBTs',
+    'Falha no DCCT 1', 'Falha no DCCT 2',
+    'Alta diferença entre DCCTs',
+    'Falha na leitura da corrente na carga do DCCT 1',
+    'Falha na leitura da corrente na carga do DCCT 2', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+ps_hard_interlock_FAC_2P4S = (
+    'Sobre-corrente na carga', 'Sobre-tensão na carga',
+    'Sobre-tensão no DC-Link do módulo 1',
+    'Sobre-tensão no DC-Link do módulo 2',
+    'Sobre-tensão no DC-Link do módulo 3',
+    'Sobre-tensão no DC-Link do módulo 4',
+    'Sobre-tensão no DC-Link do módulo 5',
+    'Sobre-tensão no DC-Link do módulo 6',
+    'Sobre-tensão no DC-Link do módulo 7',
+    'Sobre-tensão no DC-Link do módulo 8',
+    'Sub-tensão no DC-Link do módulo 1',
+    'Sub-tensão no DC-Link do módulo 2',
+    'Sub-tensão no DC-Link do módulo 3',
+    'Sub-tensão no DC-Link do módulo 4',
+    'Sub-tensão no DC-Link do módulo 5',
+    'Sub-tensão no DC-Link do módulo 6',
+    'Sub-tensão no DC-Link do módulo 7',
+    'Sub-tensão no DC-Link do módulo 8',
+    'Sobre-tensão na saída do módulo 1',
+    'Sobre-tensão na saída do módulo 2',
+    'Sobre-tensão na saída do módulo 3',
+    'Sobre-tensão na saída do módulo 4',
+    'Sobre-tensão na saída do módulo 5',
+    'Sobre-tensão na saída do módulo 6',
+    'Sobre-tensão na saída do módulo 7',
+    'Sobre-tensão na saída do módulo 8',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+ps_soft_interlock_FAC_2P4S_ACDC = (
+    'Sobre-temperatura no dissipador', 'Sobre-temperatura nos indutores',
+    'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',
+    'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+ps_hard_interlock_FAC_2P4S_ACDC = (
+    'Sobre-tensão no banco de capacitores',
+    'Sobre-tensão na saída do retificador',
+    'Sub-tensão na saída do retificador',
+    'Sobre-corrente na saída do retificador',
+    'Falha no contator de entrada AC trifásica', 'Falha no driver do IGBT',
     'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
     'Reserved', 'Reserved', 'Reserved', 'Reserved',
@@ -552,7 +614,8 @@ def _get_ps_FAC_propty_database():
 def _get_ps_FAC_ACDC_propty_database():
     """Return database with FAC_ACDC pwrsupply model PVs."""
     # TODO: MISSING SETPOINT!!!
-    db = {
+    propty_db = get_common_propty_database()
+    db_ps = {
         'IntlkSoftLabels-Cte':  {'type': 'string',
                                  'count': len(ps_soft_interlock_FAC_ACDC),
                                  'value': ps_soft_interlock_FAC_ACDC},
@@ -572,7 +635,8 @@ def _get_ps_FAC_ACDC_propty_database():
         'PWMDutyCycle-Mon': {'type': 'float', 'value': 0.0,
                                      'prec': default_ps_current_precision},
     }
-    return db
+    propty_db.update(db_ps)
+    return propty_db
 
 
 def _get_ps_FAC_2S_propty_database():
@@ -589,14 +653,119 @@ def _get_ps_FAC_2S_ACDC_propty_database():
 
 def _get_ps_FAC_2P4S_propty_database():
     """Return database with FAC_2P4S pwrsupply model PVs."""
-    # TODO: implement!!!
-    return _get_ps_FBP_propty_database()
+    propty_db = get_basic_propty_database()
+    db_ps = {
+        'Current2-Mon': {'type': 'float',  'value': 0.0,
+                         'prec': default_ps_current_precision},
+        'IntlkSoftLabels-Cte':  {'type': 'string',
+                                 'count': len(ps_soft_interlock_FAC_2P4S),
+                                 'value': ps_soft_interlock_FAC_2P4S},
+        'IntlkHardLabels-Cte':  {'type': 'string',
+                                 'count': len(ps_hard_interlock_FAC_2P4S),
+                                 'value': ps_hard_interlock_FAC_2P4S},
+        'LoadVoltage-Mon': {'type': 'float', 'value': 0.0,
+                            'prec': default_ps_current_precision,
+                            'unit': 'V'},
+        'CapacitorBank1Voltage-Mon': {'type': 'float', 'value': 0.0,
+                                      'prec': default_ps_current_precision,
+                                      'unit': 'V'},
+        'CapacitorBank2Voltage-Mon': {'type': 'float', 'value': 0.0,
+                                      'prec': default_ps_current_precision,
+                                      'unit': 'V'},
+        'CapacitorBank3Voltage-Mon': {'type': 'float', 'value': 0.0,
+                                      'prec': default_ps_current_precision,
+                                      'unit': 'V'},
+        'CapacitorBank4Voltage-Mon': {'type': 'float', 'value': 0.0,
+                                      'prec': default_ps_current_precision,
+                                      'unit': 'V'},
+        'CapacitorBank5Voltage-Mon': {'type': 'float', 'value': 0.0,
+                                      'prec': default_ps_current_precision,
+                                      'unit': 'V'},
+        'CapacitorBank6Voltage-Mon': {'type': 'float', 'value': 0.0,
+                                      'prec': default_ps_current_precision,
+                                      'unit': 'V'},
+        'CapacitorBank7Voltage-Mon': {'type': 'float', 'value': 0.0,
+                                      'prec': default_ps_current_precision,
+                                      'unit': 'V'},
+        'CapacitorBank8Voltage-Mon': {'type': 'float', 'value': 0.0,
+                                      'prec': default_ps_current_precision,
+                                      'unit': 'V'},
+        'Module1Voltage-Mon': {'type': 'float', 'value': 0.0,
+                               'prec': default_ps_current_precision,
+                               'unit': 'V'},
+        'Module2Voltage-Mon': {'type': 'float', 'value': 0.0,
+                               'prec': default_ps_current_precision,
+                               'unit': 'V'},
+        'Module3Voltage-Mon': {'type': 'float', 'value': 0.0,
+                               'prec': default_ps_current_precision,
+                               'unit': 'V'},
+        'Module4Voltage-Mon': {'type': 'float', 'value': 0.0,
+                               'prec': default_ps_current_precision,
+                               'unit': 'V'},
+        'Module5Voltage-Mon': {'type': 'float', 'value': 0.0,
+                               'prec': default_ps_current_precision,
+                               'unit': 'V'},
+        'Module6Voltage-Mon': {'type': 'float', 'value': 0.0,
+                               'prec': default_ps_current_precision,
+                               'unit': 'V'},
+        'Module7Voltage-Mon': {'type': 'float', 'value': 0.0,
+                               'prec': default_ps_current_precision,
+                               'unit': 'V'},
+        'Module8Voltage-Mon': {'type': 'float', 'value': 0.0,
+                               'prec': default_ps_current_precision,
+                               'unit': 'V'},
+        'PWMDutyCycle1-Mon': {'type': 'float', 'value': 0.0,
+                              'prec': default_ps_current_precision},
+        'PWMDutyCycle2-Mon': {'type': 'float', 'value': 0.0,
+                              'prec': default_ps_current_precision},
+        'PWMDutyCycle3-Mon': {'type': 'float', 'value': 0.0,
+                              'prec': default_ps_current_precision},
+        'PWMDutyCycle4-Mon': {'type': 'float', 'value': 0.0,
+                              'prec': default_ps_current_precision},
+        'PWMDutyCycle5-Mon': {'type': 'float', 'value': 0.0,
+                              'prec': default_ps_current_precision},
+        'PWMDutyCycle6-Mon': {'type': 'float', 'value': 0.0,
+                              'prec': default_ps_current_precision},
+        'PWMDutyCycle7-Mon': {'type': 'float', 'value': 0.0,
+                              'prec': default_ps_current_precision},
+        'PWMDutyCycle8-Mon': {'type': 'float', 'value': 0.0,
+                              'prec': default_ps_current_precision},
+        'Arm1Current-Mon': {'type': 'float', 'value': 0.0,
+                            'prec': default_ps_current_precision,
+                            'unit': 'A'},
+        'Arm2Current-Mon': {'type': 'float', 'value': 0.0,
+                            'prec': default_ps_current_precision,
+                            'unit': 'A'}
+    }
+    propty_db.update(db_ps)
+    return propty_db
 
 
 def _get_ps_FAC_2P4S_ACDC_propty_database():
     """Return database with FAC_2P4S pwrsupply model PVs."""
-    # TODO: implement!!!
-    return _get_ps_FAC_ACDC_propty_database()
+    propty_db = get_common_propty_database()
+    db_ps = {
+        'IntlkSoftLabels-Cte':  {'type': 'string',
+                                 'count': len(ps_soft_interlock_FAC_2P4S_ACDC),
+                                 'value': ps_soft_interlock_FAC_2P4S_ACDC},
+        'IntlkHardLabels-Cte':  {'type': 'string',
+                                 'count': len(ps_hard_interlock_FAC_2P4S_ACDC),
+                                 'value': ps_hard_interlock_FAC_2P4S_ACDC},
+        'CapacitorBankVoltage-Mon': {'type': 'float', 'value': 0.0,
+                                     'prec': default_ps_current_precision},
+        'RectifierVoltage-Mon': {'type': 'float', 'value': 0.0,
+                                 'prec': default_ps_current_precision},
+        'RectifierCurrent-Mon': {'type': 'float', 'value': 0.0,
+                                 'prec': default_ps_current_precision},
+        'HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
+                                    'prec': default_ps_current_precision},
+        'InductorsTemperature-Mon': {'type': 'float', 'value': 0.0,
+                                     'prec': default_ps_current_precision},
+        'PWMDutyCycle-Mon': {'type': 'float', 'value': 0.0,
+                                     'prec': default_ps_current_precision},
+    }
+    propty_db.update(db_ps)
+    return propty_db
 
 
 def _get_ps_FAP_propty_database():
