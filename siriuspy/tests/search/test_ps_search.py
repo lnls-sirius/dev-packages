@@ -45,6 +45,7 @@ class TestPSSearch(MockServConf):
         'conv_psname_2_bbbname',
         'conv_bbbname_2_psnames',
         'conv_bbbname_2_bsmps',
+        'conv_bbbname_2_freqs',
         'conv_bbb_2_udc',
         'conv_udc_2_bsmps',
         'get_pstype_2_psnames_dict',
@@ -286,6 +287,17 @@ class TestPSSearch(MockServConf):
         self.assertIsInstance(bsmps[0], tuple)
         self.assertIsInstance(bsmps[0][0], str)
         self.assertIsInstance(bsmps[0][1], int)
+
+    def test_conv_bbbname_2_freqs(self):
+        """Test conv_bbbname_2_freqs."""
+        self.assertRaises(TypeError, PSSearch.conv_bbbname_2_freqs)
+        self.assertRaises(KeyError, PSSearch.conv_bbbname_2_psnames, '')
+        freqs = PSSearch.conv_bbbname_2_freqs(
+            bbbname='TB-Glob:CO-PSCtrl-3')
+        self.assertIsInstance(freqs, tuple)
+        self.assertEqual(len(freqs), 2)
+        self.assertIsInstance(freqs[0], float)
+        self.assertIsInstance(freqs[1], float)
 
     def test_get_pstype_2_psnames_dict(self):
         """Test get_pstype_2_psnames_dict."""

@@ -79,6 +79,7 @@ TS-04:PS-CV-1                 FBP
 TS-04:PS-CV-2                 FBP
 
 AS-Glob:PS-DCLinkFBP-1        FBP_DCLink
+TB-Glob:PS-DCLinkFBP          FBP_DCLink
 
 TS-01:PS-QF1A                 FAP
 TS-01:PS-QF1B                 FAP
@@ -147,6 +148,7 @@ BO-49U:PS-CV                  FBP
 BO-02D:PS-QS	                FBP
 
 AS-Glob:PS-DCLinkFBP-2        FBP_DCLink
+SI-Glob:PS-DCLinkFBP          FBP_DCLink
 
 
 
