@@ -255,7 +255,8 @@ class PRUController:
                  device_ids,
                  processing=True,
                  scanning=True,
-                 reset=True):
+                 reset=True,
+                 freqs=None):
         """Init."""
         # create lock
         self._lock = _Lock()
@@ -264,6 +265,12 @@ class PRUController:
         # self._initialize_const_namespace()
         self._params = udcmodel.parameters
 
+        # bypass psmodel default frequencies
+        if freqs is not None:
+            self._params.FREQ_SCAN = freqs[0]
+            self._params.FREQ_RAMP = freqs[1]
+
+        print(self._params.FREQ_SCAN)
         # store udcmodel
         self._model = udcmodel
         self._udcmodel = udcmodel.name
