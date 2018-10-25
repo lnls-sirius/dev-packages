@@ -1,0 +1,13 @@
+# BeagleBone BSMP update frequencies
+
+# names not showing here use default freq values [Hz] (see model_factory.py):
+#
+# PSMODEL               SYNC_OFF[SCAN]_FREQUENCY[Hz]  SYNC_ON[RAMP]_FREQUENCY[Hz]
+# FBP                   10.0                          02.0
+# FBP_DCLink            02.0                          02.0
+# FAC                   10.0                          02.0
+
+# BBBNAME               SYNC_OFF[SCAN]_FREQUENCY[Hz]  SYNC_ON[RAMP]_FREQUENCY[Hz]
+
+TB-Glob:CO-PSCtrl-3     6.0                           6.0
+TB-Glob:CO-PSCtrl-4     6.0                           6.0

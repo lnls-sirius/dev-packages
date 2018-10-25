@@ -1,0 +1,19 @@
+# List of power supplies of type bo-dclink-fac-2p4s
+# =============================================
+
+BO-Glob:PS-DCLinkFAC2P4S-1
+BO-Glob:PS-DCLinkFAC2P4S-2
+BO-Glob:PS-DCLinkFAC2P4S-3
+BO-Glob:PS-DCLinkFAC2P4S-4
+BO-Glob:PS-DCLinkFAC2P4S-5
+BO-Glob:PS-DCLinkFAC2P4S-6
+BO-Glob:PS-DCLinkFAC2P4S-7
+BO-Glob:PS-DCLinkFAC2P4S-8
+BO-Glob:PS-DCLinkFAC2P4S-9
+BO-Glob:PS-DCLinkFAC2P4S-10
+BO-Glob:PS-DCLinkFAC2P4S-11
+BO-Glob:PS-DCLinkFAC2P4S-12
+BO-Glob:PS-DCLinkFAC2P4S-13
+BO-Glob:PS-DCLinkFAC2P4S-14
+BO-Glob:PS-DCLinkFAC2P4S-15
+BO-Glob:PS-DCLinkFAC2P4S-16

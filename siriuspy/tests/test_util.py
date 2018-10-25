@@ -237,25 +237,13 @@ class TestUtil(unittest.TestCase):
         self.assertEqual("1/m", util.get_strength_units("quadrupole-skew"))
         self.assertEqual("1/m^2", util.get_strength_units("sextupole"))
         self.assertEqual(
-            "urad", util.get_strength_units("corrector-horizontal", "SI"))
+            "urad", util.get_strength_units("corrector-horizontal", False))
         self.assertEqual(
-            "urad", util.get_strength_units("corrector-horizontal", "BO"))
+            "urad", util.get_strength_units("corrector-vertical", False))
         self.assertEqual(
-            "urad", util.get_strength_units("corrector-vertical", "SI"))
+            "mrad", util.get_strength_units("corrector-horizontal", True))
         self.assertEqual(
-            "urad", util.get_strength_units("corrector-vertical", "BO"))
-        self.assertEqual(
-            "mrad", util.get_strength_units("corrector-horizontal", "TB"))
-        self.assertEqual(
-            "mrad", util.get_strength_units("corrector-horizontal", "TS"))
-        self.assertEqual(
-            "mrad", util.get_strength_units("corrector-horizontal", "LI"))
-        self.assertEqual(
-            "mrad", util.get_strength_units("corrector-vertical", "TB"))
-        self.assertEqual(
-            "mrad", util.get_strength_units("corrector-vertical", "TS"))
-        self.assertEqual(
-            "mrad", util.get_strength_units("corrector-vertical", "LI"))
+            "mrad", util.get_strength_units("corrector-vertical", True))
         self.assertRaises(ValueError, util.get_strength_units, magfunc='')
 
     def test_update_bit(self):

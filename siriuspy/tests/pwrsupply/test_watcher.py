@@ -146,7 +146,7 @@ class TestCycleWatcher(unittest.TestCase):
         self.assertFalse(self.watcher.is_alive())
 
     def test_cycle_wait_cycle_stopped(self, mock_time):
-        """"Watcher finishes when."""
+        """Watcher finishes when."""
         # Wait cycle mode
         self.values['FakeName:OpMode-Sts'] = 2
         self.values['FakeName:CycleEnbl-Mon'] = 1

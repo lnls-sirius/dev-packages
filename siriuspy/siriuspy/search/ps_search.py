@@ -30,6 +30,7 @@ class PSSearch:
     _bsmps_2_bbbname_dict = None
 
     _bbbname_2_udc_dict = None
+    _bbbname_2_freqs_dict = None
     _udc_2_bbbname_dict = None
     _udc_2_bsmp_dict = None
     _bsmp_2_udc_dict = None
@@ -201,6 +202,13 @@ class PSSearch:
         return PSSearch._bbbname_2_bsmps_dict[bbbname]
 
     @staticmethod
+    def conv_bbbname_2_freqs(bbbname):
+        """Given bbb name return PRU sync off and on update frequencies."""
+        if PSSearch._bbbname_2_freqs_dict is None:
+            PSSearch._reload_bbb_2_freqs_dict()
+        return PSSearch._bbbname_2_freqs_dict[bbbname]
+
+    @staticmethod
     def get_pstype_2_psnames_dict():
         """Return dictionary of power supply type and power supply names."""
         if PSSearch._pstype_2_psnames_dict is None:
@@ -347,6 +355,15 @@ class PSSearch:
                 bsmp = (bsmp_name, bsmp_id)
                 PSSearch._bbbname_2_bsmps_dict[bbbname].append(bsmp)
                 PSSearch._bsmps_2_bbbname_dict[bsmp_name] = bbbname
+
+    @staticmethod
+    def _reload_bbb_2_freqs_dict():
+        data, _ = _util.read_text_data(_web.beaglebone_freqs_mapping())
+        PSSearch._bbbname_2_freqs_dict = dict()
+        for line in data:
+            bbbname, sync_off_freq, sync_on_freq = line
+            PSSearch._bbbname_2_freqs_dict[bbbname] = \
+                (float(sync_off_freq), float(sync_on_freq))
 
     @staticmethod
     def _reload_bbb_2_udc_dict():

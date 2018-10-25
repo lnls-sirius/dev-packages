@@ -268,8 +268,10 @@ class TestPRUSim(unittest.TestCase):
     """Test PRUSim API."""
 
     public_interface = (
-        'emulate_trigger',
-        'add_callback'
+        'timing_trigger_callback',
+        'add_callback',
+        'issue_callbacks',
+        'TIMING_PV'
     )
 
     def test_public_interface(self):

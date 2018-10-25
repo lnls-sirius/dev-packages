@@ -62,10 +62,10 @@ class TestOpticsCorrCSDevice(unittest.TestCase):
         self.assertEqual(db['DeltaPosY-RB']['unit'], 'mm')
         self.assertEqual(db['DeltaAngY-SP']['unit'], 'mrad')
         self.assertEqual(db['DeltaAngY-RB']['unit'], 'mrad')
-        self.assertEqual(db['RefKickCH1-Mon']['unit'], 'mrad')
+        self.assertEqual(db['RefKickCH1-Mon']['unit'], 'urad')
         self.assertEqual(db['RefKickCH2-Mon']['unit'], 'mrad')
-        self.assertEqual(db['RefKickCV1-Mon']['unit'], 'mrad')
-        self.assertEqual(db['RefKickCV2-Mon']['unit'], 'mrad')
+        self.assertEqual(db['RefKickCV1-Mon']['unit'], 'urad')
+        self.assertEqual(db['RefKickCV2-Mon']['unit'], 'urad')
 
 
 if __name__ == "__main__":

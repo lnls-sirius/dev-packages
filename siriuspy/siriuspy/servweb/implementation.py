@@ -124,6 +124,12 @@ def beaglebone_bsmp_mapping(timeout=_timeout):
     return read_url(url, timeout=timeout)
 
 
+def beaglebone_freqs_mapping(timeout=_timeout):
+    """Return the beaglebone Black BSMP PRU sync off and on freqs."""
+    url = _bbb_folder + 'beaglebone-freq.txt'
+    return read_url(url, timeout=timeout)
+
+
 def bbb_udc_mapping(timeout=_timeout):
     """Read beaglebone-udc mapping."""
     url = _bbb_folder + 'beaglebone-udc.txt'

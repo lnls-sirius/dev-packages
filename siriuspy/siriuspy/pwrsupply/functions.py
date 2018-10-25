@@ -233,9 +233,11 @@ class CfgSiggen(Function):
         """Execute command."""
         if self._idx == 5:
             if not self._setpoints or \
-                    (self._setpoints and self._setpoints.apply(value[self._idx:])):
+                    (self._setpoints and
+                     self._setpoints.apply(value[self._idx:])):
                 self._cfg.execute(value)
         else:
             if not self._setpoints or \
-                    (self._setpoints and self._setpoints.apply(value[self._idx])):
+                    (self._setpoints and
+                     self._setpoints.apply(value[self._idx])):
                 self._cfg.execute(value)
