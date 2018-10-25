@@ -35,9 +35,10 @@ class _MagnetNormalizer(_Computer):
         """Put strength value."""
         # convert strength to current
         kwargs = self._get_params(computed_pv)
-        value_conv = value if self._coef_def2edb == 1.0 else \
-            self._conv_epicsdb_2_default(value)
-        current = self.conv_strength_2_current(value_conv, **kwargs)
+        # value_conv = value if self._coef_def2edb == 1.0 else \
+        #     self._conv_epicsdb_2_default(value)
+        # current = self.conv_strength_2_current(value_conv, **kwargs)
+        current = self.conv_strength_2_current(value, **kwargs)
         # first PV must be actual magnet current
         computed_pv.pvs[0].put(current)
 
@@ -47,9 +48,11 @@ class _MagnetNormalizer(_Computer):
         # convert current to strength
         value_default = self._compute_new_value(computed_pv,
                                                 updated_pv_name, value)
-        value_conv = value_default if self._coef_def2edb == 1.0 else \
-            self._conv_default_2_epicsdb(value_default)
-        kwret["value"] = value_conv
+        # value_conv = value_default if self._coef_def2edb == 1.0 else \
+        #     self._conv_default_2_epicsdb(value_default)
+        # kwret["value"] = value_conv
+        kwret["value"] = value_default
+
         lims = self._compute_limits(computed_pv, updated_pv_name)
         if lims is not None:
             kwret["hihi"] = lims[0]
@@ -67,9 +70,10 @@ class _MagnetNormalizer(_Computer):
         lims = self._madata.splims
         lims = (lims['HIHI'], lims['HIGH'], lims['HOPR'],
                 lims['LOPR'], lims['LOW'], lims['LOLO'])
-        lims_default = self.conv_current_2_strength(lims, **kwargs)
-        lims = lims_default if self._coef_def2edb == 1.0 else \
-            self._conv_default_2_epicsdb(lims_default)
+        lims = self.conv_current_2_strength(lims, **kwargs)
+        # lims_default = self.conv_current_2_strength(lims, **kwargs)
+        # lims = lims_default if self._coef_def2edb == 1.0 else \
+        #     self._conv_default_2_epicsdb(lims_default)
         tlim = (lims[0], lims[-1])
         hihi, lolo = max(tlim), min(tlim)
         tlim = (lims[1], lims[-2])
@@ -94,9 +98,11 @@ class _MagnetNormalizer(_Computer):
         # ---
 
         strengths = self._conv_intfield_2_strength(intfields, **kwargs)
+        strengths = self._conv_default_2_epicsdb(strengths)
         return strengths
 
     def conv_strength_2_current(self, strengths, **kwargs):
+        strengths = self._conv_epicsdb_2_default(strengths)
         intfields = self._conv_strength_2_intfield(strengths, **kwargs)
         mf = self._mfmult
         # excdata = self._get_main_excdata()
