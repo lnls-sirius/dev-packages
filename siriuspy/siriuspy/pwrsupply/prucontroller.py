@@ -270,7 +270,6 @@ class PRUController:
             self._params.FREQ_SCAN = freqs[0]
             self._params.FREQ_RAMP = freqs[1]
 
-        print(self._params.FREQ_SCAN)
         # store udcmodel
         self._model = udcmodel
         self._udcmodel = udcmodel.name
