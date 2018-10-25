@@ -361,7 +361,7 @@ class PRUController:
 
     @property
     def queue_length(self):
-        """Number of operations currently in the queue."""
+        """Store number of operations currently in the queue."""
         return len(self._queue)
 
     @property
@@ -376,7 +376,7 @@ class PRUController:
 
     @property
     def connected(self):
-        """Connection state."""
+        """Store connection state."""
         return all((self.check_connected(id) for id in self.device_ids))
 
     def check_connected(self, device_id):
@@ -427,6 +427,7 @@ class PRUController:
         Returns
         -------
         Selected BSMP device variable values.
+
         """
         # process device_ids
         if isinstance(device_ids, int):
@@ -473,6 +474,7 @@ class PRUController:
         status : bool
             True is operation was queued or False, if operation was rejected
             because of the PRU sync state.
+
         """
         if self.pru_sync_status == self._params.PRU.SYNC_STATE.OFF:
             # in PRU sync off mode, append BSM function exec operation to queue
@@ -599,6 +601,7 @@ class PRUController:
         return curve
 
     def pru_curve_set(self, device_id, curve):
+        """Set PRU curves."""
         # get index of curve for the given device id
         idx = self.device_ids.index(device_id)
 
@@ -856,11 +859,11 @@ class PRUController:
                 self._params.ConstBSMP.V_FIRMWARE_VERSION]
             version = parse_firmware_version(version)
             if 'Simulation' not in version and \
-              version != _udc_firmware_version:
-               self._init_disconnect()
-               errmsg = ('Incompatible BSMP implementation version! '
-                         '{} <> {}'.format(version, _udc_firmware_version))
-               raise ValueError(errmsg)
+               version != _udc_firmware_version:
+                self._init_disconnect()
+                errmsg = ('Incompatible BSMP implementation version! '
+                          '{} <> {}'.format(version, _udc_firmware_version))
+                raise ValueError(errmsg)
 
     # --- private methods: scan and process ---
 
