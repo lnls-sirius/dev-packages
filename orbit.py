@@ -38,16 +38,22 @@ class BPM(_BaseTimingConfig):
             'asyn.ENBL': _csbpm.EnblTyp.Enable,
             'ACQBPMMode': _csbpm.OpModes.MultiBunch,
             'ACQChannel': _csbpm.AcqChan.Monit1,
-            'ACQNrShots': 1,
+            # 'ACQNrShots': 1,
+            'ACQShots': 1,
             'ACQTriggerHwDly': 0.0,
             'ACQUpdateTime': 0,
-            'ACQNrSamplesPre': 0,
-            'ACQNrSamplesPost': 200,
-            'ACQCtrl': _csbpm.AcqEvents.Stop,
-            'ACQTriggerType': _csbpm.AcqTrigTyp.External,
+            # 'ACQNrSamplesPre': 0,
+            'ACQSamplesPre': 0,
+            # 'ACQNrSamplesPost': 200,
+            'ACQSamplesPost': 200,
+            # 'ACQCtrl': _csbpm.AcqEvents.Stop,
+            'ACQTriggerEvent': _csbpm.AcqEvents.Stop,
+            # 'ACQTriggerType': _csbpm.AcqTrigTyp.External,
+            'ACQTrigger': _csbpm.AcqTrigTyp.External,
             'ACQTriggerRep': _csbpm.AcqRepeat.Repetitive,
-            'ACQTriggerDataChan': _csbpm.AcqChan.Monit1,
-            'ACQTriggerDataSel': _csbpm.AcqDataTyp.Sum,
+            # 'ACQTriggerDataChan': _csbpm.AcqChan.Monit1,
+            'ACQDataTrigChan': _csbpm.AcqChan.Monit1,
+            'ACQTriggerDataSel': _csbpm.AcqDataTyp.A,
             'ACQTriggerDataThres': 10,
             'ACQTriggerDataPol': _csbpm.Polarity.Positive,
             'ACQTriggerDataHyst': 2}
@@ -56,16 +62,23 @@ class BPM(_BaseTimingConfig):
             'asyn.CNCT': 'asyn.CNCT',
             'ACQBPMMode': 'ACQBPMMode-Sel',
             'ACQChannel': 'ACQChannel-Sel',
-            'ACQNrShots': 'ACQNrShots-SP',
+            # 'ACQNrShots': 'ACQNrShots-SP',
+            'ACQShots': 'ACQShots-SP',
             'ACQTriggerHwDly': 'ACQTriggerHwDly-SP',
             'ACQUpdateTime': 'ACQUpdateTime-SP',
-            'ACQNrSamplesPre': 'ACQNrSamplesPre-SP',
-            'ACQNrSamplesPost': 'ACQNrSamplesPost-SP',
-            'ACQCtrl': 'ACQCtrl-Sel',
-            'ACQTriggerType': 'ACQTriggerType-Sel',
+            # 'ACQNrSamplesPre': 'ACQNrSamplesPre-SP',
+            'ACQSamplesPre': 'ACQSamplesPre-SP',
+            # 'ACQNrSamplesPost': 'ACQNrSamplesPost-SP',
+            'ACQSamplesPost': 'ACQSamplesPost-SP',
+            # 'ACQCtrl': 'ACQCtrl-Sel',
+            'ACQTriggerEvent': 'ACQTriggerEvent-Sel',
+            # 'ACQTriggerType': 'ACQTriggerType-Sel',
+            'ACQTrigger': 'ACQTrigger-Sel',
             'ACQTriggerRep': 'ACQTriggerRep-Sel',
-            'ACQTriggerDataChan': 'ACQTriggerDataChan-Sel',
-            'ACQTriggerDataSel': 'ACQTriggerDataSel-Sel',
+            # 'ACQTriggerDataChan': 'ACQTriggerDataChan-Sel',
+            'ACQDataTrigChan': 'ACQDataTrigChan-Sel',
+            # 'ACQTriggerDataSel': 'ACQTriggerDataSel-Sel',
+            'ACQTriggerDataSel': 'ACQTriggerDataSel-SP',
             'ACQTriggerDataThres': 'ACQTriggerDataThres-SP',
             'ACQTriggerDataPol': 'ACQTriggerDataPol-Sel',
             'ACQTriggerDataHyst': 'ACQTriggerDataHyst-SP'}
@@ -76,17 +89,24 @@ class BPM(_BaseTimingConfig):
             'asyn.CNCT': 'asyn.CNCT',
             'ACQBPMMode': 'ACQBPMMode-Sts',
             'ACQChannel': 'ACQChannel-Sts',
-            'ACQNrShots': 'ACQNrShots-RB',
+            # 'ACQNrShots': 'ACQNrShots-RB',
+            'ACQShots': 'ACQShots-RB',
             'ACQTriggerHwDly': 'ACQTriggerHwDly-RB',
             'ACQUpdateTime': 'ACQUpdateTime-RB',
-            'ACQNrSamplesPre': 'ACQNrSamplesPre-RB',
-            'ACQNrSamplesPost': 'ACQNrSamplesPost-RB',
-            'ACQCtrl': 'ACQCtrl-Sts',
+            # 'ACQNrSamplesPre': 'ACQNrSamplesPre-RB',
+            'ACQSamplesPre': 'ACQSamplesPre-RB',
+            # 'ACQNrSamplesPost': 'ACQNrSamplesPost-RB',
+            'ACQSamplesPost': 'ACQSamplesPost-RB',
+            # 'ACQCtrl': 'ACQCtrl-Sts',
+            'ACQTriggerEvent': 'ACQTriggerEvent-Sts',
             'ACQStatus': 'ACQStatus-Mon',
-            'ACQTriggerType': 'ACQTriggerType-Sts',
+            # 'ACQTriggerType': 'ACQTriggerType-Sts',
+            'ACQTrigger': 'ACQTrigger-Sts',
             'ACQTriggerRep': 'ACQTriggerRep-Sts',
-            'ACQTriggerDataChan': 'ACQTriggerDataChan-Sts',
-            'ACQTriggerDataSel': 'ACQTriggerDataSel-Sts',
+            # 'ACQTriggerDataChan': 'ACQTriggerDataChan-Sts',
+            'ACQDataTrigChan': 'ACQDataTrigChan-Sts',
+            # 'ACQTriggerDataSel': 'ACQTriggerDataSel-Sts',
+            'ACQTriggerDataSel': 'ACQTriggerDataSel-RB',
             'ACQTriggerDataThres': 'ACQTriggerDataThres-RB',
             'ACQTriggerDataPol': 'ACQTriggerDataPol-Sts',
             'ACQTriggerDataHyst': 'ACQTriggerDataHyst-RB'}
@@ -186,14 +206,17 @@ class BPM(_BaseTimingConfig):
 
     @property
     def ctrl(self):
-        pv = self._config_pvs_rb['ACQCtrl']
+        # pv = self._config_pvs_rb['ACQCtrl']
+        pv = self._config_pvs_rb['ACQTriggerEvent']
         return pv.value if pv.connected else None
 
     @ctrl.setter
     def ctrl(self, val):
-        pv = self._config_pvs_sp['ACQCtrl']
+        # pv = self._config_pvs_sp['ACQCtrl']
+        pv = self._config_pvs_sp['ACQTriggerEvent']
         if pv.connected:
-            self._config_ok_vals['ACQCtrl'] = val
+            # self._config_ok_vals['ACQCtrl'] = val
+            self._config_ok_vals['ACQTriggerEvent'] = val
             pv.put(val, wait=False)
 
     @property
@@ -210,26 +233,32 @@ class BPM(_BaseTimingConfig):
 
     @property
     def acq_trigger(self):
-        pv = self._config_pvs_rb['ACQTriggerType']
+        # pv = self._config_pvs_rb['ACQTriggerType']
+        pv = self._config_pvs_rb['ACQTrigger']
         return pv.value if pv.connected else None
 
     @acq_trigger.setter
     def acq_trigger(self, val):
-        pv = self._config_pvs_sp['ACQTriggerType']
+        # pv = self._config_pvs_sp['ACQTriggerType']
+        pv = self._config_pvs_sp['ACQTrigger']
         if pv.connected:
-            self._config_ok_vals['ACQTriggerType'] = val
+            # self._config_ok_vals['ACQTriggerType'] = val
+            self._config_ok_vals['ACQTrigger'] = val
             pv.put(val, wait=False)
 
     @property
     def acq_trig_datatype(self):
-        pv = self._config_pvs_rb['ACQTriggerDataChan']
+        # pv = self._config_pvs_rb['ACQTriggerDataChan']
+        pv = self._config_pvs_rb['ACQDataTrigChan']
         return pv.value if pv.connected else None
 
     @acq_trig_datatype.setter
     def acq_trig_datatype(self, val):
-        pv = self._config_pvs_sp['ACQTriggerDataChan']
+        # pv = self._config_pvs_sp['ACQTriggerDataChan']
+        pv = self._config_pvs_sp['ACQDataTrigChan']
         if pv.connected:
-            self._config_ok_vals['ACQTriggerDataChan'] = val
+            # self._config_ok_vals['ACQTriggerDataChan'] = val
+            self._config_ok_vals['ACQDataTrigChan'] = val
             pv.put(val, wait=False)
 
     @property
@@ -282,38 +311,47 @@ class BPM(_BaseTimingConfig):
 
     @property
     def nrsamplespost(self):
-        pv = self._config_pvs_rb['ACQNrSamplesPost']
+        # pv = self._config_pvs_rb['ACQNrSamplesPost']
+        pv = self._config_pvs_rb['ACQSamplesPost']
         return pv.value if pv.connected else None
 
     @nrsamplespost.setter
     def nrsamplespost(self, val):
-        pv = self._config_pvs_sp['ACQNrSamplesPost']
+        # pv = self._config_pvs_sp['ACQNrSamplesPost']
+        pv = self._config_pvs_sp['ACQSamplesPost']
         if pv.connected:
-            self._config_ok_vals['ACQNrSamplesPost'] = val
+            # self._config_ok_vals['ACQNrSamplesPost'] = val
+            self._config_ok_vals['ACQSamplesPost'] = val
             pv.put(val, wait=False)
 
     @property
     def nrsamplespre(self):
-        pv = self._config_pvs_rb['ACQNrSamplesPre']
+        # pv = self._config_pvs_rb['ACQNrSamplesPre']
+        pv = self._config_pvs_rb['ACQSamplesPre']
         return pv.value if pv.connected else None
 
     @nrsamplespre.setter
     def nrsamplespre(self, val):
-        pv = self._config_pvs_sp['ACQNrSamplesPre']
+        # pv = self._config_pvs_sp['ACQNrSamplesPre']
+        pv = self._config_pvs_sp['ACQSamplesPre']
         if pv.connected:
-            self._config_ok_vals['ACQNrSamplesPre'] = val
+            # self._config_ok_vals['ACQNrSamplesPre'] = val
+            self._config_ok_vals['ACQSamplesPre'] = val
             pv.put(val, wait=False)
 
     @property
     def nrshots(self):
-        pv = self._config_pvs_rb['ACQNrShots']
+        # pv = self._config_pvs_rb['ACQNrShots']
+        pv = self._config_pvs_rb['ACQShots']
         return pv.value if pv.connected else None
 
     @nrshots.setter
     def nrshots(self, val):
-        pv = self._config_pvs_sp['ACQNrShots']
+        # pv = self._config_pvs_sp['ACQNrShots']
+        pv = self._config_pvs_sp['ACQShots']
         if pv.connected:
-            self._config_ok_vals['ACQNrShots'] = val
+            # self._config_ok_vals['ACQNrShots'] = val
+            self._config_ok_vals['ACQShots'] = val
             pv.put(val, wait=False)
 
 
