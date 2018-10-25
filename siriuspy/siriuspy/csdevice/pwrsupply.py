@@ -616,6 +616,12 @@ def _get_ps_FAC_ACDC_propty_database():
     # TODO: MISSING SETPOINT!!!
     propty_db = get_common_propty_database()
     db_ps = {
+        'CapacitorBankVoltage-SP': {'type': 'float', 'value': 0.0,
+                                    'prec': default_ps_current_precision},
+        'CapacitorBankVoltage-RB': {'type': 'float', 'value': 0.0,
+                                    'prec': default_ps_current_precision},
+        'CapacitorBankVoltageRef-Mon': {'type': 'float', 'value': 0.0,
+                                        'prec': default_ps_current_precision},
         'IntlkSoftLabels-Cte':  {'type': 'string',
                                  'count': len(ps_soft_interlock_FAC_ACDC),
                                  'value': ps_soft_interlock_FAC_ACDC},
@@ -745,6 +751,13 @@ def _get_ps_FAC_2P4S_ACDC_propty_database():
     """Return database with FAC_2P4S pwrsupply model PVs."""
     propty_db = get_common_propty_database()
     db_ps = {
+        'CapacitorBankVoltage-SP': {'type': 'float', 'value': 0.0,
+                                    'prec': default_ps_current_precision,
+                                    'lolim':0.0, 'hilim': 1.0, 'prec': 4},
+        'CapacitorBankVoltage-RB': {'type': 'float', 'value': 0.0,
+                                    'prec': default_ps_current_precision},
+        'CapacitorBankVoltageRef-Mon': {'type': 'float', 'value': 0.0,
+                                        'prec': default_ps_current_precision},
         'IntlkSoftLabels-Cte':  {'type': 'string',
                                  'count': len(ps_soft_interlock_FAC_2P4S_ACDC),
                                  'value': ps_soft_interlock_FAC_2P4S_ACDC},
