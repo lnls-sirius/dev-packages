@@ -99,6 +99,24 @@ class PSPwrState(Function):
                 _time.sleep(_delay_turn_on_off)
 
 
+class BSMPComm(Function):
+    """Adapter to deal with turning PRUController BSMP comm on and off."""
+
+    def __init__(self, pru_controller, setpoints=None):
+        """Init."""
+        self.pru_controller = pru_controller
+        self.setpoints = setpoints
+
+    def execute(self, value=None):
+        """Execute command."""
+        if not self.setpoints or \
+                self.setpoints.apply(value):
+            if value == 1:
+                self.pru_controller.bsmpcomm = True
+            elif value == 0:
+                self.pru_controller.bsmpcomm = False
+
+
 class PSPwrStateFBP_DCLink(Function):
     """Adapter to deal with FBP_DCLink turn on/off functions."""
 

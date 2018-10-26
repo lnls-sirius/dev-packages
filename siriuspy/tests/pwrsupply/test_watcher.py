@@ -62,7 +62,7 @@ class TestCycleWatcher(unittest.TestCase):
         self.watcher.start()
 
     def tearDown(self):
-        """Common teardown."""
+        """Set common teardown."""
         self.watcher.stop()
         self.watcher.join()
 
@@ -188,7 +188,7 @@ class TestRmpWatcher(unittest.TestCase):
         self.watcher.start()
 
     def tearDown(self):
-        """Common teardown."""
+        """Set common teardown."""
         self.watcher.stop()
         self.watcher.join()
 
@@ -277,7 +277,7 @@ class TestMigWatcher(unittest.TestCase):
         self.watcher.start()
 
     def tearDown(self):
-        """Common teardown."""
+        """Set common teardown."""
         self.watcher.stop()
         self.watcher.join()
 
@@ -339,8 +339,6 @@ class TestMigWatcher(unittest.TestCase):
         self.writers['Current-SP'].execute.assert_called_with(4000)
         self.writers['OpMode-Sel'].execute.assert_called_with(0)
         self.assertFalse(self.watcher.is_alive())
-
-
 
 
 if __name__ == '__main__':
