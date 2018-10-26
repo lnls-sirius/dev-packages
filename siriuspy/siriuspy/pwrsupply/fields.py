@@ -233,7 +233,8 @@ class Setpoint:
         elif self.type in ('int', 'float'):
             if self.low is None and self.high is None:
                 return True
-            if value is not None and (value > self.low and value < self.high):
+            if value is not None and \
+               (value >= self.low and value <= self.high):
                 return True
         elif self.type == 'enum':
             if value in tuple(range(len(self.enums))):
