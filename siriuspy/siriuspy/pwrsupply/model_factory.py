@@ -187,6 +187,8 @@ class ModelFactory:
             return _fields.PRUProperty(pru_controller, 'pru_sync_pulse_count')
         elif epics_field == 'PRUCtrlQueueSize-Mon':
             return _fields.PRUProperty(pru_controller, 'queue_length')
+        elif epics_field == 'PRUScanning-Sts':
+            return _fields.PRUProperty(pru_controller, 'scanning')
 
         return None
 
@@ -276,6 +278,8 @@ class FBPFactory(ModelFactory):
                 device_ids, pru_controller, 5, setpoints)
         elif epics_field == 'WfmData-SP':
             return _functions.PRUCurve(device_ids, pru_controller, setpoints)
+        elif epics_field == 'PRUScanning-Sel':
+            return _functions.PRUScanning(pru_controller, setpoints)
         else:
             return _functions.BSMPFunctionNull()
 
