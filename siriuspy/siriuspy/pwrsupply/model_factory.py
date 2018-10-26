@@ -698,6 +698,8 @@ class FACACDCFactory(FBPDCLinkFactory):
     _variables = {
         'IntlkSoft-Mon': _bsmp.ConstFAC_ACDC.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon': _bsmp.ConstFAC_ACDC.V_PS_HARD_INTERLOCKS,
+        'CapacitorBankVoltage-RB': _bsmp.ConstFAC_ACDC.V_PS_SETPOINT,
+        'CapacitorBankVoltageRef-Mon': _bsmp.ConstFAC_ACDC.V_PS_REFERENCE,
         'CapacitorBankVoltage-Mon': _bsmp.ConstFAC_ACDC.V_CAPACITOR_BANK,
         'RectifierVoltage-Mon': _bsmp.ConstFAC_ACDC.V_OUT_RECTIFIER,
         'RectifierCurrent-Mon': _bsmp.ConstFAC_ACDC.I_OUT_RECTIFIER,
@@ -730,6 +732,17 @@ class FACACDCFactory(FBPDCLinkFactory):
     def simulation_class(self):
         """Model simulation."""
         return _BSMPSim_FAC_ACDC
+
+    def function(self, device_ids, epics_field, pru_controller, setpoints):
+        """Return function."""
+        _c = _bsmp.ConstFBP_DCLink
+        _c = _bsmp.ConstFAC_ACDC
+        if epics_field == 'CapacitorBankVoltage-SP':
+            return _functions.BSMPFunction(
+                device_ids, pru_controller, _c.F_SET_SLOWREF, setpoints)
+        else:
+            return super().function(
+                device_ids, epics_field, pru_controller, setpoints)
 
 
 class FAC2SACDCFactory(FACACDCFactory):

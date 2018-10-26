@@ -93,7 +93,8 @@ def sum_magnetic_multipoles(*multipoles_list):
     return res
 
 
-# default nrpts should be taken from csdevices!!!
+# TODO: merge this function with corresponding functions|class in
+# ramp. also, default nrpts should be taken from csdevices!!!
 def get_default_ramp_waveform(interval=500, nrpts=4000,
                               ti=None, fi=None, forms=None):
     """Generate normalized ramp."""

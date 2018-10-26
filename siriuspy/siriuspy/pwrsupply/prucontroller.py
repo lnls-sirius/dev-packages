@@ -270,7 +270,6 @@ class PRUController:
             self._params.FREQ_SCAN = freqs[0]
             self._params.FREQ_RAMP = freqs[1]
 
-        print(self._params.FREQ_SCAN)
         # store udcmodel
         self._model = udcmodel
         self._udcmodel = udcmodel.name
@@ -375,7 +374,7 @@ class PRUController:
 
     @property
     def queue_length(self):
-        """Return number of operations currently in the queue."""
+        """Store number of operations currently in the queue."""
         return len(self._queue)
 
     @property
@@ -390,7 +389,7 @@ class PRUController:
 
     @property
     def connected(self):
-        """Return connection state."""
+        """Store connection state."""
         return all((self.check_connected(id) for id in self.device_ids))
 
     def check_connected(self, device_id):
