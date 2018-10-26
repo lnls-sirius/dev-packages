@@ -281,11 +281,11 @@ def get_common_propty_database():
         'PRUSyncPulseCount-Mon': {'type': 'int', 'value': 0},
         'PRUCtrlQueueSize-Mon': {'type': 'int', 'value': 0,
                                  'high': 50, 'hihi': 50},
-        # PRU scanning
-        'PRUScanning-Sel': {'type': 'enum', 'enums': ps_pwrstate_sel,
-                            'value': _et.idx.On},
-        'PRUScanning-Sts': {'type': 'enum', 'enums': ps_pwrstate_sts,
-                            'value': _et.idx.On},
+        # BSMPComm
+        'BSMPComm-Sel': {'type': 'enum', 'enums': ps_pwrstate_sel,
+                         'value': _et.idx.On},
+        'BSMPComm-Sts': {'type': 'enum', 'enums': ps_pwrstate_sts,
+                         'value': _et.idx.On},
         # Interlocks
         'IntlkSoft-Mon':    {'type': 'int',    'value': 0},
         'IntlkHard-Mon':    {'type': 'int',    'value': 0},

@@ -313,6 +313,9 @@ class PRUController:
         # self._queue = PRUCQueue()
         self._queue = prucqueue
 
+        # define BSMP communication status
+        self._bsmpcomm = True
+
         # define scan thread
         self._last_device_scanned = len(self._device_ids)  # next is the first
         self._last_operation = None  # registers last operation
@@ -351,6 +354,16 @@ class PRUController:
         self._scanning = value
 
     @property
+    def bsmpcomm(self):
+        """Return bsmpcomm state."""
+        return self._bsmpcomm
+
+    @bsmpcomm.setter
+    def bsmpcomm(self, value):
+        """Set bsmpcomm state."""
+        self._bsmpcomm = value
+
+    @property
     def processing(self):
         """Return processing state."""
         return self._processing
@@ -362,7 +375,7 @@ class PRUController:
 
     @property
     def queue_length(self):
-        """Number of operations currently in the queue."""
+        """Return number of operations currently in the queue."""
         return len(self._queue)
 
     @property
@@ -377,7 +390,7 @@ class PRUController:
 
     @property
     def connected(self):
-        """Connection state."""
+        """Return connection state."""
         return all((self.check_connected(id) for id in self.device_ids))
 
     def check_connected(self, device_id):
@@ -400,9 +413,6 @@ class PRUController:
 
         # signal threads to finish
         self._running = False
-
-        # instance not running
-        # PRUController._instance_running = False
 
     def get_state(self, device_id):
         """Return updated PSCState for a device."""
@@ -428,6 +438,7 @@ class PRUController:
         Returns
         -------
         Selected BSMP device variable values.
+
         """
         # process device_ids
         if isinstance(device_ids, int):
@@ -474,6 +485,7 @@ class PRUController:
         status : bool
             True is operation was queued or False, if operation was rejected
             because of the PRU sync state.
+
         """
         if self.pru_sync_status == self._params.PRU.SYNC_STATE.OFF:
             # in PRU sync off mode, append BSM function exec operation to queue
@@ -600,6 +612,7 @@ class PRUController:
         return curve
 
     def pru_curve_set(self, device_id, curve):
+        """Set PRU curve of a BSMP device."""
         # get index of curve for the given device id
         idx = self.device_ids.index(device_id)
 
@@ -678,12 +691,16 @@ class PRUController:
             if self.pru_sync_status == self._params.PRU.SYNC_STATE.OFF:
                 # with sync off, function executions are allowed and
                 # therefore operations must be queued in order
-                self._queue.append(operation)
+                if self._bsmpcomm:
+                    # queue operation only if serial is available.
+                    self._queue.append(operation)
             else:
                 # for sync on, no function execution is accepted and
                 # we can therefore append only unique operations since
                 # processing order is not relevant.
-                self._queue.append(operation, unique=True)
+                if self._bsmpcomm:
+                    # queue operation only if serial is reserved.
+                    self._queue.append(operation, unique=True)
         else:
             # does not append if last operation is the same as last one
             # operation appended to queue
@@ -691,8 +708,10 @@ class PRUController:
 
     def bsmp_process(self):
         """Run process once."""
-        # process first operation in queue, if any
-        self._queue.process()
+        # process first operation in queue, if any and
+        # if serial line is available.
+        if self._bsmpcomm:
+            self._queue.process()
 
         # n = len(self._queue)
         # if n > 50:
@@ -708,76 +727,12 @@ class PRUController:
         while len(self._queue) > 0:
             _time.sleep(5*self._delay_sleep)  # sleep a little
 
-    # @staticmethod
-    # def _check_instance():
-    #     # check if another instance is running
-    #     if PRUController._instance_running is True:
-    #         errmsg = ('Another instance of PRUController is already in same'
-    #                   ' process space.')
-    #         raise ValueError(errmsg)
-    #     else:
-    #         PRUController._instance_running = True
-
     def _init_disconnect(self):
         # disconnect method to be used before any operation is on the queue.
         self.scanning = False
         self.processing = False
         self.running = False
         # PRUController._instance_running = False
-
-    # def _initialize_const_namespace(self):
-    #     # define constant namespaces
-    #     self.
-    #     if self._udcmodel == 'FBP':
-    #         self._params = PRUCParms_FBP
-    #     elif self._udcmodel == 'FBP_DCLink':
-    #         self._params = PRUCParms_FBP_DCLink
-    #     elif self._udcmodel == 'FBP_FOFB':
-    #         self._params = PRUCParms_FBP
-
-    #     elif self._udcmodel == 'FAC_DCDC':
-    #         self._params = PRUCParms_FAC
-    #     elif self._udcmodel == 'FAC_ACDC':
-    #         self._params = PRUCParms_FAC_ACDC
-    #     elif self._udcmodel == 'FAC_2S_DCDC':
-    #         self._params = PRUCParms_FAC
-    #     elif self._udcmodel == 'FAC_2S_ACDC':
-    #         self._params = PRUCParms_FAC_ACDC
-    #     elif self._udcmodel == 'FAC_2P4S_DCDC':
-    #         self._params = PRUCParms_FAC
-    #     elif self._udcmodel == 'FAC_2P4S_ACDC':
-    #         self._params = PRUCParms_FAC_ACDC
-
-    #     elif self._udcmodel == 'FAP':
-    #         self._params = PRUCParms_FBP
-    #     elif self._udcmodel == 'FAP_2P2S_MASTER':
-    #         self._params = PRUCParms_FBP
-    #     elif self._udcmodel == 'FAP_4P_Master':
-    #         self._params = PRUCParms_FBP
-    #     elif self._udcmodel == 'FAP_4P_Slave':
-    #         self._params = PRUCParms_FBP
-
-    #     elif self._udcmodel == 'Commercial':
-    #         self._params = PRUCParms_FAC
-
-    #     else:
-    #         raise NotImplementedError(self._udcmodel)
-
-    # def _initialize_const_namespace(self):
-    #     # define constant namespaces
-    #     if self._udcmodel == 'FBP':
-    #         self.VGROUPS = _BSMPVarGroupsFBP
-    #         self.BSMP = _ConstFBP
-    #     elif self._udcmodel == 'FAC':
-    #         self.VGROUPS = _BSMPVarGroupsFAC
-    #         self.BSMP = _ConstFAC
-    #     elif self._udcmodel == 'FAC_ACDC':
-    #         self.VGROUPS = _BSMPVarGroupsFAC_ACDC
-    #         self.BSMP = _ConstFAC_ACDC
-    #     else:
-    #         raise NotImplementedError(self._udcmodel)
-    #
-    #     self._groups = self._model.groups
 
     def _initialize_pru(self, pru):
 
@@ -857,11 +812,11 @@ class PRUController:
                 self._params.ConstBSMP.V_FIRMWARE_VERSION]
             version = parse_firmware_version(version)
             if 'Simulation' not in version and \
-              version != _udc_firmware_version:
-               self._init_disconnect()
-               errmsg = ('Incompatible BSMP implementation version! '
-                         '{} <> {}'.format(version, _udc_firmware_version))
-               raise ValueError(errmsg)
+               version != _udc_firmware_version:
+                self._init_disconnect()
+                errmsg = ('Incompatible BSMP implementation version! '
+                          '{} <> {}'.format(version, _udc_firmware_version))
+                raise ValueError(errmsg)
 
     # --- private methods: scan and process ---
 
@@ -1156,7 +1111,7 @@ class PRUController:
     #                         pdata[id][pid].append(data[id])
     #                     else:
     #                         pdata[id][pid] = data[id]
-
+    #
     #     # update _parameters_values
     #     for id in pdata:
     #         for pid in pdata[id]:
@@ -1217,10 +1172,10 @@ class PRUController:
                                     group_id=self._params.ALLRELEVANT)
 
     # def _bsmp_init_parameters_values(self, bsmp_entities):
-
+    #
     #     # create _parameters_values
     #     self._parameters_values = {id: {} for id in self._device_ids}
-
+    #
     #     # read from ps controllers
     #     self._bsmp_update_parameters(device_ids=self._device_ids,
     #                                  parameter_ids=_Parameters.get_eids())

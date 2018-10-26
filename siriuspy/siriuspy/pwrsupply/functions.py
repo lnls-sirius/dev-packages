@@ -99,10 +99,11 @@ class PSPwrState(Function):
                 _time.sleep(_delay_turn_on_off)
 
 
-class PRUScanning(Function):
-    """Adapter to deal with turning PRUController scanning on and off."""
+class BSMPComm(Function):
+    """Adapter to deal with turning PRUController BSMP comm on and off."""
 
     def __init__(self, pru_controller, setpoints=None):
+        """Init."""
         self.pru_controller = pru_controller
         self.setpoints = setpoints
 
@@ -111,9 +112,9 @@ class PRUScanning(Function):
         if not self.setpoints or \
                 self.setpoints.apply(value):
             if value == 1:
-                self.pru_controller.scanning = True
+                self.pru_controller.bsmpcomm = True
             elif value == 0:
-                self.pru_controller.scanning = False
+                self.pru_controller.bsmpcomm = False
 
 
 class PSPwrStateFBP_DCLink(Function):
