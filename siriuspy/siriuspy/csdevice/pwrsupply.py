@@ -281,6 +281,11 @@ def get_common_propty_database():
         'PRUSyncPulseCount-Mon': {'type': 'int', 'value': 0},
         'PRUCtrlQueueSize-Mon': {'type': 'int', 'value': 0,
                                  'high': 50, 'hihi': 50},
+        # Ramp
+        'RmpIncNrCycles-SP': {'type': 'int', 'value': 0},
+        'RmpIncNrCycles-RB': {'type': 'int', 'value': 0},
+        'RmpIncNrCycles-Mon': {'type': 'int', 'value': 0},
+        'RmpReady-Mon': {'type': 'int', 'value': 0},
         # BSMPComm
         'BSMPComm-Sel': {'type': 'enum', 'enums': ps_pwrstate_sel,
                          'value': _et.idx.On},
