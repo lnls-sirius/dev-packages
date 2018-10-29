@@ -8,8 +8,6 @@ from siriuspy.csdevice.pwrsupply import Const as _PSConst
 class Ramp(_threading.Thread):
     """Do the ramp."""
 
-    RAMP_COUNT = 3
-
     WAIT_RAMP_MODE = 0
     WAIT_RAMP_BEGIN = 1
 
@@ -22,7 +20,9 @@ class Ramp(_threading.Thread):
         self._controller = controller
         self._state = Ramp.WAIT_RAMP_MODE
 
-        factors = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+        self._offset = self._controller.pru_controller.ramp_offset
+        factors = [1/(self._offset/(i + 1)) for i in range(self._offset)]
+        # factors = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 
         # Get curves
         pruc = self._controller.pru_controller
@@ -50,9 +50,9 @@ class Ramp(_threading.Thread):
 
     def run(self):
         """Thread execution."""
-        print(self._size)
         begin = 0
         next_idx = 1
+        self._controller.pru_controller.ramp_offset_count = 1
         while True:
             if self._exit:
                 break
@@ -65,8 +65,11 @@ class Ramp(_threading.Thread):
                 if count > begin:
                     self._set_waveform(next_idx)
                     begin += self._size
+                    self._controller.pru_controller.ramp_offset_count += 1
                     next_idx += 1
-                    if next_idx == 10 or not self._achieved_op_mode():
+                    if next_idx == self._offset or \
+                            not self._achieved_op_mode():
+                        self._controller.pru_controller.ramp_offset_count = 10
                         self.stop()
             _time.sleep(1e-6)
 
