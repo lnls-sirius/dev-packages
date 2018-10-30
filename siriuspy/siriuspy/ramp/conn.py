@@ -11,10 +11,9 @@ from siriuspy.epics.properties import EpicsProperty as _EpicsProperty
 from siriuspy.epics.properties import EpicsPropertiesList as _EpicsPropsList
 from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
-from siriuspy.servconf.conf_service import ConfigService as _ConfigService
 from siriuspy.servconf.srvconfig import ConnConfigService as _ConnConfigService
 from siriuspy.ramp import util as _rutil
-from siriuspy.csdevice.orbitcorr import get_consts as _get_SOFB_consts
+from siriuspy.csdevice.orbitcorr import OrbitCorrDev as _OrbitCorrDev
 from siriuspy.search.ma_search import MASearch as _MASearch
 
 
@@ -528,10 +527,10 @@ class ConnSOFB(_EpicsPropsList):
         """Get CH and CV kicks calculated by SOFB."""
         rb = self.readbacks
         cv_kicks = rb[ConnSOFB.IOC_Prefix + ':KicksCV']
-        cv_names = _get_SOFB_consts.cv_names
+        cv_names = _OrbitCorrDev.CV_NAMES
 
         ch_kicks = rb[ConnSOFB.IOC_Prefix + ':KicksCH']
-        ch_names = _get_SOFB_consts.ch_names
+        ch_names = _OrbitCorrDev.CH_NAMES
 
         corrs2kicks_dict = dict()
         for idx in range(len(cv_names)):
