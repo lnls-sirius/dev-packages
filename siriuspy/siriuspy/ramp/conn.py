@@ -523,29 +523,31 @@ class ConnSOFB(_EpicsPropsList):
                                              callback)
         super().__init__(properties)
 
-    def get_kicks(self):
-        """Get CH and CV kicks calculated by SOFB."""
+    def get_deltakicks(self):
+        """Get CH and CV delta kicks calculated by SOFB."""
         rb = self.readbacks
-        cv_kicks = rb[ConnSOFB.IOC_Prefix + ':KicksCV']
-        cv_names = _OrbitCorrDev.CV_NAMES
-
-        ch_kicks = rb[ConnSOFB.IOC_Prefix + ':KicksCH']
+        ch_dkicks = rb[ConnSOFB.IOC_Prefix + ':DeltaKicksCH']
         ch_names = _OrbitCorrDev.CH_NAMES
 
-        corrs2kicks_dict = dict()
-        for idx in range(len(cv_names)):
-            corrs2kicks_dict[cv_names[idx]] = cv_kicks[idx]
+        cv_dkicks = rb[ConnSOFB.IOC_Prefix + ':DeltaKicksCV']
+        cv_names = _OrbitCorrDev.CV_NAMES
+
+        corrs2dkicks_dict = dict()
         for idx in range(len(ch_names)):
-            corrs2kicks_dict[ch_names[idx]] = ch_kicks[idx]
-        return corrs2kicks_dict
+            corrs2dkicks_dict[ch_names[idx]] = ch_dkicks[idx]
+        for idx in range(len(cv_names)):
+            corrs2dkicks_dict[cv_names[idx]] = cv_dkicks[idx]
+        return corrs2dkicks_dict
 
     def _define_properties(self, prefix, connection_callback, callback):
         properties = (
-            _EpicsProperty(ConnSOFB.IOC_Prefix + ':KicksCH', '-Mon', '-Mon',
-                           prefix, connection_callback=connection_callback,
-                           callback=callback),
-            _EpicsProperty(ConnSOFB.IOC_Prefix + ':KicksCV', '-Mon', '-Mon',
-                           prefix, connection_callback=connection_callback,
-                           callback=callback),
+            _EpicsProperty(
+                ConnSOFB.IOC_Prefix + ':DeltaKicksCH', '-Mon', '-Mon',
+                prefix, connection_callback=connection_callback,
+                callback=callback),
+            _EpicsProperty(
+                ConnSOFB.IOC_Prefix + ':DeltaKicksCV', '-Mon', '-Mon',
+                prefix, connection_callback=connection_callback,
+                callback=callback),
             )
         return properties
