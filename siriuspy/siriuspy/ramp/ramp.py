@@ -4,6 +4,7 @@ import numpy as _np
 from copy import deepcopy as _dcopy
 
 from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
+from siriuspy.search.ma_search import MASearch as _MASearch
 from siriuspy.servconf.srvconfig import ConfigSrv as _ConfigSrv
 from siriuspy.servconf.util import \
     generate_config_name as _generate_config_name
@@ -871,6 +872,21 @@ class BoosterRamp(_ConfigSrv):
         self._update_ps_waveform(self.MANAME_DIPOLE)
         w = self._ps_waveforms[self.MANAME_DIPOLE]
         return w.anomalies
+
+    @property
+    def ps_waveform_manames_exclimits(self):
+        """Return a list of manames whose waveform exceeds current limits."""
+        manames = BoosterNormalized().manames
+        manames_exclimits = list()
+        for maname in manames:
+            self._update_ps_waveform(maname)
+            w_currents = self._ps_waveforms[maname].currents
+            limits = _MASearch.conv_maname_2_splims(maname)
+            highlim = limits['HOPR']
+            lowlim = limits['LOPR']
+            if _np.any(w_currents > highlim) or _np.any(w_currents < lowlim):
+                manames_exclimits.append(maname)
+        return manames_exclimits
 
     def ps_waveform_get(self, maname):
         """Return ps waveform for a given power supply."""
