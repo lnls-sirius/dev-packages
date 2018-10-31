@@ -284,6 +284,9 @@ class FBPFactory(ModelFactory):
                 device_ids, pru_controller, 5, setpoints)
         elif epics_field == 'WfmData-SP':
             return _functions.PRUCurve(device_ids, pru_controller, setpoints)
+        elif epics_field == 'RmpIncNrCycles-SP':
+            return _functions.PRUProperty(
+                pru_controller, 'ramp_offset', setpoints)
         elif epics_field == 'BSMPComm-Sel':
             return _functions.BSMPComm(pru_controller, setpoints)
         else:
