@@ -48,11 +48,11 @@ class TestPSSearch(MockServConf):
         'conv_bbbname_2_freqs',
         'conv_bbb_2_udc',
         'conv_udc_2_bsmps',
+        'conv_psname_2_dclink',
         'get_pstype_2_psnames_dict',
         'get_pstype_2_splims_dict',
         'get_splims_unit',
         'get_splims_labels',
-        'conv_psname_2_dclink',
     )
 
     sample = {
@@ -178,10 +178,10 @@ class TestPSSearch(MockServConf):
         # bbbnames = PSSearch.get_bbbnames({'sub': 'Glob'})
         # self.assertEqual(len(bbbnames), 29)
         # exceptions
-        self.assertRaises(TypeError, PSSearch.get_psnames, filters=23)
-        self.assertRaises(TypeError, PSSearch.get_psnames, filters=23.4)
-        self.assertRaises(TypeError, PSSearch.get_psnames, filters=[0, ])
-        self.assertRaises(TypeError, PSSearch.get_psnames, filters=(0.0, ))
+        self.assertRaises(TypeError, PSSearch.get_bbbnames, filters=23)
+        self.assertRaises(TypeError, PSSearch.get_bbbnames, filters=23.4)
+        self.assertRaises(TypeError, PSSearch.get_bbbnames, filters=[0, ])
+        self.assertRaises(TypeError, PSSearch.get_bbbnames, filters=(0.0, ))
 
     def test_get_splims(self):
         """Test get_splims."""
