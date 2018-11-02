@@ -189,6 +189,24 @@ class PSSearch:
         return PSSearch._bbbname_2_freqs_dict[bbbname]
 
     @staticmethod
+    def conv_bbb_2_udc(bbbname):
+        if PSSearch._bbbname_2_udc_dict is None:
+            PSSearch._reload_bbb_2_udc_dict()
+        return PSSearch._bbbname_2_udc_dict[bbbname]
+
+    @staticmethod
+    def conv_udc_2_bsmps(udc):
+        if PSSearch._udc_2_bsmp_dict is None:
+            PSSearch._reload_udc_2_bsmp_dict()
+        return PSSearch._udc_2_bsmp_dict[udc]
+
+    @staticmethod
+    def conv_psname_2_dclink(psname):
+        if PSSearch._ps_2_dclink_dict is None:
+            PSSearch._reload_ps_2_dclink_dict()
+        return PSSearch._ps_2_dclink_dict[psname]
+
+    @staticmethod
     def get_pstype_2_psnames_dict():
         """Return dictionary of power supply type and power supply names."""
         if PSSearch._pstype_2_psnames_dict is None:
@@ -381,21 +399,3 @@ class PSSearch:
                 PSSearch._ps_2_dclink_dict[line[0]] = None
             else:
                 PSSearch._ps_2_dclink_dict[line[0]] = dclinks
-
-    @staticmethod
-    def conv_bbb_2_udc(bbbname):
-        if PSSearch._bbbname_2_udc_dict is None:
-            PSSearch._reload_bbb_2_udc_dict()
-        return PSSearch._bbbname_2_udc_dict[bbbname]
-
-    @staticmethod
-    def conv_udc_2_bsmps(udc):
-        if PSSearch._udc_2_bsmp_dict is None:
-            PSSearch._reload_udc_2_bsmp_dict()
-        return PSSearch._udc_2_bsmp_dict[udc]
-
-    @staticmethod
-    def conv_psname_2_dclink(psname):
-        if PSSearch._ps_2_dclink_dict is None:
-            PSSearch._reload_ps_2_dclink_dict()
-        return PSSearch._ps_2_dclink_dict[psname]
