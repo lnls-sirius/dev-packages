@@ -112,18 +112,6 @@ def pu_psmodels_read(timeout=_timeout):
     return read_url(url, timeout=timeout)
 
 
-def beaglebone_power_supplies_mapping(timeout=_timeout):
-    """Return the beaglebone Black connections list."""
-    url = _ps_folder + 'beaglebone-mapping.txt'
-    return read_url(url, timeout=timeout)
-
-
-def beaglebone_bsmp_mapping(timeout=_timeout):
-    """Return the beaglebone Black BSMP device mapping list."""
-    url = _bbb_folder + 'beaglebone-bsmp.txt'
-    return read_url(url, timeout=timeout)
-
-
 def beaglebone_freqs_mapping(timeout=_timeout):
     """Return the beaglebone Black BSMP PRU sync off and on freqs."""
     url = _bbb_folder + 'beaglebone-freq.txt'
