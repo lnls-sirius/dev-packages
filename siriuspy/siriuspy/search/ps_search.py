@@ -165,14 +165,13 @@ class PSSearch:
     @staticmethod
     def conv_psname_2_bbbname(psname):
         """Given psname return the bbb name."""
-        return PSSearch.conv_bbbname_2_bsmps(psname)
+        udc = PSSearch.conv_psname_2_udc(psname)
+        return PSSearch.conv_udc_2_bbbname(udc)
 
     @staticmethod
     def conv_bbbname_2_psnames(bbbname):
         """Given bbb name return the psnames."""
-        if PSSearch._bbbname_2_bsmps_dict is None:
-            PSSearch._reload_bbb_2_bsmps_dict()
-        return PSSearch._bbbname_2_bsmps_dict[bbbname]
+        return PSSearch.conv_bbbname_2_bsmps(bbbname)
 
     @staticmethod
     def conv_bbbname_2_bsmps(bbbname):
