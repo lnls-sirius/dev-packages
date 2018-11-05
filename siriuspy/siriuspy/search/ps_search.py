@@ -195,10 +195,22 @@ class PSSearch:
         return PSSearch._bbbname_2_udc_dict[bbbname]
 
     @staticmethod
+    def conv_udc_2_bbbname(udc):
+        if PSSearch._udc_2_bbbname_dict is None:
+            PSSearch._reload_bbb_2_udc_dict()
+        return PSSearch._udc_2_bbbname_dict[bbbname]
+
+    @staticmethod
     def conv_udc_2_bsmps(udc):
         if PSSearch._udc_2_bsmp_dict is None:
             PSSearch._reload_udc_2_bsmp_dict()
         return PSSearch._udc_2_bsmp_dict[udc]
+
+    @staticmethod
+    def conv_psname_2_udc(psname):
+        if PSSearch._bsmp_2_udc_dict is None:
+            PSSearch._reload_udc_2_bsmp_dict()
+        return PSSearch._bsmp_2_udc_dict[psname]
 
     @staticmethod
     def conv_psname_2_dclink(psname):
