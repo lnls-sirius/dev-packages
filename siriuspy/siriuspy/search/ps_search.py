@@ -189,7 +189,7 @@ class PSSearch:
         return PSSearch._bbbname_2_freqs_dict[bbbname]
 
     @staticmethod
-    def conv_bbb_2_udc(bbbname):
+    def conv_bbbname_2_udc(bbbname):
         if PSSearch._bbbname_2_udc_dict is None:
             PSSearch._reload_bbb_2_udc_dict()
         return PSSearch._bbbname_2_udc_dict[bbbname]
