@@ -83,6 +83,10 @@ class ConnTiming(_EpicsPropsList):
                                              callback)
         super().__init__(properties)
 
+    def get_ramp_config(self, ramp_config):
+        """Receive BoosterRamp configuration."""
+        self._ramp_config = ramp_config
+
     # --- timing mode selection commands ---
 
     def wait_EVRs(self):
@@ -243,6 +247,10 @@ class ConnMagnets(_EpicsPropsList):
         """Return manames."""
         return self._manames
 
+    def get_ramp_config(self, ramp_config):
+        """Receive BoosterRamp configuration."""
+        self._ramp_config = ramp_config
+
     # --- power supplies commands ---
 
     def cmd_pwrstate_on(self, timeout=_PWRSTATE_ON_DELAY):
@@ -392,6 +400,10 @@ class ConnRF(_EpicsPropsList):
                                              callback)
         super().__init__(properties)
 
+    def get_ramp_config(self, ramp_config):
+        """Receive BoosterRamp configuration."""
+        self._ramp_config = ramp_config
+
     # --- RF commands ---
 
     def cmd_ramping_enable(self, timeout=_TIMEOUT_DFLT):
@@ -515,10 +527,9 @@ class ConnSOFB(_EpicsPropsList):
 
     IOC_Prefix = 'BO-Glob:AP-SOFB'
 
-    def __init__(self, ramp_config=None, prefix=_prefix,
+    def __init__(self, prefix=_prefix,
                  connection_callback=None, callback=None):
         """Init."""
-        self._ramp_config = ramp_config
         properties = self._define_properties(prefix, connection_callback,
                                              callback)
         super().__init__(properties)
