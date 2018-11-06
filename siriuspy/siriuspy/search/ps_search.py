@@ -23,8 +23,6 @@ class PSSearch:
     _pstype_2_excdat_dict = dict()
     _psname_2_psmodel_dict = None
     _psname_2_siggen_dict = None
-    # _psname_2_bbbname_dict = None
-    # _bbbname_2_psnames_dict = None
 
     _bbbname_2_bsmps_dict = None
     _bsmps_2_bbbname_dict = None
@@ -86,16 +84,6 @@ class PSSearch:
         if PSSearch._pstype_dict is None:
             PSSearch._reload_pstype_dict()
         return _copy.deepcopy(PSSearch._pstype_dict)
-
-    # @staticmethod
-    # def get_bbbname_dict():
-    #     """Return bbbname dictionary.
-    #
-    #     With key,value pairs of bbbname and corresponding power supplies.
-    #     """
-    #     if PSSearch._bbbname_2_psnames_dict is None:
-    #         PSSearch._reload_bbb_2_psname_dict()
-    #     return _copy.deepcopy(PSSearch._bbbname_2_psnames_dict)
 
     @staticmethod
     def get_bbbname_dict():
@@ -177,22 +165,13 @@ class PSSearch:
     @staticmethod
     def conv_psname_2_bbbname(psname):
         """Given psname return the bbb name."""
-        # if PSSearch._bsmps_2_bbbname_dict is None:
-        #     PSSearch._reload_bbb_2_bsmps_dict()
-        # return PSSearch._bsmps_2_bbbname_dict[psname]
-        if PSSearch._udc_2_bbbname_dict is None:
-            PSSearch._reload_bbb_2_udc_dict()
-        if PSSearch._bsmp_2_udc_dict is None:
-            PSSearch._reload_udc_2_bsmp_dict()
-        udc = PSSearch._bsmp_2_udc_dict[psname]
-        return PSSearch._udc_2_bbbname_dict[udc]
+        udc = PSSearch.conv_psname_2_udc(psname)
+        return PSSearch.conv_udc_2_bbbname(udc)
 
     @staticmethod
     def conv_bbbname_2_psnames(bbbname):
         """Given bbb name return the psnames."""
-        if PSSearch._bbbname_2_bsmps_dict is None:
-            PSSearch._reload_bbb_2_bsmps_dict()
-        return PSSearch._bbbname_2_bsmps_dict[bbbname]
+        return PSSearch.conv_bbbname_2_bsmps(bbbname)
 
     @staticmethod
     def conv_bbbname_2_bsmps(bbbname):
@@ -207,6 +186,36 @@ class PSSearch:
         if PSSearch._bbbname_2_freqs_dict is None:
             PSSearch._reload_bbb_2_freqs_dict()
         return PSSearch._bbbname_2_freqs_dict[bbbname]
+
+    @staticmethod
+    def conv_bbbname_2_udc(bbbname):
+        if PSSearch._bbbname_2_udc_dict is None:
+            PSSearch._reload_bbb_2_udc_dict()
+        return PSSearch._bbbname_2_udc_dict[bbbname]
+
+    @staticmethod
+    def conv_udc_2_bbbname(udc):
+        if PSSearch._udc_2_bbbname_dict is None:
+            PSSearch._reload_bbb_2_udc_dict()
+        return PSSearch._udc_2_bbbname_dict[bbbname]
+
+    @staticmethod
+    def conv_udc_2_bsmps(udc):
+        if PSSearch._udc_2_bsmp_dict is None:
+            PSSearch._reload_udc_2_bsmp_dict()
+        return PSSearch._udc_2_bsmp_dict[udc]
+
+    @staticmethod
+    def conv_psname_2_udc(psname):
+        if PSSearch._bsmp_2_udc_dict is None:
+            PSSearch._reload_udc_2_bsmp_dict()
+        return PSSearch._bsmp_2_udc_dict[psname]
+
+    @staticmethod
+    def conv_psname_2_dclink(psname):
+        if PSSearch._ps_2_dclink_dict is None:
+            PSSearch._reload_ps_2_dclink_dict()
+        return PSSearch._ps_2_dclink_dict[psname]
 
     @staticmethod
     def get_pstype_2_psnames_dict():
@@ -344,17 +353,19 @@ class PSSearch:
     @staticmethod
     def _reload_bbb_2_bsmps_dict():
         """Test."""
-        data, _ = _util.read_text_data(_web.beaglebone_bsmp_mapping())
+        if PSSearch._bbbname_2_udc_dict is None:
+            PSSearch._reload_bbb_2_udc_dict()
+        if PSSearch._udc_2_bsmp_dict is None:
+            PSSearch._reload_udc_2_bsmp_dict()
         PSSearch._bbbname_2_bsmps_dict = dict()
         PSSearch._bsmps_2_bbbname_dict = dict()
-        for line in data:
-            bbbname, *bsmps = line
-            PSSearch._bbbname_2_bsmps_dict[bbbname] = list()
-            for i in range(len(bsmps)//2):
-                bsmp_name, bsmp_id = bsmps[2*i+0], int(bsmps[2*i+1])
-                bsmp = (bsmp_name, bsmp_id)
-                PSSearch._bbbname_2_bsmps_dict[bbbname].append(bsmp)
-                PSSearch._bsmps_2_bbbname_dict[bsmp_name] = bbbname
+        for bbb, udcs in PSSearch._bbbname_2_udc_dict.items():
+            bsmps = []
+            for udc in udcs:
+                bsmps.extend(PSSearch._udc_2_bsmp_dict[udc])
+            PSSearch._bbbname_2_bsmps_dict[bbb] = bsmps
+        for bbb, bsmps in PSSearch._bbbname_2_bsmps_dict.items():
+            PSSearch._bsmps_2_bbbname_dict.update({x: bbb for x in bsmps})
 
     @staticmethod
     def _reload_bbb_2_freqs_dict():
@@ -399,21 +410,3 @@ class PSSearch:
                 PSSearch._ps_2_dclink_dict[line[0]] = None
             else:
                 PSSearch._ps_2_dclink_dict[line[0]] = dclinks
-
-    @staticmethod
-    def conv_bbb_2_udc(bbbname):
-        if PSSearch._bbbname_2_udc_dict is None:
-            PSSearch._reload_bbb_2_udc_dict()
-        return PSSearch._bbbname_2_udc_dict[bbbname]
-
-    @staticmethod
-    def conv_udc_2_bsmps(udc):
-        if PSSearch._udc_2_bsmp_dict is None:
-            PSSearch._reload_udc_2_bsmp_dict()
-        return PSSearch._udc_2_bsmp_dict[udc]
-
-    @staticmethod
-    def conv_psname_2_dclink(psname):
-        if PSSearch._ps_2_dclink_dict is None:
-            PSSearch._reload_ps_2_dclink_dict()
-        return PSSearch._ps_2_dclink_dict[psname]

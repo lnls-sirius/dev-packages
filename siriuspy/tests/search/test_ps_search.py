@@ -46,13 +46,15 @@ class TestPSSearch(MockServConf):
         'conv_bbbname_2_psnames',
         'conv_bbbname_2_bsmps',
         'conv_bbbname_2_freqs',
-        'conv_bbb_2_udc',
+        'conv_bbbname_2_udc',
+        'conv_udc_2_bbbname',
         'conv_udc_2_bsmps',
+        'conv_psname_2_udc',
+        'conv_psname_2_dclink',
         'get_pstype_2_psnames_dict',
         'get_pstype_2_splims_dict',
         'get_splims_unit',
         'get_splims_labels',
-        'conv_psname_2_dclink',
     )
 
     sample = {
@@ -77,11 +79,10 @@ class TestPSSearch(MockServConf):
     }
 
     sample_bbb = {
-        'BO-Glob:CO-PSCtrl-1': None,
-        'BO-Glob:CO-PSCtrl-2': None,
-        'BO-01:CO-PSCtrl-1': None,
-        'BO-01:CO-PSCtrl-2': None,
-        # 'SI-01:CO-PSCtrl-1': None,
+        'PA-RaPSC03:CO-PSCtrl-BO4': None,
+        'PA-RaPSC03:CO-PSCtrl-BO3': None,
+        'PA-RaPSC03:CO-PSCtrl-BO2': None,
+        'PA-RaPSE05:CO-PSCtrl-BO': None,
     }
 
     pstype2polarity = {
@@ -178,10 +179,10 @@ class TestPSSearch(MockServConf):
         # bbbnames = PSSearch.get_bbbnames({'sub': 'Glob'})
         # self.assertEqual(len(bbbnames), 29)
         # exceptions
-        self.assertRaises(TypeError, PSSearch.get_psnames, filters=23)
-        self.assertRaises(TypeError, PSSearch.get_psnames, filters=23.4)
-        self.assertRaises(TypeError, PSSearch.get_psnames, filters=[0, ])
-        self.assertRaises(TypeError, PSSearch.get_psnames, filters=(0.0, ))
+        self.assertRaises(TypeError, PSSearch.get_bbbnames, filters=23)
+        self.assertRaises(TypeError, PSSearch.get_bbbnames, filters=23.4)
+        self.assertRaises(TypeError, PSSearch.get_bbbnames, filters=[0, ])
+        self.assertRaises(TypeError, PSSearch.get_bbbnames, filters=(0.0, ))
 
     def test_get_splims(self):
         """Test get_splims."""
@@ -281,7 +282,7 @@ class TestPSSearch(MockServConf):
         self.assertRaises(TypeError, PSSearch.conv_bbbname_2_psnames)
         self.assertRaises(KeyError, PSSearch.conv_bbbname_2_psnames, '')
         bsmps = PSSearch.conv_bbbname_2_psnames(
-            bbbname='BO-Glob:CO-PSCtrl-1')
+            bbbname='PA-RaPSF05:CO-PSCtrl-BO')
         self.assertIsInstance(bsmps, list)
         self.assertGreater(len(bsmps), 0)
         self.assertIsInstance(bsmps[0], tuple)
@@ -293,7 +294,7 @@ class TestPSSearch(MockServConf):
         self.assertRaises(TypeError, PSSearch.conv_bbbname_2_freqs)
         self.assertRaises(KeyError, PSSearch.conv_bbbname_2_psnames, '')
         freqs = PSSearch.conv_bbbname_2_freqs(
-            bbbname='TB-Glob:CO-PSCtrl-3')
+            bbbname='LA-RaCtrl:CO-PSCtrl-TB1')
         self.assertIsInstance(freqs, tuple)
         self.assertEqual(len(freqs), 2)
         self.assertIsInstance(freqs[0], float)
