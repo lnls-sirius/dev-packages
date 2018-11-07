@@ -14,7 +14,7 @@ def generate_model_static_table():
         "# This file was generated automatically from the data of the \n"\
         "# models of the accelerators in the pymodels repository by the \n"\
         "# function: \n"\
-        "    siriuspy.optics.lattice_survey.generate_model_static_table.\n"\
+        "#    siriuspy.optics.lattice_survey.generate_model_static_table.\n"\
         "#\n"\
         "# If any model change, please, run the script\n"\
         "# again and copy the generated file to replace this one.\n"

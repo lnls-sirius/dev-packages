@@ -188,8 +188,6 @@ class HLTimeSearch:
     def _get_constants(cls):
         if cls._TWDS_EVG:
             return
-        _LLTimeSearch.add_bbb_info()
-        _LLTimeSearch.add_crates_info()
         cls._TWDS_EVG = _LLTimeSearch.get_connections_twds_evg()
         cls._FROM_EVG = _LLTimeSearch.get_connections_from_evg()
         cls._EVRs = set(_LLTimeSearch.get_device_names({'dev': 'EVR'}))
