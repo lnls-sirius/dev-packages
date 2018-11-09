@@ -122,7 +122,7 @@ class BBBFactory:
         if bbbname == 'BBB1_TEST1':
             udc_list = ['UDC_TEST']
         else:
-            udc_list = _PSSearch.conv_bbb_2_udc(bbbname)
+            udc_list = _PSSearch.conv_bbbname_2_udc(bbbname)
 
         controllers = dict()  # 1 controller per UDC
         databases = dict()
