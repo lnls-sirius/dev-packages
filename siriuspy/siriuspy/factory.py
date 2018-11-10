@@ -32,6 +32,11 @@ class NormalizerFactory:
                     maname, magnet_conv_sign=+1.0,
                     dipole_name=_mutil.get_section_dipole_name(maname))
             else:
-                return _norm.MagnetNormalizer(
-                    maname, magnet_conv_sign=-1.0,
-                    dipole_name=_mutil.get_section_dipole_name(maname))
+                if 'TB' in maname and 'QD' in maname:
+                    return _norm.MagnetNormalizer(
+                        maname, magnet_conv_sign=+1.0,
+                        dipole_name=_mutil.get_section_dipole_name(maname))
+                else:
+                    return _norm.MagnetNormalizer(
+                        maname, magnet_conv_sign=-1.0,
+                        dipole_name=_mutil.get_section_dipole_name(maname))
