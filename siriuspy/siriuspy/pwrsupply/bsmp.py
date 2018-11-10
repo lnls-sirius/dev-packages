@@ -30,6 +30,9 @@ from siriuspy.pwrsupply.pru import PRU as _PRU
 
 __version__ = 'V0.16b2018-08-22V0.16b2018-08-22'
 
+# FAP dipole version
+# __version__ = 'V0.18 2018-10-22V0.18 2018-10-22'
+
 
 class ConstBSMP:
     """Namespace for organizing power supply BSMP constants."""

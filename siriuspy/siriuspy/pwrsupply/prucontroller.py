@@ -18,7 +18,7 @@ from siriuspy.bsmp.exceptions import SerialError as _SerialError
 from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
 from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 
-from siriuspy.pwrsupply.bsmp import __version__ as _udc_firmware_version
+from siriuspy.pwrsupply.bsmp import __version__ as _devpckg_firmware_version
 from siriuspy.pwrsupply.bsmp import MAP_MIRROR_2_ORIG_FBP as _mirror_map_fbp
 # from siriuspy.pwrsupply.bsmp import Parameters as _Parameters
 
@@ -807,15 +807,18 @@ class PRUController:
             return
         for id in self.device_ids:
             # V_FIRMWARE_VERSION should be defined for all BSMP devices
-            version = self._variables_values[id][
+            _udc_firmware_version = self._variables_values[id][
                 self._params.ConstBSMP.V_FIRMWARE_VERSION]
-            version = parse_firmware_version(version)
-            if 'Simulation' not in version and \
-               version != _udc_firmware_version:
+            _udc_firmware_version = \
+                parse_firmware_version(_udc_firmware_version)
+            if 'Simulation' not in _udc_firmware_version and \
+               _udc_firmware_version != _devpckg_firmware_version:
                 self._init_disconnect()
                 errmsg = ('Incompatible BSMP implementation version! '
-                          '{} <> {}'.format(version, _udc_firmware_version))
-                raise ValueError(errmsg)
+                          '{} <> {}'.format(_udc_firmware_version,
+                                            _devpckg_firmware_version))
+                # TODO: ask ELP to update firmaware of TB dipole PS
+                # raise ValueError(errmsg)
 
     # --- private methods: scan and process ---
 
