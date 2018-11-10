@@ -37,6 +37,8 @@ class LLTimeSearch:
             },
         'EVE': {
             'UPLINK': (
+                'OTP0', 'OTP1', 'OTP2', 'OTP3', 'OTP4', 'OTP5',
+                'OTP6', 'OTP7', 'OTP8', 'OTP9', 'OTP10', 'OTP11',
                 'OUT0', 'OUT1', 'OUT2', 'OUT3',
                 'OUT4', 'OUT5', 'OUT6', 'OUT7',
                 'RFOUT',
@@ -87,8 +89,8 @@ class LLTimeSearch:
             'CRT6': ('CRT6', ),
             'CRT7': ('CRT7', ),
             },
-        'OERFTx': {'OpticalACP': ('SIGNAL', )},
-        'OERFRx': {'SIGNAL': ('OpticalACP', )},
+        'OERFRx': {'OPTICALACP': ('SIGNAL', )},
+        'OERFTx': {'SIGNAL': ('OPTICALACP', )},
         }
     i2o_map['FibPatch'] = {
         'P{0:03d}'.format(i): ('P{0:03d}'.format(i), ) for i in range(100)}
@@ -126,60 +128,6 @@ class LLTimeSearch:
         elif isinstance(conn, str):
             conn = [conn, ]
         return [_PVName(channel.device_name + ':' + co) for co in conn]
-
-    @classmethod
-    def add_crates_info(cls, connections_dict=None):
-        """Add the information of Crate to BPMs to timing map."""
-        cls._get_timedata()
-        conns = tuple(cls.i2o_map['AMCFPGAEVR'].values())[0]
-        conns = [v for v in conns if not v.startswith('FMC')]
-        if connections_dict is None:
-            connections_dict = _BPMSearch.get_timing_mapping()
-
-        used = set()
-        twds_evg = _dcopy(cls._conn_twds_evg)
-        for chan in twds_evg.keys():
-            bpms = connections_dict.get(chan.device_name)
-            if bpms is None:
-                continue
-            used.add(chan.device_name)
-            for bpm in bpms:
-                for conn in conns:
-                    cls._add_entry_to_map(
-                        which_map='from', conn=conn,
-                        ele1=chan.device_name, ele2=bpm)
-                    cls._add_entry_to_map(
-                        which_map='twds', conn=conn,
-                        ele1=bpm, ele2=chan.device_name)
-        cls._update_related_maps()
-        return (connections_dict.keys() - used)
-
-    @classmethod
-    def add_bbb_info(cls, connections_dict=dict()):
-        """Add the information of bbb to PS to timing map."""
-        cls._get_timedata()
-        if not connections_dict:
-            data = _PSSearch.get_bbbname_dict()
-            for bbb, bsmps in data.items():
-                connections_dict[bbb] = tuple([bsmp[0] for bsmp in bsmps])
-
-        conn = list(cls.i2o_map['PSCtrl'].values())[0][0]
-        used = set()
-        twds_evg = _dcopy(cls._conn_twds_evg)
-        for chan in twds_evg.keys():
-            pss = connections_dict.get(chan.device_name)
-            if pss is None:
-                continue
-            used.add(chan.device_name)
-            for ps in pss:
-                cls._add_entry_to_map(
-                    which_map='from', conn=conn,
-                    ele1=chan.device_name, ele2=ps)
-                cls._add_entry_to_map(
-                    which_map='twds', conn=conn,
-                    ele1=ps, ele2=chan.device_name)
-        cls._update_related_maps()
-        return (connections_dict.keys() - used)
 
     @classmethod
     def get_device_names(cls, filters=None, sorting=None):
@@ -323,6 +271,54 @@ class LLTimeSearch:
                     twds_evg[inn] = {out}
         cls._conn_from_evg = from_evg
         cls._conn_twds_evg = twds_evg
+        cls._add_bbb_info()
+        cls._add_crates_info()
+
+    @classmethod
+    def _add_crates_info(cls):
+        """Add the information of Crate to BPMs to timing map."""
+        conns = tuple(cls.i2o_map['AMCFPGAEVR'].values())[0]
+        conns = [v for v in conns if not v.startswith('FMC')]
+
+        conn_dict = _BPMSearch.get_timing_mapping()
+        used = set()
+        twds_evg = _dcopy(cls._conn_twds_evg)
+        for chan in twds_evg.keys():
+            bpms = conn_dict.get(chan.device_name)
+            if bpms is None:
+                continue
+            used.add(chan.device_name)
+            for bpm in bpms:
+                for conn in conns:
+                    cls._add_entry_to_map(
+                        which_map='from', conn=conn,
+                        ele1=chan.device_name, ele2=bpm)
+                    cls._add_entry_to_map(
+                        which_map='twds', conn=conn,
+                        ele1=bpm, ele2=chan.device_name)
+        print(conn_dict.keys() - used)
+
+    @classmethod
+    def _add_bbb_info(cls):
+        """Add the information of bbb to PS to timing map."""
+        data = _PSSearch.get_bbbname_dict()
+        conn_dict = {bbb: [x[0] for x in bsmps] for bbb, bsmps in data.items()}
+        conn = list(cls.i2o_map['PSCtrl'].values())[0][0]
+        used = set()
+        twds_evg = _dcopy(cls._conn_twds_evg)
+        for chan in twds_evg.keys():
+            pss = conn_dict.get(chan.device_name)
+            if pss is None:
+                continue
+            used.add(chan.device_name)
+            for ps in pss:
+                cls._add_entry_to_map(
+                    which_map='from', conn=conn,
+                    ele1=chan.device_name, ele2=ps)
+                cls._add_entry_to_map(
+                    which_map='twds', conn=conn,
+                    ele1=ps, ele2=chan.device_name)
+        print(conn_dict.keys() - used)
 
     @classmethod
     def _get_dev_and_channel(cls, txt):
@@ -387,24 +383,23 @@ _disclaimer = """
 #
 # If the mentioned file change, please, run the script
 # again and copy the generated file to replace this one.
-
-
 """
 
 
-def read_excel_file_with_connections():
+def read_excel_file_with_connections(fname=None):
     from openpyxl import load_workbook
-    wb = load_workbook('Cabos_e_Fibras_Sirius.xlsx', data_only=True)
+    fname = fname or 'Cabos_e_Fibras_Sirius.xlsx'
+    wb = load_workbook(fname, data_only=True)
     ws = wb['Cabos e Fibras']
 
     print(_disclaimer)
     chans = _load_file_and_get_channels(ws)
-    chans_sort = _sort_connection_table(chans)
+    chans_sort, chans = _sort_connection_table(chans)
     _print_tables(chans, chans_sort)
 
 
 def _print_tables(chans, chans_sort):
-    print(5*'\n')
+    print(3*'\n')
     print('# {}'.format(len(chans_sort)))
     for k1, k2 in chans_sort:
         print('{0:35s} {1:35s}'.format(k1, k2))
@@ -456,11 +451,7 @@ _conversion_linac_names = {
     'LA-MD:H1PPS-1': 'LI-RaMD01:MD-PPS',  # ?
     'LA-MD:H1PPS-2': 'LI-RaMD02:MD-PPS',  # ?
     '?': 'IA-00RaCtrl:CO-FibPatch',
-    '"Rack" Streak Camera:TI-EVE': 'IA-00RaCtrl:TI-EVE',
-    'BO_Dip_05_grupo01:CO-PSCtrl': 'BO-PAD05G01:CO-PSCtrl',
-    'BO_Dip_05_grupo02:CO-PSCtrl': 'BO-PAD05G02:CO-PSCtrl',
-    'IA-16RaBbB:TI-EVE': 'IA-16RaBbB:TI-EVR',
-    }
+    '"Rack" Streak Camera:TI-EVE': 'IA-00RaCtrl:TI-EVE'}
 _translate_port = str.maketrans('', '', ' _-')
 
 
@@ -488,20 +479,17 @@ def _sort_connection_table(chans):
                                         _PVName(dev.device_name+':'+'UPLINK'))
     chans_sort = []
     for entry in entries:
+        mark = list(range(len(chans)))
         for i, ks in enumerate(chans):
             k1, k2 = ks
             if k1 == entry:
                 entries.extend(LLTimeSearch.get_channel_input(k2))
                 chans_sort.append((k1, k2))
-                del chans[i]
-                break
+                mark.remove(i)
             if k2 == entry:
                 entries.extend(LLTimeSearch.get_channel_input(k1))
                 chans_sort.append((k2, k1))
-                del chans[i]
-                break
-    return chans_sort
+                mark.remove(i)
+        chans = [chans[i] for i in mark]
 
-
-if __name__ == '__main__':
-    m = LLTimeSearch.add_crates_info()
+    return chans_sort, chans
