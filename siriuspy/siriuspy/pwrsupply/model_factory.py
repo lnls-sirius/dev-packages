@@ -1394,7 +1394,7 @@ class PRUCParms_FAP(_PRUCParms):
         ConstBSMP.V_I_IGBT_1,
         ConstBSMP.V_I_IGBT_2,
         ConstBSMP.V_DUTY_CYCLE_1,
-        ConstBSMP.V_DUTY_CYCLE_1,
+        ConstBSMP.V_DUTY_CYCLE_2,
         ConstBSMP.V_DUTY_DIFF,)
     groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
