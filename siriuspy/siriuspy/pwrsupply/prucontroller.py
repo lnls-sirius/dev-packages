@@ -817,6 +817,7 @@ class PRUController:
                 errmsg = ('Incompatible BSMP implementation version! '
                           '{} <> {}'.format(_udc_firmware_version,
                                             _devpckg_firmware_version))
+                print(errmsg)
                 # TODO: ask ELP to update firmaware of TB dipole PS
                 # raise ValueError(errmsg)
 
