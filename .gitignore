@@ -64,3 +64,5 @@ doc/doxygen/documentation.html
 target/
 .vscode
 
+# FTP configuration file
+.ftpconfig
