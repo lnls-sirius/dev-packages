@@ -110,7 +110,6 @@ class LLTimeSearch:
     _top_chain_devs = set()
     _final_receiver_devs = set()
     _all_devices = set()
-    _hierarchy_map = list()
 
     @classmethod
     def get_channel_input(cls, channel):
@@ -202,12 +201,6 @@ class LLTimeSearch:
         """Return a dictionary with the beaglebone to power supply mapping."""
         cls._get_timedata()
         return _dcopy(cls._devs_twds_evg)
-
-    @classmethod
-    def get_hierarchy_list(cls):
-        """Return a dictionary with the beaglebone to power supply mapping."""
-        cls._get_timedata()
-        return _dcopy(cls._hierarchy_map)
 
     # ############ Auxiliar methods ###########
     @classmethod
@@ -341,7 +334,6 @@ class LLTimeSearch:
             cls._devs_twds_evg.keys() - cls._devs_from_evg.keys())
         cls._all_devices = (
             cls._devs_from_evg.keys() | cls._devs_twds_evg.keys())
-        cls._build_hierarchy_map()
 
     @classmethod
     def _build_devices_relations(cls):
@@ -360,16 +352,3 @@ class LLTimeSearch:
 
         cls._devs_from_evg = simple_map
         cls._devs_twds_evg = inv_map
-
-    @classmethod
-    def _build_hierarchy_map(cls):
-        hierarchy = [cls._top_chain_devs.copy(), ]
-        while True:
-            vals = set()
-            for k in hierarchy[-1]:
-                vals |= cls._devs_from_evg.get(k, set())
-            if vals:
-                hierarchy.append(vals)
-            else:
-                break
-        cls._hierarchy_map = hierarchy
