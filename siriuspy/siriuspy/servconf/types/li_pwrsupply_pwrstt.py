@@ -12,6 +12,12 @@ def get_dict():
     return _dict
 
 
+# When using this type of configuration to set the machine,
+# the list of PVs should be processed in the same order they are stored
+# in the configuration. The second numeric parameter in the pair is the
+# delay [s] the client should wait before setting the next PV.
+
+
 _template_dict = {
     'pvs': [
         ['LA-CN:H1MLPS-1:setpwm', 0],
