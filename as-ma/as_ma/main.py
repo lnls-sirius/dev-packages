@@ -1,7 +1,9 @@
 """Main module of AS-MA IOC."""
-import as_ma.pvs as _pvs
 import time as _time
+import logging as _log
+
 import siriuspy as _siriuspy
+import as_ma.pvs as _pvs
 
 # Coding guidelines:
 # =================
@@ -30,8 +32,6 @@ class App:
     ma_devices = None
     pvs_database = None
 
-    strengths = ['Energy', 'KL', 'SL', 'Kick', 'EnergyRef', 'KLRef', 'SLRef',
-                 'KickRef']
     writable_fields = ['SP', 'Sel', 'Cmd']
 
     def __init__(self, driver, *args):
@@ -42,11 +42,11 @@ class App:
             db=App.pvs_database,
             description='AS-MA Soft IOC',
             version=__version__,
-            prefix=_pvs._PREFIX)
-        _siriuspy.util.save_ioc_pv_list(_pvs._IOC["name"],
-                                        (_pvs._PREFIX_SECTOR,
-                                         _pvs._PREFIX_VACA),
-                                        App.pvs_database)
+            prefix=_pvs._PREFIX_VACA)
+        # _siriuspy.util.save_ioc_pv_list(_pvs._IOC["name"],
+        #                                 (_pvs._PREFIX_SECTOR,
+        #                                  _pvs._PREFIX_VACA),
+        #                                 App.pvs_database)
 
         self._driver = driver
         self._set_callback()
@@ -79,12 +79,6 @@ class App:
         # Check if field is writable
         if field not in App.writable_fields:
             return
-        # Build attribute name
-        # if propty in App.strengths:
-        #     attr = 'strength_' + field
-        # else:
-        #     attr = propty + '_' + field
-        # attr = attr.lower()
         # Update MA Object
         slot_name = sub_section + ':' + discipline + '-' + device
         ma = self.ma_devices[slot_name]
@@ -92,10 +86,11 @@ class App:
         # setattr(ma, attr, value)
         # value = getattr(ma, attr)
         if isinstance(value, float) or isinstance(value, int):
-            print(
+            _log.info(
                 '{0:<15s} {1:s} [{2:f}]: '.format('ioc write', reason, value))
         else:
-            print('{0:<15s}: '.format('ioc write'), reason)
+            _log.info(
+                '{0:<15s}: '.format('ioc write'), reason)
         # Update IOC database
         self._driver.setParam(reason, value)
         self._driver.updatePVs()
@@ -115,28 +110,28 @@ class App:
         for family, device in App.ma_devices.items():
             device.add_callback(self._mycallback)
             # ?
-            if _pvs._PREFIX_SECTOR:
-                *parts, prefix = device._maname.split(_pvs._PREFIX_SECTOR)
-            else:
-                prefix = device._maname
+            # if _pvs._PREFIX_SECTOR:
+            #     *parts, prefix = device._maname.split(_pvs._PREFIX_SECTOR)
+            # else:
+            #     prefix = device._maname
+            prefix = device._maname
             db = device.get_database(prefix=prefix)
             for reason, ddb in db.items():
                 value = ddb['value']
-                # print(reason, value)
                 if value is not None:
                     self._driver.setParam(reason, value)
             self._driver.updatePVs()
 
     def _mycallback(self, pvname, value, **kwargs):
         pvname = pvname.replace("PU-", "PM-").replace(":PS-", ":MA-")
-        pvname = pvname.replace(_pvs._PREFIX_VACA, "")
-        if _pvs._PREFIX_SECTOR:
-            *parts, reason = pvname.split(_pvs._PREFIX_SECTOR)
-        else:
-            reason = pvname
+        # pvname = pvname.replace(_pvs._PREFIX_VACA, "")
+        *parts, reason = pvname.split(_pvs._PREFIX_VACA)
+        # if _pvs._PREFIX_SECTOR:
+        #     *parts, reason = pvname.split(_pvs._PREFIX_SECTOR)
+        # else:
+        #     reason = pvname
         self._driver.setParam(reason, value)
         if 'hilim' in kwargs or 'lolim' in kwargs:
-            # print("changing upper limit", pvname, kwargs)
             self._driver.setParamInfo(reason, kwargs)
             # self._driver.callbackPV(reason)
         self._driver.updatePVs()
