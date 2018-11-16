@@ -22,7 +22,6 @@ setup(
     packages=['as_ma'],
     package_data={'as_ma': ['VERSION']},
     scripts=['scripts/sirius-ioc-as-pm.py',
-             'scripts/sirius-ioc-as-ma-select.py',
              'scripts/sirius-ioc-as-ma.py',
              ],
     zip_safe=False

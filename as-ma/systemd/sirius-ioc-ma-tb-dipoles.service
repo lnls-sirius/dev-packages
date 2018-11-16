@@ -1,0 +1,14 @@
+[Unit]
+Description=Soft IOC for TB dipole magnets
+After=multi-user.target
+
+[Service]
+Group=fac
+User=fac
+Type=simple
+WorkingDirectory=/home/fac/sirius-iocs
+StandardOutput=syslog
+StandardError=syslog
+ExecStartPre=/bin/bash --login -c 'env > /tmp/bashrc-sirius-ioc-tb-ma-dipole'
+EnvironmentFile=-/tmp/bashrc-sirius-ioc-tb-ma-dipole
+ExecStart=/usr/local/bin/sirius-ioc-as-ma.py TB-Fam:MA-B
