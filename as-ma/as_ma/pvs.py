@@ -5,9 +5,9 @@ get_ma_devices
 get_pvs_database
     Function that builds the IOC database
 """
-from siriuspy.pwrsupply.model import MAEpics as _MAEpics
-from siriuspy.envars import vaca_prefix as _vaca_prefix
 from siriuspy import util as _util
+from siriuspy.envars import vaca_prefix as _vaca_prefix
+from siriuspy.pwrsupply.model import MAEpics as _MAEpics
 
 
 _COMMIT_HASH = _util.get_last_commit_hash()
