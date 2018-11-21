@@ -518,8 +518,9 @@ def get_ma_propty_database(maname):
             db[psname][strength_name + field]['high'] = 0.0
             db[psname][strength_name + field]['hihi'] = 0.0
 
-    # add pvs list
-    db = _add_pvslist_cte(db)
+        # add pvs list
+        db[psname] = _add_pvslist_cte(db[psname])
+
     return db
 
 
@@ -572,8 +573,9 @@ def get_pm_propty_database(maname):
                 db[psname]['Kick' + field]['hihi'] = 0.0
         else:
             raise ValueError('Invalid pulsed magnet power supply type!')
-    # add pvs list
-    db = _add_pvslist_cte(db)
+        # add pvs list
+        db[psname] = _add_pvslist_cte(db[psname])
+
     return db
 
 
