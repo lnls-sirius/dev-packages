@@ -17,6 +17,8 @@ default_ps_current_precision = 4
 default_pu_current_precision = 4
 _default_ps_current_unit = None
 _default_pu_current_unit = None
+_pvslist_cte_name = 'Properties-Cte'
+
 
 # TODO: cleanup this module !!!!
 # TODO: Add properties to power EPICS supply devices:
@@ -406,19 +408,34 @@ def get_common_pu_SI_InjKicker_propty_database():
     })
 
 
+def _add_pvslist_cte(database):
+    """Add PVsList-Cte."""
+    keys = list(database.keys())
+    keys.append(_pvslist_cte_name)
+    keys = sorted(keys)
+    database[_pvslist_cte_name] = {
+        'type': 'string',
+        'count': len(keys),
+        'value': keys,
+    }
+    return database
+
+
 def get_ps_propty_database(psmodel, pstype):
     """Return property database of a LNLS power supply type device."""
-    propty_db = _get_model_db(psmodel)
-    _set_limits(pstype, propty_db)
-    return propty_db
+    database = _get_model_db(psmodel)
+    _set_limits(pstype, database)
+    # add pvs list
+    database = _add_pvslist_cte(database)
+    return database
 
 
 def get_pu_propty_database(pstype):
     """Return database definition for a pulsed power supply type."""
-    propty_db = get_common_pu_propty_database()
+    database = get_common_pu_propty_database()
     signals_lims = ('Voltage-SP', 'Voltage-RB', 'Voltage-Mon')
     signals_unit = signals_lims
-    for propty, db in propty_db.items():
+    for propty, db in database.items():
         # set setpoint limits in database
         if propty in signals_lims:
             db['lolo'] = _PSSearch.get_splims(pstype, 'lolo')
@@ -430,7 +447,9 @@ def get_pu_propty_database(pstype):
         # define unit of current
         if propty in signals_unit:
             db['unit'] = get_ps_current_unit()
-    return propty_db
+    # add pvs list
+    database = _add_pvslist_cte(database)
+    return database
 
 
 def get_ma_propty_database(maname):
@@ -443,11 +462,11 @@ def get_ma_propty_database(maname):
     unit = _MASearch.get_splims_unit(psmodel=psmodel)
     magfunc_dict = _MASearch.conv_maname_2_magfunc(maname)
     pstype = _PSSearch.conv_psname_2_pstype(psnames[0])
-    propty_db = get_ps_propty_database(psmodel, pstype)
+    database = get_ps_propty_database(psmodel, pstype)
     db = {}
 
     for psname, magfunc in magfunc_dict.items():
-        db[psname] = _copy.deepcopy(propty_db)
+        db[psname] = _copy.deepcopy(database)
         # set appropriate PS limits and unit
         for field in ["-SP", "-RB", "Ref-Mon", "-Mon"]:
             db[psname]['Current' + field]['lolo'] = \
@@ -499,15 +518,17 @@ def get_ma_propty_database(maname):
             db[psname][strength_name + field]['high'] = 0.0
             db[psname][strength_name + field]['hihi'] = 0.0
 
+    # add pvs list
+    db = _add_pvslist_cte(db)
     return db
 
 
 def get_pm_propty_database(maname):
     """Return property database of a pulsed magnet type device."""
     if 'InjNLKckr' in maname or 'InjDipKckr' in maname:
-        propty_db = get_common_pu_SI_InjKicker_propty_database()
+        database = get_common_pu_SI_InjKicker_propty_database()
     else:
-        propty_db = get_common_pu_propty_database()
+        database = get_common_pu_propty_database()
 
     psnames = _MASearch.conv_psmaname_2_psnames(maname)
     psmodel = _PSSearch.conv_psname_2_psmodel(psnames[0])
@@ -516,7 +537,7 @@ def get_pm_propty_database(maname):
     magfunc_dict = _MASearch.conv_maname_2_magfunc(maname)
     db = {}
     for psname, magfunc in magfunc_dict.items():
-        db[psname] = _copy.deepcopy(propty_db)
+        db[psname] = _copy.deepcopy(database)
         # set appropriate PS limits and unit
         for field in ["-SP", "-RB", "-Mon"]:
             db[psname]['Voltage' + field]['lolo'] = \
@@ -551,6 +572,8 @@ def get_pm_propty_database(maname):
                 db[psname]['Kick' + field]['hihi'] = 0.0
         else:
             raise ValueError('Invalid pulsed magnet power supply type!')
+    # add pvs list
+    db = _add_pvslist_cte(db)
     return db
 
 
@@ -758,7 +781,7 @@ def _get_ps_FAC_2P4S_ACDC_propty_database():
     db_ps = {
         'CapacitorBankVoltage-SP': {'type': 'float', 'value': 0.0,
                                     'prec': default_ps_current_precision,
-                                    'lolim':0.0, 'hilim': 1.0, 'prec': 4},
+                                    'lolim': 0.0, 'hilim': 1.0},
         'CapacitorBankVoltage-RB': {'type': 'float', 'value': 0.0,
                                     'prec': default_ps_current_precision},
         'CapacitorBankVoltageRef-Mon': {'type': 'float', 'value': 0.0,
@@ -905,4 +928,5 @@ def _get_model_db(psmodel):
     else:
         raise ValueError(
             'DB for psmodel {} not implemented!'.format(psmodel))
+
     return database
