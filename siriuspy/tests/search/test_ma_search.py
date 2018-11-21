@@ -37,10 +37,9 @@ class TestMASearch(MockServConf):
         'conv_maname_2_splims',
         'conv_maname_2_psnames',
         'conv_psmaname_2_psnames',
-        # 'conv_psname_2_maname',
+        'conv_bbbname_2_psmanames',
         'conv_psname_2_psmaname',
         'get_maname_2_splims_dict',
-        # 'check_maname_ispulsed'
     )
 
     maname2trims = {
