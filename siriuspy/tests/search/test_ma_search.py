@@ -203,6 +203,10 @@ class TestMASearch(MockServConf):
             self.assertEqual(MASearch.conv_psname_2_psmaname(psname),
                              maname)
 
+    def test_conv_bbbname_2_psmanames(self):
+        """Test conv_bbbname_2_psmanames."""
+        self.assertRaises(KeyError, MASearch.conv_bbbname_2_psmanames, '')
+
     def test_get_maname_2_splims_dict(self):
         """Test get_maname_2_splims_dict."""
         limlabels = ('DRVL', 'LOLO', 'LOW', 'LOPR',
