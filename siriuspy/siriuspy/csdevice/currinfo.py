@@ -1,6 +1,6 @@
 """Define PVs, contants and properties of all CurrInfo SoftIOCs."""
 import collections as _collections
-
+from siriuspy.csdevice import util as _cutil
 
 OFFONTYP = ('Off', 'On')
 DCCTSELECTIONTYP = ('Avg', 'DCCT13C4', 'DCCT14C4')
@@ -42,6 +42,7 @@ def get_charge_database():
         'ChargeCalcIntvl-RB': {'type': 'float', 'value': 100.0, 'prec': 1,
                                'unit': 's'},
         }
+    pvs_database = _cutil.add_pvslist_cte(pvs_database)
     return pvs_database
 
 
@@ -63,6 +64,7 @@ def get_current_database(acc):
                                             'value': Const.DCCTFltCheck.On}
         pvs_database['DCCTFltCheck-Sts'] = {'type': 'enum', 'enums': OFFONTYP,
                                             'value': Const.DCCTFltCheck.On}
+    pvs_database = _cutil.add_pvslist_cte(pvs_database)
     return pvs_database
 
 
@@ -88,4 +90,5 @@ def get_lifetime_database():
         'DCurrFactor-Cte': {'type': 'float', 'value': 0.003, 'prec': 2,
                             'unit': 'mA'}
         }
+    pvs_database = _cutil.add_pvslist_cte(pvs_database)
     return pvs_database
