@@ -10,26 +10,101 @@ from siriuspy.search.hl_time_search import HLTimeSearch as _HLTISearch
 from siriuspy.search.bpms_search import BPMSearch as _BPMSearch
 
 
-class OrbitCorrDev:
-    """OrbitCorrDev class."""
+# --- Enumeration Types ---
+
+class ETypes(_cutil.ETypes):
+    """Local enumerate types."""
+
+    ENBL_RF = _cutil.ETypes.OFF_ON
+    ORB_MODE_RINGS = ('Offline', 'Online', 'MultiTurn', 'SinglePass')
+    ORB_MODE_TLINES = ('Offline', 'SinglePass')
+    APPLY_CORR_RINGS = ('CH', 'CV', 'RF', 'All')
+    APPLY_CORR_TLINES = ('CH', 'CV', 'All')
+    ORB_ACQ_CHAN = ('Monit1', 'FOFB', 'TbT')
+    MEAS_RMAT_CMD = ('Start', 'Stop', 'Reset')
+    MEAS_RMAT_MON = ('Idle', 'Measuring', 'Completed', 'Aborted')
+    TLINES = ('TB', 'TS')
+    RINGS = ('BO', 'SI')
+    ACCELERATORS = TLINES + RINGS
+    STATUS_LABELS = ('Corrs', 'Matrix', 'Orbit', 'Global')
+
+
+_et = ETypes  # syntatic sugar
+
+
+# --- Const class ---
+
+class Const(_cutil.Const):
+    """Const class defining global orbitcorr constants."""
 
     EVG_NAME = _TISearch.get_device_names({'dev': 'EVG'})[0]
     ORBIT_CONVERSION_UNIT = 1/1000  # from nm to um
     MAX_MT_ORBS = 4000
+
     OrbitAcqCtrl = _csbpm.AcqEvents
-    OrbitAcqTrig = _get_namedtuple('OrbitAcqTrig', ('External', 'Data'))
     OrbitAcqDataSel = _csbpm.AcqDataTyp
     OrbitAcqDataPol = _csbpm.Polarity
-    MeasRespMatCmd = _get_namedtuple(
-        'MeasRespMatCmd', ('Start', 'Stop', 'Reset'))
-    MeasRespMatMon = _get_namedtuple(
-        'MeasRespMatMon', ('Idle', 'Measuring', 'Completed', 'Aborted'))
-    Accelerators = _get_namedtuple('Accelerators', ('TB', 'TS', 'BO', 'SI'))
-    Rings = _get_namedtuple('Rings', ('BO', 'SI'), (2, 3))
-    TransportLines = _get_namedtuple('TransportLines', ('TB', 'TS'), (0, 1))
+    OrbitAcqTrig = _cutil.Const.register('OrbitAcqTrig', ('External', 'Data'))
+    MeasRespMatCmd = _cutil.Const.register('MeasRespMatCmd', _et.MEAS_RMAT_CMD)
+    MeasRespMatMon = _cutil.Const.register('MeasRespMatMon', _et.MEAS_RMAT_MON)
+    TransportLines = _cutil.Const.register('TransportLines',
+                                           _et.TLINES, (0, 1))
+    Rings = _cutil.Const.register('Rings', _et.RINGS, (2, 3))
+    Accelerators = _cutil.Const.register('Accelerators', _et.ACCELERATORS)
 
-    def __init__(self, acc):
-        """Init method."""
+
+class ConstRings(Const):
+    """Const class defining rings orbitcorr constants."""
+
+    TRIGGER_NAME = 'AS-Glob:TI-BPM-SIBO:'
+    RF_GEN_NAME = 'AS-Glob:RF-Gen'
+    RF_NOM_FREQ = 499458000.0
+
+    EnblRF = Const.register('EnblRF', _et.ENBL_RF)
+    OrbitMode = Const.register('OrbitMode', _et.ORB_MODE_RINGS)
+    ApplyCorr = Const.register('ApplyCorr', _et.APPLY_CORR_RINGS)
+    AutoCorr = Const.register('AutoCorr', _et.OFF_ON)
+    SyncKicks = Const.register('SyncKicks', _et.OFF_ON)
+    OrbitAcqChan = Const.register('OrbitAcqChan', _et.ORB_ACQ_CHAN)
+    OrbitAcqDataChan = _csbpm.AcqChan
+    # TODO: use correct name for this device
+    StatusLabels = Const.register(
+        'StatusLabels', _et.STATUS_LABELS,
+        (('CHCV Connected', 'CHCV Mode Configured', 'CHCV PwrState On',
+          'Timing Connected', 'Timing Configured', 'RF Connected',
+          'RF PwrState On'),
+         ('', ),
+         ('Timing Connected', 'Timing Configured',
+          'BPMs Connected', 'BPMs Enabled', 'BPMs Configured'),
+         ('Ok', 'Not Ok')))
+
+
+class ConstTLines(Const):
+    """Const class defining transport lines orbitcorr constants."""
+
+    TRIGGER_NAME = 'AS-Glob:TI-BPM-TBTS:'
+
+    OrbitMode = Const.register('OrbitMode', _et.ORB_MODE_TLINES)
+    ApplyCorr = Const.register('ApplyCorr', _et.APPLY_CORR_TLINES)
+    StatusLabels = Const.register(
+        'StatusLabels', _et.STATUS_LABELS,
+        (('CHCV Connected', 'CHCV Mode Configured', 'CHCV PwrState On'),
+         ('', ),
+         ('Timing Connected', 'Timing Configured', 'BPMs Connected',
+          'BPMs Enabled', 'BPMs Configured'),
+         ('Ok', 'Not Ok')))
+
+
+# _c = Const  # syntatic sugar
+
+
+# --- Database class ---
+
+class _OrbitCorrDev:
+    """OrbitCorrDev class."""
+
+    def _init1(self, acc):
+        """Init1 method."""
         self.acc = acc.upper()
         self.acc_idx = self.Accelerators._fields.index(self.acc)
         self.BPM_NAMES = _BPMSearch.get_names({'sec': acc})
@@ -52,51 +127,8 @@ class OrbitCorrDev:
         ext = acc.lower() + 'respmat'
         self.RESPMAT_FILENAME = _os.path.join('data', 'respmat.'+ext)
 
-        if self.acc_idx in self.Rings:
-            self.TRIGGER_NAME = 'AS-Glob:TI-BPM-SIBO:'
-            self.EnblRF = _get_namedtuple('EnblRF', ('Off', 'On'))
-            self.OrbitMode = _get_namedtuple(
-                'OrbitMode', ('Offline', 'Online', 'MultiTurn', 'SinglePass'))
-            self.ApplyCorr = _get_namedtuple(
-                'ApplyCorr', ('CH', 'CV', 'RF', 'All'))
-            self.AutoCorr = _get_namedtuple('AutoCorr', ('Off', 'On'))
-            self.RF_NOM_FREQ = 499458000.0
-            self.SyncKicks = _get_namedtuple('SyncKicks', ('Off', 'On'))
-            self.OrbitAcqChan = _get_namedtuple(
-                'OrbitAcqChan', ('Monit1', 'FOFB', 'TbT'))
-            self.OrbitAcqDataChan = _csbpm.AcqChan
-
-            # TODO: use correct name for this device
-            self.RF_GEN_NAME = 'AS-Glob:RF-Gen'
-            self.StatusLabels = _get_namedtuple(
-                'StatusLabels', ('Corrs', 'Matrix', 'Orbit', 'Global'),
-                (('CHCV Connected', 'CHCV Mode Configured',
-                  'CHCV PwrState On',
-                  'Timing Connected', 'Timing Configured',
-                  'RF Connected', 'RF PwrState On'),
-                 ('', ),
-                 ('Timing Connected', 'Timing Configured',
-                  'BPMs Connected', 'BPMs Enabled', 'BPMs Configured'),
-                 ('Ok', 'Not Ok')))
-            self.NR_CORRS = self.NR_CHCV + 1
-            self.C0 = (496.8 if self.acc == 'BO' else 518.396)  # in meter
-            self.T0 = self.C0 / 299792458 * 1000  # in milliseconds
-        else:
-            self.TRIGGER_NAME = 'AS-Glob:TI-BPM-TBTS:'
-            self.OrbitMode = _get_namedtuple(
-                'OrbitMode', ('Offline', 'SinglePass'))
-            self.ApplyCorr = _get_namedtuple(
-                'ApplyCorr', ('CH', 'CV', 'All'))
-            self.StatusLabels = _get_namedtuple(
-                'StatusLabels', ('Corrs', 'Matrix', 'Orbit', 'Global'),
-                (('CHCV Connected', 'CHCV Mode Configured',
-                  'CHCV PwrState On'),
-                 ('', ),
-                 ('Timing Connected', 'Timing Configured',
-                  'BPMs Connected', 'BPMs Enabled', 'BPMs Configured'),
-                 ('Ok', 'Not Ok')))
-            self.NR_CORRS = self.NR_CHCV
-
+    def _init2(self):
+        """Init2 method."""
         self.OrbitAcqExtEvtSrc = _get_namedtuple(
             'OrbitAcqExtEvtSrc',
             _HLTISearch.get_hl_trigger_sources(self.TRIGGER_NAME))
@@ -550,3 +582,40 @@ class OrbitCorrDev:
         if prefix:
             return {prefix + k: v for k, v in db.items()}
         return db
+
+
+class OrbitCorrDevRings(_OrbitCorrDev, ConstRings):
+    """OrbitCorrDev class."""
+
+    def __init__(self, acc):
+        """Init method."""
+        self._init1(acc)
+        self.NR_CORRS = self.NR_CHCV + 1
+        self.C0 = (496.8 if self.acc == 'BO' else 518.396)  # in meter
+        self.T0 = self.C0 / 299792458 * 1000  # in milliseconds
+        self._init2()
+
+
+class OrbitCorrDevTLines(_OrbitCorrDev, ConstTLines):
+    """OrbitCorrDev class."""
+
+    def __init__(self, acc):
+        """Init method."""
+        self._init1(acc)
+        self.NR_CORRS = self.NR_CHCV
+        self._init2()
+
+
+class Factory(Const):
+    """OrbitCorrDev factory class."""
+
+    @staticmethod
+    def get(acc):
+        """Get OrbitCorrDev object."""
+        acc = acc.upper()
+        if acc in _et.RINGS:
+            return OrbitCorrDevRings(acc)
+        elif acc in _et.TLINES:
+            return OrbitCorrDevTLines(acc)
+        else:
+            raise ValueError('Invalid accelerator name "{}"'.format(acc))
