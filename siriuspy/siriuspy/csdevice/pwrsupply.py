@@ -2,11 +2,14 @@
 
 import copy as _copy
 
-from siriuspy.csdevice.enumtypes import EnumTypes as _et
+# from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.search import MASearch as _MASearch
 from siriuspy.pwrsupply.siggen import DEFAULT_SIGGEN_CONFIG as _DEF_SIGG_CONF
 from siriuspy.util import get_namedtuple as _get_namedtuple
+from siriuspy.csdevice import util as _cutil
+from siriuspy.csdevice.util import EnumTypes as _et
+
 
 # MIN_WFMSIZE = 2001
 MAX_WFMSIZE = 4000
@@ -17,7 +20,6 @@ default_ps_current_precision = 4
 default_pu_current_precision = 4
 _default_ps_current_unit = None
 _default_pu_current_unit = None
-_pvslist_cte_name = 'Properties-Cte'
 
 
 # TODO: cleanup this module !!!!
@@ -225,6 +227,7 @@ ps_sync_mode = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
 
 
 # --- power supply constants definition class ---
+
 class Const:
     """Const class defining power supply constants."""
 
@@ -241,6 +244,7 @@ class Const:
 
 
 # --- power supply databases ---
+
 def get_ps_current_unit():
     """Return power supply current unit."""
     global _default_ps_current_unit
@@ -408,25 +412,12 @@ def get_common_pu_SI_InjKicker_propty_database():
     })
 
 
-def _add_pvslist_cte(database):
-    """Add PVsList-Cte."""
-    keys = list(database.keys())
-    keys.append(_pvslist_cte_name)
-    keys = sorted(keys)
-    database[_pvslist_cte_name] = {
-        'type': 'string',
-        'count': len(keys),
-        'value': keys,
-    }
-    return database
-
-
 def get_ps_propty_database(psmodel, pstype):
     """Return property database of a LNLS power supply type device."""
     database = _get_model_db(psmodel)
     _set_limits(pstype, database)
     # add pvs list
-    database = _add_pvslist_cte(database)
+    database = _cutil.add_pvslist_cte(database)
     return database
 
 
@@ -448,7 +439,7 @@ def get_pu_propty_database(pstype):
         if propty in signals_unit:
             db['unit'] = get_ps_current_unit()
     # add pvs list
-    database = _add_pvslist_cte(database)
+    database = _cutil.add_pvslist_cte(database)
     return database
 
 
@@ -519,7 +510,7 @@ def get_ma_propty_database(maname):
             db[psname][strength_name + field]['hihi'] = 0.0
 
         # add pvs list
-        db[psname] = _add_pvslist_cte(db[psname])
+        db[psname] = _cutil.add_pvslist_cte(db[psname])
 
     return db
 
@@ -574,12 +565,14 @@ def get_pm_propty_database(maname):
         else:
             raise ValueError('Invalid pulsed magnet power supply type!')
         # add pvs list
-        db[psname] = _add_pvslist_cte(db[psname])
+        db[psname] = _cutil.add_pvslist_cte(db[psname])
 
     return db
 
 
-# Hidden
+# Auxilliary functions
+
+
 def _get_ps_FBP_propty_database():
     """Return database with FBP pwrsupply model PVs."""
     propty_db = get_basic_propty_database()
@@ -894,41 +887,25 @@ def _set_limits(pstype, database):
 
 
 def _get_model_db(psmodel):
-    if psmodel == 'FBP':
-        database = _get_ps_FBP_propty_database()
-    elif psmodel in ('FBP_DCLink'):
-        database = _get_ps_FBP_DCLink_propty_database()
-    elif psmodel in ('FBP_FOFB'):
-        database = _get_ps_FBP_FOFB_propty_database()
-
-    elif psmodel in ('FAC_DCDC'):
-        database = _get_ps_FAC_propty_database()
-    elif psmodel in ('FAC_ACDC'):
-        database = _get_ps_FAC_ACDC_propty_database()
-
-    elif psmodel in ('FAC_2S_DCDC'):
-        database = _get_ps_FAC_2S_propty_database()
-    elif psmodel in ('FAC_2S_ACDC'):
-        database = _get_ps_FAC_2S_ACDC_propty_database()
-
-    elif psmodel in ('FAC_2P4S_DCDC'):
-        database = _get_ps_FAC_2P4S_propty_database()
-    elif psmodel in ('FAC_2P4S_ACDC'):
-        database = _get_ps_FAC_2P4S_ACDC_propty_database()
-
-    elif psmodel in ('FAP'):
-        database = _get_ps_FAP_propty_database()
-    elif psmodel in ('FAP_2P2S_MASTER'):
-        database = _get_ps_FAP_2P2S_propty_database()
-    elif psmodel in ('FAP_4P_Master'):
-        database = _get_ps_FAP_4P_Master_propty_database()
-    elif psmodel in ('FAP_4P_Slave'):
-        database = _get_ps_FAP_4P_Slave_propty_database()
-
-    elif psmodel in ('Commercial'):
-        database = _get_ps_Commercial_propty_database()
+    psmodel_2_dbfunc = {
+        'FBP': _get_ps_FBP_propty_database,
+        'FBP_DCLink': _get_ps_FBP_DCLink_propty_database,
+        'FBP_FOFB': _get_ps_FBP_FOFB_propty_database,
+        'FAC_DCDC': _get_ps_FAC_propty_database,
+        'FAC_ACDC': _get_ps_FAC_ACDC_propty_database,
+        'FAC_2S_DCDC': _get_ps_FAC_2S_propty_database,
+        'FAC_2S_ACDC': _get_ps_FAC_2S_ACDC_propty_database,
+        'FAC_2P4S_DCDC': _get_ps_FAC_2P4S_propty_database,
+        'FAC_2P4S_ACDC': _get_ps_FAC_2P4S_ACDC_propty_database,
+        'FAP': _get_ps_FAP_propty_database,
+        'FAP_2P2S_MASTER': _get_ps_FAP_2P2S_propty_database,
+        'FAP_4P_Master': _get_ps_FAP_4P_Master_propty_database,
+        'FAP_4P_Slave': _get_ps_FAP_4P_Slave_propty_database,
+        'Commercial': _get_ps_Commercial_propty_database,
+    }
+    if psmodel in psmodel_2_dbfunc:
+        func = psmodel_2_dbfunc[psmodel]
+        return func()
     else:
         raise ValueError(
-            'DB for psmodel {} not implemented!'.format(psmodel))
-
-    return database
+            'DB for psmodel "{}" not implemented!'.format(psmodel))
