@@ -8,6 +8,7 @@ import siriuspy.csdevice.util as cutil
 
 public_interface = (
     'ETypes',
+    'Const',
     'add_pvslist_cte'
 )
 

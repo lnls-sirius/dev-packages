@@ -4,6 +4,11 @@ import numpy as _np
 from siriuspy.csdevice.util import ETypes as _et
 from siriuspy.util import get_namedtuple as _get_namedtuple
 
+
+# TODO: refactor this code as to make it closer in structure to all other
+# modules in csdevice subpackage
+
+
 TrigDir = _get_namedtuple('TrigDir', ('trn', 'rcv'))
 TrigDirPol = _get_namedtuple('TrigDirPol', ('same', 'rev'))
 TrigSrc = _get_namedtuple('TrigSrc', ('ext', 'int'))

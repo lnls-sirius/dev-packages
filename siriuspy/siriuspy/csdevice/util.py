@@ -1,4 +1,6 @@
-"""Util module."""
+"""Control system Device Util Module."""
+
+from siriuspy.util import get_namedtuple as _get_namedtuple
 
 
 class ETypes:
@@ -11,6 +13,23 @@ class ETypes:
     FIXED_INCR = ('Fixed', 'Incr')
     NORM_INV = ('Normal', 'Inverse')
     UNLINK_LINK = ('Unlink', 'Link')
+
+
+_et = ETypes  # syntactic sugar
+
+
+class Const:
+    """Const class defining power supply constants."""
+
+    DsblEnbl = _get_namedtuple('DsblEnbl', _et.DSBL_ENBL)
+    OffOn = _get_namedtuple('OffOn', _et.OFF_ON)
+    CloseOpen = _get_namedtuple('CloseOpen', _et.CLOSE_OPEN)
+    DisconnConn = _get_namedtuple('DisconnConn', _et.DISCONN_CONN)
+
+    @staticmethod
+    def register(name, field_names, values=None):
+        """Register namedtuple."""
+        return _get_namedtuple(name, field_names, values)
 
 
 def add_pvslist_cte(database):

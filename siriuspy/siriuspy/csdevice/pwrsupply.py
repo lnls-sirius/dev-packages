@@ -5,9 +5,7 @@ import copy as _copy
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.search import MASearch as _MASearch
 from siriuspy.pwrsupply.siggen import DEFAULT_SIGGEN_CONFIG as _DEF_SIGG_CONF
-from siriuspy.util import get_namedtuple as _get_namedtuple
 from siriuspy.csdevice import util as _cutil
-from siriuspy.csdevice.util import ETypes as _ETypes
 
 
 # MIN_WFMSIZE = 2001
@@ -23,7 +21,7 @@ _default_pu_current_unit = None
 
 # --- Enumeration Types ---
 
-class ETypes(_ETypes):
+class ETypes(_cutil.ETypes):
     """Local enumerate types."""
 
     INTERFACE = ('Remote', 'Local', 'PCHost')
@@ -38,7 +36,7 @@ class ETypes(_ETypes):
               'FBP_SOFB',
               'Commercial',
               'FP')
-    PWRSTATE_SEL = _ETypes.OFF_ON
+    PWRSTATE_SEL = _cutil.ETypes.OFF_ON
     PWRSTATE_STS = ('Off', 'On', 'Initializing')
     STATES = ('Off', 'Interlock', 'Initializing',
               'SlowRef', 'SlowRefSync', 'Cycle', 'RmpWfm', 'MigWfm', 'FastRef')
@@ -229,20 +227,19 @@ _et = ETypes  # syntatic sugar
 
 # --- Const class ---
 
-class Const:
+class Const(_cutil.Const):
     """Const class defining power supply constants."""
 
-    Models = _get_namedtuple('Models', _et.MODELS)
-    DsblEnbl = _get_namedtuple('DsblEnbl', _et.DSBL_ENBL)
-    Interface = _get_namedtuple('Interface', _et.INTERFACE)
-    OpenLoop = _get_namedtuple('OpenLoop', _et.CLOSE_OPEN)
-    States = _get_namedtuple('States', _et.STATES)
-    PwrStateSel = _get_namedtuple('PwrState', _et.PWRSTATE_SEL)
-    PwrStateSts = _get_namedtuple('PwrState', _et.PWRSTATE_STS)
-    OpMode = _get_namedtuple('OpMode', _et.OPMODES)
-    CmdAck = _get_namedtuple('CmdAck', _et.CMD_ACK)
-    CycleType = _get_namedtuple('CycleType', _et.CYCLE_TYPES)
-    SyncMode = _get_namedtuple('SyncMode', _et.SYNC_MODES)
+    Models = _cutil.Const.register('Models', _et.MODELS)
+    Interface = _cutil.Const.register('Interface', _et.INTERFACE)
+    OpenLoop = _cutil.Const.register('OpenLoop', _et.CLOSE_OPEN)
+    States = _cutil.Const.register('States', _et.STATES)
+    PwrStateSel = _cutil.Const.register('PwrStateSel', _et.PWRSTATE_SEL)
+    PwrStateSts = _cutil.Const.register('PwrStateSts', _et.PWRSTATE_STS)
+    OpMode = _cutil.Const.register('OpMode', _et.OPMODES)
+    CmdAck = _cutil.Const.register('CmdAck', _et.CMD_ACK)
+    CycleType = _cutil.Const.register('CycleType', _et.CYCLE_TYPES)
+    SyncMode = _cutil.Const.register('SyncMode', _et.SYNC_MODES)
 
 
 # --- Power supply databases ---

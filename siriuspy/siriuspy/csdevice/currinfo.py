@@ -1,12 +1,10 @@
 """Define PVs, contants and properties of all CurrInfo SoftIOCs."""
-from siriuspy.util import get_namedtuple as _get_namedtuple
 from siriuspy.csdevice import util as _cutil
-from siriuspy.csdevice.util import ETypes as _ETypes
 
 
 # --- Enumeration Types ---
 
-class ETypes(_ETypes):
+class ETypes(_cutil.ETypes):
     """Local enumerate types."""
 
     DCCTSELECTIONTYP = ('Avg', 'DCCT13C4', 'DCCT14C4')
@@ -18,13 +16,18 @@ _et = ETypes  # syntatic sugar
 
 # --- Const class ---
 
-class Const:
+class Const(_cutil.Const):
     """Const class defining CurrInfo constants and Enum types."""
 
-    DCCT = _get_namedtuple('DCCT', _et.DCCTSELECTIONTYP)
-    DCCTFltCheck = _get_namedtuple('DCCTFltCheck', _et.OFF_ON)
-    BuffAutoRst = _get_namedtuple('BuffAutoRst', _et.BUFFAUTORSTTYP)
+    DCCT = _cutil.Const.register('DCCT', _et.DCCTSELECTIONTYP)
+    DCCTFltCheck = _cutil.Const.register('DCCTFltCheck', _et.OFF_ON)
+    BuffAutoRst = _cutil.Const.register('BuffAutoRst', _et.BUFFAUTORSTTYP)
 
+
+_c = Const  # syntacti sugar
+
+
+# --- Databases ---
 
 def get_charge_database():
     """Return CurrentInfo-Charge Soft IOC database."""
@@ -51,16 +54,16 @@ def get_current_database(acc):
     }
 
     if acc == 'SI':
-        pvs_database['DCCT-Sel'] = {'type': 'enum', 'value': Const.DCCT.Avg,
+        pvs_database['DCCT-Sel'] = {'type': 'enum', 'value': _c.DCCT.Avg,
                                     'enums': _et.DCCTSELECTIONTYP}
-        pvs_database['DCCT-Sts'] = {'type': 'enum', 'value': Const.DCCT.Avg,
+        pvs_database['DCCT-Sts'] = {'type': 'enum', 'value': _c.DCCT.Avg,
                                     'enums': _et.DCCTSELECTIONTYP}
         pvs_database['DCCTFltCheck-Sel'] = {'type': 'enum',
                                             'enums': _et.OFF_ON,
-                                            'value': Const.DCCTFltCheck.On}
+                                            'value': _c.DCCTFltCheck.On}
         pvs_database['DCCTFltCheck-Sts'] = {'type': 'enum',
                                             'enums': _et.OFF_ON,
-                                            'value': Const.DCCTFltCheck.On}
+                                            'value': _c.DCCTFltCheck.On}
     pvs_database = _cutil.add_pvslist_cte(pvs_database)
     return pvs_database
 
@@ -81,9 +84,9 @@ def get_lifetime_database():
         'SplIntvl-RB':	   {'type': 'int', 'value': 10, 'unit': 's'},
         'BuffRst-Cmd':     {'type': 'int', 'value': 0},
         'BuffAutoRst-Sel': {'type': 'enum', 'enums': _et.BUFFAUTORSTTYP,
-                            'value': Const.BuffAutoRst.DCurrCheck},
+                            'value': _c.BuffAutoRst.DCurrCheck},
         'BuffAutoRst-Sts': {'type': 'enum', 'enums': _et.BUFFAUTORSTTYP,
-                            'value': Const.BuffAutoRst.DCurrCheck},
+                            'value': _c.BuffAutoRst.DCurrCheck},
         'DCurrFactor-Cte': {'type': 'float', 'value': 0.003, 'prec': 2,
                             'unit': 'mA'}
         }
