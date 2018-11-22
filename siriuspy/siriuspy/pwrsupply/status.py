@@ -141,9 +141,9 @@ class PSCStatus:
         state = self.state
         if state in (_c.States.Off,
                      _c.States.Interlock):
-            pwrstate = _c.PwrState.Off
+            pwrstate = _c.PwrStateSel.Off
         else:
-            pwrstate = _c.PwrState.On
+            pwrstate = _c.PwrStateSel.On
         return pwrstate
 
     @ioc_pwrstate.setter
@@ -152,7 +152,7 @@ class PSCStatus:
         if not (0 <= value < len(_et.PWRSTATE_SEL)):
             raise ValueError('Invalid pwrstate value!')
         # TurnOn sets Opmode to SlowRef by default.
-        state = _c.States.Off if value == _c.PwrState.Off else \
+        state = _c.States.Off if value == _c.PwrStateSel.Off else \
             _c.States.SlowRef
         self.state = state
 
