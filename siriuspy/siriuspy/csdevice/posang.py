@@ -1,5 +1,7 @@
 """Define PVs, contants and properties of all PosAng SoftIOCs."""
 
+from siriuspy.csdevice import util as _cutil
+
 
 class Const:
     """Const class defining PosAng constants."""
@@ -60,4 +62,5 @@ def get_posang_database():
         'StatusLabels-Cte':  {'type': 'string', 'count': 4,
                               'value': Const.STATUSLABELS},
     }
+    pvs_database = _cutil.add_pvslist_cte(pvs_database)
     return pvs_database
