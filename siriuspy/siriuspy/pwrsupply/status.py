@@ -1,16 +1,15 @@
 """Translate `ps_state` bits to values exposed in EPICS."""
 
-from siriuspy.csdevice.pwrsupply import ps_pwrstate_sel as _ps_pwrstate_sel
-from siriuspy.csdevice.pwrsupply import Const as _PSConst
-from siriuspy.csdevice.pwrsupply import ps_opmode as _ps_opmode
+from siriuspy.csdevice.pwrsupply import ETypes as _et
+from siriuspy.csdevice.pwrsupply import Const as _c
 
 
 class PSCStatus:
     """Power Supply Controller Status."""
 
-    OPMODE = _PSConst.OpMode
-    PWRSTATE = _PSConst.PwrState
-    STATES = _PSConst.States
+    OPMODE = _c.OpMode
+    PWRSTATE = _c.PwrStateSel
+    STATES = _c.States
 
     _mask_state = 0b0000000000001111
     _mask_oloop = 0b0000000000010000
@@ -22,25 +21,25 @@ class PSCStatus:
     _mask_stats = 0b1111111111111111
 
     _psc2ioc_state = {
-        _PSConst.States.Off: _PSConst.OpMode.SlowRef,
-        _PSConst.States.Interlock: _PSConst.OpMode.SlowRef,
-        _PSConst.States.Initializing: _PSConst.OpMode.SlowRef,
-        _PSConst.States.SlowRef: _PSConst.OpMode.SlowRef,
-        _PSConst.States.SlowRefSync: _PSConst.OpMode.SlowRefSync,
-        _PSConst.States.Cycle: _PSConst.OpMode.Cycle,
-        _PSConst.States.RmpWfm: _PSConst.OpMode.RmpWfm,
-        _PSConst.States.MigWfm: _PSConst.OpMode.MigWfm,
-        _PSConst.States.FastRef: _PSConst.OpMode.FastRef,
+        _c.States.Off: _c.OpMode.SlowRef,
+        _c.States.Interlock: _c.OpMode.SlowRef,
+        _c.States.Initializing: _c.OpMode.SlowRef,
+        _c.States.SlowRef: _c.OpMode.SlowRef,
+        _c.States.SlowRefSync: _c.OpMode.SlowRefSync,
+        _c.States.Cycle: _c.OpMode.Cycle,
+        _c.States.RmpWfm: _c.OpMode.RmpWfm,
+        _c.States.MigWfm: _c.OpMode.MigWfm,
+        _c.States.FastRef: _c.OpMode.FastRef,
     }
 
     _ioc2psc_state = {
         # TODO: controller firmware still defines only a subset of opmodes
-        _PSConst.OpMode.SlowRef: _PSConst.States.SlowRef,
-        _PSConst.OpMode.SlowRefSync: _PSConst.States.SlowRefSync,
-        _PSConst.OpMode.Cycle: _PSConst.States.Cycle,
-        _PSConst.OpMode.RmpWfm: _PSConst.States.SlowRef,
-        _PSConst.OpMode.MigWfm: _PSConst.States.SlowRef,
-        _PSConst.OpMode.FastRef: _PSConst.States.SlowRef,
+        _c.OpMode.SlowRef: _c.States.SlowRef,
+        _c.OpMode.SlowRefSync: _c.States.SlowRefSync,
+        _c.OpMode.Cycle: _c.States.Cycle,
+        _c.OpMode.RmpWfm: _c.States.SlowRef,
+        _c.OpMode.MigWfm: _c.States.SlowRef,
+        _c.OpMode.FastRef: _c.States.SlowRef,
     }
 
     def __init__(self, ps_status=0):
@@ -140,21 +139,21 @@ class PSCStatus:
     def ioc_pwrstate(self):
         """Return ioc-controller power state."""
         state = self.state
-        if state in (_PSConst.States.Off,
-                     _PSConst.States.Interlock):
-            pwrstate = _PSConst.PwrState.Off
+        if state in (_c.States.Off,
+                     _c.States.Interlock):
+            pwrstate = _c.PwrState.Off
         else:
-            pwrstate = _PSConst.PwrState.On
+            pwrstate = _c.PwrState.On
         return pwrstate
 
     @ioc_pwrstate.setter
     def ioc_pwrstate(self, value):
         """Set ps_status with a given ioc-controller power state."""
-        if not (0 <= value < len(_ps_pwrstate_sel)):
+        if not (0 <= value < len(_et.PWRSTATE_SEL)):
             raise ValueError('Invalid pwrstate value!')
         # TurnOn sets Opmode to SlowRef by default.
-        state = _PSConst.States.Off if value == _PSConst.PwrState.Off else \
-            _PSConst.States.SlowRef
+        state = _c.States.Off if value == _c.PwrState.Off else \
+            _c.States.SlowRef
         self.state = state
 
     @property
@@ -167,7 +166,7 @@ class PSCStatus:
     @ioc_opmode.setter
     def ioc_opmode(self, value):
         """Set ps_status with a given ioc-controller opmode."""
-        if not (0 <= value < len(_ps_opmode)):
+        if not (0 <= value < len(_et.OPMODES)):
             raise ValueError('Invalid opmode value!')
         state = PSCStatus._ioc2psc_state[value]
         self.state = state

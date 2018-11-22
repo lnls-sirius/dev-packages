@@ -2,7 +2,9 @@
 
 from copy import deepcopy as _dcopy
 from siriuspy.util import get_namedtuple as _get_namedtuple
+from siriuspy.csdevice.util import ETypes as _et
 from siriuspy.search import HLTimeSearch as _HLTimeSearch
+
 
 events_hl2ll_map = {
     'Linac': 'Evt01', 'InjBO': 'Evt02',
@@ -29,8 +31,8 @@ del(i, events_ll_codes, events_ll_names)  # cleanup class namespace
 events_modes = _get_namedtuple(
                 'EvtModes',
                 ('Disabled', 'Continuous', 'Injection', 'External'))
-events_delay_types = _get_namedtuple('EvtDlyTyp', ('Fixed', 'Incr'))
-clocks_states = _get_namedtuple('ClockState', ('Dsbl', 'Enbl'))
+events_delay_types = _get_namedtuple('EvtDlyTyp', _et.FIXED_INCR)
+clocks_states = _get_namedtuple('ClockState', _et.DSBL_ENBL)
 
 clocks_ll_tmp = 'Clock{0:d}'
 clocks_hl_tmp = 'Clock{0:d}'
@@ -43,10 +45,10 @@ del(i)  # cleanup class namespace
 
 clocks_ll2hl_map = {val: key for key, val in clocks_hl2ll_map.items()}
 
-triggers_states = _get_namedtuple('TrigStates', ('Dsbl', 'Enbl'))
-triggers_intlk = _get_namedtuple('TrigIntlk', ('Dsbl', 'Enbl'))
-triggers_polarities = _get_namedtuple('TrigPol', ('Normal', 'Inverse'))
-triggers_delay_types = _get_namedtuple('TrigDlyTyp', ('Fixed', 'Incr'))
+triggers_states = _get_namedtuple('TrigStates', _et.DSBL_ENBL)
+triggers_intlk = _get_namedtuple('TrigIntlk', _et.DSBL_ENBL)
+triggers_polarities = _get_namedtuple('TrigPol', _et.NORM_INV)
+triggers_delay_types = _get_namedtuple('TrigDlyTyp', _et.FIXED_INCR)
 triggers_src_ll = _get_namedtuple(
                         'TrigSrcLL',
                         ('Dsbl',  'Trigger', 'Clock0', 'Clock1', 'Clock2',
@@ -185,7 +187,7 @@ def get_evr_database(evr_num=1, prefix=None):
     prefix = def_prefix if prefix is None else prefix
     db = dict()
 
-    dic_ = {'type': 'enum', 'value': 0, 'enums': ('Dsbl', 'Enbl')}
+    dic_ = {'type': 'enum', 'value': 0, 'enums': _et.DSBL_ENBL}
     db[prefix+'DevEnbl-Sts'] = dic_
     db[prefix+'DevEnbl-Sel'] = _dcopy(dic_)
 
@@ -201,15 +203,15 @@ def get_evr_database(evr_num=1, prefix=None):
 
     db[prefix+'Network-Mon'] = {
             'type': 'enum', 'value': 1,
-            'enums': ('Disconnected', 'Connected')}
+            'enums': _et.DISCONN_CONN}
 
     db[prefix+'Link-Mon'] = {
             'type': 'enum', 'value': 1,
-            'enums': ('Unlink', 'Link')}
+            'enums': _et.UNLINK_LINK}
 
     db[prefix+'Intlk-Mon'] = {
             'type': 'enum', 'value': 0,
-            'enums': ('Dsbl', 'Enbl')}
+            'enums': _et.DSBL_ENBL}
 
     for i in range(24):
         db2 = get_otp_database(otp_num=i)
@@ -230,7 +232,7 @@ def get_eve_database(eve_num=1, prefix=None):
     prefix = def_prefix if prefix is None else prefix
     db = dict()
 
-    dic_ = {'type': 'enum', 'value': 0, 'enums': ('Dsbl', 'Enbl')}
+    dic_ = {'type': 'enum', 'value': 0, 'enums': _et.DSBL_ENBL}
     db[prefix+'DevEnbl-Sts'] = dic_
     db[prefix+'DevEnbl-Sel'] = _dcopy(dic_)
 
@@ -246,15 +248,15 @@ def get_eve_database(eve_num=1, prefix=None):
 
     db[prefix+'Network-Mon'] = {
             'type': 'enum', 'value': 1,
-            'enums': ('Disconnected', 'Connected')}
+            'enums': _et.DISCONN_CONN}
 
     db[prefix+'Link-Mon'] = {
             'type': 'enum', 'value': 1,
-            'enums': ('Unlink', 'Link')}
+            'enums': _et.UNLINK_LINK}
 
     db[prefix+'Intlk-Mon'] = {
             'type': 'enum', 'value': 0,
-            'enums': ('Dsbl', 'Enbl')}
+            'enums': _et.DSBL_ENBL}
 
     for i in range(16):
         db2 = get_otp_database(otp_num=i)
@@ -277,7 +279,7 @@ def get_afc_database(afc_sec=1, has_idx=False, idx=1, prefix=None):
 
     prefix = def_prefix if prefix is None else prefix
     db = dict()
-    dic_ = {'type': 'enum', 'value': 0, 'enums': ('Dsbl', 'Enbl')}
+    dic_ = {'type': 'enum', 'value': 0, 'enums': _et.DSBL_ENBL}
     db[prefix+'DevEnbl-Sts'] = dic_
     db[prefix+'DevEnbl-Sel'] = _dcopy(dic_)
 
@@ -293,15 +295,15 @@ def get_afc_database(afc_sec=1, has_idx=False, idx=1, prefix=None):
 
     db[prefix+'Network-Mon'] = {
             'type': 'enum', 'value': 1,
-            'enums': ('Disconnected', 'Connected')}
+            'enums': _et.DISCONN_CONN}
 
     db[prefix+'Link-Mon'] = {
             'type': 'enum', 'value': 1,
-            'enums': ('Unlink', 'Link')}
+            'enums': _et.UNLINK_LINK}
 
     db[prefix+'Intlk-Mon'] = {
             'type': 'enum', 'value': 0,
-            'enums': ('Dsbl', 'Enbl')}
+            'enums': _et.DSBL_ENBL}
 
     for i in range(8):
         db2 = get_afc_out_database(out_num=i, out_tp='CRT')
@@ -322,7 +324,7 @@ def get_fout_database(fout_num=1, prefix=None):
     prefix = def_prefix if prefix is None else prefix
     db = dict()
 
-    dic_ = {'type': 'enum', 'value': 0, 'enums': ('Dsbl', 'Enbl')}
+    dic_ = {'type': 'enum', 'value': 0, 'enums': _et.DSBL_ENBL}
     db[prefix+'DevEnbl-Sts'] = dic_
     db[prefix+'DevEnbl-Sel'] = _dcopy(dic_)
 
@@ -338,15 +340,15 @@ def get_fout_database(fout_num=1, prefix=None):
 
     db[prefix+'Network-Mon'] = {
             'type': 'enum', 'value': 1,
-            'enums': ('Disconnected', 'Connected')}
+            'enums': _et.DISCONN_CONN}
 
     db[prefix+'Link-Mon'] = {
             'type': 'enum', 'value': 1,
-            'enums': ('Unlink', 'Link')}
+            'enums': _et.UNLINK_LINK}
 
     db[prefix+'Intlk-Mon'] = {
             'type': 'enum', 'value': 0,
-            'enums': ('Dsbl', 'Enbl')}
+            'enums': _et.DSBL_ENBL}
 
     return db
 
@@ -398,11 +400,11 @@ def get_evg_database(prefix=None, only_evg=False):
     prefix = def_prefix if prefix is None else prefix
     db = dict()
 
-    dic_ = {'type': 'enum', 'value': 0, 'enums': ('Dsbl', 'Enbl')}
+    dic_ = {'type': 'enum', 'value': 0, 'enums': _et.DSBL_ENBL}
     db[prefix+'DevEnbl-Sts'] = dic_
     db[prefix+'DevEnbl-Sel'] = _dcopy(dic_)
 
-    dic_ = {'type': 'enum', 'enums': ('Dsbl', 'Enbl'), 'value': 0}
+    dic_ = {'type': 'enum', 'enums': _et.DSBL_ENBL, 'value': 0}
     db[prefix + 'ContinuousEvt-Sel'] = _dcopy(dic_)
     db[prefix + 'ContinuousEvt-Sts'] = dic_
 
@@ -417,7 +419,7 @@ def get_evg_database(prefix=None, only_evg=False):
         'lolo': 0, 'low': 0, 'lolim': 0,
         'hilim': 864, 'high': 864, 'hihi': 864}
 
-    dic_ = {'type': 'enum', 'enums': ('Dsbl', 'Enbl'), 'value': 0}
+    dic_ = {'type': 'enum', 'enums': _et.DSBL_ENBL, 'value': 0}
     db[prefix + 'InjectionEvt-Sel'] = _dcopy(dic_)
     db[prefix + 'InjectionEvt-Sts'] = dic_
 
@@ -451,7 +453,7 @@ def get_evg_database(prefix=None, only_evg=False):
 
     db[prefix+'Network-Mon'] = {
             'type': 'enum', 'value': 1,
-            'enums': ('Disconnected', 'Connected')}
+            'enums': _et.DISCONN_CONN}
 
     db[prefix+'RFStatus-Mon'] = {
             'type': 'enum', 'value': 1,

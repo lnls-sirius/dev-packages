@@ -1,11 +1,21 @@
 """Define PVs, contants and properties of all OpticsCorr SoftIOCs."""
 import collections as _collections
 from siriuspy.csdevice import util as _cutil
+from siriuspy.csdevice.util import ETypes as _ETypes
 
 
-OFFONTYP = ('Off', 'On')
-PROPADDTYP = ('Proportional', 'Additional')
+# --- Enumeration Types ---
 
+class ETypes(_ETypes):
+    """Local enumerate types."""
+
+    PROP_ADD = ('Proportional', 'Additional')
+
+
+_et = ETypes  # syntatic sugar
+
+
+# --- Const class ---
 
 class Const:
     """Const class defining OpticsCorr constants and Enum types."""
@@ -23,10 +33,10 @@ class Const:
     @staticmethod
     def _init():
         """Create class constants."""
-        for i in range(len(PROPADDTYP)):
-            Const._add_const('CorrMeth', PROPADDTYP[i], i)
-        for i in range(len(OFFONTYP)):
-            Const._add_const('SyncCorr', OFFONTYP[i], i)
+        for i in range(len(_et.PROP_ADD)):
+            Const._add_const('CorrMeth', _et.PROP_ADD[i], i)
+        for i in range(len(_et.OFF_ON)):
+            Const._add_const('SyncCorr', _et.OFF_ON[i], i)
 
     @staticmethod
     def _add_const(group, const, i):
@@ -87,13 +97,15 @@ def get_chrom_database(acc):
             'lolim': 0, 'hilim': 0, 'low': 0, 'high': 0, 'lolo': 0, 'hihi': 0}
 
     if acc == 'SI':
-        pvs_database['CorrMeth-Sel'] = {'type': 'enum', 'enums': PROPADDTYP,
+        pvs_database['CorrMeth-Sel'] = {'type': 'enum',
+                                        'enums': _et.PROP_ADD,
                                         'value': Const.CorrMeth.Proportional}
-        pvs_database['CorrMeth-Sts'] = {'type': 'enum', 'enums': PROPADDTYP,
+        pvs_database['CorrMeth-Sts'] = {'type': 'enum',
+                                        'enums': _et.PROP_ADD,
                                         'value': Const.CorrMeth.Proportional}
-        pvs_database['SyncCorr-Sel'] = {'type': 'enum', 'enums': OFFONTYP,
+        pvs_database['SyncCorr-Sel'] = {'type': 'enum', 'enums': _et.OFF_ON,
                                         'value': Const.SyncCorr.Off}
-        pvs_database['SyncCorr-Sts'] = {'type': 'enum', 'enums': OFFONTYP,
+        pvs_database['SyncCorr-Sts'] = {'type': 'enum', 'enums': _et.OFF_ON,
                                         'value': Const.SyncCorr.Off}
         pvs_database['ConfigTiming-Cmd'] = {'type': 'int', 'value': 0}
 
@@ -165,13 +177,15 @@ def get_tune_database(acc):
             'lolim': 0, 'hilim': 0, 'low': 0, 'high': 0, 'lolo': 0, 'hihi': 0}
 
     if acc == 'SI':
-        pvs_database['CorrMeth-Sel'] = {'type': 'enum', 'enums': PROPADDTYP,
+        pvs_database['CorrMeth-Sel'] = {'type': 'enum',
+                                        'enums': _et.PROP_ADD,
                                         'value': Const.CorrMeth.Proportional}
-        pvs_database['CorrMeth-Sts'] = {'type': 'enum', 'enums': PROPADDTYP,
+        pvs_database['CorrMeth-Sts'] = {'type': 'enum',
+                                        'enums': _et.PROP_ADD,
                                         'value': Const.CorrMeth.Proportional}
-        pvs_database['SyncCorr-Sel'] = {'type': 'enum', 'enums': OFFONTYP,
+        pvs_database['SyncCorr-Sel'] = {'type': 'enum', 'enums': _et.OFF_ON,
                                         'value': Const.SyncCorr.Off}
-        pvs_database['SyncCorr-Sts'] = {'type': 'enum', 'enums': OFFONTYP,
+        pvs_database['SyncCorr-Sts'] = {'type': 'enum', 'enums': _et.OFF_ON,
                                         'value': Const.SyncCorr.Off}
         pvs_database['ConfigTiming-Cmd'] = {'type': 'int', 'value': 0}
 
