@@ -11,7 +11,7 @@ class ETypes(_cutil.ETypes):
     BUFFAUTORSTTYP = ('PVsTrig', 'DCurrCheck', 'Off')
 
 
-_et = ETypes  # syntatic sugar
+_et = ETypes  # syntactic sugar
 
 
 # --- Const class ---
@@ -24,7 +24,7 @@ class Const(_cutil.Const):
     BuffAutoRst = _cutil.Const.register('BuffAutoRst', _et.BUFFAUTORSTTYP)
 
 
-_c = Const  # syntacti sugar
+_c = Const  # syntactic sugar
 
 
 # --- Databases ---

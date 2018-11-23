@@ -16,10 +16,10 @@ class ETypes(_cutil.ETypes):
     SI_QFAMS_TUNECORR = ('QFA', 'QFB', 'QFP',
                          'QDA', 'QDB1', 'QDB2', 'QDP1', 'QDP2')
     STATUS_LABELS = ('MA Connection', 'MA PwrState', 'MA OpMode',
-                    'MA CtrlMode', 'Timing Config')
+                     'MA CtrlMode', 'Timing Config')
 
 
-_et = ETypes  # syntatic sugar
+_et = ETypes  # syntactic sugar
 
 
 # --- Const class ---

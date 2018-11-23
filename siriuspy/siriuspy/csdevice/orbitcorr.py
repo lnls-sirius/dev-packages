@@ -29,7 +29,7 @@ class ETypes(_cutil.ETypes):
     STATUS_LABELS = ('Corrs', 'Matrix', 'Orbit', 'Global')
 
 
-_et = ETypes  # syntatic sugar
+_et = ETypes  # syntactic sugar
 
 
 # --- Const class ---
@@ -95,10 +95,7 @@ class ConstTLines(Const):
          ('Ok', 'Not Ok')))
 
 
-# _c = Const  # syntatic sugar
-
-
-# --- Database class ---
+# --- Database classes ---
 
 class _OrbitCorrDev:
     """OrbitCorrDev class."""
