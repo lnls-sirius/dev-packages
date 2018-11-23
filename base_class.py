@@ -6,7 +6,7 @@ from siriuspy.callbacks import Callback as _Callback
 
 
 class BaseClass(_Callback):
-    """Base Class..."""
+    """Base Class."""
 
     def __init__(self, acc, prefix='', callback=None):
         """Init method."""
@@ -58,8 +58,10 @@ class BaseClass(_Callback):
 
 
 class BaseTimingConfig:
+    """Base timing configuration class."""
 
     def __init__(self, acc):
+        """Init method."""
         self._csorb = _OrbitCorrDevFactory.create(acc)
         self._config_ok_vals = {}
         self._config_pvs_rb = {}
@@ -67,6 +69,7 @@ class BaseTimingConfig:
 
     @property
     def connected(self):
+        """Status connected."""
         conn = True
         for k, pv in self._config_pvs_rb.items():
             conn &= pv.connected
@@ -76,6 +79,7 @@ class BaseTimingConfig:
 
     @property
     def is_ok(self):
+        """Ok status."""
         ok = True
         for k, val in self._config_ok_vals.items():
             pv = self._config_pvs_rb[k]
@@ -89,6 +93,7 @@ class BaseTimingConfig:
         return ok
 
     def configure(self):
+        """Configure method."""
         if not self.connected:
             return False
         for k, pv in self._config_pvs_sp.items():
