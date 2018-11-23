@@ -1,42 +1,53 @@
 """Definition module."""
 import math as _math
-from siriuspy.csdevice.orbitcorr import OrbitCorrDev
+from siriuspy.csdevice.orbitcorr import OrbitCorrDevFactory as \
+    _OrbitCorrDevFactory
 from siriuspy.callbacks import Callback as _Callback
 
 
 class BaseClass(_Callback):
+    """Base Class..."""
+
     def __init__(self, acc, prefix='', callback=None):
+        """Init method."""
         super().__init__(callback)
-        self._csorb = OrbitCorrDev(acc)
+        self._csorb = _OrbitCorrDevFactory.create(acc)
         self._prefix = prefix
         self._status = 0b0
         self._isring = self._csorb.acc_idx in self._csorb.Rings
 
     @property
     def prefix(self):
+        """Prefix."""
         return self._prefix
 
     @property
     def acc(self):
+        """Accelerator name."""
         return self._csorb.acc
 
     @property
     def acc_idx(self):
+        """Accelerator index."""
         return self._csorb.acc_idx
 
     @property
     def isring(self):
+        """Ring accelerator status."""
         return self._isring
 
     @property
     def status(self):
+        """Status."""
         self._update_status()
         return self._status
 
     def run_callbacks(self, pvname, *args, **kwargs):
+        """Run callback functions."""
         super().run_callbacks(self._prefix + pvname, *args, **kwargs)
 
     def get_database(self, db):
+        """Return database."""
         return {self.prefix + k: v for k, v in db.items()}
 
     def _update_log(self, value):
@@ -49,7 +60,7 @@ class BaseClass(_Callback):
 class BaseTimingConfig:
 
     def __init__(self, acc):
-        self._csorb = OrbitCorrDev(acc)
+        self._csorb = _OrbitCorrDevFactory.create(acc)
         self._config_ok_vals = {}
         self._config_pvs_rb = {}
         self._config_pvs_sp = {}
