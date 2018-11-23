@@ -1,5 +1,6 @@
 """Define PVs, contants and properties of all OpticsCorr SoftIOCs."""
 import collections as _collections
+from siriuspy.csdevice import util as _cutil
 
 
 OFFONTYP = ('Off', 'On')
@@ -96,6 +97,7 @@ def get_chrom_database(acc):
                                         'value': Const.SyncCorr.Off}
         pvs_database['ConfigTiming-Cmd'] = {'type': 'int', 'value': 0}
 
+    pvs_database = _cutil.add_pvslist_cte(pvs_database)
     return pvs_database
 
 
@@ -173,4 +175,5 @@ def get_tune_database(acc):
                                         'value': Const.SyncCorr.Off}
         pvs_database['ConfigTiming-Cmd'] = {'type': 'int', 'value': 0}
 
+    pvs_database = _cutil.add_pvslist_cte(pvs_database)
     return pvs_database

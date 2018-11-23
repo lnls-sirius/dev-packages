@@ -1,4 +1,4 @@
-"""Enumtypes module."""
+"""Util module."""
 
 import types as _types
 import copy as _copy
@@ -82,3 +82,17 @@ for k, v in EnumTypes._types.items():
     for i in range(len(v)):
         setattr(EnumTypes.idx, v[i], i)
 del(k, v, i)
+
+
+def add_pvslist_cte(database):
+    """Add PVsList-Cte."""
+    pvslist_cte_name = 'Properties-Cte'
+    keys = list(database.keys())
+    keys.append(pvslist_cte_name)
+    keys = sorted(keys)
+    database[pvslist_cte_name] = {
+        'type': 'string',
+        'count': len(keys),
+        'value': keys,
+    }
+    return database

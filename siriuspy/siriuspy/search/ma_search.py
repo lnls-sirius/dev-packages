@@ -149,20 +149,6 @@ class MASearch:
             return [maname.replace(':PM', ':PU')]
         return [maname.replace(':MA', ':PS')]
 
-    # @staticmethod
-    # def conv_psname_2_maname(psname):
-    #     """Return maname for a given psname.
-    #
-    #         The maname returned is the name of the magnet or magnet family
-    #     whose magnet instances has/have coil(s) excited by the given power
-    #     supply name. For SI and BO dipoles are exceptions.
-    #     """
-    #     manames = MASearch.get_manames()
-    #     for maname in manames:
-    #         if psname in MASearch._maname_2_psnames_dict[maname]:
-    #             return maname
-    #     return None
-
     @staticmethod
     def conv_psname_2_psmaname(psname):
         """Return power supply maname for a given psname."""
@@ -178,16 +164,17 @@ class MASearch:
         else:
             return psname.replace('PS', 'MA').replace('PU', 'PM')
 
-    # @staticmethod
-    # def check_maname_ispulsed(maname):
-    #     """Return True if psname is a pulsed power supply, False otherwise."""
-    #     devname = _SiriusPVName(maname)
-    #     if devname.dis == 'PM':
-    #         return True
-    #     elif devname.dis == 'MA':
-    #         return False
-    #     else:
-    #         raise KeyError('Invalid maname "' + maname + '"!')
+    @staticmethod
+    def conv_bbbname_2_psmanames(bbbname):
+        """Return psmanames for a given bbbname."""
+        manames = set()
+        psnames = _PSSearch.conv_bbbname_2_psnames(bbbname)
+        for psname in psnames:
+            maname = MASearch.conv_psname_2_psmaname(psname[0])
+            if maname is None:
+                continue
+            manames.add(maname)
+        return list(manames)
 
     @staticmethod
     def get_maname_2_splims_dict():
@@ -261,7 +248,7 @@ class MASearch:
 
     @staticmethod
     def _reload_maname_2_model_data():
-        'Build a dictionary of model information for each magnet.'
+        """Build a dictionary of model information for each magnet."""
         if not _web.server_online():
             raise Exception(
                 'could not read magnet-excitation-ps from web server!')

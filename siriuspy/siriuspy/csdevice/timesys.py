@@ -72,7 +72,7 @@ class Const:
 
 
 def get_otp_database(otp_num=0, prefix=None):
-    """Metod get_otp_database."""
+    """Return otp_database."""
     def_prefix = 'OTP{0:02d}'.format(otp_num)
     prefix = def_prefix if prefix is None else prefix
     db = dict()
@@ -121,7 +121,7 @@ def get_otp_database(otp_num=0, prefix=None):
 
 
 def get_out_database(out_num=0, equip='EVR', prefix=None):
-    """Method get_out_database."""
+    """Return out_database."""
     def_prefix = 'OUT{0:d}'.format(out_num)
     prefix = def_prefix if prefix is None else prefix
     db = dict()
@@ -161,7 +161,7 @@ def get_out_database(out_num=0, equip='EVR', prefix=None):
 
 
 def get_afc_out_database(out_num=0, out_tp='FMC', prefix=None):
-    """Method get_afc_database."""
+    """Return afc_database."""
     def_prefix = (out_tp + '{0:d}'.format(out_num))
     if out_tp == 'FMC':
         fmc = (out_num // 5) + 1
@@ -180,7 +180,7 @@ def get_afc_out_database(out_num=0, out_tp='FMC', prefix=None):
 
 
 def get_evr_database(evr_num=1, prefix=None):
-    """Method get_evr_database."""
+    """Return evr_database."""
     def_prefix = 'AS-Glob:TI-EVR-{0:d}:'.format(evr_num)
     prefix = def_prefix if prefix is None else prefix
     db = dict()
@@ -225,7 +225,7 @@ def get_evr_database(evr_num=1, prefix=None):
 
 
 def get_eve_database(eve_num=1, prefix=None):
-    """Method get_eve_database."""
+    """Return eve_database."""
     def_prefix = 'AS-Glob:TI-EVE-{0:d}:'.format(eve_num)
     prefix = def_prefix if prefix is None else prefix
     db = dict()
@@ -270,7 +270,7 @@ def get_eve_database(eve_num=1, prefix=None):
 
 
 def get_afc_database(afc_sec=1, has_idx=False, idx=1, prefix=None):
-    """Method get_adc_database."""
+    """Return adc_database."""
     def_prefix = 'AS-{0:02d}:TI-AMCFPGAEVR:'.format(afc_sec)
     if has_idx:
         def_prefix = 'AS-{0:02d}:TI-AMCFPGAEVR-{1:d}:'.format(afc_sec, idx)
@@ -317,7 +317,7 @@ def get_afc_database(afc_sec=1, has_idx=False, idx=1, prefix=None):
 
 
 def get_fout_database(fout_num=1, prefix=None):
-    """Method get_fout_database."""
+    """Return fout_database."""
     def_prefix = 'AS-Glob:TI-Fout-{0:d}:'.format(fout_num)
     prefix = def_prefix if prefix is None else prefix
     db = dict()
@@ -352,7 +352,7 @@ def get_fout_database(fout_num=1, prefix=None):
 
 
 def get_event_database(evt_num=0, prefix=None):
-    """Method get_event_database."""
+    """Return event_database."""
     def_prefix = 'Evt{0:02d}'.format(evt_num)
     prefix = def_prefix if prefix is None else prefix
 
@@ -376,7 +376,7 @@ def get_event_database(evt_num=0, prefix=None):
 
 
 def get_clock_database(clock_num=0, prefix=None):
-    """Method get_clock_database."""
+    """Return clock_database."""
     def_prefix = 'Clock{0:d}'.format(clock_num)
     prefix = def_prefix if prefix is None else prefix
     db = dict()
@@ -393,7 +393,7 @@ def get_clock_database(clock_num=0, prefix=None):
 
 
 def get_evg_database(prefix=None, only_evg=False):
-    """Method get_evg_database."""
+    """Return evg_database."""
     def_prefix = 'AS-Glob:TI-EVG:'
     prefix = def_prefix if prefix is None else prefix
     db = dict()

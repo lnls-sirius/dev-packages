@@ -3,6 +3,7 @@ import os as _os
 from copy import deepcopy as _dcopy
 from siriuspy.util import get_namedtuple as _get_namedtuple
 import siriuspy.csdevice.bpms as _csbpm
+from siriuspy.csdevice import util as _cutil
 from siriuspy.search.ma_search import MASearch as _MASearch
 from siriuspy.search.ll_time_search import LLTimeSearch as _TISearch
 from siriuspy.search.hl_time_search import HLTimeSearch as _HLTISearch
@@ -10,6 +11,7 @@ from siriuspy.search.bpms_search import BPMSearch as _BPMSearch
 
 
 class OrbitCorrDev:
+    """OrbitCorrDev class."""
 
     EVG_NAME = _TISearch.get_device_names({'dev': 'EVG'})[0]
     ORBIT_CONVERSION_UNIT = 1/1000  # from nm to um
@@ -27,6 +29,7 @@ class OrbitCorrDev:
     TransportLines = _get_namedtuple('TransportLines', ('TB', 'TS'), (0, 1))
 
     def __init__(self, acc):
+        """Init method."""
         self.acc = acc.upper()
         self.acc_idx = self.Accelerators._fields.index(self.acc)
         self.BPM_NAMES = _BPMSearch.get_names({'sec': acc})
@@ -101,10 +104,12 @@ class OrbitCorrDev:
         self.NR_SING_VALS = min(self.NR_CORRS, 2 * self.NR_BPMS)
 
     def get_ioc_database(self, prefix=''):
+        """Return IOC database."""
         db = self.get_sofb_database(prefix)
         db.update(self.get_corrs_database(prefix))
         db.update(self.get_respmat_database(prefix))
         db.update(self.get_orbit_database(prefix))
+        db = _cutil.add_pvslist_cte(db)
         return db
 
     def get_sofb_database(self, prefix=''):
@@ -263,6 +268,7 @@ class OrbitCorrDev:
         return self._add_prefix(db, db_ring, prefix)
 
     def get_orbit_database(self, prefix=''):
+        """Return Orbit database."""
         nbpm = self.NR_BPMS
         evt = 'Dig' + self.acc
         pvs = [
