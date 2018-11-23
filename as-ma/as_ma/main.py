@@ -126,8 +126,8 @@ class App:
         pvname = pvname.replace("PU-", "PM-").replace(":PS-", ":MA-")
         # pvname = pvname.replace(_pvs._PREFIX_VACA, "")
         # *parts, reason = pvname.split(_pvs._PREFIX_VACA)
-        if _pvs._PREFIX_SECTOR:
-            *parts, reason = pvname.split(_pvs._PREFIX_SECTOR)
+        if _pvs._PREFIX_VACA:
+            *parts, reason = pvname.split(_pvs._PREFIX_VACA)
         else:
             reason = pvname
         self._driver.setParam(reason, value)
