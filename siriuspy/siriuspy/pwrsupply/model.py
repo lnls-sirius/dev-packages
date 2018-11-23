@@ -423,7 +423,7 @@ class MAEpics(PSEpics):
             if 'Energy' in pvname:
                 pvname_ps = pvname.replace('Energy', 'Current')
                 if n is None:
-                    n = _NormalizerFactory.factory(maname=self._maname)
+                    n = _NormalizerFactory.create(maname=self._maname)
                 currents = []
                 currents.append(db[pvname_ps]['hihi'])
                 currents.append(db[pvname_ps]['high'])
@@ -444,7 +444,7 @@ class MAEpics(PSEpics):
 
     def _get_normalizer(self, device_name):
         # Return Normalizer object
-        return _NormalizerFactory.factory(device_name)
+        return _NormalizerFactory.create(device_name)
 
     def _get_sync_obj(self, field):
         # Return SyncWrite or SyncRead object

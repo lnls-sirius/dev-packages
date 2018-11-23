@@ -98,7 +98,7 @@ class ConstTLines(Const):
 # --- Database classes ---
 
 class _OrbitCorrDev:
-    """OrbitCorrDev class."""
+    """Base private _OrbitCorrDev class."""
 
     def _init1(self, acc):
         """Init1 method."""
@@ -603,12 +603,12 @@ class OrbitCorrDevTLines(_OrbitCorrDev, ConstTLines):
         self._init2()
 
 
-class Factory(Const):
-    """OrbitCorrDev factory class."""
+class OrbitCorrDevFactory:
+    """Factory class for OrbitCorrDev objects."""
 
     @staticmethod
-    def get(acc):
-        """Get OrbitCorrDev object."""
+    def create(acc):
+        """Return appropriate OrbitCorrDev object."""
         acc = acc.upper()
         if acc in _et.RINGS:
             return OrbitCorrDevRings(acc)
