@@ -66,7 +66,7 @@ uninstall-tb-correctors: stop-tb-correctors
 
 
 
-install: install-tb-dipoles install-tb-quadrupoles install-tb-correctors
+install-services: install-tb-dipoles install-tb-quadrupoles install-tb-correctors
 
 stop: stop-tb-dipoles stop-tb-quadrupoles stop-tb-correctors
 
