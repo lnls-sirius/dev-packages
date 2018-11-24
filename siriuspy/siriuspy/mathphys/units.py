@@ -43,10 +43,11 @@ meter_2_mm = (_u.meter / mm)
 joule_2_eV = (joule / electron_volt)
 pascal_2_bar = pascal * 1.0e-5
 eV_2_GeV = (eV / GeV)
+joule_2_GeV = joule_2_eV * eV_2_GeV
 ev_2_joule = 1.0 / joule_2_eV
+GeV_2_eV = 1.0 / eV_2_GeV
 mrad_2_rad = 1.0 / rad_2_mrad
 mm_2_meter = 1.0 / meter_2_mm
-GeV_2_eV = 1.0 / eV_2_GeV
 
 
 # conversion functions
