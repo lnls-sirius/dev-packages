@@ -1,9 +1,15 @@
 #!/usr/bin/env python-sirius
 
+"""Siriuspy setup script."""
+
+
 from setuptools import setup, find_packages
 
-with open('VERSION','r') as _f:
+with open('VERSION', 'r') as _f:
     __version__ = _f.read().strip()
+
+with open('requirements.txt', 'r') as _f:
+    _requirements = _f.read().strip().split('\n')
 
 setup(
     name='siriuspy',
