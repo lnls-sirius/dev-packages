@@ -15,7 +15,7 @@ setup(
     name='siriuspy',
     version=__version__,
     author='lnls-sirius',
-    description='Sirius python packages',
+    description='Development packages for Sirius',
     url='https://github.com/lnls-sirius/dev-packages',
     download_url='https://github.com/lnls-sirius/dev-packages',
     license='GNU GPLv3',
