@@ -2,6 +2,8 @@
 import os as _os
 from copy import deepcopy as _dcopy
 from siriuspy.util import get_namedtuple as _get_namedtuple
+from siriuspy.mathphys import constants as _c
+from siriuspy.optics import constants as _oc
 import siriuspy.csdevice.bpms as _csbpm
 from siriuspy.csdevice import util as _cutil
 from siriuspy.search.ma_search import MASearch as _MASearch
@@ -79,8 +81,9 @@ class OrbitCorrDev:
                   'BPMs Connected', 'BPMs Enabled', 'BPMs Configured'),
                  ('Ok', 'Not Ok')))
             self.NR_CORRS = self.NR_CHCV + 1
-            self.C0 = (496.8 if self.acc == 'BO' else 518.396)  # in meter
-            self.T0 = self.C0 / 299792458 * 1000  # in milliseconds
+            self.C0 = (_oc.BO.circumference if self.acc == 'BO' else
+                       _oc.SI.circumference)  # in meter
+            self.T0 = self.C0 / _c.light_speed * 1000  # in milliseconds
         else:
             self.TRIGGER_NAME = 'AS-Glob:TI-BPM-TBTS:'
             self.OrbitMode = _get_namedtuple(
