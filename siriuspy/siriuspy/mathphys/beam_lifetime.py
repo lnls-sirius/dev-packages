@@ -8,7 +8,7 @@ from . import units as _u
 from . import beam_optics as _beam
 
 # Constant factors
-_ev_2_joule = 1 / _c.joule_2_eV
+_ev_2_joule = 1 / _u.joule_2_eV
 _mbar_2_pascal = 1.0e-3 / _u.pascal_2_bar
 
 _elastic_factor = (
