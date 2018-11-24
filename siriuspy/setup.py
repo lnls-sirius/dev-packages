@@ -25,6 +25,7 @@ setup(
         'Topic :: Scientific/Engineering'
     ],
     packages=find_packages(),
+    install_requires=_requirements,
     package_data={'siriuspy': ['VERSION']},
     test_suite='tests',
     zip_safe=False

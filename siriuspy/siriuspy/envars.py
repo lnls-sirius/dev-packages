@@ -29,6 +29,7 @@ folder_lnls_sirius_dev_packages = _os.path.join(
 folder_lnls_sirius_hla = _os.path.join(
     folder_lnls_sirius, 'hla')
 
+
 # --- support applications IPs/URLs ---
 
 server_url_rbac_auth = _os.environ.get(
