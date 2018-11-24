@@ -1,8 +1,9 @@
 #!/usr/bin/env python-sirius
+"""Siriuspy setup module."""
 
 from setuptools import setup, find_packages
 
-with open('VERSION','r') as _f:
+with open('VERSION', 'r') as _f:
     __version__ = _f.read().strip()
 
 setup(
@@ -20,6 +21,8 @@ setup(
     ],
     packages=find_packages(),
     package_data={'siriuspy': ['VERSION']},
+    data_files=[('siriuspy/mathphys/data',
+                 ['siriuspy/mathphys/data/d_touschek.npz'])],
     test_suite='tests',
     zip_safe=False
 )
