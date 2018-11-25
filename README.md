@@ -21,6 +21,7 @@ Python packages useful for the development of the Sirius control system.
 * ```siriuspy.diagnostics``` - Data structure corresponding to diagnostics elements.devices of the control system.
 * ```siriuspy.epics``` - Auxiliary classes for epics functionalities.
 * ```siriuspy.magnet``` - Classes and structures useful to represent magnet properties.
+* ```siriuspy.mathphys``` - Mathematical and physics constants and calculations.
 * ```siriuspy.namesys``` - Functionalities to deal with names for Sirius naming system.
 * ```siriuspy.optics``` - Constants, functions and data related to Sirius beam optics.
 * ```siriuspy.pwrsupply``` - Modules implementing representation of magnet power supplies.
