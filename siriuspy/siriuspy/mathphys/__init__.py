@@ -1,5 +1,8 @@
 """Math functions, physical constants and auxiliary functions."""
 
+
+# TODO: update subpackage with 2019 redefinition of SI base units and consts!
+
 from . import base_units
 from . import units
 from . import constants
