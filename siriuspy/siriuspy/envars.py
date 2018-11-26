@@ -29,6 +29,7 @@ folder_lnls_sirius_dev_packages = _os.path.join(
 folder_lnls_sirius_hla = _os.path.join(
     folder_lnls_sirius, 'hla')
 
+
 # --- support applications IPs/URLs ---
 
 server_url_rbac_auth = _os.environ.get(
@@ -49,6 +50,7 @@ server_url_configdb = _os.environ.get(
     'SIRIUS_URL_CONFIGDB',  default='http://sirius-configdb.lnls.br:8085')
 
 vaca_prefix = _os.environ.get('VACA_PREFIX',   default='')
+
 
 # --- repositories ---
 

@@ -23,7 +23,7 @@ class Magnet:
         self._family_name = _mutil.get_magnet_family_name(self._maname)
         self._magfunc = self._madata.magfunc(self._madata.psnames[0])
         self._mfmult = _magfuncs[self.magfunc]
-        self._strength_obj = _NormalizerFactory.factory(maname)
+        self._strength_obj = _NormalizerFactory.create(maname)
         self._strength_label = _util.get_strength_label(self._magfunc)
         self._strength_units = _util.get_strength_units(self._magfunc)
 

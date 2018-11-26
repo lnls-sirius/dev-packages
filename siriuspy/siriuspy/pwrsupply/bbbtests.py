@@ -84,7 +84,7 @@ def pruc_create(udcmodel, device_ids, simulate=False):
     pru, prucqueue = bbb_pru_and_prucqueue(simulate=simulate)
     pruc = PRUController(pru=pru,
                          prucqueue=prucqueue,
-                         udcmodel=ModelFactory.get(udcmodel),
+                         udcmodel=ModelFactory.create(udcmodel),
                          device_ids=device_ids,
                          processing=True,
                          scanning=True)
@@ -118,13 +118,13 @@ def bbbs_mix_pruc_create(simulate=False):
 
     pruc1 = PRUController(pru=pru,
                           prucqueue=prucqueue,
-                          udcmodel=ModelFactory.get('FBP_DCLink'),
+                          udcmodel=ModelFactory.create('FBP_DCLink'),
                           device_ids=(20, ),
                           processing=True,
                           scanning=True)
     pruc2 = PRUController(pru=pru,
                           prucqueue=prucqueue,
-                          udcmodel=ModelFactory.get('FBP'),
+                          udcmodel=ModelFactory.create('FBP'),
                           device_ids=BBB1_device_ids + BBB2_device_ids,
                           processing=True,
                           scanning=True)
