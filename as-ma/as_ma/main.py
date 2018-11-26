@@ -125,11 +125,11 @@ class App:
     def _mycallback(self, pvname, value, **kwargs):
         pvname = pvname.replace("PU-", "PM-").replace(":PS-", ":MA-")
         # pvname = pvname.replace(_pvs._PREFIX_VACA, "")
-        *parts, reason = pvname.split(_pvs._PREFIX_VACA)
-        # if _pvs._PREFIX_SECTOR:
-        #     *parts, reason = pvname.split(_pvs._PREFIX_SECTOR)
-        # else:
-        #     reason = pvname
+        # *parts, reason = pvname.split(_pvs._PREFIX_VACA)
+        if _pvs._PREFIX_VACA:
+            *parts, reason = pvname.split(_pvs._PREFIX_VACA)
+        else:
+            reason = pvname
         self._driver.setParam(reason, value)
         if 'hilim' in kwargs or 'lolim' in kwargs:
             self._driver.setParamInfo(reason, kwargs)
