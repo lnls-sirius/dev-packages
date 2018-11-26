@@ -11,10 +11,10 @@ from siriuspy.magnet import normalizer as _norm
 
 
 class NormalizerFactory:
-    """Creates normalizer objects."""
+    """Factory class for normalizer objects."""
 
     @staticmethod
-    def factory(maname):
+    def create(maname):
         """Return appropriate normalizer."""
         madata = _MAData(maname)
         magfunc = madata.magfunc(madata.psnames[0])

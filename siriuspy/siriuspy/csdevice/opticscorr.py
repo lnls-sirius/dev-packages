@@ -1,15 +1,13 @@
 """Define PVs, contants and properties of all OpticsCorr SoftIOCs."""
-import collections as _collections
 from siriuspy.csdevice import util as _cutil
 
 
-OFFONTYP = ('Off', 'On')
-PROPADDTYP = ('Proportional', 'Additional')
+# --- Enumeration Types ---
 
+class ETypes(_cutil.ETypes):
+    """Local enumerate types."""
 
-class Const:
-    """Const class defining OpticsCorr constants and Enum types."""
-
+    PROP_ADD = ('Proportional', 'Additional')
     BO_SFAMS_CHROMCORR = ('SF', 'SD')
     SI_SFAMS_CHROMCORR = ('SFA1', 'SFA2', 'SDA1', 'SDA2', 'SDA3',
                           'SFB1', 'SFB2', 'SDB1', 'SDB2', 'SDB3',
@@ -17,34 +15,34 @@ class Const:
     BO_QFAMS_TUNECORR = ('QF', 'QD')
     SI_QFAMS_TUNECORR = ('QFA', 'QFB', 'QFP',
                          'QDA', 'QDB1', 'QDB2', 'QDP1', 'QDP2')
-    STATUSLABELS = ('MA Connection', 'MA PwrState', 'MA OpMode',
-                    'MA CtrlMode', 'Timing Config')
-
-    @staticmethod
-    def _init():
-        """Create class constants."""
-        for i in range(len(PROPADDTYP)):
-            Const._add_const('CorrMeth', PROPADDTYP[i], i)
-        for i in range(len(OFFONTYP)):
-            Const._add_const('SyncCorr', OFFONTYP[i], i)
-
-    @staticmethod
-    def _add_const(group, const, i):
-        if not hasattr(Const, group):
-            setattr(Const, group, _collections.namedtuple(group, ''))
-        obj = getattr(Const, group)
-        setattr(obj, const, i)
+    STATUS_LABELS = ('MA Connection', 'MA PwrState', 'MA OpMode',
+                     'MA CtrlMode', 'Timing Config')
 
 
-Const._init()  # create class constants
+_et = ETypes  # syntactic sugar
+
+
+# --- Const class ---
+
+class Const(_cutil.Const):
+    """Const class defining OpticsCorr constants and Enum types."""
+
+    CorrMeth = _cutil.Const.register('CorrMeth', _et.PROP_ADD)
+    SyncCorr = _cutil.Const.register('SyncCorr', _et.OFF_ON)
+
+
+_c = Const  # syntactic sugar
+
+
+# --- Databases ---
 
 
 def get_chrom_database(acc):
     """Return OpticsCorr-Chrom Soft IOC database."""
     if acc == 'BO':
-        sfams = Const.BO_SFAMS_CHROMCORR
+        sfams = _et.BO_SFAMS_CHROMCORR
     elif acc == 'SI':
-        sfams = Const.SI_SFAMS_CHROMCORR
+        sfams = _et.SI_SFAMS_CHROMCORR
 
     corrmat_size = len(sfams)*2
 
@@ -78,7 +76,7 @@ def get_chrom_database(acc):
 
         'Status-Mon':       {'type': 'int', 'value': 0b11111},
         'StatusLabels-Cte': {'type': 'string', 'count': 5,
-                             'value': Const.STATUSLABELS},
+                             'value': _et.STATUS_LABELS},
     }
 
     for fam in sfams:
@@ -87,14 +85,16 @@ def get_chrom_database(acc):
             'lolim': 0, 'hilim': 0, 'low': 0, 'high': 0, 'lolo': 0, 'hihi': 0}
 
     if acc == 'SI':
-        pvs_database['CorrMeth-Sel'] = {'type': 'enum', 'enums': PROPADDTYP,
-                                        'value': Const.CorrMeth.Proportional}
-        pvs_database['CorrMeth-Sts'] = {'type': 'enum', 'enums': PROPADDTYP,
-                                        'value': Const.CorrMeth.Proportional}
-        pvs_database['SyncCorr-Sel'] = {'type': 'enum', 'enums': OFFONTYP,
-                                        'value': Const.SyncCorr.Off}
-        pvs_database['SyncCorr-Sts'] = {'type': 'enum', 'enums': OFFONTYP,
-                                        'value': Const.SyncCorr.Off}
+        pvs_database['CorrMeth-Sel'] = {'type': 'enum',
+                                        'enums': _et.PROP_ADD,
+                                        'value': _c.CorrMeth.Proportional}
+        pvs_database['CorrMeth-Sts'] = {'type': 'enum',
+                                        'enums': _et.PROP_ADD,
+                                        'value': _c.CorrMeth.Proportional}
+        pvs_database['SyncCorr-Sel'] = {'type': 'enum', 'enums': _et.OFF_ON,
+                                        'value': _c.SyncCorr.Off}
+        pvs_database['SyncCorr-Sts'] = {'type': 'enum', 'enums': _et.OFF_ON,
+                                        'value': _c.SyncCorr.Off}
         pvs_database['ConfigTiming-Cmd'] = {'type': 'int', 'value': 0}
 
     pvs_database = _cutil.add_pvslist_cte(pvs_database)
@@ -104,9 +104,9 @@ def get_chrom_database(acc):
 def get_tune_database(acc):
     """Return OpticsCorr-Tune Soft IOC database."""
     if acc == 'BO':
-        qfams = Const.BO_QFAMS_TUNECORR
+        qfams = _et.BO_QFAMS_TUNECORR
     elif acc == 'SI':
-        qfams = Const.SI_QFAMS_TUNECORR
+        qfams = _et.SI_QFAMS_TUNECORR
 
     corrmat_size = len(qfams)*2
 
@@ -153,7 +153,7 @@ def get_tune_database(acc):
 
         'Status-Mon':      {'type': 'int', 'value': 0b11111},
         'StatusLabels-Cte': {'type': 'string', 'count': 5,
-                             'value': Const.STATUSLABELS},
+                             'value': _et.STATUS_LABELS},
     }
 
     for fam in qfams:
@@ -165,14 +165,16 @@ def get_tune_database(acc):
             'lolim': 0, 'hilim': 0, 'low': 0, 'high': 0, 'lolo': 0, 'hihi': 0}
 
     if acc == 'SI':
-        pvs_database['CorrMeth-Sel'] = {'type': 'enum', 'enums': PROPADDTYP,
-                                        'value': Const.CorrMeth.Proportional}
-        pvs_database['CorrMeth-Sts'] = {'type': 'enum', 'enums': PROPADDTYP,
-                                        'value': Const.CorrMeth.Proportional}
-        pvs_database['SyncCorr-Sel'] = {'type': 'enum', 'enums': OFFONTYP,
-                                        'value': Const.SyncCorr.Off}
-        pvs_database['SyncCorr-Sts'] = {'type': 'enum', 'enums': OFFONTYP,
-                                        'value': Const.SyncCorr.Off}
+        pvs_database['CorrMeth-Sel'] = {'type': 'enum',
+                                        'enums': _et.PROP_ADD,
+                                        'value': _c.CorrMeth.Proportional}
+        pvs_database['CorrMeth-Sts'] = {'type': 'enum',
+                                        'enums': _et.PROP_ADD,
+                                        'value': _c.CorrMeth.Proportional}
+        pvs_database['SyncCorr-Sel'] = {'type': 'enum', 'enums': _et.OFF_ON,
+                                        'value': _c.SyncCorr.Off}
+        pvs_database['SyncCorr-Sts'] = {'type': 'enum', 'enums': _et.OFF_ON,
+                                        'value': _c.SyncCorr.Off}
         pvs_database['ConfigTiming-Cmd'] = {'type': 'int', 'value': 0}
 
     pvs_database = _cutil.add_pvslist_cte(pvs_database)

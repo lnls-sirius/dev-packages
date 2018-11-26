@@ -1,7 +1,13 @@
 """Define the PV database of a single BPM and its enum types."""
 from copy import deepcopy as _dcopy
 import numpy as _np
+from siriuspy.csdevice.util import ETypes as _et
 from siriuspy.util import get_namedtuple as _get_namedtuple
+
+
+# TODO: refactor this code as to make it closer in structure to all other
+# modules in csdevice subpackage
+
 
 TrigDir = _get_namedtuple('TrigDir', ('trn', 'rcv'))
 TrigDirPol = _get_namedtuple('TrigDirPol', ('same', 'rev'))
@@ -27,7 +33,7 @@ MonitEnbl = _get_namedtuple('MonitEnbl', ('No', 'Yes'))
 OpModes = _get_namedtuple('OpModes', ('MultiBunch', 'SinglePass'))
 Polarity = _get_namedtuple('Polarity', ('Positive', 'Negative'))
 EnblTyp = _get_namedtuple('EnblTyp', ('Disable', 'Enable'))
-ConnTyp = _get_namedtuple('ConnTyp', ('Disconnect', 'Connect'))
+ConnTyp = _get_namedtuple('ConnTyp', _et.DISCONN_CONN)
 AcqRepeat = _get_namedtuple('AcqRepeat', ('Normal', 'Repetitive'))
 AcqEvents = _get_namedtuple('AcqEvents', ('Start', 'Stop', 'Abort'))
 AcqDataTyp = _get_namedtuple('AcqDataTyp', ('A', 'B', 'C', 'D'))
