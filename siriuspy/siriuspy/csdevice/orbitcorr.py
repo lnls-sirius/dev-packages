@@ -26,7 +26,17 @@ class ETypes(_cutil.ETypes):
     TLINES = ('TB', 'TS')
     RINGS = ('BO', 'SI')
     ACCELERATORS = TLINES + RINGS
-    STATUS_LABELS = ('Corrs', 'Matrix', 'Orbit', 'Global')
+
+    STATUS_LABELS_CORRS_TLINES = (
+        'CHCVConnected', 'CHCVModeConfigured', 'CHCVPwrStateOn')
+    STATUS_LABELS_CORRS_RINGS = (
+        'CHCVConnected', 'CHCVModeConfigured', 'CHCVPwrStateOn',
+        'TimingConnected', 'TimingConfigured', 'RFConnected',
+        'RFPwrStateOn')
+    STATUS_LABELS_ORB = (
+        'TimingConnected', 'TimingConfigured', 'BPMsConnected',
+        'BPMsEnabled', 'BPMsConfigured')
+    STATUS_LABELS_GLOB = ('Ok', 'NotOk')
 
 
 _et = ETypes  # syntactic sugar
@@ -34,8 +44,8 @@ _et = ETypes  # syntactic sugar
 
 # --- Const class ---
 
-class Const(_cutil.Const):
-    """Const class defining global orbitcorr constants."""
+class ConstTLines(_cutil.Const):
+    """Const class defining transport lines orbitcorr constants."""
 
     EVG_NAME = _TISearch.get_device_names({'dev': 'EVG'})[0]
     ORBIT_CONVERSION_UNIT = 1/1000  # from nm to um
@@ -52,55 +62,43 @@ class Const(_cutil.Const):
     Rings = _cutil.Const.register('Rings', _et.RINGS, (2, 3))
     Accelerators = _cutil.Const.register('Accelerators', _et.ACCELERATORS)
 
+    TRIGGER_NAME = 'AS-Glob:TI-BPM-TBTS:'
 
-class ConstRings(Const):
+    OrbitMode = _cutil.Const.register('OrbitMode', _et.ORB_MODE_TLINES)
+    ApplyCorr = _cutil.Const.register('ApplyCorr', _et.APPLY_CORR_TLINES)
+    StatusLabelsCorrs = _cutil.Const.register(
+                        'StatusLabelsCorrs', _et.STATUS_LABELS_CORRS_TLINES)
+    StatusLabelsOrb = _cutil.Const.register(
+                        'StatusLabelsOrb', _et.STATUS_LABELS_ORB)
+    StatusLabelsGlob = _cutil.Const.register(
+                        'StatusLabelsGlob', _et.STATUS_LABELS_GLOB)
+
+
+class ConstRings(ConstTLines):
     """Const class defining rings orbitcorr constants."""
 
     TRIGGER_NAME = 'AS-Glob:TI-BPM-SIBO:'
+    OrbitMode = _cutil.Const.register('OrbitMode', _et.ORB_MODE_RINGS)
+    ApplyCorr = _cutil.Const.register('ApplyCorr', _et.APPLY_CORR_RINGS)
+    StatusLabelsCorrs = _cutil.Const.register(
+                        'StatusLabelsCorrs', _et.STATUS_LABELS_CORRS_RINGS)
+
+    # TODO: use correct name for the RF generator
     RF_GEN_NAME = 'AS-Glob:RF-Gen'
     RF_NOM_FREQ = 499458000.0
-
-    EnblRF = Const.register('EnblRF', _et.ENBL_RF)
-    OrbitMode = Const.register('OrbitMode', _et.ORB_MODE_RINGS)
-    ApplyCorr = Const.register('ApplyCorr', _et.APPLY_CORR_RINGS)
-    AutoCorr = Const.register('AutoCorr', _et.OFF_ON)
-    SyncKicks = Const.register('SyncKicks', _et.OFF_ON)
-    OrbitAcqChan = Const.register('OrbitAcqChan', _et.ORB_ACQ_CHAN)
+    EnblRF = _cutil.Const.register('EnblRF', _et.ENBL_RF)
+    AutoCorr = _cutil.Const.register('AutoCorr', _et.OFF_ON)
+    SyncKicks = _cutil.Const.register('SyncKicks', _et.OFF_ON)
+    OrbitAcqChan = _cutil.Const.register('OrbitAcqChan', _et.ORB_ACQ_CHAN)
     OrbitAcqDataChan = _csbpm.AcqChan
-    # TODO: use correct name for this device
-    StatusLabels = Const.register(
-        'StatusLabels', _et.STATUS_LABELS,
-        (('CHCV Connected', 'CHCV Mode Configured', 'CHCV PwrState On',
-          'Timing Connected', 'Timing Configured', 'RF Connected',
-          'RF PwrState On'),
-         ('', ),
-         ('Timing Connected', 'Timing Configured',
-          'BPMs Connected', 'BPMs Enabled', 'BPMs Configured'),
-         ('Ok', 'Not Ok')))
-
-
-class ConstTLines(Const):
-    """Const class defining transport lines orbitcorr constants."""
-
-    TRIGGER_NAME = 'AS-Glob:TI-BPM-TBTS:'
-
-    OrbitMode = Const.register('OrbitMode', _et.ORB_MODE_TLINES)
-    ApplyCorr = Const.register('ApplyCorr', _et.APPLY_CORR_TLINES)
-    StatusLabels = Const.register(
-        'StatusLabels', _et.STATUS_LABELS,
-        (('CHCV Connected', 'CHCV Mode Configured', 'CHCV PwrState On'),
-         ('', ),
-         ('Timing Connected', 'Timing Configured', 'BPMs Connected',
-          'BPMs Enabled', 'BPMs Configured'),
-         ('Ok', 'Not Ok')))
 
 
 # --- Database classes ---
 
-class _OrbitCorrDev:
-    """Base private _OrbitCorrDev class."""
+class OrbitCorrDevTLines(ConstTLines):
+    """OrbitCorrDev class for TLines."""
 
-    def _init1(self, acc):
+    def __init__(self, acc):
         """Init1 method."""
         self.acc = acc.upper()
         self.acc_idx = self.Accelerators._fields.index(self.acc)
@@ -124,8 +122,8 @@ class _OrbitCorrDev:
         ext = acc.lower() + 'respmat'
         self.RESPMAT_FILENAME = _os.path.join('data', 'respmat.'+ext)
 
-    def _init2(self):
-        """Init2 method."""
+        self.NR_CORRS = self.NR_CHCV + 1 if acc in _et.RINGS else self.NR_CHCV
+
         self.OrbitAcqExtEvtSrc = _get_namedtuple(
             'OrbitAcqExtEvtSrc',
             _HLTISearch.get_hl_trigger_sources(self.TRIGGER_NAME))
@@ -207,43 +205,10 @@ class _OrbitCorrDev:
                 'type': 'enum', 'enums': self.ApplyCorr._fields, 'value': 0,
                 'unit': 'Apply last calculated kicks.'},
             'Status-Mon': {
-                'type': 'enum', 'value': 1, 'enums': self.StatusLabels.Global}
+                'type': 'enum', 'value': 1,
+                'enums': self.StatusLabelsGlob._fields}
             }
-        db_ring = {
-            'AutoCorr-Sel': {
-                'type': 'enum', 'enums': self.AutoCorr._fields, 'value': 0},
-            'AutoCorr-Sts': {
-                'type': 'enum', 'enums': self.AutoCorr._fields, 'value': 0},
-            'AutoCorrFreq-SP': {
-                'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 3,
-                'lolim': 1e-3, 'hilim': 20},
-            'AutoCorrFreq-RB': {
-                'type': 'float', 'value': 1, 'prec': 2, 'unit': 'Hz'},
-            'MeasRespMatKickRF-SP': {
-                'type': 'float', 'value': 50, 'unit': 'Hz', 'prec': 3,
-                'lolim': 1, 'hilim': 400},
-            'MeasRespMatKickRF-RB': {
-                'type': 'float', 'value': 200, 'unit': 'Hz', 'prec': 3,
-                'lolim': 1, 'hilim': 400},
-            'CorrFactorRF-SP': {
-                'type': 'float', 'value': 100, 'unit': '%', 'prec': 2,
-                'lolim': -1000, 'hilim': 1000},
-            'CorrFactorRF-RB': {
-                'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
-            'MaxKickRF-SP': {
-                'type': 'float', 'value': 3000, 'unit': 'Hz', 'prec': 3,
-                'lolim': 0, 'hilim': 10000},
-            'MaxKickRF-RB': {
-                'type': 'float', 'value': 3000, 'prec': 2, 'unit': 'Hz',
-                'lolim': 0, 'hilim': 10000},
-            'MaxDeltaKickRF-SP': {
-                'type': 'float', 'value': 500, 'unit': 'Hz', 'prec': 3,
-                'lolim': 0, 'hilim': 10000},
-            'MaxDeltaKickRF-RB': {
-                'type': 'float', 'value': 500, 'prec': 2, 'unit': 'Hz',
-                'lolim': 0, 'hilim': 10000},
-            }
-        return self._add_prefix(db, db_ring, prefix)
+        return self._add_prefix(db, prefix)
 
     def get_corrs_database(self, prefix=''):
         """Return OpticsCorr-Chrom Soft IOC database."""
@@ -275,26 +240,10 @@ class _OrbitCorrDev:
                 'count': self.NR_CV, 'value': self.CV_NICKNAMES},
             'CorrStatus-Mon': {'type': 'short', 'value': 0b1111111},
             'CorrStatusLabels-Cte': {
-                'type': 'string', 'count': len(self.StatusLabels.Corrs),
-                'value': self.StatusLabels.Corrs}
+                'type': 'string', 'count': len(self.StatusLabelsCorrs._fields),
+                'value': self.StatusLabelsCorrs._fields}
             }
-        db_ring = {
-            'KicksRF-Mon': {
-                'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 3},
-            'NominalFreqRF-SP': {
-                'type': 'float', 'value': self.RF_NOM_FREQ, 'unit': 'Hz',
-                'prec': 3},
-            'NominalFreqRF-RB': {
-                'type': 'float', 'value': self.RF_NOM_FREQ, 'unit': 'Hz',
-                'prec': 3},
-            'SyncKicks-Sel': {
-                'type': 'enum', 'enums': self.SyncKicks._fields,
-                'value': self.SyncKicks.On},
-            'SyncKicks-Sts': {
-                'type': 'enum', 'enums': self.SyncKicks._fields,
-                'value': self.SyncKicks.On},
-            }
-        return self._add_prefix(db, db_ring, prefix)
+        return self._add_prefix(db, prefix)
 
     def get_orbit_database(self, prefix=''):
         """Return Orbit database."""
@@ -311,14 +260,6 @@ class _OrbitCorrDev:
             'OrbitOfflineY-SP', 'OrbitOfflineY-RB',
             'BPMOffsetsX-Mon', 'BPMOffsetsY-Mon',
             ]
-        pvs_ring = [
-            'OrbitRawX-Mon', 'OrbitRawY-Mon',
-            'OrbitSmoothX-Mon', 'OrbitSmoothY-Mon',
-            'OrbitMultiTurnX-Mon', 'OrbitMultiTurnY-Mon',
-            'OrbitMultiTurnSum-Mon',
-            ]
-        if self.acc_idx in self.Rings:
-            pvs.extend(pvs_ring)
         db = dict()
         prop = {
             'type': 'float', 'unit': 'um', 'count': nbpm, 'value': nbpm*[0]}
@@ -442,61 +383,10 @@ class _OrbitCorrDev:
                 'count': nbpm, 'value': self.BPM_NICKNAMES},
             'OrbitStatus-Mon': {'type': 'short', 'value': 0b00000},
             'OrbitStatusLabels-Cte': {
-                'type': 'string', 'count': len(self.StatusLabels.Orbit),
-                'value': self.StatusLabels.Orbit},
+                'type': 'string', 'count': len(self.StatusLabelsOrb._fields),
+                'value': self.StatusLabelsOrb._fields},
             })
-        db_ring = {
-            'OrbitsMultiTurnX-Mon': {
-                'type': 'float', 'unit': 'um', 'count': self.MAX_MT_ORBS*nbpm,
-                'value': 50*nbpm*[0]},
-            'OrbitsMultiTurnY-Mon': {
-                'type': 'float', 'unit': 'um', 'count': self.MAX_MT_ORBS*nbpm,
-                'value': 50*nbpm*[0]},
-            'OrbitsMultiTurnSum-Mon': {
-                'type': 'float', 'unit': 'um', 'count': self.MAX_MT_ORBS*nbpm,
-                'value': 50*nbpm*[0]},
-            'OrbitMultiTurnTime-Mon': {
-                'type': 'float', 'unit': 'ms', 'count': self.MAX_MT_ORBS,
-                'value': 50*[0]},
-            'OrbitMultiTurnIdx-SP': {
-                'type': 'int', 'unit': '', 'value': 0,
-                'hilim': 50, 'lolim': 0},
-            'OrbitMultiTurnIdx-RB': {
-                'type': 'int', 'unit': '', 'value': 0,
-                'hilim': self.MAX_MT_ORBS, 'lolim': 0},
-            'OrbitMultiTurnIdxTime-Mon': {
-                'type': 'float', 'unit': 'ms', 'value': 0.0, 'prec': 5,
-                'hilim': 500, 'lolim': 0},
-            'OrbitTrigAcqChan-Sel': {
-                'type': 'enum', 'unit': 'Change orbit acquisition Channel.',
-                'value': self.OrbitAcqChan.Monit1,
-                'enums': self.OrbitAcqChan._fields},
-            'OrbitTrigAcqChan-Sts': {
-                'type': 'enum', 'unit': 'Change orbit acquisition Channel.',
-                'value': self.OrbitAcqChan.Monit1,
-                'enums': self.OrbitAcqChan._fields},
-            'OrbitTrigNrShots-SP': {
-                'type': 'short', 'unit': '', 'value': 1,
-                'hilim': 1000, 'lolim': 1},
-            'OrbitTrigNrShots-RB': {
-                'type': 'short', 'unit': '', 'value': 1,
-                'hilim': 1000, 'lolim': 1},
-            'OrbitTrigDownSample-SP': {
-                'type': 'short', 'unit': '', 'value': 1,
-                'hilim': 2**15-1, 'lolim': 1},
-            'OrbitTrigDownSample-RB': {
-                'type': 'short', 'unit': '', 'value': 1,
-                'hilim': 2**15-1, 'lolim': 1},
-            'OrbitTrigDataChan-Sel': {
-                'type': 'enum', 'unit': 'Set Data-driven trigger Channel.',
-                'value': self.OrbitAcqDataChan.Monit1,
-                'enums': self.OrbitAcqDataChan._fields},
-            'OrbitTrigDataChan-Sts': {
-                'type': 'enum', 'unit': 'Set Data-driven trigger Channel.',
-                'value': self.OrbitAcqDataChan.Monit1,
-                'enums': self.OrbitAcqDataChan._fields},
-            }
-        return self._add_prefix(db, db_ring, prefix)
+        return self._add_prefix(db, prefix)
 
     def get_respmat_database(self, prefix=''):
         """Return OpticsCorr-Chrom Soft IOC database."""
@@ -560,6 +450,156 @@ class _OrbitCorrDev:
                 'type': 'float', 'count': self.NR_CV, 'value': self.NR_CV*[0],
                 'unit': 'Last CV kicks calculated.'},
             }
+        return self._add_prefix(db, prefix)
+
+    def _add_prefix(self, db, prefix):
+        if prefix:
+            return {prefix + k: v for k, v in db.items()}
+        return db
+
+
+class OrbitCorrDevRings(OrbitCorrDevTLines, ConstRings):
+    """OrbitCorrDev class."""
+
+    def __init__(self, acc):
+        """Init method."""
+        OrbitCorrDevTLines.__init__(self, acc)
+        self.C0 = (496.8 if self.acc == 'BO' else 518.396)  # in meter
+        self.T0 = self.C0 / 299792458 * 1000  # in milliseconds
+
+    def get_sofb_database(self, prefix=''):
+        """Return OpticsCorr-Chrom Soft IOC database."""
+        db_ring = {
+            'AutoCorr-Sel': {
+                'type': 'enum', 'enums': self.AutoCorr._fields, 'value': 0},
+            'AutoCorr-Sts': {
+                'type': 'enum', 'enums': self.AutoCorr._fields, 'value': 0},
+            'AutoCorrFreq-SP': {
+                'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 3,
+                'lolim': 1e-3, 'hilim': 20},
+            'AutoCorrFreq-RB': {
+                'type': 'float', 'value': 1, 'prec': 2, 'unit': 'Hz'},
+            'MeasRespMatKickRF-SP': {
+                'type': 'float', 'value': 50, 'unit': 'Hz', 'prec': 3,
+                'lolim': 1, 'hilim': 400},
+            'MeasRespMatKickRF-RB': {
+                'type': 'float', 'value': 200, 'unit': 'Hz', 'prec': 3,
+                'lolim': 1, 'hilim': 400},
+            'CorrFactorRF-SP': {
+                'type': 'float', 'value': 100, 'unit': '%', 'prec': 2,
+                'lolim': -1000, 'hilim': 1000},
+            'CorrFactorRF-RB': {
+                'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
+            'MaxKickRF-SP': {
+                'type': 'float', 'value': 3000, 'unit': 'Hz', 'prec': 3,
+                'lolim': 0, 'hilim': 10000},
+            'MaxKickRF-RB': {
+                'type': 'float', 'value': 3000, 'prec': 2, 'unit': 'Hz',
+                'lolim': 0, 'hilim': 10000},
+            'MaxDeltaKickRF-SP': {
+                'type': 'float', 'value': 500, 'unit': 'Hz', 'prec': 3,
+                'lolim': 0, 'hilim': 10000},
+            'MaxDeltaKickRF-RB': {
+                'type': 'float', 'value': 500, 'prec': 2, 'unit': 'Hz',
+                'lolim': 0, 'hilim': 10000},
+            }
+        db = super().get_sofb_database(prefix=prefix)
+        db.update(self._add_prefix(db_ring, prefix))
+        return db
+
+    def get_corrs_database(self, prefix=''):
+        """Return OpticsCorr-Chrom Soft IOC database."""
+        db_ring = {
+            'KicksRF-Mon': {
+                'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 3},
+            'NominalFreqRF-SP': {
+                'type': 'float', 'value': self.RF_NOM_FREQ, 'unit': 'Hz',
+                'prec': 3},
+            'NominalFreqRF-RB': {
+                'type': 'float', 'value': self.RF_NOM_FREQ, 'unit': 'Hz',
+                'prec': 3},
+            'SyncKicks-Sel': {
+                'type': 'enum', 'enums': self.SyncKicks._fields,
+                'value': self.SyncKicks.On},
+            'SyncKicks-Sts': {
+                'type': 'enum', 'enums': self.SyncKicks._fields,
+                'value': self.SyncKicks.On},
+            }
+        db = super().get_corrs_database(prefix=prefix)
+        db.update(self._add_prefix(db_ring, prefix))
+        return db
+
+    def get_orbit_database(self, prefix=''):
+        """Return Orbit database."""
+        nbpm = self.NR_BPMS
+        pvs_ring = [
+            'OrbitRawX-Mon', 'OrbitRawY-Mon',
+            'OrbitSmoothX-Mon', 'OrbitSmoothY-Mon',
+            'OrbitMultiTurnX-Mon', 'OrbitMultiTurnY-Mon',
+            'OrbitMultiTurnSum-Mon',
+            ]
+        db_ring = dict()
+        prop = {
+            'type': 'float', 'unit': 'um', 'count': nbpm, 'value': nbpm*[0]}
+        for k in pvs_ring:
+            db_ring[k] = _dcopy(prop)
+        db_ring.update({
+            'OrbitsMultiTurnX-Mon': {
+                'type': 'float', 'unit': 'um', 'count': self.MAX_MT_ORBS*nbpm,
+                'value': 50*nbpm*[0]},
+            'OrbitsMultiTurnY-Mon': {
+                'type': 'float', 'unit': 'um', 'count': self.MAX_MT_ORBS*nbpm,
+                'value': 50*nbpm*[0]},
+            'OrbitsMultiTurnSum-Mon': {
+                'type': 'float', 'unit': 'um', 'count': self.MAX_MT_ORBS*nbpm,
+                'value': 50*nbpm*[0]},
+            'OrbitMultiTurnTime-Mon': {
+                'type': 'float', 'unit': 'ms', 'count': self.MAX_MT_ORBS,
+                'value': 50*[0]},
+            'OrbitMultiTurnIdx-SP': {
+                'type': 'int', 'unit': '', 'value': 0,
+                'hilim': 50, 'lolim': 0},
+            'OrbitMultiTurnIdx-RB': {
+                'type': 'int', 'unit': '', 'value': 0,
+                'hilim': self.MAX_MT_ORBS, 'lolim': 0},
+            'OrbitMultiTurnIdxTime-Mon': {
+                'type': 'float', 'unit': 'ms', 'value': 0.0, 'prec': 5,
+                'hilim': 500, 'lolim': 0},
+            'OrbitTrigAcqChan-Sel': {
+                'type': 'enum', 'unit': 'Change orbit acquisition Channel.',
+                'value': self.OrbitAcqChan.Monit1,
+                'enums': self.OrbitAcqChan._fields},
+            'OrbitTrigAcqChan-Sts': {
+                'type': 'enum', 'unit': 'Change orbit acquisition Channel.',
+                'value': self.OrbitAcqChan.Monit1,
+                'enums': self.OrbitAcqChan._fields},
+            'OrbitTrigNrShots-SP': {
+                'type': 'short', 'unit': '', 'value': 1,
+                'hilim': 1000, 'lolim': 1},
+            'OrbitTrigNrShots-RB': {
+                'type': 'short', 'unit': '', 'value': 1,
+                'hilim': 1000, 'lolim': 1},
+            'OrbitTrigDownSample-SP': {
+                'type': 'short', 'unit': '', 'value': 1,
+                'hilim': 2**15-1, 'lolim': 1},
+            'OrbitTrigDownSample-RB': {
+                'type': 'short', 'unit': '', 'value': 1,
+                'hilim': 2**15-1, 'lolim': 1},
+            'OrbitTrigDataChan-Sel': {
+                'type': 'enum', 'unit': 'Set Data-driven trigger Channel.',
+                'value': self.OrbitAcqDataChan.Monit1,
+                'enums': self.OrbitAcqDataChan._fields},
+            'OrbitTrigDataChan-Sts': {
+                'type': 'enum', 'unit': 'Set Data-driven trigger Channel.',
+                'value': self.OrbitAcqDataChan.Monit1,
+                'enums': self.OrbitAcqDataChan._fields},
+            })
+        db = super().get_orbit_database(prefix=prefix)
+        db.update(self._add_prefix(db_ring, prefix))
+        return db
+
+    def get_respmat_database(self, prefix=''):
+        """Return OpticsCorr-Chrom Soft IOC database."""
         db_ring = {
             'RFEnbl-Sel': {
                 'type': 'enum', 'enums': self.EnblRF._fields, 'value': 0,
@@ -571,36 +611,9 @@ class _OrbitCorrDev:
                 'type': 'float', 'value': 0,
                 'unit': 'Last RF kick calculated.'},
             }
-        return self._add_prefix(db, db_ring, prefix)
-
-    def _add_prefix(self, db, db_ring, prefix):
-        if self.acc_idx in self.Rings:
-            db.update(db_ring)
-        if prefix:
-            return {prefix + k: v for k, v in db.items()}
+        db = super().get_respmat_database(prefix=prefix)
+        db.update(self._add_prefix(db_ring, prefix))
         return db
-
-
-class OrbitCorrDevRings(_OrbitCorrDev, ConstRings):
-    """OrbitCorrDev class."""
-
-    def __init__(self, acc):
-        """Init method."""
-        self._init1(acc)
-        self.NR_CORRS = self.NR_CHCV + 1
-        self.C0 = (496.8 if self.acc == 'BO' else 518.396)  # in meter
-        self.T0 = self.C0 / 299792458 * 1000  # in milliseconds
-        self._init2()
-
-
-class OrbitCorrDevTLines(_OrbitCorrDev, ConstTLines):
-    """OrbitCorrDev class."""
-
-    def __init__(self, acc):
-        """Init method."""
-        self._init1(acc)
-        self.NR_CORRS = self.NR_CHCV
-        self._init2()
 
 
 class OrbitCorrDevFactory:
