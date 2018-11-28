@@ -206,7 +206,7 @@ class LLTimeSearch:
     @classmethod
     def _add_entry_to_map(cls, which_map, conn, ele1, ele2):
         cls._get_timedata()
-        if which_map == 'from':
+        if which_map.lower().startswith('from'):
             mapp = cls._conn_from_evg
         else:
             mapp = cls._conn_twds_evg
@@ -246,7 +246,7 @@ class LLTimeSearch:
                       .format('output' if not ochn else 'input', n, line))
                 return
             elif not octyp or not ictyp:
-                print('Sintaxe error in definition of ' +
+                print('Sintax error in definition of ' +
                       '{0:s} channel in line {1:d}:\n\t {2:s}'
                       .format('output' if not octyp else 'input', n, line))
                 return
