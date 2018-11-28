@@ -198,4 +198,7 @@ class HLTimeSearch:
         text = ''
         if _web.server_online():
             text = _web.high_level_triggers(timeout=_timeout)
-        cls._hl_triggers = _ast.literal_eval(text)
+        temp_dict = _ast.literal_eval(text)
+        for k, vs in temp_dict.items():
+            vs['channels'] = tuple(map(_PVName, vs['channels']))
+            cls._hl_triggers[_PVName(k)] = vs
