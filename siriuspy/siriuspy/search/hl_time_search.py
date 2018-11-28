@@ -23,7 +23,7 @@ class HLTimeSearch:
     def get_hl_triggers(cls):
         """Dictionary with high level triggers."""
         cls._init()
-        return _dcopy(cls._hl_triggers)
+        return sorted(cls._hl_triggers.keys())
 
     @classmethod
     def get_hl_trigger_database(cls, hl_trigger):
