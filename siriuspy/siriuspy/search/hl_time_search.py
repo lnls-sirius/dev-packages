@@ -164,13 +164,12 @@ class HLTimeSearch:
                 tmp = cls._TWDS_EVG.get(chan)
                 if tmp is None:
                     raise Exception(
-                        'Device ' + chan +
-                        ' defined in the high level trigger ' +
-                        trig + ' not specified in timing connections data.')
+                        chan + ' is used in HL trigger ' + trig +
+                        ' but not specified in timing connections data.')
                 if not tmp:
-                    raise Exception('Device ' + chan +
-                                    ' defined in the high level trigger ' +
-                                    trig + ' maybe were already used.')
+                    raise Exception(
+                        chan + ' which is used in HL trigger ' + trig +
+                        ' maybe were already used somewhere else.')
                 up_dev = tmp.pop()
                 diff_devs = cls._FROM_EVG[up_dev] - chans
                 if diff_devs and not chan.dev.endswith('BPM'):
@@ -178,8 +177,7 @@ class HLTimeSearch:
                         'Devices: ' + ' '.join(diff_devs) +
                         ' are connected to the same output of ' +
                         up_dev + ' as ' + chan +
-                        ' but are not related to the sam trigger (' +
-                        trig + ').')
+                        ' but are not related to the same trigger ('+trig+').')
 
     @classmethod
     def _get_constants(cls):
