@@ -1,7 +1,6 @@
 """Define properties of all timing devices and their connections."""
 
 from copy import deepcopy as _dcopy
-from siriuspy.util import get_namedtuple as _get_namedtuple
 import siriuspy.csdevice.util as _cutil
 from siriuspy.search import HLTimeSearch as _HLTimeSearch
 
@@ -17,10 +16,11 @@ class ETypes(_cutil.ETypes):
         'Clock3', 'Clock4', 'Clock5', 'Clock6', 'Clock7')
     RFOUT = ('OFF', '5RF/2', '5RF/4', 'RF', 'RF/2', 'RF/4')
 
+
 _et = ETypes  # syntactic sugar
 
 
-class Const:
+class Const(_cutil.Const):
     """Constants important for the timing system."""
 
     # TODO: should we create a consts module?
@@ -37,14 +37,14 @@ class Const:
     RF_DELAY = BASE_DELAY / 20
     FINE_DELAY = 5e-12  # [s] (five picoseconds)
 
-    EvtModes = _get_namedtuple('EvtModes', _et.EVT_MODES)
-    EvtDlyTyp = _get_namedtuple('EvtDlyTyp', _et.FIXED_INCR)
-    ClockStates = _get_namedtuple('ClockStates', _et.DSBL_ENBL)
-    TrigStates = _get_namedtuple('TrigStates', _et.DSBL_ENBL)
-    TrigIntlk = _get_namedtuple('TrigIntlk', _et.DSBL_ENBL)
-    TrigPol = _get_namedtuple('TrigPol', _et.NORM_INV)
-    TrigDlyTyp = _get_namedtuple('TrigDlyTyp', _et.FIXED_INCR)
-    TrigSrcLL = _get_namedtuple('TrigSrcLL', _et.TRIG_SRC_LL)
+    EvtModes = _cutil.Const.register('EvtModes', _et.EVT_MODES)
+    EvtDlyTyp = _cutil.Const.register('EvtDlyTyp', _et.FIXED_INCR)
+    ClockStates = _cutil.Const.register('ClockStates', _et.DSBL_ENBL)
+    TrigStates = _cutil.Const.register('TrigStates', _et.DSBL_ENBL)
+    TrigIntlk = _cutil.Const.register('TrigIntlk', _et.DSBL_ENBL)
+    TrigPol = _cutil.Const.register('TrigPol', _et.NORM_INV)
+    TrigDlyTyp = _cutil.Const.register('TrigDlyTyp', _et.FIXED_INCR)
+    TrigSrcLL = _cutil.Const.register('TrigSrcLL', _et.TRIG_SRC_LL)
 
     EvtHL2LLMap = {
         'Linac': 'Evt001', 'InjBO': 'Evt002',
@@ -59,7 +59,8 @@ class Const:
 
     evt_ll_codes = list(range(1, 64)) + [124]
     evt_ll_names = ['Evt{0:03d}'.format(i) for i in evt_ll_codes]
-    EvtLL = _get_namedtuple('EventsLL', evt_ll_names, values=evt_ll_codes)
+    EvtLL = _cutil.Const.register(
+                    'EventsLL', evt_ll_names, values=evt_ll_codes)
     del evt_ll_codes, evt_ll_names  # cleanup class namespace
 
     ClkHL2LLMap = {
@@ -71,7 +72,8 @@ class Const:
 
     clk_ll_codes = list(range(1, 9))
     clk_ll_names = ['Evt{0:03d}'.format(i) for i in clk_ll_codes]
-    ClkLL = _get_namedtuple('ClocksLL', clk_ll_names, values=clk_ll_codes)
+    ClkLL = _cutil.Const.register(
+                    'ClocksLL', clk_ll_names, values=clk_ll_codes)
     del clk_ll_names, clk_ll_codes
 
 
