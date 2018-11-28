@@ -37,9 +37,6 @@ class HLTimeSearch:
         cls._init()
         enums = cls._hl_triggers
         enums = enums[hl_trigger]['database']['Src']['enums']
-        if cls.has_clock(hl_trigger):
-            clocks = ['Clock{0:d}'.format(i) for i in range(8)]
-            enums = ('Dsbl', ) + enums + tuple(clocks)
         return _dcopy(enums)
 
     @classmethod
