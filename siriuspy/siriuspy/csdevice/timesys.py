@@ -7,17 +7,17 @@ from siriuspy.search import HLTimeSearch as _HLTimeSearch
 
 
 events_hl2ll_map = {
-    'Linac': 'Evt01', 'InjBO': 'Evt02',
-    'InjSI': 'Evt03', 'RmpBO': 'Evt04',
-    'MigSI': 'Evt05', 'DigLI': 'Evt06',
-    'DigTB': 'Evt07', 'DigBO': 'Evt08',
-    'DigTS': 'Evt09', 'DigSI': 'Evt10',
-    'OrbSI': 'Evt11', 'CplSI': 'Evt12',
-    'TunSI': 'Evt13', 'Study': 'Evt14',
-    'OrbBO': 'Evt15'}
+    'Linac': 'Evt001', 'InjBO': 'Evt002',
+    'InjSI': 'Evt003', 'RmpBO': 'Evt004',
+    'MigSI': 'Evt005', 'DigLI': 'Evt006',
+    'DigTB': 'Evt007', 'DigBO': 'Evt008',
+    'DigTS': 'Evt009', 'DigSI': 'Evt010',
+    'OrbSI': 'Evt011', 'CplSI': 'Evt012',
+    'TunSI': 'Evt013', 'Study': 'Evt014',
+    'OrbBO': 'Evt015', 'PsMtm': 'Evt124'}
 events_ll2hl_map = {val: key for key, val in events_hl2ll_map.items()}
 
-events_ll_tmp = 'Evt{0:02d}'
+events_ll_tmp = 'Evt{0:03d}'
 events_hl_pref = 'AS-Glob:TI-EVG:'
 
 events_ll_codes = list(range(1, 64))
@@ -50,9 +50,9 @@ triggers_intlk = _get_namedtuple('TrigIntlk', _et.DSBL_ENBL)
 triggers_polarities = _get_namedtuple('TrigPol', _et.NORM_INV)
 triggers_delay_types = _get_namedtuple('TrigDlyTyp', _et.FIXED_INCR)
 triggers_src_ll = _get_namedtuple(
-                        'TrigSrcLL',
-                        ('Dsbl',  'Trigger', 'Clock0', 'Clock1', 'Clock2',
-                         'Clock3', 'Clock4', 'Clock5', 'Clock6', 'Clock7'))
+    'TrigSrcLL', (
+        'Dsbl', 'Trigger', 'Clock0', 'Clock1', 'Clock2',
+        'Clock3', 'Clock4', 'Clock5', 'Clock6', 'Clock7'))
 
 
 class Const:
