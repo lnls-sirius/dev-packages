@@ -425,12 +425,12 @@ class _OpModeSimCycleState(_OpModeSimState):
         a = variables[self._c.V_SIGGEN_AMPLITUDE]
         o = variables[self._c.V_SIGGEN_OFFSET]
         p = variables[self._c.V_SIGGEN_AUX_PARAM]
-        self._signal = _SignalFactory.factory(type=t,
-                                              num_cycles=n,
-                                              freq=f,
-                                              amplitude=a,
-                                              offset=o,
-                                              aux_param=p)
+        self._signal = _SignalFactory.create(type=t,
+                                             num_cycles=n,
+                                             freq=f,
+                                             amplitude=a,
+                                             offset=o,
+                                             aux_param=p)
 
     def _finish_siggen(self, variables):
         self._set_signal(variables)

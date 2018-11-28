@@ -27,34 +27,34 @@ class TestMagnetFactory(unittest.TestCase):
 
     @mock.patch('siriuspy.factory._norm.DipoleNormalizer', autospec=True)
     def test_dipole_creation(self, mock_ma, mock_data):
-        """Test Factory.factory. dipole creation."""
+        """Test Factory.create. dipole creation."""
         maname = 'SI-Fam:MA-B1B2'
         mock_data.return_value.magfunc.return_value = 'dipole'
-        magnet = NormalizerFactory.factory(maname=maname)
+        magnet = NormalizerFactory.create(maname=maname)
         self.assertIsInstance(magnet, DipoleNormalizer)
 
     @mock.patch('siriuspy.factory._norm.MagnetNormalizer', autospec=True)
     def test_magnet_creation(self, mock_ma, mock_data):
-        """Test Factory.factory magnet creation."""
+        """Test Factory.create magnet creation."""
         maname = 'SI-Fam:MA-QDA'
         mock_data.return_value.magfunc.return_value = 'quadrupole'
-        magnet = NormalizerFactory.factory(maname=maname)
+        magnet = NormalizerFactory.create(maname=maname)
         self.assertIsInstance(magnet, MagnetNormalizer)
 
     @mock.patch('siriuspy.factory._norm.MagnetNormalizer', autospec=True)
     def test_pulsed_magnet_creation(self, mock_ma, mock_data):
-        """Test Factory.factory magnet creation."""
+        """Test Factory.create magnet creation."""
         maname = 'SI-01SA:PM-InjDpKckr'
         mock_data.return_value.magfunc.return_value = 'corrector-vertical'
-        magnet = NormalizerFactory.factory(maname=maname)
+        magnet = NormalizerFactory.create(maname=maname)
         self.assertIsInstance(magnet, MagnetNormalizer)
 
     @mock.patch('siriuspy.factory._norm.TrimNormalizer', autospec=True)
     def test_trim_creation(self, mock_ma, mock_data):
-        """Test Factory.factory. trim creation."""
+        """Test Factory.create trim creation."""
         maname = 'SI-01M1:MA-QDA'
         mock_data.return_value.magfunc.return_value = 'quadrupole'
-        magnet = NormalizerFactory.factory(maname=maname)
+        magnet = NormalizerFactory.create(maname=maname)
         self.assertIsInstance(magnet, TrimNormalizer)
 
 

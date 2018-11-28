@@ -12,8 +12,7 @@ from siriuspy.csdevice.opticscorr import (
 
 
 public_interface = (
-        'OFFONTYP',
-        'PROPADDTYP',
+        'ETypes',
         'Const',
         'get_chrom_database',
         'get_tune_database',

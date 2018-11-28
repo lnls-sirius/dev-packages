@@ -1,5 +1,5 @@
 """Module implementing PRU elements."""
-import time as _time
+import os as _os
 import threading as _threading
 
 import epics as _epics
@@ -175,6 +175,11 @@ class PRU(PRUInterface):
 
     def __init__(self):
         """Init method."""
+        # check if process is running as root
+        if _os.geteuid() != 0:
+            exit('You need to have root privileges to use PRU')
+
+        # check if PRU library is installed
         if _PRUserial485 is None:
             raise ValueError('module PRUserial485 is not installed!')
         PRUInterface.__init__(self)
@@ -281,7 +286,7 @@ class PRUSim(PRUInterface):
             cb()
 
     def timing_trigger_callback(self, pvname, value, **kwargs):
-        """Callback to issue a timing to simulated PS."""
+        """Define callback to issue a timing to simulated PS."""
         print("Trigger")
         if self._sync_status == Const.SYNC_STATE.ON:
             self._sync_pulse_count += 1

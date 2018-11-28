@@ -345,7 +345,7 @@ class PSSearch:
             PSSearch._psname_2_siggen_dict = dict()
             for datum in data:
                 psname, *siggen_data = datum
-                signal = _SignalFactory.factory(data=siggen_data)
+                signal = _SignalFactory.create(data=siggen_data)
                 PSSearch._psname_2_siggen_dict[psname] = signal
         else:
             raise Exception('could not read siggen config from web server')

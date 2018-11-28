@@ -112,7 +112,7 @@ class BBBFactory:
     """Build BeagleBones."""
 
     @staticmethod
-    def get(bbbname=None, simulate=False):
+    def create(bbbname=None, simulate=False):
         """Return BBB object."""
         # Create PRU and PRUCQueue
         pru = _PRUSim() if simulate else _PRU()
@@ -144,7 +144,7 @@ class BBBFactory:
             # Check if there is only one psmodel
             psmodel = BBBFactory.check_ps_models(devices)
             # Get out model object
-            model = _ModelFactory.get(psmodel)
+            model = _ModelFactory.create(psmodel)
             # Create pru controller for devices
             ids = [device[1] for device in devices]
             pru_controller = _PRUController(pru, prucqueue, model, ids,
