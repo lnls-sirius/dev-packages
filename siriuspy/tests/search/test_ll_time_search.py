@@ -13,7 +13,6 @@ mock_flag = True
 
 public_interface = (
     'LLTimeSearch',
-    'read_excel_file_with_connections',
 )
 
 
@@ -32,7 +31,7 @@ class TestLLTimeSearch(unittest.TestCase):
     """Test LLTimeSearch class."""
 
     public_interface = (
-        'LLRexExp',
+        'LLRegExp',
         'In2OutMap',
         'Out2InMap',
         'get_channel_input',
@@ -54,18 +53,18 @@ class TestLLTimeSearch(unittest.TestCase):
             ll_time_search.LLTimeSearch, TestLLTimeSearch.public_interface)
         self.assertTrue(valid)
 
-    def test_ll_rgx(self):
-        """Test LL_RGX."""
+    def test_LLRegExp(self):
+        """Test LLRegExp."""
         typ = type(re.compile('dummy_input'))
-        self.assertIsInstance(ll_time_search.LLTimeSearch.ll_rgx, typ)
+        self.assertIsInstance(ll_time_search.LLTimeSearch.LLRegExp, typ)
 
-    def test_i2o_map(self):
-        """Test I2O_MAP."""
-        self.assertIsInstance(ll_time_search.LLTimeSearch.i2o_map, dict)
+    def test_In2OutMap(self):
+        """Test In2OutMap."""
+        self.assertIsInstance(ll_time_search.LLTimeSearch.In2OutMap, dict)
 
-    def test_o2i_map(self):
-        """Test O2I_MAP."""
-        self.assertIsInstance(ll_time_search.LLTimeSearch.o2i_map, dict)
+    def test_Out2InMap(self):
+        """Test Out2InMap."""
+        self.assertIsInstance(ll_time_search.LLTimeSearch.Out2InMap, dict)
 
     def test_get_channel_input(self):
         """Test get_channel_input."""
