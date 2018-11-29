@@ -26,26 +26,9 @@ public_interface = (
     'get_hl_event_database',
     'get_hl_evg_database',
     'get_hl_trigger_database',
-    'events_hl2ll_map',
-    'events_ll2hl_map',
-    'events_ll_tmp',
-    'events_hl_pref',
-    'events_ll',
-    'events_modes',
-    'events_delay_types',
-    'clocks_states',
-    'clocks_ll_tmp',
-    'clocks_hl_tmp',
-    'clocks_hl_pref',
-    'clocks_hl2ll_map',
-    'clocks_ll2hl_map',
-    'triggers_states',
-    'triggers_intlk',
-    'triggers_polarities',
-    'triggers_delay_types',
-    'triggers_src_ll',
     'Const',
-)
+    'ETypes',
+    )
 
 
 class TestModule(unittest.TestCase):
@@ -236,6 +219,20 @@ class TestConst(unittest.TestCase):
         'BASE_DELAY',
         'RF_DELAY',
         'FINE_DELAY',
+        'EvtModes',
+        'EvtDlyTyp',
+        'ClockStates',
+        'TrigStates',
+        'TrigIntlk',
+        'TrigPol',
+        'TrigDlyTyp',
+        'TrigSrcLL',
+        'EvtHL2LLMap',
+        'EvtLL2HLMap',
+        'EvtLL',
+        'ClkHL2LLMap',
+        'ClkLL2LLMap',
+        'ClkLL',
     )
 
     def test_public_interface(self):
