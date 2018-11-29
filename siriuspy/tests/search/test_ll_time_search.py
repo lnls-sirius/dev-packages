@@ -32,12 +32,10 @@ class TestLLTimeSearch(unittest.TestCase):
     """Test LLTimeSearch class."""
 
     public_interface = (
-        'll_rgx',
-        'i2o_map',
-        'o2i_map',
+        'LLRexExp',
+        'In2OutMap',
+        'Out2InMap',
         'get_channel_input',
-        'add_crates_info',
-        'add_bbb_info',
         'get_device_names',
         'get_device_tree',
         'reset',
@@ -48,7 +46,6 @@ class TestLLTimeSearch(unittest.TestCase):
         'get_final_receivers',
         'get_relations_from_evg',
         'get_relations_twds_evg',
-        'get_hierarchy_list',
     )
 
     def test_public_interface(self):

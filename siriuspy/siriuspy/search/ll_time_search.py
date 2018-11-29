@@ -16,11 +16,11 @@ _timeout = 1.0
 class LLTimeSearch:
     """Get the timing devices connections."""
 
-    ll_rgx = _re.compile('([A-Z]+)([0-9]{0,2})', _re.IGNORECASE)
+    LLRegExp = _re.compile('([A-Z]+)([0-9]{0,2})', _re.IGNORECASE)
 
     # defines the relations between input and output of the timing devices
     # that are possible taking into consideration only the devices architecture
-    i2o_map = {
+    In2OutMap = {
         'EVG': {
             'UPLINK': (
                 'OUT0', 'OUT1', 'OUT2', 'OUT3',
@@ -92,14 +92,14 @@ class LLTimeSearch:
         'OERFRx': {'OPTICALACP': ('SIGNAL', )},
         'OERFTx': {'SIGNAL': ('OPTICALACP', )},
         }
-    i2o_map['FibPatch'] = {
+    In2OutMap['FibPatch'] = {
         'P{0:03d}'.format(i): ('P{0:03d}'.format(i), ) for i in range(100)}
-    i2o_map['FibPatch']['P052B'] = ('P052B', )
+    In2OutMap['FibPatch']['P052B'] = ('P052B', )
 
-    o2i_map = dict()
-    for dev, conns_ in i2o_map.items():
+    Out2InMap = dict()
+    for dev, conns_ in In2OutMap.items():
         dic_ = dict()
-        o2i_map[dev] = dic_
+        Out2InMap[dev] = dic_
         for conn1, conns in conns_.items():
             for conn2 in conns:
                 dic_[conn2] = conn1
@@ -116,12 +116,12 @@ class LLTimeSearch:
         """Get channel input method."""
         if not isinstance(channel, _PVName):
             channel = _PVName(channel)
-        o2i = cls.o2i_map.get(channel.dev)
+        o2i = cls.Out2InMap.get(channel.dev)
         if o2i is None:
             return []
         conn = o2i.get(channel.propty)
         if conn is None:
-            conn = cls.i2o_map[channel.dev].get(channel.propty)
+            conn = cls.In2OutMap[channel.dev].get(channel.propty)
         if conn is None:
             return []
         elif isinstance(conn, str):
@@ -270,7 +270,7 @@ class LLTimeSearch:
     @classmethod
     def _add_crates_info(cls):
         """Add the information of Crate to BPMs to timing map."""
-        conns = tuple(cls.i2o_map['AMCFPGAEVR'].values())[0]
+        conns = tuple(cls.In2OutMap['AMCFPGAEVR'].values())[0]
         conns = [v for v in conns if not v.startswith('FMC')]
 
         conn_dict = _BPMSearch.get_timing_mapping()
@@ -296,7 +296,7 @@ class LLTimeSearch:
         """Add the information of bbb to PS to timing map."""
         data = _PSSearch.get_bbbname_dict()
         conn_dict = {bbb: [x[0] for x in bsmps] for bbb, bsmps in data.items()}
-        conn = list(cls.i2o_map['PSCtrl'].values())[0][0]
+        conn = list(cls.In2OutMap['PSCtrl'].values())[0][0]
         used = set()
         twds_evg = _dcopy(cls._conn_twds_evg)
         for chan in twds_evg.keys():
@@ -318,7 +318,7 @@ class LLTimeSearch:
         type_chan = num_chan = None
         dev = txt.device_name
         chan = txt.propty
-        reg_match = cls.ll_rgx.findall(chan)
+        reg_match = cls.LLRegExp.findall(chan)
         if reg_match:
             type_chan, num_chan = reg_match[0]
             return dev, chan, type_chan, num_chan
