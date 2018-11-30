@@ -1,5 +1,4 @@
 """Epics-related subpackage."""
-from .pv import *
 from .pv_time_serie import *
 from .properties import *
 from .pwrsupply import *
@@ -10,4 +9,3 @@ connection_timeout = 0.050  # [s]
 del pwrsupply
 del properties
 del pv_time_serie
-del pv
