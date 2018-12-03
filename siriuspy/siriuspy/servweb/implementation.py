@@ -158,7 +158,7 @@ def timing_devices_mapping(timeout=_timeout):
 
 def high_level_triggers(timeout=_timeout):
     """Return the data defining the high level triggers."""
-    url = _timesys_folder + 'high-level-triggers.txt'
+    url = _timesys_folder + 'high-level-triggers.py'
     return read_url(url, timeout=timeout)
 
 
