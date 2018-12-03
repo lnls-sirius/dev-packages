@@ -1,27 +1,22 @@
 """Define the high level classes."""
 
-from functools import partial as _partial
-from functools import reduce as _reduce
+from functools import partial as _partial, reduce as _reduce
 import operator
 import logging as _log
 from copy import deepcopy as _dcopy
 from threading import Lock as _Lock
 from scipy.stats import mode as _mode
-from pcaspy import Alarm as _Alarm
-from pcaspy import Severity as _Severity
+from pcaspy import Alarm as _Alarm, Severity as _Severity
 from siriuspy.thread import RepeaterThread as _Timer
 from siriuspy.search import HLTimeSearch as _HLSearch
 from siriuspy.csdevice import timesys as _cstime
-from .ll_classes import get_ll_trigger_object as _get_ll_trigger_object
-from .ll_classes import INTERVAL as _INTERVAL
-from .ll_classes import LL_Event as _LL_Event
-from .ll_classes import LL_Clock as _LL_Clock
-from .ll_classes import LL_EVG as _LL_EVG
-from .ll_classes import EVG_NAME as _EVG_NAME
+from .ll_classes import get_ll_trigger_object as _get_ll_trigger_object, \
+    INTERVAL as _INTERVAL, LL_Event as _LL_Event, LL_Clock as _LL_Clock,\
+    LL_EVG as _LL_EVG, EVG_NAME as _EVG_NAME
 
 
 # HL == High Level
-class _HL_Base:
+class _HLBase:
     """Define a High Level interface.
 
     Determine how to connect the driver with the classes which communicate
@@ -198,7 +193,7 @@ class _HL_Base:
         return {'value': value, 'alarm': alarm, 'severity': severity}
 
 
-class HL_EVG(_HL_Base):
+class HLEVG(_HLBase):
     """High Level control of the EVG.
 
     Designed to convert the repetition rate to Hz instead of the low level
@@ -227,7 +222,7 @@ class HL_EVG(_HL_Base):
         super().__init__(_EVG_NAME + ':', callback)
 
 
-class HL_Clock(_HL_Base):
+class HLClock(_HLBase):
     """High Level control of the Clocks of the EVG."""
 
     _SUFFIX_FOR_PROPS = {'Freq': '-RB', 'State': '-Sts'}
@@ -248,13 +243,13 @@ class HL_Clock(_HL_Base):
         """
         self._interface_props = {'Freq', 'State'}
         self._my_state = {'Freq': 1.0, 'State': 0}
-        cl_ll = _cstime.clocks_hl2ll_map[cl_hl]
+        cl_ll = _cstime.Const.ClkHL2LLMap[cl_hl]
         self._ll_objs_names = [_EVG_NAME + ':' + cl_ll]
         prefix = _EVG_NAME + ':' + cl_hl
         super().__init__(prefix, callback)
 
 
-class HL_Event(_HL_Base):
+class HLEvent(_HLBase):
     """High Level control of the Events of the EVG.
 
     Creates
@@ -285,7 +280,7 @@ class HL_Event(_HL_Base):
         self._interface_props = {'Delay', 'DelayType', 'Mode', 'ExtTrig'}
         self._my_state = {'Delay': 0, 'Mode': 1,
                           'DelayType': 1, 'ExtTrig': 0}
-        ev_ll = _cstime.events_hl2ll_map[ev_hl]
+        ev_ll = _cstime.Const.EvtHL2LLMap[ev_hl]
         self._ll_objs_names = [_EVG_NAME + ':' + ev_ll]
         prefix = _EVG_NAME + ':' + ev_hl
         super().__init__(prefix, callback)
@@ -296,7 +291,7 @@ class HL_Event(_HL_Base):
         return self.write('ExtTrig', value)
 
 
-class HL_Trigger(_HL_Base):
+class HLTrigger(_HLBase):
     """High level Trigger interface."""
 
     _SUFFIX_FOR_PROPS = {

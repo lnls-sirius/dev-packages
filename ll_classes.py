@@ -19,8 +19,6 @@ _FDEL = _cstime.Const.FINE_DELAY
 
 INTERVAL = 0.1
 _DELAY_UNIT_CONV = 1e-6
-_LLTimeSearch.add_bbb_info()
-_LLTimeSearch.add_crates_info()
 EVG_NAME = _LLTimeSearch.get_device_names({'dev': 'EVG'})[0]
 EVRs = _LLTimeSearch.get_device_names({'dev': 'EVR'})
 EVEs = _LLTimeSearch.get_device_names({'dev': 'EVE'})
@@ -576,13 +574,15 @@ class _EVROUT(_Base):
 
     def _process_evt(self, evt, is_sp):
         src_len = len(self._source_enums) if not is_sp else 0
-        event = _cstime.events_ll_tmp.format(evt)
-        if event not in _cstime.events_ll2hl_map:
+        if evt not in _cstime.Const.EvtLL:
             return {'Src': src_len}
-        elif _cstime.events_ll2hl_map[event] not in self._source_enums:
+        evt_st = _cstime.Const.EvtLL._fields[_cstime.Const.EvtLL.index(evt)]
+        if evt_st not in _cstime.Const.EvtLL2HLMap or \
+           _cstime.Const.EvtLL2HLMap[evt_st] not in self._source_enums:
             return {'Src': src_len}
         else:
-            ev_num = self._source_enums.index(_cstime.events_ll2hl_map[event])
+            ev_num = self._source_enums.index(
+                                    _cstime.Const.EvtLL2HLMap[evt_st])
             return {'Src': ev_num}
 
     def _process_src_trig(self, src_trig, is_sp):
@@ -593,7 +593,7 @@ class _EVROUT(_Base):
     def _process_src(self, src, is_sp):
         src_len = len(self._source_enums) if not is_sp else 0
         try:
-            source = _cstime.triggers_src_ll[src]
+            source = _cstime.Const.TrigSrcLL[src]
         except IndexError:
             source = ''
         if not source:
@@ -604,11 +604,11 @@ class _EVROUT(_Base):
     def _set_source(self, value):
         pname = self._source_enums[value]
         if pname.startswith(('Clock', 'Dsbl')):
-            n = _cstime.triggers_src_ll.index(pname)
+            n = _cstime.Const.TrigSrcLL.index(pname)
             dic_ = {'Src': n}
         else:
-            n = _cstime.triggers_src_ll.index('Trigger')
-            evt = int(_cstime.events_hl2ll_map[pname][-2:])
+            n = _cstime.Const.TrigSrcLL.index('Trigger')
+            evt = int(_cstime.Const.EvtHL2LLMap[pname][-2:])
             dic_ = {'Src': n, 'Evt': evt}
         if 'SrcTrig' in self._dict_convert_prop2pv.keys():
             dic_['SrcTrig'] = self._internal_trigger
@@ -677,7 +677,7 @@ class _EVROTP(_EVROUT):
         pname = self._source_enums[value]
         dic_ = dict()
         if not pname.startswith(('Clock', 'Dsbl')):
-            dic_['Evt'] = int(_cstime.events_hl2ll_map[pname][-2:])
+            dic_['Evt'] = int(_cstime.Const.EvtHL2LLMap[pname][-2:])
         return dic_
 
 
