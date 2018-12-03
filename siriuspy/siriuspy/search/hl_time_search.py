@@ -3,7 +3,7 @@
 import ast as _ast
 from copy import deepcopy as _dcopy
 from siriuspy import servweb as _web
-from siriuspy.namesys import SiriusPVName as _PVName
+from siriuspy.namesys import SiriusPVName as _PVName, Filter as _Filter
 from .ll_time_search import LLTimeSearch as _LLTimeSearch
 
 _timeout = 1.0
@@ -20,10 +20,12 @@ class HLTimeSearch:
     _hl_triggers = dict()
 
     @classmethod
-    def get_hl_triggers(cls):
+    def get_hl_triggers(cls, filters=None, sorting=None):
         """Dictionary with high level triggers."""
         cls._init()
-        return sorted(cls._hl_triggers.keys())
+        all_devs = sorted(cls._hl_triggers.keys())
+        return _Filter.process_filters(
+                    all_devs, filters=filters, sorting=sorting)
 
     @classmethod
     def get_hl_trigger_database(cls, hl_trigger):
