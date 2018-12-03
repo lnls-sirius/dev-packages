@@ -7,7 +7,7 @@ import numpy as _np
 from epics import PV as _PV
 import siriuspy.util as _util
 import siriuspy.csdevice.bpms as _csbpm
-import siriuspy.csdevice.timesys as _cstiming
+import siriuspy.csdevice.timesys as _cstime
 from siriuspy.thread import RepeaterThread as _Repeat
 from siriuspy.envars import vaca_prefix as LL_PREF
 from .base_class import (
@@ -365,11 +365,11 @@ class TimingConfig(_BaseTimingConfig):
         self._config_ok_vals = {
             'Src': self._csorb.OrbitAcqExtEvtSrc._fields.index(evt),
             'Delay': 0.0,
-            'DelayType': _cstiming.triggers_delay_types.Fixed,
+            'DelayType': _cstime.Const.TrigDlyTyp.Fixed,
             'NrPulses': 1,
             'Duration': 0.001,
-            'State': _cstiming.triggers_states.Enbl,
-            'Polarity': _cstiming.triggers_polarities.Normal}
+            'State': _cstime.Const.TrigStates.Enbl,
+            'Polarity': _cstime.Const.TrigPol.Normal}
         pref_name = LL_PREF + trig
         self._config_pvs_rb = {
             'Src': _PV(pref_name + 'Src-Sts', **opt),

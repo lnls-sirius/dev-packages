@@ -151,7 +151,7 @@ class SOFB(_BaseClass):
         if dt > 0:
             _time.sleep(dt)
         else:
-            _log.debug('App: check took {0:f}ms.'.format((tf-t0)*1000))
+            _log.debug('process took {0:f}ms.'.format((tf-t0)*1000))
 
     def apply_corr(self, code):
         """Apply calculated kicks on the correctors."""
@@ -268,21 +268,14 @@ class SOFB(_BaseClass):
             self._driver.setParam(pvname, value)
             self._driver.updatePV(pvname)
 
-    def _isValid(self, reason, value):
-        if reason.endswith(('-Sts', '-RB', '-Mon')):
-            _log.debug('App: PV {0:s} is read only.'.format(reason))
+    def _isValid(self, reason, val):
+        if reason.endswith(('-Sts', '-RB', '-Mon', '-Cte')):
+            _log.debug('PV {0:s} is read only.'.format(reason))
             return False
         enums = self._database[reason].get('enums')
-        if enums is not None:
-            if isinstance(value, int):
-                if value >= len(enums):
-                    _log.warning('App: value {0:d} too large '.format(value) +
-                                 'for PV {0:s} of type enum'.format(reason))
-                    return False
-            elif isinstance(value, str):
-                if value not in enums:
-                    _log.warning('Value {0:s} not permited'.format(value))
-                    return False
+        if enums is not None and isinstance(val, int) and val >= len(enums):
+            _log.warning('value %d too large for enum type PV %s', val, reason)
+            return False
         return True
 
     def _stop_meas_respmat(self):
