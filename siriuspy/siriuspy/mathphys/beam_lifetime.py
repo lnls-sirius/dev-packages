@@ -46,7 +46,7 @@ def calc_touschek_loss_rate(
     arguments:
 
     natural_emittance = Natural emittance in m.rad
-    energy            = Bunch energy in [eV]
+    energy            = Bunch energy in [GeV]
     n                 = Number of electrons ber bunch
     energy_spread     = relative energy spread,
     bunch_length      = bunch length in [m]
@@ -162,11 +162,11 @@ def calc_elastic_loss_rate(
 
     Returns loss rate [1/s].
     """
-    energy = kwargs['energy'] * _u.GeV_2_eV
+    energy = kwargs['energy']
     betax, betay = kwargs['betax'], kwargs['betay']
 
     _, _, beta, *_ = _beam.beam_rigidity(energy=energy)
-    energy_joule = energy*_ev_2_joule
+    energy_joule = energy*1e9 * _ev_2_joule
 
     horizontal_acceptance, vertical_acceptance = transverse_acceptances
 
