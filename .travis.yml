@@ -13,7 +13,7 @@ script:
 # install mathphys
   - git clone https://github.com/lnls-fac/mathphys.git
   - cd mathphys
-  - setup.py install
+  - ./setup.py install
   - cd ../
 # install siriuspy
   - cd siriuspy
