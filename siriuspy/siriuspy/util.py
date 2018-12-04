@@ -1,21 +1,19 @@
-"""Util module.
-
-    Implementation of general-purpose classes and functions used in IOCs, HLAS
-and siriuspy subpackages and modules.
-"""
+"""Module with general utilities."""
 
 import os as _os
 import logging as _log
 import inspect as _inspect
 import subprocess as _sp
 import time as _time
-import math as _math
 import datetime as _datetime
 import epics as _epics
 import numpy as _np
 import sys as _sys
 from collections import namedtuple as _namedtuple
 
+from mathphys import constants as _c
+from mathphys import units as _u
+from mathphys import beam_optics as _beam
 from siriuspy import envars as _envars
 
 
@@ -171,52 +169,70 @@ def save_ioc_pv_list(ioc_name, prefix, db, filename=None):
             fd.write("{}\n".format(prefix_sector + pv))
 
 
-def get_electron_rest_energy():
-    """Return electron rest energy [GeV]."""
-    second = 1.0
-    meter = 1.0
-    kilogram = 1.0
-    ampere = 1.0
-    newton = kilogram * meter / second
-    joule = newton * meter
-    watt = joule / second
-    coulomb = second * ampere
-    volt = watt / ampere
-    light_speed = 299792458 * (meter/second)    # [m/s]   - definition
-    electron_mass = 9.10938291e-31 * kilogram
-    #  2014-06-11 - http://physics.nist.gov/cgi-bin/cuu/Value?me
-    elementary_charge = 1.602176565e-19 * coulomb
-    #  2014-06-11 - http://physics.nist.gov/cgi-bin/cuu/Value?e
-    electron_volt = elementary_charge * volt
-    joule_2_eV = (joule / electron_volt)
-    electron_rest_energy = electron_mass * _math.pow(light_speed, 2)
-    # [Kg̣*m^2/s^2] - derived
-    electron_rest_energy = joule_2_eV * electron_rest_energy / 1e9
-    return electron_rest_energy
-
-
 def beam_rigidity(energy):
     """Return beam rigidity, beta amd game, given its energy [GeV]."""
+    electron_rest_energy_eV = _c.electron_rest_energy * _u.joule_2_eV
+    electron_rest_energy_GeV = electron_rest_energy_eV * _u.eV_2_GeV
+
     if isinstance(energy, (list, tuple)):
         energy = _np.array(energy)
-    second = 1.0
-    meter = 1.0
-    light_speed = 299792458 * (meter/second)    # [m/s]   - definition
-    electron_rest_energy = get_electron_rest_energy()
-    gamma = energy/electron_rest_energy
-    if isinstance(gamma, _np.ndarray):
-        if _np.any(energy < electron_rest_energy):
+    if isinstance(energy, _np.ndarray):
+        if _np.any(energy < electron_rest_energy_GeV):
             raise ValueError('Electron energy less than rest energy!')
-        beta = _np.sqrt(((gamma-1.0)/gamma)*((gamma+1.0)/gamma))
-        # beta[gamma < 1.0] = 0.0
+        brho, _, beta, gamma, _ = \
+            _beam.beam_rigidity(energy=energy)
     else:
-        if energy < electron_rest_energy:
-            # raise ValueError('Electron energy less than rest energy!')
-            beta = 0.0
-        else:
-            beta = _math.sqrt(((gamma-1.0)/gamma)*((gamma+1.0)/gamma))
-    brho = beta * (energy*1e9) / light_speed
+        brho, _, beta, gamma, _ = \
+            _beam.beam_rigidity(energy=energy)
     return brho, beta, gamma
+
+
+# def get_electron_rest_energy():
+#     """Return electron rest energy [GeV]."""
+#     second = 1.0
+#     meter = 1.0
+#     kilogram = 1.0
+#     ampere = 1.0
+#     newton = kilogram * meter / second
+#     joule = newton * meter
+#     watt = joule / second
+#     coulomb = second * ampere
+#     volt = watt / ampere
+#     light_speed = 299792458 * (meter/second)    # [m/s]   - definition
+#     electron_mass = 9.10938291e-31 * kilogram
+#     #  2014-06-11 - http://physics.nist.gov/cgi-bin/cuu/Value?me
+#     elementary_charge = 1.602176565e-19 * coulomb
+#     #  2014-06-11 - http://physics.nist.gov/cgi-bin/cuu/Value?e
+#     electron_volt = elementary_charge * volt
+#     joule_2_eV = (joule / electron_volt)
+#     electron_rest_energy = electron_mass * _math.pow(light_speed, 2)
+#     # [Kg̣*m^2/s^2] - derived
+#     electron_rest_energy = joule_2_eV * electron_rest_energy / 1e9
+#     return electron_rest_energy
+#
+#
+# def beam_rigidity(energy):
+#     """Return beam rigidity, beta amd game, given its energy [GeV]."""
+#     if isinstance(energy, (list, tuple)):
+#         energy = _np.array(energy)
+#     second = 1.0
+#     meter = 1.0
+#     light_speed = 299792458 * (meter/second)    # [m/s]   - definition
+#     electron_rest_energy = get_electron_rest_energy()
+#     gamma = energy/electron_rest_energy
+#     if isinstance(gamma, _np.ndarray):
+#         if _np.any(energy < electron_rest_energy):
+#             raise ValueError('Electron energy less than rest energy!')
+#         beta = _np.sqrt(((gamma-1.0)/gamma)*((gamma+1.0)/gamma))
+#         # beta[gamma < 1.0] = 0.0
+#     else:
+#         if energy < electron_rest_energy:
+#             # raise ValueError('Electron energy less than rest energy!')
+#             beta = 0.0
+#         else:
+#             beta = _math.sqrt(((gamma-1.0)/gamma)*((gamma+1.0)/gamma))
+#     brho = beta * (energy*1e9) / light_speed
+#     return brho, beta, gamma
 
 
 def check_pv_online(pvname, timeout=1.0, use_prefix=True):

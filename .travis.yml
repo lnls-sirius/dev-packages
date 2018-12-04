@@ -10,6 +10,11 @@ script:
   - sed -i s/python-sirius/python/g library_build.sh
   - ./library_build.sh develop
   - cd ../../
+# install mathphys
+  - git clone https://github.com/lnls-fac/mathphys.git
+  - cd mathphys
+  - setup.py install
+  - cd ../
 # install siriuspy
   - cd siriuspy
   - python setup.py test
