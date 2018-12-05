@@ -123,46 +123,59 @@ class ModelFactory:
 
     def _common_fields(self, device_id, epics_field, pru_controller):
         _c = _bsmp.ConstBSMP
-        if epics_field == 'CycleEnbl-Mon':
-            return _fields.Variable(
-                pru_controller, device_id, _c.V_SIGGEN_ENABLE)
-        elif epics_field == 'CycleType-Sts':
-            return _fields.Variable(
-                pru_controller, device_id, _c.V_SIGGEN_TYPE)
-        elif epics_field == 'CycleNrCycles-RB':
-            return _fields.Variable(
-                pru_controller, device_id, _c.V_SIGGEN_NUM_CYCLES)
-        elif epics_field == 'CycleIndex-Mon':
-            return _fields.Variable(pru_controller, device_id, _c.V_SIGGEN_N)
-        elif epics_field == 'CycleFreq-RB':
-            return _fields.Variable(
-                pru_controller, device_id, _c.V_SIGGEN_FREQ)
-        elif epics_field == 'CycleAmpl-RB':
-            return _fields.Variable(
-                pru_controller, device_id, _c.V_SIGGEN_AMPLITUDE)
-        elif epics_field == 'CycleOffset-RB':
-            return _fields.Variable(
-                pru_controller, device_id, _c.V_SIGGEN_OFFSET)
-        elif epics_field == 'CycleAuxParam-RB':
-            return _fields.Variable(
-                pru_controller, device_id, _c.V_SIGGEN_AUX_PARAM)
-        elif epics_field == 'PwrState-Sts':
-            return _fields.PwrState(
-                _fields.Variable(pru_controller, device_id, _c.V_PS_STATUS))
-        elif epics_field == 'OpMode-Sts':
-            return _fields.OpMode(
-                _fields.Variable(pru_controller, device_id, _c.V_PS_STATUS))
-        elif epics_field == 'CtrlMode-Mon':
-            return _fields.CtrlMode(
-                _fields.Variable(pru_controller, device_id, _c.V_PS_STATUS))
-        elif epics_field == 'CtrlLoop-Sts':
-            return _fields.CtrlLoop(
-                _fields.Variable(pru_controller, device_id, _c.V_PS_STATUS))
-        elif epics_field == 'Version-Cte':
-            return _fields.Version(
-                _fields.Variable(
-                    pru_controller, device_id, _c.V_FIRMWARE_VERSION))
-        # PRU related variables
+        e2v = {
+            'CycleEnbl-Mon': {'pru_controller': pru_controller,
+                              'device_id': device_id,
+                              'bsmp_id': _c.V_SIGGEN_ENABLE},
+            'CycleType-Sts': {'pru_controller': pru_controller,
+                              'device_id': device_id,
+                              'bsmp_id': _c.V_SIGGEN_TYPE},
+            'CycleNrCycles-RB': {'pru_controller': pru_controller,
+                                 'device_id': device_id,
+                                 'bsmp_id': _c.V_SIGGEN_NUM_CYCLES},
+            'CycleIndex-Mon': {'pru_controller': pru_controller,
+                               'device_id': device_id,
+                               'bsmp_id': _c.V_SIGGEN_N},
+            'CycleFreq-RB': {'pru_controller': pru_controller,
+                             'device_id': device_id,
+                             'bsmp_id': _c.V_SIGGEN_FREQ},
+            'CycleAmpl-RB': {'pru_controller': pru_controller,
+                             'device_id': device_id,
+                             'bsmp_id': _c.V_SIGGEN_AMPLITUDE},
+            'CycleOffset-RB': {'pru_controller': pru_controller,
+                               'device_id': device_id,
+                               'bsmp_id': _c.V_SIGGEN_OFFSET},
+            'CycleAuxParam-RB': {'pru_controller': pru_controller,
+                                 'device_id': device_id,
+                                 'bsmp_id': _c.V_SIGGEN_AUX_PARAM}}
+        e2f = {
+            'PwrState-Sts': (_fields.PwrState,
+                             {'pru_controller': pru_controller,
+                              'device_id': device_id,
+                              'bsmp_id': _c.V_PS_STATUS}),
+            'OpMode-Sts': (_fields.OpMode,
+                           {'pru_controller': pru_controller,
+                            'device_id': device_id,
+                            'bsmp_id': _c.V_PS_STATUS}),
+            'CtrlMode-Mon': (_fields.CtrlMode,
+                             {'pru_controller': pru_controller,
+                              'device_id': device_id,
+                              'bsmp_id': _c.V_PS_STATUS}),
+            'CtrlLoop-Sts': (_fields.CtrlLoop,
+                             {'pru_controller': pru_controller,
+                              'device_id': device_id,
+                              'bsmp_id': _c.V_PS_STATUS}),
+            'Version-Cte': (_fields.Version,
+                            {'pru_controller': pru_controller,
+                             'device_id': device_id,
+                             'bsmp_id': _c.V_FIRMWARE_VERSION})}
+
+        if epics_field in e2v:
+            kwargs = e2v[epics_field]
+            return _fields.Variable(**kwargs)
+        elif epics_field in e2f:
+            field, kwargs = e2f[epics_field]
+            return field(_fields.Variable(**kwargs))
         elif epics_field == 'WfmData-RB':
             return _fields.PRUCurve(pru_controller, device_id)
         elif epics_field == 'WfmIndex-Mon':
