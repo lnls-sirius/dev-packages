@@ -147,6 +147,8 @@ class Version:
     def read(self):
         """Decorate read."""
         value = self.variable.read()
+        if value is None:
+            return None
         version = ''.join([c.decode() for c in value])
         try:
             value, _ = version.split('\x00', 0)
