@@ -25,24 +25,6 @@ class ETypes(_cutil.ETypes):
 _et = ETypes  # syntactic sugar
 
 
-# --- Const class ---
-
-class Const(_cutil.Const):
-    """Const class defining OpticsCorr constants and Enum types."""
-
-    StoredEBeam = _cutil.Const.register('StoredEBeam', _et.STOREDEBEAM)
-    MeasModeSel = _cutil.Const.register('MeasModeSel', _et.MEASMODE_SEL)
-    MeasModeSts = _cutil.Const.register('MeasModeSts', _et.MEASMODE_STS)
-    MeasTrgSel = _cutil.Const.register('MeasTrgSel', _et.MEASTRG_SEL)
-    MeasTrgSts = _cutil.Const.register('MeasTrgSts', _et.MEASTRG_STS)
-    Imped = _cutil.Const.register('Imped', _et.IMPED)
-    AvgFilterTyp = _cutil.Const.register('AvgFilterTyp', _et.AVGFILTERTYP)
-    Range = _cutil.Const.register('Range', _et.RANGE)
-
-
-_c = Const  # syntactic sugar
-
-
 # --- Database ---
 
 def get_ict_database():
