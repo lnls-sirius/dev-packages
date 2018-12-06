@@ -13,7 +13,7 @@ from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.servconf.srvconfig import ConnConfigService as _ConnConfigService
 from siriuspy.ramp import util as _rutil
-from siriuspy.csdevice.orbitcorr import OrbitCorrDev as _OrbitCorrDev
+from siriuspy.csdevice.orbitcorr import OrbitCorrDevRings as _OrbitCorrConst
 from siriuspy.search.ma_search import MASearch as _MASearch
 
 
@@ -536,12 +536,13 @@ class ConnSOFB(_EpicsPropsList):
 
     def get_deltakicks(self):
         """Get CH and CV delta kicks calculated by SOFB."""
+        bo_sofb_db = _OrbitCorrConst(acc='BO')
         rb = self.readbacks
         ch_dkicks = rb[ConnSOFB.IOC_Prefix + ':DeltaKicksCH']
-        ch_names = _OrbitCorrDev.CH_NAMES
+        ch_names = bo_sofb_db.CH_NAMES
 
         cv_dkicks = rb[ConnSOFB.IOC_Prefix + ':DeltaKicksCV']
-        cv_names = _OrbitCorrDev.CV_NAMES
+        cv_names = bo_sofb_db.CV_NAMES
 
         corrs2dkicks_dict = dict()
         for idx in range(len(ch_names)):
