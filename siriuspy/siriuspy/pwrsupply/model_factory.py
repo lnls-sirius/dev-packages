@@ -239,12 +239,12 @@ class FBPFactory(ModelFactory):
         elif epics_field == 'Current-SP':
             return _functions.Current(device_ids, pru_controller, setpoints)
         elif epics_field == 'Reset-Cmd':
-            return _functions.BSMPFunction(
+            return _functions.Command(
                 device_ids, pru_controller, _c.F_RESET_INTERLOCKS, setpoints)
         elif epics_field == 'Abort-Cmd':
             return _functions.BSMPFunctionNull()
         elif epics_field == 'CycleDsbl-Cmd':
-            return _functions.BSMPFunction(
+            return _functions.Command(
                 device_ids, pru_controller, _c.F_DISABLE_SIGGEN, setpoints)
         elif epics_field == 'CycleType-Sel':
             return _functions.CfgSiggen(
