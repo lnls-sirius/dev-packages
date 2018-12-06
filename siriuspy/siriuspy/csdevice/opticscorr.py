@@ -153,7 +153,7 @@ def get_tune_database(acc):
 
         'Status-Mon':      {'type': 'int', 'value': 0b11111},
         'StatusLabels-Cte': {'type': 'string', 'count': 5,
-                             'value': _et.STATUS_LABELS},
+                             'value': _c.STATUS_LABELS},
     }
 
     for fam in qfams:
