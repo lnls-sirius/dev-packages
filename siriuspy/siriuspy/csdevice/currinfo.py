@@ -1,4 +1,4 @@
-"""Define PVs, contants and properties of all CurrInfo SoftIOCs."""
+"""Define PVs, contants and properties of CurrInfo SoftIOCs."""
 from siriuspy.csdevice import util as _cutil
 
 

@@ -1,4 +1,4 @@
-"""Define PVs, contants and properties of all OpticsCorr SoftIOCs."""
+"""Define PVs, contants and properties of OrbitCorr SoftIOCs."""
 import os as _os
 from copy import deepcopy as _dcopy
 from siriuspy.util import get_namedtuple as _get_namedtuple
