@@ -4,21 +4,46 @@ This is not a primary source database. Primary sources can be found in:
  - Digital Multimeter: https://github.com/lnls-dig/dmm7510-epics-ioc
 """
 
-from siriuspy.util import get_namedtuple as _get_namedtuple
+from siriuspy.csdevice import util as _cutil
 
-# Enum types
-StoredEBeam = _get_namedtuple('StoredEBeam', ('False', 'True'))
-MeasModeSel = _get_namedtuple('MeasModeSel', ('Normal', 'Fast'))
-MeasModeSts = _get_namedtuple('MeasModeSts', ('Unknown', 'Normal', 'Fast'))
-MeasTrgSel = _get_namedtuple(
-    'MeasTrgSel', ('None', 'External', 'InLevel', 'Software'))
-MeasTrgSts = _get_namedtuple(
-    'MeasTrgSts', ('Unknown', 'External', 'InLevel', 'Software', 'None'))
-Imped = _get_namedtuple('Imped', ('AUTO', '10MOhm'))
-OffOnType = _get_namedtuple('OffOnType', ('Off', 'On'))
-AvgFilterTyp = _get_namedtuple('AvgFilterTyp', ('Repeat', 'Moving'))
-Range = _get_namedtuple('Range', ('20 A', '2 A', '200 mA', '20 mA'))
 
+# --- Enumeration Types ---
+
+class ETypes(_cutil.ETypes):
+    """Local enumerate types."""
+
+    STOREDEBEAM = ('False', 'True')
+    MEASMODE_SEL = ('Normal', 'Fast')
+    MEASMODE_STS = ('Unknown', 'Normal', 'Fast')
+    MEASTRG_SEL = ('None', 'External', 'InLevel', 'Software')
+    MEASTRG_STS = ('Unknown', 'External', 'InLevel', 'Software', 'None')
+    IMPED = ('AUTO', '10MOhm')
+    AVGFILTERTYP = ('Repeat', 'Moving')
+    RANGE = ('20 A', '2 A', '200 mA', '20 mA')
+
+
+_et = ETypes  # syntactic sugar
+
+
+# --- Const class ---
+
+class Const(_cutil.Const):
+    """Const class defining OpticsCorr constants and Enum types."""
+
+    StoredEBeam = _cutil.Const.register('StoredEBeam', _et.STOREDEBEAM)
+    MeasModeSel = _cutil.Const.register('MeasModeSel', _et.MEASMODE_SEL)
+    MeasModeSts = _cutil.Const.register('MeasModeSts', _et.MEASMODE_STS)
+    MeasTrgSel = _cutil.Const.register('MeasTrgSel', _et.MEASTRG_SEL)
+    MeasTrgSts = _cutil.Const.register('MeasTrgSts', _et.MEASTRG_STS)
+    Imped = _cutil.Const.register('Imped', _et.IMPED)
+    AvgFilterTyp = _cutil.Const.register('AvgFilterTyp', _et.AVGFILTERTYP)
+    Range = _cutil.Const.register('Range', _et.RANGE)
+
+
+_c = Const  # syntactic sugar
+
+
+# --- Database ---
 
 def get_ict_database():
     """Return ICT device database."""
@@ -27,7 +52,7 @@ def get_ict_database():
         'Current-Mon':     {'type': 'float', 'unit': 'mA', 'prec': 6},
         'CurrHstr-Mon':    {'type': 'float', 'count': 1000, 'unit': 'mA'},
         'RawReadings-Mon': {'type': 'float', 'count': 1000000, 'unit': 'mA'},
-        'StoredEBeam-Mon': {'type': 'enum', 'enums': StoredEBeam},
+        'StoredEBeam-Mon': {'type': 'enum', 'enums': _et.STOREDEBEAM},
 
         # Measurement Reliability
         'ReliableMeas-Mon':       {'type': 'int',
@@ -36,8 +61,8 @@ def get_ict_database():
         'ReliableMeasLabels-Cte': {'type': 'string', 'count': 3},
 
         # Measurement Trigger Source and Timer Configuration
-        'MeasTrg-Sel': {'type': 'enum', 'enums': MeasTrgSel},
-        'MeasTrg-Sts': {'type': 'enum', 'enums': MeasTrgSts},
+        'MeasTrg-Sel': {'type': 'enum', 'enums': _et.MEASTRG_SEL},
+        'MeasTrg-Sts': {'type': 'enum', 'enums': _et.MEASTRG_STS},
         'TrgDelay-SP': {'type': 'float', 'unit': 's', 'prec': 6,
                         'hihi': 100000, 'high': 100000,
                         'hilim': 100000, 'lolim': 0.000008,
@@ -48,8 +73,8 @@ def get_ict_database():
                         'low': 0.000008, 'lolo': 0.000008},
 
         # Measurement Mode Selection
-        'MeasMode-Sel': {'type': 'enum', 'enums': MeasModeSel},
-        'MeasMode-Sts': {'type': 'enum', 'enums': MeasModeSts},
+        'MeasMode-Sel': {'type': 'enum', 'enums': _et.MEASMODE_SEL},
+        'MeasMode-Sts': {'type': 'enum', 'enums': _et.MEASMODE_STS},
 
         # Measurement and Filter Settings | Normal Mode
         'SampleCnt-SP':      {'type': 'float', 'hihi': 5000, 'high': 5000,
@@ -64,12 +89,12 @@ def get_ict_database():
                               'value': 0.01667, 'hihi': 10, 'high': 10,
                               'hilim': 10, 'lolim': 0.0000084,
                               'low': 0.0000084, 'lolo': 0.0000084},
-        'Imped-Sel':         {'type': 'enum', 'enums': Imped, 'value': 0},
-        'Imped-Sts':         {'type': 'enum', 'enums': Imped, 'value': 0},
-        'LineSync-Sel':      {'type': 'enum', 'enums': OffOnType, 'value': 0},
-        'LineSync-Sts':      {'type': 'enum', 'enums': OffOnType, 'value': 0},
-        'RelEnbl-Sel':       {'type': 'enum', 'enums': OffOnType, 'value': 0},
-        'RelEnbl-Sts':       {'type': 'enum', 'enums': OffOnType, 'value': 0},
+        'Imped-Sel':         {'type': 'enum', 'enums': _et.IMPED, 'value': 0},
+        'Imped-Sts':         {'type': 'enum', 'enums': _et.IMPED, 'value': 0},
+        'LineSync-Sel':      {'type': 'enum', 'enums': _et.OFF_ON, 'value': 0},
+        'LineSync-Sts':      {'type': 'enum', 'enums': _et.OFF_ON, 'value': 0},
+        'RelEnbl-Sel':       {'type': 'enum', 'enums': _et.OFF_ON, 'value': 0},
+        'RelEnbl-Sts':       {'type': 'enum', 'enums': _et.OFF_ON, 'value': 0},
         'RelLvl-SP':         {'type': 'float', 'prec': 16,
                               'high': 1000000, 'hihi': 1000000,
                               'hilim': 1000000, 'lolim': -1000000,
@@ -79,14 +104,14 @@ def get_ict_database():
                               'hilim': 1000000, 'lolim': -1000000,
                               'low': -1000000, 'lolo': -1000000},
         'RelAcq-Cmd':        {'type': 'int', 'value': 0},
-        'AvgFilterEnbl-Sel': {'type': 'enum', 'enums': OffOnType},
-        'AvgFilterEnbl-Sts': {'type': 'enum', 'enums': OffOnType},
+        'AvgFilterEnbl-Sel': {'type': 'enum', 'enums': _et.OFF_ON},
+        'AvgFilterEnbl-Sts': {'type': 'enum', 'enums': _et.OFF_ON},
         'AvgFilterCnt-SP':   {'type': 'float', 'hihi': 100, 'high': 100,
                               'hilim': 100, 'lolim': 1, 'low': 1, 'lolo': 1},
         'AvgFilterCnt-RB':   {'type': 'float', 'hihi': 100, 'high': 100,
                               'hilim': 100, 'lolim': 1, 'low': 1, 'lolo': 1},
-        'AvgFilterTyp-Sel':  {'type': 'enum', 'enums': AvgFilterTyp},
-        'AvgFilterTyp-Sts':  {'type': 'enum', 'enums': AvgFilterTyp},
+        'AvgFilterTyp-Sel':  {'type': 'enum', 'enums': _et.AVGFILTERTYP},
+        'AvgFilterTyp-Sts':  {'type': 'enum', 'enums': _et.AVGFILTERTYP},
         'AvgFilterWind-SP':  {'type': 'float', 'unit': '%',
                               'hihi': 10, 'high': 10, 'hilim': 10,
                               'lolim': 0, 'low': 0, 'lolo': 0},
@@ -107,10 +132,10 @@ def get_ict_database():
                               'value': 0.001, 'hihi': 5, 'high': 5,
                               'hilim': 5, 'lolim': 0.000001,
                               'low': 0.000001, 'lolo': 0.000001},
-        'FastImped-Sel':     {'type': 'enum', 'enums': Imped, 'value': 0},
-        'FastImped-Sts':     {'type': 'enum', 'enums': Imped, 'value': 0},
-        'FastRelEnbl-Sel':   {'type': 'enum', 'enums': OffOnType, 'value': 0},
-        'FastRelEnbl-Sts':   {'type': 'enum', 'enums': OffOnType, 'value': 0},
+        'FastImped-Sel':     {'type': 'enum', 'enums': _et.IMPED, 'value': 0},
+        'FastImped-Sts':     {'type': 'enum', 'enums': _et.IMPED, 'value': 0},
+        'FastRelEnbl-Sel':   {'type': 'enum', 'enums': _et.OFF_ON, 'value': 0},
+        'FastRelEnbl-Sts':   {'type': 'enum', 'enums': _et.OFF_ON, 'value': 0},
         'FastRelLvl-SP':     {'type': 'float', 'prec': 16,
                               'high': 1000000, 'hihi': 1000000,
                               'hilim': 1000000, 'lolim': -1000000,
@@ -122,22 +147,22 @@ def get_ict_database():
         'FastRelAcq-Cmd':    {'type': 'int', 'value': 0},
 
         # Current Measurement Range and Threshold Detection | Both Modes
-        'Range-Sel':      {'type': 'enum', 'enums': Range},
-        'Range-Sts':      {'type': 'enum', 'enums': Range},
-        'LowLimEnbl-Sel': {'type': 'enum', 'enums': OffOnType},
-        'LowLimEnbl-Sts': {'type': 'enum', 'enums': OffOnType},
+        'Range-Sel':      {'type': 'enum', 'enums': _et.RANGE},
+        'Range-Sts':      {'type': 'enum', 'enums': _et.RANGE},
+        'LowLimEnbl-Sel': {'type': 'enum', 'enums': _et.OFF_ON},
+        'LowLimEnbl-Sts': {'type': 'enum', 'enums': _et.OFF_ON},
         'CurrThold-SP':   {'type': 'float', 'unit': 'mA', 'prec': 6,
                            'hihi': 2000, 'high': 2000, 'hilim': 2000,
                            'lolim': -2000, 'low': -2000, 'lolo': -2000},
         'CurrThold-RB':   {'type': 'float', 'unit': 'mA', 'prec': 6,
                            'hihi': 2000, 'high': 2000, 'hilim': 2000,
                            'lolim': -2000, 'low': -2000, 'lolo': -2000},
-        'HFReject-Sel':   {'type': 'enum', 'enums': OffOnType},
-        'HFReject-Sts':   {'type': 'enum', 'enums': OffOnType},
+        'HFReject-Sel':   {'type': 'enum', 'enums': _et.OFF_ON},
+        'HFReject-Sts':   {'type': 'enum', 'enums': _et.OFF_ON},
 
         # DCCT Calibration Setting
-        'Test-Sel': {'type': 'enum', 'enums': OffOnType},
-        'Test-Sts': {'type': 'enum', 'enums': OffOnType},
+        'Test-Sel': {'type': 'enum', 'enums': _et.OFF_ON},
+        'Test-Sts': {'type': 'enum', 'enums': _et.OFF_ON},
 
         # Multimeter Setup
         'Download-Cmd': {'type': 'int', 'value': 0}

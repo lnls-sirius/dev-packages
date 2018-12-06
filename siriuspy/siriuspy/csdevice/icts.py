@@ -4,25 +4,43 @@ This is not a primary source database. Primary sources can be found in:
  - Digital Multimeter: https://github.com/lnls-dig/dmm7510-epics-ioc
 """
 
-from siriuspy.util import get_namedtuple as _get_namedtuple
+from siriuspy.csdevice import util as _cutil
 
-# Enum types
-RangeSel = _get_namedtuple(
-    'RangeSel', ('40 nC', '20 nC', '10 nC', '8 nC', '4 nC', '2 nC', '0.8 nC'))
-RangeSts = _get_namedtuple(
-    'RangeSts',
-    ('UNKNOWN', '40 nC', '20 nC', '10 nC', '8 nC', '4 nC', '2 nC', '0.8 nC'))
-Imped = _get_namedtuple(
-    'Imped', ('AUTO', '10MOhm'))
-SampleTrgSel = _get_namedtuple(
-    'SampleTrgSel', ('None', 'External', 'InLevel'))
-SampleTrgSts = _get_namedtuple(
-    'SampleTrgSts', ('Unknown', 'External', 'InLevel', 'None'))
-CalCharge = _get_namedtuple(
-    'CalCharge', ('1 nC', '100 pC', '10 pC', '1 pC'))
-OffOnType = _get_namedtuple(
-    'OffOnType', ('Off', 'On'))
 
+# --- Enumeration Types ---
+
+class ETypes(_cutil.ETypes):
+    """Local enumerate types."""
+
+    RANGESEL = ('40 nC', '20 nC', '10 nC', '8 nC', '4 nC', '2 nC', '0.8 nC')
+    RANGESTS = ('UNKNOWN', '40 nC', '20 nC', '10 nC', '8 nC', '4 nC', '2 nC',
+                '0.8 nC')
+    IMPED = ('AUTO', '10MOhm')
+    SAMPLETRGSEL = ('None', 'External', 'InLevel')
+    SAMPLETRGSTS = ('Unknown', 'External', 'InLevel', 'None')
+    CALCHARGE = ('1 nC', '100 pC', '10 pC', '1 pC')
+
+
+_et = ETypes  # syntactic sugar
+
+
+# --- Const class ---
+
+class Const(_cutil.Const):
+    """Const class defining OpticsCorr constants and Enum types."""
+
+    RangeSel = _cutil.Const.register('RangeSel', _et.RANGESEL)
+    RangeSts = _cutil.Const.register('RangeSts', _et.RANGESTS)
+    Imped = _cutil.Const.register('Imped', _et.IMPED)
+    SampleTrgSel = _cutil.Const.register('SampleTrgSel', _et.SAMPLETRGSEL)
+    SampleTrgSts = _cutil.Const.register('SampleTrgSts', _et.SAMPLETRGSTS)
+    CalCharge = _cutil.Const.register('CalCharge', _et.CALCHARGE)
+
+
+_c = Const  # syntactic sugar
+
+
+# --- Database ---
 
 def get_ict_database():
     """Return ICT device database."""
@@ -37,8 +55,8 @@ def get_ict_database():
         'ReliableMeasLabels-Cte': {'type': 'string', 'count': 3},
 
         # Digitize Trigger source
-        'SampleTrg-Sel': {'type': 'enum', 'enums': SampleTrgSel},
-        'SampleTrg-Sts': {'type': 'enum', 'enums': SampleTrgSts},
+        'SampleTrg-Sel': {'type': 'enum', 'enums': _et.SAMPLETRGSEL},
+        'SampleTrg-Sts': {'type': 'enum', 'enums': _et.SAMPLETRGSTS},
 
         # Level Threshold
         'Threshold-SP': {'type': 'float', 'unit': 'nC', 'prec': 6,
@@ -47,8 +65,8 @@ def get_ict_database():
         'Threshold-RB': {'type': 'float', 'unit': 'nC', 'prec': 6,
                          'hihi': 40, 'high': 40, 'hilim': 40,
                          'lolim': 0, 'low': 0, 'lolo': 0},
-        'HFReject-Sel': {'type': 'enum', 'enums': OffOnType},
-        'HFReject-Sts': {'type': 'enum', 'enums': OffOnType},
+        'HFReject-Sel': {'type': 'enum', 'enums': _et.OFF_ON},
+        'HFReject-Sts': {'type': 'enum', 'enums': _et.OFF_ON},
 
         # Measure timer configuration
         '2ndReadDly-SP': {'type': 'float', 'unit': 's', 'prec': 6,
@@ -84,21 +102,21 @@ def get_ict_database():
         'SampleRate-RB': {'type': 'int', 'unit': 'readings/s',
                           'hihi': 1000000, 'high': 1000000, 'hilim': 1000000,
                           'lolim': 1000, 'low': 1000, 'lolo': 1000},
-        'Imped-Sel':     {'type': 'enum', 'enums': Imped, 'value': 0},
-        'Imped-Sts':     {'type': 'enum', 'enums': Imped, 'value': 0},
+        'Imped-Sel':     {'type': 'enum', 'enums': _et.IMPED, 'value': 0},
+        'Imped-Sts':     {'type': 'enum', 'enums': _et.IMPED, 'value': 0},
 
         # Charge Digitize Range
         'BCMRange-SP': {'type': 'float', 'unit': 'V', 'prec': 6,
                         'hihi': 10, 'high': 10, 'hilim': 10,
                         'lolim': 1, 'low': 1, 'lolo': 1},
-        'Range-Sel':   {'type': 'enum', 'enums': RangeSel},
-        'Range-Sts':   {'type': 'enum', 'enums': RangeSts},
+        'Range-Sel':   {'type': 'enum', 'enums': _et.RANGESEL},
+        'Range-Sts':   {'type': 'enum', 'enums': _et.RANGESTS},
 
         # BCM Calibration Settings
-        'CalEnbl-Sel':   {'type': 'enum', 'enums': OffOnType},
-        'CalEnbl-Sts':   {'type': 'enum', 'enums': OffOnType},
-        'CalCharge-Sel': {'type': 'enum', 'enums': CalCharge, 'value': 0},
-        'CalCharge-Sts': {'type': 'enum', 'enums': CalCharge, 'value': 0},
+        'CalEnbl-Sel':   {'type': 'enum', 'enums': _et.OFF_ON},
+        'CalEnbl-Sts':   {'type': 'enum', 'enums': _et.OFF_ON},
+        'CalCharge-Sel': {'type': 'enum', 'enums': _et.CALCHARGE, 'value': 0},
+        'CalCharge-Sts': {'type': 'enum', 'enums': _et.CALCHARGE, 'value': 0},
 
         # Multimeter Setup
         'Download-Cmd': {'type': 'int', 'value': 0}

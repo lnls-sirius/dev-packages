@@ -6,26 +6,45 @@ This is not a primary source database. Primary sources can be found in:
  - Motor IOC: https://github.com/lnls-dig/galil-dmc30017-epics-ioc
 """
 
-from siriuspy.util import get_namedtuple as _get_namedtuple
+from siriuspy.csdevice import util as _cutil
 
-# Enum types
-OffOnType = _get_namedtuple(
-    'OffOnType', ('Off', 'On'))
-ScrnTypeSel = _get_namedtuple(
-    'ScrnTypeSel', ('None', 'Calibration', 'Fluorescent'))
-ScrnTypeSts = _get_namedtuple(
-    'ScrnTypeSts', ('None', 'Calibration', 'Fluorescent', 'Unknown'))
-CamAcqMode = _get_namedtuple(
-    'CamAcqMode', ('AUTO', 'TRIG'))
-CamExposureMode = _get_namedtuple(
-    'CamExposureMode', ('TIMED', 'TRIGWIDTH'))
-CamLastErr = _get_namedtuple(
-    'CamLastErr', ('NoError', 'Overtrigger', 'Userset', 'InvalidParameter',
-                   'OverTemperature', 'PowerFailure', 'InsufficientTrig',
-                   'UserDefPixFailur'))
-CamTempState = _get_namedtuple(
-    'CamTempState', ('Ok', 'Critical', 'Error'))
 
+# --- Enumeration Types ---
+
+class ETypes(_cutil.ETypes):
+    """Local enumerate types."""
+
+    SCRNTYPESEL = ('None', 'Calibration', 'Fluorescent')
+    SCRNTYPESTS = ('None', 'Calibration', 'Fluorescent', 'Unknown')
+    CAMACQMODE = ('AUTO', 'TRIG')
+    CAMEXPOSUREMODE = ('TIMED', 'TRIGWIDTH')
+    CAMLASTERR = ('NoError', 'Overtrigger', 'Userset', 'InvalidParameter',
+                  'OverTemperature', 'PowerFailure', 'InsufficientTrig',
+                  'UserDefPixFailur')
+    CAMTEMPSTATE = ('Ok', 'Critical', 'Error')
+
+
+_et = ETypes  # syntactic sugar
+
+
+# --- Const class ---
+
+class Const(_cutil.Const):
+    """Const class defining OpticsCorr constants and Enum types."""
+
+    ScrnTypeSel = _cutil.Const.register('ScrnTypeSel', _et.SCRNTYPESEL)
+    ScrnTypeSts = _cutil.Const.register('ScrnTypeSts', _et.SCRNTYPESTS)
+    CamAcqMode = _cutil.Const.register('CamAcqMode', _et.CAMACQMODE)
+    CamExposureMode = _cutil.Const.register('CamExposureMode',
+                                            _et.CAMEXPOSUREMODE)
+    CamLastErr = _cutil.Const.register('CamLastErr', _et.CAMLASTERR)
+    CamTempState = _cutil.Const.register('CamTempState', _et.CAMTEMPSTATE)
+
+
+_c = Const  # syntactic sugar
+
+
+# --- Database ---
 
 def get_scrn_database():
     """Return Scrn device database."""
@@ -35,17 +54,17 @@ def get_scrn_database():
         'CamPrefix-Cte':     {'type': 'string'},
 
         # PV to select screen type
-        'ScrnType-Sel': {'type': 'enum', 'enums': ScrnTypeSel, 'value': 0},
-        'ScrnType-Sts': {'type': 'enum', 'enums': ScrnTypeSts, 'value': 0},
+        'ScrnType-Sel': {'type': 'enum', 'enums': _et.SCRNTYPESEL, 'value': 0},
+        'ScrnType-Sts': {'type': 'enum', 'enums': _et.SCRNTYPESTS, 'value': 0},
 
         # Camera settings PVs
-        'CamEnbl-Sel':         {'type': 'enum', 'enums': OffOnType,
+        'CamEnbl-Sel':         {'type': 'enum', 'enums': _et.OFF_ON,
                                 'value': 0},
-        'CamEnbl-Sts':         {'type': 'enum', 'enums': OffOnType,
+        'CamEnbl-Sts':         {'type': 'enum', 'enums': _et.OFF_ON,
                                 'value': 0},
-        'CamAcqMode-Sel':      {'type': 'enum', 'enums': CamAcqMode,
+        'CamAcqMode-Sel':      {'type': 'enum', 'enums': _et.CAMACQMODE,
                                 'value': 0},
-        'CamAcqMode-Sts':      {'type': 'enum', 'enums': CamAcqMode,
+        'CamAcqMode-Sts':      {'type': 'enum', 'enums': _et.CAMACQMODE,
                                 'value': 0},
         'CamAcqPeriod-SP':     {'type': 'float', 'unit': 's', 'prec': 6,
                                 'value': 0.2, 'hihi': 10, 'high': 10,
@@ -55,9 +74,9 @@ def get_scrn_database():
                                 'value': 0.2, 'hihi': 10, 'high': 10,
                                 'hilim': 10, 'lolim': 0.0124, 'low': 0.0124,
                                 'lolo': 0.0124},
-        'CamExposureMode-Sel': {'type': 'enum', 'enums': CamExposureMode,
+        'CamExposureMode-Sel': {'type': 'enum', 'enums': _et.CAMEXPOSUREMODE,
                                 'value': 0},
-        'CamExposureMode-Sts': {'type': 'enum', 'enums': CamExposureMode,
+        'CamExposureMode-Sts': {'type': 'enum', 'enums': _et.CAMEXPOSUREMODE,
                                 'value': 0},
         'CamExposureTime-SP':  {'type': 'int', 'unit': 'us', 'value': 5000,
                                 'hihi': 1000000, 'high': 1000000,
@@ -80,9 +99,9 @@ def get_scrn_database():
         'CamBlackLevel-RB':    {'type': 'int', 'unit': 'gray value',
                                 'hihi': 64, 'high': 64, 'hilim': 64,
                                 'lolim': 0, 'low': 0, 'lolo': 0},
-        'CamLastErr-Mon':      {'type': 'enum', 'enums': CamLastErr},
+        'CamLastErr-Mon':      {'type': 'enum', 'enums': _et.CAMLASTERR},
         'CamClearLastErr-Cmd': {'type': 'int', 'value': 0},
-        'CamTempState-Mon':    {'type': 'enum', 'enums': CamTempState},
+        'CamTempState-Mon':    {'type': 'enum', 'enums': _et.CAMTEMPSTATE},
         'CamTemp-Mon':         {'type': 'float', 'unit': '°C', 'prec': 3},
 
         # Camera image PVs
@@ -158,9 +177,9 @@ def get_scrn_database():
                                 'lolim': -1000, 'low': -1000, 'lolo': -1000},
 
         # LED brightness calibration PVs
-        'EnblLED-Sel':          {'type': 'enum', 'enums': OffOnType,
+        'EnblLED-Sel':          {'type': 'enum', 'enums': _et.OFF_ON,
                                  'value': 0},
-        'EnblLED-Sts':          {'type': 'enum', 'enums': OffOnType,
+        'EnblLED-Sts':          {'type': 'enum', 'enums': _et.OFF_ON,
                                  'value': 0},
         'LEDPwrLvl-SP':         {'type': 'float', 'unit': '%',
                                  'hihi': 100, 'high': 100, 'hilim': 100,
