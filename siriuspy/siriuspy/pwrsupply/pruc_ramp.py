@@ -59,7 +59,6 @@ class Ramp(_threading.Thread):
             elif self._state == Ramp.WAIT_RAMP_MODE:
                 count = self._controller.pru_controller.pru_sync_pulse_count
                 if self._achieved_op_mode() and count == 0:
-                    print('Going to mode WAIT_RAMP_BEGIN')
                     self._state = Ramp.WAIT_RAMP_BEGIN
             elif self._state == Ramp.WAIT_RAMP_BEGIN:
                 count = self._controller.pru_controller.pru_sync_pulse_count
