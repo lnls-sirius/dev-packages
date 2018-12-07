@@ -317,6 +317,7 @@ class PRUController:
 
         # ramp offset
         self._ramp_offset = 10
+        self._ramp_offset_count = 0
 
         # define scan thread
         self._last_device_scanned = len(self._device_ids)  # next is the first
@@ -416,7 +417,7 @@ class PRUController:
     @property
     def ramp_ready(self):
         """Return wether ramp is ready."""
-        return True if self.ramp_offset_count == ramp_offset else False
+        return True if self.ramp_offset_count == self.ramp_offset else False
 
     def check_connected(self, device_id):
         """Return connection state of a device."""
