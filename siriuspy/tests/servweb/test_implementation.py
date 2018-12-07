@@ -67,13 +67,11 @@ class TestServWeb(unittest.TestCase):
         'magnets_excitation_ps_read',
         'ps_pstypes_names_read',
         'ps_pstype_data_read',
-        'ps_siggen_configuration_read',
         'ps_pstype_setpoint_limits',
         'pu_pstype_setpoint_limits',
+        'ps_siggen_configuration_read',
         'ps_psmodels_read',
         'pu_psmodels_read',
-        'beaglebone_power_supplies_mapping',
-        'beaglebone_bsmp_mapping',
         'beaglebone_freqs_mapping',
         'bbb_udc_mapping',
         'udc_ps_mapping',
@@ -233,28 +231,10 @@ class TestServWeb(unittest.TestCase):
             mock.call(url, timeout=1.0),
             mock.call(url, timeout=2.0)])
 
-    def test_beaglebone_bsmp_mapping(self, mock_read):
-        """Test beaglebon_bsmp_mapping."""
-        # TODO: implement!
-        pass
-
     def test_beaglebone_freq_mapping(self, mock_read):
         """Test beaglebone_freqs_mapping."""
         # TODO: implement!
         pass
-
-    def test_beaglebone_power_supplies_mapping(self, mock_read):
-        """Test beaglebone_power_supplies_mapping."""
-        url = implementation._ps_folder + 'beaglebone-mapping.txt'
-        # Call with different parameters
-        resp = implementation.beaglebone_power_supplies_mapping()
-        self.assertEqual(resp, "FakeResponse")
-        resp = implementation.beaglebone_power_supplies_mapping(timeout=2.0)
-        self.assertEqual(resp, "FakeResponse")
-        # Assert read_url was called correctly
-        mock_read.assert_has_calls([
-            mock.call(url, timeout=1.0),
-            mock.call(url, timeout=2.0)])
 
     def test_crates_mapping(self, mock_read):
         """Test crate_to_bpm_mapping."""

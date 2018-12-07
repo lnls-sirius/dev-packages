@@ -259,7 +259,7 @@ class SignalFactory:
     }
 
     @staticmethod
-    def factory(data=None, **kwargs):
+    def create(data=None, **kwargs):
         """Factory method.
 
             This methods returns a Signal object corresponding to the

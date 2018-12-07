@@ -80,41 +80,29 @@ class ModelFactory:
         raise NotImplementedError
 
     @staticmethod
-    def get(model):
+    def create(model):
         """Return ModelFactory object."""
-        if model == 'FBP':
-            return FBPFactory()
-        elif model == 'FBP_DCLink':
-            return FBPDCLinkFactory()
-        elif model == 'FBP_FOFB':
-            return FBPFactory()
-
-        elif model == 'FAC_DCDC':
-            return FACFactory()
-        elif model == 'FAC_ACDC':
-            return FACACDCFactory()
-        elif model == 'FAC_2S_DCDC':
-            return FAC2SDCDCFactory()
-        elif model == 'FAC_2S_ACDC':
-            return FAC2SACDCFactory()
-        elif model == 'FAC_2P4S_DCDC':
-            return FAC2P4SDCDCFactory()
-        elif model == 'FAC_2P4S_ACDC':
-            return FAC2P4SACDCFactory()
-
-        elif model == 'FAP':
-            return FAPFactory()
-        elif model == 'FAP_2P2S_MASTER':
-            return FAP2P2SMASTERFactory()
-        elif model == 'FAP_4P_Master':
-            return FAP4PMasterFactory()
-        elif model == 'FAP_4P_Slave':
-            return FAP4PSlaveFactory()
-
-        elif model == 'Commercial':
-            return CommercialFactory()
+        name_2_factory = {
+            'FBP': FBPFactory,
+            'FBP_DCLink': FBPDCLinkFactory,
+            'FBP_FOFB': FBPFactory,
+            'FAC_DCDC': FACFactory,
+            'FAC_ACDC': FACACDCFactory,
+            'FAC_2S_DCDC': FAC2SDCDCFactory,
+            'FAC_2S_ACDC': FAC2SACDCFactory,
+            'FAC_2P4S_DCDC': FAC2P4SDCDCFactory,
+            'FAC_2P4S_ACDC': FAC2P4SACDCFactory,
+            'FAP': FAPFactory,
+            'FAP_2P2S_MASTER': FAP2P2SMASTERFactory,
+            'FAP_4P_Master': FAP4PMasterFactory,
+            'FAP_4P_Slave': FAP4PSlaveFactory,
+            'Commercial': CommercialFactory,
+        }
+        if model in name_2_factory:
+            factory = name_2_factory[model]
+            return factory()
         else:
-            raise ValueError('{} not defined'.format(model))
+            raise ValueError('Model "{}" not defined'.format(model))
 
     def field(self, device_id, epics_field, pru_controller):
         """Return field."""
@@ -257,12 +245,12 @@ class FBPFactory(ModelFactory):
         elif epics_field == 'Current-SP':
             return _functions.Current(device_ids, pru_controller, setpoints)
         elif epics_field == 'Reset-Cmd':
-            return _functions.BSMPFunction(
+            return _functions.Command(
                 device_ids, pru_controller, _c.F_RESET_INTERLOCKS, setpoints)
         elif epics_field == 'Abort-Cmd':
             return _functions.BSMPFunctionNull()
         elif epics_field == 'CycleDsbl-Cmd':
-            return _functions.BSMPFunction(
+            return _functions.Command(
                 device_ids, pru_controller, _c.F_DISABLE_SIGGEN, setpoints)
         elif epics_field == 'CycleType-Sel':
             return _functions.CfgSiggen(
@@ -844,7 +832,7 @@ class PRUCParms_FBP(_PRUCParms):
 
     # UDC model
     # udcmodel = 'FBP'
-    model = ModelFactory.get('FBP')
+    model = ModelFactory.create('FBP')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
@@ -940,7 +928,7 @@ class PRUCParms_FBP_DCLink(_PRUCParms):
     FREQ_SCAN = 2.0  # [Hz]
 
     # UDC model
-    model = ModelFactory.get('FBP_DCLink')
+    model = ModelFactory.create('FBP_DCLink')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
@@ -1012,7 +1000,7 @@ class PRUCParms_FAC(_PRUCParms):
     FREQ_SCAN = 10.0  # [Hz]
 
     # UDC model
-    model = ModelFactory.get('FAC_DCDC')
+    model = ModelFactory.create('FAC_DCDC')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
@@ -1083,7 +1071,7 @@ class PRUCParms_FAC_ACDC(_PRUCParms):
     FREQ_SCAN = 2.0  # [Hz]
 
     # UDC model
-    model = ModelFactory.get('FAC_ACDC')
+    model = ModelFactory.create('FAC_ACDC')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
@@ -1155,7 +1143,7 @@ class PRUCParms_FAC_2P4S(_PRUCParms):
     FREQ_SCAN = 10.0  # [Hz]
 
     # UDC model
-    model = ModelFactory.get('FAC_2P4S_DCDC')
+    model = ModelFactory.create('FAC_2P4S_DCDC')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
@@ -1270,7 +1258,7 @@ class PRUCParms_FAC_2P4S_ACDC(_PRUCParms):
     FREQ_SCAN = 2.0  # [Hz]
 
     # UDC model
-    model = ModelFactory.get('FAC_ACDC')
+    model = ModelFactory.create('FAC_ACDC')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
@@ -1342,7 +1330,7 @@ class PRUCParms_FAP(_PRUCParms):
     FREQ_SCAN = 10.0  # [Hz]
 
     # UDC model
-    model = ModelFactory.get('FAP')
+    model = ModelFactory.create('FAP')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
@@ -1377,7 +1365,7 @@ class PRUCParms_FAP(_PRUCParms):
         ConstBSMP.V_I_IGBT_1,
         ConstBSMP.V_I_IGBT_2,
         ConstBSMP.V_DUTY_CYCLE_1,
-        ConstBSMP.V_DUTY_CYCLE_1,
+        ConstBSMP.V_DUTY_CYCLE_2,
         ConstBSMP.V_DUTY_DIFF,)
     groups[_PRUCParms.SYNCOFF] = (
         # --- common variables
@@ -1403,7 +1391,7 @@ class PRUCParms_FAP(_PRUCParms):
         ConstBSMP.V_I_IGBT_1,
         ConstBSMP.V_I_IGBT_2,
         ConstBSMP.V_DUTY_CYCLE_1,
-        ConstBSMP.V_DUTY_CYCLE_1,
+        ConstBSMP.V_DUTY_CYCLE_2,
         ConstBSMP.V_DUTY_DIFF,)
     groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
@@ -1427,7 +1415,7 @@ class UDC:
     def _create_bsmp_connectors(self):
         bsmp = dict()
         # d = udcmodels[self._udcmodel]
-        model = ModelFactory.get(self._udcmodel)
+        model = ModelFactory.create(self._udcmodel)
         entities, bsmpsim_class = model.entities, model.simulation_class
         for id in self._device_ids:
             if self._pru.simulated:

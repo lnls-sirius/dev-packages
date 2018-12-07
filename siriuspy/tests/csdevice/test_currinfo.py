@@ -12,9 +12,7 @@ from siriuspy.csdevice.currinfo import (
 )
 
 public_interface = (
-        'OFFONTYP',
-        'DCCTSELECTIONTYP',
-        'BUFFAUTORSTTYP',
+        'ETypes',
         'Const',
         'get_charge_database',
         'get_current_database',

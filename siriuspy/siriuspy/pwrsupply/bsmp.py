@@ -30,6 +30,9 @@ from siriuspy.pwrsupply.pru import PRU as _PRU
 
 __version__ = 'V0.16b2018-08-22V0.16b2018-08-22'
 
+# FAP dipole version
+# __version__ = 'V0.18 2018-10-22V0.18 2018-10-22'
+
 
 class ConstBSMP:
     """Namespace for organizing power supply BSMP constants."""
@@ -1103,9 +1106,9 @@ class EntitiesFAP(_Entities):
         {'eid': 29, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 30, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 31, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 32, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 33, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
-        {'eid': 34, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 32, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 33, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 34, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
     )
 
     Curves = tuple()

@@ -45,6 +45,16 @@ class BSMPFunction(Function):
                     self._device_ids, self.func_id, value)
 
 
+class Command(BSMPFunction):
+    """Execute a Cmd type PV."""
+
+    def execute(self, value=None):
+        """Execute command."""
+        if not self.setpoints or \
+                (self.setpoints and self.setpoints.apply(value)):
+            self.pru_controller.exec_functions(self._device_ids, self.func_id)
+
+
 class BSMPFunctionNull(BSMPFunction):
     """Do nothing."""
 

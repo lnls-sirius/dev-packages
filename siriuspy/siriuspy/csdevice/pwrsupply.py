@@ -2,11 +2,11 @@
 
 import copy as _copy
 
-from siriuspy.csdevice.enumtypes import EnumTypes as _et
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.search import MASearch as _MASearch
 from siriuspy.pwrsupply.siggen import DEFAULT_SIGGEN_CONFIG as _DEF_SIGG_CONF
-from siriuspy.util import get_namedtuple as _get_namedtuple
+from siriuspy.csdevice import util as _cutil
+
 
 # MIN_WFMSIZE = 2001
 MAX_WFMSIZE = 4000
@@ -18,227 +18,232 @@ default_pu_current_precision = 4
 _default_ps_current_unit = None
 _default_pu_current_unit = None
 
-# TODO: cleanup this module !!!!
-# TODO: Add properties to power EPICS supply devices:
-# DSPLoop-Mon: 'Off', 'On'
 
-# --- power supply enums ---
+# --- Enumeration Types ---
 
-ps_models = ('Empty',
-             'FBP', 'FBP_DCLink',
-             'FAC_ACDC', 'FAC_DCDC',
-             'FAC_2S_ACDC', 'FAC_2S_DCDC',
-             'FAC_2P4S_ACDC', 'FAC_2P4S_DCDC',
-             'FAP',
-             'FAP_4P_Master', 'FAP_4P_Slave',
-             'FAP_2P2S_MASTER', 'FAP_2P2S_SLAVE',
-             'FBP_SOFB',
-             'Commercial',
-             'FP')
-ps_dsblenbl = ('Dsbl', 'Enbl')
-ps_interface = ('Remote', 'Local', 'PCHost')
-ps_openloop = ('Close', 'Open')
-ps_pwrstate_sel = ('Off', 'On')
-ps_pwrstate_sts = ('Off', 'On', 'Initializing')
-ps_states = ('Off', 'Interlock', 'Initializing',
-             'SlowRef', 'SlowRefSync', 'Cycle', 'RmpWfm', 'MigWfm', 'FastRef')
-ps_opmode = ('SlowRef', 'SlowRefSync', 'Cycle', 'RmpWfm', 'MigWfm', 'FastRef')
-ps_cmdack = ('OK', 'Local', 'PCHost', 'Interlocked', 'UDC_locked',
-             'DSP_TimeOut', 'DSP_Busy', 'Invalid',)
-ps_soft_interlock_FBP = (
-    'Sobre-temperatura no módulo', 'Reserved',
-    'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-ps_hard_interlock_FBP = (
-    'Sobre-corrente na carga', 'Sobre-tensão na carga',
-    'Sobre-tensão no DC-Link', 'Sub-tensão no DC-Link',
-    'Falha no relé de entrada do DC-Link',
-    'Falha no fusível de entrada do DC-Link',
-    'Falha nos drivers do módulo', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-ps_soft_interlock_FBP_DCLink = (
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-ps_hard_interlock_FBP_DCLink = (
-    'Falha na fonte 1', 'Falha na fonte 2',
-    'Falha na fonte 3', 'Sobre-tensão da saída do bastidor DC-Link',
-    'Sobre-tensão da fonte 1', 'Sobre-tensão na fonte 2',
-    'Sobre-tensão na fonte 3', 'Sub-tensão da saída do bastidor DC-Link',
-    'Sub-tensão na fonte 1', 'Sub-tensão na fonte 2',
-    'Sub-tensão na fonte 3', 'Sensor de fumaça',
-    'Interlock externo', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-ps_soft_interlock_FAC = (
-    'Sobre-temperatura nos indutores',  'Sobre-temperatura nos indutores',
-    'Falha no DCCT 1', 'Falha no DCCT 2',
-    'Alta diferença entre DCCTs',
-    'Falha na leitura da corrente na carga do DCCT 1',
-    'Falha na leitura da corrente na carga do DCCT 2', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-ps_hard_interlock_FAC = (
-    'Sobre-corrente na carga', 'Sobre-tensão na carga',
-    'Sobre-tensão no DC-Link', 'Sub-tensão no DC-Link',
-    'Falha nos drivers do módulo', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-ps_soft_interlock_FAC_ACDC = (
-    'Sobre-temperatura no dissipador', 'Sobre-temperatura nos indutores',
-    'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-ps_hard_interlock_FAC_ACDC = (
-    'Sobre-tensão no banco de capacitores',
-    'Sobre-tensão na saída do retificador',
-    'Sub-tensão na saída do retificador',
-    'Sobre-corrente na saída do retificador',
-    'Falha no contator de entrada AC trifásica', 'Falha no driver do IGBT',
-    'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-ps_soft_interlock_FAC_2P4S = (
-    'Sobre-temperatura nos indutores',  'Sobre-temperatura nos IGBTs',
-    'Falha no DCCT 1', 'Falha no DCCT 2',
-    'Alta diferença entre DCCTs',
-    'Falha na leitura da corrente na carga do DCCT 1',
-    'Falha na leitura da corrente na carga do DCCT 2', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-ps_hard_interlock_FAC_2P4S = (
-    'Sobre-corrente na carga', 'Sobre-tensão na carga',
-    'Sobre-tensão no DC-Link do módulo 1',
-    'Sobre-tensão no DC-Link do módulo 2',
-    'Sobre-tensão no DC-Link do módulo 3',
-    'Sobre-tensão no DC-Link do módulo 4',
-    'Sobre-tensão no DC-Link do módulo 5',
-    'Sobre-tensão no DC-Link do módulo 6',
-    'Sobre-tensão no DC-Link do módulo 7',
-    'Sobre-tensão no DC-Link do módulo 8',
-    'Sub-tensão no DC-Link do módulo 1',
-    'Sub-tensão no DC-Link do módulo 2',
-    'Sub-tensão no DC-Link do módulo 3',
-    'Sub-tensão no DC-Link do módulo 4',
-    'Sub-tensão no DC-Link do módulo 5',
-    'Sub-tensão no DC-Link do módulo 6',
-    'Sub-tensão no DC-Link do módulo 7',
-    'Sub-tensão no DC-Link do módulo 8',
-    'Sobre-tensão na saída do módulo 1',
-    'Sobre-tensão na saída do módulo 2',
-    'Sobre-tensão na saída do módulo 3',
-    'Sobre-tensão na saída do módulo 4',
-    'Sobre-tensão na saída do módulo 5',
-    'Sobre-tensão na saída do módulo 6',
-    'Sobre-tensão na saída do módulo 7',
-    'Sobre-tensão na saída do módulo 8',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-ps_soft_interlock_FAC_2P4S_ACDC = (
-    'Sobre-temperatura no dissipador', 'Sobre-temperatura nos indutores',
-    'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-ps_hard_interlock_FAC_2P4S_ACDC = (
-    'Sobre-tensão no banco de capacitores',
-    'Sobre-tensão na saída do retificador',
-    'Sub-tensão na saída do retificador',
-    'Sobre-corrente na saída do retificador',
-    'Falha no contator de entrada AC trifásica', 'Falha no driver do IGBT',
-    'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-ps_soft_interlock_FAP = (
-    'Falha no DCCT1', 'Falha no DCCT2',
-    'Alta diferença entre DCCTs', 'Falha de leitura corrente DCCT1',
-    'Falha de leitura corrente DCCT2', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-ps_hard_interlock_FAP = (
-    'Sobre-corrente na crga',
-    'Sobre-tensão na carga',
-    'Sobre-tensão no DCLink',
-    'Sub-tensão no DCLink',
-    'Sobre-corrente no IGBT1', 'Sobre-corrente no IGBT2',
-    'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',
-    'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-ps_cycle_type = ('Sine', 'DampedSine', 'Trapezoidal')
-ps_sync_mode = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
+class ETypes(_cutil.ETypes):
+    """Local enumerate types."""
+
+    INTERFACE = ('Remote', 'Local', 'PCHost')
+    MODELS = ('Empty',
+              'FBP', 'FBP_DCLink',
+              'FAC_ACDC', 'FAC_DCDC',
+              'FAC_2S_ACDC', 'FAC_2S_DCDC',
+              'FAC_2P4S_ACDC', 'FAC_2P4S_DCDC',
+              'FAP',
+              'FAP_4P_Master', 'FAP_4P_Slave',
+              'FAP_2P2S_MASTER', 'FAP_2P2S_SLAVE',
+              'FBP_SOFB',
+              'Commercial',
+              'FP')
+    PWRSTATE_SEL = _cutil.ETypes.OFF_ON
+    PWRSTATE_STS = ('Off', 'On', 'Initializing')
+    STATES = ('Off', 'Interlock', 'Initializing',
+              'SlowRef', 'SlowRefSync', 'Cycle', 'RmpWfm', 'MigWfm', 'FastRef')
+    OPMODES = ('SlowRef', 'SlowRefSync', 'Cycle',
+               'RmpWfm', 'MigWfm', 'FastRef')
+    CMD_ACK = ('OK', 'Local', 'PCHost', 'Interlocked', 'UDC_locked',
+               'DSP_TimeOut', 'DSP_Busy', 'Invalid',)
+    SOFT_INTLCK_FBP = (
+        'Sobre-temperatura no módulo', 'Reserved',
+        'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+    HARD_INTLCK_FBP = (
+        'Sobre-corrente na carga', 'Sobre-tensão na carga',
+        'Sobre-tensão no DC-Link', 'Sub-tensão no DC-Link',
+        'Falha no relé de entrada do DC-Link',
+        'Falha no fusível de entrada do DC-Link',
+        'Falha nos drivers do módulo', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+    SOFT_INTLCK_FBP_DCLINK = (
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+    HARD_INTLCK_FBP_DCLINK = (
+        'Falha na fonte 1', 'Falha na fonte 2',
+        'Falha na fonte 3', 'Sobre-tensão da saída do bastidor DC-Link',
+        'Sobre-tensão da fonte 1', 'Sobre-tensão na fonte 2',
+        'Sobre-tensão na fonte 3', 'Sub-tensão da saída do bastidor DC-Link',
+        'Sub-tensão na fonte 1', 'Sub-tensão na fonte 2',
+        'Sub-tensão na fonte 3', 'Sensor de fumaça',
+        'Interlock externo', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+    SOFT_INTLCK_FAC = (
+        'Sobre-temperatura nos indutores',  'Sobre-temperatura nos indutores',
+        'Falha no DCCT 1', 'Falha no DCCT 2',
+        'Alta diferença entre DCCTs',
+        'Falha na leitura da corrente na carga do DCCT 1',
+        'Falha na leitura da corrente na carga do DCCT 2', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+    HARD_INTLCK_FAC = (
+        'Sobre-corrente na carga', 'Sobre-tensão na carga',
+        'Sobre-tensão no DC-Link', 'Sub-tensão no DC-Link',
+        'Falha nos drivers do módulo', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+    SOFT_INTLCK_FAC_ACDC = (
+        'Sobre-temperatura no dissipador', 'Sobre-temperatura nos indutores',
+        'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+    HARD_INTLCK_FAC_ACDC = (
+        'Sobre-tensão no banco de capacitores',
+        'Sobre-tensão na saída do retificador',
+        'Sub-tensão na saída do retificador',
+        'Sobre-corrente na saída do retificador',
+        'Falha no contator de entrada AC trifásica', 'Falha no driver do IGBT',
+        'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+    SOFT_INTLCK_FAC_2P4S = (
+        'Sobre-temperatura nos indutores',  'Sobre-temperatura nos IGBTs',
+        'Falha no DCCT 1', 'Falha no DCCT 2',
+        'Alta diferença entre DCCTs',
+        'Falha na leitura da corrente na carga do DCCT 1',
+        'Falha na leitura da corrente na carga do DCCT 2', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+    HARD_INTLCK_FAC_2P4S = (
+        'Sobre-corrente na carga', 'Sobre-tensão na carga',
+        'Sobre-tensão no DC-Link do módulo 1',
+        'Sobre-tensão no DC-Link do módulo 2',
+        'Sobre-tensão no DC-Link do módulo 3',
+        'Sobre-tensão no DC-Link do módulo 4',
+        'Sobre-tensão no DC-Link do módulo 5',
+        'Sobre-tensão no DC-Link do módulo 6',
+        'Sobre-tensão no DC-Link do módulo 7',
+        'Sobre-tensão no DC-Link do módulo 8',
+        'Sub-tensão no DC-Link do módulo 1',
+        'Sub-tensão no DC-Link do módulo 2',
+        'Sub-tensão no DC-Link do módulo 3',
+        'Sub-tensão no DC-Link do módulo 4',
+        'Sub-tensão no DC-Link do módulo 5',
+        'Sub-tensão no DC-Link do módulo 6',
+        'Sub-tensão no DC-Link do módulo 7',
+        'Sub-tensão no DC-Link do módulo 8',
+        'Sobre-tensão na saída do módulo 1',
+        'Sobre-tensão na saída do módulo 2',
+        'Sobre-tensão na saída do módulo 3',
+        'Sobre-tensão na saída do módulo 4',
+        'Sobre-tensão na saída do módulo 5',
+        'Sobre-tensão na saída do módulo 6',
+        'Sobre-tensão na saída do módulo 7',
+        'Sobre-tensão na saída do módulo 8',
+        'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved',)
+    SOFT_INTLCK_FAC_2P4S_ACDC = (
+        'Sobre-temperatura no dissipador', 'Sobre-temperatura nos indutores',
+        'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+    HARD_INTLCK_FAC_2P4S_ACDC = (
+        'Sobre-tensão no banco de capacitores',
+        'Sobre-tensão na saída do retificador',
+        'Sub-tensão na saída do retificador',
+        'Sobre-corrente na saída do retificador',
+        'Falha no contator de entrada AC trifásica', 'Falha no driver do IGBT',
+        'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+    SOFT_INTLCK_FAP = (
+        'Falha no DCCT1', 'Falha no DCCT2',
+        'Alta diferença entre DCCTs', 'Falha de leitura corrente DCCT1',
+        'Falha de leitura corrente DCCT2', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+    HARD_INTLCK_FAP = (
+        'Sobre-corrente na crga',
+        'Sobre-tensão na carga',
+        'Sobre-tensão no DCLink',
+        'Sub-tensão no DCLink',
+        'Sobre-corrente no IGBT1', 'Sobre-corrente no IGBT2',
+        'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+    CYCLE_TYPES = ('Sine', 'DampedSine', 'Trapezoidal')
+    SYNC_MODES = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
 
 
-# --- power supply constants definition class ---
-class Const:
+_et = ETypes  # syntatic sugar
+
+
+# --- Const class ---
+
+class Const(_cutil.Const):
     """Const class defining power supply constants."""
 
-    Models = _get_namedtuple('Models', ps_models)
-    DsblEnbl = _get_namedtuple('DsblEnbl', ps_dsblenbl)
-    Interface = _get_namedtuple('Interface', ps_interface)
-    OpenLoop = _get_namedtuple('OpenLoop', ps_openloop)
-    States = _get_namedtuple('States', ps_states)
-    PwrState = _get_namedtuple('PwrState', ps_pwrstate_sel)
-    OpMode = _get_namedtuple('OpMode', ps_opmode)
-    CmdAck = _get_namedtuple('CmdAck', ps_cmdack)
-    CycleType = _get_namedtuple('CycleType', ps_cycle_type)
-    SyncMode = _get_namedtuple('SyncMode', ps_sync_mode)
+    Models = _cutil.Const.register('Models', _et.MODELS)
+    Interface = _cutil.Const.register('Interface', _et.INTERFACE)
+    OpenLoop = _cutil.Const.register('OpenLoop', _et.CLOSE_OPEN)
+    States = _cutil.Const.register('States', _et.STATES)
+    PwrStateSel = _cutil.Const.register('PwrStateSel', _et.PWRSTATE_SEL)
+    PwrStateSts = _cutil.Const.register('PwrStateSts', _et.PWRSTATE_STS)
+    OpMode = _cutil.Const.register('OpMode', _et.OPMODES)
+    CmdAck = _cutil.Const.register('CmdAck', _et.CMD_ACK)
+    CycleType = _cutil.Const.register('CycleType', _et.CYCLE_TYPES)
+    SyncMode = _cutil.Const.register('SyncMode', _et.SYNC_MODES)
 
 
-# --- power supply databases ---
+# --- Power supply databases ---
+
 def get_ps_current_unit():
     """Return power supply current unit."""
     global _default_ps_current_unit
@@ -259,23 +264,23 @@ def get_common_propty_database():
     """Return database entries to all BSMP-like devices."""
     db = {
         'Version-Cte': {'type': 'str', 'value': 'UNDEF'},
-        'CtrlMode-Mon': {'type': 'enum', 'enums': ps_interface,
-                         'value': _et.idx.Remote},
+        'CtrlMode-Mon': {'type': 'enum', 'enums': _et.INTERFACE,
+                         'value': Const.Interface.Remote},
         # Common Variables
-        'PwrState-Sel': {'type': 'enum', 'enums': ps_pwrstate_sel,
-                         'value': _et.idx.Off},
-        'PwrState-Sts': {'type': 'enum', 'enums': ps_pwrstate_sts,
-                         'value': _et.idx.Off},
-        'CtrlLoop-Sel': {'type': 'enum', 'enums': ps_openloop,
+        'PwrState-Sel': {'type': 'enum', 'enums': _et.PWRSTATE_SEL,
+                         'value': Const.PwrStateSel.Off},
+        'PwrState-Sts': {'type': 'enum', 'enums': _et.PWRSTATE_STS,
+                         'value': Const.PwrStateSts.Off},
+        'CtrlLoop-Sel': {'type': 'enum', 'enums': _et.CLOSE_OPEN,
                          'value': Const.OpenLoop.Open},
-        'CtrlLoop-Sts': {'type': 'enum', 'enums': ps_openloop,
+        'CtrlLoop-Sts': {'type': 'enum', 'enums': _et.CLOSE_OPEN,
                          'value': Const.OpenLoop.Open},
-        'OpMode-Sel': {'type': 'enum', 'enums': ps_opmode,
-                       'value': _et.idx.SlowRef},
-        'OpMode-Sts': {'type': 'enum', 'enums': ps_opmode,
-                       'value': _et.idx.SlowRef},
+        'OpMode-Sel': {'type': 'enum', 'enums': _et.OPMODES,
+                       'value': Const.OpMode.SlowRef},
+        'OpMode-Sts': {'type': 'enum', 'enums': _et.OPMODES,
+                       'value': Const.OpMode.SlowRef},
         # PRU
-        'PRUSyncMode-Mon': {'type': 'enum', 'enums': ps_sync_mode,
+        'PRUSyncMode-Mon': {'type': 'enum', 'enums': _et.SYNC_MODES,
                             'value': Const.SyncMode.Off},
         'PRUBlockIndex-Mon': {'type': 'int', 'value': 0},
         'PRUSyncPulseCount-Mon': {'type': 'int', 'value': 0},
@@ -287,10 +292,10 @@ def get_common_propty_database():
         'RmpIncNrCycles-Mon': {'type': 'int', 'value': 0},
         'RmpReady-Mon': {'type': 'int', 'value': 0},
         # BSMPComm
-        'BSMPComm-Sel': {'type': 'enum', 'enums': ps_pwrstate_sel,
-                         'value': _et.idx.On},
-        'BSMPComm-Sts': {'type': 'enum', 'enums': ps_pwrstate_sts,
-                         'value': _et.idx.On},
+        'BSMPComm-Sel': {'type': 'enum', 'enums': _et.PWRSTATE_SEL,
+                         'value': Const.PwrStateSel.On},
+        'BSMPComm-Sts': {'type': 'enum', 'enums': _et.PWRSTATE_STS,
+                         'value': Const.PwrStateSts.On},
         # Interlocks
         'IntlkSoft-Mon':    {'type': 'int',    'value': 0},
         'IntlkHard-Mon':    {'type': 'int',    'value': 0},
@@ -317,9 +322,9 @@ def get_basic_propty_database():
         'Abort-Cmd': {'type': 'int', 'value': 0},
         # Cycle
         'CycleEnbl-Mon': {'type': 'int', 'value': 0},
-        'CycleType-Sel': {'type': 'enum', 'enums': ps_cycle_type,
+        'CycleType-Sel': {'type': 'enum', 'enums': _et.CYCLE_TYPES,
                           'value': DEFAULT_SIGGEN_CONFIG[0]},
-        'CycleType-Sts': {'type': 'enum', 'enums': ps_cycle_type,
+        'CycleType-Sts': {'type': 'enum', 'enums': _et.CYCLE_TYPES,
                           'value': DEFAULT_SIGGEN_CONFIG[0]},
         'CycleNrCycles-SP': {'type': 'int', 'value': DEFAULT_SIGGEN_CONFIG[1]},
         'CycleNrCycles-RB': {'type': 'int', 'value': DEFAULT_SIGGEN_CONFIG[1]},
@@ -362,17 +367,17 @@ def get_common_pu_propty_database():
     # P SI-19C4:PU-PingV
     db = {
         'Version-Cte': {'type': 'str', 'value': 'UNDEF'},
-        'CtrlMode-Mon': {'type': 'enum', 'enums': ps_interface,
-                         'value': _et.idx.Remote},
-        'PwrState-Sel': {'type': 'enum', 'enums': ps_pwrstate_sel,
-                         'value': _et.idx.Off},
-        'PwrState-Sts': {'type': 'enum', 'enums': ps_pwrstate_sts,
-                         'value': _et.idx.Off},
+        'CtrlMode-Mon': {'type': 'enum', 'enums': _et.INTERFACE,
+                         'value': Const.Interface.Remote},
+        'PwrState-Sel': {'type': 'enum', 'enums': _et.PWRSTATE_SEL,
+                         'value': Const.PwrStateSel.Off},
+        'PwrState-Sts': {'type': 'enum', 'enums': _et.PWRSTATE_STS,
+                         'value': Const.PwrStateSts.Off},
         'Reset-Cmd': {'type': 'int', 'value': 0},
-        'Pulse-Sel': {'type': 'enum', 'enums': _et.enums('DsblEnblTyp'),
-                      'value': _et.idx.Dsbl},
-        # 'Pulse-Sts': {'type': 'enum', 'enums': _et.enums('DsblEnblTyp'),
-        #               'value': _et.idx.Dsbl},
+        'Pulse-Sel': {'type': 'enum', 'enums': _et.DSBL_ENBL,
+                      'value': Const.DsblEnbl.Dsbl},
+        # 'Pulse-Sts': {'type': 'enum', 'enums': _et.DSBL_ENBL,
+        #               'value': Const.DsbEnbl.Dsbl},
         'Voltage-SP': {'type': 'float', 'value': 0.0,
                        'prec': default_pu_current_precision},
         'Voltage-RB': {'type': 'float', 'value': 0.0,
@@ -413,17 +418,19 @@ def get_common_pu_SI_InjKicker_propty_database():
 
 def get_ps_propty_database(psmodel, pstype):
     """Return property database of a LNLS power supply type device."""
-    propty_db = _get_model_db(psmodel)
-    _set_limits(pstype, propty_db)
-    return propty_db
+    database = _get_model_db(psmodel)
+    _set_limits(pstype, database)
+    # add pvs list
+    database = _cutil.add_pvslist_cte(database)
+    return database
 
 
 def get_pu_propty_database(pstype):
     """Return database definition for a pulsed power supply type."""
-    propty_db = get_common_pu_propty_database()
+    database = get_common_pu_propty_database()
     signals_lims = ('Voltage-SP', 'Voltage-RB', 'Voltage-Mon')
     signals_unit = signals_lims
-    for propty, db in propty_db.items():
+    for propty, db in database.items():
         # set setpoint limits in database
         if propty in signals_lims:
             db['lolo'] = _PSSearch.get_splims(pstype, 'lolo')
@@ -435,7 +442,9 @@ def get_pu_propty_database(pstype):
         # define unit of current
         if propty in signals_unit:
             db['unit'] = get_ps_current_unit()
-    return propty_db
+    # add pvs list
+    database = _cutil.add_pvslist_cte(database)
+    return database
 
 
 def get_ma_propty_database(maname):
@@ -448,11 +457,11 @@ def get_ma_propty_database(maname):
     unit = _MASearch.get_splims_unit(psmodel=psmodel)
     magfunc_dict = _MASearch.conv_maname_2_magfunc(maname)
     pstype = _PSSearch.conv_psname_2_pstype(psnames[0])
-    propty_db = get_ps_propty_database(psmodel, pstype)
+    database = get_ps_propty_database(psmodel, pstype)
     db = {}
 
     for psname, magfunc in magfunc_dict.items():
-        db[psname] = _copy.deepcopy(propty_db)
+        db[psname] = _copy.deepcopy(database)
         # set appropriate PS limits and unit
         for field in ["-SP", "-RB", "Ref-Mon", "-Mon"]:
             db[psname]['Current' + field]['lolo'] = \
@@ -504,15 +513,18 @@ def get_ma_propty_database(maname):
             db[psname][strength_name + field]['high'] = 0.0
             db[psname][strength_name + field]['hihi'] = 0.0
 
+        # add pvs list
+        db[psname] = _cutil.add_pvslist_cte(db[psname])
+
     return db
 
 
 def get_pm_propty_database(maname):
     """Return property database of a pulsed magnet type device."""
     if 'InjNLKckr' in maname or 'InjDipKckr' in maname:
-        propty_db = get_common_pu_SI_InjKicker_propty_database()
+        database = get_common_pu_SI_InjKicker_propty_database()
     else:
-        propty_db = get_common_pu_propty_database()
+        database = get_common_pu_propty_database()
 
     psnames = _MASearch.conv_psmaname_2_psnames(maname)
     psmodel = _PSSearch.conv_psname_2_psmodel(psnames[0])
@@ -521,7 +533,7 @@ def get_pm_propty_database(maname):
     magfunc_dict = _MASearch.conv_maname_2_magfunc(maname)
     db = {}
     for psname, magfunc in magfunc_dict.items():
-        db[psname] = _copy.deepcopy(propty_db)
+        db[psname] = _copy.deepcopy(database)
         # set appropriate PS limits and unit
         for field in ["-SP", "-RB", "-Mon"]:
             db[psname]['Voltage' + field]['lolo'] = \
@@ -556,20 +568,25 @@ def get_pm_propty_database(maname):
                 db[psname]['Kick' + field]['hihi'] = 0.0
         else:
             raise ValueError('Invalid pulsed magnet power supply type!')
+        # add pvs list
+        db[psname] = _cutil.add_pvslist_cte(db[psname])
+
     return db
 
 
-# Hidden
+# --- Auxiliary functions ---
+
+
 def _get_ps_FBP_propty_database():
     """Return database with FBP pwrsupply model PVs."""
     propty_db = get_basic_propty_database()
     db_ps = {
         'IntlkSoftLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_soft_interlock_FBP),
-                                 'value': ps_soft_interlock_FBP},
+                                 'count': len(_et.SOFT_INTLCK_FBP),
+                                 'value': _et.SOFT_INTLCK_FBP},
         'IntlkHardLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_hard_interlock_FBP),
-                                 'value': ps_hard_interlock_FBP},
+                                 'count': len(_et.HARD_INTLCK_FBP),
+                                 'value': _et.HARD_INTLCK_FBP},
     }
     propty_db.update(db_ps)
     return propty_db
@@ -592,11 +609,11 @@ def _get_ps_FBP_DCLink_propty_database():
         'VoltageDig-Mon': {'type': 'int', 'value': 0,
                            'lolim': 0, 'hilim': 255},
         'IntlkSoftLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_soft_interlock_FBP_DCLink),
-                                 'value': ps_soft_interlock_FBP_DCLink},
+                                 'count': len(_et.SOFT_INTLCK_FBP_DCLINK),
+                                 'value': _et.SOFT_INTLCK_FBP_DCLINK},
         'IntlkHardLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_hard_interlock_FBP_DCLink),
-                                 'value': ps_hard_interlock_FBP_DCLink},
+                                 'count': len(_et.HARD_INTLCK_FBP_DCLINK),
+                                 'value': _et.HARD_INTLCK_FBP_DCLINK},
         'ModulesStatus-Mon': {'type': 'int', 'value': 0},
     }
     propty_db.update(db_ps)
@@ -611,11 +628,11 @@ def _get_ps_FAC_propty_database():
         'Current2-Mon': {'type': 'float',  'value': 0.0,
                          'prec': default_ps_current_precision},
         'IntlkSoftLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_soft_interlock_FAC),
-                                 'value': ps_soft_interlock_FAC},
+                                 'count': len(_et.SOFT_INTLCK_FAC),
+                                 'value': _et.SOFT_INTLCK_FAC},
         'IntlkHardLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_hard_interlock_FAC),
-                                 'value': ps_hard_interlock_FAC},
+                                 'count': len(_et.HARD_INTLCK_FAC),
+                                 'value': _et.HARD_INTLCK_FAC},
     }
     propty_db.update(db_ps)
     return propty_db
@@ -633,11 +650,11 @@ def _get_ps_FAC_ACDC_propty_database():
         'CapacitorBankVoltageRef-Mon': {'type': 'float', 'value': 0.0,
                                         'prec': default_ps_current_precision},
         'IntlkSoftLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_soft_interlock_FAC_ACDC),
-                                 'value': ps_soft_interlock_FAC_ACDC},
+                                 'count': len(_et.SOFT_INTLCK_FAC_ACDC),
+                                 'value': _et.SOFT_INTLCK_FAC_ACDC},
         'IntlkHardLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_hard_interlock_FAC_ACDC),
-                                 'value': ps_hard_interlock_FAC_ACDC},
+                                 'count': len(_et.HARD_INTLCK_FAC_ACDC),
+                                 'value': _et.HARD_INTLCK_FAC_ACDC},
         'CapacitorBankVoltage-Mon': {'type': 'float', 'value': 0.0,
                                      'prec': default_ps_current_precision},
         'RectifierVoltage-Mon': {'type': 'float', 'value': 0.0,
@@ -674,11 +691,11 @@ def _get_ps_FAC_2P4S_propty_database():
         'Current2-Mon': {'type': 'float',  'value': 0.0,
                          'prec': default_ps_current_precision},
         'IntlkSoftLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_soft_interlock_FAC_2P4S),
-                                 'value': ps_soft_interlock_FAC_2P4S},
+                                 'count': len(_et.SOFT_INTLCK_FAC_2P4S),
+                                 'value': _et.SOFT_INTLCK_FAC_2P4S},
         'IntlkHardLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_hard_interlock_FAC_2P4S),
-                                 'value': ps_hard_interlock_FAC_2P4S},
+                                 'count': len(_et.HARD_INTLCK_FAC_2P4S),
+                                 'value': _et.HARD_INTLCK_FAC_2P4S},
         'LoadVoltage-Mon': {'type': 'float', 'value': 0.0,
                             'prec': default_ps_current_precision,
                             'unit': 'V'},
@@ -763,17 +780,17 @@ def _get_ps_FAC_2P4S_ACDC_propty_database():
     db_ps = {
         'CapacitorBankVoltage-SP': {'type': 'float', 'value': 0.0,
                                     'prec': default_ps_current_precision,
-                                    'lolim':0.0, 'hilim': 1.0, 'prec': 4},
+                                    'lolim': 0.0, 'hilim': 1.0},
         'CapacitorBankVoltage-RB': {'type': 'float', 'value': 0.0,
                                     'prec': default_ps_current_precision},
         'CapacitorBankVoltageRef-Mon': {'type': 'float', 'value': 0.0,
                                         'prec': default_ps_current_precision},
         'IntlkSoftLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_soft_interlock_FAC_2P4S_ACDC),
-                                 'value': ps_soft_interlock_FAC_2P4S_ACDC},
+                                 'count': len(_et.SOFT_INTLCK_FAC_2P4S_ACDC),
+                                 'value': _et.SOFT_INTLCK_FAC_2P4S_ACDC},
         'IntlkHardLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_hard_interlock_FAC_2P4S_ACDC),
-                                 'value': ps_hard_interlock_FAC_2P4S_ACDC},
+                                 'count': len(_et.HARD_INTLCK_FAC_2P4S_ACDC),
+                                 'value': _et.HARD_INTLCK_FAC_2P4S_ACDC},
         'CapacitorBankVoltage-Mon': {'type': 'float', 'value': 0.0,
                                      'prec': default_ps_current_precision},
         'RectifierVoltage-Mon': {'type': 'float', 'value': 0.0,
@@ -798,11 +815,11 @@ def _get_ps_FAP_propty_database():
         'Current2-Mon': {'type': 'float',  'value': 0.0,
                          'prec': default_ps_current_precision},
         'IntlkSoftLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_soft_interlock_FAP),
-                                 'value': ps_soft_interlock_FAP},
+                                 'count': len(_et.SOFT_INTLCK_FAP),
+                                 'value': _et.SOFT_INTLCK_FAP},
         'IntlkHardLabels-Cte':  {'type': 'string',
-                                 'count': len(ps_hard_interlock_FAP),
-                                 'value': ps_hard_interlock_FAP},
+                                 'count': len(_et.HARD_INTLCK_FAP),
+                                 'value': _et.HARD_INTLCK_FAP},
     }
     propty_db.update(db_ps)
     return propty_db
@@ -874,40 +891,25 @@ def _set_limits(pstype, database):
 
 
 def _get_model_db(psmodel):
-    if psmodel == 'FBP':
-        database = _get_ps_FBP_propty_database()
-    elif psmodel in ('FBP_DCLink'):
-        database = _get_ps_FBP_DCLink_propty_database()
-    elif psmodel in ('FBP_FOFB'):
-        database = _get_ps_FBP_FOFB_propty_database()
-
-    elif psmodel in ('FAC_DCDC'):
-        database = _get_ps_FAC_propty_database()
-    elif psmodel in ('FAC_ACDC'):
-        database = _get_ps_FAC_ACDC_propty_database()
-
-    elif psmodel in ('FAC_2S_DCDC'):
-        database = _get_ps_FAC_2S_propty_database()
-    elif psmodel in ('FAC_2S_ACDC'):
-        database = _get_ps_FAC_2S_ACDC_propty_database()
-
-    elif psmodel in ('FAC_2P4S_DCDC'):
-        database = _get_ps_FAC_2P4S_propty_database()
-    elif psmodel in ('FAC_2P4S_ACDC'):
-        database = _get_ps_FAC_2P4S_ACDC_propty_database()
-
-    elif psmodel in ('FAP'):
-        database = _get_ps_FAP_propty_database()
-    elif psmodel in ('FAP_2P2S_MASTER'):
-        database = _get_ps_FAP_2P2S_propty_database()
-    elif psmodel in ('FAP_4P_Master'):
-        database = _get_ps_FAP_4P_Master_propty_database()
-    elif psmodel in ('FAP_4P_Slave'):
-        database = _get_ps_FAP_4P_Slave_propty_database()
-
-    elif psmodel in ('Commercial'):
-        database = _get_ps_Commercial_propty_database()
+    psmodel_2_dbfunc = {
+        'FBP': _get_ps_FBP_propty_database,
+        'FBP_DCLink': _get_ps_FBP_DCLink_propty_database,
+        'FBP_FOFB': _get_ps_FBP_FOFB_propty_database,
+        'FAC_DCDC': _get_ps_FAC_propty_database,
+        'FAC_ACDC': _get_ps_FAC_ACDC_propty_database,
+        'FAC_2S_DCDC': _get_ps_FAC_2S_propty_database,
+        'FAC_2S_ACDC': _get_ps_FAC_2S_ACDC_propty_database,
+        'FAC_2P4S_DCDC': _get_ps_FAC_2P4S_propty_database,
+        'FAC_2P4S_ACDC': _get_ps_FAC_2P4S_ACDC_propty_database,
+        'FAP': _get_ps_FAP_propty_database,
+        'FAP_2P2S_MASTER': _get_ps_FAP_2P2S_propty_database,
+        'FAP_4P_Master': _get_ps_FAP_4P_Master_propty_database,
+        'FAP_4P_Slave': _get_ps_FAP_4P_Slave_propty_database,
+        'Commercial': _get_ps_Commercial_propty_database,
+    }
+    if psmodel in psmodel_2_dbfunc:
+        func = psmodel_2_dbfunc[psmodel]
+        return func()
     else:
         raise ValueError(
-            'DB for psmodel {} not implemented!'.format(psmodel))
-    return database
+            'DB for psmodel "{}" not implemented!'.format(psmodel))

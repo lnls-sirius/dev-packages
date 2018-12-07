@@ -1,15 +1,21 @@
 #!/usr/bin/env python-sirius
 
+"""Siriuspy setup script."""
+
+
 from setuptools import setup, find_packages
 
-with open('VERSION','r') as _f:
+with open('VERSION', 'r') as _f:
     __version__ = _f.read().strip()
+
+with open('requirements.txt', 'r') as _f:
+    _requirements = _f.read().strip().split('\n')
 
 setup(
     name='siriuspy',
     version=__version__,
     author='lnls-sirius',
-    description='Sirius python packages',
+    description='Development packages for Sirius',
     url='https://github.com/lnls-sirius/dev-packages',
     download_url='https://github.com/lnls-sirius/dev-packages',
     license='GNU GPLv3',
@@ -19,6 +25,7 @@ setup(
         'Topic :: Scientific/Engineering'
     ],
     packages=find_packages(),
+    install_requires=_requirements,
     package_data={'siriuspy': ['VERSION']},
     test_suite='tests',
     zip_safe=False
