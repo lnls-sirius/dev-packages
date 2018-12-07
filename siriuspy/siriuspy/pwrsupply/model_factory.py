@@ -176,11 +176,11 @@ class ModelFactory:
         elif epics_field == 'PRUCtrlQueueSize-Mon':
             return _fields.PRUProperty(pru_controller, 'queue_length')
         elif epics_field == 'RmpIncNrCycles-RB':
-            return _fields.PRUProperty(pruc_controller, 'ramp_offset')
+            return _fields.PRUProperty(pru_controller, 'ramp_offset')
         elif epics_field == 'RmpIncNrCycles-Mon':
-            return _fields.PRUProperty(pruc_controller, 'ramp_offset_count')
+            return _fields.PRUProperty(pru_controller, 'ramp_offset_count')
         elif epics_field == 'RmpReady-Mon':
-            return _fields.PRUProperty(pruc_controller, 'ramp_ready')
+            return _fields.PRUProperty(pru_controller, 'ramp_ready')
         elif epics_field == 'BSMPComm-Sts':
             return _fields.PRUProperty(pru_controller, 'bsmpcomm')
 
