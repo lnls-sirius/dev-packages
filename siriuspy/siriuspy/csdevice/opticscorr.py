@@ -1,4 +1,4 @@
-"""Define PVs, contants and properties of OpticsCorr SoftIOCs."""
+"""Define PVs, constants and properties of OpticsCorr SoftIOCs."""
 from siriuspy.csdevice import util as _cutil
 
 
