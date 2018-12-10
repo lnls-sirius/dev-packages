@@ -42,6 +42,24 @@ from siriuspy.pwrsupply.pru import Const as _PRUConst
 class ModelFactory:
     """Abstract factory for power supply models."""
 
+    _c = _bsmp.ConstBSMP
+    _e2v = {
+        'CycleEnbl-Mon': _c.V_SIGGEN_ENABLE,
+        'CycleType-Sts': _c.V_SIGGEN_TYPE,
+        'CycleNrCycles-RB': _c.V_SIGGEN_NUM_CYCLES,
+        'CycleIndex-Mon': _c.V_SIGGEN_N,
+        'CycleFreq-RB': _c.V_SIGGEN_FREQ,
+        'CycleAmpl-RB': _c.V_SIGGEN_AMPLITUDE,
+        'CycleOffset-RB': _c.V_SIGGEN_OFFSET,
+        'CycleAuxParam-RB': _c.V_SIGGEN_AUX_PARAM}
+
+    _e2f = {
+        'PwrState-Sts': (_fields.PwrState, _c.V_PS_STATUS),
+        'OpMode-Sts': (_fields.OpMode, _c.V_PS_STATUS),
+        'CtrlMode-Mon': (_fields.CtrlMode, _c.V_PS_STATUS),
+        'CtrlLoop-Sts': (_fields.CtrlLoop, _c.V_PS_STATUS),
+        'Version-Cte': (_fields.Version, _c.V_FIRMWARE_VERSION)}
+
     _variables = {}
 
     # def __init__(self, name, parameters):
@@ -122,60 +140,12 @@ class ModelFactory:
         raise NotImplementedError
 
     def _common_fields(self, device_id, epics_field, pru_controller):
-        _c = _bsmp.ConstBSMP
-        e2v = {
-            'CycleEnbl-Mon': {'pru_controller': pru_controller,
-                              'device_id': device_id,
-                              'bsmp_id': _c.V_SIGGEN_ENABLE},
-            'CycleType-Sts': {'pru_controller': pru_controller,
-                              'device_id': device_id,
-                              'bsmp_id': _c.V_SIGGEN_TYPE},
-            'CycleNrCycles-RB': {'pru_controller': pru_controller,
-                                 'device_id': device_id,
-                                 'bsmp_id': _c.V_SIGGEN_NUM_CYCLES},
-            'CycleIndex-Mon': {'pru_controller': pru_controller,
-                               'device_id': device_id,
-                               'bsmp_id': _c.V_SIGGEN_N},
-            'CycleFreq-RB': {'pru_controller': pru_controller,
-                             'device_id': device_id,
-                             'bsmp_id': _c.V_SIGGEN_FREQ},
-            'CycleAmpl-RB': {'pru_controller': pru_controller,
-                             'device_id': device_id,
-                             'bsmp_id': _c.V_SIGGEN_AMPLITUDE},
-            'CycleOffset-RB': {'pru_controller': pru_controller,
-                               'device_id': device_id,
-                               'bsmp_id': _c.V_SIGGEN_OFFSET},
-            'CycleAuxParam-RB': {'pru_controller': pru_controller,
-                                 'device_id': device_id,
-                                 'bsmp_id': _c.V_SIGGEN_AUX_PARAM}}
-        e2f = {
-            'PwrState-Sts': (_fields.PwrState,
-                             {'pru_controller': pru_controller,
-                              'device_id': device_id,
-                              'bsmp_id': _c.V_PS_STATUS}),
-            'OpMode-Sts': (_fields.OpMode,
-                           {'pru_controller': pru_controller,
-                            'device_id': device_id,
-                            'bsmp_id': _c.V_PS_STATUS}),
-            'CtrlMode-Mon': (_fields.CtrlMode,
-                             {'pru_controller': pru_controller,
-                              'device_id': device_id,
-                              'bsmp_id': _c.V_PS_STATUS}),
-            'CtrlLoop-Sts': (_fields.CtrlLoop,
-                             {'pru_controller': pru_controller,
-                              'device_id': device_id,
-                              'bsmp_id': _c.V_PS_STATUS}),
-            'Version-Cte': (_fields.Version,
-                            {'pru_controller': pru_controller,
-                             'device_id': device_id,
-                             'bsmp_id': _c.V_FIRMWARE_VERSION})}
-
-        if epics_field in e2v:
-            kwargs = e2v[epics_field]
-            return _fields.Variable(**kwargs)
-        elif epics_field in e2f:
-            field, kwargs = e2f[epics_field]
-            return field(_fields.Variable(**kwargs))
+        if epics_field in self._e2v:
+            bsmpid = self._e2v[epics_field]
+            return _fields.Variable(pru_controller, device_id, bsmpid)
+        elif epics_field in self._e2f:
+            field, bsmpid = self._e2f[epics_field]
+            return field(_fields.Variable(pru_controller, device_id, bsmpid))
         elif epics_field == 'WfmData-RB':
             return _fields.PRUCurve(pru_controller, device_id)
         elif epics_field == 'WfmIndex-Mon':
