@@ -246,6 +246,9 @@ class PRUController:
     _delay_func_sync_pulse = 100  # [us]
     _delay_func_set_slowref_fbp = 100  # [us]
 
+    # Number of ramp cycles while increasing amplitude
+    _DEFAULT_RAMP_OFFSET = 1
+
     # --- public interface ---
 
     def __init__(self,
@@ -316,7 +319,7 @@ class PRUController:
         self._bsmpcomm = True
 
         # ramp offset
-        self._ramp_offset = 10
+        self._ramp_offset = PRUController._DEFAULT_RAMP_OFFSET
         self._ramp_offset_count = 0
 
         # define scan thread

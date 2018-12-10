@@ -297,8 +297,8 @@ def get_common_propty_database():
         'BSMPComm-Sts': {'type': 'enum', 'enums': _et.PWRSTATE_STS,
                          'value': Const.PwrStateSts.On},
         # Interlocks
-        'IntlkSoft-Mon':    {'type': 'int',    'value': 0},
-        'IntlkHard-Mon':    {'type': 'int',    'value': 0},
+        'IntlkSoft-Mon': {'type': 'int',    'value': 0},
+        'IntlkHard-Mon': {'type': 'int',    'value': 0},
 
         'Reset-Cmd': {'type': 'int', 'value': 0},
 
