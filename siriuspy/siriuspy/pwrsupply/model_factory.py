@@ -52,13 +52,20 @@ class ModelFactory:
         'CycleAmpl-RB': _c.V_SIGGEN_AMPLITUDE,
         'CycleOffset-RB': _c.V_SIGGEN_OFFSET,
         'CycleAuxParam-RB': _c.V_SIGGEN_AUX_PARAM}
-
     _e2f = {
         'PwrState-Sts': (_fields.PwrState, _c.V_PS_STATUS),
         'OpMode-Sts': (_fields.OpMode, _c.V_PS_STATUS),
         'CtrlMode-Mon': (_fields.CtrlMode, _c.V_PS_STATUS),
         'CtrlLoop-Sts': (_fields.CtrlLoop, _c.V_PS_STATUS),
         'Version-Cte': (_fields.Version, _c.V_FIRMWARE_VERSION)}
+    _e2c = {
+        'PRUBlockIndex-Mon': 'pru_curve_block',
+        'PRUSyncPulseCount-Mon': 'pru_sync_pulse_count',
+        'PRUCtrlQueueSize-Mon': 'queue_length',
+        'RmpIncNrCycles-RB': 'ramp_offset',
+        'RmpIncNrCycles-Mon': 'ramp_offset_count',
+        'RmpReady-Mon': 'ramp_ready',
+        'BSMPComm-Sts': 'bsmpcomm'}
 
     _variables = {}
 
@@ -146,27 +153,15 @@ class ModelFactory:
         elif epics_field in self._e2f:
             field, bsmpid = self._e2f[epics_field]
             return field(_fields.Variable(pru_controller, device_id, bsmpid))
+        elif epics_field in self._e2c:
+            attr = self._e2c[epics_field]
+            return _fields.PRUProperty(pru_controller, attr)
         elif epics_field == 'WfmData-RB':
             return _fields.PRUCurve(pru_controller, device_id)
         elif epics_field == 'WfmIndex-Mon':
-                return _fields.Constant(0)
+            return _fields.Constant(0)
         elif epics_field == 'PRUSyncMode-Mon':
             return _fields.PRUSyncMode(pru_controller)
-        elif epics_field == 'PRUBlockIndex-Mon':
-            return _fields.PRUProperty(pru_controller, 'pru_curve_block')
-        elif epics_field == 'PRUSyncPulseCount-Mon':
-            return _fields.PRUProperty(pru_controller, 'pru_sync_pulse_count')
-        elif epics_field == 'PRUCtrlQueueSize-Mon':
-            return _fields.PRUProperty(pru_controller, 'queue_length')
-        elif epics_field == 'RmpIncNrCycles-RB':
-            return _fields.PRUProperty(pru_controller, 'ramp_offset')
-        elif epics_field == 'RmpIncNrCycles-Mon':
-            return _fields.PRUProperty(pru_controller, 'ramp_offset_count')
-        elif epics_field == 'RmpReady-Mon':
-            return _fields.PRUProperty(pru_controller, 'ramp_ready')
-        elif epics_field == 'BSMPComm-Sts':
-            return _fields.PRUProperty(pru_controller, 'bsmpcomm')
-
         return None
 
     def _specific_fields(self, device_id, epics_field, pru_controller):
