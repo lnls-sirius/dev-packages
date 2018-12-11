@@ -1,4 +1,4 @@
-"""Define PVs, contants and properties of all PosAng SoftIOCs."""
+"""Define PVs, contants and properties of PosAng SoftIOCs."""
 
 from siriuspy.csdevice import util as _cutil
 
