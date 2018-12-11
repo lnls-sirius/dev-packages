@@ -84,6 +84,22 @@ class PRUCurve(Function):
                 self.pru_controller.pru_curve_write(dev_id, value)
 
 
+class PRUProperty(Function):
+    """Executes a PRUProperty command."""
+
+    def __init__(self, pru_controller, property_name, setpoints=()):
+        """Get pru controller."""
+        self.pru_controller = pru_controller
+        self.property = property_name
+        self.setpoints = setpoints
+
+    def execute(self, value=None):
+        """Execute command."""
+        if not self.setpoints or \
+                (self.setpoints and self.setpoints.apply(value)):
+            setattr(self.pru_controller, self.property, value)
+
+
 class PSPwrState(Function):
     """Adapter to deal with FBP turn on/off functions."""
 

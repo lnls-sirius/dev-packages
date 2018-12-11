@@ -1,4 +1,7 @@
 """Model abstract factory."""
+
+from siriuspy.bsmp import BSMP as _BSMP
+
 from siriuspy.pwrsupply import fields as _fields
 from siriuspy.pwrsupply import functions as _functions
 from siriuspy.pwrsupply import bsmp as _bsmp
@@ -22,8 +25,6 @@ from siriuspy.pwrsupply.bsmp import ConstFAC_2P4S_DCDC as _cFAC_2P4S_DCDC
 from siriuspy.pwrsupply.bsmp import ConstFAC_2P4S_ACDC as _cFAC_2P4S_ACDC
 from siriuspy.pwrsupply.bsmp import ConstFAP as _cFAP
 
-from siriuspy.bsmp import BSMP as _BSMP
-
 from siriuspy.pwrsupply.bsmp_sim import BSMPSim_FBP as _BSMPSim_FBP
 from siriuspy.pwrsupply.bsmp_sim import \
     BSMPSim_FBP_DCLink as _BSMPSim_FBP_DCLink
@@ -35,12 +36,36 @@ from siriuspy.pwrsupply.bsmp_sim import \
     BSMPSim_FAC_2P4S_ACDC as _BSMPSim_FAC_2P4S_ACDC
 from siriuspy.pwrsupply.bsmp_sim import BSMPSim_FAP as _BSMPSim_FAP
 
-
 from siriuspy.pwrsupply.pru import Const as _PRUConst
 
 
 class ModelFactory:
     """Abstract factory for power supply models."""
+
+    _c = _bsmp.ConstBSMP
+    _e2v = {
+        'CycleEnbl-Mon': _c.V_SIGGEN_ENABLE,
+        'CycleType-Sts': _c.V_SIGGEN_TYPE,
+        'CycleNrCycles-RB': _c.V_SIGGEN_NUM_CYCLES,
+        'CycleIndex-Mon': _c.V_SIGGEN_N,
+        'CycleFreq-RB': _c.V_SIGGEN_FREQ,
+        'CycleAmpl-RB': _c.V_SIGGEN_AMPLITUDE,
+        'CycleOffset-RB': _c.V_SIGGEN_OFFSET,
+        'CycleAuxParam-RB': _c.V_SIGGEN_AUX_PARAM}
+    _e2f = {
+        'PwrState-Sts': (_fields.PwrState, _c.V_PS_STATUS),
+        'OpMode-Sts': (_fields.OpMode, _c.V_PS_STATUS),
+        'CtrlMode-Mon': (_fields.CtrlMode, _c.V_PS_STATUS),
+        'CtrlLoop-Sts': (_fields.CtrlLoop, _c.V_PS_STATUS),
+        'Version-Cte': (_fields.Version, _c.V_FIRMWARE_VERSION)}
+    _e2c = {
+        'PRUBlockIndex-Mon': 'pru_curve_block',
+        'PRUSyncPulseCount-Mon': 'pru_sync_pulse_count',
+        'PRUCtrlQueueSize-Mon': 'queue_length',
+        'RmpIncNrCycles-RB': 'ramp_offset',
+        'RmpIncNrCycles-Mon': 'ramp_offset_count',
+        'RmpReady-Mon': 'ramp_ready',
+        'BSMPComm-Sts': 'bsmpcomm'}
 
     _variables = {}
 
@@ -122,75 +147,21 @@ class ModelFactory:
         raise NotImplementedError
 
     def _common_fields(self, device_id, epics_field, pru_controller):
-        _c = _bsmp.ConstBSMP
-        e2v = {
-            'CycleEnbl-Mon': {'pru_controller': pru_controller,
-                              'device_id': device_id,
-                              'bsmp_id': _c.V_SIGGEN_ENABLE},
-            'CycleType-Sts': {'pru_controller': pru_controller,
-                              'device_id': device_id,
-                              'bsmp_id': _c.V_SIGGEN_TYPE},
-            'CycleNrCycles-RB': {'pru_controller': pru_controller,
-                                 'device_id': device_id,
-                                 'bsmp_id': _c.V_SIGGEN_NUM_CYCLES},
-            'CycleIndex-Mon': {'pru_controller': pru_controller,
-                               'device_id': device_id,
-                               'bsmp_id': _c.V_SIGGEN_N},
-            'CycleFreq-RB': {'pru_controller': pru_controller,
-                             'device_id': device_id,
-                             'bsmp_id': _c.V_SIGGEN_FREQ},
-            'CycleAmpl-RB': {'pru_controller': pru_controller,
-                             'device_id': device_id,
-                             'bsmp_id': _c.V_SIGGEN_AMPLITUDE},
-            'CycleOffset-RB': {'pru_controller': pru_controller,
-                               'device_id': device_id,
-                               'bsmp_id': _c.V_SIGGEN_OFFSET},
-            'CycleAuxParam-RB': {'pru_controller': pru_controller,
-                                 'device_id': device_id,
-                                 'bsmp_id': _c.V_SIGGEN_AUX_PARAM}}
-        e2f = {
-            'PwrState-Sts': (_fields.PwrState,
-                             {'pru_controller': pru_controller,
-                              'device_id': device_id,
-                              'bsmp_id': _c.V_PS_STATUS}),
-            'OpMode-Sts': (_fields.OpMode,
-                           {'pru_controller': pru_controller,
-                            'device_id': device_id,
-                            'bsmp_id': _c.V_PS_STATUS}),
-            'CtrlMode-Mon': (_fields.CtrlMode,
-                             {'pru_controller': pru_controller,
-                              'device_id': device_id,
-                              'bsmp_id': _c.V_PS_STATUS}),
-            'CtrlLoop-Sts': (_fields.CtrlLoop,
-                             {'pru_controller': pru_controller,
-                              'device_id': device_id,
-                              'bsmp_id': _c.V_PS_STATUS}),
-            'Version-Cte': (_fields.Version,
-                            {'pru_controller': pru_controller,
-                             'device_id': device_id,
-                             'bsmp_id': _c.V_FIRMWARE_VERSION})}
-
-        if epics_field in e2v:
-            kwargs = e2v[epics_field]
-            return _fields.Variable(**kwargs)
-        elif epics_field in e2f:
-            field, kwargs = e2f[epics_field]
-            return field(_fields.Variable(**kwargs))
+        if epics_field in self._e2v:
+            bsmpid = self._e2v[epics_field]
+            return _fields.Variable(pru_controller, device_id, bsmpid)
+        elif epics_field in self._e2f:
+            field, bsmpid = self._e2f[epics_field]
+            return field(_fields.Variable(pru_controller, device_id, bsmpid))
+        elif epics_field in self._e2c:
+            attr = self._e2c[epics_field]
+            return _fields.PRUProperty(pru_controller, attr)
         elif epics_field == 'WfmData-RB':
             return _fields.PRUCurve(pru_controller, device_id)
         elif epics_field == 'WfmIndex-Mon':
-                return _fields.Constant(0)
+            return _fields.Constant(0)
         elif epics_field == 'PRUSyncMode-Mon':
             return _fields.PRUSyncMode(pru_controller)
-        elif epics_field == 'PRUBlockIndex-Mon':
-            return _fields.PRUProperty(pru_controller, 'pru_curve_block')
-        elif epics_field == 'PRUSyncPulseCount-Mon':
-            return _fields.PRUProperty(pru_controller, 'pru_sync_pulse_count')
-        elif epics_field == 'PRUCtrlQueueSize-Mon':
-            return _fields.PRUProperty(pru_controller, 'queue_length')
-        elif epics_field == 'BSMPComm-Sts':
-            return _fields.PRUProperty(pru_controller, 'bsmpcomm')
-
         return None
 
     def _specific_fields(self, device_id, epics_field, pru_controller):
@@ -279,6 +250,9 @@ class FBPFactory(ModelFactory):
                 device_ids, pru_controller, 5, setpoints)
         elif epics_field == 'WfmData-SP':
             return _functions.PRUCurve(device_ids, pru_controller, setpoints)
+        elif epics_field == 'RmpIncNrCycles-SP':
+            return _functions.PRUProperty(
+                pru_controller, 'ramp_offset', setpoints)
         elif epics_field == 'BSMPComm-Sel':
             return _functions.BSMPComm(pru_controller, setpoints)
         else:
