@@ -246,6 +246,9 @@ class PRUController:
     _delay_func_sync_pulse = 100  # [us]
     _delay_func_set_slowref_fbp = 100  # [us]
 
+    # Number of ramp cycles while increasing amplitude
+    _DEFAULT_RAMP_OFFSET = 1
+
     # --- public interface ---
 
     def __init__(self,
@@ -314,6 +317,10 @@ class PRUController:
 
         # define BSMP communication status
         self._bsmpcomm = True
+
+        # ramp offset
+        self._ramp_offset = PRUController._DEFAULT_RAMP_OFFSET
+        self._ramp_offset_count = 0
 
         # define scan thread
         self._last_device_scanned = len(self._device_ids)  # next is the first
@@ -391,6 +398,29 @@ class PRUController:
     def connected(self):
         """Store connection state."""
         return all((self.check_connected(id) for id in self.device_ids))
+
+    @property
+    def ramp_offset(self):
+        """Ramp offset."""
+        return self._ramp_offset
+
+    @ramp_offset.setter
+    def ramp_offset(self, value):
+        self._ramp_offset = value
+
+    @property
+    def ramp_offset_count(self):
+        """Return current ramp offset count."""
+        return self._ramp_offset_count
+
+    @ramp_offset_count.setter
+    def ramp_offset_count(self, value):
+        self._ramp_offset_count = value
+
+    @property
+    def ramp_ready(self):
+        """Return wether ramp is ready."""
+        return True if self.ramp_offset_count == self.ramp_offset else False
 
     def check_connected(self, device_id):
         """Return connection state of a device."""
