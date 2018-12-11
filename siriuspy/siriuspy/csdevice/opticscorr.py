@@ -1,4 +1,4 @@
-"""Define PVs, contants and properties of all OpticsCorr SoftIOCs."""
+"""Define PVs, constants and properties of OpticsCorr SoftIOCs."""
 from siriuspy.csdevice import util as _cutil
 
 
@@ -8,15 +8,6 @@ class ETypes(_cutil.ETypes):
     """Local enumerate types."""
 
     PROP_ADD = ('Proportional', 'Additional')
-    BO_SFAMS_CHROMCORR = ('SF', 'SD')
-    SI_SFAMS_CHROMCORR = ('SFA1', 'SFA2', 'SDA1', 'SDA2', 'SDA3',
-                          'SFB1', 'SFB2', 'SDB1', 'SDB2', 'SDB3',
-                          'SFP1', 'SFP2', 'SDP1', 'SDP2', 'SDP3')
-    BO_QFAMS_TUNECORR = ('QF', 'QD')
-    SI_QFAMS_TUNECORR = ('QFA', 'QFB', 'QFP',
-                         'QDA', 'QDB1', 'QDB2', 'QDP1', 'QDP2')
-    STATUS_LABELS = ('MA Connection', 'MA PwrState', 'MA OpMode',
-                     'MA CtrlMode', 'Timing Config')
 
 
 _et = ETypes  # syntactic sugar
@@ -29,6 +20,15 @@ class Const(_cutil.Const):
 
     CorrMeth = _cutil.Const.register('CorrMeth', _et.PROP_ADD)
     SyncCorr = _cutil.Const.register('SyncCorr', _et.OFF_ON)
+    BO_SFAMS_CHROMCORR = ('SF', 'SD')
+    SI_SFAMS_CHROMCORR = ('SFA1', 'SFA2', 'SDA1', 'SDA2', 'SDA3',
+                          'SFB1', 'SFB2', 'SDB1', 'SDB2', 'SDB3',
+                          'SFP1', 'SFP2', 'SDP1', 'SDP2', 'SDP3')
+    BO_QFAMS_TUNECORR = ('QF', 'QD')
+    SI_QFAMS_TUNECORR = ('QFA', 'QFB', 'QFP',
+                         'QDA', 'QDB1', 'QDB2', 'QDP1', 'QDP2')
+    STATUS_LABELS = ('MA Connection', 'MA PwrState', 'MA OpMode',
+                     'MA CtrlMode', 'Timing Config')
 
 
 _c = Const  # syntactic sugar
@@ -40,9 +40,9 @@ _c = Const  # syntactic sugar
 def get_chrom_database(acc):
     """Return OpticsCorr-Chrom Soft IOC database."""
     if acc == 'BO':
-        sfams = _et.BO_SFAMS_CHROMCORR
+        sfams = _c.BO_SFAMS_CHROMCORR
     elif acc == 'SI':
-        sfams = _et.SI_SFAMS_CHROMCORR
+        sfams = _c.SI_SFAMS_CHROMCORR
 
     corrmat_size = len(sfams)*2
 
@@ -76,7 +76,7 @@ def get_chrom_database(acc):
 
         'Status-Mon':       {'type': 'int', 'value': 0b11111},
         'StatusLabels-Cte': {'type': 'string', 'count': 5,
-                             'value': _et.STATUS_LABELS},
+                             'value': _c.STATUS_LABELS},
     }
 
     for fam in sfams:
@@ -104,9 +104,9 @@ def get_chrom_database(acc):
 def get_tune_database(acc):
     """Return OpticsCorr-Tune Soft IOC database."""
     if acc == 'BO':
-        qfams = _et.BO_QFAMS_TUNECORR
+        qfams = _c.BO_QFAMS_TUNECORR
     elif acc == 'SI':
-        qfams = _et.SI_QFAMS_TUNECORR
+        qfams = _c.SI_QFAMS_TUNECORR
 
     corrmat_size = len(qfams)*2
 
@@ -153,7 +153,7 @@ def get_tune_database(acc):
 
         'Status-Mon':      {'type': 'int', 'value': 0b11111},
         'StatusLabels-Cte': {'type': 'string', 'count': 5,
-                             'value': _et.STATUS_LABELS},
+                             'value': _c.STATUS_LABELS},
     }
 
     for fam in qfams:
