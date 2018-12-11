@@ -1,4 +1,7 @@
 """Model abstract factory."""
+
+from siriuspy.bsmp import BSMP as _BSMP
+
 from siriuspy.pwrsupply import fields as _fields
 from siriuspy.pwrsupply import functions as _functions
 from siriuspy.pwrsupply import bsmp as _bsmp
@@ -22,8 +25,6 @@ from siriuspy.pwrsupply.bsmp import ConstFAC_2P4S_DCDC as _cFAC_2P4S_DCDC
 from siriuspy.pwrsupply.bsmp import ConstFAC_2P4S_ACDC as _cFAC_2P4S_ACDC
 from siriuspy.pwrsupply.bsmp import ConstFAP as _cFAP
 
-from siriuspy.bsmp import BSMP as _BSMP
-
 from siriuspy.pwrsupply.bsmp_sim import BSMPSim_FBP as _BSMPSim_FBP
 from siriuspy.pwrsupply.bsmp_sim import \
     BSMPSim_FBP_DCLink as _BSMPSim_FBP_DCLink
@@ -34,7 +35,6 @@ from siriuspy.pwrsupply.bsmp_sim import \
 from siriuspy.pwrsupply.bsmp_sim import \
     BSMPSim_FAC_2P4S_ACDC as _BSMPSim_FAC_2P4S_ACDC
 from siriuspy.pwrsupply.bsmp_sim import BSMPSim_FAP as _BSMPSim_FAP
-
 
 from siriuspy.pwrsupply.pru import Const as _PRUConst
 
@@ -158,6 +158,12 @@ class ModelFactory:
             return _fields.PRUProperty(pru_controller, 'pru_sync_pulse_count')
         elif epics_field == 'PRUCtrlQueueSize-Mon':
             return _fields.PRUProperty(pru_controller, 'queue_length')
+        elif epics_field == 'RmpIncNrCycles-RB':
+            return _fields.PRUProperty(pru_controller, 'ramp_offset')
+        elif epics_field == 'RmpIncNrCycles-Mon':
+            return _fields.PRUProperty(pru_controller, 'ramp_offset_count')
+        elif epics_field == 'RmpReady-Mon':
+            return _fields.PRUProperty(pru_controller, 'ramp_ready')
         elif epics_field == 'BSMPComm-Sts':
             return _fields.PRUProperty(pru_controller, 'bsmpcomm')
 
@@ -249,6 +255,9 @@ class FBPFactory(ModelFactory):
                 device_ids, pru_controller, 5, setpoints)
         elif epics_field == 'WfmData-SP':
             return _functions.PRUCurve(device_ids, pru_controller, setpoints)
+        elif epics_field == 'RmpIncNrCycles-SP':
+            return _functions.PRUProperty(
+                pru_controller, 'ramp_offset', setpoints)
         elif epics_field == 'BSMPComm-Sel':
             return _functions.BSMPComm(pru_controller, setpoints)
         else:
