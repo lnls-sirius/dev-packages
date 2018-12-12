@@ -195,10 +195,16 @@ class TestRmpWatcher(unittest.TestCase):
     def test_ramp_stop(self, mock_time):
         """Test cycle mode."""
         self.assertFalse(self.watcher.exit)
-        time.sleep(1e-1)  # Wait at least one loop
+        # time.sleep(1e-1)  # Wait at least one loop
+        t = 0
+        timeout = 1
+        init = time.time()
+        while not mock_time.sleep.call_args_list and t < timeout:
+            time.sleep(1e-3)
+            t = time.time() - init
+        mock_time.sleep.assert_called()
         self.watcher.stop()
         self.assertTrue(self.watcher.exit)
-        mock_time.sleep.assert_called()
 
     def test_ramp_opmode_trigger(self, mock_time):
         """Test ramp opmode."""
