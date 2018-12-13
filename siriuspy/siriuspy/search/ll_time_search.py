@@ -164,7 +164,7 @@ class LLTimeSearch:
         """
         cls._get_timedata()
         return _Filter.process_filters(
-                            cls._all_devices, filters=filters, sorting=sorting)
+                sorted(cls._all_devices), filters=filters, sorting=sorting)
 
     @classmethod
     def get_device_tree(cls, channel):
