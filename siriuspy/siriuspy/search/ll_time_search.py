@@ -313,18 +313,18 @@ class LLTimeSearch:
                 continue  # empty line
             out, inn = line.split()[:2]
             out, inn = _PVName(out), _PVName(inn)
-                if out in from_evg.keys():
-                    from_evg[out] |= {inn}
-                else:
-                    from_evg[out] = {inn}
+            if out in from_evg.keys():
+                from_evg[out] |= {inn}
+            else:
+                from_evg[out] = {inn}
 
-                if inn in twds_evg.keys():
+            if inn in twds_evg.keys():
                 print(
                     'Duplicate device input connection in line ' +
-                          '{0:d}:\n\t {1:s}'.format(n, line))
-                    return
-                else:
-                    twds_evg[inn] = {out}
+                    '{0:d}:\n\t {1:s}'.format(n, line))
+                return
+            else:
+                twds_evg[inn] = {out}
         cls._conn_from_evg = from_evg
         cls._conn_twds_evg = twds_evg
         cls._add_bbb_info()
