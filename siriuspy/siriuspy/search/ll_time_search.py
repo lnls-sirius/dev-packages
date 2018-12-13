@@ -260,6 +260,22 @@ class LLTimeSearch:
             if up_chan.device_name in trig_src_devs:
                 return up_chan
 
+    @classmethod
+    def get_fout_channel(cls, channel):
+        fout_devs = cls.get_device_names({'dev': 'Fout'})
+        chan_tree = cls.get_device_tree(channel)
+        for up_chan in chan_tree:
+            if up_chan.device_name in fout_devs:
+                return up_chan
+
+    @classmethod
+    def get_evg_channel(cls, channel):
+        evg_devs = cls.get_device_names({'dev': 'EVG'})
+        chan_tree = cls.get_device_tree(channel)
+        for up_chan in chan_tree:
+            if up_chan.device_name in evg_devs:
+                return up_chan
+
     # ############ Auxiliar methods ###########
     @classmethod
     def _add_entry_to_map(cls, which_map, conn, ele1, ele2):
