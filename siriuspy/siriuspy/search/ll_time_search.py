@@ -229,6 +229,26 @@ class LLTimeSearch:
         cls._get_timedata()
         return _dcopy(cls._devs_twds_evg)
 
+    @classmethod
+    def has_clock(cls, ll_trigger):
+        name = _PVName(ll_trigger)
+        if name.dev == 'AMCFPGAEVR':
+            return True
+        elif name.dev in {'EVR', 'EVE'}:
+            return name.propty.startswith('OUT')
+        else:
+            raise Exception('Error: ' + name)
+
+    @classmethod
+    def has_delay_type(cls, ll_trigger):
+        name = _PVName(ll_trigger)
+        return name.dev in {'EVR', 'EVE'} and name.propty.startswith('OUT')
+
+    @classmethod
+    def has_bypass_interlock(cls, ll_trigger):
+        name = _PVName(ll_trigger)
+        return name.dev in {'EVR', 'EVE'}
+
     # ############ Auxiliar methods ###########
     @classmethod
     def _add_entry_to_map(cls, which_map, conn, ele1, ele2):
