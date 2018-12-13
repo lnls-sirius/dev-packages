@@ -210,5 +210,5 @@ class SiriusPVTimeSerie:
         return self._pv.connected
 
     def __str__(self):
-        """String representation of time series."""
-        raise NotImplemented
+        """Return string representation of time series."""
+        raise NotImplementedError()
