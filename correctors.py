@@ -7,7 +7,7 @@ from epics import PV as _PV
 import siriuspy.util as _util
 from siriuspy.thread import RepeaterThread as _Repeat
 from siriuspy.search.hl_time_search import HLTimeSearch as _HLTimeSearch
-from siriuspy.csdevice.pwrsupply import Const as _PwrSplyConst
+from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.csdevice.timesys import events_modes as _EVT_MODES
 from siriuspy.envars import vaca_prefix as LL_PREF
 from .base_class import (
@@ -18,9 +18,12 @@ TIMEOUT = 0.05
 
 
 class Corrector(_BaseTimingConfig):
+    """Corrector class."""
+
     TINY_KICK = 1e-3  # urad
 
     def __init__(self, corr_name):
+        """Init method."""
         super().__init__(corr_name[:2])
         self._name = corr_name
         self._sp = None
@@ -28,10 +31,12 @@ class Corrector(_BaseTimingConfig):
 
     @property
     def name(self):
+        """Corrector name."""
         return self._name
 
     @property
     def connected(self):
+        """Status connected."""
         conn = super().connected
         conn &= self._sp.connected
         conn &= self._rb.connected
@@ -39,12 +44,13 @@ class Corrector(_BaseTimingConfig):
 
     @property
     def state(self):
+        """State."""
         pv = self._config_pvs_rb['PwrState']
-        return pv.value == _PwrSplyConst.PwrState.On if pv.connected else False
+        return pv.value == _PSConst.PwrState.On if pv.connected else False
 
     @state.setter
     def state(self, boo):
-        val = _PwrSplyConst.PwrState.On if boo else _PwrSplyConst.PwrState.Off
+        val = _PSConst.PwrState.On if boo else _PSConst.PwrState.Off
         pv = self._config_pvs_sp['PwrState']
         if pv.connected:
             self._config_ok_vals['PwrState'] = val
@@ -52,14 +58,17 @@ class Corrector(_BaseTimingConfig):
 
     @property
     def ready(self):
+        """Ready status."""
         return self.equalKick(self._rb.value)
 
     @property
     def applied(self):
+        """Status applied."""
         return self.equalKick(self._rb.value)
 
     @property
     def value(self):
+        """Value."""
         return self._rb.value
 
     @value.setter
@@ -67,12 +76,15 @@ class Corrector(_BaseTimingConfig):
         self._sp.put(val, wait=False)
 
     def equalKick(self, value):
+        """Equal kick."""
         return _math.isclose(self._sp.value, value, abs_tol=self.TINY_KICK)
 
 
 class RFCtrl(Corrector):
+    """RF control class."""
 
     def __init__(self):
+        """Init method."""
         super().__init__('SI')
         self._name = self._csorb.RF_GEN_NAME
         opt = {'connection_timeout': TIMEOUT}
@@ -86,6 +98,7 @@ class RFCtrl(Corrector):
 
     @property
     def state(self):
+        """State."""
         # TODO: database of RF GEN
         pv = self._config_pvs_rb['PwrState']
         return pv.value == 1 if pv.connected else False
@@ -101,16 +114,18 @@ class RFCtrl(Corrector):
 
 
 class CHCV(Corrector):
+    """CHCV class."""
 
     def __init__(self, corr_name):
+        """Init method."""
         super().__init__(corr_name)
         opt = {'connection_timeout': TIMEOUT}
         self._sp = _PV(LL_PREF + self._name + ':Current-SP', **opt)
         self._rb = _PV(LL_PREF + self._name + ':Current-RB', **opt)
         self._ref = _PV(LL_PREF + self._name + ':CurrentRef-Mon', **opt)
         self._config_ok_vals = {
-            'OpMode': _PwrSplyConst.OpMode.SlowRefSync,
-            'PwrState': _PwrSplyConst.PwrState.On}
+            'OpMode': _PSConst.OpMode.SlowRefSync,
+            'PwrState': _PSConst.PwrState.On}
         self._config_pvs_sp = {
             'OpMode': _PV(LL_PREF+self._name+':OpMode-Sel', **opt),
             'PwrState': _PV(LL_PREF+self._name+':PwrState-Sel', **opt)}
@@ -120,10 +135,12 @@ class CHCV(Corrector):
 
     @property
     def opmode_ok(self):
+        """Opmode ok status."""
         return self.opmode == self._config_ok_vals['OpMode']
 
     @property
     def opmode(self):
+        """Opmode."""
         pv = self._config_pvs_rb['OpMode']
         return pv.value if pv.connected else None
 
@@ -136,18 +153,22 @@ class CHCV(Corrector):
 
     @property
     def connected(self):
+        """Status connected."""
         conn = super().connected
         conn &= self._ref.connected
         return conn
 
     @property
     def applied(self):
+        """Status applied."""
         return self.equalKick(self._ref.value)
 
 
 class TimingConfig(_BaseTimingConfig):
+    """Timing configuration class."""
 
     def __init__(self, acc):
+        """Init method."""
         super().__init__(acc)
         if acc == 'SI':
             evt = 'OrbSI'
@@ -189,21 +210,26 @@ class TimingConfig(_BaseTimingConfig):
             }
 
     def send_evt(self):
+        """Send event method."""
         self._evt_sender.value = 1
 
     @property
     def connected(self):
+        """Status connected."""
         conn = super().connected
         conn &= self._evt_sender.connected
         return conn
 
 
 class BaseCorrectors(_BaseClass):
+    """Base correctors class."""
+
     pass
 
 
 class EpicsCorrectors(BaseCorrectors):
     """Class to deal with correctors."""
+
     TINY_INTERVAL = 0.005
     NUM_TIMEOUT = 1000
 
@@ -270,6 +296,7 @@ class EpicsCorrectors(BaseCorrectors):
         print(strn.format('    check applied:', 1000*(t5-t4)))
 
     def put_value_in_corr(self, corr, value, flag=True):
+        """Put value in corrector method."""
         if corr.equalKick(value):
             return
         if not corr.connected:
@@ -282,6 +309,7 @@ class EpicsCorrectors(BaseCorrectors):
             corr.value = value
 
     def send_evt(self):
+        """Send event method."""
         if not self.isring and not self._synced_kicks:
             return
         if not self.timing.connected:
@@ -303,11 +331,13 @@ class EpicsCorrectors(BaseCorrectors):
         return corr_values
 
     def set_kick_acq_rate(self, value):
+        """Set kick caq rate method."""
         self._acq_rate = value
         self._corrs_thread.interval = 1/value
         return True
 
     def set_nominal_rf_freq(self, value):
+        """Set nominal RF frequency method."""
         self._rf_nom_freq = value
 
     def _update_corrs_strength(self):
@@ -319,11 +349,12 @@ class EpicsCorrectors(BaseCorrectors):
             self.run_callbacks('KicksRF-Mon', corr_vals[-1])
 
     def set_chcvs_mode(self, value):
+        """Set mode of CHs and CVs method."""
         self._synced_kicks = value
         if self._synced_kicks == self._csorb.SyncKicks.On:
-            val = _PwrSplyConst.OpMode.SlowRefSync
+            val = _PSConst.OpMode.SlowRefSync
         elif self._synced_kicks == self._csorb.SyncKicks.Off:
-            val = _PwrSplyConst.OpMode.SlowRef
+            val = _PSConst.OpMode.SlowRef
 
         for corr in self._chcvs:
             if corr.connected:
@@ -338,10 +369,11 @@ class EpicsCorrectors(BaseCorrectors):
         return True
 
     def configure_correctors(self, _):
+        """Configure correctors method."""
         if self.isring and self._synced_kicks == self._csorb.SyncKicks.On:
-            val = _PwrSplyConst.OpMode.SlowRefSync
+            val = _PSConst.OpMode.SlowRefSync
         else:
-            val = _PwrSplyConst.OpMode.SlowRef
+            val = _PSConst.OpMode.SlowRef
         for corr in self._chcvs:
             if corr.connected:
                 corr.state = True
@@ -386,7 +418,6 @@ class EpicsCorrectors(BaseCorrectors):
         self.run_callbacks('CorrStatus-Mon', status)
 
     def _timed_out(self, mode='ready'):
-        """Timed out."""
         corrs = list()
         corrs.extend(self._chcvs)
         if self.isring:
