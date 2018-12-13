@@ -249,6 +249,17 @@ class LLTimeSearch:
         name = _PVName(ll_trigger)
         return name.dev in {'EVR', 'EVE'}
 
+    @classmethod
+    def get_trigger_name(cls, channel):
+        trig_src_devs = set(
+            cls.get_device_names({'dev': 'EVR'}) +
+            cls.get_device_names({'dev': 'EVE'}) +
+            cls.get_device_names({'dev': 'AMCFPGAEVR'}))
+        chan_tree = cls.get_device_tree(channel)
+        for up_chan in chan_tree:
+            if up_chan.device_name in trig_src_devs:
+                return up_chan
+
     # ############ Auxiliar methods ###########
     @classmethod
     def _add_entry_to_map(cls, which_map, conn, ele1, ele2):
