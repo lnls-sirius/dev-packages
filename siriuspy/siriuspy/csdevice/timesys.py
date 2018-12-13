@@ -597,17 +597,20 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     db['Delay-RB'] = _dcopy(dic_)
     db['Delay-SP'] = dic_
 
-    dic_ = {'type': 'enum', 'enums': _et.FIXED_INCR}
-    dic_.update(trig_db['DelayType'])
-    db['DelayType-Sts'] = _dcopy(dic_)
-    db['DelayType-Sel'] = dic_
+    dic_ = {'type': 'enum', 'enums': _et.DLYTYP}
+    dic_.update(trig_db['RFDelayType'])
+    db['RFDelayType-Sts'] = _dcopy(dic_)
+    db['RFDelayType-Sel'] = dic_
+    if not _HLTimeSearch.has_delay_type(hl_trigger):
+        db.pop('RFDelayType-Sts')
+        db.pop('RFDelayType-Sel')
 
     dic_ = {'type': 'int', 'value': 0b1111111111}
     db['Status-Mon'] = _dcopy(dic_)
 
-    db['Status-Cte'] = {
-        'type': 'string', 'count': 10,
-        'value': (
+    db['StatusLabels-Cte'] = {
+        'type': 'char', 'count': 1000,
+        'value': '\n'.join([
             'All PVs connected',
             'Device Enabled',
             'Fout Enabled',
@@ -618,7 +621,7 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
             'Fout DownLink Ok',
             'EVG DownLink Ok',
             'External Interlock',
-            )
+            ])
         }
     ll_trigs = '\n'.join(_HLTimeSearch.get_ll_trigger_names(hl_trigger))
     db['LowLvlTriggers-Cte'] = {
