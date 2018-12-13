@@ -30,6 +30,8 @@ class LLTimeSearch:
             'UPLINK': (
                 'OTP0', 'OTP1', 'OTP2', 'OTP3', 'OTP4', 'OTP5',
                 'OTP6', 'OTP7', 'OTP8', 'OTP9', 'OTP10', 'OTP11',
+                'OTP12', 'OTP13', 'OTP14', 'OTP15', 'OTP16', 'OTP17',
+                'OTP18', 'OTP19', 'OTP20', 'OTP21', 'OTP22', 'OTP23',
                 'OUT0', 'OUT1', 'OUT2', 'OUT3',
                 'OUT4', 'OUT5', 'OUT6', 'OUT7',
                 ),
@@ -38,6 +40,8 @@ class LLTimeSearch:
             'UPLINK': (
                 'OTP0', 'OTP1', 'OTP2', 'OTP3', 'OTP4', 'OTP5',
                 'OTP6', 'OTP7', 'OTP8', 'OTP9', 'OTP10', 'OTP11',
+                'OTP12', 'OTP13', 'OTP14', 'OTP15', 'OTP16', 'OTP17',
+                'OTP18', 'OTP19', 'OTP20', 'OTP21', 'OTP22', 'OTP23',
                 'OUT0', 'OUT1', 'OUT2', 'OUT3',
                 'OUT4', 'OUT5', 'OUT6', 'OUT7',
                 'RFOUT',
