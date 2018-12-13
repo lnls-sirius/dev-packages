@@ -620,5 +620,11 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
             'External Interlock',
             )
         }
-    interf = tuple(_HLTimeSearch.get_hl_trigger_interface(hl_trigger))
-    return {prefix + pv: dt for pv, dt in db.items() if pv.startswith(interf)}
+    ll_trigs = '\n'.join(_HLTimeSearch.get_ll_trigger_names(hl_trigger))
+    db['LowLvlTriggers-Cte'] = {
+        'type': 'char', 'count': 5000, 'value': ll_trigs}
+    channels = '\n'.join(_HLTimeSearch.get_hl_trigger_channels(hl_trigger))
+    db['CtrldChannels-Cte'] = {
+        'type': 'char', 'count': 5000, 'value': channels}
+
+    return {prefix + pv: dt for pv, dt in db.items()}
