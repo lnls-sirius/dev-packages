@@ -14,6 +14,8 @@ class ETypes(_cutil.ETypes):
     TRIG_SRC_LL = (
         'Dsbl', 'Trigger', 'Clock0', 'Clock1', 'Clock2',
         'Clock3', 'Clock4', 'Clock5', 'Clock6', 'Clock7')
+    BYPASS = ('Bypass', 'Active')
+    DLYTYP = ('Manual', 'Auto')
     RFOUT = ('OFF', '5RF/2', '5RF/4', 'RF', 'RF/2', 'RF/4')
 
 
@@ -43,18 +45,18 @@ class Const(_cutil.Const):
     TrigStates = _cutil.Const.register('TrigStates', _et.DSBL_ENBL)
     TrigIntlk = _cutil.Const.register('TrigIntlk', _et.DSBL_ENBL)
     TrigPol = _cutil.Const.register('TrigPol', _et.NORM_INV)
-    TrigDlyTyp = _cutil.Const.register('TrigDlyTyp', _et.FIXED_INCR)
+    TrigDlyTyp = _cutil.Const.register('TrigDlyTyp', _et.DLYTYP)
     TrigSrcLL = _cutil.Const.register('TrigSrcLL', _et.TRIG_SRC_LL)
 
     EvtHL2LLMap = {
-        'Linac': 'Evt001', 'InjBO': 'Evt002',
-        'InjSI': 'Evt003', 'RmpBO': 'Evt004',
-        'MigSI': 'Evt005', 'DigLI': 'Evt006',
-        'DigTB': 'Evt007', 'DigBO': 'Evt008',
-        'DigTS': 'Evt009', 'DigSI': 'Evt010',
-        'OrbSI': 'Evt011', 'CplSI': 'Evt012',
-        'TunSI': 'Evt013', 'Study': 'Evt014',
-        'OrbBO': 'Evt015', 'PsMtm': 'Evt124'}
+        'Linac': 'Evt01', 'InjBO': 'Evt02',
+        'InjSI': 'Evt03', 'RmpBO': 'Evt04',
+        'MigSI': 'Evt05', 'DigLI': 'Evt06',
+        'DigTB': 'Evt07', 'DigBO': 'Evt08',
+        'DigTS': 'Evt09', 'DigSI': 'Evt10',
+        'OrbSI': 'Evt11', 'CplSI': 'Evt12',
+        'TunSI': 'Evt13', 'Study': 'Evt14',
+        'OrbBO': 'Evt15', 'PsMtm': 'Evt124'}
     EvtLL2HLMap = {val: key for key, val in EvtHL2LLMap.items()}
 
     evt_ll_codes = list(range(1, 64)) + [124]
@@ -64,13 +66,13 @@ class Const(_cutil.Const):
     del evt_ll_codes, evt_ll_names  # cleanup class namespace
 
     ClkHL2LLMap = {
-        'Clock1': 'Clock1', 'Clock2': 'Clock2',
-        'Clock3': 'Clock3', 'Clock4': 'Clock4',
-        'Clock5': 'Clock5', 'Clock6': 'Clock6',
-        'Clock7': 'Clock7', 'Clock8': 'Clock8'}
+        'Clock0': 'Clk0', 'Clock1': 'Clk1',
+        'Clock2': 'Clk2', 'Clock3': 'Clk3',
+        'Clock4': 'Clk4', 'Clock5': 'Clk5',
+        'Clock6': 'Clk6', 'Clock7': 'Clk7'}
     ClkLL2LLMap = {val: key for key, val in ClkHL2LLMap.items()}
 
-    clk_ll_codes = list(range(1, 9))
+    clk_ll_codes = list(range(8))
     clk_ll_names = ['Clock{0:d}'.format(i) for i in clk_ll_codes]
     ClkLL = _cutil.Const.register(
                     'ClocksLL', clk_ll_names, values=clk_ll_codes)
@@ -119,7 +121,7 @@ def get_otp_database(otp_num=0, prefix=None):
     db[prefix+'Delay-SP'] = dic_
     db[prefix+'Delay-RB'] = _dcopy(dic_)
 
-    dic_ = {'type': 'enum', 'value': 0, 'enums': _et.DSBL_ENBL}
+    dic_ = {'type': 'enum', 'value': 0, 'enums': _et.BYPASS}
     db[prefix+'ByPassIntlk-Sts'] = dic_
     db[prefix+'ByPassIntlk-Sel'] = _dcopy(dic_)
 
@@ -136,9 +138,9 @@ def get_out_database(out_num=0, equip='EVR', prefix=None):
     db[prefix+'Src-Sts'] = dic_
     db[prefix+'Src-Sel'] = _dcopy(dic_)
 
-    dic_ = {'type': 'enum', 'value': 0, 'enums': _et.FIXED_INCR}
-    db[prefix+'DelayType-Sts'] = dic_
-    db[prefix+'DelayType-Sel'] = _dcopy(dic_)
+    dic_ = {'type': 'enum', 'value': 0, 'enums': _et.DLYTYP}
+    db[prefix+'RFDelayType-Sts'] = dic_
+    db[prefix+'RFDelayType-Sel'] = _dcopy(dic_)
 
     max_trig = 23 if equip == 'EVR' else 15
     num_trig = out_num + 12 if equip == 'EVR' else out_num
@@ -549,7 +551,7 @@ def get_hl_evg_database(prefix=None, only_evg=False):
 def get_hl_trigger_database(hl_trigger, prefix=''):
     """Return database of the specified hl_trigger."""
     db = dict()
-    trig_db = _HLTimeSearch.get_hl_trigger_database(hl_trigger)
+    trig_db = _HLTimeSearch.get_hl_trigger_predef_db(hl_trigger)
 
     dic_ = {'type': 'enum', 'enums': _et.DSBL_ENBL}
     dic_.update(trig_db['State'])
@@ -561,7 +563,6 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     if _HLTimeSearch.has_clock(hl_trigger):
         clocks = tuple(Const.ClkHL2LLMap.keys())
         dic_['enums'] = ('Dsbl', ) + dic_['enums'] + clocks
-        dic_['value'] += 1
     db['Src-Sts'] = _dcopy(dic_)
     db['Src-Sts']['enums'] += ('Invalid', )  # for completeness
     db['Src-Sel'] = dic_
@@ -585,10 +586,13 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     db['NrPulses-RB'] = _dcopy(dic_)
     db['NrPulses-SP'] = dic_
 
-    dic_ = {'type': 'enum', 'enums': _et.DSBL_ENBL}
+    dic_ = {'type': 'enum', 'enums': _et.BYPASS}
     dic_.update(trig_db['ByPassIntlk'])
     db['ByPassIntlk-Sts'] = _dcopy(dic_)
     db['ByPassIntlk-Sel'] = dic_
+    if not _HLTimeSearch.has_bypass_interlock(hl_trigger):
+        db.pop('ByPassIntlk-Sts')
+        db.pop('ByPassIntlk-Sel')
 
     dic_ = {'type': 'float', 'unit': 'us', 'prec': 6,
             'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
