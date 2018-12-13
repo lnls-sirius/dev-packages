@@ -313,25 +313,14 @@ class LLTimeSearch:
                 continue  # empty line
             out, inn = line.split()[:2]
             out, inn = _PVName(out), _PVName(inn)
-            _, ochn, octyp, _ = cls._get_dev_and_channel(out)
-            _, ichn, ictyp, _ = cls._get_dev_and_channel(inn)
-            if not ochn or not ichn:
-                print('No {0:s} channel defined in line {1:d}:\n\t {2:s}'
-                      .format('output' if not ochn else 'input', n, line))
-                return
-            elif not octyp or not ictyp:
-                print('Sintax error in definition of ' +
-                      '{0:s} channel in line {1:d}:\n\t {2:s}'
-                      .format('output' if not octyp else 'input', n, line))
-                return
-            else:
                 if out in from_evg.keys():
                     from_evg[out] |= {inn}
                 else:
                     from_evg[out] = {inn}
 
                 if inn in twds_evg.keys():
-                    print('Duplicate device input connection in line ' +
+                print(
+                    'Duplicate device input connection in line ' +
                           '{0:d}:\n\t {1:s}'.format(n, line))
                     return
                 else:
@@ -363,7 +352,7 @@ class LLTimeSearch:
                     cls._add_entry_to_map(
                         which_map='twds', conn=conn,
                         ele1=bpm, ele2=chan.device_name)
-        print(conn_dict.keys() - used)
+        # print(conn_dict.keys() - used)
 
     @classmethod
     def _add_bbb_info(cls):
@@ -385,19 +374,7 @@ class LLTimeSearch:
                 cls._add_entry_to_map(
                     which_map='twds', conn=conn,
                     ele1=ps, ele2=chan.device_name)
-        print(conn_dict.keys() - used)
-
-    @classmethod
-    def _get_dev_and_channel(cls, txt):
-        type_chan = num_chan = None
-        dev = txt.device_name
-        chan = txt.propty
-        reg_match = cls.LLRegExp.findall(chan)
-        if reg_match:
-            type_chan, num_chan = reg_match[0]
-            return dev, chan, type_chan, num_chan
-        else:
-            print(chan)
+        # print(conn_dict.keys() - used)
 
     @classmethod
     def _update_related_maps(cls):
