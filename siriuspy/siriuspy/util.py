@@ -5,6 +5,7 @@ and siriuspy subpackages and modules.
 """
 
 import os as _os
+from collections import Counter as _Counter
 import logging as _log
 import inspect as _inspect
 import subprocess as _sp
@@ -299,6 +300,12 @@ def get_bit(v, bit_pos):
         raise ValueError("v and bit_pos must be non-negative.")
 
     return (v >> bit_pos) & 1
+
+
+def mode(lst):
+    """ Find statistical mode of iterable of hashable objects."""
+    counter = _Counter(lst)
+    return counter.most_common(1)[0]
 
 
 def check_public_interface_namespace(namespace, valid_interface,
