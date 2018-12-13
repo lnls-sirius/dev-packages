@@ -237,7 +237,7 @@ class Filter:
         fs = []
         for f in filters:
             if 'sec' not in f or f['sec'] is None:
-                f['sec'] = '[A-Z]{2}'
+                f['sec'] = '[A-Z]{2,4}'
             if 'sub' not in f or f['sub'] is None:
                 f['sub'] = '\w{2,4}'
             if 'dis' not in f or f['dis'] is None:
