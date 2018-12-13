@@ -132,6 +132,19 @@ class LLTimeSearch:
         return [_PVName(channel.device_name + ':' + co) for co in conn]
 
     @classmethod
+    def get_channel_output_port_pvname(cls, channel):
+        if not isinstance(channel, _PVName):
+            channel = _PVName(channel)
+        outprt = channel.propty
+        if outprt.startswith('FMC'):
+            outprt = 'FMC' + outprt[3] + 'Ch{0:d}'.format(int(outprt[6])-1)
+        elif outprt.startswith('CRT'):
+            outprt = 'AMC' + outprt[3]
+        elif outprt.startswith('OTP'):
+            outprt = 'OTP{0:02d}'.format(int(outprt[3:]))
+        return outprt
+
+    @classmethod
     def get_channel_internal_trigger_pvname(cls, channel):
         if not isinstance(channel, _PVName):
             channel = _PVName(channel)
