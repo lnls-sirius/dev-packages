@@ -115,18 +115,22 @@ class _HLBase(Callback):
     def _update_pvs_thread(self):
         _time.sleep(_INTERVAL)  # limit update in 100Hz
         for prop, suf in self._all_props_suffix.items():
-            if suf == '-Cmd':
+            if self._iscmdpv(suf):
                 continue
             value = self.read(prop)
             if value is None:
                 return
             self.run_callbacks(self._get_pv_name(prop), **value)
-            if suf not in ('-RB', '-Sts'):
-                continue
-            value = self.read(prop, is_sp=True)
-            if value is None:
-                return
-            self.run_callbacks(self._get_pv_name(prop, is_sp=True), **value)
+            # Uncomment this if you want to update setpoint PVs as well
+            # This is not recommended though, because it can create very
+            # strange unusual behavior with widgets such as spinbox in PyDM
+            # and CS-Studio.
+            # if not self._isrbpv(suf):
+            #     continue
+            # value = self.read(prop, is_sp=True)
+            # if value is None:
+            #     return
+            # self.run_callbacks(self._get_pv_name(prop, is_sp=True), **value)
 
     def _define_funs_combine_values(self):
         """Define a dictionary of functions to combine low level values.
