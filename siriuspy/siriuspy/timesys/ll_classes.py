@@ -1,18 +1,18 @@
 """Define the low level classes which will connect to Timing Devices IOC."""
 import time as _time
+import re as _re
 from functools import partial as _partial, reduce as _reduce
 from operator import and_ as _and_
 import logging as _log
 import epics as _epics
-from siriuspy.callbacks import Callback
 from siriuspy.util import update_bit as _update_bit, get_bit as _get_bit
 from siriuspy.thread import QueueThread as _QueueThread
 from siriuspy.epics import connection_timeout as _conn_timeout
 from siriuspy.envars import vaca_prefix as LL_PREFIX
 from siriuspy.namesys import SiriusPVName as _PVName
-
 from siriuspy.csdevice import timesys as _cstime
 from siriuspy.search import LLTimeSearch as _LLTimeSearch
+from .util import Base as _Base
 
 _RFFREQ = _cstime.Const.RF_FREQUENCY
 _RFDIV = _cstime.Const.RF_DIVISION
@@ -25,7 +25,7 @@ def get_evg_name():
     return _LLTimeSearch.get_device_names({'dev': 'EVG'})[0]
 
 
-class _Base(Callback):
+class _BaseLL(_Base):
 
     def __init__(self, channel, prefix):
         """Initialize the Low Level object.
@@ -137,24 +137,6 @@ class _Base(Callback):
             return None
         return fun(is_sp)[prop]
 
-    def _iswritepv(self, pvname):
-        return self._issppv(pvname) or self._iscmdpv(pvname)
-
-    def _issppv(self, pvname):
-        return pvname.endswith(('-Sel', '-SP'))
-
-    def _iscmdpv(self, pvname):
-        return pvname.endswith('-Cmd')
-
-    def _isrbpv(self, pvname):
-        return pvname.endswith(('-Sts', '-RB'))
-
-    def _fromsp2rb(self, pvname):
-        return pvname.replace('-SP', '-RB').replace('-Sel', '-Sts')
-
-    def _fromrb2sp(self, pvname):
-        return pvname.replace('-RB', '-SP').replace('-Sts', '-Sel')
-
     def _update_base_freq(self, **kwargs):
         self._rf_freq = self._rf_freq_pv.get(
                                 timeout=_conn_timeout) or self._rf_freq
@@ -262,7 +244,7 @@ class _Base(Callback):
         pvn = self._fromsp2rb(pvname)
         is_sp = self._issppv(pvname)
         fun = self._dict_functs_for_update[self._dict_convert_pv2prop[pvn]]
-        props = fun(True, value)
+        props = fun(is_sp, value)
         for hl_prop, val in props.items():
             self.run_callbacks(self.channel, hl_prop, val, is_sp=is_sp)
 
@@ -289,7 +271,7 @@ class _Base(Callback):
         return {hl_prop: val}
 
 
-class LLEvent(_Base):
+class LLEvent(_BaseLL):
     """Define the Low Level Event Class."""
 
     def __init__(self, channel):
@@ -340,7 +322,7 @@ class LLEvent(_Base):
         return None  # -Cmd must not return any state
 
 
-class _EVROUT(_Base):
+class _EVROUT(_BaseLL):
     _REMOVE_PROPS = {}
 
     def __init__(self, channel, source_enums):

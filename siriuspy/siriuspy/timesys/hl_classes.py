@@ -6,10 +6,10 @@ from operator import or_ as _or_, and_ as _and_
 import logging as _log
 from pcaspy import Alarm as _Alarm, Severity as _Severity
 from siriuspy.util import get_bit as _get_bit, mode as _mode
-from siriuspy.callbacks import Callback
 from siriuspy.thread import RepeaterThread as _Timer
 from siriuspy.search import HLTimeSearch as _HLSearch
 from siriuspy.csdevice import timesys as _cstime
+from .util import Base as _Base
 from .ll_classes import get_ll_trigger as _get_ll_trigger, \
             LLEvent as _LLEvent, get_evg_name as _get_evg_name
 
@@ -17,7 +17,7 @@ _INTERVAL = 0.01
 
 
 # HL == High Level
-class _HLBase(Callback):
+class _BaseHL(_Base):
     """Define a High Level interface.
 
     Determine how to connect the driver with the classes which communicate
@@ -53,7 +53,7 @@ class _HLBase(Callback):
             obj.locked = bool(value)
 
     def get_database(self):
-        return NotImplemented
+        return dict()
 
     def write(self, prop_name, value):
         """Function to be called by the IOC to set high level properties.
@@ -72,7 +72,7 @@ class _HLBase(Callback):
     def readall(self, is_sp=False):
         values = dict()
         for prop, suf in self._all_props_suffix.items():
-            if suf == '-Cmd' or (is_sp and suf not in ('-RB', '-Sts')):
+            if self._iscmdpv(suf) or (is_sp and not self._isrbpv(suf)):
                 continue
             value = self.read(prop, is_sp=is_sp)
             if value is None or not value:
@@ -86,7 +86,7 @@ class _HLBase(Callback):
         map2write = dict()
         for pvname in db:
             prop = self._get_prop_name(pvname)
-            if pvname.endswith(('-SP', '-Sel', '-Cmd')):
+            if self._iswritepv(pvname):
                 map2write[pvname] = _partial(self.write, prop)
         return map2write
 
@@ -144,7 +144,7 @@ class _HLBase(Callback):
         db = self.get_database()
         props = dict()
         for pvname in db:
-            if not pvname.endswith('-Cte'):
+            if not self._issppv(pvname) and not self._isctepv(pvname):
                 prop, suf = self._get_prop_name(pvname, with_suffix=True)
                 props[prop] = suf
         return props
@@ -152,7 +152,7 @@ class _HLBase(Callback):
     def _get_pv_name(self, prop, is_sp=False):
         pvname = self.prefix + prop + self._all_props_suffix[prop]
         if is_sp:
-            pvname = pvname.replace('-RB', '-SP').replace('-Sts', '-Sel')
+            pvname = self._fromrb2sp(pvname)
         return pvname
 
     def _get_prop_name(self, pvname, with_suffix=False):
@@ -172,7 +172,7 @@ class _HLBase(Callback):
         return {'value': value, 'alarm': alarm, 'severity': severity}
 
 
-class HLEvent(_HLBase):
+class HLEvent(_BaseHL):
     """High Level control of the Events of the EVG.
 
     Creates
@@ -193,7 +193,7 @@ class HLEvent(_HLBase):
         return _cstime.get_hl_event_database(self.prefix)
 
 
-class HLTrigger(_HLBase):
+class HLTrigger(_BaseHL):
     """High level Trigger interface."""
 
     def __init__(self, hl_trigger, callback=None):
