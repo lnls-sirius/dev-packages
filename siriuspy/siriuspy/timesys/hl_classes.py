@@ -90,6 +90,18 @@ class _HLBase(Callback):
                 map2write[pvname] = _partial(self.write, prop)
         return map2write
 
+    def get_map2readpvs(self):
+        """Get the database."""
+        db = self.get_database()
+        map2readpvs = dict()
+        for pvname in db:
+            if self._isctepv(pvname) or self._iscmdpv(pvname):
+                continue
+            prop = self._get_prop_name(pvname)
+            map2readpvs[pvname] = _partial(
+                            self.read, prop, is_sp=self._issppv(pvname))
+        return map2readpvs
+
     def _on_change_pvs(self, channel, prop, value, is_sp=False, **kwargs):
         self._start_timer()
 
