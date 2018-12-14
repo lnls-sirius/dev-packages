@@ -564,8 +564,8 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     if _HLTimeSearch.has_clock(hl_trigger):
         clocks = tuple(sorted(Const.ClkHL2LLMap))
         dic_['enums'] += clocks
+    dic_['enums'] += ('Invalid', )  # for completeness
     db['Src-Sts'] = _dcopy(dic_)
-    db['Src-Sts']['enums'] += ('Invalid', )  # for completeness
     db['Src-Sel'] = dic_
 
     dic_ = {'type': 'float', 'unit': 'ms', 'prec': 6,

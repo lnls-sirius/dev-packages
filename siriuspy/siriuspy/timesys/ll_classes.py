@@ -530,37 +530,39 @@ class _EVROUT(_Base):
         return self._process_evt(dic_['Evt'], is_sp)
 
     def _process_evt(self, evt, is_sp):
-        src_len = len(self._source_enums) if not is_sp else 0
+        invalid = len(self._source_enums)-1  # Invalid option
         if evt not in _cstime.Const.EvtLL:
-            return {'Src': src_len}
+            return {'Src': invalid}
         evt_st = _cstime.Const.EvtLL._fields[_cstime.Const.EvtLL.index(evt)]
         if evt_st not in _cstime.Const.EvtLL2HLMap or \
            _cstime.Const.EvtLL2HLMap[evt_st] not in self._source_enums:
-            return {'Src': src_len}
+            return {'Src': invalid}
         else:
             ev_num = self._source_enums.index(
                                     _cstime.Const.EvtLL2HLMap[evt_st])
             return {'Src': ev_num}
 
     def _process_src_trig(self, src_trig, is_sp):
-        src_len = len(self._source_enums) if not is_sp else 0
+        invalid = len(self._source_enums)-1  # Invalid option
         intrg = _LLTimeSearch.get_channel_internal_trigger_pvname(self.channel)
         intrg = int(intrg[-2])  # get internal trigger number for EVR
         if src_trig != intrg:
-            return {'Src': src_len}  # invalid
+            return {'Src': invalid}
 
     def _process_src(self, src, is_sp):
-        src_len = len(self._source_enums) if not is_sp else 0
+        invalid = len(self._source_enums)-1  # Invalid option
         try:
             source = _cstime.Const.TrigSrcLL._fields[src]
         except IndexError:
             source = ''
         if not source:
-            return {'Src': src_len}  # invalid
+            return {'Src': invalid}
         elif source.startswith(('Dsbl', 'Clock')):
             return {'Src': self._source_enums.index(source)}
 
     def _set_source(self, value):
+        if value >= (len(self._source_enums)-1):
+            return dict()
         pname = self._source_enums[value]
         if pname.startswith(('Clock', 'Dsbl')):
             n = _cstime.Const.TrigSrcLL._fields.index(pname)
@@ -636,11 +638,20 @@ class _EVROTP(_EVROUT):
             val = self._get_from_pvs(is_sp, 'Evt')
         return self._process_evt(val, is_sp)
 
+    def _process_src(self, src, is_sp):
+        return None
+
     def _set_source(self, value):
+        if value >= (len(self._source_enums)-1):
+            return dict()
         pname = self._source_enums[value]
         dic_ = dict()
-        if not pname.startswith(('Clock', 'Dsbl')):
-            dic_['Evt'] = int(_cstime.Const.EvtHL2LLMap[pname][-2:])
+        reg = _re.compile('[0-9]+')
+        if pname.startswith('Dsbl'):
+            dic_['Evt'] = 0
+        if not pname.startswith('Clock'):
+            mat = reg.findall(_cstime.Const.EvtHL2LLMap[pname])
+            dic_['Evt'] = int(mat[0])
         return dic_
 
 
