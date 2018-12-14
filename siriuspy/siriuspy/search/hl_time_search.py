@@ -27,8 +27,8 @@ class HLTimeSearch:
         """Return the default database of the high level trigger."""
         cls._init()
         dic_ = _dcopy(cls._hl_triggers[hl_trigger]['database'])
-        if cls.has_clock(hl_trigger):
-            dic_['Src']['value'] += 1
+        dic_['Src']['enums'] = ('Dsbl', ) + dic_['Src']['enums']
+        dic_['Src']['value'] += 1
         return dic_
 
     @classmethod

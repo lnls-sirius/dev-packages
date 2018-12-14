@@ -49,6 +49,7 @@ class Const(_cutil.Const):
     TrigSrcLL = _cutil.Const.register('TrigSrcLL', _et.TRIG_SRC_LL)
 
     EvtHL2LLMap = {
+        'Dsbl':  'Evt00',
         'Linac': 'Evt01', 'InjBO': 'Evt02',
         'InjSI': 'Evt03', 'RmpBO': 'Evt04',
         'MigSI': 'Evt05', 'DigLI': 'Evt06',
@@ -59,8 +60,8 @@ class Const(_cutil.Const):
         'OrbBO': 'Evt15', 'PsMtm': 'Evt124'}
     EvtLL2HLMap = {val: key for key, val in EvtHL2LLMap.items()}
 
-    evt_ll_codes = list(range(1, 64)) + [124]
-    evt_ll_names = ['Evt{0:03d}'.format(i) for i in evt_ll_codes]
+    evt_ll_codes = list(range(64)) + [124]
+    evt_ll_names = ['Evt{0:02d}'.format(i) for i in evt_ll_codes]
     EvtLL = _cutil.Const.register(
                     'EventsLL', evt_ll_names, values=evt_ll_codes)
     del evt_ll_codes, evt_ll_names  # cleanup class namespace
@@ -561,8 +562,8 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dic_ = {'type': 'enum'}
     dic_.update(trig_db['Src'])
     if _HLTimeSearch.has_clock(hl_trigger):
-        clocks = tuple(Const.ClkHL2LLMap.keys())
-        dic_['enums'] = ('Dsbl', ) + dic_['enums'] + clocks
+        clocks = tuple(sorted(Const.ClkHL2LLMap))
+        dic_['enums'] += clocks
     db['Src-Sts'] = _dcopy(dic_)
     db['Src-Sts']['enums'] += ('Invalid', )  # for completeness
     db['Src-Sel'] = dic_
