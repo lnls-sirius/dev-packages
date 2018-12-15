@@ -173,10 +173,8 @@ class _BaseHL(_Base):
 
 
 class HLEvent(_BaseHL):
-    """High Level control of the Events of the EVG.
+    """High Level control of the Events of the EVG."""
 
-    Creates
-    """
     def __init__(self, ev_hl, callback=None):
         """Initialize object.
 
