@@ -25,6 +25,7 @@ public_interface = (
     'get_strength_units',
     'update_bit',
     'get_bit',
+    'mode',
     'check_public_interface_namespace',
     'get_namedtuple',
 )
@@ -273,6 +274,9 @@ class TestUtil(unittest.TestCase):
             util.get_bit(v=5, bit_pos=-1)
         self.assertEqual(0, util.get_bit(v=0xdf, bit_pos=5))
         self.assertEqual(1, util.get_bit(v=0x10, bit_pos=4))
+
+    def test_mode(self):
+        self.assertEqual((3, 2), util.mode([1, 2, 3, 4, 5, 6, 3]))
 
     def test_check_public_interface_namespace(self):
         """Test check_public_interface_namespace."""

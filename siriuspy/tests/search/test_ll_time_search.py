@@ -35,6 +35,8 @@ class TestLLTimeSearch(unittest.TestCase):
         'In2OutMap',
         'Out2InMap',
         'get_channel_input',
+        'get_channel_output_port_pvname',
+        'get_channel_internal_trigger_pvname',
         'get_device_names',
         'get_device_tree',
         'reset',
@@ -45,6 +47,12 @@ class TestLLTimeSearch(unittest.TestCase):
         'get_final_receivers',
         'get_relations_from_evg',
         'get_relations_twds_evg',
+        'has_clock',
+        'has_delay_type',
+        'has_bypass_interlock',
+        'get_trigger_name',
+        'get_fout_channel',
+        'get_evg_channel',
     )
 
     def test_public_interface(self):
