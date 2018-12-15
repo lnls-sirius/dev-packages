@@ -113,6 +113,9 @@ class LLTimeSearch:
     _top_chain_devs = set()
     _final_receiver_devs = set()
     _all_devices = set()
+    _trig_src_devs = set()
+    _fout_devs = set()
+    _evg_devs = set()
 
     @classmethod
     def get_channel_input(cls, channel):
@@ -176,16 +179,18 @@ class LLTimeSearch:
             up_chan = list(twds_evg[up_chan])[0]
         up_channels = [up_chan]
         while up_chan.device_name not in cls._top_chain_devs:
-            up_chan = cls.get_channel_input(up_chan)[0]
-            up_chan = list(twds_evg[up_chan])[0]
+            lst_chan = cls.get_channel_input(up_chan)
+            if not lst_chan:
+                raise Exception('Channel ', up_chan, ' not in dictionary.')
+            up_chan = list(twds_evg[lst_chan[0]])[0]
             up_channels.append(up_chan)
         return up_channels
 
     @classmethod
     def reset(cls):
         """Reset data to initial value."""
-        cls._conn_from_evg = None
-        cls._conn_twds_evg = None
+        cls._conn_from_evg = dict()
+        cls._conn_twds_evg = dict()
         cls._get_timedata()
 
     @staticmethod
@@ -251,29 +256,23 @@ class LLTimeSearch:
 
     @classmethod
     def get_trigger_name(cls, channel):
-        trig_src_devs = set(
-            cls.get_device_names({'dev': 'EVR'}) +
-            cls.get_device_names({'dev': 'EVE'}) +
-            cls.get_device_names({'dev': 'AMCFPGAEVR'}))
         chan_tree = cls.get_device_tree(channel)
         for up_chan in chan_tree:
-            if up_chan.device_name in trig_src_devs:
+            if up_chan.device_name in cls._trig_src_devs:
                 return up_chan
 
     @classmethod
     def get_fout_channel(cls, channel):
-        fout_devs = cls.get_device_names({'dev': 'Fout'})
         chan_tree = cls.get_device_tree(channel)
         for up_chan in chan_tree:
-            if up_chan.device_name in fout_devs:
+            if up_chan.device_name in cls._fout_devs:
                 return up_chan
 
     @classmethod
     def get_evg_channel(cls, channel):
-        evg_devs = cls.get_device_names({'dev': 'EVG'})
         chan_tree = cls.get_device_tree(channel)
         for up_chan in chan_tree:
-            if up_chan.device_name in evg_devs:
+            if up_chan.device_name in cls._evg_devs:
                 return up_chan
 
     # ############ Auxiliar methods ###########
@@ -385,14 +384,20 @@ class LLTimeSearch:
             cls._devs_twds_evg.keys() - cls._devs_from_evg.keys())
         cls._all_devices = (
             cls._devs_from_evg.keys() | cls._devs_twds_evg.keys())
+        cls._trig_src_devs = set(
+                cls.get_device_names({'dev': 'EVR'}) +
+                cls.get_device_names({'dev': 'EVE'}) +
+                cls.get_device_names({'dev': 'AMCFPGAEVR'}))
+        cls._fout_devs = set(cls.get_device_names({'dev': 'Fout'}))
+        cls._evg_devs = set(cls.get_device_names({'dev': 'EVG'}))
 
     @classmethod
     def _build_devices_relations(cls):
         simple_map = dict()
         for k, vs in cls._conn_from_evg.items():
-            devs = {v.device_name for v in vs}
+            devs = {_PVName(v.device_name) for v in vs}
             devs |= simple_map.get(k.device_name, set())
-            simple_map[k.device_name] = devs
+            simple_map[_PVName(k.device_name)] = devs
 
         inv_map = dict()
         for k, vs in simple_map.items():
