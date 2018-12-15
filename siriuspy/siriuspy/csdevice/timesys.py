@@ -74,7 +74,7 @@ class Const(_cutil.Const):
     ClkLL2LLMap = {val: key for key, val in ClkHL2LLMap.items()}
 
     clk_ll_codes = list(range(8))
-    clk_ll_names = ['Clock{0:d}'.format(i) for i in clk_ll_codes]
+    clk_ll_names = ['Clk{0:d}'.format(i) for i in clk_ll_codes]
     ClkLL = _cutil.Const.register(
                     'ClocksLL', clk_ll_names, values=clk_ll_codes)
     del clk_ll_names, clk_ll_codes
