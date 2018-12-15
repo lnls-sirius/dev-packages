@@ -147,6 +147,11 @@ class HLTimeSearch:
                         ' but are not related to the same trigger ('+trig+').')
 
     @classmethod
+    def reset(cls):
+        cls._hl_triggers = dict()
+        cls._init()
+
+    @classmethod
     def _init(cls):
         """Initialize the Instance."""
         if cls._hl_triggers:

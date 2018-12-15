@@ -39,6 +39,7 @@ class TestHLTimeSearch(unittest.TestCase):
         'has_delay_type',
         'has_clock',
         'check_hl_triggers_consistency',
+        'reset',
     )
 
     def get_hl_triggers(self):
