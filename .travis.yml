@@ -2,8 +2,9 @@ sudo: required
 language: python
 python:
   - "3.6"
+env:
+  - EPICS_BASE=/opt/epics/base
 script:
-  - export EPICS_BASE=/opt/epics/base
   - pip install -r requirements.txt
 # install PRUserial485
   - git clone https://github.com/lnls-sirius/pru-serial485.git
