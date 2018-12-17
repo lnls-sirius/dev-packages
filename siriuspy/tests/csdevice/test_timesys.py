@@ -233,6 +233,7 @@ class TestConst(unittest.TestCase):
         'ClkHL2LLMap',
         'ClkLL2HLMap',
         'ClkLL',
+        'HLTrigStatusLabels',
     )
 
     def test_public_interface(self):

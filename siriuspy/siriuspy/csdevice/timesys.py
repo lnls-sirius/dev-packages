@@ -79,6 +79,19 @@ class Const(_cutil.Const):
                     'ClocksLL', clk_ll_names, values=clk_ll_codes)
     del clk_ll_names, clk_ll_codes
 
+    HLTrigStatusLabels = (
+        'All PVs connected',
+        'Device Enabled',
+        'Fout Enabled',
+        'EVG Enabled',
+        'Network Ok',
+        'UPLink Ok',
+        'DownLink Ok',
+        'Fout DownLink Ok',
+        'EVG DownLink Ok',
+        'External Interlock',
+        )
+
 
 def get_otp_database(otp_num=0, prefix=None):
     """Return otp_database."""
@@ -605,18 +618,7 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
 
     db['StatusLabels-Cte'] = {
         'type': 'char', 'count': 1000,
-        'value': '\n'.join([
-            'All PVs connected',
-            'Device Enabled',
-            'Fout Enabled',
-            'EVG Enabled',
-            'Network Ok',
-            'UPLink Ok',
-            'DownLink Ok',
-            'Fout DownLink Ok',
-            'EVG DownLink Ok',
-            'External Interlock',
-            ])
+        'value': '\n'.join(Const.HLTrigStatusLabels)
         }
     ll_trigs = '\n'.join(_HLTimeSearch.get_ll_trigger_names(hl_trigger))
     db['LowLvlTriggers-Cte'] = {
