@@ -2,8 +2,6 @@ sudo: required
 language: python
 python:
   - "3.6"
-env:
-  - EPICS_BASE=/opt/epics/base
 script:
   - pip install -r requirements.txt
 # install PRUserial485
