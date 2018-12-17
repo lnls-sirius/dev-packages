@@ -335,6 +335,9 @@ class _EVROUT(_BaseLL):
 
         prefix = LL_PREFIX + _PVName(channel).device_name + ':'
         super().__init__(channel, prefix)
+        self._config_ok_values['DevEnbl'] = 1
+        self._config_ok_values['FoutDevEnbl'] = 1
+        self._config_ok_values['EVGDevEnbl'] = 1
 
     def write(self, prop, value):
         # keep this info for recalculating Width whenever necessary
