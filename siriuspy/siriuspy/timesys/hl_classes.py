@@ -4,8 +4,7 @@ import time as _time
 from functools import partial as _partial, reduce as _reduce
 from operator import or_ as _or_, and_ as _and_
 import logging as _log
-from pcaspy import Alarm as _Alarm, Severity as _Severity
-from siriuspy.util import get_bit as _get_bit, mode as _mode
+from siriuspy.util import mode as _mode
 from siriuspy.thread import RepeaterThread as _Timer
 from siriuspy.search import HLTimeSearch as _HLSearch
 from siriuspy.csdevice import timesys as _cstime
@@ -23,6 +22,17 @@ class _BaseHL(_Base):
     Determine how to connect the driver with the classes which communicate
     with low level IOCs.
     """
+    class Alarm:
+        NO = 0
+        STATE = 7
+        COMM = 9
+        LINK = 14
+
+    class Severity:
+        NO = 0
+        MINOR = 1
+        MAJOR = 2
+        INVALID = 3
 
     _SUFFIX_FOR_PROPS = {}
 
@@ -164,11 +174,11 @@ class _BaseHL(_Base):
 
     def _combine_default(self, values):
         value, cnt = _mode(sorted(values))
-        alarm = _Alarm.NO_ALARM
-        severity = _Severity.NO_ALARM
+        alarm = self.Alarm.NO
+        severity = self.Severity.NO
         if cnt < len(self._ll_objs):
-            alarm = _Alarm.COMM_ALARM
-            severity = _Severity.INVALID_ALARM
+            alarm = self.Alarm.COMM
+            severity = self.Severity.INVALID
         return {'value': value, 'alarm': alarm, 'severity': severity}
 
 
@@ -219,31 +229,14 @@ class HLTrigger(_BaseHL):
         return _HLSearch.get_hl_trigger_channels(self.prefix[:-1])
 
     def _combine_status(self, values):
-        status = _reduce(_or_, values)
-        alarm = _Alarm.NO_ALARM
-        severity = _Severity.NO_ALARM
-        if _get_bit(status, 0):
-            # 'PVsConn'
-            alarm = _Alarm.COMM_ALARM
-            severity = _Severity.INVALID_ALARM
-        elif _get_bit(status, 1) | _get_bit(status, 2) | _get_bit(status, 3):
-            # 'DevEnbl', 'FoutDevEnbl', 'EVGDevEnbl'
-            alarm = _Alarm.DISABLE_ALARM
-            severity = _Severity.INVALID_ALARM
-        elif (_get_bit(status, 5) | _get_bit(status, 6) |
-              _get_bit(status, 7) | _get_bit(status, 8)):
-            # 'Link' 'Loss'
-            alarm = _Alarm.LINK_ALARM
-            severity = _Severity.INVALID_ALARM
-        elif _get_bit(status, 4):
-            # 'Network'
-            alarm = _Alarm.COMM_ALARM
-            severity = _Severity.MINOR_ALARM
-        elif _get_bit(status, 9):
-            # 'IntlkMon'
-            alarm = _Alarm.STATE_ALARM
-            severity = _Severity.MINOR_ALARM
-        return {'value': status, 'alarm': alarm, 'severity': severity}
+        status_or = _reduce(_or_, values)
+        status_and = _reduce(_and_, values)
+        alarm = self.Alarm.NO
+        severity = self.Severity.NO
+        if status_or != status_and:
+            alarm = self.Alarm.COMM
+            severity = self.Severity.INVALID
+        return {'value': status_or, 'alarm': alarm, 'severity': severity}
 
     def _define_funs_combine_values(self):
         """Define a dictionary of functions to combine low level values."""
