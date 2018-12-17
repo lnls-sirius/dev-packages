@@ -231,7 +231,7 @@ class TestConst(unittest.TestCase):
         'EvtLL2HLMap',
         'EvtLL',
         'ClkHL2LLMap',
-        'ClkLL2LLMap',
+        'ClkLL2HLMap',
         'ClkLL',
     )
 
