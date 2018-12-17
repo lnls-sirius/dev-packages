@@ -106,7 +106,7 @@ class LLTimeSearch:
         for conn1, conns in conns_.items():
             for conn2 in conns:
                 dic_[conn2] = conn1
-    del(dev, conns_, dic_, conn1, conns, conn2)  # cleanning class namespace.
+    del dev, conns_, dic_, conn1, conns, conn2  # cleanning class namespace.
 
     _conn_from_evg = dict()
     _conn_twds_evg = dict()
