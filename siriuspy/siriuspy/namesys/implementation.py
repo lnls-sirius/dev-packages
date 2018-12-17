@@ -116,6 +116,23 @@ class SiriusPVName(str):
         obj.field = name['field']
         return obj
 
+    def substitute(self, **kwargs):
+        """Return new SiriusPVName object with the atttributes changed."""
+        dic_ = {}
+        dic_['sec'] = self.sec
+        dic_['sub'] = self.sub
+        dic_['dis'] = self.dis
+        dic_['dev'] = self.dev
+        dic_['idx'] = self.idx
+        dic_['propty'] = self.propty
+        dic_['propty_name'] = self.propty_name
+        dic_['propty_suffix'] = self.propty_suffix
+        dic_['field'] = self.field
+        dic_['prefix'] = self.prefix
+        dic_['channel_type'] = self.channel_type
+        dic_.update({k: v for k, v in kwargs.items() if isinstance(v, str)})
+        return join_name(**dic_)
+
     def __lt__(self, other):
         """Less-than operator."""
         cond = ((type(other) == type(self)) and
