@@ -71,7 +71,7 @@ class Const(_cutil.Const):
         'Clock2': 'Clk2', 'Clock3': 'Clk3',
         'Clock4': 'Clk4', 'Clock5': 'Clk5',
         'Clock6': 'Clk6', 'Clock7': 'Clk7'}
-    ClkLL2LLMap = {val: key for key, val in ClkHL2LLMap.items()}
+    ClkLL2HLMap = {val: key for key, val in ClkHL2LLMap.items()}
 
     clk_ll_codes = list(range(8))
     clk_ll_names = ['Clk{0:d}'.format(i) for i in clk_ll_codes]
@@ -188,10 +188,9 @@ def get_afc_out_database(out_num=0, out_tp='FMC', prefix=None):
     return db
 
 
-def get_evr_database(evr_num=1, prefix=None):
+def get_evr_database(prefix=None):
     """Return evr_database."""
-    def_prefix = 'AS-Glob:TI-EVR-{0:d}:'.format(evr_num)
-    prefix = def_prefix if prefix is None else prefix
+    prefix = prefix or ''
     db = dict()
 
     dic_ = {'type': 'enum', 'value': 0, 'enums': _et.DSBL_ENBL}
@@ -229,14 +228,12 @@ def get_evr_database(evr_num=1, prefix=None):
         db2 = get_out_database(out_num=i, equip='EVR')
         for k, v in db2.items():
             db[prefix + k] = v
-
     return db
 
 
 def get_eve_database(eve_num=1, prefix=None):
     """Return eve_database."""
-    def_prefix = 'AS-Glob:TI-EVE-{0:d}:'.format(eve_num)
-    prefix = def_prefix if prefix is None else prefix
+    prefix = prefix or ''
     db = dict()
 
     dic_ = {'type': 'enum', 'value': 0, 'enums': _et.DSBL_ENBL}
@@ -264,7 +261,7 @@ def get_eve_database(eve_num=1, prefix=None):
             'type': 'enum', 'value': 0,
             'enums': _et.DSBL_ENBL}
 
-    for i in range(16):
+    for i in range(24):
         db2 = get_otp_database(otp_num=i)
         for k, v in db2.items():
             db[prefix + k] = v
@@ -277,13 +274,9 @@ def get_eve_database(eve_num=1, prefix=None):
     return db
 
 
-def get_afc_database(afc_sec=1, has_idx=False, idx=1, prefix=None):
+def get_afc_database(prefix=None):
     """Return adc_database."""
-    def_prefix = 'AS-{0:02d}:TI-AMCFPGAEVR:'.format(afc_sec)
-    if has_idx:
-        def_prefix = 'AS-{0:02d}:TI-AMCFPGAEVR-{1:d}:'.format(afc_sec, idx)
-
-    prefix = def_prefix if prefix is None else prefix
+    prefix = prefix or ''
     db = dict()
     dic_ = {'type': 'enum', 'value': 0, 'enums': _et.DSBL_ENBL}
     db[prefix+'DevEnbl-Sts'] = dic_
@@ -312,7 +305,7 @@ def get_afc_database(afc_sec=1, has_idx=False, idx=1, prefix=None):
             'enums': _et.DSBL_ENBL}
 
     for i in range(8):
-        db2 = get_afc_out_database(out_num=i, out_tp='CRT')
+        db2 = get_afc_out_database(out_num=i, out_tp='AMC')
         for k, v in db2.items():
             db[prefix + k] = v
 
@@ -324,10 +317,9 @@ def get_afc_database(afc_sec=1, has_idx=False, idx=1, prefix=None):
     return db
 
 
-def get_fout_database(fout_num=1, prefix=None):
+def get_fout_database(prefix=None):
     """Return fout_database."""
-    def_prefix = 'AS-Glob:TI-Fout-{0:d}:'.format(fout_num)
-    prefix = def_prefix if prefix is None else prefix
+    prefix = prefix or ''
     db = dict()
 
     dic_ = {'type': 'enum', 'value': 0, 'enums': _et.DSBL_ENBL}
@@ -355,7 +347,6 @@ def get_fout_database(fout_num=1, prefix=None):
     db[prefix+'Intlk-Mon'] = {
             'type': 'enum', 'value': 0,
             'enums': _et.DSBL_ENBL}
-
     return db
 
 
@@ -385,7 +376,7 @@ def get_event_database(evt_num=0, prefix=None):
 
 def get_clock_database(clock_num=0, prefix=None):
     """Return clock_database."""
-    def_prefix = 'Clock{0:d}'.format(clock_num)
+    def_prefix = 'Clk{0:d}'.format(clock_num)
     prefix = def_prefix if prefix is None else prefix
     db = dict()
 
@@ -402,8 +393,7 @@ def get_clock_database(clock_num=0, prefix=None):
 
 def get_evg_database(prefix=None, only_evg=False):
     """Return evg_database."""
-    def_prefix = 'AS-Glob:TI-EVG:'
-    prefix = def_prefix if prefix is None else prefix
+    prefix = prefix or ''
     db = dict()
 
     dic_ = {'type': 'enum', 'value': 0, 'enums': _et.DSBL_ENBL}
@@ -475,7 +465,7 @@ def get_evg_database(prefix=None, only_evg=False):
     if only_evg:
         return db
 
-    for clc in Const.ClkLL2LLMap.keys():
+    for clc in Const.ClkLL2HLMap:
         db.update(get_clock_database(prefix=prefix+clc))
     for ev in Const.EvtLL._fields:
         db.update(get_event_database(prefix=prefix+ev))
