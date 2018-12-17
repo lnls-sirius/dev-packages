@@ -348,6 +348,8 @@ class _EVROUT(_BaseLL):
     def _define_convertion_prop2pv(self):
         intlb = _LLTimeSearch.get_channel_internal_trigger_pvname(self.channel)
         outlb = _LLTimeSearch.get_channel_output_port_pvname(self.channel)
+        intlb = intlb.propty
+        outlb = outlb.propty
         fout_chan = _LLTimeSearch.get_fout_channel(self.channel)
         _fout_prefix = LL_PREFIX + fout_chan.device_name + ':'
         evg_chan = _LLTimeSearch.get_evg_channel(self.channel)
@@ -530,7 +532,7 @@ class _EVROUT(_BaseLL):
     def _process_src_trig(self, src_trig, is_sp):
         invalid = len(self._source_enums)-1  # Invalid option
         intrg = _LLTimeSearch.get_channel_internal_trigger_pvname(self.channel)
-        intrg = int(intrg[-2])  # get internal trigger number for EVR
+        intrg = int(intrg.propty[-2])  # get internal trigger number for EVR
         if src_trig != intrg:
             return {'Src': invalid}
 
