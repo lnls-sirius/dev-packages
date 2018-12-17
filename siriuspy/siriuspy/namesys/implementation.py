@@ -28,15 +28,22 @@ def get_siriuspvname_attrs():
 
 
 def join_name(sec, sub, dis, dev,
-              idx=None, propty=None, field=None,
-              prefix=None, channel_type=None):
+              idx=None, propty=None, propty_name=None, propty_suffix=None,
+              field=None, prefix=None, channel_type=None, **kwargs):
     """Return SiriusPVName object."""
     name = channel_type + '://' if channel_type else ''
     name += prefix + '-' if prefix else ''
     name += (sec.upper() + '-' + sub + ':' +
              dis.upper() + '-' + dev)
     name += ('-' + idx) if idx else ""
-    name += (':' + propty) if propty else ""
+    if propty_name and propty_suffix:
+        name += ':' + propty_name + '-' + propty_suffix
+    elif propty:
+        name += ':' + propty
+    elif propty_name:
+        name += ':' + propty_name
+    else:
+        return SiriusPVName(name)
     name += ('.' + field) if field else ""
     return SiriusPVName(name)
 
