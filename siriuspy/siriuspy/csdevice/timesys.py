@@ -71,7 +71,7 @@ class Const(_cutil.Const):
         'Clock2': 'Clk2', 'Clock3': 'Clk3',
         'Clock4': 'Clk4', 'Clock5': 'Clk5',
         'Clock6': 'Clk6', 'Clock7': 'Clk7'}
-    ClkLL2LLMap = {val: key for key, val in ClkHL2LLMap.items()}
+    ClkLL2HLMap = {val: key for key, val in ClkHL2LLMap.items()}
 
     clk_ll_codes = list(range(8))
     clk_ll_names = ['Clk{0:d}'.format(i) for i in clk_ll_codes]
