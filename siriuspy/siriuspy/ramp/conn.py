@@ -11,10 +11,9 @@ from siriuspy.epics.properties import EpicsProperty as _EpicsProperty
 from siriuspy.epics.properties import EpicsPropertiesList as _EpicsPropsList
 from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
-from siriuspy.servconf.conf_service import ConfigService as _ConfigService
 from siriuspy.servconf.srvconfig import ConnConfigService as _ConnConfigService
 from siriuspy.ramp import util as _rutil
-from siriuspy.csdevice.orbitcorr import get_consts as _get_SOFB_consts
+from siriuspy.csdevice.orbitcorr import OrbitCorrDevRings as _OrbitCorrConst
 from siriuspy.search.ma_search import MASearch as _MASearch
 
 
@@ -83,6 +82,10 @@ class ConnTiming(_EpicsPropsList):
         properties = self._define_properties(prefix, connection_callback,
                                              callback)
         super().__init__(properties)
+
+    def get_ramp_config(self, ramp_config):
+        """Receive BoosterRamp configuration."""
+        self._ramp_config = ramp_config
 
     # --- timing mode selection commands ---
 
@@ -244,6 +247,10 @@ class ConnMagnets(_EpicsPropsList):
         """Return manames."""
         return self._manames
 
+    def get_ramp_config(self, ramp_config):
+        """Receive BoosterRamp configuration."""
+        self._ramp_config = ramp_config
+
     # --- power supplies commands ---
 
     def cmd_pwrstate_on(self, timeout=_PWRSTATE_ON_DELAY):
@@ -393,6 +400,10 @@ class ConnRF(_EpicsPropsList):
                                              callback)
         super().__init__(properties)
 
+    def get_ramp_config(self, ramp_config):
+        """Receive BoosterRamp configuration."""
+        self._ramp_config = ramp_config
+
     # --- RF commands ---
 
     def cmd_ramping_enable(self, timeout=_TIMEOUT_DFLT):
@@ -516,37 +527,39 @@ class ConnSOFB(_EpicsPropsList):
 
     IOC_Prefix = 'BO-Glob:AP-SOFB'
 
-    def __init__(self, ramp_config=None, prefix=_prefix,
+    def __init__(self, prefix=_prefix,
                  connection_callback=None, callback=None):
         """Init."""
-        self._ramp_config = ramp_config
         properties = self._define_properties(prefix, connection_callback,
                                              callback)
         super().__init__(properties)
 
-    def get_kicks(self):
-        """Get CH and CV kicks calculated by SOFB."""
+    def get_deltakicks(self):
+        """Get CH and CV delta kicks calculated by SOFB."""
+        bo_sofb_db = _OrbitCorrConst(acc='BO')
         rb = self.readbacks
-        cv_kicks = rb[ConnSOFB.IOC_Prefix + ':KicksCV']
-        cv_names = _get_SOFB_consts.cv_names
+        ch_dkicks = rb[ConnSOFB.IOC_Prefix + ':DeltaKicksCH']
+        ch_names = bo_sofb_db.CH_NAMES
 
-        ch_kicks = rb[ConnSOFB.IOC_Prefix + ':KicksCH']
-        ch_names = _get_SOFB_consts.ch_names
+        cv_dkicks = rb[ConnSOFB.IOC_Prefix + ':DeltaKicksCV']
+        cv_names = bo_sofb_db.CV_NAMES
 
-        corrs2kicks_dict = dict()
-        for idx in range(len(cv_names)):
-            corrs2kicks_dict[cv_names[idx]] = cv_kicks[idx]
+        corrs2dkicks_dict = dict()
         for idx in range(len(ch_names)):
-            corrs2kicks_dict[ch_names[idx]] = ch_kicks[idx]
-        return corrs2kicks_dict
+            corrs2dkicks_dict[ch_names[idx]] = ch_dkicks[idx]
+        for idx in range(len(cv_names)):
+            corrs2dkicks_dict[cv_names[idx]] = cv_dkicks[idx]
+        return corrs2dkicks_dict
 
     def _define_properties(self, prefix, connection_callback, callback):
         properties = (
-            _EpicsProperty(ConnSOFB.IOC_Prefix + ':KicksCH', '-Mon', '-Mon',
-                           prefix, connection_callback=connection_callback,
-                           callback=callback),
-            _EpicsProperty(ConnSOFB.IOC_Prefix + ':KicksCV', '-Mon', '-Mon',
-                           prefix, connection_callback=connection_callback,
-                           callback=callback),
+            _EpicsProperty(
+                ConnSOFB.IOC_Prefix + ':DeltaKicksCH', '-Mon', '-Mon',
+                prefix, connection_callback=connection_callback,
+                callback=callback),
+            _EpicsProperty(
+                ConnSOFB.IOC_Prefix + ':DeltaKicksCV', '-Mon', '-Mon',
+                prefix, connection_callback=connection_callback,
+                callback=callback),
             )
         return properties
