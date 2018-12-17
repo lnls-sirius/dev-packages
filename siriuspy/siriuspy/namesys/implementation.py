@@ -97,7 +97,7 @@ class SiriusPVName(str):
     """Sirius PV Name Class."""
 
     def __new__(cls, pv_name):
-        """New method."""
+        """Implement new method."""
         name = split_name(pv_name)
         obj = super().__new__(cls, pv_name)
         obj.channel_type = name['channel_type']
