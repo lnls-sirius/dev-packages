@@ -2,7 +2,8 @@
 
 import numpy as _np
 
-from siriuspy import util as _util
+from mathphys import constants as _c
+from mathphys import units as _u
 from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
 from siriuspy.ramp import util as _rutil
 from siriuspy.ramp.magnet import Magnet as _Magnet
@@ -485,7 +486,7 @@ class _WaveformMagnet:
 class WaveformDipole(_WaveformMagnet, WaveformParam):
     """Waveform for Dipole."""
 
-    _E0 = _util.get_electron_rest_energy()
+    _E0 = _c.electron_rest_energy * _u.joule_2_GeV
 
     def __init__(self, maname='BO-Fam:MA-B', **kwargs):
         """Constructor."""

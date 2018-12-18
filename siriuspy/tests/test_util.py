@@ -18,7 +18,6 @@ public_interface = (
     'print_ioc_banner',
     'configure_log_file',
     'save_ioc_pv_list',
-    'get_electron_rest_energy',
     'beam_rigidity',
     'check_pv_online',
     'get_strength_label',
@@ -160,11 +159,6 @@ class TestUtil(unittest.TestCase):
                  mock.call('p0pv2\n')]
         self.assertEqual(m().write.call_args_list, calls)
 
-    def test_get_electron_rest_energy(self):
-        """Test get_electron_rest_energy."""
-        energy = util.get_electron_rest_energy()
-        self.assertAlmostEqual(energy, 0.000510998927603161, 14)
-
     def test_beam_rigidity(self):
         """Test beam_rigidity."""
         e0 = 510998.92760316096/1e9  # electron rest energy [GeV]
@@ -297,6 +291,7 @@ class TestUtil(unittest.TestCase):
         self.assertFalse(valid)
 
     def test_get_namedtuple(self):
+        """Test get_namedtuple."""
         fields = ('a', 'b', 'c')
         values = (1, 4, 5)
         a = util.get_namedtuple('A', fields, values)

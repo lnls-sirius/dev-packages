@@ -62,14 +62,6 @@ class TestWaveformParam(unittest.TestCase):
                 TestWaveformParam.public_interface)
         self.assertTrue(valid)
 
-    def _test_start_energy(self):
-        """Test start_energy."""
-        w = WaveformParam()
-        v1 = util.get_electron_rest_energy()
-        v2 = w.start_energy
-        self.assertIsInstance(v2, float)
-        self.assertTrue(v2 > v1)
-
     def test_rampup_start_energy(self):
         """Test rampup_start_energy."""
         w = WaveformParam()
