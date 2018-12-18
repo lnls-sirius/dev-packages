@@ -1,6 +1,8 @@
 """Define properties of all timing devices and their connections."""
 
 from copy import deepcopy as _dcopy
+from mathphys import constants as _c
+from siriuspy.optics import constants as _oc
 from siriuspy.util import get_namedtuple as _get_namedtuple
 from siriuspy.csdevice.util import ETypes as _et
 from siriuspy.search import HLTimeSearch as _HLTimeSearch
@@ -58,14 +60,10 @@ triggers_src_ll = _get_namedtuple(
 class Const:
     """Constants important for the timing system."""
 
-    # TODO: should we create a consts module?
-    _light_speed = 299792458  # [m/s]
-    _ring_circumference = 518.396  # [m]
-    _harmonic_number = 864
-
     AC_FREQUENCY = 60  # [Hz]
     RF_DIVISION = 4
-    RF_FREQUENCY = _light_speed/_ring_circumference*_harmonic_number
+    RF_FREQUENCY = \
+        _c.light_speed / _oc.SI.circumference * _oc.SI.harmonic_number
     BASE_FREQUENCY = RF_FREQUENCY / RF_DIVISION
     RF_PERIOD = 1/RF_FREQUENCY
     BASE_DELAY = 1 / BASE_FREQUENCY
