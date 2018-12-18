@@ -47,6 +47,18 @@ class Const(_cutil.Const):
     TrigPol = _cutil.Const.register('TrigPol', _et.NORM_INV)
     TrigDlyTyp = _cutil.Const.register('TrigDlyTyp', _et.DLYTYP)
     TrigSrcLL = _cutil.Const.register('TrigSrcLL', _et.TRIG_SRC_LL)
+    HLTrigStatusLabels = (
+        'All PVs connected',
+        'Device Enabled',
+        'Fout Enabled',
+        'EVG Enabled',
+        'Network Ok',
+        'UPLink Ok',
+        'DownLink Ok',
+        'Fout DownLink Ok',
+        'EVG DownLink Ok',
+        'External Interlock',
+        )
 
     EvtHL2LLMap = {
         'Dsbl':  'Evt00',
@@ -78,19 +90,6 @@ class Const(_cutil.Const):
     ClkLL = _cutil.Const.register(
                     'ClocksLL', clk_ll_names, values=clk_ll_codes)
     del clk_ll_names, clk_ll_codes
-
-    HLTrigStatusLabels = (
-        'All PVs connected',
-        'Device Enabled',
-        'Fout Enabled',
-        'EVG Enabled',
-        'Network Ok',
-        'UPLink Ok',
-        'DownLink Ok',
-        'Fout DownLink Ok',
-        'EVG DownLink Ok',
-        'External Interlock',
-        )
 
 
 def get_otp_database(otp_num=0, prefix=None):
