@@ -103,7 +103,9 @@ class TestImplementation(unittest.TestCase):
 class TestSiriusPVName(unittest.TestCase):
     """Test SiriusPVName module."""
 
-    public_interface = ()
+    public_interface = (
+        'substitute',
+    )
 
     def test_public_interface(self):
         """Test SiriusPVName public interface."""
@@ -132,7 +134,6 @@ class TestSiriusPVName(unittest.TestCase):
         """Test string."""
         n = namesys.SiriusPVName('ca://PREFIX-SI-Fam:PS-B1B2-1:Current-SP.AVG')
         self.assertIsInstance(n, str)
-
 
 
 if __name__ == "__main__":

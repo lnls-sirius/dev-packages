@@ -3,8 +3,8 @@
 import ast as _ast
 from copy import deepcopy as _dcopy
 from siriuspy import servweb as _web
-from siriuspy.namesys import SiriusPVName as _PVName
-from .ll_time_search import LLTimeSearch as _LLTimeSearch
+from siriuspy.namesys import SiriusPVName as _PVName, Filter as _Filter
+from .ll_time_search import LLTimeSearch as _LLSearch
 
 _timeout = 1.0
 
@@ -12,34 +12,30 @@ _timeout = 1.0
 class HLTimeSearch:
     """Contain properties of the triggers."""
 
-    _TWDS_EVG = dict()
-    _FROM_EVG = dict()
-    _EVRs = set()
-    _EVEs = set()
-    _AMCFPGAEVRs = set()
     _hl_triggers = dict()
 
     @classmethod
-    def get_hl_triggers(cls):
+    def get_hl_triggers(cls, filters=None, sorting=None):
         """Dictionary with high level triggers."""
         cls._init()
-        return _dcopy(cls._hl_triggers)
+        all_devs = sorted(cls._hl_triggers.keys())
+        return _Filter.process_filters(
+                    all_devs, filters=filters, sorting=sorting)
 
     @classmethod
-    def get_hl_trigger_database(cls, hl_trigger):
+    def get_hl_trigger_predef_db(cls, hl_trigger):
         """Return the default database of the high level trigger."""
         cls._init()
-        return _dcopy(cls._hl_triggers[hl_trigger]['database'])
+        dic_ = _dcopy(cls._hl_triggers[hl_trigger]['database'])
+        dic_['Src']['enums'] = ('Dsbl', ) + dic_['Src']['enums']
+        dic_['Src']['value'] += 1
+        return dic_
 
     @classmethod
-    def get_hl_trigger_sources(cls, hl_trigger):
-        """Return the possible sources of the high level trigger."""
+    def get_hl_trigger_allowed_evts(cls, hl_trigger):
+        """Return the possible events of the high level trigger."""
         cls._init()
-        enums = cls._hl_triggers
-        enums = enums[hl_trigger]['database']['Src']['enums']
-        if cls.has_clock(hl_trigger):
-            clocks = ['Clock{0:d}'.format(i) for i in range(8)]
-            enums = ('Dsbl', ) + enums + tuple(clocks)
+        enums = cls._hl_triggers[hl_trigger]['database']['Src']['enums']
         return _dcopy(enums)
 
     @classmethod
@@ -63,46 +59,26 @@ class HLTimeSearch:
         return dic_
 
     @classmethod
-    def get_hl_trigger_interface(cls, hl_trigger):
-        """Return the properties defining the interface of the HL trigger."""
-        cls._init()
-        dic_ = cls._hl_triggers[hl_trigger]['database']
-        interface = dic_.keys() | {'Status'}
-
-        if not cls.has_delay_type(hl_trigger):
-            interface.discard('DelayType')
-        if not cls.has_bypass_interlock(hl_trigger):
-            interface.discard('ByPassIntlk')
-        return interface
-
-    @classmethod
     def get_ll_trigger_names(cls, hl_trigger=None, channels=None):
         """Get Low Level trigger object names."""
         cls._init()
-        cls._get_constants()
         ret = cls._hl_triggers.get(hl_trigger)
         chans = ret['channels'] if ret else (channels or list())
+        return sorted({_LLSearch.get_trigger_name(chan) for chan in chans})
 
-        out_chans = set()
-        for chan in chans:
-            chan_tree = _LLTimeSearch.get_device_tree(chan)
-            for up_chan in chan_tree:
-                if up_chan.device_name in (
-                            cls._EVRs | cls._EVEs | cls._AMCFPGAEVRs):
-                    out_chans |= {up_chan}
-                    break
-        return sorted(out_chans)
+    @classmethod
+    def get_hl_trigger_channels(cls, hl_trigger):
+        cls._init()
+        ret = cls._hl_triggers.get(hl_trigger)
+        chans = ret['channels'] if ret else list()
+        return sorted(chans)
 
     @classmethod
     def has_delay_type(cls, hl_trigger):
         """Return True if hl_trigger has property delayType."""
-        def get_ll(ll_trigger):
-            name = _PVName(ll_trigger)
-            return name.dev in ('EVR', 'EVE') and name.propty.startswith('OUT')
-
         cls._init()
         ll_chans = cls.get_ll_trigger_names(hl_trigger)
-        has_ = [get_ll(name) for name in ll_chans]
+        has_ = [_LLSearch.has_delay_type(name) for name in ll_chans]
         if not any(has_):
             return False
         elif not all(has_):
@@ -114,13 +90,9 @@ class HLTimeSearch:
     @classmethod
     def has_bypass_interlock(cls, hl_trigger):
         """Return True if hl_trigger has property delayType."""
-        def get_ll(ll_trigger):
-            name = _PVName(ll_trigger)
-            return name.dev in ('EVR', 'EVE')
-
         cls._init()
         ll_chans = cls.get_ll_trigger_names(hl_trigger)
-        has_ = [get_ll(name) for name in ll_chans]
+        has_ = [_LLSearch.has_bypass_interlock(name) for name in ll_chans]
         if not any(has_):
             return False
         elif not all(has_):
@@ -132,18 +104,9 @@ class HLTimeSearch:
     @classmethod
     def has_clock(cls, hl_trigger):
         """Return True if hl_trigger can listen to Clocks from EVG."""
-        def get_ll(ll_trigger):
-            name = _PVName(ll_trigger)
-            if name.dev in {'EVE', 'AMCFPGAEVR'}:
-                return True
-            elif name.dev == 'EVR':
-                return name.propty.startswith('OUT')
-            else:
-                raise Exception('Error: ' + name)
-
         cls._init()
         ll_chans = cls.get_ll_trigger_names(hl_trigger)
-        has_ = [get_ll(name) for name in ll_chans]
+        has_ = [_LLSearch.has_clock(name) for name in ll_chans]
         if all(has_):
             return True
         elif any(has_):
@@ -160,42 +123,33 @@ class HLTimeSearch:
         Low Level connections of the timing devices.
         """
         cls._init()
-        cls._get_constants()
+        twds_evg = _LLSearch.get_connections_twds_evg()
+        from_evg = _LLSearch.get_connections_from_evg()
         for trig, val in cls._hl_triggers.items():
             chans = {_PVName(chan) for chan in val['channels']}
             for chan in chans:
-                tmp = cls._TWDS_EVG.get(chan)
+                tmp = twds_evg.get(chan)
                 if tmp is None:
                     raise Exception(
-                        'Device ' + chan +
-                        ' defined in the high level trigger ' +
-                        trig + ' not specified in timing connections data.')
+                        chan + ' is used in HL trigger ' + trig +
+                        ' but not specified in timing connections data.')
                 if not tmp:
-                    raise Exception('Device ' + chan +
-                                    ' defined in the high level trigger ' +
-                                    trig + ' maybe were already used.')
+                    raise Exception(
+                        chan + ' which is used in HL trigger ' + trig +
+                        ' maybe were already used somewhere else.')
                 up_dev = tmp.pop()
-                diff_devs = cls._FROM_EVG[up_dev] - chans
+                diff_devs = from_evg[up_dev] - chans
                 if diff_devs and not chan.dev.endswith('BPM'):
                     raise Exception(
                         'Devices: ' + ' '.join(diff_devs) +
                         ' are connected to the same output of ' +
                         up_dev + ' as ' + chan +
-                        ' but are not related to the sam trigger (' +
-                        trig + ').')
+                        ' but are not related to the same trigger ('+trig+').')
 
     @classmethod
-    def _get_constants(cls):
-        if cls._TWDS_EVG:
-            return
-        _LLTimeSearch.add_bbb_info()
-        _LLTimeSearch.add_crates_info()
-        cls._TWDS_EVG = _LLTimeSearch.get_connections_twds_evg()
-        cls._FROM_EVG = _LLTimeSearch.get_connections_from_evg()
-        cls._EVRs = set(_LLTimeSearch.get_device_names({'dev': 'EVR'}))
-        cls._EVEs = set(_LLTimeSearch.get_device_names({'dev': 'EVE'}))
-        cls._AMCFPGAEVRs = set(
-                    _LLTimeSearch.get_device_names({'dev': 'AMCFPGAEVR'}))
+    def reset(cls):
+        cls._hl_triggers = dict()
+        cls._init()
 
     @classmethod
     def _init(cls):
@@ -205,4 +159,7 @@ class HLTimeSearch:
         text = ''
         if _web.server_online():
             text = _web.high_level_triggers(timeout=_timeout)
-        cls._hl_triggers = _ast.literal_eval(text)
+        temp_dict = _ast.literal_eval(text)
+        for k, vs in temp_dict.items():
+            vs['channels'] = tuple(map(_PVName, vs['channels']))
+            cls._hl_triggers[_PVName(k)] = vs

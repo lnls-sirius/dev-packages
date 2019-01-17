@@ -5,7 +5,19 @@ import unittest
 from siriuspy import util
 from siriuspy import timesys
 
-public_interface = ('PlotNetwork', 'time_simul')
+public_interface = (
+    'PlotNetwork',
+    'create_static_table',
+    'read_data_from_google',
+    'read_data_from_local_excel_file',
+    'time_simul',
+    'util',
+    'HLEvent',
+    'HLTrigger',
+    'LLEvent',
+    'get_evg_name',
+    'get_ll_trigger',
+    )
 
 
 class TestSearch(unittest.TestCase):
@@ -14,5 +26,5 @@ class TestSearch(unittest.TestCase):
     def test_public_interface(self):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-                                                timesys, public_interface)
+                                        timesys, public_interface)
         self.assertTrue(valid)

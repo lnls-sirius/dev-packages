@@ -278,7 +278,7 @@ class TestServWeb(unittest.TestCase):
 
     def test_high_level_triggers(self, mock_read):
         """Test high_level_triggers."""
-        url = implementation._timesys_folder + 'high-level-triggers.txt'
+        url = implementation._timesys_folder + 'high-level-triggers.py'
         # Call with different parameters
         resp = implementation.high_level_triggers()
         self.assertEqual(resp, "FakeResponse")

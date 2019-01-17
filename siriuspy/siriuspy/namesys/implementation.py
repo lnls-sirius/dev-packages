@@ -28,15 +28,22 @@ def get_siriuspvname_attrs():
 
 
 def join_name(sec, sub, dis, dev,
-              idx=None, propty=None, field=None,
-              prefix=None, channel_type=None):
+              idx=None, propty=None, propty_name=None, propty_suffix=None,
+              field=None, prefix=None, channel_type=None, **kwargs):
     """Return SiriusPVName object."""
     name = channel_type + '://' if channel_type else ''
     name += prefix + '-' if prefix else ''
     name += (sec.upper() + '-' + sub + ':' +
              dis.upper() + '-' + dev)
     name += ('-' + idx) if idx else ""
-    name += (':' + propty) if propty else ""
+    if propty_name and propty_suffix:
+        name += ':' + propty_name + '-' + propty_suffix
+    elif propty:
+        name += ':' + propty
+    elif propty_name:
+        name += ':' + propty_name
+    else:
+        return SiriusPVName(name)
     name += ('.' + field) if field else ""
     return SiriusPVName(name)
 
@@ -90,7 +97,7 @@ class SiriusPVName(str):
     """Sirius PV Name Class."""
 
     def __new__(cls, pv_name):
-        """New method."""
+        """Implement new method."""
         name = split_name(pv_name)
         obj = super().__new__(cls, pv_name)
         obj.channel_type = name['channel_type']
@@ -108,6 +115,23 @@ class SiriusPVName(str):
         obj.device_propty = name['device_propty']
         obj.field = name['field']
         return obj
+
+    def substitute(self, **kwargs):
+        """Return new SiriusPVName object with the atttributes changed."""
+        dic_ = {}
+        dic_['sec'] = self.sec
+        dic_['sub'] = self.sub
+        dic_['dis'] = self.dis
+        dic_['dev'] = self.dev
+        dic_['idx'] = self.idx
+        dic_['propty'] = self.propty
+        dic_['propty_name'] = self.propty_name
+        dic_['propty_suffix'] = self.propty_suffix
+        dic_['field'] = self.field
+        dic_['prefix'] = self.prefix
+        dic_['channel_type'] = self.channel_type
+        dic_.update({k: v for k, v in kwargs.items() if isinstance(v, str)})
+        return join_name(**dic_)
 
     def __lt__(self, other):
         """Less-than operator."""
@@ -237,9 +261,9 @@ class Filter:
         fs = []
         for f in filters:
             if 'sec' not in f or f['sec'] is None:
-                f['sec'] = '[A-Z]{2}'
+                f['sec'] = '[A-Z]{2,4}'
             if 'sub' not in f or f['sub'] is None:
-                f['sub'] = '\w{2,4}'
+                f['sub'] = '\w{2,16}'
             if 'dis' not in f or f['dis'] is None:
                 f['dis'] = '[A-Z]{2,6}'
             if 'dev' not in f or f['dev'] is None:

@@ -8,6 +8,7 @@ from queue import Queue as _Queue
 # when used intensively in the SOFB IOC.
 # TODO: investigate this issue!
 
+
 class QueueThread(_Thread):
     """Callback queue class.
 
