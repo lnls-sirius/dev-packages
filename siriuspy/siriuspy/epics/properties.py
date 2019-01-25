@@ -6,6 +6,7 @@ import epics as _epics
 
 import numpy as _np
 from siriuspy import envars as _envars
+from siriuspy.namesys.implementation import get_pair_sprb as _get_pair_sprb
 
 
 _prefix = _envars.vaca_prefix
@@ -14,22 +15,27 @@ _prefix = _envars.vaca_prefix
 class EpicsProperty:
     """Pair of Epics PVs."""
 
-    def __init__(self, name, suffix_sp, suffix_rb, prefix=_prefix,
-                 default_value=None, connection_callback=None, callback=None):
+    def __init__(self, name, prefix=_prefix, default_value=None,
+                 connection_callback=None, callback=None):
         """Init."""
         self._name = name
-        self._suffix_sp = suffix_sp
-        self._suffix_rb = suffix_rb
         self._prefix = prefix
         self._default = default_value
+
+        # Set callbacks
         self._connection_callback = connection_callback
         self._callback = callback
-        pvname = self._prefix + self._name
-        # Set callbacks
         callbacks = {'connection_callback': self._pv_connection_callback,
                      'callback': self._pv_callback}
-        self._pv_sp = _epics.PV(pvname + self._suffix_sp, **callbacks)
-        self._pv_rb = _epics.PV(pvname + self._suffix_rb, **callbacks)
+
+        try:
+            [self._pvname_sp, self._pvname_rb] = _get_pair_sprb(name)
+        except NameError:
+            self._pvname_sp = name
+            self._pvname_rb = name
+
+        self._pv_sp = _epics.PV(self._prefix + self._pvname_sp, **callbacks)
+        self._pv_rb = _epics.PV(self._prefix + self._pvname_rb, **callbacks)
 
     @property
     def name(self):
@@ -44,22 +50,22 @@ class EpicsProperty:
     @property
     def suffix_sp(self):
         """PV SP suffix."""
-        return self._suffix_sp
+        return self._pvname_sp.split('-')[-1]
 
     @property
     def suffix_rb(self):
         """PV RB suffix."""
-        return self._suffix_rb
+        return self._pvname_rb.split('-')[-1]
 
     @property
     def pvname_sp(self):
         """Return SP pvname (without prefix)."""
-        return self._name + self._suffix_sp
+        return self._pvname_sp
 
     @property
     def pvname_rb(self):
         """Return RB pvname (without prefix)."""
-        return self._name + self._suffix_rb
+        return self._pvname_rb
 
     @property
     def connected(self):
