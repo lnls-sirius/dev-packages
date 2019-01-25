@@ -14,6 +14,7 @@ public_interface = (
     'get_siriuspvname_attrs',
     'join_name',
     'split_name',
+    'get_pair_sprb',
     'SiriusPVName',
     'Filter',
 )

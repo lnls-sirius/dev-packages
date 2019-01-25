@@ -93,6 +93,22 @@ def split_name(pvname):
     return dic_
 
 
+def get_pair_sprb(propty):
+    """Return the equivalent [setpoint, readback] Sirius property pair.
+
+    Input: a Sirius property, with a setpoint or a readback suffix.
+    Output: the equivalent Sirius [setpoint, readback] pair.
+    """
+    _sp_rb = {'SP': 'RB', 'Sel': 'Sts'}
+    for sp, rb in _sp_rb.items():
+        if propty.split('-')[-1] in sp:
+            return [propty, propty.replace(propty.split('-')[-1], rb)]
+        elif propty.split('-')[-1] in rb:
+            return [propty.replace(propty.split('-')[-1], sp), propty]
+    else:
+        raise NameError('Input is not a setpoint/readback property!')
+
+
 class SiriusPVName(str):
     """Sirius PV Name Class."""
 
