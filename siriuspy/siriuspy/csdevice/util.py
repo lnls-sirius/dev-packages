@@ -32,15 +32,15 @@ class Const:
         return _get_namedtuple(name, field_names, values)
 
 
-def add_pvslist_cte(database):
-    """Add PVsList-Cte."""
-    pvslist_cte_name = 'Properties-Cte'
+def add_pvslist_cte(database, prefix=''):
+    """Add Properties-Cte."""
+    pvslist_cte_name = prefix + 'Properties-Cte'
     keys = list(database.keys())
     keys.append(pvslist_cte_name)
-    keys = sorted(keys)
+    val = ' '.join(sorted(keys))
     database[pvslist_cte_name] = {
-        'type': 'string',
-        'count': len(keys),
-        'value': keys,
+        'type': 'char',
+        'count': len(val),
+        'value': val,
     }
     return database
