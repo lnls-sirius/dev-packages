@@ -62,7 +62,7 @@ class ConstTLines(_cutil.Const):
     Rings = _cutil.Const.register('Rings', _et.RINGS, (2, 3))
     Accelerators = _cutil.Const.register('Accelerators', _et.ACCELERATORS)
 
-    TRIGGER_NAME = 'AS-Glob:TI-BPM-TBTS:'
+    TRIGGER_NAME = 'AS-Glob:TI-BPM-TBTS'
 
     OrbitMode = _cutil.Const.register('OrbitMode', _et.ORB_MODE_TLINES)
     ApplyCorr = _cutil.Const.register('ApplyCorr', _et.APPLY_CORR_TLINES)
@@ -77,7 +77,7 @@ class ConstTLines(_cutil.Const):
 class ConstRings(ConstTLines):
     """Const class defining rings orbitcorr constants."""
 
-    TRIGGER_NAME = 'AS-Glob:TI-BPM-SIBO:'
+    TRIGGER_NAME = 'AS-Glob:TI-BPM-SIBO'
     OrbitMode = _cutil.Const.register('OrbitMode', _et.ORB_MODE_RINGS)
     ApplyCorr = _cutil.Const.register('ApplyCorr', _et.APPLY_CORR_RINGS)
     StatusLabelsCorrs = _cutil.Const.register(
@@ -126,7 +126,7 @@ class OrbitCorrDevTLines(ConstTLines):
 
         self.OrbitAcqExtEvtSrc = _get_namedtuple(
             'OrbitAcqExtEvtSrc',
-            _HLTISearch.get_hl_trigger_sources(self.TRIGGER_NAME))
+            _HLTISearch.get_hl_trigger_allowed_evts(self.TRIGGER_NAME))
         self.MTX_SZ = self.NR_CORRS * (2 * self.NR_BPMS)
         self.NR_SING_VALS = min(self.NR_CORRS, 2 * self.NR_BPMS)
 
