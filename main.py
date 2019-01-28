@@ -57,9 +57,10 @@ class SOFB(_BaseClass):
         self.add_callback(self._update_driver)
         self._driver = None
         self._orbit = self._correctors = self._matrix = None
-        self._auto_corr = self._csorb.AutoCorr.Off
+        if self.isring:
+            self._auto_corr = self._csorb.AutoCorr.Off
+            self._auto_corr_freq = 1
         self._measuring_respmat = False
-        self._auto_corr_freq = 1
         self._corr_factor = {'ch': 1.00, 'cv': 1.00}
         self._max_kick = {'ch': 300, 'cv': 300}
         self._max_delta_kick = {'ch': 50, 'cv': 50}

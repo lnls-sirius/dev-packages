@@ -14,7 +14,6 @@ class BaseClass(_Callback):
         self._csorb = _OrbitCorrDevFactory.create(acc)
         self._prefix = prefix
         self._status = 0b0
-        self._isring = self._csorb.acc_idx in self._csorb.Rings
 
     @property
     def prefix(self):
@@ -34,7 +33,7 @@ class BaseClass(_Callback):
     @property
     def isring(self):
         """Ring accelerator status."""
-        return self._isring
+        return self._csorb.isring()
 
     @property
     def status(self):

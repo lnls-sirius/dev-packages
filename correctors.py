@@ -6,9 +6,8 @@ import numpy as _np
 from epics import PV as _PV
 import siriuspy.util as _util
 from siriuspy.thread import RepeaterThread as _Repeat
-from siriuspy.search.hl_time_search import HLTimeSearch as _HLTimeSearch
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
-from siriuspy.csdevice.timesys import events_modes as _EVT_MODES
+from siriuspy.csdevice.timesys import Const as _TIConst
 from siriuspy.envars import vaca_prefix as LL_PREF
 from .base_class import (
     BaseClass as _BaseClass,
@@ -46,11 +45,11 @@ class Corrector(_BaseTimingConfig):
     def state(self):
         """State."""
         pv = self._config_pvs_rb['PwrState']
-        return pv.value == _PSConst.PwrState.On if pv.connected else False
+        return pv.value == _PSConst.PwrStateSel.On if pv.connected else False
 
     @state.setter
     def state(self, boo):
-        val = _PSConst.PwrState.On if boo else _PSConst.PwrState.Off
+        val = _PSConst.PwrStateSel.On if boo else _PSConst.PwrStateSel.Off
         pv = self._config_pvs_sp['PwrState']
         if pv.connected:
             self._config_ok_vals['PwrState'] = val
@@ -125,7 +124,7 @@ class CHCV(Corrector):
         self._ref = _PV(LL_PREF + self._name + ':CurrentRef-Mon', **opt)
         self._config_ok_vals = {
             'OpMode': _PSConst.OpMode.SlowRefSync,
-            'PwrState': _PSConst.PwrState.On}
+            'PwrState': _PSConst.PwrStateSel.On}
         self._config_pvs_sp = {
             'OpMode': _PV(LL_PREF+self._name+':OpMode-Sel', **opt),
             'PwrState': _PV(LL_PREF+self._name+':PwrState-Sel', **opt)}
@@ -170,29 +169,24 @@ class TimingConfig(_BaseTimingConfig):
     def __init__(self, acc):
         """Init method."""
         super().__init__(acc)
-        if acc == 'SI':
-            evt = 'OrbSI'
-            trig = 'SI-Glob:TI-Corrs:'
-        elif acc == 'BO':
-            evt = 'OrbBO'
-            trig = 'BO-Glob:TI-Corrs:'
+        evt = self._csorb.EVT_COR_NAME
         pref_name = LL_PREF + self._csorb.EVG_NAME + ':' + evt
         opt = {'connection_timeout': TIMEOUT}
         self._evt_sender = _PV(pref_name + 'ExtTrig-Cmd', **opt)
         # self._evt_sender = _PV(
         #     'guilherme-AS-Glob:PS-Timing:Trigger-Cmd', **opt)
         self._config_ok_vals = {
-            'Mode': _EVT_MODES.External,
-            'Src': _HLTimeSearch.get_hl_trigger_sources(trig).index(evt),
-            'Delay': 0.0, 'DelayType': 0, 'NrPulses': 1,
-            'Duration': 0.1, 'State': 1, 'Polarity': 1,
+            'Mode': _TIConst.EvtModes.External,
+            'Src': self._csorb.OrbitCorExtEvtSrc._fields.index(evt),
+            'Delay': 0.0, 'RFDelayType': _TIConst.TrigDlyTyp.Manual,
+            'NrPulses': 1, 'Duration': 0.1, 'State': 1, 'Polarity': 1,
             }
-        pref_trig = LL_PREF + trig
+        pref_trig = LL_PREF + self._csorb.TRIGGER_COR_NAME + ':'
         self._config_pvs_rb = {
             'Mode': _PV(pref_name + 'Mode-Sts', **opt),
             'Src': _PV(pref_trig + 'Src-Sts', **opt),
             'Delay': _PV(pref_trig + 'Delay-RB', **opt),
-            'DelayType': _PV(pref_trig + 'DelayType-Sts', **opt),
+            'RFDelayType': _PV(pref_trig + 'RFDelayType-Sts', **opt),
             'NrPulses': _PV(pref_trig + 'NrPulses-RB', **opt),
             'Duration': _PV(pref_trig + 'Duration-RB', **opt),
             'State': _PV(pref_trig + 'State-Sts', **opt),
@@ -202,7 +196,7 @@ class TimingConfig(_BaseTimingConfig):
             'Mode': _PV(pref_name + 'Mode-Sel', **opt),
             'Src': _PV(pref_trig + 'Src-Sel', **opt),
             'Delay': _PV(pref_trig + 'Delay-SP', **opt),
-            'DelayType': _PV(pref_trig + 'DelayType-Sel', **opt),
+            'RFDelayType': _PV(pref_trig + 'RFDelayType-Sel', **opt),
             'NrPulses': _PV(pref_trig + 'NrPulses-SP', **opt),
             'Duration': _PV(pref_trig + 'Duration-SP', **opt),
             'State': _PV(pref_trig + 'State-Sel', **opt),
@@ -252,9 +246,10 @@ class EpicsCorrectors(BaseCorrectors):
         self._acq_rate = 10
         self._names = self._csorb.CH_NAMES + self._csorb.CV_NAMES
         self._chcvs = {CHCV(dev) for dev in self._names}
-        self._rf_ctrl = RFCtrl() if self.isring else None
-        self._rf_nom_freq = self._csorb.RF_NOM_FREQ
-        self.timing = TimingConfig(acc) if self.isring else None
+        if self.isring:
+            self._rf_ctrl = RFCtrl()
+            self._rf_nom_freq = self._csorb.RF_NOM_FREQ
+            self.timing = TimingConfig(acc)
         self._corrs_thread = _Repeat(
                 1/self._acq_rate, self._update_corrs_strength, niter=0)
         self._corrs_thread.start()

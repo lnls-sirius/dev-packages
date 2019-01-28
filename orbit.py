@@ -359,13 +359,13 @@ class TimingConfig(_BaseTimingConfig):
 
     def __init__(self, acc):
         super().__init__(acc)
-        trig = self._csorb.TRIGGER_NAME
+        trig = self._csorb.TRIGGER_ACQ_NAME
         opt = {'connection_timeout': TIMEOUT}
-        evt = 'Dig' + acc
+        evt = self._csorb.EVT_ACQ_NAME
         self._config_ok_vals = {
             'Src': self._csorb.OrbitAcqExtEvtSrc._fields.index(evt),
             'Delay': 0.0,
-            'DelayType': _cstime.Const.TrigDlyTyp.Fixed,
+            'RFDelayType': _cstime.Const.TrigDlyTyp.Manual,
             'NrPulses': 1,
             'Duration': 0.001,
             'State': _cstime.Const.TrigStates.Enbl,
@@ -374,7 +374,7 @@ class TimingConfig(_BaseTimingConfig):
         self._config_pvs_rb = {
             'Src': _PV(pref_name + 'Src-Sts', **opt),
             'Delay': _PV(pref_name + 'Delay-RB', **opt),
-            'DelayType': _PV(pref_name + 'DelayType-Sts', **opt),
+            'RFDelayType': _PV(pref_name + 'RFDelayType-Sts', **opt),
             'NrPulses': _PV(pref_name + 'NrPulses-RB', **opt),
             'Duration': _PV(pref_name + 'Duration-RB', **opt),
             'State': _PV(pref_name + 'State-Sts', **opt),
@@ -382,7 +382,7 @@ class TimingConfig(_BaseTimingConfig):
         self._config_pvs_sp = {
             'Src': _PV(pref_name + 'Src-Sel', **opt),
             'Delay': _PV(pref_name + 'Delay-SP', **opt),
-            'DelayType': _PV(pref_name + 'DelayType-Sel', **opt),
+            'RFDelayType': _PV(pref_name + 'RFDelayType-Sel', **opt),
             'NrPulses': _PV(pref_name + 'NrPulses-SP', **opt),
             'Duration': _PV(pref_name + 'Duration-SP', **opt),
             'State': _PV(pref_name + 'State-Sel', **opt),
