@@ -62,8 +62,6 @@ class ConstTLines(_cutil.Const):
     Rings = _cutil.Const.register('Rings', _et.RINGS, (2, 3))
     Accelerators = _cutil.Const.register('Accelerators', _et.ACCELERATORS)
 
-    TRIGGER_ACQ_NAME = 'AS-Glob:TI-BPM-TBTS'
-
     OrbitMode = _cutil.Const.register('OrbitMode', _et.ORB_MODE_TLINES)
     ApplyCorr = _cutil.Const.register('ApplyCorr', _et.APPLY_CORR_TLINES)
     StatusLabelsCorrs = _cutil.Const.register(
@@ -76,8 +74,6 @@ class ConstTLines(_cutil.Const):
 
 class ConstRings(ConstTLines):
     """Const class defining rings orbitcorr constants."""
-
-    TRIGGER_ACQ_NAME = 'AS-Glob:TI-BPM-SIBO'
 
     OrbitMode = _cutil.Const.register('OrbitMode', _et.ORB_MODE_RINGS)
     ApplyCorr = _cutil.Const.register('ApplyCorr', _et.APPLY_CORR_RINGS)
@@ -124,6 +120,16 @@ class OrbitCorrDevTLines(ConstTLines):
         self.RESPMAT_FILENAME = _os.path.join('data', 'respmat.'+ext)
 
         self.NR_CORRS = self.NR_CHCV + 1 if acc in _et.RINGS else self.NR_CHCV
+
+        if self.acc in ('TB', 'TS'):
+            self.TRIGGER_ACQ_NAME = 'AS-Glob:TI-BPM-TBTS'
+            if self.isring():
+                self.TRIGGER_COR_NAME = self.acc + '-Glob:TI-Mags'
+                self.EVT_COR_NAME = 'Cycle'
+        else:
+            self.TRIGGER_ACQ_NAME = 'AS-Glob:TI-BPM-SIBO'
+            self.TRIGGER_COR_NAME = self.acc + '-Glob:TI-Corrs'
+            self.EVT_COR_NAME = 'Orb' + self.acc
 
         self.EVT_ACQ_NAME = 'Dig' + self.acc
         self.OrbitAcqExtEvtSrc = _get_namedtuple(
@@ -469,8 +475,6 @@ class OrbitCorrDevRings(OrbitCorrDevTLines, ConstRings):
     def __init__(self, acc):
         """Init method."""
         OrbitCorrDevTLines.__init__(self, acc)
-        self.TRIGGER_COR_NAME = self.acc + '-Glob:TI-Corrs'
-        self.EVT_COR_NAME = 'Orb' + self.acc
         self.OrbitCorExtEvtSrc = _get_namedtuple(
             'OrbitCorExtEvtSrc',
             _HLTISearch.get_hl_trigger_allowed_evts(self.TRIGGER_COR_NAME))
