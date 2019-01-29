@@ -67,7 +67,8 @@ class Const(_cutil.Const):
         'DigTS': 'Evt09', 'DigSI': 'Evt10',
         'OrbSI': 'Evt11', 'CplSI': 'Evt12',
         'TunSI': 'Evt13', 'Study': 'Evt14',
-        'OrbBO': 'Evt15', 'PsMtn': 'Evt124'}
+        'OrbBO': 'Evt15', 'Cycle': 'Evt16',
+        'PsMtn': 'Evt124'}
     EvtLL2HLMap = {val: key for key, val in EvtHL2LLMap.items()}
 
     evt_ll_codes = list(range(64)) + [124]
