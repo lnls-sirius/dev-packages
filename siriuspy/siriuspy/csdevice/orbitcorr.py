@@ -139,7 +139,7 @@ class OrbitCorrDevTLines(ConstTLines):
         self.NR_SING_VALS = min(self.NR_CORRS, 2 * self.NR_BPMS)
 
     def isring(self):
-        return self.acc in self.Rings
+        return self.acc in self.Rings._fields
 
     def get_ioc_database(self, prefix=''):
         """Return IOC database."""
