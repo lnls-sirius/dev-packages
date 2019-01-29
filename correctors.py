@@ -329,6 +329,7 @@ class EpicsCorrectors(BaseCorrectors):
         """Set kick caq rate method."""
         self._acq_rate = value
         self._corrs_thread.interval = 1/value
+        self.run_callbacks('KickAcqRate-RB', value)
         return True
 
     def set_nominal_rf_freq(self, value):
