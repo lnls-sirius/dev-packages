@@ -703,7 +703,7 @@ class EpicsOrbit(BaseOrbit):
     def set_trig_acq_datathres(self, value):
         for bpm in self.bpms:
             bpm.acq_trig_datathres = value
-        self.run_callbacks('OrbitTrigDataSel-Sel', value)
+        self.run_callbacks('OrbitTrigDataThres-RB', value)
         return True
 
     def set_trig_acq_datahyst(self, value):
