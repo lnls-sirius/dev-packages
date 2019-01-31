@@ -327,7 +327,9 @@ class _EVROUT(_BaseLL):
 
     def __init__(self, channel, source_enums):
         fout_chan = _LLTimeSearch.get_fout_channel(channel)
-        self._fout_out = int(fout_chan.propty[3:])
+        self._foutexist = bool(fout_chan)
+        if self._foutexist:
+            self._fout_out = int(fout_chan.propty[3:])
         evg_chan = _LLTimeSearch.get_evg_channel(channel)
         self._evg_out = int(evg_chan.propty[3:])
         self._source_enums = source_enums
@@ -336,7 +338,8 @@ class _EVROUT(_BaseLL):
         prefix = LL_PREFIX + _PVName(channel).device_name + ':'
         super().__init__(channel, prefix)
         self._config_ok_values['DevEnbl'] = 1
-        self._config_ok_values['FoutDevEnbl'] = 1
+        if self._foutexist:
+            self._config_ok_values['FoutDevEnbl'] = 1
         self._config_ok_values['EVGDevEnbl'] = 1
 
     def write(self, prop, value):
@@ -350,8 +353,7 @@ class _EVROUT(_BaseLL):
         outlb = _LLTimeSearch.get_channel_output_port_pvname(self.channel)
         intlb = intlb.propty
         outlb = outlb.propty
-        fout_chan = _LLTimeSearch.get_fout_channel(self.channel)
-        _fout_prefix = LL_PREFIX + fout_chan.device_name + ':'
+
         evg_chan = _LLTimeSearch.get_evg_channel(self.channel)
         _evg_prefix = LL_PREFIX + evg_chan.device_name + ':'
         map_ = {
@@ -372,12 +374,17 @@ class _EVROUT(_BaseLL):
             'Network': self.prefix + 'Network-Mon',
             'Link': self.prefix + 'Link-Mon',
             'Los': self.prefix + 'Los-Mon',
-            'FoutLos': _fout_prefix + 'Los-Mon',
             'EVGLos': _evg_prefix + 'Los-Mon',
             'IntlkMon': self.prefix + 'Intlk-Mon',
-            'FoutDevEnbl': _fout_prefix + 'DevEnbl-Sts',
             'EVGDevEnbl': _evg_prefix + 'DevEnbl-Sts',
             }
+        if self._foutexist:
+            fout_chan = _LLTimeSearch.get_fout_channel(self.channel)
+            _fout_prefix = LL_PREFIX + fout_chan.device_name + ':'
+            map_.update({
+                'FoutLos': _fout_prefix + 'Los-Mon',
+                'FoutDevEnbl': _fout_prefix + 'DevEnbl-Sts',
+                })
         for prop in self._REMOVE_PROPS:
             map_.pop(prop)
         return map_
@@ -385,7 +392,6 @@ class _EVROUT(_BaseLL):
     def _define_dict_for_write(self):
         map_ = {
             'DevEnbl': _partial(self._set_simple, 'DevEnbl'),
-            'FoutDevEnbl': _partial(self._set_simple, 'FoutDevEnbl'),
             'EVGDevEnbl': _partial(self._set_simple, 'EVGDevEnbl'),
             'State': _partial(self._set_simple, 'State'),
             'ByPassIntlk': _partial(self._set_simple, 'ByPassIntlk'),
@@ -396,6 +402,10 @@ class _EVROUT(_BaseLL):
             'Delay': self._set_delay,
             'RFDelayType': _partial(self._set_simple, 'RFDelayType'),
             }
+        if self._foutexist:
+            map_.update({
+                'FoutDevEnbl': _partial(self._set_simple, 'FoutDevEnbl'),
+                })
         return map_
 
     def _define_dict_for_update(self):
@@ -416,12 +426,15 @@ class _EVROUT(_BaseLL):
             'Network': _partial(self._get_status, 'Network'),
             'Link': _partial(self._get_status, 'Link'),
             'Los': _partial(self._get_status, 'Los'),
-            'FoutLos': _partial(self._get_status, 'FoutLos'),
             'EVGLos': _partial(self._get_status, 'EVGLos'),
             'IntlkMon': _partial(self._get_status, 'IntlkMon'),
-            'FoutDevEnbl': _partial(self._get_status, 'FoutDevEnbl'),
             'EVGDevEnbl': _partial(self._get_status, 'EVGDevEnbl'),
             }
+        if self._foutexist:
+            map_.update({
+                'FoutLos': _partial(self._get_status, 'FoutLos'),
+                'FoutDevEnbl': _partial(self._get_status, 'FoutDevEnbl'),
+                })
         for prop in self._REMOVE_PROPS:
             map_.pop(prop)
         return map_
@@ -443,37 +456,48 @@ class _EVROUT(_BaseLL):
     def _get_status(self, prop, is_sp, value=None):
         dic_ = dict()
         dic_['DevEnbl'] = self._get_from_pvs(is_sp, 'DevEnbl')
-        dic_['FoutDevEnbl'] = self._get_from_pvs(is_sp, 'FoutDevEnbl')
         dic_['EVGDevEnbl'] = self._get_from_pvs(is_sp, 'EVGDevEnbl')
         dic_['Network'] = self._get_from_pvs(is_sp, 'Network')
         dic_['IntlkMon'] = self._get_from_pvs(is_sp, 'IntlkMon', def_val=1)
         dic_['Link'] = self._get_from_pvs(is_sp, 'Link')
         dic_['Los'] = self._get_from_pvs(is_sp, 'Los', def_val=None)
-        dic_['FoutLos'] = self._get_from_pvs(is_sp, 'FoutLos', def_val=None)
         dic_['EVGLos'] = self._get_from_pvs(is_sp, 'EVGLos', def_val=None)
         dic_['PVsConn'] = self.connected
+        if self._foutexist:
+            dic_['FoutDevEnbl'] = self._get_from_pvs(is_sp, 'FoutDevEnbl')
+            dic_['FoutLos'] = self._get_from_pvs(
+                                    is_sp, 'FoutLos', def_val=None)
+        else:
+            dic_['FoutDevEnbl'] = True
+            dic_['FoutLos'] = 0b11111111
         if value is not None:
             dic_[prop] = value
-        status = 0
-        status = _update_bit(status, 0, not dic_['PVsConn'])
-        status = _update_bit(status, 1, not dic_['DevEnbl'])
-        status = _update_bit(status, 2, not dic_['FoutDevEnbl'])
-        status = _update_bit(status, 3, not dic_['EVGDevEnbl'])
-        status = _update_bit(status, 4, not dic_['Network'])
-        status = _update_bit(status, 5, not dic_['Link'])
+        status, bit = 0, 0
+        status = _update_bit(status, bit, not dic_['PVsConn'])
+        bit += 1
+        status = _update_bit(status, bit, not dic_['DevEnbl'])
+        bit += 1
+        status = _update_bit(status, bit, not dic_['FoutDevEnbl'])
+        bit += 1
+        status = _update_bit(status, bit, not dic_['EVGDevEnbl'])
+        bit += 1
+        status = _update_bit(status, bit, not dic_['Network'])
+        bit += 1
+        status = _update_bit(status, bit, not dic_['Link'])
+        bit += 1
         if dic_['Los'] is not None:
             num = int(self.channel[-1])  # get OUT number for EVR
-            if num >= 0:
-                status = _update_bit(status, 6, _get_bit(dic_['Los'], num))
+            status = _update_bit(status, bit, _get_bit(dic_['Los'], num))
+        bit += 1
         if dic_['FoutLos'] is not None:
-            num = self._fout_out
-            if num >= 0:
-                status = _update_bit(status, 7, _get_bit(dic_['FoutLos'], num))
+            num = self._fout_out if self._foutexist else 1
+            status = _update_bit(status, bit, _get_bit(dic_['FoutLos'], num))
+        bit += 1
         if dic_['EVGLos'] is not None:
             num = self._evg_out
-            if num >= 0:
-                status = _update_bit(status, 8, _get_bit(dic_['EVGLos'], num))
-        status = _update_bit(status, 9, dic_['IntlkMon'])
+            status = _update_bit(status, bit, _get_bit(dic_['EVGLos'], num))
+        bit += 1
+        status = _update_bit(status, bit, dic_['IntlkMon'])
         return {'Status': status}
 
     def _get_delay(self, prop, is_sp, value=None):
