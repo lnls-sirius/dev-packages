@@ -469,7 +469,7 @@ class _EVROUT(_BaseLL):
                                     is_sp, 'FoutLos', def_val=None)
         else:
             dic_['FoutDevEnbl'] = True
-            dic_['FoutLos'] = 0b11111111
+            dic_['FoutLos'] = 0
         if value is not None:
             dic_[prop] = value
         status, bit = 0, 0
