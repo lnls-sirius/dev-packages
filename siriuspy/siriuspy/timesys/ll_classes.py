@@ -317,8 +317,8 @@ class LLEvent(_BaseLL):
         return {'Delay': val * self._base_del * 1e6}
 
     def _set_ext_trig(self, value):
-        pvname = self._dict_convert_prop2pv['ExtTrig']
-        self._put_on_pv(pvname, value)
+        pv = self._writepvs.get('ExtTrig')
+        self._put_on_pv(pv, value)
         return None  # -Cmd must not return any state
 
 
