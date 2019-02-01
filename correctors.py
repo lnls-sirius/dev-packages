@@ -8,6 +8,7 @@ import siriuspy.util as _util
 from siriuspy.thread import RepeaterThread as _Repeat
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.csdevice.timesys import Const as _TIConst
+from siriuspy.search import HLTimeSearch as _HLTimesearch
 from siriuspy.envars import vaca_prefix as LL_PREF
 from .base_class import (
     BaseClass as _BaseClass,
@@ -171,22 +172,22 @@ class TimingConfig(_BaseTimingConfig):
         super().__init__(acc)
         evt = self._csorb.EVT_COR_NAME
         pref_name = LL_PREF + self._csorb.EVG_NAME + ':' + evt
+        trig = self._csorb.TRIGGER_COR_NAME
         opt = {'connection_timeout': TIMEOUT}
         self._evt_sender = _PV(pref_name + 'ExtTrig-Cmd', **opt)
-        # self._evt_sender = _PV(
-        #     'guilherme-AS-Glob:PS-Timing:Trigger-Cmd', **opt)
         self._config_ok_vals = {
             'Mode': _TIConst.EvtModes.External,
             'Src': self._csorb.OrbitCorExtEvtSrc._fields.index(evt),
-            'Delay': 0.0, 'RFDelayType': _TIConst.TrigDlyTyp.Manual,
+            'Delay': 0.0,
             'NrPulses': 1, 'Duration': 0.1, 'State': 1, 'Polarity': 1,
             }
-        pref_trig = LL_PREF + self._csorb.TRIGGER_COR_NAME + ':'
+        if _HLTimesearch.has_delay_type(trig):
+            self._config_ok_vals['RFDelayType'] = _TIConst.TrigDlyTyp.Manual
+        pref_trig = LL_PREF + trig + ':'
         self._config_pvs_rb = {
             'Mode': _PV(pref_name + 'Mode-Sts', **opt),
             'Src': _PV(pref_trig + 'Src-Sts', **opt),
             'Delay': _PV(pref_trig + 'Delay-RB', **opt),
-            'RFDelayType': _PV(pref_trig + 'RFDelayType-Sts', **opt),
             'NrPulses': _PV(pref_trig + 'NrPulses-RB', **opt),
             'Duration': _PV(pref_trig + 'Duration-RB', **opt),
             'State': _PV(pref_trig + 'State-Sts', **opt),
@@ -196,12 +197,16 @@ class TimingConfig(_BaseTimingConfig):
             'Mode': _PV(pref_name + 'Mode-Sel', **opt),
             'Src': _PV(pref_trig + 'Src-Sel', **opt),
             'Delay': _PV(pref_trig + 'Delay-SP', **opt),
-            'RFDelayType': _PV(pref_trig + 'RFDelayType-Sel', **opt),
             'NrPulses': _PV(pref_trig + 'NrPulses-SP', **opt),
             'Duration': _PV(pref_trig + 'Duration-SP', **opt),
             'State': _PV(pref_trig + 'State-Sel', **opt),
             'Polarity': _PV(pref_trig + 'Polarity-Sel', **opt),
             }
+        if _HLTimesearch.has_delay_type(trig):
+            self._config_pvs_rb['RFDelayType'] = _PV(
+                            pref_trig + 'RFDelayType-Sts', **opt)
+            self._config_pvs_sp['RFDelayType'] = _PV(
+                            pref_trig + 'RFDelayType-Sel', **opt)
 
     def send_evt(self):
         """Send event method."""

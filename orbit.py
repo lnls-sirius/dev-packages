@@ -8,6 +8,7 @@ from epics import PV as _PV
 import siriuspy.util as _util
 import siriuspy.csdevice.bpms as _csbpm
 import siriuspy.csdevice.timesys as _cstime
+from siriuspy.search import HLTimeSearch as _HLTimesearch
 from siriuspy.thread import RepeaterThread as _Repeat
 from siriuspy.envars import vaca_prefix as LL_PREF
 from .base_class import (
@@ -28,10 +29,10 @@ class BPM(_BaseTimingConfig):
         self._posy = _PV(LL_PREF + self._name + ':PosY-Mon', **opt)
         self._spposx = _PV(LL_PREF + self._name + ':SPPosX-Mon', **opt)
         self._spposy = _PV(LL_PREF + self._name + ':SPPosY-Mon', **opt)
-        self._spsum = _PV(LL_PREF + self._name + ':SPPosSum-Mon', **opt)
+        self._spsum = _PV(LL_PREF + self._name + ':SPSum-Mon', **opt)
         self._arrayx = _PV(LL_PREF + self._name + ':GEN_XArrayData', **opt)
         self._arrayy = _PV(LL_PREF + self._name + ':GEN_YArrayData', **opt)
-        self._arrays = _PV(LL_PREF + self._name + ':GEN_SumArrayData', **opt)
+        self._arrays = _PV(LL_PREF + self._name + ':GEN_SUMArrayData', **opt)
         self._offsetx = _PV(LL_PREF + self._name + ':PosXOffset-RB', **opt)
         self._offsety = _PV(LL_PREF + self._name + ':PosYOffset-RB', **opt)
         self._config_ok_vals = {
@@ -99,7 +100,8 @@ class BPM(_BaseTimingConfig):
             'ACQSamplesPost': 'ACQSamplesPost-RB',
             # 'ACQCtrl': 'ACQCtrl-Sts',
             'ACQTriggerEvent': 'ACQTriggerEvent-Sts',
-            'ACQStatus': 'ACQStatus-Mon',
+            # 'ACQStatus': 'ACQStatus-Mon',
+            'ACQStatus': 'ACQStatus-Sts',
             # 'ACQTriggerType': 'ACQTriggerType-Sts',
             'ACQTrigger': 'ACQTrigger-Sts',
             'ACQTriggerRep': 'ACQTriggerRep-Sts',
@@ -365,16 +367,17 @@ class TimingConfig(_BaseTimingConfig):
         self._config_ok_vals = {
             'Src': self._csorb.OrbitAcqExtEvtSrc._fields.index(evt),
             'Delay': 0.0,
-            'RFDelayType': _cstime.Const.TrigDlyTyp.Manual,
             'NrPulses': 1,
             'Duration': 0.001,
             'State': _cstime.Const.TrigStates.Enbl,
             'Polarity': _cstime.Const.TrigPol.Normal}
-        pref_name = LL_PREF + trig
+        if _HLTimesearch.has_delay_type(trig):
+            self._config_ok_vals['RFDelayType'] = \
+                                    _cstime.Const.TrigDlyTyp.Manual
+        pref_name = LL_PREF + trig + ':'
         self._config_pvs_rb = {
             'Src': _PV(pref_name + 'Src-Sts', **opt),
             'Delay': _PV(pref_name + 'Delay-RB', **opt),
-            'RFDelayType': _PV(pref_name + 'RFDelayType-Sts', **opt),
             'NrPulses': _PV(pref_name + 'NrPulses-RB', **opt),
             'Duration': _PV(pref_name + 'Duration-RB', **opt),
             'State': _PV(pref_name + 'State-Sts', **opt),
@@ -382,11 +385,15 @@ class TimingConfig(_BaseTimingConfig):
         self._config_pvs_sp = {
             'Src': _PV(pref_name + 'Src-Sel', **opt),
             'Delay': _PV(pref_name + 'Delay-SP', **opt),
-            'RFDelayType': _PV(pref_name + 'RFDelayType-Sel', **opt),
             'NrPulses': _PV(pref_name + 'NrPulses-SP', **opt),
             'Duration': _PV(pref_name + 'Duration-SP', **opt),
             'State': _PV(pref_name + 'State-Sel', **opt),
             'Polarity': _PV(pref_name + 'Polarity-Sel', **opt)}
+        if _HLTimesearch.has_delay_type(trig):
+            self._config_pvs_rb['RFDelayType'] = _PV(
+                            pref_name + 'RFDelayType-Sts', **opt)
+            self._config_pvs_sp['RFDelayType'] = _PV(
+                            pref_name + 'RFDelayType-Sel', **opt)
 
     @property
     def nrpulses(self):
