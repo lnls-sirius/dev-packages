@@ -82,9 +82,9 @@ class Corrector(_BaseTimingConfig):
 class RFCtrl(Corrector):
     """RF control class."""
 
-    def __init__(self):
+    def __init__(self, acc):
         """Init method."""
-        super().__init__('SI')
+        super().__init__(acc)
         self._name = self._csorb.RF_GEN_NAME
         opt = {'connection_timeout': TIMEOUT}
         self._sp = _PV(LL_PREF+self._name+':Freq-SP', **opt)
@@ -247,7 +247,7 @@ class EpicsCorrectors(BaseCorrectors):
         self._names = self._csorb.CH_NAMES + self._csorb.CV_NAMES
         self._chcvs = {CHCV(dev) for dev in self._names}
         if self.isring:
-            self._rf_ctrl = RFCtrl()
+            self._rf_ctrl = RFCtrl(self.acc)
             self._rf_nom_freq = self._csorb.RF_NOM_FREQ
             self.timing = TimingConfig(acc)
         self._corrs_thread = _Repeat(
