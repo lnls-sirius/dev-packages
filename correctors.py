@@ -292,15 +292,13 @@ class EpicsCorrectors(BaseCorrectors):
 
     def put_value_in_corr(self, corr, value, flag=True):
         """Put value in corrector method."""
-        if corr.equalKick(value):
-            return
         if not corr.connected:
             self._update_log('ERR: ' + corr.name + ' not connected.')
         elif not corr.state:
             self._update_log('ERR: ' + corr.name + ' is off.')
         elif flag and not corr.opmode_ok:
             self._update_log('ERR: ' + corr.name + ' mode not configured.')
-        else:
+        elif not corr.equalKick(value):
             corr.value = value
 
     def send_evt(self):
