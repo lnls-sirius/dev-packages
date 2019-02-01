@@ -307,7 +307,7 @@ def get_afc_database(prefix=None):
             'type': 'enum', 'value': 1,
             'enums': _et.DISCONN_CONN}
 
-    db[prefix+'Link-Mon'] = {
+    db[prefix+'LinkStatus-Mon'] = {
             'type': 'enum', 'value': 1,
             'enums': _et.UNLINK_LINK}
 
