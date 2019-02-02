@@ -32,7 +32,7 @@ class App:
     ma_devices = None
     pvs_database = None
 
-    writable_fields = ['SP', 'Sel', 'Cmd']
+    writable_suffixes = ['SP', 'Sel', 'Cmd']
 
     def __init__(self, driver, *args):
         """Class constructor."""
@@ -72,17 +72,14 @@ class App:
 
     def write(self, reason, value):
         """Write value to reason and let callback update PV database."""
-        # Get property and field
-        # TODO: use SiriusPVName !!!
-        sub_section, discipline, device, propty, field = \
-            self._break_name(reason)
-        # Check if field is writable
-        if field not in App.writable_fields:
+        # Get property and suffix
+        pvname = _siriuspy.namesys.SiriusPVName(reason)
+        # Check if suffix is writable
+        if pvname.propty_suffix not in App.writable_suffixes:
             return
         # Update MA Object
-        slot_name = sub_section + ':' + discipline + '-' + device
-        ma = self.ma_devices[slot_name]
-        ma.write(propty + "-" + field, value)
+        ma = self.ma_devices[pvname.device_name]
+        ma.write(pvname.propty, value)
         # setattr(ma, attr, value)
         # value = getattr(ma, attr)
         if isinstance(value, float) or isinstance(value, int):
@@ -96,15 +93,6 @@ class App:
         self._driver.updatePVs()
 
         return
-
-    def _break_name(self, reason):
-        """Break a reason into its sub parts."""
-        # TODO: use SiriusPVName !!!
-        sub_section, discdev, pfield = reason.split(':')
-        propty, field = pfield.split('-')
-        discipline, *device = discdev.split('-')
-        device = '-'.join(device)
-        return (sub_section, discipline, device, propty, field)
 
     def _set_callback(self):
         for family, device in App.ma_devices.items():
@@ -123,13 +111,13 @@ class App:
             self._driver.updatePVs()
 
     def _mycallback(self, pvname, value, **kwargs):
-        pvname = pvname.replace("PU-", "PM-").replace(":PS-", ":MA-")
-        # pvname = pvname.replace(_pvs._PREFIX_VACA, "")
-        # *parts, reason = pvname.split(_pvs._PREFIX_VACA)
-        if _pvs._PREFIX_VACA:
-            *parts, reason = pvname.split(_pvs._PREFIX_VACA)
-        else:
-            reason = pvname
+        pvname = _siriuspy.namesys.SiriusPVName(pvname)
+        if pvname.dis == 'PU':
+            pvname = pvname.substitute(dis='PM')
+        elif pvname.dis == 'PS':
+            pvname = pvname.substitute(dis='MA')
+
+        reason = pvname.substitute(prefix='')
         self._driver.setParam(reason, value)
         if 'hilim' in kwargs or 'lolim' in kwargs:
             self._driver.setParamInfo(reason, kwargs)
