@@ -47,7 +47,7 @@ def cmd_print_help():
     print('DESCRIPTION')
     print('       Start execution of power supply magnet IOC')
     print()
-    print('       BBBNAME can be withe a beaglebone name or a list of magnets')
+    print('       BBBNAME can be either a beaglebone name or a list of magnets')
     print('')
     print('       --help | <no arguments>')
     print('               print this help.')

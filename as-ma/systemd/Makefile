@@ -1,3 +1,4 @@
+# --- TB ---
 
 install-tb-dipoles:
 	@printf "Intalling sirius-ioc-ma-tb-dipoles service...\n"
@@ -65,6 +66,16 @@ uninstall-tb-correctors: stop-tb-correctors
 	systemctl reset-failed
 
 
+install-tb: install-tb-dipoles install-tb-quadrupoles install-tb-correctors
+
+stop-tb: stop-tb-dipoles stop-tb-quadrupoles stop-tb-correctors
+
+start-tb: start-tb-dipoles start-tb-quadrupoles start-tb-correctors
+
+uninstall-tb: uninstall-tb-dipoles uninstall-tb-quadrupoles uninstall-tb-correctors
+
+
+# --- BO ---
 
 install-bo-correctors-01:
 	@printf "Intalling sirius-ioc-ma-bo-correctors-01 service...\n"
@@ -339,7 +350,6 @@ uninstall-bo-correctors-13: stop-bo-correctors-13
 	systemctl daemon-reload
 	systemctl reset-failed
 
-
 install-bo-correctors: install-bo-correctors-01 install-bo-correctors-02 install-bo-correctors-03 install-bo-correctors-04 install-bo-correctors-05 install-bo-correctors-06 install-bo-correctors-07 install-bo-correctors-08 install-bo-correctors-09 install-bo-correctors-10 install-bo-correctors-11 install-bo-correctors-12 install-bo-correctors-13
 
 stop-bo-correctors: stop-bo-correctors-01 stop-bo-correctors-02 stop-bo-correctors-03 stop-bo-correctors-04 stop-bo-correctors-05 stop-bo-correctors-06 stop-bo-correctors-07 stop-bo-correctors-08 stop-bo-correctors-09 stop-bo-correctors-10 stop-bo-correctors-11 stop-bo-correctors-12 stop-bo-correctors-13
@@ -347,16 +357,6 @@ stop-bo-correctors: stop-bo-correctors-01 stop-bo-correctors-02 stop-bo-correcto
 start-bo-correctors: start-bo-correctors-01 start-bo-correctors-02 start-bo-correctors-03 start-bo-correctors-04 start-bo-correctors-05 start-bo-correctors-06 start-bo-correctors-07 start-bo-correctors-08 start-bo-correctors-09 start-bo-correctors-10 start-bo-correctors-11 start-bo-correctors-12 start-bo-correctors-13
 
 uninstall-bo-correctors: uninstall-bo-correctors-01 uninstall-bo-correctors-02 uninstall-bo-correctors-03 uninstall-bo-correctors-04 uninstall-bo-correctors-05 uninstall-bo-correctors-06 uninstall-bo-correctors-07 uninstall-bo-correctors-08 uninstall-bo-correctors-09 uninstall-bo-correctors-10 uninstall-bo-correctors-11 uninstall-bo-correctors-12 uninstall-bo-correctors-13
-
-
-
-install-tb: install-tb-dipoles install-tb-quadrupoles install-tb-correctors
-
-stop-tb: stop-tb-dipoles stop-tb-quadrupoles stop-tb-correctors
-
-start-tb: start-tb-dipoles start-tb-quadrupoles start-tb-correctors
-
-uninstall-tb: uninstall-tb-dipoles uninstall-tb-quadrupoles uninstall-tb-correctors
 
 
 install-bo: install-bo-correctors
@@ -367,6 +367,9 @@ start-bo: start-bo-correctors
 
 uninstall-bo: uninstall-bo-correctors
 
+
+
+# --- ALL ACCELERATORS ---
 
 install-services: install-tb install-bo
 
