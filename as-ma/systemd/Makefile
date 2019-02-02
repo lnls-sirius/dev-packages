@@ -368,10 +368,10 @@ start-bo: start-bo-correctors
 uninstall-bo: uninstall-bo-correctors
 
 
-install-services: install-tb
+install-services: install-tb install-bo
 
-stop: stop-tb
+stop: stop-tb stop-bo
 
-start: start-tb
+start: start-tb start-bo
 
-uninstall: uninstall-tb
+uninstall: uninstall-tb uninstall-bo
