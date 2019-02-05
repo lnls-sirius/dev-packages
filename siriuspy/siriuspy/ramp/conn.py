@@ -120,16 +120,8 @@ class ConnTiming(_EpicsPropsList):
 
         # Event delays
         sp[c.EvtRmpBO_Delay] = 0
-
-        injection_time = self._ramp_config.ti_params_injection_time
-        egun_delay = self.get_readback(c.TrgEGunSglBun_Delay) if \
-            self.get_readback(c.TrgEGunSglBun_State) else \
-            self.get_readback(c.TrgEGunMultBun_Delay)
-        sp[c.EvtLinac_Delay] = injection_time - egun_delay
-
-        ejection_time = self._ramp_config.ti_params_ejection_time
-        ejekckr_delay = self.get_readback(c.TrgEjeKckr_Delay)
-        sp[c.EvtInjSI_Delay] = ejection_time - ejekckr_delay
+        sp[c.EvtLinac_Delay] = self.calc_linacevt_delay()
+        sp[c.EvtInjSI_Delay] = self.calc_injsievt_delay()
 
         return self.set_setpoints_check(sp, timeout)
 
@@ -168,6 +160,23 @@ class ConnTiming(_EpicsPropsList):
         """Check if injection events are enabled."""
         rb = {ConnTiming.Const.EVG_InjectionEvt: _TIConst.DsblEnbl.Enbl}
         return self._check(rb)
+
+    # --- helper methods ---
+    def calc_linacevt_delay(self):
+        """Calculate Linac Event delay."""
+        c = ConnTiming.Const
+        injection_time = self._ramp_config.ti_params_injection_time
+        egun_delay = self.get_readback(c.TrgEGunSglBun_Delay) if \
+            self.get_readback(c.TrgEGunSglBun_State) else \
+            self.get_readback(c.TrgEGunMultBun_Delay)
+        return injection_time - egun_delay
+
+    def calc_injsievt_delay(self):
+        """Calculate Sirius Injection Event delay."""
+        c = ConnTiming.Const
+        ejection_time = self._ramp_config.ti_params_ejection_time
+        ejekckr_delay = self.get_readback(c.TrgEjeKckr_Delay)
+        return ejection_time - ejekckr_delay
 
     # --- private methods ---
 
