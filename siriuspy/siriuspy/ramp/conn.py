@@ -20,7 +20,7 @@ from siriuspy.ramp import util as _rutil
 _prefix = _envars.vaca_prefix
 _PWRSTATE_ON_DELAY = 1.4
 _PWRSTATE_OFF_DELAY = 0.8
-_TIMEOUT_DFLT = 0.5
+_TIMEOUT_DFLT = 1.4
 
 
 class ConnConfig_BORamp(_ConnConfigService):
@@ -289,23 +289,23 @@ class ConnMagnets(_EpicsPropsList):
 
     def cmd_pwrstate_on(self, timeout=_PWRSTATE_ON_DELAY):
         """Turn all power supplies on."""
-        return self._command('PwrState', _PSConst.PwrState.On, timeout)
+        return self._command('PwrState-Sel', _PSConst.PwrStateSel.On, timeout)
 
     def cmd_pwrstate_off(self, timeout=_PWRSTATE_OFF_DELAY):
         """Turn all power supplies off."""
-        return self._command('PwrState', _PSConst.PwrState.Off, timeout)
+        return self._command('PwrState-Sel', _PSConst.PwrStateSel.Off, timeout)
 
     def cmd_opmode_slowref(self, timeout=_TIMEOUT_DFLT):
         """Select SlowRef opmode for all power supplies."""
-        return self._command('OpMode', _PSConst.OpMode.SlowRef, timeout)
+        return self._command('OpMode-Sel', _PSConst.OpMode.SlowRef, timeout)
 
     def cmd_opmode_cycle(self, timeout=_TIMEOUT_DFLT):
         """Select Cycle opmode for all power supplies."""
-        return self._command('OpMode', _PSConst.OpMode.Cycle, timeout)
+        return self._command('OpMode-Sel', _PSConst.OpMode.Cycle, timeout)
 
     def cmd_opmode_rmpwfm(self, timeout=_TIMEOUT_DFLT):
         """Select RmpWfm opmode for all power supplies."""
-        return self._command('OpMode', _PSConst.OpMode.RmpWfm, timeout)
+        return self._command('OpMode-Sel', _PSConst.OpMode.RmpWfm, timeout)
 
     def cmd_wfmdata(self, timeout=_TIMEOUT_DFLT):
         """Set wfmdata of all powersupplies."""
@@ -316,7 +316,7 @@ class ConnMagnets(_EpicsPropsList):
             # get value (wfmdata)
             wf = self._ramp_config.ps_waveform_get(maname)
             value = wf.currents
-            name = maname + ':' + 'WfmData'
+            name = maname + ':WfmData-SP'
             setpoints[name] = value
         return self.set_setpoints_check(setpoints, timeout)
 
@@ -324,31 +324,31 @@ class ConnMagnets(_EpicsPropsList):
 
     def check_pwrstate_on(self):
         """Check pwrstates of all power supplies are On."""
-        return self._check('PwrState', _PSConst.PwrState.On)
+        return self._check('PwrState-Sel', _PSConst.PwrStateSts.On)
 
     def check_opmode_slowref(self):
         """Check opmodes of all power supplies ar SlowRef."""
-        return self._check('OpMode', _PSConst.OpMode.SlowRef)
+        return self._check('OpMode-Sel', _PSConst.OpMode.SlowRef)
 
     def check_opmode_cycle(self):
         """Check opmodes of all power supplies ar Cycle."""
-        return self._check('OpMode', _PSConst.OpMode.Cycle)
+        return self._check('OpMode-Sel', _PSConst.OpMode.Cycle)
 
     def check_opmode_rmpwfm(self):
         """Check opmodes of all power supplies ar RmpWfm."""
-        return self._check('OpMode', _PSConst.OpMode.RmpWfm)
+        return self._check('OpMode-Sel', _PSConst.OpMode.RmpWfm)
 
     def check_intlksoft(self):
         """Check if software interlocks are reset."""
-        return self._check('IntlkSoft', 0)
+        return self._check('IntlkSoft-Mon', 0)
 
     def check_intlkhard(self):
         """Check if hardware interlocks are reset."""
-        return self._check('IntlkHard', 0)
+        return self._check('IntlkHard-Mon', 0)
 
     def check_rmpready(self):
         """Check if ramp increase was concluded."""
-        return self._check('RmpReady', 1)
+        return self._check('RmpReady-Mon', 1)
 
     # --- private methods ---
 
