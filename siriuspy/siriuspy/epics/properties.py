@@ -75,12 +75,12 @@ class EpicsProperty:
     @property
     def readback(self):
         """Property readback."""
-        return self._pv_rb.value
+        return self._pv_rb.get(timeout=0)
 
     @property
     def setpoint(self):
         """Property setpoint."""
-        return self._pv_sp.value
+        return self._pv_sp.get(timeout=0)
 
     @property
     def default(self):
