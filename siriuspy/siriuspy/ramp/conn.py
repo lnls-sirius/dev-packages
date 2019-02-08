@@ -114,16 +114,20 @@ class ConnTiming(_EpicsPropsList):
         sp[c.TrgCorrs_Duration] = self._ramp_config.ps_ramp_duration
         sp[c.TrgMags_NrPulses] = self._ramp_config.ps_ramp_wfm_nrpoints
         sp[c.TrgCorrs_NrPulses] = self._ramp_config.ps_ramp_wfm_nrpoints
-        sp[c.TrgMags_Delay] = self._ramp_config.ps_ramp_delay
-        sp[c.TrgCorrs_Delay] = self._ramp_config.ps_ramp_delay
-        sp[c.TrgLLRFRmp_Delay] = self._ramp_config.rf_ramp_delay
+        sp[c.TrgMags_Delay] = self._ramp_config.ti_params_ps_ramp_delay
+        sp[c.TrgCorrs_Delay] = self._ramp_config.ti_params_ps_ramp_delay
+        sp[c.TrgLLRFRmp_Delay] = self._ramp_config.ti_params_rf_ramp_delay
 
         # Event delays
         sp[c.EvtRmpBO_Delay] = 0
         sp[c.EvtLinac_Delay] = self.calc_linacevt_delay()
         sp[c.EvtInjSI_Delay] = self.calc_injsievt_delay()
 
-        return self.set_setpoints_check(sp, timeout)
+        delays_ok = True
+        if not self.calc_linacevt_delay() or not self.calc_injsievt_delay():
+            delays_ok = False
+
+        return (self.set_setpoints_check(sp, timeout) and delays_ok)
 
     def cmd_start_ramp(self, timeout=_TIMEOUT_DFLT):
         """Start EVG continuous events."""
@@ -169,6 +173,8 @@ class ConnTiming(_EpicsPropsList):
         egun_delay = self.get_readback(c.TrgEGunSglBun_Delay) if \
             self.get_readback(c.TrgEGunSglBun_State) else \
             self.get_readback(c.TrgEGunMultBun_Delay)
+        if not egun_delay:
+            return
         return injection_time - egun_delay
 
     def calc_injsievt_delay(self):
@@ -176,6 +182,8 @@ class ConnTiming(_EpicsPropsList):
         c = ConnTiming.Const
         ejection_time = self._ramp_config.ti_params_ejection_time
         ejekckr_delay = self.get_readback(c.TrgEjeKckr_Delay)
+        if not ejekckr_delay:
+            return
         return ejection_time - ejekckr_delay
 
     # --- private methods ---
@@ -216,7 +224,7 @@ class ConnTiming(_EpicsPropsList):
             c.TrgLLRFRmp_Polarity: _TIConst.TrigPol.Inverse,
             c.TrgLLRFRmp_RFDelayType: _TIConst.TrigDlyTyp.Manual}
 
-        self._ramp_configsetup = {
+        self.ramp_configsetup = {
             # Event delays
             c.EvtLinac_Delay: 0,
             c.EvtRmpBO_Delay: 0,
@@ -240,13 +248,15 @@ class ConnTiming(_EpicsPropsList):
         self._reading_propties = {
             # EGun trigger delays
             c.TrgEGunSglBun_Delay: 0,
+            c.TrgEGunSglBun_State:  _TIConst.DsblEnbl.Dsbl,
             c.TrgEGunMultBun_Delay: 0,
+            c.TrgEGunMultBun_State:  _TIConst.DsblEnbl.Dsbl,
             # EjeKckr trigger delay
             c.TrgEjeKckr_Delay: 0}
 
         propty2defaultvalue = self.ramp_basicsetup.copy()
+        propty2defaultvalue.update(self.ramp_configsetup)
         propty2defaultvalue.update(self._evgcontrol_propties)
-        propty2defaultvalue.update(self._ramp_configsetup)
         propty2defaultvalue.update(self._reading_propties)
 
         properties = list()
