@@ -365,19 +365,20 @@ class SOFB(_BaseClass):
             self.run_callbacks('AutoCorr-Sts', 0)
             return
         self.run_callbacks('AutoCorr-Sts', 1)
-        strn = '{0:20s}: {1:7.3f}'
+        strn = 'TIMEIT: {0:20s} - {1:7.3f}'
         while (self._auto_corr == self._csorb.AutoCorr.On and
                self.orbit.mode == self._csorb.OrbitMode.Online):
             t0 = _time.time()
+            _log.debug('TIMEIT: BEGIN')
             orb = self.orbit.get_orbit()
             t1 = _time.time()
-            print(strn.format('get orbit:', 1000*(t1-t0)))
+            _log.debug(strn.format('get orbit:', 1000*(t1-t0)))
             dkicks = self.matrix.calc_kicks(orb)
             t2 = _time.time()
-            print(strn.format('calc kicks:', 1000*(t2-t1)))
+            _log.debug(strn.format('calc kicks:', 1000*(t2-t1)))
             kicks = self.correctors.get_strength()
             t3 = _time.time()
-            print(strn.format('get strength:', 1000*(t3-t2)))
+            _log.debug(strn.format('get strength:', 1000*(t3-t2)))
             kicks = self._process_kicks(kicks, dkicks)
             if kicks is None:
                 self._auto_corr = self._csorb.AutoCorr.Off
@@ -385,13 +386,13 @@ class SOFB(_BaseClass):
                 self.run_callbacks('AutoCorr-Sel', 0)
                 continue
             t4 = _time.time()
-            print(strn.format('process kicks:', 1000*(t4-t3)))
+            _log.debug(strn.format('process kicks:', 1000*(t4-t3)))
             self.correctors.apply_kicks(kicks)  # slowest part
             t5 = _time.time()
-            print(strn.format('apply kicks:', 1000*(t5-t4)))
+            _log.debug(strn.format('apply kicks:', 1000*(t5-t4)))
             dt = (_time.time()-t0)
-            print(strn.format('total:', 1000*dt))
-            print()
+            _log.debug(strn.format('total:', 1000*dt))
+            _log.debug('TIMEIT: END')
             interval = 1/self._auto_corr_freq
             if dt > interval:
                 _log.warning('App: AutoCorr took %f ms.', dt*1000)

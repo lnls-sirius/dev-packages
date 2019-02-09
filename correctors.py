@@ -271,39 +271,43 @@ class EpicsCorrectors(BaseCorrectors):
 
     def apply_kicks(self, values):
         """Apply kicks."""
-        strn = '{0:20s}: {1:7.3f}'
+        strn = '    TIMEIT: {0:20s} - {1:7.3f}'
         # apply the RF kick
+        _log.debug('    TIMEIT: BEGIN')
         t0 = _time.time()
         if self.isring:
             self.put_value_in_corr(
                 self._rf_ctrl, values[-1] + self._rf_nom_freq, False)
         t1 = _time.time()
-        print(strn.format('    send rf:', 1000*(t1-t0)))
+        _log.debug(strn.format('send rf:', 1000*(t1-t0)))
 
         # Send correctors setpoint
         for i, corr in enumerate(self._chcvs):
             self.put_value_in_corr(corr, values[i])
         t2 = _time.time()
-        print(strn.format('    send sp:', 1000*(t2-t1)))
+        _log.debug(strn.format('send sp:', 1000*(t2-t1)))
 
         # Wait for readbacks to be updated
         if self._timed_out(mode='ready'):
             self._update_log('ERR: timeout waiting correctors RB')
             return
         t3 = _time.time()
-        print(strn.format('    check ready:', 1000*(t3-t2)))
+        _log.debug(strn.format('check ready:', 1000*(t3-t2)))
 
         # Send trigger signal for implementation
         # _time.sleep(0.450)
         self.send_evt()
         t4 = _time.time()
-        print(strn.format('    send evt:', 1000*(t4-t3)))
+        _log.debug(strn.format('send evt:', 1000*(t4-t3)))
 
         # Wait for references to be updated
         if self._timed_out(mode='applied'):
-            self._update_log('ERR: timeout waiting correctors Ref')
+            msg = 'ERR: timeout waiting correctors Ref'
+            self._update_log(msg)
+            _log.error(msg[5:])
         t5 = _time.time()
-        print(strn.format('    check applied:', 1000*(t5-t4)))
+        _log.debug(strn.format('check applied:', 1000*(t5-t4)))
+        _log.debug('    TIMEIT: END')
 
     def put_value_in_corr(self, corr, value, flag=True):
         """Put value in corrector method."""
