@@ -4,6 +4,7 @@ from copy import deepcopy as _dcopy
 from siriuspy.util import get_namedtuple as _get_namedtuple
 import siriuspy.csdevice.bpms as _csbpm
 from siriuspy.csdevice import util as _cutil
+from siriuspy.csdevice import timesys as _cstiming
 from siriuspy.search.ma_search import MASearch as _MASearch
 from siriuspy.search.ll_time_search import LLTimeSearch as _TISearch
 from siriuspy.search.hl_time_search import HLTimeSearch as _HLTISearch
@@ -132,9 +133,11 @@ class OrbitCorrDevTLines(ConstTLines):
             self.EVT_COR_NAME = 'Orb' + self.acc
 
         self.EVT_ACQ_NAME = 'Dig' + self.acc
+        evts = _HLTISearch.get_hl_trigger_allowed_evts(self.TRIGGER_ACQ_NAME)
+        vals = _cstiming.get_hl_trigger_database(self.TRIGGER_ACQ_NAME)
+        vals = tuple([vals['Src-Sel']['enums'].index(evt) for evt in evts])
         self.OrbitAcqExtEvtSrc = _get_namedtuple(
-            'OrbitAcqExtEvtSrc',
-            _HLTISearch.get_hl_trigger_allowed_evts(self.TRIGGER_ACQ_NAME))
+                                    'OrbitAcqExtEvtSrc', evts, vals)
         self.MTX_SZ = self.NR_CORRS * (2 * self.NR_BPMS)
         self.NR_SING_VALS = min(self.NR_CORRS, 2 * self.NR_BPMS)
 
@@ -475,9 +478,11 @@ class OrbitCorrDevRings(OrbitCorrDevTLines, ConstRings):
     def __init__(self, acc):
         """Init method."""
         OrbitCorrDevTLines.__init__(self, acc)
+        evts = _HLTISearch.get_hl_trigger_allowed_evts(self.TRIGGER_COR_NAME)
+        vals = _cstiming.get_hl_trigger_database(self.TRIGGER_COR_NAME)
+        vals = tuple([vals['Src-Sel']['enums'].index(evt) for evt in evts])
         self.OrbitCorExtEvtSrc = _get_namedtuple(
-            'OrbitCorExtEvtSrc',
-            _HLTISearch.get_hl_trigger_allowed_evts(self.TRIGGER_COR_NAME))
+                                        'OrbitCorExtEvtSrc', evts, vals)
         self.C0 = (496.8 if self.acc == 'BO' else 518.396)  # in meter
         self.T0 = self.C0 / 299792458 * 1000  # in milliseconds
 
