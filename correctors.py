@@ -2,6 +2,7 @@
 
 import time as _time
 import math as _math
+import logging as _log
 import numpy as _np
 from epics import PV as _PV
 import siriuspy.util as _util
@@ -38,8 +39,11 @@ class Corrector(_BaseTimingConfig):
     def connected(self):
         """Status connected."""
         conn = super().connected
-        conn &= self._sp.connected
-        conn &= self._rb.connected
+        pvs = (self._sp.connected, self._rb.connected)
+        for pv in pvs:
+            if not pv.connected:
+                _log.debug('NOT CONN: ' + pv.pvname)
+            conn &= pv.connected
         return conn
 
     @property
@@ -156,6 +160,8 @@ class CHCV(Corrector):
         """Status connected."""
         conn = super().connected
         conn &= self._ref.connected
+        if not self._ref.connected:
+            _log.debug('NOT CONN: ' + self._ref.pvname)
         return conn
 
     @property
@@ -217,6 +223,8 @@ class TimingConfig(_BaseTimingConfig):
         """Status connected."""
         conn = super().connected
         conn &= self._evt_sender.connected
+        if not self._evt_sender.connected:
+            _log.debug('NOT CONN: ' + self._evt_sender.pvname)
         return conn
 
 

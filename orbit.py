@@ -1,6 +1,7 @@
 """Module to deal with orbit acquisition."""
 import os as _os
 import time as _time
+import logging as _log
 from functools import partial as _part
 from threading import Lock
 import numpy as _np
@@ -122,16 +123,15 @@ class BPM(_BaseTimingConfig):
     @property
     def connected(self):
         conn = super().connected
-        conn &= self._posx.connected
-        conn &= self._posy.connected
-        conn &= self._spposx.connected
-        conn &= self._spposy.connected
-        conn &= self._spsum.connected
-        conn &= self._arrayx.connected
-        conn &= self._arrayy.connected
-        conn &= self._arrays.connected
-        conn &= self._offsetx.connected
-        conn &= self._offsety.connected
+        pvs = (
+            self._posx, self._posy,
+            self._spposx, self._spposy, self._spsum,
+            self._arrayx, self._arrayy, self._arrays,
+            self._offsetx, self._offsety)
+        for pv in pvs:
+            if not pv.connected:
+                _log.debug('NOT CONN: ' + pv.pvname)
+            conn &= pv.connected
         return conn
 
     @property
