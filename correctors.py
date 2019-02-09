@@ -289,7 +289,9 @@ class EpicsCorrectors(BaseCorrectors):
 
         # Wait for readbacks to be updated
         if self._timed_out(mode='ready'):
-            self._update_log('ERR: timeout waiting correctors RB')
+            msg = 'ERR: timeout waiting correctors RB'
+            self._update_log(msg)
+            _log.error(msg[5:])
             return
         t3 = _time.time()
         _log.debug(strn.format('check ready:', 1000*(t3-t2)))
@@ -312,11 +314,17 @@ class EpicsCorrectors(BaseCorrectors):
     def put_value_in_corr(self, corr, value, flag=True):
         """Put value in corrector method."""
         if not corr.connected:
-            self._update_log('ERR: ' + corr.name + ' not connected.')
+            msg = 'ERR: ' + corr.name + ' not connected.'
+            self._update_log(msg)
+            _log.error(msg[5:])
         elif not corr.state:
-            self._update_log('ERR: ' + corr.name + ' is off.')
+            msg = 'ERR: ' + corr.name + ' is off.'
+            self._update_log(msg)
+            _log.error(msg[5:])
         elif flag and not corr.opmode_ok:
-            self._update_log('ERR: ' + corr.name + ' mode not configured.')
+            msg = 'ERR: ' + corr.name + ' mode not configured.'
+            self._update_log(msg)
+            _log.error(msg[5:])
         elif not corr.equalKick(value):
             corr.value = value
 
@@ -325,10 +333,14 @@ class EpicsCorrectors(BaseCorrectors):
         if not self.isring and not self._synced_kicks:
             return
         if not self.timing.connected:
-            self._update_log('ERR: timing disconnected.')
+            msg = 'ERR: timing disconnected.'
+            self._update_log(msg)
+            _log.error(msg[5:])
             return
         elif not self.timing.is_ok:
-            self._update_log('ERR: timing not configured.')
+            msg = 'ERR: timing not configured.'
+            self._update_log(msg)
+            _log.error(msg[5:])
             return
         self.timing.send_evt()
 
@@ -373,11 +385,14 @@ class EpicsCorrectors(BaseCorrectors):
             if corr.connected:
                 corr.opmode = val
             else:
-                self._update_log('ERR: Failed to configure correctors')
+                msg = 'ERR: Failed to configure correctors'
+                self._update_log(msg)
+                _log.error(msg[5:])
                 return False
-        self._update_log(
-            'Correctors set to {0:s} Mode'.format('Sync' if value else 'Async')
-            )
+        msg = 'Correctors set to {0:s} Mode'.format(
+                                    'Sync' if value else 'Async')
+        self._update_log(msg)
+        _log.info(msg)
         self.run_callbacks('SyncKicks-Sts', value)
         return True
 
@@ -392,18 +407,24 @@ class EpicsCorrectors(BaseCorrectors):
                 corr.state = True
                 corr.opmode = val
             else:
-                self._update_log('ERR: Failed to configure correctors')
+                msg = 'ERR: Failed to configure correctors'
+                self._update_log(msg)
+                _log.error(msg[5:])
                 return False
         if not self.isring:
             return True
 
         if not self.timing.configure():
-            self._update_log('ERR: Failed to configure timing')
+            msg = 'ERR: Failed to configure timing'
+            self._update_log(msg)
+            _log.error(msg[5:])
             return False
         if self._rf_ctrl.connected:
             self._rf_ctrl.state = True
         else:
-            self._update_log('ERR: Failed to configure correctors')
+            msg = 'ERR: Failed to configure correctors'
+            self._update_log(msg)
+            _log.error(msg[5:])
             return False
         return True
 

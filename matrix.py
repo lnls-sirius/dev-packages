@@ -1,6 +1,7 @@
 """Class of the Response Matrix."""
 
 import os as _os
+import logging as _log
 import numpy as _np
 from functools import partial as _part
 from .base_class import BaseClass as _BaseClass
@@ -56,7 +57,9 @@ class EpicsMatrix(BaseMatrix):
         """Set the response matrix in memory and save it in file."""
         self.run_callbacks('Log-Mon', 'Setting New RespMat.')
         if len(mat) != self._csorb.MTX_SZ:
-            self._update_log('ERR: Wrong RespMat Size.')
+            msg = 'ERR: Wrong RespMat Size.'
+            self._update_log(msg)
+            _log.error(msg[5:])
             return False
         mat = _np.reshape(mat, [2*self._csorb.NR_BPMS, self._csorb.NR_CORRS])
         old_ = self.respmat.copy()
@@ -80,7 +83,9 @@ class EpicsMatrix(BaseMatrix):
         return kicks
 
     def set_enbl_list(self, key, val):
-        self._update_log('Setting {0:s} Enable List'.format(key.upper()))
+        msg = 'Setting {0:s} Enable List'.format(key.upper())
+        self._update_log(msg)
+        _log.info(msg)
         bkup = self.select_items[key]
         new_ = _np.array(val, dtype=bool)
         if key == 'rf':
@@ -108,17 +113,23 @@ class EpicsMatrix(BaseMatrix):
         return True
 
     def _calc_matrices(self):
-        self._update_log('Calculating Inverse Matrix.')
+        msg = 'Calculating Inverse Matrix.'
+        self._update_log(msg)
+        _log.info(msg)
         sel_ = self.select_items
         selecbpm = _np.hstack([sel_['bpmx'], sel_['bpmy']])
         seleccor = _np.hstack([sel_['ch'], sel_['cv']])
         if self.isring:
             seleccor = _np.hstack([sel_['ch'], sel_['cv'], sel_['rf']])
         if not any(selecbpm):
-            self._update_log('ERR: No BPM selected in EnblList')
+            msg = 'ERR: No BPM selected in EnblList'
+            self._update_log(msg)
+            _log.error(msg[5:])
             return False
         if not any(seleccor):
-            self._update_log('ERR: No Corrector selected in EnblList')
+            msg = 'ERR: No Corrector selected in EnblList'
+            self._update_log(msg)
+            _log.error(msg[5:])
             return False
         sel_mat = selecbpm[:, None] * seleccor[None, :]
         mat = self.respmat[sel_mat]
@@ -126,7 +137,9 @@ class EpicsMatrix(BaseMatrix):
         try:
             U, s, V = _np.linalg.svd(mat, full_matrices=False)
         except _np.linalg.LinAlgError():
-            self._update_log('ERR: Could not calculate SVD')
+            msg = 'ERR: Could not calculate SVD'
+            self._update_log(msg)
+            _log.error(msg[5:])
             return False
         inv_s = 1/s
         inv_s[self.num_sing_values:] = 0
@@ -135,7 +148,9 @@ class EpicsMatrix(BaseMatrix):
         isNan = _np.any(_np.isnan(inv_mat))
         isInf = _np.any(_np.isinf(inv_mat))
         if isNan or isInf:
-            self._update_log('ERR: Inverse contains nan or inf.')
+            msg = 'ERR: Inverse contains nan or inf.'
+            self._update_log(msg)
+            _log.error(msg[5:])
             return False
 
         self.sing_values[:] = 0
@@ -156,9 +171,13 @@ class EpicsMatrix(BaseMatrix):
             if not self._calc_matrices():
                 self.respmat = bkup
                 return
-            self._update_log('Loading RespMat from file.')
+            msg = 'Loading RespMat from file.'
+            self._update_log(msg)
+            _log.info(msg)
             self.run_callbacks('RespMat-RB', list(self.respmat.flatten()))
 
     def _save_respmat(self, mat):
-        self._update_log('Saving RespMat to file')
+        msg = 'Saving RespMat to file'
+        self._update_log(msg)
+        _log.info(msg)
         _np.savetxt(self._csorb.RESPMAT_FILENAME, mat)

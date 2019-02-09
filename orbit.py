@@ -563,7 +563,9 @@ class EpicsOrbit(BaseOrbit):
             orbx, orby = getorb(orbs)
             break
         else:
-            self._update_log('ERR: get orbit function timeout.')
+            msg = 'ERR: get orbit function timeout.'
+            self._update_log(msg)
+            _log.error(msg[5:])
             orbx = self.ref_orbs['X']
             orby = self.ref_orbs['Y']
 
@@ -582,9 +584,13 @@ class EpicsOrbit(BaseOrbit):
         return orbs['X'][idx, :], orbs['Y'][idx, :]
 
     def set_offline_orbit(self, plane, orb):
-        self._update_log('Setting New Offline Orbit.')
+        msg = 'Setting New Offline Orbit.'
+        self._update_log(msg)
+        _log.info(msg)
         if len(orb) != self._csorb.NR_BPMS:
-            self._update_log('ERR: Wrong Size.')
+            msg = 'ERR: Wrong Size.'
+            self._update_log(msg)
+            _log.error(msg[5:])
             return False
         self.offline_orbit[plane] = _np.array(orb)
         self.run_callbacks('OrbitOffline'+plane+'-RB', orb)
@@ -600,9 +606,13 @@ class EpicsOrbit(BaseOrbit):
             self._reset_orbs()
 
     def set_ref_orbit(self, plane, orb):
-        self._update_log('Setting New Reference Orbit.')
+        msg = 'Setting New Reference Orbit.'
+        self._update_log(msg)
+        _log.info(msg)
         if len(orb) != self._csorb.NR_BPMS:
-            self._update_log('ERR: Wrong Size.')
+            msg = 'ERR: Wrong Size.'
+            self._update_log(msg)
+            _log.error(msg[5:])
             return False
         self.ref_orbs[plane] = _np.array(orb, dtype=float)
         self._save_ref_orbits()
@@ -616,7 +626,9 @@ class EpicsOrbit(BaseOrbit):
         if self.isring:
             trigmds.append(self._csorb.OrbitMode.MultiTurn)
         if self._mode in trigmds and value > 2:
-            self._update_log('ERR: In triggered mode cannot set rate > 2.')
+            msg = 'ERR: In triggered mode cannot set rate > 2.'
+            self._update_log(msg)
+            _log.error(msg[5:])
             return False
         self._acqrate = value
         self._orbit_thread.interval = 1/value
@@ -647,8 +659,9 @@ class EpicsOrbit(BaseOrbit):
         maxidx *= self._acqtrignrshots
         if value >= maxidx:
             value = maxidx-1
-            self._update_log(
-                'WARN: MultiTurnIdx is too large. Redefining...')
+            msg = 'WARN: MultiTurnIdx is too large. Redefining...'
+            self._update_log(msg)
+            _log.warning(msg[6:])
         with self._lock_raw_orbs:
             self._multiturnidx = int(value)
         self.run_callbacks('OrbitMultiTurnIdx-RB', self._multiturnidx)
@@ -661,7 +674,9 @@ class EpicsOrbit(BaseOrbit):
         if self.isring:
             trigmds.append(self._csorb.OrbitMode.MultiTurn)
         if self._mode not in trigmds:
-            self._update_log('ERR: Change to a Triggered mode first.')
+            msg = 'ERR: Change to a Triggered mode first.'
+            self._update_log(msg)
+            _log.error(msg[5:])
             return False
         for bpm in self.bpms:
             bpm.configure()
@@ -755,8 +770,9 @@ class EpicsOrbit(BaseOrbit):
         nval = self._find_new_nrsamples(nval, self._acqtrigdownsample)
         if nval != value:
             value = nval
-            self._update_log(
-                'WARN: Not possible to set NrSamples. Redefining..')
+            msg = 'WARN: Not possible to set NrSamples. Redefining..'
+            self._update_log(msg)
+            _log.warning(msg[6:])
 
         value -= getattr(self, '_acqtrignrsamples'+osuf)
         with self._lock_raw_orbs:
@@ -773,8 +789,9 @@ class EpicsOrbit(BaseOrbit):
         nrpoints = pntspshot * value
         if nrpoints > self._csorb.MAX_MT_ORBS:
             value = self._csorb.MAX_MT_ORBS // pntspshot
-            self._update_log(
-                'WARN: Not possible to set NrShots. Redefining...')
+            msg = 'WARN: Not possible to set NrShots. Redefining...'
+            self._update_log(msg)
+            _log.warning(msg[6:])
         with self._lock_raw_orbs:
             for bpm in self.bpms:
                 bpm.nrshots = value
@@ -793,8 +810,9 @@ class EpicsOrbit(BaseOrbit):
                 self.acqtrignrsamples, value, onlyup=True)
         if down != value:
             value = down
-            self._update_log(
-                'WARN: DwnSpl Must divide NRSamples. Redefining...')
+            msg = 'WARN: DwnSpl Must divide NRSamples. Redefining...'
+            self._update_log(msg)
+            _log.warning(msg[6:])
         self._acqtrigdownsample = value
         self.run_callbacks('OrbitTrigDownSample-RB', value)
         self._update_time_vector()
@@ -834,7 +852,9 @@ class EpicsOrbit(BaseOrbit):
         try:
             _np.savetxt(self._csorb.REFORBFNAME, orbs)
         except FileNotFoundError:
-            self._update_log('WARN: Could not save reference orbit in file.')
+            msg = 'WARN: Could not save reference orbit in file.'
+            self._update_log(msg)
+            _log.warning(msg[6:])
 
     def _reset_orbs(self):
         self.raw_orbs = {'X': [], 'Y': []}
