@@ -181,9 +181,11 @@ class TimingConfig(_BaseTimingConfig):
         trig = self._csorb.TRIGGER_COR_NAME
         opt = {'connection_timeout': TIMEOUT}
         self._evt_sender = _PV(pref_name + 'ExtTrig-Cmd', **opt)
+        src_val = self._csorb.OrbitCorExtEvtSrc._fields.index(evt)
+        src_val = self._csorb.OrbitCorExtEvtSrc[src_val]
         self._config_ok_vals = {
             'Mode': _TIConst.EvtModes.External,
-            'Src': self._csorb.OrbitCorExtEvtSrc._fields.index(evt),
+            'Src': src_val,
             'Delay': 0.0,
             'NrPulses': 1, 'Duration': 0.1, 'State': 1, 'Polarity': 1,
             }

@@ -364,8 +364,10 @@ class TimingConfig(_BaseTimingConfig):
         trig = self._csorb.TRIGGER_ACQ_NAME
         opt = {'connection_timeout': TIMEOUT}
         evt = self._csorb.EVT_ACQ_NAME
+        src_val = self._csorb.OrbitAcqExtEvtSrc._fields.index(evt)
+        src_val = self._csorb.OrbitAcqExtEvtSrc[src_val]
         self._config_ok_vals = {
-            'Src': self._csorb.OrbitAcqExtEvtSrc._fields.index(evt),
+            'Src': src_val,
             'Delay': 0.0,
             'NrPulses': 1,
             'Duration': 0.001,
@@ -738,7 +740,7 @@ class EpicsOrbit(BaseOrbit):
         return True
 
     def set_trig_acq_extsource(self, value):
-        self.timing.evtsrc = value
+        self.timing.evtsrc = self._csorb.OrbitAcqExtEvtSrc[value]
         self.run_callbacks('OrbitTrigExtEvtSrc-Sts', value)
         return True
 
