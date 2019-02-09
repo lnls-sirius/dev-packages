@@ -61,7 +61,6 @@ class BPM(_BaseTimingConfig):
             'ACQTriggerDataHyst': 2}
         pvs = {
             'asyn.ENBL': 'asyn.ENBL',
-            'asyn.CNCT': 'asyn.CNCT',
             'ACQBPMMode': 'ACQBPMMode-Sel',
             'ACQChannel': 'ACQChannel-Sel',
             # 'ACQNrShots': 'ACQNrShots-SP',
