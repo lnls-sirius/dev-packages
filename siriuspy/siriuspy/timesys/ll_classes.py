@@ -562,8 +562,15 @@ class _EVROUT(_BaseLL):
 
     def _process_src(self, src, is_sp):
         invalid = len(self._source_enums)-1  # Invalid option
+        # I noticed that differently from the EVR and EVE IOCs, the AMCFPGAEVR
+        # do not have a 'Dsbl' as first option of the enums list. So I have to
+        # create this offset to fix this...
+        offset = 0
+        if self.channel.dev.startswith('AMCFPGAEVR'):
+            offset = 1
         try:
-            source = _cstime.Const.TrigSrcLL._fields[src]
+            source = _cstime.Const.TrigSrcLL._fields[src+offset]
+            print(_cstime.Const.TrigSrcLL._fields, src, source)
         except IndexError:
             source = ''
         if not source:
@@ -572,14 +579,25 @@ class _EVROUT(_BaseLL):
             return {'Src': self._source_enums.index(source)}
 
     def _set_source(self, value):
+        # I noticed that differently from the EVR and EVE IOCs, the AMCFPGAEVR
+        # do not have a 'Dsbl' as first option of the enums list. So I have to
+        # create this offset to fix this...
+        offset = 0
+        if self.channel.dev.startswith('AMCFPGAEVR'):
+            offset = 1
+
         if value >= (len(self._source_enums)-1):
             return dict()
         pname = self._source_enums[value]
-        if pname.startswith(('Clock', 'Dsbl')):
+        n = _cstime.Const.TrigSrcLL._fields.index('Trigger')
+        if pname.startswith('Dsbl'):
+            dic_ = {'Src': n, 'Evt': _cstime.Const.EvtLL.Evt00}
+        if pname.startswith('Clock'):
             n = _cstime.Const.TrigSrcLL._fields.index(pname)
+            n -= offset
             dic_ = {'Src': n}
         else:
-            n = _cstime.Const.TrigSrcLL._fields.index('Trigger')
+            n -= offset
             evt = int(_cstime.Const.EvtHL2LLMap[pname][-2:])
             dic_ = {'Src': n, 'Evt': evt}
         if 'SrcTrig' in self._dict_convert_prop2pv.keys():
