@@ -28,6 +28,5 @@ class TestUtil(unittest.TestCase):
         db = cutil.add_pvslist_cte(db)
         self.assertEqual(len(db), 3)
         self.assertIn('Properties-Cte', db)
-        self.assertEqual(db['Properties-Cte']['count'], 3)
-        self.assertEqual(db['Properties-Cte']['value'],
-                         ['Properties-Cte', 'a', 'b'])
+        self.assertEqual(db['Properties-Cte']['count'], 18)
+        self.assertEqual(db['Properties-Cte']['value'], 'Properties-Cte a b')
