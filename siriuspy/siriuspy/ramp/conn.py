@@ -65,11 +65,18 @@ class ConnTiming(_EpicsPropsList):
         TrgEjeKckr = 'BO-48D:TI-EjeKckr'
 
         # Injection and ejection trigger properties
-        TrgEGunSglBun_State = TrgEGunSglBun + ':State-Sel'
         TrgEGunSglBun_Delay = TrgEGunSglBun + ':Delay-SP'
-        TrgEGunMultBun_State = TrgEGunMultBun + ':State-Sel'
         TrgEGunMultBun_Delay = TrgEGunMultBun + ':Delay-SP'
         TrgEjeKckr_Delay = TrgEjeKckr + ':Delay-SP'
+
+        # Linac Egun mode properties
+        LinacEgun_SglBun_State = 'egun:pulseps:singleselstatus'
+        LinacEgun_MultBun_State = 'egun:pulseps:multiselstatus'
+
+        # Trigger specific properties
+        TrgMags_Duration = TrgMags + ':Duration-SP'
+        TrgCorrs_Duration = TrgCorrs + ':Duration-SP'
+        TrgLLRFRmp_RFDelayType = TrgLLRFRmp + ':RFDelayType-Sel'
 
     # Add events properties to Const
     evt_propties = ['Mode-Sel', 'DelayType-Sel', 'Delay-SP']
@@ -79,9 +86,9 @@ class ConnTiming(_EpicsPropsList):
             new_attr = attr+'_'+p.replace('-'+p.split('-')[-1], '')
             setattr(Const, new_attr, evt_pfx+p)
 
-    # Add trigger properties to Const
-    trg_propties = ['Status-Mon', 'NrPulses-SP', 'Duration-SP', 'Delay-SP',
-                    'RFDelayType-Sel', 'State-Sel', 'Src-Sel', 'Polarity-Sel']
+    # Add commom trigger properties to Const
+    trg_propties = ['Status-Mon', 'NrPulses-SP', 'Delay-SP',
+                    'State-Sel', 'Src-Sel', 'Polarity-Sel']
     for attr in ['TrgMags', 'TrgCorrs', 'TrgLLRFRmp']:
         for p in trg_propties:
             trg_pfx = getattr(Const, attr)
@@ -104,10 +111,17 @@ class ConnTiming(_EpicsPropsList):
 
     def cmd_setup(self, timeout=_TIMEOUT_DFLT):
         """Setup TI subsystem to ramp."""
-        return self.set_setpoints_check(self._ramp_basicsetup, timeout)
+        sp = self.ramp_basicsetup.copy()
+        sp.pop('BO-Glob:TI-Mags:Status-Mon')
+        sp.pop('BO-Glob:TI-Corrs:Status-Mon')
+        sp.pop('BO-Glob:TI-LLRF-Rmp:Status-Mon')
+        return self.set_setpoints_check(sp, timeout)
 
     def cmd_config_ramp(self, timeout=_TIMEOUT_DFLT):
         """Apply ramp_config values to TI subsystem."""
+        if not self._ramp_config:
+            return
+
         sp = dict()
         c = ConnTiming.Const
         sp[c.TrgMags_Duration] = self._ramp_config.ps_ramp_duration
@@ -166,14 +180,15 @@ class ConnTiming(_EpicsPropsList):
         return self._check(rb)
 
     # --- helper methods ---
+
     def calc_linacevt_delay(self):
         """Calculate Linac Event delay."""
         c = ConnTiming.Const
         injection_time = self._ramp_config.ti_params_injection_time
-        egun_delay = self.get_readback(c.TrgEGunSglBun_Delay) if \
-            self.get_readback(c.TrgEGunSglBun_State) else \
-            self.get_readback(c.TrgEGunMultBun_Delay)
-        if not egun_delay:
+        egun_delay = self.get_readback(c.TrgEGunSglBun_Delay) \
+            if self.get_readback(c.LinacEgun_SglBun_State) \
+            else self.get_readback(c.TrgEGunMultBun_Delay)
+        if egun_delay is None:
             return
         return injection_time - egun_delay
 
@@ -182,7 +197,7 @@ class ConnTiming(_EpicsPropsList):
         c = ConnTiming.Const
         ejection_time = self._ramp_config.ti_params_ejection_time
         ejekckr_delay = self.get_readback(c.TrgEjeKckr_Delay)
-        if not ejekckr_delay:
+        if ejekckr_delay is None:
             return
         return ejection_time - ejekckr_delay
 
@@ -208,17 +223,14 @@ class ConnTiming(_EpicsPropsList):
             c.TrgMags_State: _TIConst.DsblEnbl.Enbl,
             c.TrgMags_Src: 0,  # enum for RmpBO
             c.TrgMags_Polarity: _TIConst.TrigPol.Inverse,
-            c.TrgMags_RFDelayType: _TIConst.TrigDlyTyp.Manual,
             # Corrs trigger
             c.TrgCorrs_Status: 0,
             c.TrgCorrs_State: _TIConst.DsblEnbl.Enbl,
             c.TrgCorrs_Src: 0,  # enum for RmpBO
             c.TrgCorrs_Polarity: _TIConst.TrigPol.Inverse,
-            c.TrgCorrs_RFDelayType: _TIConst.TrigDlyTyp.Manual,
             # LLRFRmp trigger
             c.TrgLLRFRmp_Status: 0,
             c.TrgLLRFRmp_NrPulses: 1,
-            c.TrgLLRFRmp_Duration: 0.15,
             c.TrgLLRFRmp_State: _TIConst.DsblEnbl.Enbl,
             c.TrgLLRFRmp_Src: 1,  # enum for RmpBO
             c.TrgLLRFRmp_Polarity: _TIConst.TrigPol.Inverse,
@@ -248,11 +260,13 @@ class ConnTiming(_EpicsPropsList):
         self._reading_propties = {
             # EGun trigger delays
             c.TrgEGunSglBun_Delay: 0,
-            c.TrgEGunSglBun_State:  _TIConst.DsblEnbl.Dsbl,
             c.TrgEGunMultBun_Delay: 0,
-            c.TrgEGunMultBun_State:  _TIConst.DsblEnbl.Dsbl,
             # EjeKckr trigger delay
-            c.TrgEjeKckr_Delay: 0}
+            c.TrgEjeKckr_Delay: 0,
+            # LinacEgun Mode
+            c.LinacEgun_SglBun_State: 0,
+            c.LinacEgun_MultBun_State: 0
+            }
 
         propty2defaultvalue = self.ramp_basicsetup.copy()
         propty2defaultvalue.update(self.ramp_configsetup)
