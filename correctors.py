@@ -39,7 +39,7 @@ class Corrector(_BaseTimingConfig):
     def connected(self):
         """Status connected."""
         conn = super().connected
-        pvs = (self._sp.connected, self._rb.connected)
+        pvs = (self._sp, self._rb)
         for pv in pvs:
             if not pv.connected:
                 _log.debug('NOT CONN: ' + pv.pvname)
