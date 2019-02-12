@@ -60,14 +60,15 @@ class Const(_cutil.Const):
 
     EvtHL2LLMap = {
         'Dsbl':  'Evt00',
-        'Linac': 'Evt01', 'InjSI': 'Evt02',
-        'RmpBO': 'Evt03', 'MigSI': 'Evt04',
-        'DigLI': 'Evt05', 'DigTB': 'Evt06',
-        'DigBO': 'Evt07', 'DigTS': 'Evt08',
-        'DigSI': 'Evt09', 'OrbSI': 'Evt10',
-        'CplSI': 'Evt11', 'TunSI': 'Evt12',
-        'Study': 'Evt13', 'OrbBO': 'Evt14',
-        'Cycle': 'Evt15', 'PsMtn': 'Evt124'}
+        'Linac': 'Evt01', 'InjBO': 'Evt02',
+        'InjSI': 'Evt03', 'RmpBO': 'Evt04',
+        'MigSI': 'Evt05', 'DigLI': 'Evt06',
+        'DigTB': 'Evt07', 'DigBO': 'Evt08',
+        'DigTS': 'Evt09', 'DigSI': 'Evt10',
+        'OrbSI': 'Evt11', 'CplSI': 'Evt12',
+        'TunSI': 'Evt13', 'Study': 'Evt14',
+        'OrbBO': 'Evt15', 'Cycle': 'Evt16',
+        'PsMtn': 'Evt124'}
     EvtLL2HLMap = {val: key for key, val in EvtHL2LLMap.items()}
 
     evt_ll_codes = list(range(64)) + [124]
