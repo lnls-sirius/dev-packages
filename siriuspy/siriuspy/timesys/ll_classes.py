@@ -562,9 +562,9 @@ class _EVROUT(_BaseLL):
 
     def _process_src(self, src, is_sp):
         invalid = len(self._source_enums)-1  # Invalid option
-        # I noticed that differently from the EVR and EVE IOCs, the AMCFPGAEVR
-        # do not have a 'Dsbl' as first option of the enums list. So I have to
-        # create this offset to fix this...
+        # BUG: I noticed that differently from the EVR and EVE IOCs,
+        # the AMCFPGAEVR do not have a 'Dsbl' as first option of the enums
+        # list. So I have to create this offset to fix this...
         offset = 0
         if self.channel.dev.startswith('AMCFPGAEVR'):
             offset = 1
@@ -578,9 +578,9 @@ class _EVROUT(_BaseLL):
             return {'Src': self._source_enums.index(source)}
 
     def _set_source(self, value):
-        # I noticed that differently from the EVR and EVE IOCs, the AMCFPGAEVR
-        # do not have a 'Dsbl' as first option of the enums list. So I have to
-        # create this offset to fix this...
+        # BUG: I noticed that differently from the EVR and EVE IOCs,
+        # the AMCFPGAEVR do not have a 'Dsbl' as first option of the enums
+        # list. So I have to create this offset to fix this...
         offset = 0
         if self.channel.dev.startswith('AMCFPGAEVR'):
             offset = 1
@@ -610,6 +610,9 @@ class _EVROUT(_BaseLL):
         dic_ = dict()
         dic_['NrPulses'] = self._get_from_pvs(is_sp, 'NrPulses', def_val=1)
         dic_['Width'] = self._get_from_pvs(is_sp, 'Width', def_val=1)
+        for k, v in dic_.items():
+            if v == 0:  # BUG: handle cases where LL sets these value to 0
+                dic_[k] = 1
         if value is not None:
             dic_[prop] = value
         return {
@@ -623,6 +626,7 @@ class _EVROUT(_BaseLL):
             pul = self._config_ok_values.get('NrPulses')
         if pul is None:
             return dict()
+        pul = pul or 1  # BUG: handle cases where LL sets this value to 0
         wid = value / self._base_del / pul / 2
         wid = round(wid) if wid >= 1 else 1
         return {'Width': wid}
@@ -634,8 +638,9 @@ class _EVROUT(_BaseLL):
 
         # at initialization, try to set _duration
         if self._duration is None:
-            wid = self._config_ok_values.get('Width')
-            pul = self._config_ok_values.get('NrPulses')
+            # BUG: handle cases where LL sets these value to 0
+            wid = self._config_ok_values.get('Width') or 1
+            pul = self._config_ok_values.get('NrPulses') or 1
             if wid is not None and pul is not None:
                 self._duration = wid * pul * 2 * self._base_del
 
