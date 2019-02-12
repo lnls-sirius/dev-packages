@@ -570,7 +570,6 @@ class _EVROUT(_BaseLL):
             offset = 1
         try:
             source = _cstime.Const.TrigSrcLL._fields[src+offset]
-            print(_cstime.Const.TrigSrcLL._fields, src, source)
         except IndexError:
             source = ''
         if not source:
