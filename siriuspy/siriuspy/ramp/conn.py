@@ -53,6 +53,7 @@ class ConnTiming(_EpicsPropsList):
 
         # Event prefixes
         EvtLinac = EVG + ':Linac'
+        EvtInjBO = EVG + ':InjBO'
         EvtRmpBO = EVG + ':RmpBO'
         EvtInjSI = EVG + ':InjSI'
 
@@ -80,7 +81,7 @@ class ConnTiming(_EpicsPropsList):
 
     # Add events properties to Const
     evt_propties = ['Mode-Sel', 'DelayType-Sel', 'Delay-SP']
-    for attr in ['EvtLinac', 'EvtRmpBO', 'EvtInjSI']:
+    for attr in ['EvtLinac', 'EvtInjBO', 'EvtRmpBO', 'EvtInjSI']:
         for p in evt_propties:
             evt_pfx = getattr(Const, attr)
             new_attr = attr+'_'+p.replace('-'+p.split('-')[-1], '')
@@ -134,11 +135,13 @@ class ConnTiming(_EpicsPropsList):
 
         # Event delays
         sp[c.EvtRmpBO_Delay] = 0
-        sp[c.EvtLinac_Delay] = self.calc_linacevt_delay()
-        sp[c.EvtInjSI_Delay] = self.calc_injsievt_delay()
+        [linac_dly, injbo_dly, injsi_dly] = self.calc_evts_delay()
+        sp[c.EvtLinac_Delay] = linac_dly
+        sp[c.EvtInjBO_Delay] = injbo_dly
+        sp[c.EvtInjSI_Delay] = injsi_dly
 
         delays_ok = True
-        if not self.calc_linacevt_delay() or not self.calc_injsievt_delay():
+        if (linac_dly is None) or (injbo_dly is None) or (injsi_dly is None):
             delays_ok = False
 
         return (self.set_setpoints_check(sp, timeout) and delays_ok)
@@ -181,25 +184,30 @@ class ConnTiming(_EpicsPropsList):
 
     # --- helper methods ---
 
-    def calc_linacevt_delay(self):
-        """Calculate Linac Event delay."""
+    def calc_evts_delay(self):
+        """Calculate event delays."""
+        if not self._ramp_config:
+            return
+
         c = ConnTiming.Const
         injection_time = self._ramp_config.ti_params_injection_time
-        egun_delay = self.get_readback(c.TrgEGunSglBun_Delay) \
+        egun_dly = self.get_readback(c.TrgEGunSglBun_Delay) \
             if self.get_readback(c.LinacEgun_SglBun_State) \
             else self.get_readback(c.TrgEGunMultBun_Delay)
-        if egun_delay is None:
-            return
-        return injection_time - egun_delay
+        linac_dly = None if egun_dly is None else injection_time - egun_dly
 
-    def calc_injsievt_delay(self):
-        """Calculate Sirius Injection Event delay."""
-        c = ConnTiming.Const
+        curr_linac_dly = self.get_readback(c.EvtLinac_Delay)
+        delta_dly = None if curr_linac_dly is None \
+            else linac_dly - curr_linac_dly
+        curr_injbo_dly = self.get_readback(c.EvtInjBO_Delay)
+        injbo_dly = None if (delta_dly is None or curr_injbo_dly is None) \
+            else curr_injbo_dly + delta_dly
+
         ejection_time = self._ramp_config.ti_params_ejection_time
-        ejekckr_delay = self.get_readback(c.TrgEjeKckr_Delay)
-        if ejekckr_delay is None:
-            return
-        return ejection_time - ejekckr_delay
+        ejekckr_dly = self.get_readback(c.TrgEjeKckr_Delay)
+        injsi_dly = None if ejekckr_dly is None else ejection_time-ejekckr_dly
+
+        return [linac_dly, injbo_dly, injsi_dly]
 
     # --- private methods ---
 
@@ -212,6 +220,9 @@ class ConnTiming(_EpicsPropsList):
             # Linac Event
             c.EvtLinac_Mode: _TIConst.EvtModes.Injection,
             c.EvtLinac_DelayType: _TIConst.EvtDlyTyp.Incr,
+            # InjBO Event
+            c.EvtInjBO_Mode: _TIConst.EvtModes.Injection,
+            c.EvtInjBO_DelayType: _TIConst.EvtDlyTyp.Incr,
             # RmpBO Event
             c.EvtRmpBO_Mode: _TIConst.EvtModes.Continuous,
             c.EvtRmpBO_DelayType: _TIConst.EvtDlyTyp.Incr,
@@ -239,6 +250,7 @@ class ConnTiming(_EpicsPropsList):
         self.ramp_configsetup = {
             # Event delays
             c.EvtLinac_Delay: 0,
+            c.EvtInjBO_Delay: 0,
             c.EvtRmpBO_Delay: 0,
             c.EvtInjSI_Delay: 0,
             # Mags trigger
