@@ -4,6 +4,7 @@ from copy import deepcopy as _dcopy
 from siriuspy.util import get_namedtuple as _get_namedtuple
 import siriuspy.csdevice.bpms as _csbpm
 from siriuspy.csdevice import util as _cutil
+from siriuspy.csdevice import timesys as _cstiming
 from siriuspy.search.ma_search import MASearch as _MASearch
 from siriuspy.search.ll_time_search import LLTimeSearch as _TISearch
 from siriuspy.search.hl_time_search import HLTimeSearch as _HLTISearch
@@ -62,8 +63,6 @@ class ConstTLines(_cutil.Const):
     Rings = _cutil.Const.register('Rings', _et.RINGS, (2, 3))
     Accelerators = _cutil.Const.register('Accelerators', _et.ACCELERATORS)
 
-    TRIGGER_NAME = 'AS-Glob:TI-BPM-TBTS'
-
     OrbitMode = _cutil.Const.register('OrbitMode', _et.ORB_MODE_TLINES)
     ApplyCorr = _cutil.Const.register('ApplyCorr', _et.APPLY_CORR_TLINES)
     StatusLabelsCorrs = _cutil.Const.register(
@@ -77,7 +76,6 @@ class ConstTLines(_cutil.Const):
 class ConstRings(ConstTLines):
     """Const class defining rings orbitcorr constants."""
 
-    TRIGGER_NAME = 'AS-Glob:TI-BPM-SIBO'
     OrbitMode = _cutil.Const.register('OrbitMode', _et.ORB_MODE_RINGS)
     ApplyCorr = _cutil.Const.register('ApplyCorr', _et.APPLY_CORR_RINGS)
     StatusLabelsCorrs = _cutil.Const.register(
@@ -124,11 +122,27 @@ class OrbitCorrDevTLines(ConstTLines):
 
         self.NR_CORRS = self.NR_CHCV + 1 if acc in _et.RINGS else self.NR_CHCV
 
+        if self.acc in ('TB', 'TS'):
+            self.TRIGGER_ACQ_NAME = 'AS-Glob:TI-BPM-TBTS'
+            if self.isring():
+                self.TRIGGER_COR_NAME = self.acc + '-Glob:TI-Mags'
+                self.EVT_COR_NAME = 'Cycle'
+        else:
+            self.TRIGGER_ACQ_NAME = 'AS-Glob:TI-BPM-SIBO'
+            self.TRIGGER_COR_NAME = self.acc + '-Glob:TI-Corrs'
+            self.EVT_COR_NAME = 'Orb' + self.acc
+
+        self.EVT_ACQ_NAME = 'Dig' + self.acc
+        evts = _HLTISearch.get_hl_trigger_allowed_evts(self.TRIGGER_ACQ_NAME)
+        vals = _cstiming.get_hl_trigger_database(self.TRIGGER_ACQ_NAME)
+        vals = tuple([vals['Src-Sel']['enums'].index(evt) for evt in evts])
         self.OrbitAcqExtEvtSrc = _get_namedtuple(
-            'OrbitAcqExtEvtSrc',
-            _HLTISearch.get_hl_trigger_allowed_evts(self.TRIGGER_NAME))
+                                    'OrbitAcqExtEvtSrc', evts, vals)
         self.MTX_SZ = self.NR_CORRS * (2 * self.NR_BPMS)
         self.NR_SING_VALS = min(self.NR_CORRS, 2 * self.NR_BPMS)
+
+    def isring(self):
+        return self.acc in self.Rings._fields
 
     def get_ioc_database(self, prefix=''):
         """Return IOC database."""
@@ -248,7 +262,7 @@ class OrbitCorrDevTLines(ConstTLines):
     def get_orbit_database(self, prefix=''):
         """Return Orbit database."""
         nbpm = self.NR_BPMS
-        evt = 'Dig' + self.acc
+        evt = self.EVT_ACQ_NAME
         pvs = [
             'OrbitRefX-SP', 'OrbitRefX-RB',
             'OrbitRefY-SP', 'OrbitRefY-RB',
@@ -305,11 +319,11 @@ class OrbitCorrDevTLines(ConstTLines):
                 'hilim': 2**15-1, 'lolim': 1},
             'OrbitTrigDataSel-Sel': {
                 'type': 'enum', 'unit': 'Set Data trigger Selection.',
-                'value': self.OrbitAcqDataSel.Sum,
+                'value': self.OrbitAcqDataSel.A,
                 'enums': self.OrbitAcqDataSel._fields},
             'OrbitTrigDataSel-Sts': {
                 'type': 'enum', 'unit': 'Set Data trigger Selection.',
-                'value': self.OrbitAcqDataSel.Sum,
+                'value': self.OrbitAcqDataSel.A,
                 'enums': self.OrbitAcqDataSel._fields},
             'OrbitTrigDataThres-SP': {
                 'type': 'int', 'value': 1,
@@ -464,6 +478,11 @@ class OrbitCorrDevRings(OrbitCorrDevTLines, ConstRings):
     def __init__(self, acc):
         """Init method."""
         OrbitCorrDevTLines.__init__(self, acc)
+        evts = _HLTISearch.get_hl_trigger_allowed_evts(self.TRIGGER_COR_NAME)
+        vals = _cstiming.get_hl_trigger_database(self.TRIGGER_COR_NAME)
+        vals = tuple([vals['Src-Sel']['enums'].index(evt) for evt in evts])
+        self.OrbitCorExtEvtSrc = _get_namedtuple(
+                                        'OrbitCorExtEvtSrc', evts, vals)
         self.C0 = (496.8 if self.acc == 'BO' else 518.396)  # in meter
         self.T0 = self.C0 / 299792458 * 1000  # in milliseconds
 

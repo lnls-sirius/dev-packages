@@ -67,7 +67,8 @@ class Const(_cutil.Const):
         'DigTS': 'Evt09', 'DigSI': 'Evt10',
         'OrbSI': 'Evt11', 'CplSI': 'Evt12',
         'TunSI': 'Evt13', 'Study': 'Evt14',
-        'OrbBO': 'Evt15', 'PsMtn': 'Evt124'}
+        'OrbBO': 'Evt15', 'Cycle': 'Evt16',
+        'PsMtn': 'Evt124'}
     EvtLL2HLMap = {val: key for key, val in EvtHL2LLMap.items()}
 
     evt_ll_codes = list(range(64)) + [124]
@@ -306,7 +307,7 @@ def get_afc_database(prefix=None):
             'type': 'enum', 'value': 1,
             'enums': _et.DISCONN_CONN}
 
-    db[prefix+'Link-Mon'] = {
+    db[prefix+'LinkStatus-Mon'] = {
             'type': 'enum', 'value': 1,
             'enums': _et.UNLINK_LINK}
 
@@ -568,9 +569,9 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     db['Src-Sts'] = _dcopy(dic_)
     db['Src-Sel'] = dic_
 
-    dic_ = {'type': 'float', 'unit': 'ms', 'prec': 6,
-            'lolo': 0.000008, 'low': 0.000008, 'lolim': 0.000008,
-            'hilim': 500, 'high': 1000, 'hihi': 10000}
+    dic_ = {'type': 'float', 'unit': 'us', 'prec': 3,
+            'lolo': 0.008, 'low': 0.008, 'lolim': 0.008,
+            'hilim': 500000, 'high': 1000000, 'hihi': 10000000}
     dic_.update(trig_db['Duration'])
     db['Duration-RB'] = _dcopy(dic_)
     db['Duration-SP'] = dic_

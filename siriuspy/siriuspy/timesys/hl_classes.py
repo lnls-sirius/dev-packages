@@ -76,7 +76,7 @@ class _BaseHL(_Base):
 
     def read(self, prop_name, is_sp=False):
         fun = self._funs_combine_values.get(prop_name, self._combine_default)
-        vals = map(lambda x: x.read(prop_name, is_sp=is_sp), self._ll_objs)
+        vals = [x.read(prop_name, is_sp=is_sp) for x in self._ll_objs]
         return fun(vals)
 
     def readall(self, is_sp=False):

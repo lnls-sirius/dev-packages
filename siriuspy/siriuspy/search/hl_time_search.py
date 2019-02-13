@@ -78,42 +78,21 @@ class HLTimeSearch:
         """Return True if hl_trigger has property delayType."""
         cls._init()
         ll_chans = cls.get_ll_trigger_names(hl_trigger)
-        has_ = [_LLSearch.has_delay_type(name) for name in ll_chans]
-        if not any(has_):
-            return False
-        elif not all(has_):
-            raise Exception(
-                'Some triggers of ' + hl_trigger +
-                ' are connected to unsimiliar low level devices.')
-        return True
+        return all([_LLSearch.has_delay_type(name) for name in ll_chans])
 
     @classmethod
     def has_bypass_interlock(cls, hl_trigger):
         """Return True if hl_trigger has property delayType."""
         cls._init()
         ll_chans = cls.get_ll_trigger_names(hl_trigger)
-        has_ = [_LLSearch.has_bypass_interlock(name) for name in ll_chans]
-        if not any(has_):
-            return False
-        elif not all(has_):
-            raise Exception(
-                'Some triggers of ' + hl_trigger +
-                ' are connected to unsimiliar low level devices.')
-        return True
+        return all([_LLSearch.has_bypass_interlock(name) for name in ll_chans])
 
     @classmethod
     def has_clock(cls, hl_trigger):
         """Return True if hl_trigger can listen to Clocks from EVG."""
         cls._init()
         ll_chans = cls.get_ll_trigger_names(hl_trigger)
-        has_ = [_LLSearch.has_clock(name) for name in ll_chans]
-        if all(has_):
-            return True
-        elif any(has_):
-            raise Exception(
-                'Some triggers of ' + hl_trigger +
-                ' are connected to unsimiliar low level devices.')
-        return False
+        return all([_LLSearch.has_clock(name) for name in ll_chans])
 
     @classmethod
     def check_hl_triggers_consistency(cls):
