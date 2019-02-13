@@ -39,6 +39,7 @@ class _BaseLL(_Base):
         self._dict_functs_for_write = self._define_dict_for_write()
         self._dict_functs_for_update = self._define_dict_for_update()
         self._dict_functs_for_read = self._define_dict_for_read()
+        self._list_props_must_set = self._define_list_props_must_set()
         self._dict_convert_prop2pv = self._define_convertion_prop2pv()
         self._dict_convert_pv2prop = {
                 val: key for key, val in self._dict_convert_prop2pv.items()}
@@ -90,7 +91,12 @@ class _BaseLL(_Base):
     @property
     def connected(self):
         pvs = list(self._readpvs.values()) + list(self._writepvs.values())
-        return _reduce(_and_, map(lambda x: x.connected, pvs))
+        conn = True
+        for pv in pvs:
+            conn &= pv.connected
+            if not pv.connected:
+                _log.debug('NOT CONN: {0:s}'.format(pv.pvname))
+        return conn
 
     @property
     def locked(self):
@@ -99,6 +105,13 @@ class _BaseLL(_Base):
     @locked.setter
     def locked(self, value):
         self._locked = bool(value)
+        if not self._locked:
+            return
+        for prop in self._list_props_must_set:
+            val = self._config_ok_values.get(prop)
+            if val is None:
+                continue
+            self.write_ll(prop, val)
 
     def write(self, prop, value):
         """Set property values in low level IOCS.
@@ -115,20 +128,23 @@ class _BaseLL(_Base):
             return True
         elif isinstance(dic, dict) and not dic:
             return False  # dic is empty in case write was not successfull
-        self._config_ok_values.update(dic)
         for prop, val in dic.items():
-            pv = self._writepvs.get(prop)
-            if pv is None:
-                continue
-            # I decided not to wait put to finish when writing on LL PVs
-            # to make the high level IOC as fast as possible.
-            # To guarantee that the desired value will be written on the
-            # rather slow LL IOC, I put the setpoint in the verification
-            # queue.
-            self._put_on_pv(pv, val, wait=False)
-            pvname = self._dict_convert_prop2pv[prop]
-            self._queue.add_callback(self._lock_thread, pvname)
+            self.write_ll(prop, val)
         return True
+
+    def write_ll(self, prop, value):
+        self._config_ok_values[prop] = value
+        pv = self._writepvs.get(prop)
+        if pv is None:
+            return
+        # I decided not to wait put to finish when writing on LL PVs
+        # to make the high level IOC as fast as possible.
+        # To guarantee that the desired value will be written on the
+        # rather slow LL IOC, I put the setpoint in the verification
+        # queue.
+        self._put_on_pv(pv, value, wait=False)
+        pvname = self._dict_convert_prop2pv[prop]
+        self._queue.add_callback(self._lock_thread, pvname)
 
     def read(self, prop, is_sp=False):
         """Read HL properties from LL IOCs and return the value. """
@@ -145,6 +161,14 @@ class _BaseLL(_Base):
         self._base_freq = self._rf_freq / self._rf_div
         self._base_del = 1/self._base_freq
         self._rf_del = self._base_del / self._rf_div / 5
+
+    def _define_list_props_must_set(self):
+        """Define a list for properties that must be set.
+
+        When this object starts locking the low level pvs some properties must be set riht away in order to guarantee the consistency of the
+        object.
+        """
+        return list()
 
     def _define_convertion_prop2pv(self):
         """Define a dictionary for convertion of names.
@@ -341,12 +365,20 @@ class _EVROUT(_BaseLL):
         if self._foutexist:
             self._config_ok_values['FoutDevEnbl'] = 1
         self._config_ok_values['EVGDevEnbl'] = 1
+        if self.channel.propty.startswith('OUT'):
+            intrg = _LLTimeSearch.get_channel_internal_trigger_pvname(
+                                                        self.channel)
+            intrg = int(intrg.propty[-2:])  # get internal trigger number
+            self._config_ok_values['SrcTrig'] = intrg
 
     def write(self, prop, value):
         # keep this info for recalculating Width whenever necessary
         if prop == 'Duration':
             self._duration = value
         return super().write(prop, value)
+
+    def _define_list_props_must_set(self):
+        return ['DevEnbl', 'FoutDevEnbl', 'EVGDevEnbl', 'SrcTrig']
 
     def _define_convertion_prop2pv(self):
         intlb = _LLTimeSearch.get_channel_internal_trigger_pvname(self.channel)
