@@ -12,8 +12,8 @@ install-services:
 	  cp -rf $$ser /etc/systemd/system/ ; \
 	done
 	systemctl daemon-reload
-	mkdir -p /home/fac/sirius-iocs
-	chown -R fac.fac /home/fac/sirius-iocs
+	mkdir -p /home/sirius/iocs
+	chown -R sirius.sirius /home/sirius/iocs
 
 stop-services:
 	@echo " --- stoping services ---"
