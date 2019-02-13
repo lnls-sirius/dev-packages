@@ -102,8 +102,8 @@ def get_bpm_database(prefix=''):
     db.update(get_monit_database())
 
     data_names = {
-        'GEN': ['A', 'B', 'C', 'D', 'Q', 'Sum', 'X', 'Y'],
-        'PM': ['A', 'B', 'C', 'D', 'Q', 'Sum', 'X', 'Y'],
+        'GEN': ['A', 'B', 'C', 'D', 'Q', 'SUM', 'X', 'Y'],
+        'PM': ['A', 'B', 'C', 'D', 'Q', 'SUM', 'X', 'Y'],
         'SP': ['A', 'B', 'C', 'D'],
         }
     data_db = {

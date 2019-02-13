@@ -167,10 +167,10 @@ class _OpModeSimState:
         """Turn ps on."""
         ps_status = variables[self._c.V_PS_STATUS]
         psc_status = _PSCStatus(ps_status=ps_status)
-        if psc_status.ioc_pwrstate == _PSConst.PwrState.Off:
+        if psc_status.ioc_pwrstate == _PSConst.PwrStateSel.Off:
             # Set PSController status
             value_init = self._get_init_value()
-            psc_status.ioc_pwrstate = _PSConst.PwrState.On
+            psc_status.ioc_pwrstate = _PSConst.PwrStateSel.On
             psc_status.ioc_opmode = _PSConst.OpMode.SlowRef
             variables[self._c.V_PS_STATUS] = psc_status.ps_status
             # Set currents to 0
@@ -183,10 +183,10 @@ class _OpModeSimState:
         """Turn ps off."""
         ps_status = variables[self._c.V_PS_STATUS]
         psc_status = _PSCStatus(ps_status=ps_status)
-        if psc_status.ioc_pwrstate == _PSConst.PwrState.On:
+        if psc_status.ioc_pwrstate == _PSConst.PwrStateSel.On:
             value_init = self._get_init_value()
             # Set PSController status
-            psc_status.ioc_pwrstate = _PSConst.PwrState.Off
+            psc_status.ioc_pwrstate = _PSConst.PwrStateSel.Off
             variables[self._c.V_PS_STATUS] = psc_status.ps_status
             # Set currents to 0
             variables[self._c.V_PS_SETPOINT] = value_init

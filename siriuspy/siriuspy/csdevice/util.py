@@ -10,7 +10,7 @@ class ETypes:
     OFF_ON = ('Off', 'On')
     CLOSE_OPEN = ('Close', 'Open')
     DISCONN_CONN = ('Disconnected', 'Connected')
-    FIXED_INCR = ('Fixed', 'Incr')
+    FIXED_INCR = ('Incr', 'Fixed')
     NORM_INV = ('Normal', 'Inverse')
     UNLINK_LINK = ('Unlink', 'Link')
 
