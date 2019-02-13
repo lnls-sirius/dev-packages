@@ -616,12 +616,12 @@ class _EVROUT(_BaseLL):
         if value is not None:
             dic_[prop] = value
         return {
-            'Duration': 2*dic_['Width']*self._base_del*dic_['NrPulses']*1e3,
+            'Duration': 2*dic_['Width']*self._base_del*dic_['NrPulses']*1e6,
             'NrPulses': dic_['NrPulses'],
             }
 
     def _set_duration(self, value, pul=None):
-        value *= 1e-3  # ms
+        value *= 1e-6  # us
         if pul is None:
             pul = self._config_ok_values.get('NrPulses')
         if pul is None:

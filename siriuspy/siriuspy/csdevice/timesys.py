@@ -569,9 +569,9 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     db['Src-Sts'] = _dcopy(dic_)
     db['Src-Sel'] = dic_
 
-    dic_ = {'type': 'float', 'unit': 'ms', 'prec': 6,
-            'lolo': 0.000008, 'low': 0.000008, 'lolim': 0.000008,
-            'hilim': 500, 'high': 1000, 'hihi': 10000}
+    dic_ = {'type': 'float', 'unit': 'us', 'prec': 3,
+            'lolo': 0.008, 'low': 0.008, 'lolim': 0.008,
+            'hilim': 500000, 'high': 1000000, 'hihi': 10000000}
     dic_.update(trig_db['Duration'])
     db['Duration-RB'] = _dcopy(dic_)
     db['Duration-SP'] = dic_
