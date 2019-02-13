@@ -118,6 +118,12 @@ def beaglebone_freqs_mapping(timeout=_timeout):
     return read_url(url, timeout=timeout)
 
 
+def beaglebone_ip_list(timeout=_timeout):
+    """Return the beaglebone Black IP list."""
+    url = _bbb_folder + 'ip-list.txt'
+    return read_url(url, timeout=timeout)
+
+
 def bbb_udc_mapping(timeout=_timeout):
     """Read beaglebone-udc mapping."""
     url = _bbb_folder + 'beaglebone-udc.txt'
