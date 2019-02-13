@@ -3,10 +3,10 @@ Description=Soft IOC for Low Level Timing Simulation
 After=multi-user.target
 
 [Service]
-Group=fac
-User=fac
+Group=sirius
+User=sirius
 Type=simple
-WorkingDirectory=/home/fac/sirius-iocs
+WorkingDirectory=/home/sirius/iocs
 StandardOutput=syslog
 StandardError=syslog
 ExecStartPre=/bin/bash --login -c 'env > /tmp/.magic-environment-file'
