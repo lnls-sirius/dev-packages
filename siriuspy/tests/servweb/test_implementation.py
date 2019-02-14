@@ -73,6 +73,7 @@ class TestServWeb(unittest.TestCase):
         'ps_psmodels_read',
         'pu_psmodels_read',
         'beaglebone_freqs_mapping',
+        'beaglebone_ip_list',
         'bbb_udc_mapping',
         'udc_ps_mapping',
         'crates_mapping',
@@ -233,6 +234,11 @@ class TestServWeb(unittest.TestCase):
 
     def test_beaglebone_freq_mapping(self, mock_read):
         """Test beaglebone_freqs_mapping."""
+        # TODO: implement!
+        pass
+
+    def test_beaglebone_ip_list(self, mock_read):
+        """Test beaglebone_ip_list."""
         # TODO: implement!
         pass
 

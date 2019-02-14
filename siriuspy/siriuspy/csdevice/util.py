@@ -1,6 +1,12 @@
 """Control system Device Util Module."""
 
-from siriuspy.util import get_namedtuple as _get_namedtuple
+import copy as _copy
+from siriuspy import util as _util
+from siriuspy.servweb import beaglebone_ip_list as _bbb_ip_list
+from siriuspy.search.ps_search import PSSearch as _PSSearch
+
+
+_device_2_ioc_ip_dict = None
 
 
 class ETypes:
@@ -21,15 +27,15 @@ _et = ETypes  # syntactic sugar
 class Const:
     """Const class defining power supply constants."""
 
-    DsblEnbl = _get_namedtuple('DsblEnbl', _et.DSBL_ENBL)
-    OffOn = _get_namedtuple('OffOn', _et.OFF_ON)
-    CloseOpen = _get_namedtuple('CloseOpen', _et.CLOSE_OPEN)
-    DisconnConn = _get_namedtuple('DisconnConn', _et.DISCONN_CONN)
+    DsblEnbl = _util.get_namedtuple('DsblEnbl', _et.DSBL_ENBL)
+    OffOn = _util.get_namedtuple('OffOn', _et.OFF_ON)
+    CloseOpen = _util.get_namedtuple('CloseOpen', _et.CLOSE_OPEN)
+    DisconnConn = _util.get_namedtuple('DisconnConn', _et.DISCONN_CONN)
 
     @staticmethod
     def register(name, field_names, values=None):
         """Register namedtuple."""
-        return _get_namedtuple(name, field_names, values)
+        return _util.get_namedtuple(name, field_names, values)
 
 
 def add_pvslist_cte(database, prefix=''):
@@ -44,3 +50,31 @@ def add_pvslist_cte(database, prefix=''):
         'value': val,
     }
     return database
+
+
+def get_device_2_ioc_ip(reload=False):
+    """Return a dict of ioc IP numbers for csdevices."""
+    if _device_2_ioc_ip_dict is None or reload is True:
+        _reload_device_2_ioc_ip()
+    return _copy.deepcopy(_device_2_ioc_ip_dict)
+
+
+def _reload_device_2_ioc_ip():
+    global _device_2_ioc_ip_dict
+    _device_2_ioc_ip_dict = dict()
+
+    # beaglebone IPs
+    text, _ = _util.read_text_data(_bbb_ip_list())
+    for item in text:
+        if len(item) == 2:
+            bbbname, ip = item
+            _device_2_ioc_ip_dict[bbbname] = ip
+
+    # power supplies
+    dic = dict()
+    for bbbname, ip in _device_2_ioc_ip_dict.items():
+        bsmps = _PSSearch.conv_bbbname_2_bsmps(bbbname)
+        for bsmp in bsmps:
+            psname, _ = bsmp
+            dic[psname] = ip
+    _device_2_ioc_ip_dict.update(dic)
