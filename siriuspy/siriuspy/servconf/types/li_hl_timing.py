@@ -21,8 +21,13 @@ def get_dict():
 _template_dict = {
     'pvs': [
         ['RA-RaMO:TI-EVG:LinacMode-Sel', 0, 0.0],
+        ['RA-RaMO:TI-EVG:DigLIMode-Sel', 0, 0.0],
+
         ['RA-RaMO:TI-EVG:LinacDelayType-Sel', 0, 0.0],
+        ['RA-RaMO:TI-EVG:DigLIDelayType-Sel', 0, 0.0],
+
         ['RA-RaMO:TI-EVG:LinacDelay-SP', 0.0, 0.0],
+        ['RA-RaMO:TI-EVG:DigLIDelay-SP', 0.0, 0.0],
 
         ['LI-01:TI-EGun-MultBun:State-Sel', 0, 0.0],
         ['LI-01:TI-EGun-SglBun:State-Sel', 0, 0.0],
