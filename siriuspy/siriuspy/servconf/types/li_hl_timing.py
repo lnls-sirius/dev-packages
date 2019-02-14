@@ -1,4 +1,4 @@
-"""LI power supply current setpoint configuration."""
+"""LI High Level Timing configuration."""
 from copy import deepcopy as _dcopy
 
 
