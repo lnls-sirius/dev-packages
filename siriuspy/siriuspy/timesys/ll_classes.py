@@ -332,8 +332,7 @@ class LLEvent(_BaseLL):
 
     def _set_delay(self, value):
         value *= _DELAY_UNIT_CONV  # us
-        n = int(value // self._base_del)
-        return {'Delay': n}
+        return {'Delay': round(value / self._base_del)}
 
     def _get_delay(self, is_sp, val=None):
         if val is None:
@@ -653,7 +652,7 @@ class _EVROUT(_BaseLL):
             }
 
     def _set_duration(self, value, pul=None):
-        value *= 1e-6  # us
+        value *= _DELAY_UNIT_CONV  # us
         if pul is None:
             pul = self._config_ok_values.get('NrPulses')
         if pul is None:
@@ -694,9 +693,8 @@ class _EVROTP(_EVROUT):
         return {'Delay': val * self._base_del * 1e6}
 
     def _set_delay(self, value):
-        value *= _DELAY_UNIT_CONV
-        delay1 = int(value // self._base_del)
-        return {'Delay': delay1}
+        value *= _DELAY_UNIT_CONV  # us
+        return {'Delay': round(value / self._base_del)}
 
     def _process_source(self, prop, is_sp, val=None):
         if val is None:
