@@ -588,7 +588,7 @@ class _EVROUT(_BaseLL):
     def _process_src_trig(self, src_trig, is_sp):
         invalid = len(self._source_enums)-1  # Invalid option
         intrg = _LLTimeSearch.get_channel_internal_trigger_pvname(self.channel)
-        intrg = int(intrg.propty[-2])  # get internal trigger number for EVR
+        intrg = int(intrg.propty[-2:])  # get internal trigger number for EVR
         if src_trig != intrg:
             return {'Src': invalid}
 
