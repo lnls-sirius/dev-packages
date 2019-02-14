@@ -57,8 +57,6 @@ class TestImplementation(unittest.TestCase):
         self.assertRaises(TypeError, namesys.join_name,
                           sec='SI')
         self.assertRaises(TypeError, namesys.join_name,
-                          sec='SI', sub='Fam')
-        self.assertRaises(TypeError, namesys.join_name,
                           sec='SI', sub='Fam', dis='PS')
         name = namesys.join_name(sec='SI', sub='Fam', dis='PS', dev='QDA')
         self.assertEqual(name, 'SI-Fam:PS-QDA')
@@ -94,7 +92,6 @@ class TestImplementation(unittest.TestCase):
         self.assertEqual(d['propty'], 'PwrCurrent-SP')
         self.assertEqual(d['field'], 'AVG')
         # one field
-        self.assertRaises(IndexError, namesys.split_name, pvname='A')
         self.assertRaises(IndexError, namesys.split_name, pvname='A:B')
         self.assertRaises(IndexError, namesys.split_name, pvname='A:B:C')
         self.assertRaises(IndexError, namesys.split_name, pvname='A:B-C:D')
