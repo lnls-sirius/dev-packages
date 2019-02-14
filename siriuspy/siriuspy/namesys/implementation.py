@@ -81,8 +81,18 @@ def join_name(**kwargs):
     return SiriusPVName(name)
 
 
-def split_name(pvname, elements='propty'):
-    """Return dict with PV name split into fields."""
+def split_name(pvname, elements=None):
+    """Return dict with PV name split into fields.
+
+    Parameters
+    ----------
+    pvname [str] : a complete pvname or a valid part of it.
+    elements [None, 'propty', 'sec-sub', 'dis-dev'] : if pvname is not a
+        complete name, 'elements' says which part of pvname it corresponds to.
+    """
+    if not elements:
+        elements = 'propty'
+
     # empty dictionary
     dic_ = {attr: '' for attr in _attrs}
     # strip PV name
@@ -169,7 +179,7 @@ def get_pair_sprb(pv_propty):
 class SiriusPVName(str):
     """Sirius PV Name Class."""
 
-    def __new__(cls, pv_name, elements='propty'):
+    def __new__(cls, pv_name, elements=None):
         """Implement new method."""
         name = split_name(pv_name, elements)
         obj = super().__new__(cls, pv_name)
