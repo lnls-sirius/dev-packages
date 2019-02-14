@@ -1123,7 +1123,7 @@ TB-01:MA-CH-1                TB-01:PS-CH-1
 TB-01:MA-CH-2                TB-01:PS-CH-2
 TB-02:MA-CH-1                TB-02:PS-CH-1
 TB-02:MA-CH-2                TB-02:PS-CH-2
-TB-03:MA-CH                  TB-03:PS-CH
+TB-04:MA-CH                  TB-04:PS-CH
 
 # --- tb-corrector-cv ---
 TB-01:MA-CV-1                TB-01:PS-CV-1

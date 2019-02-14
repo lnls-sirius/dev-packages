@@ -1,7 +1,7 @@
-# This file was generated automatically from the data of the 
+# This file was generated automatically from the data of the
 # models of the accelerators in the pymodels repository by the
 # function:
-    siriuspy.optics.lattice_survey.generate_model_static_table.
+#    siriuspy.optics.lattice_survey.generate_model_static_table.
 #
 # If any model change, please, run the script
 # again and copy the generated file to replace this one.
@@ -1453,7 +1453,7 @@ TB-02:MA-QD2B              11.6812
 TB-02:MA-QF2A               5.3474
 TB-02:MA-QF2B              11.3112
 TB-03:MA-B                 16.3216
-TB-03:MA-CH                15.9712
+TB-04:MA-CH                15.9712
 TB-03:MA-QD3               15.5912
 TB-03:MA-QF3               15.2712
 TB-04:MA-CV-1              16.6721
