@@ -5,11 +5,10 @@ import epics as _epics
 
 
 import numpy as _np
-from siriuspy import envars as _envars
-from siriuspy.namesys.implementation import get_pair_sprb as _get_pair_sprb
-
-
-_prefix = _envars.vaca_prefix
+from siriuspy.envars import vaca_prefix as _prefix
+from siriuspy.namesys.implementation import \
+    SiriusPVName as _SiriusPVName, \
+    get_pair_sprb as _get_pair_sprb
 
 
 class EpicsProperty:
@@ -18,7 +17,17 @@ class EpicsProperty:
     def __init__(self, name, prefix=_prefix, default_value=None,
                  connection_callback=None, callback=None):
         """Init."""
-        self._name = name
+        try:
+            self._name = _SiriusPVName(name)
+            try:
+                [self._pvname_sp, self._pvname_rb] = _get_pair_sprb(self._name)
+            except TypeError:
+                self._pvname_sp = name
+                self._pvname_rb = name
+        except Exception:
+            self._name = name
+            self._pvname_sp = name
+            self._pvname_rb = name
         self._prefix = prefix
         self._default = default_value
 
@@ -27,12 +36,6 @@ class EpicsProperty:
         self._callback = callback
         callbacks = {'connection_callback': self._pv_connection_callback,
                      'callback': self._pv_callback}
-
-        try:
-            [self._pvname_sp, self._pvname_rb] = _get_pair_sprb(name)
-        except NameError:
-            self._pvname_sp = name
-            self._pvname_rb = name
 
         self._pv_sp = _epics.PV(self._prefix + self._pvname_sp, **callbacks)
         self._pv_rb = _epics.PV(self._prefix + self._pvname_rb, **callbacks)
@@ -50,12 +53,18 @@ class EpicsProperty:
     @property
     def suffix_sp(self):
         """PV SP suffix."""
-        return self._pvname_sp.split('-')[-1]
+        try:
+            return self._pvname_sp.propty_suffix
+        except Exception:
+            return self._pvname_sp
 
     @property
     def suffix_rb(self):
         """PV RB suffix."""
-        return self._pvname_rb.split('-')[-1]
+        try:
+            return self._pvname_rb.propty_suffix
+        except Exception:
+            return self._pvname_rb
 
     @property
     def pvname_sp(self):
