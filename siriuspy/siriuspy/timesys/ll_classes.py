@@ -1,8 +1,7 @@
 """Define the low level classes which will connect to Timing Devices IOC."""
 import time as _time
 import re as _re
-from functools import partial as _partial, reduce as _reduce
-from operator import and_ as _and_
+from functools import partial as _partial
 import logging as _log
 import epics as _epics
 from siriuspy.util import update_bit as _update_bit, get_bit as _get_bit
