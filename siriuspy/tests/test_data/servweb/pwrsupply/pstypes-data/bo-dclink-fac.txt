@@ -1,5 +1,0 @@
-# List of power supplies of type ibo-dclink-fac
-# =============================================
-
-BO-Glob:PS-DCLinkFAC
-

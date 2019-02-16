@@ -1,5 +1,45 @@
-# List of power supplies of type ibo-dclink-fac
+# List of power supplies of type as-dclink-fbp
 # =============================================
 
-AS-Glob:PS-DCLinkFBP-1
-AS-Glob:PS-DCLinkFBP-2
+LA-RaPS06:PS-DCLink-AS1
+LA-RaPS06:PS-DCLink-AS2
+IA-01RaCtrl:PS-DCLink-AS1
+IA-01RaCtrl:PS-DCLink-AS2
+IA-02RaCtrl:PS-DCLink-AS1
+IA-02RaCtrl:PS-DCLink-AS2
+IA-03RaCtrl:PS-DCLink-AS1
+IA-03RaCtrl:PS-DCLink-AS2
+IA-04RaCtrl:PS-DCLink-AS1
+IA-04RaCtrl:PS-DCLink-AS2
+IA-05RaCtrl:PS-DCLink-AS1
+IA-05RaCtrl:PS-DCLink-AS2
+IA-06RaCtrl:PS-DCLink-AS1
+IA-06RaCtrl:PS-DCLink-AS2
+IA-07RaCtrl:PS-DCLink-AS1
+IA-07RaCtrl:PS-DCLink-AS2
+IA-08RaCtrl:PS-DCLink-AS1
+IA-08RaCtrl:PS-DCLink-AS2
+IA-09RaCtrl:PS-DCLink-AS1
+IA-09RaCtrl:PS-DCLink-AS2
+IA-10RaCtrl:PS-DCLink-AS1
+IA-10RaCtrl:PS-DCLink-AS2
+IA-11RaCtrl:PS-DCLink-AS1
+IA-11RaCtrl:PS-DCLink-AS2
+IA-12RaCtrl:PS-DCLink-AS1
+IA-12RaCtrl:PS-DCLink-AS2
+IA-13RaCtrl:PS-DCLink-AS1
+IA-13RaCtrl:PS-DCLink-AS2
+IA-14RaCtrl:PS-DCLink-AS1
+IA-14RaCtrl:PS-DCLink-AS2
+IA-15RaCtrl:PS-DCLink-AS1
+IA-15RaCtrl:PS-DCLink-AS2
+IA-16RaCtrl:PS-DCLink-AS1
+IA-16RaCtrl:PS-DCLink-AS2
+IA-17RaCtrl:PS-DCLink-AS1
+IA-17RaCtrl:PS-DCLink-AS2
+IA-18RaCtrl:PS-DCLink-AS1
+IA-18RaCtrl:PS-DCLink-AS2
+#IA-19RaCtrl:PS-DCLink-AS1
+#IA-19RaCtrl:PS-DCLink-AS2
+IA-20RaCtrl:PS-DCLink-AS1
+IA-20RaCtrl:PS-DCLink-AS2

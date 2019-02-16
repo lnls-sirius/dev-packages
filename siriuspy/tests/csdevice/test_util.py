@@ -9,7 +9,8 @@ import siriuspy.csdevice.util as cutil
 public_interface = (
     'ETypes',
     'Const',
-    'add_pvslist_cte'
+    'add_pvslist_cte',
+    'get_device_2_ioc_ip',
 )
 
 
@@ -30,3 +31,8 @@ class TestUtil(unittest.TestCase):
         self.assertIn('Properties-Cte', db)
         self.assertEqual(db['Properties-Cte']['count'], 18)
         self.assertEqual(db['Properties-Cte']['value'], 'Properties-Cte a b')
+
+    def test_get_device_2_ioc_ip(self):
+        """Test get_device_2_ioc_ip."""
+        # TODO: implement!
+        pass
