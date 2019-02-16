@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-WEB_PATH=$LNLS_SIRIUS/control-system-constants
+WEB_PATH=$LNLS_SIRIUS/repos/control-system-constants
 PS_PATH=$WEB_PATH/pwrsupply
 MA_PATH=$WEB_PATH/magnet
 

@@ -28,45 +28,43 @@ tb-dipole-b-fam              monopolar        dipole
 tb-injseptum                 monopolar        corrector-horizontal
 li-solenoid-fam              monopolar        solenoid
 li-solenoid                  monopolar        solenoid
-li-spect                     monopolar        dipole
 
-si-quadrupole-q14-trim       bipolar        quadrupole
-si-quadrupole-q20-trim       bipolar        quadrupole
-si-quadrupole-q30-trim       bipolar        quadrupole
-si-quadrupole-qs             bipolar        quadrupole-skew
-si-sextupole-s15-ch          bipolar        corrector-horizontal
-si-sextupole-s15-cv          bipolar        corrector-vertical
-si-sextupole-s15-qs          bipolar        quadrupole-skew
-si-corrector-cv              bipolar        corrector-vertical
-si-corrector-fch             bipolar        corrector-horizontal
-si-corrector-fcv             bipolar        corrector-vertical
-si-hping                     bipolar        corrector-horizontal
-si-vping                     bipolar        corrector-vertical
-bo-quadrupole-qs             bipolar        quadrupole-skew
-bo-corrector-ch              bipolar        corrector-horizontal
-bo-corrector-cv              bipolar        corrector-vertical
-ts-quadrupole-q14            bipolar        quadrupole
-ts-quadrupole-q20            bipolar        quadrupole
-ts-corrector-ch              bipolar        corrector-horizontal
-ts-corrector-cv              bipolar        corrector-vertical
-tb-quadrupole                bipolar        quadrupole
-tb-corrector-ch              bipolar        corrector-horizontal
-tb-corrector-cv              bipolar        corrector-vertical
-li-quadrupole-long           bipolar        quadrupole
-li-quadrupole-short          bipolar        quadrupole
-li-lens                      bipolar        lens
-li-corrector-ch-long         bipolar        corrector-horizontal
-li-corrector-cv-long         bipolar        corrector-vertical
-li-corrector-ch-short        bipolar        corrector-horizontal
-li-corrector-cv-short        bipolar        corrector-vertical
+li-spect-45deg               bipolar          dipole
+li-spect-15deg               bipolar          dipole
+si-quadrupole-q14-trim       bipolar          quadrupole
+si-quadrupole-q20-trim       bipolar          quadrupole
+si-quadrupole-q30-trim       bipolar          quadrupole
+si-quadrupole-qs             bipolar          quadrupole-skew
+si-sextupole-s15-ch          bipolar          corrector-horizontal
+si-sextupole-s15-cv          bipolar          corrector-vertical
+si-sextupole-s15-qs          bipolar          quadrupole-skew
+si-corrector-cv              bipolar          corrector-vertical
+si-corrector-fch             bipolar          corrector-horizontal
+si-corrector-fcv             bipolar          corrector-vertical
+si-hping                     bipolar          corrector-horizontal
+si-vping                     bipolar          corrector-vertical
+bo-quadrupole-qs             bipolar          quadrupole-skew
+bo-corrector-ch              bipolar          corrector-horizontal
+bo-corrector-cv              bipolar          corrector-vertical
+ts-quadrupole-q14            bipolar          quadrupole
+ts-quadrupole-q20            bipolar          quadrupole
+ts-corrector-ch              bipolar          corrector-horizontal
+ts-corrector-cv              bipolar          corrector-vertical
+tb-quadrupole                bipolar          quadrupole
+tb-corrector-ch              bipolar          corrector-horizontal
+tb-corrector-cv              bipolar          corrector-vertical
+li-quadrupole-long           bipolar          quadrupole
+li-quadrupole-short          bipolar          quadrupole
+li-lens                      bipolar          lens
+li-corrector-ch-long         bipolar          corrector-horizontal
+li-corrector-cv-long         bipolar          corrector-vertical
+li-corrector-ch-short        bipolar          corrector-horizontal
+li-corrector-cv-short        bipolar          corrector-vertical
 
 
 # DCLinks
 # -------
 
-tb-dclink-fbp                none            none
-bo-dclink-fac                none            none
 bo-dclink-fac-2s             none            none
 bo-dclink-fac-2p4s           none            none
 as-dclink-fbp                none            none
-si-dclink-fbp                none            none
