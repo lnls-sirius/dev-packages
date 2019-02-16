@@ -1,0 +1,251 @@
+# Sirius Power Supplies Controls System - BeagleBoneBlack IP Mapping
+
+################################################################################
+################################# Booster ######################################
+################################################################################
+
+# --- Dipoles
+PA-RaPSE05:CO-PSCtrl-BO
+PA-RaPSF05:CO-PSCtrl-BO
+
+# --- QF, QD, SF, SD (FAC)
+PA-RaPSC03:CO-PSCtrl-BO1
+PA-RaPSC03:CO-PSCtrl-BO2
+PA-RaPSC03:CO-PSCtrl-BO3
+PA-RaPSC03:CO-PSCtrl-BO4
+
+# --- BO Correctores and Skew quadrupole
+IA-01RaCtrl:CO-PSCtrl-BO    10.128.101.105
+IA-02RaCtrl:CO-PSCtrl-BO    10.128.102.105
+IA-04RaCtrl:CO-PSCtrl-BO    10.128.104.105
+IA-05RaCtrl:CO-PSCtrl-BO    10.128.105.105
+IA-07RaCtrl:CO-PSCtrl-BO    10.128.107.105
+IA-08RaCtrl:CO-PSCtrl-BO    10.128.108.105
+IA-10RaCtrl:CO-PSCtrl-BO    10.128.110.105
+IA-11RaCtrl:CO-PSCtrl-BO    10.128.111.105
+IA-13RaCtrl:CO-PSCtrl-BO    10.128.113.105
+IA-14RaCtrl:CO-PSCtrl-BO    10.128.114.105
+IA-16RaCtrl:CO-PSCtrl-BO    10.128.116.105
+IA-17RaCtrl:CO-PSCtrl-BO    10.128.117.105
+IA-20RaCtrl:CO-PSCtrl-BO    10.128.120.105
+
+
+################################################################################
+############################# Transport Lines ##################################
+################################################################################
+# --- TB Dipole
+LA-RaPS02:CO-PSCtrl-TB      10.128.121.101
+
+# --- TB Quads
+LA-RaCtrl:CO-PSCtrl-TB1     10.128.121.103
+
+# --- TB Correctors
+LA-RaCtrl:CO-PSCtrl-TB2     10.128.121.104
+
+# --- TS Dipole
+LA-RaPS02:CO-PSCtrl-TS
+
+# --- TS Quads
+LA-RaPS04:CO-PSCtrl-TS1
+LA-RaPS04:CO-PSCtrl-TS2
+
+# --- TS Correctors
+LA-RaCtrl:CO-PSCtrl-TS1
+
+# --- TB/TS DCLinks
+LA-RaCtrl:CO-DCLinkCtrl     10.128.121.102
+
+
+################################################################################
+############################## SI/BO DCLinks ###################################
+################################################################################
+IA-01RaCtrl:CO-DCLinkCtrl   10.128.101.104
+IA-02RaCtrl:CO-DCLinkCtrl   10.128.102.104
+IA-03RaCtrl:CO-DCLinkCtrl
+IA-04RaCtrl:CO-DCLinkCtrl   10.128.104.104
+IA-05RaCtrl:CO-DCLinkCtrl   10.128.105.104
+IA-06RaCtrl:CO-DCLinkCtrl
+IA-07RaCtrl:CO-DCLinkCtrl   10.128.107.104
+IA-08RaCtrl:CO-DCLinkCtrl   10.128.108.104
+IA-09RaCtrl:CO-DCLinkCtrl
+IA-10RaCtrl:CO-DCLinkCtrl   10.128.110.104
+IA-11RaCtrl:CO-DCLinkCtrl   10.128.111.104
+IA-12RaCtrl:CO-DCLinkCtrl
+IA-13RaCtrl:CO-DCLinkCtrl   10.128.113.104
+IA-14RaCtrl:CO-DCLinkCtrl   10.128.114.104
+IA-15RaCtrl:CO-DCLinkCtrl
+IA-16RaCtrl:CO-DCLinkCtrl   10.128.116.104
+IA-17RaCtrl:CO-DCLinkCtrl   10.128.117.104
+IA-18RaCtrl:CO-DCLinkCtrl
+IA-19RaCtrl:CO-DCLinkCtrl
+IA-20RaCtrl:CO-DCLinkCtrl   10.128.120.104
+
+
+################################################################################
+############################ Storage Ring ######################################
+################################################################################
+# --- Dipoles
+PA-RaPSD04:CO-PSCtrl-SI1
+PA-RaPSD04:CO-PSCtrl-SI2
+
+# --- Quadrupoles
+PA-RaPSA02:CO-PSCtrl-SI1
+PA-RaPSA02:CO-PSCtrl-SI2
+PA-RaPSA05:CO-PSCtrl-SI1
+PA-RaPSA05:CO-PSCtrl-SI2
+
+# --- Sextupoles
+PA-RaPSB02:CO-PSCtrl-SI1
+PA-RaPSB02:CO-PSCtrl-SI2
+PA-RaPSB06:CO-PSCtrl-SI1
+PA-RaPSB06:CO-PSCtrl-SI2
+PA-RaPSB09:CO-PSCtrl-SI1
+PA-RaPSB09:CO-PSCtrl-SI2
+
+# --- Individual PSs (FBP)
+IA-01RaCtrl:CO-PSCtrl-SI1
+IA-02RaCtrl:CO-PSCtrl-SI1
+IA-03RaCtrl:CO-PSCtrl-SI1
+IA-04RaCtrl:CO-PSCtrl-SI1
+IA-05RaCtrl:CO-PSCtrl-SI1
+IA-06RaCtrl:CO-PSCtrl-SI1
+IA-07RaCtrl:CO-PSCtrl-SI1
+IA-08RaCtrl:CO-PSCtrl-SI1
+IA-09RaCtrl:CO-PSCtrl-SI1
+IA-10RaCtrl:CO-PSCtrl-SI1
+IA-11RaCtrl:CO-PSCtrl-SI1
+IA-12RaCtrl:CO-PSCtrl-SI1
+IA-13RaCtrl:CO-PSCtrl-SI1
+IA-14RaCtrl:CO-PSCtrl-SI1
+IA-15RaCtrl:CO-PSCtrl-SI1
+IA-16RaCtrl:CO-PSCtrl-SI1
+IA-17RaCtrl:CO-PSCtrl-SI1
+IA-18RaCtrl:CO-PSCtrl-SI1
+IA-19RaCtrl:CO-PSCtrl-SI1
+IA-20RaCtrl:CO-PSCtrl-SI1
+
+IA-01RaCtrl:CO-PSCtrl-SI2
+IA-02RaCtrl:CO-PSCtrl-SI2
+IA-03RaCtrl:CO-PSCtrl-SI2
+IA-04RaCtrl:CO-PSCtrl-SI2
+IA-05RaCtrl:CO-PSCtrl-SI2
+IA-06RaCtrl:CO-PSCtrl-SI2
+IA-07RaCtrl:CO-PSCtrl-SI2
+IA-08RaCtrl:CO-PSCtrl-SI2
+IA-09RaCtrl:CO-PSCtrl-SI2
+IA-10RaCtrl:CO-PSCtrl-SI2
+IA-11RaCtrl:CO-PSCtrl-SI2
+IA-12RaCtrl:CO-PSCtrl-SI2
+IA-13RaCtrl:CO-PSCtrl-SI2
+IA-14RaCtrl:CO-PSCtrl-SI2
+IA-15RaCtrl:CO-PSCtrl-SI2
+IA-16RaCtrl:CO-PSCtrl-SI2
+IA-17RaCtrl:CO-PSCtrl-SI2
+IA-18RaCtrl:CO-PSCtrl-SI2
+IA-19RaCtrl:CO-PSCtrl-SI2
+IA-20RaCtrl:CO-PSCtrl-SI2
+
+IA-01RaCtrl:CO-PSCtrl-SI3
+IA-02RaCtrl:CO-PSCtrl-SI3
+IA-03RaCtrl:CO-PSCtrl-SI3
+IA-04RaCtrl:CO-PSCtrl-SI3
+IA-05RaCtrl:CO-PSCtrl-SI3
+IA-06RaCtrl:CO-PSCtrl-SI3
+IA-07RaCtrl:CO-PSCtrl-SI3
+IA-08RaCtrl:CO-PSCtrl-SI3
+IA-09RaCtrl:CO-PSCtrl-SI3
+IA-10RaCtrl:CO-PSCtrl-SI3
+IA-11RaCtrl:CO-PSCtrl-SI3
+IA-12RaCtrl:CO-PSCtrl-SI3
+IA-13RaCtrl:CO-PSCtrl-SI3
+IA-14RaCtrl:CO-PSCtrl-SI3
+IA-15RaCtrl:CO-PSCtrl-SI3
+IA-16RaCtrl:CO-PSCtrl-SI3
+IA-17RaCtrl:CO-PSCtrl-SI3
+IA-18RaCtrl:CO-PSCtrl-SI3
+IA-19RaCtrl:CO-PSCtrl-SI3
+IA-20RaCtrl:CO-PSCtrl-SI3
+
+IA-01RaCtrl:CO-PSCtrl-SI4
+IA-02RaCtrl:CO-PSCtrl-SI4
+IA-03RaCtrl:CO-PSCtrl-SI4
+IA-04RaCtrl:CO-PSCtrl-SI4
+IA-05RaCtrl:CO-PSCtrl-SI4
+IA-06RaCtrl:CO-PSCtrl-SI4
+IA-07RaCtrl:CO-PSCtrl-SI4
+IA-08RaCtrl:CO-PSCtrl-SI4
+IA-09RaCtrl:CO-PSCtrl-SI4
+IA-10RaCtrl:CO-PSCtrl-SI4
+IA-11RaCtrl:CO-PSCtrl-SI4
+IA-12RaCtrl:CO-PSCtrl-SI4
+IA-13RaCtrl:CO-PSCtrl-SI4
+IA-14RaCtrl:CO-PSCtrl-SI4
+IA-15RaCtrl:CO-PSCtrl-SI4
+IA-16RaCtrl:CO-PSCtrl-SI4
+IA-17RaCtrl:CO-PSCtrl-SI4
+IA-18RaCtrl:CO-PSCtrl-SI4
+IA-19RaCtrl:CO-PSCtrl-SI4
+IA-20RaCtrl:CO-PSCtrl-SI4
+
+IA-01RaCtrl:CO-PSCtrl-SI5
+IA-02RaCtrl:CO-PSCtrl-SI5
+IA-03RaCtrl:CO-PSCtrl-SI5
+IA-04RaCtrl:CO-PSCtrl-SI5
+IA-05RaCtrl:CO-PSCtrl-SI5
+IA-06RaCtrl:CO-PSCtrl-SI5
+IA-07RaCtrl:CO-PSCtrl-SI5
+IA-08RaCtrl:CO-PSCtrl-SI5
+IA-09RaCtrl:CO-PSCtrl-SI5
+IA-10RaCtrl:CO-PSCtrl-SI5
+IA-11RaCtrl:CO-PSCtrl-SI5
+IA-12RaCtrl:CO-PSCtrl-SI5
+IA-13RaCtrl:CO-PSCtrl-SI5
+IA-14RaCtrl:CO-PSCtrl-SI5
+IA-15RaCtrl:CO-PSCtrl-SI5
+IA-16RaCtrl:CO-PSCtrl-SI5
+IA-17RaCtrl:CO-PSCtrl-SI5
+IA-18RaCtrl:CO-PSCtrl-SI5
+IA-19RaCtrl:CO-PSCtrl-SI5
+IA-20RaCtrl:CO-PSCtrl-SI5
+
+IA-01RaCtrl:CO-PSCtrl-SI6
+IA-02RaCtrl:CO-PSCtrl-SI6
+IA-03RaCtrl:CO-PSCtrl-SI6
+IA-04RaCtrl:CO-PSCtrl-SI6
+IA-05RaCtrl:CO-PSCtrl-SI6
+IA-06RaCtrl:CO-PSCtrl-SI6
+IA-07RaCtrl:CO-PSCtrl-SI6
+IA-08RaCtrl:CO-PSCtrl-SI6
+IA-09RaCtrl:CO-PSCtrl-SI6
+IA-10RaCtrl:CO-PSCtrl-SI6
+IA-11RaCtrl:CO-PSCtrl-SI6
+IA-12RaCtrl:CO-PSCtrl-SI6
+IA-13RaCtrl:CO-PSCtrl-SI6
+IA-14RaCtrl:CO-PSCtrl-SI6
+IA-15RaCtrl:CO-PSCtrl-SI6
+IA-16RaCtrl:CO-PSCtrl-SI6
+IA-17RaCtrl:CO-PSCtrl-SI6
+IA-18RaCtrl:CO-PSCtrl-SI6
+IA-19RaCtrl:CO-PSCtrl-SI6
+IA-20RaCtrl:CO-PSCtrl-SI6
+
+IA-01RaCtrl:CO-PSCtrl-SI7
+IA-02RaCtrl:CO-PSCtrl-SI7
+IA-03RaCtrl:CO-PSCtrl-SI7
+IA-04RaCtrl:CO-PSCtrl-SI7
+IA-05RaCtrl:CO-PSCtrl-SI7
+IA-06RaCtrl:CO-PSCtrl-SI7
+IA-07RaCtrl:CO-PSCtrl-SI7
+IA-08RaCtrl:CO-PSCtrl-SI7
+IA-09RaCtrl:CO-PSCtrl-SI7
+IA-10RaCtrl:CO-PSCtrl-SI7
+IA-11RaCtrl:CO-PSCtrl-SI7
+IA-12RaCtrl:CO-PSCtrl-SI7
+IA-13RaCtrl:CO-PSCtrl-SI7
+IA-14RaCtrl:CO-PSCtrl-SI7
+IA-15RaCtrl:CO-PSCtrl-SI7
+IA-16RaCtrl:CO-PSCtrl-SI7
+IA-17RaCtrl:CO-PSCtrl-SI7
+IA-18RaCtrl:CO-PSCtrl-SI7
+IA-19RaCtrl:CO-PSCtrl-SI7
+IA-20RaCtrl:CO-PSCtrl-SI7

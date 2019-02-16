@@ -1004,7 +1004,7 @@ TB-02:PS-QD2A           DampedSine    15          1.0                   10.0    
 TB-02:PS-QD2B           DampedSine    15          1.0                   10.0            0.0           0.0                    0.0                      6.0                     nan
 TB-02:PS-QF2A           DampedSine    15          1.0                   10.0            0.0           0.0                    0.0                      6.0                     nan
 TB-02:PS-QF2B           DampedSine    15          1.0                   10.0            0.0           0.0                    0.0                      6.0                     nan
-TB-03:PS-CH             DampedSine    15          1.0                   10.0            0.0           0.0                    0.0                      6.0                     nan
+TB-04:PS-CH             DampedSine    15          1.0                   10.0            0.0           0.0                    0.0                      6.0                     nan
 TB-03:PS-QD3            DampedSine    15          1.0                   10.0            0.0           0.0                    0.0                      6.0                     nan
 TB-03:PS-QF3            DampedSine    15          1.0                   10.0            0.0           0.0                    0.0                      6.0                     nan
 TB-04:PS-CV-1           DampedSine    15          1.0                   10.0            0.0           0.0                    0.0                      6.0                     nan
