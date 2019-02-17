@@ -110,89 +110,63 @@ class Const(_cutil.Const):
 def get_llrf_convpropty(device):
     dic = {
         'SET_STREAM': 'Stream-SP',
-        'SET_CH1_DELAY': 'DelayCh1-SP',
-        'SET_CH2_DELAY': 'DelayCh2-SP',
-        'SET_CH3_DELAY': 'DelayCh3-SP',
-        'SET_CH4_DELAY': 'DelayCh4-SP',
-        'SET_CH5_DELAY': 'DelayCh5-SP',
-        'SET_CH6_DELAY': 'DelayCh6-SP',
-        'SET_CH7_DELAY': 'DelayCh7-SP',
-        'SET_CH8_DELAY': 'DelayCh8-SP',
-        'SET_CH9_DELAY': 'DelayCh9-SP',
-        'SET_TRIGGER_DELAY': 'DelayTrig-SP',
         'SET_AMP': 'Amp-SP',
         'SET_PHASE': 'Phase-SP',
-        'SET_FB_MODE': 'FdBckMode-Sel',
+        'SET_INTEGRAL_ENABLE': 'Integral-Sel',
         'SET_KP': 'KP-SP',
         'SET_KI': 'KI-SP',
         'SET_EXTERNAL_TRIGGER_ENABLE': 'ExtTrig-Sel',
-        'SET_INTEGRAL_ENABLE': 'Integral-Sel',
+        'SET_TRIGGER_DELAY': 'DelayTrig-SP',
+        'SET_FB_MODE': 'FdBckMode-Sel',
         'SET_FBLOOP_PHASE_CORR': 'FdBckPhase-SP',
         'SET_FBLOOP_AMP_CORR': 'FdBckAmp-SP',
-        'SET_CH1_PHASE_CORR': 'PhaseCh1-SP',
-        'SET_CH2_PHASE_CORR': 'PhaseCh2-SP',
-        'SET_CH3_PHASE_CORR': 'PhaseCh3-SP',
-        'SET_CH4_PHASE_CORR': 'PhaseCh4-SP',
-        'SET_CH5_PHASE_CORR': 'PhaseCh5-SP',
-        'SET_CH6_PHASE_CORR': 'PhaseCh6-SP',
-        'SET_CH7_PHASE_CORR': 'PhaseCh7-SP',
-        'SET_CH8_PHASE_CORR': 'PhaseCh8-SP',
-        'SET_CH9_PHASE_CORR': 'PhaseCh9-SP',
-        'SET_CH1_ADT': 'ADTCh1-SP',
-        'SET_CH2_ADT': 'ADTCh2-SP',
-        'SET_CH3_ADT': 'ADTCh3-SP',
-        'SET_CH4_ADT': 'ADTCh4-SP',
-        'SET_CH5_ADT': 'ADTCh5-SP',
-        'SET_CH6_ADT': 'ADTCh6-SP',
-        'SET_CH7_ADT': 'ADTCh7-SP',
-        'SET_CH8_ADT': 'ADTCh8-SP',
-        'SET_CH9_ADT': 'ADTCh9-SP',
-        'SET_VM_ADT': 'ADTVM-SP',
-        'SET_CH1_ATT': 'ATTCh1-SP',
-        'SET_CH2_ATT': 'ATTCh2-SP',
-        'SET_CH3_ATT': 'ATTCh3-SP',
-        'SET_CH4_ATT': 'ATTCh4-SP',
-        'SET_CH5_ATT': 'ATTCh5-SP',
-        'SET_CH6_ATT': 'ATTCh6-SP',
-        'SET_CH7_ATT': 'ATTCh7-SP',
-        'SET_CH8_ATT': 'ATTCh8-SP',
-        'SET_CH9_ATT': 'ATTCh9-SP',
+        'SET_VM_ADT': 'VMADT-SP',
+        'SET_CH1_DELAY': 'Ch1Delay-SP',
+        'SET_CH2_DELAY': 'Ch2Delay-SP',
+        'SET_CH3_DELAY': 'Ch3Delay-SP',
+        'SET_CH4_DELAY': 'Ch4Delay-SP',
+        'SET_CH5_DELAY': 'Ch5Delay-SP',
+        'SET_CH6_DELAY': 'Ch6Delay-SP',
+        'SET_CH7_DELAY': 'Ch7Delay-SP',
+        'SET_CH8_DELAY': 'Ch8Delay-SP',
+        'SET_CH9_DELAY': 'Ch9Delay-SP',
+        'SET_CH1_PHASE_CORR': 'Ch1Phase-SP',
+        'SET_CH2_PHASE_CORR': 'Ch2Phase-SP',
+        'SET_CH3_PHASE_CORR': 'Ch3Phase-SP',
+        'SET_CH4_PHASE_CORR': 'Ch4Phase-SP',
+        'SET_CH5_PHASE_CORR': 'Ch5Phase-SP',
+        'SET_CH6_PHASE_CORR': 'Ch6Phase-SP',
+        'SET_CH7_PHASE_CORR': 'Ch7Phase-SP',
+        'SET_CH8_PHASE_CORR': 'Ch8Phase-SP',
+        'SET_CH9_PHASE_CORR': 'Ch9Phase-SP',
+        'SET_CH1_ADT': 'Ch1ADT-SP',
+        'SET_CH2_ADT': 'Ch2ADT-SP',
+        'SET_CH3_ADT': 'Ch3ADT-SP',
+        'SET_CH4_ADT': 'Ch4ADT-SP',
+        'SET_CH5_ADT': 'Ch5ADT-SP',
+        'SET_CH6_ADT': 'Ch6ADT-SP',
+        'SET_CH7_ADT': 'Ch7ADT-SP',
+        'SET_CH8_ADT': 'Ch8ADT-SP',
+        'SET_CH9_ADT': 'Ch9ADT-SP',
+        'SET_CH1_ATT': 'Ch1ATT-SP',
+        'SET_CH2_ATT': 'Ch2ATT-SP',
+        'SET_CH3_ATT': 'Ch3ATT-SP',
+        'SET_CH4_ATT': 'Ch4ATT-SP',
+        'SET_CH5_ATT': 'Ch5ATT-SP',
+        'SET_CH6_ATT': 'Ch6ATT-SP',
+        'SET_CH7_ATT': 'Ch7ATT-SP',
+        'SET_CH8_ATT': 'Ch8ATT-SP',
+        'SET_CH9_ATT': 'Ch9ATT-SP',
     }
     if device.dev.endswith('Kly1'):
         dic['SET_SHIF_MOTOR_ANGLE'] = ''
     elif device.dev.endswith('SHB'):
+        chans = tuple(['CH{0:d}'.format(i) for i in [3, 4, 5, 6, 9]])
+        dic = {k: v for k, v in dic.items() if not k[4:].startswith(chans)}
         dic = {
-        SET_STREAM
-SET_CH1_DELAY
-SET_CH2_DELAY
-SET_CH7_DELAY
-SET_CH8_DELAY
-SET_TRIGGER_DELAY
-SET_AMP
-SET_PHASE
-SET_FB_MODE
-SET_KP
-SET_KI
-SET_EXTERNAL_TRIGGER_ENABLE
-SET_INTEGRAL_ENABLE
-SET_CH1_PHASE_CORR
-SET_CH2_PHASE_CORR
-SET_CH7_PHASE_CORR
-SET_CH8_PHASE_CORR
-SET_FBLOOP_PHASE_CORR
-SET_FBLOOP_AMP_CORR
-SET_CH1_ADT
-SET_CH2_ADT
-SET_CH7_ADT
-SET_CH8_ADT
-SET_VM_ADT
-SET_CH1_ATT
-SET_CH2_ATT
-SET_CH7_ATT
-SET_CH8_ATT
-SET_PID_MODE
-SET_PID_KP
-SET_PID_KI
+            'SET_PID_MODE': '',
+            'SET_PID_KP': '',
+            'SET_PID_KI': '',
         }
     return dic
 
