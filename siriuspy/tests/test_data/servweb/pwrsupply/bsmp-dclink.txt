@@ -1,36 +1,46 @@
-# PS to DCLink Mapping
+# Power Supply to DCLink Mapping
+# ==============================
 
-# TB Power Supplies
-# Dipole
+
+# TB transport Line
+# ------------------
+
+# --- Dipole ---
 TB-Fam:PS-B     None
-# Quadrupoles
-TB-01:PS-QD1    TB-Glob:PS-DCLinkFBP
-TB-01:PS-QF1    TB-Glob:PS-DCLinkFBP
-TB-02:PS-QD2A   TB-Glob:PS-DCLinkFBP
-TB-02:PS-QF2A   TB-Glob:PS-DCLinkFBP
-TB-02:PS-QD2B   TB-Glob:PS-DCLinkFBP
-TB-02:PS-QF2B   TB-Glob:PS-DCLinkFBP
-TB-03:PS-QD3    TB-Glob:PS-DCLinkFBP
-TB-03:PS-QF3    TB-Glob:PS-DCLinkFBP
-TB-04:PS-QD4    TB-Glob:PS-DCLinkFBP
-TB-04:PS-QF4    TB-Glob:PS-DCLinkFBP
-# Correctors
-TB-01:PS-CH-1   AS-Glob:PS-DCLinkFBP-1
-TB-01:PS-CV-1   AS-Glob:PS-DCLinkFBP-1
-TB-01:PS-CH-2   AS-Glob:PS-DCLinkFBP-1
-TB-01:PS-CV-2   AS-Glob:PS-DCLinkFBP-1
-TB-02:PS-CH-1   AS-Glob:PS-DCLinkFBP-1
-TB-02:PS-CV-1   AS-Glob:PS-DCLinkFBP-1
-TB-02:PS-CH-2   AS-Glob:PS-DCLinkFBP-1
-TB-02:PS-CV-2   AS-Glob:PS-DCLinkFBP-1
-TB-03:PS-CH     AS-Glob:PS-DCLinkFBP-1
-TB-04:PS-CV-1   AS-Glob:PS-DCLinkFBP-1
-TB-04:PS-CV-2   AS-Glob:PS-DCLinkFBP-1
 
-# TS Power Supplies
-# Dipole
+# --- Quadrupoles ---
+TB-01:PS-QD1    LA-RaPS06:PS-DCLink-AS1
+TB-01:PS-QF1    LA-RaPS06:PS-DCLink-AS1
+TB-02:PS-QD2A   LA-RaPS06:PS-DCLink-AS1
+TB-02:PS-QF2A   LA-RaPS06:PS-DCLink-AS1
+TB-02:PS-QD2B   LA-RaPS06:PS-DCLink-AS1
+TB-02:PS-QF2B   LA-RaPS06:PS-DCLink-AS1
+TB-03:PS-QD3    LA-RaPS06:PS-DCLink-AS1
+TB-03:PS-QF3    LA-RaPS06:PS-DCLink-AS1
+TB-04:PS-QD4    LA-RaPS06:PS-DCLink-AS1
+TB-04:PS-QF4    LA-RaPS06:PS-DCLink-AS1
+
+# --- Correctors ---
+TB-01:PS-CH-1   LA-RaPS06:PS-DCLink-AS2
+TB-01:PS-CV-1   LA-RaPS06:PS-DCLink-AS2
+TB-01:PS-CH-2   LA-RaPS06:PS-DCLink-AS2
+TB-01:PS-CV-2   LA-RaPS06:PS-DCLink-AS2
+TB-02:PS-CH-1   LA-RaPS06:PS-DCLink-AS2
+TB-02:PS-CV-1   LA-RaPS06:PS-DCLink-AS2
+TB-02:PS-CH-2   LA-RaPS06:PS-DCLink-AS2
+TB-02:PS-CV-2   LA-RaPS06:PS-DCLink-AS2
+TB-04:PS-CH     LA-RaPS06:PS-DCLink-AS2
+TB-04:PS-CV-1   LA-RaPS06:PS-DCLink-AS2
+TB-04:PS-CV-2   LA-RaPS06:PS-DCLink-AS2
+
+
+# TS transport line
+# -----------------
+
+# --- Dipole ---
 TS-Fam:PS-B     None
-# Quadrupoles
+
+# --- Quadrupoles ---
 TS-01:PS-QF1A   None
 TS-01:PS-QF1B   None
 TS-02:PS-QF2    None
@@ -39,7 +49,8 @@ TS-03:PS-QF3    None
 TS-04:PS-QF4    None
 TS-04:PS-QD4A   None
 TS-04:PS-QD4B   None
-# Correctors
+
+# --- Correctors ---
 TS-01:PS-CH     AS-Glob:PS-DCLinkFBP-1
 TS-01:PS-CV-1   AS-Glob:PS-DCLinkFBP-1
 TS-01:PS-CV-2   AS-Glob:PS-DCLinkFBP-1
@@ -51,65 +62,84 @@ TS-04:PS-CH     AS-Glob:PS-DCLinkFBP-1
 TS-04:PS-CV-1   AS-Glob:PS-DCLinkFBP-1
 TS-04:PS-CV-2   AS-Glob:PS-DCLinkFBP-1
 
-# BO Power Supplies
-# Dipole
+# BO accelerator
+# --------------
+
+# --- Dipoles ---
 BO-Fam:PS-B-1   BO-Glob:PS-DCLinkFAC2P4S-1  BO-Glob:PS-DCLinkFAC2P4S-2  BO-Glob:PS-DCLinkFAC2P4S-3  BO-Glob:PS-DCLinkFAC2P4S-4  BO-Glob:PS-DCLinkFAC2P4S-5  BO-Glob:PS-DCLinkFAC2P4S-6  BO-Glob:PS-DCLinkFAC2P4S-7  BO-Glob:PS-DCLinkFAC2P4S-8
 BO-Fam:PS-B-2   BO-Glob:PS-DCLinkFAC2P4S-9  BO-Glob:PS-DCLinkFAC2P4S-10 BO-Glob:PS-DCLinkFAC2P4S-11 BO-Glob:PS-DCLinkFAC2P4S-12 BO-Glob:PS-DCLinkFAC2P4S-13 BO-Glob:PS-DCLinkFAC2P4S-14 BO-Glob:PS-DCLinkFAC2P4S-15 BO-Glob:PS-DCLinkFAC2P4S-16
-# Quadrupoles
+
+# --- Quadrupoles ---
 BO-Fam:PS-QD    BO-Glob:PS-DCLinkFAC
 BO-Fam:PS-QF    BO-Glob:PS-DCLinkFAC2S
-# Sextupoles
+
+# --- Sextupoles ---
 BO-Fam:PS-SD    BO-Glob:PS-DCLinkFAC
 BO-Fam:PS-SF    BO-Glob:PS-DCLinkFAC
-# Correctors and Quad Skew
-BO-01U:PS-CH    AS-Glob:PS-DCLinkFBP-2
-BO-01U:PS-CV    AS-Glob:PS-DCLinkFBP-2
-BO-02D:PS-QS    AS-Glob:PS-DCLinkFBP-2
-BO-03U:PS-CH    AS-Glob:PS-DCLinkFBP-2
-BO-03U:PS-CV    AS-Glob:PS-DCLinkFBP-2
-BO-05U:PS-CH    AS-Glob:PS-DCLinkFBP-2
-BO-05U:PS-CV    AS-Glob:PS-DCLinkFBP-2
-BO-07U:PS-CH    AS-Glob:PS-DCLinkFBP-2
-BO-07U:PS-CV    AS-Glob:PS-DCLinkFBP-2
-BO-09U:PS-CH    AS-Glob:PS-DCLinkFBP-2
-BO-09U:PS-CV    AS-Glob:PS-DCLinkFBP-2
-BO-11U:PS-CH    AS-Glob:PS-DCLinkFBP-2
-BO-11U:PS-CV    AS-Glob:PS-DCLinkFBP-2
-BO-13U:PS-CH    AS-Glob:PS-DCLinkFBP-2
-BO-13U:PS-CV    AS-Glob:PS-DCLinkFBP-2
-BO-15U:PS-CH    AS-Glob:PS-DCLinkFBP-2
-BO-15U:PS-CV    AS-Glob:PS-DCLinkFBP-2
-BO-17U:PS-CH    AS-Glob:PS-DCLinkFBP-2
-BO-17U:PS-CV    AS-Glob:PS-DCLinkFBP-2
-BO-19U:PS-CH    AS-Glob:PS-DCLinkFBP-2
-BO-19U:PS-CV    AS-Glob:PS-DCLinkFBP-2
-BO-21U:PS-CH    AS-Glob:PS-DCLinkFBP-2
-BO-21U:PS-CV    AS-Glob:PS-DCLinkFBP-2
-BO-23U:PS-CH    AS-Glob:PS-DCLinkFBP-2
-BO-23U:PS-CV    AS-Glob:PS-DCLinkFBP-2
-BO-25U:PS-CH    AS-Glob:PS-DCLinkFBP-2
-BO-25U:PS-CV    AS-Glob:PS-DCLinkFBP-2
-BO-27U:PS-CH    AS-Glob:PS-DCLinkFBP-2
-BO-27U:PS-CV    AS-Glob:PS-DCLinkFBP-2
-BO-29U:PS-CH    AS-Glob:PS-DCLinkFBP-2
-BO-29U:PS-CV    AS-Glob:PS-DCLinkFBP-2
-BO-31U:PS-CH    AS-Glob:PS-DCLinkFBP-2
-BO-31U:PS-CV    AS-Glob:PS-DCLinkFBP-2
-BO-33U:PS-CH    AS-Glob:PS-DCLinkFBP-2
-BO-33U:PS-CV    AS-Glob:PS-DCLinkFBP-2
-BO-35U:PS-CH    AS-Glob:PS-DCLinkFBP-2
-BO-35U:PS-CV    AS-Glob:PS-DCLinkFBP-2
-BO-37U:PS-CH    AS-Glob:PS-DCLinkFBP-2
-BO-37U:PS-CV    AS-Glob:PS-DCLinkFBP-2
-BO-39U:PS-CH    AS-Glob:PS-DCLinkFBP-2
-BO-39U:PS-CV    AS-Glob:PS-DCLinkFBP-2
-BO-41U:PS-CH    AS-Glob:PS-DCLinkFBP-2
-BO-41U:PS-CV    AS-Glob:PS-DCLinkFBP-2
-BO-43U:PS-CH    AS-Glob:PS-DCLinkFBP-2
-BO-43U:PS-CV    AS-Glob:PS-DCLinkFBP-2
-BO-45U:PS-CH    AS-Glob:PS-DCLinkFBP-2
-BO-45U:PS-CV    AS-Glob:PS-DCLinkFBP-2
-BO-47U:PS-CH    AS-Glob:PS-DCLinkFBP-2
-BO-47U:PS-CV    AS-Glob:PS-DCLinkFBP-2
-BO-49D:PS-CH    AS-Glob:PS-DCLinkFBP-2
-BO-49U:PS-CV    AS-Glob:PS-DCLinkFBP-2
+
+
+# --- Correctors and skew quadrupole ---
+
+BO-01U:PS-CH    IA-01RaCtrl:PS-DCLink-AS1
+BO-01U:PS-CV    IA-01RaCtrl:PS-DCLink-AS1
+BO-02D:PS-QS    IA-01RaCtrl:PS-DCLink-AS1
+
+BO-03U:PS-CH    IA-02RaCtrl:PS-DCLink-AS1
+BO-03U:PS-CV    IA-02RaCtrl:PS-DCLink-AS1
+BO-05U:PS-CH    IA-02RaCtrl:PS-DCLink-AS1
+BO-05U:PS-CV    IA-02RaCtrl:PS-DCLink-AS1
+
+BO-07U:PS-CH    IA-04RaCtrl:PS-DCLink-AS1
+BO-07U:PS-CV    IA-04RaCtrl:PS-DCLink-AS1
+BO-09U:PS-CH    IA-04RaCtrl:PS-DCLink-AS1
+BO-09U:PS-CV    IA-04RaCtrl:PS-DCLink-AS1
+
+BO-11U:PS-CH    IA-05RaCtrl:PS-DCLink-AS1
+BO-11U:PS-CV    IA-05RaCtrl:PS-DCLink-AS1
+BO-13U:PS-CH    IA-05RaCtrl:PS-DCLink-AS1
+BO-13U:PS-CV    IA-05RaCtrl:PS-DCLink-AS1
+
+BO-15U:PS-CH    IA-07RaCtrl:PS-DCLink-AS1
+BO-15U:PS-CV    IA-07RaCtrl:PS-DCLink-AS1
+BO-17U:PS-CH    IA-07RaCtrl:PS-DCLink-AS1
+BO-17U:PS-CV    IA-07RaCtrl:PS-DCLink-AS1
+
+BO-19U:PS-CH    IA-08RaCtrl:PS-DCLink-AS1
+BO-19U:PS-CV    IA-08RaCtrl:PS-DCLink-AS1
+BO-21U:PS-CH    IA-08RaCtrl:PS-DCLink-AS1
+BO-21U:PS-CV    IA-08RaCtrl:PS-DCLink-AS1
+
+BO-23U:PS-CH    IA-10RaCtrl:PS-DCLink-AS1
+BO-23U:PS-CV    IA-10RaCtrl:PS-DCLink-AS1
+BO-25U:PS-CH    IA-10RaCtrl:PS-DCLink-AS1
+BO-25U:PS-CV    IA-10RaCtrl:PS-DCLink-AS1
+
+BO-27U:PS-CH    IA-11RaCtrl:PS-DCLink-AS1
+BO-27U:PS-CV    IA-11RaCtrl:PS-DCLink-AS1
+BO-29U:PS-CH    IA-11RaCtrl:PS-DCLink-AS1
+BO-29U:PS-CV    IA-11RaCtrl:PS-DCLink-AS1
+
+BO-31U:PS-CH    IA-13RaCtrl:PS-DCLink-AS1
+BO-31U:PS-CV    IA-13RaCtrl:PS-DCLink-AS1
+BO-33U:PS-CH    IA-13RaCtrl:PS-DCLink-AS1
+BO-33U:PS-CV    IA-13RaCtrl:PS-DCLink-AS1
+
+BO-35U:PS-CH    IA-14RaCtrl:PS-DCLink-AS1
+BO-35U:PS-CV    IA-14RaCtrl:PS-DCLink-AS1
+BO-37U:PS-CH    IA-14RaCtrl:PS-DCLink-AS1
+BO-37U:PS-CV    IA-14RaCtrl:PS-DCLink-AS1
+
+BO-39U:PS-CH    IA-16RaCtrl:PS-DCLink-AS1
+BO-39U:PS-CV    IA-16RaCtrl:PS-DCLink-AS1
+BO-41U:PS-CH    IA-16RaCtrl:PS-DCLink-AS1
+BO-41U:PS-CV    IA-16RaCtrl:PS-DCLink-AS1
+
+BO-43U:PS-CH    IA-17RaCtrl:PS-DCLink-AS1
+BO-43U:PS-CV    IA-17RaCtrl:PS-DCLink-AS1
+BO-45U:PS-CH    IA-17RaCtrl:PS-DCLink-AS1
+BO-45U:PS-CV    IA-17RaCtrl:PS-DCLink-AS1
+
+BO-47U:PS-CH    IA-20RaCtrl:PS-DCLink-AS1
+BO-47U:PS-CV    IA-20RaCtrl:PS-DCLink-AS1
+BO-49D:PS-CH    IA-20RaCtrl:PS-DCLink-AS1
+BO-49U:PS-CV    IA-20RaCtrl:PS-DCLink-AS1

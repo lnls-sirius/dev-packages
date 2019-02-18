@@ -1,0 +1,106 @@
+# HEADER
+# ======
+# label           li-spect-45deg
+# harmonics       0
+# main_harmonic   0 normal
+# units           Ampere  T*m T*m
+
+# EXCITATION DATA
+# ===============
+-0020.00  -4.978070e-01  +0.000000e+00
+-0019.00  -4.782107e-01  +0.000000e+00
+-0018.00  -4.573769e-01  +0.000000e+00
+-0017.00  -4.354687e-01  +0.000000e+00
+-0016.00  -4.126405e-01  +0.000000e+00
+-0015.00  -3.890356e-01  +0.000000e+00
+-0014.00  -3.647851e-01  +0.000000e+00
+-0013.00  -3.400067e-01  +0.000000e+00
+-0012.00  -3.148037e-01  +0.000000e+00
+-0011.00  -2.892652e-01  +0.000000e+00
+-0010.00  -2.634663e-01  +0.000000e+00
+-0009.00  -2.374687e-01  +0.000000e+00
+-0008.00  -2.113218e-01  +0.000000e+00
+-0007.00  -1.850646e-01  +0.000000e+00
+-0006.00  -1.587274e-01  +0.000000e+00
+-0005.00  -1.323346e-01  +0.000000e+00
+-0004.00  -1.059077e-01  +0.000000e+00
+-0003.00  -7.946830e-02  +0.000000e+00
+-0002.00  -5.304254e-02  +0.000000e+00
++0000.00  +0.000000e+00  +0.000000e+00
++0002.00  +5.304254e-02  +0.000000e+00
++0003.00  +7.946830e-02  +0.000000e+00
++0004.00  +1.059077e-01  +0.000000e+00
++0005.00  +1.323346e-01  +0.000000e+00
++0006.00  +1.587274e-01  +0.000000e+00
++0007.00  +1.850646e-01  +0.000000e+00
++0008.00  +2.113218e-01  +0.000000e+00
++0009.00  +2.374687e-01  +0.000000e+00
++0010.00  +2.634663e-01  +0.000000e+00
++0011.00  +2.892652e-01  +0.000000e+00
++0012.00  +3.148037e-01  +0.000000e+00
++0013.00  +3.400067e-01  +0.000000e+00
++0014.00  +3.647851e-01  +0.000000e+00
++0015.00  +3.890356e-01  +0.000000e+00
++0016.00  +4.126405e-01  +0.000000e+00
++0017.00  +4.354687e-01  +0.000000e+00
++0018.00  +4.573769e-01  +0.000000e+00
++0019.00  +4.782107e-01  +0.000000e+00
++0020.00  +4.978070e-01  +0.000000e+00
+
+# COMMENTS
+# ========
+# 1. excdata generated with "measured_field.py fit-bl-45deg" script
+# 2. data taken from measured fieldmap at excitation current of 4.15A and
+#    rescaled fmaps for other current values using measured on-site peak fields.
+# 3. For details, see https://github.com/lnls-ima/li-spect/tree/master/model-01/analysis/hallprobe/excitation-curve
+
+# POLARITY TABLE
+# ==============
+#
+# Magnet function         | IntStrength(1) | IntField(2) | ConvSign(3) | Current(4)
+# ------------------------|----------------|-------------|-------------|-----------
+# dipole                  | Angle > 0      | BYL  < 0    | -1.0        | I > 0
+# corrector-horizontal    | HKick > 0      | BYL  > 0    | +1.0        | I > 0
+# corrector-vertical      | VKick > 0      | BXL  < 0    | -1.0        | I > 0
+# quadrupole (focusing)   | KL    > 0      | D1NL < 0    | -1.0        | I > 0
+# quadrupole (defocusing) | KL    < 0      | D1NL > 0    | -1.0        | I > 0
+# quadrupole (skew)       | KL    > 0      | D1SL > 0    | +1.0        | I > 0
+# sextupole  (focusing)   | SL    > 0      | D2NL < 0    | -1.0        | I > 0
+# sextupole  (defocusing) | SL    < 0      | D2NL > 0    | -1.0        | I > 0
+#
+# Defs:
+# ----
+# BYL   := \int{dz By|_{x=y=0}}.
+# BXL   := \int{dz Bx|_{x=y=0}}.
+# D1NL  := \int{dz \frac{dBy}{dx}_{x=y=0}}
+# D2NL  := (1/2!) \int{dz \frac{d^2By}{dx^2}_{x=y=0}}
+# D1SL  := \int{dz \frac{dBx}{dx}_{x=y=0}}
+# Brho  := magnetic rigidity.
+# Angle := ConvSign * BYL / abs(Brho)
+# HKick := ConvSign * BYL / abs(Brho)
+# VKick := ConvSign * BXL / abs(Brho)
+# KL    := ConvSign * D1NL / abs(Brho)
+# SL    := ConvSign * D2NL / abs(Brho)
+#
+# Obs:
+# ---
+# (1) Parameter definition.
+#     IntStrength values correspond to integrated PolynomA and PolynomB parameters
+#     of usual beam tracking codes, with the exception that VKick has its sign
+#     reversed with respecto to its corresponding value in PolynomA.
+# (2) Sirius coordinate system and Lorentz force.
+# (3) Conversion sign for IntField <-> IntStrength
+# (4) Convention of magnet excitation polarity, so that when I > 0 the strength
+#     of the magnet has the expected conventional sign.
+
+# STATIC DATA FILE FORMAT
+# =======================
+#
+# These static data files should comply with the following formatting rules:
+# 1. If the first alphanumeric character of the line is not the pound sign
+#    then the lines is a comment.
+# 2. If the first alphanumeric character is "#" then if
+#    a) it is followed by "[<parameter>] <value>" a parameter names <parameter>
+#       is define with value <value>. if the string <value> has spaces in it
+#       it is split as a list of strings.
+#    b) otherwise the line is ignored as a comment line.

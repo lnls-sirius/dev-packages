@@ -188,54 +188,6 @@ def beam_rigidity(energy):
     return brho, beta, gamma
 
 
-# def get_electron_rest_energy():
-#     """Return electron rest energy [GeV]."""
-#     second = 1.0
-#     meter = 1.0
-#     kilogram = 1.0
-#     ampere = 1.0
-#     newton = kilogram * meter / second
-#     joule = newton * meter
-#     watt = joule / second
-#     coulomb = second * ampere
-#     volt = watt / ampere
-#     light_speed = 299792458 * (meter/second)    # [m/s]   - definition
-#     electron_mass = 9.10938291e-31 * kilogram
-#     #  2014-06-11 - http://physics.nist.gov/cgi-bin/cuu/Value?me
-#     elementary_charge = 1.602176565e-19 * coulomb
-#     #  2014-06-11 - http://physics.nist.gov/cgi-bin/cuu/Value?e
-#     electron_volt = elementary_charge * volt
-#     joule_2_eV = (joule / electron_volt)
-#     electron_rest_energy = electron_mass * _math.pow(light_speed, 2)
-#     # [Kg̣*m^2/s^2] - derived
-#     electron_rest_energy = joule_2_eV * electron_rest_energy / 1e9
-#     return electron_rest_energy
-#
-#
-# def beam_rigidity(energy):
-#     """Return beam rigidity, beta amd game, given its energy [GeV]."""
-#     if isinstance(energy, (list, tuple)):
-#         energy = _np.array(energy)
-#     second = 1.0
-#     meter = 1.0
-#     light_speed = 299792458 * (meter/second)    # [m/s]   - definition
-#     electron_rest_energy = get_electron_rest_energy()
-#     gamma = energy/electron_rest_energy
-#     if isinstance(gamma, _np.ndarray):
-#         if _np.any(energy < electron_rest_energy):
-#             raise ValueError('Electron energy less than rest energy!')
-#         beta = _np.sqrt(((gamma-1.0)/gamma)*((gamma+1.0)/gamma))
-#         # beta[gamma < 1.0] = 0.0
-#     else:
-#         if energy < electron_rest_energy:
-#             # raise ValueError('Electron energy less than rest energy!')
-#             beta = 0.0
-#         else:
-#             beta = _math.sqrt(((gamma-1.0)/gamma)*((gamma+1.0)/gamma))
-#     brho = beta * (energy*1e9) / light_speed
-#     return brho, beta, gamma
-
-
 def check_pv_online(pvname, timeout=1.0, use_prefix=True):
     """Return whether a PV is online."""
     if use_prefix:
