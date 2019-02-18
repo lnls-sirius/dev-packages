@@ -27,29 +27,72 @@ def get_siriuspvname_attrs():
     return [attr for attr in _attrs]
 
 
-def join_name(sec, sub, dis, dev,
-              idx=None, propty=None, propty_name=None, propty_suffix=None,
-              field=None, prefix=None, channel_type=None, **kwargs):
-    """Return SiriusPVName object."""
-    name = channel_type + '://' if channel_type else ''
-    name += prefix + '-' if prefix else ''
-    name += (sec.upper() + '-' + sub + ':' +
-             dis.upper() + '-' + dev)
-    name += ('-' + idx) if idx else ""
-    if propty_name and propty_suffix:
-        name += ':' + propty_name + '-' + propty_suffix
-    elif propty:
-        name += ':' + propty
-    elif propty_name:
-        name += ':' + propty_name
-    else:
-        return SiriusPVName(name)
-    name += ('.' + field) if field else ""
+def join_name(**kwargs):
+    """Return SiriusPVName object.
+
+    Parameters
+    ----------
+    channel_type [str] : PyDM channel type, ex: 'ca'
+    prefix [str] : Prefix, ex: 'fac-454lnls'
+    sec [str] : Section, ex: 'SI'
+    sub [str] : Subsection, ex: 'Glob'
+    dis [str] : Discipline, ex: 'PS'
+    dev [str] : Device, ex: 'B'
+    idx [str] : Device index, ex: '1'
+    propty_name [str] : Property name, ex: 'Properties'
+    propty_suffix [str] : Property suffix, ex: 'Cte'
+    propty [str] : Full property, ex: 'Properties-Cte'
+    field [str] : Field, ex: 'STATUS'
+    """
+    e = {k: v for k, v in kwargs.items() if v}  # get valid args
+    name = ''
+    if len(e.keys()) == 1:
+        if 'propty' in e.keys():
+            name = e['propty']
+        elif 'propty_name' in e.keys():
+            name = e['propty_name']
+    elif len(e.keys()) == 2:
+        if 'sec' in e.keys() and 'sub' in e.keys():
+            name = e['sec'].upper() + '-' + e['sub']
+        elif 'dis' in e.keys() and 'dev' in e.keys():
+            name = e['dis'].upper() + '-' + e['dev']
+        elif 'propty_name' in e.keys() and 'propty_suffix' in e.keys():
+            name = e['propty_name'].upper() + '-' + e['propty_name']
+    elif len(e.keys()) == 3:
+        if 'dis' in e.keys() and 'dev' in e.keys() and 'idx' in e.keys():
+            name = e['dis'].upper() + '-' + e['dev'] + '-' + e['idx']
+    elif len(e.keys()) > 3:
+        name = e['channel_type'] + '://' if 'channel_type' in e.keys() else ''
+        name = e['prefix'] + '-' if 'prefix' in e.keys() else ''
+        name += (e['sec'].upper() + '-' + e['sub'] + ':' +
+                 e['dis'].upper() + '-' + e['dev'])
+        name += ('-' + e['idx']) if 'idx' in e.keys() else ''
+        if 'propty_name' in e.keys() and 'propty_suffix' in e.keys():
+            name += ':' + e['propty_name'] + '-' + e['propty_suffix']
+            name += ('.' + e['field']) if 'field' in e.keys() else ''
+        elif 'propty' in e.keys():
+            name += ':' + e['propty']
+            name += ('.' + e['field']) if 'field' in e.keys() else ''
+        elif 'propty_name' in e.keys():
+            name += ':' + e['propty_name']
+
+    if not name:
+        raise TypeError('Not a valid SiriusPVName elements set!')
     return SiriusPVName(name)
 
 
-def split_name(pvname):
-    """Return dict with PV name split into fields."""
+def split_name(pvname, elements=None):
+    """Return dict with PV name split into fields.
+
+    Parameters
+    ----------
+    pvname [str] : a complete pvname or a valid part of it.
+    elements [None, 'propty', 'sec-sub', 'dis-dev'] : if pvname is not a
+        complete name, 'elements' says which part of pvname it corresponds to.
+    """
+    if not elements:
+        elements = 'propty'
+
     # empty dictionary
     dic_ = {attr: '' for attr in _attrs}
     # strip PV name
@@ -65,40 +108,80 @@ def split_name(pvname):
         pvname = names[1]
 
     list_ = pvname.split(':')
-    slist_ = list_[0].split('-')
-    dic_['prefix'] = '-'.join([s for s in slist_[:-2]])
-    dic_['area_name'] = '-'.join([s for s in slist_[-2:]])
-    dic_['device_name'] = dic_['area_name'] + ':' + list_[1]
 
-    dic_['sec'] = slist_[-2]
-    dic_['sub'] = slist_[-1]
+    if len(list_) == 1:
+        slist_ = list_[0].split('-')
+        if len(slist_) == 1:
+            dic_['propty'] = slist_[0]
+            dic_['propty_name'] = slist_[0]
+        elif len(slist_) == 2:
+            if elements == 'propty':
+                dic_['propty'] = slist_[0]
+                dic_['propty_name'] = slist_[0]
+                dic_['propty_suffix'] = slist_[1]
+            elif elements == 'sec-sub':
+                dic_['sec'] = slist_[0]
+                dic_['sub'] = slist_[1]
+                dic_['area_name'] = slist_[0] + '-' + slist_[1]
+            elif elements == 'dis-dev':
+                dic_['dis'] = slist_[0]
+                dic_['dev'] = slist_[1]
+        elif len(slist_) == 3:
+            dic_['dis'] = slist_[0]
+            dic_['dev'] = slist_[1]
+            dic_['idx'] = slist_[2]
+    else:
+        slist_ = list_[0].split('-')
+        dic_['prefix'] = '-'.join([s for s in slist_[:-2]])
+        dic_['area_name'] = '-'.join([s for s in slist_[-2:]])
+        dic_['device_name'] = dic_['area_name'] + ':' + list_[1]
 
-    slist_ = list_[1].split('-')
-    dic_['dis'] = slist_[0]
-    dic_['dev'] = slist_[1]
-    dic_['idx'] = slist_[2] if len(slist_) >= 3 else ''
+        dic_['sec'] = slist_[-2]
+        dic_['sub'] = slist_[-1]
 
-    if len(list_) > 2:
-        slist_ = list_[2].split('.')
-        sslist_ = slist_[0].split('-')
-        dic_['propty'] = slist_[0]
-        dic_['propty_name'] = sslist_[0]
-        dic_['propty_suffix'] = sslist_[1] if len(sslist_) > 1 else ''
-        dic_['field'] = slist_[1] if len(slist_) >= 2 else ''
+        slist_ = list_[1].split('-')
+        dic_['dis'] = slist_[0]
+        dic_['dev'] = slist_[1]
+        dic_['idx'] = slist_[2] if len(slist_) >= 3 else ''
 
-    dic_['device_propty'] = (dic_['dev'] +
-                             ('-' + dic_['idx'] if dic_['idx'] else '') +
-                             (':' + dic_['propty'] if dic_['propty'] else '') +
-                             ('.' + dic_['field'] if dic_['field'] else ''))
+        if len(list_) > 2:
+            slist_ = list_[2].split('.')
+            sslist_ = slist_[0].split('-')
+            dic_['propty'] = slist_[0]
+            dic_['propty_name'] = sslist_[0]
+            dic_['propty_suffix'] = sslist_[1] if len(sslist_) > 1 else ''
+            dic_['field'] = slist_[1] if len(slist_) >= 2 else ''
+
+        dic_['device_propty'] = (
+            dic_['dev'] +
+            ('-' + dic_['idx'] if dic_['idx'] else '') +
+            (':' + dic_['propty'] if dic_['propty'] else '') +
+            ('.' + dic_['field'] if dic_['field'] else ''))
     return dic_
+
+
+def get_pair_sprb(pv_propty):
+    """Return the equivalent [setpoint, readback] SiriusPVName property pair.
+
+    Input: a SiriusPVName property, with a setpoint or a readback suffix.
+    Output: the equivalent Sirius [setpoint, readback] pair.
+    """
+    _sp_rb = {'SP': 'RB', 'Sel': 'Sts'}
+    for sp, rb in _sp_rb.items():
+        if pv_propty.propty_suffix in sp:
+            return [pv_propty, pv_propty.substitute(propty_suffix=rb)]
+        elif pv_propty.propty_suffix in rb:
+            return [pv_propty.substitute(propty_suffix=sp), pv_propty]
+    else:
+        raise TypeError('Input is not a setpoint/readback property!')
 
 
 class SiriusPVName(str):
     """Sirius PV Name Class."""
 
-    def __new__(cls, pv_name):
+    def __new__(cls, pv_name, elements=None):
         """Implement new method."""
-        name = split_name(pv_name)
+        name = split_name(pv_name, elements)
         obj = super().__new__(cls, pv_name)
         obj.channel_type = name['channel_type']
         obj.prefix = name['prefix']
