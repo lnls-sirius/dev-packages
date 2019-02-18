@@ -79,6 +79,9 @@ class ConnTiming(_EpicsPropsList):
         TrgCorrs_Duration = TrgCorrs + ':Duration-SP'
         TrgLLRFRmp_RFDelayType = TrgLLRFRmp + ':RFDelayType-Sel'
 
+        # Interlock PV
+        Intlk = 'LA-RFH01RACK2:TI-EVR:Intlk-Mon'
+
     # Add events properties to Const
     evt_propties = ['Mode-Sel', 'DelayType-Sel', 'Delay-SP']
     for attr in ['EvtLinac', 'EvtInjBO', 'EvtRmpBO', 'EvtInjSI']:
@@ -167,6 +170,10 @@ class ConnTiming(_EpicsPropsList):
         return self.set_setpoints_check(sp, timeout)
 
     # --- timing mode check ---
+
+    def check_intlk(self):
+        """Check if interlock is reset."""
+        return self._check(ConnTiming.Const.Intlk, 0)
 
     def check_setup_ramp(self):
         """Check if ramp basic setup is implemented."""
@@ -277,8 +284,9 @@ class ConnTiming(_EpicsPropsList):
             c.TrgEjeKckr_Delay: 0,
             # LinacEgun Mode
             c.LinacEgun_SglBun_State: 0,
-            c.LinacEgun_MultBun_State: 0
-            }
+            c.LinacEgun_MultBun_State: 0,
+            # Intlk
+            c.Intlk: 0}
 
         propty2defaultvalue = self.ramp_basicsetup.copy()
         propty2defaultvalue.update(self.ramp_configsetup)
