@@ -237,17 +237,22 @@ class App:
             return [done, []]
 
     def _get_config_name(self):
-        f = open('/home/fac_files/lnls-sirius/machine-applications'
-                 '/as-ap-posang/as_ap_posang/' + self._TL.lower() +
-                 '-posang.txt', 'r')
-        config_name = f.read().strip('\n')
-        f.close()
+        try:
+            f = open('/home/sirius/iocs/' + self._TL.lower() + '-ap-posang/' +
+                     self._TL.lower() + '-posang.txt', 'r')
+            config_name = f.read().strip('\n')
+            f.close()
+        except Exception:
+            f = open('/home/sirius/iocs/' + self._TL.lower() + '-ap-posang/' +
+                     self._TL.lower() + '-posang.txt', 'w+')
+            config_name = 'Default'
+            f.write(config_name)
+            f.close()
         return config_name
 
     def _set_config_name(self, config_name):
-        f = open('/home/fac_files/lnls-sirius/machine-applications'
-                 '/as-ap-posang/as_ap_posang/' + self._TL.lower() +
-                 '-posang.txt', 'w')
+        f = open('/home/sirius/iocs/' + self._TL.lower() + '-ap-posang/' +
+                 self._TL.lower() + '-posang.txt', 'w+')
         f.write(config_name)
         f.close()
 
