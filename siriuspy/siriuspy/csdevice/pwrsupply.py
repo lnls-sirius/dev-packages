@@ -816,6 +816,8 @@ def _get_ps_FAP_propty_database():
     """Return database with FAP pwrsupply model PVs."""
     propty_db = get_basic_propty_database()
     db_ps = {
+        'Current1-Mon': {'type': 'float',  'value': 0.0,
+                         'prec': default_ps_current_precision},
         'Current2-Mon': {'type': 'float',  'value': 0.0,
                          'prec': default_ps_current_precision},
         'IntlkSoftLabels-Cte':  {'type': 'string',
