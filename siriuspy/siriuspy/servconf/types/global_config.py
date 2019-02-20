@@ -81,8 +81,6 @@ _pvs_li_llrf = [
     ['LA-RF:LLRF:KLY1:SET_CH7_PHASE_CORR', 0.0, 0.0],
     ['LA-RF:LLRF:KLY1:SET_CH8_PHASE_CORR', 0.0, 0.0],
     ['LA-RF:LLRF:KLY1:SET_CH9_PHASE_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_FBLOOP_PHASE_CORR', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_FBLOOP_AMP_CORR', 0.0, 0.0],
     ['LA-RF:LLRF:KLY1:SET_CH1_ADT', 0, 0.0],
     ['LA-RF:LLRF:KLY1:SET_CH2_ADT', 0, 0.0],
     ['LA-RF:LLRF:KLY1:SET_CH3_ADT', 0, 0.0],
@@ -818,22 +816,18 @@ _pvs_bo_ma = [
     ]
 
 _pvs_bo_hl_timing = [
-    ['RA-RaMO:TI-EVG:InjBOMode-Sel', 0, 0.0],
     ['RA-RaMO:TI-EVG:RmpBOMode-Sel', 0, 0.0],
     ['RA-RaMO:TI-EVG:DigBOMode-Sel', 0, 0.0],
     ['RA-RaMO:TI-EVG:OrbBOMode-Sel', 0, 0.0],
 
-    ['RA-RaMO:TI-EVG:InjBODelayType-Sel', 0, 0.0],
     ['RA-RaMO:TI-EVG:RmpBODelayType-Sel', 0, 0.0],
     ['RA-RaMO:TI-EVG:DigBODelayType-Sel', 0, 0.0],
     ['RA-RaMO:TI-EVG:OrbBODelayType-Sel', 0, 0.0],
 
-    ['RA-RaMO:TI-EVG:InjBODelay-SP', 0.0, 0.0],
     ['RA-RaMO:TI-EVG:RmpBODelay-SP', 0.0, 0.0],
     ['RA-RaMO:TI-EVG:DigBODelay-SP', 0.0, 0.0],
     ['RA-RaMO:TI-EVG:OrbBODelay-SP', 0.0, 0.0],
 
-    ['BO-01D:TI-InjKckr:State-Sel', 0, 0.0],
     ['BO-35D:TI-DCCT:State-Sel', 0, 0.0],
     ['BO-48D:TI-EjeKckr:State-Sel', 0, 0.0],
     ['BO-Glob:TI-Corrs:State-Sel', 0, 0.0],
@@ -842,9 +836,7 @@ _pvs_bo_hl_timing = [
     ['BO-Glob:TI-Mags:State-Sel', 0, 0.0],
     ['BO-Glob:TI-TuneProc:State-Sel', 0, 0.0],
     ['AS-Glob:TI-BPM-SIBO:State-Sel', 0, 0.0],
-    ['AS-Glob:TI-Osc-InjBO:State-Sel', 0, 0.0],
 
-    ['BO-01D:TI-InjKckr:Polarity-Sel', 0, 0.0],
     ['BO-35D:TI-DCCT:Polarity-Sel', 0, 0.0],
     ['BO-48D:TI-EjeKckr:Polarity-Sel', 0, 0.0],
     ['BO-Glob:TI-Corrs:Polarity-Sel', 0, 0.0],
@@ -853,9 +845,7 @@ _pvs_bo_hl_timing = [
     ['BO-Glob:TI-Mags:Polarity-Sel', 0, 0.0],
     ['BO-Glob:TI-TuneProc:Polarity-Sel', 0, 0.0],
     ['AS-Glob:TI-BPM-SIBO:Polarity-Sel', 0, 0.0],
-    ['AS-Glob:TI-Osc-InjBO:Polarity-Sel', 0, 0.0],
 
-    ['BO-01D:TI-InjKckr:Src-Sel', 0, 0.0],
     ['BO-35D:TI-DCCT:Src-Sel', 0, 0.0],
     ['BO-48D:TI-EjeKckr:Src-Sel', 0, 0.0],
     ['BO-Glob:TI-Corrs:Src-Sel', 0, 0.0],
@@ -864,9 +854,7 @@ _pvs_bo_hl_timing = [
     ['BO-Glob:TI-Mags:Src-Sel', 0, 0.0],
     ['BO-Glob:TI-TuneProc:Src-Sel', 0, 0.0],
     ['AS-Glob:TI-BPM-SIBO:Src-Sel', 0, 0.0],
-    ['AS-Glob:TI-Osc-InjBO:Src-Sel', 0, 0.0],
 
-    ['BO-01D:TI-InjKckr:NrPulses-SP', 0, 0.0],
     ['BO-35D:TI-DCCT:NrPulses-SP', 0, 0.0],
     ['BO-48D:TI-EjeKckr:NrPulses-SP', 0, 0.0],
     ['BO-Glob:TI-Corrs:NrPulses-SP', 0, 0.0],
@@ -875,9 +863,7 @@ _pvs_bo_hl_timing = [
     ['BO-Glob:TI-Mags:NrPulses-SP', 0, 0.0],
     ['BO-Glob:TI-TuneProc:NrPulses-SP', 0, 0.0],
     ['AS-Glob:TI-BPM-SIBO:NrPulses-SP', 0, 0.0],
-    ['AS-Glob:TI-Osc-InjBO:NrPulses-SP', 0, 0.0],
 
-    ['BO-01D:TI-InjKckr:Duration-SP', 0.0, 0.0],
     ['BO-35D:TI-DCCT:Duration-SP', 0.0, 0.0],
     ['BO-48D:TI-EjeKckr:Duration-SP', 0.0, 0.0],
     ['BO-Glob:TI-Corrs:Duration-SP', 0.0, 0.0],
@@ -886,9 +872,7 @@ _pvs_bo_hl_timing = [
     ['BO-Glob:TI-Mags:Duration-SP', 0.0, 0.0],
     ['BO-Glob:TI-TuneProc:Duration-SP', 0.0, 0.0],
     ['AS-Glob:TI-BPM-SIBO:Duration-SP', 0.0, 0.0],
-    ['AS-Glob:TI-Osc-InjBO:Duration-SP', 0.0, 0.0],
 
-    ['BO-01D:TI-InjKckr:Delay-SP', 0.0, 0.0],
     ['BO-35D:TI-DCCT:Delay-SP', 0.0, 0.0],
     ['BO-48D:TI-EjeKckr:Delay-SP', 0.0, 0.0],
     ['BO-Glob:TI-Corrs:Delay-SP', 0.0, 0.0],
@@ -897,9 +881,7 @@ _pvs_bo_hl_timing = [
     ['BO-Glob:TI-Mags:Delay-SP', 0.0, 0.0],
     ['BO-Glob:TI-TuneProc:Delay-SP', 0.0, 0.0],
     ['AS-Glob:TI-BPM-SIBO:Delay-SP', 0.0, 0.0],
-    ['AS-Glob:TI-Osc-InjBO:Delay-SP', 0.0, 0.0],
 
-    ['BO-01D:TI-InjKckr:ByPassIntlk-Sel', 0, 0.0],
     ['BO-35D:TI-DCCT:ByPassIntlk-Sel', 0, 0.0],
     ['BO-48D:TI-EjeKckr:ByPassIntlk-Sel', 0, 0.0],
     # ['BO-Glob:TI-Corrs:ByPassIntlk-Sel', 0, 0.0],
@@ -908,9 +890,7 @@ _pvs_bo_hl_timing = [
     ['BO-Glob:TI-Mags:ByPassIntlk-Sel', 0, 0.0],
     ['BO-Glob:TI-TuneProc:ByPassIntlk-Sel', 0, 0.0],
     # ['AS-Glob:TI-BPM-SIBO:ByPassIntlk-Sel', 0, 0.0],
-    ['AS-Glob:TI-Osc-InjBO:ByPassIntlk-Sel', 0, 0.0],
 
-    # ['BO-01D:TI-InjKckr:RFDelayType-Sel', 0, 0.0],
     ['BO-35D:TI-DCCT:RFDelayType-Sel', 0, 0.0],
     ['BO-48D:TI-EjeKckr:RFDelayType-Sel', 0, 0.0],
     # ['BO-Glob:TI-Corrs:RFDelayType-Sel', 0, 0.0],
@@ -919,12 +899,11 @@ _pvs_bo_hl_timing = [
     # ['BO-Glob:TI-Mags:RFDelayType-Sel', 0, 0.0],
     ['BO-Glob:TI-TuneProc:RFDelayType-Sel', 0, 0.0],
     # ['AS-Glob:TI-BPM-SIBO:RFDelayType-Sel', 0, 0.0],
-    # ['AS-Glob:TI-Osc-InjBO:RFDelayType-Sel', 0, 0.0],
     ]
 
 _template_dict = {
-    'pvs': \
-        _pvs_li_llrf + _pvs_li_hl_timing + _pvs_li_pwrsupplies + \
-        _pvs_tb_ma + _pvs_tb_hl_timing + \
+    'pvs':
+        _pvs_li_llrf + _pvs_li_hl_timing + _pvs_li_pwrsupplies +
+        _pvs_tb_ma + _pvs_tb_hl_timing +
         _pvs_bo_ma + _pvs_bo_hl_timing
 }
