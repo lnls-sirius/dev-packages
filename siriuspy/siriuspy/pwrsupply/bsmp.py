@@ -477,7 +477,7 @@ class ConstFAP(ConstBSMP):
 # ===================================
 #
 # The current version of Beaglebone's PRU library is able to send only one
-# BSMP commanV_OUT_RECTIFIERd to the serial line at the end of each ramp cycle. Within BSMP
+# BSMP command to the serial line at the end of each ramp cycle. Within BSMP
 # there is no way a read command to multiple power supplies can be sent.
 # At each ramp cycle a single power supply attached to the Beaglebone can be
 # selected for its state to be read. With a ramp running at 2 Hz, the update
