@@ -20,6 +20,7 @@ setup(
     ],
     packages=['as_ti_ll_simul'],
     package_data={'as_ti_ll_simul': ['VERSION']},
+    include_package_data=True,
     scripts=['scripts/sirius-ioc-as-ti-ll-simul.py'],
     zip_safe=False
 )
