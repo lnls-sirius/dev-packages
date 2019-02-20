@@ -21,6 +21,7 @@ setup(
     ],
     packages=['as_ma'],
     package_data={'as_ma': ['VERSION']},
+    include_package_data=True,
     scripts=['scripts/sirius-ioc-as-pm.py',
              'scripts/sirius-ioc-as-ma.py',
              ],

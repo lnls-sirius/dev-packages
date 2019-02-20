@@ -21,6 +21,7 @@ setup(
     ],
     packages=['as_pu'],
     package_data={'as_pu': ['VERSION']},
+    include_package_data=True,
     scripts=['scripts/sirius-ioc-as-pu.py', ],
     zip_safe=False
 )
