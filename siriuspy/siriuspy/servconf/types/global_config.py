@@ -437,6 +437,15 @@ _pvs_tb_ma = [
     ['TB-04:MA-CV-2:Kick-SP', 0.0, 0.0],
     ]
 
+_pvs_tb_pu = [
+    ['TB-04:PU-InjSept:PwrState-Sel', 0, 0.0],
+    ['BO-01D:PU-InjKckr:PwrState-Sel', 0, 0.0],
+    ['TB-04:PU-InjSept:Pulse-Sel', 0, 0.0],
+    ['BO-01D:PU-InjKckr:Pulse-Sel', 0, 0.0],
+    ['TB-04:PU-InjSept:Voltage-SP', 0.0, 0.0],
+    ['BO-01D:PU-InjKckr:Voltage-SP', 0.0, 0.0],
+]
+
 _pvs_tb_hl_timing = [
     ['RA-RaMO:TI-EVG:InjBOMode-Sel', 0, 0.0],
     ['RA-RaMO:TI-EVG:DigTBMode-Sel', 0, 0.0],
@@ -904,6 +913,6 @@ _pvs_bo_hl_timing = [
 _template_dict = {
     'pvs':
         _pvs_li_llrf + _pvs_li_hl_timing + _pvs_li_pwrsupplies +
-        _pvs_tb_ma + _pvs_tb_hl_timing +
+        _pvs_tb_ma + _pvs_tb_pu + _pvs_tb_hl_timing +
         _pvs_bo_ma + _pvs_bo_hl_timing
 }
