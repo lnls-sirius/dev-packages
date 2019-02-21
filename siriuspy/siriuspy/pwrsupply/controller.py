@@ -72,6 +72,7 @@ class PSController:
 
     @staticmethod
     def _get_readback_field(field):
+        # TODO: check if siriuspvname already has a function for this
         return field.replace('-Sel', '-Sts').replace('-SP', '-RB')
 
 

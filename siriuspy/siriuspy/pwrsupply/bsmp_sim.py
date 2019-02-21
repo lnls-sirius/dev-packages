@@ -97,7 +97,9 @@ class _Spec_FAC_DCDC(_Spec):
         return _cFAC_DCDC
 
     def _get_monvar_ids(self):
-        return (_cFAC_DCDC.V_I_LOAD1, _cFAC_DCDC.V_I_LOAD2)
+        return (_cFAC_DCDC.V_I_LOAD_MEAN,
+                _cFAC_DCDC.V_I_LOAD1,
+                _cFAC_DCDC.V_I_LOAD2)
 
     def _get_monvar_fluctuation_rms(self, var_id):
         return _Spec._I_LOAD_FLUCTUATION_RMS
@@ -117,7 +119,9 @@ class _Spec_FAC_2P4S_DCDC(_Spec):
         return _cFAC_2P4S_DCDC
 
     def _get_monvar_ids(self):
-        return (_cFAC_2P4S_DCDC.V_I_LOAD1, _cFAC_2P4S_DCDC.V_I_LOAD2)
+        return (_cFAC_2P4S_DCDC.V_I_LOAD_MEAN,
+                _cFAC_2P4S_DCDC.V_I_LOAD1,
+                _cFAC_2P4S_DCDC.V_I_LOAD2)
 
     def _get_monvar_fluctuation_rms(self, var_id):
         return _Spec._I_LOAD_FLUCTUATION_RMS
@@ -137,7 +141,9 @@ class _Spec_FAP(_Spec):
         return _cFAP
 
     def _get_monvar_ids(self):
-        return (_cFAP.V_I_LOAD1, _cFAP.V_I_LOAD2)
+        return (_cFAP.V_I_LOAD_MEAN,
+                _cFAP.V_I_LOAD1,
+                _cFAP.V_I_LOAD2)
 
     def _get_monvar_fluctuation_rms(self, var_id):
         return _Spec._I_LOAD_FLUCTUATION_RMS

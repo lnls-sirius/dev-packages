@@ -620,11 +620,13 @@ def _get_ps_FBP_DCLink_propty_database():
     return propty_db
 
 
-def _get_ps_FAC_propty_database():
-    """Return database with FAC pwrsupply model PVs."""
+def _get_ps_FAC_DCDC_propty_database():
+    """Return database with FAC_DCDC pwrsupply model PVs."""
     # TODO: implement!!!
     propty_db = get_basic_propty_database()
     db_ps = {
+        'Current1-Mon': {'type': 'float',  'value': 0.0,
+                         'prec': default_ps_current_precision},
         'Current2-Mon': {'type': 'float',  'value': 0.0,
                          'prec': default_ps_current_precision},
         'IntlkSoftLabels-Cte':  {'type': 'string',
@@ -672,22 +674,24 @@ def _get_ps_FAC_ACDC_propty_database():
     return propty_db
 
 
-def _get_ps_FAC_2S_propty_database():
-    """Return database with FAC_2S pwrsupply model PVs."""
+def _get_ps_FAC_2S_DCDC_propty_database():
+    """Return database with FAC_2S_DCDC pwrsupply model PVs."""
     # TODO: implement!!!
     return _get_ps_FBP_propty_database()
 
 
 def _get_ps_FAC_2S_ACDC_propty_database():
-    """Return database with FAC_2S pwrsupply model PVs."""
+    """Return database with FAC_2S_ACDC pwrsupply model PVs."""
     # TODO: implement!!!
     return _get_ps_FAC_ACDC_propty_database()
 
 
-def _get_ps_FAC_2P4S_propty_database():
+def _get_ps_FAC_2P4S_DCDC_propty_database():
     """Return database with FAC_2P4S pwrsupply model PVs."""
     propty_db = get_basic_propty_database()
     db_ps = {
+        'Current1-Mon': {'type': 'float',  'value': 0.0,
+                         'prec': default_ps_current_precision},
         'Current2-Mon': {'type': 'float',  'value': 0.0,
                          'prec': default_ps_current_precision},
         'IntlkSoftLabels-Cte':  {'type': 'string',
@@ -812,6 +816,8 @@ def _get_ps_FAP_propty_database():
     """Return database with FAP pwrsupply model PVs."""
     propty_db = get_basic_propty_database()
     db_ps = {
+        'Current1-Mon': {'type': 'float',  'value': 0.0,
+                         'prec': default_ps_current_precision},
         'Current2-Mon': {'type': 'float',  'value': 0.0,
                          'prec': default_ps_current_precision},
         'IntlkSoftLabels-Cte':  {'type': 'string',
@@ -895,11 +901,11 @@ def _get_model_db(psmodel):
         'FBP': _get_ps_FBP_propty_database,
         'FBP_DCLink': _get_ps_FBP_DCLink_propty_database,
         'FBP_FOFB': _get_ps_FBP_FOFB_propty_database,
-        'FAC_DCDC': _get_ps_FAC_propty_database,
+        'FAC_DCDC': _get_ps_FAC_DCDC_propty_database,
         'FAC_ACDC': _get_ps_FAC_ACDC_propty_database,
-        'FAC_2S_DCDC': _get_ps_FAC_2S_propty_database,
+        'FAC_2S_DCDC': _get_ps_FAC_2S_DCDC_propty_database,
         'FAC_2S_ACDC': _get_ps_FAC_2S_ACDC_propty_database,
-        'FAC_2P4S_DCDC': _get_ps_FAC_2P4S_propty_database,
+        'FAC_2P4S_DCDC': _get_ps_FAC_2P4S_DCDC_propty_database,
         'FAC_2P4S_ACDC': _get_ps_FAC_2P4S_ACDC_propty_database,
         'FAP': _get_ps_FAP_propty_database,
         'FAP_2P2S_MASTER': _get_ps_FAP_2P2S_propty_database,
