@@ -718,7 +718,10 @@ class FACACDCFactory(FBPDCLinkFactory):
             return _functions.BSMPFunction(
                 device_ids, pru_controller, _c.F_SET_SLOWREF, setpoints)
         elif epics_field == 'PwrState-Sel':
-            return _functions.PSPwrState(device_ids, pru_controller, setpoints)
+            # The firmware opens the control loop. It is the user's respoibility
+            # to close it.
+            return _functions.PSPwrStateFBP_DCLink(
+                device_ids, pru_controller, setpoints)
         else:
             return super().function(
                 device_ids, epics_field, pru_controller, setpoints)
