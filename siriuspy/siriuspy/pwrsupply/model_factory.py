@@ -653,7 +653,7 @@ class FBPDCLinkFactory(ModelFactory):
             return _functions.BSMPFunction(
                 device_ids, pru_controller, _c.F_SET_SLOWREF, setpoints)
         elif epics_field == 'Reset-Cmd':
-            return _functions.BSMPFunction(
+            return _functions.Command(
                 device_ids, pru_controller, _c.F_RESET_INTERLOCKS, setpoints)
         elif epics_field == 'Abort-Cmd':
             return _functions.BSMPFunctionNull()
