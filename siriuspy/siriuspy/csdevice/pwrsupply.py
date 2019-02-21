@@ -88,7 +88,7 @@ class ETypes(_cutil.ETypes):
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',)
     SOFT_INTLCK_FAC = (
-        'Sobre-temperatura nos indutores',  'Sobre-temperatura nos indutores',
+        'Sobre-temperatura nos indutores',  'Sobre-temperatura nos IGBTs',
         'Falha no DCCT 1', 'Falha no DCCT 2',
         'Alta diferença entre DCCTs',
         'Falha na leitura da corrente na carga do DCCT 1',
@@ -206,10 +206,11 @@ class ETypes(_cutil.ETypes):
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',)
     HARD_INTLCK_FAP = (
-        'Sobre-corrente na crga',
+        'Sobre-corrente na carga',
         'Sobre-tensão na carga',
         'Sobre-tensão no DCLink',
         'Sub-tensão no DCLink',
+        'Falha no contator de entrada do DC-Link',
         'Sobre-corrente no IGBT1', 'Sobre-corrente no IGBT2',
         'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
@@ -217,7 +218,7 @@ class ETypes(_cutil.ETypes):
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+        'Reserved', 'Reserved', 'Reserved',)
     CYCLE_TYPES = ('Sine', 'DampedSine', 'Trapezoidal')
     SYNC_MODES = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
 
