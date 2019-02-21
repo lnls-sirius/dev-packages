@@ -67,7 +67,7 @@ class PSData:
 
     @property
     def splims_unit(self):
-        """Unit of power supply setpoint limits."""
+        """Return unit of power supply setpoint limits."""
         return self._splims_unit
 
     @property
