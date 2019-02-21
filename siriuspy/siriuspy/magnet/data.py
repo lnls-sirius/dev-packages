@@ -26,7 +26,7 @@ class MAData:
         self._splims_unit = \
             _MASearch.get_splims_unit(psmodel=psmodel)
         # TODO: cleanup code
-        if 'PU-' in maname:
+        if 'PM-' in maname:
             self._propty_databases = _get_pm_propty_database(self._maname)
         else:
             self._propty_databases = _get_ma_propty_database(self._maname)
@@ -38,7 +38,7 @@ class MAData:
 
     @property
     def splims_unit(self):
-        """Unit of setpoint limits."""
+        """Return unit of setpoint limits."""
         return self._splims_unit
 
     @property

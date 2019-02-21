@@ -577,6 +577,16 @@ def get_pm_propty_database(maname):
 # --- Auxiliary functions ---
 
 
+def _get_pu_FP_SEPT_propty_database():
+    """."""
+    return get_common_pu_propty_database()
+
+
+def _get_pu_FP_KCKR_propty_database():
+    """."""
+    return get_common_pu_propty_database()
+
+
 def _get_ps_FBP_propty_database():
     """Return database with FBP pwrsupply model PVs."""
     propty_db = get_basic_propty_database()
@@ -872,6 +882,7 @@ def _set_limits(pstype, database):
                     'CurrentRef-Mon', 'Current-Mon', 'Current2-Mon'
                     'CycleAmpl-SP', 'CycleAmpl-RB',
                     'CycleOffset-SP', 'CycleOffset-RB',
+                    'Voltage-SP', 'Voltage-RB', 'Voltage-Mon',
                     )
     # TODO: define limits to WfmData as well!
     signals_unit = signals_lims + (
@@ -912,6 +923,8 @@ def _get_model_db(psmodel):
         'FAP_4P_Master': _get_ps_FAP_4P_Master_propty_database,
         'FAP_4P_Slave': _get_ps_FAP_4P_Slave_propty_database,
         'Commercial': _get_ps_Commercial_propty_database,
+        'FP_SEPT': _get_pu_FP_SEPT_propty_database,
+        'FP_KCKR': _get_pu_FP_KCKR_propty_database,
     }
     if psmodel in psmodel_2_dbfunc:
         func = psmodel_2_dbfunc[psmodel]
