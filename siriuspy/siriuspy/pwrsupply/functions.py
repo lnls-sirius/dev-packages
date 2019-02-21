@@ -162,8 +162,8 @@ class PSPwrStateFBP_DCLink(Function):
                 (self.setpoints and self.setpoints.apply(value)):
             if value == 1:
                 self.turn_on.execute()
-                _time.sleep(0.3)
-                self.open_loop.execute()
+                # _time.sleep(0.3)
+                # self.open_loop.execute()
             elif value == 0:
                 self.turn_off.execute()
 

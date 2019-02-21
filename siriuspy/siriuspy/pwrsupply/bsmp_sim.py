@@ -518,7 +518,7 @@ class _OpModeSimCycleState_FAC_DCDC(_OpModeSimCycleState, _Spec_FAC_DCDC):
     """Cycle FAC_DCDC state."""
 
     pass
-
+# [27-32]
 
 class _OpModeSimState_FAC_ACDC(_OpModeSimSlowRefState, _Spec_FAC_ACDC):
     """SlowRef FAC_ACDC state."""
@@ -696,8 +696,22 @@ class BSMPSim_FAC_DCDC(_BaseBSMPSim, _Spec_FAC_DCDC):
             0, 0, 0, 0.0, 0.0, 0.0, 0.0, [0.0, 0.0, 0.0, 0.0],  # siggen [6-13]
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # undef [14-24]
             0, 0,  # interlocks [25-26]
-            0.0, 0.0,  # iload1, iload2 [27-28]
-            0.0, 0.0, 0.0, 0.0, 0.0]  # [29-33]
+            0.0, 0.0, 0.0,  # iload_mean, iload1, iload2 [27-29]
+            0.0,  # vload
+            0.0,  # capacitor_bank
+            25.0,  # temp_inductors
+            25.0,  # temp_heatsink
+            30.0,  # duty_cycle
+            0.0,  # i_input_iib
+            0.0,  # i_output_iib
+            0.0,  # v_input_iib
+            0.0,  # temp_igbts_1_iib
+            0.0,  # temp_igbts_2_iib
+            0.0,  # temp_inductor_iib
+            0.0,  # temp_heatsink_iib
+            0.0,  # driver_error_1_iib
+            0.0,  # driver_error_2_iib
+            0.0]  # iib_interlocks [44]
         default_siggen_parms = \
             _SignalFactory.DEFAULT_CONFIGS['Sine']
         variables[_cFAC_DCDC.V_SIGGEN_TYPE] = default_siggen_parms[0]
@@ -730,7 +744,8 @@ class BSMPSim_FAC_ACDC(_BaseBSMPSim, _Spec_FAC_ACDC):
             0, 0, 0, 0.0, 0.0, 0.0, 0.0, [0.0, 0.0, 0.0, 0.0],  # siggen [6-13]
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # undef [14-24]
             0, 0,  # interlocks [25-26]
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # [27-32]
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # [27-32]
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # [33-42]
         return variables
 
 
@@ -757,11 +772,10 @@ class BSMPSim_FAC_2P4S_DCDC(_BaseBSMPSim, _Spec_FAC_2P4S_DCDC):
             0, 0, 0, 0.0, 0.0, 0.0, 0.0, [0.0, 0.0, 0.0, 0.0],  # siggen [6-13]
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # undef [14-24]
             0, 0,  # interlocks [25-26]
-            0.0, 0.0,  # iload1, iload2, v_load [27-29]
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # capbank [30-37]
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # v_out[38-45]
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # durycycle [46-53]
-            0.0, 0.0]  # [54-55]
+            0.0, 0.0, 0.0,  # iload_mean, iload1, iload2, v_load [27-29]
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # [30-38]
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # [39-47]
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # [48-56]
         default_siggen_parms = \
             _SignalFactory.DEFAULT_CONFIGS['Sine']
         variables[_cFAC_DCDC.V_SIGGEN_TYPE] = default_siggen_parms[0]
@@ -819,7 +833,7 @@ class BSMPSim_FAP(_BaseBSMPSim, _Spec_FAP):
             0, 0, 0, 0.0, 0.0, 0.0, 0.0, [0.0, 0.0, 0.0, 0.0],  # siggen [6-13]
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # undef [14-24]
             0, 0,  # interlocks [25-26]
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # [27-34]
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # [27-35]
         return variables
 
 # --- Classes for UDCs ---
@@ -836,7 +850,7 @@ class BSMPSim_FAP(_BaseBSMPSim, _Spec_FAP):
 #                  'Entities': _EntitiesFBP(),
 #                  'BSMPSim': BSMPSim_FBP, },
 
-#     'FAC_DCDC': {'ConstBSMP': _cFAC_DCDC,
+#     'FAC_DCDC': {'ConstBSMP': _cFAC_DCDC,# [27-32]
 #                  'Entities': _EntitiesFAC_DCDC(),
 #                  'BSMPSim': BSMPSim_FAC_DCDC, },
 #     'FAC_ACDC': {'ConstBSMP': _cFAC_ACDC,
