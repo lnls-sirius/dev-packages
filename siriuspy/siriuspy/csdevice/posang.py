@@ -6,7 +6,7 @@ from siriuspy.csdevice import util as _cutil
 class Const:
     """Const class defining PosAng constants."""
 
-    TB_CORRH_POSANG = ('TB-03:MA-CH', 'TB-04:PM-InjSept')
+    TB_CORRH_POSANG = ('TB-04:MA-CH', 'TB-04:PM-InjSept')
     TB_CORRV_POSANG = ('TB-04:MA-CV-1', 'TB-04:MA-CV-2')
     TS_CORRH_POSANG = ('TS-04:MA-CH', 'TS-04:PM-InjSeptF')
     TS_CORRV_POSANG = ('TS-04:MA-CV-1', 'TS-04:MA-CV-2')

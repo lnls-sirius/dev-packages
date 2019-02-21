@@ -296,16 +296,27 @@ class ConstFAC_DCDC(ConstBSMP):
     V_UNDEF23 = 23
     V_UNDEF24 = 24
 
-    # --- FSB variables ---
+    # --- FAC_DCDC variables ---
     V_PS_SOFT_INTERLOCKS = 25
     V_PS_HARD_INTERLOCKS = 26
-    V_I_LOAD1 = 27
-    V_I_LOAD2 = 28
-    V_V_LOAD = 29
-    V_V_CAPACITOR_BANK = 30
-    V_TEMP_INDUCTORS = 31
-    V_TEMP_IGBTS = 32
-    V_DUTY_CYCLE = 33
+    V_I_LOAD_MEAN = 27
+    V_I_LOAD1 = 28
+    V_I_LOAD2 = 29
+    V_V_LOAD = 30
+    V_V_CAPBANK = 31
+    V_TEMP_INDUCTORS = 32
+    V_TEMP_IGBTS = 33
+    V_DUTY_CYCLE = 34
+    V_I_INPUT_IIB = 35
+    V_I_OUTPUT_IIB = 36
+    V_V_INPUT_IIB = 37
+    V_TEMP_IGBTS_1_IIB = 38
+    V_TEMP_IGBTS_2_IIB = 39
+    V_TEMP_INDUCTOR_IIB = 40
+    V_TEMP_HEATSINK_IIB = 41
+    V_DRIVER_ERROR_1_IIB = 42
+    V_DRIVER_ERROR_2_IIB = 43
+    V_IIB_INTERLOCKS = 44
 
 
 class ConstFAC_ACDC(ConstBSMP):
@@ -327,12 +338,22 @@ class ConstFAC_ACDC(ConstBSMP):
     # --- FAC_ACDC variables ---
     V_PS_SOFT_INTERLOCKS = 25
     V_PS_HARD_INTERLOCKS = 26
-    V_CAPACITOR_BANK = 27
-    V_OUT_RECTIFIER = 28
-    I_OUT_RECTIFIER = 29
-    TEMP_HEATSINK = 30
-    TEMP_INDUCTORS = 31
-    DUTY_CYCLE = 32
+    V_V_CAPBANK = 27
+    V_V_OUT_RECTIFIER = 28
+    V_I_OUT_RECTIFIER = 29
+    V_TEMP_HEATSINK = 30
+    V_TEMP_INDUCTORS = 31
+    V_DUTY_CYCLE = 32
+    V_I_INPUT_IS_IIB = 33
+    V_V_INPUT_IS_IIB = 34
+    V_TEMP_INDUCTOR_IS_IIB = 35
+    V_TEMP_HEATSINK_IS_IIB = 36
+    V_V_OUTPUT_CMD_IIB = 37
+    V_V_CAPBANK_CMD_IIB = 38
+    V_TEMP_INDUCTOR_CMD_IIB = 39
+    V_TEMP_HEATSINK_CMD_IIB = 40
+    V_IIB_INTERLOCKS_IS = 41
+    V_IIB_INTERLOCKS_CMD = 42
 
 
 class ConstFAC_2P4S_DCDC(ConstBSMP):
@@ -351,38 +372,39 @@ class ConstFAC_2P4S_DCDC(ConstBSMP):
     V_UNDEF23 = 23
     V_UNDEF24 = 24
 
-    # --- FAC_2P4S variables ---
+    # --- FAC_2P4S_DCDC variables ---
     V_PS_SOFT_INTERLOCKS = 25
     V_PS_HARD_INTERLOCKS = 26
-    V_I_LOAD1 = 27
-    V_I_LOAD2 = 28
-    V_V_LOAD = 29
-    V_V_CAPACITOR_BANK1 = 30
-    V_V_CAPACITOR_BANK2 = 31
-    V_V_CAPACITOR_BANK3 = 32
-    V_V_CAPACITOR_BANK4 = 33
-    V_V_CAPACITOR_BANK5 = 34
-    V_V_CAPACITOR_BANK6 = 35
-    V_V_CAPACITOR_BANK7 = 36
-    V_V_CAPACITOR_BANK8 = 37
-    V_V_OUT1 = 38
-    V_V_OUT2 = 39
-    V_V_OUT3 = 40
-    V_V_OUT4 = 41
-    V_V_OUT5 = 42
-    V_V_OUT6 = 43
-    V_V_OUT7 = 44
-    V_V_OUT8 = 45
-    V_DUTY_CYCLE1 = 46
-    V_DUTY_CYCLE2 = 47
-    V_DUTY_CYCLE3 = 48
-    V_DUTY_CYCLE4 = 49
-    V_DUTY_CYCLE5 = 50
-    V_DUTY_CYCLE6 = 51
-    V_DUTY_CYCLE7 = 52
-    V_DUTY_CYCLE8 = 53
-    V_I_ARM1 = 54
-    V_I_ARM2 = 55
+    V_I_LOAD_MEAN = 27
+    V_I_LOAD1 = 28
+    V_I_LOAD2 = 29
+    V_I_ARM_1 = 30
+    V_I_ARM_2 = 31
+    V_V_LOAD = 32
+    V_V_CAPBANK_1 = 33
+    V_V_CAPBANK_2 = 34
+    V_V_CAPBANK_3 = 35
+    V_V_CAPBANK_4 = 36
+    V_V_CAPBANK_5 = 37
+    V_V_CAPBANK_6 = 38
+    V_V_CAPBANK_7 = 39
+    V_V_CAPBANK_8 = 40
+    V_V_OUT_1 = 41
+    V_V_OUT_2 = 42
+    V_V_OUT_3 = 43
+    V_V_OUT_4 = 44
+    V_V_OUT_5 = 45
+    V_V_OUT_6 = 46
+    V_V_OUT_7 = 47
+    V_V_OUT_8 = 48
+    V_DUTY_CYCLE_1 = 49
+    V_DUTY_CYCLE_2 = 50
+    V_DUTY_CYCLE_3 = 51
+    V_DUTY_CYCLE_4 = 52
+    V_DUTY_CYCLE_5 = 53
+    V_DUTY_CYCLE_6 = 54
+    V_DUTY_CYCLE_7 = 55
+    V_DUTY_CYCLE_8 = 56
 
 
 class ConstFAC_2P4S_ACDC(ConstBSMP):
@@ -404,12 +426,12 @@ class ConstFAC_2P4S_ACDC(ConstBSMP):
     # --- FAC_2P4S_ACDC variables ---
     V_PS_SOFT_INTERLOCKS = 25
     V_PS_HARD_INTERLOCKS = 26
-    V_CAPACITOR_BANK = 27
-    V_OUT_RECTIFIER = 28
-    I_OUT_RECTIFIER = 29
-    TEMP_HEATSINK = 30
-    TEMP_INDUCTORS = 31
-    DUTY_CYCLE = 32
+    V_V_CAPBANK = 27
+    V_V_OUT_RECTIFIER = 28
+    V_I_OUT_RECTIFIER = 29
+    V_TEMP_HEATSINK = 30
+    V_TEMP_INDUCTORS = 31
+    V_DUTY_CYCLE = 32
 
 
 class ConstFAP(ConstBSMP):
@@ -431,21 +453,20 @@ class ConstFAP(ConstBSMP):
     V_UNDEF23 = 23
     V_UNDEF24 = 24
 
-    # --- FSB variables ---
-    V_PS_SOFT_INTERLOCKS = 25  # BSMP doc says ID numb. should be continous!
+    # --- FAP variables ---
+    V_PS_SOFT_INTERLOCKS = 25
     V_PS_HARD_INTERLOCKS = 26
-    V_I_LOAD1 = 27  # corresponds to IOC Current-Mon
-    V_I_LOAD2 = 28  # corresponds to IOC Current2-Mon
-    V_V_DCLINK = 29
-    V_I_IGBT_1 = 30
-    V_I_IGBT_2 = 31
-    V_DUTY_CYCLE_1 = 32
-    V_DUTY_CYCLE_2 = 33
-    V_DUTY_DIFF = 34
+    V_I_LOAD_MEAN = 27  # corresponds to IOC Current-Mon
+    V_I_LOAD1 = 28  # corresponds to IOC Current1-Mon
+    V_I_LOAD2 = 29  # corresponds to IOC Current2-Mon
+    V_V_DCLINK = 30
+    V_I_IGBT_1 = 31
+    V_I_IGBT_2 = 32
+    V_DUTY_CYCLE_1 = 33
+    V_DUTY_CYCLE_2 = 34
+    V_DUTY_DIFF = 35
 
     # --- undefined variables
-
-    V_UNDEF35 = 35
     V_UNDEF36 = 36
     V_UNDEF37 = 37
     V_UNDEF38 = 38
@@ -880,6 +901,17 @@ class EntitiesFAC_DCDC(_Entities):
         {'eid': 31, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 32, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 33, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 34, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 35, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 36, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 37, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 38, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 39, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 40, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 41, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 42, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 43, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 44, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
     )
 
     Curves = tuple()
@@ -931,6 +963,16 @@ class EntitiesFAC_ACDC(_Entities):
         {'eid': 30, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 31, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 32, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 33, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 34, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 35, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 36, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 37, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 38, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 39, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 40, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 41, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 42, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
     )
 
     Curves = tuple()
@@ -1005,6 +1047,7 @@ class EntitiesFAC_2P4S_DCDC(_Entities):
         {'eid': 53, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 54, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 55, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 56, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
     )
 
     Curves = tuple()
@@ -1109,6 +1152,7 @@ class EntitiesFAP(_Entities):
         {'eid': 32, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 33, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 34, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 35, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
     )
 
     Curves = tuple()

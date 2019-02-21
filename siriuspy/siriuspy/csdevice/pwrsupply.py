@@ -577,6 +577,16 @@ def get_pm_propty_database(maname):
 # --- Auxiliary functions ---
 
 
+def _get_pu_FP_SEPT_propty_database():
+    """."""
+    return get_common_pu_propty_database()
+
+
+def _get_pu_FP_KCKR_propty_database():
+    """."""
+    return get_common_pu_propty_database()
+
+
 def _get_ps_FBP_propty_database():
     """Return database with FBP pwrsupply model PVs."""
     propty_db = get_basic_propty_database()
@@ -620,11 +630,13 @@ def _get_ps_FBP_DCLink_propty_database():
     return propty_db
 
 
-def _get_ps_FAC_propty_database():
-    """Return database with FAC pwrsupply model PVs."""
+def _get_ps_FAC_DCDC_propty_database():
+    """Return database with FAC_DCDC pwrsupply model PVs."""
     # TODO: implement!!!
     propty_db = get_basic_propty_database()
     db_ps = {
+        'Current1-Mon': {'type': 'float',  'value': 0.0,
+                         'prec': default_ps_current_precision},
         'Current2-Mon': {'type': 'float',  'value': 0.0,
                          'prec': default_ps_current_precision},
         'IntlkSoftLabels-Cte':  {'type': 'string',
@@ -672,22 +684,24 @@ def _get_ps_FAC_ACDC_propty_database():
     return propty_db
 
 
-def _get_ps_FAC_2S_propty_database():
-    """Return database with FAC_2S pwrsupply model PVs."""
+def _get_ps_FAC_2S_DCDC_propty_database():
+    """Return database with FAC_2S_DCDC pwrsupply model PVs."""
     # TODO: implement!!!
     return _get_ps_FBP_propty_database()
 
 
 def _get_ps_FAC_2S_ACDC_propty_database():
-    """Return database with FAC_2S pwrsupply model PVs."""
+    """Return database with FAC_2S_ACDC pwrsupply model PVs."""
     # TODO: implement!!!
     return _get_ps_FAC_ACDC_propty_database()
 
 
-def _get_ps_FAC_2P4S_propty_database():
+def _get_ps_FAC_2P4S_DCDC_propty_database():
     """Return database with FAC_2P4S pwrsupply model PVs."""
     propty_db = get_basic_propty_database()
     db_ps = {
+        'Current1-Mon': {'type': 'float',  'value': 0.0,
+                         'prec': default_ps_current_precision},
         'Current2-Mon': {'type': 'float',  'value': 0.0,
                          'prec': default_ps_current_precision},
         'IntlkSoftLabels-Cte':  {'type': 'string',
@@ -812,6 +826,8 @@ def _get_ps_FAP_propty_database():
     """Return database with FAP pwrsupply model PVs."""
     propty_db = get_basic_propty_database()
     db_ps = {
+        'Current1-Mon': {'type': 'float',  'value': 0.0,
+                         'prec': default_ps_current_precision},
         'Current2-Mon': {'type': 'float',  'value': 0.0,
                          'prec': default_ps_current_precision},
         'IntlkSoftLabels-Cte':  {'type': 'string',
@@ -866,6 +882,7 @@ def _set_limits(pstype, database):
                     'CurrentRef-Mon', 'Current-Mon', 'Current2-Mon'
                     'CycleAmpl-SP', 'CycleAmpl-RB',
                     'CycleOffset-SP', 'CycleOffset-RB',
+                    'Voltage-SP', 'Voltage-RB', 'Voltage-Mon',
                     )
     # TODO: define limits to WfmData as well!
     signals_unit = signals_lims + (
@@ -895,17 +912,19 @@ def _get_model_db(psmodel):
         'FBP': _get_ps_FBP_propty_database,
         'FBP_DCLink': _get_ps_FBP_DCLink_propty_database,
         'FBP_FOFB': _get_ps_FBP_FOFB_propty_database,
-        'FAC_DCDC': _get_ps_FAC_propty_database,
+        'FAC_DCDC': _get_ps_FAC_DCDC_propty_database,
         'FAC_ACDC': _get_ps_FAC_ACDC_propty_database,
-        'FAC_2S_DCDC': _get_ps_FAC_2S_propty_database,
+        'FAC_2S_DCDC': _get_ps_FAC_2S_DCDC_propty_database,
         'FAC_2S_ACDC': _get_ps_FAC_2S_ACDC_propty_database,
-        'FAC_2P4S_DCDC': _get_ps_FAC_2P4S_propty_database,
+        'FAC_2P4S_DCDC': _get_ps_FAC_2P4S_DCDC_propty_database,
         'FAC_2P4S_ACDC': _get_ps_FAC_2P4S_ACDC_propty_database,
         'FAP': _get_ps_FAP_propty_database,
         'FAP_2P2S_MASTER': _get_ps_FAP_2P2S_propty_database,
         'FAP_4P_Master': _get_ps_FAP_4P_Master_propty_database,
         'FAP_4P_Slave': _get_ps_FAP_4P_Slave_propty_database,
         'Commercial': _get_ps_Commercial_propty_database,
+        'FP_SEPT': _get_pu_FP_SEPT_propty_database,
+        'FP_KCKR': _get_pu_FP_KCKR_propty_database,
     }
     if psmodel in psmodel_2_dbfunc:
         func = psmodel_2_dbfunc[psmodel]

@@ -304,7 +304,8 @@ class FACFactory(FBPFactory):
         'IntlkHard-Mon': _bsmp.ConstFAC_DCDC.V_PS_HARD_INTERLOCKS,
         'Current-RB': _bsmp.ConstFAC_DCDC.V_PS_SETPOINT,
         'CurrentRef-Mon': _bsmp.ConstFAC_DCDC.V_PS_REFERENCE,
-        'Current-Mon': _bsmp.ConstFAC_DCDC.V_I_LOAD1,
+        'Current-Mon': _bsmp.ConstFAC_DCDC.V_I_LOAD_MEAN,
+        'Current1-Mon': _bsmp.ConstFAC_DCDC.V_I_LOAD1,
         'Current2-Mon': _bsmp.ConstFAC_DCDC.V_I_LOAD2,
     }
 
@@ -371,43 +372,44 @@ class FAC2P4SDCDCFactory(FACFactory):
         'CurrentRef-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_PS_REFERENCE,
         'IntlkSoft-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_PS_HARD_INTERLOCKS,
-        'Current-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_I_LOAD1,
+        'Current-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_I_LOAD_MEAN,
+        'Current1-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_I_LOAD1,
         'Current2-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_I_LOAD2,
         'LoadVoltage-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_V_LOAD,
         'CapacitorBank1Voltage-Mon':
-            _bsmp.ConstFAC_2P4S_DCDC.V_V_CAPACITOR_BANK1,
+            _bsmp.ConstFAC_2P4S_DCDC.V_V_CAPBANK_1,
         'CapacitorBank2Voltage-Mon':
-            _bsmp.ConstFAC_2P4S_DCDC.V_V_CAPACITOR_BANK2,
+            _bsmp.ConstFAC_2P4S_DCDC.V_V_CAPBANK_2,
         'CapacitorBank3Voltage-Mon':
-            _bsmp.ConstFAC_2P4S_DCDC.V_V_CAPACITOR_BANK3,
+            _bsmp.ConstFAC_2P4S_DCDC.V_V_CAPBANK_3,
         'CapacitorBank4Voltage-Mon':
-            _bsmp.ConstFAC_2P4S_DCDC.V_V_CAPACITOR_BANK4,
+            _bsmp.ConstFAC_2P4S_DCDC.V_V_CAPBANK_4,
         'CapacitorBank5Voltage-Mon':
-            _bsmp.ConstFAC_2P4S_DCDC.V_V_CAPACITOR_BANK5,
+            _bsmp.ConstFAC_2P4S_DCDC.V_V_CAPBANK_5,
         'CapacitorBank6Voltage-Mon':
-            _bsmp.ConstFAC_2P4S_DCDC.V_V_CAPACITOR_BANK6,
+            _bsmp.ConstFAC_2P4S_DCDC.V_V_CAPBANK_6,
         'CapacitorBank7Voltage-Mon':
-            _bsmp.ConstFAC_2P4S_DCDC.V_V_CAPACITOR_BANK7,
+            _bsmp.ConstFAC_2P4S_DCDC.V_V_CAPBANK_7,
         'CapacitorBank8Voltage-Mon':
-            _bsmp.ConstFAC_2P4S_DCDC.V_V_CAPACITOR_BANK8,
-        'Module1Voltage-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_V_OUT1,
-        'Module2Voltage-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_V_OUT2,
-        'Module3Voltage-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_V_OUT3,
-        'Module4Voltage-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_V_OUT4,
-        'Module5Voltage-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_V_OUT5,
-        'Module6Voltage-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_V_OUT6,
-        'Module7Voltage-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_V_OUT7,
-        'Module8Voltage-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_V_OUT8,
-        'PWMDutyCycle1-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE1,
-        'PWMDutyCycle2-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE2,
-        'PWMDutyCycle3-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE3,
-        'PWMDutyCycle4-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE4,
-        'PWMDutyCycle5-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE5,
-        'PWMDutyCycle6-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE6,
-        'PWMDutyCycle7-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE7,
-        'PWMDutyCycle8-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE8,
-        'Arm1Current-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_I_ARM1,
-        'Arm2Current-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_I_ARM2,
+            _bsmp.ConstFAC_2P4S_DCDC.V_V_CAPBANK_8,
+        'Module1Voltage-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_V_OUT_1,
+        'Module2Voltage-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_V_OUT_2,
+        'Module3Voltage-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_V_OUT_3,
+        'Module4Voltage-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_V_OUT_4,
+        'Module5Voltage-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_V_OUT_5,
+        'Module6Voltage-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_V_OUT_6,
+        'Module7Voltage-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_V_OUT_7,
+        'Module8Voltage-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_V_OUT_8,
+        'PWMDutyCycle1-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE_1,
+        'PWMDutyCycle2-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE_2,
+        'PWMDutyCycle3-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE_3,
+        'PWMDutyCycle4-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE_4,
+        'PWMDutyCycle5-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE_5,
+        'PWMDutyCycle6-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE_6,
+        'PWMDutyCycle7-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE_7,
+        'PWMDutyCycle8-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_DUTY_CYCLE_8,
+        'Arm1Current-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_I_ARM_1,
+        'Arm2Current-Mon': _bsmp.ConstFAC_2P4S_DCDC.V_I_ARM_2,
     }
 
     @property
@@ -444,7 +446,8 @@ class FAPFactory(FBPFactory):
         'IntlkHard-Mon': _bsmp.ConstFAP.V_PS_HARD_INTERLOCKS,
         'Current-RB': _bsmp.ConstFAP.V_PS_SETPOINT,
         'CurrentRef-Mon': _bsmp.ConstFAP.V_PS_REFERENCE,
-        'Current-Mon': _bsmp.ConstFAP.V_I_LOAD1,
+        'Current-Mon': _bsmp.ConstFAP.V_I_LOAD_MEAN,
+        'Current1-Mon': _bsmp.ConstFAP.V_I_LOAD1,
         'Current2-Mon': _bsmp.ConstFAP.V_I_LOAD2,
     }
 
@@ -560,11 +563,6 @@ class FAP4PSlaveFactory(FBPFactory):
         """Model simulation."""
         return _BSMPSim_FBP
 
-    # @property
-    # def database(self):
-    #     """Return model database."""
-    #     return _get_ps_FAP_4P_Slave_propty_database()
-
 
 class CommercialFactory(FACFactory):
     """Commercial model factory."""
@@ -677,12 +675,12 @@ class FACACDCFactory(FBPDCLinkFactory):
         'IntlkHard-Mon': _bsmp.ConstFAC_ACDC.V_PS_HARD_INTERLOCKS,
         'CapacitorBankVoltage-RB': _bsmp.ConstFAC_ACDC.V_PS_SETPOINT,
         'CapacitorBankVoltageRef-Mon': _bsmp.ConstFAC_ACDC.V_PS_REFERENCE,
-        'CapacitorBankVoltage-Mon': _bsmp.ConstFAC_ACDC.V_CAPACITOR_BANK,
-        'RectifierVoltage-Mon': _bsmp.ConstFAC_ACDC.V_OUT_RECTIFIER,
-        'RectifierCurrent-Mon': _bsmp.ConstFAC_ACDC.I_OUT_RECTIFIER,
-        'HeatSinkTemperature-Mon': _bsmp.ConstFAC_ACDC.TEMP_HEATSINK,
-        'InductorsTemperature-Mon': _bsmp.ConstFAC_ACDC.TEMP_INDUCTORS,
-        'PWMDutyCycle-Mon': _bsmp.ConstFAC_ACDC.DUTY_CYCLE,
+        'CapacitorBankVoltage-Mon': _bsmp.ConstFAC_ACDC.V_V_CAPBANK,
+        'RectifierVoltage-Mon': _bsmp.ConstFAC_ACDC.V_V_OUT_RECTIFIER,
+        'RectifierCurrent-Mon': _bsmp.ConstFAC_ACDC.V_I_OUT_RECTIFIER,
+        'HeatSinkTemperature-Mon': _bsmp.ConstFAC_ACDC.V_TEMP_HEATSINK,
+        'InductorsTemperature-Mon': _bsmp.ConstFAC_ACDC.V_TEMP_INDUCTORS,
+        'PWMDutyCycle-Mon': _bsmp.ConstFAC_ACDC.V_DUTY_CYCLE,
     }
 
     @property
@@ -1014,10 +1012,11 @@ class PRUCParms_FAC(_PRUCParms):
         # --- FAC variables ---
         ConstBSMP.V_PS_SOFT_INTERLOCKS,
         ConstBSMP.V_PS_HARD_INTERLOCKS,
+        ConstBSMP.V_I_LOAD_MEAN,
         ConstBSMP.V_I_LOAD1,
         ConstBSMP.V_I_LOAD2,
         ConstBSMP.V_V_LOAD,
-        ConstBSMP.V_V_CAPACITOR_BANK,
+        ConstBSMP.V_V_CAPBANK,
         ConstBSMP.V_TEMP_INDUCTORS,
         ConstBSMP.V_TEMP_IGBTS,
         ConstBSMP.V_DUTY_CYCLE,)
@@ -1039,10 +1038,11 @@ class PRUCParms_FAC(_PRUCParms):
         # --- FAC variables ---
         ConstBSMP.V_PS_SOFT_INTERLOCKS,
         ConstBSMP.V_PS_HARD_INTERLOCKS,
+        ConstBSMP.V_I_LOAD_MEAN,
         ConstBSMP.V_I_LOAD1,
         ConstBSMP.V_I_LOAD2,
         ConstBSMP.V_V_LOAD,
-        ConstBSMP.V_V_CAPACITOR_BANK,
+        ConstBSMP.V_V_CAPBANK,
         ConstBSMP.V_TEMP_INDUCTORS,
         ConstBSMP.V_TEMP_IGBTS,
         ConstBSMP.V_DUTY_CYCLE,)
@@ -1085,12 +1085,12 @@ class PRUCParms_FAC_ACDC(_PRUCParms):
         # --- FAC_ACDC variables ---
         ConstBSMP.V_PS_SOFT_INTERLOCKS,
         ConstBSMP.V_PS_HARD_INTERLOCKS,
-        ConstBSMP.V_CAPACITOR_BANK,
-        ConstBSMP.V_OUT_RECTIFIER,
-        ConstBSMP.I_OUT_RECTIFIER,
-        ConstBSMP.TEMP_HEATSINK,
-        ConstBSMP.TEMP_INDUCTORS,
-        ConstBSMP.DUTY_CYCLE,)
+        ConstBSMP.V_V_CAPBANK,
+        ConstBSMP.V_V_OUT_RECTIFIER,
+        ConstBSMP.V_I_OUT_RECTIFIER,
+        ConstBSMP.V_TEMP_HEATSINK,
+        ConstBSMP.V_TEMP_INDUCTORS,
+        ConstBSMP.V_DUTY_CYCLE,)
     groups[_PRUCParms.SYNCOFF] = (
         # --- common variables
         ConstBSMP.V_PS_STATUS,
@@ -1109,12 +1109,12 @@ class PRUCParms_FAC_ACDC(_PRUCParms):
         # --- FAC_ACDC variables ---
         ConstBSMP.V_PS_SOFT_INTERLOCKS,
         ConstBSMP.V_PS_HARD_INTERLOCKS,
-        ConstBSMP.V_CAPACITOR_BANK,
-        ConstBSMP.V_OUT_RECTIFIER,
-        ConstBSMP.I_OUT_RECTIFIER,
-        ConstBSMP.TEMP_HEATSINK,
-        ConstBSMP.TEMP_INDUCTORS,
-        ConstBSMP.DUTY_CYCLE,)
+        ConstBSMP.V_V_CAPBANK,
+        ConstBSMP.V_V_OUT_RECTIFIER,
+        ConstBSMP.V_I_OUT_RECTIFIER,
+        ConstBSMP.V_TEMP_HEATSINK,
+        ConstBSMP.V_TEMP_INDUCTORS,
+        ConstBSMP.V_DUTY_CYCLE,)
     groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 
@@ -1157,35 +1157,36 @@ class PRUCParms_FAC_2P4S(_PRUCParms):
         # --- FAC variables ---
         ConstBSMP.V_PS_SOFT_INTERLOCKS,
         ConstBSMP.V_PS_HARD_INTERLOCKS,
+        ConstBSMP.V_I_LOAD_MEAN,
         ConstBSMP.V_I_LOAD1,
         ConstBSMP.V_I_LOAD2,
         ConstBSMP.V_V_LOAD,
-        ConstBSMP.V_V_CAPACITOR_BANK1,
-        ConstBSMP.V_V_CAPACITOR_BANK2,
-        ConstBSMP.V_V_CAPACITOR_BANK3,
-        ConstBSMP.V_V_CAPACITOR_BANK4,
-        ConstBSMP.V_V_CAPACITOR_BANK5,
-        ConstBSMP.V_V_CAPACITOR_BANK6,
-        ConstBSMP.V_V_CAPACITOR_BANK7,
-        ConstBSMP.V_V_CAPACITOR_BANK8,
-        ConstBSMP.V_V_OUT1,
-        ConstBSMP.V_V_OUT2,
-        ConstBSMP.V_V_OUT3,
-        ConstBSMP.V_V_OUT4,
-        ConstBSMP.V_V_OUT5,
-        ConstBSMP.V_V_OUT6,
-        ConstBSMP.V_V_OUT7,
-        ConstBSMP.V_V_OUT8,
-        ConstBSMP.V_DUTY_CYCLE1,
-        ConstBSMP.V_DUTY_CYCLE2,
-        ConstBSMP.V_DUTY_CYCLE3,
-        ConstBSMP.V_DUTY_CYCLE4,
-        ConstBSMP.V_DUTY_CYCLE5,
-        ConstBSMP.V_DUTY_CYCLE6,
-        ConstBSMP.V_DUTY_CYCLE7,
-        ConstBSMP.V_DUTY_CYCLE8,
-        ConstBSMP.V_I_ARM1,
-        ConstBSMP.V_I_ARM2)
+        ConstBSMP.V_V_CAPBANK_1,
+        ConstBSMP.V_V_CAPBANK_2,
+        ConstBSMP.V_V_CAPBANK_3,
+        ConstBSMP.V_V_CAPBANK_4,
+        ConstBSMP.V_V_CAPBANK_5,
+        ConstBSMP.V_V_CAPBANK_6,
+        ConstBSMP.V_V_CAPBANK_7,
+        ConstBSMP.V_V_CAPBANK_8,
+        ConstBSMP.V_V_OUT_1,
+        ConstBSMP.V_V_OUT_2,
+        ConstBSMP.V_V_OUT_3,
+        ConstBSMP.V_V_OUT_4,
+        ConstBSMP.V_V_OUT_5,
+        ConstBSMP.V_V_OUT_6,
+        ConstBSMP.V_V_OUT_7,
+        ConstBSMP.V_V_OUT_8,
+        ConstBSMP.V_DUTY_CYCLE_1,
+        ConstBSMP.V_DUTY_CYCLE_2,
+        ConstBSMP.V_DUTY_CYCLE_3,
+        ConstBSMP.V_DUTY_CYCLE_4,
+        ConstBSMP.V_DUTY_CYCLE_5,
+        ConstBSMP.V_DUTY_CYCLE_6,
+        ConstBSMP.V_DUTY_CYCLE_7,
+        ConstBSMP.V_DUTY_CYCLE_8,
+        ConstBSMP.V_I_ARM_1,
+        ConstBSMP.V_I_ARM_2)
     groups[_PRUCParms.SYNCOFF] = (
         # --- common variables
         ConstBSMP.V_PS_STATUS,
@@ -1204,35 +1205,36 @@ class PRUCParms_FAC_2P4S(_PRUCParms):
         # --- FAC variables ---
         ConstBSMP.V_PS_SOFT_INTERLOCKS,
         ConstBSMP.V_PS_HARD_INTERLOCKS,
+        ConstBSMP.V_I_LOAD_MEAN,
         ConstBSMP.V_I_LOAD1,
         ConstBSMP.V_I_LOAD2,
         ConstBSMP.V_V_LOAD,
-        ConstBSMP.V_V_CAPACITOR_BANK1,
-        ConstBSMP.V_V_CAPACITOR_BANK2,
-        ConstBSMP.V_V_CAPACITOR_BANK3,
-        ConstBSMP.V_V_CAPACITOR_BANK4,
-        ConstBSMP.V_V_CAPACITOR_BANK5,
-        ConstBSMP.V_V_CAPACITOR_BANK6,
-        ConstBSMP.V_V_CAPACITOR_BANK7,
-        ConstBSMP.V_V_CAPACITOR_BANK8,
-        ConstBSMP.V_V_OUT1,
-        ConstBSMP.V_V_OUT2,
-        ConstBSMP.V_V_OUT3,
-        ConstBSMP.V_V_OUT4,
-        ConstBSMP.V_V_OUT5,
-        ConstBSMP.V_V_OUT6,
-        ConstBSMP.V_V_OUT7,
-        ConstBSMP.V_V_OUT8,
-        ConstBSMP.V_DUTY_CYCLE1,
-        ConstBSMP.V_DUTY_CYCLE2,
-        ConstBSMP.V_DUTY_CYCLE3,
-        ConstBSMP.V_DUTY_CYCLE4,
-        ConstBSMP.V_DUTY_CYCLE5,
-        ConstBSMP.V_DUTY_CYCLE6,
-        ConstBSMP.V_DUTY_CYCLE7,
-        ConstBSMP.V_DUTY_CYCLE8,
-        ConstBSMP.V_I_ARM1,
-        ConstBSMP.V_I_ARM2)
+        ConstBSMP.V_V_CAPBANK_1,
+        ConstBSMP.V_V_CAPBANK_2,
+        ConstBSMP.V_V_CAPBANK_3,
+        ConstBSMP.V_V_CAPBANK_4,
+        ConstBSMP.V_V_CAPBANK_5,
+        ConstBSMP.V_V_CAPBANK_6,
+        ConstBSMP.V_V_CAPBANK_7,
+        ConstBSMP.V_V_CAPBANK_8,
+        ConstBSMP.V_V_OUT_1,
+        ConstBSMP.V_V_OUT_2,
+        ConstBSMP.V_V_OUT_3,
+        ConstBSMP.V_V_OUT_4,
+        ConstBSMP.V_V_OUT_5,
+        ConstBSMP.V_V_OUT_6,
+        ConstBSMP.V_V_OUT_7,
+        ConstBSMP.V_V_OUT_8,
+        ConstBSMP.V_DUTY_CYCLE_1,
+        ConstBSMP.V_DUTY_CYCLE_2,
+        ConstBSMP.V_DUTY_CYCLE_3,
+        ConstBSMP.V_DUTY_CYCLE_4,
+        ConstBSMP.V_DUTY_CYCLE_5,
+        ConstBSMP.V_DUTY_CYCLE_6,
+        ConstBSMP.V_DUTY_CYCLE_7,
+        ConstBSMP.V_DUTY_CYCLE_8,
+        ConstBSMP.V_I_ARM_1,
+        ConstBSMP.V_I_ARM_2)
     groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 
@@ -1272,12 +1274,12 @@ class PRUCParms_FAC_2P4S_ACDC(_PRUCParms):
         # --- FAC_ACDC variables ---
         ConstBSMP.V_PS_SOFT_INTERLOCKS,
         ConstBSMP.V_PS_HARD_INTERLOCKS,
-        ConstBSMP.V_CAPACITOR_BANK,
-        ConstBSMP.V_OUT_RECTIFIER,
-        ConstBSMP.I_OUT_RECTIFIER,
-        ConstBSMP.TEMP_HEATSINK,
-        ConstBSMP.TEMP_INDUCTORS,
-        ConstBSMP.DUTY_CYCLE,)
+        ConstBSMP.V_V_CAPBANK,
+        ConstBSMP.V_V_OUT_RECTIFIER,
+        ConstBSMP.V_I_OUT_RECTIFIER,
+        ConstBSMP.V_TEMP_HEATSINK,
+        ConstBSMP.V_TEMP_INDUCTORS,
+        ConstBSMP.V_DUTY_CYCLE,)
     groups[_PRUCParms.SYNCOFF] = (
         # --- common variables
         ConstBSMP.V_PS_STATUS,
@@ -1296,12 +1298,12 @@ class PRUCParms_FAC_2P4S_ACDC(_PRUCParms):
         # --- FAC_ACDC variables ---
         ConstBSMP.V_PS_SOFT_INTERLOCKS,
         ConstBSMP.V_PS_HARD_INTERLOCKS,
-        ConstBSMP.V_CAPACITOR_BANK,
-        ConstBSMP.V_OUT_RECTIFIER,
-        ConstBSMP.I_OUT_RECTIFIER,
-        ConstBSMP.TEMP_HEATSINK,
-        ConstBSMP.TEMP_INDUCTORS,
-        ConstBSMP.DUTY_CYCLE,)
+        ConstBSMP.V_V_CAPBANK,
+        ConstBSMP.V_V_OUT_RECTIFIER,
+        ConstBSMP.V_I_OUT_RECTIFIER,
+        ConstBSMP.V_TEMP_HEATSINK,
+        ConstBSMP.V_TEMP_INDUCTORS,
+        ConstBSMP.V_DUTY_CYCLE,)
     groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 
@@ -1344,6 +1346,7 @@ class PRUCParms_FAP(_PRUCParms):
         # --- FAP variables ---
         ConstBSMP.V_PS_SOFT_INTERLOCKS,
         ConstBSMP.V_PS_HARD_INTERLOCKS,
+        ConstBSMP.V_I_LOAD_MEAN,
         ConstBSMP.V_I_LOAD1,
         ConstBSMP.V_I_LOAD2,
         ConstBSMP.V_V_DCLINK,
@@ -1370,6 +1373,7 @@ class PRUCParms_FAP(_PRUCParms):
         # --- FAP variables ---
         ConstBSMP.V_PS_SOFT_INTERLOCKS,
         ConstBSMP.V_PS_HARD_INTERLOCKS,
+        ConstBSMP.V_I_LOAD_MEAN,
         ConstBSMP.V_I_LOAD1,
         ConstBSMP.V_I_LOAD2,
         ConstBSMP.V_V_DCLINK,
