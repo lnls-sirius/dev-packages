@@ -717,6 +717,8 @@ class FACACDCFactory(FBPDCLinkFactory):
         if epics_field == 'CapacitorBankVoltage-SP':
             return _functions.BSMPFunction(
                 device_ids, pru_controller, _c.F_SET_SLOWREF, setpoints)
+        elif epics_field == 'PwrState-Sel':
+            return _functions.PSPwrState(device_ids, pru_controller, setpoints)
         else:
             return super().function(
                 device_ids, epics_field, pru_controller, setpoints)
