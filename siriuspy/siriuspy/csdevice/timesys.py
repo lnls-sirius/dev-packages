@@ -41,7 +41,7 @@ class Const(_cutil.Const):
     EvtDlyTyp = _cutil.Const.register('EvtDlyTyp', _et.FIXED_INCR)
     ClockStates = _cutil.Const.register('ClockStates', _et.DSBL_ENBL)
     TrigStates = _cutil.Const.register('TrigStates', _et.DSBL_ENBL)
-    TrigIntlk = _cutil.Const.register('TrigIntlk', _et.DSBL_ENBL)
+    TrigIntlk = _cutil.Const.register('TrigIntlk', _et.BYPASS)
     TrigPol = _cutil.Const.register('TrigPol', _et.NORM_INV)
     TrigDlyTyp = _cutil.Const.register('TrigDlyTyp', _et.DLYTYP)
     TrigSrcLL = _cutil.Const.register('TrigSrcLL', _et.TRIG_SRC_LL)

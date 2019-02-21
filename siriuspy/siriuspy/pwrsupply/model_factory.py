@@ -220,6 +220,8 @@ class FBPFactory(ModelFactory):
                 _functions.BSMPFunction(
                     device_ids, pru_controller, _c.F_SELECT_OP_MODE),
                 setpoints)
+        elif epics_field == 'CtrlLoop-Sel':
+            return _functions.CtrlLoop(device_ids, pru_controller, setpoints)
         elif epics_field == 'Current-SP':
             return _functions.Current(device_ids, pru_controller, setpoints)
         elif epics_field == 'Reset-Cmd':

@@ -5,31 +5,40 @@ import epics as _epics
 
 
 import numpy as _np
-from siriuspy import envars as _envars
-
-
-_prefix = _envars.vaca_prefix
+from siriuspy.envars import vaca_prefix as _prefix
+from siriuspy.namesys.implementation import \
+    SiriusPVName as _SiriusPVName, \
+    get_pair_sprb as _get_pair_sprb
 
 
 class EpicsProperty:
     """Pair of Epics PVs."""
 
-    def __init__(self, name, suffix_sp, suffix_rb, prefix=_prefix,
-                 default_value=None, connection_callback=None, callback=None):
+    def __init__(self, name, prefix=_prefix, default_value=None,
+                 connection_callback=None, callback=None):
         """Init."""
-        self._name = name
-        self._suffix_sp = suffix_sp
-        self._suffix_rb = suffix_rb
+        try:
+            self._name = _SiriusPVName(name)
+            try:
+                [self._pvname_sp, self._pvname_rb] = _get_pair_sprb(self._name)
+            except TypeError:
+                self._pvname_sp = name
+                self._pvname_rb = name
+        except Exception:
+            self._name = name
+            self._pvname_sp = name
+            self._pvname_rb = name
         self._prefix = prefix
         self._default = default_value
+
+        # Set callbacks
         self._connection_callback = connection_callback
         self._callback = callback
-        pvname = self._prefix + self._name
-        # Set callbacks
         callbacks = {'connection_callback': self._pv_connection_callback,
                      'callback': self._pv_callback}
-        self._pv_sp = _epics.PV(pvname + self._suffix_sp, **callbacks)
-        self._pv_rb = _epics.PV(pvname + self._suffix_rb, **callbacks)
+
+        self._pv_sp = _epics.PV(self._prefix + self._pvname_sp, **callbacks)
+        self._pv_rb = _epics.PV(self._prefix + self._pvname_rb, **callbacks)
 
     @property
     def name(self):
@@ -44,22 +53,28 @@ class EpicsProperty:
     @property
     def suffix_sp(self):
         """PV SP suffix."""
-        return self._suffix_sp
+        try:
+            return self._pvname_sp.propty_suffix
+        except Exception:
+            return self._pvname_sp
 
     @property
     def suffix_rb(self):
         """PV RB suffix."""
-        return self._suffix_rb
+        try:
+            return self._pvname_rb.propty_suffix
+        except Exception:
+            return self._pvname_rb
 
     @property
     def pvname_sp(self):
         """Return SP pvname (without prefix)."""
-        return self._name + self._suffix_sp
+        return self._pvname_sp
 
     @property
     def pvname_rb(self):
         """Return RB pvname (without prefix)."""
-        return self._name + self._suffix_rb
+        return self._pvname_rb
 
     @property
     def connected(self):
@@ -69,12 +84,12 @@ class EpicsProperty:
     @property
     def readback(self):
         """Property readback."""
-        return self._pv_rb.value
+        return self._pv_rb.get(timeout=0)
 
     @property
     def setpoint(self):
         """Property setpoint."""
-        return self._pv_sp.value
+        return self._pv_sp.get(timeout=0)
 
     @property
     def default(self):

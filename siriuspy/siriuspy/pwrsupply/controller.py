@@ -97,6 +97,11 @@ class StandardPSController(PSController):
                     return self._watchers[device_name].op_mode
             except KeyError:
                 pass
+        elif field == 'CtrlLoop-Sts':
+            sts = self._readers[device_name + ':CtrlLoop-Sts']
+            sel = self._readers[device_name + ':CtrlLoop-Sel']
+            if sts.read() != sel.read():
+                sel.apply(sts.read())
         return self._readers[device_name + ':' + field].read()
 
     def write(self, device_name, field, value):

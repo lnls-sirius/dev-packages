@@ -1,8 +1,7 @@
 """Define the low level classes which will connect to Timing Devices IOC."""
 import time as _time
 import re as _re
-from functools import partial as _partial, reduce as _reduce
-from operator import and_ as _and_
+from functools import partial as _partial
 import logging as _log
 import epics as _epics
 from siriuspy.util import update_bit as _update_bit, get_bit as _get_bit
@@ -332,8 +331,7 @@ class LLEvent(_BaseLL):
 
     def _set_delay(self, value):
         value *= _DELAY_UNIT_CONV  # us
-        n = int(value // self._base_del)
-        return {'Delay': n}
+        return {'Delay': round(value / self._base_del)}
 
     def _get_delay(self, is_sp, val=None):
         if val is None:
@@ -370,6 +368,9 @@ class _EVROUT(_BaseLL):
                                                         self.channel)
             intrg = int(intrg.propty[-2:])  # get internal trigger number
             self._config_ok_values['SrcTrig'] = intrg
+            # # Remove bypass from hl:
+            # self._config_ok_values['ByPassIntlk'] = \
+            #     _cstime.Const.TrigIntlk.Active
 
     def write(self, prop, value):
         # keep this info for recalculating Width whenever necessary
@@ -653,7 +654,7 @@ class _EVROUT(_BaseLL):
             }
 
     def _set_duration(self, value, pul=None):
-        value *= 1e-6  # us
+        value *= _DELAY_UNIT_CONV  # us
         if pul is None:
             pul = self._config_ok_values.get('NrPulses')
         if pul is None:
@@ -694,9 +695,8 @@ class _EVROTP(_EVROUT):
         return {'Delay': val * self._base_del * 1e6}
 
     def _set_delay(self, value):
-        value *= _DELAY_UNIT_CONV
-        delay1 = int(value // self._base_del)
-        return {'Delay': delay1}
+        value *= _DELAY_UNIT_CONV  # us
+        return {'Delay': round(value / self._base_del)}
 
     def _process_source(self, prop, is_sp, val=None):
         if val is None:
