@@ -368,6 +368,9 @@ class _EVROUT(_BaseLL):
                                                         self.channel)
             intrg = int(intrg.propty[-2:])  # get internal trigger number
             self._config_ok_values['SrcTrig'] = intrg
+            # # Remove bypass from hl:
+            # self._config_ok_values['ByPassIntlk'] = \
+            #     _cstime.Const.TrigIntlk.Active
 
     def write(self, prop, value):
         # keep this info for recalculating Width whenever necessary
