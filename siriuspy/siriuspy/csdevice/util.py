@@ -14,7 +14,7 @@ class ETypes:
 
     DSBL_ENBL = ('Dsbl', 'Enbl')
     OFF_ON = ('Off', 'On')
-    CLOSE_OPEN = ('Close', 'Open')
+    CLOSE_OPEN = ('Closed', 'Open')
     DISCONN_CONN = ('Disconnected', 'Connected')
     FIXED_INCR = ('Incr', 'Fixed')
     NORM_INV = ('Normal', 'Inverse')
