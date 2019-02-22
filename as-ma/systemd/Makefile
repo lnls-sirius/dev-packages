@@ -3,7 +3,8 @@
 install-tb-dipoles:
 	@printf "Intalling sirius-ioc-tb-ma-dipoles service...\n"
 	cp -rf sirius-ioc-tb-ma-dipoles.service /etc/systemd/system/
-	mkdir -p /fac/sirius-iocs
+	mkdir -p /home/sirius/iocs
+	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
 stop-tb-dipoles:
@@ -25,7 +26,8 @@ uninstall-tb-dipoles: stop-tb-dipoles
 install-tb-quadrupoles:
 	@printf "Intalling sirius-ioc-tb-ma-quadrupoles service...\n"
 	cp -rf sirius-ioc-tb-ma-quadrupoles.service /etc/systemd/system/
-	mkdir -p /fac/sirius-iocs
+	mkdir -p /home/sirius/iocs
+	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
 stop-tb-quadrupoles:
@@ -47,7 +49,8 @@ uninstall-tb-quadrupoles: stop-tb-quadrupoles
 install-tb-correctors:
 	@printf "Intalling sirius-ioc-tb-ma-correctors service...\n"
 	cp -rf sirius-ioc-tb-ma-correctors.service /etc/systemd/system/
-	mkdir -p /fac/sirius-iocs
+	mkdir -p /home/sirius/iocs
+	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
 stop-tb-correctors:
@@ -80,7 +83,8 @@ uninstall-tb: uninstall-tb-dipoles uninstall-tb-quadrupoles uninstall-tb-correct
 install-bo-correctors-01:
 	@printf "Intalling sirius-ioc-bo-ma-correctors-01 service...\n"
 	cp -rf sirius-ioc-bo-ma-correctors-01.service /etc/systemd/system/
-	mkdir -p /fac/sirius-iocs
+	mkdir -p /home/sirius/iocs
+	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
 stop-bo-correctors-01:
@@ -101,7 +105,8 @@ uninstall-bo-correctors-01: stop-bo-correctors-01
 install-bo-correctors-02:
 	@printf "Intalling sirius-ioc-bo-ma-correctors-02 service...\n"
 	cp -rf sirius-ioc-bo-ma-correctors-02.service /etc/systemd/system/
-	mkdir -p /fac/sirius-iocs
+	mkdir -p /home/sirius/iocs
+	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
 stop-bo-correctors-02:
@@ -122,7 +127,8 @@ uninstall-bo-correctors-02: stop-bo-correctors-02
 install-bo-correctors-03:
 	@printf "Intalling sirius-ioc-bo-ma-correctors-03 service...\n"
 	cp -rf sirius-ioc-bo-ma-correctors-03.service /etc/systemd/system/
-	mkdir -p /fac/sirius-iocs
+	mkdir -p /home/sirius/iocs
+	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
 stop-bo-correctors-03:
@@ -143,7 +149,8 @@ uninstall-bo-correctors-03: stop-bo-correctors-03
 install-bo-correctors-04:
 	@printf "Intalling sirius-ioc-bo-ma-correctors-04 service...\n"
 	cp -rf sirius-ioc-bo-ma-correctors-04.service /etc/systemd/system/
-	mkdir -p /fac/sirius-iocs
+	mkdir -p /home/sirius/iocs
+	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
 stop-bo-correctors-04:
@@ -164,7 +171,8 @@ uninstall-bo-correctors-04: stop-bo-correctors-04
 install-bo-correctors-05:
 	@printf "Intalling sirius-ioc-bo-ma-correctors-05 service...\n"
 	cp -rf sirius-ioc-bo-ma-correctors-05.service /etc/systemd/system/
-	mkdir -p /fac/sirius-iocs
+	mkdir -p /home/sirius/iocs
+	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
 stop-bo-correctors-05:
@@ -185,7 +193,8 @@ uninstall-bo-correctors-05: stop-bo-correctors-05
 install-bo-correctors-06:
 	@printf "Intalling sirius-ioc-bo-ma-correctors-06 service...\n"
 	cp -rf sirius-ioc-bo-ma-correctors-06.service /etc/systemd/system/
-	mkdir -p /fac/sirius-iocs
+	mkdir -p /home/sirius/iocs
+	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
 stop-bo-correctors-06:
@@ -206,7 +215,8 @@ uninstall-bo-correctors-06: stop-bo-correctors-06
 install-bo-correctors-07:
 	@printf "Intalling sirius-ioc-bo-ma-correctors-07 service...\n"
 	cp -rf sirius-ioc-bo-ma-correctors-07.service /etc/systemd/system/
-	mkdir -p /fac/sirius-iocs
+	mkdir -p /home/sirius/iocs
+	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
 stop-bo-correctors-07:
@@ -227,7 +237,8 @@ uninstall-bo-correctors-07: stop-bo-correctors-07
 install-bo-correctors-08:
 	@printf "Intalling sirius-ioc-bo-ma-correctors-08 service...\n"
 	cp -rf sirius-ioc-bo-ma-correctors-08.service /etc/systemd/system/
-	mkdir -p /fac/sirius-iocs
+	mkdir -p /home/sirius/iocs
+	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
 stop-bo-correctors-08:
@@ -248,7 +259,8 @@ uninstall-bo-correctors-08: stop-bo-correctors-08
 install-bo-correctors-09:
 	@printf "Intalling sirius-ioc-bo-ma-correctors-09 service...\n"
 	cp -rf sirius-ioc-bo-ma-correctors-09.service /etc/systemd/system/
-	mkdir -p /fac/sirius-iocs
+	mkdir -p /home/sirius/iocs
+	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
 stop-bo-correctors-09:
@@ -269,7 +281,8 @@ uninstall-bo-correctors-09: stop-bo-correctors-09
 install-bo-correctors-10:
 	@printf "Intalling sirius-ioc-bo-ma-correctors-10 service...\n"
 	cp -rf sirius-ioc-bo-ma-correctors-10.service /etc/systemd/system/
-	mkdir -p /fac/sirius-iocs
+	mkdir -p /home/sirius/iocs
+	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
 stop-bo-correctors-10:
@@ -290,7 +303,8 @@ uninstall-bo-correctors-10: stop-bo-correctors-10
 install-bo-correctors-11:
 	@printf "Intalling sirius-ioc-bo-ma-correctors-11 service...\n"
 	cp -rf sirius-ioc-bo-ma-correctors-11.service /etc/systemd/system/
-	mkdir -p /fac/sirius-iocs
+	mkdir -p /home/sirius/iocs
+	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
 stop-bo-correctors-11:
@@ -311,7 +325,8 @@ uninstall-bo-correctors-11: stop-bo-correctors-11
 install-bo-correctors-12:
 	@printf "Intalling sirius-ioc-bo-ma-correctors-12 service...\n"
 	cp -rf sirius-ioc-bo-ma-correctors-12.service /etc/systemd/system/
-	mkdir -p /fac/sirius-iocs
+	mkdir -p /home/sirius/iocs
+	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
 stop-bo-correctors-12:
@@ -332,7 +347,8 @@ uninstall-bo-correctors-12: stop-bo-correctors-12
 install-bo-correctors-13:
 	@printf "Intalling sirius-ioc-bo-ma-correctors-13 service...\n"
 	cp -rf sirius-ioc-bo-ma-correctors-13.service /etc/systemd/system/
-	mkdir -p /fac/sirius-iocs
+	mkdir -p /home/sirius/iocs
+	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
 stop-bo-correctors-13:
@@ -358,14 +374,79 @@ start-bo-correctors: start-bo-correctors-01 start-bo-correctors-02 start-bo-corr
 
 uninstall-bo-correctors: uninstall-bo-correctors-01 uninstall-bo-correctors-02 uninstall-bo-correctors-03 uninstall-bo-correctors-04 uninstall-bo-correctors-05 uninstall-bo-correctors-06 uninstall-bo-correctors-07 uninstall-bo-correctors-08 uninstall-bo-correctors-09 uninstall-bo-correctors-10 uninstall-bo-correctors-11 uninstall-bo-correctors-12 uninstall-bo-correctors-13
 
+install-bo-dipoles:
+	@printf "Intalling sirius-ioc-bo-ma-dipoles service...\n"
+	cp -rf sirius-ioc-bo-ma-dipoles.service /etc/systemd/system/
+	mkdir -p /home/sirius/iocs
+	chown -R sirius.sirius /home/sirius/iocs
+	systemctl daemon-reload
 
-install-bo: install-bo-correctors
+stop-bo-dipoles:
+	@printf "Stopping sirius-ioc-bo-ma-dipoles...\n"
+	systemctl stop sirius-ioc-bo-ma-dipoles.service
 
-stop-bo: stop-bo-correctors
+start-bo-dipoles:
+	@printf "Starting sirius-ioc-bo-ma-dipoles...\n"
+	systemctl start sirius-ioc-bo-ma-dipoles.service
 
-start-bo: start-bo-correctors
+uninstall-bo-dipoles: stop-bo-dipoles
+	@printf "Uninstalling sirius-ioc-bo-ma-dipoles...\n"
+	systemctl disable sirius-ioc-bo-ma-dipoles.service
+	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-dipoles.service
+	systemctl daemon-reload
+	systemctl reset-failed
 
-uninstall-bo: uninstall-bo-correctors
+install-bo-quadrupoles:
+	@printf "Intalling sirius-ioc-bo-ma-quadrupoles service...\n"
+	cp -rf sirius-ioc-bo-ma-quadrupoles.service /etc/systemd/system/
+	mkdir -p /home/sirius/iocs
+	chown -R sirius.sirius /home/sirius/iocs
+	systemctl daemon-reload
+
+stop-bo-quadrupoles:
+	@printf "Stopping sirius-ioc-bo-ma-quadrupoles...\n"
+	systemctl stop sirius-ioc-bo-ma-quadrupoles.service
+
+start-bo-quadrupoles:
+	@printf "Starting sirius-ioc-bo-ma-quadrupoles...\n"
+	systemctl start sirius-ioc-bo-ma-quadrupoles.service
+
+uninstall-bo-quadrupoles: stop-bo-quadrupoles
+	@printf "Uninstalling sirius-ioc-bo-ma-quadrupoles...\n"
+	systemctl disable sirius-ioc-bo-ma-quadrupoles.service
+	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-quadrupoles.service
+	systemctl daemon-reload
+	systemctl reset-failed
+
+install-bo-sextupoles:
+	@printf "Intalling sirius-ioc-bo-ma-sextupoles service...\n"
+	cp -rf sirius-ioc-bo-ma-sextupoles.service /etc/systemd/system/
+	mkdir -p /home/sirius/iocs
+	chown -R sirius.sirius /home/sirius/iocs
+	systemctl daemon-reload
+
+stop-bo-sextupoles:
+	@printf "Stopping sirius-ioc-bo-ma-sextupoles...\n"
+	systemctl stop sirius-ioc-bo-ma-sextupoles.service
+
+start-bo-sextupoles:
+	@printf "Starting sirius-ioc-bo-ma-sextupoles...\n"
+	systemctl start sirius-ioc-bo-ma-sextupoles.service
+
+uninstall-bo-sextupoles: stop-bo-sextupoles
+	@printf "Uninstalling sirius-ioc-bo-ma-sextupoles...\n"
+	systemctl disable sirius-ioc-bo-ma-sextupoles.service
+	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-sextupoles.service
+	systemctl daemon-reload
+	systemctl reset-failed
+
+install-bo: install-bo-correctors install-bo-dipoles install-bo-quadrupoles install-bo-sextupoles
+
+stop-bo: stop-bo-correctors stop-bo-dipoles stop-bo-quadrupoles stop-bo-sextupoles
+
+start-bo: start-bo-correctors start-bo-dipoles start-bo-quadrupoles start-bo-sextupoles
+
+uninstall-bo: uninstall-bo-correctors uninstall-bo-dipoles uninstall-bo-quadrupoles uninstall-bo-sextupoles
 
 
 
