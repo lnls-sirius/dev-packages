@@ -461,7 +461,7 @@ class MAEpics(PSEpics):
         elif 'pulsed' == ma_class:
             dipole_name = _mutil.get_section_dipole_name(self._maname)
             dipole = self._prefix + dipole_name
-            dipole_pv = dipole + ':' + field.replace('Kick', 'Current')
+            dipole_pv = dipole + ':' + field.replace('Kick', 'Energy')
             return [self._pvs[field.replace('Kick', 'Voltage')],
                     dipole_pv]
         elif 'trim' == ma_class:
