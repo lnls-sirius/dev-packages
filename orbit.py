@@ -151,29 +151,49 @@ class BPM(_BaseTimingConfig):
     def state(self, boo):
         val = _csbpm.EnblTyp.Enable if boo else _csbpm.EnblTyp.Disable
         pv = self._config_pvs_sp['asyn.ENBL']
+        self._config_ok_vals['asyn.ENBL'] = val
         if pv.connected:
-            self._config_ok_vals['asyn.ENBL'] = val
             pv.put(val, wait=False)
+
+    @property
+    def mode(self):
+        pv = self._config_pvs_rb['ACQBPMMode']
+        return pv.value if pv.connected else _csbpm.OpModes.MultiBunch
+
+    @mode.setter
+    def mode(self, mo):
+        pv = self._config_pvs_sp['ACQBPMMode']
+        self._config_ok_vals['ACQBPMMode'] = mo
+        if pv.connected:
+            pv.value = mo
 
     @property
     def posx(self):
         pv = self._posx
-        return self.ORB_CONV*pv.value if pv.connected else None
+        val = pv.value if pv.connected else None
+        if val is not None:
+            return self.ORB_CONV*val
 
     @property
     def posy(self):
         pv = self._posy
-        return self.ORB_CONV*pv.value if pv.connected else None
+        val = pv.value if pv.connected else None
+        if val is not None:
+            return self.ORB_CONV*val
 
     @property
     def spposx(self):
         pv = self._spposx
-        return self.ORB_CONV*pv.value if pv.connected else None
+        val = pv.value if pv.connected else None
+        if val is not None:
+            return self.ORB_CONV*val
 
     @property
     def spposy(self):
         pv = self._spposy
-        return self.ORB_CONV*pv.value if pv.connected else None
+        val = pv.value if pv.connected else None
+        if val is not None:
+            return self.ORB_CONV*val
 
     @property
     def spsum(self):
@@ -183,12 +203,16 @@ class BPM(_BaseTimingConfig):
     @property
     def mtposx(self):
         pv = self._arrayx
-        return self.ORB_CONV*pv.value if pv.connected else None
+        val = pv.value if pv.connected else None
+        if val is not None:
+            return self.ORB_CONV*val
 
     @property
     def mtposy(self):
         pv = self._arrayy
-        return self.ORB_CONV*pv.value if pv.connected else None
+        val = pv.value if pv.connected else None
+        if val is not None:
+            return self.ORB_CONV*val
 
     @property
     def mtsum(self):
@@ -198,12 +222,16 @@ class BPM(_BaseTimingConfig):
     @property
     def offsetx(self):
         pv = self._offsetx
-        return self.ORB_CONV*pv.value if pv.connected else None
+        val = pv.value if pv.connected else None
+        if val is not None:
+            return self.ORB_CONV*val
 
     @property
     def offsety(self):
         pv = self._offsety
-        return self.ORB_CONV*pv.value if pv.connected else None
+        val = pv.value if pv.connected else None
+        if val is not None:
+            return self.ORB_CONV*val
 
     @property
     def ctrl(self):
@@ -440,8 +468,8 @@ class TimingConfig(_BaseTimingConfig):
     @evtsrc.setter
     def evtsrc(self, val):
         pv = self._config_pvs_sp['Src']
+        self._config_ok_vals['Src'] = val
         if pv.connected:
-            self._config_ok_vals['Src'] = val
             pv.put(val, wait=False)
 
 
