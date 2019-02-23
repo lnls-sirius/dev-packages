@@ -539,7 +539,8 @@ _pvs_tb_hl_timing = [
     ]
 
 _pvs_bo_ma = [
-    ['BO-Fam:PS-B:PwrState-Sel', _off, 0.0],
+    ['BO-Fam:PS-B-1:PwrState-Sel', _off, 0.0],
+    ['BO-Fam:PS-B-2:PwrState-Sel', _off, 0.0],
     ['BO-Fam:PS-QD:PwrState-Sel', _off, 0.0],
     ['BO-Fam:PS-QF:PwrState-Sel', _off, 0.0],
     ['BO-02D:PS-QS:PwrState-Sel', _off, 0.0],
@@ -596,7 +597,8 @@ _pvs_bo_ma = [
     ['BO-47U:PS-CV:PwrState-Sel', _off, 0.0],
     ['BO-49U:PS-CV:PwrState-Sel', _off, 0.0],
 
-    ['BO-Fam:PS-B:OpMode-Sel', _off, 0.0],
+    ['BO-Fam:PS-B-1:OpMode-Sel', _off, 0.0],
+    ['BO-Fam:PS-B-2:OpMode-Sel', _off, 0.0],
     ['BO-Fam:PS-QD:OpMode-Sel', _off, 0.0],
     ['BO-Fam:PS-QF:OpMode-Sel', _off, 0.0],
     ['BO-02D:PS-QS:OpMode-Sel', _off, 0.0],
@@ -653,7 +655,8 @@ _pvs_bo_ma = [
     ['BO-47U:PS-CV:OpMode-Sel', _off, 0.0],
     ['BO-49U:PS-CV:OpMode-Sel', _off, 0.0],
 
-    ['BO-Fam:PS-B:BSMPComm-Sel', _on, 0.0],
+    ['BO-Fam:PS-B-1:BSMPComm-Sel', _on, 0.0],
+    ['BO-Fam:PS-B-2:BSMPComm-Sel', _on, 0.0],
     ['BO-Fam:PS-QD:BSMPComm-Sel', _on, 0.0],
     ['BO-Fam:PS-QF:BSMPComm-Sel', _on, 0.0],
     ['BO-02D:PS-QS:BSMPComm-Sel', _on, 0.0],
@@ -710,7 +713,8 @@ _pvs_bo_ma = [
     ['BO-47U:PS-CV:BSMPComm-Sel', _on, 0.0],
     ['BO-49U:PS-CV:BSMPComm-Sel', _on, 0.0],
 
-    ['BO-Fam:PS-B:RmpIncNrCycles-SP', 1, 0.0],
+    ['BO-Fam:PS-B-1:RmpIncNrCycles-SP', 1, 0.0],
+    ['BO-Fam:PS-B-2:RmpIncNrCycles-SP', 1, 0.0],
     ['BO-Fam:PS-QD:RmpIncNrCycles-SP', 1, 0.0],
     ['BO-Fam:PS-QF:RmpIncNrCycles-SP', 1, 0.0],
     ['BO-02D:PS-QS:RmpIncNrCycles-SP', 1, 0.0],
