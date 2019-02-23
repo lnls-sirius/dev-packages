@@ -767,12 +767,13 @@ _pvs_bo_ma = [
     ['BO-47U:PS-CV:RmpIncNrCycles-SP', 1, 0.0],
     ['BO-49U:PS-CV:RmpIncNrCycles-SP', 1, 0.0],
 
-    ['BO-Fam:PS-B:Current-SP', 0.0, 0.0],  # [Energy: GeV]
-    ['BO-Fam:PS-QD:Current-SP', 0.0, 0.0],  # [KL: 1/m]
-    ['BO-Fam:PS-QF:Current-SP', 0.0, 0.0],  # [KL: 1/m]
-    ['BO-02D:PS-QS:Current-SP', +0.0, 0.0],  # [KL: 1/m] (skew quadrupole)
-    ['BO-Fam:PS-SD:Current-SP', 0.0, 0.0],  # [SL: 1/m^2]
-    ['BO-Fam:PS-SF:Current-SP', 0.0, 0.0],  # [SL: 1/m^2]
+    ['BO-Fam:PS-B-1:Current-SP', 0.0, 0.0],
+    ['BO-Fam:PS-B-2:Current-SP', 0.0, 0.0],
+    ['BO-Fam:PS-QD:Current-SP', 0.0, 0.0],
+    ['BO-Fam:PS-QF:Current-SP', 0.0, 0.0],
+    ['BO-02D:PS-QS:Current-SP', +0.0, 0.0],
+    ['BO-Fam:PS-SD:Current-SP', 0.0, 0.0],
+    ['BO-Fam:PS-SF:Current-SP', 0.0, 0.0],
     ['BO-01U:PS-CH:Current-SP', +0.0, 0.0],
     ['BO-03U:PS-CH:Current-SP', +0.0, 0.0],
     ['BO-05U:PS-CH:Current-SP', +0.0, 0.0],
