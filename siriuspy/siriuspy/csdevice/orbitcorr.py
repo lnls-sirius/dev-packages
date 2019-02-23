@@ -116,9 +116,11 @@ class OrbitCorrDevTLines(ConstTLines):
         self.NR_CHCV = self.NR_CH + self.NR_CV
         self.NR_BPMS = len(self.BPM_NAMES)
         ext = acc.lower() + 'orb'
-        self.REFORBFNAME = _os.path.join('data', 'ref_orbit.'+ext)
+        ioc_fol = acc.lower() + '-ap-sofb'
+        ioc_fol = _os.path.join('/home', 'sirius', 'iocs', ioc_fol, 'data')
+        self.REFORBFNAME = _os.path.join(ioc_fol, 'ref_orbit.'+ext)
         ext = acc.lower() + 'respmat'
-        self.RESPMAT_FILENAME = _os.path.join('data', 'respmat.'+ext)
+        self.RESPMAT_FILENAME = _os.path.join(ioc_fol, 'respmat.'+ext)
 
         self.NR_CORRS = self.NR_CHCV + 1 if acc in _et.RINGS else self.NR_CHCV
 
