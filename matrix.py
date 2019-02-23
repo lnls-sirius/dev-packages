@@ -180,4 +180,7 @@ class EpicsMatrix(BaseMatrix):
         msg = 'Saving RespMat to file'
         self._update_log(msg)
         _log.info(msg)
+        path = _os.path.split(self._csorb.RESPMAT_FILENAME)[0]
+        if not _os.path.isdir(path):
+            _os.mkdir(path)
         _np.savetxt(self._csorb.RESPMAT_FILENAME, mat)

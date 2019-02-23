@@ -849,6 +849,9 @@ class EpicsOrbit(BaseOrbit):
     def _save_ref_orbits(self):
         orbs = _np.array([self.ref_orbs['X'], self.ref_orbs['Y']]).T
         try:
+            path = _os.path.split(self._csorb.REFORBFNAME)[0]
+            if not _os.path.isdir(path):
+                _os.mkdir(path)
             _np.savetxt(self._csorb.REFORBFNAME, orbs)
         except FileNotFoundError:
             msg = 'WARN: Could not save reference orbit in file.'
