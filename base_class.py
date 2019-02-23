@@ -93,7 +93,8 @@ class BaseTimingConfig:
             else:
                 okay = val == pvval
             if not okay:
-                _log.debug('NOT CONF: ' + pv.pvname)
+                _log.debug('NOT CONF: {0:s} okv = {1:f}, v = {2:f}'.format(
+                    pv.pvname, val, pvval))
             ok &= okay
             if not ok:
                 break
