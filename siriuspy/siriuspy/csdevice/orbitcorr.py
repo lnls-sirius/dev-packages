@@ -308,11 +308,11 @@ class OrbitCorrDevTLines(ConstTLines):
                 'value': self.OrbitAcqTrig.External,
                 'enums': self.OrbitAcqTrig._fields},
             'OrbitTrigNrSamplesPre-SP': {
-                'type': 'short', 'unit': '', 'value': 0,
-                'hilim': 2**15-1, 'lolim': 0},
+                'type': 'short', 'unit': '', 'value': 1,
+                'hilim': 2**15-1, 'lolim': 1},
             'OrbitTrigNrSamplesPre-RB': {
-                'type': 'short', 'unit': '', 'value': 0,
-                'hilim': 2**15-1, 'lolim': 0},
+                'type': 'short', 'unit': '', 'value': 1,
+                'hilim': 2**15-1, 'lolim': 1},
             'OrbitTrigNrSamplesPost-SP': {
                 'type': 'short', 'unit': '', 'value': 200,
                 'hilim': 2**15-1, 'lolim': 1},
@@ -330,19 +330,19 @@ class OrbitCorrDevTLines(ConstTLines):
             'OrbitTrigDataThres-SP': {
                 'type': 'int', 'value': 1,
                 'unit': 'set data trigger threshold',
-                'lolim': 1, 'hilim': 2**31-1},
+                'lolim': -1000, 'hilim': 2**31-1},
             'OrbitTrigDataThres-RB': {
                 'type': 'int', 'value': 1,
                 'unit': 'set data trigger threshold',
-                'lolim': 1, 'hilim': 2**31-1},
+                'lolim': -1000, 'hilim': 2**31-1},
             'OrbitTrigDataHyst-SP': {
                 'type': 'int', 'value': 1,
                 'unit': 'set data trigger hysteresis',
-                'lolim': 1, 'hilim': 2**31-1},
+                'lolim': 0, 'hilim': 2**31-1},
             'OrbitTrigDataHyst-RB': {
                 'type': 'int', 'value': 1,
                 'unit': 'set data trigger hysteresis',
-                'lolim': 1, 'hilim': 2**31-1},
+                'lolim': 0, 'hilim': 2**31-1},
             'OrbitTrigDataPol-Sel': {
                 'type': 'enum', 'unit': 'Set Data trigger Polarity.',
                 'value': self.OrbitAcqDataPol.Positive,
@@ -356,11 +356,11 @@ class OrbitCorrDevTLines(ConstTLines):
                 'unit': 'set external trigger duration [ms]',
                 'lolim': 8e-6, 'hilim': 500},
             'OrbitTrigExtDuration-RB': {
-                'type': 'float', 'value': 1e-3,
-                'unit': 'set external trigger duration [ms]',
+                'type': 'float', 'value': 1e-3, 'prec': 4,
+                'unit': 'set external trigger duration [us]',
                 'lolim': 8e-6, 'hilim': 500},
             'OrbitTrigExtDelay-SP': {
-                'type': 'float', 'value': 0.0,
+                'type': 'float', 'value': 0.0, 'prec': 4,
                 'unit': 'set external trigger delay [us]',
                 'lolim': 0.0, 'hilim': 5e5},
             'OrbitTrigExtDelay-RB': {
