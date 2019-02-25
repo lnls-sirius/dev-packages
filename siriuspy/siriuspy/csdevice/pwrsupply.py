@@ -278,7 +278,7 @@ def get_common_propty_database():
                          'value': Const.OpenLoop.Open},
         'OpMode-Sel': {'type': 'enum', 'enums': _et.OPMODES,
                        'value': Const.OpMode.SlowRef},
-        'OpMode-Sts': {'type': 'enum', 'enums': _et.OPMODES,
+        'OpMode-Sts': {'type': 'enum', 'enums': _et.STATES,
                        'value': Const.OpMode.SlowRef},
         # PRU
         'PRUSyncMode-Mon': {'type': 'enum', 'enums': _et.SYNC_MODES,
@@ -488,7 +488,7 @@ def get_ma_propty_database(maname):
             unit = '1/m^2'
         elif magfunc == 'dipole':
             strength_name = 'Energy'
-            unit = 'Gev'
+            unit = 'GeV'
         elif magfunc in ('corrector-vertical', 'corrector-horizontal'):
             strength_name = 'Kick'
             unit = 'urad'
