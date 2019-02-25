@@ -488,7 +488,7 @@ def get_ma_propty_database(maname):
             unit = '1/m^2'
         elif magfunc == 'dipole':
             strength_name = 'Energy'
-            unit = 'Gev'
+            unit = 'GeV'
         elif magfunc in ('corrector-vertical', 'corrector-horizontal'):
             strength_name = 'Kick'
             unit = 'urad'
