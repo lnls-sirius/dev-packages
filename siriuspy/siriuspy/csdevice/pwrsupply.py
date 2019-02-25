@@ -278,7 +278,7 @@ def get_common_propty_database():
                          'value': Const.OpenLoop.Open},
         'OpMode-Sel': {'type': 'enum', 'enums': _et.OPMODES,
                        'value': Const.OpMode.SlowRef},
-        'OpMode-Sts': {'type': 'enum', 'enums': _et.OPMODES,
+        'OpMode-Sts': {'type': 'enum', 'enums': _et.STATES,
                        'value': Const.OpMode.SlowRef},
         # PRU
         'PRUSyncMode-Mon': {'type': 'enum', 'enums': _et.SYNC_MODES,
