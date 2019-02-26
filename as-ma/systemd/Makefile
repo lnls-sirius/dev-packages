@@ -84,7 +84,7 @@ start-tb-injsept:
 	@printf "Starting sirius-ioc-tb-pm-injsept...\n"
 	systemctl start sirius-ioc-tb-pm-injsept.service
 
-uninstall-tb-injseptum: stop-tb-injsept
+uninstall-tb-injsept: stop-tb-injsept
 	@printf "Uninstalling sirius-ioc-tb-pm-injsept...\n"
 	systemctl disable sirius-ioc-tb-pm-injsept.service
 	rm -rf /etc/systemd/system/sirius-ioc-tb-pm-injsept.service
