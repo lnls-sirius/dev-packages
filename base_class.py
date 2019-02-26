@@ -87,13 +87,18 @@ class BaseTimingConfig:
         ok = True
         for k, val in self._config_ok_vals.items():
             pv = self._config_pvs_rb[k]
-            pvval = pv.value
-            if isinstance(val, float):
+            pvval = None
+            if pv.connected:
+                pvval = pv.value
+            if pvval is None:
+                okay = False
+                pvval = 'None'
+            elif isinstance(val, float):
                 okay = _math.isclose(val, pvval, rel_tol=1e-2)
             else:
                 okay = val == pvval
             if not okay:
-                _log.debug('NOT CONF: {0:s} okv = {1:f}, v = {2:f}'.format(
+                _log.debug('NOT CONF: {0:s} okv = {1:f}, v = {2}'.format(
                     pv.pvname, val, pvval))
             ok &= okay
             if not ok:
