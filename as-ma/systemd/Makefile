@@ -69,6 +69,30 @@ uninstall-tb-correctors: stop-tb-correctors
 	systemctl reset-failed
 
 
+install-tb-injsept:
+	@printf "Intalling sirius-ioc-tb-pm-injseptum service...\n"
+	cp -rf sirius-ioc-tb-pm-injseptum.service /etc/systemd/system/
+	mkdir -p /home/sirius/iocs
+	chown -R sirius.sirius /home/sirius/iocs
+	systemctl daemon-reload
+
+stop-tb-injseptum:
+	@printf "Stopping sirius-ioc-tb-pm-correctors...\n"
+	systemctl stop sirius-ioc-tb-pm-injseptum.service
+
+start-tb-injseptum:
+	@printf "Starting sirius-ioc-tb-pm-injseptum...\n"
+	systemctl start sirius-ioc-tb-pm-injseptum.service
+
+uninstall-tb-correctors: stop-tb-injseptum
+	@printf "Uninstalling sirius-ioc-tb-pm-injseptum...\n"
+	systemctl disable sirius-ioc-tb-pm-injseptum.service
+	rm -rf /etc/systemd/system/sirius-ioc-tb-pm-injseptum.service
+	systemctl daemon-reload
+	systemctl reset-failed
+
+
+
 install-tb: install-tb-dipoles install-tb-quadrupoles install-tb-correctors
 
 stop-tb: stop-tb-dipoles stop-tb-quadrupoles stop-tb-correctors
