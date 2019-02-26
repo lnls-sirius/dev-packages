@@ -43,11 +43,11 @@ class BPM(_BaseTimingConfig):
             # 'ACQNrShots': 1,
             'ACQShots': 1,
             'ACQTriggerHwDly': 0.0,
-            'ACQUpdateTime': 0,
+            'ACQUpdateTime': 0.001,
             # 'ACQNrSamplesPre': 0,
-            'ACQSamplesPre': 0,
+            'ACQSamplesPre': 50,
             # 'ACQNrSamplesPost': 200,
-            'ACQSamplesPost': 200,
+            'ACQSamplesPost': 50,
             # 'ACQCtrl': _csbpm.AcqEvents.Stop,
             'ACQTriggerEvent': _csbpm.AcqEvents.Stop,
             # 'ACQTriggerType': _csbpm.AcqTrigTyp.External,
@@ -56,9 +56,9 @@ class BPM(_BaseTimingConfig):
             # 'ACQTriggerDataChan': _csbpm.AcqChan.Monit1,
             'ACQDataTrigChan': _csbpm.AcqChan.Monit1,
             'ACQTriggerDataSel': _csbpm.AcqDataTyp.A,
-            'ACQTriggerDataThres': 10,
+            'ACQTriggerDataThres': 1,
             'ACQTriggerDataPol': _csbpm.Polarity.Positive,
-            'ACQTriggerDataHyst': 2}
+            'ACQTriggerDataHyst': 0}
         pvs = {
             'asyn.ENBL': 'asyn.ENBL',
             'ACQBPMMode': 'ACQBPMMode-Sel',
@@ -397,7 +397,7 @@ class TimingConfig(_BaseTimingConfig):
             'Src': src_val,
             'Delay': 0.0,
             'NrPulses': 1,
-            'Duration': 0.001,
+            'Duration': 100.0,
             'State': _cstime.Const.TrigStates.Enbl,
             'Polarity': _cstime.Const.TrigPol.Normal}
         if _HLTimesearch.has_delay_type(trig):
