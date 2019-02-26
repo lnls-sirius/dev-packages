@@ -70,15 +70,15 @@ uninstall-tb-correctors: stop-tb-correctors
 
 
 install-tb-injsept:
-	@printf "Intalling sirius-ioc-tb-pm-injseptum service...\n"
-	cp -rf sirius-ioc-tb-pm-injseptum.service /etc/systemd/system/
+	@printf "Intalling sirius-ioc-tb-pm-injsept service...\n"
+	cp -rf sirius-ioc-tb-pm-injsept.service /etc/systemd/system/
 	mkdir -p /home/sirius/iocs
 	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
 stop-tb-injsept:
 	@printf "Stopping sirius-ioc-tb-pm-correctors...\n"
-	systemctl stop sirius-ioc-tb-pm-injseptum.service
+	systemctl stop sirius-ioc-tb-pm-injsept.service
 
 start-tb-injsept:
 	@printf "Starting sirius-ioc-tb-pm-injsept...\n"
