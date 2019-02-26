@@ -308,17 +308,17 @@ class OrbitCorrDevTLines(ConstTLines):
                 'value': self.OrbitAcqTrig.External,
                 'enums': self.OrbitAcqTrig._fields},
             'OrbitTrigNrSamplesPre-SP': {
-                'type': 'short', 'unit': '', 'value': 1,
+                'type': 'short', 'unit': '', 'value': 50,
                 'hilim': 2**15-1, 'lolim': 1},
             'OrbitTrigNrSamplesPre-RB': {
-                'type': 'short', 'unit': '', 'value': 1,
+                'type': 'short', 'unit': '', 'value': 50,
                 'hilim': 2**15-1, 'lolim': 1},
             'OrbitTrigNrSamplesPost-SP': {
-                'type': 'short', 'unit': '', 'value': 200,
-                'hilim': 2**15-1, 'lolim': 1},
+                'type': 'short', 'unit': '', 'value': 50,
+                'hilim': 2**15-1, 'lolim': 0},
             'OrbitTrigNrSamplesPost-RB': {
-                'type': 'short', 'unit': '', 'value': 200,
-                'hilim': 2**15-1, 'lolim': 1},
+                'type': 'short', 'unit': '', 'value': 50,
+                'hilim': 2**15-1, 'lolim': 0},
             'OrbitTrigDataSel-Sel': {
                 'type': 'enum', 'unit': 'Set Data trigger Selection.',
                 'value': self.OrbitAcqDataSel.A,
@@ -352,11 +352,11 @@ class OrbitCorrDevTLines(ConstTLines):
                 'value': self.OrbitAcqDataPol.Positive,
                 'enums': self.OrbitAcqDataPol._fields},
             'OrbitTrigExtDuration-SP': {
-                'type': 'float', 'value': 1e-3,
-                'unit': 'set external trigger duration [ms]',
+                'type': 'float', 'value': 100, 'prec': 4,
+                'unit': 'set external trigger duration [us]',
                 'lolim': 8e-6, 'hilim': 500},
             'OrbitTrigExtDuration-RB': {
-                'type': 'float', 'value': 1e-3, 'prec': 4,
+                'type': 'float', 'value': 100, 'prec': 4,
                 'unit': 'set external trigger duration [us]',
                 'lolim': 8e-6, 'hilim': 500},
             'OrbitTrigExtDelay-SP': {
@@ -364,7 +364,7 @@ class OrbitCorrDevTLines(ConstTLines):
                 'unit': 'set external trigger delay [us]',
                 'lolim': 0.0, 'hilim': 5e5},
             'OrbitTrigExtDelay-RB': {
-                'type': 'float', 'value': 0.0,
+                'type': 'float', 'value': 0.0, 'prec': 4,
                 'unit': 'set external trigger delay [us]',
                 'lolim': 0.0, 'hilim': 5e5},
             'OrbitTrigExtEvtSrc-Sel': {
