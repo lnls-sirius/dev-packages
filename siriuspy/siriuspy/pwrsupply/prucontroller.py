@@ -123,6 +123,15 @@ class PRUCQueue(_deque):
         """Return last operation."""
         return self._last_operation
 
+    @property
+    def bsmpcomm(self):
+        """BSMP Communication."""
+        return self._bsmpcomm
+
+    @bsmpcomm.setter
+    def bsmpcomm(self, value):
+        self._bsmpcomm = value
+
     def ignore_set(self):
         """Turn ignore state on."""
         self._ignore = True
@@ -316,7 +325,7 @@ class PRUController:
         self._queue = prucqueue
 
         # define BSMP communication status
-        self._bsmpcomm = True
+        self.bsmpcomm = True
 
         # ramp offset
         self._ramp_offset = PRUController._DEFAULT_RAMP_OFFSET
@@ -362,12 +371,12 @@ class PRUController:
     @property
     def bsmpcomm(self):
         """Return bsmpcomm state."""
-        return self._bsmpcomm
+        return self._queue.bsmpcomm
 
     @bsmpcomm.setter
     def bsmpcomm(self, value):
         """Set bsmpcomm state."""
-        self._bsmpcomm = value
+        self._queue.bsmpcomm = value
 
     @property
     def processing(self):
@@ -720,14 +729,14 @@ class PRUController:
             if self.pru_sync_status == self._params.PRU.SYNC_STATE.OFF:
                 # with sync off, function executions are allowed and
                 # therefore operations must be queued in order
-                if self._bsmpcomm:
+                if self.bsmpcomm:
                     # queue operation only if serial is available.
                     self._queue.append(operation)
             else:
                 # for sync on, no function execution is accepted and
                 # we can therefore append only unique operations since
                 # processing order is not relevant.
-                if self._bsmpcomm:
+                if self.bsmpcomm:
                     # queue operation only if serial is reserved.
                     self._queue.append(operation, unique=True)
         else:
@@ -739,7 +748,7 @@ class PRUController:
         """Run process once."""
         # process first operation in queue, if any and
         # if serial line is available.
-        if self._bsmpcomm:
+        if self.bsmpcomm:
             self._queue.process()
 
         # n = len(self._queue)
