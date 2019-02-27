@@ -74,7 +74,7 @@ class MASearch:
                        'FAC_ACDC', 'FAC_DCDC', 'FAC_2S_DCDC', 'FAC_2S_ACDC',
                        'FAC_2P4S_DCDC', 'FAC_2P4S_ACDC', 'FAP',
                        'FAP_2P2S_MASTER', 'FAP_4P_Master', 'FAP_4P_Slave',
-                       'Commercial',
+                       'Commercial', 'LINAC_PS',
                        'FP_SEPT', 'FP_KCKR'):
             return MASearch._splims_ma_unit
         else:
