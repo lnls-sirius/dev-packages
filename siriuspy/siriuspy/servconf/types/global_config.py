@@ -539,7 +539,8 @@ _pvs_tb_hl_timing = [
     ]
 
 _pvs_bo_ma = [
-    ['BO-Fam:PS-B:PwrState-Sel', _off, 0.0],
+    ['BO-Fam:PS-B-1:PwrState-Sel', _off, 0.0],
+    ['BO-Fam:PS-B-2:PwrState-Sel', _off, 0.0],
     ['BO-Fam:PS-QD:PwrState-Sel', _off, 0.0],
     ['BO-Fam:PS-QF:PwrState-Sel', _off, 0.0],
     ['BO-02D:PS-QS:PwrState-Sel', _off, 0.0],
