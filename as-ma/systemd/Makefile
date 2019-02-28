@@ -77,7 +77,7 @@ install-tb-injsept:
 	systemctl daemon-reload
 
 stop-tb-injsept:
-	@printf "Stopping sirius-ioc-tb-pm-correctors...\n"
+	@printf "Stopping sirius-ioc-tb-pm-injsept...\n"
 	systemctl stop sirius-ioc-tb-pm-injsept.service
 
 start-tb-injsept:
@@ -464,13 +464,36 @@ uninstall-bo-sextupoles: stop-bo-sextupoles
 	systemctl daemon-reload
 	systemctl reset-failed
 
-install-bo: install-bo-correctors install-bo-dipoles install-bo-quadrupoles install-bo-sextupoles
+install-bo-injkckr:
+	@printf "Intalling sirius-ioc-bo-pm-injkckr service...\n"
+	cp -rf sirius-ioc-bo-pm-injkckr.service /etc/systemd/system/
+	mkdir -p /home/sirius/iocs
+	chown -R sirius.sirius /home/sirius/iocs
+	systemctl daemon-reload
 
-stop-bo: stop-bo-correctors stop-bo-dipoles stop-bo-quadrupoles stop-bo-sextupoles
+stop-bo-injkckr:
+	@printf "Stopping sirius-ioc-bo-pm-injkckr...\n"
+	systemctl stop sirius-ioc-bo-pm-injkckr.service
 
-start-bo: start-bo-correctors start-bo-dipoles start-bo-quadrupoles start-bo-sextupoles
+start-bo-injkckr:
+	@printf "Starting sirius-ioc-bo-pm-injkckr...\n"
+	systemctl start sirius-ioc-bo-pm-injkckr.service
 
-uninstall-bo: uninstall-bo-correctors uninstall-bo-dipoles uninstall-bo-quadrupoles uninstall-bo-sextupoles
+uninstall-bo-injkckr: stop-bo-injkckr
+	@printf "Uninstalling sirius-ioc-bo-pm-injkckr...\n"
+	systemctl disable sirius-ioc-bo-pm-injkckr.service
+	rm -rf /etc/systemd/system/sirius-ioc-bo-pm-injkckr.service
+	systemctl daemon-reload
+	systemctl reset-failed
+
+
+install-bo: install-bo-correctors install-bo-dipoles install-bo-quadrupoles install-bo-sextupoles install-bo-injkckr
+
+stop-bo: stop-bo-correctors stop-bo-dipoles stop-bo-quadrupoles stop-bo-sextupoles stop-bo-injkckr
+
+start-bo: start-bo-correctors start-bo-dipoles start-bo-quadrupoles start-bo-sextupoles start-bo-injkckr
+
+uninstall-bo: uninstall-bo-correctors uninstall-bo-dipoles uninstall-bo-quadrupoles uninstall-bo-sextupoles uninstall-bo-injkckr
 
 
 
