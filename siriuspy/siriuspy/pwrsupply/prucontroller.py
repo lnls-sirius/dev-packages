@@ -117,6 +117,7 @@ class PRUCQueue(_deque):
         """Init."""
         self._thread = None
         self._ignore = False
+        self._bsmpcomm = True
 
     @property
     def last_operation(self):
@@ -325,9 +326,6 @@ class PRUController:
         # operation queue
         # self._queue = PRUCQueue()
         self._queue = prucqueue
-
-        # define BSMP communication status
-        self.bsmpcomm = True
 
         # ramp offset
         self._ramp_offset = PRUController._DEFAULT_RAMP_OFFSET
