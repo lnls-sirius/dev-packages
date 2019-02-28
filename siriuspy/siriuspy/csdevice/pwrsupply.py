@@ -393,14 +393,14 @@ def get_common_pu_propty_database():
         'Intlk6-Mon': {'type': 'int', 'value': 0},
         'Intlk7-Mon': {'type': 'int', 'value': 0},
         'Intlk8-Mon': {'type': 'int', 'value': 0},
-        'Intlk1Label-Cte': {'type': 'str', 'value': 'UNDEF'},
-        'Intlk2Label-Cte': {'type': 'str', 'value': 'UNDEF'},
-        'Intlk3Label-Cte': {'type': 'str', 'value': 'UNDEF'},
-        'Intlk4Label-Cte': {'type': 'str', 'value': 'UNDEF'},
-        'Intlk5Label-Cte': {'type': 'str', 'value': 'UNDEF'},
-        'Intlk6Label-Cte': {'type': 'str', 'value': 'UNDEF'},
-        'Intlk7Label-Cte': {'type': 'str', 'value': 'UNDEF'},
-        'Intlk8Label-Cte': {'type': 'str', 'value': 'UNDEF'},
+        'Intlk1Label-Cte': {'type': 'str', 'value': 'Switch module'},
+        'Intlk2Label-Cte': {'type': 'str', 'value': 'AC CPFL OFF'},
+        'Intlk3Label-Cte': {'type': 'str', 'value': 'Temperature'},
+        'Intlk4Label-Cte': {'type': 'str', 'value': 'Personnel protection'},
+        'Intlk5Label-Cte': {'type': 'str', 'value': 'HVPS Overcurrent'},
+        'Intlk6Label-Cte': {'type': 'str', 'value': 'HVPS Overvoltage'},
+        'Intlk7Label-Cte': {'type': 'str', 'value': 'External'},
+        'Intlk8Label-Cte': {'type': 'str', 'value': 'Switch Overcurrent'},
     }
     return db
 
