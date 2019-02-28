@@ -122,6 +122,7 @@ class App:
                     self._PREFIX_VACA + corr + ':CtrlMode-Mon',
                     callback=self._callback_corr_ctrlmode_mon)
             else:
+                # PU IOCs do not have PwrState-Sts PVs
                 self._corr_pwrstate_sts_pvs[corr] = _epics.PV(
                     self._PREFIX_VACA + corr + ':PwrState-Sel',
                     callback=self._callback_corr_pwrstate_sts)
@@ -391,7 +392,6 @@ class App:
         self._corr_check_opmode_sts[corr_index] = value
 
         # Change the third bit of correction status
-        print(self._corr_check_opmode_sts)
         self._status = _siriuspy.util.update_bit(
             v=self._status, bit_pos=2,
             bit_val=any(s != _PSConst.States.SlowRef
