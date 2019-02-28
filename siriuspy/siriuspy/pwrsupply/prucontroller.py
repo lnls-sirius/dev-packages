@@ -94,7 +94,7 @@ def parse_firmware_version(version):
 
 
 class PRUCQueue(_deque):
-    """BSMPOpQueue.
+    """PRUCQueue.
 
     This class manages operations which invoke BSMP communications using
     an append-right, pop-left queue. It also processes the next operation in a
@@ -175,6 +175,8 @@ class PRUCQueue(_deque):
     def process(self):
         """Process operation from queue."""
         # first check if a thread is already running
+        if not self._bsmpcomm:
+            return False
         if self._thread is None or not self._thread.is_alive():
             # no thread is running, we can process queue
             operation = self.popleft()
