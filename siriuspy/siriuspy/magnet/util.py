@@ -149,13 +149,13 @@ def get_section_dipole_name(maname):
         return "SI-Fam:MA-B1B2"
     elif maname.sec == "BO":
         return "BO-Fam:MA-B"
-    elif maname.sec == "TB":
+    elif maname.sec in ("TB", "LI"):
         return "TB-Fam:MA-B"
     elif maname.sec == "TS":
         return "TS-Fam:MA-B"
     else:
         raise NotImplementedError(
-            "No section named {}".format(maname.section))
+            "No section named {}".format(maname.sec))
 
 
 def get_magnet_family_name(maname):
