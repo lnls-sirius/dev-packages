@@ -5,7 +5,9 @@ import numpy as _np
 import epics as _epics
 import siriuspy as _siriuspy
 from siriuspy.servconf.conf_service import ConfigService as _ConfigService
-from siriuspy.csdevice.posang import Const as _Const
+from siriuspy.csdevice.pwrsupply import Const as _PSConst
+from siriuspy.csdevice.posang import Const as _PAConst
+from siriuspy.namesys import SiriusPVName as _SiriusPVName
 import as_ap_posang.pvs as _pvs
 
 # Coding guidelines:
@@ -51,8 +53,9 @@ class App:
 
         self._corr_check_connection = 4*[0]
         self._corr_check_pwrstate_sts = 4*[0]
-        self._corr_check_opmode_sts = [1, 0, 1, 1]
-        self._corr_check_ctrlmode_mon = 4*[1]
+        self._corr_check_opmode_sts = [1, _PSConst.States.SlowRef, 1, 1]
+        self._corr_check_ctrlmode_mon = [1, _PSConst.Interface.Remote, 1, 1]
+        # obs: ignore PM on OpMode and CtrlMode checks
 
         config_name = self._get_config_name()
         [done, corrparams] = self._get_corrparams(config_name)
@@ -69,16 +72,16 @@ class App:
         # first vertical corretor and second vertical corretor.
         self._correctors = ['', '', '', '']
         if self._TL == 'TS':
-            self._correctors[0] = _Const.TS_CORRH_POSANG[0]
-            self._correctors[1] = _Const.TS_CORRH_POSANG[1]
-            self._correctors[2] = _Const.TS_CORRV_POSANG[0]
-            self._correctors[3] = _Const.TS_CORRV_POSANG[1]
+            self._correctors[0] = _PAConst.TS_CORRH_POSANG[0]
+            self._correctors[1] = _PAConst.TS_CORRH_POSANG[1]
+            self._correctors[2] = _PAConst.TS_CORRV_POSANG[0]
+            self._correctors[3] = _PAConst.TS_CORRV_POSANG[1]
 
         elif self._TL == 'TB':
-            self._correctors[0] = _Const.TB_CORRH_POSANG[0]
-            self._correctors[1] = _Const.TB_CORRH_POSANG[1]
-            self._correctors[2] = _Const.TB_CORRV_POSANG[0]
-            self._correctors[3] = _Const.TB_CORRV_POSANG[1]
+            self._correctors[0] = _PAConst.TB_CORRH_POSANG[0]
+            self._correctors[1] = _PAConst.TB_CORRH_POSANG[1]
+            self._correctors[2] = _PAConst.TB_CORRV_POSANG[0]
+            self._correctors[3] = _PAConst.TB_CORRV_POSANG[1]
 
         # Connect to correctors
         self._corr_kick_sp_pvs = {}
@@ -104,24 +107,25 @@ class App:
 
             self._corr_pwrstate_sel_pvs[corr] = _epics.PV(
                 self._PREFIX_VACA + corr + ':PwrState-Sel')
-            self._corr_pwrstate_sts_pvs[corr] = _epics.PV(
-                self._PREFIX_VACA + corr + ':PwrState-Sts',
-                callback=self._callback_corr_pwrstate_sts)
-
-            self._corr_opmode_sel_pvs[corr] = _epics.PV(
-                self._PREFIX_VACA + corr + ':OpMode-Sel')
-
             if corr_index != 1:
+                self._corr_pwrstate_sts_pvs[corr] = _epics.PV(
+                    self._PREFIX_VACA + corr + ':PwrState-Sts',
+                    callback=self._callback_corr_pwrstate_sts)
+
+                self._corr_opmode_sel_pvs[corr] = _epics.PV(
+                    self._PREFIX_VACA + corr + ':OpMode-Sel')
                 self._corr_opmode_sts_pvs[corr] = _epics.PV(
                     self._PREFIX_VACA + corr + ':OpMode-Sts',
                     callback=self._callback_corr_opmode_sts)
-            else:
-                self._corr_opmode_sts_pvs[corr] = _epics.PV(
-                    self._PREFIX_VACA + corr + ':OpMode-Sts')
 
-            self._corr_ctrlmode_mon_pvs[corr] = _epics.PV(
-                self._PREFIX_VACA + corr + ':CtrlMode-Mon',
-                callback=self._callback_corr_ctrlmode_mon)
+                self._corr_ctrlmode_mon_pvs[corr] = _epics.PV(
+                    self._PREFIX_VACA + corr + ':CtrlMode-Mon',
+                    callback=self._callback_corr_ctrlmode_mon)
+            else:
+                # PU IOCs do not have PwrState-Sts PVs
+                self._corr_pwrstate_sts_pvs[corr] = _epics.PV(
+                    self._PREFIX_VACA + corr + ':PwrState-Sel',
+                    callback=self._callback_corr_pwrstate_sts)
 
         self.driver.setParam('Log-Mon', 'Started.')
         self.driver.updatePVs()
@@ -339,9 +343,7 @@ class App:
 
     def _callback_init_refkick(self, pvname, value, cb_info, **kws):
         """Initialize RefKick-Mon pvs and remove this callback."""
-        ps = pvname.split(self._PREFIX_VACA)[1]
-        corr = ps.split(':')[0]+':'+ps.split(':')[1]
-        corr_index = self._correctors.index(corr)
+        corr_index = self._correctors.index(_SiriusPVName(pvname).device_name)
 
         # Get reference. Correctors kick in urad (MA) or mrad (PM).
         self._corr_refkick[self._correctors[corr_index]] = value
@@ -353,72 +355,63 @@ class App:
         cb_info[1].remove_callback(cb_info[0])
 
     def _connection_callback_corr_kick_pvs(self, pvname, conn, **kws):
-        ps = pvname.split(self._PREFIX_VACA)[1]
         if not conn:
-            self.driver.setParam('Log-Mon', 'WARN:'+ps+' disconnected.')
+            self.driver.setParam('Log-Mon', 'WARN:'+pvname+' disconnected.')
             self.driver.updatePVs()
 
-        corr = ps.split(':')[0]+':'+ps.split(':')[1]
-        corr_index = self._correctors.index(corr)
+        corr_index = self._correctors.index(_SiriusPVName(pvname).device_name)
         self._corr_check_connection[corr_index] = (1 if conn else 0)
 
         # Change the first bit of correction status
         self._status = _siriuspy.util.update_bit(
-            v=self._status,
-            bit_pos=0,
+            v=self._status, bit_pos=0,
             bit_val=any(q == 0 for q in self._corr_check_connection))
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
     def _callback_corr_pwrstate_sts(self, pvname, value, **kws):
-        ps = pvname.split(self._PREFIX_VACA)[1]
-        if value == 0:
-            self.driver.setParam('Log-Mon', 'WARN:'+ps+' is Off.')
+        if value != _PSConst.PwrStateSel.On:
+            self.driver.setParam('Log-Mon', 'WARN:'+pvname+' is not On.')
 
-        corr = ps.split(':')[0]+':'+ps.split(':')[1]
-        corr_index = self._correctors.index(corr)
+        corr_index = self._correctors.index(_SiriusPVName(pvname).device_name)
         self._corr_check_pwrstate_sts[corr_index] = value
 
         # Change the second bit of correction status
         self._status = _siriuspy.util.update_bit(
-            v=self._status,
-            bit_pos=1,
-            bit_val=any(q == 0 for q in self._corr_check_pwrstate_sts))
+            v=self._status, bit_pos=1,
+            bit_val=any(q != _PSConst.PwrStateSel.On
+                        for q in self._corr_check_pwrstate_sts))
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
     def _callback_corr_opmode_sts(self, pvname, value, **kws):
-        ps = pvname.split(self._PREFIX_VACA)[1]
-        self.driver.setParam('Log-Mon', 'WARN:'+ps+' changed.')
+        self.driver.setParam('Log-Mon', 'WARN:'+pvname+' changed.')
         self.driver.updatePVs()
 
-        corr = ps.split(':')[0]+':'+ps.split(':')[1]
-        corr_index = self._correctors.index(corr)
+        corr_index = self._correctors.index(_SiriusPVName(pvname).device_name)
         self._corr_check_opmode_sts[corr_index] = value
 
         # Change the third bit of correction status
         self._status = _siriuspy.util.update_bit(
-            v=self._status,
-            bit_pos=2,
-            bit_val=any(s != 0 for s in self._corr_check_opmode_sts))
+            v=self._status, bit_pos=2,
+            bit_val=any(s != _PSConst.States.SlowRef
+                        for s in self._corr_check_opmode_sts))
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
     def _callback_corr_ctrlmode_mon(self,  pvname, value, **kws):
-        ps = pvname.split(self._PREFIX_VACA)[1]
-        if value == 1:
-            self.driver.setParam('Log-Mon', 'WARN:'+ps+' is Local.')
+        if value != _PSConst.Interface.Remote:
+            self.driver.setParam('Log-Mon', 'WARN:'+pvname+' is not Remote.')
             self.driver.updatePVs()
 
-        corr = ps.split(':')[0]+':'+ps.split(':')[1]
-        corr_index = self._correctors.index(corr)
+        corr_index = self._correctors.index(_SiriusPVName(pvname).device_name)
         self._corr_check_ctrlmode_mon[corr_index] = value
 
         # Change the fourth bit of correction status
         self._status = _siriuspy.util.update_bit(
-            v=self._status,
-            bit_pos=3,
-            bit_val=any(q == 1 for q in self._corr_check_ctrlmode_mon))
+            v=self._status, bit_pos=3,
+            bit_val=any(q != _PSConst.Interface.Remote
+                        for q in self._corr_check_ctrlmode_mon))
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
