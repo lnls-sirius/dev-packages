@@ -357,9 +357,9 @@ def get_config_database(prefix=''):
         'TriggerHwDly-RB': {
             'type': 'float', 'value': 0.0, 'low': 0.0, 'high': 1e9},
         'UpdateTime-SP': {
-            'type': 'float', 'value': 1.0, 'low': 0.0, 'high': 1e9},
+            'type': 'float', 'value': 1.0, 'low': 0.001, 'high': 1e9},
         'UpdateTime-RB': {
-            'type': 'float', 'value': 1.0, 'low': 0.0, 'high': 1e9},
+            'type': 'float', 'value': 1.0, 'low': 0.001, 'high': 1e9},
         # 'NrSamplesPre-SP': {
         'SamplesPre-SP': {
             'type': 'int', 'value': 1000, 'low': 0, 'high': 100000},

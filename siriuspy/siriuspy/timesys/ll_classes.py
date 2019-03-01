@@ -493,9 +493,9 @@ class _EVROUT(_BaseLL):
         dic_['Network'] = self._get_from_pvs(is_sp, 'Network')
         dic_['IntlkMon'] = self._get_from_pvs(is_sp, 'IntlkMon', def_val=1)
         dic_['Link'] = self._get_from_pvs(is_sp, 'Link')
-        dic_['Los'] = self._get_from_pvs(is_sp, 'Los', def_val=None)
         dic_['EVGLos'] = self._get_from_pvs(is_sp, 'EVGLos', def_val=None)
         dic_['PVsConn'] = self.connected
+        dic_['Los'] = self._get_from_pvs(is_sp, 'Los', def_val=None)
         if self._foutexist:
             dic_['FoutDevEnbl'] = self._get_from_pvs(is_sp, 'FoutDevEnbl')
             dic_['FoutLos'] = self._get_from_pvs(
@@ -730,7 +730,8 @@ class _EVEOUT(_EVROUT):
 
 class _AMCFPGAEVRAMC(_EVROUT):
     _REMOVE_PROPS = {
-        'RFDelay', 'FineDelay', 'SrcTrig', 'ByPassIntlk', 'RFDelayType', 'Los'}
+        'RFDelay', 'FineDelay', 'SrcTrig', 'ByPassIntlk', 'RFDelayType', 'Los',
+        'IntlkMon'}
 
     def _get_delay(self, prop, is_sp, value=None):
         return _EVROTP._get_delay(self, prop, is_sp, value)
