@@ -128,7 +128,7 @@ class CHCV(Corrector):
         self._rb = _PV(LL_PREF + self._name + ':Current-RB', **opt)
         self._ref = _PV(LL_PREF + self._name + ':CurrentRef-Mon', **opt)
         self._config_ok_vals = {
-            'OpMode': _PSConst.OpMode.SlowRefSync,
+            'OpMode': _PSConst.States.SlowRefSync,
             'PwrState': _PSConst.PwrStateSel.On}
         self._config_pvs_sp = {
             'OpMode': _PV(LL_PREF+self._name+':OpMode-Sel', **opt),
