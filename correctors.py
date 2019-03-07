@@ -435,7 +435,7 @@ class EpicsCorrectors(BaseCorrectors):
         if self._rf_ctrl.connected:
             self._rf_ctrl.state = True
         else:
-            msg = 'ERR: Failed to configure correctors'
+            msg = 'ERR: Failed to configure RF'
             self._update_log(msg)
             _log.error(msg[5:])
             return False
