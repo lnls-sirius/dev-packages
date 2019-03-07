@@ -541,10 +541,10 @@ class OrbitCorrDevRings(OrbitCorrDevTLines, ConstRings):
                 'prec': 3},
             'SyncKicks-Sel': {
                 'type': 'enum', 'enums': self.SyncKicks._fields,
-                'value': self.SyncKicks.On},
+                'value': self.SyncKicks.Off},
             'SyncKicks-Sts': {
                 'type': 'enum', 'enums': self.SyncKicks._fields,
-                'value': self.SyncKicks.On},
+                'value': self.SyncKicks.Off},
             }
         db = super().get_corrs_database(prefix=prefix)
         db.update(self._add_prefix(db_ring, prefix))
