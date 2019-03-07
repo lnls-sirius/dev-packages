@@ -131,7 +131,7 @@ class CHCV(Corrector):
         opt = {'connection_timeout': TIMEOUT}
         self._sp = _PV(LL_PREF + self._name + ':Kick-SP', **opt)
         self._rb = _PV(LL_PREF + self._name + ':Kick-RB', **opt)
-        self._ref = _PV(LL_PREF + self._name + ':Kick-Mon', **opt)
+        self._ref = _PV(LL_PREF + self._name + ':KickRef-Mon', **opt)
         self._config_ok_vals = {
             'OpMode': _PSConst.OpMode.SlowRefSync,
             'PwrState': _PSConst.PwrStateSel.On}
