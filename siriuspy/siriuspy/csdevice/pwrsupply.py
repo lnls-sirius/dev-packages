@@ -419,6 +419,7 @@ def get_common_pu_SI_InjKicker_propty_database():
                        'enums': ['Comissioning', 'Accumulation'],
                        'value': 0},
     })
+    return db
 
 
 def get_ps_propty_database(psmodel, pstype):
