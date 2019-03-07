@@ -146,7 +146,13 @@ class CHCV(Corrector):
     def opmode(self):
         """Opmode."""
         pv = self._config_pvs_rb['OpMode']
-        return pv.value if pv.connected else None
+        if not pv.connected:
+            return None
+        elif pv.value == _PSConst.States.SlowRefSync:
+            return _PSConst.OpMode.SlowRefSync
+        elif pv.value == _PSConst.States.SlowRef:
+            return _PSConst.OpMode.SlowRef
+        return pv.value
 
     @opmode.setter
     def opmode(self, val):
