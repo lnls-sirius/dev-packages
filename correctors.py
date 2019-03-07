@@ -157,8 +157,8 @@ class CHCV(Corrector):
     @opmode.setter
     def opmode(self, val):
         pv = self._config_pvs_sp['OpMode']
-        if pv.connected:
             self._config_ok_vals['OpMode'] = val
+        if pv.connected and pv.value != val:
             pv.put(val, wait=False)
 
     @property
