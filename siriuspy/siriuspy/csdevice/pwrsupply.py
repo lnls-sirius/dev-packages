@@ -88,7 +88,7 @@ class ETypes(_cutil.ETypes):
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',)
     SOFT_INTLCK_FAC = (
-        'Sobre-temperatura nos indutores',  'Sobre-temperatura nos indutores',
+        'Sobre-temperatura nos indutores',  'Sobre-temperatura nos IGBTs',
         'Falha no DCCT 1', 'Falha no DCCT 2',
         'Alta diferença entre DCCTs',
         'Falha na leitura da corrente na carga do DCCT 1',
@@ -206,10 +206,11 @@ class ETypes(_cutil.ETypes):
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',)
     HARD_INTLCK_FAP = (
-        'Sobre-corrente na crga',
+        'Sobre-corrente na carga',
         'Sobre-tensão na carga',
         'Sobre-tensão no DCLink',
         'Sub-tensão no DCLink',
+        'Falha no contator de entrada do DC-Link',
         'Sobre-corrente no IGBT1', 'Sobre-corrente no IGBT2',
         'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
@@ -217,7 +218,7 @@ class ETypes(_cutil.ETypes):
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+        'Reserved', 'Reserved', 'Reserved',)
     CYCLE_TYPES = ('Sine', 'DampedSine', 'Trapezoidal')
     SYNC_MODES = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
 
@@ -277,7 +278,7 @@ def get_common_propty_database():
                          'value': Const.OpenLoop.Open},
         'OpMode-Sel': {'type': 'enum', 'enums': _et.OPMODES,
                        'value': Const.OpMode.SlowRef},
-        'OpMode-Sts': {'type': 'enum', 'enums': _et.OPMODES,
+        'OpMode-Sts': {'type': 'enum', 'enums': _et.STATES,
                        'value': Const.OpMode.SlowRef},
         # PRU
         'PRUSyncMode-Mon': {'type': 'enum', 'enums': _et.SYNC_MODES,
@@ -376,8 +377,8 @@ def get_common_pu_propty_database():
         'Reset-Cmd': {'type': 'int', 'value': 0},
         'Pulse-Sel': {'type': 'enum', 'enums': _et.DSBL_ENBL,
                       'value': Const.DsblEnbl.Dsbl},
-        # 'Pulse-Sts': {'type': 'enum', 'enums': _et.DSBL_ENBL,
-        #               'value': Const.DsbEnbl.Dsbl},
+        'Pulse-Sts': {'type': 'enum', 'enums': _et.DSBL_ENBL,
+                      'value': Const.DsblEnbl.Dsbl},
         'Voltage-SP': {'type': 'float', 'value': 0.0,
                        'prec': default_pu_current_precision},
         'Voltage-RB': {'type': 'float', 'value': 0.0,
@@ -390,12 +391,16 @@ def get_common_pu_propty_database():
         'Intlk4-Mon': {'type': 'int', 'value': 0},
         'Intlk5-Mon': {'type': 'int', 'value': 0},
         'Intlk6-Mon': {'type': 'int', 'value': 0},
-        'Intlk1Label-Cte': {'type': 'str', 'value': 'Intlk1'},
-        'Intlk2Label-Cte': {'type': 'str', 'value': 'Intlk2'},
-        'Intlk3Label-Cte': {'type': 'str', 'value': 'Intlk3'},
-        'Intlk4Label-Cte': {'type': 'str', 'value': 'Intlk4'},
-        'Intlk5Label-Cte': {'type': 'str', 'value': 'Intlk5'},
-        'Intlk6Label-Cte': {'type': 'str', 'value': 'Intlk6'},
+        'Intlk7-Mon': {'type': 'int', 'value': 0},
+        'Intlk8-Mon': {'type': 'int', 'value': 0},
+        'Intlk1Label-Cte': {'type': 'str', 'value': 'Switch module'},
+        'Intlk2Label-Cte': {'type': 'str', 'value': 'AC CPFL OFF'},
+        'Intlk3Label-Cte': {'type': 'str', 'value': 'Temperature'},
+        'Intlk4Label-Cte': {'type': 'str', 'value': 'Personnel protection'},
+        'Intlk5Label-Cte': {'type': 'str', 'value': 'HVPS Overcurrent'},
+        'Intlk6Label-Cte': {'type': 'str', 'value': 'HVPS Overvoltage'},
+        'Intlk7Label-Cte': {'type': 'str', 'value': 'External'},
+        'Intlk8Label-Cte': {'type': 'str', 'value': 'Switch Overcurrent'},
     }
     return db
 
@@ -487,7 +492,7 @@ def get_ma_propty_database(maname):
             unit = '1/m^2'
         elif magfunc == 'dipole':
             strength_name = 'Energy'
-            unit = 'Gev'
+            unit = 'GeV'
         elif magfunc in ('corrector-vertical', 'corrector-horizontal'):
             strength_name = 'Kick'
             unit = 'urad'
@@ -577,6 +582,22 @@ def get_pm_propty_database(maname):
 # --- Auxiliary functions ---
 
 
+def _get_pu_FP_SEPT_propty_database():
+    """."""
+    return get_common_pu_propty_database()
+
+
+def _get_pu_FP_KCKR_propty_database():
+    """."""
+    return get_common_pu_propty_database()
+
+
+def _get_ps_LINAC_propty_database():
+    """Return LINAC pwrsupply props."""
+    propty_db = get_basic_propty_database()
+    return propty_db
+
+
 def _get_ps_FBP_propty_database():
     """Return database with FBP pwrsupply model PVs."""
     propty_db = get_basic_propty_database()
@@ -620,11 +641,13 @@ def _get_ps_FBP_DCLink_propty_database():
     return propty_db
 
 
-def _get_ps_FAC_propty_database():
-    """Return database with FAC pwrsupply model PVs."""
+def _get_ps_FAC_DCDC_propty_database():
+    """Return database with FAC_DCDC pwrsupply model PVs."""
     # TODO: implement!!!
     propty_db = get_basic_propty_database()
     db_ps = {
+        'Current1-Mon': {'type': 'float',  'value': 0.0,
+                         'prec': default_ps_current_precision},
         'Current2-Mon': {'type': 'float',  'value': 0.0,
                          'prec': default_ps_current_precision},
         'IntlkSoftLabels-Cte':  {'type': 'string',
@@ -672,22 +695,24 @@ def _get_ps_FAC_ACDC_propty_database():
     return propty_db
 
 
-def _get_ps_FAC_2S_propty_database():
-    """Return database with FAC_2S pwrsupply model PVs."""
+def _get_ps_FAC_2S_DCDC_propty_database():
+    """Return database with FAC_2S_DCDC pwrsupply model PVs."""
     # TODO: implement!!!
     return _get_ps_FBP_propty_database()
 
 
 def _get_ps_FAC_2S_ACDC_propty_database():
-    """Return database with FAC_2S pwrsupply model PVs."""
+    """Return database with FAC_2S_ACDC pwrsupply model PVs."""
     # TODO: implement!!!
     return _get_ps_FAC_ACDC_propty_database()
 
 
-def _get_ps_FAC_2P4S_propty_database():
+def _get_ps_FAC_2P4S_DCDC_propty_database():
     """Return database with FAC_2P4S pwrsupply model PVs."""
     propty_db = get_basic_propty_database()
     db_ps = {
+        'Current1-Mon': {'type': 'float',  'value': 0.0,
+                         'prec': default_ps_current_precision},
         'Current2-Mon': {'type': 'float',  'value': 0.0,
                          'prec': default_ps_current_precision},
         'IntlkSoftLabels-Cte':  {'type': 'string',
@@ -812,6 +837,8 @@ def _get_ps_FAP_propty_database():
     """Return database with FAP pwrsupply model PVs."""
     propty_db = get_basic_propty_database()
     db_ps = {
+        'Current1-Mon': {'type': 'float',  'value': 0.0,
+                         'prec': default_ps_current_precision},
         'Current2-Mon': {'type': 'float',  'value': 0.0,
                          'prec': default_ps_current_precision},
         'IntlkSoftLabels-Cte':  {'type': 'string',
@@ -866,6 +893,7 @@ def _set_limits(pstype, database):
                     'CurrentRef-Mon', 'Current-Mon', 'Current2-Mon'
                     'CycleAmpl-SP', 'CycleAmpl-RB',
                     'CycleOffset-SP', 'CycleOffset-RB',
+                    'Voltage-SP', 'Voltage-RB', 'Voltage-Mon',
                     )
     # TODO: define limits to WfmData as well!
     signals_unit = signals_lims + (
@@ -895,17 +923,20 @@ def _get_model_db(psmodel):
         'FBP': _get_ps_FBP_propty_database,
         'FBP_DCLink': _get_ps_FBP_DCLink_propty_database,
         'FBP_FOFB': _get_ps_FBP_FOFB_propty_database,
-        'FAC_DCDC': _get_ps_FAC_propty_database,
+        'FAC_DCDC': _get_ps_FAC_DCDC_propty_database,
         'FAC_ACDC': _get_ps_FAC_ACDC_propty_database,
-        'FAC_2S_DCDC': _get_ps_FAC_2S_propty_database,
+        'FAC_2S_DCDC': _get_ps_FAC_2S_DCDC_propty_database,
         'FAC_2S_ACDC': _get_ps_FAC_2S_ACDC_propty_database,
-        'FAC_2P4S_DCDC': _get_ps_FAC_2P4S_propty_database,
+        'FAC_2P4S_DCDC': _get_ps_FAC_2P4S_DCDC_propty_database,
         'FAC_2P4S_ACDC': _get_ps_FAC_2P4S_ACDC_propty_database,
         'FAP': _get_ps_FAP_propty_database,
         'FAP_2P2S_MASTER': _get_ps_FAP_2P2S_propty_database,
         'FAP_4P_Master': _get_ps_FAP_4P_Master_propty_database,
         'FAP_4P_Slave': _get_ps_FAP_4P_Slave_propty_database,
         'Commercial': _get_ps_Commercial_propty_database,
+        'FP_SEPT': _get_pu_FP_SEPT_propty_database,
+        'FP_KCKR': _get_pu_FP_KCKR_propty_database,
+        'LINAC_PS': _get_ps_LINAC_propty_database,
     }
     if psmodel in psmodel_2_dbfunc:
         func = psmodel_2_dbfunc[psmodel]

@@ -44,6 +44,11 @@ class PSController:
 
     def read(self, device_name, field):
         """Read pv value."""
+        if field == 'CtrlLoop-Sts':
+            sts = self._readers[device_name + ':CtrlLoop-Sts']
+            sel = self._readers[device_name + ':CtrlLoop-Sel']
+            if sts.read() != sel.read():
+                sel.apply(sts.read())
         return self._readers[device_name + ':' + field].read()
 
     def read_all_fields(self, device_name):
@@ -72,6 +77,7 @@ class PSController:
 
     @staticmethod
     def _get_readback_field(field):
+        # TODO: check if siriuspvname already has a function for this
         return field.replace('-Sel', '-Sts').replace('-SP', '-RB')
 
 
@@ -97,12 +103,7 @@ class StandardPSController(PSController):
                     return self._watchers[device_name].op_mode
             except KeyError:
                 pass
-        elif field == 'CtrlLoop-Sts':
-            sts = self._readers[device_name + ':CtrlLoop-Sts']
-            sel = self._readers[device_name + ':CtrlLoop-Sel']
-            if sts.read() != sel.read():
-                sel.apply(sts.read())
-        return self._readers[device_name + ':' + field].read()
+        return super().read(device_name, field)
 
     def write(self, device_name, field, value):
         """Override write method."""
