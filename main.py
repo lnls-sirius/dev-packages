@@ -461,6 +461,7 @@ class SOFB(_BaseClass):
         self._dtheta = self.matrix.calc_kicks(orb)
 
     def _process_kicks(self, kicks, dkicks):
+        kicks = _np.array(kicks)
         nr_ch = self._csorb.NR_CH
         slcs = {'ch': slice(None, nr_ch), 'cv': slice(nr_ch, None)}
         if self.isring:

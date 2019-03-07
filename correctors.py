@@ -64,7 +64,7 @@ class Corrector(_BaseTimingConfig):
     def ready(self):
         """Ready status."""
         if self._rb.connected and self._rb.value is not None:
-        return self.equalKick(self._rb.value)
+            return self.equalKick(self._rb.value)
         return False
 
     @property
@@ -76,7 +76,7 @@ class Corrector(_BaseTimingConfig):
     def value(self):
         """Value."""
         if self._rb.connected:
-        return self._rb.value
+            return self._rb.value
 
     @value.setter
     def value(self, val):
@@ -85,7 +85,7 @@ class Corrector(_BaseTimingConfig):
     def equalKick(self, value):
         """Equal kick."""
         if self._sp.connected and self._sp.value is not None:
-        return _math.isclose(self._sp.value, value, abs_tol=self.TINY_KICK)
+            return _math.isclose(self._sp.value, value, abs_tol=self.TINY_KICK)
         return False
 
 
@@ -162,7 +162,7 @@ class CHCV(Corrector):
     @opmode.setter
     def opmode(self, val):
         pv = self._config_pvs_sp['OpMode']
-            self._config_ok_vals['OpMode'] = val
+        self._config_ok_vals['OpMode'] = val
         if pv.connected and pv.value != val:
             pv.put(val, wait=False)
 
@@ -179,7 +179,7 @@ class CHCV(Corrector):
     def applied(self):
         """Status applied."""
         if self._ref.connected and self._ref.value is not None:
-        return self.equalKick(self._ref.value)
+            return self.equalKick(self._ref.value)
         return False
 
 
