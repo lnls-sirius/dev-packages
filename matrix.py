@@ -109,7 +109,7 @@ class EpicsMatrix(BaseMatrix):
         if not self._calc_matrices():
             self.num_sing_values = bkup
             return False
-        self.run_callbacks('NumSingValues-RB', num)
+        self.run_callbacks('NumSingValues-RB', self.num_sing_values)
         return True
 
     def _calc_matrices(self):
@@ -142,6 +142,19 @@ class EpicsMatrix(BaseMatrix):
             _log.error(msg[5:])
             return False
         inv_s = 1/s
+        nsv = _np.isfinite(inv_s).sum()
+        if not nsv:
+            msg = 'ERR: All Singular Values are zero.'
+            self._update_log(msg)
+            _log.error(msg[5:])
+            return False
+        elif nsv < self.num_sing_values:
+            self.num_sing_values = nsv
+            self.run_callbacks('NumSingValues-SP', nsv)
+            self.run_callbacks('NumSingValues-RB', nsv)
+            msg = 'WARN: NumSingValues had to be set to {0:d}.'.format(nsv)
+            self._update_log(msg)
+            _log.warning(msg[6:])
         inv_s[self.num_sing_values:] = 0
         Inv_S = _np.diag(inv_s)
         inv_mat = _np.dot(_np.dot(V.T, Inv_S), U.T)
