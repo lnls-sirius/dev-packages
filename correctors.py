@@ -273,7 +273,7 @@ class EpicsCorrectors(BaseCorrectors):
         self._synced_kicks = True
         self._acq_rate = 10
         self._names = self._csorb.CH_NAMES + self._csorb.CV_NAMES
-        self._chcvs = {CHCV(dev) for dev in self._names}
+        self._chcvs = [CHCV(dev) for dev in self._names]
         if self.isring:
             self._rf_ctrl = RFCtrl(self.acc)
             self._rf_nom_freq = self._csorb.RF_NOM_FREQ
