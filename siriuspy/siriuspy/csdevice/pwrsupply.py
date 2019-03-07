@@ -593,6 +593,11 @@ def _get_pu_FP_KCKR_propty_database():
     return get_common_pu_propty_database()
 
 
+def _get_pu_FP_PINGER_propty_database():
+    """."""
+    return get_common_pu_propty_database()
+
+
 def _get_ps_LINAC_propty_database():
     """Return LINAC pwrsupply props."""
     propty_db = get_basic_propty_database()
@@ -937,6 +942,7 @@ def _get_model_db(psmodel):
         'Commercial': _get_ps_Commercial_propty_database,
         'FP_SEPT': _get_pu_FP_SEPT_propty_database,
         'FP_KCKR': _get_pu_FP_KCKR_propty_database,
+        'FP_PINGER': _get_pu_FP_PINGER_propty_database,
         'LINAC_PS': _get_ps_LINAC_propty_database,
     }
     if psmodel in psmodel_2_dbfunc:
