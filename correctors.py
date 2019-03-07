@@ -124,11 +124,11 @@ class CHCV(Corrector):
         """Init method."""
         super().__init__(corr_name)
         opt = {'connection_timeout': TIMEOUT}
-        self._sp = _PV(LL_PREF + self._name + ':Current-SP', **opt)
-        self._rb = _PV(LL_PREF + self._name + ':Current-RB', **opt)
-        self._ref = _PV(LL_PREF + self._name + ':CurrentRef-Mon', **opt)
+        self._sp = _PV(LL_PREF + self._name + ':Kick-SP', **opt)
+        self._rb = _PV(LL_PREF + self._name + ':Kick-RB', **opt)
+        self._ref = _PV(LL_PREF + self._name + ':Kick-Mon', **opt)
         self._config_ok_vals = {
-            'OpMode': _PSConst.States.SlowRefSync,
+            'OpMode': _PSConst.OpMode.SlowRefSync,
             'PwrState': _PSConst.PwrStateSel.On}
         self._config_pvs_sp = {
             'OpMode': _PV(LL_PREF+self._name+':OpMode-Sel', **opt),
