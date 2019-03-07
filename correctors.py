@@ -133,7 +133,7 @@ class CHCV(Corrector):
         self._rb = _PV(LL_PREF + self._name + ':Kick-RB', **opt)
         self._ref = _PV(LL_PREF + self._name + ':KickRef-Mon', **opt)
         self._config_ok_vals = {
-            'OpMode': _PSConst.OpMode.SlowRefSync,
+            'OpMode': _PSConst.OpMode.SlowRef,
             'PwrState': _PSConst.PwrStateSel.On}
         self._config_pvs_sp = {
             'OpMode': _PV(LL_PREF+self._name+':OpMode-Sel', **opt),
@@ -270,7 +270,7 @@ class EpicsCorrectors(BaseCorrectors):
     def __init__(self, acc, prefix='', callback=None):
         """Initialize the instance."""
         super().__init__(acc, prefix=prefix, callback=callback)
-        self._synced_kicks = True
+        self._synced_kicks = False
         self._acq_rate = 10
         self._names = self._csorb.CH_NAMES + self._csorb.CV_NAMES
         self._chcvs = [CHCV(dev) for dev in self._names]
