@@ -288,6 +288,11 @@ class DipoleNormalizer(_MagnetNormalizer):
             self._ref_brho, *_ = _util.beam_rigidity(self._ref_energy)
             self._ref_angle = ang['TB']
             self._ref_BL = - self._ref_brho * self._ref_angle
+        elif self._maname.sec == 'LI':
+            self._ref_energy = 0.150  # [GeV]
+            self._ref_brho, *_ = _util.beam_rigidity(self._ref_energy)
+            self._ref_angle = ang['LI']
+            self._ref_BL = - self._ref_brho * self._ref_angle
         else:
             raise NotImplementedError
 
