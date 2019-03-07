@@ -167,16 +167,16 @@ class OrbitCorrDevTLines(ConstTLines):
                 'enums': self.MeasRespMatMon._fields},
             'MeasRespMatKickCH-SP': {
                 'type': 'float', 'value': 0.2, 'unit': 'urad', 'prec': 3,
-                'lolim': 0.002, 'hilim': 50},
+                'lolim': 0.002, 'hilim': 500},
             'MeasRespMatKickCH-RB': {
                 'type': 'float', 'value': 0.2, 'unit': 'urad', 'prec': 3,
-                'lolim': 0.002, 'hilim': 50},
+                'lolim': 0.002, 'hilim': 500},
             'MeasRespMatKickCV-SP': {
                 'type': 'float', 'value': 0.2, 'unit': 'urad', 'prec': 3,
-                'lolim': 0.002, 'hilim': 50},
+                'lolim': 0.002, 'hilim': 500},
             'MeasRespMatKickCV-RB': {
                 'type': 'float', 'value': 0.2, 'unit': 'urad', 'prec': 3,
-                'lolim': 0.002, 'hilim': 50},
+                'lolim': 0.002, 'hilim': 500},
             'MeasRespMatWait-SP': {
                 'type': 'float', 'value': 0.5, 'unit': 's', 'prec': 3,
                 'lolim': 0.05, 'hilim': 100},
@@ -187,36 +187,36 @@ class OrbitCorrDevTLines(ConstTLines):
                 'type': 'short', 'value': 0, 'unit': 'Calculate kicks'},
             'CorrFactorCH-SP': {
                 'type': 'float', 'value': 100, 'unit': '%', 'prec': 2,
-                'lolim': -1000, 'hilim': 1000},
+                'lolim': -10000, 'hilim': 10000},
             'CorrFactorCH-RB': {
                 'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
             'CorrFactorCV-SP': {
                 'type': 'float', 'value': 100, 'unit': '%', 'prec': 2,
-                'lolim': -1000, 'hilim': 1000},
+                'lolim': -10000, 'hilim': 10000},
             'CorrFactorCV-RB': {
                 'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
             'MaxKickCH-SP': {
                 'type': 'float', 'value': 300, 'unit': 'urad', 'prec': 3,
-                'lolim': 0, 'hilim': 1000},
+                'lolim': 0, 'hilim': 10000},
             'MaxKickCH-RB': {
                 'type': 'float', 'value': 300, 'prec': 2, 'unit': 'urad'},
             'MaxKickCV-SP': {
                 'type': 'float', 'value': 300, 'unit': 'urad', 'prec': 3,
-                'lolim': 0, 'hilim': 1000},
+                'lolim': 0, 'hilim': 10000},
             'MaxKickCV-RB': {
                 'type': 'float', 'value': 300, 'prec': 2, 'unit': 'urad'},
             'MaxDeltaKickCH-SP': {
                 'type': 'float', 'value': 50, 'unit': 'urad', 'prec': 3,
-                'lolim': 0, 'hilim': 1000},
+                'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCH-RB': {
                 'type': 'float', 'value': 50, 'prec': 2, 'unit': 'urad',
-                'lolim': 0, 'hilim': 1000},
+                'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCV-SP': {
                 'type': 'float', 'value': 50, 'unit': 'urad', 'prec': 3,
-                'lolim': 0, 'hilim': 1000},
+                'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCV-RB': {
                 'type': 'float', 'value': 50, 'prec': 2, 'unit': 'urad',
-                'lolim': 0, 'hilim': 1000},
+                'lolim': 0, 'hilim': 10000},
             'ApplyCorr-Cmd': {
                 'type': 'enum', 'enums': self.ApplyCorr._fields, 'value': 0,
                 'unit': 'Apply last calculated kicks.'},
@@ -354,11 +354,11 @@ class OrbitCorrDevTLines(ConstTLines):
             'OrbitTrigExtDuration-SP': {
                 'type': 'float', 'value': 100, 'prec': 4,
                 'unit': 'set external trigger duration [us]',
-                'lolim': 8e-6, 'hilim': 500},
+                'lolim': 8e-6, 'hilim': 500000},
             'OrbitTrigExtDuration-RB': {
                 'type': 'float', 'value': 100, 'prec': 4,
                 'unit': 'set external trigger duration [us]',
-                'lolim': 8e-6, 'hilim': 500},
+                'lolim': 8e-6, 'hilim': 500000},
             'OrbitTrigExtDelay-SP': {
                 'type': 'float', 'value': 0.0, 'prec': 4,
                 'unit': 'set external trigger delay [us]',
