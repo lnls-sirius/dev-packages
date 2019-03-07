@@ -706,7 +706,7 @@ class EpicsOrbit(BaseOrbit):
             _log.error(msg[5:])
             return False
         for bpm in self.bpms:
-            if self._mode == self._csorb.OrbitMode.MultiTurn:
+            if self.isring and self._mode == self._csorb.OrbitMode.MultiTurn:
                 bpm.mode = _csbpm.OpModes.MultiBunch
             else:
                 bpm.mode = _csbpm.OpModes.SinglePass
