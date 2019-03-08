@@ -15,6 +15,7 @@ def get_nominal_dipole_angles():
         'TS': _math.radians(5.011542),  # TS.V03.03
         'BO': _math.radians(7.200000),
         'TB': _math.radians(15.00000),
+        'LI': _math.radians(-45.00000),
     }
     return ref_angles
 
@@ -176,7 +177,7 @@ def magnet_class(maname):
         raise ValueError("Cannot classify {}".format(maname))
     if 'PM' == maname.dis:
         return 'pulsed'
-    if maname.dev.startswith('B'):
+    if maname.dev.startswith('B') or maname.dev.startswith('Spect'):
         return 'dipole'
     if 'QS' not in maname.dev and \
             'SI' == maname.sec and \

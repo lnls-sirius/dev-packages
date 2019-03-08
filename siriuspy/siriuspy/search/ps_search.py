@@ -241,7 +241,7 @@ class PSSearch:
                        'FAC_2P4S_DCDC', 'FAC_2P4S_ACDC', 'FAP',
                        'FAP_2P2S_MASTER', 'FAP_4P_Master', 'FAP_4P_Slave',
                        'Commercial', 'LINAC_PS',
-                       'FP_SEPT', 'FP_KCKR'):
+                       'FP_SEPT', 'FP_KCKR', 'FP_PINGER'):
             return PSSearch._splims_ps_unit
         else:
             raise ValueError(psmodel)
