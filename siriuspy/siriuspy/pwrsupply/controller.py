@@ -138,7 +138,8 @@ class StandardPSController(PSController):
             values[5:] = value
             self._functions[device_name + ':' + field].execute(values)
         elif field == 'PwrState-Sel':
-            self._readers[device_name + ':Current-SP'].apply(0.0)
+            if self._readers[device_name + ':PwrState-Sel'].value == 0:
+                self._readers[device_name + ':Current-SP'].apply(0.0)
             self._functions[name].execute(value)
         else:
             self._functions[name].execute(value)
