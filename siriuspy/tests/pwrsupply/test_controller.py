@@ -25,6 +25,7 @@ class TestStandardController(unittest.TestCase):
         self.readers = {'BO-01U:PS-CH:OpMode-Sts': mock.Mock(),
                         'BO-01U:PS-CH:OpMode-Sel': mock.Mock(),
                         'BO-01U:PS-CV:OpMode-Sel': mock.Mock(),
+                        'BO-01U:PS-CH:PwrState-Sel': mock.Mock(),
                         'BO-01U:PS-CH:PwrState-Sts': mock.Mock(),
                         'BO-01U:PS-CH:CycleOffset-RB': mock.Mock(),
                         'BO-01U:PS-CV:CycleOffset-RB': mock.Mock(),
@@ -218,6 +219,7 @@ class TestStandardController(unittest.TestCase):
 
     def test_write_pwrstate_on(self):
         """Test turn power supply on."""
+        self.readers['BO-01U:PS-CH:PwrState-Sel'].value = 0
         sp = self.readers['BO-01U:PS-CH:Current-SP']
         writer = self.writers['BO-01U:PS-CH:PwrState-Sel']
         self.controller.write('BO-01U:PS-CH', 'PwrState-Sel', 1)
@@ -226,6 +228,7 @@ class TestStandardController(unittest.TestCase):
 
     def test_write_pwrstate_off(self):
         """Test turn power supply on."""
+        self.readers['BO-01U:PS-CH:PwrState-Sel'].value = 0
         sp = self.readers['BO-01U:PS-CH:Current-SP']
         writer = self.writers['BO-01U:PS-CH:PwrState-Sel']
         self.controller.write('BO-01U:PS-CH', 'PwrState-Sel', 0)
