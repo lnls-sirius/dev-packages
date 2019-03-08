@@ -419,6 +419,7 @@ def get_common_pu_SI_InjKicker_propty_database():
                        'enums': ['Comissioning', 'Accumulation'],
                        'value': 0},
     })
+    return db
 
 
 def get_ps_propty_database(psmodel, pstype):
@@ -588,6 +589,11 @@ def _get_pu_FP_SEPT_propty_database():
 
 
 def _get_pu_FP_KCKR_propty_database():
+    """."""
+    return get_common_pu_propty_database()
+
+
+def _get_pu_FP_PINGER_propty_database():
     """."""
     return get_common_pu_propty_database()
 
@@ -936,6 +942,7 @@ def _get_model_db(psmodel):
         'Commercial': _get_ps_Commercial_propty_database,
         'FP_SEPT': _get_pu_FP_SEPT_propty_database,
         'FP_KCKR': _get_pu_FP_KCKR_propty_database,
+        'FP_PINGER': _get_pu_FP_PINGER_propty_database,
         'LINAC_PS': _get_ps_LINAC_propty_database,
     }
     if psmodel in psmodel_2_dbfunc:

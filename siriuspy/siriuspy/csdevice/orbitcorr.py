@@ -116,9 +116,11 @@ class OrbitCorrDevTLines(ConstTLines):
         self.NR_CHCV = self.NR_CH + self.NR_CV
         self.NR_BPMS = len(self.BPM_NAMES)
         ext = acc.lower() + 'orb'
-        self.REFORBFNAME = _os.path.join('data', 'ref_orbit.'+ext)
+        ioc_fol = acc.lower() + '-ap-sofb'
+        ioc_fol = _os.path.join('/home', 'sirius', 'iocs', ioc_fol, 'data')
+        self.REFORBFNAME = _os.path.join(ioc_fol, 'ref_orbit.'+ext)
         ext = acc.lower() + 'respmat'
-        self.RESPMAT_FILENAME = _os.path.join('data', 'respmat.'+ext)
+        self.RESPMAT_FILENAME = _os.path.join(ioc_fol, 'respmat.'+ext)
 
         self.NR_CORRS = self.NR_CHCV + 1 if acc in _et.RINGS else self.NR_CHCV
 
@@ -165,16 +167,16 @@ class OrbitCorrDevTLines(ConstTLines):
                 'enums': self.MeasRespMatMon._fields},
             'MeasRespMatKickCH-SP': {
                 'type': 'float', 'value': 0.2, 'unit': 'urad', 'prec': 3,
-                'lolim': 0.002, 'hilim': 50},
+                'lolim': 0.002, 'hilim': 500},
             'MeasRespMatKickCH-RB': {
                 'type': 'float', 'value': 0.2, 'unit': 'urad', 'prec': 3,
-                'lolim': 0.002, 'hilim': 50},
+                'lolim': 0.002, 'hilim': 500},
             'MeasRespMatKickCV-SP': {
                 'type': 'float', 'value': 0.2, 'unit': 'urad', 'prec': 3,
-                'lolim': 0.002, 'hilim': 50},
+                'lolim': 0.002, 'hilim': 500},
             'MeasRespMatKickCV-RB': {
                 'type': 'float', 'value': 0.2, 'unit': 'urad', 'prec': 3,
-                'lolim': 0.002, 'hilim': 50},
+                'lolim': 0.002, 'hilim': 500},
             'MeasRespMatWait-SP': {
                 'type': 'float', 'value': 0.5, 'unit': 's', 'prec': 3,
                 'lolim': 0.05, 'hilim': 100},
@@ -185,36 +187,36 @@ class OrbitCorrDevTLines(ConstTLines):
                 'type': 'short', 'value': 0, 'unit': 'Calculate kicks'},
             'CorrFactorCH-SP': {
                 'type': 'float', 'value': 100, 'unit': '%', 'prec': 2,
-                'lolim': -1000, 'hilim': 1000},
+                'lolim': -10000, 'hilim': 10000},
             'CorrFactorCH-RB': {
                 'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
             'CorrFactorCV-SP': {
                 'type': 'float', 'value': 100, 'unit': '%', 'prec': 2,
-                'lolim': -1000, 'hilim': 1000},
+                'lolim': -10000, 'hilim': 10000},
             'CorrFactorCV-RB': {
                 'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
             'MaxKickCH-SP': {
                 'type': 'float', 'value': 300, 'unit': 'urad', 'prec': 3,
-                'lolim': 0, 'hilim': 1000},
+                'lolim': 0, 'hilim': 10000},
             'MaxKickCH-RB': {
                 'type': 'float', 'value': 300, 'prec': 2, 'unit': 'urad'},
             'MaxKickCV-SP': {
                 'type': 'float', 'value': 300, 'unit': 'urad', 'prec': 3,
-                'lolim': 0, 'hilim': 1000},
+                'lolim': 0, 'hilim': 10000},
             'MaxKickCV-RB': {
                 'type': 'float', 'value': 300, 'prec': 2, 'unit': 'urad'},
             'MaxDeltaKickCH-SP': {
                 'type': 'float', 'value': 50, 'unit': 'urad', 'prec': 3,
-                'lolim': 0, 'hilim': 1000},
+                'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCH-RB': {
                 'type': 'float', 'value': 50, 'prec': 2, 'unit': 'urad',
-                'lolim': 0, 'hilim': 1000},
+                'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCV-SP': {
                 'type': 'float', 'value': 50, 'unit': 'urad', 'prec': 3,
-                'lolim': 0, 'hilim': 1000},
+                'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCV-RB': {
                 'type': 'float', 'value': 50, 'prec': 2, 'unit': 'urad',
-                'lolim': 0, 'hilim': 1000},
+                'lolim': 0, 'hilim': 10000},
             'ApplyCorr-Cmd': {
                 'type': 'enum', 'enums': self.ApplyCorr._fields, 'value': 0,
                 'unit': 'Apply last calculated kicks.'},
@@ -306,17 +308,17 @@ class OrbitCorrDevTLines(ConstTLines):
                 'value': self.OrbitAcqTrig.External,
                 'enums': self.OrbitAcqTrig._fields},
             'OrbitTrigNrSamplesPre-SP': {
-                'type': 'short', 'unit': '', 'value': 0,
-                'hilim': 2**15-1, 'lolim': 0},
+                'type': 'short', 'unit': '', 'value': 50,
+                'hilim': 2**15-1, 'lolim': 1},
             'OrbitTrigNrSamplesPre-RB': {
-                'type': 'short', 'unit': '', 'value': 0,
-                'hilim': 2**15-1, 'lolim': 0},
+                'type': 'short', 'unit': '', 'value': 50,
+                'hilim': 2**15-1, 'lolim': 1},
             'OrbitTrigNrSamplesPost-SP': {
-                'type': 'short', 'unit': '', 'value': 200,
-                'hilim': 2**15-1, 'lolim': 1},
+                'type': 'short', 'unit': '', 'value': 50,
+                'hilim': 2**15-1, 'lolim': 0},
             'OrbitTrigNrSamplesPost-RB': {
-                'type': 'short', 'unit': '', 'value': 200,
-                'hilim': 2**15-1, 'lolim': 1},
+                'type': 'short', 'unit': '', 'value': 50,
+                'hilim': 2**15-1, 'lolim': 0},
             'OrbitTrigDataSel-Sel': {
                 'type': 'enum', 'unit': 'Set Data trigger Selection.',
                 'value': self.OrbitAcqDataSel.A,
@@ -328,19 +330,19 @@ class OrbitCorrDevTLines(ConstTLines):
             'OrbitTrigDataThres-SP': {
                 'type': 'int', 'value': 1,
                 'unit': 'set data trigger threshold',
-                'lolim': 1, 'hilim': 2**31-1},
+                'lolim': -1000, 'hilim': 2**31-1},
             'OrbitTrigDataThres-RB': {
                 'type': 'int', 'value': 1,
                 'unit': 'set data trigger threshold',
-                'lolim': 1, 'hilim': 2**31-1},
+                'lolim': -1000, 'hilim': 2**31-1},
             'OrbitTrigDataHyst-SP': {
                 'type': 'int', 'value': 1,
                 'unit': 'set data trigger hysteresis',
-                'lolim': 1, 'hilim': 2**31-1},
+                'lolim': 0, 'hilim': 2**31-1},
             'OrbitTrigDataHyst-RB': {
                 'type': 'int', 'value': 1,
                 'unit': 'set data trigger hysteresis',
-                'lolim': 1, 'hilim': 2**31-1},
+                'lolim': 0, 'hilim': 2**31-1},
             'OrbitTrigDataPol-Sel': {
                 'type': 'enum', 'unit': 'Set Data trigger Polarity.',
                 'value': self.OrbitAcqDataPol.Positive,
@@ -350,19 +352,19 @@ class OrbitCorrDevTLines(ConstTLines):
                 'value': self.OrbitAcqDataPol.Positive,
                 'enums': self.OrbitAcqDataPol._fields},
             'OrbitTrigExtDuration-SP': {
-                'type': 'float', 'value': 1e-3,
-                'unit': 'set external trigger duration [ms]',
-                'lolim': 8e-6, 'hilim': 500},
+                'type': 'float', 'value': 100, 'prec': 4,
+                'unit': 'set external trigger duration [us]',
+                'lolim': 8e-6, 'hilim': 500000},
             'OrbitTrigExtDuration-RB': {
-                'type': 'float', 'value': 1e-3,
-                'unit': 'set external trigger duration [ms]',
-                'lolim': 8e-6, 'hilim': 500},
+                'type': 'float', 'value': 100, 'prec': 4,
+                'unit': 'set external trigger duration [us]',
+                'lolim': 8e-6, 'hilim': 500000},
             'OrbitTrigExtDelay-SP': {
-                'type': 'float', 'value': 0.0,
+                'type': 'float', 'value': 0.0, 'prec': 4,
                 'unit': 'set external trigger delay [us]',
                 'lolim': 0.0, 'hilim': 5e5},
             'OrbitTrigExtDelay-RB': {
-                'type': 'float', 'value': 0.0,
+                'type': 'float', 'value': 0.0, 'prec': 4,
                 'unit': 'set external trigger delay [us]',
                 'lolim': 0.0, 'hilim': 5e5},
             'OrbitTrigExtEvtSrc-Sel': {
@@ -539,10 +541,10 @@ class OrbitCorrDevRings(OrbitCorrDevTLines, ConstRings):
                 'prec': 3},
             'SyncKicks-Sel': {
                 'type': 'enum', 'enums': self.SyncKicks._fields,
-                'value': self.SyncKicks.On},
+                'value': self.SyncKicks.Off},
             'SyncKicks-Sts': {
                 'type': 'enum', 'enums': self.SyncKicks._fields,
-                'value': self.SyncKicks.On},
+                'value': self.SyncKicks.Off},
             }
         db = super().get_corrs_database(prefix=prefix)
         db.update(self._add_prefix(db_ring, prefix))
