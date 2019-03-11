@@ -21,7 +21,7 @@ class ETypes(_cutil.ETypes):
     ORB_MODE_TLINES = ('Offline', 'SinglePass')
     APPLY_CORR_RINGS = ('CH', 'CV', 'RF', 'All')
     APPLY_CORR_TLINES = ('CH', 'CV', 'All')
-    ORB_ACQ_CHAN = ('Monit1', 'FOFB', 'TbT')
+    ORB_ACQ_CHAN = ('Monit1', 'FOFB', 'TbT', 'ADC')
     MEAS_RMAT_CMD = ('Start', 'Stop', 'Reset')
     MEAS_RMAT_MON = ('Idle', 'Measuring', 'Completed', 'Aborted')
     TLINES = ('TB', 'TS')
@@ -53,6 +53,8 @@ class ConstTLines(_cutil.Const):
     MAX_MT_ORBS = 4000
 
     OrbitAcqCtrl = _csbpm.AcqEvents
+    OrbitAcqChan = _cutil.Const.register('OrbitAcqChan', _et.ORB_ACQ_CHAN)
+    OrbitAcqDataChan = _csbpm.AcqChan
     OrbitAcqDataSel = _csbpm.AcqDataTyp
     OrbitAcqDataPol = _csbpm.Polarity
     OrbitAcqTrig = _cutil.Const.register('OrbitAcqTrig', ('External', 'Data'))
@@ -87,8 +89,6 @@ class ConstRings(ConstTLines):
     EnblRF = _cutil.Const.register('EnblRF', _et.ENBL_RF)
     AutoCorr = _cutil.Const.register('AutoCorr', _et.OFF_ON)
     SyncKicks = _cutil.Const.register('SyncKicks', _et.OFF_ON)
-    OrbitAcqChan = _cutil.Const.register('OrbitAcqChan', _et.ORB_ACQ_CHAN)
-    OrbitAcqDataChan = _csbpm.AcqChan
 
 
 # --- Database classes ---
@@ -299,6 +299,22 @@ class OrbitCorrDevTLines(ConstTLines):
                 'type': 'enum', 'unit': 'Start/Stop/Reset acquistion.',
                 'value': self.OrbitAcqCtrl.Stop,
                 'enums': self.OrbitAcqCtrl._fields},
+            'OrbitTrigAcqChan-Sel': {
+                'type': 'enum', 'unit': 'Change orbit acquisition Channel.',
+                'value': self.OrbitAcqChan.ADC,
+                'enums': self.OrbitAcqChan._fields},
+            'OrbitTrigAcqChan-Sts': {
+                'type': 'enum', 'unit': 'Change orbit acquisition Channel.',
+                'value': self.OrbitAcqChan.ADC,
+                'enums': self.OrbitAcqChan._fields},
+            'OrbitTrigDataChan-Sel': {
+                'type': 'enum', 'unit': 'Set Data-driven trigger Channel.',
+                'value': self.OrbitAcqDataChan.ADC,
+                'enums': self.OrbitAcqDataChan._fields},
+            'OrbitTrigDataChan-Sts': {
+                'type': 'enum', 'unit': 'Set Data-driven trigger Channel.',
+                'value': self.OrbitAcqDataChan.ADC,
+                'enums': self.OrbitAcqDataChan._fields},
             'OrbitTrigAcqTrigger-Sel': {
                 'type': 'enum', 'unit': 'If trigger is external or by data.',
                 'value': self.OrbitAcqTrig.External,
@@ -307,6 +323,12 @@ class OrbitCorrDevTLines(ConstTLines):
                 'type': 'enum', 'unit': 'If trigger is external or by data.',
                 'value': self.OrbitAcqTrig.External,
                 'enums': self.OrbitAcqTrig._fields},
+            'OrbitTrigNrShots-SP': {
+                'type': 'short', 'unit': '', 'value': 1,
+                'hilim': 1000, 'lolim': 1},
+            'OrbitTrigNrShots-RB': {
+                'type': 'short', 'unit': '', 'value': 1,
+                'hilim': 1000, 'lolim': 1},
             'OrbitTrigNrSamplesPre-SP': {
                 'type': 'short', 'unit': '', 'value': 50,
                 'hilim': 2**15-1, 'lolim': 1},
@@ -586,34 +608,12 @@ class OrbitCorrDevRings(OrbitCorrDevTLines, ConstRings):
             'OrbitMultiTurnIdxTime-Mon': {
                 'type': 'float', 'unit': 'ms', 'value': 0.0, 'prec': 5,
                 'hilim': 500, 'lolim': 0},
-            'OrbitTrigAcqChan-Sel': {
-                'type': 'enum', 'unit': 'Change orbit acquisition Channel.',
-                'value': self.OrbitAcqChan.Monit1,
-                'enums': self.OrbitAcqChan._fields},
-            'OrbitTrigAcqChan-Sts': {
-                'type': 'enum', 'unit': 'Change orbit acquisition Channel.',
-                'value': self.OrbitAcqChan.Monit1,
-                'enums': self.OrbitAcqChan._fields},
-            'OrbitTrigNrShots-SP': {
-                'type': 'short', 'unit': '', 'value': 1,
-                'hilim': 1000, 'lolim': 1},
-            'OrbitTrigNrShots-RB': {
-                'type': 'short', 'unit': '', 'value': 1,
-                'hilim': 1000, 'lolim': 1},
             'OrbitTrigDownSample-SP': {
                 'type': 'short', 'unit': '', 'value': 1,
                 'hilim': 2**15-1, 'lolim': 1},
             'OrbitTrigDownSample-RB': {
                 'type': 'short', 'unit': '', 'value': 1,
                 'hilim': 2**15-1, 'lolim': 1},
-            'OrbitTrigDataChan-Sel': {
-                'type': 'enum', 'unit': 'Set Data-driven trigger Channel.',
-                'value': self.OrbitAcqDataChan.Monit1,
-                'enums': self.OrbitAcqDataChan._fields},
-            'OrbitTrigDataChan-Sts': {
-                'type': 'enum', 'unit': 'Set Data-driven trigger Channel.',
-                'value': self.OrbitAcqDataChan.Monit1,
-                'enums': self.OrbitAcqDataChan._fields},
             })
         db = super().get_orbit_database(prefix=prefix)
         db.update(self._add_prefix(db_ring, prefix))
