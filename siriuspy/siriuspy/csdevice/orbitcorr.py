@@ -86,7 +86,7 @@ class ConstRings(ConstTLines):
 
     # TODO: use correct name for the RF generator
     RF_GEN_NAME = 'AS-Glob:RF-Gen'
-    RF_NOM_FREQ = 499458000.0
+    RF_NOM_FREQ = 499657952.052
     EnblRF = _cutil.Const.register('EnblRF', _et.ENBL_RF)
     AutoCorr = _cutil.Const.register('AutoCorr', _et.OFF_ON)
     SyncKicks = _cutil.Const.register('SyncKicks', _et.OFF_ON)
