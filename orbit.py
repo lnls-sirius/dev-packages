@@ -487,7 +487,10 @@ class EpicsOrbit(BaseOrbit):
         db['OrbitMode-Sel'][prop] = self.set_orbit_mode
         db['OrbitTrigAcqConfig-Cmd'][prop] = self.trig_acq_config_bpms
         db['OrbitTrigAcqCtrl-Sel'][prop] = self.set_trig_acq_control
+        db['OrbitTrigAcqChan-Sel'][prop] = self.set_trig_acq_channel
+        db['OrbitTrigDataChan-Sel'][prop] = self.set_trig_acq_datachan
         db['OrbitTrigAcqTrigger-Sel'][prop] = self.set_trig_acq_trigger
+        db['OrbitTrigAcqRepeat-Sel'][prop] = self.set_trig_acq_repeat
         db['OrbitTrigDataSel-Sel'][prop] = self.set_trig_acq_datasel
         db['OrbitTrigDataThres-SP'][prop] = self.set_trig_acq_datathres
         db['OrbitTrigDataHyst-SP'][prop] = self.set_trig_acq_datahyst
@@ -506,11 +509,9 @@ class EpicsOrbit(BaseOrbit):
         db['OrbitSmoothNPnts-SP'][prop] = self.set_smooth_npts
         db['OrbitSmoothReset-Cmd'][prop] = self.set_smooth_reset
         db['OrbitAcqRate-SP'][prop] = self.set_orbit_acq_rate
+        db['OrbitTrigNrShots-SP'][prop] = self.set_trig_acq_nrshots
         if self.isring:
             db['OrbitMultiTurnIdx-SP'][prop] = self.set_orbit_multiturn_idx
-            db['OrbitTrigAcqChan-Sel'][prop] = self.set_trig_acq_channel
-            db['OrbitTrigDataChan-Sel'][prop] = self.set_trig_acq_datachan
-            db['OrbitTrigNrShots-SP'][prop] = self.set_trig_acq_nrshots
             db['OrbitTrigDownSample-SP'][prop] = self.set_trig_acq_downsample
 
         db = super().get_database(db)
