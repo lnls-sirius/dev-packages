@@ -39,10 +39,10 @@ class BPM(_BaseTimingConfig):
         self._config_ok_vals = {
             'asyn.ENBL': _csbpm.EnblTyp.Enable,
             'ACQBPMMode': _csbpm.OpModes.MultiBunch,
-            'ACQChannel': _csbpm.AcqChan.Monit1,
+            'ACQChannel': _csbpm.AcqChan.ADC,
             # 'ACQNrShots': 1,
             'ACQShots': 1,
-            'ACQTriggerHwDly': 0.0,
+            # 'ACQTriggerHwDly': 0.0,  # NOTE: leave this property commented
             'ACQUpdateTime': 0.001,
             # 'ACQNrSamplesPre': 0,
             'ACQSamplesPre': 50,
@@ -52,9 +52,9 @@ class BPM(_BaseTimingConfig):
             'ACQTriggerEvent': _csbpm.AcqEvents.Stop,
             # 'ACQTriggerType': _csbpm.AcqTrigTyp.External,
             'ACQTrigger': _csbpm.AcqTrigTyp.External,
-            'ACQTriggerRep': _csbpm.AcqRepeat.Repetitive,
+            'ACQTriggerRep': _csbpm.AcqRepeat.Normal,
             # 'ACQTriggerDataChan': _csbpm.AcqChan.Monit1,
-            'ACQDataTrigChan': _csbpm.AcqChan.Monit1,
+            'ACQDataTrigChan': _csbpm.AcqChan.ADC,
             'ACQTriggerDataSel': _csbpm.AcqDataTyp.A,
             'ACQTriggerDataThres': 1,
             'ACQTriggerDataPol': _csbpm.Polarity.Positive,
@@ -65,7 +65,7 @@ class BPM(_BaseTimingConfig):
             'ACQChannel': 'ACQChannel-Sel',
             # 'ACQNrShots': 'ACQNrShots-SP',
             'ACQShots': 'ACQShots-SP',
-            'ACQTriggerHwDly': 'ACQTriggerHwDly-SP',
+            # 'ACQTriggerHwDly': 'ACQTriggerHwDly-SP',
             'ACQUpdateTime': 'ACQUpdateTime-SP',
             # 'ACQNrSamplesPre': 'ACQNrSamplesPre-SP',
             'ACQSamplesPre': 'ACQSamplesPre-SP',
@@ -92,7 +92,7 @@ class BPM(_BaseTimingConfig):
             'ACQChannel': 'ACQChannel-Sts',
             # 'ACQNrShots': 'ACQNrShots-RB',
             'ACQShots': 'ACQShots-RB',
-            'ACQTriggerHwDly': 'ACQTriggerHwDly-RB',
+            # 'ACQTriggerHwDly': 'ACQTriggerHwDly-RB',
             'ACQUpdateTime': 'ACQUpdateTime-RB',
             # 'ACQNrSamplesPre': 'ACQNrSamplesPre-RB',
             'ACQSamplesPre': 'ACQSamplesPre-RB',
@@ -538,8 +538,8 @@ class EpicsOrbit(BaseOrbit):
         self._smooth_npts = 1
         self._acqrate = 10
         self._oldacqrate = self._acqrate
-        self._acqtrignrsamplespre = 0
-        self._acqtrignrsamplespost = 200
+        self._acqtrignrsamplespre = 50
+        self._acqtrignrsamplespost = 50
         self._acqtrignrshots = 1
         self._multiturnidx = 0
         self._acqtrigdownsample = 1
