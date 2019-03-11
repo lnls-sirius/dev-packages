@@ -367,11 +367,11 @@ class OrbitCorrDevTLines(ConstTLines):
                 'unit': 'set data trigger threshold',
                 'lolim': -1000, 'hilim': 2**31-1},
             'OrbitTrigDataHyst-SP': {
-                'type': 'int', 'value': 1,
+                'type': 'int', 'value': 0,
                 'unit': 'set data trigger hysteresis',
                 'lolim': 0, 'hilim': 2**31-1},
             'OrbitTrigDataHyst-RB': {
-                'type': 'int', 'value': 1,
+                'type': 'int', 'value': 0,
                 'unit': 'set data trigger hysteresis',
                 'lolim': 0, 'hilim': 2**31-1},
             'OrbitTrigDataPol-Sel': {
