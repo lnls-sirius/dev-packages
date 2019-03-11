@@ -276,6 +276,18 @@ class BPM(_BaseTimingConfig):
             pv.put(val, wait=False)
 
     @property
+    def acq_repeat(self):
+        pv = self._config_pvs_rb['ACQTriggerRep']
+        return pv.value if pv.connected else None
+
+    @acq_repeat.setter
+    def acq_repeat(self, val):
+        pv = self._config_pvs_sp['ACQTriggerRep']
+        self._config_ok_vals['ACQTriggerRep'] = val
+        if pv.connected:
+            pv.put(val, wait=False)
+
+    @property
     def acq_trig_datatype(self):
         # pv = self._config_pvs_rb['ACQTriggerDataChan']
         pv = self._config_pvs_rb['ACQDataTrigChan']
@@ -737,6 +749,12 @@ class EpicsOrbit(BaseOrbit):
         for bpm in self.bpms:
             bpm.acq_trigger = value + 1  # See PVs Database definition
         self.run_callbacks('OrbitTrigAcqTrigger-Sts', value)
+        return True
+
+    def set_trig_acq_repeat(self, value):
+        for bpm in self.bpms:
+            bpm.acq_repeat = value
+        self.run_callbacks('OrbitTrigAcqRepeat-Sts', value)
         return True
 
     def set_trig_acq_datachan(self, value):
