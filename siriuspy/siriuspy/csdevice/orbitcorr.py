@@ -57,6 +57,7 @@ class ConstTLines(_cutil.Const):
     OrbitAcqDataChan = _csbpm.AcqChan
     OrbitAcqDataSel = _csbpm.AcqDataTyp
     OrbitAcqDataPol = _csbpm.Polarity
+    OrbitAcqRepeat = _csbpm.AcqRepeat
     OrbitAcqTrig = _cutil.Const.register('OrbitAcqTrig', ('External', 'Data'))
     MeasRespMatCmd = _cutil.Const.register('MeasRespMatCmd', _et.MEAS_RMAT_CMD)
     MeasRespMatMon = _cutil.Const.register('MeasRespMatMon', _et.MEAS_RMAT_MON)
@@ -323,6 +324,14 @@ class OrbitCorrDevTLines(ConstTLines):
                 'type': 'enum', 'unit': 'If trigger is external or by data.',
                 'value': self.OrbitAcqTrig.External,
                 'enums': self.OrbitAcqTrig._fields},
+            'OrbitTrigAcqRepeat-Sel': {
+                'type': 'enum', 'unit': 'Auto arm to repeat acquisition.',
+                'value': self.OrbitAcqRepeat.Normal,
+                'enums': self.OrbitAcqRepeat._fields},
+            'OrbitTrigAcqRepeat-Sts': {
+                'type': 'enum', 'unit': 'Auto arm to repeat acquisition.',
+                'value': self.OrbitAcqRepeat.Normal,
+                'enums': self.OrbitAcqRepeat._fields},
             'OrbitTrigNrShots-SP': {
                 'type': 'short', 'unit': '', 'value': 1,
                 'hilim': 1000, 'lolim': 1},
