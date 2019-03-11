@@ -340,10 +340,10 @@ class OrbitCorrDevTLines(ConstTLines):
                 'hilim': 1000, 'lolim': 1},
             'OrbitTrigNrSamplesPre-SP': {
                 'type': 'short', 'unit': '', 'value': 50,
-                'hilim': 2**15-1, 'lolim': 1},
+                'hilim': 2**15-1, 'lolim': 4},
             'OrbitTrigNrSamplesPre-RB': {
                 'type': 'short', 'unit': '', 'value': 50,
-                'hilim': 2**15-1, 'lolim': 1},
+                'hilim': 2**15-1, 'lolim': 4},
             'OrbitTrigNrSamplesPost-SP': {
                 'type': 'short', 'unit': '', 'value': 50,
                 'hilim': 2**15-1, 'lolim': 0},
