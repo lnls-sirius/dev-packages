@@ -746,8 +746,11 @@ class EpicsOrbit(BaseOrbit):
         return True
 
     def set_trig_acq_trigger(self, value):
+        val = _csbpm.AcqTrigTyp.Data
+        if value == self._csorb.OrbitAcqTrig.External:
+            val = _csbpm.AcqTrigTyp.External
         for bpm in self.bpms:
-            bpm.acq_trigger = value + 1  # See PVs Database definition
+            bpm.acq_trigger = val
         self.run_callbacks('OrbitTrigAcqTrigger-Sts', value)
         return True
 
