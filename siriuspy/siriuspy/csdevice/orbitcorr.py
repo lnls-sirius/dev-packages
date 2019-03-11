@@ -610,7 +610,7 @@ class OrbitCorrDevRings(OrbitCorrDevTLines, ConstRings):
                 'value': 50*[0]},
             'OrbitMultiTurnIdx-SP': {
                 'type': 'int', 'unit': '', 'value': 0,
-                'hilim': 50, 'lolim': 0},
+                'hilim': self.MAX_MT_ORBS, 'lolim': 0},
             'OrbitMultiTurnIdx-RB': {
                 'type': 'int', 'unit': '', 'value': 0,
                 'hilim': self.MAX_MT_ORBS, 'lolim': 0},
