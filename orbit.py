@@ -243,9 +243,9 @@ class BPM(_BaseTimingConfig):
     def ctrl(self, val):
         # pv = self._config_pvs_sp['ACQCtrl']
         pv = self._config_pvs_sp['ACQTriggerEvent']
+        # self._config_ok_vals['ACQCtrl'] = val
+        self._config_ok_vals['ACQTriggerEvent'] = val
         if pv.connected:
-            # self._config_ok_vals['ACQCtrl'] = val
-            self._config_ok_vals['ACQTriggerEvent'] = val
             pv.put(val, wait=False)
 
     @property
@@ -256,8 +256,8 @@ class BPM(_BaseTimingConfig):
     @acq_type.setter
     def acq_type(self, val):
         pv = self._config_pvs_sp['ACQChannel']
+        self._config_ok_vals['ACQChannel'] = val
         if pv.connected:
-            self._config_ok_vals['ACQChannel'] = val
             pv.put(val, wait=False)
 
     @property
@@ -270,9 +270,9 @@ class BPM(_BaseTimingConfig):
     def acq_trigger(self, val):
         # pv = self._config_pvs_sp['ACQTriggerType']
         pv = self._config_pvs_sp['ACQTrigger']
+        # self._config_ok_vals['ACQTriggerType'] = val
+        self._config_ok_vals['ACQTrigger'] = val
         if pv.connected:
-            # self._config_ok_vals['ACQTriggerType'] = val
-            self._config_ok_vals['ACQTrigger'] = val
             pv.put(val, wait=False)
 
     @property
@@ -285,9 +285,9 @@ class BPM(_BaseTimingConfig):
     def acq_trig_datatype(self, val):
         # pv = self._config_pvs_sp['ACQTriggerDataChan']
         pv = self._config_pvs_sp['ACQDataTrigChan']
+        # self._config_ok_vals['ACQTriggerDataChan'] = val
+        self._config_ok_vals['ACQDataTrigChan'] = val
         if pv.connected:
-            # self._config_ok_vals['ACQTriggerDataChan'] = val
-            self._config_ok_vals['ACQDataTrigChan'] = val
             pv.put(val, wait=False)
 
     @property
@@ -298,8 +298,8 @@ class BPM(_BaseTimingConfig):
     @acq_trig_datasel.setter
     def acq_trig_datasel(self, val):
         pv = self._config_pvs_sp['ACQTriggerDataSel']
+        self._config_ok_vals['ACQTriggerDataSel'] = val
         if pv.connected:
-            self._config_ok_vals['ACQTriggerDataSel'] = val
             pv.put(val, wait=False)
 
     @property
@@ -310,8 +310,8 @@ class BPM(_BaseTimingConfig):
     @acq_trig_datathres.setter
     def acq_trig_datathres(self, val):
         pv = self._config_pvs_sp['ACQTriggerDataThres']
+        self._config_ok_vals['ACQTriggerDataThres'] = val
         if pv.connected:
-            self._config_ok_vals['ACQTriggerDataThres'] = val
             pv.put(val, wait=False)
 
     @property
@@ -322,8 +322,8 @@ class BPM(_BaseTimingConfig):
     @acq_trig_datahyst.setter
     def acq_trig_datahyst(self, val):
         pv = self._config_pvs_sp['ACQTriggerDataHyst']
+        self._config_ok_vals['ACQTriggerDataHyst'] = val
         if pv.connected:
-            self._config_ok_vals['ACQTriggerDataHyst'] = val
             pv.put(val, wait=False)
 
     @property
@@ -334,8 +334,8 @@ class BPM(_BaseTimingConfig):
     @acq_trig_datapol.setter
     def acq_trig_datapol(self, val):
         pv = self._config_pvs_sp['ACQTriggerDataPol']
+        self._config_ok_vals['ACQTriggerDataPol'] = val
         if pv.connected:
-            self._config_ok_vals['ACQTriggerDataPol'] = val
             pv.put(val, wait=False)
 
     @property
@@ -348,9 +348,9 @@ class BPM(_BaseTimingConfig):
     def nrsamplespost(self, val):
         # pv = self._config_pvs_sp['ACQNrSamplesPost']
         pv = self._config_pvs_sp['ACQSamplesPost']
+        # self._config_ok_vals['ACQNrSamplesPost'] = val
+        self._config_ok_vals['ACQSamplesPost'] = val
         if pv.connected:
-            # self._config_ok_vals['ACQNrSamplesPost'] = val
-            self._config_ok_vals['ACQSamplesPost'] = val
             pv.put(val, wait=False)
 
     @property
@@ -363,9 +363,9 @@ class BPM(_BaseTimingConfig):
     def nrsamplespre(self, val):
         # pv = self._config_pvs_sp['ACQNrSamplesPre']
         pv = self._config_pvs_sp['ACQSamplesPre']
+        # self._config_ok_vals['ACQNrSamplesPre'] = val
+        self._config_ok_vals['ACQSamplesPre'] = val
         if pv.connected:
-            # self._config_ok_vals['ACQNrSamplesPre'] = val
-            self._config_ok_vals['ACQSamplesPre'] = val
             pv.put(val, wait=False)
 
     @property
@@ -378,9 +378,9 @@ class BPM(_BaseTimingConfig):
     def nrshots(self, val):
         # pv = self._config_pvs_sp['ACQNrShots']
         pv = self._config_pvs_sp['ACQShots']
+        # self._config_ok_vals['ACQNrShots'] = val
+        self._config_ok_vals['ACQShots'] = val
         if pv.connected:
-            # self._config_ok_vals['ACQNrShots'] = val
-            self._config_ok_vals['ACQShots'] = val
             pv.put(val, wait=False)
 
 
