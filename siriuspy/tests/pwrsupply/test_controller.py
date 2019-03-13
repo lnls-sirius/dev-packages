@@ -36,6 +36,8 @@ class TestStandardController(unittest.TestCase):
                         'BO-01U:PS-CH:CycleAmpl-SP': mock.Mock(),
                         'BO-01U:PS-CH:CycleOffset-SP': mock.Mock(),
                         'BO-01U:PS-CH:CycleAuxParam-SP': mock.Mock()}
+        self.readers['BO-01U:PS-CH:OpMode-Sts'].read.return_value = \
+            PSConst.States.SlowRef
         self.writers = {
             'BO-01U:PS-CH:OpMode-Sel': mock.Mock(),
             'BO-01U:PS-CH:CycleType-Sel': mock.Mock(),
