@@ -320,7 +320,7 @@ class _OpModeSimSlowRefSyncState(_OpModeSimState):
         """Set operation mode."""
         ps_status = variables[self._c.V_PS_STATUS]
         psc_status = _PSCStatus(ps_status=ps_status)
-        psc_status.ioc_opmode = _PSConst.States.SlowRefSync
+        psc_status.ioc_opmode = _PSConst.OpMode.SlowRefSync
         variables[self._c.V_PS_STATUS] = psc_status.ps_status
 
     def set_slowref(self, variables, input_val):
