@@ -287,7 +287,6 @@ class PRUSim(PRUInterface):
 
     def timing_trigger_callback(self, pvname, value, **kwargs):
         """Define callback to issue a timing to simulated PS."""
-        print("Trigger")
         if self._sync_status == Const.SYNC_STATE.ON:
             self._sync_pulse_count += 1
             if self.sync_mode == Const.SYNC_MODE.BRDCST:
