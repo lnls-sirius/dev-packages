@@ -158,9 +158,9 @@ class EpicsMatrix(BaseMatrix):
         inv_s[self.num_sing_values:] = 0
         Inv_S = _np.diag(inv_s)
         inv_mat = _np.dot(_np.dot(V.T, Inv_S), U.T)
-        isNan = _np.any(_np.isnan(inv_mat))
-        isInf = _np.any(_np.isinf(inv_mat))
-        if isNan or isInf:
+        is_nan = _np.any(_np.isnan(inv_mat))
+        is_inf = _np.any(_np.isinf(inv_mat))
+        if is_nan or is_inf:
             msg = 'ERR: Inverse contains nan or inf.'
             self._update_log(msg)
             _log.error(msg[5:])
