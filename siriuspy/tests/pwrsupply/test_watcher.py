@@ -81,7 +81,7 @@ class TestCycleWatcher(unittest.TestCase):
     def test_cycle_opmode_trigger(self, mock_time):
         """Test cycle wait opmode state."""
         self.assertEqual(self.watcher.state, Watcher.WAIT_OPMODE)
-        self.values['FakeName:OpMode-Sts'] = _PSConst.OpMode.Cycle
+        self.values['FakeName:OpMode-Sts'] = _PSConst.States.Cycle
         self.controller.pru_controller.pru_sync_status = 1
         wait_state(self.watcher, Watcher.WAIT_TRIGGER)
         self.assertEqual(self.watcher.state, Watcher.WAIT_TRIGGER)
@@ -89,7 +89,7 @@ class TestCycleWatcher(unittest.TestCase):
 
     def test_cycle_opmode_cycle(self, mock_time):
         """Test watcher goes to wait cycle when sync already pulsed."""
-        self.values['FakeName:OpMode-Sts'] = 2
+        self.values['FakeName:OpMode-Sts'] = _PSConst.States.Cycle
         self.values['FakeName:CycleEnbl-Mon'] = 1
         self.controller.pru_controller.pru_sync_pulse_count = 1
         wait_state(self.watcher, Watcher.WAIT_CYCLE)
@@ -99,7 +99,7 @@ class TestCycleWatcher(unittest.TestCase):
     def test_cycle_trigger_change_op_mode(self, mock_time):
         """Watcher ends if op mode changes while waiting for trigger."""
         # Wait trigger mode
-        self.values['FakeName:OpMode-Sts'] = 2
+        self.values['FakeName:OpMode-Sts'] = _PSConst.States.Cycle
         self.controller.pru_controller.pru_sync_status = 1
         wait_state(self.watcher, Watcher.WAIT_TRIGGER)
         # Change op mode
@@ -111,7 +111,7 @@ class TestCycleWatcher(unittest.TestCase):
     def test_cycle_trigger_sync_stopped(self, mock_time):
         """Watcher ends if sync is stopped when cycle has not."""
         # Wait trigger mode
-        self.values['FakeName:OpMode-Sts'] = 2
+        self.values['FakeName:OpMode-Sts'] = _PSConst.States.Cycle
         self.controller.pru_controller.pru_sync_status = 1
         wait_state(self.watcher, Watcher.WAIT_TRIGGER)
         # Stop sync
@@ -123,7 +123,7 @@ class TestCycleWatcher(unittest.TestCase):
     def test_cycle_trigger_sync_stopped_and_cycle_started(self, mock_time):
         """Watcher go to wait cycle when sync stops and cycle has started."""
         # Wait trigger mode
-        self.values['FakeName:OpMode-Sts'] = 2
+        self.values['FakeName:OpMode-Sts'] = _PSConst.States.Cycle
         self.controller.pru_controller.pru_sync_status = 1
         # wait_state(self.watcher, Watcher.WAIT_TRIGGER)
         # Stop sync and start cycle
@@ -136,7 +136,7 @@ class TestCycleWatcher(unittest.TestCase):
 
     def test_cycle_wait_cycle_change_op_mode(self, mock_time):
         """Watcher ends if op mode changes while waiting for trigger."""
-        self.values['FakeName:OpMode-Sts'] = 2
+        self.values['FakeName:OpMode-Sts'] = _PSConst.States.Cycle
         self.values['FakeName:CycleEnbl-Mon'] = 1
         self.controller.pru_controller.pru_sync_pulse_count = 1
         wait_state(self.watcher, Watcher.WAIT_CYCLE)
@@ -148,7 +148,7 @@ class TestCycleWatcher(unittest.TestCase):
     def test_cycle_wait_cycle_stopped(self, mock_time):
         """Watcher finishes when."""
         # Wait cycle mode
-        self.values['FakeName:OpMode-Sts'] = 2
+        self.values['FakeName:OpMode-Sts'] = _PSConst.States.Cycle
         self.values['FakeName:CycleEnbl-Mon'] = 1
         self.controller.pru_controller.pru_sync_pulse_count = 1
         wait_state(self.watcher, Watcher.WAIT_CYCLE)
@@ -209,7 +209,7 @@ class TestRmpWatcher(unittest.TestCase):
     def test_ramp_opmode_trigger(self, mock_time):
         """Test ramp opmode."""
         self.assertEqual(self.watcher.state, Watcher.WAIT_OPMODE)
-        self.values['FakeName:OpMode-Sts'] = _PSConst.OpMode.RmpWfm
+        self.values['FakeName:OpMode-Sts'] = _PSConst.States.RmpWfm
         # time.sleep(1e-1)
         # self.assertEqual(self.watcher.state, Watcher.WAIT_OPMODE)
         self.controller.pru_controller.pru_sync_status = 1
@@ -219,18 +219,18 @@ class TestRmpWatcher(unittest.TestCase):
 
     def test_ramp_opmode_wait_ramp_changed_mode(self, mock_time):
         """Test wait_rampmode end when change op mode."""
-        self.values['FakeName:OpMode-Sts'] = _PSConst.OpMode.RmpWfm
+        self.values['FakeName:OpMode-Sts'] = _PSConst.States.RmpWfm
         self.controller.pru_controller.pru_sync_status = 1
         wait_state(self.watcher, Watcher.WAIT_RMP)
         # Change op mode
-        self.values['FakeName:OpMode-Sts'] = _PSConst.OpMode.SlowRef
+        self.values['FakeName:OpMode-Sts'] = _PSConst.States.SlowRef
         wait(lambda: not self.watcher.is_alive())
         # Assert thread died
         self.assertFalse(self.watcher.is_alive())
 
     def test_ramp_opmode_wait_ramp_sync_stopped(self, mock_time):
         """Test wait_rampmode end when change op mode."""
-        self.values['FakeName:OpMode-Sts'] = _PSConst.OpMode.RmpWfm
+        self.values['FakeName:OpMode-Sts'] = _PSConst.States.RmpWfm
         self.controller.pru_controller.pru_sync_status = 1
         wait_state(self.watcher, Watcher.WAIT_RMP)
         # Change op mode
@@ -242,12 +242,12 @@ class TestRmpWatcher(unittest.TestCase):
     def test_ramp_op_mode_finish(self, mock_time):
         """Test ramp thread finishes."""
         self.values['FakeName:WfmData-RB'] = [i + 1 for i in range(4000)]
-        self.values['FakeName:OpMode-Sts'] = _PSConst.OpMode.RmpWfm
+        self.values['FakeName:OpMode-Sts'] = _PSConst.States.RmpWfm
         self.controller.pru_controller.pru_sync_status = 1
         wait_state(self.watcher, Watcher.WAIT_RMP)
         # Sync was pulsed and Change op mode
         self.controller.pru_controller.pru_sync_pulse_count = 12000
-        self.values['FakeName:OpMode-Sts'] = _PSConst.OpMode.SlowRef
+        self.values['FakeName:OpMode-Sts'] = _PSConst.States.SlowRef
         wait_die(self.watcher)
         # Assert set current is called and thread leaves
         self.writers['Current-SP'].execute.assert_called_with(4000)
@@ -298,7 +298,7 @@ class TestMigWatcher(unittest.TestCase):
     def test_wait_opmode(self, mock_time):
         """Test mig starts loop in wait mode."""
         self.assertEqual(self.watcher.state, Watcher.WAIT_OPMODE)
-        self.values['FakeName:OpMode-Sts'] = _PSConst.OpMode.MigWfm
+        self.values['FakeName:OpMode-Sts'] = _PSConst.States.MigWfm
         self.controller.pru_controller.pru_sync_status = 1
         wait_state(self.watcher, Watcher.WAIT_MIG)
         self.assertEqual(self.watcher.state, Watcher.WAIT_MIG)
@@ -307,11 +307,11 @@ class TestMigWatcher(unittest.TestCase):
     def test_wait_mig_change_op_mode(self, mock_time):
         """Test watcher stops."""
         # WAIT_MIG
-        self.values['FakeName:OpMode-Sts'] = _PSConst.OpMode.MigWfm
+        self.values['FakeName:OpMode-Sts'] = _PSConst.States.MigWfm
         self.controller.pru_controller.pru_sync_status = 1
         wait_state(self.watcher, Watcher.WAIT_MIG)
         # Change op mode
-        self.values['FakeName:OpMode-Sts'] = _PSConst.OpMode.SlowRef
+        self.values['FakeName:OpMode-Sts'] = _PSConst.States.SlowRef
         wait_die(self.watcher)
         # Assert watcher stopped
         self.assertFalse(self.watcher.is_alive())
@@ -319,7 +319,7 @@ class TestMigWatcher(unittest.TestCase):
     def test_wait_mig_sync_stopped_but_not_pulsed(self, mock_time):
         """Test watcher stops."""
         # WAIT_MIG
-        self.values['FakeName:OpMode-Sts'] = _PSConst.OpMode.MigWfm
+        self.values['FakeName:OpMode-Sts'] = _PSConst.States.MigWfm
         self.controller.pru_controller.pru_sync_status = 1
         wait_state(self.watcher, Watcher.WAIT_MIG)
         # Change op mode
@@ -334,7 +334,7 @@ class TestMigWatcher(unittest.TestCase):
         # Fake wfmdata value
         self.values['FakeName:WfmData-RB'] = [i + 1 for i in range(4000)]
         # WAIT_MIG
-        self.values['FakeName:OpMode-Sts'] = _PSConst.OpMode.MigWfm
+        self.values['FakeName:OpMode-Sts'] = _PSConst.States.MigWfm
         self.controller.pru_controller.pru_sync_status = 1
         wait_state(self.watcher, Watcher.WAIT_MIG)
         # Change op mode

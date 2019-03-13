@@ -68,12 +68,16 @@ class PSController:
 
     def _init_setpoints(self):
         for key, reader in self._readers.items():
-            if '-Sel' in key or '-SP' in key:
+            if key.endswith(('-Sel', '-SP')):
                 rb_field = PSController._get_readback_field(key)
                 try:
-                    reader.apply(self._readers[rb_field].read())
+                    value = self._readers[rb_field].read()
                 except KeyError:
-                    pass
+                    continue
+                else:
+                    if key.endswith('OpMode-Sel'):
+                        value = 0 if value < 3 else value - 3
+                    reader.apply(value)
 
     @staticmethod
     def _get_readback_field(field):
@@ -100,7 +104,7 @@ class StandardPSController(PSController):
         if field == 'OpMode-Sts':
             try:
                 if self._watchers[device_name].is_alive():
-                    return self._watchers[device_name].op_mode
+                    return self._watchers[device_name].op_mode + 3
             except KeyError:
                 pass
         return super().read(device_name, field)

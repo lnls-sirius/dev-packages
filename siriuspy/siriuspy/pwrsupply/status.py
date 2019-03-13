@@ -160,9 +160,8 @@ class PSCStatus:
     def ioc_opmode(self):
         """Return ioc-controller opmode."""
         state = self.state
-        # opmode = PSCStatus._psc2ioc_state[state]
-        # return opmode
-        return state
+        opmode = PSCStatus._psc2ioc_state[state]
+        return opmode
 
     @ioc_opmode.setter
     def ioc_opmode(self, value):
