@@ -691,8 +691,8 @@ class EpicsOrbit(BaseOrbit):
         self.run_callbacks('OrbitMode-Sts', value)
         with self._lock_raw_orbs:
             self._reset_orbs()
-            # if self._mode in trigmds:
-            #     self.trig_acq_config_bpms()
+            if self._mode in trigmds:
+                self.trig_acq_config_bpms()
         return True
 
     def set_orbit_multiturn_idx(self, value):
