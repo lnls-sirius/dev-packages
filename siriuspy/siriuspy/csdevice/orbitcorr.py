@@ -19,9 +19,10 @@ class ETypes(_cutil.ETypes):
     ENBL_RF = _cutil.ETypes.OFF_ON
     ORB_MODE_RINGS = ('Offline', 'Online', 'MultiTurn', 'SinglePass')
     ORB_MODE_TLINES = ('Offline', 'SinglePass')
+    SMOOTH_METHOD = ('Average', 'Median')
     APPLY_CORR_RINGS = ('CH', 'CV', 'RF', 'All')
     APPLY_CORR_TLINES = ('CH', 'CV', 'All')
-    ORB_ACQ_CHAN = ('Monit1', 'FOFB', 'TbT')
+    ORB_ACQ_CHAN = ('Monit1', 'FOFB', 'TbT', 'ADC')
     MEAS_RMAT_CMD = ('Start', 'Stop', 'Reset')
     MEAS_RMAT_MON = ('Idle', 'Measuring', 'Completed', 'Aborted')
     TLINES = ('TB', 'TS')
@@ -53,9 +54,13 @@ class ConstTLines(_cutil.Const):
     MAX_MT_ORBS = 4000
 
     OrbitAcqCtrl = _csbpm.AcqEvents
+    OrbitAcqChan = _cutil.Const.register('OrbitAcqChan', _et.ORB_ACQ_CHAN)
+    OrbitAcqDataChan = _csbpm.AcqChan
     OrbitAcqDataSel = _csbpm.AcqDataTyp
     OrbitAcqDataPol = _csbpm.Polarity
+    OrbitAcqRepeat = _csbpm.AcqRepeat
     OrbitAcqTrig = _cutil.Const.register('OrbitAcqTrig', ('External', 'Data'))
+    OrbitSmoothMeth = _cutil.Const.register('OrbitSmoothMeth', _et.SMOOTH_METHOD)
     MeasRespMatCmd = _cutil.Const.register('MeasRespMatCmd', _et.MEAS_RMAT_CMD)
     MeasRespMatMon = _cutil.Const.register('MeasRespMatMon', _et.MEAS_RMAT_MON)
     TransportLines = _cutil.Const.register('TransportLines',
@@ -83,12 +88,10 @@ class ConstRings(ConstTLines):
 
     # TODO: use correct name for the RF generator
     RF_GEN_NAME = 'AS-Glob:RF-Gen'
-    RF_NOM_FREQ = 499458000.0
+    RF_NOM_FREQ = 499657952.052
     EnblRF = _cutil.Const.register('EnblRF', _et.ENBL_RF)
     AutoCorr = _cutil.Const.register('AutoCorr', _et.OFF_ON)
     SyncKicks = _cutil.Const.register('SyncKicks', _et.OFF_ON)
-    OrbitAcqChan = _cutil.Const.register('OrbitAcqChan', _et.ORB_ACQ_CHAN)
-    OrbitAcqDataChan = _csbpm.AcqChan
 
 
 # --- Database classes ---
@@ -299,6 +302,22 @@ class OrbitCorrDevTLines(ConstTLines):
                 'type': 'enum', 'unit': 'Start/Stop/Reset acquistion.',
                 'value': self.OrbitAcqCtrl.Stop,
                 'enums': self.OrbitAcqCtrl._fields},
+            'OrbitTrigAcqChan-Sel': {
+                'type': 'enum', 'unit': 'Change orbit acquisition Channel.',
+                'value': self.OrbitAcqChan.ADC,
+                'enums': self.OrbitAcqChan._fields},
+            'OrbitTrigAcqChan-Sts': {
+                'type': 'enum', 'unit': 'Change orbit acquisition Channel.',
+                'value': self.OrbitAcqChan.ADC,
+                'enums': self.OrbitAcqChan._fields},
+            'OrbitTrigDataChan-Sel': {
+                'type': 'enum', 'unit': 'Set Data-driven trigger Channel.',
+                'value': self.OrbitAcqDataChan.ADC,
+                'enums': self.OrbitAcqDataChan._fields},
+            'OrbitTrigDataChan-Sts': {
+                'type': 'enum', 'unit': 'Set Data-driven trigger Channel.',
+                'value': self.OrbitAcqDataChan.ADC,
+                'enums': self.OrbitAcqDataChan._fields},
             'OrbitTrigAcqTrigger-Sel': {
                 'type': 'enum', 'unit': 'If trigger is external or by data.',
                 'value': self.OrbitAcqTrig.External,
@@ -307,12 +326,26 @@ class OrbitCorrDevTLines(ConstTLines):
                 'type': 'enum', 'unit': 'If trigger is external or by data.',
                 'value': self.OrbitAcqTrig.External,
                 'enums': self.OrbitAcqTrig._fields},
+            'OrbitTrigAcqRepeat-Sel': {
+                'type': 'enum', 'unit': 'Auto arm to repeat acquisition.',
+                'value': self.OrbitAcqRepeat.Normal,
+                'enums': self.OrbitAcqRepeat._fields},
+            'OrbitTrigAcqRepeat-Sts': {
+                'type': 'enum', 'unit': 'Auto arm to repeat acquisition.',
+                'value': self.OrbitAcqRepeat.Normal,
+                'enums': self.OrbitAcqRepeat._fields},
+            'OrbitTrigNrShots-SP': {
+                'type': 'short', 'unit': '', 'value': 1,
+                'hilim': 1000, 'lolim': 1},
+            'OrbitTrigNrShots-RB': {
+                'type': 'short', 'unit': '', 'value': 1,
+                'hilim': 1000, 'lolim': 1},
             'OrbitTrigNrSamplesPre-SP': {
                 'type': 'short', 'unit': '', 'value': 50,
-                'hilim': 2**15-1, 'lolim': 1},
+                'hilim': 2**15-1, 'lolim': 4},
             'OrbitTrigNrSamplesPre-RB': {
                 'type': 'short', 'unit': '', 'value': 50,
-                'hilim': 2**15-1, 'lolim': 1},
+                'hilim': 2**15-1, 'lolim': 4},
             'OrbitTrigNrSamplesPost-SP': {
                 'type': 'short', 'unit': '', 'value': 50,
                 'hilim': 2**15-1, 'lolim': 0},
@@ -336,11 +369,11 @@ class OrbitCorrDevTLines(ConstTLines):
                 'unit': 'set data trigger threshold',
                 'lolim': -1000, 'hilim': 2**31-1},
             'OrbitTrigDataHyst-SP': {
-                'type': 'int', 'value': 1,
+                'type': 'int', 'value': 0,
                 'unit': 'set data trigger hysteresis',
                 'lolim': 0, 'hilim': 2**31-1},
             'OrbitTrigDataHyst-RB': {
-                'type': 'int', 'value': 1,
+                'type': 'int', 'value': 0,
                 'unit': 'set data trigger hysteresis',
                 'lolim': 0, 'hilim': 2**31-1},
             'OrbitTrigDataPol-Sel': {
@@ -383,12 +416,18 @@ class OrbitCorrDevTLines(ConstTLines):
                 'hilim': 20, 'lolim': 0.5},
             'OrbitSmoothNPnts-SP': {
                 'type': 'short', 'value': 1,
-                'unit': 'number of points for average',
-                'lolim': 1, 'hilim': 200},
+                'unit': 'number of points for smoothing',
+                'lolim': 1, 'hilim': 500},
             'OrbitSmoothNPnts-RB': {
                 'type': 'short', 'value': 1,
-                'unit': 'number of points for average',
-                'lolim': 1, 'hilim': 200},
+                'unit': 'number of points for smoothing',
+                'lolim': 1, 'hilim': 500},
+            'OrbitSmoothMethod-Sel': {
+                'type': 'enum', 'value': self.OrbitSmoothMeth.Average,
+                'enums': _et.SMOOTH_METHOD},
+            'OrbitSmoothMethod-Sts': {
+                'type': 'enum', 'value': self.OrbitSmoothMeth.Average,
+                'enums': _et.SMOOTH_METHOD},
             'OrbitSmoothReset-Cmd': {
                 'type': 'short', 'value': 0, 'unit': 'Reset orbit buffer'},
             'BPMPosS-Cte': {
@@ -579,41 +618,19 @@ class OrbitCorrDevRings(OrbitCorrDevTLines, ConstRings):
                 'value': 50*[0]},
             'OrbitMultiTurnIdx-SP': {
                 'type': 'int', 'unit': '', 'value': 0,
-                'hilim': 50, 'lolim': 0},
+                'hilim': self.MAX_MT_ORBS, 'lolim': 0},
             'OrbitMultiTurnIdx-RB': {
                 'type': 'int', 'unit': '', 'value': 0,
                 'hilim': self.MAX_MT_ORBS, 'lolim': 0},
             'OrbitMultiTurnIdxTime-Mon': {
                 'type': 'float', 'unit': 'ms', 'value': 0.0, 'prec': 5,
                 'hilim': 500, 'lolim': 0},
-            'OrbitTrigAcqChan-Sel': {
-                'type': 'enum', 'unit': 'Change orbit acquisition Channel.',
-                'value': self.OrbitAcqChan.Monit1,
-                'enums': self.OrbitAcqChan._fields},
-            'OrbitTrigAcqChan-Sts': {
-                'type': 'enum', 'unit': 'Change orbit acquisition Channel.',
-                'value': self.OrbitAcqChan.Monit1,
-                'enums': self.OrbitAcqChan._fields},
-            'OrbitTrigNrShots-SP': {
-                'type': 'short', 'unit': '', 'value': 1,
-                'hilim': 1000, 'lolim': 1},
-            'OrbitTrigNrShots-RB': {
-                'type': 'short', 'unit': '', 'value': 1,
-                'hilim': 1000, 'lolim': 1},
             'OrbitTrigDownSample-SP': {
                 'type': 'short', 'unit': '', 'value': 1,
                 'hilim': 2**15-1, 'lolim': 1},
             'OrbitTrigDownSample-RB': {
                 'type': 'short', 'unit': '', 'value': 1,
                 'hilim': 2**15-1, 'lolim': 1},
-            'OrbitTrigDataChan-Sel': {
-                'type': 'enum', 'unit': 'Set Data-driven trigger Channel.',
-                'value': self.OrbitAcqDataChan.Monit1,
-                'enums': self.OrbitAcqDataChan._fields},
-            'OrbitTrigDataChan-Sts': {
-                'type': 'enum', 'unit': 'Set Data-driven trigger Channel.',
-                'value': self.OrbitAcqDataChan.Monit1,
-                'enums': self.OrbitAcqDataChan._fields},
             })
         db = super().get_orbit_database(prefix=prefix)
         db.update(self._add_prefix(db_ring, prefix))
