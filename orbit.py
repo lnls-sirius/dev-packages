@@ -519,6 +519,7 @@ class EpicsOrbit(BaseOrbit):
         db['OrbitOfflineX-SP'][prop] = _part(self.set_offline_orbit, 'X')
         db['OrbitOfflineY-SP'][prop] = _part(self.set_offline_orbit, 'Y')
         db['OrbitSmoothNPnts-SP'][prop] = self.set_smooth_npts
+        db['OrbitSmoothMethod-Sel'][prop] = self.set_smooth_method
         db['OrbitSmoothReset-Cmd'][prop] = self.set_smooth_reset
         db['OrbitAcqRate-SP'][prop] = self.set_orbit_acq_rate
         db['OrbitTrigNrShots-SP'][prop] = self.set_trig_acq_nrshots
@@ -549,6 +550,7 @@ class EpicsOrbit(BaseOrbit):
                 'X': _np.zeros(self._csorb.NR_BPMS),
                 'Y': _np.zeros(self._csorb.NR_BPMS)}
         self._smooth_npts = 1
+        self._smooth_meth = self._csorb.OrbitSmoothMeth.Average
         self._acqrate = 10
         self._oldacqrate = self._acqrate
         self._acqtrignrsamplespre = 50
@@ -639,6 +641,11 @@ class EpicsOrbit(BaseOrbit):
     def set_smooth_npts(self, num):
         self._smooth_npts = num
         self.run_callbacks('OrbitSmoothNPnts-RB', num)
+        return True
+
+    def set_smooth_method(self, meth):
+        self._smooth_meth = meth
+        self.run_callbacks('OrbitSmoothMethod-Sts', meth)
         return True
 
     def set_smooth_reset(self, _):
@@ -954,7 +961,10 @@ class EpicsOrbit(BaseOrbit):
                 raws = self.raw_sporbs if sp else self.raw_orbs
                 raws[plane].append(orbs[plane])
                 raws[plane] = raws[plane][-self._smooth_npts:]
-                orb = _np.mean(raws[plane], axis=0)
+                if self._smooth_meth == self._csorb.OrbitSmoothMeth.Average:
+                    orb = _np.mean(raws[plane], axis=0)
+                else:
+                    orb = _np.median(raws[plane], axis=0)
             if sp:
                 self.smooth_sporb[plane] = orb
             else:
@@ -987,7 +997,10 @@ class EpicsOrbit(BaseOrbit):
                 norb = _np.array(orbs[pln], dtype=float)
                 raw.append(norb)
                 del raw[:-nr_pts]
-                orb = _np.mean(raw, axis=0)
+                if self._smooth_meth == self._csorb.OrbitSmoothMeth.Average:
+                    orb = _np.mean(raw, axis=0)
+                else:
+                    orb = _np.median(raw, axis=0)
                 if down > 1:
                     orb = _np.mean(orb.reshape(nr_bpms, -1, down), axis=2)
                 orb = orb.transpose()
