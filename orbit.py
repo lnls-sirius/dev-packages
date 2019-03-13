@@ -644,6 +644,7 @@ class EpicsOrbit(BaseOrbit):
     def set_smooth_reset(self, _):
         with self._lock_raw_orbs:
             self._reset_orbs()
+        return True
 
     def set_ref_orbit(self, plane, orb):
         msg = 'Setting New Reference Orbit.'
