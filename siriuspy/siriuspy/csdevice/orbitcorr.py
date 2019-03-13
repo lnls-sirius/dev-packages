@@ -415,11 +415,11 @@ class OrbitCorrDevTLines(ConstTLines):
             'OrbitSmoothNPnts-SP': {
                 'type': 'short', 'value': 1,
                 'unit': 'number of points for average',
-                'lolim': 1, 'hilim': 200},
+                'lolim': 1, 'hilim': 500},
             'OrbitSmoothNPnts-RB': {
                 'type': 'short', 'value': 1,
                 'unit': 'number of points for average',
-                'lolim': 1, 'hilim': 200},
+                'lolim': 1, 'hilim': 500},
             'OrbitSmoothReset-Cmd': {
                 'type': 'short', 'value': 0, 'unit': 'Reset orbit buffer'},
             'BPMPosS-Cte': {
