@@ -76,7 +76,7 @@ class PSController:
                     continue
                 else:
                     if 'PwrState-Sel' == key:
-                        value -= 3
+                        value = 0 if value < 3 else value - 3
                     reader.apply(value)
 
     @staticmethod
