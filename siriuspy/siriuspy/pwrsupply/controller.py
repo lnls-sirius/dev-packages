@@ -68,15 +68,15 @@ class PSController:
 
     def _init_setpoints(self):
         for key, reader in self._readers.items():
-            if '-Sel' in key or '-SP' in key:
+            if key.endswith(('-Sel', '-SP')):
                 rb_field = PSController._get_readback_field(key)
                 try:
                     value = self._readers[rb_field].read()
                 except KeyError:
                     continue
                 else:
-                    if 'PwrState-Sel' == key:
-                        value = 0 if value < 3 else value
+                    if key.endswith('OpMode-Sel'):
+                        value = 0 if value < 3 else value - 3
                     reader.apply(value)
 
     @staticmethod
