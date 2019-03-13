@@ -203,21 +203,21 @@ class BPM(_BaseTimingConfig):
     @property
     def mtposx(self):
         pv = self._arrayx
-        val = pv.value if pv.connected else None
+        val = pv.get() if pv.connected else None
         if val is not None:
             return self.ORB_CONV*val
 
     @property
     def mtposy(self):
         pv = self._arrayy
-        val = pv.value if pv.connected else None
+        val = pv.get() if pv.connected else None
         if val is not None:
             return self.ORB_CONV*val
 
     @property
     def mtsum(self):
         pv = self._arrays
-        return pv.value if pv.connected else None
+        return pv.get() if pv.connected else None
 
     @property
     def offsetx(self):
