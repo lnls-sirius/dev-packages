@@ -96,7 +96,11 @@ class OpMode:
 
     def read(self):
         """Decorate read."""
-        return self.variable.read()
+        value = self.variable.read()
+        if value is None:
+            return None
+        self.psc_status.ps_status = value
+        return self.psc_status.state
 
 
 class CtrlMode:
