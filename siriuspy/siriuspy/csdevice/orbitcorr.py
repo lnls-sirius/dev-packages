@@ -19,6 +19,7 @@ class ETypes(_cutil.ETypes):
     ENBL_RF = _cutil.ETypes.OFF_ON
     ORB_MODE_RINGS = ('Offline', 'Online', 'MultiTurn', 'SinglePass')
     ORB_MODE_TLINES = ('Offline', 'SinglePass')
+    SMOOTH_METHOD = ('Average', 'Median')
     APPLY_CORR_RINGS = ('CH', 'CV', 'RF', 'All')
     APPLY_CORR_TLINES = ('CH', 'CV', 'All')
     ORB_ACQ_CHAN = ('Monit1', 'FOFB', 'TbT', 'ADC')
@@ -59,6 +60,7 @@ class ConstTLines(_cutil.Const):
     OrbitAcqDataPol = _csbpm.Polarity
     OrbitAcqRepeat = _csbpm.AcqRepeat
     OrbitAcqTrig = _cutil.Const.register('OrbitAcqTrig', ('External', 'Data'))
+    OrbitSmoothMeth = _cutil.Const.register('OrbitSmoothMeth', _et.SMOOTH_METHOD)
     MeasRespMatCmd = _cutil.Const.register('MeasRespMatCmd', _et.MEAS_RMAT_CMD)
     MeasRespMatMon = _cutil.Const.register('MeasRespMatMon', _et.MEAS_RMAT_MON)
     TransportLines = _cutil.Const.register('TransportLines',
@@ -414,12 +416,18 @@ class OrbitCorrDevTLines(ConstTLines):
                 'hilim': 20, 'lolim': 0.5},
             'OrbitSmoothNPnts-SP': {
                 'type': 'short', 'value': 1,
-                'unit': 'number of points for average',
+                'unit': 'number of points for smoothing',
                 'lolim': 1, 'hilim': 500},
             'OrbitSmoothNPnts-RB': {
                 'type': 'short', 'value': 1,
-                'unit': 'number of points for average',
+                'unit': 'number of points for smoothing',
                 'lolim': 1, 'hilim': 500},
+            'OrbitSmoothMethod-Sel': {
+                'type': 'enum', 'value': self.OrbitSmoothMeth.Average,
+                'enums': _et.SMOOTH_METHOD},
+            'OrbitSmoothMethod-Sts': {
+                'type': 'enum', 'value': self.OrbitSmoothMeth.Average,
+                'enums': _et.SMOOTH_METHOD},
             'OrbitSmoothReset-Cmd': {
                 'type': 'short', 'value': 0, 'unit': 'Reset orbit buffer'},
             'BPMPosS-Cte': {
