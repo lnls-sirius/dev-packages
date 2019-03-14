@@ -329,7 +329,7 @@ class PRUController:
 
         # ramp offset
         self._ramp_offset = PRUController._DEFAULT_RAMP_OFFSET
-        self._ramp_offset_count = 0
+        self._ramp_offset_count = PRUController._DEFAULT_RAMP_OFFSET
 
         # define scan thread
         self._last_device_scanned = len(self._device_ids)  # next is the first
