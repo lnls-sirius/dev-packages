@@ -126,7 +126,7 @@ class StandardPSController(PSController):
         elif field in StandardPSController._siggen_parms:
             idx = StandardPSController._siggen_parms.index(field)
             values = self._get_siggen_arg_values(device_name)
-            if idx == 5:
+            if field == 'CycleAuxParam-SP':
                 values[idx:] = value
             else:
                 values[idx] = value
