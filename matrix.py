@@ -55,8 +55,11 @@ class EpicsMatrix(BaseMatrix):
 
     def set_respmat(self, mat):
         """Set the response matrix in memory and save it in file."""
-        self.run_callbacks('Log-Mon', 'Setting New RespMat.')
-        if len(mat) != self._csorb.MTX_SZ:
+        msg = 'Setting New RespMat.'
+        self._update_log(msg)
+        _log.info(msg)
+        mat = _np.array(mat, dtype=float)
+        if mat.size != self._csorb.MTX_SZ:
             msg = 'ERR: Wrong RespMat Size.'
             self._update_log(msg)
             _log.error(msg[5:])
@@ -89,12 +92,12 @@ class EpicsMatrix(BaseMatrix):
         bkup = self.select_items[key]
         new_ = _np.array(val, dtype=bool)
         if key == 'rf':
-            new_ = True if val else False
-        elif len(new_) >= len(bkup):
-            new_ = new_[:len(bkup)]
+            pass
+        elif new_.size >= bkup.size:
+            new_ = new_[:bkup.size]
         else:
             new2_ = bkup.copy()
-            new2_[:len(new_)] = new_
+            new2_[:new_.size] = new_
             new_ = new2_
         self.select_items[key] = new_
         if not self._calc_matrices():
@@ -120,7 +123,7 @@ class EpicsMatrix(BaseMatrix):
         selecbpm = _np.hstack([sel_['bpmx'], sel_['bpmy']])
         seleccor = _np.hstack([sel_['ch'], sel_['cv']])
         if self.isring:
-            seleccor = _np.hstack([sel_['ch'], sel_['cv'], sel_['rf']])
+            seleccor = _np.hstack([seleccor, sel_['rf']])
         if not any(selecbpm):
             msg = 'ERR: No BPM selected in EnblList'
             self._update_log(msg)

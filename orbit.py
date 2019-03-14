@@ -629,12 +629,13 @@ class EpicsOrbit(BaseOrbit):
         msg = 'Setting New Offline Orbit.'
         self._update_log(msg)
         _log.info(msg)
-        if len(orb) != self._csorb.NR_BPMS:
+        orb = _np.array(orb, dtype=float)
+        if orb.size != self._csorb.NR_BPMS:
             msg = 'ERR: Wrong Size.'
             self._update_log(msg)
             _log.error(msg[5:])
             return False
-        self.offline_orbit[plane] = _np.array(orb)
+        self.offline_orbit[plane] = orb
         self.run_callbacks('OrbitOffline'+plane+'-RB', orb)
         return True
 
@@ -657,12 +658,13 @@ class EpicsOrbit(BaseOrbit):
         msg = 'Setting New Reference Orbit.'
         self._update_log(msg)
         _log.info(msg)
-        if len(orb) != self._csorb.NR_BPMS:
+        orb = _np.array(orb, dtype=float)
+        if orb.size != self._csorb.NR_BPMS:
             msg = 'ERR: Wrong Size.'
             self._update_log(msg)
             _log.error(msg[5:])
             return False
-        self.ref_orbs[plane] = _np.array(orb, dtype=float)
+        self.ref_orbs[plane] = orb
         self._save_ref_orbits()
         with self._lock_raw_orbs:
             self._reset_orbs()
