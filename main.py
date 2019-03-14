@@ -293,6 +293,11 @@ class SOFB(_BaseClass):
         if reason.endswith(('-Sts', '-RB', '-Mon', '-Cte')):
             _log.debug('PV {0:s} is read only.'.format(reason))
             return False
+        if val is None:
+            msg = 'ERR: client tried to set None value. refusing...'
+            self._update_log(msg)
+            _log.error(msg[5:])
+            return False
         enums = self._database[reason].get('enums')
         if enums is not None and isinstance(val, int) and val >= len(enums):
             _log.warning('value %d too large for enum type PV %s', val, reason)
