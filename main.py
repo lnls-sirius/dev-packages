@@ -274,15 +274,11 @@ class SOFB(_BaseClass):
                         self._csorb.ApplyCorr._fields[code])
         self._update_log(msg)
         _log.info(msg)
-        kicks = self._process_kicks(self._ref_corr_kicks, dkicks)
-        if kicks is None:
+        dkicks = self._process_kicks(self._ref_corr_kicks, dkicks)
+        if dkicks is None:
             return
-        if any(kicks):
-            self.correctors.apply_kicks(kicks)
-        else:
-            msg = 'WARN: No kicks applied. All Zero.'
-            self._update_log(msg)
-            _log.warning(msg[6:])
+        kicks = self._ref_corr_kicks + dkicks
+        self.correctors.apply_kicks(kicks)
 
     def _update_driver(self, pvname, value, **kwargs):
         if self._driver is not None:
@@ -425,8 +421,8 @@ class SOFB(_BaseClass):
             kicks = self.correctors.get_strength()
             t3 = _time.time()
             _log.debug(strn.format('get strength:', 1000*(t3-t2)))
-            kicks = self._process_kicks(kicks, dkicks)
-            if kicks is None:
+            dkicks = self._process_kicks(kicks, dkicks)
+            if dkicks is None:
                 self._auto_corr = self._csorb.AutoCorr.Off
                 msg = 'ERR: Exit Auto Correction'
                 self._update_log(msg)
@@ -435,6 +431,7 @@ class SOFB(_BaseClass):
                 continue
             t4 = _time.time()
             _log.debug(strn.format('process kicks:', 1000*(t4-t3)))
+            kicks += dkicks
             self.correctors.apply_kicks(kicks)  # slowest part
             t5 = _time.time()
             _log.debug(strn.format('apply kicks:', 1000*(t5-t4)))
@@ -466,7 +463,6 @@ class SOFB(_BaseClass):
         self._dtheta = self.matrix.calc_kicks(orb)
 
     def _process_kicks(self, kicks, dkicks):
-        kicks = _np.array(kicks)
         nr_ch = self._csorb.NR_CH
         slcs = {'ch': slice(None, nr_ch), 'cv': slice(nr_ch, None)}
         if self.isring:
@@ -517,6 +513,9 @@ class SOFB(_BaseClass):
                                                         pln.upper(), percent)
                 self._update_log(msg)
                 _log.warning(msg[6:])
-
-            kicks[slc] += dkicks[slc]
-        return kicks
+        if not any(dkicks):
+            msg = 'Err: All kicks are zero.'
+            self._update_log(msg)
+            _log.warning(msg[6:])
+            return
+        return dkicks
