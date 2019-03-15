@@ -285,6 +285,8 @@ class _BaseLL(_Base):
         Function called by write when no conversion is needed between
         high and low level properties.
         """
+        if value is None:
+            return dict()
         return {prop: value}
 
     def _get_simple(self, prop, is_sp, val=None, hl_prop=None):
@@ -330,6 +332,8 @@ class LLEvent(_BaseLL):
         return self._define_dict_for_update()
 
     def _set_delay(self, value):
+        if value is None:
+            return dict()
         value *= _DELAY_UNIT_CONV  # us
         return {'Delay': round(value / self._base_del)}
 
@@ -546,6 +550,8 @@ class _EVROUT(_BaseLL):
         return {'Delay': delay}
 
     def _set_delay(self, value):
+        if value is None:
+            return dict()
         value *= _DELAY_UNIT_CONV  # us
         delay1 = int(value // self._base_del)
         dic_ = {'Delay': delay1}
@@ -611,6 +617,8 @@ class _EVROUT(_BaseLL):
             return {'Src': self._source_enums.index(source)}
 
     def _set_source(self, value):
+        if value is None:
+            return dict()
         # BUG: I noticed that differently from the EVR and EVE IOCs,
         # the AMCFPGAEVR do not have a 'Dsbl' as first option of the enums
         # list. So I have to create this offset to fix this...
@@ -654,6 +662,8 @@ class _EVROUT(_BaseLL):
             }
 
     def _set_duration(self, value, pul=None):
+        if value is None:
+            return dict()
         value *= _DELAY_UNIT_CONV  # us
         if pul is None:
             pul = self._config_ok_values.get('NrPulses')
@@ -665,7 +675,7 @@ class _EVROUT(_BaseLL):
         return {'Width': wid}
 
     def _set_nrpulses(self, value):
-        if value < 1:
+        if value is None or value < 1:
             return dict()
         dic = {'NrPulses': int(value)}
 

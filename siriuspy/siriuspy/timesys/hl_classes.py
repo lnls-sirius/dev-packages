@@ -71,6 +71,8 @@ class _BaseHL(_Base):
         It not only sets the new high level property value but also forwards it
         to the low level classes.
         """
+        if value is None:
+            return False
         return _reduce(_and_, map(
                     lambda x: x.write(prop_name, value), self._ll_objs))
 
