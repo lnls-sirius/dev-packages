@@ -567,7 +567,7 @@ class _EVROUT(_BaseLL):
         dic_ = dict()
         dic_['SrcTrig'] = self._get_from_pvs(is_sp, 'SrcTrig', def_val=30)
         dic_['Src'] = self._get_from_pvs(is_sp, 'Src', def_val=None)
-        dic_['Evt'] = self._get_from_pvs(is_sp, 'Evt')
+        dic_['Evt'] = self._get_from_pvs(is_sp, 'Evt', def_val=None)
         if value is not None:
             dic_[prop] = value
 
@@ -601,6 +601,9 @@ class _EVROUT(_BaseLL):
 
     def _process_src(self, src, is_sp):
         invalid = len(self._source_enums)-1  # Invalid option
+        if src is None:
+            return {'Src': invalid}
+
         # BUG: I noticed that differently from the EVR and EVE IOCs,
         # the AMCFPGAEVR do not have a 'Dsbl' as first option of the enums
         # list. So I have to create this offset to fix this...
@@ -751,8 +754,8 @@ class _AMCFPGAEVRAMC(_EVROUT):
 
     def _process_source(self, prop, is_sp, value=None):
         dic_ = dict()
-        dic_['Src'] = self._get_from_pvs(is_sp, 'Src')
-        dic_['Evt'] = self._get_from_pvs(is_sp, 'Evt')
+        dic_['Src'] = self._get_from_pvs(is_sp, 'Src', def_val=None)
+        dic_['Evt'] = self._get_from_pvs(is_sp, 'Evt', def_val=None)
         if value is not None:
             dic_[prop] = value
 
