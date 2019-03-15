@@ -1042,6 +1042,9 @@ class PRUController:
                     copy_var_vals[id][self._params.ConstBSMP.V_I_LOAD2] += \
                         0.00001*_random.uniform(-1.0, +1.0)
 
+            elif ack[id] == _Response.invalid_id:
+                self._connected[id] = False
+                self._bsmp_init_groups()
             else:
                 self._connected[id] = False
         # processing time up to this point: 19.4 ms @ BBB1
