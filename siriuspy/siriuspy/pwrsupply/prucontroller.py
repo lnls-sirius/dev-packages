@@ -1015,6 +1015,7 @@ class PRUController:
         # --- update variables, if ack is ok
         nr_devs = len(self.device_ids)
         var_ids = self._params.groups[group_id]
+        create_groups = False
         for id in device_ids:
             if ack[id] == _Response.ok:
                 self._connected[id] = True
@@ -1044,11 +1045,13 @@ class PRUController:
 
             elif ack[id] == _Response.invalid_id:
                 self._connected[id] = False
-                self._bsmp_init_groups()
+                create_groups = True
             else:
                 self._connected[id] = False
         # processing time up to this point: 19.4 ms @ BBB1
         # print('time3: ', _time.time() - t0)
+        if create_groups:
+            self._bsmp_init_groups()
 
         # update psc_state
         for id in self.device_ids:
