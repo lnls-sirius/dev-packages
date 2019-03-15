@@ -187,7 +187,7 @@ class OrbitCorrDevTLines(ConstTLines):
                 'type': 'float', 'value': 0.5, 'unit': 's', 'prec': 3,
                 'lolim': 0.05, 'hilim': 100},
             'CalcCorr-Cmd': {
-                'type': 'int, 'value': 0, 'unit': 'Calculate kicks'},
+                'type': 'int', 'value': 0, 'unit': 'Calculate kicks'},
             'CorrFactorCH-SP': {
                 'type': 'float', 'value': 100, 'unit': '%', 'prec': 2,
                 'lolim': -10000, 'hilim': 10000},
@@ -244,7 +244,7 @@ class OrbitCorrDevTLines(ConstTLines):
             'KicksCV-Mon': {
                 'type': 'float', 'count': self.NR_CV, 'value': self.NR_CV*[0],
                 'unit': 'urad'},
-            'ConfigCorrs-Cmd': {'type': 'int, 'value': 0},
+            'ConfigCorrs-Cmd': {'type': 'int', 'value': 0},
             'CHPosS-Cte': {
                 'type': 'float', 'unit': 'm', 'count': self.NR_CH,
                 'value': self.CH_POS},
@@ -257,7 +257,7 @@ class OrbitCorrDevTLines(ConstTLines):
             'CVNickName-Cte': {
                 'type': 'string', 'unit': 'shortname for the cvs.',
                 'count': self.NR_CV, 'value': self.CV_NICKNAMES},
-            'CorrStatus-Mon': {'type': 'int, 'value': 0b1111111},
+            'CorrStatus-Mon': {'type': 'int', 'value': 0b1111111},
             'CorrStatusLabels-Cte': {
                 'type': 'string', 'count': len(self.StatusLabelsCorrs._fields),
                 'value': self.StatusLabelsCorrs._fields}
@@ -293,7 +293,7 @@ class OrbitCorrDevTLines(ConstTLines):
                 'type': 'enum', 'unit': 'Change orbit acquisition mode.',
                 'value': self.OrbitMode.Offline,
                 'enums': self.OrbitMode._fields},
-            'OrbitTrigAcqConfig-Cmd': {'type': 'int, 'value': 0},
+            'OrbitTrigAcqConfig-Cmd': {'type': 'int', 'value': 0},
             'OrbitTrigAcqCtrl-Sel': {
                 'type': 'enum', 'unit': 'Start/Stop/Abort acquistion.',
                 'value': self.OrbitAcqCtrl.Stop,
@@ -335,10 +335,10 @@ class OrbitCorrDevTLines(ConstTLines):
                 'value': self.OrbitAcqRepeat.Normal,
                 'enums': self.OrbitAcqRepeat._fields},
             'OrbitTrigNrShots-SP': {
-                'type': 'int, 'unit': '', 'value': 1,
+                'type': 'int', 'unit': '', 'value': 1,
                 'hilim': 1000, 'lolim': 1},
             'OrbitTrigNrShots-RB': {
-                'type': 'int, 'unit': '', 'value': 1,
+                'type': 'int', 'unit': '', 'value': 1,
                 'hilim': 1000, 'lolim': 1},
             'OrbitTrigNrSamplesPre-SP': {
                 'type': 'int', 'unit': '', 'value': 50,
@@ -415,11 +415,11 @@ class OrbitCorrDevTLines(ConstTLines):
                 'type': 'float', 'unit': 'Hz', 'value': 10,
                 'hilim': 20, 'lolim': 0.5},
             'OrbitSmoothNPnts-SP': {
-                'type': 'int, 'value': 1,
+                'type': 'int', 'value': 1,
                 'unit': 'number of points for smoothing',
                 'lolim': 1, 'hilim': 500},
             'OrbitSmoothNPnts-RB': {
-                'type': 'int, 'value': 1,
+                'type': 'int', 'value': 1,
                 'unit': 'number of points for smoothing',
                 'lolim': 1, 'hilim': 500},
             'OrbitSmoothMethod-Sel': {
@@ -429,14 +429,14 @@ class OrbitCorrDevTLines(ConstTLines):
                 'type': 'enum', 'value': self.OrbitSmoothMeth.Average,
                 'enums': _et.SMOOTH_METHOD},
             'OrbitSmoothReset-Cmd': {
-                'type': 'int, 'value': 0, 'unit': 'Reset orbit buffer'},
+                'type': 'int', 'value': 0, 'unit': 'Reset orbit buffer'},
             'BPMPosS-Cte': {
                 'type': 'float', 'unit': 'm', 'count': nbpm,
                 'value': self.BPM_POS},
             'BPMNickName-Cte': {
                 'type': 'string', 'unit': 'shortname for the bpms.',
                 'count': nbpm, 'value': self.BPM_NICKNAMES},
-            'OrbitStatus-Mon': {'type': 'int, 'value': 0b00000},
+            'OrbitStatus-Mon': {'type': 'int', 'value': 0b00000},
             'OrbitStatusLabels-Cte': {
                 'type': 'string', 'count': len(self.StatusLabelsOrb._fields),
                 'value': self.StatusLabelsOrb._fields},
@@ -463,39 +463,39 @@ class OrbitCorrDevTLines(ConstTLines):
                 'value': self.MTX_SZ*[0],
                 'unit': '(CH, CV, RF)(urad, Hz) x (BH, BV)(um)'},
             'CHEnblList-SP': {
-                'type': 'int, 'count': self.NR_CH, 'value': self.NR_CH*[1],
+                'type': 'int', 'count': self.NR_CH, 'value': self.NR_CH*[1],
                 'unit': 'CHs used in correction'},
             'CHEnblList-RB': {
-                'type': 'int, 'count': self.NR_CH, 'value': self.NR_CH*[1],
+                'type': 'int', 'count': self.NR_CH, 'value': self.NR_CH*[1],
                 'unit': 'CHs used in correction'},
             'CVEnblList-SP': {
-                'type': 'int, 'count': self.NR_CV, 'value': self.NR_CV*[1],
+                'type': 'int', 'count': self.NR_CV, 'value': self.NR_CV*[1],
                 'unit': 'CVs used in correction'},
             'CVEnblList-RB': {
-                'type': 'int, 'count': self.NR_CV, 'value': self.NR_CV*[1],
+                'type': 'int', 'count': self.NR_CV, 'value': self.NR_CV*[1],
                 'unit': 'CVs used in correction'},
             'BPMXEnblList-SP': {
-                'type': 'int, 'count': self.NR_BPMS,
+                'type': 'int', 'count': self.NR_BPMS,
                 'value': self.NR_BPMS*[1],
                 'unit': 'BPMX used in correction'},
             'BPMXEnblList-RB': {
-                'type': 'int, 'count': self.NR_BPMS,
+                'type': 'int', 'count': self.NR_BPMS,
                 'value': self.NR_BPMS*[1],
                 'unit': 'BPMX used in correction'},
             'BPMYEnblList-SP': {
-                'type': 'int, 'count': self.NR_BPMS,
+                'type': 'int', 'count': self.NR_BPMS,
                 'value': self.NR_BPMS*[1],
                 'unit': 'BPMY used in correction'},
             'BPMYEnblList-RB': {
-                'type': 'int, 'count': self.NR_BPMS,
+                'type': 'int', 'count': self.NR_BPMS,
                 'value': self.NR_BPMS*[1],
                 'unit': 'BPMY used in correction'},
             'NumSingValues-SP': {
-                'type': 'int, 'value': self.NR_SING_VALS,
+                'type': 'int', 'value': self.NR_SING_VALS,
                 'lolim': 1, 'hilim': self.NR_SING_VALS,
                 'unit': 'Maximum number of SV to use'},
             'NumSingValues-RB': {
-                'type': 'int, 'value': self.NR_SING_VALS,
+                'type': 'int', 'value': self.NR_SING_VALS,
                 'lolim': 1, 'hilim': self.NR_SING_VALS,
                 'unit': 'Maximum number of SV to use'},
             'DeltaKicksCH-Mon': {
@@ -626,10 +626,10 @@ class OrbitCorrDevRings(OrbitCorrDevTLines, ConstRings):
                 'type': 'float', 'unit': 'ms', 'value': 0.0, 'prec': 5,
                 'hilim': 500, 'lolim': 0},
             'OrbitTrigDownSample-SP': {
-                'type': 'int, 'unit': '', 'value': 1,
+                'type': 'int', 'unit': '', 'value': 1,
                 'hilim': 2**15-1, 'lolim': 1},
             'OrbitTrigDownSample-RB': {
-                'type': 'int, 'unit': '', 'value': 1,
+                'type': 'int', 'unit': '', 'value': 1,
                 'hilim': 2**15-1, 'lolim': 1},
             })
         db = super().get_orbit_database(prefix=prefix)

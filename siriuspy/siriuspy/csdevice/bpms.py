@@ -294,21 +294,21 @@ def get_physical_trigger_database(prefix=''):
         'DirPol-Sts': {
             'type': 'enum', 'enums': TrigDirPol._fields, 'value': 1},
         'RcvCntRst-SP': {
-            'type': 'int, 'value': 0},
+            'type': 'int', 'value': 0},
         'TrnCntRst-SP': {
-            'type': 'int, 'value': 0},
+            'type': 'int', 'value': 0},
         'RcvCnt-Mon': {
             'type': 'int', 'value': 0},
         'TrnCnt-Mon': {
             'type': 'int', 'value': 0},
         'RcvLen-SP': {
-            'type': 'int, 'value': 1, 'low': 0, 'high': 2**15-1},
+            'type': 'int', 'value': 1, 'low': 0, 'high': 2**15-1},
         'RcvLen-RB': {
-            'type': 'int, 'value': 1, 'low': 0, 'high': 2**15-1},
+            'type': 'int', 'value': 1, 'low': 0, 'high': 2**15-1},
         'TrnLen-SP': {
-            'type': 'int, 'value': 1, 'low': 0, 'high': 2**15-1},
+            'type': 'int', 'value': 1, 'low': 0, 'high': 2**15-1},
         'TrnLen-RB': {
-            'type': 'int, 'value': 1, 'low': 0, 'high': 2**15-1},
+            'type': 'int', 'value': 1, 'low': 0, 'high': 2**15-1},
         }
     return {prefix + k: v for k, v in db.items()}
 
@@ -324,13 +324,13 @@ def get_logical_trigger_database(prefix=''):
         'TrnSrc-Sts': {
             'type': 'enum', 'enums': TrigSrc._fields, 'value': 0},
         'RcvInSel-SP': {
-            'type': 'int, 'value': 1, 'low': 0, 'high': 2**15-1},
+            'type': 'int', 'value': 1, 'low': 0, 'high': 2**15-1},
         'RcvInSel-RB': {
-            'type': 'int, 'value': 1, 'low': 0, 'high': 2**15-1},
+            'type': 'int', 'value': 1, 'low': 0, 'high': 2**15-1},
         'TrnOutSel-SP': {
-            'type': 'int, 'value': 1, 'low': 0, 'high': 2**15-1},
+            'type': 'int', 'value': 1, 'low': 0, 'high': 2**15-1},
         'TrnOutSel-RB': {
-            'type': 'int, 'value': 1, 'low': 0, 'high': 2**15-1},
+            'type': 'int', 'value': 1, 'low': 0, 'high': 2**15-1},
         }
     return {prefix + k: v for k, v in db.items()}
 
@@ -404,9 +404,9 @@ def get_config_database(prefix=''):
         # 'TriggerDataSel-Sts': {
         #     'type': 'enum', 'enums': AcqDataTyp._fields, 'value': 0},
         'TriggerDataSel-SP': {
-            'type': 'int, 'value': 0, 'low': 0, 'high': 4},
+            'type': 'int', 'value': 0, 'low': 0, 'high': 4},
         'TriggerDataSel-RB': {
-            'type': 'int, 'value': 0, 'low': 0, 'high': 4},
+            'type': 'int', 'value': 0, 'low': 0, 'high': 4},
         'TriggerDataThres-SP': {
             'type': 'int', 'value': 1, 'low': 0, 'high': 2**31 - 1},
         'TriggerDataThres-RB': {
