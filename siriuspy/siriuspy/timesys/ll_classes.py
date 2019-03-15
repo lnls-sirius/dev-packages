@@ -146,7 +146,7 @@ class _BaseLL(_Base):
         self._queue.add_callback(self._lock_thread, pvname)
 
     def read(self, prop, is_sp=False):
-        """Read HL properties from LL IOCs and return the value. """
+        """Read HL properties from LL IOCs and return the value."""
         fun = self._dict_functs_for_read[prop]
         if fun is None:
             return None
