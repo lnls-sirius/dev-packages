@@ -826,56 +826,8 @@ class BSMPSim_FAP(_BaseBSMPSim, _Spec_FAP):
             0, 0, 0, 0.0, 0.0, 0.0, 0.0, [0.0, 0.0, 0.0, 0.0],  # siggen [6-13]
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # undef [14-24]
             0, 0,  # interlocks [25-26]
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # [27-35]
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # [27-35]
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # [36-46]
+            0,  # [47 - iib_interlocks]
+            ]
         return variables
-
-# --- Classes for UDCs ---
-
-
-# udcmodels = {
-#     'FBP': {'ConstBSMP': _cFBP,
-#             'Entities': _EntitiesFBP(),
-#             'BSMPSim': BSMPSim_FBP, },
-#     'FBP_DCLink': {'ConstBSMP': _cFBP_DCLink,
-#                    'Entities': _EntitiesFBP_DCLink(),
-#                    'BSMPSim': BSMPSim_FBP_DCLink, },
-#     'FBP_FOFB': {'ConstBSMP': _cFBP,
-#                  'Entities': _EntitiesFBP(),
-#                  'BSMPSim': BSMPSim_FBP, },
-
-#     'FAC_DCDC': {'ConstBSMP': _cFAC_DCDC,# [27-32]
-#                  'Entities': _EntitiesFAC_DCDC(),
-#                  'BSMPSim': BSMPSim_FAC_DCDC, },
-#     'FAC_ACDC': {'ConstBSMP': _cFAC_ACDC,
-#                  'Entities': _EntitiesFAC_ACDC(),
-#                  'BSMPSim': BSMPSim_FAC_ACDC, },
-#     'FAC_2S_DCDC': {'ConstBSMP': _cFAC_DCDC,
-#                     'Entities': _EntitiesFAC_DCDC(),
-#                     'BSMPSim': BSMPSim_FAC_DCDC, },
-#     'FAC_2S_ACDC': {'ConstBSMP': _cFAC_ACDC,
-#                     'Entities': _EntitiesFAC_ACDC(),
-#                     'BSMPSim': BSMPSim_FAC_ACDC, },
-#     'FAC_2P4S_DCDC': {'ConstBSMP': _cFAC_DCDC,
-#                       'Entities': _EntitiesFAC_DCDC(),
-#                       'BSMPSim': BSMPSim_FAC_DCDC, },
-#     'FAC_2P4S_ACDC': {'ConstBSMP': _cFAC_ACDC,
-#                       'Entities': _EntitiesFAC_ACDC(),
-#                       'BSMPSim': BSMPSim_FAC_ACDC, },
-
-#     'FAP': {'ConstBSMP': _cFBP,
-#             'Entities': _EntitiesFBP(),
-#             'BSMPSim': BSMPSim_FBP, },
-#     'FAP_2P2S_MASTER': {'ConstBSMP': _cFBP,
-#                         'Entities': _EntitiesFBP(),
-#                         'BSMPSim': BSMPSim_FBP, },
-#     'FAP_4P_Master': {'ConstBSMP': _cFBP,
-#                       'Entities': _EntitiesFBP(),
-#                       'BSMPSim': BSMPSim_FBP, },
-#     'FAP_4P_Slave': {'ConstBSMP': _cFBP,
-#                      'Entities': _EntitiesFBP(),
-#                      'BSMPSim': BSMPSim_FBP, },
-
-#     'Commercial': {'ConstBSMP': _cFAC_DCDC,
-#                    'Entities': _EntitiesFAC_DCDC(),
-#                    'BSMPSim': BSMPSim_FAC_DCDC, },
-# }
