@@ -40,6 +40,8 @@ public_interface = (
     # 'ps_hard_interlock_FAP',
     # 'ps_cycle_type',
     # 'ps_sync_mode',
+    'NOMINAL_VOLTAGE_FAC_2S_ACDC',
+    'NOMINAL_VOLTAGE_FAC_2P4S_ACDC',
     'ETypes',
     'Const',
     'get_ps_current_unit',
