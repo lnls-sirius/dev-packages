@@ -279,7 +279,7 @@ class PRUController:
         # define constant namespaces
         # self._initialize_const_namespace()
         self._params = udcmodel.parameters
-
+        self._group_ids = sorted(self._params.groups.keys())
         # bypass psmodel default frequencies
         if freqs is not None:
             self._params.FREQ_SCAN = freqs[0]
@@ -1015,7 +1015,6 @@ class PRUController:
         # --- update variables, if ack is ok
         nr_devs = len(self.device_ids)
         var_ids = self._params.groups[group_id]
-        create_groups = False
         for id in device_ids:
             if ack[id] == _Response.ok:
                 self._connected[id] = True
@@ -1045,13 +1044,11 @@ class PRUController:
 
             elif ack[id] == _Response.invalid_id:
                 self._connected[id] = False
-                create_groups = True
+                self._create_groups(id)
             else:
                 self._connected[id] = False
         # processing time up to this point: 19.4 ms @ BBB1
         # print('time3: ', _time.time() - t0)
-        if create_groups:
-            self._bsmp_init_groups()
 
         # update psc_state
         for id in self.device_ids:
@@ -1179,31 +1176,34 @@ class PRUController:
         # self._bsmp_init_parameters_values()
 
     def _bsmp_init_groups(self):
-
         # check if groups have consecutive ids
-        groups_ids = sorted(self._params.groups.keys())
-        if len(groups_ids) < 3:
+        self._check_groups()
+        # loop over bsmp devices
+        for id in self._device_ids:
+            self._create_groups(id)
+
+    def _check_groups(self):
+        if len(self._group_ids) < 3:
             self._init_disconnect()
             raise ValueError('Invalid variable group definition!')
-        for i in range(len(groups_ids)):
-            if i not in groups_ids:
+        for i in range(len(self._group_ids)):
+            if i not in self._group_ids:
                 self._init_disconnect()
                 raise ValueError('Invalid variable group definition!')
 
-        # loop over bsmp devices
-        for id in self._device_ids:
-            # remove previous variables groups and fresh ones
-            try:
-                self._udc[id].remove_all_groups(
-                    timeout=self._delay_remove_groups)
-                self._connected[id] = True
-                for group_id in groups_ids[3:]:
-                    var_ids = self._params.groups[group_id]
-                    self._udc[id].create_group(
-                        var_ids, timeout=self._delay_create_group)
-            except _SerialError:
-                print('_bsmp_init_groups: serial error!')
-                self._connected[id] = False
+    def _create_groups(self, id):
+        # remove previous variables groups and fresh ones
+        try:
+            self._udc[id].remove_all_groups(
+                timeout=self._delay_remove_groups)
+            self._connected[id] = True
+            for group_id in self._group_ids[3:]:
+                var_ids = self._params.groups[group_id]
+                self._udc[id].create_group(
+                    var_ids, timeout=self._delay_create_group)
+        except _SerialError:
+            print('_bsmp_init_groups: serial error!')
+            self._connected[id] = False
 
     def _bsmp_init_variable_values(self):
 
