@@ -465,12 +465,18 @@ class ConstFAP(ConstBSMP):
     V_DUTY_CYCLE_1 = 33
     V_DUTY_CYCLE_2 = 34
     V_DUTY_DIFF = 35
-
-    # --- undefined variables
-    V_UNDEF36 = 36
-    V_UNDEF37 = 37
-    V_UNDEF38 = 38
-    V_UNDEF39 = 39
+    V_V_INPUT_IIB = 36
+    V_V_OUTPUT_IIB = 37
+    V_I_IGBT_1_IIB = 38
+    V_I_IGBT_2_IIB = 39
+    V_TEMP_IGBT_1_IIB = 40
+    V_TEMP_IGBT_2_IIB = 41
+    V_V_DRIVER_IIB = 42
+    V_I_DRIVER_1_IIB = 43
+    V_I_DRIVER_2_IIB = 44
+    V_TEMP_INDUCTOR_IIB = 45
+    V_TEMP_HEATSINK_IIB = 46
+    V_IIB_INTERLOCKS = 47
 
 
 # Mirror power supply variables (FBP)
@@ -1153,6 +1159,20 @@ class EntitiesFAP(_Entities):
         {'eid': 33, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 34, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 35, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 36, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 37, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 38, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 39, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 40, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 41, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 42, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 43, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 44, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 45, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 46, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 47, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+
+
     )
 
     Curves = tuple()
