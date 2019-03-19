@@ -444,6 +444,7 @@ class FAPFactory(FBPFactory):
     _variables = {
         'IntlkSoft-Mon': _bsmp.ConstFAP.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon': _bsmp.ConstFAP.V_PS_HARD_INTERLOCKS,
+        'IntlkIIB-Mon': _bsmp.ConstFAP.V_IIB_INTERLOCKS,
         'Current-RB': _bsmp.ConstFAP.V_PS_SETPOINT,
         'CurrentRef-Mon': _bsmp.ConstFAP.V_PS_REFERENCE,
         'Current-Mon': _bsmp.ConstFAP.V_I_LOAD_MEAN,
@@ -1354,7 +1355,19 @@ class PRUCParms_FAP(_PRUCParms):
         ConstBSMP.V_I_IGBT_2,
         ConstBSMP.V_DUTY_CYCLE_1,
         ConstBSMP.V_DUTY_CYCLE_2,
-        ConstBSMP.V_DUTY_DIFF,)
+        ConstBSMP.V_DUTY_DIFF,
+        ConstBSMP.V_V_INPUT_IIB,
+        ConstBSMP.V_V_OUTPUT_IIB,
+        ConstBSMP.V_I_IGBT_1_IIB,
+        ConstBSMP.V_I_IGBT_2_IIB,
+        ConstBSMP.V_TEMP_IGBT_1_IIB,
+        ConstBSMP.V_TEMP_IGBT_2_IIB,
+        ConstBSMP.V_V_DRIVER_IIB,
+        ConstBSMP.V_I_DRIVER_1_IIB,
+        ConstBSMP.V_I_DRIVER_2_IIB,
+        ConstBSMP.V_TEMP_INDUCTOR_IIB,
+        ConstBSMP.V_TEMP_HEATSINK_IIB,
+        ConstBSMP.V_IIB_INTERLOCKS,)
     groups[_PRUCParms.SYNCOFF] = (
         # --- common variables
         ConstBSMP.V_PS_STATUS,
@@ -1381,7 +1394,19 @@ class PRUCParms_FAP(_PRUCParms):
         ConstBSMP.V_I_IGBT_2,
         ConstBSMP.V_DUTY_CYCLE_1,
         ConstBSMP.V_DUTY_CYCLE_2,
-        ConstBSMP.V_DUTY_DIFF,)
+        ConstBSMP.V_DUTY_DIFF,
+        ConstBSMP.V_V_INPUT_IIB,
+        ConstBSMP.V_V_OUTPUT_IIB,
+        ConstBSMP.V_I_IGBT_1_IIB,
+        ConstBSMP.V_I_IGBT_2_IIB,
+        ConstBSMP.V_TEMP_IGBT_1_IIB,
+        ConstBSMP.V_TEMP_IGBT_2_IIB,
+        ConstBSMP.V_V_DRIVER_IIB,
+        ConstBSMP.V_I_DRIVER_1_IIB,
+        ConstBSMP.V_I_DRIVER_2_IIB,
+        ConstBSMP.V_TEMP_INDUCTOR_IIB,
+        ConstBSMP.V_TEMP_HEATSINK_IIB,
+        ConstBSMP.V_IIB_INTERLOCKS,)
     groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 
@@ -1393,13 +1418,7 @@ class UDC:
         self._pru = pru
         self._device_ids = device_ids
         self._udcmodel = udcmodel
-        # self._udcmodel = self._get_udcmodel(udcmodel)
         self._bsmp = self._create_bsmp_connectors()
-
-    # def _get_udcmodel(self, udcmodel):
-    #     if udcmodel not in udcmodels:
-    #         raise ValueError('{}'.format(udcmodel))
-    #     return udcmodel
 
     def _create_bsmp_connectors(self):
         bsmp = dict()
