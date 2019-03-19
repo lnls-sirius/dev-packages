@@ -353,9 +353,7 @@ class _EVROUT(_BaseLL):
 
     def __init__(self, channel, source_enums):
         fout_chan = _LLTimeSearch.get_fout_channel(channel)
-        self._foutexist = bool(fout_chan)
-        if self._foutexist:
-            self._fout_out = int(fout_chan.propty[3:])
+        self._fout_out = int(fout_chan.propty[3:])
         evg_chan = _LLTimeSearch.get_evg_channel(channel)
         self._evg_out = int(evg_chan.propty[3:])
         self._source_enums = source_enums
@@ -364,8 +362,7 @@ class _EVROUT(_BaseLL):
         prefix = LL_PREFIX + _PVName(channel).device_name + ':'
         super().__init__(channel, prefix)
         self._config_ok_values['DevEnbl'] = 1
-        if self._foutexist:
-            self._config_ok_values['FoutDevEnbl'] = 1
+        self._config_ok_values['FoutDevEnbl'] = 1
         self._config_ok_values['EVGDevEnbl'] = 1
         if self.channel.propty.startswith('OUT'):
             intrg = _LLTimeSearch.get_channel_internal_trigger_pvname(
@@ -393,6 +390,8 @@ class _EVROUT(_BaseLL):
 
         evg_chan = _LLTimeSearch.get_evg_channel(self.channel)
         _evg_prefix = LL_PREFIX + evg_chan.device_name + ':'
+        fout_chan = _LLTimeSearch.get_fout_channel(self.channel)
+        _fout_prefix = LL_PREFIX + fout_chan.device_name + ':'
         map_ = {
             'State': self.prefix + intlb + 'State-Sts',
             'Evt': self.prefix + intlb + 'Evt-RB',
@@ -410,18 +409,13 @@ class _EVROUT(_BaseLL):
             'DevEnbl': self.prefix + 'DevEnbl-Sts',
             'Network': self.prefix + 'Network-Mon',
             'Link': self.prefix + 'Link-Mon',
+            'IntlkMon': self.prefix + 'Intlk-Mon',
             'Los': self.prefix + 'Los-Mon',
             'EVGLos': _evg_prefix + 'Los-Mon',
-            'IntlkMon': self.prefix + 'Intlk-Mon',
+            'FoutLos': _fout_prefix + 'Los-Mon',
+            'FoutDevEnbl': _fout_prefix + 'DevEnbl-Sts',
             'EVGDevEnbl': _evg_prefix + 'DevEnbl-Sts',
             }
-        if self._foutexist:
-            fout_chan = _LLTimeSearch.get_fout_channel(self.channel)
-            _fout_prefix = LL_PREFIX + fout_chan.device_name + ':'
-            map_.update({
-                'FoutLos': _fout_prefix + 'Los-Mon',
-                'FoutDevEnbl': _fout_prefix + 'DevEnbl-Sts',
-                })
         for prop in self._REMOVE_PROPS:
             map_.pop(prop)
         return map_
@@ -430,6 +424,7 @@ class _EVROUT(_BaseLL):
         map_ = {
             'DevEnbl': _partial(self._set_simple, 'DevEnbl'),
             'EVGDevEnbl': _partial(self._set_simple, 'EVGDevEnbl'),
+            'FoutDevEnbl': _partial(self._set_simple, 'FoutDevEnbl'),
             'State': _partial(self._set_simple, 'State'),
             'ByPassIntlk': _partial(self._set_simple, 'ByPassIntlk'),
             'Src': self._set_source,
@@ -439,10 +434,6 @@ class _EVROUT(_BaseLL):
             'Delay': self._set_delay,
             'RFDelayType': _partial(self._set_simple, 'RFDelayType'),
             }
-        if self._foutexist:
-            map_.update({
-                'FoutDevEnbl': _partial(self._set_simple, 'FoutDevEnbl'),
-                })
         return map_
 
     def _define_dict_for_update(self):
@@ -462,16 +453,13 @@ class _EVROUT(_BaseLL):
             'DevEnbl': _partial(self._get_status, 'DevEnbl'),
             'Network': _partial(self._get_status, 'Network'),
             'Link': _partial(self._get_status, 'Link'),
+            'IntlkMon': _partial(self._get_status, 'IntlkMon'),
             'Los': _partial(self._get_status, 'Los'),
             'EVGLos': _partial(self._get_status, 'EVGLos'),
-            'IntlkMon': _partial(self._get_status, 'IntlkMon'),
+            'FoutLos': _partial(self._get_status, 'FoutLos'),
             'EVGDevEnbl': _partial(self._get_status, 'EVGDevEnbl'),
+            'FoutDevEnbl': _partial(self._get_status, 'FoutDevEnbl'),
             }
-        if self._foutexist:
-            map_.update({
-                'FoutLos': _partial(self._get_status, 'FoutLos'),
-                'FoutDevEnbl': _partial(self._get_status, 'FoutDevEnbl'),
-                })
         for prop in self._REMOVE_PROPS:
             map_.pop(prop)
         return map_
