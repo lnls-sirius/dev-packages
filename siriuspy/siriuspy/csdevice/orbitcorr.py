@@ -525,7 +525,7 @@ class OrbitCorrDevRings(OrbitCorrDevTLines, ConstRings):
         self.OrbitCorExtEvtSrc = _get_namedtuple(
                                         'OrbitCorExtEvtSrc', evts, vals)
         self.C0 = (496.8 if self.acc == 'BO' else 518.396)  # in meter
-        self.T0 = self.C0 / 299792458 * 1000  # in milliseconds
+        self.T0 = self.C0 / 299792458  # in seconds
 
     def get_sofb_database(self, prefix=''):
         """Return OpticsCorr-Chrom Soft IOC database."""
@@ -611,10 +611,11 @@ class OrbitCorrDevRings(OrbitCorrDevTLines, ConstRings):
                 'type': 'float', 'unit': 'um', 'count': self.MAX_MT_ORBS*nbpm,
                 'value': 50*nbpm*[0]},
             'OrbitsMultiTurnSum-Mon': {
-                'type': 'float', 'unit': 'um', 'count': self.MAX_MT_ORBS*nbpm,
+                'type': 'float', 'unit': 'count',
+                'count': self.MAX_MT_ORBS*nbpm,
                 'value': 50*nbpm*[0]},
             'OrbitMultiTurnTime-Mon': {
-                'type': 'float', 'unit': 'ms', 'count': self.MAX_MT_ORBS,
+                'type': 'float', 'unit': 's', 'count': self.MAX_MT_ORBS,
                 'value': 50*[0]},
             'OrbitMultiTurnIdx-SP': {
                 'type': 'int', 'unit': '', 'value': 0,
@@ -623,7 +624,7 @@ class OrbitCorrDevRings(OrbitCorrDevTLines, ConstRings):
                 'type': 'int', 'unit': '', 'value': 0,
                 'hilim': self.MAX_MT_ORBS, 'lolim': 0},
             'OrbitMultiTurnIdxTime-Mon': {
-                'type': 'float', 'unit': 'ms', 'value': 0.0, 'prec': 5,
+                'type': 'float', 'unit': 's', 'value': 0.0, 'prec': 5,
                 'hilim': 500, 'lolim': 0},
             'OrbitTrigDownSample-SP': {
                 'type': 'int', 'unit': '', 'value': 1,
