@@ -5,7 +5,7 @@ from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.computer import Computer
 
 
-class PSCurrentDiffPV(Computer):
+class PSDiagPV(Computer):
     """Diff of a setpoint and a readback."""
 
     OPMODE_SEL = 0
@@ -19,12 +19,19 @@ class PSCurrentDiffPV(Computer):
 
     def compute_update(self, computed_pv, updated_pv_name, value):
         """Compare PVs to check wether they are equal."""
-        opmode_sts = computed_pv.pvs[PSCurrentDiffPV.OPMODE_STS].get()
+        connected = \
+            computed_pv.pvs[PSDiagPV.OPMODE_SEL].connected and \
+            computed_pv.pvs[PSDiagPV.OPMODE_STS].connected and \
+            computed_pv.pvs[PSDiagPV.CURRENT_SP].connected and \
+            computed_pv.pvs[PSDiagPV.CURRENT_MON].connected
+        if not connected:
+            return {'value': 1}
+        opmode_sts = computed_pv.pvs[PSDiagPV.OPMODE_STS].get()
         if opmode_sts != _PSConst.States.SlowRef:  # Slowref
             return {'value': 0}  # Ok
         else:
-            sp = computed_pv.pvs[PSCurrentDiffPV.CURRENT_SP].get()
-            rb = computed_pv.pvs[PSCurrentDiffPV.CURRENT_MON].get()
+            sp = computed_pv.pvs[PSDiagPV.CURRENT_SP].get()
+            rb = computed_pv.pvs[PSDiagPV.CURRENT_MON].get()
             if abs(sp - rb) > self._epsilon:
                 return {'value': 1}
             else:
