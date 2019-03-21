@@ -1,14 +1,11 @@
 #!/usr/local/bin/python-sirius -u
+"""Script fpr the AS PS Diagnostics IOC."""
+
 import argparse
 from as_ps_diagnostic import as_ps_diagnostic
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument(
-    'epsilon', type=float,
-    help='Threshold at which the difference between setpoint and readback \
-          will be considered a problem.'
-)
 parser.add_argument(
     'section',
     help='Regexp for the accelerator (TB, BO, TS, SI).')
@@ -17,11 +14,9 @@ parser.add_argument(
     help='Regexp for the the sub_section (Fam, 01, 01U, ...).')
 parser.add_argument(
     'device',
-    help='Regexp for the device (Cv, CH, QD1, SF, B1B1-1, ...).')
+    help='Regexp for the device (CV, CH, QD1, SF, B1B1-1, ...).')
 
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    as_ps_diagnostic.run(
-        args.epsilon, args.section, args.sub_section, args.device, False)
-
+    as_ps_diagnostic.run(args.section, args.sub_section, args.device, False)
