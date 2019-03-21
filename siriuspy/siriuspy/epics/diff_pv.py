@@ -1,6 +1,7 @@
 #!/usr/local/bin/python-sirius
-
 import time
+
+from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.epics.computed_pv import ComputedPV
 from siriuspy.thread import QueueThread
 from siriuspy.computer import Computer
@@ -14,18 +15,18 @@ class DiffPV(Computer):
     CURRENT_SP = 2
     CURRENT_MON = 3
 
-    def __init__(self, e):
-        self._e = e
+    def __init__(self, epsilon):
+        self._epsilon = epsilon
 
     def compute_update(self, computed_pv, updated_pv_name, value):
         """Compare PVs to check wether they are equal."""
         opmode_sts = computed_pv.pvs[DiffPV.OPMODE_STS].get()
-        if opmode_sts != 3:  # Slowref
+        if opmode_sts != _PSConst.States.Slowref:  # Slowref
             return {'value': 0}  # Ok
         else:
             sp = computed_pv.pvs[DiffPV.CURRENT_SP].get()
             rb = computed_pv.pvs[DiffPV.CURRENT_MON].get()
-            if abs(sp - rb) > self._e:
+            if abs(sp - rb) > self._epsilon:
                 return {'value': 1}
             else:
                 return {'value': 0}
