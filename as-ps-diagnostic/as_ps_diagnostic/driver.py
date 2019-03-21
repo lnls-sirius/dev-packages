@@ -19,7 +19,7 @@ class DiffPVs(Driver):
         super().__init__()
         self._queue = QueueThread()
         self.pvs = list()
-        self.frequency = 10
+        self.frequency = 2
         self.scanning = False
         self.quit = False
 
