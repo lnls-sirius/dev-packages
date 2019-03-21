@@ -12,7 +12,7 @@ class ComputedPV:
     computed process variables.
     """
 
-    def __init__(self, pvname, computer, queue, *pvs):
+    def __init__(self, pvname, computer, queue, pvs, monitor=True):
         """Initialize PVs."""
         # starts computer_pvs queue, if not started yet
         self._queue = queue
@@ -33,14 +33,16 @@ class ComputedPV:
 
         # add callback
         self._callbacks = {}
-        if self._monitor_pv:
-            # in order to optimize efficiency if computed pv is of the
-            # monitor type add callback only to the first primary pv, the one
-            # corresponding to the main current to the call
-            self.pvs[0].add_callback(self._value_update_callback)
-        else:
-            for pv in self.pvs:
-                pv.add_callback(self._value_update_callback)
+        self._monitor = monitor
+        if self._monitor:
+            if self._monitor_pv:
+                # in order to optimize efficiency if computed pv is of the
+                # monitor type add callback only to the first primary pv, the one
+                # corresponding to the main current to the call
+                self.pvs[0].add_callback(self._value_update_callback)
+            else:
+                for pv in self.pvs:
+                    pv.add_callback(self._value_update_callback)
 
         # init limits
         if self.connected:
@@ -62,6 +64,8 @@ class ComputedPV:
 
     def get(self):
         """Return current value of computed PV."""
+        if not self._monitor:
+            self._update_value()
         return self.value
 
     def put(self, value):
@@ -117,12 +121,22 @@ class ComputedPV:
                 ppvs.append(pv)
         return ppvs
 
-    def _update_value(self, pvname, value):
+    def _update_value(self, pvname=None, value=None):
         # Get dict with pv props that changed
         # print('update_value')
         kwargs = self.computer.compute_update(self, pvname, value)
 
         if kwargs is not None:
+            if ('high' not in kwargs and kwargs['value'] == self.value) or \
+                    ('high' in kwargs and
+                     kwargs['value'] == self.value and
+                     kwargs['hihi'] == self.upper_alarm_limit and
+                     kwargs['high'] == self.upper_warning_limit and
+                     kwargs['hilim'] == self.upper_disp_limit and
+                     kwargs['hilim'] == self.lower_disp_limit and
+                     kwargs['low'] == self.lower_warning_limit and
+                     kwargs['lolo'] == self.lower_alarm_limit):
+                return
             self.value = kwargs["value"]
             # Check if limits are in the return dict and update them
             if "high" in kwargs:
