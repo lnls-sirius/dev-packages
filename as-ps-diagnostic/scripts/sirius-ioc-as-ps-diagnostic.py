@@ -5,6 +5,11 @@ from as_ps_diagnostic import as_ps_diagnostic
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
+    'epsilon', type=float,
+    help='Threshold at which the difference between setpoint and readback \
+          will be considered a problem.'
+)
+parser.add_argument(
     'section',
     help='Regexp for the accelerator (TB, BO, TS, SI).')
 parser.add_argument(
@@ -17,5 +22,6 @@ parser.add_argument(
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    as_ps_diagnostic.run(args.section, args.sub_section, args.device, False)
+    as_ps_diagnostic.run(
+        args.epsilon, args.section, args.sub_section, args.device, False)
 

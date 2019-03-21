@@ -10,7 +10,7 @@ from siriuspy.envars import vaca_prefix
 from siriuspy.util import configure_log_file, print_ioc_banner
 
 
-def run(section='', sub_section='', device='', debug=False):
+def run(epsilon=0.1, section='', sub_section='', device='', debug=False):
     """Run IOC."""
     configure_log_file(debug=debug)
 
@@ -37,14 +37,24 @@ def run(section='', sub_section='', device='', debug=False):
         logging.debug('{:32s}'.format(device))
 
     prefix = vaca_prefix
-    pvdb = {device + ':Diff-Mon': {'value': 0} for device in devices}
+    pvdb = {
+        device + ':Diff-Mon': {
+            'value': 0,
+            'hilim': 1,
+            'hihi': 1,
+            'high': 1,
+            'lolim': -1,
+            'lolo': -1,
+            'low': -1,
+        } for device in devices
+    }
 
     logging.info("Creating server with %d devices and '%s' prefix",
                  len(devices), prefix)
     server.createPV(prefix, pvdb)
     logging.info('Creating driver')
     try:
-        driver = DiffPVs(devices)
+        driver = DiffPVs(devices, epsilon)
     except Exception:
         logging.error('Failed to create driver. Aborting', exc_info=True)
         sys.exit(1)

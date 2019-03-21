@@ -14,9 +14,12 @@ from siriuspy.epics.diff_pv import DiffPV
 
 
 class DiffPVs(Driver):
+    """Driver responsible for updating DB."""
 
-    def __init__(self, devices):
+    def __init__(self, devices, epsilon):
+        """Create Computed PVs."""
         super().__init__()
+        self._epsilon = epsilon
         self._queue = QueueThread()
         self.pvs = list()
         self.frequency = 2
@@ -29,7 +32,7 @@ class DiffPVs(Driver):
                    vaca_prefix + device + ':Current-SP',
                    vaca_prefix + device + ':Current-Mon']
             self.pvs.append(ComputedPV(device + ':Diff-Mon',
-                                       DiffPV(2e-2),
+                                       DiffPV(self._epsilon),
                                        self._queue,
                                        pvs,
                                        monitor=False))
@@ -39,6 +42,7 @@ class DiffPVs(Driver):
         self.t.start()
 
     def scan(self):
+        """Run as a thread scanning PVs SP/Mon."""
         while True:
             if self.scanning:
                 for pv in self.pvs:
@@ -48,6 +52,7 @@ class DiffPVs(Driver):
             time.sleep(1/self.frequency)
 
     def update_db(self, pvname, value, **kwargs):
+        """Callback to update the database."""
         self.setParam(pvname, value)
         self.updatePV(pvname)
 
