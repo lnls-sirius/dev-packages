@@ -21,7 +21,7 @@ class DiffPV(Computer):
     def compute_update(self, computed_pv, updated_pv_name, value):
         """Compare PVs to check wether they are equal."""
         opmode_sts = computed_pv.pvs[DiffPV.OPMODE_STS].get()
-        if opmode_sts != _PSConst.States.Slowref:  # Slowref
+        if opmode_sts != _PSConst.States.SlowRef:  # Slowref
             return {'value': 0}  # Ok
         else:
             sp = computed_pv.pvs[DiffPV.CURRENT_SP].get()
