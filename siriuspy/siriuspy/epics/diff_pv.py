@@ -35,23 +35,3 @@ class DiffPV(Computer):
 
     def compute_limits(self, computed_pv, updated_pv_name=None):
         """Not needed."""
-
-
-def callback(pvname, value, **kwargs):
-    """Test callback."""
-    print(pvname, value)
-
-
-if __name__ == '__main__':
-    queue = QueueThread()
-    computer = DiffPV(2e-2)
-    pvs = [
-        'guilherme-TB-Fam:PS-B:OpMode-Sel', 'guilherme-TB-Fam:PS-B:OpMode-Sts',
-        'guilherme-TB-Fam:PS-B:Current-SP', 'guilherme-TB-Fam:PS-B:Current-Mon']
-    pv = ComputedPV('TB-Fam:PS-B:Diff-Mon', computer, queue, pvs, False)
-    pv.add_callback(callback)
-
-    while True:
-        # print("Connected: {}\nValue: {}".format(pv.connected, pv.get()))
-        pv.get()
-        time.sleep(0.5)
