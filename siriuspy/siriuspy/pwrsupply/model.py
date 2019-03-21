@@ -398,7 +398,7 @@ class MAEpics(PSEpics):
             str_obj = self._get_normalizer(self._maname)
             pvs = self._get_str_pv(field)
             return _ComputedPV(pvname, str_obj,
-                               self._computed_pvs_queue, *pvs)
+                               self._computed_pvs_queue, pvs)
         else:
             psnames = _MASearch.conv_psmaname_2_psnames(self._maname)
             if len(psnames) > 1:  # SyncPV
@@ -409,7 +409,7 @@ class MAEpics(PSEpics):
                        for device_name in psnames]
                 pvname = self._psname + ":" + field
                 return _ComputedPV(pvname, sync,
-                                   self._computed_pvs_queue, *pvs)
+                                   self._computed_pvs_queue, pvs)
             else:
                 # 3) PV
                 # a normal pv mirroring the power supply pv.
