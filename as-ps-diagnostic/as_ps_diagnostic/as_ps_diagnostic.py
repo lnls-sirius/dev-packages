@@ -1,20 +1,51 @@
 #!/usr/local/bin/python-sirius
 """AS PS Diagnostic."""
 
-import logging as _log
+import os as _os
 import sys as _sys
+import signal as _signal
+import logging as _log
+
 import pcaspy as _pcaspy
+import pcaspy.tools as _pcaspy_tools
 
 from .driver import PSDiagDriver as _PSDiagDriver
 
+from siriuspy.util import get_timestamp as _get_timestamp
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.envars import vaca_prefix as _vaca_prefix
 from siriuspy.util import configure_log_file as _config_log_file
 from siriuspy.util import print_ioc_banner as _print_ioc_banner
 
 
+INTERVAL = 0.1
+stop_event = False
+
+
+def _stop_now(signum, frame):
+    global stop_event
+    _log.warning(_signal.Signals(signum).name +
+                 ' received at ' + _get_timestamp())
+    _sys.stdout.flush()
+    _sys.stderr.flush()
+    stop_event = True
+
+
+def _attribute_access_security_group(server, db):
+    for k, v in db.items():
+        if k.endswith(('-RB', '-Sts', '-Cte', '-Mon')):
+            v.update({'asg': 'rbpv'})
+    path_ = _os.path.abspath(_os.path.dirname(__file__))
+    server.initAccessSecurityFile(path_ + '/access_rules.as')
+
+
 def run(section='', sub_section='', device='', debug=False):
     """Run IOC."""
+    # define abort function
+    _signal.signal(_signal.SIGINT, _stop_now)
+    _signal.signal(_signal.SIGTERM, _stop_now)
+
+    # configure log
     _config_log_file(debug=debug)
 
     _log.info("Loding power supplies")
@@ -46,14 +77,9 @@ def run(section='', sub_section='', device='', debug=False):
         splims = _PSSearch.conv_pstype_2_splims(pstype)
         dtol = splims['DTOL']
         devices[psname] = dtol
-        pvdb[psname + ':Status-Mon'] = {
-            'value': 0,
-            'hilim': 1,
-            'hihi': 1,
-            'high': 1,
-        }
         pvdb[psname + ':CurrentDiff-Mon'] = {
-            'value': 0,
+            'type': 'float',
+            'value': 0.0,
             'hilim': dtol,
             'hihi': dtol,
             'high': dtol,
@@ -61,9 +87,17 @@ def run(section='', sub_section='', device='', debug=False):
             'lolo': -dtol,
             'lolim': -dtol,
         }
+        pvdb[psname + ':Status-Mon'] = {
+            'type': 'int',
+            'value': 0,
+            'hilim': 1,
+            'hihi': 1,
+            'high': 1,
+        }
 
     _log.info("Creating server with %d devices and '%s' prefix",
               len(devices), prefix)
+    _attribute_access_security_group(server, pvdb)
     server.createPV(prefix, pvdb)
     _log.info('Creating driver')
     try:
@@ -77,10 +111,18 @@ def run(section='', sub_section='', device='', debug=False):
         'IOC that provides current sp/mon diagnostics for the power supplies.',
         '0.2', prefix)
 
+    # initiate a new thread responsible for listening for client connections
+    server_thread = _pcaspy_tools.ServerThread(server)
+    server_thread.start()
+
     driver.scanning = True
-    while True:
-        server.process(0.1)
+    while not stop_event:
+        server.process(INTERVAL)
 
     driver.scanning = False
     driver.quit = True
-    _sys.exit(0)
+
+    # sends stop signal to server thread
+    server_thread.stop()
+    server_thread.join()
+    # _sys.exit(0)
