@@ -7,8 +7,8 @@ from siriuspy.computer import Computer
 class PSDiffPV(Computer):
     """Diff of a PS current setpoint and a readback."""
 
-    CURRENT_SP = 2
-    CURRENT_MON = 3
+    CURRENT_SP = 0
+    CURRENT_MON = 1
 
     def __init__(self, dtol):
         """."""
