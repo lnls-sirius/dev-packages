@@ -22,7 +22,7 @@ class ComputedPV:
         # --- properties ---
 
         self.pvname = pvname
-        self.value = None
+        self._value = None
         self._set_limits((None,)*6)
         self.computer = computer
         self.pvs = self._create_primary_pvs_list(pvs)
@@ -62,15 +62,23 @@ class ComputedPV:
                 return False
         return True
 
+    @property
+    def value(self):
+        """Return computed PV value."""
+        return self.get()
+        # return self._value
+
     def get(self):
         """Return current value of computed PV."""
-        if not self._monitor:
+        if self._monitor:
+            pass
+        else:
             self._update_value()
-        return self.value
+        return self._value
 
     def put(self, value):
         """Put `value` to the first pv of the pv list."""
-        self.value = value
+        self._value = value
         self.computer.compute_put(self, value)
 
     def add_callback(self, func, index=None):
@@ -87,7 +95,7 @@ class ComputedPV:
         """Run all callbacks."""
         self._issue_callback(**{
             'pvname': self.pvname,
-            'value': self.value,
+            'value': self._value,
             'hihi': self.upper_alarm_limit,
             'high': self.upper_warning_limit,
             'hilim': self.upper_disp_limit,
@@ -127,17 +135,18 @@ class ComputedPV:
         kwargs = self.computer.compute_update(self, pvname, value)
 
         if kwargs is not None:
-            if ('high' not in kwargs and kwargs['value'] == self.value) or \
+            if ('high' not in kwargs and kwargs['value'] == self._value) or \
                     ('high' in kwargs and
-                     kwargs['value'] == self.value and
+                     kwargs['value'] == self._value and
                      kwargs['hihi'] == self.upper_alarm_limit and
                      kwargs['high'] == self.upper_warning_limit and
                      kwargs['hilim'] == self.upper_disp_limit and
                      kwargs['hilim'] == self.lower_disp_limit and
                      kwargs['low'] == self.lower_warning_limit and
                      kwargs['lolo'] == self.lower_alarm_limit):
-                return
-            self.value = kwargs["value"]
+                # nothing changed
+                return None
+            self._value = kwargs["value"]
             # Check if limits are in the return dict and update them
             if "high" in kwargs:
                 self.upper_alarm_limit = kwargs["hihi"]
