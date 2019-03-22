@@ -2,17 +2,14 @@
 """Driver module."""
 
 import time
-from threading import Thread
+from threading import Thread as _Thread
 from pcaspy import Driver as _Driver
 
 from siriuspy.epics.computed_pv import ComputedPV as _ComputedPV
 from siriuspy.envars import vaca_prefix as _vaca_prefix
 from siriuspy.thread import QueueThread as _QueueThread
-from siriuspy.epics.diff_pv import PSDiagPV as _PSDiagPV
-
-
-# TODO: this should be taken from a static table, one value per PS.
-_epsilon = 0.0
+from siriuspy.epics.psdiff_pv import PSDiffPV as _PSDiffPV
+from siriuspy.epics.psstatus_pv import PSStatusPV as _PSStatusPV
 
 
 class PSDiagDriver(_Driver):
@@ -27,22 +24,38 @@ class PSDiagDriver(_Driver):
         self.scanning = False
         self.quit = False
 
-        for device in devices:
-            pvs = [None, None, None, None]
-            devname = _vaca_prefix + device
-            pvs[_PSDiagPV.OPMODE_SEL] = devname + ':OpMode-Sel'
-            pvs[_PSDiagPV.OPMODE_STS] = devname + ':OpMode-Sts'
-            pvs[_PSDiagPV.CURRENT_SP] = devname + ':Current-SP'
-            pvs[_PSDiagPV.CURRENT_MON] = devname + ':Current-Mon'
-            self.pvs.append(_ComputedPV(device + ':Diag-Mon',
-                                        _PSDiagPV(_epsilon),
-                                        self._queue,
-                                        pvs,
-                                        monitor=False))
-            self.pvs[-1].add_callback(self.update_db)
+        self._create_computed_pvs(devices)
 
-        self.t = Thread(target=self.scan, daemon=True)
+        self.t = _Thread(target=self.scan, daemon=True)
         self.t.start()
+
+    def _create_computed_pvs(self, devices):
+        for device in devices:
+            devname = _vaca_prefix + device
+            # CurrentDiff-Mon
+            dtol = devices[device]
+            pvs = [None, None]
+            pvs[_PSDiffPV.CURRENT_SP] = devname + ':Current-SP'
+            pvs[_PSDiffPV.CURRENT_MON] = devname + ':Current-Mon'
+            pv = _ComputedPV(device + ':CurrentDiff-Mon',
+                             _PSDiffPV(dtol),
+                             self._queue,
+                             pvs,
+                             monitor=False)
+            pv.add_callback(self.update_db)
+            self.pvs.append(pv)
+            # Status-Mon
+            pvs = [None, None, None]
+            pvs[_PSStatusPV.OPMODE_SEL] = devname + ':OpMode-Sel'
+            pvs[_PSStatusPV.OPMODE_STS] = devname + ':OpMode-Sts'
+            pvs[_PSStatusPV.CURRENT_DIFF] = devname + ':CurrentDiff-Mon'
+            pv = _ComputedPV(device + ':Status-Mon',
+                             _PSStatusPV(),
+                             self._queue,
+                             pvs,
+                             monitor=False)
+            pv.add_callback(self.update_db)
+            self.pvs.append(pv)
 
     def scan(self):
         """Run as a thread scanning PVs SP/Mon."""

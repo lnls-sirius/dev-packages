@@ -31,27 +31,36 @@ def run(section='', sub_section='', device='', debug=False):
     if device:
         device_filter['dev'] = device
     device_filter['dis'] = 'PS'
-    devices = _PSSearch.get_psnames(device_filter)
+    psnames = _PSSearch.get_psnames(device_filter)
 
-    if not devices:
+    if not psnames:
         _log.warning('No devices found. Aborting.')
         _sys.exit(0)
 
-    for device in devices:
-        _log.debug('{:32s}'.format(device))
-
     prefix = _vaca_prefix
-    pvdb = {
-        device + ':Diag-Mon': {
+    devices = dict()
+    pvdb = dict()
+    for psname in psnames:
+        _log.debug('{:32s}'.format(psname))
+        pstype = _PSSearch.conv_psname_2_pstype(psname)
+        splims = _PSSearch.conv_pstype_2_splims(pstype)
+        dtol = splims['DTOL']
+        devices[psname] = dtol
+        pvdb[psname + ':Status-Mon'] = {
             'value': 0,
             'hilim': 1,
             'hihi': 1,
             'high': 1,
-            'lolim': -1,
-            'lolo': -1,
-            'low': -1,
-        } for device in devices
-    }
+        }
+        pvdb[psname + ':CurrentDiff-Mon'] = {
+            'value': 0,
+            'hilim': dtol,
+            'hihi': dtol,
+            'high': dtol,
+            'low': -dtol,
+            'lolo': -dtol,
+            'lolim': -dtol,
+        }
 
     _log.info("Creating server with %d devices and '%s' prefix",
               len(devices), prefix)
@@ -66,7 +75,7 @@ def run(section='', sub_section='', device='', debug=False):
     _print_ioc_banner(
         'AS PS Diagnostic', pvdb,
         'IOC that provides current sp/mon diagnostics for the power supplies.',
-        '0.1', prefix)
+        '0.2', prefix)
 
     driver.scanning = True
     while True:
