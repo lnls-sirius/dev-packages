@@ -5,10 +5,8 @@ from siriuspy.util import get_namedtuple as _get_namedtuple
 import siriuspy.csdevice.bpms as _csbpm
 from siriuspy.csdevice import util as _cutil
 from siriuspy.csdevice import timesys as _cstiming
-from siriuspy.search.ma_search import MASearch as _MASearch
-from siriuspy.search.ll_time_search import LLTimeSearch as _TISearch
-from siriuspy.search.hl_time_search import HLTimeSearch as _HLTISearch
-from siriuspy.search.bpms_search import BPMSearch as _BPMSearch
+from siriuspy.search import MASearch as _MASearch, BPMSearch as _BPMSearch, \
+    LLTimeSearch as _TISearch, HLTimeSearch as _HLTISearch
 
 
 # --- Enumeration Types ---
