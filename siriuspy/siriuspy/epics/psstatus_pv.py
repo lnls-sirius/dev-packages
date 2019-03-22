@@ -12,9 +12,9 @@ class PSStatusPV(Computer):
 
     OPMODE_SEL = 0
     OPMODE_STS = 1
-    INTLCK_SOFT = 2
-    INTLCK_HARD = 3
-    CURRENT_DIFF = 4
+    INTLK_SOFT = 2
+    INTLK_HARD = 3
+    CURRT_DIFF = 4
 
     def compute_update(self, computed_pv, updated_pv_name, value):
         """Compute PS Status PV."""
@@ -22,14 +22,14 @@ class PSStatusPV(Computer):
         connected = \
             computed_pv.pvs[PSStatusPV.OPMODE_SEL].connected and \
             computed_pv.pvs[PSStatusPV.OPMODE_STS].connected and \
-            computed_pv.pvs[PSStatusPV.INTLCK_SOFT].connected and \
-            computed_pv.pvs[PSStatusPV.INTLCK_HARD].connected and \
-            computed_pv.pvs[PSStatusPV.CURRENT_DIFF].value is not None
+            computed_pv.pvs[PSStatusPV.INTLK_SOFT].connected and \
+            computed_pv.pvs[PSStatusPV.INTLK_HARD].connected and \
+            computed_pv.pvs[PSStatusPV.CURRT_DIFF].value is not None
         if not connected:
             return {'value': 1}
         # interlock
-        intlck_soft = computed_pv.pvs[PSStatusPV.INTLCK_SOFT].get()
-        intlck_hard = computed_pv.pvs[PSStatusPV.INTLCK_HARD].get()
+        intlck_soft = computed_pv.pvs[PSStatusPV.INTLK_SOFT].get()
+        intlck_hard = computed_pv.pvs[PSStatusPV.INTLK_HARD].get()
         if intlck_soft != 0 or intlck_hard != 0:
             return {'value': 1}
         # consistent opmode?
@@ -41,7 +41,7 @@ class PSStatusPV(Computer):
         if opmode_sts != _PSConst.States.SlowRef:
             return {'value': 0}
         else:
-            severity = computed_pv.pvs[PSStatusPV.CURRENT_DIFF].severity
+            severity = computed_pv.pvs[PSStatusPV.CURRT_DIFF].severity
             return {'value': 0 if severity == 0 else 1}
 
     def compute_put(self, computed_pv, value):

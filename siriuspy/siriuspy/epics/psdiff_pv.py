@@ -7,8 +7,8 @@ from siriuspy.computer import Computer
 class PSDiffPV(Computer):
     """Diff of a PS current setpoint and a readback."""
 
-    CURRENT_SP = 0
-    CURRENT_MON = 1
+    CURRT_SP = 0
+    CURRT_MON = 1
 
     def __init__(self, dtol):
         """."""
@@ -17,12 +17,12 @@ class PSDiffPV(Computer):
     def compute_update(self, computed_pv, updated_pv_name, value):
         """Compute difference between SP and Mon current values."""
         connected = \
-            computed_pv.pvs[PSDiffPV.CURRENT_SP].connected and \
-            computed_pv.pvs[PSDiffPV.CURRENT_MON].connected
+            computed_pv.pvs[PSDiffPV.CURRT_SP].connected and \
+            computed_pv.pvs[PSDiffPV.CURRT_MON].connected
         if not connected:
             return {'value': None}
-        sp = computed_pv.pvs[PSDiffPV.CURRENT_SP].get()
-        rb = computed_pv.pvs[PSDiffPV.CURRENT_MON].get()
+        sp = computed_pv.pvs[PSDiffPV.CURRT_SP].get()
+        rb = computed_pv.pvs[PSDiffPV.CURRT_MON].get()
         return {'value': rb - sp}
 
     def compute_put(self, computed_pv, value):
