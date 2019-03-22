@@ -35,8 +35,8 @@ class PSDiagDriver(_Driver):
             # CurrentDiff-Mon
             dtol = devices[device]
             pvs = [None, None]
-            pvs[_PSDiffPV.CURRENT_SP] = devname + ':Current-SP'
-            pvs[_PSDiffPV.CURRENT_MON] = devname + ':Current-Mon'
+            pvs[_PSDiffPV.CURRT_SP] = devname + ':Current-SP'
+            pvs[_PSDiffPV.CURRT_MON] = devname + ':Current-Mon'
             pv = _ComputedPV(device + ':CurrentDiff-Mon',
                              _PSDiffPV(dtol),
                              self._queue,
@@ -45,10 +45,12 @@ class PSDiagDriver(_Driver):
             pv.add_callback(self.update_db)
             self.pvs.append(pv)
             # Status-Mon
-            pvs = [None, None, None]
+            pvs = [None, None, None, None, None]
             pvs[_PSStatusPV.OPMODE_SEL] = devname + ':OpMode-Sel'
             pvs[_PSStatusPV.OPMODE_STS] = devname + ':OpMode-Sts'
-            pvs[_PSStatusPV.CURRENT_DIFF] = devname + ':CurrentDiff-Mon'
+            pvs[_PSStatusPV.INTLK_SOFT] = devname + ':IntlkSoft-Mon'
+            pvs[_PSStatusPV.INTLK_HARD] = devname + ':IntlkHard-Mon'
+            pvs[_PSStatusPV.CURRT_DIFF] = devname + ':CurrentDiff-Mon'
             pv = _ComputedPV(device + ':Status-Mon',
                              _PSStatusPV(),
                              self._queue,
