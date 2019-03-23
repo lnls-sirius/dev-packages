@@ -11,50 +11,313 @@ def get_dict():
     }
     return _dict
 
+
+_li_diags = [
+    # Screens
+    ['LA-BI:PRF1:CAM:AcquireTime', 0.001, 0],
+    ['LA-BI:PRF1:CAM:Gain', 0, 0],
+    ['LA-BI:PRF1:CAL:CentroidThreshold', 0, 0],
+    ['LA-BI:PRF1:ROI:MinX_', 0, 0],
+    ['LA-BI:PRF1:ROI:MinY_', 0, 0],
+    ['LA-BI:PRF1:X:Gauss:Coef', 0.0, 0],
+    ['LA-BI:PRF1:Y:Gauss:Coef', 0.0, 0],
+    ['LA-BI:PRF2:CAM:AcquireTime', 0.001, 0],
+    ['LA-BI:PRF2:CAM:Gain', 0, 0],
+    ['LA-BI:PRF2:CAL:CentroidThreshold', 0, 0],
+    ['LA-BI:PRF2:ROI:MinX_', 0, 0],
+    ['LA-BI:PRF2:ROI:MinY_', 0, 0],
+    ['LA-BI:PRF2:X:Gauss:Coef', 0.0, 0],
+    ['LA-BI:PRF2:Y:Gauss:Coef', 0.0, 0],
+    ['LA-BI:PRF3:CAM:AcquireTime', 0.001, 0],
+    ['LA-BI:PRF3:CAM:Gain', 0, 0],
+    ['LA-BI:PRF3:CAL:CentroidThreshold', 0, 0],
+    ['LA-BI:PRF3:ROI:MinX_', 0, 0],
+    ['LA-BI:PRF3:ROI:MinY_', 0, 0],
+    ['LA-BI:PRF3:X:Gauss:Coef', 0.0, 0],
+    ['LA-BI:PRF3:Y:Gauss:Coef', 0.0, 0],
+    ['LA-BI:PRF4:CAM:AcquireTime', 0.001, 0],
+    ['LA-BI:PRF4:CAM:Gain', 0, 0],
+    ['LA-BI:PRF4:CAL:CentroidThreshold', 0, 0],
+    ['LA-BI:PRF4:ROI:MinX_', 0, 0],
+    ['LA-BI:PRF4:ROI:MinY_', 0, 0],
+    ['LA-BI:PRF4:X:Gauss:Coef', 0.0, 0],
+    ['LA-BI:PRF4:Y:Gauss:Coef', 0.0, 0],
+    ['LA-BI:PRF5:CAM:AcquireTime', 0.001, 0],
+    ['LA-BI:PRF5:CAM:Gain', 0, 0],
+    ['LA-BI:PRF5:CAL:CentroidThreshold', 0, 0],
+    ['LA-BI:PRF5:ROI:MinX_', 0, 0],
+    ['LA-BI:PRF5:ROI:MinY_', 0, 0],
+    ['LA-BI:PRF5:X:Gauss:Coef', 0.0, 0],
+    ['LA-BI:PRF5:Y:Gauss:Coef', 0.0, 0],
+
+    # BPMs
+    ['LA-BI:BPM2:FFT_CENTER', 0, 0],
+    ['LA-BI:BPM2:FFT_WIDTH', 0, 0],
+    ['LA-BI:BPM2:HIB_CENTER', 0, 0],
+    ['LA-BI:BPM2:HIB_WIDTH', 0, 0],
+    ['LA-BI:BPM2:POS_KX', 0, 0],
+    ['LA-BI:BPM2:POS_KY', 0, 0],
+    ['LA-BI:BPM2:POS_KS', 0, 0],
+    ['LA-BI:BPM2:POS_OX', 0, 0],
+    ['LA-BI:BPM2:POS_OY', 0, 0],
+    ['LA-BI:BPM2:FE_ATTEN_SP', 0, 0],
+    ['LA-BI:BPM2:ADC_THD', 0, 0],
+    ['LA-BI:BPM2:ACQ_TRIGGER', 0, 0],
+    ['LA-BI:BPM2:POS_ALG', 0, 0],
+    ['LA-BI:BPM2:BPM_STRIP', 0, 0],
+    ['LA-BI:BPM2:OPI:SEL', 0, 0],
+    ['LA-BI:BPM3:FFT_CENTER', 0, 0],
+    ['LA-BI:BPM3:FFT_WIDTH', 0, 0],
+    ['LA-BI:BPM3:HIB_CENTER', 0, 0],
+    ['LA-BI:BPM3:HIB_WIDTH', 0, 0],
+    ['LA-BI:BPM3:POS_KX', 0, 0],
+    ['LA-BI:BPM3:POS_KY', 0, 0],
+    ['LA-BI:BPM3:POS_KS', 0, 0],
+    ['LA-BI:BPM3:POS_OX', 0, 0],
+    ['LA-BI:BPM3:POS_OY', 0, 0],
+    ['LA-BI:BPM3:FE_ATTEN_SP', 0, 0],
+    ['LA-BI:BPM3:ADC_THD', 0, 0],
+    ['LA-BI:BPM3:ACQ_TRIGGER', 0, 0],
+    ['LA-BI:BPM3:POS_ALG', 0, 0],
+    ['LA-BI:BPM3:BPM_STRIP', 0, 0],
+    ['LA-BI:BPM3:OPI:SEL', 0, 0],
+]
+
+_timing_pvs = [
+    # Events
+    ['RA-RaMO:TI-EVG:StudyDelay-SP', 0, 0.0],  # us
+    ['RA-RaMO:TI-EVG:StudyDelayType-Sel', 0, 0.0],
+    ['RA-RaMO:TI-EVG:StudyMode-Sel', 0, 0.0],
+
+    ['RA-RaMO:TI-EVG:DigBODelay-SP', 0, 0.0],  # us
+    ['RA-RaMO:TI-EVG:DigBODelayType-Sel', 0, 0.0],
+    ['RA-RaMO:TI-EVG:DigBOMode-Sel', 0, 0.0],
+
+    ['RA-RaMO:TI-EVG:DigLIDelay-SP', 0, 0.0],  # us
+    ['RA-RaMO:TI-EVG:DigLIDelayType-Sel', 0, 0.0],
+    ['RA-RaMO:TI-EVG:DigLIMode-Sel', 0, 0.0],
+
+    ['RA-RaMO:TI-EVG:DigSIDelay-SP', 0, 0.0],  # us
+    ['RA-RaMO:TI-EVG:DigSIDelayType-Sel', 0, 0.0],
+    ['RA-RaMO:TI-EVG:DigSIMode-Sel', 0, 0.0],
+
+    ['RA-RaMO:TI-EVG:DigTBDelay-SP', 0, 0.0],  # us
+    ['RA-RaMO:TI-EVG:DigTBDelayType-Sel', 0, 0.0],
+    ['RA-RaMO:TI-EVG:DigTBMode-Sel', 0, 0.0],
+
+    ['RA-RaMO:TI-EVG:DigTSDelay-SP', 0, 0.0],  # us
+    ['RA-RaMO:TI-EVG:DigTSDelayType-Sel', 0, 0.0],
+    ['RA-RaMO:TI-EVG:DigTSMode-Sel', 0, 0.0],
+
+    # Triggers
+    ['AS-Fam:TI-Scrn-TBBO:ByPassIntlk-Sel', 0, 0.0],
+    ['AS-Fam:TI-Scrn-TBBO:Delay-SP', 0, 0.0],  # us
+    ['AS-Fam:TI-Scrn-TBBO:Duration-SP', 0, 0.0],  # us
+    ['AS-Fam:TI-Scrn-TBBO:NrPulses-SP', 0, 0.0],
+    ['AS-Fam:TI-Scrn-TBBO:Polarity-Sel', 0, 0.0],
+    ['AS-Fam:TI-Scrn-TBBO:RFDelayType-Sel', 0, 0.0],
+    ['AS-Fam:TI-Scrn-TBBO:Src-Sel', 0, 0.0],
+    ['AS-Fam:TI-Scrn-TBBO:State-Sel', 0, 0.0],
+
+    ['AS-Glob:TI-BPM-SIBO:Delay-SP', 0, 0.0],  # us
+    ['AS-Glob:TI-BPM-SIBO:Duration-SP', 0, 0.0],  # us
+    ['AS-Glob:TI-BPM-SIBO:NrPulses-SP', 0, 0.0],
+    ['AS-Glob:TI-BPM-SIBO:Polarity-Sel', 0, 0.0],
+    ['AS-Glob:TI-BPM-SIBO:Src-Sel', 0, 0.0],
+    ['AS-Glob:TI-BPM-SIBO:State-Sel', 0, 0.0],
+
+    ['AS-Glob:TI-BPM-TBTS:Delay-SP', 0, 0.0],  # us
+    ['AS-Glob:TI-BPM-TBTS:Duration-SP', 0, 0.0],  # us
+    ['AS-Glob:TI-BPM-TBTS:NrPulses-SP', 0, 0.0],
+    ['AS-Glob:TI-BPM-TBTS:Polarity-Sel', 0, 0.0],
+    ['AS-Glob:TI-BPM-TBTS:Src-Sel', 0, 0.0],
+    ['AS-Glob:TI-BPM-TBTS:State-Sel', 0, 0.0],
+
+    ['AS-Glob:TI-FCT:ByPassIntlk-Sel', 0, 0.0],
+    ['AS-Glob:TI-FCT:Delay-SP', 0, 0.0],  # us
+    ['AS-Glob:TI-FCT:Duration-SP', 0, 0.0],  # us
+    ['AS-Glob:TI-FCT:NrPulses-SP', 0, 0.0],
+    ['AS-Glob:TI-FCT:Polarity-Sel', 0, 0.0],
+    ['AS-Glob:TI-FCT:RFDelayType-Sel', 0, 0.0],
+    ['AS-Glob:TI-FCT:Src-Sel', 0, 0.0],
+    ['AS-Glob:TI-FCT:State-Sel', 0, 0.0],
+
+    ['AS-Glob:TI-FillPtrnMon:ByPassIntlk-Sel', 0, 0.0],
+    ['AS-Glob:TI-FillPtrnMon:Delay-SP', 0, 0.0],  # us
+    ['AS-Glob:TI-FillPtrnMon:Duration-SP', 0, 0.0],  # us
+    ['AS-Glob:TI-FillPtrnMon:NrPulses-SP', 0, 0.0],
+    ['AS-Glob:TI-FillPtrnMon:Polarity-Sel', 0, 0.0],
+    ['AS-Glob:TI-FillPtrnMon:RFDelayType-Sel', 0, 0.0],
+    ['AS-Glob:TI-FillPtrnMon:Src-Sel', 0, 0.0],
+    ['AS-Glob:TI-FillPtrnMon:State-Sel', 0, 0.0],
+
+    ['BO-35D:TI-DCCT:ByPassIntlk-Sel', 0, 0.0],
+    ['BO-35D:TI-DCCT:Delay-SP', 0, 0.0],  # us
+    ['BO-35D:TI-DCCT:Duration-SP', 0, 0.0],  # us
+    ['BO-35D:TI-DCCT:NrPulses-SP', 0, 0.0],
+    ['BO-35D:TI-DCCT:Polarity-Sel', 0, 0.0],
+    ['BO-35D:TI-DCCT:RFDelayType-Sel', 0, 0.0],
+    ['BO-35D:TI-DCCT:Src-Sel', 0, 0.0],
+    ['BO-35D:TI-DCCT:State-Sel', 0, 0.0],
+
+    ['BO-Glob:TI-TuneProc:ByPassIntlk-Sel', 0, 0.0],
+    ['BO-Glob:TI-TuneProc:Delay-SP', 0, 0.0],  # us
+    ['BO-Glob:TI-TuneProc:Duration-SP', 0, 0.0],  # us
+    ['BO-Glob:TI-TuneProc:NrPulses-SP', 0, 0.0],
+    ['BO-Glob:TI-TuneProc:Polarity-Sel', 0, 0.0],
+    ['BO-Glob:TI-TuneProc:RFDelayType-Sel', 0, 0.0],
+    ['BO-Glob:TI-TuneProc:Src-Sel', 0, 0.0],
+    ['BO-Glob:TI-TuneProc:State-Sel', 0, 0.0],
+
+    ['LI-Fam:TI-BPM:ByPassIntlk-Sel', 0, 0.0],
+    ['LI-Fam:TI-BPM:Delay-SP', 0, 0.0],  # us
+    ['LI-Fam:TI-BPM:Duration-SP', 0, 0.0],  # us
+    ['LI-Fam:TI-BPM:NrPulses-SP', 0, 0.0],
+    ['LI-Fam:TI-BPM:Polarity-Sel', 0, 0.0],
+    ['LI-Fam:TI-BPM:RFDelayType-Sel', 0, 0.0],
+    ['LI-Fam:TI-BPM:Src-Sel', 0, 0.0],
+    ['LI-Fam:TI-BPM:State-Sel', 0, 0.0],
+
+    ['LI-Fam:TI-ICT:ByPassIntlk-Sel', 0, 0.0],
+    ['LI-Fam:TI-ICT:Delay-SP', 0, 0.0],  # us
+    ['LI-Fam:TI-ICT:Duration-SP', 0, 0.0],  # us
+    ['LI-Fam:TI-ICT:NrPulses-SP', 0, 0.0],
+    ['LI-Fam:TI-ICT:Polarity-Sel', 0, 0.0],
+    ['LI-Fam:TI-ICT:RFDelayType-Sel', 0, 0.0],
+    ['LI-Fam:TI-ICT:Src-Sel', 0, 0.0],
+    ['LI-Fam:TI-ICT:State-Sel', 0, 0.0],
+
+    ['LI-Fam:TI-Scrn:ByPassIntlk-Sel', 0, 0.0],
+    ['LI-Fam:TI-Scrn:Delay-SP', 0, 0.0],  # us
+    ['LI-Fam:TI-Scrn:Duration-SP', 0, 0.0],  # us
+    ['LI-Fam:TI-Scrn:NrPulses-SP', 0, 0.0],
+    ['LI-Fam:TI-Scrn:Polarity-Sel', 0, 0.0],
+    ['LI-Fam:TI-Scrn:RFDelayType-Sel', 0, 0.0],
+    ['LI-Fam:TI-Scrn:Src-Sel', 0, 0.0],
+    ['LI-Fam:TI-Scrn:State-Sel', 0, 0.0],
+
+    ['SI-13C4:TI-DCCT:ByPassIntlk-Sel', 0, 0.0],
+    ['SI-13C4:TI-DCCT:Delay-SP', 0, 0.0],  # us
+    ['SI-13C4:TI-DCCT:Duration-SP', 0, 0.0],  # us
+    ['SI-13C4:TI-DCCT:NrPulses-SP', 0, 0.0],
+    ['SI-13C4:TI-DCCT:Polarity-Sel', 0, 0.0],
+    ['SI-13C4:TI-DCCT:RFDelayType-Sel', 0, 0.0],
+    ['SI-13C4:TI-DCCT:Src-Sel', 0, 0.0],
+    ['SI-13C4:TI-DCCT:State-Sel', 0, 0.0],
+
+    ['SI-14C4:TI-DCCT:ByPassIntlk-Sel', 0, 0.0],
+    ['SI-14C4:TI-DCCT:Delay-SP', 0, 0.0],  # us
+    ['SI-14C4:TI-DCCT:Duration-SP', 0, 0.0],  # us
+    ['SI-14C4:TI-DCCT:NrPulses-SP', 0, 0.0],
+    ['SI-14C4:TI-DCCT:Polarity-Sel', 0, 0.0],
+    ['SI-14C4:TI-DCCT:RFDelayType-Sel', 0, 0.0],
+    ['SI-14C4:TI-DCCT:Src-Sel', 0, 0.0],
+    ['SI-14C4:TI-DCCT:State-Sel', 0, 0.0],
+
+    ['SI-Glob:TI-StrkCam-Trig1:ByPassIntlk-Sel', 0, 0.0],
+    ['SI-Glob:TI-StrkCam-Trig1:Delay-SP', 0, 0.0],  # us
+    ['SI-Glob:TI-StrkCam-Trig1:Duration-SP', 0, 0.0],  # us
+    ['SI-Glob:TI-StrkCam-Trig1:NrPulses-SP', 0, 0.0],
+    ['SI-Glob:TI-StrkCam-Trig1:Polarity-Sel', 0, 0.0],
+    ['SI-Glob:TI-StrkCam-Trig1:RFDelayType-Sel', 0, 0.0],
+    ['SI-Glob:TI-StrkCam-Trig1:Src-Sel', 0, 0.0],
+    ['SI-Glob:TI-StrkCam-Trig1:State-Sel', 0, 0.0],
+
+    ['SI-Glob:TI-StrkCam-Trig2:ByPassIntlk-Sel', 0, 0.0],
+    ['SI-Glob:TI-StrkCam-Trig2:Delay-SP', 0, 0.0],  # us
+    ['SI-Glob:TI-StrkCam-Trig2:Duration-SP', 0, 0.0],  # us
+    ['SI-Glob:TI-StrkCam-Trig2:NrPulses-SP', 0, 0.0],
+    ['SI-Glob:TI-StrkCam-Trig2:Polarity-Sel', 0, 0.0],
+    ['SI-Glob:TI-StrkCam-Trig2:RFDelayType-Sel', 0, 0.0],
+    ['SI-Glob:TI-StrkCam-Trig2:Src-Sel', 0, 0.0],
+    ['SI-Glob:TI-StrkCam-Trig2:State-Sel', 0, 0.0],
+
+    ['TB-Fam:TI-ICT-Digit:ByPassIntlk-Sel', 0, 0.0],
+    ['TB-Fam:TI-ICT-Digit:Delay-SP', 0, 0.0],  # us
+    ['TB-Fam:TI-ICT-Digit:Duration-SP', 0, 0.0],  # us
+    ['TB-Fam:TI-ICT-Digit:NrPulses-SP', 0, 0.0],
+    ['TB-Fam:TI-ICT-Digit:Polarity-Sel', 0, 0.0],
+    ['TB-Fam:TI-ICT-Digit:Src-Sel', 0, 0.0],
+    ['TB-Fam:TI-ICT-Digit:State-Sel', 0, 0.0],
+
+    ['TB-Fam:TI-ICT-Integ:ByPassIntlk-Sel', 0, 0.0],
+    ['TB-Fam:TI-ICT-Integ:Delay-SP', 0, 0.0],  # us
+    ['TB-Fam:TI-ICT-Integ:Duration-SP', 0, 0.0],  # us
+    ['TB-Fam:TI-ICT-Integ:NrPulses-SP', 0, 0.0],
+    ['TB-Fam:TI-ICT-Integ:Polarity-Sel', 0, 0.0],
+    ['TB-Fam:TI-ICT-Integ:Src-Sel', 0, 0.0],
+    ['TB-Fam:TI-ICT-Integ:State-Sel', 0, 0.0],
+
+    ['TS-Fam:TI-ICT-Digit:ByPassIntlk-Sel', 0, 0.0],
+    ['TS-Fam:TI-ICT-Digit:Delay-SP', 0, 0.0],  # us
+    ['TS-Fam:TI-ICT-Digit:Duration-SP', 0, 0.0],  # us
+    ['TS-Fam:TI-ICT-Digit:NrPulses-SP', 0, 0.0],
+    ['TS-Fam:TI-ICT-Digit:Polarity-Sel', 0, 0.0],
+    ['TS-Fam:TI-ICT-Digit:Src-Sel', 0, 0.0],
+    ['TS-Fam:TI-ICT-Digit:State-Sel', 0, 0.0],
+
+    ['TS-Fam:TI-ICT-Integ:ByPassIntlk-Sel', 0, 0.0],
+    ['TS-Fam:TI-ICT-Integ:Delay-SP', 0, 0.0],  # us
+    ['TS-Fam:TI-ICT-Integ:Duration-SP', 0, 0.0],  # us
+    ['TS-Fam:TI-ICT-Integ:NrPulses-SP', 0, 0.0],
+    ['TS-Fam:TI-ICT-Integ:Polarity-Sel', 0, 0.0],
+    ['TS-Fam:TI-ICT-Integ:Src-Sel', 0, 0.0],
+    ['TS-Fam:TI-ICT-Integ:State-Sel', 0, 0.0],
+
+    ['TS-Fam:TI-Scrn:ByPassIntlk-Sel', 0, 0.0],
+    ['TS-Fam:TI-Scrn:Delay-SP', 0, 0.0],  # us
+    ['TS-Fam:TI-Scrn:Duration-SP', 0, 0.0],  # us
+    ['TS-Fam:TI-Scrn:NrPulses-SP', 0, 0.0],
+    ['TS-Fam:TI-Scrn:Polarity-Sel', 0, 0.0],
+    ['TS-Fam:TI-Scrn:RFDelayType-Sel', 0, 0.0],
+    ['TS-Fam:TI-Scrn:Src-Sel', 0, 0.0],
+    ['TS-Fam:TI-Scrn:State-Sel', 0, 0.0],
+]
+
 _bpm_pvs = [
     # AMCFPGAEVR PVs related to BPMs
-    ['IA-01RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],
-    ['IA-01RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],
-    ['IA-02RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],
-    ['IA-02RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],
-    ['IA-03RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],
-    ['IA-03RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],
-    ['IA-04RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],
-    ['IA-04RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],
-    ['IA-05RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],
-    ['IA-05RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],
-    ['IA-06RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],
-    ['IA-06RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],
-    ['IA-07RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],
-    ['IA-07RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],
-    ['IA-08RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],
-    ['IA-08RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],
-    ['IA-09RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],
-    ['IA-09RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],
-    ['IA-10RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],
-    ['IA-10RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],
-    ['IA-11RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],
-    ['IA-11RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],
-    ['IA-12RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],
-    ['IA-12RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],
-    ['IA-13RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],
-    ['IA-13RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],
-    ['IA-14RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],
-    ['IA-14RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],
-    ['IA-15RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],
-    ['IA-15RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],
-    ['IA-16RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],
-    ['IA-16RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],
-    ['IA-17RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],
-    ['IA-17RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],
-    ['IA-18RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],
-    ['IA-18RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],
-    ['IA-19RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],
-    ['IA-19RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],
-    ['IA-20RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],
-    ['IA-20RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],
-    ['IA-20RaBPMTL:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],
-    ['IA-20RaBPMTL:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],
+    ['IA-01RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],    # Hz
+    ['IA-01RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],     # Hz
+    ['IA-02RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],    # Hz
+    ['IA-02RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],     # Hz
+    ['IA-03RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],    # Hz
+    ['IA-03RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],     # Hz
+    ['IA-04RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],    # Hz
+    ['IA-04RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],     # Hz
+    ['IA-05RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],    # Hz
+    ['IA-05RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],     # Hz
+    ['IA-06RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],    # Hz
+    ['IA-06RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],     # Hz
+    ['IA-07RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],    # Hz
+    ['IA-07RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],     # Hz
+    ['IA-08RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],    # Hz
+    ['IA-08RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],     # Hz
+    ['IA-09RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],    # Hz
+    ['IA-09RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],     # Hz
+    ['IA-10RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],    # Hz
+    ['IA-10RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],     # Hz
+    ['IA-11RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],    # Hz
+    ['IA-11RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],     # Hz
+    ['IA-12RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],    # Hz
+    ['IA-12RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],     # Hz
+    ['IA-13RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],    # Hz
+    ['IA-13RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],     # Hz
+    ['IA-14RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],    # Hz
+    ['IA-14RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],     # Hz
+    ['IA-15RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],    # Hz
+    ['IA-15RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],     # Hz
+    ['IA-16RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],    # Hz
+    ['IA-16RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],     # Hz
+    ['IA-17RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],    # Hz
+    ['IA-17RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],     # Hz
+    ['IA-18RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],    # Hz
+    ['IA-18RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],     # Hz
+    ['IA-19RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],    # Hz
+    ['IA-19RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],     # Hz
+    ['IA-20RaBPM:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],    # Hz
+    ['IA-20RaBPM:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],     # Hz
+    ['IA-20RaBPMTL:TI-AMCFPGAEVR:RTMFreq-SP', 124914500, 0.0],  # Hz
+    ['IA-20RaBPMTL:TI-AMCFPGAEVR:AFCFreq-SP', 69396944, 0.0],   # Hz
 
     # TB BPMs
     ['TB-01:DI-BPM-1:INFOClkProp-Sel', 0, 0.0],
@@ -62171,4 +62434,4 @@ _bpm_pvs = [
 # in the configuration. The second numeric parameter in the pair is the
 # delay [s] the client should wait before setting the next PV.
 
-_template_dict = {'pvs': _bpm_pvs}
+_template_dict = {'pvs': _timing_pvs + _li_diags + _bpm_pvs}
