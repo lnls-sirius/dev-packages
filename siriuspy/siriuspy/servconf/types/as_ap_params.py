@@ -63,7 +63,6 @@ _tb_sofb = [
 ]
 
 _bo_sofb = [
-    ['BO-Glob:AP-SOFB:AutoCorr-Sel', 0, 0.0],
     ['BO-Glob:AP-SOFB:AutoCorrFreq-SP', 0.0, 0.0],
     ['BO-Glob:AP-SOFB:BPMXEnblList-SP', [0, ]*50, 0.0],
     ['BO-Glob:AP-SOFB:BPMYEnblList-SP', [0, ]*50, 0.0],
@@ -158,7 +157,6 @@ _ts_sofb = [
 ]
 
 _si_sofb = [
-    ['SI-Glob:AP-SOFB:AutoCorr-Sel', 0, 0.0],
     ['SI-Glob:AP-SOFB:AutoCorrFreq-SP', 0.0, 0.0],
     ['SI-Glob:AP-SOFB:BPMXEnblList-SP', [0, ]*160, 0.0],
     ['SI-Glob:AP-SOFB:BPMYEnblList-SP', [0, ]*160, 0.0],
