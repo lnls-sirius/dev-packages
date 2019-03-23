@@ -443,80 +443,80 @@ _pvs_timing = [
     ['SI-19C4:TI-PingV:Src-Sel', 0, 0.0],
     ['SI-19C4:TI-PingV:State-Sel', 0, 0.0],
 
-    ['SI-Glob:DI-BbBProcH-Fid:ByPassIntlk-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcH-Fid:Delay-SP', 0, 0.0],  # us
-    ['SI-Glob:DI-BbBProcH-Fid:Duration-SP', 0, 0.0],  # us
-    ['SI-Glob:DI-BbBProcH-Fid:NrPulses-SP', 0, 0.0],
-    ['SI-Glob:DI-BbBProcH-Fid:Polarity-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcH-Fid:RFDelayType-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcH-Fid:Src-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcH-Fid:State-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcH-Fid:ByPassIntlk-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcH-Fid:Delay-SP', 0, 0.0],  # us
+    ['SI-Glob:TI-BbBProcH-Fid:Duration-SP', 0, 0.0],  # us
+    ['SI-Glob:TI-BbBProcH-Fid:NrPulses-SP', 0, 0.0],
+    ['SI-Glob:TI-BbBProcH-Fid:Polarity-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcH-Fid:RFDelayType-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcH-Fid:Src-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcH-Fid:State-Sel', 0, 0.0],
 
-    ['SI-Glob:DI-BbBProcH-Trig1:ByPassIntlk-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcH-Trig1:Delay-SP', 0, 0.0],  # us
-    ['SI-Glob:DI-BbBProcH-Trig1:Duration-SP', 0, 0.0],  # us
-    ['SI-Glob:DI-BbBProcH-Trig1:NrPulses-SP', 0, 0.0],
-    ['SI-Glob:DI-BbBProcH-Trig1:Polarity-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcH-Trig1:Src-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcH-Trig1:State-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcH-Trig1:ByPassIntlk-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcH-Trig1:Delay-SP', 0, 0.0],  # us
+    ['SI-Glob:TI-BbBProcH-Trig1:Duration-SP', 0, 0.0],  # us
+    ['SI-Glob:TI-BbBProcH-Trig1:NrPulses-SP', 0, 0.0],
+    ['SI-Glob:TI-BbBProcH-Trig1:Polarity-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcH-Trig1:Src-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcH-Trig1:State-Sel', 0, 0.0],
 
-    ['SI-Glob:DI-BbBProcH-Trig2:ByPassIntlk-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcH-Trig2:Delay-SP', 0, 0.0],  # us
-    ['SI-Glob:DI-BbBProcH-Trig2:Duration-SP', 0, 0.0],  # us
-    ['SI-Glob:DI-BbBProcH-Trig2:NrPulses-SP', 0, 0.0],
-    ['SI-Glob:DI-BbBProcH-Trig2:Polarity-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcH-Trig2:Src-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcH-Trig2:State-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcH-Trig2:ByPassIntlk-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcH-Trig2:Delay-SP', 0, 0.0],  # us
+    ['SI-Glob:TI-BbBProcH-Trig2:Duration-SP', 0, 0.0],  # us
+    ['SI-Glob:TI-BbBProcH-Trig2:NrPulses-SP', 0, 0.0],
+    ['SI-Glob:TI-BbBProcH-Trig2:Polarity-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcH-Trig2:Src-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcH-Trig2:State-Sel', 0, 0.0],
 
-    ['SI-Glob:DI-BbBProcL-Fid:ByPassIntlk-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcL-Fid:Delay-SP', 0, 0.0],  # us
-    ['SI-Glob:DI-BbBProcL-Fid:Duration-SP', 0, 0.0],  # us
-    ['SI-Glob:DI-BbBProcL-Fid:NrPulses-SP', 0, 0.0],
-    ['SI-Glob:DI-BbBProcL-Fid:Polarity-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcL-Fid:RFDelayType-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcL-Fid:Src-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcL-Fid:State-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcL-Fid:ByPassIntlk-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcL-Fid:Delay-SP', 0, 0.0],  # us
+    ['SI-Glob:TI-BbBProcL-Fid:Duration-SP', 0, 0.0],  # us
+    ['SI-Glob:TI-BbBProcL-Fid:NrPulses-SP', 0, 0.0],
+    ['SI-Glob:TI-BbBProcL-Fid:Polarity-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcL-Fid:RFDelayType-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcL-Fid:Src-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcL-Fid:State-Sel', 0, 0.0],
 
-    ['SI-Glob:DI-BbBProcL-Trig1:ByPassIntlk-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcL-Trig1:Delay-SP', 0, 0.0],  # us
-    ['SI-Glob:DI-BbBProcL-Trig1:Duration-SP', 0, 0.0],  # us
-    ['SI-Glob:DI-BbBProcL-Trig1:NrPulses-SP', 0, 0.0],
-    ['SI-Glob:DI-BbBProcL-Trig1:Polarity-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcL-Trig1:Src-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcL-Trig1:State-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcL-Trig1:ByPassIntlk-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcL-Trig1:Delay-SP', 0, 0.0],  # us
+    ['SI-Glob:TI-BbBProcL-Trig1:Duration-SP', 0, 0.0],  # us
+    ['SI-Glob:TI-BbBProcL-Trig1:NrPulses-SP', 0, 0.0],
+    ['SI-Glob:TI-BbBProcL-Trig1:Polarity-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcL-Trig1:Src-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcL-Trig1:State-Sel', 0, 0.0],
 
-    ['SI-Glob:DI-BbBProcL-Trig2:ByPassIntlk-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcL-Trig2:Delay-SP', 0, 0.0],  # us
-    ['SI-Glob:DI-BbBProcL-Trig2:Duration-SP', 0, 0.0],  # us
-    ['SI-Glob:DI-BbBProcL-Trig2:NrPulses-SP', 0, 0.0],
-    ['SI-Glob:DI-BbBProcL-Trig2:Polarity-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcL-Trig2:Src-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcL-Trig2:State-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcL-Trig2:ByPassIntlk-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcL-Trig2:Delay-SP', 0, 0.0],  # us
+    ['SI-Glob:TI-BbBProcL-Trig2:Duration-SP', 0, 0.0],  # us
+    ['SI-Glob:TI-BbBProcL-Trig2:NrPulses-SP', 0, 0.0],
+    ['SI-Glob:TI-BbBProcL-Trig2:Polarity-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcL-Trig2:Src-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcL-Trig2:State-Sel', 0, 0.0],
 
-    ['SI-Glob:DI-BbBProcV-Fid:ByPassIntlk-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcV-Fid:Delay-SP', 0, 0.0],  # us
-    ['SI-Glob:DI-BbBProcV-Fid:Duration-SP', 0, 0.0],  # us
-    ['SI-Glob:DI-BbBProcV-Fid:NrPulses-SP', 0, 0.0],
-    ['SI-Glob:DI-BbBProcV-Fid:Polarity-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcV-Fid:RFDelayType-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcV-Fid:Src-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcV-Fid:State-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcV-Fid:ByPassIntlk-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcV-Fid:Delay-SP', 0, 0.0],  # us
+    ['SI-Glob:TI-BbBProcV-Fid:Duration-SP', 0, 0.0],  # us
+    ['SI-Glob:TI-BbBProcV-Fid:NrPulses-SP', 0, 0.0],
+    ['SI-Glob:TI-BbBProcV-Fid:Polarity-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcV-Fid:RFDelayType-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcV-Fid:Src-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcV-Fid:State-Sel', 0, 0.0],
 
-    ['SI-Glob:DI-BbBProcV-Trig1:ByPassIntlk-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcV-Trig1:Delay-SP', 0, 0.0],  # us
-    ['SI-Glob:DI-BbBProcV-Trig1:Duration-SP', 0, 0.0],  # us
-    ['SI-Glob:DI-BbBProcV-Trig1:NrPulses-SP', 0, 0.0],
-    ['SI-Glob:DI-BbBProcV-Trig1:Polarity-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcV-Trig1:Src-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcV-Trig1:State-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcV-Trig1:ByPassIntlk-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcV-Trig1:Delay-SP', 0, 0.0],  # us
+    ['SI-Glob:TI-BbBProcV-Trig1:Duration-SP', 0, 0.0],  # us
+    ['SI-Glob:TI-BbBProcV-Trig1:NrPulses-SP', 0, 0.0],
+    ['SI-Glob:TI-BbBProcV-Trig1:Polarity-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcV-Trig1:Src-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcV-Trig1:State-Sel', 0, 0.0],
 
-    ['SI-Glob:DI-BbBProcV-Trig2:ByPassIntlk-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcV-Trig2:Delay-SP', 0, 0.0],  # us
-    ['SI-Glob:DI-BbBProcV-Trig2:Duration-SP', 0, 0.0],  # us
-    ['SI-Glob:DI-BbBProcV-Trig2:NrPulses-SP', 0, 0.0],
-    ['SI-Glob:DI-BbBProcV-Trig2:Polarity-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcV-Trig2:Src-Sel', 0, 0.0],
-    ['SI-Glob:DI-BbBProcV-Trig2:State-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcV-Trig2:ByPassIntlk-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcV-Trig2:Delay-SP', 0, 0.0],  # us
+    ['SI-Glob:TI-BbBProcV-Trig2:Duration-SP', 0, 0.0],  # us
+    ['SI-Glob:TI-BbBProcV-Trig2:NrPulses-SP', 0, 0.0],
+    ['SI-Glob:TI-BbBProcV-Trig2:Polarity-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcV-Trig2:Src-Sel', 0, 0.0],
+    ['SI-Glob:TI-BbBProcV-Trig2:State-Sel', 0, 0.0],
 
     ['SI-Glob:TI-Corrs:Delay-SP', 0, 0.0],  # us
     ['SI-Glob:TI-Corrs:Duration-SP', 0, 0.0],  # us
