@@ -45,8 +45,8 @@ _pvs_li_llrf = [
     ['LA-RF:LLRF:BUN1:SET_CH7_DELAY', 0, 0.0],
     ['LA-RF:LLRF:BUN1:SET_CH8_DELAY', 0, 0.0],
     ['LA-RF:LLRF:BUN1:SET_TRIGGER_DELAY', 0, 0.0],
-    ['LA-RF:LLRF:BUN1:SET_AMP', 0.0, 0.0],
-    ['LA-RF:LLRF:BUN1:SET_PHASE', 0.0, 0.0],
+    ['LA-RF:LLRF:BUN1:SET_AMP', 0.0, 0.0],  # %
+    ['LA-RF:LLRF:BUN1:SET_PHASE', 0.0, 0.0],  # Degree
     ['LA-RF:LLRF:BUN1:SET_FB_MODE', 0, 0.0],
     ['LA-RF:LLRF:BUN1:SET_KP', 0, 0.0],
     ['LA-RF:LLRF:BUN1:SET_KI', 0, 0.0],
@@ -81,8 +81,9 @@ _pvs_li_llrf = [
     ['LA-RF:LLRF:KLY1:SET_CH8_DELAY', 0, 0.0],
     ['LA-RF:LLRF:KLY1:SET_CH9_DELAY', 0, 0.0],
     ['LA-RF:LLRF:KLY1:SET_TRIGGER_DELAY', 0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_AMP', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY1:SET_PHASE', 0.0, 0.0],
+    ['LA-RF:LLRF:KLY1:SET_AMP', 0.0, 0.0],  # %
+    ['LA-RF:LLRF:KLY1:SET_PHASE', 0.0, 0.0],  # Degree
+    ['LA-RF:LLRF:KLY1:SET_REFL_POWER_LIMIT', 0.0, 0.0],
     ['LA-RF:LLRF:KLY1:SET_FB_MODE', 0, 0.0],
     ['LA-RF:LLRF:KLY1:SET_KP', 0, 0.0],
     ['LA-RF:LLRF:KLY1:SET_KI', 0, 0.0],
@@ -129,8 +130,9 @@ _pvs_li_llrf = [
     ['LA-RF:LLRF:KLY2:SET_CH8_DELAY', 0, 0.0],
     ['LA-RF:LLRF:KLY2:SET_CH9_DELAY', 0, 0.0],
     ['LA-RF:LLRF:KLY2:SET_TRIGGER_DELAY', 0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_AMP', 0.0, 0.0],
-    ['LA-RF:LLRF:KLY2:SET_PHASE', 0.0, 0.0],
+    ['LA-RF:LLRF:KLY2:SET_AMP', 0.0, 0.0],  # %
+    ['LA-RF:LLRF:KLY2:SET_PHASE', 0.0, 0.0],  # Degree
+    ['LA-RF:LLRF:KLY2:SET_REFL_POWER_LIMIT', 0.0, 0.0],
     ['LA-RF:LLRF:KLY2:SET_FB_MODE', 0, 0.0],
     ['LA-RF:LLRF:KLY2:SET_KP', 0, 0.0],
     ['LA-RF:LLRF:KLY2:SET_KI', 0, 0.0],
