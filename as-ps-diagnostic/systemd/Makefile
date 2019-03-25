@@ -1,21 +1,21 @@
 
 install-tb:
-	@printf "Installing sirius-ioc-ps-diagnostic-tb service...\n"
-	cp -rf sirius-ioc-ps-diagnostic-tb.service /etc/systemd/system/
+	@printf "Installing sirius-ioc-tb-ps-diagnostic service...\n"
+	cp -rf sirius-ioc-tb-ps-diagnostic.service /etc/systemd/system/
 	mkdir -p /home/sirius/iocs
 	systemctl daemon-reload
 
 stop-tb:
-	@printf "Stopping  sirius-ioc-ps-diagnostic-tb...\n"
-	systemctl stop sirius-ioc-ps-diagnostic-tb.service
+	@printf "Stopping  sirius-ioc-tb-ps-diagnostic...\n"
+	systemctl stop sirius-ioc-tb-ps-diagnostic.service
 
 start-tb:
-	@printf "Starting  sirius-ioc-ps-diagnostic-tb...\n"
-	systemctl start sirius-ioc-ps-diagnostic-tb.service
+	@printf "Starting  sirius-ioc-tb-ps-diagnostic...\n"
+	systemctl start sirius-ioc-tb-ps-diagnostic.service
 
 uninstall-tb: stop-tb
-	@printf "Uninstalling  sirius-ioc-ps-diagnostic-tb...\n"
-	systemctl disable sirius-ioc-ps-diagnostic-tb.service
+	@printf "Uninstalling  sirius-ioc-tb-ps-diagnostic...\n"
+	systemctl disable sirius-ioc-tb-ps-diagnostic.service
 	rm -rf /etc/systemd/system/sirius-bbb-ioc-ps.service
 	systemctl daemon-reload
 	systemctl reset-failed
