@@ -1304,5 +1304,5 @@ _pvs_bo_ma = [
 _template_dict = {
     'pvs':
         _pvs_li_egunmod + _pvs_li_llrf + _pvs_timing + _pvs_li_pwrsupplies +
-        _pvs_tb_ma + _pvs_tb_pu + _pvs_bo_ma
+        _pvs_tb_ma + _pvs_pu + _pvs_bo_ma
     }
