@@ -1,5 +1,5 @@
 #!/usr/local/bin/python-sirius
-"""PSStatusPV."""
+"""PS Diag PVs."""
 
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.computer import Computer
