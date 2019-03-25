@@ -11,11 +11,13 @@ import pcaspy.tools as _pcaspy_tools
 
 from .driver import PSDiagDriver as _PSDiagDriver
 
-from siriuspy.util import get_timestamp as _get_timestamp
-from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.envars import vaca_prefix as _vaca_prefix
+from siriuspy.util import get_timestamp as _get_timestamp
 from siriuspy.util import configure_log_file as _config_log_file
 from siriuspy.util import print_ioc_banner as _print_ioc_banner
+from siriuspy.csdevice.psdiag import get_ps_diag_propty_database as \
+    _get_database
+from siriuspy.search import PSSearch as _PSSearch
 
 
 INTERVAL = 0.1
@@ -68,40 +70,24 @@ def run(section='', sub_section='', device='', debug=False):
         _log.warning('No devices found. Aborting.')
         _sys.exit(0)
 
+    # create PV database
     prefix = _vaca_prefix
-    devices = dict()
     pvdb = dict()
     for psname in psnames:
         _log.debug('{:32s}'.format(psname))
-        pstype = _PSSearch.conv_psname_2_pstype(psname)
-        splims = _PSSearch.conv_pstype_2_splims(pstype)
-        dtol = splims['DTOL']
-        devices[psname] = dtol
-        pvdb[psname + ':CurrentDiff-Mon'] = {
-            'type': 'float',
-            'value': 0.0,
-            'hilim': dtol,
-            'hihi': dtol,
-            'high': dtol,
-            'low': -dtol,
-            'lolo': -dtol,
-            'lolim': -dtol,
-        }
-        pvdb[psname + ':Status-Mon'] = {
-            'type': 'int',
-            'value': 0,
-            'hilim': 1,
-            'hihi': 1,
-            'high': 1,
-        }
-
+        db = _get_database(psname)
+        for key, value in db.items():
+            pvdb[psname + ':' + key] = value
+        pvdb
     _log.info("Creating server with %d devices and '%s' prefix",
-              len(devices), prefix)
+              len(psnames), prefix)
     _attribute_access_security_group(server, pvdb)
     server.createPV(prefix, pvdb)
+
+    # create driver
     _log.info('Creating driver')
     try:
-        driver = _PSDiagDriver(devices)
+        driver = _PSDiagDriver(psnames)
     except Exception:
         _log.error('Failed to create driver. Aborting', exc_info=True)
         _sys.exit(1)
