@@ -10,20 +10,22 @@ from pcaspy import Severity as _Severity
 from siriuspy.epics.computed_pv import ComputedPV as _ComputedPV
 from siriuspy.envars import vaca_prefix as _vaca_prefix
 from siriuspy.thread import QueueThread as _QueueThread
-from siriuspy.epics.psstatus_pv import PSStatusPV as _PSStatusPV
-from siriuspy.epics.psstatus_pv import PSDiffPV as _PSDiffPV
+from siriuspy.epics.psdiag_pv import PSStatusPV as _PSStatusPV
+from siriuspy.epics.psdiag_pv import PSDiffPV as _PSDiffPV
+
+
+SCAN_FREQUENCY = 2  # [Hz]
 
 
 class PSDiagDriver(_Driver):
     """Driver responsible for updating DB."""
 
-    def __init__(self, devices):
+    def __init__(self, psnames):
         """Create Computed PVs."""
         super().__init__()
-        self._devices = devices
+        self._psnames = psnames
         self._queue = _QueueThread()
         self.pvs = list()
-        self.frequency = 2  # [Hz]
         self.scanning = False
         self.quit = False
 
@@ -33,13 +35,13 @@ class PSDiagDriver(_Driver):
         self.t.start()
 
     def _create_computed_pvs(self):
-        for device in self._devices:
-            devname = _vaca_prefix + device
+        for psname in self._psnames:
+            devname = _vaca_prefix + psname
             # CurrentDiff-Mon
             pvs = [None, None]
             pvs[_PSDiffPV.CURRT_SP] = devname + ':Current-SP'
             pvs[_PSDiffPV.CURRT_MON] = devname + ':Current-Mon'
-            pv = _ComputedPV(device + ':CurrentDiff-Mon',
+            pv = _ComputedPV(psname + ':DiagCurrentDiff-Mon',
                              _PSDiffPV(),
                              self._queue,
                              pvs,
@@ -49,11 +51,11 @@ class PSDiagDriver(_Driver):
             pvs = [None, None, None, None, None]
             pvs[_PSStatusPV.OPMODE_SEL] = devname + ':OpMode-Sel'
             pvs[_PSStatusPV.OPMODE_STS] = devname + ':OpMode-Sts'
-            pvs[_PSStatusPV.CURRT_DIFF] = devname + ':CurrentDiff-Mon'
+            pvs[_PSStatusPV.CURRT_DIFF] = devname + ':DiagCurrentDiff-Mon'
             pvs[_PSStatusPV.INTLK_SOFT] = devname + ':IntlkSoft-Mon'
             pvs[_PSStatusPV.INTLK_HARD] = devname + ':IntlkHard-Mon'
-            # TODO: Add other interlocks for some PS types
-            pv = _ComputedPV(device + ':Status-Mon',
+            # TODO: Add other interlocks for PS types that hav them
+            pv = _ComputedPV(psname + ':DiagStatus-Mon',
                              _PSStatusPV(),
                              self._queue,
                              pvs,
@@ -72,4 +74,4 @@ class PSDiagDriver(_Driver):
                     else:
                         self.setParam(pv.pvname, pv.value)
                 self.updatePVs()
-            _time.sleep(1.0/self.frequency)
+            _time.sleep(1.0/SCAN_FREQUENCY)
