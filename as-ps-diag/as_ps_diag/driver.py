@@ -64,7 +64,12 @@ class PSDiagDriver(_Driver):
 
     def scan(self):
         """Run as a thread scanning PVs."""
-        connected = False
+        # TODO: can this be replaced by 'scan' field in DB?
+        # reset 'connected' to false for all PVs
+        connected = dict()
+        for pv in self.pvs:
+            connected[pv] = False
+
         while not self.quit:
             if self.scanning:
                 for pv in self.pvs:
@@ -74,18 +79,18 @@ class PSDiagDriver(_Driver):
                         _, pvname = pv.pvname.split(self._prefix)
                     pv.get()
                     if not pv.connected:
-                        connected = False
+                        connected[pv] = False
                         self.setParamStatus(pvname,
                                             _Alarm.TIMEOUT_ALARM,
                                             _Severity.INVALID_ALARM)
                         if 'DiagStatus' in pvname:
                             self.setParam(pvname, pv.value)
                     else:
-                        if not connected:
+                        if not connected[pv]:
                             self.setParamStatus(pvname,
                                                 _Alarm.NO_ALARM,
                                                 _Severity.NO_ALARM)
-                        connected = True
+                        connected[pv] = True
                         self.setParam(pvname, pv.value)
                 self.updatePVs()
             _time.sleep(1.0/SCAN_FREQUENCY)
