@@ -64,14 +64,21 @@ class PSDiagDriver(_Driver):
 
     def scan(self):
         """Run as a thread scanning PVs."""
+        connected = False
         while not self.quit:
             if self.scanning:
                 for pv in self.pvs:
                     if not pv.connected:
+                        connected = False
                         self.setParamStatus(pv.pvname,
                                             _Alarm.TIMEOUT_ALARM,
                                             _Severity.INVALID_ALARM)
                     else:
+                        if not connected:
+                            self.setParamStatus(pv.pvname,
+                                                _Alarm.NO_ALARM,
+                                                _Severity.NO_ALARM)
+                        connected = True
                         self.setParam(pv.pvname, pv.value)
                 self.updatePVs()
             _time.sleep(1.0/SCAN_FREQUENCY)
