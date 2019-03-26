@@ -161,49 +161,58 @@ class BPM(_BaseTimingConfig):
             pv.put(val, wait=False)
 
     @property
-    def tbtperiod(self):
+    def adcfreq(self):
+        defv = 218446014.0 if self._csorb.acc == 'BO' else 220870069.0
+        pv = self._config_pvs_rb['INFOClkFreq']
+        val = pv.value if pv.connected else defv
+        return val if val else defv
+
+    @property
+    def tbtrate(self):
+        defv = 362 if self._csorb.acc == 'BO' else 382
         pv = self._config_pvs_rb['INFOTBTRate']
-        pvfreq = self._config_pvs_rb['INFOClkFreq']
-        if pv.connected and pvfreq.connected:
-            val1 = pv.value
-            val2 = pvfreq.value
-            if val1 is not None and val2 is not None:
-                return val1/val2
-        return self._csorb.T0
+        val = pv.value if pv.connected else defv
+        return val if val else defv
+
+    @property
+    def tbtperiod(self):
+        return self.tbtrate / self.adcfreq
+
+    @property
+    def fofbrate(self):
+        defv = (362 if self._csorb.acc == 'BO' else 382) * 24
+        pv = self._config_pvs_rb['INFOFOFBRate']
+        val = pv.value if pv.connected else defv
+        return val if val else defv
 
     @property
     def fofbperiod(self):
-        pv = self._config_pvs_rb['INFOFOFBRate']
-        pvfreq = self._config_pvs_rb['INFOClkFreq']
-        if pv.connected and pvfreq.connected:
-            val1 = pv.value
-            val2 = pvfreq.value
-            if val1 is not None and val2 is not None:
-                return val1/val2
-        return self._csorb.T0 * 24
+        return self.fofbrate / self.adcfreq
+
+    @property
+    def monitrate(self):
+        defv = (362 if self._csorb.acc == 'BO' else 382) * 59904
+        pv = self._config_pvs_rb['INFOMONITRate']
+        val = pv.value if pv.connected else defv
+        return val if val else defv
 
     @property
     def monitperiod(self):
-        pv = self._config_pvs_rb['INFOMONITRate']
-        pvfreq = self._config_pvs_rb['INFOClkFreq']
-        if pv.connected and pvfreq.connected:
-            val1 = pv.value
-            val2 = pvfreq.value
-            if val1 is not None and val2 is not None:
-                return val1/val2
-        return self._csorb.T0 * 59904
+        return self.monitrate / self.adcfreq
+
+    @property
+    def monit1rate(self):
+        defv = (362 if self._csorb.acc == 'BO' else 382) * 603
+        # Not implemented in BPMs IOCs yet.
+        # pv = self._config_pvs_rb['INFOMONIT1Rate']
+        # val = pv.value if pv.connected else defv
+        # return val if val else defv
+        return defv
 
     @property
     def monit1period(self):
-        # Not implemented in BPMs IOCs yet.
-        # pv = self._config_pvs_rb['INFOMONITRate']
-        # pvfreq = self._config_pvs_rb['INFOClkFreq']
-        # if pv.connected and pvfreq.connected:
-        #     val1 = pv.value
-        #     val2 = pvfreq.value
-        #     if val1 is not None and val2 is not None:
-        #         return val1/val2
-        return self._csorb.T0 * 603
+        return self.monit1rate / self.adcfreq
+
 
     @property
     def mode(self):
