@@ -194,13 +194,12 @@ class TimingConfig(_BaseTimingConfig):
         trig = self._csorb.TRIGGER_COR_NAME
         opt = {'connection_timeout': TIMEOUT}
         self._evt_sender = _PV(pref_name + 'ExtTrig-Cmd', **opt)
-        src_val = self._csorb.OrbitCorExtEvtSrc._fields.index(evt)
-        src_val = self._csorb.OrbitCorExtEvtSrc[src_val]
+        src_val = self._csorb.CorrExtEvtSrc._fields.index(evt)
+        src_val = self._csorb.CorrExtEvtSrc[src_val]
         self._config_ok_vals = {
             'Mode': _TIConst.EvtModes.External,
-            'Src': src_val,
-            'Delay': 0.0,
-            'NrPulses': 1, 'Duration': 0.1, 'State': 1, 'Polarity': 1,
+            'Src': src_val, 'Delay': 0.0,
+            'NrPulses': 1, 'Duration': 150.0, 'State': 1, 'Polarity': 0,
             }
         if _HLTimesearch.has_delay_type(trig):
             self._config_ok_vals['RFDelayType'] = _TIConst.TrigDlyTyp.Manual
@@ -259,10 +258,10 @@ class EpicsCorrectors(BaseCorrectors):
         """Get the database of the class."""
         db = self._csorb.get_corrs_database()
         prop = 'fun_set_pv'
-        db['ConfigCorrs-Cmd'][prop] = self.configure_correctors
+        db['CorrConfig-Cmd'][prop] = self.configure_correctors
         db['KickAcqRate-SP'][prop] = self.set_kick_acq_rate
         if self.isring:
-            db['SyncKicks-Sel'][prop] = self.set_chcvs_mode
+            db['CorrSync-Sel'][prop] = self.set_chcvs_mode
             db['NominalFreqRF-SP'][prop] = self.set_nominal_rf_freq
         db = super().get_database(db)
         return db
@@ -380,18 +379,18 @@ class EpicsCorrectors(BaseCorrectors):
 
     def _update_corrs_strength(self):
         corr_vals = self.get_strength()
-        self.run_callbacks('KicksCH-Mon', corr_vals[:self._csorb.NR_CH])
+        self.run_callbacks('KickCH-Mon', corr_vals[:self._csorb.NR_CH])
         self.run_callbacks(
-            'KicksCV-Mon', corr_vals[self._csorb.NR_CH:self._csorb.NR_CHCV])
+            'KickCV-Mon', corr_vals[self._csorb.NR_CH:self._csorb.NR_CHCV])
         if self.isring:
-            self.run_callbacks('KicksRF-Mon', corr_vals[-1])
+            self.run_callbacks('KickRF-Mon', corr_vals[-1])
 
     def set_chcvs_mode(self, value):
         """Set mode of CHs and CVs method."""
         self._synced_kicks = value
-        if self._synced_kicks == self._csorb.SyncKicks.On:
+        if self._synced_kicks == self._csorb.CorrSync.On:
             val = _PSConst.OpMode.SlowRefSync
-        elif self._synced_kicks == self._csorb.SyncKicks.Off:
+        elif self._synced_kicks == self._csorb.CorrSync.Off:
             val = _PSConst.OpMode.SlowRef
 
         for corr in self._chcvs:
@@ -406,12 +405,12 @@ class EpicsCorrectors(BaseCorrectors):
                                     'Sync' if value else 'Async')
         self._update_log(msg)
         _log.info(msg)
-        self.run_callbacks('SyncKicks-Sts', value)
+        self.run_callbacks('CorrSync-Sts', value)
         return True
 
     def configure_correctors(self, _):
         """Configure correctors method."""
-        if self.isring and self._synced_kicks == self._csorb.SyncKicks.On:
+        if self.isring and self._synced_kicks == self._csorb.CorrSync.On:
             val = _PSConst.OpMode.SlowRefSync
         else:
             val = _PSConst.OpMode.SlowRef

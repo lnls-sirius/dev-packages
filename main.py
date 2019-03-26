@@ -23,9 +23,9 @@ class SOFB(_BaseClass):
         db = self._csorb.get_sofb_database()
         prop = 'fun_set_pv'
         db['MeasRespMat-Cmd'][prop] = self.set_respmat_meas_state
-        db['CalcCorr-Cmd'][prop] = self.calc_correction
-        db['CorrFactorCH-SP'][prop] = _part(self.set_corr_factor, 'ch')
-        db['CorrFactorCV-SP'][prop] = _part(self.set_corr_factor, 'cv')
+        db['CalcDelta-Cmd'][prop] = self.calc_correction
+        db['DeltaFactorCH-SP'][prop] = _part(self.set_corr_factor, 'ch')
+        db['DeltaFactorCV-SP'][prop] = _part(self.set_corr_factor, 'cv')
         db['MaxKickCH-SP'][prop] = _part(self.set_max_kick, 'ch')
         db['MaxKickCV-SP'][prop] = _part(self.set_max_kick, 'cv')
         db['MaxDeltaKickCH-SP'][prop] = _part(self.set_max_delta_kick, 'ch')
@@ -33,11 +33,11 @@ class SOFB(_BaseClass):
         db['MeasRespMatKickCH-SP'][prop] = _part(self.set_respmat_kick, 'ch')
         db['MeasRespMatKickCV-SP'][prop] = _part(self.set_respmat_kick, 'cv')
         db['MeasRespMatWait-SP'][prop] = self.set_respmat_wait_time
-        db['ApplyCorr-Cmd'][prop] = self.apply_corr
+        db['ApplyDelta-Cmd'][prop] = self.apply_corr
         if self.isring:
-            db['AutoCorr-Sel'][prop] = self.set_auto_corr
-            db['AutoCorrFreq-SP'][prop] = self.set_auto_corr_frequency
-            db['CorrFactorRF-SP'][prop] = _part(self.set_corr_factor, 'rf')
+            db['ClosedLoop-Sel'][prop] = self.set_auto_corr
+            db['ClosedLoopFreq-SP'][prop] = self.set_auto_corr_frequency
+            db['DeltaFactorRF-SP'][prop] = _part(self.set_corr_factor, 'rf')
             db['MaxKickRF-SP'][prop] = _part(self.set_max_kick, 'rf')
             db['MaxDeltaKickRF-SP'][prop] = _part(
                 self.set_max_delta_kick, 'rf')
@@ -58,7 +58,7 @@ class SOFB(_BaseClass):
         self._driver = None
         self._orbit = self._correctors = self._matrix = None
         if self.isring:
-            self._auto_corr = self._csorb.AutoCorr.Off
+            self._auto_corr = self._csorb.ClosedLoop.Off
             self._auto_corr_freq = 1
         self._measuring_respmat = False
         self._corr_factor = {'ch': 1.00, 'cv': 1.00}
@@ -156,13 +156,13 @@ class SOFB(_BaseClass):
 
     def apply_corr(self, code):
         """Apply calculated kicks on the correctors."""
-        # if self.orbit.mode == self._csorb.OrbitMode.Offline:
+        # if self.orbit.mode == self._csorb.SOFBMode.Offline:
         #     msg = 'ERR: Offline, cannot apply kicks.'
         #     self._update_log(msg)
         #     _log.error(msg[5:])
         #     return False
         if self._thread and self._thread.is_alive():
-            msg = 'ERR: AutoCorr or MeasRespMat is On.'
+            msg = 'ERR: Loop is Closed or MeasRespMat is On.'
             self._update_log(msg)
             _log.error(msg[5:])
             return False
@@ -179,7 +179,7 @@ class SOFB(_BaseClass):
     def calc_correction(self, _):
         """Calculate correction."""
         if self._thread and self._thread.is_alive():
-            msg = 'ERR: AutoCorr or MeasRespMat is On.'
+            msg = 'ERR: Loop is Closed or MeasRespMat is On.'
             self._update_log(msg)
             _log.error(msg[5:])
             return False
@@ -196,9 +196,9 @@ class SOFB(_BaseClass):
         return True
 
     def set_auto_corr(self, value):
-        if value == self._csorb.AutoCorr.On:
-            if self._auto_corr == self._csorb.AutoCorr.On:
-                msg = 'ERR: AutoCorr is Already On.'
+        if value == self._csorb.ClosedLoop.On:
+            if self._auto_corr == self._csorb.ClosedLoop.On:
+                msg = 'ERR: ClosedLoop is Already On.'
                 self._update_log(msg)
                 _log.error(msg[5:])
                 return False
@@ -207,15 +207,15 @@ class SOFB(_BaseClass):
                 self._update_log(msg)
                 _log.error(msg[5:])
                 return False
-            msg = 'Turning Auto Correction On.'
+            msg = 'Closing the Loop.'
             self._update_log(msg)
             _log.info(msg)
             self._auto_corr = value
             self._thread = _Thread(target=self._do_auto_corr,
                                    daemon=True)
             self._thread.start()
-        elif value == self._csorb.AutoCorr.Off:
-            msg = 'Turning Auto Correction Off.'
+        elif value == self._csorb.ClosedLoop.Off:
+            msg = 'Opening the Loop.'
             self._update_log(msg)
             _log.info(msg)
             self._auto_corr = value
@@ -223,7 +223,7 @@ class SOFB(_BaseClass):
 
     def set_auto_corr_frequency(self, value):
         self._auto_corr_freq = value
-        self.run_callbacks('AutoCorrFreq-RB', value)
+        self.run_callbacks('ClosedLoopFreq-RB', value)
         return True
 
     def set_max_kick(self, plane, value):
@@ -238,10 +238,10 @@ class SOFB(_BaseClass):
 
     def set_corr_factor(self, plane, value):
         self._corr_factor[plane] = value/100
-        msg = '{0:s} CorrFactor set to {1:6.2f}'.format(plane.upper(), value)
+        msg = '{0:s} DeltaFactor set to {1:6.2f}'.format(plane.upper(), value)
         self._update_log(msg)
         _log.info(msg)
-        self.run_callbacks('CorrFactor'+plane.upper()+'-RB', value)
+        self.run_callbacks('DeltaFactor'+plane.upper()+'-RB', value)
         return True
 
     def set_respmat_kick(self, plane, value):
@@ -262,16 +262,16 @@ class SOFB(_BaseClass):
     def _apply_corr(self, code):
         nr_ch = self._csorb.NR_CH
         dkicks = self._dtheta.copy()
-        if code == self._csorb.ApplyCorr.CH:
+        if code == self._csorb.ApplyDelta.CH:
             dkicks[nr_ch:] = 0
-        elif code == self._csorb.ApplyCorr.CV:
+        elif code == self._csorb.ApplyDelta.CV:
             dkicks[:nr_ch] = 0
             if self.isring:
                 dkicks[-1] = 0
-        elif self.isring and code == self._csorb.ApplyCorr.RF:
+        elif self.isring and code == self._csorb.ApplyDelta.RF:
             dkicks[:-1] = 0
         msg = 'Applying {0:s} kicks.'.format(
-                        self._csorb.ApplyCorr._fields[code])
+                        self._csorb.ApplyDelta._fields[code])
         self._update_log(msg)
         _log.info(msg)
         dkicks = self._process_kicks(self._ref_corr_kicks, dkicks)
@@ -345,7 +345,7 @@ class SOFB(_BaseClass):
             _log.error(msg[5:])
             return False
         if self._thread and self._thread.is_alive():
-            msg = 'ERR: Cannot Measure, AutoCorr is On.'
+            msg = 'ERR: Cannot Measure, Loop is Closed.'
             self._update_log(msg)
             _log.error(msg[5:])
             return False
@@ -399,17 +399,17 @@ class SOFB(_BaseClass):
         self._measuring_respmat = False
 
     def _do_auto_corr(self):
-        if self.orbit.mode != self._csorb.OrbitMode.Online:
+        if self.orbit.mode != self._csorb.SOFBMode.SlowOrb:
             msg = 'ERR: Can only Auto Correct in Online Mode'
             self._update_log(msg)
             _log.error(msg[5:])
-            self.run_callbacks('AutoCorr-Sel', 0)
-            self.run_callbacks('AutoCorr-Sts', 0)
+            self.run_callbacks('ClosedLoop-Sel', 0)
+            self.run_callbacks('ClosedLoop-Sts', 0)
             return
-        self.run_callbacks('AutoCorr-Sts', 1)
+        self.run_callbacks('ClosedLoop-Sts', 1)
         strn = 'TIMEIT: {0:20s} - {1:7.3f}'
-        while (self._auto_corr == self._csorb.AutoCorr.On and
-               self.orbit.mode == self._csorb.OrbitMode.Online):
+        while (self._auto_corr == self._csorb.ClosedLoop.On and
+               self.orbit.mode == self._csorb.SOFBMode.SlowOrb):
             t0 = _time.time()
             _log.debug('TIMEIT: BEGIN')
             orb = self.orbit.get_orbit()
@@ -423,11 +423,11 @@ class SOFB(_BaseClass):
             _log.debug(strn.format('get strength:', 1000*(t3-t2)))
             dkicks = self._process_kicks(kicks, dkicks)
             if dkicks is None:
-                self._auto_corr = self._csorb.AutoCorr.Off
-                msg = 'ERR: Exit Auto Correction'
+                self._auto_corr = self._csorb.ClosedLoop.Off
+                msg = 'ERR: Opening the Loop'
                 self._update_log(msg)
                 _log.error(msg[5:])
-                self.run_callbacks('AutoCorr-Sel', 0)
+                self.run_callbacks('ClosedLoop-Sel', 0)
                 continue
             t4 = _time.time()
             _log.debug(strn.format('process kicks:', 1000*(t4-t3)))
@@ -440,16 +440,16 @@ class SOFB(_BaseClass):
             _log.debug('TIMEIT: END')
             interval = 1/self._auto_corr_freq
             if dt > interval:
-                msg = 'WARN: AutoCorr took {0:6.2f}ms.'.format(dt*1000)
+                msg = 'WARN: Loop took {0:6.2f}ms.'.format(dt*1000)
                 self._update_log(msg)
                 _log.warning(msg[6:])
             dt = interval - dt
             if dt > 0:
                 _time.sleep(dt)
-        msg = 'Auto Correction is Off.'
+        msg = 'Loop is opened.'
         self._update_log(msg)
         _log.info(msg)
-        self.run_callbacks('AutoCorr-Sts', 0)
+        self.run_callbacks('ClosedLoop-Sts', 0)
 
     def _calc_correction(self):
         msg = 'Getting the orbit.'
@@ -488,7 +488,7 @@ class SOFB(_BaseClass):
             # Check if any kick is larger than the maximum allowed:
             ind, *_ = _np.where(_np.abs(kicks[slc]) > self._max_kick[pln])
             if ind.size:
-                msg = 'ERR: Corrs above MaxKick{0:s}.'.format(pln.upper())
+                msg = 'ERR: Kicks above MaxKick{0:s}.'.format(pln.upper())
                 self._update_log(msg)
                 _log.error(msg[5:])
                 return

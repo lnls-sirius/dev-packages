@@ -1,8 +1,7 @@
 """Definition module."""
 import math as _math
 import logging as _log
-from siriuspy.csdevice.orbitcorr import OrbitCorrDevFactory as \
-    _OrbitCorrDevFactory
+from siriuspy.csdevice.orbitcorr import SOFBFactory as _SOFBFactory
 from siriuspy.callbacks import Callback as _Callback
 
 
@@ -12,7 +11,7 @@ class BaseClass(_Callback):
     def __init__(self, acc, prefix='', callback=None):
         """Init method."""
         super().__init__(callback)
-        self._csorb = _OrbitCorrDevFactory.create(acc)
+        self._csorb = _SOFBFactory.create(acc)
         self._prefix = prefix
         self._status = 0b0
 
@@ -62,7 +61,7 @@ class BaseTimingConfig:
 
     def __init__(self, acc):
         """Init method."""
-        self._csorb = _OrbitCorrDevFactory.create(acc)
+        self._csorb = _SOFBFactory.create(acc)
         self._config_ok_vals = {}
         self._config_pvs_rb = {}
         self._config_pvs_sp = {}

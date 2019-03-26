@@ -23,7 +23,7 @@ class EpicsMatrix(BaseMatrix):
         db['CVEnblList-SP'][prop] = _part(self.set_enbl_list, 'cv')
         db['BPMXEnblList-SP'][prop] = _part(self.set_enbl_list, 'bpmx')
         db['BPMYEnblList-SP'][prop] = _part(self.set_enbl_list, 'bpmy')
-        db['NumSingValues-SP'][prop] = self.set_num_sing_values
+        db['NrSingValues-SP'][prop] = self.set_num_sing_values
         if self.isring:
             db['RFEnbl-Sel'][prop] = _part(self.set_enbl_list, 'rf')
         db = super().get_database(db)
@@ -78,11 +78,11 @@ class EpicsMatrix(BaseMatrix):
         """Calculate the kick from the orbit distortion given."""
         kicks = _np.dot(-self.inv_respmat, orbit)
         self.run_callbacks(
-                        'DeltaKicksCH-Mon', list(kicks[:self._csorb.NR_CH]))
+                        'DeltaKickCH-Mon', list(kicks[:self._csorb.NR_CH]))
         self.run_callbacks(
-                        'DeltaKicksCV-Mon', list(kicks[self._csorb.NR_CH:-1]))
+                        'DeltaKickCV-Mon', list(kicks[self._csorb.NR_CH:-1]))
         if self.isring:
-            self.run_callbacks('DeltaKicksRF-Mon', kicks[-1])
+            self.run_callbacks('DeltaKickRF-Mon', kicks[-1])
         return kicks
 
     def set_enbl_list(self, key, val):
@@ -112,7 +112,7 @@ class EpicsMatrix(BaseMatrix):
         if not self._calc_matrices():
             self.num_sing_values = bkup
             return False
-        self.run_callbacks('NumSingValues-RB', self.num_sing_values)
+        self.run_callbacks('NrSingValues-RB', self.num_sing_values)
         return True
 
     def _calc_matrices(self):
@@ -153,9 +153,9 @@ class EpicsMatrix(BaseMatrix):
             return False
         elif nsv < self.num_sing_values:
             self.num_sing_values = nsv
-            self.run_callbacks('NumSingValues-SP', nsv)
-            self.run_callbacks('NumSingValues-RB', nsv)
-            msg = 'WARN: NumSingValues had to be set to {0:d}.'.format(nsv)
+            self.run_callbacks('NrSingValues-SP', nsv)
+            self.run_callbacks('NrSingValues-RB', nsv)
+            msg = 'WARN: NrSingValues had to be set to {0:d}.'.format(nsv)
             self._update_log(msg)
             _log.warning(msg[6:])
         inv_s[self.num_sing_values:] = 0
