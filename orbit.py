@@ -503,6 +503,39 @@ class BPM(_BaseTimingConfig):
         if pv.connected:
             pv.put(val, wait=False)
 
+    def calc_sp_multiturn_pos(self, nturns, refx=0, refy=0, refsum=0):
+        downs = self.tbtrate
+        samp = downs * nturns
+        an = {
+            'A': self.spanta, 'B': self.spantb,
+            'C': self.spantc, 'D': self.spantd}
+        vs = dict()
+        zrs = np.zeros(samp*[0], dtype=bool)
+        for a, v in an.items():
+            nv = _np.full(samp, 0)
+            if v is None:
+                pass
+            elif v.size < samp:
+                nv[:v.size] = v
+            elif v.size >= samp:
+                nv = v[:samp]
+            zrs &= nv == 0
+            vs[a] = _np.std(nv.reshape(-1, downs), axis=1)
+
+        # handle cases where length read is smaller than required.
+        vld = _np.sum(zrs.reshape(-1, downs, axis=1)) == 0
+        vs = {a: v[vld] for a, v in vs.items()}
+
+        d1 = (vs['A'] - vs['B']) / (vs['A'] + vs['B'])
+        d2 = (vs['D'] - vs['C']) / (vs['D'] + vs['C'])
+        x = _np.full(nturns, refx)
+        y = _np.full(nturns, refy)
+        s = _np.full(nturns, refsum)
+        x[vld] = (d1 + d2)*self.kx/2
+        y[vld] = (d1 - d2)*self.ky/2
+        s[vld] = np.sum(vs.values()) * self.ksum
+        return x, y, s
+
 
 class TimingConfig(_BaseTimingConfig):
 
@@ -1043,6 +1076,7 @@ class EpicsOrbit(BaseOrbit):
             self._update_multiturn_orbits()
         elif self._mode == self._csorb.SOFBMode.SinglePass:
             self._update_online_orbits(sp=True)
+            # self._update_singlepass_orbits()
         elif self.isring:
             self._update_online_orbits(sp=False)
 
@@ -1120,6 +1154,31 @@ class EpicsOrbit(BaseOrbit):
             self.run_callbacks('MTurn' + name + '-Mon', orb.flatten())
             self.run_callbacks(
                 'MTurnIdx' + name + '-Mon', orb[idx, :].flatten())
+
+    def _update_singlepass_orbits(self):
+        orbs = {'X': [], 'Y': [], 'Sum': []}
+        nr_turns = 10
+        with self._lock_raw_orbs:  # I need the lock here to assure consistency
+            nr_pts = self._smooth_npts
+            for i, bpm in enumerate(self.bpms):
+                orbx, orby, Sum = bpm.calc_sp_multiturn_pos(
+                    nr_turns, self.ref_orbs['X'][i], self.ref_orbs['Y'][i])
+                orbs['X'].append(orbx)
+                orbs['Y'].append(orby)
+                orbs['Sum'].append(Sum)
+
+            for pln, raw in self.raw_sporbs.items():
+                norb = _np.array(orbs[pln], dtype=float)
+                raw.append(norb)
+                del raw[:-nr_pts]
+                if self._smooth_meth == self._csorb.SmoothMeth.Average:
+                    orb = _np.mean(raw, axis=0)
+                else:
+                    orb = _np.median(raw, axis=0)
+                orb = orb.flatten()
+                self.smooth_sporb[pln] = orb
+                name = ('Orb' if pln != 'Sum' else '') + pln
+                self.run_callbacks('SPass' + name + '-Mon', list(orb))
 
     def _update_status(self):
         status = 0b11111
