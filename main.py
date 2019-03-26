@@ -306,14 +306,10 @@ class SOFB(_BaseClass):
             self._update_log(msg)
             _log.error(msg[5:])
             return False
-        msg = 'Aborting measurement.'
+        msg = 'Aborting measurement. Wait...'
         self._update_log(msg)
         _log.info(msg)
         self._measuring_respmat = False
-        self._thread.join()
-        msg = 'Measurement aborted.'
-        self._update_log(msg)
-        _log.info(msg)
         return True
 
     def _reset_meas_respmat(self):
@@ -369,6 +365,9 @@ class SOFB(_BaseClass):
                 self.run_callbacks(
                     'MeasRespMat-Mon', self._csorb.MeasRespMatMon.Aborted)
                 self.correctors.apply_kicks(orig_kicks)
+                msg = 'Measurement aborted.'
+                self._update_log(msg)
+                _log.info(msg)
                 return
             msg = 'Varying Corrector {0:d} of {1:d}'.format(i+1, nr_corrs)
             self._update_log(msg)
