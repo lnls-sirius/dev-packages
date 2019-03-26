@@ -585,10 +585,10 @@ class ConnSOFB(_EpicsPropsList):
         """Get CH and CV delta kicks calculated by SOFB."""
         bo_sofb_db = _OrbitCorrConst(acc='BO')
         rb = self.readbacks
-        ch_dkicks = rb[ConnSOFB.IOC_Prefix + ':DeltaKicksCH']
+        ch_dkicks = rb[ConnSOFB.IOC_Prefix + ':DeltaKickCH']
         ch_names = bo_sofb_db.CH_NAMES
 
-        cv_dkicks = rb[ConnSOFB.IOC_Prefix + ':DeltaKicksCV']
+        cv_dkicks = rb[ConnSOFB.IOC_Prefix + ':DeltaKickCV']
         cv_names = bo_sofb_db.CV_NAMES
 
         corrs2dkicks_dict = dict()
@@ -601,10 +601,10 @@ class ConnSOFB(_EpicsPropsList):
     def _define_properties(self, prefix, connection_callback, callback):
         properties = (
             _EpicsProperty(
-                ConnSOFB.IOC_Prefix + ':DeltaKicksCH-Mon', prefix,
+                ConnSOFB.IOC_Prefix + ':DeltaKickCH-Mon', prefix,
                 connection_callback=connection_callback, callback=callback),
             _EpicsProperty(
-                ConnSOFB.IOC_Prefix + ':DeltaKicksCV-Mon', prefix,
+                ConnSOFB.IOC_Prefix + ':DeltaKickCV-Mon', prefix,
                 connection_callback=connection_callback, callback=callback),
             )
         return properties
