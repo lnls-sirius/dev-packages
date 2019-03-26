@@ -325,13 +325,8 @@ class SOFB(_BaseClass):
         return True
 
     def _start_meas_respmat(self):
-        if self._csorb.isring():
-            modes = (self._csorb.OrbitMode.Online,
-                     self._csorb.OrbitMode.SinglePass)
-        else:
-            modes = (self._csorb.OrbitMode.SinglePass,)
-        if self.orbit.mode not in modes:
-            msg = 'ERR: Can only Meas Respmat in Online/SinglePass Mode'
+        if self.orbit.mode == self._csorb.SOFBMode.Offline:
+            msg = 'ERR: Cannot Meas Respmat in Offline Mode'
             self._update_log(msg)
             _log.error(msg[5:])
             return False
