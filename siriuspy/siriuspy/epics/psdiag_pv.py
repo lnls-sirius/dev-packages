@@ -60,22 +60,23 @@ class PSStatusPV(Computer):
             not computed_pv.pvs[PSStatusPV.INTLK_HARD].connected
         if disconnected:
             value |= PSStatusPV.BIT_DISCONNTD
-        # opmode comparison
+            return {'value': value}
+
         sel = computed_pv.pvs[PSStatusPV.OPMODE_SEL].value
         sts = computed_pv.pvs[PSStatusPV.OPMODE_STS].value
         if sel is not None and sts is not None:
+            # opmode comparison
             opmode_sel = _ETypes.OPMODES[sel]
             opmode_sts = _ETypes.STATES[sts]
             if opmode_sel != opmode_sts:
                 value |= PSStatusPV.BIT_OPMODEDIF
+            # current diff
+            if opmode_sts == _PSConst.States.SlowRef:
+                severity = computed_pv.pvs[PSStatusPV.CURRT_DIFF].severity
+                if severity != 0:
+                    value |= PSStatusPV.BIT_CURRTDIFF
         else:
             value |= PSStatusPV.BIT_OPMODEDIF
-        # current diff
-        if opmode_sts == _PSConst.States.SlowRef or opmode_sts is None or \
-                opmode_sel != opmode_sts:
-            severity = computed_pv.pvs[PSStatusPV.CURRT_DIFF].severity
-            if severity != 0:
-                value |= PSStatusPV.BIT_CURRTDIFF
         # interlock soft
         intlksoft = computed_pv.pvs[PSStatusPV.INTLK_SOFT].value
         if intlksoft != 0 or intlksoft is None:
