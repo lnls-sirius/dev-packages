@@ -26,11 +26,18 @@ class BPM(_BaseTimingConfig):
         self._name = name
         self.ORB_CONV = self._csorb.ORBIT_CONVERSION_UNIT
         opt = {'connection_timeout': TIMEOUT}
+        self._kx = _PV(LL_PREF + self._name + ':PosKx-RB', **opt)
+        self._ky = _PV(LL_PREF + self._name + ':PosKy-RB', **opt)
+        self._ksum = _PV(LL_PREF + self._name + ':PosKsum-RB', **opt)
         self._posx = _PV(LL_PREF + self._name + ':PosX-Mon', **opt)
         self._posy = _PV(LL_PREF + self._name + ':PosY-Mon', **opt)
         self._spposx = _PV(LL_PREF + self._name + ':SPPosX-Mon', **opt)
         self._spposy = _PV(LL_PREF + self._name + ':SPPosY-Mon', **opt)
         self._spsum = _PV(LL_PREF + self._name + ':SPSum-Mon', **opt)
+        self._spanta = _PV(LL_PREF + self._name + ':SP_AArrayData', **opt)
+        self._spantb = _PV(LL_PREF + self._name + ':SP_BArrayData', **opt)
+        self._spantc = _PV(LL_PREF + self._name + ':SP_CArrayData', **opt)
+        self._spantd = _PV(LL_PREF + self._name + ':SP_DArrayData', **opt)
         self._arrayx = _PV(LL_PREF + self._name + ':GEN_XArrayData', **opt)
         self._arrayy = _PV(LL_PREF + self._name + ':GEN_YArrayData', **opt)
         self._arrays = _PV(LL_PREF + self._name + ':GEN_SUMArrayData', **opt)
@@ -131,7 +138,9 @@ class BPM(_BaseTimingConfig):
             self._posx, self._posy,
             self._spposx, self._spposy, self._spsum,
             self._arrayx, self._arrayy, self._arrays,
-            self._offsetx, self._offsety)
+            self._offsetx, self._offsety,
+            self._spanta, self._spantb, self._spantc, self._spantd,
+            self._kx, self._ky, self._ksum)
         for pv in pvs:
             if not pv.connected:
                 _log.debug('NOT CONN: ' + pv.pvname)
@@ -213,6 +222,26 @@ class BPM(_BaseTimingConfig):
     def monit1period(self):
         return self.monit1rate / self.adcfreq
 
+    @property
+    def kx(self):
+        defv = 1
+        pv = self._kx
+        val = pv.value if pv.connected else defv
+        return val if val else defv
+
+    @property
+    def ky(self):
+        defv = 1
+        pv = self._ky
+        val = pv.value if pv.connected else defv
+        return val if val else defv
+
+    @property
+    def ksum(self):
+        defv = 1
+        pv = self._ksum
+        val = pv.value if pv.connected else defv
+        return val if val else defv
 
     @property
     def mode(self):
@@ -258,6 +287,26 @@ class BPM(_BaseTimingConfig):
     def spsum(self):
         pv = self._spsum
         return pv.value if pv.connected else None
+
+    @property
+    def spanta(self):
+        pv = self._spanta
+        return pv.get() if pv.connected else None
+
+    @property
+    def spantb(self):
+        pv = self._spantb
+        return pv.get() if pv.connected else None
+
+    @property
+    def spantc(self):
+        pv = self._spantc
+        return pv.get() if pv.connected else None
+
+    @property
+    def spantd(self):
+        pv = self._spantd
+        return pv.get() if pv.connected else None
 
     @property
     def mtposx(self):
