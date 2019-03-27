@@ -1072,16 +1072,17 @@ class EpicsOrbit(BaseOrbit):
         self.smooth_mtorb = {'X': None, 'Y': None, 'Sum': None}
 
     def _update_orbits(self):
+        count = 0
         if self.isring and self._mode == self._csorb.SOFBMode.MultiTurn:
             self._update_multiturn_orbits()
-            count = len(self.raw_mtorbs)
+            count = len(self.raw_mtorbs['X'])
         elif self._mode == self._csorb.SOFBMode.SinglePass:
             self._update_online_orbits(sp=True)
             # self._update_singlepass_orbits()
-            count = len(self.raw_sporbs)
+            count = len(self.raw_sporbs['X'])
         elif self.isring:
             self._update_online_orbits(sp=False)
-            count = len(self.raw_orbs)
+            count = len(self.raw_orbs['X'])
         self.run_callbacks('BufferCount-Mon', count)
 
     def _update_online_orbits(self, sp=False):
