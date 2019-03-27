@@ -3,6 +3,21 @@
 
 # should we include here polarity columns?
 
+# --- linac Spect ---
+
+LI-01:MA-Spect               LI-01:PS-Spect
+
+# --- linac long quadrupoles ---
+
+LI-01:MA-QD1                 LI-01:PS-QD1
+LI-01:MA-QD2                 LI-01:PS-QD2
+
+# --- linac short quadrupoles ---
+
+LI-Fam:MA-QF1                LI-Fam:PS-QF1
+LI-Fam:MA-QF2                LI-Fam:PS-QF2
+LI-01:MA-QF3                 LI-01:PS-QF3
+
 # --- dipole families ---
 
 SI-Fam:MA-B1B2               SI-Fam:PS-B1B2-1    SI-Fam:PS-B1B2-2

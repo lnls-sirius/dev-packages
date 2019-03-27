@@ -1,6 +1,6 @@
 # HEADER
 # ======
-# label           li-spect
+# label           li-spect-sinap
 # harmonics       0
 # main_harmonic   0 normal
 # units           Ampere T*m T*m
