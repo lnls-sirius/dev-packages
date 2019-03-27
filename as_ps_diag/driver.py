@@ -1,8 +1,6 @@
 #!/usr/local/bin/python-sirius
 """Driver module."""
 
-import time as _time
-from threading import Thread as _Thread
 from pcaspy import Driver as _Driver
 from pcaspy import Alarm as _Alarm
 from pcaspy import Severity as _Severity
@@ -28,6 +26,7 @@ class PSDiagDriver(_Driver):
     def _create_computed_pvs(self):
         for psname in self._psnames:
             devname = self._prefix + psname
+            magname = self._get_magname(psname)
             # DiagCurrentDiff-Mon
             pvs = [None, None]
             pvs[_PSDiffPV.CURRT_SP] = devname + ':Current-SP'
@@ -39,13 +38,14 @@ class PSDiagDriver(_Driver):
                              monitor=False)
             self.pvs.append(pv)
             # DiagStatus-Mon
-            pvs = [None, None, None, None, None]
+            pvs = [None, None, None, None, None, None]
             pvs[_PSStatusPV.OPMODE_SEL] = devname + ':OpMode-Sel'
             pvs[_PSStatusPV.OPMODE_STS] = devname + ':OpMode-Sts'
             pvs[_PSStatusPV.CURRT_DIFF] = devname + ':DiagCurrentDiff-Mon'
+            pvs[_PSStatusPV.MAOPMD_SEL] = magname + ':OpMode-Sel'
             pvs[_PSStatusPV.INTLK_SOFT] = devname + ':IntlkSoft-Mon'
             pvs[_PSStatusPV.INTLK_HARD] = devname + ':IntlkHard-Mon'
-            # TODO: Add other interlocks for PS types that hav them
+            # TODO: Add other interlocks for PS types that have them
             pv = _ComputedPV(psname + ':DiagStatus-Mon',
                              _PSStatusPV(),
                              self._queue,
@@ -53,9 +53,19 @@ class PSDiagDriver(_Driver):
                              monitor=False)
             self.pvs.append(pv)
 
+    def _get_magname(self, psname):
+        if psname in ('BO-Fam:PS-B-1', 'BO-Fam:PS-B-2'):
+            return self._prefix + 'BO-Fam:MA-B'
+        elif psname in ('SI-Fam:PS-B1B2-1', 'SI-Fam:PS-B1B2-2'):
+            return self._prefix + 'SI-Fam:MA-B1B2'
+        else:
+            return self._prefix + psname.replace(':PS-', ':MA-')
+
     def read(self, reason):
+        """Read method."""
         if 'DiagVersion-Cte' in reason:
             for pv in self.pvs:
+                # pv.get()
                 connected = False
                 if not pv.connected:
                     connected = False
