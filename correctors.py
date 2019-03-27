@@ -274,8 +274,7 @@ class EpicsCorrectors(BaseCorrectors):
         self._names = self._csorb.CH_NAMES + self._csorb.CV_NAMES
         self._chcvs = [CHCV(dev) for dev in self._names]
         if self.isring:
-            self._rf_ctrl = RFCtrl(self.acc)
-            self._rf_nom_freq = self._csorb.RF_NOM_FREQ
+            self._corrs.append(RFCtrl(self.acc))
             self.timing = TimingConfig(acc)
         self._corrs_thread = _Repeat(
                 1/self._acq_rate, self._update_corrs_strength, niter=0)
@@ -372,10 +371,6 @@ class EpicsCorrectors(BaseCorrectors):
         self._corrs_thread.interval = 1/value
         self.run_callbacks('KickAcqRate-RB', value)
         return True
-
-    def set_nominal_rf_freq(self, value):
-        """Set nominal RF frequency method."""
-        self._rf_nom_freq = value
 
     def _update_corrs_strength(self):
         corr_vals = self.get_strength()
