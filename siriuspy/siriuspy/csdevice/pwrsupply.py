@@ -137,6 +137,34 @@ class ETypes(_cutil.ETypes):
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+    SOFT_INTLCK_FAC_2S_DCDC = (
+        'Falha no DCCT1', 'Falha no DCCT2',
+        'Alta diferença entre DCCT\'s',
+        'Falha na leitura da corrente na carga do DCCT1',
+        'Falha na leitura da corrente na carga do DCCT2',
+        'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+    HARD_INTLCK_FAC_2S_DCDC = (
+        'Sobre-corrente na carga', 'Sobre-tensão na carga',
+        'Sobre-tensão no DC-Link do módulo 1',
+        'Sobre-tensão no DC-Link do módulo 2',
+        'Sub-tensão no DC-Link do módulo 1',
+        'Sub-tensão no DC-Link do módulo 2',
+        'Sobre-tensão na saída do módulo 1',
+        'Sobre-tensão na saída do módulo 2',
+        'Interlock da placa IIB do módulo 1',
+        'Interlock da placa IIB do módulo 2',
+        'Interlock externo', 'Interlock dos racks',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
     SOFT_INTLCK_FAC_2P4S = (
         'Sobre-temperatura nos indutores',  'Sobre-temperatura nos IGBTs',
         'Falha no DCCT 1', 'Falha no DCCT 2',
