@@ -79,8 +79,7 @@ class ConstRings(ConstTLines):
 
     SOFBMode = _cutil.Const.register('SOFBMode', _et.ORB_MODE_RINGS)
     ApplyDelta = _cutil.Const.register('ApplyDelta', _et.APPLY_CORR_RINGS)
-    StsLblsCorr = _cutil.Const.register(
-                        'StsLblsCorr', _et.STS_LBLS_CORR_RINGS)
+    StsLblsCorr = _cutil.Const.register('StsLblsCorr', _et.STS_LBLS_CORR_RINGS)
 
     # TODO: use correct name for the RF generator
     RF_GEN_NAME = 'AS-Glob:RF-Gen'
@@ -421,6 +420,8 @@ class SOFBTLines(ConstTLines):
                 'enums': _et.SMOOTH_METH},
             'SmoothReset-Cmd': {
                 'type': 'int', 'value': 0, 'unit': 'Reset orbit buffer'},
+            'BufferCount-Mon': {
+                'type': 'int', 'value': 0, 'unit': 'Current buffer size'},
             'BPMPosS-Cte': {
                 'type': 'float', 'unit': 'm', 'count': nbpm,
                 'value': self.BPM_POS},
