@@ -753,14 +753,76 @@ def _get_ps_FAC_ACDC_propty_database():
 
 def _get_ps_FAC_2S_DCDC_propty_database():
     """Return database with FAC_2S_DCDC pwrsupply model PVs."""
-    # TODO: implement!!!
-    return _get_ps_FBP_propty_database()
+    propty_db = get_basic_propty_database()
+    db_ps = {
+        'IntlkSoftLabels-Cte':  {'type': 'string',
+                                 'count': len(_et.SOFT_INTLCK_FAC_2S_DCDC),
+                                 'value': _et.SOFT_INTLCK_FAC_2S_DCDC},
+        'IntlkHardLabels-Cte':  {'type': 'string',
+                                 'count': len(_et.HARD_INTLCK_FAC_2S_DCDC),
+                                 'value': _et.HARD_INTLCK_FAC_2S_DCDC},
+        'Current1-Mon': {'type': 'float', 'value': 0.0,
+                         'prec': default_ps_current_precision},
+        'Current2-Mon': {'type': 'float', 'value': 0.0,
+                         'prec': default_ps_current_precision},
+        'LoadVoltage-Mon': {'type': 'float', 'value': 0.0,
+                            'prec': default_ps_current_precision,
+                            'unit': 'V'},
+        'Module1Voltage-Mon': {'type': 'float', 'value': 0.0,
+                               'prec': default_ps_current_precision,
+                               'unit': 'V'},
+        'Module2Voltage-Mon': {'type': 'float', 'value': 0.0,
+                               'prec': default_ps_current_precision,
+                               'unit': 'V'},
+        'CapacitorBank1Voltage-Mon': {'type': 'float', 'value': 0.0,
+                                      'prec': default_ps_current_precision,
+                                      'unit': 'V'},
+        'CapacitorBank2Voltage-Mon': {'type': 'float', 'value': 0.0,
+                                      'prec': default_ps_current_precision,
+                                      'unit': 'V'},
+        'PWMDutyCycle1-Mon': {'type': 'float', 'value': 0.0,
+                              'prec': default_ps_current_precision},
+        'PWMDutyCycle2-Mon': {'type': 'float', 'value': 0.0,
+                              'prec': default_ps_current_precision},
+        'PWMDutyDiff-Mon': {'type': 'float', 'value': 0.0,
+                            'prec': default_ps_current_precision},
+    }
+    propty_db.update(db_ps)
+    return propty_db
 
 
 def _get_ps_FAC_2S_ACDC_propty_database():
     """Return database with FAC_2S_ACDC pwrsupply model PVs."""
-    # TODO: implement!!!
-    return _get_ps_FAC_ACDC_propty_database()
+    propty_db = get_common_propty_database()
+    db_ps = {
+        'CapacitorBankVoltage-SP': {'type': 'float', 'value': 0.0,
+                                    'prec': default_ps_current_precision,
+                                    'lolim': 0.0, 'hilim': 1.0},
+        'CapacitorBankVoltage-RB': {'type': 'float', 'value': 0.0,
+                                    'prec': default_ps_current_precision},
+        'CapacitorBankVoltageRef-Mon': {'type': 'float', 'value': 0.0,
+                                        'prec': default_ps_current_precision},
+        'IntlkSoftLabels-Cte':  {'type': 'string',
+                                 'count': len(_et.SOFT_INTLCK_FAC_2S_ACDC),
+                                 'value': _et.SOFT_INTLCK_FAC_2S_ACDC},
+        'IntlkHardLabels-Cte':  {'type': 'string',
+                                 'count': len(_et.HARD_INTLCK_FAC_2S_ACDC),
+                                 'value': _et.HARD_INTLCK_FAC_2S_ACDC},
+        'CapacitorBankVoltage-Mon': {'type': 'float', 'value': 0.0,
+                                     'prec': default_ps_current_precision},
+        'RectifierVoltage-Mon': {'type': 'float', 'value': 0.0,
+                                 'prec': default_ps_current_precision},
+        'RectifierCurrent-Mon': {'type': 'float', 'value': 0.0,
+                                 'prec': default_ps_current_precision},
+        'HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
+                                    'prec': default_ps_current_precision},
+        'InductorsTemperature-Mon': {'type': 'float', 'value': 0.0,
+                                     'prec': default_ps_current_precision},
+        'PWMDutyCycle-Mon': {'type': 'float', 'value': 0.0,
+                                     'prec': default_ps_current_precision},
+    }
+    propty_db.update(db_ps)
+    return propty_db
 
 
 def _get_ps_FAC_2P4S_DCDC_propty_database():
