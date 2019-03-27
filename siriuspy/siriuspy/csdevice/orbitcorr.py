@@ -83,7 +83,6 @@ class ConstRings(ConstTLines):
 
     # TODO: use correct name for the RF generator
     RF_GEN_NAME = 'AS-Glob:RF-Gen'
-    RF_NOM_FREQ = 499657952.052
     EnblRF = _cutil.Const.register('EnblRF', _et.ENBL_RF)
     ClosedLoop = _cutil.Const.register('ClosedLoop', _et.OFF_ON)
     CorrSync = _cutil.Const.register('CorrSync', _et.OFF_ON)
@@ -563,12 +562,6 @@ class SOFBRings(SOFBTLines, ConstRings):
         db_ring = {
             'KickRF-Mon': {
                 'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 3},
-            'NominalFreqRF-SP': {
-                'type': 'float', 'value': self.RF_NOM_FREQ, 'unit': 'Hz',
-                'prec': 3},
-            'NominalFreqRF-RB': {
-                'type': 'float', 'value': self.RF_NOM_FREQ, 'unit': 'Hz',
-                'prec': 3},
             'CorrSync-Sel': {
                 'type': 'enum', 'enums': self.CorrSync._fields,
                 'value': self.CorrSync.Off},
