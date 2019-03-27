@@ -1,4 +1,5 @@
 """Definition of ComputedPV class that simulates a PV composed of epics PVs."""
+import numpy as _np
 from epics import get_pv as _get_pv
 from siriuspy.epics import connection_timeout as _connection_timeout
 
@@ -14,6 +15,8 @@ class ComputedPV:
 
     def __init__(self, pvname, computer, queue, pvs, monitor=True):
         """Initialize PVs."""
+        # print('compute_pv: ', pvname, pvs)
+
         # starts computer_pvs queue, if not started yet
         self._queue = queue
         if not self._queue.running:
@@ -129,34 +132,50 @@ class ComputedPV:
                 ppvs.append(pv)
         return ppvs
 
+    def _is_same(self, value):
+        """."""
+        if isinstance(self._value, _np.ndarray):
+            return _np.all(self._value == value)
+        else:
+            return self._value == value
+
+    def _process_new_value(self, kwargs):
+        self._value = kwargs["value"]
+        # Check if limits are in the return dict and update them
+        if "high" in kwargs:
+            self.upper_alarm_limit = kwargs["hihi"]
+            self.upper_warning_limit = kwargs["high"]
+            self.upper_disp_limit = kwargs["hilim"]
+            self.lower_disp_limit = kwargs["lolim"]
+            self.lower_warning_limit = kwargs["low"]
+            self.lower_alarm_limit = kwargs["lolo"]
+        self._issue_callback(pvname=self.pvname, **kwargs)
+
     def _update_value(self, pvname=None, value=None):
         # Get dict with pv props that changed
         # print('update_value')
         kwargs = self.computer.compute_update(self, pvname, value)
 
-        if kwargs is not None:
-            if ('high' not in kwargs and kwargs['value'] == self._value) or \
-                    ('high' in kwargs and
-                     kwargs['value'] == self._value and
-                     kwargs['hihi'] == self.upper_alarm_limit and
-                     kwargs['high'] == self.upper_warning_limit and
-                     kwargs['hilim'] == self.upper_disp_limit and
-                     kwargs['hilim'] == self.lower_disp_limit and
-                     kwargs['low'] == self.lower_warning_limit and
-                     kwargs['lolo'] == self.lower_alarm_limit):
-                # nothing changed
-                return None
-            self._value = kwargs["value"]
-            # Check if limits are in the return dict and update them
-            if "high" in kwargs:
-                self.upper_alarm_limit = kwargs["hihi"]
-                self.upper_warning_limit = kwargs["high"]
-                self.upper_disp_limit = kwargs["hilim"]
-                self.lower_disp_limit = kwargs["lolim"]
-                self.lower_warning_limit = kwargs["low"]
-                self.lower_alarm_limit = kwargs["lolo"]
+        if kwargs is None:
+            return None
 
-            self._issue_callback(pvname=self.pvname, **kwargs)
+        if self._value is None:
+            self._process_new_value(kwargs)
+            return None
+
+        if not self._is_same(kwargs['value']):
+            self._process_new_value(kwargs)
+            return None
+
+        if 'high' not in kwargs:
+            return None
+        elif kwargs['hihi'] != self.upper_alarm_limit or \
+                kwargs['high'] != self.upper_warning_limit or \
+                kwargs['hilim'] != self.upper_disp_limit or \
+                kwargs['hilim'] != self.lower_disp_limit or \
+                kwargs['low'] != self.lower_warning_limit or \
+                kwargs['lolo'] != self.lower_alarm_limit:
+            self._process_new_value(kwargs)
 
     def _value_update_callback(self, pvname, value, **kwargs):
         # if 'Current-Mon' not in pvname:
