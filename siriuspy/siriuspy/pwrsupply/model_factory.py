@@ -7,36 +7,52 @@ from siriuspy.pwrsupply import functions as _functions
 from siriuspy.pwrsupply import bsmp as _bsmp
 from siriuspy.pwrsupply import controller as _controller
 
+from siriuspy.pwrsupply.pru import Const as _PRUConst
+
+# --- Entities DCDC ---
 from siriuspy.pwrsupply.bsmp import EntitiesFBP as _EntitiesFBP
-from siriuspy.pwrsupply.bsmp import EntitiesFBP_DCLink as _EntitiesFBP_DCLink
 from siriuspy.pwrsupply.bsmp import EntitiesFAC_DCDC as _EntitiesFAC_DCDC
-from siriuspy.pwrsupply.bsmp import EntitiesFAC_ACDC as _EntitiesFAC_ACDC
 from siriuspy.pwrsupply.bsmp import \
     EntitiesFAC_2P4S_DCDC as _EntitiesFAC_2P4S_DCDC
 from siriuspy.pwrsupply.bsmp import \
-    EntitiesFAC_2P4S_ACDC as _EntitiesFAC_2P4S_ACDC
+    EntitiesFAC_2S_DCDC as _EntitiesFAC_2S_DCDC
 from siriuspy.pwrsupply.bsmp import EntitiesFAP as _EntitiesFAP
+# --- Entities ACDC ---
+from siriuspy.pwrsupply.bsmp import EntitiesFBP_DCLink as _EntitiesFBP_DCLink
+from siriuspy.pwrsupply.bsmp import EntitiesFAC_ACDC as _EntitiesFAC_ACDC
+from siriuspy.pwrsupply.bsmp import \
+    EntitiesFAC_2P4S_ACDC as _EntitiesFAC_2P4S_ACDC
+from siriuspy.pwrsupply.bsmp import \
+    EntitiesFAC_2S_ACDC as _EntitiesFAC_2S_ACDC
 
+# --- Const DCDC ---
 from siriuspy.pwrsupply.bsmp import ConstFBP as _cFBP
-from siriuspy.pwrsupply.bsmp import ConstFBP_DCLink as _cFBP_DCLink
 from siriuspy.pwrsupply.bsmp import ConstFAC_DCDC as _cFAC_DCDC
-from siriuspy.pwrsupply.bsmp import ConstFAC_ACDC as _cFAC_ACDC
 from siriuspy.pwrsupply.bsmp import ConstFAC_2P4S_DCDC as _cFAC_2P4S_DCDC
-from siriuspy.pwrsupply.bsmp import ConstFAC_2P4S_ACDC as _cFAC_2P4S_ACDC
+from siriuspy.pwrsupply.bsmp import ConstFAC_2S_DCDC as _cFAC_2S_DCDC
 from siriuspy.pwrsupply.bsmp import ConstFAP as _cFAP
+# --- Const ACDC ---
+from siriuspy.pwrsupply.bsmp import ConstFBP_DCLink as _cFBP_DCLink
+from siriuspy.pwrsupply.bsmp import ConstFAC_ACDC as _cFAC_ACDC
+from siriuspy.pwrsupply.bsmp import ConstFAC_2P4S_ACDC as _cFAC_2P4S_ACDC
+from siriuspy.pwrsupply.bsmp import ConstFAC_2S_ACDC as _cFAC_2S_ACDC
 
+# --- BSMP DCDC ---
 from siriuspy.pwrsupply.bsmp_sim import BSMPSim_FBP as _BSMPSim_FBP
-from siriuspy.pwrsupply.bsmp_sim import \
-    BSMPSim_FBP_DCLink as _BSMPSim_FBP_DCLink
 from siriuspy.pwrsupply.bsmp_sim import BSMPSim_FAC_DCDC as _BSMPSim_FAC_DCDC
-from siriuspy.pwrsupply.bsmp_sim import BSMPSim_FAC_ACDC as _BSMPSim_FAC_ACDC
 from siriuspy.pwrsupply.bsmp_sim import \
     BSMPSim_FAC_2P4S_DCDC as _BSMPSim_FAC_2P4S_DCDC
 from siriuspy.pwrsupply.bsmp_sim import \
-    BSMPSim_FAC_2P4S_ACDC as _BSMPSim_FAC_2P4S_ACDC
+    BSMPSim_FAC_2S_DCDC as _BSMPSim_FAC_2S_DCDC
 from siriuspy.pwrsupply.bsmp_sim import BSMPSim_FAP as _BSMPSim_FAP
-
-from siriuspy.pwrsupply.pru import Const as _PRUConst
+# --- BSMP ACDC ---
+from siriuspy.pwrsupply.bsmp_sim import \
+    BSMPSim_FBP_DCLink as _BSMPSim_FBP_DCLink
+from siriuspy.pwrsupply.bsmp_sim import BSMPSim_FAC_ACDC as _BSMPSim_FAC_ACDC
+from siriuspy.pwrsupply.bsmp_sim import \
+    BSMPSim_FAC_2P4S_ACDC as _BSMPSim_FAC_2P4S_ACDC
+from siriuspy.pwrsupply.bsmp_sim import \
+    BSMPSim_FAC_2S_ACDC as _BSMPSim_FAC_2S_ACDC
 
 
 class ModelFactory:
@@ -263,7 +279,7 @@ class FBP_Factory(ModelFactory):
 
 
 class FBP_FOFB_Factory(FBP_Factory):
-    """FBP FOFB model factory."""
+    """FBP_FOFB model factory."""
 
     @property
     def name(self):
@@ -331,7 +347,7 @@ class FAC_Factory(FBP_Factory):
 
 
 class FAC_2S_DCDC_Factory(FAC_Factory):
-    """FAC 2S model factory."""
+    """FAC_2S_DCDC model factory."""
 
     @property
     def name(self):
@@ -360,7 +376,7 @@ class FAC_2S_DCDC_Factory(FAC_Factory):
 
 
 class FAC_2P4S_DCDC_Factory(FAC_Factory):
-    """FAC 2P4S model factory."""
+    """FAC_2P4S_DCDC model factory."""
 
     _variables = {
         'Current-RB': _bsmp.ConstFAC_2P4S_DCDC.V_PS_SETPOINT,
@@ -474,7 +490,7 @@ class FAP_Factory(FBP_Factory):
 
 
 class FAP_2P2S_Master_Factory(FBP_Factory):
-    """FAP model factory."""
+    """FAP_2P2S model factory."""
 
     @property
     def name(self):
@@ -503,7 +519,7 @@ class FAP_2P2S_Master_Factory(FBP_Factory):
 
 
 class FAP_4P_Master_Factory(FBP_Factory):
-    """FAP model factory."""
+    """FAP_4P_Master model factory."""
 
     @property
     def name(self):
@@ -532,7 +548,7 @@ class FAP_4P_Master_Factory(FBP_Factory):
 
 
 class FAP_4P_Slave_Factory(FBP_Factory):
-    """FAP model factory."""
+    """FAP_4P_Slave model factory."""
 
     @property
     def name(self):
@@ -591,7 +607,7 @@ class Commercial_Factory(FAC_Factory):
 
 # Auxiliaty power supplies (DCLinks)
 class FBP_DCLink_Factory(ModelFactory):
-    """FBP dclink factory."""
+    """FBP_DCLink factory."""
 
     _variables = {
         'IntlkSoft-Mon': _bsmp.ConstFBP_DCLink.V_PS_SOFT_INTERLOCKS,
@@ -664,7 +680,7 @@ class FBP_DCLink_Factory(ModelFactory):
 
 
 class FAC_ACDC_Factory(FBP_DCLink_Factory):
-    """FAC ACDC factory."""
+    """FAC_ACDC factory."""
 
     _variables = {
         'IntlkSoft-Mon': _bsmp.ConstFAC_ACDC.V_PS_SOFT_INTERLOCKS,
@@ -712,8 +728,8 @@ class FAC_ACDC_Factory(FBP_DCLink_Factory):
             return _functions.BSMPFunction(
                 device_ids, pru_controller, _c.F_SET_SLOWREF, setpoints)
         elif epics_field == 'PwrState-Sel':
-            # The firmware opens the control loop. It is the user's respoibility
-            # to close it.
+            # The firmware opens the control loop. It is the user's
+            # responsability to close it.
             return _functions.PSPwrStateFBP_DCLink(
                 device_ids, pru_controller, setpoints)
         else:
@@ -722,7 +738,7 @@ class FAC_ACDC_Factory(FBP_DCLink_Factory):
 
 
 class FAC_2S_ACDC_Factory(FAC_ACDC_Factory):
-    """FAC 2S factory."""
+    """FAC_2S_ACDC factory."""
 
     @property
     def name(self):
@@ -732,26 +748,26 @@ class FAC_2S_ACDC_Factory(FAC_ACDC_Factory):
     @property
     def parameters(self):
         """PRU Controller parameters."""
-        return PRUCParms_FAC_ACDC  # TODO: change to FAC_2S_ACDC
+        return PRUCParms_FAC_2S_ACDC
 
     @property
     def bsmp_constants(self):
         """Model BSMP constants."""
-        return _cFAC_ACDC
+        return _cFAC_2S_ACDC
 
     @property
     def entities(self):
         """Model entities."""
-        return _EntitiesFAC_ACDC()
+        return _EntitiesFAC_2S_ACDC()
 
     @property
     def simulation_class(self):
         """Model simulation."""
-        return _BSMPSim_FAC_ACDC
+        return _BSMPSim_FAC_2S_ACDC
 
 
 class FAC_2P4S_ACDC_Factory(FAC_ACDC_Factory):
-    """FAC 2P4S factoy."""
+    """FAC_2P4S_ACDC factoy."""
 
     @property
     def name(self):
@@ -1234,14 +1250,165 @@ class PRUCParms_FAC_2P4S(_PRUCParms):
     groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 
+class PRUCParms_FAC_2S(_PRUCParms):
+    """FAC_2S specific PRUC parameters.
+
+    Represent FAC_2S psmodels.
+    """
+
+    FREQ_RAMP = 2.0  # [Hz]
+    FREQ_SCAN = 10.0  # [Hz]
+
+    # UDC model
+    model = ModelFactory.create('FAC_2S_DCDC')
+    ConstBSMP = model.bsmp_constants
+    Entities = model.entities
+
+    groups = dict()
+    # reserved variable groups (not to be used)
+    groups[_PRUCParms.ALL] = tuple(sorted(Entities.list_variables(0)))
+    groups[_PRUCParms.READONLY] = tuple(sorted(Entities.list_variables(1)))
+    groups[_PRUCParms.WRITEABLE] = tuple(sorted(Entities.list_variables(2)))
+    # new variable groups usefull for PRUController.
+    groups[_PRUCParms.ALLRELEVANT] = (
+        # --- common variables
+        ConstBSMP.V_PS_STATUS,
+        ConstBSMP.V_PS_SETPOINT,
+        ConstBSMP.V_PS_REFERENCE,
+        ConstBSMP.V_FIRMWARE_VERSION,
+        ConstBSMP.V_COUNTER_SET_SLOWREF,
+        ConstBSMP.V_COUNTER_SYNC_PULSE,
+        ConstBSMP.V_SIGGEN_ENABLE,
+        ConstBSMP.V_SIGGEN_TYPE,
+        ConstBSMP.V_SIGGEN_NUM_CYCLES,
+        ConstBSMP.V_SIGGEN_N,
+        ConstBSMP.V_SIGGEN_FREQ,
+        ConstBSMP.V_SIGGEN_AMPLITUDE,
+        ConstBSMP.V_SIGGEN_OFFSET,
+        ConstBSMP.V_SIGGEN_AUX_PARAM,
+        # --- FAC variables ---
+        ConstBSMP.V_PS_SOFT_INTERLOCKS,
+        ConstBSMP.V_PS_HARD_INTERLOCKS,
+        ConstBSMP.V_I_LOAD_MEAN,
+        ConstBSMP.V_I_LOAD1,
+        ConstBSMP.V_I_LOAD2,
+        ConstBSMP.V_V_LOAD,
+        ConstBSMP.V_V_OUT_1,
+        ConstBSMP.V_V_OUT_2,
+        ConstBSMP.V_V_CAPBANK_1,
+        ConstBSMP.V_V_CAPBANK_2,
+        ConstBSMP.V_DUTY_CYCLE_1,
+        ConstBSMP.V_DUTY_CYCLE_2,
+        ConstBSMP.V_DUTY_DIFF)
+    groups[_PRUCParms.SYNCOFF] = (
+        # --- common variables
+        ConstBSMP.V_PS_STATUS,
+        ConstBSMP.V_PS_SETPOINT,
+        ConstBSMP.V_PS_REFERENCE,
+        ConstBSMP.V_COUNTER_SET_SLOWREF,
+        ConstBSMP.V_COUNTER_SYNC_PULSE,
+        ConstBSMP.V_SIGGEN_ENABLE,
+        ConstBSMP.V_SIGGEN_TYPE,
+        ConstBSMP.V_SIGGEN_NUM_CYCLES,
+        ConstBSMP.V_SIGGEN_N,
+        ConstBSMP.V_SIGGEN_FREQ,
+        ConstBSMP.V_SIGGEN_AMPLITUDE,
+        ConstBSMP.V_SIGGEN_OFFSET,
+        ConstBSMP.V_SIGGEN_AUX_PARAM,
+        # --- FAC variables ---
+        ConstBSMP.V_PS_SOFT_INTERLOCKS,
+        ConstBSMP.V_PS_HARD_INTERLOCKS,
+        ConstBSMP.V_I_LOAD_MEAN,
+        ConstBSMP.V_I_LOAD1,
+        ConstBSMP.V_I_LOAD2,
+        ConstBSMP.V_V_LOAD,
+        ConstBSMP.V_V_OUT_1,
+        ConstBSMP.V_V_OUT_2,
+        ConstBSMP.V_V_CAPBANK_1,
+        ConstBSMP.V_V_CAPBANK_2,
+        ConstBSMP.V_DUTY_CYCLE_1,
+        ConstBSMP.V_DUTY_CYCLE_2,
+        ConstBSMP.V_DUTY_DIFF)
+    groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
+
+
 class PRUCParms_FAC_2P4S_ACDC(_PRUCParms):
-    """FAC_ACDC-specific PRUC parameters."""
+    """FAC_2P4S_ACDC-specific PRUC parameters."""
 
     FREQ_RAMP = 2.0  # [Hz]
     FREQ_SCAN = 2.0  # [Hz]
 
     # UDC model
     model = ModelFactory.create('FAC_ACDC')
+    ConstBSMP = model.bsmp_constants
+    Entities = model.entities
+
+    groups = dict()
+    # reserved variable groups (not to be used)
+    groups[_PRUCParms.ALL] = tuple(sorted(Entities.list_variables(0)))
+    groups[_PRUCParms.READONLY] = tuple(sorted(Entities.list_variables(1)))
+    groups[_PRUCParms.WRITEABLE] = tuple(sorted(Entities.list_variables(2)))
+    # new variable groups usefull for PRUController.
+    groups[_PRUCParms.ALLRELEVANT] = (
+        # --- common variables
+        ConstBSMP.V_PS_STATUS,
+        ConstBSMP.V_PS_SETPOINT,
+        ConstBSMP.V_PS_REFERENCE,
+        ConstBSMP.V_FIRMWARE_VERSION,
+        ConstBSMP.V_COUNTER_SET_SLOWREF,
+        ConstBSMP.V_COUNTER_SYNC_PULSE,
+        # ConstBSMP.V_SIGGEN_ENABLE,
+        # ConstBSMP.V_SIGGEN_TYPE,
+        # ConstBSMP.V_SIGGEN_NUM_CYCLES,
+        # ConstBSMP.V_SIGGEN_N,
+        # ConstBSMP.V_SIGGEN_FREQ,
+        # ConstBSMP.V_SIGGEN_AMPLITUDE,
+        # ConstBSMP.V_SIGGEN_OFFSET,
+        # ConstBSMP.V_SIGGEN_AUX_PARAM,
+        # --- FAC_ACDC variables ---
+        ConstBSMP.V_PS_SOFT_INTERLOCKS,
+        ConstBSMP.V_PS_HARD_INTERLOCKS,
+        ConstBSMP.V_V_CAPBANK,
+        ConstBSMP.V_V_OUT_RECTIFIER,
+        ConstBSMP.V_I_OUT_RECTIFIER,
+        ConstBSMP.V_TEMP_HEATSINK,
+        ConstBSMP.V_TEMP_INDUCTORS,
+        ConstBSMP.V_DUTY_CYCLE,)
+    groups[_PRUCParms.SYNCOFF] = (
+        # --- common variables
+        ConstBSMP.V_PS_STATUS,
+        ConstBSMP.V_PS_SETPOINT,
+        ConstBSMP.V_PS_REFERENCE,
+        ConstBSMP.V_COUNTER_SET_SLOWREF,
+        ConstBSMP.V_COUNTER_SYNC_PULSE,
+        # ConstBSMP.V_SIGGEN_ENABLE,
+        # ConstBSMP.V_SIGGEN_TYPE,
+        # ConstBSMP.V_SIGGEN_NUM_CYCLES,
+        # ConstBSMP.V_SIGGEN_N,
+        # ConstBSMP.V_SIGGEN_FREQ,
+        # ConstBSMP.V_SIGGEN_AMPLITUDE,
+        # ConstBSMP.V_SIGGEN_OFFSET,
+        # ConstBSMP.V_SIGGEN_AUX_PARAM,
+        # --- FAC_ACDC variables ---
+        ConstBSMP.V_PS_SOFT_INTERLOCKS,
+        ConstBSMP.V_PS_HARD_INTERLOCKS,
+        ConstBSMP.V_V_CAPBANK,
+        ConstBSMP.V_V_OUT_RECTIFIER,
+        ConstBSMP.V_I_OUT_RECTIFIER,
+        ConstBSMP.V_TEMP_HEATSINK,
+        ConstBSMP.V_TEMP_INDUCTORS,
+        ConstBSMP.V_DUTY_CYCLE,)
+    groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
+
+
+class PRUCParms_FAC_2S_ACDC(_PRUCParms):
+    """FAC_2S_ACDC-specific PRUC parameters."""
+
+    FREQ_RAMP = 2.0  # [Hz]
+    FREQ_SCAN = 2.0  # [Hz]
+
+    # UDC model
+    model = ModelFactory.create('FAC_2S_ACDC')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
