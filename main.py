@@ -261,6 +261,11 @@ class SOFB(_BaseClass):
 
     def _apply_corr(self, code):
         nr_ch = self._csorb.NR_CH
+        if self._dtheta is None:
+            msg = 'Err: All kicks are zero.'
+            self._update_log(msg)
+            _log.warning(msg[6:])
+            return
         dkicks = self._dtheta.copy()
         if code == self._csorb.ApplyDelta.CH:
             dkicks[nr_ch:] = 0
@@ -278,7 +283,7 @@ class SOFB(_BaseClass):
         if dkicks is None:
             return
         kicks = self._ref_corr_kicks + dkicks
-        self.correctors.apply_kicks(kicks)
+        self.correctors.apply_kicks(kicks, code=code)
 
     def _update_driver(self, pvname, value, **kwargs):
         if self._driver is not None:
@@ -507,9 +512,4 @@ class SOFB(_BaseClass):
                                                         pln.upper(), percent)
                 self._update_log(msg)
                 _log.warning(msg[6:])
-        if not any(dkicks):
-            msg = 'Err: All kicks are zero.'
-            self._update_log(msg)
-            _log.warning(msg[6:])
-            return
         return dkicks
