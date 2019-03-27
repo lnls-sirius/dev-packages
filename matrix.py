@@ -77,10 +77,10 @@ class EpicsMatrix(BaseMatrix):
     def calc_kicks(self, orbit):
         """Calculate the kick from the orbit distortion given."""
         kicks = _np.dot(-self.inv_respmat, orbit)
-        self.run_callbacks(
-                        'DeltaKickCH-Mon', list(kicks[:self._csorb.NR_CH]))
-        self.run_callbacks(
-                        'DeltaKickCV-Mon', list(kicks[self._csorb.NR_CH:-1]))
+        nr_ch = self._csorb.NR_CH
+        nr_chcv = self._csorb.NR_CHCV
+        self.run_callbacks('DeltaKickCH-Mon', list(kicks[:nr_ch]))
+        self.run_callbacks('DeltaKickCV-Mon', list(kicks[nr_ch:nr_chcv]))
         if self.isring:
             self.run_callbacks('DeltaKickRF-Mon', kicks[-1])
         return kicks
