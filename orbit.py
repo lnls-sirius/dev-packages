@@ -1087,21 +1087,18 @@ class EpicsOrbit(BaseOrbit):
 
     def _update_online_orbits(self, sp=False):
         orb = _np.zeros(self._csorb.NR_BPMS, dtype=float)
-        orbs = {'X': orb, 'Y': orb.copy()}
-        if sp:
-            orbs['Sum'] = orb.copy()
+        orbs = {'X': orb, 'Y': orb.copy(), 'Sum': orb.copy()}
         ref = self.ref_orbs
-        if sp:
-            for i, bpm in enumerate(self.bpms):
-                orbs['X'][i] = bpm.spposx or ref['X'][i]
-                orbs['Y'][i] = bpm.spposy or ref['Y'][i]
-                orbs['Sum'][i] = bpm.spsum or 0.0
-        else:
-            for i, bpm in enumerate(self.bpms):
-                orbs['X'][i] = bpm.posx or ref['X'][i]
-                orbs['Y'][i] = bpm.posy or ref['Y'][i]
+        for i, bpm in enumerate(self.bpms):
+            pos = bpm.spposx if sp else bpm.posx
+            orbs['X'][i] = ref['X'][i] if pos is None else pos
+            pos = bpm.spposy if sp else bpm.posy
+            orbs['Y'][i] = ref['Y'][i] if pos is None else pos
+            pos = bpm.spsum if sp else 0.0
+            orbs['Sum'][i] = 0.0 if pos is None else pos
 
         planes = ('X', 'Y', 'Sum') if sp else ('X', 'Y')
+        smooth = self.smooth_sporb if sp else self.smooth_orb
         for plane in planes:
             with self._lock_raw_orbs:
                 raws = self.raw_sporbs if sp else self.raw_orbs
@@ -1111,10 +1108,7 @@ class EpicsOrbit(BaseOrbit):
                     orb = _np.mean(raws[plane], axis=0)
                 else:
                     orb = _np.median(raws[plane], axis=0)
-            if sp:
-                self.smooth_sporb[plane] = orb
-            else:
-                self.smooth_orb[plane] = orb
+            smooth[plane] = orb
             pref = 'SPass' if sp else 'Slow'
             name = ('Orb' if plane != 'Sum' else '') + plane
             self.run_callbacks(pref + name + '-Mon', list(orb))
