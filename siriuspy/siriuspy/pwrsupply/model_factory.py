@@ -69,11 +69,6 @@ class ModelFactory:
 
     _variables = {}
 
-    # def __init__(self, name, parameters):
-    #     """Set model name."""
-    #     self._name = name
-    #     self._parameters = parameters
-
     @property
     def name(self):
         """Model name."""
@@ -108,20 +103,20 @@ class ModelFactory:
     def create(model):
         """Return ModelFactory object."""
         name_2_factory = {
-            'FBP': FBPFactory,
-            'FBP_DCLink': FBPDCLinkFactory,
-            'FBP_FOFB': FBPFactory,
-            'FAC_DCDC': FACFactory,
-            'FAC_ACDC': FACACDCFactory,
-            'FAC_2S_DCDC': FAC2SDCDCFactory,
-            'FAC_2S_ACDC': FAC2SACDCFactory,
-            'FAC_2P4S_DCDC': FAC2P4SDCDCFactory,
-            'FAC_2P4S_ACDC': FAC2P4SACDCFactory,
-            'FAP': FAPFactory,
-            'FAP_2P2S_MASTER': FAP2P2SMASTERFactory,
-            'FAP_4P_Master': FAP4PMasterFactory,
-            'FAP_4P_Slave': FAP4PSlaveFactory,
-            'Commercial': CommercialFactory,
+            'FBP': FBP_Factory,
+            'FBP_DCLink': FBP_DCLink_Factory,
+            'FBP_FOFB': FBP_Factory,
+            'FAC_DCDC': FAC_Factory,
+            'FAC_ACDC': FAC_ACDC_Factory,
+            'FAC_2S_DCDC': FAC_2S_DCDC_Factory,
+            'FAC_2S_ACDC': FAC_2S_ACDC_Factory,
+            'FAC_2P4S_DCDC': FAC_2P4S_DCDC_Factory,
+            'FAC_2P4S_ACDC': FAC_2P4S_ACDC_Factory,
+            'FAP': FAP_Factory,
+            'FAP_2P2S_MASTER': FAP_2P2S_Master_Factory,
+            'FAP_4P_Master': FAP_4P_Master_Factory,
+            'FAP_4P_Slave': FAP_4P_Slave_Factory,
+            'Commercial': Commercial_Factory,
         }
         if model in name_2_factory:
             factory = name_2_factory[model]
@@ -173,7 +168,7 @@ class ModelFactory:
 
 
 # Standard PS that supply magnets
-class FBPFactory(ModelFactory):
+class FBP_Factory(ModelFactory):
     """FBP model factory."""
 
     _variables = {
@@ -267,7 +262,7 @@ class FBPFactory(ModelFactory):
             readers, writers, connections, pru_controller, devices)
 
 
-class FBPFOFBFactory(FBPFactory):
+class FBP_FOFB_Factory(FBP_Factory):
     """FBP FOFB model factory."""
 
     @property
@@ -296,7 +291,7 @@ class FBPFOFBFactory(FBPFactory):
         return _BSMPSim_FBP
 
 
-class FACFactory(FBPFactory):
+class FAC_Factory(FBP_Factory):
     """FAC model factory."""
 
     _variables = {
@@ -335,7 +330,7 @@ class FACFactory(FBPFactory):
         return _BSMPSim_FAC_DCDC
 
 
-class FAC2SDCDCFactory(FACFactory):
+class FAC_2S_DCDC_Factory(FAC_Factory):
     """FAC 2S model factory."""
 
     @property
@@ -346,25 +341,25 @@ class FAC2SDCDCFactory(FACFactory):
     @property
     def parameters(self):
         """PRU Controller parameters."""
-        return PRUCParms_FAC  # TODO: Change to PRUCParms_2S_DCDC
+        return PRUCParms_FAC_2S
 
     @property
     def bsmp_constants(self):
         """Model BSMP constants."""
-        return _cFAC_DCDC
+        return _cFAC_2S_DCDC
 
     @property
     def entities(self):
         """Model entities."""
-        return _EntitiesFAC_DCDC()
+        return _EntitiesFAC_2S_DCDC()
 
     @property
     def simulation_class(self):
         """Model simulation."""
-        return _BSMPSim_FAC_DCDC
+        return _BSMPSim_FAC_2S_DCDC
 
 
-class FAC2P4SDCDCFactory(FACFactory):
+class FAC_2P4S_DCDC_Factory(FAC_Factory):
     """FAC 2P4S model factory."""
 
     _variables = {
@@ -438,7 +433,7 @@ class FAC2P4SDCDCFactory(FACFactory):
         return _BSMPSim_FAC_2P4S_DCDC
 
 
-class FAPFactory(FBPFactory):
+class FAP_Factory(FBP_Factory):
     """FAP model factory."""
 
     _variables = {
@@ -478,7 +473,7 @@ class FAPFactory(FBPFactory):
         return _BSMPSim_FAP
 
 
-class FAP2P2SMASTERFactory(FBPFactory):
+class FAP_2P2S_Master_Factory(FBP_Factory):
     """FAP model factory."""
 
     @property
@@ -507,7 +502,7 @@ class FAP2P2SMASTERFactory(FBPFactory):
         return _BSMPSim_FBP
 
 
-class FAP4PMasterFactory(FBPFactory):
+class FAP_4P_Master_Factory(FBP_Factory):
     """FAP model factory."""
 
     @property
@@ -536,7 +531,7 @@ class FAP4PMasterFactory(FBPFactory):
         return _BSMPSim_FBP
 
 
-class FAP4PSlaveFactory(FBPFactory):
+class FAP_4P_Slave_Factory(FBP_Factory):
     """FAP model factory."""
 
     @property
@@ -565,7 +560,7 @@ class FAP4PSlaveFactory(FBPFactory):
         return _BSMPSim_FBP
 
 
-class CommercialFactory(FACFactory):
+class Commercial_Factory(FAC_Factory):
     """Commercial model factory."""
 
     @property
@@ -595,7 +590,7 @@ class CommercialFactory(FACFactory):
 
 
 # Auxiliaty power supplies (DCLinks)
-class FBPDCLinkFactory(ModelFactory):
+class FBP_DCLink_Factory(ModelFactory):
     """FBP dclink factory."""
 
     _variables = {
@@ -668,7 +663,7 @@ class FBPDCLinkFactory(ModelFactory):
             readers, writers, connections, pru_controller)
 
 
-class FACACDCFactory(FBPDCLinkFactory):
+class FAC_ACDC_Factory(FBP_DCLink_Factory):
     """FAC ACDC factory."""
 
     _variables = {
@@ -726,7 +721,7 @@ class FACACDCFactory(FBPDCLinkFactory):
                 device_ids, epics_field, pru_controller, setpoints)
 
 
-class FAC2SACDCFactory(FACACDCFactory):
+class FAC_2S_ACDC_Factory(FAC_ACDC_Factory):
     """FAC 2S factory."""
 
     @property
@@ -755,7 +750,7 @@ class FAC2SACDCFactory(FACACDCFactory):
         return _BSMPSim_FAC_ACDC
 
 
-class FAC2P4SACDCFactory(FACACDCFactory):
+class FAC_2P4S_ACDC_Factory(FAC_ACDC_Factory):
     """FAC 2P4S factoy."""
 
     @property

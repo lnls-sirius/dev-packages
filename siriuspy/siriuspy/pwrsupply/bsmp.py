@@ -281,7 +281,7 @@ class ConstFBP_DCLink(ConstBSMP):
 
 
 class ConstFAC_DCDC(ConstBSMP):
-    """Namespace for organizing power supply FAC BSMP constants."""
+    """Namespace for organizing power supply FAC_DCDC BSMP constants."""
 
     # --- undefined variables
     V_UNDEF14 = 14
@@ -320,7 +320,7 @@ class ConstFAC_DCDC(ConstBSMP):
 
 
 class ConstFAC_ACDC(ConstBSMP):
-    """Namespace for organizing power supply FAC ACDC BSMP constants."""
+    """Namespace for organizing power supply FAC_ACDC BSMP constants."""
 
     # --- undefined variables
     V_UNDEF14 = 14
@@ -357,7 +357,7 @@ class ConstFAC_ACDC(ConstBSMP):
 
 
 class ConstFAC_2P4S_DCDC(ConstBSMP):
-    """Namespace for organizing power supply FAC BSMP constants."""
+    """Namespace for organizing power supply FAC_2P4S_DCDC BSMP constants."""
 
     # --- undefined variables
     V_UNDEF14 = 14
@@ -408,7 +408,7 @@ class ConstFAC_2P4S_DCDC(ConstBSMP):
 
 
 class ConstFAC_2P4S_ACDC(ConstBSMP):
-    """Namespace for organizing power supply FAC ACDC BSMP constants."""
+    """Namespace for organizing power supply FAC_2P4S_ACDC BSMP constants."""
 
     # --- undefined variables
     V_UNDEF14 = 14
