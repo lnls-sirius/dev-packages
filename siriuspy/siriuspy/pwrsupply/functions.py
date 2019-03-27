@@ -234,7 +234,7 @@ class Current(Function):
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
             op_modes = [_PSCStatus(self.pru_controller.read_variables(
-                device_id, 0)).ioc_opmode for device_id in self._device_ids]
+                device_id, 0)).state for device_id in self._device_ids]
             slowsync = False
             if _PSConst.States.SlowRefSync in op_modes:
                 slowsync = True

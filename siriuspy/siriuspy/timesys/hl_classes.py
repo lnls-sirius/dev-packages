@@ -71,6 +71,8 @@ class _BaseHL(_Base):
         It not only sets the new high level property value but also forwards it
         to the low level classes.
         """
+        if value is None:
+            return False
         return _reduce(_and_, map(
                     lambda x: x.write(prop_name, value), self._ll_objs))
 
@@ -86,7 +88,7 @@ class _BaseHL(_Base):
                 continue
             value = self.read(prop, is_sp=is_sp)
             if value is None or not value:
-                return
+                continue
             values[prop] = value
         return values
 
@@ -173,13 +175,19 @@ class _BaseHL(_Base):
             return ret[0]
 
     def _combine_default(self, values):
+        dic_ = {
+            'alarm': self.Alarm.COMM,
+            'severity': self.Severity.INVALID}
+        values = [val for val in values if val is not None]
+        if not values:
+            dic_['value'] = None
+            return dic_
         value, cnt = _mode(sorted(values))
-        alarm = self.Alarm.NO
-        severity = self.Severity.NO
-        if cnt < len(self._ll_objs):
-            alarm = self.Alarm.COMM
-            severity = self.Severity.INVALID
-        return {'value': value, 'alarm': alarm, 'severity': severity}
+        dic_['value'] = value
+        if cnt == len(self._ll_objs):
+            dic_['alarm'] = self.Alarm.NO
+            dic_['severity'] = self.Severity.NO
+        return dic_
 
 
 class HLEvent(_BaseHL):

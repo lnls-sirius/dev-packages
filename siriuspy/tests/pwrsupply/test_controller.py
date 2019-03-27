@@ -36,6 +36,8 @@ class TestStandardController(unittest.TestCase):
                         'BO-01U:PS-CH:CycleAmpl-SP': mock.Mock(),
                         'BO-01U:PS-CH:CycleOffset-SP': mock.Mock(),
                         'BO-01U:PS-CH:CycleAuxParam-SP': mock.Mock()}
+        self.readers['BO-01U:PS-CH:OpMode-Sts'].read.return_value = \
+            PSConst.States.SlowRef
         self.writers = {
             'BO-01U:PS-CH:OpMode-Sel': mock.Mock(),
             'BO-01U:PS-CH:CycleType-Sel': mock.Mock(),
@@ -102,6 +104,7 @@ class TestStandardController(unittest.TestCase):
 
     def test_read_operation_mode_checks_watcher(self):
         """Test device watcher is checked."""
+        self.controller._watchers['BO-01U:PS-CH'].op_mode = PSConst.OpMode.Cycle
         self.controller.read('BO-01U:PS-CH', 'OpMode-Sts')
         self.controller._watchers['BO-01U:PS-CH'].is_alive.assert_called()
 
@@ -115,9 +118,9 @@ class TestStandardController(unittest.TestCase):
     def test_read_operation_mode_watcher_alive(self):
         """Test watcher status is verified and returned."""
         self.controller._watchers['BO-01U:PS-CH'].is_alive.return_value = True
-        self.controller._watchers['BO-01U:PS-CH'].op_mode = 2
+        self.controller._watchers['BO-01U:PS-CH'].op_mode = PSConst.OpMode.Cycle
         ret = self.controller.read('BO-01U:PS-CH', 'OpMode-Sts')
-        self.assertEqual(ret, 2)
+        self.assertEqual(ret, PSConst.States.Cycle)
 
     # Write method
     def test_write(self):

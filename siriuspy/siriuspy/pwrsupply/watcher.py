@@ -98,7 +98,7 @@ class Watcher(_threading.Thread):
             _time.sleep(self.wait)
 
     def _current_op_mode(self):
-        return self.controller.read(self.dev_name, 'OpMode-Sts')
+        return self.controller.read(self.dev_name, 'OpMode-Sts') - 3
 
     def _achieved_op_mode(self):
         return self.op_mode == self._current_op_mode()
@@ -122,17 +122,12 @@ class Watcher(_threading.Thread):
         return self.controller.pru_controller.pru_sync_pulse_count > 0
 
     def _set_current(self):
-        # cur_sp = 'Current-SP'
         dev_name = self.dev_name
         if self.op_mode == _PSConst.OpMode.Cycle:
             val = self.controller.read(dev_name, 'CycleOffset-RB')
         else:
             val = self.controller.read(dev_name, 'WfmData-RB')[-1]
-        # self.setpoints[dev_name + ':' + cur_sp].apply(val)
         self.writers['Current-SP'].execute(val)
 
     def _set_slow_ref(self):
-        # self.setpoints[dev_name + ':' + field].apply(value)
-        # self.controller.write(dev_name, field, value)
-        self.writers['OpMode-Sel'].execute(0)
-        # self.controller.write(self.dev_name, 'OpMode-Sel', 0)
+        self.writers['OpMode-Sel'].execute(_PSConst.OpMode.SlowRef)

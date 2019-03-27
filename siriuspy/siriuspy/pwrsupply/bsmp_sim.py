@@ -275,7 +275,7 @@ class _OpModeSimSlowRefState(_OpModeSimState):
         """Set operation mode."""
         ps_status = variables[self._c.V_PS_STATUS]
         psc_status = _PSCStatus(ps_status=ps_status)
-        psc_status.ioc_opmode = _PSConst.OpMode.SlowRef
+        psc_status.ioc_opmode = _PSConst.States.SlowRef
         variables[self._c.V_PS_STATUS] = psc_status.ps_status
         self.set_slowref(variables, variables[self._c.V_PS_SETPOINT])
 
@@ -304,14 +304,9 @@ class _OpModeSimSlowRefState(_OpModeSimState):
         variables[self._c.V_SIGGEN_AMPLITUDE] = input_val[1]
         variables[self._c.V_SIGGEN_OFFSET] = input_val[2]
 
-    def trigger(self, variables, value):
+    def trigger(self, variables):
         """Slow Ref does nothing when trigger is received."""
-        if self._is_on(variables):
-            variables[self._c.V_PS_REFERENCE] = value
-            if self._is_open_loop(variables) == 0:
-                # control loop closed
-                for monvar_id in self._monvars:
-                    variables[monvar_id] = value
+        pass
 
 
 class _OpModeSimSlowRefSyncState(_OpModeSimState):
@@ -325,7 +320,7 @@ class _OpModeSimSlowRefSyncState(_OpModeSimState):
         """Set operation mode."""
         ps_status = variables[self._c.V_PS_STATUS]
         psc_status = _PSCStatus(ps_status=ps_status)
-        psc_status.ioc_opmode = _PSConst.States.SlowRefSync
+        psc_status.ioc_opmode = _PSConst.OpMode.SlowRefSync
         variables[self._c.V_PS_STATUS] = psc_status.ps_status
 
     def set_slowref(self, variables, input_val):
@@ -609,10 +604,7 @@ class _BaseBSMPSim(_BSMPSim):
 
     def _trigger(self, value=None):
         if self._is_on():
-            if value is not None:
-                self._state.trigger(self._variables, value)
-            else:
-                self._state.trigger(self._variables)
+            self._state.trigger(self._variables)
 
 
 class BSMPSim_FBP(_BaseBSMPSim, _Spec_FBP):
@@ -819,7 +811,8 @@ class BSMPSim_FAP(_BaseBSMPSim, _Spec_FAP):
         return _EntitiesFAP()
 
     def _get_states(self):
-        return [_OpModeSimState_FAP()]
+        return [_OpModeSimSlowRefState_FBP(), _OpModeSimSlowRefSyncState_FBP(),
+                _OpModeSimCycleState_FBP(self._pru)]
 
     def _get_init_variables(self):
         firmware = [b'S', b'i', b'm', b'u', b'l', b'a', b't', b'i', b'o', b'n']
@@ -833,56 +826,8 @@ class BSMPSim_FAP(_BaseBSMPSim, _Spec_FAP):
             0, 0, 0, 0.0, 0.0, 0.0, 0.0, [0.0, 0.0, 0.0, 0.0],  # siggen [6-13]
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # undef [14-24]
             0, 0,  # interlocks [25-26]
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # [27-35]
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # [27-35]
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # [36-46]
+            0,  # [47 - iib_interlocks]
+            ]
         return variables
-
-# --- Classes for UDCs ---
-
-
-# udcmodels = {
-#     'FBP': {'ConstBSMP': _cFBP,
-#             'Entities': _EntitiesFBP(),
-#             'BSMPSim': BSMPSim_FBP, },
-#     'FBP_DCLink': {'ConstBSMP': _cFBP_DCLink,
-#                    'Entities': _EntitiesFBP_DCLink(),
-#                    'BSMPSim': BSMPSim_FBP_DCLink, },
-#     'FBP_FOFB': {'ConstBSMP': _cFBP,
-#                  'Entities': _EntitiesFBP(),
-#                  'BSMPSim': BSMPSim_FBP, },
-
-#     'FAC_DCDC': {'ConstBSMP': _cFAC_DCDC,# [27-32]
-#                  'Entities': _EntitiesFAC_DCDC(),
-#                  'BSMPSim': BSMPSim_FAC_DCDC, },
-#     'FAC_ACDC': {'ConstBSMP': _cFAC_ACDC,
-#                  'Entities': _EntitiesFAC_ACDC(),
-#                  'BSMPSim': BSMPSim_FAC_ACDC, },
-#     'FAC_2S_DCDC': {'ConstBSMP': _cFAC_DCDC,
-#                     'Entities': _EntitiesFAC_DCDC(),
-#                     'BSMPSim': BSMPSim_FAC_DCDC, },
-#     'FAC_2S_ACDC': {'ConstBSMP': _cFAC_ACDC,
-#                     'Entities': _EntitiesFAC_ACDC(),
-#                     'BSMPSim': BSMPSim_FAC_ACDC, },
-#     'FAC_2P4S_DCDC': {'ConstBSMP': _cFAC_DCDC,
-#                       'Entities': _EntitiesFAC_DCDC(),
-#                       'BSMPSim': BSMPSim_FAC_DCDC, },
-#     'FAC_2P4S_ACDC': {'ConstBSMP': _cFAC_ACDC,
-#                       'Entities': _EntitiesFAC_ACDC(),
-#                       'BSMPSim': BSMPSim_FAC_ACDC, },
-
-#     'FAP': {'ConstBSMP': _cFBP,
-#             'Entities': _EntitiesFBP(),
-#             'BSMPSim': BSMPSim_FBP, },
-#     'FAP_2P2S_MASTER': {'ConstBSMP': _cFBP,
-#                         'Entities': _EntitiesFBP(),
-#                         'BSMPSim': BSMPSim_FBP, },
-#     'FAP_4P_Master': {'ConstBSMP': _cFBP,
-#                       'Entities': _EntitiesFBP(),
-#                       'BSMPSim': BSMPSim_FBP, },
-#     'FAP_4P_Slave': {'ConstBSMP': _cFBP,
-#                      'Entities': _EntitiesFBP(),
-#                      'BSMPSim': BSMPSim_FBP, },
-
-#     'Commercial': {'ConstBSMP': _cFAC_DCDC,
-#                    'Entities': _EntitiesFAC_DCDC(),
-#                    'BSMPSim': BSMPSim_FAC_DCDC, },
-# }

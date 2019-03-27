@@ -130,7 +130,7 @@ class FBPPowerSupply(_Device):
                 # TODO: values['PwrState-Sts'] == values['OpMode-Sts'] ?
                 psc_status = _PSCStatus(ps_status=values['PwrState-Sts'])
                 values['PwrState-Sts'] = psc_status.ioc_pwrstate
-                values['OpMode-Sts'] = psc_status.ioc_opmode
+                values['OpMode-Sts'] = psc_status.state
                 values['CtrlMode-Mon'] = psc_status.interface
             if _c.V_FIRMWARE_VERSION in var_ids:
                 version = ''.join([c.decode() for c in values['Version-Cte']])
@@ -156,7 +156,7 @@ class FBPPowerSupply(_Device):
             val = psc_status.ioc_pwrstate
         elif field == 'OpMode-Sts':
             psc_status = _PSCStatus(ps_status=val)
-            val = psc_status.ioc_opmode
+            val = psc_status.state
         elif field == 'CtrlMode-Mon':
             psc_status = _PSCStatus(ps_status=val)
             val = psc_status.interface

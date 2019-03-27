@@ -90,7 +90,7 @@ class ETypes(_cutil.ETypes):
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-    SOFT_INTLCK_FAC = (
+    SOFT_INTLCK_FAC_DCDC = (
         'Sobre-temperatura nos indutores',  'Sobre-temperatura nos IGBTs',
         'Falha no DCCT 1', 'Falha no DCCT 2',
         'Alta diferença entre DCCTs',
@@ -102,10 +102,12 @@ class ETypes(_cutil.ETypes):
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-    HARD_INTLCK_FAC = (
+    HARD_INTLCK_FAC_DCDC = (
         'Sobre-corrente na carga', 'Sobre-tensão na carga',
         'Sobre-tensão no DC-Link', 'Sub-tensão no DC-Link',
-        'Falha nos drivers do módulo', 'Reserved', 'Reserved', 'Reserved',
+        'Falha nos drivers do módulo',
+        'Interlock da placa IIB',
+        'Interlock externo', 'Interlock do rack',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
@@ -199,9 +201,11 @@ class ETypes(_cutil.ETypes):
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',)
     SOFT_INTLCK_FAP = (
-        'Falha no DCCT1', 'Falha no DCCT2',
-        'Alta diferença entre DCCTs', 'Falha de leitura corrente DCCT1',
-        'Falha de leitura corrente DCCT2', 'Reserved', 'Reserved', 'Reserved',
+        'Falha no DCCT 1', 'Falha no DCCT 2',
+        'Alta diferença entre DCCTs',
+        'Falha de leitura da corrente na carga do DCCT 1',
+        'Falha de leitura da corrente na carga do DCCT 2',
+        'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
@@ -211,17 +215,32 @@ class ETypes(_cutil.ETypes):
     HARD_INTLCK_FAP = (
         'Sobre-corrente na carga',
         'Sobre-tensão na carga',
-        'Sobre-tensão no DCLink',
-        'Sub-tensão no DCLink',
+        'Sobre-tensão no DC-Link',
+        'Sub-tensão no DC-Link',
         'Falha no contator de entrada do DC-Link',
-        'Sobre-corrente no IGBT1', 'Sobre-corrente no IGBT2',
-        'Reserved', 'Reserved',
+        'Sobre-corrente no IGBT 1', 'Sobre-corrente no IGBT 2',
+        'Interlock da placa IIB', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved',)
+    IIB_INTLCK_FAP = (
+        'Sobre-tensão de entrada', 'Sobre-tensão de saída',
+        'Sobre-corrente no IGBT 1', 'Sobre-corrente no IGBT 2',
+        'Sobre-temperatura no IGBT 1', 'Sobre-temperatura no IGBT 2',
+        'Sobre-tensão dos drivers dos IGBTs',
+        'Sobre-corrente do driver do IGBT 1',
+        'Sobre-corrente do driver do IGBT 2',
+        'Erro no driver do IGBT 1', 'Erro no driver do IGBT 2',
+        'Sobre-temperatura nos indutores', 'Sobre-temperatura no dissipador',
+        'Falha no contator de entrada do DC-Link', 'Interlock externo',
+        'Alta corrente de fuga', 'Interlock do rack',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
     CYCLE_TYPES = ('Sine', 'DampedSine', 'Trapezoidal')
     SYNC_MODES = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
 
@@ -660,11 +679,11 @@ def _get_ps_FAC_DCDC_propty_database():
         'Current2-Mon': {'type': 'float',  'value': 0.0,
                          'prec': default_ps_current_precision},
         'IntlkSoftLabels-Cte':  {'type': 'string',
-                                 'count': len(_et.SOFT_INTLCK_FAC),
-                                 'value': _et.SOFT_INTLCK_FAC},
+                                 'count': len(_et.SOFT_INTLCK_FAC_DCDC),
+                                 'value': _et.SOFT_INTLCK_FAC_DCDC},
         'IntlkHardLabels-Cte':  {'type': 'string',
-                                 'count': len(_et.HARD_INTLCK_FAC),
-                                 'value': _et.HARD_INTLCK_FAC},
+                                 'count': len(_et.HARD_INTLCK_FAC_DCDC),
+                                 'value': _et.HARD_INTLCK_FAC_DCDC},
     }
     propty_db.update(db_ps)
     return propty_db
@@ -850,12 +869,17 @@ def _get_ps_FAP_propty_database():
                          'prec': default_ps_current_precision},
         'Current2-Mon': {'type': 'float',  'value': 0.0,
                          'prec': default_ps_current_precision},
+        'IntlkIIB-Mon': {'type': 'int',    'value': 0},
         'IntlkSoftLabels-Cte':  {'type': 'string',
                                  'count': len(_et.SOFT_INTLCK_FAP),
                                  'value': _et.SOFT_INTLCK_FAP},
         'IntlkHardLabels-Cte':  {'type': 'string',
                                  'count': len(_et.HARD_INTLCK_FAP),
                                  'value': _et.HARD_INTLCK_FAP},
+        'IntlkIIB-Cte':  {'type': 'string',
+                          'count': len(_et.IIB_INTLCK_FAP),
+                          'value': _et.IIB_INTLCK_FAP},
+
     }
     propty_db.update(db_ps)
     return propty_db

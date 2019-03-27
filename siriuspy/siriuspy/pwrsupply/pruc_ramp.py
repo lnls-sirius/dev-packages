@@ -106,7 +106,7 @@ class Ramp(_threading.Thread):
         return self._controller.read(self._dev_names[0], 'OpMode-Sts')
 
     def _achieved_op_mode(self):
-        return _PSConst.OpMode.RmpWfm == self._current_op_mode()
+        return _PSConst.States.RmpWfm == self._current_op_mode()
 
     def _set_waveform(self, idx):
         for dev_id in self._dev_ids:
