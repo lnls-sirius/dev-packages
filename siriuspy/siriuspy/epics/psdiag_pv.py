@@ -39,14 +39,16 @@ class PSStatusPV(Computer):
     BIT_DISCONNTD = 0b00000001
     BIT_OPMODEDIF = 0b00000010
     BIT_CURRTDIFF = 0b00000100
-    BIT_INTLKSOFT = 0b00001000
-    BIT_INTLKHARD = 0b00010000
+    BIT_MADISCONN = 0b00001000
+    BIT_INTLKSOFT = 0b00010000
+    BIT_INTLKHARD = 0b00100000
 
     OPMODE_SEL = 0
     OPMODE_STS = 1
     CURRT_DIFF = 2
-    INTLK_SOFT = 3
-    INTLK_HARD = 4
+    MAOPMD_SEL = 3
+    INTLK_SOFT = 4
+    INTLK_HARD = 5
 
     def compute_update(self, computed_pv, updated_pv_name, value):
         """Compute PS Status PV."""
@@ -62,26 +64,31 @@ class PSStatusPV(Computer):
             value |= PSStatusPV.BIT_DISCONNTD
             return {'value': value}
 
+        # opmode?
         sel = computed_pv.pvs[PSStatusPV.OPMODE_SEL].value
         sts = computed_pv.pvs[PSStatusPV.OPMODE_STS].value
         if sel is not None and sts is not None:
-            # opmode comparison
             opmode_sel = _ETypes.OPMODES[sel]
             opmode_sts = _ETypes.STATES[sts]
             if opmode_sel != opmode_sts:
                 value |= PSStatusPV.BIT_OPMODEDIF
-            # current diff
+            # current-diff?
             if opmode_sts == _PSConst.States.SlowRef:
                 severity = computed_pv.pvs[PSStatusPV.CURRT_DIFF].severity
                 if severity != 0:
                     value |= PSStatusPV.BIT_CURRTDIFF
         else:
             value |= PSStatusPV.BIT_OPMODEDIF
-        # interlock soft
+        # ma connected?
+        disconnected = \
+            not computed_pv.pvs[PSStatusPV.MAOPMD_SEL].connected
+        if disconnected:
+            value |= PSStatusPV.BIT_MADISCONN
+        # interlock soft?
         intlksoft = computed_pv.pvs[PSStatusPV.INTLK_SOFT].value
         if intlksoft != 0 or intlksoft is None:
             value |= PSStatusPV.BIT_INTLKSOFT
-        # interlock hard
+        # interlock hard?
         intlkhard = computed_pv.pvs[PSStatusPV.INTLK_HARD].value
         if intlkhard != 0 or intlkhard is None:
             value |= PSStatusPV.BIT_INTLKHARD
