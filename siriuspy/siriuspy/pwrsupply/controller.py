@@ -76,7 +76,8 @@ class PSController:
                     continue
                 else:
                     if key.endswith('OpMode-Sel'):
-                        value = 0 if value < 3 else value - 3
+                        if value is not None:
+                            value = 0 if value < 3 else value - 3
                     reader.apply(value)
 
     @staticmethod

@@ -114,7 +114,7 @@ class ETypes(_cutil.ETypes):
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-    HARD_INTLCK_FAC_ACDC = (
+    SOFT_INTLCK_FAC_ACDC = (
         'Sobre-temperatura no dissipador', 'Sobre-temperatura nos indutores',
         'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
