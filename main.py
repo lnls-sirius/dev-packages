@@ -354,12 +354,11 @@ class SOFB(_BaseClass):
         return True
 
     def _do_meas_respmat(self):
-        nr_corrs = self._csorb.NR_CORRS
-        nr_bpms = self._csorb.NR_BPMS
         self.run_callbacks(
             'MeasRespMat-Mon', self._csorb.MeasRespMatMon.Measuring)
-        mat = _np.zeros([2*nr_bpms, nr_corrs])
+        mat = list()
         orig_kicks = self.correctors.get_strength()
+        nr_corrs = len(orig_kicks)
         for i in range(nr_corrs):
             if not self._measuring_respmat:
                 self.run_callbacks(
@@ -387,11 +386,12 @@ class SOFB(_BaseClass):
             self.correctors.apply_kicks(kicks)
             _time.sleep(self._meas_respmat_wait)
             orbn = self.orbit.get_orbit(True)
-            mat[:, i] = (orbp-orbn)/delta
+            mat.append((orbp-orbn)/delta)
         self.correctors.apply_kicks(orig_kicks)
         msg = 'Measurement Completed.'
         self._update_log(msg)
         _log.info(msg)
+        mat = _np.array(mat).T
         self.matrix.set_respmat(list(mat.flatten()))
         self.run_callbacks(
             'MeasRespMat-Mon', self._csorb.MeasRespMatMon.Completed)
