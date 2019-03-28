@@ -7,31 +7,30 @@
 
 # EXCITATION DATA
 # ===============
-+0000.00   -00.00e-03 00.00e+00
-+0448.00   -02.06e-03 00.00e+00
-+0640.00   -03.08e-03 00.00e+00
-+0825.00   -04.11e-03 00.00e+00
-+1002.00   -05.14e-03 00.00e+00
-+1170.00   -06.11e-03 00.00e+00
-+1340.00   -07.12e-03 00.00e+00
-+1510.00   -08.13e-03 00.00e+00
-+1680.00   -09.17e-03 00.00e+00
-+1850.00   -10.21e-03 00.00e+00
-+2015.00   -11.22e-03 00.00e+00
-+2145.00   -12.02e-03 00.00e+00
-+3500.00   -20.59e-03 00.00e+00
-+4464.20   -26.62e-03 00.00e+00
++0000.00  +0.000000e+00 0.000000e+00
++0448.00  -2.060000e-03 0.000000e+00
++0640.00  -3.080000e-03 0.000000e+00
++0825.00  -4.110000e-03 0.000000e+00
++1002.00  -5.140000e-03 0.000000e+00
++1170.00  -6.110000e-03 0.000000e+00
++1340.00  -7.120000e-03 0.000000e+00
++1510.00  -8.130000e-03 0.000000e+00
++1680.00  -9.170000e-03 0.000000e+00
++1850.00  -1.021000e-02 0.000000e+00
++2015.00  -1.122000e-02 0.000000e+00
++2145.00  -1.202000e-02 0.000000e+00
++3500.00  -2.059000e-02 0.000000e+00
 
 # COMMENTS
 # ========
 # 1. data:   a) measurements
-#               smb://centaurus/repositorio/LNLS/Projetos/Projetos_Ativos/Sirius/EPP/Projeto Septa/Inj_Boo
+#               smb://centaurus/repositorio/LNLS/Projetos/Projetos_Ativos/Sirius/EPP/Projeto Septa/Inj_Boo/Boo_Inj_SepKcResumo.pptx
 #               (email from fabio arroyo to ximenes with excel file, 2018-10-10)
 #            b) last excdata point corresponds to a kick of 25 mrad @ 150 MeV, linearly fitted
 #               using te last 6 data points, from 1510 to 3500 volts.
 #            c) deflections:
-#               nominal deflection value: 19.34 mrad @ 150 MeV: 3500.00 Volts
-#               maximum deflection value: 23.40 mrad @ 150 Mev: 4192.65 Volts
+#               nominal deflection value: -19.34 mrad @ 150 MeV: 1762.82 Volts
+#               maximum deflection value: -23.40 mrad @ 150 Mev: 2094.30 Volts
 #            d) voltage tension column "VAT Ajuste RMT" from excel spreadsheet was used.
 #            e) specs:
 #               https://wiki-sirius.lnls.br/mediawiki/index.php/Table:Septa_parameters

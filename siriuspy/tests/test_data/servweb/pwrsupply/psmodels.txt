@@ -6,14 +6,24 @@
 #        https://cnpemcamp-my.sharepoint.com/:b:/g/personal/cleber_rodrigues_lnls_br/EYay5Qhtb0tOoBr-t-4TVhIBsPemqeQhG59vq8WgO2K-EQ?e=CgggsR
 
 
+# --- Linac quadrupoles ---
+
+LI-01:PS-Spect               LINAC_PS
+LI-01:PS-QD1                 LINAC_PS
+LI-01:PS-QD2                 LINAC_PS
+LI-Fam:PS-QF1                LINAC_PS
+LI-Fam:PS-QF2                LINAC_PS
+LI-01:PS-QF3                 LINAC_PS
+
+
 # --- Booster dipole, quandrupole and sextupole power supplies (FAC) (Slide 1)
 
 BO-Fam:PS-SD                  FAC_DCDC
 BO-Fam:PS-SF                  FAC_DCDC
 BO-Fam:PS-QD                  FAC_DCDC
 
-BO-Fam:PS-QF                  FAC_2S_DCDC
-PA-RaPSC03:PS-DCLink-BO1      FAC_2S_ACDC
+BO-Fam:PS-QF                  FAC_DCDC
+PA-RaPSC03:PS-DCLink-BO1      FAC_ACDC
 
 BO-Fam:PS-B-1                 FAC_2P4S_DCDC
 PA-RaPSE01:PS-DCLink-BO       FAC_2P4S_ACDC
