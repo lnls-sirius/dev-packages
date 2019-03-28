@@ -250,7 +250,6 @@ class _BaseLL(_Base):
                 pv._initialized = True
             except _epics.ca.CASeverityException:
                 _log.error('NO Write Permission to {0:s}'.format(pv.pvname))
-                return
 
     def _on_change_writepv(self, pvname, value, **kwargs):
         # -Cmd PVs do not have a state associated to them
