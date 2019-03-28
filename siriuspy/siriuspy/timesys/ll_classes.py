@@ -245,8 +245,11 @@ class _BaseLL(_Base):
         if pv.connected and pv.put_complete:
             # wait=True is too slow for the LL Timing IOCs. It is better not
             # to use it.
-            pv.put(value, use_complete=True, wait=wait)
-            pv._initialized = True
+            try:
+                pv.put(value, use_complete=True, wait=wait)
+                pv._initialized = True
+            except _epics.ca.CASeverityException:
+                _log.error('NO Write Permission to {0:s}'.format(pv.pvname))
 
     def _on_change_writepv(self, pvname, value, **kwargs):
         # -Cmd PVs do not have a state associated to them

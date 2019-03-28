@@ -98,6 +98,7 @@ repo_names = {
                     'dev-packages',
                     'machine-applications',
                     'hla',
-                    'pydm'],
+                    'pydm',
+                    'scripts'],
 
 }
