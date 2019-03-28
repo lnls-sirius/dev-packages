@@ -50,6 +50,7 @@ class ConstTLines(_cutil.Const):
     EVG_NAME = _TISearch.get_device_names({'dev': 'EVG'})[0]
     ORBIT_CONVERSION_UNIT = 1/1000  # from nm to um
     MAX_MT_ORBS = 4000
+    MAX_RINGSZ = 5
 
     TrigAcqCtrl = _csbpm.AcqEvents
     TrigAcqChan = _cutil.Const.register('TrigAcqChan', _et.ORB_ACQ_CHAN)
@@ -438,11 +439,11 @@ class SOFBTLines(ConstTLines):
         """Return OpticsCorr-Chrom Soft IOC database."""
         db = {
             'RespMat-SP': {
-                'type': 'float', 'count': self.MTX_SZ,
+                'type': 'float', 'count': self.MAX_RINGSZ*self.MTX_SZ,
                 'value': self.MTX_SZ*[0],
                 'unit': '(BH, BV)(um) x (CH, CV, RF)(urad, Hz)'},
             'RespMat-RB': {
-                'type': 'float', 'count': self.MTX_SZ,
+                'type': 'float', 'count': self.MAX_RINGSZ*self.MTX_SZ,
                 'value': self.MTX_SZ*[0],
                 'unit': '(BH, BV)(um) x (CH, CV, RF)(urad, Hz)'},
             'SingValues-Mon': {
@@ -450,7 +451,7 @@ class SOFBTLines(ConstTLines):
                 'value': self.NR_SING_VALS*[0],
                 'unit': 'Singular values of the matrix in use'},
             'InvRespMat-Mon': {
-                'type': 'float', 'count': self.MTX_SZ,
+                'type': 'float', 'count': self.MAX_RINGSZ*self.MTX_SZ,
                 'value': self.MTX_SZ*[0],
                 'unit': '(CH, CV, RF)(urad, Hz) x (BH, BV)(um)'},
             'CHEnblList-SP': {
@@ -466,19 +467,19 @@ class SOFBTLines(ConstTLines):
                 'type': 'int', 'count': self.NR_CV, 'value': self.NR_CV*[1],
                 'unit': 'CVs used in correction'},
             'BPMXEnblList-SP': {
-                'type': 'int', 'count': self.NR_BPMS,
+                'type': 'int', 'count': self.MAX_RINGSZ*self.NR_BPMS,
                 'value': self.NR_BPMS*[1],
                 'unit': 'BPMX used in correction'},
             'BPMXEnblList-RB': {
-                'type': 'int', 'count': self.NR_BPMS,
+                'type': 'int', 'count': self.MAX_RINGSZ*self.NR_BPMS,
                 'value': self.NR_BPMS*[1],
                 'unit': 'BPMX used in correction'},
             'BPMYEnblList-SP': {
-                'type': 'int', 'count': self.NR_BPMS,
+                'type': 'int', 'count': self.MAX_RINGSZ*self.NR_BPMS,
                 'value': self.NR_BPMS*[1],
                 'unit': 'BPMY used in correction'},
             'BPMYEnblList-RB': {
-                'type': 'int', 'count': self.NR_BPMS,
+                'type': 'int', 'count': self.MAX_RINGSZ*self.NR_BPMS,
                 'value': self.NR_BPMS*[1],
                 'unit': 'BPMY used in correction'},
             'NrSingValues-SP': {
