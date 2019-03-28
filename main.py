@@ -399,7 +399,7 @@ class SOFB(_BaseClass):
 
     def _do_auto_corr(self):
         if self.orbit.mode != self._csorb.SOFBMode.SlowOrb:
-            msg = 'ERR: Can only Auto Correct in Online Mode'
+            msg = 'ERR: Can only Auto Correct in SlowOrb Mode'
             self._update_log(msg)
             _log.error(msg[5:])
             self.run_callbacks('ClosedLoop-Sel', 0)
