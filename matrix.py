@@ -76,6 +76,11 @@ class EpicsMatrix(BaseMatrix):
 
     def calc_kicks(self, orbit):
         """Calculate the kick from the orbit distortion given."""
+        if len(orbit) != self.inv_respmat.shape[0]:
+            msg = 'ERR: Orbit and matrix size not compatible.'
+            self._update_log(msg)
+            _log.error(msg[5:])
+            return
         kicks = _np.dot(-self.inv_respmat, orbit)
         nr_ch = self._csorb.NR_CH
         nr_chcv = self._csorb.NR_CHCV

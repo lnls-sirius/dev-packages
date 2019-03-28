@@ -459,9 +459,13 @@ class SOFB(_BaseClass):
         self._update_log(msg)
         _log.info(msg)
         self._ref_corr_kicks = self.correctors.get_strength()
-        self._dtheta = self.matrix.calc_kicks(orb)
+        dkicks = self.matrix.calc_kicks(orb)
+        if dkicks is not None:
+            self._dtheta = dkicks
 
     def _process_kicks(self, kicks, dkicks):
+        if dkicks is None:
+            return
         nr_ch = self._csorb.NR_CH
         slcs = {'ch': slice(None, nr_ch), 'cv': slice(nr_ch, None)}
         if self.isring:
