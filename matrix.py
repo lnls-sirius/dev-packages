@@ -59,12 +59,12 @@ class EpicsMatrix(BaseMatrix):
         self._update_log(msg)
         _log.info(msg)
         mat = _np.array(mat, dtype=float)
-        if mat.size != self._csorb.MTX_SZ:
+        if mat.size % self._csorb.MTX_SZ:
             msg = 'ERR: Wrong RespMat Size.'
             self._update_log(msg)
             _log.error(msg[5:])
             return False
-        mat = _np.reshape(mat, [2*self._csorb.NR_BPMS, self._csorb.NR_CORRS])
+        mat = _np.reshape(mat, [-1, self._csorb.NR_CORRS])
         old_ = self.respmat.copy()
         self.respmat = mat
         if not self._calc_matrices():
