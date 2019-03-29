@@ -271,7 +271,8 @@ class SOFBTLines(ConstTLines):
             ]
         db = dict()
         prop = {
-            'type': 'float', 'unit': 'um', 'count': nbpm, 'value': nbpm*[0]}
+            'type': 'float', 'unit': 'um', 'count': self.MAX_RINGSZ*nbpm,
+            'value': nbpm*[0]}
         for k in pvs:
             db[k] = _dcopy(prop)
         db.update({
@@ -423,11 +424,11 @@ class SOFBTLines(ConstTLines):
             'BufferCount-Mon': {
                 'type': 'int', 'value': 0, 'unit': 'Current buffer size'},
             'BPMPosS-Cte': {
-                'type': 'float', 'unit': 'm', 'count': nbpm,
+                'type': 'float', 'unit': 'm', 'count': self.MAX_RINGSZ*nbpm,
                 'value': self.BPM_POS},
             'BPMNickName-Cte': {
                 'type': 'string', 'unit': 'shortname for the bpms.',
-                'count': nbpm, 'value': self.BPM_NICKNAMES},
+                'count': self.MAX_RINGSZ*nbpm, 'value': self.BPM_NICKNAMES},
             'OrbStatus-Mon': {'type': 'int', 'value': 0b00000},
             'OrbStatusLabels-Cte': {
                 'type': 'string', 'count': len(self.StsLblsOrb._fields),
@@ -592,7 +593,8 @@ class SOFBRings(SOFBTLines, ConstRings):
             ]
         db_ring = dict()
         prop = {
-            'type': 'float', 'unit': 'um', 'count': nbpm, 'value': nbpm*[0]}
+            'type': 'float', 'unit': 'um', 'count': self.MAX_RINGSZ*nbpm,
+            'value': nbpm*[0]}
         for k in pvs_ring:
             db_ring[k] = _dcopy(prop)
         db_ring.update({
