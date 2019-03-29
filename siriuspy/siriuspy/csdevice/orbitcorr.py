@@ -521,6 +521,14 @@ class SOFBRings(SOFBTLines, ConstRings):
     def get_sofb_database(self, prefix=''):
         """Return OpticsCorr-Chrom Soft IOC database."""
         db_ring = {
+            'RingSize-SP': {
+                'type': 'int', 'value': 1, 'lolim': 0,
+                'hilim': self.MAX_RINGSZ+1,
+                'unit': 'Nr Times to extend the ring'},
+            'RingSize-RB': {
+                'type': 'int', 'value': 1, 'lolim': 0,
+                'hilim': self.MAX_RINGSZ+1,
+                'unit': 'Nr Times to extend the ring'},
             'ClosedLoop-Sel': {
                 'type': 'enum', 'enums': self.ClosedLoop._fields, 'value': 0},
             'ClosedLoop-Sts': {
