@@ -533,7 +533,7 @@ class BPM(_BaseTimingConfig):
         s = _np.full(nturns, refsum)
         x[vld] = (d1 + d2)*self.kx/2
         y[vld] = (d1 - d2)*self.ky/2
-        s[vld] = np.sum(vs.values()) * self.ksum
+        s[vld] = _np.sum(vs.values()) * self.ksum
         return x, y, s
 
 
