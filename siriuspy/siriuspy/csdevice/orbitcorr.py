@@ -423,9 +423,9 @@ class SOFBTLines(ConstTLines):
                 'type': 'int', 'value': 0, 'unit': 'Reset orbit buffer'},
             'BufferCount-Mon': {
                 'type': 'int', 'value': 0, 'unit': 'Current buffer size'},
-            'BPMPosS-Cte': {
+            'BPMPosS-Mon': {
                 'type': 'float', 'unit': 'm', 'count': self.MAX_RINGSZ*nbpm,
-                'value': self.BPM_POS},
+                'value': self.BPM_POS, 'prec': 2},
             'BPMNickName-Cte': {
                 'type': 'string', 'unit': 'shortname for the bpms.',
                 'count': self.MAX_RINGSZ*nbpm, 'value': self.BPM_NICKNAMES},
