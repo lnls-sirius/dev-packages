@@ -1,6 +1,7 @@
 """Module to deal with orbit acquisition."""
 import os as _os
 import time as _time
+from copy import deepcopy as _dcopy
 import logging as _log
 from functools import partial as _part
 from threading import Lock
@@ -700,6 +701,11 @@ class EpicsOrbit(BaseOrbit):
         self._multiturnidx = 0
         self._acqtrigdownsample = 1
         self._timevector = None
+
+        self._ring_extension = 1
+        self._offline_orb_extension = _dcopy(self.offline_orbit)
+        self._ref_orb_extension = _dcopy(self.ref_orbs)
+
         self.bpms = [BPM(name) for name in self._csorb.BPM_NAMES]
         self.timing = TimingConfig(acc)
         self._orbit_thread = _Repeat(
@@ -714,6 +720,21 @@ class EpicsOrbit(BaseOrbit):
     @property
     def acqtrignrsamples(self):
         return self._acqtrignrsamplespre + self._acqtrignrsamplespost
+
+    def set_ring_extension(self, val):
+        maval = self._csorb.MAX_RINGSZ
+        val = 1 if val < 1 else int(val)
+        val = maval if val > maval else val
+        if val == self.ring_extension:
+            return True
+        with self._lock_raw_orbs:
+            self._reset_orbs()
+            self.ring_extension = val
+            for pln in self._offline_orb_extended.keys():
+                orb = self._offline_orb_extended[pln]
+                self.set_offline_orbit(pln, orb)
+                orb = self._ref_orb_extended[pln]
+                self.set_ref_orbit(pln, orb)
 
     def get_orbit(self, reset=False):
         """Return the orbit distortion."""
@@ -800,12 +821,24 @@ class EpicsOrbit(BaseOrbit):
         self._update_log(msg)
         _log.info(msg)
         orb = _np.array(orb, dtype=float)
-        if orb.size != self._csorb.NR_BPMS:
-            msg = 'ERR: Wrong Size.'
+        nrb = self._csorb.NR_BPMS * self.ring_extension
+        if orb.size % self._csorb.NR_BPMS:
+            msg = 'ERR: Wrong RefOrb Size.'
             self._update_log(msg)
             _log.error(msg[5:])
             return False
+        elif orb.size < nrb:
+            nrep = int(nrb//orb.size)
+            orb2 = _np.repmat(orb, nrep)
+            orb = orb2[:nrb]
+            orbe = orb.copy()
+        elif orb.size > nrb:
+            orbe = orb
+            orb = orb[:nrb]
+        else:
+            orbe = orb.copy()
         self.ref_orbs[plane] = orb
+        self._ref_orb_extended[plane] = orbe
         self._save_ref_orbits()
         with self._lock_raw_orbs:
             self._reset_orbs()
