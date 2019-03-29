@@ -512,7 +512,7 @@ class BPM(_BaseTimingConfig):
             'A': self.spanta, 'B': self.spantb,
             'C': self.spantc, 'D': self.spantd}
         vs = dict()
-        zrs = np.zeros(samp*[0], dtype=bool)
+        zrs = _np.zeros(samp, dtype=bool)
         for a, v in an.items():
             nv = _np.full(samp, 0)
             if v is None:
@@ -731,18 +731,18 @@ class EpicsOrbit(BaseOrbit):
             for pln in self.offline_orbit.keys():
                 orb = self.offline_orbit[pln]
                 if orb.size < nrb:
-                    orb2 = np.zeros(nrb, dtype=float)
+                    orb2 = _np.zeros(nrb, dtype=float)
                     orb2[:orb.size] = orb
                     orb = orb2
-                self.offline_orbit[plane] = orb
-                self.run_callbacks('OfflineOrb'+plane+'-RB', orb[:nrb])
+                self.offline_orbit[pln] = orb
+                self.run_callbacks('OfflineOrb'+pln+'-RB', orb[:nrb])
                 orb = self.ref_orbs[pln]
                 if orb.size < nrb:
                     nrep = _ceil(nrb/orb.size)
                     orb2 = _np.tile(orb, nrep)
                     orb = orb2[:nrb]
-                self.ref_orbs[plane] = orb
-                self.run_callbacks('RefOrb'+plane+'-RB', orb[:nrb])
+                self.ref_orbs[pln] = orb
+                self.run_callbacks('RefOrb'+pln+'-RB', orb[:nrb])
         self._save_ref_orbits()
         return True
 
@@ -807,7 +807,7 @@ class EpicsOrbit(BaseOrbit):
             _log.error(msg[5:])
             return False
         elif orb.size < nrb:
-            orb2 = np.zeros(nrb, dtype=float)
+            orb2 = _np.zeros(nrb, dtype=float)
             orb2[:orb.size] = orb
             orb = orb2
         self.offline_orbit[plane] = orb
@@ -845,7 +845,7 @@ class EpicsOrbit(BaseOrbit):
             self._update_log(msg)
             _log.error(msg[6:])
             nrep = int(nrb//orb.size) + 1
-            orb2 = _np.repmat(orb, nrep)
+            orb2 = _np.tile(orb, nrep)
             orb = orb2[:nrb]
         self.ref_orbs[plane] = orb
         self._save_ref_orbits()
@@ -1107,11 +1107,11 @@ class EpicsOrbit(BaseOrbit):
         refx = self.ref_orbs['X']
         refy = self.ref_orbs['Y']
         if refx.size < refy.size:
-            ref = np.zeros(refy.shape, dtype=float)
+            ref = _np.zeros(refy.shape, dtype=float)
             ref[:refx.size] = refx
             refx = ref
         elif refy.size < refx.size:
-            ref = np.zeros(refx.shape, dtype=float)
+            ref = _np.zeros(refx.shape, dtype=float)
             ref[:refy.size] = refy
             refy = ref
         orbs = _np.array([refx, refy]).T

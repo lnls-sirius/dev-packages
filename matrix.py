@@ -50,7 +50,8 @@ class EpicsMatrix(BaseMatrix):
             self.selection_pv_names['rf'] = 'RFEnbl-Sts'
         self.num_sing_values = self._csorb.NR_SING_VALS
         self.sing_values = _np.zeros(self._csorb.NR_CORRS, dtype=float)
-        self.respmat = _np.zeros([2*self._csorb.NR_BPMS, self._csorb.NR_CORRS])
+        self.respmat = _np.zeros(
+            [2*self._csorb.NR_BPMS, self._csorb.NR_CORRS], dtype=float)
         self.inv_respmat = self.respmat.copy().T
 
         self.ring_extension = 1
@@ -79,6 +80,7 @@ class EpicsMatrix(BaseMatrix):
     def _set_respmat(self, mat):
         mat = _np.array(mat, dtype=float)
         nrc = self._csorb.NR_CORRS
+        nrb = self._csorb.NR_BPMS
         rext = self.ring_extension
         mat_rext = (mat.size // self._csorb.MTX_SZ)
         if mat.size % self._csorb.MTX_SZ:
@@ -87,15 +89,15 @@ class EpicsMatrix(BaseMatrix):
             _log.error(msg[5:])
             return None, None
         elif mat_rext < rext:
-            mat2 = _np.zeros(2, rext*self._csorb.NR_BPMS, nrc)
-            mat = mat.reshape(2, mat_rext, nrc)
-            mat2[:, :mat_rext, :] = mat
+            mat2 = _np.zeros([2, rext*self._csorb.NR_BPMS, nrc], dtype=float)
+            mat = mat.reshape(2, -1, nrc)
+            mat2[:, :(mat_rext*nrb), :] = mat
             mat = mat2.reshape(-1)
             matb = mat
         elif mat_rext > rext:
             matb = mat
-            mat = mat.reshape(2, mat_rext, nrc)
-            mat = mat[:, :rext, :]
+            mat = mat.reshape(2, -1, nrc)
+            mat = mat[:, :(rext*nrb), :]
             mat = mat.reshape(-1)
         else:
             matb = mat
@@ -271,7 +273,7 @@ class EpicsMatrix(BaseMatrix):
         self.sing_values[:] = 0
         self.sing_values[:len(s)] = s
         self.run_callbacks('SingValues-Mon', list(self.sing_values))
-        self.inv_respmat = _np.zeros(self.respmat.shape).T
+        self.inv_respmat = _np.zeros(self.respmat.shape, dtype=float).T
         self.inv_respmat[sel_mat.T] = inv_mat.flatten()
         self.run_callbacks(
                 'InvRespMat-Mon', list(self.inv_respmat.flatten()))
