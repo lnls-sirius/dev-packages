@@ -722,11 +722,11 @@ class EpicsOrbit(BaseOrbit):
         maval = self._csorb.MAX_RINGSZ
         val = 1 if val < 1 else int(val)
         val = maval if val > maval else val
-        if val == self.ring_extension:
+        if val == self._ring_extension:
             return True
         with self._lock_raw_orbs:
             self._reset_orbs()
-            self.ring_extension = val
+            self._ring_extension = val
             nrb = val * self._csorb.NR_BPMS
             for pln in self.offline_orbit.keys():
                 orb = self.offline_orbit[pln]
@@ -748,7 +748,7 @@ class EpicsOrbit(BaseOrbit):
 
     def get_orbit(self, reset=False):
         """Return the orbit distortion."""
-        nrb = self.ring_extension * self._csorb.NR_BPMS
+        nrb = self._ring_extension * self._csorb.NR_BPMS
         refx = self.ref_orbs['X'][:nrb]
         refy = self.ref_orbs['Y'][:nrb]
         if self._mode == self._csorb.SOFBMode.Offline:
@@ -800,7 +800,7 @@ class EpicsOrbit(BaseOrbit):
         self._update_log(msg)
         _log.info(msg)
         orb = _np.array(orb, dtype=float)
-        nrb = self.ring_extension * self._csorb.NR_BPMS
+        nrb = self._ring_extension * self._csorb.NR_BPMS
         if orb.size % self._csorb.NR_BPMS:
             msg = 'ERR: Wrong OfflineOrb Size.'
             self._update_log(msg)
@@ -834,7 +834,7 @@ class EpicsOrbit(BaseOrbit):
         self._update_log(msg)
         _log.info(msg)
         orb = _np.array(orb, dtype=float)
-        nrb = self._csorb.NR_BPMS * self.ring_extension
+        nrb = self._csorb.NR_BPMS * self._ring_extension
         if orb.size % self._csorb.NR_BPMS:
             msg = 'ERR: Wrong RefOrb Size.'
             self._update_log(msg)
@@ -869,7 +869,7 @@ class EpicsOrbit(BaseOrbit):
         return True
 
     def set_orbit_mode(self, value):
-        if value == self._csorb.SOFBMode.SlowOrb and self.ring_extension != 1:
+        if value == self._csorb.SOFBMode.SlowOrb and self._ring_extension != 1:
             msg = 'ERR: Cannot got to SlowOrb mode, set RingSize to 1 first.'
             self._update_log(msg)
             _log.error(msg[5:])
@@ -1054,6 +1054,11 @@ class EpicsOrbit(BaseOrbit):
         return True
 
     def set_trig_acq_downsample(self, value):
+        if self._ring_extension != 1 and value != 1:
+            msg = 'ERR: Cannot set DownSample > 1 when RingSize > 1.'
+            self._update_log(msg)
+            _log.warning(msg[5:])
+            return False
         down = self._find_new_downsample(self.acqtrignrsamples, value)
         nrpoints = (self.acqtrignrsamples // down) * self._acqtrignrshots
         if nrpoints > self._csorb.MAX_MT_ORBS:
@@ -1061,11 +1066,11 @@ class EpicsOrbit(BaseOrbit):
                 self.acqtrignrsamples, value, onlyup=True)
         if down != value:
             value = down
-            msg = 'WARN: DwnSpl Must divide NRSamples. Redefining...'
+            msg = 'WARN: DownSample must divide NrSample. Redefining...'
             self._update_log(msg)
             _log.warning(msg[6:])
         self._acqtrigdownsample = value
-        self.run_callbacks('MTurnDownSample-RB', value)
+        self.run_callbacks('TrigDownSample-RB', value)
         self._update_time_vector()
         return True
 
@@ -1082,7 +1087,7 @@ class EpicsOrbit(BaseOrbit):
             dt = self.bpms[0].fofbperiod
         else:
             dt = self.bpms[0].tbtperiod
-        dt *= self._acqtrigdownsample
+        dt *= self._acqtrigdownsample * self._ring_extension
         nrptpst = self.acqtrignrsamples // self._acqtrigdownsample
         offset = self._acqtrignrsamplespre / self._acqtrigdownsample
         nrst = self._acqtrignrshots
@@ -1099,7 +1104,17 @@ class EpicsOrbit(BaseOrbit):
                                         self._csorb.REFORBFNAME, unpack=True)
 
     def _save_ref_orbits(self):
-        orbs = _np.array([self.ref_orbs['X'], self.ref_orbs['Y']]).T
+        refx = self.ref_orbs['X']
+        refy = self.ref_orbs['Y']
+        if refx.size < refy.size:
+            ref = np.zeros(refy.shape, dtype=float)
+            ref[:refx.size] = refx
+            refx = ref
+        elif refy.size < refx.size:
+            ref = np.zeros(refx.shape, dtype=float)
+            ref[:refy.size] = refy
+            refy = ref
+        orbs = _np.array([refx, refy]).T
         try:
             path = _os.path.split(self._csorb.REFORBFNAME)[0]
             if not _os.path.isdir(path):
@@ -1133,16 +1148,18 @@ class EpicsOrbit(BaseOrbit):
         self.run_callbacks('BufferCount-Mon', count)
 
     def _update_online_orbits(self, sp=False):
-        orb = _np.zeros(self._csorb.NR_BPMS, dtype=float)
+        nrb = self._csorb.NR_BPMS
+        orbsz = nrb * self._ring_extension
+        orb = _np.zeros(orbsz, dtype=float)
         orbs = {'X': orb, 'Y': orb.copy(), 'Sum': orb.copy()}
         ref = self.ref_orbs
         for i, bpm in enumerate(self.bpms):
             pos = bpm.spposx if sp else bpm.posx
-            orbs['X'][i] = ref['X'][i] if pos is None else pos
+            orbs['X'][i::nrb] = ref['X'][i] if pos is None else pos
             pos = bpm.spposy if sp else bpm.posy
-            orbs['Y'][i] = ref['Y'][i] if pos is None else pos
+            orbs['Y'][i::nrb] = ref['Y'][i] if pos is None else pos
             pos = bpm.spsum if sp else 0.0
-            orbs['Sum'][i] = 0.0 if pos is None else pos
+            orbs['Sum'][i::nrb] = 0.0 if pos is None else pos
 
         planes = ('X', 'Y', 'Sum') if sp else ('X', 'Y')
         smooth = self.smooth_sporb if sp else self.smooth_orb
@@ -1161,11 +1178,15 @@ class EpicsOrbit(BaseOrbit):
             self.run_callbacks(pref + name + '-Mon', list(orb))
 
     def _update_multiturn_orbits(self):
+        if self._ring_extension != 1 and self._acqtrigdownsample != 1:
+            return
         orbs = {'X': [], 'Y': [], 'Sum': []}
-        with self._lock_raw_orbs:  # I need the lock here to assure consistency
+        with self._lock_raw_orbs:  # I need the lock here to ensure consistency
             samp = self.acqtrignrsamples * self._acqtrignrshots
-            nr_bpms = self._csorb.NR_BPMS
             down = self._acqtrigdownsample
+            ringsz = self._ring_extension
+            samp -= samp % (ringsz*down)
+            orbsz = self._csorb.NR_BPMS * ringsz
             idx = self._multiturnidx
             nr_pts = self._smooth_npts
             for i, bpm in enumerate(self.bpms):
@@ -1184,6 +1205,7 @@ class EpicsOrbit(BaseOrbit):
 
             for pln, raw in self.raw_mtorbs.items():
                 norb = _np.array(orbs[pln], dtype=float)
+                norb = norb.reshape(orbsz, -1)
                 raw.append(norb)
                 del raw[:-nr_pts]
                 if self._smooth_meth == self._csorb.SmoothMeth.Average:
@@ -1191,7 +1213,7 @@ class EpicsOrbit(BaseOrbit):
                 else:
                     orb = _np.median(raw, axis=0)
                 if down > 1:
-                    orb = _np.mean(orb.reshape(nr_bpms, -1, down), axis=2)
+                    orb = _np.mean(orb.reshape(orbsz, -1, down), axis=2)
                 orb = orb.transpose()
                 self.smooth_mtorb[pln] = orb
                 orbs[pln] = orb
@@ -1202,8 +1224,12 @@ class EpicsOrbit(BaseOrbit):
                 'MTurnIdx' + name + '-Mon', orb[idx, :].flatten())
 
     def _update_singlepass_orbits(self):
+        if self._ring_extension != 1 and self._acqtrigdownsample != 1:
+            return
         orbs = {'X': [], 'Y': [], 'Sum': []}
-        nr_turns = 10
+        ringsz = self._ring_extension
+        down = self._acqtrigdownsample
+        nr_turns = ringsz * down
         with self._lock_raw_orbs:  # I need the lock here to assure consistency
             nr_pts = self._smooth_npts
             for i, bpm in enumerate(self.bpms):
@@ -1221,7 +1247,9 @@ class EpicsOrbit(BaseOrbit):
                     orb = _np.mean(raw, axis=0)
                 else:
                     orb = _np.median(raw, axis=0)
-                orb = orb.flatten()
+                orb = orb.reshape(-1)
+                if down > 1:
+                    orb = _np.mean(orb.reshape(-1, down), axis=1)
                 self.smooth_sporb[pln] = orb
                 name = ('Orb' if pln != 'Sum' else '') + pln
                 self.run_callbacks('SPass' + name + '-Mon', list(orb))
@@ -1247,11 +1275,12 @@ class EpicsOrbit(BaseOrbit):
         self._update_bpmoffsets()
 
     def _update_bpmoffsets(self):
-        orbx = _np.zeros(self._csorb.NR_BPMS, dtype=float)
+        nrb = self._csorb.NR_BPMS
+        orbx = _np.zeros(nrb * self._ring_extension, dtype=float)
         orby = orbx.copy()
         for i, bpm in enumerate(self.bpms):
-            orbx[i] = bpm.offsetx or 0
-            orby[i] = bpm.offsety or 0
+            orbx[i::nrb] = bpm.offsetx or 0.0
+            orby[i::nrb] = bpm.offsety or 0.0
         self.run_callbacks('BPMOffsetX-Mon', orbx)
         self.run_callbacks('BPMOffsetY-Mon', orby)
 
