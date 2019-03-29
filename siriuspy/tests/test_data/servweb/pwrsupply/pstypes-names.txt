@@ -12,11 +12,11 @@ si-sextupole-s15-sf-fam      monopolar        sextupole
 si-sextupole-s15-sd-fam      monopolar        sextupole
 si-injdpk                    monopolar        corrector-horizontal
 si-injnlk                    monopolar        corrector-horizontal
-bo-dipole-b-fam              monopolar        dipole
-bo-quadrupole-qd-fam         monopolar        quadrupole
-bo-quadrupole-qf-fam         monopolar        quadrupole
-bo-sextupole-sd-fam          monopolar        sextupole
-bo-sextupole-sf-fam          monopolar        sextupole
+bo-dipole-b-fam              bipolar          dipole
+bo-quadrupole-qd-fam         bipolar          quadrupole
+bo-quadrupole-qf-fam         bipolar          quadrupole
+bo-sextupole-sd-fam          bipolar          sextupole
+bo-sextupole-sf-fam          bipolar          sextupole
 bo-injkicker                 monopolar        corrector-horizontal
 bo-ejekicker                 monopolar        corrector-horizontal
 ts-dipole-b-fam              monopolar        dipole
@@ -24,13 +24,13 @@ ts-injseptum-thick           monopolar        corrector-horizontal
 ts-injseptum-thin            monopolar        corrector-horizontal
 ts-ejeseptum-thick           monopolar        corrector-horizontal
 ts-ejeseptum-thin            monopolar        corrector-horizontal
-tb-dipole-b-fam              monopolar        dipole
+tb-dipole-b-fam              bipolar          dipole
 tb-injseptum                 monopolar        corrector-horizontal
 li-solenoid-fam              monopolar        solenoid
 li-solenoid                  monopolar        solenoid
 
 li-spect-45deg               bipolar          dipole
-li-spect-15deg               bipolar          dipole
+#li-spect-15deg               bipolar          dipole
 si-quadrupole-q14-trim       bipolar          quadrupole
 si-quadrupole-q20-trim       bipolar          quadrupole
 si-quadrupole-q30-trim       bipolar          quadrupole

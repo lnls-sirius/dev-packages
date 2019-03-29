@@ -5,14 +5,14 @@
 ################################################################################
 
 # --- Dipoles
-PA-RaPSE05:CO-PSCtrl-BO
-PA-RaPSF05:CO-PSCtrl-BO
+PA-RaPSF05:CO-PSCtrl-BO    10.128.123.105
+PA-RaPSE05:CO-PSCtrl-BO    10.128.123.106
 
 # --- QF, QD, SF, SD (FAC)
-PA-RaPSC03:CO-PSCtrl-BO1
-PA-RaPSC03:CO-PSCtrl-BO2
-PA-RaPSC03:CO-PSCtrl-BO3
-PA-RaPSC03:CO-PSCtrl-BO4
+PA-RaPSC03:CO-PSCtrl-BO1    10.128.123.101
+PA-RaPSC03:CO-PSCtrl-BO2    10.128.123.102
+PA-RaPSC03:CO-PSCtrl-BO3    10.128.123.103
+PA-RaPSC03:CO-PSCtrl-BO4    10.128.123.104
 
 # --- BO Correctores and Skew quadrupole
 IA-01RaCtrl:CO-PSCtrl-BO    10.128.101.105
