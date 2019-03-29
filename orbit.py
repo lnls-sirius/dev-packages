@@ -2,6 +2,7 @@
 import os as _os
 import time as _time
 from copy import deepcopy as _dcopy
+from math import ceil as _ceil
 import logging as _log
 from functools import partial as _part
 from threading import Lock
@@ -701,11 +702,7 @@ class EpicsOrbit(BaseOrbit):
         self._multiturnidx = 0
         self._acqtrigdownsample = 1
         self._timevector = None
-
         self._ring_extension = 1
-        self._offline_orb_extension = _dcopy(self.offline_orbit)
-        self._ref_orb_extension = _dcopy(self.ref_orbs)
-
         self.bpms = [BPM(name) for name in self._csorb.BPM_NAMES]
         self.timing = TimingConfig(acc)
         self._orbit_thread = _Repeat(
@@ -730,19 +727,33 @@ class EpicsOrbit(BaseOrbit):
         with self._lock_raw_orbs:
             self._reset_orbs()
             self.ring_extension = val
-            for pln in self._offline_orb_extended.keys():
-                orb = self._offline_orb_extended[pln]
-                self.set_offline_orbit(pln, orb)
-                orb = self._ref_orb_extended[pln]
-                self.set_ref_orbit(pln, orb)
+            nrb = val * self._csorb.NR_BPMS
+            for pln in self.offline_orbit.keys():
+                orb = self.offline_orbit[pln]
+                if orb.size < nrb:
+                    orb2 = np.zeros(nrb, dtype=float)
+                    orb2[:orb.size] = orb
+                    orb = orb2
+                self.offline_orbit[plane] = orb
+                self.run_callbacks('OfflineOrb'+plane+'-RB', orb[:nrb])
+                orb = self.ref_orbs[pln]
+                if orb.size < nrb:
+                    nrep = _ceil(nrb/orb.size)
+                    orb2 = _np.tile(orb, nrep)
+                    orb = orb2[:nrb]
+                self.ref_orbs[plane] = orb
+                self.run_callbacks('RefOrb'+plane+'-RB', orb[:nrb])
+        self._save_ref_orbits()
+        return True
 
     def get_orbit(self, reset=False):
         """Return the orbit distortion."""
+        nrb = self.ring_extension * self._csorb.NR_BPMS
+        refx = self.ref_orbs['X'][:nrb]
+        refy = self.ref_orbs['Y'][:nrb]
         if self._mode == self._csorb.SOFBMode.Offline:
-            orbx = self.offline_orbit['X']
-            orby = self.offline_orbit['Y']
-            refx = self.ref_orbs['X']
-            refy = self.ref_orbs['Y']
+            orbx = self.offline_orbit['X'][:nrb]
+            orby = self.offline_orbit['Y'][:nrb]
             return _np.hstack([orbx-refx, orby-refy])
 
         if reset:
@@ -770,11 +781,8 @@ class EpicsOrbit(BaseOrbit):
             msg = 'ERR: get orbit function timeout.'
             self._update_log(msg)
             _log.error(msg[5:])
-            orbx = self.ref_orbs['X']
-            orby = self.ref_orbs['Y']
-
-        refx = self.ref_orbs['X']
-        refy = self.ref_orbs['Y']
+            orbx = refx
+            orby = refy
         return _np.hstack([orbx-refx, orby-refy])
 
     def _get_orbit_online(self, orbs):
@@ -792,13 +800,18 @@ class EpicsOrbit(BaseOrbit):
         self._update_log(msg)
         _log.info(msg)
         orb = _np.array(orb, dtype=float)
-        if orb.size != self._csorb.NR_BPMS:
-            msg = 'ERR: Wrong Size.'
+        nrb = self.ring_extension * self._csorb.NR_BPMS
+        if orb.size % self._csorb.NR_BPMS:
+            msg = 'ERR: Wrong OfflineOrb Size.'
             self._update_log(msg)
             _log.error(msg[5:])
             return False
+        elif orb.size < nrb:
+            orb2 = np.zeros(nrb, dtype=float)
+            orb2[:orb.size] = orb
+            orb = orb2
         self.offline_orbit[plane] = orb
-        self.run_callbacks('OfflineOrb'+plane+'-RB', orb)
+        self.run_callbacks('OfflineOrb'+plane+'-RB', orb[:nrb])
         return True
 
     def set_smooth_npts(self, num):
@@ -828,21 +841,17 @@ class EpicsOrbit(BaseOrbit):
             _log.error(msg[5:])
             return False
         elif orb.size < nrb:
-            nrep = int(nrb//orb.size)
+            msg = 'WARN: Orb Size is too small. Replicating...'
+            self._update_log(msg)
+            _log.error(msg[6:])
+            nrep = int(nrb//orb.size) + 1
             orb2 = _np.repmat(orb, nrep)
             orb = orb2[:nrb]
-            orbe = orb.copy()
-        elif orb.size > nrb:
-            orbe = orb
-            orb = orb[:nrb]
-        else:
-            orbe = orb.copy()
         self.ref_orbs[plane] = orb
-        self._ref_orb_extended[plane] = orbe
         self._save_ref_orbits()
         with self._lock_raw_orbs:
             self._reset_orbs()
-        self.run_callbacks('RefOrb'+plane+'-RB', orb)
+        self.run_callbacks('RefOrb'+plane+'-RB', orb[:nrb])
         return True
 
     def set_orbit_acq_rate(self, value):
