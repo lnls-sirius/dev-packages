@@ -157,7 +157,7 @@ class EpicsMatrix(BaseMatrix):
 
     def set_ring_extension(self, val):
         val = 1 if val < 1 else int(val)
-        val = 5 if val > 5 else val
+        val = self._csorb.MAX_RINGSZ if val > self._csorb.MAX_RINGSZ else val
         if val == self.ring_extension:
             return True
         bkup = self.ring_extension
