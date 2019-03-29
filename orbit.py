@@ -668,7 +668,7 @@ class EpicsOrbit(BaseOrbit):
         db['TrigNrShots-SP'][prop] = self.set_trig_acq_nrshots
         if self.isring:
             db['MTurnIdx-SP'][prop] = self.set_orbit_multiturn_idx
-            db['MTurnDownSample-SP'][prop] = self.set_trig_acq_downsample
+            db['TrigDownSample-SP'][prop] = self.set_trig_acq_downsample
 
         db = super().get_database(db)
         return db
