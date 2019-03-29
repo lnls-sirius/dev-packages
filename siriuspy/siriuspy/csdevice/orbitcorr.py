@@ -620,10 +620,10 @@ class SOFBRings(SOFBTLines, ConstRings):
             'MTurnIdxTime-Mon': {
                 'type': 'float', 'unit': 's', 'value': 0.0, 'prec': 5,
                 'hilim': 500, 'lolim': 0},
-            'MTurnDownSample-SP': {
+            'TrigDownSample-SP': {
                 'type': 'int', 'unit': '', 'value': 1,
                 'hilim': 2**15-1, 'lolim': 1},
-            'MTurnDownSample-RB': {
+            'TrigDownSample-RB': {
                 'type': 'int', 'unit': '', 'value': 1,
                 'hilim': 2**15-1, 'lolim': 1},
             })
