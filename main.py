@@ -35,6 +35,7 @@ class SOFB(_BaseClass):
         db['MeasRespMatWait-SP'][prop] = self.set_respmat_wait_time
         db['ApplyDelta-Cmd'][prop] = self.apply_corr
         if self.isring:
+            db['RingSize-SP'][prop] = self.set_ring_extension
             db['ClosedLoop-Sel'][prop] = self.set_auto_corr
             db['ClosedLoopFreq-SP'][prop] = self.set_auto_corr_frequency
             db['DeltaFactorRF-SP'][prop] = _part(self.set_corr_factor, 'rf')
@@ -61,6 +62,7 @@ class SOFB(_BaseClass):
             self._auto_corr = self._csorb.ClosedLoop.Off
             self._auto_corr_freq = 1
         self._measuring_respmat = False
+        self._ring_extension = 1
         self._corr_factor = {'ch': 1.00, 'cv': 1.00}
         self._max_kick = {'ch': 300, 'cv': 300}
         self._max_delta_kick = {'ch': 50, 'cv': 50}
@@ -153,6 +155,25 @@ class SOFB(_BaseClass):
             _time.sleep(dt)
         else:
             _log.debug('process took {0:f}ms.'.format((tf-t0)*1000))
+
+    def set_ring_extension(self, val):
+        val = 1 if val < 1 else int(val)
+        val = self._csorb.MAX_RINGSZ if val > self._csorb.MAX_RINGSZ else val
+        if val == self._ring_extension:
+            return True
+        ok = self.orbit.set_ring_extension(val)
+        if not ok:
+            return False
+        ok &= self.matrix.set_ring_extension(val)
+        if not ok:
+            return False
+        self._ring_extension = val
+        self.run_callbacks('RingSize-RB', val)
+        bpms = _np.array(self._csorb.BPM_POS)
+        bpm_pos = [bpms + i*self._csorb.T0*299792458 for i in range(val)]
+        bpm_pos = _np.hstack(bpm_pos)
+        self.run_callbacks('BPMPosS-Mon', bpm_pos)
+        return True
 
     def apply_corr(self, code):
         """Apply calculated kicks on the correctors."""
