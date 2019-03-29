@@ -5,8 +5,9 @@ from pcaspy import Driver as _Driver
 from pcaspy import Alarm as _Alarm
 from pcaspy import Severity as _Severity
 
-from siriuspy.epics.computed_pv import ComputedPV as _ComputedPV
 from siriuspy.thread import QueueThread as _QueueThread
+from siriuspy.search.ma_search import MASearch as _MASearch
+from siriuspy.epics.computed_pv import ComputedPV as _ComputedPV
 from siriuspy.epics.psdiag_pv import PSStatusPV as _PSStatusPV
 from siriuspy.epics.psdiag_pv import PSDiffPV as _PSDiffPV
 
@@ -26,7 +27,7 @@ class PSDiagDriver(_Driver):
     def _create_computed_pvs(self):
         for psname in self._psnames:
             devname = self._prefix + psname
-            magname = self._get_magname(psname)
+            magname = _MASearch.conv_psname_2_psmaname(psname)
             # DiagCurrentDiff-Mon
             pvs = [None, None]
             pvs[_PSDiffPV.CURRT_SP] = devname + ':Current-SP'
@@ -52,14 +53,6 @@ class PSDiagDriver(_Driver):
                              pvs,
                              monitor=False)
             self.pvs.append(pv)
-
-    def _get_magname(self, psname):
-        if psname in ('BO-Fam:PS-B-1', 'BO-Fam:PS-B-2'):
-            return self._prefix + 'BO-Fam:MA-B'
-        elif psname in ('SI-Fam:PS-B1B2-1', 'SI-Fam:PS-B1B2-2'):
-            return self._prefix + 'SI-Fam:MA-B1B2'
-        else:
-            return self._prefix + psname.replace(':PS-', ':MA-')
 
     def read(self, reason):
         """Read method."""
