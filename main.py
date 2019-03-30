@@ -170,7 +170,7 @@ class SOFB(_BaseClass):
         self._ring_extension = val
         self.run_callbacks('RingSize-RB', val)
         bpms = _np.array(self._csorb.BPM_POS)
-        bpm_pos = [bpms + i*self._csorb.T0*299792458 for i in range(val)]
+        bpm_pos = [bpms + i*self._csorb.C0 for i in range(val)]
         bpm_pos = _np.hstack(bpm_pos)
         self.run_callbacks('BPMPosS-Mon', bpm_pos)
         return True
