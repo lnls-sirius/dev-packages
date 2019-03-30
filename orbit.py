@@ -877,11 +877,6 @@ class EpicsOrbit(BaseOrbit):
         return True
 
     def set_orbit_mode(self, value):
-        if value == self._csorb.SOFBMode.SlowOrb and self._ring_extension != 1:
-            msg = 'ERR: Cannot got to SlowOrb mode, set RingSize to 1 first.'
-            self._update_log(msg)
-            _log.error(msg[5:])
-            return False
         trigmds = [self._csorb.SOFBMode.SinglePass, ]
         if self.isring:
             trigmds.append(self._csorb.SOFBMode.MultiTurn)
