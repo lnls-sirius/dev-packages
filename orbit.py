@@ -735,13 +735,6 @@ class EpicsOrbit(BaseOrbit):
             self._ring_extension = val
             nrb = val * self._csorb.NR_BPMS
             for pln in self.offline_orbit.keys():
-                orb = self.offline_orbit[pln]
-                if orb.size < nrb:
-                    orb2 = _np.zeros(nrb, dtype=float)
-                    orb2[:orb.size] = orb
-                    orb = orb2
-                self.offline_orbit[pln] = orb
-                self.run_callbacks('OfflineOrb'+pln+'-RB', orb[:nrb])
                 orb = self.ref_orbs[pln]
                 if orb.size < nrb:
                     nrep = _ceil(nrb/orb.size)
@@ -749,6 +742,15 @@ class EpicsOrbit(BaseOrbit):
                     orb = orb2[:nrb]
                 self.ref_orbs[pln] = orb
                 self.run_callbacks('RefOrb'+pln+'-RB', orb[:nrb])
+                self.run_callbacks('RefOrb'+pln+'-SP', orb[:nrb])
+                orb = self.offline_orbit[pln]
+                if orb.size < nrb:
+                    orb2 = self.ref_orbs[pln].copy()
+                    orb2[:orb.size] = orb
+                    orb = orb2
+                self.offline_orbit[pln] = orb
+                self.run_callbacks('OfflineOrb'+pln+'-RB', orb[:nrb])
+                self.run_callbacks('OfflineOrb'+pln+'-SP', orb[:nrb])
         self._save_ref_orbits()
         return True
 
