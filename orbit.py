@@ -727,6 +727,9 @@ class EpicsOrbit(BaseOrbit):
         val = maval if val > maval else val
         if val == self._ring_extension:
             return True
+        self._acqtrigdownsample = 1
+        self.run_callbacks('TrigDownSample-SP', 1)
+        self.run_callbacks('TrigDownSample-RB', 1)
         with self._lock_raw_orbs:
             self._reset_orbs()
             self._ring_extension = val
