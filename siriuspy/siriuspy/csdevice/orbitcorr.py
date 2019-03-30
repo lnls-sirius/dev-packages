@@ -325,6 +325,12 @@ class SOFBTLines(ConstTLines):
                 'type': 'enum', 'unit': 'Auto arm to repeat acquisition.',
                 'value': self.TrigAcqRepeat.Normal,
                 'enums': self.TrigAcqRepeat._fields},
+            'TrigDownSample-SP': {
+                'type': 'int', 'unit': '', 'value': 1,
+                'hilim': 2**15-1, 'lolim': 1},
+            'TrigDownSample-RB': {
+                'type': 'int', 'unit': '', 'value': 1,
+                'hilim': 2**15-1, 'lolim': 1},
             'TrigNrShots-SP': {
                 'type': 'int', 'unit': '', 'value': 1,
                 'hilim': 1000, 'lolim': 1},
@@ -620,12 +626,6 @@ class SOFBRings(SOFBTLines, ConstRings):
             'MTurnIdxTime-Mon': {
                 'type': 'float', 'unit': 's', 'value': 0.0, 'prec': 5,
                 'hilim': 500, 'lolim': 0},
-            'TrigDownSample-SP': {
-                'type': 'int', 'unit': '', 'value': 1,
-                'hilim': 2**15-1, 'lolim': 1},
-            'TrigDownSample-RB': {
-                'type': 'int', 'unit': '', 'value': 1,
-                'hilim': 2**15-1, 'lolim': 1},
             })
         db = super().get_orbit_database(prefix=prefix)
         db.update(self._add_prefix(db_ring, prefix))
