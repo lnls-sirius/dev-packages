@@ -186,7 +186,10 @@ class EpicsMatrix(BaseMatrix):
         self.run_callbacks('RespMat-RB', list(self.respmat.flatten()))
         for k in sellist:
             v = self.select_items[k]
-            self.run_callbacks(self.selection_pv_names[k], v)
+            pvname = self.selection_pv_names[k]
+            self.run_callbacks(pvname, v)
+            pvname = pvname.replace('-RB', '-SP')
+            self.run_callbacks(pvname, v)
         return True
 
     def calc_kicks(self, orbit):
