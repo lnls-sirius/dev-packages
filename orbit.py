@@ -1142,8 +1142,8 @@ class EpicsOrbit(BaseOrbit):
             self._update_multiturn_orbits()
             count = len(self.raw_mtorbs['X'])
         elif self._mode == self._csorb.SOFBMode.SinglePass:
-            self._update_online_orbits(sp=True)
-            # self._update_singlepass_orbits()
+            # self._update_online_orbits(sp=True)
+            self._update_singlepass_orbits()
             count = len(self.raw_sporbs['X'])
         elif self.isring:
             self._update_online_orbits(sp=False)
