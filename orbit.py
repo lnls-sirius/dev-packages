@@ -507,35 +507,38 @@ class BPM(_BaseTimingConfig):
 
     def calc_sp_multiturn_pos(self, nturns, refx=0, refy=0, refsum=0):
         downs = self.tbtrate
-        samp = downs * nturns
         an = {
             'A': self.spanta, 'B': self.spantb,
             'C': self.spantc, 'D': self.spantd}
         vs = dict()
-        zrs = _np.zeros(samp, dtype=bool)
+        siz = None
         for a, v in an.items():
-            nv = _np.full(samp, 0)
-            if v is None:
-                pass
-            elif v.size < samp:
-                nv[:v.size] = v
-            elif v.size >= samp:
-                nv = v[:samp]
-            zrs &= nv == 0
-            vs[a] = _np.std(nv.reshape(-1, downs), axis=1)
+            if v is None or v.size == 0:
+                siz = 0
+                break
+            nzrs = v.size  # _np.sum(v != 0)
+            siz = nzrs if siz is None else min(siz, nzrs)
+            vs[a] = v
 
-        # handle cases where length read is smaller than required.
-        vld = _np.sum(zrs.reshape(-1, downs, axis=1)) == 0
-        vs = {a: v[vld] for a, v in vs.items()}
-
-        d1 = (vs['A'] - vs['B']) / (vs['A'] + vs['B'])
-        d2 = (vs['D'] - vs['C']) / (vs['D'] + vs['C'])
         x = _np.full(nturns, refx)
         y = _np.full(nturns, refy)
         s = _np.full(nturns, refsum)
-        x[vld] = (d1 + d2)*self.kx/2
-        y[vld] = (d1 - d2)*self.ky/2
-        s[vld] = _np.sum(vs.values()) * self.ksum
+
+        # handle cases where length read is smaller than required.
+        rnts = min(siz//downs, nturns)
+        if not (siz or rnts):
+            return x, y, s
+
+        for a, v in vs.items():
+            v = v[:(rnts*downs)]
+            vs[a] = _np.std(v.reshape(-1, downs), axis=1)
+
+        s1, s2 = vs['A'] + vs['B'], vs['D'] + vs['C']
+        d1 = (vs['A'] - vs['B']) / s1
+        d2 = (vs['D'] - vs['C']) / s2
+        x[:rnts] = (d1 + d2)*self.kx/2 * self.ORB_CONV
+        y[:rnts] = (d1 - d2)*self.ky/2 * self.ORB_CONV
+        s[:rnts] = (s1 + s2) * self.ksum
         return x, y, s
 
 
