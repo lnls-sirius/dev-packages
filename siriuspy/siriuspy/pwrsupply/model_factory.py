@@ -810,7 +810,7 @@ class FAC_2P4S_ACDC_Factory(FAC_2S_ACDC_Factory):
 class FAC_ACDC_Factory(FAC_2S_ACDC_Factory):
     """FAC_ACDC factory."""
 
-    _variables = FAC_2S_ACDC_Factory._variables.update({
+    FAC_2S_ACDC_Factory._variables.update({
         'IntlkSoft-Mon': _bsmp.ConstFAC_ACDC.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon': _bsmp.ConstFAC_ACDC.V_PS_HARD_INTERLOCKS,
         'CapacitorBankVoltage-RB': _bsmp.ConstFAC_ACDC.V_PS_SETPOINT,
@@ -821,14 +821,16 @@ class FAC_ACDC_Factory(FAC_2S_ACDC_Factory):
         'HeatSinkTemperature-Mon': _bsmp.ConstFAC_ACDC.V_TEMP_HEATSINK,
         'InductorsTemperature-Mon': _bsmp.ConstFAC_ACDC.V_TEMP_INDUCTORS,
         'PWMDutyCycle-Mon': _bsmp.ConstFAC_ACDC.V_DUTY_CYCLE,
-        'IIBInputCurrent-Mon': _bsmp.ConstFAC_ACDC.V_I_INPUT_IS_IIB,
-        'IIBInputVoltage-Mon': _bsmp.ConstFAC_ACDC.V_V_INPUT_IS_IIB,
-        'IIBInductorsTemperature-Mon':
+
+        'IIBISInputCurrent-Mon': _bsmp.ConstFAC_ACDC.V_I_INPUT_IS_IIB,
+        'IIBISInputVoltage-Mon': _bsmp.ConstFAC_ACDC.V_V_INPUT_IS_IIB,
+        'IIBISInductorsTemperature-Mon':
             _bsmp.ConstFAC_ACDC.V_TEMP_INDUCTOR_IS_IIB,
-        'IIBHeatSinkTemperature-Mon':
+        'IIBISHeatSinkTemperature-Mon':
             _bsmp.ConstFAC_ACDC.V_TEMP_HEATSINK_IS_IIB,
         'IIBCmdOutputVoltage-Mon': _bsmp.ConstFAC_ACDC.V_V_OUTPUT_CMD_IIB,
-        'IIBCapacitorBankVoltage-Mon': _bsmp.ConstFAC_ACDC.V_V_CAPBANK_CMD_IIB,
+        'IIBCmdCapacitorBankVoltage-Mon':
+            _bsmp.ConstFAC_ACDC.V_V_CAPBANK_CMD_IIB,
         'IIBCmdInductorsTemperature-Mon':
             _bsmp.ConstFAC_ACDC.V_TEMP_INDUCTOR_CMD_IIB,
         'IIBCmdHeatSinkTemperature-Mon':
@@ -864,7 +866,6 @@ class FAC_ACDC_Factory(FAC_2S_ACDC_Factory):
 
     def function(self, device_ids, epics_field, pru_controller, setpoints):
         """Return function."""
-        _c = _bsmp.ConstFBP_DCLink
         _c = _bsmp.ConstFAC_ACDC
         if epics_field == 'CapacitorBankVoltage-SP':
             return _functions.BSMPFunction(
@@ -1467,7 +1468,17 @@ class PRUCParms_FAC_ACDC(_PRUCParms):
         ConstBSMP.V_I_OUT_RECTIFIER,
         ConstBSMP.V_TEMP_HEATSINK,
         ConstBSMP.V_TEMP_INDUCTORS,
-        ConstBSMP.V_DUTY_CYCLE,)
+        ConstBSMP.V_DUTY_CYCLE,
+        ConstBSMP.V_I_INPUT_IS_IIB,
+        ConstBSMP.V_V_INPUT_IS_IIB,
+        ConstBSMP.V_TEMP_INDUCTOR_IS_IIB,
+        ConstBSMP.V_TEMP_HEATSINK_IS_IIB,
+        ConstBSMP.V_V_OUTPUT_CMD_IIB,
+        ConstBSMP.V_V_CAPBANK_CMD_IIB,
+        ConstBSMP.V_TEMP_INDUCTOR_CMD_IIB,
+        ConstBSMP.V_TEMP_HEATSINK_CMD_IIB,
+        ConstBSMP.V_IIB_INTERLOCKS_IS,
+        ConstBSMP.V_IIB_INTERLOCKS_CMD,)
     groups[_PRUCParms.SYNCOFF] = (
         # --- common variables
         ConstBSMP.V_PS_STATUS,
@@ -1491,7 +1502,17 @@ class PRUCParms_FAC_ACDC(_PRUCParms):
         ConstBSMP.V_I_OUT_RECTIFIER,
         ConstBSMP.V_TEMP_HEATSINK,
         ConstBSMP.V_TEMP_INDUCTORS,
-        ConstBSMP.V_DUTY_CYCLE,)
+        ConstBSMP.V_DUTY_CYCLE,
+        ConstBSMP.V_I_INPUT_IS_IIB,
+        ConstBSMP.V_V_INPUT_IS_IIB,
+        ConstBSMP.V_TEMP_INDUCTOR_IS_IIB,
+        ConstBSMP.V_TEMP_HEATSINK_IS_IIB,
+        ConstBSMP.V_V_OUTPUT_CMD_IIB,
+        ConstBSMP.V_V_CAPBANK_CMD_IIB,
+        ConstBSMP.V_TEMP_INDUCTOR_CMD_IIB,
+        ConstBSMP.V_TEMP_HEATSINK_CMD_IIB,
+        ConstBSMP.V_IIB_INTERLOCKS_IS,
+        ConstBSMP.V_IIB_INTERLOCKS_CMD,)
     groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 

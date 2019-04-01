@@ -952,22 +952,23 @@ def _get_ps_FAC_ACDC_propty_database():
         'IntlkHardLabels-Cte': {
             'type': 'string', 'count': len(_et.HARD_INTLCK_FAC_ACDC),
             'value': _et.HARD_INTLCK_FAC_ACDC},
-        'IIBInputCurrent-Mon': {
+
+        'IIBISInputCurrent-Mon': {
             'type': 'float', 'value': 0.0,
             'prec': default_ps_current_precision},
-        'IIBInputVoltage-Mon': {
+        'IIBISInputVoltage-Mon': {
             'type': 'float', 'value': 0.0,
             'prec': default_ps_current_precision},
-        'IIBInductorsTemperature-Mon': {
+        'IIBISInductorsTemperature-Mon': {
             'type': 'float', 'value': 0.0,
             'prec': default_ps_current_precision},
-        'IIBHeatSinkTemperature-Mon': {
+        'IIBISHeatSinkTemperature-Mon': {
             'type': 'float', 'value': 0.0,
             'prec': default_ps_current_precision},
         'IIBCmdOutputVoltage-Mon': {
             'type': 'float', 'value': 0.0,
             'prec': default_ps_current_precision},
-        'IIBCapacitorBankVoltage-Mon': {
+        'IIBCmdCapacitorBankVoltage-Mon': {
             'type': 'float', 'value': 0.0,
             'prec': default_ps_current_precision},
         'IIBCmdInductorsTemperature-Mon': {
