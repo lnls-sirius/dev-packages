@@ -891,17 +891,17 @@ class EpicsOrbit(BaseOrbit):
             trigmds.append(self._csorb.SOFBMode.MultiTurn)
         bo1 = self._mode in trigmds
         bo2 = value not in trigmds
-        self._mode = value
-        if bo1 == bo2:
-            acqrate = 2 if not bo2 else self._oldacqrate
-            self._oldacqrate = self._acqrate
-            self.run_callbacks('OrbAcqRate-SP', acqrate)
-            self.set_orbit_acq_rate(acqrate)
-        self.run_callbacks('SOFBMode-Sts', value)
         with self._lock_raw_orbs:
+            self._mode = value
+            if bo1 == bo2:
+                acqrate = 2 if not bo2 else self._oldacqrate
+                self._oldacqrate = self._acqrate
+                self.run_callbacks('OrbAcqRate-SP', acqrate)
+                self.set_orbit_acq_rate(acqrate)
             self._reset_orbs()
-            if self._mode in trigmds:
-                self.trig_acq_config_bpms()
+        if self._mode in trigmds:
+            self.trig_acq_config_bpms()
+        self.run_callbacks('SOFBMode-Sts', value)
         return True
 
     def set_orbit_multiturn_idx(self, value):
