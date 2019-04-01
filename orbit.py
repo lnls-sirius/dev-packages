@@ -667,6 +667,7 @@ class EpicsOrbit(BaseOrbit):
         db['SmoothNrPts-SP'][prop] = self.set_smooth_npts
         db['SmoothMethod-Sel'][prop] = self.set_smooth_method
         db['SmoothReset-Cmd'][prop] = self.set_smooth_reset
+        db['SPassMethod-Sel'][prop] = self.set_spass_method
         db['OrbAcqRate-SP'][prop] = self.set_orbit_acq_rate
         db['TrigNrShots-SP'][prop] = self.set_trig_acq_nrshots
         if self.isring:
@@ -697,6 +698,7 @@ class EpicsOrbit(BaseOrbit):
                 'Y': _np.zeros(self._csorb.NR_BPMS)}
         self._smooth_npts = 1
         self._smooth_meth = self._csorb.SmoothMeth.Average
+        self._spass_method = self._csorb.SPassMethod.FromBPMs
         self._acqrate = 10
         self._oldacqrate = self._acqrate
         self._acqtrignrsamplespre = 50
@@ -830,6 +832,13 @@ class EpicsOrbit(BaseOrbit):
     def set_smooth_method(self, meth):
         self._smooth_meth = meth
         self.run_callbacks('SmoothMethod-Sts', meth)
+        return True
+
+    def set_spass_method(self, meth):
+        if self._mode == self._csorb.SOFBMode.SinglePass:
+            self._spass_method = meth
+            self._reset_orbs()
+        self.run_callbacks('SPassMethod-Sts', meth)
         return True
 
     def set_smooth_reset(self, _):
@@ -1142,8 +1151,10 @@ class EpicsOrbit(BaseOrbit):
             self._update_multiturn_orbits()
             count = len(self.raw_mtorbs['X'])
         elif self._mode == self._csorb.SOFBMode.SinglePass:
-            # self._update_online_orbits(sp=True)
-            self._update_singlepass_orbits()
+            if self._spass_method == self._csorb.SPassMethod.FromBPMs:
+                self._update_online_orbits(sp=True)
+            else:
+                self._update_singlepass_orbits()
             count = len(self.raw_sporbs['X'])
         elif self.isring:
             self._update_online_orbits(sp=False)
