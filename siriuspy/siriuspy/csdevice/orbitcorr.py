@@ -137,6 +137,8 @@ class SOFBTLines(ConstTLines):
                                     'AcqExtEvtSrc', evts, vals)
         self.MTX_SZ = self.NR_CORRS * (2 * self.NR_BPMS)
         self.NR_SING_VALS = min(self.NR_CORRS, 2 * self.NR_BPMS)
+        self.C0 = 22 if self.acc == 'TB' else 30  # in meters
+        self.T0 = self.C0 / 299792458  # in seconds
 
     def isring(self):
         return self.acc in self.Rings._fields
