@@ -226,6 +226,24 @@ class ETypes(_cutil.ETypes):
         'Sobre-tensão na saída do módulo 8',
         'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved',)
+    IIBIS_INTLCK_FAC_ACDC = (
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+    IIBCMD_INTLCK_FAC_ACDC = (
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
     SOFT_INTLCK_FAC_2P4S_ACDC = (
         'Sobre-temperatura no dissipador', 'Sobre-temperatura nos indutores',
         'Reserved', 'Reserved',
@@ -675,6 +693,8 @@ def _get_ps_LINAC_propty_database():
     return propty_db
 
 
+# --- FBP ---
+
 def _get_ps_FBP_propty_database():
     """Return database with FBP pwrsupply model PVs."""
     propty_db = get_basic_propty_database()
@@ -718,6 +738,9 @@ def _get_ps_FBP_DCLink_propty_database():
     return propty_db
 
 
+# --- FAC DCDC ---
+
+
 def _get_ps_FAC_DCDC_propty_database():
     """Return database with FAC_DCDC pwrsupply model PVs."""
     # TODO: implement!!!
@@ -733,40 +756,6 @@ def _get_ps_FAC_DCDC_propty_database():
         'IntlkHardLabels-Cte':  {'type': 'string',
                                  'count': len(_et.HARD_INTLCK_FAC_DCDC),
                                  'value': _et.HARD_INTLCK_FAC_DCDC},
-    }
-    propty_db.update(db_ps)
-    return propty_db
-
-
-def _get_ps_FAC_ACDC_propty_database():
-    """Return database with FAC_ACDC pwrsupply model PVs."""
-    # TODO: MISSING SETPOINT!!!
-    propty_db = get_common_propty_database()
-    db_ps = {
-        'CapacitorBankVoltage-SP': {'type': 'float', 'value': 0.0,
-                                    'prec': default_ps_current_precision},
-        'CapacitorBankVoltage-RB': {'type': 'float', 'value': 0.0,
-                                    'prec': default_ps_current_precision},
-        'CapacitorBankVoltageRef-Mon': {'type': 'float', 'value': 0.0,
-                                        'prec': default_ps_current_precision},
-        'IntlkSoftLabels-Cte':  {'type': 'string',
-                                 'count': len(_et.SOFT_INTLCK_FAC_ACDC),
-                                 'value': _et.SOFT_INTLCK_FAC_ACDC},
-        'IntlkHardLabels-Cte':  {'type': 'string',
-                                 'count': len(_et.HARD_INTLCK_FAC_ACDC),
-                                 'value': _et.HARD_INTLCK_FAC_ACDC},
-        'CapacitorBankVoltage-Mon': {'type': 'float', 'value': 0.0,
-                                     'prec': default_ps_current_precision},
-        'RectifierVoltage-Mon': {'type': 'float', 'value': 0.0,
-                                 'prec': default_ps_current_precision},
-        'RectifierCurrent-Mon': {'type': 'float', 'value': 0.0,
-                                 'prec': default_ps_current_precision},
-        'HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                    'prec': default_ps_current_precision},
-        'InductorsTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                     'prec': default_ps_current_precision},
-        'PWMDutyCycle-Mon': {'type': 'float', 'value': 0.0,
-                                     'prec': default_ps_current_precision},
     }
     propty_db.update(db_ps)
     return propty_db
@@ -807,40 +796,6 @@ def _get_ps_FAC_2S_DCDC_propty_database():
                               'prec': default_ps_current_precision},
         'PWMDutyDiff-Mon': {'type': 'float', 'value': 0.0,
                             'prec': default_ps_current_precision},
-    }
-    propty_db.update(db_ps)
-    return propty_db
-
-
-def _get_ps_FAC_2S_ACDC_propty_database():
-    """Return database with FAC_2S_ACDC pwrsupply model PVs."""
-    propty_db = get_common_propty_database()
-    db_ps = {
-        'CapacitorBankVoltage-SP': {'type': 'float', 'value': 0.0,
-                                    'prec': default_ps_current_precision,
-                                    'lolim': 0.0, 'hilim': 1.0},
-        'CapacitorBankVoltage-RB': {'type': 'float', 'value': 0.0,
-                                    'prec': default_ps_current_precision},
-        'CapacitorBankVoltageRef-Mon': {'type': 'float', 'value': 0.0,
-                                        'prec': default_ps_current_precision},
-        'IntlkSoftLabels-Cte':  {'type': 'string',
-                                 'count': len(_et.SOFT_INTLCK_FAC_2S_ACDC),
-                                 'value': _et.SOFT_INTLCK_FAC_2S_ACDC},
-        'IntlkHardLabels-Cte':  {'type': 'string',
-                                 'count': len(_et.HARD_INTLCK_FAC_2S_ACDC),
-                                 'value': _et.HARD_INTLCK_FAC_2S_ACDC},
-        'CapacitorBankVoltage-Mon': {'type': 'float', 'value': 0.0,
-                                     'prec': default_ps_current_precision},
-        'RectifierVoltage-Mon': {'type': 'float', 'value': 0.0,
-                                 'prec': default_ps_current_precision},
-        'RectifierCurrent-Mon': {'type': 'float', 'value': 0.0,
-                                 'prec': default_ps_current_precision},
-        'HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                    'prec': default_ps_current_precision},
-        'InductorsTemperature-Mon': {'type': 'float', 'value': 0.0,
-                                     'prec': default_ps_current_precision},
-        'PWMDutyCycle-Mon': {'type': 'float', 'value': 0.0,
-                                     'prec': default_ps_current_precision},
     }
     propty_db.update(db_ps)
     return propty_db
@@ -938,10 +893,19 @@ def _get_ps_FAC_2P4S_DCDC_propty_database():
     return propty_db
 
 
-def _get_ps_FAC_2P4S_ACDC_propty_database():
-    """Return database with FAC_2P4S pwrsupply model PVs."""
+# --- FAC ACDC ---
+
+
+def _get_ps_FAC_2S_ACDC_propty_database():
+    """Return database with FAC_2S_ACDC pwrsupply model PVs."""
     propty_db = get_common_propty_database()
     db_ps = {
+        'IntlkSoftLabels-Cte':  {'type': 'string',
+                                 'count': len(_et.SOFT_INTLCK_FAC_2S_ACDC),
+                                 'value': _et.SOFT_INTLCK_FAC_2S_ACDC},
+        'IntlkHardLabels-Cte':  {'type': 'string',
+                                 'count': len(_et.HARD_INTLCK_FAC_2S_ACDC),
+                                 'value': _et.HARD_INTLCK_FAC_2S_ACDC},
         'CapacitorBankVoltage-SP': {'type': 'float', 'value': 0.0,
                                     'prec': default_ps_current_precision,
                                     'lolim': 0.0, 'hilim': 1.0},
@@ -949,12 +913,6 @@ def _get_ps_FAC_2P4S_ACDC_propty_database():
                                     'prec': default_ps_current_precision},
         'CapacitorBankVoltageRef-Mon': {'type': 'float', 'value': 0.0,
                                         'prec': default_ps_current_precision},
-        'IntlkSoftLabels-Cte':  {'type': 'string',
-                                 'count': len(_et.SOFT_INTLCK_FAC_2P4S_ACDC),
-                                 'value': _et.SOFT_INTLCK_FAC_2P4S_ACDC},
-        'IntlkHardLabels-Cte':  {'type': 'string',
-                                 'count': len(_et.HARD_INTLCK_FAC_2P4S_ACDC),
-                                 'value': _et.HARD_INTLCK_FAC_2P4S_ACDC},
         'CapacitorBankVoltage-Mon': {'type': 'float', 'value': 0.0,
                                      'prec': default_ps_current_precision},
         'RectifierVoltage-Mon': {'type': 'float', 'value': 0.0,
@@ -971,6 +929,67 @@ def _get_ps_FAC_2P4S_ACDC_propty_database():
     propty_db.update(db_ps)
     return propty_db
 
+
+def _get_ps_FAC_2P4S_ACDC_propty_database():
+    """Return database with FAC_2P4S pwrsupply model PVs."""
+    propty_db = _get_ps_FAC_2S_ACDC_propty_database()
+    propty_db['IntlkSoftLabels-Cte'] = {
+        'type': 'string', 'count': len(_et.SOFT_INTLCK_FAC_2P4S_ACDC),
+        'value': _et.SOFT_INTLCK_FAC_2P4S_ACDC}
+    propty_db['IntlkHardLabels-Cte'] = {
+        'type': 'string', 'count': len(_et.HARD_INTLCK_FAC_2P4S_ACDC),
+        'value': _et.HARD_INTLCK_FAC_2P4S_ACDC}
+    return propty_db
+
+
+def _get_ps_FAC_ACDC_propty_database():
+    """Return database with FAC_ACDC pwrsupply model PVs."""
+    propty_db = _get_ps_FAC_2S_ACDC_propty_database()
+    db = {
+        'IntlkSoftLabels-Cte': {
+            'type': 'string', 'count': len(_et.SOFT_INTLCK_FAC_ACDC),
+            'value': _et.SOFT_INTLCK_FAC_ACDC},
+        'IntlkHardLabels-Cte': {
+            'type': 'string', 'count': len(_et.HARD_INTLCK_FAC_ACDC),
+            'value': _et.HARD_INTLCK_FAC_ACDC},
+        'IIBInputCurrent-Mon': {
+            'type': 'float', 'value': 0.0,
+            'prec': default_ps_current_precision},
+        'IIBInputVoltage-Mon': {
+            'type': 'float', 'value': 0.0,
+            'prec': default_ps_current_precision},
+        'IIBInductorsTemperature-Mon': {
+            'type': 'float', 'value': 0.0,
+            'prec': default_ps_current_precision},
+        'IIBHeatSinkTemperature-Mon': {
+            'type': 'float', 'value': 0.0,
+            'prec': default_ps_current_precision},
+        'IIBCmdOutputVoltage-Mon': {
+            'type': 'float', 'value': 0.0,
+            'prec': default_ps_current_precision},
+        'IIBCapacitorBankVoltage-Mon': {
+            'type': 'float', 'value': 0.0,
+            'prec': default_ps_current_precision},
+        'IIBCmdInductorsTemperature-Mon': {
+            'type': 'float', 'value': 0.0,
+            'prec': default_ps_current_precision},
+        'IIBCmdHeatSinkTemperature-Mon': {
+            'type': 'float', 'value': 0.0,
+            'prec': default_ps_current_precision},
+        'IntlkIIBIS-Mon': {'type': 'int', 'value': 0},
+        'IntlkIIBCmd-Mon': {'type': 'int', 'value': 0},
+        'IntlkIIBISLabels-Cte': {
+            'type': 'string', 'count': len(_et.IIBIS_INTLCK_FAC_ACDC),
+            'value': _et.IIBIS_INTLCK_FAC_ACDC},
+        'IntlkIIBCmdLabels-Cte': {
+            'type': 'string', 'count': len(_et.IIBCMD_INTLCK_FAC_ACDC),
+            'value': _et.IIBCMD_INTLCK_FAC_ACDC},
+    }
+    propty_db.update(db)
+    return propty_db
+
+
+# --- FAP ---
 
 def _get_ps_FAP_propty_database():
     """Return database with FAP pwrsupply model PVs."""
@@ -1020,6 +1039,8 @@ def _get_ps_FAP_4P_Slave_propty_database():
     return _get_ps_FBP_propty_database()
 
 
+# --- Others ---
+
 def _get_ps_FBP_FOFB_propty_database():
     """Return database with FBP_FOFB pwrsupply model PVs."""
     # TODO: implement!!!
@@ -1030,6 +1051,9 @@ def _get_ps_Commercial_propty_database():
     """Return database with Commercial pwrsupply model PVs."""
     # TODO: implement!!!
     return _get_ps_FBP_propty_database()
+
+
+# --- Aux. ---
 
 
 def _set_limits(pstype, database):
