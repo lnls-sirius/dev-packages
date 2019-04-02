@@ -337,16 +337,16 @@ class SOFBTLines(ConstTLines):
                 'hilim': 1000, 'lolim': 1},
             'TrigNrSamplesPre-SP': {
                 'type': 'int', 'unit': '', 'value': 50,
-                'hilim': 2**15-1, 'lolim': 4},
+                'hilim': 20000, 'lolim': 4},
             'TrigNrSamplesPre-RB': {
                 'type': 'int', 'unit': '', 'value': 50,
-                'hilim': 2**15-1, 'lolim': 4},
+                'hilim': 20000, 'lolim': 4},
             'TrigNrSamplesPost-SP': {
                 'type': 'int', 'unit': '', 'value': 50,
-                'hilim': 2**15-1, 'lolim': 0},
+                'hilim': 20000, 'lolim': 0},
             'TrigNrSamplesPost-RB': {
                 'type': 'int', 'unit': '', 'value': 50,
-                'hilim': 2**15-1, 'lolim': 0},
+                'hilim': 20000, 'lolim': 0},
             'TrigDataSel-Sel': {
                 'type': 'enum', 'unit': 'Set Data trigger Selection.',
                 'value': self.TrigAcqDataSel.A,
