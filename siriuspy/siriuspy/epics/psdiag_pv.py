@@ -73,7 +73,7 @@ class PSStatusPV(Computer):
             if opmode_sel != opmode_sts:
                 value |= PSStatusPV.BIT_OPMODEDIF
             # current-diff?
-            if opmode_sts == _PSConst.States.SlowRef:
+            if sts == _PSConst.States.SlowRef:
                 severity = computed_pv.pvs[PSStatusPV.CURRT_DIFF].severity
                 if severity != 0:
                     value |= PSStatusPV.BIT_CURRTDIFF
