@@ -672,7 +672,7 @@ class EpicsOrbit(BaseOrbit):
         db['TrigNrShots-SP'][prop] = self.set_trig_acq_nrshots
         if self.isring:
             db['MTurnIdx-SP'][prop] = self.set_orbit_multiturn_idx
-            db['TrigDownSample-SP'][prop] = self.set_trig_acq_downsample
+            db['MTurnDownSample-SP'][prop] = self.set_mturndownsample
 
         db = super().get_database(db)
         return db
@@ -705,7 +705,7 @@ class EpicsOrbit(BaseOrbit):
         self._acqtrignrsamplespost = 50
         self._acqtrignrshots = 1
         self._multiturnidx = 0
-        self._acqtrigdownsample = 1
+        self._mturndownsample = 1
         self._timevector = None
         self._ring_extension = 1
         self.bpms = [BPM(name) for name in self._csorb.BPM_NAMES]
@@ -729,10 +729,10 @@ class EpicsOrbit(BaseOrbit):
         val = maval if val > maval else val
         if val == self._ring_extension:
             return True
-        self._acqtrigdownsample = 1
-        self.run_callbacks('TrigDownSample-SP', 1)
-        self.run_callbacks('TrigDownSample-RB', 1)
         with self._lock_raw_orbs:
+            self._mturndownsample = 1
+            self.run_callbacks('MTurnDownSample-SP', 1)
+            self.run_callbacks('MTurnDownSample-RB', 1)
             self._reset_orbs()
             self._ring_extension = val
             nrb = val * self._csorb.NR_BPMS
@@ -905,7 +905,7 @@ class EpicsOrbit(BaseOrbit):
         return True
 
     def set_orbit_multiturn_idx(self, value):
-        maxidx = self.acqtrignrsamples // self._acqtrigdownsample
+        maxidx = self.acqtrignrsamples // self._mturndownsample
         maxidx *= self._acqtrignrshots
         if value >= maxidx:
             value = maxidx-1
@@ -1065,24 +1065,18 @@ class EpicsOrbit(BaseOrbit):
         self._update_time_vector()
         return True
 
-    def set_trig_acq_downsample(self, value):
-        if self._ring_extension != 1 and value != 1:
+    def set_mturndownsample(self, val):
+        if self._ring_extension != 1 and val != 1:
             msg = 'ERR: Cannot set DownSample > 1 when RingSize > 1.'
             self._update_log(msg)
             _log.warning(msg[5:])
             return False
-        down = self._find_new_downsample(self.acqtrignrsamples, value)
-        nrpoints = (self.acqtrignrsamples // down) * self._acqtrignrshots
-        if nrpoints > self._csorb.MAX_MT_ORBS:
-            down = self._find_new_downsample(
-                self.acqtrignrsamples, value, onlyup=True)
-        if down != value:
-            value = down
-            msg = 'WARN: DownSample must divide NrSample. Redefining...'
-            self._update_log(msg)
-            _log.warning(msg[6:])
-        self._acqtrigdownsample = value
-        self.run_callbacks('TrigDownSample-RB', value)
+        val = int(val) if val > 1 else 1
+        val = val if val < 1000 else 1000
+        with self._lock_raw_orbs:
+            self._mturndownsample = val
+            self._reset_orbs()
+        self.run_callbacks('TrigDownSample-RB', val)
         self._update_time_vector()
         return True
 
@@ -1099,9 +1093,9 @@ class EpicsOrbit(BaseOrbit):
             dt = self.bpms[0].fofbperiod
         else:
             dt = self.bpms[0].tbtperiod
-        dt *= self._acqtrigdownsample * self._ring_extension
-        nrptpst = self.acqtrignrsamples // self._acqtrigdownsample
-        offset = self._acqtrignrsamplespre / self._acqtrigdownsample
+        dt *= self._mturndownsample * self._ring_extension
+        nrptpst = self.acqtrignrsamples // self._mturndownsample
+        offset = self._acqtrignrsamplespre / self._mturndownsample
         nrst = self._acqtrignrshots
         a = _np.arange(nrst)
         b = _np.arange(nrptpst, dtype=float) + (0.5 - offset)
@@ -1192,12 +1186,11 @@ class EpicsOrbit(BaseOrbit):
             self.run_callbacks(pref + name + '-Mon', list(orb))
 
     def _update_multiturn_orbits(self):
-        if self._ring_extension != 1 and self._acqtrigdownsample != 1:
+        if self._ring_extension != 1 and self._mturndownsample != 1:
             return
         orbs = {'X': [], 'Y': [], 'Sum': []}
         with self._lock_raw_orbs:  # I need the lock here to ensure consistency
-            samp = self.acqtrignrsamples * self._acqtrignrshots
-            down = self._acqtrigdownsample
+            down = self._mturndownsample
             ringsz = self._ring_extension
             samp -= samp % (ringsz*down)
             orbsz = self._csorb.NR_BPMS * ringsz
