@@ -25,6 +25,7 @@ class TestStandardController(unittest.TestCase):
         self.readers = {'BO-01U:PS-CH:OpMode-Sts': mock.Mock(),
                         'BO-01U:PS-CH:OpMode-Sel': mock.Mock(),
                         'BO-01U:PS-CV:OpMode-Sel': mock.Mock(),
+                        'BO-01U:PS-CH:PwrState-Sel': mock.Mock(),
                         'BO-01U:PS-CH:PwrState-Sts': mock.Mock(),
                         'BO-01U:PS-CH:CycleOffset-RB': mock.Mock(),
                         'BO-01U:PS-CV:CycleOffset-RB': mock.Mock(),
@@ -35,6 +36,8 @@ class TestStandardController(unittest.TestCase):
                         'BO-01U:PS-CH:CycleAmpl-SP': mock.Mock(),
                         'BO-01U:PS-CH:CycleOffset-SP': mock.Mock(),
                         'BO-01U:PS-CH:CycleAuxParam-SP': mock.Mock()}
+        self.readers['BO-01U:PS-CH:OpMode-Sts'].read.return_value = \
+            PSConst.States.SlowRef
         self.writers = {
             'BO-01U:PS-CH:OpMode-Sel': mock.Mock(),
             'BO-01U:PS-CH:CycleType-Sel': mock.Mock(),
@@ -45,40 +48,13 @@ class TestStandardController(unittest.TestCase):
             'BO-01U:PS-CH:CycleAuxParam-SP': mock.Mock(),
             'BO-01U:PS-CH:PwrState-Sel': mock.Mock(),
             'BO-01U:PS-CH:Current-SP': mock.Mock(),
-            'BO-01U:PS-CV:Current-SP': mock.Mock(),
-        }
+            'BO-01U:PS-CV:Current-SP': mock.Mock()}
         self.connections = {}
-
         self.pru_controller = mock.Mock()
-
-        # self.hw_values = values
-        # self.hw_dict_values = dict_values
-        # self.hw_dict_values.update({
-        #     # 'Reset-Cmd': 0,
-        #     # 'Abort-Cmd': 0,
-        #     'WfmData-RB': self.database['WfmData-RB']['value'],
-        #     'PRUSyncMode-Mon': 1,
-        #     'PRUBlockIndex-Mon': 1,
-        #     'PRUSyncPulseCount-Mon': 10,
-        #     'PRUCtrlQueueSize-Mon': 0})
-
         self.controller = StandardPSController(
             self.readers, self.writers, self.connections,
             self.pru_controller, self.devices)
         self.controller._watchers['BO-01U:PS-CH'] = mock.Mock()
-
-    # @mock.patch('siriuspy.csdevice.pwrsupply.get_ps_current_unit')
-    # @mock.patch('siriuspy.csdevice.pwrsupply._PSSearch')
-    # def _get_db(self, search, unit):
-    #     def mock_splims(pstype, label):
-    #         """Return limits value."""
-    #         if label in ('lolo', 'low', 'lolim'):
-    #             return 0.0
-    #         else:
-    #             return 165.0
-    #     search.get_splims.side_effect = mock_splims
-    #     unit.return_value = 'A'
-    #     return get_ps_propty_database('FAC', 'bo-quadrupole-qd-fam')
 
     def test_pru_controller(self):
         """Test pru_controller property."""
@@ -101,6 +77,8 @@ class TestStandardController(unittest.TestCase):
 
     def test_read_operation_mode_checks_watcher(self):
         """Test device watcher is checked."""
+        self.controller._watchers['BO-01U:PS-CH'].op_mode = \
+            PSConst.OpMode.Cycle
         self.controller.read('BO-01U:PS-CH', 'OpMode-Sts')
         self.controller._watchers['BO-01U:PS-CH'].is_alive.assert_called()
 
@@ -114,9 +92,10 @@ class TestStandardController(unittest.TestCase):
     def test_read_operation_mode_watcher_alive(self):
         """Test watcher status is verified and returned."""
         self.controller._watchers['BO-01U:PS-CH'].is_alive.return_value = True
-        self.controller._watchers['BO-01U:PS-CH'].op_mode = 2
+        self.controller._watchers['BO-01U:PS-CH'].op_mode = \
+            PSConst.OpMode.Cycle
         ret = self.controller.read('BO-01U:PS-CH', 'OpMode-Sts')
-        self.assertEqual(ret, 2)
+        self.assertEqual(ret, PSConst.States.Cycle)
 
     # Write method
     def test_write(self):
@@ -127,10 +106,10 @@ class TestStandardController(unittest.TestCase):
 
     def test_write_strange_key(self):
         """Test write method with strange key."""
-        with self.assertRaises(KeyError):
-            self.controller.write('StrangeDevice', 'Current-SP', 1.0)
-        with self.assertRaises(KeyError):
-            self.controller.write('BO-01U:PS-CH', 'StrangeField', 1.0)
+        v = self.controller.write('StrangeDevice', 'Current-SP', 1.0)
+        self.assertIsNone(v)
+        v = self.controller.write('BO-01U:PS-CH', 'StrangeField', 1.0)
+        self.assertIsNone(v)
 
     def test_write_operation_mode_slowref_pru(self):
         """Test writing slowref pru controller methods."""
@@ -218,6 +197,7 @@ class TestStandardController(unittest.TestCase):
 
     def test_write_pwrstate_on(self):
         """Test turn power supply on."""
+        self.readers['BO-01U:PS-CH:PwrState-Sel'].value = 0
         sp = self.readers['BO-01U:PS-CH:Current-SP']
         writer = self.writers['BO-01U:PS-CH:PwrState-Sel']
         self.controller.write('BO-01U:PS-CH', 'PwrState-Sel', 1)
@@ -226,13 +206,14 @@ class TestStandardController(unittest.TestCase):
 
     def test_write_pwrstate_off(self):
         """Test turn power supply on."""
+        self.readers['BO-01U:PS-CH:PwrState-Sel'].value = 0
         sp = self.readers['BO-01U:PS-CH:Current-SP']
         writer = self.writers['BO-01U:PS-CH:PwrState-Sel']
         self.controller.write('BO-01U:PS-CH', 'PwrState-Sel', 0)
         sp.apply.assert_called_with(0.0)
         writer.execute.assert_called_with(0)
 
-    @mock.patch.object(StandardPSController, '_cfg_siggen_args')
+    @mock.patch.object(StandardPSController, '_get_siggen_arg_values')
     def test_write_cycle_type(self, cfg):
         """Test writing cycle type."""
         cfg.return_value = [0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
@@ -241,7 +222,7 @@ class TestStandardController(unittest.TestCase):
         writer.execute.assert_called_with(
             [1, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 
-    @mock.patch.object(StandardPSController, '_cfg_siggen_args')
+    @mock.patch.object(StandardPSController, '_get_siggen_arg_values')
     def test_write_cycle_number_cycles(self, cfg):
         """Test writing cycle type."""
         cfg.return_value = [0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
@@ -250,7 +231,7 @@ class TestStandardController(unittest.TestCase):
         writer.execute.assert_called_with(
             [0, 10, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 
-    @mock.patch.object(StandardPSController, '_cfg_siggen_args')
+    @mock.patch.object(StandardPSController, '_get_siggen_arg_values')
     def test_write_set_cycle_frequency(self, cfg):
         """Test writing cycle type."""
         cfg.return_value = [0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
@@ -259,7 +240,7 @@ class TestStandardController(unittest.TestCase):
         writer.execute.assert_called_with(
             [0, 0, 0.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 
-    @mock.patch.object(StandardPSController, '_cfg_siggen_args')
+    @mock.patch.object(StandardPSController, '_get_siggen_arg_values')
     def test_write_cycle_amplitude(self, cfg):
         """Test writing cycle type."""
         cfg.return_value = [0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
@@ -268,7 +249,7 @@ class TestStandardController(unittest.TestCase):
         writer.execute.assert_called_with(
             [0, 0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 
-    @mock.patch.object(StandardPSController, '_cfg_siggen_args')
+    @mock.patch.object(StandardPSController, '_get_siggen_arg_values')
     def test_write_cycle_offset(self, cfg):
         """Test writing cycle type."""
         cfg.return_value = [0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
@@ -277,7 +258,7 @@ class TestStandardController(unittest.TestCase):
         writer.execute.assert_called_with(
             [0, 0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0])
 
-    @mock.patch.object(StandardPSController, '_cfg_siggen_args')
+    @mock.patch.object(StandardPSController, '_get_siggen_arg_values')
     def test_write_cycle_aux_param(self, cfg):
         """Test writing cycle type."""
         cfg.return_value = [0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]

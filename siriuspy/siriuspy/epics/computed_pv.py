@@ -1,4 +1,5 @@
 """Definition of ComputedPV class that simulates a PV composed of epics PVs."""
+import numpy as _np
 from epics import get_pv as _get_pv
 from siriuspy.epics import connection_timeout as _connection_timeout
 
@@ -12,8 +13,10 @@ class ComputedPV:
     computed process variables.
     """
 
-    def __init__(self, pvname, computer, queue, *pvs):
+    def __init__(self, pvname, computer, queue, pvs, monitor=True):
         """Initialize PVs."""
+        # print('compute_pv: ', pvname, pvs)
+
         # starts computer_pvs queue, if not started yet
         self._queue = queue
         if not self._queue.running:
@@ -22,7 +25,7 @@ class ComputedPV:
         # --- properties ---
 
         self.pvname = pvname
-        self.value = None
+        self._value = None
         self._set_limits((None,)*6)
         self.computer = computer
         self.pvs = self._create_primary_pvs_list(pvs)
@@ -33,14 +36,16 @@ class ComputedPV:
 
         # add callback
         self._callbacks = {}
-        if self._monitor_pv:
-            # in order to optimize efficiency if computed pv is of the
-            # monitor type add callback only to the first primary pv, the one
-            # corresponding to the main current to the call
-            self.pvs[0].add_callback(self._value_update_callback)
-        else:
-            for pv in self.pvs:
-                pv.add_callback(self._value_update_callback)
+        self._monitor = monitor
+        if self._monitor:
+            if self._monitor_pv:
+                # in order to optimize efficiency if computed pv is of the
+                # monitor type add callback only to the first primary pv, the
+                # one corresponding to the main current to the call
+                self.pvs[0].add_callback(self._value_update_callback)
+            else:
+                for pv in self.pvs:
+                    pv.add_callback(self._value_update_callback)
 
         # init limits
         if self.connected:
@@ -60,13 +65,23 @@ class ComputedPV:
                 return False
         return True
 
+    @property
+    def value(self):
+        """Return computed PV value."""
+        return self.get()
+        # return self._value
+
     def get(self):
         """Return current value of computed PV."""
-        return self.value
+        if self._monitor:
+            pass
+        else:
+            self._update_value()
+        return self._value
 
     def put(self, value):
         """Put `value` to the first pv of the pv list."""
-        self.value = value
+        self._value = value
         self.computer.compute_put(self, value)
 
     def add_callback(self, func, index=None):
@@ -83,7 +98,7 @@ class ComputedPV:
         """Run all callbacks."""
         self._issue_callback(**{
             'pvname': self.pvname,
-            'value': self.value,
+            'value': self._value,
             'hihi': self.upper_alarm_limit,
             'high': self.upper_warning_limit,
             'hilim': self.upper_disp_limit,
@@ -117,23 +132,50 @@ class ComputedPV:
                 ppvs.append(pv)
         return ppvs
 
-    def _update_value(self, pvname, value):
+    def _is_same(self, value):
+        """."""
+        if isinstance(self._value, _np.ndarray):
+            return _np.all(self._value == value)
+        else:
+            return self._value == value
+
+    def _process_new_value(self, kwargs):
+        self._value = kwargs["value"]
+        # Check if limits are in the return dict and update them
+        if "high" in kwargs:
+            self.upper_alarm_limit = kwargs["hihi"]
+            self.upper_warning_limit = kwargs["high"]
+            self.upper_disp_limit = kwargs["hilim"]
+            self.lower_disp_limit = kwargs["lolim"]
+            self.lower_warning_limit = kwargs["low"]
+            self.lower_alarm_limit = kwargs["lolo"]
+        self._issue_callback(pvname=self.pvname, **kwargs)
+
+    def _update_value(self, pvname=None, value=None):
         # Get dict with pv props that changed
         # print('update_value')
         kwargs = self.computer.compute_update(self, pvname, value)
 
-        if kwargs is not None:
-            self.value = kwargs["value"]
-            # Check if limits are in the return dict and update them
-            if "high" in kwargs:
-                self.upper_alarm_limit = kwargs["hihi"]
-                self.upper_warning_limit = kwargs["high"]
-                self.upper_disp_limit = kwargs["hilim"]
-                self.lower_disp_limit = kwargs["lolim"]
-                self.lower_warning_limit = kwargs["low"]
-                self.lower_alarm_limit = kwargs["lolo"]
+        if kwargs is None:
+            return None
 
-            self._issue_callback(pvname=self.pvname, **kwargs)
+        if self._value is None:
+            self._process_new_value(kwargs)
+            return None
+
+        if not self._is_same(kwargs['value']):
+            self._process_new_value(kwargs)
+            return None
+
+        if 'high' not in kwargs:
+            return None
+        elif kwargs['hihi'] != self.upper_alarm_limit or \
+                kwargs['high'] != self.upper_warning_limit or \
+                kwargs['hilim'] != self.upper_disp_limit or \
+                kwargs['hilim'] != self.lower_disp_limit or \
+                kwargs['low'] != self.lower_warning_limit or \
+                kwargs['lolo'] != self.lower_alarm_limit:
+            self._process_new_value(kwargs)
 
     def _value_update_callback(self, pvname, value, **kwargs):
         # if 'Current-Mon' not in pvname:

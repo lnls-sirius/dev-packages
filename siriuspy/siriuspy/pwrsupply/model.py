@@ -130,7 +130,7 @@ class FBPPowerSupply(_Device):
                 # TODO: values['PwrState-Sts'] == values['OpMode-Sts'] ?
                 psc_status = _PSCStatus(ps_status=values['PwrState-Sts'])
                 values['PwrState-Sts'] = psc_status.ioc_pwrstate
-                values['OpMode-Sts'] = psc_status.ioc_opmode
+                values['OpMode-Sts'] = psc_status.state
                 values['CtrlMode-Mon'] = psc_status.interface
             if _c.V_FIRMWARE_VERSION in var_ids:
                 version = ''.join([c.decode() for c in values['Version-Cte']])
@@ -156,7 +156,7 @@ class FBPPowerSupply(_Device):
             val = psc_status.ioc_pwrstate
         elif field == 'OpMode-Sts':
             psc_status = _PSCStatus(ps_status=val)
-            val = psc_status.ioc_opmode
+            val = psc_status.state
         elif field == 'CtrlMode-Mon':
             psc_status = _PSCStatus(ps_status=val)
             val = psc_status.interface
@@ -398,7 +398,7 @@ class MAEpics(PSEpics):
             str_obj = self._get_normalizer(self._maname)
             pvs = self._get_str_pv(field)
             return _ComputedPV(pvname, str_obj,
-                               self._computed_pvs_queue, *pvs)
+                               self._computed_pvs_queue, pvs)
         else:
             psnames = _MASearch.conv_psmaname_2_psnames(self._maname)
             if len(psnames) > 1:  # SyncPV
@@ -409,7 +409,7 @@ class MAEpics(PSEpics):
                        for device_name in psnames]
                 pvname = self._psname + ":" + field
                 return _ComputedPV(pvname, sync,
-                                   self._computed_pvs_queue, *pvs)
+                                   self._computed_pvs_queue, pvs)
             else:
                 # 3) PV
                 # a normal pv mirroring the power supply pv.

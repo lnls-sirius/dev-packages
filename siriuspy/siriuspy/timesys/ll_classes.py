@@ -75,17 +75,19 @@ class _BaseLL(_Base):
 
             if pvnamerb is not None:
                 self._readpvs[prop] = _epics.PV(
-                    pvnamerb,
-                    callback=self._on_change_readpv,
-                    connection_timeout=_conn_timeout)
+                    pvnamerb, connection_timeout=_conn_timeout)
             if pvnamesp != pvnamerb:
                 self._writepvs[prop] = _epics.PV(
-                    pvnamesp,
-                    callback=self._on_change_writepv,
-                    connection_timeout=_conn_timeout)
+                    pvnamesp, connection_timeout=_conn_timeout)
                 self._writepvs[prop]._initialized = False
-                self._writepvs[prop].connection_callbacks.append(
-                                            self._on_connection_writepv)
+
+        for prop, pv in self._writepvs.items():
+            if self._iscmdpv(pv.pvname):
+                continue
+            pv.add_callback(self._on_change_writepv)
+            pv.connection_callbacks.append(self._on_connection_writepv)
+        for prop, pv in self._readpvs.items():
+            pv.add_callback(self._on_change_readpv)
 
     @property
     def connected(self):
@@ -146,11 +148,14 @@ class _BaseLL(_Base):
         self._queue.add_callback(self._lock_thread, pvname)
 
     def read(self, prop, is_sp=False):
-        """Read HL properties from LL IOCs and return the value. """
+        """Read HL properties from LL IOCs and return the value."""
         fun = self._dict_functs_for_read[prop]
         if fun is None:
             return None
-        return fun(is_sp)[prop]
+        dic_ = fun(is_sp)
+        if dic_ is None or prop not in dic_:
+            return None
+        return dic_[prop]
 
     def _update_base_freq(self, **kwargs):
         self._rf_freq = self._rf_freq_pv.get(
@@ -164,8 +169,8 @@ class _BaseLL(_Base):
     def _define_list_props_must_set(self):
         """Define a list for properties that must be set.
 
-        When this object starts locking the low level pvs some properties must be set riht away in order to guarantee the consistency of the
-        object.
+        When this object starts locking the low level pvs some properties must
+        be set riht away in order to guarantee the consistency of the object.
         """
         return list()
 
@@ -204,25 +209,24 @@ class _BaseLL(_Base):
         """
         return dict()
 
-    def _get_from_pvs(self, is_sp, ll_prop, def_val=0):
-        if is_sp:
-            pv = self._writepvs.get(ll_prop)
-        else:
-            pv = self._readpvs.get(ll_prop)
-        if pv is None or not pv.connected:
+    def _get_from_pvs(self, is_sp, ll_prop, def_val=None):
+        pv = self._writepvs[ll_prop] if is_sp else self._readpvs[ll_prop]
+        if not pv.connected:
             return def_val
         val = pv.get(timeout=_conn_timeout)
         return def_val if val is None else val
 
     def _lock_thread(self, pvname, value=None):
         prop = self._dict_convert_pv2prop[pvname]
-        pv = self._writepvs.get(prop)
-        if pv is None:
-            return
         if value is None:
             value = self._get_from_pvs(False, prop)
         my_val = self._config_ok_values.get(prop)
-        if my_val is not None and (not pv._initialized or my_val != value):
+
+        pv = self._writepvs.get(prop)
+        conds = pv is not None
+        conds &= my_val is not None
+        conds &= value is not None
+        if conds and (not pv._initialized or my_val != value):
             self._put_on_pv(pv, my_val)
             # I have to keep calling this function over and over again to
             # guarantee that the hardware will go to the desired state.
@@ -241,8 +245,11 @@ class _BaseLL(_Base):
         if pv.connected and pv.put_complete:
             # wait=True is too slow for the LL Timing IOCs. It is better not
             # to use it.
-            pv.put(value, use_complete=True, wait=wait)
-            pv._initialized = True
+            try:
+                pv.put(value, use_complete=True, wait=wait)
+                pv._initialized = True
+            except _epics.ca.CASeverityException:
+                _log.error('NO Write Permission to {0:s}'.format(pv.pvname))
 
     def _on_change_writepv(self, pvname, value, **kwargs):
         # -Cmd PVs do not have a state associated to them
@@ -285,12 +292,16 @@ class _BaseLL(_Base):
         Function called by write when no conversion is needed between
         high and low level properties.
         """
+        if value is None:
+            return dict()
         return {prop: value}
 
     def _get_simple(self, prop, is_sp, val=None, hl_prop=None):
         hl_prop = prop if hl_prop is None else hl_prop
         if val is None:
             val = self._get_from_pvs(is_sp, prop)
+        if val is None:
+            return dict()
         return {hl_prop: val}
 
 
@@ -330,12 +341,16 @@ class LLEvent(_BaseLL):
         return self._define_dict_for_update()
 
     def _set_delay(self, value):
+        if value is None:
+            return dict()
         value *= _DELAY_UNIT_CONV  # us
         return {'Delay': round(value / self._base_del)}
 
     def _get_delay(self, is_sp, val=None):
         if val is None:
-            val = self._get_from_pvs(is_sp, 'Delay', def_val=0)
+            val = self._get_from_pvs(is_sp, 'Delay')
+        if val is None:
+            return dict()
         return {'Delay': val * self._base_del * 1e6}
 
     def _set_ext_trig(self, value):
@@ -349,9 +364,7 @@ class _EVROUT(_BaseLL):
 
     def __init__(self, channel, source_enums):
         fout_chan = _LLTimeSearch.get_fout_channel(channel)
-        self._foutexist = bool(fout_chan)
-        if self._foutexist:
-            self._fout_out = int(fout_chan.propty[3:])
+        self._fout_out = int(fout_chan.propty[3:])
         evg_chan = _LLTimeSearch.get_evg_channel(channel)
         self._evg_out = int(evg_chan.propty[3:])
         self._source_enums = source_enums
@@ -360,8 +373,7 @@ class _EVROUT(_BaseLL):
         prefix = LL_PREFIX + _PVName(channel).device_name + ':'
         super().__init__(channel, prefix)
         self._config_ok_values['DevEnbl'] = 1
-        if self._foutexist:
-            self._config_ok_values['FoutDevEnbl'] = 1
+        self._config_ok_values['FoutDevEnbl'] = 1
         self._config_ok_values['EVGDevEnbl'] = 1
         if self.channel.propty.startswith('OUT'):
             intrg = _LLTimeSearch.get_channel_internal_trigger_pvname(
@@ -389,6 +401,8 @@ class _EVROUT(_BaseLL):
 
         evg_chan = _LLTimeSearch.get_evg_channel(self.channel)
         _evg_prefix = LL_PREFIX + evg_chan.device_name + ':'
+        fout_chan = _LLTimeSearch.get_fout_channel(self.channel)
+        _fout_prefix = LL_PREFIX + fout_chan.device_name + ':'
         map_ = {
             'State': self.prefix + intlb + 'State-Sts',
             'Evt': self.prefix + intlb + 'Evt-RB',
@@ -406,18 +420,13 @@ class _EVROUT(_BaseLL):
             'DevEnbl': self.prefix + 'DevEnbl-Sts',
             'Network': self.prefix + 'Network-Mon',
             'Link': self.prefix + 'Link-Mon',
+            'IntlkMon': self.prefix + 'Intlk-Mon',
             'Los': self.prefix + 'Los-Mon',
             'EVGLos': _evg_prefix + 'Los-Mon',
-            'IntlkMon': self.prefix + 'Intlk-Mon',
+            'FoutLos': _fout_prefix + 'Los-Mon',
+            'FoutDevEnbl': _fout_prefix + 'DevEnbl-Sts',
             'EVGDevEnbl': _evg_prefix + 'DevEnbl-Sts',
             }
-        if self._foutexist:
-            fout_chan = _LLTimeSearch.get_fout_channel(self.channel)
-            _fout_prefix = LL_PREFIX + fout_chan.device_name + ':'
-            map_.update({
-                'FoutLos': _fout_prefix + 'Los-Mon',
-                'FoutDevEnbl': _fout_prefix + 'DevEnbl-Sts',
-                })
         for prop in self._REMOVE_PROPS:
             map_.pop(prop)
         return map_
@@ -426,6 +435,7 @@ class _EVROUT(_BaseLL):
         map_ = {
             'DevEnbl': _partial(self._set_simple, 'DevEnbl'),
             'EVGDevEnbl': _partial(self._set_simple, 'EVGDevEnbl'),
+            'FoutDevEnbl': _partial(self._set_simple, 'FoutDevEnbl'),
             'State': _partial(self._set_simple, 'State'),
             'ByPassIntlk': _partial(self._set_simple, 'ByPassIntlk'),
             'Src': self._set_source,
@@ -435,10 +445,6 @@ class _EVROUT(_BaseLL):
             'Delay': self._set_delay,
             'RFDelayType': _partial(self._set_simple, 'RFDelayType'),
             }
-        if self._foutexist:
-            map_.update({
-                'FoutDevEnbl': _partial(self._set_simple, 'FoutDevEnbl'),
-                })
         return map_
 
     def _define_dict_for_update(self):
@@ -458,16 +464,13 @@ class _EVROUT(_BaseLL):
             'DevEnbl': _partial(self._get_status, 'DevEnbl'),
             'Network': _partial(self._get_status, 'Network'),
             'Link': _partial(self._get_status, 'Link'),
+            'IntlkMon': _partial(self._get_status, 'IntlkMon'),
             'Los': _partial(self._get_status, 'Los'),
             'EVGLos': _partial(self._get_status, 'EVGLos'),
-            'IntlkMon': _partial(self._get_status, 'IntlkMon'),
+            'FoutLos': _partial(self._get_status, 'FoutLos'),
             'EVGDevEnbl': _partial(self._get_status, 'EVGDevEnbl'),
+            'FoutDevEnbl': _partial(self._get_status, 'FoutDevEnbl'),
             }
-        if self._foutexist:
-            map_.update({
-                'FoutLos': _partial(self._get_status, 'FoutLos'),
-                'FoutDevEnbl': _partial(self._get_status, 'FoutDevEnbl'),
-                })
         for prop in self._REMOVE_PROPS:
             map_.pop(prop)
         return map_
@@ -488,56 +491,53 @@ class _EVROUT(_BaseLL):
 
     def _get_status(self, prop, is_sp, value=None):
         dic_ = dict()
-        dic_['DevEnbl'] = self._get_from_pvs(is_sp, 'DevEnbl')
-        dic_['EVGDevEnbl'] = self._get_from_pvs(is_sp, 'EVGDevEnbl')
-        dic_['Network'] = self._get_from_pvs(is_sp, 'Network')
-        dic_['IntlkMon'] = self._get_from_pvs(is_sp, 'IntlkMon', def_val=1)
-        dic_['Link'] = self._get_from_pvs(is_sp, 'Link')
-        dic_['EVGLos'] = self._get_from_pvs(is_sp, 'EVGLos', def_val=None)
+        dic_['DevEnbl'] = self._get_from_pvs(is_sp, 'DevEnbl', def_val=0)
+        dic_['EVGDevEnbl'] = self._get_from_pvs(is_sp, 'EVGDevEnbl', def_val=0)
+        dic_['FoutDevEnbl'] = self._get_from_pvs(
+                                        is_sp, 'FoutDevEnbl', def_val=0)
+        dic_['Network'] = self._get_from_pvs(False, 'Network', def_val=0)
+        dic_['Link'] = self._get_from_pvs(False, 'Link', def_val=0)
         dic_['PVsConn'] = self.connected
-        dic_['Los'] = self._get_from_pvs(is_sp, 'Los', def_val=None)
-        if self._foutexist:
-            dic_['FoutDevEnbl'] = self._get_from_pvs(is_sp, 'FoutDevEnbl')
-            dic_['FoutLos'] = self._get_from_pvs(
-                                    is_sp, 'FoutLos', def_val=None)
+        if 'IntlkMon' in self._REMOVE_PROPS:
+            dic_['IntlkMon'] = 0
         else:
-            dic_['FoutDevEnbl'] = True
-            dic_['FoutLos'] = 0
+            dic_['IntlkMon'] = self._get_from_pvs(False, 'IntlkMon', def_val=1)
+        if 'Los' in self._REMOVE_PROPS:
+            prt_num = 0
+            dic_['Los'] = 0b00000000
+        else:
+            prt_num = int(self.channel[-1])  # get OUT number for EVR
+            dic_['Los'] = self._get_from_pvs(False, 'Los', def_val=0b11111111)
+        dic_['EVGLos'] = self._get_from_pvs(
+                                False, 'EVGLos', def_val=0b11111111)
+        dic_['FoutLos'] = self._get_from_pvs(
+                                False, 'FoutLos', def_val=0b11111111)
+
         if value is not None:
             dic_[prop] = value
-        status, bit = 0, 0
-        status = _update_bit(status, bit, not dic_['PVsConn'])
-        bit += 1
-        status = _update_bit(status, bit, not dic_['DevEnbl'])
-        bit += 1
-        status = _update_bit(status, bit, not dic_['FoutDevEnbl'])
-        bit += 1
-        status = _update_bit(status, bit, not dic_['EVGDevEnbl'])
-        bit += 1
-        status = _update_bit(status, bit, not dic_['Network'])
-        bit += 1
-        status = _update_bit(status, bit, not dic_['Link'])
-        bit += 1
-        if dic_['Los'] is not None:
-            num = int(self.channel[-1])  # get OUT number for EVR
-            status = _update_bit(status, bit, _get_bit(dic_['Los'], num))
-        bit += 1
-        if dic_['FoutLos'] is not None:
-            num = self._fout_out if self._foutexist else 1
-            status = _update_bit(status, bit, _get_bit(dic_['FoutLos'], num))
-        bit += 1
-        if dic_['EVGLos'] is not None:
-            num = self._evg_out
-            status = _update_bit(status, bit, _get_bit(dic_['EVGLos'], num))
-        bit += 1
-        status = _update_bit(status, bit, dic_['IntlkMon'])
-        return {'Status': status}
+
+        dic_['Los'] = _get_bit(dic_['Los'], prt_num)
+        dic_['EVGLos'] = _get_bit(dic_['EVGLos'], self._evg_out)
+        dic_['FoutLos'] = _get_bit(dic_['FoutLos'], self._fout_out)
+
+        prob, bit = 0, 0
+        prob, bit = _update_bit(prob, bit, not dic_['PVsConn']), bit+1
+        prob, bit = _update_bit(prob, bit, not dic_['DevEnbl']), bit+1
+        prob, bit = _update_bit(prob, bit, not dic_['FoutDevEnbl']), bit+1
+        prob, bit = _update_bit(prob, bit, not dic_['EVGDevEnbl']), bit+1
+        prob, bit = _update_bit(prob, bit, not dic_['Network']), bit+1
+        prob, bit = _update_bit(prob, bit, not dic_['Link']), bit+1
+        prob, bit = _update_bit(prob, bit, dic_['Los']), bit+1
+        prob, bit = _update_bit(prob, bit, dic_['FoutLos']), bit+1
+        prob, bit = _update_bit(prob, bit, dic_['EVGLos']), bit+1
+        prob, bit = _update_bit(prob, bit, dic_['IntlkMon']), bit+1
+        return {'Status': prob}
 
     def _get_delay(self, prop, is_sp, value=None):
         dic_ = dict()
-        dic_['Delay'] = self._get_from_pvs(is_sp, 'Delay')
-        dic_['RFDelay'] = self._get_from_pvs(is_sp, 'RFDelay')
-        dic_['FineDelay'] = self._get_from_pvs(is_sp, 'FineDelay')
+        dic_['Delay'] = self._get_from_pvs(is_sp, 'Delay', def_val=0)
+        dic_['RFDelay'] = self._get_from_pvs(is_sp, 'RFDelay', def_val=0)
+        dic_['FineDelay'] = self._get_from_pvs(is_sp, 'FineDelay', def_val=0)
         if value is not None:
             dic_[prop] = value
 
@@ -546,6 +546,8 @@ class _EVROUT(_BaseLL):
         return {'Delay': delay}
 
     def _set_delay(self, value):
+        if value is None:
+            return dict()
         value *= _DELAY_UNIT_CONV  # us
         delay1 = int(value // self._base_del)
         dic_ = {'Delay': delay1}
@@ -558,10 +560,13 @@ class _EVROUT(_BaseLL):
         return dic_
 
     def _process_source(self, prop, is_sp, value=None):
-        dic_ = dict()
-        dic_['SrcTrig'] = self._get_from_pvs(is_sp, 'SrcTrig', def_val=30)
-        dic_['Src'] = self._get_from_pvs(is_sp, 'Src', def_val=None)
-        dic_['Evt'] = self._get_from_pvs(is_sp, 'Evt')
+        dic_ = {'SrcTrig': 30, 'Src': None, 'Evt': None}
+        if 'SrcTrig' not in self._REMOVE_PROPS:
+            dic_['SrcTrig'] = self._get_from_pvs(is_sp, 'SrcTrig', def_val=30)
+        if 'Src' not in self._REMOVE_PROPS:
+            dic_['Src'] = self._get_from_pvs(is_sp, 'Src', def_val=None)
+        if 'Evt' not in self._REMOVE_PROPS:
+            dic_['Evt'] = self._get_from_pvs(is_sp, 'Evt', def_val=None)
         if value is not None:
             dic_[prop] = value
 
@@ -595,6 +600,9 @@ class _EVROUT(_BaseLL):
 
     def _process_src(self, src, is_sp):
         invalid = len(self._source_enums)-1  # Invalid option
+        if src is None:
+            return {'Src': invalid}
+
         # BUG: I noticed that differently from the EVR and EVE IOCs,
         # the AMCFPGAEVR do not have a 'Dsbl' as first option of the enums
         # list. So I have to create this offset to fix this...
@@ -611,6 +619,8 @@ class _EVROUT(_BaseLL):
             return {'Src': self._source_enums.index(source)}
 
     def _set_source(self, value):
+        if value is None:
+            return dict()
         # BUG: I noticed that differently from the EVR and EVE IOCs,
         # the AMCFPGAEVR do not have a 'Dsbl' as first option of the enums
         # list. So I have to create this offset to fix this...
@@ -654,6 +664,8 @@ class _EVROUT(_BaseLL):
             }
 
     def _set_duration(self, value, pul=None):
+        if value is None:
+            return dict()
         value *= _DELAY_UNIT_CONV  # us
         if pul is None:
             pul = self._config_ok_values.get('NrPulses')
@@ -665,7 +677,7 @@ class _EVROUT(_BaseLL):
         return {'Width': wid}
 
     def _set_nrpulses(self, value):
-        if value < 1:
+        if value is None or value < 1:
             return dict()
         dic = {'NrPulses': int(value)}
 
@@ -691,7 +703,7 @@ class _EVROTP(_EVROUT):
 
     def _get_delay(self, prop, is_sp, val=None):
         if val is None:
-            val = self._get_from_pvs(is_sp, 'Delay')
+            val = self._get_from_pvs(is_sp, 'Delay', def_val=0)
         return {'Delay': val * self._base_del * 1e6}
 
     def _set_delay(self, value):
@@ -741,8 +753,8 @@ class _AMCFPGAEVRAMC(_EVROUT):
 
     def _process_source(self, prop, is_sp, value=None):
         dic_ = dict()
-        dic_['Src'] = self._get_from_pvs(is_sp, 'Src')
-        dic_['Evt'] = self._get_from_pvs(is_sp, 'Evt')
+        dic_['Src'] = self._get_from_pvs(is_sp, 'Src', def_val=None)
+        dic_['Evt'] = self._get_from_pvs(is_sp, 'Evt', def_val=None)
         if value is not None:
             dic_[prop] = value
 

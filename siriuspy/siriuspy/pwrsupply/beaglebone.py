@@ -119,10 +119,7 @@ class BBBFactory:
         prucqueue = _PRUCQueue()
         db = dict()
 
-        if bbbname == 'BBB1_TEST1':
-            udc_list = ['UDC_TEST']
-        else:
-            udc_list = _PSSearch.conv_bbbname_2_udc(bbbname)
+        udc_list = _PSSearch.conv_bbbname_2_udc(bbbname)
 
         controllers = dict()  # 1 controller per UDC
         databases = dict()
@@ -134,34 +131,37 @@ class BBBFactory:
             freqs = None
 
         for udc in udc_list:
-            if udc == 'UDC_TEST':
-                devices = (('BO-01U:PS-CH', 1),
-                           ('BO-01U:PS-CV', 2),
-                           ('BO-03U:PS-CH', 5),
-                           ('BO-03U:PS-CV', 6))
-            else:
-                devices = _PSSearch.conv_udc_2_bsmps(udc)
+
+            devices = _PSSearch.conv_udc_2_bsmps(udc)
+
             # Check if there is only one psmodel
             psmodel = BBBFactory.check_ps_models(devices)
+
             # Get out model object
             model = _ModelFactory.create(psmodel)
+
             # Create pru controller for devices
             ids = [device[1] for device in devices]
             pru_controller = _PRUController(pru, prucqueue, model, ids,
                                             freqs=freqs)
+
             # Get model database
             database = _PSData(devices[0][0]).propty_database
+
             # Build setpoints
             setpoints = BBBFactory._build_setpoints_dict(devices, database)
+
             # Build fields and functions dicts
             fields, functions = BBBFactory._build_fields_functions_dict(
                 db, model, setpoints,
                 devices, database, pru_controller)
+
             # Build connections and device_ids dicts
             connections, devices_ids = dict(), dict()
             for dev_name, dev_id in devices:
                 devices_ids[dev_name] = dev_id
                 connections[dev_name] = Connection(dev_id, pru_controller)
+
             # Build controller
             controller = model.controller(
                 fields, functions, connections, pru_controller, devices_ids)

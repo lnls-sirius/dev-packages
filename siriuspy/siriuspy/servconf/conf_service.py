@@ -9,6 +9,7 @@ from urllib.request import Request as _Request
 from urllib.request import urlopen as _urlopen
 from urllib.error import URLError as _URLError
 from http import HTTPStatus as _HTTPStatus
+import numpy as _np
 
 import siriuspy.envars as _envars
 import siriuspy.servconf.conf_types as _config_types
@@ -23,6 +24,16 @@ ch.setFormatter(formatter)
 logger = _logging.getLogger(__name__)
 logger.addHandler(ch)
 logger.setLevel(_logging.WARNING)  # This toggles all the logging in your app
+
+
+# NOTE: I've copied this code from:
+# https://stackoverflow.com/a/47626762
+class NumpyEncoder(_json.JSONEncoder):
+
+    def default(self, obj):
+        if isinstance(obj, _np.ndarray):
+            return obj.tolist()
+        return _json.JSONEncoder.default(self, obj)
 
 
 class ConfigService:
@@ -93,9 +104,10 @@ class ConfigService:
                 'Config name must be str, not {}!'.format(type(name)))
         url = self._url + self.CONFIGS_ENDPOINT
         data = {"config_type": config_type, "name": name, "value": value}
-        request = _Request(url=url, method="POST",
-                           headers={"Content-Type": "application/json"},
-                           data=_json.dumps(data).encode())
+        jdata = _json.dumps(data, cls=NumpyEncoder).encode()
+        request = _Request(
+            url=url, method="POST",
+            headers={"Content-Type": "application/json"}, data=jdata)
         return self._make_request(request)
 
     def find_configs(self,
@@ -177,9 +189,10 @@ class ConfigService:
         else:
             if type(find_dict) is not dict:
                 raise AttributeError("`find_dict` is not a dict")
-            request = _Request(url=url, method="GET",
-                               headers={"Content-Type": "application/json"},
-                               data=_json.dumps(find_dict).encode())
+            jdata = _json.dumps(find_dict, cls=NumpyEncoder).encode()
+            request = _Request(
+                url=url, method="GET",
+                headers={"Content-Type": "application/json"}, data=jdata)
         return self._make_request(request)
 
     def request_configs(self, find_dict=None):
@@ -190,9 +203,10 @@ class ConfigService:
         else:
             if type(find_dict) is not dict:
                 raise ValueError("`find_dict` is not a dict")
-            request = _Request(url=url, method="GET",
-                               headers={"Content-Type": "application/json"},
-                               data=_json.dumps(find_dict).encode())
+            jdata = _json.dumps(find_dict, cls=NumpyEncoder).encode()
+            request = _Request(
+                url=url, method="GET",
+                headers={"Content-Type": "application/json"}, data=jdata)
         return self._make_request(request)
 
     def delete_config(self, obj_dict):
@@ -214,9 +228,10 @@ class ConfigService:
         # Build URL a make PUT request
         url_params = "/{}".format(_id)
         url = self._url + self.CONFIGS_ENDPOINT + url_params
-        request = _Request(url=url, method="PUT",
-                           headers={"Content-Type": "application/json"},
-                           data=_json.dumps(update_dict).encode())
+        jdata = _json.dumps(update_dict, cls=NumpyEncoder).encode()
+        request = _Request(
+            url=url, method="PUT",
+            headers={"Content-Type": "application/json"}, data=jdata)
         return self._make_request(request)
 
     def query_db_size(self):

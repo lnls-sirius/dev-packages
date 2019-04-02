@@ -1,8 +1,9 @@
 """Configuration Type Module."""
 
 import importlib as _importlib
-import siriuspy.servconf.types as _types
 import copy as _copy
+import numpy as _np
+import siriuspy.servconf.types as _types
 
 # NOTE: values for key string labels ending with char '*' have not their
 #       sizes compared with a reference if their lists or tuples!
@@ -11,6 +12,16 @@ import copy as _copy
 #       through json looses track of tuple|list type.
 
 _config_types_dict = None
+_config_types_check = None
+_int_types = {int}
+for k, tp in _np.typeDict.items():
+        if isinstance(k, str) and k.startswith('int'):
+            _int_types.add(tp)
+
+_float_types = {float}
+for k, tp in _np.typeDict.items():
+        if isinstance(k, str) and k.startswith('float'):
+            _float_types.add(tp)
 
 
 def get_config_types():
@@ -33,24 +44,34 @@ def check_value(config_type, value):
     if _config_types_dict is None:
         _init_config_types_dict()
     ref_value = _config_types_dict[config_type]
-    return recursive_check(ref_value, value)
+    if _config_types_check[config_type]:
+        return recursive_check(ref_value, value)
+    return True
 
 
 def _init_config_types_dict():
-    global _config_types_dict
-    _config_types_dict = {}
+    global _config_types_dict, _config_types_check
+    _config_types_dict = dict()
+    _config_types_check = dict()
     for ct_name in _types._ctypes:
         ctm = _importlib.import_module('siriuspy.servconf.types.' + ct_name)
         ct = ctm.get_dict()
         config_type_name = ct['config_type_name']
         _config_types_dict[config_type_name] = ct['value']
+        _config_types_check[config_type_name] = ct.get('check', True)
 
 
+# NOTE: It would be better if this method raised an error with a message
+#       specifying the name of the PV which is incompatible.
 def recursive_check(ref_value, value, checklength=True):
-    if type(ref_value) != type(value):
+    tps = {type(ref_value), type(value)}
+    if len(tps) > len(tps - _int_types) > 0:
         # print('h1')
         return False
-    if type(ref_value) == dict:
+    elif len(tps) > len(tps - _float_types) > 0:
+        # print('h2')
+        return False
+    elif isinstance(ref_value, dict):
         if checklength and len(value) != len(ref_value):
             return False
         for k, v in value.items():
@@ -66,7 +87,7 @@ def recursive_check(ref_value, value, checklength=True):
                 if not checked:
                     # print('h4')
                     return False
-    elif type(ref_value) in (list, tuple, ):
+    elif isinstance(ref_value, (list, tuple, _np.ndarray)):
         if checklength and len(ref_value) != len(value):
             # print('h5')
             return False
