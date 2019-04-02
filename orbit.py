@@ -1022,46 +1022,29 @@ class EpicsOrbit(BaseOrbit):
         self.run_callbacks('TrigExtEvtSrc-Sts', value)
         return True
 
-    def set_trig_acq_nrsamples(self, value, ispost=True):
-        Nmax = self._csorb.MAX_MT_ORBS // self._acqtrignrshots
-        Nmax *= self._acqtrigdownsample
+    def set_trig_acq_nrsamples(self, val, ispost=True):
+        val = int(val) if val > 4 else 4
+        val = val if val < 20000 else 20000
         suf = 'post' if ispost else 'pre'
-        osuf = 'pre' if ispost else 'post'
-        value += getattr(self, '_acqtrignrsamples'+osuf)
-
-        nval = value if value <= Nmax else Nmax
-        nval = self._find_new_nrsamples(nval, self._acqtrigdownsample)
-        if nval != value:
-            value = nval
-            msg = 'WARN: Not possible to set NrSamples. Redefining..'
-            self._update_log(msg)
-            _log.warning(msg[6:])
-
-        value -= getattr(self, '_acqtrignrsamples'+osuf)
         with self._lock_raw_orbs:
             for bpm in self.bpms:
-                setattr(bpm, 'nrsamples'+suf, value)
+                setattr(bpm, 'nrsamples' + suf, val)
             self._reset_orbs()
-            setattr(self, '_acqtrignrsamples'+suf, value)
-        self.run_callbacks('TrigNrSamples'+suf.title()+'-RB', value)
+            setattr(self, '_acqtrignrsamples' + suf, val)
+        self.run_callbacks('TrigNrSamples'+suf.title()+'-RB', val)
         self._update_time_vector()
         return True
 
-    def set_trig_acq_nrshots(self, value):
-        pntspshot = self.acqtrignrsamples // self._acqtrigdownsample
-        nrpoints = pntspshot * value
-        if nrpoints > self._csorb.MAX_MT_ORBS:
-            value = self._csorb.MAX_MT_ORBS // pntspshot
-            msg = 'WARN: Not possible to set NrShots. Redefining...'
-            self._update_log(msg)
-            _log.warning(msg[6:])
+    def set_trig_acq_nrshots(self, val):
+        val = int(val) if val > 1 else 1
+        val = val if val < 1000 else 1000
         with self._lock_raw_orbs:
             for bpm in self.bpms:
-                bpm.nrshots = value
-            self.timing.nrpulses = value
+                bpm.nrshots = val
+            self.timing.nrpulses = val
             self._reset_orbs()
-            self._acqtrignrshots = value
-        self.run_callbacks('TrigNrShots-RB', value)
+            self._acqtrignrshots = val
+        self.run_callbacks('TrigNrShots-RB', val)
         self._update_time_vector()
         return True
 
@@ -1190,9 +1173,16 @@ class EpicsOrbit(BaseOrbit):
             return
         orbs = {'X': [], 'Y': [], 'Sum': []}
         with self._lock_raw_orbs:  # I need the lock here to ensure consistency
+            samp = self.acqtrignrsamples
             down = self._mturndownsample
             ringsz = self._ring_extension
             samp -= samp % (ringsz*down)
+            if samp < 1:
+                msg = 'ERR: Actual nr_samples in MTurn orb calc. is < 1.'
+                self._update_log(msg)
+                _log.error(msg[5:])
+                return
+            samp *= self._acqtrignrshots
             orbsz = self._csorb.NR_BPMS * ringsz
             idx = self._multiturnidx
             nr_pts = self._smooth_npts
@@ -1303,7 +1293,3 @@ class EpicsOrbit(BaseOrbit):
                 return d+i
             elif not onlyup and not N % (d-i):
                 return d-i
-
-    @staticmethod
-    def _find_new_nrsamples(N, d):
-        return d*(N//d) if N >= d else d
