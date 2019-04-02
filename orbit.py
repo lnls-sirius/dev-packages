@@ -1233,22 +1233,37 @@ class EpicsOrbit(BaseOrbit):
             idx = self._multiturnidx
             nr_pts = self._smooth_npts
             for i, bpm in enumerate(self.bpms):
-                posx = bpm.mtposx
-                if posx is None or posx.size < samp:
+                pos = bpm.mtposx
+                if pos is None:
                     posx = _np.full(samp, self.ref_orbs['X'][i])
-                posy = bpm.mtposy
-                if posy is None or posy.size < samp:
+                elif pos.size < samp:
+                    posx = _np.full(samp, self.ref_orbs['X'][i])
+                    posx[:pos.size] = pos
+                else:
+                    posx = pos[:samp]
+                pos = bpm.mtposy
+                if pos is None:
                     posy = _np.full(samp, self.ref_orbs['Y'][i])
-                psum = bpm.mtsum
-                if psum is None or psum.size < samp:
+                elif pos.size < samp:
+                    posy = _np.full(samp, self.ref_orbs['Y'][i])
+                    posy[:pos.size] = pos
+                else:
+                    posy = pos[:samp]
+                pos = bpm.mtsum
+                if pos is None:
                     psum = _np.full(samp, 0)
-                orbs['X'].append(posx[:samp])
-                orbs['Y'].append(posy[:samp])
-                orbs['Sum'].append(psum[:samp])
+                elif pos.size < samp:
+                    psum = _np.full(samp, 0)
+                    psum[:pos.size] = pos
+                else:
+                    psum = pos[:samp]
+                orbs['X'].append(posx)
+                orbs['Y'].append(posy)
+                orbs['Sum'].append(psum)
 
             for pln, raw in self.raw_mtorbs.items():
-                norb = _np.array(orbs[pln], dtype=float)
-                norb = norb.reshape(orbsz, -1)
+                norb = _np.array(orbs[pln], dtype=float)  # bpms x turns
+                norb = norb.T.reshape(-1, orbsz)  # turns/rz x rz*bpms
                 raw.append(norb)
                 del raw[:-nr_pts]
                 if self._smooth_meth == self._csorb.SmoothMeth.Average:
@@ -1256,8 +1271,7 @@ class EpicsOrbit(BaseOrbit):
                 else:
                     orb = _np.median(raw, axis=0)
                 if down > 1:
-                    orb = _np.mean(orb.reshape(orbsz, -1, down), axis=2)
-                orb = orb.transpose()
+                    orb = _np.mean(orb.reshape(-1, down, orbsz), axis=1)
                 self.smooth_mtorb[pln] = orb
                 orbs[pln] = orb
         for pln, orb in orbs.items():
