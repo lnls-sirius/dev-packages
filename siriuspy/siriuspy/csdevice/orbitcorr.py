@@ -329,12 +329,6 @@ class SOFBTLines(ConstTLines):
                 'type': 'enum', 'unit': 'Auto arm to repeat acquisition.',
                 'value': self.TrigAcqRepeat.Normal,
                 'enums': self.TrigAcqRepeat._fields},
-            'TrigDownSample-SP': {
-                'type': 'int', 'unit': '', 'value': 1,
-                'hilim': 2**15-1, 'lolim': 1},
-            'TrigDownSample-RB': {
-                'type': 'int', 'unit': '', 'value': 1,
-                'hilim': 2**15-1, 'lolim': 1},
             'TrigNrShots-SP': {
                 'type': 'int', 'unit': '', 'value': 1,
                 'hilim': 1000, 'lolim': 1},
@@ -614,6 +608,12 @@ class SOFBRings(SOFBTLines, ConstRings):
         for k in pvs_ring:
             db_ring[k] = _dcopy(prop)
         db_ring.update({
+            'MTurnDownSample-SP': {
+                'type': 'int', 'unit': '', 'value': 1,
+                'hilim': 20000, 'lolim': 1},
+            'MTurnDownSample-RB': {
+                'type': 'int', 'unit': '', 'value': 1,
+                'hilim': 20000, 'lolim': 1},
             'MTurnOrbX-Mon': {
                 'type': 'float', 'unit': 'um', 'count': self.MAX_MT_ORBS*nbpm,
                 'value': 50*nbpm*[0]},
