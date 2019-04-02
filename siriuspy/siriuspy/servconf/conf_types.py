@@ -12,6 +12,7 @@ import siriuspy.servconf.types as _types
 #       through json looses track of tuple|list type.
 
 _config_types_dict = None
+_config_types_check = None
 _int_types = {int}
 for k, tp in _np.typeDict.items():
         if isinstance(k, str) and k.startswith('int'):
@@ -43,17 +44,21 @@ def check_value(config_type, value):
     if _config_types_dict is None:
         _init_config_types_dict()
     ref_value = _config_types_dict[config_type]
-    return recursive_check(ref_value, value)
+    if _config_types_check[config_type]:
+        return recursive_check(ref_value, value)
+    return True
 
 
 def _init_config_types_dict():
-    global _config_types_dict
-    _config_types_dict = {}
+    global _config_types_dict, _config_types_check
+    _config_types_dict = dict()
+    _config_types_check = dict()
     for ct_name in _types._ctypes:
         ctm = _importlib.import_module('siriuspy.servconf.types.' + ct_name)
         ct = ctm.get_dict()
         config_type_name = ct['config_type_name']
         _config_types_dict[config_type_name] = ct['value']
+        _config_types_check[config_type_name] = ct.get('check', True)
 
 
 # NOTE: It would be better if this method raised an error with a message

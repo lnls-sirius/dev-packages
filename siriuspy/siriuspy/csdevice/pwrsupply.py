@@ -9,6 +9,7 @@ from siriuspy.csdevice import util as _cutil
 
 
 # MIN_WFMSIZE = 2001
+
 MAX_WFMSIZE = 4000
 DEFAULT_SIGGEN_CONFIG = _DEF_SIGG_CONF
 DEFAULT_WFMDATA = (0.0, ) * MAX_WFMSIZE
@@ -18,7 +19,8 @@ default_pu_current_precision = 4
 _default_ps_current_unit = None
 _default_pu_current_unit = None
 
-NOMINAL_VOLTAGE_FAC_2S_ACDC = 80.0  # [Volt] (for BO QF)
+# TODO: temporary data?
+NOMINAL_VOLTAGE_FAC_2S_ACDC = 300.0  # [Volt] (for BO QF)
 NOMINAL_VOLTAGE_FAC_2P4S_ACDC = 25.0  # [Volt] (for BO B-1, B-2)
 
 # --- Enumeration Types ---
