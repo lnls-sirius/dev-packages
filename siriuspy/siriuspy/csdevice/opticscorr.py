@@ -138,15 +138,6 @@ def get_tune_database(acc):
         'NominalKL-Mon':   {'type': 'float', 'count': len(qfams),
                             'value': len(qfams)*[0], 'prec': 6},
 
-        'CorrFactor-SP':   {'type': 'float', 'value': 0, 'unit': '%',
-                            'prec': 1, 'hilim': 1000, 'lolim': -1000,
-                            'high': 1000, 'low': -1000, 'hihi': 1000,
-                            'lolo': -1000},
-        'CorrFactor-RB':   {'type': 'float', 'value': 0, 'unit': '%',
-                            'prec': 1, 'hilim': 1000, 'lolim': -1000,
-                            'high': 1000, 'low': -1000, 'hihi': 1000,
-                            'lolo': -1000},
-
         'ConfigMA-Cmd':    {'type': 'int', 'value': 0},
 
         'SetNewRefKL-Cmd': {'type': 'int', 'value': 0},
