@@ -4,9 +4,6 @@ from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.csdevice import util as _cutil
 
 
-SCAN_FREQUENCY = 2.0  # [Hz]
-
-
 class ETypes(_cutil.ETypes):
     """Local enumerate types."""
 
@@ -26,8 +23,7 @@ def get_ps_diag_propty_database(psname):
     splims = _PSSearch.conv_pstype_2_splims(pstype)
     dtol = splims['DTOL']
     db = {
-        'DiagVersion-Cte': {'type': 'str', 'value': 'UNDEF',
-                            'scan': 1.0/SCAN_FREQUENCY},
+        'DiagVersion-Cte': {'type': 'str', 'value': 'UNDEF'},
         'DiagCurrentDiff-Mon': {'type': 'float', 'value': 0.0,
                                 'hilim': dtol, 'hihi': dtol, 'high': dtol,
                                 'low': -dtol, 'lolo': -dtol, 'lolim': -dtol},
