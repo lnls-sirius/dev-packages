@@ -433,6 +433,18 @@ class SOFBTLines(ConstTLines):
             'SPassMethod-Sts': {
                 'type': 'enum', 'value': self.SPassMethod.FromBPMs,
                 'enums': self.SPassMethod._fields},
+            'SPassDataOffset-SP': {
+                'type': 'int', 'value': 0, 'lolim': -1, 'hilim': 1000},
+            'SPassDataOffset-RB': {
+                'type': 'int', 'value': 0, 'lolim': -1, 'hilim': 1000},
+            'SPassDataSize-SP': {
+                'type': 'int', 'value': 362, 'lolim': 1, 'hilim': 1000},
+            'SPassDataSize-RB': {
+                'type': 'int', 'value': 362, 'lolim': 1, 'hilim': 1000},
+            'SPassAvgNrTurns-SP': {
+                'type': 'int', 'value': 1, 'lolim': 1, 'hilim': 1000},
+            'SPassAvgNrTurns-RB': {
+                'type': 'int', 'value': 1, 'lolim': 1, 'hilim': 1000},
             'BPMPosS-Mon': {
                 'type': 'float', 'unit': 'm', 'count': self.MAX_RINGSZ*nbpm,
                 'value': self.BPM_POS, 'prec': 2},
