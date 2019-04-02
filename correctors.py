@@ -275,7 +275,7 @@ class EpicsCorrectors(BaseCorrectors):
         db['CorrConfig-Cmd'][prop] = self.configure_correctors
         db['KickAcqRate-SP'][prop] = self.set_kick_acq_rate
         if self.isring:
-            db['CorrSync-Sel'][prop] = self.set_chcvs_mode
+            db['CorrSync-Sel'][prop] = self.set_corrs_mode
         db = super().get_database(db)
         return db
 
@@ -403,7 +403,7 @@ class EpicsCorrectors(BaseCorrectors):
         if self.isring:
             self.run_callbacks('KickRF-Mon', corr_vals[-1])
 
-    def set_chcvs_mode(self, value):
+    def set_corrs_mode(self, value):
         """Set mode of CHs and CVs method."""
         self._synced_kicks = value
         if self._synced_kicks == self._csorb.CorrSync.On:
