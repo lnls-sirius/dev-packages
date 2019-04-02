@@ -505,8 +505,19 @@ class BPM(_BaseTimingConfig):
         if pv.connected:
             pv.put(val, wait=False)
 
-    def calc_sp_multiturn_pos(self, nturns, refx=0, refy=0, refsum=0):
+    def calc_sp_multiturn_pos(self, **kwargs):
         downs = self.tbtrate
+        nturns = kwargs.get('nturns', 1)
+        refx = kwargs.get('refx', 0.0)
+        refy = kwargs.get('refy', 0.0)
+        refsum = kwargs.get('refsum', 0.0)
+        size = kwargs.get('size', downs)
+        offset = kwargs.get('offset', 0)
+
+        size = size if size < downs else downs
+        maxoff = downs - size
+        offset = offset if offset < maxoff else maxoff
+
         an = {
             'A': self.spanta, 'B': self.spantb,
             'C': self.spantc, 'D': self.spantd}
@@ -526,12 +537,13 @@ class BPM(_BaseTimingConfig):
 
         # handle cases where length read is smaller than required.
         rnts = min(siz//downs, nturns)
-        if not (siz or rnts):
+        if not (siz and rnts):
             return x, y, s
 
         for a, v in vs.items():
             v = v[:(rnts*downs)]
-            vs[a] = _np.std(v.reshape(-1, downs), axis=1)
+            v = v.reshape(-1, downs)[:, offset:(offset+size)]
+            vs[a] = _np.std(v, axis=1)
 
         s1, s2 = vs['A'] + vs['B'], vs['D'] + vs['C']
         d1 = (vs['A'] - vs['B']) / s1
@@ -668,6 +680,9 @@ class EpicsOrbit(BaseOrbit):
         db['SmoothMethod-Sel'][prop] = self.set_smooth_method
         db['SmoothReset-Cmd'][prop] = self.set_smooth_reset
         db['SPassMethod-Sel'][prop] = self.set_spass_method
+        db['SPassDataSize-SP'][prop] = self.set_spass_size
+        db['SPassDataOffset-SP'][prop] = self.set_spass_offset
+        db['SPassAvgNrTurns-SP'][prop] = self.set_spass_average
         db['OrbAcqRate-SP'][prop] = self.set_orbit_acq_rate
         db['TrigNrShots-SP'][prop] = self.set_trig_acq_nrshots
         if self.isring:
@@ -699,6 +714,9 @@ class EpicsOrbit(BaseOrbit):
         self._smooth_npts = 1
         self._smooth_meth = self._csorb.SmoothMeth.Average
         self._spass_method = self._csorb.SPassMethod.FromBPMs
+        self._spass_size = 362
+        self._spass_offset = 0
+        self._spass_average = 1
         self._acqrate = 10
         self._oldacqrate = self._acqrate
         self._acqtrignrsamplespre = 50
@@ -730,6 +748,9 @@ class EpicsOrbit(BaseOrbit):
         if val == self._ring_extension:
             return True
         with self._lock_raw_orbs:
+            self._spass_average = 1
+            self.run_callbacks('SPassAvgNrTurns-SP', 1)
+            self.run_callbacks('SPassAvgNrTurns-RB', 1)
             self._mturndownsample = 1
             self.run_callbacks('MTurnDownSample-SP', 1)
             self.run_callbacks('MTurnDownSample-RB', 1)
@@ -836,10 +857,35 @@ class EpicsOrbit(BaseOrbit):
 
     def set_spass_method(self, meth):
         if self._mode == self._csorb.SOFBMode.SinglePass:
-            self._spass_method = meth
-            self._reset_orbs()
+            with self._lock_raw_orbs:
+                self._spass_method = meth
+                self._reset_orbs()
         self.run_callbacks('SPassMethod-Sts', meth)
         return True
+
+    def set_spass_size(self, val):
+        val = int(val) if val > 2 else 2
+        maxsz = self.bpms[0].tbtrate - self._spass_offset
+        val = val if val < maxsz else maxsz
+        self._spass_size = val
+        self.run_callbacks('SPassDataSize-RB', val)
+
+    def set_spass_offset(self, val):
+        val = int(val) if val >= 0 else 0
+        maxsz = self.bpms[0].tbtrate - self._spass_size
+        val = val if val < maxsz else maxsz
+        self._spass_offset = val
+        self.run_callbacks('SPassDataOffset-RB', val)
+
+    def set_spass_average(self, val):
+        if self._ring_extension != 1 and val != 1:
+            msg = 'ERR: Cannot set SPassAvgNrTurns > 1 when RingSize > 1.'
+            self._update_log(msg)
+            _log.warning(msg[5:])
+            return False
+        val = int(val) if val > 1 else 1
+        self._spass_average = val
+        self.run_callbacks('SPassAvgNrTurns-RB', val)
 
     def set_smooth_reset(self, _):
         with self._lock_raw_orbs:
@@ -1221,32 +1267,38 @@ class EpicsOrbit(BaseOrbit):
                 'MTurnIdx' + name + '-Mon', orb[idx, :].flatten())
 
     def _update_singlepass_orbits(self):
-        if self._ring_extension != 1 and self._acqtrigdownsample != 1:
+        if self._ring_extension != 1 and self._spass_average != 1:
             return
         orbs = {'X': [], 'Y': [], 'Sum': []}
         ringsz = self._ring_extension
-        down = self._acqtrigdownsample
+        down = self._spass_average
         nr_turns = ringsz * down
         with self._lock_raw_orbs:  # I need the lock here to assure consistency
+            dic = {
+                'size': self._spass_size,
+                'offset': self._spass_offset,
+                'nturns': ringsz * down}
             nr_pts = self._smooth_npts
             for i, bpm in enumerate(self.bpms):
-                orbx, orby, Sum = bpm.calc_sp_multiturn_pos(
-                    nr_turns, self.ref_orbs['X'][i], self.ref_orbs['Y'][i])
+                dic.update({
+                    'refx': self.ref_orbs['X'][i],
+                    'refy': self.ref_orbs['Y'][i]})
+                orbx, orby, Sum = bpm.calc_sp_multiturn_pos(**dic)
                 orbs['X'].append(orbx)
                 orbs['Y'].append(orby)
                 orbs['Sum'].append(Sum)
 
             for pln, raw in self.raw_sporbs.items():
-                norb = _np.array(orbs[pln], dtype=float)
+                norb = _np.array(orbs[pln], dtype=float).T  # turns x bpms
+                norb = norb.reshape(-1)
                 raw.append(norb)
                 del raw[:-nr_pts]
                 if self._smooth_meth == self._csorb.SmoothMeth.Average:
                     orb = _np.mean(raw, axis=0)
                 else:
                     orb = _np.median(raw, axis=0)
-                orb = orb.reshape(-1)
                 if down > 1:
-                    orb = _np.mean(orb.reshape(-1, down), axis=1)
+                    orb = _np.mean(orb.reshape(down, -1), axis=0)
                 self.smooth_sporb[pln] = orb
                 name = ('Orb' if pln != 'Sum' else '') + pln
                 self.run_callbacks('SPass' + name + '-Mon', list(orb))
