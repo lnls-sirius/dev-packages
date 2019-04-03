@@ -120,7 +120,7 @@ class EpicsMatrix(BaseMatrix):
             self.select_items[key] = bkup
             return False
         self.select_items_extended[key] = newb
-        self.run_callbacks(self.selection_pv_names[key], val)
+        self.run_callbacks(self.selection_pv_names[key], new)
         return False
 
     def _set_enbllist(self, key, val):
@@ -194,7 +194,7 @@ class EpicsMatrix(BaseMatrix):
 
     def calc_kicks(self, orbit):
         """Calculate the kick from the orbit distortion given."""
-        if len(orbit) != self.inv_respmat.shape[0]:
+        if len(orbit) != self.inv_respmat.shape[1]:
             msg = 'ERR: Orbit and matrix size not compatible.'
             self._update_log(msg)
             _log.error(msg[5:])
