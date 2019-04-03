@@ -214,5 +214,7 @@ class StandardPSController(PSController):
     def _get_siggen_arg_values(self, device_name):
         """Get cfg_siggen args and execute it."""
         args = [self._readers[device_name + ':' + arg].read()
-                for arg in StandardPSController._siggen_parms]
+                for arg in StandardPSController._siggen_parms[:-1]]
+        aux = StandardPSController._siggen_parms[-1]
+        args.extend(self._readers[device_name + ':' + aux].read())
         return args
