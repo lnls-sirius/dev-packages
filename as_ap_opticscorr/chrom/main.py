@@ -297,8 +297,10 @@ class App:
                         self._sfam_check_opmode_sts[fam_index] = (
                             self._sfam_opmode_sts_pvs[fam].value)
 
-                    val = (1 if any(op != value for op in
-                                    self._sfam_check_opmode_sts) else 0)
+                    opmode = _PSConst.OpMode.SlowRefSync if value \
+                        else _PSConst.OpMode.SlowRef
+                    val = any(op != opmode
+                              for op in self._sfam_check_opmode_sts)
                 else:
                     val = 1
 
@@ -450,10 +452,8 @@ class App:
         self._sfam_check_opmode_sts[fam_index] = value
 
         # Change the third bit of correction status
-        if self._sync_corr:
-            opmode = _PSConst.States.SlowRefSync
-        else:
-            opmode = _PSConst.States.SlowRef
+        opmode = _PSConst.States.SlowRefSync if self._sync_corr \
+            else _PSConst.States.SlowRef
         self._status = _siriuspy.util.update_bit(
             v=self._status, bit_pos=2,
             bit_val=any(s != opmode for s in self._sfam_check_opmode_sts))
@@ -480,15 +480,15 @@ class App:
         if 'Sexts:State' in pvname:
             self._timing_check_config[0] = value  # Enbl
         elif 'Sexts:EVGParam' in pvname:
-            self._timing_check_config[1] = (1 if value == 1 else 0)  # Chroms
+            self._timing_check_config[1] = (value == 1)  # Chroms
         elif 'Sexts:Pulses' in pvname:
-            self._timing_check_config[2] = (1 if value == 1 else 0)  # 1 pulse
+            self._timing_check_config[2] = (value == 1)  # 1 pulse
         elif 'Sexts:Duration' in pvname:
-            self._timing_check_config[3] = (1 if value == 0.15 else 0)  # 150us
+            self._timing_check_config[3] = (value == 0.15)  # 150us
         elif 'ChromsMode' in pvname:
-            self._timing_check_config[4] = (1 if value == 3 else 0)  # External
+            self._timing_check_config[4] = (value == 3)  # External
         elif 'ChromsDelay' in pvname:
-            self._timing_check_config[5] = (1 if value == 0 else 0)  # 0s
+            self._timing_check_config[5] = (value == 0)  # 0s
 
         # Change the fifth bit of correction status
         self._status = _siriuspy.util.update_bit(
