@@ -62,9 +62,9 @@ class TestOpticsCorrCSDevice(unittest.TestCase):
             if accelerator == 'SI':
                 self.assertTrue('CorrMeth-Sel' in db)
                 self.assertTrue('CorrMeth-Sts' in db)
-                self.assertTrue('SyncCorr-Sel' in db)
-                self.assertTrue('SyncCorr-Sts' in db)
-                self.assertTrue('ConfigTiming-Cmd' in db)
+                # self.assertTrue('SyncCorr-Sel' in db)
+                # self.assertTrue('SyncCorr-Sts' in db)
+                # self.assertTrue('ConfigTiming-Cmd' in db)
 
     def test_get_tune_database(self):
         """Test get_tune_database."""
@@ -83,8 +83,6 @@ class TestOpticsCorrCSDevice(unittest.TestCase):
             self.assertTrue('DeltaTuneY-SP' in db)
             self.assertTrue('DeltaTuneY-RB' in db)
             self.assertTrue('ApplyCorr-Cmd' in db)
-            self.assertTrue('ConfigName-SP' in db)
-            self.assertTrue('ConfigName-RB' in db)
             self.assertTrue('RespMat-Mon' in db)
             self.assertTrue('NominalKL-Mon' in db)
             self.assertTrue('CorrFactor-SP' in db)
