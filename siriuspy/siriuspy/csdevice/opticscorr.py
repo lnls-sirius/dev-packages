@@ -91,11 +91,11 @@ def get_chrom_database(acc):
         pvs_database['CorrMeth-Sts'] = {'type': 'enum',
                                         'enums': _et.PROP_ADD,
                                         'value': _c.CorrMeth.Proportional}
-        pvs_database['SyncCorr-Sel'] = {'type': 'enum', 'enums': _et.OFF_ON,
-                                        'value': _c.SyncCorr.Off}
-        pvs_database['SyncCorr-Sts'] = {'type': 'enum', 'enums': _et.OFF_ON,
-                                        'value': _c.SyncCorr.Off}
-        pvs_database['ConfigTiming-Cmd'] = {'type': 'int', 'value': 0}
+        # pvs_database['SyncCorr-Sel'] = {'type': 'enum', 'enums': _et.OFF_ON,
+        #                                 'value': _c.SyncCorr.Off}
+        # pvs_database['SyncCorr-Sts'] = {'type': 'enum', 'enums': _et.OFF_ON,
+        #                                 'value': _c.SyncCorr.Off}
+        # pvs_database['ConfigTiming-Cmd'] = {'type': 'int', 'value': 0}
 
     pvs_database = _cutil.add_pvslist_cte(pvs_database)
     return pvs_database
