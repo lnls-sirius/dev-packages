@@ -307,8 +307,10 @@ class App:
                         self._qfam_check_opmode_sts[fam_index] = (
                             self._qfam_opmode_sts_pvs[fam].value)
 
-                    val = (1 if any(op != value for op in
-                                    self._qfam_check_opmode_sts) else 0)
+                    opmode = _PSConst.OpMode.SlowRefSync if value \
+                        else _PSConst.OpMode.SlowRef
+                    val = any(op != opmode
+                              for op in self._qfam_check_opmode_sts)
                 else:
                     val = 1
 
@@ -501,10 +503,8 @@ class App:
         self._qfam_check_opmode_sts[fam_index] = value
 
         # Change the third bit of correction status
-        if self._sync_corr:
-            opmode = _PSConst.States.SlowRefSync
-        else:
-            opmode = _PSConst.States.SlowRef
+        opmode = _PSConst.States.SlowRefSync if self._sync_corr \
+            else _PSConst.States.SlowRef
         self._status = _siriuspy.util.update_bit(
             v=self._status, bit_pos=2,
             bit_val=any(s != opmode for s in self._qfam_check_opmode_sts))
@@ -557,10 +557,8 @@ class App:
         self.driver.updatePVs()
 
     def _config_ma(self):
-        if self._sync_corr:
-            opmode = _PSConst.OpMode.SlowRefSync
-        else:
-            opmode = _PSConst.OpMode.SlowRef
+        opmode = _PSConst.OpMode.SlowRefSync if self._sync_corr \
+            else _PSConst.OpMode.SlowRef
         for fam in self._QFAMS:
             if self._qfam_pwrstate_sel_pvs[fam].connected:
                 self._qfam_pwrstate_sel_pvs[fam].put(_PSConst.PwrStateSel.On)
