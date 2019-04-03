@@ -85,8 +85,6 @@ class TestOpticsCorrCSDevice(unittest.TestCase):
             self.assertTrue('ApplyCorr-Cmd' in db)
             self.assertTrue('RespMat-Mon' in db)
             self.assertTrue('NominalKL-Mon' in db)
-            self.assertTrue('CorrFactor-SP' in db)
-            self.assertTrue('CorrFactor-RB' in db)
             self.assertTrue('ConfigMA-Cmd' in db)
             self.assertTrue('Status-Mon' in db)
             self.assertTrue('StatusLabels-Cte' in db)
