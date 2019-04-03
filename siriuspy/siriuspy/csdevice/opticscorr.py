@@ -75,8 +75,8 @@ def get_chrom_database(acc):
         'ConfigMA-Cmd':     {'type': 'int', 'value': 0},
 
         'Status-Mon':       {'type': 'int', 'value': 0b11111},
-        'StatusLabels-Cte': {'type': 'string', 'count': 5,
-                             'value': _c.STATUS_LABELS},
+        'StatusLabels-Cte': {'type': 'char', 'count': 1000,
+                             'value': '\n'.join(_c.STATUS_LABELS)},
     }
 
     for fam in sfams:
@@ -143,8 +143,8 @@ def get_tune_database(acc):
         'SetNewRefKL-Cmd': {'type': 'int', 'value': 0},
 
         'Status-Mon':      {'type': 'int', 'value': 0b11111},
-        'StatusLabels-Cte': {'type': 'string', 'count': 5,
-                             'value': _c.STATUS_LABELS},
+        'StatusLabels-Cte': {'type': 'char', 'count': 1000,
+                             'value': '\n'.join(_c.STATUS_LABELS)},
     }
 
     for fam in qfams:
