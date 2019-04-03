@@ -486,9 +486,10 @@ class EpicsOrbit(BaseOrbit):
             dt = self.bpms[0].fofbperiod
         else:
             dt = self.bpms[0].tbtperiod
-        dt *= self._mturndownsample * self._ring_extension
-        nrptpst = self.acqtrignrsamples // self._mturndownsample
-        offset = self._acqtrignrsamplespre / self._mturndownsample
+        mult = self._mturndownsample * self._ring_extension
+        dt *= mult
+        nrptpst = self.acqtrignrsamples // mult
+        offset = self._acqtrignrsamplespre / mult
         nrst = self._acqtrignrshots
         a = _np.arange(nrst)
         b = _np.arange(nrptpst, dtype=float) + (0.5 - offset)
