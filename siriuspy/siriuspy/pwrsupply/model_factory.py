@@ -774,8 +774,8 @@ class FAC_2S_ACDC_Factory(ModelFactory):
     def controller(self, readers, writers, connections,
                    pru_controller, devices):
         """Return controller."""
-        return _controller.StandardPSController(
-            readers, writers, connections, pru_controller, devices)
+        return _controller.PSController(
+            readers, writers, connections, pru_controller)
 
 
 class FAC_2P4S_ACDC_Factory(FAC_2S_ACDC_Factory):
