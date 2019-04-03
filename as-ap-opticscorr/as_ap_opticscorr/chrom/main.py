@@ -2,9 +2,13 @@
 
 import time as _time
 import epics as _epics
+
 import siriuspy as _siriuspy
 from siriuspy.servconf.conf_service import ConfigService as _ConfigService
+from siriuspy.namesys import SiriusPVName as _SiriusPVName
+from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.csdevice.opticscorr import Const as _Const
+
 from as_ap_opticscorr.opticscorr_utils import (
         OpticsCorr as _OpticsCorr,
         get_config_name as _get_config_name,
@@ -393,26 +397,22 @@ class App:
         return False
 
     def _connection_callback_sfam_sl_rb(self, pvname, conn, **kws):
-        ps = pvname.split(self._PREFIX_VACA)[1]
         if not conn:
-            self.driver.setParam('Log-Mon', 'WARN:'+ps+' disconnected.')
+            self.driver.setParam('Log-Mon', 'WARN:'+pvname+' disconnected.')
             self.driver.updatePVs()
 
-        fam = ps.split(':')[1].split('-')[1]
-        fam_index = self._SFAMS.index(fam)
+        fam_index = self._SFAMS.index(_SiriusPVName(pvname).dev)
         self._sfam_check_connection[fam_index] = (1 if conn else 0)
 
         # Change the first bit of correction status
-        val = (1 if any(s == 0 for s in self._sfam_check_connection) else 0)
         self._status = _siriuspy.util.update_bit(
-            v=self._status, bit_pos=0, bit_val=val)
+            v=self._status, bit_pos=0,
+            bit_val=any(s == 0 for s in self._sfam_check_connection))
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
     def _callback_estimate_chrom(self, pvname, value, **kws):
-        ps = pvname.split(self._PREFIX_VACA)[1]
-        fam = ps.split(':')[1].split('-')[1]
-        fam_index = self._SFAMS.index(fam)
+        fam_index = self._SFAMS.index(_SiriusPVName(pvname).dev)
         self._sfam_sl_rb[fam_index] = value
 
         sfam_deltasl = len(self._SFAMS)*[0]
@@ -427,56 +427,52 @@ class App:
         self.driver.updatePVs()
 
     def _callback_sfam_pwrstate_sts(self, pvname, value, **kws):
-        ps = pvname.split(self._PREFIX_VACA)[1]
-        if value == 0:
-            self.driver.setParam('Log-Mon', 'WARN:'+ps+' is Off.')
+        if value != _PSConst.PwrStateSts.On:
+            self.driver.setParam('Log-Mon', 'WARN:'+pvname+' is Off.')
             self.driver.updatePVs()
 
-        fam = ps.split(':')[1].split('-')[1]
-        fam_index = self._SFAMS.index(fam)
+        fam_index = self._SFAMS.index(_SiriusPVName(pvname).dev)
         self._sfam_check_pwrstate_sts[fam_index] = value
 
         # Change the second bit of correction status
-        val = (1 if any(s == 0 for s in self._sfam_check_pwrstate_sts)
-               else 0)
         self._status = _siriuspy.util.update_bit(
-            v=self._status, bit_pos=1, bit_val=val)
+            v=self._status, bit_pos=1,
+            bit_val=any(s != _PSConst.PwrStateSts.On
+                        for s in self._sfam_check_pwrstate_sts))
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
     def _callback_sfam_opmode_sts(self, pvname, value, **kws):
-        ps = pvname.split(self._PREFIX_VACA)[1]
-        self.driver.setParam('Log-Mon', 'WARN:'+ps+' changed.')
+        self.driver.setParam('Log-Mon', 'WARN:'+pvname+' changed.')
         self.driver.updatePVs()
 
-        fam = ps.split(':')[1].split('-')[1]
-        fam_index = self._SFAMS.index(fam)
+        fam_index = self._SFAMS.index(_SiriusPVName(pvname).dev)
         self._sfam_check_opmode_sts[fam_index] = value
 
         # Change the third bit of correction status
-        opmode = self._sync_corr
-        val = (1 if any(s != opmode for s in self._sfam_check_opmode_sts)
-               else 0)
+        if self._sync_corr:
+            opmode = _PSConst.States.SlowRefSync
+        else:
+            opmode = _PSConst.States.SlowRef
         self._status = _siriuspy.util.update_bit(
-            v=self._status, bit_pos=2, bit_val=val)
+            v=self._status, bit_pos=2,
+            bit_val=any(s != opmode for s in self._sfam_check_opmode_sts))
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
     def _callback_sfam_ctrlmode_mon(self,  pvname, value, **kws):
-        ps = pvname.split(self._PREFIX_VACA)[1]
-        if value == 1:
-            self.driver.setParam('Log-Mon', 'WARN:'+ps+' is Local.')
+        if value != _PSConst.Interface.Remote:
+            self.driver.setParam('Log-Mon', 'WARN:'+pvname+' is not Remote.')
             self.driver.updatePVs()
 
-        fam = ps.split(':')[1].split('-')[1]
-        fam_index = self._SFAMS.index(fam)
+        fam_index = self._SFAMS.index(_SiriusPVName(pvname).dev)
         self._sfam_check_ctrlmode_mon[fam_index] = value
 
         # Change the fourth bit of correction status
-        val = (1 if any(s == 1 for s in self._sfam_check_ctrlmode_mon)
-               else 0)
         self._status = _siriuspy.util.update_bit(
-            v=self._status, bit_pos=3, bit_val=val)
+            v=self._status, bit_pos=3,
+            bit_val=any(s != _PSConst.Interface.Remote
+                        for s in self._sfam_check_ctrlmode_mon))
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
@@ -495,10 +491,9 @@ class App:
             self._timing_check_config[5] = (1 if value == 0 else 0)  # 0s
 
         # Change the fifth bit of correction status
-        val = (1 if any(index == 0 for index in self._timing_check_config)
-               else 0)
         self._status = _siriuspy.util.update_bit(
-            v=self._status, bit_pos=4, bit_val=val)
+            v=self._status, bit_pos=4,
+            bit_val=any(idx == 0 for idx in self._timing_check_config))
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
 
