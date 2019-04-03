@@ -469,7 +469,7 @@ class EpicsOrbit(BaseOrbit):
         with self._lock_raw_orbs:
             self._mturndownsample = val
             self._reset_orbs()
-        self.run_callbacks('TrigDownSample-RB', val)
+        self.run_callbacks('MTurnDownSample-RB', val)
         self._update_time_vector()
         return True
 
