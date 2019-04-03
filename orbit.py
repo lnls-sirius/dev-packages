@@ -50,8 +50,8 @@ class EpicsOrbit(BaseOrbit):
         db['SmoothMethod-Sel'][prop] = self.set_smooth_method
         db['SmoothReset-Cmd'][prop] = self.set_smooth_reset
         db['SPassMethod-Sel'][prop] = self.set_spass_method
-        db['SPassDataSize-SP'][prop] = self.set_spass_size
-        db['SPassDataOffset-SP'][prop] = self.set_spass_offset
+        db['SPassMaskSplBeg-SP'][prop] = _part(self.set_spass_mask, beg=True)
+        db['SPassMaskSplEnd-SP'][prop] = _part(self.set_spass_mask, beg=False)
         db['SPassAvgNrTurns-SP'][prop] = self.set_spass_average
         db['OrbAcqRate-SP'][prop] = self.set_orbit_acq_rate
         db['TrigNrShots-SP'][prop] = self.set_trig_acq_nrshots
@@ -84,8 +84,7 @@ class EpicsOrbit(BaseOrbit):
         self._smooth_npts = 1
         self._smooth_meth = self._csorb.SmoothMeth.Average
         self._spass_method = self._csorb.SPassMethod.FromBPMs
-        self._spass_size = 362
-        self._spass_offset = 0
+        self._spass_mask = [0, 0]
         self._spass_average = 1
         self._acqrate = 10
         self._oldacqrate = self._acqrate
@@ -233,19 +232,14 @@ class EpicsOrbit(BaseOrbit):
         self.run_callbacks('SPassMethod-Sts', meth)
         return True
 
-    def set_spass_size(self, val):
-        val = int(val) if val > 2 else 2
-        maxsz = self.bpms[0].tbtrate - self._spass_offset
+    def set_spass_mask(self, val, beg=True):
+        val = int(val) if val > 0 else 0
+        other_mask = self._spass_mask[not beg]
+        maxsz = self.bpms[0].tbtrate - other_mask - 2
         val = val if val < maxsz else maxsz
-        self._spass_size = val
-        self.run_callbacks('SPassDataSize-RB', val)
-
-    def set_spass_offset(self, val):
-        val = int(val) if val >= 0 else 0
-        maxsz = self.bpms[0].tbtrate - self._spass_size
-        val = val if val < maxsz else maxsz
-        self._spass_offset = val
-        self.run_callbacks('SPassDataOffset-RB', val)
+        self._spass_mask[beg] = val
+        name = 'Beg' if beg else 'End'
+        self.run_callbacks('SPassMaskSpl' + name + '-RB', val)
 
     def set_spass_average(self, val):
         if self._ring_extension != 1 and val != 1:
@@ -659,8 +653,8 @@ class EpicsOrbit(BaseOrbit):
         nr_turns = ringsz * down
         with self._lock_raw_orbs:  # I need the lock here to assure consistency
             dic = {
-                'size': self._spass_size,
-                'offset': self._spass_offset,
+                'maskbeg': self._spass_mask[0],
+                'maskend': self._spass_mask[1],
                 'nturns': ringsz * down}
             nr_pts = self._smooth_npts
             for i, bpm in enumerate(self.bpms):
