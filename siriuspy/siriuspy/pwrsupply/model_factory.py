@@ -758,7 +758,7 @@ class FAC_2S_ACDC_Factory(ModelFactory):
                 setpoints)
         elif epics_field == 'CtrlLoop-Sel':
             return _functions.CtrlLoop(device_ids, pru_controller, setpoints)
-        elif epics_field == 'CapacitorBankVoltage-SP-SP':
+        elif epics_field == 'CapacitorBankVoltage-SP':
             return _functions.BSMPFunction(
                 device_ids, pru_controller, _c.F_SET_SLOWREF, setpoints)
         elif epics_field == 'Reset-Cmd':
@@ -774,8 +774,8 @@ class FAC_2S_ACDC_Factory(ModelFactory):
     def controller(self, readers, writers, connections,
                    pru_controller, devices):
         """Return controller."""
-        return _controller.StandardPSController(
-            readers, writers, connections, pru_controller, devices)
+        return _controller.PSController(
+            readers, writers, connections, pru_controller)
 
 
 class FAC_2P4S_ACDC_Factory(FAC_2S_ACDC_Factory):
