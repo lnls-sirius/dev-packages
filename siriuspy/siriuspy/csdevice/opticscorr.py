@@ -60,7 +60,7 @@ def get_chrom_database(acc):
                              'low': -10, 'hihi': 10, 'lolo': -10},
         'ChromY-RB':        {'type': 'float', 'value': 0, 'prec': 6},
 
-        'ApplyCorr-Cmd':    {'type': 'int', 'value': 0},
+        'ApplyDelta-Cmd':    {'type': 'int', 'value': 0},
 
         'ConfigName-SP':    {'type': 'string', 'value': ''},
         'ConfigName-RB':    {'type': 'string', 'value': ''},
@@ -128,7 +128,7 @@ def get_tune_database(acc):
                             'hilim': 5, 'lolim': -5, 'high': 5, 'low': -5,
                             'hihi': 5, 'lolo': -5},
 
-        'ApplyCorr-Cmd':   {'type': 'int', 'value': 0},
+        'ApplyDelta-Cmd':   {'type': 'int', 'value': 0},
 
         'ConfigName-SP':   {'type': 'string', 'value': ''},
         'ConfigName-RB':   {'type': 'string', 'value': ''},
