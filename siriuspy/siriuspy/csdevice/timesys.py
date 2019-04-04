@@ -58,17 +58,7 @@ class Const(_cutil.Const):
         'External Interlock',
         )
 
-    EvtHL2LLMap = {
-        'Dsbl':  'Evt00',
-        'Linac': 'Evt01', 'InjBO': 'Evt02',
-        'InjSI': 'Evt03', 'RmpBO': 'Evt04',
-        'MigSI': 'Evt05', 'DigLI': 'Evt06',
-        'DigTB': 'Evt07', 'DigBO': 'Evt08',
-        'DigTS': 'Evt09', 'DigSI': 'Evt10',
-        'OrbSI': 'Evt11', 'CplSI': 'Evt12',
-        'TunSI': 'Evt13', 'Study': 'Evt14',
-        'OrbBO': 'Evt15', 'Cycle': 'Evt16',
-        'PsMtn': 'Evt124'}
+    EvtHL2LLMap = _HLTimeSearch.get_hl_events()
     EvtLL2HLMap = {val: key for key, val in EvtHL2LLMap.items()}
 
     evt_ll_codes = list(range(64)) + [124]

@@ -7,7 +7,7 @@ import unittest
 # from unittest import mock
 
 from siriuspy import util
-from siriuspy.csdevice import timesys
+from ..mock_servweb import MockServConf
 
 mock_flag = True
 
@@ -31,11 +31,12 @@ public_interface = (
     )
 
 
-class TestModule(unittest.TestCase):
+class TestModule(MockServConf):
     """Test module interface."""
 
     def test_public_interface(self):
         """Test module's public interface."""
+        from siriuspy.csdevice import timesys
         valid = util.check_public_interface_namespace(
                 timesys,
                 public_interface)
@@ -207,7 +208,7 @@ class TestModule(unittest.TestCase):
         pass
 
 
-class TestConst(unittest.TestCase):
+class TestConst(MockServConf):
     """Test Const class."""
 
     public_interface = (
@@ -238,6 +239,7 @@ class TestConst(unittest.TestCase):
 
     def test_public_interface(self):
         """Test module's public interface."""
+        from siriuspy.csdevice import timesys
         valid = util.check_public_interface_namespace(
                         timesys.Const, TestConst.public_interface)
         self.assertTrue(valid)

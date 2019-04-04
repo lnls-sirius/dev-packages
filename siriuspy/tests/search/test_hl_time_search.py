@@ -29,6 +29,7 @@ class TestHLTimeSearch(unittest.TestCase):
     """Test HLTimeSearch class."""
 
     public_interface = (
+        'get_hl_events',
         'get_hl_triggers',
         'get_hl_trigger_database',
         'get_hl_trigger_sources',

@@ -7,7 +7,7 @@ import unittest
 # from unittest import mock
 
 from siriuspy import util
-from siriuspy.timesys.time_simul import device_models
+from ...mock_servweb import MockServConf
 
 mock_flag = True
 
@@ -21,18 +21,19 @@ public_interface = (
 )
 
 
-class TestModule(unittest.TestCase):
+class TestModule(MockServConf):
     """Test module interface."""
 
     def test_public_interface(self):
         """Test module's public interface."""
+        from siriuspy.timesys.time_simul import device_models
         valid = util.check_public_interface_namespace(
                 device_models,
                 public_interface)
         self.assertTrue(valid)
 
 
-class TestCallBack(unittest.TestCase):
+class TestCallBack(MockServConf):
     """Test CallBack class."""
 
     public_interface = (
@@ -42,6 +43,7 @@ class TestCallBack(unittest.TestCase):
 
     def test_public_interface(self):
         """Test class public interface."""
+        from siriuspy.timesys.time_simul import device_models
         valid = util.check_public_interface_namespace(
             device_models.CallBack, TestCallBack.public_interface)
         self.assertTrue(valid)
@@ -57,7 +59,7 @@ class TestCallBack(unittest.TestCase):
         pass
 
 
-class TestEVGIOC(unittest.TestCase):
+class TestEVGIOC(MockServConf):
     """Test EVGIOC class."""
 
     public_interface = (
@@ -72,6 +74,7 @@ class TestEVGIOC(unittest.TestCase):
 
     def test_public_interface(self):
         """Test class public interface."""
+        from siriuspy.timesys.time_simul import device_models
         valid = util.check_public_interface_namespace(
             device_models.EVGIOC, TestEVGIOC.public_interface)
         self.assertTrue(valid)
@@ -112,7 +115,7 @@ class TestEVGIOC(unittest.TestCase):
         pass
 
 
-class TestEVRIOC(unittest.TestCase):
+class TestEVRIOC(MockServConf):
     """Test EVRIOC class."""
 
     public_interface = (
@@ -124,6 +127,7 @@ class TestEVRIOC(unittest.TestCase):
 
     def test_public_interface(self):
         """Test class public interface."""
+        from siriuspy.timesys.time_simul import device_models
         valid = util.check_public_interface_namespace(
             device_models.EVRIOC, TestEVRIOC.public_interface)
         self.assertTrue(valid)
@@ -149,7 +153,7 @@ class TestEVRIOC(unittest.TestCase):
         pass
 
 
-class TestEVEIOC(unittest.TestCase):
+class TestEVEIOC(MockServConf):
     """Test EVEIOC class."""
 
     public_interface = (
@@ -158,6 +162,7 @@ class TestEVEIOC(unittest.TestCase):
 
     def test_public_interface(self):
         """Test class public interface."""
+        from siriuspy.timesys.time_simul import device_models
         valid = util.check_public_interface_namespace(
             device_models.EVEIOC, TestEVEIOC.public_interface)
         self.assertTrue(valid)
@@ -168,7 +173,7 @@ class TestEVEIOC(unittest.TestCase):
         pass
 
 
-class TestAMCFPGAEVRIOC(unittest.TestCase):
+class TestAMCFPGAEVRIOC(MockServConf):
     """Test AMCFPGAEVRIOC class."""
 
     public_interface = (
@@ -177,6 +182,7 @@ class TestAMCFPGAEVRIOC(unittest.TestCase):
 
     def test_public_interface(self):
         """Test class public interface."""
+        from siriuspy.timesys.time_simul import device_models
         valid = util.check_public_interface_namespace(
             device_models.AMCFPGAEVRIOC, TestAMCFPGAEVRIOC.public_interface)
         self.assertTrue(valid)
@@ -187,7 +193,7 @@ class TestAMCFPGAEVRIOC(unittest.TestCase):
         pass
 
 
-class TestFoutIOC(unittest.TestCase):
+class TestFoutIOC(MockServConf):
     """Test FoutIOC class."""
 
     public_interface = (
@@ -197,6 +203,7 @@ class TestFoutIOC(unittest.TestCase):
 
     def test_public_interface(self):
         """Test class public interface."""
+        from siriuspy.timesys.time_simul import device_models
         valid = util.check_public_interface_namespace(
             device_models.FoutIOC, TestFoutIOC.public_interface)
         self.assertTrue(valid)

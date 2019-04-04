@@ -7,7 +7,7 @@ import unittest
 # from unittest import mock
 
 from siriuspy import util
-from siriuspy.timesys.time_simul import time_simul
+from ...mock_servweb import MockServConf
 
 mock_flag = True
 
@@ -16,18 +16,19 @@ public_interface = (
 )
 
 
-class TestModule(unittest.TestCase):
+class TestModule(MockServConf):
     """Test module interface."""
 
     def test_public_interface(self):
         """Test module's public interface."""
+        from siriuspy.timesys.time_simul import time_simul
         valid = util.check_public_interface_namespace(
                 time_simul,
                 public_interface)
         self.assertTrue(valid)
 
 
-class TestTimingSimulation(unittest.TestCase):
+class TestTimingSimulation(MockServConf):
     """Test TimingSimulation class."""
 
     public_interface = (
@@ -45,6 +46,7 @@ class TestTimingSimulation(unittest.TestCase):
 
     def test_public_interface(self):
         """Test class public interface."""
+        from siriuspy.timesys.time_simul import time_simul
         valid = util.check_public_interface_namespace(
             time_simul.TimingSimulation, TestTimingSimulation.public_interface)
         self.assertTrue(valid)

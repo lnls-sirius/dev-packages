@@ -7,6 +7,8 @@ from unittest import mock
 import os
 from siriuspy.search import ps_search
 from siriuspy.search import ma_search
+from siriuspy.search import hl_time_search
+from siriuspy.search import ll_time_search
 from siriuspy.magnet import excdata
 
 
@@ -77,6 +79,25 @@ class MockServConf(unittest.TestCase):
         # mocked functions
         self.mock3.magnets_excitation_data_read.side_effect = \
             MockServConf.magnets_excitation_data_read
+
+        # --- mock objects hl_time_search _web ---
+        _p = mock.patch.object(hl_time_search, '_web', autospec=True)
+        self.addCleanup(_p.stop)
+        self.mock4 = _p.start()
+        # mocked functions
+        self.mock4.high_level_events.return_value = \
+            MockServConf.read_test_file('timesys/high-level-events.py')
+        self.mock4.high_level_triggers.return_value = \
+            MockServConf.read_test_file('timesys/high-level-triggers.py')
+
+        # --- mock objects ll_time_search _web ---
+        _p = mock.patch.object(ll_time_search, '_web', autospec=True)
+        self.addCleanup(_p.stop)
+        self.mock5 = _p.start()
+        # mocked functions
+        self.mock5.timing_devices_mapping.return_value = \
+            MockServConf.read_test_file(
+                                'timesys/timing-devices-connection.txt')
 
     @staticmethod
     def read_test_file(path):

@@ -80,6 +80,7 @@ class TestServWeb(unittest.TestCase):
         'bpms_data',
         'timing_devices_mapping',
         'high_level_triggers',
+        'high_level_events',
         'bsmp_dclink_mapping'
     }
 
@@ -295,6 +296,18 @@ class TestServWeb(unittest.TestCase):
             mock.call(url, timeout=1.0),
             mock.call(url, timeout=2.0)])
 
+    def test_high_level_events(self, mock_read):
+        """Test high_level_events."""
+        url = implementation._timesys_folder + 'high-level-events.py'
+        # Call with different parameters
+        resp = implementation.high_level_events()
+        self.assertEqual(resp, "FakeResponse")
+        resp = implementation.high_level_events(timeout=2.0)
+        self.assertEqual(resp, "FakeResponse")
+        # Assert read_url was called correctly
+        mock_read.assert_has_calls([
+            mock.call(url, timeout=1.0),
+            mock.call(url, timeout=2.0)])
 
 if __name__ == "__main__":
     unittest.main()

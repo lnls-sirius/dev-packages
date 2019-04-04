@@ -3,34 +3,35 @@
 """Unittest module for ll_time_search.py."""
 
 import unittest
-import re
-# from unittest import mock
 
 from siriuspy import util
-from siriuspy.timesys import plot_network
+from ..mock_servweb import MockServConf
+
 
 mock_flag = True
 
 public_interface = ('PlotNetwork', )
 
 
-class TestModule(unittest.TestCase):
+class TestModule(MockServConf):
     """Test module interface."""
 
     def test_public_interface(self):
         """Test module's public interface."""
+        from siriuspy.timesys import plot_network
         valid = util.check_public_interface_namespace(
                                             plot_network, public_interface)
         self.assertTrue(valid)
 
 
-class TestPlotNetwork(unittest.TestCase):
+class TestPlotNetwork(MockServConf):
     """Test PlotNetwork class."""
 
     public_interface = ('plot', )
 
     def test_public_interface(self):
         """Test class public interface."""
+        from siriuspy.timesys import plot_network
         valid = util.check_public_interface_namespace(
             plot_network.PlotNetwork, TestPlotNetwork.public_interface)
         self.assertTrue(valid)
