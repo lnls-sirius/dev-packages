@@ -63,39 +63,39 @@ class TestASAPTuneCorrMain(unittest.TestCase):
                                                       print_flag=True)
         self.assertTrue(valid)
 
-    def test_write_ok_syncoff_ApplyCorr(self):
-        """Test write on ApplyCorr-Cmd in normal operation, sync off."""
+    def test_write_ok_syncoff_ApplyDelta(self):
+        """Test write on ApplyDelta-Cmd in normal operation, sync off."""
         self.mock_cs().get_config.return_value = self.q_ok
         app = App(self.mock_driver)
         app._sync_corr = 0
 
         app._status = 0
-        self.assertFalse(app.write('ApplyCorr-Cmd', 0))
+        self.assertFalse(app.write('ApplyDelta-Cmd', 0))
         count = self.mock_epics.PV.return_value.put.call_count
         self.assertEqual(count, len(self.qfams))
 
         app._status = 0b10000
-        self.assertFalse(app.write('ApplyCorr-Cmd', 0))
+        self.assertFalse(app.write('ApplyDelta-Cmd', 0))
         count = self.mock_epics.PV.return_value.put.call_count
         self.assertEqual(count, 2*len(self.qfams))
 
-    def test_write_ok_syncon_ApplyCorr(self):
-        """Test write on ApplyCorr-Cmd in normal operation, sync on."""
+    def test_write_ok_syncon_ApplyDelta(self):
+        """Test write on ApplyDelta-Cmd in normal operation, sync on."""
         self.mock_cs().get_config.return_value = self.q_ok
         app = App(self.mock_driver)
         app._sync_corr = 1
         app._status = 0
-        self.assertFalse(app.write('ApplyCorr-Cmd', 0))
+        self.assertFalse(app.write('ApplyDelta-Cmd', 0))
         count = self.mock_epics.PV.return_value.put.call_count
         self.assertEqual(count, 1+len(self.qfams))
 
-    def test_write_statuserror_ApplyCorr(self):
-        """Test write on ApplyCorr-Cmd on status error."""
+    def test_write_statuserror_ApplyDelta(self):
+        """Test write on ApplyDelta-Cmd on status error."""
         self.mock_cs().get_config.return_value = self.q_ok
         app = App(self.mock_driver)
         app._sync_corr = 1
         app._status = 0b10000
-        self.assertFalse(app.write('ApplyCorr-Cmd', 0))
+        self.assertFalse(app.write('ApplyDelta-Cmd', 0))
         self.mock_epics.PV.return_value.put.assert_not_called()
 
     def test_write_ok_ConfigName(self):
