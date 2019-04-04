@@ -7,7 +7,10 @@ import siriuspy as _siriuspy
 from siriuspy.servconf.conf_service import ConfigService as _ConfigService
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
+from siriuspy.csdevice.timesys import Const as _TIConst, \
+    get_hl_trigger_database as _get_trig_db
 from siriuspy.csdevice.opticscorr import Const as _Const
+from siriuspy.timesys.ll_classes import get_evg_name as _get_evg_name
 
 from as_ap_opticscorr.opticscorr_utils import (
         OpticsCorr as _OpticsCorr,
@@ -67,7 +70,7 @@ class App:
             self._corr_method = _Const.CorrMeth.Proportional
             self._sync_corr = _Const.SyncCorr.Off
             self._config_timing_cmd_count = 0
-            self._timing_check_config = 6*[0]
+            self._timing_check_config = 9*[0]
         else:
             self._corr_method = _Const.CorrMeth.Additional
             self._sync_corr = _Const.SyncCorr.Off
@@ -143,44 +146,70 @@ class App:
 
         # Connect to Timing
         if self._ACC == 'SI':
+            SEXTS_TRIG = 'SI-Glob:TI-Sexts'
             self._timing_sexts_state_sel = _epics.PV(
-                self._PREFIX_VACA+'SI-Glob:TI-Sexts:State-Sel')
+                self._PREFIX_VACA+SEXTS_TRIG+':State-Sel')
             self._timing_sexts_state_sts = _epics.PV(
-                self._PREFIX_VACA+'SI-Glob:TI-Sexts:State-Sts',
+                self._PREFIX_VACA+SEXTS_TRIG+':State-Sts',
                 callback=self._callback_timing_state)
 
-            self._timing_sexts_evgparam_sel = _epics.PV(
-                self._PREFIX_VACA+'SI-Glob:TI-Sexts:EVGParam-Sel')
-            self._timing_sexts_evgparam_sts = _epics.PV(
-                self._PREFIX_VACA+'SI-Glob:TI-Sexts:EVGParam-Sts',
+            self._timing_sexts_polarity_sel = _epics.PV(
+                self._PREFIX_VACA+SEXTS_TRIG+':Polarity-Sel')
+            self._timing_sexts_polarity_sts = _epics.PV(
+                self._PREFIX_VACA+SEXTS_TRIG+':Polarity-Sts',
                 callback=self._callback_timing_state)
+
+            self._timing_sexts_src_sel = _epics.PV(
+                self._PREFIX_VACA+SEXTS_TRIG+':Src-Sel')
+            self._timing_sexts_src_sts = _epics.PV(
+                self._PREFIX_VACA+SEXTS_TRIG+':Src-Sts',
+                callback=self._callback_timing_state)
+            trig_db = _get_trig_db(SEXTS_TRIG)
+            try:
+                self._chromsi_src_idx = trig_db['Src-Sel']['enums'].index(
+                    'ChromSI')
+            except ValueError:
+                self._chromsi_src_idx = 1
 
             self._timing_sexts_pulses_sp = _epics.PV(
-                self._PREFIX_VACA+'SI-Glob:TI-Sexts:Pulses-SP')
+                self._PREFIX_VACA+SEXTS_TRIG+':NrPulses-SP')
             self._timing_sexts_pulses_rb = _epics.PV(
-                self._PREFIX_VACA+'SI-Glob:TI-Sexts:Pulses-RB',
+                self._PREFIX_VACA+SEXTS_TRIG+':NrPulses-RB',
                 callback=self._callback_timing_state)
 
             self._timing_sexts_duration_sp = _epics.PV(
-                self._PREFIX_VACA+'SI-Glob:TI-Sexts:Duration-SP')
+                self._PREFIX_VACA+SEXTS_TRIG+':Duration-SP')
             self._timing_sexts_duration_rb = _epics.PV(
-                self._PREFIX_VACA+'SI-Glob:TI-Sexts:Duration-RB',
+                self._PREFIX_VACA+SEXTS_TRIG+':Duration-RB',
                 callback=self._callback_timing_state)
 
-            self._timing_evg_chromsmode_sel = _epics.PV(
-                self._PREFIX_VACA+'SI-Glob:TI-EVG:ChromsMode-Sel')
-            self._timing_evg_chromsmode_sts = _epics.PV(
-                self._PREFIX_VACA+'SI-Glob:TI-EVG:ChromsMode-Sts',
+            self._timing_sexts_delay_sp = _epics.PV(
+                self._PREFIX_VACA+SEXTS_TRIG+':Delay-SP')
+            self._timing_sexts_delay_rb = _epics.PV(
+                self._PREFIX_VACA+SEXTS_TRIG+':Delay-RB',
                 callback=self._callback_timing_state)
 
-            self._timing_evg_chromsdelay_sp = _epics.PV(
-                self._PREFIX_VACA+'SI-Glob:TI-EVG:ChromsDelay-SP')
-            self._timing_evg_chromsdelay_rb = _epics.PV(
-                self._PREFIX_VACA+'SI-Glob:TI-EVG:ChromsDelay-RB',
+            EVG = _get_evg_name()
+            self._timing_evg_chromsimode_sel = _epics.PV(
+                self._PREFIX_VACA+EVG+':ChromSIMode-Sel')
+            self._timing_evg_chromsimode_sts = _epics.PV(
+                self._PREFIX_VACA+EVG+':ChromSIMode-Sts',
                 callback=self._callback_timing_state)
 
-            self._timing_evg_chromsexttrig_cmd = _epics.PV(
-                self._PREFIX_VACA+'SI-Glob:TI-EVG:ChromsExtTrig-Cmd')
+            self._timing_evg_chromsidelaytype_sel = _epics.PV(
+                self._PREFIX_VACA+EVG+':ChromSIDelayType-Sel')
+            self._timing_evg_chromsidelaytype_sts = _epics.PV(
+                self._PREFIX_VACA+EVG+':ChromSIDelayType-Sts',
+                callback=self._callback_timing_state)
+
+            self._timing_evg_chromsidelay_sp = _epics.PV(
+                self._PREFIX_VACA+EVG+':ChromSIDelay-SP')
+            self._timing_evg_chromsidelay_rb = _epics.PV(
+                self._PREFIX_VACA+EVG+':ChromSIDelay-RB',
+                callback=self._callback_timing_state)
+
+            self._timing_evg_chromsiexttrig_cmd = _epics.PV(
+                self._PREFIX_VACA+EVG+':ChromSIExtTrig-Cmd')
 
         self.driver.setParam('Log-Mon', 'Started.')
         self.driver.updatePVs()
@@ -389,7 +418,7 @@ class App:
             self.driver.updatePVs()
 
             if self._sync_corr == _Const.SyncCorr.On:
-                self._timing_evg_chromsexttrig_cmd.put(0)
+                self._timing_evg_chromsiexttrig_cmd.put(0)
                 self.driver.setParam('Log-Mon', 'Generated trigger.')
                 self.driver.updatePVs()
             return True
@@ -478,17 +507,25 @@ class App:
 
     def _callback_timing_state(self, pvname, value, **kws):
         if 'Sexts:State' in pvname:
-            self._timing_check_config[0] = value  # Enbl
-        elif 'Sexts:EVGParam' in pvname:
-            self._timing_check_config[1] = (value == 1)  # Chroms
-        elif 'Sexts:Pulses' in pvname:
-            self._timing_check_config[2] = (value == 1)  # 1 pulse
+            self._timing_check_config[0] = (value == _TIConst.DsblEnbl.Enbl)
+        elif 'Sexts:Polarity' in pvname:
+            self._timing_check_config[1] = (value == _TIConst.TrigPol.Normal)
+        elif 'Sexts:Src' in pvname:
+            self._timing_check_config[2] = (value == self._chromsi_src_idx)
+        elif 'Sexts:NrPulses' in pvname:
+            self._timing_check_config[3] = (value == 1)  # 1 pulse
         elif 'Sexts:Duration' in pvname:
-            self._timing_check_config[3] = (value == 0.15)  # 150us
-        elif 'ChromsMode' in pvname:
-            self._timing_check_config[4] = (value == 3)  # External
-        elif 'ChromsDelay' in pvname:
-            self._timing_check_config[5] = (value == 0)  # 0s
+            self._timing_check_config[4] = (value == 150)  # 150us
+        elif 'Sexts:Delay' in pvname:
+            self._timing_check_config[5] = (value == 0)  # 0us
+        elif 'ChromSIMode' in pvname:
+            self._timing_check_config[6] = \
+                (value == _TIConst.EvtModes.External)
+        elif 'ChromSIDelayType' in pvname:
+            self._timing_check_config[7] = (
+                value == _TIConst.EvtDlyTyp.Fixed)
+        elif 'ChromSIDelay' in pvname:
+            self._timing_check_config[8] = (value == 0)  # 0us
 
         # Change the fifth bit of correction status
         self._status = _siriuspy.util.update_bit(
@@ -513,24 +550,32 @@ class App:
         return True
 
     def _config_timing(self):
-        if not any(pv.connected is False for pv in [
-                self._timing_sexts_state_sel,
-                self._timing_sexts_evgparam_sel,
-                self._timing_sexts_pulses_sp,
-                self._timing_sexts_duration_sp,
-                self._timing_evg_chromsmode_sel,
-                self._timing_evg_chromsdelay_sp]):
-            self._timing_sexts_state_sel.put(1)
-            self._timing_sexts_evgparam_sel.put(1)
-            self._timing_sexts_pulses_sp.put(1)
+        conn = not any(pv.connected is False for pv in [
+                       self._timing_sexts_state_sel,
+                       self._timing_sexts_polarity_sel,
+                       self._timing_sexts_scr_sel,
+                       self._timing_sexts_nrpulses_sp,
+                       self._timing_sexts_duration_sp,
+                       self._timing_sexts_delay_sp,
+                       self._timing_evg_chromsimode_sel,
+                       self._timing_evg_chromsidelaytype_sel,
+                       self._timing_evg_chromsidelay_sp])
+        if conn:
+            self._timing_sexts_state_sel.put(_TIConst.DsblEnbl.Enbl)
+            self._timing_sexts_polarity_sel.put(_TIConst.TrigPol.Normal)
+            self._timing_sexts_scr_sel.put(self._chromsi_src_idx)
+            self._timing_sexts_nrpulses_sp.put(1)
             self._timing_sexts_duration_sp.put(0.15)
-            self._timing_evg_chromsmode_sel.put(3)
-            self._timing_evg_chromsdelay_sp.put(0)
-            self.driver.setParam('Log-Mon', 'Sent configuration to timing.')
+            self._timing_sexts_delay_sp.put(0)
+            self._timing_evg_chromsimode_sel.put(_TIConst.EvtModes.External)
+            self._timing_evg_chromsidelaytype_sel.put(_TIConst.EvtDlyTyp.Fixed)
+            self._timing_evg_chromsidelay_sp.put(0)
+
+            self.driver.setParam('Log-Mon', 'Sent configuration to TI.')
             self.driver.updatePVs()
             return True
         else:
             self.driver.setParam('Log-Mon',
-                                 'ERR:Some timing PV is disconnected.')
+                                 'ERR:Some TI PV is disconnected.')
             self.driver.updatePVs()
             return False
