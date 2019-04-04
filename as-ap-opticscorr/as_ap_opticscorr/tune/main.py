@@ -533,21 +533,21 @@ class App:
         elif 'Quads:Polarity' in pvname:
             self._timing_check_config[1] = (value == _TIConst.TrigPol.Normal)
         elif 'Quads:Src' in pvname:
-            self._timing_check_config[1] = (value == self._tunsi_src_idx)
+            self._timing_check_config[2] = (value == self._tunsi_src_idx)
         elif 'Quads:NrPulses' in pvname:
-            self._timing_check_config[2] = (value == 1)  # 1 pulse
+            self._timing_check_config[3] = (value == 1)  # 1 pulse
         elif 'Quads:Duration' in pvname:
-            self._timing_check_config[3] = (value == 0.15)  # 150us
+            self._timing_check_config[4] = (value == 150)  # 150us
         elif 'Quads:Delay' in pvname:
-            self._timing_check_config[3] = (value == 0)  # 0us
+            self._timing_check_config[5] = (value == 0)  # 0us
         elif 'TunSIMode' in pvname:
-            self._timing_check_config[4] = \
+            self._timing_check_config[6] = \
                 (value == _TIConst.EvtModes.External)
         elif 'TunSIDelayType' in pvname:
-            self._timing_check_config[5] = (
+            self._timing_check_config[7] = (
                 value == _TIConst.EvtDlyTyp.Fixed)
         elif 'TunSIDelay' in pvname:
-            self._timing_check_config[5] = (value == 0)  # 0us
+            self._timing_check_config[8] = (value == 0)  # 0us
 
         # Change the fifth bit of correction status
         self._status = _siriuspy.util.update_bit(
