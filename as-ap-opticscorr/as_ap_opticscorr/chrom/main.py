@@ -232,11 +232,11 @@ class App:
             self.driver.updatePVs()
             status = True
 
-        elif reason == 'ApplyCorr-Cmd':
+        elif reason == 'ApplyDelta-Cmd':
             done = self._apply_corr()
             if done:
                 self._apply_corr_cmd_count += 1
-                self.driver.setParam('ApplyCorr-Cmd',
+                self.driver.setParam('ApplyDelta-Cmd',
                                      self._apply_corr_cmd_count)
                 self.driver.updatePVs()
 
@@ -394,7 +394,7 @@ class App:
                 self.driver.updatePVs()
             return True
         else:
-            self.driver.setParam('Log-Mon', 'ERR:ApplyCorr-Cmd failed.')
+            self.driver.setParam('Log-Mon', 'ERR:ApplyDelta-Cmd failed.')
             self.driver.updatePVs()
         return False
 
