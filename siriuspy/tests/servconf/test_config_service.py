@@ -1,8 +1,8 @@
 #!/usr/bin/env python-sirius
 
 """Test the configuration service class."""
-import unittest
-from unittest import mock
+from unittest import TestCase
+from unittest import mock, TestCase
 import json
 from urllib.error import URLError
 
@@ -15,7 +15,7 @@ import siriuspy.util as util
 #   - _Request
 
 
-class TestConfigService(unittest.TestCase):
+class TestConfigService(TestCase):
     """Test update and delete config meets requirements."""
 
     api = {
@@ -325,7 +325,7 @@ class TestConfigService(unittest.TestCase):
         self.assertIn(self.cs.connected, (True, False))
 
 
-class TestConfigServiceConTimestamp(unittest.TestCase):
+class TestConfigServiceConTimestamp(TestCase):
     """Test response error handling."""
 
     def _test_conv_timestamp(self):
@@ -351,7 +351,3 @@ class TestConfigServiceConTimestamp(unittest.TestCase):
             date_string = sample[0]
             timestamp = sample[1]
             self.assertEqual(cs.conv_timestamp(date_string), timestamp)
-
-
-if __name__ == "__main__":
-    unittest.main()

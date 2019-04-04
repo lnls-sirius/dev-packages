@@ -2,12 +2,9 @@
 
 """Unittest module for time_simul.py."""
 
-import unittest
-# import re
-# from unittest import mock
-
+from unittest import TestCase
 from siriuspy import util
-from ...mock_servweb import MockServConf
+from siriuspy.timesys.time_simul import time_simul
 
 mock_flag = True
 
@@ -16,19 +13,18 @@ public_interface = (
 )
 
 
-class TestModule(MockServConf):
+class TestModule(TestCase):
     """Test module interface."""
 
     def test_public_interface(self):
         """Test module's public interface."""
-        from siriuspy.timesys.time_simul import time_simul
         valid = util.check_public_interface_namespace(
                 time_simul,
                 public_interface)
         self.assertTrue(valid)
 
 
-class TestTimingSimulation(MockServConf):
+class TestTimingSimulation(TestCase):
     """Test TimingSimulation class."""
 
     public_interface = (
@@ -46,7 +42,6 @@ class TestTimingSimulation(MockServConf):
 
     def test_public_interface(self):
         """Test class public interface."""
-        from siriuspy.timesys.time_simul import time_simul
         valid = util.check_public_interface_namespace(
             time_simul.TimingSimulation, TestTimingSimulation.public_interface)
         self.assertTrue(valid)

@@ -2,7 +2,7 @@
 
 """Unittest module for currinfo.py."""
 
-import unittest
+from unittest import TestCase
 from siriuspy import util
 from siriuspy.csdevice import currinfo
 from siriuspy.csdevice.currinfo import (
@@ -20,7 +20,7 @@ public_interface = (
     )
 
 
-class TestCurrInfoCSDevice(unittest.TestCase):
+class TestCurrInfoCSDevice(TestCase):
     """Test siriuspy.csdevice.currinfo module."""
 
     def test_public_interface(self):
@@ -95,7 +95,3 @@ class TestCurrInfoCSDevice(unittest.TestCase):
         self.assertEqual(db['SplIntvl-SP']['unit'], 's')
         self.assertEqual(db['SplIntvl-RB']['unit'], 's')
         self.assertEqual(db['DCurrFactor-Cte']['unit'], 'mA')
-
-
-if __name__ == "__main__":
-    unittest.main()

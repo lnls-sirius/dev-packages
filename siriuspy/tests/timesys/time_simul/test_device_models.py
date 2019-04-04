@@ -2,12 +2,9 @@
 
 """Unittest module for device_models.py."""
 
-import unittest
-# import re
-# from unittest import mock
-
+from unittest import TestCase
 from siriuspy import util
-from ...mock_servweb import MockServConf
+from siriuspy.timesys.time_simul import device_models
 
 mock_flag = True
 
@@ -21,19 +18,18 @@ public_interface = (
 )
 
 
-class TestModule(MockServConf):
+class TestModule(TestCase):
     """Test module interface."""
 
     def test_public_interface(self):
         """Test module's public interface."""
-        from siriuspy.timesys.time_simul import device_models
         valid = util.check_public_interface_namespace(
                 device_models,
                 public_interface)
         self.assertTrue(valid)
 
 
-class TestCallBack(MockServConf):
+class TestCallBack(TestCase):
     """Test CallBack class."""
 
     public_interface = (
@@ -43,7 +39,6 @@ class TestCallBack(MockServConf):
 
     def test_public_interface(self):
         """Test class public interface."""
-        from siriuspy.timesys.time_simul import device_models
         valid = util.check_public_interface_namespace(
             device_models.CallBack, TestCallBack.public_interface)
         self.assertTrue(valid)
@@ -59,7 +54,7 @@ class TestCallBack(MockServConf):
         pass
 
 
-class TestEVGIOC(MockServConf):
+class TestEVGIOC(TestCase):
     """Test EVGIOC class."""
 
     public_interface = (
@@ -74,7 +69,6 @@ class TestEVGIOC(MockServConf):
 
     def test_public_interface(self):
         """Test class public interface."""
-        from siriuspy.timesys.time_simul import device_models
         valid = util.check_public_interface_namespace(
             device_models.EVGIOC, TestEVGIOC.public_interface)
         self.assertTrue(valid)
@@ -115,7 +109,7 @@ class TestEVGIOC(MockServConf):
         pass
 
 
-class TestEVRIOC(MockServConf):
+class TestEVRIOC(TestCase):
     """Test EVRIOC class."""
 
     public_interface = (
@@ -127,7 +121,6 @@ class TestEVRIOC(MockServConf):
 
     def test_public_interface(self):
         """Test class public interface."""
-        from siriuspy.timesys.time_simul import device_models
         valid = util.check_public_interface_namespace(
             device_models.EVRIOC, TestEVRIOC.public_interface)
         self.assertTrue(valid)
@@ -153,7 +146,7 @@ class TestEVRIOC(MockServConf):
         pass
 
 
-class TestEVEIOC(MockServConf):
+class TestEVEIOC(TestCase):
     """Test EVEIOC class."""
 
     public_interface = (
@@ -162,7 +155,6 @@ class TestEVEIOC(MockServConf):
 
     def test_public_interface(self):
         """Test class public interface."""
-        from siriuspy.timesys.time_simul import device_models
         valid = util.check_public_interface_namespace(
             device_models.EVEIOC, TestEVEIOC.public_interface)
         self.assertTrue(valid)
@@ -173,7 +165,7 @@ class TestEVEIOC(MockServConf):
         pass
 
 
-class TestAMCFPGAEVRIOC(MockServConf):
+class TestAMCFPGAEVRIOC(TestCase):
     """Test AMCFPGAEVRIOC class."""
 
     public_interface = (
@@ -182,7 +174,6 @@ class TestAMCFPGAEVRIOC(MockServConf):
 
     def test_public_interface(self):
         """Test class public interface."""
-        from siriuspy.timesys.time_simul import device_models
         valid = util.check_public_interface_namespace(
             device_models.AMCFPGAEVRIOC, TestAMCFPGAEVRIOC.public_interface)
         self.assertTrue(valid)
@@ -193,7 +184,7 @@ class TestAMCFPGAEVRIOC(MockServConf):
         pass
 
 
-class TestFoutIOC(MockServConf):
+class TestFoutIOC(TestCase):
     """Test FoutIOC class."""
 
     public_interface = (
@@ -203,7 +194,6 @@ class TestFoutIOC(MockServConf):
 
     def test_public_interface(self):
         """Test class public interface."""
-        from siriuspy.timesys.time_simul import device_models
         valid = util.check_public_interface_namespace(
             device_models.FoutIOC, TestFoutIOC.public_interface)
         self.assertTrue(valid)
@@ -217,7 +207,3 @@ class TestFoutIOC(MockServConf):
         """Test receive_events."""
         # TODO: implement test!
         pass
-
-
-if __name__ == "__main__":
-    unittest.main()

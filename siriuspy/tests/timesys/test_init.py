@@ -1,9 +1,8 @@
 """Unittest module for timesys package."""
 
-import unittest
-
+from unittest import TestCase
 from siriuspy import util
-from ..mock_servweb import MockServConf
+from siriuspy import timesys
 
 public_interface = (
     'PlotNetwork',
@@ -20,12 +19,11 @@ public_interface = (
     )
 
 
-class TestSearch(MockServConf):
+class TestSearch(TestCase):
     """Test timesys package."""
 
     def test_public_interface(self):
         """Test module's public interface."""
-        from siriuspy import timesys
         valid = util.check_public_interface_namespace(
                                         timesys, public_interface)
         self.assertTrue(valid)

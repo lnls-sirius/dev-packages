@@ -1,7 +1,6 @@
 #!/usr/bin/env python-sirius
 """Test webserver implementation module."""
-import unittest
-from unittest import mock
+from unittest import TestCase, mock
 from urllib.request import URLError
 
 from siriuspy.servweb import implementation
@@ -13,7 +12,7 @@ import siriuspy.util as util
 # _urllib_request.urlopen.read
 
 
-class TestServWebReadUrl(unittest.TestCase):
+class TestServWebReadUrl(TestCase):
     """Test read url method."""
 
     def setUp(self):
@@ -54,7 +53,7 @@ class TestServWebReadUrl(unittest.TestCase):
 
 @mock.patch.object(implementation, 'read_url', autospec=True,
                    return_value="FakeResponse")
-class TestServWeb(unittest.TestCase):
+class TestServWeb(TestCase):
     """Test servweb."""
 
     public_interface = {
@@ -308,6 +307,3 @@ class TestServWeb(unittest.TestCase):
         mock_read.assert_has_calls([
             mock.call(url, timeout=1.0),
             mock.call(url, timeout=2.0)])
-
-if __name__ == "__main__":
-    unittest.main()

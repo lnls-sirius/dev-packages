@@ -3,10 +3,9 @@
 """Unittest module for util.py."""
 
 from io import StringIO
-import numpy as np
-import unittest
-from unittest import mock
 import logging
+import numpy as np
+from unittest import mock, TestCase
 import siriuspy.util as util
 
 
@@ -30,7 +29,7 @@ public_interface = (
 )
 
 
-class TestUtil(unittest.TestCase):
+class TestUtil(TestCase):
     """Test util."""
 
     def test_public_interface(self):
@@ -304,7 +303,3 @@ class TestUtil(unittest.TestCase):
         fields = ('a a', 'b b', 'c')
         a = util.get_namedtuple('A', fields)
         self.assertTrue(a._fields == ('a_a', 'b_b', 'c'))
-
-
-if __name__ == "__main__":
-    unittest.main()

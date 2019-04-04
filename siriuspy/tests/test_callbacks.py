@@ -2,11 +2,7 @@
 
 """Unittest module for callbacks.py."""
 
-from io import StringIO
-import numpy as np
-import unittest
-from unittest import mock
-import logging
+from unittest import mock, TestCase
 import siriuspy.util as util
 import siriuspy.callbacks as callbacks
 
@@ -16,7 +12,7 @@ public_interface = (
 )
 
 
-class TestCallbacks(unittest.TestCase):
+class TestCallbacks(TestCase):
     """Test util."""
 
     def test_public_interface(self):
@@ -26,7 +22,7 @@ class TestCallbacks(unittest.TestCase):
         self.assertTrue(valid)
 
 
-class TestCallbackClass(unittest.TestCase):
+class TestCallbackClass(TestCase):
     """Test Callback Class."""
 
     public_interface = (
@@ -112,7 +108,3 @@ class TestCallbackClass(unittest.TestCase):
 
     def _run_tes2(self, *args, **kwargs):
         self.TES = 2
-
-
-if __name__ == "__main__":
-    unittest.main()

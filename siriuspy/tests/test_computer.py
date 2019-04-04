@@ -2,11 +2,7 @@
 
 """Unittest module for computer.py."""
 
-# from io import StringIO
-# import numpy as np
-# import epics
-import unittest
-# from unittest import mock
+from unittest import TestCase
 import siriuspy.util as util
 import siriuspy.computer as computer
 
@@ -16,7 +12,7 @@ public_interface = (
 )
 
 
-class TestComputer(unittest.TestCase):
+class TestComputer(TestCase):
     """Test computer module."""
 
     def test_public_interface(self):
@@ -26,7 +22,7 @@ class TestComputer(unittest.TestCase):
         self.assertTrue(valid)
 
 
-class TestComputerClass(unittest.TestCase):
+class TestComputerClass(TestCase):
     """Test Computer Class."""
 
     public_interface = (
@@ -62,7 +58,3 @@ class TestComputerClass(unittest.TestCase):
         c = computer.Computer()
         self.assertRaises(NotImplementedError, c.compute_limits,
                           computed_pv=None,)
-
-
-if __name__ == "__main__":
-    unittest.main()
