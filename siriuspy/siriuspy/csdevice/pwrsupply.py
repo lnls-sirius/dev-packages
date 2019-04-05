@@ -318,7 +318,7 @@ class ETypes(_cutil.ETypes):
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-    CYCLE_TYPES = ('Sine', 'DampedSine', 'Trapezoidal')
+    CYCLE_TYPES = ('Sine', 'DampedSine', 'Trapezoidal', 'DampedSquaredSine')
     SYNC_MODES = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
 
 
