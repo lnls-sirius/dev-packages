@@ -24,7 +24,7 @@ class Const(_cutil.Const):
 
     # TrigSrcLL = _cutil.Const.register('TrigSrcLL', _et.TRIG_SRC_LL)
     PSConvDict = {
-        'LA-CN:H1RCPS-1': 'LI-01:PS-RevLens',
+        'LA-CN:H1RCPS-1': 'LI-01:PS-LensRev',
         'LA-CN:H1MLPS-1': 'LI-01:PS-Lens-1',
         'LA-CN:H1MLPS-2': 'LI-01:PS-Lens-2',
         'LA-CN:H1MLPS-3': 'LI-01:PS-Lens-3',
