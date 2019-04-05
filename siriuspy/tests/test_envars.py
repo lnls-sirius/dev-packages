@@ -2,7 +2,7 @@
 
 """Unittest module for envars.py."""
 
-import unittest
+from unittest import TestCase
 import siriuspy.envars as envars
 import siriuspy.util as util
 
@@ -48,7 +48,7 @@ public_interface = folders + servers + \
                   ('vaca_prefix', 'org_folders', 'repo_names')
 
 
-class TestEnvars(unittest.TestCase):
+class TestEnvars(TestCase):
     """Test envars."""
 
     def test_public_interface(self):
@@ -75,7 +75,3 @@ class TestEnvars(unittest.TestCase):
         self.assertIn('vaca_prefix', envars.__dict__)
         value = getattr(envars, 'vaca_prefix')
         self.assertIsInstance(value, str)
-
-
-if __name__ == "__main__":
-    unittest.main()

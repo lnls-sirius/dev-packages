@@ -2,7 +2,7 @@
 
 """Unittest module for opticscorr.py."""
 
-import unittest
+from unittest import TestCase
 from siriuspy import util
 from siriuspy.csdevice import posang
 from siriuspy.csdevice.posang import get_posang_database
@@ -14,7 +14,7 @@ public_interface = (
     )
 
 
-class TestOpticsCorrCSDevice(unittest.TestCase):
+class TestOpticsCorrCSDevice(TestCase):
     """Test siriuspy.csdevice.opticscorr module."""
 
     def test_public_interface(self):
@@ -66,7 +66,3 @@ class TestOpticsCorrCSDevice(unittest.TestCase):
         self.assertEqual(db['RefKickCH2-Mon']['unit'], 'mrad')
         self.assertEqual(db['RefKickCV1-Mon']['unit'], 'urad')
         self.assertEqual(db['RefKickCV2-Mon']['unit'], 'urad')
-
-
-if __name__ == "__main__":
-    unittest.main()

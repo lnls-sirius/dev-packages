@@ -2,8 +2,7 @@
 
 """Unittest module for factory.py."""
 
-import unittest
-from unittest import mock
+from unittest import mock, TestCase
 import siriuspy.util as util
 import siriuspy.factory as factory
 from siriuspy.factory import NormalizerFactory
@@ -17,7 +16,7 @@ valid_interface = (
 
 
 @mock.patch('siriuspy.factory._MAData', autospec=True)
-class TestMagnetFactory(unittest.TestCase):
+class TestMagnetFactory(TestCase):
     """Test MagnetFactory."""
 
     def test_public_interface(self, mock_data):
@@ -56,7 +55,3 @@ class TestMagnetFactory(unittest.TestCase):
         mock_data.return_value.magfunc.return_value = 'quadrupole'
         magnet = NormalizerFactory.create(maname=maname)
         self.assertIsInstance(magnet, TrimNormalizer)
-
-
-if __name__ == "__main__":
-    unittest.main()

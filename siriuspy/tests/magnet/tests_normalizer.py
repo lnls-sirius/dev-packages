@@ -7,13 +7,12 @@ Requirements:
     convert strength to current
     all sections: TB, BO, TS, SI
 """
-import unittest
+from unittest import TestCase
 
 from siriuspy.magnet.normalizer import DipoleNormalizer
-from ..mock_servweb import MockServConf
 
 
-class DipoleNormalizerTest(MockServConf):
+class DipoleNormalizerTest(TestCase):
     """Test conversion of current/energy in dipoles."""
 
     settings = {
@@ -81,7 +80,3 @@ class DipoleNormalizerTest(MockServConf):
     def _test_si_strength_conversion(self):
         """Test SI conversion of energy to current."""
         self._convert_strength("SI")
-
-
-if __name__ == "__main__":
-    unittest.main()

@@ -2,7 +2,7 @@
 
 """Unittest module for opticscorr.py."""
 
-import unittest
+from unittest import TestCase
 from siriuspy import util
 from siriuspy.csdevice import opticscorr
 from siriuspy.csdevice.opticscorr import (
@@ -19,7 +19,7 @@ public_interface = (
     )
 
 
-class TestOpticsCorrCSDevice(unittest.TestCase):
+class TestOpticsCorrCSDevice(TestCase):
     """Test siriuspy.csdevice.opticscorr module."""
 
     def test_public_interface(self):
@@ -100,7 +100,3 @@ class TestOpticsCorrCSDevice(unittest.TestCase):
                 self.assertTrue('SyncCorr-Sel' in db)
                 self.assertTrue('SyncCorr-Sts' in db)
                 self.assertTrue('ConfigTiming-Cmd' in db)
-
-
-if __name__ == "__main__":
-    unittest.main()

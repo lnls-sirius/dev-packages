@@ -1,7 +1,7 @@
 #!/usr/bin/env python-sirius
 """Magnet class test module."""
 
-import unittest
+from unittest import TestCase
 import numpy
 from siriuspy import util
 from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
@@ -20,7 +20,7 @@ public_interface = (
 )
 
 
-class TestModule(unittest.TestCase):
+class TestModule(TestCase):
     """Test module interface."""
 
     def test_public_interface(self):
@@ -31,7 +31,7 @@ class TestModule(unittest.TestCase):
         self.assertTrue(valid)
 
 
-class TestWaveformParam(unittest.TestCase):
+class TestWaveformParam(TestCase):
     """Test WaveformParam class."""
 
     public_interface = (
@@ -187,7 +187,7 @@ class TestWaveformParam(unittest.TestCase):
         pass
 
 
-class TestWaveformDipole(unittest.TestCase):
+class TestWaveformDipole(TestCase):
     """Test WaveformDipole class."""
 
     public_interface = (
@@ -225,7 +225,7 @@ class TestWaveformDipole(unittest.TestCase):
         pass
 
 
-class TestWaveform(unittest.TestCase):
+class TestWaveform(TestCase):
     """Test Waveform class."""
 
     public_interface = (
@@ -260,7 +260,3 @@ class TestWaveform(unittest.TestCase):
         bo_b.rampup_start_energy *= 1.01
         c2 = qd.currents
         self.assertTrue((c1 != c2).any())
-
-
-if __name__ == "__main__":
-    unittest.main()
