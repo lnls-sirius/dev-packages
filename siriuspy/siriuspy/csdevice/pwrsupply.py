@@ -2,6 +2,7 @@
 
 import copy as _copy
 
+from pcaspy import Severity as _Severity
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.search import MASearch as _MASearch
 from siriuspy.pwrsupply.siggen import DEFAULT_SIGGEN_CONFIG as _DEF_SIGG_CONF
@@ -691,7 +692,41 @@ def _get_pu_FP_PINGER_propty_database():
 
 def _get_ps_LINAC_propty_database():
     """Return LINAC pwrsupply props."""
-    propty_db = get_basic_propty_database()
+    # propty_db = get_basic_propty_database()
+    propty_db = {
+        'rdnets': {'type': 'enum', 'enums': ['Connected', 'Broken'],
+                   'states': [_Severity.NO_ALARM, _Severity.MAJOR_ALARM]},
+        'setpwm': {'type': 'enum', 'enums': ['Pwm_Off', 'Pwm_On']},  # 40
+        'rdpwm': {'type': 'enum', 'enums': ['Pwm_Off', 'Pwm_On']},   # 40
+        'seti': {'type': 'float', 'prec': 4, 'unit': 'A',
+                 'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+                 'hilim': 0.0, 'high': 0.0, 'hihi': 0.0},            # 90
+        'rdseti': {'type': 'float', 'prec': 4, 'unit': 'A',
+                   'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+                   'hilim': 0.0, 'high': 0.0, 'hihi': 0.0},          # 90
+        'rdmaxti': {'type': 'float', 'prec': 4, 'unit': 'A'},        # 91
+        'rdminti': {'type': 'float', 'prec': 4, 'unit': 'A'},        # 92
+        'rdseti_fit': {'type': 'float', 'prec': 4},                  # f0
+        'rdi': {'type': 'float', 'prec': 4, 'unit': 'A',
+                'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
+                'hilim': 0.0, 'high': 0.0, 'hihi': 0.0,
+                'mdel': 0.000099, 'adel': 0.000099},                 # f1
+        'rdldv': {'type': 'float', 'prec': 4},                       # f2
+        'rdbusv': {'type': 'float', 'prec': 4},                      # f3
+        'rdwarn': {'type': 'int'},                                   # 23
+        'rdsgin': {'type': 'int'},                                   # 70
+        'rdsgin_msk': {'type': 'int'},                               # 71
+        'sgin': {'type': 'int'},
+        'rdsgout': {'type': 'int'},                                  # 72
+        'rdsgout_msk': {'type': 'int'},                              # 73
+        'sgout': {'type': 'int'},
+        'rdtp': {'type': 'float', 'prec': 4},                        # 74
+        'boottime': {'type': 'string'},
+        'interlock': {'type': 'int', 'hihi': 55},
+        'Cycle-Cmd': {'type': 'int', 'value': 0},
+        'Abort-Cmd': {'type': 'int', 'value': 0},
+        'Version-Cte': {'type': 'string', 'value': 'UNDEF'}
+    }
     return propty_db
 
 
