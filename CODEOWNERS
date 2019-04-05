@@ -4,7 +4,6 @@
 # @xresende
 # @anacso17
 # @fernandohds564
-# @liulin-lili
 
 # --- default owners of the repo
 * @gu1lhermelp @xresende
@@ -13,7 +12,7 @@
 # -------- BASIC MODULES --------
 
 # --- basic siriuspy modules
-/siriuspy/siriuspy/* @gu1lhermelp @xresende @anacso17 @fernandohds564 @liulin-lili
+/siriuspy/siriuspy/* @gu1lhermelp @xresende @anacso17 @fernandohds564
 
 
 # -------- SUBPACKAGES --------
@@ -22,7 +21,7 @@
 /siriuspy/siriuspy/bsmp/ @gu1lhermelp @xresende @fernandohds564
 
 # --- csdevice subpackage
-/siriuspy/siriuspy/csdevice/ @gu1lhermelp @xresende @fernandohds564
+/siriuspy/siriuspy/csdevice/ @gu1lhermelp @xresende @fernandohds564 @anacso17
 
 # --- diagnostics subpackage
 /siriuspy/siriuspy/diagnostics/ @fernandohds564 @xresende
@@ -40,19 +39,19 @@
 /siriuspy/siriuspy/pwrsupply/ @gu1lhermelp @xresende @fernandohds564 @anacso17
 
 # --- ramp subpackage
-/siriuspy/siriuspy/ramp/ @gu1lhermelp @xresende @fernandohds564 @liulin-lili
+/siriuspy/siriuspy/ramp/ @gu1lhermelp @xresende @fernandohds564
 
 # --- servccdb subpackage
 /siriuspy/siriuspy/servccdb/ @xresende
 
 # --- servconf subpackage
-/siriuspy/siriuspy/servconf/ @gu1lhermelp @xresende @liulin-lili
+/siriuspy/siriuspy/servconf/ @gu1lhermelp @xresende
 
 # --- servname subpackage
 /siriuspy/siriuspy/servname/ @xresende
 
 # --- servweb subpackage
-/siriuspy/siriuspy/servweb/ @xresende @liulin-lili
+/siriuspy/siriuspy/servweb/ @xresende
 
 # --- timesys subpackage
 /siriuspy/siriuspy/timesys/ @fernandohds564 @xresende

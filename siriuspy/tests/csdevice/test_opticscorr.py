@@ -2,7 +2,7 @@
 
 """Unittest module for opticscorr.py."""
 
-import unittest
+from unittest import TestCase
 from siriuspy import util
 from siriuspy.csdevice import opticscorr
 from siriuspy.csdevice.opticscorr import (
@@ -19,7 +19,7 @@ public_interface = (
     )
 
 
-class TestOpticsCorrCSDevice(unittest.TestCase):
+class TestOpticsCorrCSDevice(TestCase):
     """Test siriuspy.csdevice.opticscorr module."""
 
     def test_public_interface(self):
@@ -46,7 +46,7 @@ class TestOpticsCorrCSDevice(unittest.TestCase):
             self.assertTrue('ChromX-RB' in db)
             self.assertTrue('ChromY-SP' in db)
             self.assertTrue('ChromY-RB' in db)
-            self.assertTrue('ApplyCorr-Cmd' in db)
+            self.assertTrue('ApplyDelta-Cmd' in db)
             self.assertTrue('ConfigName-SP' in db)
             self.assertTrue('ConfigName-RB' in db)
             self.assertTrue('RespMat-Mon' in db)
@@ -62,9 +62,9 @@ class TestOpticsCorrCSDevice(unittest.TestCase):
             if accelerator == 'SI':
                 self.assertTrue('CorrMeth-Sel' in db)
                 self.assertTrue('CorrMeth-Sts' in db)
-                self.assertTrue('SyncCorr-Sel' in db)
-                self.assertTrue('SyncCorr-Sts' in db)
-                self.assertTrue('ConfigTiming-Cmd' in db)
+                # self.assertTrue('SyncCorr-Sel' in db)
+                # self.assertTrue('SyncCorr-Sts' in db)
+                # self.assertTrue('ConfigTiming-Cmd' in db)
 
     def test_get_tune_database(self):
         """Test get_tune_database."""
@@ -82,13 +82,9 @@ class TestOpticsCorrCSDevice(unittest.TestCase):
             self.assertTrue('DeltaTuneX-RB' in db)
             self.assertTrue('DeltaTuneY-SP' in db)
             self.assertTrue('DeltaTuneY-RB' in db)
-            self.assertTrue('ApplyCorr-Cmd' in db)
-            self.assertTrue('ConfigName-SP' in db)
-            self.assertTrue('ConfigName-RB' in db)
+            self.assertTrue('ApplyDelta-Cmd' in db)
             self.assertTrue('RespMat-Mon' in db)
             self.assertTrue('NominalKL-Mon' in db)
-            self.assertTrue('CorrFactor-SP' in db)
-            self.assertTrue('CorrFactor-RB' in db)
             self.assertTrue('ConfigMA-Cmd' in db)
             self.assertTrue('Status-Mon' in db)
             self.assertTrue('StatusLabels-Cte' in db)
@@ -104,7 +100,3 @@ class TestOpticsCorrCSDevice(unittest.TestCase):
                 self.assertTrue('SyncCorr-Sel' in db)
                 self.assertTrue('SyncCorr-Sts' in db)
                 self.assertTrue('ConfigTiming-Cmd' in db)
-
-
-if __name__ == "__main__":
-    unittest.main()

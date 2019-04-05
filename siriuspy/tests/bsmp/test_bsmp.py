@@ -6,7 +6,7 @@
 # from siriuspy.util import check_public_interface_namespace
 #
 #
-# class _TestBSMP(unittest.TestCase):
+# class _TestBSMP(TestCase):
 #     """Test BSMP class."""
 #
 #     api = (
@@ -55,7 +55,7 @@
 #         self.assertEqual(load, ['\x00', '\x00'])
 #
 #
-# class _TestBSMPQuery(unittest.TestCase):
+# class _TestBSMPQuery(TestCase):
 #     """Test BSMPQuery class."""
 #
 #     api = (
@@ -132,7 +132,7 @@
 #         self.bsmp.slaves[1].query.assert_called_with(0x50, ID_receiver=1)
 #
 #
-# class _TestBSMPResponse(unittest.TestCase):
+# class _TestBSMPResponse(TestCase):
 #     """Test BSMPResponse class."""
 #
 #     api = (
@@ -159,7 +159,3 @@
 #         self.assertEqual(BSMPResponse._query2resp[0x30], 'create_group')
 #         self.assertEqual(BSMPResponse._query2resp[0x32], 'remove_groups')
 #         self.assertEqual(BSMPResponse._query2resp[0x50], 'cmd_0x51')
-#
-#
-# if __name__ == "__main__":
-#     unittest.main()

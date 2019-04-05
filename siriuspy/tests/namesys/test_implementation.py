@@ -2,8 +2,8 @@
 
 """Test implementation.py."""
 
-import unittest
-# from unittest import mock
+from unittest import TestCase
+
 import siriuspy.util as util
 import siriuspy.namesys as namesys
 
@@ -20,7 +20,7 @@ public_interface = (
 )
 
 
-class TestImplementation(unittest.TestCase):
+class TestImplementation(TestCase):
     """Test Implementation module."""
 
     def test_public_interface(self):
@@ -98,7 +98,7 @@ class TestImplementation(unittest.TestCase):
         self.assertRaises(IndexError, namesys.split_name, pvname='A:B-C:D.F')
 
 
-class TestSiriusPVName(unittest.TestCase):
+class TestSiriusPVName(TestCase):
     """Test SiriusPVName module."""
 
     public_interface = (
@@ -132,7 +132,3 @@ class TestSiriusPVName(unittest.TestCase):
         """Test string."""
         n = namesys.SiriusPVName('ca://PREFIX-SI-Fam:PS-B1B2-1:Current-SP.AVG')
         self.assertIsInstance(n, str)
-
-
-if __name__ == "__main__":
-    unittest.main()

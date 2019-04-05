@@ -2,7 +2,7 @@
 
 """Test commands module."""
 
-import unittest
+from unittest import TestCase
 from unittest.mock import Mock
 import struct
 
@@ -11,7 +11,7 @@ from siriuspy.bsmp import Package, Message, Types, Variable, VariablesGroup, \
 from siriuspy.util import check_public_interface_namespace
 
 
-class TestBSMPAPI(unittest.TestCase):
+class TestBSMPAPI(TestCase):
     """Test BSMP."""
 
     api = (
@@ -43,7 +43,7 @@ class TestBSMPAPI(unittest.TestCase):
         self.assertTrue(check_public_interface_namespace(BSMP, self.api))
 
 
-class TestBSMP0x0(unittest.TestCase):
+class TestBSMP0x0(TestCase):
     """Test BSMP consulting methods."""
 
     def setUp(self):
@@ -107,7 +107,7 @@ class TestBSMP0x0(unittest.TestCase):
             self.bsmp.consult_functions_list()
 
 
-class TestBSMP0x1(unittest.TestCase):
+class TestBSMP0x1(TestCase):
     """Test BSMP read methods."""
 
     def setUp(self):
@@ -219,7 +219,7 @@ class TestBSMP0x1(unittest.TestCase):
         self.assertEqual(response, (None, None))
 
 
-class TestBSMP0x2(unittest.TestCase):
+class TestBSMP0x2(TestCase):
     """Test BSMP write methods."""
 
     def setUp(self):
@@ -255,7 +255,7 @@ class TestBSMP0x2(unittest.TestCase):
             self.bsmp.write_read_variable(0, 1, 10)
 
 
-class TestBSMP0x3(unittest.TestCase):
+class TestBSMP0x3(TestCase):
     """Test BSMP group management methods."""
 
     def setUp(self):
@@ -322,7 +322,7 @@ class TestBSMP0x3(unittest.TestCase):
         self.assertEqual(response, (None, None))
 
 
-class TestBSMP0x4(unittest.TestCase):
+class TestBSMP0x4(TestCase):
     """Test BSMP curve methods."""
 
     def setUp(self):
@@ -348,7 +348,7 @@ class TestBSMP0x4(unittest.TestCase):
             self.bsmp.calc_curve_checksum(1)
 
 
-class TestBSMP0x5(unittest.TestCase):
+class TestBSMP0x5(TestCase):
     """Test BSMP function methods."""
 
     def setUp(self):
@@ -371,7 +371,3 @@ class TestBSMP0x5(unittest.TestCase):
         self.serial.UART_write.assert_called_once_with(
             send_p.stream, timeout=100)
         self.assertEqual(response, (0xE0, 0))
-
-
-if __name__ == '__main__':
-    unittest.main()

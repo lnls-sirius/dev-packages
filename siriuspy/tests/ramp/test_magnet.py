@@ -1,8 +1,7 @@
 #!/usr/bin/env python-sirius
 """Magnet class test module."""
 
-import unittest
-from unittest import mock
+from unittest import mock, TestCase
 from siriuspy import util
 from siriuspy.ramp import magnet
 import siriuspy.search as _search
@@ -13,7 +12,7 @@ public_interface = (
 )
 
 
-class TestModule(unittest.TestCase):
+class TestModule(TestCase):
     """Test module interface."""
 
     def test_public_interface(self):
@@ -24,7 +23,7 @@ class TestModule(unittest.TestCase):
         self.assertTrue(valid)
 
 
-class TestMagnet(unittest.TestCase):
+class TestMagnet(TestCase):
     """TestMagnet."""
 
     class Modules:
@@ -184,7 +183,3 @@ class TestMagnet(unittest.TestCase):
                 strengths_family=1.0)
             for i in range(len(currents1)):
                 self.assertAlmostEqual(currents1[i], currents2[i])
-
-
-if __name__ == "__main__":
-    unittest.main()

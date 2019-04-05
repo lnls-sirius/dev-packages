@@ -2,10 +2,7 @@
 
 """Unittest module for device_models.py."""
 
-import unittest
-# import re
-# from unittest import mock
-
+from unittest import TestCase
 from siriuspy import util
 from siriuspy.timesys.time_simul import device_models
 
@@ -21,7 +18,7 @@ public_interface = (
 )
 
 
-class TestModule(unittest.TestCase):
+class TestModule(TestCase):
     """Test module interface."""
 
     def test_public_interface(self):
@@ -32,7 +29,7 @@ class TestModule(unittest.TestCase):
         self.assertTrue(valid)
 
 
-class TestCallBack(unittest.TestCase):
+class TestCallBack(TestCase):
     """Test CallBack class."""
 
     public_interface = (
@@ -57,7 +54,7 @@ class TestCallBack(unittest.TestCase):
         pass
 
 
-class TestEVGIOC(unittest.TestCase):
+class TestEVGIOC(TestCase):
     """Test EVGIOC class."""
 
     public_interface = (
@@ -112,7 +109,7 @@ class TestEVGIOC(unittest.TestCase):
         pass
 
 
-class TestEVRIOC(unittest.TestCase):
+class TestEVRIOC(TestCase):
     """Test EVRIOC class."""
 
     public_interface = (
@@ -149,7 +146,7 @@ class TestEVRIOC(unittest.TestCase):
         pass
 
 
-class TestEVEIOC(unittest.TestCase):
+class TestEVEIOC(TestCase):
     """Test EVEIOC class."""
 
     public_interface = (
@@ -168,7 +165,7 @@ class TestEVEIOC(unittest.TestCase):
         pass
 
 
-class TestAMCFPGAEVRIOC(unittest.TestCase):
+class TestAMCFPGAEVRIOC(TestCase):
     """Test AMCFPGAEVRIOC class."""
 
     public_interface = (
@@ -187,7 +184,7 @@ class TestAMCFPGAEVRIOC(unittest.TestCase):
         pass
 
 
-class TestFoutIOC(unittest.TestCase):
+class TestFoutIOC(TestCase):
     """Test FoutIOC class."""
 
     public_interface = (
@@ -210,7 +207,3 @@ class TestFoutIOC(unittest.TestCase):
         """Test receive_events."""
         # TODO: implement test!
         pass
-
-
-if __name__ == "__main__":
-    unittest.main()
