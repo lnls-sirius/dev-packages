@@ -59,8 +59,8 @@ def get_posang_database():
         'ConfigMA-Cmd':      {'type': 'int', 'value': 0},
 
         'Status-Mon':        {'type': 'int', 'value': 0b1111},
-        'StatusLabels-Cte':  {'type': 'string', 'count': 4,
-                              'value': Const.STATUSLABELS},
+        'StatusLabels-Cte':  {'type': 'char', 'count': 1000,
+                              'value': '\n'.join(Const.STATUSLABELS)},
     }
     pvs_database = _cutil.add_pvslist_cte(pvs_database)
     return pvs_database
