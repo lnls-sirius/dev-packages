@@ -206,13 +206,7 @@ class SignalDampedNSine(SignalSine):
         """Init method."""
         super().__init__(**kwargs)
         self.n = n
-        w = 2*_math.pi*self.freq
-        if w != 0.0:
-            self._t0 = _math.atan(w*self.decay_time)/w
-        else:
-            self._t0 = 0.0
-        self._f = _math.exp(self._t0/self.decay_time) / \
-            _math.sin(w*self._t0)**self.n
+        self._update()
 
     def _get_sin_signal(self, time_delta):
         sinsig = (super()._get_sin_signal(time_delta))**self.n
