@@ -5,8 +5,8 @@
 # TODO: E2SController now is an auxilliary class!
 # this unittest module does not conform to standard we have been using.
 
-import unittest
-from unittest import mock
+from unittest import TestCase
+from unittest import mock, TestCase
 
 # from siriuspy.csdevice.pwrsupply import get_ps_propty_database
 from siriuspy.pwrsupply.controller import StandardPSController
@@ -14,7 +14,7 @@ from siriuspy.csdevice.pwrsupply import Const as PSConst
 from siriuspy.pwrsupply.pru import Const as PRUConst
 
 
-class TestStandardController(unittest.TestCase):
+class TestStandardController(TestCase):
     """Test E2SController public methods behaviour."""
 
     def setUp(self):
@@ -267,7 +267,3 @@ class TestStandardController(unittest.TestCase):
             'BO-01U:PS-CH', 'CycleAuxParam-SP', [1.0, 1.0, 1.0, 1.0])
         writer.execute.assert_called_with(
             [0, 0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0])
-
-
-if __name__ == '__main__':
-    unittest.main()

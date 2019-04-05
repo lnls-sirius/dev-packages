@@ -1,14 +1,13 @@
 """Unittest module for ma_search.py."""
 
-import unittest
+from unittest import TestCase
 
 from siriuspy import util
 from siriuspy.search import ma_search
 from siriuspy.search import MASearch
-from ..mock_servweb import MockServConf
 
 
-class TestModule(unittest.TestCase):
+class TestModule(TestCase):
     """Test Search module."""
 
     public_interface = (
@@ -22,7 +21,7 @@ class TestModule(unittest.TestCase):
         self.assertTrue(valid)
 
 
-class TestMASearch(MockServConf):
+class TestMASearch(TestCase):
     """Test MASearch."""
 
     public_interface = (

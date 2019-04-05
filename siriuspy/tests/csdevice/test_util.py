@@ -2,7 +2,7 @@
 
 """Unittest module for util.py."""
 
-import unittest
+from unittest import TestCase
 import siriuspy.util as util
 import siriuspy.csdevice.util as cutil
 
@@ -14,7 +14,7 @@ public_interface = (
 )
 
 
-class TestUtil(unittest.TestCase):
+class TestUtil(TestCase):
     """Test util module."""
 
     def test_public_interface(self):

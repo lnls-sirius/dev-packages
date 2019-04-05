@@ -1,8 +1,7 @@
 #!/usr/bin/env python-sirius
 
 """Test Sync class."""
-import unittest
-from unittest import mock
+from unittest import mock, TestCase
 
 import epics
 
@@ -11,7 +10,7 @@ from siriuspy.epics.computed_pv import ComputedPV
 from siriuspy.thread import QueueThread
 
 
-class SyncWritePutTest(unittest.TestCase):
+class SyncWritePutTest(TestCase):
     """Test sync write behaviour.
 
     Tests:
@@ -30,7 +29,7 @@ class SyncWritePutTest(unittest.TestCase):
         mock_put.assert_has_calls(calls)
 
 
-class SyncWriteUpdateCmdTest(unittest.TestCase):
+class SyncWriteUpdateCmdTest(TestCase):
     """Test sync write behaviour.
 
     Test `compute_update` beahaviour when the ComputedPV `value` is None
@@ -77,7 +76,7 @@ class SyncWriteUpdateCmdTest(unittest.TestCase):
         self.assertEqual(self.pv.value, self.update_value)
 
 
-class SyncWriteUpdateWhenNoneTest(unittest.TestCase):
+class SyncWriteUpdateWhenNoneTest(TestCase):
     """Test sync write behaviour.
 
     Test `compute_update` beahaviour when the ComputedPV `value` is None
@@ -136,7 +135,7 @@ class SyncWriteUpdateWhenNoneTest(unittest.TestCase):
         self.assertEqual(self.pv.value, self.update_value)
 
 
-class SyncWriteUpdateValueChangedTest(unittest.TestCase):
+class SyncWriteUpdateValueChangedTest(TestCase):
     """Test sync write update behaviour when value changed.
 
     Tests:
@@ -197,7 +196,7 @@ class SyncWriteUpdateValueChangedTest(unittest.TestCase):
         self.assertEqual(self.pv.value, self.initial_value)
 
 
-class SyncWriteUpdateValueNotChangedTest(unittest.TestCase):
+class SyncWriteUpdateValueNotChangedTest(TestCase):
     """Test sync write update behaviour when value did not changed.
 
     Tests:
@@ -256,7 +255,3 @@ class SyncWriteUpdateValueNotChangedTest(unittest.TestCase):
         """Test value remains the same afted update value was called."""
         # Assert value was not set to pv
         self.assertEqual(self.pv.value, self.initial_value)
-
-
-if __name__ == "__main__":
-    unittest.main()

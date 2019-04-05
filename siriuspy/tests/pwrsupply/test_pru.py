@@ -1,8 +1,7 @@
 #!/usr/bin/env python-sirius
 
 """Test PRU module."""
-import unittest
-# from unittest import mock
+from unittest import TestCase
 
 from siriuspy import util
 from siriuspy.pwrsupply import pru
@@ -20,7 +19,7 @@ public_interface = (
 )
 
 
-class TestModule(unittest.TestCase):
+class TestModule(TestCase):
     """Test module interface."""
 
     def test_public_interface(self):
@@ -31,7 +30,7 @@ class TestModule(unittest.TestCase):
         self.assertTrue(valid)
 
 
-class TestConst(unittest.TestCase):
+class TestConst(TestCase):
     """Test Const class interface."""
 
     public_interface = (
@@ -70,7 +69,7 @@ class TestConst(unittest.TestCase):
         self.assertIn('ON', dir(Const.SYNC_STATE))
 
 
-class TestPRUInterface(unittest.TestCase):
+class TestPRUInterface(TestCase):
     """Test PRUInterface API."""
 
     public_interface = (
@@ -183,7 +182,7 @@ class TestPRUInterface(unittest.TestCase):
         pass
 
 
-class TestPRU(unittest.TestCase):
+class TestPRU(TestCase):
     """Test PRU API."""
 
     public_interface = ()
@@ -264,7 +263,7 @@ class TestPRU(unittest.TestCase):
         pass
 
 
-class TestPRUSim(unittest.TestCase):
+class TestPRUSim(TestCase):
     """Test PRUSim API."""
 
     public_interface = (
@@ -353,7 +352,3 @@ class TestPRUSim(unittest.TestCase):
         """Test emulate_trigger."""
         # TODO: implement test!
         pass
-
-
-if __name__ == "__main__":
-    unittest.main()

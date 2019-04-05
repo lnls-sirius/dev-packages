@@ -2,9 +2,7 @@
 
 """Unittest module for siggen.py."""
 
-# import numpy as np
-import unittest
-# from unittest import mock
+from unittest import TestCase
 import siriuspy.util as util
 import siriuspy.pwrsupply.siggen as siggen
 
@@ -13,13 +11,15 @@ public_interface = (
     'DEFAULT_SIGGEN_CONFIG',
     'Signal',
     'SignalSine',
+    'SignalDampedNSine',
     'SignalDampedSine',
+    'SignalDampedSquaredSine',
     'SignalTrapezoidal',
     'SignalFactory',
 )
 
 
-class TestModule(unittest.TestCase):
+class TestModule(TestCase):
     """Test Module."""
 
     def test_public_interface(self):
@@ -34,7 +34,7 @@ class TestModule(unittest.TestCase):
         self.assertTrue(len(defconfig), 9)
 
 
-class TestSigGenConfig(unittest.TestCase):
+class TestSigGenConfig(TestCase):
     """Test SigGenconfig class."""
 
     public_interface = (
@@ -48,6 +48,7 @@ class TestSigGenConfig(unittest.TestCase):
         'plateau_time',
         'decay_time',
         'get_waveform',
+        'reset',
     )
 
     def test_public_interface(self):
@@ -95,7 +96,3 @@ class TestSigGenConfig(unittest.TestCase):
         """Test get_waveform."""
         # TODO: implement test!
         pass
-
-
-if __name__ == "__main__":
-    unittest.main()
