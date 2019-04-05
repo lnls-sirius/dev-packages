@@ -2,11 +2,11 @@
 
 """Test type module."""
 
-import unittest
+from unittest import TestCase
 from siriuspy.bsmp import Types
 
 
-class TestBSMPTypes(unittest.TestCase):
+class TestBSMPTypes(TestCase):
     """Test BSMP Types."""
 
     def test_char_type(self):
@@ -63,7 +63,3 @@ class TestBSMPTypes(unittest.TestCase):
         self.assertTrue(t.check(1.5))
         self.assertFalse(t.check('c'))
         self.assertFalse(t.check(1))
-
-
-if __name__ == '__main__':
-    unittest.main()

@@ -2,10 +2,8 @@
 
 """Unittest module for ll_time_search.py."""
 
-import unittest
+from unittest import TestCase
 import re
-# from unittest import mock
-
 from siriuspy import util
 from siriuspy.search import ll_time_search
 
@@ -16,7 +14,7 @@ public_interface = (
 )
 
 
-class TestModule(unittest.TestCase):
+class TestModule(TestCase):
     """Test module interface."""
 
     def test_public_interface(self):
@@ -27,7 +25,7 @@ class TestModule(unittest.TestCase):
         self.assertTrue(valid)
 
 
-class TestLLTimeSearch(unittest.TestCase):
+class TestLLTimeSearch(TestCase):
     """Test LLTimeSearch class."""
 
     public_interface = (
@@ -143,7 +141,3 @@ class TestLLTimeSearch(unittest.TestCase):
         """Test get_hierarchy_list."""
         # TODO: implement test!
         pass
-
-
-if __name__ == "__main__":
-    unittest.main()

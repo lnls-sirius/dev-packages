@@ -2,10 +2,7 @@
 
 """Unittest module for time_simul.py."""
 
-import unittest
-# import re
-# from unittest import mock
-
+from unittest import TestCase
 from siriuspy import util
 from siriuspy.timesys.time_simul import time_simul
 
@@ -16,7 +13,7 @@ public_interface = (
 )
 
 
-class TestModule(unittest.TestCase):
+class TestModule(TestCase):
     """Test module interface."""
 
     def test_public_interface(self):
@@ -27,7 +24,7 @@ class TestModule(unittest.TestCase):
         self.assertTrue(valid)
 
 
-class TestTimingSimulation(unittest.TestCase):
+class TestTimingSimulation(TestCase):
     """Test TimingSimulation class."""
 
     public_interface = (

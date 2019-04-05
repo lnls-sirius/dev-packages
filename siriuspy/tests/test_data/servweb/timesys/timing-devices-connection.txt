@@ -1,0 +1,18 @@
+
+# This file was generated automatically from the data of the
+# excel file Cabos_e_Fibras_Sirius.xlsx by the function
+# siriuspy.timesys.static_table.create_static_table.
+#
+# If the mentioned file change, please, run the script
+# again and copy the generated file to replace this one.
+
+
+
+
+
+# 430
+RA-RaMO:TI-EVG:OUT0                 RA-RaMO:CO-FibPatch:P074
+RA-RaMO:TI-EVG:OUT1                 RA-RaMO:CO-FibPatch:P075
+RA-RaMO:TI-EVG:OUT2                 RA-RaMO:CO-FibPatch:P076
+RA-RaMO:TI-EVG:OUT3                 RA-RaMO:CO-FibPatch:P077
+RA-RaMO:TI-EVG:OUT4                 RA-RaMO:CO-FibPatch:P078

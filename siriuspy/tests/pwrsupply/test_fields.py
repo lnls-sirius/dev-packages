@@ -1,10 +1,10 @@
 """Test fields module."""
-import unittest
+from unittest import TestCase
 
 from siriuspy.pwrsupply.fields import Setpoint
 
 
-class TestSetpointMatch(unittest.TestCase):
+class TestSetpointMatch(TestCase):
     """Test setpoint match."""
 
     def test_match_sp(self):
@@ -25,7 +25,7 @@ class TestSetpointMatch(unittest.TestCase):
         self.assertFalse(Setpoint.match('Fake-Sts'))
 
 
-class TestCmdSetpoint(unittest.TestCase):
+class TestCmdSetpoint(TestCase):
     """Test setpoint class."""
 
     def setUp(self):
@@ -53,7 +53,7 @@ class TestCmdSetpoint(unittest.TestCase):
         self.assertEqual(self.setpoint.value, 2)
 
 
-class TestPSetpoint(unittest.TestCase):
+class TestPSetpoint(TestCase):
     """Test setpoints sp."""
 
     def setUp(self):
@@ -96,7 +96,7 @@ class TestPSetpoint(unittest.TestCase):
         self.assertEqual(self.setpoint.value, 9.0)
 
 
-class TestSelSetpoint(unittest.TestCase):
+class TestSelSetpoint(TestCase):
     """Test sel setpoints."""
 
     def setUp(self):

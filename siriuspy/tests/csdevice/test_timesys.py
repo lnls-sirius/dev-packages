@@ -2,9 +2,7 @@
 
 """Unittest module for ll_database.py."""
 
-import unittest
-# import re
-# from unittest import mock
+from unittest import TestCase
 
 from siriuspy import util
 from siriuspy.csdevice import timesys
@@ -31,7 +29,7 @@ public_interface = (
     )
 
 
-class TestModule(unittest.TestCase):
+class TestModule(TestCase):
     """Test module interface."""
 
     def test_public_interface(self):
@@ -207,7 +205,7 @@ class TestModule(unittest.TestCase):
         pass
 
 
-class TestConst(unittest.TestCase):
+class TestConst(TestCase):
     """Test Const class."""
 
     public_interface = (
@@ -241,7 +239,3 @@ class TestConst(unittest.TestCase):
         valid = util.check_public_interface_namespace(
                         timesys.Const, TestConst.public_interface)
         self.assertTrue(valid)
-
-
-if __name__ == "__main__":
-    unittest.main()
