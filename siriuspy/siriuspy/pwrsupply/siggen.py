@@ -2,20 +2,22 @@
 
 import time as _t
 import math as _math
-import numpy as _np
+# import numpy as _np
 
 DEFAULT_SIGGEN_CONFIG = (
     0,      # type  [0:Sine]
-    1,      # num_cycles
-    100.0,  # freq [Hz]
-    0.0,    # amplitude [A]
+    100,      # num_cycles
+    2.0,  # freq [Hz]
+    0.0,    # amplitude [A] (Maximum amplitude)
     0.0,    # offset [A]
     0.0,    # aux_param[0]
-            #   (Sine|DampedSine: theta_beg, Trapezoidal: ramp up[s])
+            #   (Sine|DampedSine|DampedSquaredSine: theta_beg,
+            #    Trapezoidal: ramp up[s])
     0.0,    # aux_param[1]
-            #   (Sine|DampedSine: theta_end, Trapezoidal: ramp down[s])
+            #   (Sine|DampedSine|DampedSquaredSine: theta_end,
+            #    Trapezoidal: ramp down[s])
     0.0,    # aux_param[2]
-            #   (DampedSine: decay time [s])
+            #   (DampedSine|DampedSquaredSine: decay time [s])
     0.0     # aux_param[3]
             #   (reserved)
 )
@@ -26,11 +28,11 @@ class Signal:
 
     def __init__(self,
                  type,
-                 num_cycles,  # Sine, DampedSine, Trapezoidal
-                 freq,  # [Hz] Sine, DampedSine
-                 amplitude,  # [A] Sine, DampedSine, Trapezoidal
-                 offset,  # [A] Sine, DampedSine, Trapezoidal
-                 aux_param,  # Sine, DampedSine, Trapezoidal)
+                 num_cycles,  # Sine, DampedSine, DampedSqrdSin, Trapezoidal
+                 freq,  # [Hz] Sine, DampedSine, DampedSqrdSin
+                 amplitude,  # [A] Sine, DampedSine, DampedSqrdSin, Trapezoidal
+                 offset,  # [A] Sine, DampedSine, DampedSqrdSin, Trapezoidal
+                 aux_param,  # Sine, DampedSine, DampedSqrdSin, Trapezoidal)
                  **kwargs
                  ):
         """Init method."""
@@ -70,17 +72,19 @@ class Signal:
     def rampup_time(self, value):
         """Set Rampup time for Trapezoidal signals."""
         self.aux_param[0] = value
+        self._update()
         return value
 
     @property
     def theta_begin(self):
-        """Initial phase for Sine or DampedSine signals."""
+        """Return initial phase for Sine or Damped(Squared)Sine signals."""
         return self.aux_param[0]
 
     @theta_begin.setter
     def theta_begin(self, value):
-        """Set Initial phase for Sine or DampedSine signals."""
+        """Set Initial phase for Sine or Damped(Squared)Sine signals."""
         self.aux_param[0] = value
+        self._update()
         return value
 
     @property
@@ -92,17 +96,19 @@ class Signal:
     def rampdown_time(self, value):
         """Set Rampdown time for Trapezoidal signals."""
         self.aux_param[1] = value
+        self._update()
         return value
 
     @property
     def theta_end(self):
-        """Final phase for Sine or DampedSine signals."""
+        """Return final phase for Sine or Damped(Squared)Sine signals."""
         return self.aux_param[1]
 
     @theta_end.setter
     def theta_end(self, value):
-        """Set Final phase for Sine or DampedSine signals."""
+        """Set Final phase for Sine or Damped(Squared)Sine signals."""
         self.aux_param[1] = value
+        self._update()
         return value
 
     @property
@@ -114,42 +120,38 @@ class Signal:
     def plateau_time(self, value):
         """Set Plateau time for Trapezoidal signals."""
         self.aux_param[2] = value
+        self._update()
         return value
 
     @property
     def decay_time(self):
-        """Decay time constant for DampedSine signals."""
+        """Decay time constant for Damped(Squared)Sine signals."""
         return self.aux_param[2]
 
     @decay_time.setter
     def decay_time(self, value):
-        """Set Decay time constant for DampedSine signals."""
+        """Set Decay time constant for Damped(Squared)Sine signals."""
         self.aux_param[2] = value
+        self._update()
         return value
 
-    def get_waveform(self, nr_points=100):
-        """Return list with signal waveform."""
-        raise NotImplementedError
-        d2r = _np.pi/180.0
-        t = _np.linspace(0.0, self.duration, nr_points)
-        if self.type in ('Sine', 'DampedSine'):
-            # TODO: confirm!
-            if self.type == 'Sine':
-                amp = self.amplitude * _np.ones(t.shape)
-            else:
-                amp = self.amplitude * _np.exp(-t/self.decay_time)
-            wfm = self.offset * _np.ones(t.shape)
-            phase = (2*_np.pi) * (self.freq*t % 1)
-            sel_in = \
-                (phase >= d2r * self.theta_begin) & \
-                (phase <= d2r * self.theta_end)
-            wfm_delta = amp * _np.sin(phase)
-            # wfm = wfm_delta
-            wfm[sel_in] += wfm_delta[sel_in]
-        else:
-            # TODO: implement get_waveform for 'Trapezoidal' type.
-            wfm = _np.zeros(t.shape) + self.offset
-        return wfm, sel_in, phase, wfm_delta
+    def reset(self):
+        """Reset init time."""
+        self.time_init = _t.time()
+
+    def get_waveform(self, nrpts=100):
+        """."""
+        tmax = self.duration
+        tstep = tmax/(nrpts-1) if nrpts > 1 else tmax
+        tv, wv = [], []
+        t = 0
+        while True:
+            w = self._get_value(t)
+            tv.append(t), wv.append(w)
+            if len(tv) == nrpts:
+                break
+            t += tstep
+        return wv, tv
 
     # --- virtual methods ---
 
@@ -160,6 +162,9 @@ class Signal:
         raise NotImplementedError
 
     def _get_value(self, time_delta):
+        raise NotImplementedError
+
+    def _update(self):
         raise NotImplementedError
 
 
@@ -190,19 +195,49 @@ class SignalSine(Signal):
             _math.sin(2 * _math.pi * self.freq * time_delta)
         return value
 
+    def _update(self):
+        pass
 
-class SignalDampedSine(SignalSine):
+
+class SignalDampedNSine(SignalSine):
+    """DampedNSine signal."""
+
+    def __init__(self, n, **kwargs):
+        """Init method."""
+        super().__init__(**kwargs)
+        self.n = n
+        self._update()
+
+    def _get_sin_signal(self, time_delta):
+        sinsig = (super()._get_sin_signal(time_delta))**self.n
+        expsig = self._f * _math.exp(-time_delta/self.decay_time)
+        value = self.offset + sinsig * expsig
+        return value
+
+    def _update(self):
+        self.wfreq = 2*_math.pi*self.freq
+        if self.wfreq != 0.0:
+            self._t0 = _math.atan(self.wfreq*self.decay_time)/self.wfreq
+        else:
+            self._t0 = 0.0
+        self._f = _math.exp(self._t0/self.decay_time) / \
+            _math.sin(self.wfreq*self._t0)**self.n
+
+
+class SignalDampedSine(SignalDampedNSine):
     """DampedSine signal."""
 
     def __init__(self, **kwargs):
         """Init method."""
-        super().__init__(**kwargs)
+        super().__init__(n=1, **kwargs)
 
-    def _get_sin_signal(self, time_delta):
-        sinsig = super()._get_sin_signal(time_delta)
-        expsig = _math.exp(-time_delta/self.decay_time)
-        value = self.offset + sinsig * expsig
-        return value
+
+class SignalDampedSquaredSine(SignalDampedNSine):
+    """DampedSquaredSine signal."""
+
+    def __init__(self, **kwargs):
+        """Init method."""
+        super().__init__(n=2, **kwargs)
 
 
 class SignalTrapezoidal(Signal):
@@ -244,18 +279,24 @@ class SignalTrapezoidal(Signal):
         if self.rampdown_time == 0:
             self.rampdown_time = 0.1
 
+    def _update(self):
+        pass
+
 
 class SignalFactory:
     """Signal Generator Factory."""
 
-    TYPES = {'Sine': 0, 'DampedSine': 1, 'Trapezoidal': 2}
+    TYPES = {
+        'Sine': 0, 'DampedSine': 1,
+        'Trapezoidal': 2, 'DampedSquaredSine': 3}
 
-    TYPES_IND = {0: 'Sine', 1: 'DampedSine', 2: 'Trapezoidal'}
+    TYPES_IND = {v: k for k, v in TYPES.items()}
 
     DEFAULT_CONFIGS = {
         'Sine': DEFAULT_SIGGEN_CONFIG,
         'DampedSine': [1, 1, 100.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
         'Trapezoidal': [2, 1, 0.0, 0.0, 0.0, 0.01, 0.01, 0.01, 0.0],
+        'DampedSquaredSine': [1, 1, 100.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
     }
 
     @staticmethod
@@ -295,7 +336,7 @@ class SignalFactory:
         kw.update(kwargs)
         kw['type'] = typ
         p = SignalFactory.DEFAULT_CONFIGS[SignalFactory.TYPES_IND[typ]]
-        # print(p)
+
         kw['num_cycles'] = p[1]
         kw['freq'] = p[2]  # [A]
         kw['amplitude'] = p[3]
@@ -303,7 +344,7 @@ class SignalFactory:
         kw['aux_param'] = p[5:9]
 
         # process data argument
-        kw = dict()
+        # kw = dict()
         if data is not None:
             kw['type'] = data[0]
             kw['num_cycles'] = int(data[1])
@@ -332,4 +373,6 @@ class SignalFactory:
         elif typ == SignalFactory.TYPES['Sine']:
             return SignalSine(**kw)
         elif typ == SignalFactory.TYPES['DampedSine']:
+            return SignalDampedSine(**kw)
+        elif typ == SignalFactory.TYPES['DampedSquaredSine']:
             return SignalDampedSine(**kw)

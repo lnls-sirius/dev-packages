@@ -11,7 +11,9 @@ public_interface = (
     'DEFAULT_SIGGEN_CONFIG',
     'Signal',
     'SignalSine',
+    'SignalDampedNSine',
     'SignalDampedSine',
+    'SignalDampedSquaredSine',
     'SignalTrapezoidal',
     'SignalFactory',
 )
@@ -46,6 +48,7 @@ class TestSigGenConfig(TestCase):
         'plateau_time',
         'decay_time',
         'get_waveform',
+        'reset',
     )
 
     def test_public_interface(self):
