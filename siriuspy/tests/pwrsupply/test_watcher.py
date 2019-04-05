@@ -1,7 +1,6 @@
 """Test watcher module."""
 import time
-import unittest
-from unittest import mock
+from unittest import mock, TestCase
 
 from siriuspy.pwrsupply.watcher import Watcher
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
@@ -36,7 +35,7 @@ def wait_state(watcher, state, timelimit=0.5):
 
 
 @mock.patch('siriuspy.pwrsupply.watcher._time')
-class TestCycleWatcher(unittest.TestCase):
+class TestCycleWatcher(TestCase):
     """Test watcher."""
 
     def setUp(self):
@@ -162,7 +161,7 @@ class TestCycleWatcher(unittest.TestCase):
 
 
 @mock.patch('siriuspy.pwrsupply.watcher._time')
-class TestRmpWatcher(unittest.TestCase):
+class TestRmpWatcher(TestCase):
     """Test Ramp Watcher."""
 
     def setUp(self):
@@ -257,7 +256,7 @@ class TestRmpWatcher(unittest.TestCase):
 
 
 @mock.patch('siriuspy.pwrsupply.watcher._time')
-class TestMigWatcher(unittest.TestCase):
+class TestMigWatcher(TestCase):
     """Test MigWfm Watcher."""
 
     def setUp(self):
@@ -345,7 +344,3 @@ class TestMigWatcher(unittest.TestCase):
         self.writers['Current-SP'].execute.assert_called_with(4000)
         self.writers['OpMode-Sel'].execute.assert_called_with(0)
         self.assertFalse(self.watcher.is_alive())
-
-
-if __name__ == '__main__':
-    unittest.main()

@@ -2,7 +2,7 @@
 
 """Test entities module."""
 
-import unittest
+from unittest import TestCase
 import struct
 
 from siriuspy.bsmp import Types
@@ -10,7 +10,7 @@ from siriuspy.bsmp import Variable, VariablesGroup, Function
 from siriuspy.util import check_public_interface_namespace
 
 
-class TestBSMPVariable(unittest.TestCase):
+class TestBSMPVariable(TestCase):
     """Test Variable class."""
 
     api = ('load_to_value', 'value_to_load')
@@ -114,7 +114,7 @@ class TestBSMPVariable(unittest.TestCase):
         self.assertEqual(var.load_to_value(load), expected_value)
 
 
-class TestBSMPVariablesGroup(unittest.TestCase):
+class TestBSMPVariablesGroup(TestCase):
     """Test VariablesGroup class."""
 
     api = (
@@ -175,13 +175,13 @@ class TestBSMPVariablesGroup(unittest.TestCase):
         self.assertEqual(load, expected_load)
 
 
-class TestBSMPCurve(unittest.TestCase):
+class TestBSMPCurve(TestCase):
     """Test Curve class."""
 
     pass
 
 
-class TestBSMPFunction(unittest.TestCase):
+class TestBSMPFunction(TestCase):
     """Test Function class."""
 
     api = ('value_to_load', 'load_to_value')
@@ -313,11 +313,7 @@ class TestBSMPFunction(unittest.TestCase):
         self.assertAlmostEqual(func.load_to_value(load)[1], values[1])
 
 
-class TestBSMPEntities(unittest.TestCase):
+class TestBSMPEntities(TestCase):
     """This class only has propertyies."""
 
     pass
-
-
-if __name__ == '__main__':
-    unittest.main()

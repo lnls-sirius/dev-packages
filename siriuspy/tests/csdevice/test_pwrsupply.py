@@ -2,8 +2,7 @@
 
 """Unittest module for enumtypes.py."""
 
-import unittest
-from unittest import mock
+from unittest import mock, TestCase
 import siriuspy.csdevice.pwrsupply as pwrsupply
 import siriuspy.util as util
 
@@ -57,7 +56,7 @@ public_interface = (
 )
 
 
-class TestPwrSupply(unittest.TestCase):
+class TestPwrSupply(TestCase):
     """Test pwrsupply module."""
 
     ps_alarm = ('Current-SP', 'Current-RB',
@@ -289,7 +288,3 @@ class TestPwrSupply(unittest.TestCase):
                 self.assertIn('unit', db_ps[convname])
                 self.assertIn('unit', db_ps[convname.replace('-SP', '-RB')])
                 self.assertIn('unit', db_ps[convname.replace('-SP', '-Mon')])
-
-
-if __name__ == "__main__":
-    unittest.main()

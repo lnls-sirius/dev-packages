@@ -1,13 +1,9 @@
 #!/usr/bin/env python-sirius
 """Test beaglebone module."""
-import unittest
+from unittest import TestCase
 
 
-class TestBeagleBone(unittest.TestCase):
+class TestBeagleBone(TestCase):
     """Test PRUInterface API."""
 
     pass
-
-
-if __name__ == "__main__":
-    unittest.main()

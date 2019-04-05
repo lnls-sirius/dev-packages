@@ -2,7 +2,7 @@
 
 """Unittest module for search package."""
 
-import unittest
+from unittest import TestCase
 
 from siriuspy import util
 from siriuspy import search
@@ -16,7 +16,7 @@ public_interface = (
 )
 
 
-class TestSearch(unittest.TestCase):
+class TestSearch(TestCase):
     """Test Search module."""
 
     def test_public_interface(self):
