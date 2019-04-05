@@ -2,7 +2,7 @@
 
 import copy as _copy
 
-from pcaspy import Severity as _Severity
+# from pcaspy import Severity as _Severity
 from siriuspy.search import PSSearch as _PSSearch
 from siriuspy.search import MASearch as _MASearch
 from siriuspy.pwrsupply.siggen import DEFAULT_SIGGEN_CONFIG as _DEF_SIGG_CONF
@@ -19,6 +19,13 @@ default_ps_current_precision = 4
 default_pu_current_precision = 4
 _default_ps_current_unit = None
 _default_pu_current_unit = None
+
+
+# _SEVERITY_NO_ALARM = _Severity.NO_ALARM
+# _SEVERITY_MAJOR_ALARM = _Severity.MAJOR_ALARM
+_SEVERITY_NO_ALARM = 0
+_SEVERITY_MAJOR_ALARM = 2
+
 
 # TODO: temporary data?
 NOMINAL_VOLTAGE_FAC_2S_ACDC = 300.0  # [Volt] (for BO QF)
@@ -695,7 +702,8 @@ def _get_ps_LINAC_propty_database():
     # propty_db = get_basic_propty_database()
     propty_db = {
         'rdnets': {'type': 'enum', 'enums': ['Connected', 'Broken'],
-                   'states': [_Severity.NO_ALARM, _Severity.MAJOR_ALARM]},
+                   # 'states': [_Severity.NO_ALARM, _Severity.MAJOR_ALARM]},
+                   'states': [_SEVERITY_NO_ALARM, _SEVERITY_MAJOR_ALARM]},
         'setpwm': {'type': 'enum', 'enums': ['Pwm_Off', 'Pwm_On']},  # 40
         'rdpwm': {'type': 'enum', 'enums': ['Pwm_Off', 'Pwm_On']},   # 40
         'seti': {'type': 'float', 'prec': 4, 'unit': 'A',
