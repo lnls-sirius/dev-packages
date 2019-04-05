@@ -2,10 +2,7 @@
 
 """Unittest module for hl_time_search.py."""
 
-import unittest
-# import re
-# from unittest import mock
-
+from unittest import TestCase
 from siriuspy import util
 from siriuspy.search import hl_time_search
 
@@ -14,7 +11,7 @@ mock_flag = True
 public_interface = ('HLTimeSearch', )
 
 
-class TestModule(unittest.TestCase):
+class TestModule(TestCase):
     """Test module interface."""
 
     def test_public_interface(self):
@@ -25,10 +22,11 @@ class TestModule(unittest.TestCase):
         self.assertTrue(valid)
 
 
-class TestHLTimeSearch(unittest.TestCase):
+class TestHLTimeSearch(TestCase):
     """Test HLTimeSearch class."""
 
     public_interface = (
+        'get_hl_events',
         'get_hl_triggers',
         'get_hl_trigger_database',
         'get_hl_trigger_sources',
@@ -91,7 +89,3 @@ class TestHLTimeSearch(unittest.TestCase):
         """Test check_hl_triggers_consistency."""
         # TODO: implement test!
         pass
-
-
-if __name__ == "__main__":
-    unittest.main()

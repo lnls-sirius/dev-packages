@@ -60,7 +60,7 @@ def get_chrom_database(acc):
                              'low': -10, 'hihi': 10, 'lolo': -10},
         'ChromY-RB':        {'type': 'float', 'value': 0, 'prec': 6},
 
-        'ApplyCorr-Cmd':    {'type': 'int', 'value': 0},
+        'ApplyDelta-Cmd':    {'type': 'int', 'value': 0},
 
         'ConfigName-SP':    {'type': 'string', 'value': ''},
         'ConfigName-RB':    {'type': 'string', 'value': ''},
@@ -75,8 +75,8 @@ def get_chrom_database(acc):
         'ConfigMA-Cmd':     {'type': 'int', 'value': 0},
 
         'Status-Mon':       {'type': 'int', 'value': 0b11111},
-        'StatusLabels-Cte': {'type': 'string', 'count': 5,
-                             'value': _c.STATUS_LABELS},
+        'StatusLabels-Cte': {'type': 'char', 'count': 1000,
+                             'value': '\n'.join(_c.STATUS_LABELS)},
     }
 
     for fam in sfams:
@@ -91,11 +91,11 @@ def get_chrom_database(acc):
         pvs_database['CorrMeth-Sts'] = {'type': 'enum',
                                         'enums': _et.PROP_ADD,
                                         'value': _c.CorrMeth.Proportional}
-        pvs_database['SyncCorr-Sel'] = {'type': 'enum', 'enums': _et.OFF_ON,
-                                        'value': _c.SyncCorr.Off}
-        pvs_database['SyncCorr-Sts'] = {'type': 'enum', 'enums': _et.OFF_ON,
-                                        'value': _c.SyncCorr.Off}
-        pvs_database['ConfigTiming-Cmd'] = {'type': 'int', 'value': 0}
+        # pvs_database['SyncCorr-Sel'] = {'type': 'enum', 'enums': _et.OFF_ON,
+        #                                 'value': _c.SyncCorr.Off}
+        # pvs_database['SyncCorr-Sts'] = {'type': 'enum', 'enums': _et.OFF_ON,
+        #                                 'value': _c.SyncCorr.Off}
+        # pvs_database['ConfigTiming-Cmd'] = {'type': 'int', 'value': 0}
 
     pvs_database = _cutil.add_pvslist_cte(pvs_database)
     return pvs_database
@@ -116,19 +116,19 @@ def get_tune_database(acc):
         'Log-Mon':         {'type': 'string', 'value': 'Starting...'},
 
         'DeltaTuneX-SP':   {'type': 'float', 'value': 0, 'prec': 6,
-                            'hilim': 1, 'lolim': -1, 'high': 1, 'low': -1,
-                            'hihi': 1, 'lolo': -1},
+                            'hilim': 5, 'lolim': -5, 'high': 5, 'low': -5,
+                            'hihi': 5, 'lolo': -5},
         'DeltaTuneX-RB':   {'type': 'float', 'value': 0, 'prec': 6,
-                            'hilim': 1, 'lolim': -1, 'high': 1, 'low': -1,
-                            'hihi': 1, 'lolo': -1},
+                            'hilim': 5, 'lolim': -5, 'high': 5, 'low': -5,
+                            'hihi': 5, 'lolo': -5},
         'DeltaTuneY-SP':   {'type': 'float', 'value': 0, 'prec': 6,
-                            'hilim': 1, 'lolim': -1, 'high': 1, 'low': -1,
-                            'hihi': 1, 'lolo': -1},
+                            'hilim': 5, 'lolim': -5, 'high': 5, 'low': -5,
+                            'hihi': 5, 'lolo': -5},
         'DeltaTuneY-RB':   {'type': 'float', 'value': 0, 'prec': 6,
-                            'hilim': 1, 'lolim': -1, 'high': 1, 'low': -1,
-                            'hihi': 1, 'lolo': -1},
+                            'hilim': 5, 'lolim': -5, 'high': 5, 'low': -5,
+                            'hihi': 5, 'lolo': -5},
 
-        'ApplyCorr-Cmd':   {'type': 'int', 'value': 0},
+        'ApplyDelta-Cmd':   {'type': 'int', 'value': 0},
 
         'ConfigName-SP':   {'type': 'string', 'value': ''},
         'ConfigName-RB':   {'type': 'string', 'value': ''},
@@ -138,22 +138,13 @@ def get_tune_database(acc):
         'NominalKL-Mon':   {'type': 'float', 'count': len(qfams),
                             'value': len(qfams)*[0], 'prec': 6},
 
-        'CorrFactor-SP':   {'type': 'float', 'value': 0, 'unit': '%',
-                            'prec': 1, 'hilim': 1000, 'lolim': -1000,
-                            'high': 1000, 'low': -1000, 'hihi': 1000,
-                            'lolo': -1000},
-        'CorrFactor-RB':   {'type': 'float', 'value': 0, 'unit': '%',
-                            'prec': 1, 'hilim': 1000, 'lolim': -1000,
-                            'high': 1000, 'low': -1000, 'hihi': 1000,
-                            'lolo': -1000},
-
         'ConfigMA-Cmd':    {'type': 'int', 'value': 0},
 
         'SetNewRefKL-Cmd': {'type': 'int', 'value': 0},
 
         'Status-Mon':      {'type': 'int', 'value': 0b11111},
-        'StatusLabels-Cte': {'type': 'string', 'count': 5,
-                             'value': _c.STATUS_LABELS},
+        'StatusLabels-Cte': {'type': 'char', 'count': 1000,
+                             'value': '\n'.join(_c.STATUS_LABELS)},
     }
 
     for fam in qfams:

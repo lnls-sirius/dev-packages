@@ -2,10 +2,7 @@
 
 """Unittest module for ll_time_search.py."""
 
-import unittest
-import re
-# from unittest import mock
-
+from unittest import TestCase
 from siriuspy import util
 from siriuspy.timesys import plot_network
 
@@ -14,7 +11,7 @@ mock_flag = True
 public_interface = ('PlotNetwork', )
 
 
-class TestModule(unittest.TestCase):
+class TestModule(TestCase):
     """Test module interface."""
 
     def test_public_interface(self):
@@ -24,7 +21,7 @@ class TestModule(unittest.TestCase):
         self.assertTrue(valid)
 
 
-class TestPlotNetwork(unittest.TestCase):
+class TestPlotNetwork(TestCase):
     """Test PlotNetwork class."""
 
     public_interface = ('plot', )
@@ -39,7 +36,3 @@ class TestPlotNetwork(unittest.TestCase):
         """Test plot."""
         # TODO: implement test!
         pass
-
-
-if __name__ == "__main__":
-    unittest.main()

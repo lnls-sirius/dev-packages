@@ -2,14 +2,14 @@
 
 """Test serial module."""
 
-import unittest
+from unittest import TestCase
 from unittest.mock import Mock
 from siriuspy.bsmp import SerialErrMsgShort, SerialErrPckgLen
 from siriuspy.bsmp import Message, Package, Channel, SerialError
 from siriuspy.util import check_public_interface_namespace
 
 
-class TestBSMPMessage(unittest.TestCase):
+class TestBSMPMessage(TestCase):
     """Test BSMP Message class."""
 
     api = (
@@ -78,7 +78,7 @@ class TestBSMPMessage(unittest.TestCase):
         self.assertEqual(m.stream, expected_stream)
 
 
-class TestBSMPPackage(unittest.TestCase):
+class TestBSMPPackage(TestCase):
     """Test BSMP Package class."""
 
     # Tuples with address, message and checksum
@@ -163,7 +163,7 @@ class TestBSMPPackage(unittest.TestCase):
             self.assertFalse(Package.verify_checksum(stream))
 
 
-class TestBSMPChannel(unittest.TestCase):
+class TestBSMPChannel(TestCase):
     """Test Channel class of BSMP package."""
 
     api = ('read', 'write', 'request')
@@ -218,7 +218,3 @@ class TestBSMPChannel(unittest.TestCase):
         self.serial.UART_read.return_value = None
         with self.assertRaises(SerialError):
             self.channel.request(Message.message(0x10, payload=[chr(10)]))
-
-
-if __name__ == '__main__':
-    unittest.main()

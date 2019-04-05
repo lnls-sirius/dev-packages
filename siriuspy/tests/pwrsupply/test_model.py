@@ -1,7 +1,7 @@
 #!/usr/bin/env python-sirius
 """Test public API of PowerSupply/Magnet class."""
-import unittest
-from unittest import mock
+
+from unittest import mock, TestCase
 
 from siriuspy.bsmp import SerialError
 from siriuspy.pwrsupply import model
@@ -33,7 +33,7 @@ public_interface = (
 )
 
 
-class TestModule(unittest.TestCase):
+class TestModule(TestCase):
     """Test Module."""
 
     def test_public_interface(self):
@@ -44,7 +44,7 @@ class TestModule(unittest.TestCase):
 
 # TODO: Uncomment unittests!
 
-# class TestPowerSupplyAPI(unittest.TestCase):
+# class TestPowerSupplyAPI(TestCase):
 #     """Test PowerSupply class."""
 #
 #     api = (
@@ -69,7 +69,7 @@ class TestModule(unittest.TestCase):
 #             check_public_interface_namespace(FBPPowerSupply, self.api))
 #
 #
-# class TestPowerSupply(unittest.TestCase):
+# class TestPowerSupply(TestCase):
 #     """Test power supply.
 #
 #     Test methods read_variable, execute_function and method that read and parse
@@ -266,7 +266,7 @@ class TestModule(unittest.TestCase):
 #         self.assertFalse(self.ps._create_group(['CurrentRef-Mon']))
 #
 #
-# class TestPowerSupplyFunctions(unittest.TestCase):
+# class TestPowerSupplyFunctions(TestCase):
 #     """Test functions."""
 #
 #     @mock.patch('siriuspy.csdevice.pwrsupply.get_ps_current_unit')
@@ -489,6 +489,3 @@ class TestModule(unittest.TestCase):
 #     #     self.controller.execute_function.assert_called_with(
 #     #         24, [1.0, 1.0, 1.0])
 #
-
-if __name__ == "__main__":
-    unittest.main()

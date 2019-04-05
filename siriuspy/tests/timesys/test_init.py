@@ -1,7 +1,6 @@
 """Unittest module for timesys package."""
 
-import unittest
-
+from unittest import TestCase
 from siriuspy import util
 from siriuspy import timesys
 
@@ -20,7 +19,7 @@ public_interface = (
     )
 
 
-class TestSearch(unittest.TestCase):
+class TestSearch(TestCase):
     """Test timesys package."""
 
     def test_public_interface(self):

@@ -2,8 +2,8 @@
 
 """Test data module."""
 
-import unittest
-from unittest import mock
+from unittest import TestCase
+from unittest import mock, TestCase
 from siriuspy import util
 from siriuspy.pwrsupply import data
 
@@ -15,7 +15,7 @@ public_interface = (
 )
 
 
-class TestModule(unittest.TestCase):
+class TestModule(TestCase):
     """Test module interface."""
 
     def test_public_interface(self):
@@ -26,7 +26,7 @@ class TestModule(unittest.TestCase):
         self.assertTrue(valid)
 
 
-class TestPSDataProperties(unittest.TestCase):
+class TestPSDataProperties(TestCase):
     """Test PSData properties are set correctly."""
 
     def setUp(self):
@@ -140,7 +140,7 @@ class TestPSDataProperties(unittest.TestCase):
         self.assertEqual(self.data.propty_database, self.db)
 
 
-class TestPSDataDb(unittest.TestCase):
+class TestPSDataDb(TestCase):
     """Test right database is called."""
 
     def setUp(self):
@@ -185,7 +185,7 @@ class TestPSDataDb(unittest.TestCase):
         self.ps_db_mock.assert_not_called()
 
 
-class TestPSDataException(unittest.TestCase):
+class TestPSDataException(TestCase):
     """Test PSDAta fails when PS is not found."""
 
     @mock.patch('siriuspy.pwrsupply.data._PSSearch', autospec=True)
@@ -194,7 +194,3 @@ class TestPSDataException(unittest.TestCase):
         mock_search.get_psnames.return_value = ["RealPS1", "RealPS2"]
         with self.assertRaises(ValueError):
             PSData("NonExistentPS")
-
-
-if __name__ == "__main__":
-    unittest.main()

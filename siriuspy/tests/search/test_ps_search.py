@@ -1,16 +1,15 @@
 """Unittest module for ps_search.py."""
 
-import unittest
+from unittest import TestCase
 
 from siriuspy import util
 from siriuspy.search import ps_search
 from siriuspy.search import PSSearch
 from siriuspy.pwrsupply.siggen import Signal
 from siriuspy.magnet.excdata import ExcitationData
-from ..mock_servweb import MockServConf
 
 
-class TestModule(unittest.TestCase):
+class TestModule(TestCase):
     """Test Search module."""
 
     public_interface = (
@@ -24,7 +23,7 @@ class TestModule(unittest.TestCase):
         self.assertTrue(valid)
 
 
-class TestPSSearch(MockServConf):
+class TestPSSearch(TestCase):
     """Test PSSearch."""
 
     public_interface = (
