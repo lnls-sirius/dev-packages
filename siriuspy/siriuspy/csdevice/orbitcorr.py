@@ -19,6 +19,9 @@ class ETypes(_cutil.ETypes):
     ORB_MODE_TLINES = ('Offline', 'SinglePass')
     SMOOTH_METH = ('Average', 'Median')
     SPASS_METHOD = ('FromBPMs', 'Calculated')
+    SPASS_BG_CTRL = ('Acquire', 'Reset')
+    SPASS_BG_STS = ('Empty', 'Acquiring', 'Acquired')
+    SPASS_USE_BG = ('NotUsing', 'Using')
     APPLY_CORR_RINGS = ('CH', 'CV', 'RF', 'All')
     APPLY_CORR_TLINES = ('CH', 'CV', 'All')
     ORB_ACQ_CHAN = ('Monit1', 'FOFB', 'TbT', 'ADC')
@@ -62,6 +65,9 @@ class ConstTLines(_cutil.Const):
     TrigAcqTrig = _cutil.Const.register('TrigAcqTrig', ('External', 'Data'))
     SmoothMeth = _cutil.Const.register('SmoothMeth', _et.SMOOTH_METH)
     SPassMethod = _cutil.Const.register('SPassMethod', _et.SPASS_METHOD)
+    SPassBgCtrl = _cutil.Const.register('SPassBgCtrl', _et.SPASS_BG_CTRL)
+    SPassBgSts = _cutil.Const.register('SPassBgSts', _et.SPASS_BG_STS)
+    SPassUseBg = _cutil.Const.register('SPassUseBg', _et.SPASS_USE_BG)
     MeasRespMatCmd = _cutil.Const.register('MeasRespMatCmd', _et.MEAS_RMAT_CMD)
     MeasRespMatMon = _cutil.Const.register('MeasRespMatMon', _et.MEAS_RMAT_MON)
     TransportLines = _cutil.Const.register('TransportLines',
@@ -445,6 +451,18 @@ class SOFBTLines(ConstTLines):
                 'type': 'int', 'value': 1, 'lolim': 1, 'hilim': 1000},
             'SPassAvgNrTurns-RB': {
                 'type': 'int', 'value': 1, 'lolim': 1, 'hilim': 1000},
+            'SPassBgCtrl-Cmd': {
+                'type': 'enum', 'value': self.SPassBgCtrl.Acquire,
+                'enums': self.SPassBgCtrl._fields},
+            'SPassBgSts-Mon': {
+                'type': 'enum', 'value': self.SPassBgSts.Empty,
+                'enums': self.SPassBgSts._fields},
+            'SPassUseBg-Sel': {
+                'type': 'enum', 'value': self.SPassUseBg.NotUsing,
+                'enums': self.SPassUseBg._fields},
+            'SPassUseBg-Sts': {
+                'type': 'enum', 'value': self.SPassUseBg.NotUsing,
+                'enums': self.SPassUseBg._fields},
             'BPMPosS-Mon': {
                 'type': 'float', 'unit': 'm', 'count': self.MAX_RINGSZ*nbpm,
                 'value': self.BPM_POS, 'prec': 2},
