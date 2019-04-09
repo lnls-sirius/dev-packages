@@ -2,6 +2,7 @@
 
 # make sure tests are run without access to sirius servers!
 import os as _os
+from . import mock_servweb
 
 _os.environ['SIRIUS_URL_RBAC_AUTH'] = ''
 _os.environ['SIRIUS_URL_RBAC'] = ''
