@@ -81,7 +81,11 @@ class BPM(_BaseTimingConfig):
             'ACQTriggerDataSel': 'ACQTriggerDataSel-SP',
             'ACQTriggerDataThres': 'ACQTriggerDataThres-SP',
             'ACQTriggerDataPol': 'ACQTriggerDataPol-Sel',
-            'ACQTriggerDataHyst': 'ACQTriggerDataHyst-SP'}
+            'ACQTriggerDataHyst': 'ACQTriggerDataHyst-SP',
+            'TbtTagEn': 'TbtTagEn-Sel',  # Enable TbT sync with timing
+            'TbtDataMaskEn': 'TbtDataMaskEn-Sel',  # Enable use of mask
+            'TbtDataMaskSamplesBeg': 'TbtDataMaskSamplesBeg-SP',
+            'TbtDataMaskSamplesEnd': 'TbtDataMaskSamplesEnd-SP'}
         self._config_pvs_sp = {
             k: _PV(LL_PREF+self.name+':'+v, **opt) for k, v in pvs.items()}
         pvs = {
@@ -92,6 +96,7 @@ class BPM(_BaseTimingConfig):
             'INFOTBTRate': 'INFOTBTRate-RB',
             'INFOFOFBRate': 'INFOFOFBRate-RB',
             'INFOMONITRate': 'INFOMONITRate-RB',
+            'INFOMONIT1Rate': 'INFOMONIT1Rate-RB',
             'ACQBPMMode': 'ACQBPMMode-Sts',
             'ACQChannel': 'ACQChannel-Sts',
             # 'ACQNrShots': 'ACQNrShots-RB',
@@ -115,7 +120,11 @@ class BPM(_BaseTimingConfig):
             'ACQTriggerDataSel': 'ACQTriggerDataSel-RB',
             'ACQTriggerDataThres': 'ACQTriggerDataThres-RB',
             'ACQTriggerDataPol': 'ACQTriggerDataPol-Sts',
-            'ACQTriggerDataHyst': 'ACQTriggerDataHyst-RB'}
+            'ACQTriggerDataHyst': 'ACQTriggerDataHyst-RB',
+            'TbtTagEn': 'TbtTagEn-Sts',
+            'TbtDataMaskEn': 'TbtDataMaskEn-Sts',
+            'TbtDataMaskSamplesBeg': 'TbtDataMaskSamplesBeg-RB',
+            'TbtDataMaskSamplesEnd': 'TbtDataMaskSamplesEnd-RB'}
         self._config_pvs_rb = {
             k: _PV(LL_PREF+self.name+':'+v, **opt) for k, v in pvs.items()}
 
@@ -204,10 +213,9 @@ class BPM(_BaseTimingConfig):
     @property
     def monit1rate(self):
         defv = (362 if self._csorb.acc == 'BO' else 382) * 603
-        # Not implemented in BPMs IOCs yet.
-        # pv = self._config_pvs_rb['INFOMONIT1Rate']
-        # val = pv.value if pv.connected else defv
-        # return val if val else defv
+        pv = self._config_pvs_rb['INFOMONIT1Rate']
+        val = pv.value if pv.connected else defv
+        return val if val else defv
         return defv
 
     @property
@@ -447,6 +455,54 @@ class BPM(_BaseTimingConfig):
     def acq_trig_datapol(self, val):
         pv = self._config_pvs_sp['ACQTriggerDataPol']
         self._config_ok_vals['ACQTriggerDataPol'] = val
+        if pv.connected:
+            pv.put(val, wait=False)
+
+    @property
+    def tbt_sync_enbl(self):
+        pv = self._config_pvs_rb['TbtTagEn']
+        return pv.value if pv.connected else None
+
+    @tbt_sync_enbl.setter
+    def tbt_sync_enbl(self, val):
+        pv = self._config_pvs_sp['TbtTagEn']
+        self._config_ok_vals['TbtTagEn'] = val
+        if pv.connected:
+            pv.put(val, wait=False)
+
+    @property
+    def tbt_mask_enbl(self):
+        pv = self._config_pvs_rb['TbtDataMaskEn']
+        return pv.value if pv.connected else None
+
+    @tbt_mask_enbl.setter
+    def tbt_mask_enbl(self, val):
+        pv = self._config_pvs_sp['TbtDataMaskEn']
+        self._config_ok_vals['TbtDataMaskEn'] = val
+        if pv.connected:
+            pv.put(val, wait=False)
+
+    @property
+    def tbt_mask_begin(self):
+        pv = self._config_pvs_rb['TbtDataMaskSamplesBeg']
+        return pv.value if pv.connected else None
+
+    @tbt_mask_begin.setter
+    def tbt_mask_begin(self, val):
+        pv = self._config_pvs_sp['TbtDataMaskSamplesBeg']
+        self._config_ok_vals['TbtDataMaskSamplesBeg'] = val
+        if pv.connected:
+            pv.put(val, wait=False)
+
+    @property
+    def tbt_mask_end(self):
+        pv = self._config_pvs_rb['TbtDataMaskSamplesEnd']
+        return pv.value if pv.connected else None
+
+    @tbt_mask_end.setter
+    def tbt_mask_end(self, val):
+        pv = self._config_pvs_sp['TbtDataMaskSamplesEnd']
+        self._config_ok_vals['TbtDataMaskSamplesEnd'] = val
         if pv.connected:
             pv.put(val, wait=False)
 
