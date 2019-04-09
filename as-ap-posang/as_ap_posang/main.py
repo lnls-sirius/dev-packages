@@ -370,7 +370,7 @@ class App:
         self.driver.updatePVs()
 
     def _callback_corr_pwrstate_sts(self, pvname, value, **kws):
-        if value != _PSConst.PwrStateSel.On:
+        if value != _PSConst.PwrStateSts.On:
             self.driver.setParam('Log-Mon', 'WARN:'+pvname+' is not On.')
 
         corr_index = self._correctors.index(_SiriusPVName(pvname).device_name)
@@ -379,7 +379,7 @@ class App:
         # Change the second bit of correction status
         self._status = _siriuspy.util.update_bit(
             v=self._status, bit_pos=1,
-            bit_val=any(q != _PSConst.PwrStateSel.On
+            bit_val=any(q != _PSConst.PwrStateSts.On
                         for q in self._corr_check_pwrstate_sts))
         self.driver.setParam('Status-Mon', self._status)
         self.driver.updatePVs()
