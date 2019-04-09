@@ -56,6 +56,7 @@ class ConstTLines(_cutil.Const):
     MAX_MT_ORBS = 4000
     MAX_RINGSZ = 5
 
+    EnbldDsbld = _cutil.Const.register('EnbldDsbld', _et.DSBLD_ENBLD)
     TrigAcqCtrl = _csbpm.AcqEvents
     TrigAcqChan = _cutil.Const.register('TrigAcqChan', _et.ORB_ACQ_CHAN)
     TrigAcqDataChan = _csbpm.AcqChan
@@ -70,15 +71,15 @@ class ConstTLines(_cutil.Const):
     SPassUseBg = _cutil.Const.register('SPassUseBg', _et.SPASS_USE_BG)
     MeasRespMatCmd = _cutil.Const.register('MeasRespMatCmd', _et.MEAS_RMAT_CMD)
     MeasRespMatMon = _cutil.Const.register('MeasRespMatMon', _et.MEAS_RMAT_MON)
-    TransportLines = _cutil.Const.register('TransportLines',
-                                           _et.TLINES, (0, 1))
+    TransportLines = _cutil.Const.register(
+        'TransportLines', _et.TLINES, (0, 1))
     Rings = _cutil.Const.register('Rings', _et.RINGS, (2, 3))
     Accelerators = _cutil.Const.register('Accelerators', _et.ACCELERATORS)
 
     SOFBMode = _cutil.Const.register('SOFBMode', _et.ORB_MODE_TLINES)
     ApplyDelta = _cutil.Const.register('ApplyDelta', _et.APPLY_CORR_TLINES)
     StsLblsCorr = _cutil.Const.register(
-                                    'StsLblsCorr', _et.STS_LBLS_CORR_TLINES)
+        'StsLblsCorr', _et.STS_LBLS_CORR_TLINES)
     StsLblsOrb = _cutil.Const.register('StsLblsOrb', _et.STS_LBLS_ORB)
     StsLblsGlob = _cutil.Const.register('StsLblsGlob', _et.STS_LBLS_GLOB)
 
@@ -638,6 +639,26 @@ class SOFBRings(SOFBTLines, ConstRings):
         for k in pvs_ring:
             db_ring[k] = _dcopy(prop)
         db_ring.update({
+            'MTurnSyncTim-Sel': {
+                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
+                'enums': self.EnbldDsbld._fields},
+            'MTurnSyncTim-Sts': {
+                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
+                'enums': self.EnbldDsbld._fields},
+            'MTurnUseMask-Sel': {
+                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
+                'enums': self.EnbldDsbld._fields},
+            'MTurnUseMask-Sts': {
+                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
+                'enums': self.EnbldDsbld._fields},
+            'MTurnMaskSplBeg-SP': {
+                'type': 'int', 'value': 0, 'lolim': -1, 'hilim': 1000},
+            'MTurnMaskSplBeg-RB': {
+                'type': 'int', 'value': 0, 'lolim': -1, 'hilim': 1000},
+            'MTurnMaskSplEnd-SP': {
+                'type': 'int', 'value': 0, 'lolim': -1, 'hilim': 1000},
+            'MTurnMaskSplEnd-RB': {
+                'type': 'int', 'value': 0, 'lolim': -1, 'hilim': 1000},
             'MTurnDownSample-SP': {
                 'type': 'int', 'unit': '', 'value': 1,
                 'hilim': 20000, 'lolim': 1},

@@ -33,7 +33,7 @@ MonitEnbl = _get_namedtuple('MonitEnbl', ('No', 'Yes'))
 OpModes = _get_namedtuple('OpModes', ('MultiBunch', 'SinglePass'))
 Polarity = _get_namedtuple('Polarity', ('Positive', 'Negative'))
 EnblTyp = _get_namedtuple('EnblTyp', ('Disable', 'Enable'))
-EnbldTyp = _get_namedtuple('EnbldTyp', ('disabled', 'enabled'))
+EnbldDsbld = _get_namedtuple('EnbldDsbld', ('disabled', 'enabled'))
 ConnTyp = _get_namedtuple('ConnTyp', _et.DISCONN_CONN)
 AcqRepeat = _get_namedtuple('AcqRepeat', ('Normal', 'Repetitive'))
 AcqEvents = _get_namedtuple('AcqEvents', ('Start', 'Stop', 'Abort'))
@@ -425,17 +425,17 @@ def get_config_database(prefix=''):
         'TriggerDataHyst-RB': {
             'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
         'TbtTagEn-Sel': {
-            'type': 'enum', 'enums': EnbldTyp._fields, 'value': 0},
+            'type': 'enum', 'enums': EnbldDsbld._fields, 'value': 0},
         'TbtTagEn-Sts': {
-            'type': 'enum', 'enums': EnbldTyp._fields, 'value': 0},
+            'type': 'enum', 'enums': EnbldDsbld._fields, 'value': 0},
         'TbtTagDly-SP': {
             'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
         'TbtTagDly-RB': {
             'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
         'TbtDataMaskEn-Sel': {
-            'type': 'enum', 'enums': EnbldTyp._fields, 'value': 0},
+            'type': 'enum', 'enums': EnbldDsbld._fields, 'value': 0},
         'TbtDataMaskEn-Sts': {
-            'type': 'enum', 'enums': EnbldTyp._fields, 'value': 0},
+            'type': 'enum', 'enums': EnbldDsbld._fields, 'value': 0},
         'TbtDataMaskSamplesBeg-SP': {
             'type': 'int', 'value': 0, 'low': 0, 'high': 2**31 - 1},
         'TbtDataMaskSamplesBeg-RB': {
