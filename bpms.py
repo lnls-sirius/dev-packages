@@ -504,17 +504,16 @@ class BPM(_BaseTimingConfig):
         maskend = kwargs.get('maskend', 0)
         bg = kwargs.get('bg', dict())
 
-        size = self.tbtrate
-        maskbeg = min(maskbeg, size - 2)
-        maskend = min(maskend, size - maskbeg - 2)
-        mask = slice(maskbeg, size - maskend)
+        wsize = self.tbtrate
+        maskbeg = min(maskbeg, wsize - 2)
+        maskend = min(maskend, wsize - maskbeg - 2)
+        mask = slice(maskbeg, wsize - maskend)
 
-        an = {
+        vs = {
             'A': self.spanta, 'B': self.spantb,
             'C': self.spantc, 'D': self.spantd}
-        vs = dict()
         siz = None
-        for a, v in an.items():
+        for a, v in vs.items():
             if v is None or v.size == 0:
                 siz = 0
                 break
@@ -528,20 +527,22 @@ class BPM(_BaseTimingConfig):
         s = _np.full(nturns, refsum)
 
         # handle cases where length read is smaller than required.
-        rnts = min(siz//downs, nturns)
+        rnts = min(siz//wsize, nturns)
         if not (siz and rnts):
             return x, y, s
 
         for a, v in vs.items():
-            v = v[:(rnts*downs)]
-            v = v.reshape(-1, downs)[:, mask]
+            v = v[:(rnts*wsize)]
+            v = v.reshape(-1, wsize)[:, mask]
             vs[a] = _np.std(v, axis=1)
 
         s1, s2 = vs['A'] + vs['B'], vs['D'] + vs['C']
-        d1 = (vs['A'] - vs['B']) / s1
-        d2 = (vs['D'] - vs['C']) / s2
-        x[:rnts] = (d1 + d2)*self.kx/2 * self.ORB_CONV
-        y[:rnts] = (d1 - d2)*self.ky/2 * self.ORB_CONV
+        m1 = _np.logical_not(_np.isclose(s1, 0.0))
+        m2 = _np.logical_not(_np.isclose(s2, 0.0))
+        d1 = (vs['A'][m1] - vs['B'][m1]) / s1[m1]
+        d2 = (vs['D'][m2] - vs['C'][m2]) / s2[m2]
+        x[:rnts][m1] = (d1 + d2) * self.kx/2 * self.ORB_CONV
+        y[:rnts][m2] = (d1 - d2) * self.ky/2 * self.ORB_CONV
         s[:rnts] = (s1 + s2) * self.ksum
         return x, y, s
 

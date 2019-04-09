@@ -718,7 +718,7 @@ class EpicsOrbit(BaseOrbit):
         ringsz = self._ring_extension
         down = self._spass_average
         use_bg = self._spass_usebg == self._csorb.SPassUseBg.Using
-        use_bg &= self._spass_bgs[-1]  # check if there is a BG saved
+        use_bg &= bool(self._spass_bgs[-1])  # check if there is a BG saved
         pvv = self._csorb.SPassUseBg
         self.run_callbacks(
             'SPassUseBg-Sts', pvv.Using if use_bg else pvv.NotUsing)
