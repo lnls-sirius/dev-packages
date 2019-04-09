@@ -61,6 +61,12 @@ class EpicsOrbit(BaseOrbit):
         if self.isring:
             db['MTurnIdx-SP'][prop] = self.set_orbit_multiturn_idx
             db['MTurnDownSample-SP'][prop] = self.set_mturndownsample
+            db['MTurnSyncTim-Sel'][prop] = self.set_mturn_sync
+            db['MTurnUseMask-Sel'][prop] = self.set_mturn_usemask
+            db['MTurnMaskSplBeg-SP'][prop] = _part(
+                self.set_mturn_mask, beg=True)
+            db['MTurnMaskSplEnd-SP'][prop] = _part(
+                self.set_mturn_mask, beg=False)
 
         db = super().get_database(db)
         return db
@@ -246,6 +252,7 @@ class EpicsOrbit(BaseOrbit):
         self._spass_mask[beg] = val
         name = 'Beg' if beg else 'End'
         self.run_callbacks('SPassMaskSpl' + name + '-RB', val)
+        return True
 
     def set_spass_bg(self, val):
         if val == self._csorb.SPassBgCtrl.Acquire:
@@ -268,6 +275,43 @@ class EpicsOrbit(BaseOrbit):
             self._update_log(msg)
             _log.warning(msg[5:])
             return False
+        return True
+
+    def set_mturn_sync(self, val):
+        val = \
+            _csbpm.EnbldDsbld.disabled \
+            if val == self._csorb.EnbldDsbld.Dsbld else \
+            _csbpm.EnbldDsbld.enabled
+        for bpm in self.bpms:
+            bpm.tbt_sync_enbl = val
+        self.run_callbacks('MTurnSyncTim-Sts', val)
+        return True
+
+    def set_mturn_usemask(self, val):
+        val = \
+            _csbpm.EnbldDsbld.disabled \
+            if val == self._csorb.EnbldDsbld.Dsbld else \
+            _csbpm.EnbldDsbld.enabled
+        for bpm in self.bpms:
+            bpm.tbt_mask_enbl = val
+        self.run_callbacks('MTurnUseMask-Sts', val)
+        return True
+
+    def set_mturn_mask(self, val, beg=True):
+        val = int(val) if val > 0 else 0
+        omsk = \
+            self.bpms[0].tbt_mask_begin if not beg else \
+            self.bpms[0].tbt_mask_end
+        omsk = omsk or 0
+        maxsz = self.bpms[0].tbtrate - omsk - 2
+        val = val if val < maxsz else maxsz
+        for bpm in self.bpms:
+            if beg:
+                bpm.tbt_mask_begin = val
+            else:
+                bpm.tbt_mask_end = val
+        name = 'Beg' if beg else 'End'
+        self.run_callbacks('MTurnMaskSpl' + name + '-RB', val)
         return True
 
     def _do_acquire_spass_bg(self):

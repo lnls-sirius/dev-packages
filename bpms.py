@@ -57,7 +57,11 @@ class BPM(_BaseTimingConfig):
             'ACQTriggerDataSel': _csbpm.AcqDataTyp.A,
             'ACQTriggerDataThres': 1,
             'ACQTriggerDataPol': _csbpm.Polarity.Positive,
-            'ACQTriggerDataHyst': 0}
+            'ACQTriggerDataHyst': 0,
+            'TbtTagEn': _csbpm.EnbldDsbld.disabled,  # Enable TbT sync Timing
+            'TbtDataMaskEn': _csbpm.EnbldDsbld.disabled,  # Enable use of mask
+            'TbtDataMaskSamplesBeg': 0,
+            'TbtDataMaskSamplesEnd': 0}
         pvs = {
             'asyn.ENBL': 'asyn.ENBL',
             'ACQBPMMode': 'ACQBPMMode-Sel',
