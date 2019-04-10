@@ -35,19 +35,22 @@ folder_lnls_sirius_hla = _os.path.join(
 server_url_rbac_auth = _os.environ.get(
     'SIRIUS_URL_RBAC_AUTH', default='https://sirius-rbac-auth.lnls.br')
 server_url_rbac = _os.environ.get(
-    'SIRIUS_URL_RBAC',      default='https://rbac:8445')
+    'SIRIUS_URL_RBAC', default='https://rbac:8445')
 server_url_ns = _os.environ.get(
-    'SIRIUS_URL_NS',        default='http://naming-service-wildfly:8089/names')
+    'SIRIUS_URL_NS', default='http://naming-service-wildfly:8089/names')
 server_url_ccdb = _os.environ.get(
-    'SIRIUS_URL_CCDB',      default='http://ccdb:8083')
+    'SIRIUS_URL_CCDB', default='http://ccdb:8083')
 server_url_cables = _os.environ.get(
-    'SIRIUS_URL_CABLES',    default='http://cables:8086')
+    'SIRIUS_URL_CABLES', default='http://cables:8086')
 server_url_consts = _os.environ.get(
-    'SIRIUS_URL_CONSTS',    default='http://sirius-consts.lnls.br')
+    'SIRIUS_URL_CONSTS',
+    default='http://sirius-consts.lnls.br/control-system-constants')
 server_url_logbook = _os.environ.get(
-    'SIRIUS_URL_LOGBOOK',   default='http://sirius-logbook.lnls.br')
+    'SIRIUS_URL_LOGBOOK',
+    default='http://sirius-logbook.lnls.br/Olog')
 server_url_configdb = _os.environ.get(
-    'SIRIUS_URL_CONFIGDB',  default='http://sirius-configdb.lnls.br:8085')
+    'SIRIUS_URL_CONFIGDB',
+    default='http://sirius-configdb.lnls.br:8085')
 
 vaca_prefix = _os.environ.get('VACA_PREFIX',   default='')
 
