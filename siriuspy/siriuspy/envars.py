@@ -48,7 +48,7 @@ server_url_consts = _os.environ.get(
 server_url_logbook = _os.environ.get(
     'SIRIUS_URL_LOGBOOK', default='http://sirius-logbook.lnls.br')
 server_url_configdb = _os.environ.get(
-    'SIRIUS_URL_CONFIGDB', default='http://sirius-configdb.lnls.br:8085')
+    'SIRIUS_URL_CONFIGDB', default='http://sirius-configdb.lnls.br/config-db')
 
 vaca_prefix = _os.environ.get('VACA_PREFIX',   default='')
 
