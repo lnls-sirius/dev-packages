@@ -13,6 +13,7 @@ class ETypes:
     """Enumerate types."""
 
     DSBL_ENBL = ('Dsbl', 'Enbl')
+    DSBLD_ENBLD = ('Dsbld', 'Enbld')
     OFF_ON = ('Off', 'On')
     CLOSE_OPEN = ('Closed', 'Open')
     DISCONN_CONN = ('Disconnected', 'Connected')
