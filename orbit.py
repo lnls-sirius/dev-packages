@@ -21,56 +21,6 @@ class BaseOrbit(_BaseClass):
 class EpicsOrbit(BaseOrbit):
     """Class to deal with orbit acquisition."""
 
-    def get_database(self):
-        """Get the database of the class."""
-        db = self._csorb.get_orbit_database()
-        prop = 'fun_set_pv'
-        db['SOFBMode-Sel'][prop] = self.set_orbit_mode
-        db['TrigAcqConfig-Cmd'][prop] = self.trig_acq_config_bpms
-        db['TrigAcqCtrl-Sel'][prop] = self.set_trig_acq_control
-        db['TrigAcqChan-Sel'][prop] = self.set_trig_acq_channel
-        db['TrigDataChan-Sel'][prop] = self.set_trig_acq_datachan
-        db['TrigAcqTrigger-Sel'][prop] = self.set_trig_acq_trigger
-        db['TrigAcqRepeat-Sel'][prop] = self.set_trig_acq_repeat
-        db['TrigDataSel-Sel'][prop] = self.set_trig_acq_datasel
-        db['TrigDataThres-SP'][prop] = self.set_trig_acq_datathres
-        db['TrigDataHyst-SP'][prop] = self.set_trig_acq_datahyst
-        db['TrigDataPol-Sel'][prop] = self.set_trig_acq_datapol
-        db['TrigExtDuration-SP'][prop] = self.set_trig_acq_extduration
-        db['TrigExtDelay-SP'][prop] = self.set_trig_acq_extdelay
-        db['TrigExtEvtSrc-Sel'][prop] = self.set_trig_acq_extsource
-        db['TrigNrSamplesPre-SP'][prop] = _part(
-            self.set_trig_acq_nrsamples, ispost=False)
-        db['TrigNrSamplesPost-SP'][prop] = _part(
-            self.set_trig_acq_nrsamples, ispost=True)
-        db['RefOrbX-SP'][prop] = _part(self.set_ref_orbit, 'X')
-        db['RefOrbY-SP'][prop] = _part(self.set_ref_orbit, 'Y')
-        db['OfflineOrbX-SP'][prop] = _part(self.set_offline_orbit, 'X')
-        db['OfflineOrbY-SP'][prop] = _part(self.set_offline_orbit, 'Y')
-        db['SmoothNrPts-SP'][prop] = self.set_smooth_npts
-        db['SmoothMethod-Sel'][prop] = self.set_smooth_method
-        db['SmoothReset-Cmd'][prop] = self.set_smooth_reset
-        db['SPassMethod-Sel'][prop] = self.set_spass_method
-        db['SPassMaskSplBeg-SP'][prop] = _part(self.set_spass_mask, beg=True)
-        db['SPassMaskSplEnd-SP'][prop] = _part(self.set_spass_mask, beg=False)
-        db['SPassBgCtrl-Cmd'][prop] = self.set_spass_bg
-        db['SPassUseBg-Sel'][prop] = self.set_spass_usebg
-        db['SPassAvgNrTurns-SP'][prop] = self.set_spass_average
-        db['OrbAcqRate-SP'][prop] = self.set_orbit_acq_rate
-        db['TrigNrShots-SP'][prop] = self.set_trig_acq_nrshots
-        if self.isring:
-            db['MTurnIdx-SP'][prop] = self.set_orbit_multiturn_idx
-            db['MTurnDownSample-SP'][prop] = self.set_mturndownsample
-            db['MTurnSyncTim-Sel'][prop] = self.set_mturn_sync
-            db['MTurnUseMask-Sel'][prop] = self.set_mturn_usemask
-            db['MTurnMaskSplBeg-SP'][prop] = _part(
-                self.set_mturn_mask, beg=True)
-            db['MTurnMaskSplEnd-SP'][prop] = _part(
-                self.set_mturn_mask, beg=False)
-
-        db = super().get_database(db)
-        return db
-
     def __init__(self, acc, prefix='', callback=None):
         """Initialize the instance."""
         super().__init__(acc, prefix=prefix, callback=callback)
@@ -113,6 +63,53 @@ class EpicsOrbit(BaseOrbit):
                         1/self._acqrate, self._update_orbits, niter=0)
         self._orbit_thread.start()
         self._update_time_vector()
+
+    def get_map2write(self):
+        """Get the write methods of the class."""
+        db = {
+            'SOFBMode-Sel': self.set_orbit_mode,
+            'TrigAcqConfig-Cmd': self.trig_acq_config_bpms,
+            'TrigAcqCtrl-Sel': self.set_trig_acq_control,
+            'TrigAcqChan-Sel': self.set_trig_acq_channel,
+            'TrigDataChan-Sel': self.set_trig_acq_datachan,
+            'TrigAcqTrigger-Sel': self.set_trig_acq_trigger,
+            'TrigAcqRepeat-Sel': self.set_trig_acq_repeat,
+            'TrigDataSel-Sel': self.set_trig_acq_datasel,
+            'TrigDataThres-SP': self.set_trig_acq_datathres,
+            'TrigDataHyst-SP': self.set_trig_acq_datahyst,
+            'TrigDataPol-Sel': self.set_trig_acq_datapol,
+            'TrigExtDuration-SP': self.set_trig_acq_extduration,
+            'TrigExtDelay-SP': self.set_trig_acq_extdelay,
+            'TrigExtEvtSrc-Sel': self.set_trig_acq_extsource,
+            'TrigNrSamplesPre-SP': _part(self.set_acq_nrsamples, ispost=False),
+            'TrigNrSamplesPost-SP': _part(self.set_acq_nrsamples, ispost=True),
+            'RefOrbX-SP': _part(self.set_reforb, 'X'),
+            'RefOrbY-SP': _part(self.set_reforb, 'Y'),
+            'OfflineOrbX-SP': _part(self.set_offlineorb, 'X'),
+            'OfflineOrbY-SP': _part(self.set_offlineorb, 'Y'),
+            'SmoothNrPts-SP': self.set_smooth_npts,
+            'SmoothMethod-Sel': self.set_smooth_method,
+            'SmoothReset-Cmd': self.set_smooth_reset,
+            'SPassMethod-Sel': self.set_spass_method,
+            'SPassMaskSplBeg-SP': _part(self.set_spass_mask, beg=True),
+            'SPassMaskSplEnd-SP': _part(self.set_spass_mask, beg=False),
+            'SPassBgCtrl-Cmd': self.set_spass_bg,
+            'SPassUseBg-Sel': self.set_spass_usebg,
+            'SPassAvgNrTurns-SP': self.set_spass_average,
+            'OrbAcqRate-SP': self.set_orbit_acq_rate,
+            'TrigNrShots-SP': self.set_trig_acq_nrshots,
+            }
+        if not self.isring:
+            return db
+        db.update({
+            'MTurnIdx-SP': self.set_orbit_multiturn_idx,
+            'MTurnDownSample-SP': self.set_mturndownsample,
+            'MTurnSyncTim-Sel': self.set_mturn_sync,
+            'MTurnUseMask-Sel': self.set_mturn_usemask,
+            'MTurnMaskSplBeg-SP': _part(self.set_mturnmask, beg=True),
+            'MTurnMaskSplEnd-SP': _part(self.set_mturnmask, beg=False),
+            })
+        return db
 
     @property
     def mode(self):
@@ -207,7 +204,7 @@ class EpicsOrbit(BaseOrbit):
         idx = self._multiturnidx
         return orbs['X'][idx, :], orbs['Y'][idx, :]
 
-    def set_offline_orbit(self, plane, orb):
+    def set_offlineorb(self, plane, orb):
         msg = 'Setting New Offline Orbit.'
         self._update_log(msg)
         _log.info(msg)
@@ -297,7 +294,7 @@ class EpicsOrbit(BaseOrbit):
         self.run_callbacks('MTurnUseMask-Sts', val)
         return True
 
-    def set_mturn_mask(self, val, beg=True):
+    def set_mturnmask(self, val, beg=True):
         val = int(val) if val > 0 else 0
         omsk = \
             self.bpms[0].tbt_mask_begin if not beg else \
@@ -366,7 +363,7 @@ class EpicsOrbit(BaseOrbit):
             self._reset_orbs()
         return True
 
-    def set_ref_orbit(self, plane, orb):
+    def set_reforb(self, plane, orb):
         msg = 'Setting New Reference Orbit.'
         self._update_log(msg)
         _log.info(msg)
@@ -542,7 +539,7 @@ class EpicsOrbit(BaseOrbit):
         self.run_callbacks('TrigExtEvtSrc-Sts', value)
         return True
 
-    def set_trig_acq_nrsamples(self, val, ispost=True):
+    def set_acq_nrsamples(self, val, ispost=True):
         val = int(val) if val > 4 else 4
         val = val if val < 20000 else 20000
         suf = 'post' if ispost else 'pre'

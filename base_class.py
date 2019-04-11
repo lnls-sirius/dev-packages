@@ -14,6 +14,7 @@ class BaseClass(_Callback):
         self._csorb = _SOFBFactory.create(acc)
         self._prefix = prefix
         self._status = 0b0
+        self._map2write = self.get_map2write()
 
     @property
     def prefix(self):
@@ -41,13 +42,26 @@ class BaseClass(_Callback):
         self._update_status()
         return self._status
 
+    @property
+    def csorb(self):
+        """CSDevice SOFB definition."""
+        return self._csorb
+
+    def write(self, pvname, value):
+        pvname = pvname.replace(self.prefix, '')
+        if pvname in self._map2write:
+            return self._map2write[pvname](value)
+        else:
+            _log.warning('PV %s does not have a set function.', pvname)
+            return False
+
     def run_callbacks(self, pvname, *args, **kwargs):
         """Run callback functions."""
         super().run_callbacks(self._prefix + pvname, *args, **kwargs)
 
-    def get_database(self, db):
-        """Return database."""
-        return {self.prefix + k: v for k, v in db.items()}
+    def get_map2write(self):
+        """Return map of PV name to function for write."""
+        return dict()
 
     def _update_log(self, value):
         self.run_callbacks('Log-Mon', value)

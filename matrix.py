@@ -15,21 +15,6 @@ class BaseMatrix(_BaseClass):
 class EpicsMatrix(BaseMatrix):
     """Class of the Response Matrix."""
 
-    def get_database(self):
-        """Get the database of the class."""
-        db = self._csorb.get_respmat_database()
-        prop = 'fun_set_pv'
-        db['RespMat-SP'][prop] = self.set_respmat
-        db['CHEnblList-SP'][prop] = _part(self.set_enbllist, 'ch')
-        db['CVEnblList-SP'][prop] = _part(self.set_enbllist, 'cv')
-        db['BPMXEnblList-SP'][prop] = _part(self.set_enbllist, 'bpmx')
-        db['BPMYEnblList-SP'][prop] = _part(self.set_enbllist, 'bpmy')
-        db['NrSingValues-SP'][prop] = self.set_num_sing_values
-        if self.isring:
-            db['RFEnbl-Sel'][prop] = _part(self.set_enbllist, 'rf')
-        db = super().get_database(db)
-        return db
-
     def __init__(self, acc, prefix='', callback=None):
         """Initialize the instance."""
         super().__init__(acc, prefix=prefix, callback=callback)
@@ -58,6 +43,20 @@ class EpicsMatrix(BaseMatrix):
         self.respmat_extended = self.respmat.copy()
         self.select_items_extended = _dcopy(self.select_items)
         self._load_respmat()
+
+    def get_map2write(self):
+        """Get the write methods of the class."""
+        db = {
+            'RespMat-SP': self.set_respmat,
+            'CHEnblList-SP': _part(self.set_enbllist, 'ch'),
+            'CVEnblList-SP': _part(self.set_enbllist, 'cv'),
+            'BPMXEnblList-SP': _part(self.set_enbllist, 'bpmx'),
+            'BPMYEnblList-SP': _part(self.set_enbllist, 'bpmy'),
+            'NrSingValues-SP': self.set_num_sing_values,
+            }
+        if self.isring:
+            db['RFEnbl-Sel'] = _part(self.set_enbllist, 'rf')
+        return db
 
     def set_respmat(self, mat):
         """Set the response matrix in memory and save it in file."""

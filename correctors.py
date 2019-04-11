@@ -268,17 +268,6 @@ class EpicsCorrectors(BaseCorrectors):
     TINY_INTERVAL = 0.005
     NUM_TIMEOUT = 1000
 
-    def get_database(self):
-        """Get the database of the class."""
-        db = self._csorb.get_corrs_database()
-        prop = 'fun_set_pv'
-        db['CorrConfig-Cmd'][prop] = self.configure_correctors
-        db['KickAcqRate-SP'][prop] = self.set_kick_acq_rate
-        if self.isring:
-            db['CorrSync-Sel'][prop] = self.set_corrs_mode
-        db = super().get_database(db)
-        return db
-
     def __init__(self, acc, prefix='', callback=None):
         """Initialize the instance."""
         super().__init__(acc, prefix=prefix, callback=callback)
@@ -292,6 +281,16 @@ class EpicsCorrectors(BaseCorrectors):
         self._corrs_thread = _Repeat(
                 1/self._acq_rate, self._update_corrs_strength, niter=0)
         self._corrs_thread.start()
+
+    def get_map2write(self):
+        """Get the write methods of the class."""
+        db = {
+            'CorrConfig-Cmd': self.configure_correctors,
+            'KickAcqRate-SP': self.set_kick_acq_rate,
+            }
+        if self.isring:
+            db['CorrSync-Sel'] = self.set_corrs_mode
+        return db
 
     def apply_kicks(self, values, code=None):
         """Apply kicks."""

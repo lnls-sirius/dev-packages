@@ -1,15 +1,14 @@
 """Main Module of the program."""
 
 import time as _time
-import numpy as _np
 import logging as _log
 from functools import partial as _part
 from threading import Thread as _Thread
+import numpy as _np
 from pcaspy import Driver as _PCasDriver
-from .matrix import BaseMatrix as _BaseMatrix, EpicsMatrix as _EpicsMatrix
-from .orbit import BaseOrbit as _BaseOrbit, EpicsOrbit as _EpicsOrbit
-from .correctors import (BaseCorrectors as _BaseCorrectors,
-                         EpicsCorrectors as _EpicsCorrectors)
+from .matrix import BaseMatrix as _BaseMatrix
+from .orbit import BaseOrbit as _BaseOrbit
+from .correctors import BaseCorrectors as _BaseCorrectors
 from .base_class import BaseClass as _BaseClass
 
 INTERVAL = 1
@@ -18,44 +17,12 @@ INTERVAL = 1
 class SOFB(_BaseClass):
     """Main Class of the IOC."""
 
-    def get_database(self):
-        """Get the database of the class."""
-        db = self._csorb.get_sofb_database()
-        prop = 'fun_set_pv'
-        db['MeasRespMat-Cmd'][prop] = self.set_respmat_meas_state
-        db['CalcDelta-Cmd'][prop] = self.calc_correction
-        db['DeltaFactorCH-SP'][prop] = _part(self.set_corr_factor, 'ch')
-        db['DeltaFactorCV-SP'][prop] = _part(self.set_corr_factor, 'cv')
-        db['MaxKickCH-SP'][prop] = _part(self.set_max_kick, 'ch')
-        db['MaxKickCV-SP'][prop] = _part(self.set_max_kick, 'cv')
-        db['MaxDeltaKickCH-SP'][prop] = _part(self.set_max_delta_kick, 'ch')
-        db['MaxDeltaKickCV-SP'][prop] = _part(self.set_max_delta_kick, 'cv')
-        db['MeasRespMatKickCH-SP'][prop] = _part(self.set_respmat_kick, 'ch')
-        db['MeasRespMatKickCV-SP'][prop] = _part(self.set_respmat_kick, 'cv')
-        db['MeasRespMatWait-SP'][prop] = self.set_respmat_wait_time
-        db['ApplyDelta-Cmd'][prop] = self.apply_corr
-        if self.isring:
-            db['RingSize-SP'][prop] = self.set_ring_extension
-            db['ClosedLoop-Sel'][prop] = self.set_auto_corr
-            db['ClosedLoopFreq-SP'][prop] = self.set_auto_corr_frequency
-            db['DeltaFactorRF-SP'][prop] = _part(self.set_corr_factor, 'rf')
-            db['MaxKickRF-SP'][prop] = _part(self.set_max_kick, 'rf')
-            db['MaxDeltaKickRF-SP'][prop] = _part(
-                self.set_max_delta_kick, 'rf')
-            db['MeasRespMatKickRF-SP'][prop] = _part(
-                self.set_respmat_kick, 'rf')
-        db = super().get_database(db)
-        db.update(self.correctors.get_database())
-        db.update(self.matrix.get_database())
-        db.update(self.orbit.get_database())
-        return db
-
     def __init__(self, acc, prefix='', callback=None,
                  orbit=None, matrix=None, correctors=None):
         """Initialize Object."""
         super().__init__(acc, prefix=prefix, callback=callback)
         _log.info('Starting SOFB...')
-        self.add_callback(self._update_driver)
+        self.add_callback(self.update_driver)
         self._driver = None
         self._orbit = self._correctors = self._matrix = None
         if self.isring:
@@ -80,16 +47,32 @@ class SOFB(_BaseClass):
         self.orbit = orbit
         self.correctors = correctors
         self.matrix = matrix
-        if self._orbit is None:
-            self.orbit = _EpicsOrbit(
-                acc=acc, prefix=self.prefix, callback=self._update_driver)
-        if self._correctors is None:
-            self.correctors = _EpicsCorrectors(
-                acc=acc, prefix=self.prefix, callback=self._update_driver)
-        if self._matrix is None:
-            self.matrix = _EpicsMatrix(
-                acc=acc, prefix=self.prefix, callback=self._update_driver)
-        self._database = self.get_database()
+
+    def get_map2write(self):
+        """Get the database of the class."""
+        db = {
+            'MeasRespMat-Cmd': self.set_respmat_meas_state,
+            'CalcDelta-Cmd': self.calc_correction,
+            'DeltaFactorCH-SP': _part(self.set_corr_factor, 'ch'),
+            'DeltaFactorCV-SP': _part(self.set_corr_factor, 'cv'),
+            'MaxKickCH-SP': _part(self.set_max_kick, 'ch'),
+            'MaxKickCV-SP': _part(self.set_max_kick, 'cv'),
+            'MaxDeltaKickCH-SP': _part(self.set_max_delta_kick, 'ch'),
+            'MaxDeltaKickCV-SP': _part(self.set_max_delta_kick, 'cv'),
+            'MeasRespMatKickCH-SP': _part(self.set_respmat_kick, 'ch'),
+            'MeasRespMatKickCV-SP': _part(self.set_respmat_kick, 'cv'),
+            'MeasRespMatWait-SP': self.set_respmat_wait_time,
+            'ApplyDelta-Cmd': self.apply_corr,
+            }
+        if self.isring:
+            db['RingSize-SP'] = self.set_ring_extension
+            db['ClosedLoop-Sel'] = self.set_auto_corr
+            db['ClosedLoopFreq-SP'] = self.set_auto_corr_frequency
+            db['DeltaFactorRF-SP'] = _part(self.set_corr_factor, 'rf')
+            db['MaxKickRF-SP'] = _part(self.set_max_kick, 'rf')
+            db['MaxDeltaKickRF-SP'] = _part(self.set_max_delta_kick, 'rf')
+            db['MeasRespMatKickRF-SP'] = _part(self.set_respmat_kick, 'rf')
+        return db
 
     @property
     def orbit(self):
@@ -98,6 +81,7 @@ class SOFB(_BaseClass):
     @orbit.setter
     def orbit(self, orb):
         if isinstance(orb, _BaseOrbit):
+            self._map2write.update(orb.get_map2write())
             self._orbit = orb
 
     @property
@@ -107,6 +91,7 @@ class SOFB(_BaseClass):
     @correctors.setter
     def correctors(self, corrs):
         if isinstance(corrs, _BaseCorrectors):
+            self._map2write.update(corrs.get_map2write())
             self._correctors = corrs
 
     @property
@@ -116,6 +101,7 @@ class SOFB(_BaseClass):
     @matrix.setter
     def matrix(self, mat):
         if isinstance(mat, _BaseMatrix):
+            self._map2write.update(mat.get_map2write())
             self._matrix = mat
 
     @property
@@ -127,23 +113,6 @@ class SOFB(_BaseClass):
     def driver(self, driver):
         if isinstance(driver, _PCasDriver):
             self._driver = driver
-
-    def write(self, reason, value):
-        """Write value in database."""
-        if not self._isValid(reason, value):
-            return False
-        fun_ = self._database[reason].get('fun_set_pv')
-        if fun_ is None:
-            _log.warning('PV %s does not have a set function.', reason)
-            return False
-        ret_val = fun_(value)
-        if ret_val:
-            _log.info('YES Write %s: %s', reason, str(value))
-        else:
-            value = self._driver.getParam(reason)
-            _log.warning('NO write %s: %s', reason, str(value))
-        self._update_driver(reason, value)
-        return True
 
     def process(self):
         """Run continuously in the main thread."""
@@ -306,25 +275,10 @@ class SOFB(_BaseClass):
         kicks = self._ref_corr_kicks + dkicks
         self.correctors.apply_kicks(kicks, code=code)
 
-    def _update_driver(self, pvname, value, **kwargs):
+    def update_driver(self, pvname, value, **kwargs):
         if self._driver is not None:
             self._driver.setParam(pvname, value)
             self._driver.updatePV(pvname)
-
-    def _isValid(self, reason, val):
-        if reason.endswith(('-Sts', '-RB', '-Mon', '-Cte')):
-            _log.debug('PV {0:s} is read only.'.format(reason))
-            return False
-        if val is None:
-            msg = 'ERR: client tried to set None value. refusing...'
-            self._update_log(msg)
-            _log.error(msg[5:])
-            return False
-        enums = self._database[reason].get('enums')
-        if enums is not None and isinstance(val, int) and val >= len(enums):
-            _log.warning('value %d too large for enum type PV %s', val, reason)
-            return False
-        return True
 
     def _stop_meas_respmat(self):
         if not self._measuring_respmat:
