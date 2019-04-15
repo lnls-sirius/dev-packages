@@ -21,6 +21,8 @@ class ProcessImage:
     HIGH = 1
     MOMENTS = 0
     GAUSS = 1
+    CLIKE = 0
+    FORTRANLIKE = 1
 
     def __init__(self):
         self._roi_autocenter = True
@@ -31,17 +33,21 @@ class ProcessImage:
         self._roi_axis = [_np.array([], dtype=int), _np.array([], dtype=int)]
         self._roi_proj = [_np.array([], dtype=int), _np.array([], dtype=int)]
         self._roi_gauss = [_np.array([], dtype=int), _np.array([], dtype=int)]
-        self._background = _np.zeros((2, 2), dtype=int)
+        self._background = _np.zeros((1024, 1024), dtype=int)
         self._background_use = False
         self._crop = [0, 255]
         self._crop_use = False
+        self._width = 0
+        self._reading_order = self.CLIKE
         self._method = self.GAUSS
-        self._image_raw = _np.zeros((2, 2), dtype=int)
-        self._image_proc = _np.zeros((2, 2), dtype=int)
+        self._image_raw = _np.zeros((1024, 1024), dtype=int)
+        self._image_proc = _np.zeros((1024, 1024), dtype=int)
         self._conv_autocenter = True
         self._conv_cen = [0, 0]
         self._conv_scale = [1, 1]
         self._beam_params = [[0, 1, 1, 0], [0, 1, 1, 0]]
+        self.roisizex = 500
+        self.roisizey = 500
 
     @property
     def image(self):
@@ -49,9 +55,32 @@ class ProcessImage:
 
     @image.setter
     def image(self, val):
-        if not isinstance(val, _np.ndarray) or len(val.shape) != 2:
+        if not isinstance(val, _np.ndarray):
             return
         self._image_raw = val.copy()
+        self._process_image()
+
+    @property
+    def imagewidth(self):
+        return self._width
+
+    @imagewidth.setter
+    def imagewidth(self, val):
+        self._width = int(val)
+        img = self._adjust_image_dimensions(self._background)
+        if img is not None:
+            self._background = img
+        self._process_image()
+
+    @property
+    def readingorder(self):
+        return self._reading_order
+
+    @readingorder.setter
+    def readingorder(self, val):
+        self._reading_order = self.CLIKE
+        if val == self.FORTRANLIKE:
+            self._reading_order = val
         self._process_image()
 
     @property
@@ -63,6 +92,7 @@ class ProcessImage:
         val = int(val)
         if 0 <= val < self._crop[self.HIGH]:
             self._crop[self.LOW] = val
+            self._process_image()
 
     @property
     def imagecrophigh(self):
@@ -73,6 +103,7 @@ class ProcessImage:
         val = int(val)
         if self._crop[self.LOW] < val:
             self._crop[self.HIGH] = val
+            self._process_image()
 
     @property
     def useimagecrop(self):
@@ -81,6 +112,7 @@ class ProcessImage:
     @useimagecrop.setter
     def useimagecrop(self, val):
         self._crop_use = bool(val)
+        self._process_image()
 
     @property
     def imagesizex(self):
@@ -97,6 +129,7 @@ class ProcessImage:
     @method.setter
     def method(self, val):
         self._method = self.MOMENTS if int(val) == self.MOMENTS else self.GAUSS
+        self._process_image()
 
     @property
     def roiautocenter(self):
@@ -105,6 +138,7 @@ class ProcessImage:
     @roiautocenter.setter
     def roiautocenter(self, val):
         self._roi_autocenter = bool(val)
+        self._process_image()
 
     @property
     def roicenterx(self):
@@ -117,6 +151,7 @@ class ProcessImage:
         val = int(val)
         if 0 <= val < self._image_raw.shape[self.X]:
             self._roi_cen[self.X] = val
+            self._process_image()
 
     @property
     def roicentery(self):
@@ -129,6 +164,7 @@ class ProcessImage:
         val = int(val)
         if 0 <= val < self._image_raw.shape[self.Y]:
             self._roi_cen[self.Y] = val
+            self._process_image()
 
     @property
     def roisizex(self):
@@ -139,6 +175,7 @@ class ProcessImage:
         val = int(val)
         if 1 <= val < self._image_raw.shape[self.X]:
             self._roi_size[self.X] = val
+            self._process_image()
 
     @property
     def roisizey(self):
@@ -149,6 +186,7 @@ class ProcessImage:
         val = int(val)
         if 1 <= val < self._image_raw.shape[self.Y]:
             self._roi_size[self.Y] = val
+            self._process_image()
 
     @property
     def roistartx(self):
@@ -198,7 +236,11 @@ class ProcessImage:
     def background(self, val):
         if not isinstance(val, _np.ndarray) or len(val.shape) != 2:
             return
-        self._background = val.copy()
+        img = self._adjust_image_dimensions(val.copy())
+        if img is None:
+            return
+        self._background = img
+        self._process_image()
 
     @property
     def usebackground(self):
@@ -207,6 +249,7 @@ class ProcessImage:
     @usebackground.setter
     def usebackground(self, val):
         self._background_use = bool(val)
+        self._process_image()
 
     @property
     def beamcenterx(self):
@@ -311,7 +354,9 @@ class ProcessImage:
         return self.beamsizey * self._conv_scale[self.Y]
 
     def _process_image(self):
-        image = self._image_raw.copy()
+        image = self._adjust_image_dimensions(self._image_raw.copy())
+        if image is None:
+            return
         if self._background_use and self._background.shape == image.shape:
             image -= self._background
             b = _np.where(image < 0)
@@ -341,6 +386,19 @@ class ProcessImage:
         self._roi_gauss[self.Y] = self._gaussian(axisy, *pary)
         self._beam_params[self.X] = parx
         self._beam_params[self.Y] = pary
+
+    def _adjust_image_dimensions(self, img):
+        if len(img.shape) == 1:
+            if self._width <= 1:
+                return None
+            try:
+                if self._reading_order == self.CLIKE:
+                    img = img.reshape((-1, self._width), order='C')
+                else:
+                    img = img.reshape((self._width, -1), order='F')
+            except ValueError:
+                return None
+        return img
 
     def _update_roi(self):
         image = self._image_proc
