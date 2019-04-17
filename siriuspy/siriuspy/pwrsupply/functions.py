@@ -212,7 +212,7 @@ class PSOpMode(Function):
             if value in (_PSConst.OpMode.SlowRef,
                          _PSConst.OpMode.RmpWfm,
                          _PSConst.OpMode.MigWfm):
-                self._operation_mode = value
+                # self._operation_mode = value
                 op_mode = 0
             self.function.execute(op_mode + 3)
 
