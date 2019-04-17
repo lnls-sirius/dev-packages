@@ -124,11 +124,14 @@ class _BaseLL(_Base):
         """
         fun = self._dict_functs_for_write.get(prop)
         if fun is None:
+            _log.warning('No write function defined')
             return False
         dic = fun(value)  # dic must be None for -Cmd PVs
         if dic is None:
+            _log.warning('Function returned None')
             return True
         elif isinstance(dic, dict) and not dic:
+            _log.warning('Function return value is empty')
             return False  # dic is empty in case write was not successfull
         for prop, val in dic.items():
             self.write_ll(prop, val)
@@ -220,7 +223,7 @@ class _BaseLL(_Base):
         val = pv.get(timeout=_conn_timeout)
         return def_val if val is None else val
 
-    def _lock_thread(self, pvname, value=None):
+    def _lock_thread(self, pvname, value=None, count=0):
         prop = self._dict_convert_pv2prop[pvname]
         if value is None:
             value = self._get_from_pvs(False, prop)
@@ -231,7 +234,16 @@ class _BaseLL(_Base):
         conds &= my_val is not None
         conds &= value is not None
         if conds and (not pv._initialized or my_val != value):
+            count += 1
             self._put_on_pv(pv, my_val)
+            if count > 1:
+                _log.warning((
+                    'chan: {0:s}  pvname: {1:s}  my_val: {2:s}  '
+                    'val: {3:s}  put_comp: {4:s} initia: {5:s}  '
+                    'count: {6:s}').format(
+                        self.channel, pv.pvname, str(my_val), str(value),
+                        str(pv.put_complete), str(pv._initialized),
+                        str(count)))
             # I have to keep calling this function over and over again to
             # guarantee that the hardware will go to the desired state.
             # I have to do this because of a problem on the LL IOCs
