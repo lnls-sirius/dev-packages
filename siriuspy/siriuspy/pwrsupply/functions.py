@@ -209,7 +209,9 @@ class PSOpMode(Function):
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
             op_mode = value
-            if value in (0, 3, 4):
+            if value in (_PSConst.OpMode.SlowRef,
+                         _PSConst.OpMode.RmpWfm,
+                         _PSConst.OpMode.MigWfm):
                 self._operation_mode = value
                 op_mode = 0
             self.function.execute(op_mode + 3)
