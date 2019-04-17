@@ -3,9 +3,10 @@ import time as _time
 import re as _re
 from functools import partial as _partial
 import logging as _log
+from threading import Thread as _Thread
 import epics as _epics
 from siriuspy.util import update_bit as _update_bit, get_bit as _get_bit
-from siriuspy.thread import QueueThread as _QueueThread
+# from siriuspy.thread import QueueThread as _QueueThread
 from siriuspy.epics import connection_timeout as _conn_timeout
 from siriuspy.envars import vaca_prefix as LL_PREFIX
 from siriuspy.namesys import SiriusPVName as _PVName
@@ -59,8 +60,8 @@ class _BaseLL(_Base):
 
         self._writepvs = dict()
         self._readpvs = dict()
-        self._queue = _QueueThread()
-        self._queue.start()
+        # self._queue = _QueueThread()
+        # self._queue.start()
         self._locked = False
 
         _log.info(self.channel+': Creating PVs.')
@@ -145,7 +146,10 @@ class _BaseLL(_Base):
         # queue.
         self._put_on_pv(pv, value, wait=False)
         pvname = self._dict_convert_prop2pv[prop]
-        self._queue.add_callback(self._lock_thread, pvname)
+        # self._queue.add_callback(self._lock_thread, pvname)
+        _Thread(
+            target=self._lock_thread,
+            args=(pvname, value), daemon=True).start()
 
     def read(self, prop, is_sp=False):
         """Read HL properties from LL IOCs and return the value."""
@@ -238,8 +242,9 @@ class _BaseLL(_Base):
             # of the LL IOCs, or the same property twice, in a time interval
             # shorter than the one it takes for LL IOC complete the write on
             # the hardware (~60ms).
-            _time.sleep(0.002)  # I wait a little bit to reduce CPU load
-            self._queue.add_callback(self._lock_thread, pvname)
+            _time.sleep(0.1)  # I wait a little bit to reduce CPU load
+            # self._queue.add_callback(self._lock_thread, pvname, count=count)
+            self._lock_thread(pvname, count=count)
 
     def _put_on_pv(self, pv, value, wait=False):
         if pv.connected and pv.put_complete:
@@ -255,14 +260,23 @@ class _BaseLL(_Base):
         # -Cmd PVs do not have a state associated to them
         if value is None or self._iscmdpv(pvname):
             return
-        self._queue.add_callback(self._on_change_pv_thread, pvname, value)
+        # self._queue.add_callback(self._on_change_pv_thread, pvname, value)
+        _Thread(
+            target=self._on_change_pv_thread,
+            args=(pvname, value), daemon=True).start()
 
     def _on_change_readpv(self, pvname, value, **kwargs):
         if value is None:
             return
         if self._locked:
-            self._queue.add_callback(self._lock_thread, pvname, value)
-        self._queue.add_callback(self._on_change_pv_thread, pvname, value)
+            # self._queue.add_callback(self._lock_thread, pvname, value)
+            _Thread(
+                target=self._lock_thread,
+                args=(pvname, value), daemon=True).start()
+        # self._queue.add_callback(self._on_change_pv_thread, pvname, value)
+        _Thread(
+            target=self._on_change_pv_thread,
+            args=(pvname, value), daemon=True).start()
 
         # at initialization load _config_ok_values
         prop = self._dict_convert_pv2prop.get(pvname)
