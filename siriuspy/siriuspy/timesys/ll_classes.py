@@ -306,7 +306,8 @@ class _BaseLL(_Base):
         fun = self._dict_functs_for_update[self._dict_convert_pv2prop[pvn]]
         props = fun(is_sp, value)
         for hl_prop, val in props.items():
-            self.run_callbacks(self.channel, hl_prop, val, is_sp=is_sp)
+            if val is not None:
+                self.run_callbacks(self.channel, hl_prop, val, is_sp=is_sp)
 
     def _on_connection_writepv(self, pvname, conn, **kwargs):
         if not self._iscmdpv(pvname):  # -Cmd must not change
@@ -566,12 +567,14 @@ class _EVROUT(_BaseLL):
 
     def _get_delay(self, prop, is_sp, value=None):
         dic_ = dict()
-        dic_['Delay'] = self._get_from_pvs(is_sp, 'Delay', def_val=0)
+        dic_['Delay'] = self._get_from_pvs(is_sp, 'Delay')
         dic_['RFDelay'] = self._get_from_pvs(is_sp, 'RFDelay', def_val=0)
         dic_['FineDelay'] = self._get_from_pvs(is_sp, 'FineDelay', def_val=0)
         if value is not None:
             dic_[prop] = value
 
+        if dic_['Delay'] is None:
+            return dict()
         delay = (dic_['Delay']*self._base_del + dic_['FineDelay']*_FDEL) * 1e6
         delay += dic_['RFDelay']*self._rf_del * 1e6
         return {'Delay': delay}
@@ -593,13 +596,16 @@ class _EVROUT(_BaseLL):
     def _process_source(self, prop, is_sp, value=None):
         dic_ = {'SrcTrig': 30, 'Src': None, 'Evt': None}
         if 'SrcTrig' not in self._REMOVE_PROPS:
-            dic_['SrcTrig'] = self._get_from_pvs(is_sp, 'SrcTrig', def_val=30)
+            dic_['SrcTrig'] = self._get_from_pvs(is_sp, 'SrcTrig')
         if 'Src' not in self._REMOVE_PROPS:
-            dic_['Src'] = self._get_from_pvs(is_sp, 'Src', def_val=None)
+            dic_['Src'] = self._get_from_pvs(is_sp, 'Src')
         if 'Evt' not in self._REMOVE_PROPS:
-            dic_['Evt'] = self._get_from_pvs(is_sp, 'Evt', def_val=None)
+            dic_['Evt'] = self._get_from_pvs(is_sp, 'Evt')
         if value is not None:
             dic_[prop] = value
+
+        if any(map(lambda x: x is None, dic_.values())):
+            return dict()
 
         ret = self._process_src_trig(dic_['SrcTrig'], is_sp)
         if ret is not None:
@@ -682,13 +688,16 @@ class _EVROUT(_BaseLL):
 
     def _get_duration_pulses(self, prop, is_sp, value=None):
         dic_ = dict()
-        dic_['NrPulses'] = self._get_from_pvs(is_sp, 'NrPulses', def_val=1)
-        dic_['Width'] = self._get_from_pvs(is_sp, 'Width', def_val=1)
+        dic_['NrPulses'] = self._get_from_pvs(is_sp, 'NrPulses')
+        dic_['Width'] = self._get_from_pvs(is_sp, 'Width')
         for k, v in dic_.items():
             if v == 0:  # BUG: handle cases where LL sets these value to 0
                 dic_[k] = 1
         if value is not None:
             dic_[prop] = value
+        if any(map(lambda x: x is None, dic_.values())):
+            return dict()
+
         return {
             'Duration': 2*dic_['Width']*self._base_del*dic_['NrPulses']*1e6,
             'NrPulses': dic_['NrPulses'],
@@ -729,12 +738,11 @@ class _EVROTP(_EVROUT):
     _REMOVE_PROPS = {
         'RFDelay', 'FineDelay', 'Src', 'SrcTrig', 'RFDelayType', 'Los'}
 
-    def _define_num_int(self, num):
-        return num
-
     def _get_delay(self, prop, is_sp, val=None):
         if val is None:
-            val = self._get_from_pvs(is_sp, 'Delay', def_val=0)
+            val = self._get_from_pvs(is_sp, 'Delay')
+        if val is None:
+            return dict()
         return {'Delay': val * self._base_del * 1e6}
 
     def _set_delay(self, value):
@@ -744,10 +752,12 @@ class _EVROTP(_EVROUT):
     def _process_source(self, prop, is_sp, val=None):
         if val is None:
             val = self._get_from_pvs(is_sp, 'Evt')
+        if val is None:
+            return dict()
         return self._process_evt(val, is_sp)
 
     def _process_src(self, src, is_sp):
-        return None
+        return dict()
 
     def _set_source(self, value):
         if value >= (len(self._source_enums)-1):
@@ -784,11 +794,12 @@ class _AMCFPGAEVRAMC(_EVROUT):
 
     def _process_source(self, prop, is_sp, value=None):
         dic_ = dict()
-        dic_['Src'] = self._get_from_pvs(is_sp, 'Src', def_val=None)
-        dic_['Evt'] = self._get_from_pvs(is_sp, 'Evt', def_val=None)
+        dic_['Src'] = self._get_from_pvs(is_sp, 'Src')
+        dic_['Evt'] = self._get_from_pvs(is_sp, 'Evt')
         if value is not None:
             dic_[prop] = value
-
+        if any(map(lambda x: x is None, dic_.values())):
+            return dict()
         ret = self._process_src(dic_['Src'], is_sp)
         if ret is not None:
             return ret
