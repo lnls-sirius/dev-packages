@@ -703,10 +703,7 @@ class _EVROUT(_BaseLL):
     def _set_duration(self, value, pul=None):
         if value is None:
             return dict()
-        if pul is None:
-            pul = self._config_ok_values.get('NrPulses')
-        if pul is None:
-            return dict()
+        pul = pul or self._config_ok_values.get('NrPulses')
         pul = pul or 1  # BUG: handle cases where LL sets this value to 0
         wid = value / self._base_del / pul / 2
         wid = round(wid) if wid >= 1 else 1
