@@ -89,6 +89,7 @@ class _BaseLL(_Base):
             pv.connection_callbacks.append(self._on_connection_writepv)
         for prop, pv in self._readpvs.items():
             pv.add_callback(self._on_change_readpv)
+            pv.connection_callbacks.append(self._on_connection)
 
     @property
     def connected(self):
@@ -306,11 +307,12 @@ class _BaseLL(_Base):
 
     def _on_connection_writepv(self, pvname, conn, **kwargs):
         if not self._iscmdpv(pvname):  # -Cmd must not change
-            self._queue.add_callback(self._on_connection_thread, pvname, conn)
+            prop = self._dict_convert_pv2prop[self._fromsp2rb(pvname)]
+            self._writepvs[prop]._initialized = False  # not self._locked
+            self._on_connection(pvname, conn)
 
-    def _on_connection_thread(self, pvname, conn):
-        prop = self._dict_convert_pv2prop[self._fromsp2rb(pvname)]
-        self._writepvs[prop]._initialized = False
+    def _on_connection(self, pvname, conn, **kwargs):
+        self.run_callbacks(self.channel, None, None)
 
     def _set_simple(self, prop, value):
         """Simple setting of Low Level IOC PVs.
