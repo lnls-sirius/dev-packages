@@ -293,8 +293,11 @@ class _BaseLL(_Base):
 
         # at initialization load _config_ok_values
         prop = self._dict_convert_pv2prop.get(pvname)
-        val = self._config_ok_values.get(prop)
-        if prop is not None and self._isrbpv(pvname) and val is None:
+        cond = prop is not None
+        cond &= self._config_ok_values.get(prop) is None
+        cond &= self._isrbpv(pvname)
+        cond &= not self._locked
+        if cond:
             self._config_ok_values[prop] = value
 
     def _on_change_pv_thread(self, pvname, value, **kwargs):
