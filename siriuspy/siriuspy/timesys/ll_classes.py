@@ -17,8 +17,8 @@ from .util import Base as _Base
 _RFFREQ = _cstime.Const.RF_FREQUENCY
 _RFDIV = _cstime.Const.RF_DIVISION
 _ACFREQ = _cstime.Const.AC_FREQUENCY
-_FDEL = _cstime.Const.FINE_DELAY
-_DELAY_UNIT_CONV = 1e-6
+_US2SEC = 1e-6
+_FDEL = _cstime.Const.FINE_DELAY / _US2SEC
 
 
 def get_evg_name():
@@ -171,7 +171,7 @@ class _BaseLL(_Base):
         self._rf_div = self._rf_div_pv.get(
                                 timeout=_conn_timeout) or self._rf_div
         self._base_freq = self._rf_freq / self._rf_div
-        self._base_del = 1/self._base_freq
+        self._base_del = 1/self._base_freq / _US2SEC
         self._rf_del = self._base_del / self._rf_div / 5
 
     def _define_list_props_must_set(self):
@@ -375,7 +375,6 @@ class LLEvent(_BaseLL):
     def _set_delay(self, value):
         if value is None:
             return dict()
-        value *= _DELAY_UNIT_CONV  # us
         return {'Delay': round(value / self._base_del)}
 
     def _get_delay(self, is_sp, val=None):
@@ -383,7 +382,7 @@ class LLEvent(_BaseLL):
             val = self._get_from_pvs(is_sp, 'Delay')
         if val is None:
             return dict()
-        return {'Delay': val * self._base_del * 1e6}
+        return {'Delay': val * self._base_del}
 
     def _set_ext_trig(self, value):
         pv = self._writepvs.get('ExtTrig')
@@ -575,14 +574,13 @@ class _EVROUT(_BaseLL):
 
         if dic_['Delay'] is None:
             return dict()
-        delay = (dic_['Delay']*self._base_del + dic_['FineDelay']*_FDEL) * 1e6
-        delay += dic_['RFDelay']*self._rf_del * 1e6
+        delay = dic_['Delay']*self._base_del + dic_['FineDelay']*_FDEL
+        delay += dic_['RFDelay']*self._rf_del
         return {'Delay': delay}
 
     def _set_delay(self, value):
         if value is None:
             return dict()
-        value *= _DELAY_UNIT_CONV  # us
         delay1 = int(value // self._base_del)
         dic_ = {'Delay': delay1}
         value -= delay1 * self._base_del
@@ -697,16 +695,14 @@ class _EVROUT(_BaseLL):
             dic_[prop] = value
         if any(map(lambda x: x is None, dic_.values())):
             return dict()
-
         return {
-            'Duration': 2*dic_['Width']*self._base_del*dic_['NrPulses']*1e6,
+            'Duration': 2*dic_['Width']*self._base_del*dic_['NrPulses'],
             'NrPulses': dic_['NrPulses'],
             }
 
     def _set_duration(self, value, pul=None):
         if value is None:
             return dict()
-        value *= _DELAY_UNIT_CONV  # us
         if pul is None:
             pul = self._config_ok_values.get('NrPulses')
         if pul is None:
@@ -716,21 +712,20 @@ class _EVROUT(_BaseLL):
         wid = round(wid) if wid >= 1 else 1
         return {'Width': wid}
 
-    def _set_nrpulses(self, value):
-        if value is None or value < 1:
+    def _set_nrpulses(self, pul):
+        if pul is None or pul < 1:
             return dict()
-        dic = {'NrPulses': int(value)}
+        pul = int(pul)
+        dic = {'NrPulses': pul}
 
         # at initialization, try to set _duration
         if self._duration is None:
             # BUG: handle cases where LL sets these value to 0
             wid = self._config_ok_values.get('Width') or 1
-            pul = self._config_ok_values.get('NrPulses') or 1
-            if wid is not None and pul is not None:
-                self._duration = wid * pul * 2 * self._base_del
+            self._duration = wid * pul * 2 * self._base_del
 
         if self._duration is not None:
-            dic.update(self._set_duration(self._duration, pul=int(value)))
+            dic.update(self._set_duration(self._duration, pul=pul))
         return dic
 
 
@@ -743,10 +738,9 @@ class _EVROTP(_EVROUT):
             val = self._get_from_pvs(is_sp, 'Delay')
         if val is None:
             return dict()
-        return {'Delay': val * self._base_del * 1e6}
+        return {'Delay': val * self._base_del}
 
     def _set_delay(self, value):
-        value *= _DELAY_UNIT_CONV  # us
         return {'Delay': round(value / self._base_del)}
 
     def _process_source(self, prop, is_sp, val=None):
