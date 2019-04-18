@@ -3,9 +3,10 @@ import time as _time
 import re as _re
 from functools import partial as _partial
 import logging as _log
+from threading import Thread as _Thread
 import epics as _epics
 from siriuspy.util import update_bit as _update_bit, get_bit as _get_bit
-from siriuspy.thread import QueueThread as _QueueThread
+# from siriuspy.thread import QueueThread as _QueueThread
 from siriuspy.epics import connection_timeout as _conn_timeout
 from siriuspy.envars import vaca_prefix as LL_PREFIX
 from siriuspy.namesys import SiriusPVName as _PVName
@@ -16,8 +17,8 @@ from .util import Base as _Base
 _RFFREQ = _cstime.Const.RF_FREQUENCY
 _RFDIV = _cstime.Const.RF_DIVISION
 _ACFREQ = _cstime.Const.AC_FREQUENCY
-_FDEL = _cstime.Const.FINE_DELAY
-_DELAY_UNIT_CONV = 1e-6
+_US2SEC = 1e-6
+_FDEL = _cstime.Const.FINE_DELAY / _US2SEC
 
 
 def get_evg_name():
@@ -59,8 +60,8 @@ class _BaseLL(_Base):
 
         self._writepvs = dict()
         self._readpvs = dict()
-        self._queue = _QueueThread()
-        self._queue.start()
+        # self._queue = _QueueThread()
+        # self._queue.start()
         self._locked = False
 
         _log.info(self.channel+': Creating PVs.')
@@ -88,6 +89,7 @@ class _BaseLL(_Base):
             pv.connection_callbacks.append(self._on_connection_writepv)
         for prop, pv in self._readpvs.items():
             pv.add_callback(self._on_change_readpv)
+            pv.connection_callbacks.append(self._on_connection)
 
     @property
     def connected(self):
@@ -123,11 +125,14 @@ class _BaseLL(_Base):
         """
         fun = self._dict_functs_for_write.get(prop)
         if fun is None:
+            _log.warning('No write function defined')
             return False
         dic = fun(value)  # dic must be None for -Cmd PVs
         if dic is None:
+            _log.warning('Function returned None')
             return True
         elif isinstance(dic, dict) and not dic:
+            _log.warning('Function return value is empty')
             return False  # dic is empty in case write was not successfull
         for prop, val in dic.items():
             self.write_ll(prop, val)
@@ -145,7 +150,10 @@ class _BaseLL(_Base):
         # queue.
         self._put_on_pv(pv, value, wait=False)
         pvname = self._dict_convert_prop2pv[prop]
-        self._queue.add_callback(self._lock_thread, pvname)
+        # self._queue.add_callback(self._lock_thread, pvname)
+        _Thread(
+            target=self._lock_thread,
+            args=(pvname, value), daemon=True).start()
 
     def read(self, prop, is_sp=False):
         """Read HL properties from LL IOCs and return the value."""
@@ -163,7 +171,7 @@ class _BaseLL(_Base):
         self._rf_div = self._rf_div_pv.get(
                                 timeout=_conn_timeout) or self._rf_div
         self._base_freq = self._rf_freq / self._rf_div
-        self._base_del = 1/self._base_freq
+        self._base_del = 1/self._base_freq / _US2SEC
         self._rf_del = self._base_del / self._rf_div / 5
 
     def _define_list_props_must_set(self):
@@ -216,7 +224,7 @@ class _BaseLL(_Base):
         val = pv.get(timeout=_conn_timeout)
         return def_val if val is None else val
 
-    def _lock_thread(self, pvname, value=None):
+    def _lock_thread(self, pvname, value=None, count=0):
         prop = self._dict_convert_pv2prop[pvname]
         if value is None:
             value = self._get_from_pvs(False, prop)
@@ -227,7 +235,16 @@ class _BaseLL(_Base):
         conds &= my_val is not None
         conds &= value is not None
         if conds and (not pv._initialized or my_val != value):
+            count += 1
             self._put_on_pv(pv, my_val)
+            if count > 1:
+                _log.warning((
+                    'chan: {0:s}  pvname: {1:s}  my_val: {2:s}  '
+                    'val: {3:s}  put_comp: {4:s} initia: {5:s}  '
+                    'count: {6:s}').format(
+                        self.channel, pv.pvname, str(my_val), str(value),
+                        str(pv.put_complete), str(pv._initialized),
+                        str(count)))
             # I have to keep calling this function over and over again to
             # guarantee that the hardware will go to the desired state.
             # I have to do this because of a problem on the LL IOCs
@@ -238,8 +255,9 @@ class _BaseLL(_Base):
             # of the LL IOCs, or the same property twice, in a time interval
             # shorter than the one it takes for LL IOC complete the write on
             # the hardware (~60ms).
-            _time.sleep(0.002)  # I wait a little bit to reduce CPU load
-            self._queue.add_callback(self._lock_thread, pvname)
+            _time.sleep(0.1)  # I wait a little bit to reduce CPU load
+            # self._queue.add_callback(self._lock_thread, pvname, count=count)
+            self._lock_thread(pvname, count=count)
 
     def _put_on_pv(self, pv, value, wait=False):
         if pv.connected and pv.put_complete:
@@ -255,19 +273,31 @@ class _BaseLL(_Base):
         # -Cmd PVs do not have a state associated to them
         if value is None or self._iscmdpv(pvname):
             return
-        self._queue.add_callback(self._on_change_pv_thread, pvname, value)
+        # self._queue.add_callback(self._on_change_pv_thread, pvname, value)
+        _Thread(
+            target=self._on_change_pv_thread,
+            args=(pvname, value), daemon=True).start()
 
     def _on_change_readpv(self, pvname, value, **kwargs):
         if value is None:
             return
         if self._locked:
-            self._queue.add_callback(self._lock_thread, pvname, value)
-        self._queue.add_callback(self._on_change_pv_thread, pvname, value)
+            # self._queue.add_callback(self._lock_thread, pvname, value)
+            _Thread(
+                target=self._lock_thread,
+                args=(pvname, value), daemon=True).start()
+        # self._queue.add_callback(self._on_change_pv_thread, pvname, value)
+        _Thread(
+            target=self._on_change_pv_thread,
+            args=(pvname, value), daemon=True).start()
 
         # at initialization load _config_ok_values
         prop = self._dict_convert_pv2prop.get(pvname)
-        val = self._config_ok_values.get(prop)
-        if prop is not None and self._isrbpv(pvname) and val is None:
+        cond = prop is not None
+        cond &= self._config_ok_values.get(prop) is None
+        cond &= self._isrbpv(pvname)
+        cond &= not self._locked
+        if cond:
             self._config_ok_values[prop] = value
 
     def _on_change_pv_thread(self, pvname, value, **kwargs):
@@ -276,15 +306,17 @@ class _BaseLL(_Base):
         fun = self._dict_functs_for_update[self._dict_convert_pv2prop[pvn]]
         props = fun(is_sp, value)
         for hl_prop, val in props.items():
-            self.run_callbacks(self.channel, hl_prop, val, is_sp=is_sp)
+            if val is not None:
+                self.run_callbacks(self.channel, hl_prop, val, is_sp=is_sp)
 
     def _on_connection_writepv(self, pvname, conn, **kwargs):
         if not self._iscmdpv(pvname):  # -Cmd must not change
-            self._queue.add_callback(self._on_connection_thread, pvname, conn)
+            prop = self._dict_convert_pv2prop[self._fromsp2rb(pvname)]
+            self._writepvs[prop]._initialized = False  # not self._locked
+            self._on_connection(pvname, conn)
 
-    def _on_connection_thread(self, pvname, conn):
-        prop = self._dict_convert_pv2prop[self._fromsp2rb(pvname)]
-        self._writepvs[prop]._initialized = False
+    def _on_connection(self, pvname, conn, **kwargs):
+        self.run_callbacks(self.channel, None, None)
 
     def _set_simple(self, prop, value):
         """Simple setting of Low Level IOC PVs.
@@ -343,7 +375,6 @@ class LLEvent(_BaseLL):
     def _set_delay(self, value):
         if value is None:
             return dict()
-        value *= _DELAY_UNIT_CONV  # us
         return {'Delay': round(value / self._base_del)}
 
     def _get_delay(self, is_sp, val=None):
@@ -351,7 +382,7 @@ class LLEvent(_BaseLL):
             val = self._get_from_pvs(is_sp, 'Delay')
         if val is None:
             return dict()
-        return {'Delay': val * self._base_del * 1e6}
+        return {'Delay': val * self._base_del}
 
     def _set_ext_trig(self, value):
         pv = self._writepvs.get('ExtTrig')
@@ -535,20 +566,21 @@ class _EVROUT(_BaseLL):
 
     def _get_delay(self, prop, is_sp, value=None):
         dic_ = dict()
-        dic_['Delay'] = self._get_from_pvs(is_sp, 'Delay', def_val=0)
+        dic_['Delay'] = self._get_from_pvs(is_sp, 'Delay')
         dic_['RFDelay'] = self._get_from_pvs(is_sp, 'RFDelay', def_val=0)
         dic_['FineDelay'] = self._get_from_pvs(is_sp, 'FineDelay', def_val=0)
         if value is not None:
             dic_[prop] = value
 
-        delay = (dic_['Delay']*self._base_del + dic_['FineDelay']*_FDEL) * 1e6
-        delay += dic_['RFDelay']*self._rf_del * 1e6
+        if dic_['Delay'] is None:
+            return dict()
+        delay = dic_['Delay']*self._base_del + dic_['FineDelay']*_FDEL
+        delay += dic_['RFDelay']*self._rf_del
         return {'Delay': delay}
 
     def _set_delay(self, value):
         if value is None:
             return dict()
-        value *= _DELAY_UNIT_CONV  # us
         delay1 = int(value // self._base_del)
         dic_ = {'Delay': delay1}
         value -= delay1 * self._base_del
@@ -562,13 +594,16 @@ class _EVROUT(_BaseLL):
     def _process_source(self, prop, is_sp, value=None):
         dic_ = {'SrcTrig': 30, 'Src': None, 'Evt': None}
         if 'SrcTrig' not in self._REMOVE_PROPS:
-            dic_['SrcTrig'] = self._get_from_pvs(is_sp, 'SrcTrig', def_val=30)
+            dic_['SrcTrig'] = self._get_from_pvs(is_sp, 'SrcTrig')
         if 'Src' not in self._REMOVE_PROPS:
-            dic_['Src'] = self._get_from_pvs(is_sp, 'Src', def_val=None)
+            dic_['Src'] = self._get_from_pvs(is_sp, 'Src')
         if 'Evt' not in self._REMOVE_PROPS:
-            dic_['Evt'] = self._get_from_pvs(is_sp, 'Evt', def_val=None)
+            dic_['Evt'] = self._get_from_pvs(is_sp, 'Evt')
         if value is not None:
             dic_[prop] = value
+
+        if any(map(lambda x: x is None, dic_.values())):
+            return dict()
 
         ret = self._process_src_trig(dic_['SrcTrig'], is_sp)
         if ret is not None:
@@ -651,46 +686,43 @@ class _EVROUT(_BaseLL):
 
     def _get_duration_pulses(self, prop, is_sp, value=None):
         dic_ = dict()
-        dic_['NrPulses'] = self._get_from_pvs(is_sp, 'NrPulses', def_val=1)
-        dic_['Width'] = self._get_from_pvs(is_sp, 'Width', def_val=1)
+        dic_['NrPulses'] = self._get_from_pvs(is_sp, 'NrPulses')
+        dic_['Width'] = self._get_from_pvs(is_sp, 'Width')
         for k, v in dic_.items():
             if v == 0:  # BUG: handle cases where LL sets these value to 0
                 dic_[k] = 1
         if value is not None:
             dic_[prop] = value
+        if any(map(lambda x: x is None, dic_.values())):
+            return dict()
         return {
-            'Duration': 2*dic_['Width']*self._base_del*dic_['NrPulses']*1e6,
+            'Duration': 2*dic_['Width']*self._base_del*dic_['NrPulses'],
             'NrPulses': dic_['NrPulses'],
             }
 
     def _set_duration(self, value, pul=None):
         if value is None:
             return dict()
-        value *= _DELAY_UNIT_CONV  # us
-        if pul is None:
-            pul = self._config_ok_values.get('NrPulses')
-        if pul is None:
-            return dict()
+        pul = pul or self._config_ok_values.get('NrPulses')
         pul = pul or 1  # BUG: handle cases where LL sets this value to 0
         wid = value / self._base_del / pul / 2
         wid = round(wid) if wid >= 1 else 1
         return {'Width': wid}
 
-    def _set_nrpulses(self, value):
-        if value is None or value < 1:
+    def _set_nrpulses(self, pul):
+        if pul is None or pul < 1:
             return dict()
-        dic = {'NrPulses': int(value)}
+        pul = int(pul)
+        dic = {'NrPulses': pul}
 
         # at initialization, try to set _duration
         if self._duration is None:
             # BUG: handle cases where LL sets these value to 0
             wid = self._config_ok_values.get('Width') or 1
-            pul = self._config_ok_values.get('NrPulses') or 1
-            if wid is not None and pul is not None:
-                self._duration = wid * pul * 2 * self._base_del
+            self._duration = wid * pul * 2 * self._base_del
 
         if self._duration is not None:
-            dic.update(self._set_duration(self._duration, pul=int(value)))
+            dic.update(self._set_duration(self._duration, pul=pul))
         return dic
 
 
@@ -698,25 +730,25 @@ class _EVROTP(_EVROUT):
     _REMOVE_PROPS = {
         'RFDelay', 'FineDelay', 'Src', 'SrcTrig', 'RFDelayType', 'Los'}
 
-    def _define_num_int(self, num):
-        return num
-
     def _get_delay(self, prop, is_sp, val=None):
         if val is None:
-            val = self._get_from_pvs(is_sp, 'Delay', def_val=0)
-        return {'Delay': val * self._base_del * 1e6}
+            val = self._get_from_pvs(is_sp, 'Delay')
+        if val is None:
+            return dict()
+        return {'Delay': val * self._base_del}
 
     def _set_delay(self, value):
-        value *= _DELAY_UNIT_CONV  # us
         return {'Delay': round(value / self._base_del)}
 
     def _process_source(self, prop, is_sp, val=None):
         if val is None:
             val = self._get_from_pvs(is_sp, 'Evt')
+        if val is None:
+            return dict()
         return self._process_evt(val, is_sp)
 
     def _process_src(self, src, is_sp):
-        return None
+        return dict()
 
     def _set_source(self, value):
         if value >= (len(self._source_enums)-1):
@@ -753,11 +785,12 @@ class _AMCFPGAEVRAMC(_EVROUT):
 
     def _process_source(self, prop, is_sp, value=None):
         dic_ = dict()
-        dic_['Src'] = self._get_from_pvs(is_sp, 'Src', def_val=None)
-        dic_['Evt'] = self._get_from_pvs(is_sp, 'Evt', def_val=None)
+        dic_['Src'] = self._get_from_pvs(is_sp, 'Src')
+        dic_['Evt'] = self._get_from_pvs(is_sp, 'Evt')
         if value is not None:
             dic_[prop] = value
-
+        if any(map(lambda x: x is None, dic_.values())):
+            return dict()
         ret = self._process_src(dic_['Src'], is_sp)
         if ret is not None:
             return ret

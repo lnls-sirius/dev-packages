@@ -1,57 +1,57 @@
 # -------- LIST OF CONTRIBUTERS --------
 
-# @gu1lhermelp
 # @xresende
 # @anacso17
 # @fernandohds564
+# @murilobalves
 
 # --- default owners of the repo
-* @gu1lhermelp @xresende
+* @xresende @fernandohds564
 
 
 # -------- BASIC MODULES --------
 
 # --- basic siriuspy modules
-/siriuspy/siriuspy/* @gu1lhermelp @xresende @anacso17 @fernandohds564
+/siriuspy/siriuspy/* @xresende @anacso17 @fernandohds564
 
 
 # -------- SUBPACKAGES --------
 
 # --- bsmp subpackage
-/siriuspy/siriuspy/bsmp/ @gu1lhermelp @xresende @fernandohds564
+/siriuspy/siriuspy/bsmp/ @xresende @anacso17
 
 # --- csdevice subpackage
-/siriuspy/siriuspy/csdevice/ @gu1lhermelp @xresende @fernandohds564 @anacso17
+/siriuspy/siriuspy/csdevice/ @xresende @fernandohds564 @anacso17 @murilobalves
 
 # --- diagnostics subpackage
 /siriuspy/siriuspy/diagnostics/ @fernandohds564 @xresende
 
 # --- epics subpackage
-/siriuspy/siriuspy/epics/ @gu1lhermelp @xresende @fernandohds564
+/siriuspy/siriuspy/epics/ @xresende @fernandohds564 @anacso17
 
 # --- magnet subpackage
-/siriuspy/siriuspy/magnet/ @gu1lhermelp @xresende @fernandohds564
+/siriuspy/siriuspy/magnet/ @xresende @anacso17
 
 # --- namesys subpackage
-/siriuspy/siriuspy/namesys/ @gu1lhermelp @xresende @fernandohds564 @anacso17
+/siriuspy/siriuspy/namesys/ @fernandohds564 @anacso17
 
 # --- pwrsupply subpackage
-/siriuspy/siriuspy/pwrsupply/ @gu1lhermelp @xresende @fernandohds564 @anacso17
+/siriuspy/siriuspy/pwrsupply/ @xresende @anacso17 @murilobalves
 
 # --- ramp subpackage
-/siriuspy/siriuspy/ramp/ @gu1lhermelp @xresende @fernandohds564
+/siriuspy/siriuspy/ramp/ @xresende @anacso17
 
 # --- servccdb subpackage
-/siriuspy/siriuspy/servccdb/ @xresende
+/siriuspy/siriuspy/servccdb/ @xresende @fernandohds564
 
 # --- servconf subpackage
-/siriuspy/siriuspy/servconf/ @gu1lhermelp @xresende
+/siriuspy/siriuspy/servconf/ @xresende @anacso17 @fernandohds564
 
 # --- servname subpackage
-/siriuspy/siriuspy/servname/ @xresende
+/siriuspy/siriuspy/servname/ @xresende @fernandohds564
 
 # --- servweb subpackage
-/siriuspy/siriuspy/servweb/ @xresende
+/siriuspy/siriuspy/servweb/ @xresende @anacso17 @fernandohds564
 
 # --- timesys subpackage
 /siriuspy/siriuspy/timesys/ @fernandohds564 @xresende
