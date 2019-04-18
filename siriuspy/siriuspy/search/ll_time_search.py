@@ -297,6 +297,8 @@ class LLTimeSearch:
             return
         if _web.server_online():
             text = _web.timing_devices_mapping(timeout=_timeout)
+        else:
+            raise Exception('Could not connect with Consts Server!!')
         cls._parse_text_and_build_connection_mappings(text)
         cls._update_related_maps()
 
