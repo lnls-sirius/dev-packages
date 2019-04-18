@@ -368,7 +368,7 @@ class PSEpics(PSCommInterface):
 class MAEpics(PSEpics):
     """Magnet power supply with Epics communication."""
 
-    # NOTE: check if usage of QueeuThread class is not degrading
+    # NOTE: check if usage of QueueThread class is not degrading
     # performance. This class implemented in siriuspy.thread is
     # under suspicion...
 
