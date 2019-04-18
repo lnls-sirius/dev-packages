@@ -56,6 +56,7 @@ class Const(_cutil.Const):
         'Fout DownLink Ok',
         'EVG DownLink Ok',
         'External Interlock',
+        'Interlock Status'
         )
 
     EvtHL2LLMap = _HLTimeSearch.get_hl_events()
