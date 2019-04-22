@@ -12,7 +12,7 @@ valid_interface = (
     'get_pvs_vaca_prefix',
     'get_pvs_prefix',
     'get_pvs_database',
-    'print_banner_and_save_pv_list',
+    'print_banner',
 )
 
 
@@ -48,11 +48,10 @@ class TestASAPCurrInfoChargePvs(unittest.TestCase):
         self.mock_csdevice.assert_called()
 
     @mock.patch("as_ap_currinfo.charge.pvs._util")
-    def test_print_banner_and_save_pv_list(self, util):
-        """Test print_banner_and_save_pv_list."""
-        pvs.print_banner_and_save_pv_list()
+    def test_print_banner(self, util):
+        """Test print_banner."""
+        pvs.print_banner()
         util.print_ioc_banner.assert_called_once()
-        util.save_ioc_pv_list.assert_called_once()
 
 
 if __name__ == "__main__":

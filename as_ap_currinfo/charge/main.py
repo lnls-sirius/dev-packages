@@ -24,7 +24,7 @@ class App:
 
     def __init__(self, driver):
         """Class constructor."""
-        _pvs.print_banner_and_save_pv_list()
+        _pvs.print_banner()
 
         self._PREFIX_VACA = _pvs.get_pvs_vaca_prefix()
         self._PREFIX = _pvs.get_pvs_prefix()

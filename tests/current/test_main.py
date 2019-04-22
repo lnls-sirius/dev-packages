@@ -30,7 +30,7 @@ class TestASAPCurrInfoCurrentMain(unittest.TestCase):
         pvs.select_ioc('si')
         App.init_class()
         printbanner_patcher = mock.patch(
-            "as_ap_currinfo.current.pvs.print_banner_and_save_pv_list",
+            "as_ap_currinfo.current.pvs.print_banner",
             autospec=True)
         self.addCleanup(printbanner_patcher.stop)
         self.mock_printbanner = printbanner_patcher.start()
