@@ -22,7 +22,7 @@ class TestASAPCurrInfoCurrentPvs(unittest.TestCase):
     """Test AS-AP-CurrInfo Current Soft IOC."""
 
     def setUp(self):
-        """Setup tests."""
+        """Set tests up."""
         csdevice_patcher = mock.patch(
             "as_ap_currinfo.current.pvs._get_database",
             autospec=True)

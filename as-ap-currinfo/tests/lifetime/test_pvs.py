@@ -22,7 +22,7 @@ class TestASAPCurrInfoLifetimePvs(unittest.TestCase):
     """Test AS-AP-CurrInfo Lifetime Soft IOC."""
 
     def setUp(self):
-        """Setup tests."""
+        """Set tests up."""
         csdevice_patcher = mock.patch(
             "as_ap_currinfo.lifetime.pvs._get_database",
             autospec=True)
