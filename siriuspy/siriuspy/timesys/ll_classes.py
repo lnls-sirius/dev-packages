@@ -520,6 +520,11 @@ class _EVROUT(_BaseLL):
             }
         return map_
 
+    def _get_bypass(self, is_sp, value=None):
+        dic = self._get_simple('ByPassIntlk', is_sp, val=value)
+        dic.update(self._get_status('ByPassIntlk', is_sp, value=value))
+        return dic
+
     def _get_status(self, prop, is_sp, value=None):
         dic_ = dict()
         dic_['DevEnbl'] = self._get_from_pvs(is_sp, 'DevEnbl', def_val=0)
@@ -531,8 +536,11 @@ class _EVROUT(_BaseLL):
         dic_['PVsConn'] = self.connected
         if 'IntlkMon' in self._REMOVE_PROPS:
             dic_['IntlkMon'] = 0
+            dic_['ByPassIntlk'] = 0
         else:
             dic_['IntlkMon'] = self._get_from_pvs(False, 'IntlkMon', def_val=1)
+            dic_['ByPassIntlk'] = self._get_from_pvs(
+                False, 'ByPassIntlk', def_val=1)
         if 'Los' in self._REMOVE_PROPS:
             prt_num = 0
             dic_['Los'] = 0b00000000
@@ -562,6 +570,8 @@ class _EVROUT(_BaseLL):
         prob, bit = _update_bit(prob, bit, dic_['FoutLos']), bit+1
         prob, bit = _update_bit(prob, bit, dic_['EVGLos']), bit+1
         prob, bit = _update_bit(prob, bit, dic_['IntlkMon']), bit+1
+        intlk_sts = dic_['IntlkMon'] and dic_['ByPassIntlk']
+        prob = _update_bit(prob, bit, intlk_sts)
         return {'Status': prob}
 
     def _get_delay(self, prop, is_sp, value=None):
