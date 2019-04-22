@@ -26,7 +26,7 @@ logger.addHandler(ch)
 logger.setLevel(_logging.WARNING)  # This toggles all the logging in your app
 
 
-_invalid_characters = '/:;,?!$'
+_invalid_characters = '\\/:;,?!$'
 
 
 def _check_valid_configname(name):
