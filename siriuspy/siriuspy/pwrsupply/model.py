@@ -368,6 +368,10 @@ class PSEpics(PSCommInterface):
 class MAEpics(PSEpics):
     """Magnet power supply with Epics communication."""
 
+    # NOTE: check if usage of QueueThread class is not degrading
+    # performance. This class implemented in siriuspy.thread is
+    # under suspicion...
+
     _is_strength = _re.compile('(Energy|KL|SL|Kick).+$')
     _is_multi_ps = _re.compile('(SI|BO)-\w{2,4}:MA-B.*$')
 
