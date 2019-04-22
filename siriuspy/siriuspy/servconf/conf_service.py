@@ -1,7 +1,6 @@
 
 """Define a class to communicate with configuration database API."""
 
-import re as _re
 import json as _json
 import logging as _logging
 import datetime as _datetime
