@@ -16,7 +16,7 @@ valid_interface = (
     'get_pvs_prefix',
     'get_corr_fams',
     'get_pvs_database',
-    'print_banner_and_save_pv_list',
+    'print_banner',
 )
 
 
@@ -91,13 +91,12 @@ class TestASAPOpticsCorrTunePvs(unittest.TestCase):
         self.mock_csdevice.assert_called()
 
     @mock.patch("as_ap_opticscorr.tune.pvs._util")
-    def test_print_banner_and_save_pv_list(self, util):
-        """Test print_banner_and_save_pv_list."""
+    def test_print_banner(self, util):
+        """Test print_banner."""
         for accelerator in ['SI', 'BO']:
             pvs.select_ioc(accelerator)
-            pvs.print_banner_and_save_pv_list()
+            pvs.print_banner()
             util.print_ioc_banner.assert_called()
-            util.save_ioc_pv_list.assert_called()
 
 
 if __name__ == "__main__":
