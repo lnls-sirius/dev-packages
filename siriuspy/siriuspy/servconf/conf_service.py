@@ -27,7 +27,14 @@ logger.addHandler(ch)
 logger.setLevel(_logging.WARNING)  # This toggles all the logging in your app
 
 
-invalid_confname = _re.compile('(/|:|;)')
+_invalid_characters = '/:;,?!$'
+
+
+def _check_valid_configname(name):
+    for c in _invalid_characters:
+        if c in name:
+            return False
+    return True
 
 
 # NOTE: I've copied this code from: https://stackoverflow.com/a/47626762
@@ -105,7 +112,7 @@ class ConfigService:
         if not isinstance(name, str):
             raise TypeError(
                 'Config name must be str, not {}!'.format(type(name)))
-        if invalid_confname.search(name):
+        if not _check_valid_configname(name):
             raise ValueError("There are invalid characters in config name!")
         url = self._create_url(self._url + self.CONFIGS_ENDPOINT)
         data = {"config_type": config_type, "name": name, "value": value}
@@ -273,7 +280,7 @@ class ConfigService:
     # --- private methods ---
 
     def _create_url(self, string):
-        return _parse.quote(string, safe='/:;')
+        return _parse.quote(string, safe=_invalid_characters)
 
     def _make_request(self, request):
         try:
