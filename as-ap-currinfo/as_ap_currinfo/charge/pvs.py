@@ -28,7 +28,7 @@ def get_pvs_database():
     return pvs_database
 
 
-def print_banner_and_save_pv_list():
+def print_banner():
     """Print Soft IOC banner."""
     _util.print_ioc_banner(
         ioc_name='si-ap-currinfo-charge',
@@ -36,6 +36,3 @@ def print_banner_and_save_pv_list():
         description='SI-AP-CurrInfo-Charge Soft IOC',
         version=_COMMIT_HASH,
         prefix=_PREFIX)
-    _util.save_ioc_pv_list('si-ap-currinfo-charge',
-                           (_DEVICE, _PREFIX_VACA),
-                           get_pvs_database())

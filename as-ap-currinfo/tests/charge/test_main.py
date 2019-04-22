@@ -27,7 +27,7 @@ class TestASAPCurrInfoChargeMain(unittest.TestCase):
         self.mock_driver = mock.create_autospec(_PCASDriver)
         App.init_class()
         printbanner_patcher = mock.patch(
-            "as_ap_currinfo.charge.pvs.print_banner_and_save_pv_list",
+            "as_ap_currinfo.charge.pvs.print_banner",
             autospec=True)
         self.addCleanup(printbanner_patcher.stop)
         self.mock_printbanner = printbanner_patcher.start()

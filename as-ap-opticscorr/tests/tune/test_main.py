@@ -48,7 +48,7 @@ class TestASAPTuneCorrMain(unittest.TestCase):
         epics_patcher = mock.patch("as_ap_opticscorr.tune.main._epics",
                                    autospec=True)
         printbanner_patcher = mock.patch(
-            "as_ap_opticscorr.tune.pvs.print_banner_and_save_pv_list",
+            "as_ap_opticscorr.tune.pvs.print_banner",
             autospec=True)
         self.addCleanup(cs_patcher.stop)
         self.addCleanup(epics_patcher.stop)
