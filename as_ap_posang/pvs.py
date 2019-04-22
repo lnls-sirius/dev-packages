@@ -42,7 +42,7 @@ def get_pvs_database():
     return pvs_database
 
 
-def print_banner_and_save_pv_list():
+def print_banner():
     """Print Soft IOC banner."""
     _util.print_ioc_banner(
         ioc_name=_TL + '-AP-PosAng',
@@ -50,6 +50,3 @@ def print_banner_and_save_pv_list():
         description=_TL+'-AP-PosAng Soft IOC',
         version=_COMMIT_HASH,
         prefix=_PREFIX)
-    _util.save_ioc_pv_list(_TL.lower()+'-ap-posang',
-                           (_DEVICE, _PREFIX_VACA),
-                           get_pvs_database())
