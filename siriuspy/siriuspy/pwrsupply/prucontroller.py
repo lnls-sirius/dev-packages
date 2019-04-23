@@ -1019,17 +1019,17 @@ class PRUController:
                 # TODO: turn off added random fluctuations.
                 # commenting out this fluctuation cpu usage is reduced from
                 # 20% to 19.5% at BBB1
-                if self._udcmodel == 'FBP':
-                    copy_var_vals[id][self._params.ConstBSMP.V_I_LOAD] += \
-                        0.00001*_random.uniform(-1.0, +1.0)
-                elif self._udcmodel == 'FBP_DCLink':
-                    copy_var_vals[id][self._params.ConstBSMP.V_V_OUT] += \
-                        0.00001*_random.uniform(-1.0, +1.0)
-                elif self._udcmodel == 'FAC':
-                    copy_var_vals[id][self._params.ConstBSMP.V_I_LOAD1] += \
-                        0.00001*_random.uniform(-1.0, +1.0)
-                    copy_var_vals[id][self._params.ConstBSMP.V_I_LOAD2] += \
-                        0.00001*_random.uniform(-1.0, +1.0)
+                # if self._udcmodel == 'FBP':
+                #     copy_var_vals[id][self._params.ConstBSMP.V_I_LOAD] += \
+                #         0.00001*_random.uniform(-1.0, +1.0)
+                # elif self._udcmodel == 'FBP_DCLink':
+                #     copy_var_vals[id][self._params.ConstBSMP.V_V_OUT] += \
+                #         0.00001*_random.uniform(-1.0, +1.0)
+                # elif self._udcmodel == 'FAC':
+                #     copy_var_vals[id][self._params.ConstBSMP.V_I_LOAD1] += \
+                #         0.00001*_random.uniform(-1.0, +1.0)
+                #     copy_var_vals[id][self._params.ConstBSMP.V_I_LOAD2] += \
+                #         0.00001*_random.uniform(-1.0, +1.0)
 
             elif ack[id] == _Response.invalid_id:
                 self._connected[id] = False
