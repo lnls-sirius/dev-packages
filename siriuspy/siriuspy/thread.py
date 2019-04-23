@@ -72,7 +72,7 @@ class RepeaterThread(_Thread):
         self.kwargs = kwargs
         self.niters = niter
         self.cur_iter = 0
-        self.stopped = _Event()
+        self._stopped = _Event()
         self._unpaused = _Event()
         self._unpaused.set()
 
@@ -81,10 +81,10 @@ class RepeaterThread(_Thread):
         self._unpaused.wait()
         self.function(*self.args, **self.kwargs)
         dt = 0.0
-        while ((not self.stopped.wait(self.interval - dt)) and
+        while ((not self._stopped.wait(self.interval - dt)) and
                (not self.niters or self.niters > self.cur_iter)):
             self._unpaused.wait()
-            if self.stopped.is_set():
+            if self._stopped.is_set():
                 break
             self.cur_iter += 1
             t0 = _time.time()
@@ -113,4 +113,4 @@ class RepeaterThread(_Thread):
     def stop(self):
         """Stop execution."""
         self._unpaused.set()
-        self.stopped.set()
+        self._stopped.set()
