@@ -231,7 +231,7 @@ class PRUController:
 
     # shortcuts, local variables and constants
 
-    _dcdc_udcmodel = ('FBP', 'FAC', 'FAC_2P4S', 'FAP', 'FAP_4P', 'FAP_2P2S')
+    # _dcdc_udcmodel = ('FBP', 'FAC', 'FAC_2P4S', 'FAP', 'FAP_4P', 'FAP_2P2S')
 
     _default_slowrefsync_sp = _DEFAULT_WFMDATA[0]
 
@@ -670,18 +670,13 @@ class PRUController:
                 # trim wfmdata
                 self._curves[i] += self._curves[i][:n]
 
-        # # for now do not accept changing curve lengths
-        # if len(curve) != len(self._curves[idx]):
-        #     self.disconnect()
-        #     raise NotImplementedError('Change of curve size not implemented')
-
         # store curve in PRUController attribute
         self._curves[idx] = list(curve)
 
     def pru_curve_write(self, device_id, curve):
         """Write curve for a device to the correponding PRU memory."""
+        # prepare curves, trimming or padding...
         self.pru_curve_set(device_id, curve)
-
         # write curve to PRU memory
         self.pru_curve_send()
 
@@ -709,12 +704,6 @@ class PRUController:
 
         # select block to be used at next start of ramp
         self._pru.set_curve_block(block_next)
-
-    # @property
-    # def pru_curve_length(self):
-    #     """PRU curves length."""
-    #     n = len(self._curves[self.device_ids[0]])
-    #     return n
 
     # --- public methods: access to atomic methods of scan and process loops
 
@@ -814,8 +803,10 @@ class PRUController:
         # TODO: somehow this is necessary. if curves are not set in
         # initialization, RMPEND does not work! sometimes the ps controllers
         # are put in a non-responsive state!!!
-        if self._udcmodel in PRUController._dcdc_udcmodel:
-            self.pru_curve_write(self.device_ids[0], self._curves[0])
+
+        # if self._udcmodel in PRUController._dcdc_udcmodel:
+        #     self.pru_curve_write(self.device_ids[0], self._curves[0])
+        self.pru_curve_write(self.device_ids[0], self._curves[0])
 
     def _initialize_devices(self):
 
@@ -824,9 +815,6 @@ class PRUController:
             pass
 
     def _init_prune_mirror_group(self):
-
-        # if self._udcmodel not in PRUController._dcdc_udcmodel:
-        #     return
 
         if self._udcmodel != 'FBP':
             return
