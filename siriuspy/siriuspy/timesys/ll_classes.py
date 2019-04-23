@@ -224,40 +224,42 @@ class _BaseLL(_Base):
         val = pv.get(timeout=_conn_timeout)
         return def_val if val is None else val
 
-    def _lock_thread(self, pvname, value=None, count=0):
+    def _lock_thread(self, pvname, value=None):
         prop = self._dict_convert_pv2prop[pvname]
         if value is None:
             value = self._get_from_pvs(False, prop)
-        my_val = self._config_ok_values.get(prop)
-
-        pv = self._writepvs.get(prop)
-        conds = pv is not None
-        conds &= my_val is not None
-        conds &= value is not None
-        if conds and (not pv._initialized or my_val != value):
-            count += 1
+        # I have loop here to guarantee that the hardware will go to the
+        # desired state.
+        # I have to do this because of a problem on the LL IOCs triggered by
+        # write commands which do not wait for the put operation to be
+        # completed, which is the case for the default behavior of pyepics,
+        # pydm, cs-studio...
+        # This problem happens when one try to set different properties of the
+        # LL IOCs, or the same property twice, in a time interval shorter than
+        # the one it takes for LL IOC complete writing on the hardware (~60ms).
+        maxatt = 100
+        for count in range(maxatt):
+            my_val = self._config_ok_values.get(prop)
+            pv = self._writepvs.get(prop)
+            if my_val is None or pv is None:
+                break
+            value = value if count < 1 else self._get_from_pvs(False, prop)
+            if value is None:
+                continue
+            if pv._initialized and my_val == value:
+                break
             self._put_on_pv(pv, my_val)
-            if count > 1:
-                _log.warning((
-                    'chan: {0:s}  pvname: {1:s}  my_val: {2:s}  '
-                    'val: {3:s}  put_comp: {4:s} initia: {5:s}  '
-                    'count: {6:s}').format(
-                        self.channel, pv.pvname, str(my_val), str(value),
-                        str(pv.put_complete), str(pv._initialized),
-                        str(count)))
-            # I have to keep calling this function over and over again to
-            # guarantee that the hardware will go to the desired state.
-            # I have to do this because of a problem on the LL IOCs
-            # triggered by write commands which do not wait for the put
-            # operation to be completed, which is the case for the default
-            # behavior of pyepics, pydm, cs-studio...
-            # This problem happens when one try to set different properties
-            # of the LL IOCs, or the same property twice, in a time interval
-            # shorter than the one it takes for LL IOC complete the write on
-            # the hardware (~60ms).
             _time.sleep(0.1)  # I wait a little bit to reduce CPU load
-            # self._queue.add_callback(self._lock_thread, pvname, count=count)
-            self._lock_thread(pvname, count=count)
+        if count > 1:
+            _log.warning((
+                'chan: {0:s} pvname: {1:s} my_val: {2:s} '
+                'val: {3:s} put_comp: {4:s} initia: {5:s} '
+                'count: {6:s} conn: {7:s}').format(
+                    self.channel, pv.pvname, str(my_val), str(value),
+                    str(pv.put_complete), str(pv._initialized),
+                    str(count), str(pv.connected)))
+        if count == maxatt-1:
+            _log.error('Could not set PV {0:s}.'.format(pv.pvname))
 
     def _put_on_pv(self, pv, value, wait=False):
         if pv.connected and pv.put_complete:
