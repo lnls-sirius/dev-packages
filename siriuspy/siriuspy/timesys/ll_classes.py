@@ -411,9 +411,6 @@ class _EVROUT(_BaseLL):
                                                         self.channel)
             intrg = int(intrg.propty[-2:])  # get internal trigger number
             self._config_ok_values['SrcTrig'] = intrg
-            # # Remove bypass from hl:
-            # self._config_ok_values['ByPassIntlk'] = \
-            #     _cstime.Const.TrigIntlk.Active
 
     def write(self, prop, value):
         # keep this info for recalculating Width whenever necessary
@@ -458,6 +455,9 @@ class _EVROUT(_BaseLL):
             'FoutDevEnbl': _fout_prefix + 'DevEnbl-Sts',
             'EVGDevEnbl': _evg_prefix + 'DevEnbl-Sts',
             }
+        if not _LLTimeSearch.has_bypass_interlock(self.channel):
+            map_.pop('ByPassIntlk', None)
+            map_.pop('IntlkMon', None)
         for prop in self._REMOVE_PROPS:
             map_.pop(prop)
         return map_
@@ -476,6 +476,8 @@ class _EVROUT(_BaseLL):
             'Delay': self._set_delay,
             'RFDelayType': _partial(self._set_simple, 'RFDelayType'),
             }
+        if not _LLTimeSearch.has_bypass_interlock(self.channel):
+            map_.pop('ByPassIntlk', None)
         return map_
 
     def _define_dict_for_update(self):
@@ -502,6 +504,9 @@ class _EVROUT(_BaseLL):
             'EVGDevEnbl': _partial(self._get_status, 'EVGDevEnbl'),
             'FoutDevEnbl': _partial(self._get_status, 'FoutDevEnbl'),
             }
+        if not _LLTimeSearch.has_bypass_interlock(self.channel):
+            map_.pop('ByPassIntlk', None)
+            map_.pop('IntlkMon', None)
         for prop in self._REMOVE_PROPS:
             map_.pop(prop)
         return map_
@@ -518,6 +523,8 @@ class _EVROUT(_BaseLL):
             'RFDelayType': _partial(self._get_simple, 'RFDelayType'),
             'Status': _partial(self._get_status, ''),
             }
+        if not _LLTimeSearch.has_bypass_interlock(self.channel):
+            map_.pop('ByPassIntlk', None)
         return map_
 
     def _get_bypass(self, is_sp, value=None):
@@ -534,13 +541,16 @@ class _EVROUT(_BaseLL):
         dic_['Network'] = self._get_from_pvs(False, 'Network', def_val=0)
         dic_['Link'] = self._get_from_pvs(False, 'Link', def_val=0)
         dic_['PVsConn'] = self.connected
-        if 'IntlkMon' in self._REMOVE_PROPS:
+
+        cond = not _LLTimeSearch.has_bypass_interlock(self.channel)
+        if 'IntlkMon' in self._REMOVE_PROPS or cond:
             dic_['IntlkMon'] = 0
             dic_['ByPassIntlk'] = 0
         else:
             dic_['IntlkMon'] = self._get_from_pvs(False, 'IntlkMon', def_val=1)
             dic_['ByPassIntlk'] = self._get_from_pvs(
                 False, 'ByPassIntlk', def_val=1)
+
         if 'Los' in self._REMOVE_PROPS:
             prt_num = 0
             dic_['Los'] = 0b00000000

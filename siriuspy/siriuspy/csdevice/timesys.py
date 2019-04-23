@@ -181,8 +181,8 @@ def get_afc_out_database(out_num=0, out_tp='FMC', prefix=None):
 
     prefix = def_prefix if prefix is None else prefix
     db = get_otp_database(prefix=prefix)
-    db.pop(prefix + 'ByPassIntlk-Sel')
-    db.pop(prefix + 'ByPassIntlk-Sts')
+    db.pop(prefix + 'ByPassIntlk-Sel', None)
+    db.pop(prefix + 'ByPassIntlk-Sts', None)
     dic_ = {'type': 'enum', 'value': 0, 'enums': _et.TRIG_SRC_LL}
     db[prefix+'Src-Sts'] = dic_
     db[prefix+'Src-Sel'] = _dcopy(dic_)

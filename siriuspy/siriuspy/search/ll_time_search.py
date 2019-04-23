@@ -252,7 +252,8 @@ class LLTimeSearch:
     @classmethod
     def has_bypass_interlock(cls, ll_trigger):
         name = _PVName(ll_trigger)
-        return name.dev in {'EVR', 'EVE'}
+        has_bp_interlock = {'LA-RFH01RACK2:TI-EVR', }
+        return name.device_name in has_bp_interlock
 
     @classmethod
     def get_trigger_name(cls, channel):
