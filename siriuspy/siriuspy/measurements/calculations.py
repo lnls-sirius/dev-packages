@@ -1,16 +1,18 @@
 
+from functools import partial as _part
 from copy import deepcopy as _dcopy
 import numpy as _np
 from scipy.optimize import curve_fit
 from siriuspy.search import PSSearch as _PSS
 import mathphys.constants as _consts
 from siriuspy.factory import NormalizerFactory as _NormFact
+from .base import BaseClass as _BaseClass
 
 C = _consts.light_speed
 E0 = _consts.electron_rest_energy / _consts.elementary_charge * 1e-9  # in GeV
 
 
-class ProcessImage:
+class ProcessImage(_BaseClass):
     X = 1
     Y = 0
     AMP = 0
@@ -25,6 +27,7 @@ class ProcessImage:
     FORTRANLIKE = 1
 
     def __init__(self):
+        super().__init__()
         self._roi_autocenter = True
         self._roi_cen = [0, 0]
         self._roi_size = [0, 0]
@@ -48,6 +51,74 @@ class ProcessImage:
         self._beam_params = [[0, 1, 1, 0], [0, 1, 1, 0]]
         self.roisizex = 500
         self.roisizey = 500
+
+    def get_map2write(self):
+        return {
+            'Image-SP': _part(self.write, 'image'),
+            'Width-SP': _part(self.write, 'imagewidth'),
+            'ReadingOrder-Sel': _part(self.write, 'readingorder'),
+            'ImgCropLow-SP': _part(self.write, 'imagecroplow'),
+            'ImgCropHigh-SP': _part(self.write, 'imagecrophigh'),
+            'ImgCropUse-Sel': _part(self.write, 'useimagecrop'),
+            'CalcMethod-Sel': _part(self.write, 'method'),
+            'ROIAutoCenter-Sel': _part(self.write, 'roiautocenter'),
+            'ROICenterX-SP': _part(self.write, 'roicenterx'),
+            'ROICenterY-SP': _part(self.write, 'roicentery'),
+            'ROISizeX-SP': _part(self.write, 'roisizex'),
+            'ROISizeY-SP': _part(self.write, 'roisizey'),
+            'Background-SP': _part(self.write, 'background'),
+            'BgUse-Sel': _part(self.write, 'usebackground'),
+            'Px2mmScaleX-SP': _part(self.write, 'px2mmscalex'),
+            'Px2mmScaleY-SP': _part(self.write, 'px2mmscaley'),
+            'Px2mmAutoCenter-Sel': _part(self.write, 'px2mmautocenter'),
+            'Px2mmCenterX-SP': _part(self.write, 'px2mmcenterx'),
+            'Px2mmCenterY-SP': _part(self.write, 'px2mmcentery'),
+            }
+
+    def get_map2read(self):
+        return {
+            'Image-RB': _part(self.read, 'image'),
+            'Width-RB': _part(self.read, 'imagewidth'),
+            'ReadingOrder-Sts': _part(self.read, 'readingorder'),
+            'ImgCropLow-RB': _part(self.read, 'imagecroplow'),
+            'ImgCropHigh-RB': _part(self.read, 'imagecrophigh'),
+            'ImgCropUse-Sts': _part(self.read, 'useimagecrop'),
+            'CalcMethod-Sts': _part(self.read, 'method'),
+            'ROIAutoCenter-Sts': _part(self.read, 'roiautocenter'),
+            'ROICenterX-RB': _part(self.read, 'roicenterx'),
+            'ROICenterY-RB': _part(self.read, 'roicentery'),
+            'ROISizeX-RB': _part(self.read, 'roisizex'),
+            'ROISizeY-RB': _part(self.read, 'roisizey'),
+            'ROIStartX-Mon': _part(self.read, 'roistartx'),
+            'ROIStartY-Mon': _part(self.read, 'roistarty'),
+            'ROIEndX-Mon': _part(self.read, 'roiendx'),
+            'ROIEndY-Mon': _part(self.read, 'roiendy'),
+            'ROIProjX-Mon': _part(self.read, 'roiprojx'),
+            'ROIProjY-Mon': _part(self.read, 'roiprojy'),
+            'ROIAxisX-Mon': _part(self.read, 'roiaxisx'),
+            'ROIAxisY-Mon': _part(self.read, 'roiaxisy'),
+            'ROIGaussFitX-Mon': _part(self.read, 'roigaussx'),
+            'ROIGaussFitY-Mon': _part(self.read, 'roigaussy'),
+            'BeamCenterX-Mon': _part(self.read, 'beamcenterx'),
+            'BeamCenterY-Mon': _part(self.read, 'beamcentery'),
+            'BeamSizeX-Mon': _part(self.read, 'beamsizex'),
+            'BeamSizeY-Mon': _part(self.read, 'beamsizey'),
+            'BeamCentermmX-Mon': _part(self.read, 'beamcentermmx'),
+            'BeamCentermmY-Mon': _part(self.read, 'beamcentermmy'),
+            'BeamSizemmX-Mon': _part(self.read, 'beamsizemmx'),
+            'BeamSizemmY-Mon': _part(self.read, 'beamsizemmy'),
+            'BeamAmplX-Mon': _part(self.read, 'beamamplx'),
+            'BeamAmplY-Mon': _part(self.read, 'beamamply'),
+            'BgOffsetX-Mon': _part(self.read, 'bgoffsetx'),
+            'BgOffsetY-Mon': _part(self.read, 'bgoffsety'),
+            'Background-RB': _part(self.read, 'background'),
+            'BgUse-Sts': _part(self.read, 'usebackground'),
+            'Px2mmScaleX-RB': _part(self.read, 'px2mmscalex'),
+            'Px2mmScaleY-RB': _part(self.read, 'px2mmscaley'),
+            'Px2mmAutoCenter-Sts': _part(self.read, 'px2mmautocenter'),
+            'Px2mmCenterX-RB': _part(self.read, 'px2mmcenterx'),
+            'Px2mmCenterY-RB': _part(self.read, 'px2mmcentery'),
+            }
 
     @property
     def image(self):
@@ -278,45 +349,45 @@ class ProcessImage:
         return self._beam_params[self.Y][self.AMP]
 
     @property
-    def beamoffsetx(self):
+    def bgoffsetx(self):
         return self._beam_params[self.X][self.OFF]
 
     @property
-    def beamoffsety(self):
+    def bgoffsety(self):
         return self._beam_params[self.Y][self.OFF]
 
     @property
-    def pxl2mmscalex(self):
+    def px2mmscalex(self):
         return self._conv_scale[self.X]
 
-    @pxl2mmscalex.setter
-    def pxl2mmscalex(self, val):
+    @px2mmscalex.setter
+    def px2mmscalex(self, val):
         if val != 0:
             self._conv_scale[self.X] = val
 
     @property
-    def pxl2mmscaley(self):
+    def px2mmscaley(self):
         return self._conv_scale[self.Y]
 
-    @pxl2mmscaley.setter
-    def pxl2mmscaley(self, val):
+    @px2mmscaley.setter
+    def px2mmscaley(self, val):
         if val != 0:
             self._conv_scale[self.Y] = val
 
     @property
-    def pxl2mmoffsetauto(self):
+    def px2mmautocenter(self):
         return self._conv_autocenter
 
-    @pxl2mmoffsetauto.setter
-    def pxl2mmoffsetauto(self, val):
+    @px2mmautocenter.setter
+    def px2mmautocenter(self, val):
         self._conv_autocenter = bool(val)
 
     @property
-    def pxl2mmoffsetx(self):
+    def px2mmcenterx(self):
         return self._conv_cen[self.X]
 
-    @pxl2mmoffsetx.setter
-    def pxl2mmoffsetx(self, val):
+    @px2mmcenterx.setter
+    def px2mmcenterx(self, val):
         if self._conv_autocenter:
             return
         val = int(val)
@@ -324,11 +395,11 @@ class ProcessImage:
             self._conv_cen[self.X] = val
 
     @property
-    def pxl2mmoffsety(self):
+    def px2mmcentery(self):
         return self._conv_cen[self.Y]
 
-    @pxl2mmoffsety.setter
-    def pxl2mmoffsety(self, val):
+    @px2mmcentery.setter
+    def px2mmcentery(self, val):
         if self._conv_autocenter:
             return
         val = int(val)
@@ -476,7 +547,7 @@ class ProcessImage:
         return par
 
 
-class CalcEnergy:
+class CalcEnergy(_BaseClass):
     """."""
     DEFAULT_DISP = 1.087
     DEFAULT_B_ANG = _np.pi/4
@@ -484,6 +555,7 @@ class CalcEnergy:
 
     def __init__(self, dispersion=None, angle=None, spectrometer=None):
         """."""
+        super().__init__()
         self._dispersion = dispersion or self.DEFAULT_DISP
         self._angle = angle or self.DEFAULT_B_ANG
         self._spect = spectrometer or self.DEFAULT_SPECT
@@ -494,6 +566,23 @@ class CalcEnergy:
         self._spread = _np.array([], dtype=float)
         self._beamcenter = _np.array([], dtype=float)
         self._beamsize = _np.array([], dtype=float)
+
+    def get_map2write(self):
+        return {
+            'Dispersion-SP': _part(self.write, 'dispersion'),
+            'Angle-SP': _part(self.write, 'angle'),
+            'Spectrometer-SP': _part(self.write, 'spectrometer'),
+            }
+
+    def get_map2read(self):
+        return {
+            'Dispersion-SP': _part(self.read, 'dispersion'),
+            'Angle-SP': _part(self.read, 'angle'),
+            'Spectrometer-SP': _part(self.read, 'spectrometer'),
+            'IntDipole-Mon': _part(self.read, 'intdipole'),
+            'Energy-Mon': _part(self.read, 'energy'),
+            'Spread-Mon': _part(self.read, 'spread'),
+            }
 
     @property
     def dispersion(self):
@@ -544,10 +633,10 @@ class CalcEnergy:
         return _dcopy(self._beamcenter)
 
     @property
-    @property
     def intdipole(self):
         return _dcopy(self._intdipole)
 
+    @property
     def energy(self):
         return _dcopy(self._energy)
 
@@ -598,7 +687,7 @@ class CalcEnergy:
         self._spread = self._beamsize / self._dispersion * 100  # in percent%
 
 
-class CalcEmmitance:
+class CalcEmmitance(_BaseClass):
     X = 0
     Y = 1
     PLACES = ('li', 'tb-qd2a', 'tb-qf2a')
@@ -606,6 +695,7 @@ class CalcEmmitance:
     THINLENS = 1
 
     def __init__(self):
+        super().__init__()
         self._place = 'LI'
         self._quadname = ''
         self._quadlen = 0.0
@@ -621,6 +711,30 @@ class CalcEmmitance:
         self._beta = 0.0
         self._alpha = 0.0
         self._gamma = 0.0
+
+    def get_map2write(self):
+        return {
+            'Place-Sel': _part(self.write, 'place'),
+            'Plane-Sel': _part(self.write, 'plane'),
+            }
+
+    def get_map2read(self):
+        return {
+            'Place-Sts': _part(self.write, 'place'),
+            'Plane-Sts': _part(self.write, 'plane'),
+            'QuadName-Mon': _part(self.write, 'quadname'),
+            'QuadLen-Mon': _part(self.write, 'quadlen'),
+            'Distance-Mon': _part(self.write, 'distance'),
+            'BeamSizes-Mon': _part(self.write, 'beamsize'),
+            'BeamSizesFit-Mon': _part(self.write, 'beamsize_fit'),
+            'QuadCurrents-Mon': _part(self.write, 'currents'),
+            'QuadStrens-Mon': _part(self.write, 'quadstren'),
+            'Beta-Mon': _part(self.write, 'beta'),
+            'Alpha-Mon': _part(self.write, 'alpha'),
+            'Gamma-Mon': _part(self.write, 'gamma'),
+            'Emittance-Mon': _part(self.write, 'emittance'),
+            'NormEmittance-Mon': _part(self.write, 'norm_emittance'),
+            }
 
     @property
     def place(self):
