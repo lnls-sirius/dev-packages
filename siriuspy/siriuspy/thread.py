@@ -96,8 +96,12 @@ class RepeaterThread(_Thread):
     def pause(self):
         self._unpaused.clear()
 
-    def unpause(self):
+    def resume(self):
         self._unpaused.set()
+
+    def unpause(self):
+        self.resume()
+
 
     def stop(self):
         """Stop execution."""
