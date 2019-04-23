@@ -102,6 +102,11 @@ class RepeaterThread(_Thread):
     def unpause(self):
         self.resume()
 
+    def is_paused(self):
+        return not self._unpaused.is_set()
+
+    def isPaused(self):
+        return self.is_paused()
 
     def stop(self):
         """Stop execution."""
