@@ -28,6 +28,7 @@ class MeasEnergy:
             prof+':Y:Gauss:Coef', callback=_part(self._update_coef, pln='y'))
         self._image_source = _PV(prof + ':RAW:ArrayData')
         self._width_source = _PV(prof + ':ROI:MaxSizeX_RBV')
+        self._current_source = _PV('LA-CN:H1DPPS-1:seti')
         self._interval = 0.5
         self._measuring = False
         self._thread = _Repeater(self._interval, self._meas_energy, niter=0)
@@ -64,19 +65,23 @@ class MeasEnergy:
         else:
             self.stop()
 
-    def _update_coef(self, val, pln='x'):
-
+    def _update_coef(self, _, val, pln='x', **kwargs):
+        if val is None:
+            return
+        if pln.startswith('x'):
+            self.image_processor.pxl2mmscalex = val
+        elif pln.startswith('y'):
+            self.image_processor.pxl2mmscaley = val
 
     def _meas_energy(self):
         if not self._measuring:
             return
-        self.image_processor.imagewidth
+        self.image_processor.imagewidth = self._width_source.get()
         self.image_processor.image = self._image_source.get()
         self.energy_calculator.set_data(
-            self._get_current(),
+            self._current_source.get(),
             self.image_processor.beamcentermmx,
             self.image_processor.beamsizemmx)
-
 
 
 class CalcEmmitance:

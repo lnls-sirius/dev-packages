@@ -66,6 +66,8 @@ class ProcessImage:
 
     @imagewidth.setter
     def imagewidth(self, val):
+        if val is None or int(val) == self._width:
+            return
         self._width = int(val)
         img = self._adjust_image_dimensions(self._background)
         if img is not None:
@@ -554,6 +556,8 @@ class CalcEnergy:
         return _dcopy(self._spread)
 
     def set_data(self, currents, beam_centers, beam_sizes):
+        if None in {currents, beam_centers, beam_sizes}:
+            return False
         if isinstance(beam_sizes, (int, float)):
             beam_sizes = [beam_sizes]
         if isinstance(beam_centers, (int, float)):
@@ -571,6 +575,7 @@ class CalcEnergy:
         self._beamcenter = beam_centers
         self._currents = currents
         self._perform_analysis()
+        return True
 
     def _update_integrated_dipole(self):
         """."""
@@ -698,6 +703,8 @@ class CalcEmmitance:
         return self.emittance * self._energy / E0
 
     def set_data(self, beam_sizes, currents):
+        if None in {currents, beam_sizes}:
+            return False
         if isinstance(beam_sizes, (int, float)):
             beam_sizes = [beam_sizes]
         if isinstance(currents, (int, float)):
@@ -709,6 +716,7 @@ class CalcEmmitance:
         self._beamsize = beam_sizes
         self._currents = currents
         self._perform_analysis()
+        return True
 
     def _select_experimental_setup(self):
         if self.place.lower().startswith('li'):
