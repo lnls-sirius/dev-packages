@@ -3,7 +3,7 @@ import time as _time
 import re as _re
 from functools import partial as _partial
 import logging as _log
-from threading import Thread as _Thread
+from threading import Thread as _ThreadBase
 import epics as _epics
 from siriuspy.util import update_bit as _update_bit, get_bit as _get_bit
 # from siriuspy.thread import QueueThread as _QueueThread
@@ -23,6 +23,14 @@ _FDEL = _cstime.Const.FINE_DELAY / _US2SEC
 
 def get_evg_name():
     return _LLTimeSearch.get_device_names({'dev': 'EVG'})[0]
+
+
+class _Thread(_ThreadBase):
+
+    def __init__(self, **kwargs):
+        if 'daemon' not in kwargs:
+            kwargs['daemon'] = True
+        super().__init__(**kwargs)
 
 
 class _BaseLL(_Base):
@@ -148,9 +156,7 @@ class _BaseLL(_Base):
         # queue.
         self._put_on_pv(pv, value, wait=False)
         pvname = self._dict_convert_prop2pv[prop]
-        _Thread(
-            target=self._lock_thread,
-            args=(pvname, value), daemon=True).start()
+        _Thread(target=self._lock_thread, args=(pvname, value)).start()
 
     def read(self, prop, is_sp=False):
         """Read HL properties from LL IOCs and return the value."""
@@ -272,20 +278,14 @@ class _BaseLL(_Base):
         # -Cmd PVs do not have a state associated to them
         if value is None or self._iscmdpv(pvname):
             return
-        _Thread(
-            target=self._on_change_pv_thread,
-            args=(pvname, value), daemon=True).start()
+        _Thread(target=self._on_change_pv_thread, args=(pvname, value)).start()
 
     def _on_change_readpv(self, pvname, value, **kwargs):
         if value is None:
             return
         if self._locked:
-            _Thread(
-                target=self._lock_thread,
-                args=(pvname, value), daemon=True).start()
-        _Thread(
-            target=self._on_change_pv_thread,
-            args=(pvname, value), daemon=True).start()
+            _Thread(target=self._lock_thread, args=(pvname, value)).start()
+        _Thread(target=self._on_change_pv_thread, args=(pvname, value)).start()
 
         # at initialization load _config_ok_values
         prop = self._dict_convert_pv2prop.get(pvname)
