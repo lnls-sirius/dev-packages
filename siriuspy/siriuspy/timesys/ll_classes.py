@@ -60,8 +60,6 @@ class _BaseLL(_Base):
 
         self._writepvs = dict()
         self._readpvs = dict()
-        # self._queue = _QueueThread()
-        # self._queue.start()
         self._locked = False
 
         _log.info(self.channel+': Creating PVs.')
@@ -150,7 +148,6 @@ class _BaseLL(_Base):
         # queue.
         self._put_on_pv(pv, value, wait=False)
         pvname = self._dict_convert_prop2pv[prop]
-        # self._queue.add_callback(self._lock_thread, pvname)
         _Thread(
             target=self._lock_thread,
             args=(pvname, value), daemon=True).start()
@@ -275,7 +272,6 @@ class _BaseLL(_Base):
         # -Cmd PVs do not have a state associated to them
         if value is None or self._iscmdpv(pvname):
             return
-        # self._queue.add_callback(self._on_change_pv_thread, pvname, value)
         _Thread(
             target=self._on_change_pv_thread,
             args=(pvname, value), daemon=True).start()
@@ -284,11 +280,9 @@ class _BaseLL(_Base):
         if value is None:
             return
         if self._locked:
-            # self._queue.add_callback(self._lock_thread, pvname, value)
             _Thread(
                 target=self._lock_thread,
                 args=(pvname, value), daemon=True).start()
-        # self._queue.add_callback(self._on_change_pv_thread, pvname, value)
         _Thread(
             target=self._on_change_pv_thread,
             args=(pvname, value), daemon=True).start()
