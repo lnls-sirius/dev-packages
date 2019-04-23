@@ -474,24 +474,6 @@ def get_evg_database(prefix=None, only_evg=False):
     return db
 
 
-def get_hl_clock_database(prefix='Clock0'):
-    """Return database of a high level Clock."""
-    db = dict()
-
-    dic_ = {
-        'type': 'float', 'value': 1.0,
-        'unit': 'kHz', 'prec': 6,
-        'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
-        'hilim': 125000000, 'high': 125000000, 'hihi': 125000000}
-    db[prefix + 'Freq-RB'] = _dcopy(dic_)
-    db[prefix + 'Freq-SP'] = dic_
-
-    dic_ = {'type': 'enum', 'enums': _et.DSBL_ENBL, 'value': 0}
-    db[prefix + 'State-Sel'] = _dcopy(dic_)
-    db[prefix + 'State-Sts'] = dic_
-    return db
-
-
 def get_hl_event_database(prefix='Linac'):
     """Return database of a high level event."""
     db = dict()
@@ -515,29 +497,6 @@ def get_hl_event_database(prefix='Linac'):
     db[prefix + 'ExtTrig-Cmd'] = {
         'type': 'int', 'value': 0,
         'unit': 'When in External Mode generates Event.'}
-    return db
-
-
-def get_hl_evg_database(prefix=None, only_evg=False):
-    """Return database of the high level PVs associated with the EVG."""
-    def_prefix = 'AS-Glob:TI-EVG:'
-    pre = def_prefix if prefix is None else prefix
-    db = dict()
-
-    dic_ = {'type': 'float', 'value': 2.0,
-            'unit': 'Hz', 'prec': 6,
-            'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
-            'hilim': 60, 'high': 60, 'hihi': 60}
-    db[pre + 'RepRate-RB'] = _dcopy(dic_)
-    db[pre + 'RepRate-SP'] = dic_
-
-    if only_evg:
-        return db
-
-    for ev in Const.EvtHL2LLMap.keys():
-        db.update(get_hl_event_database(prefix=prefix+ev))
-    for clc in Const.ClkHL2LLMap.keys():
-        db.update(get_hl_clock_database(prefix=prefix+clc))
     return db
 
 
@@ -579,13 +538,11 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     db['NrPulses-RB'] = _dcopy(dic_)
     db['NrPulses-SP'] = dic_
 
-    dic_ = {'type': 'enum', 'enums': _et.BYPASS}
-    dic_.update(trig_db['ByPassIntlk'])
-    db['ByPassIntlk-Sts'] = _dcopy(dic_)
-    db['ByPassIntlk-Sel'] = dic_
-    if not _HLTimeSearch.has_bypass_interlock(hl_trigger):
-        db.pop('ByPassIntlk-Sts')
-        db.pop('ByPassIntlk-Sel')
+    if _HLTimeSearch.has_bypass_interlock(hl_trigger):
+        dic_ = {'type': 'enum', 'enums': _et.BYPASS}
+        dic_.update(trig_db['ByPassIntlk'])
+        db['ByPassIntlk-Sts'] = _dcopy(dic_)
+        db['ByPassIntlk-Sel'] = dic_
 
     dic_ = {'type': 'float', 'unit': 'us', 'prec': 6,
             'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
