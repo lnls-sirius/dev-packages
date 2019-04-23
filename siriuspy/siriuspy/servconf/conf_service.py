@@ -1,12 +1,12 @@
 
 """Define a class to communicate with configuration database API."""
-# import copy as _copy
+
 import json as _json
 import logging as _logging
 import datetime as _datetime
 import dateutil.parser
-from urllib.request import Request as _Request
-from urllib.request import urlopen as _urlopen
+from urllib import parse as _parse
+from urllib.request import Request as _Request, urlopen as _urlopen
 from urllib.error import URLError as _URLError
 from http import HTTPStatus as _HTTPStatus
 import numpy as _np
@@ -26,8 +26,17 @@ logger.addHandler(ch)
 logger.setLevel(_logging.WARNING)  # This toggles all the logging in your app
 
 
-# NOTE: I've copied this code from:
-# https://stackoverflow.com/a/47626762
+_invalid_characters = '\\/:;,?!$'
+
+
+def _check_valid_configname(name):
+    for c in _invalid_characters:
+        if c in name:
+            return False
+    return True
+
+
+# NOTE: I've copied this code from: https://stackoverflow.com/a/47626762
 class NumpyEncoder(_json.JSONEncoder):
 
     def default(self, obj):
@@ -79,19 +88,19 @@ class ConfigService:
     def get_config(self, config_type, name):
         """Get lists by name and config."""
         url_params = "/{}/{}".format(config_type, name)
-        url = self._url + self.CONFIGS_ENDPOINT + url_params
+        url = self._create_url(self._url + self.CONFIGS_ENDPOINT + url_params)
         request = _Request(url=url, method="GET")
         return self._make_request(request)
 
     def get_types(self):
         """Get lists by name and config."""
-        url = self._url + '/config_types'
+        url = self._create_url(self._url + '/config_types')
         request = _Request(url=url, method="GET")
         return self._make_request(request)
 
     def get_names_by_type(self, config_type):
         """Get lists by name and config."""
-        url = self._url + '/config_types/' + config_type
+        url = self._create_url(self._url + '/config_types/' + config_type)
         request = _Request(url=url, method="GET")
         return self._make_request(request)
 
@@ -102,7 +111,9 @@ class ConfigService:
         if not isinstance(name, str):
             raise TypeError(
                 'Config name must be str, not {}!'.format(type(name)))
-        url = self._url + self.CONFIGS_ENDPOINT
+        if not _check_valid_configname(name):
+            raise ValueError("There are invalid characters in config name!")
+        url = self._create_url(self._url + self.CONFIGS_ENDPOINT)
         data = {"config_type": config_type, "name": name, "value": value}
         jdata = _json.dumps(data, cls=NumpyEncoder).encode()
         request = _Request(
@@ -183,7 +194,7 @@ class ConfigService:
 
     def request_count(self, find_dict=None):
         """Return number of configurations matching search criteria."""
-        url = self._url + self.CONFIGS_ENDPOINT + "/count"
+        url = self._create_url(self._url + self.CONFIGS_ENDPOINT + "/count")
         if find_dict is None or not find_dict:
             request = _Request(url=url, method="GET")
         else:
@@ -197,7 +208,7 @@ class ConfigService:
 
     def request_configs(self, find_dict=None):
         """Request configurations matching search criteria."""
-        url = self._url + self.CONFIGS_ENDPOINT
+        url = self._create_url(self._url + self.CONFIGS_ENDPOINT)
         if find_dict is None or not find_dict:
             request = _Request(url=url, method="GET")
         else:
@@ -212,7 +223,7 @@ class ConfigService:
     def delete_config(self, obj_dict):
         """Mark a valid configuration as discarded."""
         url_params = "/{}".format(obj_dict["_id"])
-        url = self._url + self.CONFIGS_ENDPOINT + url_params
+        url = self._create_url(self._url + self.CONFIGS_ENDPOINT + url_params)
         request = _Request(url=url, method="DELETE")
         return self._make_request(request)
 
@@ -227,7 +238,7 @@ class ConfigService:
             "discarded": False}
         # Build URL a make PUT request
         url_params = "/{}".format(_id)
-        url = self._url + self.CONFIGS_ENDPOINT + url_params
+        url = self._create_url(self._url + self.CONFIGS_ENDPOINT + url_params)
         jdata = _json.dumps(update_dict, cls=NumpyEncoder).encode()
         request = _Request(
             url=url, method="PUT",
@@ -236,7 +247,8 @@ class ConfigService:
 
     def query_db_size(self):
         """Return estimated size of configuration database."""
-        url = self._url + self.CONFIGS_ENDPOINT + "/stats/size"
+        url = self._create_url(
+            self._url + self.CONFIGS_ENDPOINT + "/stats/size")
         request = _Request(url=url, method="GET")
         return self._make_request(request)
 
@@ -265,6 +277,9 @@ class ConfigService:
         return str(_datetime.datetime.fromtimestamp(timestamp))
 
     # --- private methods ---
+
+    def _create_url(self, string):
+        return _parse.quote(string, safe=_invalid_characters)
 
     def _make_request(self, request):
         try:
