@@ -279,6 +279,8 @@ class PRUController:
         # define constant namespaces
         # self._initialize_const_namespace()
         self._params = udcmodel.parameters
+        # print(self._params)
+
         self._group_ids = sorted(self._params.groups.keys())
         # bypass psmodel default frequencies
         if freqs is not None:
@@ -611,6 +613,7 @@ class PRUController:
             sync_address=self._device_ids[0],
             # sync_address=0xff,  # broadcast bsmp id
             delay=self._pru_delays[sync_mode])
+        # print(hex(sync_mode))
 
         # update time interval according to new sync mode selected
         self._scan_interval = self._get_scan_interval()
@@ -791,6 +794,11 @@ class PRUController:
         udc = _UDC(self._pru, self._udcmodel, self._device_ids)
         self._udc = udc
 
+        # print('!!! INIT')
+        # print('')
+        # print(self._device_ids)
+        # print(len(self._params.groups[self._params.MIRROR]))
+
     def _bsmp_reset_ps_controllers(self):
 
         # turn PRU sync off
@@ -881,6 +889,8 @@ class PRUController:
             return dev_ids, self._params.MIGWFM
         elif self._pru.sync_mode == self._params.PRU.SYNC_MODE.RMPEND:
             dev_ids = self._select_next_device_id()
+            # print(len(self._params.groups[self._params.MIRROR]))
+            # print(self._params.RMPWFM)
             return dev_ids, self._params.RMPWFM
         elif self._pru.sync_mode == self._params.PRU.SYNC_MODE.BRDCST:
             return self._device_ids, self._params.CYCLE
@@ -1009,7 +1019,21 @@ class PRUController:
                 self._connected[id] = True
                 values = data[id]
                 for i in range(len(values)):
-                    var_id = var_ids[i]
+                    # ===
+                    # NOTE: fixit!
+                    # When changing from SlowRef to RmpWfm mode in TB-04-PS-CH,
+                    # 1. i >= len(var_ids)
+                    # 2. WfmData-RB != WfmData_SP
+                    # try/exception necessary!
+                    try:
+                        var_id = var_ids[i]
+                    except IndexError:
+                        print('device_ids:', device_ids)
+                        print('group_id:', group_id)
+                        print('i:', i)
+                        print('var_ids:', var_ids)
+                        print('len(values):', len(values))
+                    # ===
                     self._update_copy_var_vals(id, copy_var_vals, nr_devs,
                                                values[i], group_id, var_id)
 
