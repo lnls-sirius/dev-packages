@@ -6,7 +6,7 @@ at the other end of the serial line.
 """
 
 import time as _time
-import random as _random
+# import random as _random
 from collections import deque as _deque
 from threading import Thread as _Thread
 from threading import Lock as _Lock
@@ -326,7 +326,6 @@ class PRUController:
         self._initialize_devices()
 
         # operation queue
-        # self._queue = PRUCQueue()
         self._queue = prucqueue
 
         # ramp offset
@@ -744,10 +743,6 @@ class PRUController:
         if self.bsmpcomm:
             self._queue.process()
 
-        # n = len(self._queue)
-        # if n > 50:
-        #     print('BBB queue size: {} !!!'.format(len(self._queue)))
-
     # --- private methods: initializations ---
 
     def _scanning_false_wait_empty_queue(self):
@@ -793,11 +788,6 @@ class PRUController:
         # create UDC
         udc = _UDC(self._pru, self._udcmodel, self._device_ids)
         self._udc = udc
-
-        # print('!!! INIT')
-        # print('')
-        # print(self._device_ids)
-        # print(len(self._params.groups[self._params.MIRROR]))
 
     def _bsmp_reset_ps_controllers(self):
 
@@ -850,11 +840,14 @@ class PRUController:
             if 'Simulation' not in _udc_firmware_version and \
                _udc_firmware_version != _devpckg_firmware_version:
                 self._init_disconnect()
-                errmsg = ('Incompatible BSMP implementation version! '
-                          '{} <> {}'.format(_udc_firmware_version,
-                                            _devpckg_firmware_version))
-                print(errmsg)
-                # TODO: ask ELP to update firmaware of TB dipole PS
+                errmsg = ('Incompatible bsmp implementation version '
+                          'for device id:{}')
+                print(errmsg.format(id))
+                errmsg = 'lib version: {}'
+                print(errmsg.format(_devpckg_firmware_version))
+                errmsg = 'udc version: {}'
+                print(errmsg.format(_udc_firmware_version))
+                print()
                 # raise ValueError(errmsg)
 
     # --- private methods: scan and process ---
@@ -1183,7 +1176,6 @@ class PRUController:
         # check if ps controller version is compatible with bsmp.py
         # TODO: turn version checking on when test bench frmware is updated.
         self._init_check_version()
-
         # initialize parameters_values, a mirror state of BSMP devices
         # TODO: finish implementation of _bsmp_init_parameters_values!
         # self._bsmp_init_parameters_values()
