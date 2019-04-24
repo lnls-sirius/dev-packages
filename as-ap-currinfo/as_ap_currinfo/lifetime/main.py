@@ -27,7 +27,7 @@ class App:
 
     def __init__(self, driver):
         """Class constructor."""
-        _pvs.print_banner_and_save_pv_list()
+        _pvs.print_banner()
 
         self._driver = driver
         self._pvs_database = App.pvs_database
