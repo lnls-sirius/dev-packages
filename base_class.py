@@ -4,6 +4,16 @@ import logging as _log
 from siriuspy.csdevice.orbitcorr import SOFBFactory as _SOFBFactory
 from siriuspy.callbacks import Callback as _Callback
 
+_CSACCELS = {}
+
+
+def _create_csorb(acc):
+    csorb = _CSACCELS.get(acc)
+    if csorb is None:
+        csorb = _SOFBFactory.create(acc)
+        _CSACCELS[acc] = csorb
+    return csorb
+
 
 class BaseClass(_Callback):
     """Base Class."""
@@ -11,7 +21,7 @@ class BaseClass(_Callback):
     def __init__(self, acc, prefix='', callback=None):
         """Init method."""
         super().__init__(callback)
-        self._csorb = _SOFBFactory.create(acc)
+        self._csorb = _create_csorb(acc)
         self._prefix = prefix
         self._status = 0b0
         self._map2write = self.get_map2write()
@@ -75,7 +85,7 @@ class BaseTimingConfig:
 
     def __init__(self, acc):
         """Init method."""
-        self._csorb = _SOFBFactory.create(acc)
+        self._csorb = _create_csorb(acc)
         self._config_ok_vals = {}
         self._config_pvs_rb = {}
         self._config_pvs_sp = {}
