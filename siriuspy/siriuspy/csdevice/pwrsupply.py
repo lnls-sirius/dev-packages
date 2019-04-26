@@ -699,7 +699,6 @@ def _get_pu_FP_PINGER_propty_database():
 
 def _get_ps_LINAC_propty_database():
     """Return LINAC pwrsupply props."""
-    # propty_db = get_basic_propty_database()
     propty_db = {
         'rdnets': {'type': 'enum', 'enums': ['Connected', 'Broken'],
                    # 'states': [_Severity.NO_ALARM, _Severity.MAJOR_ALARM]},
@@ -1097,6 +1096,15 @@ def _get_ps_Commercial_propty_database():
     """Return database with Commercial pwrsupply model PVs."""
     # TODO: implement!!!
     return _get_ps_FBP_propty_database()
+
+
+def get_li_ma_propty_database(maname):
+    """Return property database of a magnet type device."""
+    psnames = _MASearch.conv_psmaname_2_psnames(maname)
+    database = _get_ps_LINAC_propty_database()
+    db = {}
+    db[psnames[0]] = database
+    return db
 
 
 # --- Aux. ---
