@@ -3,6 +3,7 @@ from functools import partial as _part
 import numpy as _np
 from epics import PV as _PV
 import mathphys.constants as _consts
+from threading import Event as _Event
 from siriuspy.thread import RepeaterThread as _Repeater
 from siriuspy.search import PSSearch as _PSS
 from siriuspy.factory import NormalizerFactory as _NormFact
@@ -18,51 +19,63 @@ class MeasEnergy(_BaseClass):
 
     def __init__(self):
         """."""
+        prof = 'LA-BI:PRF4'
         self.energy_calculator = CalcEnergy()
         self.image_processor = ProcessImage()
         self.image_processor.readingorder = self.image_processor.CLIKE
+        self._profile = prof
         self._coefx = _PV(
             prof+':X:Gauss:Coef', callback=_part(self._update_coef, pln='x'))
         self._coefy = _PV(
             prof+':Y:Gauss:Coef', callback=_part(self._update_coef, pln='y'))
+        self._width_source = _PV(
+            prof + ':ROI:MaxSizeX_RBV', callback=self._update_width)
         self._image_source = _PV(prof + ':RAW:ArrayData')
-        self._width_source = _PV(prof + ':ROI:MaxSizeX_RBV')
         self._current_source = _PV('LA-CN:H1DPPS-1:seti')
-        self._interval = 0.5
-        self._measuring = False
-        self._thread = _Repeater(self._interval, self._meas_energy, niter=0)
+        self._thread = _Repeater(0.5, self._meas_energy, niter=0)
+        self._thread.pause()
         self._thread.start()
+
+    def get_map2write(self):
+        database = dict()
+        dic_ = self.image_processor.get_map2write()
+        dic_.update(self.energy_calculator.get_map2write())
+        dic_.update({'MeasureCtrl-Cmd': _part(self.write, 'measuring')})
+        return {k: v for k, v in dic_.items() if k in database}
+
+    def get_map2read(self):
+        database = dict()
+        dic_ = self.image_processor.get_map2read()
+        dic_.update(self.energy_calculator.get_map2read())
+        dic_.update({'MeasureSts-Mon': _part(self.read, 'measuring')})
+        return {k: v for k, v in dic_.items() if k in database}
 
     def start(self):
         """."""
-        self._measuring = True
+        self._thread.resume()
 
     def stop(self):
         """."""
-        self._measuring = False
+        self._thread.pause()
 
     @property
     def rate(self):
         """."""
-        return 1/self._interval
+        return 1/self._thread.interval
 
     @rate.setter
     def rate(self, val):
         if isinstance(val, (float, int)) and 0 < val < 4:
-            self._interval = val
-            self._thread.interval = val
+            self._thread.interval = 1/val
 
     @property
     def measuring(self):
         """."""
-        return self._measuring
+        return not self._thread.is_paused()
 
     @measuring.setter
     def measuring(self, val):
-        if val:
-            self.start()
-        else:
-            self.stop()
+        return self.start() if val else self.stop()
 
     def _update_coef(self, _, val, pln='x', **kwargs):
         if val is None:
@@ -72,10 +85,11 @@ class MeasEnergy(_BaseClass):
         elif pln.startswith('y'):
             self.image_processor.pxl2mmscaley = val
 
+    def _update_width(self, _, val, **kwargs):
+        if isinstance(val, (float, int)):
+            self.image_processor.imagewidth = int(val)
+
     def _meas_energy(self):
-        if not self._measuring:
-            return
-        self.image_processor.imagewidth = self._width_source.get()
         self.image_processor.image = self._image_source.get()
         self.energy_calculator.set_data(
             self._current_source.get(),
@@ -87,130 +101,119 @@ class CalcEmmitance(_BaseClass):
     X = 0
     Y = 1
     PLACES = ('li', 'tb-qd2a', 'tb-qf2a')
-    TRANSMAT = 0
-    THINLENS = 1
 
     def __init__(self):
-        self._place = 'LI'
-        self._quadname = ''
-        self._quadlen = 0.0
-        self._distance = 0.0
+        super().__init__()
+        self._measuring = _Event()
+        self.emittance_calculator = CalcEmmitance()
+        self.image_processor = ProcessImage()
+        self.image_processor.readingorder = self.image_processor.CLIKE
         self._select_experimental_setup()
-        self._beamsize = _np.array([], dtype=float)
-        self._beamsize_fit = _np.array([], dtype=float)
-        self._currents = _np.array([], dtype=float)
-        self._quadstren = _np.array([], dtype=float)
-        self._plane = self.X
-        self._energy = 0.15
-        self._emittance = 0.0
-        self._beta = 0.0
-        self._alpha = 0.0
-        self._gamma = 0.0
 
-    @property
-    def place(self):
-        return self._place
+    def get_map2write(self):
+        database = dict()
+        dic_ = self.image_processor.get_map2write()
+        dic_.update(self.emittance_calculator.get_map2write())
+        dic_.update({'MeasureCtrl-Cmd': _part(self.write, 'measuring')})
+        return {k: v for k, v in dic_.items() if k in database}
 
-    @place.setter
-    def place(self, val):
-        if isinstance(val, str) and val.lower() in self.PLACES:
-            self._place = val
-            self._select_experimental_setup()
-            self._perform_analysis()
-
-    @property
-    def plane(self):
-        return self._plane
-
-    @plane.setter
-    def plane(self, val):
-        if not isinstance(val, (int, float)):
-            return
-        self._plane = self.X if val == self.X else self.Y
-        self._perform_analysis()
-
-    @property
-    def plane_str(self):
-        return self._plane
-
-    @plane_str.setter
-    def plane_str(self, val):
-        if not isinstance(val, str):
-            return
-        self.plane = self.X if val.lower == 'x' else self.Y
-
-    @property
-    def quadname(self):
-        return self._quadname
-
-    @property
-    def quadlen(self):
-        return self._quadlen
-
-    @property
-    def distance(self):
-        return self._distance
-
-    @property
-    def beamsize(self):
-        return self._beamsize.copy()
-
-    @property
-    def beamsize_fit(self):
-        return self._beamsize_fit.copy()
-
-    @property
-    def currents(self):
-        return self._currents.copy()
-
-    @property
-    def quadstren(self):
-        return self._quadstren.copy()
-
-    @property
-    def beta(self):
-        return self._beta
-
-    @property
-    def alpha(self):
-        return self._alpha
-
-    @property
-    def gamma(self):
-        return self._gamma
-
-    @property
-    def emittance(self):
-        return self._emittance * 1e6  # in mm.mrad
-
-    @property
-    def norm_emittance(self):
-        return self.emittance * self._energy / E0
-
-    def set_data(self, beam_sizes, currents):
-        if isinstance(beam_sizes, (int, float)):
-            beam_sizes = [beam_sizes]
-        if isinstance(currents, (int, float)):
-            currents = [currents]
-        beam_sizes = _np.array(beam_sizes, dtype=float)
-        currents = _np.array(currents, dtype=float)
-        if beam_sizes.size != currents.size:
-            return False
-        self._beamsize = beam_sizes
-        self._currents = currents
-        self._perform_analysis()
+    def get_map2read(self):
+        database = dict()
+        dic_ = self.image_processor.get_map2read()
+        dic_.update(self.emittance_calculator.get_map2read())
+        dic_.update({'MeasureSts-Mon': _part(self.read, 'measuring')})
+        return {k: v for k, v in dic_.items() if k in database}
 
     def _select_experimental_setup(self):
+        self._profile = prof
+    def _select_experimental_setup(self):
         if self.place.lower().startswith('li'):
-            self._quadname = 'LA-CN:H1FQPS-3'
-            self._quadlen = 0.112
-            self._distance = 2.8775
+            prof = 'LA-BI:PRF4'
+            sp_cur = 'LA-CN:H1FQPS-3:seti'
+            rb_cur = 'LA-CN:H1FQPS-3:rdi'
+            img = prof + ':RAW:ArrayData'
+            wid = prof + ':ROI:MaxSizeX_RBV'
         if self.place.lower().startswith('tb-qd2a'):
-            self._quadname = 'TB-02:PS-QD2A'
+            quad = 'TB-02:PS-QD2A'
+            sp_cur = 'LA-CN:H1FQPS-3:seti'
+            rb_cur = 'LA-CN:H1FQPS-3:rdi'
+            img = prof + ':RAW:ArrayData'
+            wid = prof + ':ROI:MaxSizeX_RBV'
             self._quadlen = 0.1
             self._distance = 6.904
         if self.place.lower().startswith('tb-qf2a'):
             self._quadname = 'TB-02:PS-QF2A'
             self._quadlen = 0.1
             self._distance = 6.534
+
+        if self._place.lower().startswith('li'):
+            self._image_source = _PV(prof+':RAW:ArrayData')
+            self._width_source = _PV(
+                prof+':ROI:MaxSizeX_RBV', callback=self._update_width)
+            self._coefx = _PV(
+                prof+':X:Gauss:Coef',
+                callback=_part(self._update_coef, pln='x'))
+            self._coefy = _PV(
+                prof+':Y:Gauss:Coef',
+                callback=_part(self._update_coef, pln='y'))
+            self.quad_I_sp = PV('LA-CN:H1FQPS-3:seti')
+            self.quad_I_rb = PV('LA-CN:H1FQPS-3:rdi')
+            self.DIST = 2.8775
+            self.QUAD_L = 0.112
+        if self._place.lower().startswith('tb-qd2a'):
+            self.quad_I_sp = PV('TB-02:PS-QD2A:Current-SP')
+            self.quad_I_rb = PV('TB-02:PS-QD2A:Current-RB')
+            self.DIST = 6.904
+            self.QUAD_L = 0.1
+        if self._place.lower().startswith('tb-qf2a'):
+            self.quad_I_sp = PV('TB-02:PS-QF2A:Current-SP')
+            self.quad_I_rb = PV('TB-02:PS-QF2A:Current-RB')
+            self.DIST = 6.534
+            self.QUAD_L = 0.1
         self._conv2kl = _NormFact.create(self._quadname)
+
+
+    def _acquire_data(self):
+        samples = self.spbox_samples.value()
+        nsteps = self.spbox_steps.value()
+        I_ini = self.spbox_I_ini.value()
+        I_end = self.spbox_I_end.value()
+
+        pl = 'y' if self.cbbox_plane.currentIndex() else 'x'
+        curr_list = np.linspace(I_ini, I_end, nsteps)
+        sigma = []
+        I_meas = []
+        for i, I in enumerate(curr_list):
+            print('setting Quadrupole to ', I)
+            if not SIMUL:
+                self.quad_I_sp.put(I, wait=True)
+            self._measuring.wait(5 if i else 15)
+            j = 0
+            I_tmp = []
+            sig_tmp = []
+            while j < samples:
+                if self._measuring.is_set():
+                    print('Stopped')
+                    return
+                print('measuring sample', j)
+                I_now = self.quad_I_rb.value
+                cen_x, sigma_x, cen_y, sigma_y = self.plt_image.get_params()
+                mu, sig = (cen_x, sigma_x) if pl == 'x' else (cen_y, sigma_y)
+                max_size = self.spbox_threshold.value()*1e-3
+                if sig > max_size:
+                    self._measuring.wait(1)
+                    continue
+                I_tmp.append(I_now)
+                sig_tmp.append(abs(sig))
+                self._measuring.wait(0.5)
+                j += 1
+            ind = np.argsort(sig_tmp)
+            I_tmp = np.array(I_tmp)[ind]
+            sig_tmp = np.array(sig_tmp)[ind]
+            I_meas.extend(I_tmp[6:-6])
+            sigma.extend(sig_tmp[6:-6])
+        self._measuring.set()
+        print('Finished!')
+        self.I_meas = I_meas
+        self.sigma = sigma
+        self.plane_meas = pl

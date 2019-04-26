@@ -576,9 +576,9 @@ class CalcEnergy(_BaseClass):
 
     def get_map2read(self):
         return {
-            'Dispersion-SP': _part(self.read, 'dispersion'),
-            'Angle-SP': _part(self.read, 'angle'),
-            'Spectrometer-SP': _part(self.read, 'spectrometer'),
+            'Dispersion-RB': _part(self.read, 'dispersion'),
+            'Angle-RB': _part(self.read, 'angle'),
+            'Spectrometer-RB': _part(self.read, 'spectrometer'),
             'IntDipole-Mon': _part(self.read, 'intdipole'),
             'Energy-Mon': _part(self.read, 'energy'),
             'Spread-Mon': _part(self.read, 'spread'),
@@ -691,8 +691,6 @@ class CalcEmmitance(_BaseClass):
     X = 0
     Y = 1
     PLACES = ('li', 'tb-qd2a', 'tb-qf2a')
-    TRANSMAT = 0
-    THINLENS = 1
 
     def __init__(self):
         super().__init__()
