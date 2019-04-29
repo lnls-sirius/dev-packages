@@ -624,6 +624,15 @@ def get_ma_propty_database(maname):
     return db
 
 
+def get_li_ma_propty_database(maname):
+    """Return property database of a magnet type device."""
+    psnames = _MASearch.conv_psmaname_2_psnames(maname)
+    database = _get_ps_LINAC_propty_database()
+    db = {}
+    db[psnames[0]] = database
+    return db
+
+
 def get_pm_propty_database(maname):
     """Return property database of a pulsed magnet type device."""
     if 'InjNLKckr' in maname or 'InjDipKckr' in maname:
@@ -699,7 +708,6 @@ def _get_pu_FP_PINGER_propty_database():
 
 def _get_ps_LINAC_propty_database():
     """Return LINAC pwrsupply props."""
-    # propty_db = get_basic_propty_database()
     propty_db = {
         'rdnets': {'type': 'enum', 'enums': ['Connected', 'Broken'],
                    # 'states': [_Severity.NO_ALARM, _Severity.MAJOR_ALARM]},
