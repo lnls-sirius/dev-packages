@@ -624,6 +624,15 @@ def get_ma_propty_database(maname):
     return db
 
 
+def get_li_ma_propty_database(maname):
+    """Return property database of a magnet type device."""
+    psnames = _MASearch.conv_psmaname_2_psnames(maname)
+    database = _get_ps_LINAC_propty_database()
+    db = {}
+    db[psnames[0]] = database
+    return db
+
+
 def get_pm_propty_database(maname):
     """Return property database of a pulsed magnet type device."""
     if 'InjNLKckr' in maname or 'InjDipKckr' in maname:
@@ -1096,15 +1105,6 @@ def _get_ps_Commercial_propty_database():
     """Return database with Commercial pwrsupply model PVs."""
     # TODO: implement!!!
     return _get_ps_FBP_propty_database()
-
-
-def get_li_ma_propty_database(maname):
-    """Return property database of a magnet type device."""
-    psnames = _MASearch.conv_psmaname_2_psnames(maname)
-    database = _get_ps_LINAC_propty_database()
-    db = {}
-    db[psnames[0]] = database
-    return db
 
 
 # --- Aux. ---
