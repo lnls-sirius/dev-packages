@@ -1195,6 +1195,8 @@ class PRUCParms_FAC_2P4S(_PRUCParms):
         ConstBSMP.V_I_LOAD_MEAN,
         ConstBSMP.V_I_LOAD1,
         ConstBSMP.V_I_LOAD2,
+        ConstBSMP.V_I_ARM_1,
+        ConstBSMP.V_I_ARM_2,
         ConstBSMP.V_V_LOAD,
         ConstBSMP.V_V_CAPBANK_1,
         ConstBSMP.V_V_CAPBANK_2,
@@ -1219,9 +1221,7 @@ class PRUCParms_FAC_2P4S(_PRUCParms):
         ConstBSMP.V_DUTY_CYCLE_5,
         ConstBSMP.V_DUTY_CYCLE_6,
         ConstBSMP.V_DUTY_CYCLE_7,
-        ConstBSMP.V_DUTY_CYCLE_8,
-        ConstBSMP.V_I_ARM_1,
-        ConstBSMP.V_I_ARM_2)
+        ConstBSMP.V_DUTY_CYCLE_8)
     groups[_PRUCParms.SYNCOFF] = (
         # --- common variables
         ConstBSMP.V_PS_STATUS,
@@ -1267,9 +1267,7 @@ class PRUCParms_FAC_2P4S(_PRUCParms):
         ConstBSMP.V_DUTY_CYCLE_5,
         ConstBSMP.V_DUTY_CYCLE_6,
         ConstBSMP.V_DUTY_CYCLE_7,
-        ConstBSMP.V_DUTY_CYCLE_8,
-        ConstBSMP.V_I_ARM_1,
-        ConstBSMP.V_I_ARM_2)
+        ConstBSMP.V_DUTY_CYCLE_8)
     groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 
