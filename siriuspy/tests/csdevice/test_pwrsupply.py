@@ -52,6 +52,7 @@ public_interface = (
     'get_ps_propty_database',
     'get_pu_propty_database',
     'get_ma_propty_database',
+    'get_li_ma_propty_database',
     'get_pm_propty_database',
 )
 
@@ -259,6 +260,13 @@ class TestPwrSupply(TestCase):
                 self.assertIn('unit',
                               db_ps[convname.replace('-SP', 'Ref-Mon')])
                 self.assertIn('unit', db_ps[convname.replace('-SP', '-Mon')])
+
+    def test_li_ma_propty_database(self):
+        """Test li_ma_propty_database."""
+        for maname, convname in TestPwrSupply.sample.items():
+            if not maname.startswith('LI-'):
+                continue
+            db = pwrsupply.get_li_ma_propty_database(maname)
 
     def test_pm_propty_database(self):
         """Test pm_propty_database."""
