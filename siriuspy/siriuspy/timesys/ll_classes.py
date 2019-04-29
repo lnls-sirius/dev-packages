@@ -3,7 +3,7 @@ import time as _time
 import re as _re
 from functools import partial as _partial
 import logging as _log
-from threading import Thread as _Thread
+from threading import Thread as _ThreadBase
 import epics as _epics
 from siriuspy.util import update_bit as _update_bit, get_bit as _get_bit
 # from siriuspy.thread import QueueThread as _QueueThread
@@ -23,6 +23,14 @@ _FDEL = _cstime.Const.FINE_DELAY / _US2SEC
 
 def get_evg_name():
     return _LLTimeSearch.get_device_names({'dev': 'EVG'})[0]
+
+
+class _Thread(_ThreadBase):
+
+    def __init__(self, **kwargs):
+        if 'daemon' not in kwargs:
+            kwargs['daemon'] = True
+        super().__init__(**kwargs)
 
 
 class _BaseLL(_Base):
@@ -60,8 +68,6 @@ class _BaseLL(_Base):
 
         self._writepvs = dict()
         self._readpvs = dict()
-        # self._queue = _QueueThread()
-        # self._queue.start()
         self._locked = False
 
         _log.info(self.channel+': Creating PVs.')
@@ -150,10 +156,7 @@ class _BaseLL(_Base):
         # queue.
         self._put_on_pv(pv, value, wait=False)
         pvname = self._dict_convert_prop2pv[prop]
-        # self._queue.add_callback(self._lock_thread, pvname)
-        _Thread(
-            target=self._lock_thread,
-            args=(pvname, value), daemon=True).start()
+        _Thread(target=self._lock_thread, args=(pvname, value)).start()
 
     def read(self, prop, is_sp=False):
         """Read HL properties from LL IOCs and return the value."""
@@ -224,40 +227,42 @@ class _BaseLL(_Base):
         val = pv.get(timeout=_conn_timeout)
         return def_val if val is None else val
 
-    def _lock_thread(self, pvname, value=None, count=0):
+    def _lock_thread(self, pvname, value=None):
         prop = self._dict_convert_pv2prop[pvname]
         if value is None:
             value = self._get_from_pvs(False, prop)
-        my_val = self._config_ok_values.get(prop)
-
-        pv = self._writepvs.get(prop)
-        conds = pv is not None
-        conds &= my_val is not None
-        conds &= value is not None
-        if conds and (not pv._initialized or my_val != value):
-            count += 1
+        # I have loop here to guarantee that the hardware will go to the
+        # desired state.
+        # I have to do this because of a problem on the LL IOCs triggered by
+        # write commands which do not wait for the put operation to be
+        # completed, which is the case for the default behavior of pyepics,
+        # pydm, cs-studio...
+        # This problem happens when one try to set different properties of the
+        # LL IOCs, or the same property twice, in a time interval shorter than
+        # the one it takes for LL IOC complete writing on the hardware (~60ms).
+        maxatt = 100
+        for count in range(maxatt):
+            my_val = self._config_ok_values.get(prop)
+            pv = self._writepvs.get(prop)
+            if my_val is None or pv is None:
+                break
+            value = value if count < 1 else self._get_from_pvs(False, prop)
+            if value is None:
+                continue
+            if pv._initialized and my_val == value:
+                break
             self._put_on_pv(pv, my_val)
-            if count > 1:
-                _log.warning((
-                    'chan: {0:s}  pvname: {1:s}  my_val: {2:s}  '
-                    'val: {3:s}  put_comp: {4:s} initia: {5:s}  '
-                    'count: {6:s}').format(
-                        self.channel, pv.pvname, str(my_val), str(value),
-                        str(pv.put_complete), str(pv._initialized),
-                        str(count)))
-            # I have to keep calling this function over and over again to
-            # guarantee that the hardware will go to the desired state.
-            # I have to do this because of a problem on the LL IOCs
-            # triggered by write commands which do not wait for the put
-            # operation to be completed, which is the case for the default
-            # behavior of pyepics, pydm, cs-studio...
-            # This problem happens when one try to set different properties
-            # of the LL IOCs, or the same property twice, in a time interval
-            # shorter than the one it takes for LL IOC complete the write on
-            # the hardware (~60ms).
             _time.sleep(0.1)  # I wait a little bit to reduce CPU load
-            # self._queue.add_callback(self._lock_thread, pvname, count=count)
-            self._lock_thread(pvname, count=count)
+        if count > 1:
+            _log.warning((
+                'chan: {0:s} pvname: {1:s} my_val: {2:s} '
+                'val: {3:s} put_comp: {4:s} initia: {5:s} '
+                'count: {6:s} conn: {7:s}').format(
+                    self.channel, pv.pvname, str(my_val), str(value),
+                    str(pv.put_complete), str(pv._initialized),
+                    str(count), str(pv.connected)))
+        if count == maxatt-1:
+            _log.error('Could not set PV {0:s}.'.format(pv.pvname))
 
     def _put_on_pv(self, pv, value, wait=False):
         if pv.connected and pv.put_complete:
@@ -273,23 +278,14 @@ class _BaseLL(_Base):
         # -Cmd PVs do not have a state associated to them
         if value is None or self._iscmdpv(pvname):
             return
-        # self._queue.add_callback(self._on_change_pv_thread, pvname, value)
-        _Thread(
-            target=self._on_change_pv_thread,
-            args=(pvname, value), daemon=True).start()
+        _Thread(target=self._on_change_pv_thread, args=(pvname, value)).start()
 
     def _on_change_readpv(self, pvname, value, **kwargs):
         if value is None:
             return
         if self._locked:
-            # self._queue.add_callback(self._lock_thread, pvname, value)
-            _Thread(
-                target=self._lock_thread,
-                args=(pvname, value), daemon=True).start()
-        # self._queue.add_callback(self._on_change_pv_thread, pvname, value)
-        _Thread(
-            target=self._on_change_pv_thread,
-            args=(pvname, value), daemon=True).start()
+            _Thread(target=self._lock_thread, args=(pvname, value)).start()
+        _Thread(target=self._on_change_pv_thread, args=(pvname, value)).start()
 
         # at initialization load _config_ok_values
         prop = self._dict_convert_pv2prop.get(pvname)
@@ -520,6 +516,11 @@ class _EVROUT(_BaseLL):
             }
         return map_
 
+    def _get_bypass(self, is_sp, value=None):
+        dic = self._get_simple('ByPassIntlk', is_sp, val=value)
+        dic.update(self._get_status('ByPassIntlk', is_sp, value=value))
+        return dic
+
     def _get_status(self, prop, is_sp, value=None):
         dic_ = dict()
         dic_['DevEnbl'] = self._get_from_pvs(is_sp, 'DevEnbl', def_val=0)
@@ -531,8 +532,11 @@ class _EVROUT(_BaseLL):
         dic_['PVsConn'] = self.connected
         if 'IntlkMon' in self._REMOVE_PROPS:
             dic_['IntlkMon'] = 0
+            dic_['ByPassIntlk'] = 0
         else:
             dic_['IntlkMon'] = self._get_from_pvs(False, 'IntlkMon', def_val=1)
+            dic_['ByPassIntlk'] = self._get_from_pvs(
+                False, 'ByPassIntlk', def_val=1)
         if 'Los' in self._REMOVE_PROPS:
             prt_num = 0
             dic_['Los'] = 0b00000000
@@ -562,6 +566,8 @@ class _EVROUT(_BaseLL):
         prob, bit = _update_bit(prob, bit, dic_['FoutLos']), bit+1
         prob, bit = _update_bit(prob, bit, dic_['EVGLos']), bit+1
         prob, bit = _update_bit(prob, bit, dic_['IntlkMon']), bit+1
+        intlk_sts = dic_['IntlkMon'] and dic_['ByPassIntlk']
+        prob = _update_bit(prob, bit, intlk_sts)
         return {'Status': prob}
 
     def _get_delay(self, prop, is_sp, value=None):

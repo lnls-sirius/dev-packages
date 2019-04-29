@@ -28,7 +28,7 @@ from siriuspy.pwrsupply.pru import PRU as _PRU
 # firmware: FBP DCLink variable id 32 changed from float to uint8
 # __version__ = 'V0.15 2018-07-11V0.15 2018-07-11'
 
-__version__ = 'V0.16b2018-08-22V0.16b2018-08-22'
+__version__ = 'V0.32 2019-04-10V0.32 2019-04-10'
 
 # FAP dipole version
 # __version__ = 'V0.18 2018-10-22V0.18 2018-10-22'

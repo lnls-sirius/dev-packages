@@ -6,7 +6,7 @@ at the other end of the serial line.
 """
 
 import time as _time
-import random as _random
+# import random as _random
 from collections import deque as _deque
 from threading import Thread as _Thread
 from threading import Lock as _Lock
@@ -231,7 +231,7 @@ class PRUController:
 
     # shortcuts, local variables and constants
 
-    _dcdc_udcmodel = ('FBP', 'FAC', 'FAC_2P4S', 'FAP', 'FAP_4P', 'FAP_2P2S')
+    # _dcdc_udcmodel = ('FBP', 'FAC', 'FAC_2P4S', 'FAP', 'FAP_4P', 'FAP_2P2S')
 
     _default_slowrefsync_sp = _DEFAULT_WFMDATA[0]
 
@@ -279,6 +279,8 @@ class PRUController:
         # define constant namespaces
         # self._initialize_const_namespace()
         self._params = udcmodel.parameters
+        # print(self._params)
+
         self._group_ids = sorted(self._params.groups.keys())
         # bypass psmodel default frequencies
         if freqs is not None:
@@ -324,7 +326,6 @@ class PRUController:
         self._initialize_devices()
 
         # operation queue
-        # self._queue = PRUCQueue()
         self._queue = prucqueue
 
         # ramp offset
@@ -609,7 +610,9 @@ class PRUController:
         self._pru.sync_start(
             sync_mode=sync_mode,
             sync_address=self._device_ids[0],
+            # sync_address=0xff,  # broadcast bsmp id
             delay=self._pru_delays[sync_mode])
+        # print(hex(sync_mode))
 
         # update time interval according to new sync mode selected
         self._scan_interval = self._get_scan_interval()
@@ -669,18 +672,13 @@ class PRUController:
                 # trim wfmdata
                 self._curves[i] += self._curves[i][:n]
 
-        # # for now do not accept changing curve lengths
-        # if len(curve) != len(self._curves[idx]):
-        #     self.disconnect()
-        #     raise NotImplementedError('Change of curve size not implemented')
-
         # store curve in PRUController attribute
         self._curves[idx] = list(curve)
 
     def pru_curve_write(self, device_id, curve):
         """Write curve for a device to the correponding PRU memory."""
+        # prepare curves, trimming or padding...
         self.pru_curve_set(device_id, curve)
-
         # write curve to PRU memory
         self.pru_curve_send()
 
@@ -708,12 +706,6 @@ class PRUController:
 
         # select block to be used at next start of ramp
         self._pru.set_curve_block(block_next)
-
-    # @property
-    # def pru_curve_length(self):
-    #     """PRU curves length."""
-    #     n = len(self._curves[self.device_ids[0]])
-    #     return n
 
     # --- public methods: access to atomic methods of scan and process loops
 
@@ -750,10 +742,6 @@ class PRUController:
         # if serial line is available.
         if self.bsmpcomm:
             self._queue.process()
-
-        # n = len(self._queue)
-        # if n > 50:
-        #     print('BBB queue size: {} !!!'.format(len(self._queue)))
 
     # --- private methods: initializations ---
 
@@ -813,8 +801,10 @@ class PRUController:
         # TODO: somehow this is necessary. if curves are not set in
         # initialization, RMPEND does not work! sometimes the ps controllers
         # are put in a non-responsive state!!!
-        if self._udcmodel in PRUController._dcdc_udcmodel:
-            self.pru_curve_write(self.device_ids[0], self._curves[0])
+
+        # if self._udcmodel in PRUController._dcdc_udcmodel:
+        #     self.pru_curve_write(self.device_ids[0], self._curves[0])
+        self.pru_curve_write(self.device_ids[0], self._curves[0])
 
     def _initialize_devices(self):
 
@@ -823,9 +813,6 @@ class PRUController:
             pass
 
     def _init_prune_mirror_group(self):
-
-        # if self._udcmodel not in PRUController._dcdc_udcmodel:
-        #     return
 
         if self._udcmodel != 'FBP':
             return
@@ -853,11 +840,14 @@ class PRUController:
             if 'Simulation' not in _udc_firmware_version and \
                _udc_firmware_version != _devpckg_firmware_version:
                 self._init_disconnect()
-                errmsg = ('Incompatible BSMP implementation version! '
-                          '{} <> {}'.format(_udc_firmware_version,
-                                            _devpckg_firmware_version))
-                print(errmsg)
-                # TODO: ask ELP to update firmaware of TB dipole PS
+                errmsg = ('Incompatible bsmp implementation version '
+                          'for device id:{}')
+                print(errmsg.format(id))
+                errmsg = 'lib version: {}'
+                print(errmsg.format(_devpckg_firmware_version))
+                errmsg = 'udc version: {}'
+                print(errmsg.format(_udc_firmware_version))
+                print()
                 # raise ValueError(errmsg)
 
     # --- private methods: scan and process ---
@@ -892,6 +882,8 @@ class PRUController:
             return dev_ids, self._params.MIGWFM
         elif self._pru.sync_mode == self._params.PRU.SYNC_MODE.RMPEND:
             dev_ids = self._select_next_device_id()
+            # print(len(self._params.groups[self._params.MIRROR]))
+            # print(self._params.RMPWFM)
             return dev_ids, self._params.RMPWFM
         elif self._pru.sync_mode == self._params.PRU.SYNC_MODE.BRDCST:
             return self._device_ids, self._params.CYCLE
@@ -1020,7 +1012,21 @@ class PRUController:
                 self._connected[id] = True
                 values = data[id]
                 for i in range(len(values)):
-                    var_id = var_ids[i]
+                    # ===
+                    # NOTE: fixit!
+                    # When changing from SlowRef to RmpWfm mode in TB-04-PS-CH,
+                    # 1. i >= len(var_ids)
+                    # 2. WfmData-RB != WfmData_SP
+                    # try/exception necessary!
+                    try:
+                        var_id = var_ids[i]
+                    except IndexError:
+                        print('device_ids:', device_ids)
+                        print('group_id:', group_id)
+                        print('i:', i)
+                        print('var_ids:', var_ids)
+                        print('len(values):', len(values))
+                    # ===
                     self._update_copy_var_vals(id, copy_var_vals, nr_devs,
                                                values[i], group_id, var_id)
 
@@ -1030,17 +1036,17 @@ class PRUController:
                 # TODO: turn off added random fluctuations.
                 # commenting out this fluctuation cpu usage is reduced from
                 # 20% to 19.5% at BBB1
-                if self._udcmodel == 'FBP':
-                    copy_var_vals[id][self._params.ConstBSMP.V_I_LOAD] += \
-                        0.00001*_random.uniform(-1.0, +1.0)
-                elif self._udcmodel == 'FBP_DCLink':
-                    copy_var_vals[id][self._params.ConstBSMP.V_V_OUT] += \
-                        0.00001*_random.uniform(-1.0, +1.0)
-                elif self._udcmodel == 'FAC':
-                    copy_var_vals[id][self._params.ConstBSMP.V_I_LOAD1] += \
-                        0.00001*_random.uniform(-1.0, +1.0)
-                    copy_var_vals[id][self._params.ConstBSMP.V_I_LOAD2] += \
-                        0.00001*_random.uniform(-1.0, +1.0)
+                # if self._udcmodel == 'FBP':
+                #     copy_var_vals[id][self._params.ConstBSMP.V_I_LOAD] += \
+                #         0.00001*_random.uniform(-1.0, +1.0)
+                # elif self._udcmodel == 'FBP_DCLink':
+                #     copy_var_vals[id][self._params.ConstBSMP.V_V_OUT] += \
+                #         0.00001*_random.uniform(-1.0, +1.0)
+                # elif self._udcmodel == 'FAC':
+                #     copy_var_vals[id][self._params.ConstBSMP.V_I_LOAD1] += \
+                #         0.00001*_random.uniform(-1.0, +1.0)
+                #     copy_var_vals[id][self._params.ConstBSMP.V_I_LOAD2] += \
+                #         0.00001*_random.uniform(-1.0, +1.0)
 
             elif ack[id] == _Response.invalid_id:
                 self._connected[id] = False
@@ -1170,7 +1176,6 @@ class PRUController:
         # check if ps controller version is compatible with bsmp.py
         # TODO: turn version checking on when test bench frmware is updated.
         self._init_check_version()
-
         # initialize parameters_values, a mirror state of BSMP devices
         # TODO: finish implementation of _bsmp_init_parameters_values!
         # self._bsmp_init_parameters_values()
