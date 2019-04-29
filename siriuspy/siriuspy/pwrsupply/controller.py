@@ -57,7 +57,8 @@ class PSController:
         values = dict()
         for field in self._fields:
             pvname = device_name + ':' + field
-            values[pvname] = self.read(device_name, field)
+            value = self.read(device_name, field)
+            values[pvname] = value
         return values
 
     def write(self, device_name, field, value):
