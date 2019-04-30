@@ -87,7 +87,7 @@ class App:
                 '{0:<15s} {1:s} [{2:f}]: '.format('ioc write', reason, value))
         else:
             _log.info(
-                '{0:<15s}: '.format('ioc write'), reason)
+                '{0:<15s}: {1:s}'.format('ioc write', reason))
         # Update IOC database
         self._driver.setParam(reason, value)
         self._driver.updatePVs()
