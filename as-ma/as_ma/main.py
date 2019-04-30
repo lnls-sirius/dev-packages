@@ -118,7 +118,16 @@ class App:
             pvname = pvname.substitute(dis='MA')
 
         reason = pvname.substitute(prefix='')
-        self._driver.setParam(reason, value)
+
+        # NOTE: try to find when this happens
+        if value is None:
+            cur_value = self._driver.getParam(reason)
+            _log.info('Testing...')
+            _log.info('Current Value: {:20s}'.format(str(cur_value)))
+            _log.info('Update  Value: {:20s}'.format(str(value)))
+        else:
+            self._driver.setParam(reason, value)
+
         if 'hilim' in kwargs or 'lolim' in kwargs:
             self._driver.setParamInfo(reason, kwargs)
             # self._driver.callbackPV(reason)
