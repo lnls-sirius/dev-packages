@@ -134,7 +134,7 @@ class ComputedPV:
 
     def _is_same(self, value):
         """."""
-        # make sure vars are converted to numpay array, if it is the case
+        # make sure vars are converted to numpy array, if it is the case
         if isinstance(self._value, _np.ndarray) or isinstance(value, _np.ndarray):
             if not isinstance(self._value, _np.ndarray):
                 self._value = _np.array(self._value)
