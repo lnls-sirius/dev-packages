@@ -34,7 +34,8 @@ class PRUCurve:
 
     def read(self):
         """Read curve."""
-        return self.pru_controller.pru_curve_read(self.device_id)
+        data = self.pru_controller.pru_curve_read(self.device_id)
+        return data
 
 
 class PRUProperty:
