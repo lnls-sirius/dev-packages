@@ -68,7 +68,7 @@ class EpicsOrbit(BaseOrbit):
         """Get the write methods of the class."""
         db = {
             'SOFBMode-Sel': self.set_orbit_mode,
-            'TrigAcqConfig-Cmd': self.trig_acq_config_bpms,
+            'TrigAcqConfig-Cmd': self.acq_config_bpms,
             'TrigAcqCtrl-Sel': self.set_trig_acq_control,
             'TrigAcqChan-Sel': self.set_trig_acq_channel,
             'TrigDataChan-Sel': self.set_trig_acq_datachan,
@@ -415,8 +415,7 @@ class EpicsOrbit(BaseOrbit):
                 self.run_callbacks('OrbAcqRate-SP', acqrate)
                 self.set_orbit_acq_rate(acqrate)
             self._reset_orbs()
-        if self._mode in trigmds:
-            self.trig_acq_config_bpms()
+        self.acq_config_bpms()
         self.run_callbacks('SOFBMode-Sts', value)
         return True
 
@@ -436,22 +435,23 @@ class EpicsOrbit(BaseOrbit):
             'MTurnIdxTime-Mon', self._timevector[self._multiturnidx])
         return True
 
-    def trig_acq_config_bpms(self, *args):
-        trigmds = [self._csorb.SOFBMode.SinglePass, ]
+    def acq_config_bpms(self, *args):
+        trigmds = {self._csorb.SOFBMode.SinglePass, }
         if self.isring:
-            trigmds.append(self._csorb.SOFBMode.MultiTurn)
-        if self._mode not in trigmds:
-            msg = 'ERR: Change to a Triggered mode first.'
-            self._update_log(msg)
-            _log.error(msg[5:])
-            return False
+            trigmds.add(self._csorb.SOFBMode.MultiTurn)
         for bpm in self.bpms:
-            if self.isring and self._mode == self._csorb.SOFBMode.MultiTurn:
+            if self.isring and self._mode == self._csorb.SOFBMode.SlowOrb:
+                bpm.set_auto_monitor(True)
+                continue
+            elif self.isring and self._mode == self._csorb.SOFBMode.MultiTurn:
                 bpm.mode = _csbpm.OpModes.MultiBunch
-            else:
+            elif self._mode == self._csorb.SOFBMode.SinglePass:
                 bpm.mode = _csbpm.OpModes.SinglePass
-            bpm.configure()
-        self.timing.configure()
+            if bpm in trigmds:
+                bpm.configure()
+            bpm.set_auto_monitor(False)
+        if self._mode in trigmds:
+            self.timing.configure()
         return True
 
     def set_trig_acq_control(self, value):
@@ -689,7 +689,6 @@ class EpicsOrbit(BaseOrbit):
                 return
             samp *= self._acqtrignrshots
             orbsz = self._csorb.NR_BPMS * ringsz
-            idx = self._multiturnidx
             nr_pts = self._smooth_npts
             for i, bpm in enumerate(self.bpms):
                 pos = bpm.mtposx
@@ -733,6 +732,7 @@ class EpicsOrbit(BaseOrbit):
                     orb = _np.mean(orb.reshape(-1, down, orbsz), axis=1)
                 self.smooth_mtorb[pln] = orb
                 orbs[pln] = orb
+        idx = min(self._multiturnidx, orb.shape[0])
         for pln, orb in orbs.items():
             name = ('Orb' if pln != 'Sum' else '') + pln
             self.run_callbacks('MTurn' + name + '-Mon', orb.flatten())

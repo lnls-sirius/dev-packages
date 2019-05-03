@@ -132,6 +132,10 @@ class BPM(_BaseTimingConfig):
         self._config_pvs_rb = {
             k: _PV(LL_PREF+self.name+':'+v, **opt) for k, v in pvs.items()}
 
+    def set_auto_monitor(self, boo):
+        self._posx.set_auto_monitor(boo)
+        self._posy.set_auto_monitor(boo)
+
     @property
     def name(self):
         return self._name
@@ -613,9 +617,6 @@ class TimingConfig(_BaseTimingConfig):
         super().__init__(acc)
         trig = self._csorb.TRIGGER_ACQ_NAME
         opt = {'connection_timeout': TIMEOUT}
-        evt = self._csorb.EVT_ACQ_NAME
-        src_val = self._csorb.AcqExtEvtSrc._fields.index(evt)
-        src_val = self._csorb.AcqExtEvtSrc[src_val]
         self._config_ok_vals = {
             'NrPulses': 1,
             'State': _cstime.Const.TrigStates.Enbl}
