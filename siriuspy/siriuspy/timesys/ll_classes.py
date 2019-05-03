@@ -4,10 +4,9 @@ import re as _re
 from functools import partial as _partial
 import logging as _log
 from threading import Thread as _ThreadBase
-import epics as _epics
+from epics.ca import CASeverityException as _CASeverityException
 from siriuspy.util import update_bit as _update_bit, get_bit as _get_bit
-# from siriuspy.thread import QueueThread as _QueueThread
-from siriuspy.epics import connection_timeout as _conn_timeout
+from siriuspy.epics import connection_timeout as _conn_timeout, PV as _PV
 from siriuspy.envars import vaca_prefix as LL_PREFIX
 from siriuspy.namesys import SiriusPVName as _PVName
 from siriuspy.csdevice import timesys as _cstime
@@ -56,10 +55,10 @@ class _BaseLL(_Base):
         self._rf_div = _RFDIV
 
         evg_name = get_evg_name()
-        self._rf_freq_pv = _epics.PV(
+        self._rf_freq_pv = _PV(
             LL_PREFIX + 'AS-Glob:RF-Gen:Frequency-SP',
             connection_timeout=_conn_timeout)
-        self._rf_div_pv = _epics.PV(
+        self._rf_div_pv = _PV(
             LL_PREFIX + evg_name + ':RFDiv-SP',
             connection_timeout=_conn_timeout)
         self._update_base_freq()
@@ -77,14 +76,14 @@ class _BaseLL(_Base):
                 pvnamerb = pvname
                 pvnamesp = self._fromrb2sp(pvname)
             elif self._iscmdpv(pvname):  # -Cmd is different!!
-                self._writepvs[prop] = _epics.PV(
+                self._writepvs[prop] = _PV(
                                 pvname, connection_timeout=_conn_timeout)
 
             if pvnamerb is not None:
-                self._readpvs[prop] = _epics.PV(
+                self._readpvs[prop] = _PV(
                     pvnamerb, connection_timeout=_conn_timeout)
             if pvnamesp != pvnamerb:
-                self._writepvs[prop] = _epics.PV(
+                self._writepvs[prop] = _PV(
                     pvnamesp, connection_timeout=_conn_timeout)
                 self._writepvs[prop]._initialized = False
 
@@ -271,7 +270,7 @@ class _BaseLL(_Base):
             try:
                 pv.put(value, use_complete=True, wait=wait)
                 pv._initialized = True
-            except _epics.ca.CASeverityException:
+            except _CASeverityException:
                 _log.error('NO Write Permission to {0:s}'.format(pv.pvname))
 
     def _on_change_writepv(self, pvname, value, **kwargs):

@@ -139,11 +139,6 @@ class SOFBTLines(ConstTLines):
             self.EVT_COR_NAME = 'Orb' + self.acc
 
         self.EVT_ACQ_NAME = 'Dig' + self.acc
-        evts = _HLTISearch.get_hl_trigger_allowed_evts(self.TRIGGER_ACQ_NAME)
-        vals = _cstiming.get_hl_trigger_database(self.TRIGGER_ACQ_NAME)
-        vals = tuple([vals['Src-Sel']['enums'].index(evt) for evt in evts])
-        self.AcqExtEvtSrc = _get_namedtuple(
-                                    'AcqExtEvtSrc', evts, vals)
         self.MTX_SZ = self.NR_CORRS * (2 * self.NR_BPMS)
         self.NR_SING_VALS = min(self.NR_CORRS, 2 * self.NR_BPMS)
         self.C0 = 22 if self.acc == 'TB' else 30  # in meters
@@ -386,30 +381,6 @@ class SOFBTLines(ConstTLines):
                 'type': 'enum', 'unit': 'Set Data trigger Polarity.',
                 'value': self.TrigAcqDataPol.Positive,
                 'enums': self.TrigAcqDataPol._fields},
-            'TrigExtDuration-SP': {
-                'type': 'float', 'value': 100, 'prec': 4,
-                'unit': 'set external trigger duration [us]',
-                'lolim': 8e-6, 'hilim': 500000},
-            'TrigExtDuration-RB': {
-                'type': 'float', 'value': 100, 'prec': 4,
-                'unit': 'set external trigger duration [us]',
-                'lolim': 8e-6, 'hilim': 500000},
-            'TrigExtDelay-SP': {
-                'type': 'float', 'value': 0.0, 'prec': 4,
-                'unit': 'set external trigger delay [us]',
-                'lolim': 0.0, 'hilim': 5e5},
-            'TrigExtDelay-RB': {
-                'type': 'float', 'value': 0.0, 'prec': 4,
-                'unit': 'set external trigger delay [us]',
-                'lolim': 0.0, 'hilim': 5e5},
-            'TrigExtEvtSrc-Sel': {
-                'type': 'enum', 'unit': 'Set ext trigger timing event.',
-                'value': self.AcqExtEvtSrc._fields.index(evt),
-                'enums': self.AcqExtEvtSrc._fields},
-            'TrigExtEvtSrc-Sts': {
-                'type': 'enum', 'unit': 'Set ext trigger timing event.',
-                'value': self.AcqExtEvtSrc._fields.index(evt),
-                'enums': self.AcqExtEvtSrc._fields},
             'OrbAcqRate-SP': {
                 'type': 'float', 'unit': 'Hz', 'value': 10,
                 'hilim': 20, 'lolim': 0.5},
