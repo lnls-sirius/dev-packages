@@ -395,12 +395,16 @@ class EpicsCorrectors(BaseCorrectors):
         return True
 
     def _update_corrs_strength(self):
-        corr_vals = self.get_strength()
-        self.run_callbacks('KickCH-Mon', corr_vals[:self._csorb.NR_CH])
-        self.run_callbacks(
-            'KickCV-Mon', corr_vals[self._csorb.NR_CH:self._csorb.NR_CHCV])
-        if self.isring:
-            self.run_callbacks('KickRF-Mon', corr_vals[-1])
+        try:
+            corr_vals = self.get_strength()
+            self.run_callbacks('KickCH-Mon', corr_vals[:self._csorb.NR_CH])
+            self.run_callbacks(
+                'KickCV-Mon', corr_vals[self._csorb.NR_CH:self._csorb.NR_CHCV])
+            if self.isring:
+                self.run_callbacks('KickRF-Mon', corr_vals[-1])
+        except Exception as err:
+            self._update_log('ERR: ' + str(err))
+            _log.error(str(err))
 
     def set_corrs_mode(self, value):
         """Set mode of CHs and CVs method."""

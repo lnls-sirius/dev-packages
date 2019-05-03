@@ -351,7 +351,9 @@ class EpicsOrbit(BaseOrbit):
             _log.warning(msg[5:])
             return False
         val = int(val) if val > 1 else 1
-        self._spass_average = val
+        with self._lock_raw_orbs:
+            self._spass_average = val
+            self._reset_orbs()
         self.run_callbacks('SPassAvgNrTurns-RB', val)
         return True
 
@@ -428,6 +430,7 @@ class EpicsOrbit(BaseOrbit):
             _log.warning(msg[6:])
         with self._lock_raw_orbs:
             self._multiturnidx = int(value)
+            self._reset_orbs()
         self.run_callbacks('MTurnIdx-RB', self._multiturnidx)
         self.run_callbacks(
             'MTurnIdxTime-Mon', self._timevector[self._multiturnidx])
@@ -621,20 +624,24 @@ class EpicsOrbit(BaseOrbit):
         self.smooth_mtorb = {'X': None, 'Y': None, 'Sum': None}
 
     def _update_orbits(self):
-        count = 0
-        if self.isring and self._mode == self._csorb.SOFBMode.MultiTurn:
-            self._update_multiturn_orbits()
-            count = len(self.raw_mtorbs['X'])
-        elif self._mode == self._csorb.SOFBMode.SinglePass:
-            if self._spass_method == self._csorb.SPassMethod.FromBPMs:
-                self._update_online_orbits(sp=True)
-            else:
-                self._update_singlepass_orbits()
-            count = len(self.raw_sporbs['X'])
-        elif self.isring:
-            self._update_online_orbits(sp=False)
-            count = len(self.raw_orbs['X'])
-        self.run_callbacks('BufferCount-Mon', count)
+        try:
+            count = 0
+            if self.isring and self._mode == self._csorb.SOFBMode.MultiTurn:
+                self._update_multiturn_orbits()
+                count = len(self.raw_mtorbs['X'])
+            elif self._mode == self._csorb.SOFBMode.SinglePass:
+                if self._spass_method == self._csorb.SPassMethod.FromBPMs:
+                    self._update_online_orbits(sp=True)
+                else:
+                    self._update_singlepass_orbits()
+                count = len(self.raw_sporbs['X'])
+            elif self.isring and self._mode == self._csorb.SOFBMode.SlowOrb:
+                self._update_online_orbits(sp=False)
+                count = len(self.raw_orbs['X'])
+            self.run_callbacks('BufferCount-Mon', count)
+        except Exception as err:
+            self._update_log('ERR: ' + str(err))
+            _log.error(str(err))
 
     def _update_online_orbits(self, sp=False):
         nrb = self._csorb.NR_BPMS
