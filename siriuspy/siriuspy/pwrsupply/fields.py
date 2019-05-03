@@ -19,7 +19,9 @@ class Variable:
 
     def read(self):
         """Read variable from pru controller."""
-        return self.pru_controller.read_variables(self.device_id, self.bsmp_id)
+        value = self.pru_controller.read_variables(
+            self.device_id, self.bsmp_id)
+        return value
 
 
 class PRUCurve:
@@ -32,7 +34,8 @@ class PRUCurve:
 
     def read(self):
         """Read curve."""
-        return self.pru_controller.pru_curve_read(self.device_id)
+        data = self.pru_controller.pru_curve_read(self.device_id)
+        return data
 
 
 class PRUProperty:

@@ -147,6 +147,8 @@ class HLTimeSearch:
         if _web.server_online():
             text1 = _web.high_level_triggers(timeout=_timeout)
             text2 = _web.high_level_events(timeout=_timeout)
+        else:
+            raise Exception('Could not connect with Consts Server!!')
         temp_dict = _ast.literal_eval(text1)
         for k, vs in temp_dict.items():
             vs['channels'] = tuple(map(_PVName, vs['channels']))

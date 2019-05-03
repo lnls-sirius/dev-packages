@@ -134,7 +134,16 @@ class ComputedPV:
 
     def _is_same(self, value):
         """."""
-        if isinstance(self._value, _np.ndarray):
+        # make sure vars are converted to numpy array, if it is the case
+        # TODO: maybe this checking can be simplified. the class seems to be
+        # converting values unnecessarily.
+        if isinstance(self._value, _np.ndarray) or isinstance(value, _np.ndarray):
+            if not isinstance(self._value, _np.ndarray):
+                self._value = _np.array(self._value)
+            if not isinstance(value, _np.ndarray):
+                value = _np.array(value)
+
+        if isinstance(value, _np.ndarray):
             return _np.all(self._value == value)
         else:
             return self._value == value
@@ -153,7 +162,6 @@ class ComputedPV:
 
     def _update_value(self, pvname=None, value=None):
         # Get dict with pv props that changed
-        # print('update_value')
         kwargs = self.computer.compute_update(self, pvname, value)
 
         if kwargs is None:
