@@ -132,6 +132,12 @@ class BBBFactory:
 
         for udc in udc_list:
 
+            # UDC-specific frequencies
+            try:
+                freqs = _PSSearch.conv_bbbname_2_freqs(udc)
+            except KeyError:
+                pass
+
             devices = _PSSearch.conv_udc_2_bsmps(udc)
 
             # Check if there is only one psmodel

@@ -57,7 +57,8 @@ class PSController:
         values = dict()
         for field in self._fields:
             pvname = device_name + ':' + field
-            values[pvname] = self.read(device_name, field)
+            value = self.read(device_name, field)
+            values[pvname] = value
         return values
 
     def write(self, device_name, field, value):
@@ -186,8 +187,15 @@ class StandardPSController(PSController):
         if setpoint in (_PSConst.OpMode.Cycle, _PSConst.OpMode.MigWfm,
                         _PSConst.OpMode.RmpWfm):
             self._set_watchers(setpoint)
-        if setpoint in (_PSConst.OpMode.RmpWfm, ):
-            self._set_pruc_ramp()
+
+        # TODO: Ramp of ramp seems to be buggy. Disabling it now since it seems
+        # that power supply can survive without this funcionality in the IOC
+        # If ramp of ramp if to be abandoned, we should clean up code in
+        # various places!
+        #
+        # if setpoint in (_PSConst.OpMode.RmpWfm, ):
+        #     self._set_pruc_ramp()
+        pass
 
     def _set_pruc_ramp(self):
         if self._pruc_ramp is not None and self._pruc_ramp.is_alive:
