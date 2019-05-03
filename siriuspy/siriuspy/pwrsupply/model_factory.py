@@ -78,9 +78,6 @@ class ModelFactory:
         'PRUBlockIndex-Mon': 'pru_curve_block',
         'PRUSyncPulseCount-Mon': 'pru_sync_pulse_count',
         'PRUCtrlQueueSize-Mon': 'queue_length',
-        'RmpIncNrCycles-RB': 'ramp_offset',
-        'RmpIncNrCycles-Mon': 'ramp_offset_count',
-        'RmpReady-Mon': 'ramp_ready',
         'BSMPComm-Sts': 'bsmpcomm'}
 
     _variables = {}
@@ -263,9 +260,6 @@ class FBP_Factory(ModelFactory):
                 device_ids, pru_controller, 5, setpoints)
         elif epics_field == 'WfmData-SP':
             return _functions.PRUCurve(device_ids, pru_controller, setpoints)
-        elif epics_field == 'RmpIncNrCycles-SP':
-            return _functions.PRUProperty(
-                pru_controller, 'ramp_offset', setpoints)
         elif epics_field == 'BSMPComm-Sel':
             return _functions.BSMPComm(pru_controller, setpoints)
         else:

@@ -114,7 +114,7 @@ class ConnTiming(_EpicsPropsList):
     # --- timing setup commands ---
 
     def cmd_setup(self, timeout=_TIMEOUT_DFLT):
-        """Setup TI subsystem to ramp."""
+        """Do setup TI subsystem to ramp."""
         sp = self.ramp_basicsetup.copy()
         sp.pop('BO-Glob:TI-Mags:Status-Mon')
         sp.pop('BO-Glob:TI-Corrs:Status-Mon')
@@ -390,10 +390,6 @@ class ConnMagnets(_EpicsPropsList):
         """Check if hardware interlocks are reset."""
         return self._check('IntlkHard-Mon', 0)
 
-    def check_rmpready(self):
-        """Check if ramp increase was concluded."""
-        return self._check('RmpReady-Mon', 1)
-
     # --- private methods ---
 
     def _get_manames(self):
@@ -421,10 +417,6 @@ class ConnMagnets(_EpicsPropsList):
                                callback=callback))
             properties.append(
                 _EpicsProperty(maname + ':IntlkHard-Mon', p,
-                               connection_callback=connection_callback,
-                               callback=callback))
-            properties.append(
-                _EpicsProperty(maname + ':RmpReady-Mon', p,
                                connection_callback=connection_callback,
                                callback=callback))
         return properties
