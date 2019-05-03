@@ -78,9 +78,6 @@ class EpicsOrbit(BaseOrbit):
             'TrigDataThres-SP': self.set_trig_acq_datathres,
             'TrigDataHyst-SP': self.set_trig_acq_datahyst,
             'TrigDataPol-Sel': self.set_trig_acq_datapol,
-            'TrigExtDuration-SP': self.set_trig_acq_extduration,
-            'TrigExtDelay-SP': self.set_trig_acq_extdelay,
-            'TrigExtEvtSrc-Sel': self.set_trig_acq_extsource,
             'TrigNrSamplesPre-SP': _part(self.set_acq_nrsamples, ispost=False),
             'TrigNrSamplesPost-SP': _part(self.set_acq_nrsamples, ispost=True),
             'RefOrbX-SP': _part(self.set_reforb, 'X'),
@@ -520,23 +517,6 @@ class EpicsOrbit(BaseOrbit):
         for bpm in self.bpms:
             bpm.acq_trig_datapol = value
         self.run_callbacks('TrigDataPol-Sts', value)
-        return True
-
-    def set_trig_acq_extduration(self, value):
-        self.timing.duration = value
-        self._update_time_vector(duration=value)
-        self.run_callbacks('TrigExtDuration-RB', value)
-        return True
-
-    def set_trig_acq_extdelay(self, value):
-        self.timing.delay = value
-        self._update_time_vector(delay=value)
-        self.run_callbacks('TrigExtDelay-RB', value)
-        return True
-
-    def set_trig_acq_extsource(self, value):
-        self.timing.evtsrc = self._csorb.AcqExtEvtSrc[value]
-        self.run_callbacks('TrigExtEvtSrc-Sts', value)
         return True
 
     def set_acq_nrsamples(self, val, ispost=True):

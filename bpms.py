@@ -617,30 +617,20 @@ class TimingConfig(_BaseTimingConfig):
         src_val = self._csorb.AcqExtEvtSrc._fields.index(evt)
         src_val = self._csorb.AcqExtEvtSrc[src_val]
         self._config_ok_vals = {
-            'Src': src_val,
-            'Delay': 0.0,
             'NrPulses': 1,
-            'Duration': 100.0,
-            'State': _cstime.Const.TrigStates.Enbl,
-            'Polarity': _cstime.Const.TrigPol.Normal}
+            'State': _cstime.Const.TrigStates.Enbl}
         if _HLTimesearch.has_delay_type(trig):
             self._config_ok_vals['RFDelayType'] = \
                                     _cstime.Const.TrigDlyTyp.Manual
         pref_name = LL_PREF + trig + ':'
         self._config_pvs_rb = {
-            'Src': _PV(pref_name + 'Src-Sts', **opt),
             'Delay': _PV(pref_name + 'Delay-RB', **opt),
             'NrPulses': _PV(pref_name + 'NrPulses-RB', **opt),
             'Duration': _PV(pref_name + 'Duration-RB', **opt),
-            'State': _PV(pref_name + 'State-Sts', **opt),
-            'Polarity': _PV(pref_name + 'Polarity-Sts', **opt)}
+            'State': _PV(pref_name + 'State-Sts', **opt)}
         self._config_pvs_sp = {
-            'Src': _PV(pref_name + 'Src-Sel', **opt),
-            'Delay': _PV(pref_name + 'Delay-SP', **opt),
             'NrPulses': _PV(pref_name + 'NrPulses-SP', **opt),
-            'Duration': _PV(pref_name + 'Duration-SP', **opt),
-            'State': _PV(pref_name + 'State-Sel', **opt),
-            'Polarity': _PV(pref_name + 'Polarity-Sel', **opt)}
+            'State': _PV(pref_name + 'State-Sel', **opt)}
         if _HLTimesearch.has_delay_type(trig):
             self._config_pvs_rb['RFDelayType'] = _PV(
                             pref_name + 'RFDelayType-Sts', **opt)
@@ -664,33 +654,7 @@ class TimingConfig(_BaseTimingConfig):
         pv = self._config_pvs_rb['Duration']
         return pv.value if pv.connected else None
 
-    @duration.setter
-    def duration(self, val):
-        pv = self._config_pvs_sp['Duration']
-        if pv.connected:
-            self._config_ok_vals['Duration'] = val
-            pv.put(val, wait=False)
-
     @property
     def delay(self):
         pv = self._config_pvs_rb['Delay']
         return pv.value if pv.connected else None
-
-    @delay.setter
-    def delay(self, val):
-        pv = self._config_pvs_sp['Delay']
-        if pv.connected:
-            self._config_ok_vals['Delay'] = val
-            pv.put(val, wait=False)
-
-    @property
-    def evtsrc(self):
-        pv = self._config_pvs_rb['Src']
-        return pv.value if pv.connected else None
-
-    @evtsrc.setter
-    def evtsrc(self, val):
-        pv = self._config_pvs_sp['Src']
-        self._config_ok_vals['Src'] = val
-        if pv.connected:
-            pv.put(val, wait=False)
