@@ -445,9 +445,9 @@ class EpicsOrbit(BaseOrbit):
                 continue
             elif self.isring and self._mode == self._csorb.SOFBMode.MultiTurn:
                 bpm.mode = _csbpm.OpModes.MultiBunch
+                bpm.configure()
             elif self._mode == self._csorb.SOFBMode.SinglePass:
                 bpm.mode = _csbpm.OpModes.SinglePass
-            if bpm in trigmds:
                 bpm.configure()
             bpm.set_auto_monitor(False)
         if self._mode in trigmds:
