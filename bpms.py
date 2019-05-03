@@ -1,7 +1,7 @@
 """Module to deal with orbit acquisition."""
 import logging as _log
 import numpy as _np
-from epics import PV as _PV
+from siriuspy.epics import PV as _PV
 import siriuspy.csdevice.bpms as _csbpm
 import siriuspy.csdevice.timesys as _cstime
 from siriuspy.search import HLTimeSearch as _HLTimesearch

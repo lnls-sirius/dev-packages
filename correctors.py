@@ -4,7 +4,7 @@ import time as _time
 import math as _math
 import logging as _log
 import numpy as _np
-from epics import PV as _PV
+from siriuspy.epics import PV as _PV
 import siriuspy.util as _util
 from siriuspy.thread import RepeaterThread as _Repeat
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
