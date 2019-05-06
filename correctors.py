@@ -272,7 +272,7 @@ class EpicsCorrectors(BaseCorrectors):
         """Initialize the instance."""
         super().__init__(acc, prefix=prefix, callback=callback)
         self._synced_kicks = False
-        self._acq_rate = 10
+        self._acq_rate = 2
         self._names = self._csorb.CH_NAMES + self._csorb.CV_NAMES
         self._corrs = [CHCV(dev) for dev in self._names]
         if self.isring:

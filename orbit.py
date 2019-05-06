@@ -50,8 +50,8 @@ class EpicsOrbit(BaseOrbit):
         self._spass_usebg = self._csorb.SPassUseBg.NotUsing
         self._acqrate = 10
         self._oldacqrate = self._acqrate
-        self._acqtrignrsamplespre = 50
-        self._acqtrignrsamplespost = 50
+        self._acqtrignrsamplespre = 10
+        self._acqtrignrsamplespost = 360
         self._acqtrignrshots = 1
         self._multiturnidx = 0
         self._mturndownsample = 1
@@ -523,7 +523,7 @@ class EpicsOrbit(BaseOrbit):
         return True
 
     def set_acq_nrsamples(self, val, ispost=True):
-        val = int(val) if val > 4 else 4
+        val = int(val) if val > 0 else 0
         val = val if val < 20000 else 20000
         suf = 'post' if ispost else 'pre'
         with self._lock_raw_orbs:

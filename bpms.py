@@ -44,9 +44,9 @@ class BPM(_BaseTimingConfig):
             # 'ACQTriggerHwDly': 0.0,  # NOTE: leave this property commented
             'ACQUpdateTime': 0.001,
             # 'ACQNrSamplesPre': 0,
-            'ACQSamplesPre': 50,
+            'ACQSamplesPre': 0,
             # 'ACQNrSamplesPost': 200,
-            'ACQSamplesPost': 50,
+            'ACQSamplesPost': 360,
             # 'ACQCtrl': _csbpm.AcqEvents.Stop,
             'ACQTriggerEvent': _csbpm.AcqEvents.Stop,
             # 'ACQTriggerType': _csbpm.AcqTrigTyp.External,
@@ -58,7 +58,7 @@ class BPM(_BaseTimingConfig):
             'ACQTriggerDataThres': 1,
             'ACQTriggerDataPol': _csbpm.Polarity.Positive,
             'ACQTriggerDataHyst': 0,
-            'TbtTagEn': _csbpm.EnbldDsbld.disabled,  # Enable TbT sync Timing
+            'TbtTagEn': _csbpm.EnbldDsbld.enabled,  # Enable TbT sync Timing
             'TbtDataMaskEn': _csbpm.EnbldDsbld.disabled,  # Enable use of mask
             'TbtDataMaskSamplesBeg': 0,
             'TbtDataMaskSamplesEnd': 0}

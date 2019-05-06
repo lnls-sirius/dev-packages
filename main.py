@@ -31,15 +31,15 @@ class SOFB(_BaseClass):
         self._measuring_respmat = False
         self._ring_extension = 1
         self._corr_factor = {'ch': 1.00, 'cv': 1.00}
-        self._max_kick = {'ch': 300, 'cv': 300}
-        self._max_delta_kick = {'ch': 50, 'cv': 50}
-        self._meas_respmat_kick = {'ch': 0.2, 'cv': 0.2}
+        self._max_kick = {'ch': 3000, 'cv': 3000}
+        self._max_delta_kick = {'ch': 3000, 'cv': 3000}
+        self._meas_respmat_kick = {'ch': 300, 'cv': 150}
         if self.isring:
             self._corr_factor['rf'] = 1.00
             self._max_kick['rf'] = 3000
             self._max_delta_kick['rf'] = 500
             self._meas_respmat_kick['rf'] = 200
-        self._meas_respmat_wait = 0.5  # seconds
+        self._meas_respmat_wait = 5  # seconds
         self._dtheta = None
         self._ref_corr_kicks = None
         self._thread = None
