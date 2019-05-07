@@ -186,9 +186,8 @@ class TestStandardController(TestCase):
         self.pru_controller.pru_sync_stop.assert_called()
         self.pru_controller.pru_sync_start(PRUConst.SYNC_MODE.RMPEND)
 
-    @mock.patch('siriuspy.pwrsupply.controller._Ramp')
     @mock.patch('siriuspy.pwrsupply.controller._Watcher')
-    def test_write_operation_mode_rmpwfm(self, watcher, ramp):
+    def test_write_operation_mode_rmpwfm(self, watcher):
         """Test writing cycle operation mode."""
         writer = self.writers['BO-01U:PS-CH:OpMode-Sel']
         self.controller.write(
