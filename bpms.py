@@ -161,9 +161,16 @@ class BPM(_BaseTimingConfig):
         ok = super().is_ok
         pv = self._config_pvs_rb['ACQStatus']
         stts = _csbpm.AcqStates
-        return ok and pv.value not in (
-            stts.Error, stts.No_Memory,
-            stts.Too_Few_Samples, stts.Too_Many_Samples)
+        ok &= pv.value not in {
+            stts.Error, stts.No_Memory, stts.Too_Few_Samples,
+            stts.Too_Many_Samples, stts.Acq_Overflow}
+        if self._config_ok_vals['ACQTriggerEvent'] == _csbpm.AcqEvents.Start:
+            ok &= pv.value not in {stts.Idle, stts.Aborted}
+        else:
+            ok &= pv.value not in {
+                stts.Waiting, stts.External_Trig, stts.Data_Trig,
+                stts.Software_Trig, stts.Acquiring}
+        return ok
 
     @property
     def state(self):
@@ -294,7 +301,9 @@ class BPM(_BaseTimingConfig):
     @property
     def spsum(self):
         pv = self._spsum
-        return pv.value if pv.connected else None
+        val = pv.value if pv.connected else None
+        if val is not None:
+            return val / 2**28
 
     @property
     def spanta(self):
@@ -333,7 +342,9 @@ class BPM(_BaseTimingConfig):
     @property
     def mtsum(self):
         pv = self._arrays
-        return pv.get() if pv.connected else None
+        val = pv.get() if pv.connected else None
+        if val is not None:
+            return val / 2**28
 
     @property
     def offsetx(self):
@@ -607,7 +618,7 @@ class BPM(_BaseTimingConfig):
         d2 = (vs['D'][m2] - vs['C'][m2]) / s2[m2]
         x[:rnts][m1] = (d1 + d2) * self.kx/2 * self.ORB_CONV
         y[:rnts][m2] = (d1 - d2) * self.ky/2 * self.ORB_CONV
-        s[:rnts] = (s1 + s2) * self.ksum
+        s[:rnts] = (s1 + s2) * self.ksum / 2**28
         return x, y, s
 
 
