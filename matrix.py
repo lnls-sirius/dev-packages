@@ -115,11 +115,19 @@ class EpicsMatrix(BaseMatrix):
             return False
         bkup = self.select_items[key]
         self.select_items[key] = new
+
+        max_num = self.get_max_num_sing_values()
+        num = self.num_sing_values
+        num = num if num < max_num else max_num
+        nrbkup = self.num_sing_values
+        self.num_sing_values = num
         if not self._calc_matrices():
+            self.num_sing_values = nrbkup
             self.select_items[key] = bkup
             return False
         self.select_items_extended[key] = newb
         self.run_callbacks(self.selection_pv_names[key], new)
+        self.run_callbacks('NrSingValues-RB', self.num_sing_values)
         return False
 
     def _set_enbllist(self, key, val):
@@ -208,6 +216,9 @@ class EpicsMatrix(BaseMatrix):
         return kicks
 
     def set_num_sing_values(self, num):
+        num = int(num) if int(num) > 0 else 1
+        max_num = self.get_max_num_sing_values()
+        num = num if num < max_num else max_num
         bkup = self.num_sing_values
         self.num_sing_values = num
         if not self._calc_matrices():
@@ -215,6 +226,15 @@ class EpicsMatrix(BaseMatrix):
             return False
         self.run_callbacks('NrSingValues-RB', self.num_sing_values)
         return True
+
+    def get_max_num_sing_values(self):
+        ncorr = _np.sum(self.select_items['ch'])
+        ncorr += _np.sum(self.select_items['cv'])
+        if self.isring:
+            ncorr += _np.sum(self.select_items['rf'])
+        nbpm = _np.sum(self.select_items['bpmx'])
+        nbpm += _np.sum(self.select_items['bpmy'])
+        return min(ncorr, nbpm)
 
     def _calc_matrices(self):
         msg = 'Calculating Inverse Matrix.'
