@@ -50,7 +50,7 @@ class EpicsOrbit(BaseOrbit):
         self._spass_usebg = self._csorb.SPassUseBg.NotUsing
         self._acqrate = 10
         self._oldacqrate = self._acqrate
-        self._acqtrignrsamplespre = 10
+        self._acqtrignrsamplespre = 0
         self._acqtrignrsamplespost = 360
         self._acqtrignrshots = 1
         self._multiturnidx = 0
@@ -150,6 +150,7 @@ class EpicsOrbit(BaseOrbit):
                 self.run_callbacks('OfflineOrb'+pln+'-RB', orb[:nrb])
                 self.run_callbacks('OfflineOrb'+pln+'-SP', orb[:nrb])
         self._save_ref_orbits()
+        Thread(target=self._prepare_mode, daemon=True).start()
         return True
 
     def get_orbit(self, reset=False):
@@ -355,6 +356,7 @@ class EpicsOrbit(BaseOrbit):
             self._spass_average = val
             self._reset_orbs()
         self.run_callbacks('SPassAvgNrTurns-RB', val)
+        Thread(target=self._prepare_mode, daemon=True).start()
         return True
 
     def set_smooth_reset(self, _):
@@ -407,6 +409,7 @@ class EpicsOrbit(BaseOrbit):
             trigmds.append(self._csorb.SOFBMode.MultiTurn)
         bo1 = self._mode in trigmds
         bo2 = value not in trigmds
+        omode = self._mode
         with self._lock_raw_orbs:
             self._mode = value
             if bo1 == bo2:
@@ -415,8 +418,51 @@ class EpicsOrbit(BaseOrbit):
                 self.run_callbacks('OrbAcqRate-SP', acqrate)
                 self.set_orbit_acq_rate(acqrate)
             self._reset_orbs()
-        self.acq_config_bpms()
+        Thread(
+            target=self._prepare_mode,
+            kwargs={'oldmode': omode, }, daemon=True).start()
         self.run_callbacks('SOFBMode-Sts', value)
+        return True
+
+    def _prepare_mode(self, oldmode=None):
+        oldmode = self._mode if oldmode is None else oldmode
+        if oldmode == self._csorb.SOFBMode.SinglePass:
+            self.set_trig_acq_control(self._csorb.TrigAcqCtrl.Abort)
+        elif self.isring and oldmode == self._csorb.SOFBMode.MultiTurn:
+            # _time.sleep(0.2)
+            self.set_trig_acq_control(self._csorb.TrigAcqCtrl.Stop)
+        _time.sleep(0.2)
+
+        trigmodes = {self._csorb.SOFBMode.SinglePass, }
+        if self.isring:
+            trigmodes.add(self._csorb.SOFBMode.MultiTurn)
+        if self._mode not in trigmodes:
+            self.acq_config_bpms()
+            return True
+
+        points = self._ring_extension
+        if self._mode == self._csorb.SOFBMode.SinglePass:
+            chan = self._csorb.TrigAcqChan.ADC
+            rep = self._csorb.TrigAcqRepeat.Normal
+            points *= self._spass_average * self.bpms[0].tbtrate
+        elif self.isring and self._mode == self._csorb.SOFBMode.MultiTurn:
+            chan = self._csorb.TrigAcqChan.TbT
+            rep = self._csorb.TrigAcqRepeat.Repetitive
+            points *= self._mturndownsample
+
+        self.run_callbacks('TrigAcqChan-Sel', chan)
+        self.set_trig_acq_channel(chan)
+        self.run_callbacks('TrigAcqRepeat-Sel', rep)
+        self.set_trig_acq_repeat(rep)
+        if self.acqtrignrsamples < points:
+            pts = points - self._acqtrignrsamplespre
+            self.run_callbacks('TrigNrSamplesPost-SP', pts)
+            self.set_acq_nrsamples(pts, ispost=True)
+        _time.sleep(0.2)
+        self.acq_config_bpms()
+        _time.sleep(0.3)
+        self.set_trig_acq_control(self._csorb.TrigAcqCtrl.Start)
+
         return True
 
     def set_orbit_multiturn_idx(self, value):
@@ -436,9 +482,6 @@ class EpicsOrbit(BaseOrbit):
         return True
 
     def acq_config_bpms(self, *args):
-        trigmds = {self._csorb.SOFBMode.SinglePass, }
-        if self.isring:
-            trigmds.add(self._csorb.SOFBMode.MultiTurn)
         for bpm in self.bpms:
             if self.isring and self._mode == self._csorb.SOFBMode.SlowOrb:
                 bpm.set_auto_monitor(True)
@@ -446,12 +489,12 @@ class EpicsOrbit(BaseOrbit):
             elif self.isring and self._mode == self._csorb.SOFBMode.MultiTurn:
                 bpm.mode = _csbpm.OpModes.MultiBunch
                 bpm.configure()
+                self.timing.configure()
             elif self._mode == self._csorb.SOFBMode.SinglePass:
                 bpm.mode = _csbpm.OpModes.SinglePass
                 bpm.configure()
+                self.timing.configure()
             bpm.set_auto_monitor(False)
-        if self._mode in trigmds:
-            self.timing.configure()
         return True
 
     def set_trig_acq_control(self, value):
@@ -561,6 +604,7 @@ class EpicsOrbit(BaseOrbit):
             self._reset_orbs()
         self.run_callbacks('MTurnDownSample-RB', val)
         self._update_time_vector()
+        Thread(target=self._prepare_mode, daemon=True).start()
         return True
 
     def _update_time_vector(self, delay=None, duration=None, channel=None):
@@ -794,6 +838,12 @@ class EpicsOrbit(BaseOrbit):
         nok = not all(bpm.state for bpm in self.bpms)
         status = _util.update_bit(v=status, bit_pos=3, bit_val=nok)
 
+        # nok = False
+        # for bpm in self.bpms:
+        #     nok |= not bpm.is_ok
+        #     if nok:
+        #         print(bpm.name)
+        #         break
         nok = not all(bpm.is_ok for bpm in self.bpms)
         status = _util.update_bit(v=status, bit_pos=4, bit_val=nok)
 
