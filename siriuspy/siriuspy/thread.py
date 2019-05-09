@@ -2,8 +2,9 @@
 import time as _time
 from threading import Thread as _Thread
 from threading import Event as _Event
+from threading import Lock as _Lock
 from queue import Queue as _Queue
-
+from collections import deque as _deque
 # NOTE: QueueThread was reported as generating unstable behaviour
 # when used intensively in the SOFB IOC.
 # TODO: investigate this issue!
@@ -114,3 +115,95 @@ class RepeaterThread(_Thread):
         """Stop execution."""
         self._unpaused.set()
         self._stopped.set()
+
+
+class DequeThread(_deque):
+    """DequeThread.
+
+    This class manages generic operations (actions) using an append-right,
+    pop-left queue. Each operation processing is a method invoked as a separate
+    thread.
+    """
+
+    _lock = _Lock()
+
+    def __init__(self):
+        """Init."""
+        self._thread = None
+        self._ignore = False
+        self._enabled = True
+
+    @property
+    def last_operation(self):
+        """Return last operation."""
+        return self._last_operation
+
+    @property
+    def enabled(self):
+        """Enable process."""
+        return self._enabled
+
+    @enabled.setter
+    def enabled(self, value):
+        self._bsmpcomm = value
+
+    def ignore_set(self):
+        """Turn ignore state on."""
+        self._ignore = True
+
+    def ignore_clear(self):
+        """Turn ignore state on."""
+        self._ignore = False
+
+    def append(self, operation, unique=False):
+        """Append operation to queue."""
+        DequeThread._lock.acquire(blocking=True)
+        if not self._ignore:
+            if not unique:
+                super().append(operation)
+                self._last_operation = operation
+            else:
+                # super().append(operation)
+                # self._last_operation = operation
+                n = self.count(operation)
+                if n == 0:
+                    super().append(operation)
+                    self._last_operation = operation
+        DequeThread._lock.release()
+
+    def clear(self):
+        """Clear deque."""
+        self._lock.acquire()
+        super().clear()
+        self._lock.release()
+
+    def popleft(self):
+        """Pop left operation from queue."""
+        DequeThread._lock.acquire(blocking=True)
+        if super().__len__() > 0:
+            value = super().popleft()
+        else:
+            value = None
+        DequeThread._lock.release()
+        return value
+
+    def process(self):
+        """Process operation from queue."""
+        # first check if a thread is already running
+        if not self._enabled:
+            return False
+        if self._thread is None or not self._thread.is_alive():
+            # no thread is running, we can process queue
+            operation = self.popleft()
+            if operation is None:
+                # but therse is nothing in queue
+                return False
+            else:
+                # process operation taken from queue
+                func, args = operation
+                self._thread = _Thread(target=func, args=args, daemon=True)
+                self._thread.start()
+                return True
+        else:
+            # there an operation being processed:do nothing for now.
+            return False
