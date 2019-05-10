@@ -578,6 +578,7 @@ class PRUController:
         # try to abandon previous sync mode gracefully
         if self.pru_sync_status != self._params.PRU.SYNC_STATE.OFF:
             # --- already with sync mode on.
+            # TODO: after testing, this 'if' can be avoided altogether
             if sync_mode != self._pru.sync_mode:
                 # --- different sync mode
                 # PRU sync is on but it needs sync_mode change
@@ -586,7 +587,10 @@ class PRUController:
             else:
                 # --- already in selected sync mode
                 # TODO: to do nothing is what we want? what about WfmIndex?
-                return
+                # return
+                # NOTE: This seems to be important with concurrent
+                # PRUControllers. For TB quads and coors, for example!
+                self.pru_sync_abort()
         else:
             # --- current sync mode is off
             pass
