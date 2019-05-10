@@ -10,12 +10,12 @@ from siriuspy.pwrsupply import bsmp as _bsmp
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 
-# TODO: check with ELP group how short these delays can be
-_delay_turn_on_off = 0.3  # [s]
-_delay_loop_open_close = 0.3  # [s]
-
+# _delay_turn_on_off = 0.3  # [s]
+# _delay_loop_open_close = 0.3  # [s]
+# These updated values are based on what Gabriel indicated.
 _delay_turn_on_off = 0.010  # [s]
 _delay_loop_open_close = 0.150  # [s]
+
 
 class Function:
     """Generic function class."""

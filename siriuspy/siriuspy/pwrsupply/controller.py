@@ -52,8 +52,6 @@ class PSController:
                 sel.apply(sts.read())
 
         reader = self._readers[pvname]
-        # if 'QF4' in device_name and field == 'Current-SP':
-        #     print(reader, reader.read())
         return reader.read()
 
     def read_all_fields(self, device_name):
@@ -142,6 +140,9 @@ class StandardPSController(PSController):
                 values[idx] = value
             self._functions[pvname].execute(values)
         elif field == 'PwrState-Sel':
+            # NOTE: Should we set Current-SP to zero at Power On ? This may be
+            # generating inconsistent behaviour when loading configuration in
+            # HLA...
             # if self._readers[device_name + ':PwrState-Sel'].value == 0:
             #     self._readers[device_name + ':Current-SP'].apply(0.0)
             self._functions[pvname].execute(value)

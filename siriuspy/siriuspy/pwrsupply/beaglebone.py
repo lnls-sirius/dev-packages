@@ -72,10 +72,14 @@ class BeagleBone:
         """Read from device."""
         now = _time.time()
         last = self._timestamps[device_name]
-        interval = self.update_interval(device_name)
+
+        # NOTE: update frequency with which class updates state mirror of
+        # power supply. Still testing...
+        # interval = self.update_interval(device_name)
+        interval = 0.05  # [s]
 
         # reads, if updating is needed
-        if True or last is None or now - last > interval:
+        if last is None or now - last > interval:
             updated = True
             self._mirror[device_name] = \
                 self._controllers[device_name].read_all_fields(device_name)
@@ -225,7 +229,6 @@ class BBBFactory:
                 for dev_name, dev_id in devices:
                     pvname = dev_name + ':' + field
                     db[pvname] = _deepcopy(database[field])
-                    # db[pvname] = database[field]
                     fields[pvname] = setpoints[pvname]
             elif _Constant.match(field) and field != 'Version-Cte':
                 for dev_name, dev_id in devices:

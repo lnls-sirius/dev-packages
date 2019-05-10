@@ -589,7 +589,7 @@ class PRUController:
                 # TODO: to do nothing is what we want? what about WfmIndex?
                 # return
                 # NOTE: This seems to be important with concurrent
-                # PRUControllers. For TB quads and coors, for example!
+                # PRUControllers. For TB quads and corrs, for example!
                 self.pru_sync_abort()
         else:
             # --- current sync mode is off
