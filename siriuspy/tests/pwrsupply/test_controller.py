@@ -201,7 +201,10 @@ class TestStandardController(TestCase):
         sp = self.readers['BO-01U:PS-CH:Current-SP']
         writer = self.writers['BO-01U:PS-CH:PwrState-Sel']
         self.controller.write('BO-01U:PS-CH', 'PwrState-Sel', 1)
-        sp.apply.assert_called_with(0.0)
+        # NOTE: Should we set Current-SP to zero at Power On ? This may be
+        # generating inconsistent behaviour when loading configuration in
+        # HLA...
+        # sp.apply.assert_called_with(0.0)
         writer.execute.assert_called_with(1)
 
     def test_write_pwrstate_off(self):
@@ -210,7 +213,10 @@ class TestStandardController(TestCase):
         sp = self.readers['BO-01U:PS-CH:Current-SP']
         writer = self.writers['BO-01U:PS-CH:PwrState-Sel']
         self.controller.write('BO-01U:PS-CH', 'PwrState-Sel', 0)
-        sp.apply.assert_called_with(0.0)
+        # NOTE: Should we set Current-SP to zero at Power On ? This may be
+        # generating inconsistent behaviour when loading configuration in
+        # HLA...
+        # sp.apply.assert_called_with(0.0)
         writer.execute.assert_called_with(0)
 
     @mock.patch.object(StandardPSController, '_get_siggen_arg_values')
