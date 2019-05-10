@@ -157,19 +157,16 @@ class DequeThread(_deque):
 
     def append(self, operation, unique=False):
         """Append operation to queue."""
-        DequeThread._lock.acquire(blocking=True)
-        if not self._ignore:
-            if not unique:
-                super().append(operation)
-                self._last_operation = operation
-            else:
-                # super().append(operation)
-                # self._last_operation = operation
-                n = self.count(operation)
-                if n == 0:
+        with DequeThread._lock:
+            if not self._ignore:
+                if not unique:
                     super().append(operation)
                     self._last_operation = operation
-        DequeThread._lock.release()
+                else:
+                    n = self.count(operation)
+                    if n == 0:
+                        super().append(operation)
+                        self._last_operation = operation
 
     def clear(self):
         """Clear deque."""
@@ -177,15 +174,24 @@ class DequeThread(_deque):
         super().clear()
         self._lock.release()
 
+    def pop(self):
+        """Pop operation from queue."""
+        with DequeThread._lock:
+            if super().__len__() > 0:
+                value = super().pop()
+                return value
+            else:
+                raise IndexError
+
     def popleft(self):
         """Pop left operation from queue."""
-        DequeThread._lock.acquire(blocking=True)
-        if super().__len__() > 0:
-            value = super().popleft()
-        else:
-            value = None
-        DequeThread._lock.release()
-        return value
+        with DequeThread._lock:
+            if super().__len__() > 0:
+                value = super().popleft()
+                return value
+            else:
+                raise IndexError
+
 
     def process(self):
         """Process operation from queue."""
@@ -194,16 +200,16 @@ class DequeThread(_deque):
             return False
         if self._thread is None or not self._thread.is_alive():
             # no thread is running, we can process queue
-            operation = self.popleft()
-            if operation is None:
-                # but therse is nothing in queue
+            try:
+                operation = self.popleft()
+            except IndexError:
+                # there is nothing in the queue
                 return False
-            else:
-                # process operation taken from queue
-                func, args = operation
-                self._thread = _Thread(target=func, args=args, daemon=True)
-                self._thread.start()
-                return True
+            # process operation taken from queue
+            func, args = operation
+            self._thread = _Thread(target=func, args=args, daemon=True)
+            self._thread.start()
+            return True
         else:
             # there an operation being processed:do nothing for now.
             return False
