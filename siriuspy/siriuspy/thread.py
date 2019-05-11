@@ -32,7 +32,7 @@ class QueueThread(_Thread):
     def add_callback(self, func, *args, **kwargs):
         """Add callback."""
         if not hasattr(func, '__call__'):
-            raise TypeError('func must be callable.')
+            raise TypeError('Argument "func" is not callable.')
         self._queue.put((func, args, kwargs))
 
     def run(self):
@@ -71,7 +71,7 @@ class RepeaterThread(_Thread):
         super().__init__(daemon=True)
         self.interval = interval
         if not hasattr(function, '__call__'):
-            raise TypeError('function must be callable.')
+            raise TypeError('Argument "function" is not callable.')
         self.function = function
         self.args = args
         self.kwargs = kwargs
@@ -167,7 +167,8 @@ class DequeThread(_deque):
             if not hasattr(operation, '__len__'):
                 operation = (operation, )
             if not hasattr(operation[0], '__call__'):
-                raise TypeError('First element of operation must be callable.')
+                raise TypeError(
+                    'First element of "operation" is not callable.')
             super().append(operation)
             self._last_operation = operation
             return True
