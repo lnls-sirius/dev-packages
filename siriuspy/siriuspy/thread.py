@@ -158,14 +158,15 @@ class DequeThread(_deque):
         """Append operation to queue."""
         with self._lock:
             if self._ignore or (unique and self.count(operation) > 0):
-                return
+                return False
 
             if not hasattr(operation, '__len__'):
                 operation = (operation, )
             if not hasattr(operation[0], '__call__'):
-                return
+                return False
             super().append(operation)
             self._last_operation = operation
+            return True
 
     def clear(self):
         """Clear deque."""
