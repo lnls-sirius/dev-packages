@@ -145,7 +145,7 @@ class DequeThread(_deque):
 
     @enabled.setter
     def enabled(self, value):
-        self._bsmpcomm = value
+        self._enabled = value
 
     def ignore_set(self):
         """Turn ignore state on."""
