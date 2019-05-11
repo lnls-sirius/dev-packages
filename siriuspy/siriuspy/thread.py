@@ -159,6 +159,11 @@ class DequeThread(_deque):
         with self._lock:
             if self._ignore or (unique and self.count(operation) > 0):
                 return
+
+            if not hasattr(operation, '__len__'):
+                operation = (operation, )
+            if not hasattr(operation[0], '__call__'):
+                return
             super().append(operation)
             self._last_operation = operation
 
@@ -192,7 +197,14 @@ class DequeThread(_deque):
             # there is nothing in the queue
             return False
         # process operation taken from queue
-        func, args = operation
-        self._thread = _Thread(target=func, args=args, daemon=True)
+        args = tuple()
+        kws = dict()
+        if len(operation) == 1:
+            func = operation[0]
+        elif len(operation) == 2:
+            func, args = operation
+        elif len(operation) >= 3:
+            func, args, kws = operation[:3]
+        self._thread = _Thread(target=func, args=args, kwargs=kws, daemon=True)
         self._thread.start()
         return True
