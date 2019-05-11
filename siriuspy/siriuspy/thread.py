@@ -124,14 +124,13 @@ class DequeThread(_deque):
     pop-left queue. Each operation processing is a method invoked as a separate
     thread.
     """
-
-    _lock = _Lock()
-
     def __init__(self):
         """Init."""
+        super().__init__()
         self._thread = None
         self._ignore = False
         self._enabled = True
+        self._lock = _Lock()
 
     @property
     def last_operation(self):
