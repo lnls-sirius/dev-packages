@@ -7,7 +7,6 @@ at the other end of the serial line.
 
 import time as _time
 # import random as _random
-from collections import deque as _deque
 from threading import Thread as _Thread
 from threading import Lock as _Lock
 from copy import deepcopy as _dcopy
@@ -88,111 +87,6 @@ def parse_firmware_version(version):
     version = version[:version.index(b'\x00')]
     version = ''.join([chr(ord(v)) for v in version])
     return version
-
-
-# --- PRUC Queue class ---
-
-
-class PRUCQueue(_deque):
-    """PRUCQueue.
-
-    This class manages operations which invoke BSMP communications using
-    an append-right, pop-left queue. It also processes the next operation in a
-    way as to circumvent the blocking character of UART writes when PRU sync
-    mode is on.
-
-    Each operation processing is a method invoked as a separate thread since
-    it run write PRU functions that might block code execution, depending
-    on the PRU sync mode. The serial read called and the preceeding write
-    function are supposed to be in a locked scope in orde to avoid other
-    write executations to read the respond of previous write executions.
-    """
-
-    # TODO: maybe methods 'ignore_set' and 'ignore_clear' are not needed!
-    # PRUController's scan setter could be set to False instead.
-
-    _lock = _Lock()
-
-    def __init__(self):
-        """Init."""
-        self._thread = None
-        self._ignore = False
-        self._bsmpcomm = True
-
-    @property
-    def last_operation(self):
-        """Return last operation."""
-        return self._last_operation
-
-    @property
-    def bsmpcomm(self):
-        """BSMP Communication."""
-        return self._bsmpcomm
-
-    @bsmpcomm.setter
-    def bsmpcomm(self, value):
-        self._bsmpcomm = value
-
-    def ignore_set(self):
-        """Turn ignore state on."""
-        self._ignore = True
-
-    def ignore_clear(self):
-        """Turn ignore state on."""
-        self._ignore = False
-
-    def append(self, operation, unique=False):
-        """Append operation to queue."""
-        PRUCQueue._lock.acquire(blocking=True)
-        if not self._ignore:
-            if not unique:
-                super().append(operation)
-                self._last_operation = operation
-            else:
-                # super().append(operation)
-                # self._last_operation = operation
-                n = self.count(operation)
-                if n == 0:
-                    super().append(operation)
-                    self._last_operation = operation
-        PRUCQueue._lock.release()
-
-    def clear(self):
-        """Clear deque."""
-        self._lock.acquire()
-        super().clear()
-        self._lock.release()
-
-    def popleft(self):
-        """Pop left operation from queue."""
-        PRUCQueue._lock.acquire(blocking=True)
-        if super().__len__() > 0:
-            value = super().popleft()
-        else:
-            value = None
-        PRUCQueue._lock.release()
-        return value
-
-    def process(self):
-        """Process operation from queue."""
-        # first check if a thread is already running
-        if not self._bsmpcomm:
-            return False
-        if self._thread is None or not self._thread.is_alive():
-            # no thread is running, we can process queue
-            operation = self.popleft()
-            if operation is None:
-                # but therse is nothing in queue
-                return False
-            else:
-                # process operation taken from queue
-                func, args = operation
-                self._thread = _Thread(target=func, args=args, daemon=True)
-                self._thread.start()
-                return True
-        else:
-            # there an operation being processed:do nothing for now.
-            return False
 
 
 # --- PRUController ---
@@ -327,6 +221,16 @@ class PRUController:
 
         # operation queue
         self._queue = prucqueue
+        # This object if of class DequeThread which invoke BSMP communications
+        # using an append-right, pop-left queue. It also processes the next
+        # operation in a way as to circumvent the blocking character of UART
+        # writes when PRU sync mode is on.
+        # Each operation processing is a method invoked as a separate thread
+        # since it run write PRU functions that might block code execution,
+        # depending on the PRU sync mode. The serial read called and the
+        # preceeding write function are supposed to be in a locked scope in
+        # order to avoid other write executations to read the respond of
+        # previous write executions.
 
         # ramp offset
         self._ramp_offset = PRUController._DEFAULT_RAMP_OFFSET
@@ -373,12 +277,12 @@ class PRUController:
     @property
     def bsmpcomm(self):
         """Return bsmpcomm state."""
-        return self._queue.bsmpcomm
+        return self._queue.enabled
 
     @bsmpcomm.setter
     def bsmpcomm(self, value):
         """Set bsmpcomm state."""
-        self._queue.bsmpcomm = value
+        self._queue.enabled = value
 
     @property
     def processing(self):
