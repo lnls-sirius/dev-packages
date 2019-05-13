@@ -7,6 +7,8 @@ at the other end of the serial line.
 
 import time as _time
 # import random as _random
+
+from copy import deepcopy as _dcopy
 from threading import Thread as _Thread
 from threading import Lock as _Lock
 
