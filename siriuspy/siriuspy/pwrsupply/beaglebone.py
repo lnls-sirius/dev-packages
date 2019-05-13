@@ -21,10 +21,10 @@ import time as _time
 from copy import deepcopy as _deepcopy
 
 from siriuspy.search import PSSearch as _PSSearch
+from siriuspy.thread import DequeThread as _DequeThread
 from siriuspy.pwrsupply.data import PSData as _PSData
 from siriuspy.pwrsupply.pru import PRU as _PRU
 from siriuspy.pwrsupply.pru import PRUSim as _PRUSim
-from siriuspy.pwrsupply.prucontroller import PRUCQueue as _PRUCQueue
 from siriuspy.pwrsupply.prucontroller import PRUController as _PRUController
 from siriuspy.pwrsupply.fields import Constant as _Constant
 from siriuspy.pwrsupply.fields import Setpoint as _Setpoint
@@ -134,11 +134,9 @@ class BBBFactory:
         """Return BBB object."""
         # Create PRU and PRUCQueue
         pru = _PRUSim() if simulate else _PRU()
-        prucqueue = _PRUCQueue()
+        prucqueue = _DequeThread()
+
         db = dict()
-
-        udc_list = _PSSearch.conv_bbbname_2_udc(bbbname)
-
         controllers = dict()  # 1 controller per UDC
         databases = dict()
 
@@ -148,6 +146,7 @@ class BBBFactory:
         except KeyError:
             freqs = None
 
+        udc_list = _PSSearch.conv_bbbname_2_udc(bbbname)
         for udc in udc_list:
 
             # UDC-specific frequencies
