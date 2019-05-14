@@ -196,8 +196,8 @@ class PRUController:
 
         # conversion of ps status to high level properties
         self._psc_state = {}
-        for id in self.device_ids:
-            self._psc_state[id] = _PSCStatus()
+        for bsmp_id in self.device_ids:
+            self._psc_state[bsmp_id] = _PSCStatus()
 
         # create PRU (sync mode off).
         self._initialize_pru(pru)
@@ -206,7 +206,7 @@ class PRUController:
         self._initialize_udc()
 
         # reset power supply controllers
-        # TODO: this should be invoked in the case of IOC setting state of HW
+        # NOTE: this should be invoked in the case of IOC setting state of HW
         if reset is True:
             self._bsmp_reset_ps_controllers()  # (contains first BSMP comm)
 
@@ -230,7 +230,8 @@ class PRUController:
         # previous write executions.
 
         # define scan thread
-        self._last_device_scanned = len(self._device_ids)  # next is the first
+        self._dev_idx_last_scanned = \
+            len(self._device_ids)-1  # the next will be the first bsmp dev
         self._last_operation = None  # registers last operation
         self._thread_scan = _Thread(target=self._loop_scan, daemon=True)
         self._scanning = scanning
@@ -532,19 +533,20 @@ class PRUController:
         idx = self.device_ids.index(device_id)
 
         # if the case, trim or padd existing curves
-        n, n0 = len(curve), len(self._curves[idx])
-        if n == 0:
+        curvsize, curvsize0 = len(curve), len(self._curves[idx])
+        if curvsize == 0:
             raise ValueError('Invalid empty curve!')
-        elif n > _MAX_WFMSIZE:
+        elif curvsize > _MAX_WFMSIZE:
             raise ValueError('Curve length exceeds maximum value!')
-        elif n > n0:
+        elif curvsize > curvsize0:
             for i in self.device_ids:
                 # padd wfmdata with current last value
-                self._curves[i] += [self._curves[i][-1], ] * (n - n0)
-        elif n < n0:
+                self._curves[i] += [self._curves[i][-1], ] * \
+                    (curvsize - curvsize0)
+        elif curvsize < curvsize0:
             for i in self.device_ids:
                 # trim wfmdata
-                self._curves[i] += self._curves[i][:n]
+                self._curves[i] += self._curves[i][:curvsize]
 
         # store curve in PRUController attribute
         self._curves[idx] = list(curve)
@@ -766,19 +768,17 @@ class PRUController:
             raise NotImplementedError('Sync mode not implemented!')
 
     def _select_next_device_id(self):
-        if self._udcmodel == 'FAC_2P4S_ACDC':
-            # this is a special case since there are too many BSMP devices to
-            # be read at each ramp cycle!
-            nr_devs = len(self._device_ids)
-            dev_idx = (self._last_device_scanned + 1) % nr_devs
-            dev_id = self._device_ids[dev_idx]
-            self._last_device_scanned = dev_id
-        else:
-            # with the mirror var solution this selection is not necessary!
-            # attribute self._last_device_scanned can be deleted.
-            # now always return first device to read the selected variables of
-            # all power supplies through mirror variables.
+        # select device ids to be read (when not in sync_off mode)
+        if self._udcmodel in ('FBP', ):
+            # with the mirror var solution for FBP we can always read only
+            # one of them and get updates for all the others
             dev_id = self._device_ids[0]
+        else:
+            # cycle through bsmp devices
+            nr_devs = len(self._device_ids)
+            dev_idx = (self._dev_idx_last_scanned + 1) % nr_devs
+            dev_id = self._device_ids[dev_idx]
+            self._dev_idx_last_scanned = dev_idx
         return (dev_id, )
 
     def _get_scan_interval(self):
@@ -794,20 +794,10 @@ class PRUController:
             else:
                 return 1.0/self._params.FREQ_RAMP  # [s]
 
-    def _serial_error(self, ids, e, operation):
-
-        # print error message to stdout
-        # print()
-        # print('--- Serial Error in PRUController._bsmp_update_variables')
-        # print('------ last_operation: {}'.format(operation))
-        # print('------ traceback:')
-        # _traceback.print_exc()
-        # print('---')
-        # print()
-
+    def _serial_error(self, ids):
         # signal disconnected for device ids.
-        for id in ids:
-            self._connected[id] = False
+        for bsmp_id in ids:
+            self._connected[bsmp_id] = False
 
     # --- private methods: BSMP UART communications ---
 
@@ -849,12 +839,12 @@ class PRUController:
             dtime = tstamp - t0
             operation = ('V', tstamp, dtime, device_ids, group_id, False)
             self._last_operation = operation
-        except (_SerialError, IndexError) as e:
+        except (_SerialError, IndexError):
             tstamp = _time.time()
             dtime = tstamp - t0
             operation = ('V', tstamp, dtime, device_ids, group_id, True)
             self._last_operation = operation
-            self._serial_error(device_ids, e, operation)
+            self._serial_error(device_ids)
             return
 
         # TODO: stopping method execution at this point, not processing
