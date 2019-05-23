@@ -5,6 +5,7 @@ from copy import deepcopy as _dcopy
 
 from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
 from siriuspy.search.ma_search import MASearch as _MASearch
+from siriuspy.namesys import SiriusPVName
 from siriuspy.servconf.srvconfig import ConfigSrv as _ConfigSrv
 from siriuspy.servconf.util import \
     generate_config_name as _generate_config_name
@@ -35,16 +36,24 @@ class BoosterNormalized(_ConfigSrv):
         _ConfigSrv.__init__(self, name=name)
         self.configuration = self.get_config_type_template()
 
+        self._manames2index = dict()
+        for index, data in enumerate(self._configuration['pvs']):
+            maname = SiriusPVName(data[0]).device_name
+            self._manames2index[maname] = index
+
     @property
     def manames(self):
         """List of power supply names."""
-        return list(self._configuration.keys())
+        return list(self._manames2index.keys())
 
-    def _get_item(self, index):
-        return float(self._configuration[index])
+    def _get_item(self, maname):
+        index = self._manames2index[maname]
+        value = self._configuration['pvs'][index][1]
+        return float(value)
 
-    def _set_item(self, index, value):
-        self._configuration[index] = float(value)
+    def _set_item(self, maname, value):
+        index = self._manames2index[maname]
+        self._configuration['pvs'][index][1] = value
 
     def _set_configuration(self, value):
         self._configuration = value
@@ -55,14 +64,15 @@ class BoosterNormalized(_ConfigSrv):
             st = 'name: {}'.format(self.name)
             return st
         st = ''
-        k = tuple(self._configuration.keys())
-        v = tuple(self._configuration.values())
+        k = [data[0] for data in self._configuration['pvs']]
+        v1 = [data[1] for data in self._configuration['pvs']]
+        v2 = [data[2] for data in self._configuration['pvs']]
         maxlen = max(tuple(len(ky) for ky in k) + (len('name'),))
-        fmtstr1 = '{:<'+str(maxlen)+'}: {:+.6f}\n'
-        fmtstr2 = fmtstr1.replace('{:+.6f}', '{}')
+        fmtstr1 = '{:<'+str(maxlen)+'}, {:+.6f}, {:+.6f}\n'
+        fmtstr2 = '{:<'+str(maxlen)+'}: {}\n'
         st = fmtstr2.format('name', self.name)
         for i in range(len(k)):
-            st += fmtstr1.format(k[i], v[i])
+            st += fmtstr1.format(k[i], v1[i], v2[i])
         return st
 
 
