@@ -4,6 +4,7 @@ from copy import deepcopy as _dcopy
 _on = 1
 _SlowRef = 0
 
+
 def get_dict():
     """Return configuration type dictionary."""
     module_name = __name__.split('.')[-1]
