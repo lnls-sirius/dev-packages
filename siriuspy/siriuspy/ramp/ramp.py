@@ -229,10 +229,10 @@ class BoosterRamp(_ConfigSrv):
         # interpolate nconfig, if necessary
         if nconfig is None:
             nconfig = self._ps_nconfigs[name].get_config_type_template()
-            for k in nconfig.keys():
-                if k != self.MANAME_DIPOLE:
-                    ovalues = [self._ps_nconfigs[n][k] for n in onames]
-                    nconfig[k] = _np.interp(time, otimes, ovalues)
+            for ma in nconfig.manames:
+                if ma != self.MANAME_DIPOLE:
+                    ovalues = [self._ps_nconfigs[n][ma] for n in onames]
+                    nconfig[ma] = _np.interp(time, otimes, ovalues)
 
             # set config energy appropriately
             indices = self._conv_times_2_indices([time])
@@ -1063,7 +1063,7 @@ class BoosterRamp(_ConfigSrv):
         nconf_strength = []
         for i in range(len(nconf_times)):
             nconfig = self._ps_nconfigs[nconf_names[i]]
-            if maname not in nconfig.configuration:
+            if maname not in nconfig.manames:
                 raise _RampInvalidNormConfig
             nconf_strength.append(nconfig[maname])
 
