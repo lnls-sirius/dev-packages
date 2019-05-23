@@ -10,7 +10,7 @@ from siriuspy.epics.properties import EpicsPropertiesList as _EpicsPropsList
 from siriuspy.csdevice import util as _cutil
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.csdevice.timesys import Const as _TIConst
-from siriuspy.csdevice.orbitcorr import OrbitCorrDevRings as _OrbitCorrConst
+from siriuspy.csdevice.orbitcorr import SOFBRings as _SOFBRings
 from siriuspy.servconf.srvconfig import ConnConfigService as _ConnConfigService
 from siriuspy.search.ma_search import MASearch as _MASearch
 from siriuspy.timesys.ll_classes import get_evg_name as _get_evg_name
@@ -583,7 +583,7 @@ class ConnSOFB(_EpicsPropsList):
 
     def get_deltakicks(self):
         """Get CH and CV delta kicks calculated by SOFB."""
-        bo_sofb_db = _OrbitCorrConst(acc='BO')
+        bo_sofb_db = _SOFBRings(acc='BO')
         rb = self.readbacks
         ch_dkicks = rb[ConnSOFB.IOC_Prefix + ':DeltaKickCH']
         ch_names = bo_sofb_db.CH_NAMES
