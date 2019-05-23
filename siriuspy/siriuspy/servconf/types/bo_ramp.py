@@ -184,7 +184,7 @@ _ti_pvs = [  # timing pvs
     ['BO-Glob:TI-LLRF-Rmp:Delay-SP', 0.0, 0.0],  # [us]
     ['BO-Glob:TI-LLRF-Rmp:Polarity-Sel', 0, 0.0],
     ['BO-Glob:TI-LLRF-Rmp:State-Sel', _Enbl, 0.0],
-    ['BO-Glob:TI-LLRF-Rmp:RFDelayType-Sel', 0.0, 0.0],
+    ['BO-Glob:TI-LLRF-Rmp:RFDelayType-Sel', 0, 0.0],
 
     ['LI-01:TI-EGun-SglBun:ByPassIntlk-Sel', 0, 0.0],
     ['LI-01:TI-EGun-SglBun:Src-Sel', 0, 0.0],
@@ -207,7 +207,7 @@ _ti_pvs = [  # timing pvs
     ['BO-48D:TI-EjeKckr:Duration-SP', 0.0, 0.0],  # [us]
     ['BO-48D:TI-EjeKckr:NrPulses-SP', 0, 0.0],
     ['BO-48D:TI-EjeKckr:Delay-SP', 0.0, 0.0],  # [us]
-    ['BO-48D:TI-EjeKckr:Polarity-Sel', 0.0, 0],
+    ['BO-48D:TI-EjeKckr:Polarity-Sel', 0, 0.0],
     ['BO-48D:TI-EjeKckr:State-Sel', _Enbl, 0.0],
 ]
 
