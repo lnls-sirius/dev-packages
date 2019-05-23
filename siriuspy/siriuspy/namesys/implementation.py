@@ -57,7 +57,7 @@ def join_name(**kwargs):
         elif 'dis' in e.keys() and 'dev' in e.keys():
             name = e['dis'].upper() + '-' + e['dev']
         elif 'propty_name' in e.keys() and 'propty_suffix' in e.keys():
-            name = e['propty_name'].upper() + '-' + e['propty_name']
+            name = e['propty_name'].upper() + '-' + e['propty_suffix']
     elif len(e.keys()) == 3:
         if 'dis' in e.keys() and 'dev' in e.keys() and 'idx' in e.keys():
             name = e['dis'].upper() + '-' + e['dev'] + '-' + e['idx']
