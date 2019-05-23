@@ -13,15 +13,16 @@ import siriuspy.servconf.types as _types
 
 _config_types_dict = None
 _config_types_check = None
+_config_types_checklength = None
 _int_types = {int}
 for k, tp in _np.typeDict.items():
-        if isinstance(k, str) and k.startswith('int'):
-            _int_types.add(tp)
+    if isinstance(k, str) and k.startswith('int'):
+        _int_types.add(tp)
 
 _float_types = {float}
 for k, tp in _np.typeDict.items():
-        if isinstance(k, str) and k.startswith('float'):
-            _float_types.add(tp)
+    if isinstance(k, str) and k.startswith('float'):
+        _float_types.add(tp)
 
 
 def get_config_types():
@@ -45,20 +46,25 @@ def check_value(config_type, value):
         _init_config_types_dict()
     ref_value = _config_types_dict[config_type]
     if _config_types_check[config_type]:
-        return recursive_check(ref_value, value)
+        if _config_types_checklength[config_type]:
+            return recursive_check(ref_value, value)
+        return recursive_check(ref_value, value, checklength=False)
     return True
 
 
 def _init_config_types_dict():
-    global _config_types_dict, _config_types_check
+    global _config_types_dict, _config_types_check, _config_types_checklength
     _config_types_dict = dict()
     _config_types_check = dict()
+    _config_types_checklength = dict()
     for ct_name in _types._ctypes:
         ctm = _importlib.import_module('siriuspy.servconf.types.' + ct_name)
         ct = ctm.get_dict()
         config_type_name = ct['config_type_name']
         _config_types_dict[config_type_name] = ct['value']
         _config_types_check[config_type_name] = ct.get('check', True)
+        _config_types_checklength[config_type_name] = ct.get(
+            'checklength', True)
 
 
 # NOTE: It would be better if this method raised an error with a message
@@ -73,10 +79,11 @@ def recursive_check(ref_value, value, checklength=True):
         return False
     elif isinstance(ref_value, dict):
         if checklength and len(value) != len(ref_value):
+            # print('h3')
             return False
         for k, v in value.items():
             if k not in ref_value and checklength:
-                # print('h3')
+                # print('h4')
                 return False
             if k in ref_value:
                 v_ref = ref_value[k]
@@ -85,15 +92,15 @@ def recursive_check(ref_value, value, checklength=True):
                 else:
                     checked = recursive_check(v_ref, v, checklength)
                 if not checked:
-                    # print('h4')
+                    # print('h5')
                     return False
     elif isinstance(ref_value, (list, tuple, _np.ndarray)):
         if checklength and len(ref_value) != len(value):
-            # print('h5')
+            # print('h6')
             return False
         for i in range(min(len(value), len(ref_value))):
             checked = recursive_check(value[i], ref_value[i], checklength)
             if not checked:
-                # print('h6')
+                # print('h7')
                 return False
     return True
