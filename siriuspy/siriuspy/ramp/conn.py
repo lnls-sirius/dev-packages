@@ -9,7 +9,8 @@ from siriuspy.epics.properties import EpicsProperty as _EpicsProperty
 from siriuspy.epics.properties import EpicsPropertiesList as _EpicsPropsList
 from siriuspy.csdevice import util as _cutil
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
-from siriuspy.csdevice.timesys import Const as _TIConst
+from siriuspy.csdevice.timesys import Const as _TIConst, \
+    get_hl_trigger_database as _get_trig_db
 from siriuspy.csdevice.orbitcorr import SOFBRings as _SOFBRings
 from siriuspy.servconf.srvconfig import ConnConfigService as _ConnConfigService
 from siriuspy.search.ma_search import MASearch as _MASearch
@@ -221,6 +222,10 @@ class ConnTiming(_EpicsPropsList):
     def _define_properties(self, prefix, connection_callback, callback):
         c = ConnTiming.Const
 
+        mags_db = _get_trig_db(c.TrgMags)
+        corrs_db = _get_trig_db(c.TrgCorrs)
+        llrf_db = _get_trig_db(c.TrgLLRFRmp)
+
         self.ramp_basicsetup = {
             # EVG
             c.EVG_DevEnbl: _TIConst.DsblEnbl.Enbl,
@@ -239,18 +244,18 @@ class ConnTiming(_EpicsPropsList):
             # Mags trigger
             c.TrgMags_Status: 0,
             c.TrgMags_State: _TIConst.DsblEnbl.Enbl,
-            c.TrgMags_Src: 0,  # enum for RmpBO
+            c.TrgMags_Src: mags_db['Src-Sel']['enums'].index('RmpBO'),
             c.TrgMags_Polarity: _TIConst.TrigPol.Inverse,
             # Corrs trigger
             c.TrgCorrs_Status: 0,
             c.TrgCorrs_State: _TIConst.DsblEnbl.Enbl,
-            c.TrgCorrs_Src: 0,  # enum for RmpBO
+            c.TrgCorrs_Src: corrs_db['Src-Sel']['enums'].index('RmpBO'),
             c.TrgCorrs_Polarity: _TIConst.TrigPol.Inverse,
             # LLRFRmp trigger
             c.TrgLLRFRmp_Status: 0,
             c.TrgLLRFRmp_NrPulses: 1,
             c.TrgLLRFRmp_State: _TIConst.DsblEnbl.Enbl,
-            c.TrgLLRFRmp_Src: 1,  # enum for RmpBO
+            c.TrgLLRFRmp_Src: llrf_db['Src-Sel']['enums'].index('RmpBO'),
             c.TrgLLRFRmp_Polarity: _TIConst.TrigPol.Inverse,
             c.TrgLLRFRmp_RFDelayType: _TIConst.TrigDlyTyp.Manual}
 
