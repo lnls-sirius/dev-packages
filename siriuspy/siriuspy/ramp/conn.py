@@ -261,32 +261,31 @@ class ConnTiming(_EpicsPropsList):
 
         self.ramp_configsetup = {
             # Event delays
-            c.EvtLinac_Delay: 0,
-            c.EvtInjBO_Delay: 0,
-            c.EvtRmpBO_Delay: 0,
-            c.EvtInjSI_Delay: 0,
+            c.EvtLinac_Delay: 0,          # [us]
+            c.EvtInjBO_Delay: 0,          # [us]
+            c.EvtRmpBO_Delay: 0,          # [us]
+            c.EvtInjSI_Delay: 0,          # [us]
             # Mags trigger
             c.TrgMags_NrPulses: 3920,
-            c.TrgMags_Duration: 490,
-            c.TrgMags_Delay: 0,
+            c.TrgMags_Duration: 490000,   # [us]
+            c.TrgMags_Delay: 0,           # [us]
             # Corrs trigger
             c.TrgCorrs_NrPulses: 3920,
-            c.TrgCorrs_Duration: 490,
-            c.TrgCorrs_Delay: 0,
+            c.TrgCorrs_Duration: 490000,  # [us]
+            c.TrgCorrs_Delay: 0,          # [us]
             # LLRFRmp trigger
-            c.TrgLLRFRmp_Delay: 0}
+            c.TrgLLRFRmp_Delay: 0}        # [us]
 
         self._evgcontrol_propties = {
-            # EVG
             c.EVG_ContinuousEvt: _TIConst.DsblEnbl.Dsbl,
             c.EVG_InjectionEvt: _TIConst.DsblEnbl.Dsbl}
 
         self._reading_propties = {
             # EGun trigger delays
-            c.TrgEGunSglBun_Delay: 0,
-            c.TrgEGunMultBun_Delay: 0,
+            c.TrgEGunSglBun_Delay: 0,     # [us]
+            c.TrgEGunMultBun_Delay: 0,    # [us]
             # EjeKckr trigger delay
-            c.TrgEjeKckr_Delay: 0,
+            c.TrgEjeKckr_Delay: 0,        # [us]
             # LinacEgun Mode
             c.LinacEgun_SglBun_State: 0,
             c.LinacEgun_MultBun_State: 0,
