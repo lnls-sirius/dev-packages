@@ -34,7 +34,7 @@ class BoosterNormalized(_ConfigSrv):
     def __init__(self, name=None):
         """Constructor."""
         _ConfigSrv.__init__(self, name=name)
-        self.configuration = self.get_config_type_template()
+        self._configuration = self.get_config_type_template()
 
         self._manames2index = dict()
         for index, data in enumerate(self._configuration['pvs']):
@@ -56,7 +56,7 @@ class BoosterNormalized(_ConfigSrv):
         self._configuration['pvs'][index][1] = value
 
     def _set_configuration(self, value):
-        self._configuration = value
+        self._configuration = _dcopy(value)
 
     def __str__(self):
         """Return string representation of configuration."""
@@ -228,11 +228,11 @@ class BoosterRamp(_ConfigSrv):
 
         # interpolate nconfig, if necessary
         if nconfig is None:
-            nconfig = self._ps_nconfigs[name].get_config_type_template()
-            for ma in nconfig.manames:
+            nconfig_obj = self._ps_nconfigs[name]
+            for ma in nconfig_obj.manames:
                 if ma != self.MANAME_DIPOLE:
                     ovalues = [self._ps_nconfigs[n][ma] for n in onames]
-                    nconfig[ma] = _np.interp(time, otimes, ovalues)
+                    nconfig_obj[ma] = _np.interp(time, otimes, ovalues)
 
             # set config energy appropriately
             indices = self._conv_times_2_indices([time])
@@ -240,7 +240,8 @@ class BoosterRamp(_ConfigSrv):
             strength = _np.interp(indices[0],
                                   list(range(self.ps_ramp_wfm_nrpoints)),
                                   strengths)
-            nconfig[self.MANAME_DIPOLE] = strength
+            nconfig_obj[self.MANAME_DIPOLE] = strength
+            nconfig = nconfig_obj.configuration
 
         # ps normalized configuration was given
         self._ps_nconfigs[name].configuration = nconfig
