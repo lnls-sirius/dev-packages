@@ -31,11 +31,11 @@ def get_config_types():
     return tuple(_config_types_dict.keys())
 
 
-def get_config_type_template(ctype):
+def get_template(config_type):
     """Return value of a configuration type."""
     if _config_types_dict is None:
         _init_config_types_dict()
-    value = _config_types_dict[ctype]
+    value = _config_types_dict[config_type]
     return _copy.deepcopy(value)
 
 
@@ -45,7 +45,7 @@ def check_value(config_type, value):
         _init_config_types_dict()
     ref_value = _config_types_dict[config_type]
     if _config_types_check[config_type]:
-        return recursive_check(ref_value, value)
+        return _recursive_check(ref_value, value)
     return True
 
 
@@ -63,7 +63,7 @@ def _init_config_types_dict():
 
 # NOTE: It would be better if this method raised an error with a message
 #       specifying the name of the PV which is incompatible.
-def recursive_check(ref_value, value, checklength=True):
+def _recursive_check(ref_value, value, checklength=True):
     tps = {type(ref_value), type(value)}
     if len(tps) > len(tps - _int_types) > 0:
         # print('h1')

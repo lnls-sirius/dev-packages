@@ -10,7 +10,7 @@ import dateutil.parser
 import numpy as _np
 
 import siriuspy.envars as _envars
-import siriuspy.servconf.conf_types as _config_types
+from . import _templates
 
 
 class ConfigDBClient:
@@ -127,7 +127,7 @@ class ConfigDBClient:
                 'Config name must be str, not {}!'.format(type(name)))
         if not self.check_valid_configname(name):
             raise ValueError("There are invalid characters in config name!")
-        if not _config_types.check_value(config_type, value):
+        if not self.check_valid_value(config_type, value):
             raise TypeError('Incompatible configuration value!')
 
         url = self._create_url(config_type=config_type, name=name)
@@ -143,6 +143,21 @@ class ConfigDBClient:
         url = self._create_url(
             config_type=config_type, name=name, discarded=True)
         return self._make_request(url, method='POST')
+
+    @staticmethod
+    def get_config_types_from_templates():
+        """Return list of configuration types."""
+        return _templates.get_config_types()
+
+    @staticmethod
+    def get_value_template(config_type):
+        """Return value of a configuration type."""
+        return _templates.get_template(config_type)
+
+    @staticmethod
+    def check_valid_value(config_type, value):
+        """Check whether values data corresponds to a configuration type."""
+        return _templates.check_value(config_type, value)
 
     @classmethod
     def check_valid_configname(cls, name):
