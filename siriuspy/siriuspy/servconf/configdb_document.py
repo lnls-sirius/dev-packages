@@ -5,21 +5,38 @@ import datetime as _datetime
 import re as _re
 from copy import deepcopy as _dcopy
 
-from .configdb_type import ConfigDBType as _ConfigDBType
+from .configdb_client import ConfigDBClient as _ConfigDBClient
 
 
-class ConfigDBDocument(_ConfigDBType):
+class ConfigDBDocument():
     """Abstract configuration class."""
 
     def __init__(self, config_type, name=None, url=None):
         """Constructor."""
-        super().__init__(config_type, url=url)
+        self._configdbclient = _ConfigDBClient(
+                            url=url, config_type=config_type)
         self._name = name or self._generate_config_name()
         self._info = None
         self._value = None
         self._synchronized = False
         if self.exist():
             self.load()
+
+    @property
+    def configdbclient(self):
+        return self._configdbclient
+
+    @property
+    def url(self):
+        return self._configdbclient.url
+
+    @property
+    def config_type(self):
+        return self._configdbclient.config_type
+
+    @property
+    def connected(self):
+        return self._configdbclient.connected
 
     @property
     def name(self):
@@ -29,7 +46,7 @@ class ConfigDBDocument(_ConfigDBType):
     @name.setter
     def name(self, value):
         """Set name of configuration."""
-        if self.check_valid_configname(value):
+        if self._configdbclient.check_valid_configname(value):
             self._name = value
             self._synchronized = False
 
@@ -69,39 +86,15 @@ class ConfigDBDocument(_ConfigDBType):
         """Return sync state of object and configuration in server."""
         return self._synchronized
 
-    def get_config_value(self, discarded=False):
-        """Mark a valid configuration as discarded."""
-        return super().get_config_value(self._name, discarded=discarded)
-
-    def get_config_info(self, discarded=False):
-        """Mark a valid configuration as discarded."""
-        return super().get_config_info(self._name, discarded=discarded)
-
-    def rename_config(self, newname):
-        """Rename configuration in database."""
-        return super().rename_config(self._name, newname)
-
-    def insert_config(self, value):
-        """Insert configuration into database."""
-        return super().insert_config(self._name, value)
-
-    def delete_config(self):
-        """Mark a valid configuration as discarded."""
-        return super().delete_config(self._name)
-
-    def retrieve_config(self):
-        """Mark a discarded configuration as valid."""
-        return super().retrieve_config(self._config_type, self._name)
-
     def exist(self):
         """Return True if configuration exists in ConfigServer."""
-        info = self.find_configs(name=self._name)
+        info = self._configdbclient.find_configs(name=self._name)
         return len(info) > 0
 
     def load(self):
         """Load configuration from ConfigServer."""
-        self._info = self.get_config_info()
-        self._value = self.get_config_value()
+        self._info = self._configdbclient.get_config_info(name=self._name)
+        self._value = self._configdbclient.get_config_value(name=self._name)
         self._synchronized = True
 
     def save(self, new_name=None):
@@ -112,7 +105,7 @@ class ConfigDBDocument(_ConfigDBType):
             return
 
         # check if data format is ok
-        if not self.check_valid_value(self._value):
+        if not self._configdbclient.check_valid_value(self._value):
             raise ValueError(
                 'Configuration value with inconsistent format.')
 
@@ -120,19 +113,19 @@ class ConfigDBDocument(_ConfigDBType):
         if new_name is not None:
             self._name = new_name
 
-        self.insert_config(self._value)
-        self._info = self.get_config_info()
+        self._configdbclient.insert_config(self._name, self._value)
+        self._info = self._configdbclient.get_config_info(name=self._name)
         self._synchronized = True
 
     def delete(self):
         """Delete configuration from server."""
         # TODO: should this method be easily available?
         if self.exist():
-            self.delete_config()
+            self._configdbclient.delete_config(self._name)
             self._synchronized = False
 
     def _set_value(self, value):
-        if self.check_valid_value(value):
+        if self._configdbclient.check_valid_value(value):
             self._value = _dcopy(value)
 
     def _get_item(self, index):

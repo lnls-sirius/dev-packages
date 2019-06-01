@@ -18,7 +18,7 @@ class ConfigDBClient:
 
     _INVALID_CHARACTERS = '\\/:;,?!$'
 
-    def __init__(self, url=None):
+    def __init__(self, url=None, config_type=None):
         """Class constructor.
 
         Parameters
@@ -29,6 +29,17 @@ class ConfigDBClient:
 
         """
         self._url = url or _envars.server_url_configdb
+        self._config_type = config_type
+
+    @property
+    def config_type(self):
+        """Type of configuration."""
+        return self._config_type
+
+    @config_type.setter
+    def config_type(self, name):
+        if isinstance(name, str):
+            self._config_type = name
 
     @property
     def url(self):
@@ -46,29 +57,21 @@ class ConfigDBClient:
 
     def get_dbsize(self):
         """Return estimated size of configuration database."""
-        url = self._create_url(stats=True)
-        value = self._make_request(url)
-        return value['size']
-
-    def get_dbsize_discarded(self):
-        """Return estimated size of discarded configurations data."""
-        pass
+        return self._make_request(stats=True)['size']
 
     def get_nrconfigs(self):
         """Return estimated size of configuration database."""
-        url = self._create_url(stats=True)
-        value = self._make_request(url)
-        return value['count']
+        return self._make_request(stats=True)['count']
 
     def get_config_types(self):
         """Get all configuration types."""
-        return self._make_request(self._create_url())
+        return self._make_request()
 
     def find_configs(self,
-                     config_type,
                      name=None,
                      begin=None,
                      end=None,
+                     config_type=None,
                      discarded=False):
         """Find configurations matching search criteria.
 
@@ -80,6 +83,7 @@ class ConfigDBClient:
             matching the other criteria.
 
         """
+        config_type = self._process_config_type(config_type)
         # build search dictionary
         find_dict = dict(config_type=config_type)
         if name is not None:
@@ -91,37 +95,41 @@ class ConfigDBClient:
             if end is not None:
                 find_dict['created']['$lte'] = end
 
-        url = self._create_url(config_type=config_type, discarded=discarded)
-        return self._make_request(url, data=find_dict)
+        return self._make_request(
+            config_type=config_type, discarded=discarded, data=find_dict)
 
-    def get_config_value(self, config_type, name, discarded=False):
+    def get_config_value(self, name, config_type=None, discarded=False):
         """Mark a valid configuration as discarded."""
-        url = self._create_url(
-            config_type=config_type, name=name, discarded=discarded)
-        return self._make_request(url)['value']
+        config_type = self._process_config_type(config_type)
+        return self._make_request(
+            config_type=config_type, name=name, discarded=discarded)['value']
 
-    def get_config_info(self, config_type, name, discarded=False):
+    def get_config_info(self, name, config_type=None, discarded=False):
         """Mark a valid configuration as discarded."""
-        res = self.find_configs(config_type, name=name, discarded=discarded)
+        config_type = self._process_config_type(config_type)
+        res = self.find_configs(
+            name=name, config_type=config_type, discarded=discarded)
         if not res:
             raise ConfigDBException(
                 {'code': 404, 'message': 'Configuration no found.'})
         return res[0]
 
-    def rename_config(self, config_type, oldname, newname):
+    def rename_config(self, oldname, newname, config_type=None):
         """Rename configuration in database."""
+        config_type = self._process_config_type(config_type)
         if not isinstance(newname, str):
             raise TypeError(
                 'Config name must be str, not {}!'.format(type(newname)))
         if not self.check_valid_configname(newname):
             raise ValueError("There are invalid characters in config name!")
 
-        url = self._create_url(
-            config_type=config_type, name=oldname, newname=newname)
-        return self._make_request(url, method='POST')
+        return self._make_request(
+            config_type=config_type, name=oldname, newname=newname,
+            method='POST')
 
-    def insert_config(self, config_type, name, value):
+    def insert_config(self, name, value, config_type=None):
         """Insert configuration into database."""
+        config_type = self._process_config_type(config_type)
         if not isinstance(name, str):
             raise TypeError(
                 'Config name must be str, not {}!'.format(type(name)))
@@ -130,34 +138,35 @@ class ConfigDBClient:
         if not self.check_valid_value(config_type, value):
             raise TypeError('Incompatible configuration value!')
 
-        url = self._create_url(config_type=config_type, name=name)
-        self._make_request(url, method='POST', data=value)
+        self._make_request(
+            config_type=config_type, name=name, method='POST', data=value)
 
-    def delete_config(self, config_type, name):
+    def delete_config(self, name, config_type=None):
         """Mark a valid configuration as discarded."""
-        url = self._create_url(config_type=config_type, name=name)
-        return self._make_request(url, method='DELETE')
+        config_type = self._process_config_type(config_type)
+        return self._make_request(
+            config_type=config_type, name=name, method='DELETE')
 
-    def retrieve_config(self, config_type, name):
+    def retrieve_config(self, name, config_type=None):
         """Mark a discarded configuration as valid."""
-        url = self._create_url(
-            config_type=config_type, name=name, discarded=True)
-        return self._make_request(url, method='POST')
+        config_type = self._process_config_type(config_type)
+        return self._make_request(
+            config_type=config_type, name=name, discarded=True, method='POST')
+
+    def get_value_template(self, config_type=None):
+        """Return value of a configuration type."""
+        config_type = self._process_config_type(config_type)
+        return _templates.get_template(config_type)
+
+    def check_valid_value(self, value, config_type=None):
+        """Check whether values data corresponds to a configuration type."""
+        config_type = self._process_config_type(config_type)
+        return _templates.check_value(config_type, value)
 
     @staticmethod
     def get_config_types_from_templates():
         """Return list of configuration types."""
         return _templates.get_config_types()
-
-    @staticmethod
-    def get_value_template(config_type):
-        """Return value of a configuration type."""
-        return _templates.get_template(config_type)
-
-    @staticmethod
-    def check_valid_value(config_type, value):
-        """Check whether values data corresponds to a configuration type."""
-        return _templates.check_value(config_type, value)
 
     @classmethod
     def check_valid_configname(cls, name):
@@ -176,25 +185,17 @@ class ConfigDBClient:
 
     # --- private methods ---
 
-    def _create_url(self, config_type=None, name=None, discarded=False,
-                    stats=False, newname=None):
-        url = self.url
-        if stats:
-            return url + '/stats'
-        url += '/configs'
-        if newname:
-            url += '/rename'
-        if discarded:
-            url += '/discarded'
-        if config_type:
-            url += '/' + config_type
-        if name:
-            url += '/' + name
-        if newname:
-            url += '/' + newname
-        return _parse.quote(url)
+    def _process_config_type(self, config_type):
+        config_type = config_type or self._config_type
+        if not config_type:
+            raise ValueError(
+                'You must define a `config_type` attribute or' +
+                ' provide it in method call.')
+        return config_type
 
-    def _make_request(self, url, method='GET', data=None):
+    def _make_request(self, method='GET', data=None, **kwargs):
+        url = self._create_url(**kwargs)
+
         if data is None:
             request = _Request(url=url, method=method)
         else:
@@ -212,6 +213,24 @@ class ConfigDBClient:
         if response['code'] != 200:
             raise ConfigDBException(response)
         return response['result']
+
+    def _create_url(self, config_type=None, name=None, discarded=False,
+                    stats=False, newname=None):
+        url = self.url
+        if stats:
+            return url + '/stats'
+        url += '/configs'
+        if newname:
+            url += '/rename'
+        if discarded:
+            url += '/discarded'
+        if config_type:
+            url += '/' + config_type
+        if name:
+            url += '/' + name
+        if newname:
+            url += '/' + newname
+        return _parse.quote(url)
 
 
 class ConfigDBException(Exception):
