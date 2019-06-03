@@ -466,32 +466,6 @@ def get_evg_database(prefix=None, only_evg=False):
     return db
 
 
-def get_hl_event_database(prefix='Linac'):
-    """Return database of a high level event."""
-    db = dict()
-
-    dic_ = {'type': 'float', 'unit': 'us', 'prec': 4, 'value': 0,
-            'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
-            'hilim': 500000, 'high': 1000000, 'hihi': 10000000}
-    db[prefix + 'Delay-RB'] = _dcopy(dic_)
-    db[prefix + 'Delay-SP'] = dic_
-
-    dic_ = {'type': 'enum', 'enums': _et.EVT_MODES,
-            'value': 1,
-            'states': ()}
-    db[prefix + 'Mode-Sts'] = _dcopy(dic_)
-    db[prefix + 'Mode-Sel'] = dic_
-
-    dic_ = {'type': 'enum', 'enums': _et.FIXED_INCR, 'value': 1}
-    db[prefix + 'DelayType-Sts'] = _dcopy(dic_)
-    db[prefix + 'DelayType-Sel'] = dic_
-
-    db[prefix + 'ExtTrig-Cmd'] = {
-        'type': 'int', 'value': 0,
-        'unit': 'When in External Mode generates Event.'}
-    return db
-
-
 def get_hl_trigger_database(hl_trigger, prefix=''):
     """Return database of the specified hl_trigger."""
     db = dict()

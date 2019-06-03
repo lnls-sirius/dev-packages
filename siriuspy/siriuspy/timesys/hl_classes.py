@@ -190,25 +190,6 @@ class _BaseHL(_Base):
         return dic_
 
 
-class HLEvent(_BaseHL):
-    """High Level control of the Events of the EVG."""
-
-    def __init__(self, ev_hl, callback=None):
-        """Initialize object.
-
-        ev_ll: low level event code
-        """
-        evg_name = _get_evg_name()
-        ev_ll = _cstime.Const.EvtHL2LLMap[ev_hl]
-        ll_objs = [_LLEvent(evg_name + ':' + ev_ll), ]
-        prefix = evg_name + ':' + ev_hl
-        super().__init__(prefix, ll_objs, callback=callback)
-
-    def get_database(self):
-        """Create the database of the class."""
-        return _cstime.get_hl_event_database(self.prefix)
-
-
 class HLTrigger(_BaseHL):
     """High level Trigger interface."""
 

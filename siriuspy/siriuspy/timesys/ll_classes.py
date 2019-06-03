@@ -332,59 +332,6 @@ class _BaseLL(_Base):
         return {hl_prop: val}
 
 
-class LLEvent(_BaseLL):
-    """Define the Low Level Event Class."""
-
-    def __init__(self, channel):
-        """Initialize the instance."""
-        prefix = LL_PREFIX + channel
-        super().__init__(channel, prefix)
-
-    def _define_convertion_prop2pv(self):
-        return {
-            'Delay': self.prefix + 'Delay-RB',
-            'Mode': self.prefix + 'Mode-Sts',
-            'DelayType': self.prefix + 'DelayType-Sts',
-            'ExtTrig': self.prefix + 'ExtTrig-Cmd',
-            }
-
-    def _define_dict_for_write(self):
-        return {
-            'Delay': self._set_delay,
-            'Mode': _partial(self._set_simple, 'Mode'),
-            'DelayType': _partial(self._set_simple, 'DelayType'),
-            'ExtTrig': self._set_ext_trig,
-            }
-
-    def _define_dict_for_update(self):
-        return {
-            'Delay': self._get_delay,
-            'Mode': _partial(self._get_simple, 'Mode'),
-            'DelayType': _partial(self._get_simple, 'DelayType'),
-            'ExtTrig': _partial(self._get_simple, 'ExtTrig'),
-            }
-
-    def _define_dict_for_read(self):
-        return self._define_dict_for_update()
-
-    def _set_delay(self, value):
-        if value is None:
-            return dict()
-        return {'Delay': round(value / self._base_del)}
-
-    def _get_delay(self, is_sp, val=None):
-        if val is None:
-            val = self._get_from_pvs(is_sp, 'Delay')
-        if val is None:
-            return dict()
-        return {'Delay': val * self._base_del}
-
-    def _set_ext_trig(self, value):
-        pv = self._writepvs.get('ExtTrig')
-        self._put_on_pv(pv, value)
-        return None  # -Cmd must not return any state
-
-
 class _EVROUT(_BaseLL):
     _REMOVE_PROPS = {}
 
