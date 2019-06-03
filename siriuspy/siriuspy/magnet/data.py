@@ -6,6 +6,8 @@ from siriuspy.csdevice.pwrsupply \
     import get_ma_propty_database as _get_ma_propty_database
 from siriuspy.csdevice.pwrsupply \
     import get_pm_propty_database as _get_pm_propty_database
+from siriuspy.csdevice.pwrsupply \
+    import get_li_ma_propty_database as _get_li_ma_propty_database
 
 
 class MAData:
@@ -28,6 +30,8 @@ class MAData:
         # TODO: cleanup code
         if 'PM-' in maname:
             self._propty_databases = _get_pm_propty_database(self._maname)
+        elif self._maname.sec == 'LI':
+            self._propty_databases = _get_li_ma_propty_database(self._maname)
         else:
             self._propty_databases = _get_ma_propty_database(self._maname)
 

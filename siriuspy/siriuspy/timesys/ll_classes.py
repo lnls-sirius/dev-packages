@@ -3,11 +3,10 @@ import time as _time
 import re as _re
 from functools import partial as _partial
 import logging as _log
-from threading import Thread as _Thread
-import epics as _epics
+from threading import Thread as _ThreadBase
+from epics.ca import CASeverityException as _CASeverityException
 from siriuspy.util import update_bit as _update_bit, get_bit as _get_bit
-# from siriuspy.thread import QueueThread as _QueueThread
-from siriuspy.epics import connection_timeout as _conn_timeout
+from siriuspy.epics import connection_timeout as _conn_timeout, PV as _PV
 from siriuspy.envars import vaca_prefix as LL_PREFIX
 from siriuspy.namesys import SiriusPVName as _PVName
 from siriuspy.csdevice import timesys as _cstime
@@ -23,6 +22,14 @@ _FDEL = _cstime.Const.FINE_DELAY / _US2SEC
 
 def get_evg_name():
     return _LLTimeSearch.get_device_names({'dev': 'EVG'})[0]
+
+
+class _Thread(_ThreadBase):
+
+    def __init__(self, **kwargs):
+        if 'daemon' not in kwargs:
+            kwargs['daemon'] = True
+        super().__init__(**kwargs)
 
 
 class _BaseLL(_Base):
@@ -48,10 +55,10 @@ class _BaseLL(_Base):
         self._rf_div = _RFDIV
 
         evg_name = get_evg_name()
-        self._rf_freq_pv = _epics.PV(
+        self._rf_freq_pv = _PV(
             LL_PREFIX + 'AS-Glob:RF-Gen:Frequency-SP',
             connection_timeout=_conn_timeout)
-        self._rf_div_pv = _epics.PV(
+        self._rf_div_pv = _PV(
             LL_PREFIX + evg_name + ':RFDiv-SP',
             connection_timeout=_conn_timeout)
         self._update_base_freq()
@@ -60,8 +67,6 @@ class _BaseLL(_Base):
 
         self._writepvs = dict()
         self._readpvs = dict()
-        # self._queue = _QueueThread()
-        # self._queue.start()
         self._locked = False
 
         _log.info(self.channel+': Creating PVs.')
@@ -71,14 +76,14 @@ class _BaseLL(_Base):
                 pvnamerb = pvname
                 pvnamesp = self._fromrb2sp(pvname)
             elif self._iscmdpv(pvname):  # -Cmd is different!!
-                self._writepvs[prop] = _epics.PV(
+                self._writepvs[prop] = _PV(
                                 pvname, connection_timeout=_conn_timeout)
 
             if pvnamerb is not None:
-                self._readpvs[prop] = _epics.PV(
+                self._readpvs[prop] = _PV(
                     pvnamerb, connection_timeout=_conn_timeout)
             if pvnamesp != pvnamerb:
-                self._writepvs[prop] = _epics.PV(
+                self._writepvs[prop] = _PV(
                     pvnamesp, connection_timeout=_conn_timeout)
                 self._writepvs[prop]._initialized = False
 
@@ -150,10 +155,7 @@ class _BaseLL(_Base):
         # queue.
         self._put_on_pv(pv, value, wait=False)
         pvname = self._dict_convert_prop2pv[prop]
-        # self._queue.add_callback(self._lock_thread, pvname)
-        _Thread(
-            target=self._lock_thread,
-            args=(pvname, value), daemon=True).start()
+        _Thread(target=self._lock_thread, args=(pvname, value)).start()
 
     def read(self, prop, is_sp=False):
         """Read HL properties from LL IOCs and return the value."""
@@ -224,40 +226,42 @@ class _BaseLL(_Base):
         val = pv.get(timeout=_conn_timeout)
         return def_val if val is None else val
 
-    def _lock_thread(self, pvname, value=None, count=0):
+    def _lock_thread(self, pvname, value=None):
         prop = self._dict_convert_pv2prop[pvname]
         if value is None:
             value = self._get_from_pvs(False, prop)
-        my_val = self._config_ok_values.get(prop)
-
-        pv = self._writepvs.get(prop)
-        conds = pv is not None
-        conds &= my_val is not None
-        conds &= value is not None
-        if conds and (not pv._initialized or my_val != value):
-            count += 1
+        # I have loop here to guarantee that the hardware will go to the
+        # desired state.
+        # I have to do this because of a problem on the LL IOCs triggered by
+        # write commands which do not wait for the put operation to be
+        # completed, which is the case for the default behavior of pyepics,
+        # pydm, cs-studio...
+        # This problem happens when one try to set different properties of the
+        # LL IOCs, or the same property twice, in a time interval shorter than
+        # the one it takes for LL IOC complete writing on the hardware (~60ms).
+        maxatt = 100
+        for count in range(maxatt):
+            my_val = self._config_ok_values.get(prop)
+            pv = self._writepvs.get(prop)
+            if my_val is None or pv is None:
+                break
+            value = value if count < 1 else self._get_from_pvs(False, prop)
+            if value is None:
+                continue
+            if pv._initialized and my_val == value:
+                break
             self._put_on_pv(pv, my_val)
-            if count > 1:
-                _log.warning((
-                    'chan: {0:s}  pvname: {1:s}  my_val: {2:s}  '
-                    'val: {3:s}  put_comp: {4:s} initia: {5:s}  '
-                    'count: {6:s}').format(
-                        self.channel, pv.pvname, str(my_val), str(value),
-                        str(pv.put_complete), str(pv._initialized),
-                        str(count)))
-            # I have to keep calling this function over and over again to
-            # guarantee that the hardware will go to the desired state.
-            # I have to do this because of a problem on the LL IOCs
-            # triggered by write commands which do not wait for the put
-            # operation to be completed, which is the case for the default
-            # behavior of pyepics, pydm, cs-studio...
-            # This problem happens when one try to set different properties
-            # of the LL IOCs, or the same property twice, in a time interval
-            # shorter than the one it takes for LL IOC complete the write on
-            # the hardware (~60ms).
             _time.sleep(0.1)  # I wait a little bit to reduce CPU load
-            # self._queue.add_callback(self._lock_thread, pvname, count=count)
-            self._lock_thread(pvname, count=count)
+        if count > 1:
+            _log.warning((
+                'chan: {0:s} pvname: {1:s} my_val: {2:s} '
+                'val: {3:s} put_comp: {4:s} initia: {5:s} '
+                'count: {6:s} conn: {7:s}').format(
+                    self.channel, pv.pvname, str(my_val), str(value),
+                    str(pv.put_complete), str(pv._initialized),
+                    str(count), str(pv.connected)))
+        if count == maxatt-1:
+            _log.error('Could not set PV {0:s}.'.format(pv.pvname))
 
     def _put_on_pv(self, pv, value, wait=False):
         if pv.connected and pv.put_complete:
@@ -266,30 +270,21 @@ class _BaseLL(_Base):
             try:
                 pv.put(value, use_complete=True, wait=wait)
                 pv._initialized = True
-            except _epics.ca.CASeverityException:
+            except _CASeverityException:
                 _log.error('NO Write Permission to {0:s}'.format(pv.pvname))
 
     def _on_change_writepv(self, pvname, value, **kwargs):
         # -Cmd PVs do not have a state associated to them
         if value is None or self._iscmdpv(pvname):
             return
-        # self._queue.add_callback(self._on_change_pv_thread, pvname, value)
-        _Thread(
-            target=self._on_change_pv_thread,
-            args=(pvname, value), daemon=True).start()
+        _Thread(target=self._on_change_pv_thread, args=(pvname, value)).start()
 
     def _on_change_readpv(self, pvname, value, **kwargs):
         if value is None:
             return
         if self._locked:
-            # self._queue.add_callback(self._lock_thread, pvname, value)
-            _Thread(
-                target=self._lock_thread,
-                args=(pvname, value), daemon=True).start()
-        # self._queue.add_callback(self._on_change_pv_thread, pvname, value)
-        _Thread(
-            target=self._on_change_pv_thread,
-            args=(pvname, value), daemon=True).start()
+            _Thread(target=self._lock_thread, args=(pvname, value)).start()
+        _Thread(target=self._on_change_pv_thread, args=(pvname, value)).start()
 
         # at initialization load _config_ok_values
         prop = self._dict_convert_pv2prop.get(pvname)

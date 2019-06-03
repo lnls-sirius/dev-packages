@@ -139,11 +139,6 @@ class SOFBTLines(ConstTLines):
             self.EVT_COR_NAME = 'Orb' + self.acc
 
         self.EVT_ACQ_NAME = 'Dig' + self.acc
-        evts = _HLTISearch.get_hl_trigger_allowed_evts(self.TRIGGER_ACQ_NAME)
-        vals = _cstiming.get_hl_trigger_database(self.TRIGGER_ACQ_NAME)
-        vals = tuple([vals['Src-Sel']['enums'].index(evt) for evt in evts])
-        self.AcqExtEvtSrc = _get_namedtuple(
-                                    'AcqExtEvtSrc', evts, vals)
         self.MTX_SZ = self.NR_CORRS * (2 * self.NR_BPMS)
         self.NR_SING_VALS = min(self.NR_CORRS, 2 * self.NR_BPMS)
         self.C0 = 22 if self.acc == 'TB' else 30  # in meters
@@ -172,22 +167,22 @@ class SOFBTLines(ConstTLines):
                 'type': 'enum', 'value': 0,
                 'enums': self.MeasRespMatMon._fields},
             'MeasRespMatKickCH-SP': {
-                'type': 'float', 'value': 0.2, 'unit': 'urad', 'prec': 3,
+                'type': 'float', 'value': 300, 'unit': 'urad', 'prec': 3,
                 'lolim': 0.002, 'hilim': 500},
             'MeasRespMatKickCH-RB': {
-                'type': 'float', 'value': 0.2, 'unit': 'urad', 'prec': 3,
+                'type': 'float', 'value': 300, 'unit': 'urad', 'prec': 3,
                 'lolim': 0.002, 'hilim': 500},
             'MeasRespMatKickCV-SP': {
-                'type': 'float', 'value': 0.2, 'unit': 'urad', 'prec': 3,
+                'type': 'float', 'value': 150, 'unit': 'urad', 'prec': 3,
                 'lolim': 0.002, 'hilim': 500},
             'MeasRespMatKickCV-RB': {
-                'type': 'float', 'value': 0.2, 'unit': 'urad', 'prec': 3,
+                'type': 'float', 'value': 150, 'unit': 'urad', 'prec': 3,
                 'lolim': 0.002, 'hilim': 500},
             'MeasRespMatWait-SP': {
-                'type': 'float', 'value': 0.5, 'unit': 's', 'prec': 3,
+                'type': 'float', 'value': 5, 'unit': 's', 'prec': 3,
                 'lolim': 0.05, 'hilim': 100},
             'MeasRespMatWait-RB': {
-                'type': 'float', 'value': 0.5, 'unit': 's', 'prec': 3,
+                'type': 'float', 'value': 5, 'unit': 's', 'prec': 3,
                 'lolim': 0.05, 'hilim': 100},
             'CalcDelta-Cmd': {
                 'type': 'int', 'value': 0, 'unit': 'Calculate kicks'},
@@ -202,26 +197,26 @@ class SOFBTLines(ConstTLines):
             'DeltaFactorCV-RB': {
                 'type': 'float', 'value': 100, 'prec': 2, 'unit': '%'},
             'MaxKickCH-SP': {
-                'type': 'float', 'value': 300, 'unit': 'urad', 'prec': 3,
+                'type': 'float', 'value': 3000, 'unit': 'urad', 'prec': 3,
                 'lolim': 0, 'hilim': 10000},
             'MaxKickCH-RB': {
-                'type': 'float', 'value': 300, 'prec': 2, 'unit': 'urad'},
+                'type': 'float', 'value': 3000, 'prec': 2, 'unit': 'urad'},
             'MaxKickCV-SP': {
-                'type': 'float', 'value': 300, 'unit': 'urad', 'prec': 3,
+                'type': 'float', 'value': 3000, 'unit': 'urad', 'prec': 3,
                 'lolim': 0, 'hilim': 10000},
             'MaxKickCV-RB': {
-                'type': 'float', 'value': 300, 'prec': 2, 'unit': 'urad'},
+                'type': 'float', 'value': 3000, 'prec': 2, 'unit': 'urad'},
             'MaxDeltaKickCH-SP': {
-                'type': 'float', 'value': 50, 'unit': 'urad', 'prec': 3,
+                'type': 'float', 'value': 3000, 'unit': 'urad', 'prec': 3,
                 'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCH-RB': {
-                'type': 'float', 'value': 50, 'prec': 2, 'unit': 'urad',
+                'type': 'float', 'value': 3000, 'prec': 2, 'unit': 'urad',
                 'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCV-SP': {
-                'type': 'float', 'value': 50, 'unit': 'urad', 'prec': 3,
+                'type': 'float', 'value': 3000, 'unit': 'urad', 'prec': 3,
                 'lolim': 0, 'hilim': 10000},
             'MaxDeltaKickCV-RB': {
-                'type': 'float', 'value': 50, 'prec': 2, 'unit': 'urad',
+                'type': 'float', 'value': 3000, 'prec': 2, 'unit': 'urad',
                 'lolim': 0, 'hilim': 10000},
             'ApplyDelta-Cmd': {
                 'type': 'enum', 'enums': self.ApplyDelta._fields, 'value': 0,
@@ -236,10 +231,10 @@ class SOFBTLines(ConstTLines):
         """Return OpticsCorr-Chrom Soft IOC database."""
         db = {
             'KickAcqRate-SP': {
-                'type': 'float', 'unit': 'Hz', 'value': 10,
+                'type': 'float', 'unit': 'Hz', 'value': 2,
                 'hilim': 20, 'lolim': 0.5},
             'KickAcqRate-RB': {
-                'type': 'float', 'unit': 'Hz', 'value': 10,
+                'type': 'float', 'unit': 'Hz', 'value': 2,
                 'hilim': 20, 'lolim': 0.5},
             'KickCH-Mon': {
                 'type': 'float', 'count': self.NR_CH, 'value': self.NR_CH*[0],
@@ -343,16 +338,16 @@ class SOFBTLines(ConstTLines):
                 'type': 'int', 'unit': '', 'value': 1,
                 'hilim': 1000, 'lolim': 1},
             'TrigNrSamplesPre-SP': {
-                'type': 'int', 'unit': '', 'value': 50,
-                'hilim': 20000, 'lolim': 4},
+                'type': 'int', 'unit': '', 'value': 0,
+                'hilim': 20000, 'lolim': -1},
             'TrigNrSamplesPre-RB': {
-                'type': 'int', 'unit': '', 'value': 50,
-                'hilim': 20000, 'lolim': 4},
+                'type': 'int', 'unit': '', 'value': 0,
+                'hilim': 20000, 'lolim': -1},
             'TrigNrSamplesPost-SP': {
-                'type': 'int', 'unit': '', 'value': 50,
+                'type': 'int', 'unit': '', 'value': 360,
                 'hilim': 20000, 'lolim': 0},
             'TrigNrSamplesPost-RB': {
-                'type': 'int', 'unit': '', 'value': 50,
+                'type': 'int', 'unit': '', 'value': 360,
                 'hilim': 20000, 'lolim': 0},
             'TrigDataSel-Sel': {
                 'type': 'enum', 'unit': 'Set Data trigger Selection.',
@@ -386,30 +381,6 @@ class SOFBTLines(ConstTLines):
                 'type': 'enum', 'unit': 'Set Data trigger Polarity.',
                 'value': self.TrigAcqDataPol.Positive,
                 'enums': self.TrigAcqDataPol._fields},
-            'TrigExtDuration-SP': {
-                'type': 'float', 'value': 100, 'prec': 4,
-                'unit': 'set external trigger duration [us]',
-                'lolim': 8e-6, 'hilim': 500000},
-            'TrigExtDuration-RB': {
-                'type': 'float', 'value': 100, 'prec': 4,
-                'unit': 'set external trigger duration [us]',
-                'lolim': 8e-6, 'hilim': 500000},
-            'TrigExtDelay-SP': {
-                'type': 'float', 'value': 0.0, 'prec': 4,
-                'unit': 'set external trigger delay [us]',
-                'lolim': 0.0, 'hilim': 5e5},
-            'TrigExtDelay-RB': {
-                'type': 'float', 'value': 0.0, 'prec': 4,
-                'unit': 'set external trigger delay [us]',
-                'lolim': 0.0, 'hilim': 5e5},
-            'TrigExtEvtSrc-Sel': {
-                'type': 'enum', 'unit': 'Set ext trigger timing event.',
-                'value': self.AcqExtEvtSrc._fields.index(evt),
-                'enums': self.AcqExtEvtSrc._fields},
-            'TrigExtEvtSrc-Sts': {
-                'type': 'enum', 'unit': 'Set ext trigger timing event.',
-                'value': self.AcqExtEvtSrc._fields.index(evt),
-                'enums': self.AcqExtEvtSrc._fields},
             'OrbAcqRate-SP': {
                 'type': 'float', 'unit': 'Hz', 'value': 10,
                 'hilim': 20, 'lolim': 0.5},
@@ -640,10 +611,10 @@ class SOFBRings(SOFBTLines, ConstRings):
             db_ring[k] = _dcopy(prop)
         db_ring.update({
             'MTurnSyncTim-Sel': {
-                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
+                'type': 'enum', 'value': self.EnbldDsbld.Enbld,
                 'enums': self.EnbldDsbld._fields},
             'MTurnSyncTim-Sts': {
-                'type': 'enum', 'value': self.EnbldDsbld.Dsbld,
+                'type': 'enum', 'value': self.EnbldDsbld.Enbld,
                 'enums': self.EnbldDsbld._fields},
             'MTurnUseMask-Sel': {
                 'type': 'enum', 'value': self.EnbldDsbld.Dsbld,

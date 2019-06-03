@@ -209,11 +209,24 @@ class PSOpMode(Function):
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
             op_mode = value
-            if value in (0, 3, 4):
-                self._operation_mode = value
-                op_mode = 0
-            self.function.execute(op_mode + 3)
+            if value == _PSConst.OpMode.SlowRef:
+                op_mode = _PSConst.States.SlowRef
+            elif value == _PSConst.OpMode.SlowRefSync:
+                op_mode = _PSConst.States.SlowRefSync
+            elif value == _PSConst.OpMode.Cycle:
+                op_mode = _PSConst.States.Cycle
+            elif value == _PSConst.OpMode.RmpWfm:
+                op_mode = _PSConst.States.SlowRef  # RmpWfm -> SlowRef
+                # op_mode = _PSConst.States.FastRef  # RmpWfm -> FastRef
+            elif value == _PSConst.OpMode.MigWfm:
+                op_mode = _PSConst.States.SlowRef  # MigWfm -> SlowRef
+                # op_mode = _PSConst.States.FastRef  # MigWfm -> FastRef
+            else:
+                op_mode = value
 
+            self.function.execute(op_mode)
+
+            # NOTE: should this be set only when changing to SlowRef?
             if value == _PSConst.OpMode.SlowRef:
                 self.disable_siggen.execute(None)
 
