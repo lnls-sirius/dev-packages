@@ -27,8 +27,8 @@ _template_dict = {
         ['BO-Fam:MA-QF:KL-SP', +0.3770999232791374, 0.0],  # [1/m]
         ['BO-02D:MA-QS:KL-SP', +0.0, 0.0],  # [1/m] (skew quadrupole)
         # --- sextupoles ---
-        ['BO-Fam:MA-SD:SL-SP', +0.5258382119529604, 0.0],  # [1/m^2]
-        ['BO-Fam:MA-SF:SL-SP', +1.1898514030258744, 0.0],  # [1/m^2]
+        ['BO-Fam:MA-SD:SL-SP', +1.1649714449989350, 0.0],  # [1/m^2]
+        ['BO-Fam:MA-SF:SL-SP', +1.1816645548211360, 0.0],  # [1/m^2]
         # --- horizontal correctors ---
         ['BO-01U:MA-CH:Kick-SP', +0.0, 0.0],  # [urad]
         ['BO-03U:MA-CH:Kick-SP', +0.0, 0.0],  # [urad]
