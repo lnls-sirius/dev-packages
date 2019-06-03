@@ -67,6 +67,7 @@ class ConfigDBDocument():
     def modified_count(self):
         return len(self._info['modified'])
 
+    @property
     def discarded(self):
         return self._info['discarded']
 
