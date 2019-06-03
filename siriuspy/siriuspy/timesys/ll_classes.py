@@ -388,8 +388,8 @@ class _EVROUT(_BaseLL):
             # connection status PVs
             'DevEnbl': self.prefix + 'DevEnbl-Sts',
             'Network': self.prefix + 'Network-Mon',
-            'Link': self.prefix + 'Link-Mon',
-            'IntlkMon': self.prefix + 'Intlk-Mon',
+            'Link': self.prefix + 'LinkStatus-Mon',
+            'Intlk': self.prefix + 'IntlkStatus-Mon',
             'Los': self.prefix + 'Los-Mon',
             'EVGLos': _evg_prefix + 'Los-Mon',
             'FoutLos': _fout_prefix + 'Los-Mon',
@@ -431,7 +431,7 @@ class _EVROUT(_BaseLL):
             'DevEnbl': _partial(self._get_status, 'DevEnbl'),
             'Network': _partial(self._get_status, 'Network'),
             'Link': _partial(self._get_status, 'Link'),
-            'IntlkMon': _partial(self._get_status, 'IntlkMon'),
+            'Intlk': _partial(self._get_status, 'Intlk'),
             'Los': _partial(self._get_status, 'Los'),
             'EVGLos': _partial(self._get_status, 'EVGLos'),
             'FoutLos': _partial(self._get_status, 'FoutLos'),
@@ -465,15 +465,13 @@ class _EVROUT(_BaseLL):
         dic_['Link'] = self._get_from_pvs(False, 'Link', def_val=0)
         dic_['PVsConn'] = self.connected
 
-        if 'IntlkMon' in self._REMOVE_PROPS:
-            dic_['IntlkMon'] = 0
-        else:
-            dic_['IntlkMon'] = self._get_from_pvs(False, 'IntlkMon', def_val=1)
+        dic_['Intlk'] = 0
+        if 'Intlk' not in self._REMOVE_PROPS:
+            dic_['Intlk'] = self._get_from_pvs(False, 'Intlk', def_val=1)
 
-        if 'Los' in self._REMOVE_PROPS:
-            prt_num = 0
-            dic_['Los'] = 0b00000000
-        else:
+        prt_num = 0
+        dic_['Los'] = 0b00000000
+        if 'Los' not in self._REMOVE_PROPS:
             prt_num = int(self.channel[-1])  # get OUT number for EVR
             dic_['Los'] = self._get_from_pvs(False, 'Los', def_val=0b11111111)
         dic_['EVGLos'] = self._get_from_pvs(
@@ -498,8 +496,8 @@ class _EVROUT(_BaseLL):
         prob, bit = _update_bit(prob, bit, dic_['Los']), bit+1
         prob, bit = _update_bit(prob, bit, dic_['FoutLos']), bit+1
         prob, bit = _update_bit(prob, bit, dic_['EVGLos']), bit+1
-        prob, bit = _update_bit(prob, bit, dic_['IntlkMon']), bit+1
-        intlk_sts = dic_['IntlkMon']
+        prob, bit = _update_bit(prob, bit, dic_['Intlk']), bit+1
+        intlk_sts = dic_['Intlk']
         prob = _update_bit(prob, bit, intlk_sts)
         return {'Status': prob}
 
@@ -713,7 +711,7 @@ class _EVEOUT(_EVROUT):
 
 class _AMCFPGAEVRAMC(_EVROUT):
     _REMOVE_PROPS = {
-        'RFDelay', 'FineDelay', 'SrcTrig', 'RFDelayType', 'Los', 'IntlkMon'}
+        'RFDelay', 'FineDelay', 'SrcTrig', 'RFDelayType', 'Los', 'Intlk'}
 
     def _get_delay(self, prop, is_sp, value=None):
         return _EVROTP._get_delay(self, prop, is_sp, value)

@@ -205,11 +205,15 @@ def get_evr_database(prefix=None):
             'type': 'enum', 'value': 1,
             'enums': _et.DISCONN_CONN}
 
-    db[prefix+'Link-Mon'] = {
+    db[prefix+'LinkStatus-Mon'] = {
             'type': 'enum', 'value': 1,
             'enums': _et.UNLINK_LINK}
 
-    db[prefix+'Intlk-Mon'] = {
+    db[prefix+'IntlkStatus-Mon'] = {
+            'type': 'enum', 'value': 0,
+            'enums': _et.DSBL_ENBL}
+
+    db[prefix+'IntlkEnbl-Mon'] = {
             'type': 'enum', 'value': 0,
             'enums': _et.DSBL_ENBL}
 
@@ -247,11 +251,15 @@ def get_eve_database(eve_num=1, prefix=None):
             'type': 'enum', 'value': 1,
             'enums': _et.DISCONN_CONN}
 
-    db[prefix+'Link-Mon'] = {
+    db[prefix+'LinkStatus-Mon'] = {
             'type': 'enum', 'value': 1,
             'enums': _et.UNLINK_LINK}
 
-    db[prefix+'Intlk-Mon'] = {
+    db[prefix+'IntlkStatus-Mon'] = {
+            'type': 'enum', 'value': 0,
+            'enums': _et.DSBL_ENBL}
+
+    db[prefix+'IntlkEnbl-Mon'] = {
             'type': 'enum', 'value': 0,
             'enums': _et.DSBL_ENBL}
 
@@ -294,7 +302,7 @@ def get_afc_database(prefix=None):
             'type': 'enum', 'value': 1,
             'enums': _et.UNLINK_LINK}
 
-    db[prefix+'Intlk-Mon'] = {
+    db[prefix+'IntlkStatus-Mon'] = {
             'type': 'enum', 'value': 0,
             'enums': _et.DSBL_ENBL}
 
