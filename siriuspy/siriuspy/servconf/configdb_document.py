@@ -15,7 +15,7 @@ class ConfigDBDocument():
         """Constructor."""
         self._configdbclient = _ConfigDBClient(
                             url=url, config_type=config_type)
-        self._name = name or self._generate_config_name()
+        self._name = name or self.generate_config_name()
         self._info = None
         self._value = None
         self._synchronized = False
@@ -124,6 +124,23 @@ class ConfigDBDocument():
             self._configdbclient.delete_config(self._name)
             self._synchronized = False
 
+    @classmethod
+    def generate_config_name(cls, name=None):
+        """Generate a configuration name using current imestamp."""
+        if name is None:
+            name = ''
+        name = name.strip()
+        # tsf = _re.compile('^\d\d\d\d\d\d-\d\d\d\d\d\d')
+        tsf = _re.compile('^[\d]{6}-[\d]{6}')
+        if tsf.match(name):
+            new_name = cls._get_timestamp() + name[13:]
+        else:
+            if name:
+                new_name = cls._get_timestamp() + ' ' + name
+            else:
+                new_name = cls._get_timestamp()
+        return new_name
+
     def _set_value(self, value):
         if self._configdbclient.check_valid_value(value):
             self._value = _dcopy(value)
@@ -146,23 +163,6 @@ class ConfigDBDocument():
         """Set configuration item."""
         self._set_item(index, value)
         self._synchronized = False
-
-    @classmethod
-    def _generate_config_name(cls, name=None):
-        """Generate a configuration name using current imestamp."""
-        if name is None:
-            name = ''
-        name = name.strip()
-        # tsf = _re.compile('^\d\d\d\d\d\d-\d\d\d\d\d\d')
-        tsf = _re.compile('^[\d]{6}-[\d]{6}')
-        if tsf.match(name):
-            new_name = cls._get_timestamp() + name[13:]
-        else:
-            if name:
-                new_name = cls._get_timestamp() + ' ' + name
-            else:
-                new_name = cls._get_timestamp()
-        return new_name
 
     @staticmethod
     def _get_timestamp(now=None):
