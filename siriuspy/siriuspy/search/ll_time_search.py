@@ -250,12 +250,6 @@ class LLTimeSearch:
         return name.dev in {'EVR', 'EVE'} and name.propty.startswith('OUT')
 
     @classmethod
-    def has_bypass_interlock(cls, ll_trigger):
-        name = _PVName(ll_trigger)
-        has_bp_interlock = {'LA-RFH01RACK2:TI-EVR', }
-        return name.device_name in has_bp_interlock
-
-    @classmethod
     def get_trigger_name(cls, channel):
         chan_tree = cls.get_device_tree(channel)
         for up_chan in chan_tree:

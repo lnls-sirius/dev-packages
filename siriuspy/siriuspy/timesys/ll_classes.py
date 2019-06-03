@@ -433,7 +433,6 @@ class _EVROUT(_BaseLL):
             'Polarity': self.prefix + intlb + 'Polarity-Sts',
             'NrPulses': self.prefix + intlb + 'NrPulses-RB',
             'Delay': self.prefix + intlb + 'Delay-RB',
-            'ByPassIntlk': self.prefix + intlb + 'ByPassIntlk-Sts',
             'Src': self.prefix + outlb + 'Src-Sts',
             'SrcTrig': self.prefix + outlb + 'SrcTrig-RB',
             'RFDelay': self.prefix + outlb + 'RFDelay-RB',
@@ -450,9 +449,6 @@ class _EVROUT(_BaseLL):
             'FoutDevEnbl': _fout_prefix + 'DevEnbl-Sts',
             'EVGDevEnbl': _evg_prefix + 'DevEnbl-Sts',
             }
-        if not _LLTimeSearch.has_bypass_interlock(self.channel):
-            map_.pop('ByPassIntlk', None)
-            map_.pop('IntlkMon', None)
         for prop in self._REMOVE_PROPS:
             map_.pop(prop)
         return map_
@@ -463,7 +459,6 @@ class _EVROUT(_BaseLL):
             'EVGDevEnbl': _partial(self._set_simple, 'EVGDevEnbl'),
             'FoutDevEnbl': _partial(self._set_simple, 'FoutDevEnbl'),
             'State': _partial(self._set_simple, 'State'),
-            'ByPassIntlk': _partial(self._set_simple, 'ByPassIntlk'),
             'Src': self._set_source,
             'Duration': self._set_duration,
             'Polarity': _partial(self._set_simple, 'Polarity'),
@@ -471,8 +466,6 @@ class _EVROUT(_BaseLL):
             'Delay': self._set_delay,
             'RFDelayType': _partial(self._set_simple, 'RFDelayType'),
             }
-        if not _LLTimeSearch.has_bypass_interlock(self.channel):
-            map_.pop('ByPassIntlk', None)
         return map_
 
     def _define_dict_for_update(self):
@@ -482,7 +475,6 @@ class _EVROUT(_BaseLL):
             'Width': _partial(self._get_duration_pulses, 'Width'),
             'Polarity': _partial(self._get_simple, 'Polarity'),
             'NrPulses': _partial(self._get_duration_pulses, 'NrPulses'),
-            'ByPassIntlk': _partial(self._get_simple, 'ByPassIntlk'),
             'Delay': _partial(self._get_delay, 'Delay'),
             'Src': _partial(self._process_source, 'Src'),
             'SrcTrig': _partial(self._process_source, 'SrcTrig'),
@@ -499,9 +491,6 @@ class _EVROUT(_BaseLL):
             'EVGDevEnbl': _partial(self._get_status, 'EVGDevEnbl'),
             'FoutDevEnbl': _partial(self._get_status, 'FoutDevEnbl'),
             }
-        if not _LLTimeSearch.has_bypass_interlock(self.channel):
-            map_.pop('ByPassIntlk', None)
-            map_.pop('IntlkMon', None)
         for prop in self._REMOVE_PROPS:
             map_.pop(prop)
         return map_
@@ -512,20 +501,12 @@ class _EVROUT(_BaseLL):
             'Duration': _partial(self._get_duration_pulses, ''),
             'Polarity': _partial(self._get_simple, 'Polarity'),
             'NrPulses': _partial(self._get_duration_pulses, ''),
-            'ByPassIntlk': _partial(self._get_simple, 'ByPassIntlk'),
             'Delay': _partial(self._get_delay, 'Delay'),
             'Src': _partial(self._process_source, ''),
             'RFDelayType': _partial(self._get_simple, 'RFDelayType'),
             'Status': _partial(self._get_status, ''),
             }
-        if not _LLTimeSearch.has_bypass_interlock(self.channel):
-            map_.pop('ByPassIntlk', None)
         return map_
-
-    def _get_bypass(self, is_sp, value=None):
-        dic = self._get_simple('ByPassIntlk', is_sp, val=value)
-        dic.update(self._get_status('ByPassIntlk', is_sp, value=value))
-        return dic
 
     def _get_status(self, prop, is_sp, value=None):
         dic_ = dict()
@@ -537,14 +518,10 @@ class _EVROUT(_BaseLL):
         dic_['Link'] = self._get_from_pvs(False, 'Link', def_val=0)
         dic_['PVsConn'] = self.connected
 
-        cond = not _LLTimeSearch.has_bypass_interlock(self.channel)
-        if 'IntlkMon' in self._REMOVE_PROPS or cond:
+        if 'IntlkMon' in self._REMOVE_PROPS:
             dic_['IntlkMon'] = 0
-            dic_['ByPassIntlk'] = 0
         else:
             dic_['IntlkMon'] = self._get_from_pvs(False, 'IntlkMon', def_val=1)
-            dic_['ByPassIntlk'] = self._get_from_pvs(
-                False, 'ByPassIntlk', def_val=1)
 
         if 'Los' in self._REMOVE_PROPS:
             prt_num = 0
@@ -575,7 +552,7 @@ class _EVROUT(_BaseLL):
         prob, bit = _update_bit(prob, bit, dic_['FoutLos']), bit+1
         prob, bit = _update_bit(prob, bit, dic_['EVGLos']), bit+1
         prob, bit = _update_bit(prob, bit, dic_['IntlkMon']), bit+1
-        intlk_sts = dic_['IntlkMon'] and dic_['ByPassIntlk']
+        intlk_sts = dic_['IntlkMon']
         prob = _update_bit(prob, bit, intlk_sts)
         return {'Status': prob}
 
@@ -789,8 +766,7 @@ class _EVEOUT(_EVROUT):
 
 class _AMCFPGAEVRAMC(_EVROUT):
     _REMOVE_PROPS = {
-        'RFDelay', 'FineDelay', 'SrcTrig', 'ByPassIntlk', 'RFDelayType', 'Los',
-        'IntlkMon'}
+        'RFDelay', 'FineDelay', 'SrcTrig', 'RFDelayType', 'Los', 'IntlkMon'}
 
     def _get_delay(self, prop, is_sp, value=None):
         return _EVROTP._get_delay(self, prop, is_sp, value)

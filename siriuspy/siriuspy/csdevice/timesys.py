@@ -16,7 +16,6 @@ class ETypes(_cutil.ETypes):
     TRIG_SRC_LL = (
         'Dsbl', 'Trigger', 'Clock0', 'Clock1', 'Clock2',
         'Clock3', 'Clock4', 'Clock5', 'Clock6', 'Clock7')
-    BYPASS = ('Bypass', 'Active')
     DLYTYP = ('Manual', 'Auto')
     RFOUT = ('OFF', '5RF/2', '5RF/4', 'RF', 'RF/2', 'RF/4')
 
@@ -41,7 +40,6 @@ class Const(_cutil.Const):
     EvtDlyTyp = _cutil.Const.register('EvtDlyTyp', _et.FIXED_INCR)
     ClockStates = _cutil.Const.register('ClockStates', _et.DSBL_ENBL)
     TrigStates = _cutil.Const.register('TrigStates', _et.DSBL_ENBL)
-    TrigIntlk = _cutil.Const.register('TrigIntlk', _et.BYPASS)
     TrigPol = _cutil.Const.register('TrigPol', _et.NORM_INV)
     TrigDlyTyp = _cutil.Const.register('TrigDlyTyp', _et.DLYTYP)
     TrigSrcLL = _cutil.Const.register('TrigSrcLL', _et.TRIG_SRC_LL)
@@ -124,10 +122,6 @@ def get_otp_database(otp_num=0, prefix=None):
     db[prefix+'Delay-SP'] = dic_
     db[prefix+'Delay-RB'] = _dcopy(dic_)
 
-    dic_ = {'type': 'enum', 'value': 0, 'enums': _et.BYPASS}
-    db[prefix+'ByPassIntlk-Sts'] = dic_
-    db[prefix+'ByPassIntlk-Sel'] = _dcopy(dic_)
-
     return db
 
 
@@ -181,8 +175,6 @@ def get_afc_out_database(out_num=0, out_tp='FMC', prefix=None):
 
     prefix = def_prefix if prefix is None else prefix
     db = get_otp_database(prefix=prefix)
-    db.pop(prefix + 'ByPassIntlk-Sel', None)
-    db.pop(prefix + 'ByPassIntlk-Sts', None)
     dic_ = {'type': 'enum', 'value': 0, 'enums': _et.TRIG_SRC_LL}
     db[prefix+'Src-Sts'] = dic_
     db[prefix+'Src-Sel'] = _dcopy(dic_)
@@ -537,12 +529,6 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dic_.update(trig_db['NrPulses'])
     db['NrPulses-RB'] = _dcopy(dic_)
     db['NrPulses-SP'] = dic_
-
-    if _HLTimeSearch.has_bypass_interlock(hl_trigger):
-        dic_ = {'type': 'enum', 'enums': _et.BYPASS}
-        dic_.update(trig_db['ByPassIntlk'])
-        db['ByPassIntlk-Sts'] = _dcopy(dic_)
-        db['ByPassIntlk-Sel'] = dic_
 
     dic_ = {'type': 'float', 'unit': 'us', 'prec': 6,
             'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
