@@ -497,8 +497,6 @@ class _EVROUT(_BaseLL):
         prob, bit = _update_bit(prob, bit, dic_['FoutLos']), bit+1
         prob, bit = _update_bit(prob, bit, dic_['EVGLos']), bit+1
         prob, bit = _update_bit(prob, bit, dic_['Intlk']), bit+1
-        intlk_sts = dic_['Intlk']
-        prob = _update_bit(prob, bit, intlk_sts)
         return {'Status': prob}
 
     def _get_delay(self, prop, is_sp, value=None):
