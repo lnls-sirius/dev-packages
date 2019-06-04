@@ -116,7 +116,7 @@ def split_name(pvname, elements=None):
             dic_['propty_name'] = slist_[0]
         elif len(slist_) == 2:
             if elements == 'propty':
-                dic_['propty'] = slist_[0]
+                dic_['propty'] = slist_[0] + '-' + slist_[1]
                 dic_['propty_name'] = slist_[0]
                 dic_['propty_suffix'] = slist_[1]
             elif elements == 'sec-sub':
