@@ -67,19 +67,9 @@ class ConnTiming(_EpicsPropsList):
         TrgEGunMultBun = 'LI-01:TI-EGun-MultBun'
         TrgEjeKckr = 'BO-48D:TI-EjeKckr'
 
-        # Injection and ejection trigger properties
-        TrgEGunSglBun_Delay = TrgEGunSglBun + ':Delay-SP'
-        TrgEGunMultBun_Delay = TrgEGunMultBun + ':Delay-SP'
-        TrgEjeKckr_Delay = TrgEjeKckr + ':Delay-SP'
-
         # Linac Egun mode properties
         LinacEgun_SglBun_State = 'egun:pulseps:singleselstatus'
         LinacEgun_MultBun_State = 'egun:pulseps:multiselstatus'
-
-        # Trigger specific properties
-        TrgMags_Duration = TrgMags + ':Duration-SP'
-        TrgCorrs_Duration = TrgCorrs + ':Duration-SP'
-        TrgLLRFRmp_RFDelayType = TrgLLRFRmp + ':RFDelayType-Sel'
 
         # Interlock PV
         Intlk = 'LA-RFH01RACK2:TI-EVR:Intlk-Mon'
@@ -92,14 +82,16 @@ class ConnTiming(_EpicsPropsList):
             new_attr = attr+'_'+p.replace('-'+p.split('-')[-1], '')
             setattr(Const, new_attr, evt_pfx+p)
 
-    # Add commom trigger properties to Const
-    trg_propties = ['Status-Mon', 'NrPulses-SP', 'Delay-SP',
-                    'State-Sel', 'Src-Sel', 'Polarity-Sel']
-    for attr in ['TrgMags', 'TrgCorrs', 'TrgLLRFRmp']:
+    # Add trigger properties to Const
+    trg_propties = ['State-Sel', 'Polarity-Sel', 'Src-Sel', 'NrPulses-SP',
+                    'Duration-SP', 'Delay-SP', 'Status-Mon']
+    for attr in ['TrgMags', 'TrgCorrs', 'TrgLLRFRmp',
+                 'TrgEGunSglBun', 'TrgEGunMultBun', 'TrgEjeKckr']:
         for p in trg_propties:
             trg_pfx = getattr(Const, attr)
             new_attr = attr+'_'+p.replace('-'+p.split('-')[-1], '')
             setattr(Const, new_attr, trg_pfx+':'+p)
+    Const.TrgLLRFRmp_RFDelayType = Const.TrgLLRFRmp + ':RFDelayType-Sel'
 
     def __init__(self, ramp_config=None, prefix=_prefix,
                  connection_callback=None, callback=None):
@@ -118,9 +110,9 @@ class ConnTiming(_EpicsPropsList):
     def cmd_setup(self, timeout=_TIMEOUT_DFLT):
         """Setup TI subsystem to ramp."""
         sp = self.ramp_basicsetup.copy()
-        sp.pop('BO-Glob:TI-Mags:Status-Mon')
-        sp.pop('BO-Glob:TI-Corrs:Status-Mon')
-        sp.pop('BO-Glob:TI-LLRF-Rmp:Status-Mon')
+        for ppty in sp:
+            if 'Status-Mon' in ppty:
+                sp.pop(ppty)
         return self.set_setpoints_check(sp, timeout)
 
     def cmd_config_ramp(self, timeout=_TIMEOUT_DFLT):
@@ -243,22 +235,23 @@ class ConnTiming(_EpicsPropsList):
             c.EvtInjSI_Mode: _TIConst.EvtModes.Injection,
             c.EvtInjSI_DelayType: _TIConst.EvtDlyTyp.Incr,
             # Mags trigger
-            c.TrgMags_Status: 0,
             c.TrgMags_State: _TIConst.DsblEnbl.Enbl,
-            c.TrgMags_Src: mags_db['Src-Sel']['enums'].index('RmpBO'),
             c.TrgMags_Polarity: _TIConst.TrigPol.Inverse,
+            c.TrgMags_Src: mags_db['Src-Sel']['enums'].index('RmpBO'),
+            c.TrgMags_Status: 0,
             # Corrs trigger
-            c.TrgCorrs_Status: 0,
             c.TrgCorrs_State: _TIConst.DsblEnbl.Enbl,
-            c.TrgCorrs_Src: corrs_db['Src-Sel']['enums'].index('RmpBO'),
             c.TrgCorrs_Polarity: _TIConst.TrigPol.Inverse,
+            c.TrgCorrs_Src: corrs_db['Src-Sel']['enums'].index('RmpBO'),
+            c.TrgCorrs_Status: 0,
             # LLRFRmp trigger
-            c.TrgLLRFRmp_Status: 0,
-            c.TrgLLRFRmp_NrPulses: 1,
             c.TrgLLRFRmp_State: _TIConst.DsblEnbl.Enbl,
-            c.TrgLLRFRmp_Src: llrf_db['Src-Sel']['enums'].index('RmpBO'),
             c.TrgLLRFRmp_Polarity: _TIConst.TrigPol.Inverse,
-            c.TrgLLRFRmp_RFDelayType: _TIConst.TrigDlyTyp.Manual}
+            c.TrgLLRFRmp_Src: llrf_db['Src-Sel']['enums'].index('RmpBO'),
+            c.TrgLLRFRmp_NrPulses: 1,
+            c.TrgLLRFRmp_Duration: 0.016,
+            c.TrgLLRFRmp_RFDelayType: _TIConst.TrigDlyTyp.Manual,
+            c.TrgLLRFRmp_Status: 0}
 
         self.ramp_configsetup = {
             # Event delays
@@ -596,12 +589,10 @@ class ConnSOFB(_EpicsPropsList):
         return corrs2dkicks_dict
 
     def _define_properties(self, prefix, connection_callback, callback):
-        properties = (
-            _EpicsProperty(
-                ConnSOFB.IOC_Prefix + ':DeltaKickCH-Mon', prefix,
-                connection_callback=connection_callback, callback=callback),
-            _EpicsProperty(
-                ConnSOFB.IOC_Prefix + ':DeltaKickCV-Mon', prefix,
-                connection_callback=connection_callback, callback=callback),
-            )
+        properties = list()
+        for ppty in ['DeltaKickCH-Mon', 'DeltaKickCV-Mon']:
+            properties.append(
+                _EpicsProperty(ConnSOFB.IOC_Prefix + ':' + ppty, prefix,
+                               connection_callback=connection_callback,
+                               callback=callback))
         return properties
