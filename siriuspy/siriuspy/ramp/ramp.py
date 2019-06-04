@@ -928,6 +928,19 @@ class BoosterRamp(_ConfigSrv):
         waveform = self._ps_waveforms[maname]
         return waveform.strengths.copy()
 
+    def ps_waveform_interp_time(self, energy):
+        """Return ps ramp time at a given energy.
+
+        Use only energies until rampup-stop time.
+        """
+        rampup_stop_time = self.ps_ramp_rampup_stop_time
+        times = [time for time in self.ps_waveform_get_times()
+                 if time < rampup_stop_time]
+        energies = self._ps_waveforms[self.MANAME_DIPOLE].strengths[
+                 0:len(times)]
+        time = _np.interp(energy, energies, times)
+        return time
+
     def ps_waveform_interp_strengths(self, maname, time):
         """Return ps ramp strength at a given time."""
         times = self.ps_waveform_get_times()
