@@ -88,13 +88,6 @@ class HLTimeSearch:
         return all([_LLSearch.has_delay_type(name) for name in ll_chans])
 
     @classmethod
-    def has_bypass_interlock(cls, hl_trigger):
-        """Return True if hl_trigger has property delayType."""
-        cls._init()
-        ll_chans = cls.get_ll_trigger_names(hl_trigger)
-        return all([_LLSearch.has_bypass_interlock(name) for name in ll_chans])
-
-    @classmethod
     def has_clock(cls, hl_trigger):
         """Return True if hl_trigger can listen to Clocks from EVG."""
         cls._init()
