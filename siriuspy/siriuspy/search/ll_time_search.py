@@ -170,6 +170,32 @@ class LLTimeSearch:
                 sorted(cls._all_devices), filters=filters, sorting=sorting)
 
     @classmethod
+    def get_triggersource_devices(cls):
+        cls._get_timedata()
+        return _dcopy(cls._trig_src_devs)
+
+    @classmethod
+    def get_trigsrc2fout_mapping(cls):
+        cls._get_timedata()
+        mapp = dict()
+        for dev in cls._trig_src_devs:
+            inp = list(cls.In2OutMap[dev.dev])[0]
+            dev = dev.substitute(propty=inp)
+            mapp[dev.device_name] = cls.get_fout_channel(dev)
+        return mapp
+
+    @classmethod
+    def get_fout2trigsrc_mapping(cls):
+        mapp = cls.get_trigsrc2fout_mapping()
+        mapp2 = dict()
+        for k, v in mapp.items():
+            if v.device_name in mapp2:
+                mapp2[v.device_name][v.propty] = k
+            else:
+                mapp2[v.device_name] = {v.propty: k}
+        return mapp2
+
+    @classmethod
     def get_device_tree(cls, channel):
         """Return a dictionary with the beaglebone to power supply mapping."""
         cls._get_timedata()
