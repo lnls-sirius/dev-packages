@@ -188,7 +188,9 @@ class ConnTiming(_EpicsPropsList):
     def calc_evts_delay(self):
         """Calculate event delays."""
         if not self._ramp_config:
-            return
+            return False
+        if not self.connected:
+            return False
 
         c = ConnTiming.Const
         injection_time = self._ramp_config.ti_params_injection_time
