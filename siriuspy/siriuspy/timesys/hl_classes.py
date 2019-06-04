@@ -10,7 +10,7 @@ from siriuspy.search import HLTimeSearch as _HLSearch
 from siriuspy.csdevice import timesys as _cstime
 from .util import Base as _Base
 from .ll_classes import get_ll_trigger as _get_ll_trigger, \
-            LLEvent as _LLEvent, get_evg_name as _get_evg_name
+    get_evg_name as _get_evg_name
 
 _INTERVAL = 0.01
 
