@@ -253,7 +253,6 @@ _pvs_timing = [
     ['RA-RaMO:TI-EVG:TunSIMode-Sel', 0, 0.0],
 
     # Triggers
-    ['AS-Glob:TI-Osc-EjeBO:ByPassIntlk-Sel', 0, 0.0],
     ['AS-Glob:TI-Osc-EjeBO:Delay-SP', 0, 0.0],  # us
     ['AS-Glob:TI-Osc-EjeBO:Duration-SP', 0, 0.0],  # us
     ['AS-Glob:TI-Osc-EjeBO:NrPulses-SP', 0, 0.0],
@@ -262,7 +261,6 @@ _pvs_timing = [
     ['AS-Glob:TI-Osc-EjeBO:Src-Sel', 0, 0.0],
     ['AS-Glob:TI-Osc-EjeBO:State-Sel', 0, 0.0],
 
-    ['AS-Glob:TI-Osc-InjBO:ByPassIntlk-Sel', 0, 0.0],
     ['AS-Glob:TI-Osc-InjBO:Delay-SP', 0, 0.0],  # us
     ['AS-Glob:TI-Osc-InjBO:Duration-SP', 0, 0.0],  # us
     ['AS-Glob:TI-Osc-InjBO:NrPulses-SP', 0, 0.0],
@@ -270,7 +268,6 @@ _pvs_timing = [
     ['AS-Glob:TI-Osc-InjBO:Src-Sel', 0, 0.0],
     ['AS-Glob:TI-Osc-InjBO:State-Sel', 0, 0.0],
 
-    ['AS-Glob:TI-Osc-InjSI:ByPassIntlk-Sel', 0, 0.0],
     ['AS-Glob:TI-Osc-InjSI:Delay-SP', 0, 0.0],  # us
     ['AS-Glob:TI-Osc-InjSI:Duration-SP', 0, 0.0],  # us
     ['AS-Glob:TI-Osc-InjSI:NrPulses-SP', 0, 0.0],
@@ -278,7 +275,6 @@ _pvs_timing = [
     ['AS-Glob:TI-Osc-InjSI:Src-Sel', 0, 0.0],
     ['AS-Glob:TI-Osc-InjSI:State-Sel', 0, 0.0],
 
-    ['BO-01D:TI-InjKckr:ByPassIntlk-Sel', 0, 0.0],
     ['BO-01D:TI-InjKckr:Delay-SP', 0, 0.0],  # us
     ['BO-01D:TI-InjKckr:Duration-SP', 0, 0.0],  # us
     ['BO-01D:TI-InjKckr:NrPulses-SP', 0, 0.0],
@@ -286,7 +282,6 @@ _pvs_timing = [
     ['BO-01D:TI-InjKckr:Src-Sel', 0, 0.0],
     ['BO-01D:TI-InjKckr:State-Sel', 0, 0.0],
 
-    ['BO-48D:TI-EjeKckr:ByPassIntlk-Sel', 0, 0.0],
     ['BO-48D:TI-EjeKckr:Delay-SP', 0, 0.0],  # us
     ['BO-48D:TI-EjeKckr:Duration-SP', 0, 0.0],  # us
     ['BO-48D:TI-EjeKckr:NrPulses-SP', 0, 0.0],
@@ -302,7 +297,6 @@ _pvs_timing = [
     ['BO-Glob:TI-Corrs:Src-Sel', 0, 0.0],
     ['BO-Glob:TI-Corrs:State-Sel', 0, 0.0],
 
-    ['BO-Glob:TI-LLRF-PsMtn:ByPassIntlk-Sel', 0, 0.0],
     ['BO-Glob:TI-LLRF-PsMtn:Delay-SP', 0, 0.0],  # us
     ['BO-Glob:TI-LLRF-PsMtn:Duration-SP', 0, 0.0],  # us
     ['BO-Glob:TI-LLRF-PsMtn:NrPulses-SP', 0, 0.0],
@@ -311,7 +305,6 @@ _pvs_timing = [
     ['BO-Glob:TI-LLRF-PsMtn:Src-Sel', 0, 0.0],
     ['BO-Glob:TI-LLRF-PsMtn:State-Sel', 0, 0.0],
 
-    ['BO-Glob:TI-LLRF-Rmp:ByPassIntlk-Sel', 0, 0.0],
     ['BO-Glob:TI-LLRF-Rmp:Delay-SP', 0, 0.0],  # us
     ['BO-Glob:TI-LLRF-Rmp:Duration-SP', 0, 0.0],  # us
     ['BO-Glob:TI-LLRF-Rmp:NrPulses-SP', 0, 0.0],
@@ -320,7 +313,6 @@ _pvs_timing = [
     ['BO-Glob:TI-LLRF-Rmp:Src-Sel', 0, 0.0],
     ['BO-Glob:TI-LLRF-Rmp:State-Sel', 0, 0.0],
 
-    ['BO-Glob:TI-Mags:ByPassIntlk-Sel', 0, 0.0],
     ['BO-Glob:TI-Mags:Delay-SP', 0, 0.0],  # us
     ['BO-Glob:TI-Mags:Duration-SP', 0, 0.0],  # us
     ['BO-Glob:TI-Mags:NrPulses-SP', 0, 0.0],
@@ -328,7 +320,6 @@ _pvs_timing = [
     ['BO-Glob:TI-Mags:Src-Sel', 0, 0.0],
     ['BO-Glob:TI-Mags:State-Sel', 0, 0.0],
 
-    ['LI-01:TI-EGun-MultBun:ByPassIntlk-Sel', 0, 0.0],
     ['LI-01:TI-EGun-MultBun:Delay-SP', 0, 0.0],  # us
     ['LI-01:TI-EGun-MultBun:Duration-SP', 0, 0.0],  # us
     ['LI-01:TI-EGun-MultBun:NrPulses-SP', 0, 0.0],
@@ -337,7 +328,6 @@ _pvs_timing = [
     ['LI-01:TI-EGun-MultBun:Src-Sel', 0, 0.0],
     ['LI-01:TI-EGun-MultBun:State-Sel', 0, 0.0],
 
-    ['LI-01:TI-EGun-SglBun:ByPassIntlk-Sel', 0, 0.0],
     ['LI-01:TI-EGun-SglBun:Delay-SP', 0, 0.0],  # us
     ['LI-01:TI-EGun-SglBun:Duration-SP', 0, 0.0],  # us
     ['LI-01:TI-EGun-SglBun:NrPulses-SP', 0, 0.0],
@@ -346,7 +336,6 @@ _pvs_timing = [
     ['LI-01:TI-EGun-SglBun:Src-Sel', 0, 0.0],
     ['LI-01:TI-EGun-SglBun:State-Sel', 0, 0.0],
 
-    ['LI-01:TI-Modltr-1:ByPassIntlk-Sel', 0, 0.0],
     ['LI-01:TI-Modltr-1:Delay-SP', 0, 0.0],  # us
     ['LI-01:TI-Modltr-1:Duration-SP', 0, 0.0],  # us
     ['LI-01:TI-Modltr-1:NrPulses-SP', 0, 0.0],
@@ -354,7 +343,6 @@ _pvs_timing = [
     ['LI-01:TI-Modltr-1:Src-Sel', 0, 0.0],
     ['LI-01:TI-Modltr-1:State-Sel', 0, 0.0],
 
-    ['LI-01:TI-Modltr-2:ByPassIntlk-Sel', 0, 0.0],
     ['LI-01:TI-Modltr-2:Delay-SP', 0, 0.0],  # us
     ['LI-01:TI-Modltr-2:Duration-SP', 0, 0.0],  # us
     ['LI-01:TI-Modltr-2:NrPulses-SP', 0, 0.0],
@@ -362,7 +350,6 @@ _pvs_timing = [
     ['LI-01:TI-Modltr-2:Src-Sel', 0, 0.0],
     ['LI-01:TI-Modltr-2:State-Sel', 0, 0.0],
 
-    ['LI-Glob:TI-LLRF-Kly1:ByPassIntlk-Sel', 0, 0.0],
     ['LI-Glob:TI-LLRF-Kly1:Delay-SP', 0, 0.0],  # us
     ['LI-Glob:TI-LLRF-Kly1:Duration-SP', 0, 0.0],  # us
     ['LI-Glob:TI-LLRF-Kly1:NrPulses-SP', 0, 0.0],
@@ -370,7 +357,6 @@ _pvs_timing = [
     ['LI-Glob:TI-LLRF-Kly1:Src-Sel', 0, 0.0],
     ['LI-Glob:TI-LLRF-Kly1:State-Sel', 0, 0.0],
 
-    ['LI-Glob:TI-LLRF-Kly2:ByPassIntlk-Sel', 0, 0.0],
     ['LI-Glob:TI-LLRF-Kly2:Delay-SP', 0, 0.0],  # us
     ['LI-Glob:TI-LLRF-Kly2:Duration-SP', 0, 0.0],  # us
     ['LI-Glob:TI-LLRF-Kly2:NrPulses-SP', 0, 0.0],
@@ -378,7 +364,6 @@ _pvs_timing = [
     ['LI-Glob:TI-LLRF-Kly2:Src-Sel', 0, 0.0],
     ['LI-Glob:TI-LLRF-Kly2:State-Sel', 0, 0.0],
 
-    ['LI-Glob:TI-LLRF-SHB:ByPassIntlk-Sel', 0, 0.0],
     ['LI-Glob:TI-LLRF-SHB:Delay-SP', 0, 0.0],  # us
     ['LI-Glob:TI-LLRF-SHB:Duration-SP', 0, 0.0],  # us
     ['LI-Glob:TI-LLRF-SHB:NrPulses-SP', 0, 0.0],
@@ -386,7 +371,6 @@ _pvs_timing = [
     ['LI-Glob:TI-LLRF-SHB:Src-Sel', 0, 0.0],
     ['LI-Glob:TI-LLRF-SHB:State-Sel', 0, 0.0],
 
-    ['LI-Glob:TI-SSAmp-Kly1:ByPassIntlk-Sel', 0, 0.0],
     ['LI-Glob:TI-SSAmp-Kly1:Delay-SP', 0, 0.0],  # us
     ['LI-Glob:TI-SSAmp-Kly1:Duration-SP', 0, 0.0],  # us
     ['LI-Glob:TI-SSAmp-Kly1:NrPulses-SP', 0, 0.0],
@@ -394,7 +378,6 @@ _pvs_timing = [
     ['LI-Glob:TI-SSAmp-Kly1:Src-Sel', 0, 0.0],
     ['LI-Glob:TI-SSAmp-Kly1:State-Sel', 0, 0.0],
 
-    ['LI-Glob:TI-SSAmp-Kly2:ByPassIntlk-Sel', 0, 0.0],
     ['LI-Glob:TI-SSAmp-Kly2:Delay-SP', 0, 0.0],  # us
     ['LI-Glob:TI-SSAmp-Kly2:Duration-SP', 0, 0.0],  # us
     ['LI-Glob:TI-SSAmp-Kly2:NrPulses-SP', 0, 0.0],
@@ -402,7 +385,6 @@ _pvs_timing = [
     ['LI-Glob:TI-SSAmp-Kly2:Src-Sel', 0, 0.0],
     ['LI-Glob:TI-SSAmp-Kly2:State-Sel', 0, 0.0],
 
-    ['LI-Glob:TI-SSAmp-SHB:ByPassIntlk-Sel', 0, 0.0],
     ['LI-Glob:TI-SSAmp-SHB:Delay-SP', 0, 0.0],  # us
     ['LI-Glob:TI-SSAmp-SHB:Duration-SP', 0, 0.0],  # us
     ['LI-Glob:TI-SSAmp-SHB:NrPulses-SP', 0, 0.0],
@@ -410,7 +392,6 @@ _pvs_timing = [
     ['LI-Glob:TI-SSAmp-SHB:Src-Sel', 0, 0.0],
     ['LI-Glob:TI-SSAmp-SHB:State-Sel', 0, 0.0],
 
-    ['SI-01SA:TI-InjDpKckr:ByPassIntlk-Sel', 0, 0.0],
     ['SI-01SA:TI-InjDpKckr:Delay-SP', 0, 0.0],  # us
     ['SI-01SA:TI-InjDpKckr:Duration-SP', 0, 0.0],  # us
     ['SI-01SA:TI-InjDpKckr:NrPulses-SP', 0, 0.0],
@@ -418,7 +399,6 @@ _pvs_timing = [
     ['SI-01SA:TI-InjDpKckr:Src-Sel', 0, 0.0],
     ['SI-01SA:TI-InjDpKckr:State-Sel', 0, 0.0],
 
-    ['SI-01SA:TI-InjNLKckr:ByPassIntlk-Sel', 0, 0.0],
     ['SI-01SA:TI-InjNLKckr:Delay-SP', 0, 0.0],  # us
     ['SI-01SA:TI-InjNLKckr:Duration-SP', 0, 0.0],  # us
     ['SI-01SA:TI-InjNLKckr:NrPulses-SP', 0, 0.0],
@@ -426,7 +406,6 @@ _pvs_timing = [
     ['SI-01SA:TI-InjNLKckr:Src-Sel', 0, 0.0],
     ['SI-01SA:TI-InjNLKckr:State-Sel', 0, 0.0],
 
-    ['SI-01SA:TI-PingH:ByPassIntlk-Sel', 0, 0.0],
     ['SI-01SA:TI-PingH:Delay-SP', 0, 0.0],  # us
     ['SI-01SA:TI-PingH:Duration-SP', 0, 0.0],  # us
     ['SI-01SA:TI-PingH:NrPulses-SP', 0, 0.0],
@@ -434,7 +413,6 @@ _pvs_timing = [
     ['SI-01SA:TI-PingH:Src-Sel', 0, 0.0],
     ['SI-01SA:TI-PingH:State-Sel', 0, 0.0],
 
-    ['SI-19C4:TI-PingV:ByPassIntlk-Sel', 0, 0.0],
     ['SI-19C4:TI-PingV:Delay-SP', 0, 0.0],  # us
     ['SI-19C4:TI-PingV:Duration-SP', 0, 0.0],  # us
     ['SI-19C4:TI-PingV:NrPulses-SP', 0, 0.0],
@@ -443,7 +421,6 @@ _pvs_timing = [
     ['SI-19C4:TI-PingV:Src-Sel', 0, 0.0],
     ['SI-19C4:TI-PingV:State-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-BbBProcH-Fid:ByPassIntlk-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcH-Fid:Delay-SP', 0, 0.0],  # us
     ['SI-Glob:TI-BbBProcH-Fid:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-BbBProcH-Fid:NrPulses-SP', 0, 0.0],
@@ -452,7 +429,6 @@ _pvs_timing = [
     ['SI-Glob:TI-BbBProcH-Fid:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcH-Fid:State-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-BbBProcH-Trig1:ByPassIntlk-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcH-Trig1:Delay-SP', 0, 0.0],  # us
     ['SI-Glob:TI-BbBProcH-Trig1:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-BbBProcH-Trig1:NrPulses-SP', 0, 0.0],
@@ -460,7 +436,6 @@ _pvs_timing = [
     ['SI-Glob:TI-BbBProcH-Trig1:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcH-Trig1:State-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-BbBProcH-Trig2:ByPassIntlk-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcH-Trig2:Delay-SP', 0, 0.0],  # us
     ['SI-Glob:TI-BbBProcH-Trig2:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-BbBProcH-Trig2:NrPulses-SP', 0, 0.0],
@@ -468,7 +443,6 @@ _pvs_timing = [
     ['SI-Glob:TI-BbBProcH-Trig2:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcH-Trig2:State-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-BbBProcL-Fid:ByPassIntlk-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcL-Fid:Delay-SP', 0, 0.0],  # us
     ['SI-Glob:TI-BbBProcL-Fid:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-BbBProcL-Fid:NrPulses-SP', 0, 0.0],
@@ -477,7 +451,6 @@ _pvs_timing = [
     ['SI-Glob:TI-BbBProcL-Fid:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcL-Fid:State-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-BbBProcL-Trig1:ByPassIntlk-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcL-Trig1:Delay-SP', 0, 0.0],  # us
     ['SI-Glob:TI-BbBProcL-Trig1:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-BbBProcL-Trig1:NrPulses-SP', 0, 0.0],
@@ -485,7 +458,6 @@ _pvs_timing = [
     ['SI-Glob:TI-BbBProcL-Trig1:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcL-Trig1:State-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-BbBProcL-Trig2:ByPassIntlk-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcL-Trig2:Delay-SP', 0, 0.0],  # us
     ['SI-Glob:TI-BbBProcL-Trig2:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-BbBProcL-Trig2:NrPulses-SP', 0, 0.0],
@@ -493,7 +465,6 @@ _pvs_timing = [
     ['SI-Glob:TI-BbBProcL-Trig2:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcL-Trig2:State-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-BbBProcV-Fid:ByPassIntlk-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcV-Fid:Delay-SP', 0, 0.0],  # us
     ['SI-Glob:TI-BbBProcV-Fid:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-BbBProcV-Fid:NrPulses-SP', 0, 0.0],
@@ -502,7 +473,6 @@ _pvs_timing = [
     ['SI-Glob:TI-BbBProcV-Fid:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcV-Fid:State-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-BbBProcV-Trig1:ByPassIntlk-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcV-Trig1:Delay-SP', 0, 0.0],  # us
     ['SI-Glob:TI-BbBProcV-Trig1:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-BbBProcV-Trig1:NrPulses-SP', 0, 0.0],
@@ -510,7 +480,6 @@ _pvs_timing = [
     ['SI-Glob:TI-BbBProcV-Trig1:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcV-Trig1:State-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-BbBProcV-Trig2:ByPassIntlk-Sel', 0, 0.0],
     ['SI-Glob:TI-BbBProcV-Trig2:Delay-SP', 0, 0.0],  # us
     ['SI-Glob:TI-BbBProcV-Trig2:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-BbBProcV-Trig2:NrPulses-SP', 0, 0.0],
@@ -525,7 +494,6 @@ _pvs_timing = [
     ['SI-Glob:TI-Corrs:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-Corrs:State-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-Dips:ByPassIntlk-Sel', 0, 0.0],
     ['SI-Glob:TI-Dips:Delay-SP', 0, 0.0],  # us
     ['SI-Glob:TI-Dips:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-Dips:NrPulses-SP', 0, 0.0],
@@ -533,7 +501,6 @@ _pvs_timing = [
     ['SI-Glob:TI-Dips:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-Dips:State-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-LLRF-PsMtn:ByPassIntlk-Sel', 0, 0.0],
     ['SI-Glob:TI-LLRF-PsMtn:Delay-SP', 0, 0.0],  # us
     ['SI-Glob:TI-LLRF-PsMtn:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-LLRF-PsMtn:NrPulses-SP', 0, 0.0],
@@ -542,7 +509,6 @@ _pvs_timing = [
     ['SI-Glob:TI-LLRF-PsMtn:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-LLRF-PsMtn:State-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-LLRF-Rmp:ByPassIntlk-Sel', 0, 0.0],
     ['SI-Glob:TI-LLRF-Rmp:Delay-SP', 0, 0.0],  # us
     ['SI-Glob:TI-LLRF-Rmp:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-LLRF-Rmp:NrPulses-SP', 0, 0.0],
@@ -558,7 +524,6 @@ _pvs_timing = [
     ['SI-Glob:TI-Quads:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-Quads:State-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-Sexts:ByPassIntlk-Sel', 0, 0.0],
     ['SI-Glob:TI-Sexts:Delay-SP', 0, 0.0],  # us
     ['SI-Glob:TI-Sexts:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-Sexts:NrPulses-SP', 0, 0.0],
@@ -573,7 +538,6 @@ _pvs_timing = [
     ['SI-Glob:TI-Skews:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-Skews:State-Sel', 0, 0.0],
 
-    ['TB-04:TI-InjSept:ByPassIntlk-Sel', 0, 0.0],
     ['TB-04:TI-InjSept:Delay-SP', 0, 0.0],  # us
     ['TB-04:TI-InjSept:Duration-SP', 0, 0.0],  # us
     ['TB-04:TI-InjSept:NrPulses-SP', 0, 0.0],
@@ -581,7 +545,6 @@ _pvs_timing = [
     ['TB-04:TI-InjSept:Src-Sel', 0, 0.0],
     ['TB-04:TI-InjSept:State-Sel', 0, 0.0],
 
-    ['TB-Glob:TI-Mags:ByPassIntlk-Sel', 0, 0.0],
     ['TB-Glob:TI-Mags:Delay-SP', 0, 0.0],  # us
     ['TB-Glob:TI-Mags:Duration-SP', 0, 0.0],  # us
     ['TB-Glob:TI-Mags:NrPulses-SP', 0, 0.0],
@@ -589,7 +552,6 @@ _pvs_timing = [
     ['TB-Glob:TI-Mags:Src-Sel', 0, 0.0],
     ['TB-Glob:TI-Mags:State-Sel', 0, 0.0],
 
-    ['TS-04:TI-InjSeptF:ByPassIntlk-Sel', 0, 0.0],
     ['TS-04:TI-InjSeptF:Delay-SP', 0, 0.0],  # us
     ['TS-04:TI-InjSeptF:Duration-SP', 0, 0.0],  # us
     ['TS-04:TI-InjSeptF:NrPulses-SP', 0, 0.0],
@@ -597,7 +559,6 @@ _pvs_timing = [
     ['TS-04:TI-InjSeptF:Src-Sel', 0, 0.0],
     ['TS-04:TI-InjSeptF:State-Sel', 0, 0.0],
 
-    ['TS-Fam:TI-EjeSept:ByPassIntlk-Sel', 0, 0.0],
     ['TS-Fam:TI-EjeSept:Delay-SP', 0, 0.0],  # us
     ['TS-Fam:TI-EjeSept:Duration-SP', 0, 0.0],  # us
     ['TS-Fam:TI-EjeSept:NrPulses-SP', 0, 0.0],
@@ -606,7 +567,6 @@ _pvs_timing = [
     ['TS-Fam:TI-EjeSept:Src-Sel', 0, 0.0],
     ['TS-Fam:TI-EjeSept:State-Sel', 0, 0.0],
 
-    ['TS-Fam:TI-InjSeptG:ByPassIntlk-Sel', 0, 0.0],
     ['TS-Fam:TI-InjSeptG:Delay-SP', 0, 0.0],  # us
     ['TS-Fam:TI-InjSeptG:Duration-SP', 0, 0.0],  # us
     ['TS-Fam:TI-InjSeptG:NrPulses-SP', 0, 0.0],
@@ -614,7 +574,6 @@ _pvs_timing = [
     ['TS-Fam:TI-InjSeptG:Src-Sel', 0, 0.0],
     ['TS-Fam:TI-InjSeptG:State-Sel', 0, 0.0],
 
-    ['TS-Glob:TI-Mags:ByPassIntlk-Sel', 0, 0.0],
     ['TS-Glob:TI-Mags:Delay-SP', 0, 0.0],  # us
     ['TS-Glob:TI-Mags:Duration-SP', 0, 0.0],  # us
     ['TS-Glob:TI-Mags:NrPulses-SP', 0, 0.0],
@@ -623,7 +582,6 @@ _pvs_timing = [
     ['TS-Glob:TI-Mags:State-Sel', 0, 0.0],
 
     # Diagnostics Triggers
-    ['AS-Fam:TI-Scrn-TBBO:ByPassIntlk-Sel', 0, 0.0],
     ['AS-Fam:TI-Scrn-TBBO:Delay-SP', 0, 0.0],  # us
     ['AS-Fam:TI-Scrn-TBBO:Duration-SP', 0, 0.0],  # us
     ['AS-Fam:TI-Scrn-TBBO:NrPulses-SP', 0, 0.0],
@@ -646,7 +604,6 @@ _pvs_timing = [
     ['AS-Glob:TI-BPM-TBTS:Src-Sel', 0, 0.0],
     ['AS-Glob:TI-BPM-TBTS:State-Sel', 0, 0.0],
 
-    ['AS-Glob:TI-FCT:ByPassIntlk-Sel', 0, 0.0],
     ['AS-Glob:TI-FCT:Delay-SP', 0, 0.0],  # us
     ['AS-Glob:TI-FCT:Duration-SP', 0, 0.0],  # us
     ['AS-Glob:TI-FCT:NrPulses-SP', 0, 0.0],
@@ -655,7 +612,6 @@ _pvs_timing = [
     ['AS-Glob:TI-FCT:Src-Sel', 0, 0.0],
     ['AS-Glob:TI-FCT:State-Sel', 0, 0.0],
 
-    ['AS-Glob:TI-FillPtrnMon:ByPassIntlk-Sel', 0, 0.0],
     ['AS-Glob:TI-FillPtrnMon:Delay-SP', 0, 0.0],  # us
     ['AS-Glob:TI-FillPtrnMon:Duration-SP', 0, 0.0],  # us
     ['AS-Glob:TI-FillPtrnMon:NrPulses-SP', 0, 0.0],
@@ -664,7 +620,6 @@ _pvs_timing = [
     ['AS-Glob:TI-FillPtrnMon:Src-Sel', 0, 0.0],
     ['AS-Glob:TI-FillPtrnMon:State-Sel', 0, 0.0],
 
-    ['BO-35D:TI-DCCT:ByPassIntlk-Sel', 0, 0.0],
     ['BO-35D:TI-DCCT:Delay-SP', 0, 0.0],  # us
     ['BO-35D:TI-DCCT:Duration-SP', 0, 0.0],  # us
     ['BO-35D:TI-DCCT:NrPulses-SP', 0, 0.0],
@@ -673,7 +628,6 @@ _pvs_timing = [
     ['BO-35D:TI-DCCT:Src-Sel', 0, 0.0],
     ['BO-35D:TI-DCCT:State-Sel', 0, 0.0],
 
-    ['BO-Glob:TI-TuneProc:ByPassIntlk-Sel', 0, 0.0],
     ['BO-Glob:TI-TuneProc:Delay-SP', 0, 0.0],  # us
     ['BO-Glob:TI-TuneProc:Duration-SP', 0, 0.0],  # us
     ['BO-Glob:TI-TuneProc:NrPulses-SP', 0, 0.0],
@@ -682,7 +636,6 @@ _pvs_timing = [
     ['BO-Glob:TI-TuneProc:Src-Sel', 0, 0.0],
     ['BO-Glob:TI-TuneProc:State-Sel', 0, 0.0],
 
-    ['LI-Fam:TI-BPM:ByPassIntlk-Sel', 0, 0.0],
     ['LI-Fam:TI-BPM:Delay-SP', 0, 0.0],  # us
     ['LI-Fam:TI-BPM:Duration-SP', 0, 0.0],  # us
     ['LI-Fam:TI-BPM:NrPulses-SP', 0, 0.0],
@@ -691,7 +644,6 @@ _pvs_timing = [
     ['LI-Fam:TI-BPM:Src-Sel', 0, 0.0],
     ['LI-Fam:TI-BPM:State-Sel', 0, 0.0],
 
-    ['LI-Fam:TI-ICT:ByPassIntlk-Sel', 0, 0.0],
     ['LI-Fam:TI-ICT:Delay-SP', 0, 0.0],  # us
     ['LI-Fam:TI-ICT:Duration-SP', 0, 0.0],  # us
     ['LI-Fam:TI-ICT:NrPulses-SP', 0, 0.0],
@@ -700,7 +652,6 @@ _pvs_timing = [
     ['LI-Fam:TI-ICT:Src-Sel', 0, 0.0],
     ['LI-Fam:TI-ICT:State-Sel', 0, 0.0],
 
-    ['LI-Fam:TI-Scrn:ByPassIntlk-Sel', 0, 0.0],
     ['LI-Fam:TI-Scrn:Delay-SP', 0, 0.0],  # us
     ['LI-Fam:TI-Scrn:Duration-SP', 0, 0.0],  # us
     ['LI-Fam:TI-Scrn:NrPulses-SP', 0, 0.0],
@@ -709,7 +660,6 @@ _pvs_timing = [
     ['LI-Fam:TI-Scrn:Src-Sel', 0, 0.0],
     ['LI-Fam:TI-Scrn:State-Sel', 0, 0.0],
 
-    ['SI-13C4:TI-DCCT:ByPassIntlk-Sel', 0, 0.0],
     ['SI-13C4:TI-DCCT:Delay-SP', 0, 0.0],  # us
     ['SI-13C4:TI-DCCT:Duration-SP', 0, 0.0],  # us
     ['SI-13C4:TI-DCCT:NrPulses-SP', 0, 0.0],
@@ -718,7 +668,6 @@ _pvs_timing = [
     ['SI-13C4:TI-DCCT:Src-Sel', 0, 0.0],
     ['SI-13C4:TI-DCCT:State-Sel', 0, 0.0],
 
-    ['SI-14C4:TI-DCCT:ByPassIntlk-Sel', 0, 0.0],
     ['SI-14C4:TI-DCCT:Delay-SP', 0, 0.0],  # us
     ['SI-14C4:TI-DCCT:Duration-SP', 0, 0.0],  # us
     ['SI-14C4:TI-DCCT:NrPulses-SP', 0, 0.0],
@@ -727,7 +676,6 @@ _pvs_timing = [
     ['SI-14C4:TI-DCCT:Src-Sel', 0, 0.0],
     ['SI-14C4:TI-DCCT:State-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-StrkCam-Trig1:ByPassIntlk-Sel', 0, 0.0],
     ['SI-Glob:TI-StrkCam-Trig1:Delay-SP', 0, 0.0],  # us
     ['SI-Glob:TI-StrkCam-Trig1:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-StrkCam-Trig1:NrPulses-SP', 0, 0.0],
@@ -736,7 +684,6 @@ _pvs_timing = [
     ['SI-Glob:TI-StrkCam-Trig1:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-StrkCam-Trig1:State-Sel', 0, 0.0],
 
-    ['SI-Glob:TI-StrkCam-Trig2:ByPassIntlk-Sel', 0, 0.0],
     ['SI-Glob:TI-StrkCam-Trig2:Delay-SP', 0, 0.0],  # us
     ['SI-Glob:TI-StrkCam-Trig2:Duration-SP', 0, 0.0],  # us
     ['SI-Glob:TI-StrkCam-Trig2:NrPulses-SP', 0, 0.0],
@@ -745,7 +692,6 @@ _pvs_timing = [
     ['SI-Glob:TI-StrkCam-Trig2:Src-Sel', 0, 0.0],
     ['SI-Glob:TI-StrkCam-Trig2:State-Sel', 0, 0.0],
 
-    ['TB-Fam:TI-ICT-Digit:ByPassIntlk-Sel', 0, 0.0],
     ['TB-Fam:TI-ICT-Digit:Delay-SP', 0, 0.0],  # us
     ['TB-Fam:TI-ICT-Digit:Duration-SP', 0, 0.0],  # us
     ['TB-Fam:TI-ICT-Digit:NrPulses-SP', 0, 0.0],
@@ -753,7 +699,6 @@ _pvs_timing = [
     ['TB-Fam:TI-ICT-Digit:Src-Sel', 0, 0.0],
     ['TB-Fam:TI-ICT-Digit:State-Sel', 0, 0.0],
 
-    ['TB-Fam:TI-ICT-Integ:ByPassIntlk-Sel', 0, 0.0],
     ['TB-Fam:TI-ICT-Integ:Delay-SP', 0, 0.0],  # us
     ['TB-Fam:TI-ICT-Integ:Duration-SP', 0, 0.0],  # us
     ['TB-Fam:TI-ICT-Integ:NrPulses-SP', 0, 0.0],
@@ -761,7 +706,6 @@ _pvs_timing = [
     ['TB-Fam:TI-ICT-Integ:Src-Sel', 0, 0.0],
     ['TB-Fam:TI-ICT-Integ:State-Sel', 0, 0.0],
 
-    ['TS-Fam:TI-ICT-Digit:ByPassIntlk-Sel', 0, 0.0],
     ['TS-Fam:TI-ICT-Digit:Delay-SP', 0, 0.0],  # us
     ['TS-Fam:TI-ICT-Digit:Duration-SP', 0, 0.0],  # us
     ['TS-Fam:TI-ICT-Digit:NrPulses-SP', 0, 0.0],
@@ -769,7 +713,6 @@ _pvs_timing = [
     ['TS-Fam:TI-ICT-Digit:Src-Sel', 0, 0.0],
     ['TS-Fam:TI-ICT-Digit:State-Sel', 0, 0.0],
 
-    ['TS-Fam:TI-ICT-Integ:ByPassIntlk-Sel', 0, 0.0],
     ['TS-Fam:TI-ICT-Integ:Delay-SP', 0, 0.0],  # us
     ['TS-Fam:TI-ICT-Integ:Duration-SP', 0, 0.0],  # us
     ['TS-Fam:TI-ICT-Integ:NrPulses-SP', 0, 0.0],
@@ -777,7 +720,6 @@ _pvs_timing = [
     ['TS-Fam:TI-ICT-Integ:Src-Sel', 0, 0.0],
     ['TS-Fam:TI-ICT-Integ:State-Sel', 0, 0.0],
 
-    ['TS-Fam:TI-Scrn:ByPassIntlk-Sel', 0, 0.0],
     ['TS-Fam:TI-Scrn:Delay-SP', 0, 0.0],  # us
     ['TS-Fam:TI-Scrn:Duration-SP', 0, 0.0],  # us
     ['TS-Fam:TI-Scrn:NrPulses-SP', 0, 0.0],
