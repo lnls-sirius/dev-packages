@@ -191,13 +191,17 @@ class SiriusPVName(str):
         obj.dis = name['dis']
         obj.dev = name['dev']
         obj.idx = name['idx']
-        obj.device_name = name['device_name']
+        obj._device_name = name['device_name']
         obj.propty_name = name['propty_name']
         obj.propty_suffix = name['propty_suffix']
         obj.propty = name['propty']
         obj.device_propty = name['device_propty']
         obj.field = name['field']
         return obj
+
+    @property
+    def device_name(self):
+        return SiriusPVName(self._device_name)
 
     def substitute(self, **kwargs):
         """Return new SiriusPVName object with the atttributes changed."""
