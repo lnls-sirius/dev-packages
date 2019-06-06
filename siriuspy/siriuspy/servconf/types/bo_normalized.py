@@ -5,6 +5,7 @@ corresponding values when a new configuration is tried to be inserted in the
 servconf database.
 """
 from copy import deepcopy as _dcopy
+from siriuspy.ramp import util as _util
 
 
 def get_dict():
@@ -21,7 +22,7 @@ def get_dict():
 _template_dict = {
     'pvs': [
         # --- dipole ---
-        ['BO-Fam:MA-B:Energy-SP', +0.150, 0.0],  # [GeV] (just a reference)
+        ['BO-Fam:MA-B:Energy-SP', _util.DEFAULT_PS_RAMP_START_ENERGY, 0.0],  # [GeV] (just a reference)
         # --- quadrupoles ---
         ['BO-Fam:MA-QD:KL-SP', +0.0011197961538728, 0.0],  # [1/m]
         ['BO-Fam:MA-QF:KL-SP', +0.3770999232791374, 0.0],  # [1/m]
