@@ -137,11 +137,7 @@ class ConnTiming(_EpicsPropsList):
         sp[c.EvtInjBO_Delay] = injbo_dly
         sp[c.EvtInjSI_Delay] = injsi_dly
 
-        delays_ok = True
-        if (linac_dly is None) or (injbo_dly is None) or (injsi_dly is None):
-            delays_ok = False
-
-        return (self.set_setpoints_check(sp, timeout) and delays_ok)
+        return self.set_setpoints_check(sp, timeout)
 
     def cmd_start_ramp(self, timeout=_TIMEOUT_DFLT):
         """Start EVG continuous events."""
@@ -197,18 +193,16 @@ class ConnTiming(_EpicsPropsList):
         egun_dly = self.get_readback(c.TrgEGunSglBun_Delay) \
             if self.get_readback(c.LinacEgun_SglBun_State) \
             else self.get_readback(c.TrgEGunMultBun_Delay)
-        linac_dly = None if egun_dly is None else injection_time - egun_dly
+        linac_dly = injection_time - egun_dly
 
         curr_linac_dly = self.get_readback(c.EvtLinac_Delay)
-        delta_dly = None if curr_linac_dly is None \
-            else linac_dly - curr_linac_dly
+        delta_dly = linac_dly - curr_linac_dly
         curr_injbo_dly = self.get_readback(c.EvtInjBO_Delay)
-        injbo_dly = None if (delta_dly is None or curr_injbo_dly is None) \
-            else curr_injbo_dly + delta_dly
+        injbo_dly = curr_injbo_dly + delta_dly
 
         ejection_time = self._ramp_config.ti_params_ejection_time
         ejekckr_dly = self.get_readback(c.TrgEjeKckr_Delay)
-        injsi_dly = None if ejekckr_dly is None else ejection_time-ejekckr_dly
+        injsi_dly = ejection_time - ejekckr_dly
 
         return [linac_dly, injbo_dly, injsi_dly]
 
