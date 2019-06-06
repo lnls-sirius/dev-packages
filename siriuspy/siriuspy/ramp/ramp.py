@@ -165,7 +165,7 @@ class BoosterRamp(_ConfigSrv):
                 return False
         return True
 
-    # ---- ps_normalized_configs* ----
+    # ---- ps_normalized_configs ----
 
     @property
     def ps_normalized_configs(self):
@@ -214,7 +214,7 @@ class BoosterRamp(_ConfigSrv):
                 names[index] = name
             else:
                 raise _RampInvalidNormConfig(
-                    'Invalid interpolation at existing time value.')
+                    'There is already a configuration at this time.')
         else:
             times.append(time)
             names.append(name)
@@ -228,33 +228,36 @@ class BoosterRamp(_ConfigSrv):
 
         # interpolate nconfig, if necessary
         if nconfig is None:
-            nconfig_obj = self._ps_nconfigs[name]
-            for ma in nconfig_obj.manames:
-                if ma != self.MANAME_DIPOLE:
-                    ovalues = [self._ps_nconfigs[n][ma] for n in onames]
-                    nconfig_obj[ma] = _np.interp(time, otimes, ovalues)
+            for ma in self._ps_nconfigs[name].manames:
+                if ma == self.MANAME_DIPOLE:
+                    continue
+                ovalues = [self._ps_nconfigs[n][ma] for n in onames]
+                self._ps_nconfigs[name][ma] = _np.interp(time, otimes, ovalues)
 
-            # set config energy appropriately
-            indices = self._conv_times_2_indices([time])
-            strengths = self.ps_waveform_get_strengths(self.MANAME_DIPOLE)
-            strength = _np.interp(indices[0],
-                                  list(range(self.ps_ramp_wfm_nrpoints)),
-                                  strengths)
-            nconfig_obj[self.MANAME_DIPOLE] = strength
-            nconfig = nconfig_obj.configuration
-
-        # ps normalized configuration was given
-        self._ps_nconfigs[name].configuration = nconfig
+            self._update_ps_normalized_config_energy(
+                self._ps_nconfigs[name], time)
+        else:
+            self._ps_nconfigs[name].configuration = nconfig
 
         return name
 
-    def ps_normalized_configs_change_time(self, index, new_time):
+    def ps_normalized_configs_change_time(self, index, new_time,
+                                          change_energy=False):
         """Change the time of an existing config either by index or name."""
         names = self.ps_normalized_configs_names
         if isinstance(index, str):
-            index = names.index(index)
+            name = index
+            index = names.index(name)
+        else:
+            name = names[index]
         times = self.ps_normalized_configs_times
         times[index] = new_time
+
+        # set config energy appropriately if needed
+        if change_energy:
+            self._update_ps_normalized_config_energy(
+                self._ps_nconfigs[name], new_time)
+
         nconfigs = [[times[i], names[i]] for i in range(len(times))]
         self._set_ps_normalized_configs(nconfigs)  # with waveform invalidation
         self._synchronized = False
@@ -1047,6 +1050,15 @@ class BoosterRamp(_ConfigSrv):
                 self._invalidate_ps_waveforms()
                 norm_configs[name] = BoosterNormalized(name)
         self._ps_nconfigs = norm_configs
+
+    def _update_ps_normalized_config_energy(self, nconfig_obj, time):
+        indices = self._conv_times_2_indices([time])
+        strengths = self.ps_waveform_get_strengths(self.MANAME_DIPOLE)
+        strength = _np.interp(indices[0],
+                              list(range(self.ps_ramp_wfm_nrpoints)),
+                              strengths)
+        nconfig_obj[self.MANAME_DIPOLE] = strength
+        return nconfig_obj
 
     def _update_ps_waveform(self, maname):
 
