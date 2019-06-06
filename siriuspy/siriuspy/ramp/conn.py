@@ -29,7 +29,7 @@ class ConnConfig_BORamp(_ConnConfigService):
 
     def __init__(self, url=_envars.server_url_configdb):
         """Constructor."""
-        _ConnConfigService.__init__(self, config_type='bo_ramp_params',
+        _ConnConfigService.__init__(self, config_type='bo_ramp',
                                     url=url)
 
 
