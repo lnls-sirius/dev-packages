@@ -5,13 +5,16 @@
 import requests
 # import json
 
+import siriuspy.envars as _envars
+
+
 # See https://slacmshankar.github.io/epicsarchiver_docs/userguide.html
 
 
 class ArchiverFetcher:
     """Archiver Data Fetcher class."""
 
-    SERVER_URL = 'http://10.0.38.42/retrieval/data/'
+    SERVER_URL = _envars.server_url_archiver
 
     # https://en.wikipedia.org/wiki/Percent-encoding
     CHAR2PENC = {
