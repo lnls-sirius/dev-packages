@@ -19,8 +19,6 @@ class ConfigDBDocument():
         self._info = None
         self._value = None
         self._synchronized = False
-        if self.exist():
-            self.load()
 
     @property
     def configdbclient(self):
@@ -102,7 +100,7 @@ class ConfigDBDocument():
         """Save configuration to ConfigServer."""
         # if config is syncronyzed, it is not necessary to save an identical
         # one in server
-        if self.synchronized and not new_name:
+        if self.exist() and self._synchronized and not new_name:
             return
 
         # check if data format is ok
@@ -125,6 +123,12 @@ class ConfigDBDocument():
             self._configdbclient.delete_config(self._name)
             self._synchronized = False
 
+    def check_valid_value(self, value):
+        return self._configdbclient.check_valid_value(value)
+
+    def get_value_template(self):
+        return self._configdbclient.get_value_template()
+
     @classmethod
     def generate_config_name(cls, name=None):
         """Generate a configuration name using current imestamp."""
@@ -143,8 +147,10 @@ class ConfigDBDocument():
         return new_name
 
     def _set_value(self, value):
-        if self._configdbclient.check_valid_value(value):
+        if self.check_valid_value(value):
             self._value = _dcopy(value)
+        else:
+            raise ValueError('Invalid value.')
 
     def _get_item(self, index):
         return
