@@ -135,7 +135,7 @@ class ConfigDBClient:
                 'Config name must be str, not {}!'.format(type(name)))
         if not self.check_valid_configname(name):
             raise ValueError("There are invalid characters in config name!")
-        if not self.check_valid_value(config_type, value):
+        if not self.check_valid_value(value, config_type=config_type):
             raise TypeError('Incompatible configuration value!')
 
         self._make_request(
@@ -230,7 +230,7 @@ class ConfigDBClient:
             url += '/' + name
         if newname:
             url += '/' + newname
-        return _parse.quote(url)
+        return _parse.quote(url, safe='/:')
 
 
 class ConfigDBException(Exception):
