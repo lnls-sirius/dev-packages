@@ -16,7 +16,6 @@
                 'value': 3920, 'hilim': 4001, 'high': 4001, 'hihi': 4001},
             'Duration': {'value': 2000},
             'State': {'value': 0},
-            'ByPassIntlk': {'value': 0},
             'Polarity': {'value': 1, 'states': (1, 0)},
             },
         'channels': (
