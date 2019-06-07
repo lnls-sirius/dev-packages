@@ -2,12 +2,20 @@
 import re as _re
 import numpy as _np
 
+import mathphys as _mp
 from siriuspy import util as _util
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.magnet import util as _mutil
 from siriuspy.magnet.data import MAData as _MAData
 from siriuspy.computer import Computer as _Computer
 
+
+# beta(energy) ~ 1 approximation is more computationally efficient.
+_BETA_APPROXIMATION = True
+
+
+if not _BETA_APPROXIMATION:
+    _gamma_2_GeV = _mp.constants.electron_rest_energy * _mp.units.joule_2_GeV
 
 _magfuncs = _mutil.get_magfunc_2_multipole_dict()
 
@@ -269,13 +277,15 @@ class DipoleNormalizer(_MagnetNormalizer):
         ang = DipoleNormalizer._ref_angles
         if self._maname.sec == 'SI':
             self._ref_energy = 3.0  # [GeV]
-            self._ref_brho, *_ = _util.beam_rigidity(self._ref_energy)
+            self._ref_brho, self._ref_beta, *_ = \
+                _util.beam_rigidity(self._ref_energy)
             self._ref_BL_BC = - self._ref_brho * ang['SI_BC']
             self._ref_angle = ang['SI_B1'] + ang['SI_B2'] + ang['SI_BC']
             self._ref_BL = - self._ref_brho * self._ref_angle - self._ref_BL_BC
         elif self._maname.sec == 'BO':
             self._ref_energy = 3.0  # [GeV]
-            self._ref_brho, *_ = _util.beam_rigidity(self._ref_energy)
+            self._ref_brho, self._ref_beta, *_ = \
+                _util.beam_rigidity(self._ref_energy)
             self._ref_angle = ang['BO']
             self._ref_BL = - self._ref_brho * self._ref_angle
         elif self._maname.sec == 'TS':
@@ -303,26 +313,54 @@ class DipoleNormalizer(_MagnetNormalizer):
         if isinstance(strengths, list):
             strengths = _np.array(strengths)
         if self._maname.sec == 'SI':
-            intfields = (- self._ref_angle *
-                         (self._ref_brho / self._ref_energy)
-                         * strengths - self._ref_BL_BC)
+            if _BETA_APPROXIMATION:
+                # 1. approximation beta(energy) ~ 1.0
+                intfields = (- self._ref_angle *
+                             (self._ref_brho / self._ref_energy) *
+                             strengths - self._ref_BL_BC)
+            else:
+                # 2. without approximation
+                brho, *_ = _util.beam_rigidity(strengths)
+                intfields = brho * (- self._ref_angle) - self._ref_BL_BC
         else:
-            intfields = (- self._ref_angle *
-                         (self._ref_brho / self._ref_energy)
-                         * strengths)
+            if _BETA_APPROXIMATION:
+                # 1. approximation beta(energy) ~ 1.0
+                intfields = (- self._ref_angle *
+                    (self._ref_brho / self._ref_energy) * strengths)
+            else:
+                # 2. without approximation
+                brho, *_ = _util.beam_rigidity(strengths)
+                intfields = brho * (- self._ref_angle)
+
         return intfields
 
     def _conv_intfield_2_strength(self, intfields, **kwargs):
         if isinstance(intfields, list):
             intfields = _np.array(intfields)
         if self._maname.sec == 'SI':
-            strengths = -self._magnet_conv_sign * \
-                        ((self._ref_energy / self._ref_brho) *
-                         (- intfields - self._ref_BL_BC) / self._ref_angle)
+            if _BETA_APPROXIMATION:
+                # 1. approximation beta(energy) ~ 1.0
+                strengths = -self._magnet_conv_sign * \
+                    ((self._ref_energy / self._ref_brho) *
+                     (- intfields - self._ref_BL_BC) / self._ref_angle)
+            else:
+                # 2. without approximation
+                gamma = _np.sqrt(1.0 + (-intfields - self._ref_BL_BC) /
+                                 self._ref_angle *
+                                 (self._ref_beta / self._ref_brho))
+                strengths = gamma * _gamma_2_GeV
         else:
-            strengths = -self._magnet_conv_sign * \
-                        ((self._ref_energy / self._ref_brho) *
-                         (-intfields) / self._ref_angle)
+            if _BETA_APPROXIMATION:
+                # 1. approximation beta(energy) ~ 1.0
+                strengths = -self._magnet_conv_sign * \
+                    ((self._ref_energy / self._ref_brho) *
+                     (- intfields) / self._ref_angle)
+            else:
+                # 2. without approximation
+                gamma = _np.sqrt(1.0 + (-intfields) /
+                                 self._ref_angle *
+                                 (self._ref_beta / self._ref_brho))
+                strengths = gamma * _gamma_2_GeV
         return strengths
 
     def _power_supplies(self):

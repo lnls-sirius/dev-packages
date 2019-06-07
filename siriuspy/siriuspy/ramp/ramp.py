@@ -5,6 +5,7 @@ from copy import deepcopy as _dcopy
 
 from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
 from siriuspy.search.ma_search import MASearch as _MASearch
+from siriuspy.namesys import SiriusPVName
 from siriuspy.servconf.srvconfig import ConfigSrv as _ConfigSrv
 from siriuspy.servconf.util import \
     generate_config_name as _generate_config_name
@@ -33,21 +34,29 @@ class BoosterNormalized(_ConfigSrv):
     def __init__(self, name=None):
         """Constructor."""
         _ConfigSrv.__init__(self, name=name)
-        self.configuration = self.get_config_type_template()
+        self._configuration = self.get_config_type_template()
+
+        self._manames2index = dict()
+        for index, data in enumerate(self._configuration['pvs']):
+            maname = SiriusPVName(data[0]).device_name
+            self._manames2index[maname] = index
 
     @property
     def manames(self):
         """List of power supply names."""
-        return list(self._configuration.keys())
+        return list(self._manames2index.keys())
 
-    def _get_item(self, index):
-        return float(self._configuration[index])
+    def _get_item(self, maname):
+        index = self._manames2index[maname]
+        value = self._configuration['pvs'][index][1]
+        return float(value)
 
-    def _set_item(self, index, value):
-        self._configuration[index] = float(value)
+    def _set_item(self, maname, value):
+        index = self._manames2index[maname]
+        self._configuration['pvs'][index][1] = value
 
     def _set_configuration(self, value):
-        self._configuration = value
+        self._configuration = _dcopy(value)
 
     def __str__(self):
         """Return string representation of configuration."""
@@ -55,14 +64,15 @@ class BoosterNormalized(_ConfigSrv):
             st = 'name: {}'.format(self.name)
             return st
         st = ''
-        k = tuple(self._configuration.keys())
-        v = tuple(self._configuration.values())
+        k = [data[0] for data in self._configuration['pvs']]
+        v1 = [data[1] for data in self._configuration['pvs']]
+        v2 = [data[2] for data in self._configuration['pvs']]
         maxlen = max(tuple(len(ky) for ky in k) + (len('name'),))
-        fmtstr1 = '{:<'+str(maxlen)+'}: {:+.6f}\n'
-        fmtstr2 = fmtstr1.replace('{:+.6f}', '{}')
+        fmtstr1 = '{:<'+str(maxlen)+'}, {:+.6f}, {:+.6f}\n'
+        fmtstr2 = '{:<'+str(maxlen)+'}: {}\n'
         st = fmtstr2.format('name', self.name)
         for i in range(len(k)):
-            st += fmtstr1.format(k[i], v[i])
+            st += fmtstr1.format(k[i], v1[i], v2[i])
         return st
 
 
@@ -155,7 +165,7 @@ class BoosterRamp(_ConfigSrv):
                 return False
         return True
 
-    # ---- ps_normalized_configs* ----
+    # ---- ps_normalized_configs ----
 
     @property
     def ps_normalized_configs(self):
@@ -204,7 +214,7 @@ class BoosterRamp(_ConfigSrv):
                 names[index] = name
             else:
                 raise _RampInvalidNormConfig(
-                    'Invalid interpolation at existing time value.')
+                    'There is already a configuration at this time.')
         else:
             times.append(time)
             names.append(name)
@@ -218,32 +228,36 @@ class BoosterRamp(_ConfigSrv):
 
         # interpolate nconfig, if necessary
         if nconfig is None:
-            nconfig = self._ps_nconfigs[name].get_config_type_template()
-            for k in nconfig.keys():
-                if k != self.MANAME_DIPOLE:
-                    ovalues = [self._ps_nconfigs[n][k] for n in onames]
-                    nconfig[k] = _np.interp(time, otimes, ovalues)
+            for ma in self._ps_nconfigs[name].manames:
+                if ma == self.MANAME_DIPOLE:
+                    continue
+                ovalues = [self._ps_nconfigs[n][ma] for n in onames]
+                self._ps_nconfigs[name][ma] = _np.interp(time, otimes, ovalues)
 
-            # set config energy appropriately
-            indices = self._conv_times_2_indices([time])
-            strengths = self.ps_waveform_get_strengths(self.MANAME_DIPOLE)
-            strength = _np.interp(indices[0],
-                                  list(range(self.ps_ramp_wfm_nrpoints)),
-                                  strengths)
-            nconfig[self.MANAME_DIPOLE] = strength
-
-        # ps normalized configuration was given
-        self._ps_nconfigs[name].configuration = nconfig
+            self._update_ps_normalized_config_energy(
+                self._ps_nconfigs[name], time)
+        else:
+            self._ps_nconfigs[name].configuration = nconfig
 
         return name
 
-    def ps_normalized_configs_change_time(self, index, new_time):
+    def ps_normalized_configs_change_time(self, index, new_time,
+                                          change_energy=False):
         """Change the time of an existing config either by index or name."""
         names = self.ps_normalized_configs_names
         if isinstance(index, str):
-            index = names.index(index)
+            name = index
+            index = names.index(name)
+        else:
+            name = names[index]
         times = self.ps_normalized_configs_times
         times[index] = new_time
+
+        # set config energy appropriately if needed
+        if change_energy:
+            self._update_ps_normalized_config_energy(
+                self._ps_nconfigs[name], new_time)
+
         nconfigs = [[times[i], names[i]] for i in range(len(times))]
         self._set_ps_normalized_configs(nconfigs)  # with waveform invalidation
         self._synchronized = False
@@ -917,6 +931,19 @@ class BoosterRamp(_ConfigSrv):
         waveform = self._ps_waveforms[maname]
         return waveform.strengths.copy()
 
+    def ps_waveform_interp_time(self, energy):
+        """Return ps ramp time at a given energy.
+
+        Use only energies until rampup-stop time.
+        """
+        rampup_stop_time = self.ps_ramp_rampup_stop_time
+        times = [time for time in self.ps_waveform_get_times()
+                 if time < rampup_stop_time]
+        energies = self._ps_waveforms[self.MANAME_DIPOLE].strengths[
+                 0:len(times)]
+        time = _np.interp(energy, energies, times)
+        return time
+
     def ps_waveform_interp_strengths(self, maname, time):
         """Return ps ramp strength at a given time."""
         times = self.ps_waveform_get_times()
@@ -1024,6 +1051,15 @@ class BoosterRamp(_ConfigSrv):
                 norm_configs[name] = BoosterNormalized(name)
         self._ps_nconfigs = norm_configs
 
+    def _update_ps_normalized_config_energy(self, nconfig_obj, time):
+        indices = self._conv_times_2_indices([time])
+        strengths = self.ps_waveform_get_strengths(self.MANAME_DIPOLE)
+        strength = _np.interp(indices[0],
+                              list(range(self.ps_ramp_wfm_nrpoints)),
+                              strengths)
+        nconfig_obj[self.MANAME_DIPOLE] = strength
+        return nconfig_obj
+
     def _update_ps_waveform(self, maname):
 
         # update dipole if necessary
@@ -1053,7 +1089,7 @@ class BoosterRamp(_ConfigSrv):
         nconf_strength = []
         for i in range(len(nconf_times)):
             nconfig = self._ps_nconfigs[nconf_names[i]]
-            if maname not in nconfig.configuration:
+            if maname not in nconfig.manames:
                 raise _RampInvalidNormConfig
             nconf_strength.append(nconfig[maname])
 
