@@ -15,13 +15,13 @@ _config_types_dict = None
 _config_types_check = None
 _int_types = {int}
 for k, tp in _np.typeDict.items():
-        if isinstance(k, str) and k.startswith('int'):
-            _int_types.add(tp)
+    if isinstance(k, str) and k.startswith('int'):
+        _int_types.add(tp)
 
 _float_types = {float}
 for k, tp in _np.typeDict.items():
-        if isinstance(k, str) and k.startswith('float'):
-            _float_types.add(tp)
+    if isinstance(k, str) and k.startswith('float'):
+        _float_types.add(tp)
 
 
 def get_config_types():
@@ -74,10 +74,11 @@ def _recursive_check(ref_value, value, checklength=True):
         return False
     elif isinstance(ref_value, dict):
         if checklength and len(value) != len(ref_value):
+            # print('h3')
             return False
         for k, v in value.items():
             if k not in ref_value and checklength:
-                # print('h3')
+                # print('h4')
                 return False
             if k in ref_value:
                 v_ref = ref_value[k]
@@ -86,15 +87,15 @@ def _recursive_check(ref_value, value, checklength=True):
                 else:
                     checked = _recursive_check(v_ref, v, checklength)
                 if not checked:
-                    # print('h4')
+                    # print('h5')
                     return False
     elif isinstance(ref_value, (list, tuple, _np.ndarray)):
         if checklength and len(ref_value) != len(value):
-            # print('h5')
+            # print('h6')
             return False
         for i in range(min(len(value), len(ref_value))):
             checked = _recursive_check(value[i], ref_value[i], checklength)
             if not checked:
-                # print('h6')
+                # print('h7')
                 return False
     return True

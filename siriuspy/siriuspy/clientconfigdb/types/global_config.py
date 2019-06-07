@@ -1,8 +1,11 @@
 """AS Global configuration."""
 from copy import deepcopy as _dcopy
+import numpy as _np
+from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 
 _on = 1
 _SlowRef = 0
+
 
 def get_dict():
     """Return configuration type dictionary."""
@@ -1112,10 +1115,80 @@ _pvs_bo_ps = [
     ['BO-45U:PS-CV:Current-SP', +0.0, 0.0],  # unit: A
     ['BO-47U:PS-CV:Current-SP', +0.0, 0.0],  # unit: A
     ['BO-49U:PS-CV:Current-SP', +0.0, 0.0],  # unit: A
+
+    ['BO-Fam:PS-B:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-Fam:PS-QD:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-Fam:PS-QF:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-02D:PS-QS:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-Fam:PS-SD:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-Fam:PS-SF:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-01U:PS-CH:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-03U:PS-CH:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-05U:PS-CH:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-07U:PS-CH:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-09U:PS-CH:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-11U:PS-CH:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-13U:PS-CH:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-15U:PS-CH:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-17U:PS-CH:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-19U:PS-CH:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-21U:PS-CH:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-23U:PS-CH:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-25U:PS-CH:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-27U:PS-CH:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-29U:PS-CH:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-31U:PS-CH:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-33U:PS-CH:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-35U:PS-CH:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-37U:PS-CH:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-39U:PS-CH:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-41U:PS-CH:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-43U:PS-CH:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-45U:PS-CH:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-47U:PS-CH:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-49D:PS-CH:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-01U:PS-CV:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-03U:PS-CV:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-05U:PS-CV:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-07U:PS-CV:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-09U:PS-CV:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-11U:PS-CV:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-13U:PS-CV:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-15U:PS-CV:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-17U:PS-CV:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-19U:PS-CV:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-21U:PS-CV:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-23U:PS-CV:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-25U:PS-CV:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-27U:PS-CV:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-29U:PS-CV:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-31U:PS-CV:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-33U:PS-CV:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-35U:PS-CV:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-37U:PS-CV:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-39U:PS-CV:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-41U:PS-CV:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-43U:PS-CV:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-45U:PS-CV:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-47U:PS-CV:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-49U:PS-CV:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ]
+
+_rf_pvs = [
+    ['BO-05D:RF-LLRF:RmpEnbl-Sel', 0, 0.0],
+    ['BO-05D:RF-LLRF:RmpTs1-SP', 0.0, 0.0],
+    ['BO-05D:RF-LLRF:RmpTs2-SP', 0.0, 0.0],
+    ['BO-05D:RF-LLRF:RmpTs3-SP', 0.0, 0.0],
+    ['BO-05D:RF-LLRF:RmpTs4-SP', 0.0, 0.0],
+    ['BO-05D:RF-LLRF:RmpIncTs-SP', 0.0, 0.0],
+    ['BO-05D:RF-LLRF:RmpVoltBot-SP', 0.0, 0.0],
+    ['BO-05D:RF-LLRF:RmpVoltTop-SP', 0.0, 0.0],
+    ['BO-05D:RF-LLRF:RmpPhsBot-SP', 0.0, 0.0],
+    ['BO-05D:RF-LLRF:RmpPhsTop-SP', 0.0, 0.0],
     ]
 
 _template_dict = {
     'pvs':
         _pvs_li_egunmod + _pvs_li_llrf + _pvs_timing +
-        _pvs_li_ps + _pvs_tb_ps + _pvs_pu + _pvs_bo_ps
+        _pvs_li_ps + _pvs_tb_ps + _pvs_pu + _pvs_bo_ps  # + _rf_pvs
     }

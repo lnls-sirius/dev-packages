@@ -6,5 +6,3 @@ from .hl_classes import HLTrigger
 from .ll_classes import get_evg_name, get_ll_trigger
 
 del plot_network, static_table, hl_classes, ll_classes
-
-__all__ = ('time_simul', )
