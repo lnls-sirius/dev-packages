@@ -9,8 +9,9 @@ from siriuspy.epics.properties import EpicsProperty as _EpicsProperty
 from siriuspy.epics.properties import EpicsPropertiesList as _EpicsPropsList
 from siriuspy.csdevice import util as _cutil
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
-from siriuspy.csdevice.timesys import Const as _TIConst
-from siriuspy.csdevice.orbitcorr import OrbitCorrDevRings as _OrbitCorrConst
+from siriuspy.csdevice.timesys import Const as _TIConst, \
+    get_hl_trigger_database as _get_trig_db
+from siriuspy.csdevice.orbitcorr import SOFBRings as _SOFBRings
 from siriuspy.servconf.srvconfig import ConnConfigService as _ConnConfigService
 from siriuspy.search.ma_search import MASearch as _MASearch
 from siriuspy.timesys.ll_classes import get_evg_name as _get_evg_name
@@ -28,7 +29,8 @@ class ConnConfig_BORamp(_ConnConfigService):
 
     def __init__(self, url=_envars.server_url_configdb):
         """Constructor."""
-        _ConnConfigService.__init__(self, config_type='bo_ramp', url=url)
+        _ConnConfigService.__init__(self, config_type='bo_ramp',
+                                    url=url)
 
 
 class ConnConfig_BONormalized(_ConnConfigService):
@@ -65,19 +67,9 @@ class ConnTiming(_EpicsPropsList):
         TrgEGunMultBun = 'LI-01:TI-EGun-MultBun'
         TrgEjeKckr = 'BO-48D:TI-EjeKckr'
 
-        # Injection and ejection trigger properties
-        TrgEGunSglBun_Delay = TrgEGunSglBun + ':Delay-SP'
-        TrgEGunMultBun_Delay = TrgEGunMultBun + ':Delay-SP'
-        TrgEjeKckr_Delay = TrgEjeKckr + ':Delay-SP'
-
         # Linac Egun mode properties
         LinacEgun_SglBun_State = 'egun:pulseps:singleselstatus'
         LinacEgun_MultBun_State = 'egun:pulseps:multiselstatus'
-
-        # Trigger specific properties
-        TrgMags_Duration = TrgMags + ':Duration-SP'
-        TrgCorrs_Duration = TrgCorrs + ':Duration-SP'
-        TrgLLRFRmp_RFDelayType = TrgLLRFRmp + ':RFDelayType-Sel'
 
         # Interlock PV
         Intlk = 'LA-RFH01RACK2:TI-EVR:Intlk-Mon'
@@ -90,14 +82,16 @@ class ConnTiming(_EpicsPropsList):
             new_attr = attr+'_'+p.replace('-'+p.split('-')[-1], '')
             setattr(Const, new_attr, evt_pfx+p)
 
-    # Add commom trigger properties to Const
-    trg_propties = ['Status-Mon', 'NrPulses-SP', 'Delay-SP',
-                    'State-Sel', 'Src-Sel', 'Polarity-Sel']
-    for attr in ['TrgMags', 'TrgCorrs', 'TrgLLRFRmp']:
+    # Add trigger properties to Const
+    trg_propties = ['State-Sel', 'Polarity-Sel', 'Src-Sel', 'NrPulses-SP',
+                    'Duration-SP', 'Delay-SP', 'Status-Mon']
+    for attr in ['TrgMags', 'TrgCorrs', 'TrgLLRFRmp',
+                 'TrgEGunSglBun', 'TrgEGunMultBun', 'TrgEjeKckr']:
         for p in trg_propties:
             trg_pfx = getattr(Const, attr)
             new_attr = attr+'_'+p.replace('-'+p.split('-')[-1], '')
             setattr(Const, new_attr, trg_pfx+':'+p)
+    Const.TrgLLRFRmp_RFDelayType = Const.TrgLLRFRmp + ':RFDelayType-Sel'
 
     def __init__(self, ramp_config=None, prefix=_prefix,
                  connection_callback=None, callback=None):
@@ -116,9 +110,9 @@ class ConnTiming(_EpicsPropsList):
     def cmd_setup(self, timeout=_TIMEOUT_DFLT):
         """Setup TI subsystem to ramp."""
         sp = self.ramp_basicsetup.copy()
-        sp.pop('BO-Glob:TI-Mags:Status-Mon')
-        sp.pop('BO-Glob:TI-Corrs:Status-Mon')
-        sp.pop('BO-Glob:TI-LLRF-Rmp:Status-Mon')
+        for ppty in sp:
+            if 'Status-Mon' in ppty:
+                sp.pop(ppty)
         return self.set_setpoints_check(sp, timeout)
 
     def cmd_config_ramp(self, timeout=_TIMEOUT_DFLT):
@@ -143,11 +137,7 @@ class ConnTiming(_EpicsPropsList):
         sp[c.EvtInjBO_Delay] = injbo_dly
         sp[c.EvtInjSI_Delay] = injsi_dly
 
-        delays_ok = True
-        if (linac_dly is None) or (injbo_dly is None) or (injsi_dly is None):
-            delays_ok = False
-
-        return (self.set_setpoints_check(sp, timeout) and delays_ok)
+        return self.set_setpoints_check(sp, timeout)
 
     def cmd_start_ramp(self, timeout=_TIMEOUT_DFLT):
         """Start EVG continuous events."""
@@ -194,25 +184,25 @@ class ConnTiming(_EpicsPropsList):
     def calc_evts_delay(self):
         """Calculate event delays."""
         if not self._ramp_config:
-            return
+            return False
+        if not self.connected:
+            return False
 
         c = ConnTiming.Const
         injection_time = self._ramp_config.ti_params_injection_time
         egun_dly = self.get_readback(c.TrgEGunSglBun_Delay) \
             if self.get_readback(c.LinacEgun_SglBun_State) \
             else self.get_readback(c.TrgEGunMultBun_Delay)
-        linac_dly = None if egun_dly is None else injection_time - egun_dly
+        linac_dly = injection_time - egun_dly
 
         curr_linac_dly = self.get_readback(c.EvtLinac_Delay)
-        delta_dly = None if curr_linac_dly is None \
-            else linac_dly - curr_linac_dly
+        delta_dly = linac_dly - curr_linac_dly
         curr_injbo_dly = self.get_readback(c.EvtInjBO_Delay)
-        injbo_dly = None if (delta_dly is None or curr_injbo_dly is None) \
-            else curr_injbo_dly + delta_dly
+        injbo_dly = curr_injbo_dly + delta_dly
 
         ejection_time = self._ramp_config.ti_params_ejection_time
         ejekckr_dly = self.get_readback(c.TrgEjeKckr_Delay)
-        injsi_dly = None if ejekckr_dly is None else ejection_time-ejekckr_dly
+        injsi_dly = ejection_time - ejekckr_dly
 
         return [linac_dly, injbo_dly, injsi_dly]
 
@@ -220,6 +210,10 @@ class ConnTiming(_EpicsPropsList):
 
     def _define_properties(self, prefix, connection_callback, callback):
         c = ConnTiming.Const
+
+        mags_db = _get_trig_db(c.TrgMags)
+        corrs_db = _get_trig_db(c.TrgCorrs)
+        llrf_db = _get_trig_db(c.TrgLLRFRmp)
 
         self.ramp_basicsetup = {
             # EVG
@@ -237,51 +231,51 @@ class ConnTiming(_EpicsPropsList):
             c.EvtInjSI_Mode: _TIConst.EvtModes.Injection,
             c.EvtInjSI_DelayType: _TIConst.EvtDlyTyp.Incr,
             # Mags trigger
-            c.TrgMags_Status: 0,
             c.TrgMags_State: _TIConst.DsblEnbl.Enbl,
-            c.TrgMags_Src: 0,  # enum for RmpBO
             c.TrgMags_Polarity: _TIConst.TrigPol.Inverse,
+            c.TrgMags_Src: mags_db['Src-Sel']['enums'].index('RmpBO'),
+            c.TrgMags_Status: 0,
             # Corrs trigger
-            c.TrgCorrs_Status: 0,
             c.TrgCorrs_State: _TIConst.DsblEnbl.Enbl,
-            c.TrgCorrs_Src: 0,  # enum for RmpBO
             c.TrgCorrs_Polarity: _TIConst.TrigPol.Inverse,
+            c.TrgCorrs_Src: corrs_db['Src-Sel']['enums'].index('RmpBO'),
+            c.TrgCorrs_Status: 0,
             # LLRFRmp trigger
-            c.TrgLLRFRmp_Status: 0,
-            c.TrgLLRFRmp_NrPulses: 1,
             c.TrgLLRFRmp_State: _TIConst.DsblEnbl.Enbl,
-            c.TrgLLRFRmp_Src: 1,  # enum for RmpBO
             c.TrgLLRFRmp_Polarity: _TIConst.TrigPol.Inverse,
-            c.TrgLLRFRmp_RFDelayType: _TIConst.TrigDlyTyp.Manual}
+            c.TrgLLRFRmp_Src: llrf_db['Src-Sel']['enums'].index('RmpBO'),
+            c.TrgLLRFRmp_NrPulses: 1,
+            c.TrgLLRFRmp_Duration: 0.016,
+            c.TrgLLRFRmp_RFDelayType: _TIConst.TrigDlyTyp.Manual,
+            c.TrgLLRFRmp_Status: 0}
 
         self.ramp_configsetup = {
             # Event delays
-            c.EvtLinac_Delay: 0,
-            c.EvtInjBO_Delay: 0,
-            c.EvtRmpBO_Delay: 0,
-            c.EvtInjSI_Delay: 0,
+            c.EvtLinac_Delay: 0,          # [us]
+            c.EvtInjBO_Delay: 0,          # [us]
+            c.EvtRmpBO_Delay: 0,          # [us]
+            c.EvtInjSI_Delay: 0,          # [us]
             # Mags trigger
             c.TrgMags_NrPulses: 3920,
-            c.TrgMags_Duration: 490,
-            c.TrgMags_Delay: 0,
+            c.TrgMags_Duration: 490000,   # [us]
+            c.TrgMags_Delay: 0,           # [us]
             # Corrs trigger
             c.TrgCorrs_NrPulses: 3920,
-            c.TrgCorrs_Duration: 490,
-            c.TrgCorrs_Delay: 0,
+            c.TrgCorrs_Duration: 490000,  # [us]
+            c.TrgCorrs_Delay: 0,          # [us]
             # LLRFRmp trigger
-            c.TrgLLRFRmp_Delay: 0}
+            c.TrgLLRFRmp_Delay: 0}        # [us]
 
         self._evgcontrol_propties = {
-            # EVG
             c.EVG_ContinuousEvt: _TIConst.DsblEnbl.Dsbl,
             c.EVG_InjectionEvt: _TIConst.DsblEnbl.Dsbl}
 
         self._reading_propties = {
             # EGun trigger delays
-            c.TrgEGunSglBun_Delay: 0,
-            c.TrgEGunMultBun_Delay: 0,
+            c.TrgEGunSglBun_Delay: 0,     # [us]
+            c.TrgEGunMultBun_Delay: 0,    # [us]
             # EjeKckr trigger delay
-            c.TrgEjeKckr_Delay: 0,
+            c.TrgEjeKckr_Delay: 0,        # [us]
             # LinacEgun Mode
             c.LinacEgun_SglBun_State: 0,
             c.LinacEgun_MultBun_State: 0,
@@ -390,10 +384,6 @@ class ConnMagnets(_EpicsPropsList):
         """Check if hardware interlocks are reset."""
         return self._check('IntlkHard-Mon', 0)
 
-    def check_rmpready(self):
-        """Check if ramp increase was concluded."""
-        return self._check('RmpReady-Mon', 1)
-
     # --- private methods ---
 
     def _get_manames(self):
@@ -421,10 +411,6 @@ class ConnMagnets(_EpicsPropsList):
                                callback=callback))
             properties.append(
                 _EpicsProperty(maname + ':IntlkHard-Mon', p,
-                               connection_callback=connection_callback,
-                               callback=callback))
-            properties.append(
-                _EpicsProperty(maname + ':RmpReady-Mon', p,
                                connection_callback=connection_callback,
                                callback=callback))
         return properties
@@ -583,7 +569,7 @@ class ConnSOFB(_EpicsPropsList):
 
     def get_deltakicks(self):
         """Get CH and CV delta kicks calculated by SOFB."""
-        bo_sofb_db = _OrbitCorrConst(acc='BO')
+        bo_sofb_db = _SOFBRings(acc='BO')
         rb = self.readbacks
         ch_dkicks = rb[ConnSOFB.IOC_Prefix + ':DeltaKickCH']
         ch_names = bo_sofb_db.CH_NAMES
@@ -599,12 +585,10 @@ class ConnSOFB(_EpicsPropsList):
         return corrs2dkicks_dict
 
     def _define_properties(self, prefix, connection_callback, callback):
-        properties = (
-            _EpicsProperty(
-                ConnSOFB.IOC_Prefix + ':DeltaKickCH-Mon', prefix,
-                connection_callback=connection_callback, callback=callback),
-            _EpicsProperty(
-                ConnSOFB.IOC_Prefix + ':DeltaKickCV-Mon', prefix,
-                connection_callback=connection_callback, callback=callback),
-            )
+        properties = list()
+        for ppty in ['DeltaKickCH-Mon', 'DeltaKickCV-Mon']:
+            properties.append(
+                _EpicsProperty(ConnSOFB.IOC_Prefix + ':' + ppty, prefix,
+                               connection_callback=connection_callback,
+                               callback=callback))
         return properties
