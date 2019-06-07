@@ -1,11 +1,9 @@
 """E2SController."""
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
-# from siriuspy.pwrsupply.model_factory import PRUCParms_FBP as _PRUCParms_FBP
 from siriuspy.pwrsupply.bsmp import ConstBSMP as _c
 from siriuspy.pwrsupply.functions import PSOpMode as _PSOpMode
 from siriuspy.pwrsupply.functions import BSMPFunction as _Function
 from siriuspy.pwrsupply.watcher import Watcher as _Watcher
-from siriuspy.pwrsupply.pruc_ramp import Ramp as _Ramp
 
 
 class PSController:
@@ -111,7 +109,6 @@ class StandardPSController(PSController):
         super().__init__(readers, functions, connections, pru_controller)
         self._devices = devices
         self._watchers = dict()
-        self._pruc_ramp = None
 
     def read(self, device_name, field):
         """Read pv value."""
@@ -192,22 +189,6 @@ class StandardPSController(PSController):
         if setpoint in (_PSConst.OpMode.Cycle, _PSConst.OpMode.MigWfm,
                         _PSConst.OpMode.RmpWfm):
             self._set_watchers(setpoint)
-
-        # TODO: Ramp of ramp seems to be buggy. Disabling it now since it seems
-        # that power supply can survive without this funcionality in the IOC
-        # If ramp of ramp if to be abandoned, we should clean up code in
-        # various places!
-        #
-        # if setpoint in (_PSConst.OpMode.RmpWfm, ):
-        #     self._set_pruc_ramp()
-        pass
-
-    def _set_pruc_ramp(self):
-        if self._pruc_ramp is not None and self._pruc_ramp.is_alive:
-            self._pruc_ramp.stop()
-            self._pruc_ramp.join()
-        self._pruc_ramp = _Ramp(self._devices, self)
-        self._pruc_ramp.start()
 
     def _set_opmode(self, writer, op_mode):
         self._pru_controller.pru_sync_stop()
