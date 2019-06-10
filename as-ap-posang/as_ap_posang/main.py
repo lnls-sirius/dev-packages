@@ -4,7 +4,8 @@ import time as _time
 import numpy as _np
 import epics as _epics
 import siriuspy as _siriuspy
-from siriuspy.servconf.conf_service import ConfigService as _ConfigService
+from siriuspy.clientconfigdb import ConfigDBClient as _ConfigDBClient, \
+    ConfigDBException as _ConfigDBException
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.csdevice.posang import Const as _PAConst
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
@@ -224,21 +225,16 @@ class App:
 
     def _get_corrparams(self, config_name):
         """Get response matrix from configurations database."""
-        cs = _ConfigService()
-        querry = cs.get_config(self._TL.lower()+'_posang_respm', config_name)
-        querry_result = querry['code']
+        try:
+            cdb = _ConfigDBClient()
+            mats = cdb.get_config_value(
+                config_name, config_type=self._TL.lower()+'_posang_respm')
+        except _ConfigDBException:
+            return [False, []]
 
-        if querry_result == 200:
-            done = True
-            mats = querry['result']['value']
-            respmat_x = [item for sublist in mats['respm-x']
-                         for item in sublist]
-            respmat_y = [item for sublist in mats['respm-y']
-                         for item in sublist]
-            return [done, [respmat_x, respmat_y]]
-        else:
-            done = False
-            return [done, []]
+        respmat_x = [item for sublist in mats['respm-x'] for item in sublist]
+        respmat_y = [item for sublist in mats['respm-y'] for item in sublist]
+        return [True, [respmat_x, respmat_y]]
 
     def _get_config_name(self):
         try:
