@@ -90,7 +90,7 @@ class ConnTiming(_EpicsPropsList):
     # --- timing setup commands ---
 
     def cmd_setup(self, timeout=_TIMEOUT_DFLT):
-        """Setup TI subsystem to ramp."""
+        """Do setup TI subsystem to ramp."""
         sp = self.ramp_basicsetup.copy()
         for ppty in sp:
             if 'Status-Mon' in ppty:
