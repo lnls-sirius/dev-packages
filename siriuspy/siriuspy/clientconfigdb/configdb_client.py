@@ -51,8 +51,8 @@ class ConfigDBClient:
         """Return connection state."""
         try:
             self.get_dbsize()
-        except _URLError:
-            return False
+        except ConfigDBException as err:
+            return not err.server_code == -2
         return True
 
     def get_dbsize(self):
@@ -208,6 +208,8 @@ class ConfigDBClient:
             response = _json.loads(_urlopen(request).read().decode("utf-8"))
         except _json.JSONDecodeError:
             response = {"code": -1, "message": "JSON decode error"}
+        except _URLError as err:
+            response = {'code': -2, 'message': str(err)}
 
         # print(response)
         if response['code'] != 200:
