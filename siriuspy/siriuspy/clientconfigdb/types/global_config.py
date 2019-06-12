@@ -1034,7 +1034,8 @@ _pvs_bo_ps = [
     ['BO-47U:PS-CV:Current-SP', +0.0, 0.0],  # unit: A
     ['BO-49U:PS-CV:Current-SP', +0.0, 0.0],  # unit: A
 
-    ['BO-Fam:PS-B:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-Fam:PS-B-1:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
+    ['BO-Fam:PS-B-2:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
     ['BO-Fam:PS-QD:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
     ['BO-Fam:PS-QF:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
     ['BO-02D:PS-QS:WfmData-SP', _np.array(_DEFAULT_WFMDATA), 0.0],
