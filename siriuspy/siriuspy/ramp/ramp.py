@@ -803,23 +803,6 @@ class BoosterRamp(_ConfigSrv):
         self._configuration['rf_ramp']['top_phase'] = value
         self._synchronized = False
 
-    @property
-    def rf_ramp_rampinc_duration(self):
-        """RF ramp ramping increase duration."""
-        return self._configuration['rf_ramp']['rampinc_duration']
-
-    @rf_ramp_rampinc_duration.setter
-    def rf_ramp_rampinc_duration(self, value):
-        value = float(value)
-        if value == self._configuration['rf_ramp']['rampinc_duration']:
-            return
-        if not 0.0 < value < 28.0:
-            raise _RampInvalidRFParms(
-                'Invalid value to ramping increase duration.')
-
-        self._configuration['rf_ramp']['rampinc_duration'] = value
-        self._synchronized = False
-
     # --- timing parameters ---
 
     @property
