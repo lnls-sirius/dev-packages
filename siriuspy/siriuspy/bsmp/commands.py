@@ -163,6 +163,7 @@ class BSMP:
     # 0x4_
     def read_curve_block(self, curve_id, block):
         """Read curve block. Command 0x40."""
+        # m = _Message.meassge(0x40, payload=[chr(curve_id), chr(block & 0xff00)var_ids]))
         raise NotImplementedError()
 
     def write_curve_block(self, curve_id, block, value):
