@@ -113,7 +113,7 @@ class ConnTiming(_EpicsPropsList):
         for ppty in sp:
             if 'Status-Mon' in ppty:
                 sp.pop(ppty)
-        return self.set_setpoints_check(sp, timeout)
+        return self._command(sp, timeout)
 
     def cmd_config_ramp(self, timeout=_TIMEOUT_DFLT):
         """Apply ramp_config values to TI subsystem."""
@@ -137,27 +137,27 @@ class ConnTiming(_EpicsPropsList):
         sp[c.EvtInjBO_Delay] = injbo_dly
         sp[c.EvtInjSI_Delay] = injsi_dly
 
-        return self.set_setpoints_check(sp, timeout)
+        return self._command(sp, timeout)
 
     def cmd_start_ramp(self, timeout=_TIMEOUT_DFLT):
         """Start EVG continuous events."""
         sp = {ConnTiming.Const.EVG_ContinuousEvt: _TIConst.DsblEnbl.Enbl}
-        return self.set_setpoints_check(sp, timeout)
+        return self._command(sp, timeout)
 
     def cmd_stop_ramp(self, timeout=_TIMEOUT_DFLT):
         """Stop EVG continuous events."""
         sp = {ConnTiming.Const.EVG_ContinuousEvt: _TIConst.DsblEnbl.Dsbl}
-        return self.set_setpoints_check(sp, timeout)
+        return self._command(sp, timeout)
 
     def cmd_start_injection(self, timeout=_TIMEOUT_DFLT):
         """Start EVG injection events."""
         sp = {ConnTiming.Const.EVG_InjectionEvt: _TIConst.DsblEnbl.Enbl}
-        return self.set_setpoints_check(sp, timeout)
+        return self._command(sp, timeout)
 
     def cmd_stop_injection(self, timeout=_TIMEOUT_DFLT):
         """Stop EVG injection events."""
         sp = {ConnTiming.Const.EVG_InjectionEvt: _TIConst.DsblEnbl.Dsbl}
-        return self.set_setpoints_check(sp, timeout)
+        return self._command(sp, timeout)
 
     # --- timing mode check ---
 
@@ -294,6 +294,12 @@ class ConnTiming(_EpicsPropsList):
                                connection_callback=connection_callback,
                                callback=callback))
         return properties
+
+    def _command(self, setpoints, timeout):
+        if self.connected:
+            return self.set_setpoints_check(setpoints, timeout)
+        else:
+            return False
 
     def _check(self, readbacks):
         for name, value in readbacks.items():
@@ -444,7 +450,6 @@ class ConnRF(_EpicsPropsList):
         Rmp_Ts2 = DevName + ':RmpTs2-SP'
         Rmp_Ts3 = DevName + ':RmpTs3-SP'
         Rmp_Ts4 = DevName + ':RmpTs4-SP'
-        Rmp_IncTs = DevName + ':RmpIncTs-SP'
         Rmp_VoltBot = DevName + ':RmpVoltBot-SP'
         Rmp_VoltTop = DevName + ':RmpVoltTop-SP'
         Rmp_PhsBot = DevName + ':RmpPhsBot-SP'
@@ -484,7 +489,6 @@ class ConnRF(_EpicsPropsList):
         sp[c.Rmp_Ts2] = self._ramp_config.rf_ramp_rampup_duration
         sp[c.Rmp_Ts3] = self._ramp_config.rf_ramp_top_duration
         sp[c.Rmp_Ts4] = self._ramp_config.rf_ramp_rampdown_duration
-        sp[c.Rmp_IncTs] = self._ramp_config.rf_ramp_rampinc_duration
         sp[c.Rmp_VoltBot] = self._ramp_config.rf_ramp_bottom_voltage
         sp[c.Rmp_VoltTop] = self._ramp_config.rf_ramp_top_voltage
         sp[c.Rmp_PhsBot] = self._ramp_config.rf_ramp_bottom_phase
@@ -505,7 +509,6 @@ class ConnRF(_EpicsPropsList):
         rb[ConnRF.Const.Rmp_Ts2] = self._ramp_config.rf_ramp_rampup_duration
         rb[ConnRF.Const.Rmp_Ts3] = self._ramp_config.rf_ramp_top_duration
         rb[ConnRF.Const.Rmp_Ts4] = self._ramp_config.rf_ramp_rampdown_duration
-        rb[ConnRF.Const.Rmp_IncTs] = self._ramp_config.rf_ramp_rampinc_duration
         rb[ConnRF.Const.Rmp_VoltBot] = self._ramp_config.rf_ramp_bottom_voltage
         rb[ConnRF.Const.Rmp_VoltTop] = self._ramp_config.rf_ramp_top_voltage
         rb[ConnRF.Const.Rmp_PhsBot] = self._ramp_config.rf_ramp_bottom_phase
@@ -530,7 +533,6 @@ class ConnRF(_EpicsPropsList):
             c.Rmp_Ts2: _rutil.DEFAULT_RF_RAMP_RAMPUP_DURATION,
             c.Rmp_Ts3: _rutil.DEFAULT_RF_RAMP_TOP_DURATION,
             c.Rmp_Ts4: _rutil.DEFAULT_RF_RAMP_RAMPDOWN_DURATION,
-            c.Rmp_IncTs: _rutil.DEFAULT_RF_RAMP_RAMPINC_DURATION,
             c.Rmp_VoltBot: _rutil.DEFAULT_RF_RAMP_BOTTOM_VOLTAGE,
             c.Rmp_VoltTop: _rutil.DEFAULT_RF_RAMP_TOP_VOLTAGE,
             c.Rmp_PhsBot: _rutil.DEFAULT_RF_RAMP_BOTTOM_PHASE,
