@@ -5,16 +5,15 @@ magnet soft IOcs, ConfigDB service and orbit IOCs.
 """
 
 from siriuspy import envars as _envars
-from siriuspy.epics.properties import EpicsProperty as _EpicsProperty
-from siriuspy.epics.properties import EpicsPropertiesList as _EpicsPropsList
+from siriuspy.epics import EpicsProperty as _EpicsProperty, \
+    EpicsPropertiesList as _EpicsPropsList
 from siriuspy.csdevice import util as _cutil
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.csdevice.timesys import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
 from siriuspy.csdevice.orbitcorr import SOFBRings as _SOFBRings
-from siriuspy.servconf.srvconfig import ConnConfigService as _ConnConfigService
-from siriuspy.search.ma_search import MASearch as _MASearch
-from siriuspy.timesys.ll_classes import get_evg_name as _get_evg_name
+from siriuspy.search import MASearch as _MASearch
+from siriuspy.timesys import get_evg_name as _get_evg_name
 from siriuspy.ramp import util as _rutil
 
 
@@ -22,23 +21,6 @@ _prefix = _envars.vaca_prefix
 _PWRSTATE_ON_DELAY = 1.4
 _PWRSTATE_OFF_DELAY = 0.8
 _TIMEOUT_DFLT = 1.4
-
-
-class ConnConfig_BORamp(_ConnConfigService):
-    """ConfigurationService connector class for BO ramp configs."""
-
-    def __init__(self, url=_envars.server_url_configdb):
-        """Constructor."""
-        _ConnConfigService.__init__(self, config_type='bo_ramp',
-                                    url=url)
-
-
-class ConnConfig_BONormalized(_ConnConfigService):
-    """ConfigurationService connector for BO normalized configs."""
-
-    def __init__(self, url=_envars.server_url_configdb):
-        """Constructor."""
-        _ConnConfigService.__init__(self, config_type='bo_normalized', url=url)
 
 
 class ConnTiming(_EpicsPropsList):
