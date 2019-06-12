@@ -342,7 +342,7 @@ class BoosterRamp(_ConfigSrv):
             except _RampInvalidDipoleWfmParms as e:
                 raise _RampInvalidDipoleWfmParms(str(e))
             else:
-                rdip['start_energy'] = value
+                rdip['start_energy'] = w.start_energy
                 self._synchronized = False
                 self._invalidate_ps_waveforms(True)
 
@@ -366,7 +366,7 @@ class BoosterRamp(_ConfigSrv):
             except _RampInvalidDipoleWfmParms as e:
                 raise _RampInvalidDipoleWfmParms(str(e))
             else:
-                rdip['rampup_start_energy'] = value
+                rdip['rampup_start_energy'] = w.rampup_start_energy
                 self._synchronized = False
                 self._invalidate_ps_waveforms(True)
 
@@ -414,7 +414,7 @@ class BoosterRamp(_ConfigSrv):
             except _RampInvalidDipoleWfmParms as e:
                 raise _RampInvalidDipoleWfmParms(str(e))
             else:
-                rdip['rampup_stop_energy'] = value
+                rdip['rampup_stop_energy'] = w.rampup_stop_energy
                 self._synchronized = False
                 self._invalidate_ps_waveforms(True)
 
@@ -474,7 +474,7 @@ class BoosterRamp(_ConfigSrv):
             except _RampInvalidDipoleWfmParms as e:
                 raise _RampInvalidDipoleWfmParms(str(e))
             else:
-                rdip['plateau_energy'] = value
+                rdip['plateau_energy'] = w.plateau_energy
                 self._synchronized = False
                 self._invalidate_ps_waveforms(True)
 
@@ -498,7 +498,7 @@ class BoosterRamp(_ConfigSrv):
             except _RampInvalidDipoleWfmParms as e:
                 raise _RampInvalidDipoleWfmParms(str(e))
             else:
-                rdip['rampdown_start_energy'] = value
+                rdip['rampdown_start_energy'] = w.rampdown_start_energy
                 self._synchronized = False
                 self._invalidate_ps_waveforms(True)
 
@@ -546,7 +546,7 @@ class BoosterRamp(_ConfigSrv):
             except _RampInvalidDipoleWfmParms as e:
                 raise _RampInvalidDipoleWfmParms(str(e))
             else:
-                rdip['rampdown_stop_energy'] = value
+                rdip['rampdown_stop_energy'] = w.rampdown_stop_energy
                 self._synchronized = False
                 self._invalidate_ps_waveforms(True)
 
