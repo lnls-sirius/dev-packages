@@ -4,13 +4,14 @@ import time as _time
 import epics as _epics
 
 import siriuspy as _siriuspy
-from siriuspy.servconf.conf_service import ConfigService as _ConfigService
+from siriuspy.clientconfigdb import ConfigDBClient as _ConfigDBClient, \
+    ConfigDBException as _ConfigDBException
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.csdevice.timesys import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
 from siriuspy.csdevice.opticscorr import Const as _Const
-from siriuspy.timesys.ll_classes import get_evg_name as _get_evg_name
+from siriuspy.timesys import get_evg_name as _get_evg_name
 
 from as_ap_opticscorr.opticscorr_utils import (
         OpticsCorr as _OpticsCorr,
@@ -361,23 +362,17 @@ class App:
 
     def _get_corrparams(self, config_name):
         """Get response matrix from configurations database."""
-        cs = _ConfigService()
-        querry = cs.get_config(self._ACC.lower()+'_chromcorr_params',
-                               config_name)
-        querry_result = querry['code']
+        try:
+            cdb = _ConfigDBClient()
+            params = cdb.get_config_value(
+                config_name, config_type=self._ACC.lower()+'_chromcorr_params')
+        except _ConfigDBException:
+            return [False, []]
 
-        if querry_result == 200:
-            done = True
-            params = querry['result']['value']
-
-            nominal_matrix = [item for sublist in params['matrix']
-                              for item in sublist]
-            nominal_sl = params['nominal SLs']
-            nominal_chrom = params['nominal chrom']
-            return [done, [nominal_matrix, nominal_sl, nominal_chrom]]
-        else:
-            done = False
-            return [done, []]
+        nom_matrix = [item for sublist in params['matrix'] for item in sublist]
+        nom_sl = params['nominal SLs']
+        nom_chrom = params['nominal chrom']
+        return [True, [nom_matrix, nom_sl, nom_chrom]]
 
     def _calc_sl(self):
         delta_chromx = self._chrom_sp[0]-self._chrom_rb[0]
