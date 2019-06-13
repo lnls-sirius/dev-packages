@@ -2,9 +2,8 @@
 
 
 import numpy as _np
-from siriuspy.servconf.srvconfig import ConfigSrv as _ConfigSrv, \
-                                        ConnConfigService as _ConnConfigService
-from siriuspy.servconf.exceptions import SrvError as _SrvError
+from siriuspy.clientconfigdb import ConfigDBDocument as _ConfigDBDocument, \
+    ConfigDBException as _ConfigDBException
 from siriuspy.csdevice.opticscorr import Const as _Const
 
 
@@ -144,7 +143,7 @@ class OpticsCorr:
                              "'magnetfams_ordering' property!")
 
         self._magnetfams_focusing = tuple(sorted(
-            value, key=lambda x: self.magnetfams_ordering.index(x)))
+            value, key=self.magnetfams_ordering.index))
 
         if self._initialized:
             self._calculate_matrices()
@@ -172,7 +171,7 @@ class OpticsCorr:
                              "'magnetfams_ordering_svd' property!")
 
         self._magnetfams_defocusing = tuple(sorted(
-            value, key=lambda x: self.magnetfams_ordering.index(x)))
+            value, key=self.magnetfams_ordering.index))
 
         if self._initialized:
             self._calculate_matrices()
@@ -401,31 +400,26 @@ class OpticsCorr:
         return m
 
 
-class BOTuneCorr(OpticsCorr, _ConfigSrv):
+class BOTuneCorr(OpticsCorr, _ConfigDBDocument):
     """Auxiliar class to handle Booster tune correction."""
-
-    _conn = _ConnConfigService(config_type='bo_tunecorr_params')
 
     def __init__(self, name):
         """Get configuration from ConfigServer and initialize object."""
-        _ConfigSrv.__init__(self, name)
+        _ConfigDBDocument.__init__(self, 'bo_tunecorr_params', name=name)
 
-        try:
-            self.configsrv_load()
-        except _SrvError as e:
-            raise(e)
-        else:
-            params = self.configuration
-            nominal_matrix = [item for sublist in params['matrix']
-                              for item in sublist]
-            nominal_kl = params['nominal KLs']
-            OpticsCorr.__init__(self,
-                                magnetfams_ordering=_Const.BO_QFAMS_TUNECORR,
-                                nominal_matrix=nominal_matrix,
-                                nominal_intstrengths=nominal_kl,
-                                nominal_opticsparam=[0.0, 0.0],
-                                magnetfams_focusing=('QF',),
-                                magnetfams_defocusing=('QD',))
+        self.load()
+        params = self.value
+        nominal_matrix = [item for sublist in params['matrix']
+                            for item in sublist]
+        nominal_kl = params['nominal KLs']
+        OpticsCorr.__init__(
+            self,
+            magnetfams_ordering=_Const.BO_QFAMS_TUNECORR,
+            nominal_matrix=nominal_matrix,
+            nominal_intstrengths=nominal_kl,
+            nominal_opticsparam=[0.0, 0.0],
+            magnetfams_focusing=('QF',),
+            magnetfams_defocusing=('QD',))
 
     def calculate_deltaKL(self, delta_tune):
         """Calculate delta KL based on the required delta tune."""
@@ -437,32 +431,26 @@ class BOTuneCorr(OpticsCorr, _ConfigSrv):
         return self.calculate_opticsparam(delta_intstrengths=deltaKL)
 
 
-class BOChromCorr(OpticsCorr, _ConfigSrv):
+class BOChromCorr(OpticsCorr, _ConfigDBDocument):
     """Auxiliar class to handle Booster chromacity correction."""
-
-    _conn = _ConnConfigService(config_type='bo_chromcorr_params')
 
     def __init__(self, name):
         """Get configuration from ConfigServer and initialize object."""
-        _ConfigSrv.__init__(self, name)
+        _ConfigDBDocument.__init__(self, 'bo_chromcorr_params', name=name)
 
-        try:
-            self.configsrv_load()
-        except _SrvError as e:
-            raise(e)
-        else:
-            params = self.configuration
-            nominal_matrix = [item for sublist in params['matrix']
-                              for item in sublist]
-            nominal_sl = params['nominal SLs']
-            nominal_chrom = params['nominal chrom']
-            OpticsCorr.__init__(self,
-                                magnetfams_ordering=_Const.BO_SFAMS_CHROMCORR,
-                                nominal_matrix=nominal_matrix,
-                                nominal_intstrengths=nominal_sl,
-                                nominal_opticsparam=nominal_chrom,
-                                magnetfams_focusing=('SF',),
-                                magnetfams_defocusing=('SD',))
+        self.load()
+        params = self.value
+        nominal_matrix = [item for sublist in params['matrix']
+                            for item in sublist]
+        nominal_sl = params['nominal SLs']
+        nominal_chrom = params['nominal chrom']
+        OpticsCorr.__init__(self,
+                            magnetfams_ordering=_Const.BO_SFAMS_CHROMCORR,
+                            nominal_matrix=nominal_matrix,
+                            nominal_intstrengths=nominal_sl,
+                            nominal_opticsparam=nominal_chrom,
+                            magnetfams_focusing=('SF',),
+                            magnetfams_defocusing=('SD',))
 
     def calculate_deltaSL(self, delta_chrom):
         """Calculate delta SL based on the required delta chromacity."""
