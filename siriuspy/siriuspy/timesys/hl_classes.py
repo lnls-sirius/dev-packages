@@ -4,6 +4,7 @@ import time as _time
 from functools import partial as _partial, reduce as _reduce
 from operator import or_ as _or_, and_ as _and_
 import logging as _log
+import numpy as _np
 from siriuspy.util import mode as _mode
 from siriuspy.thread import RepeaterThread as _Timer
 from siriuspy.search import HLTimeSearch as _HLSearch
@@ -202,6 +203,45 @@ class HLTrigger(_BaseHL):
             ll_objs.append(_get_ll_trigger(
                 channel=name, source_enums=src_enums))
         super().__init__(hl_trigger + ':', ll_objs, callback=callback)
+        self._hldelay = 0.0
+        self._hldeltadelay = _np.zeros(len(ll_objs))
+
+    def write(self, prop_name, value):
+        """Function to be called by the IOC to set high level properties.
+
+        It not only sets the new high level property value but also forwards it
+        to the low level classes.
+        """
+        if value is None:
+            return False
+        if prop_name.startswith('Delay'):
+            self._hldelay = float(value)
+            value = self._hldeltadelay + self._hldelay
+        elif prop_name.startswith('DeltaDelay'):
+            prop_name = prop_name.replace('DeltaDelay', 'Delay')
+            if len(value) <= len(self._hldeltadelay):
+                self._hldeltadelay[:len(value)] = value
+            elif len(value) > len(self._hldeltadelay):
+                self._hldeltadelay = value[:len(self._hldelay)]
+            value = self._hldeltadelay + self._hldelay
+        elif prop_name.startswith('LockLL'):
+            for obj in self._ll_objs:
+                obj.locked = bool(value)
+            return True
+        else:
+            value = len(self._ll_objs) * [value, ]
+
+        boo = True
+        for val, obj in zip(value, self._ll_objs):
+            boo &= obj.write(prop_name, val)
+        return boo
+
+    def read(self, prop_name, is_sp=False):
+        fun = self._funs_combine_values.get(prop_name, self._combine_default)
+        if prop_name.startswith('DeltaDelay'):
+            prop_name = prop_name.replace('DeltaDelay', 'Delay')
+        vals = [x.read(prop_name, is_sp=is_sp) for x in self._ll_objs]
+        return fun(vals)
 
     def get_database(self):
         """Get the database."""
