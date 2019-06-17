@@ -546,7 +546,7 @@ class PRUController:
         elif curvsize < curvsize0:
             for i in self.device_ids:
                 # trim wfmdata
-                self._curves[i] += self._curves[i][:curvsize]
+                self._curves[i] = self._curves[i][:curvsize]
 
         # store curve in PRUController attribute
         self._curves[idx] = list(curve)
