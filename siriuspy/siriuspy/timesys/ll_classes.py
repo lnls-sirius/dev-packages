@@ -115,8 +115,9 @@ class _BaseLL(_Base):
         self._locked = bool(value)
         if not self._locked:
             return
-        for prop in self._list_props_must_set:
-            val = self._config_ok_values.get(prop)
+        # for prop in self._list_props_must_set:
+        #     val = self._config_ok_values.get(prop)
+        for prop, val in self._config_ok_values.items():
             if val is None:
                 continue
             self.write_ll(prop, val)
