@@ -164,30 +164,34 @@ class BSMP:
     def read_curve_block(self, curve_id, block, timeout):
         """Read curve block. Command 0x40."""
         curve = self.entities.curves[curve_id]
-        # load = curve.nblock_to_load(block)
-        # print(load)
         lsb, hsb = block & 0xff, (block & 0xff00) >> 8
         m = _Message.message(0x40, payload=[chr(curve_id), chr(hsb), chr(lsb)])
-        print([hex(ord(c)) for c in m.stream])
+        # print([hex(ord(c)) for c in m.stream])
         response = self.channel.request(m, timeout)
-        print(response.cmd)
+        # print(response.cmd)
         load = response.payload
-        print(len(load))
-        if response.cmd == 0x13:
-            if len(load) == curve.size:
-                cid = load[0]
+        data = load[3:]
+        # print('load len: ', len(load))
+        if response.cmd == 0x41:
+            # print('here1', len(data), curve.size)
+            if len(data) == curve.size:
+                # print('here2')
+                cid = ord(load[0])
                 cblock = ord(load[1]) << 8 + ord(load[0])
                 if cid != curve_id or cblock != block:
                     print('Invalid curve id or block number in response!')
+                    print('expected: ', curve_id, block)
+                    print('received: ', cid, cblock)
                     return None, None
                 else:
-                    return Response.ok, curve.load_to_value(load[2:])
+                    # print('here4')
+                    return Response.ok, curve.load_to_value(data)
         else:
+            # print('here5')
             if response.cmd > 0xE0 and response.cmd <= 0xE8:
                 return response.cmd, None
 
         return None, None
-
 
     def write_curve_block(self, curve_id, block, value):
         """Write to curve block. Command 0x41."""
@@ -235,28 +239,64 @@ class BSMPSim:
         """PS entities."""
         return self._entities
 
+    # 0x1_
     def read_variable(self, var_id, timeout=100):
         """Read a variable."""
         # print(var_id)
         return Response.ok, self._variables[var_id]
 
-    def remove_all_groups(self, timeout=100):
-        """Remove all groups."""
-        self.entities.remove_all_groups()
-        return Response.ok, None
-
-    def read_group_variables(self, group_id, timeout=100):
+    def read_group_variables(self, group_id, timeout):
         """Read group of variables."""
         ids = [var.eid for var in self.entities.groups[group_id].variables]
         # print('here')
         values = [self.read_variable(id)[1] for id in ids]
         return Response.ok, values
 
-    def create_group(self, var_ids, timeout=100):
+    # 0x3_
+    def create_group(self, var_ids, timeout):
         """Create new group."""
         self.entities.add_group(var_ids)
         return Response.ok, None
 
+    def remove_all_groups(self, timeout):
+        """Remove all groups."""
+        self.entities.remove_all_groups()
+        return Response.ok, None
+
+    # 0x4_
+    def read_curve_block(self, curve_id, block, timeout):
+        """Read curve block. Command 0x40."""
+        curve = self.entities.curves[curve_id]
+        lsb, hsb = block & 0xff, (block & 0xff00) >> 8
+        m = _Message.message(0x40, payload=[chr(curve_id), chr(hsb), chr(lsb)])
+        # print([hex(ord(c)) for c in m.stream])
+        response = self.channel.request(m, timeout)
+        # print(response.cmd)
+        load = response.payload
+        data = load[3:]
+        # print('load len: ', len(load))
+        if response.cmd == 0x41:
+            # print('here1', len(data), curve.size)
+            if len(data) == curve.size:
+                # print('here2')
+                cid = ord(load[0])
+                cblock = ord(load[1]) << 8 + ord(load[0])
+                if cid != curve_id or cblock != block:
+                    print('Invalid curve id or block number in response!')
+                    print('expected: ', curve_id, block)
+                    print('received: ', cid, cblock)
+                    return None, None
+                else:
+                    # print('here4')
+                    return Response.ok, curve.load_to_value(data)
+        else:
+            # print('here5')
+            if response.cmd > 0xE0 and response.cmd <= 0xE8:
+                return response.cmd, None
+
+        return None, None
+
+    # 0x5_
     def execute_function(self, func_id, input_val=None, timeout=100):
         """Execute a function."""
         raise NotImplementedError()

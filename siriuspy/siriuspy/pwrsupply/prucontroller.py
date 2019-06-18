@@ -7,6 +7,7 @@ at the other end of the serial line.
 
 import time as _time
 # import random as _random
+import numpy as _np
 from threading import Thread as _Thread
 from threading import Lock as _Lock
 from copy import deepcopy as _dcopy
@@ -137,6 +138,7 @@ class PRUController:
     _delay_remove_groups = 100  # [us]
     _delay_create_group = 100  # [us]
     _delay_read_group_variables = 100  # [us]
+    _delay_read_curve = 100  # [us]
     # increasing _delay_sleep from 10 ms to 90 ms decreases CPU usage from
     # 20% to 19.2% at BBB1.
     _delay_sleep = 0.020  # [s]
@@ -800,6 +802,30 @@ class PRUController:
             self._connected[bsmp_id] = False
 
     # --- private methods: BSMP UART communications ---
+
+    def _bsmp_get_curve(self, device_ids, curve_id):
+        """Read curve from devices."""
+        time0 = _time.time()
+        curves = dict()
+        try:
+            for id in device_ids:
+                curves[id] = []
+                udc = self._udc[id]
+                curve_entity = udc.entities.curves[curve_id]
+                for block in range(curve_entity.nblocks):
+                    _, data = udc.read_curve_block(
+                        curve_id=curve_id,
+                        block=block,
+                        timeout=self._delay_read_curve)
+                    curves[id] = _np.hstack((curves[id], data))
+        except (_SerialError, IndexError):
+            tstamp = _time.time()
+            dtime = tstamp - time0
+            operation = ('V', tstamp, dtime, device_ids, True)
+            self._last_operation = operation
+            self._serial_error(device_ids)
+            return dict()
+        return curves
 
     def _bsmp_update_variables(self, device_ids, group_id):
         """Read a variable group of device(s).

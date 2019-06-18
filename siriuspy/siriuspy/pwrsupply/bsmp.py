@@ -850,11 +850,11 @@ class EntitiesFBP(_Entities):
     )
 
     Curves = (
-        {'eid': 0, 'waccess': False, 'count': 1024,
+        {'eid': 0, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
-        {'eid': 1, 'waccess': False, 'count': 1024,
+        {'eid': 1, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
-        {'eid': 2, 'waccess': False, 'count': 1024,
+        {'eid': 2, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
     )
 
@@ -920,11 +920,11 @@ class EntitiesFAC_DCDC(_Entities):
     )
 
     Curves = (
-        {'eid': 0, 'waccess': False, 'count': 1024,
+        {'eid': 0, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
-        {'eid': 1, 'waccess': False, 'count': 1024,
+        {'eid': 1, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
-        {'eid': 2, 'waccess': False, 'count': 1024,
+        {'eid': 2, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
     )
 
@@ -1002,11 +1002,11 @@ class EntitiesFAC_2P4S_DCDC(_Entities):
     )
 
     Curves = (
-        {'eid': 0, 'waccess': False, 'count': 1024,
+        {'eid': 0, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
-        {'eid': 1, 'waccess': False, 'count': 1024,
+        {'eid': 1, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
-        {'eid': 2, 'waccess': False, 'count': 1024,
+        {'eid': 2, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
     )
 
@@ -1065,11 +1065,11 @@ class EntitiesFAC_2S_DCDC(_Entities):
     )
 
     Curves = (
-        {'eid': 0, 'waccess': False, 'count': 1024,
+        {'eid': 0, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
-        {'eid': 1, 'waccess': False, 'count': 1024,
+        {'eid': 1, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
-        {'eid': 2, 'waccess': False, 'count': 1024,
+        {'eid': 2, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
     )
 
@@ -1140,11 +1140,11 @@ class EntitiesFAP(_Entities):
     )
 
     Curves = (
-        {'eid': 0, 'waccess': False, 'count': 1024,
+        {'eid': 0, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
-        {'eid': 1, 'waccess': False, 'count': 1024,
+        {'eid': 1, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
-        {'eid': 2, 'waccess': False, 'count': 1024,
+        {'eid': 2, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
     )
 

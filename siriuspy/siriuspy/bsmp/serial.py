@@ -194,7 +194,7 @@ class Channel:
     def write(self, message, timeout=100):
         """Write to serial."""
         stream = Package.package(self.address, message).stream
-        print('write query: ', [hex(ord(c)) for c in stream])
+        #print('write query: ', [hex(ord(c)) for c in stream])
         response = self.serial.UART_write(stream, timeout=timeout)
         return response
 

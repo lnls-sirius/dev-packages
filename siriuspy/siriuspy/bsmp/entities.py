@@ -32,7 +32,7 @@ class _Entity:
                 load += self._conv_value(var_types[idx].fmt, value)
             while len(load) < size:
                 load += chr(0)
-            return load
+            return load 
         else:
             self._check_type(var_types[0], values[0])
             return self._conv_value(var_types[0].fmt, values[0])
@@ -215,7 +215,7 @@ class Entities:
             count = curve['count']
             var_type = curve['var_type']
             self.curves.append(
-                Curve(curve_id, waccess, var_type, nblocks, count, ))
+                Curve(curve_id, waccess, var_type, nblocks, count))
 
         self._functions = list()
         for function in functions:
