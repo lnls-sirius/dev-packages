@@ -849,7 +849,14 @@ class EntitiesFBP(_Entities):
         {'eid': 63, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
     )
 
-    Curves = tuple()
+    Curves = (
+        {'eid': 0, 'waccess': False, 'count': 1024,
+         'nblocks': 16, 'var_type': _Types.T_FLOAT},
+        {'eid': 1, 'waccess': False, 'count': 1024,
+         'nblocks': 16, 'var_type': _Types.T_FLOAT},
+        {'eid': 2, 'waccess': False, 'count': 1024,
+         'nblocks': 16, 'var_type': _Types.T_FLOAT},
+    )
 
     Functions = _BSMP_Functions
 
@@ -912,7 +919,14 @@ class EntitiesFAC_DCDC(_Entities):
         {'eid': 44, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
     )
 
-    Curves = tuple()
+    Curves = (
+        {'eid': 0, 'waccess': False, 'count': 1024,
+         'nblocks': 16, 'var_type': _Types.T_FLOAT},
+        {'eid': 1, 'waccess': False, 'count': 1024,
+         'nblocks': 16, 'var_type': _Types.T_FLOAT},
+        {'eid': 2, 'waccess': False, 'count': 1024,
+         'nblocks': 16, 'var_type': _Types.T_FLOAT},
+    )
 
     Functions = _BSMP_Functions
 
@@ -987,7 +1001,14 @@ class EntitiesFAC_2P4S_DCDC(_Entities):
         {'eid': 56, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
     )
 
-    Curves = tuple()
+    Curves = (
+        {'eid': 0, 'waccess': False, 'count': 1024,
+         'nblocks': 16, 'var_type': _Types.T_FLOAT},
+        {'eid': 1, 'waccess': False, 'count': 1024,
+         'nblocks': 16, 'var_type': _Types.T_FLOAT},
+        {'eid': 2, 'waccess': False, 'count': 1024,
+         'nblocks': 16, 'var_type': _Types.T_FLOAT},
+    )
 
     Functions = _BSMP_Functions
 
@@ -1043,7 +1064,14 @@ class EntitiesFAC_2S_DCDC(_Entities):
         {'eid': 37, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
     )
 
-    Curves = tuple()
+    Curves = (
+        {'eid': 0, 'waccess': False, 'count': 1024,
+         'nblocks': 16, 'var_type': _Types.T_FLOAT},
+        {'eid': 1, 'waccess': False, 'count': 1024,
+         'nblocks': 16, 'var_type': _Types.T_FLOAT},
+        {'eid': 2, 'waccess': False, 'count': 1024,
+         'nblocks': 16, 'var_type': _Types.T_FLOAT},
+    )
 
     Functions = _BSMP_Functions
 
@@ -1111,7 +1139,14 @@ class EntitiesFAP(_Entities):
 
     )
 
-    Curves = tuple()
+    Curves = (
+        {'eid': 0, 'waccess': False, 'count': 1024,
+         'nblocks': 16, 'var_type': _Types.T_FLOAT},
+        {'eid': 1, 'waccess': False, 'count': 1024,
+         'nblocks': 16, 'var_type': _Types.T_FLOAT},
+        {'eid': 2, 'waccess': False, 'count': 1024,
+         'nblocks': 16, 'var_type': _Types.T_FLOAT},
+    )
 
     Functions = _BSMP_Functions
 

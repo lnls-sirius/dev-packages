@@ -161,10 +161,21 @@ class BSMP:
         return None, None
 
     # 0x4_
-    def read_curve_block(self, curve_id, block):
+    def read_curve_block(self, curve_id, block, timeout):
         """Read curve block. Command 0x40."""
-        # m = _Message.meassge(0x40, payload=[chr(curve_id), chr(block & 0xff00)var_ids]))
-        raise NotImplementedError()
+        curve = self.entities.curves[curve_id]
+        # load = curve.nblock_to_load(block)
+        # print(load)
+        m = _Message.message(0x40, payload=[chr(curve_id), chr(block)])
+        print(m.stream)
+        response = self.channel.request(m, timeout)
+        if response.cmd == 0x13:
+            if len(response.payload) == curve.size:
+                return Response.ok, curve.load_to_value(response.payload)
+        else:
+            if response.cmd > 0xE0 and response.cmd <= 0xE8:
+                return response.cmd, None
+
 
     def write_curve_block(self, curve_id, block, value):
         """Write to curve block. Command 0x41."""

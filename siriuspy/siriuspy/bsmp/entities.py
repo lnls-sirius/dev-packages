@@ -125,14 +125,25 @@ class VariablesGroup(_Entity):
 class Curve(_Entity):
     """BSMP Curve entity."""
 
-    def __init__(self, eid, waccess, sblocks, nblocks, checksum):
+    def __init__(self, eid, waccess, var_type, nblocks, count):
         """Set curve properties."""
         super().__init__()
         self.eid = eid  # Entity ID
         self.waccess = waccess
-        self.sblocks = sblocks  # Block size
+        self.size = (var_type.size * count)  # 1..128 bytes
+        self.type = var_type
         self.nblocks = nblocks  # Number of blocks
-        self.checksum = checksum
+        self._var_types = [var_type for _ in range(count)]
+
+    def load_to_value(self, load):
+        """Parse value from load."""
+        return self._conv_load_to_value(self._var_types, self.size, load)
+
+    def value_to_load(self, value):
+        """Convert curve block number to load."""
+        if not isinstance(value, (list, tuple)):
+            value = [value, ]
+        return self._conv_value_to_load(self._var_types, self.size, value)
 
 
 class Function(_Entity):
@@ -195,8 +206,17 @@ class Entities:
             VariablesGroup(1, False, r_var),
             VariablesGroup(2, True, w_var),
         ]
-        # TODO: implement curves
+
         self._curves = list()
+        for curve in curves:
+            curve_id = curve['eid']
+            waccess = curve['waccess']
+            nblocks = curve['nblocks']
+            count = curve['count']
+            var_type = curve['var_type']
+            self.curves.append(
+                Curve(curve_id, waccess, var_type, nblocks, count, ))
+
         self._functions = list()
         for function in functions:
             func_id = function['eid']
