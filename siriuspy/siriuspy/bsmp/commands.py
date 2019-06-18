@@ -166,9 +166,11 @@ class BSMP:
         curve = self.entities.curves[curve_id]
         # load = curve.nblock_to_load(block)
         # print(load)
-        lsb, hsb = block * 0xff, (block & 0xff00) >> 8
+        lsb, hsb = block & 0xff, (block & 0xff00) >> 8
         m = _Message.message(0x40, payload=[chr(curve_id), chr(hsb), chr(lsb)])
+        print([hex(ord(c)) for c in m.stream])
         response = self.channel.request(m, timeout)
+        print(len(response.payload))
         if response.cmd == 0x13:
             if len(response.payload) == curve.size:
                 return Response.ok, curve.load_to_value(response.payload)
