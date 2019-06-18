@@ -170,13 +170,23 @@ class BSMP:
         m = _Message.message(0x40, payload=[chr(curve_id), chr(hsb), chr(lsb)])
         print([hex(ord(c)) for c in m.stream])
         response = self.channel.request(m, timeout)
-        print(len(response.payload))
+        print(response.cmd)
+        load = response.payload
+        print(len(load))
         if response.cmd == 0x13:
-            if len(response.payload) == curve.size:
-                return Response.ok, curve.load_to_value(response.payload)
+            if len(load) == curve.size:
+                cid = load[0]
+                cblock = ord(load[1]) << 8 + ord(load[0])
+                if cid != curve_id or cblock != block:
+                    print('Invalid curve id or block number in response!')
+                    return None, None
+                else:
+                    return Response.ok, curve.load_to_value(load[2:])
         else:
             if response.cmd > 0xE0 and response.cmd <= 0xE8:
                 return response.cmd, None
+
+        return None, None
 
 
     def write_curve_block(self, curve_id, block, value):
