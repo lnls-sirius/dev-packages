@@ -140,12 +140,12 @@ class _BaseHL(_Base):
             # This is not recommended though, because it can create very
             # strange unusual behavior with widgets such as spinbox in PyDM
             # and CS-Studio.
-            # if not self._isrbpv(suf):
-            #     continue
-            # value = self.read(prop, is_sp=True)
-            # if value is None:
-            #     return
-            # self.run_callbacks(self._get_pv_name(prop, is_sp=True), **value)
+            if not self._isrbpv(suf):
+                continue
+            value = self.read(prop, is_sp=True)
+            if value is None:
+                return
+            self.run_callbacks(self._get_pv_name(prop, is_sp=True), **value)
 
     def _define_funs_combine_values(self):
         """Define a dictionary of functions to combine low level values.
