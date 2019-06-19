@@ -2,6 +2,7 @@
 
 import re as _re
 from copy import deepcopy as _dcopy
+from threading import Lock as _Lock
 
 from siriuspy import servweb as _web
 from siriuspy.namesys import SiriusPVName as _PVName, Filter as _Filter
@@ -116,6 +117,7 @@ class LLTimeSearch:
     _trig_src_devs = set()
     _fout_devs = set()
     _evg_devs = set()
+    _lock = _Lock()
 
     @classmethod
     def get_channel_input(cls, channel):
@@ -168,6 +170,32 @@ class LLTimeSearch:
         cls._get_timedata()
         return _Filter.process_filters(
                 sorted(cls._all_devices), filters=filters, sorting=sorting)
+
+    @classmethod
+    def get_triggersource_devices(cls):
+        cls._get_timedata()
+        return _dcopy(cls._trig_src_devs)
+
+    @classmethod
+    def get_trigsrc2fout_mapping(cls):
+        cls._get_timedata()
+        mapp = dict()
+        for dev in cls._trig_src_devs:
+            inp = list(cls.In2OutMap[dev.dev])[0]
+            dev = dev.substitute(propty=inp)
+            mapp[dev.device_name] = cls.get_fout_channel(dev)
+        return mapp
+
+    @classmethod
+    def get_fout2trigsrc_mapping(cls):
+        mapp = cls.get_trigsrc2fout_mapping()
+        mapp2 = dict()
+        for k, v in mapp.items():
+            if v.device_name in mapp2:
+                mapp2[v.device_name][v.propty] = k
+            else:
+                mapp2[v.device_name] = {v.propty: k}
+        return mapp2
 
     @classmethod
     def get_device_tree(cls, channel):
@@ -250,11 +278,6 @@ class LLTimeSearch:
         return name.dev in {'EVR', 'EVE'} and name.propty.startswith('OUT')
 
     @classmethod
-    def has_bypass_interlock(cls, ll_trigger):
-        name = _PVName(ll_trigger)
-        return name.dev in {'EVR', 'EVE'}
-
-    @classmethod
     def get_trigger_name(cls, channel):
         chan_tree = cls.get_device_tree(channel)
         for up_chan in chan_tree:
@@ -278,7 +301,6 @@ class LLTimeSearch:
     # ############ Auxiliar methods ###########
     @classmethod
     def _add_entry_to_map(cls, which_map, conn, ele1, ele2):
-        cls._get_timedata()
         if which_map.lower().startswith('from'):
             mapp = cls._conn_from_evg
         else:
@@ -293,14 +315,15 @@ class LLTimeSearch:
 
     @classmethod
     def _get_timedata(cls):
-        if cls._conn_from_evg:
-            return
-        if _web.server_online():
-            text = _web.timing_devices_mapping(timeout=_timeout)
-        else:
-            raise Exception('Could not connect with Consts Server!!')
-        cls._parse_text_and_build_connection_mappings(text)
-        cls._update_related_maps()
+        with cls._lock:
+            if cls._conn_from_evg:
+                return
+            if _web.server_online():
+                text = _web.timing_devices_mapping(timeout=_timeout)
+            else:
+                raise Exception('Could not connect with Consts Server!!')
+            cls._parse_text_and_build_connection_mappings(text)
+            cls._update_related_maps()
 
     # Methods auxiliar to _get_timedata
     @classmethod
@@ -379,6 +402,10 @@ class LLTimeSearch:
 
     @classmethod
     def _update_related_maps(cls):
+        def _get_device_names(filters=None, sorting=None):
+            return _Filter.process_filters(
+                    sorted(cls._all_devices), filters=filters, sorting=sorting)
+
         cls._build_devices_relations()
         cls._top_chain_devs = (
             cls._devs_from_evg.keys() - cls._devs_twds_evg.keys())
@@ -387,11 +414,11 @@ class LLTimeSearch:
         cls._all_devices = (
             cls._devs_from_evg.keys() | cls._devs_twds_evg.keys())
         cls._trig_src_devs = set(
-                cls.get_device_names({'dev': 'EVR'}) +
-                cls.get_device_names({'dev': 'EVE'}) +
-                cls.get_device_names({'dev': 'AMCFPGAEVR'}))
-        cls._fout_devs = set(cls.get_device_names({'dev': 'Fout'}))
-        cls._evg_devs = set(cls.get_device_names({'dev': 'EVG'}))
+                _get_device_names({'dev': 'EVR'}) +
+                _get_device_names({'dev': 'EVE'}) +
+                _get_device_names({'dev': 'AMCFPGAEVR'}))
+        cls._fout_devs = set(_get_device_names({'dev': 'Fout'}))
+        cls._evg_devs = set(_get_device_names({'dev': 'EVG'}))
 
     @classmethod
     def _build_devices_relations(cls):

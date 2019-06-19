@@ -9,11 +9,8 @@ public_interface = (
     'create_static_table',
     'read_data_from_google',
     'read_data_from_local_excel_file',
-    'time_simul',
     'util',
-    'HLEvent',
     'HLTrigger',
-    'LLEvent',
     'get_evg_name',
     'get_ll_trigger',
     )
