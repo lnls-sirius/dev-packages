@@ -260,6 +260,8 @@ class HLTrigger(_BaseHL):
         return _HLSearch.get_hl_trigger_channels(self.prefix[:-1])
 
     def _update_deltadelay(self, value):
+        if not hasattr(value, '__len__'):
+            value = _np.array([value, ], dtype=float)
         if len(value) <= len(self._hldeltadelay):
             self._hldeltadelay[:len(value)] = value
         elif len(value) > len(self._hldeltadelay):
