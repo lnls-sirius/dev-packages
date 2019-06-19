@@ -34,10 +34,10 @@ _pvs_li_egunmod = [
     ['egun:pulseps:singleselect', 0, 0.0],
     ['egun:pulseps:singleswitch', 0, 0.0],
     ['egun:pulseps:poweroutsoft', 0.0, 0.0],  # Volt
-    ['sirius_md:WRITE_I', 100.0, 0.0],        # mA
-    ['sirius_md_02:WRITE_I', 100.0, 0.0],     # mA
-    ['sirius_md:WRITE_V', 0.0, 0.0],          # kV
-    ['sirius_md_02:WRITE_V', 0.0, 0.0],       # kV
+    ['LI-01:PU-Modltr-1:WRITE_I', 100.0, 0.0],        # mA
+    ['LI-01:PU-Modltr-2:WRITE_I', 100.0, 0.0],     # mA
+    ['LI-01:PU-Modltr-1:WRITE_V', 0.0, 0.0],          # kV
+    ['LI-01:PU-Modltr-2:WRITE_V', 0.0, 0.0],       # kV
     ]
 
 _pvs_li_llrf = [
