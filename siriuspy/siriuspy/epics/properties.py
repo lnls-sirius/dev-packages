@@ -5,6 +5,7 @@ import epics as _epics
 
 
 import numpy as _np
+from math import isclose as _isclose
 from siriuspy.envars import vaca_prefix as _prefix
 from siriuspy.namesys.implementation import \
     SiriusPVName as _SiriusPVName, \
@@ -145,15 +146,15 @@ class EpicsPropertiesList:
     def __init__(self, properties):
         """Init."""
         self._properties = dict()
-        for property in properties:
-            self._properties[property.name] = property
+        for ppty in properties:
+            self._properties[ppty.name] = ppty
         self._default = {p.name: p.default for p in self._properties.values()}
 
     @property
     def connected(self):
         """State of connection."""
-        for property in self._properties.values():
-            if not property.connected:
+        for ppty in self._properties.values():
+            if not ppty.connected:
                 return False
         return True
 
@@ -161,8 +162,8 @@ class EpicsPropertiesList:
     def disconnected_properties(self):
         """Return list of disconnected properties."""
         props = []
-        for name, property in self._properties.items():
-            if not property.connected:
+        for name, ppty in self._properties.items():
+            if not ppty.connected:
                 props.append(name)
         return sorted(props)
 
@@ -180,19 +181,19 @@ class EpicsPropertiesList:
     def readbacks(self):
         """Return dict with all readbacks."""
         readbacks = dict()
-        for name, property in self._properties.items():
-            readbacks[name] = property.readback
+        for name, ppty in self._properties.items():
+            readbacks[name] = ppty.readback
         return readbacks
 
     def get_readback(self, name):
         """Return readback value of a property."""
-        property = self._properties[name]
-        return property.readback
+        ppty = self._properties[name]
+        return ppty.readback
 
     def get_setpoint(self, name):
         """Return setpoint value of a property."""
-        property = self._properties[name]
-        return property.setpoint
+        ppty = self._properties[name]
+        return ppty.setpoint
 
     def set_setpoints_check(self, setpoints, timeout, order=None):
         """Set setpoints of properties."""
@@ -202,43 +203,51 @@ class EpicsPropertiesList:
         for name in order:
             value = setpoints[name]
             if value is not None:
-                property = self._properties[name]
-                property.setpoint = value
+                ppty = self._properties[name]
+                ppty.setpoint = value
         # check
         t0 = _time.time()
-        while True:
+        while _time.time() - t0 < timeout:
             finished = True
             for pvname, value in setpoints.items():
-                property = self._properties[pvname]
                 if value is None:
                     continue
-                if isinstance(value, _np.ndarray):
-                    if not all(property.readback == value):
+                rb = self._properties[pvname].readback
+                if isinstance(value, (tuple, list, _np.ndarray)):
+                    if not isinstance(rb, (tuple, list, _np.ndarray)):
                         finished = False
                         break
+                    if len(value) != len(rb):
+                        finished = False
+                        break
+                    for i in range(len(value)):
+                        if not _isclose(rb[i], value[i],
+                                        rel_tol=1e-06, abs_tol=0.0):
+                            finished = False
+                            break
                 else:
-                    if not property.readback == value:
+                    if not _isclose(rb, value, rel_tol=1e-06, abs_tol=0.0):
                         finished = False
                         break
-            if finished or _time.time()-t0 > timeout:
+            if finished:
                 break
-            _time.sleep(min(0.1, timeout))
+            _time.sleep(timeout/10.0)
         return finished
 
     def reset_default(self):
         """Reset properties to default values."""
-        for property in self._properties.values():
-            property.reset_default()
+        for ppty in self._properties.values():
+            ppty.reset_default()
 
     def set_callback(self, callback):
         """Set callback."""
-        for property in self._properties.values():
-            property.set_callback(callback)
+        for ppty in self._properties.values():
+            ppty.set_callback(callback)
 
     def set_connection_callback(self, connection_callback):
         """Set connection callback."""
-        for property in self._properties.values():
-            property.set_connection_callback(connection_callback)
+        for ppty in self._properties.values():
+            ppty.set_connection_callback(connection_callback)
 
     def __getitem__(self, key):
         """Property item."""

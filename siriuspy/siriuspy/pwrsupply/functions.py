@@ -6,7 +6,7 @@ an `execute` method.
 import time as _time
 
 # BSMP and PS constants
-from siriuspy.pwrsupply import bsmp as _bsmp
+from siriuspy.pwrsupply.bsmp import ConstBSMP as _c
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 
@@ -106,9 +106,12 @@ class PSPwrState(Function):
     def __init__(self, device_ids, pru_controller, setpoints=None):
         """Define function."""
         self._device_ids = device_ids
-        self.turn_on = BSMPFunction(device_ids, pru_controller, 0)
-        self.close_loop = BSMPFunction(device_ids, pru_controller, 3)
-        self.turn_off = BSMPFunction(device_ids, pru_controller, 1)
+        self.turn_on = BSMPFunction(
+            device_ids, pru_controller, _c.F_TURN_ON)
+        self.close_loop = BSMPFunction(
+            device_ids, pru_controller, _c.F_CLOSE_LOOP)
+        self.turn_off = BSMPFunction(
+            device_ids, pru_controller, _c.F_TURN_OFF)
         self.setpoints = setpoints
 
     def execute(self, value=None):
@@ -150,21 +153,19 @@ class PSPwrStateFBP_DCLink(Function):
         """Define function."""
         self.setpoints = setpoints
         self.turn_on = BSMPFunction(
-            device_ids, pru_controller, _bsmp.ConstBSMP.F_TURN_ON)
+            device_ids, pru_controller, _c.F_TURN_ON)
         self.turn_off = BSMPFunction(
-            device_ids, pru_controller, _bsmp.ConstBSMP.F_TURN_OFF)
+            device_ids, pru_controller, _c.F_TURN_OFF)
         self.open_loop = BSMPFunction(
-            device_ids, pru_controller, _bsmp.ConstBSMP.F_OPEN_LOOP)
+            device_ids, pru_controller, _c.F_OPEN_LOOP)
 
     def execute(self, value=None):
         """Execute Command."""
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
-            if value == 1:
+            if value == _PSConst.PwrStateSel.On:
                 self.turn_on.execute()
-                # _time.sleep(0.3)
-                # self.open_loop.execute()
-            elif value == 0:
+            elif value == _PSConst.PwrStateSel.Off:
                 self.turn_off.execute()
 
 
@@ -176,9 +177,9 @@ class CtrlLoop(Function):
         self.pru_controller = pru_controller
         self.setpoints = setpoints
         self.open_loop = BSMPFunction(
-            device_ids, pru_controller, _bsmp.ConstBSMP.F_OPEN_LOOP)
+            device_ids, pru_controller, _c.F_OPEN_LOOP)
         self.close_loop = BSMPFunction(
-            device_ids, pru_controller, _bsmp.ConstBSMP.F_CLOSE_LOOP)
+            device_ids, pru_controller, _c.F_CLOSE_LOOP)
 
     def execute(self, value=None):
         """Execute Command."""
@@ -199,9 +200,9 @@ class PSOpMode(Function):
         """Command."""
         self._device_ids = device_ids
         self.function = function
-        # Substitute 26 by const value
         self.disable_siggen = \
-            BSMPFunction(device_ids, function.pru_controller, 26)
+            BSMPFunction(device_ids, function.pru_controller,
+                         _c.F_DISABLE_SIGGEN)
         self.setpoints = setpoints
 
     def execute(self, value=None):
@@ -239,7 +240,7 @@ class Current(Function):
         self._device_ids = device_ids
         self.pru_controller = pru_controller
         self.set_current = BSMPFunction(
-            device_ids, pru_controller, _bsmp.ConstBSMP.F_SET_SLOWREF)
+            device_ids, pru_controller, _c.F_SET_SLOWREF)
         self.setpoints = setpoints
 
     def execute(self, value=None):
@@ -265,7 +266,7 @@ class Voltage(Function):
     def __init__(self, device_ids, pru_controller, setpoints=None):
         """Create command to set voltage."""
         self.device_ids = device_ids
-        func_id = _bsmp.ConstBSMP.F_SET_SLOWREF
+        func_id = _c.F_SET_SLOWREF
         self.set_voltage = BSMPFunction(device_ids, pru_controller, func_id)
         self.setpoints = setpoints
 
@@ -284,7 +285,7 @@ class CfgSiggen(Function):
         self._idx = idx
         self._setpoints = setpoints
         self._cfg = BSMPFunction(
-            device_ids, pru_controller, _bsmp.ConstBSMP.F_CFG_SIGGEN)
+            device_ids, pru_controller, _c.F_CFG_SIGGEN)
 
     def execute(self, value=None):
         """Execute command."""

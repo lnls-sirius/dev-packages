@@ -152,9 +152,6 @@ class PRUController:
     _delay_func_sync_pulse = 100  # [us]
     _delay_func_set_slowref_fbp = 100  # [us]
 
-    # Number of ramp cycles while increasing amplitude
-    _DEFAULT_RAMP_OFFSET = 1
-
     # --- public interface ---
 
     def __init__(self,
@@ -231,10 +228,6 @@ class PRUController:
         # preceeding write function are supposed to be in a locked scope in
         # order to avoid other write executations to read the respond of
         # previous write executions.
-
-        # ramp offset
-        self._ramp_offset = PRUController._DEFAULT_RAMP_OFFSET
-        self._ramp_offset_count = PRUController._DEFAULT_RAMP_OFFSET
 
         # define scan thread
         self._dev_idx_last_scanned = \
@@ -313,29 +306,6 @@ class PRUController:
     def connected(self):
         """Store connection state."""
         return all((self.check_connected(id) for id in self.device_ids))
-
-    @property
-    def ramp_offset(self):
-        """Ramp offset."""
-        return self._ramp_offset
-
-    @ramp_offset.setter
-    def ramp_offset(self, value):
-        self._ramp_offset = value
-
-    @property
-    def ramp_offset_count(self):
-        """Return current ramp offset count."""
-        return self._ramp_offset_count
-
-    @ramp_offset_count.setter
-    def ramp_offset_count(self, value):
-        self._ramp_offset_count = value
-
-    @property
-    def ramp_ready(self):
-        """Return wether ramp is ready."""
-        return True if self.ramp_offset_count == self.ramp_offset else False
 
     def check_connected(self, device_id):
         """Return connection state of a device."""
@@ -576,7 +546,7 @@ class PRUController:
         elif curvsize < curvsize0:
             for i in self.device_ids:
                 # trim wfmdata
-                self._curves[i] += self._curves[i][:curvsize]
+                self._curves[i] = self._curves[i][:curvsize]
 
         # store curve in PRUController attribute
         self._curves[idx] = list(curve)

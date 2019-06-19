@@ -1,6 +1,7 @@
 """Load and process BBB to PS data from static table in remote server."""
 
 from copy import deepcopy as _dcopy
+from threading import Lock as _Lock
 from siriuspy.namesys import Filter as _Filter, SiriusPVName as _PVName
 import siriuspy.servweb as _web
 
@@ -15,6 +16,8 @@ class BPMSearch:
 
     _mapping = None
     _timing_mapping = None
+
+    _lock = _Lock()
 
     # BPMsDATA API
     # ==========
@@ -69,13 +72,14 @@ class BPMSearch:
 
     @classmethod
     def _get_data(cls):
-        if cls._mapping is not None:
-            return
-        if not _web.server_online():
-            raise Exception('could not read data from web server!')
-        text = _web.bpms_data(timeout=_timeout)
-        cls._build_mapping(text)
-        cls._build_timing_to_bpm_mapping()
+        with cls._lock:
+            if cls._mapping is not None:
+                return
+            if not _web.server_online():
+                raise Exception('could not read data from web server!')
+            text = _web.bpms_data(timeout=_timeout)
+            cls._build_mapping(text)
+            cls._build_timing_to_bpm_mapping()
 
     @classmethod
     def _build_mapping(cls, text):

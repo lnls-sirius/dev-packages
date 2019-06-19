@@ -41,8 +41,8 @@ _ps_ramp = {
 
 _ps_normalized_configs = [
     # time [ms]            normalized configuration name
-    [_util.DEFAULT_PS_RAMP_RAMPUP_START_TIME, 'rampup-start'],
-    [_util.DEFAULT_PS_RAMP_RAMPUP_STOP_TIME, 'rampup-stop'],
+    [0,                              'ramp-start'],
+    [_util.DEFAULT_PS_RAMP_DURATION, 'ramp-stop'],
 ]
 
 _rf_ramp = {

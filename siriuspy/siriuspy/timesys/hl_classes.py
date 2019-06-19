@@ -1,16 +1,17 @@
 """Define the high level classes."""
 
 import time as _time
+from copy import deepcopy as _dcopy
 from functools import partial as _partial, reduce as _reduce
 from operator import or_ as _or_, and_ as _and_
 import logging as _log
+import numpy as _np
 from siriuspy.util import mode as _mode
 from siriuspy.thread import RepeaterThread as _Timer
 from siriuspy.search import HLTimeSearch as _HLSearch
 from siriuspy.csdevice import timesys as _cstime
 from .util import Base as _Base
-from .ll_classes import get_ll_trigger as _get_ll_trigger, \
-            LLEvent as _LLEvent, get_evg_name as _get_evg_name
+from .ll_classes import get_ll_trigger as _get_ll_trigger
 
 _INTERVAL = 0.01
 
@@ -55,12 +56,14 @@ class _BaseHL(_Base):
 
     @property
     def locked(self):
-        return _reduce(_and_, map(lambda x: x.locked, self._ll_objs))
+        dic_ = self._combine_default(map(lambda x: x.locked, self._ll_objs))
+        return dic_['value']
 
     @locked.setter
     def locked(self, value):
         for obj in self._ll_objs:
             obj.locked = bool(value)
+        self.run_callbacks(self._get_pv_name('LowLvlLock'), value=bool(value))
 
     def get_database(self):
         return dict()
@@ -137,12 +140,12 @@ class _BaseHL(_Base):
             # This is not recommended though, because it can create very
             # strange unusual behavior with widgets such as spinbox in PyDM
             # and CS-Studio.
-            # if not self._isrbpv(suf):
-            #     continue
-            # value = self.read(prop, is_sp=True)
-            # if value is None:
-            #     return
-            # self.run_callbacks(self._get_pv_name(prop, is_sp=True), **value)
+            if not self._isrbpv(suf):
+                continue
+            value = self.read(prop, is_sp=True)
+            if value is None:
+                return
+            self.run_callbacks(self._get_pv_name(prop, is_sp=True), **value)
 
     def _define_funs_combine_values(self):
         """Define a dictionary of functions to combine low level values.
@@ -190,25 +193,6 @@ class _BaseHL(_Base):
         return dic_
 
 
-class HLEvent(_BaseHL):
-    """High Level control of the Events of the EVG."""
-
-    def __init__(self, ev_hl, callback=None):
-        """Initialize object.
-
-        ev_ll: low level event code
-        """
-        evg_name = _get_evg_name()
-        ev_ll = _cstime.Const.EvtHL2LLMap[ev_hl]
-        ll_objs = [_LLEvent(evg_name + ':' + ev_ll), ]
-        prefix = evg_name + ':' + ev_hl
-        super().__init__(prefix, ll_objs, callback=callback)
-
-    def get_database(self):
-        """Create the database of the class."""
-        return _cstime.get_hl_event_database(self.prefix)
-
-
 class HLTrigger(_BaseHL):
     """High level Trigger interface."""
 
@@ -216,11 +200,50 @@ class HLTrigger(_BaseHL):
         """Appropriately initialize the instance."""
         src_enums = _cstime.get_hl_trigger_database(hl_trigger=hl_trigger)
         src_enums = src_enums['Src-Sel']['enums']
+        ll_obj_names = _HLSearch.get_ll_trigger_names(hl_trigger)
         ll_objs = list()
-        for name in _HLSearch.get_ll_trigger_names(hl_trigger):
+        self._hldelay = 0.0
+        self._hldeltadelay = _np.zeros(len(ll_obj_names))
+        for name in ll_obj_names:
             ll_objs.append(_get_ll_trigger(
                 channel=name, source_enums=src_enums))
         super().__init__(hl_trigger + ':', ll_objs, callback=callback)
+
+    def write(self, prop_name, value):
+        """Call to set high level properties.
+
+        It not only sets the new high level property value but also forwards it
+        to the low level classes.
+        """
+        if value is None:
+            return False
+        if prop_name.startswith('Delay'):
+            self._update_delay(value)
+            value = self._hldelay + self._hldeltadelay
+        elif prop_name.startswith('DeltaDelay'):
+            prop_name = prop_name.replace('DeltaDelay', 'Delay')
+            self._update_deltadelay(value)
+            value = self._hldelay + self._hldeltadelay
+        elif prop_name.startswith('LowLvlLock'):
+            self.locked = bool(value)
+            return True
+        else:
+            value = len(self._ll_objs) * [value, ]
+
+        boo = True
+        for val, obj in zip(value, self._ll_objs):
+            boo &= obj.write(prop_name, val)
+        return boo
+
+    def read(self, prop_name, is_sp=False):
+        fun = self._funs_combine_values.get(prop_name, self._combine_default)
+        if prop_name.startswith('DeltaDelay'):
+            prop_name = prop_name.replace('DeltaDelay', 'Delay')
+        if prop_name.startswith('LowLvlLock'):
+            vals = [x.locked for x in self._ll_objs]
+        else:
+            vals = [x.read(prop_name, is_sp=is_sp) for x in self._ll_objs]
+        return fun(vals)
 
     def get_database(self):
         """Get the database."""
@@ -236,6 +259,22 @@ class HLTrigger(_BaseHL):
     def get_ll_channels(self):
         return _HLSearch.get_hl_trigger_channels(self.prefix[:-1])
 
+    def _update_deltadelay(self, value):
+        if not hasattr(value, '__len__'):
+            value = _np.array([value, ], dtype=float)
+        if len(value) <= len(self._hldeltadelay):
+            self._hldeltadelay[:len(value)] = value
+        elif len(value) > len(self._hldeltadelay):
+            self._hldeltadelay = value[:len(self._hldelay)]
+        mini = min(self._hldeltadelay)
+        self._hldelay += mini
+        self._hldeltadelay -= mini
+        self._hldelay = 0 if self._hldelay <= 0 else self._hldelay
+        self.run_callbacks(self._get_pv_name('Delay'), value=self._hldelay)
+
+    def _update_delay(self, value):
+        self._hldelay = float(value)
+
     def _combine_status(self, values):
         status_or = _reduce(_or_, values)
         status_and = _reduce(_and_, values)
@@ -246,6 +285,31 @@ class HLTrigger(_BaseHL):
             severity = self.Severity.INVALID
         return {'value': status_or, 'alarm': alarm, 'severity': severity}
 
+    def _combine_deltadelay(self, values):
+        if any(map(lambda x: x is None, values)):
+            return {
+                'value': None,
+                'alarm': self.Alarm.COMM,
+                'severity': self.Severity.INVALID}
+        alarm = self.Alarm.NO
+        severity = self.Severity.NO
+        values = _np.array(values) - min(values)
+        return {'value': values, 'alarm': alarm, 'severity': severity}
+
+    def _combine_delay(self, values):
+        if any(map(lambda x: x is None, values)):
+            return {
+                'value': None,
+                'alarm': self.Alarm.COMM,
+                'severity': self.Severity.INVALID}
+        alarm = self.Alarm.NO
+        severity = self.Severity.NO
+        values = min(values)
+        return {'value': values, 'alarm': alarm, 'severity': severity}
+
     def _define_funs_combine_values(self):
         """Define a dictionary of functions to combine low level values."""
-        return {'Status': self._combine_status}
+        return {
+            'Status': self._combine_status,
+            'DeltaDelay': self._combine_deltadelay,
+            'Delay': self._combine_delay}
