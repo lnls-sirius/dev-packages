@@ -1,6 +1,7 @@
 """Search module."""
 
 import copy as _copy
+from threading import Lock as _Lock
 from siriuspy import util as _util
 from siriuspy.namesys import Filter as _Filter
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
@@ -35,28 +36,31 @@ class PSSearch:
 
     _ps_2_dclink_dict = None
 
+    _lock = _Lock()
+
     @staticmethod
     def get_psnames(filters=None):
         """Return a sorted and filtered list of all power supply names."""
-        if PSSearch._pstype_2_psnames_dict is None:
-            PSSearch._reload_pstype_2_psnames_dict()
+        with PSSearch._lock:
+            if PSSearch._pstype_2_psnames_dict is None:
+                PSSearch._reload_pstype_2_psnames_dict()
         return sorted(_Filter.process_filters(PSSearch._psnames_list,
                                               filters=filters))
 
     @staticmethod
     def get_pstype_names():
         """Return sorted list of power supply types."""
-        if PSSearch._pstype_dict is None:
-            PSSearch._reload_pstype_dict()
+        with PSSearch._lock:
+            if PSSearch._pstype_dict is None:
+                PSSearch._reload_pstype_dict()
         return sorted(set(PSSearch._pstype_dict.keys()))
 
     @staticmethod
     def get_bbbnames(filters=None):
         """Return a sorted and filtered list of all beaglebone names."""
-        if PSSearch._bbbname_2_bsmps_dict is None:
-            PSSearch._reload_bbb_2_bsmps_dict()
-        # if PSSearch._psname_2_bbbname_dict is None:
-        #     PSSearch._reload_bbb_2_psname_dict()
+        with PSSearch._lock:
+            if PSSearch._bbbname_2_bsmps_dict is None:
+                PSSearch._reload_bbb_2_bsmps_dict()
         bbname_list = tuple(PSSearch._bbbname_2_bsmps_dict.keys())
         return sorted(_Filter.process_filters(bbname_list, filters=filters))
 
@@ -66,8 +70,9 @@ class PSSearch:
 
         The label can be either epics' or pcaspy's.
         """
-        if PSSearch._pstype_2_splims_dict is None:
-            PSSearch._reload_pstype_2_splims_dict()
+        with PSSearch._lock:
+            if PSSearch._pstype_2_splims_dict is None:
+                PSSearch._reload_pstype_2_splims_dict()
         if label in PSSearch._splims_labels:
             return PSSearch._pstype_2_splims_dict[pstype][label]
         else:
@@ -81,8 +86,9 @@ class PSSearch:
         With key,value pairs of power supply types and corresponding
         (polarities,mag_function).
         """
-        if PSSearch._pstype_dict is None:
-            PSSearch._reload_pstype_dict()
+        with PSSearch._lock:
+            if PSSearch._pstype_dict is None:
+                PSSearch._reload_pstype_dict()
         return _copy.deepcopy(PSSearch._pstype_dict)
 
     @staticmethod
@@ -91,23 +97,26 @@ class PSSearch:
 
         With key,value pairs of bbbname and corresponding power supplies.
         """
-        if PSSearch._bbbname_2_bsmps_dict is None:
-            PSSearch._reload_bbb_2_bsmps_dict()
+        with PSSearch._lock:
+            if PSSearch._bbbname_2_bsmps_dict is None:
+                PSSearch._reload_bbb_2_bsmps_dict()
         return _copy.deepcopy(PSSearch._bbbname_2_bsmps_dict)
 
     @staticmethod
     def get_polarities():
         """Return sorted list of power supply polarities."""
-        if PSSearch._pstype_dict is None:
-            PSSearch._reload_pstype_dict()
+        with PSSearch._lock:
+            if PSSearch._pstype_dict is None:
+                PSSearch._reload_pstype_dict()
         p = [datum[0] for datum in PSSearch._pstype_dict.values()]
         return sorted(set(p))
 
     @staticmethod
     def conv_psname_2_pstype(psname):
         """Return the power supply type of a given power supply name."""
-        if PSSearch._pstype_2_psnames_dict is None:
-            PSSearch._reload_pstype_2_psnames_dict()
+        with PSSearch._lock:
+            if PSSearch._pstype_2_psnames_dict is None:
+                PSSearch._reload_pstype_2_psnames_dict()
         for pstype, psnames in PSSearch._pstype_2_psnames_dict.items():
             if psname in psnames:
                 return pstype
@@ -116,15 +125,17 @@ class PSSearch:
     @staticmethod
     def conv_pstype_2_polarity(pstype):
         """Return polarity of a given power supply type."""
-        if PSSearch._pstype_dict is None:
-            PSSearch._reload_pstype_dict()
+        with PSSearch._lock:
+            if PSSearch._pstype_dict is None:
+                PSSearch._reload_pstype_dict()
         return PSSearch._pstype_dict[pstype][0]
 
     @staticmethod
     def conv_pstype_2_magfunc(pstype):
         """Return magnetic function of a given power supply type."""
-        if PSSearch._pstype_dict is None:
-            PSSearch._reload_pstype_dict()
+        with PSSearch._lock:
+            if PSSearch._pstype_dict is None:
+                PSSearch._reload_pstype_dict()
         for key, value in PSSearch._pstype_dict.items():
             if key == pstype:
                 return value[1]
@@ -135,31 +146,34 @@ class PSSearch:
         """Convert pstype to splims."""
         if pstype is None:
             return None
-        if PSSearch._pstype_2_splims_dict is None:
-            PSSearch._reload_pstype_2_splims_dict()
+        with PSSearch._lock:
+            if PSSearch._pstype_2_splims_dict is None:
+                PSSearch._reload_pstype_2_splims_dict()
         return _copy.deepcopy(PSSearch._pstype_2_splims_dict[pstype])
 
     @staticmethod
     def conv_psname_2_excdata(psname):
         """Convert psname to excdata."""
         pstype = PSSearch.conv_psname_2_pstype(psname)
-        if pstype not in PSSearch._pstype_2_excdat_dict:
-            PSSearch._reload_pstype_2_excdat_dict(pstype)
-
+        with PSSearch._lock:
+            if pstype not in PSSearch._pstype_2_excdat_dict:
+                PSSearch._reload_pstype_2_excdat_dict(pstype)
         return PSSearch._pstype_2_excdat_dict[pstype]
 
     @staticmethod
     def conv_psname_2_psmodel(psname):
         """Convert psname to psmodel."""
-        if PSSearch._psname_2_psmodel_dict is None:
-            PSSearch._reload_psname_2_psmodel_dict()
+        with PSSearch._lock:
+            if PSSearch._psname_2_psmodel_dict is None:
+                PSSearch._reload_psname_2_psmodel_dict()
         return PSSearch._psname_2_psmodel_dict[psname]
 
     @staticmethod
     def conv_psname_2_siggenconf(psname):
         """Convert psname to corresponding SigGenConf object."""
-        if PSSearch._psname_2_siggen_dict is None:
-            PSSearch._reload_psname_2_siggen_dict()
+        with PSSearch._lock:
+            if PSSearch._psname_2_siggen_dict is None:
+                PSSearch._reload_psname_2_siggen_dict()
         return PSSearch._psname_2_siggen_dict[psname]
 
     @staticmethod
@@ -176,66 +190,76 @@ class PSSearch:
     @staticmethod
     def conv_bbbname_2_bsmps(bbbname):
         """Given bbb name return bsmps."""
-        if PSSearch._bbbname_2_bsmps_dict is None:
-            PSSearch._reload_bbb_2_bsmps_dict()
+        with PSSearch._lock:
+            if PSSearch._bbbname_2_bsmps_dict is None:
+                PSSearch._reload_bbb_2_bsmps_dict()
         return PSSearch._bbbname_2_bsmps_dict[bbbname]
 
     @staticmethod
     def conv_bbbname_2_freqs(bbbname):
         """Given bbb name return PRU sync off and on update frequencies."""
-        if PSSearch._bbbname_2_freqs_dict is None:
-            PSSearch._reload_bbb_2_freqs_dict()
+        with PSSearch._lock:
+            if PSSearch._bbbname_2_freqs_dict is None:
+                PSSearch._reload_bbb_2_freqs_dict()
         return PSSearch._bbbname_2_freqs_dict[bbbname]
 
     @staticmethod
     def conv_bbbname_2_udc(bbbname):
-        if PSSearch._bbbname_2_udc_dict is None:
-            PSSearch._reload_bbb_2_udc_dict()
+        with PSSearch._lock:
+            if PSSearch._bbbname_2_udc_dict is None:
+                PSSearch._reload_bbb_2_udc_dict()
         return PSSearch._bbbname_2_udc_dict[bbbname]
 
     @staticmethod
     def conv_udc_2_bbbname(udc):
-        if PSSearch._udc_2_bbbname_dict is None:
-            PSSearch._reload_bbb_2_udc_dict()
-        return PSSearch._udc_2_bbbname_dict[bbbname]
+        with PSSearch._lock:
+            if PSSearch._udc_2_bbbname_dict is None:
+                PSSearch._reload_bbb_2_udc_dict()
+        return PSSearch._udc_2_bbbname_dict[udc]
 
     @staticmethod
     def conv_udc_2_bsmps(udc):
-        if PSSearch._udc_2_bsmp_dict is None:
-            PSSearch._reload_udc_2_bsmp_dict()
+        with PSSearch._lock:
+            if PSSearch._udc_2_bsmp_dict is None:
+                PSSearch._reload_udc_2_bsmp_dict()
         return PSSearch._udc_2_bsmp_dict[udc]
 
     @staticmethod
     def conv_psname_2_udc(psname):
-        if PSSearch._bsmp_2_udc_dict is None:
-            PSSearch._reload_udc_2_bsmp_dict()
+        with PSSearch._lock:
+            if PSSearch._bsmp_2_udc_dict is None:
+                PSSearch._reload_udc_2_bsmp_dict()
         return PSSearch._bsmp_2_udc_dict[psname]
 
     @staticmethod
     def conv_psname_2_dclink(psname):
-        if PSSearch._ps_2_dclink_dict is None:
-            PSSearch._reload_ps_2_dclink_dict()
+        with PSSearch._lock:
+            if PSSearch._ps_2_dclink_dict is None:
+                PSSearch._reload_ps_2_dclink_dict()
         return PSSearch._ps_2_dclink_dict[psname]
 
     @staticmethod
     def get_pstype_2_psnames_dict():
         """Return dictionary of power supply type and power supply names."""
-        if PSSearch._pstype_2_psnames_dict is None:
-            PSSearch._reload_pstype_2_psnames_dict()
+        with PSSearch._lock:
+            if PSSearch._pstype_2_psnames_dict is None:
+                PSSearch._reload_pstype_2_psnames_dict()
         return _copy.deepcopy(PSSearch._pstype_2_psnames_dict)
 
     @staticmethod
     def get_pstype_2_splims_dict():
         """Return a dictionary of power supply type and setpoint limits."""
-        if PSSearch._pstype_2_splims_dict is None:
-            PSSearch._reload_pstype_2_splims_dict()
+        with PSSearch._lock:
+            if PSSearch._pstype_2_splims_dict is None:
+                PSSearch._reload_pstype_2_splims_dict()
         return _copy.deepcopy(PSSearch._pstype_2_splims_dict)
 
     @staticmethod
     def get_splims_unit(psmodel):
         """Return SP limits unit."""
-        if PSSearch._pstype_2_splims_dict is None:
-            PSSearch._reload_pstype_2_splims_dict()
+        with PSSearch._lock:
+            if PSSearch._pstype_2_splims_dict is None:
+                PSSearch._reload_pstype_2_splims_dict()
         if psmodel in ('FBP', 'FBP_DCLink', 'FBP_FOFB',
                        'FAC_ACDC', 'FAC_DCDC', 'FAC_2S_DCDC', 'FAC_2S_ACDC',
                        'FAC_2P4S_DCDC', 'FAC_2P4S_ACDC', 'FAP',
@@ -249,8 +273,9 @@ class PSSearch:
     @staticmethod
     def get_splims_labels():
         """Return labels in SP limits dictionary."""
-        if PSSearch._pstype_2_splims_dict is None:
-            PSSearch._reload_pstype_2_splims_dict()
+        with PSSearch._lock:
+            if PSSearch._pstype_2_splims_dict is None:
+                PSSearch._reload_pstype_2_splims_dict()
         return PSSearch._splims_labels
 
     # --- private methods ---
