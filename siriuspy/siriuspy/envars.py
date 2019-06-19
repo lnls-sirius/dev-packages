@@ -11,9 +11,9 @@ folder_epics_base = _os.environ.get(
 folder_lnls_sirius = _os.environ.get(
     'LNLS_SIRIUS',  default=_os.path.join(folder_root, 'lnls-sirius'))
 folder_lnls_fac = _os.environ.get(
-    'LNLS_FAC',     default=_os.path.join(folder_root, 'lnls-fac'))
+    'LNLS_FAC',     default=_os.path.join(folder_root, 'lnls-facs'))
 folder_lnls_ima = _os.environ.get(
-    'LNLS_IMA',     default=_os.path.join(folder_root, 'lnls-ima'))
+    'LNLS_IMA',     default=_os.path.join(folder_root, 'lnls-imas'))
 folder_fac_code = _os.path.join(
     folder_root, 'lnls-fac')
 folder_fac_data = _os.path.join(
