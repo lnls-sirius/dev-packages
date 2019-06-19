@@ -175,8 +175,8 @@ class TestBSMPVariablesGroup(TestCase):
         self.assertEqual(load, expected_load)
 
 
-class TestBSMPCurve(TestCase):
-    """Test Curve class."""
+class TestPSCurve(TestCase):
+    """Test PS Curve class."""
 
     pass
 

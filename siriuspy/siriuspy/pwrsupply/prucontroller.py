@@ -383,6 +383,24 @@ class PRUController:
 
         return values
 
+    def read_ps_curves(self, device_ids, curve_id):
+        """Return PS curves."""
+        # process device_ids
+        if isinstance(device_ids, int):
+            dev_ids = (device_ids, )
+        else:
+            dev_ids = device_ids
+
+        # gather selected data
+        with self._lock:
+            curves = _dcopy(self._ps_curves[curve_id])
+
+        dev_curves = dict()
+        for id in dev_ids:
+            dev_curves[id] = curves[id]
+
+        return dev_curves
+
     def exec_functions(self, device_ids, function_id, args=None):
         """
         Append BSMP function executions to opertations queue.
@@ -412,6 +430,19 @@ class PRUController:
             else:
                 args = (device_ids, function_id, args)
             operation = (self._bsmp_exec_function, args)
+            self._queue.append(operation)
+            return True
+        else:
+            # does nothing if PRU sync is on, regardless of sync mode.
+            return False
+
+    def update_ps_curves(self, device_ids, curve_id):
+        """Read PS curve."""
+        if self.pru_sync_status == self._params.PRU.SYNC_STATE.OFF:
+            # in PRU sync off mode, append BSM function exec operation to queue
+            if isinstance(device_ids, int):
+                device_ids = (device_ids, )
+            operation = (self._bsmp_update_ps_curves, (device_ids, curve_id))
             self._queue.append(operation)
             return True
         else:
@@ -726,6 +757,8 @@ class PRUController:
                 errmsg = 'udc version: {}'
                 print(errmsg.format(_udc_firmware_version))
                 print()
+                # TODO: turn version checking on when
+                # test bench firmware is updated.
                 # raise ValueError(errmsg)
 
     # --- private methods: scan and process ---
@@ -803,7 +836,7 @@ class PRUController:
 
     # --- private methods: BSMP UART communications ---
 
-    def _bsmp_get_curve(self, device_ids, curve_id):
+    def _bsmp_update_ps_curves(self, device_ids, curve_id):
         """Read curve from devices."""
         time0 = _time.time()
         curves = dict()
@@ -821,11 +854,14 @@ class PRUController:
         except (_SerialError, IndexError):
             tstamp = _time.time()
             dtime = tstamp - time0
-            operation = ('V', tstamp, dtime, device_ids, True)
+            operation = ('C', tstamp, dtime, device_ids, True)
             self._last_operation = operation
             self._serial_error(device_ids)
-            return dict()
-        return curves
+
+        # update
+        with self._lock:
+            for id in device_ids:
+                self._ps_curves[curve_id][id] = curves[id]
 
     def _bsmp_update_variables(self, device_ids, group_id):
         """Read a variable group of device(s).
@@ -1063,9 +1099,12 @@ class PRUController:
         # initialize variables_values, a mirror state of BSMP devices
         self._bsmp_init_variable_values()
 
+        # initialize ps curves
+        self._bsmp_init_ps_curves()
+
         # check if ps controller version is compatible with bsmp.py
-        # TODO: turn version checking on when test bench frmware is updated.
         self._init_check_version()
+
         # initialize parameters_values, a mirror state of BSMP devices
         # TODO: finish implementation of _bsmp_init_parameters_values!
         # self._bsmp_init_parameters_values()
@@ -1099,6 +1138,22 @@ class PRUController:
         except _SerialError:
             print('_bsmp_init_groups: serial error!')
             self._connected[id] = False
+
+    def _bsmp_init_ps_curves(self):
+        # init ps curves
+        self._ps_curves = dict()
+        for curve_id in (0, 1, 2):
+            self._ps_curves[curve_id] = dict()
+            for id in self._device_ids:
+                udc = self._udc[id]
+                curve_entity = udc.entities.curves[curve_id]
+                size = curve_entity.size // curve_entity.type.size
+                tsize = curve_entity.nblocks * size
+                self._ps_curves[curve_id][id] = _np.zeros(tsize)
+        # read from ps
+        self._bsmp_update_ps_curves(self._device_ids, 0)
+        self._bsmp_update_ps_curves(self._device_ids, 1)
+        self._bsmp_update_ps_curves(self._device_ids, 2)
 
     def _bsmp_init_variable_values(self):
 
