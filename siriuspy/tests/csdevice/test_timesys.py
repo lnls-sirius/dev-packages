@@ -219,6 +219,7 @@ class TestConst(TestCase):
         'ClockStates',
         'TrigStates',
         'TrigPol',
+        'LowLvlLock',
         'TrigDlyTyp',
         'TrigSrcLL',
         'EvtHL2LLMap',
