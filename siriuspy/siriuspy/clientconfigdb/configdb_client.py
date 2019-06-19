@@ -244,7 +244,7 @@ class ConfigDBException(Exception):
         self.server_message = response['message']
 
 
-def _jsonify_numpy(self, obj):
+def _jsonify_numpy(obj):
     if isinstance(obj, _np.ndarray):
         return obj.tolist()
     raise TypeError('Object is not JSON serializable.')
