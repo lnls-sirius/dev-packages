@@ -2,6 +2,7 @@
 
 import ast as _ast
 from copy import deepcopy as _dcopy
+from threading import Lock as _Lock
 from siriuspy import servweb as _web
 from siriuspy.namesys import SiriusPVName as _PVName, Filter as _Filter
 from .ll_time_search import LLTimeSearch as _LLSearch
@@ -14,6 +15,8 @@ class HLTimeSearch:
 
     _hl_triggers = dict()
     _hl_events = dict()
+
+    _lock = _Lock()
 
     @classmethod
     def get_hl_events(cls):
@@ -133,17 +136,18 @@ class HLTimeSearch:
     @classmethod
     def _init(cls):
         """Initialize the Instance."""
-        if cls._hl_triggers:
-            return
-        text1 = ''
-        text2 = ''
-        if _web.server_online():
-            text1 = _web.high_level_triggers(timeout=_timeout)
-            text2 = _web.high_level_events(timeout=_timeout)
-        else:
-            raise Exception('Could not connect with Consts Server!!')
-        temp_dict = _ast.literal_eval(text1)
-        for k, vs in temp_dict.items():
-            vs['channels'] = tuple(map(_PVName, vs['channels']))
-            cls._hl_triggers[_PVName(k)] = vs
-        cls._hl_events = _ast.literal_eval(text2)
+        with cls._lock:
+            if cls._hl_triggers:
+                return
+            text1 = ''
+            text2 = ''
+            if _web.server_online():
+                text1 = _web.high_level_triggers(timeout=_timeout)
+                text2 = _web.high_level_events(timeout=_timeout)
+            else:
+                raise Exception('Could not connect with Consts Server!!')
+            temp_dict = _ast.literal_eval(text1)
+            for k, vs in temp_dict.items():
+                vs['channels'] = tuple(map(_PVName, vs['channels']))
+                cls._hl_triggers[_PVName(k)] = vs
+            cls._hl_events = _ast.literal_eval(text2)

@@ -1,6 +1,7 @@
 """Search module."""
 
 import copy as _copy
+from threading import Lock as _Lock
 from siriuspy import util as _util
 from siriuspy.namesys import Filter as _Filter
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
@@ -21,14 +22,17 @@ class MASearch:
     _splims_labels = None
     _splims_unit = None
 
+    _lock = _Lock()
+
     @staticmethod
     def get_manames(filters=None, sorting=None):
         """Return a sorted and filtered list of all magnet names.
 
         This list also includes pulsed magnets (PM).
         """
-        if MASearch._manames_list is None:
-            MASearch._reload_maname_2_psnames_dict()
+        with MASearch._lock:
+            if MASearch._manames_list is None:
+                MASearch._reload_maname_2_psnames_dict()
         return _Filter.process_filters(MASearch._manames_list,
                                        filters=filters,
                                        sorting=sorting)
@@ -36,8 +40,9 @@ class MASearch:
     @staticmethod
     def get_pwrsupply_manames(filters=None, sorting=None):
         """Return a sorted and filtered list of all pwrsupply magnet names."""
-        if MASearch._maname_2_splims_dict is None:
-            MASearch._reload_maname_2_splims_dict()
+        with MASearch._lock:
+            if MASearch._maname_2_splims_dict is None:
+                MASearch._reload_maname_2_splims_dict()
         ps_manames_list = list(MASearch._maname_2_splims_dict.keys())
         return _Filter.process_filters(ps_manames_list,
                                        filters=filters,
@@ -49,8 +54,9 @@ class MASearch:
 
         This list also includes pulsed magnets (PM).
         """
-        if MASearch._maname_2_modeldata_dict is None:
-            MASearch._reload_maname_2_model_data()
+        with MASearch._lock:
+            if MASearch._maname_2_modeldata_dict is None:
+                MASearch._reload_maname_2_model_data()
         if not names:
             names = MASearch.get_manames(filters=filters, sorting=sorting)
         return [MASearch._maname_2_modeldata_dict[mag]['pos'] for mag in names]
@@ -68,8 +74,9 @@ class MASearch:
     @staticmethod
     def get_splims_unit(psmodel):
         """Get unit of SP limits."""
-        if MASearch._maname_2_splims_dict is None:
-            MASearch._reload_maname_2_splims_dict()
+        with MASearch._lock:
+            if MASearch._maname_2_splims_dict is None:
+                MASearch._reload_maname_2_splims_dict()
         if psmodel in ('FBP', 'FBP_DCLink', 'FBP_FOFB',
                        'FAC_ACDC', 'FAC_DCDC', 'FAC_2S_DCDC', 'FAC_2S_ACDC',
                        'FAC_2P4S_DCDC', 'FAC_2P4S_ACDC', 'FAP',
@@ -87,8 +94,9 @@ class MASearch:
 
         that correspond to given label (either epics' or pcaspy's).
         """
-        if MASearch._maname_2_splims_dict is None:
-            MASearch._reload_maname_2_splims_dict()
+        with MASearch._lock:
+            if MASearch._maname_2_splims_dict is None:
+                MASearch._reload_maname_2_splims_dict()
         if label in MASearch._splims_labels:
             return MASearch._maname_2_splims_dict[maname][label]
         else:
@@ -101,15 +109,17 @@ class MASearch:
     @staticmethod
     def conv_maname_2_trims(maname):
         """Convert maname powersupply to its trims."""
-        if MASearch._maname_2_trim_dict is None:
-            MASearch._reload_maname_2_psnames_dict()
+        with MASearch._lock:
+            if MASearch._maname_2_trim_dict is None:
+                MASearch._reload_maname_2_psnames_dict()
         return MASearch._maname_2_trim_dict.get(maname, None)
 
     @staticmethod
     def conv_maname_2_magfunc(maname):
         """Return a dict mapping ps to magnet functions for given magnet ps."""
-        if MASearch._maname_2_psnames_dict is None:
-            MASearch._reload_maname_2_psnames_dict()
+        with MASearch._lock:
+            if MASearch._maname_2_psnames_dict is None:
+                MASearch._reload_maname_2_psnames_dict()
         ps = MASearch._maname_2_psnames_dict[maname]
         ps_types = tuple(map(_PSSearch.conv_psname_2_pstype, ps))
         ma_func = tuple(map(_PSSearch.conv_pstype_2_magfunc, ps_types))
@@ -125,15 +135,17 @@ class MASearch:
         """Convert maname powersupply to a dict with its setpoint limits."""
         if maname is None:
             return None
-        if MASearch._maname_2_splims_dict is None:
-            MASearch._reload_maname_2_splims_dict()
+        with MASearch._lock:
+            if MASearch._maname_2_splims_dict is None:
+                MASearch._reload_maname_2_splims_dict()
         return _copy.deepcopy(MASearch._maname_2_splims_dict[maname])
 
     @staticmethod
     def conv_maname_2_psnames(maname):
         """Return list of power supplies associated with a given magnet."""
-        if MASearch._maname_2_psnames_dict is None:
-            MASearch._reload_maname_2_psnames_dict()
+        with MASearch._lock:
+            if MASearch._maname_2_psnames_dict is None:
+                MASearch._reload_maname_2_psnames_dict()
         return MASearch._maname_2_psnames_dict[maname]
 
     @staticmethod
@@ -153,8 +165,9 @@ class MASearch:
     @staticmethod
     def conv_psname_2_psmaname(psname):
         """Return power supply maname for a given psname."""
-        if MASearch._psnames_list is None:
-            MASearch._reload_maname_2_psnames_dict()
+        with MASearch._lock:
+            if MASearch._psnames_list is None:
+                MASearch._reload_maname_2_psnames_dict()
         if psname not in MASearch._psnames_list or 'DCLink' in psname or \
                 'Slave' in psname:
             return None
@@ -180,8 +193,9 @@ class MASearch:
     @staticmethod
     def get_maname_2_splims_dict():
         """Return a dictionary of power supply magnet and setpoint limits."""
-        if MASearch._maname_2_splims_dict is None:
-            MASearch._reload_maname_2_splims_dict()
+        with MASearch._lock:
+            if MASearch._maname_2_splims_dict is None:
+                MASearch._reload_maname_2_splims_dict()
         return _copy.deepcopy(MASearch._maname_2_splims_dict)
 
     # --- private methods ---

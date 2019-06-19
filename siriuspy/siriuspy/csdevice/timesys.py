@@ -1,6 +1,7 @@
 """Define properties of all timing devices and their connections."""
 
 from copy import deepcopy as _dcopy
+import numpy as _np
 from mathphys import constants as _c
 import siriuspy.csdevice.util as _cutil
 from siriuspy.optics import constants as _oc
@@ -16,6 +17,7 @@ class ETypes(_cutil.ETypes):
     TRIG_SRC_LL = (
         'Dsbl', 'Trigger', 'Clock0', 'Clock1', 'Clock2',
         'Clock3', 'Clock4', 'Clock5', 'Clock6', 'Clock7')
+    LOCKLL = ('Unlocked', 'Locked')
     DLYTYP = ('Manual', 'Auto')
     RFOUT = ('OFF', '5RF/2', '5RF/4', 'RF', 'RF/2', 'RF/4')
 
@@ -41,6 +43,7 @@ class Const(_cutil.Const):
     ClockStates = _cutil.Const.register('ClockStates', _et.DSBL_ENBL)
     TrigStates = _cutil.Const.register('TrigStates', _et.DSBL_ENBL)
     TrigPol = _cutil.Const.register('TrigPol', _et.NORM_INV)
+    LowLvlLock = _cutil.Const.register('LowLvlLock', _et.LOCKLL)
     TrigDlyTyp = _cutil.Const.register('TrigDlyTyp', _et.DLYTYP)
     TrigSrcLL = _cutil.Const.register('TrigSrcLL', _et.TRIG_SRC_LL)
     HLTrigStatusLabels = (
@@ -477,6 +480,7 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     """Return database of the specified hl_trigger."""
     db = dict()
     trig_db = _HLTimeSearch.get_hl_trigger_predef_db(hl_trigger)
+    ll_trig_names = _HLTimeSearch.get_ll_trigger_names(hl_trigger)
 
     dic_ = {'type': 'enum', 'enums': _et.DSBL_ENBL}
     dic_.update(trig_db['State'])
@@ -518,6 +522,18 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     db['Delay-RB'] = _dcopy(dic_)
     db['Delay-SP'] = dic_
 
+    siz = len(ll_trig_names)
+    dic_ = {'type': 'float', 'unit': 'us', 'prec': 6,
+            'count': siz, 'value': _np.zeros(siz),
+            'lolo': -500000, 'low': -1000000, 'lolim': -10000000,
+            'hilim': 500000, 'high': 1000000, 'hihi': 10000000}
+    db['DeltaDelay-RB'] = _dcopy(dic_)
+    db['DeltaDelay-SP'] = dic_
+
+    dic_ = {'type': 'enum', 'enums': _et.LOCKLL, 'value': 0}
+    db['LowLvlLock-Sts'] = _dcopy(dic_)
+    db['LowLvlLock-Sel'] = dic_
+
     dic_ = {'type': 'enum', 'enums': _et.DLYTYP}
     dic_.update(trig_db['RFDelayType'])
     db['RFDelayType-Sts'] = _dcopy(dic_)
@@ -533,7 +549,7 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
         'type': 'char', 'count': 1000,
         'value': '\n'.join(Const.HLTrigStatusLabels)
         }
-    ll_trigs = '\n'.join(_HLTimeSearch.get_ll_trigger_names(hl_trigger))
+    ll_trigs = '\n'.join(ll_trig_names)
     db['LowLvlTriggers-Cte'] = {
         'type': 'char', 'count': 5000, 'value': ll_trigs}
     channels = '\n'.join(_HLTimeSearch.get_hl_trigger_channels(hl_trigger))
