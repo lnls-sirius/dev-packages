@@ -24,20 +24,20 @@ def get_dict():
 # delay [s] the client should wait before setting the next PV.
 
 _pvs_li_egunmod = [
-    ['egun:biasps:switch', 0, 0],
-    ['egun:biasps:voltoutsoft', -60.0, 0.0],   # Volt
-    ['egun:filaps:switch', 0, 0],
-    ['egun:hvps:currentoutsoft', 0.003, 0.0],  # mA
-    ['egun:hvps:enable', 0, 0.0],
-    ['egun:pulseps:multiselect', 0, 0.0],
-    ['egun:pulseps:multiswitch', 0, 0.0],
-    ['egun:pulseps:singleselect', 0, 0.0],
-    ['egun:pulseps:singleswitch', 0, 0.0],
-    ['egun:pulseps:poweroutsoft', 0.0, 0.0],  # Volt
-    ['sirius_md:WRITE_I', 100.0, 0.0],        # mA
-    ['sirius_md_02:WRITE_I', 100.0, 0.0],     # mA
-    ['sirius_md:WRITE_V', 0.0, 0.0],          # kV
-    ['sirius_md_02:WRITE_V', 0.0, 0.0],       # kV
+    ['LI-01:EG-BiasPS:switch', 0, 0],
+    ['LI-01:EG-BiasPS:voltoutsoft', -60.0, 0.0],   # Volt
+    ['LI-01:EG-FilaPS:switch', 0, 0],
+    ['LI-01:EG-HVPS:currentoutsoft', 0.003, 0.0],  # mA
+    ['LI-01:EG-HVPS:enable', 0, 0.0],
+    ['LI-01:EG-PulsePS:multiselect', 0, 0.0],
+    ['LI-01:EG-PulsePS:multiswitch', 0, 0.0],
+    ['LI-01:EG-PulsePS:singleselect', 0, 0.0],
+    ['LI-01:EG-PulsePS:singleswitch', 0, 0.0],
+    ['LI-01:EG-PulsePS:poweroutsoft', 0.0, 0.0],  # Volt
+    ['LI-01:PU-Modltr-1:WRITE_I', 100.0, 0.0],        # mA
+    ['LI-01:PU-Modltr-2:WRITE_I', 100.0, 0.0],     # mA
+    ['LI-01:PU-Modltr-1:WRITE_V', 0.0, 0.0],          # kV
+    ['LI-01:PU-Modltr-2:WRITE_V', 0.0, 0.0],       # kV
     ]
 
 _pvs_li_llrf = [
