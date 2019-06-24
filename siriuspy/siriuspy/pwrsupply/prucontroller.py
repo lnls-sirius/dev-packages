@@ -529,7 +529,6 @@ class PRUController:
 
     def pru_curve_set(self, device_id, curve):
         """Set PRU curve of a BSMP device."""
-        print('here!')
         # get index of curve for the given device id
         idx = self.device_ids.index(device_id)
 
