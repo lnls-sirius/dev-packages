@@ -529,6 +529,7 @@ class PRUController:
 
     def pru_curve_set(self, device_id, curve):
         """Set PRU curve of a BSMP device."""
+        print('here!')
         # get index of curve for the given device id
         idx = self.device_ids.index(device_id)
 
@@ -539,12 +540,12 @@ class PRUController:
         elif curvsize > _MAX_WFMSIZE:
             raise ValueError('Curve length exceeds maximum value!')
         elif curvsize > curvsize0:
-            for i in self.device_ids:
-                # padd wfmdata with current last value
+            for i in range(len(self.device_ids)):
+                # padd wfmdata with last current value
                 self._curves[i] += [self._curves[i][-1], ] * \
                     (curvsize - curvsize0)
         elif curvsize < curvsize0:
-            for i in self.device_ids:
+            for i in range(len(self.device_ids)):
                 # trim wfmdata
                 self._curves[i] = self._curves[i][:curvsize]
 
