@@ -72,11 +72,11 @@ class BPMSearch:
 
     @classmethod
     def _get_data(cls):
+        if cls._mapping is not None:
+            return
+        if not _web.server_online():
+            raise Exception('could not read data from web server!')
         with cls._lock:
-            if cls._mapping is not None:
-                return
-            if not _web.server_online():
-                raise Exception('could not read data from web server!')
             text = _web.bpms_data(timeout=_timeout)
             cls._build_mapping(text)
             cls._build_timing_to_bpm_mapping()

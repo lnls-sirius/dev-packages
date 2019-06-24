@@ -315,13 +315,12 @@ class LLTimeSearch:
 
     @classmethod
     def _get_timedata(cls):
+        if cls._conn_from_evg:
+            return
+        if not _web.server_online():
+            raise Exception('Could not connect with Consts Server!!')
         with cls._lock:
-            if cls._conn_from_evg:
-                return
-            if _web.server_online():
-                text = _web.timing_devices_mapping(timeout=_timeout)
-            else:
-                raise Exception('Could not connect with Consts Server!!')
+            text = _web.timing_devices_mapping(timeout=_timeout)
             cls._parse_text_and_build_connection_mappings(text)
             cls._update_related_maps()
 

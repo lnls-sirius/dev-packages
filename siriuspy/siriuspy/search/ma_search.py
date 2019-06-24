@@ -15,7 +15,7 @@ class MASearch:
 
     _psnames_list = None
     _manames_list = None
-    _maname_2_splims_dict = None  # magnets-stpoint-limits file
+    _maname_2_splims_dict = None  # magnets-setpoint-limits file
     _maname_2_psnames_dict = None  # magnet-excitation-ps file
     _maname_2_trim_dict = None
     _maname_2_modeldata_dict = None
@@ -30,9 +30,7 @@ class MASearch:
 
         This list also includes pulsed magnets (PM).
         """
-        with MASearch._lock:
-            if MASearch._manames_list is None:
-                MASearch._reload_maname_2_psnames_dict()
+        MASearch._reload_maname_2_psnames_dict()
         return _Filter.process_filters(MASearch._manames_list,
                                        filters=filters,
                                        sorting=sorting)
@@ -40,9 +38,7 @@ class MASearch:
     @staticmethod
     def get_pwrsupply_manames(filters=None, sorting=None):
         """Return a sorted and filtered list of all pwrsupply magnet names."""
-        with MASearch._lock:
-            if MASearch._maname_2_splims_dict is None:
-                MASearch._reload_maname_2_splims_dict()
+        MASearch._reload_maname_2_splims_dict()
         ps_manames_list = list(MASearch._maname_2_splims_dict.keys())
         return _Filter.process_filters(ps_manames_list,
                                        filters=filters,
@@ -54,9 +50,7 @@ class MASearch:
 
         This list also includes pulsed magnets (PM).
         """
-        with MASearch._lock:
-            if MASearch._maname_2_modeldata_dict is None:
-                MASearch._reload_maname_2_model_data()
+        MASearch._reload_maname_2_model_data()
         if not names:
             names = MASearch.get_manames(filters=filters, sorting=sorting)
         return [MASearch._maname_2_modeldata_dict[mag]['pos'] for mag in names]
@@ -74,9 +68,7 @@ class MASearch:
     @staticmethod
     def get_splims_unit(psmodel):
         """Get unit of SP limits."""
-        with MASearch._lock:
-            if MASearch._maname_2_splims_dict is None:
-                MASearch._reload_maname_2_splims_dict()
+        MASearch._reload_maname_2_splims_dict()
         if psmodel in ('FBP', 'FBP_DCLink', 'FBP_FOFB',
                        'FAC_ACDC', 'FAC_DCDC', 'FAC_2S_DCDC', 'FAC_2S_ACDC',
                        'FAC_2P4S_DCDC', 'FAC_2P4S_ACDC', 'FAP',
@@ -94,9 +86,7 @@ class MASearch:
 
         that correspond to given label (either epics' or pcaspy's).
         """
-        with MASearch._lock:
-            if MASearch._maname_2_splims_dict is None:
-                MASearch._reload_maname_2_splims_dict()
+        MASearch._reload_maname_2_splims_dict()
         if label in MASearch._splims_labels:
             return MASearch._maname_2_splims_dict[maname][label]
         else:
@@ -109,17 +99,13 @@ class MASearch:
     @staticmethod
     def conv_maname_2_trims(maname):
         """Convert maname powersupply to its trims."""
-        with MASearch._lock:
-            if MASearch._maname_2_trim_dict is None:
-                MASearch._reload_maname_2_psnames_dict()
+        MASearch._reload_maname_2_psnames_dict()
         return MASearch._maname_2_trim_dict.get(maname, None)
 
     @staticmethod
     def conv_maname_2_magfunc(maname):
         """Return a dict mapping ps to magnet functions for given magnet ps."""
-        with MASearch._lock:
-            if MASearch._maname_2_psnames_dict is None:
-                MASearch._reload_maname_2_psnames_dict()
+        MASearch._reload_maname_2_psnames_dict()
         ps = MASearch._maname_2_psnames_dict[maname]
         ps_types = tuple(map(_PSSearch.conv_psname_2_pstype, ps))
         ma_func = tuple(map(_PSSearch.conv_pstype_2_magfunc, ps_types))
@@ -135,17 +121,13 @@ class MASearch:
         """Convert maname powersupply to a dict with its setpoint limits."""
         if maname is None:
             return None
-        with MASearch._lock:
-            if MASearch._maname_2_splims_dict is None:
-                MASearch._reload_maname_2_splims_dict()
+        MASearch._reload_maname_2_splims_dict()
         return _copy.deepcopy(MASearch._maname_2_splims_dict[maname])
 
     @staticmethod
     def conv_maname_2_psnames(maname):
         """Return list of power supplies associated with a given magnet."""
-        with MASearch._lock:
-            if MASearch._maname_2_psnames_dict is None:
-                MASearch._reload_maname_2_psnames_dict()
+        MASearch._reload_maname_2_psnames_dict()
         return MASearch._maname_2_psnames_dict[maname]
 
     @staticmethod
@@ -165,9 +147,7 @@ class MASearch:
     @staticmethod
     def conv_psname_2_psmaname(psname):
         """Return power supply maname for a given psname."""
-        with MASearch._lock:
-            if MASearch._psnames_list is None:
-                MASearch._reload_maname_2_psnames_dict()
+        MASearch._reload_maname_2_psnames_dict()
         if psname not in MASearch._psnames_list or 'DCLink' in psname or \
                 'Slave' in psname:
             return None
@@ -193,9 +173,7 @@ class MASearch:
     @staticmethod
     def get_maname_2_splims_dict():
         """Return a dictionary of power supply magnet and setpoint limits."""
-        with MASearch._lock:
-            if MASearch._maname_2_splims_dict is None:
-                MASearch._reload_maname_2_splims_dict()
+        MASearch._reload_maname_2_splims_dict()
         return _copy.deepcopy(MASearch._maname_2_splims_dict)
 
     # --- private methods ---
@@ -203,7 +181,12 @@ class MASearch:
     @staticmethod
     def _reload_maname_2_splims_dict():
         """Build dict with limits for each magnet."""
-        if _web.server_online():
+        if MASearch._maname_2_splims_dict is not None:
+            return
+        if not _web.server_online():
+            raise Exception(
+                'could not read magnet splims from web server!')
+        with MASearch._lock:
             # MA data
             text = _web.magnets_setpoint_limits()
             ma_data, ma_param_dict = _util.read_text_data(text)
@@ -219,58 +202,64 @@ class MASearch:
             MASearch._splims_ma_unit = ma_param_dict['unit']
             MASearch._splims_pm_unit = pm_param_dict['unit']
             MASearch._splims_labels = tuple(types)
-            MASearch._maname_2_splims_dict = {}
 
+            maname_2_splims_dict = dict()
             for datum in data:
                 maname, *limits = datum
                 db = {MASearch._splims_labels[i]: float(limits[i])
                       for i in range(len(MASearch._splims_labels))}
-                MASearch._maname_2_splims_dict[maname] = db
-        else:
-            raise Exception('could not read magnet splims from web server!')
+                maname_2_splims_dict[maname] = db
+            MASearch._maname_2_splims_dict = maname_2_splims_dict
 
     @staticmethod
     def _reload_maname_2_psnames_dict():
         """Build a dict of tuples with power supplies of each magnet."""
+        if MASearch._maname_2_psnames_dict is not None:
+            return
         if not _web.server_online():
             raise Exception(
                 'could not read magnet-excitation-ps from web server!')
-        text = _web.magnets_excitation_ps_read()
-        data, param_dict = _util.read_text_data(text)
-        MASearch._maname_2_psnames_dict = {}
-        MASearch._maname_2_trim_dict = {}
-        MASearch._manames_list = []
-        for datum in data:
-            magnet, *psnames = datum
-            magnet = _SiriusPVName(magnet)
-            MASearch._manames_list.append(magnet)
-            MASearch._maname_2_psnames_dict[magnet] = tuple(psnames)
-            if 'Fam' != magnet.sub:
-                famname = magnet
-                famname = famname.replace(
-                    famname.sub, 'Fam').replace('MA-', 'PS-')
-                if '-Fam:PS-Q' in famname and famname in psnames:
-                    psnames.remove(famname)
-                    maname = famname.replace('PS-', 'MA-')
-                    if maname not in MASearch._maname_2_trim_dict:
-                        MASearch._maname_2_trim_dict[maname] = \
-                            tuple(psnames)
-                    else:
-                        MASearch._maname_2_trim_dict[maname] += \
-                            tuple(psnames)
-        MASearch._manames_list = sorted(MASearch._manames_list)
-        MASearch._psnames_list = _PSSearch.get_psnames()
+        with MASearch._lock:
+            text = _web.magnets_excitation_ps_read()
+            data, param_dict = _util.read_text_data(text)
+            maname_2_psnames_dict = dict()
+            maname_2_trim_dict = dict()
+            manames_list = list()
+            for datum in data:
+                magnet, *psnames = datum
+                magnet = _SiriusPVName(magnet)
+                manames_list.append(magnet)
+                maname_2_psnames_dict[magnet] = tuple(psnames)
+                if 'Fam' != magnet.sub:
+                    famname = magnet
+                    famname = famname.replace(
+                        famname.sub, 'Fam').replace('MA-', 'PS-')
+                    if '-Fam:PS-Q' in famname and famname in psnames:
+                        psnames.remove(famname)
+                        maname = famname.replace('PS-', 'MA-')
+                        if maname not in maname_2_trim_dict:
+                            maname_2_trim_dict[maname] = tuple(psnames)
+                        else:
+                            maname_2_trim_dict[maname] += tuple(psnames)
+            MASearch._maname_2_psnames_dict = maname_2_psnames_dict
+            MASearch._maname_2_trim_dict = maname_2_trim_dict
+            MASearch._manames_list = sorted(manames_list)
+            MASearch._psnames_list = _PSSearch.get_psnames()
 
     @staticmethod
     def _reload_maname_2_model_data():
         """Build a dictionary of model information for each magnet."""
+        if MASearch._maname_2_modeldata_dict is not None:
+            return
         if not _web.server_online():
             raise Exception(
-                'could not read magnet-excitation-ps from web server!')
-        text = _web.magnets_model_data()
-        data, param_dict = _util.read_text_data(text)
-        MASearch._maname_2_modeldata_dict = {}
-        for datum in data:
-            mag, *data = datum
-            mag = _SiriusPVName(mag)
-            MASearch._maname_2_modeldata_dict[mag] = {'pos': float(data[0])}
+                'could not read magnet model data from web server!')
+        with MASearch._lock:
+            text = _web.magnets_model_data()
+            data, param_dict = _util.read_text_data(text)
+            maname_2_modeldata_dict = dict()
+            for datum in data:
+                mag, *data = datum
+                mag = _SiriusPVName(mag)
+                maname_2_modeldata_dict[mag] = {'pos': float(data[0])}
+            MASearch._maname_2_modeldata_dict = maname_2_modeldata_dict

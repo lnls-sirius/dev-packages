@@ -136,18 +136,17 @@ class HLTimeSearch:
     @classmethod
     def _init(cls):
         """Initialize the Instance."""
+        if cls._hl_triggers:
+            return
+        if not _web.server_online():
+            raise Exception('Could not connect with Consts Server!!')
         with cls._lock:
-            if cls._hl_triggers:
-                return
-            text1 = ''
-            text2 = ''
-            if _web.server_online():
-                text1 = _web.high_level_triggers(timeout=_timeout)
-                text2 = _web.high_level_events(timeout=_timeout)
-            else:
-                raise Exception('Could not connect with Consts Server!!')
+            text1 = _web.high_level_triggers(timeout=_timeout)
+            text2 = _web.high_level_events(timeout=_timeout)
             temp_dict = _ast.literal_eval(text1)
+            hl_trigs = dict()
             for k, vs in temp_dict.items():
                 vs['channels'] = tuple(map(_PVName, vs['channels']))
-                cls._hl_triggers[_PVName(k)] = vs
+                hl_trigs[_PVName(k)] = vs
+            cls._hl_triggers = hl_trigs
             cls._hl_events = _ast.literal_eval(text2)
