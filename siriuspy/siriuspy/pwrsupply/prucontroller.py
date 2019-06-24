@@ -539,14 +539,13 @@ class PRUController:
         elif curvsize > _MAX_WFMSIZE:
             raise ValueError('Curve length exceeds maximum value!')
         elif curvsize > curvsize0:
-            for i in self.device_ids:
-                # padd wfmdata with current last value
-                self._curves[i] += [self._curves[i][-1], ] * \
-                    (curvsize - curvsize0)
+            for curve in self._curves:
+                # padd wfmdata with last current value
+                curve += [curve[-1], ] * (curvsize - curvsize0)
         elif curvsize < curvsize0:
-            for i in self.device_ids:
+            for curve in self._curves:
                 # trim wfmdata
-                self._curves[i] = self._curves[i][:curvsize]
+                del curve[curvsize:]
 
         # store curve in PRUController attribute
         self._curves[idx] = list(curve)
