@@ -181,12 +181,12 @@ class MASearch:
     @staticmethod
     def _reload_maname_2_splims_dict():
         """Build dict with limits for each magnet."""
-        if MASearch._maname_2_splims_dict is not None:
-            return
-        if not _web.server_online():
-            raise Exception(
-                'could not read magnet splims from web server!')
         with MASearch._lock:
+            if MASearch._maname_2_splims_dict is not None:
+                return
+            if not _web.server_online():
+                raise Exception(
+                    'could not read magnet splims from web server!')
             # MA data
             text = _web.magnets_setpoint_limits()
             ma_data, ma_param_dict = _util.read_text_data(text)
@@ -214,12 +214,12 @@ class MASearch:
     @staticmethod
     def _reload_maname_2_psnames_dict():
         """Build a dict of tuples with power supplies of each magnet."""
-        if MASearch._maname_2_psnames_dict is not None:
-            return
-        if not _web.server_online():
-            raise Exception(
-                'could not read magnet-excitation-ps from web server!')
         with MASearch._lock:
+            if MASearch._maname_2_psnames_dict is not None:
+                return
+            if not _web.server_online():
+                raise Exception(
+                    'could not read magnet-excitation-ps from web server!')
             text = _web.magnets_excitation_ps_read()
             data, param_dict = _util.read_text_data(text)
             maname_2_psnames_dict = dict()
@@ -249,12 +249,12 @@ class MASearch:
     @staticmethod
     def _reload_maname_2_model_data():
         """Build a dictionary of model information for each magnet."""
-        if MASearch._maname_2_modeldata_dict is not None:
-            return
-        if not _web.server_online():
-            raise Exception(
-                'could not read magnet model data from web server!')
         with MASearch._lock:
+            if MASearch._maname_2_modeldata_dict is not None:
+                return
+            if not _web.server_online():
+                raise Exception(
+                    'could not read magnet model data from web server!')
             text = _web.magnets_model_data()
             data, param_dict = _util.read_text_data(text)
             maname_2_modeldata_dict = dict()

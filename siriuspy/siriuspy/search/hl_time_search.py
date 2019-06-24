@@ -136,11 +136,11 @@ class HLTimeSearch:
     @classmethod
     def _init(cls):
         """Initialize the Instance."""
-        if cls._hl_triggers:
-            return
-        if not _web.server_online():
-            raise Exception('Could not connect with Consts Server!!')
         with cls._lock:
+            if cls._hl_triggers:
+                return
+            if not _web.server_online():
+                raise Exception('Could not connect with Consts Server!!')
             text1 = _web.high_level_triggers(timeout=_timeout)
             text2 = _web.high_level_events(timeout=_timeout)
             temp_dict = _ast.literal_eval(text1)
