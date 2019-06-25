@@ -15,7 +15,7 @@ folder_lnls_fac = _os.environ.get(
 folder_lnls_ima = _os.environ.get(
     'LNLS_IMA',     default=_os.path.join(folder_root, 'lnls-imas'))
 folder_fac_code = _os.path.join(
-    folder_root, 'lnls-fac')
+    folder_root, 'lnls-facs')
 folder_fac_data = _os.path.join(
     folder_root, 'data')
 folder_lnls_sirius_csslnls = _os.path.join(
