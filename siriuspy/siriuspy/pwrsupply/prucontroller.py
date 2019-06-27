@@ -527,60 +527,12 @@ class PRUController:
         curve = self._curves[idx]
         return curve
 
-    def pru_curve_set(self, device_id, curve):
-        """Set PRU curve of a BSMP device."""
-        # get index of curve for the given device id
-        idx = self.device_ids.index(device_id)
-
-        # if the case, trim or padd existing curves
-        curvsize, curvsize0 = len(curve), len(self._curves[idx])
-        if curvsize == 0:
-            raise ValueError('Invalid empty curve!')
-        elif curvsize > _MAX_WFMSIZE:
-            raise ValueError('Curve length exceeds maximum value!')
-        elif curvsize > curvsize0:
-            for curve in self._curves:
-                # padd wfmdata with last current value
-                curve += [curve[-1], ] * (curvsize - curvsize0)
-        elif curvsize < curvsize0:
-            for curve in self._curves:
-                # trim wfmdata
-                del curve[curvsize:]
-
-        # store curve in PRUController attribute
-        self._curves[idx] = list(curve)
-
     def pru_curve_write(self, device_id, curve):
         """Write curve for a device to the correponding PRU memory."""
         # prepare curves, trimming or padding...
-        self.pru_curve_set(device_id, curve)
+        self._curve_set(device_id, curve)
         # write curve to PRU memory
-        self.pru_curve_send()
-
-    def pru_curve_send(self):
-        """Send PRUController curves to PRU."""
-        # NOTE: we the current PRU lib version we can deal with only
-        # 4 curves for each controller, corresponding to 4 power supply
-        # waveforms. If the number of bsmp devices is bigger than 4 and
-        # this method is invoked, exception is raised!
-        if len(self._device_ids) > 4:
-            errmsg = 'Invalid method invocation when number of devs > 4'
-            print(errmsg)
-            # raise ValueError(errmsg)
-
-        # select in which block the new curve will be stored
-        block_curr = self._pru.read_curve_block()
-        block_next = 1 if block_curr == 0 else 0
-
-        self._pru.curve(self._curves[0],
-                        self._curves[1],
-                        self._curves[2],
-                        self._curves[3],
-                        block_next)
-        # TODO: do we need a sleep here?
-
-        # select block to be used at next start of ramp
-        self._pru.set_curve_block(block_next)
+        self._curve_send()
 
     # --- public methods: access to atomic methods of scan and process loops
 
@@ -724,6 +676,54 @@ class PRUController:
                 print(errmsg.format(_udc_firmware_version))
                 print()
                 # raise ValueError(errmsg)
+
+    def _curve_set(self, device_id, curve):
+        """Set PRU curve of a BSMP device."""
+        # get index of curve for the given device id
+        idx = self.device_ids.index(device_id)
+
+        # if the case, trim or padd existing curves
+        curvsize, curvsize0 = len(curve), len(self._curves[idx])
+        if curvsize == 0:
+            raise ValueError('Invalid empty curve!')
+        elif curvsize > _MAX_WFMSIZE:
+            raise ValueError('Curve length exceeds maximum value!')
+        elif curvsize > curvsize0:
+            for curv in self._curves:
+                # padd wfmdata with last current value
+                curv += [curv[-1], ] * (curvsize - curvsize0)
+        elif curvsize < curvsize0:
+            for curv in self._curves:
+                # trim wfmdata
+                del curv[curvsize:]
+
+        # store curve in PRUController attribute
+        self._curves[idx] = list(curve)
+
+    def _curve_send(self):
+        """Send PRUController curves to PRU."""
+        # NOTE: we the current PRU lib version we can deal with only
+        # 4 curves for each controller, corresponding to 4 power supply
+        # waveforms. If the number of bsmp devices is bigger than 4 and
+        # this method is invoked, exception is raised!
+        if len(self._device_ids) > 4:
+            errmsg = 'Invalid method invocation when number of devs > 4'
+            print(errmsg)
+            # raise ValueError(errmsg)
+
+        # select in which block the new curve will be stored
+        block_curr = self._pru.read_curve_block()
+        block_next = 1 if block_curr == 0 else 0
+
+        self._pru.curve(self._curves[0],
+                        self._curves[1],
+                        self._curves[2],
+                        self._curves[3],
+                        block_next)
+        # TODO: do we need a sleep here?
+
+        # select block to be used at next start of ramp
+        self._pru.set_curve_block(block_next)
 
     # --- private methods: scan and process ---
 
