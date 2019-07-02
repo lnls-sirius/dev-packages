@@ -432,6 +432,7 @@ class ConnRF(_EpicsPropsList):
         Rmp_Ts2 = DevName + ':RmpTs2-SP'
         Rmp_Ts3 = DevName + ':RmpTs3-SP'
         Rmp_Ts4 = DevName + ':RmpTs4-SP'
+        Rmp_IncTs = DevName + ':RmpIncTs-SP'
         Rmp_VoltBot = DevName + ':RmpVoltBot-SP'
         Rmp_VoltTop = DevName + ':RmpVoltTop-SP'
         Rmp_PhsBot = DevName + ':RmpPhsBot-SP'
@@ -475,6 +476,7 @@ class ConnRF(_EpicsPropsList):
         sp[c.Rmp_VoltTop] = self._ramp_config.rf_ramp_top_voltage
         sp[c.Rmp_PhsBot] = self._ramp_config.rf_ramp_bottom_phase
         sp[c.Rmp_PhsTop] = self._ramp_config.rf_ramp_top_phase
+        sp[c.Rmp_IncTs] = 0
         return self.set_setpoints_check(sp, timeout)
 
     # --- RF checks ---
@@ -487,14 +489,16 @@ class ConnRF(_EpicsPropsList):
     def check_config_ramp(self):
         """Check if configured to ramp."""
         rb = dict()
-        rb[ConnRF.Const.Rmp_Ts1] = self._ramp_config.rf_ramp_bottom_duration
-        rb[ConnRF.Const.Rmp_Ts2] = self._ramp_config.rf_ramp_rampup_duration
-        rb[ConnRF.Const.Rmp_Ts3] = self._ramp_config.rf_ramp_top_duration
-        rb[ConnRF.Const.Rmp_Ts4] = self._ramp_config.rf_ramp_rampdown_duration
-        rb[ConnRF.Const.Rmp_VoltBot] = self._ramp_config.rf_ramp_bottom_voltage
-        rb[ConnRF.Const.Rmp_VoltTop] = self._ramp_config.rf_ramp_top_voltage
-        rb[ConnRF.Const.Rmp_PhsBot] = self._ramp_config.rf_ramp_bottom_phase
-        rb[ConnRF.Const.Rmp_PhsTop] = self._ramp_config.rf_ramp_top_phase
+        c = ConnRF.Const
+        rb[c.Rmp_Ts1] = self._ramp_config.rf_ramp_bottom_duration
+        rb[c.Rmp_Ts2] = self._ramp_config.rf_ramp_rampup_duration
+        rb[c.Rmp_Ts3] = self._ramp_config.rf_ramp_top_duration
+        rb[c.Rmp_Ts4] = self._ramp_config.rf_ramp_rampdown_duration
+        rb[c.Rmp_VoltBot] = self._ramp_config.rf_ramp_bottom_voltage
+        rb[c.Rmp_VoltTop] = self._ramp_config.rf_ramp_top_voltage
+        rb[c.Rmp_PhsBot] = self._ramp_config.rf_ramp_bottom_phase
+        rb[c.Rmp_PhsTop] = self._ramp_config.rf_ramp_top_phase
+        rb[c.Rmp_IncTs] = 0
         return self._check(rb)
 
     def check_intlk(self):
@@ -519,6 +523,7 @@ class ConnRF(_EpicsPropsList):
             c.Rmp_VoltTop: _rutil.DEFAULT_RF_RAMP_TOP_VOLTAGE,
             c.Rmp_PhsBot: _rutil.DEFAULT_RF_RAMP_BOTTOM_PHASE,
             c.Rmp_PhsTop: _rutil.DEFAULT_RF_RAMP_TOP_PHASE,
+            c.Rmp_IncTs: 0,
             c.Rmp_Intlk: None,
             c.Rmp_RmpReady: None}
 
