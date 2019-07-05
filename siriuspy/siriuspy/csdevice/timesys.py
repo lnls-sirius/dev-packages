@@ -510,7 +510,7 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
 
     dic_ = {'type': 'int', 'unit': 'numer of pulses',
             # 'lolo': 1, 'low': 1, 'lolim': 1,
-            'hilim': 2001, 'high': 10000, 'hihi': 100000}
+            'hilim': 100000, 'high': 100000, 'hihi': 100000}
     dic_.update(trig_db['NrPulses'])
     db['NrPulses-RB'] = _dcopy(dic_)
     db['NrPulses-SP'] = dic_
