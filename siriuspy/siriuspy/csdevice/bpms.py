@@ -45,7 +45,7 @@ AcqStates = _get_namedtuple(
             'AcqStates',
             ('Idle', 'Waiting', 'External Trig', 'Data Trig', 'Software Trig',
              'Acquiring', 'Error', 'Aborted', 'Too Many Samples',
-             'Too Few Samples', 'No Memory'))
+            'Too Few Samples', 'No Memory', 'Acq Overflow'))
 AcqTrigTyp = _get_namedtuple(
                         'AcqTrigTyp', ('Now', 'External', 'Data', 'Software'))
 FFTWindowTyp = _get_namedtuple(

@@ -7,7 +7,6 @@ at the other end of the serial line.
 
 import time as _time
 # import random as _random
-from collections import deque as _deque
 from threading import Thread as _Thread
 from threading import Lock as _Lock
 from copy import deepcopy as _dcopy
@@ -90,111 +89,6 @@ def parse_firmware_version(version):
     return version
 
 
-# --- PRUC Queue class ---
-
-
-class PRUCQueue(_deque):
-    """PRUCQueue.
-
-    This class manages operations which invoke BSMP communications using
-    an append-right, pop-left queue. It also processes the next operation in a
-    way as to circumvent the blocking character of UART writes when PRU sync
-    mode is on.
-
-    Each operation processing is a method invoked as a separate thread since
-    it run write PRU functions that might block code execution, depending
-    on the PRU sync mode. The serial read called and the preceeding write
-    function are supposed to be in a locked scope in orde to avoid other
-    write executations to read the respond of previous write executions.
-    """
-
-    # TODO: maybe methods 'ignore_set' and 'ignore_clear' are not needed!
-    # PRUController's scan setter could be set to False instead.
-
-    _lock = _Lock()
-
-    def __init__(self):
-        """Init."""
-        self._thread = None
-        self._ignore = False
-        self._bsmpcomm = True
-
-    @property
-    def last_operation(self):
-        """Return last operation."""
-        return self._last_operation
-
-    @property
-    def bsmpcomm(self):
-        """BSMP Communication."""
-        return self._bsmpcomm
-
-    @bsmpcomm.setter
-    def bsmpcomm(self, value):
-        self._bsmpcomm = value
-
-    def ignore_set(self):
-        """Turn ignore state on."""
-        self._ignore = True
-
-    def ignore_clear(self):
-        """Turn ignore state on."""
-        self._ignore = False
-
-    def append(self, operation, unique=False):
-        """Append operation to queue."""
-        PRUCQueue._lock.acquire(blocking=True)
-        if not self._ignore:
-            if not unique:
-                super().append(operation)
-                self._last_operation = operation
-            else:
-                # super().append(operation)
-                # self._last_operation = operation
-                n = self.count(operation)
-                if n == 0:
-                    super().append(operation)
-                    self._last_operation = operation
-        PRUCQueue._lock.release()
-
-    def clear(self):
-        """Clear deque."""
-        self._lock.acquire()
-        super().clear()
-        self._lock.release()
-
-    def popleft(self):
-        """Pop left operation from queue."""
-        PRUCQueue._lock.acquire(blocking=True)
-        if super().__len__() > 0:
-            value = super().popleft()
-        else:
-            value = None
-        PRUCQueue._lock.release()
-        return value
-
-    def process(self):
-        """Process operation from queue."""
-        # first check if a thread is already running
-        if not self._bsmpcomm:
-            return False
-        if self._thread is None or not self._thread.is_alive():
-            # no thread is running, we can process queue
-            operation = self.popleft()
-            if operation is None:
-                # but therse is nothing in queue
-                return False
-            else:
-                # process operation taken from queue
-                func, args = operation
-                self._thread = _Thread(target=func, args=args, daemon=True)
-                self._thread.start()
-                return True
-        else:
-            # there an operation being processed:do nothing for now.
-            return False
-
-
 # --- PRUController ---
 
 
@@ -258,9 +152,6 @@ class PRUController:
     _delay_func_sync_pulse = 100  # [us]
     _delay_func_set_slowref_fbp = 100  # [us]
 
-    # Number of ramp cycles while increasing amplitude
-    _DEFAULT_RAMP_OFFSET = 1
-
     # --- public interface ---
 
     def __init__(self,
@@ -305,8 +196,8 @@ class PRUController:
 
         # conversion of ps status to high level properties
         self._psc_state = {}
-        for id in self.device_ids:
-            self._psc_state[id] = _PSCStatus()
+        for bsmp_id in self.device_ids:
+            self._psc_state[bsmp_id] = _PSCStatus()
 
         # create PRU (sync mode off).
         self._initialize_pru(pru)
@@ -315,7 +206,7 @@ class PRUController:
         self._initialize_udc()
 
         # reset power supply controllers
-        # TODO: this should be invoked in the case of IOC setting state of HW
+        # NOTE: this should be invoked in the case of IOC setting state of HW
         if reset is True:
             self._bsmp_reset_ps_controllers()  # (contains first BSMP comm)
 
@@ -327,13 +218,20 @@ class PRUController:
 
         # operation queue
         self._queue = prucqueue
-
-        # ramp offset
-        self._ramp_offset = PRUController._DEFAULT_RAMP_OFFSET
-        self._ramp_offset_count = PRUController._DEFAULT_RAMP_OFFSET
+        # This object if of class DequeThread which invoke BSMP communications
+        # using an append-right, pop-left queue. It also processes the next
+        # operation in a way as to circumvent the blocking character of UART
+        # writes when PRU sync mode is on.
+        # Each operation processing is a method invoked as a separate thread
+        # since it run write PRU functions that might block code execution,
+        # depending on the PRU sync mode. The serial read called and the
+        # preceeding write function are supposed to be in a locked scope in
+        # order to avoid other write executations to read the respond of
+        # previous write executions.
 
         # define scan thread
-        self._last_device_scanned = len(self._device_ids)  # next is the first
+        self._dev_idx_last_scanned = \
+            len(self._device_ids)-1  # the next will be the first bsmp dev
         self._last_operation = None  # registers last operation
         self._thread_scan = _Thread(target=self._loop_scan, daemon=True)
         self._scanning = scanning
@@ -372,12 +270,12 @@ class PRUController:
     @property
     def bsmpcomm(self):
         """Return bsmpcomm state."""
-        return self._queue.bsmpcomm
+        return self._queue.enabled
 
     @bsmpcomm.setter
     def bsmpcomm(self, value):
         """Set bsmpcomm state."""
-        self._queue.bsmpcomm = value
+        self._queue.enabled = value
 
     @property
     def processing(self):
@@ -408,29 +306,6 @@ class PRUController:
     def connected(self):
         """Store connection state."""
         return all((self.check_connected(id) for id in self.device_ids))
-
-    @property
-    def ramp_offset(self):
-        """Ramp offset."""
-        return self._ramp_offset
-
-    @ramp_offset.setter
-    def ramp_offset(self, value):
-        self._ramp_offset = value
-
-    @property
-    def ramp_offset_count(self):
-        """Return current ramp offset count."""
-        return self._ramp_offset_count
-
-    @ramp_offset_count.setter
-    def ramp_offset_count(self, value):
-        self._ramp_offset_count = value
-
-    @property
-    def ramp_ready(self):
-        """Return wether ramp is ready."""
-        return True if self.ramp_offset_count == self.ramp_offset else False
 
     def check_connected(self, device_id):
         """Return connection state of a device."""
@@ -652,60 +527,12 @@ class PRUController:
         curve = self._curves[idx]
         return curve
 
-    def pru_curve_set(self, device_id, curve):
-        """Set PRU curve of a BSMP device."""
-        # get index of curve for the given device id
-        idx = self.device_ids.index(device_id)
-
-        # if the case, trim or padd existing curves
-        n, n0 = len(curve), len(self._curves[idx])
-        if n == 0:
-            raise ValueError('Invalid empty curve!')
-        elif n > _MAX_WFMSIZE:
-            raise ValueError('Curve length exceeds maximum value!')
-        elif n > n0:
-            for i in self.device_ids:
-                # padd wfmdata with current last value
-                self._curves[i] += [self._curves[i][-1], ] * (n - n0)
-        elif n < n0:
-            for i in self.device_ids:
-                # trim wfmdata
-                self._curves[i] += self._curves[i][:n]
-
-        # store curve in PRUController attribute
-        self._curves[idx] = list(curve)
-
     def pru_curve_write(self, device_id, curve):
         """Write curve for a device to the correponding PRU memory."""
         # prepare curves, trimming or padding...
-        self.pru_curve_set(device_id, curve)
+        self._curve_set(device_id, curve)
         # write curve to PRU memory
-        self.pru_curve_send()
-
-    def pru_curve_send(self):
-        """Send PRUController curves to PRU."""
-        # NOTE: we the current PRU lib version we can deal with only
-        # 4 curves for each controller, corresponding to 4 power supply
-        # waveforms. If the number of bsmp devices is bigger than 4 and
-        # this method is invoked, exception is raised!
-        if len(self._device_ids) > 4:
-            errmsg = 'Invalid method invocation when number of devs > 4'
-            print(errmsg)
-            # raise ValueError(errmsg)
-
-        # select in which block the new curve will be stored
-        block_curr = self._pru.read_curve_block()
-        block_next = 1 if block_curr == 0 else 0
-
-        self._pru.curve(self._curves[0],
-                        self._curves[1],
-                        self._curves[2],
-                        self._curves[3],
-                        block_next)
-        # TODO: do we need a sleep here?
-
-        # select block to be used at next start of ramp
-        self._pru.set_curve_block(block_next)
+        self._curve_send()
 
     # --- public methods: access to atomic methods of scan and process loops
 
@@ -850,6 +677,54 @@ class PRUController:
                 print()
                 # raise ValueError(errmsg)
 
+    def _curve_set(self, device_id, curve):
+        """Set PRU curve of a BSMP device."""
+        # get index of curve for the given device id
+        idx = self.device_ids.index(device_id)
+
+        # if the case, trim or padd existing curves
+        curvsize, curvsize0 = len(curve), len(self._curves[idx])
+        if curvsize == 0:
+            raise ValueError('Invalid empty curve!')
+        elif curvsize > _MAX_WFMSIZE:
+            raise ValueError('Curve length exceeds maximum value!')
+        elif curvsize > curvsize0:
+            for curv in self._curves:
+                # padd wfmdata with last current value
+                curv += [curv[-1], ] * (curvsize - curvsize0)
+        elif curvsize < curvsize0:
+            for curv in self._curves:
+                # trim wfmdata
+                del curv[curvsize:]
+
+        # store curve in PRUController attribute
+        self._curves[idx] = list(curve)
+
+    def _curve_send(self):
+        """Send PRUController curves to PRU."""
+        # NOTE: we the current PRU lib version we can deal with only
+        # 4 curves for each controller, corresponding to 4 power supply
+        # waveforms. If the number of bsmp devices is bigger than 4 and
+        # this method is invoked, exception is raised!
+        if len(self._device_ids) > 4:
+            errmsg = 'Invalid method invocation when number of devs > 4'
+            print(errmsg)
+            # raise ValueError(errmsg)
+
+        # select in which block the new curve will be stored
+        block_curr = self._pru.read_curve_block()
+        block_next = 1 if block_curr == 0 else 0
+
+        self._pru.curve(self._curves[0],
+                        self._curves[1],
+                        self._curves[2],
+                        self._curves[3],
+                        block_next)
+        # TODO: do we need a sleep here?
+
+        # select block to be used at next start of ramp
+        self._pru.set_curve_block(block_next)
+
     # --- private methods: scan and process ---
 
     def _loop_scan(self):
@@ -892,19 +767,17 @@ class PRUController:
             raise NotImplementedError('Sync mode not implemented!')
 
     def _select_next_device_id(self):
-        if self._udcmodel == 'FAC_2P4S_ACDC':
-            # this is a special case since there are too many BSMP devices to
-            # be read at each ramp cycle!
-            nr_devs = len(self._device_ids)
-            dev_idx = (self._last_device_scanned + 1) % nr_devs
-            dev_id = self._device_ids[dev_idx]
-            self._last_device_scanned = dev_id
-        else:
-            # with the mirror var solution this selection is not necessary!
-            # attribute self._last_device_scanned can be deleted.
-            # now always return first device to read the selected variables of
-            # all power supplies through mirror variables.
+        # select device ids to be read (when not in sync_off mode)
+        if self._udcmodel in ('FBP', ):
+            # with the mirror var solution for FBP we can always read only
+            # one of them and get updates for all the others
             dev_id = self._device_ids[0]
+        else:
+            # cycle through bsmp devices
+            nr_devs = len(self._device_ids)
+            dev_idx = (self._dev_idx_last_scanned + 1) % nr_devs
+            dev_id = self._device_ids[dev_idx]
+            self._dev_idx_last_scanned = dev_idx
         return (dev_id, )
 
     def _get_scan_interval(self):
@@ -920,20 +793,10 @@ class PRUController:
             else:
                 return 1.0/self._params.FREQ_RAMP  # [s]
 
-    def _serial_error(self, ids, e, operation):
-
-        # print error message to stdout
-        # print()
-        # print('--- Serial Error in PRUController._bsmp_update_variables')
-        # print('------ last_operation: {}'.format(operation))
-        # print('------ traceback:')
-        # _traceback.print_exc()
-        # print('---')
-        # print()
-
+    def _serial_error(self, ids):
         # signal disconnected for device ids.
-        for id in ids:
-            self._connected[id] = False
+        for bsmp_id in ids:
+            self._connected[bsmp_id] = False
 
     # --- private methods: BSMP UART communications ---
 
@@ -975,12 +838,12 @@ class PRUController:
             dtime = tstamp - t0
             operation = ('V', tstamp, dtime, device_ids, group_id, False)
             self._last_operation = operation
-        except (_SerialError, IndexError) as e:
+        except (_SerialError, IndexError):
             tstamp = _time.time()
             dtime = tstamp - t0
             operation = ('V', tstamp, dtime, device_ids, group_id, True)
             self._last_operation = operation
-            self._serial_error(device_ids, e, operation)
+            self._serial_error(device_ids)
             return
 
         # TODO: stopping method execution at this point, not processing

@@ -1,6 +1,7 @@
 """Define properties of all timing devices and their connections."""
 
 from copy import deepcopy as _dcopy
+import numpy as _np
 from mathphys import constants as _c
 import siriuspy.csdevice.util as _cutil
 from siriuspy.optics import constants as _oc
@@ -16,7 +17,7 @@ class ETypes(_cutil.ETypes):
     TRIG_SRC_LL = (
         'Dsbl', 'Trigger', 'Clock0', 'Clock1', 'Clock2',
         'Clock3', 'Clock4', 'Clock5', 'Clock6', 'Clock7')
-    BYPASS = ('Bypass', 'Active')
+    LOCKLL = ('Unlocked', 'Locked')
     DLYTYP = ('Manual', 'Auto')
     RFOUT = ('OFF', '5RF/2', '5RF/4', 'RF', 'RF/2', 'RF/4')
 
@@ -41,8 +42,8 @@ class Const(_cutil.Const):
     EvtDlyTyp = _cutil.Const.register('EvtDlyTyp', _et.FIXED_INCR)
     ClockStates = _cutil.Const.register('ClockStates', _et.DSBL_ENBL)
     TrigStates = _cutil.Const.register('TrigStates', _et.DSBL_ENBL)
-    TrigIntlk = _cutil.Const.register('TrigIntlk', _et.BYPASS)
     TrigPol = _cutil.Const.register('TrigPol', _et.NORM_INV)
+    LowLvlLock = _cutil.Const.register('LowLvlLock', _et.LOCKLL)
     TrigDlyTyp = _cutil.Const.register('TrigDlyTyp', _et.DLYTYP)
     TrigSrcLL = _cutil.Const.register('TrigSrcLL', _et.TRIG_SRC_LL)
     HLTrigStatusLabels = (
@@ -55,8 +56,7 @@ class Const(_cutil.Const):
         'DownLink Ok',
         'Fout DownLink Ok',
         'EVG DownLink Ok',
-        'External Interlock',
-        'Interlock Status'
+        'Interlock Status',
         )
 
     EvtHL2LLMap = _HLTimeSearch.get_hl_events()
@@ -124,10 +124,6 @@ def get_otp_database(otp_num=0, prefix=None):
     db[prefix+'Delay-SP'] = dic_
     db[prefix+'Delay-RB'] = _dcopy(dic_)
 
-    dic_ = {'type': 'enum', 'value': 0, 'enums': _et.BYPASS}
-    db[prefix+'ByPassIntlk-Sts'] = dic_
-    db[prefix+'ByPassIntlk-Sel'] = _dcopy(dic_)
-
     return db
 
 
@@ -181,8 +177,6 @@ def get_afc_out_database(out_num=0, out_tp='FMC', prefix=None):
 
     prefix = def_prefix if prefix is None else prefix
     db = get_otp_database(prefix=prefix)
-    db.pop(prefix + 'ByPassIntlk-Sel')
-    db.pop(prefix + 'ByPassIntlk-Sts')
     dic_ = {'type': 'enum', 'value': 0, 'enums': _et.TRIG_SRC_LL}
     db[prefix+'Src-Sts'] = dic_
     db[prefix+'Src-Sel'] = _dcopy(dic_)
@@ -213,11 +207,15 @@ def get_evr_database(prefix=None):
             'type': 'enum', 'value': 1,
             'enums': _et.DISCONN_CONN}
 
-    db[prefix+'Link-Mon'] = {
+    db[prefix+'LinkStatus-Mon'] = {
             'type': 'enum', 'value': 1,
             'enums': _et.UNLINK_LINK}
 
-    db[prefix+'Intlk-Mon'] = {
+    db[prefix+'IntlkStatus-Mon'] = {
+            'type': 'enum', 'value': 0,
+            'enums': _et.DSBL_ENBL}
+
+    db[prefix+'IntlkEnbl-Mon'] = {
             'type': 'enum', 'value': 0,
             'enums': _et.DSBL_ENBL}
 
@@ -255,11 +253,15 @@ def get_eve_database(eve_num=1, prefix=None):
             'type': 'enum', 'value': 1,
             'enums': _et.DISCONN_CONN}
 
-    db[prefix+'Link-Mon'] = {
+    db[prefix+'LinkStatus-Mon'] = {
             'type': 'enum', 'value': 1,
             'enums': _et.UNLINK_LINK}
 
-    db[prefix+'Intlk-Mon'] = {
+    db[prefix+'IntlkStatus-Mon'] = {
+            'type': 'enum', 'value': 0,
+            'enums': _et.DSBL_ENBL}
+
+    db[prefix+'IntlkEnbl-Mon'] = {
             'type': 'enum', 'value': 0,
             'enums': _et.DSBL_ENBL}
 
@@ -302,7 +304,7 @@ def get_afc_database(prefix=None):
             'type': 'enum', 'value': 1,
             'enums': _et.UNLINK_LINK}
 
-    db[prefix+'Intlk-Mon'] = {
+    db[prefix+'IntlkStatus-Mon'] = {
             'type': 'enum', 'value': 0,
             'enums': _et.DSBL_ENBL}
 
@@ -474,77 +476,11 @@ def get_evg_database(prefix=None, only_evg=False):
     return db
 
 
-def get_hl_clock_database(prefix='Clock0'):
-    """Return database of a high level Clock."""
-    db = dict()
-
-    dic_ = {
-        'type': 'float', 'value': 1.0,
-        'unit': 'kHz', 'prec': 6,
-        'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
-        'hilim': 125000000, 'high': 125000000, 'hihi': 125000000}
-    db[prefix + 'Freq-RB'] = _dcopy(dic_)
-    db[prefix + 'Freq-SP'] = dic_
-
-    dic_ = {'type': 'enum', 'enums': _et.DSBL_ENBL, 'value': 0}
-    db[prefix + 'State-Sel'] = _dcopy(dic_)
-    db[prefix + 'State-Sts'] = dic_
-    return db
-
-
-def get_hl_event_database(prefix='Linac'):
-    """Return database of a high level event."""
-    db = dict()
-
-    dic_ = {'type': 'float', 'unit': 'us', 'prec': 4, 'value': 0,
-            'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
-            'hilim': 500000, 'high': 1000000, 'hihi': 10000000}
-    db[prefix + 'Delay-RB'] = _dcopy(dic_)
-    db[prefix + 'Delay-SP'] = dic_
-
-    dic_ = {'type': 'enum', 'enums': _et.EVT_MODES,
-            'value': 1,
-            'states': ()}
-    db[prefix + 'Mode-Sts'] = _dcopy(dic_)
-    db[prefix + 'Mode-Sel'] = dic_
-
-    dic_ = {'type': 'enum', 'enums': _et.FIXED_INCR, 'value': 1}
-    db[prefix + 'DelayType-Sts'] = _dcopy(dic_)
-    db[prefix + 'DelayType-Sel'] = dic_
-
-    db[prefix + 'ExtTrig-Cmd'] = {
-        'type': 'int', 'value': 0,
-        'unit': 'When in External Mode generates Event.'}
-    return db
-
-
-def get_hl_evg_database(prefix=None, only_evg=False):
-    """Return database of the high level PVs associated with the EVG."""
-    def_prefix = 'AS-Glob:TI-EVG:'
-    pre = def_prefix if prefix is None else prefix
-    db = dict()
-
-    dic_ = {'type': 'float', 'value': 2.0,
-            'unit': 'Hz', 'prec': 6,
-            'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
-            'hilim': 60, 'high': 60, 'hihi': 60}
-    db[pre + 'RepRate-RB'] = _dcopy(dic_)
-    db[pre + 'RepRate-SP'] = dic_
-
-    if only_evg:
-        return db
-
-    for ev in Const.EvtHL2LLMap.keys():
-        db.update(get_hl_event_database(prefix=prefix+ev))
-    for clc in Const.ClkHL2LLMap.keys():
-        db.update(get_hl_clock_database(prefix=prefix+clc))
-    return db
-
-
 def get_hl_trigger_database(hl_trigger, prefix=''):
     """Return database of the specified hl_trigger."""
     db = dict()
     trig_db = _HLTimeSearch.get_hl_trigger_predef_db(hl_trigger)
+    ll_trig_names = _HLTimeSearch.get_ll_trigger_names(hl_trigger)
 
     dic_ = {'type': 'enum', 'enums': _et.DSBL_ENBL}
     dic_.update(trig_db['State'])
@@ -574,18 +510,10 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
 
     dic_ = {'type': 'int', 'unit': 'numer of pulses',
             # 'lolo': 1, 'low': 1, 'lolim': 1,
-            'hilim': 2001, 'high': 10000, 'hihi': 100000}
+            'hilim': 100000, 'high': 100000, 'hihi': 100000}
     dic_.update(trig_db['NrPulses'])
     db['NrPulses-RB'] = _dcopy(dic_)
     db['NrPulses-SP'] = dic_
-
-    dic_ = {'type': 'enum', 'enums': _et.BYPASS}
-    dic_.update(trig_db['ByPassIntlk'])
-    db['ByPassIntlk-Sts'] = _dcopy(dic_)
-    db['ByPassIntlk-Sel'] = dic_
-    if not _HLTimeSearch.has_bypass_interlock(hl_trigger):
-        db.pop('ByPassIntlk-Sts')
-        db.pop('ByPassIntlk-Sel')
 
     dic_ = {'type': 'float', 'unit': 'us', 'prec': 6,
             'lolo': 0.0, 'low': 0.0, 'lolim': 0.0,
@@ -593,6 +521,18 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
     dic_.update(trig_db['Delay'])
     db['Delay-RB'] = _dcopy(dic_)
     db['Delay-SP'] = dic_
+
+    siz = len(ll_trig_names)
+    dic_ = {'type': 'float', 'unit': 'us', 'prec': 6,
+            'count': siz, 'value': _np.zeros(siz),
+            'lolo': -500000, 'low': -1000000, 'lolim': -10000000,
+            'hilim': 500000, 'high': 1000000, 'hihi': 10000000}
+    db['DeltaDelay-RB'] = _dcopy(dic_)
+    db['DeltaDelay-SP'] = dic_
+
+    dic_ = {'type': 'enum', 'enums': _et.LOCKLL, 'value': 0}
+    db['LowLvlLock-Sts'] = _dcopy(dic_)
+    db['LowLvlLock-Sel'] = dic_
 
     dic_ = {'type': 'enum', 'enums': _et.DLYTYP}
     dic_.update(trig_db['RFDelayType'])
@@ -609,7 +549,7 @@ def get_hl_trigger_database(hl_trigger, prefix=''):
         'type': 'char', 'count': 1000,
         'value': '\n'.join(Const.HLTrigStatusLabels)
         }
-    ll_trigs = '\n'.join(_HLTimeSearch.get_ll_trigger_names(hl_trigger))
+    ll_trigs = '\n'.join(ll_trig_names)
     db['LowLvlTriggers-Cte'] = {
         'type': 'char', 'count': 5000, 'value': ll_trigs}
     channels = '\n'.join(_HLTimeSearch.get_hl_trigger_channels(hl_trigger))

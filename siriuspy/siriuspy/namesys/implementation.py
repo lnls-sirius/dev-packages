@@ -57,7 +57,7 @@ def join_name(**kwargs):
         elif 'dis' in e.keys() and 'dev' in e.keys():
             name = e['dis'].upper() + '-' + e['dev']
         elif 'propty_name' in e.keys() and 'propty_suffix' in e.keys():
-            name = e['propty_name'].upper() + '-' + e['propty_name']
+            name = e['propty_name'].upper() + '-' + e['propty_suffix']
     elif len(e.keys()) == 3:
         if 'dis' in e.keys() and 'dev' in e.keys() and 'idx' in e.keys():
             name = e['dis'].upper() + '-' + e['dev'] + '-' + e['idx']
@@ -116,7 +116,7 @@ def split_name(pvname, elements=None):
             dic_['propty_name'] = slist_[0]
         elif len(slist_) == 2:
             if elements == 'propty':
-                dic_['propty'] = slist_[0]
+                dic_['propty'] = slist_[0] + '-' + slist_[1]
                 dic_['propty_name'] = slist_[0]
                 dic_['propty_suffix'] = slist_[1]
             elif elements == 'sec-sub':
@@ -191,13 +191,17 @@ class SiriusPVName(str):
         obj.dis = name['dis']
         obj.dev = name['dev']
         obj.idx = name['idx']
-        obj.device_name = name['device_name']
+        obj._device_name = name['device_name']
         obj.propty_name = name['propty_name']
         obj.propty_suffix = name['propty_suffix']
         obj.propty = name['propty']
         obj.device_propty = name['device_propty']
         obj.field = name['field']
         return obj
+
+    @property
+    def device_name(self):
+        return SiriusPVName(self._device_name)
 
     def substitute(self, **kwargs):
         """Return new SiriusPVName object with the atttributes changed."""

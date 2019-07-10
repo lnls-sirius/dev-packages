@@ -4,10 +4,9 @@ import re as _re
 from functools import partial as _partial
 import logging as _log
 from threading import Thread as _ThreadBase
-import epics as _epics
+from epics.ca import CASeverityException as _CASeverityException
 from siriuspy.util import update_bit as _update_bit, get_bit as _get_bit
-# from siriuspy.thread import QueueThread as _QueueThread
-from siriuspy.epics import connection_timeout as _conn_timeout
+from siriuspy.epics import connection_timeout as _conn_timeout, PV as _PV
 from siriuspy.envars import vaca_prefix as LL_PREFIX
 from siriuspy.namesys import SiriusPVName as _PVName
 from siriuspy.csdevice import timesys as _cstime
@@ -56,10 +55,10 @@ class _BaseLL(_Base):
         self._rf_div = _RFDIV
 
         evg_name = get_evg_name()
-        self._rf_freq_pv = _epics.PV(
+        self._rf_freq_pv = _PV(
             LL_PREFIX + 'AS-Glob:RF-Gen:Frequency-SP',
             connection_timeout=_conn_timeout)
-        self._rf_div_pv = _epics.PV(
+        self._rf_div_pv = _PV(
             LL_PREFIX + evg_name + ':RFDiv-SP',
             connection_timeout=_conn_timeout)
         self._update_base_freq()
@@ -77,14 +76,14 @@ class _BaseLL(_Base):
                 pvnamerb = pvname
                 pvnamesp = self._fromrb2sp(pvname)
             elif self._iscmdpv(pvname):  # -Cmd is different!!
-                self._writepvs[prop] = _epics.PV(
+                self._writepvs[prop] = _PV(
                                 pvname, connection_timeout=_conn_timeout)
 
             if pvnamerb is not None:
-                self._readpvs[prop] = _epics.PV(
+                self._readpvs[prop] = _PV(
                     pvnamerb, connection_timeout=_conn_timeout)
             if pvnamesp != pvnamerb:
-                self._writepvs[prop] = _epics.PV(
+                self._writepvs[prop] = _PV(
                     pvnamesp, connection_timeout=_conn_timeout)
                 self._writepvs[prop]._initialized = False
 
@@ -116,8 +115,9 @@ class _BaseLL(_Base):
         self._locked = bool(value)
         if not self._locked:
             return
-        for prop in self._list_props_must_set:
-            val = self._config_ok_values.get(prop)
+        # for prop in self._list_props_must_set:
+        #     val = self._config_ok_values.get(prop)
+        for prop, val in self._config_ok_values.items():
             if val is None:
                 continue
             self.write_ll(prop, val)
@@ -271,7 +271,7 @@ class _BaseLL(_Base):
             try:
                 pv.put(value, use_complete=True, wait=wait)
                 pv._initialized = True
-            except _epics.ca.CASeverityException:
+            except _CASeverityException:
                 _log.error('NO Write Permission to {0:s}'.format(pv.pvname))
 
     def _on_change_writepv(self, pvname, value, **kwargs):
@@ -333,59 +333,6 @@ class _BaseLL(_Base):
         return {hl_prop: val}
 
 
-class LLEvent(_BaseLL):
-    """Define the Low Level Event Class."""
-
-    def __init__(self, channel):
-        """Initialize the instance."""
-        prefix = LL_PREFIX + channel
-        super().__init__(channel, prefix)
-
-    def _define_convertion_prop2pv(self):
-        return {
-            'Delay': self.prefix + 'Delay-RB',
-            'Mode': self.prefix + 'Mode-Sts',
-            'DelayType': self.prefix + 'DelayType-Sts',
-            'ExtTrig': self.prefix + 'ExtTrig-Cmd',
-            }
-
-    def _define_dict_for_write(self):
-        return {
-            'Delay': self._set_delay,
-            'Mode': _partial(self._set_simple, 'Mode'),
-            'DelayType': _partial(self._set_simple, 'DelayType'),
-            'ExtTrig': self._set_ext_trig,
-            }
-
-    def _define_dict_for_update(self):
-        return {
-            'Delay': self._get_delay,
-            'Mode': _partial(self._get_simple, 'Mode'),
-            'DelayType': _partial(self._get_simple, 'DelayType'),
-            'ExtTrig': _partial(self._get_simple, 'ExtTrig'),
-            }
-
-    def _define_dict_for_read(self):
-        return self._define_dict_for_update()
-
-    def _set_delay(self, value):
-        if value is None:
-            return dict()
-        return {'Delay': round(value / self._base_del)}
-
-    def _get_delay(self, is_sp, val=None):
-        if val is None:
-            val = self._get_from_pvs(is_sp, 'Delay')
-        if val is None:
-            return dict()
-        return {'Delay': val * self._base_del}
-
-    def _set_ext_trig(self, value):
-        pv = self._writepvs.get('ExtTrig')
-        self._put_on_pv(pv, value)
-        return None  # -Cmd must not return any state
-
-
 class _EVROUT(_BaseLL):
     _REMOVE_PROPS = {}
 
@@ -407,9 +354,6 @@ class _EVROUT(_BaseLL):
                                                         self.channel)
             intrg = int(intrg.propty[-2:])  # get internal trigger number
             self._config_ok_values['SrcTrig'] = intrg
-            # # Remove bypass from hl:
-            # self._config_ok_values['ByPassIntlk'] = \
-            #     _cstime.Const.TrigIntlk.Active
 
     def write(self, prop, value):
         # keep this info for recalculating Width whenever necessary
@@ -437,7 +381,6 @@ class _EVROUT(_BaseLL):
             'Polarity': self.prefix + intlb + 'Polarity-Sts',
             'NrPulses': self.prefix + intlb + 'NrPulses-RB',
             'Delay': self.prefix + intlb + 'Delay-RB',
-            'ByPassIntlk': self.prefix + intlb + 'ByPassIntlk-Sts',
             'Src': self.prefix + outlb + 'Src-Sts',
             'SrcTrig': self.prefix + outlb + 'SrcTrig-RB',
             'RFDelay': self.prefix + outlb + 'RFDelay-RB',
@@ -446,8 +389,8 @@ class _EVROUT(_BaseLL):
             # connection status PVs
             'DevEnbl': self.prefix + 'DevEnbl-Sts',
             'Network': self.prefix + 'Network-Mon',
-            'Link': self.prefix + 'Link-Mon',
-            'IntlkMon': self.prefix + 'Intlk-Mon',
+            'Link': self.prefix + 'LinkStatus-Mon',
+            'Intlk': self.prefix + 'IntlkStatus-Mon',
             'Los': self.prefix + 'Los-Mon',
             'EVGLos': _evg_prefix + 'Los-Mon',
             'FoutLos': _fout_prefix + 'Los-Mon',
@@ -464,7 +407,6 @@ class _EVROUT(_BaseLL):
             'EVGDevEnbl': _partial(self._set_simple, 'EVGDevEnbl'),
             'FoutDevEnbl': _partial(self._set_simple, 'FoutDevEnbl'),
             'State': _partial(self._set_simple, 'State'),
-            'ByPassIntlk': _partial(self._set_simple, 'ByPassIntlk'),
             'Src': self._set_source,
             'Duration': self._set_duration,
             'Polarity': _partial(self._set_simple, 'Polarity'),
@@ -481,7 +423,6 @@ class _EVROUT(_BaseLL):
             'Width': _partial(self._get_duration_pulses, 'Width'),
             'Polarity': _partial(self._get_simple, 'Polarity'),
             'NrPulses': _partial(self._get_duration_pulses, 'NrPulses'),
-            'ByPassIntlk': _partial(self._get_simple, 'ByPassIntlk'),
             'Delay': _partial(self._get_delay, 'Delay'),
             'Src': _partial(self._process_source, 'Src'),
             'SrcTrig': _partial(self._process_source, 'SrcTrig'),
@@ -491,7 +432,7 @@ class _EVROUT(_BaseLL):
             'DevEnbl': _partial(self._get_status, 'DevEnbl'),
             'Network': _partial(self._get_status, 'Network'),
             'Link': _partial(self._get_status, 'Link'),
-            'IntlkMon': _partial(self._get_status, 'IntlkMon'),
+            'Intlk': _partial(self._get_status, 'Intlk'),
             'Los': _partial(self._get_status, 'Los'),
             'EVGLos': _partial(self._get_status, 'EVGLos'),
             'FoutLos': _partial(self._get_status, 'FoutLos'),
@@ -508,18 +449,12 @@ class _EVROUT(_BaseLL):
             'Duration': _partial(self._get_duration_pulses, ''),
             'Polarity': _partial(self._get_simple, 'Polarity'),
             'NrPulses': _partial(self._get_duration_pulses, ''),
-            'ByPassIntlk': _partial(self._get_simple, 'ByPassIntlk'),
             'Delay': _partial(self._get_delay, 'Delay'),
             'Src': _partial(self._process_source, ''),
             'RFDelayType': _partial(self._get_simple, 'RFDelayType'),
             'Status': _partial(self._get_status, ''),
             }
         return map_
-
-    def _get_bypass(self, is_sp, value=None):
-        dic = self._get_simple('ByPassIntlk', is_sp, val=value)
-        dic.update(self._get_status('ByPassIntlk', is_sp, value=value))
-        return dic
 
     def _get_status(self, prop, is_sp, value=None):
         dic_ = dict()
@@ -530,17 +465,14 @@ class _EVROUT(_BaseLL):
         dic_['Network'] = self._get_from_pvs(False, 'Network', def_val=0)
         dic_['Link'] = self._get_from_pvs(False, 'Link', def_val=0)
         dic_['PVsConn'] = self.connected
-        if 'IntlkMon' in self._REMOVE_PROPS:
-            dic_['IntlkMon'] = 0
-            dic_['ByPassIntlk'] = 0
-        else:
-            dic_['IntlkMon'] = self._get_from_pvs(False, 'IntlkMon', def_val=1)
-            dic_['ByPassIntlk'] = self._get_from_pvs(
-                False, 'ByPassIntlk', def_val=1)
-        if 'Los' in self._REMOVE_PROPS:
-            prt_num = 0
-            dic_['Los'] = 0b00000000
-        else:
+
+        dic_['Intlk'] = 0
+        if 'Intlk' not in self._REMOVE_PROPS:
+            dic_['Intlk'] = self._get_from_pvs(False, 'Intlk', def_val=1)
+
+        prt_num = 0
+        dic_['Los'] = 0b00000000
+        if 'Los' not in self._REMOVE_PROPS:
             prt_num = int(self.channel[-1])  # get OUT number for EVR
             dic_['Los'] = self._get_from_pvs(False, 'Los', def_val=0b11111111)
         dic_['EVGLos'] = self._get_from_pvs(
@@ -565,9 +497,7 @@ class _EVROUT(_BaseLL):
         prob, bit = _update_bit(prob, bit, dic_['Los']), bit+1
         prob, bit = _update_bit(prob, bit, dic_['FoutLos']), bit+1
         prob, bit = _update_bit(prob, bit, dic_['EVGLos']), bit+1
-        prob, bit = _update_bit(prob, bit, dic_['IntlkMon']), bit+1
-        intlk_sts = dic_['IntlkMon'] and dic_['ByPassIntlk']
-        prob = _update_bit(prob, bit, intlk_sts)
+        prob, bit = _update_bit(prob, bit, dic_['Intlk']), bit+1
         return {'Status': prob}
 
     def _get_delay(self, prop, is_sp, value=None):
@@ -780,8 +710,7 @@ class _EVEOUT(_EVROUT):
 
 class _AMCFPGAEVRAMC(_EVROUT):
     _REMOVE_PROPS = {
-        'RFDelay', 'FineDelay', 'SrcTrig', 'ByPassIntlk', 'RFDelayType', 'Los',
-        'IntlkMon'}
+        'RFDelay', 'FineDelay', 'SrcTrig', 'RFDelayType', 'Los', 'Intlk'}
 
     def _get_delay(self, prop, is_sp, value=None):
         return _EVROTP._get_delay(self, prop, is_sp, value)
