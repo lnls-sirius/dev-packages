@@ -108,6 +108,7 @@ class CalcEmmitance(_BaseClass):
         self.emittance_calculator = CalcEmmitance()
         self.image_processor = ProcessImage()
         self.image_processor.readingorder = self.image_processor.CLIKE
+        self._place = 'li'
         self._select_experimental_setup()
 
     def get_map2write(self):
@@ -124,29 +125,20 @@ class CalcEmmitance(_BaseClass):
         dic_.update({'MeasureSts-Mon': _part(self.read, 'measuring')})
         return {k: v for k, v in dic_.items() if k in database}
 
-    def _select_experimental_setup(self):
-        self._profile = prof
-    def _select_experimental_setup(self):
-        if self.place.lower().startswith('li'):
-            prof = 'LA-BI:PRF4'
-            sp_cur = 'LA-CN:H1FQPS-3:seti'
-            rb_cur = 'LA-CN:H1FQPS-3:rdi'
-            img = prof + ':RAW:ArrayData'
-            wid = prof + ':ROI:MaxSizeX_RBV'
-        if self.place.lower().startswith('tb-qd2a'):
-            quad = 'TB-02:PS-QD2A'
-            sp_cur = 'LA-CN:H1FQPS-3:seti'
-            rb_cur = 'LA-CN:H1FQPS-3:rdi'
-            img = prof + ':RAW:ArrayData'
-            wid = prof + ':ROI:MaxSizeX_RBV'
-            self._quadlen = 0.1
-            self._distance = 6.904
-        if self.place.lower().startswith('tb-qf2a'):
-            self._quadname = 'TB-02:PS-QF2A'
-            self._quadlen = 0.1
-            self._distance = 6.534
+    @property
+    def place(self):
+        return self._place
 
+    @place.setter
+    def place(self, val):
+        if val in self.PLACES:
+            self._place = val
+            self._select_experimental_setup()
+
+    def _select_experimental_setup(self):
+        self.emittance_calculator.place = self._place
         if self._place.lower().startswith('li'):
+            prof = 'LA-BI:PRF5'
             self._image_source = _PV(prof+':RAW:ArrayData')
             self._width_source = _PV(
                 prof+':ROI:MaxSizeX_RBV', callback=self._update_width)
@@ -156,22 +148,33 @@ class CalcEmmitance(_BaseClass):
             self._coefy = _PV(
                 prof+':Y:Gauss:Coef',
                 callback=_part(self._update_coef, pln='y'))
-            self.quad_I_sp = PV('LA-CN:H1FQPS-3:seti')
-            self.quad_I_rb = PV('LA-CN:H1FQPS-3:rdi')
-            self.DIST = 2.8775
-            self.QUAD_L = 0.112
-        if self._place.lower().startswith('tb-qd2a'):
-            self.quad_I_sp = PV('TB-02:PS-QD2A:Current-SP')
-            self.quad_I_rb = PV('TB-02:PS-QD2A:Current-RB')
-            self.DIST = 6.904
-            self.QUAD_L = 0.1
-        if self._place.lower().startswith('tb-qf2a'):
-            self.quad_I_sp = PV('TB-02:PS-QF2A:Current-SP')
-            self.quad_I_rb = PV('TB-02:PS-QF2A:Current-RB')
-            self.DIST = 6.534
-            self.QUAD_L = 0.1
-        self._conv2kl = _NormFact.create(self._quadname)
+            self.quad_I_sp = _PV('LI-01:PS-QF3:seti')
+            self.quad_I_rb = _PV('LI-01:PS-QF3:rdi')
+        elif self._place.lower().startswith('tb'):
+            self._image_source = _PV('TB-02:DI-Scrn-2:ImgData-Mon')
+            self._width_source = _PV(
+                'TB-02:DI-Scrn-2:ImgMaxWidth-Cte', callback=self._update_width)
+            self._coefx = _PV(
+                'TB-02:DI-ScrnCam-2:ImgScaleFactorX-RB',
+                callback=_part(self._update_coef, pln='x'))
+            self._coefy = _PV(
+                'TB-02:DI-ScrnCam-2:ImgScaleFactorY-RB',
+                callback=_part(self._update_coef, pln='y'))
+            quad = self.emittance_calculator.quadname
+            self.quad_I_sp = _PV(quad + ':Current-SP')
+            self.quad_I_rb = _PV(quad + ':Current-RB')
 
+    def _update_coef(self, _, val, pln='x', **kwargs):
+        if val is None:
+            return
+        if pln.startswith('x'):
+            self.image_processor.pxl2mmscalex = val
+        elif pln.startswith('y'):
+            self.image_processor.pxl2mmscaley = val
+
+    def _update_width(self, _, val, **kwargs):
+        if isinstance(val, (float, int)):
+            self.image_processor.imagewidth = int(val)
 
     def _acquire_data(self):
         samples = self.spbox_samples.value()

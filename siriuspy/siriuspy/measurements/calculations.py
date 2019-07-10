@@ -718,20 +718,20 @@ class CalcEmmitance(_BaseClass):
 
     def get_map2read(self):
         return {
-            'Place-Sts': _part(self.write, 'place'),
-            'Plane-Sts': _part(self.write, 'plane'),
-            'QuadName-Mon': _part(self.write, 'quadname'),
-            'QuadLen-Mon': _part(self.write, 'quadlen'),
-            'Distance-Mon': _part(self.write, 'distance'),
-            'BeamSizes-Mon': _part(self.write, 'beamsize'),
-            'BeamSizesFit-Mon': _part(self.write, 'beamsize_fit'),
-            'QuadCurrents-Mon': _part(self.write, 'currents'),
-            'QuadStrens-Mon': _part(self.write, 'quadstren'),
-            'Beta-Mon': _part(self.write, 'beta'),
-            'Alpha-Mon': _part(self.write, 'alpha'),
-            'Gamma-Mon': _part(self.write, 'gamma'),
-            'Emittance-Mon': _part(self.write, 'emittance'),
-            'NormEmittance-Mon': _part(self.write, 'norm_emittance'),
+            'Place-Sts': _part(self.read, 'place'),
+            'Plane-Sts': _part(self.read, 'plane'),
+            'QuadName-Mon': _part(self.read, 'quadname'),
+            'QuadLen-Mon': _part(self.read, 'quadlen'),
+            'Distance-Mon': _part(self.read, 'distance'),
+            'BeamSizes-Mon': _part(self.read, 'beamsize'),
+            'BeamSizesFit-Mon': _part(self.read, 'beamsize_fit'),
+            'QuadCurrents-Mon': _part(self.read, 'currents'),
+            'QuadStrens-Mon': _part(self.read, 'quadstren'),
+            'Beta-Mon': _part(self.read, 'beta'),
+            'Alpha-Mon': _part(self.read, 'alpha'),
+            'Gamma-Mon': _part(self.read, 'gamma'),
+            'Emittance-Mon': _part(self.read, 'emittance'),
+            'NormEmittance-Mon': _part(self.read, 'norm_emittance'),
             }
 
     @property
@@ -832,7 +832,7 @@ class CalcEmmitance(_BaseClass):
 
     def _select_experimental_setup(self):
         if self.place.lower().startswith('li'):
-            self._quadname = 'LA-CN:H1FQPS-3'
+            self._quadname = 'LI-01:PS-QF3'
             self._quadlen = 0.112
             self._distance = 2.8775
         if self.place.lower().startswith('tb-qd2a'):
