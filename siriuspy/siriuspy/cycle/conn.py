@@ -5,7 +5,7 @@ from epics import PV as _PV
 from math import isclose as _isclose
 import numpy as _np
 
-from siriuspy.namesys import SiriusPVName as _SiriusPVName, \
+from siriuspy.namesys import SiriusPVName as _PVName, \
     get_pair_sprb as _get_pair_sprb
 from siriuspy.envars import vaca_prefix as VACA_PREFIX
 from siriuspy.search import MASearch as _MASearch, PSSearch as _PSSearch
@@ -17,7 +17,7 @@ from .util import pv_timed_get as _pv_timed_get, pv_conn_put as _pv_conn_put
 from .bo_cycle_data import DEFAULT_RAMP_NRCYCLES, DEFAULT_RAMP_DURATION,\
     DEFAULT_RAMP_NRPULSES, DEFAULT_RAMP_TOTDURATION, \
     bo_get_default_waveform as _bo_get_default_waveform
-
+from .li_cycle_data import li_get_default_waveform as _li_get_default_waveform
 
 TIMEOUT_CONNECTION = 0.05
 SLEEP_CAPUT = 0.1
@@ -97,9 +97,9 @@ class Timing:
         """Return connected state."""
         disconn = set()
         for name, pv in Timing._pvs.items():
-            if sections and _SiriusPVName(name).sec not in sections:
-                continue
-            if not pv.connected:
+            name = _PVName(name)
+            if (name.dev == 'EVG' or name.sec in sections) and\
+                    not pv.connected:
                 disconn.add(pv.pvname)
         if return_disconn:
             return disconn
@@ -109,7 +109,7 @@ class Timing:
         pvnames = set()
         for mode in Timing.properties.keys():
             for prop in Timing.properties[mode].keys():
-                prop = _SiriusPVName(prop)
+                prop = _PVName(prop)
                 if prop.dev == 'EVG' or prop.sec in sections:
                     pvnames.add(prop)
         return pvnames
@@ -119,7 +119,7 @@ class Timing:
         for prop, defval in Timing.properties[mode].items():
             if defval is None:
                 continue
-            prop = _SiriusPVName(prop)
+            prop = _PVName(prop)
             if prop.dev == 'EVG' or prop.sec in sections:
                 pvname_2_defval_dict[prop] = defval
         return pvname_2_defval_dict
@@ -214,7 +214,7 @@ class Timing:
             for pvname in dict_.keys():
                 if pvname in Timing._pvs.keys():
                     continue
-                pvname = _SiriusPVName(pvname)
+                pvname = _PVName(pvname)
                 Timing._pvs[pvname] = _PV(
                     VACA_PREFIX+pvname, connection_timeout=TIMEOUT_CONNECTION)
                 self._initial_state[pvname] = Timing._pvs[pvname].get()
@@ -419,6 +419,104 @@ class MagnetCycler:
             return 3  # indicate interlock problems
 
         return 0
+
+    def __getitem__(self, prop):
+        """Return item."""
+        return self._pvs[prop]
+
+
+class LinacMagnetCycler:
+    """Handle Linac magnet properties to cycle."""
+
+    properties = [
+        'seti', 'rdi', 'setpwm', 'interlock'
+    ]
+
+    def __init__(self, maname, ramp_config=None):
+        """Constructor."""
+        self._maname = maname
+        self._waveform = None
+        self._cycle_duration = None
+        self._pvs = dict()
+        for prop in LinacMagnetCycler.properties:
+            if prop not in self._pvs.keys():
+                pvname = VACA_PREFIX + self._maname + ':' + prop
+                self._pvs[prop] = _PV(
+                    pvname, connection_timeout=TIMEOUT_CONNECTION)
+                self._pvs[prop].get()
+
+    @property
+    def maname(self):
+        """Magnet name."""
+        return self._maname
+
+    @property
+    def connected(self):
+        """Return connected state."""
+        for prop in LinacMagnetCycler.properties:
+            if not self[prop].connected:
+                return False
+        return True
+
+    @property
+    def waveform(self):
+        if self._waveform is None:
+            self._get_duration_and_waveform()
+        return self._waveform
+
+    def cycle_duration(self, mode):
+        """Return the duration of the cycling in seconds."""
+        if self._cycle_duration is None:
+            self._get_duration_and_waveform()
+        return self._cycle_duration
+
+    def check_intlks(self):
+        if not self.connected:
+            return False
+        return self['interlock'].value > 55
+
+    def check_on(self):
+        """Return wether magnet PS is on."""
+        return _pv_timed_get(self['setpwm'], 1)
+
+    def set_current_zero(self):
+        """Set PS current to zero ."""
+        return _pv_conn_put(self['seti'], 0)
+
+    def check_current_zero(self):
+        """Return wether magnet PS current is zero."""
+        return _pv_timed_get(self['rdi'], 0)
+
+    def prepare(self, mode):
+        """Config magnet to cycling mode."""
+        status = self.set_current_zero()
+        return status
+
+    def is_prepared(self, mode):
+        """Return wether magnet is ready."""
+        status = self.check_current_zero()
+        return status
+
+    def cycle(self):
+        """Cycle. This function may run in a thread."""
+        for i in range(len(self._waveform)):
+            self['seti'] = self._waveform[i]
+            _time.sleep(self._times[i+1] - self._times[i])
+
+    def check_final_state(self, mode):
+        status = True
+        status &= self.check_on()
+        status &= self.check_intlks()
+        if not status:
+            return 3  # indicate interlock problems
+        return 0
+
+    def _get_duration_and_waveform(self):
+        """Get duration and waveform."""
+        t, w = _li_get_default_waveform(psname=self.maname)
+        self._times = t
+        self._cycle_duration = max(t)
+        self._waveform = w
 
     def __getitem__(self, prop):
         """Return item."""

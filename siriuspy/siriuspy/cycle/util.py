@@ -9,9 +9,11 @@ from siriuspy.search import MASearch as _MASearch, PSSearch as _PSSearch
 
 def get_manames():
     """Return manames."""
-    return _MASearch.get_manames({'sec': '(TB|BO)', 'dis': 'MA'})
+    names = _MASearch.get_manames({'sec': '(TB|BO)', 'dis': 'MA'})
     # TODO: uncomment when using TS and SI
-    # return _MASearch.get_manames({'sec': '(TB|BO|TS|SI)', 'dis': 'MA'})
+    # names = _MASearch.get_manames({'sec': '(TB|BO|TS|SI)', 'dis': 'MA'})
+    names.extend(_PSSearch.get_psnames({'sec': 'LI'}))
+    return names
 
 
 def get_manames_from_same_udc(maname):

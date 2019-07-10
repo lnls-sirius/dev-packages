@@ -4,9 +4,9 @@ import sys as _sys
 import time as _time
 import logging as _log
 import threading as _thread
-from siriuspy.namesys import Filter as _Filter
-from siriuspy.search import MASearch as _MASearch
-from .conn import MagnetCycler, Timing
+from siriuspy.namesys import Filter as _Filter, SiriusPVName as _PVName
+from siriuspy.search import MASearch as _MASearch, PSSearch as _PSSearch
+from .conn import Timing, MagnetCycler, LinacMagnetCycler
 
 TIMEOUT_SLEEP = 0.1
 TIMEOUT_CHECK = 20
@@ -18,29 +18,32 @@ class CycleController:
     def __init__(self, cyclers=None, timing=None,
                  is_bo=False, ramp_config=None, logger=None):
         """Initialize."""
+        ma2ramp = list()
+        ma2cycle = list()
         if cyclers:
             self.cyclers = cyclers
+            self.psnames_li = self._li_psnames_2_cycle()
+            ma2cycle = self._manames_2_cycle()
+            ma2ramp = self._manames_2_ramp()
         else:
+            self.cyclers = dict()
             if is_bo:
                 manames = _MASearch.get_manames({'sec': 'BO', 'dis': 'MA'})
+                ma2ramp = manames
             else:
+                self.psnames_li = _PSSearch.get_psnames(
+                    {'sec': 'LI', 'dis': 'PS'})
+                for psname in self.psnames_li:
+                    self.cyclers[psname] = LinacMagnetCycler(psname)
+
                 manames = _MASearch.get_manames({'sec': 'TB', 'dis': 'MA'})
+                ma2cycle = manames
                 # manames = _MASearch.get_manames(
                 #     {'sec': '(TB|TS|SI)', 'dis': 'MA'})
-            self.cyclers = dict()
             for maname in manames:
                 self.cyclers[maname] = MagnetCycler(maname, ramp_config)
         self._timing = timing if timing is not None else Timing()
 
-        self._logger = logger
-        self._logger_message = ''
-        if not logger:
-            _log.basicConfig(
-                format='%(asctime)s | %(message)s',
-                datefmt='%F %T', level=_log.INFO, stream=_sys.stdout)
-
-        ma2cycle = self._manames_2_cycle()
-        ma2ramp = self._manames_2_ramp()
         if ma2cycle and ma2ramp:
             raise Exception('Can not cycle Booster with other accelerators!')
         elif ma2cycle:
@@ -54,9 +57,15 @@ class CycleController:
                 self._cycle_duration,
                 self.cyclers[ma].cycle_duration(self._mode))
 
-        self.aborted = False
-        self._prepare_size = None
+        self._prepare_ma_size = None
         self._cycle_size = None
+
+        self._logger = logger
+        self._logger_message = ''
+        if not logger:
+            _log.basicConfig(
+                format='%(asctime)s | %(message)s',
+                datefmt='%F %T', level=_log.INFO, stream=_sys.stdout)
 
     @property
     def manames(self):
@@ -69,46 +78,49 @@ class CycleController:
         return self._mode
 
     @property
-    def prepare_size(self):
-        """Prepare size."""
-        if not self._prepare_size:
-            s_check = len(self.manames) + 3
-            s_prep = len(self.manames) + 3
-            self._prepare_size = s_check + s_prep
-        return self._prepare_size
+    def prepare_timing_size(self):
+        """Timing preparation size."""
+        return 3
+
+    @property
+    def prepare_magnets_size(self):
+        """Magnets preparation size."""
+        if self._prepare_ma_size is None:
+            self._prepare_ma_size = 2*len(self.manames)+1
+        return self._prepare_ma_size
 
     @property
     def cycle_size(self):
         """Cycle size."""
         if not self._cycle_size:
-            s_check = len(self.manames)+3
-            s_cycle = round(self._cycle_duration)+3*len(self.manames)+4
-            self._cycle_size = s_check + s_cycle
+            s_check_params = len(self.manames)+3
+            s_config_opmode = 2*len(self.manames)
+            s_cycle = 1+round(self._cycle_duration)
+            s_check_final = len(self.manames)+2
+            self._cycle_size = s_check_params + \
+                s_config_opmode + s_cycle + s_check_final
         return self._cycle_size
 
-    def prepare_all_magnets(self, ppty):
+    def config_all_magnets(self, ppty):
         """Prepare magnets to cycle according to mode."""
         threads = list()
         for maname in self.manames:
             t = _thread.Thread(
-                target=self.prepare_magnet, args=(maname, ppty), daemon=True)
+                target=self.config_magnet, args=(maname, ppty), daemon=True)
             self._update_log('Preparing '+maname+' '+ppty+'...')
             threads.append(t)
             t.start()
         for t in threads:
             t.join()
-        if self.aborted:
-            self._update_log('Aborted.', error=True)
-            return
 
-    def prepare_magnet(self, maname, ppty):
+    def config_magnet(self, maname, ppty):
         """Prepare magnet parameters."""
         if ppty == 'parameters':
             self.cyclers[maname].prepare(self.mode)
         elif ppty == 'opmode':
             self.cyclers[maname].set_opmode_cycle(self.mode)
 
-    def prepare_timing(self):
+    def config_timing(self):
         """Prepare timing to cycle according to mode."""
         self._timing.turnoff()
         sections = ['TB', ] if self.mode == 'Cycle' else ['BO', ]
@@ -130,18 +142,16 @@ class CycleController:
             t.start()
         for t in threads:
             t.join()
-        if self.aborted:
-            self._update_log('Aborted.', error=True)
-            return False
 
+        status = True
         for maname in self.manames:
             self._update_log('Checking '+maname+' '+ppty+'...')
             if self._checks_result[maname]:
                 self._update_log(done=True)
             else:
                 self._update_log(maname+' is not ready.', error=True)
-                return False
-        return True
+                status &= False
+        return status
 
     def check_magnet(self, maname, ppty):
         """Check magnet."""
@@ -165,7 +175,7 @@ class CycleController:
         # sections = ['TB', 'TS', 'SI'] if mode == 'Cycle' else ['BO', ]
         self._update_log('Checking Timing...')
         t0 = _time.time()
-        while _time.time()-t0 < TIMEOUT_CHECK:
+        while _time.time()-t0 < TIMEOUT_CHECK/2:
             status = self._timing.check(self.mode, sections)
             if status:
                 break
@@ -179,6 +189,16 @@ class CycleController:
 
     def init(self):
         """Trigger timing according to mode to init cycling."""
+        # initialize dict to check which ps is cycling
+        for maname in self.manames:
+            self._is_cycling_dict[maname] = True
+        self._li_threads = list()
+        for psname in self.psnames_li:
+            cycler = self.cyclers[psname]
+            t = _thread.Thread(target=cycler.cycle(), daemon=True)
+            self._li_threads.append(t)
+            t.start()
+
         self._update_log('Triggering timing...')
         self._timing.trigger(self.mode)
         self._update_log(done=True)
@@ -200,13 +220,18 @@ class CycleController:
             self._update_log('Remaining time: {}s...'.format(t))
 
             # verify if magnets started to cycle
-            if (self.mode == 'Cycle') and (5 < _time.time() - t0 < 8):
+            if (self.mode == 'Cycle') and (5 < _time.time() - t0 < 6):
+                # print('checking cycle')
                 for maname in self.manames:
+                    if _PVName(maname).sec == 'LI':
+                        continue
                     if not self.cyclers[maname].get_cycle_enable():
-                        self._update_log(
-                            'Magnets are not cycling! Verify triggers!',
-                            error=True)
-                        return False
+                        self._update_log(maname + 'is not cycling!',
+                                         warning=True)
+                        self._is_cycling_dict[maname] = False
+            if all([v is False for v in self._is_cycling_dict.values()]):
+                self._update_log('All magnets failed. Stopping.', error=True)
+                return False
 
             # update keep_waiting
             if self.mode == 'Cycle':
@@ -229,9 +254,6 @@ class CycleController:
             t.start()
         for t in threads:
             t.join()
-        if self.aborted:
-            self._update_log('Aborted.', error=True)
-            return False
 
         for maname in self.manames:
             self._update_log('Checking '+maname+' final state...')
@@ -260,6 +282,8 @@ class CycleController:
         self._update_log('Setting magnets to SlowRef...')
         threads = list()
         for ma in self.manames:
+            if 'LI' in ma:
+                continue
             t = _thread.Thread(
                 target=self.cyclers[ma].set_opmode_slowref, daemon=True)
             threads.append(t)
@@ -272,44 +296,37 @@ class CycleController:
 
     # --- main commands ---
 
-    def prepare(self):
-        """Prepare to cycle."""
-        self.prepare_all_magnets('parameters')
-        if self.aborted:
-            self._update_log('Aborted.', error=True)
+    def prepare_timing(self):
+        self.config_timing()
+        if not self.check_timing():
             return
-        self.prepare_timing()
-        if not self.check():
-            return
-        self._update_log('Preparation finished!')
+        self._update_log('Timing preparation finished!')
 
-    def check(self):
-        """Check cycle preparation."""
+    def prepare_magnets(self):
+        """Prepare to cycle."""
+        self.config_all_magnets('parameters')
         if not self.check_all_magnets('parameters'):
             self._update_log(
                 'There are magnets not configured to cycle. Stopping.',
                 error=True)
-            return False
-        if not self.check_timing():
-            return False
-        return True
+            return
+        self._update_log('Magnets preparation finished!')
 
     def cycle(self):
         """Cycle."""
-        if not self.check():
+        # check
+        if not self.check_timing():
             return
-        if self.aborted:
-            self._update_log('Aborted.', error=True)
+        if not self.check_all_magnets('parameters'):
+            self._update_log(
+                'There are magnets not configured to cycle. Stopping.',
+                error=True)
             return
-
         self.prepare_all_magnets('opmode')
         if not self.check_all_magnets('opmode'):
             self._update_log(
                 'There are magnets with wrong opmode. Stopping.',
                 error=True)
-            return
-        if self.aborted:
-            self._update_log('Aborted.', error=True)
             return
 
         self.init()
@@ -323,6 +340,11 @@ class CycleController:
         self._update_log('Cycle finished!')
 
     # --- private methods ---
+
+    def _li_psnames_2_cycle(self):
+        """Return Linac psnames to cycle."""
+        return _Filter.process_filters(
+            self.cyclers.keys(), filters={'sec': 'LI', 'dis': 'PS'})
 
     def _manames_2_cycle(self):
         """Return manames to cycle."""
