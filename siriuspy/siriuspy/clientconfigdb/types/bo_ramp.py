@@ -5,7 +5,7 @@ corresponding values when a new configuration is tried to be inserted in the
 servconf database.
 """
 from copy import deepcopy as _dcopy
-from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
+from siriuspy.csdevice.pwrsupply import DEF_WFMSIZE as _DEF_WFMSIZE
 from siriuspy.ramp import util as _util
 
 
@@ -24,7 +24,7 @@ _ps_ramp = {
     # ramp total duration [ms]
     'duration':             _util.DEFAULT_PS_RAMP_DURATION,
     # number of points in power supply waveforms
-    'wfm_nrpoints':         _MAX_WFMSIZE,
+    'wfm_nrpoints':         _DEF_WFMSIZE,
     # ramp time parameters [ms]
     'rampup_start_time':    _util.DEFAULT_PS_RAMP_RAMPUP_START_TIME,
     'rampup_stop_time':     _util.DEFAULT_PS_RAMP_RAMPUP_STOP_TIME,
