@@ -3,6 +3,7 @@
 
 
 import requests
+from urllib import parse as _parse
 # import json
 
 import siriuspy.envars as _envars
@@ -11,28 +12,59 @@ import siriuspy.envars as _envars
 # See https://slacmshankar.github.io/epicsarchiver_docs/userguide.html
 
 
-class ArchiverFetcher:
+class ClientArchiver:
     """Archiver Data Fetcher class."""
 
     SERVER_URL = _envars.server_url_archiver
+    ENDPOINT = '/mgmt/bpl'
 
-    # https://en.wikipedia.org/wiki/Percent-encoding
-    CHAR2PENC = {
-        ':': '%23'
-    }
-
-    _FORM_DEFLT = 'json'
-    _METHOD_DEFLT = 'getData'
-
-    def __init__(self, form=None, method=None, server_url=SERVER_URL):
+    def __init__(self, server_url=None):
         """."""
-        self._form = ArchiverFetcher._FORM_DEFLT if form is None else form
-        self._method = ArchiverFetcher._METHOD_DEFLT \
-            if method is None else method
-        self._server_url = ArchiverFetcher.SERVER_URL \
-            if server_url is None else server_url
+        self.session = None
+        self._url = server_url or self.SERVER_URL
 
-    def get_data(self, pvname, timestamp_start, timestamp_stop):
+    def login(self, username, password):
+        headers = {"User-Agent": "Mozilla/5.0"}
+        payload = {"username": username, "password": password}
+        self.session = requests.Session()
+        url = self._create_url(method='login')
+        response = self.session.post(
+            url, headers=headers, data=payload, verify=False)
+        return b"authenticated" in response.content
+
+    def getPVsInfo(self, pvnames):
+        if isinstance(pvnames, (list, tuple)):
+            pvnames = ','.join(pvnames)
+        url = self._create_url(method='getPVStatus', pv=pvnames)
+        return self.session.get(url).json()
+
+    def getAllPVs(self, pvnames):
+        if isinstance(pvnames, (list, tuple)):
+            pvnames = ','.join(pvnames)
+        url = self._create_url(method='getAllPVs', pv=pvnames, limit='-1')
+        return self.session.get(url).json()
+
+    def deletePVs(self, pvnames):
+        for pvname in pvnames:
+            url = self._create_url(
+                method='deletePV', pv=pvname, deleteData='true')
+            self.session.get(url)
+
+    def pausePVs(self, pvnames):
+        for pvname in pvnames:
+            url = self._create_url(method='pauseArchivingPV', pv=pvnames)
+            self.session.get(url)
+
+    def renamePV(self, oldname, newname):
+        url = self._create_url(method='renamePV', pv=oldname, newname=newname)
+        self.session.get(url)
+
+    def resumePVs(self, pvnames):
+        for pvname in pvnames:
+            url = self._create_url(method='resumeArchivingPV', pv=pvname)
+            self.session.get(url)
+
+    def getData(self, pvname, timestamp_start, timestamp_stop):
         """Get archiver data.
 
         pvname -- name of pv.
@@ -41,8 +73,11 @@ class ArchiverFetcher:
         timestamp_stop -- timestamp of interval start
                            Example: (2019-05-23T14:32:27.570Z)
         """
-        url = self.get_url(pvname, timestamp_start, timestamp_stop)
-        req = requests.get(url, verify=False)
+        tstart = _parse.quote(timestamp_start)
+        tstop = _parse.quote(timestamp_stop)
+        url = self._create_url(
+            method='getData.json', pv=pvname, **{'from': tstart, 'to': tstop})
+        req = self.session.get(url)
         data = req.json()[0]['data']
         value = [v['val'] for v in data]
         timestamp = [v['secs'] + v['nanos']/1.0e9 for v in data]
@@ -50,19 +85,15 @@ class ArchiverFetcher:
         severity = [v['severity'] for v in data]
         return timestamp, value, status, severity
 
-    def get_url(self, pvname, timestamp_start, timestamp_stop):
+    def _create_url(self, method, **kwargs):
         """."""
-        pvname = self.conv_str_2_percent_encoding(pvname)
-        fmturl = '{}{}.{}?pv={}&from={}&to={}'
-        url = fmturl.format(
-            self._server_url, self._method, self._form,
-            pvname, timestamp_start, timestamp_stop)
+        url = self._url
+        if method.startswith('getData.json'):
+            url += '/retrieval/data'
+        else:
+            url += self.ENDPOINT
+        url += '/' + method
+        if kwargs:
+            url += '?'
+            url += '&'.join(['{}={}'.format(k, v) for k, v in kwargs.items()])
         return url
-
-    @staticmethod
-    def conv_str_2_percent_encoding(pvname):
-        """."""
-        pvname_new = pvname
-        for key, value in ArchiverFetcher.CHAR2PENC.items():
-            pvname_new.replace(key, value)
-        return pvname_new

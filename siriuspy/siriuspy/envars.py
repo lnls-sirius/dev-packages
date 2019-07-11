@@ -53,7 +53,7 @@ server_url_configdb = _os.environ.get(
     default='http://sirius-configdb.lnls.br/config-db')
 server_url_archiver = _os.environ.get(
     'SIRIUS_URL_ARCHIVER',
-    default='http://sirius-archiver.lnls.br/retrieval/data/')
+    default='https://sirius-archiver.lnls.br')
 
 
 vaca_prefix = _os.environ.get('VACA_PREFIX',   default='')
