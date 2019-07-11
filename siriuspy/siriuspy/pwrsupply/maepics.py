@@ -19,164 +19,6 @@ from siriuspy.magnet import util as _mutil
 from .status import PSCStatus as _PSCStatus
 
 
-class _Device:
-    """Base class to control a device using BSMP."""
-
-    # Constants and Setpoint regexp patterns
-    _ct = _re.compile('^.*-Cte$')
-    _sp = _re.compile('^.*-(SP|Sel|Cmd)$')
-
-    def __init__(self, controller, slave_id):
-        """Control a device using BSMP protocol."""
-        self._connected = False
-        self._slave_id = slave_id
-        self._controller = controller
-
-        # self._init_setpoints()
-        # self._init_constants()
-
-    # --- public interface
-
-    @property
-    def controller(self):
-        """Controller."""
-        return self._controller
-
-    def read(self, variable_id=None):
-        """Return variable value, if none return group."""
-        return self.controller.read_variable(self._slave_id, variable_id)
-
-    def write(self, variable_id, value):
-        """Not used."""
-        pass
-
-    def connected(self):
-        """Return wether device is connected."""
-        return self.controller.connections[self._slave_id]
-
-    def _execute_function(self, function_id, value=None):
-        """Execute function."""
-        if value is None:
-            self.controller.exec_function(self._slave_id, function_id)
-        else:
-            self.controller.exec_function(self._slave_id, function_id, value)
-
-
-class FBPPowerSupply(_Device):
-    """Control a power supply using BSMP protocol."""
-
-    # Device API
-    def turn_on(self):
-        """Turn power supply on."""
-        self._execute_function(_c.F_TURN_ON)
-        _time.sleep(0.3)  # TODO: really necessary? PRUController does that.
-        self._execute_function(_c.F_CLOSE_LOOP)
-
-    def turn_off(self):
-        """Turn power supply off."""
-        self._execute_function(_c.F_TURN_OFF)
-        _time.sleep(0.3)  # TODO: really necessary? PRUController does that.
-
-    def select_op_mode(self, value):
-        """Set operation mode."""
-        psc_status = _PSCStatus()
-        psc_status.ioc_opmode = value
-        return self._execute_function(_c.F_SELECT_OP_MODE, psc_status.state)
-
-    def reset_interlocks(self):
-        """Reset."""
-        self._execute_function(_c.F_RESET_INTERLOCKS)
-        _time.sleep(0.1)  # TODO: should PRUController do that?
-
-    def set_slowref(self, value):
-        """Set current."""
-        return self._execute_function(_c.F_SET_SLOWREF, value)
-
-    def cfg_siggen(self, t_siggen, num_cycles,
-                   freq, amplitude, offset, aux_params):
-        """Set siggen congiguration parameters."""
-        value = \
-            [t_siggen, num_cycles, freq, amplitude, offset]
-        value.extend(aux_params)
-        self._execute_function(_c.F_CFG_SIGGEN, value)
-
-    def set_siggen(self, frequency, amplitude, offset):
-        """Set siggen parameters in coninuous operation."""
-        value = [frequency, amplitude, offset]
-        self._execute_function(_c.SET_SIGGEN, value)
-
-    def enable_siggen(self):
-        """Enable siggen."""
-        self._execute_function(_c.F_ENABLE_SIGGEN)
-
-    def disable_siggen(self):
-        """Disable siggen."""
-        self._execute_function(_c.F_DISABLE_SIGGEN)
-
-    # --- Methods called by write ---
-
-    # --- Virtual methods ---
-
-    def _read_group(self, group_id):
-        """Parse some variables.
-
-            Check to see if PS_STATE or V_FIRMWARE_VERSION are in the group, as
-        these variables need further parsing.
-        """
-        values = super()._read_group(group_id)
-        if values is not None:
-            var_ids = self.bsmp_device.entities.list_variables(group_id)
-            if _c.V_PS_STATUS in var_ids:
-                # TODO: values['PwrState-Sts'] == values['OpMode-Sts'] ?
-                psc_status = _PSCStatus(ps_status=values['PwrState-Sts'])
-                values['PwrState-Sts'] = psc_status.ioc_pwrstate
-                values['OpMode-Sts'] = psc_status.state
-                values['CtrlMode-Mon'] = psc_status.interface
-            if _c.V_FIRMWARE_VERSION in var_ids:
-                version = ''.join([c.decode() for c in values['Version-Cte']])
-                try:
-                    values['Version-Cte'], _ = version.split('\x00', 1)
-                except ValueError:
-                    values['Version-Cte'] = version
-        return values
-
-    def _read_variable(self, field):
-        """Parse some variables.
-
-            Check to see if PS_STATE or V_FIRMWARE_VERSION are in the group, as
-        these variables need further parsing.
-        """
-        val = super()._read_variable(field)
-
-        if val is None:
-            return None
-
-        if field == 'PwrState-Sts':
-            psc_status = _PSCStatus(ps_status=val)
-            val = psc_status.ioc_pwrstate
-        elif field == 'OpMode-Sts':
-            psc_status = _PSCStatus(ps_status=val)
-            val = psc_status.state
-        elif field == 'CtrlMode-Mon':
-            psc_status = _PSCStatus(ps_status=val)
-            val = psc_status.interface
-        elif field == 'Version-Cte':
-            version = ''.join([c.decode() for c in val])
-            try:
-                val, _ = version.split('\x00', 1)
-            except ValueError:
-                val = version
-
-        return val
-
-    def _write_setpoint(self, field, setpoint):
-        """Write operation."""
-        if field in FBPPowerSupply._epics_2_wfuncs:
-            func_name = FBPPowerSupply._epics_2_wfuncs[field]
-            func = getattr(self, func_name)
-            return func(setpoint=setpoint)
-
-
 class PSCommInterface:
     """Communication interface class for power supplies."""
 
@@ -227,13 +69,16 @@ class PSEpics(PSCommInterface):
 
     # TODO: should we merge this base class into MAEpics?
 
-    def __init__(self, psname, fields=None):
+    def __init__(self, psname, fields=None, use_vaca=True):
         """Create epics PVs and expose them through public controller API."""
         PSCommInterface.__init__(self)
         # Attributes use build a full PV address
         self._psname = psname
         # self._sort_fields()
-        self._prefix = _VACA_PREFIX
+        if use_vaca:
+            self._prefix = _VACA_PREFIX
+        else:
+            self._prefix = ''
         # Get pv db
         self._base_db = self._get_base_db()
         # Get fields, if none is passed they'll will be retrieved from the db
