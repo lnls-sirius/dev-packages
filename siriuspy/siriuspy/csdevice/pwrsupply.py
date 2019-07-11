@@ -12,8 +12,9 @@ from siriuspy.csdevice import util as _cutil
 # MIN_WFMSIZE = 2001
 
 MAX_WFMSIZE = 4000
+DEF_WFMSIZE = 3920
 DEFAULT_SIGGEN_CONFIG = _DEF_SIGG_CONF
-DEFAULT_WFMDATA = (0.0, ) * MAX_WFMSIZE
+DEFAULT_WFMDATA = (0.0, ) * DEF_WFMSIZE
 
 default_ps_current_precision = 4
 default_pu_current_precision = 4
@@ -443,10 +444,10 @@ def get_basic_propty_database():
         'CycleIndex-Mon': {'type': 'int', 'value': 0},
         # Wfm
         'WfmIndex-Mon': {'type': 'int', 'value': 0},
-        'WfmData-SP': {'type': 'float', 'count': MAX_WFMSIZE,
+        'WfmData-SP': {'type': 'float', 'count': DEF_WFMSIZE,
                        'value': list(DEFAULT_WFMDATA),
                        'prec': default_ps_current_precision},
-        'WfmData-RB': {'type': 'float', 'count': MAX_WFMSIZE,
+        'WfmData-RB': {'type': 'float', 'count': DEF_WFMSIZE,
                        'value': list(DEFAULT_WFMDATA),
                        'prec': default_ps_current_precision},
     })
