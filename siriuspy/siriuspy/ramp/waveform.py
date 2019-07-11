@@ -4,7 +4,7 @@ import numpy as _np
 
 from mathphys import constants as _c
 from mathphys import units as _u
-from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
+from siriuspy.csdevice.pwrsupply import DEF_WFMSIZE as _DEF_WFMSIZE
 from siriuspy.ramp import util as _rutil
 from siriuspy.ramp.magnet import Magnet as _Magnet
 from siriuspy.ramp.exceptions import RampInvalidDipoleWfmParms as \
@@ -418,7 +418,7 @@ class _WaveformMagnet:
     _magnets = dict()  # dict with magnets objects to improve efficiency
 
     def __init__(self, maname,
-                 wfm_nrpoints=_MAX_WFMSIZE,
+                 wfm_nrpoints=_DEF_WFMSIZE,
                  **kwargs):
         if maname not in _WaveformMagnet._magnets:
             _WaveformMagnet._magnets[maname] = _Magnet(maname)
