@@ -227,16 +227,13 @@ class PSEpics(PSCommInterface):
 
     # TODO: should we merge this base class into MAEpics?
 
-    def __init__(self, psname, fields=None, use_vaca=True):
+    def __init__(self, psname, fields=None):
         """Create epics PVs and expose them through public controller API."""
         PSCommInterface.__init__(self)
         # Attributes use build a full PV address
         self._psname = psname
         # self._sort_fields()
-        if use_vaca:
-            self._prefix = _VACA_PREFIX
-        else:
-            self._prefix = ''
+        self._prefix = _VACA_PREFIX
         # Get pv db
         self._base_db = self._get_base_db()
         # Get fields, if none is passed they'll will be retrieved from the db
