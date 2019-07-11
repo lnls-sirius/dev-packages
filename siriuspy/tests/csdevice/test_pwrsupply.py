@@ -15,6 +15,7 @@ public_interface = (
     'DEF_WFMSIZE',
     'DEFAULT_SIGGEN_CONFIG',
     'DEFAULT_WFMDATA',
+    'DEFAULT_CURVE',
     'default_ps_current_precision',
     'default_pu_current_precision',
     # 'ps_models',
