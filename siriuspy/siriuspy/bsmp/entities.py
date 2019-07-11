@@ -32,7 +32,7 @@ class _Entity:
                 load += self._conv_value(var_types[idx].fmt, value)
             while len(load) < size:
                 load += chr(0)
-            return load 
+            return load
         else:
             self._check_type(var_types[0], values[0])
             return self._conv_value(var_types[0].fmt, values[0])

@@ -385,6 +385,7 @@ class PRUController:
 
     def read_ps_curves(self, device_ids, curve_id):
         """Return PS curves."""
+        # NOTE: Part of BSMP curves implementation to be used in the future.
         # process device_ids
         if isinstance(device_ids, int):
             dev_ids = (device_ids, )
@@ -1099,7 +1100,8 @@ class PRUController:
         self._bsmp_init_variable_values()
 
         # initialize ps curves
-        self._bsmp_init_ps_curves()
+        # NOTE: Part of BSMP curves implementation to be used in the future.
+        # self._bsmp_init_ps_curves()
 
         # check if ps controller version is compatible with bsmp.py
         self._init_check_version()
@@ -1139,6 +1141,7 @@ class PRUController:
             self._connected[id] = False
 
     def _bsmp_init_ps_curves(self):
+        # NOTE: Part of BSMP curves implementation to be used in the future.
         # init ps curves
         self._ps_curves = dict()
         for curve_id in (0, 1, 2):

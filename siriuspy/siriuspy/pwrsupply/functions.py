@@ -35,7 +35,6 @@ class BSMPFunction(Function):
 
     def execute(self, value=None):
         """Execute command."""
-        # print(self.func_id)
         if not self.setpoints or \
                 (self.setpoints and self.setpoints.apply(value)):
             if value is None:

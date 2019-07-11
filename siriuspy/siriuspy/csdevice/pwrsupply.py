@@ -454,12 +454,13 @@ def get_basic_propty_database():
                        'value': list(DEFAULT_WFMDATA),
                        'prec': default_ps_current_precision},
         # PS Curves
-        'CurvesAcq-Sel': {'type': 'enum', 'enums': _et.DSBLD_ENBLD,
-                          'value': Const.DsblEnbl.Dsbl},
-        'Curve1-Mon': {'type': 'float', 'count': len(DEFAULT_CURVE),
-                       'Value': DEFAULT_CURVE,
-                       'prec': default_ps_current_precision},
-        'CurvesAcq-Cmd': {'type': 'int', 'value': 0},
+        # NOTE: Part of BSMP curves implementation to be used in the future.
+        # 'CurvesAcq-Sel': {'type': 'enum', 'enums': _et.DSBLD_ENBLD,
+        #                   'value': Const.DsblEnbl.Dsbl},
+        # 'Curve1-Mon': {'type': 'float', 'count': len(DEFAULT_CURVE),
+        #                'Value': DEFAULT_CURVE,
+        #                'prec': default_ps_current_precision},
+        # 'CurvesAcq-Cmd': {'type': 'int', 'value': 0},
     })
     return db
 

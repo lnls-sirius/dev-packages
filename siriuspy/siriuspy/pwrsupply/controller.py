@@ -43,7 +43,6 @@ class PSController:
     def read(self, device_name, field):
         """Read pv value."""
         pvname = device_name + ':' + field
-
         if field == 'CtrlLoop-Sts':
             sts = self._readers[device_name + ':CtrlLoop-Sts']
             sel = self._readers[device_name + ':CtrlLoop-Sel']

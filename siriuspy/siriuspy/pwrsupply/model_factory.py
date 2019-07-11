@@ -170,8 +170,9 @@ class ModelFactory:
             return _fields.Constant(0)
         elif epics_field == 'PRUSyncMode-Mon':
             return _fields.PRUSyncMode(pru_controller)
-        elif epics_field == 'Curve1-Mon':
-            return _fields.PSCurve(pru_controller, device_id, 1)
+        # NOTE: Part of BSMP curves implementation to be used in the future.
+        # elif epics_field == 'Curve1-Mon':
+        #     return _fields.PSCurve(pru_controller, device_id, 1)
         return None
 
     def _specific_fields(self, device_id, epics_field, pru_controller):
@@ -264,12 +265,13 @@ class FBP_Factory(ModelFactory):
             return _functions.PRUCurve(device_ids, pru_controller, setpoints)
         elif epics_field == 'BSMPComm-Sel':
             return _functions.BSMPComm(pru_controller, setpoints)
-        elif epics_field == 'CurvesAcq-Sel':
-            return _functions.PSCurvesAcq(device_ids, pru_controller,
-                                          setpoints)
-        elif epics_field == 'CurvesAcq-Cmd':
-            return _functions.PSCurvesAcqCmd(device_ids, pru_controller,
-                                             setpoints)
+        # NOTE: Part of BSMP curves implementation to be used in the future.
+        # elif epics_field == 'CurvesAcq-Sel':
+        #     return _functions.PSCurvesAcq(device_ids, pru_controller,
+        #                                   setpoints)
+        # elif epics_field == 'CurvesAcq-Cmd':
+        #     return _functions.PSCurvesAcqCmd(device_ids, pru_controller,
+        #                                      setpoints)
         else:
             return _functions.BSMPFunctionNull()
 
