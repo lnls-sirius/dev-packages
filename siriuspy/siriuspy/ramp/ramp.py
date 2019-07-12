@@ -23,6 +23,8 @@ from siriuspy.ramp.waveform import \
 class BoosterNormalized(_ConfigDBDocument):
     """Booster normalized configuration."""
 
+    manames = _MASearch.get_manames({'sec': 'BO', 'dis': 'MA'})
+
     def __init__(self, name=None):
         """Constructor."""
         super().__init__('bo_normalized', name=name)
@@ -32,11 +34,6 @@ class BoosterNormalized(_ConfigDBDocument):
         for index, data in enumerate(self._value['pvs']):
             maname = SiriusPVName(data[0]).device_name
             self._manames2index[maname] = index
-
-    @property
-    def manames(self):
-        """List of power supply names."""
-        return list(self._manames2index.keys())
 
     def _get_item(self, maname):
         index = self._manames2index[maname]
@@ -819,7 +816,7 @@ class BoosterRamp(_ConfigDBDocument):
     @property
     def ps_waveform_manames_exclimits(self):
         """Return a list of manames whose waveform exceeds current limits."""
-        manames = BoosterNormalized().manames
+        manames = BoosterNormalized.manames
         manames_exclimits = list()
         for maname in manames:
             self._update_ps_waveform(maname)
