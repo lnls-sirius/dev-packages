@@ -20,6 +20,9 @@ import as_ma.pvs as _pvs
 __version__ = _pvs._COMMIT_HASH
 
 
+_consts = _siriuspy.csdevice.pwrsupply.Const.DisconnConn
+
+
 class App:
     """Main application for handling magnet power supplies.
 
@@ -96,14 +99,15 @@ class App:
         return
 
     def _update_psconn_status(self):
-        for family, maepics in App.ma_devices.items():
+        for maepics in App.ma_devices.values():
             reason = maepics.maname + ':PSConnStatus-Mon'
-            value = 1 if maepics.connected else 0
+            value = _consts.Connected if maepics.connected else \
+                _consts.Disconnected
             self._driver.setParam(reason, value)
             self._driver.updatePV(reason)
 
     def _set_callback(self):
-        for family, maepics in App.ma_devices.items():
+        for maepics in App.ma_devices.values():
             maepics.add_callback(self._mycallback)
             db = maepics.get_database(prefix=maepics.maname)
             for reason, ddb in db.items():
