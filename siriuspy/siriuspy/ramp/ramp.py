@@ -972,9 +972,9 @@ class BoosterRamp(_ConfigDBDocument):
             if name in self._ps_nconfigs:
                 norm_configs[name] = self._ps_nconfigs[name]
             else:
-                self._synchronized = False
-                self._invalidate_ps_waveforms()
                 norm_configs[name] = BoosterNormalized(name)
+        self._synchronized = False
+        self._invalidate_ps_waveforms()
         self._ps_nconfigs = norm_configs
 
     def _update_ps_normalized_config_energy(self, nconfig_obj, time):
