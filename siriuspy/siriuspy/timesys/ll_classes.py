@@ -363,14 +363,14 @@ class _EVROUT(_BaseLL):
         map_ = {
             'State': self.prefix + intlb + 'State-Sts',
             'Evt': self.prefix + intlb + 'Evt-RB',
-            'Width': self.prefix + intlb + 'Width-RB',
+            'Width': self.prefix + intlb + 'WidthRaw-RB',
             'Polarity': self.prefix + intlb + 'Polarity-Sts',
             'NrPulses': self.prefix + intlb + 'NrPulses-RB',
-            'Delay': self.prefix + intlb + 'Delay-RB',
+            'Delay': self.prefix + intlb + 'DelayRaw-RB',
             'Src': self.prefix + outlb + 'Src-Sts',
             'SrcTrig': self.prefix + outlb + 'SrcTrig-RB',
-            'RFDelay': self.prefix + outlb + 'RFDelay-RB',
-            'FineDelay': self.prefix + outlb + 'FineDelay-RB',
+            'RFDelay': self.prefix + outlb + 'RFDelayRaw-RB',
+            'FineDelay': self.prefix + outlb + 'FineDelayRaw-RB',
             'RFDelayType': self.prefix + outlb + 'RFDelayType-Sts',
             # connection status PVs
             'DevEnbl': self.prefix + 'DevEnbl-Sts',
@@ -703,6 +703,13 @@ class _AMCFPGAEVRAMC(_EVROUT):
 
     def _set_delay(self, value):
         return _EVROTP._set_delay(self, value)
+
+    def _define_convertion_prop2pv(self):
+        map_ = super()._define_convertion_prop2pv()
+        map_['Delay'] = map_['Delay'].replace('Raw-RB', '-RB')
+        map_['Width'] = map_['Width'].replace('Raw-RB', '-RB')
+        map_['Network'] = map_['Network'].replace('Network', 'RefClkLocked')
+        return map_
 
     def _process_source(self, prop, is_sp, value=None):
         dic_ = dict()
