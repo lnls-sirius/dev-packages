@@ -1,11 +1,10 @@
 """Sync computer objects definition."""
 
+from numpy import ndarray as _ndarray
 from siriuspy.computer import Computer as _Computer
 
 
-from numpy import ndarray as _ndarray
-
-_master_pv_index = 0
+_MASTER_PV_INDEX = 0
 
 
 class SyncWrite(_Computer):
@@ -55,17 +54,17 @@ class SyncWrite(_Computer):
     def compute_limits(self, computed_pv, updated_pv_name=None):
         """Compute limits from real pvs."""
         computed_pv.upper_warning_limit = \
-            computed_pv.pvs[_master_pv_index].upper_warning_limit
+            computed_pv.pvs[_MASTER_PV_INDEX].upper_warning_limit
         computed_pv.lower_warning_limit = \
-            computed_pv.pvs[_master_pv_index].lower_warning_limit
+            computed_pv.pvs[_MASTER_PV_INDEX].lower_warning_limit
         computed_pv.upper_alarm_limit = \
-            computed_pv.pvs[_master_pv_index].upper_alarm_limit
+            computed_pv.pvs[_MASTER_PV_INDEX].upper_alarm_limit
         computed_pv.lower_alarm_limit = \
-            computed_pv.pvs[_master_pv_index].lower_alarm_limit
+            computed_pv.pvs[_MASTER_PV_INDEX].lower_alarm_limit
         computed_pv.upper_disp_limit = \
-            computed_pv.pvs[_master_pv_index].upper_disp_limit
+            computed_pv.pvs[_MASTER_PV_INDEX].upper_disp_limit
         computed_pv.lower_disp_limit = \
-            computed_pv.pvs[_master_pv_index].lower_disp_limit
+            computed_pv.pvs[_MASTER_PV_INDEX].lower_disp_limit
 
 
 class SyncRead(_Computer):
