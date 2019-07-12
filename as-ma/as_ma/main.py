@@ -101,7 +101,6 @@ class App:
             value = 1 if maepics.connected else 0
             self._driver.setParam(reason, value)
             self._driver.updatePV(reason)
-        print()
 
     def _set_callback(self):
         for family, maepics in App.ma_devices.items():
