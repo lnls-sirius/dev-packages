@@ -872,6 +872,7 @@ class BoosterRamp(_ConfigDBDocument):
 
     def ps_waveform_interp_strengths(self, maname, time):
         """Return ps ramp strength at a given time."""
+        self._update_ps_waveform(maname)
         times = self.ps_waveform_get_times()
         strengths = self._ps_waveforms[maname].strengths
         strength = _np.interp(time, times, strengths)
@@ -879,6 +880,7 @@ class BoosterRamp(_ConfigDBDocument):
 
     def ps_waveform_interp_currents(self, maname, time):
         """Return ps ramp current at a given time."""
+        self._update_ps_waveform(maname)
         times = self.ps_waveform_get_times()
         currents = self._ps_waveforms[maname].currents
         current = _np.interp(time, times, currents)
