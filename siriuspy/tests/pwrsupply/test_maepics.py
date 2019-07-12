@@ -4,8 +4,7 @@
 from unittest import mock, TestCase
 
 from siriuspy.bsmp import SerialError
-from siriuspy.pwrsupply import model
-# from siriuspy.pwrsupply.model import FBPPowerSupply
+from siriuspy.pwrsupply import maepics
 from siriuspy.csdevice.pwrsupply import get_ps_propty_database
 from siriuspy.util import check_public_interface_namespace
 
@@ -37,5 +36,5 @@ class TestModule(TestCase):
 
     def test_public_interface(self):
         """Test module's public interface."""
-        valid = check_public_interface_namespace(model, public_interface)
+        valid = check_public_interface_namespace(maepics, public_interface)
         self.assertTrue(valid)
