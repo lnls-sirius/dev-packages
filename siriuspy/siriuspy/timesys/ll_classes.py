@@ -335,9 +335,9 @@ class _EVROUT(_BaseLL):
 
         prefix = LL_PREFIX + _PVName(channel).device_name + ':'
         super().__init__(channel, prefix)
-        self._config_ok_values['DevEnbl'] = 1
-        self._config_ok_values['FoutDevEnbl'] = 1
-        self._config_ok_values['EVGDevEnbl'] = 1
+        # self._config_ok_values['DevEnbl'] = 1
+        # self._config_ok_values['FoutDevEnbl'] = 1
+        # self._config_ok_values['EVGDevEnbl'] = 1
         if self.channel.propty.startswith('OUT'):
             intrg = _LLTimeSearch.get_channel_internal_trigger_pvname(
                                                         self.channel)
