@@ -86,6 +86,24 @@ class PRUCurve(Function):
                 self.pru_controller.pru_curve_write(dev_id, value)
 
 
+class PSCurvesAcqCmd(Function):
+    """Executes a ps curve update."""
+
+    def __init__(self, device_ids, pru_controller, setpoints=()):
+        """Get pru controller."""
+        self._device_ids = device_ids
+        self.pru_controller = pru_controller
+        self.setpoints = setpoints
+
+    def execute(self, value=None):
+        """Execute command."""
+        if not self.setpoints or \
+                (self.setpoints and self.setpoints.apply(value)):
+            self.pru_controller.update_ps_curves(self._device_ids, 0)
+            self.pru_controller.update_ps_curves(self._device_ids, 1)
+            self.pru_controller.update_ps_curves(self._device_ids, 2)
+
+
 class PRUProperty(Function):
     """Executes a PRUProperty command."""
 
@@ -128,6 +146,28 @@ class PSPwrState(Function):
             elif value == 0:
                 self.turn_off.execute()
                 _time.sleep(_delay_turn_on_off)
+
+
+class PSCurvesAcq(Function):
+    """Enable/Disable curve acquisition."""
+
+    def __init__(self, device_ids, pru_controller, setpoints=None):
+        """Define CurveAcq."""
+        self._device_ids = device_ids
+        self.enable = BSMPFunction(
+            device_ids, pru_controller, _c.F_ENABLE_BUF_SAMPLES)
+        self.disable = BSMPFunction(
+            device_ids, pru_controller, _c.F_DISABLE_BUF_SAMPLES)
+        self.setpoints = setpoints
+
+    def execute(self, value=None):
+        """Execute Command."""
+        if not self.setpoints or \
+                (self.setpoints and self.setpoints.apply(value)):
+            if value == 1:
+                self.enable.execute()
+            elif value == 0:
+                self.disable.execute()
 
 
 class BSMPComm(Function):
