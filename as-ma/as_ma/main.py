@@ -99,7 +99,6 @@ class App:
         for family, maepics in App.ma_devices.items():
             reason = maepics.maname + ':PSConnStatus-Mon'
             value = 1 if maepics.connected else 0
-            print(reason, value, maepics.connected)
             self._driver.setParam(reason, value)
             self._driver.updatePV(reason)
         print()
