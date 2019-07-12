@@ -46,7 +46,6 @@ class _BaseLL(_Base):
         self._dict_functs_for_write = self._define_dict_for_write()
         self._dict_functs_for_update = self._define_dict_for_update()
         self._dict_functs_for_read = self._define_dict_for_read()
-        self._list_props_must_set = self._define_list_props_must_set()
         self._dict_convert_prop2pv = self._define_convertion_prop2pv()
         self._dict_convert_pv2prop = {
                 val: key for key, val in self._dict_convert_prop2pv.items()}
@@ -115,8 +114,6 @@ class _BaseLL(_Base):
         self._locked = bool(value)
         if not self._locked:
             return
-        # for prop in self._list_props_must_set:
-        #     val = self._config_ok_values.get(prop)
         for prop, val in self._config_ok_values.items():
             if val is None:
                 continue
@@ -176,14 +173,6 @@ class _BaseLL(_Base):
         self._base_freq = self._rf_freq / self._rf_div
         self._base_del = 1/self._base_freq / _US2SEC
         self._rf_del = self._base_del / self._rf_div / 5
-
-    def _define_list_props_must_set(self):
-        """Define a list for properties that must be set.
-
-        When this object starts locking the low level pvs some properties must
-        be set riht away in order to guarantee the consistency of the object.
-        """
-        return list()
 
     def _define_convertion_prop2pv(self):
         """Define a dictionary for convertion of names.
@@ -360,9 +349,6 @@ class _EVROUT(_BaseLL):
         if prop == 'Duration':
             self._duration = value
         return super().write(prop, value)
-
-    def _define_list_props_must_set(self):
-        return ['DevEnbl', 'FoutDevEnbl', 'EVGDevEnbl', 'SrcTrig']
 
     def _define_convertion_prop2pv(self):
         intlb = _LLTimeSearch.get_channel_internal_trigger_pvname(self.channel)
