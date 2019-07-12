@@ -99,13 +99,13 @@ class PSEpics(PSCommInterface):
             # print("Not connected")
             return None
 
-    def add_callback(self, func):
+    def add_callback(self, func, index=None):
         """Add callback to field."""
         if not callable(func):
             raise ValueError("Tried to set non callable as a callback")
         else:
             for pv in self._pvs.values():
-                pv.add_callback(func)
+                pv.add_callback(func, index)
 
     def _connected(self):
         for pv in self._pvs.values():
@@ -140,11 +140,14 @@ class PSEpics(PSCommInterface):
         self._sort_fields()
         self._pvs = dict()
         for field in self._fields:
-            self._pvs[field] = self._create_pv(field)
+            pv = self._create_pv(field)
+            if pv:
+                self._pvs[field] = pv
 
     def _create_pv(self, field):
-        return _PV(self._prefix + self._psname + ":" + field,
-                   connection_timeout=_connection_timeout)
+        pvname = self._prefix + self._psname + ":" + field
+        pv = _PV(pvname)
+        return pv
 
     def _get_base_db(self):
         return _PSData(self._psname).propty_database
@@ -203,9 +206,20 @@ class MAEpics(PSEpics):
 
         self._lock = lock
         self._computed_pvs_queue = _QueueThread()
-        super().__init__(
-            self._maname.replace("MA", "PS").replace("PM", "PU"),
-            **kwargs)
+        psname = self._maname.replace("MA", "PS").replace("PM", "PU")
+        super().__init__(psname, **kwargs)
+
+    @property
+    def maname(self):
+        """Return maname."""
+        return self._maname
+
+    def read(self, field):
+        """Read a field value."""
+        if 'PSConnStatus' in field:
+            return self.connected
+        else:
+            return super().read(field)
 
     # --- virtual methods ---
 
@@ -215,6 +229,9 @@ class MAEpics(PSEpics):
 
     def _create_pv(self, field):
         # Build either a base or computed PV
+        if 'PSConnStatus' in field:
+            # PSConnStatus is not a PV, it is a MAEpics object field
+            return None
         if MAEpics._is_strength.match(field):
             # 1) STRENGTH fields
             # an intermediate computed_pv is created in order for the
@@ -234,16 +251,20 @@ class MAEpics(PSEpics):
                 # 2) SYNCPV fields
                 # this is used basically for SI and BO dipoles
                 sync = self._get_sync_obj(field)
-                pvs = [self._prefix + device_name + ":" + field
-                       for device_name in psnames]
+                pvnames = [self._prefix + device_name + ":" + field
+                           for device_name in psnames]
                 pvname = self._psname + ":" + field
-                return _ComputedPV(pvname, sync,
-                                   self._computed_pvs_queue, pvs)
+                computer_pv = _ComputedPV(
+                    pvname, sync, self._computed_pvs_queue, pvnames)
+                return computer_pv
             else:
                 # 3) PV
                 # a normal pv mirroring the power supply pv.
                 # no computed_pv is needed.
                 return super()._create_pv(field)
+
+
+
 
     def _get_base_db(self):
         # set dipole energy limits

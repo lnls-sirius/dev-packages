@@ -619,6 +619,11 @@ def get_ma_propty_database(maname):
             db[psname][strength_name + field]['high'] = 0.0
             db[psname][strength_name + field]['hihi'] = 0.0
 
+        # add PSConnStatus
+        db[psname]['PSConnStatus-Mon'] = {
+            'type': 'enum', 'enums': _et.DISCONN_CONN,
+                            'value': Const.DisconnConn.Disconnected}
+
         # add pvs list
         db[psname] = _cutil.add_pvslist_cte(db[psname])
 
