@@ -1,5 +1,6 @@
 """Module implementing PRU elements."""
 import os as _os
+import sys as _sys
 import threading as _threading
 
 import epics as _epics
@@ -9,7 +10,9 @@ from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 __version__ = '1.3.3'  # current compatible version.
 # load PRUserial485 if available and checks version
 
+
 import PRUserial485 as _PRUserial485
+
 
 ver, *_ = _PRUserial485.__version__.split(':')
 if ver != __version__:
@@ -177,7 +180,7 @@ class PRU(PRUInterface):
         """Init method."""
         # check if process is running as root
         if _os.geteuid() != 0:
-            exit('You need to have root privileges to use PRU')
+            _sys.exit('You need to have root privileges to use PRU')
 
         # check if PRU library is installed
         if _PRUserial485 is None:
