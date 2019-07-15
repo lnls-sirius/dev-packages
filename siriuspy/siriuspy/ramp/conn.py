@@ -18,9 +18,10 @@ from siriuspy.ramp import util as _rutil
 
 
 _prefix = _envars.vaca_prefix
-_PWRSTATE_ON_DELAY = 1.4
-_PWRSTATE_OFF_DELAY = 0.8
-_TIMEOUT_DFLT = 1.4
+_TIMEOUT_DFLT = 5
+_TIMEOUT_PWRSTATE_ON = 1.4
+_TIMEOUT_PWRSTATE_OFF = 0.8
+_TIMEOUT_OPMODE_CHANGE = 5
 
 
 class ConnTiming(_EpicsPropsList):
@@ -279,7 +280,7 @@ class ConnTiming(_EpicsPropsList):
 
     def _command(self, setpoints, timeout):
         if self.connected:
-            return self.set_setpoints_check(setpoints, timeout)
+            return self.set_setpoints_check(setpoints, timeout=timeout)
         else:
             return False
 
@@ -313,38 +314,53 @@ class ConnMagnets(_EpicsPropsList):
 
     # --- power supplies commands ---
 
-    def cmd_pwrstate_on(self, timeout=_PWRSTATE_ON_DELAY):
+    def cmd_pwrstate_on(self, timeout=_TIMEOUT_PWRSTATE_ON):
         """Turn all power supplies on."""
-        return self._command('PwrState-Sel', _PSConst.PwrStateSel.On, timeout)
+        return self._command('PwrState-Sel',
+                             _PSConst.PwrStateSel.On,
+                             desired_readback=_PSConst.PwrStateSts.On,
+                             timeout=timeout)
 
-    def cmd_pwrstate_off(self, timeout=_PWRSTATE_OFF_DELAY):
+    def cmd_pwrstate_off(self, timeout=_TIMEOUT_PWRSTATE_OFF):
         """Turn all power supplies off."""
-        return self._command('PwrState-Sel', _PSConst.PwrStateSel.Off, timeout)
+        return self._command('PwrState-Sel',
+                             _PSConst.PwrStateSel.Off,
+                             desired_readback=_PSConst.PwrStateSts.Off,
+                             timeout=timeout)
 
-    def cmd_opmode_slowref(self, timeout=_TIMEOUT_DFLT):
+    def cmd_opmode_slowref(self, timeout=_TIMEOUT_OPMODE_CHANGE):
         """Select SlowRef opmode for all power supplies."""
-        return self._command('OpMode-Sel', _PSConst.OpMode.SlowRef, timeout)
+        return self._command('OpMode-Sel',
+                             _PSConst.OpMode.SlowRef,
+                             desired_readback=_PSConst.States.SlowRef,
+                             timeout=timeout)
 
-    def cmd_opmode_cycle(self, timeout=_TIMEOUT_DFLT):
+    def cmd_opmode_cycle(self, timeout=_TIMEOUT_OPMODE_CHANGE):
         """Select Cycle opmode for all power supplies."""
-        return self._command('OpMode-Sel', _PSConst.OpMode.Cycle, timeout)
+        return self._command('OpMode-Sel',
+                             _PSConst.OpMode.Cycle,
+                             desired_readback=_PSConst.States.Cycle,
+                             timeout=timeout)
 
-    def cmd_opmode_rmpwfm(self, timeout=_TIMEOUT_DFLT):
+    def cmd_opmode_rmpwfm(self, timeout=_TIMEOUT_OPMODE_CHANGE):
         """Select RmpWfm opmode for all power supplies."""
-        return self._command('OpMode-Sel', _PSConst.OpMode.RmpWfm, timeout)
+        return self._command('OpMode-Sel',
+                             _PSConst.OpMode.RmpWfm,
+                             desired_readback=_PSConst.States.RmpWfm,
+                             timeout=timeout)
 
     def cmd_wfmdata(self, timeout=_TIMEOUT_DFLT):
         """Set wfmdata of all powersupplies."""
         if self._ramp_config is None:
             return False
-        setpoints = dict()
+        sp = dict()
         for maname in self.manames:
             # get value (wfmdata)
             wf = self._ramp_config.ps_waveform_get(maname)
             value = wf.currents
             name = maname + ':WfmData-SP'
-            setpoints[name] = value
-        return self.set_setpoints_check(setpoints, timeout)
+            sp[name] = value
+        return self.set_setpoints_check(sp, timeout=timeout)
 
     # --- power supplies checks ---
 
@@ -403,13 +419,18 @@ class ConnMagnets(_EpicsPropsList):
                                callback=callback))
         return properties
 
-    def _command(self, prop, value, timeout):
+    def _command(self, prop, setpoint, desired_readback=None,
+                 timeout=_TIMEOUT_DFLT):
         """Exec command for all power supplies."""
-        setpoints = dict()
+        sp = dict()
+        rb = dict()
         for maname in self.manames:
             name = maname + ':' + prop
-            setpoints[name] = value
-        return self.set_setpoints_check(setpoints, timeout)
+            sp[name] = setpoint
+            rb[name] = desired_readback if desired_readback else setpoint
+        result = self.set_setpoints_check(
+            sp, desired_readbacks=rb, timeout=timeout)
+        return result
 
     def _check(self, prop, value):
         """Check a prop of all power supplies for a value."""
@@ -457,12 +478,12 @@ class ConnRF(_EpicsPropsList):
     def cmd_ramping_enable(self, timeout=_TIMEOUT_DFLT):
         """Turn RF ramping enable."""
         sp = {ConnRF.Const.Rmp_Enbl: ConnRF.Const.DsblEnbl.Enbl}
-        return self.set_setpoints_check(sp, timeout)
+        return self.set_setpoints_check(sp, timeout=timeout)
 
     def cmd_ramping_disable(self, timeout=_TIMEOUT_DFLT):
         """Turn RF ramping disable."""
         sp = {ConnRF.Const.Rmp_Enbl: ConnRF.Const.STATE_DISBL}
-        return self.set_setpoints_check(sp, timeout)
+        return self.set_setpoints_check(sp, timeout=timeout)
 
     def cmd_config_ramp(self, timeout=_TIMEOUT_DFLT):
         """Apply ramp_config values to RF subsystem."""
@@ -477,7 +498,7 @@ class ConnRF(_EpicsPropsList):
         sp[c.Rmp_PhsBot] = self._ramp_config.rf_ramp_bottom_phase
         sp[c.Rmp_PhsTop] = self._ramp_config.rf_ramp_top_phase
         sp[c.Rmp_IncTs] = 0
-        return self.set_setpoints_check(sp, timeout)
+        return self.set_setpoints_check(sp, timeout=timeout)
 
     # --- RF checks ---
 
