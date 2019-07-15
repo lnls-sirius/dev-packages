@@ -7,7 +7,7 @@ get_pvs_database
 """
 from siriuspy import util as _util
 from siriuspy.envars import vaca_prefix as _vaca_prefix
-from siriuspy.pwrsupply.model import MAEpics as _MAEpics
+from siriuspy.pwrsupply.maepics import MAEpics as _MAEpics
 
 
 _COMMIT_HASH = _util.get_last_commit_hash()

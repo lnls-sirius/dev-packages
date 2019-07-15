@@ -20,6 +20,9 @@ import as_ma.pvs as _pvs
 __version__ = _pvs._COMMIT_HASH
 
 
+_consts = _siriuspy.csdevice.pwrsupply.Const.DisconnConn
+
+
 class App:
     """Main application for handling magnet power supplies.
 
@@ -64,6 +67,7 @@ class App:
 
     def process(self, interval):
         """Sleep."""
+        self._update_psconn_status()
         _time.sleep(interval)
 
     def read(self, reason):
@@ -94,16 +98,18 @@ class App:
 
         return
 
+    def _update_psconn_status(self):
+        for maepics in App.ma_devices.values():
+            reason = maepics.maname + ':PSConnStatus-Mon'
+            value = _consts.Connected if maepics.connected else \
+                _consts.Disconnected
+            self._driver.setParam(reason, value)
+            self._driver.updatePV(reason)
+
     def _set_callback(self):
-        for family, device in App.ma_devices.items():
-            device.add_callback(self._mycallback)
-            # ?
-            # if _pvs._PREFIX_SECTOR:
-            #     *parts, prefix = device._maname.split(_pvs._PREFIX_SECTOR)
-            # else:
-            #     prefix = device._maname
-            prefix = device._maname
-            db = device.get_database(prefix=prefix)
+        for maepics in App.ma_devices.values():
+            maepics.add_callback(self._mycallback)
+            db = maepics.get_database(prefix=maepics.maname)
             for reason, ddb in db.items():
                 value = ddb['value']
                 if value is not None:
