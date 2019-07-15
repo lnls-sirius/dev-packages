@@ -39,9 +39,9 @@ class ComputedPV:
         self._monitor = monitor
         if self._monitor:
             if self._monitor_pv:
-                # in order to optimize efficiency if computed pv is of the
+                # in order to optimize efficiency, if computed pv is of the
                 # monitor type add callback only to the first primary pv, the
-                # one corresponding to the main current to the call
+                # one corresponding to the main current.
                 self.pvs[0].add_callback(self._value_update_callback)
             else:
                 for pv in self.pvs:
