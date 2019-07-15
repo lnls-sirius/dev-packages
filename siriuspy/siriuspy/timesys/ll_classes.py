@@ -81,7 +81,7 @@ class _BaseLL(_Base):
             if pvnamerb is not None:
                 self._readpvs[prop] = _PV(
                     pvnamerb, connection_timeout=_conn_timeout)
-            if pvnamesp != pvnamerb:
+            if pvnamesp != pvnamerb and not prop.endswith('DevEnbl'):
                 self._writepvs[prop] = _PV(
                     pvnamesp, connection_timeout=_conn_timeout)
                 self._writepvs[prop]._initialized = False
@@ -389,9 +389,9 @@ class _EVROUT(_BaseLL):
 
     def _define_dict_for_write(self):
         map_ = {
-            'DevEnbl': _partial(self._set_simple, 'DevEnbl'),
-            'EVGDevEnbl': _partial(self._set_simple, 'EVGDevEnbl'),
-            'FoutDevEnbl': _partial(self._set_simple, 'FoutDevEnbl'),
+            # 'DevEnbl': _partial(self._set_simple, 'DevEnbl'),
+            # 'EVGDevEnbl': _partial(self._set_simple, 'EVGDevEnbl'),
+            # 'FoutDevEnbl': _partial(self._set_simple, 'FoutDevEnbl'),
             'State': _partial(self._set_simple, 'State'),
             'Src': self._set_source,
             'Duration': self._set_duration,
