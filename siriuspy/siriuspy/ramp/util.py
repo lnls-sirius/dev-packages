@@ -109,8 +109,8 @@ _t = _t + DEFAULT_RF_RAMP_RAMPUP_DURATION
 DEFAULT_RF_RAMP_TOP_VOLTAGE = _v1 + _m*(_t - _t1)  # [kV]
 del(_t1, _t2, _v1, _v2, _m, _t)
 
-DEFAULT_RF_RAMP_BOTTOM_PHASE = 0  # [°]
-DEFAULT_RF_RAMP_TOP_PHASE = 0  # [°]
+DEFAULT_RF_RAMP_BOTTOM_PHASE = 0.0  # [°]
+DEFAULT_RF_RAMP_TOP_PHASE = 0.0  # [°]
 
 
 def update_nominal_strengths(dic):
