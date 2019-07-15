@@ -1,6 +1,7 @@
 """Power Supply Control System Devices."""
 
 import copy as _copy
+import numpy as _np
 
 # from pcaspy import Severity as _Severity
 from siriuspy.search import PSSearch as _PSSearch
@@ -12,8 +13,14 @@ from siriuspy.csdevice import util as _cutil
 # MIN_WFMSIZE = 2001
 
 MAX_WFMSIZE = 4000
+DEF_WFMSIZE = 3920
 DEFAULT_SIGGEN_CONFIG = _DEF_SIGG_CONF
-DEFAULT_WFMDATA = (0.0, ) * MAX_WFMSIZE
+DEFAULT_WFMDATA = (0.0, ) * DEF_WFMSIZE
+
+# NOTE: _SIZE has to be consistent with
+# pwrsupply.bsmp.EntitiesFBP.Curve: _SIZE = _curve['count']*_curve['nblocks']
+_SIZE = 4096
+DEFAULT_CURVE = _np.zeros(_SIZE)
 
 default_ps_current_precision = 4
 default_pu_current_precision = 4
@@ -386,11 +393,8 @@ def get_common_propty_database():
         'PRUSyncPulseCount-Mon': {'type': 'int', 'value': 0},
         'PRUCtrlQueueSize-Mon': {'type': 'int', 'value': 0,
                                  'high': 50, 'hihi': 50},
-        # # Ramp
-        # 'RmpIncNrCycles-SP': {'type': 'int', 'value': 0},
-        # 'RmpIncNrCycles-RB': {'type': 'int', 'value': 0},
-        # 'RmpIncNrCycles-Mon': {'type': 'int', 'value': 0},
-        # 'RmpReady-Mon': {'type': 'int', 'value': 0},
+
+        # TODO: should BSMPComm and Interlocks PVs be in "basic"?
         # BSMPComm
         'BSMPComm-Sel': {'type': 'enum', 'enums': _et.PWRSTATE_SEL,
                          'value': Const.PwrStateSel.On},
@@ -443,12 +447,20 @@ def get_basic_propty_database():
         'CycleIndex-Mon': {'type': 'int', 'value': 0},
         # Wfm
         'WfmIndex-Mon': {'type': 'int', 'value': 0},
-        'WfmData-SP': {'type': 'float', 'count': MAX_WFMSIZE,
+        'WfmData-SP': {'type': 'float', 'count': DEF_WFMSIZE,
                        'value': list(DEFAULT_WFMDATA),
                        'prec': default_ps_current_precision},
-        'WfmData-RB': {'type': 'float', 'count': MAX_WFMSIZE,
+        'WfmData-RB': {'type': 'float', 'count': DEF_WFMSIZE,
                        'value': list(DEFAULT_WFMDATA),
                        'prec': default_ps_current_precision},
+        # PS Curves
+        # NOTE: Part of BSMP curves implementation to be used in the future.
+        # 'CurvesAcq-Sel': {'type': 'enum', 'enums': _et.DSBLD_ENBLD,
+        #                   'value': Const.DsblEnbl.Dsbl},
+        # 'Curve1-Mon': {'type': 'float', 'count': len(DEFAULT_CURVE),
+        #                'Value': DEFAULT_CURVE,
+        #                'prec': default_ps_current_precision},
+        # 'CurvesAcq-Cmd': {'type': 'int', 'value': 0},
     })
     return db
 
@@ -617,6 +629,11 @@ def get_ma_propty_database(maname):
             db[psname][strength_name + field]['hilim'] = 0.0
             db[psname][strength_name + field]['high'] = 0.0
             db[psname][strength_name + field]['hihi'] = 0.0
+
+        # add PSConnStatus
+        db[psname]['PSConnStatus-Mon'] = {
+            'type': 'enum', 'enums': _et.DISCONN_CONN,
+                            'value': Const.DisconnConn.Disconnected}
 
         # add pvs list
         db[psname] = _cutil.add_pvslist_cte(db[psname])
