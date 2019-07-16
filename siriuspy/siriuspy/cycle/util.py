@@ -4,6 +4,7 @@
 import time as _time
 import numpy as _np
 from math import isclose as _isclose
+from siriuspy.namesys import Filter as _Filter
 from siriuspy.search import MASearch as _MASearch, PSSearch as _PSSearch
 
 
@@ -24,6 +25,14 @@ def get_manames_from_same_udc(maname):
     psnames = [bsmp[0] for bsmp in bsmp_list]
     manames = set([_MASearch.conv_psname_2_psmaname(name) for name in psnames])
     return manames
+
+
+def get_sections(manames):
+    sections = list()
+    for s in ['LI', 'TB', 'BO', 'TS', 'SI']:
+        if _Filter.process_filters(manames, filters={'sec': s}):
+            sections.append(s)
+    return sections
 
 
 def pv_timed_get(pv, value, wait=5):

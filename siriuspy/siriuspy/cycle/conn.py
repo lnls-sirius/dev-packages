@@ -153,7 +153,7 @@ class Timing:
                 if prop_sts.propty_name.endswith(('Duration', 'Delay')):
                     tol = 0.008 * 1.5
                     if mode == 'Ramp':
-                        tol *= self.DEFAULT_RAMP_NRPULSES
+                        tol *= DEFAULT_RAMP_NRPULSES
                     if not _isclose(pv.value, defval, abs_tol=tol):
                         return False
                 elif isinstance(defval, (_np.ndarray, list, tuple)):
@@ -473,7 +473,7 @@ class LinacMagnetCycler:
     def check_intlks(self):
         if not self.connected:
             return False
-        return self['interlock'].value > 55
+        return self['interlock'].value < 55
 
     def check_on(self):
         """Return wether magnet PS is on."""
@@ -485,7 +485,9 @@ class LinacMagnetCycler:
 
     def check_current_zero(self):
         """Return wether magnet PS current is zero."""
-        return _pv_timed_get(self['rdi'], 0)
+        if not self.connected:
+            return False
+        return _isclose(self['rdi'].value, 0, abs_tol=0.1)
 
     def prepare(self, mode):
         """Config magnet to cycling mode."""
@@ -499,9 +501,10 @@ class LinacMagnetCycler:
 
     def cycle(self):
         """Cycle. This function may run in a thread."""
-        for i in range(len(self._waveform)):
-            self['seti'] = self._waveform[i]
+        for i in range(len(self._waveform)-1):
+            self['seti'].value = self._waveform[i]
             _time.sleep(self._times[i+1] - self._times[i])
+        self['seti'].value = self._waveform[-1]
 
     def check_final_state(self, mode):
         status = True
