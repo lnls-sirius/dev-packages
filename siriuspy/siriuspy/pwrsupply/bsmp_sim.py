@@ -644,11 +644,15 @@ class _BaseBSMPSim(_BSMPSim):
 
     def _get_init_curves(self):
         cvs = self.entities.curves
-        bsmp_c = cvs[0]
-        sblock = bsmp_c.size // bsmp_c.type.size
-        curves = _np.random.normal(
-            scale=_Spec.I_LOAD_FLUCTUATION_RMS,
-            size=(len(cvs), sblock))
+        if len(cvs):
+            bsmp_c = cvs[0]
+            sblock = bsmp_c.size // bsmp_c.type.size
+            curves = _np.random.normal(
+                scale=_Spec.I_LOAD_FLUCTUATION_RMS,
+                size=(len(cvs), sblock))
+        else:
+            # cases where there is no defined bsmp curve, such as in DCLinks.
+            curves = []
         return curves
 
 
