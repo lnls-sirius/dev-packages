@@ -46,7 +46,6 @@ class _BaseLL(_Base):
         self._dict_functs_for_write = self._define_dict_for_write()
         self._dict_functs_for_update = self._define_dict_for_update()
         self._dict_functs_for_read = self._define_dict_for_read()
-        self._list_props_must_set = self._define_list_props_must_set()
         self._dict_convert_prop2pv = self._define_convertion_prop2pv()
         self._dict_convert_pv2prop = {
                 val: key for key, val in self._dict_convert_prop2pv.items()}
@@ -82,7 +81,7 @@ class _BaseLL(_Base):
             if pvnamerb is not None:
                 self._readpvs[prop] = _PV(
                     pvnamerb, connection_timeout=_conn_timeout)
-            if pvnamesp != pvnamerb:
+            if pvnamesp != pvnamerb and not prop.endswith('DevEnbl'):
                 self._writepvs[prop] = _PV(
                     pvnamesp, connection_timeout=_conn_timeout)
                 self._writepvs[prop]._initialized = False
@@ -115,8 +114,6 @@ class _BaseLL(_Base):
         self._locked = bool(value)
         if not self._locked:
             return
-        # for prop in self._list_props_must_set:
-        #     val = self._config_ok_values.get(prop)
         for prop, val in self._config_ok_values.items():
             if val is None:
                 continue
@@ -176,14 +173,6 @@ class _BaseLL(_Base):
         self._base_freq = self._rf_freq / self._rf_div
         self._base_del = 1/self._base_freq / _US2SEC
         self._rf_del = self._base_del / self._rf_div / 5
-
-    def _define_list_props_must_set(self):
-        """Define a list for properties that must be set.
-
-        When this object starts locking the low level pvs some properties must
-        be set riht away in order to guarantee the consistency of the object.
-        """
-        return list()
 
     def _define_convertion_prop2pv(self):
         """Define a dictionary for convertion of names.
@@ -346,9 +335,9 @@ class _EVROUT(_BaseLL):
 
         prefix = LL_PREFIX + _PVName(channel).device_name + ':'
         super().__init__(channel, prefix)
-        self._config_ok_values['DevEnbl'] = 1
-        self._config_ok_values['FoutDevEnbl'] = 1
-        self._config_ok_values['EVGDevEnbl'] = 1
+        # self._config_ok_values['DevEnbl'] = 1
+        # self._config_ok_values['FoutDevEnbl'] = 1
+        # self._config_ok_values['EVGDevEnbl'] = 1
         if self.channel.propty.startswith('OUT'):
             intrg = _LLTimeSearch.get_channel_internal_trigger_pvname(
                                                         self.channel)
@@ -360,9 +349,6 @@ class _EVROUT(_BaseLL):
         if prop == 'Duration':
             self._duration = value
         return super().write(prop, value)
-
-    def _define_list_props_must_set(self):
-        return ['DevEnbl', 'FoutDevEnbl', 'EVGDevEnbl', 'SrcTrig']
 
     def _define_convertion_prop2pv(self):
         intlb = _LLTimeSearch.get_channel_internal_trigger_pvname(self.channel)
@@ -377,14 +363,14 @@ class _EVROUT(_BaseLL):
         map_ = {
             'State': self.prefix + intlb + 'State-Sts',
             'Evt': self.prefix + intlb + 'Evt-RB',
-            'Width': self.prefix + intlb + 'Width-RB',
+            'Width': self.prefix + intlb + 'WidthRaw-RB',
             'Polarity': self.prefix + intlb + 'Polarity-Sts',
             'NrPulses': self.prefix + intlb + 'NrPulses-RB',
-            'Delay': self.prefix + intlb + 'Delay-RB',
+            'Delay': self.prefix + intlb + 'DelayRaw-RB',
             'Src': self.prefix + outlb + 'Src-Sts',
             'SrcTrig': self.prefix + outlb + 'SrcTrig-RB',
-            'RFDelay': self.prefix + outlb + 'RFDelay-RB',
-            'FineDelay': self.prefix + outlb + 'FineDelay-RB',
+            'RFDelay': self.prefix + outlb + 'RFDelayRaw-RB',
+            'FineDelay': self.prefix + outlb + 'FineDelayRaw-RB',
             'RFDelayType': self.prefix + outlb + 'RFDelayType-Sts',
             # connection status PVs
             'DevEnbl': self.prefix + 'DevEnbl-Sts',
@@ -403,9 +389,9 @@ class _EVROUT(_BaseLL):
 
     def _define_dict_for_write(self):
         map_ = {
-            'DevEnbl': _partial(self._set_simple, 'DevEnbl'),
-            'EVGDevEnbl': _partial(self._set_simple, 'EVGDevEnbl'),
-            'FoutDevEnbl': _partial(self._set_simple, 'FoutDevEnbl'),
+            # 'DevEnbl': _partial(self._set_simple, 'DevEnbl'),
+            # 'EVGDevEnbl': _partial(self._set_simple, 'EVGDevEnbl'),
+            # 'FoutDevEnbl': _partial(self._set_simple, 'FoutDevEnbl'),
             'State': _partial(self._set_simple, 'State'),
             'Src': self._set_source,
             'Duration': self._set_duration,
@@ -717,6 +703,13 @@ class _AMCFPGAEVRAMC(_EVROUT):
 
     def _set_delay(self, value):
         return _EVROTP._set_delay(self, value)
+
+    def _define_convertion_prop2pv(self):
+        map_ = super()._define_convertion_prop2pv()
+        map_['Delay'] = map_['Delay'].replace('Raw-RB', '-RB')
+        map_['Width'] = map_['Width'].replace('Raw-RB', '-RB')
+        map_['Network'] = map_['Network'].replace('Network', 'RefClkLocked')
+        return map_
 
     def _process_source(self, prop, is_sp, value=None):
         dic_ = dict()
