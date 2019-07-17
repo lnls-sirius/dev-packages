@@ -3,7 +3,7 @@
 import ast as _ast
 from copy import deepcopy as _dcopy
 from threading import Lock as _Lock
-from siriuspy import servweb as _web
+from siriuspy import clientweb as _web
 from siriuspy.namesys import SiriusPVName as _PVName, Filter as _Filter
 from .ll_time_search import LLTimeSearch as _LLSearch
 
