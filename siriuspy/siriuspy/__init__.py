@@ -5,7 +5,7 @@ del _os
 
 
 __all__ = [
-    'envars', 'util', 'clientweb', 'clientconfigdb', 'clientarch'
+    'envars', 'util', 'clientweb', 'clientconfigdb',
     'diagnostics', 'pwrsupply', 'magnet', 'namesys', 'timesys', 'csdevice',
     'epics', 'callbacks']
 
