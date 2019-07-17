@@ -2,7 +2,7 @@
 
 import copy as _copy
 from siriuspy import util as _util
-from siriuspy.servweb import beaglebone_ip_list as _bbb_ip_list
+from siriuspy.clientweb import beaglebone_ip_list as _bbb_ip_list
 from siriuspy.search.ps_search import PSSearch as _PSSearch
 
 

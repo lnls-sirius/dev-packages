@@ -5,7 +5,7 @@ from threading import Lock as _Lock
 from siriuspy import util as _util
 from siriuspy.namesys import Filter as _Filter
 from siriuspy.namesys import SiriusPVName as _SiriusPVName
-from siriuspy import servweb as _web
+from siriuspy import clientweb as _web
 from siriuspy.search.ps_search import PSSearch as _PSSearch
 from siriuspy.magnet import util as _mutil
 

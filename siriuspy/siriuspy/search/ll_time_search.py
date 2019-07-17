@@ -4,7 +4,7 @@ import re as _re
 from copy import deepcopy as _dcopy
 from threading import Lock as _Lock
 
-from siriuspy import servweb as _web
+from siriuspy import clientweb as _web
 from siriuspy.namesys import SiriusPVName as _PVName, Filter as _Filter
 from .bpms_search import BPMSearch as _BPMSearch
 from .ps_search import PSSearch as _PSSearch

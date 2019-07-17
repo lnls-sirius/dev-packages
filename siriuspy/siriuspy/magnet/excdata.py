@@ -2,7 +2,7 @@
 
 import numpy as _np
 
-from siriuspy import servweb as _web
+from siriuspy import clientweb as _web
 from siriuspy.magnet import util as _util
 
 
