@@ -1,7 +1,7 @@
 import pyaccel
 import pymodels
 from siriuspy.namesys import join_name as _join_name, SiriusPVName as _PVName
-from siriuspy.servweb import crates_mapping as _crates_mapping
+from siriuspy.clientweb import crates_mapping as _crates_mapping
 
 
 def run_all():
