@@ -3,7 +3,7 @@
 from unittest import TestCase, mock
 from urllib.request import URLError
 
-from siriuspy.servweb import implementation
+from siriuspy.clientweb import implementation
 import siriuspy.util as util
 
 # Dependencies
@@ -12,7 +12,7 @@ import siriuspy.util as util
 # _urllib_request.urlopen.read
 
 
-class TestServWebReadUrl(TestCase):
+class TestClientWebReadUrl(TestCase):
     """Test read url method."""
 
     def setUp(self):
@@ -53,8 +53,8 @@ class TestServWebReadUrl(TestCase):
 
 @mock.patch.object(implementation, 'read_url', autospec=True,
                    return_value="FakeResponse")
-class TestServWeb(TestCase):
-    """Test servweb."""
+class TestClientWeb(TestCase):
+    """Test ClientWeb."""
 
     public_interface = {
         'read_url',
@@ -86,7 +86,7 @@ class TestServWeb(TestCase):
     def test_public_interface(self, mock_read):
         """Test module's public interface."""
         valid = util.check_public_interface_namespace(
-            implementation, TestServWeb.public_interface)
+            implementation, TestClientWeb.public_interface)
         self.assertTrue(valid)
 
     def test_server_online(self, mock_read):

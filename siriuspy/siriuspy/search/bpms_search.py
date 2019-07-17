@@ -3,7 +3,7 @@
 from copy import deepcopy as _dcopy
 from threading import Lock as _Lock
 from siriuspy.namesys import Filter as _Filter, SiriusPVName as _PVName
-import siriuspy.servweb as _web
+import siriuspy.clientweb as _web
 
 _timeout = 1.0
 
