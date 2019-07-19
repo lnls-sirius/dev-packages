@@ -1178,7 +1178,7 @@ def _set_limits(pstype, database):
             db['unit'] = get_ps_current_unit()
         # define prec of current
         if propty in signals_prec:
-            db['prec'] = default_ps_current_precision,
+            db['prec'] = default_ps_current_precision
 
 
 def _get_model_db(psmodel):
