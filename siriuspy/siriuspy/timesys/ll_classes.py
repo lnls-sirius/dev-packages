@@ -153,7 +153,7 @@ class _BaseLL(_Base):
         # queue.
         self._put_on_pv(pv, value, wait=False)
         pvname = self._dict_convert_prop2pv[prop]
-        _Thread(target=self._lock_thread, args=(pvname, value)).start()
+        _Thread(target=self._lock_thread, args=(pvname, )).start()
 
     def read(self, prop, is_sp=False):
         """Read HL properties from LL IOCs and return the value."""
