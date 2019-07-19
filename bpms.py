@@ -231,7 +231,6 @@ class BPM(_BaseTimingConfig):
         pv = self._config_pvs_rb['INFOMONIT1Rate']
         val = pv.value if pv.connected else defv
         return val if val else defv
-        return defv
 
     @property
     def monit1period(self):

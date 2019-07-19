@@ -450,14 +450,16 @@ class EpicsOrbit(BaseOrbit):
             rep = self._csorb.TrigAcqRepeat.Repetitive
             points *= self._mturndownsample
 
-        self.run_callbacks('TrigAcqChan-Sel', chan)
-        self.set_trig_acq_channel(chan)
-        self.run_callbacks('TrigAcqRepeat-Sel', rep)
-        self.set_trig_acq_repeat(rep)
-        if self.acqtrignrsamples < points:
-            pts = points - self._acqtrignrsamplespre
-            self.run_callbacks('TrigNrSamplesPost-SP', pts)
-            self.set_acq_nrsamples(pts, ispost=True)
+        if self._mode != oldmode:
+            self.run_callbacks('TrigAcqChan-Sel', chan)
+            self.set_trig_acq_channel(chan)
+            self.run_callbacks('TrigAcqRepeat-Sel', rep)
+            self.set_trig_acq_repeat(rep)
+            if self.acqtrignrsamples < points:
+                pts = points - self._acqtrignrsamplespre
+                self.run_callbacks('TrigNrSamplesPost-SP', pts)
+                self.set_acq_nrsamples(pts, ispost=True)
+
         _time.sleep(0.2)
         self.acq_config_bpms()
         _time.sleep(0.3)
@@ -512,7 +514,7 @@ class EpicsOrbit(BaseOrbit):
         for bpm in self.bpms:
             bpm.acq_type = val
         self.run_callbacks('TrigAcqChan-Sts', value)
-        self._update_time_vector(channel=value)
+        self._update_time_vector(channel=val)
         return True
 
     def set_trig_acq_trigger(self, value):
@@ -608,15 +610,17 @@ class EpicsOrbit(BaseOrbit):
         return True
 
     def _update_time_vector(self, delay=None, duration=None, channel=None):
+        print(delay, duration, channel, _csbpm.AcqChan.Monit1)
         if not self.isring:
             return
         dl = (delay or self.timing.delay or 0.0) * 1e-6  # from us to s
         dur = (duration or self.timing.duration or 0.0) * 1e-6  # from us to s
         channel = channel or self.bpms[0].acq_type or 0
+        print(delay, duration, channel, _csbpm.AcqChan.Monit1)
         # revolution period in s
-        if channel == self._csorb.TrigAcqChan.Monit1:
+        if channel == _csbpm.AcqChan.Monit1:
             dt = self.bpms[0].monit1period
-        elif channel == self._csorb.TrigAcqChan.FOFB:
+        elif channel == _csbpm.AcqChan.FOFB:
             dt = self.bpms[0].fofbperiod
         else:
             dt = self.bpms[0].tbtperiod
