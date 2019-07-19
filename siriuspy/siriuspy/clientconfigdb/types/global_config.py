@@ -3,6 +3,7 @@ from copy import deepcopy as _dcopy
 import numpy as _np
 from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 
+_off = 0
 _on = 1
 _SlowRef = 0
 
@@ -981,6 +982,8 @@ _pvs_tb_ps = [
     ]
 
 _pvs_pu = [
+    ['TB-04:PU-InjSept:PwrState-Sel', _off, 0.0],
+    ['BO-01D:PU-InjKckr:PwrState-Sel', _off, 0.0],
     ['TB-04:PU-InjSept:Pulse-Sel', 0, 0.0],
     ['BO-01D:PU-InjKckr:Pulse-Sel', 0, 0.0],
     ['TB-04:PU-InjSept:Voltage-SP', 0.0, 0.0],   # Volt
