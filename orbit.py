@@ -610,13 +610,12 @@ class EpicsOrbit(BaseOrbit):
         return True
 
     def _update_time_vector(self, delay=None, duration=None, channel=None):
-        print(delay, duration, channel, _csbpm.AcqChan.Monit1)
         if not self.isring:
             return
         dl = (delay or self.timing.delay or 0.0) * 1e-6  # from us to s
         dur = (duration or self.timing.duration or 0.0) * 1e-6  # from us to s
         channel = channel or self.bpms[0].acq_type or 0
-        print(delay, duration, channel, _csbpm.AcqChan.Monit1)
+
         # revolution period in s
         if channel == _csbpm.AcqChan.Monit1:
             dt = self.bpms[0].monit1period
