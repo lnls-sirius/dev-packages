@@ -1,10 +1,9 @@
 # List of power supplies of type tb-corrector-ch
 # ==============================================
 
-# number of power supplies: 5
+# number of power supplies: 4
 
 TB-01:PS-CH-1
 TB-01:PS-CH-2
 TB-02:PS-CH-1
 TB-02:PS-CH-2
-TB-04:PS-CH

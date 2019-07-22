@@ -1,14 +1,24 @@
 # BeagleBoneBlack Mapping to UDC
 
 ################################################################################
+################################# Sirius #######################################
+################################################################################
+# --- Dipoles
+PA-RaPSD04:CO-PSCtrl-SI1    PA-RaPSD04:PS-UDC-SI1
+PA-RaPSD04:CO-PSCtrl-SI2    PA-RaPSD04:PS-UDC-SI2
+
+
+################################################################################
 ################################# Booster ######################################
 ################################################################################
 # --- Dipoles
 PA-RaPSE05:CO-PSCtrl-BO     PA-RaPSE05:PS-UDC-BO1   PA-RaPSE05:PS-UDC-BO2   PA-RaPSE05:PS-UDC-BO3   PA-RaPSE05:PS-UDC-BO4   PA-RaPSE05:PS-UDC-BO5
 PA-RaPSF05:CO-PSCtrl-BO     PA-RaPSF05:PS-UDC-BO1   PA-RaPSF05:PS-UDC-BO2   PA-RaPSF05:PS-UDC-BO3   PA-RaPSF05:PS-UDC-BO4   PA-RaPSF05:PS-UDC-BO5
 
-# --- QF, QD, SF, SD (FAC)
+# --- QF ---
 PA-RaPSC03:CO-PSCtrl-BO1	PA-RaPSC03:PS-UDC-BO1	PA-RaPSC03:PS-UDC-BO2
+
+# --- QD, SF, SD (FAC) ---
 PA-RaPSC03:CO-PSCtrl-BO2	PA-RaPSC03:PS-UDC-BO3
 PA-RaPSC03:CO-PSCtrl-BO3	PA-RaPSC03:PS-UDC-BO4
 PA-RaPSC03:CO-PSCtrl-BO4	PA-RaPSC03:PS-UDC-BO5
