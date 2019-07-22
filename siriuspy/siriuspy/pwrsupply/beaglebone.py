@@ -130,10 +130,15 @@ class BBBFactory:
     """Build BeagleBones."""
 
     @staticmethod
-    def create(bbbname=None, simulate=False):
+    def create(bbbname=None, simulate=False, eth=False):
         """Return BBB object."""
-        # Create PRU and PRUCQueue
-        pru = _PRUSim() if simulate else _PRU()
+        # Create PRU
+        if eth:
+            pru = _PRU(bbbname=bbbname)
+        else:
+            pru = _PRUSim() if simulate else _PRU()
+
+        # create DequeThread
         prucqueue = _DequeThread()
 
         db = dict()

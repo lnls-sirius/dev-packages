@@ -15,7 +15,7 @@ import PRUserial485 as _PRUserial485
 
 
 ver, *_ = _PRUserial485.__version__.split(':')
-if ver != __version__:
+if __version__ not in ver:
     # loaded library has an incompatible version!
     err_msg = 'Invalid PRUserial485 library version! {} != {}'.format(
         _PRUserial485.__version__, __version__)
@@ -64,11 +64,11 @@ class PRUInterface:
         """Return sync status."""
         return self._get_sync_status()
 
-    def sync_start(self, sync_mode, sync_address, delay):
+    def sync_start(self, sync_mode, delay, sync_address):
         """Start sync mode in PRU."""
         if sync_mode in Const.SYNC_MODE.ALL:
             self._sync_mode = sync_mode
-            self._sync_start(sync_mode, sync_address, delay)
+            self._sync_start(sync_mode, delay, sync_address)
             return None
         else:
             # TODO: should this be changed to an exception?
@@ -136,7 +136,7 @@ class PRUInterface:
     def _get_sync_status(self):
         raise NotImplementedError
 
-    def _sync_start(sync_mode, sync_address, delay):
+    def _sync_start(self, sync_mode, delay, sync_address):
         raise NotImplementedError
 
     def _sync_stop(self):
@@ -176,15 +176,22 @@ class PRUInterface:
 class PRU(PRUInterface):
     """Functions for the programmable real-time unit."""
 
-    def __init__(self):
+    def __init__(self, bbbname=None):
         """Init method."""
-        # check if process is running as root
-        if _os.geteuid() != 0:
-            _sys.exit('You need to have root privileges to use PRU')
-
-        # check if PRU library is installed
+        # check if appropriate conditions are met
         if _PRUserial485 is None:
             raise ValueError('module PRUserial485 is not installed!')
+        if bbbname is None:
+            # check if process is running as root
+            if _os.geteuid() != 0:
+                _sys.exit('You need to have root privileges to use PRU')
+        else:
+            if 'eth' not in _PRUserial485.__version__:
+                _sys.exit('PRUserial485 library if not ethernet client-server')
+            # tell PRUserial485_eth what BBB it should connect to
+            _PRUserial485.set_beaglebone_ip(bbbname)
+
+        # init PRUserial485 interface
         PRUInterface.__init__(self)
 
         # start PRU library and set PRU to sync off
@@ -202,7 +209,7 @@ class PRU(PRUInterface):
         value = _PRUserial485.PRUserial485_sync_status()
         return value
 
-    def _sync_start(self, sync_mode, sync_address, delay):
+    def _sync_start(self, sync_mode, delay, sync_address):
         _PRUserial485.PRUserial485_sync_start(
             sync_mode, delay, sync_address)  # delay-sync_addres order is ok.
         return True
