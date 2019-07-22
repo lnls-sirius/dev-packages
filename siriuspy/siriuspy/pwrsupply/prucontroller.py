@@ -518,9 +518,8 @@ class PRUController:
         # set selected sync mode
         self._pru.sync_start(
             sync_mode=sync_mode,
-            sync_address=self._device_ids[0],
-            # sync_address=0xff,  # broadcast bsmp id
-            delay=self._pru_delays[sync_mode])
+            delay=self._pru_delays[sync_mode],
+            sync_address=self._device_ids[0])
         # print(hex(sync_mode))
 
         # update time interval according to new sync mode selected
