@@ -517,10 +517,10 @@ class _OpModeSimState_FBP_DCLink(_OpModeSimSlowRefState, _Spec_FBP_DCLink):
     def reset_interlocks(self, variables):
         """Reset ps."""
         _OpModeSimSlowRefState.reset_interlocks(self, variables)
-        if variables[self._c.V_PS_REFERENCE] < 50.0:
-            # sub-tension sources 1,2,3.
-            variables[self._c.V_PS_HARD_INTERLOCKS] += \
-                (1 << 8) + (1 << 9) + (1 << 10)
+        # if variables[self._c.V_PS_REFERENCE] < 50.0:
+        #     # sub-tension sources 1,2,3.
+        #     variables[self._c.V_PS_HARD_INTERLOCKS] += \
+        #         (1 << 8) + (1 << 9) + (1 << 10)
 
 
 class _OpModeSimSlowRefState_FAC_DCDC(_OpModeSimSlowRefState, _Spec_FAC_DCDC):

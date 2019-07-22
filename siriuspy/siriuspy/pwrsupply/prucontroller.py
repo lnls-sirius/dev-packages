@@ -1,4 +1,4 @@
-"""BeagleBone Controller.
+"""PRUController.
 
 This module implements classes that are used to do low level BeagleBone
 communications, be it with PRU or BSMP requests to power supply controllers
@@ -7,24 +7,20 @@ at the other end of the serial line.
 
 import time as _time
 # import random as _random
+from copy import deepcopy as _dcopy
 import numpy as _np
 from threading import Thread as _Thread
 from threading import Lock as _Lock
-from copy import deepcopy as _dcopy
 
-from siriuspy.bsmp import Response as _Response
-from siriuspy.bsmp.exceptions import SerialError as _SerialError
+from siriuspy.bsmp import Response as _Response, SerialError as _SerialError
 
 from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
 from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 
 from siriuspy.pwrsupply.bsmp import __version__ as _devpckg_firmware_version
 from siriuspy.pwrsupply.bsmp import MAP_MIRROR_2_ORIG_FBP as _mirror_map_fbp
-# from siriuspy.pwrsupply.bsmp import Parameters as _Parameters
-
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 from siriuspy.pwrsupply.model_factory import UDC as _UDC
-# from siriuspy.pwrsupply.bsmp_sim import udcmodels as _udcmodels
 
 
 # NOTE: On current behaviour of PRUC and Power Supplies:
@@ -43,21 +39,16 @@ from siriuspy.pwrsupply.model_factory import UDC as _UDC
 #     before switching the power supply off the ramp mode.
 #     This is prone to operation errors!
 #
-# 03. In order to avoid having many concurrent processes|threads accessing
-#     the UART through the PRU library by mistake it is desirable to have a
-#     semaphore the PRU memory to guarantee that only one process access it.
-#     Think about how this could be implemented in a safe but simple way...
-#
-# 04. Change of curves on the fly. In order to allow this blocks 0 and 1 of
+# 03. Change of curves on the fly. In order to allow this blocks 0 and 1 of
 #     curves will be used in a cyclic way. This should be transparent for
 #     users of the PRUController. At this points only one high level curve
 #     for each power supply is implemented. Also we have not implemented yet
 #     the possibility of changing the curve length.
 #
-# 05. Discretization of the current-mon can mascarade measurements of update
+# 04. Discretization of the current-mon can mascarade measurements of update
 #     rates. For testing we should add a small random fluctuation.
 #
-# 06. In Cycle mode, the high level OpMode-Sts (maybe OpMode-Sel too?) is
+# 05. In Cycle mode, the high level OpMode-Sts (maybe OpMode-Sel too?) is
 #     expected to return to SlowRef automatically without changing CurrentRef.
 #     In the current firmware version when the controller executes a
 #     SELECT_OP_MODE with SlowRef as argument it automatically sets CurrentRef
@@ -67,7 +58,7 @@ from siriuspy.pwrsupply.model_factory import UDC as _UDC
 #     before moving the power supply to Cycle mode. This is being done with the
 #     current version of the IOC.
 #
-# 08. While in RmpWfm, MigWfm or SlowRefSync, the PS_I_LOAD variable read from
+# 06. While in RmpWfm, MigWfm or SlowRefSync, the PS_I_LOAD variable read from
 #     power supplies after setting the last curve point may not be the
 #     final value given by PS_REFERENCE. This is due to the fact that the
 #     power supply control loop takes some time to converge and the PRU may
@@ -101,11 +92,10 @@ class PRUController:
     controllers.
     """
 
-    # TODO: delete random fluctuation added to measurements
     # TODO: it might be possible and useful to use simulated BSMP but real PRU
     # TODO: test not dcopying self._variables_values in _bsmp_update_variables.
-    #       we need lock whole up section in that function that does
-    #       updating of _variables_values, though. Also lock other class
+    #       we need to lock up whole section in that function that does
+    #       updating of _variables_values, though. Also to lock up other class
     #       properties and methods that access _variables_values or _psc_status
 
     # NOTES:
@@ -121,20 +111,10 @@ class PRUController:
     #     RAMP = 2.0  # [Hz]
     #     SCAN = 10.0  # [Hz]
 
-    # PRU constants
-    # PRU = _PRUConst
 
-    # shortcuts, local variables and constants
-
-    # _dcdc_udcmodel = ('FBP', 'FAC', 'FAC_2P4S', 'FAP', 'FAP_4P', 'FAP_2P2S')
+    # --- shortcuts, local variables and constants
 
     _default_slowrefsync_sp = _DEFAULT_WFMDATA[0]
-
-    # NOTE: these delays been moved to high level commands.py
-    # # TODO: check with ELP group how short these delays can be
-    # _delay_turn_on_off = 0.3  # [s]
-    # _delay_loop_open_close = 0.3  # [s]
-
     _delay_remove_groups = 100  # [us]
     _delay_create_group = 100  # [us]
     _delay_read_group_variables = 100  # [us]
@@ -143,8 +123,8 @@ class PRUController:
     # 20% to 19.2% at BBB1.
     _delay_sleep = 0.020  # [s]
 
-    # default delays for sync modes
 
+    # --- default delays for sync modes
     # This this is delay PRU observes right after finishing writting to UART
     # the BSMP broadcast command 0x0F 'sync_pulse' before processing the UART
     # buffer again. This delay has to be longer than the duration of the
@@ -471,11 +451,13 @@ class PRUController:
         02. Moves sync state to off.
         03. Stops scanning device variables
         04. Waits untill all operations in queue are processed.
-        05. Start sync in requested mode
-        06. Turn scanning back on again.
+        05. Executes a final variable scan in the queue.
+        06. Start sync in requested mode
+        07. Waits untill all operations in queue are processed.
+        08. Turn scanning back on again.
 
-        obs: Since operation in queue are processed before changing starting
-        the new sync mode, this method can safely be invoked right away after
+        obs: Since operation in queue are processed before changing to
+        he new sync mode, this method can safely be invoked right away after
         any other PRUController method, withou any inserted delay.
         """
         # test if sync_mode is valid
@@ -487,15 +469,7 @@ class PRUController:
         # try to abandon previous sync mode gracefully
         if self.pru_sync_status != self._params.PRU.SYNC_STATE.OFF:
             # --- already with sync mode on.
-            if sync_mode != self._pru.sync_mode:
-                # --- different sync mode
-                # PRU sync is on but it needs sync_mode change
-                # first turn off PRY sync mode abruptally
-                self.pru_sync_abort()
-            else:
-                # --- already in selected sync mode
-                # TODO: to do nothing is what we want? what about WfmIndex?
-                return
+            self.pru_sync_abort()
         else:
             # --- current sync mode is off
             pass
@@ -504,7 +478,7 @@ class PRUController:
         self.bsmp_scan()
         self._scanning_false_wait_empty_queue()
 
-        # execute a BSMP read group so that mirror is updated.
+        # execute a last BSMP read group so that mirror is updated.
         # This is supposedly needed in cases where the last operation
         # in the queue was a function execution.
         # TODO: test this! but is it really necessary?
@@ -518,10 +492,8 @@ class PRUController:
         # set selected sync mode
         self._pru.sync_start(
             sync_mode=sync_mode,
-            sync_address=self._device_ids[0],
-            # sync_address=0xff,  # broadcast bsmp id
-            delay=self._pru_delays[sync_mode])
-        # print(hex(sync_mode))
+            delay=self._pru_delays[sync_mode],
+            sync_address=self._device_ids[0])
 
         # update time interval according to new sync mode selected
         self._scan_interval = self._get_scan_interval()
@@ -551,6 +523,12 @@ class PRUController:
     def pru_curve_block(self):
         """PRU curves block index."""
         return self._pru.read_curve_block()
+
+    # TODO: since now we have many concurrent PRUController objects in the
+    # same process, due to the fact that a single BBB can communicate with
+    # more than one UDC, we should move WfmData (curves) to a separate
+    # class that maps more naturally to the BBB-PRUC... Maybe in this
+    #  process rename PRUController to something like "UDCComm"
 
     def pru_curve_read(self, device_id):
         """Read curve of a device from PRU memory."""
@@ -1045,27 +1023,6 @@ class PRUController:
             success &= connected
 
         if success:
-            #
-            # power supplies need time after specific commands before it is
-            # able to receive any other command from master.
-            #
-            # this is the place to give it since if other BSMP messages are
-            # sent to the power supply in the meantime it will put the
-            # ps controller in a wrong state.
-            #
-            # NOTE: These BSMP functions should be defined for all BSMP devs.
-            #
-            # NOTE: these delays been moved to high level commands.py
-            # if function_id in (self._params.ConstBSMP.F_TURN_ON,
-            #                    self._params.ConstBSMP.F_TURN_OFF):
-            #     # print('waiting {} s for TURN_ON or TURN_OFF'.format(
-            #     #     self._delay_turn_on_off))
-            #     _time.sleep(self._delay_turn_on_off)
-            # elif function_id in (self._params.ConstBSMP.F_OPEN_LOOP,
-            #                      self._params.ConstBSMP.F_CLOSE_LOOP):
-            #     # print('waiting {} s for CLOSE_LOOP or OPEN_LOOP'.format(
-            #     #     self._delay_loop_open_close))
-            #     _time.sleep(self._delay_loop_open_close)
             return data
         else:
             return None
