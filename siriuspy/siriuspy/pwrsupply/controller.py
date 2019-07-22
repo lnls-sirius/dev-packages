@@ -48,7 +48,9 @@ class PSController:
             sel = self._readers[device_name + ':CtrlLoop-Sel']
             if sts.read() != sel.read():
                 sel.apply(sts.read())
-        return self._readers[pvname].read()
+
+        reader = self._readers[pvname]
+        return reader.read()
 
     def read_all_fields(self, device_name):
         """Read all fields value from device."""
@@ -135,8 +137,11 @@ class StandardPSController(PSController):
                 values[idx] = value
             self._functions[pvname].execute(values)
         elif field == 'PwrState-Sel':
-            if self._readers[device_name + ':PwrState-Sel'].value == 0:
-                self._readers[device_name + ':Current-SP'].apply(0.0)
+            # NOTE: Should we set Current-SP to zero at Power On ? This may be
+            # generating inconsistent behaviour when loading configuration in
+            # HLA...
+            # if self._readers[device_name + ':PwrState-Sel'].value == 0:
+            #     self._readers[device_name + ':Current-SP'].apply(0.0)
             self._functions[pvname].execute(value)
         else:
             self._functions[pvname].execute(value)

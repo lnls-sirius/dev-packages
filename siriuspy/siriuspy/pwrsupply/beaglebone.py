@@ -47,8 +47,11 @@ class BeagleBone:
         self._controllers = controllers
         self._databases = databases
 
+        # create device_name to scan interval dict
+        self._create_dev2interval_dict()
+
         # init mirror variables and last update timestamp dicts
-        self._init_mirror_and_timestamp()
+        self._create_dev2mirr_dev2timestamp_dict()
 
     @property
     def psnames(self):
@@ -58,35 +61,44 @@ class BeagleBone:
     def update_interval(self, device_name=None):
         """Update interval, as defined in PRUcontrollers."""
         if device_name is not None:
-            pruc = self._controllers[device_name].pru_controller
-            f_max = max(pruc.params.FREQ_SCAN, pruc.params.FREQ_RAMP)
+            return self._dev2interval[device_name]
+            # pruc = self._controllers[device_name].pru_controller
+            # f_max = max(pruc.params.FREQ_SCAN, pruc.params.FREQ_RAMP)
         else:
-            f_ramp = tuple(c.pru_controller.params.FREQ_RAMP for c in
-                           self._controllers.values())
-            f_scan = tuple(c.pru_controller.params.FREQ_SCAN for c in
-                           self._controllers.values())
-            f_max = max(f_ramp + f_scan)
-        return 1.0 / f_max
+            # f_ramp = tuple(c.pru_controller.params.FREQ_RAMP for c in
+            #                self._controllers.values())
+            # f_scan = tuple(c.pru_controller.params.FREQ_SCAN for c in
+            #                self._controllers.values())
+            # f_max = max(f_ramp + f_scan)
+            m = self._dev2interval
+            intervals = [m[dev] for dev in m]
+            return max(intervals)
+        # return 1.0 / f_max
 
-    def read(self, device_name, field=None):
+    def read(self, device_name, field=None, force_update=False):
         """Read from device."""
         now = _time.time()
-        last = self._timestamps[device_name]
-        interval = self.update_interval(device_name)
+        last = self._dev2timestamp[device_name]
+
+        # NOTE: update frequency with which class updates state mirror of
+        # power supply. Still testing...
+        # interval = self.update_interval(device_name)
+        # interval = 0.05  # [s]
+        interval = self._dev2interval[device_name]
 
         # reads, if updating is needed
-        if last is None or now - last > interval:
+        if force_update or last is None or now - last > interval:
             updated = True
-            self._mirror[device_name] = \
+            self._dev2mirror[device_name] = \
                 self._controllers[device_name].read_all_fields(device_name)
-            self._timestamps[device_name] = now
+            self._dev2timestamp[device_name] = now
         else:
             updated = False
 
         if field is None:
-            return self._mirror[device_name], updated
+            return self._dev2mirror[device_name], updated
         else:
-            return self._mirror[device_name][device_name+':'+field], updated
+            return self._dev2mirror[device_name][device_name+':'+field], updated
 
     def write(self, device_name, field, value):
         """Write to device."""
@@ -100,13 +112,19 @@ class BeagleBone:
         """Device database."""
         return self._databases[device_name]
 
-    def _init_mirror_and_timestamp(self):
-        self._timestamps = dict()
-        self._mirror = dict()
+    def _create_dev2mirr_dev2timestamp_dict(self):
+        self._dev2timestamp = dict()
+        self._dev2mirror = dict()
         for device_name in self._controllers:
-            self._timestamps[device_name] = None
-            self._mirror[device_name] = dict()
+            self._dev2timestamp[device_name] = None
+            self._dev2mirror[device_name] = dict()
 
+    def _create_dev2interval_dict(self):
+        self._dev2interval = dict()
+        for devname, controller in self._controllers.items():
+            pruc = controller.pru_controller
+            f = max(pruc.params.FREQ_RAMP, pruc.params.FREQ_SCAN)
+            self._dev2interval[devname] = 1.0/f
 
 class BBBFactory:
     """Build BeagleBones."""
