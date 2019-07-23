@@ -4,3 +4,7 @@
 # number of power supplies: 1
 
 LI-01:PS-Spect
+
+# SINAP original names
+
+# LA-CN:H1DPPS-1

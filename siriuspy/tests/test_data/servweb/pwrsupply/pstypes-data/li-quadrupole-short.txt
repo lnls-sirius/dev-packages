@@ -6,3 +6,9 @@
 LI-Fam:PS-QF1
 LI-Fam:PS-QF2
 LI-01:PS-QF3
+
+# SINAP original names
+
+# LA-CN:H1FQPS-1
+# LA-CN:H1FQPS-2
+# LA-CN:H1FQPS-3

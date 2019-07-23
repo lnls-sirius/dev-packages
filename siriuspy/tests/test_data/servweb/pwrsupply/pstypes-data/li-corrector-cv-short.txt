@@ -5,3 +5,8 @@
 
 LI-01:PS-CV-1
 LI-01:PS-CV-2
+
+# SINAP original names
+
+# LA-CN:H1SCPS-1
+# LA-CN:H1SCPS-3

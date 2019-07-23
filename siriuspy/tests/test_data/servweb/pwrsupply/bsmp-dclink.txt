@@ -2,6 +2,13 @@
 # ==============================
 
 
+
+# SI families
+# -----------
+SI-Fam:PS-B1B2-1   None
+SI-Fam:PS-B1B2-2   None
+
+
 # TB transport Line
 # ------------------
 
@@ -29,7 +36,8 @@ TB-02:PS-CH-1   LA-RaPS06:PS-DCLink-AS2
 TB-02:PS-CV-1   LA-RaPS06:PS-DCLink-AS2
 TB-02:PS-CH-2   LA-RaPS06:PS-DCLink-AS2
 TB-02:PS-CV-2   LA-RaPS06:PS-DCLink-AS2
-TB-04:PS-CH     LA-RaPS06:PS-DCLink-AS2
+TB-04:PS-CH-1   LA-RaPS06:PS-DCLink-AS2
+TB-04:PS-CH-2   LA-RaPS06:PS-DCLink-AS2
 TB-04:PS-CV-1   LA-RaPS06:PS-DCLink-AS2
 TB-04:PS-CV-2   LA-RaPS06:PS-DCLink-AS2
 
@@ -71,7 +79,7 @@ BO-Fam:PS-B-2   PA-RaPSF01:PS-DCLink-BO PA-RaPSF02:PS-DCLink-BO PA-RaPSF03:PS-DC
 
 # --- Quadrupoles ---
 BO-Fam:PS-QD    None
-BO-Fam:PS-QF    PA-RaPSC03:PS-DCLink-BO1
+BO-Fam:PS-QF    PA-RaPSC03:PS-DCLink-BO1 PA-RaPSC03:PS-DCLink-BO2
 
 # --- Sextupoles ---
 BO-Fam:PS-SD    None

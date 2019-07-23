@@ -7,3 +7,10 @@ LI-01:PS-Lens-1
 LI-01:PS-Lens-2
 LI-01:PS-Lens-3
 LI-01:PS-Lens-4
+
+# SINAP original names
+
+# LA-CN:H1MLPS-1
+# LA-CN:H1MLPS-2
+# LA-CN:H1MLPS-3
+# LA-CN:H1MLPS-4
