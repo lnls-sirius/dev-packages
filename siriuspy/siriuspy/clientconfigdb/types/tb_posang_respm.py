@@ -21,20 +21,28 @@ def get_dict():
 # Position-Angle Correction Response Matrices for the Booster Injection
 # (TB correctors)
 #
-# Horizontal Matrix:
 #
-#  | DeltaPosX @ TB-04:PM-InjSept |    | h11  h12 |   | Kick TB-03:MA-CH   |
-#  |                           | =  |          | * |                    |
+# Horizontal Matrix (ch-sept):
+#
+#  | DeltaPosX @ TB-04:PM-InjSept |    | h11  h12 |   |  Kick TB-04:MA-CH-1   |
+#  |                              | =  |          | * |                       |
 #  | DeltaAngX @ TB-04:PM-InjSept |    | h21  h22 |   | Kick TB-04:PM-InjSept |
+#
+# Horizontal Matrix (ch-ch):
+#
+#  | DeltaPosX @ TB-04:PM-InjSept |    | h11  h12 |   |  Kick TB-04:MA-CH-1  |
+#  |                              | =  |          | * |                      |
+#  | DeltaAngX @ TB-04:PM-InjSept |    | h21  h22 |   |  Kick TB-04:MA-CH-2  |
 #
 # Data structure:
 #         h11   h12
 #         h21   h22
 #
+#
 # Vertical Matrix:
 #
 #  | DeltaPosY @ TB-04:PM-InjSept |    | v11  v12 |   | Kick TB-04:MA-CV-1 |
-#  |                           | =  |          | * |                    |
+#  |                              | =  |          | * |                    |
 #  | DeltaAngY @ TB-04:PM-InjSept |    | v21  v22 |   | Kick TB-04:MA-CV-2 |
 #
 # Data structure:

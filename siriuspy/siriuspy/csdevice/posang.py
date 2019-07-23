@@ -6,18 +6,21 @@ from siriuspy.csdevice import util as _cutil
 class Const:
     """Const class defining PosAng constants."""
 
-    TB_CORRH_POSANG = ('TB-04:MA-CH', 'TB-04:PM-InjSept')
+    TB_CORRH_POSANG_CHSEPT = ('TB-04:MA-CH-1', 'TB-04:PM-InjSept')
+    TB_CORRH_POSANG_CHCH = ('TB-04:MA-CH-1', 'TB-04:MA-CH-2')
     TB_CORRV_POSANG = ('TB-04:MA-CV-1', 'TB-04:MA-CV-2')
+
     TS_CORRH_POSANG = ('TS-04:MA-CH', 'TS-04:PM-InjSeptF')
     TS_CORRV_POSANG = ('TS-04:MA-CV-1', 'TS-04:MA-CV-2')
 
     STATUSLABELS = ('MA Connection', 'MA PwrState', 'MA OpMode', 'MA CtrlMode')
 
 
-def get_posang_database():
+def get_posang_database(correctors_type):
     """Return Soft IOC database."""
     pvs_database = {
         'Version-Cte':       {'type': 'string', 'value': 'UNDEF'},
+        'CorrType-Cte':      {'type': 'string', 'value': correctors_type},
 
         'Log-Mon':           {'type': 'string', 'value': 'Starting...'},
 
@@ -48,8 +51,7 @@ def get_posang_database():
 
         'RefKickCH1-Mon':    {'type': 'float', 'value': 0, 'prec': 4,
                               'unit': 'urad'},
-        'RefKickCH2-Mon':    {'type': 'float', 'value': 0, 'prec': 4,
-                              'unit': 'mrad'},
+        'RefKickCH2-Mon':    {'type': 'float', 'value': 0, 'prec': 4},
         'RefKickCV1-Mon':    {'type': 'float', 'value': 0, 'prec': 4,
                               'unit': 'urad'},
         'RefKickCV2-Mon':    {'type': 'float', 'value': 0, 'prec': 4,
@@ -62,5 +64,9 @@ def get_posang_database():
         'StatusLabels-Cte':  {'type': 'char', 'count': 1000,
                               'value': '\n'.join(Const.STATUSLABELS)},
     }
+    if correctors_type == 'ch-sept':
+        pvs_database['RefKickCH2-Mon']['unit'] = 'mrad'
+    elif correctors_type == 'ch-ch':
+        pvs_database['RefKickCH2-Mon']['unit'] = 'urad'
     pvs_database = _cutil.add_pvslist_cte(pvs_database)
     return pvs_database
