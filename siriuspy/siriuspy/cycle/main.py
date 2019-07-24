@@ -310,15 +310,25 @@ class CycleController:
             return
         self._update_log('Timing preparation finished!')
 
-    def prepare_magnets(self):
+    def prepare_magnets_parameters(self):
         """Prepare to cycle."""
         self.config_all_magnets('parameters')
         if not self.check_all_magnets('parameters'):
             self._update_log(
-                'There are magnets not configured to cycle. Stopping.',
+                'There are magnets not configured to cycle.',
                 error=True)
             return
-        self._update_log('Magnets preparation finished!')
+        self._update_log('Magnets parameters preparation finished!')
+
+    def prepare_magnets_opmode(self):
+        """Prepare to cycle."""
+        self.config_all_magnets('opmode')
+        if not self.check_all_magnets('opmode'):
+            self._update_log(
+                'There are magnets with wrong opmode.',
+                error=True)
+            return
+        self._update_log('Magnets OpMode preparation finished!')
 
     def cycle(self):
         """Cycle."""
@@ -332,7 +342,6 @@ class CycleController:
                 'There are magnets not configured to cycle. Stopping.',
                 error=True)
             return
-        self.config_all_magnets('opmode')
         if not self.check_all_magnets('opmode'):
             self._update_log(
                 'There are magnets with wrong opmode. Stopping.',
