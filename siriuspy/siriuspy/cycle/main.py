@@ -262,18 +262,18 @@ class CycleController:
             t.join()
 
         for maname in self.manames:
-            self._update_log('Checking '+maname+' final state...')
+            self._update_log('Checking '+maname+' state...')
             has_prob = self._checks_final_result[maname]
-            if not has_prob:
+            if has_prob == 0:
                 self._update_log(done=True)
             elif has_prob == 1:
                 self._update_log(
                     'Verify the number of pulses '+maname+' received!',
-                    warning=True)
+                    error=True)
             elif has_prob == 2 and self._is_cycling_dict[maname]:
                 self._update_log(maname+' is finishing cycling...',
                                  warning=True)
-            else:
+            elif has_prob == 3:
                 self._update_log(maname+' has interlock problems.',
                                  error=True)
         return True

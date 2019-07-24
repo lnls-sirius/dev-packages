@@ -313,7 +313,9 @@ class MagnetCycler:
 
     def check_current_zero(self):
         """Return wether magnet PS current is zero."""
-        return _pv_timed_get(self['CurrentRef-Mon'], 0)
+        if not self.connected:
+            return False
+        return _isclose(self['CurrentRef-Mon'].value, 0, abs_tol=0.05)
 
     def set_params(self, mode):
         """Set params to cycle."""
@@ -394,7 +396,9 @@ class MagnetCycler:
         return _pv_timed_get(self['OpMode-Sts'], opmode)
 
     def get_cycle_enable(self):
-        return _pv_timed_get(self['CycleEnbl-Mon'], _PSConst.DsblEnbl.Enbl)
+        if not self.connected:
+            return False
+        return self['CycleEnbl-Mon'] == _PSConst.DsblEnbl.Enbl
 
     def check_final_state(self, mode):
         if mode == 'Ramp':
@@ -407,12 +411,10 @@ class MagnetCycler:
             status &= _pv_timed_get(
                 self['OpMode-Sts'], _PSConst.States.SlowRef)
         else:
-            status = _pv_timed_get(
-                self['OpMode-Sts'], _PSConst.States.SlowRef, wait=10.0)
+            status = _pv_timed_get(self['CycleEnbl-Mon'], 0, wait=10.0)
             if not status:
                 return 2  # indicate cycling not finished yet
 
-        status &= _pv_timed_get(self['PwrState-Sts'], _PSConst.PwrStateSts.On)
         status &= _pv_timed_get(self['IntlkSoft-Mon'], 0, wait=1.0)
         status &= _pv_timed_get(self['IntlkHard-Mon'], 0, wait=1.0)
         if not status:
