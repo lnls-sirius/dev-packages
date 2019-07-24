@@ -299,8 +299,8 @@ class MagnetCycler:
             return (DEFAULT_RAMP_TOTDURATION)
 
     def check_intlks(self):
-        status = _pv_timed_get(self['IntlkSoft-Mon'], 0)
-        status &= _pv_timed_get(self['IntlkHard-Mon'], 0)
+        status = _pv_timed_get(self['IntlkSoft-Mon'], 0, wait=1.0)
+        status &= _pv_timed_get(self['IntlkHard-Mon'], 0, wait=1.0)
         return status
 
     def check_on(self):
@@ -398,7 +398,7 @@ class MagnetCycler:
     def get_cycle_enable(self):
         if not self.connected:
             return False
-        return self['CycleEnbl-Mon'] == _PSConst.DsblEnbl.Enbl
+        return self['CycleEnbl-Mon'].value == _PSConst.DsblEnbl.Enbl
 
     def check_final_state(self, mode):
         if mode == 'Ramp':
@@ -415,8 +415,7 @@ class MagnetCycler:
             if not status:
                 return 2  # indicate cycling not finished yet
 
-        status &= _pv_timed_get(self['IntlkSoft-Mon'], 0, wait=1.0)
-        status &= _pv_timed_get(self['IntlkHard-Mon'], 0, wait=1.0)
+        status &= self.check_intlks()
         if not status:
             return 3  # indicate interlock problems
 
