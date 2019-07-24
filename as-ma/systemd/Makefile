@@ -104,299 +104,299 @@ uninstall-tb: uninstall-tb-dipoles uninstall-tb-quadrupoles uninstall-tb-correct
 
 # --- BO ---
 
-install-bo-correctors-01:
-	@printf "Intalling sirius-ioc-bo-ma-correctors-01 service...\n"
-	cp -rf sirius-ioc-bo-ma-correctors-01.service /etc/systemd/system/
+install-bo-correctors-ia01:
+	@printf "Intalling sirius-ioc-bo-ma-correctors-ia01 service...\n"
+	cp -rf sirius-ioc-bo-ma-correctors-ia01.service /etc/systemd/system/
 	mkdir -p /home/sirius/iocs
 	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
-stop-bo-correctors-01:
-	@printf "Stopping sirius-ioc-bo-ma-correctors-01...\n"
-	systemctl stop sirius-ioc-bo-ma-correctors-01.service
+stop-bo-correctors-ia01:
+	@printf "Stopping sirius-ioc-bo-ma-correctors-ia01...\n"
+	systemctl stop sirius-ioc-bo-ma-correctors-ia01.service
 
-start-bo-correctors-01:
-	@printf "Starting sirius-ioc-bo-ma-correctors-01...\n"
-	systemctl start sirius-ioc-bo-ma-correctors-01.service
+start-bo-correctors-ia01:
+	@printf "Starting sirius-ioc-bo-ma-correctors-ia01...\n"
+	systemctl start sirius-ioc-bo-ma-correctors-ia01.service
 
-uninstall-bo-correctors-01: stop-bo-correctors-01
-	@printf "Uninstalling sirius-ioc-bo-ma-correctors-01...\n"
-	systemctl disable sirius-ioc-bo-ma-correctors-01.service
-	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-correctors-01.service
+uninstall-bo-correctors-ia01: stop-bo-correctors-ia01
+	@printf "Uninstalling sirius-ioc-bo-ma-correctors-ia01...\n"
+	systemctl disable sirius-ioc-bo-ma-correctors-ia01.service
+	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-correctors-ia01.service
 	systemctl daemon-reload
 	systemctl reset-failed
 
-install-bo-correctors-02:
-	@printf "Intalling sirius-ioc-bo-ma-correctors-02 service...\n"
-	cp -rf sirius-ioc-bo-ma-correctors-02.service /etc/systemd/system/
+install-bo-correctors-ia02:
+	@printf "Intalling sirius-ioc-bo-ma-correctors-ia02 service...\n"
+	cp -rf sirius-ioc-bo-ma-correctors-ia02.service /etc/systemd/system/
 	mkdir -p /home/sirius/iocs
 	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
-stop-bo-correctors-02:
-	@printf "Stopping sirius-ioc-bo-ma-correctors-02...\n"
-	systemctl stop sirius-ioc-bo-ma-correctors-02.service
+stop-bo-correctors-ia02:
+	@printf "Stopping sirius-ioc-bo-ma-correctors-ia02...\n"
+	systemctl stop sirius-ioc-bo-ma-correctors-ia02.service
 
-start-bo-correctors-02:
-	@printf "Starting sirius-ioc-bo-ma-correctors-02...\n"
-	systemctl start sirius-ioc-bo-ma-correctors-02.service
+start-bo-correctors-ia02:
+	@printf "Starting sirius-ioc-bo-ma-correctors-ia02...\n"
+	systemctl start sirius-ioc-bo-ma-correctors-ia02.service
 
-uninstall-bo-correctors-02: stop-bo-correctors-02
-	@printf "Uninstalling sirius-ioc-bo-ma-correctors-02...\n"
-	systemctl disable sirius-ioc-bo-ma-correctors-02.service
-	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-correctors-02.service
+uninstall-bo-correctors-ia02: stop-bo-correctors-ia02
+	@printf "Uninstalling sirius-ioc-bo-ma-correctors-ia02...\n"
+	systemctl disable sirius-ioc-bo-ma-correctors-ia02.service
+	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-correctors-ia02.service
 	systemctl daemon-reload
 	systemctl reset-failed
 
-install-bo-correctors-03:
-	@printf "Intalling sirius-ioc-bo-ma-correctors-03 service...\n"
-	cp -rf sirius-ioc-bo-ma-correctors-03.service /etc/systemd/system/
+install-bo-correctors-ia04:
+	@printf "Intalling sirius-ioc-bo-ma-correctors-ia04 service...\n"
+	cp -rf sirius-ioc-bo-ma-correctors-ia04.service /etc/systemd/system/
 	mkdir -p /home/sirius/iocs
 	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
-stop-bo-correctors-03:
-	@printf "Stopping sirius-ioc-bo-ma-correctors-03...\n"
-	systemctl stop sirius-ioc-bo-ma-correctors-03.service
+stop-bo-correctors-ia04:
+	@printf "Stopping sirius-ioc-bo-ma-correctors-ia04...\n"
+	systemctl stop sirius-ioc-bo-ma-correctors-ia04.service
 
-start-bo-correctors-03:
-	@printf "Starting sirius-ioc-bo-ma-correctors-03...\n"
-	systemctl start sirius-ioc-bo-ma-correctors-03.service
+start-bo-correctors-ia04:
+	@printf "Starting sirius-ioc-bo-ma-correctors-ia04...\n"
+	systemctl start sirius-ioc-bo-ma-correctors-ia04.service
 
-uninstall-bo-correctors-03: stop-bo-correctors-03
-	@printf "Uninstalling sirius-ioc-bo-ma-correctors-03...\n"
-	systemctl disable sirius-ioc-bo-ma-correctors-03.service
-	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-correctors-03.service
+uninstall-bo-correctors-ia04: stop-bo-correctors-ia04
+	@printf "Uninstalling sirius-ioc-bo-ma-correctors-ia04...\n"
+	systemctl disable sirius-ioc-bo-ma-correctors-ia04.service
+	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-correctors-ia04.service
 	systemctl daemon-reload
 	systemctl reset-failed
 
-install-bo-correctors-04:
-	@printf "Intalling sirius-ioc-bo-ma-correctors-04 service...\n"
-	cp -rf sirius-ioc-bo-ma-correctors-04.service /etc/systemd/system/
+install-bo-correctors-ia05:
+	@printf "Intalling sirius-ioc-bo-ma-correctors-ia05 service...\n"
+	cp -rf sirius-ioc-bo-ma-correctors-ia05.service /etc/systemd/system/
 	mkdir -p /home/sirius/iocs
 	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
-stop-bo-correctors-04:
-	@printf "Stopping sirius-ioc-bo-ma-correctors-04...\n"
-	systemctl stop sirius-ioc-bo-ma-correctors-04.service
+stop-bo-correctors-ia05:
+	@printf "Stopping sirius-ioc-bo-ma-correctors-ia05...\n"
+	systemctl stop sirius-ioc-bo-ma-correctors-ia05.service
 
-start-bo-correctors-04:
-	@printf "Starting sirius-ioc-bo-ma-correctors-04...\n"
-	systemctl start sirius-ioc-bo-ma-correctors-04.service
+start-bo-correctors-ia05:
+	@printf "Starting sirius-ioc-bo-ma-correctors-ia05...\n"
+	systemctl start sirius-ioc-bo-ma-correctors-ia05.service
 
-uninstall-bo-correctors-04: stop-bo-correctors-04
-	@printf "Uninstalling sirius-ioc-bo-ma-correctors-04...\n"
-	systemctl disable sirius-ioc-bo-ma-correctors-04.service
-	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-correctors-04.service
+uninstall-bo-correctors-ia05: stop-bo-correctors-ia05
+	@printf "Uninstalling sirius-ioc-bo-ma-correctors-ia05...\n"
+	systemctl disable sirius-ioc-bo-ma-correctors-ia05.service
+	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-correctors-ia05.service
 	systemctl daemon-reload
 	systemctl reset-failed
 
-install-bo-correctors-05:
-	@printf "Intalling sirius-ioc-bo-ma-correctors-05 service...\n"
-	cp -rf sirius-ioc-bo-ma-correctors-05.service /etc/systemd/system/
+install-bo-correctors-ia07:
+	@printf "Intalling sirius-ioc-bo-ma-correctors-ia07 service...\n"
+	cp -rf sirius-ioc-bo-ma-correctors-ia07.service /etc/systemd/system/
 	mkdir -p /home/sirius/iocs
 	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
-stop-bo-correctors-05:
-	@printf "Stopping sirius-ioc-bo-ma-correctors-05...\n"
-	systemctl stop sirius-ioc-bo-ma-correctors-05.service
+stop-bo-correctors-ia07:
+	@printf "Stopping sirius-ioc-bo-ma-correctors-ia07...\n"
+	systemctl stop sirius-ioc-bo-ma-correctors-ia07.service
 
-start-bo-correctors-05:
-	@printf "Starting sirius-ioc-bo-ma-correctors-05...\n"
-	systemctl start sirius-ioc-bo-ma-correctors-05.service
+start-bo-correctors-ia07:
+	@printf "Starting sirius-ioc-bo-ma-correctors-ia07...\n"
+	systemctl start sirius-ioc-bo-ma-correctors-ia07.service
 
-uninstall-bo-correctors-05: stop-bo-correctors-05
-	@printf "Uninstalling sirius-ioc-bo-ma-correctors-05...\n"
-	systemctl disable sirius-ioc-bo-ma-correctors-05.service
-	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-correctors-05.service
+uninstall-bo-correctors-ia07: stop-bo-correctors-ia07
+	@printf "Uninstalling sirius-ioc-bo-ma-correctors-ia07...\n"
+	systemctl disable sirius-ioc-bo-ma-correctors-ia07.service
+	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-correctors-ia07.service
 	systemctl daemon-reload
 	systemctl reset-failed
 
-install-bo-correctors-06:
-	@printf "Intalling sirius-ioc-bo-ma-correctors-06 service...\n"
-	cp -rf sirius-ioc-bo-ma-correctors-06.service /etc/systemd/system/
+install-bo-correctors-ia08:
+	@printf "Intalling sirius-ioc-bo-ma-correctors-ia08 service...\n"
+	cp -rf sirius-ioc-bo-ma-correctors-ia08.service /etc/systemd/system/
 	mkdir -p /home/sirius/iocs
 	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
-stop-bo-correctors-06:
-	@printf "Stopping sirius-ioc-bo-ma-correctors-06...\n"
-	systemctl stop sirius-ioc-bo-ma-correctors-06.service
+stop-bo-correctors-ia08:
+	@printf "Stopping sirius-ioc-bo-ma-correctors-ia08...\n"
+	systemctl stop sirius-ioc-bo-ma-correctors-ia08.service
 
-start-bo-correctors-06:
-	@printf "Starting sirius-ioc-bo-ma-correctors-06...\n"
-	systemctl start sirius-ioc-bo-ma-correctors-06.service
+start-bo-correctors-ia08:
+	@printf "Starting sirius-ioc-bo-ma-correctors-ia08...\n"
+	systemctl start sirius-ioc-bo-ma-correctors-ia08.service
 
-uninstall-bo-correctors-06: stop-bo-correctors-06
-	@printf "Uninstalling sirius-ioc-bo-ma-correctors-06...\n"
-	systemctl disable sirius-ioc-bo-ma-correctors-06.service
-	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-correctors-06.service
+uninstall-bo-correctors-ia08: stop-bo-correctors-ia08
+	@printf "Uninstalling sirius-ioc-bo-ma-correctors-ia08...\n"
+	systemctl disable sirius-ioc-bo-ma-correctors-ia08.service
+	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-correctors-ia08.service
 	systemctl daemon-reload
 	systemctl reset-failed
 
-install-bo-correctors-07:
-	@printf "Intalling sirius-ioc-bo-ma-correctors-07 service...\n"
-	cp -rf sirius-ioc-bo-ma-correctors-07.service /etc/systemd/system/
+install-bo-correctors-ia10:
+	@printf "Intalling sirius-ioc-bo-ma-correctors-ia10 service...\n"
+	cp -rf sirius-ioc-bo-ma-correctors-ia10.service /etc/systemd/system/
 	mkdir -p /home/sirius/iocs
 	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
-stop-bo-correctors-07:
-	@printf "Stopping sirius-ioc-bo-ma-correctors-07...\n"
-	systemctl stop sirius-ioc-bo-ma-correctors-07.service
+stop-bo-correctors-ia10:
+	@printf "Stopping sirius-ioc-bo-ma-correctors-ia10...\n"
+	systemctl stop sirius-ioc-bo-ma-correctors-ia10.service
 
-start-bo-correctors-07:
-	@printf "Starting sirius-ioc-bo-ma-correctors-07...\n"
-	systemctl start sirius-ioc-bo-ma-correctors-07.service
+start-bo-correctors-ia10:
+	@printf "Starting sirius-ioc-bo-ma-correctors-ia10...\n"
+	systemctl start sirius-ioc-bo-ma-correctors-ia10.service
 
-uninstall-bo-correctors-07: stop-bo-correctors-07
-	@printf "Uninstalling sirius-ioc-bo-ma-correctors-07...\n"
-	systemctl disable sirius-ioc-bo-ma-correctors-07.service
-	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-correctors-07.service
+uninstall-bo-correctors-ia10: stop-bo-correctors-ia10
+	@printf "Uninstalling sirius-ioc-bo-ma-correctors-ia10...\n"
+	systemctl disable sirius-ioc-bo-ma-correctors-ia10.service
+	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-correctors-ia10.service
 	systemctl daemon-reload
 	systemctl reset-failed
 
-install-bo-correctors-08:
-	@printf "Intalling sirius-ioc-bo-ma-correctors-08 service...\n"
-	cp -rf sirius-ioc-bo-ma-correctors-08.service /etc/systemd/system/
+install-bo-correctors-ia11:
+	@printf "Intalling sirius-ioc-bo-ma-correctors-ia11 service...\n"
+	cp -rf sirius-ioc-bo-ma-correctors-ia11.service /etc/systemd/system/
 	mkdir -p /home/sirius/iocs
 	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
-stop-bo-correctors-08:
-	@printf "Stopping sirius-ioc-bo-ma-correctors-08...\n"
-	systemctl stop sirius-ioc-bo-ma-correctors-08.service
+stop-bo-correctors-ia11:
+	@printf "Stopping sirius-ioc-bo-ma-correctors-ia11...\n"
+	systemctl stop sirius-ioc-bo-ma-correctors-ia11.service
 
-start-bo-correctors-08:
-	@printf "Starting sirius-ioc-bo-ma-correctors-08...\n"
-	systemctl start sirius-ioc-bo-ma-correctors-08.service
+start-bo-correctors-ia11:
+	@printf "Starting sirius-ioc-bo-ma-correctors-ia11...\n"
+	systemctl start sirius-ioc-bo-ma-correctors-ia11.service
 
-uninstall-bo-correctors-08: stop-bo-correctors-08
-	@printf "Uninstalling sirius-ioc-bo-ma-correctors-08...\n"
-	systemctl disable sirius-ioc-bo-ma-correctors-08.service
-	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-correctors-08.service
+uninstall-bo-correctors-ia11: stop-bo-correctors-ia11
+	@printf "Uninstalling sirius-ioc-bo-ma-correctors-ia11...\n"
+	systemctl disable sirius-ioc-bo-ma-correctors-ia11.service
+	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-correctors-ia11.service
 	systemctl daemon-reload
 	systemctl reset-failed
 
-install-bo-correctors-09:
-	@printf "Intalling sirius-ioc-bo-ma-correctors-09 service...\n"
-	cp -rf sirius-ioc-bo-ma-correctors-09.service /etc/systemd/system/
+install-bo-correctors-ia13:
+	@printf "Intalling sirius-ioc-bo-ma-correctors-ia13 service...\n"
+	cp -rf sirius-ioc-bo-ma-correctors-ia13.service /etc/systemd/system/
 	mkdir -p /home/sirius/iocs
 	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
-stop-bo-correctors-09:
-	@printf "Stopping sirius-ioc-bo-ma-correctors-09...\n"
-	systemctl stop sirius-ioc-bo-ma-correctors-09.service
+stop-bo-correctors-ia13:
+	@printf "Stopping sirius-ioc-bo-ma-correctors-ia13...\n"
+	systemctl stop sirius-ioc-bo-ma-correctors-ia13.service
 
-start-bo-correctors-09:
-	@printf "Starting sirius-ioc-bo-ma-correctors-09...\n"
-	systemctl start sirius-ioc-bo-ma-correctors-09.service
+start-bo-correctors-ia13:
+	@printf "Starting sirius-ioc-bo-ma-correctors-ia13...\n"
+	systemctl start sirius-ioc-bo-ma-correctors-ia13.service
 
-uninstall-bo-correctors-09: stop-bo-correctors-09
-	@printf "Uninstalling sirius-ioc-bo-ma-correctors-09...\n"
-	systemctl disable sirius-ioc-bo-ma-correctors-09.service
-	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-correctors-09.service
+uninstall-bo-correctors-ia13: stop-bo-correctors-ia13
+	@printf "Uninstalling sirius-ioc-bo-ma-correctors-ia13...\n"
+	systemctl disable sirius-ioc-bo-ma-correctors-ia13.service
+	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-correctors-ia13.service
 	systemctl daemon-reload
 	systemctl reset-failed
 
-install-bo-correctors-10:
-	@printf "Intalling sirius-ioc-bo-ma-correctors-10 service...\n"
-	cp -rf sirius-ioc-bo-ma-correctors-10.service /etc/systemd/system/
+install-bo-correctors-ia14:
+	@printf "Intalling sirius-ioc-bo-ma-correctors-ia14 service...\n"
+	cp -rf sirius-ioc-bo-ma-correctors-ia14.service /etc/systemd/system/
 	mkdir -p /home/sirius/iocs
 	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
-stop-bo-correctors-10:
-	@printf "Stopping sirius-ioc-bo-ma-correctors-10...\n"
-	systemctl stop sirius-ioc-bo-ma-correctors-10.service
+stop-bo-correctors-ia14:
+	@printf "Stopping sirius-ioc-bo-ma-correctors-ia14...\n"
+	systemctl stop sirius-ioc-bo-ma-correctors-ia14.service
 
-start-bo-correctors-10:
-	@printf "Starting sirius-ioc-bo-ma-correctors-10...\n"
-	systemctl start sirius-ioc-bo-ma-correctors-10.service
+start-bo-correctors-ia14:
+	@printf "Starting sirius-ioc-bo-ma-correctors-ia14...\n"
+	systemctl start sirius-ioc-bo-ma-correctors-ia14.service
 
-uninstall-bo-correctors-10: stop-bo-correctors-10
-	@printf "Uninstalling sirius-ioc-bo-ma-correctors-10...\n"
-	systemctl disable sirius-ioc-bo-ma-correctors-10.service
-	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-correctors-10.service
+uninstall-bo-correctors-ia14: stop-bo-correctors-ia14
+	@printf "Uninstalling sirius-ioc-bo-ma-correctors-ia14...\n"
+	systemctl disable sirius-ioc-bo-ma-correctors-ia14.service
+	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-correctors-ia14.service
 	systemctl daemon-reload
 	systemctl reset-failed
 
-install-bo-correctors-11:
-	@printf "Intalling sirius-ioc-bo-ma-correctors-11 service...\n"
-	cp -rf sirius-ioc-bo-ma-correctors-11.service /etc/systemd/system/
+install-bo-correctors-ia16:
+	@printf "Intalling sirius-ioc-bo-ma-correctors-ia16 service...\n"
+	cp -rf sirius-ioc-bo-ma-correctors-ia16.service /etc/systemd/system/
 	mkdir -p /home/sirius/iocs
 	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
-stop-bo-correctors-11:
-	@printf "Stopping sirius-ioc-bo-ma-correctors-11...\n"
-	systemctl stop sirius-ioc-bo-ma-correctors-11.service
+stop-bo-correctors-ia16:
+	@printf "Stopping sirius-ioc-bo-ma-correctors-ia16...\n"
+	systemctl stop sirius-ioc-bo-ma-correctors-ia16.service
 
-start-bo-correctors-11:
-	@printf "Starting sirius-ioc-bo-ma-correctors-11...\n"
-	systemctl start sirius-ioc-bo-ma-correctors-11.service
+start-bo-correctors-ia16:
+	@printf "Starting sirius-ioc-bo-ma-correctors-ia16...\n"
+	systemctl start sirius-ioc-bo-ma-correctors-ia16.service
 
-uninstall-bo-correctors-11: stop-bo-correctors-11
-	@printf "Uninstalling sirius-ioc-bo-ma-correctors-11...\n"
-	systemctl disable sirius-ioc-bo-ma-correctors-11.service
-	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-correctors-11.service
+uninstall-bo-correctors-ia16: stop-bo-correctors-ia16
+	@printf "Uninstalling sirius-ioc-bo-ma-correctors-ia16...\n"
+	systemctl disable sirius-ioc-bo-ma-correctors-ia16.service
+	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-correctors-ia16.service
 	systemctl daemon-reload
 	systemctl reset-failed
 
-install-bo-correctors-12:
-	@printf "Intalling sirius-ioc-bo-ma-correctors-12 service...\n"
-	cp -rf sirius-ioc-bo-ma-correctors-12.service /etc/systemd/system/
+install-bo-correctors-ia17:
+	@printf "Intalling sirius-ioc-bo-ma-correctors-ia17 service...\n"
+	cp -rf sirius-ioc-bo-ma-correctors-ia17.service /etc/systemd/system/
 	mkdir -p /home/sirius/iocs
 	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
-stop-bo-correctors-12:
-	@printf "Stopping sirius-ioc-bo-ma-correctors-12...\n"
-	systemctl stop sirius-ioc-bo-ma-correctors-12.service
+stop-bo-correctors-ia17:
+	@printf "Stopping sirius-ioc-bo-ma-correctors-ia17...\n"
+	systemctl stop sirius-ioc-bo-ma-correctors-ia17.service
 
-start-bo-correctors-12:
-	@printf "Starting sirius-ioc-bo-ma-correctors-12...\n"
-	systemctl start sirius-ioc-bo-ma-correctors-12.service
+start-bo-correctors-ia17:
+	@printf "Starting sirius-ioc-bo-ma-correctors-ia17...\n"
+	systemctl start sirius-ioc-bo-ma-correctors-ia17.service
 
-uninstall-bo-correctors-12: stop-bo-correctors-12
-	@printf "Uninstalling sirius-ioc-bo-ma-correctors-12...\n"
-	systemctl disable sirius-ioc-bo-ma-correctors-12.service
-	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-correctors-12.service
+uninstall-bo-correctors-ia17: stop-bo-correctors-ia17
+	@printf "Uninstalling sirius-ioc-bo-ma-correctors-ia17...\n"
+	systemctl disable sirius-ioc-bo-ma-correctors-ia17.service
+	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-correctors-ia17.service
 	systemctl daemon-reload
 	systemctl reset-failed
 
-install-bo-correctors-13:
-	@printf "Intalling sirius-ioc-bo-ma-correctors-13 service...\n"
-	cp -rf sirius-ioc-bo-ma-correctors-13.service /etc/systemd/system/
+install-bo-correctors-ia20:
+	@printf "Intalling sirius-ioc-bo-ma-correctors-ia20 service...\n"
+	cp -rf sirius-ioc-bo-ma-correctors-ia20.service /etc/systemd/system/
 	mkdir -p /home/sirius/iocs
 	chown -R sirius.sirius /home/sirius/iocs
 	systemctl daemon-reload
 
-stop-bo-correctors-13:
-	@printf "Stopping sirius-ioc-bo-ma-correctors-13...\n"
-	systemctl stop sirius-ioc-bo-ma-correctors-13.service
+stop-bo-correctors-ia20:
+	@printf "Stopping sirius-ioc-bo-ma-correctors-ia20...\n"
+	systemctl stop sirius-ioc-bo-ma-correctors-ia20.service
 
-start-bo-correctors-13:
-	@printf "Starting sirius-ioc-bo-ma-correctors-13...\n"
-	systemctl start sirius-ioc-bo-ma-correctors-13.service
+start-bo-correctors-ia20:
+	@printf "Starting sirius-ioc-bo-ma-correctors-ia20...\n"
+	systemctl start sirius-ioc-bo-ma-correctors-ia20.service
 
-uninstall-bo-correctors-13: stop-bo-correctors-13
-	@printf "Uninstalling sirius-ioc-bo-ma-correctors-13...\n"
-	systemctl disable sirius-ioc-bo-ma-correctors-13.service
-	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-correctors-13.service
+uninstall-bo-correctors-ia20: stop-bo-correctors-ia20
+	@printf "Uninstalling sirius-ioc-bo-ma-correctors-ia20...\n"
+	systemctl disable sirius-ioc-bo-ma-correctors-ia20.service
+	rm -rf /etc/systemd/system/sirius-ioc-bo-ma-correctors-ia20.service
 	systemctl daemon-reload
 	systemctl reset-failed
 
-install-bo-correctors: install-bo-correctors-01 install-bo-correctors-02 install-bo-correctors-03 install-bo-correctors-04 install-bo-correctors-05 install-bo-correctors-06 install-bo-correctors-07 install-bo-correctors-08 install-bo-correctors-09 install-bo-correctors-10 install-bo-correctors-11 install-bo-correctors-12 install-bo-correctors-13
+install-bo-correctors: install-bo-correctors-ia01 install-bo-correctors-ia02 install-bo-correctors-ia04 install-bo-correctors-ia05 install-bo-correctors-ia07 install-bo-correctors-ia08 install-bo-correctors-ia10 install-bo-correctors-ia11 install-bo-correctors-ia13 install-bo-correctors-ia14 install-bo-correctors-ia16 install-bo-correctors-ia17 install-bo-correctors-ia20
 
-stop-bo-correctors: stop-bo-correctors-01 stop-bo-correctors-02 stop-bo-correctors-03 stop-bo-correctors-04 stop-bo-correctors-05 stop-bo-correctors-06 stop-bo-correctors-07 stop-bo-correctors-08 stop-bo-correctors-09 stop-bo-correctors-10 stop-bo-correctors-11 stop-bo-correctors-12 stop-bo-correctors-13
+stop-bo-correctors: stop-bo-correctors-ia01 stop-bo-correctors-ia02 stop-bo-correctors-ia04 stop-bo-correctors-ia05 stop-bo-correctors-ia07 stop-bo-correctors-ia08 stop-bo-correctors-ia10 stop-bo-correctors-ia11 stop-bo-correctors-ia13 stop-bo-correctors-ia14 stop-bo-correctors-ia16 stop-bo-correctors-ia17 stop-bo-correctors-ia20
 
-start-bo-correctors: start-bo-correctors-01 start-bo-correctors-02 start-bo-correctors-03 start-bo-correctors-04 start-bo-correctors-05 start-bo-correctors-06 start-bo-correctors-07 start-bo-correctors-08 start-bo-correctors-09 start-bo-correctors-10 start-bo-correctors-11 start-bo-correctors-12 start-bo-correctors-13
+start-bo-correctors: start-bo-correctors-ia01 start-bo-correctors-ia02 start-bo-correctors-ia04 start-bo-correctors-ia05 start-bo-correctors-ia07 start-bo-correctors-ia08 start-bo-correctors-ia10 start-bo-correctors-ia11 start-bo-correctors-ia13 start-bo-correctors-ia14 start-bo-correctors-ia16 start-bo-correctors-ia17 start-bo-correctors-ia20
 
-uninstall-bo-correctors: uninstall-bo-correctors-01 uninstall-bo-correctors-02 uninstall-bo-correctors-03 uninstall-bo-correctors-04 uninstall-bo-correctors-05 uninstall-bo-correctors-06 uninstall-bo-correctors-07 uninstall-bo-correctors-08 uninstall-bo-correctors-09 uninstall-bo-correctors-10 uninstall-bo-correctors-11 uninstall-bo-correctors-12 uninstall-bo-correctors-13
+uninstall-bo-correctors: uninstall-bo-correctors-ia01 uninstall-bo-correctors-ia02 uninstall-bo-correctors-ia04 uninstall-bo-correctors-ia05 uninstall-bo-correctors-ia07 uninstall-bo-correctors-ia08 uninstall-bo-correctors-ia10 uninstall-bo-correctors-ia11 uninstall-bo-correctors-ia13 uninstall-bo-correctors-ia14 uninstall-bo-correctors-ia16 uninstall-bo-correctors-ia17 uninstall-bo-correctors-ia20
 
 install-bo-dipoles:
 	@printf "Intalling sirius-ioc-bo-ma-dipoles service...\n"

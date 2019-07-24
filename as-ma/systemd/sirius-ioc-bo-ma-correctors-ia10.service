@@ -1,5 +1,5 @@
 [Unit]
-Description=Soft IOC for BO corrector magnets 07
+Description=Soft IOC for BO corrector magnets ia10
 After=multi-user.target
 
 [Service]
@@ -9,8 +9,8 @@ Type=simple
 WorkingDirectory=/home/sirius/iocs
 StandardOutput=syslog
 StandardError=syslog
-ExecStartPre=/bin/bash --login -c 'env > /tmp/bashrc-sirius-ioc-tb-ma-correctors-07'
-EnvironmentFile=-/tmp/bashrc-sirius-ioc-tb-ma-correctors-07
+ExecStartPre=/bin/bash --login -c 'env > /tmp/bashrc-sirius-ioc-tb-ma-correctors-ia10'
+EnvironmentFile=-/tmp/bashrc-sirius-ioc-tb-ma-correctors-ia10
 ExecStart=/usr/local/bin/sirius-ioc-as-ma.py \
 BO-23U:MA-CH \
 BO-23U:MA-CV \
