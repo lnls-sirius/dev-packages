@@ -5,6 +5,8 @@
 #
 # If any model change, please, run the script
 # again and copy the generated file to replace this one.
+#
+# Obs.: Pulsed magnet names were manually fixed from discipline MA to PM.
 
 
 #Magnets data
@@ -15,9 +17,9 @@
 #---------------------------------------------------------
 #Name                 Position @ center [m]
 #---------------------------------------------------------
-SI-01SA:MA-InjDpKckr        2.1150
-SI-01SA:MA-InjNLKckr        2.8000
-SI-01SA:MA-PingH            2.1150
+SI-01SA:PM-InjDpKckr        2.1150
+SI-01SA:PM-InjNLKckr        2.8000
+SI-01SA:PM-PingH            2.1150
 SI-01M2:MA-CH               4.4679
 SI-01M2:MA-CV               4.4679
 SI-01M2:MA-FCH              4.2769
@@ -1133,7 +1135,7 @@ SI-19C3:MA-SFB2            481.3993
 SI-19C4:MA-B1              486.9593
 SI-19C4:MA-CH              485.8603
 SI-19C4:MA-CV              485.8603
-SI-19C4:MA-PingV           486.1723
+SI-19C4:PM-PingV           486.1723
 SI-19C4:MA-Q1              485.5153
 SI-19C4:MA-Q2              484.6753
 SI-19C4:MA-SDB1            485.8603
@@ -1219,7 +1221,7 @@ SI-01M1:MA-SFA0            514.6681
 BO-01U:MA-CH                0.8000
 BO-01U:MA-QF                1.1500
 BO-01D:MA-B                 6.1180
-BO-01D:MA-InjKckr           1.8500
+BO-01D:PM-InjKckr           1.8500
 BO-02U:MA-QF               11.0860
 BO-02U:MA-SF               10.7860
 BO-02D:MA-B                16.0540
@@ -1418,7 +1420,7 @@ BO-48U:MA-QF               468.1420
 BO-48U:MA-SD               464.0500
 BO-48U:MA-SF               467.8420
 BO-48D:MA-B                473.1100
-BO-48D:MA-EjeKckr          468.8420
+BO-48D:PM-EjeKckr          468.8420
 BO-48D:MA-QD               472.2340
 BO-49U:MA-CV               473.9860
 BO-49U:MA-QF               478.0780
@@ -1453,13 +1455,13 @@ TB-02:MA-QD2B              11.6812
 TB-02:MA-QF2A               5.3474
 TB-02:MA-QF2B              11.3112
 TB-03:MA-B                 16.3216
-TB-04:MA-CH                15.9712
+TB-04:MA-CH-1              15.9712
 TB-03:MA-QD3               15.5912
 TB-03:MA-QF3               15.2712
 TB-04:MA-CV-1              16.6721
 TB-04:MA-CV-2              18.5087
-TB-04:MA-CV-3              18.8437
-TB-04:MA-InjSept           19.1937
+TB-04:MA-CH-2              18.5087
+TB-04:PM-InjSept           19.1937
 TB-04:MA-QD4               18.4237
 TB-04:MA-QF4               18.1077
 
@@ -1473,8 +1475,8 @@ TS-01:MA-B                  7.6756
 TS-01:MA-CH                 6.1278
 TS-01:MA-CV-1               2.0046
 TS-01:MA-CV-2               6.6678
-TS-01:MA-EjeSeptF           0.2887
-TS-01:MA-EjeSeptG           1.1159
+TS-01:PM-EjeSeptF           0.2887
+TS-01:PM-EjeSeptG           1.1159
 TS-01:MA-QF1A               2.9746
 TS-01:MA-QF1B               6.3978
 TS-02:MA-B                 12.1192
@@ -1489,9 +1491,9 @@ TS-03:MA-QF3               15.1820
 TS-04:MA-CH                20.2557
 TS-04:MA-CV-1              20.0057
 TS-04:MA-CV-2              22.5387
-TS-04:MA-InjSeptF          24.6820
-TS-04:MA-InjSeptG-1        23.0274
-TS-04:MA-InjSeptG-2        23.8547
+TS-04:PM-InjSeptF          24.6820
+TS-04:PM-InjSeptG-1        23.0274
+TS-04:PM-InjSeptG-2        23.8547
 TS-04:MA-QD4A              18.9437
 TS-04:MA-QD4B              21.0687
 TS-04:MA-QF4               20.5557

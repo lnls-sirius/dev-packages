@@ -1,0 +1,7 @@
+# List of power supplies of type tb-corrector-strong-ch
+# =====================================================
+
+# number of power supplies: 2
+
+TB-04:PS-CH-1
+TB-04:PS-CH-2

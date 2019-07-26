@@ -2,3 +2,4 @@
 # =============================================
 
 PA-RaPSC03:PS-DCLink-BO1
+PA-RaPSC03:PS-DCLink-BO2

@@ -930,7 +930,8 @@ _pvs_tb_ps = [
     ['TB-02:PS-CV-1:OpMode-Sel', _SlowRef, 0.0],
     ['TB-02:PS-CH-2:OpMode-Sel', _SlowRef, 0.0],
     ['TB-02:PS-CV-2:OpMode-Sel', _SlowRef, 0.0],
-    ['TB-04:PS-CH:OpMode-Sel', _SlowRef, 0.0],
+    ['TB-04:PS-CH-1:OpMode-Sel', _SlowRef, 0.0],
+    ['TB-04:PS-CH-2:OpMode-Sel', _SlowRef, 0.0],
     ['TB-04:PS-CV-1:OpMode-Sel', _SlowRef, 0.0],
     ['TB-04:PS-CV-2:OpMode-Sel', _SlowRef, 0.0],
 
@@ -953,7 +954,8 @@ _pvs_tb_ps = [
     ['TB-02:PS-CV-1:BSMPComm-Sel', _on, 0.0],
     ['TB-02:PS-CH-2:BSMPComm-Sel', _on, 0.0],
     ['TB-02:PS-CV-2:BSMPComm-Sel', _on, 0.0],
-    ['TB-04:PS-CH:BSMPComm-Sel', _on, 0.0],
+    ['TB-04:PS-CH-1:BSMPComm-Sel', _on, 0.0],
+    ['TB-04:PS-CH-2:BSMPComm-Sel', _on, 0.0],
     ['TB-04:PS-CV-1:BSMPComm-Sel', _on, 0.0],
     ['TB-04:PS-CV-2:BSMPComm-Sel', _on, 0.0],
 
@@ -976,7 +978,8 @@ _pvs_tb_ps = [
     ['TB-02:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
     ['TB-02:PS-CH-2:Current-SP', 0.0, 0.0],  # unit: A
     ['TB-02:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
-    ['TB-04:PS-CH:Current-SP', 0.0, 0.0],    # unit: A
+    ['TB-04:PS-CH-1:Current-SP', 0.0, 0.0],    # unit: A
+    ['TB-04:PS-CH-2:Current-SP', 0.0, 0.0],    # unit: A
     ['TB-04:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
     ['TB-04:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
     ]
