@@ -257,7 +257,7 @@ class App:
         return config_name
 
     def _set_config_name(self, config_name):
-        f = open('/home/sirius/iocs/' + self._TL.lower() + '-ap-posang/' +
+        f = open('/home/sirius/iocs-log/' + self._TL.lower() + '-ap-posang/' +
                  self._TL.lower() + '-posang.txt', 'w+')
         f.write(config_name)
         f.close()
