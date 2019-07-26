@@ -6,11 +6,11 @@ After=multi-user.target
 Group=sirius
 User=sirius
 Type=simple
-WorkingDirectory=/home/sirius/iocs
+WorkingDirectory=/home/sirius/iocs-log
 StandardOutput=syslog
 StandardError=syslog
-ExecStartPre=/bin/bash --login -c 'env > /tmp/bashrc-sirius-ioc-tb-ma-quadrupoles'
-EnvironmentFile=-/tmp/bashrc-sirius-ioc-tb-ma-quadrupoles
+ExecStartPre=/bin/bash --login -c 'env > /home/sirius/iocs-log/env-sirius-ioc-tb-ma-quadrupoles'
+EnvironmentFile=-/home/sirius/iocs-log/env-sirius-ioc-tb-ma-quadrupoles
 ExecStart=/usr/local/bin/sirius-ioc-as-ma.py \
 BO-Fam:MA-QF \
 BO-Fam:MA-QD
