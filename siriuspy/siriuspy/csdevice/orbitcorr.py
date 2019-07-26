@@ -124,7 +124,7 @@ class SOFBTLines(ConstTLines):
         self.NR_BPMS = len(self.BPM_NAMES)
         ext = acc.lower() + 'orb'
         ioc_fol = acc.lower() + '-ap-sofb'
-        ioc_fol = _os.path.join('/home', 'sirius', 'iocs', ioc_fol, 'data')
+        ioc_fol = _os.path.join('/home', 'sirius', 'iocs-log', ioc_fol, 'data')
         self.REFORBFNAME = _os.path.join(ioc_fol, 'ref_orbit.'+ext)
         ext = acc.lower() + 'respmat'
         self.RESPMAT_FILENAME = _os.path.join(ioc_fol, 'respmat.'+ext)
