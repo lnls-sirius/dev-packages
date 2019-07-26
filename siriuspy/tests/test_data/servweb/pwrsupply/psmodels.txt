@@ -6,14 +6,122 @@
 #        https://cnpemcamp-my.sharepoint.com/:b:/g/personal/cleber_rodrigues_lnls_br/EYay5Qhtb0tOoBr-t-4TVhIBsPemqeQhG59vq8WgO2K-EQ?e=CgggsR
 
 
-# --- Linac quadrupoles ---
+# --- Linac Spectrometer ---
 
 LI-01:PS-Spect               LINAC_PS
+
+# --- Linac quadrupoles ---
+
 LI-01:PS-QD1                 LINAC_PS
 LI-01:PS-QD2                 LINAC_PS
 LI-Fam:PS-QF1                LINAC_PS
 LI-Fam:PS-QF2                LINAC_PS
 LI-01:PS-QF3                 LINAC_PS
+
+# --- Linac correctors ---
+
+LI-01:PS-CH-1                LINAC_PS
+LI-01:PS-CH-2                LINAC_PS
+LI-01:PS-CH-3                LINAC_PS
+LI-01:PS-CH-4                LINAC_PS
+LI-01:PS-CH-5                LINAC_PS
+LI-01:PS-CH-6                LINAC_PS
+LI-01:PS-CH-7                LINAC_PS
+LI-01:PS-CV-1                LINAC_PS
+LI-01:PS-CV-2                LINAC_PS
+LI-01:PS-CV-3                LINAC_PS
+LI-01:PS-CV-4                LINAC_PS
+LI-01:PS-CV-5                LINAC_PS
+LI-01:PS-CV-6                LINAC_PS
+LI-01:PS-CV-7                LINAC_PS
+
+# --- Linac lenses ---
+
+LI-01:PS-Lens-1              LINAC_PS
+LI-01:PS-Lens-2              LINAC_PS
+LI-01:PS-Lens-3              LINAC_PS
+LI-01:PS-Lens-4              LINAC_PS
+LI-01:PS-LensRev             LINAC_PS
+
+# --- Linac solenoids ---
+
+LI-01:PS-Slnd-1              LINAC_PS
+LI-01:PS-Slnd-10             LINAC_PS
+LI-01:PS-Slnd-11             LINAC_PS
+LI-01:PS-Slnd-12             LINAC_PS
+LI-01:PS-Slnd-13             LINAC_PS
+LI-01:PS-Slnd-2              LINAC_PS
+LI-01:PS-Slnd-3              LINAC_PS
+LI-01:PS-Slnd-4              LINAC_PS
+LI-01:PS-Slnd-5              LINAC_PS
+LI-01:PS-Slnd-6              LINAC_PS
+LI-01:PS-Slnd-7              LINAC_PS
+LI-01:PS-Slnd-8              LINAC_PS
+LI-01:PS-Slnd-9              LINAC_PS
+LI-Fam:PS-Slnd-14            LINAC_PS
+LI-Fam:PS-Slnd-15            LINAC_PS
+LI-Fam:PS-Slnd-16            LINAC_PS
+LI-Fam:PS-Slnd-17            LINAC_PS
+LI-Fam:PS-Slnd-18            LINAC_PS
+LI-Fam:PS-Slnd-19            LINAC_PS
+LI-Fam:PS-Slnd-20            LINAC_PS
+LI-Fam:PS-Slnd-21            LINAC_PS
+
+
+# --- Linac original SINAP names ---
+
+# LA-CN:H1DPPS-1               LINAC_PS
+
+# LA-CN:H1DQPS-1               LINAC_PS
+# LA-CN:H1DQPS-2               LINAC_PS
+# LA-CN:H1FQPS-1               LINAC_PS
+# LA-CN:H1FQPS-2               LINAC_PS
+# LA-CN:H1FQPS-3               LINAC_PS
+
+# LA-CN:H1SCPS-1               LINAC_PS
+# LA-CN:H1SCPS-2               LINAC_PS
+# LA-CN:H1SCPS-3               LINAC_PS
+# LA-CN:H1SCPS-4               LINAC_PS
+
+# LA-CN:H1LCPS-1               LINAC_PS
+# LA-CN:H1LCPS-2               LINAC_PS
+# LA-CN:H1LCPS-3               LINAC_PS
+# LA-CN:H1LCPS-4               LINAC_PS
+# LA-CN:H1LCPS-5               LINAC_PS
+# LA-CN:H1LCPS-6               LINAC_PS
+# LA-CN:H1LCPS-7               LINAC_PS
+# LA-CN:H1LCPS-8               LINAC_PS
+# LA-CN:H1LCPS-9               LINAC_PS
+# LA-CN:H1LCPS-10              LINAC_PS
+
+# LA-CN:H1MLPS-1               LINAC_PS
+# LA-CN:H1MLPS-2               LINAC_PS
+# LA-CN:H1MLPS-3               LINAC_PS
+# LA-CN:H1MLPS-4               LINAC_PS
+
+# LA-CN:H1RCPS-1               LINAC_PS
+
+# LA-CN:H1SLPS-1               LINAC_PS
+# LA-CN:H1SLPS-2               LINAC_PS
+# LA-CN:H1SLPS-3               LINAC_PS
+# LA-CN:H1SLPS-8               LINAC_PS
+# LA-CN:H1SLPS-4               LINAC_PS
+# LA-CN:H1SLPS-5               LINAC_PS
+# LA-CN:H1SLPS-6               LINAC_PS
+# LA-CN:H1SLPS-7               LINAC_PS
+# LA-CN:H1SLPS-9               LINAC_PS
+# LA-CN:H1SLPS-10              LINAC_PS
+# LA-CN:H1SLPS-11              LINAC_PS
+# LA-CN:H1SLPS-12              LINAC_PS
+# LA-CN:H1SLPS-13              LINAC_PS
+# LA-CN:H1SLPS-14              LINAC_PS
+# LA-CN:H1SLPS-15              LINAC_PS
+# LA-CN:H1SLPS-16              LINAC_PS
+# LA-CN:H1SLPS-17              LINAC_PS
+# LA-CN:H1SLPS-18              LINAC_PS
+# LA-CN:H1SLPS-19              LINAC_PS
+# LA-CN:H1SLPS-20              LINAC_PS
+# LA-CN:H1SLPS-21              LINAC_PS
 
 
 # --- Booster dipole, quandrupole and sextupole power supplies (FAC) (Slide 1)
@@ -22,8 +130,9 @@ BO-Fam:PS-SD                  FAC_DCDC
 BO-Fam:PS-SF                  FAC_DCDC
 BO-Fam:PS-QD                  FAC_DCDC
 
-BO-Fam:PS-QF                  FAC_DCDC
-PA-RaPSC03:PS-DCLink-BO1      FAC_ACDC
+BO-Fam:PS-QF                  FAC_2S_DCDC
+PA-RaPSC03:PS-DCLink-BO1      FAC_2S_ACDC
+PA-RaPSC03:PS-DCLink-BO2      FAC_2S_ACDC
 
 BO-Fam:PS-B-1                 FAC_2P4S_DCDC
 PA-RaPSE01:PS-DCLink-BO       FAC_2P4S_ACDC
@@ -72,7 +181,8 @@ TB-02:PS-CH-1                 FBP
 TB-02:PS-CV-1                 FBP
 TB-02:PS-CH-2                 FBP
 TB-02:PS-CV-2                 FBP
-TB-04:PS-CH                   FBP
+TB-04:PS-CH-1                 FBP
+TB-04:PS-CH-2                 FBP
 TB-04:PS-CV-1                 FBP
 TB-04:PS-CV-2                 FBP
 
