@@ -405,12 +405,12 @@ def get_config_name(acc, opticsparam):
         raise ValueError("'opticsparam' must be 'tune' or 'chrom' instance.")
 
     try:
-        f = open('/home/sirius/iocs/'+acc+'-ap-'+opticsparam+'corr/' +
+        f = open('/home/sirius/iocs-log/'+acc+'-ap-'+opticsparam+'corr/' +
                  acc+'-'+opticsparam+'corr.txt', 'r')
         config_name = f.read().strip('\n')
         f.close()
     except Exception:
-        f = open('/home/sirius/iocs/'+acc+'-ap-'+opticsparam+'corr/' +
+        f = open('/home/sirius/iocs-log/'+acc+'-ap-'+opticsparam+'corr/' +
                  acc+'-'+opticsparam+'corr.txt', 'w+')
         config_name = 'Default'
         f.write(config_name)
@@ -427,7 +427,7 @@ def set_config_name(acc, opticsparam, config_name):
     if not isinstance(config_name, str):
         raise TypeError("'config_name' must be a string.")
 
-    f = open('/home/sirius/iocs/'+acc+'-ap-'+opticsparam+'corr/' +
+    f = open('/home/sirius/iocs-log/'+acc+'-ap-'+opticsparam+'corr/' +
              acc+'-'+opticsparam+'corr.txt', 'w+')
     f.write(config_name)
     f.close()
