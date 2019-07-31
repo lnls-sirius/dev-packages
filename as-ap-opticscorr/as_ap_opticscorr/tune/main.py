@@ -12,9 +12,8 @@ from siriuspy.csdevice.timesys import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
 from siriuspy.csdevice.opticscorr import Const as _Const
 from siriuspy.timesys import get_evg_name as _get_evg_name
-
+from siriuspy.optics.opticscorr import OpticsCorr as _OpticsCorr
 from as_ap_opticscorr.opticscorr_utils import (
-        OpticsCorr as _OpticsCorr,
         get_config_name as _get_config_name,
         set_config_name as _set_config_name)
 import as_ap_opticscorr.tune.pvs as _pvs
