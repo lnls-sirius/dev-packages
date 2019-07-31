@@ -12,9 +12,8 @@ from siriuspy.csdevice.timesys import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
 from siriuspy.csdevice.opticscorr import Const as _Const
 from siriuspy.timesys import get_evg_name as _get_evg_name
-
+from siriuspy.optics.opticscorr import OpticsCorr as _OpticsCorr
 from as_ap_opticscorr.opticscorr_utils import (
-        OpticsCorr as _OpticsCorr,
         get_config_name as _get_config_name,
         set_config_name as _set_config_name)
 import as_ap_opticscorr.chrom.pvs as _pvs
@@ -169,7 +168,7 @@ class App:
             try:
                 self._chromsi_src_idx = trig_db['Src-Sel']['enums'].index(
                     'ChromSI')
-            except ValueError:
+            except Exception:
                 self._chromsi_src_idx = 1
 
             self._timing_sexts_pulses_sp = _epics.PV(
