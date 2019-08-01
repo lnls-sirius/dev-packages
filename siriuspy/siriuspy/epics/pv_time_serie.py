@@ -171,34 +171,33 @@ class SiriusPVTimeSerie:
 
     def _update(self, timestamp):
         """Update time serie according to current timestamp."""
-        if len(self._timestamp_deque) > 0:
-            if self._timestamp_deque[-1] <= timestamp - self._time_window:
-                self.clearserie()
+        if len(self._timestamp_deque) == 0 or self._time_window is None:
+            return
 
-            elif self._timestamp_deque[0] >= timestamp - self._time_window:
-                pass
+        min_timestamp = timestamp - self._time_window
+        if self._timestamp_deque[-1] <= min_timestamp:
+            self.clearserie()
+        elif self._timestamp_deque[0] >= min_timestamp:
+            pass
+        else:
+            low_interval_end = 0
+            high_interval_end = len(self._timestamp_deque)-1
+            search_index = (high_interval_end - low_interval_end)//2
 
-            else:
-                low_interval_end = 0
-                high_interval_end = len(self._timestamp_deque)-1
-                search_index = (high_interval_end - low_interval_end)//2
+            while low_interval_end != search_index:
+                if self._timestamp_deque[search_index] <= min_timestamp:
+                    low_interval_end = search_index
+                    search_index = ((
+                        high_interval_end - low_interval_end)//2 +
+                        low_interval_end)
+                else:
+                    high_interval_end = search_index
+                    search_index = ((
+                        high_interval_end - low_interval_end)//2 +
+                        low_interval_end)
 
-                while low_interval_end != search_index:
-                    if self._timestamp_deque[search_index] <= \
-                            timestamp - self._time_window:
-                        low_interval_end = search_index
-                        search_index = ((
-                            high_interval_end - low_interval_end)//2 +
-                            low_interval_end)
-                    else:
-                        high_interval_end = search_index
-                        search_index = ((
-                            high_interval_end - low_interval_end)//2 +
-                            low_interval_end)
-
-                for item in range(search_index + 1):
-                    self._timestamp_deque.popleft(), \
-                        self._value_deque.popleft()
+            for item in range(search_index + 1):
+                self._timestamp_deque.popleft(), self._value_deque.popleft()
 
     def clearserie(self):
         """Clear time serie."""
