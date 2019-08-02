@@ -21,22 +21,25 @@ def get_dict():
 
 
 _ps_ramp = {
-    # ramp total duration [ms]
-    'duration':             _util.DEFAULT_PS_RAMP_DURATION,
     # number of points in power supply waveforms
-    'wfm_nrpoints':         _DEF_WFMSIZE,
+    'wfm_nrpoints': _DEF_WFMSIZE,
+    # ramp total duration [ms]
+    'duration': _util.DEFAULT_PS_RAMP_DURATION,
     # ramp time parameters [ms]
-    'rampup_start_time':    _util.DEFAULT_PS_RAMP_RAMPUP_START_TIME,
-    'rampup_stop_time':     _util.DEFAULT_PS_RAMP_RAMPUP_STOP_TIME,
-    'rampdown_start_time':  _util.DEFAULT_PS_RAMP_RAMPDOWN_START_TIME,
-    'rampdown_stop_time':   _util.DEFAULT_PS_RAMP_RAMPDOWN_STOP_TIME,
+    'rampup1_start_time': _util.DEFAULT_PS_RAMP_RAMPUP1_START_TIME,
+    'rampup2_start_time': _util.DEFAULT_PS_RAMP_RAMPUP2_START_TIME,
+    'rampdown_start_time': _util.DEFAULT_PS_RAMP_RAMPDOWN_START_TIME,
+    'rampdown_stop_time': _util.DEFAULT_PS_RAMP_RAMPDOWN_STOP_TIME,
+    'rampup_range': _util.DEFAULT_PS_RAMP_RAMPUP_RANGE,
+    'rampdown_range': _util.DEFAULT_PS_RAMP_RAMPDOWN_RANGE,
     # ramp energy parameters [GeV]
-    'start_energy':         _util.DEFAULT_PS_RAMP_START_ENERGY,
-    'rampup_start_energy':  _util.DEFAULT_PS_RAMP_RAMPUP_START_ENERGY,
-    'rampup_stop_energy':   _util.DEFAULT_PS_RAMP_RAMPUP_STOP_ENERGY,
-    'plateau_energy':       _util.DEFAULT_PS_RAMP_PLATEAU_ENERGY,
+    'start_energy': _util.DEFAULT_PS_RAMP_START_ENERGY,
+    'rampup1_start_energy': _util.DEFAULT_PS_RAMP_RAMPUP1_START_ENERGY,
+    'rampup2_start_energy': _util.DEFAULT_PS_RAMP_RAMPUP2_START_ENERGY,
     'rampdown_start_energy': _util.DEFAULT_PS_RAMP_RAMPDOWN_START_ENERGY,
     'rampdown_stop_energy': _util.DEFAULT_PS_RAMP_RAMPDOWN_STOP_ENERGY,
+    'rampup_delta': _util.DEFAULT_PS_RAMP_RAMPUP_DELTA,
+    'rampdown_delta': _util.DEFAULT_PS_RAMP_RAMPDOWN_DELTA,
 }
 
 _ps_normalized_configs = [
