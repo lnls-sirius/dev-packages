@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python-sirius
 
 import numpy as _np
 import matplotlib.pyplot as plt
