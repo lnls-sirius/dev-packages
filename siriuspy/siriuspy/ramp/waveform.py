@@ -49,7 +49,6 @@ class WaveformParam:
         self._rampdown_stop_energy = rampdown_stop_energy
         self._update()
 
-
     @property
     def duration(self):
         """Return duration."""
