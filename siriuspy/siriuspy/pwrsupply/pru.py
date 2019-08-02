@@ -13,7 +13,8 @@ import PRUserial485 as _PRUserial485
 # check PRUserial485 package version
 __version1__ = '1.3.3'  # PRUserial485
 __version2__ = '2.3.3'  # eth-PRUserial485
-if _PRUserial485.__version__ not in (__version1__, __version2__):
+__prulib_ver__ = _PRUserial485.__version__
+if not(__version1__ in __prulib_ver__ or __version2__ in __prulib_ver__):
     # loaded library has an incompatible version!
     _ERR_MSG = 'Invalid PRUserial485 library version! {} != {} or {}'.format(
         _PRUserial485.__version__, __version1__, __version2__)
