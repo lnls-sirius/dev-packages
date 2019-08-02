@@ -73,7 +73,6 @@ class TestPRUInterface(TestCase):
     """Test PRUInterface API."""
 
     public_interface = (
-        'VERSION',
         'simulated',
         'sync_mode',
         'sync_status',
@@ -96,10 +95,6 @@ class TestPRUInterface(TestCase):
         """Test class public interface."""
         self.assertTrue(util.check_public_interface_namespace(
             PRUInterface, TestPRUInterface.public_interface))
-
-    def test_VERSION(self):
-        """Test VERSION."""
-        self.assertIsInstance(PRUInterface.VERSION, str)
 
     def test_simulated(self):
         """Test simulated."""
