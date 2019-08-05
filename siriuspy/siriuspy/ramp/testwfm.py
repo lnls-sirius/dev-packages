@@ -19,25 +19,28 @@ from waveform import WaveformParam
 # 490 	30
 # ------------------
 
+
+current_3gev = 1013.2431  # [A]
+current_130mev = 43.9658  # [A]
+
 nrpts = 15000
 duration = 490.0
-start_energy = 30.0
+start_energy = 33.83487167315745
 
-rampup1_start_energy = 40.0
-rampup2_start_energy = 175.0
-rampdown_start_energy = 1000.0
-rampdown_stop_energy = 40.0
+rampup1_start_energy = 42.29358959144682
+rampup2_start_energy = 199.6650857456675
+rampdown_start_energy = 1140.7171157378064
+rampdown_stop_energy = 42.29358959144682
 
-rampup1_start_time = 10.0
-rampup2_start_time = 130.0
-rampdown_start_time = 380.0
-rampdown_stop_time = 485.0
+rampup1_start_time = 15.0
+rampup2_start_time = 145.0
+rampdown_start_time = 375.0
+rampdown_stop_time = 488.0
 
-rampup_delta = 1*5.0
+rampup_delta = 5.7047167355905
 rampup_range = 60
-rampdown_delta = 1*80.0
+rampdown_delta = 91.275467769448
 rampdown_range = 60
-
 
 w1 = WaveformParam(
     duration=duration,
@@ -120,6 +123,6 @@ def waveform_print(nrpts):
 
 
 waveform_info(nrpts)
-waveform_plot(nrpts, slope=False, selected_values=[100, 890])
-waveform_plot(nrpts, slope=True, selected_values=[-8000])
+waveform_plot(nrpts, slope=False, selected_values=[current_130mev, current_3gev])
+waveform_plot(nrpts, slope=True, selected_values=[4000, -10000])
 # waveform_print(nrpts)
