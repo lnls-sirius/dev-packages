@@ -3,8 +3,8 @@
 
 # number of power supplies: 1
 
-LI-01:PS-Spect
+LI-01:PS-LensRev
 
 # SINAP original names
 
-# LA-CN:H1DPPS-1
+# LA-CN:H1RCPS-1

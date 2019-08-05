@@ -3,11 +3,22 @@
 
 # number of power supplies: 8
 
-LI-Fam:PS-Slnd14
-LI-Fam:PS-Slnd15
-LI-Fam:PS-Slnd16
-LI-Fam:PS-Slnd17
-LI-Fam:PS-Slnd18
-LI-Fam:PS-Slnd19
-LI-Fam:PS-Slnd20
-LI-Fam:PS-Slnd21
+LI-Fam:PS-Slnd-14
+LI-Fam:PS-Slnd-15
+LI-Fam:PS-Slnd-16
+LI-Fam:PS-Slnd-17
+LI-Fam:PS-Slnd-18
+LI-Fam:PS-Slnd-19
+LI-Fam:PS-Slnd-20
+LI-Fam:PS-Slnd-21
+
+# SINAP original names
+
+# LA-CN:H1SLPS-14
+# LA-CN:H1SLPS-15
+# LA-CN:H1SLPS-16
+# LA-CN:H1SLPS-17
+# LA-CN:H1SLPS-18
+# LA-CN:H1SLPS-19
+# LA-CN:H1SLPS-20
+# LA-CN:H1SLPS-21

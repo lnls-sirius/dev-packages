@@ -5,3 +5,8 @@
 
 LI-01:PS-QD1
 LI-01:PS-QD2
+
+# SINAP original names
+
+# LA-CN:H1DQPS-1
+# LA-CN:H1DQPS-2

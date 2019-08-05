@@ -7,20 +7,18 @@ import epics as _epics
 
 from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 
-__version__ = '1.3.3'  # current compatible version.
-# load PRUserial485 if available and checks version
-
-
 import PRUserial485 as _PRUserial485
 
 
-ver, *_ = _PRUserial485.__version__.split(':')
-if ver != __version__:
+# check PRUserial485 package version
+__version1__ = '1.3.3'  # PRUserial485
+__version2__ = '2.3.3'  # eth-PRUserial485
+__prulib_ver__ = _PRUserial485.__version__
+if not(__version1__ in __prulib_ver__ or __version2__ in __prulib_ver__):
     # loaded library has an incompatible version!
-    err_msg = 'Invalid PRUserial485 library version! {} != {}'.format(
-        _PRUserial485.__version__, __version__)
-    raise ValueError(err_msg)
-del(ver)
+    _ERR_MSG = 'Invalid PRUserial485 library version! {} != {} or {}'.format(
+        _PRUserial485.__version__, __version1__, __version2__)
+    raise ValueError(_ERR_MSG)
 
 
 class Const:
@@ -40,8 +38,6 @@ class PRUInterface:
     """Interface class for programmable real-time units."""
 
     # TODO: replace 'write' and 'read' methods by 'request' and 'read' methods
-
-    VERSION = __version__  # Version of the compatible PRUserial485 library
 
     def __init__(self):
         """Init method."""
@@ -64,11 +60,11 @@ class PRUInterface:
         """Return sync status."""
         return self._get_sync_status()
 
-    def sync_start(self, sync_mode, sync_address, delay):
+    def sync_start(self, sync_mode, delay, sync_address):
         """Start sync mode in PRU."""
         if sync_mode in Const.SYNC_MODE.ALL:
             self._sync_mode = sync_mode
-            self._sync_start(sync_mode, sync_address, delay)
+            self._sync_start(sync_mode, delay, sync_address)
             return None
         else:
             # TODO: should this be changed to an exception?
@@ -136,7 +132,7 @@ class PRUInterface:
     def _get_sync_status(self):
         raise NotImplementedError
 
-    def _sync_start(sync_mode, sync_address, delay):
+    def _sync_start(self, sync_mode, delay, sync_address):
         raise NotImplementedError
 
     def _sync_stop(self):
@@ -176,15 +172,24 @@ class PRUInterface:
 class PRU(PRUInterface):
     """Functions for the programmable real-time unit."""
 
-    def __init__(self):
+    def __init__(self, bbbname=None):
         """Init method."""
-        # check if process is running as root
-        if _os.geteuid() != 0:
-            _sys.exit('You need to have root privileges to use PRU')
-
-        # check if PRU library is installed
+        # check if appropriate conditions are met
         if _PRUserial485 is None:
             raise ValueError('module PRUserial485 is not installed!')
+        if bbbname is None:
+            self.version = __version1__
+            # check if process is running as root
+            if _os.geteuid() != 0:
+                _sys.exit('You need to have root privileges to use PRU')
+        else:
+            if _PRUserial485.__version__ != __version2__:
+                _sys.exit('PRUserial485 library if not ethernet client-server')
+            self.version = __version2__
+            # tell PRUserial485_eth what BBB it should connect to
+            _PRUserial485.set_beaglebone_ip(bbbname)
+
+        # init PRUserial485 interface
         PRUInterface.__init__(self)
 
         # start PRU library and set PRU to sync off
@@ -202,7 +207,7 @@ class PRU(PRUInterface):
         value = _PRUserial485.PRUserial485_sync_status()
         return value
 
-    def _sync_start(self, sync_mode, sync_address, delay):
+    def _sync_start(self, sync_mode, delay, sync_address):
         _PRUserial485.PRUserial485_sync_start(
             sync_mode, delay, sync_address)  # delay-sync_addres order is ok.
         return True
@@ -265,9 +270,11 @@ class PRUSim(PRUInterface):
     # TODO: improve simulation
     TIMING_PV = 'guilherme-AS-Glob:PS-Timing:Trigger-Cmd'
 
+
     def __init__(self):
         """Init method."""
         PRUInterface.__init__(self)
+        self.version = 'Simulation'
         self._callbacks = list()
         self._sync_status = Const.SYNC_STATE.OFF
         self._sync_pulse_count = 0

@@ -26,7 +26,7 @@ class TestOpticsCorrCSDevice(TestCase):
 
     def test_get_posang_database(self):
         """Test get_posang_database."""
-        db = get_posang_database()
+        db = get_posang_database('ch-sept')
         self.assertIsInstance(db, dict)
 
         # PV names

@@ -4,6 +4,38 @@
 # pstype                     polarity         magnetic_function
 # -------------------------------------------------------------
 
+li-spect-45deg               bipolar          dipole
+#li-spect-15deg               bipolar          dipole
+li-quadrupole-short          bipolar          quadrupole
+li-quadrupole-long           bipolar          quadrupole
+li-corrector-ch-short        bipolar          corrector-horizontal
+li-corrector-cv-short        bipolar          corrector-vertical
+li-corrector-ch-long         bipolar          corrector-horizontal
+li-corrector-cv-long         bipolar          corrector-vertical
+li-solenoid-fam              monopolar        solenoid
+li-solenoid                  monopolar        solenoid
+li-lens                      bipolar          lens
+li-lens-reversed             bipolar          lens
+
+tb-dipole-b-fam              bipolar          dipole
+tb-quadrupole                bipolar          quadrupole
+tb-corrector-ch              bipolar          corrector-horizontal
+tb-corrector-cv              bipolar          corrector-vertical
+tb-corrector-strong-ch       bipolar          corrector-horizontal
+tb-corrector-strong-cv       bipolar          corrector-vertical
+tb-injseptum                 monopolar        corrector-horizontal
+
+bo-dipole-b-fam              bipolar          dipole
+bo-quadrupole-qd-fam         bipolar          quadrupole
+bo-quadrupole-qf-fam         bipolar          quadrupole
+bo-sextupole-sd-fam          bipolar          sextupole
+bo-sextupole-sf-fam          bipolar          sextupole
+bo-quadrupole-qs             bipolar          quadrupole-skew
+bo-corrector-ch              bipolar          corrector-horizontal
+bo-corrector-cv              bipolar          corrector-vertical
+bo-injkicker                 monopolar        corrector-horizontal
+bo-ejekicker                 monopolar        corrector-horizontal
+
 si-dipole-b1b2-fam           monopolar        dipole
 si-quadrupole-q14-fam        monopolar        quadrupole
 si-quadrupole-q20-fam        monopolar        quadrupole
@@ -12,25 +44,13 @@ si-sextupole-s15-sf-fam      monopolar        sextupole
 si-sextupole-s15-sd-fam      monopolar        sextupole
 si-injdpk                    monopolar        corrector-horizontal
 si-injnlk                    monopolar        corrector-horizontal
-bo-dipole-b-fam              bipolar          dipole
-bo-quadrupole-qd-fam         bipolar          quadrupole
-bo-quadrupole-qf-fam         bipolar          quadrupole
-bo-sextupole-sd-fam          bipolar          sextupole
-bo-sextupole-sf-fam          bipolar          sextupole
-bo-injkicker                 monopolar        corrector-horizontal
-bo-ejekicker                 monopolar        corrector-horizontal
+
 ts-dipole-b-fam              monopolar        dipole
 ts-injseptum-thick           monopolar        corrector-horizontal
 ts-injseptum-thin            monopolar        corrector-horizontal
 ts-ejeseptum-thick           monopolar        corrector-horizontal
 ts-ejeseptum-thin            monopolar        corrector-horizontal
-tb-dipole-b-fam              bipolar          dipole
-tb-injseptum                 monopolar        corrector-horizontal
-li-solenoid-fam              monopolar        solenoid
-li-solenoid                  monopolar        solenoid
 
-li-spect-45deg               bipolar          dipole
-#li-spect-15deg               bipolar          dipole
 si-quadrupole-q14-trim       bipolar          quadrupole
 si-quadrupole-q20-trim       bipolar          quadrupole
 si-quadrupole-q30-trim       bipolar          quadrupole
@@ -43,23 +63,11 @@ si-corrector-fch             bipolar          corrector-horizontal
 si-corrector-fcv             bipolar          corrector-vertical
 si-hping                     bipolar          corrector-horizontal
 si-vping                     bipolar          corrector-vertical
-bo-quadrupole-qs             bipolar          quadrupole-skew
-bo-corrector-ch              bipolar          corrector-horizontal
-bo-corrector-cv              bipolar          corrector-vertical
+
 ts-quadrupole-q14            bipolar          quadrupole
 ts-quadrupole-q20            bipolar          quadrupole
 ts-corrector-ch              bipolar          corrector-horizontal
 ts-corrector-cv              bipolar          corrector-vertical
-tb-quadrupole                bipolar          quadrupole
-tb-corrector-ch              bipolar          corrector-horizontal
-tb-corrector-cv              bipolar          corrector-vertical
-li-quadrupole-long           bipolar          quadrupole
-li-quadrupole-short          bipolar          quadrupole
-li-lens                      bipolar          lens
-li-corrector-ch-long         bipolar          corrector-horizontal
-li-corrector-cv-long         bipolar          corrector-vertical
-li-corrector-ch-short        bipolar          corrector-horizontal
-li-corrector-cv-short        bipolar          corrector-vertical
 
 
 # DCLinks

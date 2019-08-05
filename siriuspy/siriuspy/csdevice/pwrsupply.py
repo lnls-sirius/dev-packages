@@ -699,6 +699,11 @@ def get_pm_propty_database(maname):
                 db[psname]['Kick' + field]['hihi'] = 0.0
         else:
             raise ValueError('Invalid pulsed magnet power supply type!')
+
+        # add PSConnStatus
+        db[psname]['PSConnStatus-Mon'] = {
+            'type': 'enum', 'enums': _et.DISCONN_CONN,
+                            'value': Const.DisconnConn.Disconnected}
         # add pvs list
         db[psname] = _cutil.add_pvslist_cte(db[psname])
 
@@ -1178,7 +1183,7 @@ def _set_limits(pstype, database):
             db['unit'] = get_ps_current_unit()
         # define prec of current
         if propty in signals_prec:
-            db['prec'] = default_ps_current_precision,
+            db['prec'] = default_ps_current_precision
 
 
 def _get_model_db(psmodel):

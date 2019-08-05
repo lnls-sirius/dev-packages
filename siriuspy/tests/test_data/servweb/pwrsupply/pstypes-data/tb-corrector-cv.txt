@@ -1,11 +1,9 @@
 # List of power supplies of type tb-corrector-cv
 # ==============================================
 
-# number of power supplies: 6
+# number of power supplies: 4
 
 TB-01:PS-CV-1
 TB-01:PS-CV-2
 TB-02:PS-CV-1
 TB-02:PS-CV-2
-TB-04:PS-CV-1
-TB-04:PS-CV-2
