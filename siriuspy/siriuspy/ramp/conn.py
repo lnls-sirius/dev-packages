@@ -349,12 +349,13 @@ class ConnMagnets(_EpicsPropsList):
                              desired_readback=_PSConst.States.RmpWfm,
                              timeout=timeout)
 
-    def cmd_wfmdata(self, timeout=_TIMEOUT_DFLT):
+    def cmd_wfmdata(self, manames=list(), timeout=_TIMEOUT_DFLT):
         """Set wfmdata of all powersupplies."""
         if self._ramp_config is None:
             return False
+        magnets = manames if manames else self.manames
         sp = dict()
-        for maname in self.manames:
+        for maname in magnets:
             # get value (wfmdata)
             wf = self._ramp_config.ps_waveform_get(maname)
             value = wf.currents
