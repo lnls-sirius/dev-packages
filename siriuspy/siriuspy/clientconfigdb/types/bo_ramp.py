@@ -39,11 +39,8 @@ _ps_ramp = {
     'rampdown_stop_energy': _util.DEFAULT_PS_RAMP_RAMPDOWN_STOP_ENERGY,
 }
 
-_ps_normalized_configs = [
-    # time [ms]            normalized configuration name
-    [0.0,                            'ramp-start'],
-    [_util.DEFAULT_PS_RAMP_DURATION, 'ramp-stop'],
-]
+# time [ms]            normalized configuration name
+_ps_normalized_configs = []
 
 _rf_ramp = {
     # ramp intervals durations [ms]
