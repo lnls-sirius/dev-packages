@@ -44,7 +44,7 @@ def get_pvs_prefix():
 
 def get_pvs_database():
     """Return Soft IOC database."""
-    pvs_database = _get_database(_CORRSTYPE)
+    pvs_database = _get_database(_TL, _CORRSTYPE)
     pvs_database['Version-Cte']['value'] = _COMMIT_HASH
     return pvs_database
 
