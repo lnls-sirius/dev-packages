@@ -114,19 +114,19 @@ class BoosterRamp(_ConfigDBDocument):
             if config.exist():
                 if self._check_ps_normalized_modified(config):
                     # save changes in an existing normalized config
-                    old_name = config.name
-                    new_name = config.generate_config_name(old_name)
-                    config.save(new_name)
+                    old = config.name
+                    new = config.generate_config_name(old)
+                    config.save(new)
 
                     # replace old config from normalized configs dict
-                    del(self._ps_nconfigs[old_name])
-                    self._ps_nconfigs[new_name] = config
+                    del(self._ps_nconfigs[old])
+                    self._ps_nconfigs[new] = config
 
                     # replace old name in normalized configs list
                     nconfigs = self.ps_normalized_configs
                     for i in range(len(nconfigs)):
-                        if nconfigs[i][1] == old_name:
-                            nconfigs[i][1] = new_name
+                        if nconfigs[i][1] == old:
+                            nconfigs[i][1] = new
                     self._value['ps_normalized_configs*'] = nconfigs
                 else:
                     config._synchronized = True
