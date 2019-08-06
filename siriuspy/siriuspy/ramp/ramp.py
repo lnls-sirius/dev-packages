@@ -840,7 +840,8 @@ class BoosterRamp(_ConfigDBDocument):
 
     def ps_waveform_get(self, maname):
         """Return ps waveform for a given power supply."""
-        if not self._value['ps_normalized_configs*']:
+        if maname != self.MANAME_DIPOLE and \
+                not self._value['ps_normalized_configs*']:
             raise _RampError('There is no normalized cofiguration defined!')
         self._update_ps_waveform(maname)
         waveform = self._ps_waveforms[maname]
