@@ -51,11 +51,11 @@ class ConnTiming(_EpicsPropsList):
         TrgEjeKckr = 'BO-48D:TI-EjeKckr'
 
         # Linac Egun mode properties
-        LinacEgun_SglBun_State = 'egun:pulseps:singleselstatus'
-        LinacEgun_MultBun_State = 'egun:pulseps:multiselstatus'
+        LinacEgun_SglBun_State = 'LI-01:EG-PulsePS:singleselstatus'
+        LinacEgun_MultBun_State = 'LI-01:EG-PulsePS:multiselstatus'
 
         # Interlock PV
-        Intlk = 'LA-RFH01RACK2:TI-EVR:Intlk-Mon'
+        Intlk = 'LA-RFH01RACK2:TI-EVR:IntlkStatus-Mon'
 
     # Add events properties to Const
     evt_propties = ['Mode-Sel', 'DelayType-Sel', 'Delay-SP']
