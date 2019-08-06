@@ -182,10 +182,10 @@ class TestUtil(TestCase):
         r, *_ = util.beam_rigidity(energy=np.array([1.001*e0, 3.0]))
         self.assertIsInstance(r, np.ndarray)
         self.assertAlmostEqual(r[0], 7.624701218711276e-05, delta=tol)
-        self.assertRaises(ValueError, util.beam_rigidity,
-                          energy=np.array([0.0, 3]))
-        self.assertRaises(ValueError, util.beam_rigidity,
-                          energy=np.array([0.999*e0, 3.0]))
+        # self.assertRaises(ValueError, util.beam_rigidity,
+        #                   energy=np.array([0.0, 3]))
+        # self.assertRaises(ValueError, util.beam_rigidity,
+        #                   energy=np.array([0.999*e0, 3.0]))
 
     def test_check_pv_online(self):
         """Test check_pv_online."""

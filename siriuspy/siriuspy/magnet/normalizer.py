@@ -409,8 +409,9 @@ class MagnetNormalizer(_MagnetNormalizer):
             intfields = _np.array(intfields)
         brhos, *_ = _util.beam_rigidity(kwargs['strengths_dipole'])
         if isinstance(brhos, _np.ndarray):
-            strengths = self._magnet_conv_sign * intfields / brhos
-            strengths[brhos == 0] = 0.0
+            with _np.errstate(divide='ignore', invalid='ignore'):
+                strengths = self._magnet_conv_sign * intfields / brhos
+                strengths[brhos == 0] = 0.0
         else:
             if brhos == 0:
                 strengths = 0.0

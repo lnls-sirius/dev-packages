@@ -2,8 +2,7 @@
 
 
 import numpy as _np
-from siriuspy.clientconfigdb import ConfigDBDocument as _ConfigDBDocument, \
-    ConfigDBException as _ConfigDBException
+from siriuspy.clientconfigdb import ConfigDBDocument as _ConfigDBDocument
 from siriuspy.csdevice.opticscorr import Const as _Const
 
 
@@ -410,7 +409,7 @@ class BOTuneCorr(OpticsCorr, _ConfigDBDocument):
         self.load()
         params = self.value
         nominal_matrix = [item for sublist in params['matrix']
-                            for item in sublist]
+                          for item in sublist]
         nominal_kl = params['nominal KLs']
         OpticsCorr.__init__(
             self,
@@ -441,7 +440,7 @@ class BOChromCorr(OpticsCorr, _ConfigDBDocument):
         self.load()
         params = self.value
         nominal_matrix = [item for sublist in params['matrix']
-                            for item in sublist]
+                          for item in sublist]
         nominal_sl = params['nominal SLs']
         nominal_chrom = params['nominal chrom']
         OpticsCorr.__init__(self,
