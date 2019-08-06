@@ -167,11 +167,14 @@ def get_pair_sprb(pv_propty):
     Output: the equivalent Sirius [setpoint, readback] pair.
     """
     _sp_rb = {'SP': 'RB', 'Sel': 'Sts'}
-    for sp, rb in _sp_rb.items():
-        if pv_propty.propty_suffix in sp:
-            return [pv_propty, pv_propty.substitute(propty_suffix=rb)]
-        elif pv_propty.propty_suffix in rb:
-            return [pv_propty.substitute(propty_suffix=sp), pv_propty]
+    _rb_sp = {v: k for k, v in _sp_rb.items()}
+
+    suffix = pv_propty.propty_suffix
+
+    if suffix in _sp_rb.keys():
+        return [pv_propty, pv_propty.substitute(propty_suffix=_sp_rb[suffix])]
+    elif suffix in _rb_sp.keys():
+        return [pv_propty.substitute(propty_suffix=_rb_sp[suffix]), pv_propty]
     else:
         raise TypeError('Input is not a setpoint/readback property!')
 
