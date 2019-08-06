@@ -7,8 +7,6 @@ from mathphys import units as _u
 from siriuspy.csdevice.pwrsupply import DEF_WFMSIZE as _DEF_WFMSIZE
 from siriuspy.ramp import util as _rutil
 from siriuspy.ramp.magnet import Magnet as _Magnet
-from siriuspy.ramp.exceptions import RampInvalidDipoleWfmParms as \
-    _RampInvalidDipoleWfmParms
 
 
 class WaveformParam:
@@ -377,9 +375,7 @@ class _WaveformMagnet:
 
     _magnets = dict()  # dict with magnets objects to improve efficiency
 
-    def __init__(self, maname,
-                 wfm_nrpoints=_DEF_WFMSIZE,
-                 **kwargs):
+    def __init__(self, maname, wfm_nrpoints=_DEF_WFMSIZE, **kwargs):
         if maname not in _WaveformMagnet._magnets:
             _WaveformMagnet._magnets[maname] = _Magnet(maname)
         self._maname = maname
@@ -446,8 +442,6 @@ class _WaveformMagnet:
 class WaveformDipole(_WaveformMagnet, WaveformParam):
     """Waveform for Dipole."""
 
-    _E0 = _c.electron_rest_energy * _u.joule_2_GeV
-
     def __init__(self, maname='BO-Fam:MA-B', **kwargs):
         """Constructor."""
         _WaveformMagnet.__init__(self, maname, **kwargs)
@@ -471,9 +465,6 @@ class WaveformDipole(_WaveformMagnet, WaveformParam):
         if self._changed or self._waveform is None:
             t = self.times
             self._waveform = self.eval_at(t)
-            if _np.any(_np.array(self._waveform) < WaveformDipole._E0):
-                raise _RampInvalidDipoleWfmParms(
-                    'Dipole energy less than electron rest energy.')
 
     def _get_currents(self):
         currents = self.conv_strength_2_current(self.waveform)

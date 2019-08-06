@@ -60,7 +60,6 @@ NOMINAL_STRENGTHS = {
     'TB-04:MA-QD4': -0.708409321198300,  # [KL: 1/m]
 }
 
-
 # Power supply ramp parameters
 DEFAULT_PS_RAMP_DURATION = 490.0  # [ms]
 
@@ -99,8 +98,6 @@ DEFAULT_TI_PARAMS_RF_RAMP_DELAY = DEFAULT_PS_RAMP_RAMPUP1_START_TIME  # [us]
 
 
 # RF ramp parameters
-DEFAULT_RF_RAMP_RAMPINC_DURATION = 0.5  # [min]
-
 MAX_RF_RAMP_DURATION = 410.0  # [ms]
 DEFAULT_RF_RAMP_BOTTOM_DURATION = 0.0  # [ms]
 DEFAULT_RF_RAMP_RAMPUP_DURATION = 300.0  # [ms]
@@ -126,8 +123,8 @@ _t = _t + DEFAULT_RF_RAMP_RAMPUP_DURATION
 DEFAULT_RF_RAMP_TOP_VOLTAGE = _v1 + _m*(_t - _t1)  # [kV]
 del(_t1, _t2, _v1, _v2, _m, _t)
 
-DEFAULT_RF_RAMP_BOTTOM_PHASE = 0  # [°]
-DEFAULT_RF_RAMP_TOP_PHASE = 0  # [°]
+DEFAULT_RF_RAMP_BOTTOM_PHASE = 0.0  # [°]
+DEFAULT_RF_RAMP_TOP_PHASE = 0.0  # [°]
 
 
 def update_nominal_strengths(dic):

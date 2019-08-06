@@ -42,15 +42,10 @@ _ps_ramp = {
     'rampdown_delta': _util.DEFAULT_PS_RAMP_RAMPDOWN_DELTA,
 }
 
-_ps_normalized_configs = [
-    # time [ms]            normalized configuration name
-    [0,                              'ramp-start'],
-    [_util.DEFAULT_PS_RAMP_DURATION, 'ramp-stop'],
-]
+# time [ms]            normalized configuration name
+_ps_normalized_configs = []
 
 _rf_ramp = {
-    # ramp increase duration [min]
-    'rampinc_duration': _util.DEFAULT_RF_RAMP_RAMPINC_DURATION,
     # ramp intervals durations [ms]
     'bottom_duration':      _util.DEFAULT_RF_RAMP_BOTTOM_DURATION,
     'rampup_duration':      _util.DEFAULT_RF_RAMP_RAMPUP_DURATION,
