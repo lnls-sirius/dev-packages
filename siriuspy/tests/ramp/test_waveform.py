@@ -37,19 +37,19 @@ class TestWaveformParam(TestCase):
     public_interface = (
         'N',
         'duration',
-        'start_energy',
+        'start_value',
         'rampup1_start_time',
-        'rampup1_start_energy',
+        'rampup1_start_value',
         'rampup2_start_time',
-        'rampup2_start_energy',
+        'rampup2_start_value',
         'rampdown_start_time',
-        'rampdown_start_energy',
-        'rampdown_stop_energy',
+        'rampdown_start_value',
+        'rampdown_stop_value',
         'rampdown_stop_time',
-        'rampup_range',
-        'rampup_delta',
-        'rampdown_range',
-        'rampdown_delta',
+        'rampup_smooth_intvl',
+        'rampup_smooth_value',
+        'rampdown_smooth_intvl',
+        'rampdown_smooth_value',
         'rampup1_slope',
         'rampup2_slope',
         'rampdown_slope',
@@ -103,70 +103,70 @@ class TestWaveformParam(TestCase):
         self.assertIsInstance(v2, float)
         self.assertTrue(v2 > v1)
 
-    def test_start_energy(self):
-        """Test start_energy."""
+    def test_start_value(self):
+        """Test start_value."""
         w = WaveformParam()
         v1 = 0.0
-        v2 = w.start_energy
+        v2 = w.start_value
         self.assertIsInstance(v2, float)
         self.assertTrue(v2 >= v1)
 
-    def test_rampup1_start_energy(self):
-        """Test rampup1_start_energy."""
+    def test_rampup1_start_value(self):
+        """Test rampup1_start_value."""
         w = WaveformParam()
-        v1 = w.start_energy
-        v2 = w.rampup1_start_energy
+        v1 = w.start_value
+        v2 = w.rampup1_start_value
         self.assertIsInstance(v2, float)
         self.assertTrue(v2 > v1)
 
-    def test_rampup2_start_energy(self):
-        """Test rampup2_start_energy."""
+    def test_rampup2_start_value(self):
+        """Test rampup2_start_value."""
         w = WaveformParam()
-        v1 = w.rampup1_start_energy
-        v2 = w.rampup2_start_energy
+        v1 = w.rampup1_start_value
+        v2 = w.rampup2_start_value
         self.assertIsInstance(v2, float)
         self.assertTrue(v2 > v1)
 
-    def test_rampdown_start_energy(self):
-        """Test rampdown_start_energy."""
+    def test_rampdown_start_value(self):
+        """Test rampdown_start_value."""
         w = WaveformParam()
-        v1 = w.rampup2_start_energy
-        v2 = w.rampdown_start_energy
+        v1 = w.rampup2_start_value
+        v2 = w.rampdown_start_value
         self.assertIsInstance(v2, float)
         self.assertTrue(v2 > v1)
 
-    def test_rampdown_stop_energy(self):
-        """Test rampdown_stop_energy."""
+    def test_rampdown_stop_value(self):
+        """Test rampdown_stop_value."""
         w = WaveformParam()
-        v1 = w.rampdown_start_energy
-        v2 = w.rampdown_stop_energy
+        v1 = w.rampdown_start_value
+        v2 = w.rampdown_stop_value
         self.assertIsInstance(v2, float)
         self.assertTrue(v2 < v1)
 
-    def test_rampup_range(self):
-        """Test rampup_range."""
+    def test_rampup_smooth_intvl(self):
+        """Test rampup_smooth_intvl."""
         w = WaveformParam()
-        v1 = w.rampup_range
+        v1 = w.rampup_smooth_intvl
         self.assertIsInstance(v1, float)
         self.assertTrue(v1 > 0)
 
-    def test_rampup_delta(self):
-        """Test rampup_delta."""
+    def test_rampup_smooth_value(self):
+        """Test rampup_smooth_value."""
         w = WaveformParam()
-        v1 = w.rampup_delta
+        v1 = w.rampup_smooth_value
         self.assertIsInstance(v1, float)
 
-    def test_rampdown_range(self):
-        """Test rampdown_range."""
+    def test_rampdown_smooth_intvl(self):
+        """Test rampdown_smooth_intvl."""
         w = WaveformParam()
-        v1 = w.rampdown_range
+        v1 = w.rampdown_smooth_intvl
         self.assertIsInstance(v1, float)
         self.assertTrue(v1 > 0)
 
-    def test_rampup_delta(self):
-        """Test rampdown_delta."""
+    def test_rampdown_smooth_value(self):
+        """Test rampdown_smooth_value."""
         w = WaveformParam()
-        v1 = w.rampdown_delta
+        v1 = w.rampdown_smooth_value
         self.assertIsInstance(v1, float)
 
 
@@ -174,8 +174,21 @@ class TestWaveformDipole(TestCase):
     """Test WaveformDipole class."""
 
     public_interface = (
-        'update',
         'waveform',
+        'start_energy',
+        'rampup1_start_energy',
+        'rampup2_start_energy',
+        'rampdown_start_energy',
+        'rampdown_stop_energy',
+        'rampup_smooth_energy',
+        'rampdown_smooth_energy',
+        'start_value',
+        'rampup1_start_value',
+        'rampup2_start_value',
+        'rampdown_start_value',
+        'rampdown_stop_value',
+        'rampup_smooth_value',
+        'rampdown_smooth_value',
     )
 
     def test_public_interface(self):
