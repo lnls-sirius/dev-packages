@@ -30,16 +30,16 @@ _ps_ramp = {
     'rampup2_start_time': _util.DEFAULT_PS_RAMP_RAMPUP2_START_TIME,
     'rampdown_start_time': _util.DEFAULT_PS_RAMP_RAMPDOWN_START_TIME,
     'rampdown_stop_time': _util.DEFAULT_PS_RAMP_RAMPDOWN_STOP_TIME,
-    'rampup_range': _util.DEFAULT_PS_RAMP_RAMPUP_RANGE,
-    'rampdown_range': _util.DEFAULT_PS_RAMP_RAMPDOWN_RANGE,
+    'rampup_smooth_intvl': _util.DEFAULT_PS_RAMP_RAMPUP_SMOOTH_INTVL,
+    'rampdown_smooth_intvl': _util.DEFAULT_PS_RAMP_RAMPDOWN_SMOOTH_INTVL,
     # ramp energy parameters [GeV]
     'start_energy': _util.DEFAULT_PS_RAMP_START_ENERGY,
     'rampup1_start_energy': _util.DEFAULT_PS_RAMP_RAMPUP1_START_ENERGY,
     'rampup2_start_energy': _util.DEFAULT_PS_RAMP_RAMPUP2_START_ENERGY,
     'rampdown_start_energy': _util.DEFAULT_PS_RAMP_RAMPDOWN_START_ENERGY,
     'rampdown_stop_energy': _util.DEFAULT_PS_RAMP_RAMPDOWN_STOP_ENERGY,
-    'rampup_delta': _util.DEFAULT_PS_RAMP_RAMPUP_DELTA,
-    'rampdown_delta': _util.DEFAULT_PS_RAMP_RAMPDOWN_DELTA,
+    'rampup_smooth_energy': _util.DEFAULT_PS_RAMP_RAMPUP_SMOOTH_ENERGY,
+    'rampdown_smooth_energy': _util.DEFAULT_PS_RAMP_RAMPDOWN_SMOOTH_ENERGY,
 }
 
 # time [ms]            normalized configuration name
