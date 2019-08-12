@@ -8,9 +8,8 @@ from siriuspy.search import MASearch as _MASearch
 from siriuspy.namesys import SiriusPVName
 from siriuspy.clientconfigdb import ConfigDBDocument as _ConfigDBDocument
 from siriuspy.magnet.util import \
-    get_section_dipole_name as _get_section_dipole_name, \
     get_magnet_family_name as _get_magnet_family_name
-from siriuspy.ramp.exceptions import \
+from siriuspy.ramp.exceptions import RampError as _RampError, \
     RampInvalidDipoleWfmParms as _RampInvalidDipoleWfmParms, \
     RampInvalidNormConfig as _RampInvalidNormConfig, \
     RampInvalidRFParms as _RampInvalidRFParms
@@ -23,6 +22,8 @@ from siriuspy.ramp.waveform import \
 class BoosterNormalized(_ConfigDBDocument):
     """Booster normalized configuration."""
 
+    manames = _MASearch.get_manames({'sec': 'BO', 'dis': 'MA'})
+
     def __init__(self, name=None):
         """Constructor."""
         super().__init__('bo_normalized', name=name)
@@ -32,11 +33,6 @@ class BoosterNormalized(_ConfigDBDocument):
         for index, data in enumerate(self._value['pvs']):
             maname = SiriusPVName(data[0]).device_name
             self._manames2index[maname] = index
-
-    @property
-    def manames(self):
-        """List of power supply names."""
-        return list(self._manames2index.keys())
 
     def _get_item(self, maname):
         index = self._manames2index[maname]
@@ -118,21 +114,22 @@ class BoosterRamp(_ConfigDBDocument):
             if config.exist():
                 if self._check_ps_normalized_modified(config):
                     # save changes in an existing normalized config
-                    old_nconfig_name = config.name
-                    new_nconfig_name = config.generate_config_name(
-                        old_nconfig_name)
-                    config.save(new_nconfig_name)
+                    old = config.name
+                    new = config.generate_config_name(old)
+                    config.save(new)
 
                     # replace old config from normalized configs dict
-                    del(self._ps_nconfigs[old_nconfig_name])
-                    self._ps_nconfigs[new_nconfig_name] = config
+                    del(self._ps_nconfigs[old])
+                    self._ps_nconfigs[new] = config
 
                     # replace old name in normalized configs list
                     nconfigs = self.ps_normalized_configs
                     for i in range(len(nconfigs)):
-                        if nconfigs[i][1] == old_nconfig_name:
-                            nconfigs[i][1] = new_nconfig_name
+                        if nconfigs[i][1] == old:
+                            nconfigs[i][1] = new
                     self._value['ps_normalized_configs*'] = nconfigs
+                else:
+                    config._synchronized = True
             else:
                 config.save()
 
@@ -151,14 +148,20 @@ class BoosterRamp(_ConfigDBDocument):
     @property
     def ps_normalized_configs_times(self):
         """Return time instants corresponding to ps normalized configs."""
-        time, _ = zip(*self._value['ps_normalized_configs*'])
-        return list(time)
+        if not self._value['ps_normalized_configs*']:
+            return list()
+        else:
+            time, _ = zip(*self._value['ps_normalized_configs*'])
+            return list(time)
 
     @property
     def ps_normalized_configs_names(self):
         """Return names corresponding to ps normalized configs."""
-        _, name = zip(*self._value['ps_normalized_configs*'])
-        return list(name)
+        if not self._value['ps_normalized_configs*']:
+            return list()
+        else:
+            _, name = zip(*self._value['ps_normalized_configs*'])
+            return list(name)
 
     def ps_normalized_configs_delete(self, index):
         """Delete a ps normalized config either by its index or its name."""
@@ -235,8 +238,9 @@ class BoosterRamp(_ConfigDBDocument):
                 self._ps_nconfigs[name], new_time)
 
         nconfigs = [[times[i], names[i]] for i in range(len(times))]
-        self._set_ps_normalized_configs(nconfigs)  # with waveform invalidation
+        self._set_ps_normalized_configs(nconfigs)
         self._synchronized = False
+        self._invalidate_ps_waveforms()
 
     # ---- ps ramp parameters ----
 
@@ -315,7 +319,7 @@ class BoosterRamp(_ConfigDBDocument):
             if self._auto_update:
                 w.strengths  # triggers waveform interpolation
 
-            rdip['start_energy'] = value
+            rdip['start_energy'] = w.start_energy
             self._synchronized = False
             self._invalidate_ps_waveforms(True)
 
@@ -336,7 +340,7 @@ class BoosterRamp(_ConfigDBDocument):
             if self._auto_update:
                 w.strengths  # triggers waveform interpolation
 
-            rdip['rampup_start_energy'] = value
+            rdip['rampup_start_energy'] = w.rampup_start_energy
             self._synchronized = False
             self._invalidate_ps_waveforms(True)
 
@@ -378,7 +382,7 @@ class BoosterRamp(_ConfigDBDocument):
             if self._auto_update:
                 w.strengths  # triggers waveform interpolation
 
-            rdip['rampup_stop_energy'] = value
+            rdip['rampup_stop_energy'] = w.rampup_stop_energy
             self._synchronized = False
             self._invalidate_ps_waveforms(True)
 
@@ -432,7 +436,7 @@ class BoosterRamp(_ConfigDBDocument):
             if self._auto_update:
                 w.strengths  # triggers waveform interpolation
 
-            rdip['plateau_energy'] = value
+            rdip['plateau_energy'] = w.plateau_energy
             self._synchronized = False
             self._invalidate_ps_waveforms(True)
 
@@ -453,7 +457,7 @@ class BoosterRamp(_ConfigDBDocument):
             if self._auto_update:
                 w.strengths  # triggers waveform interpolation
 
-            rdip['rampdown_start_energy'] = value
+            rdip['rampdown_start_energy'] = w.rampdown_start_energy
             self._synchronized = False
             self._invalidate_ps_waveforms(True)
 
@@ -495,7 +499,7 @@ class BoosterRamp(_ConfigDBDocument):
             if self._auto_update:
                 w.strengths  # triggers waveform interpolation
 
-            rdip['rampdown_stop_energy'] = value
+            rdip['rampdown_stop_energy'] = w.rampdown_stop_energy
             self._synchronized = False
             self._invalidate_ps_waveforms(True)
 
@@ -749,23 +753,6 @@ class BoosterRamp(_ConfigDBDocument):
         self._value['rf_ramp']['top_phase'] = value
         self._synchronized = False
 
-    @property
-    def rf_ramp_rampinc_duration(self):
-        """RF ramp ramping increase duration."""
-        return self._value['rf_ramp']['rampinc_duration']
-
-    @rf_ramp_rampinc_duration.setter
-    def rf_ramp_rampinc_duration(self, value):
-        value = float(value)
-        if value == self._value['rf_ramp']['rampinc_duration']:
-            return
-        if not 0.0 < value < 28.0:
-            raise _RampInvalidRFParms(
-                'Invalid value to ramping increase duration.')
-
-        self._value['rf_ramp']['rampinc_duration'] = value
-        self._synchronized = False
-
     # --- timing parameters ---
 
     @property
@@ -836,7 +823,10 @@ class BoosterRamp(_ConfigDBDocument):
     @property
     def ps_waveform_manames_exclimits(self):
         """Return a list of manames whose waveform exceeds current limits."""
-        manames = BoosterNormalized().manames
+        if not self._value['ps_normalized_configs*']:
+            manames = [self.MANAME_DIPOLE, ]
+        else:
+            manames = BoosterNormalized.manames
         manames_exclimits = list()
         for maname in manames:
             self._update_ps_waveform(maname)
@@ -850,13 +840,15 @@ class BoosterRamp(_ConfigDBDocument):
 
     def ps_waveform_get(self, maname):
         """Return ps waveform for a given power supply."""
+        if maname != self.MANAME_DIPOLE and \
+                not self._value['ps_normalized_configs*']:
+            raise _RampError('There is no normalized cofiguration defined!')
         self._update_ps_waveform(maname)
         waveform = self._ps_waveforms[maname]
         return waveform
 
     def ps_waveform_set(self, maname, waveform):
         """Set ps waveform for a given power supply."""
-        # self._update_ps_waveform(maname)
         self._ps_waveforms[maname] = _dcopy(waveform)
 
     def ps_waveform_get_times(self):
@@ -867,12 +859,18 @@ class BoosterRamp(_ConfigDBDocument):
 
     def ps_waveform_get_currents(self, maname):
         """Return ps waveform current for a given power supply."""
+        if not self._value['ps_normalized_configs*'] and \
+                maname != self.MANAME_DIPOLE:
+            raise _RampError('There is no normalized cofiguration defined!')
         self._update_ps_waveform(maname)
         waveform = self._ps_waveforms[maname]
         return waveform.currents.copy()
 
     def ps_waveform_get_strengths(self, maname):
         """Return ps waveform strength for a given power supply."""
+        if not self._value['ps_normalized_configs*'] and \
+                maname != self.MANAME_DIPOLE:
+            raise _RampError('There is no normalized cofiguration defined!')
         self._update_ps_waveform(maname)
         waveform = self._ps_waveforms[maname]
         return waveform.strengths.copy()
@@ -892,6 +890,10 @@ class BoosterRamp(_ConfigDBDocument):
 
     def ps_waveform_interp_strengths(self, maname, time):
         """Return ps ramp strength at a given time."""
+        if not self._value['ps_normalized_configs*'] and \
+                maname != self.MANAME_DIPOLE:
+            raise _RampError('There is no normalized cofiguration defined!')
+        self._update_ps_waveform(maname)
         times = self.ps_waveform_get_times()
         strengths = self._ps_waveforms[maname].strengths
         strength = _np.interp(time, times, strengths)
@@ -899,6 +901,10 @@ class BoosterRamp(_ConfigDBDocument):
 
     def ps_waveform_interp_currents(self, maname, time):
         """Return ps ramp current at a given time."""
+        if not self._value['ps_normalized_configs*'] and \
+                maname != self.MANAME_DIPOLE:
+            raise _RampError('There is no normalized cofiguration defined!')
+        self._update_ps_waveform(maname)
         times = self.ps_waveform_get_times()
         currents = self._ps_waveforms[maname].currents
         current = _np.interp(time, times, currents)
@@ -992,9 +998,9 @@ class BoosterRamp(_ConfigDBDocument):
             if name in self._ps_nconfigs:
                 norm_configs[name] = self._ps_nconfigs[name]
             else:
+                norm_configs[name] = BoosterNormalized(name)
                 self._synchronized = False
                 self._invalidate_ps_waveforms()
-                norm_configs[name] = BoosterNormalized(name)
         self._ps_nconfigs = norm_configs
 
     def _update_ps_normalized_config_energy(self, nconfig_obj, time):
@@ -1018,9 +1024,9 @@ class BoosterRamp(_ConfigDBDocument):
             self._update_ps_waveform(family)
 
         # update magnet waveform if it is not a dipole
-        dipole = _get_section_dipole_name(maname)
-        if dipole is not None and maname not in self._ps_waveforms:
-            self._update_ps_waveform_not_dipole(maname, dipole, family)
+        if maname not in self._ps_waveforms:
+            self._update_ps_waveform_not_dipole(
+                maname, self.MANAME_DIPOLE, family)
 
     def _update_ps_waveform_not_dipole(self, maname, dipole, family=None):
         # sort ps normalized configs

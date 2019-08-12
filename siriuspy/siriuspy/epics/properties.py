@@ -195,7 +195,8 @@ class EpicsPropertiesList:
         ppty = self._properties[name]
         return ppty.setpoint
 
-    def set_setpoints_check(self, setpoints, timeout, order=None):
+    def set_setpoints_check(self, setpoints, desired_readbacks=dict(),
+                            timeout=5, order=None):
         """Set setpoints of properties."""
         if order is None:
             order = list(setpoints.keys())
@@ -206,10 +207,12 @@ class EpicsPropertiesList:
                 ppty = self._properties[name]
                 ppty.setpoint = value
         # check
+        if not desired_readbacks:
+            desired_readbacks = setpoints
         t0 = _time.time()
         while _time.time() - t0 < timeout:
             finished = True
-            for pvname, value in setpoints.items():
+            for pvname, value in desired_readbacks.items():
                 if value is None:
                     continue
                 rb = self._properties[pvname].readback
