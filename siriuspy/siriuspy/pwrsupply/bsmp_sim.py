@@ -2,6 +2,7 @@
 
 import time as _t
 import random as _random
+import numpy as _np
 from threading import Thread as _Thread
 
 from siriuspy import util as _util
@@ -45,7 +46,7 @@ __version__ = _util.get_last_commit_hash()
 
 class _Spec:
 
-    _I_LOAD_FLUCTUATION_RMS = 0.01  # [A]
+    I_LOAD_FLUCTUATION_RMS = 0.01  # [A]
 
     def _get_constants(self):
         raise NotImplementedError()
@@ -70,7 +71,7 @@ class _Spec_FBP(_Spec):
         return (_cFBP.V_I_LOAD, )
 
     def _get_monvar_fluctuation_rms(self, var_id):
-        return _Spec._I_LOAD_FLUCTUATION_RMS
+        return _Spec.I_LOAD_FLUCTUATION_RMS
 
 
 class _Spec_FBP_DCLink(_Spec):
@@ -106,7 +107,7 @@ class _Spec_FAC_DCDC(_Spec):
                 _cFAC_DCDC.V_I_LOAD2)
 
     def _get_monvar_fluctuation_rms(self, var_id):
-        return _Spec._I_LOAD_FLUCTUATION_RMS
+        return _Spec.I_LOAD_FLUCTUATION_RMS
 
 
 class _Spec_FAC_ACDC(_Spec):
@@ -128,7 +129,7 @@ class _Spec_FAC_2P4S_DCDC(_Spec):
                 _cFAC_2P4S_DCDC.V_I_LOAD2)
 
     def _get_monvar_fluctuation_rms(self, var_id):
-        return _Spec._I_LOAD_FLUCTUATION_RMS
+        return _Spec.I_LOAD_FLUCTUATION_RMS
 
 
 class _Spec_FAC_2S_DCDC(_Spec):
@@ -143,7 +144,7 @@ class _Spec_FAC_2S_DCDC(_Spec):
                 _cFAC_2S_DCDC.V_I_LOAD2)
 
     def _get_monvar_fluctuation_rms(self, var_id):
-        return _Spec._I_LOAD_FLUCTUATION_RMS
+        return _Spec.I_LOAD_FLUCTUATION_RMS
 
 
 class _Spec_FAC_2P4S_ACDC(_Spec):
@@ -172,7 +173,7 @@ class _Spec_FAP(_Spec):
                 _cFAP.V_I_LOAD2)
 
     def _get_monvar_fluctuation_rms(self, var_id):
-        return _Spec._I_LOAD_FLUCTUATION_RMS
+        return _Spec.I_LOAD_FLUCTUATION_RMS
 
 
 # --- simulated OpMode state classes ---
@@ -516,10 +517,10 @@ class _OpModeSimState_FBP_DCLink(_OpModeSimSlowRefState, _Spec_FBP_DCLink):
     def reset_interlocks(self, variables):
         """Reset ps."""
         _OpModeSimSlowRefState.reset_interlocks(self, variables)
-        if variables[self._c.V_PS_REFERENCE] < 50.0:
-            # sub-tension sources 1,2,3.
-            variables[self._c.V_PS_HARD_INTERLOCKS] += \
-                (1 << 8) + (1 << 9) + (1 << 10)
+        # if variables[self._c.V_PS_REFERENCE] < 50.0:
+        #     # sub-tension sources 1,2,3.
+        #     variables[self._c.V_PS_HARD_INTERLOCKS] += \
+        #         (1 << 8) + (1 << 9) + (1 << 10)
 
 
 class _OpModeSimSlowRefState_FAC_DCDC(_OpModeSimSlowRefState, _Spec_FAC_DCDC):
@@ -576,6 +577,9 @@ class _BaseBSMPSim(_BSMPSim):
         # Set variables initial value
         self._variables = self._get_init_variables()
 
+        # Set curves initial values
+        self._curves = self._get_init_curves()
+
         # Operation mode states
         self._states = self._get_states()
 
@@ -623,6 +627,12 @@ class _BaseBSMPSim(_BSMPSim):
 
         return _Response.ok, None
 
+    def read_curve_block(self, curve_id, block, timeout):
+        """Read curve block."""
+        self._curves = self._get_init_curves()
+        curveblock = self._curves[curve_id]
+        return _Response.ok, curveblock
+
     def _is_on(self):
         ps_status = self._variables[self._c.V_PS_STATUS]
         psc_status = _PSCStatus(ps_status=ps_status)
@@ -631,6 +641,19 @@ class _BaseBSMPSim(_BSMPSim):
     def _trigger(self, value=None):
         if self._is_on():
             self._state.trigger(self._variables)
+
+    def _get_init_curves(self):
+        cvs = self.entities.curves
+        if len(cvs):
+            bsmp_c = cvs[0]
+            sblock = bsmp_c.size // bsmp_c.type.size
+            curves = _np.random.normal(
+                scale=_Spec.I_LOAD_FLUCTUATION_RMS,
+                size=(len(cvs), sblock))
+        else:
+            # cases where there is no defined bsmp curve, such as in DCLinks.
+            curves = []
+        return curves
 
 
 class BSMPSim_FBP(_BaseBSMPSim, _Spec_FBP):

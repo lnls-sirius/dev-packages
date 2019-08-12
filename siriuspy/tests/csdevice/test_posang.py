@@ -26,7 +26,7 @@ class TestOpticsCorrCSDevice(TestCase):
 
     def test_get_posang_database(self):
         """Test get_posang_database."""
-        db = get_posang_database()
+        db = get_posang_database('TB', 'ch-sept')
         self.assertIsInstance(db, dict)
 
         # PV names
@@ -44,6 +44,10 @@ class TestOpticsCorrCSDevice(TestCase):
         self.assertTrue('ConfigName-RB' in db)
         self.assertTrue('RespMatX-Mon' in db)
         self.assertTrue('RespMatY-Mon' in db)
+        self.assertTrue('CH1-Cte' in db)
+        self.assertTrue('CH2-Cte' in db)
+        self.assertTrue('CV1-Cte' in db)
+        self.assertTrue('CV2-Cte' in db)
         self.assertTrue('RefKickCH1-Mon' in db)
         self.assertTrue('RefKickCH2-Mon' in db)
         self.assertTrue('RefKickCV1-Mon' in db)

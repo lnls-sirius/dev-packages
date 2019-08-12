@@ -4,15 +4,15 @@ import numpy as _np
 
 from mathphys import constants as _c
 from mathphys import units as _u
-from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
+from siriuspy.csdevice.pwrsupply import DEF_WFMSIZE as _DEF_WFMSIZE
 from siriuspy.ramp import util as _rutil
 from siriuspy.ramp.magnet import Magnet as _Magnet
-from siriuspy.ramp.exceptions import RampInvalidDipoleWfmParms as \
-    _RampInvalidDipoleWfmParms
 
 
 class WaveformParam:
     """Dipole parameterized Waveforms."""
+
+    _E0 = _c.electron_rest_energy * _u.joule_2_GeV
 
     def __init__(
             self,
@@ -168,7 +168,7 @@ class WaveformParam:
     @start_energy.setter
     def start_energy(self, value):
         """Set start energy."""
-        self._start_energy = float(value)
+        self._start_energy = float(value) if value > self._E0 else self._E0
         self._changed = True
 
     @rampup_start_time.setter
@@ -180,7 +180,8 @@ class WaveformParam:
     @rampup_start_energy.setter
     def rampup_start_energy(self, value):
         """Set energy of rampup start."""
-        self._rampup_start_energy = float(value)
+        self._rampup_start_energy = \
+            float(value) if value > self._E0 else self._E0
         self._changed = True
 
     @rampup_stop_time.setter
@@ -192,13 +193,15 @@ class WaveformParam:
     @rampup_stop_energy.setter
     def rampup_stop_energy(self, value):
         """Set energy of rampup stop."""
-        self._rampup_stop_energy = float(value)
+        self._rampup_stop_energy = \
+            float(value) if value > self._E0 else self._E0
         self._changed = True
 
     @plateau_energy.setter
     def plateau_energy(self, value):
         """Set energy of plateau."""
-        self._plateau_energy = float(value)
+        self._plateau_energy = \
+            float(value) if value > self._E0 else self._E0
         self._changed = True
 
     @rampdown_start_time.setter
@@ -210,7 +213,8 @@ class WaveformParam:
     @rampdown_start_energy.setter
     def rampdown_start_energy(self, value):
         """Set energy of rampdown start."""
-        self._rampdown_start_energy = float(value)
+        self._rampdown_start_energy = \
+            float(value) if value > self._E0 else self._E0
         self._changed = True
 
     @rampdown_stop_time.setter
@@ -222,7 +226,8 @@ class WaveformParam:
     @rampdown_stop_energy.setter
     def rampdown_stop_energy(self, value):
         """Set energy of rampdown stop."""
-        self._rampdown_stop_energy = float(value)
+        self._rampdown_stop_energy = \
+            float(value) if value > self._E0 else self._E0
         self._changed = True
 
     # --- private methods ---
@@ -417,9 +422,7 @@ class _WaveformMagnet:
 
     _magnets = dict()  # dict with magnets objects to improve efficiency
 
-    def __init__(self, maname,
-                 wfm_nrpoints=_MAX_WFMSIZE,
-                 **kwargs):
+    def __init__(self, maname, wfm_nrpoints=_DEF_WFMSIZE, **kwargs):
         if maname not in _WaveformMagnet._magnets:
             _WaveformMagnet._magnets[maname] = _Magnet(maname)
         self._maname = maname
@@ -486,8 +489,6 @@ class _WaveformMagnet:
 class WaveformDipole(_WaveformMagnet, WaveformParam):
     """Waveform for Dipole."""
 
-    _E0 = _c.electron_rest_energy * _u.joule_2_GeV
-
     def __init__(self, maname='BO-Fam:MA-B', **kwargs):
         """Constructor."""
         _WaveformMagnet.__init__(self, maname, **kwargs)
@@ -511,9 +512,6 @@ class WaveformDipole(_WaveformMagnet, WaveformParam):
         if self._changed or self._waveform is None:
             t = self.times
             self._waveform = self.eval_at(t)
-            if _np.any(_np.array(self._waveform) < WaveformDipole._E0):
-                raise _RampInvalidDipoleWfmParms(
-                    'Dipole energy less than electron rest energy.')
 
     def _get_currents(self):
         currents = self.conv_strength_2_current(self.waveform)

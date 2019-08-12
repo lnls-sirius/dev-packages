@@ -8,12 +8,9 @@ import subprocess as _sp
 import time as _time
 import datetime as _datetime
 import epics as _epics
-import numpy as _np
 import sys as _sys
 from collections import namedtuple as _namedtuple
 
-from mathphys import constants as _c
-from mathphys import units as _u
 from mathphys import beam_optics as _beam
 from siriuspy import envars as _envars
 
@@ -136,55 +133,9 @@ def configure_log_file(stream=None, filename=None, debug=False):
     _log.basicConfig(format=fmt, datefmt='%F %T', level=level, **dic_)
 
 
-def save_ioc_pv_list(ioc_name, prefix, db, filename=None):
-    """Save a list of the IOC pvs.
-
-    Inputs:
-        ioc_name: name of the ioc;
-        prefix: str or 2-tuple. In case of a 2-tuple the first element is the
-                sector prefix and the second element is the simulation prefix;
-        db: dictionary, set, tuple or list of pv names without the prefices.
-        filename (optional): the name of the file to save the PV names. In
-                case no filename is given it will be built from the ioc_name.
-
-    """
-    if isinstance(prefix, (list, tuple)):
-        prefix_vaca = prefix[1]
-        prefix_sector = prefix[0]
-    else:
-        prefix_vaca = prefix
-        prefix_sector = ''
-
-    if filename is None:
-        home = _os.path.expanduser('~')
-        path = _os.path.join(home, 'sirius-iocs', 'pvs')
-        filename = ioc_name + ".txt"
-    else:
-        path = _os.path.join(home, 'sirius-iocs', 'pvs')
-
-    if not _os.path.exists(path):
-        _os.makedirs(path)
-    with open(path + "/" + filename, "w") as fd:
-        fd.write("{}\n".format(prefix_vaca))
-        for pv in db:
-            fd.write("{}\n".format(prefix_sector + pv))
-
-
 def beam_rigidity(energy):
     """Return beam rigidity, beta amd game, given its energy [GeV]."""
-    electron_rest_energy_eV = _c.electron_rest_energy * _u.joule_2_eV
-    electron_rest_energy_GeV = electron_rest_energy_eV * _u.eV_2_GeV
-
-    if isinstance(energy, (list, tuple)):
-        energy = _np.array(energy)
-    if isinstance(energy, _np.ndarray):
-        if _np.any(energy < electron_rest_energy_GeV):
-            raise ValueError('Electron energy less than rest energy!')
-        brho, _, beta, gamma, _ = \
-            _beam.beam_rigidity(energy=energy)
-    else:
-        brho, _, beta, gamma, _ = \
-            _beam.beam_rigidity(energy=energy)
+    brho, _, beta, gamma, _ = _beam.beam_rigidity(energy=energy)
     return brho, beta, gamma
 
 

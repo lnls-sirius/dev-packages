@@ -91,8 +91,9 @@ _pvs_tb_ps = [
     ['TB-02:PS-CV-1:PwrState-Sel', _on, 0.0],
     ['TB-02:PS-CH-2:PwrState-Sel', _on, 0.0],
     ['TB-02:PS-CV-2:PwrState-Sel', _on, 0.0],
-    ['TB-04:PS-CH:PwrState-Sel', _on, 0.0],
+    ['TB-04:PS-CH-1:PwrState-Sel', _on, 0.0],
     ['TB-04:PS-CV-1:PwrState-Sel', _on, 0.0],
+    ['TB-04:PS-CH-2:PwrState-Sel', _on, 0.0],
     ['TB-04:PS-CV-2:PwrState-Sel', _on, 0.0],
     ]
 

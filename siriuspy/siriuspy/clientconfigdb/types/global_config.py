@@ -3,6 +3,7 @@ from copy import deepcopy as _dcopy
 import numpy as _np
 from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 
+_off = 0
 _on = 1
 _SlowRef = 0
 
@@ -929,7 +930,8 @@ _pvs_tb_ps = [
     ['TB-02:PS-CV-1:OpMode-Sel', _SlowRef, 0.0],
     ['TB-02:PS-CH-2:OpMode-Sel', _SlowRef, 0.0],
     ['TB-02:PS-CV-2:OpMode-Sel', _SlowRef, 0.0],
-    ['TB-04:PS-CH:OpMode-Sel', _SlowRef, 0.0],
+    ['TB-04:PS-CH-1:OpMode-Sel', _SlowRef, 0.0],
+    ['TB-04:PS-CH-2:OpMode-Sel', _SlowRef, 0.0],
     ['TB-04:PS-CV-1:OpMode-Sel', _SlowRef, 0.0],
     ['TB-04:PS-CV-2:OpMode-Sel', _SlowRef, 0.0],
 
@@ -952,7 +954,8 @@ _pvs_tb_ps = [
     ['TB-02:PS-CV-1:BSMPComm-Sel', _on, 0.0],
     ['TB-02:PS-CH-2:BSMPComm-Sel', _on, 0.0],
     ['TB-02:PS-CV-2:BSMPComm-Sel', _on, 0.0],
-    ['TB-04:PS-CH:BSMPComm-Sel', _on, 0.0],
+    ['TB-04:PS-CH-1:BSMPComm-Sel', _on, 0.0],
+    ['TB-04:PS-CH-2:BSMPComm-Sel', _on, 0.0],
     ['TB-04:PS-CV-1:BSMPComm-Sel', _on, 0.0],
     ['TB-04:PS-CV-2:BSMPComm-Sel', _on, 0.0],
 
@@ -975,12 +978,15 @@ _pvs_tb_ps = [
     ['TB-02:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
     ['TB-02:PS-CH-2:Current-SP', 0.0, 0.0],  # unit: A
     ['TB-02:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
-    ['TB-04:PS-CH:Current-SP', 0.0, 0.0],    # unit: A
+    ['TB-04:PS-CH-1:Current-SP', 0.0, 0.0],    # unit: A
+    ['TB-04:PS-CH-2:Current-SP', 0.0, 0.0],    # unit: A
     ['TB-04:PS-CV-1:Current-SP', 0.0, 0.0],  # unit: A
     ['TB-04:PS-CV-2:Current-SP', 0.0, 0.0],  # unit: A
     ]
 
 _pvs_pu = [
+    ['TB-04:PU-InjSept:PwrState-Sel', _off, 0.0],
+    ['BO-01D:PU-InjKckr:PwrState-Sel', _off, 0.0],
     ['TB-04:PU-InjSept:Pulse-Sel', 0, 0.0],
     ['BO-01D:PU-InjKckr:Pulse-Sel', 0, 0.0],
     ['TB-04:PU-InjSept:Voltage-SP', 0.0, 0.0],   # Volt

@@ -5,7 +5,7 @@ corresponding values when a new configuration is tried to be inserted in the
 servconf database.
 """
 from copy import deepcopy as _dcopy
-from siriuspy.csdevice.pwrsupply import MAX_WFMSIZE as _MAX_WFMSIZE
+from siriuspy.csdevice.pwrsupply import DEF_WFMSIZE as _DEF_WFMSIZE
 from siriuspy.ramp import util as _util
 
 
@@ -24,7 +24,7 @@ _ps_ramp = {
     # ramp total duration [ms]
     'duration':             _util.DEFAULT_PS_RAMP_DURATION,
     # number of points in power supply waveforms
-    'wfm_nrpoints':         _MAX_WFMSIZE,
+    'wfm_nrpoints':         _DEF_WFMSIZE,
     # ramp time parameters [ms]
     'rampup_start_time':    _util.DEFAULT_PS_RAMP_RAMPUP_START_TIME,
     'rampup_stop_time':     _util.DEFAULT_PS_RAMP_RAMPUP_STOP_TIME,
@@ -39,15 +39,10 @@ _ps_ramp = {
     'rampdown_stop_energy': _util.DEFAULT_PS_RAMP_RAMPDOWN_STOP_ENERGY,
 }
 
-_ps_normalized_configs = [
-    # time [ms]            normalized configuration name
-    [0,                              'ramp-start'],
-    [_util.DEFAULT_PS_RAMP_DURATION, 'ramp-stop'],
-]
+# time [ms]            normalized configuration name
+_ps_normalized_configs = []
 
 _rf_ramp = {
-    # ramp increase duration [min]
-    'rampinc_duration': _util.DEFAULT_RF_RAMP_RAMPINC_DURATION,
     # ramp intervals durations [ms]
     'bottom_duration':      _util.DEFAULT_RF_RAMP_BOTTOM_DURATION,
     'rampup_duration':      _util.DEFAULT_RF_RAMP_RAMPUP_DURATION,

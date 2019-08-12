@@ -12,8 +12,10 @@ _mock_flag = True
 
 public_interface = (
     'MAX_WFMSIZE',
+    'DEF_WFMSIZE',
     'DEFAULT_SIGGEN_CONFIG',
     'DEFAULT_WFMDATA',
+    'DEFAULT_CURVE',
     'default_ps_current_precision',
     'default_pu_current_precision',
     # 'ps_models',
@@ -143,6 +145,12 @@ class TestPwrSupply(TestCase):
         """Test MAX_WFMSIZE."""
         self.assertIsInstance(pwrsupply.MAX_WFMSIZE, int)
         self.assertTrue(pwrsupply.MAX_WFMSIZE > 0)
+
+    def test_DEF_WFMSIZE(self):
+        """Test DEF_WFMSIZE."""
+        self.assertIsInstance(pwrsupply.DEF_WFMSIZE, int)
+        self.assertTrue(pwrsupply.DEF_WFMSIZE > 0)
+        self.assertTrue(pwrsupply.DEF_WFMSIZE <= pwrsupply.MAX_WFMSIZE)
 
     def test_DEFAULT_SIGGEN_CONFIG(self):
         """Test DEFAULT_SIGGEN_CONFIG."""
