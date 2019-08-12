@@ -3,9 +3,9 @@
 import numpy as _np
 
 from mathphys import constants as _c
-from mathphys import units as _u
+from mathphys import units as _mu
 from siriuspy.csdevice.pwrsupply import DEF_WFMSIZE as _DEF_WFMSIZE
-from siriuspy.ramp import util as _rutil
+from siriuspy.ramp import util as _ru
 from siriuspy.ramp.magnet import Magnet as _Magnet
 
 
@@ -16,35 +16,36 @@ class WaveformParam:
 
     def __init__(
             self,
-            duration=_rutil.DEFAULT_PS_RAMP_DURATION,
-            rampup1_start_time=_rutil.DEFAULT_PS_RAMP_RAMPUP1_START_TIME,
-            rampup2_start_time=_rutil.DEFAULT_PS_RAMP_RAMPUP2_START_TIME,
-            rampdown_start_time=_rutil.DEFAULT_PS_RAMP_RAMPDOWN_START_TIME,
-            rampdown_stop_time=_rutil.DEFAULT_PS_RAMP_RAMPDOWN_STOP_TIME,
-            rampup_range=_rutil.DEFAULT_PS_RAMP_RAMPUP_RANGE,
-            rampdown_range=_rutil.DEFAULT_PS_RAMP_RAMPDOWN_RANGE,
-            start_energy=_rutil.DEFAULT_PS_RAMP_START_ENERGY,
-            rampup1_start_energy=_rutil.DEFAULT_PS_RAMP_RAMPUP1_START_ENERGY,
-            rampup2_start_energy=_rutil.DEFAULT_PS_RAMP_RAMPUP2_START_ENERGY,
-            rampdown_start_energy=_rutil.DEFAULT_PS_RAMP_RAMPDOWN_START_ENERGY,
-            rampdown_stop_energy=_rutil.DEFAULT_PS_RAMP_RAMPDOWN_STOP_ENERGY,
-            rampup_delta=_rutil.DEFAULT_PS_RAMP_RAMPUP_DELTA,
-            rampdown_delta=_rutil.DEFAULT_PS_RAMP_RAMPDOWN_DELTA):
+            duration=_ru.DEFAULT_PS_RAMP_DURATION,
+            rampup1_start_time=_ru.DEFAULT_PS_RAMP_RAMPUP1_START_TIME,
+            rampup2_start_time=_ru.DEFAULT_PS_RAMP_RAMPUP2_START_TIME,
+            rampdown_start_time=_ru.DEFAULT_PS_RAMP_RAMPDOWN_START_TIME,
+            rampdown_stop_time=_ru.DEFAULT_PS_RAMP_RAMPDOWN_STOP_TIME,
+            rampup_smooth_intvl=_ru.DEFAULT_PS_RAMP_RAMPUP_SMOOTH_INTVL,
+            rampdown_smooth_intvl=_ru.DEFAULT_PS_RAMP_RAMPDOWN_SMOOTH_INTVL,
+            start_value=_ru.DEFAULT_PS_RAMP_START_CURRENT,
+            rampup1_start_value=_ru.DEFAULT_PS_RAMP_RAMPUP1_START_CURRENT,
+            rampup2_start_value=_ru.DEFAULT_PS_RAMP_RAMPUP2_START_CURRENT,
+            rampdown_start_value=_ru.DEFAULT_PS_RAMP_RAMPDOWN_START_CURRENT,
+            rampdown_stop_value=_ru.DEFAULT_PS_RAMP_RAMPDOWN_STOP_CURRENT,
+            rampup_smooth_value=_ru.DEFAULT_PS_RAMP_RAMPUP_SMOOTH_CURRENT,
+            rampdown_smooth_value=_ru.DEFAULT_PS_RAMP_RAMPDOWN_SMOOTH_CURRENT
+            ):
         """Init method."""
         self._duration = duration
-        self._start_energy = start_energy
+        self._start_value = start_value
         self._rampup1_start_time = rampup1_start_time
-        self._rampup1_start_energy = rampup1_start_energy
-        self._rampup_range = rampup_range
-        self._rampup_delta = rampup_delta
+        self._rampup1_start_value = rampup1_start_value
+        self._rampup_smooth_intvl = rampup_smooth_intvl
+        self._rampup_smooth_value = rampup_smooth_value
         self._rampup2_start_time = rampup2_start_time
-        self._rampup2_start_energy = rampup2_start_energy
-        self._rampdown_range = rampdown_range
-        self._rampdown_delta = rampdown_delta
+        self._rampup2_start_value = rampup2_start_value
+        self._rampdown_smooth_intvl = rampdown_smooth_intvl
+        self._rampdown_smooth_value = rampdown_smooth_value
         self._rampdown_start_time = rampdown_start_time
-        self._rampdown_start_energy = rampdown_start_energy
+        self._rampdown_start_value = rampdown_start_value
         self._rampdown_stop_time = rampdown_stop_time
-        self._rampdown_stop_energy = rampdown_stop_energy
+        self._rampdown_stop_value = rampdown_stop_value
         self._update()
 
     @property
@@ -53,9 +54,9 @@ class WaveformParam:
         return self._duration
 
     @property
-    def start_energy(self):
-        """Return start_energy."""
-        return self._start_energy
+    def start_value(self):
+        """Return start_value."""
+        return self._start_value
 
     @property
     def rampup1_start_time(self):
@@ -63,9 +64,9 @@ class WaveformParam:
         return self._rampup1_start_time
 
     @property
-    def rampup1_start_energy(self):
-        """Return rampup1_start_energy."""
-        return self._rampup1_start_energy
+    def rampup1_start_value(self):
+        """Return rampup1_start_value."""
+        return self._rampup1_start_value
 
     @property
     def rampup2_start_time(self):
@@ -73,9 +74,9 @@ class WaveformParam:
         return self._rampup2_start_time
 
     @property
-    def rampup2_start_energy(self):
-        """Return rampup2_start_energy."""
-        return self._rampup2_start_energy
+    def rampup2_start_value(self):
+        """Return rampup2_start_value."""
+        return self._rampup2_start_value
 
     @property
     def rampdown_start_time(self):
@@ -83,9 +84,9 @@ class WaveformParam:
         return self._rampdown_start_time
 
     @property
-    def rampdown_start_energy(self):
-        """Return rampdown_start_energy."""
-        return self._rampdown_start_energy
+    def rampdown_start_value(self):
+        """Return rampdown_start_value."""
+        return self._rampdown_start_value
 
     @property
     def rampdown_stop_time(self):
@@ -93,29 +94,29 @@ class WaveformParam:
         return self._rampdown_stop_time
 
     @property
-    def rampdown_stop_energy(self):
-        """Return rampdown_stop_energy."""
-        return self._rampdown_stop_energy
+    def rampdown_stop_value(self):
+        """Return rampdown_stop_value."""
+        return self._rampdown_stop_value
 
     @property
-    def rampup_range(self):
-        """Return rampup_range."""
-        return self._rampup_range
+    def rampup_smooth_intvl(self):
+        """Return rampup_smooth_intvl."""
+        return self._rampup_smooth_intvl
 
     @property
-    def rampup_delta(self):
-        """Return rampup_delta."""
-        return self._rampup_delta
+    def rampup_smooth_value(self):
+        """Return rampup_smooth_value."""
+        return self._rampup_smooth_value
 
     @property
-    def rampdown_range(self):
-        """Return rampdown_range."""
-        return self._rampdown_range
+    def rampdown_smooth_intvl(self):
+        """Return rampdown_smooth_intvl."""
+        return self._rampdown_smooth_intvl
 
     @property
-    def rampdown_delta(self):
-        """Return rampdown_delta."""
-        return self._rampdown_delta
+    def rampdown_smooth_value(self):
+        """Return rampdown_smooth_value."""
+        return self._rampdown_smooth_value
 
     @duration.setter
     def duration(self, value):
@@ -123,10 +124,10 @@ class WaveformParam:
         self._duration = value
         self._update()
 
-    @start_energy.setter
-    def start_energy(self, value):
-        """Set start_energy."""
-        self._start_energy = value
+    @start_value.setter
+    def start_value(self, value):
+        """Set start_value."""
+        self._start_value = float(value)
         self._update()
 
     @rampup1_start_time.setter
@@ -135,10 +136,10 @@ class WaveformParam:
         self._rampup1_start_time = value
         self._update()
 
-    @rampup1_start_energy.setter
-    def rampup1_start_energy(self, value):
-        """Set rampup1_start_energy."""
-        self._rampup1_start_energy = value
+    @rampup1_start_value.setter
+    def rampup1_start_value(self, value):
+        """Set rampup1_start_value."""
+        self._rampup1_start_value = float(value)
         self._update()
 
     @rampup2_start_time.setter
@@ -147,10 +148,11 @@ class WaveformParam:
         self._rampup2_start_time = value
         self._update()
 
-    @rampup2_start_energy.setter
-    def rampup2_start_energy(self, value):
-        """Set rampup2_start_energy."""
-        self._rampup2_start_energy = value
+    @rampup2_start_value.setter
+    def rampup2_start_value(self, value):
+        """Set rampup2_start_value."""
+        self._rampup2_start_value = float(value)
+        self._update()
 
     @rampdown_start_time.setter
     def rampdown_start_time(self, value):
@@ -158,10 +160,10 @@ class WaveformParam:
         self._rampdown_start_time = value
         self._update()
 
-    @rampdown_start_energy.setter
-    def rampdown_start_energy(self, value):
-        """Set rampdown_start_energy."""
-        self._rampdown_start_energy = value
+    @rampdown_start_value.setter
+    def rampdown_start_value(self, value):
+        """Set rampdown_start_value."""
+        self._rampdown_start_value = float(value)
         self._update()
 
     @rampdown_stop_time.setter
@@ -170,34 +172,34 @@ class WaveformParam:
         self._rampdown_stop_time = value
         self._update()
 
-    @rampdown_stop_energy.setter
-    def rampdown_stop_energy(self, value):
-        """Set rampdown_stop_energy."""
-        self._rampdown_stop_energy = value
+    @rampdown_stop_value.setter
+    def rampdown_stop_value(self, value):
+        """Set rampdown_stop_value."""
+        self._rampdown_stop_value = float(value)
         self._update()
 
-    @rampup_range.setter
-    def rampup_range(self, value):
-        """Set rampup_range."""
-        self._rampup_range = value
+    @rampup_smooth_intvl.setter
+    def rampup_smooth_intvl(self, value):
+        """Set rampup_smooth_intvl."""
+        self._rampup_smooth_intvl = value
         self._update()
 
-    @rampup_delta.setter
-    def rampup_delta(self, value):
-        """Set rampup_delta."""
-        self._rampup_delta = value
+    @rampup_smooth_value.setter
+    def rampup_smooth_value(self, value):
+        """Set rampup_smooth_value."""
+        self._rampup_smooth_value = value
         self._update()
 
-    @rampdown_range.setter
-    def rampdown_range(self, value):
-        """Set rampdown_range."""
-        self._rampdown_range = value
+    @rampdown_smooth_intvl.setter
+    def rampdown_smooth_intvl(self, value):
+        """Set rampdown_smooth_intvl."""
+        self._rampdown_smooth_intvl = value
         self._update()
 
-    @rampdown_delta.setter
-    def rampdown_delta(self, value):
-        """Set rampdown_delta."""
-        self._rampdown_delta = value
+    @rampdown_smooth_value.setter
+    def rampdown_smooth_value(self, value):
+        """Set rampdown_smooth_value."""
+        self._rampdown_smooth_value = value
         self._update()
 
     @property
@@ -214,8 +216,6 @@ class WaveformParam:
     def rampdown_slope(self):
         """Return rampdown slope."""
         return self._c[3][1]
-
-
 
     def eval_at(self, time):
         """."""
@@ -243,19 +243,19 @@ class WaveformParam:
         return value
 
     def _update(self):
-
         self._t = []  # start and stop times
         self._v = []  # start amd stop values
         self._c = []  # polynomial coefficients
 
         # region 0 - cubic
         self._t.append(_np.array([0.0, self._rampup1_start_time]))
-        self._v.append(_np.array([self._start_energy, self._rampup1_start_energy]))
+        self._v.append(_np.array([self._start_value,
+                                  self._rampup1_start_value]))
         self._c.append([0.0, 0.0, 0.0, 0.0])
         # region 1 - linear rampup1
         time = _np.array([self._rampup1_start_time, self._rampup2_start_time])
-        value = _np.array([self._rampup1_start_energy,
-                           self._rampup2_start_energy])
+        value = _np.array([self._rampup1_start_value,
+                           self._rampup2_start_value])
         self._t.append(time)
         self._v.append(value)
         coeff_a = value[0]
@@ -263,8 +263,8 @@ class WaveformParam:
         self._c.append([coeff_a, coeff_b, 0.0, 0.0])
         # region 2 - linear rampup2
         time = _np.array([self._rampup2_start_time, self._rampdown_start_time])
-        value = _np.array([self._rampup2_start_energy,
-                           self._rampdown_start_energy])
+        value = _np.array([self._rampup2_start_value,
+                           self._rampdown_start_value])
         self._t.append(time)
         self._v.append(value)
         coeff_a = value[0]
@@ -273,16 +273,18 @@ class WaveformParam:
         # region 3 - linear rampdown
         time = _np.array([self._rampdown_start_time,
                           self._rampdown_stop_time])
-        value = _np.array([self._rampdown_start_energy,
-                           self._rampdown_stop_energy])
+        value = _np.array([self._rampdown_start_value,
+                           self._rampdown_stop_value])
         self._t.append(time)
         self._v.append(value)
         coeff_a = value[0]
         coeff_b = (value[1] - value[0])/(time[1] - time[0])
         self._c.append([coeff_a, coeff_b, 0.0, 0.0])
         # region 4 - cubic
-        self._t.append(_np.array([self._rampdown_stop_time, self._duration]))
-        self._v.append(_np.array([self._rampdown_stop_energy, self._start_energy]))
+        self._t.append(_np.array([self._rampdown_stop_time,
+                                  self._duration]))
+        self._v.append(_np.array([self._rampdown_stop_value,
+                                  self._start_value]))
         self._c.append([0.0, 0.0, 0.0, 0.0])
 
         # set coeffs for region 0
@@ -311,26 +313,26 @@ class WaveformParam:
         ts = self._rampup2_start_time
         # t1 = ts - (ts - self._rampup1_start_time)/4
         # t2 = ts + (self._rampdown_start_time - ts)/4
-        t1 = ts - self._rampup_range/2
-        t2 = ts + self._rampup_range/2
+        t1 = ts - self._rampup_smooth_intvl/2
+        t2 = ts + self._rampup_smooth_intvl/2
         self._region12_t = [t1, ts, t2]
         ts = self._rampdown_start_time
         # t1 = ts - (ts - self._rampup2_start_time)/4
         # t2 = ts + (self._rampdown_stop_time - ts)/4
-        t1 = ts - self._rampdown_range/2
-        t2 = ts + self._rampdown_range/2
+        t1 = ts - self._rampdown_smooth_intvl/2
+        t2 = ts + self._rampdown_smooth_intvl/2
         self._region23_t = [t1, ts, t2]
 
     def _func_region_12(self, time, delta=None):
         """Evaluate function in regions 1 and 2."""
         if delta is None:
-            delta = self._rampup_delta
+            delta = self._rampup_smooth_value
         return self._func_region(time, delta, self._region12_t, 1, 2)
 
     def _func_region_23(self, time, delta=None):
         """Evaluate function in regions 2 and 3."""
         if delta is None:
-            delta = self._rampdown_delta
+            delta = self._rampdown_smooth_value
         return self._func_region(time, delta, self._region23_t, 2, 3)
 
     def _func_region(self, time, delta, region_t, region_idx1, region_idx2):
