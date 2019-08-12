@@ -377,7 +377,7 @@ class _WaveformMagnet:
 
     _magnets = dict()  # dict with magnets objects to improve efficiency
 
-    def __init__(self, maname, wfm_nrpoints=_DEF_WFMSIZE, **kwargs):
+    def __init__(self, maname, wfm_nrpoints=_DEF_WFMSIZE):
         if maname not in _WaveformMagnet._magnets:
             _WaveformMagnet._magnets[maname] = _Magnet(maname)
         self._maname = maname
@@ -444,36 +444,252 @@ class _WaveformMagnet:
 class WaveformDipole(_WaveformMagnet, WaveformParam):
     """Waveform for Dipole."""
 
-    def __init__(self, maname='BO-Fam:MA-B', **kwargs):
-        """Constructor."""
-        _WaveformMagnet.__init__(self, maname, **kwargs)
-        WaveformParam.__init__(self, **kwargs)
-        self._waveform = None
-        self._update_waveform()
+    _E0 = _c.electron_rest_energy * _mu.joule_2_GeV
 
-    def update(self):
-        """Update."""
-        if self.changed:
-            self._waveform = None
-        WaveformParam.update(self)
+    def __init__(
+            self, maname='BO-Fam:MA-B', wfm_nrpoints=_DEF_WFMSIZE,
+            duration=_ru.DEFAULT_PS_RAMP_DURATION,
+            start_energy=_ru.DEFAULT_PS_RAMP_START_ENERGY,
+            rampup1_start_time=_ru.DEFAULT_PS_RAMP_RAMPUP1_START_TIME,
+            rampup1_start_energy=_ru.DEFAULT_PS_RAMP_RAMPUP1_START_ENERGY,
+            rampup2_start_time=_ru.DEFAULT_PS_RAMP_RAMPUP2_START_TIME,
+            rampup2_start_energy=_ru.DEFAULT_PS_RAMP_RAMPUP2_START_ENERGY,
+            rampup_smooth_intvl=_ru.DEFAULT_PS_RAMP_RAMPUP_SMOOTH_INTVL,
+            rampup_smooth_energy=_ru.DEFAULT_PS_RAMP_RAMPUP_SMOOTH_ENERGY,
+            rampdown_start_time=_ru.DEFAULT_PS_RAMP_RAMPDOWN_START_TIME,
+            rampdown_start_energy=_ru.DEFAULT_PS_RAMP_RAMPDOWN_START_ENERGY,
+            rampdown_stop_time=_ru.DEFAULT_PS_RAMP_RAMPDOWN_STOP_TIME,
+            rampdown_stop_energy=_ru.DEFAULT_PS_RAMP_RAMPDOWN_STOP_ENERGY,
+            rampdown_smooth_intvl=_ru.DEFAULT_PS_RAMP_RAMPDOWN_SMOOTH_INTVL,
+            rampdown_smooth_energy=_ru.DEFAULT_PS_RAMP_RAMPDOWN_SMOOTH_ENERGY
+            ):
+        """Constructor."""
+        _WaveformMagnet.__init__(self, maname, wfm_nrpoints)
+
+        self._start_energy = start_energy
+        self._rampup1_start_energy = rampup1_start_energy
+        self._rampup2_start_energy = rampup2_start_energy
+        self._rampdown_start_energy = rampdown_start_energy
+        self._rampdown_stop_energy = rampdown_stop_energy
+        self._rampup_smooth_energy = rampup_smooth_energy
+        self._rampdown_smooth_energy = rampdown_smooth_energy
+
+        _conv_func = self.conv_strength_2_current
+        start_value = _conv_func(start_energy)
+        rampup1_start_value = _conv_func(rampup1_start_energy)
+        rampup2_start_value = _conv_func(rampup2_start_energy)
+        rampdown_start_value = _conv_func(rampdown_start_energy)
+        rampdown_stop_value = _conv_func(rampdown_stop_energy)
+        rampup_smooth_value = _conv_func(rampup_smooth_energy)
+        rampdown_smooth_value = _conv_func(rampdown_smooth_energy)
+        WaveformParam.__init__(
+            self,
+            duration=duration,
+            rampup1_start_time=rampup1_start_time,
+            rampup2_start_time=rampup2_start_time,
+            rampdown_start_time=rampdown_start_time,
+            rampdown_stop_time=rampdown_stop_time,
+            rampup_smooth_intvl=rampup_smooth_intvl,
+            rampdown_smooth_intvl=rampdown_smooth_intvl,
+            start_value=start_value,
+            rampup1_start_value=rampup1_start_value,
+            rampup2_start_value=rampup2_start_value,
+            rampdown_start_value=rampdown_start_value,
+            rampdown_stop_value=rampdown_stop_value,
+            rampup_smooth_value=rampup_smooth_value,
+            rampdown_smooth_value=rampdown_smooth_value)
+        self._currents = self.eval_at(self.times)
+        self._strengths = self.conv_current_2_strength(self._currents)
 
     @property
     def waveform(self):
         """Magnet waveform."""
-        self._update_waveform()
-        return self._waveform
+        return self.strengths
 
-    def _update_waveform(self):
-        if self._changed or self._waveform is None:
-            t = self.times
-            self._waveform = self.eval_at(t)
+    @property
+    def start_energy(self):
+        """Return start_energy."""
+        return self._start_energy
+
+    @property
+    def rampup1_start_energy(self):
+        """Return rampup1_start_energy."""
+        return self._rampup1_start_energy
+
+    @property
+    def rampup2_start_energy(self):
+        """Return rampup2_start_energy."""
+        return self._rampup2_start_energy
+
+    @property
+    def rampdown_start_energy(self):
+        """Return rampdown_start_energy."""
+        return self._rampdown_start_energy
+
+    @property
+    def rampdown_stop_energy(self):
+        """Return rampdown_stop_energy."""
+        return self._rampdown_stop_energy
+
+    @property
+    def rampup_smooth_energy(self):
+        """Return rampup_smooth_energy."""
+        return self._rampup_smooth_energy
+
+    @property
+    def rampdown_smooth_energy(self):
+        """Return rampdown_smooth_energy."""
+        return self._rampdown_smooth_energy
+
+    @start_energy.setter
+    def start_energy(self, value):
+        """Set start_energy."""
+        value = float(value) if value > self._E0 else self._E0
+        self._start_energy = float(value)
+        WaveformParam.start_value = self.conv_strength_2_current(value)
+
+    @rampup1_start_energy.setter
+    def rampup1_start_energy(self, value):
+        """Set rampup1_start_energy."""
+        value = float(value) if value > self._E0 else self._E0
+        self._rampup1_start_energy = value
+        WaveformParam.rampup1_start_value = self.conv_strength_2_current(value)
+
+    @rampup2_start_energy.setter
+    def rampup2_start_energy(self, value):
+        """Set rampup2_start_energy."""
+        value = float(value) if value > self._E0 else self._E0
+        self._rampup2_start_energy = value
+        WaveformParam.rampup2_start_value = self.conv_strength_2_current(value)
+
+    @rampdown_start_energy.setter
+    def rampdown_start_energy(self, value):
+        """Set rampdown_start_energy."""
+        value = float(value) if value > self._E0 else self._E0
+        self._rampdown_start_energy = value
+        WaveformParam.rampdown_start_value = \
+            self.conv_strength_2_current(value)
+
+    @rampdown_stop_energy.setter
+    def rampdown_stop_energy(self, value):
+        """Set rampdown_stop_energy."""
+        value = float(value) if value > self._E0 else self._E0
+        self._rampdown_stop_energy = value
+        WaveformParam.rampdown_stop_value = self.conv_strength_2_current(value)
+
+    @rampup_smooth_energy.setter
+    def rampup_smooth_energy(self, value):
+        """Set rampup_smooth_energy."""
+        self._rampup_smooth_energy = value
+        WaveformParam.rampup_smooth_value = \
+            self.conv_strength_2_current(value)
+
+    @rampdown_smooth_energy.setter
+    def rampdown_smooth_energy(self, value):
+        """Set rampdown_smooth_energy."""
+        self._rampdown_smooth_energy = value
+        WaveformParam.rampdown_smooth_value = \
+            self.conv_strength_2_current(value)
+
+    @property
+    def start_value(self):
+        """Return start_value."""
+        return WaveformParam.start_value
+
+    @property
+    def rampup1_start_value(self):
+        """Return rampup1_start_value."""
+        return WaveformParam.rampup1_start_value
+
+    @property
+    def rampup2_start_value(self):
+        """Return rampup2_start_value."""
+        return WaveformParam.rampup2_start_value
+
+    @property
+    def rampdown_start_value(self):
+        """Return rampdown_start_value."""
+        return WaveformParam.rampdown_start_value
+
+    @property
+    def rampdown_stop_value(self):
+        """Return rampdown_stop_value."""
+        return WaveformParam.rampdown_stop_value
+
+    @property
+    def rampup_smooth_value(self):
+        """Return rampup_smooth_value."""
+        return WaveformParam.rampup_smooth_value
+
+    @property
+    def rampdown_smooth_value(self):
+        """Return rampdown_smooth_value."""
+        return WaveformParam.rampdown_smooth_value
+
+    @start_value.setter
+    def start_value(self, value):
+        """Set start_value."""
+        WaveformParam.start_value = value
+        new_energy = self.conv_current_2_strength(float(value))
+        if new_energy < self._E0:
+            new_energy = self._E0
+        self._start_energy = new_energy
+
+    @rampup1_start_value.setter
+    def rampup1_start_value(self, value):
+        """Set rampup1_start_value."""
+        WaveformParam.rampup1_start_value = value
+        new_energy = self.conv_current_2_strength(float(value))
+        if new_energy < self._E0:
+            new_energy = self._E0
+        self._rampup1_start_energy = new_energy
+
+    @rampup2_start_value.setter
+    def rampup2_start_value(self, value):
+        """Set rampup2_start_value."""
+        WaveformParam.rampup2_start_value = value
+        new_energy = self.conv_current_2_strength(float(value))
+        if new_energy < self._E0:
+            new_energy = self._E0
+        self._rampup2_start_energy = new_energy
+
+    @rampdown_start_value.setter
+    def rampdown_start_value(self, value):
+        """Set rampdown_start_value."""
+        WaveformParam.rampdown_start_value = value
+        new_energy = self.conv_current_2_strength(float(value))
+        if new_energy < self._E0:
+            new_energy = self._E0
+        self._rampdown_start_energy = new_energy
+
+    @rampdown_stop_value.setter
+    def rampdown_stop_value(self, value):
+        """Set rampdown_stop_value."""
+        WaveformParam.rampdown_stop_value = value
+        new_energy = self.conv_current_2_strength(float(value))
+        if new_energy < self._E0:
+            new_energy = self._E0
+        self._rampdown_stop_energy = new_energy
+
+    @rampup_smooth_value.setter
+    def rampup_smooth_value(self, value):
+        """Set rampup_smooth_value."""
+        WaveformParam.rampup_smooth_value = value
+        self._rampup_smooth_energy = self.conv_current_2_strength(value)
+
+    @rampdown_smooth_value.setter
+    def rampdown_smooth_value(self, value):
+        """Set rampdown_smooth_value."""
+        WaveformParam.rampdown_smooth_value = value
+        self._rampdown_smooth_energy = self.conv_current_2_strength(value)
 
     def _get_currents(self):
-        currents = self.conv_strength_2_current(self.waveform)
-        return currents
+        self._currents = self.eval_at(self.times)
+        return self._currents
 
     def _get_strengths(self):
-        return self.waveform
+        self._strengths = self.conv_current_2_strength(self.currents)
+        return self._strengths
 
 
 class Waveform(_WaveformMagnet):
@@ -481,15 +697,15 @@ class Waveform(_WaveformMagnet):
 
     def __init__(self, maname, dipole=None, family=None, strengths=None):
         """Constructor."""
-        if maname != 'SI-Fam:MA-B1B2' and dipole is None:
-            raise ValueError(
-                '{} waveform needs an associated dipole!'.format(maname))
+        if dipole is None:
+            raise ValueError('{} waveform needs an associated '
+                             'dipole waveform!'.format(maname))
         _WaveformMagnet.__init__(self, maname)
         self._dipole = dipole
         self._family = family
         if strengths is None:
-            if maname in _rutil.NOMINAL_STRENGTHS:
-                nom_strengths = _rutil.NOMINAL_STRENGTHS[maname]
+            if maname in _ru.NOMINAL_STRENGTHS:
+                nom_strengths = _ru.NOMINAL_STRENGTHS[maname]
             else:
                 nom_strengths = 0.0
             strengths = [nom_strengths, ] * self._dipole.wfm_nrpoints
@@ -508,8 +724,6 @@ class Waveform(_WaveformMagnet):
 
     def update(self):
         """Update object."""
-        if self._dipole is not None:
-            self._dipole.update()
         if self._family is not None:
             self._family.update()
         self._currents = self._conv_strengths_2_currents(self._strengths)
