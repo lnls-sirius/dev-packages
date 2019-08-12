@@ -7,20 +7,18 @@ import epics as _epics
 
 from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 
-__version__ = '1.3.3'  # current compatible version.
-# load PRUserial485 if available and checks version
-
-
 import PRUserial485 as _PRUserial485
 
 
-ver, *_ = _PRUserial485.__version__.split(':')
-if __version__ not in ver:
+# check PRUserial485 package version
+__version1__ = '1.3.3'  # PRUserial485
+__version2__ = '2.3.3'  # eth-PRUserial485
+__prulib_ver__ = _PRUserial485.__version__
+if not(__version1__ in __prulib_ver__ or __version2__ in __prulib_ver__):
     # loaded library has an incompatible version!
-    err_msg = 'Invalid PRUserial485 library version! {} != {}'.format(
-        _PRUserial485.__version__, __version__)
-    raise ValueError(err_msg)
-del(ver)
+    _ERR_MSG = 'Invalid PRUserial485 library version! {} != {} or {}'.format(
+        _PRUserial485.__version__, __version1__, __version2__)
+    raise ValueError(_ERR_MSG)
 
 
 class Const:
@@ -40,8 +38,6 @@ class PRUInterface:
     """Interface class for programmable real-time units."""
 
     # TODO: replace 'write' and 'read' methods by 'request' and 'read' methods
-
-    VERSION = __version__  # Version of the compatible PRUserial485 library
 
     def __init__(self):
         """Init method."""
@@ -182,12 +178,14 @@ class PRU(PRUInterface):
         if _PRUserial485 is None:
             raise ValueError('module PRUserial485 is not installed!')
         if bbbname is None:
+            self.version = __version1__
             # check if process is running as root
             if _os.geteuid() != 0:
                 _sys.exit('You need to have root privileges to use PRU')
         else:
-            if 'eth' not in _PRUserial485.__version__:
+            if _PRUserial485.__version__ != __version2__:
                 _sys.exit('PRUserial485 library if not ethernet client-server')
+            self.version = __version2__
             # tell PRUserial485_eth what BBB it should connect to
             _PRUserial485.set_beaglebone_ip(bbbname)
 
@@ -272,9 +270,11 @@ class PRUSim(PRUInterface):
     # TODO: improve simulation
     TIMING_PV = 'guilherme-AS-Glob:PS-Timing:Trigger-Cmd'
 
+
     def __init__(self):
         """Init method."""
         PRUInterface.__init__(self)
+        self.version = 'Simulation'
         self._callbacks = list()
         self._sync_status = Const.SYNC_STATE.OFF
         self._sync_pulse_count = 0

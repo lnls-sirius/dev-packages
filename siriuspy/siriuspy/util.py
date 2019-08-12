@@ -8,12 +8,9 @@ import subprocess as _sp
 import time as _time
 import datetime as _datetime
 import epics as _epics
-import numpy as _np
 import sys as _sys
 from collections import namedtuple as _namedtuple
 
-from mathphys import constants as _c
-from mathphys import units as _u
 from mathphys import beam_optics as _beam
 from siriuspy import envars as _envars
 
@@ -138,19 +135,7 @@ def configure_log_file(stream=None, filename=None, debug=False):
 
 def beam_rigidity(energy):
     """Return beam rigidity, beta amd game, given its energy [GeV]."""
-    electron_rest_energy_eV = _c.electron_rest_energy * _u.joule_2_eV
-    electron_rest_energy_GeV = electron_rest_energy_eV * _u.eV_2_GeV
-
-    if isinstance(energy, (list, tuple)):
-        energy = _np.array(energy)
-    if isinstance(energy, _np.ndarray):
-        if _np.any(energy < electron_rest_energy_GeV):
-            raise ValueError('Electron energy less than rest energy!')
-        brho, _, beta, gamma, _ = \
-            _beam.beam_rigidity(energy=energy)
-    else:
-        brho, _, beta, gamma, _ = \
-            _beam.beam_rigidity(energy=energy)
+    brho, _, beta, gamma, _ = _beam.beam_rigidity(energy=energy)
     return brho, beta, gamma
 
 
