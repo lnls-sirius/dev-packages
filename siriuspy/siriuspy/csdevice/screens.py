@@ -27,6 +27,21 @@ class ETypes(_cutil.ETypes):
 _et = ETypes  # syntactic sugar
 
 
+# --- Const class ---
+
+class Const(_cutil.Const):
+    """Const class defining Screens constants and Enum types."""
+
+    CamAcqMode = _cutil.Const.register('CamAcqMode', _et.CAMACQMODE)
+    CamExposureMode = _cutil.Const.register('CamExposureMode',
+                                            _et.CAMEXPOSUREMODE)
+    CamLastErr = _cutil.Const.register('CamLastErr', _et.CAMLASTERR)
+    CamTempState = _cutil.Const.register('CamTempState', _et.CAMTEMPSTATE)
+
+
+_c = Const  # syntactic sugar
+
+
 # --- Database ---
 
 def get_scrn_database():

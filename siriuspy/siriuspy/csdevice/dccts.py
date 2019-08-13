@@ -25,10 +25,23 @@ class ETypes(_cutil.ETypes):
 _et = ETypes  # syntactic sugar
 
 
+# --- Const class ---
+
+class Const(_cutil.Const):
+    """Const class defining DCCTs constants and Enum types."""
+
+    MeasModeSel = _cutil.Const.register('MeasModeSel', _et.MEASMODE_SEL)
+    MeasModeSts = _cutil.Const.register('MeasModeSts', _et.MEASMODE_STS)
+    AvgFilterTyp = _cutil.Const.register('AvgFilterTyp', _et.AVGFILTERTYP)
+
+
+_c = Const  # syntactic sugar
+
+
 # --- Database ---
 
-def get_ict_database():
-    """Return ICT device database."""
+def get_dcct_database():
+    """Return DCCT device database."""
     pvs_database = {
         # Average Current Measurement
         'Current-Mon':     {'type': 'float', 'unit': 'mA', 'prec': 6},

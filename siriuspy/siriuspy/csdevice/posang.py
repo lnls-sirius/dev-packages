@@ -16,8 +16,18 @@ class Const:
     STATUSLABELS = ('MA Connection', 'MA PwrState', 'MA OpMode', 'MA CtrlMode')
 
 
-def get_posang_database(correctors_type):
+def get_posang_database(tl, correctors_type):
     """Return Soft IOC database."""
+    if tl.upper() == 'TS':
+        CORRV = Const.TS_CORRV_POSANG
+        CORRH = Const.TS_CORRH_POSANG
+        ch2_unit = 'mrad'
+    elif tl.upper() == 'TB':
+        CORRV = Const.TB_CORRV_POSANG
+        CORRH = Const.TB_CORRH_POSANG_CHSEPT if correctors_type == 'ch-sept' \
+            else Const.TB_CORRH_POSANG_CHCH
+        ch2_unit = 'mrad' if correctors_type == 'ch-sept' else 'urad'
+
     pvs_database = {
         'Version-Cte':       {'type': 'string', 'value': 'UNDEF'},
         'CorrType-Cte':      {'type': 'string', 'value': correctors_type},
@@ -49,11 +59,16 @@ def get_posang_database(correctors_type):
         'RespMatY-Mon':      {'type': 'float', 'value': 4*[0], 'prec': 6,
                               'count': 4},
 
+        'CH1-Cte':           {'type': 'string', 'value': CORRH[0]},
         'RefKickCH1-Mon':    {'type': 'float', 'value': 0, 'prec': 4,
                               'unit': 'urad'},
-        'RefKickCH2-Mon':    {'type': 'float', 'value': 0, 'prec': 4},
+        'CH2-Cte':           {'type': 'string', 'value': CORRH[1]},
+        'RefKickCH2-Mon':    {'type': 'float', 'value': 0, 'prec': 4,
+                              'unit': ch2_unit},
+        'CV1-Cte':           {'type': 'string', 'value':  CORRV[0]},
         'RefKickCV1-Mon':    {'type': 'float', 'value': 0, 'prec': 4,
                               'unit': 'urad'},
+        'CV2-Cte':           {'type': 'string', 'value':  CORRV[1]},
         'RefKickCV2-Mon':    {'type': 'float', 'value': 0, 'prec': 4,
                               'unit': 'urad'},
         'SetNewRefKick-Cmd': {'type': 'int', 'value': 0},
@@ -64,9 +79,5 @@ def get_posang_database(correctors_type):
         'StatusLabels-Cte':  {'type': 'char', 'count': 1000,
                               'value': '\n'.join(Const.STATUSLABELS)},
     }
-    if correctors_type == 'ch-sept':
-        pvs_database['RefKickCH2-Mon']['unit'] = 'mrad'
-    elif correctors_type == 'ch-ch':
-        pvs_database['RefKickCH2-Mon']['unit'] = 'urad'
     pvs_database = _cutil.add_pvslist_cte(pvs_database)
     return pvs_database
