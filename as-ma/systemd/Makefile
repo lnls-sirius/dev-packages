@@ -3,12 +3,6 @@ preparation:
 	mkdir -p /home/sirius/iocs-log
 	chown -R sirius.sirius /home/sirius/iocs-log
 
-
-
-
-
-
-
 # --- TB ---
 install-tb-ma: preparation
 	@printf "Intalling sirius-ioc-tb-ma services...\n"
@@ -64,11 +58,11 @@ uninstall-tb-pm: stop-tb-pm disable-tb-pm
 	systemctl daemon-reload
 	systemctl reset-failed
 
-
 install-tb: install-tb-ma install-tb-pm
 stop-tb: stop-tb-ma stop-tb-pm
 start-tb: start-tb-ma start-tb-pm
 uninstall-tb: uninstall-tb-ma uninstall-tb-pm
+
 # --- BO ---
 install-bo-ma: preparation
 	@printf "Installing sirius-ioc-bo-ma services...\n"
@@ -120,6 +114,7 @@ stop-bo-pm:
 
 start-bo-ma: preparation
 	@printf "Starting sirius-ioc-bo-ma services...\n"
+	systemctl start sirius-ioc-bo-ma-dipoles.service
 	systemctl start sirius-ioc-bo-ma-correctors-ia01.service
 	systemctl start sirius-ioc-bo-ma-correctors-ia02.service
 	systemctl start sirius-ioc-bo-ma-correctors-ia04.service
@@ -135,14 +130,10 @@ start-bo-ma: preparation
 	systemctl start sirius-ioc-bo-ma-correctors-ia20.service
 	systemctl start sirius-ioc-bo-ma-sextupoles.service
 	systemctl start sirius-ioc-bo-ma-quadrupoles.service
-	systemctl start sirius-ioc-bo-ma-dipoles.service
 
 start-bo-pm: preparation
 	@printf "Starting sirius-ioc-bo-pm services...\n"
 	systemctl start sirius-ioc-bo-pm-injkckr.service
-
-
-
 
 disable-bo-ma:
 	@printf "Disabling sirius-ioc-bo-ma services...\n"
@@ -164,9 +155,6 @@ disable-bo-ma:
 
 disable-bo-pm:
 	@printf "Disabling sirius-ioc-bo-pm services...\n"
-
-
-
 
 uninstall-bo-ma: stop-bo-ma disable-bo-ma
 	@printf "Uninstalling sirius-ioc-bo-ma services...\n"
@@ -195,13 +183,82 @@ uninstall-bo-pm: stop-bo-pm disable-bo-pm
 	systemctl daemon-reload
 	systemctl reset-failed
 
-
 install-bo: install-bo-ma install-bo-pm
 stop-bo: stop-bo-ma stop-bo-pm
 start-bo: start-bo-ma start-bo-pm
 uninstall-bo: uninstall-bo-ma uninstall-bo-pm
+
+
+# --- SI ---
+install-si-ma: preparation
+	@printf "Installing sirius-ioc-si-ma services...\n"
+	cp -rf sirius-ioc-si-ma-dipoles.service /etc/systemd/system/
+	cp -rf sirius-ioc-si-ma-quadrupoles-qf.service /etc/systemd/system/
+	cp -rf sirius-ioc-si-ma-quadrupoles-qd1.service /etc/systemd/system/
+	cp -rf sirius-ioc-si-ma-quadrupoles-qd2.service /etc/systemd/system/
+	cp -rf sirius-ioc-si-ma-quadrupoles-q.service /etc/systemd/system/
+	systemctl daemon-reload
+
+install-si-pm: preparation
+	@printf "Installing sirius-ioc-si-pm services...\n"
+	systemctl daemon-reload
+
+stop-si-ma:
+	@printf "Stopping sirius-ioc-si-ma services...\n"
+	systemctl stop sirius-ioc-si-ma-quadrupoles-qf.service
+	systemctl stop sirius-ioc-si-ma-quadrupoles-qd1.service
+	systemctl stop sirius-ioc-si-ma-quadrupoles-qd2.service
+	systemctl stop sirius-ioc-si-ma-quadrupoles-q.service
+	systemctl stop sirius-ioc-si-ma-dipoles.service
+
+stop-si-pm:
+	@printf "Stopping sirius-ioc-si-pm services...\n"
+
+start-si-ma: preparation
+	@printf "Starting sirius-ioc-si-ma services...\n"
+	systemctl start sirius-ioc-si-ma-dipoles.service
+	systemctl start sirius-ioc-si-ma-quadrupoles-qf.service
+	systemctl start sirius-ioc-si-ma-quadrupoles-qd1.service
+	systemctl start sirius-ioc-si-ma-quadrupoles-qd2.service
+	systemctl start sirius-ioc-si-ma-quadrupoles-q.service
+
+start-si-pm: preparation
+	@printf "Starting sirius-ioc-si-pm services...\n"
+
+disable-si-ma:
+	@printf "Disabling sirius-ioc-si-ma services...\n"
+	systemctl disable sirius-ioc-si-ma-quadrupoles-qf.service
+	systemctl disable sirius-ioc-si-ma-quadrupoles-qd1.service
+	systemctl disable sirius-ioc-si-ma-quadrupoles-qd2.service
+	systemctl disable sirius-ioc-si-ma-quadrupoles-q.service
+	systemctl disable sirius-ioc-si-ma-dipoles.service
+
+disable-si-pm:
+	@printf "Disabling sirius-ioc-si-pm services...\n"
+
+uninstall-si-ma: stop-si-ma disable-si-ma
+	@printf "Uninstalling sirius-ioc-si-ma services...\n"
+	rm -rf /etc/systemd/system/sirius-ioc-si-ma-quadrupoles-qf.service
+	rm -rf /etc/systemd/system/sirius-ioc-si-ma-quadrupoles-qd1.service
+	rm -rf /etc/systemd/system/sirius-ioc-si-ma-quadrupoles-qd2.service
+	rm -rf /etc/systemd/system/sirius-ioc-si-ma-quadrupoles-q.service
+	rm -rf /etc/systemd/system/sirius-ioc-si-ma-dipoles.service
+	systemctl daemon-reload
+	systemctl reset-failed
+
+uninstall-si-pm: stop-si-pm disable-si-pm
+	@printf "Uninstalling sirius-ioc-si-pm services...\n"
+	systemctl daemon-reload
+	systemctl reset-failed
+
+install-si: install-si-ma install-si-pm
+stop-si: stop-si-ma stop-si-pm
+start-si: start-si-ma start-si-pm
+uninstall-si: uninstall-si-ma uninstall-si-pm
+
+
 # --- ALL ACCELERATORS ---
-install-services: install-tb install-bo
-stop: stop-tb stop-bo
-start: start-tb start-bo
-uninstall: uninstall-tb uninstall-bo
+install-services: install-tb install-bo install-si
+stop: stop-tb stop-bo stop-si
+start: start-tb start-bo start-si
+uninstall: uninstall-tb uninstall-bo uninstall-si
