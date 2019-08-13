@@ -17,6 +17,7 @@ from siriuspy.pwrsupply.bsmp import \
 from siriuspy.pwrsupply.bsmp import \
     EntitiesFAC_2S_DCDC as _EntitiesFAC_2S_DCDC
 from siriuspy.pwrsupply.bsmp import EntitiesFAP as _EntitiesFAP
+from siriuspy.pwrsupply.bsmp import EntitiesFAP_4P as _EntitiesFAP_4P
 # --- Entities ACDC ---
 from siriuspy.pwrsupply.bsmp import EntitiesFBP_DCLink as _EntitiesFBP_DCLink
 from siriuspy.pwrsupply.bsmp import EntitiesFAC_ACDC as _EntitiesFAC_ACDC
@@ -31,6 +32,8 @@ from siriuspy.pwrsupply.bsmp import ConstFAC_DCDC as _cFAC_DCDC
 from siriuspy.pwrsupply.bsmp import ConstFAC_2P4S_DCDC as _cFAC_2P4S_DCDC
 from siriuspy.pwrsupply.bsmp import ConstFAC_2S_DCDC as _cFAC_2S_DCDC
 from siriuspy.pwrsupply.bsmp import ConstFAP as _cFAP
+from siriuspy.pwrsupply.bsmp import ConstFAP_4P as _cFAP_4P
+
 # --- Const ACDC ---
 from siriuspy.pwrsupply.bsmp import ConstFBP_DCLink as _cFBP_DCLink
 from siriuspy.pwrsupply.bsmp import ConstFAC_ACDC as _cFAC_ACDC
@@ -45,6 +48,8 @@ from siriuspy.pwrsupply.bsmp_sim import \
 from siriuspy.pwrsupply.bsmp_sim import \
     BSMPSim_FAC_2S_DCDC as _BSMPSim_FAC_2S_DCDC
 from siriuspy.pwrsupply.bsmp_sim import BSMPSim_FAP as _BSMPSim_FAP
+from siriuspy.pwrsupply.bsmp_sim import BSMPSim_FAP_4P as _BSMPSim_FAP_4P
+
 # --- BSMP ACDC ---
 from siriuspy.pwrsupply.bsmp_sim import \
     BSMPSim_FBP_DCLink as _BSMPSim_FBP_DCLink
@@ -552,22 +557,22 @@ class FAP_4P_Factory(FBP_Factory):
     @property
     def parameters(self):
         """PRU Controller parameters."""
-        return PRUCParms_FBP
+        return PRUCParms_FAP_4P
 
     @property
     def bsmp_constants(self):
         """Model BSMP constants."""
-        return _cFBP
+        return _cFAP_4P
 
     @property
     def entities(self):
         """Model entities."""
-        return _EntitiesFBP()
+        return _EntitiesFAP_4P()
 
     @property
     def simulation_class(self):
         """Model simulation."""
-        return _BSMPSim_FBP
+        return _BSMPSim_FAP_4P
 
 
 class Commercial_Factory(FAC_Factory):
@@ -1592,7 +1597,7 @@ class PRUCParms_FAP(_PRUCParms):
     groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 
-    class PRUCParms_FAP_4P(_PRUCParms):
+class PRUCParms_FAP_4P(_PRUCParms):
     """FAC-specific PRUC parameters.
 
     Represent FAP_4P

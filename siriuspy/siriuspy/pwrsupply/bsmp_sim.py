@@ -36,6 +36,7 @@ from siriuspy.pwrsupply.bsmp import ConstFAC_2P4S_ACDC as _cFAC_2P4S_ACDC
 from siriuspy.pwrsupply.bsmp import ConstFAC_2S_DCDC as _cFAC_2S_DCDC
 from siriuspy.pwrsupply.bsmp import ConstFAC_2S_ACDC as _cFAC_2S_ACDC
 from siriuspy.pwrsupply.bsmp import ConstFAP as _cFAP
+from siriuspy.pwrsupply.bsmp import ConstFAP_4P as _cFAP_4P
 
 
 __version__ = _util.get_last_commit_hash()
@@ -174,6 +175,22 @@ class _Spec_FAP(_Spec):
 
     def _get_monvar_fluctuation_rms(self, var_id):
         return _Spec.I_LOAD_FLUCTUATION_RMS
+
+
+class _Spec_FAP_4P(_Spec):
+    """Spec FAP_4P."""
+
+    def _get_constants(self):
+        return _cFAP_4P
+
+    def _get_monvar_ids(self):
+        return (_cFAP_4P.V_I_LOAD_MEAN,
+                _cFAP_4P.V_I_LOAD1,
+                _cFAP_4P.V_I_LOAD2)
+
+    def _get_monvar_fluctuation_rms(self, var_id):
+        return _Spec.I_LOAD_FLUCTUATION_RMS
+
 
 
 # --- simulated OpMode state classes ---
@@ -921,4 +938,33 @@ class BSMPSim_FAP(_BaseBSMPSim, _Spec_FAP):
             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # [36-46]
             0,  # [47 - iib_interlocks]
             ]
+        return variables
+
+
+class BSMPSim_FAP_4P(_BaseBSMPSim, _Spec_FAP_4P):
+    """Simulated FAP UDC."""
+
+    def _get_entities(self):
+        return _EntitiesFAP_4P()
+
+    def _get_states(self):
+        return [_OpModeSimSlowRefState_FBP(), _OpModeSimSlowRefSyncState_FBP(),
+                _OpModeSimCycleState_FBP(self._pru)]
+
+    def _get_init_variables(self):
+        firmware = [b'S', b'i', b'm', b'u', b'l', b'a', b't', b'i', b'o', b'n']
+        while len(firmware) < 128:
+            firmware.append('\x00'.encode())
+        variables = [
+            0b10000,  # V_PS_STATUS
+            0.0, 0.0,  # ps_setpoint, ps_reference
+            firmware,
+            0, 0,  # counters
+            0, 0, 0, 0.0, 0.0, 0.0, 0.0, [0.0, 0.0, 0.0, 0.0],  # siggen [6-13]
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # undef [14-24]
+            0, 0,  # interlocks [25-26]
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # [27-35]
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # [36-46]
+            0,  # [47 - iib_interlocks]
+        ]
         return variables
