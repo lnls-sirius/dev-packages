@@ -1,0 +1,17 @@
+[Unit]
+Description=Soft IOC for SI quadrupoles QDP2 QDP1 QDA
+After=multi-user.target
+
+[Service]
+Group=sirius
+User=sirius
+Type=simple
+WorkingDirectory=/home/sirius/iocs-log
+StandardOutput=syslog
+StandardError=syslog
+ExecStartPre=/bin/bash --login -c 'env > /home/sirius/iocs-log/env-sirius-ioc-si-ma-quadrupoles-qd1'
+EnvironmentFile=-/home/sirius/iocs-log/env-sirius-ioc-si-ma-quadrupoles-qd1
+ExecStart=/usr/local/bin/sirius-ioc-as-ma.py \
+SI-Fam:MA-QDP2 \
+SI-Fam:MA-QDP1 \
+SI-Fam:MA-QDA
