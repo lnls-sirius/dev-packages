@@ -127,8 +127,7 @@ class ModelFactory:
             'FAC_2P4S_ACDC': FAC_2P4S_ACDC_Factory,
             'FAP': FAP_Factory,
             'FAP_2P2S_MASTER': FAP_2P2S_Master_Factory,
-            'FAP_4P_Master': FAP_4P_Master_Factory,
-            'FAP_4P_Slave': FAP_4P_Slave_Factory,
+            'FAP_4P': FAP_4P_Factory,
             'Commercial': Commercial_Factory,
         }
         if model in name_2_factory:
@@ -542,47 +541,18 @@ class FAP_2P2S_Master_Factory(FBP_Factory):
         return _BSMPSim_FBP
 
 
-class FAP_4P_Master_Factory(FBP_Factory):
-    """FAP_4P_Master model factory."""
+class FAP_4P_Factory(FBP_Factory):
+    """FAP_4P model factory."""
 
     @property
     def name(self):
         """Model name."""
-        return 'FAP_4P_Master'
+        return 'FAP_4P'
 
     @property
     def parameters(self):
         """PRU Controller parameters."""
-        return PRUCParms_FBP  # TODO: change to FAP_4P_Master
-
-    @property
-    def bsmp_constants(self):
-        """Model BSMP constants."""
-        return _cFBP
-
-    @property
-    def entities(self):
-        """Model entities."""
-        return _EntitiesFBP()
-
-    @property
-    def simulation_class(self):
-        """Model simulation."""
-        return _BSMPSim_FBP
-
-
-class FAP_4P_Slave_Factory(FBP_Factory):
-    """FAP_4P_Slave model factory."""
-
-    @property
-    def name(self):
-        """Model name."""
-        return 'FAP_4P_Slave'
-
-    @property
-    def parameters(self):
-        """PRU Controller parameters."""
-        return PRUCParms_FBP  # TODO: change to FAP_4P_Slave
+        return PRUCParms_FBP
 
     @property
     def bsmp_constants(self):
@@ -1531,6 +1501,108 @@ class PRUCParms_FAP(_PRUCParms):
 
     # UDC model
     model = ModelFactory.create('FAP')
+    ConstBSMP = model.bsmp_constants
+    Entities = model.entities
+
+    groups = dict()
+    # reserved variable groups (not to be used)
+    groups[_PRUCParms.ALL] = tuple(sorted(Entities.list_variables(0)))
+    groups[_PRUCParms.READONLY] = tuple(sorted(Entities.list_variables(1)))
+    groups[_PRUCParms.WRITEABLE] = tuple(sorted(Entities.list_variables(2)))
+    # new variable groups usefull for PRUController.
+    groups[_PRUCParms.ALLRELEVANT] = (
+        # --- common variables
+        ConstBSMP.V_PS_STATUS,
+        ConstBSMP.V_PS_SETPOINT,
+        ConstBSMP.V_PS_REFERENCE,
+        ConstBSMP.V_FIRMWARE_VERSION,
+        ConstBSMP.V_COUNTER_SET_SLOWREF,
+        ConstBSMP.V_COUNTER_SYNC_PULSE,
+        ConstBSMP.V_SIGGEN_ENABLE,
+        ConstBSMP.V_SIGGEN_TYPE,
+        ConstBSMP.V_SIGGEN_NUM_CYCLES,
+        ConstBSMP.V_SIGGEN_N,
+        ConstBSMP.V_SIGGEN_FREQ,
+        ConstBSMP.V_SIGGEN_AMPLITUDE,
+        ConstBSMP.V_SIGGEN_OFFSET,
+        ConstBSMP.V_SIGGEN_AUX_PARAM,
+        # --- FAP variables ---
+        ConstBSMP.V_PS_SOFT_INTERLOCKS,
+        ConstBSMP.V_PS_HARD_INTERLOCKS,
+        ConstBSMP.V_I_LOAD_MEAN,
+        ConstBSMP.V_I_LOAD1,
+        ConstBSMP.V_I_LOAD2,
+        ConstBSMP.V_V_DCLINK,
+        ConstBSMP.V_I_IGBT_1,
+        ConstBSMP.V_I_IGBT_2,
+        ConstBSMP.V_DUTY_CYCLE_1,
+        ConstBSMP.V_DUTY_CYCLE_2,
+        ConstBSMP.V_DUTY_DIFF,
+        ConstBSMP.V_V_INPUT_IIB,
+        ConstBSMP.V_V_OUTPUT_IIB,
+        ConstBSMP.V_I_IGBT_1_IIB,
+        ConstBSMP.V_I_IGBT_2_IIB,
+        ConstBSMP.V_TEMP_IGBT_1_IIB,
+        ConstBSMP.V_TEMP_IGBT_2_IIB,
+        ConstBSMP.V_V_DRIVER_IIB,
+        ConstBSMP.V_I_DRIVER_1_IIB,
+        ConstBSMP.V_I_DRIVER_2_IIB,
+        ConstBSMP.V_TEMP_INDUCTOR_IIB,
+        ConstBSMP.V_TEMP_HEATSINK_IIB,
+        ConstBSMP.V_IIB_INTERLOCKS,)
+    groups[_PRUCParms.SYNCOFF] = (
+        # --- common variables
+        ConstBSMP.V_PS_STATUS,
+        ConstBSMP.V_PS_SETPOINT,
+        ConstBSMP.V_PS_REFERENCE,
+        ConstBSMP.V_COUNTER_SET_SLOWREF,
+        ConstBSMP.V_COUNTER_SYNC_PULSE,
+        ConstBSMP.V_SIGGEN_ENABLE,
+        ConstBSMP.V_SIGGEN_TYPE,
+        ConstBSMP.V_SIGGEN_NUM_CYCLES,
+        ConstBSMP.V_SIGGEN_N,
+        ConstBSMP.V_SIGGEN_FREQ,
+        ConstBSMP.V_SIGGEN_AMPLITUDE,
+        ConstBSMP.V_SIGGEN_OFFSET,
+        ConstBSMP.V_SIGGEN_AUX_PARAM,
+        # --- FAP variables ---
+        ConstBSMP.V_PS_SOFT_INTERLOCKS,
+        ConstBSMP.V_PS_HARD_INTERLOCKS,
+        ConstBSMP.V_I_LOAD_MEAN,
+        ConstBSMP.V_I_LOAD1,
+        ConstBSMP.V_I_LOAD2,
+        ConstBSMP.V_V_DCLINK,
+        ConstBSMP.V_I_IGBT_1,
+        ConstBSMP.V_I_IGBT_2,
+        ConstBSMP.V_DUTY_CYCLE_1,
+        ConstBSMP.V_DUTY_CYCLE_2,
+        ConstBSMP.V_DUTY_DIFF,
+        ConstBSMP.V_V_INPUT_IIB,
+        ConstBSMP.V_V_OUTPUT_IIB,
+        ConstBSMP.V_I_IGBT_1_IIB,
+        ConstBSMP.V_I_IGBT_2_IIB,
+        ConstBSMP.V_TEMP_IGBT_1_IIB,
+        ConstBSMP.V_TEMP_IGBT_2_IIB,
+        ConstBSMP.V_V_DRIVER_IIB,
+        ConstBSMP.V_I_DRIVER_1_IIB,
+        ConstBSMP.V_I_DRIVER_2_IIB,
+        ConstBSMP.V_TEMP_INDUCTOR_IIB,
+        ConstBSMP.V_TEMP_HEATSINK_IIB,
+        ConstBSMP.V_IIB_INTERLOCKS,)
+    groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
+
+
+    class PRUCParms_FAP_4P(_PRUCParms):
+    """FAC-specific PRUC parameters.
+
+    Represent FAP_4P
+    """
+
+    FREQ_RAMP = 2.0  # [Hz]
+    FREQ_SCAN = 10.0  # [Hz]
+
+    # UDC model
+    model = ModelFactory.create('FAP_4P')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
