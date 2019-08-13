@@ -50,8 +50,7 @@ class ETypes(_cutil.ETypes):
               'FAC_ACDC', 'FAC_DCDC',
               'FAC_2S_ACDC', 'FAC_2S_DCDC',
               'FAC_2P4S_ACDC', 'FAC_2P4S_DCDC',
-              'FAP',
-              'FAP_4P_Master', 'FAP_4P_Slave',
+              'FAP', 'FAP_4P',
               'FAP_2P2S_MASTER', 'FAP_2P2S_SLAVE',
               'FBP_SOFB',
               'Commercial',
@@ -1127,18 +1126,6 @@ def _get_ps_FAP_2P2S_propty_database():
     return _get_ps_FBP_propty_database()
 
 
-def _get_ps_FAP_4P_Master_propty_database():
-    """Return database with FAP_2P2S pwrsupply model PVs."""
-    # TODO: implement!!!
-    return _get_ps_FBP_propty_database()
-
-
-def _get_ps_FAP_4P_Slave_propty_database():
-    """Return database with FAP_2P2S pwrsupply model PVs."""
-    # TODO: implement!!!
-    return _get_ps_FBP_propty_database()
-
-
 # --- Others ---
 
 def _get_ps_FBP_FOFB_propty_database():
@@ -1199,8 +1186,7 @@ def _get_model_db(psmodel):
         'FAC_2P4S_ACDC': _get_ps_FAC_2P4S_ACDC_propty_database,
         'FAP': _get_ps_FAP_propty_database,
         'FAP_2P2S_MASTER': _get_ps_FAP_2P2S_propty_database,
-        'FAP_4P_Master': _get_ps_FAP_4P_Master_propty_database,
-        'FAP_4P_Slave': _get_ps_FAP_4P_Slave_propty_database,
+        'FAP_4P': _get_ps_FAP_4P_propty_database,
         'Commercial': _get_ps_Commercial_propty_database,
         'FP_SEPT': _get_pu_FP_SEPT_propty_database,
         'FP_KCKR': _get_pu_FP_KCKR_propty_database,
