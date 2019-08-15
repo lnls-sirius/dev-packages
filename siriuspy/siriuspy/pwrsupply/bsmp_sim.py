@@ -26,6 +26,7 @@ from siriuspy.pwrsupply.bsmp import \
 from siriuspy.pwrsupply.bsmp import \
     EntitiesFAC_2P4S_ACDC as _EntitiesFAC_2P4S_ACDC
 from siriuspy.pwrsupply.bsmp import EntitiesFAP as _EntitiesFAP
+from siriuspy.pwrsupply.bsmp import EntitiesFAP_4P as _EntitiesFAP_4P
 
 from siriuspy.pwrsupply.bsmp import ConstFBP as _cFBP
 from siriuspy.pwrsupply.bsmp import ConstFBP_DCLink as _cFBP_DCLink
@@ -964,7 +965,14 @@ class BSMPSim_FAP_4P(_BaseBSMPSim, _Spec_FAP_4P):
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # undef [14-24]
             0, 0,  # interlocks [25-26]
             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # [27-35]
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # [36-46]
-            0,  # [47 - iib_interlocks]
+            0.0, 0.0, 0.0, 0.0,  # [36-39]
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # [40-49]
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # [50-59]
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # [60-69]
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # [70-79]
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # [80-89]
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # [90-99]
+            0, 0, 0, 0,  # iib_interlocks [100-103]
+            0.0, 0.0, 0.0, 0.0,  # [104-107]
         ]
         return variables

@@ -36,7 +36,8 @@ _SEVERITY_MAJOR_ALARM = 2
 
 # TODO: temporary data?
 NOMINAL_VOLTAGE_FAC_2S_ACDC = 300.0  # [Volt] (for BO QF)
-NOMINAL_VOLTAGE_FAC_2P4S_ACDC = 25.0  # [Volt] (for BO B-1, B-2)
+NOMINAL_VOLTAGE_FAC_2P4S_ACDC = 240.0  # [Volt] (for BO B-1, B-2)
+
 
 # --- Enumeration Types ---
 
@@ -324,6 +325,37 @@ class ETypes(_cutil.ETypes):
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+    SOFT_INTLCK_FAP_4P = SOFT_INTLCK_FAP
+    HARD_INTLCK_FAP_4P = (
+        'Sobre-corrente na carga',
+        'Sobre-tensão na carga',
+        'Sobre-corrente no IGBT 1 do módulo 1',
+        'Sobre-corrente no IGBT 2 do módulo 1',
+        'Sobre-corrente no IGBT 1 do módulo 2',
+        'Sobre-corrente no IGBT 2 do módulo 2',
+        'Sobre-corrente no IGBT 1 do módulo 3',
+        'Sobre-corrente no IGBT 2 do módulo 3',
+
+        'Sobre-corrente no IGBT 1 do módulo 4',
+        'Sobre-corrente no IGBT 2 do módulo 4',
+        'Falha no contator de entrada do DC-Link do módulo 1',
+        'Falha no contator de entrada do DC-Link do módulo 2',
+        'Falha no contator de entrada do DC-Link do módulo 3',
+        'Falha no contator de entrada do DC-Link do módulo 4',
+        'Sobre-tensão do DC-Link do módulo 1',
+        'Sobre-tensão do DC-Link do módulo 2',
+
+        'Sobre-tensão do DC-Link do módulo 3',
+        'Sobre-tensão do DC-Link do módulo 4',
+        'Sub-tensão do DC-Link do módulo 1',
+        'Sub-tensão do DC-Link do módulo 2',
+        'Sub-tensão do DC-Link do módulo 3',
+        'Sub-tensão do DC-Link do módulo 4',
+        'Interlock da placa IIB', 'Rserved',
+
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+    IIB_INTLCK_FAP_4P = IIB_INTLCK_FAP
     CYCLE_TYPES = ('Sine', 'DampedSine', 'Trapezoidal', 'DampedSquaredSine')
     SYNC_MODES = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
 
@@ -1092,13 +1124,13 @@ def _get_ps_FAP_propty_database():
     """Return database with FAP pwrsupply model PVs."""
     propty_db = get_basic_propty_database()
     db_ps = {
-        'Current1-Mon': {'type': 'float',  'value': 0.0,
+        'Current1-Mon': {'type': 'float', 'value': 0.0,
                          'prec': default_ps_current_precision,
                          'unit': 'A'},
-        'Current2-Mon': {'type': 'float',  'value': 0.0,
+        'Current2-Mon': {'type': 'float', 'value': 0.0,
                          'prec': default_ps_current_precision,
                          'unit': 'A'},
-        'IntlkIIB-Mon': {'type': 'int',    'value': 0},
+        'IntlkIIB-Mon': {'type': 'int', 'value': 0},
         'IntlkSoftLabels-Cte':  {'type': 'string',
                                  'count': len(_et.SOFT_INTLCK_FAP),
                                  'value': _et.SOFT_INTLCK_FAP},
@@ -1116,8 +1148,55 @@ def _get_ps_FAP_propty_database():
 
 def _get_ps_FAP_4P_propty_database():
     """Return database with FAP_4P pwrsupply model PVs."""
-    # TODO: implement!!!
-    return _get_ps_FBP_propty_database()
+    propty_db = get_basic_propty_database()
+    db_ps = {
+        'Current1-Mon': {'type': 'float', 'value': 0.0,
+                         'prec': default_ps_current_precision,
+                         'unit': 'A'},
+        'Current2-Mon': {'type': 'float', 'value': 0.0,
+                         'prec': default_ps_current_precision,
+                         'unit': 'A'},
+        'DCLink1Voltage-Mon': {'type': 'float', 'value': 0.0,
+                               'prec': default_ps_current_precision,
+                               'unit': 'V'},
+        'DCLink2Voltage-Mon': {'type': 'float', 'value': 0.0,
+                               'prec': default_ps_current_precision,
+                               'unit': 'V'},
+        'DCLink3Voltage-Mon': {'type': 'float', 'value': 0.0,
+                               'prec': default_ps_current_precision,
+                               'unit': 'V'},
+        'DCLink4Voltage-Mon': {'type': 'float', 'value': 0.0,
+                               'prec': default_ps_current_precision,
+                               'unit': 'V'},
+        'Mod1Current-Mon': {'type': 'float', 'value': 0.0,
+                            'prec': default_ps_current_precision,
+                            'unit': 'A'},
+        'Mod2Current-Mon': {'type': 'float', 'value': 0.0,
+                            'prec': default_ps_current_precision,
+                            'unit': 'A'},
+        'Mod3Current-Mon': {'type': 'float', 'value': 0.0,
+                            'prec': default_ps_current_precision,
+                            'unit': 'A'},
+        'Mod4Current-Mon': {'type': 'float', 'value': 0.0,
+                            'prec': default_ps_current_precision,
+                            'unit': 'A'},
+        'Intlk1IIB-Mon': {'type': 'int', 'value': 0},
+        'Intlk2IIB-Mon': {'type': 'int', 'value': 0},
+        'Intlk3IIB-Mon': {'type': 'int', 'value': 0},
+        'Intlk4IIB-Mon': {'type': 'int', 'value': 0},
+        'IntlkSoftLabels-Cte':  {'type': 'string',
+                                 'count': len(_et.SOFT_INTLCK_FAP_4P),
+                                 'value': _et.SOFT_INTLCK_FAP_4P},
+        'IntlkHardLabels-Cte':  {'type': 'string',
+                                 'count': len(_et.HARD_INTLCK_FAP_4P),
+                                 'value': _et.HARD_INTLCK_FAP_4P},
+        'IntlkIIB-Cte':  {'type': 'string',
+                          'count': len(_et.IIB_INTLCK_FAP_4P),
+                          'value': _et.IIB_INTLCK_FAP_4P},
+
+    }
+    propty_db.update(db_ps)
+    return propty_db
 
 
 def _get_ps_FAP_2P2S_propty_database():

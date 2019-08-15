@@ -517,6 +517,57 @@ class FAP_Factory(FBP_Factory):
         return _BSMPSim_FAP
 
 
+class FAP_4P_Factory(FBP_Factory):
+    """FAP_4P model factory."""
+
+    _variables = {
+        'IntlkSoft-Mon': _bsmp.ConstFAP_4P.V_PS_SOFT_INTERLOCKS,
+        'IntlkHard-Mon': _bsmp.ConstFAP_4P.V_PS_HARD_INTERLOCKS,
+        'Intlk1IIB-Mon': _bsmp.ConstFAP_4P.V_IIB_INTERLOCKS_1,
+        'Intlk2IIB-Mon': _bsmp.ConstFAP_4P.V_IIB_INTERLOCKS_2,
+        'Intlk3IIB-Mon': _bsmp.ConstFAP_4P.V_IIB_INTERLOCKS_3,
+        'Intlk4IIB-Mon': _bsmp.ConstFAP_4P.V_IIB_INTERLOCKS_4,
+        'Current-RB': _bsmp.ConstFAP_4P.V_PS_SETPOINT,
+        'CurrentRef-Mon': _bsmp.ConstFAP_4P.V_PS_REFERENCE,
+        'Current-Mon': _bsmp.ConstFAP_4P.V_I_LOAD_MEAN,
+        'Current1-Mon': _bsmp.ConstFAP_4P.V_I_LOAD1,
+        'Current2-Mon': _bsmp.ConstFAP_4P.V_I_LOAD2,
+        'DCLink1Voltage-Mon': _bsmp.ConstFAP_4P.V_V_DCLINK_1,
+        'DCLink2Voltage-Mon': _bsmp.ConstFAP_4P.V_V_DCLINK_1,
+        'DCLink3Voltage-Mon': _bsmp.ConstFAP_4P.V_V_DCLINK_3,
+        'DCLink4Voltage-Mon': _bsmp.ConstFAP_4P.V_V_DCLINK_4,
+        'Mod1Current-Mon': _bsmp.ConstFAP_4P.V_I_MOD_1,
+        'Mod2Current-Mon': _bsmp.ConstFAP_4P.V_I_MOD_2,
+        'Mod3Current-Mon': _bsmp.ConstFAP_4P.V_I_MOD_3,
+        'Mod4Current-Mon': _bsmp.ConstFAP_4P.V_I_MOD_4,
+    }
+
+    @property
+    def name(self):
+        """Model name."""
+        return 'FAP_4P'
+
+    @property
+    def parameters(self):
+        """PRU Controller parameters."""
+        return PRUCParms_FAP_4P
+
+    @property
+    def bsmp_constants(self):
+        """Model BSMP constants."""
+        return _cFAP_4P
+
+    @property
+    def entities(self):
+        """Model entities."""
+        return _EntitiesFAP_4P()
+
+    @property
+    def simulation_class(self):
+        """Model simulation."""
+        return _BSMPSim_FAP_4P
+
+
 class FAP_2P2S_Master_Factory(FBP_Factory):
     """FAP_2P2S model factory."""
 
@@ -544,35 +595,6 @@ class FAP_2P2S_Master_Factory(FBP_Factory):
     def simulation_class(self):
         """Model simulation."""
         return _BSMPSim_FBP
-
-
-class FAP_4P_Factory(FBP_Factory):
-    """FAP_4P model factory."""
-
-    @property
-    def name(self):
-        """Model name."""
-        return 'FAP_4P'
-
-    @property
-    def parameters(self):
-        """PRU Controller parameters."""
-        return PRUCParms_FAP_4P
-
-    @property
-    def bsmp_constants(self):
-        """Model BSMP constants."""
-        return _cFAP_4P
-
-    @property
-    def entities(self):
-        """Model entities."""
-        return _EntitiesFAP_4P()
-
-    @property
-    def simulation_class(self):
-        """Model simulation."""
-        return _BSMPSim_FAP_4P
 
 
 class Commercial_Factory(FAC_Factory):
@@ -1633,35 +1655,96 @@ class PRUCParms_FAP_4P(_PRUCParms):
         ConstBSMP.V_SIGGEN_AMPLITUDE,
         ConstBSMP.V_SIGGEN_OFFSET,
         ConstBSMP.V_SIGGEN_AUX_PARAM,
-        # --- FAP variables ---
+        # --- FAP_4P variables ---
         ConstBSMP.V_PS_SOFT_INTERLOCKS,
         ConstBSMP.V_PS_HARD_INTERLOCKS,
         ConstBSMP.V_I_LOAD_MEAN,
         ConstBSMP.V_I_LOAD1,
         ConstBSMP.V_I_LOAD2,
-        ConstBSMP.V_V_DCLINK,
-        ConstBSMP.V_I_IGBT_1,
-        ConstBSMP.V_I_IGBT_2,
-        ConstBSMP.V_DUTY_CYCLE_1,
-        ConstBSMP.V_DUTY_CYCLE_2,
-        ConstBSMP.V_DUTY_DIFF,
-        ConstBSMP.V_V_INPUT_IIB,
-        ConstBSMP.V_V_OUTPUT_IIB,
-        ConstBSMP.V_I_IGBT_1_IIB,
-        ConstBSMP.V_I_IGBT_2_IIB,
-        ConstBSMP.V_TEMP_IGBT_1_IIB,
-        ConstBSMP.V_TEMP_IGBT_2_IIB,
-        ConstBSMP.V_V_DRIVER_IIB,
-        ConstBSMP.V_I_DRIVER_1_IIB,
-        ConstBSMP.V_I_DRIVER_2_IIB,
-        ConstBSMP.V_TEMP_INDUCTOR_IIB,
-        ConstBSMP.V_TEMP_HEATSINK_IIB,
-        ConstBSMP.V_IIB_INTERLOCKS,)
+        ConstBSMP.V_V_LOAD,
+        ConstBSMP.V_I_IGBT_1_1,
+        ConstBSMP.V_I_IGBT_2_1,
+        ConstBSMP.V_I_IGBT_1_2,
+        ConstBSMP.V_I_IGBT_2_2,
+        ConstBSMP.V_I_IGBT_1_3,
+        ConstBSMP.V_I_IGBT_2_3,
+        ConstBSMP.V_I_IGBT_1_4,
+        ConstBSMP.V_I_IGBT_2_4,
+        ConstBSMP.V_V_DCLINK_1,
+        ConstBSMP.V_V_DCLINK_2,
+        ConstBSMP.V_V_DCLINK_3,
+        ConstBSMP.V_V_DCLINK_4,
+        ConstBSMP.V_DUTY_MEAN,
+        ConstBSMP.V_DUTY_CYCLE_1_1,
+        ConstBSMP.V_DUTY_CYCLE_2_1,
+        ConstBSMP.V_DUTY_CYCLE_1_2,
+        ConstBSMP.V_DUTY_CYCLE_2_2,
+        ConstBSMP.V_DUTY_CYCLE_1_3,
+        ConstBSMP.V_DUTY_CYCLE_2_3,
+        ConstBSMP.V_DUTY_CYCLE_1_4,
+        ConstBSMP.V_DUTY_CYCLE_2_4,
+        ConstBSMP.V_V_INPUT_IIB_1,
+        ConstBSMP.V_V_OUTPUT_IIB_1,
+        ConstBSMP.V_I_IGBT_1_IIB_1,
+        ConstBSMP.V_I_IGBT_2_IIB_1,
+        ConstBSMP.V_TEMP_IGBT_1_IIB_1,
+        ConstBSMP.V_TEMP_IGBT_2_IIB_1,
+        ConstBSMP.V_V_DRIVER_IIB_1,
+        ConstBSMP.V_I_DRIVER_1_IIB_1,
+        ConstBSMP.V_I_DRIVER_2_IIB_1,
+        ConstBSMP.V_TEMP_INDUCTOR_IIB_1,
+        ConstBSMP.V_TEMP_HEATSINK_IIB_1,
+        ConstBSMP.V_I_LEAKAGE_IIB_1,
+        ConstBSMP.V_V_INPUT_IIB_1,
+        ConstBSMP.V_V_OUTPUT_IIB_1,
+        ConstBSMP.V_I_IGBT_1_IIB_1,
+        ConstBSMP.V_I_IGBT_2_IIB_1,
+        ConstBSMP.V_TEMP_IGBT_1_IIB_1,
+        ConstBSMP.V_TEMP_IGBT_2_IIB_1,
+        ConstBSMP.V_V_DRIVER_IIB_1,
+        ConstBSMP.V_I_DRIVER_1_IIB_1,
+        ConstBSMP.V_I_DRIVER_2_IIB_1,
+        ConstBSMP.V_TEMP_INDUCTOR_IIB_1,
+        ConstBSMP.V_TEMP_HEATSINK_IIB_1,
+        ConstBSMP.V_I_LEAKAGE_IIB_1,
+        ConstBSMP.V_V_INPUT_IIB_1,
+        ConstBSMP.V_V_OUTPUT_IIB_1,
+        ConstBSMP.V_I_IGBT_1_IIB_1,
+        ConstBSMP.V_I_IGBT_2_IIB_1,
+        ConstBSMP.V_TEMP_IGBT_1_IIB_1,
+        ConstBSMP.V_TEMP_IGBT_2_IIB_1,
+        ConstBSMP.V_V_DRIVER_IIB_1,
+        ConstBSMP.V_I_DRIVER_1_IIB_1,
+        ConstBSMP.V_I_DRIVER_2_IIB_1,
+        ConstBSMP.V_TEMP_INDUCTOR_IIB_1,
+        ConstBSMP.V_TEMP_HEATSINK_IIB_1,
+        ConstBSMP.V_I_LEAKAGE_IIB_1,
+        ConstBSMP.V_V_INPUT_IIB_1,
+        ConstBSMP.V_V_OUTPUT_IIB_1,
+        ConstBSMP.V_I_IGBT_1_IIB_1,
+        ConstBSMP.V_I_IGBT_2_IIB_1,
+        ConstBSMP.V_TEMP_IGBT_1_IIB_1,
+        ConstBSMP.V_TEMP_IGBT_2_IIB_1,
+        ConstBSMP.V_V_DRIVER_IIB_1,
+        ConstBSMP.V_I_DRIVER_1_IIB_1,
+        ConstBSMP.V_I_DRIVER_2_IIB_1,
+        ConstBSMP.V_TEMP_INDUCTOR_IIB_1,
+        ConstBSMP.V_TEMP_HEATSINK_IIB_1,
+        ConstBSMP.V_I_LEAKAGE_IIB_1,
+        ConstBSMP.V_IIB_INTERLOCKS_1,
+        ConstBSMP.V_IIB_INTERLOCKS_2,
+        ConstBSMP.V_IIB_INTERLOCKS_3,
+        ConstBSMP.V_IIB_INTERLOCKS_4,
+        ConstBSMP.V_I_MOD_1,
+        ConstBSMP.V_I_MOD_2,
+        ConstBSMP.V_I_MOD_3,
+        ConstBSMP.V_I_MOD_4,)
     groups[_PRUCParms.SYNCOFF] = (
         # --- common variables
         ConstBSMP.V_PS_STATUS,
         ConstBSMP.V_PS_SETPOINT,
         ConstBSMP.V_PS_REFERENCE,
+        ConstBSMP.V_FIRMWARE_VERSION,
         ConstBSMP.V_COUNTER_SET_SLOWREF,
         ConstBSMP.V_COUNTER_SYNC_PULSE,
         ConstBSMP.V_SIGGEN_ENABLE,
@@ -1672,30 +1755,90 @@ class PRUCParms_FAP_4P(_PRUCParms):
         ConstBSMP.V_SIGGEN_AMPLITUDE,
         ConstBSMP.V_SIGGEN_OFFSET,
         ConstBSMP.V_SIGGEN_AUX_PARAM,
-        # --- FAP variables ---
+        # --- FAP_4P variables ---
         ConstBSMP.V_PS_SOFT_INTERLOCKS,
         ConstBSMP.V_PS_HARD_INTERLOCKS,
         ConstBSMP.V_I_LOAD_MEAN,
         ConstBSMP.V_I_LOAD1,
         ConstBSMP.V_I_LOAD2,
-        ConstBSMP.V_V_DCLINK,
-        ConstBSMP.V_I_IGBT_1,
-        ConstBSMP.V_I_IGBT_2,
-        ConstBSMP.V_DUTY_CYCLE_1,
-        ConstBSMP.V_DUTY_CYCLE_2,
-        ConstBSMP.V_DUTY_DIFF,
-        ConstBSMP.V_V_INPUT_IIB,
-        ConstBSMP.V_V_OUTPUT_IIB,
-        ConstBSMP.V_I_IGBT_1_IIB,
-        ConstBSMP.V_I_IGBT_2_IIB,
-        ConstBSMP.V_TEMP_IGBT_1_IIB,
-        ConstBSMP.V_TEMP_IGBT_2_IIB,
-        ConstBSMP.V_V_DRIVER_IIB,
-        ConstBSMP.V_I_DRIVER_1_IIB,
-        ConstBSMP.V_I_DRIVER_2_IIB,
-        ConstBSMP.V_TEMP_INDUCTOR_IIB,
-        ConstBSMP.V_TEMP_HEATSINK_IIB,
-        ConstBSMP.V_IIB_INTERLOCKS,)
+        ConstBSMP.V_V_LOAD,
+        ConstBSMP.V_I_IGBT_1_1,
+        ConstBSMP.V_I_IGBT_2_1,
+        ConstBSMP.V_I_IGBT_1_2,
+        ConstBSMP.V_I_IGBT_2_2,
+        ConstBSMP.V_I_IGBT_1_3,
+        ConstBSMP.V_I_IGBT_2_3,
+        ConstBSMP.V_I_IGBT_1_4,
+        ConstBSMP.V_I_IGBT_2_4,
+        ConstBSMP.V_V_DCLINK_1,
+        ConstBSMP.V_V_DCLINK_2,
+        ConstBSMP.V_V_DCLINK_3,
+        ConstBSMP.V_V_DCLINK_4,
+        ConstBSMP.V_DUTY_MEAN,
+        ConstBSMP.V_DUTY_CYCLE_1_1,
+        ConstBSMP.V_DUTY_CYCLE_2_1,
+        ConstBSMP.V_DUTY_CYCLE_1_2,
+        ConstBSMP.V_DUTY_CYCLE_2_2,
+        ConstBSMP.V_DUTY_CYCLE_1_3,
+        ConstBSMP.V_DUTY_CYCLE_2_3,
+        ConstBSMP.V_DUTY_CYCLE_1_4,
+        ConstBSMP.V_DUTY_CYCLE_2_4,
+        ConstBSMP.V_V_INPUT_IIB_1,
+        ConstBSMP.V_V_OUTPUT_IIB_1,
+        ConstBSMP.V_I_IGBT_1_IIB_1,
+        ConstBSMP.V_I_IGBT_2_IIB_1,
+        ConstBSMP.V_TEMP_IGBT_1_IIB_1,
+        ConstBSMP.V_TEMP_IGBT_2_IIB_1,
+        ConstBSMP.V_V_DRIVER_IIB_1,
+        ConstBSMP.V_I_DRIVER_1_IIB_1,
+        ConstBSMP.V_I_DRIVER_2_IIB_1,
+        ConstBSMP.V_TEMP_INDUCTOR_IIB_1,
+        ConstBSMP.V_TEMP_HEATSINK_IIB_1,
+        ConstBSMP.V_I_LEAKAGE_IIB_1,
+        ConstBSMP.V_V_INPUT_IIB_1,
+        ConstBSMP.V_V_OUTPUT_IIB_1,
+        ConstBSMP.V_I_IGBT_1_IIB_1,
+        ConstBSMP.V_I_IGBT_2_IIB_1,
+        ConstBSMP.V_TEMP_IGBT_1_IIB_1,
+        ConstBSMP.V_TEMP_IGBT_2_IIB_1,
+        ConstBSMP.V_V_DRIVER_IIB_1,
+        ConstBSMP.V_I_DRIVER_1_IIB_1,
+        ConstBSMP.V_I_DRIVER_2_IIB_1,
+        ConstBSMP.V_TEMP_INDUCTOR_IIB_1,
+        ConstBSMP.V_TEMP_HEATSINK_IIB_1,
+        ConstBSMP.V_I_LEAKAGE_IIB_1,
+        ConstBSMP.V_V_INPUT_IIB_1,
+        ConstBSMP.V_V_OUTPUT_IIB_1,
+        ConstBSMP.V_I_IGBT_1_IIB_1,
+        ConstBSMP.V_I_IGBT_2_IIB_1,
+        ConstBSMP.V_TEMP_IGBT_1_IIB_1,
+        ConstBSMP.V_TEMP_IGBT_2_IIB_1,
+        ConstBSMP.V_V_DRIVER_IIB_1,
+        ConstBSMP.V_I_DRIVER_1_IIB_1,
+        ConstBSMP.V_I_DRIVER_2_IIB_1,
+        ConstBSMP.V_TEMP_INDUCTOR_IIB_1,
+        ConstBSMP.V_TEMP_HEATSINK_IIB_1,
+        ConstBSMP.V_I_LEAKAGE_IIB_1,
+        ConstBSMP.V_V_INPUT_IIB_1,
+        ConstBSMP.V_V_OUTPUT_IIB_1,
+        ConstBSMP.V_I_IGBT_1_IIB_1,
+        ConstBSMP.V_I_IGBT_2_IIB_1,
+        ConstBSMP.V_TEMP_IGBT_1_IIB_1,
+        ConstBSMP.V_TEMP_IGBT_2_IIB_1,
+        ConstBSMP.V_V_DRIVER_IIB_1,
+        ConstBSMP.V_I_DRIVER_1_IIB_1,
+        ConstBSMP.V_I_DRIVER_2_IIB_1,
+        ConstBSMP.V_TEMP_INDUCTOR_IIB_1,
+        ConstBSMP.V_TEMP_HEATSINK_IIB_1,
+        ConstBSMP.V_I_LEAKAGE_IIB_1,
+        ConstBSMP.V_IIB_INTERLOCKS_1,
+        ConstBSMP.V_IIB_INTERLOCKS_2,
+        ConstBSMP.V_IIB_INTERLOCKS_3,
+        ConstBSMP.V_IIB_INTERLOCKS_4,
+        ConstBSMP.V_I_MOD_1,
+        ConstBSMP.V_I_MOD_2,
+        ConstBSMP.V_I_MOD_3,
+        ConstBSMP.V_I_MOD_4,)
     groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 

@@ -48,9 +48,9 @@ class PSController:
             sel = self._readers[device_name + ':CtrlLoop-Sel']
             if sts.read() != sel.read():
                 sel.apply(sts.read())
-
         reader = self._readers[pvname]
-        return reader.read()
+        value = reader.read()
+        return value
 
     def read_all_fields(self, device_name):
         """Read all fields value from device."""
