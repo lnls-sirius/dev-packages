@@ -1,29 +1,32 @@
 # Sirius Power Supplies Controls System - BeagleBoneBlack IP Mapping
+# ==================================================================
 
 
-################################################################################
-################################# Sirius #######################################
-################################################################################
-# --- Dipoles
-PA-RaPSD04:CO-PSCtrl-SI1    10.128.123.107
-PA-RaPSD04:CO-PSCtrl-SI2    10.128.123.108
+# ______ TB ______
+
+# --- TB Dipole ---
+LA-RaPS02:CO-PSCtrl-TB      10.128.121.101
+
+# --- TB Quads ---
+LA-RaCtrl:CO-PSCtrl-TB1     10.128.121.103
+
+# --- TB Correctors ---
+LA-RaCtrl:CO-PSCtrl-TB2     10.128.121.104
 
 
-################################################################################
-################################# Booster ######################################
-################################################################################
+# ______ BO ______
 
-# --- Dipoles
+# --- BO Dipoles ---
 PA-RaPSF05:CO-PSCtrl-BO    10.128.123.105
 PA-RaPSE05:CO-PSCtrl-BO    10.128.123.106
 
-# --- QF, QD, SF, SD (FAC)
+# --- BO QF, QD, SF, SD (FAC) ---
 PA-RaPSC03:CO-PSCtrl-BO1    10.128.123.101
 PA-RaPSC03:CO-PSCtrl-BO2    10.128.123.102
 PA-RaPSC03:CO-PSCtrl-BO3    10.128.123.103
 PA-RaPSC03:CO-PSCtrl-BO4    10.128.123.104
 
-# --- BO Correctores and Skew quadrupole
+# --- BO Correctores and Skew quadrupole ---
 IA-01RaCtrl:CO-PSCtrl-BO    10.128.101.105
 IA-02RaCtrl:CO-PSCtrl-BO    10.128.102.105
 IA-04RaCtrl:CO-PSCtrl-BO    10.128.104.105
@@ -39,35 +42,24 @@ IA-17RaCtrl:CO-PSCtrl-BO    10.128.117.105
 IA-20RaCtrl:CO-PSCtrl-BO    10.128.120.105
 
 
-################################################################################
-############################# Transport Lines ##################################
-################################################################################
-# --- TB Dipole
-LA-RaPS02:CO-PSCtrl-TB      10.128.121.101
+# ______ TS ______
 
-# --- TB Quads
-LA-RaCtrl:CO-PSCtrl-TB1     10.128.121.103
+# --- TS Dipole ---
+LA-RaPS02:CO-PSCtrl-TS      10.128.121.106
 
-# --- TB Correctors
-LA-RaCtrl:CO-PSCtrl-TB2     10.128.121.104
-
-# --- TS Dipole
-LA-RaPS02:CO-PSCtrl-TS
-
-# --- TS Quads
-LA-RaPS04:CO-PSCtrl-TS1
+# --- TS Quads ---
+LA-RaPS04:CO-PSCtrl-TS1     10.128.121.107
 LA-RaPS04:CO-PSCtrl-TS2
 
-# --- TS Correctors
-LA-RaCtrl:CO-PSCtrl-TS1
+# --- TS Correctors ---
+LA-RaCtrl:CO-PSCtrl-TS      10.128.121.105
 
-# --- TB/TS DCLinks
+# --- TB/TS DCLinks ---
 LA-RaCtrl:CO-DCLinkCtrl     10.128.121.102
 
 
-################################################################################
-############################## SI/BO DCLinks ###################################
-################################################################################
+# ______ BO|SI ______
+
 IA-01RaCtrl:CO-DCLinkCtrl   10.128.101.104
 IA-02RaCtrl:CO-DCLinkCtrl   10.128.102.104
 IA-03RaCtrl:CO-DCLinkCtrl
@@ -90,20 +82,18 @@ IA-19RaCtrl:CO-DCLinkCtrl
 IA-20RaCtrl:CO-DCLinkCtrl   10.128.120.104
 
 
-################################################################################
-############################ Storage Ring ######################################
-################################################################################
-# --- Dipoles
-PA-RaPSD04:CO-PSCtrl-SI1
-PA-RaPSD04:CO-PSCtrl-SI2
+# ______ SI ______
 
-# --- Quadrupoles
-PA-RaPSA02:CO-PSCtrl-SI1
-PA-RaPSA02:CO-PSCtrl-SI2
-PA-RaPSA05:CO-PSCtrl-SI1
-PA-RaPSA05:CO-PSCtrl-SI2
+# --- SI Dipoles ---
+PA-RaPSD04:CO-PSCtrl-SI     10.128.123.107
 
-# --- Sextupoles
+# --- SI Quadrupoles ---
+PA-RaPSA02:CO-PSCtrl-SI1   10.128.123.109
+PA-RaPSA02:CO-PSCtrl-SI2   10.128.123.110
+PA-RaPSA05:CO-PSCtrl-SI1   10.128.123.111
+PA-RaPSA05:CO-PSCtrl-SI2   10.128.123.112
+
+# --- SI Sextupoles ---
 PA-RaPSB02:CO-PSCtrl-SI1
 PA-RaPSB02:CO-PSCtrl-SI2
 PA-RaPSB06:CO-PSCtrl-SI1
@@ -111,7 +101,7 @@ PA-RaPSB06:CO-PSCtrl-SI2
 PA-RaPSB09:CO-PSCtrl-SI1
 PA-RaPSB09:CO-PSCtrl-SI2
 
-# --- Individual PSs (FBP)
+# --- Individual PSs (FBP) ---
 IA-01RaCtrl:CO-PSCtrl-SI1
 IA-02RaCtrl:CO-PSCtrl-SI1
 IA-03RaCtrl:CO-PSCtrl-SI1

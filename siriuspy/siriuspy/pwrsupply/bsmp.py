@@ -438,6 +438,10 @@ class ConstFAP(ConstBSMP):
     V_IIB_INTERLOCKS = 47
 
 
+class ConstFAP_4P(ConstFAP):
+    """Namespace for organizing power supply FAP_4P BSMP constants."""
+
+
 # --- ACDC ---
 
 
@@ -1134,10 +1138,7 @@ class EntitiesFAP(_Entities):
         {'eid': 44, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 45, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 46, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 47, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
-
-
-    )
+        {'eid': 47, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32}, )
 
     Curves = (
         {'eid': 0, 'waccess': False, 'count': 256,
@@ -1145,14 +1146,18 @@ class EntitiesFAP(_Entities):
         {'eid': 1, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
         {'eid': 2, 'waccess': False, 'count': 256,
-         'nblocks': 16, 'var_type': _Types.T_FLOAT},
-    )
+         'nblocks': 16, 'var_type': _Types.T_FLOAT}, )
 
     Functions = _BSMP_Functions
 
     def __init__(self):
         """Call super."""
         super().__init__(self.Variables, self.Curves, self.Functions)
+
+
+class EntitiesFAP_4P(EntitiesFAP):
+    """FAP_4P-type power supply entities."""
+
 
 
 # --- DCDC ---
@@ -1386,6 +1391,16 @@ class FAP(_PSBSMP):
         """Init BSMP."""
         self.ConstBSMP = ConstFAP
         _PSBSMP.__init__(self, slave_address, EntitiesFAP(), pru=pru)
+
+
+class FAP_4P(_PSBSMP):
+    """BSMP with EntitiesFAP_4P."""
+
+    def __init__(self, slave_address, pru=None):
+        """Init BSMP."""
+        self.ConstBSMP = ConstFAP_4P
+        _PSBSMP.__init__(self, slave_address, EntitiesFAP_4P(), pru=pru)
+
 
 
 # --- ACDC ---

@@ -179,15 +179,23 @@ class PRU(PRUInterface):
             raise ValueError('module PRUserial485 is not installed!')
         if bbbname is None:
             self.version = __version1__
+            self.version_server = None
             # check if process is running as root
             if _os.geteuid() != 0:
                 _sys.exit('You need to have root privileges to use PRU')
         else:
             if _PRUserial485.__version__ != __version2__:
                 _sys.exit('PRUserial485 library if not ethernet client-server')
-            self.version = __version2__
             # tell PRUserial485_eth what BBB it should connect to
             _PRUserial485.set_beaglebone_ip(bbbname)
+            self.version = __version2__
+            self.version_server = _PRUserial485.PRUserial485_version()
+
+        # print prulib version
+        fmtstr = 'PRUserial485 lib version_{}: {}'
+        print(fmtstr.format('client', self.version))
+        print(fmtstr.format('server', self.version_server))
+        print()
 
         # init PRUserial485 interface
         PRUInterface.__init__(self)
