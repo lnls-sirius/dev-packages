@@ -1,0 +1,18 @@
+[Unit]
+Description=Soft IOC for TS quadrupole magnets (12)
+After=multi-user.target
+
+[Service]
+Group=sirius
+User=sirius
+Type=simple
+WorkingDirectory=/home/sirius/iocs-log
+StandardOutput=syslog
+StandardError=syslog
+ExecStartPre=/bin/bash --login -c 'env > /home/sirius/iocs-log/env-sirius-ioc-ts-ma-quadrupole-12'
+EnvironmentFile=-/home/sirius/iocs-log/env-sirius-ioc-ts-ma-quadrupole-12
+ExecStart=/usr/local/bin/sirius-ioc-as-ma.py \
+TS-01:MA-QF1B \
+TS-01:MA-QF1A \
+TS-02:MA-QD2 \
+TS-02:MA-QF2

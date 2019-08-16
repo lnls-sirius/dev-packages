@@ -1,0 +1,24 @@
+[Unit]
+Description=Soft IOC for TS corrector magnets
+After=multi-user.target
+
+[Service]
+Group=sirius
+User=sirius
+Type=simple
+WorkingDirectory=/home/sirius/iocs-log
+StandardOutput=syslog
+StandardError=syslog
+ExecStartPre=/bin/bash --login -c 'env > /home/sirius/iocs-log/env-sirius-ioc-ts-ma-correctors'
+EnvironmentFile=-/home/sirius/iocs-log/env-sirius-ioc-ts-ma-correctors
+ExecStart=/usr/local/bin/sirius-ioc-as-ma.py \
+TS-01:MA-CV-1 \
+TS-01:MA-CH \
+TS-01:MA-CV-2 \
+TS-02:MA-CH 4 \
+TS-02:MA-CV \
+TS-03:MA-CH \
+TS-03:MA-CV \
+TS-04:MA-CV-1 \
+TS-04:MA-CH \
+TS-04:MA-CV-2
