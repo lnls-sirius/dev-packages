@@ -207,11 +207,16 @@ class BoosterRamp(_ConfigDBDocument):
 
         # interpolate nconfig, if necessary
         if nconfig is None:
-            for ma in self._ps_nconfigs[name].manames:
-                if ma == self.MANAME_DIPOLE:
-                    continue
-                ovalues = [self._ps_nconfigs[n][ma] for n in onames]
-                self._ps_nconfigs[name][ma] = _np.interp(time, otimes, ovalues)
+            if otimes:
+                for ma in self._ps_nconfigs[name].manames:
+                    if ma == self.MANAME_DIPOLE:
+                        continue
+                    ovalues = [self._ps_nconfigs[n][ma] for n in onames]
+                    self._ps_nconfigs[name][ma] = _np.interp(
+                        time, otimes, ovalues)
+            else:
+                self._ps_nconfigs[name].value = \
+                    BoosterNormalized().get_value_template()
 
             self._update_ps_normalized_config_energy(
                 self._ps_nconfigs[name], time)
@@ -283,23 +288,19 @@ class BoosterRamp(_ConfigDBDocument):
     @property
     def ps_ramp_times(self):
         """Return ps ramp times."""
-        v = (self.ps_ramp_rampup_start_time,
-             self.ps_ramp_rampup_stop_time,
-             self.ps_ramp_plateau_start_time,
-             self.ps_ramp_plateau_stop_time,
+        v = (self.ps_ramp_rampup1_start_time,
+             self.ps_ramp_rampup2_start_time,
              self.ps_ramp_rampdown_start_time,
-             self.ps_ramp_rampdown_stop_time,)
+             self.ps_ramp_rampdown_stop_time)
         return v
 
     @property
     def ps_ramp_energies(self):
         """Return ps ramp times."""
-        v = (self.ps_ramp_rampup_start_energy,
-             self.ps_ramp_rampup_stop_energy,
-             self.ps_ramp_plateau_energy,
-             self.ps_ramp_plateau_energy,
+        v = (self.ps_ramp_rampup1_start_energy,
+             self.ps_ramp_rampup2_start_energy,
              self.ps_ramp_rampdown_start_energy,
-             self.ps_ramp_rampdown_stop_energy,)
+             self.ps_ramp_rampdown_stop_energy)
         return v
 
     @property
@@ -315,130 +316,105 @@ class BoosterRamp(_ConfigDBDocument):
         if value != rdip['start_energy']:
             w = self._create_new_ps_waveform_dipole()
             w.start_energy = value
-            self._verify_ps_waveform_invalid(w, 'start_energy')
-            if self._auto_update:
-                w.strengths  # triggers waveform interpolation
-
             rdip['start_energy'] = w.start_energy
             self._synchronized = False
             self._invalidate_ps_waveforms(True)
 
     @property
-    def ps_ramp_rampup_start_energy(self):
+    def ps_ramp_rampup1_start_energy(self):
         """Return."""
-        return self._value['ps_ramp']['rampup_start_energy']
+        return self._value['ps_ramp']['rampup1_start_energy']
 
-    @ps_ramp_rampup_start_energy.setter
-    def ps_ramp_rampup_start_energy(self, value):
+    @ps_ramp_rampup1_start_energy.setter
+    def ps_ramp_rampup1_start_energy(self, value):
         """Return."""
         value = float(value)
         rdip = self._value['ps_ramp']
-        if value != rdip['rampup_start_energy']:
+        if value != rdip['rampup1_start_energy']:
             w = self._create_new_ps_waveform_dipole()
-            w.rampup_start_energy = value
-            self._verify_ps_waveform_invalid(w, 'rampup_start_energy')
-            if self._auto_update:
-                w.strengths  # triggers waveform interpolation
-
-            rdip['rampup_start_energy'] = w.rampup_start_energy
+            w.rampup1_start_energy = value
+            rdip['rampup1_start_energy'] = w.rampup1_start_energy
             self._synchronized = False
             self._invalidate_ps_waveforms(True)
 
     @property
-    def ps_ramp_rampup_start_time(self):
+    def ps_ramp_rampup1_start_time(self):
         """Return."""
-        return self._value['ps_ramp']['rampup_start_time']
+        return self._value['ps_ramp']['rampup1_start_time']
 
-    @ps_ramp_rampup_start_time.setter
-    def ps_ramp_rampup_start_time(self, value):
+    @ps_ramp_rampup1_start_time.setter
+    def ps_ramp_rampup1_start_time(self, value):
+        """Return."""
+        self._check_valid_time(value)
+        self._value['ps_ramp']['rampup1_start_time'] = value
+        self._synchronized = False
+        self._invalidate_ps_waveforms(True)
+
+    @property
+    def ps_ramp_rampup1_slope(self):
+        """Return rampup1 slope."""
+        self._update_ps_waveform(self.MANAME_DIPOLE)
+        return self._ps_waveforms[self.MANAME_DIPOLE].rampup1_slope
+
+    @property
+    def ps_ramp_rampup2_start_energy(self):
+        """Return."""
+        return self._value['ps_ramp']['rampup2_start_energy']
+
+    @ps_ramp_rampup2_start_energy.setter
+    def ps_ramp_rampup2_start_energy(self, value):
         """Return."""
         value = float(value)
         rdip = self._value['ps_ramp']
-        if value != rdip['rampup_start_time']:
+        if value != rdip['rampup2_start_energy']:
             w = self._create_new_ps_waveform_dipole()
-            w.rampup_start_time = value
-            self._verify_ps_waveform_invalid(w, 'rampup_start_time')
-            if self._auto_update:
-                w.strengths  # triggers waveform interpolation
-
-            rdip['rampup_start_time'] = value
+            w.rampup2_start_energy = value
+            rdip['rampup2_start_energy'] = w.rampup2_start_energy
             self._synchronized = False
             self._invalidate_ps_waveforms(True)
 
     @property
-    def ps_ramp_rampup_stop_energy(self):
+    def ps_ramp_rampup2_start_time(self):
         """Return."""
-        return self._value['ps_ramp']['rampup_stop_energy']
+        return self._value['ps_ramp']['rampup2_start_time']
 
-    @ps_ramp_rampup_stop_energy.setter
-    def ps_ramp_rampup_stop_energy(self, value):
+    @ps_ramp_rampup2_start_time.setter
+    def ps_ramp_rampup2_start_time(self, value):
         """Return."""
-        value = float(value)
-        rdip = self._value['ps_ramp']
-        if value != rdip['rampup_stop_energy']:
-            w = self._create_new_ps_waveform_dipole()
-            w.rampup_stop_energy = value
-            self._verify_ps_waveform_invalid(w, 'rampup_stop_energy')
-            if self._auto_update:
-                w.strengths  # triggers waveform interpolation
-
-            rdip['rampup_stop_energy'] = w.rampup_stop_energy
-            self._synchronized = False
-            self._invalidate_ps_waveforms(True)
+        self._check_valid_time(value)
+        self._value['ps_ramp']['rampup2_start_time'] = value
+        self._synchronized = False
+        self._invalidate_ps_waveforms(True)
 
     @property
-    def ps_ramp_rampup_stop_time(self):
-        """Return."""
-        return self._value['ps_ramp']['rampup_stop_time']
-
-    @ps_ramp_rampup_stop_time.setter
-    def ps_ramp_rampup_stop_time(self, value):
-        """Return."""
-        value = float(value)
-        rdip = self._value['ps_ramp']
-        if value != rdip['rampup_stop_time']:
-            w = self._create_new_ps_waveform_dipole()
-            w.rampup_stop_time = value
-            self._verify_ps_waveform_invalid(w, 'rampup_stop_time')
-            if self._auto_update:
-                w.strengths  # triggers waveform interpolation
-
-            rdip['rampup_stop_time'] = value
-            self._synchronized = False
-            self._invalidate_ps_waveforms(True)
+    def ps_ramp_rampup2_slope(self):
+        """Return rampup2 slope."""
+        self._update_ps_waveform(self.MANAME_DIPOLE)
+        return self._ps_waveforms[self.MANAME_DIPOLE].rampup2_slope
 
     @property
-    def ps_ramp_plateau_start_time(self):
+    def ps_ramp_rampup_smooth_energy(self):
         """Return."""
-        w = self.ps_waveform_get(self.MANAME_DIPOLE)
-        return w.plateau_start_time
+        return self._value['ps_ramp']['rampup_smooth_energy']
+
+    @ps_ramp_rampup_smooth_energy.setter
+    def ps_ramp_rampup_smooth_energy(self, value):
+        """Return."""
+        self._value['ps_ramp']['rampup_smooth_energy'] = value
+        self._synchronized = False
+        self._invalidate_ps_waveforms(True)
 
     @property
-    def ps_ramp_plateau_stop_time(self):
+    def ps_ramp_rampup_smooth_intvl(self):
         """Return."""
-        w = self.ps_waveform_get(self.MANAME_DIPOLE)
-        return w.plateau_stop_time
+        return self._value['ps_ramp']['rampup_smooth_intvl']
 
-    @property
-    def ps_ramp_plateau_energy(self):
+    @ps_ramp_rampup_smooth_intvl.setter
+    def ps_ramp_rampup_smooth_intvl(self, value):
         """Return."""
-        return self._value['ps_ramp']['plateau_energy']
-
-    @ps_ramp_plateau_energy.setter
-    def ps_ramp_plateau_energy(self, value):
-        """Return."""
-        value = float(value)
-        rdip = self._value['ps_ramp']
-        if value != rdip['plateau_energy']:
-            w = self._create_new_ps_waveform_dipole()
-            w.plateau_energy = value
-            self._verify_ps_waveform_invalid(w, 'plateau_energy')
-            if self._auto_update:
-                w.strengths  # triggers waveform interpolation
-
-            rdip['plateau_energy'] = w.plateau_energy
-            self._synchronized = False
-            self._invalidate_ps_waveforms(True)
+        self._value['ps_ramp']['rampup_smooth_intvl'] = value
+        self._synchronized = False
+        self._invalidate_ps_waveforms(True)
 
     @property
     def ps_ramp_rampdown_start_energy(self):
@@ -453,10 +429,6 @@ class BoosterRamp(_ConfigDBDocument):
         if value != rdip['rampdown_start_energy']:
             w = self._create_new_ps_waveform_dipole()
             w.rampdown_start_energy = value
-            self._verify_ps_waveform_invalid(w, 'rampdown_start_energy')
-            if self._auto_update:
-                w.strengths  # triggers waveform interpolation
-
             rdip['rampdown_start_energy'] = w.rampdown_start_energy
             self._synchronized = False
             self._invalidate_ps_waveforms(True)
@@ -469,18 +441,10 @@ class BoosterRamp(_ConfigDBDocument):
     @ps_ramp_rampdown_start_time.setter
     def ps_ramp_rampdown_start_time(self, value):
         """Return."""
-        value = float(value)
-        rdip = self._value['ps_ramp']
-        if value != rdip['rampdown_start_time']:
-            w = self._create_new_ps_waveform_dipole()
-            w.rampdown_start_time = value
-            self._verify_ps_waveform_invalid(w, 'rampdown_start_time')
-            if self._auto_update:
-                w.strengths  # triggers waveform interpolation
-
-            rdip['rampdown_start_time'] = value
-            self._synchronized = False
-            self._invalidate_ps_waveforms(True)
+        self._check_valid_time(value)
+        self._value['ps_ramp']['rampdown_start_time'] = value
+        self._synchronized = False
+        self._invalidate_ps_waveforms(True)
 
     @property
     def ps_ramp_rampdown_stop_energy(self):
@@ -495,10 +459,6 @@ class BoosterRamp(_ConfigDBDocument):
         if value != rdip['rampdown_stop_energy']:
             w = self._create_new_ps_waveform_dipole()
             w.rampdown_stop_energy = value
-            self._verify_ps_waveform_invalid(w, 'rampdown_stop_energy')
-            if self._auto_update:
-                w.strengths  # triggers waveform interpolation
-
             rdip['rampdown_stop_energy'] = w.rampdown_stop_energy
             self._synchronized = False
             self._invalidate_ps_waveforms(True)
@@ -511,18 +471,40 @@ class BoosterRamp(_ConfigDBDocument):
     @ps_ramp_rampdown_stop_time.setter
     def ps_ramp_rampdown_stop_time(self, value):
         """Return."""
-        value = float(value)
-        rdip = self._value['ps_ramp']
-        if value != rdip['rampdown_stop_time']:
-            w = self._create_new_ps_waveform_dipole()
-            w.rampdown_stop_time = value
-            self._verify_ps_waveform_invalid(w, 'rampdown_stop_time')
-            if self._auto_update:
-                w.strengths  # triggers waveform interpolation
+        self._check_valid_time(value)
+        self._value['ps_ramp']['rampdown_stop_time'] = value
+        self._synchronized = False
+        self._invalidate_ps_waveforms(True)
 
-            rdip['rampdown_stop_time'] = value
-            self._synchronized = False
-            self._invalidate_ps_waveforms(True)
+    @property
+    def ps_ramp_rampdown_slope(self):
+        """Return rampup2 slope."""
+        self._update_ps_waveform(self.MANAME_DIPOLE)
+        return self._ps_waveforms[self.MANAME_DIPOLE].rampdown_slope
+
+    @property
+    def ps_ramp_rampdown_smooth_energy(self):
+        """Return."""
+        return self._value['ps_ramp']['rampdown_smooth_energy']
+
+    @ps_ramp_rampdown_smooth_energy.setter
+    def ps_ramp_rampdown_smooth_energy(self, value):
+        """Return."""
+        self._value['ps_ramp']['rampdown_smooth_energy'] = value
+        self._synchronized = False
+        self._invalidate_ps_waveforms(True)
+
+    @property
+    def ps_ramp_rampdown_smooth_intvl(self):
+        """Return."""
+        return self._value['ps_ramp']['rampdown_smooth_intvl']
+
+    @ps_ramp_rampdown_smooth_intvl.setter
+    def ps_ramp_rampdown_smooth_intvl(self, value):
+        """Return."""
+        self._value['ps_ramp']['rampdown_smooth_intvl'] = value
+        self._synchronized = False
+        self._invalidate_ps_waveforms(True)
 
     # ---- rf ramp parameters ----
 
@@ -814,13 +796,6 @@ class BoosterRamp(_ConfigDBDocument):
     # --- API for waveforms ---
 
     @property
-    def ps_waveform_anomalies(self):
-        """Return ps waveform anomalies."""
-        self._update_ps_waveform(self.MANAME_DIPOLE)
-        w = self._ps_waveforms[self.MANAME_DIPOLE]
-        return w.anomalies
-
-    @property
     def ps_waveform_manames_exclimits(self):
         """Return a list of manames whose waveform exceeds current limits."""
         if not self._value['ps_normalized_configs*']:
@@ -831,8 +806,12 @@ class BoosterRamp(_ConfigDBDocument):
         for maname in manames:
             self._update_ps_waveform(maname)
             w_currents = self._ps_waveforms[maname].currents
+            isNan = _np.any(_np.isnan(w_currents))
+            isInf = _np.any(_np.isinf(w_currents))
+            if isNan or isInf:
+                continue
             limits = _MASearch.conv_maname_2_splims(maname)
-            highlim = limits['HOPR']
+            highlim = limits['HOPR'] if maname != 'BO-Fam:MA-B' else 1072
             lowlim = limits['LOPR']
             if _np.any(w_currents > highlim) or _np.any(w_currents < lowlim):
                 manames_exclimits.append(maname)
@@ -877,12 +856,11 @@ class BoosterRamp(_ConfigDBDocument):
 
     def ps_waveform_interp_time(self, energy):
         """Return ps ramp time at a given energy.
-
-        Use only energies until rampup-stop time.
+        Use only energies until rampdown-start time.
         """
-        rampup_stop_time = self.ps_ramp_rampup_stop_time
+        rampdown_start_time = self.ps_ramp_rampdown_start_time
         times = [time for time in self.ps_waveform_get_times()
-                 if time < rampup_stop_time]
+                 if time < rampdown_start_time]
         energies = self._ps_waveforms[self.MANAME_DIPOLE].strengths[
                  0:len(times)]
         time = _np.interp(energy, energies, times)
@@ -932,6 +910,7 @@ class BoosterRamp(_ConfigDBDocument):
             'ti_params_ejection_time [ms]',
             'ps_ramp_duration [ms]',
             'ps_ramp_time_energy [ms] [GeV]',
+            'ps_ramp_slopes [GeV/s]',
             'ps_normalized_configs [ms] [name]',
         )
         st = ''
@@ -949,18 +928,12 @@ class BoosterRamp(_ConfigDBDocument):
         st += strfmt1.format(labels[5], '')
         st += strfmt2.format('', 0.0,
                              self.ps_ramp_start_energy, '(start)')
-        st += strfmt2.format('', self.ps_ramp_rampup_start_time,
-                             self.ps_ramp_rampup_start_energy,
-                             '(rampup_start)')
-        st += strfmt2.format('', self.ps_ramp_rampup_stop_time,
-                             self.ps_ramp_rampup_stop_energy,
-                             '(rampup_stop)')
-        st += strfmt2.format('', self.ps_ramp_plateau_start_time,
-                             self.ps_ramp_plateau_energy,
-                             '(plateau_start)')
-        st += strfmt2.format('', self.ps_ramp_plateau_stop_time,
-                             self.ps_ramp_plateau_energy,
-                             '(plateau_stop)')
+        st += strfmt2.format('', self.ps_ramp_rampup1_start_time,
+                             self.ps_ramp_rampup1_start_energy,
+                             '(rampup1_start)')
+        st += strfmt2.format('', self.ps_ramp_rampup2_start_time,
+                             self.ps_ramp_rampup2_start_energy,
+                             '(rampup2_start)')
         st += strfmt2.format('', self.ps_ramp_rampdown_start_time,
                              self.ps_ramp_rampdown_start_energy,
                              '(rampdown_start)')
@@ -970,6 +943,13 @@ class BoosterRamp(_ConfigDBDocument):
         st += strfmt2.format('', self.ps_ramp_duration,
                              self.ps_ramp_start_energy, '(stop)')
         st += strfmt1.format(labels[6], '')
+        st += strfmt3.format('', self.ps_ramp_rampup1_slope,
+                             '(rampup1)')
+        st += strfmt3.format('', self.ps_ramp_rampup2_slope,
+                             '(rampup2)')
+        st += strfmt3.format('', self.ps_ramp_rampdown_slope,
+                             '(rampdown)')
+        st += strfmt1.format(labels[7], '')
         time = self.ps_normalized_configs_times
         name = self.ps_normalized_configs_names
         for i in range(len(time)):
@@ -1071,15 +1051,18 @@ class BoosterRamp(_ConfigDBDocument):
             wfm_nrpoints=rdip['wfm_nrpoints'],
             duration=rdip['duration'],
             start_energy=rdip['start_energy'],
-            rampup_start_time=rdip['rampup_start_time'],
-            rampup_start_energy=rdip['rampup_start_energy'],
-            rampup_stop_time=rdip['rampup_stop_time'],
-            rampup_stop_energy=rdip['rampup_stop_energy'],
-            plateau_energy=rdip['plateau_energy'],
+            rampup1_start_time=rdip['rampup1_start_time'],
+            rampup1_start_energy=rdip['rampup1_start_energy'],
+            rampup2_start_time=rdip['rampup2_start_time'],
+            rampup2_start_energy=rdip['rampup2_start_energy'],
+            rampup_smooth_intvl=rdip['rampup_smooth_intvl'],
+            rampup_smooth_energy=rdip['rampup_smooth_energy'],
             rampdown_start_time=rdip['rampdown_start_time'],
             rampdown_start_energy=rdip['rampdown_start_energy'],
             rampdown_stop_time=rdip['rampdown_stop_time'],
-            rampdown_stop_energy=rdip['rampdown_stop_energy'])
+            rampdown_stop_energy=rdip['rampdown_stop_energy'],
+            rampdown_smooth_intvl=rdip['rampdown_smooth_intvl'],
+            rampdown_smooth_energy=rdip['rampdown_smooth_energy'])
         return dipole
 
     def _conv_times_2_indices(self, times):
@@ -1096,13 +1079,6 @@ class BoosterRamp(_ConfigDBDocument):
             if maname != self.MANAME_DIPOLE or include_dipole:
                 del(self._ps_waveforms[maname])
 
-    def _verify_ps_waveform_invalid(self, waveform, propty=''):
-        if propty == '':
-            propty = 'parameters'
-        if waveform.invalid:  # triggers waveform check invalid parameters
-            raise _RampInvalidDipoleWfmParms(
-                'Invalid ps waveform {}.'.format(propty))
-
     def _check_ps_normalized_modified(self, nconfig):
         # load original nconfig from server
         oconfig = BoosterNormalized(name=nconfig.name)
@@ -1113,6 +1089,15 @@ class BoosterRamp(_ConfigDBDocument):
             if oconfig[mag] != nconfig[mag]:
                 return True
         return False
+
+    def _check_valid_time(self, time):
+        """Check if time is in valid interval."""
+        d = self.ps_ramp_duration
+        if 0 < time < d:
+            return True
+        else:
+            raise _RampError(
+                'Time value must be between 0 and {}!'.format(d))
 
 
 class SiriusMig(BoosterRamp):
