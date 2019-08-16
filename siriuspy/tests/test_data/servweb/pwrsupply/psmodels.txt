@@ -159,8 +159,7 @@ PA-RaPSF09:PS-DCLink-BO       FAC_2P4S_ACDC
 
 TB-Fam:PS-B                   FAP
 
-TS-Fam:PS-B                   FAP_4P_Master
-TS-Fam:PS-B-Slave             FAP_4P_Slave
+TS-Fam:PS-B                   FAP_4P
 
 TB-01:PS-QD1                  FBP
 TB-01:PS-QF1                  FBP

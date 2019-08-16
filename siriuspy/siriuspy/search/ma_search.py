@@ -72,8 +72,7 @@ class MASearch:
         if psmodel in ('FBP', 'FBP_DCLink', 'FBP_FOFB',
                        'FAC_ACDC', 'FAC_DCDC', 'FAC_2S_DCDC', 'FAC_2S_ACDC',
                        'FAC_2P4S_DCDC', 'FAC_2P4S_ACDC', 'FAP',
-                       'FAP_2P2S_MASTER', 'FAP_4P_Master', 'FAP_4P_Slave',
-                       'Commercial', 'LINAC_PS',
+                       'FAP_2P2S_MASTER', 'FAP_4P', 'Commercial', 'LINAC_PS',
                        'FP_SEPT', 'FP_KCKR', 'FP_PINGER'):
             return MASearch._splims_ma_unit
         else:
@@ -148,8 +147,7 @@ class MASearch:
     def conv_psname_2_psmaname(psname):
         """Return power supply maname for a given psname."""
         MASearch._reload_maname_2_psnames_dict()
-        if psname not in MASearch._psnames_list or 'DCLink' in psname or \
-                'Slave' in psname:
+        if psname not in MASearch._psnames_list or 'DCLink' in psname:
             return None
         if 'PS-B1B2' in psname:
             return 'SI-Fam:MA-B1B2'
