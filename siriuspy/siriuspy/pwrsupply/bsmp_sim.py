@@ -19,6 +19,7 @@ from siriuspy.pwrsupply.bsmp import EntitiesFBP as _EntitiesFBP
 from siriuspy.pwrsupply.bsmp import EntitiesFBP_DCLink as _EntitiesFBP_DCLink
 from siriuspy.pwrsupply.bsmp import EntitiesFAC_DCDC as _EntitiesFAC_DCDC
 from siriuspy.pwrsupply.bsmp import EntitiesFAC_ACDC as _EntitiesFAC_ACDC
+from siriuspy.pwrsupply.bsmp import EntitiesFAC_2S_ACDC as _EntitiesFAC_2S_ACDC
 from siriuspy.pwrsupply.bsmp import \
     EntitiesFAC_2P4S_DCDC as _EntitiesFAC_2P4S_DCDC
 from siriuspy.pwrsupply.bsmp import \
