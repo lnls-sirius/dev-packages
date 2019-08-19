@@ -144,6 +144,11 @@ class ConstBSMP:
     V_WFMREF_START = 18
     V_WFMREF_END = 19
     V_WFMREF_IDX = 20
+    # --- undefined variables
+    V_UNDEF21 = 21
+    V_UNDEF22 = 22
+    V_UNDEF23 = 23
+    V_UNDEF24 = 24
 
     # --- power supply parameters ---
     # ----- class PS -----
@@ -475,19 +480,6 @@ class ConstFBP_DCLink(ConstBSMP):
 class ConstFAC_2S_ACDC(ConstBSMP):
     """Namespace for organizing power supply FAC_2S_ACDC BSMP constants."""
 
-    # --- undefined variables
-    V_UNDEF14 = 14
-    V_UNDEF15 = 15
-    V_UNDEF16 = 16
-    V_UNDEF17 = 17
-    V_UNDEF18 = 18
-    V_UNDEF19 = 19
-    V_UNDEF20 = 20
-    V_UNDEF21 = 21
-    V_UNDEF22 = 22
-    V_UNDEF23 = 23
-    V_UNDEF24 = 24
-
     # --- FAC_2S_ACDC variables ---
     V_PS_SOFT_INTERLOCKS = 25
     V_PS_HARD_INTERLOCKS = 26
@@ -497,6 +489,17 @@ class ConstFAC_2S_ACDC(ConstBSMP):
     V_TEMP_HEATSINK = 30
     V_TEMP_INDUCTORS = 31
     V_DUTY_CYCLE = 32
+    V_I_INPUT_IS_IIB = 33
+    V_V_INPUT_IS_IIB = 34
+    V_TEMP_INDUCTOR_IS_IIB = 35
+    V_TEMP_HEATSINK_IS_IIB = 36
+    V_OUTPUT_CMD_IIB = 37
+    V_CAPBANK_CMD_IIB = 38
+    V_TEMP_INDUCTOR_CMD_IIB = 39
+    V_TEMP_HEATSINK_CMD_IIB = 40
+    V_I_LEAKAGE_CMD_IIB = 41
+    V_IIB_INTERLOCKS_IS = 42
+    V_IIB_INTERLOCKS_CMD = 43
 
 
 class ConstFAC_2P4S_ACDC(ConstFAC_2S_ACDC):
@@ -1160,7 +1163,7 @@ class EntitiesFAP_4P(EntitiesFAP):
 
 
 
-# --- DCDC ---
+# --- ACDC ---
 
 
 class EntitiesFBP_DCLink(_Entities):
@@ -1253,6 +1256,17 @@ class EntitiesFAC_2S_ACDC(_Entities):
         {'eid': 30, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 31, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 32, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 33, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 34, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 35, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 36, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 37, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 38, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 39, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 40, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 41, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 42, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 43, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
     )
 
     Curves = tuple()
