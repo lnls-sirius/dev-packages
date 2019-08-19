@@ -144,6 +144,11 @@ class ConstBSMP:
     V_WFMREF_START = 18
     V_WFMREF_END = 19
     V_WFMREF_IDX = 20
+    # --- undefined variables
+    V_UNDEF21 = 21
+    V_UNDEF22 = 22
+    V_UNDEF23 = 23
+    V_UNDEF24 = 24
 
     # --- power supply parameters ---
     # ----- class PS -----
@@ -209,12 +214,6 @@ class ConstFBP(ConstBSMP):
 
     # --- implemented protocol version ---
     # version = __bsmp_version__
-
-    # --- undefined variables
-    V_UNDEF21 = 21
-    V_UNDEF22 = 22
-    V_UNDEF23 = 23
-    V_UNDEF24 = 24
 
     # --- FSB variables ---
     V_PS_SOFT_INTERLOCKS = 25  # BSMP doc says ID numb. should be continous!
