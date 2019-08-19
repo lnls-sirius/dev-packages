@@ -453,23 +453,10 @@ class ConstFAP_4P(ConstFAP):
 class ConstFBP_DCLink(ConstBSMP):
     """Namespace for organizing power supply FBP_DCLink BSMP constants."""
 
-    # --- undefined variables
-    V_UNDEF14 = 14
-    V_UNDEF15 = 15
-    V_UNDEF16 = 16
-    V_UNDEF17 = 17
-    V_UNDEF18 = 18
-    V_UNDEF19 = 19
-    V_UNDEF20 = 20
-    V_UNDEF21 = 21
-    V_UNDEF22 = 22
-    V_UNDEF23 = 23
-    V_UNDEF24 = 24
-
     # --- FBP_DCLink variables ---
     V_PS_SOFT_INTERLOCKS = 25
     V_PS_HARD_INTERLOCKS = 26
-    V_DIGITAL_INPUTS = 27
+    V_MODULES_STATUS = 27
     V_V_OUT = 28
     V_V_OUT_1 = 29
     V_V_OUT_2 = 30
@@ -1184,7 +1171,6 @@ class EntitiesFBP_DCLink(_Entities):
         {'eid': 11, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 12, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 13, 'waccess': False, 'count': 4, 'var_type': _Types.T_FLOAT},
-        # --- undefined variables
         {'eid': 14, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
         {'eid': 15, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
         {'eid': 16, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
@@ -1192,6 +1178,7 @@ class EntitiesFBP_DCLink(_Entities):
         {'eid': 18, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 19, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 20, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        # --- undefined variables
         {'eid': 21, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         {'eid': 22, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         {'eid': 23, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
