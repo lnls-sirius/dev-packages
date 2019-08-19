@@ -225,7 +225,6 @@ class ConstFBP(ConstBSMP):
     V_DUTY_CYCLE = 31  # (float)
 
     # --- undefined variables
-
     V_UNDEF32 = 32
     V_UNDEF33 = 33
     V_UNDEF34 = 34
@@ -236,7 +235,6 @@ class ConstFBP(ConstBSMP):
     V_UNDEF39 = 39
 
     # --- mirror variables ---
-
     V_PS_STATUS_1 = 40
     V_PS_STATUS_2 = 41
     V_PS_STATUS_3 = 42
