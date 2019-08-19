@@ -737,8 +737,9 @@ class BSMPSim_FBP_DCLink(_BaseBSMPSim, _Spec_FBP_DCLink):
             0, 0, 0, 0.0, 0.0, 0.0, 0.0, [0.0, 0.0, 0.0, 0.0],  # siggen [6-13]
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # undef [14-24]
             0, 0,  # interlocks [25-26]
-            0,
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # [28-32]
+            0,  # modules_status [27]
+            0.0, 0.0, 0.0, 0.0,  # v_out [28-31],
+            0]  # dig_pot_tap [32]
         return variables
 
 
