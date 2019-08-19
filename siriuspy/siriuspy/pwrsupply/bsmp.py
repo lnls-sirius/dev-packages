@@ -140,7 +140,6 @@ class ConstBSMP:
     V_WFMREF_START = 18
     V_WFMREF_END = 19
     V_WFMREF_IDX = 20
-
     # --- undefined variables
     V_UNDEF21 = 21
     V_UNDEF22 = 22
