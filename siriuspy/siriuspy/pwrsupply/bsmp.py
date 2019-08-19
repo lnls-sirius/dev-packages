@@ -211,13 +211,6 @@ class ConstFBP(ConstBSMP):
     # version = __bsmp_version__
 
     # --- undefined variables
-    V_UNDEF14 = 14
-    V_UNDEF15 = 15
-    V_UNDEF16 = 16
-    V_UNDEF17 = 17
-    V_UNDEF18 = 18
-    V_UNDEF19 = 19
-    V_UNDEF20 = 20
     V_UNDEF21 = 21
     V_UNDEF22 = 22
     V_UNDEF23 = 23
@@ -791,7 +784,6 @@ class EntitiesFBP(_Entities):
         {'eid': 11, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 12, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 13, 'waccess': False, 'count': 4, 'var_type': _Types.T_FLOAT},
-        # --- undefined variables
         {'eid': 14, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
         {'eid': 15, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
         {'eid': 16, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
@@ -799,6 +791,7 @@ class EntitiesFBP(_Entities):
         {'eid': 18, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 19, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
         {'eid': 20, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        # --- undefined variables
         {'eid': 21, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         {'eid': 22, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         {'eid': 23, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},

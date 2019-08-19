@@ -197,6 +197,8 @@ class FBP_Factory(ModelFactory):
         'Current-RB':  _bsmp.ConstFBP.V_PS_SETPOINT,
         'CurrentRef-Mon':  _bsmp.ConstFBP.V_PS_REFERENCE,
         'Current-Mon':  _bsmp.ConstFBP.V_I_LOAD,
+        'SwitchesTemperature-Mon': _bsmp.ConstFBP.V_TEMP_SWITCHES,
+        'PWMDutyCycle-Mon': _bsmp.ConstFBP.V_DUTY_CYCLE,
     }
 
     @property
@@ -901,7 +903,7 @@ class PRUCParms_FBP(_PRUCParms):
     groups[_PRUCParms.ALL] = tuple(sorted(Entities.list_variables(0)))
     groups[_PRUCParms.READONLY] = tuple(sorted(Entities.list_variables(1)))
     groups[_PRUCParms.WRITEABLE] = tuple(sorted(Entities.list_variables(2)))
-    # new variable groups usefull for PRUController.
+    # new variable groups useful for PRUController.
     groups[_PRUCParms.ALLRELEVANT] = (
         # --- common variables
         ConstBSMP.V_PS_STATUS,
@@ -927,11 +929,6 @@ class PRUCParms_FBP(_PRUCParms):
         ConstBSMP.V_TEMP_SWITCHES,
         ConstBSMP.V_DUTY_CYCLE,)
     groups[_PRUCParms.SYNCOFF] = (
-        # =======================================================
-        # cmd exec_funcion read_group:
-        #   17.2 ± 0.3 ms @ BBB1, 4 ps as measured from Python
-        #   180us @ BBB1, 1 ps as measured in the oscilloscope
-        # =======================================================
         # --- common variables
         ConstBSMP.V_PS_STATUS,
         ConstBSMP.V_PS_SETPOINT,
@@ -946,7 +943,7 @@ class PRUCParms_FBP(_PRUCParms):
         ConstBSMP.V_SIGGEN_AMPLITUDE,
         ConstBSMP.V_SIGGEN_OFFSET,
         ConstBSMP.V_SIGGEN_AUX_PARAM,
-        # --- FSB variables ---
+        # --- FBP variables ---
         ConstBSMP.V_PS_SOFT_INTERLOCKS,
         ConstBSMP.V_PS_HARD_INTERLOCKS,
         ConstBSMP.V_I_LOAD,

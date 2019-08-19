@@ -690,9 +690,20 @@ class BSMPSim_FBP(_BaseBSMPSim, _Spec_FBP):
             firmware.append('\x00'.encode())
         variables = [
             0b10000,  # V_PS_STATUS
-            0.0, 0.0, firmware, 0, 0, 0, 0, 0, 0.0, 0.0, 0.0, 0.0,
-            [0.0, 0.0, 0.0, 0.0], 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0,
-            0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0]
+            0.0, 0.0,  # ps_setpoint, ps_reference
+            firmware,
+            0, 0,  # counters
+            0, 0, 0, 0.0, 0.0, 0.0, 0.0, [0.0, 0.0, 0.0, 0.0],  # siggen [6-13]
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # undef [14-24]
+            0, 0,  # interlocks [25-26]
+            0.0, 0.0, 0.0, 0.0, 0.0,  # i_load, v_load, etc [27-31]
+            0, 0, 0, 0, 0, 0, 0, 0,  # reserved [32-39]
+            0, 0, 0, 0,  # mirror ps_status [40-43]
+            0.0, 0.0, 0.0, 0.0,  # mirror ps_setpoints [44-47]
+            0.0, 0.0, 0.0, 0.0,  # mirror ps_reference [48-51]
+            0, 0, 0, 0,  # mirror soft_interlock [52-55]
+            0, 0, 0, 0,  # mirror hard_interlock [56-59]
+            0.0, 0.0, 0.0, 0.0]  # mirror i_load [60-63]
         default_siggen_parms = \
             _SignalFactory.DEFAULT_CONFIGS['Sine']
         variables[_cFBP.V_SIGGEN_TYPE] = default_siggen_parms[0]
