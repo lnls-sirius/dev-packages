@@ -613,7 +613,7 @@ class FBP_DCLink_Factory(ModelFactory):
     _variables = {
         'IntlkSoft-Mon': _bsmp.ConstFBP_DCLink.V_PS_SOFT_INTERLOCKS,
         'IntlkHard-Mon': _bsmp.ConstFBP_DCLink.V_PS_HARD_INTERLOCKS,
-        'ModulesStatus-Mon': _bsmp.ConstFBP_DCLink.V_DIGITAL_INPUTS,
+        'ModulesStatus-Mon': _bsmp.ConstFBP_DCLink.V_MODULES_STATUS,
         'Voltage-RB': _bsmp.ConstFBP_DCLink.V_PS_SETPOINT,
         'VoltageRef-Mon': _bsmp.ConstFBP_DCLink.V_PS_REFERENCE,
         'Voltage-Mon': _bsmp.ConstFBP_DCLink.V_V_OUT,
@@ -1017,7 +1017,7 @@ class PRUCParms_FBP_DCLink(_PRUCParms):
         # --- FBP_DCLink variables ---
         ConstBSMP.V_PS_SOFT_INTERLOCKS,
         ConstBSMP.V_PS_HARD_INTERLOCKS,
-        ConstBSMP.V_DIGITAL_INPUTS,
+        ConstBSMP.V_MODULES_STATUS,
         ConstBSMP.V_V_OUT,
         ConstBSMP.V_V_OUT_1,
         ConstBSMP.V_V_OUT_2,
@@ -1041,7 +1041,7 @@ class PRUCParms_FBP_DCLink(_PRUCParms):
         # --- FBP_DCLink variables ---
         ConstBSMP.V_PS_SOFT_INTERLOCKS,
         ConstBSMP.V_PS_HARD_INTERLOCKS,
-        ConstBSMP.V_DIGITAL_INPUTS,
+        ConstBSMP.V_MODULES_STATUS,
         ConstBSMP.V_V_OUT,
         ConstBSMP.V_V_OUT_1,
         ConstBSMP.V_V_OUT_2,
