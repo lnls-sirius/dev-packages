@@ -335,7 +335,6 @@ class ETypes(_cutil.ETypes):
         'Sobre-corrente no IGBT 2 do módulo 2',
         'Sobre-corrente no IGBT 1 do módulo 3',
         'Sobre-corrente no IGBT 2 do módulo 3',
-
         'Sobre-corrente no IGBT 1 do módulo 4',
         'Sobre-corrente no IGBT 2 do módulo 4',
         'Falha no contator de entrada do DC-Link do módulo 1',
@@ -344,15 +343,13 @@ class ETypes(_cutil.ETypes):
         'Falha no contator de entrada do DC-Link do módulo 4',
         'Sobre-tensão do DC-Link do módulo 1',
         'Sobre-tensão do DC-Link do módulo 2',
-
         'Sobre-tensão do DC-Link do módulo 3',
         'Sobre-tensão do DC-Link do módulo 4',
         'Sub-tensão do DC-Link do módulo 1',
         'Sub-tensão do DC-Link do módulo 2',
         'Sub-tensão do DC-Link do módulo 3',
         'Sub-tensão do DC-Link do módulo 4',
-        'Interlock da placa IIB', 'Rserved',
-
+        'Interlock da placa IIB', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',)
     IIB_INTLCK_FAP_4P = IIB_INTLCK_FAP
