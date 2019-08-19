@@ -451,7 +451,7 @@ class ConstFBP_DCLink(ConstBSMP):
     # --- FBP_DCLink variables ---
     V_PS_SOFT_INTERLOCKS = 25
     V_PS_HARD_INTERLOCKS = 26
-    V_DIGITAL_INPUTS = 27
+    V_MODULES_STATUS = 27
     V_V_OUT = 28
     V_V_OUT_1 = 29
     V_V_OUT_2 = 30
