@@ -117,7 +117,6 @@ class _Spec_FAC_ACDC(_Spec):
     def _get_constants(self):
         return _cFAC_ACDC
 
-
 class _Spec_FAC_2P4S_DCDC(_Spec):
     """Spec FAC_2P4S_DCDC."""
 
@@ -803,8 +802,10 @@ class BSMPSim_FAC_ACDC(_BaseBSMPSim, _Spec_FAC_ACDC):
             0, 0, 0, 0.0, 0.0, 0.0, 0.0, [0.0, 0.0, 0.0, 0.0],  # siggen [6-13]
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # undef [14-24]
             0, 0,  # interlocks [25-26]
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # [27-32]
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # [33-42]
+            0.0, 0.0, 0.0, 0.0, 0.0,  # [27-31]
+            0.0, 0.0, 0.0, 0.0, 0.0,  # [32-36]
+            0.0, 0.0, 0.0, 0.0,  # [37-40]
+            0, 0]  # [41-42]
         return variables
 
 

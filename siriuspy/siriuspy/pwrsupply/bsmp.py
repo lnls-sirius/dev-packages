@@ -492,9 +492,18 @@ class ConstFAC_2P4S_ACDC(ConstFAC_2S_ACDC):
     pass
 
 
-class ConstFAC_ACDC(ConstFAC_2S_ACDC):
+class ConstFAC_ACDC(ConstBSMP):
     """Namespace for organizing power supply FAC_ACDC BSMP constants."""
 
+    # --- FAC_ACDC variables ---
+    V_PS_SOFT_INTERLOCKS = 25
+    V_PS_HARD_INTERLOCKS = 26
+    V_V_CAPBANK = 27
+    V_V_OUT_RECTIFIER = 28
+    V_I_OUT_RECTIFIER = 29
+    V_TEMP_HEATSINK = 30
+    V_TEMP_INDUCTORS = 31
+    V_DUTY_CYCLE = 32
     V_I_INPUT_IS_IIB = 33
     V_V_INPUT_IS_IIB = 34
     V_TEMP_INDUCTOR_IS_IIB = 35
@@ -1147,7 +1156,7 @@ class EntitiesFAP_4P(EntitiesFAP):
 
 
 
-# --- DCDC ---
+# --- ACDC ---
 
 
 class EntitiesFBP_DCLink(_Entities):
@@ -1276,7 +1285,6 @@ class EntitiesFAC_ACDC(_Entities):
         {'eid': 11, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 12, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 13, 'waccess': False, 'count': 4, 'var_type': _Types.T_FLOAT},
-        # --- undefined variables
         {'eid': 14, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         {'eid': 15, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         {'eid': 16, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
@@ -1284,6 +1292,7 @@ class EntitiesFAC_ACDC(_Entities):
         {'eid': 18, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         {'eid': 19, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         {'eid': 20, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        # --- undefined variables
         {'eid': 21, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         {'eid': 22, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         {'eid': 23, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
@@ -1305,8 +1314,8 @@ class EntitiesFAC_ACDC(_Entities):
         {'eid': 38, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 39, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 40, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 41, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 42, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 41, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 42, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
     )
 
     Curves = tuple()

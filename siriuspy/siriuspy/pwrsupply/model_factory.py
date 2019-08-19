@@ -800,7 +800,6 @@ class FAC_ACDC_Factory(FAC_2S_ACDC_Factory):
         'HeatSinkTemperature-Mon': _bsmp.ConstFAC_ACDC.V_TEMP_HEATSINK,
         'InductorsTemperature-Mon': _bsmp.ConstFAC_ACDC.V_TEMP_INDUCTORS,
         'PWMDutyCycle-Mon': _bsmp.ConstFAC_ACDC.V_DUTY_CYCLE,
-
         'IIBISInputCurrent-Mon': _bsmp.ConstFAC_ACDC.V_I_INPUT_IS_IIB,
         'IIBISInputVoltage-Mon': _bsmp.ConstFAC_ACDC.V_V_INPUT_IS_IIB,
         'IIBISInductorsTemperature-Mon':
