@@ -426,12 +426,13 @@ class EpicsOrbit(BaseOrbit):
 
     def _prepare_mode(self, oldmode=None):
         oldmode = self._mode if oldmode is None else oldmode
-        if oldmode == self._csorb.SOFBMode.SinglePass:
-            self.set_trig_acq_control(self._csorb.TrigAcqCtrl.Abort)
-        elif self.isring and oldmode == self._csorb.SOFBMode.MultiTurn:
-            # _time.sleep(0.2)
-            self.set_trig_acq_control(self._csorb.TrigAcqCtrl.Stop)
-        _time.sleep(0.2)
+        self.set_trig_acq_control(self._csorb.TrigAcqCtrl.Abort)
+        for _ in range(40):
+            if all(map(lambda x: x.is_ok, self.bpms)):
+                break
+            _time.sleep(0.1)
+        else:
+            _log.warning('Timeout waiting bpms.')
 
         trigmodes = {self._csorb.SOFBMode.SinglePass, }
         if self.isring:
@@ -460,11 +461,8 @@ class EpicsOrbit(BaseOrbit):
                 self.run_callbacks('TrigNrSamplesPost-SP', pts)
                 self.set_acq_nrsamples(pts, ispost=True)
 
-        _time.sleep(0.2)
         self.acq_config_bpms()
-        _time.sleep(0.3)
         self.set_trig_acq_control(self._csorb.TrigAcqCtrl.Start)
-
         return True
 
     def set_orbit_multiturn_idx(self, value):
@@ -841,14 +839,8 @@ class EpicsOrbit(BaseOrbit):
         nok = not all(bpm.state for bpm in self.bpms)
         status = _util.update_bit(v=status, bit_pos=3, bit_val=nok)
 
-        # nok = False
-        # for bpm in self.bpms:
-        #     nok |= not bpm.is_ok
-        #     if nok:
-        #         print(bpm.name)
-        #         break
-        nok = not all(bpm.is_ok for bpm in self.bpms)
-        status = _util.update_bit(v=status, bit_pos=4, bit_val=nok)
+        isok = all(bpm.is_ok for bpm in self.bpms)
+        status = _util.update_bit(v=status, bit_pos=4, bit_val=not isok)
 
         self._status = status
         self.run_callbacks('OrbStatus-Mon', status)
