@@ -1109,6 +1109,15 @@ def _get_ps_FAP_propty_database():
                           'count': len(_et.IIB_INTLCK_FAP),
                           'value': _et.IIB_INTLCK_FAP},
 
+        'IIBLeakCurrent-Mon': {'type': 'float',  'value': 0.0,
+                               'prec': default_ps_current_precision,
+                               'unit': 'A'},
+        'IIBInductorTemperature-Mon': {'type': 'float', 'value': 0.0,
+                                       'prec': 2,
+                                       'unit': 'C'},
+        'IIBHeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
+                                       'prec': 2,
+                                       'unit': 'C'},
     }
     propty_db.update(db_ps)
     return propty_db

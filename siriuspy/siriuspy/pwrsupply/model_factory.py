@@ -489,6 +489,9 @@ class FAP_Factory(FBP_Factory):
         'Current-Mon': _bsmp.ConstFAP.V_I_LOAD_MEAN,
         'Current1-Mon': _bsmp.ConstFAP.V_I_LOAD1,
         'Current2-Mon': _bsmp.ConstFAP.V_I_LOAD2,
+        'IIBLeakCurrent-Mon': _bsmp.ConstFAP.V_I_LEAKAGE_IIB,
+        'IIBInductorTemperature-Mon': _bsmp.ConstFAP.V_TEMP_INDUCTOR_IIB,
+        'IIBHeatSinkTemperature-Mon': _bsmp.ConstFAP.V_TEMP_HEATSINK_IIB,
     }
 
     @property
@@ -1554,6 +1557,7 @@ class PRUCParms_FAP(_PRUCParms):
         ConstBSMP.V_I_DRIVER_2_IIB,
         ConstBSMP.V_TEMP_INDUCTOR_IIB,
         ConstBSMP.V_TEMP_HEATSINK_IIB,
+        ConstBSMP.V_I_LEAKAGE_IIB,
         ConstBSMP.V_IIB_INTERLOCKS,)
     groups[_PRUCParms.SYNCOFF] = (
         # --- common variables
@@ -1593,6 +1597,7 @@ class PRUCParms_FAP(_PRUCParms):
         ConstBSMP.V_I_DRIVER_2_IIB,
         ConstBSMP.V_TEMP_INDUCTOR_IIB,
         ConstBSMP.V_TEMP_HEATSINK_IIB,
+        ConstBSMP.V_I_LEAKAGE_IIB,
         ConstBSMP.V_IIB_INTERLOCKS,)
     groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
