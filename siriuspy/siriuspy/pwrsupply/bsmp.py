@@ -486,10 +486,29 @@ class ConstFAC_2S_ACDC(ConstBSMP):
     V_DUTY_CYCLE = 32
 
 
-class ConstFAC_2P4S_ACDC(ConstFAC_2S_ACDC):
+class ConstFAC_2P4S_ACDC(ConstBSMP):
     """Namespace for organizing power supply FAC_2P4S_ACDC BSMP constants."""
 
-    pass
+    # --- FAC_2P4S_ACDC variables ---
+    V_PS_SOFT_INTERLOCKS = 25
+    V_PS_HARD_INTERLOCKS = 26
+    V_V_CAPACITOR_BANK = 27
+    V_V_OUT_RECTIFIER = 28
+    V_I_OUT_RECTIFIER = 29
+    V_TEMP_HEATSINK = 30
+    V_TEMP_INDUCTORS = 31
+    V_DUTY_CYCLE = 32
+    V_I_INPUT_IS_IIB = 33
+    V_V_INPUT_IS_IIB = 34
+    V_TEMP_INDUCTOR_IS_IIB = 35
+    V_TEMP_HEATSINK_IS_IIB = 36
+    V_V_OUTPUT_CMD_IIB = 37
+    V_V_CAPBANK_CMD_IIB = 38
+    V_TEMP_INDUCTOR_CMD_IIB = 39
+    V_TEMP_HEATSINK_CMD_IIB = 40
+    V_I_LEAKAGE_CMD_IIB = 41
+    V_IIB_INTERLOCKS_IS = 42
+    V_IIB_INTERLOCKS_CMD = 43
 
 
 class ConstFAC_ACDC(ConstFAC_2S_ACDC):
@@ -1251,10 +1270,72 @@ class EntitiesFAC_2S_ACDC(_Entities):
         super().__init__(self.Variables, self.Curves, self.Functions)
 
 
-class EntitiesFAC_2P4S_ACDC(EntitiesFAC_2S_ACDC):
+class EntitiesFAC_2P4S_ACDC(_Entities):
     """FAC_2P4S_ACDC-type power supply entities."""
 
-    pass
+    Variables = (
+        # --- common variables
+        {'eid': 0, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
+        {'eid': 1, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 2, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 3, 'waccess': False, 'count': 128, 'var_type': _Types.T_CHAR},
+        {'eid': 4, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 5, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 6, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
+        {'eid': 7, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
+        {'eid': 8, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
+        {'eid': 9, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 10, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 11, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 12, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 13, 'waccess': False, 'count': 4, 'var_type': _Types.T_FLOAT},
+        {'eid': 14, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 15, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 16, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 17, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 18, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 19, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 20, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        # --- undefined variables
+        {'eid': 21, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 22, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 23, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 24, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        # --- FAC_2P4S_ACDC-specific variables
+        {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 27, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 28, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 29, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 30, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 31, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 32, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 33, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 34, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 35, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 36, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 37, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 38, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 39, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 40, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 41, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 42, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 43, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},)
+
+    Curves = (
+        {'eid': 0, 'waccess': False, 'count': 256,
+         'nblocks': 16, 'var_type': _Types.T_FLOAT},
+        {'eid': 1, 'waccess': False, 'count': 256,
+         'nblocks': 16, 'var_type': _Types.T_FLOAT},
+        {'eid': 2, 'waccess': False, 'count': 256,
+         'nblocks': 16, 'var_type': _Types.T_FLOAT}, )
+
+    Functions = _BSMP_Functions
+
+    def __init__(self):
+        """Call super."""
+        super().__init__(self.Variables, self.Curves, self.Functions)
+
 
 
 class EntitiesFAC_ACDC(_Entities):
