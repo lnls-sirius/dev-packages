@@ -1187,9 +1187,18 @@ def _get_ps_FAP_4P_propty_database():
         'IntlkHardLabels-Cte':  {'type': 'string',
                                  'count': len(_et.HARD_INTLCK_FAP_4P),
                                  'value': _et.HARD_INTLCK_FAP_4P},
-        'IntlkIIB-Cte':  {'type': 'string',
-                          'count': len(_et.IIB_INTLCK_FAP_4P),
-                          'value': _et.IIB_INTLCK_FAP_4P},
+        'Intlk1IIBLabels-Cte':  {'type': 'string',
+                                 'count': len(_et.IIB_INTLCK_FAP_4P),
+                                 'value': _et.IIB_INTLCK_FAP_4P},
+        'Intlk2IIBLabels-Cte':  {'type': 'string',
+                                 'count': len(_et.IIB_INTLCK_FAP_4P),
+                                 'value': _et.IIB_INTLCK_FAP_4P},
+        'Intlk3IIBLabels-Cte':  {'type': 'string',
+                                 'count': len(_et.IIB_INTLCK_FAP_4P),
+                                 'value': _et.IIB_INTLCK_FAP_4P},
+        'Intlk4IIBLabels-Cte':  {'type': 'string',
+                                 'count': len(_et.IIB_INTLCK_FAP_4P),
+                                 'value': _et.IIB_INTLCK_FAP_4P},
 
     }
     propty_db.update(db_ps)
