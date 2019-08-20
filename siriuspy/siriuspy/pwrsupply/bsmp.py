@@ -442,6 +442,93 @@ class ConstFAP_4P(ConstFAP):
     """Namespace for organizing power supply FAP_4P BSMP constants."""
 
 
+class ConstFAP_2P2S(ConstBSMP):
+    """Namespace for organizing power supply FAP_2P2S BSMP constants."""
+
+    # --- FAP_2P2S variables ---
+    V_PS_SOFT_INTERLOCKS = 25
+    V_PS_HARD_INTERLOCKS = 26
+    V_I_LOAD_MEAN = 27
+    V_I_LOAD1 = 28
+    V_I_LOAD2 = 29
+    V_I_ARM_1 = 30
+    V_I_ARM_2 = 31
+    V_I_IGBT_1_1 = 32
+    V_I_IGBT_2_1 = 33
+    V_I_IGBT_1_2 = 34
+    V_I_IGBT_2_2 = 35
+    V_I_IGBT_1_3 = 36
+    V_I_IGBT_2_3 = 37
+    V_I_IGBT_1_4 = 38
+    V_I_IGBT_2_4 = 39
+    V_V_DCLINK_1 = 40
+    V_V_DCLINK_2 = 41
+    V_V_DCLINK_3 = 42
+    V_V_DCLINK_4 = 43
+    V_DUTY_MEAN = 44
+    V_DUTY_ARMS_DIFF = 45
+    V_DUTY_CYCLE_1_1 = 46
+    V_DUTY_CYCLE_2_1 = 47
+    V_DUTY_CYCLE_1_2 = 48
+    V_DUTY_CYCLE_2_2 = 49
+    V_DUTY_CYCLE_1_3 = 50
+    V_DUTY_CYCLE_2_3 = 51
+    V_DUTY_CYCLE_1_4 = 52
+    V_DUTY_CYCLE_2_4 = 53
+    V_V_INPUT_IIB_1 = 54
+    V_V_OUTPUT_IIB_1 = 55
+    V_I_IGBT_1_IIB_1 = 56
+    V_I_IGBT_2_IIB_1 = 57
+    V_TEMP_IGBT_1_IIB_1 = 58
+    V_TEMP_IGBT_2_IIB_1 = 59
+    V_V_DRIVER_IIB_1 = 60
+    V_I_DRIVER_1_IIB_1 = 61
+    V_I_DRIVER_2_IIB_1 = 62
+    V_TEMP_INDUCTOR_IIB_1 = 63
+    V_TEMP_HEATSINK_IIB_1 = 64
+    V_V_INPUT_IIB_2 = 65
+    V_V_OUTPUT_IIB_2 = 66
+    V_I_IGBT_1_IIB_2 = 67
+    V_I_IGBT_2_IIB_2 = 68
+    V_TEMP_IGBT_1_IIB_2 = 69
+    V_TEMP_IGBT_2_IIB_2 = 70
+    V_V_DRIVER_IIB_2 = 71
+    V_I_DRIVER_1_IIB_2 = 72
+    V_I_DRIVER_2_IIB_2 = 73
+    V_TEMP_INDUCTOR_IIB_2 = 74
+    V_TEMP_HEATSINK_IIB_2 = 75
+    V_V_INPUT_IIB_3 = 76
+    V_V_OUTPUT_IIB_3 = 77
+    V_I_IGBT_1_IIB_3 = 78
+    V_I_IGBT_2_IIB_3 = 79
+    V_TEMP_IGBT_1_IIB_3 = 80
+    V_TEMP_IGBT_2_IIB_3 = 81
+    V_V_DRIVER_IIB_3 = 82
+    V_I_DRIVER_1_IIB_3 = 83
+    V_I_DRIVER_2_IIB_3 = 84
+    V_TEMP_INDUCTOR_IIB_3 = 85
+    V_TEMP_HEATSINK_IIB_3 = 86
+    V_V_INPUT_IIB_4 = 87
+    V_V_OUTPUT_IIB_4 = 88
+    V_I_IGBT_1_IIB_4 = 89
+    V_I_IGBT_2_IIB_4 = 90
+    V_TEMP_IGBT_1_IIB_4 = 91
+    V_TEMP_IGBT_2_IIB_4 = 92
+    V_V_DRIVER_IIB_4 = 93
+    V_I_DRIVER_1_IIB_4 = 94
+    V_I_DRIVER_2_IIB_4 = 95
+    V_TEMP_INDUCTOR_IIB_4 = 96
+    V_TEMP_HEATSINK_IIB_4 = 97
+    V_IIB_INTERLOCKS_1 = 98
+    V_IIB_INTERLOCKS_2 = 99
+    V_IIB_INTERLOCKS_3 = 100
+    V_IIB_INTERLOCKS_4 = 101
+    V_I_MOD_1 = 102
+    V_I_MOD_2 = 103
+    V_I_MOD_3 = 104
+    V_I_MOD_4 = 105
+
+
 # --- ACDC ---
 
 
@@ -1146,6 +1233,134 @@ class EntitiesFAP_4P(EntitiesFAP):
     """FAP_4P-type power supply entities."""
 
 
+class EntitiesFAP_2P2S(_Entities):
+    """FAP-type power supply entities."""
+
+    Variables = (
+        # --- common variables
+        {'eid': 0, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
+        {'eid': 1, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 2, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 3, 'waccess': False, 'count': 128, 'var_type': _Types.T_CHAR},
+        {'eid': 4, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 5, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 6, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
+        {'eid': 7, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
+        {'eid': 8, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
+        {'eid': 9, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 10, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 11, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 12, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 13, 'waccess': False, 'count': 4, 'var_type': _Types.T_FLOAT},
+        {'eid': 14, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
+        {'eid': 15, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT16},
+        {'eid': 16, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 17, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 18, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 19, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 20, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        # --- undefined variables
+        {'eid': 21, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 22, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 23, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        {'eid': 24, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        # --- FAP_2P2S-specific variables
+        {'eid': 25, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 26, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 27, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 28, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 29, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 30, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 31, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 32, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 33, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 34, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 35, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 36, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 37, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 38, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 39, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 40, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 41, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 42, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 43, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 44, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 45, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 46, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 47, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 48, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 49, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 50, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 51, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 52, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 53, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 54, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 55, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 56, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 57, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 58, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 59, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 60, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 61, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 62, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 63, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 64, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 65, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 66, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 67, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 68, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 69, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 70, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 71, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 72, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 73, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 74, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 75, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 76, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 77, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 78, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 79, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 80, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 81, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 82, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 83, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 84, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 85, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 86, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 87, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 88, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 89, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 90, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 91, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 92, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 93, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 94, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 95, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 96, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 97, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 98, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 99, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 100, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 101, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
+        {'eid': 102, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 103, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 104, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 105, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},)
+
+    Curves = (
+        {'eid': 0, 'waccess': False, 'count': 256,
+         'nblocks': 16, 'var_type': _Types.T_FLOAT},
+        {'eid': 1, 'waccess': False, 'count': 256,
+         'nblocks': 16, 'var_type': _Types.T_FLOAT},
+        {'eid': 2, 'waccess': False, 'count': 256,
+         'nblocks': 16, 'var_type': _Types.T_FLOAT}, )
+
+    Functions = _BSMP_Functions
+
+    def __init__(self):
+        """Call super."""
+        super().__init__(self.Variables, self.Curves, self.Functions)
+
 
 # --- DCDC ---
 
@@ -1387,6 +1602,15 @@ class FAP_4P(_PSBSMP):
         """Init BSMP."""
         self.ConstBSMP = ConstFAP_4P
         _PSBSMP.__init__(self, slave_address, EntitiesFAP_4P(), pru=pru)
+
+
+class FAP_2P2S(_PSBSMP):
+    """BSMP with EntitiesFAP_2P2S."""
+
+    def __init__(self, slave_address, pru=None):
+        """Init BSMP."""
+        self.ConstBSMP = ConstFAP_2P2S
+        _PSBSMP.__init__(self, slave_address, EntitiesFAP_2P2S(), pru=pru)
 
 
 
