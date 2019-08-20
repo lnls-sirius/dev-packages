@@ -432,10 +432,9 @@ class EpicsCorrectors(BaseCorrectors):
 
     def configure_correctors(self, _):
         """Configure correctors method."""
+        val = _PSConst.OpMode.SlowRef
         if self.isring and self._synced_kicks == self._csorb.CorrSync.On:
             val = _PSConst.OpMode.SlowRefSync
-        else:
-            val = _PSConst.OpMode.SlowRef
         for corr in self._corrs:
             if corr.connected:
                 corr.state = True
@@ -445,7 +444,6 @@ class EpicsCorrectors(BaseCorrectors):
                 msg += corr.name
                 self._update_log(msg)
                 _log.error(msg[5:])
-                return False
         if not self.isring:
             return True
 
@@ -453,7 +451,6 @@ class EpicsCorrectors(BaseCorrectors):
             msg = 'ERR: Failed to configure timing'
             self._update_log(msg)
             _log.error(msg[5:])
-            return False
         return True
 
     def _update_status(self):
