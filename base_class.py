@@ -59,8 +59,14 @@ class BaseClass(_Callback):
 
     def write(self, pvname, value):
         pvname = pvname.replace(self.prefix, '')
+        _log.info('Write received for: {} --> {}'.format(pvname, value))
         if pvname in self._map2write:
-            return self._map2write[pvname](value)
+            ret = self._map2write[pvname](value)
+            if ret:
+                _log.info('YES Write for: {} --> {}'.format(pvname, value))
+            else:
+                _log.info('NOT Write for: {} --> {}'.format(pvname, value))
+            return ret
         else:
             _log.warning('PV %s does not have a set function.', pvname)
             return False
@@ -121,7 +127,7 @@ class BaseTimingConfig:
             else:
                 okay = val == pvval
             if not okay:
-                _log.debug('NOT CONF: {0:s} okv = {1:f}, v = {2}'.format(
+                _log.info('NOT CONF: {0:s} okv = {1:f}, v = {2}'.format(
                     pv.pvname, val, pvval))
             ok &= okay
             if not ok:
