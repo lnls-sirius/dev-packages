@@ -870,7 +870,12 @@ class BSMPSim_FAC_2S_DCDC(_BaseBSMPSim, _Spec_FAC_2P4S_DCDC):
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # undef [14-24]
             0, 0,  # interlocks [25-26]
             0.0, 0.0, 0.0, 0.0,  # iload_mean, iload1, iload2, v_load [27-30]
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # [31-37]
+            0.0, 0.0, 0.0, 0.0, 0.0,  # [31-35]
+            0.0, 0.0, 0.0, 0.0, 0.0,  # [36-40]
+            0.0, 0.0, 0.0, 0.0, 0.0,  # [41-45]
+            0.0, 0.0, 0.0, 0.0, 0.0,  # [45-50]
+            0.0,  # [51]
+            0, 0]  # iib_interlocks [52-53]
         default_siggen_parms = \
             _SignalFactory.DEFAULT_CONFIGS['Sine']
         variables[_cFAC_DCDC.V_SIGGEN_TYPE] = default_siggen_parms[0]

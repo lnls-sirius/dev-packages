@@ -375,6 +375,16 @@ class FAC_2S_DCDC_Factory(FBP_Factory):
         'PWMDutyCycle1-Mon': _bsmp.ConstFAC_2S_DCDC.V_DUTY_CYCLE_1,
         'PWMDutyCycle2-Mon': _bsmp.ConstFAC_2S_DCDC.V_DUTY_CYCLE_2,
         'PWMDutyDiff-Mon': _bsmp.ConstFAC_2S_DCDC.V_DUTY_DIFF,
+        'IIB1InductorsTemperature-Mon':
+            _bsmp.ConstFAC_2S_DCDC.V_TEMP_INDUCTOR_IIB_1,
+        'IIB1HeatSinkTemperature-Mon':
+            _bsmp.ConstFAC_2S_DCDC.V_TEMP_HEATSINK_IIB_1,
+        'IIB2InductorsTemperature-Mon':
+            _bsmp.ConstFAC_2S_DCDC.V_TEMP_INDUCTOR_IIB_2,
+        'IIB2HeatSinkTemperature-Mon':
+            _bsmp.ConstFAC_2S_DCDC.V_TEMP_HEATSINK_IIB_2,
+        'IntlkIIB1-Mon': _bsmp.ConstFAC_2S_DCDC.V_IIB_INTERLOCKS_1,
+        'IntlkIIB2-Mon': _bsmp.ConstFAC_2S_DCDC.V_IIB_INTERLOCKS_2,
     }
 
     @property
@@ -385,7 +395,7 @@ class FAC_2S_DCDC_Factory(FBP_Factory):
     @property
     def parameters(self):
         """PRU Controller parameters."""
-        return PRUCParms_FAC_2S
+        return PRUCParms_FAC_2S_DCDC
 
     @property
     def bsmp_constants(self):
@@ -901,7 +911,7 @@ class PRUCParms_FBP(_PRUCParms):
     groups[_PRUCParms.ALL] = tuple(sorted(Entities.list_variables(0)))
     groups[_PRUCParms.READONLY] = tuple(sorted(Entities.list_variables(1)))
     groups[_PRUCParms.WRITEABLE] = tuple(sorted(Entities.list_variables(2)))
-    # new variable groups usefull for PRUController.
+    # new variable groups useful for PRUController.
     groups[_PRUCParms.ALLRELEVANT] = (
         # --- common variables
         ConstBSMP.V_PS_STATUS,
@@ -997,7 +1007,7 @@ class PRUCParms_FBP_DCLink(_PRUCParms):
     groups[_PRUCParms.ALL] = tuple(sorted(Entities.list_variables(0)))
     groups[_PRUCParms.READONLY] = tuple(sorted(Entities.list_variables(1)))
     groups[_PRUCParms.WRITEABLE] = tuple(sorted(Entities.list_variables(2)))
-    # new variable groups usefull for PRUController.
+    # new variable groups useful for PRUController.
     groups[_PRUCParms.ALLRELEVANT] = (
         # --- common variables
         ConstBSMP.V_PS_STATUS,
@@ -1050,10 +1060,10 @@ class PRUCParms_FBP_DCLink(_PRUCParms):
     groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 
-class PRUCParms_FAC_2S(_PRUCParms):
+class PRUCParms_FAC_2S_DCDC(_PRUCParms):
     """FAC_2S specific PRUC parameters.
 
-    Represent FAC_2S psmodels.
+    Represent FAC_2S_DCDC psmodels.
     """
 
     FREQ_RAMP = 2.0  # [Hz]
@@ -1069,7 +1079,7 @@ class PRUCParms_FAC_2S(_PRUCParms):
     groups[_PRUCParms.ALL] = tuple(sorted(Entities.list_variables(0)))
     groups[_PRUCParms.READONLY] = tuple(sorted(Entities.list_variables(1)))
     groups[_PRUCParms.WRITEABLE] = tuple(sorted(Entities.list_variables(2)))
-    # new variable groups usefull for PRUController.
+    # new variable groups useful for PRUController.
     groups[_PRUCParms.ALLRELEVANT] = (
         # --- common variables
         ConstBSMP.V_PS_STATUS,
@@ -1086,7 +1096,7 @@ class PRUCParms_FAC_2S(_PRUCParms):
         ConstBSMP.V_SIGGEN_AMPLITUDE,
         ConstBSMP.V_SIGGEN_OFFSET,
         ConstBSMP.V_SIGGEN_AUX_PARAM,
-        # --- FAC variables ---
+        # --- FAC_2S_DCDC variables ---
         ConstBSMP.V_PS_SOFT_INTERLOCKS,
         ConstBSMP.V_PS_HARD_INTERLOCKS,
         ConstBSMP.V_I_LOAD_MEAN,
@@ -1099,12 +1109,29 @@ class PRUCParms_FAC_2S(_PRUCParms):
         ConstBSMP.V_V_CAPBANK_2,
         ConstBSMP.V_DUTY_CYCLE_1,
         ConstBSMP.V_DUTY_CYCLE_2,
-        ConstBSMP.V_DUTY_DIFF)
+        ConstBSMP.V_DUTY_DIFF,
+        ConstBSMP.V_I_INPUT_IIB_1,
+        ConstBSMP.V_I_OUTPUT_IIB_1,
+        ConstBSMP.V_V_INPUT_IIB_1,
+        ConstBSMP.V_TEMP_INDUCTOR_IIB_1,
+        ConstBSMP.V_TEMP_HEATSINK_IIB_1,
+        ConstBSMP.V_DRIVER_ERROR_1_IIB_1,
+        ConstBSMP.V_DRIVER_ERROR_2_IIB_1,
+        ConstBSMP.V_I_INPUT_IIB_2,
+        ConstBSMP.V_I_OUTPUT_IIB_2,
+        ConstBSMP.V_V_INPUT_IIB_2,
+        ConstBSMP.V_TEMP_INDUCTOR_IIB_2,
+        ConstBSMP.V_TEMP_HEATSINK_IIB_2,
+        ConstBSMP.V_DRIVER_ERROR_1_IIB_2,
+        ConstBSMP.V_DRIVER_ERROR_2_IIB_2,
+        ConstBSMP.V_IIB_INTERLOCKS_1,
+        ConstBSMP.V_IIB_INTERLOCKS_2)
     groups[_PRUCParms.SYNCOFF] = (
         # --- common variables
         ConstBSMP.V_PS_STATUS,
         ConstBSMP.V_PS_SETPOINT,
         ConstBSMP.V_PS_REFERENCE,
+        ConstBSMP.V_FIRMWARE_VERSION,
         ConstBSMP.V_COUNTER_SET_SLOWREF,
         ConstBSMP.V_COUNTER_SYNC_PULSE,
         ConstBSMP.V_SIGGEN_ENABLE,
@@ -1115,7 +1142,7 @@ class PRUCParms_FAC_2S(_PRUCParms):
         ConstBSMP.V_SIGGEN_AMPLITUDE,
         ConstBSMP.V_SIGGEN_OFFSET,
         ConstBSMP.V_SIGGEN_AUX_PARAM,
-        # --- FAC variables ---
+        # --- FAC_2S_DCDC variables ---
         ConstBSMP.V_PS_SOFT_INTERLOCKS,
         ConstBSMP.V_PS_HARD_INTERLOCKS,
         ConstBSMP.V_I_LOAD_MEAN,
@@ -1128,7 +1155,23 @@ class PRUCParms_FAC_2S(_PRUCParms):
         ConstBSMP.V_V_CAPBANK_2,
         ConstBSMP.V_DUTY_CYCLE_1,
         ConstBSMP.V_DUTY_CYCLE_2,
-        ConstBSMP.V_DUTY_DIFF)
+        ConstBSMP.V_DUTY_DIFF,
+        ConstBSMP.V_I_INPUT_IIB_1,
+        ConstBSMP.V_I_OUTPUT_IIB_1,
+        ConstBSMP.V_V_INPUT_IIB_1,
+        ConstBSMP.V_TEMP_INDUCTOR_IIB_1,
+        ConstBSMP.V_TEMP_HEATSINK_IIB_1,
+        ConstBSMP.V_DRIVER_ERROR_1_IIB_1,
+        ConstBSMP.V_DRIVER_ERROR_2_IIB_1,
+        ConstBSMP.V_I_INPUT_IIB_2,
+        ConstBSMP.V_I_OUTPUT_IIB_2,
+        ConstBSMP.V_V_INPUT_IIB_2,
+        ConstBSMP.V_TEMP_INDUCTOR_IIB_2,
+        ConstBSMP.V_TEMP_HEATSINK_IIB_2,
+        ConstBSMP.V_DRIVER_ERROR_1_IIB_2,
+        ConstBSMP.V_DRIVER_ERROR_2_IIB_2,
+        ConstBSMP.V_IIB_INTERLOCKS_1,
+        ConstBSMP.V_IIB_INTERLOCKS_2)
     groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 
@@ -1151,7 +1194,7 @@ class PRUCParms_FAC_2P4S(_PRUCParms):
     groups[_PRUCParms.ALL] = tuple(sorted(Entities.list_variables(0)))
     groups[_PRUCParms.READONLY] = tuple(sorted(Entities.list_variables(1)))
     groups[_PRUCParms.WRITEABLE] = tuple(sorted(Entities.list_variables(2)))
-    # new variable groups usefull for PRUController.
+    # new variable groups useful for PRUController.
     groups[_PRUCParms.ALLRELEVANT] = (
         # --- common variables
         ConstBSMP.V_PS_STATUS,
@@ -1271,7 +1314,7 @@ class PRUCParms_FAC(_PRUCParms):
     groups[_PRUCParms.ALL] = tuple(sorted(Entities.list_variables(0)))
     groups[_PRUCParms.READONLY] = tuple(sorted(Entities.list_variables(1)))
     groups[_PRUCParms.WRITEABLE] = tuple(sorted(Entities.list_variables(2)))
-    # new variable groups usefull for PRUController.
+    # new variable groups useful for PRUController.
     groups[_PRUCParms.ALLRELEVANT] = (
         # --- common variables
         ConstBSMP.V_PS_STATUS,
@@ -1344,7 +1387,7 @@ class PRUCParms_FAC_2S_ACDC(_PRUCParms):
     groups[_PRUCParms.ALL] = tuple(sorted(Entities.list_variables(0)))
     groups[_PRUCParms.READONLY] = tuple(sorted(Entities.list_variables(1)))
     groups[_PRUCParms.WRITEABLE] = tuple(sorted(Entities.list_variables(2)))
-    # new variable groups usefull for PRUController.
+    # new variable groups useful for PRUController.
     groups[_PRUCParms.ALLRELEVANT] = (
         # --- common variables
         ConstBSMP.V_PS_STATUS,
@@ -1422,7 +1465,7 @@ class PRUCParms_FAC_ACDC(_PRUCParms):
     groups[_PRUCParms.ALL] = tuple(sorted(Entities.list_variables(0)))
     groups[_PRUCParms.READONLY] = tuple(sorted(Entities.list_variables(1)))
     groups[_PRUCParms.WRITEABLE] = tuple(sorted(Entities.list_variables(2)))
-    # new variable groups usefull for PRUController.
+    # new variable groups useful for PRUController.
     groups[_PRUCParms.ALLRELEVANT] = (
         # --- common variables
         ConstBSMP.V_PS_STATUS,
@@ -1514,7 +1557,7 @@ class PRUCParms_FAP(_PRUCParms):
     groups[_PRUCParms.ALL] = tuple(sorted(Entities.list_variables(0)))
     groups[_PRUCParms.READONLY] = tuple(sorted(Entities.list_variables(1)))
     groups[_PRUCParms.WRITEABLE] = tuple(sorted(Entities.list_variables(2)))
-    # new variable groups usefull for PRUController.
+    # new variable groups useful for PRUController.
     groups[_PRUCParms.ALLRELEVANT] = (
         # --- common variables
         ConstBSMP.V_PS_STATUS,
@@ -1616,7 +1659,7 @@ class PRUCParms_FAP_4P(_PRUCParms):
     groups[_PRUCParms.ALL] = tuple(sorted(Entities.list_variables(0)))
     groups[_PRUCParms.READONLY] = tuple(sorted(Entities.list_variables(1)))
     groups[_PRUCParms.WRITEABLE] = tuple(sorted(Entities.list_variables(2)))
-    # new variable groups usefull for PRUController.
+    # new variable groups useful for PRUController.
     groups[_PRUCParms.ALLRELEVANT] = (
         # --- common variables
         ConstBSMP.V_PS_STATUS,
