@@ -345,6 +345,18 @@ class ETypes(_cutil.ETypes):
     SOFT_INTLCK_FAP_2P2S = SOFT_INTLCK_FAP
     HARD_INTLCK_FAP_2P2S = (
         'Sobre-corrente na carga',
+        'Sobre-corrente no IGBT 1 do módulo 1',
+        'Sobre-corrente no IGBT 2 do módulo 1',
+        'Sobre-corrente no IGBT 1 do módulo 2',
+        'Sobre-corrente no IGBT 2 do módulo 2',
+        'Sobre-corrente no IGBT 1 do módulo 3',
+        'Sobre-corrente no IGBT 2 do módulo 3',
+        'Sobre-corrente no IGBT 1 do módulo 4',
+        'Sobre-corrente no IGBT 2 do módulo 4',
+        'Falha no contator de entrada do DC-Link do módulo 1',
+        'Falha no contator de entrada do DC-Link do módulo 2',
+        'Falha no contator de entrada do DC-Link do módulo 3',
+        'Falha no contator de entrada do DC-Link do módulo 4',
         'Sobre-tensão no DC-Link do módulo 1',
         'Sobre-tensão no DC-Link do módulo 2',
         'Sobre-tensão no DC-Link do módulo 3',
