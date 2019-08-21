@@ -884,6 +884,20 @@ def _get_ps_FAC_2S_DCDC_propty_database():
                               'prec': default_ps_current_precision},
         'PWMDutyDiff-Mon': {'type': 'float', 'value': 0.0,
                             'prec': default_ps_current_precision},
+        'IIB1InductorsTemperature-Mon': {'type': 'float', 'value': 0.0,
+                                         'prec': 2,
+                                         'unit': 'C'},
+        'IIB1HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
+                                        'prec': 2,
+                                        'unit': 'C'},
+        'IIB2InductorsTemperature-Mon': {'type': 'float', 'value': 0.0,
+                                         'prec': 2,
+                                         'unit': 'C'},
+        'IIB2HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
+                                        'prec': 2,
+                                        'unit': 'C'},
+        'IntlkIIB1-Mon': {'type': 'int', 'value': 0},
+        'IntlkIIB2-Mon': {'type': 'int', 'value': 0},
     }
     propty_db.update(db_ps)
     return propty_db
