@@ -326,6 +326,10 @@ class FAC_Factory(FBP_Factory):
         'Current-Mon': _bsmp.ConstFAC_DCDC.V_I_LOAD_MEAN,
         'Current1-Mon': _bsmp.ConstFAC_DCDC.V_I_LOAD1,
         'Current2-Mon': _bsmp.ConstFAC_DCDC.V_I_LOAD2,
+        'LoadVoltage-Mon': _bsmp.ConstFAC_DCDC.V_V_LOAD,
+        'InductorsTemperature-Mon': _bsmp.ConstFAC_DCDC.V_TEMP_INDUCTORS,
+        'IGBTSTemperature-Mon': _bsmp.ConstFAC_DCDC.V_TEMP_IGBTS,
+        'PWMDutyCycle-Mon': _bsmp.ConstFAC_DCDC.V_DUTY_CYCLE,
     }
 
     @property
