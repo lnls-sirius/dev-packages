@@ -810,6 +810,11 @@ def _get_ps_FBP_propty_database():
         'IntlkHardLabels-Cte':  {'type': 'string',
                                  'count': len(_et.HARD_INTLCK_FBP),
                                  'value': _et.HARD_INTLCK_FBP},
+        'SwitchesTemperature-Mon': {'type': 'float', 'value': 0.0,
+                                    'prec': 2,
+                                    'unit': 'C'},
+        'PWMDutyCycle-Mon': {'type': 'float', 'value': 0.0,
+                             'prec': default_ps_current_precision},
     }
     propty_db.update(db_ps)
     return propty_db
