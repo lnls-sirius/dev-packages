@@ -50,8 +50,7 @@ class ETypes(_cutil.ETypes):
               'FAC_ACDC', 'FAC_DCDC',
               'FAC_2S_ACDC', 'FAC_2S_DCDC',
               'FAC_2P4S_ACDC', 'FAC_2P4S_DCDC',
-              'FAP', 'FAP_4P',
-              'FAP_2P2S_MASTER', 'FAP_2P2S_SLAVE',
+              'FAP', 'FAP_4P', 'FAP_2P2S',
               'FBP_SOFB',
               'Commercial',
               'FP')
@@ -194,8 +193,10 @@ class ETypes(_cutil.ETypes):
     HARD_INTLCK_FAC_2S_ACDC = (
         'Sobre-tensão no banco de capacitores',
         'Sobre-corrente na saída do retificador',
-        'Interlock da placa IIB', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Falha no contator de entrada AC trifásica'
+        'Interlock da placa IIB 1',
+        'Interlock da placa IIB 2', 'Interlock da placa IIB 3',
+        'Interlock da placa IIB 4', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
@@ -324,6 +325,36 @@ class ETypes(_cutil.ETypes):
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+    SOFT_INTLCK_FAP_2P2S = SOFT_INTLCK_FAP
+    HARD_INTLCK_FAP_2P2S = (
+        'Sobre-corrente na carga',
+        'Sobre-corrente no IGBT 1 do módulo 1',
+        'Sobre-corrente no IGBT 2 do módulo 1',
+        'Sobre-corrente no IGBT 1 do módulo 2',
+        'Sobre-corrente no IGBT 2 do módulo 2',
+        'Sobre-corrente no IGBT 1 do módulo 3',
+        'Sobre-corrente no IGBT 2 do módulo 3',
+        'Sobre-corrente no IGBT 1 do módulo 4',
+        'Sobre-corrente no IGBT 2 do módulo 4',
+        'Falha no contator de entrada do DC-Link do módulo 1',
+        'Falha no contator de entrada do DC-Link do módulo 2',
+        'Falha no contator de entrada do DC-Link do módulo 3',
+        'Falha no contator de entrada do DC-Link do módulo 4',
+        'Sobre-tensão no DC-Link do módulo 1',
+        'Sobre-tensão no DC-Link do módulo 2',
+        'Sobre-tensão no DC-Link do módulo 3',
+        'Sobre-tensão no DC-Link do módulo 4',
+        'Sub-tensão no DC-Link do módulo 1',
+        'Sub-tensão no DC-Link do módulo 2',
+        'Sub-tensão no DC-Link do módulo 3',
+        'Sub-tensão no DC-Link do módulo 4',
+        'Interlock da placa IIB do módulo 1',
+        'Interlock da placa IIB do módulo 2',
+        'Interlock da placa IIB do módulo 3',
+        'Interlock da placa IIB do módulo 4',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved')
+    IIB_INTLCK_FAP_2P2S = IIB_INTLCK_FAP
     CYCLE_TYPES = ('Sine', 'DampedSine', 'Trapezoidal', 'DampedSquaredSine')
     SYNC_MODES = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
 
@@ -779,6 +810,11 @@ def _get_ps_FBP_propty_database():
         'IntlkHardLabels-Cte':  {'type': 'string',
                                  'count': len(_et.HARD_INTLCK_FBP),
                                  'value': _et.HARD_INTLCK_FBP},
+        'SwitchesTemperature-Mon': {'type': 'float', 'value': 0.0,
+                                    'prec': 2,
+                                    'unit': 'C'},
+        'PWMDutyCycle-Mon': {'type': 'float', 'value': 0.0,
+                             'prec': default_ps_current_precision},
     }
     propty_db.update(db_ps)
     return propty_db
@@ -817,21 +853,31 @@ def _get_ps_FBP_DCLink_propty_database():
 
 def _get_ps_FAC_DCDC_propty_database():
     """Return database with FAC_DCDC pwrsupply model PVs."""
-    # TODO: implement!!!
     propty_db = get_basic_propty_database()
     db_ps = {
-        'Current1-Mon': {'type': 'float',  'value': 0.0,
-                         'prec': default_ps_current_precision,
-                         'unit': 'A'},
-        'Current2-Mon': {'type': 'float',  'value': 0.0,
-                         'prec': default_ps_current_precision,
-                         'unit': 'A'},
         'IntlkSoftLabels-Cte':  {'type': 'string',
                                  'count': len(_et.SOFT_INTLCK_FAC_DCDC),
                                  'value': _et.SOFT_INTLCK_FAC_DCDC},
         'IntlkHardLabels-Cte':  {'type': 'string',
                                  'count': len(_et.HARD_INTLCK_FAC_DCDC),
                                  'value': _et.HARD_INTLCK_FAC_DCDC},
+        'Current1-Mon': {'type': 'float',  'value': 0.0,
+                         'prec': default_ps_current_precision,
+                         'unit': 'A'},
+        'Current2-Mon': {'type': 'float',  'value': 0.0,
+                         'prec': default_ps_current_precision,
+                         'unit': 'A'},
+        'LoadVoltage-Mon': {'type': 'float', 'value': 0.0,
+                            'prec': default_ps_current_precision,
+                            'unit': 'V'},
+        'InductorsTemperature-Mon': {'type': 'float', 'value': 0.0,
+                                     'prec': 2,
+                                     'unit': 'C'},
+        'IGBTSTemperature-Mon': {'type': 'float', 'value': 0.0,
+                                 'prec': 2,
+                                 'unit': 'C'},
+        'PWMDutyCycle-Mon': {'type': 'float', 'value': 0.0,
+                             'prec': default_ps_current_precision},
     }
     propty_db.update(db_ps)
     return propty_db
@@ -874,6 +920,20 @@ def _get_ps_FAC_2S_DCDC_propty_database():
                               'prec': default_ps_current_precision},
         'PWMDutyDiff-Mon': {'type': 'float', 'value': 0.0,
                             'prec': default_ps_current_precision},
+        'IIB1InductorsTemperature-Mon': {'type': 'float', 'value': 0.0,
+                                         'prec': 2,
+                                         'unit': 'C'},
+        'IIB1HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
+                                        'prec': 2,
+                                        'unit': 'C'},
+        'IIB2InductorsTemperature-Mon': {'type': 'float', 'value': 0.0,
+                                         'prec': 2,
+                                         'unit': 'C'},
+        'IIB2HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
+                                        'prec': 2,
+                                        'unit': 'C'},
+        'IntlkIIB1-Mon': {'type': 'int', 'value': 0},
+        'IntlkIIB2-Mon': {'type': 'int', 'value': 0},
     }
     propty_db.update(db_ps)
     return propty_db
@@ -1122,8 +1182,75 @@ def _get_ps_FAP_4P_propty_database():
 
 def _get_ps_FAP_2P2S_propty_database():
     """Return database with FAP_2P2S pwrsupply model PVs."""
-    # TODO: implement!!!
-    return _get_ps_FBP_propty_database()
+    propty_db = get_basic_propty_database()
+    db_ps = {
+        'Current1-Mon': {'type': 'float',  'value': 0.0,
+                         'prec': default_ps_current_precision,
+                         'unit': 'A'},
+        'Current2-Mon': {'type': 'float',  'value': 0.0,
+                         'prec': default_ps_current_precision,
+                         'unit': 'A'},
+        'Intlk1IIB-Mon': {'type': 'int', 'value': 0},
+        'Intlk2IIB-Mon': {'type': 'int', 'value': 0},
+        'Intlk3IIB-Mon': {'type': 'int', 'value': 0},
+        'Intlk4IIB-Mon': {'type': 'int', 'value': 0},
+        'IntlkSoftLabels-Cte':  {'type': 'string',
+                                 'count': len(_et.SOFT_INTLCK_FAP_2P2S),
+                                 'value': _et.SOFT_INTLCK_FAP},
+        'IntlkHardLabels-Cte':  {'type': 'string',
+                                 'count': len(_et.HARD_INTLCK_FAP_2P2S),
+                                 'value': _et.HARD_INTLCK_FAP},
+        'Intlk1IIBLabels-Cte':  {'type': 'string',
+                                 'count': len(_et.IIB_INTLCK_FAP_2P2S),
+                                 'value': _et.IIB_INTLCK_FAP},
+        'Intlk2IIBLabels-Cte':  {'type': 'string',
+                                 'count': len(_et.IIB_INTLCK_FAP_2P2S),
+                                 'value': _et.IIB_INTLCK_FAP},
+        'Intlk3IIBLabels-Cte':  {'type': 'string',
+                                 'count': len(_et.IIB_INTLCK_FAP_2P2S),
+                                 'value': _et.IIB_INTLCK_FAP},
+        'Intlk4IIBLabels-Cte':  {'type': 'string',
+                                 'count': len(_et.IIB_INTLCK_FAP_2P2S),
+                                 'value': _et.IIB_INTLCK_FAP},
+        'Mod1Current-Mon': {'type': 'float', 'value': 0.0,
+                            'prec': default_ps_current_precision,
+                            'unit': 'A'},
+        'Mod2Current-Mon': {'type': 'float', 'value': 0.0,
+                            'prec': default_ps_current_precision,
+                            'unit': 'A'},
+        'Mod3Current-Mon': {'type': 'float', 'value': 0.0,
+                            'prec': default_ps_current_precision,
+                            'unit': 'A'},
+        'Mod4Current-Mon': {'type': 'float', 'value': 0.0,
+                            'prec': default_ps_current_precision,
+                            'unit': 'A'},
+        'IIB1InductorTemperature-Mon': {'type': 'float', 'value': 0.0,
+                                        'prec': 2,
+                                        'unit': 'C'},
+        'IIB1HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
+                                         'prec': 2,
+                                         'unit': 'C'},
+        'IIB2InductorTemperature-Mon': {'type': 'float', 'value': 0.0,
+                                        'prec': 2,
+                                        'unit': 'C'},
+        'IIB2HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
+                                        'prec': 2,
+                                        'unit': 'C'},
+        'IIB3InductorTemperature-Mon': {'type': 'float', 'value': 0.0,
+                                        'prec': 2,
+                                        'unit': 'C'},
+        'IIB3HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
+                                        'prec': 2,
+                                        'unit': 'C'},
+        'IIB4InductorTemperature-Mon': {'type': 'float', 'value': 0.0,
+                                        'prec': 2,
+                                        'unit': 'C'},
+        'IIB4HeatSinkTemperature-Mon': {'type': 'float', 'value': 0.0,
+                                        'prec': 2,
+                                        'unit': 'C'},
+    }
+    propty_db.update(db_ps)
+    return propty_db
 
 
 # --- Others ---
@@ -1185,7 +1312,7 @@ def _get_model_db(psmodel):
         'FAC_2P4S_DCDC': _get_ps_FAC_2P4S_DCDC_propty_database,
         'FAC_2P4S_ACDC': _get_ps_FAC_2P4S_ACDC_propty_database,
         'FAP': _get_ps_FAP_propty_database,
-        'FAP_2P2S_MASTER': _get_ps_FAP_2P2S_propty_database,
+        'FAP_2P2S': _get_ps_FAP_2P2S_propty_database,
         'FAP_4P': _get_ps_FAP_4P_propty_database,
         'Commercial': _get_ps_Commercial_propty_database,
         'FP_SEPT': _get_pu_FP_SEPT_propty_database,
