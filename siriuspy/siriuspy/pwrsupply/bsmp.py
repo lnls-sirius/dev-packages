@@ -274,19 +274,6 @@ class ConstFBP(ConstBSMP):
 class ConstFAC_DCDC(ConstBSMP):
     """Namespace for organizing power supply FAC_DCDC BSMP constants."""
 
-    # --- undefined variables
-    V_UNDEF14 = 14
-    V_UNDEF15 = 15
-    V_UNDEF16 = 16
-    V_UNDEF17 = 17
-    V_UNDEF18 = 18
-    V_UNDEF19 = 19
-    V_UNDEF20 = 20
-    V_UNDEF21 = 21
-    V_UNDEF22 = 22
-    V_UNDEF23 = 23
-    V_UNDEF24 = 24
-
     # --- FAC_DCDC variables ---
     V_PS_SOFT_INTERLOCKS = 25
     V_PS_HARD_INTERLOCKS = 26
@@ -443,7 +430,6 @@ class ConstFAP_4P(ConstFAP):
 
 
 # --- ACDC ---
-
 
 class ConstFBP_DCLink(ConstBSMP):
     """Namespace for organizing power supply FBP_DCLink BSMP constants."""
@@ -875,7 +861,6 @@ class EntitiesFAC_DCDC(_Entities):
         {'eid': 11, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 12, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 13, 'waccess': False, 'count': 4, 'var_type': _Types.T_FLOAT},
-        # --- undefined variables
         {'eid': 14, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         {'eid': 15, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         {'eid': 16, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
@@ -883,6 +868,7 @@ class EntitiesFAC_DCDC(_Entities):
         {'eid': 18, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         {'eid': 19, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         {'eid': 20, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
+        # --- undefined variables
         {'eid': 21, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         {'eid': 22, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
         {'eid': 23, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT8},
@@ -907,7 +893,7 @@ class EntitiesFAC_DCDC(_Entities):
         {'eid': 41, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 42, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
         {'eid': 43, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
-        {'eid': 44, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},
+        {'eid': 44, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32},
     )
 
     Curves = (
@@ -1147,7 +1133,7 @@ class EntitiesFAP_4P(EntitiesFAP):
 
 
 
-# --- DCDC ---
+# --- ACDC ---
 
 
 class EntitiesFBP_DCLink(_Entities):

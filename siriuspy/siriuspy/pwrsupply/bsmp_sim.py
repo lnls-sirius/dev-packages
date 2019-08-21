@@ -770,7 +770,7 @@ class BSMPSim_FAC_DCDC(_BaseBSMPSim, _Spec_FAC_DCDC):
             0.0,  # temp_heatsink_iib
             0.0,  # driver_error_1_iib
             0.0,  # driver_error_2_iib
-            0.0]  # iib_interlocks [44]
+            0]  # iib_interlocks [44]
         default_siggen_parms = \
             _SignalFactory.DEFAULT_CONFIGS['Sine']
         variables[_cFAC_DCDC.V_SIGGEN_TYPE] = default_siggen_parms[0]
