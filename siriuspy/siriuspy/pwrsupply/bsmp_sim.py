@@ -19,6 +19,7 @@ from siriuspy.pwrsupply.bsmp import EntitiesFBP as _EntitiesFBP
 from siriuspy.pwrsupply.bsmp import EntitiesFBP_DCLink as _EntitiesFBP_DCLink
 from siriuspy.pwrsupply.bsmp import EntitiesFAC_DCDC as _EntitiesFAC_DCDC
 from siriuspy.pwrsupply.bsmp import EntitiesFAC_ACDC as _EntitiesFAC_ACDC
+from siriuspy.pwrsupply.bsmp import EntitiesFAC_2S_ACDC as _EntitiesFAC_2S_ACDC
 from siriuspy.pwrsupply.bsmp import \
     EntitiesFAC_2P4S_DCDC as _EntitiesFAC_2P4S_DCDC
 from siriuspy.pwrsupply.bsmp import \
@@ -26,6 +27,7 @@ from siriuspy.pwrsupply.bsmp import \
 from siriuspy.pwrsupply.bsmp import \
     EntitiesFAC_2P4S_ACDC as _EntitiesFAC_2P4S_ACDC
 from siriuspy.pwrsupply.bsmp import EntitiesFAP as _EntitiesFAP
+from siriuspy.pwrsupply.bsmp import EntitiesFAP_2P2S as _EntitiesFAP_2P2S
 
 from siriuspy.pwrsupply.bsmp import ConstFBP as _cFBP
 from siriuspy.pwrsupply.bsmp import ConstFBP_DCLink as _cFBP_DCLink
@@ -37,6 +39,7 @@ from siriuspy.pwrsupply.bsmp import ConstFAC_2S_DCDC as _cFAC_2S_DCDC
 from siriuspy.pwrsupply.bsmp import ConstFAC_2S_ACDC as _cFAC_2S_ACDC
 from siriuspy.pwrsupply.bsmp import ConstFAP as _cFAP
 from siriuspy.pwrsupply.bsmp import ConstFAP_4P as _cFAP_4P
+from siriuspy.pwrsupply.bsmp import ConstFAP_2P2S as _cFAP_2P2S
 
 
 __version__ = _util.get_last_commit_hash()
@@ -186,6 +189,21 @@ class _Spec_FAP_4P(_Spec):
         return (_cFAP_4P.V_I_LOAD_MEAN,
                 _cFAP_4P.V_I_LOAD1,
                 _cFAP_4P.V_I_LOAD2)
+
+    def _get_monvar_fluctuation_rms(self, var_id):
+        return _Spec.I_LOAD_FLUCTUATION_RMS
+
+
+class _Spec_FAP_2P2S(_Spec):
+    """Spec FAP_2P2S."""
+
+    def _get_constants(self):
+        return _cFAP_2P2S
+
+    def _get_monvar_ids(self):
+        return (_cFAP_2P2S.V_I_LOAD_MEAN,
+                _cFAP_2P2S.V_I_LOAD1,
+                _cFAP_2P2S.V_I_LOAD2)
 
     def _get_monvar_fluctuation_rms(self, var_id):
         return _Spec.I_LOAD_FLUCTUATION_RMS
@@ -769,7 +787,7 @@ class BSMPSim_FAC_DCDC(_BaseBSMPSim, _Spec_FAC_DCDC):
             0.0,  # temp_heatsink_iib
             0.0,  # driver_error_1_iib
             0.0,  # driver_error_2_iib
-            0.0]  # iib_interlocks [44]
+            0]  # iib_interlocks [44]
         default_siggen_parms = \
             _SignalFactory.DEFAULT_CONFIGS['Sine']
         variables[_cFAC_DCDC.V_SIGGEN_TYPE] = default_siggen_parms[0]
@@ -871,7 +889,12 @@ class BSMPSim_FAC_2S_DCDC(_BaseBSMPSim, _Spec_FAC_2P4S_DCDC):
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # undef [14-24]
             0, 0,  # interlocks [25-26]
             0.0, 0.0, 0.0, 0.0,  # iload_mean, iload1, iload2, v_load [27-30]
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # [31-37]
+            0.0, 0.0, 0.0, 0.0, 0.0,  # [31-35]
+            0.0, 0.0, 0.0, 0.0, 0.0,  # [36-40]
+            0.0, 0.0, 0.0, 0.0, 0.0,  # [41-45]
+            0.0, 0.0, 0.0, 0.0, 0.0,  # [45-50]
+            0.0,  # [51]
+            0, 0]  # iib_interlocks [52-53]
         default_siggen_parms = \
             _SignalFactory.DEFAULT_CONFIGS['Sine']
         variables[_cFAC_DCDC.V_SIGGEN_TYPE] = default_siggen_parms[0]
@@ -908,10 +931,34 @@ class BSMPSim_FAC_2P4S_ACDC(_BaseBSMPSim, _Spec_FAC_2P4S_ACDC):
         return variables
 
 
-class BSMPSim_FAC_2S_ACDC(BSMPSim_FAC_2P4S_ACDC):
+class BSMPSim_FAC_2S_ACDC(_BaseBSMPSim, _Spec_FAC_2S_ACDC):
     """Simulated FAC_2S_ACDC UDC."""
 
-    pass
+    def _get_entities(self):
+        return _EntitiesFAC_2S_ACDC()
+
+    def _get_states(self):
+        return [_OpModeSimState_FAC_ACDC()]
+
+    def _get_init_variables(self):
+        firmware = [b'S', b'i', b'm', b'u', b'l', b'a', b't', b'i', b'o', b'n']
+        while len(firmware) < 128:
+            firmware.append('\x00'.encode())
+        variables = [
+            0b10000,  # V_PS_STATUS
+            0.0, 0.0,  # ps_setpoint, ps_reference
+            firmware,
+            0, 0,  # counters
+            0, 0, 0, 0.0, 0.0, 0.0, 0.0, [0.0, 0.0, 0.0, 0.0],  # siggen [6-13]
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # undef [14-24]
+            0, 0,  # interlocks [25-26]
+            0.0, 0.0, 0.0,  # [27-29]
+            0.0, 0.0,  # temps [30-31]
+            0.0, 0.0, 0.0, 0.0, 0.0,  # [32-36]
+            0.0, 0.0, 0.0, 0.0, 0.0,  # [37-41]
+            0, 0]  # iib_interlocks [42-43]
+        return variables
+
 
 
 class BSMPSim_FAP(_BaseBSMPSim, _Spec_FAP):
@@ -969,4 +1016,46 @@ class BSMPSim_FAP_4P(_BaseBSMPSim, _Spec_FAP_4P):
             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # [36-46]
             0,  # [47 - iib_interlocks]
         ]
+        return variables
+
+
+class BSMPSim_FAP_2P2S(_BaseBSMPSim, _Spec_FAP_2P2S):
+    """Simulated FAP_2P2S UDC."""
+
+    def _get_entities(self):
+        return _EntitiesFAP_2P2S()
+
+    def _get_states(self):
+        return [_OpModeSimSlowRefState_FBP(), _OpModeSimSlowRefSyncState_FBP(),
+                _OpModeSimCycleState_FBP(self._pru)]
+
+    def _get_init_variables(self):
+        firmware = [b'S', b'i', b'm', b'u', b'l', b'a', b't', b'i', b'o', b'n']
+        while len(firmware) < 128:
+            firmware.append('\x00'.encode())
+        variables = [
+            0b10000,  # V_PS_STATUS
+            0.0, 0.0,  # ps_setpoint, ps_reference
+            firmware,
+            0, 0,  # counters
+            0, 0, 0, 0.0, 0.0, 0.0, 0.0, [0.0, 0.0, 0.0, 0.0],  # siggen [6-13]
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # undef [14-24]
+            0, 0,  # interlocks [25-26]
+            0.0, 0.0, 0.0,  # [27-29]
+            0.0, 0.0, 0.0, 0.0, 0.0,  # [30-34]
+            0.0, 0.0, 0.0, 0.0, 0.0,  # [35-39]
+            0.0, 0.0, 0.0, 0.0, 0.0,  # [40-44]
+            0.0, 0.0, 0.0, 0.0, 0.0,  # [45-49]
+            0.0, 0.0, 0.0, 0.0, 0.0,  # [50-54]
+            0.0, 0.0, 0.0, 0.0, 0.0,  # [55-59]
+            0.0, 0.0, 0.0, 0.0, 0.0,  # [60-64]
+            0.0, 0.0, 0.0, 0.0, 0.0,  # [65-69]
+            0.0, 0.0, 0.0, 0.0, 0.0,  # [70-74]
+            0.0, 0.0, 0.0, 0.0, 0.0,  # [75-79]
+            0.0, 0.0, 0.0, 0.0, 0.0,  # [80-84]
+            0.0, 0.0, 0.0, 0.0, 0.0,  # [85-89]
+            0.0, 0.0, 0.0, 0.0, 0.0,  # [90-94]
+            0.0, 0.0, 0.0,  # [95-97]
+            0, 0, 0, 0,  # [98-101]
+            0.0, 0.0, 0.0, 0.0]  # [102-105]
         return variables
