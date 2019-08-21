@@ -4,4 +4,3 @@
 # number of power supplies: 1
 
 TS-Fam:PS-B
-TS-Fam:PS-B-Slave

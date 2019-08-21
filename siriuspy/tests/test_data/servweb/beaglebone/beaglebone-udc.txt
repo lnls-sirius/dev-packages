@@ -1,29 +1,21 @@
-# BeagleBoneBlack Mapping to UDC
+# Beaglebone Mapping to UDC
+# =========================
 
-################################################################################
-################################# Sirius #######################################
-################################################################################
-# --- Dipoles
-PA-RaPSD04:CO-PSCtrl-SI1    PA-RaPSD04:PS-UDC-SI1
-PA-RaPSD04:CO-PSCtrl-SI2    PA-RaPSD04:PS-UDC-SI2
+# ______ BO ______
 
+# --- BO Dipoles ---
+PA-RaPSE05:CO-PSCtrl-BO          PA-RaPSE05:PS-UDC-BO1   PA-RaPSE05:PS-UDC-BO2   PA-RaPSE05:PS-UDC-BO3   PA-RaPSE05:PS-UDC-BO4   PA-RaPSE05:PS-UDC-BO5
+PA-RaPSF05:CO-PSCtrl-BO          PA-RaPSF05:PS-UDC-BO1   PA-RaPSF05:PS-UDC-BO2   PA-RaPSF05:PS-UDC-BO3   PA-RaPSF05:PS-UDC-BO4   PA-RaPSF05:PS-UDC-BO5
 
-################################################################################
-################################# Booster ######################################
-################################################################################
-# --- Dipoles
-PA-RaPSE05:CO-PSCtrl-BO     PA-RaPSE05:PS-UDC-BO1   PA-RaPSE05:PS-UDC-BO2   PA-RaPSE05:PS-UDC-BO3   PA-RaPSE05:PS-UDC-BO4   PA-RaPSE05:PS-UDC-BO5
-PA-RaPSF05:CO-PSCtrl-BO     PA-RaPSF05:PS-UDC-BO1   PA-RaPSF05:PS-UDC-BO2   PA-RaPSF05:PS-UDC-BO3   PA-RaPSF05:PS-UDC-BO4   PA-RaPSF05:PS-UDC-BO5
-
-# --- QF ---
-PA-RaPSC03:CO-PSCtrl-BO1	PA-RaPSC03:PS-UDC-BO1	PA-RaPSC03:PS-UDC-BO2
+# --- BO QF ---
+PA-RaPSC03:CO-PSCtrl-BO1        PA-RaPSC03:PS-UDC-BO1    PA-RaPSC03:PS-UDC-BO2
 
 # --- QD, SF, SD (FAC) ---
-PA-RaPSC03:CO-PSCtrl-BO2	PA-RaPSC03:PS-UDC-BO3
-PA-RaPSC03:CO-PSCtrl-BO3	PA-RaPSC03:PS-UDC-BO4
-PA-RaPSC03:CO-PSCtrl-BO4	PA-RaPSC03:PS-UDC-BO5
+PA-RaPSC03:CO-PSCtrl-BO2        PA-RaPSC03:PS-UDC-BO3
+PA-RaPSC03:CO-PSCtrl-BO3        PA-RaPSC03:PS-UDC-BO4
+PA-RaPSC03:CO-PSCtrl-BO4        PA-RaPSC03:PS-UDC-BO5
 
-# BO Correctores/Quad Skew
+# --- BO Correctores/Quad Skew ---
 IA-01RaCtrl:CO-PSCtrl-BO        IA-01RaPS01:PS-UDC-BO
 IA-02RaCtrl:CO-PSCtrl-BO        IA-02RaPS01:PS-UDC-BO
 IA-04RaCtrl:CO-PSCtrl-BO        IA-04RaPS01:PS-UDC-BO
@@ -39,35 +31,37 @@ IA-17RaCtrl:CO-PSCtrl-BO        IA-17RaPS01:PS-UDC-BO
 IA-20RaCtrl:CO-PSCtrl-BO        IA-20RaPS01:PS-UDC-BO
 
 
-################################################################################
-############################# Transport Lines ##################################
-################################################################################
-# TB Dipole
+# ______ TB ______
+
+# --- TB Dipole ---
 LA-RaPS02:CO-PSCtrl-TB      LA-RaPS02:PS-UDC-TB
 
-# TB Quads
+# --- TB Quads ---
 LA-RaCtrl:CO-PSCtrl-TB1     LA-RaPS06:PS-UDC-TB1    LA-RaPS06:PS-UDC-TB2    LA-RaPS06:PS-UDC-TB3
 
-# TB Correctors
+# --- TB Correctors ---
 LA-RaCtrl:CO-PSCtrl-TB2     LA-RaPS06:PS-UDC-TB4    LA-RaPS06:PS-UDC-TB5    LA-RaPS06:PS-UDC-TB6
 
-# TS Dipole
+
+# ______ TS ______
+
+# --- TS Dipole ---
 LA-RaPS02:CO-PSCtrl-TS      LA-RaPS02:PS-UDC-TS1    LA-RaPS02:PS-UDC-TS2
 
-# TS Quads
+# --- TS Quads ---
 LA-RaPS04:CO-PSCtrl-TS1     LA-RaPS02:PS-UDC-TS3    LA-RaPS02:PS-UDC-TS4    LA-RaPS04:PS-UDC-TS1    LA-RaPS04:PS-UDC-TS2
 LA-RaPS04:CO-PSCtrl-TS2     LA-RaPS04:PS-UDC-TS3    LA-RaPS04:PS-UDC-TS4    LA-RaPS04:PS-UDC-TS5    LA-RaPS04:PS-UDC-TS6
 
-# TS Correctors
+# --- TS Correctors ---
 LA-RaCtrl:CO-PSCtrl-TS      LA-RaPS06:PS-UDC-TS1    LA-RaPS06:PS-UDC-TS2    LA-RaPS06:PS-UDC-TS3
 
-# TB/TS DCLinks
+# --- TB/TS DCLinks ---
 LA-RaCtrl:CO-DCLinkCtrl     LA-RaPS06:PS-UDC-AS1    LA-RaPS06:PS-UDC-AS2
 
 
-################################################################################
-############################## SI/BO DCLinks ###################################
-################################################################################
+# ______ SI|BO ______
+
+# --- SI/BO DCLinks ---
 IA-01RaCtrl:CO-DCLinkCtrl       IA-01RaPS01:PS-UDC-AS       IA-01RaPS02:PS-UDC-AS
 IA-02RaCtrl:CO-DCLinkCtrl       IA-02RaPS01:PS-UDC-AS       IA-02RaPS02:PS-UDC-AS
 IA-03RaCtrl:CO-DCLinkCtrl       IA-03RaPS01:PS-UDC-AS       IA-03RaPS02:PS-UDC-AS
@@ -86,24 +80,21 @@ IA-15RaCtrl:CO-DCLinkCtrl       IA-15RaPS01:PS-UDC-AS       IA-15RaPS02:PS-UDC-A
 IA-16RaCtrl:CO-DCLinkCtrl       IA-16RaPS01:PS-UDC-AS       IA-16RaPS02:PS-UDC-AS
 IA-17RaCtrl:CO-DCLinkCtrl       IA-17RaPS01:PS-UDC-AS       IA-17RaPS02:PS-UDC-AS
 IA-18RaCtrl:CO-DCLinkCtrl       IA-18RaPS01:PS-UDC-AS       IA-18RaPS02:PS-UDC-AS
-#IA-19RaCtrl:CO-DCLinkCtrl       IA-19RaPS01:PS-UDC-AS       IA-19RaPS02:PS-UDC-AS
 IA-20RaCtrl:CO-DCLinkCtrl       IA-20RaPS01:PS-UDC-AS       IA-20RaPS02:PS-UDC-AS
 
 
-################################################################################
-############################ Storage Ring ######################################
-################################################################################
-# --- Dipoles
-PA-RaPSD04:CO-PSCtrl-SI1        PA-RaPSD04:PS-UDC-SI1
-PA-RaPSD04:CO-PSCtrl-SI2        PA-RaPSD04:PS-UDC-SI3
+# ______ SI ______
 
-# --- Quadrupoles
+# --- SI Dipoles ---
+PA-RaPSD04:CO-PSCtrl-SI         PA-RaPSD04:PS-UDC-SI1   PA-RaPSD04:PS-UDC-SI2
+
+# --- SI Quadrupoles ---
 PA-RaPSA02:CO-PSCtrl-SI1        PA-RaPSA02:PS-UDC-SI1   PA-RaPSA02:PS-UDC-SI2   PA-RaPSA02:PS-UDC-SI3
 PA-RaPSA02:CO-PSCtrl-SI2        PA-RaPSA02:PS-UDC-SI4   PA-RaPSA02:PS-UDC-SI5   PA-RaPSA02:PS-UDC-SI6
-PA-RaPSA05:CO-PSCtrl-SI1        PA-RaPSA05:PS-UDC-SI1   PA-RaPSA05:PS-UDC-SI2   PA-RaPSA05:PS-UDC-SI3
-PA-RaPSA05:CO-PSCtrl-SI2        PA-RaPSA05:PS-UDC-SI4   PA-RaPSA05:PS-UDC-SI5   PA-RaPSA05:PS-UDC-SI6
+PA-RaPSA05:CO-PSCtrl-SI1        PA-RaPSA05:PS-UDC-SI1   PA-RaPSA05:PS-UDC-SI2
+PA-RaPSA05:CO-PSCtrl-SI2        PA-RaPSA05:PS-UDC-SI3   PA-RaPSA05:PS-UDC-SI4   PA-RaPSA05:PS-UDC-SI5   PA-RaPSA05:PS-UDC-SI6
 
-# --- Sextupoles
+# --- SI Sextupoles ---
 PA-RaPSB02:CO-PSCtrl-SI1        PA-RaPSB02:PS-UDC-SI1   PA-RaPSB02:PS-UDC-SI2   PA-RaPSB02:PS-UDC-SI3
 PA-RaPSB02:CO-PSCtrl-SI2        PA-RaPSB02:PS-UDC-SI4   PA-RaPSB02:PS-UDC-SI5   PA-RaPSB02:PS-UDC-SI6   PA-RaPSB02:PS-UDC-SI7
 PA-RaPSB06:CO-PSCtrl-SI1        PA-RaPSB06:PS-UDC-SI1   PA-RaPSB06:PS-UDC-SI2   PA-RaPSB06:PS-UDC-SI3
@@ -111,7 +102,7 @@ PA-RaPSB06:CO-PSCtrl-SI2        PA-RaPSB06:PS-UDC-SI4   PA-RaPSB06:PS-UDC-SI5   
 PA-RaPSB09:CO-PSCtrl-SI1        PA-RaPSB09:PS-UDC-SI1   PA-RaPSB09:PS-UDC-SI2   PA-RaPSB09:PS-UDC-SI3
 PA-RaPSB09:CO-PSCtrl-SI2        PA-RaPSB09:PS-UDC-SI4   PA-RaPSB09:PS-UDC-SI5   PA-RaPSB09:PS-UDC-SI6   PA-RaPSB09:PS-UDC-SI7
 
-# --- Individual PSs (FBP)
+# --- SI Individual PSs (FBP) ---
 IA-01RaCtrl:CO-PSCtrl-SI1       IA-01RaPS01:PS-UDC-SI1
 IA-02RaCtrl:CO-PSCtrl-SI1       IA-02RaPS01:PS-UDC-SI1      IA-02RaPS01:PS-UDC-SI2
 IA-03RaCtrl:CO-PSCtrl-SI1       IA-03RaPS01:PS-UDC-SI1      IA-03RaPS01:PS-UDC-SI2
