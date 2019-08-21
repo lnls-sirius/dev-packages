@@ -709,9 +709,6 @@ class FAC_2S_ACDC_Factory(ModelFactory):
         'InductorsTemperature-Mon': _bsmp.ConstFAC_ACDC.V_TEMP_INDUCTORS,
         'PWMDutyCycle-Mon': _bsmp.ConstFAC_ACDC.V_DUTY_CYCLE,
     }
-    # 'CapacitorBankVoltage-SP': {'type': 'float', 'value': 0.0,
-    #                             'prec': default_ps_current_precision,
-    #                             'lolim': 0.0, 'hilim': 1.0},
 
     @property
     def name(self):

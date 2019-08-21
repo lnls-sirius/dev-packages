@@ -194,8 +194,10 @@ class ETypes(_cutil.ETypes):
     HARD_INTLCK_FAC_2S_ACDC = (
         'Sobre-tensão no banco de capacitores',
         'Sobre-corrente na saída do retificador',
-        'Interlock da placa IIB', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Falha no contator de entrada AC trifásica'
+        'Interlock da placa IIB 1',
+        'Interlock da placa IIB 2', 'Interlock da placa IIB 3',
+        'Interlock da placa IIB 4', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',

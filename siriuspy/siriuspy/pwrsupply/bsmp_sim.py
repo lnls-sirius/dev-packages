@@ -19,6 +19,7 @@ from siriuspy.pwrsupply.bsmp import EntitiesFBP as _EntitiesFBP
 from siriuspy.pwrsupply.bsmp import EntitiesFBP_DCLink as _EntitiesFBP_DCLink
 from siriuspy.pwrsupply.bsmp import EntitiesFAC_DCDC as _EntitiesFAC_DCDC
 from siriuspy.pwrsupply.bsmp import EntitiesFAC_ACDC as _EntitiesFAC_ACDC
+from siriuspy.pwrsupply.bsmp import EntitiesFAC_2S_ACDC as _EntitiesFAC_2S_ACDC
 from siriuspy.pwrsupply.bsmp import \
     EntitiesFAC_2P4S_DCDC as _EntitiesFAC_2P4S_DCDC
 from siriuspy.pwrsupply.bsmp import \
@@ -912,10 +913,34 @@ class BSMPSim_FAC_2P4S_ACDC(_BaseBSMPSim, _Spec_FAC_2P4S_ACDC):
         return variables
 
 
-class BSMPSim_FAC_2S_ACDC(BSMPSim_FAC_2P4S_ACDC):
+class BSMPSim_FAC_2S_ACDC(_BaseBSMPSim, _Spec_FAC_2S_ACDC):
     """Simulated FAC_2S_ACDC UDC."""
 
-    pass
+    def _get_entities(self):
+        return _EntitiesFAC_2S_ACDC()
+
+    def _get_states(self):
+        return [_OpModeSimState_FAC_ACDC()]
+
+    def _get_init_variables(self):
+        firmware = [b'S', b'i', b'm', b'u', b'l', b'a', b't', b'i', b'o', b'n']
+        while len(firmware) < 128:
+            firmware.append('\x00'.encode())
+        variables = [
+            0b10000,  # V_PS_STATUS
+            0.0, 0.0,  # ps_setpoint, ps_reference
+            firmware,
+            0, 0,  # counters
+            0, 0, 0, 0.0, 0.0, 0.0, 0.0, [0.0, 0.0, 0.0, 0.0],  # siggen [6-13]
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # undef [14-24]
+            0, 0,  # interlocks [25-26]
+            0.0, 0.0, 0.0,  # [27-29]
+            0.0, 0.0,  # temps [30-31]
+            0.0, 0.0, 0.0, 0.0, 0.0,  # [32-36]
+            0.0, 0.0, 0.0, 0.0, 0.0,  # [37-41]
+            0, 0]  # iib_interlocks [42-43]
+        return variables
+
 
 
 class BSMPSim_FAP(_BaseBSMPSim, _Spec_FAP):
