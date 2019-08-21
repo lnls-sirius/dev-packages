@@ -309,8 +309,8 @@ IA-20RaCtrl:PS-DCLink-AS2     FBP_DCLink
 
 # --- Sirius Dipoles
 
-SI-Fam:PS-B1B2-1    FAP_2P2S_MASTER
-SI-Fam:PS-B1B2-2    FAP_2P2S_MASTER
+SI-Fam:PS-B1B2-1    FAP_2P2S
+SI-Fam:PS-B1B2-2    FAP_2P2S
 
 # --- Sirius Quadrupole Families
 
