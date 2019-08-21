@@ -538,7 +538,6 @@ class FAP_Factory(FBP_Factory):
 
 class FAP_4P_Factory(FBP_Factory):
     """FAP_4P model factory."""
-<<<<<<< HEAD
 
     _variables = {
         'IntlkSoft-Mon': _bsmp.ConstFAP_4P.V_PS_SOFT_INTERLOCKS,
@@ -561,8 +560,6 @@ class FAP_4P_Factory(FBP_Factory):
         'Mod3Current-Mon': _bsmp.ConstFAP_4P.V_I_MOD_3,
         'Mod4Current-Mon': _bsmp.ConstFAP_4P.V_I_MOD_4,
     }
-=======
->>>>>>> master
 
     @property
     def name(self):
@@ -590,10 +587,6 @@ class FAP_4P_Factory(FBP_Factory):
         return _BSMPSim_FAP_4P
 
 
-<<<<<<< HEAD
-class FAP_2P2S_Master_Factory(FBP_Factory):
-    """FAP_2P2S model factory."""
-=======
 class FAP_2P2S_Factory(FBP_Factory):
     """FAP_2P2S model factory."""
 
@@ -622,52 +615,31 @@ class FAP_2P2S_Factory(FBP_Factory):
         'Mod3Current-Mon': _bsmp.ConstFAP_2P2S.V_I_MOD_3,
         'Mod4Current-Mon': _bsmp.ConstFAP_2P2S.V_I_MOD_4,
     }
->>>>>>> master
 
     @property
     def name(self):
         """Model name."""
-<<<<<<< HEAD
-        return 'FAP_2P2S_MASTER'
-=======
         return 'FAP_2P2S'
->>>>>>> master
 
     @property
     def parameters(self):
         """PRU Controller parameters."""
-<<<<<<< HEAD
-        return PRUCParms_FBP  # TODO: change to FAP_2P2S_MASTER
-=======
         return PRUCParms_FAP_2P2S
->>>>>>> master
 
     @property
     def bsmp_constants(self):
         """Model BSMP constants."""
-<<<<<<< HEAD
-        return _cFBP
-=======
         return _cFAP_2P2S
->>>>>>> master
 
     @property
     def entities(self):
         """Model entities."""
-<<<<<<< HEAD
-        return _EntitiesFBP()
-=======
         return _EntitiesFAP_2P2S()
->>>>>>> master
 
     @property
     def simulation_class(self):
         """Model simulation."""
-<<<<<<< HEAD
-        return _BSMPSim_FBP
-=======
         return _BSMPSim_FAP_2P2S
->>>>>>> master
 
 
 class Commercial_Factory(FAC_Factory):

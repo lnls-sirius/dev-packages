@@ -326,29 +326,10 @@ class ETypes(_cutil.ETypes):
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-<<<<<<< HEAD
     SOFT_INTLCK_FAP_4P = SOFT_INTLCK_FAP
     HARD_INTLCK_FAP_4P = (
         'Sobre-corrente na carga',
         'Sobre-tensão na carga',
-=======
-    SOFT_INTLCK_FAP_2P2S = SOFT_INTLCK_FAP
-    HARD_INTLCK_FAP_2P2S = (
-        'Sobre-corrente na carga',
->>>>>>> master
-        'Sobre-corrente no IGBT 1 do módulo 1',
-        'Sobre-corrente no IGBT 2 do módulo 1',
-        'Sobre-corrente no IGBT 1 do módulo 2',
-        'Sobre-corrente no IGBT 2 do módulo 2',
-        'Sobre-corrente no IGBT 1 do módulo 3',
-        'Sobre-corrente no IGBT 2 do módulo 3',
-        'Sobre-corrente no IGBT 1 do módulo 4',
-        'Sobre-corrente no IGBT 2 do módulo 4',
-        'Falha no contator de entrada do DC-Link do módulo 1',
-        'Falha no contator de entrada do DC-Link do módulo 2',
-        'Falha no contator de entrada do DC-Link do módulo 3',
-        'Falha no contator de entrada do DC-Link do módulo 4',
-<<<<<<< HEAD
         'Sobre-tensão do DC-Link do módulo 1',
         'Sobre-tensão do DC-Link do módulo 2',
         'Sobre-tensão do DC-Link do módulo 3',
@@ -361,7 +342,9 @@ class ETypes(_cutil.ETypes):
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved', 'Reserved',)
     IIB_INTLCK_FAP_4P = IIB_INTLCK_FAP
-=======
+    SOFT_INTLCK_FAP_2P2S = SOFT_INTLCK_FAP
+    HARD_INTLCK_FAP_2P2S = (
+        'Sobre-corrente na carga',
         'Sobre-tensão no DC-Link do módulo 1',
         'Sobre-tensão no DC-Link do módulo 2',
         'Sobre-tensão no DC-Link do módulo 3',
@@ -377,7 +360,6 @@ class ETypes(_cutil.ETypes):
         'Reserved', 'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved')
     IIB_INTLCK_FAP_2P2S = IIB_INTLCK_FAP
->>>>>>> master
     CYCLE_TYPES = ('Sine', 'DampedSine', 'Trapezoidal', 'DampedSquaredSine')
     SYNC_MODES = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
 
