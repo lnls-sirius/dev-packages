@@ -188,29 +188,65 @@ class DequeThread(_deque):
         with self._lock:
             return super().popleft()
 
+    # NOTE: delete this commented code eventually.
+    # Iit seems that having creation and initialization of threads
+    # unprotected with lock may results in concurrent deque threads, thus
+    # spoiling the order of inserted operations. This has been observed in
+    # PS IOC for TB quadrupoles and correctors!
+    #
+    # def process(self):
+    #     """Process operation from queue."""
+    #     # first check if a thread is already running
+    #
+    #     donothing = not self._enabled
+    #     donothing |= self._thread is not None and self._thread.is_alive()
+    #     if donothing:
+    #         return False
+    #
+    #     # no thread is running, we can process queue
+    #     try:
+    #         operation = self.popleft()
+    #     except IndexError:
+    #         # there is nothing in the queue
+    #         return False
+    #     # process operation taken from queue
+    #     args = tuple()
+    #     kws = dict()
+    #     if len(operation) == 1:
+    #         func = operation[0]
+    #     elif len(operation) == 2:
+    #         func, args = operation
+    #     elif len(operation) >= 3:
+    #         func, args, kws = operation[:3]
+    #     self._thread = _Thread(
+    #         target=func, args=args, kwargs=kws, daemon=True)
+    #     self._thread.start()
+    #     return True
+
     def process(self):
         """Process operation from queue."""
         # first check if a thread is already running
-        donothing = not self._enabled
-        donothing |= self._thread is not None and self._thread.is_alive()
-        if donothing:
-            return False
+        with self._lock:
+            donothing = not self._enabled
+            donothing |= self._thread is not None and self._thread.is_alive()
+            if donothing:
+                return False
 
-        # no thread is running, we can process queue
-        try:
-            operation = self.popleft()
-        except IndexError:
-            # there is nothing in the queue
-            return False
-        # process operation taken from queue
-        args = tuple()
-        kws = dict()
-        if len(operation) == 1:
-            func = operation[0]
-        elif len(operation) == 2:
-            func, args = operation
-        elif len(operation) >= 3:
-            func, args, kws = operation[:3]
-        self._thread = _Thread(target=func, args=args, kwargs=kws, daemon=True)
-        self._thread.start()
-        return True
+            # no thread is running, we can process queue
+            try:
+                operation = super().popleft()
+            except IndexError:
+                # there is nothing in the queue
+                return False
+            # process operation taken from queue
+            args = tuple()
+            kws = dict()
+            if len(operation) == 1:
+                func = operation[0]
+            elif len(operation) == 2:
+                func, args = operation
+            elif len(operation) >= 3:
+                func, args, kws = operation[:3]
+            self._thread = _Thread(target=func, args=args, kwargs=kws, daemon=True)
+            self._thread.start()
+            return True
