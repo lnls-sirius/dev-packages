@@ -1178,7 +1178,8 @@ def _set_limits(pstype, database):
                     'CurrentRef-Mon', 'Current-Mon', 'Current2-Mon'
                     'CycleAmpl-SP', 'CycleAmpl-RB',
                     'CycleOffset-SP', 'CycleOffset-RB',
-                    'Voltage-SP', 'Voltage-RB', 'Voltage-Mon',
+                    'Voltage-SP', 'Voltage-RB',
+                    'VoltageRef-Mon', 'Voltage-Mon',
                     )
     # TODO: define limits to WfmData as well!
     signals_unit = signals_lims + (
