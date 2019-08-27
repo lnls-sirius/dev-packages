@@ -219,6 +219,21 @@ class ETypes(_cutil.ETypes):
         'Sobre-tensão na saída do módulo 8',
         'Reserved', 'Reserved', 'Reserved',
         'Reserved', 'Reserved', 'Reserved',)
+    IIBINTLCK_FAC_2P4S_DCDC = (
+        'Sobre-tensão de entrada', 'Sobre-tensão de saída',
+        'Sobre-corrente no IGBT 1', 'Sobre-corrente no IGBT 2',
+        'Sobre-temperatura no IGBT 1', 'Sobre-temperatura no IGBT 2',
+        'Sobre-tensão dos drivers dos IGBTs',
+        'Sobre-corrente no driver do IGBT 1', 'Sobre-corrente no driver do IGBT 2',
+        'Erro no driver do IGBT 1', 'Erro no driver do IGBT 2',
+        'Sobre-temperatura nos indutores',
+        'Sobre-temperatura no dissipador',
+        'Falha no contator de entrada do DC-Link',
+        'Interlock Externo', 'Alta corrente de fuga',
+        'Interlock do Rack', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved',
+        'Reserved', 'Reserved', 'Reserved', 'Reserved')
     SOFT_INTLCK_FAC_2P4S_ACDC = (
         'Sobre-temperatura no dissipador', 'Sobre-temperatura nos indutores',
         'Reserved', 'Reserved',
