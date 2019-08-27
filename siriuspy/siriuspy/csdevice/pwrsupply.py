@@ -1185,9 +1185,15 @@ def _set_limits(pstype, database):
     )
     signals_prec = signals_unit
 
+    print(pstype)
+
     for propty, db in database.items():
         # set setpoint limits in database
         if propty in signals_lims:
+            if propty == 'Voltage-Mon' and pstype == 'as-dclink-fbp':
+                # for FBP DCLinks Voltage-Mon has different units than
+                # Voltage-SP!
+                continue
             db['lolo'] = _PSSearch.get_splims(pstype, 'lolo')
             db['low'] = _PSSearch.get_splims(pstype, 'low')
             db['lolim'] = _PSSearch.get_splims(pstype, 'lolim')
