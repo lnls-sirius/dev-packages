@@ -98,7 +98,7 @@ class PRUController:
     #       updating of _variables_values, though. Also to lock up other class
     #       properties and methods that access _variables_values or _psc_status
     # TODO: move scan and process threads to BeagleBone objects. With this
-    #       change the code will map to the power supply architcture more
+    #       change the code will map to the power supply architecture more
     #       naturally.
 
     # NOTES:
