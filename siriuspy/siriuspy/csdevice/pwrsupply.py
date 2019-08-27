@@ -379,7 +379,8 @@ def get_common_propty_database():
                             'value': Const.SyncMode.Off},
         'PRUBlockIndex-Mon': {'type': 'int', 'value': 0},
         'PRUSyncPulseCount-Mon': {'type': 'int', 'value': 0},
-        'PRUCtrlQueueSize-Mon': {'type': 'int', 'value': -1,
+        'PRUCtrlQueueSize-Mon': {'type': 'int', 'value': 0,
+                                 'low': -1, 'lolo': -1,
                                  'high': 50, 'hihi': 50},
 
         # TODO: should BSMPComm and Interlocks PVs be in "basic"?
