@@ -13,6 +13,11 @@ from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 # _delay_turn_on_off = 0.3  # [s]
 # _delay_loop_open_close = 0.3  # [s]
 # These updated values are based on what Gabriel indicated.
+
+# NOTE: delete these delays
+# the way the communication threads work in PRUController make these
+# parameters immaterial for the case of a single beaglebone with multiple
+# UDCs.
 _delay_turn_on_off = 0.010  # [s]
 _delay_loop_open_close = 0.150  # [s]
 
@@ -140,12 +145,12 @@ class PSPwrState(Function):
                 (self.setpoints and self.setpoints.apply(value)):
             if value == 1:
                 self.turn_on.execute()
-                _time.sleep(_delay_turn_on_off)
+                # _time.sleep(_delay_turn_on_off)
                 self.close_loop.execute()
-                _time.sleep(_delay_loop_open_close)
+                # _time.sleep(_delay_loop_open_close)
             elif value == 0:
                 self.turn_off.execute()
-                _time.sleep(_delay_turn_on_off)
+                # _time.sleep(_delay_turn_on_off)
 
 
 class PSCurvesAcq(Function):
@@ -229,10 +234,10 @@ class CtrlLoop(Function):
                 (self.setpoints and self.setpoints.apply(value)):
             if value == 1:
                 self.open_loop.execute(None)
-                _time.sleep(_delay_loop_open_close)
+                # _time.sleep(_delay_loop_open_close)
             elif value == 0:
                 self.close_loop.execute(None)
-                _time.sleep(_delay_loop_open_close)
+                # _time.sleep(_delay_loop_open_close)
 
 
 class PSOpMode(Function):
