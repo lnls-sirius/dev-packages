@@ -97,20 +97,15 @@ class PRUController:
     #       we need to lock up whole section in that function that does
     #       updating of _variables_values, though. Also to lock up other class
     #       properties and methods that access _variables_values or _psc_status
+    # TODO: move scan and process threads to BeagleBone objects. With this
+    #       change the code will map to the power supply architcture more
+    #       naturally.
 
     # NOTES:
     # =====
     #
     # 01. All private methods starting with '_bsmp' string make a direct
     #     write to the serial line.
-
-    # # frequency constants
-    # class FREQ:
-    #     """Namespace for frequency values."""
-    #
-    #     RAMP = 2.0  # [Hz]
-    #     SCAN = 10.0  # [Hz]
-
 
     # --- shortcuts, local variables and constants
 
@@ -1007,6 +1002,22 @@ class PRUController:
             for id in device_ids:
                 ack[id], data[id] = \
                     self._udc[id].execute_function(function_id, args)
+                # check anomalous response
+                if data[id] != 0:
+                    print('! anomalous response')
+                    print('device_id:   {}'.format(id))
+                    print('function_id: {}'.format(function_id))
+                    print('response:    {}'.format(data[id]))
+                # if UDC receives stacking write requests for different power
+                # supplies it may respond with anomalous data. a sleep
+                # therefore might eliminate this problem.
+                # NOTE: we should discuss with ELP to see if this sleep is really
+                # necessary...
+                if function_id in (0, 1, 2, 3):
+                    # print('dev_id:{}, func_id:{}, resp:{}'.format(id,
+                    #       function_id, data[id]))
+                    _time.sleep(0.020)
+
         except (_SerialError, IndexError):
             print('SerialError exception in {}'.format(
                 ('F', device_ids, function_id, args)))
