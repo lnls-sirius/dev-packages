@@ -13,12 +13,10 @@ from siriuspy.bsmp import BSMPSim as _BSMPSim
 
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
 from .siggen import SignalFactory as _SignalFactory
-# from siriuspy.pwrsupply.model_factory import ModelFactory as _ModelFactory
 
 from siriuspy.pwrsupply.bsmp import EntitiesFBP as _EntitiesFBP
 from siriuspy.pwrsupply.bsmp import EntitiesFBP_DCLink as _EntitiesFBP_DCLink
 from siriuspy.pwrsupply.bsmp import EntitiesFAC_DCDC as _EntitiesFAC_DCDC
-from siriuspy.pwrsupply.bsmp import EntitiesFAC_ACDC as _EntitiesFAC_ACDC
 from siriuspy.pwrsupply.bsmp import EntitiesFAC_2S_ACDC as _EntitiesFAC_2S_ACDC
 from siriuspy.pwrsupply.bsmp import \
     EntitiesFAC_2P4S_DCDC as _EntitiesFAC_2P4S_DCDC
@@ -33,7 +31,6 @@ from siriuspy.pwrsupply.bsmp import EntitiesFAP_2P2S as _EntitiesFAP_2P2S
 from siriuspy.pwrsupply.bsmp import ConstFBP as _cFBP
 from siriuspy.pwrsupply.bsmp import ConstFBP_DCLink as _cFBP_DCLink
 from siriuspy.pwrsupply.bsmp import ConstFAC_DCDC as _cFAC_DCDC
-from siriuspy.pwrsupply.bsmp import ConstFAC_ACDC as _cFAC_ACDC
 from siriuspy.pwrsupply.bsmp import ConstFAC_2P4S_DCDC as _cFAC_2P4S_DCDC
 from siriuspy.pwrsupply.bsmp import ConstFAC_2P4S_ACDC as _cFAC_2P4S_ACDC
 from siriuspy.pwrsupply.bsmp import ConstFAC_2S_DCDC as _cFAC_2S_DCDC
@@ -80,7 +77,7 @@ class _Spec_FBP(_Spec):
 
 
 class _Spec_FBP_DCLink(_Spec):
-    """Spec FAC_ACDC."""
+    """Spec FBP_DCLink."""
 
     _monvar_rms = {
         _cFBP_DCLink.V_V_OUT: 0.001,
@@ -113,13 +110,6 @@ class _Spec_FAC_DCDC(_Spec):
 
     def _get_monvar_fluctuation_rms(self, var_id):
         return _Spec.I_LOAD_FLUCTUATION_RMS
-
-
-class _Spec_FAC_ACDC(_Spec):
-    """Spec FAC_ACDC."""
-
-    def _get_constants(self):
-        return _cFAC_ACDC
 
 
 class _Spec_FAC_2P4S_DCDC(_Spec):
@@ -578,8 +568,14 @@ class _OpModeSimCycleState_FAC_DCDC(_OpModeSimCycleState, _Spec_FAC_DCDC):
     pass
 
 
-class _OpModeSimState_FAC_ACDC(_OpModeSimSlowRefState, _Spec_FAC_ACDC):
-    """SlowRef FAC_ACDC state."""
+class _OpModeSimState_FAC_2S_ACDC(_OpModeSimSlowRefState, _Spec_FAC_2S_ACDC):
+    """SlowRef FAC_2S_ACDC state."""
+
+    pass
+
+
+class _OpModeSimState_FAC_2P4S_ACDC(_OpModeSimSlowRefState, _Spec_FAC_2P4S_ACDC):
+    """SlowRef FAC_2P4S_ACDC state."""
 
     pass
 
@@ -812,32 +808,6 @@ class BSMPSim_FAC_DCDC(_BaseBSMPSim, _Spec_FAC_DCDC):
         return variables
 
 
-class BSMPSim_FAC_ACDC(_BaseBSMPSim, _Spec_FAC_ACDC):
-    """Simulated FAC_ACDC UDC."""
-
-    def _get_entities(self):
-        return _EntitiesFAC_ACDC()
-
-    def _get_states(self):
-        return [_OpModeSimState_FAC_ACDC()]
-
-    def _get_init_variables(self):
-        firmware = [b'S', b'i', b'm', b'u', b'l', b'a', b't', b'i', b'o', b'n']
-        while len(firmware) < 128:
-            firmware.append('\x00'.encode())
-        variables = [
-            0b10000,  # V_PS_STATUS
-            0.0, 0.0,  # ps_setpoint, ps_reference
-            firmware,
-            0, 0,  # counters
-            0, 0, 0, 0.0, 0.0, 0.0, 0.0, [0.0, 0.0, 0.0, 0.0],  # siggen [6-13]
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # undef [14-24]
-            0, 0,  # interlocks [25-26]
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0,  # [27-32]
-            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # [33-42]
-        return variables
-
-
 class BSMPSim_FAC_2P4S_DCDC(_BaseBSMPSim, _Spec_FAC_2P4S_DCDC):
     """Simulated FAC_2P4S_DCDC UDC."""
 
@@ -924,7 +894,7 @@ class BSMPSim_FAC_2P4S_ACDC(_BaseBSMPSim, _Spec_FAC_2P4S_ACDC):
         return _EntitiesFAC_2P4S_ACDC()
 
     def _get_states(self):
-        return [_OpModeSimState_FAC_ACDC()]
+        return [_OpModeSimState_FAC_2P4S_ACDC()]
 
     def _get_init_variables(self):
         firmware = [b'S', b'i', b'm', b'u', b'l', b'a', b't', b'i', b'o', b'n']
@@ -949,7 +919,7 @@ class BSMPSim_FAC_2S_ACDC(_BaseBSMPSim, _Spec_FAC_2S_ACDC):
         return _EntitiesFAC_2S_ACDC()
 
     def _get_states(self):
-        return [_OpModeSimState_FAC_ACDC()]
+        return [_OpModeSimState_FAC_2S_ACDC()]
 
     def _get_init_variables(self):
         firmware = [b'S', b'i', b'm', b'u', b'l', b'a', b't', b'i', b'o', b'n']
