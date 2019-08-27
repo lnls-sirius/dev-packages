@@ -171,13 +171,12 @@ class ETypes(_cutil.ETypes):
         'Falha no contator de entrada AC trifásica'
         'Interlock da placa IIB 1',
         'Interlock da placa IIB 2', 'Interlock da placa IIB 3',
-        'Interlock da placa IIB 4', 'Bit',
-        'Bit', 'Bit', 'Bit', 'Bit',
-        'Bit', 'Bit', 'Bit', 'Bit',
-        'Bit', 'Bit', 'Bit', 'Bit',
-        'Bit', 'Bit', 'Bit', 'Bit',
-        'Bit', 'Bit', 'Bit', 'Bit',
-        'Bit', 'Bit', 'Bit', 'Bit',)
+        'Interlock da placa IIB 4', 'Bit11',
+        'Bit12', 'Bit13', 'Bit14', 'Bit15',
+        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31')
     SOFT_INTLCK_FAC_2P4S = (
         'Sobre-temperatura nos indutores', 'Sobre-temperatura nos IGBTs',
         'Falha no DCCT 1', 'Falha no DCCT 2',
