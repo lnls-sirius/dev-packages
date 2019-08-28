@@ -1185,8 +1185,6 @@ def _set_limits(pstype, database):
     )
     signals_prec = signals_unit
 
-    print(pstype)
-
     for propty, db in database.items():
         # set setpoint limits in database
         if propty in signals_lims:
