@@ -222,7 +222,7 @@ class PSSearch:
         """Return SP limits unit."""
         PSSearch._reload_pstype_2_splims_dict()
         if psmodel in ('FBP', 'FBP_DCLink', 'FBP_FOFB',
-                       'FAC_ACDC', 'FAC_DCDC', 'FAC_2S_DCDC', 'FAC_2S_ACDC',
+                       'FAC_DCDC', 'FAC_2S_DCDC', 'FAC_2S_ACDC',
                        'FAC_2P4S_DCDC', 'FAC_2P4S_ACDC',
                        'FAP', 'FAP_2P2S', 'FAP_4P',
                        'Commercial', 'LINAC_PS',

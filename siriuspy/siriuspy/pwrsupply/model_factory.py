@@ -21,7 +21,7 @@ from siriuspy.pwrsupply.bsmp import EntitiesFAP_4P as _EntitiesFAP_4P
 from siriuspy.pwrsupply.bsmp import EntitiesFAP_2P2S as _EntitiesFAP_2P2S
 # --- Entities ACDC ---
 from siriuspy.pwrsupply.bsmp import EntitiesFBP_DCLink as _EntitiesFBP_DCLink
-from siriuspy.pwrsupply.bsmp import EntitiesFAC_ACDC as _EntitiesFAC_ACDC
+
 from siriuspy.pwrsupply.bsmp import \
     EntitiesFAC_2P4S_ACDC as _EntitiesFAC_2P4S_ACDC
 from siriuspy.pwrsupply.bsmp import \
@@ -38,7 +38,6 @@ from siriuspy.pwrsupply.bsmp import ConstFAP_2P2S as _cFAP_2P2S
 
 # --- Const ACDC ---
 from siriuspy.pwrsupply.bsmp import ConstFBP_DCLink as _cFBP_DCLink
-from siriuspy.pwrsupply.bsmp import ConstFAC_ACDC as _cFAC_ACDC
 from siriuspy.pwrsupply.bsmp import ConstFAC_2P4S_ACDC as _cFAC_2P4S_ACDC
 from siriuspy.pwrsupply.bsmp import ConstFAC_2S_ACDC as _cFAC_2S_ACDC
 
@@ -56,7 +55,6 @@ from siriuspy.pwrsupply.bsmp_sim import BSMPSim_FAP_2P2S as _BSMPSim_FAP_2P2S
 # --- BSMP ACDC ---
 from siriuspy.pwrsupply.bsmp_sim import \
     BSMPSim_FBP_DCLink as _BSMPSim_FBP_DCLink
-from siriuspy.pwrsupply.bsmp_sim import BSMPSim_FAC_ACDC as _BSMPSim_FAC_ACDC
 from siriuspy.pwrsupply.bsmp_sim import \
     BSMPSim_FAC_2P4S_ACDC as _BSMPSim_FAC_2P4S_ACDC
 from siriuspy.pwrsupply.bsmp_sim import \
@@ -128,7 +126,6 @@ class ModelFactory:
             'FBP_DCLink': FBP_DCLink_Factory,
             'FBP_FOFB': FBP_Factory,
             'FAC_DCDC': FAC_Factory,
-            'FAC_ACDC': FAC_ACDC_Factory,
             'FAC_2S_DCDC': FAC_2S_DCDC_Factory,
             'FAC_2S_ACDC': FAC_2S_ACDC_Factory,
             'FAC_2P4S_DCDC': FAC_2P4S_DCDC_Factory,
@@ -729,16 +726,16 @@ class FAC_2S_ACDC_Factory(ModelFactory):
     """FAC_2S_ACDC factory."""
 
     _variables = {
-        'IntlkSoft-Mon': _bsmp.ConstFAC_ACDC.V_PS_SOFT_INTERLOCKS,
-        'IntlkHard-Mon': _bsmp.ConstFAC_ACDC.V_PS_HARD_INTERLOCKS,
-        'CapacitorBankVoltage-RB': _bsmp.ConstFAC_ACDC.V_PS_SETPOINT,
-        'CapacitorBankVoltageRef-Mon': _bsmp.ConstFAC_ACDC.V_PS_REFERENCE,
-        'CapacitorBankVoltage-Mon': _bsmp.ConstFAC_ACDC.V_V_CAPBANK,
-        'RectifierVoltage-Mon': _bsmp.ConstFAC_ACDC.V_V_OUT_RECTIFIER,
-        'RectifierCurrent-Mon': _bsmp.ConstFAC_ACDC.V_I_OUT_RECTIFIER,
-        'HeatSinkTemperature-Mon': _bsmp.ConstFAC_ACDC.V_TEMP_HEATSINK,
-        'InductorsTemperature-Mon': _bsmp.ConstFAC_ACDC.V_TEMP_INDUCTORS,
-        'PWMDutyCycle-Mon': _bsmp.ConstFAC_ACDC.V_DUTY_CYCLE,
+        'IntlkSoft-Mon': _bsmp.ConstFAC_2S_ACDC.V_PS_SOFT_INTERLOCKS,
+        'IntlkHard-Mon': _bsmp.ConstFAC_2S_ACDC.V_PS_HARD_INTERLOCKS,
+        'CapacitorBankVoltage-RB': _bsmp.ConstFAC_2S_ACDC.V_PS_SETPOINT,
+        'CapacitorBankVoltageRef-Mon': _bsmp.ConstFAC_2S_ACDC.V_PS_REFERENCE,
+        'CapacitorBankVoltage-Mon': _bsmp.ConstFAC_2S_ACDC.V_V_CAPBANK,
+        'RectifierVoltage-Mon': _bsmp.ConstFAC_2S_ACDC.V_V_OUT_RECTIFIER,
+        'RectifierCurrent-Mon': _bsmp.ConstFAC_2S_ACDC.V_I_OUT_RECTIFIER,
+        'HeatSinkTemperature-Mon': _bsmp.ConstFAC_2S_ACDC.V_TEMP_HEATSINK,
+        'InductorsTemperature-Mon': _bsmp.ConstFAC_2S_ACDC.V_TEMP_INDUCTORS,
+        'PWMDutyCycle-Mon': _bsmp.ConstFAC_2S_ACDC.V_DUTY_CYCLE,
     }
 
     @property
@@ -826,79 +823,6 @@ class FAC_2P4S_ACDC_Factory(FAC_2S_ACDC_Factory):
     def simulation_class(self):
         """Model simulation."""
         return _BSMPSim_FAC_2P4S_ACDC
-
-
-class FAC_ACDC_Factory(FAC_2S_ACDC_Factory):
-    """FAC_ACDC factory."""
-
-    FAC_2S_ACDC_Factory._variables.update({
-        'IntlkSoft-Mon': _bsmp.ConstFAC_ACDC.V_PS_SOFT_INTERLOCKS,
-        'IntlkHard-Mon': _bsmp.ConstFAC_ACDC.V_PS_HARD_INTERLOCKS,
-        'CapacitorBankVoltage-RB': _bsmp.ConstFAC_ACDC.V_PS_SETPOINT,
-        'CapacitorBankVoltageRef-Mon': _bsmp.ConstFAC_ACDC.V_PS_REFERENCE,
-        'CapacitorBankVoltage-Mon': _bsmp.ConstFAC_ACDC.V_V_CAPBANK,
-        'RectifierVoltage-Mon': _bsmp.ConstFAC_ACDC.V_V_OUT_RECTIFIER,
-        'RectifierCurrent-Mon': _bsmp.ConstFAC_ACDC.V_I_OUT_RECTIFIER,
-        'HeatSinkTemperature-Mon': _bsmp.ConstFAC_ACDC.V_TEMP_HEATSINK,
-        'InductorsTemperature-Mon': _bsmp.ConstFAC_ACDC.V_TEMP_INDUCTORS,
-        'PWMDutyCycle-Mon': _bsmp.ConstFAC_ACDC.V_DUTY_CYCLE,
-
-        'IIBISInputCurrent-Mon': _bsmp.ConstFAC_ACDC.V_I_INPUT_IS_IIB,
-        'IIBISInputVoltage-Mon': _bsmp.ConstFAC_ACDC.V_V_INPUT_IS_IIB,
-        'IIBISInductorsTemperature-Mon':
-            _bsmp.ConstFAC_ACDC.V_TEMP_INDUCTOR_IS_IIB,
-        'IIBISHeatSinkTemperature-Mon':
-            _bsmp.ConstFAC_ACDC.V_TEMP_HEATSINK_IS_IIB,
-        'IIBCmdOutputVoltage-Mon': _bsmp.ConstFAC_ACDC.V_V_OUTPUT_CMD_IIB,
-        'IIBCmdCapacitorBankVoltage-Mon':
-            _bsmp.ConstFAC_ACDC.V_V_CAPBANK_CMD_IIB,
-        'IIBCmdInductorsTemperature-Mon':
-            _bsmp.ConstFAC_ACDC.V_TEMP_INDUCTOR_CMD_IIB,
-        'IIBCmdHeatSinkTemperature-Mon':
-            _bsmp.ConstFAC_ACDC.V_TEMP_HEATSINK_CMD_IIB,
-        'IntlkIIBIS-Mon': _bsmp.ConstFAC_ACDC.V_IIB_INTERLOCKS_IS,
-        'IntlkIIBCmd-Mon': _bsmp.ConstFAC_ACDC.V_IIB_INTERLOCKS_CMD,
-    })
-
-    @property
-    def name(self):
-        """Model name."""
-        return 'FAC_ACDC'
-
-    @property
-    def parameters(self):
-        """PRU Controller parameters."""
-        return PRUCParms_FAC_ACDC
-
-    @property
-    def bsmp_constants(self):
-        """Model BSMP constants."""
-        return _cFAC_ACDC
-
-    @property
-    def entities(self):
-        """Model entities."""
-        return _EntitiesFAC_ACDC()
-
-    @property
-    def simulation_class(self):
-        """Model simulation."""
-        return _BSMPSim_FAC_ACDC
-
-    def function(self, device_ids, epics_field, pru_controller, setpoints):
-        """Return function."""
-        _c = _bsmp.ConstFAC_ACDC
-        if epics_field == 'CapacitorBankVoltage-SP':
-            return _functions.BSMPFunction(
-                device_ids, pru_controller, _c.F_SET_SLOWREF, setpoints)
-        elif epics_field == 'PwrState-Sel':
-            # The firmware opens the control loop. It is the user's
-            # responsability to close it.
-            return _functions.PSPwrStateFBP_DCLink(
-                device_ids, pru_controller, setpoints)
-        else:
-            return super().function(
-                device_ids, epics_field, pru_controller, setpoints)
 
 
 # --- PRUC Parameter classes ---
@@ -1431,7 +1355,7 @@ class PRUCParms_FAC_2S_ACDC(_PRUCParms):
         # ConstBSMP.V_SIGGEN_AMPLITUDE,
         # ConstBSMP.V_SIGGEN_OFFSET,
         # ConstBSMP.V_SIGGEN_AUX_PARAM,
-        # --- FAC_ACDC variables ---
+        # --- FAC_2S_ACDC variables ---
         ConstBSMP.V_PS_SOFT_INTERLOCKS,
         ConstBSMP.V_PS_HARD_INTERLOCKS,
         ConstBSMP.V_V_CAPBANK,
@@ -1455,7 +1379,7 @@ class PRUCParms_FAC_2S_ACDC(_PRUCParms):
         # ConstBSMP.V_SIGGEN_AMPLITUDE,
         # ConstBSMP.V_SIGGEN_OFFSET,
         # ConstBSMP.V_SIGGEN_AUX_PARAM,
-        # --- FAC_ACDC variables ---
+        # --- FAC_2S_ACDC variables ---
         ConstBSMP.V_PS_SOFT_INTERLOCKS,
         ConstBSMP.V_PS_HARD_INTERLOCKS,
         ConstBSMP.V_V_CAPBANK,
@@ -1474,95 +1398,6 @@ class PRUCParms_FAC_2P4S_ACDC(PRUCParms_FAC_2S_ACDC):
     model = ModelFactory.create('FAC_2P4S_ACDC')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
-
-
-class PRUCParms_FAC_ACDC(_PRUCParms):
-    """FAC_ACDC-specific PRUC parameters."""
-
-    FREQ_RAMP = 2.0  # [Hz]
-    FREQ_SCAN = 2.0  # [Hz]
-
-    # UDC model
-    model = ModelFactory.create('FAC_ACDC')
-    ConstBSMP = model.bsmp_constants
-    Entities = model.entities
-
-    groups = dict()
-    # reserved variable groups (not to be used)
-    groups[_PRUCParms.ALL] = tuple(sorted(Entities.list_variables(0)))
-    groups[_PRUCParms.READONLY] = tuple(sorted(Entities.list_variables(1)))
-    groups[_PRUCParms.WRITEABLE] = tuple(sorted(Entities.list_variables(2)))
-    # new variable groups useful for PRUController.
-    groups[_PRUCParms.ALLRELEVANT] = (
-        # --- common variables
-        ConstBSMP.V_PS_STATUS,
-        ConstBSMP.V_PS_SETPOINT,
-        ConstBSMP.V_PS_REFERENCE,
-        ConstBSMP.V_FIRMWARE_VERSION,
-        ConstBSMP.V_COUNTER_SET_SLOWREF,
-        ConstBSMP.V_COUNTER_SYNC_PULSE,
-        # ConstBSMP.V_SIGGEN_ENABLE,
-        # ConstBSMP.V_SIGGEN_TYPE,
-        # ConstBSMP.V_SIGGEN_NUM_CYCLES,
-        # ConstBSMP.V_SIGGEN_N,
-        # ConstBSMP.V_SIGGEN_FREQ,
-        # ConstBSMP.V_SIGGEN_AMPLITUDE,
-        # ConstBSMP.V_SIGGEN_OFFSET,
-        # ConstBSMP.V_SIGGEN_AUX_PARAM,
-        # --- FAC_ACDC variables ---
-        ConstBSMP.V_PS_SOFT_INTERLOCKS,
-        ConstBSMP.V_PS_HARD_INTERLOCKS,
-        ConstBSMP.V_V_CAPBANK,
-        ConstBSMP.V_V_OUT_RECTIFIER,
-        ConstBSMP.V_I_OUT_RECTIFIER,
-        ConstBSMP.V_TEMP_HEATSINK,
-        ConstBSMP.V_TEMP_INDUCTORS,
-        ConstBSMP.V_DUTY_CYCLE,
-        ConstBSMP.V_I_INPUT_IS_IIB,
-        ConstBSMP.V_V_INPUT_IS_IIB,
-        ConstBSMP.V_TEMP_INDUCTOR_IS_IIB,
-        ConstBSMP.V_TEMP_HEATSINK_IS_IIB,
-        ConstBSMP.V_V_OUTPUT_CMD_IIB,
-        ConstBSMP.V_V_CAPBANK_CMD_IIB,
-        ConstBSMP.V_TEMP_INDUCTOR_CMD_IIB,
-        ConstBSMP.V_TEMP_HEATSINK_CMD_IIB,
-        ConstBSMP.V_IIB_INTERLOCKS_IS,
-        ConstBSMP.V_IIB_INTERLOCKS_CMD,)
-    groups[_PRUCParms.SYNCOFF] = (
-        # --- common variables
-        ConstBSMP.V_PS_STATUS,
-        ConstBSMP.V_PS_SETPOINT,
-        ConstBSMP.V_PS_REFERENCE,
-        ConstBSMP.V_COUNTER_SET_SLOWREF,
-        ConstBSMP.V_COUNTER_SYNC_PULSE,
-        # ConstBSMP.V_SIGGEN_ENABLE,
-        # ConstBSMP.V_SIGGEN_TYPE,
-        # ConstBSMP.V_SIGGEN_NUM_CYCLES,
-        # ConstBSMP.V_SIGGEN_N,
-        # ConstBSMP.V_SIGGEN_FREQ,
-        # ConstBSMP.V_SIGGEN_AMPLITUDE,
-        # ConstBSMP.V_SIGGEN_OFFSET,
-        # ConstBSMP.V_SIGGEN_AUX_PARAM,
-        # --- FAC_ACDC variables ---
-        ConstBSMP.V_PS_SOFT_INTERLOCKS,
-        ConstBSMP.V_PS_HARD_INTERLOCKS,
-        ConstBSMP.V_V_CAPBANK,
-        ConstBSMP.V_V_OUT_RECTIFIER,
-        ConstBSMP.V_I_OUT_RECTIFIER,
-        ConstBSMP.V_TEMP_HEATSINK,
-        ConstBSMP.V_TEMP_INDUCTORS,
-        ConstBSMP.V_DUTY_CYCLE,
-        ConstBSMP.V_I_INPUT_IS_IIB,
-        ConstBSMP.V_V_INPUT_IS_IIB,
-        ConstBSMP.V_TEMP_INDUCTOR_IS_IIB,
-        ConstBSMP.V_TEMP_HEATSINK_IS_IIB,
-        ConstBSMP.V_V_OUTPUT_CMD_IIB,
-        ConstBSMP.V_V_CAPBANK_CMD_IIB,
-        ConstBSMP.V_TEMP_INDUCTOR_CMD_IIB,
-        ConstBSMP.V_TEMP_HEATSINK_CMD_IIB,
-        ConstBSMP.V_IIB_INTERLOCKS_IS,
-        ConstBSMP.V_IIB_INTERLOCKS_CMD,)
-    groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 
 class PRUCParms_FAP(_PRUCParms):
@@ -1986,7 +1821,6 @@ class PRUCParms_FAP_2P2S(_PRUCParms):
         ConstBSMP.V_I_MOD_3,
         ConstBSMP.V_I_MOD_4)
     groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
-
 
 
 class UDC:

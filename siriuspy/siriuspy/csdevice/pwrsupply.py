@@ -46,8 +46,7 @@ class ETypes(_cutil.ETypes):
 
     INTERFACE = ('Remote', 'Local', 'PCHost')
     MODELS = ('Empty',
-              'FBP', 'FBP_DCLink',
-              'FAC_ACDC', 'FAC_DCDC',
+              'FBP', 'FBP_DCLink', 'FAC_DCDC',
               'FAC_2S_ACDC', 'FAC_2S_DCDC',
               'FAC_2P4S_ACDC', 'FAC_2P4S_DCDC',
               'FAP', 'FAP_4P', 'FAP_2P2S',
@@ -63,36 +62,35 @@ class ETypes(_cutil.ETypes):
     CMD_ACK = ('OK', 'Local', 'PCHost', 'Interlocked', 'UDC_locked',
                'DSP_TimeOut', 'DSP_Busy', 'Invalid',)
     SOFT_INTLCK_FBP = (
-        'Sobre-temperatura no módulo', 'Reserved',
-        'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+        'Sobre-temperatura no módulo', 'Bit1', 'Bit2', 'Bit3',
+        'Bit4', 'Bit5', 'Bit6', 'Bit7',
+        'Bit8', 'Bit9', 'Bit10', 'Bit11',
+        'Bit12', 'Bit13', 'Bit14', 'Bit15',
+        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31')
     HARD_INTLCK_FBP = (
         'Sobre-corrente na carga', 'Sobre-tensão na carga',
         'Sobre-tensão no DC-Link', 'Sub-tensão no DC-Link',
         'Falha no relé de entrada do DC-Link',
         'Falha no fusível de entrada do DC-Link',
-        'Falha nos drivers do módulo', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+        'Falha nos drivers do módulo', 'Bit7',
+        'Bit8', 'Bit9', 'Bit10', 'Bit11',
+        'Bit12', 'Bit13', 'Bit14', 'Bit15',
+        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31')
     SOFT_INTLCK_FBP_DCLINK = (
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+        'Bit0', 'Bit1', 'Bit2', 'Bit3',
+        'Bit4', 'Bit5', 'Bit6', 'Bit7',
+        'Bit8', 'Bit9', 'Bit10', 'Bit11',
+        'Bit12', 'Bit13', 'Bit14', 'Bit15',
+        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31')
     HARD_INTLCK_FBP_DCLINK = (
         'Falha na fonte 1', 'Falha na fonte 2',
         'Falha na fonte 3', 'Sobre-tensão da saída do bastidor DC-Link',
@@ -100,70 +98,47 @@ class ETypes(_cutil.ETypes):
         'Sobre-tensão na fonte 3', 'Sub-tensão da saída do bastidor DC-Link',
         'Sub-tensão na fonte 1', 'Sub-tensão na fonte 2',
         'Sub-tensão na fonte 3', 'Sensor de fumaça',
-        'Interlock externo', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+        'Interlock externo', 'Bit13', 'Bit14', 'Bit15',
+        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31')
     SOFT_INTLCK_FAC_DCDC = (
         'Sobre-temperatura nos indutores',  'Sobre-temperatura nos IGBTs',
         'Falha no DCCT 1', 'Falha no DCCT 2',
         'Alta diferença entre DCCTs',
         'Falha na leitura da corrente na carga do DCCT 1',
-        'Falha na leitura da corrente na carga do DCCT 2', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+        'Falha na leitura da corrente na carga do DCCT 2', 'Bit7',
+        'Bit8', 'Bit9', 'Bit10', 'Bit11',
+        'Bit12', 'Bit13', 'Bit14', 'Bit15',
+        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31')
     HARD_INTLCK_FAC_DCDC = (
         'Sobre-corrente na carga', 'Sobre-tensão na carga',
         'Sobre-tensão no DC-Link', 'Sub-tensão no DC-Link',
         'Falha nos drivers do módulo',
         'Interlock da placa IIB',
         'Interlock externo', 'Interlock do rack',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-    SOFT_INTLCK_FAC_ACDC = (
-        'Sobre-temperatura no dissipador', 'Sobre-temperatura nos indutores',
-        'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-    HARD_INTLCK_FAC_ACDC = (
-        'Sobre-tensão no banco de capacitores',
-        'Sobre-tensão na saída do retificador',
-        'Sub-tensão na saída do retificador',
-        'Sobre-corrente na saída do retificador',
-        'Falha no contator de entrada AC trifásica', 'Falha no driver do IGBT',
-        'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+        'Bit8', 'Bit9', 'Bit10', 'Bit11',
+        'Bit12', 'Bit13', 'Bit14', 'Bit15',
+        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31')
     SOFT_INTLCK_FAC_2S_DCDC = (
         'Falha no DCCT1', 'Falha no DCCT2',
         'Alta diferença entre DCCT\'s',
         'Falha na leitura da corrente na carga do DCCT1',
         'Falha na leitura da corrente na carga do DCCT2',
-        'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+        'Bit5', 'Bit6', 'Bit7',
+        'Bit8', 'Bit9', 'Bit10', 'Bit11',
+        'Bit12', 'Bit13', 'Bit14', 'Bit15',
+        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31')
     HARD_INTLCK_FAC_2S_DCDC = (
         'Sobre-corrente na carga', 'Sobre-tensão na carga',
         'Sobre-tensão no DC-Link do módulo 1',
@@ -175,46 +150,45 @@ class ETypes(_cutil.ETypes):
         'Interlock da placa IIB do módulo 1',
         'Interlock da placa IIB do módulo 2',
         'Interlock externo', 'Interlock dos racks',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+        'Bit12', 'Bit13', 'Bit14', 'Bit15',
+        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31')
     SOFT_INTLCK_FAC_2S_ACDC = (
         'Sobre-temperatura no dissipador', 'Sobre-temperatura nos indutores',
-        'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+        'Bit2', 'Bit3',
+        'Bit4', 'Bit5', 'Bit6', 'Bit7',
+        'Bit8', 'Bit9', 'Bit10', 'Bit11',
+        'Bit12', 'Bit13', 'Bit14', 'Bit15',
+        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31')
     HARD_INTLCK_FAC_2S_ACDC = (
         'Sobre-tensão no banco de capacitores',
         'Sobre-corrente na saída do retificador',
         'Falha no contator de entrada AC trifásica'
         'Interlock da placa IIB 1',
         'Interlock da placa IIB 2', 'Interlock da placa IIB 3',
-        'Interlock da placa IIB 4', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+        'Interlock da placa IIB 4', 'Bit11',
+        'Bit12', 'Bit13', 'Bit14', 'Bit15',
+        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31')
     SOFT_INTLCK_FAC_2P4S = (
-        'Sobre-temperatura nos indutores',  'Sobre-temperatura nos IGBTs',
+        'Sobre-temperatura nos indutores', 'Sobre-temperatura nos IGBTs',
         'Falha no DCCT 1', 'Falha no DCCT 2',
         'Alta diferença entre DCCTs',
         'Falha na leitura da corrente na carga do DCCT 1',
-        'Falha na leitura da corrente na carga do DCCT 2', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+        'Falha na leitura da corrente na carga do DCCT 2', 'Bit7',
+        'Bit8', 'Bit9', 'Bit10', 'Bit11',
+        'Bit12', 'Bit13', 'Bit14', 'Bit15',
+        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31')
     HARD_INTLCK_FAC_2P4S = (
         'Sobre-corrente na carga', 'Sobre-tensão na carga',
         'Sobre-tensão no DC-Link do módulo 1',
@@ -241,61 +215,43 @@ class ETypes(_cutil.ETypes):
         'Sobre-tensão na saída do módulo 6',
         'Sobre-tensão na saída do módulo 7',
         'Sobre-tensão na saída do módulo 8',
-        'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved',)
-    IIBIS_INTLCK_FAC_ACDC = (
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
-    IIBCMD_INTLCK_FAC_ACDC = (
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+        'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31')
     SOFT_INTLCK_FAC_2P4S_ACDC = (
         'Sobre-temperatura no dissipador', 'Sobre-temperatura nos indutores',
-        'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+        'Bit2', 'Bit3',
+        'Bit4', 'Bit5', 'Bit6', 'Bit7',
+        'Bit8', 'Bit9', 'Bit10', 'Bit11',
+        'Bit12', 'Bit13', 'Bit14', 'Bit15',
+        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31')
     HARD_INTLCK_FAC_2P4S_ACDC = (
         'Sobre-tensão no banco de capacitores',
         'Sobre-tensão na saída do retificador',
         'Sub-tensão na saída do retificador',
         'Sobre-corrente na saída do retificador',
         'Falha no contator de entrada AC trifásica', 'Falha no driver do IGBT',
-        'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+        'Bit6', 'Bit7',
+        'Bit8', 'Bit9', 'Bit10', 'Bit11',
+        'Bit12', 'Bit13', 'Bit14', 'Bit15',
+        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31')
     SOFT_INTLCK_FAP = (
         'Falha no DCCT 1', 'Falha no DCCT 2',
         'Alta diferença entre DCCTs',
         'Falha de leitura da corrente na carga do DCCT 1',
         'Falha de leitura da corrente na carga do DCCT 2',
-        'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+        'Bit5', 'Bit6', 'Bit7',
+        'Bit8', 'Bit9', 'Bit10', 'Bit11',
+        'Bit12', 'Bit13', 'Bit14', 'Bit15',
+        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31')
     HARD_INTLCK_FAP = (
         'Sobre-corrente na carga',
         'Sobre-tensão na carga',
@@ -303,13 +259,13 @@ class ETypes(_cutil.ETypes):
         'Sub-tensão no DC-Link',
         'Falha no contator de entrada do DC-Link',
         'Sobre-corrente no IGBT 1', 'Sobre-corrente no IGBT 2',
-        'Interlock da placa IIB', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved',)
+        'Interlock da placa IIB',
+        'Bit8', 'Bit9', 'Bit10', 'Bit11',
+        'Bit12', 'Bit13', 'Bit14', 'Bit15',
+        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31')
     IIB_INTLCK_FAP = (
         'Sobre-tensão de entrada', 'Sobre-tensão de saída',
         'Sobre-corrente no IGBT 1', 'Sobre-corrente no IGBT 2',
@@ -321,10 +277,10 @@ class ETypes(_cutil.ETypes):
         'Sobre-temperatura nos indutores', 'Sobre-temperatura no dissipador',
         'Falha no contator de entrada do DC-Link', 'Interlock externo',
         'Alta corrente de fuga', 'Interlock do rack',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',)
+        'Bit16', 'Bit17', 'Bit18', 'Bit19',
+        'Bit20', 'Bit21', 'Bit22', 'Bit23',
+        'Bit24', 'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31')
     SOFT_INTLCK_FAP_2P2S = SOFT_INTLCK_FAP
     HARD_INTLCK_FAP_2P2S = (
         'Sobre-corrente na carga',
@@ -352,8 +308,8 @@ class ETypes(_cutil.ETypes):
         'Interlock da placa IIB do módulo 2',
         'Interlock da placa IIB do módulo 3',
         'Interlock da placa IIB do módulo 4',
-        'Reserved', 'Reserved', 'Reserved', 'Reserved',
-        'Reserved', 'Reserved', 'Reserved')
+        'Bit25', 'Bit26', 'Bit27',
+        'Bit28', 'Bit29', 'Bit30', 'Bit31')
     IIB_INTLCK_FAP_2P2S = IIB_INTLCK_FAP
     CYCLE_TYPES = ('Sine', 'DampedSine', 'Trapezoidal', 'DampedSquaredSine')
     SYNC_MODES = ('Off', 'Cycle', 'RmpEnd', 'MigEnd')
@@ -422,6 +378,7 @@ def get_common_propty_database():
         'PRUBlockIndex-Mon': {'type': 'int', 'value': 0},
         'PRUSyncPulseCount-Mon': {'type': 'int', 'value': 0},
         'PRUCtrlQueueSize-Mon': {'type': 'int', 'value': 0,
+                                 'low': -1, 'lolo': -1,
                                  'high': 50, 'hihi': 50},
 
         # TODO: should BSMPComm and Interlocks PVs be in "basic"?
@@ -1090,62 +1047,6 @@ def _get_ps_FAC_2P4S_ACDC_propty_database():
     return propty_db
 
 
-def _get_ps_FAC_ACDC_propty_database():
-    """Return database with FAC_ACDC pwrsupply model PVs."""
-    propty_db = _get_ps_FAC_2S_ACDC_propty_database()
-    db = {
-        'IntlkSoftLabels-Cte': {
-            'type': 'string', 'count': len(_et.SOFT_INTLCK_FAC_ACDC),
-            'value': _et.SOFT_INTLCK_FAC_ACDC},
-        'IntlkHardLabels-Cte': {
-            'type': 'string', 'count': len(_et.HARD_INTLCK_FAC_ACDC),
-            'value': _et.HARD_INTLCK_FAC_ACDC},
-
-        'IIBISInputCurrent-Mon': {
-            'type': 'float', 'value': 0.0,
-            'prec': default_ps_current_precision,
-            'unit': 'A'},
-        'IIBISInputVoltage-Mon': {
-            'type': 'float', 'value': 0.0,
-            'prec': default_ps_current_precision,
-            'unit': 'V'},
-        'IIBISInductorsTemperature-Mon': {
-            'type': 'float', 'value': 0.0,
-            'prec': 2,
-            'unit': 'C'},
-        'IIBISHeatSinkTemperature-Mon': {
-            'type': 'float', 'value': 0.0,
-            'prec': 2,
-            'unit': 'C'},
-        'IIBCmdOutputVoltage-Mon': {
-            'type': 'float', 'value': 0.0,
-            'prec': default_ps_current_precision,
-            'unit': 'V'},
-        'IIBCmdCapacitorBankVoltage-Mon': {
-            'type': 'float', 'value': 0.0,
-            'prec': default_ps_current_precision,
-            'unit': 'V'},
-        'IIBCmdInductorsTemperature-Mon': {
-            'type': 'float', 'value': 0.0,
-            'prec': 2,
-            'unit': 'C'},
-        'IIBCmdHeatSinkTemperature-Mon': {
-            'type': 'float', 'value': 0.0,
-            'prec': 2,
-            'unit': 'C'},
-        'IntlkIIBIS-Mon': {'type': 'int', 'value': 0},
-        'IntlkIIBCmd-Mon': {'type': 'int', 'value': 0},
-        'IntlkIIBISLabels-Cte': {
-            'type': 'string', 'count': len(_et.IIBIS_INTLCK_FAC_ACDC),
-            'value': _et.IIBIS_INTLCK_FAC_ACDC},
-        'IntlkIIBCmdLabels-Cte': {
-            'type': 'string', 'count': len(_et.IIBCMD_INTLCK_FAC_ACDC),
-            'value': _et.IIBCMD_INTLCK_FAC_ACDC},
-    }
-    propty_db.update(db)
-    return propty_db
-
-
 # --- FAP ---
 
 def _get_ps_FAP_propty_database():
@@ -1275,7 +1176,8 @@ def _set_limits(pstype, database):
                     'CurrentRef-Mon', 'Current-Mon', 'Current2-Mon'
                     'CycleAmpl-SP', 'CycleAmpl-RB',
                     'CycleOffset-SP', 'CycleOffset-RB',
-                    'Voltage-SP', 'Voltage-RB', 'Voltage-Mon',
+                    'Voltage-SP', 'Voltage-RB',
+                    'VoltageRef-Mon', 'Voltage-Mon',
                     )
     # TODO: define limits to WfmData as well!
     signals_unit = signals_lims + (
@@ -1286,6 +1188,10 @@ def _set_limits(pstype, database):
     for propty, db in database.items():
         # set setpoint limits in database
         if propty in signals_lims:
+            if propty == 'Voltage-Mon' and pstype == 'as-dclink-fbp':
+                # for FBP DCLinks Voltage-Mon has different units than
+                # Voltage-SP!
+                continue
             db['lolo'] = _PSSearch.get_splims(pstype, 'lolo')
             db['low'] = _PSSearch.get_splims(pstype, 'low')
             db['lolim'] = _PSSearch.get_splims(pstype, 'lolim')
@@ -1306,7 +1212,6 @@ def _get_model_db(psmodel):
         'FBP_DCLink': _get_ps_FBP_DCLink_propty_database,
         'FBP_FOFB': _get_ps_FBP_FOFB_propty_database,
         'FAC_DCDC': _get_ps_FAC_DCDC_propty_database,
-        'FAC_ACDC': _get_ps_FAC_ACDC_propty_database,
         'FAC_2S_DCDC': _get_ps_FAC_2S_DCDC_propty_database,
         'FAC_2S_ACDC': _get_ps_FAC_2S_ACDC_propty_database,
         'FAC_2P4S_DCDC': _get_ps_FAC_2P4S_DCDC_propty_database,
