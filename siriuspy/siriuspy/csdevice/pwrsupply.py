@@ -306,7 +306,7 @@ class ETypes(_cutil.ETypes):
         'Sub-tensão do DC-Link do módulo 2',
         'Sub-tensão do DC-Link do módulo 3',
         'Sub-tensão do DC-Link do módulo 4',
-        'Interlock da placa IIB', 'Reserved',
+        'Interlock da placa IIB', 'Bit23',
         'Bit24', 'Bit25', 'Bit26', 'Bit27',
         'Bit28', 'Bit29', 'Bit30', 'Bit31')
     IIB_INTLCK_FAP_4P = IIB_INTLCK_FAP
