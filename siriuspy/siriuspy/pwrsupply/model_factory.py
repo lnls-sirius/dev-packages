@@ -1929,7 +1929,6 @@ class PRUCParms_FAP_2P2S(_PRUCParms):
     groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 
-
 class UDC:
     """UDC."""
 
