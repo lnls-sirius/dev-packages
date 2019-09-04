@@ -172,7 +172,7 @@ class BBBFactory:
             psmodel = BBBFactory.check_ps_models(devices)
 
             # Ignore regatron ps model
-            if psmodel == 'REGATRON':
+            if psmodel == 'REGATRON_DCLink':
                 continue
 
             # Get out model object
