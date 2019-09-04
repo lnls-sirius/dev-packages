@@ -1,0 +1,15 @@
+[Unit]
+Description=Soft IOC for TS ejection septum G
+After=multi-user.target
+
+[Service]
+Group=sirius
+User=sirius
+Type=simple
+WorkingDirectory=/home/sirius/iocs-log
+StandardOutput=syslog
+StandardError=syslog
+ExecStartPre=/bin/bash --login -c 'env > /home/sirius/iocs-log/env-sirius-ioc-ts-pm-ejeseptg'
+EnvironmentFile=-/home/sirius/iocs-log/env-sirius-ioc-ts-pm-ejeseptg
+ExecStart=/usr/local/bin/sirius-ioc-as-ma.py \
+TS-01:PM-EjeSeptG
