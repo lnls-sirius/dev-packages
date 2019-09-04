@@ -218,7 +218,7 @@ class BBBFactory:
         """
         psmodels = {_PSData(psname).psmodel for psname, bsmp_id in devices}
         if len(psmodels) > 1:
-            raise ValueError('Too many psmodels')
+            raise ValueError('Different psmodels in the same UDC')
         return psmodels.pop()
 
     @staticmethod
