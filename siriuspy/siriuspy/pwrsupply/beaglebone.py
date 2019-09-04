@@ -171,6 +171,10 @@ class BBBFactory:
             # Check if there is only one psmodel
             psmodel = BBBFactory.check_ps_models(devices)
 
+            # Ignore regatron ps model
+            if psmodel == 'REGATRON':
+                continue
+
             # Get out model object
             model = _ModelFactory.create(psmodel)
 
