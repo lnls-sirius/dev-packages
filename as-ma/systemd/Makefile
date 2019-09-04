@@ -87,6 +87,7 @@ install-bo-ma: preparation
 install-bo-pm: preparation
 	@printf "Installing sirius-ioc-bo-pm services...\n"
 	cp -rf sirius-ioc-bo-pm-injkckr.service /etc/systemd/system/
+	cp -rf sirius-ioc-bo-pm-ejekckr.service /etc/systemd/system/
 	systemctl daemon-reload
 
 stop-bo-ma:
@@ -111,6 +112,7 @@ stop-bo-ma:
 stop-bo-pm:
 	@printf "Stopping sirius-ioc-bo-pm services...\n"
 	systemctl stop sirius-ioc-bo-pm-injkckr.service
+	systemctl stop sirius-ioc-bo-pm-ejekckr.service
 
 start-bo-ma: preparation
 	@printf "Starting sirius-ioc-bo-ma services...\n"
@@ -134,6 +136,7 @@ start-bo-ma: preparation
 start-bo-pm: preparation
 	@printf "Starting sirius-ioc-bo-pm services...\n"
 	systemctl start sirius-ioc-bo-pm-injkckr.service
+	systemctl start sirius-ioc-bo-pm-ejekckr.service
 
 disable-bo-ma:
 	@printf "Disabling sirius-ioc-bo-ma services...\n"
@@ -156,6 +159,7 @@ disable-bo-ma:
 disable-bo-pm:
 	@printf "Disabling sirius-ioc-bo-pm services...\n"
 	systemctl disable sirius-ioc-bo-pm-injkckr.service
+	systemctl disable sirius-ioc-bo-pm-ejekckr.service
 
 uninstall-bo-ma: stop-bo-ma disable-bo-ma
 	@printf "Uninstalling sirius-ioc-bo-ma services...\n"
@@ -181,6 +185,7 @@ uninstall-bo-ma: stop-bo-ma disable-bo-ma
 uninstall-bo-pm: stop-bo-pm disable-bo-pm
 	@printf "Uninstalling sirius-ioc-bo-pm services...\n"
 	rm -rf /etc/systemd/system/sirius-ioc-bo-pm-injkckr.service
+	rm -rf /etc/systemd/system/sirius-ioc-bo-pm-ejekckr.service
 	systemctl daemon-reload
 	systemctl reset-failed
 
@@ -200,6 +205,8 @@ install-ts-ma: preparation
 
 install-ts-pm: preparation
 	@printf "Installing sirius-ioc-ts-pm services...\n"
+	cp -rf sirius-ioc-ts-pm-ejeseptf.service /etc/systemd/system/
+	cp -rf sirius-ioc-ts-pm-ejeseptg.service /etc/systemd/system/
 	systemctl daemon-reload
 
 stop-ts-ma:
@@ -211,6 +218,8 @@ stop-ts-ma:
 
 stop-ts-pm:
 	@printf "Stopping sirius-ioc-ts-pm services...\n"
+	systemctl stop sirius-ioc-ts-pm-ejeseptf.service
+	systemctl stop sirius-ioc-ts-pm-ejeseptg.service
 
 start-ts-ma: preparation
 	@printf "Starting sirius-ioc-ts-ma services...\n"
@@ -221,6 +230,8 @@ start-ts-ma: preparation
 
 start-ts-pm: preparation
 	@printf "Starting sirius-ioc-ts-pm services...\n"
+	systemctl start sirius-ioc-ts-pm-ejeseptf.service
+	systemctl start sirius-ioc-ts-pm-ejeseptg.service
 
 disable-ts-ma:
 	@printf "Disabling sirius-ioc-ts-ma services...\n"
@@ -231,6 +242,8 @@ disable-ts-ma:
 
 disable-ts-pm:
 	@printf "Disabling sirius-ioc-ts-pm services...\n"
+	systemctl disable sirius-ioc-ts-pm-ejeseptf.service
+	systemctl disable sirius-ioc-ts-pm-ejeseptg.service
 
 uninstall-ts-ma: stop-ts-ma disable-ts-ma
 	@printf "Uninstalling sirius-ioc-ts-ma services...\n"
@@ -243,6 +256,8 @@ uninstall-ts-ma: stop-ts-ma disable-ts-ma
 
 uninstall-ts-pm: stop-ts-pm disable-ts-pm
 	@printf "Uninstalling sirius-ioc-ts-pm services...\n"
+	rm -rf /etc/systemd/system/sirius-ioc-ts-pm-ejeseptf.service
+	rm -rf /etc/systemd/system/sirius-ioc-ts-pm-ejeseptg.service
 	systemctl daemon-reload
 	systemctl reset-failed
 
