@@ -4,6 +4,7 @@
 
 import requests
 from urllib import parse as _parse
+import urllib3 as _urllib3
 # import json
 
 import siriuspy.envars as _envars
@@ -22,8 +23,11 @@ class ClientArchiver:
         """."""
         self.session = None
         self._url = server_url or self.SERVER_URL
+        print('urllib3 InsecureRequestWarning disabled!')
+        _urllib3.disable_warnings(_urllib3.exceptions.InsecureRequestWarning)
 
     def login(self, username, password):
+        """."""
         headers = {"User-Agent": "Mozilla/5.0"}
         payload = {"username": username, "password": password}
         self.session = requests.Session()
@@ -33,33 +37,45 @@ class ClientArchiver:
         return b"authenticated" in response.content
 
     def getPVsInfo(self, pvnames):
+        """."""
         if isinstance(pvnames, (list, tuple)):
             pvnames = ','.join(pvnames)
         url = self._create_url(method='getPVStatus', pv=pvnames)
         return self.session.get(url).json()
 
     def getAllPVs(self, pvnames):
+        """."""
         if isinstance(pvnames, (list, tuple)):
             pvnames = ','.join(pvnames)
         url = self._create_url(method='getAllPVs', pv=pvnames, limit='-1')
         return self.session.get(url).json()
 
     def deletePVs(self, pvnames):
+        """."""
+        if not isinstance(pvnames, (list, tuple)):
+            pvnames = (pvnames, )
         for pvname in pvnames:
             url = self._create_url(
                 method='deletePV', pv=pvname, deleteData='true')
             self.session.get(url)
 
     def pausePVs(self, pvnames):
+        """."""
+        if not isinstance(pvnames, (list, tuple)):
+            pvnames = (pvnames, )
         for pvname in pvnames:
-            url = self._create_url(method='pauseArchivingPV', pv=pvnames)
+            url = self._create_url(method='pauseArchivingPV', pv=pvname)
             self.session.get(url)
 
     def renamePV(self, oldname, newname):
+        """."""
         url = self._create_url(method='renamePV', pv=oldname, newname=newname)
         self.session.get(url)
 
     def resumePVs(self, pvnames):
+        """."""
+        if not isinstance(pvnames, (list, tuple)):
+            pvnames = (pvnames, )
         for pvname in pvnames:
             url = self._create_url(method='resumeArchivingPV', pv=pvname)
             self.session.get(url)
