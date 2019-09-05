@@ -1,0 +1,17 @@
+[Unit]
+Description=Power Supply IOC - SI Sextupoles SDB1, SFB0, SDB0
+After=multi-user.target
+
+[Service]
+Group=sirius
+User=sirius
+Type=simple
+WorkingDirectory=/home/sirius/iocs-log
+StandardOutput=syslog
+StandardError=syslog
+ExecStartPre=/bin/bash --login -c 'env > /home/sirius/iocs-log/env-sirius-ioc-si-ma-sextupoles-sfb0-sdb01'
+EnvironmentFile=-/home/sirius/iocs-log/env-sirius-ioc-si-ma-sextupoles-sfb0-sdb01
+ExecStart=/usr/local/bin/sirius-ioc-as-ma.py \
+SI-Fam:MA-SDB1 \
+SI-Fam:MA-SFB0 \
+SI-Fam:MA-SDB0

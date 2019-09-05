@@ -274,6 +274,12 @@ install-si-ma: preparation
 	cp -rf sirius-ioc-si-ma-quadrupoles-qd1.service /etc/systemd/system/
 	cp -rf sirius-ioc-si-ma-quadrupoles-qd2.service /etc/systemd/system/
 	cp -rf sirius-ioc-si-ma-quadrupoles-q.service /etc/systemd/system/
+	cp -rf sirius-ioc-si-ma-sextupoles-sfb0-sdb01.service /etc/systemd/system/
+	cp -rf sirius-ioc-si-ma-sextupoles-sfa0p0-sda0p0.service /etc/systemd/system/
+	cp -rf sirius-ioc-si-ma-sextupoles-sda1b12.service /etc/systemd/system/
+	cp -rf sirius-ioc-si-ma-sextupoles-sfa12-sda3p1.service /etc/systemd/system/
+	cp -rf sirius-ioc-si-ma-sextupoles-sfb12-sdb3.service /etc/systemd/system/
+	cp -rf sirius-ioc-si-ma-sextupoles-sfp12-sdp23.service /etc/systemd/system/
 	cp -rf sirius-ioc-si-ma-correctors-ia01-c2.service /etc/systemd/system/
 	cp -rf sirius-ioc-si-ma-correctors-ia01-c134.service /etc/systemd/system/
 	cp -rf sirius-ioc-si-ma-correctors-ia01-m12.service /etc/systemd/system/
@@ -342,11 +348,17 @@ install-si-pm: preparation
 
 stop-si-ma:
 	@printf "Stopping sirius-ioc-si-ma services...\n"
+	systemctl stop sirius-ioc-si-ma-dipoles.service
 	systemctl stop sirius-ioc-si-ma-quadrupoles-qf.service
 	systemctl stop sirius-ioc-si-ma-quadrupoles-qd1.service
 	systemctl stop sirius-ioc-si-ma-quadrupoles-qd2.service
 	systemctl stop sirius-ioc-si-ma-quadrupoles-q.service
-	systemctl stop sirius-ioc-si-ma-dipoles.service
+	systemctl stop sirius-ioc-si-ma-sextupoles-sfb0-sdb01.service
+	systemctl stop sirius-ioc-si-ma-sextupoles-sfa0p0-sda0p0.service
+	systemctl stop sirius-ioc-si-ma-sextupoles-sda1b12.service
+	systemctl stop sirius-ioc-si-ma-sextupoles-sfa12-sda3p1.service
+	systemctl stop sirius-ioc-si-ma-sextupoles-sfb12-sdb3.service
+	systemctl stop sirius-ioc-si-ma-sextupoles-sfp12-sdp23.service
 	systemctl stop sirius-ioc-si-ma-correctors-ia01-c2.service
 	systemctl stop sirius-ioc-si-ma-correctors-ia01-c134.service
 	systemctl stop sirius-ioc-si-ma-correctors-ia01-m12.service
@@ -418,6 +430,12 @@ start-si-ma: preparation
 	systemctl start sirius-ioc-si-ma-quadrupoles-qd1.service
 	systemctl start sirius-ioc-si-ma-quadrupoles-qd2.service
 	systemctl start sirius-ioc-si-ma-quadrupoles-q.service
+	systemctl start sirius-ioc-si-ma-sextupoles-sfb0-sdb01.service
+	systemctl start sirius-ioc-si-ma-sextupoles-sfa0p0-sda0p0.service
+	systemctl start sirius-ioc-si-ma-sextupoles-sda1b12.service
+	systemctl start sirius-ioc-si-ma-sextupoles-sfa12-sda3p1.service
+	systemctl start sirius-ioc-si-ma-sextupoles-sfb12-sdb3.service
+	systemctl start sirius-ioc-si-ma-sextupoles-sfp12-sdp23.service
 	systemctl start sirius-ioc-si-ma-correctors-ia01-c2.service
 	systemctl start sirius-ioc-si-ma-correctors-ia01-c134.service
 	systemctl start sirius-ioc-si-ma-correctors-ia01-m12.service
@@ -484,11 +502,17 @@ start-si-pm: preparation
 
 disable-si-ma:
 	@printf "Disabling sirius-ioc-si-ma services...\n"
+	systemctl disable sirius-ioc-si-ma-dipoles.service
 	systemctl disable sirius-ioc-si-ma-quadrupoles-qf.service
 	systemctl disable sirius-ioc-si-ma-quadrupoles-qd1.service
 	systemctl disable sirius-ioc-si-ma-quadrupoles-qd2.service
 	systemctl disable sirius-ioc-si-ma-quadrupoles-q.service
-	systemctl disable sirius-ioc-si-ma-dipoles.service
+	systemctl disable sirius-ioc-si-ma-sextupoles-sfb0-sdb01.service
+	systemctl disable sirius-ioc-si-ma-sextupoles-sfa0p0-sda0p0.service
+	systemctl disable sirius-ioc-si-ma-sextupoles-sda1b12.service
+	systemctl disable sirius-ioc-si-ma-sextupoles-sfa12-sda3p1.service
+	systemctl disable sirius-ioc-si-ma-sextupoles-sfb12-sdb3.service
+	systemctl disable sirius-ioc-si-ma-sextupoles-sfp12-sdp23.service
 	systemctl disable sirius-ioc-si-ma-correctors-ia01-c2.service
 	systemctl disable sirius-ioc-si-ma-correctors-ia01-c134.service
 	systemctl disable sirius-ioc-si-ma-correctors-ia01-m12.service
@@ -555,11 +579,17 @@ disable-si-pm:
 
 uninstall-si-ma: stop-si-ma disable-si-ma
 	@printf "Uninstalling sirius-ioc-si-ma services...\n"
+	rm -rf /etc/systemd/system/sirius-ioc-si-ma-dipoles.service
 	rm -rf /etc/systemd/system/sirius-ioc-si-ma-quadrupoles-qf.service
 	rm -rf /etc/systemd/system/sirius-ioc-si-ma-quadrupoles-qd1.service
 	rm -rf /etc/systemd/system/sirius-ioc-si-ma-quadrupoles-qd2.service
 	rm -rf /etc/systemd/system/sirius-ioc-si-ma-quadrupoles-q.service
-	rm -rf /etc/systemd/system/sirius-ioc-si-ma-dipoles.service
+	rm -rf /etc/systemd/system/sirius-ioc-si-ma-sextupoles-sfb0-sdb01.service
+	rm -rf /etc/systemd/system/sirius-ioc-si-ma-sextupoles-sfa0p0-sda0p0.service
+	rm -rf /etc/systemd/system/sirius-ioc-si-ma-sextupoles-sda1b12.service
+	rm -rf /etc/systemd/system/sirius-ioc-si-ma-sextupoles-sfa12-sda3p1.service
+	rm -rf /etc/systemd/system/sirius-ioc-si-ma-sextupoles-sfb12-sdb3.service
+	rm -rf /etc/systemd/system/sirius-ioc-si-ma-sextupoles-sfp12-sdp23.service
 	rm -rf /etc/systemd/system/sirius-ioc-si-ma-correctors-ia01-c2.service
 	rm -rf /etc/systemd/system/sirius-ioc-si-ma-correctors-ia01-c134.service
 	rm -rf /etc/systemd/system/sirius-ioc-si-ma-correctors-ia01-m12.service
