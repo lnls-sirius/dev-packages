@@ -25,9 +25,8 @@ class SOFB(_BaseClass):
         self.add_callback(self.update_driver)
         self._driver = None
         self._orbit = self._correctors = self._matrix = None
-        if self.isring:
-            self._auto_corr = self._csorb.ClosedLoop.Off
-            self._auto_corr_freq = 1
+        self._auto_corr = self._csorb.ClosedLoop.Off
+        self._auto_corr_freq = 1
         self._measuring_respmat = False
         self._ring_extension = 1
         self._corr_factor = {'ch': 1.00, 'cv': 1.00}
@@ -51,6 +50,8 @@ class SOFB(_BaseClass):
     def get_map2write(self):
         """Get the database of the class."""
         db = {
+            'ClosedLoop-Sel': self.set_auto_corr,
+            'ClosedLoopFreq-SP': self.set_auto_corr_frequency,
             'MeasRespMat-Cmd': self.set_respmat_meas_state,
             'CalcDelta-Cmd': self.calc_correction,
             'DeltaFactorCH-SP': _part(self.set_corr_factor, 'ch'),
@@ -66,8 +67,6 @@ class SOFB(_BaseClass):
             }
         if self.isring:
             db['RingSize-SP'] = self.set_ring_extension
-            db['ClosedLoop-Sel'] = self.set_auto_corr
-            db['ClosedLoopFreq-SP'] = self.set_auto_corr_frequency
             db['DeltaFactorRF-SP'] = _part(self.set_corr_factor, 'rf')
             db['MaxKickRF-SP'] = _part(self.set_max_kick, 'rf')
             db['MaxDeltaKickRF-SP'] = _part(self.set_max_delta_kick, 'rf')
@@ -201,8 +200,8 @@ class SOFB(_BaseClass):
             self._update_log(msg)
             _log.info(msg)
             self._auto_corr = value
-            self._thread = _Thread(target=self._do_auto_corr,
-                                   daemon=True)
+            self._thread = _Thread(
+                target=self._do_auto_corr, daemon=True)
             self._thread.start()
         elif value == self._csorb.ClosedLoop.Off:
             msg = 'Opening the Loop.'
@@ -373,17 +372,9 @@ class SOFB(_BaseClass):
         self._measuring_respmat = False
 
     def _do_auto_corr(self):
-        if self.orbit.mode != self._csorb.SOFBMode.SlowOrb:
-            msg = 'ERR: Can only Auto Correct in SlowOrb Mode'
-            self._update_log(msg)
-            _log.error(msg[5:])
-            self.run_callbacks('ClosedLoop-Sel', 0)
-            self.run_callbacks('ClosedLoop-Sts', 0)
-            return
         self.run_callbacks('ClosedLoop-Sts', 1)
         strn = 'TIMEIT: {0:20s} - {1:7.3f}'
-        while (self._auto_corr == self._csorb.ClosedLoop.On and
-               self.orbit.mode == self._csorb.SOFBMode.SlowOrb):
+        while self._auto_corr == self._csorb.ClosedLoop.On:
             t0 = _time.time()
             _log.debug('TIMEIT: BEGIN')
             orb = self.orbit.get_orbit()
