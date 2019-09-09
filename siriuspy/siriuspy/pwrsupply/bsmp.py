@@ -890,7 +890,7 @@ class EntitiesFBP(_Entities):
     )
 
     Curves = (
-        {'eid': 0, 'waccess': True, 'count': 256,
+        {'eid': 0, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
         {'eid': 1, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
@@ -960,7 +960,7 @@ class EntitiesFAC_DCDC(_Entities):
     )
 
     Curves = (
-        {'eid': 0, 'waccess': True, 'count': 256,
+        {'eid': 0, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
         {'eid': 1, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
@@ -1042,7 +1042,7 @@ class EntitiesFAC_2P4S_DCDC(_Entities):
     )
 
     Curves = (
-        {'eid': 0, 'waccess': True, 'count': 256,
+        {'eid': 0, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
         {'eid': 1, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
@@ -1121,7 +1121,7 @@ class EntitiesFAC_2S_DCDC(_Entities):
     )
 
     Curves = (
-        {'eid': 0, 'waccess': True, 'count': 256,
+        {'eid': 0, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
         {'eid': 1, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
@@ -1193,7 +1193,7 @@ class EntitiesFAP(_Entities):
         {'eid': 47, 'waccess': False, 'count': 1, 'var_type': _Types.T_UINT32}, )
 
     Curves = (
-        {'eid': 0, 'waccess': True, 'count': 256,
+        {'eid': 0, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
         {'eid': 1, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
@@ -1326,7 +1326,7 @@ class EntitiesFAP_2P2S(_Entities):
         {'eid': 105, 'waccess': False, 'count': 1, 'var_type': _Types.T_FLOAT},)
 
     Curves = (
-        {'eid': 0, 'waccess': True, 'count': 256,
+        {'eid': 0, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
         {'eid': 1, 'waccess': False, 'count': 256,
          'nblocks': 16, 'var_type': _Types.T_FLOAT},
