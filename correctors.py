@@ -454,7 +454,7 @@ class EpicsCorrectors(BaseCorrectors):
         return True
 
     def _update_status(self):
-        status = 0b1111111
+        status = 0b1111111 if self.isring else 0b0000111
         chcvs = self._corrs[:self._csorb.NR_CHCV]
         status = _util.update_bit(
             status, bit_pos=0,
