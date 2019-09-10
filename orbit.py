@@ -460,7 +460,7 @@ class EpicsOrbit(BaseOrbit):
                 pts = points - self._acqtrignrsamplespre
                 self.run_callbacks('TrigNrSamplesPost-SP', pts)
                 self.set_acq_nrsamples(pts, ispost=True)
-
+        self._update_time_vector()
         self.acq_config_bpms()
         self.set_trig_acq_control(self._csorb.TrigAcqCtrl.Start)
         return True
@@ -603,7 +603,6 @@ class EpicsOrbit(BaseOrbit):
             self._mturndownsample = val
             self._reset_orbs()
         self.run_callbacks('MTurnDownSample-RB', val)
-        self._update_time_vector()
         Thread(target=self._prepare_mode, daemon=True).start()
         return True
 
