@@ -51,6 +51,10 @@ server_url_logbook = _os.environ.get(
 server_url_configdb = _os.environ.get(
     'SIRIUS_URL_CONFIGDB',
     default='http://sirius-configdb.lnls.br/config-db')
+server_url_archiver = _os.environ.get(
+    'SIRIUS_URL_ARCHIVER',
+    default='https://sirius-archiver.lnls.br')
+
 
 vaca_prefix = _os.environ.get('VACA_PREFIX',   default='')
 

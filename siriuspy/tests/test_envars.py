@@ -29,6 +29,7 @@ servers = (
     'server_url_consts',
     'server_url_logbook',
     'server_url_configdb',
+    'server_url_archiver',
 )
 misc = (
     'org_folders',

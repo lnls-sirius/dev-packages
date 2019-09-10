@@ -56,11 +56,16 @@ class CycleController:
 
         # task sizes
         self.prepare_timing_size = 3
+        self.prepare_timing_max_duration = 15
+
         self.prepare_magnets_size = 2*len(self.manames)+1
+        self.prepare_magnets_max_duration = 20
+
         self.cycle_size = (len(self.manames)+3 +  # check params
                            2*len(self.manames) +  # opmode
                            1+round(self._cycle_duration) +  # cycle
                            len(self.manames)+2)  # check final
+        self.cycle_max_duration = 15 + round(self._cycle_duration)
 
         # logger
         self._logger = logger
