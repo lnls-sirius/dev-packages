@@ -1,4 +1,7 @@
 #!/usr/bin/python-sirius
+
+import sys as _sys
+import logging as _log
 from siriuspy.namesys import SiriusPVName as PVName
 from siriuspy.search import LLTimeSearch
 
@@ -24,12 +27,20 @@ _conversion_linac_names = {
 _translate_port = str.maketrans('', '', ' _-')
 
 
-def create_static_table(fname=None, local=False):
+def create_static_table(fname=None, local=False, logfile=None):
+    if logfile:
+        hand = _log.FileHandler(logfile, mode='w')
+    else:
+        hand = _log.StreamHandler(stream=_sys.stdout)
+    hand.setFormatter(_log.Formatter('', datefmt=''))
+    _log.getLogger().setLevel(level=_log.INFO)
+    _log.getLogger().addHandler(hand)
+
     if local:
         data = read_data_from_local_excel_file(fname)
     else:
         data = read_data_from_google()
-    print(_disclaimer)
+    _log.info(_disclaimer)
     chans = _get_channels_from_data(data)
     chans_sort, chans = _sort_connection_table(chans)
     _print_tables(chans, chans_sort)
@@ -42,6 +53,10 @@ def read_data_from_google():
     from googleapiclient.discovery import build
     from httplib2 import Http
     from oauth2client import file, client, tools
+    _log.getLogger('googleapiclient.discovery_cache').setLevel(_log.ERROR)
+    _log.getLogger('googleapiclient.discovery').setLevel(_log.ERROR)
+    _log.getLogger('oauth2client.transport').setLevel(_log.ERROR)
+    _log.getLogger('oauth2client.client').setLevel(_log.ERROR)
 
     # If modifying these scopes, delete the file token.json.
     SCOPES = 'https://www.googleapis.com/auth/spreadsheets.readonly'
@@ -109,7 +124,7 @@ def _get_channels_from_data(data):
             name1 = PVName(name1)
             name2 = PVName(name2)
         except IndexError:
-            print('# {0:04d}:   {1:40s} {2:40s}'.format(i, name1, name2))
+            _log.info('# {0:04d}:   {1:40s} {2:40s}'.format(i, name1, name2))
             continue
         chans.append((name1, name2))
     return chans
@@ -155,13 +170,13 @@ def _sort_connection_table(chans):
 
 
 def _print_tables(chans, chans_sort):
-    print(3*'\n')
-    print('# {}'.format(len(chans_sort)))
+    _log.info(3*'\n')
+    _log.info('# {}'.format(len(chans_sort)))
     for k1, k2 in chans_sort:
-        print('{0:35s} {1:35s}'.format(k1, k2))
+        _log.info('{0:35s} {1:35s}'.format(k1, k2))
 
-    print(5*'\n')
-    print('# CONNECTIONS NOT USED')
-    print('# {}'.format(len(chans)))
+    _log.info(5*'\n')
+    _log.info('# CONNECTIONS NOT USED')
+    _log.info('# {}'.format(len(chans)))
     for k1, k2 in chans:
-        print('# {0:35s} {1:35s}'.format(k1, k2))
+        _log.info('# {0:35s} {1:35s}'.format(k1, k2))
