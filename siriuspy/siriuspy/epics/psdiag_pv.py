@@ -2,7 +2,6 @@
 """PS Diag PVs."""
 
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
-from siriuspy.csdevice.pwrsupply import ETypes as _ETypes
 from siriuspy.computer import Computer
 
 
@@ -36,62 +35,76 @@ class PSStatusPV(Computer):
 
     # TODO: Add other interlocks for some PS types
 
-    BIT_DISCONNTD = 0b00000001
-    BIT_OPMODEDIF = 0b00000010
-    BIT_CURRTDIFF = 0b00000100
-    BIT_MADISCONN = 0b00001000
-    BIT_INTLKSOFT = 0b00010000
-    BIT_INTLKHARD = 0b00100000
+    BIT_PSCONNECT = 0b00000001
+    BIT_MACONNECT = 0b00000010
+    BIT_PSMACOMOK = 0b00000100
+    BIT_PWRSTATON = 0b00001000
+    BIT_OPMDSLWRF = 0b00010000
+    BIT_CURRTDIFF = 0b00100000
+    BIT_INTERLKOK = 0b01000000
 
-    OPMODE_SEL = 0
-    OPMODE_STS = 1
-    CURRT_DIFF = 2
-    MAOPMD_SEL = 3
-    INTLK_SOFT = 4
-    INTLK_HARD = 5
+    PWRSTE_STS = 0
+    INTLK_SOFT = 1
+    INTLK_HARD = 2
+    OPMODE_STS = 3
+    CURRT_DIFF = 4
+    MAOPMD_SEL = 5
+    PSCONN_MON = 6
 
     def compute_update(self, computed_pv, updated_pv_name, value):
         """Compute PS Status PV."""
         value = 0
-        # connected?
+        # ps connected?
         disconnected = \
-            not computed_pv.pvs[PSStatusPV.OPMODE_SEL].connected or \
-            not computed_pv.pvs[PSStatusPV.OPMODE_STS].connected or \
-            not computed_pv.pvs[PSStatusPV.CURRT_DIFF].connected or \
+            not computed_pv.pvs[PSStatusPV.PWRSTE_STS].connected or \
             not computed_pv.pvs[PSStatusPV.INTLK_SOFT].connected or \
-            not computed_pv.pvs[PSStatusPV.INTLK_HARD].connected
+            not computed_pv.pvs[PSStatusPV.INTLK_HARD].connected or \
+            not computed_pv.pvs[PSStatusPV.OPMODE_STS].connected or \
+            not computed_pv.pvs[PSStatusPV.CURRT_DIFF].connected
         if disconnected:
-            value |= PSStatusPV.BIT_DISCONNTD
+            value |= PSStatusPV.BIT_PSCONNECT
+            value |= PSStatusPV.BIT_PWRSTATON
+            value |= PSStatusPV.BIT_INTERLKOK
+            value |= PSStatusPV.BIT_OPMDSLWRF
+            value |= PSStatusPV.BIT_CURRTDIFF
             return {'value': value}
 
-        # opmode?
-        sel = computed_pv.pvs[PSStatusPV.OPMODE_SEL].value
-        sts = computed_pv.pvs[PSStatusPV.OPMODE_STS].value
-        if sel is not None and sts is not None:
-            opmode_sel = _ETypes.OPMODES[sel]
-            opmode_sts = _ETypes.STATES[sts]
-            if opmode_sel != opmode_sts:
-                value |= PSStatusPV.BIT_OPMODEDIF
-            # current-diff?
-            if sts == _PSConst.States.SlowRef:
-                severity = computed_pv.pvs[PSStatusPV.CURRT_DIFF].severity
-                if severity != 0:
-                    value |= PSStatusPV.BIT_CURRTDIFF
-        else:
-            value |= PSStatusPV.BIT_OPMODEDIF
         # ma connected?
         disconnected = \
             not computed_pv.pvs[PSStatusPV.MAOPMD_SEL].connected
         if disconnected:
-            value |= PSStatusPV.BIT_MADISCONN
-        # interlock soft?
+            value |= PSStatusPV.BIT_MACONNECT
+            value |= PSStatusPV.BIT_PSMACOMOK
+        else:
+            # ps-ma comm ok?
+            psconn = computed_pv.pvs[PSStatusPV.PSCONN_MON].value
+            if psconn is None or psconn == 0:
+                value |= PSStatusPV.BIT_PSMACOMOK
+
+        # pwrstate?
+        pwrsts = computed_pv.pvs[PSStatusPV.PWRSTE_STS].value
+        if pwrsts != _PSConst.PwrStateSts.On or pwrsts is None:
+            value |= PSStatusPV.BIT_PWRSTATON
+
+        # opmode?
+        opmsts = computed_pv.pvs[PSStatusPV.OPMODE_STS].value
+        if opmsts is not None:
+            if opmsts != _PSConst.States.SlowRef:
+                value |= PSStatusPV.BIT_OPMDSLWRF
+            # current-diff?
+            else:
+                severity = computed_pv.pvs[PSStatusPV.CURRT_DIFF].severity
+                if severity != 0:
+                    value |= PSStatusPV.BIT_CURRTDIFF
+        else:
+            value |= PSStatusPV.BIT_OPMDSLWRF
+
+        # interlocks?
         intlksoft = computed_pv.pvs[PSStatusPV.INTLK_SOFT].value
-        if intlksoft != 0 or intlksoft is None:
-            value |= PSStatusPV.BIT_INTLKSOFT
-        # interlock hard?
         intlkhard = computed_pv.pvs[PSStatusPV.INTLK_HARD].value
-        if intlkhard != 0 or intlkhard is None:
-            value |= PSStatusPV.BIT_INTLKHARD
+        if intlksoft != 0 or intlksoft is None or \
+                intlkhard != 0 or intlkhard is None:
+            value |= PSStatusPV.BIT_INTERLKOK
         return {'value': value}
 
     def compute_put(self, computed_pv, value):
