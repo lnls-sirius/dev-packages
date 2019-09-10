@@ -83,6 +83,8 @@ class ConstTLines(_cutil.Const):
     StsLblsOrb = _cutil.Const.register('StsLblsOrb', _et.STS_LBLS_ORB)
     StsLblsGlob = _cutil.Const.register('StsLblsGlob', _et.STS_LBLS_GLOB)
 
+    ClosedLoop = _cutil.Const.register('ClosedLoop', _et.OFF_ON)
+
 
 class ConstRings(ConstTLines):
     """Const class defining rings orbitcorr constants."""
@@ -94,7 +96,6 @@ class ConstRings(ConstTLines):
     # TODO: use correct name for the RF generator
     RF_GEN_NAME = 'AS-Glob:RF-Gen'
     EnblRF = _cutil.Const.register('EnblRF', _et.ENBL_RF)
-    ClosedLoop = _cutil.Const.register('ClosedLoop', _et.OFF_ON)
     CorrSync = _cutil.Const.register('CorrSync', _et.OFF_ON)
 
 
@@ -160,6 +161,15 @@ class SOFBTLines(ConstTLines):
         """Return OpticsCorr-Chrom Soft IOC database."""
         db = {
             'Log-Mon': {'type': 'char', 'value': '', 'count': 200},
+            'ClosedLoop-Sel': {
+                'type': 'enum', 'enums': self.ClosedLoop._fields, 'value': 0},
+            'ClosedLoop-Sts': {
+                'type': 'enum', 'enums': self.ClosedLoop._fields, 'value': 0},
+            'ClosedLoopFreq-SP': {
+                'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 3,
+                'lolim': 1e-3, 'hilim': 20},
+            'ClosedLoopFreq-RB': {
+                'type': 'float', 'value': 1, 'prec': 2, 'unit': 'Hz'},
             'MeasRespMat-Cmd': {
                 'type': 'enum', 'value': 0,
                 'enums': self.MeasRespMatCmd._fields},
@@ -542,15 +552,6 @@ class SOFBRings(SOFBTLines, ConstRings):
                 'type': 'int', 'value': 1, 'lolim': 0,
                 'hilim': self.MAX_RINGSZ+1,
                 'unit': 'Nr Times to extend the ring'},
-            'ClosedLoop-Sel': {
-                'type': 'enum', 'enums': self.ClosedLoop._fields, 'value': 0},
-            'ClosedLoop-Sts': {
-                'type': 'enum', 'enums': self.ClosedLoop._fields, 'value': 0},
-            'ClosedLoopFreq-SP': {
-                'type': 'float', 'value': 1, 'unit': 'Hz', 'prec': 3,
-                'lolim': 1e-3, 'hilim': 20},
-            'ClosedLoopFreq-RB': {
-                'type': 'float', 'value': 1, 'prec': 2, 'unit': 'Hz'},
             'MeasRespMatKickRF-SP': {
                 'type': 'float', 'value': 50, 'unit': 'Hz', 'prec': 3,
                 'lolim': 1, 'hilim': 400},

@@ -8,10 +8,9 @@ class ETypes(_cutil.ETypes):
     """Local enumerate types."""
 
     DIAG_STATUS = (
-        'PS Disconnected', 'OpMode-(Sel|Sts) differ',
-        'Current-(SP|Mon) differ', 'MA Disconnected',
-        'Soft Interlock',
-        'Hard Interlock', 'Reserved', 'Reserved',)
+        'PS Connected', 'MA Connected', 'PS-MA Comm. Ok',
+        'PwrState-Sts On', 'OpMode-Sts SlowRef',
+        'Current-(SP|Mon) differ', 'Interlocks')
 
 
 _et = ETypes  # syntatic sugar
