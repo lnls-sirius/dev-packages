@@ -66,10 +66,3 @@ Before making pull-requests to ```master``` branch, unittests can be run.
 
   ---
 
-## siriusdm
-
-### Prerequisites
-
-### Installation
-
-### Unittests
