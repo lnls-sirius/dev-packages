@@ -67,13 +67,14 @@ class App:
                              monitor=False)
             self.pvs.append(pv)
             # DiagStatus-Mon
-            pvs = [None, None, None, None, None, None]
-            pvs[_PSStatusPV.OPMODE_SEL] = devname + ':OpMode-Sel'
+            pvs = [None, None, None, None, None, None, None]
+            pvs[_PSStatusPV.PWRSTE_STS] = devname + ':PwrState-Sts'
+            pvs[_PSStatusPV.INTLK_SOFT] = devname + ':IntlkSoft-Mon'
+            pvs[_PSStatusPV.INTLK_HARD] = devname + ':IntlkHard-Mon'
             pvs[_PSStatusPV.OPMODE_STS] = devname + ':OpMode-Sts'
             pvs[_PSStatusPV.CURRT_DIFF] = devname + ':DiagCurrentDiff-Mon'
             pvs[_PSStatusPV.MAOPMD_SEL] = magname + ':OpMode-Sel'
-            pvs[_PSStatusPV.INTLK_SOFT] = devname + ':IntlkSoft-Mon'
-            pvs[_PSStatusPV.INTLK_HARD] = devname + ':IntlkHard-Mon'
+            pvs[_PSStatusPV.PSCONN_MON] = magname + ':PSConnStatus-Mon'
             # TODO: Add other interlocks for PS types that have them
             pv = _ComputedPV(psname + ':DiagStatus-Mon',
                              _PSStatusPV(),
