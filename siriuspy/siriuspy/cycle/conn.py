@@ -8,7 +8,8 @@ import numpy as _np
 from siriuspy.namesys import SiriusPVName as _PVName, \
     get_pair_sprb as _get_pair_sprb
 from siriuspy.envars import vaca_prefix as VACA_PREFIX
-from siriuspy.search import MASearch as _MASearch, PSSearch as _PSSearch
+from siriuspy.search import MASearch as _MASearch, PSSearch as _PSSearch, \
+    LLTimeSearch as _LLTimeSearch
 from siriuspy.csdevice.pwrsupply import Const as _PSConst, ETypes as _PSet
 from siriuspy.csdevice.timesys import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
@@ -41,55 +42,14 @@ class Timing:
     #    'TS-Glob:TI-Mags', 'SI-Glob:TI-Dips', 'SI-Glob:TI-Quads',
     #    'SI-Glob:TI-Sexts', 'SI-Glob:TI-Skews', 'SI-Glob:TI-Corrs']
 
-    properties = {
-        'Cycle': {
-            # EVG settings
-            'AS-RaMO:TI-EVG:DevEnbl-Sel': DEFAULT_STATE,
-            'AS-RaMO:TI-EVG:UpdateEvt-Cmd': 1,
-
-            # Cycle event settings
-            'AS-RaMO:TI-EVG:CycleMode-Sel': _TIConst.EvtModes.External,
-            'AS-RaMO:TI-EVG:CycleDelayType-Sel': _TIConst.EvtDlyTyp.Fixed,
-            'AS-RaMO:TI-EVG:CycleExtTrig-Cmd': None,
-        },
-        'Ramp': {
-            # EVG settings
-            'AS-RaMO:TI-EVG:DevEnbl-Sel': DEFAULT_STATE,
-            'AS-RaMO:TI-EVG:InjectionEvt-Sel': _TIConst.DsblEnbl.Dsbl,
-            'AS-RaMO:TI-EVG:BucketList-SP': [1, ],
-            'AS-RaMO:TI-EVG:RepeatBucketList-SP': DEFAULT_RAMP_NRCYCLES,
-            'AS-RaMO:TI-EVG:InjCount-Mon': None,
-
-            # Cycle event settings
-            'AS-RaMO:TI-EVG:CycleMode-Sel': _TIConst.EvtModes.Injection,
-            'AS-RaMO:TI-EVG:CycleDelayType-Sel': _TIConst.EvtDlyTyp.Incr,
-            'AS-RaMO:TI-EVG:CycleDelay-SP': DEFAULT_DELAY,
-        }
-    }
-
-    cycle_idx = dict()
-    for trig in _trigger_list:
-        properties['Cycle'][trig+':Src-Sel'] = EVTNAME_CYCLE
-        properties['Cycle'][trig+':Duration-SP'] = DEFAULT_CYCLE_DURATION
-        properties['Cycle'][trig+':NrPulses-SP'] = DEFAULT_CYCLE_NRPULSES
-        properties['Cycle'][trig+':Delay-SP'] = DEFAULT_DELAY
-        properties['Cycle'][trig+':Polarity-Sel'] = DEFAULT_POLARITY
-        properties['Cycle'][trig+':State-Sel'] = DEFAULT_STATE
-
-        properties['Ramp'][trig+':Src-Sel'] = EVTNAME_CYCLE
-        properties['Ramp'][trig+':Duration-SP'] = DEFAULT_RAMP_DURATION
-        properties['Ramp'][trig+':NrPulses-SP'] = DEFAULT_RAMP_NRPULSES
-        properties['Ramp'][trig+':Delay-SP'] = DEFAULT_DELAY
-        properties['Ramp'][trig+':Polarity-Sel'] = DEFAULT_POLARITY
-        properties['Ramp'][trig+':State-Sel'] = DEFAULT_STATE
-
-        _trig_db = _get_trig_db(trig)
-        cycle_idx[trig] = _trig_db['Src-Sel']['enums'].index('Cycle')
-
     _pvs = dict()
+    properties = dict()
+    cycle_idx = dict()
+    evg_name = ''
 
     def __init__(self):
         """Init."""
+        self._init_properties()
         self._initial_state = dict()
         self._create_pvs()
 
@@ -107,8 +67,8 @@ class Timing:
 
     def get_pvnames_by_section(self, sections=list()):
         pvnames = set()
-        for mode in Timing.properties.keys():
-            for prop in Timing.properties[mode].keys():
+        for mode in Timing.properties:
+            for prop in Timing.properties[mode]:
                 prop = _PVName(prop)
                 if prop.dev == 'EVG' or prop.sec in sections:
                     pvnames.add(prop)
@@ -166,13 +126,13 @@ class Timing:
     def trigger(self, mode):
         """Trigger timming to cycle magnets."""
         if mode == 'Cycle':
-            pv = Timing._pvs['AS-RaMO:TI-EVG:CycleExtTrig-Cmd']
+            pv = Timing._pvs[Timing.evg_name+':CycleExtTrig-Cmd']
             pv.value = 1
         else:
-            pv = Timing._pvs['AS-RaMO:TI-EVG:InjectionEvt-Sel']
+            pv = Timing._pvs[Timing.evg_name+':InjectionEvt-Sel']
             pv.value = _TIConst.DsblEnbl.Enbl
 
-            pv = Timing._pvs['AS-RaMO:TI-EVG:InjectionEvt-Sts']
+            pv = Timing._pvs[Timing.evg_name+':InjectionEvt-Sts']
             t0 = _time.time()
             while _time.time() - t0 < TIMEOUT_CHECK:
                 if pv.value == _TIConst.DsblEnbl.Enbl:
@@ -180,18 +140,18 @@ class Timing:
                 _time.sleep(SLEEP_CAPUT)
 
     def get_cycle_count(self):
-        pv = Timing._pvs['AS-RaMO:TI-EVG:InjCount-Mon']
+        pv = Timing._pvs[Timing.evg_name+':InjCount-Mon']
         return pv.value
 
     def check_ramp_end(self):
-        pv = Timing._pvs['AS-RaMO:TI-EVG:InjCount-Mon']
+        pv = Timing._pvs[Timing.evg_name+':InjCount-Mon']
         return (pv.value == DEFAULT_RAMP_NRCYCLES)
 
     def turnoff(self):
         """Turn timing off."""
-        pv_event = Timing._pvs['AS-RaMO:TI-EVG:CycleMode-Sel']
+        pv_event = Timing._pvs[Timing.evg_name+':CycleMode-Sel']
         pv_event.value = _TIConst.EvtModes.Disabled
-        pv_bktlist = Timing._pvs['AS-RaMO:TI-EVG:RepeatBucketList-SP']
+        pv_bktlist = Timing._pvs[Timing.evg_name+':RepeatBucketList-SP']
         pv_bktlist.value = 0
         for trig in self._trigger_list:
             pv = Timing._pvs[trig+':Src-Sel']
@@ -229,6 +189,56 @@ class Timing:
                     VACA_PREFIX+pvname_sts,
                     connection_timeout=TIMEOUT_CONNECTION)
                 Timing._pvs[pvname_sts].get()  # force connection
+
+    @classmethod
+    def _init_properties(cls):
+        if cls.properties:
+            return
+        cls.evg_name = _LLTimeSearch.get_evg_name()
+        props = {
+            'Cycle': {
+                # EVG settings
+                cls.evg_name+':DevEnbl-Sel': cls.DEFAULT_STATE,
+                cls.evg_name+':UpdateEvt-Cmd': 1,
+
+                # Cycle event settings
+                cls.evg_name+':CycleMode-Sel': _TIConst.EvtModes.External,
+                cls.evg_name+':CycleDelayType-Sel': _TIConst.EvtDlyTyp.Fixed,
+                cls.evg_name+':CycleExtTrig-Cmd': None,
+            },
+            'Ramp': {
+                # EVG settings
+                cls.evg_name+':DevEnbl-Sel': cls.DEFAULT_STATE,
+                cls.evg_name+':InjectionEvt-Sel': _TIConst.DsblEnbl.Dsbl,
+                cls.evg_name+':BucketList-SP': [1, ],
+                cls.evg_name+':RepeatBucketList-SP': DEFAULT_RAMP_NRCYCLES,
+                cls.evg_name+':InjCount-Mon': None,
+
+                # Cycle event settings
+                cls.evg_name+':CycleMode-Sel': _TIConst.EvtModes.Injection,
+                cls.evg_name+':CycleDelayType-Sel': _TIConst.EvtDlyTyp.Incr,
+                cls.evg_name+':CycleDelay-SP': cls.DEFAULT_DELAY,
+            }
+        }
+
+        for trig in cls._trigger_list:
+            props['Cycle'][trig+':Src-Sel'] = cls.EVTNAME_CYCLE
+            props['Cycle'][trig+':Duration-SP'] = cls.DEFAULT_CYCLE_DURATION
+            props['Cycle'][trig+':NrPulses-SP'] = cls.DEFAULT_CYCLE_NRPULSES
+            props['Cycle'][trig+':Delay-SP'] = cls.DEFAULT_DELAY
+            props['Cycle'][trig+':Polarity-Sel'] = cls.DEFAULT_POLARITY
+            props['Cycle'][trig+':State-Sel'] = cls.DEFAULT_STATE
+
+            props['Ramp'][trig+':Src-Sel'] = cls.EVTNAME_CYCLE
+            props['Ramp'][trig+':Duration-SP'] = DEFAULT_RAMP_DURATION
+            props['Ramp'][trig+':NrPulses-SP'] = DEFAULT_RAMP_NRPULSES
+            props['Ramp'][trig+':Delay-SP'] = cls.DEFAULT_DELAY
+            props['Ramp'][trig+':Polarity-Sel'] = cls.DEFAULT_POLARITY
+            props['Ramp'][trig+':State-Sel'] = cls.DEFAULT_STATE
+
+            _trig_db = _get_trig_db(trig)
+            cls.cycle_idx[trig] = _trig_db['Src-Sel']['enums'].index('Cycle')
+        cls.properties = props
 
 
 class MagnetCycler:
