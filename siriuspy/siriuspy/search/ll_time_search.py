@@ -172,6 +172,10 @@ class LLTimeSearch:
                 sorted(cls._all_devices), filters=filters, sorting=sorting)
 
     @classmethod
+    def get_evg_name(cls):
+        return cls.get_device_names({'dev': 'EVG'})[0]
+
+    @classmethod
     def get_triggersource_devices(cls):
         cls._get_timedata()
         return _dcopy(cls._trig_src_devs)

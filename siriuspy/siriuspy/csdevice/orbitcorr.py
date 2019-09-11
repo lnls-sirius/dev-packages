@@ -51,7 +51,7 @@ _et = ETypes  # syntactic sugar
 class ConstTLines(_cutil.Const):
     """Const class defining transport lines orbitcorr constants."""
 
-    EVG_NAME = _TISearch.get_device_names({'dev': 'EVG'})[0]
+    EVG_NAME = _TISearch.get_evg_name()
     ORBIT_CONVERSION_UNIT = 1/1000  # from nm to um
     MAX_MT_ORBS = 4000
     MAX_RINGSZ = 5
