@@ -95,10 +95,10 @@ class LLTimeSearch:
         'OERFRx': {'OPTICALACP': ('SIGNAL', )},
         'OERFTx': {'SIGNAL': ('OPTICALACP', )},
         }
-    In2OutMap['FibPatch'] = {
-        'P{0:03d}'.format(i): ('P{0:03d}'.format(i), ) for i in range(100)}
-    In2OutMap['FibPatch']['P052B'] = ('P052B', )
-    In2OutMap['FibPatch']['P027B'] = ('P027B', )
+    In2OutMap['DIO'] = {
+        'P{0:03d}'.format(i): ('P{0:03d}'.format(i), ) for i in range(110)}
+    In2OutMap['DIO']['P052B'] = ('P052B', )
+    In2OutMap['DIO']['P027B'] = ('P027B', )
 
     Out2InMap = dict()
     for dev, conns_ in In2OutMap.items():

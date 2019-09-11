@@ -22,7 +22,7 @@ _conversion_linac_names = {
     'LA-BI:H1FO-1': 'LI-RaDiag02:TI-TrigFout',
     'LA-MD:H1PPS-1': 'LI-RaMD01:MD-PPS',  # ?
     'LA-MD:H1PPS-2': 'LI-RaMD02:MD-PPS',  # ?
-    '?': 'IA-00RaCtrl:CO-FibPatch',
+    '?': 'IA-00RaCtrl:CO-DIO',
     '"Rack" Streak Camera:TI-EVE': 'IA-00RaCtrl:TI-EVE'}
 _translate_port = str.maketrans('', '', ' _-')
 
