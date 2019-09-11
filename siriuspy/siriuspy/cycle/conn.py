@@ -44,26 +44,26 @@ class Timing:
     properties = {
         'Cycle': {
             # EVG settings
-            'RA-RaMO:TI-EVG:DevEnbl-Sel': DEFAULT_STATE,
-            'RA-RaMO:TI-EVG:UpdateEvt-Cmd': 1,
+            'AS-RaMO:TI-EVG:DevEnbl-Sel': DEFAULT_STATE,
+            'AS-RaMO:TI-EVG:UpdateEvt-Cmd': 1,
 
             # Cycle event settings
-            'RA-RaMO:TI-EVG:CycleMode-Sel': _TIConst.EvtModes.External,
-            'RA-RaMO:TI-EVG:CycleDelayType-Sel': _TIConst.EvtDlyTyp.Fixed,
-            'RA-RaMO:TI-EVG:CycleExtTrig-Cmd': None,
+            'AS-RaMO:TI-EVG:CycleMode-Sel': _TIConst.EvtModes.External,
+            'AS-RaMO:TI-EVG:CycleDelayType-Sel': _TIConst.EvtDlyTyp.Fixed,
+            'AS-RaMO:TI-EVG:CycleExtTrig-Cmd': None,
         },
         'Ramp': {
             # EVG settings
-            'RA-RaMO:TI-EVG:DevEnbl-Sel': DEFAULT_STATE,
-            'RA-RaMO:TI-EVG:InjectionEvt-Sel': _TIConst.DsblEnbl.Dsbl,
-            'RA-RaMO:TI-EVG:BucketList-SP': [1, ],
-            'RA-RaMO:TI-EVG:RepeatBucketList-SP': DEFAULT_RAMP_NRCYCLES,
-            'RA-RaMO:TI-EVG:InjCount-Mon': None,
+            'AS-RaMO:TI-EVG:DevEnbl-Sel': DEFAULT_STATE,
+            'AS-RaMO:TI-EVG:InjectionEvt-Sel': _TIConst.DsblEnbl.Dsbl,
+            'AS-RaMO:TI-EVG:BucketList-SP': [1, ],
+            'AS-RaMO:TI-EVG:RepeatBucketList-SP': DEFAULT_RAMP_NRCYCLES,
+            'AS-RaMO:TI-EVG:InjCount-Mon': None,
 
             # Cycle event settings
-            'RA-RaMO:TI-EVG:CycleMode-Sel': _TIConst.EvtModes.Injection,
-            'RA-RaMO:TI-EVG:CycleDelayType-Sel': _TIConst.EvtDlyTyp.Incr,
-            'RA-RaMO:TI-EVG:CycleDelay-SP': DEFAULT_DELAY,
+            'AS-RaMO:TI-EVG:CycleMode-Sel': _TIConst.EvtModes.Injection,
+            'AS-RaMO:TI-EVG:CycleDelayType-Sel': _TIConst.EvtDlyTyp.Incr,
+            'AS-RaMO:TI-EVG:CycleDelay-SP': DEFAULT_DELAY,
         }
     }
 
@@ -166,13 +166,13 @@ class Timing:
     def trigger(self, mode):
         """Trigger timming to cycle magnets."""
         if mode == 'Cycle':
-            pv = Timing._pvs['RA-RaMO:TI-EVG:CycleExtTrig-Cmd']
+            pv = Timing._pvs['AS-RaMO:TI-EVG:CycleExtTrig-Cmd']
             pv.value = 1
         else:
-            pv = Timing._pvs['RA-RaMO:TI-EVG:InjectionEvt-Sel']
+            pv = Timing._pvs['AS-RaMO:TI-EVG:InjectionEvt-Sel']
             pv.value = _TIConst.DsblEnbl.Enbl
 
-            pv = Timing._pvs['RA-RaMO:TI-EVG:InjectionEvt-Sts']
+            pv = Timing._pvs['AS-RaMO:TI-EVG:InjectionEvt-Sts']
             t0 = _time.time()
             while _time.time() - t0 < TIMEOUT_CHECK:
                 if pv.value == _TIConst.DsblEnbl.Enbl:
@@ -180,18 +180,18 @@ class Timing:
                 _time.sleep(SLEEP_CAPUT)
 
     def get_cycle_count(self):
-        pv = Timing._pvs['RA-RaMO:TI-EVG:InjCount-Mon']
+        pv = Timing._pvs['AS-RaMO:TI-EVG:InjCount-Mon']
         return pv.value
 
     def check_ramp_end(self):
-        pv = Timing._pvs['RA-RaMO:TI-EVG:InjCount-Mon']
+        pv = Timing._pvs['AS-RaMO:TI-EVG:InjCount-Mon']
         return (pv.value == DEFAULT_RAMP_NRCYCLES)
 
     def turnoff(self):
         """Turn timing off."""
-        pv_event = Timing._pvs['RA-RaMO:TI-EVG:CycleMode-Sel']
+        pv_event = Timing._pvs['AS-RaMO:TI-EVG:CycleMode-Sel']
         pv_event.value = _TIConst.EvtModes.Disabled
-        pv_bktlist = Timing._pvs['RA-RaMO:TI-EVG:RepeatBucketList-SP']
+        pv_bktlist = Timing._pvs['AS-RaMO:TI-EVG:RepeatBucketList-SP']
         pv_bktlist.value = 0
         for trig in self._trigger_list:
             pv = Timing._pvs[trig+':Src-Sel']
