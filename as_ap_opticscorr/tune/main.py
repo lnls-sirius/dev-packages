@@ -11,7 +11,7 @@ from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.csdevice.timesys import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
 from siriuspy.csdevice.opticscorr import Const as _Const
-from siriuspy.timesys import get_evg_name as _get_evg_name
+from siriuspy.search import LLTimeSearch as _LLTimeSearch
 from siriuspy.optics.opticscorr import OpticsCorr as _OpticsCorr
 from as_ap_opticscorr.opticscorr_utils import (
         get_config_name as _get_config_name,
@@ -187,7 +187,7 @@ class App:
                 self._PREFIX_VACA+QUADS_TRIG+':Delay-RB',
                 callback=self._callback_timing_state)
 
-            EVG = _get_evg_name()
+            EVG = _LLTimeSearch.get_evg_name()
             self._timing_evg_tunsimode_sel = _epics.PV(
                 self._PREFIX_VACA+EVG+':TunSIMode-Sel')
             self._timing_evg_tunsimode_sts = _epics.PV(
