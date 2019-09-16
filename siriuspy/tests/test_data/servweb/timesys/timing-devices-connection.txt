@@ -11,8 +11,8 @@
 
 
 # 430
-RA-RaMO:TI-EVG:OUT0                 RA-RaMO:CO-FibPatch:P074
-RA-RaMO:TI-EVG:OUT1                 RA-RaMO:CO-FibPatch:P075
-RA-RaMO:TI-EVG:OUT2                 RA-RaMO:CO-FibPatch:P076
-RA-RaMO:TI-EVG:OUT3                 RA-RaMO:CO-FibPatch:P077
-RA-RaMO:TI-EVG:OUT4                 RA-RaMO:CO-FibPatch:P078
+AS-RaMO:TI-EVG:OUT0                 RA-RaMO:CO-DIO:P074
+AS-RaMO:TI-EVG:OUT1                 RA-RaMO:CO-DIO:P075
+AS-RaMO:TI-EVG:OUT2                 RA-RaMO:CO-DIO:P076
+AS-RaMO:TI-EVG:OUT3                 RA-RaMO:CO-DIO:P077
+AS-RaMO:TI-EVG:OUT4                 RA-RaMO:CO-DIO:P078

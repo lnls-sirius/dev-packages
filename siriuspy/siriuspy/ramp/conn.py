@@ -12,8 +12,8 @@ from siriuspy.csdevice.pwrsupply import Const as _PSConst
 from siriuspy.csdevice.timesys import Const as _TIConst, \
     get_hl_trigger_database as _get_trig_db
 from siriuspy.csdevice.orbitcorr import SOFBRings as _SOFBRings
-from siriuspy.search import MASearch as _MASearch
-from siriuspy.timesys import get_evg_name as _get_evg_name
+from siriuspy.search import MASearch as _MASearch, \
+    LLTimeSearch as _LLTimeSearch
 from siriuspy.ramp import util as _rutil
 
 
@@ -31,7 +31,7 @@ class ConnTiming(_EpicsPropsList):
         """Properties names."""
 
         # EVG PVs
-        EVG = _get_evg_name()
+        EVG = _LLTimeSearch.get_evg_name()
         EVG_DevEnbl = EVG + ':DevEnbl-Sel'
         EVG_ContinuousEvt = EVG + ':ContinuousEvt-Sel'
         EVG_InjectionEvt = EVG + ':InjectionEvt-Sel'
