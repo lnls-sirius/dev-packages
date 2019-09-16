@@ -125,12 +125,12 @@ class FactoryModel:
             'FBP': FactoryFBP,
             'FBP_DCLink': FactoryFBP_DCLink,
             'FBP_FOFB': FactoryFBP,
-            'FAC_DCDC': Factory_FAC,
+            'FAC_DCDC': FactoryFAC_DCDC,
             'FAC_2S_DCDC': FactoryFAC_2S_DCDC,
             'FAC_2S_ACDC': FactoryFAC_2S_ACDC,
             'FAC_2P4S_DCDC': FactoryFAC_2P4S_DCDC,
             'FAC_2P4S_ACDC': FactoryFAC_2P4S_ACDC,
-            'FAP': Factory_FAP,
+            'FAP': FactoryFAP,
             'FAP_2P2S': FactoryFAP_2P2S,
             'FAP_4P': FactoryFAP_4P,
             'Commercial': FactoryCommercial,
@@ -209,7 +209,7 @@ class FactoryFBP(FactoryModel):
     @property
     def parameters(self):
         """PRU Controller parameters."""
-        return PRUCParms_FBP
+        return PRUCParmsFBP
 
     @property
     def bsmp_constants(self):
@@ -299,7 +299,7 @@ class FactoryFBP_FOFB(FactoryFBP):
     @property
     def parameters(self):
         """PRU Controller parameters."""
-        return PRUCParms_FBP  # change to FBP_FOFB
+        return PRUCParmsFBP  # change to FBP_FOFB
 
     @property
     def bsmp_constants(self):
@@ -317,7 +317,7 @@ class FactoryFBP_FOFB(FactoryFBP):
         return _BSMPSim_FBP
 
 
-class Factory_FAC(FactoryFBP):
+class FactoryFAC_DCDC(FactoryFBP):
     """FAC model factory."""
 
     _variables = {
@@ -401,7 +401,7 @@ class FactoryFAC_2S_DCDC(FactoryFBP):
     @property
     def parameters(self):
         """PRU Controller parameters."""
-        return PRUCParms_FAC_2S_DCDC
+        return PRUCParmsFAC_2S_DCDC
 
     @property
     def bsmp_constants(self):
@@ -419,7 +419,7 @@ class FactoryFAC_2S_DCDC(FactoryFBP):
         return _BSMPSim_FAC_2S_DCDC
 
 
-class FactoryFAC_2P4S_DCDC(Factory_FAC):
+class FactoryFAC_2P4S_DCDC(FactoryFAC_DCDC):
     """FAC_2P4S_DCDC model factory."""
 
     _variables = {
@@ -493,7 +493,7 @@ class FactoryFAC_2P4S_DCDC(Factory_FAC):
         return _BSMPSim_FAC_2P4S_DCDC
 
 
-class Factory_FAP(FactoryFBP):
+class FactoryFAP(FactoryFBP):
     """FAP model factory."""
 
     _variables = {
@@ -515,7 +515,7 @@ class Factory_FAP(FactoryFBP):
     @property
     def parameters(self):
         """PRU Controller parameters."""
-        return PRUCParms_FAP
+        return PRUCParmsFAP
 
     @property
     def bsmp_constants(self):
@@ -544,7 +544,7 @@ class FactoryFAP_4P(FactoryFBP):
     @property
     def parameters(self):
         """PRU Controller parameters."""
-        return PRUCParms_FAP_4P
+        return PRUCParmsFAP_4P
 
     @property
     def bsmp_constants(self):
@@ -599,7 +599,7 @@ class FactoryFAP_2P2S(FactoryFBP):
     @property
     def parameters(self):
         """PRU Controller parameters."""
-        return PRUCParms_FAP_2P2S
+        return PRUCParmsFAP_2P2S
 
     @property
     def bsmp_constants(self):
@@ -617,7 +617,7 @@ class FactoryFAP_2P2S(FactoryFBP):
         return _BSMPSim_FAP_2P2S
 
 
-class FactoryCommercial(Factory_FAC):
+class FactoryCommercial(FactoryFAC_DCDC):
     """Commercial model factory."""
 
     @property
@@ -673,7 +673,7 @@ class FactoryFBP_DCLink(FactoryModel):
     @property
     def parameters(self):
         """PRU Controller parameters."""
-        return PRUCParms_FBP_DCLink
+        return PRUCParmsFBP_DCLink
 
     @property
     def bsmp_constants(self):
@@ -746,7 +746,7 @@ class FactoryFAC_2S_ACDC(FactoryModel):
     @property
     def parameters(self):
         """PRU Controller parameters."""
-        return PRUCParms_FAC_2S_ACDC
+        return PRUCParmsFAC_2S_ACDC
 
     @property
     def bsmp_constants(self):
@@ -807,7 +807,7 @@ class FactoryFAC_2P4S_ACDC(FactoryFAC_2S_ACDC):
     @property
     def parameters(self):
         """PRU Controller parameters."""
-        return PRUCParms_FAC_2P4S_ACDC
+        return PRUCParmsFAC_2P4S_ACDC
 
     @property
     def bsmp_constants(self):
@@ -850,14 +850,13 @@ class _PRUCParms:
     PRU = _PRUConst
 
 
-class PRUCParms_FBP(_PRUCParms):
+class PRUCParmsFBP(_PRUCParms):
     """FBP-specific PRUC parameters."""
 
     FREQ_RAMP = 2.0  # [Hz]
     FREQ_SCAN = 10.0  # [Hz]
 
     # UDC model
-    # udcmodel = 'FBP'
     model = FactoryModel.create('FBP')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
@@ -942,7 +941,7 @@ class PRUCParms_FBP(_PRUCParms):
         ConstBSMP.V_I_LOAD_4,)
 
 
-class PRUCParms_FBP_DCLink(_PRUCParms):
+class PRUCParmsFBP_DCLink(_PRUCParms):
     """FBP_DCLink-specific PRUC parameters."""
 
     FREQ_RAMP = 2.0  # [Hz]
@@ -1011,7 +1010,7 @@ class PRUCParms_FBP_DCLink(_PRUCParms):
     groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 
-class PRUCParms_FAC_2S_DCDC(_PRUCParms):
+class PRUCParmsFAC_2S_DCDC(_PRUCParms):
     """FAC_2S specific PRUC parameters.
 
     Represent FAC_2S_DCDC psmodels.
@@ -1126,7 +1125,7 @@ class PRUCParms_FAC_2S_DCDC(_PRUCParms):
     groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 
-class PRUCParms_FAC_2P4S(_PRUCParms):
+class PRUCParmsFAC_2P4S_DCDC(_PRUCParms):
     """FAC-specific PRUC parameters.
 
     Represent FAC_2P4S psmodels.
@@ -1246,7 +1245,7 @@ class PRUCParms_FAC_2P4S(_PRUCParms):
     groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 
-class PRUCParms_FAC(_PRUCParms):
+class PRUCParmsFAC_DCDC(_PRUCParms):
     """FAC-specific PRUC parameters.
 
     Represent FAC, FAC_2S, FAC_2P4S psmodels.
@@ -1322,7 +1321,7 @@ class PRUCParms_FAC(_PRUCParms):
     groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 
-class PRUCParms_FAC_2S_ACDC(_PRUCParms):
+class PRUCParmsFAC_2S_ACDC(_PRUCParms):
     """FAC_2S_ACDC-specific PRUC parameters."""
 
     FREQ_RAMP = 2.0  # [Hz]
@@ -1391,7 +1390,7 @@ class PRUCParms_FAC_2S_ACDC(_PRUCParms):
     groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 
-class PRUCParms_FAC_2P4S_ACDC(PRUCParms_FAC_2S_ACDC):
+class PRUCParmsFAC_2P4S_ACDC(PRUCParmsFAC_2S_ACDC):
     """FAC_2P4S_ACDC-specific PRUC parameters."""
 
     # UDC model
@@ -1400,7 +1399,7 @@ class PRUCParms_FAC_2P4S_ACDC(PRUCParms_FAC_2S_ACDC):
     Entities = model.entities
 
 
-class PRUCParms_FAP(_PRUCParms):
+class PRUCParmsFAP(_PRUCParms):
     """FAC-specific PRUC parameters.
 
     Represent FAP
@@ -1502,7 +1501,7 @@ class PRUCParms_FAP(_PRUCParms):
     groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 
-class PRUCParms_FAP_4P(_PRUCParms):
+class PRUCParmsFAP_4P(_PRUCParms):
     """FAC-specific PRUC parameters.
 
     Represent FAP_4P
@@ -1604,7 +1603,7 @@ class PRUCParms_FAP_4P(_PRUCParms):
     groups[_PRUCParms.MIRROR] = groups[_PRUCParms.SYNCOFF]
 
 
-class PRUCParms_FAP_2P2S(_PRUCParms):
+class PRUCParmsFAP_2P2S(_PRUCParms):
     """FAC_2P2S-specific PRUC parameters.
 
     Represent FAP_2P2S
@@ -1826,23 +1825,40 @@ class PRUCParms_FAP_2P2S(_PRUCParms):
 class UDC:
     """UDC."""
 
-    def __init__(self, pru, udcmodel, device_ids):
+    _prucparms = {
+        'FBP': PRUCParmsFBP,
+        'FBP_DCLink': PRUCParmsFBP_DCLink,
+        'FAC_2S_DCDC': PRUCParmsFAC_2S_DCDC,
+        'FAC_2P4S_DCDC': PRUCParmsFAC_2P4S_DCDC,
+        'FAC_DCDC': PRUCParmsFAC_DCDC,
+        'FAC_2S_ACDC': PRUCParmsFAC_2S_ACDC,
+        'FAC_2P4S_ACDC': PRUCParmsFAC_2P4S_ACDC,
+        'FAP': PRUCParmsFAP,
+        'FAP_4P': PRUCParmsFAP_4P,
+        'FAP_2P2S': PRUCParmsFAP_2P2S,
+    }
+
+    def __init__(self, pru, psmodel, device_ids):
         """Init."""
         self._pru = pru
         self._device_ids = device_ids
-        self._udcmodel = udcmodel
+        self._psmodel = psmodel
         self._bsmp = self._create_bsmp_connectors()
+
+    @property
+    def parameters(self):
+        """PRU Controller parameters."""
+        return UDC._prucparms[self._psmodel]
 
     def _create_bsmp_connectors(self):
         bsmp = dict()
-        # d = udcmodels[self._udcmodel]
-        model = FactoryModel.create(self._udcmodel)
+        model = FactoryModel.create(self._psmodel)
         entities, bsmpsim_class = model.entities, model.simulation_class
-        for id in self._device_ids:
+        for dev_id in self._device_ids:
             if self._pru.simulated:
-                bsmp[id] = bsmpsim_class(self._pru)
+                bsmp[dev_id] = bsmpsim_class(self._pru)
             else:
-                bsmp[id] = _BSMP(self._pru, id, entities)
+                bsmp[dev_id] = _BSMP(self._pru, dev_id, entities)
         return bsmp
 
     def __getitem__(self, index):

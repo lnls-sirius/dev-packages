@@ -4,7 +4,7 @@ from unittest import mock, TestCase
 
 from siriuspy.pwrsupply.watcher import Watcher
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
-from siriuspy.pwrsupply.factorymodel import PRUCParms_FBP
+from siriuspy.pwrsupply.factorymodel import PRUCParmsFBP
 
 
 def wait(condition, timelimit=0.5):
@@ -43,7 +43,7 @@ class TestCycleWatcher(TestCase):
         self.writers = {'OpMode-Sel': mock.Mock(), 'Current-SP': mock.Mock()}
         self.controller = mock.Mock()
         self.controller.pru_controller.params.FREQ_SCAN = \
-            PRUCParms_FBP.FREQ_SCAN
+            PRUCParmsFBP.FREQ_SCAN
         self.dev_name = 'FakeName'
         self.op_mode = _PSConst.OpMode.Cycle
         self.watcher = Watcher(
@@ -169,7 +169,7 @@ class TestRmpWatcher(TestCase):
         self.writers = {'OpMode-Sel': mock.Mock(), 'Current-SP': mock.Mock()}
         self.controller = mock.Mock()
         self.controller.pru_controller.params.FREQ_SCAN = \
-            PRUCParms_FBP.FREQ_SCAN
+            PRUCParmsFBP.FREQ_SCAN
         self.dev_name = 'FakeName'
         self.op_mode = _PSConst.OpMode.RmpWfm
         self.watcher = Watcher(
@@ -257,7 +257,7 @@ class TestMigWatcher(TestCase):
         self.writers = {'OpMode-Sel': mock.Mock(), 'Current-SP': mock.Mock()}
         self.controller = mock.Mock()
         self.controller.pru_controller.params.FREQ_SCAN = \
-            PRUCParms_FBP.FREQ_SCAN
+            PRUCParmsFBP.FREQ_SCAN
         self.dev_name = 'FakeName'
         self.op_mode = _PSConst.OpMode.MigWfm
         self.watcher = Watcher(
