@@ -61,7 +61,7 @@ from siriuspy.pwrsupply.bsmp_sim import \
     BSMPSim_FAC_2S_ACDC as _BSMPSim_FAC_2S_ACDC
 
 
-class ModelFactory:
+class FactoryModel:
     """Abstract factory for power supply models."""
 
     _c = _bsmp.ConstBSMP
@@ -120,20 +120,20 @@ class ModelFactory:
 
     @staticmethod
     def create(model):
-        """Return ModelFactory object."""
+        """Return FactoryModel object."""
         name_2_factory = {
-            'FBP': FBP_Factory,
-            'FBP_DCLink': FBP_DCLink_Factory,
-            'FBP_FOFB': FBP_Factory,
-            'FAC_DCDC': FAC_Factory,
-            'FAC_2S_DCDC': FAC_2S_DCDC_Factory,
-            'FAC_2S_ACDC': FAC_2S_ACDC_Factory,
-            'FAC_2P4S_DCDC': FAC_2P4S_DCDC_Factory,
-            'FAC_2P4S_ACDC': FAC_2P4S_ACDC_Factory,
-            'FAP': FAP_Factory,
-            'FAP_2P2S': FAP_2P2S_Factory,
-            'FAP_4P': FAP_4P_Factory,
-            'Commercial': Commercial_Factory,
+            'FBP': FactoryFBP,
+            'FBP_DCLink': FactoryFBP_DCLink,
+            'FBP_FOFB': FactoryFBP,
+            'FAC_DCDC': Factory_FAC,
+            'FAC_2S_DCDC': FactoryFAC_2S_DCDC,
+            'FAC_2S_ACDC': FactoryFAC_2S_ACDC,
+            'FAC_2P4S_DCDC': FactoryFAC_2P4S_DCDC,
+            'FAC_2P4S_ACDC': FactoryFAC_2P4S_ACDC,
+            'FAP': Factory_FAP,
+            'FAP_2P2S': FactoryFAP_2P2S,
+            'FAP_4P': FactoryFAP_4P,
+            'Commercial': FactoryCommercial,
         }
         if model in name_2_factory:
             factory = name_2_factory[model]
@@ -188,7 +188,7 @@ class ModelFactory:
 
 
 # Standard PS that supply magnets
-class FBP_Factory(ModelFactory):
+class FactoryFBP(FactoryModel):
     """FBP model factory."""
 
     _variables = {
@@ -288,7 +288,7 @@ class FBP_Factory(ModelFactory):
             readers, writers, connections, pru_controller, devices)
 
 
-class FBP_FOFB_Factory(FBP_Factory):
+class FactoryFBP_FOFB(FactoryFBP):
     """FBP_FOFB model factory."""
 
     @property
@@ -317,7 +317,7 @@ class FBP_FOFB_Factory(FBP_Factory):
         return _BSMPSim_FBP
 
 
-class FAC_Factory(FBP_Factory):
+class Factory_FAC(FactoryFBP):
     """FAC model factory."""
 
     _variables = {
@@ -360,7 +360,7 @@ class FAC_Factory(FBP_Factory):
         return _BSMPSim_FAC_DCDC
 
 
-class FAC_2S_DCDC_Factory(FBP_Factory):
+class FactoryFAC_2S_DCDC(FactoryFBP):
     """FAC_2S_DCDC model factory."""
 
     _variables = {
@@ -419,7 +419,7 @@ class FAC_2S_DCDC_Factory(FBP_Factory):
         return _BSMPSim_FAC_2S_DCDC
 
 
-class FAC_2P4S_DCDC_Factory(FAC_Factory):
+class FactoryFAC_2P4S_DCDC(Factory_FAC):
     """FAC_2P4S_DCDC model factory."""
 
     _variables = {
@@ -517,7 +517,7 @@ class FAC_2P4S_DCDC_Factory(FAC_Factory):
         return _BSMPSim_FAC_2P4S_DCDC
 
 
-class FAP_Factory(FBP_Factory):
+class Factory_FAP(FactoryFBP):
     """FAP model factory."""
 
     _variables = {
@@ -557,7 +557,7 @@ class FAP_Factory(FBP_Factory):
         return _BSMPSim_FAP
 
 
-class FAP_4P_Factory(FBP_Factory):
+class FactoryFAP_4P(FactoryFBP):
     """FAP_4P model factory."""
 
     @property
@@ -586,7 +586,7 @@ class FAP_4P_Factory(FBP_Factory):
         return _BSMPSim_FAP_4P
 
 
-class FAP_2P2S_Factory(FBP_Factory):
+class FactoryFAP_2P2S(FactoryFBP):
     """FAP_2P2S model factory."""
 
     _variables = {
@@ -641,7 +641,7 @@ class FAP_2P2S_Factory(FBP_Factory):
         return _BSMPSim_FAP_2P2S
 
 
-class Commercial_Factory(FAC_Factory):
+class FactoryCommercial(Factory_FAC):
     """Commercial model factory."""
 
     @property
@@ -673,7 +673,7 @@ class Commercial_Factory(FAC_Factory):
 # --- ACDC ---
 
 
-class FBP_DCLink_Factory(ModelFactory):
+class FactoryFBP_DCLink(FactoryModel):
     """FBP_DCLink factory."""
 
     _variables = {
@@ -746,7 +746,7 @@ class FBP_DCLink_Factory(ModelFactory):
             readers, writers, connections, pru_controller)
 
 
-class FAC_2S_ACDC_Factory(ModelFactory):
+class FactoryFAC_2S_ACDC(FactoryModel):
     """FAC_2S_ACDC factory."""
 
     _variables = {
@@ -820,7 +820,7 @@ class FAC_2S_ACDC_Factory(ModelFactory):
             readers, writers, connections, pru_controller)
 
 
-class FAC_2P4S_ACDC_Factory(FAC_2S_ACDC_Factory):
+class FactoryFAC_2P4S_ACDC(FactoryFAC_2S_ACDC):
     """FAC_2P4S_ACDC factoy."""
 
     @property
@@ -882,7 +882,7 @@ class PRUCParms_FBP(_PRUCParms):
 
     # UDC model
     # udcmodel = 'FBP'
-    model = ModelFactory.create('FBP')
+    model = FactoryModel.create('FBP')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
@@ -973,7 +973,7 @@ class PRUCParms_FBP_DCLink(_PRUCParms):
     FREQ_SCAN = 2.0  # [Hz]
 
     # UDC model
-    model = ModelFactory.create('FBP_DCLink')
+    model = FactoryModel.create('FBP_DCLink')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
@@ -1045,7 +1045,7 @@ class PRUCParms_FAC_2S_DCDC(_PRUCParms):
     FREQ_SCAN = 10.0  # [Hz]
 
     # UDC model
-    model = ModelFactory.create('FAC_2S_DCDC')
+    model = FactoryModel.create('FAC_2S_DCDC')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
@@ -1160,7 +1160,7 @@ class PRUCParms_FAC_2P4S_DCDC(_PRUCParms):
     FREQ_SCAN = 10.0  # [Hz]
 
     # UDC model
-    model = ModelFactory.create('FAC_2P4S_DCDC')
+    model = FactoryModel.create('FAC_2P4S_DCDC')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
@@ -1408,7 +1408,7 @@ class PRUCParms_FAC(_PRUCParms):
     FREQ_SCAN = 10.0  # [Hz]
 
     # UDC model
-    model = ModelFactory.create('FAC_DCDC')
+    model = FactoryModel.create('FAC_DCDC')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
@@ -1481,7 +1481,7 @@ class PRUCParms_FAC_2S_ACDC(_PRUCParms):
     FREQ_SCAN = 2.0  # [Hz]
 
     # UDC model
-    model = ModelFactory.create('FAC_2S_ACDC')
+    model = FactoryModel.create('FAC_2S_ACDC')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
@@ -1547,7 +1547,7 @@ class PRUCParms_FAC_2P4S_ACDC(PRUCParms_FAC_2S_ACDC):
     """FAC_2P4S_ACDC-specific PRUC parameters."""
 
     # UDC model
-    model = ModelFactory.create('FAC_2P4S_ACDC')
+    model = FactoryModel.create('FAC_2P4S_ACDC')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
@@ -1562,7 +1562,7 @@ class PRUCParms_FAP(_PRUCParms):
     FREQ_SCAN = 10.0  # [Hz]
 
     # UDC model
-    model = ModelFactory.create('FAP')
+    model = FactoryModel.create('FAP')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
@@ -1664,7 +1664,7 @@ class PRUCParms_FAP_4P(_PRUCParms):
     FREQ_SCAN = 10.0  # [Hz]
 
     # UDC model
-    model = ModelFactory.create('FAP_4P')
+    model = FactoryModel.create('FAP_4P')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
@@ -1766,7 +1766,7 @@ class PRUCParms_FAP_2P2S(_PRUCParms):
     FREQ_SCAN = 10.0  # [Hz]
 
     # UDC model
-    model = ModelFactory.create('FAP_2P2S')
+    model = FactoryModel.create('FAP_2P2S')
     ConstBSMP = model.bsmp_constants
     Entities = model.entities
 
@@ -1988,7 +1988,7 @@ class UDC:
     def _create_bsmp_connectors(self):
         bsmp = dict()
         # d = udcmodels[self._udcmodel]
-        model = ModelFactory.create(self._udcmodel)
+        model = FactoryModel.create(self._udcmodel)
         entities, bsmpsim_class = model.entities, model.simulation_class
         for id in self._device_ids:
             if self._pru.simulated:
