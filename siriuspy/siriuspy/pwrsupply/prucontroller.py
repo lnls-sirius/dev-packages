@@ -20,7 +20,7 @@ from siriuspy.csdevice.pwrsupply import DEFAULT_WFMDATA as _DEFAULT_WFMDATA
 from siriuspy.pwrsupply.bsmp import __version__ as _devpckg_firmware_version
 from siriuspy.pwrsupply.bsmp import MAP_MIRROR_2_ORIG_FBP as _mirror_map_fbp
 from siriuspy.pwrsupply.status import PSCStatus as _PSCStatus
-from siriuspy.pwrsupply.model_factory import UDC as _UDC
+from siriuspy.pwrsupply.factorymodel import UDC as _UDC
 
 
 # NOTE: On current behaviour of PRUC and Power Supplies:

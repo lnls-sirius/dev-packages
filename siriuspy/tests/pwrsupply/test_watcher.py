@@ -4,7 +4,7 @@ from unittest import mock, TestCase
 
 from siriuspy.pwrsupply.watcher import Watcher
 from siriuspy.csdevice.pwrsupply import Const as _PSConst
-from siriuspy.pwrsupply.model_factory import PRUCParms_FBP
+from siriuspy.pwrsupply.factorymodel import PRUCParms_FBP
 
 
 def wait(condition, timelimit=0.5):
@@ -75,7 +75,7 @@ class TestCycleWatcher(TestCase):
         wait(lambda: len(mock_time.sleep.call_args_list) > 0)
         self.watcher.stop()
         self.assertTrue(self.watcher.exit)
-        mock_time.sleep.assert_called() 
+        mock_time.sleep.assert_called()
 
     def test_cycle_opmode_trigger(self, mock_time):
         """Test cycle wait opmode state."""
