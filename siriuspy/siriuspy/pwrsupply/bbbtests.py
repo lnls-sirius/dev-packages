@@ -10,9 +10,9 @@ from siriuspy.pwrsupply.pru import PRUSim
 from siriuspy.pwrsupply.bsmp import ConstBSMP
 from siriuspy.pwrsupply.bsmp import EntitiesFBP
 from siriuspy.pwrsupply.bsmp_sim import BSMPSim_FBP
-from siriuspy.pwrsupply.prucontroller import PRUCQueue
+from siriuspy.thread import DequeThread
 from siriuspy.pwrsupply.prucontroller import PRUController
-from siriuspy.pwrsupply.model_factory import ModelFactory
+from siriuspy.pwrsupply.factorymodel import FactoryModel
 
 P = 'T'
 
@@ -69,12 +69,12 @@ def bsmp_reset_interlock(bsmp):
 
 
 def bbb_pru_and_prucqueue(simulate=False):
-    """Return PRU and PRUCQUEUE."""
+    """Return PRU and DequeThread."""
     if simulate:
         pru = PRUSim()
     else:
         pru = PRU()
-    prucqueue = PRUCQueue()
+    prucqueue = DequeThread()
     return pru, prucqueue
 
 
@@ -84,7 +84,7 @@ def pruc_create(udcmodel, device_ids, simulate=False):
     pru, prucqueue = bbb_pru_and_prucqueue(simulate=simulate)
     pruc = PRUController(pru=pru,
                          prucqueue=prucqueue,
-                         udcmodel=ModelFactory.create(udcmodel),
+                         udcmodel=FactoryModel.create(udcmodel),
                          device_ids=device_ids,
                          processing=True,
                          scanning=True)
@@ -118,13 +118,13 @@ def bbbs_mix_pruc_create(simulate=False):
 
     pruc1 = PRUController(pru=pru,
                           prucqueue=prucqueue,
-                          udcmodel=ModelFactory.create('FBP_DCLink'),
+                          udcmodel=FactoryModel.create('FBP_DCLink'),
                           device_ids=(20, ),
                           processing=True,
                           scanning=True)
     pruc2 = PRUController(pru=pru,
                           prucqueue=prucqueue,
-                          udcmodel=ModelFactory.create('FBP'),
+                          udcmodel=FactoryModel.create('FBP'),
                           device_ids=BBB1_device_ids + BBB2_device_ids,
                           processing=True,
                           scanning=True)
