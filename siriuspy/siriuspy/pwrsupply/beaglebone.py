@@ -29,7 +29,7 @@ from siriuspy.pwrsupply.prucontroller import PRUController as _PRUController
 from siriuspy.pwrsupply.fields import Constant as _Constant
 from siriuspy.pwrsupply.fields import Setpoint as _Setpoint
 from siriuspy.pwrsupply.fields import Setpoints as _Setpoints
-from siriuspy.pwrsupply.model_factory import ModelFactory as _ModelFactory
+from siriuspy.pwrsupply.factorymodel import FactoryModel as _FactoryModel
 
 
 class BeagleBone:
@@ -177,7 +177,7 @@ class BBBFactory:
                 continue
 
             # Get out model object
-            model = _ModelFactory.create(psmodel)
+            model = _FactoryModel.create(psmodel)
 
             # Create pru controller for devices
             ids = [device[1] for device in devices]
