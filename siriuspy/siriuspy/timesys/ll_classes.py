@@ -20,10 +20,6 @@ _US2SEC = 1e-6
 _FDEL = _cstime.Const.FINE_DELAY / _US2SEC
 
 
-def get_evg_name():
-    return _LLTimeSearch.get_device_names({'dev': 'EVG'})[0]
-
-
 class _Thread(_ThreadBase):
 
     def __init__(self, **kwargs):
@@ -53,7 +49,7 @@ class _BaseLL(_Base):
         self._rf_freq = _RFFREQ
         self._rf_div = _RFDIV
 
-        evg_name = get_evg_name()
+        evg_name = _LLTimeSearch.get_evg_name()
         self._rf_freq_pv = _PV(
             LL_PREFIX + 'AS-Glob:RF-Gen:Frequency-SP',
             connection_timeout=_conn_timeout)
