@@ -134,7 +134,7 @@ class PRUController:
     def __init__(self,
                  pru,
                  prucqueue,
-                 udcmodel,
+                 psmodel,
                  device_ids,
                  processing=True,
                  scanning=True,
@@ -144,20 +144,21 @@ class PRUController:
         # create lock
         self._lock = _Lock()
 
-        # define constant namespaces
-        # self._initialize_const_namespace()
-        self._params = udcmodel.parameters
-        # print(self._params)
+        # store psmodel
+        self._psmodel = psmodel
 
-        self._group_ids = sorted(self._params.groups.keys())
+        # sorted list of device ids
+        self._device_ids = sorted(device_ids)
+
+        # initialize UDC
+        self._initialize_udc(pru, self._psmodel.name, self._device_ids)
+
         # bypass psmodel default frequencies
         if freqs is not None:
             self._params.FREQ_SCAN = freqs[0]
             self._params.FREQ_RAMP = freqs[1]
 
-        # store udcmodel
-        self._model = udcmodel
-        self._udcmodel = udcmodel.name
+        # set PRU delays
         self._pru_delays = dict()
         self._pru_delays[self._params.PRU.SYNC_MODE.MIGINT] = None
         self._pru_delays[self._params.PRU.SYNC_MODE.MIGEND] = \
@@ -168,19 +169,13 @@ class PRUController:
         self._pru_delays[self._params.PRU.SYNC_MODE.BRDCST] = \
             PRUController._delay_func_sync_pulse
 
-        # sorted list of device ids
-        self._device_ids = sorted(device_ids)
-
         # conversion of ps status to high level properties
         self._psc_state = {}
-        for bsmp_id in self.device_ids:
+        for bsmp_id in self._device_ids:
             self._psc_state[bsmp_id] = _PSCStatus()
 
         # create PRU (sync mode off).
         self._initialize_pru(pru)
-
-        # initialize BSMP
-        self._initialize_udc()
 
         # reset power supply controllers
         # NOTE: this should be invoked in the case of IOC setting state of HW
@@ -611,17 +606,20 @@ class PRUController:
                         list(_DEFAULT_WFMDATA),  # 4th power supply
                         ]
 
-    def _initialize_udc(self):
+    def _initialize_udc(self, pru, psmodel_name, device_ids):
+
+        # create UDC
+        self._udc = _UDC(pru, psmodel_name, device_ids)
+        self._params = self._udc.parameters
 
         # prune variables from mirror group
         self._init_prune_mirror_group()
 
         # create attribute with state of connections
-        self._connected = {id: False for id in self.device_ids}
+        self._connected = {dev_id: False for dev_id in device_ids}
 
-        # create UDC
-        udc = _UDC(self._pru, self._udcmodel, self._device_ids)
-        self._udc = udc
+        # create sorted variables group ids
+        self._group_ids = sorted(self._params.groups.keys())
 
     def _bsmp_reset_ps_controllers(self):
 
@@ -636,8 +634,6 @@ class PRUController:
         # initialization, RMPEND does not work! sometimes the ps controllers
         # are put in a non-responsive state!!!
 
-        # if self._udcmodel in PRUController._dcdc_udcmodel:
-        #     self.pru_curve_write(self.device_ids[0], self._curves[0])
         self.pru_curve_write(self.device_ids[0], self._curves[0])
 
     def _initialize_devices(self):
@@ -648,7 +644,7 @@ class PRUController:
 
     def _init_prune_mirror_group(self):
 
-        if self._udcmodel != 'FBP':
+        if self._psmodel.name != 'FBP':
             return
 
         # gather mirror variables that will be used
@@ -777,7 +773,7 @@ class PRUController:
 
     def _select_next_device_id(self):
         # select device ids to be read (when not in sync_off mode)
-        if self._udcmodel in ('FBP', ):
+        if self._psmodel.name in ('FBP', ):
             # with the mirror var solution for FBP we can always read only
             # one of them and get updates for all the others
             dev_id = self._device_ids[0]
@@ -935,13 +931,13 @@ class PRUController:
                 # TODO: turn off added random fluctuations.
                 # commenting out this fluctuation cpu usage is reduced from
                 # 20% to 19.5% at BBB1
-                # if self._udcmodel == 'FBP':
+                # if self._psmodel.name == 'FBP':
                 #     copy_var_vals[id][self._params.ConstBSMP.V_I_LOAD] += \
                 #         0.00001*_random.uniform(-1.0, +1.0)
-                # elif self._udcmodel == 'FBP_DCLink':
+                # elif self._psmodel.name == 'FBP_DCLink':
                 #     copy_var_vals[id][self._params.ConstBSMP.V_V_OUT] += \
                 #         0.00001*_random.uniform(-1.0, +1.0)
-                # elif self._udcmodel == 'FAC':
+                # elif self._psmodel.name == 'FAC':
                 #     copy_var_vals[id][self._params.ConstBSMP.V_I_LOAD1] += \
                 #         0.00001*_random.uniform(-1.0, +1.0)
                 #     copy_var_vals[id][self._params.ConstBSMP.V_I_LOAD2] += \
@@ -970,7 +966,7 @@ class PRUController:
 
     def _update_copy_var_vals(self, id, copy_var_vals, nr_devs,
                               value, group_id, var_id):
-        if self._udcmodel == 'FBP' and group_id == self._params.MIRROR:
+        if self._psmodel.name == 'FBP' and group_id == self._params.MIRROR:
             # TODO: generalize this !
             # --- update from read of group of mirror variables
             #
