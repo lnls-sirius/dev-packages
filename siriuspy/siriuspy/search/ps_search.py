@@ -225,9 +225,10 @@ class PSSearch:
                        'FAC_DCDC', 'FAC_2S_DCDC', 'FAC_2S_ACDC',
                        'FAC_2P4S_DCDC', 'FAC_2P4S_ACDC',
                        'FAP', 'FAP_2P2S', 'FAP_4P',
-                       'Commercial', 'LINAC_PS',
-                       'FP_SEPT', 'FP_KCKR', 'FP_PINGER'):
+                       'Commercial', 'LINAC_PS'):
             return PSSearch._splims_ps_unit
+        elif psmodel in ('FP_SEPT', 'FP_KCKR', 'FP_PINGER'):
+            return PSSearch._splims_pu_unit
         else:
             raise ValueError(psmodel)
 
