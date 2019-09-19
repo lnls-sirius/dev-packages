@@ -1,0 +1,20 @@
+# This file was generated automatically from the data of the files
+# in the subfolder microTCA-vs-BPMs-mapping and the
+# models of the accelerators in the pymodels repository by the
+# function:
+#      siriuspy.optics.lattice_survey.generate_bpm_static_table.
+#
+# If the data in the mentioned subfolder change, please, run the
+# script again and copy the generated file to replace this one.
+
+
+#BPMs data
+#-----------
+
+
+# Storage Ring (SR)
+#---------------------------------------------------------
+#Name                  Position [m]    Timing
+#---------------------------------------------------------
+SI-01M2:DI-BPM           3.5179      IA-01RaBPM:TI-AMCFPGAEVR
+SI-01C1:DI-BPM-1         7.1959      IA-01RaBPM:TI-AMCFPGAEVR
