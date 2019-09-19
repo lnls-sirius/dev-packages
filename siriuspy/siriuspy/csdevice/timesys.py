@@ -13,7 +13,9 @@ from siriuspy.search import HLTimeSearch as _HLTimeSearch
 class ETypes(_cutil.ETypes):
     """Local enumerate types."""
 
-    EVT_MODES = ('Disabled', 'Continuous', 'Injection', 'OneShot', 'External')
+    # EVT_MODES = (
+    #    'Disabled', 'Continuous', 'Injection', 'OneShot', 'External')
+    EVT_MODES = ('Disabled', 'Continuous', 'Injection', 'External')
     TRIG_SRC_LL = (
         'Dsbl', 'Trigger', 'Clock0', 'Clock1', 'Clock2',
         'Clock3', 'Clock4', 'Clock5', 'Clock6', 'Clock7')
