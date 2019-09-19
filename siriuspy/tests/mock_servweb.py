@@ -8,6 +8,7 @@ from siriuspy.search import ps_search
 from siriuspy.search import ma_search
 from siriuspy.search import hl_time_search
 from siriuspy.search import ll_time_search
+from siriuspy.search import bpms_search
 from siriuspy.magnet import excdata
 
 
@@ -96,3 +97,9 @@ _p = mock.patch.object(ll_time_search, '_web', autospec=True)
 mock5 = _p.start()
 mock5.timing_devices_mapping.return_value = _read_test_file(
     'timesys/timing-devices-connection.txt')
+
+# --- mock objects bpms_search _web ---
+_p = mock.patch.object(bpms_search, '_web', autospec=True)
+mock6 = _p.start()
+mock6.bpms_data.return_value = _read_test_file(
+    'diagnostics/bpms-data.txt')
