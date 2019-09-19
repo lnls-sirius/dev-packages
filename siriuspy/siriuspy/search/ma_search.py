@@ -73,12 +73,12 @@ class MASearch:
                        'FAC_DCDC', 'FAC_2S_DCDC', 'FAC_2S_ACDC',
                        'FAC_2P4S_DCDC', 'FAC_2P4S_ACDC',
                        'FAP', 'FAP_2P2S', 'FAP_4P',
-                       'Commercial', 'LINAC_PS',
-                       'FP_SEPT', 'FP_KCKR', 'FP_PINGER'):
+                       'Commercial', 'LINAC_PS'):
             return MASearch._splims_ma_unit
+        elif psmodel in ('FP_SEPT', 'FP_KCKR', 'FP_PINGER'):
+            return MASearch._splims_pm_unit
         else:
             raise ValueError('units not def for ' + psmodel)
-            # return MASearch._splims_pm_unit
 
     @staticmethod
     def get_splims(maname, label):
