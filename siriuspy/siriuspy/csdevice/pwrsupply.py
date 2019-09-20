@@ -19,8 +19,8 @@ DEFAULT_WFMDATA = (0.0, ) * DEF_WFMSIZE
 
 # NOTE: _SIZE has to be consistent with
 # pwrsupply.bsmp.EntitiesFBP.Curve: _SIZE = _curve['count']*_curve['nblocks']
-_SIZE = 4096
-DEFAULT_CURVE = _np.zeros(_SIZE)
+# _SIZE = 4096
+DEFAULT_CURVESIZE = _np.zeros(DEF_WFMSIZE)
 
 default_ps_current_precision = 4
 default_pu_current_precision = 4
@@ -440,14 +440,13 @@ def get_basic_propty_database():
         'WfmData-RB': {'type': 'float', 'count': DEF_WFMSIZE,
                        'value': list(DEFAULT_WFMDATA),
                        'prec': default_ps_current_precision},
-        # PS Curves
-        # NOTE: Part of BSMP curves implementation to be used in the future.
+        # PS BSMP Curves
         # 'CurvesAcq-Sel': {'type': 'enum', 'enums': _et.DSBLD_ENBLD,
         #                   'value': Const.DsblEnbl.Dsbl},
-        # 'Curve1-Mon': {'type': 'float', 'count': len(DEFAULT_CURVE),
-        #                'Value': DEFAULT_CURVE,
-        #                'prec': default_ps_current_precision},
         # 'CurvesAcq-Cmd': {'type': 'int', 'value': 0},
+        # 'CurveWfmRef-Mon': {'type': 'float', 'count': len(DEFAULT_CURVESIZE),
+        #                     'Value': DEFAULT_CURVESIZE,
+        #                     'prec': default_ps_current_precision},
     })
     return db
 
